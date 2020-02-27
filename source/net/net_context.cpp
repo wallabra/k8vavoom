@@ -58,7 +58,7 @@ VNetContext::~VNetContext () {
 //
 //==========================================================================
 void VNetContext::ThinkerDestroyed (VThinker *Th) {
-  if (ServerConnection) {
+  if (IsClient()) {
     // client; have connection with a server
     VThinkerChannel *chan = ServerConnection->ThinkerChannels.FindPtr(Th);
     if (chan) {

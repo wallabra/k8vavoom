@@ -67,7 +67,7 @@ void VControlChannel::ParsePacket (VMessageIn &msg) {
     VStr Cmd;
     msg << Cmd;
     if (msg.IsError()) break;
-    if (Connection->Context->ServerConnection) {
+    if (Connection->Context->IsClient()) {
       GCmdBuf << Cmd;
     } else {
       VCommand::ExecuteString(Cmd, VCommand::SRC_Client, Connection->Owner);

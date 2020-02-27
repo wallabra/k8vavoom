@@ -96,7 +96,7 @@ VNetConnection::~VNetConnection () {
     NetCon = nullptr;
   }
   NetCon = nullptr;
-  if (Context->ServerConnection) {
+  if (Context->IsClient()) {
     vensure(Context->ServerConnection == this);
     Context->ServerConnection = nullptr;
   } else {

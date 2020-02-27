@@ -445,11 +445,15 @@ class VNetContext {
 public:
   VField *RoleField;
   VField *RemoteRoleField;
-  VNetConnection *ServerConnection;
-  TArray<VNetConnection *> ClientConnections;
+  VNetConnection *ServerConnection; // non-nullptr for clients (only)
+  TArray<VNetConnection *> ClientConnections; // known clients for servers
 
+public:
   VNetContext ();
   virtual ~VNetContext ();
+
+  inline bool IsClient () const noexcept { return (ServerConnection != nullptr); }
+  inline bool IsServer () const noexcept { return (ServerConnection == nullptr); }
 
   // VNetContext interface
   virtual VLevel *GetLevel() = 0;
