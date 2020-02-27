@@ -400,10 +400,8 @@ replication {
     DecalName,
     Score, Accuracy, Stamina;
 
-  /*
-  reliable if (Role == ROLE_Authority && (bIsPlayer || bMonster || bMissile))
-    LastMoveOrigin, LastMoveAngles, LastMoveTime, LastMoveDuration, bIntrJustMoved;
-  */
+  reliable if (Role == ROLE_Authority && bNetInitial)
+    Radius, Height, VanillaHeight, RenderRadius, FloatBobPhase, FloatBobStrength;
 
   reliable if (Role == ROLE_Authority && bFixedModel)
     FixedModelName;
