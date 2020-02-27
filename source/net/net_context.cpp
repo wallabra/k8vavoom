@@ -109,6 +109,9 @@ void VNetContext::Tick () {
       Conn->GetMessages(); // why not?
       Conn->Tick();
     }
-    if (Conn->State == NETCON_Closed) SV_DropClient(Conn->Owner, true);
+    if (Conn->State == NETCON_Closed) {
+      GCon->Logf(NAME_DevNet, "Dropping client %s", *Conn->GetAddress());
+      SV_DropClient(Conn->Owner, true);
+    }
   }
 }

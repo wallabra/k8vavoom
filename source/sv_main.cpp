@@ -1484,8 +1484,16 @@ void SV_DropClient (VBasePlayer *Player, bool crash) {
     if (GLevel && GLevel->Acs) {
       GLevel->Acs->StartTypedACScripts(SCRIPT_Disconnect, SV_GetPlayerNum(Player), 0, 0, nullptr, true, false);
     }
-    if (Player->PlayerFlags & VBasePlayer::PF_Spawned) Player->eventDisconnectClient();
+    if (Player->PlayerFlags&VBasePlayer::PF_Spawned) Player->eventDisconnectClient();
+  } else {
+    // this is sudden network disconnect, kill player mobile (if any)
+    // if we won't do this, player mobile will be left in the game, and will become Voodoo Doll
+    if ((Player->PlayerFlags&VBasePlayer::PF_Spawned) && Player->MO) {
+      GCon->Logf(NAME_DevNet, "killing player #%d mobile", SV_GetPlayerNum(Player));
+      Player->eventDisconnectClient();
+    }
   }
+
   Player->PlayerFlags &= ~VBasePlayer::PF_Active;
   GGameInfo->Players[SV_GetPlayerNum(Player)] = nullptr;
   Player->PlayerFlags &= ~VBasePlayer::PF_Spawned;
@@ -1689,6 +1697,7 @@ void SV_ConnectClient (VBasePlayer *player) {
   player->PlayerFlags &= ~VBasePlayer::PF_Spawned;
   player->Level = GLevelInfo;
   if (!sv_loading) {
+    //GCon->Logf(NAME_Debug, "player #%d: reborn!", SV_GetPlayerNum(player));
     player->MO = nullptr;
     player->PlayerState = PST_REBORN;
     player->eventPutClientIntoServer();
