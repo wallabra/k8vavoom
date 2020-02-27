@@ -62,6 +62,7 @@ void SV_SendAfterSaveEvent (bool isAutosave, bool isCheckpoint);
 // `modtypestr` is used to show loading messages
 void G_LoadVCMods (VName modlistfile, const char *modtypestr); // in "sv_main.cpp"
 
+vuint32 SV_GetModListHash ();
 
 extern server_t sv;
 extern server_static_t svs;

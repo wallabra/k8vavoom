@@ -470,6 +470,8 @@ void CL_ParseServerInfo (const ClientServerInfo *sinfo) {
   SB_Start();
 
   GCon->Log(NAME_Dev, "Client level loaded");
+
+  if (GClLevel->MapHash != sinfo->maphash) Host_Error("Server has different map data");
 }
 
 

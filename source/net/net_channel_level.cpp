@@ -183,9 +183,13 @@ void VLevelChannel::SendNewLevel () {
     Msg.WriteInt(CMD_NewLevel/*, CMD_MAX*/);
     Msg.WriteInt(NETWORK_PROTO_VERSION);
     VStr MapName = *Level->MapName;
+    VStr MapHash = *Level->MapHash;
+    vuint32 modhash = SV_GetModListHash();
     vassert(!Msg.IsLoading());
     //Msg << svs.serverinfo << MapName;
     Msg << MapName;
+    Msg << MapHash;
+    Msg << modhash;
     Msg.WriteInt(svs.max_clients/*, MAXPLAYERS+1*/);
     Msg.WriteInt(deathmatch/*, 256*/);
     Msg.WriteInt((int)((sinfo.length()+999)/1000)); // number of packets in server info
@@ -824,9 +828,12 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           if (ver != NETWORK_PROTO_VERSION) Host_Error("Invalid network protocol version: expected %d, got %d", ver, NETWORK_PROTO_VERSION);
         }
         Msg << csi.mapname;
+        Msg << csi.maphash;
+        Msg << csi.modhash;
         csi.maxclients = Msg.ReadInt();
         csi.deathmatch = Msg.ReadInt();
         if (Msg.IsError() || csi.maxclients < 1 || csi.maxclients > MAXPLAYERS) Host_Error("Invalid level handshake sequence");
+        if (csi.modhash != SV_GetModListHash()) Host_Error("Server has different wad set");
         // prepare serveinfo buffer
         serverInfoBuf.clear();
         severInfoPacketCount = Msg.ReadInt();

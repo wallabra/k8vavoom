@@ -36,6 +36,8 @@ class VChannel;
 
 struct ClientServerInfo {
   VStr mapname;
+  VStr maphash;
+  vuint32 modhash;
   VStr sinfo;
   int maxclients;
   int deathmatch;

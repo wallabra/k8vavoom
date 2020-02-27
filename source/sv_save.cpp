@@ -495,39 +495,11 @@ static VStr SV_GetSavesDir () {
 
 //==========================================================================
 //
-//  GetModListHash
-//
-//==========================================================================
-static vuint32 GetModListHash () {
-  VStr modlist;
-  // get list of loaded modules
-  auto wadlist = FL_GetWadPk3List();
-  for (auto &&wadname : wadlist) {
-    modlist += wadname;
-    modlist += "\n";
-  }
-  //GCon->Logf(NAME_Debug, "modlist:\n%s", *modlist);
-#if 0
-  // get list hash
-  vuint8 sha512[SHA512_DIGEST_SIZE];
-  sha512_buf(sha512, *modlist, (size_t)modlist.length());
-  // convert to hex
-  VStr shahex = VStr::buf2hex(sha512, SHA512_DIGEST_SIZE);
-#else
-  vuint32 xxhashval = XXHash32::hash(*modlist, (vint32)modlist.length(), (vuint32)wadlist.length());
-  //VStr shahex = VStr::buf2hex(&xxhashval, 4);
-  return xxhashval;
-#endif
-}
-
-
-//==========================================================================
-//
 //  GetSaveSlotDirectoryPrefix
 //
 //==========================================================================
 static VStr GetSaveSlotCommonDirectoryPrefix () {
-  vuint32 hash = GetModListHash();
+  vuint32 hash = SV_GetModListHash();
   VStr pfx = VStr::buf2hex(&hash, 4);
   //GCon->Logf(NAME_Debug, "SAVE PFX: %s", *pfx);
   //pfx += "/";
@@ -2559,7 +2531,7 @@ COMMAND(ShowSavePrefix) {
   GCon->Log("==== MODS ====");
   for (auto &&mname: wadlist) GCon->Logf("  %s", *mname);
   GCon->Log("----");
-  vuint32 hash = GetModListHash();
+  vuint32 hash = SV_GetModListHash();
   VStr pfx = VStr::buf2hex(&hash, 4);
   GCon->Logf("save prefix: %s", *pfx);
 }

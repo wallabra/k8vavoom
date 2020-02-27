@@ -251,6 +251,34 @@ void SV_ReplaceCustomDamageFactors () {
 
 //==========================================================================
 //
+//  SV_GetModListHash
+//
+//==========================================================================
+vuint32 SV_GetModListHash () {
+  VStr modlist;
+  // get list of loaded modules
+  auto wadlist = FL_GetWadPk3List();
+  for (auto &&wadname : wadlist) {
+    modlist += wadname;
+    modlist += "\n";
+  }
+  //GCon->Logf(NAME_Debug, "modlist:\n%s", *modlist);
+#if 0
+  // get list hash
+  vuint8 sha512[SHA512_DIGEST_SIZE];
+  sha512_buf(sha512, *modlist, (size_t)modlist.length());
+  // convert to hex
+  VStr shahex = VStr::buf2hex(sha512, SHA512_DIGEST_SIZE);
+#else
+  vuint32 xxhashval = XXHash32::hash(*modlist, (vint32)modlist.length(), (vuint32)wadlist.length());
+  //VStr shahex = VStr::buf2hex(&xxhashval, 4);
+  return xxhashval;
+#endif
+}
+
+
+//==========================================================================
+//
 //  SV_Init
 //
 //==========================================================================
