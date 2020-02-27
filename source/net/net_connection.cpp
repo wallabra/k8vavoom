@@ -522,8 +522,7 @@ void VNetConnection::FlushOutput () {
   if (!Out.GetNumBits()) {
     // check if we have to send keepalive
     double tout = VNetworkPublic::MessageTimeOut;
-    if (tout < 50) tout = 50;
-    tout /= 1000.0f;
+    if (tout < 0.02) tout = 0.02;
     if (Driver->NetTime-LastSendTime < tout/2.0f) return;
   }
   Flush(); // send keepalive or accumulated data
@@ -541,8 +540,7 @@ void VNetConnection::Flush () {
   if (!Out.GetNumBits()) {
     //&& Driver->NetTime-LastSendTime < 5.0) return;
     double tout = VNetworkPublic::MessageTimeOut;
-    if (tout < 50) tout = 50;
-    tout /= 1000.0f;
+    if (tout < 0.02) tout = 0.02;
     if (Driver->NetTime-LastSendTime < tout/2.0f) return;
   }
 
@@ -617,8 +615,7 @@ void VNetConnection::Tick () {
       //GCon->Logf(NAME_DevNet, "::: NO LEVEL :::");
     } else {
       double tout = VNetworkPublic::MessageTimeOut;
-      if (tout < 50) tout = 50;
-      tout /= 1000.0f;
+      if (tout < 0.02) tout = 0.02;
       // if the player is not spawned, the client is prolly creating a nodes, so increase timeout
       if (GetGeneralChannel() && Owner && !(Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
         tout = 3*60.0; // allow it to spend three minutes at it
