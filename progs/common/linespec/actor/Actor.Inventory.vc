@@ -223,16 +223,29 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 //  A_SelectWeapon
 //
 //==========================================================================
-[decorate] final void A_SelectWeapon (class!Weapon WeaponType) {
+[decorate] final void A_SelectWeapon (class!Weapon WeaponType, optional int flags) {
   if (!bIsPlayer) return;
+
+  auto pex = PlayerEx(Player);
+  if (!pex) {
+    KeepChainResult();
+    return;
+  }
 
   Weapon Wpn = Weapon(FindInventory(WeaponType));
   if (Wpn) {
-    if (PlayerEx(Player).ReadyWeapon != Wpn) {
-      PlayerEx(Player).PendingWeapon = Wpn;
-    }
+    if (pex.ReadyWeapon != Wpn) pex.PendingWeapon = Wpn;
   } else {
-    KeepChainResult();
+    if (flags&SWF_SELECTPRIORITY) {
+      Weapon best = pex.BestWeapon();
+      if (best) {
+        if (pex.PendingWeapon != best) pex.PendingWeapon = best;
+      } else {
+        KeepChainResult();
+      }
+    } else {
+      KeepChainResult();
+    }
   }
 }
 

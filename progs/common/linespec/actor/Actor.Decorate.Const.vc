@@ -603,3 +603,9 @@ enum [decorate] /*EFSkillProperty*/ {
   SKILLP_FriendlyHealth,
   SKILLP_KickbackFactor,
 };
+
+
+// flags for A_SelectWeapon
+enum [decorate] /*ESelectWeaponFlags*/ {
+  SWF_SELECTPRIORITY = 1,
+};
