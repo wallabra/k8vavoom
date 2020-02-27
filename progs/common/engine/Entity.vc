@@ -353,6 +353,10 @@ float Gravity;
 ubyte WaterLevel;
 ubyte WaterType;
 
+int Score;
+int Accuracy;
+int Stamina;
+
 // variables, so it may be customised
 float WaterSinkFactor = 3.0;
 float WaterSinkSpeed = 0.5;
@@ -393,7 +397,8 @@ replication {
     bFly, bNoSector, bInvisible, bFullBright,
     bFixedModel, SoundOriginID/*, bUseDispState*/, bBright,
     DispSpriteFrame, DispSpriteName,
-    DecalName;
+    DecalName,
+    Score, Accuracy, Stamina;
 
   /*
   reliable if (Role == ROLE_Authority && (bIsPlayer || bMonster || bMissile))

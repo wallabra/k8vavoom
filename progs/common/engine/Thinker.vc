@@ -86,10 +86,12 @@ ubyte RemoteRole;
 
 // flags
 bool bAlwaysRelevant; // always updated
-readonly bool bNetInitial; // initial update
-readonly bool bNetOwner; // is owned by current player
+// there is no reason to write those flags even when i'll implement network savegames
+// network code manipulates 'em right in channel updater
+transient readonly bool bNetInitial; // initial update
+transient readonly bool bNetOwner; // is owned by current player
 // see C++ code for explanations (not implemented yet)
-bool bDetachFromServer;
+transient bool bDetachFromServer;
 
 
 replication {

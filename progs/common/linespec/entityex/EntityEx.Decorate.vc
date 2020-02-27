@@ -295,6 +295,10 @@ const [decorate] int AAPTR_OWNER = 0x10_0000;
 [decorate] final int decorate_ExplosionDamage { get { return ExplosionDamage; } }
 [decorate] final int decorate_ExplosionRadius { get { return ExplosionRadius; } }
 
+[decorate] final int decorate_Score { get { return Score; } }
+[decorate] final int decorate_Accuracy { get { return Accuracy; } }
+[decorate] final int decorate_Stamina { get { return Stamina; } }
+
 [decorate] final int decorate_GetUID () { return __ObjectUniqueId; }
 [decorate] final Object decorate_GetSelf () { return self; }
 [decorate] final Object decorate_GetSSR () { /*print("(SSR.self=%C)", self);*/ return _stateRouteSelf; }

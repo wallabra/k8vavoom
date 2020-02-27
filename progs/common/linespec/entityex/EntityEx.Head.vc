@@ -77,6 +77,7 @@ enum {
   BOUNCE_Hexen,
 };
 
+// see `GetActorProperty()` and `SetActorProperty()`
 enum {
   APROP_Health        = 0, // implemented
   APROP_Speed         = 1, // implemented
@@ -96,7 +97,7 @@ enum {
   APROP_Gravity       = 15, // implemented
   APROP_Friendly      = 16, // implemented
   APROP_SpawnHealth   = 17, // implemented
-  // only getters
+  // only getters (nope, some of them are setters too)
   APROP_Dropped       = 18, // implemented
   APROP_Notarget      = 19, // partially implemented (read-only)
   APROP_Species       = 20, // getter only, implemented in C++ code
@@ -112,15 +113,15 @@ enum {
   APROP_ScaleY        = 30, // implemented
   APROP_Dormant       = 31, // implemented
   APROP_Mass          = 32, // implemented
-  APROP_Accuracy      = 33,
-  APROP_Stamina       = 34,
+  APROP_Accuracy      = 33, // implemented
+  APROP_Stamina       = 34, // implemented
   APROP_Height        = 35, // implemented
   APROP_Radius        = 36, // implemented
   APROP_ReactionTime  = 37, // implemented
   APROP_MeleeRange    = 38, // implemented
   APROP_ViewHeight    = 39, // implemented
   APROP_AttackZOffset = 40, // implemented
-  APROP_StencilColor  = 41,
+  APROP_StencilColor  = 41, // implemented
   // not implemented yet (and prolly won't be)
   APROP_Friction         = 42,
   APROP_DamageMultiplier = 43, // implemented
@@ -519,7 +520,7 @@ bool bUseKillScripts;
 bool bNoKillScripts;
 bool bDontCorpse;
 
-int ScoreValue; // for APROP_Score
+//int ScoreValue; // for APROP_Score; it is named "Score" now
 float GenericDamageFactor = 1.0; // for APROP_DamageFactor
 float GenericDamageMultiplier = 1.0; // for APROP_DamageMultiplier
 

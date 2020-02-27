@@ -177,8 +177,8 @@ void Cheat_Gimme () {
 
   // health
   if (Cmd_CheckParm("Health")) {
-    Health = MAXHEALTH+Stamina;
-    MO.Health = MAXHEALTH+Stamina;
+    Health = MAXHEALTH+MO.Stamina;
+    MO.Health = MAXHEALTH+MO.Stamina;
     cprint("FULL HEALTH");
   }
 

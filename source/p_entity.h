@@ -323,6 +323,10 @@ class VEntity : public VThinker {
   vuint8 WaterLevel;
   vuint8 WaterType;
 
+  vint32 Score;
+  vint32 Accuracy;
+  vint32 Stamina;
+
   // variables, so it may be customised
   float WaterSinkFactor;
   float WaterSinkSpeed;

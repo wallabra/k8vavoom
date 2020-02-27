@@ -274,8 +274,8 @@ override void SB_DrawMainBar (bool inAutomap) {
     DrawAmmo(MiniMissiles, 131);
     DrawAmmo(HEGrenadeRounds, 115);
     DrawAmmo(PhosphorusGrenadeRounds, 123);
-    SB_DrawSmallNum(BAR_X+267, BAR_Y+84, cl.Accuracy);
-    SB_DrawSmallNum(BAR_X+267, BAR_Y+108, cl.Stamina);
+    SB_DrawSmallNum(BAR_X+267, BAR_Y+84, cl.MO.Accuracy);
+    SB_DrawSmallNum(BAR_X+267, BAR_Y+108, cl.MO.Stamina);
     NumKeys = 0;
     for (Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
       if (Key(Item)) ++NumKeys;
@@ -411,8 +411,8 @@ override void SB_DrawFullscreenStats () {
     DrawAmmo(MiniMissiles, 171, 0.9);
     DrawAmmo(HEGrenadeRounds, 155, 0.9);
     DrawAmmo(PhosphorusGrenadeRounds, 163, 0.9);
-    SB_DrawSmallNum(BAR_X+267, BAR_Y+124, cl.Accuracy, 0.9);
-    SB_DrawSmallNum(BAR_X+267, BAR_Y+148, cl.Stamina, 0.9);
+    SB_DrawSmallNum(BAR_X+267, BAR_Y+124, cl.MO.Accuracy, 0.9);
+    SB_DrawSmallNum(BAR_X+267, BAR_Y+148, cl.MO.Stamina, 0.9);
     NumKeys = 0;
     for (Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
       if (Key(Item)) ++NumKeys;

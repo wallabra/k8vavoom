@@ -122,8 +122,11 @@ float MorphTime; // player is morphed into something if > 0
 int MorphStyle;
 class!Actor UnmorphFlash;
 
+// moved to entity
+/*
 int Accuracy;
 int Stamina;
+*/
 
 float BlendR;
 float BlendG;
@@ -244,7 +247,7 @@ void BotTestFindPathTo (TVec dest) {
 replication {
   reliable if (!bIsClient)
     Cheats, ReadyWeapon, InvFirst, InvPtr, InventoryTime, ArtifactFlash,
-    Objectives, MorphTime, Accuracy, Stamina, MapsVisited, DamageFlash,
+    Objectives, MorphTime/*, Accuracy, Stamina*/, MapsVisited, DamageFlash,
     BonusFlash, Attacker, bFrozen, bTotallyFrozen, DesiredFOV, FOV;
 
   unreliable if (!bIsClient)
@@ -4755,13 +4758,13 @@ void AddVisitedMap (name Map) {
 int GetMaxHealth () {
   int Max = (PlayerPawn(MO).MaxHealth > 0 ? PlayerPawn(MO).MaxHealth :
     Level.CompatDehHealth ? MAXHEALTH :
-    HealthBonus.default.MaxAmount/2)+Stamina;
+    HealthBonus.default.MaxAmount/2)+(MO ? MO.Stamina : 0);
   if (MorphTime) {
     if (MorphStyle&EntityEx::MORPH_FULLHEALTH) {
-      if (!(MorphStyle&EntityEx::MORPH_ADDSTAMINA)) Max -= Stamina;
+      if (!(MorphStyle&EntityEx::MORPH_ADDSTAMINA)) Max -= (MO ? MO.Stamina : 0);
     } else {
       Max = MAXMORPHHEALTH;
-      if (MorphStyle&EntityEx::MORPH_ADDSTAMINA) Max += Stamina;
+      if (MorphStyle&EntityEx::MORPH_ADDSTAMINA) Max += (MO ? MO.Stamina : 0);
     }
   }
   return Max;

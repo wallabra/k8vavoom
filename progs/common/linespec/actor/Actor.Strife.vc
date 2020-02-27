@@ -749,7 +749,7 @@ final bool InquisitorCheckDistance () {
 
   //Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-  int power = PlayerEx(Player).Stamina/10;
+  int power = Stamina/10;
   int damage = (P_Random()%(power+8))*(power+2);
 
   TAVec angles = Angles;
@@ -803,7 +803,7 @@ final bool InquisitorCheckDistance () {
   if (!Wpn) return;
 
   float savedangle = Angles.yaw;
-  Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0/8.0/float(1<<(PlayerEx(Player).Accuracy*5/100)));
+  Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0/8.0/float(1<<(Accuracy*5/100)));
   Wpn.DepleteAmmo(Wpn.FireMode);
   SetState(MissileState);
   SpawnPlayerMissile(Proj);
@@ -824,7 +824,7 @@ final bool InquisitorCheckDistance () {
   if (!Wpn) return;
 
   float savedangle = Angles.yaw;
-  Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0/4.0/float(1<<(PlayerEx(Player).Accuracy*5/100)));
+  Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0/4.0/float(1<<(Accuracy*5/100)));
   Wpn.DepleteAmmo(Wpn.FireMode);
   SetState(MissileState);
   SpawnPlayerMissile(MiniMissile);

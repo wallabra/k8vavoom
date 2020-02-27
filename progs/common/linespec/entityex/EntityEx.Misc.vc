@@ -2397,7 +2397,9 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
       break;
     case APROP_Notarget: break; // no, my dear mod author, you cannot do this
     case APROP_Notrigger: bNoTrigger = !!IntVal; break;
-    case APROP_Score: ScoreValue = IntVal; break;
+    case APROP_Score: Score = IntVal; break;
+    case APROP_Accuracy: Accuracy = IntVal; break;
+    case APROP_Stamina: Stamina = IntVal; break;
     case APROP_DamageFactor:
       // this fixes my fuckup with invalid `GetCVar()` ACS API
       //if (IntVal <= 64) IntVal *= 65536;
@@ -2411,6 +2413,7 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
       //printdebug("%C: dmgmult=%s (%s)", self, GenericDamageMultiplier, IntVal);
       break;
     case APROP_ReactionTime: ReactionCount = IntVal; break;
+    case APROP_StencilColor: StencilColor = IntVal|0xff000000; break;
     default: dprint("%C: SetActorProperty: unknown property %d", self, Prop);
   }
 }
@@ -2459,10 +2462,13 @@ override int GetActorProperty (int Prop) {
       return int((bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0)*65536.0);
     case APROP_Notarget: return (bIsPlayer ? PlayerEx(Player).bNoTarget : 0);
     case APROP_Notrigger: return (bNoTrigger ? 1 : 0);
-    case APROP_Score: return ScoreValue;
+    case APROP_Score: return Score;
+    case APROP_Accuracy: return Accuracy;
+    case APROP_Stamina: return Stamina;
     case APROP_DamageFactor: return int(GenericDamageFactor*65536.0);
     case APROP_DamageMultiplier: return int(GenericDamageMultiplier*65536.0);
     case APROP_ReactionTime: return ReactionCount;
+    case APROP_StencilColor: return StencilColor&0xffffff;
   }
   dprint("%C: GetActorProperty: unknown property %d", self, Prop);
   return 0;

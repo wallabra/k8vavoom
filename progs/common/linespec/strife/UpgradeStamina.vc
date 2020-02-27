@@ -38,10 +38,10 @@ override bool TryPickup(EntityEx Toucher)
     return false;
   }
 
-  PlayerEx(Toucher.Player).Stamina += Amount;
-  if (PlayerEx(Toucher.Player).Stamina >= MaxAmount)
+  Toucher.Stamina += Amount;
+  if (Toucher.Stamina >= MaxAmount)
   {
-    PlayerEx(Toucher.Player).Stamina = MaxAmount;
+    Toucher.Stamina = MaxAmount;
   }
   Toucher.GiveBody(-100);
   GoAwayAndDie();
