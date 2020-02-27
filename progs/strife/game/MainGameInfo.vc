@@ -85,7 +85,7 @@ void InitTranslationTables () {
   SetLineTrans(9, LNSPEC_FloorDonut, -1, 4, 4, 0, 0, SPAC_Use, false);
 
   SetLineTrans(10, LNSPEC_PlatDownWaitUpStayLip, -1, 32, 105, 0, 0, SPAC_Cross, false, true);
-  SetLineTrans(11, LNSPEC_ExitNormal, -1, 0, 0, 0, 0, SPAC_Use, false); // --
+  SetLineTrans(11, LNSPEC_ExitNormal, -1, 0, 0, 0, 0, SPAC_Use, false); // --  // is -1 a bug?
   SetLineTrans(12, LNSPEC_LightMaxNeighbor, -1, 0, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(13, LNSPEC_LightChangeToValue, -1, 255, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(14, LNSPEC_FloorRaiseByValueChangeTex, -1, 4, 4, 0, 0, SPAC_Use, false);
@@ -129,7 +129,7 @@ void InitTranslationTables () {
   SetLineTrans(49, LNSPEC_CeilingCrushAndRaiseA, -1, 8, 8, 10, 0, SPAC_Use, false);
 
   SetLineTrans(50, LNSPEC_DoorClose, -1, 16, 0, 0, 0, SPAC_Use, false);
-  SetLineTrans(51, LNSPEC_ExitSecret, -1, 0, 0, 0, 0, SPAC_Use, false); // S1 EndLevelSecret
+  SetLineTrans(51, LNSPEC_ExitSecret, -1, 0, 0, 0, 0, SPAC_Use, false); // S1 EndLevelSecret; is -1 a bug?
   SetLineTrans(52, LNSPEC_ACSExecuteWithResult, 0, 52, -1, 0, 0, SPAC_Cross, false);
   SetLineTrans(53, LNSPEC_PlatPerpetualRaiseLip, -1, 8, 105, 0, 0, SPAC_Cross, false);
   SetLineTrans(54, LNSPEC_PlatStop, -1, 0, 0, 0, 0, SPAC_Cross, false);
@@ -209,7 +209,7 @@ void InitTranslationTables () {
   SetLineTrans(121, LNSPEC_PlatDownWaitUpStayLip, -1, 64, 105, 0, 0, SPAC_Cross, false);
   SetLineTrans(122, LNSPEC_PlatDownWaitUpStayLip, -1, 64, 105, 0, 0, SPAC_Use, false);
   SetLineTrans(123, LNSPEC_PlatDownWaitUpStayLip, -1, 64, 105, 0, 0, SPAC_Use, true);
-  SetLineTrans(124, LNSPEC_ExitSecret, -1, 0, 0, 0, 0, SPAC_Cross, false); // W1 EndLevelSecret UNUSED
+  SetLineTrans(124, LNSPEC_ExitSecret, -1, 0, 0, 0, 0, SPAC_Cross, false); // W1 EndLevelSecret UNUSED; is -1 a bug?
   SetLineTrans(125, LNSPEC_Teleport, 0, -1, 0, 0, 0, SPAC_MCross, false);
   SetLineTrans(126, LNSPEC_Teleport, 0, -1, 0, 0, 0, SPAC_MCross, true);
   SetLineTrans(127, LNSPEC_StairsBuildUpDoom, -1, 32, 16, 0, 0, SPAC_Use, false);

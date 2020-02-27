@@ -201,7 +201,7 @@ void InitTranslationTables()
   SetLineTrans(9, LNSPEC_FloorDonut, -1, 4, 4, 0, 0, SPAC_Use, false);
 
   SetLineTrans(10, LNSPEC_PlatDownWaitUpStayLip, -1, 32, 105, 0, 0, SPAC_Cross, false, true);
-  SetLineTrans(11, LNSPEC_ExitNormal, -1, 0, 0, 0, 0, SPAC_Use, false);
+  SetLineTrans(11, LNSPEC_ExitNormal, /*-1*/0, 0, 0, 0, 0, SPAC_Use, false); // -1 is bug
   SetLineTrans(12, LNSPEC_LightMaxNeighbor, -1, 0, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(13, LNSPEC_LightChangeToValue, -1, 255, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(14, LNSPEC_FloorRaiseByValueChangeTex, -1, 4, 4, 0, 0, SPAC_Use, false);
@@ -245,7 +245,7 @@ void InitTranslationTables()
   SetLineTrans(49, LNSPEC_CeilingCrushAndRaiseA, -1, 8, 8, 10, 0, SPAC_Use, false);
 
   SetLineTrans(50, LNSPEC_DoorClose, -1, 16, 0, 0, 0, SPAC_Use, false);
-  SetLineTrans(51, LNSPEC_ExitSecret, -1, 0, 0, 0, 0, SPAC_Use, false);
+  SetLineTrans(51, LNSPEC_ExitSecret, /*-1*/0, 0, 0, 0, 0, SPAC_Use, false); // -1 is bug
   SetLineTrans(52, LNSPEC_ExitNormal, -1, 0, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(53, LNSPEC_PlatPerpetualRaiseLip, -1, 8, 105, 0, 0, SPAC_Cross, false);
   SetLineTrans(54, LNSPEC_PlatStop, -1, 0, 0, 0, 0, SPAC_Cross, false);
@@ -304,7 +304,7 @@ void InitTranslationTables()
   SetLineTrans(102, LNSPEC_FloorLowerToHighest, -1, 8, 128, 0, 0, SPAC_Use, false);
   SetLineTrans(103, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Use, false);
   SetLineTrans(104, LNSPEC_LightMinNeighbor, -1, 0, 0, 0, 0, SPAC_Cross, false);
-  SetLineTrans(105, LNSPEC_ExitSecret, -1, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(105, LNSPEC_ExitSecret, /*-1*/0, 0, 0, 0, 0, SPAC_Cross, false); // -1 is bug
   SetLineTrans(106, LNSPEC_StairsBuildUpDoom, -1, 8, 16, 0, 0, SPAC_Cross, false);
   SetLineTrans(107, LNSPEC_StairsBuildUpDoom, -1, 8, 16, 0, 0, SPAC_Use, false);
 }
