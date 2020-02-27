@@ -48,6 +48,8 @@ enum {
 
   CMD_StaticLightSpot,
 
+  CMD_ClientMapLoaded,
+
   CMD_MAX
 };
 
@@ -858,7 +860,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         }
         csi.sinfo = serverInfoBuf;
         serverInfoBuf.clear();
-        CL_ParseServerInfo(&csi);
+        CL_ParseServerInfo(&csi); // this loads map
         csi.mapname.clear();
         csi.sinfo.clear();
         #endif

@@ -151,6 +151,7 @@ void ajbsp_Progress (int curr, int total) {
   } else {
     R_PBarUpdate("BSP", curr, total);
   }
+  //if (cl && cl->Net) GCon->Logf(NAME_Debug, "!!!! **** !!!! curr=%d; total=%d; time=%g", curr, total, Sys_Time());
 #endif
 }
 

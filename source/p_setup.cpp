@@ -53,6 +53,9 @@ static inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(v
 #ifdef SERVER
 # include "sv_local.h"
 #endif
+#ifdef CLIENT
+# include "cl_local.h"
+#endif
 
 #include "drawer.h"
 
@@ -434,11 +437,28 @@ void VLevel::ClearAllMapData () {
 
 //==========================================================================
 //
+//  SendNetworkHeartbeat
+//
+//==========================================================================
+static inline void SendNetworkHeartbeat (bool forced=false) {
+#ifdef CLIENT
+  CL_NetworkHeartbeat(forced);
+#endif
+#ifdef SERVER
+  SV_NetworkHeartbeat(forced);
+#endif
+}
+
+
+//==========================================================================
+//
 //  VLevel::SaveCachedData
 //
 //==========================================================================
 void VLevel::SaveCachedData (VStream *strm) {
   if (!strm) return;
+
+  SendNetworkHeartbeat(true); // forced
 
   // signature
   strm->Serialize(CACHE_DATA_SIGNATURE, 32);
@@ -467,6 +487,7 @@ void VLevel::SaveCachedData (VStream *strm) {
     vint32 sldidx = (n->splitldef ? (int)(ptrdiff_t)(n->splitldef-Lines) : -1);
     *arrstrm << sldidx;
     *arrstrm << n->sx << n->sy << n->dx << n->dy;
+    if (f%512 == 0) SendNetworkHeartbeat();
   }
 
   // vertices
@@ -477,6 +498,7 @@ void VLevel::SaveCachedData (VStream *strm) {
     float y = Vertexes[f].y;
     float z = Vertexes[f].z;
     *arrstrm << x << y << z;
+    if (f%512 == 0) SendNetworkHeartbeat();
   }
 
   // write vertex indicies in linedefs
@@ -488,6 +510,7 @@ void VLevel::SaveCachedData (VStream *strm) {
     vint32 v1 = (vint32)(ptrdiff_t)(L.v1-Vertexes);
     vint32 v2 = (vint32)(ptrdiff_t)(L.v2-Vertexes);
     *arrstrm << v1 << v2;
+    if (f%512 == 0) SendNetworkHeartbeat();
   }
 
   // subsectors
@@ -497,6 +520,7 @@ void VLevel::SaveCachedData (VStream *strm) {
     subsector_t *ss = Subsectors+f;
     *arrstrm << ss->numlines;
     *arrstrm << ss->firstline;
+    if (f%512 == 0) SendNetworkHeartbeat();
   }
 
   // sectors
@@ -546,9 +570,11 @@ void VLevel::SaveCachedData (VStream *strm) {
     *arrstrm << fssnum;
     *arrstrm << seg->side;
     *arrstrm << seg->flags;
+    if (f%512 == 0) SendNetworkHeartbeat();
   }
 
   // reject
+  SendNetworkHeartbeat(true); // forced
   *arrstrm << RejectMatrixSize;
   if (RejectMatrixSize) {
     GCon->Logf("cache: writing %d bytes of reject table", RejectMatrixSize);
@@ -556,6 +582,7 @@ void VLevel::SaveCachedData (VStream *strm) {
   }
 
   // blockmap
+  SendNetworkHeartbeat(true); // forced
   *arrstrm << BlockMapLumpSize;
   if (BlockMapLumpSize) {
     GCon->Logf("cache: writing %d cells of blockmap table", BlockMapLumpSize);
@@ -565,6 +592,7 @@ void VLevel::SaveCachedData (VStream *strm) {
   //FIXME: store visdata size somewhere
   // pvs
   if (VisData) {
+    SendNetworkHeartbeat(true); // forced
     int rowbytes = (NumSubsectors+7)>>3;
     int vissize = rowbytes*NumSubsectors;
     GCon->Logf("cache: writing %d bytes of pvs table", vissize);
@@ -577,7 +605,10 @@ void VLevel::SaveCachedData (VStream *strm) {
 
   delete arrstrm;
 
+  SendNetworkHeartbeat(true); // forced
   strm->Flush();
+
+  SendNetworkHeartbeat();
 }
 
 

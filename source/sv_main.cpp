@@ -66,6 +66,8 @@ int main () {
 }
 */
 
+static double ServerLastKeepAliveTime = 0.0;
+
 
 static int cli_SVDumpDoomEd = 0;
 static int cli_SVDumpScriptId = 0;
@@ -154,9 +156,9 @@ static VCvarB split_frame("split_frame", true, "Splitframe mode?", CVAR_Archive|
 static VCvarI sv_maxmove("sv_maxmove", "400", "Maximum allowed network movement.", CVAR_Archive);
 static VCvarF master_heartbeat_time("master_heartbeat_time", "300", "Master server heartbit interval.", CVAR_Archive|CVAR_PreInit);
 
-static VServerNetContext *ServerNetContext;
+static VServerNetContext *ServerNetContext = nullptr;
 
-static double LastMasterUpdate;
+static double LastMasterUpdate = 0.0;
 
 static bool cliMapStartFound = false;
 
@@ -448,6 +450,26 @@ void SV_Clear () {
 
 //==========================================================================
 //
+//  SV_NetworkHeartbeat
+//
+//==========================================================================
+void SV_NetworkHeartbeat (bool forced) {
+  if (!ServerNetContext) return;
+  if (GGameInfo->NetMode != NM_DedicatedServer && GGameInfo->NetMode != NM_ListenServer) return; // no need if server is local
+#ifdef CLIENT
+  if (cls.demoplayback) return;
+#endif
+  double currTime = Sys_Time();
+  if (currTime < 0) currTime = 0;
+  if (ServerLastKeepAliveTime > currTime) ServerLastKeepAliveTime = currTime; // wtf?!
+  if (!forced && currTime-ServerLastKeepAliveTime < 1.0/60.0) return;
+  ServerLastKeepAliveTime = currTime;
+  ServerNetContext->KeepaliveTick();
+}
+
+
+//==========================================================================
+//
 //  SV_SendClientMessages
 //
 //==========================================================================
@@ -479,6 +501,7 @@ static void SV_SendClientMessages (bool full=true) {
   }
 
   ServerNetContext->Tick();
+  ServerLastKeepAliveTime = Sys_Time();
 
   if (full && GDemoRecordingContext) {
     for (int i = 0; i < GDemoRecordingContext->ClientConnections.length(); ++i) {
@@ -638,10 +661,10 @@ static void SV_RunClients (bool skipFrame=false) {
 
   //GCon->Logf(NAME_Debug, "*** IMS: %d (demo=%p : %d)", (int)sv.intermission, GDemoRecordingContext, (int)cls.demorecording);
   if (sv.intermission) {
-#ifdef CLIENT
+    #ifdef CLIENT
     if (GDemoRecordingContext) {
       if (cls.demorecording) {
-        CL_KeepaliveMessage();
+        //CL_NetworkHeartbeat();
         for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
           //GDemoRecordingContext->ClientConnections[f]->Driver->NetTime = 0; //Sys_Time()+1000;
           //GDemoRecordingContext->ClientConnections[f]->Flush();
@@ -656,7 +679,7 @@ static void SV_RunClients (bool skipFrame=false) {
       }
       */
     }
-#endif
+    #endif
     CheckForSkip();
     ++sv.intertime;
   }

@@ -115,3 +115,17 @@ void VNetContext::Tick () {
     }
   }
 }
+
+
+//==========================================================================
+//
+//  VNetContext::KeepaliveTick
+//
+//==========================================================================
+void VNetContext::KeepaliveTick () {
+  for (int i = 0; i < ClientConnections.Num(); ++i) {
+    VNetConnection *Conn = ClientConnections[i];
+    if (!Conn) continue; // just in case
+    if (Conn->State != NETCON_Closed) Conn->KeepaliveTick();
+  }
+}

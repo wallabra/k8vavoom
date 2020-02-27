@@ -152,12 +152,14 @@ void VNetConnection::GetMessages () {
     }
     if (ret) {
       NeedsUpdate = true; // we got *any* activity, update the world!
-      // received some packet
+      // received something
+      /*
       if (!IsLocalConnection()) {
         NetCon->LastMessageTime = Driver->NetTime;
              if (ret == 1) ++Driver->MessagesReceived;
         else if (ret == 2) ++Driver->UnreliableMessagesReceived; // this seems to never happen
       }
+      */
       if (Data.Num() > 0) {
         vuint8 LastByte = Data[Data.Num()-1];
         if (LastByte) {
@@ -231,20 +233,47 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
   if (Packet.ReadInt(/*256*/) != NETPACKET_DATA) return;
   ++Driver->packetsReceived;
 
+  // update receive time (this is used for keepalive packets)
+  if (IsTimeoutExceeded()) {
+    ShowTimeoutStats();
+    State = NETCON_Closed;
+    return;
+  }
+
+  Driver->SetNetTime();
+  NetCon->LastMessageTime = Driver->NetTime;
+  /*
+  #ifndef CLIENT
+  GCon->Logf(NAME_DevNet, "**** got client packet! *** (interval=%g; tout=%g)", Driver->NetTime-NetCon->LastMessageTime, VNetworkPublic::MessageTimeOut.asFloat());
+  #endif
+  */
+
   //NeedsUpdate = true; // this is done elsewhere
 
+  // get unreliable sequence number
   vuint32 Sequence;
   Packet << Sequence;
   if (Packet.IsError()) {
     GCon->Log(NAME_DevNet, "Packet is missing packet ID");
     return;
   }
-  if (Sequence < UnreliableReceiveSequence) GCon->Log(NAME_DevNet, "Got a stale datagram");
+
+  // ignore stale datagrams
+  // reliable messages will be resent anyway
+  if (Sequence < UnreliableReceiveSequence) {
+    if (net_dbg_conn_show_outdated) GCon->Log(NAME_DevNet, "Got a stale datagram");
+    return;
+  }
+
+  // lost some datagrams?
   if (Sequence != UnreliableReceiveSequence) {
+    // yeah, record it
     int count = Sequence-UnreliableReceiveSequence;
     Driver->droppedDatagrams += count;
     GCon->Logf(NAME_DevNet, "Dropped %d datagram(s)", count);
   }
+
+  // bump sequence number
   UnreliableReceiveSequence = Sequence+1;
 
   bool NeedsAck = false;
@@ -613,34 +642,21 @@ void VNetConnection::PrepareOut (int Length) {
 
 //==========================================================================
 //
-//  VNetConnection::FlushOutput
-//
-//==========================================================================
-void VNetConnection::FlushOutput () {
-  Driver->SetNetTime();
-  if (!Out.GetNumBits()) {
-    // check if we have to send keepalive
-    double tout = VNetworkPublic::MessageTimeOut;
-    if (tout < 0.02) tout = 0.02;
-    if (Driver->NetTime-LastSendTime < tout/2.0f) return;
-  }
-  Flush(); // send keepalive or accumulated data
-}
-
-
-//==========================================================================
-//
 //  VNetConnection::Flush
 //
 //==========================================================================
 void VNetConnection::Flush () {
   Driver->SetNetTime();
+  if (State == NETCON_Closed) return;
 
   if (!Out.GetNumBits()) {
-    //&& Driver->NetTime-LastSendTime < 5.0) return;
+    // do not sent keepalices for autoack (demos) and local connections, nobody cares
+    // `AutoAck == true` means "demo recording"
+    if (AutoAck || IsLocalConnection()) return;
     double tout = VNetworkPublic::MessageTimeOut;
     if (tout < 0.02) tout = 0.02;
-    if (Driver->NetTime-LastSendTime < tout/2.0f) return;
+    if (Driver->NetTime-LastSendTime < tout/4.0f) return;
+    //GCon->Log(NAME_Debug, "sending keepalive...");
   }
 
   // prepare out for keepalive messages
@@ -683,6 +699,68 @@ bool VNetConnection::IsLocalConnection () {
 
 //==========================================================================
 //
+//  VNetConnection::IsTimeoutExceeded
+//
+//==========================================================================
+bool VNetConnection::IsTimeoutExceeded () {
+  if (State == NETCON_Closed) return false; // no wai
+  // for bots and demo playback there's no other end that will send us the ACK
+  // so there's no need to check for timeouts
+  // `AutoAck == true` means "demo recording"
+  if (AutoAck || IsLocalConnection()) return false;
+  if (!GetLevelChannel()->Level) {
+    // wtf?!
+    NetCon->LastMessageTime = Driver->NetTime;
+    return false;
+  }
+  double tout = VNetworkPublic::MessageTimeOut;
+  if (tout < 0.02) tout = 0.02;
+  if (Driver->NetTime-NetCon->LastMessageTime <= tout) return false;
+  // timeout!
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::ShowTimeoutStats
+//
+//==========================================================================
+void VNetConnection::ShowTimeoutStats () {
+  if (State == NETCON_Closed) return;
+  GCon->Logf(NAME_DevNet, "ERROR: Channel timed out; time delta=%g; sent %d messages (%d packets), received %d messages (%d packets)",
+    (Driver->NetTime-NetCon->LastMessageTime)*1000.0f,
+    Driver->MessagesSent, Driver->packetsSent,
+    Driver->MessagesReceived, Driver->packetsReceived);
+  /*
+  if (GetGeneralChannel() && Owner) {
+    if (Owner->PlayerFlags&VBasePlayer::PF_Spawned) {
+      GCon->Log(NAME_DevNet, "*** TIMEOUT: PLAYER IS SPAWNED");
+    } else {
+      GCon->Log(NAME_DevNet, "*** TIMEOUT: PLAYER IS *NOT* SPAWNED");
+    }
+  }
+  */
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::KeepaliveTick
+//
+//==========================================================================
+void VNetConnection::KeepaliveTick () {
+  if (State == NETCON_Closed) return;
+  // reset timeout
+  Driver->SetNetTime();
+  NetCon->LastMessageTime = Driver->NetTime;
+  // flush any remaining data or send keepalive
+  Flush();
+}
+
+
+//==========================================================================
+//
 //  VNetConnection::Tick
 //
 //==========================================================================
@@ -691,6 +769,7 @@ void VNetConnection::Tick () {
 
   // for bots and demo playback there's no other end that will send us
   // the ACK so just mark all outgoing messages as ACK-ed
+  // `AutoAck == true` means "demo recording"
   if (AutoAck) {
     for (auto it = ChanIdxMap.first(); it; ++it) {
       VChannel *chan = it.getValue();
@@ -705,38 +784,10 @@ void VNetConnection::Tick () {
 
   // see if this connection has timed out
   bool connTimedOut = false;
-
-  // `AutoAck == true` means "demo recording"
-  if (!AutoAck && !IsLocalConnection() /*&& (Driver->MessagesSent > 90 || Driver->MessagesReceived > 10)*/) {
-    //double currTime = Sys_Time();
-    if (!GetLevelChannel()->Level) {
-      NetCon->LastMessageTime = Driver->NetTime;
-      //GCon->Logf(NAME_DevNet, "::: NO LEVEL :::");
-    } else {
-      double tout = VNetworkPublic::MessageTimeOut;
-      if (tout < 0.02) tout = 0.02;
-      // if the player is not spawned, the client is prolly creating a nodes, so increase timeout
-      if (GetGeneralChannel() && Owner && !(Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
-        tout = 3*60.0; // allow it to spend three minutes at it
-      }
-      if (/*currTime-*/Driver->NetTime-NetCon->LastMessageTime > tout) {
-        if (State != NETCON_Closed) {
-          GCon->Logf(NAME_DevNet, "ERROR: Channel timed out; time delta=%g; sent %d messages (%d packets), received %d messages (%d packets)",
-            (/*currTime-*/Driver->NetTime-NetCon->LastMessageTime)*1000.0f,
-            Driver->MessagesSent, Driver->packetsSent,
-            Driver->MessagesReceived, Driver->packetsReceived);
-        }
-        if (GetGeneralChannel() && Owner) {
-          if (Owner->PlayerFlags&VBasePlayer::PF_Spawned) {
-            GCon->Log(NAME_DevNet, "*** TIMEOUT: PLAYER IS SPAWNED");
-          } else {
-            GCon->Log(NAME_DevNet, "*** TIMEOUT: PLAYER IS *NOT* SPAWNED");
-          }
-        }
-        State = NETCON_Closed;
-        connTimedOut = true;
-      }
-    }
+  if (IsTimeoutExceeded()) {
+    ShowTimeoutStats();
+    State = NETCON_Closed;
+    connTimedOut = true;
   }
 
   if (!connTimedOut) {
@@ -750,7 +801,7 @@ void VNetConnection::Tick () {
   }
 
   // flush any remaining data or send keepalive
-  FlushOutput();
+  Flush();
 
   //GCon->Logf(NAME_DevNet, "***: (time delta=%g); sent: %d (%d); recv: %d (%d)", (/*Sys_Time()-*/Driver->NetTime-NetCon->LastMessageTime)*1000.0f, Driver->MessagesSent, Driver->packetsSent, Driver->MessagesReceived, Driver->packetsReceived);
 }

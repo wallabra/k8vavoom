@@ -44,6 +44,9 @@ void SV_ShutdownGame ();
 void SV_ServerInterframeBK ();
 void SV_AllClientsNeedsWorldUpdate ();
 
+// call this on map loading
+void SV_NetworkHeartbeat (bool forced=false);
+
 void SV_ReplaceCustomDamageFactors ();
 
 // set all player fields to defaults (calls `ResetToDefaults()` method)

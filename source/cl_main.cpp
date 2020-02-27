@@ -61,7 +61,7 @@ extern VCvarB r_wipe_enabled;
 IMPLEMENT_CLASS(V, ClientGameBase);
 
 static VName CurrentSongLump;
-static double LastKeepAliveTime = 0.0;
+static double ClientLastKeepAliveTime = 0.0;
 
 
 //==========================================================================
@@ -169,7 +169,7 @@ void CL_ReadFromServer (float deltaTime) {
   if (!cl) return;
 
   if (cl->Net) {
-    LastKeepAliveTime = Sys_Time();
+    ClientLastKeepAliveTime = Sys_Time();
     cl->Net->GetMessages();
     if (cl->Net->State == NETCON_Closed) Host_EndGame("Server disconnected");
   }
@@ -200,84 +200,43 @@ void CL_ReadFromServer (float deltaTime) {
 //
 //==========================================================================
 static void SendKeepaliveInternal (double currTime, bool forced) {
-  /*
-  if (!GDemoRecordingContext) {
-    if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
-    //if (cls.demoplayback) return;
-    if (!cl->Net) return;
-  }
-  */
   if (currTime < 0) currTime = 0;
-  if (LastKeepAliveTime > currTime) LastKeepAliveTime = currTime; // wtf?!
-  if (!forced && currTime-LastKeepAliveTime < 1.0/35.0) return;
-  LastKeepAliveTime = currTime;
-  // write out a nop
-  /*
-  if (GDemoRecordingContext) {
-    for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
-      GDemoRecordingContext->ClientConnections[f]->Driver->NetTime = 0; //Sys_Time()+1000;
-      //GDemoRecordingContext->ClientConnections[f]->Flush();
-    }
-  }
-  */
-  if (cl->Net) cl->Net->Flush();
+  if (ClientLastKeepAliveTime > currTime) ClientLastKeepAliveTime = currTime; // wtf?!
+  if (!forced && currTime-ClientLastKeepAliveTime < 1.0/60.0) return;
+  ClientLastKeepAliveTime = currTime;
+  //if (cl->Net) cl->Net->Flush();
+  if (cl->Net) cl->Net->KeepaliveTick();
 }
 
 
 //==========================================================================
 //
-//  CL_KeepaliveMessage
+//  CL_NetworkHeartbeat
 //
 //  when the client is taking a long time to load stuff, send keepalive
 //  messages so the server doesn't disconnect
 //
 //==========================================================================
-void CL_KeepaliveMessage () {
-  //if (!GDemoRecordingContext)
-  {
-    if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
-    if (cls.demoplayback) return;
-    if (!cl->Net) return;
-  }
-  SendKeepaliveInternal(Sys_Time(), false);
-  /*
-  double currTime = Sys_Time();
-  if (currTime-LastKeepAliveTime < 1.0/35.0) return;
-  LastKeepAliveTime = currTime;
-  // write out a nop
-  if (GDemoRecordingContext) {
-    for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
-      GDemoRecordingContext->ClientConnections[f]->Flush();
-    }
-  }
-  if (cl->Net) cl->Net->Flush();
-  */
+void CL_NetworkHeartbeat (bool forced) {
+  if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
+  if (cls.demoplayback) return;
+  if (!cl->Net) return;
+  SendKeepaliveInternal(Sys_Time(), forced);
 }
 
 
 //==========================================================================
 //
-//  CL_KeepaliveMessageEx
+//  CL_NetworkHeartbeatEx
 //
 //  pass `Sys_Time()` here
 //
 //==========================================================================
-void CL_KeepaliveMessageEx (double currTime, bool forced) {
-  //if (!GDemoRecordingContext)
-  {
-    if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
-    if (cls.demoplayback) return;
-    if (!cl->Net) return;
-  }
+void CL_NetworkHeartbeatEx (double currTime, bool forced) {
+  if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
+  if (cls.demoplayback) return;
+  if (!cl->Net) return;
   SendKeepaliveInternal(currTime, forced);
-  /*
-  if (currTime < 0) currTime = 0;
-  if (LastKeepAliveTime > currTime) LastKeepAliveTime = currTime; // wtf?!
-  if (!forced && currTime-LastKeepAliveTime < 1.0/35.0) return;
-  LastKeepAliveTime = currTime;
-  // write out a nop
-  cl->Net->Flush();
-  */
 }
 
 
@@ -313,7 +272,7 @@ void CL_EstablishConnection (const char *host) {
 
   GClGame->eventConnected();
   cls.signon = 0; // need all the signon messages before playing
-  LastKeepAliveTime = Sys_Time();
+  ClientLastKeepAliveTime = Sys_Time();
 
   MN_DeactivateMenu();
 }

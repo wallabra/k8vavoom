@@ -224,6 +224,16 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 // a channel for updating level data
 class VLevelChannel : public VChannel {
+  // server states
+  enum {
+    // we just sent level info to the client
+    SState_NewLevelSent,
+    // we got ack for the last server info packet
+    // this means that the client is loading a map, so we should use bigger timeout
+    SState_ServerInfoAcked,
+    // we got `CMD_ClientMapLoaded` packet (i.e. client is ready, use normal timeout)
+  };
+
 public:
   struct VBodyQueueTrInfo {
     vuint8 TranslStart;
@@ -245,6 +255,8 @@ public:
   int severInfoCurrPacket;
   ClientServerInfo csi;
 
+  //int srvState; // see SState_*
+
 public:
   VLevelChannel (VNetConnection *, vint32, vuint8 = true);
   virtual ~VLevelChannel () override;
@@ -255,6 +267,10 @@ public:
   void ResetLevel ();
   virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
+  // used on the client to initiate map loading
+  //virtual void SpecialAck (VMessageOut *msg) override;
+  // call this from client when the map is ready
+  //void SentClientMapLoaded ();
 };
 
 
@@ -427,10 +443,10 @@ public:
 
   void PrepareOut (int);
   void Flush ();
-  void FlushOutput (); // call this to send all queued packets at the end of the frame
   bool IsLocalConnection ();
   inline VStr GetAddress () const { return (NetCon ? NetCon->Address : VStr()); }
   void Tick ();
+  void KeepaliveTick ();
   void SendCommand (VStr Str);
   void SetupFatPVS ();
   int CheckFatPVS (subsector_t *);
@@ -444,6 +460,11 @@ public:
   virtual void Intermission (bool active);
 
 private:
+  // returns `true` if connection timeouted
+  bool IsTimeoutExceeded ();
+
+  void ShowTimeoutStats ();
+
   void SetupPvsNode (int, float *);
 };
 
@@ -468,6 +489,7 @@ public:
   virtual VLevel *GetLevel() = 0;
   void ThinkerDestroyed (VThinker *);
   void Tick ();
+  void KeepaliveTick ();
 };
 
 
