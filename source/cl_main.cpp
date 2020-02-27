@@ -291,16 +291,22 @@ void CL_KeepaliveMessageEx (double currTime, bool forced) {
 void CL_EstablishConnection (const char *host) {
   if (GGameInfo->NetMode == NM_DedicatedServer) return;
 
+  GCon->Log("shutting down current game...");
   SV_ShutdownGame();
 
+  R_LdrMsgReset();
+  R_LdrMsgShow(va("initiating connection to [%s]", (host ? host : "")));
+
+  GCon->Logf("connecting to '%s'...", (host ? host : ""));
   VSocketPublic *Sock = GNet->Connect(host);
   if (!Sock) {
     GCon->Log("Failed to connect to the server");
     return;
   }
 
+  GCon->Log("initialising net client...");
   CL_SetupNetClient(Sock);
-  GCon->Logf(NAME_Dev, "CL_EstablishConnection: connected to %s", host);
+  GCon->Logf(NAME_Dev, "CL_EstablishConnection: connected to '%s'", host);
   GGameInfo->NetMode = NM_Client;
 
   UserInfoSent = false;
