@@ -60,7 +60,9 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "net_local.h"
-
+#ifdef CLIENT
+# include "../drawer.h"
+#endif
 
 static int cli_NoLAN = 0;
 
@@ -141,7 +143,8 @@ public:
 
   void SearchForHosts (VNetLanDriver *, bool, bool);
   VSocket *Connect (VNetLanDriver *, const char *);
-  VSocket *CheckNewConnections (VNetLanDriver *);
+  VSocket *CheckNewConnections (VNetLanDriver *Drv);
+  void SendConnectionReject (VNetLanDriver *Drv, VStr reason, int acceptsock, sockaddr_t clientaddr);
   void UpdateMaster (VNetLanDriver *);
   void QuitMaster (VNetLanDriver *);
   bool QueryMaster (VNetLanDriver *, bool);
@@ -329,8 +332,17 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   VBitStreamReader *msg = nullptr;
   vuint8 TmpByte;
 
+  if (!host || !host[0]) return nullptr;
+
+  SCR_Update();
+  R_LdrMsgReset();
+
+  R_LdrMsgShow(va("getting address for [%s]", host));
+
   // see if we can resolve the host name
   if (Drv->GetAddrFromName(host, &sendaddr, Net->HostPort) == -1) return nullptr;
+
+  R_LdrMsgShow("creating socket");
 
   newsock = Drv->OpenSocket(0);
   if (newsock == -1) return nullptr;
@@ -339,15 +351,20 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   sock->LanSocket = newsock;
   sock->LanDriver = Drv;
 
+  R_LdrMsgShow(va("connecting to [%s]", host));
+
   // connect to the host
   if (Drv->Connect(newsock, &sendaddr) == -1) goto ErrorReturn;
 
   // send the connection request
   GCon->Log(NAME_DevNet, "trying...");
-  SCR_Update();
+  //SCR_Update();
   start_time = Net->NetTime;
 
+  //TODO: check for user abort here!
   for (reps = 0; reps < 3; ++reps) {
+    R_LdrMsgShow("sending handshake");
+
     VBitStreamWriter MsgOut(256<<3);
     // save space for the header, filled in later
     TmpByte = NETPACKET_CTL;
@@ -387,20 +404,22 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
     } while (ret == 0 && (Net->SetNetTime()-start_time) < 2.5);
     if (ret) break;
     GCon->Log(NAME_DevNet, "still trying...");
-    SCR_Update();
+    //SCR_Update();
     start_time = Net->SetNetTime();
   }
 
+  //SCR_Update();
+
   if (ret == 0) {
     reason = "No Response";
-    GCon->Log(NAME_DevNet, reason);
+    GCon->Logf(NAME_DevNet, "Connection failure: %s", *reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
 
   if (ret == -1) {
     reason = "Network Error";
-    GCon->Log(NAME_DevNet, reason);
+    GCon->Logf(NAME_DevNet, "Connection failure: %s", *reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
@@ -408,14 +427,14 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   *msg << msgtype;
   if (msgtype == CCREP_REJECT) {
     *msg << reason;
-    GCon->Log(NAME_DevNet, reason);
+    GCon->Logf(NAME_DevNet, "Connection rejected: %s", *reason);
     VStr::NCpy(Net->ReturnReason, *reason, 31);
     goto ErrorReturn;
   }
 
   if (msgtype != CCREP_ACCEPT) {
     reason = "Bad Response";
-    GCon->Log(NAME_DevNet, reason);
+    GCon->Logf(NAME_DevNet, "Connection failure: %s", *reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
@@ -433,13 +452,16 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   // switch the connection to the specified address
   if (Drv->Connect(newsock, &sock->Addr) == -1) {
     reason = "Connect to Game failed";
-    GCon->Log(NAME_DevNet, reason);
+    GCon->Logf(NAME_DevNet, "Connection failure: %s", *reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
 
   delete msg;
   msg = nullptr;
+
+  R_LdrMsgShow("receiving initial data");
+
   //m_return_onerror = false;
   return sock;
 
@@ -451,11 +473,7 @@ ErrorReturn:
     delete msg;
     msg = nullptr;
   }
-  //if (m_return_onerror) {
-  //  key_dest = key_menu;
-  //  m_state = m_return_state;
-  //  m_return_onerror = false;
-  //}
+  SCR_Update();
 #endif
   return nullptr;
 }
@@ -474,6 +492,23 @@ VSocket *VDatagramDriver::Connect (const char *host) {
     }
   }
   return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VDatagramDriver::SendConnectionReject
+//
+//==========================================================================
+void VDatagramDriver::SendConnectionReject (VNetLanDriver *Drv, VStr reason, int acceptsock, sockaddr_t clientaddr) {
+  vuint8 TmpByte;
+  VBitStreamWriter MsgOut(256<<3);
+  TmpByte = NETPACKET_CTL;
+  MsgOut << TmpByte;
+  TmpByte = CCREP_REJECT;
+  MsgOut << TmpByte;
+  MsgOut << reason;
+  Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
 }
 
 
@@ -541,21 +576,19 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   if (command != CCREQ_CONNECT) return nullptr;
 
   msg << gamename;
-  if (gamename != "K8VAVOOM") return nullptr;
-
-  /*
-  if (MSG_ReadByte() != NET_PROTOCOL_VERSION) {
-    SZ_Clear(&net_message);
-    // save space for the header, filled in later
-    MSG_WriteLong(&net_message, 0);
-    MSG_WriteByte(&net_message, CCREP_REJECT);
-    MSG_WriteString(&net_message, "Incompatible version.\n");
-    *((int *)net_message.data) = BigLong(NETPACKET_CTL | (net_message.cursize & NETFLAG_LENGTH_MASK));
-    Drv.Write (acceptsock, net_message.data, net_message.cursize, &clientaddr);
-    SZ_Clear(&net_message);
+  if (gamename != "K8VAVOOM") {
+    GCon->Log(NAME_DevNet, "connection error: invalid game signature");
     return nullptr;
   }
-  */
+
+  TmpByte = 0;
+  msg << TmpByte;
+  if (msg.IsError() || TmpByte != NET_PROTOCOL_VERSION) {
+    GCon->Logf(NAME_DevNet, "connection error: invalid protocol version, got %u, but expected %d", TmpByte, NET_PROTOCOL_VERSION);
+    // send reject packet, why not?
+    SendConnectionReject(Drv, "invalid protocol version", acceptsock, clientaddr);
+    return nullptr;
+  }
 
   // see if this guy is already connected
   for (VSocket *as = Net->ActiveSockets; as; as = as->Next) {
@@ -586,14 +619,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
   if (svs.num_connected >= svs.max_clients) {
     // no room; try to let him know
-    VBitStreamWriter MsgOut(256<<3);
-    TmpByte = NETPACKET_CTL;
-    MsgOut << TmpByte;
-    TmpByte = CCREP_REJECT;
-    MsgOut << TmpByte;
-    TmpStr = "Server is full.\n";
-    MsgOut << TmpStr;
-    Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
+    SendConnectionReject(Drv, "server is full", acceptsock, clientaddr);
     return nullptr;
   }
 
