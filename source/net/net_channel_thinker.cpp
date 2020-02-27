@@ -260,6 +260,17 @@ void VThinkerChannel::Update () {
     VClass *TmpClass = Thinker->GetClass();
     Connection->ObjMap->SerialiseClass(Msg, TmpClass);
     NewObj = false;
+    // if this is gore object, set role to authority, and remoterole to dumbproxy
+    // dumbproxy channels will be closed before exiting this method
+    // note that roles are swapped here
+    /*
+    if (VStr::startsWith(TmpClass->GetName(), "K8Gore")) {
+      // this is Role on the client
+      Thinker->SetFieldByte("RemoteRole", ROLE_SimulatedProxy);
+      // this is RemoteRole on the client (and Role on the server)
+      Thinker->SetFieldByte("Role", ROLE_SimulatedProxy);
+    }
+    */
   }
 
   TAVec SavedAngles;

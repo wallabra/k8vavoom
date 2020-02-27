@@ -1826,7 +1826,12 @@ override bool SectorChanged (int CrushChange) {
 //
 //==========================================================================
 override void ClientTick (float DeltaTime) {
-  if (bInvisible || bNoSector || !DeltaTime) return;
+  if (!DeltaTime) return;
+  if (Role == ROLE_SimulatedProxy) {
+    //if (Level) Tick(DeltaTime);
+    return;
+  }
+  if (bInvisible || bNoSector) return;
 
   // if we're in closed door or something, skip effects
   if (CeilingZ <= FloorZ) return;

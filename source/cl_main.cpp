@@ -151,8 +151,9 @@ void CL_DecayLights () {
 //==========================================================================
 static void CL_UpdateMobjs (float deltaTime) {
   if (!GClLevel) return; //k8: this is wrong!
-  for (TThinkerIterator<VThinker> Th(GClLevel); Th; ++Th) {
-    Th->eventClientTick(deltaTime);
+  //GCon->Log(NAME_Debug, "====================== CL_UpdateMobjs ======================");
+  for (TThinkerIterator<VThinker> th(GClLevel); th; ++th) {
+    th->eventClientTick(deltaTime);
   }
 }
 

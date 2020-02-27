@@ -25,8 +25,24 @@
 //**************************************************************************
 
 enum {
+  // no role assigned yet
   ROLE_None,
+  // this is dumb proxy: it does no physics, no animation, and updates only
+  // when the server sends an update.
+  // this situation is only seen in network clients, never for network servers or SP games
   ROLE_DumbProxy,
+  // this is simulated proxy: the client should simulate physics and perform animation, but
+  // the server is still the authority.
+  // this situation is only seen in network clients, never for network servers or SP games
+  ROLE_SimulatedProxy,
+  // this is local player (not implemented yet)
+  // used to perform client-side predictions
+  // this situation is only seen in network clients, never for network servers or SP games
+  ROLE_AutonomousProxy,
+  // this machine has absolute, authoritative control over the actor.
+  // this is the case for all actors on a network server or in SP game.
+  // on a client, this is the case for actors that were locally spawned by the client,
+  // such as gratuitous special effects which are done client-side in order to reduce bandwidth usage.
   ROLE_Authority,
 };
 
@@ -56,9 +72,16 @@ class VThinker : public VGameObject {
   vuint8 RemoteRole;
 
   enum {
-    TF_AlwaysRelevant = 0x00000001,
-    TF_NetInitial     = 0x00000002,
-    TF_NetOwner       = 0x00000004,
+    TF_AlwaysRelevant   = 1u<<0,
+    TF_NetInitial       = 1u<<1,
+    TF_NetOwner         = 1u<<2,
+    // set this flag to detach the thinker from the server
+    // i.e. the server will destroy it, and the client should perform ticking for it
+    // the logic is like this: the server sets this flag on initial update, and
+    // waits for `Role` to change.
+    // when `Role` changes to `ROLE_Authority`, the client should take full control
+    // over the thinker.
+    TF_DetachFromServer = 1u<<3,
   };
   vuint32 ThinkerFlags;
 
