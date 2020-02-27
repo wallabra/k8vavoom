@@ -815,7 +815,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         }
         break;
       case CMD_NewLevel:
-#ifdef CLIENT
+        #ifdef CLIENT
         {
           int ver = Msg.ReadInt();
           if (Msg.IsError()) Host_Error("Cannot read network protocol version");
@@ -831,10 +831,10 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         if (Msg.IsError() || severInfoPacketCount < 0 || severInfoPacketCount > 1024) Host_Error("Invalid server info size");
         severInfoCurrPacket = (severInfoPacketCount ? 0 : -2);
         //CL_ParseServerInfo(Msg);
-#endif
+        #endif
         break;
       case CMD_ServerInfo:
-#ifdef CLIENT
+        #ifdef CLIENT
         if (severInfoCurrPacket < 0) Host_Error("Invalid level handshake sequence");
         if (severInfoCurrPacket >= severInfoPacketCount) Host_Error("Invalid level handshake sequence");
         {
@@ -846,10 +846,10 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           serverInfoBuf += s;
           ++severInfoCurrPacket;
         }
-#endif
+        #endif
         break;
       case CMD_ServerInfoEnd:
-#ifdef CLIENT
+        #ifdef CLIENT
         if (severInfoCurrPacket == -2) Host_Error("Invalid level handshake sequence");
         {
           int sq = Msg.ReadInt();
@@ -861,20 +861,20 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         CL_ParseServerInfo(&csi);
         csi.mapname.clear();
         csi.sinfo.clear();
-#endif
+        #endif
         break;
-      case CMD_PreRender:
-#ifdef CLIENT
+      case CMD_PreRender: // sent by server, received by client
+        #ifdef CLIENT
         if (severInfoCurrPacket != -2) Host_Error("Invalid level handshake sequence");
-#endif
-        Level->Renderer->PreRender();
-#ifdef CLIENT
+        #endif
+        if (Level->Renderer) Level->Renderer->PreRender();
+        #ifdef CLIENT
         if (cls.signon) Host_Error("Client_Spawn command already sent");
         if (!UserInfoSent) {
           cl->eventServerSetUserInfo(cls.userinfo);
           UserInfoSent = true;
         }
-#endif
+        #endif
         Connection->SendCommand("PreSpawn\n");
         GCmdBuf << "HideConsole\n";
         break;

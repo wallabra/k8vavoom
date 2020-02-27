@@ -95,6 +95,8 @@ public:
   double Time; // time this message has been sent
   vuint32 PacketId; // packet in which this message was sent
   int markPos;
+  // user data; can be used in ack processor
+  int udata;
 
 public:
   // cannot be inlined, sorry
@@ -114,6 +116,7 @@ public:
     , Time(src.Time)
     , PacketId(src.PacketId)
     , markPos(src.markPos)
+    , udata(src.udata)
   {
     // clone bitstream writer
     cloneFrom(&src);

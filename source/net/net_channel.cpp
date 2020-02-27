@@ -275,6 +275,15 @@ void VChannel::SendMessage (VMessageOut *AMsg) {
 
 //==========================================================================
 //
+//  VChannel::SpecialAck
+//
+//==========================================================================
+void VChannel::SpecialAck (VMessageOut *msg) {
+}
+
+
+//==========================================================================
+//
 //  VChannel::ReceivedAck
 //
 //  returns `true` if channel is closed (the caller should delete it)
@@ -289,6 +298,7 @@ bool VChannel::ReceivedAck () {
     VMessageOut *Msg = OutMsg;
     OutMsg = Msg->Next;
     if (Msg->bClose) CloseAcked = true;
+    if (Msg->udata) SpecialAck(Msg);
     delete Msg;
     Msg = nullptr;
   }

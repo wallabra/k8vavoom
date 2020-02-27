@@ -46,6 +46,7 @@ VMessageOut::VMessageOut (VChannel *AChannel, bool aAllowExpand)
   , Time(0)
   , PacketId(0)
   , markPos(0)
+  , udata(0)
 {}
 
 
@@ -68,6 +69,7 @@ void VMessageOut::Setup (VChannel *AChannel, bool aAllowExpand) {
   Time = 0;
   PacketId = 0;
   markPos = 0;
+  udata = 0;
 }
 
 

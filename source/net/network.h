@@ -196,6 +196,10 @@ public:
   virtual bool ReceivedAck (); // returns `true` if closing ack received (the caller should delete it)
   virtual void Close ();
   virtual void Tick ();
+  // called when `msg->udata` is not zero
+  // DO NOT delete message, DO NOT store pointer to it!
+  virtual void SpecialAck (VMessageOut *msg);
+
   void SendRpc (VMethod *, VObject *);
   bool ReadRpc (VMessageIn &Msg, int, VObject *);
 

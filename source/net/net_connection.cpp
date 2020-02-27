@@ -619,11 +619,24 @@ void VNetConnection::Tick () {
       double tout = VNetworkPublic::MessageTimeOut;
       if (tout < 50) tout = 50;
       tout /= 1000.0f;
+      // if the player is not spawned, the client is prolly creating a nodes, so increase timeout
+      if (GetGeneralChannel() && Owner && !(Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
+        tout = 3*60.0; // allow it to spend three minutes at it
+      }
       if (/*currTime-*/Driver->NetTime-NetCon->LastMessageTime > tout) {
-        if (State != NETCON_Closed) GCon->Logf(NAME_DevNet, "ERROR: Channel timed out; time delta=%g; sent %d messages (%d packets), received %d messages (%d packets)",
-          (/*currTime-*/Driver->NetTime-NetCon->LastMessageTime)*1000.0f,
-          Driver->MessagesSent, Driver->packetsSent,
-          Driver->MessagesReceived, Driver->packetsReceived);
+        if (State != NETCON_Closed) {
+          GCon->Logf(NAME_DevNet, "ERROR: Channel timed out; time delta=%g; sent %d messages (%d packets), received %d messages (%d packets)",
+            (/*currTime-*/Driver->NetTime-NetCon->LastMessageTime)*1000.0f,
+            Driver->MessagesSent, Driver->packetsSent,
+            Driver->MessagesReceived, Driver->packetsReceived);
+        }
+        if (GetGeneralChannel() && Owner) {
+          if (Owner->PlayerFlags&VBasePlayer::PF_Spawned) {
+            GCon->Log(NAME_DevNet, "*** TIMEOUT: PLAYER IS SPAWNED");
+          } else {
+            GCon->Log(NAME_DevNet, "*** TIMEOUT: PLAYER IS *NOT* SPAWNED");
+          }
+        }
         State = NETCON_Closed;
         connTimedOut = true;
       }
