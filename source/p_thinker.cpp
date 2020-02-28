@@ -441,6 +441,7 @@ IMPLEMENT_FUNCTION(VThinker, AllocDlight) {
   VOptParamInt lightid(-1);
   vobjGetParamSelf(Owner, lorg, radius, lightid);
   if (radius < 0) radius = 0;
+  if (!Self->XLevel || !Self->XLevel->Renderer) { RET_PTR(nullptr); return; } // for dedicated server
   RET_PTR(Self->XLevel->Renderer->AllocDlight(Owner, lorg, radius, lightid));
 }
 
@@ -450,6 +451,7 @@ IMPLEMENT_FUNCTION(VThinker, ShiftDlightHeight) {
   float zdelta;
   vobjGetParamSelf(lightid, zdelta);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VThinker::ShiftDlightOrigin"); }
+  if (!Self->XLevel || !Self->XLevel->Renderer) { RET_BOOL(false); return; }
   dlight_t *dl = Self->XLevel->Renderer->FindDlightById(lightid);
   if (dl) {
     //GCon->Logf("fixing dlight with id %d, delta=%g", lightid, zdelta);
@@ -463,7 +465,7 @@ IMPLEMENT_FUNCTION(VThinker, ShiftDlightHeight) {
 IMPLEMENT_FUNCTION(VThinker, NewParticle) {
   TVec porg;
   vobjGetParamSelf(porg);
-  if (GGameInfo->IsPaused()) {
+  if (GGameInfo->IsPaused() || !Self->XLevel || !Self->XLevel->Renderer) {
     RET_PTR(nullptr);
   } else {
     RET_PTR(Self->XLevel->Renderer->NewParticle(porg));
