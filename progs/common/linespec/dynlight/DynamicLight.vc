@@ -253,7 +253,16 @@ final float StaticIntensityToRadius (float Val) {
 //
 //==========================================================================
 final float IntensityToRadius (float Val) {
-  if (Attenuated) return Val*1.04; //k8: 1.04f is just because i feel
+  //if (Attenuated) return Val*1.04; //k8: 1.04f is just because i feel
+  if (Attenuated) {
+    /*
+    if (Val <= 20.0) return Val*4.5*0.8;
+    if (Val <= 30.0) return Val*3.6*0.8;
+    if (Val <= 40.0) return Val*3.3*0.8;
+    if (Val <= 60.0) return Val*2.8*0.8;
+    */
+    return Val*2;
+  }
   if (Val <= 20.0) return Val*4.5;
   if (Val <= 30.0) return Val*3.6;
   if (Val <= 40.0) return Val*3.3;

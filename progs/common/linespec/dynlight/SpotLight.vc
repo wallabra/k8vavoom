@@ -53,3 +53,30 @@ class SpotLightFlickerRandom : SpotLightBase __mobjinfo__(9844);
 defaultproperties {
   LightType = DLTYPE_FlickerRandom|DLTYPE_Spot;
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class SpotLightAttenuated : SpotLightBase __mobjinfo__(9870);
+defaultproperties {
+  LightType = DLTYPE_Spot;
+}
+
+class SpotLightPulseAttenuated : SpotLightBase __mobjinfo__(9871);
+defaultproperties {
+  LightType = DLTYPE_Pulse|DLTYPE_Spot;
+}
+
+class SpotLightFlickerAttenuated : SpotLightBase __mobjinfo__(9872);
+defaultproperties {
+  LightType = DLTYPE_Flicker|DLTYPE_Spot;
+}
+
+class SectorSpotLightAttenuated : SpotLightBase __mobjinfo__(9873);
+defaultproperties {
+  LightType = DLTYPE_Sector|DLTYPE_Spot;
+}
+
+class SpotLightFlickerRandomAttenuated : SpotLightBase __mobjinfo__(9874);
+defaultproperties {
+  LightType = DLTYPE_FlickerRandom|DLTYPE_Spot;
+}

@@ -58,6 +58,11 @@ defaultproperties {
   LightType = DLTYPE_Pulse|DLTYPE_Additive;
 }
 
+class PointLightPulseAttenuated : PointLightPulse __mobjinfo__(9831);
+defaultproperties {
+  Attenuated = true;
+}
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 class PointLightFlicker : DynamicLight __mobjinfo__(9802);
