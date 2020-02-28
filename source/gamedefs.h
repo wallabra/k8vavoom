@@ -30,10 +30,14 @@
 #ifndef GAMEDEFS_HEADER
 #define GAMEDEFS_HEADER
 
-#ifdef USE_GLAD
-#include "glad.h"
+#ifdef CLIENT
+# ifdef USE_GLAD
+#  include "glad.h"
+# else
+#  include <GL/gl.h>
+# endif
 #else
-#include <GL/gl.h>
+# define GLuint  vuint32
 #endif
 
 #include "../libs/core/core.h"
