@@ -155,9 +155,18 @@ int VUdpDriver::Init () {
 
   const char *pp = cli_IP;
   if (pp && pp[0]) {
-    myAddr = inet_addr(pp);
-    if (myAddr == INADDR_NONE) Sys_Error("'%s' is not a valid IP address", pp);
-    VStr::Cpy(Net->MyIpAddress, pp);
+    if (VStr::strEquCI(pp, "any") || VStr::strEquCI(pp, "all")) {
+      myAddr = INADDR_ANY;
+      VStr::Cpy(Net->MyIpAddress, "INADDR_ANY");
+    } else {
+      //myAddr = inet_addr(pp);
+      //if (myAddr == INADDR_NONE) Sys_Error("'%s' is not a valid IP address", pp);
+      //VStr::Cpy(Net->MyIpAddress, pp);
+      struct in_addr addr;
+      if (inet_aton(pp, &addr) == 0) Sys_Error("'%s' is not a valid IP address", pp);
+      VStr::Cpy(Net->MyIpAddress, inet_ntoa(addr));
+      myAddr = addr.s_addr;
+    }
   } else {
 #ifdef WIN32
     myAddr = INADDR_ANY;
@@ -225,11 +234,16 @@ int VUdpDriver::Init () {
     VStr::Cpy(Net->MyIpAddress, *AddrToString(&addr));
     char *colon = strrchr(Net->MyIpAddress, ':');
     if (colon) *colon = 0;
-    GCon->Logf(NAME_Init, "My IP address: %s", Net->MyIpAddress);
+    //GCon->Logf(NAME_Init, "My IP address: %s", Net->MyIpAddress);
+  }
+  {
+    sockaddr_t addr;
+    GetSocketAddr(net_controlsocket, &addr);
+    GCon->Logf(NAME_Init, "UDP control socket address is %s", *AddrToString(&addr));
   }
 #endif
 
-  GCon->Log(NAME_Init, "UDP Initialised");
+  GCon->Logf(NAME_Init, "UDP Initialised on %s", Net->MyIpAddress);
   Net->IpAvailable = true;
 
   return net_controlsocket;
@@ -326,6 +340,7 @@ void VUdpDriver::Listen (bool state) {
     if (net_acceptsocket == -1) {
       net_acceptsocket = OpenSocket(Net->HostPort);
       if (net_acceptsocket == -1) Sys_Error("UDP_Listen: Unable to open accept socket\n");
+      GCon->Logf(NAME_DevNet, "created listening socket");
     }
   } else {
     // disable listening
