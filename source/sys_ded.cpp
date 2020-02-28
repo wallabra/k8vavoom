@@ -213,7 +213,7 @@ static void signal_handler (int s) {
 //==========================================================================
 int main (int argc, char **argv) {
   try {
-    printf("k8vavoom dedicated server " VERSION_TEXT "\n");
+    //printf("k8vavoom dedicated server " VERSION_TEXT "\n");
 
     VObject::StaticInitOptions(GParsedArgs);
     FL_InitOptions();

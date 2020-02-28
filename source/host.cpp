@@ -214,6 +214,7 @@ void Host_Init () {
   #else
   // allow unimplemented builtins for dedicated server (temp. band-aid)
   VObject::engineAllowNotImplementedBuiltins = true;
+  VObject::cliShowUndefinedBuiltins = false;
   #endif
 
   FL_ProcessPreInits();
