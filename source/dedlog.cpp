@@ -92,6 +92,7 @@ public:
         else if (lastEvent == NAME_Error) putStdOut("\x1b[0;31;1m");
         else if (lastEvent == NAME_Log) putStdOut("\x1b[0;32m");
         else if (lastEvent == NAME_Debug) putStdOut("\x1b[0;35;1m");
+        else if (lastEvent == NAME_Chat) putStdOut("\x1b[0;37;1m");
         else putStdOut("\x1b[0;36;1m");
         #endif
         putStr(VName::SafeString(lastEvent));

@@ -98,7 +98,7 @@ bool CT_Responder (event_t *ev) {
   if (ev->data1 == K_ENTER || ev->data1 == K_PADENTER) {
     if (ev->type != ev_keyup) return true;
     if (w_chat.length() != 0) {
-      GCmdBuf << "Say " << VStr(w_chat.getCStr()).quote() << "\n";
+      GCmdBuf << "Say " << VStr(w_chat.getCStr()).quote(true) << "\n";
     }
     CT_Stop();
     return true;

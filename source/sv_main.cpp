@@ -2138,6 +2138,14 @@ COMMAND(Say) {
   }
   GLevelInfo->BroadcastPrint(*Text);
   GLevelInfo->StartSound(TVec(0, 0, 0), 0, GSoundManager->GetSoundID("misc/chat"), 0, 1.0f, 0, false);
+  #ifndef CLIENT
+  Text = VStr("[")+Player->PlayerName+"]:";
+  for (int i = 1; i < Args.length(); ++i) {
+    Text += " ";
+    Text += Args[i];
+  }
+  GCon->Logf(NAME_Chat, "%s", *Text);
+  #endif
 }
 
 
