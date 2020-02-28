@@ -153,6 +153,7 @@ static void CL_UpdateMobjs (float deltaTime) {
   if (!GClLevel) return; //k8: this is wrong!
   //GCon->Log(NAME_Debug, "====================== CL_UpdateMobjs ======================");
   for (TThinkerIterator<VThinker> th(GClLevel); th; ++th) {
+    if (th->IsGoingToDie()) continue; // just in case
     th->eventClientTick(deltaTime);
   }
 }
