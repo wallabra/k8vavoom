@@ -49,6 +49,13 @@ int cli_ShowEndText = 0;
   VParsedArgs::RegisterFlagSet("-vc-k8-developer", "!", &cli_SetDeveloperDefine) &&
   VParsedArgs::RegisterFlagSet("-endtext", "!enable end text (disabled by default)", &cli_ShowEndText);
 
+const char *cli_LogFileName = nullptr;
+
+/*static*/ bool cliRegister_con_args =
+  VParsedArgs::RegisterStringOption("-logfile", "specify log file name", &cli_LogFileName) &&
+  VParsedArgs::RegisterAlias("-log-file", "-logfile") &&
+  VParsedArgs::RegisterAlias("--log-file", "-logfile");
+
 
 
 // state updates, number of tics/second
@@ -95,15 +102,6 @@ bool host_request_exit = false;
 extern VCvarB real_time;
 
 
-#ifndef CLIENT
-class VDedLog : public VLogListener {
-public:
-  virtual void Serialise (const char *Text, EName) noexcept override { printf("%s", Text); }
-};
-static VDedLog  DedLog;
-#endif
-
-
 #if defined(_WIN32) || defined(__SWITCH__)
 # define VV_CVAR_RELEASE_MODE  true
 #else
@@ -147,6 +145,9 @@ static VCvarB cap_framerate("cl_cap_framerate", true, "Cap framerate for non-net
 static VCvarI cl_framerate("cl_framerate", "0", "Cap framerate for non-networking games?", CVAR_Archive);
 
 
+#include "dedlog.cpp"
+
+
 //==========================================================================
 //
 //  Host_Init
@@ -159,9 +160,8 @@ void Host_Init () {
 
 #ifdef CLIENT
   C_Init();
-#else
-  GLog.AddListener(&DedLog);
 #endif
+  DD_SetupLog();
 
   {
     VStr cfgdir = FL_GetConfigDir();
@@ -785,6 +785,8 @@ void Host_Quit () {
   Host_SaveConfiguration();
 #endif
 
+  DD_ShutdownLog();
+
   // get the lump with the end text
   // if option -noendtxt is set, don't print the text
   bool GotEndText = false;
@@ -906,6 +908,8 @@ void Host_Shutdown () {
   if (developer) GLog.Log(NAME_Dev, "shutting down console...");
   C_Shutdown(); // save log
 #endif
+
+  DD_ShutdownLog();
 
   // prevent shitdoze crashes
   if (developer) GLog.Log(NAME_Dev, "shutting down memory manager...");

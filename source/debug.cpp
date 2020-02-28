@@ -28,6 +28,7 @@
 //#define CLOSEDDF
 
 
+/*
 class VDebugLog : public VLogListener {
 public:
   virtual void Serialise (const char *Text, EName Event) noexcept override;
@@ -41,6 +42,7 @@ void VDebugLog::Serialise (const char *Text, EName Event) noexcept {
 static FILE *df = nullptr;
 static const char *debug_file_name = nullptr;
 static VDebugLog DebugLog;
+*/
 
 
 //==========================================================================
@@ -49,6 +51,7 @@ static VDebugLog DebugLog;
 //
 //==========================================================================
 void OpenDebugFile (const char *name) {
+/*
   debug_file_name = name;
 #ifdef CLOSEDDF
   df = fopen(debug_file_name, "w");
@@ -66,6 +69,7 @@ void OpenDebugFile (const char *name) {
   }
 #endif
   if (df) GLog.AddListener(&DebugLog);
+*/
 }
 
 
@@ -75,6 +79,7 @@ void OpenDebugFile (const char *name) {
 //
 //==========================================================================
 int devprintf (const char *s, ...) {
+/*
   va_list v;
 
 #ifdef CLOSEDDF
@@ -91,6 +96,6 @@ int devprintf (const char *s, ...) {
 #ifdef CLOSEDDF
   fclose(df);
 #endif
-
+*/
   return 0;
 }

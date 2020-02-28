@@ -2178,21 +2178,3 @@ COMMAND(gc_show_all_objects) {
 VLevel *VServerNetContext::GetLevel () {
   return GLevel;
 }
-
-
-//**************************************************************************
-//
-//  Dedicated server console streams
-//
-//**************************************************************************
-#ifndef CLIENT
-class FConsoleDevice : public FOutputDevice {
-public:
-  virtual void Serialise (const char *V, EName) noexcept override {
-    printf("%s\n", V);
-  }
-};
-
-FConsoleDevice Console;
-FOutputDevice *GCon = &Console;
-#endif
