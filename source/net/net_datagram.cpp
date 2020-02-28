@@ -60,9 +60,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "net_local.h"
-#ifdef CLIENT
-# include "../drawer.h"
-#endif
+
 
 static int cli_NoLAN = 0;
 
@@ -336,15 +334,15 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   if (!host || !host[0]) return nullptr;
 
   SCR_Update();
-  R_LdrMsgReset();
+  R_OSDMsgReset(OSD_Network);
 
-  R_LdrMsgShow(va("getting address for [%s]", host));
+  R_OSDMsgShow(va("getting address for [%s]", host));
 
   // see if we can resolve the host name
   if (Drv->GetAddrFromName(host, &sendaddr, Net->HostPort) == -1) return nullptr;
 
-  //R_LdrMsgShow("creating socket");
-  R_LdrMsgShow(va("connecting to [%s]", *Drv->AddrToString(&sendaddr)));
+  //R_OSDMsgShow("creating socket");
+  R_OSDMsgShow(va("connecting to [%s]", *Drv->AddrToString(&sendaddr)));
 
   //newsock = Drv->OpenSocket(0);
   newsock = Drv->OpenSocketFor(&sendaddr);
@@ -366,7 +364,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
   //TODO: check for user abort here!
   for (reps = 0; reps < 3; ++reps) {
-    R_LdrMsgShow("sending handshake");
+    R_OSDMsgShow("sending handshake");
 
     VBitStreamWriter MsgOut(256<<3);
     // save space for the header, filled in later
@@ -463,7 +461,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   delete msg;
   msg = nullptr;
 
-  R_LdrMsgShow("receiving initial data");
+  R_OSDMsgShow("receiving initial data");
 
   //m_return_onerror = false;
   return sock;

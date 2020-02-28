@@ -2625,7 +2625,7 @@ void VRenderLevelShared::PrecacheLevel () {
   int maxpbar = 0, currpbar = 0;
   for (auto &&b : texturepresent) { if (b) ++maxpbar; }
 
-  R_LdrMsgShowSecondary("PRECACHING TEXTURES...");
+  R_OSDMsgShowSecondary("PRECACHING TEXTURES...");
   R_PBarReset();
 
   if (maxpbar > 0) {

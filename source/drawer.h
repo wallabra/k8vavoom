@@ -652,35 +652,6 @@ extern VDrawer *Drawer;
 #endif
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// fancyprogress bar
-
-// reset progress bar, setup initial timing and so on
-// returns `false` if graphics is not initialized
-bool R_PBarReset ();
-
-// update progress bar, return `true` if something was displayed.
-// it is safe to call this even if graphics is not initialized.
-// without graphics, it will print occasionally console messages.
-// you can call this as often as you want, it will take care of
-// limiting output to reasonable amounts.
-// `cur` must be zero or positive, `max` must be positive
-bool R_PBarUpdate (const char *message, int cur, int max, bool forced=false);
-
-
-// iniit loader messages system
-void R_LdrMsgReset ();
-
-// show loader message
-void R_LdrMsgShow (const char *msg, int clr=CR_TAN);
-
-extern int R_LdrMsgColorMain;
-extern int R_LdrMsgColorSecondary;
-
-static inline VVA_OKUNUSED void R_LdrMsgShowMain (const char *msg) { R_LdrMsgShow(msg, R_LdrMsgColorMain); }
-static inline VVA_OKUNUSED void R_LdrMsgShowSecondary (const char *msg) { R_LdrMsgShow(msg, R_LdrMsgColorSecondary); }
-
-
 // call this before initializing video, to tell shitdoze to GTFO
 // does nothing on normal OSes
 void R_FuckOffShitdoze ();

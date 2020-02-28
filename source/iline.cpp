@@ -24,7 +24,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "cl_local.h"
+#include "iline.h"
 
 #define MAX_ILINE_LENGTH  (4096)
 

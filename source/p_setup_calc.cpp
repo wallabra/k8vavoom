@@ -30,11 +30,6 @@
 #include "gamedefs.h"
 #include "bsp/ajbsp/bsp.h"
 
-#ifdef CLIENT
-# include "drawer.h"
-# include "cl_local.h"
-#endif
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB loader_build_pvs("pvs_build_on_loading", false, "Build simple PVS on node rebuilding?", CVAR_Archive);
@@ -109,7 +104,7 @@ int VLevel::GetNodesBuilder () const {
 //==========================================================================
 void VLevel::BuildNodes () {
 #ifdef CLIENT
-  R_LdrMsgShowSecondary("BUILDING NODES...");
+  R_OSDMsgShowSecondary("BUILDING NODES...");
   R_PBarReset();
 #endif
   switch (GetNodesBuilder()) {

@@ -363,14 +363,6 @@ struct tmtrace_t {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-TVec P_SectorClosestPoint (sector_t *sec, TVec in);
-int P_BoxOnLineSide (float *tmbox, line_t *ld);
-
-// used only in debug code
-bool P_GetMidTexturePosition (const line_t *line, int sideno, float *ptextop, float *ptexbot);
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump=false);
 
 // this is used to get region lighting

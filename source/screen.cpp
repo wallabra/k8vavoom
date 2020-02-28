@@ -453,7 +453,7 @@ static void CheckResolutionChange () {
 
   if (res_changed) {
     Drawer->InitResolution();
-    R_LdrMsgReset();
+    //R_OSDMsgReset(OSD_MapLoading);
     if (Drawer->RendLev) Drawer->RendLev->PrecacheLevel();
     if (GRoot) GRoot->RefreshScale();
     // post "resolution changed" event

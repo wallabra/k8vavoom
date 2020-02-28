@@ -28,8 +28,6 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "cl_local.h"
-#include "drawer.h"
 #ifdef CLIENT
 # include "neoui/neoui.h"
 # include "render/r_local.h" /*FIXME: sorry, i have to do this for textured automap*/

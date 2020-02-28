@@ -24,7 +24,6 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "sv_local.h"
 
 // polyobj line start special
 #define PO_LINE_START     (1)

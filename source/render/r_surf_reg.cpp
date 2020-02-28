@@ -1271,7 +1271,7 @@ void VRenderLevelLightmap::PreRender () {
   if (doReadCache || doWriteCache) GCon->Logf(NAME_Debug, "lightmap cache file: '%s'", *ccfname);
 
   if (doPrecalc || doReadCache || doWriteCache) {
-    R_LdrMsgShowSecondary("CREATING LIGHTMAPS...");
+    R_OSDMsgShowSecondary("CREATING LIGHTMAPS...");
 
     bool recalcLight = true;
     if (doReadCache) {

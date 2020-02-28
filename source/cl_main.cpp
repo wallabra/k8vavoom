@@ -259,8 +259,8 @@ void CL_EstablishConnection (const char *host) {
   GCon->Log("shutting down current game...");
   SV_ShutdownGame();
 
-  R_LdrMsgReset();
-  R_LdrMsgShow(va("initiating connection to [%s]", (host ? host : "")));
+  //R_OSDMsgReset(OSD_Network);
+  //R_OSDMsgShow(va("initiating connection to [%s]", (host ? host : "")));
 
   GCon->Logf("connecting to '%s'...", (host ? host : ""));
   VSocketPublic *Sock = GNet->Connect(host);
@@ -846,7 +846,7 @@ COMMAND(VidRendererRestart) {
   if (Source != SRC_Command) return;
   if (!GClLevel) return;
   if (!GClLevel->Renderer) return;
-  R_LdrMsgReset();
+  R_OSDMsgReset(OSD_MapLoading);
   Drawer->SetMainFBO(); // just in case
   delete GClLevel->Renderer;
   GClLevel->Renderer = nullptr;

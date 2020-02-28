@@ -25,7 +25,6 @@
 //**************************************************************************
 #include "../libs/vavoomc/vc_local.h"
 #include "../gamedefs.h"
-#include "../sv_local.h"
 
 // WARNING! dehacked parser requires this!
 #define VC_DECORATE_ACTION_BELONGS_TO_STATE

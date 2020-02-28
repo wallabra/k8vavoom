@@ -28,7 +28,6 @@
 //
 //**************************************************************************
 #include "gamedefs.h"
-#include "sv_local.h"
 
 
 struct VSplashInfo {

@@ -51,7 +51,6 @@ static int cli_WarnUnknownKeys = 1;
 
 // ////////////////////////////////////////////////////////////////////////// //
 #include "gamedefs.h"
-#include "sv_local.h"
 
 
 enum {

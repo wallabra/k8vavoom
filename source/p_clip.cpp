@@ -24,7 +24,6 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "sv_local.h"
 
 //#define XXX_CLIPPER_MANY_DUMPS
 

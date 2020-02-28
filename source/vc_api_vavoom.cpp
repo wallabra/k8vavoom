@@ -24,7 +24,6 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "sv_local.h"
 #ifdef CLIENT
 # include "drawer.h"
 #endif

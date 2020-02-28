@@ -324,13 +324,8 @@ static void pvsStartThreads (const PVSInfo &anfo) {
   int pvsThreadsToUse = /*loader_pvs_builder_threads*/numOfThreads;
   if (pvsThreadsToUse < 1) pvsThreadsToUse = 1; else if (pvsThreadsToUse > PVSThreadMax) pvsThreadsToUse = PVSThreadMax;
 
-#ifdef CLIENT
-  pvsReportTimeout = (Drawer && Drawer->IsInited() ? 0.05 : 2.5);
-  pvsReportPNum = (Drawer && Drawer->IsInited() ? 32 : 512);
-#else
-  pvsReportTimeout = 2.5;
-  pvsReportPNum = 512;
-#endif
+  pvsReportTimeout = (R_IsDrawerInited() ? 0.05 : 2.5);
+  pvsReportPNum = (R_IsDrawerInited() ? 32 : 512);
 
   mythread_mutex_init(&pvsNPLock);
   mythread_mutex_init(&pvsPingLock);
@@ -398,7 +393,7 @@ void VLevel::BuildPVS () {
 
   GCon->Logf("building PVS...");
 #ifdef CLIENT
-  R_LdrMsgShowSecondary("BUILDING PVS...");
+  R_OSDMsgShowSecondary("BUILDING PVS...");
   R_PBarReset();
 #endif
 

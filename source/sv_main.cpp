@@ -467,12 +467,12 @@ void SV_Clear () {
     VObject::CollectGarbage();
   }
   memset(&sv, 0, sizeof(sv));
-#ifdef CLIENT
+  #ifdef CLIENT
   // clear drawer level
   if (Drawer) Drawer->RendLev = nullptr;
   // make sure all sounds are stopped
   GAudio->StopAllSound();
-#endif
+  #endif
 }
 
 
@@ -1570,7 +1570,7 @@ void SV_DropClient (VBasePlayer *Player, bool crash) {
 void SV_ShutdownGame () {
   if (GGameInfo->NetMode == NM_None) return;
 
-#ifdef CLIENT
+  #ifdef CLIENT
   if (GGameInfo->Flags&VGameInfo::GIF_Paused) {
     GGameInfo->Flags &= ~VGameInfo::GIF_Paused;
     GAudio->ResumeSound();
@@ -1583,10 +1583,10 @@ void SV_ShutdownGame () {
 
   // clear drawer level
   if (Drawer) Drawer->RendLev = nullptr;
-#endif
+  #endif
 
   if (GGameInfo->NetMode == NM_Client) {
-#ifdef CLIENT
+    #ifdef CLIENT
     if (cls.demoplayback) GClGame->eventDemoPlaybackStopped();
 
     // sends a disconnect message to the server
@@ -1606,7 +1606,7 @@ void SV_ShutdownGame () {
       delete GClLevel;
       GClLevel = nullptr;
     }
-#endif
+    #endif
   } else {
     sv_loading = false;
     sv_map_travel = false;
@@ -1646,13 +1646,13 @@ void SV_ShutdownGame () {
     }
   }
 
-#ifdef CLIENT
+  #ifdef CLIENT
   GClLevel = nullptr;
   cl = nullptr;
   cls.clearForDisconnect(); // this resets demo playback flag too
 
   if (GGameInfo->NetMode != NM_DedicatedServer) GClGame->eventDisconnected();
-#endif
+  #endif
 
   SV_InitBaseSlot();
 

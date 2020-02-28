@@ -25,7 +25,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "r_local.h"
-#include "sv_local.h"
+#include "../sv_local.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1878,7 +1878,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   }
 
   if (inWorldCreation) {
-    R_LdrMsgShowSecondary("CREATING WORLD SURFACES...");
+    R_OSDMsgShowSecondary("CREATING WORLD SURFACES...");
     R_PBarReset();
   }
 

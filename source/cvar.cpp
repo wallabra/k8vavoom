@@ -25,7 +25,6 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "net/network.h"
-#include "sv_local.h"
 #include "cvar.h"
 
 

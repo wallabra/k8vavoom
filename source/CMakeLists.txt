@@ -275,6 +275,7 @@ set(VLEVEL_CLASS_SOURCES
   level_saveio.cpp
   level_secnode.cpp
   level_soundprop.cpp
+  level_miscapi.cpp
 )
 
 
@@ -516,6 +517,7 @@ set(SERVER_COMMON_SOURCES
   sv_main.cpp
   sv_save.cpp
   sv_world.cpp
+  text.cpp
   ${VCCLIB_SOURCES}
   ${AJBSP_SOURCES}
   ${ZDBSP_SOURCES}

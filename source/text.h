@@ -92,3 +92,40 @@ int T_GetCursorY ();
 
 extern VFont *SmallFont;
 extern VFont *ConFont;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// fancyprogress bar and OSD
+
+bool R_IsDrawerInited ();
+
+// reset progress bar, setup initial timing and so on
+// returns `false` if graphics is not initialized
+bool R_PBarReset ();
+
+// update progress bar, return `true` if something was displayed.
+// it is safe to call this even if graphics is not initialized.
+// without graphics, it will print occasionally console messages.
+// you can call this as often as you want, it will take care of
+// limiting output to reasonable amounts.
+// `cur` must be zero or positive, `max` must be positive
+bool R_PBarUpdate (const char *message, int cur, int max, bool forced=false);
+
+
+// on-screen messages type
+enum {
+  OSD_MapLoading,
+  OSD_Network,
+};
+
+// iniit on-screen messages system
+void R_OSDMsgReset (int type);
+
+// show loader message
+void R_OSDMsgShow (const char *msg, int clr=-666);
+
+extern int R_OSDMsgColorMain;
+extern int R_OSDMsgColorSecondary;
+
+static inline VVA_OKUNUSED void R_OSDMsgShowMain (const char *msg) { R_OSDMsgShow(msg, R_OSDMsgColorMain); }
+static inline VVA_OKUNUSED void R_OSDMsgShowSecondary (const char *msg) { R_OSDMsgShow(msg, R_OSDMsgColorSecondary); }

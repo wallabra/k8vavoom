@@ -27,15 +27,7 @@
 //**  Switches, buttons. Two-state animation. Exits.
 //**
 //**************************************************************************
-
-//==================================================================
-//
-//      CHANGE THE TEXTURE OF A WALL SWITCH TO ITS OPPOSITE
-//
-//==================================================================
-
 #include "gamedefs.h"
-#include "sv_local.h"
 
 
 #define BUTTONTIME  (1.0f) // 1 second
@@ -48,6 +40,11 @@ enum EBWhere {
 };
 
 
+//==================================================================
+//
+//      CHANGE THE TEXTURE OF A WALL SWITCH TO ITS OPPOSITE
+//
+//==================================================================
 class VThinkButton : public VThinker {
   DECLARE_CLASS(VThinkButton, VThinker, 0)
   NO_DEFAULT_CONSTRUCTOR(VThinkButton)

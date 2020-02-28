@@ -53,11 +53,6 @@ static inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(v
 #ifdef SERVER
 # include "sv_local.h"
 #endif
-#ifdef CLIENT
-# include "cl_local.h"
-#endif
-
-#include "drawer.h"
 
 
 static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", CVAR_PreInit/*|CVAR_Archive*/);
@@ -918,8 +913,8 @@ load_again:
   }
 
   //FIXME: reload saved background screen from FBO
-  R_LdrMsgReset();
-  R_LdrMsgShowMain("LOADING...");
+  R_OSDMsgReset(OSD_MapLoading);
+  R_OSDMsgShowMain("LOADING...");
 
   bool saveCachedData = false;
   int gl_lumpnum = -100;
@@ -1201,13 +1196,13 @@ load_again:
   if (!cachedDataLoaded || forceNodeRebuildFromFixer) {
     if (NeedNodesBuild || forceNodeRebuildFromFixer) {
       GCon->Logf("building GL nodes...");
-      //R_LdrMsgShowSecondary("BUILDING NODES...");
+      //R_OSDMsgShowSecondary("BUILDING NODES...");
       BuildNodes();
       saveCachedData = true;
     } else if (UseComprGLNodes) {
       if (!LoadCompressedGLNodes(CompressedGLNodesLump, GLNodesHdr)) {
         GCon->Logf("rebuilding GL nodes...");
-        //R_LdrMsgShowSecondary("BUILDING NODES...");
+        //R_OSDMsgShowSecondary("BUILDING NODES...");
         BuildNodes();
         saveCachedData = true;
       }

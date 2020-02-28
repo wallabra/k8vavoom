@@ -25,9 +25,6 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "net/network.h"
-#ifdef CLIENT
-# include "drawer.h"
-#endif
 
 
 VCmdBuf GCmdBuf;
@@ -712,12 +709,12 @@ void VCommand::ExecuteString (VStr Acmd, ECmdSource src, VBasePlayer *APlayer) {
     FL_ProcessPreInits(); // override configs
     FL_ClearPreInits();
     if (!cliInserted) {
-#ifdef CLIENT
-      if (!Drawer || !Drawer->IsInited()) {
+      #ifdef CLIENT
+      if (!R_IsDrawerInited()) {
         GCmdBuf.Insert("wait\n__run_cli_commands__\n");
         return;
       }
-#endif
+      #endif
       execLogInit = false;
       cliInserted = true;
       InsertCLICommands();

@@ -33,7 +33,6 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "net/network.h"
-#include "sv_local.h"
 #include "cl_local.h" // for dlight_t
 
 

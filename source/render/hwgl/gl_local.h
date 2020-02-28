@@ -44,7 +44,6 @@
 #undef VV_GLDECLS
 
 #include "gamedefs.h"
-#include "cl_local.h"
 #include "../r_shared.h"
 
 

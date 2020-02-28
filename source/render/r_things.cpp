@@ -34,7 +34,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "r_local.h"
-#include "sv_local.h"
+#include "../sv_local.h"
 
 
 extern VCvarB r_chasecam;

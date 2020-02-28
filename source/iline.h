@@ -27,6 +27,9 @@
 //**  input line library
 //**
 //**************************************************************************
+#ifndef CL_ILINE_HEADER
+#define CL_ILINE_HEADER
+
 
 // input text line widget
 class TILine {
@@ -75,3 +78,6 @@ public:
   // font and align should be already set
   void DrawAt (int x0, int y0, int clrNormal=CR_ORANGE, int clrLR=CR_FIRE);
 };
+
+
+#endif
