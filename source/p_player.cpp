@@ -541,11 +541,14 @@ void VBasePlayer::DoClientSetAngles (TAVec Angles) {
   //ViewAngles.pitch = AngleMod180(ViewAngles.pitch);
 
   // check angles
+  // k8: nope, don't do that; this is called via RPC, and the server knows better
+  /*
   if (ViewAngles.pitch > 80.0f) ViewAngles.pitch = 80.0f;
   if (ViewAngles.pitch < -80.0f) ViewAngles.pitch = -80.0f;
 
   if (ViewAngles.roll > 80.0f) ViewAngles.roll = 80.0f;
   if (ViewAngles.roll < -80.0f) ViewAngles.roll = -80.0f;
+  */
 }
 
 
@@ -718,19 +721,26 @@ void VBasePlayer::DoClientHudMessage (VStr Message, VName Font, int Type,
 //
 //  VBasePlayer::WriteViewData
 //
+//  this is called from `SV_SendClientMessages()`
+//
 //==========================================================================
 void VBasePlayer::WriteViewData () {
   // update bam_angles (after teleportation)
   if (PlayerFlags&PF_FixAngle) {
     PlayerFlags &= ~PF_FixAngle;
-    //k8: ???
+    //k8: this should enforce view angles on client (it is done via RPC)
+    //GCon->Logf(NAME_Debug, "FIXANGLES va=(%g,%g,%g)", ViewAngles.pitch, ViewAngles.yaw, ViewAngles.roll);
+    eventClientSetAngles(ViewAngles);
+    /*
     if (MO) {
       TAVec a = ViewAngles;
       a.yaw = MO->Angles.yaw;
       eventClientSetAngles(a);
+      //ViewAngles.yaw = MO->Angles.yaw;
     } else {
       eventClientSetAngles(ViewAngles);
     }
+    */
   }
 }
 
@@ -1029,6 +1039,7 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClientCenterPrint) {
 IMPLEMENT_FUNCTION(VBasePlayer, ClientSetAngles) {
   TAVec Angles;
   vobjGetParamSelf(Angles);
+  //GCon->Logf(NAME_Debug, "!!! va=(%g,%g,%g); aa=(%g,%g,%g)", Self->ViewAngles.pitch, Self->ViewAngles.yaw, Self->ViewAngles.roll, Angles.pitch, Angles.yaw, Angles.roll);
   Self->DoClientSetAngles(Angles);
 }
 
