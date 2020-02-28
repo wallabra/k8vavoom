@@ -160,6 +160,7 @@ public:
   virtual bool CanBroadcast () = 0;
   virtual int Broadcast (int socket, const vuint8 *buf, int len) = 0;
   virtual VStr AddrToString (sockaddr_t *addr) = 0;
+  virtual VStr AddrToStringNoPort (sockaddr_t *addr) = 0;
   virtual int StringToAddr (const char *string, sockaddr_t *addr) = 0;
   virtual int GetSocketAddr (int socket, sockaddr_t *addr) = 0;
   virtual VStr GetNameFromAddr (sockaddr_t *addr) = 0;

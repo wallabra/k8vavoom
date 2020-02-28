@@ -79,6 +79,7 @@ public:
   virtual int Broadcast (int, const vuint8 *, int) override;
   virtual bool CanBroadcast () override;
   virtual VStr AddrToString (sockaddr_t *) override;
+  virtual VStr AddrToStringNoPort (sockaddr_t *) override;
   virtual int StringToAddr (const char *, sockaddr_t *) override;
   virtual int GetSocketAddr (int, sockaddr_t *) override;
   virtual VStr GetNameFromAddr (sockaddr_t *) override;
@@ -386,7 +387,7 @@ int VUdpDriver::OpenSocket (int port) {
   const int err = errno;
   closesocket(newsocket);
 
-  Sys_Error("Unable to bind to %s (err=%d)", *AddrToString((sockaddr_t *)&address), err);
+  Sys_Error("Unable to bind to %s:%u (err=%d)", *AddrToStringNoPort((sockaddr_t *)&address), port, err);
   return -1;
 }
 
@@ -418,17 +419,24 @@ int VUdpDriver::OpenSocketFor (sockaddr_t *addr) {
     return -1;
   }
 
-  GCon->Logf(NAME_DevNet, "binding new socket to %s", *AddrToString(addr));
+  GCon->Logf(NAME_DevNet, "binding new socket to %s", *AddrToStringNoPort(addr));
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = (((const sockaddr_in *)addr)->sin_addr.s_addr); //ntohl
-  address.sin_port = 0; //(((const sockaddr_in *)addr)->sin_port); //ntohs
+  address.sin_port = 0; // get any free port
 
-  if (bind(newsocket, (sockaddr *)&address, sizeof(address)) == 0) return newsocket;
+  if (bind(newsocket, (sockaddr *)&address, sizeof(address)) == 0) {
+    sockaddr_t skad;
+    socklen_t skadlen = sizeof(sockaddr_t);
+    memset(&skad, 0, sizeof(sockaddr_t));
+    getsockname(newsocket, (sockaddr *)&skad, &skadlen);
+    GCon->Logf(NAME_DevNet, "bound to %s", *AddrToString(&skad));
+    return newsocket;
+  }
   //if (bind(newsocket, (sockaddr *)addr, sizeof(sockaddr)) == 0) return newsocket;
   const int err = errno;
   closesocket(newsocket);
 
-  GCon->Logf(NAME_Error, "Unable to bind to %s (err=%d)", *AddrToString(addr), err);
+  GCon->Logf(NAME_Error, "Unable to bind to %s (err=%d)", *AddrToStringNoPort(addr), err);
   return -1;
 }
 
@@ -557,6 +565,20 @@ VStr VUdpDriver::AddrToString (sockaddr_t *addr) {
   snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d:%d", (haddr>>24)&0xff,
     (haddr>>16)&0xff, (haddr>>8)&0xff, haddr&0xff,
     ntohs(((sockaddr_in *)addr)->sin_port));
+  return VStr(buffer);
+}
+
+
+//==========================================================================
+//
+//  VUdpDriver::AddrToStringNoPort
+//
+//==========================================================================
+VStr VUdpDriver::AddrToStringNoPort (sockaddr_t *addr) {
+  char buffer[32];
+  int haddr = ntohl(((sockaddr_in *)addr)->sin_addr.s_addr);
+  snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d", (haddr>>24)&0xff,
+    (haddr>>16)&0xff, (haddr>>8)&0xff, haddr&0xff);
   return VStr(buffer);
 }
 
