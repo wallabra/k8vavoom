@@ -535,20 +535,11 @@ void VBasePlayer::DoClientCenterPrint (VStr Str) {
 //
 //  VBasePlayer::DoClientSetAngles
 //
+//  called via RPC
+//
 //==========================================================================
 void VBasePlayer::DoClientSetAngles (TAVec Angles) {
   ViewAngles = Angles;
-  //ViewAngles.pitch = AngleMod180(ViewAngles.pitch);
-
-  // check angles
-  // k8: nope, don't do that; this is called via RPC, and the server knows better
-  /*
-  if (ViewAngles.pitch > 80.0f) ViewAngles.pitch = 80.0f;
-  if (ViewAngles.pitch < -80.0f) ViewAngles.pitch = -80.0f;
-
-  if (ViewAngles.roll > 80.0f) ViewAngles.roll = 80.0f;
-  if (ViewAngles.roll < -80.0f) ViewAngles.roll = -80.0f;
-  */
 }
 
 
@@ -731,16 +722,6 @@ void VBasePlayer::WriteViewData () {
     //k8: this should enforce view angles on client (it is done via RPC)
     //GCon->Logf(NAME_Debug, "FIXANGLES va=(%g,%g,%g)", ViewAngles.pitch, ViewAngles.yaw, ViewAngles.roll);
     eventClientSetAngles(ViewAngles);
-    /*
-    if (MO) {
-      TAVec a = ViewAngles;
-      a.yaw = MO->Angles.yaw;
-      eventClientSetAngles(a);
-      //ViewAngles.yaw = MO->Angles.yaw;
-    } else {
-      eventClientSetAngles(ViewAngles);
-    }
-    */
   }
 }
 
