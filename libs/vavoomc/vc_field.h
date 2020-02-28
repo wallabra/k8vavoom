@@ -78,7 +78,8 @@ public:
   static void SerialiseFieldValue (VStream &, vuint8 *, const VFieldType &);
   static void SkipSerialisedType (VStream &);
   static void SkipSerialisedValue (VStream &);
-  static bool NetSerialiseValue (VStream &, VNetObjectsMapBase *, vuint8 *, const VFieldType &);
+  // if `vecprecise` is false, use 16 bits for coords and for angles (only for saving, loading is automatic)
+  static bool NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *Data, const VFieldType &Type, bool vecprecise=false);
   static void CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &);
   static bool CleanField (vuint8 *, const VFieldType &); // returns `true` if something was cleaned
   static void DestructField (vuint8 *, const VFieldType &, bool zeroIt=false);

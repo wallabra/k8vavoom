@@ -754,10 +754,47 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
 
 //==========================================================================
 //
-//  VField::NetSerialiseValue
+//  angle2word
 //
 //==========================================================================
-bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *Data, const VFieldType &Type) {
+static vuint16 angle2word (float angle) {
+  if (angle) {
+    angle = fmodf(angle, 360.0f); // signed
+    vuint16 v = (vuint16)((double)fabsf(angle)/360.0*32767.0);
+    v <<= 1;
+    if (v && angle < 0) v |= 1u;
+    return v;
+  } else {
+    return 0;
+  }
+}
+
+
+//==========================================================================
+//
+//  word2angle
+//
+//==========================================================================
+static float word2angle (vuint16 angle) {
+  if (angle) {
+    const vuint8 sign = angle&1u;
+    angle >>= 1;
+    float res = (float)((double)angle/32767.0*360.0);
+    return (sign ? -res : res);
+  } else {
+    return 0;
+  }
+}
+
+
+//==========================================================================
+//
+//  VField::NetSerialiseValue
+//
+//  if `vecprecise` is false, use 16 bits for coords and for angles
+//
+//==========================================================================
+bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *Data, const VFieldType &Type, bool vecprecise) {
   VFieldType IntType;
   int InnerSize;
   bool Ret = true;
@@ -782,61 +819,103 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *
     case TYPE_Name: Ret = Map->SerialiseName(Strm, *(VName *)Data); break;
     case TYPE_Vector:
       if (Type.Struct->Name == NAME_TAVec) {
-        // transmit real angles
-        #if 0
+        TAVec *ang = (TAVec *)Data;
         if (Strm.IsLoading()) {
-          vuint8 ByteYaw;
-          vuint8 BytePitch = 0;
-          vuint8 ByteRoll = 0;
+          // load angles
           vuint8 HavePitchRoll = 0;
-          Strm << ByteYaw;
-          Strm.SerialiseBits(&HavePitchRoll, 1);
-          if (HavePitchRoll) Strm << BytePitch << ByteRoll;
-          ((TAVec *)Data)->yaw = ByteToAngle(ByteYaw);
-          ((TAVec *)Data)->pitch = ByteToAngle(BytePitch);
-          ((TAVec *)Data)->roll = ByteToAngle(ByteRoll);
+          Strm.SerialiseBits(&HavePitchRoll, 3);
+          if (HavePitchRoll&4) {
+            // precise
+            Strm << ang->yaw;
+            if (HavePitchRoll&1u) Strm << ang->pitch; else ang->pitch = 0.0f;
+            if (HavePitchRoll&2u) Strm << ang->roll; else ang->roll = 0.0f;
+          } else {
+            // imprecise
+            vuint16 wyaw = 0;
+            vuint16 wpitch = 0;
+            vuint16 wroll = 0;
+            Strm << wyaw;
+            if (HavePitchRoll&1u) Strm << wpitch;
+            if (HavePitchRoll&2u) Strm << wroll;
+            ang->yaw = word2angle(wyaw);
+            ang->pitch = word2angle(wpitch);
+            ang->roll = word2angle(wroll);
+            /*
+            vuint8 ByteYaw;
+            vuint8 BytePitch = 0;
+            vuint8 ByteRoll = 0;
+            vuint8 HavePitchRoll = 0;
+            Strm << ByteYaw;
+            Strm.SerialiseBits(&HavePitchRoll, 1);
+            if (HavePitchRoll) Strm << BytePitch << ByteRoll;
+            ang->yaw = ByteToAngle(ByteYaw);
+            ang->pitch = ByteToAngle(BytePitch);
+            ang->roll = ByteToAngle(ByteRoll);
+            */
+          }
         } else {
-          vuint8 ByteYaw = AngleToByte(((TAVec *)Data)->yaw);
-          vuint8 BytePitch = AngleToByte(((TAVec *)Data)->pitch);
-          vuint8 ByteRoll = AngleToByte(((TAVec *)Data)->roll);
-          vuint8 HavePitchRoll = BytePitch || ByteRoll;
-          Strm << ByteYaw;
-          Strm.SerialiseBits(&HavePitchRoll, 1);
-          if (HavePitchRoll) Strm << BytePitch << ByteRoll;
+          // save angles
+          if (vecprecise) {
+            vuint8 HavePitchRoll =
+              (ang->pitch ? 1u : 0u)|
+              (ang->roll ? 2u : 0u)|
+              4u; // precision
+            Strm.SerialiseBits(&HavePitchRoll, 3);
+            Strm << ang->yaw;
+            if (HavePitchRoll&1u) Strm << ang->pitch;
+            if (HavePitchRoll&2u) Strm << ang->roll;
+          } else {
+            vuint16 wyaw = angle2word(ang->yaw);
+            vuint16 wpitch = angle2word(ang->pitch);
+            vuint16 wroll = angle2word(ang->roll);
+            vuint8 HavePitchRoll =
+              (wpitch ? 1u : 0u)|
+              (wroll ? 2u : 0u)|
+              0u; // precision
+            Strm.SerialiseBits(&HavePitchRoll, 3);
+            Strm << wyaw;
+            if (HavePitchRoll&1u) Strm << wpitch;
+            if (HavePitchRoll&2u) Strm << wroll;
+            /*
+            vuint8 ByteYaw = AngleToByte(ang->yaw);
+            vuint8 BytePitch = AngleToByte(ang->pitch);
+            vuint8 ByteRoll = AngleToByte(ang->roll);
+            vuint8 HavePitchRoll = BytePitch || ByteRoll;
+            Strm << ByteYaw;
+            Strm.SerialiseBits(&HavePitchRoll, 1);
+            if (HavePitchRoll) Strm << BytePitch << ByteRoll;
+            */
+          }
         }
-        #else
-        if (Strm.IsLoading()) {
-          // loading
-          TAVec *ang = (TAVec *)Data;
-          Strm << ang->yaw;
-          vuint8 HavePitchRoll = 0;
-          Strm.SerialiseBits(&HavePitchRoll, 2);
-          if (HavePitchRoll&1u) Strm << ang->pitch; else ang->pitch = 0.0f;
-          if (HavePitchRoll&2u) Strm << ang->roll; else ang->roll = 0.0f;
-        } else {
-          // writing
-          TAVec *ang = (TAVec *)Data;
-          Strm << ang->yaw;
-          vuint8 HavePitchRoll =
-            (ang->pitch ? 1u : 0u)|
-            (ang->roll ? 2u : 0u);
-          Strm.SerialiseBits(&HavePitchRoll, 2);
-          if (HavePitchRoll&1u) Strm << ang->pitch;
-          if (HavePitchRoll&2u) Strm << ang->roll;
-        }
-        #endif
       } else {
+        TVec *vec = (TVec *)Data;
         if (Strm.IsLoading()) {
-          vint16 x, y, z;
-          Strm << x << y << z;
-          ((TVec *)Data)->x = x;
-          ((TVec *)Data)->y = y;
-          ((TVec *)Data)->z = z;
+          // load position
+          vuint8 precision = 0;
+          Strm.SerialiseBits(&precision, 1);
+          if (precision) {
+            Strm << vec->x << vec->y << vec->z;
+          } else {
+            vint16 x, y, z;
+            Strm << x << y << z;
+            vec->x = x;
+            vec->y = y;
+            vec->z = z;
+          }
         } else {
-          vint16 x = mround(((TVec *)Data)->x);
-          vint16 y = mround(((TVec *)Data)->y);
-          vint16 z = mround(((TVec *)Data)->z);
-          Strm << x << y << z;
+          // save position
+          if (vecprecise) {
+            vuint8 precision = 1;
+            Strm.SerialiseBits(&precision, 1);
+            Strm << vec->x << vec->y << vec->z;
+          } else {
+            vuint8 precision = 0;
+            Strm.SerialiseBits(&precision, 1);
+            vint16 x = mround(vec->x);
+            vint16 y = mround(vec->y);
+            vint16 z = mround(vec->z);
+            Strm << x << y << z;
+          }
         }
       }
       break;
