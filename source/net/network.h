@@ -411,6 +411,10 @@ public:
   VNetObjectsMap *ObjMap;
   bool ObjMapSent;
   bool LevelInfoSent;
+  // when we detach thinker, there's no need to send it anymore
+  // we cannot have this flag in thinker itself, because new
+  // clients should still get detached thinkers
+  TMapNC<VThinker *, bool> DetachedThinkers;
 
 private:
   vuint8 *UpdatePvs;

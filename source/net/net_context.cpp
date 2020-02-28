@@ -58,6 +58,7 @@ VNetContext::~VNetContext () {
 //
 //==========================================================================
 void VNetContext::ThinkerDestroyed (VThinker *Th) {
+  if (!Th) return; // just in case
   if (IsClient()) {
     // client; have connection with a server
     VThinkerChannel *chan = ServerConnection->ThinkerChannels.FindPtr(Th);
@@ -70,6 +71,8 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
       GCon->Logf(NAME_Debug, "NET:CLIENT:%p: CLOSED thinker with class `%s`; chan %p: #%d", Th, Th->GetClass()->GetName(), chan, chan->Index);
       #endif
     }
+    // remove from detached list (just in case)
+    ServerConnection->DetachedThinkers.remove(Th);
   } else {
     for (auto &&it : ClientConnections) {
       VThinkerChannel *chan = it->ThinkerChannels.FindPtr(Th);
@@ -79,6 +82,9 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
         #endif
         chan->Close();
       }
+      if (it->DetachedThinkers.has(Th)) GCon->Logf(NAME_Debug, "%s:%u: removed from detached list", Th->GetClass()->GetName(), Th->GetUniqueId());
+      // remove from detached list
+      it->DetachedThinkers.remove(Th);
     }
   }
 }

@@ -152,9 +152,31 @@ void CL_DecayLights () {
 static void CL_UpdateMobjs (float deltaTime) {
   if (!GClLevel) return; //k8: this is wrong!
   //GCon->Log(NAME_Debug, "====================== CL_UpdateMobjs ======================");
-  for (TThinkerIterator<VThinker> th(GClLevel); th; ++th) {
-    if (th->IsGoingToDie()) continue; // just in case
-    th->eventClientTick(deltaTime);
+  if (GGameInfo->NetMode == NM_Client) {
+    if (!deltaTime) return;
+    // network client
+    // cannot use thinker iterator here, because detached thinker may remove itself...
+    VThinker *curr = GClLevel->ThinkerHead;
+    while (curr) {
+      VThinker *th = curr;
+      curr = curr->Next;
+      if (th->IsGoingToDie()) continue;
+      if (th->Role == ROLE_Authority) {
+        //GCon->Logf(NAME_Debug, "%s:%u: client-local!", th->GetClass()->GetName(), th->GetUniqueId());
+        // for local thinkers, call their ticker method first
+        th->Tick(deltaTime);
+        if (th->IsGoingToDie()) continue; // just in case
+      }
+      th->eventClientTick(deltaTime);
+    }
+  } else {
+    // other game types; don't use iterator too, because it does excessive class checks
+    VThinker *curr = GClLevel->ThinkerHead;
+    while (curr) {
+      VThinker *th = curr;
+      curr = curr->Next;
+      if (!th->IsGoingToDie()) th->eventClientTick(deltaTime);
+    }
   }
 }
 

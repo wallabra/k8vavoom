@@ -72,7 +72,17 @@ VThinkerChannel::~VThinkerChannel () {
 void VThinkerChannel::RemoveThinkerFromGame () {
   // if this is a client version of entity, destroy it
   if (!Thinker) return;
-  if (!OpenedLocally) {
+  bool doRemove = !OpenedLocally;
+  if (doRemove) {
+    // for clients: don't remove "authority" thinkers, they became autonomous
+    if (Connection->Context->IsClient()) {
+      if (Thinker->RemoteRole == ROLE_DumbProxy) {
+        doRemove = false;
+        GCon->Logf(NAME_Debug, "VThinkerChannel::RemoveThinkerFromGame: skipping autonomous thinker '%s':%u", Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
+      }
+    }
+  }
+  if (doRemove) {
     #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
     #ifdef CLIENT
     GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- before `DestroyThinker()`", this, Index);
@@ -241,13 +251,15 @@ void VThinkerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Value
 }
 
 
+
+
 //==========================================================================
 //
 //  VThinkerChannel::Update
 //
 //==========================================================================
 void VThinkerChannel::Update () {
-  if (Closing) return;
+  if (Closing || !Thinker) return;
 
   VEntity *Ent = Cast<VEntity>(Thinker);
 
@@ -278,6 +290,21 @@ void VThinkerChannel::Update () {
       Thinker->SetFieldByte("Role", ROLE_SimulatedProxy);
     }
     */
+  }
+
+  const bool isServer = Connection->Context->IsServer();
+  vuint8 oldRole = 0, oldRemoteRole = 0;
+
+  if (isServer) {
+    if (Ent && Ent->FlagsEx&VEntity::EFEX_NoTickGrav) {
+      // this is Role on the client
+      oldRole = Thinker->Role;
+      oldRemoteRole = Thinker->RemoteRole;
+      Thinker->RemoteRole = ROLE_Authority;
+      // this is RemoteRole on the client (and Role on the server)
+      Thinker->Role = ROLE_DumbProxy;
+      GCon->Logf(NAME_DevNet, "%s:%u: became notick, closing channel%s", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), (OpenedLocally ? " (opened locally)" : ""));
+    }
   }
 
   TAVec SavedAngles;
@@ -342,11 +369,38 @@ void VThinkerChannel::Update () {
   if (Ent && (Ent->EntityFlags&VEntity::EF_IsPlayer)) Ent->Angles = SavedAngles;
   UpdatedThisFrame = true;
 
+  // if this object becomes "dumb proxy", transmit some additional data
+  if (isServer && Thinker->Role == ROLE_DumbProxy && Ent) {
+    Msg.WriteInt(-1); // "special data" flag
+    vuint8 exFlags = 0;
+    if (Ent->FlagsEx&VEntity::EFEX_NoInteraction) exFlags |= 1u<<0;
+    if (Ent->FlagsEx&VEntity::EFEX_NoTickGrav) exFlags |= 1u<<1;
+    if (Ent->FlagsEx&VEntity::EFEX_NoTickGravLT) exFlags |= 1u<<2;
+    if (Ent->EntityFlags&VEntity::EF_NoGravity) exFlags |= 1u<<3;
+    Msg.SerialiseBits(&exFlags, 3);
+    // lifetime fields
+    if (exFlags&(1u<<2)) {
+      // special fields for "notick"
+      Msg << Ent->LastMoveTime;
+      Msg << Ent->PlaneAlpha;
+    }
+  }
+
   if (Msg.GetNumBits()) SendMessage(&Msg);
 
   // clear temporary networking flags
   Thinker->ThinkerFlags &= ~VThinker::TF_NetInitial;
   Thinker->ThinkerFlags &= ~VThinker::TF_NetOwner;
+
+  // if this object becomes "dumb proxy", mark it as detached, and close the channel
+  if (isServer && Thinker->Role == ROLE_DumbProxy && Ent) {
+    // remember that we already did this thinker
+    Connection->DetachedThinkers.put(Thinker, true);
+    // restore roles
+    Thinker->Role = oldRole;
+    Thinker->RemoteRole = oldRemoteRole;
+    Close();
+  }
 }
 
 
@@ -390,6 +444,35 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
 
   while (!Msg.AtEnd()) {
     int FldIdx = Msg.ReadInt(/*Thinker->GetClass()->NumNetFields*/);
+    // special data?
+    if (FldIdx == -1) {
+      // receive some additional fields for entities
+      vuint8 exFlags = 0;
+      Msg.SerialiseBits(&exFlags, 3);
+      if (Ent) {
+        if (exFlags&(1u<<0)) Ent->FlagsEx |= VEntity::EFEX_NoInteraction;
+        if (exFlags&(1u<<1)) Ent->FlagsEx |= VEntity::EFEX_NoTickGrav;
+        if (exFlags&(1u<<2)) Ent->FlagsEx |= VEntity::EFEX_NoTickGravLT;
+        if (exFlags&(1u<<3)) Ent->EntityFlags |= VEntity::EF_NoGravity;
+        GCon->Logf(NAME_Debug, "%s:%u: got special flags 0x%02x", Ent->GetClass()->GetName(), Ent->GetUniqueId(), exFlags);
+      }
+      // lifetime fields
+      if (exFlags&(1u<<2)) {
+        if (Ent) {
+          // special fields for "notick"
+          Msg << Ent->LastMoveTime;
+          Msg << Ent->PlaneAlpha;
+          GCon->Logf(NAME_Debug, "%s:%u: got special notick fields: %g, %g", Ent->GetClass()->GetName(), Ent->GetUniqueId(), Ent->LastMoveTime, Ent->PlaneAlpha);
+        } else {
+          float a, b;
+          Msg << a;
+          Msg << b;
+        }
+      }
+      continue;
+    }
+
+    // find field
     VField *F = nullptr;
     for (VField *CF = ThinkerClass->NetFields; CF; CF = CF->NextNetField) {
       if (CF->NetIndex == FldIdx) {
@@ -397,6 +480,8 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
         break;
       }
     }
+
+    // got field?
     if (F) {
       if (F->Type.Type == TYPE_Array) {
         int Idx = Msg.ReadInt(/*F->Type.GetArrayDim()*/);
@@ -409,6 +494,7 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
       continue;
     }
 
+    // not a field: this must be RPC
     if (ReadRpc(Msg, FldIdx, Thinker)) continue;
 
     Sys_Error("Bad net field %d", FldIdx);

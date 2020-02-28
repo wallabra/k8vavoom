@@ -932,12 +932,15 @@ bool VNetConnection::SecCheckFatPVS (sector_t *Sec) {
 //
 //==========================================================================
 bool VNetConnection::IsRelevant (VThinker *Th) {
+  if (Th->IsGoingToDie()) return false; // anyway
   if (Th->ThinkerFlags&VThinker::TF_AlwaysRelevant) return true;
+  // check if this thinker was detached
+  if (DetachedThinkers.has(Th)) return false;
   VEntity *Ent = Cast<VEntity>(Th);
   if (!Ent || !Ent->Sector) return false;
-  if (Ent->GetTopOwner() == Owner->MO) return true;
-  if (Ent->EntityFlags&VEntity::EF_NoSector) return false;
-  if (Ent->EntityFlags&VEntity::EF_Invisible) return false;
+  if (Ent->GetTopOwner() == Owner->MO) return true; // inventory
+  if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) return false;
+  //if (Ent->RemoteRole == ROLE_Authority) return false; // this should not end here
   if (!CheckFatPVS(Ent->SubSector)) return false;
   return true;
 }

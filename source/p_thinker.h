@@ -149,23 +149,23 @@ template <class T> class TThinkerIterator {
 private:
   VThinker *Th;
 
-  void GetNext () {
-    while (Th && (!Th->IsA(T::StaticClass()) || (Th->GetFlags()&_OF_DelayedDestroy))) Th = Th->Next;
+  inline void GetNext () noexcept {
+    while (Th && (!Th->IsA(T::StaticClass()) || Th->IsGoingToDie())) Th = Th->Next;
   }
 
 public:
-  TThinkerIterator (const VLevel *Level) {
+  inline TThinkerIterator (const VLevel *Level) noexcept {
     Th = Level->ThinkerHead;
     GetNext();
   }
 
-  inline operator bool () const { return Th != nullptr; }
-  inline void operator ++ () {
+  inline operator bool () const noexcept { return Th != nullptr; }
+  inline void operator ++ () noexcept {
     if (Th) {
       Th = Th->Next;
       GetNext();
     }
   }
-  inline T *operator -> () { return (T*)Th; }
-  inline T *operator * () { return (T*)Th; }
+  inline T *operator -> () noexcept { return (T *)Th; }
+  inline T *operator * () noexcept { return (T *)Th; }
 };
