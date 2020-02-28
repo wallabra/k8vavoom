@@ -52,6 +52,7 @@ REGISTER_NAME(DevNet)
 REGISTER_NAME(Warning)
 REGISTER_NAME(Error)
 REGISTER_NAME(Debug)
+REGISTER_NAME(Chat)
 
 // native class names
 REGISTER_NAME(Object)
