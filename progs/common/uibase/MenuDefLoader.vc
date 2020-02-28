@@ -598,7 +598,8 @@ override MenuChoice CreateOption (MenuScreen menu) {
   opt.Focusable = false;
   if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
   if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
-  opt.Height = (title ? 12 : 10);
+  //opt.Height = (title ? 12 : 10);
+  if (title) opt.Height = opt.Height+(opt.Height <= 11 ? 2 : 4);
   return opt;
 }
 

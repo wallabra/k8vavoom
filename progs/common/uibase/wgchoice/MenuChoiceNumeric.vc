@@ -44,6 +44,7 @@ delegate bool ValueChanging (Object Sender, float NewValue);
 //==========================================================================
 void SetText (string AText) {
   Text = TranslateString(AText);
+  FixMinimumHeight();
 }
 
 
@@ -93,6 +94,8 @@ void SetInitialValue (float AValue) {
 //==========================================================================
 override void OnDraw () {
   DrawBackground();
+
+  SetFont('smallfont');
 
   int Col = (IsFocus() ? TextColorFocus : TextColor);
 

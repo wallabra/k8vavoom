@@ -94,6 +94,8 @@ override void OnDraw () {
 
   slist = GetSlist();
 
+  SetFont('smallfont');
+
   SetTextAlign(hleft, vtop);
   foreach (int i; 0..slist->Cache.length) {
     DrawText(16, 32+10*i, slist->Cache[i].Name);

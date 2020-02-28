@@ -69,6 +69,8 @@ override void OnDraw () {
 
   DrawBackground();
 
+  SetFont('smallfont');
+
   SetTextAlign(hright, vtop);
   DrawText(CursorXOffs, 2+1, Text, IsFocus() ? TextColorFocus : TextColor);
 

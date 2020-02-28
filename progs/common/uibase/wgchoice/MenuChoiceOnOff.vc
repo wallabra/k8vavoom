@@ -38,6 +38,8 @@ class MenuChoice_OnOff : MenuChoiceEnum;
 override void OnDraw () {
   DrawBackground();
 
+  SetFont('smallfont');
+
   int Col = (IsFocus() ? TextColorFocus : TextColor);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);

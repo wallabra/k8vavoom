@@ -54,6 +54,8 @@ void OnValueChanged () {
 override void OnDraw () {
   DrawBackground();
 
+  SetFont('smallfont');
+
   SetTextAlign(hleft, vtop);
   DrawText(0, 0, Text, IsFocus() ? CR_YELLOW : CR_WHITE);
   if (bEnteringText) {

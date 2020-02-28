@@ -39,6 +39,20 @@ int ValueColorFocus = CR_YELLOW;
 
 //==========================================================================
 //
+//  FixMinimumHeight
+//
+//==========================================================================
+void FixMinimumHeight () {
+  auto oldFont = GetFont();
+  scope(exit) SetFont(oldFont);
+  SetFont('smallfont');
+  int height = clamp(FontHeight(), 10, 32);
+  if (Height < height) Height = height;
+}
+
+
+//==========================================================================
+//
 //  FixFractionalValue
 //
 //  used in sliders to fix fractional values

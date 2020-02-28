@@ -40,6 +40,7 @@ bool Disabled;
 //==========================================================================
 void SetText (string AText) {
   Text = TranslateString(AText);
+  FixMinimumHeight();
 }
 
 
@@ -58,6 +59,8 @@ override void SetOrigin (int x, int y) {
 
 override void OnDraw () {
   DrawBackground();
+
+  SetFont('smallfont');
 
   int key1 = -1;
   int key2 = -1;

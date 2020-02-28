@@ -39,27 +39,71 @@ int hasSubMenuChecked; // <0: nope; 0: not checked; >0: ok
 delegate void Activated (Object Sender);
 
 
+//==========================================================================
+//
+//  FixMinimumHeight
+//
+//  call this after setting text and font
+//
+//==========================================================================
+override void FixMinimumHeight () {
+  if (!Text || !TextFont) return;
+  auto oldFont = GetFont();
+  scope(exit) SetFont(oldFont);
+  SetFont(TextFont);
+  int height = clamp(TextHeight(Text), 10, 32);
+  if (Height < height) Height = height;
+}
+
+
+//==========================================================================
+//
+//  SetSubMenuClass
+//
+//==========================================================================
 void SetSubMenuClass (class!MenuScreen asubmenuClass) {
   submenuClass = asubmenuClass;
 }
 
 
+//==========================================================================
+//
+//  SetSubMenuName
+//
+//==========================================================================
 void SetSubMenuName (string menuName) {
   submenuName = menuName;
 }
 
 
+//==========================================================================
+//
+//  SetText
+//
+//==========================================================================
 void SetText (string AText) {
   Text = TranslateString(AText);
 }
 
 
+//==========================================================================
+//
+//  CalcTextWidth
+//
+//==========================================================================
 int CalcTextWidth () {
+  auto oldFont = GetFont();
+  scope(exit) SetFont(oldFont);
   SetFont(TextFont);
   return TextWidth(Text);
 }
 
 
+//==========================================================================
+//
+//  ActivateEvent
+//
+//==========================================================================
 void ActivateEvent () {
   // there was(?) the bug: parent can be destroyed before activation event comes (wtf?!)
   if (!Parent) printwarn("button '%s' (%C) has no parent! pos=(%d,%d)", Text, self, X, Y);
@@ -77,6 +121,11 @@ void ActivateEvent () {
 }
 
 
+//==========================================================================
+//
+//  OnKeyDown
+//
+//==========================================================================
 override bool OnKeyDown (int key) {
   key = ConvertBoundKey(key);
   if (key == K_ENTER || key == K_PADENTER || key == K_MOUSE1 || key == K_JOY1) {
@@ -88,6 +137,11 @@ override bool OnKeyDown (int key) {
 }
 
 
+//==========================================================================
+//
+//  OnMouseClick
+//
+//==========================================================================
 override void OnMouseClick (int X, int Y) {
   SetFocus();
   ActivateEvent();
@@ -95,6 +149,11 @@ override void OnMouseClick (int X, int Y) {
 }
 
 
+//==========================================================================
+//
+//  CheckSubMenu
+//
+//==========================================================================
 void CheckSubMenu (optional bool changeEnabled) {
   if (!hasSubMenuChecked) {
     if (submenuClass) {
@@ -109,6 +168,11 @@ void CheckSubMenu (optional bool changeEnabled) {
 }
 
 
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
 override void OnDraw () {
   CheckSubMenu();
 
@@ -121,8 +185,7 @@ override void OnDraw () {
 }
 
 
-defaultproperties
-{
+defaultproperties {
   ActivateSound = 'menu/choose';
   TextColor = CR_UNTRANSLATED;
   TextColorFocus = CR_UNTRANSLATED;
