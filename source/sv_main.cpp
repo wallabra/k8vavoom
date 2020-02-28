@@ -1822,6 +1822,21 @@ void SV_AllClientsNeedsWorldUpdate () {
 
 //==========================================================================
 //
+//  NET_SendNetworkHeartbeat
+//
+//==========================================================================
+void NET_SendNetworkHeartbeat (bool forced) {
+#ifdef CLIENT
+  CL_NetworkHeartbeat(forced);
+#endif
+#ifdef SERVER
+  SV_NetworkHeartbeat(forced);
+#endif
+}
+
+
+//==========================================================================
+//
 //  SV_ConnectBot
 //
 //==========================================================================

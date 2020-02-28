@@ -554,10 +554,15 @@ void SCR_Update (bool fullUpdate) {
   bool updateStarted = false;
   bool allowClear = true;
   bool allowWipeStart = true;
+  bool drawOther = true;
 
   // do buffered drawing
   if (cl && cls.signon && cl->MO && !GClGame->InIntermission()) {
-    if (!GLevel || GLevel->TicTime >= serverStartRenderFramesTic) {
+    if (GGameInfo->NetMode == NM_Client && !cl->Level) {
+      allowClear = false;
+      allowWipeStart = false;
+      drawOther = false;
+    } else if (!GLevel || GLevel->TicTime >= serverStartRenderFramesTic) {
       //k8: always render level, so automap will be updated in all cases
       updateStarted = true;
       Drawer->StartUpdate();
@@ -584,6 +589,10 @@ void SCR_Update (bool fullUpdate) {
       allowClear = false;
       allowWipeStart = false;
     }
+  } else if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && !GClGame->InIntermission()) {
+    allowClear = false;
+    allowWipeStart = false;
+    drawOther = false;
   }
 
   if (!updateStarted) {
@@ -593,39 +602,39 @@ void SCR_Update (bool fullUpdate) {
     if (clWipeTimer >= 0.0f) Drawer->RenderWipe(-1.0f);
   }
 
-  // draw user interface
-  GRoot->DrawWidgets();
+  if (drawOther) {
+    // draw user interface
+    GRoot->DrawWidgets();
 
-  if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && !GClGame->InIntermission()) {
+    // console drawing
+    C_Drawer();
+    // various on-screen statistics
+    DrawFPS();
+
+    if (clWipeTimer >= 0.0f) {
+      // fix wipe timer
+      const double ctt = Sys_Time();
+      if (allowWipeStart) {
+        if (!wipeStarted) { wipeStarted = true; wipeStartedTime = ctt; }
+        clWipeTimer = (float)(ctt-wipeStartedTime);
+        // render wipe
+        if (clWipeTimer >= 0.0f) {
+          if (!Drawer->RenderWipe(clWipeTimer)) clWipeTimer = -1.0f;
+        }
+      } else {
+        Drawer->RenderWipe(-1.0f);
+      }
+    }
+  } else if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && !GClGame->InIntermission()) {
     T_SetFont(SmallFont);
     T_SetAlign(hleft, vtop);
-    const int y = 8;
+    const int y = 8+cls.gotmap*8;
     // slightly off vcenter
     switch (cls.gotmap) {
       case 0: T_DrawText(4, y, "getting network data (map)...", CR_TAN); break;
       case 1: T_DrawText(4, y, "getting network data (world)...", CR_TAN); break;
       case 2: T_DrawText(4, y, "getting network data (spawning)...", CR_TAN); break;
       default: T_DrawText(4, y, "getting network data (something)...", CR_TAN); break;
-    }
-  }
-
-  // console drawing
-  C_Drawer();
-  // various on-screen statistics
-  DrawFPS();
-
-  if (clWipeTimer >= 0.0f) {
-    // fix wipe timer
-    const double ctt = Sys_Time();
-    if (allowWipeStart) {
-      if (!wipeStarted) { wipeStarted = true; wipeStartedTime = ctt; }
-      clWipeTimer = (float)(ctt-wipeStartedTime);
-      // render wipe
-      if (clWipeTimer >= 0.0f) {
-        if (!Drawer->RenderWipe(clWipeTimer)) clWipeTimer = -1.0f;
-      }
-    } else {
-      Drawer->RenderWipe(-1.0f);
     }
   }
 

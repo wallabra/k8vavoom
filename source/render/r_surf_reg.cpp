@@ -759,6 +759,7 @@ void VRenderLevelLightmap::saveLightmapsInternal (VStream *strm) {
       WriteSurfaceLightmaps(Level, strm, (r->fakefloor ? r->fakefloor->surfs : nullptr));
       WriteSurfaceLightmaps(Level, strm, (r->fakeceil ? r->fakeceil->surfs : nullptr));
     }
+    if (i%128 == 0) NET_SendNetworkHeartbeat();
   }
 
   for (int i = 0; i < Level->NumSegs; ++i) {
@@ -778,6 +779,7 @@ void VRenderLevelLightmap::saveLightmapsInternal (VStream *strm) {
       WriteSegLightmaps(Level, strm, ds->topsky);
       WriteSegLightmaps(Level, strm, ds->extra);
     }
+    if (i%128 == 0) NET_SendNetworkHeartbeat();
   }
 }
 
@@ -1060,6 +1062,7 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
         if (!LoadLightSurfaces(Level, strm, (r->fakeceil ? r->fakeceil->surfs : nullptr), lmcacheUnknownSurfaceCount, missingWarned)) return false;
       }
     }
+    if (i%128 == 0) NET_SendNetworkHeartbeat();
   }
 
   for (int i = 0; i < Level->NumSegs; ++i) {
@@ -1110,6 +1113,7 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
         if (!LoadLightSegSurfaces(Level, strm, ds->extra, lmcacheUnknownSurfaceCount, missingWarned)) return false;
       }
     }
+    if (i%128 == 0) NET_SendNetworkHeartbeat();
   }
 
   return !strm->IsError();

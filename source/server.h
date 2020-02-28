@@ -58,6 +58,8 @@ void SV_SendLoadedEvent ();
 void SV_SendBeforeSaveEvent (bool isAutosave, bool isCheckpoint);
 void SV_SendAfterSaveEvent (bool isAutosave, bool isCheckpoint);
 
+void NET_SendNetworkHeartbeat (bool forced=false);
+
 // loading mods, take list from modlistfile
 // `modtypestr` is used to show loading messages
 void G_LoadVCMods (VName modlistfile, const char *modtypestr); // in "sv_main.cpp"

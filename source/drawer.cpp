@@ -260,10 +260,12 @@ void VRenderLevelDrawer::PopDrawLists () {
 //==========================================================================
 void R_LdrMsgReset () {
   currMsgNumber = 0;
+  NET_SendNetworkHeartbeat();
 }
 
 
 void R_LdrMsgShow (const char *msg, int clr) {
+  NET_SendNetworkHeartbeat();
 #ifdef CLIENT
   if (!msg || !msg[0]) return;
   if (Drawer && Drawer->IsInited()) {

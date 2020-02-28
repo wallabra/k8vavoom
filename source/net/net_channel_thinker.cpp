@@ -364,6 +364,7 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
     #ifdef CLIENT
     //GCon->Logf("NET:%p: spawned thinker with class `%s`", Th, Th->GetClass()->GetName());
     if (Th && Th->IsA(VLevelInfo::StaticClass())) {
+      //GCon->Logf(NAME_DevNet, "*** NET:%p: spawned thinker with class `%s`", Th, Th->GetClass()->GetName());
       VLevelInfo *LInfo = (VLevelInfo *)Th;
       LInfo->Level = LInfo;
       GClLevel->LevelInfo = LInfo;
