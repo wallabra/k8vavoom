@@ -70,6 +70,7 @@ public:
   virtual void Shutdown () override;
   virtual void Listen (bool state) override;
   virtual int OpenSocket (int) override;
+  virtual int OpenSocketFor (sockaddr_t *addr) override; // required for UDP
   virtual int CloseSocket (int) override;
   virtual int Connect (int, sockaddr_t *) override;
   virtual int CheckNewConnections () override;
@@ -391,6 +392,48 @@ int VUdpDriver::OpenSocket (int port) {
 
 //==========================================================================
 //
+//  VUdpDriver::OpenSocketFor
+//
+//  required for UDP
+//
+//==========================================================================
+int VUdpDriver::OpenSocketFor (sockaddr_t *addr) {
+  int newsocket;
+  sockaddr_in address;
+
+  newsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (newsocket == -1) return -1;
+
+  // switch to non-blocking mode
+#ifdef WIN32
+  DWORD trueval = 1;
+  if (ioctlsocket(newsocket, FIONBIO, &trueval) == -1)
+#else
+  u_long trueval = 1;
+  if (ioctl(newsocket, FIONBIO, (char *)&trueval) == -1)
+#endif
+  {
+    closesocket(newsocket);
+    return -1;
+  }
+
+  GCon->Logf(NAME_DevNet, "binding new socket to %s", *AddrToString(addr));
+  address.sin_family = AF_INET;
+  address.sin_addr.s_addr = (((const sockaddr_in *)addr)->sin_addr.s_addr); //ntohl
+  address.sin_port = 0; //(((const sockaddr_in *)addr)->sin_port); //ntohs
+
+  if (bind(newsocket, (sockaddr *)&address, sizeof(address)) == 0) return newsocket;
+  //if (bind(newsocket, (sockaddr *)addr, sizeof(sockaddr)) == 0) return newsocket;
+
+  closesocket(newsocket);
+
+  GCon->Logf(NAME_DevNet, "Unable to bind to %s", *AddrToString(addr));
+  return -1;
+}
+
+
+//==========================================================================
+//
 //  VUdpDriver::CloseSocket
 //
 //==========================================================================
@@ -432,6 +475,7 @@ int VUdpDriver::CheckNewConnections () {
 //==========================================================================
 int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
   socklen_t addrlen = sizeof(sockaddr_t);
+  memset((void *)addr, 0, addrlen);
   int ret = recvfrom(socket, (char *)buf, len, 0, (sockaddr *)addr, &addrlen);
   if (ret == -1) {
 #ifdef WIN32
@@ -546,8 +590,10 @@ int VUdpDriver::GetSocketAddr (int socket, sockaddr_t *addr) {
 
   memset(addr, 0, sizeof(sockaddr_t));
   getsockname(socket, (sockaddr *)addr, &addrlen);
-  a = ((sockaddr_in *)addr)->sin_addr.s_addr;
-  if (a == 0 || a == inet_addr("127.0.0.1")) ((sockaddr_in *)addr)->sin_addr.s_addr = myAddr;
+  if (myAddr != INADDR_ANY) {
+    a = ((sockaddr_in *)addr)->sin_addr.s_addr;
+    if (a == 0 || a == inet_addr("127.0.0.1")) ((sockaddr_in *)addr)->sin_addr.s_addr = myAddr;
+  }
 
   return 0;
 }

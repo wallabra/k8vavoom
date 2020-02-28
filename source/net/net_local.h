@@ -151,6 +151,7 @@ public:
   virtual void Shutdown () = 0;
   virtual void Listen (bool state) = 0;
   virtual int OpenSocket (int port) = 0;
+  virtual int OpenSocketFor (sockaddr_t *addr) = 0; // required for UDP
   virtual int CloseSocket (int socket) = 0;
   virtual int Connect (int, sockaddr_t *) = 0;
   virtual int CheckNewConnections () = 0;

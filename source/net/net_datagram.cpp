@@ -343,22 +343,24 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   // see if we can resolve the host name
   if (Drv->GetAddrFromName(host, &sendaddr, Net->HostPort) == -1) return nullptr;
 
-  R_LdrMsgShow("creating socket");
+  //R_LdrMsgShow("creating socket");
+  R_LdrMsgShow(va("connecting to [%s]", *Drv->AddrToString(&sendaddr)));
 
-  newsock = Drv->OpenSocket(0);
+  //newsock = Drv->OpenSocket(0);
+  newsock = Drv->OpenSocketFor(&sendaddr);
   if (newsock == -1) return nullptr;
 
   sock = new VDatagramSocket(this);
   sock->LanSocket = newsock;
   sock->LanDriver = Drv;
-
-  R_LdrMsgShow(va("connecting to [%s]", host));
+  sock->Addr = sendaddr;
+  sock->Address = Drv->AddrToString(&sendaddr);
 
   // connect to the host
-  if (Drv->Connect(newsock, &sendaddr) == -1) goto ErrorReturn;
+  //if (Drv->Connect(newsock, &sendaddr) == -1) goto ErrorReturn;
 
   // send the connection request
-  GCon->Log(NAME_DevNet, "trying...");
+  GCon->Logf(NAME_DevNet, "trying %s", *Drv->AddrToString(&sendaddr));
   //SCR_Update();
   start_time = Net->NetTime;
 
@@ -404,7 +406,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
       }
     } while (ret == 0 && (Net->SetNetTime()-start_time) < 2.5);
     if (ret) break;
-    GCon->Log(NAME_DevNet, "still trying...");
+    GCon->Logf(NAME_DevNet, "still trying %s", *Drv->AddrToString(&sendaddr));
     //SCR_Update();
     start_time = Net->SetNetTime();
   }
@@ -539,6 +541,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   len = Drv->Read(acceptsock, packetBuffer.data, MAX_MSGLEN, &clientaddr);
   if (len < (int)sizeof(vint32)) {
     if (len >= 0 && net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: too short packet (%d) from %s", len, *Drv->AddrToString(&clientaddr));
+    if (len < 0) GCon->Logf(NAME_DevNet, "CONN: error reading incoming packet from %s", *Drv->AddrToString(&clientaddr));
     return nullptr;
   }
 
@@ -640,17 +643,22 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     return nullptr;
   }
 
+  GCon->Logf(NAME_DevNet, "CONN: connecting to client %s", *Drv->AddrToString(&clientaddr));
+
+  /*
   // allocate a network socket
   newsock = Drv->OpenSocket(0);
   if (newsock == -1) return nullptr;
 
   // connect to the client
-  GCon->Logf(NAME_DevNet, "CONN: connecting to client %s", *Drv->AddrToString(&clientaddr));
   if (Drv->Connect(newsock, &clientaddr) == -1) {
     GCon->Logf(NAME_DevNet, "CONN: cannot connect to client %s", *Drv->AddrToString(&clientaddr));
     Drv->CloseSocket(newsock);
     return nullptr;
   }
+  */
+  newsock = Drv->OpenSocketFor(&clientaddr);
+  if (newsock == -1) return nullptr;
 
   // allocate a VSocket
   // everything is allocated, just fill in the details
@@ -945,14 +953,20 @@ int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
     // read message
     length = LanDriver->Read(LanSocket, (vuint8 *)&packetBuffer, NET_DATAGRAMSIZE, &readaddr);
 
-    if (length == 0) break;
+    if (length == 0) {
+      //if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: no data from %s (expected address is %s)", *LanDriver->AddrToString(&readaddr), *LanDriver->AddrToString(&Addr));
+      break;
+    }
 
     if ((int)length == -1) {
       GCon->Log(NAME_DevNet, "Read error");
       return -1;
     }
 
-    if (LanDriver->AddrCompare(&readaddr, &Addr) != 0) continue;
+    if (LanDriver->AddrCompare(&readaddr, &Addr) != 0) {
+      if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: rejected packet from %s due to wrong address (%s expected)", *LanDriver->AddrToString(&readaddr), *LanDriver->AddrToString(&Addr));
+      continue;
+    }
 
     Data.SetNum(length);
     memcpy(Data.Ptr(), packetBuffer.data, length);
