@@ -26,13 +26,15 @@
 #ifndef VAVOOM_S_LOCAL_HEADER
 #define VAVOOM_S_LOCAL_HEADER
 
-#define AL_ALEXT_PROTOTYPES
-#include <AL/al.h>
-#include <AL/alc.h>
-#include <AL/alext.h>
+#ifdef CLIENT
+# define AL_ALEXT_PROTOTYPES
+# include <AL/al.h>
+# include <AL/alc.h>
+# include <AL/alext.h>
 // linux headers doesn't define this
-#ifndef OPENAL
-# define OPENAL
+# ifndef OPENAL
+#  define OPENAL
+# endif
 #endif
 
 
@@ -163,6 +165,7 @@ struct VReverbInfo {
 #endif
 
 
+#ifdef CLIENT
 // sound device interface
 // this class implements the only supported OpenAL Soft driver
 class VOpenALDevice {
@@ -249,6 +252,9 @@ public:
   //          from the thread that calls `PlaySound*()` API!
   void NotifySoundLoaded (int sound_id, bool success);
 };
+#else
+class VOpenALDevice {};
+#endif
 
 
 class VAudioCodec;
