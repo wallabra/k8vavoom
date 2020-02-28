@@ -616,7 +616,15 @@ void Host_Frame () {
       if (developer) GCon->Log(NAME_Dev, "Frame delayed due to lengthy operation (this is perfectly ok)");
     }
   } catch (RecoverableError &e) {
-    GCon->Logf("Host_Error: %s", e.message);
+    //GCon->Logf(NAME_Error, "Host Error: \034[RedError]%s\034[Untranslated]", e.message);
+    GCon->Logf(NAME_Error, "Host Error: %s", e.message);
+    /* color test
+    GCon->Logf(NAME_Warning, "W:Host Error: %s", e.message);
+    GCon->Logf(NAME_Init, "I:Host Error: %s", e.message);
+    GCon->Logf(NAME_Debug, "D:Host Error: %s", e.message);
+    GCon->Logf(NAME_DevNet, "N:Host Error: %s", e.message);
+    GCon->Logf("Host Error: %s", e.message);
+    */
 
     // reset progs virtual machine
     VObject::PR_OnAbort();

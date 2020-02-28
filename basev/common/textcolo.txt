@@ -261,3 +261,62 @@ Console:
 Flat:
   #236773
 }
+
+
+// special colors for console messages
+// error
+RedError
+{
+  #3F0000  #7F0000
+Console:
+  #000000  #7F0000    0 127
+  #FF0000  #9F0000  128 256
+Flat:
+  #7F0000
+}
+
+// warning
+WarningYellow
+{
+  #272700  #7F7F00
+Console:
+  #000000  #7F7F00    0 127
+  #FFFF00  #9F9F00  128 256
+Flat:
+  #7F7F00
+}
+
+// debug
+DebugGreen
+{
+  #003F00  #007F00
+Console:
+  #000000  #007F00    0 127
+  #00FF00  #009F00  128 256
+Flat:
+  #007F00
+}
+
+
+// net debug
+DebugCyan
+{
+  #003F3F  #007F7F
+Console:
+  #000000  #007F7F    0 127
+  #00FFFF  #009F9F  128 256
+Flat:
+  #007F7F
+}
+
+
+// init messages
+InitCyan
+{
+  #004F4F  #008F8F
+Console:
+  #000000  #008F8F    0 127
+  #008F8F  #00BFBF  128 256
+Flat:
+  #008F8F
+}
