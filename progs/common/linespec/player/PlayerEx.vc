@@ -159,6 +159,9 @@ int k8HealthAccum_Amount; // amount of currently accumulated health
 float k8HealthAccum_LastRegenTime = -10000;
 float k8HealthAccum_LastBoostTime = -10000;
 
+// this is used in network games; no need to save it
+//transient bool k8HealthAccum_Enabled_NWClient;
+
 bool bFlashlightOn;
 transient bool bFlashlightButtonDown;
 transient float k8NextSuperBulletTime;
@@ -255,7 +258,7 @@ replication {
     ParticleEffect, ClientExplosion, ClientParticleExplosion,
     ClientSparkParticles, ClientRailTrail, DecalEffect,
     // we need this to update UI, but this is not vital info
-    k8HealthAccum_Amount, k8HealthAccum_LastRegenTime, k8HealthAccum_LastBoostTime;
+    /*k8HealthAccum_Enabled_NWClient,*/ k8HealthAccum_Amount;
 
   reliable if (!bIsClient)
     ClientVoice, ClientSpeech, ClientFinaleType, ClientSlideshow1,
