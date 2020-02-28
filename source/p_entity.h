@@ -89,6 +89,14 @@ extern VCvarB r_interpolate_thing_angles_sprites;
 #endif
 extern VCvarB sv_decoration_block_projectiles;
 
+struct VDropOffLineInfo {
+  line_t *line;
+  vint32 side; // is front dropoff?
+  // side -> dir:
+  //  0: line->normal
+  //  1: -line->normal
+};
+
 
 enum {
   STYLE_None, // do not draw
@@ -615,7 +623,10 @@ public:
   VEntity *CheckOnmobj ();
   bool CheckSides (TVec);
   bool FixMapthingPos ();
-  void CheckDropOff (float &, float &);
+  void CheckDropOff (float &DeltaX, float &DeltaY, float baseSpeed=32.0f);
+  // returns number of *added* lines (i.e. it won't clear `list`)
+  // `list` can be `nullptr`
+  int FindDropOffLine (TArray<VDropOffLineInfo> *list, TVec pos);
 
   // this is used to move chase camera
   TVec SlideMoveCamera (TVec org, TVec end, float radius);
@@ -725,6 +736,7 @@ public:
   DECLARE_FUNCTION(CheckSides)
   DECLARE_FUNCTION(FixMapthingPos)
   DECLARE_FUNCTION(CheckDropOff)
+  DECLARE_FUNCTION(FindDropOffLine)
   DECLARE_FUNCTION(CheckPosition)
   DECLARE_FUNCTION(CheckRelPosition)
   DECLARE_FUNCTION(TryMove)

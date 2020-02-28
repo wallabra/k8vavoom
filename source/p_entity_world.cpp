@@ -1900,18 +1900,18 @@ VEntity *VEntity::CheckOnmobj () {
 //
 //  VEntity::CheckSides
 //
-// This routine checks for Lost Souls trying to be spawned    // phares
-// across 1-sided lines, impassible lines, or "monsters can't //   |
-// cross" lines. Draw an imaginary line between the PE        //   V
-// and the new Lost Soul spawn spot. If that line crosses
-// a 'blocking' line, then disallow the spawn. Only search
-// lines in the blocks of the blockmap where the bounding box
-// of the trajectory line resides. Then check bounding box
-// of the trajectory vs. the bounding box of each blocking
-// line to see if the trajectory and the blocking line cross.
-// Then check the PE and LS to see if they're on different
-// sides of the blocking line. If so, return true, otherwise
-// false.
+//  This routine checks for Lost Souls trying to be spawned    // phares
+//  across 1-sided lines, impassible lines, or "monsters can't //   |
+//  cross" lines. Draw an imaginary line between the PE        //   V
+//  and the new Lost Soul spawn spot. If that line crosses
+//  a 'blocking' line, then disallow the spawn. Only search
+//  lines in the blocks of the blockmap where the bounding box
+//  of the trajectory line resides. Then check bounding box
+//  of the trajectory vs. the bounding box of each blocking
+//  line to see if the trajectory and the blocking line cross.
+//  Then check the PE and LS to see if they're on different
+//  sides of the blocking line. If so, return true, otherwise
+//  false.
 //
 //==========================================================================
 bool VEntity::CheckSides (TVec lsPos) {
@@ -2112,7 +2112,7 @@ bool VEntity::FixMapthingPos () {
 //  dropoffs.
 //
 //=============================================================================
-void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
+void VEntity::CheckDropOff (float &DeltaX, float &DeltaY, float baseSpeed) {
   float t_bbox[4];
 
   // try to move away from a dropoff
@@ -2170,12 +2170,89 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
           }
           // move away from dropoff at a standard speed
           // multiple contacted linedefs are cumulative (e.g. hanging over corner)
-          DeltaX += Dir.x*32.0f;
-          DeltaY += Dir.y*32.0f;
+          DeltaX += Dir.x*baseSpeed;
+          DeltaY += Dir.y*baseSpeed;
         }
       }
     }
   }
+}
+
+
+//=============================================================================
+//
+//  FindDropOffLines
+//
+//  find dropoff lines (the same as `CheckDropOff()` is using)
+//
+//=============================================================================
+int VEntity::FindDropOffLine (TArray<VDropOffLineInfo> *list, TVec pos) {
+  int res = 0;
+  float t_bbox[4];
+
+  t_bbox[BOX2D_TOP] = Origin.y+Radius;
+  t_bbox[BOX2D_BOTTOM] = Origin.y-Radius;
+  t_bbox[BOX2D_RIGHT] = Origin.x+Radius;
+  t_bbox[BOX2D_LEFT] = Origin.x-Radius;
+
+  const int xl = MapBlock(t_bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
+  const int xh = MapBlock(t_bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
+  const int yl = MapBlock(t_bbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
+  const int yh = MapBlock(t_bbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
+
+  // check lines
+  //++validcount;
+  XLevel->IncrementValidCount();
+  for (int bx = xl; bx <= xh; ++bx) {
+    for (int by = yl; by <= yh; ++by) {
+      line_t *line;
+      for (VBlockLinesIterator It(XLevel, bx, by, &line); It.GetNext(); ) {
+        if (!line->backsector) continue; // ignore one-sided linedefs
+        // linedef must be contacted
+        if (t_bbox[BOX2D_RIGHT] > line->bbox2d[BOX2D_LEFT] &&
+            t_bbox[BOX2D_LEFT] < line->bbox2d[BOX2D_RIGHT] &&
+            t_bbox[BOX2D_TOP] > line->bbox2d[BOX2D_BOTTOM] &&
+            t_bbox[BOX2D_BOTTOM] < line->bbox2d[BOX2D_TOP] &&
+            P_BoxOnLineSide(t_bbox, line) == -1)
+        {
+          // new logic for 3D Floors
+          /*
+          sec_region_t *FrontReg = SV_FindThingGap(line->frontsector, Origin, Height);
+          sec_region_t *BackReg = SV_FindThingGap(line->backsector, Origin, Height);
+          float front = FrontReg->efloor.GetPointZClamped(Origin);
+          float back = BackReg->efloor.GetPointZClamped(Origin);
+          */
+          TSecPlaneRef ffloor, fceiling;
+          TSecPlaneRef bfloor, bceiling;
+          SV_FindGapFloorCeiling(line->frontsector, Origin, Height, ffloor, fceiling);
+          SV_FindGapFloorCeiling(line->backsector, Origin, Height, bfloor, bceiling);
+          const float front = ffloor.GetPointZClamped(Origin);
+          const float back = bfloor.GetPointZClamped(Origin);
+
+          // the monster must contact one of the two floors, and the other must be a tall dropoff
+          int side;
+          if (back == Origin.z && front < Origin.z-MaxDropoffHeight) {
+            // front side dropoff
+            side = 0;
+          } else if (front == Origin.z && back < Origin.z-MaxDropoffHeight) {
+            // back side dropoff
+            side = 1;
+          } else {
+            continue;
+          }
+
+          ++res;
+          if (list) {
+            VDropOffLineInfo *la = &list->alloc();
+            la->line = line;
+            la->side = side;
+          }
+        }
+      }
+    }
+  }
+
+  return res;
 }
 
 
@@ -2337,128 +2414,137 @@ bool VRoughBlockSearchIterator::GetNext () {
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VEntity, CheckWater) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckWater();
 }
 
 IMPLEMENT_FUNCTION(VEntity, CheckDropOff) {
-  P_GET_PTR(float, DeltaX);
-  P_GET_PTR(float, DeltaY);
-  P_GET_SELF;
-  Self->CheckDropOff(*DeltaX, *DeltaY);
+  float *DeltaX;
+  float *DeltaY;
+  VOptParamFloat baseSpeed(32.0f);
+  vobjGetParamSelf(DeltaX, DeltaY, baseSpeed);
+  Self->CheckDropOff(*DeltaX, *DeltaY, baseSpeed);
+}
+
+// native final int FindDropOffLine (ref array!VDropOffLineInfo list, TVec pos);
+IMPLEMENT_FUNCTION(VEntity, FindDropOffLine) {
+  TArray<VDropOffLineInfo> *list;
+  TVec pos;
+  vobjGetParamSelf(list, pos);
+  RET_INT(Self->FindDropOffLine(list, pos));
 }
 
 IMPLEMENT_FUNCTION(VEntity, CheckPosition) {
-  P_GET_VEC(Pos);
-  P_GET_SELF;
-  RET_BOOL(Self->CheckPosition(Pos));
+  TVec pos;
+  vobjGetParamSelf(pos);
+  RET_BOOL(Self->CheckPosition(pos));
 }
 
 // native final bool CheckRelPosition (out tmtrace_t tmtrace, TVec Pos, optional bool noPickups/*=false*/, optional bool ignoreMonsters, optional bool ignorePlayers);
 IMPLEMENT_FUNCTION(VEntity, CheckRelPosition) {
   tmtrace_t tmp;
-  P_GET_BOOL_OPT(ignorePlayers, false);
-  P_GET_BOOL_OPT(ignoreMonsters, false);
-  P_GET_BOOL_OPT(noPickups, false);
-  P_GET_VEC(Pos);
-  P_GET_PTR(tmtrace_t, tmtrace);
+  tmtrace_t *tmtrace = nullptr;
+  TVec Pos;
+  VOptParamBool noPickups(false);
+  VOptParamBool ignoreMonsters(false);
+  VOptParamBool ignorePlayers(false);
+  vobjGetParamSelf(tmtrace, Pos, noPickups, ignoreMonsters, ignorePlayers);
   if (!tmtrace) tmtrace = &tmp;
-  P_GET_SELF;
   RET_BOOL(Self->CheckRelPosition(*tmtrace, Pos, noPickups, ignoreMonsters, ignorePlayers));
 }
 
 IMPLEMENT_FUNCTION(VEntity, CheckSides) {
-  P_GET_VEC(lsPos);
-  P_GET_SELF;
+  TVec lsPos;
+  vobjGetParamSelf(lsPos);
   RET_BOOL(Self->CheckSides(lsPos));
 }
 
 IMPLEMENT_FUNCTION(VEntity, FixMapthingPos) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_BOOL(Self->FixMapthingPos());
 }
 
 IMPLEMENT_FUNCTION(VEntity, TryMove) {
-  P_GET_BOOL_OPT(checkOnly, false);
-  P_GET_BOOL(AllowDropOff);
-  P_GET_VEC(Pos);
-  P_GET_SELF;
   tmtrace_t tmtrace;
+  TVec Pos;
+  bool AllowDropOff;
+  VOptParamBool checkOnly(false);
+  vobjGetParamSelf(Pos, AllowDropOff, checkOnly);
   RET_BOOL(Self->TryMove(tmtrace, Pos, AllowDropOff, checkOnly));
 }
 
 IMPLEMENT_FUNCTION(VEntity, TryMoveEx) {
   tmtrace_t tmp;
-  P_GET_BOOL_OPT(checkOnly, false);
-  P_GET_BOOL(AllowDropOff);
-  P_GET_VEC(Pos);
-  P_GET_PTR(tmtrace_t, tmtrace);
+  tmtrace_t *tmtrace = nullptr;
+  TVec Pos;
+  bool AllowDropOff;
+  VOptParamBool checkOnly(false);
+  vobjGetParamSelf(tmtrace, Pos, AllowDropOff, checkOnly);
   if (!tmtrace) tmtrace = &tmp;
-  P_GET_SELF;
   RET_BOOL(Self->TryMove(*tmtrace, Pos, AllowDropOff, checkOnly));
 }
 
 IMPLEMENT_FUNCTION(VEntity, TestMobjZ) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_BOOL(!Self->TestMobjZ(Self->Origin));
 }
 
 IMPLEMENT_FUNCTION(VEntity, SlideMove) {
-  P_GET_BOOL_OPT(noPickups, false);
-  P_GET_FLOAT(StepVelScale);
-  P_GET_SELF;
+  float StepVelScale;
+  VOptParamBool noPickups(false);
+  vobjGetParamSelf(StepVelScale, noPickups);
   Self->SlideMove(StepVelScale, noPickups);
 }
 
 IMPLEMENT_FUNCTION(VEntity, BounceWall) {
-  P_GET_FLOAT(overbounce);
-  P_GET_FLOAT(bouncefactor);
-  P_GET_SELF;
+  float overbounce;
+  float bouncefactor;
+  vobjGetParamSelf(overbounce, bouncefactor);
   Self->BounceWall(overbounce, bouncefactor);
 }
 
 IMPLEMENT_FUNCTION(VEntity, CheckOnmobj) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_REF(Self->CheckOnmobj());
 }
 
 IMPLEMENT_FUNCTION(VEntity, LinkToWorld) {
-  P_GET_INT_OPT(properFloorCheck, 0);
-  P_GET_SELF;
+  VOptParamInt properFloorCheck(0);
+  vobjGetParamSelf(properFloorCheck);
   Self->LinkToWorld(properFloorCheck);
 }
 
 IMPLEMENT_FUNCTION(VEntity, UnlinkFromWorld) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->UnlinkFromWorld();
 }
 
 IMPLEMENT_FUNCTION(VEntity, CanSee) {
-  P_GET_BOOL_OPT(disableBetterSight, false);
-  P_GET_REF(VEntity, Other);
-  P_GET_SELF;
+  VEntity *Other;
+  VOptParamBool disableBetterSight(false);
+  vobjGetParamSelf(Other, disableBetterSight);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
   RET_BOOL(Self->CanSee(Other, disableBetterSight));
 }
 
 IMPLEMENT_FUNCTION(VEntity, CanSeeAdv) {
-  P_GET_REF(VEntity, Other);
-  P_GET_SELF;
+  VEntity *Other;
+  vobjGetParamSelf(Other);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
   RET_BOOL(Self->CanSee(Other, false, true));
 }
 
 IMPLEMENT_FUNCTION(VEntity, CanShoot) {
-  P_GET_REF(VEntity, Other);
-  P_GET_SELF;
+  VEntity *Other;
+  vobjGetParamSelf(Other);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
   RET_BOOL(Self->CanShoot(Other));
 }
 
 IMPLEMENT_FUNCTION(VEntity, RoughBlockSearch) {
-  P_GET_INT(Distance);
-  P_GET_PTR(VEntity *, EntPtr);
-  P_GET_SELF;
+  VEntity **EntPtr;
+  int Distance;
+  vobjGetParamSelf(EntPtr, Distance);
   RET_PTR(new VRoughBlockSearchIterator(Self, Distance, EntPtr));
 }
 
