@@ -383,9 +383,10 @@ int VUdpDriver::OpenSocket (int port) {
   address.sin_port = htons((vuint16)port);
   if (bind(newsocket, (sockaddr *)&address, sizeof(address)) == 0) return newsocket;
 
+  const int err = errno;
   closesocket(newsocket);
 
-  Sys_Error("Unable to bind to %s", *AddrToString((sockaddr_t *)&address));
+  Sys_Error("Unable to bind to %s (err=%d)", *AddrToString((sockaddr_t *)&address), err);
   return -1;
 }
 
@@ -424,10 +425,10 @@ int VUdpDriver::OpenSocketFor (sockaddr_t *addr) {
 
   if (bind(newsocket, (sockaddr *)&address, sizeof(address)) == 0) return newsocket;
   //if (bind(newsocket, (sockaddr *)addr, sizeof(sockaddr)) == 0) return newsocket;
-
+  const int err = errno;
   closesocket(newsocket);
 
-  GCon->Logf(NAME_DevNet, "Unable to bind to %s", *AddrToString(addr));
+  GCon->Logf(NAME_Error, "Unable to bind to %s (err=%d)", *AddrToString(addr), err);
   return -1;
 }
 
