@@ -295,7 +295,7 @@ void VThinkerChannel::Update () {
   const bool isServer = Connection->Context->IsServer();
   vuint8 oldRole = 0, oldRemoteRole = 0;
 
-  if (isServer) {
+  if (isServer && !Connection->AutoAck) {
     if (Ent && Ent->FlagsEx&VEntity::EFEX_NoTickGrav) {
       // this is Role on the client
       oldRole = Thinker->Role;
