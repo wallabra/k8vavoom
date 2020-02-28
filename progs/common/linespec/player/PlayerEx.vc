@@ -4431,7 +4431,7 @@ override void PlayerTick (float deltaTime) {
     bFlashlightButtonDown = false;
   }
 
-  ProcessFlashligh();
+  //ProcessFlashligh(); // nope, it is done in `ClientTick()`
 
 #ifdef SPOTLIGHT_DISCO_TEST
   {
@@ -4583,6 +4583,7 @@ override void SetViewPos () {
 override void ClientTick (float deltaTime) {
   bAutoAim = !!GetCvar('autoaim');
   //printdebug("%C: flashlight=%B", self, bFlashlightOn);
+  //if (MO) printdebug("%C: va=%s; %C: a=%s", self, ViewAngles, MO, MO.Angles);
   ProcessFlashligh();
 }
 

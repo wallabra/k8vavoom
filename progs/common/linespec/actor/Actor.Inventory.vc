@@ -306,7 +306,10 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
   if (AimTarget) {
     PlaySound('*fist', CHAN_WEAPON);
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
-    if (bIsPlayer) Player.bFixAngle = true;
+    if (bIsPlayer) {
+      //printdebug("%C: angles=%s; plrva=%s", self, Angles, Player.ViewAngles);
+      Player.bFixAngle = true;
+    }
   }
 }
 
