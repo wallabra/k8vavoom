@@ -246,15 +246,17 @@ void R_OSDMsgShow (const char *msg, int clr) {
       case OSD_Network:
         y = 8*T_FontHeight();
         if (clr == -666) clr = CR_ICE;
-        GRoot->ShadeRect(0, y+T_FontHeight()*currMsgNumber, VirtualWidth, T_FontHeight(), 0.05f);
         //GRoot->FillRect(0, y+T_FontHeight()*currMsgNumber, VirtualWidth, T_FontHeight(), 0, 1.0f);
         break;
       default:
         if (clr == -666) clr = CR_TEAL;
         y = max2(4*T_FontHeight(), VirtualHeight/2-9*T_FontHeight());
+        //GRoot->ShadeRect(96, y+T_FontHeight()*currMsgNumber, VirtualWidth-96*2, T_FontHeight(), 0.666f);
         break;
     }
-    T_DrawText(VirtualWidth/2, y+T_FontHeight()*currMsgNumber, msg, clr/*CR_TAN*/);
+    y += T_FontHeight()*currMsgNumber;
+    GRoot->ShadeRect(96, y, VirtualWidth-96*2, T_FontHeight(), 0.666f);
+    T_DrawText(VirtualWidth/2, y, msg, clr);
     Drawer->Update();
     ++currMsgNumber;
   }
