@@ -782,6 +782,8 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *
     case TYPE_Name: Ret = Map->SerialiseName(Strm, *(VName *)Data); break;
     case TYPE_Vector:
       if (Type.Struct->Name == NAME_TAVec) {
+        // transmit real angles
+        #if 0
         if (Strm.IsLoading()) {
           vuint8 ByteYaw;
           vuint8 BytePitch = 0;
@@ -802,6 +804,27 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *
           Strm.SerialiseBits(&HavePitchRoll, 1);
           if (HavePitchRoll) Strm << BytePitch << ByteRoll;
         }
+        #else
+        if (Strm.IsLoading()) {
+          // loading
+          TAVec *ang = (TAVec *)Data;
+          Strm << ang->yaw;
+          vuint8 HavePitchRoll = 0;
+          Strm.SerialiseBits(&HavePitchRoll, 2);
+          if (HavePitchRoll&1u) Strm << ang->pitch; else ang->pitch = 0.0f;
+          if (HavePitchRoll&2u) Strm << ang->roll; else ang->roll = 0.0f;
+        } else {
+          // writing
+          TAVec *ang = (TAVec *)Data;
+          Strm << ang->yaw;
+          vuint8 HavePitchRoll =
+            (ang->pitch ? 1u : 0u)|
+            (ang->roll ? 2u : 0u);
+          Strm.SerialiseBits(&HavePitchRoll, 2);
+          if (HavePitchRoll&1u) Strm << ang->pitch;
+          if (HavePitchRoll&2u) Strm << ang->roll;
+        }
+        #endif
       } else {
         if (Strm.IsLoading()) {
           vint16 x, y, z;
