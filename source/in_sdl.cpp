@@ -32,6 +32,7 @@
 #include "drawer.h"
 #include "ui/ui.h"
 #include "neoui/neoui.h"
+#include "net/network.h"
 
 #ifndef MAX_JOYSTICK_BUTTONS
 # define MAX_JOYSTICK_BUTTONS  (100)
@@ -93,7 +94,21 @@ private:
 
   void HideRealMouse ();
   void ShowRealMouse ();
+
+public:
+  bool CheckForEscape ();
 };
+
+
+//==========================================================================
+//
+//  GNetCheckForUserAbortCB
+//
+//==========================================================================
+static bool GNetCheckForUserAbortCB (void *udata) {
+  VSdlInputDevice *drv = (VSdlInputDevice *)udata;
+  return drv->CheckForEscape();
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -261,6 +276,11 @@ VSdlInputDevice::VSdlInputDevice ()
 
   // initialise joystick
   StartupJoystick();
+
+  if (GNet) {
+    GNet->CheckUserAbortCB = &GNetCheckForUserAbortCB;
+    GNet->CheckUserAbortUData = (void *)this;
+  }
 }
 
 
@@ -270,6 +290,10 @@ VSdlInputDevice::VSdlInputDevice ()
 //
 //==========================================================================
 VSdlInputDevice::~VSdlInputDevice () {
+  if (GNet) {
+    GNet->CheckUserAbortCB = nullptr;
+    GNet->CheckUserAbortUData = nullptr;
+  }
   SDL_ShowCursor(1); // on
   ShutdownJoystick();
 }
@@ -771,6 +795,40 @@ void VSdlInputDevice::PostJoystick () {
       joy_oldb[i] = joy_newb[i];
     }
   }
+}
+
+
+//==========================================================================
+//
+//  VSdlInputDevice::CheckForEscape
+//
+//==========================================================================
+bool VSdlInputDevice::CheckForEscape () {
+  bool res = false;
+  SDL_Event ev;
+
+  VInputPublic::UnpressAll();
+
+  SDL_PumpEvents();
+  while (SDL_PollEvent(&ev)) {
+    switch (ev.type) {
+      //case SDL_KEYDOWN:
+      case SDL_KEYUP:
+        switch (ev.key.keysym.sym) {
+          case SDLK_ESCAPE: res = true; break;
+          default: break;
+        }
+        break;
+      case SDL_QUIT:
+        res = true;
+        GCmdBuf << "Quit\n";
+        break;
+      default:
+        break;
+    }
+  }
+
+  return res;
 }
 
 

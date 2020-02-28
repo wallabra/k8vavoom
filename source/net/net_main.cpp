@@ -93,7 +93,7 @@ private:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VNetworkPublic *GNet;
+VNetworkPublic *GNet = nullptr;
 
 VCvarS VNetworkLocal::HostName("hostname", "UNNAMED", "Name of this host.");
 // k8: dunno, it was 300. but why? we can have big hiccups on level loading,
@@ -136,6 +136,8 @@ VNetworkPublic::VNetworkPublic ()
   , receivedDuplicateCount(0)
   , shortPacketCount(0)
   , droppedDatagrams(0)
+  , CheckUserAbortCB(nullptr)
+  , CheckUserAbortUData(nullptr)
 {
 }
 
@@ -146,7 +148,8 @@ VNetworkPublic::VNetworkPublic ()
 //
 //==========================================================================
 VNetworkLocal::VNetworkLocal ()
-  : ActiveSockets(nullptr)
+  : VNetworkPublic()
+  , ActiveSockets(nullptr)
   , HostCacheCount(0)
   , HostPort(0)
   , DefaultHostPort(26000)
@@ -616,7 +619,9 @@ VSocketPublic *VNetwork::Connect (const char *InHost) {
   SlistSilent = host.IsNotEmpty();
   Slist();
 
-  while (SlistInProgress) Poll();
+  while (SlistInProgress && !CheckForUserAbort()) {
+    Poll();
+  }
 
   if (host.IsEmpty()) {
     if (HostCacheCount != 1) return nullptr;

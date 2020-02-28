@@ -139,9 +139,18 @@ public:
   int shortPacketCount;
   int droppedDatagrams;
 
+  // if set, `Connect()` will call this to check if user aborted the process
+  // return `true` if aborted
+  bool (*CheckUserAbortCB) (void *udata);
+  void *CheckUserAbortUData; // user-managed
+
+public:
   static VCvarF MessageTimeOut;
 
+public:
   VNetworkPublic ();
+
+  inline bool CheckForUserAbort () { return (CheckUserAbortCB ? CheckUserAbortCB(CheckUserAbortUData) : false); }
 
   virtual void Init () = 0;
   virtual void Shutdown () = 0;
@@ -154,6 +163,7 @@ public:
   virtual void UpdateMaster () = 0;
   virtual void QuitMaster () = 0;
 
+public:
   static VNetworkPublic *Create ();
 };
 

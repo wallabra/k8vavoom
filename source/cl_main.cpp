@@ -288,7 +288,7 @@ void CL_EstablishConnection (const char *host) {
   GCon->Logf("connecting to '%s'...", (host ? host : ""));
   VSocketPublic *Sock = GNet->Connect(host);
   if (!Sock) {
-    GCon->Log("Failed to connect to the server");
+    GCon->Log(NAME_Error, "Failed to connect to the server");
     return;
   }
 

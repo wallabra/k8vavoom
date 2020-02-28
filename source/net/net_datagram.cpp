@@ -364,6 +364,8 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
   //TODO: check for user abort here!
   for (reps = 0; reps < 3; ++reps) {
+    if (Net->CheckForUserAbort()) { ret = 0; break; }
+
     R_OSDMsgShow("sending handshake");
 
     VBitStreamWriter MsgOut(256<<3);
@@ -377,6 +379,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
     TmpByte = NET_PROTOCOL_VERSION;
     MsgOut << TmpByte;
     Drv->Write(newsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
+    bool aborted = false;
     do {
       ret = Drv->Read(newsock, packetBuffer.data, MAX_MSGLEN, &readaddr);
       // if we got something, validate it
@@ -402,8 +405,10 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
           continue;
         }
       }
+
+      if (ret == 0) { aborted = Net->CheckForUserAbort(); if (aborted) break; }
     } while (ret == 0 && (Net->SetNetTime()-start_time) < 2.5);
-    if (ret) break;
+    if (ret || aborted) break;
     GCon->Logf(NAME_DevNet, "still trying %s", *Drv->AddrToString(&sendaddr));
     //SCR_Update();
     start_time = Net->SetNetTime();
