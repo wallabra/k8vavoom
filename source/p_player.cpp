@@ -723,7 +723,14 @@ void VBasePlayer::WriteViewData () {
   // update bam_angles (after teleportation)
   if (PlayerFlags&PF_FixAngle) {
     PlayerFlags &= ~PF_FixAngle;
-    eventClientSetAngles(ViewAngles);
+    //k8: ???
+    if (MO) {
+      TAVec a = ViewAngles;
+      a.yaw = MO->Angles.yaw;
+      eventClientSetAngles(a);
+    } else {
+      eventClientSetAngles(ViewAngles);
+    }
   }
 }
 
