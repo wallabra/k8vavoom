@@ -805,7 +805,9 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           float Radius;
           vuint32 Color;
           Msg << Origin << Radius << Color;
+          #ifdef CLIENT
           Level->Renderer->AddStaticLightRGB(nullptr, Origin, Radius, Color);
+          #endif
         }
         break;
       case CMD_StaticLightSpot:
@@ -817,7 +819,9 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           TVec ConeDir;
           float ConeAngle;
           Msg << Origin << Radius << Color << ConeDir << ConeAngle;
+          #ifdef CLIENT
           Level->Renderer->AddStaticLightRGB(nullptr, Origin, Radius, Color, ConeDir, ConeAngle);
+          #endif
         }
         break;
       case CMD_NewLevel:
@@ -840,6 +844,8 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         if (Msg.IsError() || severInfoPacketCount < 0 || severInfoPacketCount > 1024) Host_Error("Invalid server info size");
         severInfoCurrPacket = (severInfoPacketCount ? 0 : -2);
         //CL_ParseServerInfo(Msg);
+        #else
+        Host_Error("CMD_NewLevel from client");
         #endif
         break;
       case CMD_ServerInfo:
@@ -855,6 +861,8 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           serverInfoBuf += s;
           ++severInfoCurrPacket;
         }
+        #else
+        Host_Error("CMD_ServerInfo from client");
         #endif
         break;
       case CMD_ServerInfoEnd:
@@ -870,6 +878,8 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         CL_ParseServerInfo(&csi); // this loads map
         csi.mapname.clear();
         csi.sinfo.clear();
+        #else
+        Host_Error("CMD_ServerInfoEnd from client");
         #endif
         break;
       case CMD_PreRender: // sent by server, received by client
@@ -883,6 +893,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           cl->eventServerSetUserInfo(cls.userinfo);
           UserInfoSent = true;
         }
+        cls.gotmap = 2;
         #endif
         Connection->SendCommand("PreSpawn\n");
         GCmdBuf << "HideConsole\n";

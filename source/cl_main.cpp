@@ -183,6 +183,12 @@ void CL_ReadFromServer (float deltaTime) {
     CL_UpdateMobjs(deltaTime);
     cl->eventClientTick(deltaTime);
     if (deltaTime) CL_Ticker();
+  } else {
+    /*
+    if (GGameInfo->NetMode == NM_Client && deltaTime) {
+      GCon->Logf(NAME_Debug, "client is not signed on yet... (%g)", Sys_Time());
+    }
+    */
   }
 
   if (deltaTime && GClLevel && GClLevel->LevelInfo) {
@@ -219,7 +225,7 @@ static void SendKeepaliveInternal (double currTime, bool forced) {
 //==========================================================================
 void CL_NetworkHeartbeat (bool forced) {
   if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
-  if (cls.demoplayback) return;
+  if (cls.demorecording || cls.demoplayback) return;
   if (!cl->Net) return;
   SendKeepaliveInternal(Sys_Time(), forced);
 }
@@ -234,7 +240,7 @@ void CL_NetworkHeartbeat (bool forced) {
 //==========================================================================
 void CL_NetworkHeartbeatEx (double currTime, bool forced) {
   if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
-  if (cls.demoplayback) return;
+  if (cls.demorecording || cls.demoplayback) return;
   if (!cl->Net) return;
   SendKeepaliveInternal(currTime, forced);
 }
@@ -271,7 +277,8 @@ void CL_EstablishConnection (const char *host) {
   UserInfoSent = false;
 
   GClGame->eventConnected();
-  cls.signon = 0; // need all the signon messages before playing
+  // need all the signon messages before playing
+  cls.signon = 0;
   ClientLastKeepAliveTime = Sys_Time();
 
   MN_DeactivateMenu();
@@ -297,7 +304,9 @@ void CL_SetupLocalPlayer () {
   cl->eventServerSetUserInfo(cls.userinfo);
 
   GClGame->eventConnected();
-  cls.signon = 0; // need all the signon messages before playing
+  // need all the signon messages before playing
+  // but the map may be aloready loaded
+  cls.signon = 0;
 
   MN_DeactivateMenu();
 
@@ -341,7 +350,8 @@ void CL_SetupStandaloneClient () {
   GClLevel->Renderer->PreRender();
 
   cl->SpawnClient();
-  cls.signon = 1;
+  //cls.signon = 1;
+  cls.clearForStandalone();
 
   // if wipe is enabled, tick the world once, so spawned things will fix themselves
   if (r_wipe_enabled) {
@@ -415,7 +425,8 @@ void CL_Clear () {
   GClGame->ResetIntermission();
   if (cl) cl->ClearInput();
   if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) GAudio->StopAllSound(); // make sure all sounds are stopped
-  cls.signon = 0;
+  //cls.signon = 0;
+  cls.clearForClient();
 }
 
 
@@ -472,6 +483,8 @@ void CL_ParseServerInfo (const ClientServerInfo *sinfo) {
   GCon->Log(NAME_Dev, "Client level loaded");
 
   if (GClLevel->MapHash != sinfo->maphash) Host_Error("Server has different map data");
+
+  cls.gotmap = 1;
 }
 
 

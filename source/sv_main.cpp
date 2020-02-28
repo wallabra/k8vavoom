@@ -484,9 +484,9 @@ void SV_Clear () {
 void SV_NetworkHeartbeat (bool forced) {
   if (!ServerNetContext) return;
   if (GGameInfo->NetMode != NM_DedicatedServer && GGameInfo->NetMode != NM_ListenServer) return; // no need if server is local
-#ifdef CLIENT
-  if (cls.demoplayback) return;
-#endif
+  #ifdef CLIENT
+  if (cls.demorecording || cls.demoplayback) return;
+  #endif
   double currTime = Sys_Time();
   if (currTime < 0) currTime = 0;
   if (ServerLastKeepAliveTime > currTime) ServerLastKeepAliveTime = currTime; // wtf?!
@@ -1649,8 +1649,7 @@ void SV_ShutdownGame () {
 #ifdef CLIENT
   GClLevel = nullptr;
   cl = nullptr;
-  cls.demoplayback = false;
-  cls.signon = 0;
+  cls.clearForDisconnect(); // this resets demo playback flag too
 
   if (GGameInfo->NetMode != NM_DedicatedServer) GClGame->eventDisconnected();
 #endif

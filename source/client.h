@@ -36,6 +36,25 @@ struct client_static_t {
 
   // connection information
   int signon; // 0 to SIGNONS
+  // set to 1 when client got a map
+  int gotmap;
+
+  inline void clearForClient () noexcept {
+    signon = 0;
+    gotmap = 0;
+  }
+
+  inline void clearForStandalone () noexcept {
+    signon = 1;
+    gotmap = 1;
+  }
+
+  inline void clearForDisconnect () noexcept {
+    signon = 0;
+    gotmap = 0;
+    demorecording = false;
+    demoplayback = false;
+  }
 };
 
 

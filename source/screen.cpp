@@ -595,6 +595,20 @@ void SCR_Update (bool fullUpdate) {
 
   // draw user interface
   GRoot->DrawWidgets();
+
+  if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && !GClGame->InIntermission()) {
+    T_SetFont(SmallFont);
+    T_SetAlign(hleft, vtop);
+    const int y = 8;
+    // slightly off vcenter
+    switch (cls.gotmap) {
+      case 0: T_DrawText(4, y, "getting network data (map)...", CR_TAN); break;
+      case 1: T_DrawText(4, y, "getting network data (world)...", CR_TAN); break;
+      case 2: T_DrawText(4, y, "getting network data (spawning)...", CR_TAN); break;
+      default: T_DrawText(4, y, "getting network data (something)...", CR_TAN); break;
+    }
+  }
+
   // console drawing
   C_Drawer();
   // various on-screen statistics
