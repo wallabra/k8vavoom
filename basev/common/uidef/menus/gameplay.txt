@@ -11,7 +11,7 @@ menudef GameplayOptions {
   }
 
   option bool {
-    title = "Monsters can drop off";
+    title = "Monsters can avoid dropoffs";
     cvar = monster_dropoff;
   }
 
