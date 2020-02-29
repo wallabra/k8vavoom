@@ -960,6 +960,27 @@ native static final void printerror (string format, ...) [printf,1];
 // print debug message to console (not filtered, just another message type)
 native static final void printdebug (string format, ...) [printf,1];
 
+// WARNING! keep in sync with C++ code!
+enum PMSG {
+  Log,
+  Warning,
+  Error,
+  Debug,
+  //
+  Bot,
+  BotDev,
+  BotDevAI,
+  BotDevRoam,
+  BotDevCheckPos,
+  BotDevItems,
+  BotDevAttack,
+  BotDevPath,
+  BotDevCrumbs,
+  BotDevPlanPath,
+}
+
+native static final void printmsg (PMSG type, string format, ...) [printf,2];
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // type conversions
