@@ -101,13 +101,24 @@ int queryCounter;
 // key: node index, value: nobody cares
 dictionary!(int, int) refreshMap;
 
-bool debugDump;
+transient bool debugDump;
+transient bool bot_developer_messages_path;
 
 
 override void Destroy () {
   foreach (ref auto node; nodes) delete node;
   nodes.length = 0;
   ::Destroy();
+}
+
+
+//==========================================================================
+//
+//  UpdateCvarCache
+//
+//==========================================================================
+final void UpdateCvarCache () {
+  bot_developer_messages_path = GetCvarB('bot_developer_messages_path');
 }
 
 
@@ -120,7 +131,7 @@ final void IncQueryCounter () {
 #ifdef BOT_PATHER_FORCE_FULL_REFRESH
   foreach (auto node; nodes) {
     if (node.isSectorChanged) {
-      print("FUCK! node #%d changed, but not queued!", node.index);
+      if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "FUCK! node #%d changed, but not queued!", node.index);
       node.queryCounter = 0;
       refreshNode(node);
       Reset();
@@ -138,7 +149,7 @@ final bool needOpenDoor (GameObject::sector_t *sec) {
 final bool isDoorSector (GameObject::sector_t *sec, GameObject::subsector_t *sub) {
   // check if this sector has door activation lines
   GameObject::line_t *ld;
-  //print("checking sector #%s for 'doorness' (%d lines; sub #%d)...", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
+  //if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "checking sector #%s for 'doorness' (%d lines; sub #%d)...", sec-&bot.player.MO.XLevel.Sectors[0], sec.lines.length, sub-&bot.player.MO.XLevel.Subsectors[0]);
   foreach (int idx, ld; sec.lines) {
     if (EntityEx.isGoodDoorLinedef(sec, ld)) return true;
   }
@@ -184,16 +195,16 @@ final bool IsGoodMapPosition (ref TVec pos) {
 final void queueRefreshNode (BotPathNode node, optional bool forced) {
   if (!forced) {
     if (node.queryCounter == queryCounter) return;
-    //print("queueRefreshNode(0): #%d", node.index);
+    //if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "queueRefreshNode(0): #%d", node.index);
     if (!node.isSectorChanged) return;
-    //print("queueRefreshNode(1): #%d", node.index);
+    //if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "queueRefreshNode(1): #%d", node.index);
   } else {
     node.queryCounter = 0;
   }
   if (refreshMap.find(node.index)) return;
-  print("queueRefreshNode(2): #%d", node.index);
+  if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "queueRefreshNode(2): #%d", node.index);
   // queue this node, and all adjacent nodes
-  print("queuing node #%d (sector #%d) for refresh", node.index, node.sub.sector-&bot.player.MO.XLevel.Sectors[0]);
+  if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "queuing node #%d (sector #%d) for refresh", node.index, node.sub.sector-&bot.player.MO.XLevel.Sectors[0]);
   refreshMap.put(node.index, true);
   //node.queryCounter = queryCounter;
 }
@@ -213,7 +224,7 @@ final void refreshNovePassability (BotPathNode node) {
   EntityEx::FakeDoorInfo savedPlane;
   Level lev = bot.player.MO.XLevel;
 
-  print("updating sub #%d (sector #%d) passability (old is %B)", node.index, node.sub.sector-&lev.Sectors[0], node.passable);
+  if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "updating sub #%d (sector #%d) passability (old is %B)", node.index, node.sub.sector-&lev.Sectors[0], node.passable);
 
   fakeOpenDoor(node, out savedPlane);
   scope(exit) restoreFakeOpenDoor(savedPlane);
@@ -248,7 +259,7 @@ final void refreshNovePassability (BotPathNode node) {
   }
 
   if (node.passable != oldPassable) {
-    print("node #%d becomes %svalid (door:%B; sector: %s)", node.index, (node.passable ? "" : "in"), node.door, node.sub.sector-&lev.Sectors[0]);
+    if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "node #%d becomes %svalid (door:%B; sector: %s)", node.index, (node.passable ? "" : "in"), node.door, node.sub.sector-&lev.Sectors[0]);
   }
 }
 
@@ -279,7 +290,7 @@ final void refreshNodeExit (BotPathNode node, int exitnum) {
 
   if (!otherNode.passable) {
     /*if (tr.dist != -1)*/ {
-      print("invalidated exit #%d from node #%d to sub #%d due to other-invalid", exitnum, node.index, tr.subnum);
+      if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "invalidated exit #%d from node #%d to sub #%d due to other-invalid", exitnum, node.index, tr.subnum);
       tr.dist = -1;
       tr.needJump = false;
       tr.needUse = false;
@@ -306,21 +317,21 @@ final void refreshNodeExit (BotPathNode node, int exitnum) {
 
   // if reached, record this path
   if (reached) {
-    //if (dumpReachable && tr.dist < 0) print("  can reach sub #%d from sub #%d", tr.subnum, node.index);
+    //if (dumpReachable && tr.dist < 0) { if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "  can reach sub #%d from sub #%d", tr.subnum, node.index); }
     bool wasValid = (tr.dist >= 0);
     tr.dist = pi.maxdist;
     tr.needJump = pi.needJump;
     tr.needUse = pi.needUse;
     tr.moveCost = pi.maxdist*pi.maxdist+(pi.needUse ? 20 : 0);
     if (bot.IsDangerous(tr.sub.sector)) tr.moveCost *= 9;
-    /*if (!wasValid)*/ print("validated exit #%d from node #%d to sub #%d", exitnum, node.index, tr.subnum);
+    /*if (!wasValid)*/ if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "validated exit #%d from node #%d to sub #%d", exitnum, node.index, tr.subnum);
   } else {
     /*if (tr.dist != -1)*/ {
       tr.dist = -1;
       tr.needJump = false;
       tr.needUse = false;
       tr.moveCost = -1;
-      print("invalidated exit #%d from node #%d to sub #%d", exitnum, node.index, tr.subnum);
+      if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "invalidated exit #%d from node #%d to sub #%d", exitnum, node.index, tr.subnum);
     }
   }
 }
@@ -344,7 +355,7 @@ final void refreshAllNodesInMap () {
     int key = refreshMap.keyAtIndex(idx);
     auto node = nodes[key];
     node.queryCounter = 0;
-    print("refreshing node #%d (sector #%d)", node.index, node.sub.sector-&bot.player.MO.XLevel.Sectors[0]);
+    if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "refreshing node #%d (sector #%d)", node.index, node.sub.sector-&bot.player.MO.XLevel.Sectors[0]);
     refreshNode(node);
   }
 
@@ -365,7 +376,7 @@ final void refreshAllNodesInMap () {
     if (!tmpNodeInds.length) break;
     foreach (auto nidx; tmpNodeInds) {
       auto node = nodes[nidx];
-      print("secondary refreshing node #%d (sector #%d)", node.index, node.sub.sector-&bot.player.MO.XLevel.Sectors[0]);
+      if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "secondary refreshing node #%d (sector #%d)", node.index, node.sub.sector-&bot.player.MO.XLevel.Sectors[0]);
       refreshNode(node);
     }
   }
@@ -502,7 +513,7 @@ final bool BuildPath (TVec from, GameObject::subsector_t *fromsub, TVec dest, Ga
     refreshAllNodesInMap();
     bool res = Solve(nodes[fromsub-&lev.Subsectors[0]], nodes[destsub-&lev.Subsectors[0]]);
     if (refreshMap.length == 0) return res;
-    print("*** MAP CHANGED! ***");
+    if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "*** MAP CHANGED! ***");
   }
 }
 
