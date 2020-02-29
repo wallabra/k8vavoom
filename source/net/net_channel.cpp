@@ -53,32 +53,12 @@ VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AInd
 //
 //==========================================================================
 VChannel::~VChannel () {
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  #ifdef CLIENT
-  GCon->Logf(NAME_Debug, "VChannel::~VChannel:%p (#%d) -- enter", this, Index);
-  #endif
-  #endif
   Closing = true; // just in case
   ClearAllQueues();
   if (Index >= 0 && Index < MAX_CHANNELS && Connection) {
-    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-    #ifdef CLIENT
-    GCon->Logf(NAME_Debug, "VChannel::~VChannel:%p (#%d) -- before `UnregisterChannel()`", this, Index);
-    #endif
-    #endif
     Connection->UnregisterChannel(this);
     Index = -1; // just in case
-    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-    #ifdef CLIENT
-    GCon->Logf(NAME_Debug, "VChannel::~VChannel:%p (#%d) -- after `UnregisterChannel()`", this, Index);
-    #endif
-    #endif
   }
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  #ifdef CLIENT
-  GCon->Logf(NAME_Debug, "VChannel::~VChannel:%p (#%d) -- done", this, Index);
-  #endif
-  #endif
 }
 
 
@@ -137,23 +117,11 @@ void VChannel::Suicide () {
 //==========================================================================
 void VChannel::Close () {
   if (Closing) return; // already in closing state
-
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  #ifdef CLIENT
-  GCon->Logf(NAME_Debug, "VChannel::Close:%p (#%d) -- sending message", this, Index);
-  #endif
-  #endif
   // send close message
   VMessageOut Msg(this);
   Msg.bReliable = true;
   Msg.bClose = true;
   SendMessage(&Msg);
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  #ifdef CLIENT
-  GCon->Logf(NAME_Debug, "VChannel::Close:%p (#%d) -- message sent", this, Index);
-  #endif
-  #endif
-
   // enter closing state
   Closing = true;
 }
@@ -307,6 +275,7 @@ bool VChannel::ReceivedAck () {
   // only the first ones are deleted so that close message doesn't
   // get handled while there's still messages that are not ACK-ed
   bool CloseAcked = false;
+
   while (!CloseAcked && OutMsg && OutMsg->bReceivedAck) {
     VMessageOut *Msg = OutMsg;
     OutMsg = Msg->Next;
@@ -317,14 +286,11 @@ bool VChannel::ReceivedAck () {
   }
 
   // if we received ACK for close message then delete this channel
-  //if (CloseAcked) delete this;
   if (CloseAcked) {
-    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-    GCon->Logf(NAME_Debug, "%p: got close ack for channel #%d", this, Index);
-    #endif
     ReceivedClosingAck();
     Suicide();
   }
+
   return CloseAcked;
 }
 

@@ -205,11 +205,6 @@ void VNetConnection::RemoveDeadThinkerChannels (bool resetUpdated) {
     vassert(chan);
     if (chan->IsDead()) {
       // this channel is closed, and should be removed
-      #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-      //#ifdef CLIENT
-      GCon->Logf(NAME_Debug, ":::%p: removing dead channel #%d", chan, chan->Index);
-      //#endif
-      #endif
       if (chan->Index >= 0) UnregisterChannel(chan, false); // leave it in hash
       chan->Index = -666; // channel should not unregister itself, we'll take care of it
       delete chan;
@@ -352,16 +347,6 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
         if (Msg.bOpen) {
           Chan = CreateChannel(Msg.ChanType, Msg.ChanIndex, false);
           Chan->OpenAcked = true;
-          #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-          #ifdef CLIENT
-          if (Chan->IsThinker()) {
-            VThinkerChannel *tc = (VThinkerChannel *)Chan;
-            GCon->Logf(NAME_Debug, ":::%p: created thinker channel #%d (%s : %u)", Chan, Chan->Index, (tc->Thinker ? tc->Thinker->GetClass()->GetName() : "<none>"), (tc->Thinker ? tc->Thinker->GetUniqueId() : 0u));
-          } else {
-            GCon->Logf(NAME_Debug, ":::%p: created channel #%d", Chan, Chan->Index);
-          }
-          #endif
-          #endif
         } else {
           if (Msg.ChanIndex < 0 || Msg.ChanIndex >= MAX_CHANNELS) {
             GCon->Logf(NAME_DevNet, "Ignored message for invalid channel %d", Msg.ChanIndex);
@@ -490,17 +475,6 @@ void VNetConnection::RegisterChannel (VChannel *chan) {
   }
   ChanIdxMap.put(idx, chan);
   //!GCon->Logf(NAME_DevNet, "   VNetConnection (%s): registered channel %d (%s) ('%s')", *GetAddress(), chan->Index, chan->GetTypeName(), *shitppTypeNameObj(*chan));
-  //if (chan->Index == 2) abort();
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  #ifdef CLIENT
-  if (chan->IsThinker()) {
-    VThinkerChannel *tc = (VThinkerChannel *)chan;
-    GCon->Logf(NAME_Debug, ":::%p: registered thinker channel #%d (%s : %u)", chan, chan->Index, (tc->Thinker ? tc->Thinker->GetClass()->GetName() : "<none>"), (tc->Thinker ? tc->Thinker->GetUniqueId() : 0u));
-  } else {
-    GCon->Logf(NAME_Debug, ":::%p: registered channel #%d", chan, chan->Index);
-  }
-  #endif
-  #endif
 }
 
 
@@ -513,16 +487,6 @@ void VNetConnection::UnregisterChannel (VChannel *chan, bool touchMap) {
   if (!chan) return;
   const vint32 idx = chan->Index;
   vassert(idx >= 0 && idx < MAX_CHANNELS);
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  #ifdef CLIENT
-  if (chan->IsThinker()) {
-    VThinkerChannel *tc = (VThinkerChannel *)chan;
-    GCon->Logf(NAME_Debug, ":::%p: unregistering thinker channel #%d (%s : %u)", chan, chan->Index, (tc->Thinker ? tc->Thinker->GetClass()->GetName() : "<none>"), (tc->Thinker ? tc->Thinker->GetUniqueId() : 0u));
-  } else {
-    GCon->Logf(NAME_Debug, ":::%p: unregistering channel #%d", chan, chan->Index);
-  }
-  #endif
-  #endif
   const unsigned bmpIdx = ((unsigned)idx)/32u;
   const unsigned bmpOfs = ((unsigned)idx)&0x1fu;
   if (!(ChanFreeBitmap[bmpIdx]&(1u<<bmpOfs))) Sys_Error("trying to unregister non-registered channel %d", idx);
@@ -1016,11 +980,6 @@ void VNetConnection::UpdateLevel () {
     PendingThinkers.reset();
     PendingGoreEnts.reset();
     AliveGoreChans.reset();
-    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-    #ifndef CLIENT
-    GCon->Log(NAME_Debug, "=== VNetConnection::UpdateLevel ===");
-    #endif
-    #endif
 
     // mark all entity channels as not updated in this frame, and remove dead channels
     RemoveDeadThinkerChannels(true);
@@ -1032,13 +991,6 @@ void VNetConnection::UpdateLevel () {
       if (!chan) {
         // add gore entities as last ones
         if (VStr::startsWith(th->GetClass()->GetName(), "K8Gore")) {
-          /*
-          #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-          #ifndef CLIENT
-          GCon->Logf(NAME_Debug, "  thinker '%s':%u is GORE: pending...", th->GetClass()->GetName(), th->GetUniqueId());
-          #endif
-          #endif
-          */
           vassert(th->GetClass()->IsChildOf(VEntity::StaticClass()));
           PendingGoreEnts.append((VEntity *)(*th));
           continue;
@@ -1047,26 +999,10 @@ void VNetConnection::UpdateLevel () {
         chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
         if (!chan) {
           // remember this thinker
-          #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-          #ifndef CLIENT
-          GCon->Logf(NAME_Debug, "  thinker '%s':%u is pending...", th->GetClass()->GetName(), th->GetUniqueId());
-          #endif
-          #endif
           PendingThinkers.append(*th);
           continue;
         }
-        #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-        GCon->Logf(NAME_Debug, "  thinker '%s':%u is new channel #%d...", th->GetClass()->GetName(), th->GetUniqueId(), chan->Index);
-        #endif
         chan->SetThinker(*th);
-      } else {
-        /*
-        #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-        #ifndef CLIENT
-        GCon->Logf(NAME_Debug, "  #%d: old thinker '%s':%u", chan->Index, th->GetClass()->GetName(), th->GetUniqueId());
-        #endif
-        #endif
-        */
       }
       chan->Update();
     }
@@ -1081,19 +1017,11 @@ void VNetConnection::UpdateLevel () {
           VThinkerChannel *tc = (VThinkerChannel *)chan;
           if (!tc->UpdatedThisFrame) {
             if (!chan->Closing) {
-              #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-              GCon->Logf(NAME_Debug, ":::%p: closing thinker channel #%d (%s : %u)", chan, chan->Index, (tc->Thinker ? tc->Thinker->GetClass()->GetName() : "<none>"), (tc->Thinker ? tc->Thinker->GetUniqueId() : 0u));
-              #endif
               chan->Close();
             }
           }
           if (chan->IsDead()) {
             // remove it
-            #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-            #ifdef CLIENT
-            GCon->Logf(NAME_Debug, ":::%p: removing inactive/closed channel #%d", chan, chan->Index);
-            #endif
-            #endif
             UnregisterChannel(chan, false); // leave it in hash
             chan->Index = -667; // channel should not unregister itself, we'll take care of it
             delete chan;
@@ -1110,14 +1038,6 @@ void VNetConnection::UpdateLevel () {
         ++it;
       }
     }
-
-    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-    #ifndef CLIENT
-    if (PendingThinkers.length()) {
-      GCon->Logf(NAME_Debug, "  *** we have %d pending thinkers, and %d free channels...", PendingThinkers.length(), MAX_CHANNELS-ChanIdxMap.length());
-    }
-    #endif
-    #endif
 
     // if we have some pending thinkers, open channels for them
     if (PendingThinkers.length()) {
@@ -1148,9 +1068,6 @@ void VNetConnection::UpdateLevel () {
         VThinkerChannel *chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
         if (!chan) break; // no room
         chan->SetThinker(PendingThinkers[f]);
-        #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-        GCon->Logf(NAME_Debug, "  added pending thinger '%s':%u (%p; #%d)", PendingThinkers[f]->GetClass()->GetName(), PendingThinkers[f]->GetUniqueId(), chan, chan->Index);
-        #endif
         chan->Update();
       }
     }
@@ -1163,9 +1080,6 @@ void VNetConnection::UpdateLevel () {
         VThinkerChannel *chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
         if (!chan) break; // no room
         chan->SetThinker(it);
-        #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-        GCon->Logf(NAME_Debug, "  added pending gore '%s':%u (%p; #%d)", it->GetClass()->GetName(), it->GetUniqueId(), chan, chan->Index);
-        #endif
         chan->Update();
       }
     }
@@ -1218,12 +1132,6 @@ void VNetConnection::ResetLevel () {
     VChannel *chan = it.getValue();
     vassert(chan);
     if (chan->IsThinker()) {
-      #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-      #ifdef CLIENT
-      VThinkerChannel *tc = (VThinkerChannel *)chan;
-      GCon->Logf(NAME_Debug, ":::%p: resetlevel: killing thinker channel #%d (%s : %u)", chan, chan->Index, (tc->Thinker ? tc->Thinker->GetClass()->GetName() : "<none>"), (tc->Thinker ? tc->Thinker->GetUniqueId() : 0u));
-      #endif
-      #endif
       chan->Close(); //k8: should we close it, or we can simply kill it?
       /*
       chan->Suicide();
@@ -1237,12 +1145,6 @@ void VNetConnection::ResetLevel () {
     }
     ++it;
   }
-  /*
-  for (int i = OpenChannels.Num()-1; i >= 0; --i) {
-    VChannel *Chan = OpenChannels[i];
-    if (Chan->Type == CHANNEL_Thinker) Chan->Close();
-  }
-  */
   GetLevelChannel()->ResetLevel();
 }
 

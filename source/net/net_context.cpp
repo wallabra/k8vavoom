@@ -62,26 +62,13 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
   if (IsClient()) {
     // client; have connection with a server
     VThinkerChannel *chan = ServerConnection->ThinkerChannels.FindPtr(Th);
-    if (chan) {
-      #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-      GCon->Logf(NAME_Debug, "NET:CLIENT:%p: destroying thinker with class `%s`; chan %p: #%d", Th, Th->GetClass()->GetName(), chan, chan->Index);
-      #endif
-      chan->Close();
-      #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-      GCon->Logf(NAME_Debug, "NET:CLIENT:%p: CLOSED thinker with class `%s`; chan %p: #%d", Th, Th->GetClass()->GetName(), chan, chan->Index);
-      #endif
-    }
+    if (chan) chan->Close();
     // remove from detached list (just in case)
     ServerConnection->DetachedThinkers.remove(Th);
   } else {
     for (auto &&it : ClientConnections) {
       VThinkerChannel *chan = it->ThinkerChannels.FindPtr(Th);
-      if (chan) {
-        #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-        GCon->Logf(NAME_Debug, "NET:SERVER:%p: destroyed thinker with class `%s`; chan %p: #%d", Th, Th->GetClass()->GetName(), chan, chan->Index);
-        #endif
-        chan->Close();
-      }
+      if (chan) chan->Close();
       if (it->DetachedThinkers.has(Th)) GCon->Logf(NAME_Debug, "%s:%u: removed from detached list", Th->GetClass()->GetName(), Th->GetUniqueId());
       // remove from detached list
       it->DetachedThinkers.remove(Th);

@@ -44,9 +44,6 @@ VControlChannel::VControlChannel (VNetConnection *AConnection, vint32 AIndex, vu
 //
 //==========================================================================
 void VControlChannel::Suicide () {
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  GCon->Logf(NAME_Debug, "VControlChannel::Suicide:%p (#%d)", this, Index);
-  #endif
   VChannel::Suicide();
   Closing = true; // just in case
   ClearAllQueues();

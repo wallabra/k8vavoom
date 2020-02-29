@@ -57,11 +57,6 @@ VThinkerChannel::~VThinkerChannel () {
   Closing = true;
   // if this is a client version of entity, destroy it
   RemoveThinkerFromGame();
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  #ifdef CLIENT
-  GCon->Logf(NAME_Debug, "VThinkerChannel::~VThinkerChannel:%p (#%d) -- done", this, Index);
-  #endif
-  #endif
 }
 
 

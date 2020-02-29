@@ -26,8 +26,6 @@
 #ifndef VAVOOM_NETWORK_HEADER
 #define VAVOOM_NETWORK_HEADER
 
-//#define VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-
 extern VCvarB net_fixed_name_set;
 extern VCvarB net_debug_fixed_name_set;
 

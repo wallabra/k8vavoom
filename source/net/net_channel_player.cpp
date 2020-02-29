@@ -58,9 +58,6 @@ VPlayerChannel::~VPlayerChannel () {
 //
 //==========================================================================
 void VPlayerChannel::Suicide () {
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  GCon->Logf(NAME_Debug, "VPlayerChannel::Suicide:%p (#%d)", this, Index);
-  #endif
   SetPlayer(nullptr);
   VChannel::Suicide();
   Closing = true; // just in case

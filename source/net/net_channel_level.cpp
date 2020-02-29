@@ -92,9 +92,6 @@ VLevelChannel::~VLevelChannel () {
 //
 //==========================================================================
 void VLevelChannel::Suicide () {
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  GCon->Logf(NAME_Debug, "VLevelChannel::Suicide:%p (#%d)", this, Index);
-  #endif
   VChannel::Suicide();
   Closing = true; // just in case
   ClearAllQueues();
