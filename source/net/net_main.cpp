@@ -35,7 +35,7 @@ static const char *cli_Port = nullptr;
   /*&& VParsedArgs::RegisterFlagSet("-listen", nullptr, &cli_Listen)*/;
 
 
-VCvarB net_fixed_name_set("net_fixed_name_set", false, "Send fixed name set (old way)? WARNING! this is experimental option!", CVAR_PreInit);
+VCvarB net_fixed_name_set("net_fixed_name_set", true, "Send fixed name set (old way)? WARNING! this is experimental option!", CVAR_PreInit);
 VCvarB net_debug_fixed_name_set("net_debug_fixed_name_set", false, "Dump new names?");
 
 
