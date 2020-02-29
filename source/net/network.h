@@ -28,6 +28,9 @@
 
 //#define VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
 
+extern VCvarB net_fixed_name_set;
+extern VCvarB net_debug_fixed_name_set;
+
 
 class VNetContext;
 
@@ -243,6 +246,7 @@ public:
   void ReceivedRawMessage (VMessageIn &);
   virtual void ParsePacket (VMessageIn &) = 0;
   void SendMessage (VMessageOut *);
+  virtual void ReceivedClosingAck (); // some channels may want to set some flags here; WARNING! don't close/suicide here!
   virtual bool ReceivedAck (); // returns `true` if closing ack received (the caller should delete it)
   virtual void Close ();
   virtual void Tick ();
@@ -387,6 +391,7 @@ public:
   virtual ~VObjectMapChannel () override;
   virtual void Tick () override;
   void Update ();
+  void ReceivedClosingAck () override; // sets `ObjMapSent` flag
   virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
 };
@@ -572,6 +577,11 @@ private:
   TArray<VClass *> ClassLookup;
   TMap<VClass *, vuint32> ClassMap;
 
+  TMapNC<VName, int> NewName2Idx;
+  TMapNC<int, VName> NewIdx2Name;
+
+  int NewNameFirstIndex;
+
 public:
   VNetConnection *Connection;
 
@@ -582,6 +592,11 @@ public:
 
   void SetupClassLookup ();
   bool CanSerialiseObject (VObject *);
+
+  // called on name receiving
+  void SetNumberOfKnownNames (int newlen);
+  // called on reading
+  void ReceivedName (int index, VName Name);
 
   virtual bool SerialiseName (VStream &, VName &) override;
   virtual bool SerialiseObject (VStream &, VObject *&) override;

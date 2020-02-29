@@ -258,7 +258,10 @@ void VThinkerChannel::Update () {
          if (F == Connection->Context->RoleField) FieldValue = Data+Connection->Context->RemoteRoleField->Ofs;
     else if (F == Connection->Context->RemoteRoleField) FieldValue = Data+Connection->Context->RoleField->Ofs;
 
-    if (VField::IdenticalValue(FieldValue, OldData+F->Ofs, F->Type)) continue;
+    if (VField::IdenticalValue(FieldValue, OldData+F->Ofs, F->Type)) {
+      //GCon->Logf(NAME_DevNet, "%s:%u: skipped field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
+      continue;
+    }
     if (F->Type.Type == TYPE_Array) {
       VFieldType IntType = F->Type;
       IntType.Type = F->Type.ArrayInnerType;
@@ -266,7 +269,10 @@ void VThinkerChannel::Update () {
       for (int i = 0; i < F->Type.GetArrayDim(); ++i) {
         vuint8 *Val = FieldValue+i*InnerSize;
         vuint8 *OldVal = OldData+F->Ofs+i*InnerSize;
-        if (VField::IdenticalValue(Val, OldVal, IntType)) continue;
+        if (VField::IdenticalValue(Val, OldVal, IntType)) {
+          //GCon->Logf(NAME_DevNet, "%s:%u: skipped array field #%d [%d] (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, i, F->GetName(), *IntType.GetName());
+          continue;
+        }
 
         // if it's an object reference that cannot be serialised, send it as nullptr reference
         if (IntType.Type == TYPE_Reference && !Connection->ObjMap->CanSerialiseObject(*(VObject **)Val)) {
@@ -277,6 +283,7 @@ void VThinkerChannel::Update () {
         Msg.WriteInt(F->NetIndex/*, Thinker->GetClass()->NumNetFields*/);
         Msg.WriteInt(i/*, F->Type.GetArrayDim()*/);
         if (VField::NetSerialiseValue(Msg, Connection->ObjMap, Val, IntType)) {
+          //GCon->Logf(NAME_DevNet, "%s:%u: sent array field #%d [%d] (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, i, F->GetName(), *IntType.GetName());
           VField::CopyFieldValue(Val, OldVal, IntType);
         }
       }
@@ -289,6 +296,7 @@ void VThinkerChannel::Update () {
 
       Msg.WriteInt(F->NetIndex/*, Thinker->GetClass()->NumNetFields*/);
       if (VField::NetSerialiseValue(Msg, Connection->ObjMap, FieldValue, F->Type)) {
+        //GCon->Logf(NAME_DevNet, "%s:%u: sent field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
         VField::CopyFieldValue(FieldValue, OldData+F->Ofs, F->Type);
       }
     }

@@ -49,6 +49,7 @@ VObjectMapChannel::VObjectMapChannel (VNetConnection *AConnection, vint32 AIndex
 //==========================================================================
 VObjectMapChannel::~VObjectMapChannel () {
   Connection->ObjMapSent = true;
+  //GCon->Logf(NAME_DevNet, "initial objects and names sent!");
 }
 
 
@@ -59,7 +60,7 @@ VObjectMapChannel::~VObjectMapChannel () {
 //==========================================================================
 void VObjectMapChannel::Suicide () {
   #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  GCon->Logf(NAME_Debug, "VObjectMapChannel::Suicide:%p (#%d)", this, Index);
+  GCon->Logf(NAME_DevNet, "VObjectMapChannel::Suicide:%p (#%d)", this, Index);
   #endif
   VChannel::Suicide();
   Closing = true; // just in case
@@ -68,7 +69,24 @@ void VObjectMapChannel::Suicide () {
     Connection->UnregisterChannel(this);
     Index = -1; // just in case
   }
+  //if (!Connection->ObjMapSent) GCon->Logf(NAME_DevNet, "VObjectMapChannel::DONE:%p (#%d)", this, Index);
   Connection->ObjMapSent = true;
+}
+
+
+//==========================================================================
+//
+//  VObjectMapChannel::ReceivedClosingAck
+//
+//  some channels may want to set some flags here
+//
+//  WARNING! don't close/suicide here!
+//
+//==========================================================================
+void VObjectMapChannel::ReceivedClosingAck () {
+  //GCon->Logf(NAME_DevNet, "VObjectMapChannel::ReceivedClosingAck:%p (#%d)", this, Index);
+  Connection->ObjMapSent = true;
+  GCon->Logf(NAME_DevNet, "initial objects and names sent");
 }
 
 
@@ -143,7 +161,8 @@ void VObjectMapChannel::ReadCounters (VMessageIn &Msg) {
     //Msg << NumNames;
     //if (!Msg.bOpen) GCon->Logf("MORE: names=%d (%d)", NumNames, Connection->ObjMap->NameLookup.length());
     vassert(Connection->ObjMap->NameLookup.length() <= NumNames);
-    Connection->ObjMap->NameLookup.SetNum(NumNames);
+    //Connection->ObjMap->NameLookup.SetNum(NumNames);
+    Connection->ObjMap->SetNumberOfKnownNames(NumNames);
   }
 
   if (newClasses) {
@@ -167,8 +186,6 @@ void VObjectMapChannel::ReadCounters (VMessageIn &Msg) {
 //
 //==========================================================================
 void VObjectMapChannel::Update () {
-  //!GCon->Logf(NAME_DevNet, "!!! VObjectMapChannel::Update: OutMsg=%d; OpenAcked=%d", (OutMsg ? 1 : 0), (OpenAcked ? 1 :0));
-
   if (OutMsg && !OpenAcked) return;
 
   if (CurrName == Connection->ObjMap->NameLookup.Num() && CurrClass == Connection->ObjMap->ClassLookup.Num()) {
@@ -227,6 +244,14 @@ void VObjectMapChannel::Update () {
   // this is the last message
   SendMessage(&Msg);
   Close();
+
+  if (net_fixed_name_set) {
+    GCon->Logf(NAME_DevNet, "done writing initial objects (%d) and names (%d)", CurrClass, CurrName);
+  } else {
+    vassert(CurrName == 0);
+    GCon->Logf(NAME_DevNet, "done writing initial objects (%d) and names (%d)", CurrClass, Connection->ObjMap->NewName2Idx.length());
+  }
+  //Connection->ObjMapSent = true;
 }
 
 
@@ -238,18 +263,21 @@ void VObjectMapChannel::Update () {
 void VObjectMapChannel::ParsePacket (VMessageIn &Msg) {
   ReadCounters(Msg);
 
+  TArray<char> buf;
+
+  const bool haveSomeWork =
+    CurrName < Connection->ObjMap->NameLookup.Num() ||
+    CurrClass < Connection->ObjMap->ClassLookup.Num();
+
   // read names
   while (!Msg.AtEnd() && CurrName < Connection->ObjMap->NameLookup.Num()) {
     int Len = Msg.ReadInt(/*NAME_SIZE*/);
-    char Buf[NAME_SIZE+1];
-    Msg.Serialise(Buf, Len);
-    Buf[Len] = 0;
-    VName Name = Buf;
-    Connection->ObjMap->NameLookup[CurrName] = Name;
-    while (Connection->ObjMap->NameMap.Num() <= Name.GetIndex()) {
-      Connection->ObjMap->NameMap.Append(-1);
-    }
-    Connection->ObjMap->NameMap[Name.GetIndex()] = CurrName;
+    buf.setLength(Len+1, false);
+    //char buf[NAME_SIZE+1];
+    Msg.Serialise(buf.ptr(), Len);
+    buf[Len] = 0;
+    VName Name(buf.ptr());
+    Connection->ObjMap->ReceivedName(CurrName, Name);
     ++CurrName;
   }
 
@@ -262,5 +290,9 @@ void VObjectMapChannel::ParsePacket (VMessageIn &Msg) {
     Connection->ObjMap->ClassLookup[CurrClass] = C;
     Connection->ObjMap->ClassMap.Set(C, CurrClass);
     ++CurrClass;
+  }
+
+  if (haveSomeWork && CurrName >= Connection->ObjMap->NameLookup.Num() && CurrClass >= Connection->ObjMap->ClassLookup.Num()) {
+    GCon->Logf(NAME_DevNet, "received initial names (%d) and classes (%d)", CurrName, CurrClass);
   }
 }

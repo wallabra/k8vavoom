@@ -35,6 +35,10 @@ static const char *cli_Port = nullptr;
   /*&& VParsedArgs::RegisterFlagSet("-listen", nullptr, &cli_Listen)*/;
 
 
+VCvarB net_fixed_name_set("net_fixed_name_set", false, "Send fixed name set (old way)? WARNING! this is experimental option!", CVAR_PreInit);
+VCvarB net_debug_fixed_name_set("net_debug_fixed_name_set", false, "Dump new names?");
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class VNetwork : public VNetworkLocal {
 private:
@@ -238,6 +242,8 @@ VNetwork::~VNetwork () {
 //
 //==========================================================================
 void VNetwork::Init () {
+  net_fixed_name_set.SetReadOnly(true); // it is dangerous to go alone!
+
   const char *p = cli_Port;
   if (p && p[0]) {
     DefaultHostPort = VStr::atoi(p);

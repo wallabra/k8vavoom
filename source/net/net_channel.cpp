@@ -284,6 +284,19 @@ void VChannel::SpecialAck (VMessageOut *msg) {
 
 //==========================================================================
 //
+//  VChannel::ReceivedClosingAck
+//
+//  some channels may want to set some flags here
+//
+//  WARNING! don't close/suicide here!
+//
+//==========================================================================
+void VChannel::ReceivedClosingAck () {
+}
+
+
+//==========================================================================
+//
 //  VChannel::ReceivedAck
 //
 //  returns `true` if channel is closed (the caller should delete it)
@@ -309,6 +322,7 @@ bool VChannel::ReceivedAck () {
     #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
     GCon->Logf(NAME_Debug, "%p: got close ack for channel #%d", this, Index);
     #endif
+    ReceivedClosingAck();
     Suicide();
   }
   return CloseAcked;
