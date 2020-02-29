@@ -435,6 +435,20 @@ public:
           else if (event == NAME_Log) xprintStr("\x1b[0;32m", fo);
           else if (event == NAME_Debug) xprintStr("\x1b[0;35;1m", fo);
           else if (event == NAME_Chat) xprintStr("\x1b[0;37;1m", fo);
+          else if (event == NAME_Bot ||
+                   event == NAME_BotDev ||
+                   event == NAME_BotDevAI ||
+                   event == NAME_BotDevRoam ||
+                   event == NAME_BotDevCheckPos ||
+                   event == NAME_BotDevItems ||
+                   event == NAME_BotDevAttack ||
+                   event == NAME_BotDevPath ||
+                   event == NAME_BotDevCrumbs ||
+                   event == NAME_BotDevPlanPath)
+          {
+            xprintStr("\x1b[0;33m", fo);
+            resetColor = false;
+          }
           else xprintStr("\x1b[0;36;1m", fo);
         } else {
           resetColor = false;
