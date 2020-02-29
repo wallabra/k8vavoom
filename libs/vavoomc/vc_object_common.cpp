@@ -1067,6 +1067,50 @@ IMPLEMENT_FUNCTION(VObject, printdebug) {
   PR_DoWriteBuf(nullptr, false, NAME_Debug);
 }
 
+// WARNING! keep in sync with C++ code!
+enum PrintMsg {
+  PMSG_Log,
+  PMSG_Warning,
+  PMSG_Error,
+  PMSG_Debug,
+  //
+  PMSG_Bot,
+  PMSG_BotDev,
+  PMSG_BotDevAI,
+  PMSG_BotDevRoam,
+  PMSG_BotDevCheckPos,
+  PMSG_BotDevItems,
+  PMSG_BotDevAttack,
+  PMSG_BotDevPath,
+  PMSG_BotDevCrumbs,
+  PMSG_BotDevPlanPath,
+};
+
+IMPLEMENT_FUNCTION(VObject, printmsg) {
+  int type;
+  VStr s = PF_FormatString();
+  vobjGetParam(type);
+  EName nn = NAME_Log;
+  switch (type) {
+    case PMSG_Log: nn = NAME_Log; break;
+    case PMSG_Warning: nn = NAME_Warning; break;
+    case PMSG_Error: nn = NAME_Error; break;
+    case PMSG_Debug: nn = NAME_Debug; break;
+    case PMSG_Bot: nn = NAME_Bot; break;
+    case PMSG_BotDev: nn = NAME_BotDev; break;
+    case PMSG_BotDevAI: nn = NAME_BotDevAI; break;
+    case PMSG_BotDevRoam: nn = NAME_BotDevRoam; break;
+    case PMSG_BotDevCheckPos: nn = NAME_BotDevCheckPos; break;
+    case PMSG_BotDevItems: nn = NAME_BotDevItems; break;
+    case PMSG_BotDevAttack: nn = NAME_BotDevAttack; break;
+    case PMSG_BotDevPath: nn = NAME_BotDevPath; break;
+    case PMSG_BotDevCrumbs: nn = NAME_BotDevCrumbs; break;
+    case PMSG_BotDevPlanPath: nn = NAME_BotDevPlanPath; break;
+  }
+  PR_DoWriteBuf(*s, false, nn);
+  PR_DoWriteBuf(nullptr, false, nn);
+}
+
 
 //==========================================================================
 //

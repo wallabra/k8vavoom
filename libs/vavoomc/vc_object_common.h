@@ -156,6 +156,7 @@
   DECLARE_FUNCTION(printwarn)
   DECLARE_FUNCTION(printerror)
   DECLARE_FUNCTION(printdebug)
+  DECLARE_FUNCTION(printmsg)
 
   // class methods
   DECLARE_FUNCTION(FindClass)
