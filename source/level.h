@@ -576,6 +576,7 @@ public:
   void AddThinker (VThinker *Th);
   void RemoveThinker (VThinker *Th);
   void DestroyAllThinkers ();
+  void TickDecals (float DeltaTime); // this should be called in `CL_UpdateMobjs()`
   void TickWorld (float DeltaTime);
 
   // poly-objects

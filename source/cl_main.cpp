@@ -155,6 +155,8 @@ static void CL_UpdateMobjs (float deltaTime) {
   if (GGameInfo->NetMode == NM_Client) {
     if (!deltaTime) return;
     // network client
+    // animate decals
+    GClLevel->TickDecals(deltaTime);
     // cannot use thinker iterator here, because detached thinker may remove itself...
     VThinker *curr = GClLevel->ThinkerHead;
     while (curr) {
@@ -170,6 +172,8 @@ static void CL_UpdateMobjs (float deltaTime) {
       th->eventClientTick(deltaTime);
     }
   } else {
+    // animate decals
+    GClLevel->TickDecals(deltaTime);
     // other game types; don't use iterator too, because it does excessive class checks
     VThinker *curr = GClLevel->ThinkerHead;
     while (curr) {

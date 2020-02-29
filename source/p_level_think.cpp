@@ -275,27 +275,37 @@ extern "C" {
 //
 //  VLevel::TickWorld
 //
+//  this should be called in `CL_UpdateMobjs()`
+//
+//==========================================================================
+void VLevel::TickDecals (float DeltaTime) {
+  if (!r_decals_enabled || !decanimlist) { worldThinkTimeDecal = -1; return; }
+  if (DeltaTime <= 0.0f) return;
+  double stimed = (dbg_world_think_decal_time ? -Sys_Time() : 0);
+  // run decal thinkers
+  decal_t *dc = decanimlist;
+  while (dc) {
+    bool removeIt = true;
+    if (dc->animator) removeIt = !dc->animator->animate(dc, DeltaTime);
+    decal_t *c = dc;
+    dc = dc->nextanimated;
+    if (removeIt) RemoveAnimatedDecal(c);
+  }
+  worldThinkTimeDecal = (dbg_world_think_decal_time ? Sys_Time()+stimed : -1);
+}
+
+
+//==========================================================================
+//
+//  VLevel::TickWorld
+//
 //==========================================================================
 void VLevel::TickWorld (float DeltaTime) {
   if (DeltaTime <= 0.0f) return;
 
   CheckAndRecalcWorldBBoxes();
 
-  double stimed = 0, stimet = 0;
-
-  if (dbg_world_think_decal_time) stimed = -Sys_Time();
-  // run decal thinkers
-  if (DeltaTime > 0 && r_decals_enabled) {
-    decal_t *dc = decanimlist;
-    while (dc) {
-      bool removeIt = true;
-      if (dc->animator) removeIt = !dc->animator->animate(dc, DeltaTime);
-      decal_t *c = dc;
-      dc = dc->nextanimated;
-      if (removeIt) RemoveAnimatedDecal(c);
-    }
-  }
-  worldThinkTimeDecal = (dbg_world_think_decal_time ? Sys_Time()+stimed : -1);
+  double stimet = 0;
 
   eventBeforeWorldTick(DeltaTime);
 
