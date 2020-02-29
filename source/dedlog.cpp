@@ -105,7 +105,7 @@ public:
                  lastEvent == NAME_BotDevCrumbs ||
                  lastEvent == NAME_BotDevPlanPath)
         {
-          putStdOut("\x1b[0;33m", fo);
+          putStdOut("\x1b[0;33m");
           resetColor = false;
         }
         else putStdOut("\x1b[0;36;1m");
