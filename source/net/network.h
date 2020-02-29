@@ -52,7 +52,7 @@ enum {
 // separate messages from packets, so we can fragment and reassemble one message with several packets
 // without this, it is impossible to not hit packet limit
 enum {
-  MAX_MSGLEN              = /*1024*/1280-40/*+1024*/, // max length of a message
+  MAX_MSGLEN              = /*1024*//*1280*/1320-40/*+1024*/, // max length of a message
   MAX_PACKET_HEADER_BITS  = /*40*/42, //k8: 41 for 32-bit sequence number, 1 is reserved
   MAX_PACKET_TRAILER_BITS = /*1*/7, //k8: or 7? was 1
   MAX_MESSAGE_HEADER_BITS = /*63*/118, //k8: isack(1), chanindex(41), reliable(1), open(1), close(1), seq(41), chantype(11), len(21)
@@ -88,12 +88,26 @@ class VSocketPublic : public VInterface {
 public:
   VStr Address;
 
-  double ConnectTime;
-  double LastMessageTime;
+  double ConnectTime = 0;
+  double LastMessageTime = 0;
+
+  vuint64 bytesSent = 0;
+  vuint64 bytesReceived = 0;
+  vuint64 bytesRejected = 0;
+  unsigned minimalSentPacket = 0;
+  unsigned maximalSentPacket = 0;
 
   virtual bool IsLocalConnection () = 0;
   virtual int GetMessage (TArray<vuint8> &) = 0;
   virtual int SendMessage (const vuint8 *, vuint32) = 0;
+
+  virtual void UpdateSentStats (vuint32 length) noexcept;
+  virtual void UpdateReceivedStats (vuint32 length) noexcept;
+  virtual void UpdateRejectedStats (vuint32 length) noexcept;
+
+  virtual void DumpStats ();
+
+  static VStr u64str (vuint64 v, bool comatose=true) noexcept;
 };
 
 
@@ -138,6 +152,11 @@ public:
   int receivedDuplicateCount;
   int shortPacketCount;
   int droppedDatagrams;
+  vuint64 bytesSent;
+  vuint64 bytesReceived;
+  vuint64 bytesRejected;
+  unsigned minimalSentPacket;
+  unsigned maximalSentPacket;
 
   // if set, `Connect()` will call this to check if user aborted the process
   // return `true` if aborted
@@ -154,7 +173,7 @@ public:
 
   virtual void Init () = 0;
   virtual void Shutdown () = 0;
-  virtual VSocketPublic *Connect (const char *) = 0;
+  virtual VSocketPublic *Connect (const char *InHost) = 0;
   virtual VSocketPublic *CheckNewConnections () = 0;
   virtual void Poll () = 0;
   virtual void StartSearch (bool) = 0;
@@ -162,6 +181,10 @@ public:
   virtual double SetNetTime () = 0;
   virtual void UpdateMaster () = 0;
   virtual void QuitMaster () = 0;
+
+  void UpdateSentStats (vuint32 length) noexcept;
+  void UpdateReceivedStats (vuint32 length) noexcept;
+  void UpdateRejectedStats (vuint32 length) noexcept;
 
 public:
   static VNetworkPublic *Create ();
@@ -185,11 +208,26 @@ public:
   // also, it is safe to remove the channel if `OutMsg` is `nullptr` (we have no messages to ack)
 
 public:
+  inline static const char *GetChanTypeName (vuint8 type) noexcept {
+    switch (type) {
+      case 0: return "<broken0>";
+      case CHANNEL_Control: return "Control";
+      case CHANNEL_Level: return "Level";
+      case CHANNEL_Player: return "Player";
+      case CHANNEL_Thinker: return "Thinker";
+      case CHANNEL_ObjectMap: return "ObjectMap";
+      default: return "<internalerror>";
+    }
+  }
+
+public:
   VChannel (VNetConnection *, EChannelType, vint32, vuint8);
   virtual ~VChannel ();
 
   void ClearAllQueues ();
   void ClearOutQueue ();
+
+  inline const char *GetTypeName () const noexcept { return GetChanTypeName(Type); }
 
   // is it safe to remove this channel?
   inline bool IsDead () const noexcept { return (Closing && OutMsg == nullptr); }
@@ -441,7 +479,7 @@ private:
   TArray<vint32> AliveGoreChans;
 
 public:
-  VNetConnection (VSocketPublic *, VNetContext *, VBasePlayer *);
+  VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, VBasePlayer *AOwner);
   virtual ~VNetConnection ();
 
   // VNetConnection interface

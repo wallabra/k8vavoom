@@ -325,6 +325,7 @@ void VChannel::Tick () {
   // bomb the network with messages, because why not
   //TODO: messages like player movement should be marked as "urgent" and we
   //      should spam with them without delays
+  //!if (OutMsg) GCon->Logf(NAME_DevNet, "VChannel::Tick(%d:%s): nettime=%g; msgtime=%g; tout=%g", Index, GetTypeName(), Connection->Driver->NetTime, OutMsg->Time, Connection->Driver->NetTime-OutMsg->Time);
   for (VMessageOut *Msg = OutMsg; Msg; Msg = Msg->Next) {
     if (!Msg->bReceivedAck && Connection->Driver->NetTime-Msg->Time > 1.0/35.0) {
       Connection->SendRawMessage(*Msg);

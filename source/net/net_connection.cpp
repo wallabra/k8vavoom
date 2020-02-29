@@ -97,8 +97,7 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
 //
 //==========================================================================
 VNetConnection::~VNetConnection () {
-  GCon->Logf(NAME_Dev, "Closing connection %s", *GetAddress());
-  //GCon->Logf("NET: deleting #%d channels...", OpenChannels.length());
+  GCon->Logf(NAME_DevNet, "Deleting connection to %s", *GetAddress());
   // remove all open channels
   while (ChanIdxMap.length()) {
     VChannel *chan = ChanIdxMap.first().getValue();
@@ -106,11 +105,12 @@ VNetConnection::~VNetConnection () {
     chan->Suicide(); // don't send any messages (just in case)
     delete chan;
   }
-  ThinkerChannels.reset();
-  //GCon->Logf("NET: all channels deleted.");
+  ThinkerChannels.clear();
+  //GCon->Logf(NAME_DevNet, "...all channels deleted");
   if (NetCon) {
+    //GCon->Logf(NAME_DevNet, "...deleting socket (%p)", NetCon);
+    NetCon->DumpStats();
     delete NetCon;
-    NetCon = nullptr;
   }
   NetCon = nullptr;
   if (Context->IsClient()) {
@@ -146,7 +146,7 @@ void VNetConnection::GetMessages () {
     ret = GetRawPacket(Data);
     if (ret == -1) {
       // error
-      GCon->Log(NAME_DevNet, "Bad read");
+      //GCon->Log(NAME_DevNet, "Bad read");
       State = NETCON_Closed;
       return;
     }
@@ -183,7 +183,7 @@ void VNetConnection::GetMessages () {
 
 //==========================================================================
 //
-//  VNetConnection::GetRawMessage
+//  VNetConnection::GetRawPacket
 //
 //==========================================================================
 int VNetConnection::GetRawPacket (TArray<vuint8> &Data) {
@@ -489,6 +489,8 @@ void VNetConnection::RegisterChannel (VChannel *chan) {
     KnownChannels[idx] = chan;
   }
   ChanIdxMap.put(idx, chan);
+  //!GCon->Logf(NAME_DevNet, "   VNetConnection (%s): registered channel %d (%s) ('%s')", *GetAddress(), chan->Index, chan->GetTypeName(), *shitppTypeNameObj(*chan));
+  //if (chan->Index == 2) abort();
   #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
   #ifdef CLIENT
   if (chan->IsThinker()) {
@@ -783,22 +785,21 @@ void VNetConnection::Tick () {
   if (HasDeadChannels) RemoveDeadThinkerChannels();
 
   // see if this connection has timed out
-  bool connTimedOut = false;
   if (IsTimeoutExceeded()) {
     ShowTimeoutStats();
     State = NETCON_Closed;
-    connTimedOut = true;
+    return;
   }
 
-  if (!connTimedOut) {
-    // run tick for all open channels
-    //for (int i = OpenChannels.Num()-1; i >= 0; --i) if (OpenChannels[i]) OpenChannels[i]->Tick();
-    for (auto it = ChanIdxMap.first(); it; ++it) it.getValue()->Tick();
-    // perform channel cleanup
-    if (HasDeadChannels) RemoveDeadThinkerChannels();
-    // if general channel has been closed, then this connection is closed
-    if (!GetGeneralChannel()) State = NETCON_Closed;
+  // run tick for all open channels
+  for (auto it = ChanIdxMap.first(); it; ++it) {
+    //!GCon->Logf(NAME_DevNet, "   VNetConnection (%s): channel %d (%s) is ticking...", *GetAddress(), it.getValue()->Index, it.getValue()->GetTypeName());
+    it.getValue()->Tick();
   }
+  // perform channel cleanup
+  if (HasDeadChannels) RemoveDeadThinkerChannels();
+  // if general channel has been closed, then this connection is closed
+  if (!GetGeneralChannel()) { State = NETCON_Closed; return; }
 
   // flush any remaining data or send keepalive
   Flush();

@@ -27,6 +27,7 @@
 #include "network.h"
 
 static VCvarI net_dbg_dump_thinker_channels("net_dbg_dump_thinker_channels", "0", "Dump thinker channels creation/closing (bit 0)?");
+static VCvarB net_dbg_dump_thinker_detach("net_dbg_dump_thinker_detach", false, "Dump thinker detaches?");
 
 
 //==========================================================================
@@ -78,16 +79,11 @@ void VThinkerChannel::RemoveThinkerFromGame () {
     if (Connection->Context->IsClient()) {
       if (Thinker->RemoteRole == ROLE_DumbProxy) {
         doRemove = false;
-        GCon->Logf(NAME_Debug, "VThinkerChannel::RemoveThinkerFromGame: skipping autonomous thinker '%s':%u", Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
+        if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_Debug, "VThinkerChannel::RemoveThinkerFromGame: skipping autonomous thinker '%s':%u", Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
       }
     }
   }
   if (doRemove) {
-    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-    #ifdef CLIENT
-    GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- before `DestroyThinker()`", this, Index);
-    #endif
-    #endif
     if (net_dbg_dump_thinker_channels.asInt()&1) GCon->Logf(NAME_Debug, "VThinkerChannel #%d: removing thinker '%s':%u from game...", Index, Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
     // avoid loops
     VThinker *th = Thinker;
@@ -95,35 +91,15 @@ void VThinkerChannel::RemoveThinkerFromGame () {
     th->DestroyThinker();
     //k8: oooh; hacks upon hacks, and more hacks... one of those methods can call `SetThinker(nullptr)` for us
     if (th && th->XLevel) {
-      #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-      #ifdef CLIENT
-      GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- before `RemoveThinker()`", this, Index);
-      #endif
-      #endif
       th->XLevel->RemoveThinker(th);
     }
     if (th) {
-      #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-      #ifdef CLIENT
-      GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- before `ConditionalDestroy()`", this, Index);
-      #endif
-      #endif
       th->ConditionalDestroy();
     }
     // restore it
     Thinker = th;
   }
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  #ifdef CLIENT
-  GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- before `SetThinker()`", this, Index);
-  #endif
-  #endif
   SetThinker(nullptr);
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  #ifdef CLIENT
-  GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- done", this, Index);
-  #endif
-  #endif
 }
 
 
@@ -134,18 +110,8 @@ void VThinkerChannel::RemoveThinkerFromGame () {
 //==========================================================================
 void VThinkerChannel::Suicide () {
   Closing = true;
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  #ifdef CLIENT
-  GCon->Logf(NAME_Debug, "VThinkerChannel::Suicide:%p (#%d) -- resetting thinker", this, Index);
-  #endif
-  #endif
   // if this is a client version of entity, destroy it
   RemoveThinkerFromGame();
-  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-  #ifdef CLIENT
-  GCon->Logf(NAME_Debug, "VThinkerChannel::Suicide:%p (#%d) -- calling super::Suicide()", this, Index);
-  #endif
-  #endif
   VChannel::Suicide();
 }
 
@@ -158,24 +124,9 @@ void VThinkerChannel::Suicide () {
 void VThinkerChannel::Close () {
   if (!Closing) {
     // don't suicide here, we still need to wait for ack
-    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-    #ifdef CLIENT
-    GCon->Logf(NAME_Debug, "VThinkerChannel::Close:%p (#%d) -- calling super::Close()", this, Index);
-    #endif
-    #endif
     VChannel::Close();
-    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-    #ifdef CLIENT
-    GCon->Logf(NAME_Debug, "VThinkerChannel::Close:%p (#%d) -- removing thinker", this, Index);
-    #endif
-    #endif
     // if this is a client version of entity, destroy it
     RemoveThinkerFromGame();
-    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-    #ifdef CLIENT
-    GCon->Logf(NAME_Debug, "VThinkerChannel::Close:%p (#%d) -- done", this, Index);
-    #endif
-    #endif
   }
 }
 
@@ -191,11 +142,6 @@ void VThinkerChannel::SetThinker (VThinker *AThinker) {
   if (Thinker && AThinker && net_dbg_dump_thinker_channels.asInt()&1) GCon->Logf(NAME_Debug, "VThinkerChannel #%d: replacing thinker '%s':%u with '%s':%u", Index, Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), AThinker->GetClass()->GetName(), AThinker->GetUniqueId());
 
   if (Thinker) {
-    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-    #ifdef CLIENT
-    GCon->Logf(NAME_Debug, "VThinkerChannel::SetThinker:%p (#%d): removing thinker '%s':%u", this, Index, Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
-    #endif
-    #endif
     Connection->ThinkerChannels.Remove(Thinker);
     if (OldData) {
       for (VField *F = ThinkerClass->NetFields; F; F = F->NextNetField) {
@@ -213,11 +159,6 @@ void VThinkerChannel::SetThinker (VThinker *AThinker) {
   Thinker = AThinker;
 
   if (Thinker) {
-    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
-    #ifdef CLIENT
-    GCon->Logf(NAME_Debug, "VThinkerChannel::SetThinker:%p (#%d): setting thinker '%s':%u", this, Index, AThinker->GetClass()->GetName(), AThinker->GetUniqueId());
-    #endif
-    #endif
     ThinkerClass = Thinker->GetClass();
     if (OpenedLocally) {
       VThinker *Def = (VThinker *)ThinkerClass->Defaults;
@@ -251,8 +192,6 @@ void VThinkerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Value
 }
 
 
-
-
 //==========================================================================
 //
 //  VThinkerChannel::Update
@@ -279,17 +218,6 @@ void VThinkerChannel::Update () {
     VClass *TmpClass = Thinker->GetClass();
     Connection->ObjMap->SerialiseClass(Msg, TmpClass);
     NewObj = false;
-    // if this is gore object, set role to authority, and remoterole to dumbproxy
-    // dumbproxy channels will be closed before exiting this method
-    // note that roles are swapped here
-    /*
-    if (VStr::startsWith(TmpClass->GetName(), "K8Gore")) {
-      // this is Role on the client
-      Thinker->SetFieldByte("RemoteRole", ROLE_SimulatedProxy);
-      // this is RemoteRole on the client (and Role on the server)
-      Thinker->SetFieldByte("Role", ROLE_SimulatedProxy);
-    }
-    */
   }
 
   const bool isServer = Connection->Context->IsServer();
@@ -303,7 +231,7 @@ void VThinkerChannel::Update () {
       Thinker->RemoteRole = ROLE_Authority;
       // this is RemoteRole on the client (and Role on the server)
       Thinker->Role = ROLE_DumbProxy;
-      GCon->Logf(NAME_DevNet, "%s:%u: became notick, closing channel%s", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), (OpenedLocally ? " (opened locally)" : ""));
+      if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_DevNet, "%s:%u: became notick, closing channel%s", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), (OpenedLocally ? " (opened locally)" : ""));
     }
   }
 
@@ -454,7 +382,7 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
         if (exFlags&(1u<<1)) Ent->FlagsEx |= VEntity::EFEX_NoTickGrav;
         if (exFlags&(1u<<2)) Ent->FlagsEx |= VEntity::EFEX_NoTickGravLT;
         if (exFlags&(1u<<3)) Ent->EntityFlags |= VEntity::EF_NoGravity;
-        GCon->Logf(NAME_Debug, "%s:%u: got special flags 0x%02x", Ent->GetClass()->GetName(), Ent->GetUniqueId(), exFlags);
+        if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_Debug, "%s:%u: got special flags 0x%02x", Ent->GetClass()->GetName(), Ent->GetUniqueId(), exFlags);
       }
       // lifetime fields
       if (exFlags&(1u<<2)) {
@@ -462,7 +390,7 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
           // special fields for "notick"
           Msg << Ent->LastMoveTime;
           Msg << Ent->PlaneAlpha;
-          GCon->Logf(NAME_Debug, "%s:%u: got special notick fields: %g, %g", Ent->GetClass()->GetName(), Ent->GetUniqueId(), Ent->LastMoveTime, Ent->PlaneAlpha);
+          if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_Debug, "%s:%u: got special notick fields: %g, %g", Ent->GetClass()->GetName(), Ent->GetUniqueId(), Ent->LastMoveTime, Ent->PlaneAlpha);
         } else {
           float a, b;
           Msg << a;

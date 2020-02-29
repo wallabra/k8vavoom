@@ -69,10 +69,9 @@ public:
   virtual int Init () override;
   virtual void Shutdown () override;
   virtual void Listen (bool state) override;
-  virtual int OpenSocket (int) override;
-  virtual int OpenSocketFor (sockaddr_t *addr) override; // required for UDP
+  virtual int OpenListenSocket (int) override;
+  virtual int ConnectSocketTo (sockaddr_t *addr) override; // required for UDP
   virtual int CloseSocket (int) override;
-  virtual int Connect (int, sockaddr_t *) override;
   virtual int CheckNewConnections () override;
   virtual int Read (int, vuint8 *, int, sockaddr_t *) override;
   virtual int Write (int, const vuint8 *, int, sockaddr_t *) override;
@@ -94,6 +93,9 @@ public:
 #endif
 
   int PartialIPAddress (const char *, sockaddr_t *, int);
+
+private:
+  static bool SetNonBlocking (int fd) noexcept;
 };
 
 
@@ -213,7 +215,7 @@ int VUdpDriver::Init () {
     Net->HostName = buff;
   }
 
-  if ((net_controlsocket = OpenSocket(0)) == -1) {
+  if ((net_controlsocket = OpenListenSocket(0)) == -1) {
 #ifdef WIN32
     GCon->Log(NAME_Init, "WINS_Init: Unable to open control socket");
     if (--winsock_initialised == 0) WSACleanup();
@@ -340,7 +342,7 @@ void VUdpDriver::Listen (bool state) {
   if (state) {
     // enable listening
     if (net_acceptsocket == -1) {
-      net_acceptsocket = OpenSocket(Net->HostPort);
+      net_acceptsocket = OpenListenSocket(Net->HostPort);
       if (net_acceptsocket == -1) Sys_Error("UDP_Listen: Unable to open accept socket\n");
       GCon->Logf(NAME_DevNet, "created listening socket");
     }
@@ -356,29 +358,42 @@ void VUdpDriver::Listen (bool state) {
 
 //==========================================================================
 //
-//  VUdpDriver::OpenSocket
+//  VUdpDriver::SetNonBlocking
+//
+//  switch to non-blocking mode
 //
 //==========================================================================
-int VUdpDriver::OpenSocket (int port) {
-  int newsocket;
-  sockaddr_in address;
+bool VUdpDriver::SetNonBlocking (int fd) noexcept {
+  if (fd < 0) return -1;
+  #ifdef WIN32
+  DWORD trueval = 1;
+  if (ioctlsocket(fd, FIONBIO, &trueval) == -1)
+  #else
+  u_long trueval = 1;
+  if (ioctl(fd, FIONBIO, (char *)&trueval) == -1)
+  #endif
+  {
+    return false;
+  }
+  return true;
+}
 
-  newsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+//==========================================================================
+//
+//  VUdpDriver::OpenListenSocket
+//
+//==========================================================================
+int VUdpDriver::OpenListenSocket (int port) {
+  int newsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (newsocket == -1) return -1;
 
-  // switch to non-blocking mode
-#ifdef WIN32
-  DWORD trueval = 1;
-  if (ioctlsocket(newsocket, FIONBIO, &trueval) == -1)
-#else
-  u_long trueval = 1;
-  if (ioctl(newsocket, FIONBIO, (char *)&trueval) == -1)
-#endif
-  {
+  if (!SetNonBlocking(newsocket)) {
     closesocket(newsocket);
     return -1;
   }
 
+  sockaddr_in address;
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = myAddr;
   address.sin_port = htons((vuint16)port);
@@ -394,50 +409,44 @@ int VUdpDriver::OpenSocket (int port) {
 
 //==========================================================================
 //
-//  VUdpDriver::OpenSocketFor
+//  VUdpDriver::ConnectSocketTo
 //
 //  required for UDP
 //
 //==========================================================================
-int VUdpDriver::OpenSocketFor (sockaddr_t *addr) {
-  int newsocket;
-  sockaddr_in address;
-
-  newsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+int VUdpDriver::ConnectSocketTo (sockaddr_t *addr) {
+  int newsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (newsocket == -1) return -1;
 
-  // switch to non-blocking mode
-#ifdef WIN32
-  DWORD trueval = 1;
-  if (ioctlsocket(newsocket, FIONBIO, &trueval) == -1)
-#else
-  u_long trueval = 1;
-  if (ioctl(newsocket, FIONBIO, (char *)&trueval) == -1)
-#endif
-  {
+  if (!SetNonBlocking(newsocket)) {
     closesocket(newsocket);
     return -1;
   }
 
-  GCon->Logf(NAME_DevNet, "binding new socket to %s", *AddrToStringNoPort(addr));
+  return newsocket;
+  /* k8: for some reason, after `connect` we cannot use this socket in `recvfrom()` anymore
+         (it always return "no data yet). wtf?!
+  GCon->Logf(NAME_DevNet, "binding new socket connection to %s", *AddrToString(addr));
+  sockaddr_in address;
   address.sin_family = AF_INET;
-  address.sin_addr.s_addr = (((const sockaddr_in *)addr)->sin_addr.s_addr); //ntohl
-  address.sin_port = 0; // get any free port
+  address.sin_addr.s_addr = (((const sockaddr_in *)addr)->sin_addr.s_addr);
+  address.sin_port = ((sockaddr_in *)addr)->sin_port;
 
-  if (bind(newsocket, (sockaddr *)&address, sizeof(address)) == 0) {
+  if (connect(newsocket, (sockaddr *)&address, sizeof(address)) == 0) {
     sockaddr_t skad;
     socklen_t skadlen = sizeof(sockaddr_t);
     memset(&skad, 0, sizeof(sockaddr_t));
     getsockname(newsocket, (sockaddr *)&skad, &skadlen);
-    GCon->Logf(NAME_DevNet, "bound to %s", *AddrToString(&skad));
+    GCon->Logf(NAME_DevNet, "(bound to local address %s)", *AddrToString(&skad));
     return newsocket;
   }
-  //if (bind(newsocket, (sockaddr *)addr, sizeof(sockaddr)) == 0) return newsocket;
+
   const int err = errno;
   closesocket(newsocket);
 
-  GCon->Logf(NAME_Error, "Unable to bind to %s (err=%d)", *AddrToStringNoPort(addr), err);
+  GCon->Logf(NAME_Error, "Unable to bind to %s (err=%d)", *AddrToString(addr), err);
   return -1;
+  */
 }
 
 
@@ -449,16 +458,6 @@ int VUdpDriver::OpenSocketFor (sockaddr_t *addr) {
 int VUdpDriver::CloseSocket (int socket) {
   if (socket == net_broadcastsocket) net_broadcastsocket = 0;
   return closesocket(socket);
-}
-
-
-//==========================================================================
-//
-//  VUdpDriver::Connect
-//
-//==========================================================================
-int VUdpDriver::Connect (int, sockaddr_t *) {
-  return 0;
 }
 
 
@@ -487,12 +486,12 @@ int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
   memset((void *)addr, 0, addrlen);
   int ret = recvfrom(socket, (char *)buf, len, 0, (sockaddr *)addr, &addrlen);
   if (ret == -1) {
-#ifdef WIN32
+    #ifdef WIN32
     int e = WSAGetLastError();
     if (e == WSAEWOULDBLOCK || e == WSAECONNREFUSED) return 0;
-#else
+    #else
     if (errno == EWOULDBLOCK || errno == ECONNREFUSED) return 0;
-#endif
+    #endif
   }
   return ret;
 }
@@ -506,11 +505,11 @@ int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
 int VUdpDriver::Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr) {
   int ret = sendto(socket, (const char *)buf, len, 0, (sockaddr *)addr, sizeof(sockaddr));
   if (ret == -1) {
-#ifdef WIN32
+    #ifdef WIN32
     if (WSAGetLastError() == WSAEWOULDBLOCK) return 0;
-#else
+    #else
     if (errno == EWOULDBLOCK) return 0;
-#endif
+    #endif
   }
   return ret;
 }
@@ -522,9 +521,9 @@ int VUdpDriver::Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr)
 //
 //==========================================================================
 bool VUdpDriver::CanBroadcast () {
-#ifdef WIN32
+  #ifdef WIN32
   GetLocalAddress();
-#endif
+  #endif
   vuint32 addr = ntohl(myAddr);
   return (myAddr != INADDR_ANY && ((addr>>24)&0xff) != 0x7f); // ignore localhost
 }

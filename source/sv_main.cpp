@@ -675,6 +675,7 @@ static void SV_RunClients (bool skipFrame=false) {
       // (because they aren't sent yet)
       // let context ticker reset it instead
       //Player->Net->NeedsUpdate = false;
+      //GCon->Logf(NAME_DevNet, "player #%d: getting messages...", i);
       Player->Net->GetMessages();
     }
 
@@ -1551,8 +1552,11 @@ void SV_DropClient (VBasePlayer *Player, bool crash) {
 
   if (Player->PlayerReplicationInfo) Player->PlayerReplicationInfo->DestroyThinker();
 
-  delete Player->Net;
-  Player->Net = nullptr;
+  if (Player->Net) {
+    GCon->Log(NAME_DevNet, "deleting player connection");
+    delete Player->Net;
+    Player->Net = nullptr;
+  }
 
   --svs.num_connected;
   Player->UserInfo = VStr();
@@ -1735,7 +1739,7 @@ COMMAND(Stats) {
 //==========================================================================
 void SV_ConnectClient (VBasePlayer *player) {
   if (player->Net) {
-    GCon->Logf(NAME_Dev, "Client %s connected", *player->Net->GetAddress());
+    GCon->Logf(NAME_DevNet, "Client %s connected", *player->Net->GetAddress());
     ServerNetContext->ClientConnections.Append(player->Net);
     player->Net->NeedsUpdate = false; // we're just connected, no need to send world updates yet
   }
@@ -1765,17 +1769,18 @@ void SV_ConnectClient (VBasePlayer *player) {
 //
 //  SV_CheckForNewClients
 //
+//  check for new connections
+//
 //==========================================================================
 void SV_CheckForNewClients () {
-  VSocketPublic *sock;
-  int i;
-
-  // check for new connections
-  while (1) {
-    sock = GNet->CheckNewConnections();
+  for (;;) {
+    VSocketPublic *sock = GNet->CheckNewConnections();
     if (!sock) break;
 
+    //GCon->Logf(NAME_DevNet, "SV_CheckForNewClients: got client at %s", *sock->Address);
+
     // init a new client structure
+    int i;
     for (i = 0; i < svs.max_clients; ++i) if (!GGameInfo->Players[i]) break;
     if (i == svs.max_clients) Sys_Error("Host_CheckForNewClients: no free clients");
 

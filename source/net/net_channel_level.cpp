@@ -60,7 +60,7 @@ enum {
 //
 //==========================================================================
 VLevelChannel::VLevelChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally)
-  : VChannel(AConnection, CHANNEL_Player, AIndex, AOpenedLocally)
+  : VChannel(AConnection, CHANNEL_Level, AIndex, AOpenedLocally)
   , Level(nullptr)
   , Lines(nullptr)
   , Sides(nullptr)
@@ -176,6 +176,8 @@ void VLevelChannel::ResetLevel () {
 //
 //==========================================================================
 void VLevelChannel::SendNewLevel () {
+  GCon->Logf(NAME_DevNet, "sending initial level data to %s", *Connection->GetAddress());
+
   VStr sinfo = svs.serverinfo;
   {
     VMessageOut Msg(this);
@@ -225,8 +227,10 @@ void VLevelChannel::SendNewLevel () {
     }
   }
 
+  GCon->Logf(NAME_DevNet, "sending static lights to %s", *Connection->GetAddress());
   SendStaticLights();
 
+  GCon->Logf(NAME_DevNet, "sending prerender to %s", *Connection->GetAddress());
   {
     VMessageOut Msg(this);
     Msg.bReliable = true;

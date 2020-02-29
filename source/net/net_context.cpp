@@ -98,21 +98,34 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
 //
 //==========================================================================
 void VNetContext::Tick () {
-  for (int i = 0; i < ClientConnections.Num(); ++i) {
+  for (int i = 0; i < ClientConnections.length(); ++i) {
     VNetConnection *Conn = ClientConnections[i];
     if (!Conn) continue; // just in case
-    if (Conn->State != NETCON_Closed) {
-      // don't update level if the player isn't totally in the game yet
-      if (Conn->GetGeneralChannel() && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
-        if (Conn->NeedsUpdate) {
-          // reset update flag; it will be set again if we'll get any packet from the client
-          Conn->NeedsUpdate = false;
-          Conn->UpdateLevel();
-        }
+    //!GCon->Logf(NAME_DevNet, "#%d: %s (oms:%d)", i, *Conn->GetAddress(), (int)Conn->ObjMapSent);
+    // don't update level if the player isn't totally in the game yet
+    if (Conn->State != NETCON_Closed && Conn->GetGeneralChannel() && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
+      //!GCon->Logf(NAME_DevNet, "  spawned: #%d: %s", i, *Conn->GetAddress());
+      if (Conn->NeedsUpdate) {
+        // reset update flag; it will be set again if we'll get any packet from the client
+        //!GCon->Logf(NAME_DevNet, "  sending level update: #%d: %s", i, *Conn->GetAddress());
+        Conn->NeedsUpdate = false;
+        Conn->UpdateLevel();
+      }
+      if (Conn->State != NETCON_Closed) {
+        //!GCon->Logf(NAME_DevNet, "  sending player update: #%d: %s", i, *Conn->GetAddress());
         Conn->GetPlayerChannel()->Update();
       }
-      if (Conn->ObjMapSent && !Conn->LevelInfoSent) Conn->SendServerInfo();
+    }
+    if (Conn->State != NETCON_Closed && Conn->ObjMapSent && !Conn->LevelInfoSent) {
+      GCon->Logf(NAME_DevNet, "Sending server info for %s", *Conn->GetAddress());
+      Conn->SendServerInfo();
+    }
+    if (Conn->State != NETCON_Closed) {
+      //!GCon->Logf(NAME_DevNet, "  checking messages: #%d: %s", i, *Conn->GetAddress());
       Conn->GetMessages(); // why not?
+    }
+    if (Conn->State != NETCON_Closed) {
+      //!GCon->Logf(NAME_DevNet, "  ticking: #%d: %s", i, *Conn->GetAddress());
       Conn->Tick();
     }
     if (Conn->State == NETCON_Closed) {

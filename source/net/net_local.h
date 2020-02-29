@@ -59,6 +59,10 @@ public:
 
   VSocket (VNetDriver *);
   virtual ~VSocket () override;
+
+  virtual void UpdateSentStats (vuint32 length) noexcept override;
+  virtual void UpdateReceivedStats (vuint32 length) noexcept override;
+  virtual void UpdateRejectedStats (vuint32 length) noexcept override;
 };
 
 
@@ -150,10 +154,9 @@ public:
   virtual int Init () = 0;
   virtual void Shutdown () = 0;
   virtual void Listen (bool state) = 0;
-  virtual int OpenSocket (int port) = 0;
-  virtual int OpenSocketFor (sockaddr_t *addr) = 0; // required for UDP
+  virtual int OpenListenSocket (int port) = 0;
+  virtual int ConnectSocketTo (sockaddr_t *addr) = 0; // returns socket or -1
   virtual int CloseSocket (int socket) = 0;
-  virtual int Connect (int, sockaddr_t *) = 0;
   virtual int CheckNewConnections () = 0;
   virtual int Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) = 0;
   virtual int Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr) = 0;

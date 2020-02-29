@@ -136,9 +136,48 @@ VNetworkPublic::VNetworkPublic ()
   , receivedDuplicateCount(0)
   , shortPacketCount(0)
   , droppedDatagrams(0)
+  , bytesSent(0)
+  , bytesReceived(0)
+  , bytesRejected(0)
+  , minimalSentPacket(0)
+  , maximalSentPacket(0)
   , CheckUserAbortCB(nullptr)
   , CheckUserAbortUData(nullptr)
 {
+}
+
+
+//==========================================================================
+//
+//  VNetworkPublic::UpdateSentStats
+//
+//==========================================================================
+void VNetworkPublic::UpdateSentStats (vuint32 length) noexcept {
+  if (length) {
+    bytesSent += length;
+    if (!minimalSentPacket || minimalSentPacket > length) minimalSentPacket = length;
+    if (maximalSentPacket < length) maximalSentPacket = length;
+  }
+}
+
+
+//==========================================================================
+//
+//  VNetworkPublic::UpdateReceivedStats
+//
+//==========================================================================
+void VNetworkPublic::UpdateReceivedStats (vuint32 length) noexcept {
+  bytesReceived += length;
+}
+
+
+//==========================================================================
+//
+//  VNetworkPublic::UpdateRejectedStats
+//
+//==========================================================================
+void VNetworkPublic::UpdateRejectedStats (vuint32 length) noexcept {
+  bytesRejected += length;
 }
 
 
@@ -480,7 +519,6 @@ void VNetwork::MasterList_Poll () {
   // could not connect to the master server
   if (!SlistSilent) {
     GCon->Log(NAME_DevNet, "Could not connect to the master server.");
-    GCon->Log(NAME_DevNet, "");
   }
 
   SlistInProgress = false;
@@ -628,7 +666,6 @@ VSocketPublic *VNetwork::Connect (const char *InHost) {
     host = HostCache[0].CName;
     GCon->Log(NAME_DevNet, "Connecting to...");
     GCon->Logf(NAME_DevNet, "%s @ %s", *HostCache[0].Name, *host);
-    GCon->Log(NAME_DevNet, "");
   }
 
   if (HostCacheCount) {
@@ -706,6 +743,81 @@ void VNetwork::QuitMaster () {
 
 //==========================================================================
 //
+//  VSocketPublic::u64str
+//
+//==========================================================================
+VStr VSocketPublic::u64str (vuint64 v, bool comatose) noexcept {
+  if (!v) return VStr("0");
+  char buf[128];
+  unsigned dpos = (unsigned)sizeof(buf);
+  int digitsPut = (comatose ? 0 : 666);
+  buf[--dpos] = 0;
+  do {
+    if (digitsPut == 3) {
+      if (!dpos) abort();
+      buf[--dpos] = ',';
+      digitsPut = 0;
+    }
+    if (!dpos) abort();
+    buf[--dpos] = '0'+(int)(v%10);
+    ++digitsPut;
+  } while (v /= 10);
+  return VStr(buf+dpos);
+}
+
+
+//==========================================================================
+//
+//  VSocketPublic::DumpStats
+//
+//==========================================================================
+void VSocketPublic::DumpStats () {
+  if (bytesSent|bytesReceived|bytesRejected) {
+    if (bytesRejected) {
+      GCon->Logf(NAME_DevNet, "Closing stats for %s: %s bytes sent, %s bytes received (%s rejected)", *Address, *u64str(bytesSent), *u64str(bytesReceived), *u64str(bytesRejected));
+    } else {
+      GCon->Logf(NAME_DevNet, "Closing stats for %s: %s bytes sent, %s bytes received", *Address, *u64str(bytesSent), *u64str(bytesReceived));
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VSocketPublic::UpdateSentStats
+//
+//==========================================================================
+void VSocketPublic::UpdateSentStats (vuint32 length) noexcept {
+  if (length) {
+    bytesSent += length;
+    if (!minimalSentPacket || minimalSentPacket > length) minimalSentPacket = length;
+    if (maximalSentPacket < length) maximalSentPacket = length;
+  }
+}
+
+
+//==========================================================================
+//
+//  VSocketPublic::UpdateReceivedStats
+//
+//==========================================================================
+void VSocketPublic::UpdateReceivedStats (vuint32 length) noexcept {
+  bytesReceived += length;
+}
+
+
+//==========================================================================
+//
+//  VSocketPublic::UpdateRejectedStats
+//
+//==========================================================================
+void VSocketPublic::UpdateRejectedStats (vuint32 length) noexcept {
+  bytesRejected += length;
+}
+
+
+//==========================================================================
+//
 //  VSocket::VSocket
 //
 //==========================================================================
@@ -739,6 +851,39 @@ VSocket::~VSocket () {
     }
     if (!s) Sys_Error("NET_FreeQSocket: not active\n");
   }
+}
+
+
+//==========================================================================
+//
+//  VSocket::UpdateSentStats
+//
+//==========================================================================
+void VSocket::UpdateSentStats (vuint32 length) noexcept {
+  VSocketPublic::UpdateSentStats(length);
+  if (Driver && Driver->Net) Driver->Net->UpdateSentStats(length);
+}
+
+
+//==========================================================================
+//
+//  VSocket::UpdateReceivedStats
+//
+//==========================================================================
+void VSocket::UpdateReceivedStats (vuint32 length) noexcept {
+  VSocketPublic::UpdateReceivedStats(length);
+  if (Driver && Driver->Net) Driver->Net->UpdateReceivedStats(length);
+}
+
+
+//==========================================================================
+//
+//  VSocket::UpdateRejectedStats
+//
+//==========================================================================
+void VSocket::UpdateRejectedStats (vuint32 length) noexcept {
+  VSocketPublic::UpdateRejectedStats(length);
+  if (Driver && Driver->Net) Driver->Net->UpdateRejectedStats(length);
 }
 
 

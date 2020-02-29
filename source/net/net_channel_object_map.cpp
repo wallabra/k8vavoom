@@ -167,6 +167,8 @@ void VObjectMapChannel::ReadCounters (VMessageIn &Msg) {
 //
 //==========================================================================
 void VObjectMapChannel::Update () {
+  //!GCon->Logf(NAME_DevNet, "!!! VObjectMapChannel::Update: OutMsg=%d; OpenAcked=%d", (OutMsg ? 1 : 0), (OpenAcked ? 1 :0));
+
   if (OutMsg && !OpenAcked) return;
 
   if (CurrName == Connection->ObjMap->NameLookup.Num() && CurrClass == Connection->ObjMap->ClassLookup.Num()) {
