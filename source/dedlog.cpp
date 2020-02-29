@@ -87,18 +87,33 @@ public:
     while (rstr && *rstr) {
       if (justNewlined) {
         #if !defined(_WIN32)
+        bool resetColor = true;
              if (lastEvent == NAME_Init) putStdOut("\x1b[1m");
         else if (lastEvent == NAME_Warning) putStdOut("\x1b[0;33;1m");
         else if (lastEvent == NAME_Error) putStdOut("\x1b[0;31;1m");
         else if (lastEvent == NAME_Log) putStdOut("\x1b[0;32m");
         else if (lastEvent == NAME_Debug) putStdOut("\x1b[0;35;1m");
         else if (lastEvent == NAME_Chat) putStdOut("\x1b[0;37;1m");
+        else if (lastEvent == NAME_Bot ||
+                 lastEvent == NAME_BotDev ||
+                 lastEvent == NAME_BotDevAI ||
+                 lastEvent == NAME_BotDevRoam ||
+                 lastEvent == NAME_BotDevCheckPos ||
+                 lastEvent == NAME_BotDevItems ||
+                 lastEvent == NAME_BotDevAttack ||
+                 lastEvent == NAME_BotDevPath ||
+                 lastEvent == NAME_BotDevCrumbs ||
+                 lastEvent == NAME_BotDevPlanPath)
+        {
+          putStdOut("\x1b[0;33m", fo);
+          resetColor = false;
+        }
         else putStdOut("\x1b[0;36;1m");
         #endif
         putStr(VName::SafeString(lastEvent));
         if (rstr[0] != '\n') putStr(": "); else putStr(":");
         #if !defined(_WIN32)
-        putStdOut("\x1b[0m");
+        if (resetColor) putStdOut("\x1b[0m");
         #endif
         justNewlined = false;
       }

@@ -795,6 +795,19 @@ static void ConSerialise (const char *str, EName Event, bool fromGLog) noexcept 
   } else if (Event == NAME_DevNet) {
     cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "[DebugCyan]");
     cpPrintCurrColor();
+  } else if (Event == NAME_Bot ||
+             Event == NAME_BotDev ||
+             Event == NAME_BotDevAI ||
+             Event == NAME_BotDevRoam ||
+             Event == NAME_BotDevCheckPos ||
+             Event == NAME_BotDevItems ||
+             Event == NAME_BotDevAttack ||
+             Event == NAME_BotDevPath ||
+             Event == NAME_BotDevCrumbs ||
+             Event == NAME_BotDevPlanPath)
+  {
+    cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "[Black]");
+    cpPrintCurrColor();
   }
   DoPrint(str);
   // write to log
