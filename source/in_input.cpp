@@ -34,6 +34,7 @@
 #include "cl_local.h"
 #include "ui/ui.h"
 #include "neoui/neoui.h"
+#include "net/network.h"
 
 
 static VCvarB allow_vanilla_cheats("allow_vanilla_cheats", true, "Allow vanilla keyboard cheat codes?", CVAR_Archive);
@@ -574,17 +575,32 @@ void VInput::ProcessEvents () {
     if (ev.data1 == K_RALT) { if (ev.type == ev_keydown) AltDown |= 1; else AltDown &= ~1; }
     if (ev.data1 == K_LALT) { if (ev.type == ev_keydown) AltDown |= 2; else AltDown &= ~2; }
 
-    if (C_Responder(&ev)) continue; // console
-    if (NUI_Responder(&ev)) continue; // new UI
-    if (CT_Responder(&ev)) continue; // chat
-    if (MN_Responder(&ev)) continue; // menu
-    if (GRoot->Responder(&ev)) continue; // root widget
+    // initial network client data transmit?
+    bool initNetClient = false;
+    if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && !GClGame->InIntermission()) {
+      if (!cl->Net->ObjMapSent) {
+        initNetClient = true;
+      }
+    }
+
+    if (!initNetClient) {
+      if (C_Responder(&ev)) continue; // console
+      if (NUI_Responder(&ev)) continue; // new UI
+      if (CT_Responder(&ev)) continue; // chat
+      if (MN_Responder(&ev)) continue; // menu
+      if (GRoot->Responder(&ev)) continue; // root widget
+    } else {
+      // check for user abort
+      if (ev.type == ev_keydown && ev.keycode == K_ESCAPE) {
+        GCmdBuf << "Disconnect\n";
+      }
+    }
 
     //k8: this hack prevents "keyup" to be propagated when console is active
     //    this should be in console responder, but...
     //if (C_Active() && (ev.type == ev_keydown || ev.type == ev_keyup)) continue;
     // actually, when console is active, it eats everything
-    if (C_Active()) continue;
+    if (initNetClient || C_Active()) continue;
 
     reachedBinding = true;
     if (!lastWasGameBinding) {
