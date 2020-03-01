@@ -384,6 +384,8 @@ protected:
   // `Msg.bOpen` must be valid
   void ReadCounters (VMessageIn &Msg);
 
+  void UpdateSendPBar ();
+
 public:
   VObjectMapChannel (VNetConnection *, vint32, vuint8 = true);
   virtual ~VObjectMapChannel () override;

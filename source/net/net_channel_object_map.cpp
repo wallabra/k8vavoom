@@ -110,6 +110,8 @@ void VObjectMapChannel::WriteCounters (VMessageOut &Msg) {
   if (Msg.bOpen) {
     writeNames = true;
     writeClasses = true;
+    RNet_PBarReset();
+    GCon->Logf(NAME_DevNet, "opened class/name channel for %s", *Connection->GetAddress());
   } else {
     writeNames = (LastNameCount != Connection->ObjMap->NameLookup.Num());
     writeClasses = (LastClassCount != Connection->ObjMap->ClassLookup.Num());
@@ -148,6 +150,8 @@ void VObjectMapChannel::ReadCounters (VMessageIn &Msg) {
   if (Msg.bOpen) {
     newNames = true;
     newClasses = true;
+    RNet_PBarReset();
+    RNet_OSDMsgShow("receiving names and classes");
   } else {
     newNames = Msg.ReadBit();
     newClasses = Msg.ReadBit();
@@ -160,6 +164,7 @@ void VObjectMapChannel::ReadCounters (VMessageIn &Msg) {
     vassert(Connection->ObjMap->NameLookup.length() <= NumNames);
     //Connection->ObjMap->NameLookup.SetNum(NumNames);
     Connection->ObjMap->SetNumberOfKnownNames(NumNames);
+    GCon->Logf(NAME_DevNet, "expecting %d names", NumNames);
   }
 
   if (newClasses) {
@@ -168,12 +173,23 @@ void VObjectMapChannel::ReadCounters (VMessageIn &Msg) {
     //if (!Msg.bOpen) GCon->Logf("MORE: classes=%d (%d)", NumClasses, Connection->ObjMap->ClassLookup.length());
     vassert(Connection->ObjMap->ClassLookup.length() <= NumClasses);
     Connection->ObjMap->ClassLookup.SetNum(NumClasses);
+    GCon->Logf(NAME_DevNet, "expecting %d classes", NumClasses);
   }
 
   //if (Msg.bOpen) GCon->Logf("FIRST: names=%d; classes=%d", Connection->ObjMap->NameLookup.length(), Connection->ObjMap->ClassLookup.length());
 
   LastNameCount = Connection->ObjMap->NameLookup.Num();
   LastClassCount = Connection->ObjMap->ClassLookup.Num();
+}
+
+
+//==========================================================================
+//
+//  VObjectMapChannel::Update
+//
+//==========================================================================
+void VObjectMapChannel::UpdateSendPBar () {
+  RNet_PBarUpdate("sending names and classes", CurrName+CurrClass, Connection->ObjMap->NameLookup.Num()+Connection->ObjMap->ClassLookup.Num());
 }
 
 
@@ -192,7 +208,7 @@ void VObjectMapChannel::Update () {
     return;
   }
 
-  if (CountOutMessages() >= 10) return; // queue is full
+  if (CountOutMessages() >= 10) { UpdateSendPBar(); return; } // queue is full
 
   VMessageOut Msg(this);
   Msg.bReliable = true;
@@ -208,8 +224,8 @@ void VObjectMapChannel::Update () {
     // send message if this name will not fit
     if (Msg.GetNumBytes()+1+Len+VBitStreamWriter::CalcIntBits(Len) > OUT_MESSAGE_SIZE/8) {
       SendMessage(&Msg);
-      if (!OpenAcked) return;
-      if (CountOutMessages() >= 10) return; // queue is full
+      //if (!OpenAcked) { UpdateSendPBar(); return; } // k8: who cares
+      if (CountOutMessages() >= 10) { UpdateSendPBar(); return; } // queue is full
       //Msg = VMessageOut(this);
       Msg.Setup(this);
       Msg.bReliable = true;
@@ -226,7 +242,7 @@ void VObjectMapChannel::Update () {
     // send message if this class will not fit
     if (Msg.GetNumBytes()+1+VBitStreamWriter::CalcIntBits(VName::GetNumNames()) > OUT_MESSAGE_SIZE/8) {
       SendMessage(&Msg);
-      if (CountOutMessages() >= 10) return; // queue is full
+      if (CountOutMessages() >= 10) { UpdateSendPBar(); return; } // queue is full
       //Msg = VMessageOut(this);
       Msg.Setup(this);
       Msg.bReliable = true;
@@ -289,7 +305,11 @@ void VObjectMapChannel::ParsePacket (VMessageIn &Msg) {
     ++CurrClass;
   }
 
+  RNet_PBarUpdate("loading names and classes", CurrName+CurrClass, Connection->ObjMap->NameLookup.Num()+Connection->ObjMap->ClassLookup.Num());
+
   if (haveSomeWork && CurrName >= Connection->ObjMap->NameLookup.Num() && CurrClass >= Connection->ObjMap->ClassLookup.Num()) {
     GCon->Logf(NAME_DevNet, "received initial names (%d) and classes (%d)", CurrName, CurrClass);
+  } else {
+    GCon->Logf(NAME_DevNet, "...got %d names and %d classes so far", CurrName, CurrClass);
   }
 }
