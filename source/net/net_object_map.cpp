@@ -73,6 +73,7 @@ void VNetObjectsMap::SetupClassLookup () {
       NameMap[i] = i;
       NameLookup[i] = VName::CreateWithIndex(i);
     }
+    vassert(NameLookup[0] == NAME_None);
   } else {
     NameMap.setLength(0);
     NameLookup.setLength(0);
@@ -84,11 +85,12 @@ void VNetObjectsMap::SetupClassLookup () {
   // 0 is reserved for ''
   NewNameFirstIndex = NameMap.length()+1;
 
+  // collect all possible thinker classes
   ClassLookup.Clear();
-  ClassLookup.Append(nullptr);
-  for (int i = 0; i < VMemberBase::GMembers.Num(); ++i) {
-    if (VMemberBase::GMembers[i]->MemberType == MEMBER_Class) {
-      VClass *C = static_cast<VClass*>(VMemberBase::GMembers[i]);
+  ClassLookup.Append(nullptr); // `None` class
+  for (auto &&mbr : VMemberBase::GMembers) {
+    if (mbr->MemberType == MEMBER_Class) {
+      VClass *C = static_cast<VClass *>(mbr);
       if (C->IsChildOf(VThinker::StaticClass())) {
         ClassMap.Set(C, ClassLookup.Num());
         ClassLookup.Append(C);

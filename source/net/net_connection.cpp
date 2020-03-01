@@ -26,8 +26,6 @@
 #include "gamedefs.h"
 #include "network.h"
 
-//#define VAVOOM_NET_RECV_DEBUG_EXTRA
-
 
 static VCvarF net_test_loss("net_test_loss", "0", "Emulated packet loss percentage (randomly skip sending some packets).", CVAR_PreInit);
 static VCvarB net_dbg_conn_show_outdated("net_dbg_conn_show_outdated", false, "Show outdated channel messages?");
@@ -246,8 +244,8 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
   //NeedsUpdate = true; // this is done elsewhere
 
   // get unreliable sequence number
-  vuint32 Sequence;
-  Packet << Sequence;
+  vuint32 Sequence = 0;
+  Packet << STRM_INDEX_U(Sequence);
   if (Packet.IsError()) {
     GCon->Log(NAME_DevNet, "Packet is missing packet ID");
     return;
@@ -267,23 +265,24 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
         return;
       }
       //Driver->droppedDatagrams += count;
-      if (net_dbg_conn_show_outdated) {
-        GCon->Logf(NAME_DevNet, "Got %d stale datagram(s) (urseq=%u; seq=%u)", count, UnreliableReceiveSequence, Sequence);
-      }
       */
+      if (net_dbg_conn_show_outdated) {
+        const int cc = (int)(UnreliableReceiveSequence-Sequence);
+        GCon->Logf(NAME_DevNet, "Got %d stale datagram(s) (urseq=%u; seq=%u)", cc, UnreliableReceiveSequence, Sequence);
+      }
       // nope, ignore it
-      return;
+      //return;
     } else {
       // this datagram is in the future, looks like older datagrams are lost
       int count = (int)(Sequence-UnreliableReceiveSequence);
       if (count < 0) {
         // something is VERY wrong here
-        GCon->Logf(NAME_DevNet, "Dropped %d datagram(s); WTF?! (urseq=%u; seq=%u)", count, UnreliableReceiveSequence, Sequence);
+        GCon->Logf(NAME_DevNet, "Missing %d datagram%s; WTF?! (urseq=%u; seq=%u)", count, (count != 1 ? "s" : ""), UnreliableReceiveSequence, Sequence);
         State = NETCON_Closed;
         return;
       }
       Driver->droppedDatagrams += count;
-      GCon->Logf(NAME_DevNet, "Dropped %d datagram(s) (urseq=%u; seq=%u)", count, UnreliableReceiveSequence, Sequence);
+      GCon->Logf(NAME_DevNet, "Missing %d datagram%s (urseq=%u; seq=%u)", count, (count != 1 ? "s" : ""), UnreliableReceiveSequence, Sequence);
     }
   }
 
@@ -292,9 +291,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
   bool NeedsAck = false;
 
-#ifdef VAVOOM_NET_RECV_DEBUG_EXTRA
-  GCon->Logf(NAME_DevNet, "***!!!*** Network Packet (pos=%d; num=%d; seq=%u)", Packet.GetPos(), Packet.GetNum(), Sequence);
-#endif
+  if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "***!!!*** Network Packet (pos=%d; num=%d (%d); seq=%u)", Packet.GetPos(), Packet.GetNum(), (Packet.GetNum()+7)/8, Sequence);
   while (!Packet.AtEnd()) {
     // read a flag to see if it's an ACK or a message
     bool IsAck = Packet.ReadBit();
@@ -305,13 +302,13 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
     if (IsAck) {
       vuint32 AckSeq;
-      Packet << AckSeq;
+      Packet << STRM_INDEX_U(AckSeq);
+      if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  packet(seq:%u): AckSeq=%u; current AckSequence=%u", Sequence, AckSeq, AckSequence);
            if (AckSeq == AckSequence) ++AckSequence;
       else if (AckSeq > AckSequence) AckSequence = AckSeq+1;
       else GCon->Log(NAME_DevNet, "Duplicate ACK received");
 
       // mark corrresponding messages as ACK-ed
-      //for (int i = 0; i < OpenChannels.Num(); ++i) {
       for (auto it = ChanIdxMap.first(); it; ++it) {
         VChannel *chan = it.getValue();
         bool gotAck = false;
@@ -320,6 +317,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
             Msg->bReceivedAck = true;
             if (Msg->bOpen) chan->OpenAcked = true;
             gotAck = true;
+            if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "    packet(seq:%u): got ack for channel #%d (packetid=%u; open=%d)", Sequence, chan->Index, Msg->PacketId, (int)Msg->bOpen);
           }
         }
         if (gotAck) chan->ReceivedAck();
@@ -335,7 +333,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
       Msg.bClose = Packet.ReadBit();
       Msg.Sequence = 0;
       Msg.ChanType = 0;
-      if (Msg.bReliable) Packet << Msg.Sequence;
+      if (Msg.bReliable) Packet << STRM_INDEX_U(Msg.Sequence);
       if (Msg.bOpen) Msg.ChanType = Packet.ReadInt(/*CHANNEL_MAX*/);
       if (Packet.IsError()) {
         GCon->Logf(NAME_DevNet, "Packet is missing message header");
@@ -344,9 +342,6 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
       // read data
       int Length = Packet.ReadInt(/*MAX_MSGLEN*8*/);
-      #ifdef VAVOOM_NET_RECV_DEBUG_EXTRA
-      GCon->Logf(NAME_DevNet, "SERBITS: len=%d; pos=%d; num=%d; left=%d", Length, Packet.GetPos(), Packet.GetNum(), Packet.GetNum()-Packet.GetPos()-Length);
-      #endif
       Msg.SetData(Packet, Length);
       if (Packet.IsError()) {
         GCon->Logf(NAME_DevNet, "Packet (channel %d; open=%d; close=%d; reliable=%d; seq=%d; chantype=%d) is missing message data (len=%d; pos=%d; num=%d)",
@@ -354,11 +349,12 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
           Length, Packet.GetPos(), Packet.GetNum());
         break;
       } else {
-        #ifdef VAVOOM_NET_RECV_DEBUG_EXTRA
-        GCon->Logf(NAME_DevNet, "*** Packet (channel %d; open=%d; close=%d; reliable=%d; seq=%d; chantype=%d) (len=%d; pos=%d; num=%d; left=%d)",
-          Msg.ChanIndex, (int)Msg.bOpen, (int)Msg.bClose, (int)Msg.bReliable, (int)Msg.Sequence, (int)Msg.ChanType,
-          Length, Packet.GetPos(), Packet.GetNum(), Packet.GetNum()-Packet.GetPos());
-        #endif
+        if (net_debug_dump_recv_packets) {
+          GCon->Logf(NAME_DevNet, "  packet(seq:%u) (channel %d; open=%d; close=%d; reliable=%d; seq=%d; chantype=%d) (len=%d; pos=%d; num=%d; left=%d)",
+            Sequence,
+            Msg.ChanIndex, (int)Msg.bOpen, (int)Msg.bClose, (int)Msg.bReliable, (int)Msg.Sequence, (int)Msg.ChanType,
+            Length, Packet.GetPos(), Packet.GetNum(), Packet.GetNum()-Packet.GetPos());
+        }
       }
 
       VChannel *Chan = GetChannelByIndex(Msg.ChanIndex);
@@ -582,12 +578,12 @@ VChannel *VNetConnection::CreateChannel (vuint8 Type, vint32 AIndex, vuint8 Open
 void VNetConnection::SendRawMessage (VMessageOut &Msg) {
   PrepareOut(MAX_MESSAGE_HEADER_BITS+Msg.GetNumBits());
 
-  Out.WriteBit(false);
+  Out.WriteBit(false); // not an ack
   Out.WriteInt(Msg.ChanIndex/*, MAX_CHANNELS*/);
   Out.WriteBit(Msg.bReliable);
   Out.WriteBit(Msg.bOpen);
   Out.WriteBit(Msg.bClose);
-  if (Msg.bReliable) Out << Msg.Sequence;
+  if (Msg.bReliable) Out << STRM_INDEX_U(Msg.Sequence);
   if (Msg.bOpen) Out.WriteInt(Msg.ChanType/*, CHANNEL_MAX*/);
   Out.WriteInt(Msg.GetNumBits()/*, MAX_MSGLEN*8*/);
   Out.SerialiseBits(Msg.GetData(), Msg.GetNumBits());
@@ -605,8 +601,8 @@ void VNetConnection::SendRawMessage (VMessageOut &Msg) {
 void VNetConnection::SendAck (vuint32 Sequence) {
   if (AutoAck) return;
   PrepareOut(33);
-  Out.WriteBit(true);
-  Out << Sequence;
+  Out.WriteBit(true); // ack
+  Out << STRM_INDEX_U(Sequence);
 }
 
 
@@ -620,7 +616,7 @@ void VNetConnection::PrepareOut (int Length) {
   if (Out.GetNumBits()+Length+MAX_PACKET_TRAILER_BITS > MAX_MSGLEN*8) Flush();
   if (Out.GetNumBits() == 0) {
     Out.WriteInt(NETPACKET_DATA/*, 256*/);
-    Out << UnreliableSendSequence;
+    Out << STRM_INDEX_U(UnreliableSendSequence);
   }
 }
 

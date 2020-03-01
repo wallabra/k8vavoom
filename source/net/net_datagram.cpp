@@ -93,10 +93,6 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VDatagramDriver : public VNetDriver {
 public:
-  // I don't think that communication protocol will change, but just in a case
-  // k8: and it did
-  enum { NET_PROTOCOL_VERSION = 3 };
-
   enum { MASTER_SERVER_PORT = 26002 };
 
   // client request

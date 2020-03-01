@@ -37,6 +37,7 @@ static const char *cli_Port = nullptr;
 
 VCvarB net_fixed_name_set("net_fixed_name_set", true, "Send fixed name set (old way)? WARNING! this is experimental option!", CVAR_PreInit);
 VCvarB net_debug_fixed_name_set("net_debug_fixed_name_set", false, "Dump new names?");
+VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump received packets?");
 
 
 // ////////////////////////////////////////////////////////////////////////// //

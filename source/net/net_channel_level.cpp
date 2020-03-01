@@ -180,7 +180,7 @@ void VLevelChannel::SendNewLevel () {
     VMessageOut Msg(this);
     Msg.bReliable = true;
     Msg.WriteInt(CMD_NewLevel/*, CMD_MAX*/);
-    Msg.WriteInt(NETWORK_PROTO_VERSION);
+    Msg.WriteInt(NET_PROTOCOL_VERSION);
     VStr MapName = *Level->MapName;
     VStr MapHash = *Level->MapHash;
     vuint32 modhash = SV_GetModListHash();
@@ -830,7 +830,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         {
           int ver = Msg.ReadInt();
           if (Msg.IsError()) Host_Error("Cannot read network protocol version");
-          if (ver != NETWORK_PROTO_VERSION) Host_Error("Invalid network protocol version: expected %d, got %d", ver, NETWORK_PROTO_VERSION);
+          if (ver != NET_PROTOCOL_VERSION) Host_Error("Invalid network protocol version: expected %d, got %d", ver, NET_PROTOCOL_VERSION);
         }
         Msg << csi.mapname;
         Msg << csi.maphash;

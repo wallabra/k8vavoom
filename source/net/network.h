@@ -28,6 +28,7 @@
 
 extern VCvarB net_fixed_name_set;
 extern VCvarB net_debug_fixed_name_set;
+extern VCvarB net_debug_dump_recv_packets;
 
 
 class VNetContext;
@@ -43,9 +44,11 @@ enum {
   NETPACKET_CTL  = 0x80,
 };
 
-// sent with `CMD_NewLevel`
+// sent on handshake, and with `CMD_NewLevel`
+// I don't think that communication protocol will change, but just in a case
+// k8: and it did
 enum {
-  NETWORK_PROTO_VERSION = 2,
+  NET_PROTOCOL_VERSION = 4,
 };
 
 //FIXME!
@@ -375,19 +378,13 @@ class VObjectMapChannel : public VChannel {
 private:
   vint32 CurrName;
   vint32 CurrClass;
-  vint32 LastNameCount;
-  vint32 LastClassCount;
+  bool needOpenMessage; // valid only for local channel (sender)
 
 protected:
-  // `Msg.bOpen` must be valid
-  void WriteCounters (VMessageOut &Msg);
-  // `Msg.bOpen` must be valid
-  void ReadCounters (VMessageIn &Msg);
-
   void UpdateSendPBar ();
 
 public:
-  VObjectMapChannel (VNetConnection *, vint32, vuint8 = true);
+  VObjectMapChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally);
   virtual ~VObjectMapChannel () override;
   virtual void Tick () override;
   void Update ();
