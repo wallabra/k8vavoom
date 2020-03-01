@@ -88,27 +88,8 @@ public:
       if (justNewlined) {
         #if !defined(_WIN32)
         bool resetColor = true;
-             if (lastEvent == NAME_Init) putStdOut("\x1b[1m");
-        else if (lastEvent == NAME_Warning) putStdOut("\x1b[0;33;1m");
-        else if (lastEvent == NAME_Error) putStdOut("\x1b[0;31;1m");
-        else if (lastEvent == NAME_Log) putStdOut("\x1b[0;32m");
-        else if (lastEvent == NAME_Debug) putStdOut("\x1b[0;35;1m");
-        else if (lastEvent == NAME_Chat) putStdOut("\x1b[0;37;1m");
-        else if (lastEvent == NAME_Bot ||
-                 lastEvent == NAME_BotDev ||
-                 lastEvent == NAME_BotDevAI ||
-                 lastEvent == NAME_BotDevRoam ||
-                 lastEvent == NAME_BotDevCheckPos ||
-                 lastEvent == NAME_BotDevItems ||
-                 lastEvent == NAME_BotDevAttack ||
-                 lastEvent == NAME_BotDevPath ||
-                 lastEvent == NAME_BotDevCrumbs ||
-                 lastEvent == NAME_BotDevPlanPath)
-        {
-          putStdOut("\x1b[0;33m");
-          resetColor = false;
-        }
-        else putStdOut("\x1b[0;36;1m");
+        const char *cs = VLog::GetColorInfoTTY(lastEvent, resetColor);
+        if (cs) putStdOut(cs); else resetColor = false;
         #endif
         putStr(VName::SafeString(lastEvent));
         if (rstr[0] != '\n') putStr(": "); else putStr(":");

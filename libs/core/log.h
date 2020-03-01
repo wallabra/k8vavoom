@@ -80,6 +80,13 @@ public:
   void Log (EName Type, const char *s) noexcept;
   void Log (const char *s) noexcept;
 
+public:
+  static const char *GetColorInfoTTY (EName type, bool &reset) noexcept;
+  static const char *GetColorInfoEngine (EName type, bool &reset) noexcept;
+
+  static void SetColorInfoTTY (EName type, const char *clrstr, bool reset=true) noexcept;
+  static void SetColorInfoEngine (EName type, const char *clrstr, bool reset=true) noexcept;
+
 public: // fuck you, shitplusplus!
   static mythread_mutex logLock;
   static volatile bool logLockInited;

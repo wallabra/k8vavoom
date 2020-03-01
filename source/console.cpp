@@ -779,34 +779,10 @@ static void ConSerialise (const char *str, EName Event, bool fromGLog) noexcept 
   if (VStr::NCmp(str, "Sys_Error:", 10) == 0) {
     if (logfout) { fflush(logfout); fprintf(logfout, "*** %s\n", str); fclose(logfout); logfout = nullptr; }
   }
-  if (Event == NAME_Warning) {
-    cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "[WarningYellow]");
-    cpPrintCurrColor();
-  } else if (Event == NAME_Error) {
-    //cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "T"); //R T
-    cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "[RedError]"); //R T
-    cpPrintCurrColor();
-  } else if (Event == NAME_Init) {
-    cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "[InitCyan]");
-    cpPrintCurrColor();
-  } else if (Event == NAME_Debug || Event == NAME_Dev) {
-    cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "[DebugGreen]");
-    cpPrintCurrColor();
-  } else if (Event == NAME_DevNet) {
-    cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "[DebugCyan]");
-    cpPrintCurrColor();
-  } else if (Event == NAME_Bot ||
-             Event == NAME_BotDev ||
-             Event == NAME_BotDevAI ||
-             Event == NAME_BotDevRoam ||
-             Event == NAME_BotDevCheckPos ||
-             Event == NAME_BotDevItems ||
-             Event == NAME_BotDevAttack ||
-             Event == NAME_BotDevPath ||
-             Event == NAME_BotDevCrumbs ||
-             Event == NAME_BotDevPlanPath)
-  {
-    cpLastColor = VStr(TEXT_COLOR_ESCAPE_STR "[Black]");
+  bool resetColor = true;
+  const char *cs = VLog::GetColorInfoEngine(Event, resetColor);
+  if (cs) {
+    cpLastColor = VStr(cs);
     cpPrintCurrColor();
   }
   DoPrint(str);

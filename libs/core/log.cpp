@@ -50,6 +50,48 @@ mythread_mutex VLog::logLock;
 volatile bool VLog::logLockInited = false;
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct ColorInfo {
+  VStr color;
+  bool resetColor;
+  EName type;
+};
+
+// colors for various predefined types
+static TMap<EName, ColorInfo> ttyColors;
+static TMap<EName, ColorInfo> engineColors;
+
+static inline const char *GetColorInfoFromMap (TMap<EName, ColorInfo> &map, EName type, bool &reset) noexcept {
+  auto pp = map.find(type);
+  if (!pp) pp = map.find(NAME_None);
+  if (pp) {
+    reset = pp->resetColor;
+    return *pp->color;
+  } else {
+    reset = false;
+    return nullptr;
+  }
+}
+
+static inline void SetColorInfoToMap (TMap<EName, ColorInfo> &map, EName type, const char *clrstr, bool reset) noexcept {
+  if (clrstr && clrstr[0]) {
+    ColorInfo ci;
+    ci.color = clrstr;
+    ci.resetColor = reset;
+    ci.type = type;
+    map.put(type, ci);
+  } else {
+    map.remove(type);
+  }
+}
+
+const char *VLog::GetColorInfoTTY (EName type, bool &reset) noexcept { return GetColorInfoFromMap(ttyColors, type, reset); }
+const char *VLog::GetColorInfoEngine (EName type, bool &reset) noexcept { return GetColorInfoFromMap(engineColors, type, reset); }
+
+void VLog::SetColorInfoTTY (EName type, const char *clrstr, bool reset) noexcept { SetColorInfoToMap(ttyColors, type, clrstr, reset); }
+void VLog::SetColorInfoEngine (EName type, const char *clrstr, bool reset) noexcept { SetColorInfoToMap(engineColors, type, clrstr, reset); }
+
+
 //==========================================================================
 //
 //  InitLogLock
@@ -429,27 +471,8 @@ public:
         bool resetColor = true;
         int fd = fileno(fo);
         if (fd >= 0 && isatty(fd)) {
-               if (event == NAME_Init) xprintStr("\x1b[1m", fo);
-          else if (event == NAME_Warning) xprintStr("\x1b[0;33;1m", fo);
-          else if (event == NAME_Error) xprintStr("\x1b[0;31;1m", fo);
-          else if (event == NAME_Log) xprintStr("\x1b[0;32m", fo);
-          else if (event == NAME_Debug) xprintStr("\x1b[0;35;1m", fo);
-          else if (event == NAME_Chat) xprintStr("\x1b[0;37;1m", fo);
-          else if (event == NAME_Bot ||
-                   event == NAME_BotDev ||
-                   event == NAME_BotDevAI ||
-                   event == NAME_BotDevRoam ||
-                   event == NAME_BotDevCheckPos ||
-                   event == NAME_BotDevItems ||
-                   event == NAME_BotDevAttack ||
-                   event == NAME_BotDevPath ||
-                   event == NAME_BotDevCrumbs ||
-                   event == NAME_BotDevPlanPath)
-          {
-            xprintStr("\x1b[0;33m", fo);
-            resetColor = false;
-          }
-          else xprintStr("\x1b[0;36;1m", fo);
+          const char *cs = VLog::GetColorInfoTTY(event, resetColor);
+          if (cs) xprintStr(cs, fo);
         } else {
           resetColor = false;
         }
@@ -500,3 +523,53 @@ public:
 
 VConLogger conlogger;
 #endif
+
+
+class LoggerSetupPredefinedColors {
+public:
+  LoggerSetupPredefinedColors () {
+    // tty colors
+    VLog::SetColorInfoTTY(NAME_None, "\x1b[0;36;1m"); // unknown
+    VLog::SetColorInfoTTY(NAME_Init, "\x1b[1m");
+    VLog::SetColorInfoTTY(NAME_Warning, "\x1b[0;33;1m");
+    VLog::SetColorInfoTTY(NAME_Error, "\x1b[0;31;1m");
+    VLog::SetColorInfoTTY(NAME_Log, "\x1b[0;32m");
+    VLog::SetColorInfoTTY(NAME_Debug, "\x1b[0;35;1m");
+    VLog::SetColorInfoTTY(NAME_Dev, "\x1b[0;35;1m");
+    VLog::SetColorInfoTTY(NAME_Chat, "\x1b[0;37;1m");
+    // bots, don't reset
+    VLog::SetColorInfoTTY(NAME_Bot, "\x1b[0;33m", false);
+    VLog::SetColorInfoTTY(NAME_BotDev, "\x1b[0;33m", false);
+    VLog::SetColorInfoTTY(NAME_BotDevAI, "\x1b[0;33m", false);
+    VLog::SetColorInfoTTY(NAME_BotDevRoam, "\x1b[0;33m", false);
+    VLog::SetColorInfoTTY(NAME_BotDevCheckPos, "\x1b[0;33m", false);
+    VLog::SetColorInfoTTY(NAME_BotDevItems, "\x1b[0;33m", false);
+    VLog::SetColorInfoTTY(NAME_BotDevAttack, "\x1b[0;33m", false);
+    VLog::SetColorInfoTTY(NAME_BotDevPath, "\x1b[0;33m", false);
+    VLog::SetColorInfoTTY(NAME_BotDevCrumbs, "\x1b[0;33m", false);
+    VLog::SetColorInfoTTY(NAME_BotDevPlanPath, "\x1b[0;33m", false);
+
+    // engine colors
+    //SetColorInfo(NAME_None, ""); // unknown
+    VLog::SetColorInfoEngine(NAME_Init, TEXT_COLOR_ESCAPE_STR "[InitCyan]");
+    VLog::SetColorInfoEngine(NAME_Warning, TEXT_COLOR_ESCAPE_STR "[WarningYellow]");
+    VLog::SetColorInfoEngine(NAME_Error, TEXT_COLOR_ESCAPE_STR "[RedError]");
+    VLog::SetColorInfoEngine(NAME_Debug, TEXT_COLOR_ESCAPE_STR "[DebugGreen]");
+    VLog::SetColorInfoEngine(NAME_Dev, TEXT_COLOR_ESCAPE_STR "[DebugGreen]");
+    VLog::SetColorInfoEngine(NAME_Chat, TEXT_COLOR_ESCAPE_STR "[Gold]");
+    // bots, don't reset
+    VLog::SetColorInfoEngine(NAME_Bot, TEXT_COLOR_ESCAPE_STR "[Black]", false);
+    VLog::SetColorInfoEngine(NAME_BotDev, TEXT_COLOR_ESCAPE_STR "[Black]", false);
+    VLog::SetColorInfoEngine(NAME_BotDevAI, TEXT_COLOR_ESCAPE_STR "[Black]", false);
+    VLog::SetColorInfoEngine(NAME_BotDevRoam, TEXT_COLOR_ESCAPE_STR "[Black]", false);
+    VLog::SetColorInfoEngine(NAME_BotDevCheckPos, TEXT_COLOR_ESCAPE_STR "[Black]", false);
+    VLog::SetColorInfoEngine(NAME_BotDevItems, TEXT_COLOR_ESCAPE_STR "[Black]", false);
+    VLog::SetColorInfoEngine(NAME_BotDevAttack, TEXT_COLOR_ESCAPE_STR "[Black]", false);
+    VLog::SetColorInfoEngine(NAME_BotDevPath, TEXT_COLOR_ESCAPE_STR "[Black]", false);
+    VLog::SetColorInfoEngine(NAME_BotDevCrumbs, TEXT_COLOR_ESCAPE_STR "[Black]", false);
+    VLog::SetColorInfoEngine(NAME_BotDevPlanPath, TEXT_COLOR_ESCAPE_STR "[Black]", false);
+  }
+};
+
+
+LoggerSetupPredefinedColors loggerSetupPredefinedColors__;
