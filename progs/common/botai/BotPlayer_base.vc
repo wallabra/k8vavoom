@@ -437,6 +437,10 @@ final void PutItemToIgnoreList (Actor item, optional float timeoutMult) {
   if (!specified_timeoutMult) timeoutMult = 1;
   float currTime = botmo.XLevel.Time;
   float timeout = ITEM_IGNORE_TIME+(FRandomFull()-0.5)*(ITEM_IGNORE_TIME_DEVIATION*2);
+  if (!player.Level.Game.deathmatch) {
+    // coop
+    timeout += 30;
+  }
   timeout *= timeoutMult;
   timeout += currTime;
   if (bot_developer_messages_items) printmsg(PMSG.BotDevAI, "bot '%s' gives up on %C for %s", player.PlayerName, item.Class, timeout-currTime);
@@ -1125,21 +1129,30 @@ void Scan () {
         // it is ok to obtain, remove from list
         itemIgnoreTimeout.del(actor);
       }
-      Weapon wpn = Weapon(actor);
-      if (wpn) otherItems[$] = actor;
+      if (player.Level.Game.deathmatch) {
+        // not a coop
+        Weapon wpn = Weapon(actor);
+        if (wpn) otherItems[$] = actor;
+      }
     }
   }
 
   if (!item && otherItems.length) {
-    while (otherItems.length) {
-      int idx = roundi(FRandomFull()*otherItems.length)%otherItems.length;
-      Actor act = otherItems[idx];
-      otherItems.remove(idx);
-      if (CheckItem(act) && HavePathToPoint(act.Origin, act.SubSector)) {
-        if (bot_developer_messages_items) printmsg(PMSG.BotDevItems, "going to unseen item %C", act);
-        UseCurrentPath();
-        item = act;
-        break;
+    if (!player.Level.Game.deathmatch) {
+      // coop, don't chase items
+      otherItems.reset();
+      item = none;
+    } else {
+      while (otherItems.length) {
+        int idx = roundi(FRandomFull()*otherItems.length)%otherItems.length;
+        Actor act = otherItems[idx];
+        otherItems.remove(idx);
+        if (CheckItem(act) && HavePathToPoint(act.Origin, act.SubSector)) {
+          if (bot_developer_messages_items) printmsg(PMSG.BotDevItems, "going to unseen item %C", act);
+          UseCurrentPath();
+          item = act;
+          break;
+        }
       }
     }
   }
