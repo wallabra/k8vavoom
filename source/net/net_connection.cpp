@@ -253,27 +253,33 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
     return;
   }
 
-  // ignore stale datagrams
-  // reliable messages will be resent anyway
-  if (Sequence < UnreliableReceiveSequence) {
-    if (net_dbg_conn_show_outdated) {
-      GCon->Logf(NAME_DevNet, "Got a stale datagram (urseq=%u; seq=%u)", UnreliableReceiveSequence, Sequence);
-    }
-    return;
-  }
-
-  // lost some datagrams?
+  // invalid sequence number?
   if (Sequence != UnreliableReceiveSequence) {
     // yeah, record it
-    int count = (int)(Sequence-UnreliableReceiveSequence);
-    if (count < 0) {
-      // something is VERY wrong here
-      GCon->Logf(NAME_DevNet, "Dropped %d datagram(s); WTF?! (urseq=%u; seq=%u)", count, UnreliableReceiveSequence, Sequence);
-      State = NETCON_Closed;
-      return;
+    if (Sequence < UnreliableReceiveSequence) {
+      // earlier datagram, still accept it
+      int count = (int)(UnreliableReceiveSequence-Sequence);
+      if (count > 0) {
+        // something is VERY wrong here
+        GCon->Logf(NAME_DevNet, "Got %d stale datagram(s); WTF?! (urseq=%u; seq=%u)", count, UnreliableReceiveSequence, Sequence);
+        State = NETCON_Closed;
+        return;
+      }
+      //Driver->droppedDatagrams += count;
+      if (net_dbg_conn_show_outdated) {
+        GCon->Logf(NAME_DevNet, "Got %d stale datagram(s) (urseq=%u; seq=%u)", count, UnreliableReceiveSequence, Sequence);
+      }
+    } else {
+      int count = (int)(Sequence-UnreliableReceiveSequence);
+      if (count < 0) {
+        // something is VERY wrong here
+        GCon->Logf(NAME_DevNet, "Dropped %d datagram(s); WTF?! (urseq=%u; seq=%u)", count, UnreliableReceiveSequence, Sequence);
+        State = NETCON_Closed;
+        return;
+      }
+      Driver->droppedDatagrams += count;
+      GCon->Logf(NAME_DevNet, "Dropped %d datagram(s) (urseq=%u; seq=%u)", count, UnreliableReceiveSequence, Sequence);
     }
-    Driver->droppedDatagrams += count;
-    GCon->Logf(NAME_DevNet, "Dropped %d datagram(s) (urseq=%u; seq=%u)", count, UnreliableReceiveSequence, Sequence);
   }
 
   // bump sequence number
