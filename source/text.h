@@ -101,7 +101,9 @@ bool R_IsDrawerInited ();
 
 // reset progress bar, setup initial timing and so on
 // returns `false` if graphics is not initialized
-bool R_PBarReset ();
+bool R_PBarReset (bool sendKeepalives=true);
+// this doesn't send keepalives
+VVA_OKUNUSED inline bool RNet_PBarReset () { return R_PBarReset(false); }
 
 // update progress bar, return `true` if something was displayed.
 // it is safe to call this even if graphics is not initialized.
@@ -109,7 +111,9 @@ bool R_PBarReset ();
 // you can call this as often as you want, it will take care of
 // limiting output to reasonable amounts.
 // `cur` must be zero or positive, `max` must be positive
-bool R_PBarUpdate (const char *message, int cur, int max, bool forced=false);
+bool R_PBarUpdate (const char *message, int cur, int max, bool forced=false, bool sendKeepalives=true);
+// this doesn't send keepalives
+VVA_OKUNUSED inline bool RNet_PBarUpdate (const char *message, int cur, int max, bool forced=false) { return R_PBarUpdate(message, cur, max, forced, false); }
 
 
 // on-screen messages type
@@ -119,10 +123,12 @@ enum {
 };
 
 // iniit on-screen messages system
-void R_OSDMsgReset (int type);
+void R_OSDMsgReset (int type, bool sendKeepalives=true);
+VVA_OKUNUSED inline void RNet_OSDMsgReset (int type) { R_OSDMsgReset(type, false); }
 
 // show loader message
-void R_OSDMsgShow (const char *msg, int clr=-666);
+void R_OSDMsgShow (const char *msg, int clr=-666, bool sendKeepalives=true);
+VVA_OKUNUSED inline void RNet_OSDMsgShow (const char *msg, int clr=-666) { R_OSDMsgShow(msg, clr, false); }
 
 extern int R_OSDMsgColorMain;
 extern int R_OSDMsgColorSecondary;

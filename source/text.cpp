@@ -216,10 +216,10 @@ bool R_IsDrawerInited () {
 //  R_OSDMsgReset
 //
 //==========================================================================
-void R_OSDMsgReset (int type) {
+void R_OSDMsgReset (int type, bool sendKeepalives) {
   currMsgNumber = 0;
   currMsgType = type;
-  NET_SendNetworkHeartbeat();
+  if (sendKeepalives) NET_SendNetworkHeartbeat();
 }
 
 
@@ -228,8 +228,8 @@ void R_OSDMsgReset (int type) {
 //  R_OSDMsgShow
 //
 //==========================================================================
-void R_OSDMsgShow (const char *msg, int clr) {
-  NET_SendNetworkHeartbeat();
+void R_OSDMsgShow (const char *msg, int clr, bool sendKeepalives) {
+  if (sendKeepalives) NET_SendNetworkHeartbeat();
   #ifdef CLIENT
   if (!msg || !msg[0]) return;
   if (Drawer && Drawer->IsInited()) {
@@ -269,7 +269,7 @@ void R_OSDMsgShow (const char *msg, int clr) {
 //  R_PBarReset
 //
 //==========================================================================
-bool R_PBarReset () {
+bool R_PBarReset (bool sendKeepalives) {
   lastPBarWdt = -666;
   pbarStartTime = Sys_Time();
   pbarLastUpdateTime = 0;
@@ -286,34 +286,14 @@ bool R_PBarReset () {
 //  R_PBarUpdate
 //
 //==========================================================================
-bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
-/*
-#ifdef CLIENT
-  if (Drawer && Drawer->IsInited()) {
-    int wdt = cur*(Drawer->getWidth()-PBarHPad*2)/max;
-    if (cur < max && wdt == lastPBarWdt) return;
-    lastPBarWdt = wdt;
-    Drawer->StartUpdate();
-    Drawer->FillRect(PBarHPad-2, Drawer->getHeight()-PBarVPad-PBarHeight-2, Drawer->getWidth()-PBarHPad+2, Drawer->getHeight()-PBarVPad+2, 0xffffffff);
-    Drawer->FillRect(PBarHPad-1, Drawer->getHeight()-PBarVPad-PBarHeight-1, Drawer->getWidth()-PBarHPad+1, Drawer->getHeight()-PBarVPad+1, 0xff000000);
-    Drawer->FillRect(PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, Drawer->getWidth()-PBarHPad, Drawer->getHeight()-PBarVPad, 0xff8f0f00);
-    if (wdt > 0) Drawer->FillRect(PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, PBarHPad+wdt, Drawer->getHeight()-PBarVPad, 0xffff7f00);
-    Drawer->Update();
-  } else
-#endif
-  {
-    int prc = cur*100/max;
-    GCon->Logf("PVS: %02d%% done (%d of %d)", prc, cur-1, max);
-  }
-*/
-
-  NET_SendNetworkHeartbeat();
+bool R_PBarUpdate (const char *message, int cur, int max, bool forced, bool sendKeepalives) {
+  if (sendKeepalives) NET_SendNetworkHeartbeat();
 
   if (forced && cur >= max && lastPBarWdt == -666) return false; // nothing was drawn at all
 
   // check if we need to update pbar
   // when we have drawer, delay first update by 800 msec, otherwise don't delay it
-#ifdef CLIENT
+  #ifdef CLIENT
   if (!forced) {
     if (Drawer && Drawer->IsInited()) {
       double currt = Sys_Time();
@@ -323,13 +303,13 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
       }
     }
   }
-#endif
+  #endif
 
   if (max < 1) return false; // alas
   if (cur < 0) cur = 0;
   if (cur > max) cur = max;
 
-#ifdef CLIENT
+  #ifdef CLIENT
   if (Drawer && Drawer->IsInited()) {
     int wdt = cur*(Drawer->getWidth()-PBarHPad*2)/max;
     if (!forced && wdt == lastPBarWdt) return false;
@@ -382,7 +362,8 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
     }
     Drawer->Update();
   } else
-#endif
+  #endif
+  // textual
   {
     double currt = Sys_Time();
     if (!forced && currt-pbarLastUpdateTime < 2) return false;
