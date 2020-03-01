@@ -29,7 +29,7 @@
 //#define VAVOOM_NET_RECV_DEBUG_EXTRA
 
 
-static VCvarF net_test_loss("net_test_loss", "0", "Test packet loss code?", CVAR_PreInit);
+static VCvarF net_test_loss("net_test_loss", "0", "Emulated packet loss percentage (randomly skip sending some packets).", CVAR_PreInit);
 static VCvarB net_dbg_conn_show_outdated("net_dbg_conn_show_outdated", false, "Show outdated channel messages?");
 
 
@@ -257,6 +257,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
   if (Sequence != UnreliableReceiveSequence) {
     // yeah, record it
     if (Sequence < UnreliableReceiveSequence) {
+      /*
       // earlier datagram, still accept it
       int count = (int)(UnreliableReceiveSequence-Sequence);
       if (count > 0) {
@@ -269,7 +270,11 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
       if (net_dbg_conn_show_outdated) {
         GCon->Logf(NAME_DevNet, "Got %d stale datagram(s) (urseq=%u; seq=%u)", count, UnreliableReceiveSequence, Sequence);
       }
+      */
+      // nope, ignore it
+      return;
     } else {
+      // this datagram is in the future, looks like older datagrams are lost
       int count = (int)(Sequence-UnreliableReceiveSequence);
       if (count < 0) {
         // something is VERY wrong here
@@ -648,7 +653,8 @@ void VNetConnection::Flush () {
   while (Out.GetNumBits()&7) Out.WriteBit(false);
 
   // send the message
-  if (net_test_loss == 0 || Random()*100.0f <= net_test_loss) {
+  const float lossPrc = net_test_loss.asFloat();
+  if (lossPrc <= 0.0f || RandomFull()*100.0f <= net_test_loss) {
     if (NetCon->SendMessage(Out.GetData(), Out.GetNumBytes()) == -1) State = NETCON_Closed;
   }
   LastSendTime = Driver->NetTime;
