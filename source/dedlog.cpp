@@ -48,11 +48,10 @@ class VDedLog : public VLogListener {
 public:
   bool justNewlined;
   EName lastEvent;
-  bool stdoutIsTTY;
 
 private:
   inline void putStdOut (const char *s, int len=-1) {
-    if (!stdoutIsTTY) return;
+    if (!ttyIsGood()) return;
     if (len < 1) {
       if (!len || !s || !s[0]) return;
       len = (int)strlen(s);
@@ -67,15 +66,12 @@ private:
       len = (int)strlen(s);
       if (len < 1) return;
     }
-    if (stdoutIsTTY) write(STDOUT_FILENO, s, (size_t)len);
+    if (ttyIsGood()) ttyRawWrite(s);
     if (ddlogfout) fwrite(s, (size_t)len, 1, ddlogfout);
   }
 
 public:
-  inline VDedLog () noexcept : justNewlined(true) {
-    stdoutIsTTY = !!isatty(STDOUT_FILENO);
-    //stdoutIsTTY = false;
-  }
+  inline VDedLog () noexcept : justNewlined(true) {}
 
 public:
   virtual void Serialise (const char *Text, EName Event) noexcept override {
