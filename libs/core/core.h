@@ -157,4 +157,6 @@
 
 #include "fsys/fsys.h"
 
+#include "rawtty.h"
+
 #endif

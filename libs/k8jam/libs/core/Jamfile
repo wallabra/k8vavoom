@@ -39,6 +39,7 @@ Library libcore.a :
   src/micropather.cpp
   src/zone.cpp
   src/SpookyV2.c
+  src/rawtty.cpp
   # mi-malloc
   src/mimalloc/static.c
   # lzma

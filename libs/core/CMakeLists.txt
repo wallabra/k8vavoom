@@ -75,6 +75,8 @@ add_library(core STATIC
   cvarsys.h
   cvarsys.cpp
 
+  rawtty.cpp
+
   chachaprng_c.h
   chachaprng_cpp.h
 
