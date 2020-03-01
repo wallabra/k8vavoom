@@ -129,8 +129,7 @@ void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values
 void VPlayerChannel::Update () {
   EvalCondValues(Plr, Plr->GetClass(), FieldCondValues);
 
-  VMessageOut Msg(this);
-  Msg.bReliable = true;
+  VMessageOut Msg(this, true/*reliable*/);
   vuint8 *Data = (vuint8 *)Plr;
   for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
     if (!FieldCondValues[F->NetIndex]) continue;

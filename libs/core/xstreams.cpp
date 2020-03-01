@@ -975,8 +975,9 @@ void VBitStreamReader::cloneFrom (const VBitStreamReader *rd) {
 //
 //==========================================================================
 void VBitStreamReader::SetData (VBitStreamReader &Src, int Length) noexcept {
+  vassert(Length >= 0);
   Data.SetNum((Length+7)>>3);
-  Src.SerialiseBits(Data.Ptr(), Length);
+  if (Length) Src.SerialiseBits(Data.Ptr(), Length);
   Num = Length;
   Pos = 0;
 }

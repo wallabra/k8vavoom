@@ -39,8 +39,10 @@ VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AInd
   , OpenedLocally(AOpenedLocally)
   , OpenAcked(AIndex < CHANIDX_ThinkersStart)
   , Closing(false)
+  , InCloseProcessed(false)
   , InMsg(nullptr)
   , OutMsg(nullptr)
+  , bAllowPrematureClose(false)
 {
   vassert(Index >= 0 && Index < MAX_CHANNELS);
   Connection->RegisterChannel(this);
@@ -68,18 +70,23 @@ VChannel::~VChannel () {
 //
 //==========================================================================
 void VChannel::ClearAllQueues () {
+  ClearInQueue();
+  ClearOutQueue();
+}
+
+
+//==========================================================================
+//
+//  VChannel::ClearInQueue
+//
+//==========================================================================
+void VChannel::ClearInQueue () {
   for (VMessageIn *Msg = InMsg; Msg; ) {
     VMessageIn *Next = Msg->Next;
     delete Msg;
     Msg = Next;
   }
   InMsg = nullptr;
-  for (VMessageOut *Msg = OutMsg; Msg; ) {
-    VMessageOut *Next = Msg->Next;
-    delete Msg;
-    Msg = Next;
-  }
-  OutMsg = nullptr;
 }
 
 
@@ -105,6 +112,7 @@ void VChannel::ClearOutQueue () {
 //==========================================================================
 void VChannel::Suicide () {
   Closing = true;
+  InCloseProcessed = true; // we're going to die anyway, so reject any incoming packets
   ClearOutQueue(); // it is safe to destroy it
   if (Connection) Connection->MarkChannelsDirty();
 }
@@ -118,12 +126,12 @@ void VChannel::Suicide () {
 void VChannel::Close () {
   if (Closing) return; // already in closing state
   // send close message
-  VMessageOut Msg(this);
-  Msg.bReliable = true;
+  VMessageOut Msg(this, true/*reliable*/);
   Msg.bClose = true;
   SendMessage(&Msg);
   // enter closing state
   Closing = true;
+  InCloseProcessed = true; // we're going to die anyway, so reject any incoming packets
 }
 
 
@@ -132,7 +140,7 @@ void VChannel::Close () {
 //  VChannel::CountInMessages
 //
 //==========================================================================
-int VChannel::CountInMessages () const {
+int VChannel::CountInMessages () const noexcept {
   int res = 0;
   for (VMessageIn *M = InMsg; M; M = M->Next) ++res;
   return res;
@@ -144,7 +152,7 @@ int VChannel::CountInMessages () const {
 //  VChannel::CountOutMessages
 //
 //==========================================================================
-int VChannel::CountOutMessages () const {
+int VChannel::CountOutMessages () const noexcept {
   int res = 0;
   for (VMessageOut *M = OutMsg; M; M = M->Next) ++res;
   return res;
@@ -157,46 +165,99 @@ int VChannel::CountOutMessages () const {
 //
 //==========================================================================
 void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
+  GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: received %sreliable message; seq=%u (curr=%u)", *Connection->GetAddress(), Index, (Msg.bReliable ? "" : "un"), Msg.Sequence, Connection->InSequence[Index]);
+
   // drop outdated messages
   if (Msg.bReliable && Msg.Sequence < Connection->InSequence[Index]) {
+    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: dropped duplicate message %u (%u)", *Connection->GetAddress(), Index, Msg.Sequence, Connection->InSequence[Index]);
     ++Connection->Driver->receivedDuplicateCount;
     return;
   }
 
-  if (Msg.bReliable && Msg.Sequence > Connection->InSequence[Index]) {
-    VMessageIn **pNext = &InMsg;
-    while (*pNext && (*pNext)->Sequence <= Msg.Sequence) {
-      if ((*pNext)->Sequence == Msg.Sequence) {
+  // if we're going to die, or received "close", don't perform any processing
+  // note that "open new channel" logic in connection should advance insequence
+  // to the appropriate number on receiving "create channel" packet
+  // that is, the remote can send us "close", and immediately reopen the channel,
+  // and we should not accept such packets
+  if (InCloseProcessed) {
+    // it is safe to clear incoming queue here too
+    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: dropped message %u for in-closed channel", *Connection->GetAddress(), Index, Msg.Sequence);
+    ClearInQueue();
+    return;
+  }
+
+  if (!Msg.bReliable) {
+    // process unreliable message
+    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: processing unreliable message", *Connection->GetAddress(), Index);
+    ParsePacket(Msg);
+    return;
+  }
+
+  if (Msg.Sequence == Connection->InSequence[Index]) {
+    // current message, no need to insert it anywhere, perform direct processing
+    ++Connection->InSequence[Index];
+    const bool isCloseMsg = Msg.bClose;
+    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: directly processing sequence message %u", *Connection->GetAddress(), Index, Msg.Sequence);
+    ParsePacket(Msg);
+    if (isCloseMsg) {
+      GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: closing channel due to closing direct message %u", *Connection->GetAddress(), Index, Msg.Sequence);
+      // we got "close" message, don't process more messages, and send "closing" here
+      Close();
+      // it is safe to clear incoming queue here
+      ClearInQueue();
+    }
+    if (!InMsg) return; // nothing more to do
+  } else if (Msg.Sequence > Connection->InSequence[Index]) {
+    // message from the future
+    // insert it in the processing queue (but don't replace the existing one)
+    VMessageIn *prev = nullptr, *curr = InMsg;
+    while (curr && curr->Sequence <= Msg.Sequence) {
+      if (curr->Sequence == Msg.Sequence) {
+        // duplicate message, drop it
+        GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: dropped duplicate message; seq=%u (curr=%u)", *Connection->GetAddress(), Index, Msg.Sequence, Connection->InSequence[Index]);
         ++Connection->Driver->receivedDuplicateCount;
         return;
       }
-      pNext = &(*pNext)->Next;
+      prev = curr;
+      curr = curr->Next;
     }
+    // insert *before* `curr`
     VMessageIn *Copy = new VMessageIn(Msg);
-    Copy->Next = *pNext;
-    *pNext = Copy;
-    return;
+    if (prev) prev->Next = Copy; else InMsg = Copy;
+    Copy->Next = curr;
+    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: queued sequence message %u", *Connection->GetAddress(), Index, Copy->Sequence);
   }
-  if (Msg.bReliable) ++Connection->InSequence[Index];
 
-  if (!Closing) ParsePacket(Msg);
-  if (Msg.bClose) {
-    Suicide();
+  if (!InMsg) {
+    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: NO QUEUED MESSAGES, WTF?!", *Connection->GetAddress(), Index);
     return;
   }
 
+  GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: first queued message seq=%u (curr=%u)", *Connection->GetAddress(), Index, InMsg->Sequence, Connection->InSequence[Index]);
+
+  // parse all ordered messages
   while (InMsg && InMsg->Sequence == Connection->InSequence[Index]) {
     VMessageIn *OldMsg = InMsg;
     InMsg = OldMsg->Next;
     ++Connection->InSequence[Index];
-    if (!Closing) ParsePacket(*OldMsg);
     const bool isCloseMsg = OldMsg->bClose;
+    const vuint32 seq = OldMsg->Sequence;
+    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: processing sequence message %u", *Connection->GetAddress(), Index, OldMsg->Sequence);
+    ParsePacket(*OldMsg);
     delete OldMsg;
-    OldMsg = nullptr;
     if (isCloseMsg) {
-      Suicide();
-      return;
+      GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: closing channel due to closing queued message %u", *Connection->GetAddress(), Index, seq);
+      // we got "close" message, don't process more messages, and send "closing" here
+      Close();
+      // it is safe to clear incoming queue here
+      ClearInQueue();
     }
+  }
+
+  if (InMsg) {
+    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: done queue scan; first queued message seq=%u (curr=%u)", *Connection->GetAddress(), Index, InMsg->Sequence, Connection->InSequence[Index]);
+  } else {
+    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: done queue scan; inqueue is empty (curr=%u)", *Connection->GetAddress(), Index, Connection->InSequence[Index]);
   }
 }
 
@@ -235,6 +296,8 @@ void VChannel::SendMessage (VMessageOut *AMsg) {
     Msg = Copy;
 
     ++Connection->OutSequence[Index];
+
+    GCon->Logf(NAME_DevNet, ">>> %s: channel #%d: sending and queueing %smessage %u", *Connection->GetAddress(), Index, (Msg->bClose ? "CLOSING " : ""), Msg->Sequence);
   }
 
   Connection->SendRawMessage(*Msg);
@@ -270,28 +333,56 @@ void VChannel::ReceivedClosingAck () {
 //  returns `true` if channel is closed (the caller should delete it)
 //
 //==========================================================================
-bool VChannel::ReceivedAck () {
+void VChannel::ReceivedAck () {
   // clean up messages that have been ACK-ed
   // only the first ones are deleted so that close message doesn't
   // get handled while there's still messages that are not ACK-ed
-  bool CloseAcked = false;
+  //bool CloseAcked = false;
 
-  while (!CloseAcked && OutMsg && OutMsg->bReceivedAck) {
-    VMessageOut *Msg = OutMsg;
-    OutMsg = Msg->Next;
-    if (Msg->bClose) CloseAcked = true;
-    if (Msg->udata) SpecialAck(Msg);
-    delete Msg;
-    Msg = nullptr;
+  // remove *all* acked messages from resend queue, to not spam the network
+  // but don't suicide until closed message is acked (if `bAllowPrematureClose` is not set)
+  VMessageOut *prev = nullptr, *curr = OutMsg;
+  while (curr) {
+    // acked?
+    if (!curr->bReceivedAck) {
+      // no, move to the next message
+      prev = curr;
+      curr = curr->Next;
+      continue;
+    }
+    // yes, remove this message from resend queue (but check for premature close)
+    if (!prev && curr->udata) SpecialAck(curr); // callback if this message is first acked in queue
+    // acked close message?
+    if (curr->bClose) {
+      //CloseAcked = true;
+      // if premature closing is allowed, clear the whole queue
+      if (bAllowPrematureClose || !prev) {
+        if (!Closing) {
+          Closing = true;
+          InCloseProcessed = true; // we aren't interested in incoming messages anymore
+          ReceivedClosingAck();
+          GCon->Logf(NAME_DevNet, ">>> %s: channel #%d: closing die to close ACK seq=%u", *Connection->GetAddress(), Index, curr->Sequence);
+        }
+        ClearOutQueue();
+        // nothing to do if the queue is cleared
+        break;
+      }
+      vassert(prev);
+      // move to the next message
+      prev = curr;
+      curr = curr->Next;
+      continue;
+    }
+    // remove this message from queue
+    if (prev) prev->Next = curr->Next; else OutMsg = curr->Next;
+    VMessageOut *msg = curr;
+    curr = curr->Next;
+    delete msg;
   }
 
-  // if we received ACK for close message then delete this channel
-  if (CloseAcked) {
-    ReceivedClosingAck();
-    Suicide();
-  }
-
-  return CloseAcked;
+  // if we received ACK for close message, mark is as closing
+  // if you need to perform something special on close, use `ReceivedClosingAck()`
+  //if (CloseAcked) Closing = true;
 }
 
 
@@ -307,10 +398,18 @@ void VChannel::Tick () {
   //      should spam with them without delays
   //!if (OutMsg) GCon->Logf(NAME_DevNet, "VChannel::Tick(%d:%s): nettime=%g; msgtime=%g; tout=%g", Index, GetTypeName(), Connection->Driver->NetTime, OutMsg->Time, Connection->Driver->NetTime-OutMsg->Time);
   for (VMessageOut *Msg = OutMsg; Msg; Msg = Msg->Next) {
-    if (!Msg->bReceivedAck && Connection->Driver->NetTime-Msg->Time > 1.0/35.0) {
-      Connection->SendRawMessage(*Msg);
-      ++Connection->Driver->packetsReSent;
+    if (!Msg->bReceivedAck) {
+      if (Connection->Driver->NetTime-Msg->Time > 1.0/35.0) {
+        Connection->SendRawMessage(*Msg);
+        ++Connection->Driver->packetsReSent;
+        GCon->Logf(NAME_DevNet, ">>> %s: channel #%d: sending %squeued raw message seq=%u (curr=%u); pid=%u", *Connection->GetAddress(), Index, (Msg->bClose ? "CLOSING " : ""), Msg->Sequence, Connection->OutSequence[Index], Msg->PacketId);
+      } else {
+        //GCon->Logf(NAME_DevNet, ">>> %s: channel #%d: skipped raw message seq=%u (curr=%u) (to=%g : %g); pid=%u", *Connection->GetAddress(), Index, Msg->Sequence, Connection->OutSequence[Index], Connection->Driver->NetTime-Msg->Time, 1.0/35.0, Msg->PacketId);
+      }
+    } else {
+      GCon->Logf(NAME_DevNet, ">>> %s: channel #%d: skipped acked %squeued raw message seq=%u (curr=%u); pid=%u", *Connection->GetAddress(), Index, (Msg->bClose ? "CLOSING " : ""), Msg->Sequence, Connection->OutSequence[Index], Msg->PacketId);
     }
+    if (Msg->bClose) break; // there's no need to sand anything after close message
   }
 }
 
@@ -321,9 +420,7 @@ void VChannel::Tick () {
 //
 //==========================================================================
 void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
-  VMessageOut Msg(this);
-  Msg.bReliable = !!(Func->Flags&FUNC_NetReliable);
-
+  VMessageOut Msg(this, !!(Func->Flags&FUNC_NetReliable)/*reliable*/);
   Msg.WriteInt(Func->NetIndex/*, Owner->GetClass()->NumNetFields*/);
 
   // serialise arguments

@@ -177,8 +177,7 @@ void VLevelChannel::SendNewLevel () {
 
   VStr sinfo = svs.serverinfo;
   {
-    VMessageOut Msg(this);
-    Msg.bReliable = true;
+    VMessageOut Msg(this, true/*reliable*/);
     Msg.WriteInt(CMD_NewLevel/*, CMD_MAX*/);
     Msg.WriteInt(NET_PROTOCOL_VERSION);
     VStr MapName = *Level->MapName;
@@ -199,8 +198,7 @@ void VLevelChannel::SendNewLevel () {
   if (sinfo.length()) {
     int pktnum = 0;
     while (sinfo.length() > 0) {
-      VMessageOut Msg(this);
-      Msg.bReliable = true;
+      VMessageOut Msg(this, true/*reliable*/);
       Msg.WriteInt(CMD_ServerInfo/*, CMD_MAX*/);
       Msg.WriteInt(pktnum); // sequence number
       VStr s = sinfo;
@@ -216,8 +214,7 @@ void VLevelChannel::SendNewLevel () {
     }
 
     {
-      VMessageOut Msg(this);
-      Msg.bReliable = true;
+      VMessageOut Msg(this, true/*reliable*/);
       Msg.WriteInt(CMD_ServerInfoEnd/*, CMD_MAX*/);
       Msg.WriteInt(pktnum); // sequence number
       SendMessage(&Msg);
@@ -229,8 +226,7 @@ void VLevelChannel::SendNewLevel () {
 
   GCon->Logf(NAME_DevNet, "sending prerender to %s", *Connection->GetAddress());
   {
-    VMessageOut Msg(this);
-    Msg.bReliable = true;
+    VMessageOut Msg(this, true/*reliable*/);
     Msg.WriteInt(CMD_PreRender/*, CMD_MAX*/);
     SendMessage(&Msg);
   }
@@ -247,8 +243,7 @@ void VLevelChannel::SendNewLevel () {
 void VLevelChannel::Update () {
   //GCon->Log(NAME_DevNet, "VLevelChannel::Update: enter");
 
-  VMessageOut Msg(this, true);
-  //Msg.bReliable = true; // autoreliable
+  VMessageOut Msg(this, true/*reliable*/);
 
   //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Lines");
   for (int i = 0; i < Level->NumLines; ++i) {
@@ -692,8 +687,7 @@ void VLevelChannel::Update () {
 void VLevelChannel::SendStaticLights () {
   for (int i = 0; i < Level->NumStaticLights; ++i) {
     rep_light_t &L = Level->StaticLights[i];
-    VMessageOut Msg(this);
-    Msg.bReliable = true;
+    VMessageOut Msg(this, true/*reliable*/);
     if (L.ConeAngle) {
       Msg.WriteInt(CMD_StaticLightSpot/*, CMD_MAX*/);
       Msg << L.Origin << L.Radius << L.Color << L.ConeDir << L.ConeAngle;

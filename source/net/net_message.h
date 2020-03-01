@@ -102,7 +102,7 @@ public:
 
 public:
   // cannot be inlined, sorry
-  VMessageOut (VChannel *AChannel, bool aAllowExpand=false);
+  VMessageOut (VChannel *AChannel, bool AReliable, bool aAllowExpand=true);
 
   inline VMessageOut (const VMessageOut &src)
     : VBitStreamWriter(0, false) // it will be overwritten anyway
@@ -124,7 +124,7 @@ public:
     cloneFrom(&src);
   }
 
-  void Setup (VChannel *AChannel, bool aAllowExpand=false);
+  void Setup (VChannel *AChannel, bool AReliable, bool aAllowExpand=true);
 
   inline void SetMark () { markPos = GetNumBits(); }
   bool NeedSplit () const;

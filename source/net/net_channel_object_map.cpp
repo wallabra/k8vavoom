@@ -129,8 +129,7 @@ void VObjectMapChannel::Update () {
     return;
   }
 
-  VMessageOut Msg(this);
-  Msg.bReliable = true;
+  VMessageOut Msg(this, true/*reliable*/);
   Msg.bOpen = needOpenMessage; // opening message?
   // send counters in the first message
   if (needOpenMessage) {
@@ -160,14 +159,13 @@ void VObjectMapChannel::Update () {
       if (CountOutMessages() >= 10) { UpdateSendPBar(); return; } // is queue full?
       // clear message
       if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...names: [%d/%d] (%d)", CurrName+1, Connection->ObjMap->NameLookup.length(), CountOutMessages());
-      Msg.Setup(this);
-      Msg.bReliable = true;
+      Msg.Setup(this, true/*reliable*/);
       Msg.bOpen = false;
     }
     Msg.WriteInt(Len);
     Msg.Serialise((void *)EName, Len);
     ++CurrName;
-    if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :name: [%d/%d]: <%s>", CurrName, Connection->ObjMap->NameLookup.length(), EName);
+    //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :name: [%d/%d]: <%s>", CurrName, Connection->ObjMap->NameLookup.length(), EName);
   }
 
   // send classes while we have anything to send
@@ -179,14 +177,13 @@ void VObjectMapChannel::Update () {
       if (CountOutMessages() >= 10) { UpdateSendPBar(); return; } // is queue full?
       // clear message
       if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...classes: [%d/%d] (%d)", CurrClass+1, Connection->ObjMap->ClassLookup.length(), CountOutMessages());
-      Msg.Setup(this);
-      Msg.bReliable = true;
+      Msg.Setup(this, true/*reliable*/);
       Msg.bOpen = false;
     }
     VName Name = Connection->ObjMap->ClassLookup[CurrClass]->GetVName();
     Connection->ObjMap->SerialiseName(Msg, Name);
     ++CurrClass;
-    if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name);
+    //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name);
   }
 
   // this is the last message
@@ -237,7 +234,7 @@ void VObjectMapChannel::ParsePacket (VMessageIn &Msg) {
     VName Name(buf.ptr());
     Connection->ObjMap->ReceivedName(CurrName, Name);
     ++CurrName;
-    if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :name: [%d/%d]: <%s>", CurrName, Connection->ObjMap->NameLookup.length(), buf.ptr());
+    //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :name: [%d/%d]: <%s>", CurrName, Connection->ObjMap->NameLookup.length(), buf.ptr());
   }
 
   // read classes
@@ -249,7 +246,7 @@ void VObjectMapChannel::ParsePacket (VMessageIn &Msg) {
     Connection->ObjMap->ClassLookup[CurrClass] = C;
     Connection->ObjMap->ClassMap.Set(C, CurrClass);
     ++CurrClass;
-    if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s : %s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name, C->GetName());
+    //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s : %s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name, C->GetName());
   }
 
   RNet_PBarUpdate("loading names and classes", CurrName+CurrClass, Connection->ObjMap->NameLookup.length()+Connection->ObjMap->ClassLookup.length());

@@ -44,6 +44,8 @@ VThinkerChannel::VThinkerChannel (VNetConnection *AConnection, vint32 AIndex, vu
   , UpdatedThisFrame(false)
   , FieldCondValues(nullptr)
 {
+  // it is ok to close it... or it isn't?
+  //bAllowPrematureClose = true;
 }
 
 
@@ -95,6 +97,20 @@ void VThinkerChannel::RemoveThinkerFromGame () {
     Thinker = th;
   }
   SetThinker(nullptr);
+}
+
+
+//==========================================================================
+//
+//  VThinkerChannel::ReceivedClosingAck
+//
+//  some channels may want to set some flags here
+//
+//  WARNING! don't close/suicide here!
+//
+//==========================================================================
+void VThinkerChannel::ReceivedClosingAck () {
+  RemoveThinkerFromGame();
 }
 
 
@@ -205,8 +221,7 @@ void VThinkerChannel::Update () {
   vuint8 *Data = (vuint8 *)Thinker;
   VObject *NullObj = nullptr;
 
-  VMessageOut Msg(this);
-  Msg.bReliable = true;
+  VMessageOut Msg(this, true/*reliable*/);
 
   if (NewObj) {
     Msg.bOpen = true;

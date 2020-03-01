@@ -202,14 +202,24 @@ public:
   VNetConnection *Connection;
   vint32 Index;
   vuint8 Type;
-  vuint8 OpenedLocally;
-  vuint8 OpenAcked;
-  vuint8 Closing;
-  VMessageIn *InMsg;
+  bool OpenedLocally;
+  bool OpenAcked;
+  // `true` if we're waiting ACK for close packet
+  // if set, don't queue more packets for sending
+  // if `OutMsg` is `nullptr`, we can destroy this channel
+  bool Closing;
+  // `true` if we got incoming close packed, and processed it
+  // if set, don't process any received packets
+  bool InCloseProcessed;
+  VMessageIn *InMsg; // incoming queue, so we can process packets in order
   VMessageOut *OutMsg; // sent reliable messages; we want ACK for them
-  // if `Closing` flag is set, we should remove the channel when `ReceivedAck()` returns `true`
-  // until then, the channel should be alive, because it may contain some reliable messages to resend
-  // also, it is safe to remove the channel if `OutMsg` is `nullptr` (we have no messages to ack)
+
+  // if this is set to `true`, it is ok to close the channel when close message is acked,
+  // even if we still have unacked outgoing messages in `OutMsg` queue
+  // it is ok to do this for thinkers, for example (we'll just lost them, and that's all),
+  // but we cannot prematurely close object mapping channel (obviously)
+  // default is `false`
+  bool bAllowPrematureClose;
 
 public:
   inline static const char *GetChanTypeName (vuint8 type) noexcept {
@@ -229,6 +239,7 @@ public:
   virtual ~VChannel ();
 
   void ClearAllQueues ();
+  void ClearInQueue ();
   void ClearOutQueue ();
 
   inline const char *GetTypeName () const noexcept { return GetChanTypeName(Type); }
@@ -244,22 +255,35 @@ public:
   virtual void Suicide ();
 
   // VChannel interface
+  // this is called when new message for this channel is received
   void ReceivedRawMessage (VMessageIn &);
+
+  // called by `ReceivedRawMessage()` to parse new message
+  // this call is sequenced (i.e. the sequence is right)
   virtual void ParsePacket (VMessageIn &) = 0;
+
+  // copies the passed message if necessary
   void SendMessage (VMessageOut *);
-  virtual void ReceivedClosingAck (); // some channels may want to set some flags here; WARNING! don't close/suicide here!
-  virtual bool ReceivedAck (); // returns `true` if closing ack received (the caller should delete it)
-  virtual void Close ();
-  virtual void Tick ();
+
   // called when `msg->udata` is not zero
   // DO NOT delete message, DO NOT store pointer to it!
   virtual void SpecialAck (VMessageOut *msg);
+  // some channels may want to set some flags here; WARNING! don't close/suicide here!
+  // this is called when there's no other messages in ack queue, and close acked
+  virtual void ReceivedClosingAck ();
+  // process all ack flags (called when we received new ack message for this channel)
+  virtual void ReceivedAck ();
+  // this sends reliable "close" message
+  virtual void Close ();
+
+  // call this periodically to perform various processing
+  virtual void Tick ();
 
   void SendRpc (VMethod *, VObject *);
   bool ReadRpc (VMessageIn &Msg, int, VObject *);
 
-  int CountInMessages () const;
-  int CountOutMessages () const;
+  int CountInMessages () const noexcept;
+  int CountOutMessages () const noexcept;
 };
 
 
@@ -346,6 +370,7 @@ public:
   void Update ();
   virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
+  virtual void ReceivedClosingAck () override;
   virtual void Close () override;
 
   void RemoveThinkerFromGame ();

@@ -32,13 +32,13 @@
 //  VMessageOut::VMessageOut
 //
 //==========================================================================
-VMessageOut::VMessageOut (VChannel *AChannel, bool aAllowExpand)
+VMessageOut::VMessageOut (VChannel *AChannel, bool AReliable, bool aAllowExpand)
   : VBitStreamWriter(OUT_MESSAGE_SIZE, aAllowExpand) // allow expand
   , mChannel(AChannel)
   , Next(nullptr)
   , ChanType(AChannel->Type)
   , ChanIndex(AChannel->Index)
-  , bReliable(/*false*/aAllowExpand)
+  , bReliable(AReliable)
   , bOpen(false)
   , bClose(false)
   , bReceivedAck(false)
@@ -55,13 +55,13 @@ VMessageOut::VMessageOut (VChannel *AChannel, bool aAllowExpand)
 //  VMessageOut::Setup
 //
 //==========================================================================
-void VMessageOut::Setup (VChannel *AChannel, bool aAllowExpand) {
+void VMessageOut::Setup (VChannel *AChannel, bool AReliable, bool aAllowExpand) {
   Reinit(OUT_MESSAGE_SIZE, aAllowExpand);
   mChannel = AChannel;
   Next = nullptr;
   ChanType = AChannel->Type;
   ChanIndex = AChannel->Index;
-  bReliable = aAllowExpand;
+  bReliable = AReliable;
   bOpen = false;
   bClose = false;
   bReceivedAck = false;
@@ -97,21 +97,22 @@ void VMessageOut::SendSplitMessage () {
   vassert(bReliable);
   vassert(mChannel);
   if (IsError() || !NeedSplit()) return; // just in case
-  if (Pos-markPos > OUT_MESSAGE_SIZE) { bError = true; return; } // oops
+  //if (Pos-markPos > OUT_MESSAGE_SIZE) { bError = true; return; } // oops
   vassert(!bOpen);
   vassert(!bClose);
 
   //GCon->Logf(NAME_DevNet, "SPLIT! max=%d, size=%d, markPos=%d, extra=%d", Max, Pos, markPos, Pos-markPos);
 
   // send message part
-  VMessageOut tmp(mChannel);
-  tmp.ChanType = ChanType;
-  tmp.ChanIndex = ChanIndex;
-  tmp.bReliable = bReliable;
-  tmp.bOpen = bOpen;
-  tmp.bClose = bClose;
-  tmp.SerialiseBits(Data.Ptr(), markPos);
-  mChannel->SendMessage(&tmp);
+  {
+    VMessageOut tmp(mChannel, bReliable);
+    tmp.ChanType = ChanType;
+    tmp.ChanIndex = ChanIndex;
+    tmp.bOpen = bOpen;
+    tmp.bClose = bClose;
+    tmp.SerialiseBits(Data.Ptr(), markPos);
+    mChannel->SendMessage(&tmp);
+  }
 
   // remove sent bits
   const int bitsLeft = Pos-markPos;
