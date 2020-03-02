@@ -99,6 +99,8 @@ public:
   int markPos;
   // user data; can be used in ack processor
   int udata;
+  // packet ids we sent this message in; used to ack with old messages (FUCKIN' HACK, DON'T DO THAT, KETMAR!)
+  TMapNC<vuint32, bool> AckPIds;
 
 public:
   // cannot be inlined, sorry
@@ -122,15 +124,16 @@ public:
   {
     // clone bitstream writer
     cloneFrom(&src);
+    // there is no need to clone ack pids, tho
   }
 
   void Setup (VChannel *AChannel, bool AReliable, bool aAllowExpand=true);
 
   inline void SetMark () { markPos = GetNumBits(); }
+
+  inline bool IsGoodAckId (vuint32 pid) const noexcept { return AckPIds.has(pid); }
+  inline void AppendAckId (vuint32 pid) noexcept { AckPIds.put(pid, true); }
+
   bool NeedSplit () const;
   void SendSplitMessage ();
 };
-
-
-//inline float ByteToAngle (vuint8 angle) { return (float)angle*360.0f/256.0f; }
-//inline vuint8 AngleToByte (float angle) { return (vuint8)(angle*256.0f/360.0f); }

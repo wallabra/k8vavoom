@@ -247,6 +247,9 @@ public:
 
   inline const char *GetTypeName () const noexcept { return GetChanTypeName(Type); }
 
+  virtual VStr GetName () const noexcept;
+  VStr GetDebugName () const noexcept;
+
   // is it safe to remove this channel?
   inline bool IsDead () const noexcept { return (Closing && OutMsg == nullptr); }
 
@@ -296,6 +299,7 @@ public:
   VControlChannel (VNetConnection *, vint32, vuint8 = true);
 
   // VChannel interface
+  virtual VStr GetName () const noexcept override;
   virtual void ParsePacket (VMessageIn &) override;
   virtual void Suicide () override;
 };
@@ -345,6 +349,7 @@ public:
   void SendNewLevel ();
   void SendStaticLights ();
   void ResetLevel ();
+  virtual VStr GetName () const noexcept override;
   virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
   // used on the client to initiate map loading
@@ -371,6 +376,7 @@ public:
   void SetThinker (VThinker *);
   void EvalCondValues (VObject *, VClass *, vuint8 *);
   void Update ();
+  virtual VStr GetName () const noexcept override;
   virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
   virtual void ReceivedClosingAck () override;
@@ -395,6 +401,7 @@ public:
   void SetPlayer (VBasePlayer *);
   void EvalCondValues (VObject *, VClass *, vuint8 *);
   void Update ();
+  virtual VStr GetName () const noexcept override;
   virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
 };
@@ -417,6 +424,7 @@ public:
   virtual void Tick () override;
   void Update ();
   void ReceivedClosingAck () override; // sets `ObjMapSent` flag
+  virtual VStr GetName () const noexcept override;
   virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
 };

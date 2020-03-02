@@ -115,6 +115,10 @@ void VNetContext::Tick () {
       //!GCon->Logf(NAME_DevNet, "  ticking: #%d: %s", i, *Conn->GetAddress());
       Conn->Tick();
     }
+    if (Conn->State != NETCON_Closed && Conn->GetGeneralChannel()->Closing) {
+      GCon->Logf(NAME_DevNet, "Client %s closed the connection", *Conn->GetAddress());
+      Conn->State = NETCON_Closed;
+    }
     if (Conn->State == NETCON_Closed) {
       GCon->Logf(NAME_DevNet, "Dropping client %s", *Conn->GetAddress());
       SV_DropClient(Conn->Owner, true);

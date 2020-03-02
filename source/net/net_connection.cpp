@@ -313,13 +313,14 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
         bool seenClosingMessage = false;
         for (VMessageOut *Msg = chan->OutMsg; Msg && !seenClosingMessage; Msg = Msg->Next) {
           seenClosingMessage = Msg->bClose; // set flag
-          if (Msg->PacketId != AckSeq) continue; // invalid ack seq
+          //if (Msg->PacketId != AckSeq) continue; // invalid ack seq
+          if (!Msg->IsGoodAckId(AckSeq)) continue;
           if (!chan->OpenAcked && !Msg->bOpen) continue; // channel is not open, and this is not an open request
           // ok, mark this message as acked
           Msg->bReceivedAck = true;
           if (Msg->bOpen) chan->OpenAcked = true;
           gotAck = true;
-          if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "    packet(seq:%u): got ack for channel #%d (opack=%d; closing=%d) (packetid=%u; open=%d; pseq=%u)", Sequence, chan->Index, (int)chan->OpenAcked, (int)chan->Closing, Msg->PacketId, (int)Msg->bOpen, Msg->Sequence);
+          if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "    packet(seq:%u): got ack for %s (opAck=%d; closing=%d) (packetid=%u; open=%d; pseq=%u)", Sequence, *chan->GetDebugName(), (int)chan->OpenAcked, (int)chan->Closing, Msg->PacketId, (int)Msg->bOpen, Msg->Sequence);
         }
         if (gotAck) chan->ReceivedAck();
       }
@@ -597,6 +598,7 @@ void VNetConnection::SendRawMessage (VMessageOut &Msg) {
 
   Msg.Time = Driver->NetTime;
   Msg.PacketId = UnreliableSendSequence;
+  Msg.AppendAckId(UnreliableSendSequence);
 
   // if this is reliable "open channel" or "close channel" messages, force packet send here.
   // we need to to this so acking won't accidentally ack messages we aren't interested into.

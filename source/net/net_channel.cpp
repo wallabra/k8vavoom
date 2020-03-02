@@ -66,6 +66,26 @@ VChannel::~VChannel () {
 
 //==========================================================================
 //
+//  VChannel::GetName
+//
+//==========================================================================
+VStr VChannel::GetName () const noexcept {
+  return VStr(va("chan #%d(%s)", Index, GetTypeName()));
+}
+
+
+//==========================================================================
+//
+//  VChannel::GetDebugName
+//
+//==========================================================================
+VStr VChannel::GetDebugName () const noexcept {
+  return (Connection ? Connection->GetAddress() : VStr("<noip>"))+":"+GetName();
+}
+
+
+//==========================================================================
+//
 //  VChannel::Suicide
 //
 //==========================================================================
@@ -165,15 +185,15 @@ int VChannel::CountOutMessages () const noexcept {
 //==========================================================================
 void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
   if (NoMoreIncoming) {
-    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: rejected %sreliable message for in-closed channel; seq=%u (curr=%u)", *Connection->GetAddress(), Index, (Msg.bReliable ? "" : "un"), Msg.Sequence, Connection->InSequence[Index]);
+    GCon->Logf(NAME_DevNet, "<<< %s: rejected %sreliable message for in-closed channel; seq=%u (curr=%u)", *GetDebugName(), (Msg.bReliable ? "" : "un"), Msg.Sequence, Connection->InSequence[Index]);
     return;
   }
 
-  GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: received %sreliable message; seq=%u (curr=%u)", *Connection->GetAddress(), Index, (Msg.bReliable ? "" : "un"), Msg.Sequence, Connection->InSequence[Index]);
+  GCon->Logf(NAME_DevNet, "<<< %s: received %sreliable message; seq=%u (curr=%u)", *GetDebugName(), (Msg.bReliable ? "" : "un"), Msg.Sequence, Connection->InSequence[Index]);
 
   // drop outdated messages
   if (Msg.bReliable && Msg.Sequence < Connection->InSequence[Index]) {
-    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: dropped duplicate message %u (%u)", *Connection->GetAddress(), Index, Msg.Sequence, Connection->InSequence[Index]);
+    GCon->Logf(NAME_DevNet, "<<< %s: dropped duplicate message %u (%u)", *GetDebugName(), Msg.Sequence, Connection->InSequence[Index]);
     ++Connection->Driver->receivedDuplicateCount;
     return;
   }
@@ -182,7 +202,7 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
   if (!Msg.bReliable) {
     // pretend that unreliable messages never reached closed channel
     if (!Closing) {
-      GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: processing unreliable message", *Connection->GetAddress(), Index);
+      GCon->Logf(NAME_DevNet, "<<< %s: processing unreliable message", *GetDebugName());
       ParsePacket(Msg);
     }
     return;
@@ -192,14 +212,14 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
   vassert(Msg.bReliable);
 
   // don't overoptimise yet; just copy and insert new message into the queue
-if (Msg.Sequence >= Connection->InSequence[Index]) {
+  if (Msg.Sequence >= Connection->InSequence[Index]) {
     // message from the future
     // insert it in the processing queue (but don't replace the existing one)
     VMessageIn *prev = nullptr, *curr = InMsg;
     while (curr && curr->Sequence <= Msg.Sequence) {
       if (curr->Sequence == Msg.Sequence) {
         // duplicate message, drop it
-        GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: dropped duplicate message; seq=%u (curr=%u)", *Connection->GetAddress(), Index, Msg.Sequence, Connection->InSequence[Index]);
+        GCon->Logf(NAME_DevNet, "<<< %s: dropped duplicate message; seq=%u (curr=%u)", *GetDebugName(), Msg.Sequence, Connection->InSequence[Index]);
         ++Connection->Driver->receivedDuplicateCount;
         return;
       }
@@ -210,15 +230,15 @@ if (Msg.Sequence >= Connection->InSequence[Index]) {
     VMessageIn *Copy = new VMessageIn(Msg);
     if (prev) prev->Next = Copy; else InMsg = Copy;
     Copy->Next = curr;
-    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: queued sequence message %u", *Connection->GetAddress(), Index, Copy->Sequence);
+    GCon->Logf(NAME_DevNet, "<<< %s: queued sequence message %u", *GetDebugName(), Copy->Sequence);
   }
 
   if (!InMsg) {
-    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: NO QUEUED MESSAGES, WTF?!", *Connection->GetAddress(), Index);
+    GCon->Logf(NAME_DevNet, "<<< %s: NO QUEUED MESSAGES, WTF?!", *GetDebugName());
     return;
   }
 
-  GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: first queued message seq=%u (curr=%u)", *Connection->GetAddress(), Index, InMsg->Sequence, Connection->InSequence[Index]);
+  GCon->Logf(NAME_DevNet, "<<< %s: first queued message seq=%u (curr=%u)", *GetDebugName(), InMsg->Sequence, Connection->InSequence[Index]);
 
   // parse all ordered messages
   while (InMsg && InMsg->Sequence == Connection->InSequence[Index]) {
@@ -227,11 +247,11 @@ if (Msg.Sequence >= Connection->InSequence[Index]) {
     ++Connection->InSequence[Index];
     const bool isCloseMsg = OldMsg->bClose;
     const vuint32 seq = OldMsg->Sequence;
-    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: processing sequence message %u", *Connection->GetAddress(), Index, OldMsg->Sequence);
+    GCon->Logf(NAME_DevNet, "<<< %s: processing sequence message %u", *GetDebugName(), OldMsg->Sequence);
     ParsePacket(*OldMsg);
     delete OldMsg;
     if (isCloseMsg) {
-      GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: closing channel due to closing queued message %u", *Connection->GetAddress(), Index, seq);
+      GCon->Logf(NAME_DevNet, "<<< %s: closing channel due to closing queued message %u", *GetDebugName(), seq);
       // we got "close" message from the other side; it means that the other side called `Close()` on this channel, and
       // don't want to send more data here; also, it means that we processed all the data it fed to us.
       // if we have close message to resend on our side, we can safely remove this channel, it is dead.
@@ -252,9 +272,9 @@ if (Msg.Sequence >= Connection->InSequence[Index]) {
   }
 
   if (InMsg) {
-    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: done queue scan; first queued message seq=%u (curr=%u)", *Connection->GetAddress(), Index, InMsg->Sequence, Connection->InSequence[Index]);
+    GCon->Logf(NAME_DevNet, "<<< %s: done queue scan; first queued message seq=%u (curr=%u)", *GetDebugName(), InMsg->Sequence, Connection->InSequence[Index]);
   } else {
-    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: done queue scan; inqueue is empty (curr=%u)", *Connection->GetAddress(), Index, Connection->InSequence[Index]);
+    GCon->Logf(NAME_DevNet, "<<< %s: done queue scan; inqueue is empty (curr=%u)", *GetDebugName(), Connection->InSequence[Index]);
   }
 }
 
@@ -268,16 +288,10 @@ void VChannel::SendMessage (VMessageOut *AMsg) {
   VMessageOut *Msg = AMsg;
 
   if (Msg->IsError()) {
-    GCon->Logf(NAME_DevNet, "Overflowed message (len=%d bits, %d bytes)", Msg->GetNum(), (Msg->GetNum()+7)/8);
-    const char *chanName = "thinker";
-    switch (Msg->ChanIndex) {
-      case CHANIDX_General: chanName = "general"; break;
-      case CHANIDX_Player: chanName = "player"; break;
-      case CHANIDX_Level: chanName = "level"; break;
-    }
-    GCon->Logf(NAME_DevNet, "  chan=%d(%s) (type=%d), reliable=%d, open=%d; closed=%d; rack=%d; seq=%d; time=%g; pid=%u",
-      Msg->ChanIndex, chanName, Msg->ChanType, (int)Msg->bReliable, (int)Msg->bOpen, (int)Msg->bClose, (int)Msg->bReceivedAck, Msg->Sequence, Msg->Time, Msg->PacketId);
-    //abort();
+    GCon->Logf(NAME_Error, "Overflowed message (len=%d bits, %d bytes)", Msg->GetNum(), (Msg->GetNum()+7)/8);
+    GCon->Logf(NAME_Error, "  %s: reliable=%d, open=%d; closed=%d; rack=%d; seq=%d; time=%g; pid=%u",
+      *GetDebugName(),
+      (int)Msg->bReliable, (int)Msg->bOpen, (int)Msg->bClose, (int)Msg->bReceivedAck, Msg->Sequence, Msg->Time, Msg->PacketId);
     return;
   }
 
@@ -294,7 +308,7 @@ void VChannel::SendMessage (VMessageOut *AMsg) {
 
     ++Connection->OutSequence[Index];
 
-    GCon->Logf(NAME_DevNet, ">>> %s: channel #%d: sending and queueing %smessage %u", *Connection->GetAddress(), Index, (Msg->bClose ? "CLOSING " : ""), Msg->Sequence);
+    GCon->Logf(NAME_DevNet, ">>> %s: sending and queueing %smessage %u", *GetDebugName(), (Msg->bClose ? "CLOSING " : ""), Msg->Sequence);
   }
 
   Connection->SendRawMessage(*Msg);
@@ -357,7 +371,7 @@ void VChannel::ReceivedAck () {
         if (!Closing) {
           Closing = true;
           ReceivedClosingAck();
-          GCon->Logf(NAME_DevNet, ">>> %s: channel #%d: closing die to close ACK seq=%u", *Connection->GetAddress(), Index, curr->Sequence);
+          GCon->Logf(NAME_DevNet, ">>> %s: closing die to close ACK seq=%u", *GetDebugName(), curr->Sequence);
         }
         ClearOutQueue();
         // nothing to do if the queue is cleared
@@ -398,12 +412,12 @@ void VChannel::Tick () {
       if (Connection->Driver->NetTime-Msg->Time > 1.0/35.0) {
         Connection->SendRawMessage(*Msg);
         ++Connection->Driver->packetsReSent;
-        GCon->Logf(NAME_DevNet, ">>> %s: channel #%d: sending %squeued raw message seq=%u (curr=%u); pid=%u", *Connection->GetAddress(), Index, (Msg->bClose ? "CLOSING " : ""), Msg->Sequence, Connection->OutSequence[Index], Msg->PacketId);
+        GCon->Logf(NAME_DevNet, ">>> %s: sending %squeued raw message seq=%u (curr=%u); pid=%u", *GetDebugName(), (Msg->bClose ? "CLOSING " : ""), Msg->Sequence, Connection->OutSequence[Index], Msg->PacketId);
       } else {
-        //GCon->Logf(NAME_DevNet, ">>> %s: channel #%d: skipped raw message seq=%u (curr=%u) (to=%g : %g); pid=%u", *Connection->GetAddress(), Index, Msg->Sequence, Connection->OutSequence[Index], Connection->Driver->NetTime-Msg->Time, 1.0/35.0, Msg->PacketId);
+        //GCon->Logf(NAME_DevNet, ">>> %s: skipped raw message seq=%u (curr=%u) (to=%g : %g); pid=%u", *GetDebugName(), Msg->Sequence, Connection->OutSequence[Index], Connection->Driver->NetTime-Msg->Time, 1.0/35.0, Msg->PacketId);
       }
     } else {
-      GCon->Logf(NAME_DevNet, ">>> %s: channel #%d: skipped acked %squeued raw message seq=%u (curr=%u); pid=%u", *Connection->GetAddress(), Index, (Msg->bClose ? "CLOSING " : ""), Msg->Sequence, Connection->OutSequence[Index], Msg->PacketId);
+      GCon->Logf(NAME_DevNet, ">>> %s: skipped acked %squeued raw message seq=%u (curr=%u); pid=%u", *GetDebugName(), (Msg->bClose ? "CLOSING " : ""), Msg->Sequence, Connection->OutSequence[Index], Msg->PacketId);
     }
     if (Msg->bClose) break; // there's no need to sand anything after close message
   }

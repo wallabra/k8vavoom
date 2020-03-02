@@ -41,6 +41,16 @@ VControlChannel::VControlChannel (VNetConnection *AConnection, vint32 AIndex, vu
 
 //==========================================================================
 //
+//  VControlChannel::GetName
+//
+//==========================================================================
+VStr VControlChannel::GetName () const noexcept {
+  return VStr(va("ctlchan #%d(%s)", Index, GetTypeName()));
+}
+
+
+//==========================================================================
+//
 //  VControlChannel::Suicide
 //
 //==========================================================================

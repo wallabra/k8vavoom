@@ -47,6 +47,7 @@ VMessageOut::VMessageOut (VChannel *AChannel, bool AReliable, bool aAllowExpand)
   , PacketId(0)
   , markPos(0)
   , udata(0)
+  , AckPIds()
 {}
 
 
@@ -70,6 +71,7 @@ void VMessageOut::Setup (VChannel *AChannel, bool AReliable, bool aAllowExpand) 
   PacketId = 0;
   markPos = 0;
   udata = 0;
+  AckPIds.reset();
 }
 
 

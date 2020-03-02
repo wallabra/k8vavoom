@@ -64,6 +64,20 @@ VThinkerChannel::~VThinkerChannel () {
 
 //==========================================================================
 //
+//  VThinkerChannel::GetName
+//
+//==========================================================================
+VStr VThinkerChannel::GetName () const noexcept {
+  if (Thinker) {
+    return VStr(va("thchan #%d <%s:%u>", Index, Thinker->GetClass()->GetName(), Thinker->GetUniqueId()));
+  } else {
+    return VStr(va("thchan #%d <none>", Index));
+  }
+}
+
+
+//==========================================================================
+//
 //  VThinkerChannel::RemoveThinkerFromGame
 //
 //==========================================================================
@@ -233,6 +247,7 @@ void VThinkerChannel::Update () {
   const bool isServer = Connection->Context->IsServer();
   vuint8 oldRole = 0, oldRemoteRole = 0;
 
+  /*
   if (isServer && !Connection->AutoAck) {
     if (Ent && Ent->FlagsEx&VEntity::EFEX_NoTickGrav) {
       // this is Role on the client
@@ -244,6 +259,7 @@ void VThinkerChannel::Update () {
       if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_DevNet, "%s:%u: became notick, closing channel%s", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), (OpenedLocally ? " (opened locally)" : ""));
     }
   }
+  */
 
   TAVec SavedAngles;
   if (Ent) {
