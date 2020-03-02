@@ -39,6 +39,7 @@ VPlayerChannel::VPlayerChannel (VNetConnection *AConnection, vint32 AIndex, vuin
   , NewObj(false)
   , FieldCondValues(nullptr)
 {
+  OpenAcked = true; // this channel is pre-opened
 }
 
 

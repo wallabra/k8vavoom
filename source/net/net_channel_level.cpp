@@ -66,6 +66,7 @@ VLevelChannel::VLevelChannel (VNetConnection *AConnection, vint32 AIndex, vuint8
   , Sides(nullptr)
   , Sectors(nullptr)
 {
+  OpenAcked = true; // this channel is pre-opened
   serverInfoBuf.clear();
   severInfoPacketCount = 0;
   severInfoCurrPacket = -1;

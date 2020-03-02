@@ -115,7 +115,7 @@ void VObjectMapChannel::UpdateSendPBar () {
 //
 //==========================================================================
 void VObjectMapChannel::Update () {
-  if (OutMsg && !OpenAcked) return;
+  //if (OutMsg && !OpenAcked) return;
 
   if (CurrName == Connection->ObjMap->NameLookup.length() && CurrClass == Connection->ObjMap->ClassLookup.length()) {
     // everything has been sent

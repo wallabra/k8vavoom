@@ -37,9 +37,9 @@ VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AInd
   , Index(AIndex)
   , Type(AType)
   , OpenedLocally(AOpenedLocally)
-  , OpenAcked(AIndex < CHANIDX_ThinkersStart)
+  , OpenAcked(false/*AIndex < CHANIDX_ThinkersStart*/)
   , Closing(false)
-  , InCloseProcessed(false)
+  , NoMoreIncoming(false)
   , InMsg(nullptr)
   , OutMsg(nullptr)
   , bAllowPrematureClose(false)
@@ -112,7 +112,7 @@ void VChannel::ClearOutQueue () {
 //==========================================================================
 void VChannel::Suicide () {
   Closing = true;
-  InCloseProcessed = true; // we're going to die anyway, so reject any incoming packets
+  NoMoreIncoming = true;
   ClearOutQueue(); // it is safe to destroy it
   if (Connection) Connection->MarkChannelsDirty();
 }
@@ -131,7 +131,6 @@ void VChannel::Close () {
   SendMessage(&Msg);
   // enter closing state
   Closing = true;
-  InCloseProcessed = true; // we're going to die anyway, so reject any incoming packets
 }
 
 
@@ -165,6 +164,11 @@ int VChannel::CountOutMessages () const noexcept {
 //
 //==========================================================================
 void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
+  if (NoMoreIncoming) {
+    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: rejected %sreliable message for in-closed channel; seq=%u (curr=%u)", *Connection->GetAddress(), Index, (Msg.bReliable ? "" : "un"), Msg.Sequence, Connection->InSequence[Index]);
+    return;
+  }
+
   GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: received %sreliable message; seq=%u (curr=%u)", *Connection->GetAddress(), Index, (Msg.bReliable ? "" : "un"), Msg.Sequence, Connection->InSequence[Index]);
 
   // drop outdated messages
@@ -174,40 +178,21 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
     return;
   }
 
-  // if we're going to die, or received "close", don't perform any processing
-  // note that "open new channel" logic in connection should advance insequence
-  // to the appropriate number on receiving "create channel" packet
-  // that is, the remote can send us "close", and immediately reopen the channel,
-  // and we should not accept such packets
-  if (InCloseProcessed) {
-    // it is safe to clear incoming queue here too
-    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: dropped message %u for in-closed channel", *Connection->GetAddress(), Index, Msg.Sequence);
-    ClearInQueue();
-    return;
-  }
-
+  // process unreliable message
   if (!Msg.bReliable) {
-    // process unreliable message
-    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: processing unreliable message", *Connection->GetAddress(), Index);
-    ParsePacket(Msg);
+    // pretend that unreliable messages never reached closed channel
+    if (!Closing) {
+      GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: processing unreliable message", *Connection->GetAddress(), Index);
+      ParsePacket(Msg);
+    }
     return;
   }
 
-  if (Msg.Sequence == Connection->InSequence[Index]) {
-    // current message, no need to insert it anywhere, perform direct processing
-    ++Connection->InSequence[Index];
-    const bool isCloseMsg = Msg.bClose;
-    GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: directly processing sequence message %u", *Connection->GetAddress(), Index, Msg.Sequence);
-    ParsePacket(Msg);
-    if (isCloseMsg) {
-      GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: closing channel due to closing direct message %u", *Connection->GetAddress(), Index, Msg.Sequence);
-      // we got "close" message, don't process more messages, and send "closing" here
-      Close();
-      // it is safe to clear incoming queue here
-      ClearInQueue();
-    }
-    if (!InMsg) return; // nothing more to do
-  } else if (Msg.Sequence > Connection->InSequence[Index]) {
+  // this message must be reliable
+  vassert(Msg.bReliable);
+
+  // don't overoptimise yet; just copy and insert new message into the queue
+if (Msg.Sequence >= Connection->InSequence[Index]) {
     // message from the future
     // insert it in the processing queue (but don't replace the existing one)
     VMessageIn *prev = nullptr, *curr = InMsg;
@@ -247,10 +232,22 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
     delete OldMsg;
     if (isCloseMsg) {
       GCon->Logf(NAME_DevNet, "<<< %s: channel #%d: closing channel due to closing queued message %u", *Connection->GetAddress(), Index, seq);
-      // we got "close" message, don't process more messages, and send "closing" here
-      Close();
-      // it is safe to clear incoming queue here
+      // we got "close" message from the other side; it means that the other side called `Close()` on this channel, and
+      // don't want to send more data here; also, it means that we processed all the data it fed to us.
+      // if we have close message to resend on our side, we can safely remove this channel, it is dead.
+      // the easy way to check if we have such outgoing message is to check `Closing` flag: it will be
+      // set in `Close()`, where the corresponding message is queued.
+      // if the channel is going to suicide, it doesn't matter at all.
+      if (Closing) {
+        // ok, we'll be dead anyway, so perform suicide here
+        Suicide();
+      } else {
+        // queue "close ack" packet
+        Close();
+      }
+      // it is safe to clear incoming queue here (and stop accepting incoming messages)
       ClearInQueue();
+      NoMoreIncoming = true;
     }
   }
 
@@ -359,7 +356,6 @@ void VChannel::ReceivedAck () {
       if (bAllowPrematureClose || !prev) {
         if (!Closing) {
           Closing = true;
-          InCloseProcessed = true; // we aren't interested in incoming messages anymore
           ReceivedClosingAck();
           GCon->Logf(NAME_DevNet, ">>> %s: channel #%d: closing die to close ACK seq=%u", *Connection->GetAddress(), Index, curr->Sequence);
         }

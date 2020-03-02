@@ -35,6 +35,7 @@
 VControlChannel::VControlChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally)
   : VChannel(AConnection, CHANNEL_Control, AIndex, AOpenedLocally)
 {
+  OpenAcked = true; // this channel is pre-opened
 }
 
 

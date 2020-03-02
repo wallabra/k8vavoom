@@ -204,13 +204,16 @@ public:
   vuint8 Type;
   bool OpenedLocally;
   bool OpenAcked;
+
   // `true` if we're waiting ACK for close packet
   // if set, don't queue more packets for sending
   // if `OutMsg` is `nullptr`, we can destroy this channel
   bool Closing;
-  // `true` if we got incoming close packed, and processed it
-  // if set, don't process any received packets
-  bool InCloseProcessed;
+  // this flag will be set when we'll see a "close me" incoming packet
+  // there is no reason to accept more data on this channel, it is prolly
+  // just waiting for "outgoing close ack"
+  bool NoMoreIncoming;
+
   VMessageIn *InMsg; // incoming queue, so we can process packets in order
   VMessageOut *OutMsg; // sent reliable messages; we want ACK for them
 

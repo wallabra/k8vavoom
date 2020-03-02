@@ -314,16 +314,12 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
         for (VMessageOut *Msg = chan->OutMsg; Msg && !seenClosingMessage; Msg = Msg->Next) {
           seenClosingMessage = Msg->bClose; // set flag
           if (Msg->PacketId != AckSeq) continue; // invalid ack seq
-          // if this channel is closing, never ack "open" message for it
-          if (chan->Closing && !chan->OpenAcked) {
-            if (Msg->bOpen) continue;
-          }
-          if (!chan->OpenAcked && !Msg->bOpen) continue; // channel is not open, and this is not an "open me" message
+          if (!chan->OpenAcked && !Msg->bOpen) continue; // channel is not open, and this is not an open request
           // ok, mark this message as acked
           Msg->bReceivedAck = true;
           if (Msg->bOpen) chan->OpenAcked = true;
           gotAck = true;
-          if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "    packet(seq:%u): got ack for channel #%d (packetid=%u; open=%d; pseq=%u)", Sequence, chan->Index, Msg->PacketId, (int)Msg->bOpen, Msg->Sequence);
+          if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "    packet(seq:%u): got ack for channel #%d (opack=%d; closing=%d) (packetid=%u; open=%d; pseq=%u)", Sequence, chan->Index, (int)chan->OpenAcked, (int)chan->Closing, Msg->PacketId, (int)Msg->bOpen, Msg->Sequence);
         }
         if (gotAck) chan->ReceivedAck();
       }
@@ -378,6 +374,8 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
           // ignore messages for unopened channels
           if (Msg.ChanIndex < 0 || Msg.ChanIndex >= MAX_CHANNELS) {
             GCon->Logf(NAME_DevNet, "Ignored message for invalid channel %d", Msg.ChanIndex);
+          } else {
+            GCon->Logf(NAME_DevNet, "Message for closed channel %d", Msg.ChanIndex);
           }
           continue;
         }
@@ -578,6 +576,13 @@ VChannel *VNetConnection::CreateChannel (vuint8 Type, vint32 AIndex, vuint8 Open
 //
 //==========================================================================
 void VNetConnection::SendRawMessage (VMessageOut &Msg) {
+  // if this is reliable "open channel" or "close channel" messages, force packet send here.
+  // we need to to this so acking won't accidentally ack messages we aren't interested into.
+  if (Msg.bReliable && (Msg.bOpen || Msg.bClose)) {
+    if (Out.GetNumBits()) Flush();
+    GCon->Logf(NAME_Debug, ">>>: going to send open/close message for channel #%d (msgseq=%u; open=%d; close=%d); pktid=%u", Msg.ChanIndex, Msg.Sequence, (int)Msg.bOpen, (int)Msg.bClose, UnreliableSendSequence);
+  }
+
   PrepareOut(MAX_MESSAGE_HEADER_BITS+Msg.GetNumBits());
 
   Out.WriteBit(false); // not an ack
@@ -592,6 +597,13 @@ void VNetConnection::SendRawMessage (VMessageOut &Msg) {
 
   Msg.Time = Driver->NetTime;
   Msg.PacketId = UnreliableSendSequence;
+
+  // if this is reliable "open channel" or "close channel" messages, force packet send here.
+  // we need to to this so acking won't accidentally ack messages we aren't interested into.
+  if (Msg.bReliable && (Msg.bOpen || Msg.bClose)) {
+    Flush();
+    GCon->Logf(NAME_Debug, ">>>: flushed open/close message for channel #%d (msgseq=%u; open=%d; close=%d); pktid=%u", Msg.ChanIndex, Msg.Sequence, (int)Msg.bOpen, (int)Msg.bClose, UnreliableSendSequence);
+  }
 }
 
 
@@ -602,6 +614,7 @@ void VNetConnection::SendRawMessage (VMessageOut &Msg) {
 //==========================================================================
 void VNetConnection::SendAck (vuint32 Sequence) {
   if (AutoAck) return;
+  GCon->Logf(NAME_DevNet, ">>>: sending ack for pktid=%u", Sequence);
   PrepareOut(33);
   Out.WriteBit(true); // ack
   Out << STRM_INDEX_U(Sequence);
@@ -647,7 +660,7 @@ void VNetConnection::Flush () {
 
   // add trailing bit so we can find out how many bits the message has
   Out.WriteBit(true);
-  // pad it with zero bits until byte boundary
+  // pad it with zero bits until the byte boundary
   while (Out.GetNumBits()&7) Out.WriteBit(false);
 
   // send the message
