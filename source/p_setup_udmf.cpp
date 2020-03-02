@@ -589,13 +589,13 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       if (Key.strEquCI("moreids")) { ParseMoreIds(S.moreTags); continue; }
 
       if (Key.strEquCI("lightfloor")) { S.params.lightFloor = CheckInt(); continue; }
-      if (Key.strEquCI("lightceiling")) { S.params.lightFloor = CheckInt(); continue; }
+      if (Key.strEquCI("lightceiling")) { S.params.lightCeiling = CheckInt(); continue; }
 
       if (Key.strEquCI("lightfloorabsolute")) { Flag(S.params.lightFCFlags, sec_params_t::LFC_FloorLight_Abs); continue; }
       if (Key.strEquCI("lightceilingabsolute")) { Flag(S.params.lightFCFlags, sec_params_t::LFC_CeilingLight_Abs); continue; }
 
       if (Key.strEquCI("floorglowcolor")) { S.params.glowFloor = CheckColor(0u, 0xff000000u); continue; }
-      if (Key.strEquCI("ceilingglowcolor")) { S.params.glowFloor = CheckColor(0u, 0xff000000u); continue; }
+      if (Key.strEquCI("ceilingglowcolor")) { S.params.glowCeiling = CheckColor(0u, 0xff000000u); continue; }
 
       if (Key.strEquCI("floorglowheight")) { S.params.glowFloorHeight = CheckFloat(); continue; }
       if (Key.strEquCI("ceilingglowheight")) { S.params.glowCeilingHeight = CheckFloat(); continue; }
