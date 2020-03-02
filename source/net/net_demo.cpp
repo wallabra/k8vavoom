@@ -133,7 +133,7 @@ int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
   *Strm << MsgSize;
   *Strm << Owner->ViewAngles;
 
-  if (MsgSize > OUT_MESSAGE_SIZE) Sys_Error("Demo message > MAX_MSGLEN");
+  //if (MsgSize > OUT_MESSAGE_SIZE) Sys_Error("Demo message > MAX_MSGLEN");
   Data.SetNum(MsgSize);
   Strm->Serialise(Data.Ptr(), MsgSize);
   if (Strm->IsError()) {
@@ -158,10 +158,10 @@ int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
 
 //==========================================================================
 //
-//  VDemoPlaybackNetConnection::SendRawMessage
+//  VDemoPlaybackNetConnection::SendMessage
 //
 //==========================================================================
-void VDemoPlaybackNetConnection::SendRawMessage (VMessageOut &) {
+void VDemoPlaybackNetConnection::SendMessage (VMessageOut &) {
   //Driver->SetNetTime();
 }
 

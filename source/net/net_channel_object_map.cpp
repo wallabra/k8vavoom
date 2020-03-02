@@ -25,6 +25,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "network.h"
+#include "net_message.h"
 
 VCvarB net_debug_dump_chan_objmap("net_debug_dump_chan_objmap", false, "Dump objectmap communication?");
 
@@ -70,15 +71,9 @@ VStr VObjectMapChannel::GetName () const noexcept {
 //
 //==========================================================================
 void VObjectMapChannel::Suicide () {
-  VChannel::Suicide();
-  Closing = true; // just in case
-  ClearAllQueues();
-  if (Index >= 0 && Index < MAX_CHANNELS && Connection) {
-    Connection->UnregisterChannel(this);
-    Index = -1; // just in case
-  }
   //if (!Connection->ObjMapSent) GCon->Logf(NAME_DevNet, "VObjectMapChannel::DONE:%p (#%d)", this, Index);
   Connection->ObjMapSent = true;
+  VChannel::Suicide();
 }
 
 
@@ -125,7 +120,6 @@ void VObjectMapChannel::UpdateSendPBar () {
 //
 //==========================================================================
 void VObjectMapChannel::Update () {
-  //if (OutMsg && !OpenAcked) return;
 
   if (CurrName == Connection->ObjMap->NameLookup.length() && CurrClass == Connection->ObjMap->ClassLookup.length()) {
     // everything has been sent
@@ -134,13 +128,12 @@ void VObjectMapChannel::Update () {
   }
 
   // do not overflow queue
-  if (CountOutMessages() >= 10) {
+  if (Connection->GetSendQueueSize() >= 10) {
     UpdateSendPBar();
     return;
   }
 
-  VMessageOut Msg(this, true/*reliable*/);
-  Msg.bOpen = needOpenMessage; // opening message?
+  VMessageOut Msg(this, (needOpenMessage ? VMessageOut::Open : 0u));
   // send counters in the first message
   if (needOpenMessage) {
     needOpenMessage = false;
@@ -156,48 +149,47 @@ void VObjectMapChannel::Update () {
     GCon->Logf(NAME_DevNet, "sending total %d classes", NumClasses);
   }
 
+  VBitStreamWriter strm(MAX_MSG_SIZE_BITS, true); // allow expand, why not?
+
   // send names while we have anything to send
   while (CurrName < Connection->ObjMap->NameLookup.length()) {
     //const VNameEntry *E = VName::GetEntry(CurrName);
     const char *EName = *VName::CreateWithIndex(CurrName);
     int Len = VStr::Length(EName);
     vassert(Len > 0 && Len <= NAME_SIZE);
+    strm.WriteInt(Len);
+    strm.Serialise((void *)EName, Len);
     // send message if this name will not fit
-    if (Msg.GetNumBytes()+1+Len+VBitStreamWriter::CalcIntBits(Len) > OUT_MESSAGE_SIZE/8) {
-      SendMessage(&Msg);
+    if (WillFlushMsg(Msg, strm)) {
+      FlushMsg(Msg);
+      if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...names: [%d/%d] (%d)", CurrName+1, Connection->ObjMap->NameLookup.length(), Connection->GetSendQueueSize());
       if (!OpenAcked) { UpdateSendPBar(); return; } // if not opened, don't spam with packets yet
-      if (CountOutMessages() >= 10) { UpdateSendPBar(); return; } // is queue full?
-      // clear message
-      if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...names: [%d/%d] (%d)", CurrName+1, Connection->ObjMap->NameLookup.length(), CountOutMessages());
-      Msg.Setup(this, true/*reliable*/);
-      Msg.bOpen = false;
+      if (Connection->GetSendQueueSize() >= 10) { UpdateSendPBar(); return; } // is queue full?
     }
-    Msg.WriteInt(Len);
-    Msg.Serialise((void *)EName, Len);
+    PutStream(Msg, strm);
     ++CurrName;
     //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :name: [%d/%d]: <%s>", CurrName, Connection->ObjMap->NameLookup.length(), EName);
   }
 
   // send classes while we have anything to send
   while (CurrClass < Connection->ObjMap->ClassLookup.length()) {
-    // send message if this class will not fit
-    if (Msg.GetNumBytes()+1+VBitStreamWriter::CalcIntBits(VName::GetNumNames()) > OUT_MESSAGE_SIZE/8) {
-      SendMessage(&Msg);
-      if (!OpenAcked) { UpdateSendPBar(); return; } // if not opened, don't spam with packets yet
-      if (CountOutMessages() >= 10) { UpdateSendPBar(); return; } // is queue full?
-      // clear message
-      if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...classes: [%d/%d] (%d)", CurrClass+1, Connection->ObjMap->ClassLookup.length(), CountOutMessages());
-      Msg.Setup(this, true/*reliable*/);
-      Msg.bOpen = false;
-    }
     VName Name = Connection->ObjMap->ClassLookup[CurrClass]->GetVName();
-    Connection->ObjMap->SerialiseName(Msg, Name);
+    //Connection->ObjMap->SerialiseName(Msg, Name);
+    Connection->ObjMap->SerialiseName(strm, Name);
+    // send message if this class will not fit
+    if (WillFlushMsg(Msg, strm)) {
+      FlushMsg(Msg);
+      if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...classes: [%d/%d] (%d)", CurrClass+1, Connection->ObjMap->ClassLookup.length(), Connection->GetSendQueueSize());
+      if (!OpenAcked) { UpdateSendPBar(); return; } // if not opened, don't spam with packets yet
+      if (Connection->GetSendQueueSize() >= 10) { UpdateSendPBar(); return; } // is queue full?
+    }
     ++CurrClass;
     //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name);
   }
 
   // this is the last message
-  SendMessage(&Msg);
+  PutStream(Msg, strm);
+  FlushMsg(Msg);
   Close();
 
   if (net_fixed_name_set) {

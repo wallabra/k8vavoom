@@ -121,7 +121,7 @@ public:
   };
 
   struct {
-    vuint8 data[MAX_MSGLEN];
+    vuint8 data[MAX_DGRAM_SIZE];
   } packetBuffer;
 
 public:
@@ -229,7 +229,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     Drv->Broadcast(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes());
   }
 
-  while ((len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_MSGLEN, &readaddr)) > 0) {
+  while ((len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr)) > 0) {
     if (len < (int)sizeof(int)) continue;
 
     // don't answer our own query
@@ -373,7 +373,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
     bool aborted = false;
     do {
-      ret = Drv->Read(newsock, packetBuffer.data, MAX_MSGLEN, &readaddr);
+      ret = Drv->Read(newsock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr);
       // if we got something, validate it
       if (ret > 0) {
         // is it from the right place?
@@ -525,7 +525,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   acceptsock = Drv->CheckNewConnections();
   if (acceptsock == -1) return nullptr;
 
-  len = Drv->Read(acceptsock, packetBuffer.data, MAX_MSGLEN, &clientaddr);
+  len = Drv->Read(acceptsock, packetBuffer.data, MAX_DGRAM_SIZE, &clientaddr);
   if (len < (int)sizeof(vint32)) {
     if (len >= 0 && net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: too short packet (%d) from %s", len, *Drv->AddrToString(&clientaddr));
     if (len < 0) GCon->Logf(NAME_DevNet, "CONN: error reading incoming packet from %s", *Drv->AddrToString(&clientaddr));
@@ -550,7 +550,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
     GCon->Logf(NAME_DevNet, "CONN: sending server info to %s", *Drv->AddrToString(&clientaddr));
 
-    VBitStreamWriter MsgOut(MAX_MSGLEN<<3);
+    VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
     TmpByte = NETPACKET_CTL;
     MsgOut << TmpByte;
     TmpByte = CCREP_SERVER_INFO;
@@ -795,7 +795,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
   }
 
   //GCon->Logf("waiting for master reply...");
-  while ((len = Drv->Read(Drv->MasterQuerySocket, packetBuffer.data, MAX_MSGLEN, &readaddr)) > 0) {
+  while ((len = Drv->Read(Drv->MasterQuerySocket, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr)) > 0) {
     if (len < 1) continue;
 
     //GCon->Logf("got master reply...");
@@ -922,7 +922,7 @@ int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
   if (Invalid) return -1;
 
   struct {
-    vuint8 data[MAX_MSGLEN];
+    vuint8 data[MAX_DGRAM_SIZE];
   } packetBuffer;
 
   for (;;) {
@@ -969,7 +969,7 @@ int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
 //==========================================================================
 int VDatagramSocket::SendMessage (const vuint8 *Data, vuint32 Length) {
   vensure(Length > 0);
-  vensure(Length <= MAX_MSGLEN);
+  vensure(Length <= MAX_DGRAM_SIZE);
   if (Invalid) return -1;
   const int res = (LanDriver->Write(LanSocket, Data, Length, &Addr) == -1 ? -1 : 1);
   if (res > 0) UpdateSentStats(Length);

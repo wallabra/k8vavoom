@@ -25,6 +25,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "network.h"
+#include "net_message.h"
 
 
 //==========================================================================
@@ -46,22 +47,6 @@ VControlChannel::VControlChannel (VNetConnection *AConnection, vint32 AIndex, vu
 //==========================================================================
 VStr VControlChannel::GetName () const noexcept {
   return VStr(va("ctlchan #%d(%s)", Index, GetTypeName()));
-}
-
-
-//==========================================================================
-//
-//  VControlChannel::Suicide
-//
-//==========================================================================
-void VControlChannel::Suicide () {
-  VChannel::Suicide();
-  Closing = true; // just in case
-  ClearAllQueues();
-  if (Index >= 0 && Index < MAX_CHANNELS && Connection) {
-    Connection->UnregisterChannel(this);
-    Index = -1; // just in case
-  }
 }
 
 

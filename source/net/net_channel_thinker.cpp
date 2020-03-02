@@ -25,6 +25,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "network.h"
+#include "net_message.h"
 
 static VCvarI net_dbg_dump_thinker_channels("net_dbg_dump_thinker_channels", "0", "Dump thinker channels creation/closing (bit 0)?");
 static VCvarB net_dbg_dump_thinker_detach("net_dbg_dump_thinker_detach", false, "Dump thinker detaches?");
@@ -235,10 +236,9 @@ void VThinkerChannel::Update () {
   vuint8 *Data = (vuint8 *)Thinker;
   VObject *NullObj = nullptr;
 
-  VMessageOut Msg(this, true/*reliable*/);
+  VMessageOut Msg(this, (NewObj ? VMessageOut::Open : 0u));
 
   if (NewObj) {
-    Msg.bOpen = true;
     VClass *TmpClass = Thinker->GetClass();
     Connection->ObjMap->SerialiseClass(Msg, TmpClass);
     NewObj = false;
@@ -348,7 +348,7 @@ void VThinkerChannel::Update () {
     }
   }
 
-  if (Msg.GetNumBits()) SendMessage(&Msg);
+  if (!Msg.IsEmpty()) SendMessage(Msg);
 
   // clear temporary networking flags
   Thinker->ThinkerFlags &= ~VThinker::TF_NetInitial;

@@ -33,9 +33,6 @@ extern VCvarB net_debug_dump_recv_packets;
 
 class VNetContext;
 
-// network message class
-#include "net_message.h"
-
 // packet header IDs.
 // since control and data communications are on different ports, there should
 // never be a case when these are mixed. but I will keep it for now just in case.
@@ -54,16 +51,17 @@ enum {
 //FIXME!
 //TODO!
 // separate messages from packets, so we can fragment and reassemble one message with several packets
-// without this, it is impossible to not hit packet limit
 enum {
-  MAX_MSGLEN              = /*1024*//*1280*/1320-40/*+1024*/, // max length of a message
-  MAX_PACKET_HEADER_BITS  = /*40*/42, //k8: 41 for 32-bit sequence number, 1 is reserved
-  MAX_PACKET_TRAILER_BITS = /*1*/7, //k8: or 7? was 1
-  MAX_MESSAGE_HEADER_BITS = /*63*/118, //k8: isack(1), chanindex(41), reliable(1), open(1), close(1), seq(41), chantype(11), len(21)
-  OUT_MESSAGE_SIZE        = MAX_MSGLEN*8-MAX_PACKET_HEADER_BITS-MAX_MESSAGE_HEADER_BITS-MAX_PACKET_TRAILER_BITS,
+  MAX_DGRAM_SIZE    = 1350, // max length of a datagram; fuck off, ipshit6
+  MSG_HEADER_SIZE   = 2*4+2, // seq, ackseq, port
+  MAX_MSG_SIZE      = MAX_DGRAM_SIZE-MSG_HEADER_SIZE-1, // max length of a message (excluding header)
+
+  MAX_MSG_SIZE_BITS = MAX_MSG_SIZE*8,
 };
 
-enum { MAX_CHANNELS = 1024 };
+enum {
+  MAX_CHANNELS = 1024,
+};
 
 enum EChannelType {
   CHANNEL_Control = 1,
@@ -72,7 +70,7 @@ enum EChannelType {
   CHANNEL_Thinker,
   CHANNEL_ObjectMap,
 
-  CHANNEL_MAX = 8,
+  CHANNEL_MAX,
 };
 
 enum EChannelIndex {
@@ -84,6 +82,23 @@ enum EChannelIndex {
   //
   CHANIDX_KnownBmpMask = 0x1111u,
 };
+
+
+// used in level channel
+struct VNetClientServerInfo {
+  VStr mapname;
+  VStr maphash;
+  vuint32 modhash;
+  VStr sinfo;
+  int maxclients;
+  int deathmatch;
+};
+
+
+// network message classes
+//#include "net_message.h"
+class VMessageIn;
+class VMessageOut;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -204,25 +219,10 @@ public:
   vuint8 Type;
   bool OpenedLocally;
   bool OpenAcked;
-
   // `true` if we're waiting ACK for close packet
-  // if set, don't queue more packets for sending
-  // if `OutMsg` is `nullptr`, we can destroy this channel
   bool Closing;
-  // this flag will be set when we'll see a "close me" incoming packet
-  // there is no reason to accept more data on this channel, it is prolly
-  // just waiting for "outgoing close ack"
-  bool NoMoreIncoming;
-
-  VMessageIn *InMsg; // incoming queue, so we can process packets in order
-  VMessageOut *OutMsg; // sent reliable messages; we want ACK for them
-
-  // if this is set to `true`, it is ok to close the channel when close message is acked,
-  // even if we still have unacked outgoing messages in `OutMsg` queue
-  // it is ok to do this for thinkers, for example (we'll just lost them, and that's all),
-  // but we cannot prematurely close object mapping channel (obviously)
-  // default is `false`
-  bool bAllowPrematureClose;
+  // `true` if we got ACK for close packet
+  bool CloseAcked;
 
 public:
   inline static const char *GetChanTypeName (vuint8 type) noexcept {
@@ -237,13 +237,16 @@ public:
     }
   }
 
+protected:
+  bool WillFlushMsg (VMessageOut &msg, VBitStreamWriter &strm);
+  // moves steam to msg (sending previous msg if necessary)
+  void PutStream (VMessageOut &msg, VBitStreamWriter &strm);
+  // sends message if it is not empty, and clears it
+  void FlushMsg (VMessageOut &msg);
+
 public:
   VChannel (VNetConnection *, EChannelType, vint32, vuint8);
   virtual ~VChannel ();
-
-  void ClearAllQueues ();
-  void ClearInQueue ();
-  void ClearOutQueue ();
 
   inline const char *GetTypeName () const noexcept { return GetChanTypeName(Type); }
 
@@ -251,7 +254,8 @@ public:
   VStr GetDebugName () const noexcept;
 
   // is it safe to remove this channel?
-  inline bool IsDead () const noexcept { return (Closing && OutMsg == nullptr); }
+  //inline bool IsDead () const noexcept { return (Closing && OutMsg == nullptr); }
+  inline bool IsDead () const noexcept { return (Closing && CloseAcked); }
 
   inline bool IsThinker () const noexcept { return (Type == CHANNEL_Thinker); }
 
@@ -262,24 +266,20 @@ public:
 
   // VChannel interface
   // this is called when new message for this channel is received
-  void ReceivedRawMessage (VMessageIn &);
+  void ReceivedRawMessage (VMessageIn &Msg);
+
+  void SendMessage (VMessageOut &Msg);
 
   // called by `ReceivedRawMessage()` to parse new message
   // this call is sequenced (i.e. the sequence is right)
-  virtual void ParsePacket (VMessageIn &) = 0;
+  virtual void ParsePacket (VMessageIn &Msg) = 0;
 
-  // copies the passed message if necessary
-  void SendMessage (VMessageOut *);
-
-  // called when `msg->udata` is not zero
-  // DO NOT delete message, DO NOT store pointer to it!
-  virtual void SpecialAck (VMessageOut *msg);
   // some channels may want to set some flags here; WARNING! don't close/suicide here!
-  // this is called when there's no other messages in ack queue, and close acked
+  // this is called by `ReceivedRawMessage()` *after* `ParsePacket()` is called
+  // won't be called for already closing channels
   virtual void ReceivedClosingAck ();
-  // process all ack flags (called when we received new ack message for this channel)
-  virtual void ReceivedAck ();
-  // this sends reliable "close" message
+
+  // this sends reliable "close" message, if the channel in not closing
   virtual void Close ();
 
   // call this periodically to perform various processing
@@ -287,9 +287,6 @@ public:
 
   void SendRpc (VMethod *, VObject *);
   bool ReadRpc (VMessageIn &Msg, int, VObject *);
-
-  int CountInMessages () const noexcept;
-  int CountOutMessages () const noexcept;
 };
 
 
@@ -301,7 +298,6 @@ public:
   // VChannel interface
   virtual VStr GetName () const noexcept override;
   virtual void ParsePacket (VMessageIn &) override;
-  virtual void Suicide () override;
 };
 
 
@@ -337,7 +333,7 @@ public:
   VStr serverInfoBuf;
   int severInfoPacketCount;
   int severInfoCurrPacket;
-  ClientServerInfo csi;
+  VNetClientServerInfo csi;
 
   //int srvState; // see SState_*
 
@@ -350,7 +346,6 @@ public:
   void SendStaticLights ();
   void ResetLevel ();
   virtual VStr GetName () const noexcept override;
-  virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
   // used on the client to initiate map loading
   //virtual void SpecialAck (VMessageOut *msg) override;
@@ -402,7 +397,6 @@ public:
   void EvalCondValues (VObject *, VClass *, vuint8 *);
   void Update ();
   virtual VStr GetName () const noexcept override;
-  virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
 };
 
@@ -445,15 +439,13 @@ protected:
   VSocketPublic *NetCon;
 
 protected:
-  // open channels (in random order)
-  //TArray<VChannel *> OpenChannels;
   // non-thinker channels
   VChannel *KnownChannels[CHANIDX_ThinkersStart];
   vuint32 ChanFreeBitmap[(MAX_CHANNELS+31)/32];
   // use random channel ids for thinkers
   int ChanFreeIds[MAX_CHANNELS];
   unsigned ChanFreeIdsUsed;
-  // thinker channels
+  // thinker channels (also used to iterate for ticking)
   TMapNC<vint32, VChannel *> ChanIdxMap; // index -> channel
   // if this flag is set, we *may* have some dead channels, and should call `RemoveDeadThinkerChannels()`
   bool HasDeadChannels;
@@ -483,18 +475,41 @@ public:
   VBasePlayer *Owner;
   ENetConState State;
   double LastSendTime;
-  bool NeedsUpdate;
-  bool AutoAck;
+  bool NeedsUpdate; // should we call `VNetConnection::UpdateLevel()`? this updates mobjs in sight, and sends new mobj state
+  bool AutoAck; // `true` for demos
   VBitStreamWriter Out;
-  //VChannel *Channels[MAX_CHANNELS];
-  //TArray<VChannel *> OpenChannels;
-  vuint32 InSequence[MAX_CHANNELS];
-  vuint32 OutSequence[MAX_CHANNELS];
   TMapNC<VThinker *, VThinkerChannel *> ThinkerChannels;
-  vuint32 AckSequence;
-  vuint32 UnreliableSendSequence;
-  vuint32 UnreliableReceiveSequence;
+
+  // queued message
+  struct QMessage {
+    vuint8 data[MAX_MSG_SIZE];
+    vuint32 dataSize;
+    QMessage *next;
+  };
+  // this is current message to send/ack
+  QMessage *sendQueueHead;
+  // this is where we'll add our messages
+  QMessage *sendQueueTail;
+  int sendQueueSize;
+
+  vuint8 sendData[MAX_DGRAM_SIZE];
+  vuint32 sendDataSize; // if equal to `MSG_HEADER_SIZE`, we're sending empty keepalive packets
+
+  vuint8 recvData[MAX_DGRAM_SIZE];
+  vuint32 recvDataSize;
+
+  // sequencing
+  vuint32 inSequence; // incoming_sequence
+  vuint32 inAckSeq; // incoming_acknowledged
+  vuint32 inReliableAcked; // one bit; incoming_reliable_acknowledged
+  vuint32 inRelSeq; // maintained local; incoming_reliable_sequence
+
+  vuint32 outSequence; // outgoing_sequence
+  vuint32 outReliableSequence; // one bit; reliable_sequence
+  vuint32 lastReliableSeq; // last_reliable_sequence
+
   VNetObjectsMap *ObjMap;
+  // various flags
   bool ObjMapSent;
   bool LevelInfoSent;
   // when we detach thinker, there's no need to send it anymore
@@ -516,6 +531,10 @@ private:
   TArray<VEntity *> PendingGoreEnts;
   TArray<vint32> AliveGoreChans;
 
+protected:
+  void ProcessSendQueue ();
+  bool ProcessRecvQueue ();
+
 public:
   VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, VBasePlayer *AOwner);
   virtual ~VNetConnection ();
@@ -525,13 +544,15 @@ public:
   virtual int GetRawPacket (TArray<vuint8> &);
   void ReceivedPacket (VBitStreamReader &);
   VChannel *CreateChannel (vuint8, vint32, vuint8 = true);
-  virtual void SendRawMessage (VMessageOut &);
-  virtual void SendAck (vuint32);
+  virtual void SendMessage (VMessageOut &);
+
+  inline int GetSendQueueSize () const noexcept { return sendQueueSize; }
+
+  bool WillOverflow (VMessageOut &strm, int moredata);
 
   // if `resetUpdated` is true, reset "updated" flag for thinker channels
   void RemoveDeadThinkerChannels (bool resetUpdated=false);
 
-  void PrepareOut (int);
   void Flush ();
   bool IsLocalConnection ();
   inline VStr GetAddress () const { return (NetCon ? NetCon->Address : VStr()); }
@@ -550,6 +571,8 @@ public:
   virtual void Intermission (bool active);
 
 private:
+  void PutOutToSendQueue ();
+
   // returns `true` if connection timeouted
   bool IsTimeoutExceeded ();
 
@@ -657,7 +680,7 @@ public:
 
   // VNetConnection interface
   virtual int GetRawPacket (TArray<vuint8> &) override;
-  virtual void SendRawMessage (VMessageOut &) override;
+  virtual void SendMessage (VMessageOut &) override;
 
   virtual void Intermission (bool active) override;
 };

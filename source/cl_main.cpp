@@ -472,7 +472,7 @@ void CL_ReadFromServerInfo () {
 //  CL_DoLoadLevel
 //
 //==========================================================================
-void CL_ParseServerInfo (const ClientServerInfo *sinfo) {
+void CL_ParseServerInfo (const VNetClientServerInfo *sinfo) {
   vassert(sinfo);
   CL_Clear();
 

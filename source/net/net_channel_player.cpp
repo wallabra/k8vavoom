@@ -25,6 +25,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "network.h"
+#include "net_message.h"
 
 
 //==========================================================================
@@ -60,23 +61,6 @@ VPlayerChannel::~VPlayerChannel () {
 //==========================================================================
 VStr VPlayerChannel::GetName () const noexcept {
   return VStr(va("plrchan #%d(%s)", Index, GetTypeName()));
-}
-
-
-//==========================================================================
-//
-//  VPlayerChannel::Suicide
-//
-//==========================================================================
-void VPlayerChannel::Suicide () {
-  SetPlayer(nullptr);
-  VChannel::Suicide();
-  Closing = true; // just in case
-  ClearAllQueues();
-  if (Index >= 0 && Index < MAX_CHANNELS && Connection) {
-    Connection->UnregisterChannel(this);
-    Index = -1; // just in case
-  }
 }
 
 
@@ -140,7 +124,7 @@ void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values
 void VPlayerChannel::Update () {
   EvalCondValues(Plr, Plr->GetClass(), FieldCondValues);
 
-  VMessageOut Msg(this, true/*reliable*/);
+  VMessageOut Msg(this);
   vuint8 *Data = (vuint8 *)Plr;
   for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
     if (!FieldCondValues[F->NetIndex]) continue;
@@ -165,7 +149,7 @@ void VPlayerChannel::Update () {
     }
   }
 
-  if (Msg.GetNumBits()) SendMessage(&Msg);
+  if (!Msg.IsEmpty()) SendMessage(Msg);
 }
 
 

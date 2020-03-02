@@ -25,6 +25,61 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "network.h"
+#include "net_message.h"
+
+
+//==========================================================================
+//
+//  VMessageIn::LoadFrom
+//
+//==========================================================================
+bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
+  // clear stream
+  Data.reset();
+  Num = Pos = 0;
+  bError = false;
+  // read length
+  vuint16 v = 0;
+  for (int f = 0; f < 16; ++f) {
+    if (srcPacket.IsError()) { bError = true; return false; }
+    v <<= 1;
+    if (srcPacket.ReadBit()) v |= 0x01u;
+  }
+  if (srcPacket.IsError() || IsError()) { bError = true; return false; }
+  SetData(srcPacket, v);
+  if (srcPacket.IsError() || IsError()) { bError = true; return false; }
+  // parse header
+  vint32 cidx = (vint32)this->ReadInt();
+  if (cidx < 0) { bError = true; return false; }
+  bOpen = ReadBit();
+  bClose = ReadBit();
+  if (bOpen) {
+    vuint8 ctype = 255;
+    srcPacket << ctype;
+    if (ctype >= CHANNEL_MAX) { bError = true; return false; }
+    ChanType = ctype;
+  } else {
+    ChanType = 0; // unknown
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VMessageIn::ReadMessageSize
+//
+//  returns -1 on error
+//
+//==========================================================================
+int VMessageIn::ReadMessageSize (VBitStreamReader &strm) {
+  if (strm.IsError()) return -1;
+  vuint16 len = 0xffffu;
+  strm << len;
+  if (len > MAX_MSG_SIZE_BITS) return -1;
+  return (int)len;
+}
+
 
 
 //==========================================================================
@@ -32,61 +87,25 @@
 //  VMessageOut::VMessageOut
 //
 //==========================================================================
-VMessageOut::VMessageOut (VChannel *AChannel, bool AReliable, bool aAllowExpand)
-  : VBitStreamWriter(OUT_MESSAGE_SIZE, aAllowExpand) // allow expand
-  , mChannel(AChannel)
-  , Next(nullptr)
-  , ChanType(AChannel->Type)
-  , ChanIndex(AChannel->Index)
-  , bReliable(AReliable)
-  , bOpen(false)
-  , bClose(false)
-  , bReceivedAck(false)
-  , Sequence(0)
-  , Time(0)
-  , PacketId(0)
-  , markPos(0)
-  , udata(0)
-  , AckPIds()
-{}
-
-
-//==========================================================================
-//
-//  VMessageOut::Setup
-//
-//==========================================================================
-void VMessageOut::Setup (VChannel *AChannel, bool AReliable, bool aAllowExpand) {
-  Reinit(OUT_MESSAGE_SIZE, aAllowExpand);
-  mChannel = AChannel;
-  Next = nullptr;
-  ChanType = AChannel->Type;
-  ChanIndex = AChannel->Index;
-  bReliable = AReliable;
-  bOpen = false;
-  bClose = false;
-  bReceivedAck = false;
-  Sequence = 0;
-  Time = 0;
-  PacketId = 0;
-  markPos = 0;
-  udata = 0;
-  AckPIds.reset();
+VMessageOut::VMessageOut (VChannel *AChannel, unsigned flags)
+  : VBitStreamWriter(MAX_MSG_SIZE_BITS+16, false) // no expand
+  , hdrSizeBits(0)
+{
+  vassert(AChannel);
+  writeHeader(AChannel->Type, AChannel->Index, flags);
 }
 
 
 //==========================================================================
 //
-//  VMessageOut::NeedSplit
+//  VMessageOut::VMessageOut
 //
 //==========================================================================
-bool VMessageOut::NeedSplit () const {
-  if (bError) {
-    //GCon->Log(NAME_DevNet, "SHIT!");
-    return false;
-  }
-  //GCon->Logf(NAME_DevNet, "split check: markPos=%d; pos=%d; max=%d; expanded=%d", markPos, Pos, Max, (int)IsExpanded());
-  return (markPos > 0 && IsExpanded());
+VMessageOut::VMessageOut (vuint8 AChanType, int AChanIndex, unsigned flags)
+  : VBitStreamWriter(MAX_MSG_SIZE_BITS+16, false) // no expand
+  , hdrSizeBits(0)
+{
+  writeHeader(AChanType, AChanIndex, flags);
 }
 
 
@@ -95,54 +114,67 @@ bool VMessageOut::NeedSplit () const {
 //  VMessageOut::Reset
 //
 //==========================================================================
-void VMessageOut::SendSplitMessage () {
-  vassert(bReliable);
-  vassert(mChannel);
-  if (IsError() || !NeedSplit()) return; // just in case
-  //if (Pos-markPos > OUT_MESSAGE_SIZE) { bError = true; return; } // oops
-  vassert(!bOpen);
-  vassert(!bClose);
+void VMessageOut::Reset (VChannel *AChannel, unsigned flags) {
+  vassert(AChannel);
+  Clear();
+  hdrSizeBits = 0;
+  writeHeader(AChannel->Type, AChannel->Index, flags);
+}
 
-  //GCon->Logf(NAME_DevNet, "SPLIT! max=%d, size=%d, markPos=%d, extra=%d", Max, Pos, markPos, Pos-markPos);
 
-  // send message part
-  {
-    VMessageOut tmp(mChannel, bReliable);
-    tmp.ChanType = ChanType;
-    tmp.ChanIndex = ChanIndex;
-    tmp.bOpen = bOpen;
-    tmp.bClose = bClose;
-    tmp.SerialiseBits(Data.Ptr(), markPos);
-    mChannel->SendMessage(&tmp);
+//==========================================================================
+//
+//  VMessageOut::writeHeader
+//
+//==========================================================================
+void VMessageOut::writeHeader (vuint8 AChanType, int AChanIndex, unsigned flags) {
+  vassert(hdrSizeBits == 0);
+  //if (flags&NoHeader) return;
+  vassert(GetNumBits() == 0);
+  vassert(AChanIndex >= 0);
+  // reserve room for size
+  for (int f = 0; f < 16; ++f) this->WriteBit(false);
+  vassert(GetNumBits() == 16);
+  this->WriteInt(AChanIndex);
+  this->WriteBit(!!(flags&Open));
+  this->WriteBit(!!(flags&Close));
+  if (flags&Open) {
+    vuint8 ctype = AChanType;
+    *this << ctype;
   }
+  hdrSizeBits = GetNumBits();
+}
 
-  // remove sent bits
-  const int bitsLeft = Pos-markPos;
-  TArray<vuint8> oldData;
-  //oldData.setLength((bitsLeft+7)/8+16);
-  //TODO: make this faster
-  Pos = markPos;
-  vuint8 currByte = 0;
-  vuint8 currMask = 1;
-  for (int f = 0; f < bitsLeft; ++f) {
-    if (ReadBitInternal()) currByte |= currMask;
-    currMask <<= 1;
-    if (currMask == 0) {
-      oldData.append(currByte);
-      currByte = 0;
-      currMask = 1;
-    }
-  }
-  oldData.append(currByte);
 
-  Data.setLength((Max+7)/8+256);
-  memset(Data.ptr(), 0, Data.length());
+//==========================================================================
+//
+//  VMessageOut::setSize
+//
+//==========================================================================
+void VMessageOut::fixSize () {
+  vassert(Data.length() >= 2);
+  vassert(GetNumBits() <= MAX_MSG_SIZE_BITS);
+  static_assert(MAX_MSG_SIZE_BITS <= 0xffff, "internal message size too big");
+  //HACK!
+  int savedPos = Pos;
   Pos = 0;
-  for (int f = 0; f < bitsLeft; ++f) {
-    WriteBit(!!(oldData[f/8]&(1<<(f%8))));
+  vuint16 v = (vuint16)savedPos;
+  for (int f = 0; f < 16; ++f) {
+    WriteBit(!!(v&0x8000u));
+    v <<= 1;
   }
+  vassert(Pos == 16);
+  Pos = savedPos;
+}
 
-  markPos = 0;
 
-  //GCon->Logf(NAME_DevNet, "  max=%d, size=%d; left=%d", Max, Pos, bitsLeft);
+//==========================================================================
+//
+//  VMessageOut::Finalise
+//
+//  call this before copying packet data
+//
+//==========================================================================
+void VMessageOut::Finalise () {
+  fixSize();
 }

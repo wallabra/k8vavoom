@@ -36,7 +36,7 @@
 
 #define HOSTCACHESIZE  (8)
 
-#define NET_DATAGRAMSIZE  (MAX_MSGLEN)
+#define NET_DATAGRAMSIZE  (MAX_DGRAM_SIZE)
 
 
 // ////////////////////////////////////////////////////////////////////////// //

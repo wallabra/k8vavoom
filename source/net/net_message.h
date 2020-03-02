@@ -34,106 +34,86 @@
 class VChannel;
 
 
-struct ClientServerInfo {
-  VStr mapname;
-  VStr maphash;
-  vuint32 modhash;
-  VStr sinfo;
-  int maxclients;
-  int deathmatch;
-};
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 class VMessageIn : public VBitStreamReader {
 public:
-  VMessageIn *Next;
   vuint8 ChanType;
   vint32 ChanIndex;
-  bool bReliable; // reliable message
   bool bOpen; // open channel message
   bool bClose; // close channel message
-  vuint32 Sequence; // reliable message sequence ID
+
+protected:
+  // returns -1 on error
+  static int ReadMessageSize (VBitStreamReader &strm);
 
 public:
-  inline VMessageIn (vuint8 *Src=nullptr, vint32 Length=0)
-    : VBitStreamReader(Src, Length)
-    , Next(nullptr)
-    , ChanType(0)
-    , ChanIndex(0)
-    , bReliable(false)
-    , bOpen(false)
-    , bClose(false)
-    , Sequence(0)
-  {}
-  inline VMessageIn (const VMessageIn &src) noexcept
-    : VBitStreamReader(nullptr, 0)
-    , Next(nullptr)
-    , ChanType(src.ChanType)
-    , ChanIndex(src.ChanIndex)
-    , bReliable(src.bReliable)
-    , bOpen(src.bOpen)
-    , bClose(src.bClose)
-    , Sequence(src.Sequence)
-  {
-    // clone bitstream reader
-    cloneFrom(&src);
-  }
+  VV_DISABLE_COPY(VMessageIn)
+
+  inline VMessageIn (VBitStreamReader &srcPacket) : VBitStreamReader(), ChanType(0), ChanIndex(-1), bOpen(false), bClose(false) { LoadFrom(srcPacket); }
+
+  bool LoadFrom (VBitStreamReader &srcPacket);
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VMessageOut : public VBitStreamWriter {
 public:
-  VChannel *mChannel;
-  VMessageOut *Next;
-  vuint8 ChanType;
-  vint32 ChanIndex;
-  bool bReliable; // needs ACK or not
-  bool bOpen;
-  bool bClose;
-  bool bReceivedAck;
-  vuint32 Sequence; // reliable message sequence ID
-  double Time; // time this message has been sent
-  vuint32 PacketId; // packet in which this message was sent
-  int markPos;
-  // user data; can be used in ack processor
-  int udata;
-  // packet ids we sent this message in; used to ack with old messages (FUCKIN' HACK, DON'T DO THAT, KETMAR!)
-  TMapNC<vuint32, bool> AckPIds;
+  // flags for ctor
+  enum {
+    Unreliable = 1u<<0,
+    Open       = 1u<<1,
+    Close      = 1u<<2,
+
+    //NoHeader   = 1u<<7,
+  };
+
+protected:
+  int hdrSizeBits;
+
+protected:
+  void writeHeader (vuint8 AChanType, int AChanIndex, unsigned flags);
+
+  void fixSize ();
 
 public:
-  // cannot be inlined, sorry
-  VMessageOut (VChannel *AChannel, bool AReliable, bool aAllowExpand=true);
+  // this creates message with the header for the given existing channel
+  VMessageOut (VChannel *AChannel, unsigned flags=0);
 
+  // this creates message with the header for arbitrary channel
+  VMessageOut (vuint8 AChanType, int AChanIndex, unsigned flags);
+
+  // this copies message data, including header
   inline VMessageOut (const VMessageOut &src)
     : VBitStreamWriter(0, false) // it will be overwritten anyway
-    , mChannel(src.mChannel)
-    , Next(nullptr)
-    , ChanType(src.ChanType)
-    , ChanIndex(src.ChanIndex)
-    , bReliable(src.bReliable)
-    , bOpen(src.bOpen)
-    , bClose(src.bClose)
-    , bReceivedAck(src.bReceivedAck)
-    , Sequence(src.Sequence)
-    , Time(src.Time)
-    , PacketId(src.PacketId)
-    , markPos(src.markPos)
-    , udata(src.udata)
   {
     // clone bitstream writer
     cloneFrom(&src);
-    // there is no need to clone ack pids, tho
   }
 
-  void Setup (VChannel *AChannel, bool AReliable, bool aAllowExpand=true);
+  inline bool IsEmpty () const noexcept { return (GetNumBits() == hdrSizeBits); }
 
-  inline void SetMark () { markPos = GetNumBits(); }
+  void Reset (VChannel *AChannel, unsigned flags=0);
 
-  inline bool IsGoodAckId (vuint32 pid) const noexcept { return AckPIds.has(pid); }
-  inline void AppendAckId (vuint32 pid) noexcept { AckPIds.put(pid, true); }
+  // call this before copying packet data
+  void Finalise ();
 
-  bool NeedSplit () const;
-  void SendSplitMessage ();
+  static inline int CalcFullMsgBitSize (int bitlen) noexcept {
+    // message size, one stop bit, rounded to the byte boundary
+    vassert(bitlen >= 0);
+    return ((bitlen+1+7)>>3)<<3;
+  }
+
+  inline int CalcRealMsgBitSize (int addlen=0) const noexcept { return CalcFullMsgBitSize(GetNumBits()+addlen); }
+  inline int CalcRealMsgBitSize (const VBitStreamWriter &strm) const noexcept { return CalcFullMsgBitSize(GetNumBits()+strm.GetNumBits()); }
+
+  // will this overflow a datagram?
+  inline bool WillOverflow (int moredata) const noexcept {
+    vassert(moredata >= 0);
+    return (CalcRealMsgBitSize(moredata) > MAX_MSG_SIZE_BITS);
+  }
+
+  // will this overflow a datagram?
+  inline bool WillOverflow (const VBitStreamWriter &strm) const noexcept {
+    return (CalcRealMsgBitSize(strm) > MAX_MSG_SIZE_BITS);
+  }
 };

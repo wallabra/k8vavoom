@@ -25,6 +25,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "network.h"
+#include "net_message.h"
 
 
 static VCvarF net_test_loss("net_test_loss", "0", "Emulated packet loss percentage (randomly skip sending some packets).", CVAR_PreInit);
@@ -45,10 +46,7 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   , LastSendTime(0)
   , NeedsUpdate(false)
   , AutoAck(false)
-  , Out(MAX_MSGLEN*8)
-  , AckSequence(0)
-  , UnreliableSendSequence(0)
-  , UnreliableReceiveSequence(0)
+  , Out(MAX_MSG_SIZE_BITS+16)
   , ObjMapSent(false)
   , LevelInfoSent(false)
   , UpdatePvs(nullptr)
@@ -78,8 +76,17 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   }
   */
 
-  memset(InSequence, 0, sizeof(InSequence));
-  memset(OutSequence, 0, sizeof(OutSequence));
+  sendQueueHead = sendQueueTail = nullptr;
+  sendDataSize = 0;
+
+  inSequence = inAckSeq = 0;
+  inReliableAcked = 0;
+  inRelSeq = 0;
+
+  outSequence = lastReliableSeq = 0;
+  outReliableSequence = 0;
+
+  Out.Reinit(MAX_MSG_SIZE_BITS+16);
 
   ObjMap = new VNetObjectsMap(this);
 
@@ -130,58 +137,213 @@ VNetConnection::~VNetConnection () {
 
 //==========================================================================
 //
+//  VNetConnection::ProcessSendQueue
+//
+//==========================================================================
+void VNetConnection::ProcessSendQueue () {
+  // if the remote side dropped the last reliable message, resend it
+  vuint32 send_reliable = (unsigned)(inAckSeq > inRelSeq && inReliableAcked != outReliableSequence);
+
+  // if the reliable transmit buffer is empty, copy the current message out
+  if (sendDataSize <= MSG_HEADER_SIZE && sendQueueHead) {
+    if (sendQueueHead->dataSize) memcpy(sendData+MSG_HEADER_SIZE, sendQueueHead->data, sendQueueHead->dataSize);
+    sendDataSize = sendQueueHead->dataSize+MSG_HEADER_SIZE;
+    //chan->reliable_length = chan->message.cursize;
+    //chan->message.cursize = 0;
+    outReliableSequence ^= 1;
+    send_reliable = 1;
+    // if this is the message we're adding data into, create a new one to fill
+    if (sendQueueHead == sendQueueTail) {
+      // need a new one
+      QMessage *qm = new QMessage;
+      qm->dataSize = 0;
+      qm->next = nullptr;
+      vassert(!sendQueueTail->next);
+      sendQueueTail->next = qm;
+      sendQueueTail = qm;
+      ++sendQueueSize;
+    }
+  }
+
+  if (sendDataSize == 0) {
+    // this is keepalive packet without data
+    sendDataSize = MSG_HEADER_SIZE;
+  }
+
+  // write the packet header
+  vuint32 *w1 = (vuint32 *)sendData;
+  vuint32 *w2 = (vuint32 *)(sendData+4);
+  vuint16 *p3 = (vuint16 *)(sendData+4+4);
+
+  *w1 = outSequence|(send_reliable<<31);
+  *w2 = inSequence|(inRelSeq<<31);
+  *p3 = 0; // don't care for now
+
+  ++outSequence;
+
+  // send the datagram
+  /*
+  i = chan->outgoing_sequence & (MAX_LATENT-1); // MAX_LATENT=32
+  chan->outgoing_size[i] = send.cursize;
+  chan->outgoing_time[i] = realtime;
+  */
+
+  // send the message
+  const float lossPrc = net_test_loss.asFloat();
+  if (lossPrc <= 0.0f || RandomFull()*100.0f >= net_test_loss) {
+    if (NetCon->SendMessage(sendData, sendDataSize) == -1) State = NETCON_Closed;
+  }
+  LastSendTime = Driver->NetTime;
+
+  if (!IsLocalConnection()) ++Driver->MessagesSent;
+  ++Driver->packetsSent;
+
+  /*
+  if (chan->cleartime < realtime)
+    chan->cleartime = realtime + send.cursize*chan->rate;
+  else
+    chan->cleartime += send.cursize*chan->rate;
+  #ifdef SERVERONLY
+  if (ServerPaused())
+    chan->cleartime = realtime;
+  #endif
+  */
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::ProcessRecvQueue
+//
+//  returns `true` if message was received
+//
+//==========================================================================
+bool VNetConnection::ProcessRecvQueue () {
+  // check for message arrival
+  vassert(NetCon);
+  TArray<vuint8> msgdata;
+  int res = NetCon->GetMessage(msgdata);
+  if (res == 0) return false;
+  if (res < 0) { State = NETCON_Closed; return false; }
+
+  if (msgdata.length() < MSG_HEADER_SIZE) {
+    GCon->Logf(NAME_DevNet, "got too small packet from %s", *GetAddress());
+    return false;
+  }
+
+  if (msgdata.length() > MAX_DGRAM_SIZE) {
+    GCon->Logf(NAME_DevNet, "got too big packet from %s", *GetAddress());
+    return false;
+  }
+
+  // copy data to recv buffer
+  memcpy(recvData, msgdata.ptr(), msgdata.length());
+  recvDataSize = (unsigned)msgdata.length();
+
+  // get sequence numbers
+  vuint32 sequence = *(const vuint32 *)recvData;
+  vuint32 sequence_ack = *(const vuint32 *)(recvData+4);
+
+  // read the qport if we are a server
+  //vuint16 qport = MSG_ReadShort ();
+
+  vuint32 reliable_message = sequence>>31;
+  vuint32 reliable_ack = sequence_ack>>31;
+
+  sequence &= ~(1u<<31);
+  sequence_ack &= ~(1u<<31);
+
+  // discard stale or duplicated packets
+  if (sequence <= inSequence) {
+    GCon->Logf(NAME_DevNet, "Got stale datagram (urseq=%u; seq=%u)", inSequence, sequence);
+    return false;
+  }
+
+  // dropped packets don't keep the message from being used
+  int ndrop = sequence-inSequence;
+  // yeah, record it
+  if (ndrop) {
+    vassert(ndrop > 0);
+    // this datagram is in the future, looks like older datagrams are lost
+    Driver->droppedDatagrams += ndrop;
+    GCon->Logf(NAME_DevNet, "Missing %d datagram%s (urseq=%u; seq=%u)", ndrop, (ndrop != 1 ? "s" : ""), inSequence, sequence);
+  }
+
+  // if the current outgoing reliable message has been acknowledged
+  // clear the buffer to make way for the next
+  if (reliable_ack == outReliableSequence) {
+    if (sendDataSize > MSG_HEADER_SIZE) {
+      // invariants
+      vassert(sendQueueHead);
+      vassert(sendQueueTail);
+      vassert(sendQueueHead != sendQueueTail);
+      // drop queue head
+      QMessage *qm = sendQueueHead;
+      sendQueueHead = qm->next;
+      delete qm;
+      vassert(sendQueueSize > 1);
+      --sendQueueSize;
+    }
+    // reset keepalive flag
+    sendDataSize = 0; // it has been received
+  }
+
+  // if this message contains a reliable message, bump incoming_reliable_sequence
+  inSequence = sequence;
+  inAckSeq = sequence_ack;
+  inReliableAcked = reliable_ack;
+  if (reliable_message) inRelSeq ^= 1;
+
+  // the message can now be read from the current message pointer
+  // update statistics counters
+  /*
+  chan->frame_latency = chan->frame_latency*OLD_AVG
+    + (chan->outgoing_sequence-sequence_ack)*(1.0-OLD_AVG);
+  chan->frame_rate = chan->frame_rate*OLD_AVG
+    + (realtime-chan->last_received)*(1.0-OLD_AVG);
+  chan->good_count += 1;
+
+  chan->last_received = realtime;
+  */
+
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VNetConnection::GetMessages
 //
 //==========================================================================
 void VNetConnection::GetMessages () {
-  int ret;
   Driver->SetNetTime();
-  do {
-    TArray<vuint8> Data;
-    //  returns  0 if no data is waiting
-    //  returns  1 if a packet was received
-    //  returns -1 if connection is invalid
-    ret = GetRawPacket(Data);
-    if (ret == -1) {
-      // error
-      //GCon->Log(NAME_DevNet, "Bad read");
-      State = NETCON_Closed;
-      return;
+  if (State == NETCON_Closed) return;
+  if (!ProcessRecvQueue()) return;
+  // received something
+  //NetCon->LastMessageTime = Driver->NetTime; // this is done in `ReceivedPacket()`
+  ++Driver->UnreliableMessagesReceived;
+  NeedsUpdate = true; // we got *any* activity, update the world!
+  if (recvDataSize > MSG_HEADER_SIZE) {
+    vuint8 lastbyte = recvData[recvDataSize-1];
+    if (lastbyte) {
+      // find out real length by stepping back until the trailing bit
+      vuint32 length = recvDataSize*8-1;
+      for (vuint8 mask = 0x80; !(lastbyte&mask); mask >>= 1) --length;
+      vassert(length >= MSG_HEADER_SIZE*8);
+      VBitStreamReader Packet(recvData+MSG_HEADER_SIZE*8, length-MSG_HEADER_SIZE*8);
+      ReceivedPacket(Packet);
+    } else {
+      GCon->Log(NAME_DevNet, "Packet is missing trailing bit");
     }
-    if (ret) {
-      NeedsUpdate = true; // we got *any* activity, update the world!
-      // received something
-      /*
-      if (!IsLocalConnection()) {
-        NetCon->LastMessageTime = Driver->NetTime;
-             if (ret == 1) ++Driver->MessagesReceived;
-        else if (ret == 2) ++Driver->UnreliableMessagesReceived; // this seems to never happen
-      }
-      */
-      if (Data.Num() > 0) {
-        vuint8 LastByte = Data[Data.Num()-1];
-        if (LastByte) {
-          // find out real length by stepping back until the trailing bit
-          vuint32 Length = Data.Num()*8-1;
-          for (vuint8 Mask = 0x80; !(LastByte&Mask); Mask >>= 1) --Length;
-          VBitStreamReader Packet(Data.Ptr(), Length);
-          //GCon->Logf(NAME_DevNet, "%g: Got network packet; length=%d", Sys_Time(), Length);
-          ReceivedPacket(Packet);
-        } else {
-          GCon->Log(NAME_DevNet, "Packet is missing trailing bit");
-        }
-      } else {
-        GCon->Log(NAME_DevNet, "Packet is too small");
-        ++Driver->shortPacketCount;
-      }
-    }
-  } while (ret > 0 && State != NETCON_Closed);
+  }
 }
 
 
 //==========================================================================
 //
 //  VNetConnection::GetRawPacket
+//
+//  used in demos
 //
 //==========================================================================
 int VNetConnection::GetRawPacket (TArray<vuint8> &Data) {
@@ -223,7 +385,7 @@ void VNetConnection::RemoveDeadThinkerChannels (bool resetUpdated) {
 //
 //==========================================================================
 void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
-  if (Packet.ReadInt(/*256*/) != NETPACKET_DATA) return;
+  if (Packet.ReadInt() != NETPACKET_DATA) return;
   ++Driver->packetsReceived;
 
   // update receive time (this is used for keepalive packets)
@@ -243,149 +405,54 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
   //NeedsUpdate = true; // this is done elsewhere
 
-  // get unreliable sequence number
-  vuint32 Sequence = 0;
-  Packet << STRM_INDEX_U(Sequence);
-  if (Packet.IsError()) {
-    GCon->Log(NAME_DevNet, "Packet is missing packet ID");
-    return;
-  }
-
-  // for stale messages, still process possible acks
-  bool staleMsg = false;
-
-  // invalid sequence number?
-  if (Sequence != UnreliableReceiveSequence) {
-    // yeah, record it
-    if (Sequence < UnreliableReceiveSequence) {
-      staleMsg = true;
-      if (net_dbg_conn_show_outdated) {
-        const int cc = (int)(UnreliableReceiveSequence-Sequence);
-        GCon->Logf(NAME_DevNet, "Got %d stale datagram(s) (urseq=%u; seq=%u)", cc, UnreliableReceiveSequence, Sequence);
-      }
-    } else {
-      // this datagram is in the future, looks like older datagrams are lost
-      int count = (int)(Sequence-UnreliableReceiveSequence);
-      if (count < 0) {
-        // something is VERY wrong here
-        GCon->Logf(NAME_DevNet, "Missing %d datagram%s; WTF?! (urseq=%u; seq=%u)", count, (count != 1 ? "s" : ""), UnreliableReceiveSequence, Sequence);
-        State = NETCON_Closed;
-        return;
-      }
-      Driver->droppedDatagrams += count;
-      GCon->Logf(NAME_DevNet, "Missing %d datagram%s (urseq=%u; seq=%u)", count, (count != 1 ? "s" : ""), UnreliableReceiveSequence, Sequence);
-    }
-  }
-
-  if (!staleMsg) {
-    // bump sequence number
-    UnreliableReceiveSequence = Sequence+1;
-  }
-
-  bool NeedsAck = true; //false;
-
-  if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "***!!!*** Network Packet (pos=%d; num=%d (%d); seq=%u)", Packet.GetPos(), Packet.GetNum(), (Packet.GetNum()+7)/8, Sequence);
+  if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "***!!!*** Network Packet (pos=%d; num=%d (%d))", Packet.GetPos(), Packet.GetNum(), (Packet.GetNum()+7)/8);
   while (!Packet.AtEnd()) {
-    // read a flag to see if it's an ACK or a message
-    bool IsAck = Packet.ReadBit();
-    if (Packet.IsError()) {
-      GCon->Log(NAME_DevNet, "Packet is missing ACK flag");
-      return;
+    // read message header
+    VMessageIn Msg(Packet);
+    if (Packet.IsError() || Msg.IsError()) {
+      GCon->Logf(NAME_DevNet, "Packet is missing message header");
+      break;
     }
 
-    if (IsAck) {
-      vuint32 AckSeq;
-      Packet << STRM_INDEX_U(AckSeq);
-      if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  packet(seq:%u): AckSeq=%u; current AckSequence=%u", Sequence, AckSeq, AckSequence);
-      // `AckSequence` is not used anywhere
-           if (AckSeq == AckSequence) ++AckSequence;
-      else if (AckSeq > AckSequence) AckSequence = AckSeq+1;
-      //else GCon->Log(NAME_DevNet, "Duplicate ACK received"); // doesn't matter
+    /*
+    if (Packet.IsError()) {
+      GCon->Logf(NAME_DevNet, "Packet (channel %d; open=%d; close=%d; chantype=%d) is missing message data (len=%d; pos=%d; num=%d)",
+        Msg.ChanIndex, (int)Msg.bOpen, (int)Msg.bClose, (int)Msg.ChanType,
+        Length, Packet.GetPos(), Packet.GetNum());
+      break;
+    }
+    */
 
-      // mark corrresponding messages as ACK-ed
-      for (auto it = ChanIdxMap.first(); it; ++it) {
-        VChannel *chan = it.getValue();
-        vassert(chan);
-        bool gotAck = false;
-        // note that if channel is not acked "open" message, we should not mark other messages as acked.
-        // otherwise we may miss first open message, ack others, and will never receive those other messages again.
-        // also, if the channel is closed, make sure that we won't ack any messages after the closing one
-        bool seenClosingMessage = false;
-        for (VMessageOut *Msg = chan->OutMsg; Msg && !seenClosingMessage; Msg = Msg->Next) {
-          seenClosingMessage = Msg->bClose; // set flag
-          //if (Msg->PacketId != AckSeq) continue; // invalid ack seq
-          if (!Msg->IsGoodAckId(AckSeq)) continue;
-          if (!chan->OpenAcked && !Msg->bOpen) continue; // channel is not open, and this is not an open request
-          // ok, mark this message as acked
-          Msg->bReceivedAck = true;
-          if (Msg->bOpen) chan->OpenAcked = true;
-          gotAck = true;
-          if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "    packet(seq:%u): got ack for %s (opAck=%d; closing=%d) (packetid=%u; open=%d; pseq=%u)", Sequence, *chan->GetDebugName(), (int)chan->OpenAcked, (int)chan->Closing, Msg->PacketId, (int)Msg->bOpen, Msg->Sequence);
-        }
-        if (gotAck) chan->ReceivedAck();
-      }
-    } else {
-      // read message header
-      VMessageIn Msg;
-      Msg.ChanIndex = Packet.ReadInt(/*MAX_CHANNELS*/);
-      Msg.bReliable = Packet.ReadBit();
-      NeedsAck = (NeedsAck || Msg.bReliable); // no need to ack anything for unreliable messages
-      Msg.bOpen = Packet.ReadBit();
-      Msg.bClose = Packet.ReadBit();
-      Msg.Sequence = 0;
-      Msg.ChanType = 0;
-      if (Msg.bReliable) Packet << STRM_INDEX_U(Msg.Sequence);
-      if (Msg.bOpen) Msg.ChanType = Packet.ReadInt();
-      if (Packet.IsError()) {
-        GCon->Logf(NAME_DevNet, "Packet is missing message header");
-        break;
-      }
+    if (net_debug_dump_recv_packets) {
+      GCon->Logf(NAME_DevNet, "  packet (channel %d; open=%d; close=%d; chantype=%d) (len=%d; pos=%d; num=%d; left=%d)",
+        Msg.ChanIndex, (int)Msg.bOpen, (int)Msg.bClose, (int)Msg.ChanType,
+        Msg.GetNumBits(), Packet.GetPos(), Packet.GetNum(), Packet.GetNum()-Packet.GetPos());
+    }
 
-      // read data
-      int Length = Packet.ReadInt();
-      Msg.SetData(Packet, Length);
-
-      if (Packet.IsError()) {
-        GCon->Logf(NAME_DevNet, "Packet (channel %d; open=%d; close=%d; reliable=%d; seq=%d; chantype=%d) is missing message data (len=%d; pos=%d; num=%d)",
-          Msg.ChanIndex, (int)Msg.bOpen, (int)Msg.bClose, (int)Msg.bReliable, (int)Msg.Sequence, (int)Msg.ChanType,
-          Length, Packet.GetPos(), Packet.GetNum());
-        break;
-      }
-
-      if (net_debug_dump_recv_packets) {
-        GCon->Logf(NAME_DevNet, "  packet(seq:%u) (channel %d; open=%d; close=%d; reliable=%d; seq=%d; chantype=%d) (len=%d; pos=%d; num=%d; left=%d)",
-          Sequence,
-          Msg.ChanIndex, (int)Msg.bOpen, (int)Msg.bClose, (int)Msg.bReliable, (int)Msg.Sequence, (int)Msg.ChanType,
-          Length, Packet.GetPos(), Packet.GetNum(), Packet.GetNum()-Packet.GetPos());
-      }
-
-      VChannel *Chan = GetChannelByIndex(Msg.ChanIndex);
-      if (!Chan) {
-        // possible new channel
-        if (Msg.bOpen) {
-          // channel opening message, do it
-          Chan = CreateChannel(Msg.ChanType, Msg.ChanIndex, false);
-          if (!Chan) {
-            GCon->Logf(NAME_DevNet, "  !!! CANNOT create new channel #%d (%s)", Msg.ChanIndex, VChannel::GetChanTypeName(Msg.ChanType));
-            continue;
-          }
-          Chan->OpenAcked = true;
-          GCon->Logf(NAME_DevNet, "  !!! created new channel #%d (%s)", Chan->Index, Chan->GetTypeName());
-        } else {
-          // ignore messages for unopened channels
-          if (Msg.ChanIndex < 0 || Msg.ChanIndex >= MAX_CHANNELS) {
-            GCon->Logf(NAME_DevNet, "Ignored message for invalid channel %d", Msg.ChanIndex);
-          } else {
-            GCon->Logf(NAME_DevNet, "Message for closed channel %d", Msg.ChanIndex);
-          }
+    VChannel *Chan = GetChannelByIndex(Msg.ChanIndex);
+    if (!Chan) {
+      // possible new channel
+      if (Msg.bOpen) {
+        // channel opening message, do it
+        Chan = CreateChannel(Msg.ChanType, Msg.ChanIndex, false);
+        if (!Chan) {
+          GCon->Logf(NAME_DevNet, "  !!! CANNOT create new channel #%d (%s)", Msg.ChanIndex, VChannel::GetChanTypeName(Msg.ChanType));
           continue;
         }
+        Chan->OpenAcked = true;
+        GCon->Logf(NAME_DevNet, "  !!! created new channel #%d (%s)", Chan->Index, Chan->GetTypeName());
+      } else {
+        // ignore messages for unopened channels
+        if (Msg.ChanIndex < 0 || Msg.ChanIndex >= MAX_CHANNELS) {
+          GCon->Logf(NAME_DevNet, "Ignored message for invalid channel %d", Msg.ChanIndex);
+        } else {
+          GCon->Logf(NAME_DevNet, "Message for closed channel %d", Msg.ChanIndex);
+        }
+        continue;
       }
-      Chan->ReceivedRawMessage(Msg);
     }
+    Chan->ReceivedRawMessage(Msg);
   }
-
-  if (NeedsAck) SendAck(Sequence);
 }
 
 
@@ -573,68 +640,71 @@ VChannel *VNetConnection::CreateChannel (vuint8 Type, vint32 AIndex, vuint8 Open
 
 //==========================================================================
 //
-//  VNetConnection::SendRawMessage
+//  CalcFullMsgBitSize
 //
 //==========================================================================
-void VNetConnection::SendRawMessage (VMessageOut &Msg) {
-  // if this is reliable "open channel" or "close channel" messages, force packet send here.
-  // we need to to this so acking won't accidentally ack messages we aren't interested into.
-  if (Msg.bReliable && (Msg.bOpen || Msg.bClose)) {
-    if (Out.GetNumBits()) Flush();
-    GCon->Logf(NAME_Debug, ">>>: going to send open/close message for channel #%d (msgseq=%u; open=%d; close=%d); pktid=%u", Msg.ChanIndex, Msg.Sequence, (int)Msg.bOpen, (int)Msg.bClose, UnreliableSendSequence);
+static inline int CalcFullMsgBitSize (const VBitStreamWriter &strm, int addnum=0) {
+  return VMessageOut::CalcFullMsgBitSize(strm.GetNumBits()+addnum);
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::PutOutToSendQueue
+//
+//==========================================================================
+void VNetConnection::PutOutToSendQueue () {
+  if (Out.GetNumBits() == 0) return; // nothing to do
+  if (CalcFullMsgBitSize(Out) > MAX_MSG_SIZE_BITS) {
+    Sys_Error("outgoing message too long: %d bits, but only %d bits allowed (psq)", CalcFullMsgBitSize(Out), MAX_MSG_SIZE_BITS);
+  }
+  // add trailing bit so we can find out how many bits the message has
+  Out.WriteBit(true);
+  // pad it with zero bits until the byte boundary
+  while (Out.GetNumBits()&7) Out.WriteBit(false);
+  vassert(Out.GetNumBits() <= MAX_MSG_SIZE_BITS);
+  // create new message
+  QMessage *qm = new QMessage;
+  qm->dataSize = 0;
+  qm->next = nullptr;
+  // copy data
+  vassert(Out.GetNumBytes() > 0 && Out.GetNumBytes() <= MAX_MSG_SIZE_BITS/8);
+  memcpy(qm->data, Out.GetData(), Out.GetNumBytes());
+  qm->dataSize = (unsigned)Out.GetNumBytes();
+  Out.Reinit(MAX_MSG_SIZE_BITS+16);
+  // append data to queue
+  if (sendQueueTail) sendQueueTail->next = qm; else sendQueueHead = qm;
+  sendQueueTail = qm;
+  vassert(Out.GetNumBits() == 0);
+  ++sendQueueSize;
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::SendMessage
+//
+//  actually, add message to send queue
+//
+//==========================================================================
+void VNetConnection::SendMessage (VMessageOut &Msg) {
+  if (Msg.CalcRealMsgBitSize() > MAX_MSG_SIZE_BITS) {
+    Sys_Error("outgoing message too long: %d bits, but only %d bits allowed (smg)", Msg.CalcRealMsgBitSize(), MAX_MSG_SIZE_BITS);
   }
 
-  PrepareOut(MAX_MESSAGE_HEADER_BITS+Msg.GetNumBits());
+  // do we need to allocate a new message?
+  int newsz = Msg.CalcRealMsgBitSize(Out);
+  if (newsz > MAX_MSG_SIZE_BITS) PutOutToSendQueue();
 
-  Out.WriteBit(false); // not an ack
-  Out.WriteInt(Msg.ChanIndex/*, MAX_CHANNELS*/);
-  Out.WriteBit(Msg.bReliable);
-  Out.WriteBit(Msg.bOpen);
-  Out.WriteBit(Msg.bClose);
-  if (Msg.bReliable) Out << STRM_INDEX_U(Msg.Sequence);
-  if (Msg.bOpen) Out.WriteInt(Msg.ChanType/*, CHANNEL_MAX*/);
-  Out.WriteInt(Msg.GetNumBits()/*, MAX_MSGLEN*8*/);
+  vassert(Msg.CalcRealMsgBitSize(Out) <= MAX_MSG_SIZE_BITS);
+  Msg.Finalise();
   Out.SerialiseBits(Msg.GetData(), Msg.GetNumBits());
 
+  /*
   Msg.Time = Driver->NetTime;
   Msg.PacketId = UnreliableSendSequence;
   Msg.AppendAckId(UnreliableSendSequence);
-
-  // if this is reliable "open channel" or "close channel" messages, force packet send here.
-  // we need to to this so acking won't accidentally ack messages we aren't interested into.
-  if (Msg.bReliable && (Msg.bOpen || Msg.bClose)) {
-    Flush();
-    GCon->Logf(NAME_Debug, ">>>: flushed open/close message for channel #%d (msgseq=%u; open=%d; close=%d); pktid=%u", Msg.ChanIndex, Msg.Sequence, (int)Msg.bOpen, (int)Msg.bClose, UnreliableSendSequence);
-  }
-}
-
-
-//==========================================================================
-//
-//  VNetConnection::SendAck
-//
-//==========================================================================
-void VNetConnection::SendAck (vuint32 Sequence) {
-  if (AutoAck) return;
-  GCon->Logf(NAME_DevNet, ">>>: sending ack for pktid=%u", Sequence);
-  PrepareOut(33);
-  Out.WriteBit(true); // ack
-  Out << STRM_INDEX_U(Sequence);
-}
-
-
-//==========================================================================
-//
-//  VNetConnection::PrepareOut
-//
-//==========================================================================
-void VNetConnection::PrepareOut (int Length) {
-  // send current packet if new message doesn't fit
-  if (Out.GetNumBits()+Length+MAX_PACKET_TRAILER_BITS > MAX_MSGLEN*8) Flush();
-  if (Out.GetNumBits() == 0) {
-    Out.WriteInt(NETPACKET_DATA/*, 256*/);
-    Out << STRM_INDEX_U(UnreliableSendSequence);
-  }
+  */
 }
 
 
@@ -647,41 +717,22 @@ void VNetConnection::Flush () {
   Driver->SetNetTime();
   if (State == NETCON_Closed) return;
 
-  if (!Out.GetNumBits()) {
-    // do not sent keepalices for autoack (demos) and local connections, nobody cares
+  // put current queued data to send queue
+  PutOutToSendQueue();
+
+  // create keepalive packet if send queue is empty
+  if (!sendQueueHead && sendDataSize <= MSG_HEADER_SIZE) {
+    // do not sent keepalives for autoack (demos) and local connections, nobody cares
     // `AutoAck == true` means "demo recording"
     if (AutoAck || IsLocalConnection()) return;
     double tout = VNetworkPublic::MessageTimeOut;
     if (tout < 0.02) tout = 0.02;
     if (Driver->NetTime-LastSendTime < tout/4.0f) return;
-    //GCon->Log(NAME_Debug, "sending keepalive...");
+    // it is ok to send a keepalive; it contains no data
+    sendDataSize = 0;
   }
 
-  // prepare out for keepalive messages
-  if (!Out.GetNumBits()) PrepareOut(0);
-
-  // add trailing bit so we can find out how many bits the message has
-  Out.WriteBit(true);
-  // pad it with zero bits until the byte boundary
-  while (Out.GetNumBits()&7) Out.WriteBit(false);
-
-  // send the message
-  const float lossPrc = net_test_loss.asFloat();
-  if (lossPrc <= 0.0f || RandomFull()*100.0f >= net_test_loss) {
-    if (NetCon->SendMessage(Out.GetData(), Out.GetNumBytes()) == -1) State = NETCON_Closed;
-  }
-  LastSendTime = Driver->NetTime;
-
-  if (!IsLocalConnection()) ++Driver->MessagesSent;
-  ++Driver->packetsSent;
-
-  // increment outgoing packet counter
-  ++UnreliableSendSequence;
-
-  // clear outgoing packet buffer
-  //Out = VBitStreamWriter(MAX_MSGLEN*8);
-  //k8: shout we fully reinit `Out` here?
-  Out.Reinit(MAX_MSGLEN*8);
+  ProcessSendQueue();
 }
 
 
@@ -770,12 +821,16 @@ void VNetConnection::Tick () {
   // the ACK so just mark all outgoing messages as ACK-ed
   // `AutoAck == true` means "demo recording"
   if (AutoAck) {
+    //FIXME
+    Sys_Error("demos are not implemeted yet (0)");
+    /*
     for (auto it = ChanIdxMap.first(); it; ++it) {
       VChannel *chan = it.getValue();
       for (VMessageOut *Msg = chan->OutMsg; Msg; Msg = Msg->Next) Msg->bReceivedAck = true;
       chan->OpenAcked = true;
       if (chan->OutMsg) chan->ReceivedAck();
     }
+    */
   }
 
   // perform channel cleanup
@@ -811,9 +866,9 @@ void VNetConnection::Tick () {
 //
 //==========================================================================
 void VNetConnection::SendCommand (VStr Str) {
-  VMessageOut Msg(GetGeneralChannel(), true/*reliable*/);
+  VMessageOut Msg(GetGeneralChannel());
   Msg << Str;
-  GetGeneralChannel()->SendMessage(&Msg);
+  GetGeneralChannel()->SendMessage(Msg);
 }
 
 
