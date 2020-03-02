@@ -783,6 +783,20 @@ void VBitStreamWriter::WriteBit (bool Bit) noexcept {
 
 //==========================================================================
 //
+//  VBitStreamWriter::CopyFromWS
+//
+//==========================================================================
+void VBitStreamWriter::CopyFromWS (const VBitStreamWriter &strm) noexcept {
+  if (strm.Pos == 0) return;
+  const vuint8 *src = (const vuint8 *)strm.Data.ptr();
+  for (int pos = 0; pos < strm.Pos; ++pos) {
+    WriteBit(src[pos>>3]&(1<<(pos&7)));
+  }
+}
+
+
+//==========================================================================
+//
 //  VBitStreamWriter::Expand
 //
 //==========================================================================

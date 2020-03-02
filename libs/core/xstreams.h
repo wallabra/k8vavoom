@@ -207,6 +207,9 @@ public:
 
   inline bool IsExpanded () const noexcept { return (Pos > Max); }
 
+  // won't modify `strm`
+  void CopyFromWS (const VBitStreamWriter &strm) noexcept;
+
   void WriteBit (bool Bit) noexcept;
   /*
   inline void WriteBit (bool Bit) {
