@@ -147,10 +147,10 @@ void VThinkerChannel::Suicide () {
 //  VThinkerChannel::Close
 //
 //==========================================================================
-void VThinkerChannel::Close () {
+void VThinkerChannel::Close (VMessageOut *msg) {
   if (!Closing) {
     // don't suicide here, we still need to wait for ack
-    VChannel::Close();
+    VChannel::Close(msg);
     // if this is a client version of entity, destroy it
     RemoveThinkerFromGame();
   }
@@ -348,8 +348,6 @@ void VThinkerChannel::Update () {
     }
   }
 
-  if (!Msg.IsEmpty()) SendMessage(Msg);
-
   // clear temporary networking flags
   Thinker->ThinkerFlags &= ~VThinker::TF_NetInitial;
   Thinker->ThinkerFlags &= ~VThinker::TF_NetOwner;
@@ -361,7 +359,9 @@ void VThinkerChannel::Update () {
     // restore roles
     Thinker->Role = oldRole;
     Thinker->RemoteRole = oldRemoteRole;
-    Close();
+    Close(&Msg); // this will send `Msg`
+  } else {
+    SendMessage(Msg);
   }
 }
 

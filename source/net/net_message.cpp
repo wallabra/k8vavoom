@@ -38,15 +38,15 @@ bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
   Data.reset();
   Num = Pos = 0;
   bError = false;
-  // read length (it includes 2 bytes for the length itself)
+  // read 14-bit length (it includes 2 bytes for the length itself)
   vuint16 v = 0;
-  for (int f = 0; f < 16; ++f) {
+  for (int f = 0; f < 14; ++f) {
     if (srcPacket.IsError()) { bError = true; return false; }
     v <<= 1;
     if (srcPacket.ReadBit()) v |= 0x01u;
   }
-  if (srcPacket.IsError() || IsError() || v < 2*8) { bError = true; return false; }
-  v -= 2*8;
+  if (srcPacket.IsError() || IsError() || v < 14) { bError = true; return false; }
+  v -= 14;
   GCon->Logf(NAME_Debug, "*** inmessage size: %u (left %u)", v, srcPacket.GetNumBits()-srcPacket.GetPos());
   if (srcPacket.GetNumBits() < v) {
     GCon->Log(NAME_Debug, "*** inmessage: out of data in packed!");
@@ -60,19 +60,22 @@ bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
     return false;
   }
   // parse header
-  ChanIndex = (vint32)this->ReadInt();
+  // message flags
+  bOpen = ReadBit();
+  bClose = ReadBit();
+  // channel index
+  *this << STRM_INDEX(ChanIndex);
   GCon->Logf(NAME_Debug, "*** inmessage: cidx=%d", ChanIndex);
   if (ChanIndex < 0) {
     bError = true;
     return false;
   }
-  bOpen = ReadBit();
-  bClose = ReadBit();
   GCon->Logf(NAME_Debug, "*** inmessage: bOpen=%d; bClose=%d; cidx=%d", (int)bOpen, (int)bClose, ChanIndex);
+  // optional channel type
   if (bOpen) {
-    int ctype = ReadInt();
-    GCon->Logf(NAME_Debug, "*** inmessage: ctype=%d", ctype);
-    if (ctype < 0 || ctype >= CHANNEL_MAX) {
+    vuint32 ctype = ReadUInt();
+    GCon->Logf(NAME_Debug, "*** inmessage: ctype=%u", ctype);
+    if (ctype >= CHANNEL_MAX) {
       bError = true;
       return false;
     }
@@ -81,22 +84,6 @@ bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
     ChanType = 0; // unknown
   }
   return !IsError();
-}
-
-
-//==========================================================================
-//
-//  VMessageIn::ReadMessageSize
-//
-//  returns -1 on error
-//
-//==========================================================================
-int VMessageIn::ReadMessageSize (VBitStreamReader &strm) {
-  if (strm.IsError()) return -1;
-  vuint16 len = 0xffffu;
-  strm << len;
-  if (len > MAX_MSG_SIZE_BITS) return -1;
-  return (int)len;
 }
 
 
@@ -109,6 +96,7 @@ int VMessageIn::ReadMessageSize (VBitStreamReader &strm) {
 VMessageOut::VMessageOut (VChannel *AChannel, unsigned flags)
   : VBitStreamWriter(MAX_MSG_SIZE_BITS+16, false) // no expand
   , hdrSizeBits(0)
+  , msgflags(0)
 {
   vassert(AChannel);
   writeHeader(AChannel->Type, AChannel->Index, flags);
@@ -123,6 +111,7 @@ VMessageOut::VMessageOut (VChannel *AChannel, unsigned flags)
 VMessageOut::VMessageOut (vuint8 AChanType, int AChanIndex, unsigned flags)
   : VBitStreamWriter(MAX_MSG_SIZE_BITS+16, false) // no expand
   , hdrSizeBits(0)
+  , msgflags(0)
 {
   writeHeader(AChanType, AChanIndex, flags);
 }
@@ -151,37 +140,57 @@ void VMessageOut::writeHeader (vuint8 AChanType, int AChanIndex, unsigned flags)
   //if (flags&NoHeader) return;
   vassert(GetNumBits() == 0);
   vassert(AChanIndex >= 0);
-  // reserve room for size
-  for (int f = 0; f < 16; ++f) this->WriteBit(false);
-  vassert(GetNumBits() == 16);
-  this->WriteInt(AChanIndex);
+  // reserve room for size (14 bits)
+  for (int f = 0; f < 14; ++f) this->WriteBit(false);
+  vassert(GetNumBits() == 14);
+  // message flags
   this->WriteBit(!!(flags&Open));
+  vassert(Pos == 15);
   this->WriteBit(!!(flags&Close));
-  if (flags&Open) this->WriteInt(AChanType);
+  // message index
+  *this << STRM_INDEX(AChanIndex);
+  // optional channel type
+  if (flags&Open) this->WriteUInt(AChanType);
   hdrSizeBits = GetNumBits();
+  msgflags = flags;
 }
 
 
 //==========================================================================
 //
-//  VMessageOut::setSize
+//  VMessageOut::MarkClose
+//
+//==========================================================================
+void VMessageOut::MarkClose () noexcept {
+  vassert(hdrSizeBits > 18);
+  msgflags |= Close;
+  // fix header
+  this->ForceBitAt(15, true);
+}
+
+
+//==========================================================================
+//
+//  VMessageOut::fixSize
+//
+//  this fixes message size in the header
 //
 //==========================================================================
 void VMessageOut::fixSize () {
-  vassert(GetNumBits() >= 2*8);
+  vassert(GetNumBits() >= 16);
   vassert(GetNumBits() <= MAX_MSG_SIZE_BITS);
   static_assert(MAX_MSG_SIZE_BITS <= 0xffff, "internal message size too big");
-  //HACK!
-  int savedPos = Pos;
-  vuint16 v = (vuint16)savedPos;
+  vuint16 v = (vuint16)GetNumBits();
+  const int chk = GetNumBits();
+  vassert(v <= 0x4000);
   GCon->Logf(NAME_Debug, "*** outmessage size: %u", v);
-  Pos = 0;
-  for (int f = 0; f < 16; ++f) {
-    WriteBit(!!(v&0x8000u));
+  // 14 bits is enough
+  v <<= 2; // remove hight two bits, they are zero anyway
+  for (int f = 0; f < 14; ++f) {
+    ForceBitAt(f, v&0x8000u);
     v <<= 1;
   }
-  vassert(Pos == 2*8);
-  Pos = savedPos;
+  vassert(GetNumBits() == chk);
 }
 
 

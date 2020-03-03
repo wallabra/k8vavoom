@@ -31,7 +31,8 @@
 static VCvarF net_test_loss("net_test_loss", "0", "Emulated packet loss percentage (randomly skip sending some packets).", CVAR_PreInit);
 static VCvarB net_dbg_conn_show_outdated("net_dbg_conn_show_outdated", false, "Show outdated channel messages?");
 static VCvarB net_dbg_conn_show_dgrams("net_dbg_conn_show_dgrams", false, "Show datagram activity?");
-static VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump received packets?");
+
+VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump received packets?");
 
 
 //==========================================================================
@@ -114,7 +115,7 @@ VNetConnection::~VNetConnection () {
     delete NetCon;
   }
   NetCon = nullptr;
-  if (Context->IsClient()) {
+  if (IsClient()) {
     vensure(Context->ServerConnection == this);
     Context->ServerConnection = nullptr;
   } else {
@@ -128,6 +129,26 @@ VNetConnection::~VNetConnection () {
     delete ObjMap;
     ObjMap = nullptr;
   }
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::IsClient
+//
+//==========================================================================
+bool VNetConnection::IsClient () noexcept {
+  return (Context ? Context->IsClient() : false);
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::IsServer
+//
+//==========================================================================
+bool VNetConnection::IsServer () noexcept {
+  return (Context ? Context->IsServer() : false);
 }
 
 
@@ -319,7 +340,7 @@ VChannel *VNetConnection::CreateChannel (vuint8 Type, vint32 AIndex, vuint8 Open
 //
 //==========================================================================
 void VNetConnection::ProcessSendQueue () {
-  if (Context->IsServer()) {
+  if (IsServer()) {
     if (!AllowMessageSend) return; // got nothing from client, don't send anything back yet
     AllowMessageSend = false;
   }
@@ -351,7 +372,7 @@ void VNetConnection::ProcessSendQueue () {
   // don't send anything if we're server, and we have no reliable packets:
   // server should feed us with something.
   // the only exception could be a map loading, but i'll add keepalive crap later
-  if (Context->IsServer()) {
+  if (IsServer()) {
     if (!send_reliable || !relSendDataSize) {
       AllowMessageSend = true; // restore flag
       return; // and do nothing
@@ -530,7 +551,7 @@ void VNetConnection::GetMessages () {
   if (!ProcessRecvQueue(Packet)) return;
   NeedsUpdate = true; // we got *any* activity, update the world! (valid for server)
   AllowMessageSend = true; // allow sending client messages (valid for server)
-  if (Context->IsServer()) {
+  if (IsServer()) {
     // make sure the reply sequence number matches the incoming sequence number
     if (incoming_sequence >= outgoing_sequence) {
       outgoing_sequence = incoming_sequence;
@@ -612,15 +633,6 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
     }
     if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  parsed packet message: %d bits eaten of %d", Packet.GetPos(), Packet.GetNumBits());
 
-    /*
-    if (Packet.IsError()) {
-      GCon->Logf(NAME_DevNet, "Packet (channel %d; open=%d; close=%d; chantype=%d) is missing message data (len=%d; pos=%d; num=%d)",
-        Msg.ChanIndex, (int)Msg.bOpen, (int)Msg.bClose, (int)Msg.ChanType,
-        Length, Packet.GetPos(), Packet.GetNum());
-      break;
-    }
-    */
-
     if (net_debug_dump_recv_packets) {
       GCon->Logf(NAME_DevNet, "  packet (channel %d; open=%d; close=%d; chantype=%d) (len=%d; pos=%d; num=%d; left=%d)",
         Msg.ChanIndex, (int)Msg.bOpen, (int)Msg.bClose, (int)Msg.ChanType,
@@ -639,6 +651,12 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
         }
         Chan->OpenAcked = true;
         GCon->Logf(NAME_DevNet, "  !!! created new channel #%d (%s)", Chan->Index, Chan->GetTypeName());
+        // immediately send "channel open ack" message (the channel itself should do it, but...)
+        {
+          if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "%s: sending OPEN ACK for %s", *GetAddress(), *Chan->GetDebugName());
+          VMessageOut ackmsg(Chan, VMessageOut::Open);
+          SendMessage(ackmsg);
+        }
       } else {
         // ignore messages for unopened channels
         if (Msg.ChanIndex < 0 || Msg.ChanIndex >= MAX_CHANNELS) {
@@ -647,6 +665,12 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
           GCon->Logf(NAME_DevNet, "Message for closed channel %d", Msg.ChanIndex);
         }
         continue;
+      }
+    } else {
+      // ack channel open for local channels
+      if (Msg.bOpen && Chan->OpenedLocally) {
+        GCon->Logf(NAME_DevNet, "%s: got OPEN ACK for %s", *GetAddress(), *Chan->GetDebugName());
+        Chan->OpenAcked = true;
       }
     }
     Chan->ReceivedRawMessage(Msg);
@@ -704,18 +728,24 @@ void VNetConnection::PutOutToSendQueue () {
 //  actually, add message to send queue
 //
 //==========================================================================
-void VNetConnection::SendMessage (VMessageOut &Msg) {
-  if (Msg.CalcRealMsgBitSize() > MAX_MSG_SIZE_BITS) {
-    Sys_Error("outgoing message too long: %d bits, but only %d bits allowed (smg)", Msg.CalcRealMsgBitSize(), MAX_MSG_SIZE_BITS);
+void VNetConnection::SendMessage (VMessageOut &msg) {
+  if (msg.CalcRealMsgBitSize() > MAX_MSG_SIZE_BITS) {
+    Sys_Error("%s: outgoing message too long: %d bits, but only %d bits allowed (smg)", *GetAddress(), msg.CalcRealMsgBitSize(), MAX_MSG_SIZE_BITS);
   }
 
   // do we need to allocate a new message?
-  int newsz = Msg.CalcRealMsgBitSize(Out);
-  if (newsz > MAX_MSG_SIZE_BITS) PutOutToSendQueue();
+  int newsz = msg.CalcRealMsgBitSize(Out);
+  if (newsz > MAX_MSG_SIZE_BITS) {
+    if (net_dbg_conn_show_dgrams) GCon->Logf(NAME_DevNet, "%s: pushed current output buffer to queue; out=%d; msg=%d", *GetAddress(), Out.GetNumBytes(), msg.GetNumBytes());
+    PutOutToSendQueue();
+  }
 
-  vassert(Msg.CalcRealMsgBitSize(Out) <= MAX_MSG_SIZE_BITS);
-  Msg.Finalise();
-  Out.SerialiseBits(Msg.GetData(), Msg.GetNumBits());
+  vassert(msg.CalcRealMsgBitSize(Out) <= MAX_MSG_SIZE_BITS);
+  msg.Finalise();
+
+  if (net_dbg_conn_show_dgrams) GCon->Logf(NAME_DevNet, "%s: saving message to outbuf; out=%d; msg=%d", *GetAddress(), Out.GetNumBytes(), msg.GetNumBytes());
+  Out.SerialiseBits(msg.GetData(), msg.GetNumBits());
+  if (net_dbg_conn_show_dgrams) GCon->Logf(NAME_DevNet, "%s: saved message to outbuf; out=%d; msg=%d", *GetAddress(), Out.GetNumBytes(), msg.GetNumBytes());
 }
 
 
@@ -878,9 +908,9 @@ void VNetConnection::Tick () {
 //
 //==========================================================================
 void VNetConnection::SendCommand (VStr Str) {
-  VMessageOut Msg(GetGeneralChannel());
-  Msg << Str;
-  GetGeneralChannel()->SendMessage(Msg);
+  VMessageOut msg(GetGeneralChannel());
+  msg << Str;
+  GetGeneralChannel()->SendMessage(msg);
 }
 
 

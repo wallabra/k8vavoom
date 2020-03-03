@@ -149,7 +149,9 @@ void VPlayerChannel::Update () {
     }
   }
 
-  if (!Msg.IsEmpty()) SendMessage(Msg);
+  // for client, always send it
+  if (Connection->IsClient()) Msg.MarkKeepalive();
+  SendMessage(Msg);
 }
 
 

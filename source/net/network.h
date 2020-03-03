@@ -258,6 +258,12 @@ public:
 
   inline bool IsThinker () const noexcept { return (Type == CHANNEL_Thinker); }
 
+  // is this channel opened locally?
+  inline bool IsLocalChannel () const noexcept { return OpenedLocally; }
+
+  // is this channel opened from the other end?
+  inline bool IsRemoteChannel () const noexcept { return !OpenedLocally; }
+
   // call this instead of `delete this`
   // connection ticker will take care of closed channels
   // WARNING! this will not call `Close()`, but will set `Closing` flag directly
@@ -278,8 +284,10 @@ public:
   // won't be called for already closing channels
   virtual void ReceivedClosingAck ();
 
-  // this sends reliable "close" message, if the channel in not closing
-  virtual void Close ();
+  // this sends reliable "close" message, if the channel in not on closing state yet
+  // you can pass already created message to use its header instead of creating a separate "close" msg
+  // passed message will be put into send queue (i.e. there's no need to separately send it)
+  virtual void Close (VMessageOut *msg=nullptr);
 
   // call this periodically to perform various processing
   virtual void Tick ();
@@ -374,7 +382,7 @@ public:
   virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
   virtual void ReceivedClosingAck () override;
-  virtual void Close () override;
+  virtual void Close (VMessageOut *msg=nullptr) override;
 
   void RemoveThinkerFromGame ();
 };
@@ -563,6 +571,9 @@ public:
   // call this if you want to send something to client regardless of its activity
   // note that this can (and prolly will) break sequencing!
   inline void ForceAllowSendForServer () noexcept { AllowMessageSend = true; }
+
+  bool IsClient () noexcept;
+  bool IsServer () noexcept;
 
   void Flush ();
   bool IsLocalConnection ();

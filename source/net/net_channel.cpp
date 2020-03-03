@@ -27,6 +27,8 @@
 #include "network.h"
 #include "net_message.h"
 
+extern VCvarB net_debug_dump_recv_packets;
+
 
 //==========================================================================
 //
@@ -78,7 +80,7 @@ VStr VChannel::GetName () const noexcept {
 //
 //==========================================================================
 VStr VChannel::GetDebugName () const noexcept {
-  return (Connection ? Connection->GetAddress() : VStr("<noip>"))+":"+GetName();
+  return (Connection ? Connection->GetAddress() : VStr("<noip>"))+":"+(IsLocalChannel() ? "l:" : "r:")+GetName();
 }
 
 
@@ -99,11 +101,17 @@ void VChannel::Suicide () {
 //  VChannel::Close
 //
 //==========================================================================
-void VChannel::Close () {
+void VChannel::Close (VMessageOut *msg) {
   if (Closing) return; // already in closing state
   // send close message
-  VMessageOut Msg(this, VMessageOut::Close);
-  SendMessage(Msg);
+  if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "%s: sending CLOSE %s", *GetDebugName(), (IsLocalChannel() ? "request" : "ack"));
+  if (msg) {
+    msg->MarkClose();
+    SendMessage(*msg);
+  } else {
+    VMessageOut CloseMsg(this, VMessageOut::Close);
+    SendMessage(CloseMsg);
+  }
   // enter closing state
   Closing = true;
 }
@@ -148,7 +156,7 @@ void VChannel::PutStream (VMessageOut &msg, VBitStreamWriter &strm) {
 //
 //==========================================================================
 void VChannel::FlushMsg (VMessageOut &msg) {
-  if (!msg.IsEmpty()) SendMessage(msg);
+  SendMessage(msg);
   msg.Reset(this);
 }
 
@@ -159,8 +167,7 @@ void VChannel::FlushMsg (VMessageOut &msg) {
 //
 //==========================================================================
 void VChannel::SendMessage (VMessageOut &Msg) {
-  // no need to send empty messages
-  if (Connection && !Msg.IsEmpty()) Connection->SendMessage(Msg);
+  if (Connection && Msg.NeedToSend()) Connection->SendMessage(Msg);
 }
 
 
@@ -180,24 +187,33 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
     return;
   }
 
+  /* no, we still may receive something from that side
   if (Closing && !Msg.bClose) {
     GCon->Logf(NAME_DevNet, "<<< %s: rejected non-close message for closing channel", *GetDebugName());
     return;
   }
+  */
 
   GCon->Logf(NAME_DevNet, "<<< %s: received message", *GetDebugName());
 
   const bool isClosing = Msg.bClose;
   ParsePacket(Msg);
-  // process cloing message
+  // process closing message
   if (isClosing) {
     if (!Closing) ReceivedClosingAck();
     if (Closing) {
+      // if we are in "closing" state, and we received closing packed, this is "close ack"
       // ok, we'll be dead anyway, so perform suicide here
+      if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "%s: got CLOSE ACK, performing suicide", *GetDebugName());
       Suicide();
     } else {
-      // queue "close ack" packet
+      // queue "close ack" or "close request" packet
       Close();
+      // if this is not a local channel, kill it for good, becase network layer will take care of ack delivering
+      if (!IsLocalChannel()) {
+        if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "%s: sent CLOSE ACK, performing suicide", *GetDebugName());
+        Suicide();
+      }
     }
   }
 }

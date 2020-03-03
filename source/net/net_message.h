@@ -42,10 +42,6 @@ public:
   bool bOpen; // open channel message
   bool bClose; // close channel message
 
-protected:
-  // returns -1 on error
-  static int ReadMessageSize (VBitStreamReader &strm);
-
 public:
   VV_DISABLE_COPY(VMessageIn)
 
@@ -63,12 +59,14 @@ public:
     Unreliable = 1u<<0,
     Open       = 1u<<1,
     Close      = 1u<<2,
-
+    // this flag means nothing, and used only to force sending empty packets
+    Keepalive  = 1u<<6,
     //NoHeader   = 1u<<7,
   };
 
 protected:
   int hdrSizeBits;
+  unsigned msgflags;
 
 protected:
   void writeHeader (vuint8 AChanType, int AChanIndex, unsigned flags);
@@ -90,7 +88,22 @@ public:
     cloneFrom(&src);
   }
 
+  // empty message contains only header
   inline bool IsEmpty () const noexcept { return (GetNumBits() == hdrSizeBits); }
+
+  inline bool IsOpen () const noexcept { return !!(msgflags&Open); }
+  inline bool IsClose () const noexcept { return !!(msgflags&Close); }
+  inline bool IsReliable () const noexcept { return !(msgflags&Unreliable); }
+  inline bool IsUnreliable () const noexcept { return !!(msgflags&Unreliable); }
+  inline bool IsKeepalive () const noexcept { return !!(msgflags&Keepalive); }
+
+  inline void MarkKeepalive () noexcept { msgflags |= Keepalive; }
+
+  // we cannot mark the packed as "open" post-factum, but we can mark is as "closing", to save bandwidth
+  void MarkClose () noexcept;
+
+  // empty packets with special flags should still be sent
+  inline bool NeedToSend () const noexcept { return (GetNumBits() > hdrSizeBits || (msgflags&(Open|Close|Keepalive))); }
 
   void Reset (VChannel *AChannel, unsigned flags=0);
 

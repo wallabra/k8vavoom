@@ -89,7 +89,11 @@ void VObjectMapChannel::Suicide () {
 void VObjectMapChannel::ReceivedClosingAck () {
   //GCon->Logf(NAME_DevNet, "VObjectMapChannel::ReceivedClosingAck:%p (#%d)", this, Index);
   Connection->ObjMapSent = true;
-  GCon->Logf(NAME_DevNet, "initial objects and names sent");
+  if (IsLocalChannel()) {
+    GCon->Logf(NAME_DevNet, "initial objects and names received");
+  } else {
+    GCon->Logf(NAME_DevNet, "initial objects and names sent");
+  }
 }
 
 
@@ -100,7 +104,7 @@ void VObjectMapChannel::ReceivedClosingAck () {
 //==========================================================================
 void VObjectMapChannel::Tick () {
   VChannel::Tick();
-  if (OpenedLocally) Update();
+  if (IsLocalChannel()) Update();
 }
 
 
@@ -120,6 +124,7 @@ void VObjectMapChannel::UpdateSendPBar () {
 //
 //==========================================================================
 void VObjectMapChannel::Update () {
+  if (!OpenAcked && !needOpenMessage) return; // nothing to do yet (we sent open message, and waiting for the ack)
 
   if (CurrName == Connection->ObjMap->NameLookup.length() && CurrClass == Connection->ObjMap->ClassLookup.length()) {
     // everything has been sent
@@ -182,14 +187,15 @@ void VObjectMapChannel::Update () {
       if (!OpenAcked) { UpdateSendPBar(); return; } // if not opened, don't spam with packets yet
       if (Connection->GetSendQueueSize() >= 10) { UpdateSendPBar(); return; } // is queue full?
     }
+    PutStream(Msg, strm);
     ++CurrClass;
     //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name);
   }
 
   // this is the last message
   PutStream(Msg, strm);
-  FlushMsg(Msg);
-  Close();
+  //FlushMsg(Msg);
+  Close(&Msg); // this will flush it
 
   if (net_fixed_name_set) {
     GCon->Logf(NAME_DevNet, "done writing initial objects (%d) and names (%d)", CurrClass, CurrName);
@@ -207,6 +213,9 @@ void VObjectMapChannel::Update () {
 //
 //==========================================================================
 void VObjectMapChannel::ParsePacket (VMessageIn &Msg) {
+  // if this channel is opened locally, it is used only for sending data
+  if (IsLocalChannel()) return;
+
   // read counters from opening message
   if (Msg.bOpen) {
     RNet_PBarReset();
