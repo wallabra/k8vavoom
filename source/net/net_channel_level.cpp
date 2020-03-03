@@ -238,7 +238,7 @@ void VLevelChannel::SendNewLevel () {
 //==========================================================================
 void VLevelChannel::Update () {
   VMessageOut Msg(this);
-  VBitStreamWriter strm(MAX_MSG_SIZE_BITS, true); // allow expand, why not?
+  VBitStreamWriter strm(MAX_MSG_SIZE_BITS, false); // no expand
 
   for (int i = 0; i < Level->NumLines; ++i) {
     line_t *Line = &Level->Lines[i];
@@ -285,7 +285,7 @@ void VLevelChannel::Update () {
       continue;
     }
 
-    //GCon->Logf(NAME_DevNet, "VLevelChannel::Update: Side #%d (pos=%d; max=%d; err=%d)", i, Msg.GetPos(), Msg.GetNum(), (int)Msg.IsError());
+    GCon->Logf(NAME_DevNet, "%s:Update:000: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
 
     strm.WriteInt(CMD_Side);
     strm.WriteInt(i);
@@ -306,62 +306,62 @@ void VLevelChannel::Update () {
     }
     strm.WriteBit(Side->Top.TextureOffset != RepSide->Top.TextureOffset);
     if (Side->Top.TextureOffset != RepSide->Top.TextureOffset) {
-      Msg << Side->Top.TextureOffset;
+      strm << Side->Top.TextureOffset;
       RepSide->Top.TextureOffset = Side->Top.TextureOffset;
     }
     strm.WriteBit(Side->Bot.TextureOffset != RepSide->Bot.TextureOffset);
     if (Side->Bot.TextureOffset != RepSide->Bot.TextureOffset) {
-      Msg << Side->Bot.TextureOffset;
+      strm << Side->Bot.TextureOffset;
       RepSide->Bot.TextureOffset = Side->Bot.TextureOffset;
     }
     strm.WriteBit(Side->Mid.TextureOffset != RepSide->Mid.TextureOffset);
     if (Side->Mid.TextureOffset != RepSide->Mid.TextureOffset) {
-      Msg << Side->Mid.TextureOffset;
+      strm << Side->Mid.TextureOffset;
       RepSide->Mid.TextureOffset = Side->Mid.TextureOffset;
     }
     strm.WriteBit(Side->Top.RowOffset != RepSide->Top.RowOffset);
     if (Side->Top.RowOffset != RepSide->Top.RowOffset) {
-      Msg << Side->Top.RowOffset;
+      strm << Side->Top.RowOffset;
       RepSide->Top.RowOffset = Side->Top.RowOffset;
     }
     strm.WriteBit(Side->Bot.RowOffset != RepSide->Bot.RowOffset);
     if (Side->Bot.RowOffset != RepSide->Bot.RowOffset) {
-      Msg << Side->Bot.RowOffset;
+      strm << Side->Bot.RowOffset;
       RepSide->Bot.RowOffset = Side->Bot.RowOffset;
     }
     strm.WriteBit(Side->Mid.RowOffset != RepSide->Mid.RowOffset);
     if (Side->Mid.RowOffset != RepSide->Mid.RowOffset) {
-      Msg << Side->Mid.RowOffset;
+      strm << Side->Mid.RowOffset;
       RepSide->Mid.RowOffset = Side->Mid.RowOffset;
     }
     strm.WriteBit(Side->Top.ScaleX != RepSide->Top.ScaleX);
     if (Side->Top.ScaleX != RepSide->Top.ScaleX) {
-      Msg << Side->Top.ScaleX;
+      strm << Side->Top.ScaleX;
       RepSide->Top.ScaleX = Side->Top.ScaleX;
     }
     strm.WriteBit(Side->Top.ScaleY != RepSide->Top.ScaleY);
     if (Side->Top.ScaleY != RepSide->Top.ScaleY) {
-      Msg << Side->Top.ScaleY;
+      strm << Side->Top.ScaleY;
       RepSide->Top.ScaleY = Side->Top.ScaleY;
     }
     strm.WriteBit(Side->Bot.ScaleX != RepSide->Bot.ScaleX);
     if (Side->Bot.ScaleX != RepSide->Bot.ScaleX) {
-      Msg << Side->Bot.ScaleX;
+      strm << Side->Bot.ScaleX;
       RepSide->Bot.ScaleX = Side->Bot.ScaleX;
     }
     strm.WriteBit(Side->Bot.ScaleY != RepSide->Bot.ScaleY);
     if (Side->Bot.ScaleY != RepSide->Bot.ScaleY) {
-      Msg << Side->Bot.ScaleY;
+      strm << Side->Bot.ScaleY;
       RepSide->Bot.ScaleY = Side->Bot.ScaleY;
     }
     strm.WriteBit(Side->Mid.ScaleX != RepSide->Mid.ScaleX);
     if (Side->Mid.ScaleX != RepSide->Mid.ScaleX) {
-      Msg << Side->Mid.ScaleX;
+      strm << Side->Mid.ScaleX;
       RepSide->Mid.ScaleX = Side->Mid.ScaleX;
     }
     strm.WriteBit(Side->Mid.ScaleY != RepSide->Mid.ScaleY);
     if (Side->Mid.ScaleY != RepSide->Mid.ScaleY) {
-      Msg << Side->Mid.ScaleY;
+      strm << Side->Mid.ScaleY;
       RepSide->Mid.ScaleY = Side->Mid.ScaleY;
     }
     strm.WriteBit(Side->Flags != RepSide->Flags);
@@ -371,11 +371,13 @@ void VLevelChannel::Update () {
     }
     strm.WriteBit(Side->Light != RepSide->Light);
     if (Side->Light != RepSide->Light) {
-      Msg << Side->Light;
+      strm << Side->Light;
       RepSide->Light = Side->Light;
     }
 
+    GCon->Logf(NAME_DevNet, "%s:Update:001: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
     PutStream(Msg, strm);
+    GCon->Logf(NAME_DevNet, "%s:Update:002: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
   }
 
   //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Sectors");
@@ -462,17 +464,17 @@ void VLevelChannel::Update () {
     if (FloorChanged) {
       strm.WriteBit(RepSec->floor_dist != Sec->floor.dist);
       if (RepSec->floor_dist != Sec->floor.dist) {
-        Msg << Sec->floor.dist;
-        Msg << Sec->floor.TexZ;
+        strm << Sec->floor.dist;
+        strm << Sec->floor.TexZ;
       }
       strm.WriteBit(mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs));
       if (mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs)) strm.WriteInt(mround(Sec->floor.xoffs)&63/*, 64*/);
       strm.WriteBit(mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs));
       if (mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs)) strm.WriteInt(mround(Sec->floor.yoffs)&63/*, 64*/);
       strm.WriteBit(RepSec->floor_XScale != Sec->floor.XScale);
-      if (RepSec->floor_XScale != Sec->floor.XScale) Msg << Sec->floor.XScale;
+      if (RepSec->floor_XScale != Sec->floor.XScale) strm << Sec->floor.XScale;
       strm.WriteBit(RepSec->floor_YScale != Sec->floor.YScale);
-      if (RepSec->floor_YScale != Sec->floor.YScale) Msg << Sec->floor.YScale;
+      if (RepSec->floor_YScale != Sec->floor.YScale) strm << Sec->floor.YScale;
       strm.WriteBit(mround(RepSec->floor_Angle) != mround(Sec->floor.Angle));
       if (mround(RepSec->floor_Angle) != mround(Sec->floor.Angle)) strm.WriteInt((int)AngleMod(Sec->floor.Angle)/*, 360*/);
       strm.WriteBit(mround(RepSec->floor_BaseAngle) != mround(Sec->floor.BaseAngle));
@@ -480,23 +482,23 @@ void VLevelChannel::Update () {
       strm.WriteBit(mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs));
       if (mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs)) strm.WriteInt(mround(Sec->floor.BaseYOffs)&63/*, 64*/);
       strm.WriteBit(RepSec->floor_SkyBox != FloorSkyBox);
-      if (RepSec->floor_SkyBox != FloorSkyBox) Msg << FloorSkyBox;
+      if (RepSec->floor_SkyBox != FloorSkyBox) strm << FloorSkyBox;
     }
     strm.WriteBit(CeilChanged);
     if (CeilChanged) {
       strm.WriteBit(RepSec->ceil_dist != Sec->ceiling.dist);
       if (RepSec->ceil_dist != Sec->ceiling.dist) {
-        Msg << Sec->ceiling.dist;
-        Msg << Sec->ceiling.TexZ;
+        strm << Sec->ceiling.dist;
+        strm << Sec->ceiling.TexZ;
       }
       strm.WriteBit(mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs));
       if (mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs)) strm.WriteInt(mround(Sec->ceiling.xoffs)&63/*, 64*/);
       strm.WriteBit(mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs));
       if (mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs)) strm.WriteInt(mround(Sec->ceiling.yoffs)&63/*, 64*/);
       strm.WriteBit(RepSec->ceil_XScale != Sec->ceiling.XScale);
-      if (RepSec->ceil_XScale != Sec->ceiling.XScale) Msg << Sec->ceiling.XScale;
+      if (RepSec->ceil_XScale != Sec->ceiling.XScale) strm << Sec->ceiling.XScale;
       strm.WriteBit(RepSec->ceil_YScale != Sec->ceiling.YScale);
-      if (RepSec->ceil_YScale != Sec->ceiling.YScale) Msg << Sec->ceiling.YScale;
+      if (RepSec->ceil_YScale != Sec->ceiling.YScale) strm << Sec->ceiling.YScale;
       strm.WriteBit(mround(RepSec->ceil_Angle) != mround(Sec->ceiling.Angle));
       if (mround(RepSec->ceil_Angle) != mround(Sec->ceiling.Angle)) strm.WriteInt((int)AngleMod(Sec->ceiling.Angle)/*, 360*/);
       strm.WriteBit(mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle));
@@ -504,18 +506,18 @@ void VLevelChannel::Update () {
       strm.WriteBit(mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs));
       if (mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs)) strm.WriteInt(mround(Sec->ceiling.BaseYOffs)&63/*, 64*/);
       strm.WriteBit(RepSec->ceil_SkyBox != CeilSkyBox);
-      if (RepSec->ceil_SkyBox != CeilSkyBox) Msg << CeilSkyBox;
+      if (RepSec->ceil_SkyBox != CeilSkyBox) strm << CeilSkyBox;
     }
     strm.WriteBit(LightChanged);
     if (LightChanged) strm.WriteInt(Sec->params.lightlevel>>2/*, 256*/);
     strm.WriteBit(FadeChanged);
-    if (FadeChanged) Msg << Sec->params.Fade;
+    if (FadeChanged) strm << Sec->params.Fade;
     strm.WriteBit(SkyChanged);
     if (SkyChanged) strm.WriteInt(Sec->Sky/*, MAX_VUINT16*/);
     strm.WriteBit(MirrorChanged);
     if (MirrorChanged) {
-      Msg << Sec->floor.MirrorAlpha;
-      Msg << Sec->ceiling.MirrorAlpha;
+      strm << Sec->floor.MirrorAlpha;
+      strm << Sec->ceiling.MirrorAlpha;
     }
 
     PutStream(Msg, strm);
@@ -562,11 +564,11 @@ void VLevelChannel::Update () {
     strm.WriteInt(CMD_PolyObj);
     strm.WriteInt(i);
     strm.WriteBit(RepPo->startSpot.x != Po->startSpot.x);
-    if (RepPo->startSpot.x != Po->startSpot.x) Msg << Po->startSpot.x;
+    if (RepPo->startSpot.x != Po->startSpot.x) strm << Po->startSpot.x;
     strm.WriteBit(RepPo->startSpot.y != Po->startSpot.y);
-    if (RepPo->startSpot.y != Po->startSpot.y) Msg << Po->startSpot.y;
+    if (RepPo->startSpot.y != Po->startSpot.y) strm << Po->startSpot.y;
     strm.WriteBit(RepPo->angle != Po->angle);
-    if (RepPo->angle != Po->angle) Msg << Po->angle;
+    if (RepPo->angle != Po->angle) strm << Po->angle;
 
     PutStream(Msg, strm);
 
@@ -592,7 +594,7 @@ void VLevelChannel::Update () {
     // send message
     strm.WriteInt(CMD_CamTex/*, CMD_MAX*/);
     strm.WriteInt(i/*, 0xff*/);
-    Connection->ObjMap->SerialiseObject(Msg, *(VObject **)&CamEnt);
+    Connection->ObjMap->SerialiseObject(strm, *(VObject **)&CamEnt);
     strm.WriteInt(Cam.TexNum/*, 0xffff*/);
     strm.WriteInt(Cam.FOV/*, 360*/);
 
@@ -630,11 +632,11 @@ void VLevelChannel::Update () {
     for (int j = 0; j < Tr->Commands.Num(); ++j) {
       VTextureTranslation::VTransCmd &C = Tr->Commands[j];
       strm.WriteInt(C.Type/*, 2*/);
-           if (C.Type == 0) Msg << C.Start << C.End << C.R1 << C.R2;
-      else if (C.Type == 1) Msg << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2 << C.G2 << C.B2;
-      else if (C.Type == 2) Msg << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2 << C.G2 << C.B2;
-      else if (C.Type == 3) Msg << C.Start << C.End << C.R1 << C.G1 << C.B1;
-      else if (C.Type == 4) Msg << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2;
+           if (C.Type == 0) strm << C.Start << C.End << C.R1 << C.R2;
+      else if (C.Type == 1) strm << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2 << C.G2 << C.B2;
+      else if (C.Type == 2) strm << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2 << C.G2 << C.B2;
+      else if (C.Type == 3) strm << C.Start << C.End << C.R1 << C.G1 << C.B1;
+      else if (C.Type == 4) strm << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2;
       Rep[j] = C;
     }
 
@@ -654,7 +656,7 @@ void VLevelChannel::Update () {
     // send message
     strm.WriteInt(CMD_BodyQueueTrans/*, CMD_MAX*/);
     strm.WriteInt(i/*, MAX_BODY_QUEUE_TRANSLATIONS*/);
-    Msg << Tr->TranslStart << Tr->TranslEnd;
+    strm << Tr->TranslStart << Tr->TranslEnd;
     strm.WriteInt(Tr->Color/*, 0x00ffffff*/);
 
     PutStream(Msg, strm);
