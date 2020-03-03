@@ -31,6 +31,7 @@
 static VCvarF net_test_loss("net_test_loss", "0", "Emulated packet loss percentage (randomly skip sending some packets).", CVAR_PreInit);
 static VCvarB net_dbg_conn_show_outdated("net_dbg_conn_show_outdated", false, "Show outdated channel messages?");
 static VCvarB net_dbg_conn_show_dgrams("net_dbg_conn_show_dgrams", false, "Show datagram activity?");
+static VCvarB net_dbg_report_missing_dgrams("net_dbg_report_missing_dgrams", false, "Report missing datagrams (this is mostly useless console spam)?");
 
 VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump received packets?");
 
@@ -478,7 +479,7 @@ bool VNetConnection::ProcessRecvQueue (VBitStreamReader &Packet) {
     vassert(ndrop > 0);
     // this datagram is in the future, looks like older datagrams are lost
     Driver->droppedDatagrams += ndrop;
-    GCon->Logf(NAME_DevNet, "Missing %d datagram%s (urseq=%u; seq=%u)", ndrop, (ndrop != 1 ? "s" : ""), incoming_sequence, sequence);
+    if (net_dbg_report_missing_dgrams) GCon->Logf(NAME_DevNet, "Missing %d datagram%s (urseq=%u; seq=%u)", ndrop, (ndrop != 1 ? "s" : ""), incoming_sequence, sequence);
   }
 
   if (net_dbg_conn_show_dgrams) {
