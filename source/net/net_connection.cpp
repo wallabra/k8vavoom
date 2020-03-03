@@ -369,16 +369,6 @@ void VNetConnection::ProcessSendQueue () {
     if (net_dbg_conn_show_dgrams) GCon->Logf(NAME_DevNet, "%s: took new reliable datagram from queue (%d bytes); %d left in queue", *GetAddress(), relSendDataSize, sendQueueSize);
   }
 
-  // don't send anything if we're server, and we have no reliable packets:
-  // server should feed us with something.
-  // the only exception could be a map loading, but i'll add keepalive crap later
-  if (IsServer()) {
-    if (!send_reliable || !relSendDataSize) {
-      AllowMessageSend = true; // restore flag
-      return; // and do nothing
-    }
-  }
-
   vuint32 sendDataSize; // put it here, so it won't be overwritten accidentally (and i hope the compiler won't move it)
   vuint8 sendData[MAX_DGRAM_SIZE];
 
