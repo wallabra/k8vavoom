@@ -297,9 +297,16 @@ bool VNetObjectsMap::SerialiseClass (VStream &Strm, VClass *&Class) {
   if (Strm.IsLoading()) {
     vuint32 ClassId;
     Strm.SerialiseInt(ClassId/*, ClassLookup.Num()*/);
-    //GCon->Logf("classid=%u (%d)", ClassId, ClassLookup.Num());
+    //GCon->Logf(NAME_DevNet, "VNetObjectsMap::SerialiseClass: classid=%u (%d total)", ClassId, ClassLookup.Num());
     if (ClassId) {
       Class = ClassLookup[ClassId];
+      /*
+      if (Class) {
+        GCon->Logf(NAME_DevNet, "VNetObjectsMap::SerialiseClass: classid=%u; class is '%s'", ClassId, Class->GetName());
+      } else {
+        GCon->Logf(NAME_DevNet, "VNetObjectsMap::SerialiseClass: classid=%u; NO SUCH CLASS", ClassId);
+      }
+      */
     } else {
       Class = nullptr;
     }

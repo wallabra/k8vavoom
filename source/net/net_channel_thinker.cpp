@@ -372,15 +372,21 @@ void VThinkerChannel::Update () {
 //
 //==========================================================================
 void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
+  // currently, client cannot create thinkers, so ignore incoming client packets here
+  // the player has its own channel for data
+  if (IsLocalChannel()) return;
+
   if (Msg.bOpen) {
-    VClass *C;
+    VClass *C = nullptr;
     Connection->ObjMap->SerialiseClass(Msg, C);
 
-    VThinker *Th = Connection->Context->GetLevel()->SpawnThinker(C, TVec(0, 0, 0), TAVec(0, 0, 0), nullptr, false);
+    if (!C) Sys_Error("%s: cannot spawn `none` thinker", *GetDebugName());
+
+    VThinker *Th = Connection->Context->GetLevel()->SpawnThinker(C, TVec(0, 0, 0), TAVec(0, 0, 0), nullptr, false); // no replacements
     #ifdef CLIENT
-    //GCon->Logf("NET:%p: spawned thinker with class `%s`", Th, Th->GetClass()->GetName());
-    if (Th && Th->IsA(VLevelInfo::StaticClass())) {
-      //GCon->Logf(NAME_DevNet, "*** NET:%p: spawned thinker with class `%s`", Th, Th->GetClass()->GetName());
+    GCon->Logf(NAME_DevNet, "%s spawned thinker with class `%s`(%u)", *GetDebugName(), Th->GetClass()->GetName(), Th->GetUniqueId());
+    if (Th->IsA(VLevelInfo::StaticClass())) {
+      GCon->Logf(NAME_DevNet, "*** NET: got LevelInfo, sending 'client_spawn' command");
       VLevelInfo *LInfo = (VLevelInfo *)Th;
       LInfo->Level = LInfo;
       GClLevel->LevelInfo = LInfo;
