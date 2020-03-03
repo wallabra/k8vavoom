@@ -758,6 +758,13 @@ void VNetConnection::Flush (bool asKeepalive) {
   Driver->SetNetTime();
   if (State == NETCON_Closed) return;
 
+  // see if this connection has timed out
+  if (IsTimeoutExceeded()) {
+    ShowTimeoutStats();
+    State = NETCON_Closed;
+    return;
+  }
+
   // put current queued data to send queue
   PutOutToSendQueue();
 
@@ -798,11 +805,13 @@ bool VNetConnection::IsTimeoutExceeded () {
   // so there's no need to check for timeouts
   // `AutoAck == true` means "demo recording"
   if (AutoAck || IsLocalConnection()) return false;
+  /* nope; even if we have no level, the timeout should still be checked
   if (!GetLevelChannel()->Level) {
     // wtf?!
     NetCon->LastMessageTime = Driver->NetTime;
     return false;
   }
+  */
   double tout = VNetworkPublic::MessageTimeOut;
   if (tout < 0.02) tout = 0.02;
   if (Driver->NetTime-NetCon->LastMessageTime <= tout) return false;
@@ -877,11 +886,14 @@ void VNetConnection::Tick () {
   if (HasDeadChannels) RemoveDeadThinkerChannels();
 
   // see if this connection has timed out
+  // this is done in `Flush()` now
+  /*
   if (IsTimeoutExceeded()) {
     ShowTimeoutStats();
     State = NETCON_Closed;
     return;
   }
+  */
 
   // run tick for all open channels
   for (auto it = ChanIdxMap.first(); it; ++it) {

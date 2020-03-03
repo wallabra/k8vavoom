@@ -98,6 +98,7 @@ void VNetContext::Tick () {
         //Conn->NeedsUpdate = false; // nope, this is set in `UpdateLevel()`
         Conn->UpdateLevel();
       }
+      // spam client with player updates
       if (Conn->State != NETCON_Closed) {
         //!GCon->Logf(NAME_DevNet, "  sending player update: #%d: %s", i, *Conn->GetAddress());
         Conn->GetPlayerChannel()->Update();
@@ -107,12 +108,6 @@ void VNetContext::Tick () {
       GCon->Logf(NAME_DevNet, "Sending server info for %s", *Conn->GetAddress());
       Conn->SendServerInfo();
     }
-    /*
-    if (Conn->State != NETCON_Closed) {
-      //!GCon->Logf(NAME_DevNet, "  checking messages: #%d: %s", i, *Conn->GetAddress());
-      Conn->GetMessages(); // why not?
-    }
-    */
     if (Conn->State != NETCON_Closed) {
       //!GCon->Logf(NAME_DevNet, "  ticking: #%d: %s", i, *Conn->GetAddress());
       Conn->Tick();
