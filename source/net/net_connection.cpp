@@ -348,6 +348,16 @@ void VNetConnection::ProcessSendQueue () {
     if (net_dbg_conn_show_dgrams) GCon->Logf(NAME_DevNet, "%s: took new reliable datagram from queue (%d bytes); %d left in queue", *GetAddress(), relSendDataSize, sendQueueSize);
   }
 
+  // don't send anything if we're server, and we have no reliable packets:
+  // server should feed us with something.
+  // the only exception could be a map loading, but i'll add keepalive crap later
+  if (Context->IsServer()) {
+    if (!send_reliable || !relSendDataSize) {
+      AllowMessageSend = true; // restore flag
+      return; // and do nothing
+    }
+  }
+
   vuint32 sendDataSize; // put it here, so it won't be overwritten accidentally (and i hope the compiler won't move it)
   vuint8 sendData[MAX_DGRAM_SIZE];
 
@@ -592,12 +602,15 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
   if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "***!!!*** Network Packet (pos=%d; num=%d (%d))", Packet.GetPos(), Packet.GetNum(), (Packet.GetNum()+7)/8);
   while (!Packet.AtEnd()) {
+    if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  parsing packet: %d bits eaten of %d", Packet.GetPos(), Packet.GetNumBits());
     // read message header
     VMessageIn Msg(Packet);
     if (Packet.IsError() || Msg.IsError()) {
       GCon->Logf(NAME_DevNet, "Packet is missing message header");
-      break;
+      State = NETCON_Closed;
+      return;
     }
+    if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  parsed packet message: %d bits eaten of %d", Packet.GetPos(), Packet.GetNumBits());
 
     /*
     if (Packet.IsError()) {
@@ -661,11 +674,11 @@ void VNetConnection::PutOutToSendQueue () {
   if (CalcFullMsgBitSize(Out) > MAX_MSG_SIZE_BITS) {
     Sys_Error("outgoing message too long: %d bits, but only %d bits allowed (psq)", CalcFullMsgBitSize(Out), MAX_MSG_SIZE_BITS);
   }
-  //GCon->Logf(NAME_DevNet, "%s: PutOutToSendQueue:000: qlen=%d; outlen=%d bits", *GetAddress(), sendQueueSize, Out.GetNumBits());
+  //!GCon->Logf(NAME_DevNet, "%s: PutOutToSendQueue:000: qlen=%d; outlen=%d bits", *GetAddress(), sendQueueSize, Out.GetNumBits());
   // add trailing bit so we can find out how many bits the message has
   Out.WriteTrailingBit();
   vassert(Out.GetNumBits() <= MAX_MSG_SIZE_BITS);
-  //GCon->Logf(NAME_DevNet, "%s: PutOutToSendQueue:001: qlen=%d; outlen=%d bits", *GetAddress(), sendQueueSize, Out.GetNumBits());
+  //!GCon->Logf(NAME_DevNet, "%s: PutOutToSendQueue:001: qlen=%d; outlen=%d bits", *GetAddress(), sendQueueSize, Out.GetNumBits());
   // create new message
   QMessage *qm = new QMessage;
   qm->dataSize = 0;
@@ -680,7 +693,7 @@ void VNetConnection::PutOutToSendQueue () {
   if (sendQueueTail) sendQueueTail->next = qm; else sendQueueHead = qm;
   sendQueueTail = qm;
   ++sendQueueSize;
-  //GCon->Logf(NAME_DevNet, "%s: PutOutToSendQueue:002: qlen=%d; outlen=%d bits", *GetAddress(), sendQueueSize, Out.GetNumBits());
+  //!GCon->Logf(NAME_DevNet, "%s: PutOutToSendQueue:002: qlen=%d; outlen=%d bits", *GetAddress(), sendQueueSize, Out.GetNumBits());
 }
 
 

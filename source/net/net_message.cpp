@@ -47,7 +47,7 @@ bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
   }
   if (srcPacket.IsError() || IsError() || v < 2*8) { bError = true; return false; }
   v -= 2*8;
-  GCon->Logf(NAME_Debug, "*** inmessage size: %u (left %u)", v, srcPacket.GetNumBits());
+  GCon->Logf(NAME_Debug, "*** inmessage size: %u (left %u)", v, srcPacket.GetNumBits()-srcPacket.GetPos());
   if (srcPacket.GetNumBits() < v) {
     GCon->Log(NAME_Debug, "*** inmessage: out of data in packed!");
     bError = true;
@@ -55,7 +55,7 @@ bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
   }
   SetData(srcPacket, v);
   if (srcPacket.IsError() || IsError()) {
-    GCon->Log(NAME_Debug, "*** inmessage: error reading data from packet!");
+    GCon->Logf(NAME_Debug, "*** inmessage: error reading data from packet (%d : %d)!", (int)srcPacket.IsError(), (int)IsError());
     bError = true;
     return false;
   }

@@ -226,7 +226,7 @@ void VObjectMapChannel::ParsePacket (VMessageIn &Msg) {
   TArray<char> buf;
 
   // read names
-  GCon->Logf(NAME_Debug, "%s: ==== (%d : %d)", *GetDebugName(), CurrName, Connection->ObjMap->NameLookup.length());
+  //GCon->Logf(NAME_Debug, "%s: ==== (%d : %d)", *GetDebugName(), CurrName, Connection->ObjMap->NameLookup.length());
   while (!Msg.AtEnd() && CurrName < Connection->ObjMap->NameLookup.length()) {
     int Len = Msg.ReadInt();
     if (Len < 0 || Len > NAME_SIZE) {
@@ -241,7 +241,7 @@ void VObjectMapChannel::ParsePacket (VMessageIn &Msg) {
     buf.setLength(Len+1, false);
     Msg.Serialise(buf.ptr(), Len);
     buf[Len] = 0;
-    GCon->Logf(NAME_Debug, "%s: len=%d (%s)", *GetDebugName(), Len, buf.ptr());
+    //GCon->Logf(NAME_Debug, "%s: len=%d (%s)", *GetDebugName(), Len, buf.ptr());
     VName Name(buf.ptr());
     Connection->ObjMap->ReceivedName(CurrName, Name);
     ++CurrName;
