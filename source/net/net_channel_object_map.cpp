@@ -126,7 +126,7 @@ void VObjectMapChannel::UpdateSendPBar () {
 void VObjectMapChannel::Update () {
   if (!OpenAcked && !needOpenMessage) return; // nothing to do yet (we sent open message, and waiting for the ack)
 
-  if (CurrName == Connection->ObjMap->NameLookup.length() && CurrClass == Connection->ObjMap->ClassLookup.length()) {
+  if (CurrName >= Connection->ObjMap->NameLookup.length() && CurrClass == Connection->ObjMap->ClassLookup.length()) {
     // everything has been sent
     Close();
     return;
@@ -138,7 +138,7 @@ void VObjectMapChannel::Update () {
     return;
   }
 
-  VMessageOut Msg(this, (needOpenMessage ? VMessageOut::Open : 0u));
+  VMessageOut outmsg(this, (needOpenMessage ? VMessageOut::Open : 0u));
   // send counters in the first message
   if (needOpenMessage) {
     needOpenMessage = false;
@@ -146,11 +146,11 @@ void VObjectMapChannel::Update () {
     GCon->Logf(NAME_DevNet, "opened class/name channel for %s", *Connection->GetAddress());
     // send number of names
     vint32 NumNames = Connection->ObjMap->NameLookup.length();
-    Msg.WriteInt(NumNames);
+    outmsg.WriteInt(NumNames);
     GCon->Logf(NAME_DevNet, "sending total %d names", NumNames);
     // send number of classes
     vint32 NumClasses = Connection->ObjMap->ClassLookup.length();
-    Msg.WriteInt(NumClasses);
+    outmsg.WriteInt(NumClasses);
     GCon->Logf(NAME_DevNet, "sending total %d classes", NumClasses);
   }
 
@@ -164,13 +164,13 @@ void VObjectMapChannel::Update () {
     strm.WriteInt(Len);
     strm.Serialise((void *)EName, Len);
     // send message if this name will not fit
-    if (WillFlushMsg(Msg, strm)) {
-      FlushMsg(Msg);
+    if (WillFlushMsg(outmsg, strm)) {
+      FlushMsg(outmsg);
       if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...names: [%d/%d] (%d)", CurrName+1, Connection->ObjMap->NameLookup.length(), Connection->GetSendQueueSize());
       if (!OpenAcked) { UpdateSendPBar(); return; } // if not opened, don't spam with packets yet
       if (Connection->GetSendQueueSize() >= 10) { UpdateSendPBar(); return; } // is queue full?
     }
-    PutStream(Msg, strm);
+    PutStream(outmsg, strm);
     ++CurrName;
     //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :name: [%d/%d]: <%s>", CurrName, Connection->ObjMap->NameLookup.length(), EName);
   }
@@ -178,24 +178,26 @@ void VObjectMapChannel::Update () {
   // send classes while we have anything to send
   while (CurrClass < Connection->ObjMap->ClassLookup.length()) {
     VName Name = Connection->ObjMap->ClassLookup[CurrClass]->GetVName();
-    //Connection->ObjMap->SerialiseName(Msg, Name);
-    Connection->ObjMap->SerialiseName(strm, Name);
+    Connection->ObjMap->SerialiseNameNoIntern(strm, Name); // not yet
     // send message if this class will not fit
-    if (WillFlushMsg(Msg, strm)) {
-      FlushMsg(Msg);
+    if (WillFlushMsg(outmsg, strm)) {
+      FlushMsg(outmsg);
       if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...classes: [%d/%d] (%d)", CurrClass+1, Connection->ObjMap->ClassLookup.length(), Connection->GetSendQueueSize());
       if (!OpenAcked) { UpdateSendPBar(); return; } // if not opened, don't spam with packets yet
       if (Connection->GetSendQueueSize() >= 10) { UpdateSendPBar(); return; } // is queue full?
     }
-    PutStream(Msg, strm);
+    // now internalise it
+    Connection->ObjMap->InternName(Name);
+    PutStream(outmsg, strm);
     ++CurrClass;
     //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name);
   }
 
   // this is the last message
-  PutStream(Msg, strm);
-  //FlushMsg(Msg);
-  Close(&Msg); // this will flush it
+  vassert(strm.GetNumBits() == 0);
+  PutStream(outmsg, strm);
+  //FlushMsg(outmsg);
+  Close(&outmsg); // this will flush it
 
   if (net_fixed_name_set) {
     GCon->Logf(NAME_DevNet, "done writing initial objects (%d) and names (%d)", CurrClass, CurrName);

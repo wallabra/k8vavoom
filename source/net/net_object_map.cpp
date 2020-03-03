@@ -151,6 +151,74 @@ bool VNetObjectsMap::CanSerialiseObject (VObject *Obj) {
 
 //==========================================================================
 //
+//  VNetObjectsMap::SerialiseNameNoIntern
+//
+//==========================================================================
+bool VNetObjectsMap::SerialiseNameNoIntern (VStream &Strm, VName &Name) {
+  vassert(!Strm.IsLoading());
+  if (Name == NAME_None) {
+    // special for empty name
+    vuint32 NameIndex = 0;
+    Strm << STRM_INDEX_U(NameIndex);
+    if (net_debug_fixed_name_set) GCon->Logf(NAME_Debug, "sent empty name");
+    return true;
+  }
+  //const int namecount = VName::GetNumNames();
+  //vassert(namecount > 0 && namecount < 1024*1024);
+  // note that code can create names on the fly, and we need to transmit them
+  if (Name.GetIndex() >= NameMap.length()) {
+    // new name?
+    auto nip = NewName2Idx.find(Name);
+    if (nip) {
+      // already seen
+      vuint32 NameIndex = (vuint32)(*nip);
+      Strm << STRM_INDEX_U(NameIndex);
+      if (net_debug_fixed_name_set) GCon->Logf(NAME_Debug, "sent old new name '%s' (%d)", *Name, (int)NameIndex);
+    } else {
+      // new name
+      int newIndex = NewNameFirstIndex+NewName2Idx.length();
+      //NewName2Idx.put(Name, newIndex);
+      //NewIdx2Name.put(newIndex, Name);
+      vuint32 NameIndex = (vuint32)newIndex|0x80000000u; // flag
+      Strm << STRM_INDEX_U(NameIndex);
+      // new name
+      const char *EName = *Name;
+      vuint32 Len = VStr::Length(EName);
+      Strm << STRM_INDEX_U(Len);
+      Strm.Serialise((void *)EName, Len);
+      if (net_debug_fixed_name_set) GCon->Logf(NAME_Debug, "sent new name '%s' (%d)", EName, newIndex);
+    }
+    return true;
+  } else {
+    // old name
+    vassert(Name.GetIndex() < NameMap.length());
+    vuint32 NameIndex = (Name.GetIndex() < NameMap.Num() ? NameMap[Name.GetIndex()] : /*NameLookup.Num()*/0);
+    Strm << STRM_INDEX_U(NameIndex);
+    if (net_debug_fixed_name_set) GCon->Logf(NAME_Debug, "sent old name '%s' (%d)", *Name, (int)NameIndex);
+    return true;
+  }
+}
+
+
+//==========================================================================
+//
+//  VNetObjectsMap::InternName
+//
+//==========================================================================
+void VNetObjectsMap::InternName (VName Name) {
+  if (Name == NAME_None) return;
+  if (Name.GetIndex() < NameMap.length()) return;
+  // new name?
+  auto nip = NewName2Idx.find(Name);
+  if (nip) return; // already seen
+  int newIndex = NewNameFirstIndex+NewName2Idx.length();
+  NewName2Idx.put(Name, newIndex);
+  NewIdx2Name.put(newIndex, Name);
+}
+
+
+//==========================================================================
+//
 //  VNetObjectsMap::SerialiseName
 //
 //==========================================================================
@@ -159,22 +227,23 @@ bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
   if (Strm.IsLoading()) {
     // reading name
     vuint32 NameIndex;
-    Strm.SerialiseInt(NameIndex);
+    Strm << STRM_INDEX_U(NameIndex);
+    if (net_debug_fixed_name_set) GCon->Logf(NAME_Debug, "::: got name index %u (0x%08x)", NameIndex, NameIndex);
     // reserved?
     if (NameIndex == 0) {
       Name = NAME_None;
       return true;
     }
     // special?
-    if (NameIndex == 0xffffffffu) {
+    if (NameIndex&0x80000000u) {
       // new index
-      Strm.SerialiseInt(NameIndex);
+      NameIndex &= 0x7fffffffu;
       // new name
       TArray<char> buf;
       vuint32 Len = 0;
-      Strm.SerialiseInt(Len);
+      Strm << STRM_INDEX_U(Len);
+      if (Len == 0 || Len > NAME_SIZE) Sys_Error("invalid name length: %u", Len);
       buf.setLength(Len+1, false);
-      //char buf[NAME_SIZE+1];
       Strm.Serialise(buf.ptr(), Len);
       buf[Len] = 0;
       VName NewName(buf.ptr());
@@ -199,48 +268,9 @@ bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
     return true;
   } else {
     // writing name
-    if (Name == NAME_None) {
-      // special for empty name
-      vuint32 NameIndex = 0;
-      Strm.SerialiseInt(NameIndex);
-      return true;
-    }
-    //const int namecount = VName::GetNumNames();
-    //vassert(namecount > 0 && namecount < 1024*1024);
-    // note that code can create names on the fly, and we need to transmit them
-    if (Name.GetIndex() >= NameMap.length()) {
-      // new name?
-      auto nip = NewName2Idx.find(Name);
-      if (nip) {
-        // already seen
-        vuint32 NameIndex = (vuint32)(*nip);
-        Strm.SerialiseInt(NameIndex);
-        if (net_debug_fixed_name_set) GCon->Logf(NAME_Debug, "sent old new name '%s' (%d)", *Name, (int)NameIndex);
-      } else {
-        // new name
-        int newIndex = NewNameFirstIndex+NewName2Idx.length();
-        NewName2Idx.put(Name, newIndex);
-        NewIdx2Name.put(newIndex, Name);
-        vuint32 special = 0xffffffffu;
-        Strm.SerialiseInt(special);
-        // new index
-        special = (vuint32)newIndex;
-        Strm.SerialiseInt(special);
-        // new name
-        const char *EName = *Name;
-        vuint32 Len = VStr::Length(EName);
-        Strm.SerialiseInt(Len);
-        Strm.Serialise((void *)EName, Len);
-        if (net_debug_fixed_name_set) GCon->Logf(NAME_Debug, "sent new name '%s' (%d)", EName, newIndex);
-      }
-      return true;
-    } else {
-      // old name
-      vassert(Name.GetIndex() < NameMap.length());
-      vuint32 NameIndex = (Name.GetIndex() < NameMap.Num() ? NameMap[Name.GetIndex()] : /*NameLookup.Num()*/0);
-      Strm.SerialiseInt(NameIndex/*, NameLookup.Num()+1*/);
-      return ((vint32)NameIndex != NameLookup.Num());
-    }
+    const bool res = SerialiseNameNoIntern(Strm, Name);
+    InternName(Name);
+    return res;
   }
 }
 

@@ -683,6 +683,11 @@ public:
   // called on reading
   void ReceivedName (int index, VName Name);
 
+  // this is for initial class sending
+  // out stream may be dropped, so we need to defer name internalising here
+  bool SerialiseNameNoIntern (VStream &, VName &);
+  void InternName (VName);
+
   virtual bool SerialiseName (VStream &, VName &) override;
   virtual bool SerialiseObject (VStream &, VObject *&) override;
   virtual bool SerialiseClass (VStream &, VClass *&) override;
