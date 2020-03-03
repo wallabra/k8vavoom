@@ -219,8 +219,15 @@ public:
         if (!Expand()) { bError = true; return; }
       }
     }
-    if (Bit) Data.ptr()[Pos>>3] |= 1<<(Pos&7);
+    if (Bit) Data.ptr()[((unsigned)Pos)>>3] |= 1u<<(Pos&7); else Data.ptr()[((unsigned)Pos)>>3] &= ~(1u<<(Pos&7));
     ++Pos;
+  }
+
+  // this forces bit at the given position without adjusting the actual position
+  inline void ForceBitAt (int bitpos, bool Bit) noexcept {
+    if (bError) return;
+    if (bitpos < 0 || bitpos >= Data.length()*8) { bError = true; return; }
+    if (Bit) Data.ptr()[((unsigned)bitpos)>>3] |= 1u<<(bitpos&7); else Data.ptr()[((unsigned)bitpos)>>3] &= ~(1u<<(bitpos&7));
   }
 
   // add trailing bit so we can find out how many bits the message has
@@ -274,9 +281,16 @@ public:
       bError = true;
       return false;
     }
-    bool Ret = !!(Data.ptr()[Pos>>3]&(1<<(Pos&7)));
+    const bool Ret = !!(Data.ptr()[((unsigned)Pos)>>3]&(1u<<(Pos&7)));
     ++Pos;
     return Ret;
+  }
+
+  // this returns bit at the given position without adjusting the actual position
+  inline bool GetBitAt (int bitpos) const noexcept {
+    if (bError) return false;
+    if (bitpos < 0 || bitpos >= Num) return false; // ignore invalid offsets, why not
+    return !!(Data.ptr()[((unsigned)bitpos)>>3]&(1u<<(bitpos&7)));
   }
 
   static inline int CalcIntBits (vuint32 n) noexcept { return VBitStreamWriter::CalcIntBits(n); }
