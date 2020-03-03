@@ -643,6 +643,13 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
     if (!Chan) {
       // possible new channel
       if (Msg.bOpen) {
+        // client cannot create thinkers on the server (safeguard)
+        if (Msg.ChanType == CHANNEL_Thinker && IsServer()) {
+          GCon->Logf(NAME_DevNet, "%s: client requested thinker creation, disconnecting possibly evil client", *GetAddress());
+          State = NETCON_Closed;
+          return;
+        }
+        //TODO: check for invalid index too
         // channel opening message, do it
         Chan = CreateChannel(Msg.ChanType, Msg.ChanIndex, false);
         if (!Chan) {
