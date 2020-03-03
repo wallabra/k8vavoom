@@ -905,9 +905,24 @@ void VBitStreamWriter::SerialiseInt (vuint32 &Value) {
 //  VBitStreamWriter::CalcIntBits
 //
 //==========================================================================
-int VBitStreamWriter::CalcIntBits (vuint32 Val) noexcept {
+int VBitStreamWriter::CalcIntBits (vint32 Val) noexcept {
   int res = 1; // sign bit
   if (Val&0x80000000u) Val ^= 0xffffffffu;
+  while (Val) {
+    res += 5; // continute bit, 4 data bits
+    Val >>= 4;
+  }
+  return res+1; // and stop bit
+}
+
+
+//==========================================================================
+//
+//  VBitStreamWriter::CalcUIntBits
+//
+//==========================================================================
+int VBitStreamWriter::CalcUIntBits (vuint32 Val) noexcept {
+  int res = 0; // no sign bit
   while (Val) {
     res += 5; // continute bit, 4 data bits
     Val >>= 4;
@@ -921,14 +936,33 @@ int VBitStreamWriter::CalcIntBits (vuint32 Val) noexcept {
 //  VBitStreamWriter::WriteInt
 //
 //==========================================================================
-void VBitStreamWriter::WriteInt (vuint32 Val) {
+void VBitStreamWriter::WriteInt (vint32 IVal) {
   // sign bit
+  vuint32 Val = (vuint32)IVal;
   if (Val&0x80000000u) {
     WriteBit(true);
     Val ^= 0xffffffffu;
   } else {
     WriteBit(false);
   }
+  // bytes
+  while (Val) {
+    WriteBit(true);
+    for (int cnt = 4; cnt > 0; --cnt) {
+      WriteBit(!!(Val&0x01));
+      Val >>= 1;
+    }
+  }
+  WriteBit(false); // stop bit
+}
+
+
+//==========================================================================
+//
+//  VBitStreamWriter::WriteUInt
+//
+//==========================================================================
+void VBitStreamWriter::WriteUInt (vuint32 Val) {
   // bytes
   while (Val) {
     WriteBit(true);
@@ -1095,7 +1129,7 @@ void VBitStreamReader::SerialiseInt (vuint32 &Value) {
 //  VBitStreamReader::ReadInt
 //
 //==========================================================================
-vuint32 VBitStreamReader::ReadInt () {
+vint32 VBitStreamReader::ReadInt () {
   bool sign = ReadBit();
   vuint32 Val = 0, Mask = 1u;
   // bytes
@@ -1107,6 +1141,25 @@ vuint32 VBitStreamReader::ReadInt () {
     }
   }
   if (sign) Val ^= 0xffffffffu;
+  return (vint32)Val;
+}
+
+
+//==========================================================================
+//
+//  VBitStreamReader::ReadUInt
+//
+//==========================================================================
+vuint32 VBitStreamReader::ReadUInt () {
+  vuint32 Val = 0, Mask = 1u;
+  // bytes
+  while (ReadBit()) {
+    for (int cnt = 4; cnt > 0; --cnt) {
+      vassert(Mask);
+      if (ReadBit()) Val |= Mask;
+      Mask <<= 1;
+    }
+  }
   return Val;
 }
 

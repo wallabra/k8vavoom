@@ -199,7 +199,8 @@ public:
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
   virtual void SerialiseInt (vuint32 &Value) override;
-  void WriteInt (vuint32 Val);
+  void WriteInt (vint32 Val);
+  void WriteUInt (vuint32 Val);
   inline vuint8 *GetData () noexcept { return Data.Ptr(); }
   inline int GetNumBits () const noexcept { return Pos; }
   inline int GetNumBytes () const noexcept { return (Pos+7)>>3; }
@@ -237,7 +238,8 @@ public:
     while (Pos&7) WriteBit(false);
   }
 
-  static int CalcIntBits (vuint32 Val) noexcept;
+  static int CalcIntBits (vint32 Val) noexcept;
+  static int CalcUIntBits (vuint32 Val) noexcept;
 
   inline int GetPos () const noexcept { return Pos; }
   inline int GetNum () const noexcept { return Max; }
@@ -264,7 +266,8 @@ public:
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
   virtual void SerialiseInt (vuint32 &Value/*, vuint32 Max*/) override;
-  vuint32 ReadInt (/*vuint32*/);
+  vint32 ReadInt ();
+  vuint32 ReadUInt ();
   virtual bool AtEnd () override;
   inline vuint8 *GetData () noexcept { return Data.Ptr(); }
   inline int GetNumBits () const noexcept { return Num; }
@@ -293,7 +296,8 @@ public:
     return !!(Data.ptr()[((unsigned)bitpos)>>3]&(1u<<(bitpos&7)));
   }
 
-  static inline int CalcIntBits (vuint32 n) noexcept { return VBitStreamWriter::CalcIntBits(n); }
+  static inline int CalcIntBits (vint32 n) noexcept { return VBitStreamWriter::CalcIntBits(n); }
+  static inline int CalcUIntBits (vuint32 n) noexcept { return VBitStreamWriter::CalcUIntBits(n); }
 
   inline int GetPos () const noexcept { return Pos; }
   inline int GetNum () const noexcept { return Num; }
