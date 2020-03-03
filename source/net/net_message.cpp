@@ -27,6 +27,9 @@
 #include "network.h"
 #include "net_message.h"
 
+//#define VAVOOM_NET_DEBUG_INMESSAGE
+//#define VAVOOM_NET_DEBUG_OUTMESSAGE
+
 
 //==========================================================================
 //
@@ -47,7 +50,9 @@ bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
   }
   if (srcPacket.IsError() || IsError() || v < 14) { bError = true; return false; }
   v -= 14;
+  #ifdef VAVOOM_NET_DEBUG_INMESSAGE
   GCon->Logf(NAME_Debug, "*** inmessage size: %u (left %u)", v, srcPacket.GetNumBits()-srcPacket.GetPos());
+  #endif
   if (srcPacket.GetNumBits() < v) {
     GCon->Log(NAME_Debug, "*** inmessage: out of data in packed!");
     bError = true;
@@ -65,16 +70,22 @@ bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
   bClose = ReadBit();
   // channel index
   *this << STRM_INDEX(ChanIndex);
+  #ifdef VAVOOM_NET_DEBUG_INMESSAGE
   GCon->Logf(NAME_Debug, "*** inmessage: cidx=%d", ChanIndex);
+  #endif
   if (ChanIndex < 0) {
     bError = true;
     return false;
   }
+  #ifdef VAVOOM_NET_DEBUG_INMESSAGE
   GCon->Logf(NAME_Debug, "*** inmessage: bOpen=%d; bClose=%d; cidx=%d", (int)bOpen, (int)bClose, ChanIndex);
+  #endif
   // optional channel type
   if (bOpen) {
     vuint32 ctype = ReadUInt();
+    #ifdef VAVOOM_NET_DEBUG_INMESSAGE
     GCon->Logf(NAME_Debug, "*** inmessage: ctype=%u", ctype);
+    #endif
     if (ctype >= CHANNEL_MAX) {
       bError = true;
       return false;
@@ -183,7 +194,9 @@ void VMessageOut::fixSize () {
   vuint16 v = (vuint16)GetNumBits();
   const int chk = GetNumBits();
   vassert(v <= 0x4000);
+  #ifdef VAVOOM_NET_DEBUG_OUTMESSAGE
   GCon->Logf(NAME_Debug, "*** outmessage size: %u", v);
+  #endif
   // 14 bits is enough
   v <<= 2; // remove hight two bits, they are zero anyway
   for (int f = 0; f < 14; ++f) {

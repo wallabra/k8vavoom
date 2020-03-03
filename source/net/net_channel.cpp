@@ -194,7 +194,7 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
   }
   */
 
-  GCon->Logf(NAME_DevNet, "<<< %s: received message", *GetDebugName());
+  if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "<<< %s: received message", *GetDebugName());
 
   const bool isClosing = Msg.bClose;
   ParsePacket(Msg);

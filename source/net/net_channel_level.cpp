@@ -285,7 +285,7 @@ void VLevelChannel::Update () {
       continue;
     }
 
-    GCon->Logf(NAME_DevNet, "%s:Update:000: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
+    //GCon->Logf(NAME_DevNet, "%s:Update:000: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
 
     strm.WriteInt(CMD_Side);
     strm.WriteInt(i);
@@ -375,9 +375,9 @@ void VLevelChannel::Update () {
       RepSide->Light = Side->Light;
     }
 
-    GCon->Logf(NAME_DevNet, "%s:Update:001: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
+    //GCon->Logf(NAME_DevNet, "%s:Update:001: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
     PutStream(Msg, strm);
-    GCon->Logf(NAME_DevNet, "%s:Update:002: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
+    //GCon->Logf(NAME_DevNet, "%s:Update:002: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
   }
 
   //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Sectors");

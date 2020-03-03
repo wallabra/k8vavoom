@@ -384,9 +384,9 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
 
     VThinker *Th = Connection->Context->GetLevel()->SpawnThinker(C, TVec(0, 0, 0), TAVec(0, 0, 0), nullptr, false); // no replacements
     #ifdef CLIENT
-    GCon->Logf(NAME_DevNet, "%s spawned thinker with class `%s`(%u)", *GetDebugName(), Th->GetClass()->GetName(), Th->GetUniqueId());
+    //GCon->Logf(NAME_DevNet, "%s spawned thinker with class `%s`(%u)", *GetDebugName(), Th->GetClass()->GetName(), Th->GetUniqueId());
     if (Th->IsA(VLevelInfo::StaticClass())) {
-      GCon->Logf(NAME_DevNet, "*** NET: got LevelInfo, sending 'client_spawn' command");
+      //GCon->Logf(NAME_DevNet, "*** NET: got LevelInfo, sending 'client_spawn' command");
       VLevelInfo *LInfo = (VLevelInfo *)Th;
       LInfo->Level = LInfo;
       GClLevel->LevelInfo = LInfo;

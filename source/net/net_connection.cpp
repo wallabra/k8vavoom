@@ -649,7 +649,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
           continue;
         }
         Chan->OpenAcked = true;
-        GCon->Logf(NAME_DevNet, "  !!! created new channel #%d (%s)", Chan->Index, Chan->GetTypeName());
+        //!GCon->Logf(NAME_DevNet, "  !!! created new channel #%d (%s)", Chan->Index, Chan->GetTypeName());
         // immediately send "channel open ack" message (the channel itself should do it, but...)
         {
           if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "%s: sending OPEN ACK for %s", *GetAddress(), *Chan->GetDebugName());
@@ -668,7 +668,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
     } else {
       // ack channel open for local channels
       if (Msg.bOpen && Chan->OpenedLocally) {
-        GCon->Logf(NAME_DevNet, "%s: got OPEN ACK for %s", *GetAddress(), *Chan->GetDebugName());
+        //!GCon->Logf(NAME_DevNet, "%s: got OPEN ACK for %s", *GetAddress(), *Chan->GetDebugName());
         Chan->OpenAcked = true;
       }
     }
