@@ -166,6 +166,7 @@ public:
 //**************************************************************************
 
 class VBitStreamWriter : public VStream {
+  friend class VBitStreamReader;
 protected:
   TArray<vuint8> Data;
   vint32 Max;
@@ -237,6 +238,7 @@ public:
 
 
 class VBitStreamReader : public VStream {
+  friend class VBitStreamWriter;
 protected:
   TArray<vuint8> Data;
   vint32 Num;

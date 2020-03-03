@@ -986,10 +986,33 @@ void VBitStreamReader::cloneFrom (const VBitStreamReader *rd) {
 //==========================================================================
 void VBitStreamReader::SetData (VBitStreamReader &Src, int Length) noexcept {
   vassert(Length >= 0);
-  Data.SetNum((Length+7)>>3);
-  if (Length) Src.SerialiseBits(Data.Ptr(), Length);
-  Num = Length;
+  if (Src.IsError() || Src.GetNumBits()-Src.Pos < Length) { bError = true; return; }
+  bError = false;
   Pos = 0;
+  Data.SetNum((Length+7)>>3);
+  if (Data.length()) memset(Data.ptr(), 0, Data.length());
+  Num = Length;
+  if (Length) Src.SerialiseBits(Data.ptr(), Length);
+  if (Src.IsError()) bError = true;
+  /*
+  if (Src.Pos&7) {
+    // slower, alas
+    const vuint8 *s = (const vuint8 *)Src.Data.ptr();
+    s += Src.Pos>>3;
+    vuint8 smask = 1u<<(Src.Pos&7);
+    vuint8 *d = (vuint8 *)Data.ptr();
+    vuint8 dmask = 1u;
+    while (Length--) {
+      if (s[0]&smask) d[0] |= dmask;
+      if ((smask<<=1) == 0) { smask = 1u; ++s; }
+      if ((dmask<<=1) == 0) { dmask = 1u; ++d; }
+    }
+    Src.Pos += Length;
+  } else {
+    // faster
+    if (Length) Src.SerialiseBits(Data.Ptr()+(Src.Pos>>3), Length);
+  }
+  */
 }
 
 
@@ -1120,7 +1143,8 @@ void VBitStreamReader::SetupFrom (const vuint8 *data, vint32 len, bool FixWithTr
     vassert(data);
     vuint8 b = data[byteLen-1];
     if (!b) { bError = true; return; } // oops
-    while ((b&1) == 0) { --Num; b >>= 1; }
+    --Num;
+    while ((b&0x80u) == 0) { --Num; b <<= 1; }
     if (Num < 0) { Num = 0; bError = true; return; } // oops
   }
 }
