@@ -107,10 +107,12 @@ void VNetContext::Tick () {
       GCon->Logf(NAME_DevNet, "Sending server info for %s", *Conn->GetAddress());
       Conn->SendServerInfo();
     }
+    /*
     if (Conn->State != NETCON_Closed) {
       //!GCon->Logf(NAME_DevNet, "  checking messages: #%d: %s", i, *Conn->GetAddress());
       Conn->GetMessages(); // why not?
     }
+    */
     if (Conn->State != NETCON_Closed) {
       //!GCon->Logf(NAME_DevNet, "  ticking: #%d: %s", i, *Conn->GetAddress());
       Conn->Tick();

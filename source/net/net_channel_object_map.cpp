@@ -153,7 +153,6 @@ void VObjectMapChannel::Update () {
 
   // send names while we have anything to send
   while (CurrName < Connection->ObjMap->NameLookup.length()) {
-    //const VNameEntry *E = VName::GetEntry(CurrName);
     const char *EName = *VName::CreateWithIndex(CurrName);
     int Len = VStr::Length(EName);
     vassert(Len > 0 && Len <= NAME_SIZE);
@@ -227,12 +226,22 @@ void VObjectMapChannel::ParsePacket (VMessageIn &Msg) {
   TArray<char> buf;
 
   // read names
+  GCon->Logf(NAME_Debug, "%s: ==== (%d : %d)", *GetDebugName(), CurrName, Connection->ObjMap->NameLookup.length());
   while (!Msg.AtEnd() && CurrName < Connection->ObjMap->NameLookup.length()) {
     int Len = Msg.ReadInt();
+    if (Len < 0 || Len > NAME_SIZE) {
+      GCon->Logf(NAME_Debug, "%s: len=%d", *GetDebugName(), Len);
+      /*
+      FILE *fo = fopen("z_z_z", "w");
+      fwrite(Msg.GetData(), Msg.GetNumBytes(), 1, fo);
+      fclose(fo);
+      */
+    }
     vassert(Len > 0 && Len <= NAME_SIZE);
     buf.setLength(Len+1, false);
     Msg.Serialise(buf.ptr(), Len);
     buf[Len] = 0;
+    GCon->Logf(NAME_Debug, "%s: len=%d (%s)", *GetDebugName(), Len, buf.ptr());
     VName Name(buf.ptr());
     Connection->ObjMap->ReceivedName(CurrName, Name);
     ++CurrName;
@@ -257,7 +266,7 @@ void VObjectMapChannel::ParsePacket (VMessageIn &Msg) {
     if (CurrName >= Connection->ObjMap->NameLookup.length() && CurrClass >= Connection->ObjMap->ClassLookup.length()) {
       GCon->Logf(NAME_DevNet, "received initial names (%d) and classes (%d)", CurrName, CurrClass);
     } else {
-      if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "...got %d names and %d classes so far", CurrName, CurrClass);
+      if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "...got %d/%d names and %d/%d classes so far", CurrName, Connection->ObjMap->NameLookup.length(), CurrClass, Connection->ObjMap->ClassLookup.length());
     }
   }
 }

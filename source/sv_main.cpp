@@ -789,6 +789,7 @@ static void SV_Ticker () {
     bool frameSkipped = false;
     bool wasPaused = false;
     bool timeLimitReached = false;
+    bool runClientsCalled = false;
     // do main actions
     double frametimeleft = host_frametime;
     int lastTick = GLevel->TicTime;
@@ -806,12 +807,13 @@ static void SV_Ticker () {
       host_frametime = GGameInfo->frametime;
       if (GGameInfo->IsPaused()) {
         // no need to do anything more if the game is paused
-        if (!frameSkipped) SV_RunClients();
+        if (!frameSkipped) { runClientsCalled = true; SV_RunClients(); }
         wasPaused = true;
         break;
       }
       // advance player states, so weapons won't slow down on frame skip
       if (!frameSkipped || dbg_skipframe_player_tick) {
+        runClientsCalled = true;
         SV_RunClients(frameSkipped); // have to make a full run, for demos/network (k8: is it really necessary?)
       }
       GLevel->TickWorld(host_frametime);
@@ -826,6 +828,7 @@ static void SV_Ticker () {
       frametimeleft -= host_frametime /*currframetime*/; // next step
       frameSkipped = true;
     }
+    if (!runClientsCalled) SV_RunClients(true);
     if (completed) G_DoCompleted(timeLimitReached);
     // remember fractional frame time
     host_frametime = saved_frametime;

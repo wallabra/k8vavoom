@@ -28,7 +28,6 @@
 
 extern VCvarB net_fixed_name_set;
 extern VCvarB net_debug_fixed_name_set;
-extern VCvarB net_debug_dump_recv_packets;
 
 
 class VNetContext;
@@ -52,9 +51,9 @@ enum {
 //TODO!
 // separate messages from packets, so we can fragment and reassemble one message with several packets
 enum {
-  MAX_DGRAM_SIZE    = 1350, // max length of a datagram; fuck off, ipshit6
-  MSG_HEADER_SIZE   = 2*4+2, // seq, ackseq, port
-  MAX_MSG_SIZE      = MAX_DGRAM_SIZE-MSG_HEADER_SIZE-1, // max length of a message (excluding header)
+  MAX_DGRAM_SIZE    = 1400, // max length of a datagram; fuck off, ipshit6
+  MSG_HEADER_SIZE   = 2*4, // seq, ackseq
+  MAX_MSG_SIZE      = MAX_DGRAM_SIZE-MSG_HEADER_SIZE-1, // max length of a message (excluding header, and NETPACKET_DATA)
 
   MAX_MSG_SIZE_BITS = MAX_MSG_SIZE*8,
 };
@@ -492,21 +491,29 @@ public:
   QMessage *sendQueueTail;
   int sendQueueSize;
 
-  vuint8 sendData[MAX_DGRAM_SIZE];
-  vuint32 sendDataSize; // if equal to `MSG_HEADER_SIZE`, we're sending empty keepalive packets
+  // for client, doesn't matter
+  // for server, set when we got something from client
+  bool AllowMessageSend;
 
-  vuint8 recvData[MAX_DGRAM_SIZE];
-  vuint32 recvDataSize;
+  //vuint8 sendData[MAX_DGRAM_SIZE];
+  //vuint32 sendDataSize;
+
+  // current reliable message is kept here (and it is popped from the send queue)
+  vuint8 relSendData[MAX_DGRAM_SIZE];
+  vuint32 relSendDataSize;
+
+  //vuint8 recvData[MAX_DGRAM_SIZE];
+  //vuint32 recvDataSize;
 
   // sequencing
-  vuint32 inSequence; // incoming_sequence
-  vuint32 inAckSeq; // incoming_acknowledged
-  vuint32 inReliableAcked; // one bit; incoming_reliable_acknowledged
-  vuint32 inRelSeq; // maintained local; incoming_reliable_sequence
+  vuint32 incoming_sequence;
+  vuint32 incoming_acknowledged;
+  vuint32 incoming_reliable_acknowledged; // one bit
+  vuint32 incoming_reliable_sequence; // one bit; maintained local
 
-  vuint32 outSequence; // outgoing_sequence
-  vuint32 outReliableSequence; // one bit; reliable_sequence
-  vuint32 lastReliableSeq; // last_reliable_sequence
+  vuint32 outgoing_sequence;
+  vuint32 reliable_sequence; // one bit
+  vuint32 last_reliable_sequence;
 
   VNetObjectsMap *ObjMap;
   // various flags
@@ -533,7 +540,7 @@ private:
 
 protected:
   void ProcessSendQueue ();
-  bool ProcessRecvQueue ();
+  bool ProcessRecvQueue (VBitStreamReader &Packet);
 
 public:
   VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, VBasePlayer *AOwner);
@@ -552,6 +559,10 @@ public:
 
   // if `resetUpdated` is true, reset "updated" flag for thinker channels
   void RemoveDeadThinkerChannels (bool resetUpdated=false);
+
+  // call this if you want to send something to client regardless of its activity
+  // note that this can (and prolly will) break sequencing!
+  inline void ForceAllowSendForServer () noexcept { AllowMessageSend = true; }
 
   void Flush ();
   bool IsLocalConnection ();

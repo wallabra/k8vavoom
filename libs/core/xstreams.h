@@ -197,46 +197,39 @@ public:
 
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
-  virtual void SerialiseInt (vuint32 &Value/*, vuint32 Max*/) override;
-  void WriteInt (vuint32/*, vuint32*/);
+  virtual void SerialiseInt (vuint32 &Value) override;
+  void WriteInt (vuint32 Val);
   inline vuint8 *GetData () noexcept { return Data.Ptr(); }
   inline int GetNumBits () const noexcept { return Pos; }
   inline int GetNumBytes () const noexcept { return (Pos+7)>>3; }
 
-  inline void Clear () noexcept { bError = false; Pos = 0; }
+  inline void Clear () noexcept { bError = false; Pos = 0; if (Data.length()) memset(Data.ptr(), 0, Data.length()); }
 
   inline bool IsExpanded () const noexcept { return (Pos > Max); }
 
   // won't modify `strm`
   void CopyFromWS (const VBitStreamWriter &strm) noexcept;
 
-  void WriteBit (bool Bit) noexcept;
-  /*
-  inline void WriteBit (bool Bit) {
+  inline void WriteBit (bool Bit) noexcept {
     if (bError) return;
-    if (Pos+1 > / *Max* /Data.length()*8) {
-      if (!Expand()) {
-        bError = true;
-        return;
+    if (Pos+1 > Max) {
+      if (!bAllowExpand) { bError = true; return; }
+      if ((Pos+7)/8+1 > Data.length()) {
+        if (!Expand()) { bError = true; return; }
       }
     }
     if (Bit) Data.ptr()[Pos>>3] |= 1<<(Pos&7);
     ++Pos;
   }
-  */
 
-  static inline int CalcIntBits (vuint32 Val) noexcept {
-    int res = 1; // sign bit
-    if (Val&0x80000000u) Val ^= 0xffffffffu;
-    //vuint32 mask = 0x0f;
-    while (Val) {
-      res += 5; // continute bit, 4 data bits
-      //Val &= ~mask;
-      //mask <<= 4;
-      Val >>= 4;
-    }
-    return res+1; // and stop bit
+  // add trailing bit so we can find out how many bits the message has
+  inline void WriteTrailingBit () noexcept {
+    WriteBit(true);
+    // pad it with zero bits until the byte boundary
+    while (Pos&7) WriteBit(false);
   }
+
+  static int CalcIntBits (vuint32 Val) noexcept;
 
   inline int GetPos () const noexcept { return Pos; }
   inline int GetNum () const noexcept { return Max; }
@@ -252,7 +245,8 @@ protected:
 public:
   VV_DISABLE_COPY(VBitStreamReader)
 
-  VBitStreamReader (vuint8* = nullptr, vint32 = 0);
+  // `Length` is in bits, not in bytes!
+  VBitStreamReader (vuint8 *Src=nullptr, vint32 Length=0);
   virtual ~VBitStreamReader () override;
 
   void cloneFrom (const VBitStreamReader *rd);
@@ -267,6 +261,11 @@ public:
   inline int GetNumBits () const noexcept { return Num; }
   inline int GetNumBytes () const noexcept { return (Num+7)>>3; }
   inline int GetPosBits () const noexcept { return Pos; }
+
+  inline void Clear (bool freeData=false) noexcept { bError = false; Num = 0; Pos = 0; if (freeData) Data.clear(); else Data.reset(); }
+
+  // if `FixWithTrailingBit` is true, shrink with the last trailing bit (including it)
+  void SetupFrom (const vuint8 *data, vint32 len, bool FixWithTrailingBit=false) noexcept;
 
   inline bool ReadBit () noexcept {
     if (Pos+1 > Num) {

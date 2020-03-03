@@ -746,6 +746,7 @@ void VBitStreamWriter::Reinit (vint32 AMax, bool allowExpand) {
   int sz = (AMax+7)/8+(allowExpand ? 256 : 0);
   Data.SetNum(sz);
   if (sz > 0) memset(Data.Ptr(), 0, sz);
+  bError = false;
 }
 
 
@@ -765,32 +766,19 @@ void VBitStreamWriter::cloneFrom (const VBitStreamWriter *wr) {
 
 //==========================================================================
 //
-//  VBitStreamWriter::WriteBit
-//
-//==========================================================================
-void VBitStreamWriter::WriteBit (bool Bit) noexcept {
-  if (bError) return;
-  if (Pos+1 > Max) {
-    if (!bAllowExpand) { bError = true; return; }
-    if ((Pos+7)/8+1 > Data.length()) {
-      if (!Expand()) { bError = true; return; }
-    }
-  }
-  if (Bit) Data.ptr()[Pos>>3] |= 1<<(Pos&7);
-  ++Pos;
-}
-
-
-//==========================================================================
-//
 //  VBitStreamWriter::CopyFromWS
 //
 //==========================================================================
 void VBitStreamWriter::CopyFromWS (const VBitStreamWriter &strm) noexcept {
   if (strm.Pos == 0) return;
   const vuint8 *src = (const vuint8 *)strm.Data.ptr();
+  vuint8 mask = 0x01u;
   for (int pos = 0; pos < strm.Pos; ++pos) {
-    WriteBit(src[pos>>3]&(1<<(pos&7)));
+    WriteBit(src[0]&mask);
+    if ((mask<<=1) == 0) {
+      mask = 0x01u;
+      ++src;
+    }
   }
 }
 
@@ -828,6 +816,7 @@ void VBitStreamWriter::SerialiseBits (void *Src, int Length) {
   if (!Length) return;
   vassert(Length > 0);
 
+  #if 0
   if (Pos+Length > Max) {
     if (!bAllowExpand) { bError = true; return; }
     // do it slow
@@ -886,6 +875,18 @@ void VBitStreamWriter::SerialiseBits (void *Src, int Length) {
     }
     Pos += Length&7;
   }
+  #else
+  // do it slow
+  const vuint8 *sb = (const vuint8 *)Src;
+  while (Length > 0) {
+    const vuint8 currByte = *sb++;
+    vuint8 mask = 1u;
+    while (mask && Length-- > 0) {
+      WriteBit(currByte&mask);
+      mask <<= 1;
+    }
+  }
+  #endif
 }
 
 
@@ -894,8 +895,24 @@ void VBitStreamWriter::SerialiseBits (void *Src, int Length) {
 //  VBitStreamWriter::SerialiseInt
 //
 //==========================================================================
-void VBitStreamWriter::SerialiseInt (vuint32 &Value/*, vuint32 Max*/) {
-  WriteInt(Value/*, Max*/);
+void VBitStreamWriter::SerialiseInt (vuint32 &Value) {
+  WriteInt(Value);
+}
+
+
+//==========================================================================
+//
+//  VBitStreamWriter::CalcIntBits
+//
+//==========================================================================
+int VBitStreamWriter::CalcIntBits (vuint32 Val) noexcept {
+  int res = 1; // sign bit
+  if (Val&0x80000000u) Val ^= 0xffffffffu;
+  while (Val) {
+    res += 5; // continute bit, 4 data bits
+    Val >>= 4;
+  }
+  return res+1; // and stop bit
 }
 
 
@@ -904,27 +921,7 @@ void VBitStreamWriter::SerialiseInt (vuint32 &Value/*, vuint32 Max*/) {
 //  VBitStreamWriter::WriteInt
 //
 //==========================================================================
-void VBitStreamWriter::WriteInt (vuint32 Val/*, vuint32 Maximum*/) {
-  //vensure(Val < Maximum);
-#if 0
-  // with maximum of 1 the only possible value is 0
-  if (Maximum <= 1) return;
-
-  // check for the case when it will take all 32 bits
-  if (Maximum > 0x80000000) {
-    *this << Val;
-    return;
-  }
-
-  for (vuint32 Mask = 1; Mask && Mask < Maximum; Mask <<= 1) {
-    if (Pos+1 > Max) {
-      bError = true;
-      return;
-    }
-    if (Val&Mask) Data[Pos>>3] |= 1<<(Pos&7);
-    ++Pos;
-  }
-#else
+void VBitStreamWriter::WriteInt (vuint32 Val) {
   // sign bit
   if (Val&0x80000000u) {
     WriteBit(true);
@@ -941,7 +938,6 @@ void VBitStreamWriter::WriteInt (vuint32 Val/*, vuint32 Maximum*/) {
     }
   }
   WriteBit(false); // stop bit
-#endif
 }
 
 
@@ -1021,6 +1017,7 @@ void VBitStreamReader::SerialiseBits (void *Dst, int Length) {
     return;
   }
 
+  #if 0
   if (Pos&7) {
     int SrcPos = Pos>>3;
     int Shift1 = Pos&7;
@@ -1044,6 +1041,19 @@ void VBitStreamReader::SerialiseBits (void *Dst, int Length) {
     }
   }
   Pos += Length;
+  #else
+  // do it slow
+  vuint8 *db = (vuint8 *)Dst;
+  while (Length > 0) {
+    vuint8 currByte = 0;
+    vuint8 mask = 1u;
+    while (mask && Length-- > 0) {
+      if (ReadBit()) currByte |= mask;
+      mask <<= 1;
+    }
+    *db++ = currByte;
+  }
+  #endif
 }
 
 
@@ -1052,8 +1062,8 @@ void VBitStreamReader::SerialiseBits (void *Dst, int Length) {
 //  VBitStreamReader::SerialiseInt
 //
 //==========================================================================
-void VBitStreamReader::SerialiseInt (vuint32 &Value/*, vuint32 Max*/) {
-  Value = ReadInt(/*Max*/);
+void VBitStreamReader::SerialiseInt (vuint32 &Value) {
+  Value = ReadInt();
 }
 
 
@@ -1062,27 +1072,9 @@ void VBitStreamReader::SerialiseInt (vuint32 &Value/*, vuint32 Max*/) {
 //  VBitStreamReader::ReadInt
 //
 //==========================================================================
-vuint32 VBitStreamReader::ReadInt (/*vuint32 Maximum*/) {
-#if 0
-  // with maximum of 1 the only possible value is 0
-  if (Maximum <= 1) return 0;
-
-  // check for the case when it will take all 32 bits
-  if (Maximum > 0x80000000) return Streamer<vuint32>(*this);
-
-  vuint32 Val = 0;
-  for (vuint32 Mask = 1; Mask && Mask < Maximum; Mask <<= 1) {
-    if (Pos+1 > Num) {
-      bError = true;
-      return 0;
-    }
-    if (Data[Pos>>3]&(1<<(Pos&7))) Val |= Mask;
-    ++Pos;
-  }
-  return Val;
-#else
+vuint32 VBitStreamReader::ReadInt () {
   bool sign = ReadBit();
-  vuint32 Val = 0, Mask = 1;
+  vuint32 Val = 0, Mask = 1u;
   // bytes
   while (ReadBit()) {
     for (int cnt = 4; cnt > 0; --cnt) {
@@ -1093,7 +1085,6 @@ vuint32 VBitStreamReader::ReadInt (/*vuint32 Maximum*/) {
   }
   if (sign) Val ^= 0xffffffffu;
   return Val;
-#endif
 }
 
 
@@ -1104,6 +1095,34 @@ vuint32 VBitStreamReader::ReadInt (/*vuint32 Maximum*/) {
 //==========================================================================
 bool VBitStreamReader::AtEnd () {
   return (bError || Pos >= Num);
+}
+
+
+//==========================================================================
+//
+//  VBitStreamReader::SetupFrom
+//
+//  if `FixWithTrailingBit` is true, shrink with the last
+//  trailing bit (including it)
+//
+//==========================================================================
+void VBitStreamReader::SetupFrom (const vuint8 *data, vint32 len, bool FixWithTrailingBit) noexcept {
+  vassert(len >= 0);
+  bError = false;
+  Num = len;
+  Pos = 0;
+  const int byteLen = (len+7)>>3;
+  Data.setLength(byteLen);
+  if (byteLen) {
+    if (data) memcpy(Data.ptr(), data, byteLen); else memset(Data.ptr(), 0, byteLen);
+  }
+  if (len > 0 && FixWithTrailingBit) {
+    vassert(data);
+    vuint8 b = data[byteLen-1];
+    if (!b) { bError = true; return; } // oops
+    while ((b&1) == 0) { --Num; b >>= 1; }
+    if (Num < 0) { Num = 0; bError = true; return; } // oops
+  }
 }
 
 

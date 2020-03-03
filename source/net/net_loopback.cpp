@@ -251,11 +251,11 @@ VLoopbackSocket::~VLoopbackSocket () {
 //
 //  VLoopbackSocket::GetMessage
 //
-// If there is a packet, return it.
+//  If there is a packet, return it.
 //
-// returns 0 if no data is waiting
-// returns 1 if a packet was received
-// returns -1 if connection is invalid
+//  returns 0 if no data is waiting
+//  returns 1 if a packet was received
+//  returns -1 if connection is invalid
 //
 //==========================================================================
 int VLoopbackSocket::GetMessage (TArray<vuint8> &Data) {
@@ -270,9 +270,9 @@ int VLoopbackSocket::GetMessage (TArray<vuint8> &Data) {
 //
 //  VLoopbackSocket::SendMessage
 //
-// Send a packet over the net connection.
-// returns 1 if the packet was sent properly
-// returns -1 if the connection died
+//  Send a packet over the net connection.
+//  returns 1 if the packet was sent properly
+//  returns -1 if the connection died
 //
 //==========================================================================
 int VLoopbackSocket::SendMessage (const vuint8 *Data, vuint32 Length) {

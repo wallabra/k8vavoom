@@ -915,26 +915,22 @@ VDatagramSocket::~VDatagramSocket () {
 //
 //==========================================================================
 int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
-  vuint32 length;
-  sockaddr_t readaddr;
-  int ret = 0;
-
   if (Invalid) return -1;
 
-  struct {
-    vuint8 data[MAX_DGRAM_SIZE];
-  } packetBuffer;
+  sockaddr_t readaddr;
+  int ret = 0;
+  vuint8 data[MAX_DGRAM_SIZE];
 
   for (;;) {
     // read message
-    length = LanDriver->Read(LanSocket, (vuint8 *)&packetBuffer, NET_DATAGRAMSIZE, &readaddr);
+    vuint32 length = LanDriver->Read(LanSocket, data, NET_DATAGRAMSIZE, &readaddr);
 
     if (length == 0) {
       //if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: no data from %s (expected address is %s)", *LanDriver->AddrToString(&readaddr), *LanDriver->AddrToString(&Addr));
       break;
     }
 
-    if ((int)length == -1) {
+    if ((int)length < 0) {
       GCon->Logf(NAME_DevNet, "Read error (%s)", *LanDriver->AddrToString(&Addr));
       return -1;
     }
@@ -948,7 +944,7 @@ int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
     UpdateReceivedStats(length);
 
     Data.SetNum(length);
-    memcpy(Data.Ptr(), packetBuffer.data, length);
+    memcpy(Data.Ptr(), data, length);
 
     ret = 1;
     break;
