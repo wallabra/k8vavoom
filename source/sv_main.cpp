@@ -676,6 +676,8 @@ static void SV_RunClients (bool skipFrame=false) {
       // let context ticker reset it instead
       //Player->Net->NeedsUpdate = false;
       //GCon->Logf(NAME_DevNet, "player #%d: getting messages...", i);
+      // actually, force updates...
+      //Player->Net->NeedsUpdate = true;
       Player->Net->GetMessages();
     }
 
@@ -1504,7 +1506,11 @@ COMMAND(PreSpawn) {
     GCon->Log("PreSpawn is not valid from console");
     return;
   }
-  // make sure level info is spawned on client side, since there could be some RPCs that depend on it
+
+  // allow server to send updates
+  Player->Net->NeedsUpdate = true;
+
+  // make sure level info is spawned on server side, since there could be some RPCs that depend on it
   VThinkerChannel *Chan = Player->Net->ThinkerChannels.FindPtr(GLevelInfo);
   if (!Chan) {
     Chan = (VThinkerChannel *)Player->Net->CreateChannel(CHANNEL_Thinker, -1);

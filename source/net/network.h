@@ -482,6 +482,8 @@ public:
   VBasePlayer *Owner;
   ENetConState State;
   double LastSendTime;
+  double NextUpdateTimeThinkers; // this is used by the server to limit updates
+  double NextUpdateTimeLevel; // this is used by the server to limit updates
   bool NeedsUpdate; // should we call `VNetConnection::UpdateLevel()`? this updates mobjs in sight, and sends new mobj state
   bool AutoAck; // `true` for demos
   VBitStreamWriter Out;
@@ -575,7 +577,7 @@ public:
   bool IsClient () noexcept;
   bool IsServer () noexcept;
 
-  void Flush ();
+  void Flush (bool asKeepalive=false);
   bool IsLocalConnection ();
   inline VStr GetAddress () const { return (NetCon ? NetCon->Address : VStr()); }
   void Tick ();
@@ -585,7 +587,9 @@ public:
   int CheckFatPVS (subsector_t *);
   bool SecCheckFatPVS (sector_t *);
   bool IsRelevant (VThinker *Th);
+
   void UpdateLevel ();
+
   void SendServerInfo ();
   void LoadedNewLevel ();
   void ResetLevel ();
@@ -593,6 +597,9 @@ public:
   virtual void Intermission (bool active);
 
 private:
+  // used in `UpdateLevel()`
+  void UpdateThinkers ();
+
   void PutOutToSendQueue ();
 
   // returns `true` if connection timeouted

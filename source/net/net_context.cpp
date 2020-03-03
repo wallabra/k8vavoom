@@ -95,7 +95,7 @@ void VNetContext::Tick () {
       if (Conn->NeedsUpdate) {
         // reset update flag; it will be set again if we'll get any packet from the client
         //!GCon->Logf(NAME_DevNet, "  sending level update: #%d: %s", i, *Conn->GetAddress());
-        Conn->NeedsUpdate = false;
+        //Conn->NeedsUpdate = false; // nope, this is set in `UpdateLevel()`
         Conn->UpdateLevel();
       }
       if (Conn->State != NETCON_Closed) {

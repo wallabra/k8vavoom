@@ -47,6 +47,8 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   , Owner(AOwner)
   , State(NETCON_Open)
   , LastSendTime(0)
+  , NextUpdateTimeThinkers(0)
+  , NextUpdateTimeLevel(0)
   , NeedsUpdate(false)
   , AutoAck(false)
   , Out(MAX_MSG_SIZE_BITS+16)
@@ -496,7 +498,8 @@ bool VNetConnection::ProcessRecvQueue (VBitStreamReader &Packet) {
 
   // copy received data to packet stream
   Packet.Clear();
-  NeedsUpdate = true; // we got *any* activity, update the world!
+  // nope, this will be set by the server code
+  //NeedsUpdate = true; // we got *any* activity, update the world!
   if (recvDataSize > MSG_HEADER_SIZE) {
     // check packet type
     if (recvData[MSG_HEADER_SIZE] != NETPACKET_DATA) {
@@ -539,7 +542,8 @@ void VNetConnection::GetMessages () {
 
   VBitStreamReader Packet;
   if (!ProcessRecvQueue(Packet)) return;
-  NeedsUpdate = true; // we got *any* activity, update the world! (valid for server)
+  // nope, this will be set by the server code
+  //NeedsUpdate = true; // we got *any* activity, update the world! (valid for server)
   AllowMessageSend = true; // allow sending client messages (valid for server)
   if (IsServer()) {
     // make sure the reply sequence number matches the incoming sequence number
@@ -608,8 +612,6 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
   }
   */
   ++Driver->packetsReceived;
-
-  //NeedsUpdate = true; // this is done elsewhere
 
   if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "***!!!*** Network Packet (pos=%d; num=%d (%d))", Packet.GetPos(), Packet.GetNum(), (Packet.GetNum()+7)/8);
   while (!Packet.AtEnd()) {
@@ -751,7 +753,7 @@ void VNetConnection::SendMessage (VMessageOut &msg) {
 //  VNetConnection::Flush
 //
 //==========================================================================
-void VNetConnection::Flush () {
+void VNetConnection::Flush (bool asKeepalive) {
   Driver->SetNetTime();
   if (State == NETCON_Closed) return;
 
@@ -759,8 +761,7 @@ void VNetConnection::Flush () {
   PutOutToSendQueue();
 
   // create keepalive packet if send queue is empty
-  /*
-  if (!sendQueueHead) {
+  if (!sendQueueHead && asKeepalive) {
     // do not sent keepalives for autoack (demos) and local connections, nobody cares
     // `AutoAck == true` means "demo recording"
     if (AutoAck || IsLocalConnection()) return;
@@ -769,7 +770,6 @@ void VNetConnection::Flush () {
     if (Driver->NetTime-LastSendTime < tout/4.0f) return;
     // it is ok to send a keepalive; it will contain no data
   }
-  */
 
   ProcessSendQueue();
 }
@@ -842,9 +842,9 @@ void VNetConnection::KeepaliveTick () {
   if (State == NETCON_Closed) return;
   // reset timeout
   Driver->SetNetTime();
-  NetCon->LastMessageTime = Driver->NetTime;
+  NetCon->LastMessageTime = Driver->NetTime; // presume that we got something from the server
   // flush any remaining data or send keepalive
-  Flush();
+  Flush(true); // as keepalive
 }
 
 
@@ -1095,121 +1095,154 @@ extern "C" {
 
 //==========================================================================
 //
+//  VNetConnection::UpdateThinkers
+//
+//==========================================================================
+void VNetConnection::UpdateThinkers () {
+  PendingThinkers.reset();
+  PendingGoreEnts.reset();
+  AliveGoreChans.reset();
+
+  // mark all entity channels as not updated in this frame, and remove dead channels
+  RemoveDeadThinkerChannels(true);
+
+  // update mobjs in sight
+  for (TThinkerIterator<VThinker> th(Context->GetLevel()); th; ++th) {
+    if (!IsRelevant(*th)) continue;
+    VThinkerChannel *chan = ThinkerChannels.FindPtr(*th);
+    if (!chan) {
+      // add gore entities as last ones
+      if (VStr::startsWith(th->GetClass()->GetName(), "K8Gore")) {
+        vassert(th->GetClass()->IsChildOf(VEntity::StaticClass()));
+        PendingGoreEnts.append((VEntity *)(*th));
+        continue;
+      }
+      // not a gore
+      chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
+      if (!chan) {
+        // remember this thinker
+        PendingThinkers.append(*th);
+        continue;
+      }
+      chan->SetThinker(*th);
+    }
+    chan->Update();
+  }
+
+  // close entity channels that were not updated in this frame
+  {
+    HasDeadChannels = false;
+    auto it = ChanIdxMap.first();
+    while (it) {
+      VChannel *chan = it.getValue();
+      if (chan->IsThinker()) {
+        VThinkerChannel *tc = (VThinkerChannel *)chan;
+        if (!tc->UpdatedThisFrame) {
+          if (!chan->Closing) {
+            chan->Close();
+          }
+        }
+        if (chan->IsDead()) {
+          // remove it
+          UnregisterChannel(chan, false); // leave it in hash
+          chan->Index = -667; // channel should not unregister itself, we'll take care of it
+          delete chan;
+          it.removeCurrent();
+          continue;
+        }
+        // remember gore entities
+        if (!tc->Closing && tc->Thinker && VStr::startsWith(tc->Thinker->GetClass()->GetName(), "K8Gore")) {
+          AliveGoreChans.append(chan->Index);
+        }
+      } else if (chan->IsDead()) {
+        HasDeadChannels = true;
+      }
+      ++it;
+    }
+  }
+
+  // if we have some pending thinkers, open channels for them
+  if (PendingThinkers.length()) {
+    static_assert(sizeof(PendingThinkers[0]) == sizeof(VThinker *), "wtf?!");
+    // sort them
+    timsort_r(PendingThinkers.ptr(), PendingThinkers.length(), sizeof(PendingThinkers[0]), &cmpPendingThinkers, (void *)this);
+    // if we have not enough free channels, remove gore entities
+    if (AliveGoreChans.length() && MAX_CHANNELS-ChanIdxMap.length() < PendingThinkers.length()) {
+      int needChans = PendingThinkers.length()-(MAX_CHANNELS-ChanIdxMap.length());
+      while (AliveGoreChans.length() && needChans-- > 0) {
+        // pop index
+        vint32 idx = AliveGoreChans[AliveGoreChans.length()-1];
+        AliveGoreChans.removeAt(AliveGoreChans.length()-1);
+        // close channel
+        VChannel **chanp = ChanIdxMap.find(idx);
+        if (chanp) {
+          VChannel *chan = *chanp;
+          vassert(chan->IsThinker());
+          VThinkerChannel *tc = (VThinkerChannel *)chan;
+          vassert(tc->Thinker && tc->Thinker->GetClass()->IsChildOf(VEntity::StaticClass()));
+          //PendingGoreEnts.append((VEntity *)(tc->Thinker));
+          chan->Close();
+        }
+      }
+    }
+    // append thinkers
+    for (int f = 0; f < PendingThinkers.length(); ++f) {
+      VThinkerChannel *chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
+      if (!chan) break; // no room
+      chan->SetThinker(PendingThinkers[f]);
+      chan->Update();
+    }
+  }
+
+  // append gore entities if we have any free slots
+  if (PendingGoreEnts.length() && MAX_CHANNELS-ChanIdxMap.length() > 0) {
+    // sort them
+    timsort_r(PendingGoreEnts.ptr(), PendingGoreEnts.length(), sizeof(PendingGoreEnts[0]), &cmpPendingGoreEnts, (void *)this);
+    for (auto &&it : PendingGoreEnts) {
+      VThinkerChannel *chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
+      if (!chan) break; // no room
+      chan->SetThinker(it);
+      chan->Update();
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VNetConnection::UpdateLevel
 //
 //==========================================================================
 void VNetConnection::UpdateLevel () {
-  if (GetLevelChannel()->Level) {
-    SetupFatPVS();
+  if (IsClient()) return; // client never does this
+  if (!GetLevelChannel()->Level) return;
+  vassert(IsServer());
 
-    GetLevelChannel()->Update();
-    PendingThinkers.reset();
-    PendingGoreEnts.reset();
-    AliveGoreChans.reset();
+  // limit thinker update rate
+  // level updated 60 times per second
+  // thinkers updated 35 times per second
+  //NeedsUpdate = false; // don't reset it, we'll do rate limiting here
 
-    // mark all entity channels as not updated in this frame, and remove dead channels
-    RemoveDeadThinkerChannels(true);
+  double ctt = Sys_Time();
+  bool needUpdateLevel = false;
+  bool needUpdateThinkers = false;
 
-    // update mobjs in sight
-    for (TThinkerIterator<VThinker> th(Context->GetLevel()); th; ++th) {
-      if (!IsRelevant(*th)) continue;
-      VThinkerChannel *chan = ThinkerChannels.FindPtr(*th);
-      if (!chan) {
-        // add gore entities as last ones
-        if (VStr::startsWith(th->GetClass()->GetName(), "K8Gore")) {
-          vassert(th->GetClass()->IsChildOf(VEntity::StaticClass()));
-          PendingGoreEnts.append((VEntity *)(*th));
-          continue;
-        }
-        // not a gore
-        chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
-        if (!chan) {
-          // remember this thinker
-          PendingThinkers.append(*th);
-          continue;
-        }
-        chan->SetThinker(*th);
-      }
-      chan->Update();
-    }
-
-    // close entity channels that were not updated in this frame
-    {
-      HasDeadChannels = false;
-      auto it = ChanIdxMap.first();
-      while (it) {
-        VChannel *chan = it.getValue();
-        if (chan->IsThinker()) {
-          VThinkerChannel *tc = (VThinkerChannel *)chan;
-          if (!tc->UpdatedThisFrame) {
-            if (!chan->Closing) {
-              chan->Close();
-            }
-          }
-          if (chan->IsDead()) {
-            // remove it
-            UnregisterChannel(chan, false); // leave it in hash
-            chan->Index = -667; // channel should not unregister itself, we'll take care of it
-            delete chan;
-            it.removeCurrent();
-            continue;
-          }
-          // remember gore entities
-          if (!tc->Closing && tc->Thinker && VStr::startsWith(tc->Thinker->GetClass()->GetName(), "K8Gore")) {
-            AliveGoreChans.append(chan->Index);
-          }
-        } else if (chan->IsDead()) {
-          HasDeadChannels = true;
-        }
-        ++it;
-      }
-    }
-
-    // if we have some pending thinkers, open channels for them
-    if (PendingThinkers.length()) {
-      static_assert(sizeof(PendingThinkers[0]) == sizeof(VThinker *), "wtf?!");
-      // sort them
-      timsort_r(PendingThinkers.ptr(), PendingThinkers.length(), sizeof(PendingThinkers[0]), &cmpPendingThinkers, (void *)this);
-      // if we have not enough free channels, remove gore entities
-      if (AliveGoreChans.length() && MAX_CHANNELS-ChanIdxMap.length() < PendingThinkers.length()) {
-        int needChans = PendingThinkers.length()-(MAX_CHANNELS-ChanIdxMap.length());
-        while (AliveGoreChans.length() && needChans-- > 0) {
-          // pop index
-          vint32 idx = AliveGoreChans[AliveGoreChans.length()-1];
-          AliveGoreChans.removeAt(AliveGoreChans.length()-1);
-          // close channel
-          VChannel **chanp = ChanIdxMap.find(idx);
-          if (chanp) {
-            VChannel *chan = *chanp;
-            vassert(chan->IsThinker());
-            VThinkerChannel *tc = (VThinkerChannel *)chan;
-            vassert(tc->Thinker && tc->Thinker->GetClass()->IsChildOf(VEntity::StaticClass()));
-            //PendingGoreEnts.append((VEntity *)(tc->Thinker));
-            chan->Close();
-          }
-        }
-      }
-      // append thinkers
-      for (int f = 0; f < PendingThinkers.length(); ++f) {
-        VThinkerChannel *chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
-        if (!chan) break; // no room
-        chan->SetThinker(PendingThinkers[f]);
-        chan->Update();
-      }
-    }
-
-    // append gore entities if we have any free slots
-    if (PendingGoreEnts.length() && MAX_CHANNELS-ChanIdxMap.length() > 0) {
-      // sort them
-      timsort_r(PendingGoreEnts.ptr(), PendingGoreEnts.length(), sizeof(PendingGoreEnts[0]), &cmpPendingGoreEnts, (void *)this);
-      for (auto &&it : PendingGoreEnts) {
-        VThinkerChannel *chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
-        if (!chan) break; // no room
-        chan->SetThinker(it);
-        chan->Update();
-      }
-    }
+  if (NextUpdateTimeLevel <= ctt) {
+    needUpdateLevel = true;
+    NextUpdateTimeLevel = ctt+1.0/60.0;
   }
+
+  if (NextUpdateTimeThinkers <= ctt) {
+    needUpdateThinkers = true;
+    NextUpdateTimeThinkers = ctt+1.0/35.0;
+  }
+
+  if (!needUpdateLevel && !needUpdateThinkers) return;
+
+  SetupFatPVS();
+
+  if (needUpdateLevel) GetLevelChannel()->Update();
+  if (needUpdateThinkers) UpdateThinkers();
 }
 
 
