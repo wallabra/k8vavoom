@@ -679,6 +679,7 @@ static void SV_RunClients (bool skipFrame=false) {
       // actually, force updates...
       //Player->Net->NeedsUpdate = true;
       Player->Net->GetMessages();
+      Player->Net->Tick();
     }
 
     // pause if in menu or console and at least one tic has been run
@@ -1306,8 +1307,11 @@ int NET_SendToAll (int blocktime) {
     count = 0;
     for (int i = 0; i < svs.max_clients; ++i) {
       VBasePlayer *Player = GGameInfo->Players[i];
+      if (!Player) continue;
+
       if (!state1[i]) {
         state1[i] = true;
+        Player->Net->ForceAllowSendForServer();
         Player->Net->GetGeneralChannel()->Close();
         ++count;
         continue;
@@ -1317,6 +1321,7 @@ int NET_SendToAll (int blocktime) {
         if (Player->Net->State == NETCON_Closed) {
           state2[i] = true;
         } else {
+          Player->Net->ForceAllowSendForServer();
           Player->Net->GetMessages();
           Player->Net->Tick();
         }

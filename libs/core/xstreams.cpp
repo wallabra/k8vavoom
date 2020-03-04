@@ -1203,6 +1203,37 @@ void VBitStreamReader::SetupFrom (const vuint8 *data, vint32 len, bool FixWithTr
 }
 
 
+//==========================================================================
+//
+//  VBitStreamReader::CopyFromBuffer
+//
+//==========================================================================
+void VBitStreamReader::CopyFromBuffer (const vuint8 *buf, int bitLength) noexcept {
+  vassert(bitLength >= 0);
+  if (!bitLength) return;
+  vassert(buf);
+  int oldByteLen = (Num+7)>>3;
+  int newByteLen = (Num+bitLength+7)>>3;
+  // make buffer bigger
+  if (Data.length() < newByteLen) {
+    Data.setLength(newByteLen);
+    if (newByteLen > oldByteLen) memset(Data.ptr()+oldByteLen, 0, newByteLen-oldByteLen);
+  }
+  // destination
+  vuint8 *d = Data.ptr()+(Num>>3);
+  vuint8 dmask = 1u<<(Num&7);
+  Num += bitLength;
+  // source
+  vuint8 smask = 1u;
+  // copy
+  while (bitLength-- > 0) {
+    if (buf[0]&smask) d[0] |= dmask; else d[0] &= ~dmask;
+    if ((smask<<=1) == 0) { smask = 1u; ++buf; }
+    if ((dmask<<=1) == 0) { dmask = 1u; ++d; }
+  }
+}
+
+
 
 //==========================================================================
 //

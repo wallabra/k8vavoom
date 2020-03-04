@@ -210,6 +210,7 @@ public:
   inline bool IsExpanded () const noexcept { return (Pos > Max); }
 
   // won't modify `strm`
+  // actually, this appends data from `strm`
   void CopyFromWS (const VBitStreamWriter &strm) noexcept;
 
   inline void WriteBit (bool Bit) noexcept {
@@ -278,6 +279,9 @@ public:
 
   // if `FixWithTrailingBit` is true, shrink with the last trailing bit (including it)
   void SetupFrom (const vuint8 *data, vint32 len, bool FixWithTrailingBit=false) noexcept;
+
+  // actually, this appends data from `buf`
+  void CopyFromBuffer (const vuint8 *buf, int bitLength) noexcept;
 
   inline bool ReadBit () noexcept {
     if (Pos+1 > Num) {

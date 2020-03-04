@@ -31,6 +31,7 @@
 static VCvarF net_test_loss("net_test_loss", "0", "Emulated packet loss percentage (randomly skip sending some packets).", CVAR_PreInit);
 static VCvarB net_dbg_conn_show_outdated("net_dbg_conn_show_outdated", false, "Show outdated channel messages?");
 static VCvarB net_dbg_conn_show_dgrams("net_dbg_conn_show_dgrams", false, "Show datagram activity?");
+static VCvarB net_dbg_conn_show_unreliable("net_dbg_conn_show_unreliable", false, "Show datagram unreliable payload info?");
 static VCvarB net_dbg_report_missing_dgrams("net_dbg_report_missing_dgrams", false, "Report missing datagrams (this is mostly useless console spam)?");
 
 VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump received packets?");
@@ -402,6 +403,50 @@ void VNetConnection::ProcessSendQueue () {
     if (net_dbg_conn_show_dgrams) GCon->Logf(NAME_DevNet, "%s: sending empty datagram (%d bytes); w1=%08x; w2=%08x", *GetAddress(), sendDataSize, *w1, *w2);
   }
 
+  // append unreliable data while we can
+  if (sendDataSize < MAX_DGRAM_SIZE-3) {
+    // two bytes for bit count, one byte for packed type
+    vuint32 maxUPSize = MAX_DGRAM_SIZE-2-(sendDataSize+(sendDataSize == MSG_HEADER_SIZE ? 1 : 0));
+    VBitStreamWriter wrs(MAX_DGRAM_SIZE, false);
+    // first, append unreliable player data
+    GetPlayerChannel()->PutUnreliableRPCOut(wrs, maxUPSize);
+    // then, append unreliable thinker data
+    for (auto it = ChanIdxMap.first(); it; ++it) {
+      VChannel *chan = it.getValue();
+      chan->PutUnreliableRPCOut(wrs, maxUPSize);
+    }
+    // do we have any data there?
+    if (wrs.GetNumBits()) {
+      vassert(wrs.GetNumBits() <= (int)maxUPSize);
+      // yeah, check if we should append it
+      if (sendDataSize == MSG_HEADER_SIZE) {
+        // empty packet; can simply put it as reliable data
+        wrs.WriteTrailingBit(); // finalise it
+        if (net_dbg_conn_show_unreliable) GCon->Logf(NAME_DevNet, "%s: putting %d bytes of unreliable data into empty datagram (0x%08x : 0x%08x)", *GetAddress(), wrs.GetNumBytes(), *w1, *w2);
+        sendData[sendDataSize++] = NETPACKET_DATA; // packet type
+        memcpy(sendData+sendDataSize, wrs.GetData(), wrs.GetNumBytes());
+        sendDataSize += wrs.GetNumBytes();
+      } else {
+        // fix packet type
+        vassert(sendDataSize > MSG_HEADER_SIZE);
+        vassert(sendData[MSG_HEADER_SIZE] == NETPACKET_DATA);
+        sendData[MSG_HEADER_SIZE] = NETPACKET_DATA_C; // mark as combined
+        vuint32 ursBits = wrs.GetNumBits();
+        vuint32 urs = wrs.GetNumBytes();
+        if (net_dbg_conn_show_unreliable) GCon->Logf(NAME_DevNet, "%s: appending %u bytes (%u bits) of unreliable data into datagram with %d bytes of data (0x%08x : 0x%08x)", *GetAddress(), urs, ursBits, sendDataSize, *w1, *w2);
+        vassert(sendDataSize+urs+2 <= MAX_DGRAM_SIZE);
+        // copy unreliable packet
+        memcpy(sendData+sendDataSize, wrs.GetData(), urs);
+        sendDataSize += urs;
+        vassert(sendDataSize+2 <= MAX_DGRAM_SIZE);
+        // write unreliable data size
+        sendData[sendDataSize++] = (vuint8)(ursBits&0xffu);
+        sendData[sendDataSize++] = (vuint8)((ursBits>>8)&0xffu);
+        if (net_dbg_conn_show_unreliable) GCon->Logf(NAME_DevNet, "%s: added %u bytes of unreliable data into datagram; total %d bytes of data (0x%08x : 0x%08x)", *GetAddress(), urs+2, sendDataSize, *w1, *w2);
+      }
+    }
+  }
+
   // send the message
   const float lossPrc = net_test_loss.asFloat();
   if (lossPrc <= 0.0f || RandomFull()*100.0f >= net_test_loss) {
@@ -450,6 +495,7 @@ bool VNetConnection::ProcessRecvQueue (VBitStreamReader &Packet) {
   // get sequence numbers
   vuint32 sequence = *(const vuint32 *)(recvData+0);
   vuint32 sequence_ack = *(const vuint32 *)(recvData+4);
+  const vuint32 w1 = sequence; const vuint32 w2 = sequence_ack;
   // data starts at `sendData+8`
   static_assert(MSG_HEADER_SIZE == 8, "invalid MSG_HEADER_SIZE");
 
@@ -491,6 +537,8 @@ bool VNetConnection::ProcessRecvQueue (VBitStreamReader &Packet) {
   // clear the buffer to make way for the next
   if (reliable_ack == reliable_sequence) relSendDataSize = 0; // it has been received
 
+  //FIXME: this should be done after parsing a packet
+
   // if this message contains a reliable message, bump incoming reliable sequence
   incoming_sequence = sequence;
   incoming_acknowledged = sequence_ack;
@@ -503,22 +551,53 @@ bool VNetConnection::ProcessRecvQueue (VBitStreamReader &Packet) {
   //NeedsUpdate = true; // we got *any* activity, update the world!
   if (recvDataSize > MSG_HEADER_SIZE) {
     // check packet type
-    if (recvData[MSG_HEADER_SIZE] != NETPACKET_DATA) {
+    int unrelSizeBits = 0;
+    if (recvData[MSG_HEADER_SIZE] == NETPACKET_DATA_C) {
+      // got some unreliable data too; we'll append it later
+      if (recvDataSize < MSG_HEADER_SIZE+1+2+1) {
+        GCon->Logf(NAME_DevNet, "%s: datagram packet has invalid unreliable data part", *GetAddress());
+        State = NETCON_Closed; // close connection due to invalid data
+        return false;
+      }
+      unrelSizeBits = (int)((vuint32)(recvData[recvDataSize-2])|(((vuint32)(recvData[recvDataSize-1]))<<8));
+      int unrelSize = ((unrelSizeBits+7)>>3)+2; // two bytes for length
+      if (unrelSize >= recvDataSize && recvDataSize-unrelSize < MSG_HEADER_SIZE+1) {
+        GCon->Logf(NAME_DevNet, "%s: datagram packet has invalid unreliable data part", *GetAddress());
+        State = NETCON_Closed; // close connection due to invalid data
+        return false;
+      }
+      // decrease received data length, we'll deal with unreliable part later
+      if (net_dbg_conn_show_unreliable) GCon->Logf(NAME_DevNet, "%s: got %d bytes (%d bits) of unreliable data into datagram with %d total bytes of data (0x%08x : 0x%08x)", *GetAddress(), unrelSize, unrelSizeBits, recvDataSize, w1, w2);
+      recvDataSize -= unrelSize;
+    } else if (recvData[MSG_HEADER_SIZE] != NETPACKET_DATA) {
       GCon->Logf(NAME_DevNet, "%s: datagram packet has invalid type; expected 0x%02x, got 0x%02x", *GetAddress(), NETPACKET_DATA, recvData[MSG_HEADER_SIZE]);
+      State = NETCON_Closed; // close connection due to invalid data
       return false;
     }
     int length = (int)((recvDataSize-MSG_HEADER_SIZE-1)*8);
     vassert(length >= 0);
     if (length == 0) {
       GCon->Log(NAME_DevNet, "%s: datagram packet has no data; this should not happen!");
+      State = NETCON_Closed; // close connection due to invalid data
       return false;
     }
     Packet.SetupFrom(recvData+MSG_HEADER_SIZE+1, length, true); // fix the length with the trailing bit
     if (Packet.IsError()) {
       GCon->Logf(NAME_DevNet, "%s: datagram packet is missing trailing bit", *GetAddress());
+      State = NETCON_Closed; // close connection due to invalid data
       return false;
     }
-    if (net_dbg_conn_show_dgrams) GCon->Logf(NAME_DevNet, "%s: got datagram with a packet (%d bits of data)", *GetAddress(), Packet.GetNumBits());
+    // append unreliable data, if there is any
+    if (unrelSizeBits > 0) {
+      if (net_dbg_conn_show_unreliable) GCon->Logf(NAME_DevNet, "%s: copying %d bits of unreliable data from %d (0x%08x : 0x%08x)", *GetAddress(), unrelSizeBits, recvDataSize, w1, w2);
+      Packet.CopyFromBuffer(recvData+recvDataSize, unrelSizeBits);
+      if (Packet.IsError()) {
+        GCon->Logf(NAME_DevNet, "%s: datagram packet is missing trailing bit (unreliable)", *GetAddress());
+        State = NETCON_Closed; // close connection due to invalid data
+        return false;
+      }
+    }
+    if (net_dbg_conn_show_dgrams) GCon->Logf(NAME_DevNet, "%s: got datagram with a packet (%d bits of data) (0x%08x : 0x%08x)", *GetAddress(), Packet.GetNumBits(), w1, w2);
   }
 
   return true;
@@ -870,16 +949,13 @@ void VNetConnection::Tick () {
   // the ACK so just mark all outgoing messages as ACK-ed
   // `AutoAck == true` means "demo recording"
   if (AutoAck) {
-    //FIXME
-    Sys_Error("demos are not implemeted yet (0)");
-    /*
     for (auto it = ChanIdxMap.first(); it; ++it) {
       VChannel *chan = it.getValue();
-      for (VMessageOut *Msg = chan->OutMsg; Msg; Msg = Msg->Next) Msg->bReceivedAck = true;
+      //for (VMessageOut *Msg = chan->OutMsg; Msg; Msg = Msg->Next) Msg->bReceivedAck = true;
       chan->OpenAcked = true;
-      if (chan->OutMsg) chan->ReceivedAck();
+      //if (chan->OutMsg) chan->ReceivedAck();
+      if (chan->Closing) chan->CloseAcked = true;
     }
-    */
   }
 
   // perform channel cleanup
@@ -1116,6 +1192,7 @@ void VNetConnection::UpdateThinkers () {
   PendingGoreEnts.reset();
   AliveGoreChans.reset();
 
+  //GCon->Logf(NAME_DevNet, "%s: UpThinkers!", *GetAddress());
   // mark all entity channels as not updated in this frame, and remove dead channels
   RemoveDeadThinkerChannels(true);
 
@@ -1236,6 +1313,22 @@ void VNetConnection::UpdateLevel () {
   // thinkers updated 35 times per second
   //NeedsUpdate = false; // don't reset it, we'll do rate limiting here
 
+  //if (!AllowMessageSend) return;
+  if (sendQueueHead) {
+    /*
+    if (sendQueueSize > 5) {
+      //GCon->Logf(NAME_DevNet, "%s: UpLevel; DELAYED: %d messages in queue", *GetAddress(), sendQueueSize);
+      for (auto it = ChanIdxMap.first(); it; ++it) {
+        VChannel *chan = it.getValue();
+        chan->DropUnreliableRPCOuts();
+      }
+    }
+    */
+    return;
+  }
+
+  //GCon->Logf(NAME_DevNet, "%s: UpLevel!", *GetAddress());
+  #if 1
   double ctt = Sys_Time();
   bool needUpdateLevel = false;
   bool needUpdateThinkers = false;
@@ -1251,11 +1344,32 @@ void VNetConnection::UpdateLevel () {
   }
 
   if (!needUpdateLevel && !needUpdateThinkers) return;
+  #else
+  bool needUpdateLevel = true;
+  bool needUpdateThinkers = true;
+  #endif
 
   SetupFatPVS();
 
   if (needUpdateLevel) GetLevelChannel()->Update();
-  if (needUpdateThinkers) UpdateThinkers();
+  if (needUpdateThinkers) {
+    UpdateThinkers();
+  } else if (Owner && Owner->MO) {
+    // send player update anyway
+    /*
+    for (auto it = ChanIdxMap.first(); it; ++it) {
+      VChannel *chan = it.getValue();
+      if (!chan || chan->Closing) continue;
+      if (!chan->IsThinker()) continue;
+      VThinkerChannel *tchan = (VThinkerChannel *)chan;
+      VThinker *th = tchan->Thinker;
+      if (!th || th != Owner->MO) continue;
+      GCon->Logf(NAME_DevNet, "%s: sending player.MO update", *GetAddress());
+      tchan->Update();
+    }
+    */
+  }
+  //!GCon->Logf(NAME_DevNet, "%s: UpLevel; %d messages in queue", *GetAddress(), sendQueueSize);
 }
 
 

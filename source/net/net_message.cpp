@@ -54,7 +54,7 @@ bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
   GCon->Logf(NAME_Debug, "*** inmessage size: %u (left %u)", v, srcPacket.GetNumBits()-srcPacket.GetPos());
   #endif
   if (srcPacket.GetNumBits() < v) {
-    GCon->Log(NAME_Debug, "*** inmessage: out of data in packed!");
+    GCon->Log(NAME_Debug, "*** inmessage: out of data in packet!");
     bError = true;
     return false;
   }

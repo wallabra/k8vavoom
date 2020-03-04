@@ -36,8 +36,9 @@ class VNetContext;
 // since control and data communications are on different ports, there should
 // never be a case when these are mixed. but I will keep it for now just in case.
 enum {
-  NETPACKET_DATA = 0x40,
-  NETPACKET_CTL  = 0x80,
+  NETPACKET_DATA   = 0x40,
+  NETPACKET_DATA_C = 0x44, // combined reliable and unreliable packet data
+  NETPACKET_CTL    = 0x80,
 };
 
 // sent on handshake, and with `CMD_NewLevel`
@@ -223,6 +224,16 @@ public:
   // `true` if we got ACK for close packet
   bool CloseAcked;
 
+  struct RPCOut {
+    bool reliable;
+    VBitStreamWriter *strm;
+    RPCOut *next;
+    VStr debugName;
+  };
+
+  RPCOut *rpcOutHead;
+  RPCOut *rpcOutTail;
+
 public:
   inline static const char *GetChanTypeName (vuint8 type) noexcept {
     switch (type) {
@@ -263,6 +274,15 @@ public:
 
   // is this channel opened from the other end?
   inline bool IsRemoteChannel () const noexcept { return !OpenedLocally; }
+
+  VBitStreamWriter &AllocRPCOut (bool reliable, VStr dbgname=VStr::EmptyString);
+
+  void SendRPCOuts (VMessageOut &msg);
+  void DropUnreliableRPCOuts ();
+  void DropAllRPCOuts ();
+
+  // fill buffer with unreliable RPC data while we can, drop all unfit RPC data
+  void PutUnreliableRPCOut (VBitStreamWriter &wrs, const vuint32 maxWrsSizeBits);
 
   // call this instead of `delete this`
   // connection ticker will take care of closed channels

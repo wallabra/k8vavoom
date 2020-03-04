@@ -237,6 +237,7 @@ void VThinkerChannel::Update () {
   VObject *NullObj = nullptr;
 
   VMessageOut Msg(this, (NewObj ? VMessageOut::Open : 0u));
+  SendRPCOuts(Msg);
 
   if (NewObj) {
     VClass *TmpClass = Thinker->GetClass();
@@ -361,7 +362,8 @@ void VThinkerChannel::Update () {
     Thinker->RemoteRole = oldRemoteRole;
     Close(&Msg); // this will send `Msg`
   } else {
-    SendMessage(Msg);
+    //SendMessage(Msg);
+    FlushMsg(Msg);
   }
 }
 

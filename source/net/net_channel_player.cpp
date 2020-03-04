@@ -122,13 +122,30 @@ void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values
 //
 //==========================================================================
 void VPlayerChannel::Update () {
+  /*
+  if (Connection->IsServer()) {
+    if (!Connection->AllowMessageSend) return;
+  }
+  */
+  //if (Connection->sendQueueHead) return;
+  if (Connection->sendQueueHead) {
+    /*if (Connection->sendQueueSize > 5)*/ {
+      //DropUnreliableRPCOuts();
+      //GCon->Logf(NAME_DevNet, "%s: DELAYED: %d messages in queue", *GetDebugName(), Connection->sendQueueSize);
+      return;
+    }
+  }
+
   EvalCondValues(Plr, Plr->GetClass(), FieldCondValues);
 
   VMessageOut Msg(this);
+  SendRPCOuts(Msg);
+
   vuint8 *Data = (vuint8 *)Plr;
   for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
     if (!FieldCondValues[F->NetIndex]) continue;
     if (VField::IdenticalValue(Data+F->Ofs, OldData+F->Ofs, F->Type)) continue;
+    //GCon->Logf(NAME_DevNet, "%s: ...sending player update (%s); field %s", *GetDebugName(), (Connection->IsClient() ? "client" : "server"), *F->GetFullName());
     if (F->Type.Type == TYPE_Array) {
       VFieldType IntType = F->Type;
       IntType.Type = F->Type.ArrayInnerType;
@@ -147,11 +164,18 @@ void VPlayerChannel::Update () {
         VField::CopyFieldValue(Data+F->Ofs, OldData+F->Ofs, F->Type);
       }
     }
+    /*
+    if (VStr::strEqu(F->GetName(), "ClientForwardMove")) {
+      GCon->Logf(NAME_DevNet, "%s: ...sengind player update (%s); field %s; value=%g", *GetDebugName(), (Connection->IsClient() ? "client" : "server"), *F->GetFullName(), F->GetFloat(Plr));
+    }
+    */
   }
 
   // for client, always send it
   if (Connection->IsClient()) Msg.MarkKeepalive();
-  SendMessage(Msg);
+  //GCon->Logf(NAME_DevNet, "%s: sending player update (%s)", *GetDebugName(), (Connection->IsClient() ? "client" : "server"));
+  //SendMessage(Msg);
+  FlushMsg(Msg);
 }
 
 
@@ -161,6 +185,7 @@ void VPlayerChannel::Update () {
 //
 //==========================================================================
 void VPlayerChannel::ParsePacket (VMessageIn &Msg) {
+  //GCon->Logf(NAME_DevNet, "%s: received player update (%s)", *GetDebugName(), (Connection->IsClient() ? "client" : "server"));
   while (!Msg.AtEnd()) {
     int FldIdx = Msg.ReadInt(/*Plr->GetClass()->NumNetFields*/);
     VField *F = nullptr;
@@ -171,6 +196,7 @@ void VPlayerChannel::ParsePacket (VMessageIn &Msg) {
       }
     }
     if (F) {
+      //GCon->Logf(NAME_DevNet, "%s: ...received player update (%s); field %s", *GetDebugName(), (Connection->IsClient() ? "client" : "server"), *F->GetFullName());
       if (F->Type.Type == TYPE_Array) {
         int Idx = Msg.ReadInt(/*F->Type.GetArrayDim()*/);
         VFieldType IntType = F->Type;
@@ -179,6 +205,11 @@ void VPlayerChannel::ParsePacket (VMessageIn &Msg) {
       } else {
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+F->Ofs, F->Type);
       }
+      /*
+      if (VStr::strEqu(F->GetName(), "ClientForwardMove")) {
+        GCon->Logf(NAME_DevNet, "%s: ...received player update (%s); field %s; value=%g", *GetDebugName(), (Connection->IsClient() ? "client" : "server"), *F->GetFullName(), F->GetFloat(Plr));
+      }
+      */
       continue;
     }
 

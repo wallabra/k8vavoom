@@ -28,6 +28,7 @@
 #include "net_message.h"
 
 extern VCvarB net_debug_dump_recv_packets;
+static VCvarB net_debug_rpc("net_debug_rpc", false, "Dump RPC info?");
 
 
 //==========================================================================
@@ -43,6 +44,8 @@ VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AInd
   , OpenAcked(false/*AIndex < CHANIDX_ThinkersStart*/)
   , Closing(false)
   , CloseAcked(false)
+  , rpcOutHead(nullptr)
+  , rpcOutTail(nullptr)
 {
   vassert(Index >= 0 && Index < MAX_CHANNELS);
   Connection->RegisterChannel(this);
@@ -55,6 +58,7 @@ VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AInd
 //
 //==========================================================================
 VChannel::~VChannel () {
+  DropAllRPCOuts();
   Closing = true; // just in case
   CloseAcked = true; // just in case
   if (Index >= 0 && Index < MAX_CHANNELS && Connection) {
@@ -167,7 +171,11 @@ void VChannel::FlushMsg (VMessageOut &msg) {
 //
 //==========================================================================
 void VChannel::SendMessage (VMessageOut &Msg) {
-  if (Connection && Msg.NeedToSend()) Connection->SendMessage(Msg);
+  if (Connection && Msg.NeedToSend()) {
+    //GCon->Logf(NAME_DevNet, "%s: SENDING MESSAGE! (%d in queue)", *GetDebugName(), Connection->sendQueueSize);
+    //if (Type == CHANNEL_Player && Connection->sendQueueSize > 64) abort();
+    Connection->SendMessage(Msg);
+  }
 }
 
 
@@ -243,11 +251,120 @@ void VChannel::Tick () {
 
 //==========================================================================
 //
+//  VChannel::DropUnreliableRPCOuts
+//
+//==========================================================================
+void VChannel::DropUnreliableRPCOuts () {
+  RPCOut *prev = nullptr, *curr = rpcOutHead;
+  while (curr) {
+    if (curr->reliable) {
+      prev = curr;
+      curr = curr->next;
+    } else {
+      RPCOut *o = curr;
+      curr = curr->next;
+      if (prev) prev->next = curr; else rpcOutHead = curr;
+      delete o->strm;
+      delete o;
+    }
+  }
+  if (!rpcOutHead) rpcOutTail = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VChannel::PutUnreliableRPCOut
+//
+//  fill buffer with unreliable RPC data while we can, drop all unfit RPC data
+//
+//==========================================================================
+void VChannel::PutUnreliableRPCOut (VBitStreamWriter &wrs, const vuint32 maxWrsSizeBits) {
+  RPCOut *prev = nullptr, *curr = rpcOutHead;
+  while (curr) {
+    if (curr->reliable) {
+      prev = curr;
+      curr = curr->next;
+    } else {
+      RPCOut *o = curr;
+      curr = curr->next;
+      if (prev) prev->next = curr; else rpcOutHead = curr;
+      if (!Closing && maxWrsSizeBits-wrs.GetNumBits() > 8) {
+        VMessageOut omsg(this, 0);
+        omsg.CopyFromWS(*o->strm);
+        omsg.Finalise();
+        if (wrs.GetNumBits()+omsg.GetNumBits() <= (int)maxWrsSizeBits) {
+          wrs.CopyFromWS(omsg);
+        }
+      }
+      delete o->strm;
+      delete o;
+    }
+  }
+  if (!rpcOutHead) rpcOutTail = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VChannel::DropAllRPCOuts
+//
+//==========================================================================
+void VChannel::DropAllRPCOuts () {
+  while (rpcOutHead) {
+    RPCOut *o = rpcOutHead;
+    rpcOutHead = o->next;
+    delete o->strm;
+    delete o;
+  }
+  rpcOutHead = rpcOutTail = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VChannel::SendRPCOuts
+//
+//==========================================================================
+void VChannel::SendRPCOuts (VMessageOut &msg) {
+  while (rpcOutHead) {
+    RPCOut *o = rpcOutHead;
+    rpcOutHead = rpcOutHead->next;
+    if (net_debug_rpc) GCon->Logf(NAME_DevNet, "%s: queuing RPC: <%s>", *GetDebugName(), *o->debugName);
+    PutStream(msg, *o->strm);
+    delete o->strm;
+    delete o;
+  }
+  rpcOutHead = rpcOutTail = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VChannel::AllocRPCOut
+//
+//==========================================================================
+VBitStreamWriter &VChannel::AllocRPCOut (bool reliable, VStr dbgname) {
+  RPCOut *res = new RPCOut;
+  res->reliable = reliable;
+  res->strm = new VBitStreamWriter(MAX_MSG_SIZE_BITS, false); // can't expand
+  res->next = nullptr;
+  res->debugName = dbgname;
+  if (rpcOutTail) rpcOutTail->next = res; else rpcOutHead = res;
+  rpcOutTail = res;
+  return *res->strm;
+}
+
+
+//==========================================================================
+//
 //  VChannel::SendRpc
 //
 //==========================================================================
 void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
-  VMessageOut Msg(this, (Func->Flags&FUNC_NetReliable ? 0u : VMessageOut::Unreliable));
+  //VMessageOut Msg(this, (Func->Flags&FUNC_NetReliable ? 0u : VMessageOut::Unreliable));
+  VBitStreamWriter &Msg = AllocRPCOut(Func->Flags&FUNC_NetReliable, Func->GetFullName());
+  //GCon->Logf(NAME_DevNet, "%s: creating RPC: %s", *GetDebugName(), *Func->GetFullName());
   Msg.WriteInt(Func->NetIndex/*, Owner->GetClass()->NumNetFields*/);
 
   // serialise arguments
@@ -293,7 +410,8 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
   }
 
   // send it
-  SendMessage(Msg);
+  //SendMessage(Msg);
+  if (net_debug_rpc) GCon->Logf(NAME_DevNet, "%s: created RPC: %s (%d bits)", *GetDebugName(), *Func->GetFullName(), Msg.GetNumBits());
 }
 
 
@@ -311,6 +429,7 @@ bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
     }
   }
   if (!Func) return false;
+  if (net_debug_rpc) GCon->Logf(NAME_DevNet, "%s: ...received RPC (%s); method %s", *GetDebugName(), (Connection->IsClient() ? "client" : "server"), *Func->GetFullName());
 
   //memset(pr_stackPtr, 0, Func->ParamsSize*sizeof(VStack));
   VObject::VMCheckAndClearStack(Func->ParamsSize);
