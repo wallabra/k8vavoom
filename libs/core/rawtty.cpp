@@ -40,20 +40,22 @@
 
 
 static bool isAvailable = false;
-#ifdef _WIN32
-# define  isGood     false
-# define  isRawMode  false
-# define  isWaitKey  true
-#else
 enum TermType {
   other,
   rxvt,
   xterm,
   linuxcon, // linux console
+  shitdoze,
 };
 
-static TermType termType = TermType::other;
 
+#ifdef _WIN32
+# define  isGood     false
+# define  isRawMode  false
+# define  isWaitKey  true
+static TermType termType = TermType::shitdoze;
+#else
+static TermType termType = TermType::other;
 static bool isGood = false;
 static bool isRawMode = false;
 static bool isWaitKey = false;
@@ -448,7 +450,7 @@ int ttyGetHeight () noexcept {
 //==========================================================================
 bool ttySetRawMode (bool enable) noexcept {
   #ifdef _WIN32
-  return false
+  return false;
   #else
   if (!isGood) return false; // oops
   if (isRawMode == enable) return true; // already done
