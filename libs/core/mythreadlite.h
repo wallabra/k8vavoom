@@ -500,6 +500,7 @@ static __attribute__((unused)) inline void mythread_condtime_set (mythread_condt
 */
 #include <windows.h>
 #include <process.h>
+#include <synchapi.h>
 
 // fuck you, shitdoze!
 #ifdef RGB
