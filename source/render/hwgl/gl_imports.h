@@ -397,6 +397,7 @@ typedef void (APIENTRY *glGetPointerv_t) (GLenum pname,  GLvoid **params);
 //typedef void (APIENTRY *glGetActiveUniform_t) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, char *name);
 //typedef void (APIENTRY *glGetActiveAttrib_t) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, char *name);
 
+typedef void (APIENTRY *glBlendEquation_t) (GLenum mode);
 typedef void (APIENTRY *glBlendFuncSeparate_t) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
 typedef void (APIENTRY *glBlendEquationSeparate_t) (GLenum modeRGB, GLenum modeAlpha);
 
@@ -533,6 +534,7 @@ typedef void (APIENTRY *glGenerateMipmap_t) (GLenum target);
 
   VGLAPIPTR(glBlendFuncSeparate, false);
   VGLAPIPTR(glBlendEquationSeparate, false);
+  VGLAPIPTR(glBlendEquation, true);
 
   VGLAPIPTR(glDeleteRenderbuffers, true);
   VGLAPIPTR(glGenRenderbuffers, true);

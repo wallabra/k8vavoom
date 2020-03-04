@@ -27,22 +27,6 @@
 //**  System driver for DOS, LINUX and UNIX dedicated servers.
 //**
 //**************************************************************************
-#include <signal.h>
-#include <fcntl.h>
-#include <unistd.h>
-#ifdef _WIN32
-# define ftime fucked_ftime
-# include <io.h>
-# undef ftime
-# include <conio.h>
-# include <sys/timeb.h>
-# include <windows.h>
-#endif
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <time.h>
-
 #if defined(USE_FPU_MATH)
 # define VAVOOM_ALLOW_FPU_DEBUG
 #elif defined(__linux__)
@@ -59,6 +43,22 @@
 #endif
 
 #include "gamedefs.h"
+
+#include <signal.h>
+#include <fcntl.h>
+#include <unistd.h>
+#ifdef _WIN32
+# define ftime fucked_ftime
+# include <io.h>
+# undef ftime
+# include <conio.h>
+# include <sys/timeb.h>
+# include <windows.h>
+#endif
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
 
 
 //==========================================================================

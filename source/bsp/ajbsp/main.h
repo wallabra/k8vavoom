@@ -30,7 +30,11 @@
  */
 
 #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
-#define WIN32_LEAN_AND_MEAN
+/*#define WIN32_LEAN_AND_MEAN*/
+# if _WIN32_WINNT < 0x0600
+#  undef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0600
+# endif
 #include <windows.h>
   #ifndef WIN32
   #define WIN32

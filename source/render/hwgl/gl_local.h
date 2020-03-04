@@ -26,6 +26,9 @@
 #ifndef VAVOOM_GL_LOCAL_HEADER
 #define VAVOOM_GL_LOCAL_HEADER
 
+#include "gamedefs.h"
+#include "../r_shared.h"
+
 #ifdef _WIN32
 # include <windows.h>
 #endif
@@ -35,6 +38,11 @@
 # include <GL/gl.h>
 #endif
 #ifdef _WIN32
+/*
+# ifndef GL_GLEXT_PROTOTYPES
+#  define GL_GLEXT_PROTOTYPES
+# endif
+*/
 # include <GL/glext.h>
 #endif
 
@@ -42,9 +50,6 @@
 #define VV_GLDECLS
 #include "gl_imports.h"
 #undef VV_GLDECLS
-
-#include "gamedefs.h"
-#include "../r_shared.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //

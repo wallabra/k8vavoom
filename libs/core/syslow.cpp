@@ -840,6 +840,7 @@ bool Sys_DirExists (VStr path) {
 
 
 #ifdef SHITDOZE_USE_WINMM
+#include <mmsystem.h>
 static bool shitdozeTimerInited = false;
 static vuint32 shitdozeLastTime = 0;
 static vuint64 shitdozeCurrTime = 0;

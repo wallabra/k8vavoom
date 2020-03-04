@@ -23,6 +23,9 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#include "gamedefs.h"
+#include "net_local.h"
+
 #ifdef WIN32
 # include <windows.h>
 # include <errno.h>
@@ -38,9 +41,6 @@
 # include <sys/ioctl.h>
 # define closesocket close
 #endif
-
-#include "gamedefs.h"
-#include "net_local.h"
 
 
 static int cli_NoUDP = 0;
@@ -163,13 +163,16 @@ int VUdpDriver::Init () {
       myAddr = INADDR_ANY;
       VStr::Cpy(Net->MyIpAddress, "INADDR_ANY");
     } else {
-      //myAddr = inet_addr(pp);
-      //if (myAddr == INADDR_NONE) Sys_Error("'%s' is not a valid IP address", pp);
-      //VStr::Cpy(Net->MyIpAddress, pp);
+      #ifdef _WIN32
+      myAddr = inet_addr(pp);
+      if (myAddr == INADDR_NONE) Sys_Error("'%s' is not a valid IP address", pp);
+      VStr::Cpy(Net->MyIpAddress, pp);
+      #else
       struct in_addr addr;
       if (inet_aton(pp, &addr) == 0) Sys_Error("'%s' is not a valid IP address", pp);
       VStr::Cpy(Net->MyIpAddress, inet_ntoa(addr));
       myAddr = addr.s_addr;
+      #endif
     }
   } else {
 #ifdef WIN32

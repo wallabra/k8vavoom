@@ -1094,7 +1094,11 @@ void FNodeBuilder::PrintSet (int l, DWORD set)
 
 #ifdef BACKPATCH
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
+# if _WIN32_WINNT < 0x0600
+#  undef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0600
+# endif
+/*#define WIN32_LEAN_AND_MEAN*/
 #include <windows.h>
 #else
 #include <sys/mman.h>

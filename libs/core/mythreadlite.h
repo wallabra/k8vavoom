@@ -491,14 +491,19 @@ static __attribute__((unused)) inline void mythread_condtime_set (mythread_condt
 // ////////////////////////////////////////////////////////////////////////// //
 // shitdoze
 
-#define WIN32_LEAN_AND_MEAN
+// this should be included from "core.h", but...
+#ifndef _WINDOWS_
 /*
-#ifdef MYTHREAD_VISTA
-# undef _WIN32_WINNT
-# define _WIN32_WINNT 0x0600
-#endif
+# ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+# endif
 */
-#include <windows.h>
+# if _WIN32_WINNT < 0x0600
+#  undef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0600
+# endif
+# include <windows.h>
+#endif
 #include <process.h>
 #include <synchapi.h>
 

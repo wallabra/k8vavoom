@@ -543,7 +543,7 @@ void VOpenGLDrawer::SetupBlending (const RenderStyleInfo &ri) {
         p_glBlendEquationSeparate(GL_FUNC_REVERSE_SUBTRACT, GL_FUNC_ADD);
       } else {
         // at least something
-        glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+        p_glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
       }
       break;
     default: // normal
@@ -572,7 +572,7 @@ void VOpenGLDrawer::RestoreBlending (const RenderStyleInfo &ri) {
       break;
     case RenderStyleInfo::Subtractive: // subtractive translucency
       glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-      glBlendEquation(GL_FUNC_ADD);
+      p_glBlendEquation(GL_FUNC_ADD);
       break;
     default:
       break;
