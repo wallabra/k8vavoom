@@ -52,10 +52,10 @@ VStr VControlChannel::GetName () const noexcept {
 
 //==========================================================================
 //
-//  VControlChannel::ParsePacket
+//  VControlChannel::ParseMessage
 //
 //==========================================================================
-void VControlChannel::ParsePacket (VMessageIn &msg) {
+void VControlChannel::ParseMessage (VMessageIn &msg) {
   while (!msg.AtEnd()) {
     VStr Cmd;
     msg << Cmd;

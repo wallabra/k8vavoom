@@ -39,10 +39,12 @@ add_library(core STATIC
   str.cpp
   stream.h
   stream.cpp
-  xstreams.h
-  xstreams.cpp
-  zipstreams.h
-  zipstreams.cpp
+  streamsbit.h
+  streamsbit.cpp
+  streamsex.h
+  streamsex.cpp
+  streamszip.h
+  streamszip.cpp
   mathutil.h
   vector.h
   vector.cpp

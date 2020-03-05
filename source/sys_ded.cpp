@@ -63,63 +63,6 @@
 
 //==========================================================================
 //
-//  Sys_ConsoleInput
-//
-//==========================================================================
-char *Sys_ConsoleInput () {
-  static char text[256];
-#ifndef _WIN32
-  int len;
-  fd_set fdset;
-  struct timeval timeout;
-
-  FD_ZERO(&fdset);
-  FD_SET(0, &fdset); // stdin
-  timeout.tv_sec = 0;
-  timeout.tv_usec = 0;
-  if (select(1, &fdset, nullptr, nullptr, &timeout) == -1 || !FD_ISSET(0, &fdset)) return nullptr;
-
-  len = read(0, text, sizeof(text));
-  if (len < 1) return nullptr;
-  text[len-1] = 0; // rip off the /n and terminate
-
-  return text;
-#else
-  static int len;
-  int c;
-
-  // read a line out
-  while (kbhit()) {
-    c = getch();
-    putch(c);
-    if (c == '\r') {
-      text[len] = 0;
-      putch('\n');
-      len = 0;
-      return text;
-    }
-    if (c == 8) {
-      if (len) {
-        putch(' ');
-        putch(c);
-        --len;
-        text[len] = 0;
-      }
-      continue;
-    }
-    text[len] = c;
-    ++len;
-    text[len] = 0;
-    if (len == sizeof(text)) len = 0;
-  }
-
-  return nullptr;
-#endif
-}
-
-
-//==========================================================================
-//
 //  Sys_Quit
 //
 //  Shuts down net game, saves defaults, prints the exit text message,
@@ -127,6 +70,7 @@ char *Sys_ConsoleInput () {
 //
 //==========================================================================
 void Sys_Quit (const char *msg) {
+  //if (ttyIsGood()) ttySetRawMode(false);
   Host_Shutdown();
   Z_Exit(0);
 }
@@ -138,6 +82,159 @@ void Sys_Quit (const char *msg) {
 //
 //==========================================================================
 void Sys_Shutdown () {
+  /*
+  if (ttyIsGood()) {
+    ttySetRawMode(false);
+    ttyRawWrite("\r\x1b[0m\x1b[K");
+  }
+  */
+}
+
+
+extern bool ttyRefreshInputLine;
+extern bool ttyExtraDisabled;
+
+static char text[8192];
+static char text2[8192];
+static int textpos = 0;
+
+
+//==========================================================================
+//
+//  UpdateTTYText
+//
+//==========================================================================
+static void UpdateTTYText () {
+  if (!ttyRefreshInputLine) return;
+  ttyRefreshInputLine = false;
+  vassert(textpos < (int)ARRAY_COUNT(text));
+  text[textpos] = 0;
+  int wdt = ttyGetWidth();
+  if (wdt < 3) return; // just in case
+  char ssr[64];
+  snprintf(ssr, sizeof(ssr), "\x1b[%d;1H\x1b[44m\x1b[37;1m>", ttyGetHeight());
+  int stpos = textpos-(wdt-2);
+  if (stpos < 0) stpos = 0;
+  ttyRawWrite(ssr);
+  ttyRawWrite(text+stpos);
+  ttyRawWrite("\x1b[K"); // clear line
+}
+
+
+//==========================================================================
+//
+//  PutToTTYText
+//
+//==========================================================================
+static void PutToTTYText (const char *s) {
+  if (!s || !s[0]) return;
+  ttyRefreshInputLine = true;
+  while (*s) {
+    if (textpos >= (int)ARRAY_COUNT(text)-3) {
+      ttyBeep();
+      return;
+    }
+    text[textpos++] = *s++;
+  }
+}
+
+
+//==========================================================================
+//
+//  Sys_ConsoleInput
+//
+//==========================================================================
+char *Sys_ConsoleInput () {
+#ifdef _WIN32
+  return nullptr;
+#else
+  if (!ttyIsAvailable()) return nullptr;
+  if (ttyExtraDisabled || !ttyIsGood()) {
+    int len;
+    fd_set fdset;
+    struct timeval timeout;
+
+    FD_ZERO(&fdset);
+    FD_SET(0, &fdset); // stdin
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+    if (select(1, &fdset, nullptr, nullptr, &timeout) == -1 || !FD_ISSET(0, &fdset)) return nullptr;
+
+    len = read(0, text, sizeof(text));
+    if (len < 1) return nullptr;
+    text[len-1] = 0; // rip off the /n and terminate
+
+    return text;
+  }
+
+  UpdateTTYText();
+
+  TTYEvent evt = ttyReadKey(0);
+  if (evt.type <= TTYEvent::Type::Unknown) return nullptr;
+  // C-smth
+  if (evt.type == TTYEvent::Type::ModChar) {
+    if (evt.ch == 'C') Sys_Quit("*** ABORTED ***");
+    if (evt.ch == 'Y') { textpos = 0; ttyRefreshInputLine = true; UpdateTTYText(); return nullptr; }
+  } else if (evt.type == TTYEvent::Type::Enter) {
+    if (textpos == 0) return nullptr;
+    strcpy(text2, text);
+    textpos = 0;
+    text[0] = 0;
+    ttyRefreshInputLine = true;
+    UpdateTTYText();
+    GCon->Logf(">%s", text2);
+    return text2;
+  }
+
+  if (evt.type == TTYEvent::Type::Backspace) {
+    if (textpos == 0) return nullptr;
+    text[--textpos] = 0;
+    ttyRefreshInputLine = true;
+  } else if (evt.type == TTYEvent::Type::Tab) {
+    // autocompletion
+    if (textpos == 0) return nullptr;
+    //TODO: autocompletion with moved cursor
+    const int curpos = textpos;
+    VStr clineRest(text); // after cursor
+    VStr cline = clineRest.left(curpos);
+    clineRest.chopLeft(curpos);
+    if (cline.length() && clineRest.length() && clineRest[0] == '"') {
+      cline += clineRest[0];
+      clineRest.chopLeft(1);
+    }
+    // find last command
+    int cmdstart = cline.findNextCommand();
+    for (;;) {
+      const int cmdstnext = cline.findNextCommand(cmdstart);
+      if (cmdstnext == cmdstart) break;
+      cmdstart = cmdstnext;
+    }
+    VStr oldpfx = cline;
+    oldpfx.chopLeft(cmdstart); // remove completed commands
+    VStr newpfx = VCommand::GetAutoComplete(oldpfx);
+    if (oldpfx != newpfx) {
+      textpos = 0;
+      PutToTTYText(*cline.left(cmdstart));
+      PutToTTYText(*newpfx);
+      // append rest of cline
+      if (clineRest.length()) {
+        //int cpos = textpos;
+        PutToTTYText(*clineRest);
+        //c_iline.setCurPos(cpos);
+      }
+    }
+  } else if (evt.type == TTYEvent::Type::Char) {
+    if (evt.ch >= ' ' && evt.ch < 127) {
+      char tmp[2];
+      tmp[0] = (char)evt.ch;
+      tmp[1] = 0;
+      PutToTTYText(tmp);
+    }
+  }
+
+  UpdateTTYText();
+  return nullptr;
+#endif
 }
 
 
@@ -204,6 +301,19 @@ static void signal_handler (int s) {
 #endif
 
 
+#ifndef _WIN32
+extern "C" {
+  static void restoreTTYOnExit (void) {
+    if (ttyIsGood()) {
+      ttySetRawMode(false);
+      //ttyRawWrite("\x1b[9999F\x1b[0m\x1b[K");
+      ttyRawWrite("\r\x1b[0m\x1b[K");
+    }
+  }
+}
+#endif
+
+
 //==========================================================================
 //
 //  main
@@ -220,6 +330,17 @@ int main (int argc, char **argv) {
     GArgs.Init(argc, argv, "-file");
     FL_CollectPreinits();
     GParsedArgs.parse(GArgs);
+
+    if (GArgs.CheckParm("-gdb")) ttyExtraDisabled = true;
+
+    #ifndef _WIN32
+    if (!ttyExtraDisabled && ttyIsGood()) {
+      ttySetRawMode(true);
+      atexit(&restoreTTYOnExit);
+      //ttyRawWrite("\x1b[0m;\x1b[2J\x1b[9999F"); // clear, move cursor down
+      UpdateTTYText();
+    }
+    #endif
 
 #ifdef USE_SIGNAL_HANDLER
     // install signal handlers

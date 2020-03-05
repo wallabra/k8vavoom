@@ -1832,6 +1832,12 @@ override void ClientTick (float DeltaTime) {
   // if we're in closed door or something, skip effects
   if (CeilingZ <= FloorZ) return;
 
+  // update bobbing
+  if (bFloatBob) {
+    if (FloatBobPhase < 0) FloatBobPhase = Random()*256.0/35.0;
+    FloatBobPhase += DeltaTime;
+  }
+
   // do not do any state effects if the object is too far away from the camera
   if (!CheckViewOrgDistance(Origin, GetDynLightMaxDist())) return;
 

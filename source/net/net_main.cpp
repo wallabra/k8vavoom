@@ -75,7 +75,6 @@ public:
   virtual void QuitMaster () override;
 
   // API only for network drivers!
-  virtual double SetNetTime () override;
   virtual void SchedulePollProcedure (VNetPollProcedure *, double) override;
 
   void MasterList ();
@@ -104,7 +103,7 @@ VCvarS VNetworkLocal::HostName("hostname", "UNNAMED", "Name of this host.");
 //     and when sound is not cached, for example. it should be safe to
 //     set this to 3 seconds: the only consequence is longer timeout before
 //     detecting disconnects. not a big deal, i think.
-VCvarF VNetworkPublic::MessageTimeOut("net_messagetimeout", "3", "Network timeout value in seconds.");
+VCvarF VNetworkPublic::MessageTimeOut("net_messagetimeout", "10", "Network timeout value in seconds.");
 
 VNetDriver *VNetworkLocal::Drivers[MAX_NET_DRIVERS];
 int VNetworkLocal::NumDrivers = 0;
@@ -129,10 +128,7 @@ VNetworkPublic *VNetworkPublic::Create () {
 //
 //==========================================================================
 VNetworkPublic::VNetworkPublic ()
-  : NetTime(0.0)
-  , MessagesSent(0)
-  , MessagesReceived(0)
-  , UnreliableMessagesSent(0)
+  : UnreliableMessagesSent(0)
   , UnreliableMessagesReceived(0)
   , packetsSent(0)
   , packetsReSent(0)
@@ -256,7 +252,6 @@ void VNetwork::Init () {
 #else
   Listening = true;
 #endif
-  SetNetTime();
 
   // initialise all the drivers
   for (int i = 0; i < NumDrivers; ++i) {
@@ -277,8 +272,6 @@ void VNetwork::Init () {
 //
 //==========================================================================
 void VNetwork::Shutdown () {
-  SetNetTime();
-
   while (ActiveSockets) {
     delete ActiveSockets;
     ActiveSockets = nullptr;
@@ -296,25 +289,14 @@ void VNetwork::Shutdown () {
 
 //==========================================================================
 //
-//  VNetwork::SetNetTime
-//
-//==========================================================================
-double VNetwork::SetNetTime () {
-  NetTime = Sys_Time();
-  //GCon->Logf("*** VNetwork::SetNetTime: %g ***", NetTime);
-  return NetTime;
-}
-
-
-//==========================================================================
-//
 //  VNetwork::Poll
 //
 //==========================================================================
 void VNetwork::Poll () {
-  SetNetTime();
+  //SetNetTime();
+  double ctt = GetNetTime();
   for (VNetPollProcedure *pp = PollProcedureList; pp; pp = pp->next) {
-    if (pp->nextTime > NetTime) break;
+    if (pp->nextTime > ctt) break;
     PollProcedureList = pp->next;
     pp->procedure(pp->arg);
   }
@@ -641,8 +623,6 @@ VSocketPublic *VNetwork::Connect (const char *InHost) {
   int numdrivers = NumDrivers;
   int n;
 
-  SetNetTime();
-
   if (host.IsNotEmpty()) {
     if (host == "local") {
       numdrivers = 1;
@@ -706,15 +686,12 @@ JustDoIt:
 //
 //==========================================================================
 VSocketPublic *VNetwork::CheckNewConnections () {
-  SetNetTime();
-
   for (int i = 0; i < NumDrivers; ++i) {
     if (Drivers[i]->initialised == false) continue;
     if (i && Listening == false) continue;
     VSocket *ret = Drivers[i]->CheckNewConnections();
     if (ret) return ret;
   }
-
   return nullptr;
 }
 
@@ -725,7 +702,6 @@ VSocketPublic *VNetwork::CheckNewConnections () {
 //
 //==========================================================================
 void VNetwork::UpdateMaster () {
-  SetNetTime();
   for (int i = 0; i < NumDrivers; ++i) {
     if (!Drivers[i]->initialised) continue;
     Drivers[i]->UpdateMaster();
@@ -739,7 +715,6 @@ void VNetwork::UpdateMaster () {
 //
 //==========================================================================
 void VNetwork::QuitMaster () {
-  SetNetTime();
   for (int i = 0; i < NumDrivers; ++i) {
     if (!Drivers[i]->initialised) continue;
     Drivers[i]->QuitMaster();
@@ -832,9 +807,9 @@ VSocket::VSocket (VNetDriver *Drv) : Driver(Drv) {
   Next = Driver->Net->ActiveSockets;
   Driver->Net->ActiveSockets = this;
 
-  ConnectTime = Driver->Net->NetTime;
+  ConnectTime = Driver->Net->GetNetTime();
   Address = "UNSET ADDRESS";
-  LastMessageTime = Driver->Net->NetTime;
+  LastMessageTime = ConnectTime;
 }
 
 

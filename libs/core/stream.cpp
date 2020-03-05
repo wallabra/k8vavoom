@@ -94,7 +94,9 @@ vuint32 decodeVarInt (const void *data) noexcept {
 
 // returns number of used bytes; can consume up to 5 bytes
 int encodeVarInt (void *data, vuint32 n) noexcept {
+  vuint8 temp[8];
   vuint8 *buf = (vuint8 *)data;
+  if (!buf) buf = temp;
   if (n <= 0x1fffffff) {
     // positive
     if (n <= 0x7f) {

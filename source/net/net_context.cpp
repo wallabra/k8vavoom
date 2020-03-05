@@ -90,7 +90,7 @@ void VNetContext::Tick () {
     if (!Conn) continue; // just in case
     //!GCon->Logf(NAME_DevNet, "#%d: %s (oms:%d)", i, *Conn->GetAddress(), (int)Conn->ObjMapSent);
     // don't update level if the player isn't totally in the game yet
-    if (Conn->State != NETCON_Closed && Conn->GetGeneralChannel() && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
+    if (Conn->IsOpen() && Conn->GetGeneralChannel() && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
       //!GCon->Logf(NAME_DevNet, "  spawned: #%d: %s", i, *Conn->GetAddress());
       if (Conn->NeedsUpdate) {
         // reset update flag; it will be set again if we'll get any packet from the client
@@ -99,24 +99,24 @@ void VNetContext::Tick () {
         Conn->UpdateLevel();
       }
       // spam client with player updates
-      if (Conn->State != NETCON_Closed) {
+      if (Conn->IsOpen()) {
         //!GCon->Logf(NAME_DevNet, "  sending player update: #%d: %s", i, *Conn->GetAddress());
         Conn->GetPlayerChannel()->Update();
       }
     }
-    if (Conn->State != NETCON_Closed && Conn->ObjMapSent && !Conn->LevelInfoSent) {
+    if (Conn->IsOpen() && Conn->ObjMapSent && !Conn->LevelInfoSent) {
       GCon->Logf(NAME_DevNet, "Sending server info for %s", *Conn->GetAddress());
       Conn->SendServerInfo();
     }
-    if (Conn->State != NETCON_Closed) {
+    if (Conn->IsOpen()) {
       //!GCon->Logf(NAME_DevNet, "  ticking: #%d: %s", i, *Conn->GetAddress());
       Conn->Tick();
     }
-    if (Conn->State != NETCON_Closed && Conn->GetGeneralChannel()->Closing) {
+    if (Conn->IsOpen() && Conn->GetGeneralChannel()->Closing) {
       GCon->Logf(NAME_DevNet, "Client %s closed the connection", *Conn->GetAddress());
       Conn->State = NETCON_Closed;
     }
-    if (Conn->State == NETCON_Closed) {
+    if (Conn->IsClosed()) {
       GCon->Logf(NAME_DevNet, "Dropping client %s", *Conn->GetAddress());
       SV_DropClient(Conn->Owner, true);
     }
@@ -133,6 +133,6 @@ void VNetContext::KeepaliveTick () {
   for (int i = 0; i < ClientConnections.Num(); ++i) {
     VNetConnection *Conn = ClientConnections[i];
     if (!Conn) continue; // just in case
-    if (Conn->State != NETCON_Closed) Conn->KeepaliveTick();
+    if (Conn->IsOpen()) Conn->KeepaliveTick();
   }
 }

@@ -746,8 +746,7 @@ COMMAND_WITH_AC(RecordDemo) {
     Conn->AutoAck = true;
     GDemoRecordingContext->ClientConnections.Append(Conn);
     Conn->ObjMap->SetupClassLookup();
-    VObjectMapChannel *Chan = (VObjectMapChannel *)Conn->CreateChannel(CHANNEL_ObjectMap, -1);
-    (void)Chan; //k8:shut up, gcc!
+    (void)Conn->CreateChannel(CHANNEL_ObjectMap, -1, true); // local
     while (!Conn->ObjMapSent) Conn->Tick();
     Conn->SendServerInfo();
     Conn->GetPlayerChannel()->SetPlayer(cl);

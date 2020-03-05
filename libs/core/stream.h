@@ -43,7 +43,27 @@ int decodeVarIntLength (const vuint8 firstByte) noexcept;
 vuint32 decodeVarInt (const void *data) noexcept;
 
 // returns number of used bytes; can consume up to 5 bytes
+// you can pass `nullptr` as `data` to calculate length
 int encodeVarInt (void *data, vuint32 n) noexcept;
+
+// alas, have to have it here
+VVA_OKUNUSED static inline constexpr int calcVarIntLength (vuint32 n) noexcept {
+  if (n <= 0x1fffffff) {
+    // positive
+    if (n <= 0x7f) return 1;
+    if (n <= 0x1fff) return 2;
+    if (n <= 0x1fffff) return 3;
+    return 4;
+  } else {
+    // either negative, or full 32 bits required; format 3
+    // first, xor it
+    n ^= 0xffffffffU;
+    if (n <= 0x7ff) return 2;
+    if (n <= 0x7ffff) return 3;
+    if (n <= 0x7ffffff) return 4;
+    return 5;
+  }
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -191,12 +211,16 @@ class VStreamCompactIndex {
 public:
   vint32 Val;
   friend VStream &operator << (VStream &, VStreamCompactIndex &);
+  static inline int CalcBytes (vint32 val) noexcept { return calcVarIntLength((vuint32)val); }
 };
 #define STRM_INDEX(val)  (*(VStreamCompactIndex *)&(val))
+#define STRM_INDEX_BYTES(val)  (VStreamCompactIndex::CalcBytes(val))
 
 class VStreamCompactIndexU {
 public:
   vuint32 Val;
   friend VStream &operator << (VStream &, VStreamCompactIndexU &);
+  static int CalcBytes (vuint32 val) noexcept { return calcVarIntLength((vuint32)val); }
 };
 #define STRM_INDEX_U(val)  (*(VStreamCompactIndexU *)&(val))
+#define STRM_INDEX_U_BYTES(val)  (VStreamCompactIndexU::CalcBytes(val))

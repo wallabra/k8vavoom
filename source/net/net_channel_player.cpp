@@ -50,7 +50,7 @@ VPlayerChannel::VPlayerChannel (VNetConnection *AConnection, vint32 AIndex, vuin
 //
 //==========================================================================
 VPlayerChannel::~VPlayerChannel () {
-  SetPlayer(nullptr);
+  if (Connection) SetPlayer(nullptr);
 }
 
 
@@ -61,6 +61,16 @@ VPlayerChannel::~VPlayerChannel () {
 //==========================================================================
 VStr VPlayerChannel::GetName () const noexcept {
   return VStr(va("plrchan #%d(%s)", Index, GetTypeName()));
+}
+
+
+//==========================================================================
+//
+//  VPlayerChannel::SetClosing
+//
+//==========================================================================
+void VPlayerChannel::SetClosing () {
+  if (Connection) SetPlayer(nullptr);
 }
 
 
@@ -122,24 +132,11 @@ void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values
 //
 //==========================================================================
 void VPlayerChannel::Update () {
-  /*
-  if (Connection->IsServer()) {
-    if (!Connection->AllowMessageSend) return;
-  }
-  */
-  //if (Connection->sendQueueHead) return;
-  if (Connection->sendQueueHead) {
-    /*if (Connection->sendQueueSize > 5)*/ {
-      //DropUnreliableRPCOuts();
-      //GCon->Logf(NAME_DevNet, "%s: DELAYED: %d messages in queue", *GetDebugName(), Connection->sendQueueSize);
-      return;
-    }
-  }
+  if (!CanSendData()) { Connection->NeedsUpdate = true; return; }
 
   EvalCondValues(Plr, Plr->GetClass(), FieldCondValues);
 
   VMessageOut Msg(this);
-  SendRPCOuts(Msg);
 
   vuint8 *Data = (vuint8 *)Plr;
   for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
@@ -171,20 +168,17 @@ void VPlayerChannel::Update () {
     */
   }
 
-  // for client, always send it
-  if (Connection->IsClient()) Msg.MarkKeepalive();
   //GCon->Logf(NAME_DevNet, "%s: sending player update (%s)", *GetDebugName(), (Connection->IsClient() ? "client" : "server"));
-  //SendMessage(Msg);
-  FlushMsg(Msg);
+  SendMessage(&Msg);
 }
 
 
 //==========================================================================
 //
-//  VPlayerChannel::ParsePacket
+//  VPlayerChannel::ParseMessage
 //
 //==========================================================================
-void VPlayerChannel::ParsePacket (VMessageIn &Msg) {
+void VPlayerChannel::ParseMessage (VMessageIn &Msg) {
   //GCon->Logf(NAME_DevNet, "%s: received player update (%s)", *GetDebugName(), (Connection->IsClient() ? "client" : "server"));
   while (!Msg.AtEnd()) {
     int FldIdx = Msg.ReadInt(/*Plr->GetClass()->NumNetFields*/);

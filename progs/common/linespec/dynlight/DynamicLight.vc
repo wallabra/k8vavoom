@@ -78,7 +78,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     Origin.z = FixLightFlatPosition(Sector, Origin.z, mthing-&XLevel.Things[0]);
   }
 
-  //if (LightType&DLTYPE_Spot) printdebug("%C: Angles=%s; [1]=%s; [2]=%s", self, Angles, Args[1], Args[2]);
+  if (LightType&DLTYPE_Spot) printdebug("%C: Angles=%s; [1]=%s; [2]=%s", self, Angles, Args[1], Args[2]);
 
   //printwarn("LIGHT: r=%d; g=%d; b=%d; intensuty=%d", Args[0], Args[1], Args[2], Args[3]);
   // use static light for placed point lights that cannot be deactivated
@@ -87,7 +87,7 @@ override void OnMapSpawn (mthing_t *mthing) {
       //printdebug("*** adding static light for class %C (%d, %d, %d, %d)", self, mthing->arg1, mthing->arg2, mthing->arg3, mthing->arg4);
       if (LightType&DLTYPE_Spot) {
         // spotlight
-        //printdebug("*** adding static spotlight for class %C (%d, %d, %d, %d)", self, mthing->arg1, mthing->arg2, mthing->arg3, mthing->arg4);
+        printdebug("*** adding static spotlight for class %C (%d, %d, %d, %d); angles=%s; org=%s", self, mthing->arg1, mthing->arg2, mthing->arg3, mthing->arg4, Angles, Origin);
         TVec dir;
         AngleVector(Angles, out dir);
         Level.AddStaticLightRGB(none, Origin, IntensityToRadius(float(mthing->arg4)), mthing->arg1|0xff_00_00_00, dir, AngleMod360(max(mthing->arg2, mthing->arg3)));

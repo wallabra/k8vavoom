@@ -43,9 +43,9 @@ public:
   VLoopbackSocket (VNetDriver *Drv) : VSocket(Drv), OtherSock(nullptr) {}
   virtual ~VLoopbackSocket () override;
 
-  virtual int GetMessage (TArray<vuint8> &) override;
+  virtual int GetMessage (void *dest, size_t destSize) override;
   virtual int SendMessage (const vuint8 *, vuint32) override;
-  virtual bool IsLocalConnection () override;
+  virtual bool IsLocalConnection () const noexcept override;
 };
 
 
@@ -251,18 +251,14 @@ VLoopbackSocket::~VLoopbackSocket () {
 //
 //  VLoopbackSocket::GetMessage
 //
-//  If there is a packet, return it.
-//
-//  returns 0 if no data is waiting
-//  returns 1 if a packet was received
-//  returns -1 if connection is invalid
-//
 //==========================================================================
-int VLoopbackSocket::GetMessage (TArray<vuint8> &Data) {
+int VLoopbackSocket::GetMessage (void *dest, size_t destSize) {
   if (!LoopbackMessages.Num()) return 0;
-  Data = LoopbackMessages[0].Data;
+  int res = LoopbackMessages[0].Data.length();
+  if (res > (int)destSize) return -1;
+  if (res) memcpy(dest, LoopbackMessages[0].Data.ptr(), res);
   LoopbackMessages.RemoveIndex(0);
-  return 1;
+  return res;
 }
 
 
@@ -289,6 +285,6 @@ int VLoopbackSocket::SendMessage (const vuint8 *Data, vuint32 Length) {
 //  VLoopbackSocket::IsLocalConnection
 //
 //==========================================================================
-bool VLoopbackSocket::IsLocalConnection () {
+bool VLoopbackSocket::IsLocalConnection () const noexcept {
   return true;
 }

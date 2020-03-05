@@ -265,8 +265,8 @@ static void stack_trace () {
 //  Sys_ConsoleInput
 //
 //==========================================================================
-char *Sys_ConsoleInput ()
-{
+char *Sys_ConsoleInput () {
+  /*
   static char text[256];
   int     len;
   fd_set  fdset;
@@ -283,6 +283,8 @@ char *Sys_ConsoleInput ()
   text[len-1] = 0;    // rip off the /n and terminate
 
   return text;
+  */
+  return nullptr;
 }
 
 

@@ -27,9 +27,6 @@
 #include "network.h"
 #include "net_message.h"
 
-//#define VAVOOM_NET_DEBUG_INMESSAGE
-//#define VAVOOM_NET_DEBUG_OUTMESSAGE
-
 
 //==========================================================================
 //
@@ -41,59 +38,29 @@ bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
   Data.reset();
   Num = Pos = 0;
   bError = false;
-  // read 14-bit length (it includes 2 bytes for the length itself)
-  vuint16 v = 0;
-  for (int f = 0; f < 14; ++f) {
-    if (srcPacket.IsError()) { bError = true; return false; }
-    v <<= 1;
-    if (srcPacket.ReadBit()) v |= 0x01u;
-  }
-  if (srcPacket.IsError() || IsError() || v < 14) { bError = true; return false; }
-  v -= 14;
-  #ifdef VAVOOM_NET_DEBUG_INMESSAGE
-  GCon->Logf(NAME_Debug, "*** inmessage size: %u (left %u)", v, srcPacket.GetNumBits()-srcPacket.GetPos());
-  #endif
-  if (srcPacket.GetNumBits() < v) {
-    GCon->Log(NAME_Debug, "*** inmessage: out of data in packet!");
+
+  bReliable = srcPacket.ReadBit();
+  bOpen = srcPacket.ReadBit();
+  bClose = (bReliable ? srcPacket.ReadBit() : bOpen);
+  ChanIndex = srcPacket.ReadUInt();
+  ChanSequence = 0;
+  if (bReliable) srcPacket << STRM_INDEX_U(ChanSequence);
+  ChanType = (bReliable || bOpen ? srcPacket.ReadUInt() : 0);
+  const int dataBits = (int)srcPacket.ReadUInt();
+
+  if (srcPacket.IsError()) {
+    GCon->Log(NAME_DevNet, "*** inmessage: incomplete message header");
     bError = true;
     return false;
   }
-  SetData(srcPacket, v);
+
+  SetData(srcPacket, dataBits);
   if (srcPacket.IsError() || IsError()) {
     GCon->Logf(NAME_Debug, "*** inmessage: error reading data from packet (%d : %d)!", (int)srcPacket.IsError(), (int)IsError());
     bError = true;
     return false;
   }
-  // parse header
-  // message flags
-  bOpen = ReadBit();
-  bClose = ReadBit();
-  // channel index
-  *this << STRM_INDEX(ChanIndex);
-  #ifdef VAVOOM_NET_DEBUG_INMESSAGE
-  GCon->Logf(NAME_Debug, "*** inmessage: cidx=%d", ChanIndex);
-  #endif
-  if (ChanIndex < 0) {
-    bError = true;
-    return false;
-  }
-  #ifdef VAVOOM_NET_DEBUG_INMESSAGE
-  GCon->Logf(NAME_Debug, "*** inmessage: bOpen=%d; bClose=%d; cidx=%d", (int)bOpen, (int)bClose, ChanIndex);
-  #endif
-  // optional channel type
-  if (bOpen) {
-    vuint32 ctype = ReadUInt();
-    #ifdef VAVOOM_NET_DEBUG_INMESSAGE
-    GCon->Logf(NAME_Debug, "*** inmessage: ctype=%u", ctype);
-    #endif
-    if (ctype >= CHANNEL_MAX) {
-      bError = true;
-      return false;
-    }
-    ChanType = ctype;
-  } else {
-    ChanType = 0; // unknown
-  }
+
   return !IsError();
 }
 
@@ -104,13 +71,19 @@ bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
 //  VMessageOut::VMessageOut
 //
 //==========================================================================
-VMessageOut::VMessageOut (VChannel *AChannel, unsigned flags)
+VMessageOut::VMessageOut (VChannel *AChannel, bool areliable)
   : VBitStreamWriter(MAX_MSG_SIZE_BITS+16, false) // no expand
-  , hdrSizeBits(0)
-  , msgflags(0)
+  , ChanType(AChannel ? AChannel->Type : 0)
+  , ChanIndex(AChannel ? AChannel->Index : -1)
+  , ChanSequence(0)
+  , PacketId(0)
+  , bOpen(false)
+  , bClose(false)
+  , bReliable(areliable)
+  , Next(nullptr)
+  , Time(0)
+  , bReceivedAck(false)
 {
-  vassert(AChannel);
-  writeHeader(AChannel->Type, AChannel->Index, flags);
 }
 
 
@@ -119,12 +92,19 @@ VMessageOut::VMessageOut (VChannel *AChannel, unsigned flags)
 //  VMessageOut::VMessageOut
 //
 //==========================================================================
-VMessageOut::VMessageOut (vuint8 AChanType, int AChanIndex, unsigned flags)
+VMessageOut::VMessageOut (vuint8 AChanType, int AChanIndex, bool areliable)
   : VBitStreamWriter(MAX_MSG_SIZE_BITS+16, false) // no expand
-  , hdrSizeBits(0)
-  , msgflags(0)
+  , ChanType(AChanType)
+  , ChanIndex(AChanIndex)
+  , ChanSequence(0)
+  , PacketId(0)
+  , bOpen(false)
+  , bClose(false)
+  , bReliable(areliable)
+  , Next(nullptr)
+  , Time(0)
+  , bReceivedAck(false)
 {
-  writeHeader(AChanType, AChanIndex, flags);
 }
 
 
@@ -133,87 +113,75 @@ VMessageOut::VMessageOut (vuint8 AChanType, int AChanIndex, unsigned flags)
 //  VMessageOut::Reset
 //
 //==========================================================================
-void VMessageOut::Reset (VChannel *AChannel, unsigned flags) {
-  vassert(AChannel);
+void VMessageOut::Reset (VChannel *AChannel, bool areliable) {
   Clear();
-  hdrSizeBits = 0;
-  writeHeader(AChannel->Type, AChannel->Index, flags);
+  ChanType = (AChannel ? AChannel->Type : 0);
+  ChanIndex = (AChannel ? AChannel->Index : -1);
+  ChanSequence = 0;
+  PacketId = 0;
+  bOpen = false;
+  bClose = false;
+  bReliable = areliable;
+  Time = 0;
+  bReceivedAck = false;
 }
 
 
 //==========================================================================
 //
-//  VMessageOut::writeHeader
+//  VMessageOut::WriteHeader
 //
 //==========================================================================
-void VMessageOut::writeHeader (vuint8 AChanType, int AChanIndex, unsigned flags) {
-  vassert(hdrSizeBits == 0);
-  //if (flags&NoHeader) return;
-  vassert(GetNumBits() == 0);
-  vassert(AChanIndex >= 0);
-  // reserve room for size (14 bits)
-  for (int f = 0; f < 14; ++f) this->WriteBit(false);
-  vassert(GetNumBits() == 14);
-  // message flags
-  this->WriteBit(!!(flags&Open));
-  vassert(Pos == 15);
-  this->WriteBit(!!(flags&Close));
-  // message index
-  *this << STRM_INDEX(AChanIndex);
-  // optional channel type
-  if (flags&Open) this->WriteUInt(AChanType);
-  hdrSizeBits = GetNumBits();
-  msgflags = flags;
-}
-
-
-//==========================================================================
-//
-//  VMessageOut::MarkClose
-//
-//==========================================================================
-void VMessageOut::MarkClose () noexcept {
-  vassert(hdrSizeBits > 18);
-  msgflags |= Close;
-  // fix header
-  this->ForceBitAt(15, true);
-}
-
-
-//==========================================================================
-//
-//  VMessageOut::fixSize
-//
-//  this fixes message size in the header
-//
-//==========================================================================
-void VMessageOut::fixSize () {
-  vassert(GetNumBits() >= 16);
-  vassert(GetNumBits() <= MAX_MSG_SIZE_BITS);
-  static_assert(MAX_MSG_SIZE_BITS <= 0xffff, "internal message size too big");
-  vuint16 v = (vuint16)GetNumBits();
-  const int chk = GetNumBits();
-  vassert(v <= 0x4000);
-  #ifdef VAVOOM_NET_DEBUG_OUTMESSAGE
-  GCon->Logf(NAME_Debug, "*** outmessage size: %u", v);
-  #endif
-  // 14 bits is enough
-  v <<= 2; // remove hight two bits, they are zero anyway
-  for (int f = 0; f < 14; ++f) {
-    ForceBitAt(f, v&0x8000u);
-    v <<= 1;
+void VMessageOut::WriteHeader (VBitStreamWriter &strm) const {
+  vassert(ChanIndex >= 0 && ChanIndex < MAX_CHANNELS);
+  // "normal message" flag
+  strm.WriteBit(false);
+  strm.WriteBit(bReliable);
+  strm.WriteBit(bOpen);
+  if (bReliable) {
+    strm.WriteBit(bClose);
+  } else {
+    // unreliable messages should not open/close channels
+    // the only exception is "open, shoot, and close"
+    vassert(bOpen == bClose);
   }
-  vassert(GetNumBits() == chk);
+  strm.WriteUInt(ChanIndex);
+  // for reliable, write channel sequence
+  if (bReliable) strm << STRM_INDEX_U(ChanSequence);
+  // for reliable or open, write channel type
+  // this is because non-open reliable message can arrive first, and we need to create a channel anyway
+  if (bReliable || bOpen) strm.WriteUInt(ChanType);
+  strm.WriteUInt((vuint32)GetNumBits());
 }
 
 
 //==========================================================================
 //
-//  VMessageOut::Finalise
+//  VMessageOut::EstimateSize
 //
-//  call this before copying packet data
+//  estimate current packet size
+//  channel sequence, and packedid doesn't matter
 //
 //==========================================================================
-void VMessageOut::Finalise () {
-  fixSize();
+int VMessageOut::EstimateSizeInBits (int addbits) const noexcept {
+  vassert(addbits >= 0);
+  // this is wrong, because the message should know about communication layer internals; but meh
+  const int bitsize =
+    // header
+    1+ // zero
+    1+ // reliable flag
+    1+ // open flag
+    (bReliable ? 1 : 0)+ // close flag
+    BitStreamCalcUIntBits(ChanIndex)+ // channel index
+    (bReliable ? 5*8 : 0)+ // channel sequence (unknown yet)
+    (bReliable || bOpen ? BitStreamCalcUIntBits(ChanType) : 0)+ // channel type
+    BitStreamCalcUIntBits(MAX_MSG_SIZE_BITS)+ // size field
+    // data
+    GetNumBits()+addbits+
+    // stop bit
+    1;
+  // get size in bytes
+  const int bytesize = (bitsize+7)>>3;
+  // return resulting bits
+  return (bytesize<<3);
 }

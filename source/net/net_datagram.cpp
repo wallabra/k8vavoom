@@ -84,9 +84,9 @@ public:
   VDatagramSocket (VNetDriver *Drv) : VSocket(Drv), LanDriver(nullptr), LanSocket(0), Invalid(false) {}
   virtual ~VDatagramSocket() override;
 
-  virtual int GetMessage (TArray<vuint8> &Data) override;
+  virtual int GetMessage (void *dest, size_t destSize) override;
   virtual int SendMessage (const vuint8 *Data, vuint32 Length) override;
-  virtual bool IsLocalConnection () override;
+  virtual bool IsLocalConnection () const noexcept override;
 };
 
 
@@ -352,7 +352,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   // send the connection request
   GCon->Logf(NAME_DevNet, "trying %s", *Drv->AddrToString(&sendaddr));
   //SCR_Update();
-  start_time = Net->NetTime;
+  start_time = Net->GetNetTime();
 
   for (reps = 0; reps < 3; ++reps) {
     if (Net->CheckForUserAbort()) { ret = 0; break; }
@@ -399,11 +399,11 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
       }
 
       if (ret == 0) { aborted = Net->CheckForUserAbort(); if (aborted) break; }
-    } while (ret == 0 && (Net->SetNetTime()-start_time) < 2.5);
+    } while (ret == 0 && (Net->GetNetTime()-start_time) < 2.5);
     if (ret || aborted) break;
     GCon->Logf(NAME_DevNet, "still trying %s", *Drv->AddrToString(&sendaddr));
     //SCR_Update();
-    start_time = Net->SetNetTime();
+    start_time = Net->GetNetTime();
   }
 
   //SCR_Update();
@@ -445,7 +445,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   sock->Address = Drv->AddrToString(&sock->Addr);
 
   GCon->Logf(NAME_DevNet, "Connection accepted at %s (redirected to port %u)", *sock->Address, newport);
-  sock->LastMessageTime = Net->SetNetTime();
+  sock->LastMessageTime = Net->GetNetTime();
 
   delete msg;
   msg = nullptr;
@@ -603,7 +603,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     ret = Drv->AddrCompare(&clientaddr, &s->Addr);
     if (ret >= 0) {
       // is this a duplicate connection reqeust?
-      if (ret == 0 && Net->NetTime-s->ConnectTime < 2.0) {
+      if (ret == 0 && Net->GetNetTime()-s->ConnectTime < 2.0) {
         GCon->Logf(NAME_DevNet, "CONN: duplicate connection request from %s (this is ok)", *Drv->AddrToString(&clientaddr));
         // yes, so send a duplicate reply
         VBitStreamWriter MsgOut(32<<3);
@@ -907,19 +907,18 @@ VDatagramSocket::~VDatagramSocket () {
 //
 //  VDatagramSocket::GetMessage
 //
-//  If there is a packet, return it.
-//
-//  returns  0 if no data is waiting
-//  returns  1 if a packet was received
-//  returns -1 if connection is invalid
+//  dest should be at least `MAX_DGRAM_SIZE+4` (just in case)
+//  returns number of bytes received, 0 for "no message", -1 for error
 //
 //==========================================================================
-int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
+int VDatagramSocket::GetMessage (void *dest, size_t destSize) {
   if (Invalid) return -1;
+  if (destSize == 0) return -1;
+  if (!dest) return -1;
 
   sockaddr_t readaddr;
   int ret = 0;
-  vuint8 data[MAX_DGRAM_SIZE];
+  vuint8 data[MAX_DGRAM_SIZE+4];
 
   for (;;) {
     // read message
@@ -931,7 +930,7 @@ int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
     }
 
     if ((int)length < 0) {
-      GCon->Logf(NAME_DevNet, "Read error (%s)", *LanDriver->AddrToString(&Addr));
+      GCon->Logf(NAME_DevNet, "%s: Read error", *LanDriver->AddrToString(&Addr));
       return -1;
     }
 
@@ -943,10 +942,13 @@ int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
 
     UpdateReceivedStats(length);
 
-    Data.SetNum(length);
-    memcpy(Data.Ptr(), data, length);
+    if (length > destSize) {
+      GCon->Logf(NAME_DevNet, "%s: Read error (message too big)", *LanDriver->AddrToString(&Addr));
+      return -1;
+    }
 
-    ret = 1;
+    memcpy(dest, data, length);
+    ret = (int)length;
     break;
   }
 
@@ -979,7 +981,7 @@ int VDatagramSocket::SendMessage (const vuint8 *Data, vuint32 Length) {
 //  VDatagramSocket::IsLocalConnection
 //
 //==========================================================================
-bool VDatagramSocket::IsLocalConnection () {
+bool VDatagramSocket::IsLocalConnection () const noexcept {
   return false;
 }
 
@@ -1009,21 +1011,19 @@ COMMAND(NetStats) {
 
   VNetworkLocal *Net = (VNetworkLocal *)GNet;
   if (Args.Num() == 1) {
-    GCon->Logf(NAME_DevNet, "unreliable messages sent   = %d", Net->UnreliableMessagesSent);
-    GCon->Logf(NAME_DevNet, "unreliable messages recv   = %d", Net->UnreliableMessagesReceived);
-    GCon->Logf(NAME_DevNet, "reliable messages sent     = %d", Net->MessagesSent);
-    GCon->Logf(NAME_DevNet, "reliable messages received = %d", Net->MessagesReceived);
-    GCon->Logf(NAME_DevNet, "packetsSent                = %d", Net->packetsSent);
-    GCon->Logf(NAME_DevNet, "packetsReSent              = %d", Net->packetsReSent);
-    GCon->Logf(NAME_DevNet, "packetsReceived            = %d", Net->packetsReceived);
-    GCon->Logf(NAME_DevNet, "receivedDuplicateCount     = %d", Net->receivedDuplicateCount);
-    GCon->Logf(NAME_DevNet, "shortPacketCount           = %d", Net->shortPacketCount);
-    GCon->Logf(NAME_DevNet, "droppedDatagrams           = %d", Net->droppedDatagrams);
-    GCon->Logf(NAME_DevNet, "minimalSentPacket          = %u", Net->minimalSentPacket);
-    GCon->Logf(NAME_DevNet, "maximalSentPacket          = %u", Net->maximalSentPacket);
-    GCon->Logf(NAME_DevNet, "bytesSent                  = %s", *VSocketPublic::u64str(Net->bytesSent));
-    GCon->Logf(NAME_DevNet, "bytesReceived              = %s", *VSocketPublic::u64str(Net->bytesReceived));
-    GCon->Logf(NAME_DevNet, "bytesRejected              = %s", *VSocketPublic::u64str(Net->bytesRejected));
+    GCon->Logf(NAME_DevNet, "unreliable messages sent = %d", Net->UnreliableMessagesSent);
+    GCon->Logf(NAME_DevNet, "unreliable messages recv = %d", Net->UnreliableMessagesReceived);
+    GCon->Logf(NAME_DevNet, "packetsSent              = %d", Net->packetsSent);
+    GCon->Logf(NAME_DevNet, "packetsReSent            = %d", Net->packetsReSent);
+    GCon->Logf(NAME_DevNet, "packetsReceived          = %d", Net->packetsReceived);
+    GCon->Logf(NAME_DevNet, "receivedDuplicateCount   = %d", Net->receivedDuplicateCount);
+    GCon->Logf(NAME_DevNet, "shortPacketCount         = %d", Net->shortPacketCount);
+    GCon->Logf(NAME_DevNet, "droppedDatagrams         = %d", Net->droppedDatagrams);
+    GCon->Logf(NAME_DevNet, "minimalSentPacket        = %u", Net->minimalSentPacket);
+    GCon->Logf(NAME_DevNet, "maximalSentPacket        = %u", Net->maximalSentPacket);
+    GCon->Logf(NAME_DevNet, "bytesSent                = %s", *VSocketPublic::u64str(Net->bytesSent));
+    GCon->Logf(NAME_DevNet, "bytesReceived            = %s", *VSocketPublic::u64str(Net->bytesReceived));
+    GCon->Logf(NAME_DevNet, "bytesRejected            = %s", *VSocketPublic::u64str(Net->bytesRejected));
   } else {
     for (s = Net->ActiveSockets; s; s = s->Next) {
       bool hit = false;

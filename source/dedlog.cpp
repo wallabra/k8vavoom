@@ -29,6 +29,9 @@
 
 static FILE *ddlogfout = nullptr;
 
+bool ttyRefreshInputLine = true;
+bool ttyExtraDisabled = false;
+
 
 //**************************************************************************
 //
@@ -46,32 +49,75 @@ FOutputDevice *GCon = &Console;
 
 class VDedLog : public VLogListener {
 public:
-  bool justNewlined;
   EName lastEvent;
+  bool justNewlined;
+  unsigned coLen;
+  char collectedLine[8192];
 
 private:
-  inline void putStdOut (const char *s, int len=-1) {
-    if (!ttyIsGood()) return;
+  void putStdOut (const char *s, int len=-1) {
+    if (!s || !ttyIsAvailable()) return;
     if (len < 1) {
       if (!len || !s || !s[0]) return;
       len = (int)strlen(s);
-      if (len < 1) return;
     }
-    write(STDOUT_FILENO, s, (size_t)len);
+    if (len < 1) return;
+    if (ttyExtraDisabled || !ttyIsGood()) {
+      //ttyRawWrite(s);
+      write(STDOUT_FILENO, s, (size_t)len);
+      return;
+    }
+    // buffer TTY output
+    while (len > 0) {
+      // newline?
+      if (s[0] == '\n') {
+        // output collected line
+        if (coLen) {
+          collectedLine[coLen++] = '\x1b';
+          collectedLine[coLen++] = '[';
+          collectedLine[coLen++] = '0';
+          collectedLine[coLen++] = 'm';
+          collectedLine[coLen++] = '\n';
+          collectedLine[coLen] = 0;
+          ttyRawWrite(collectedLine);
+          coLen = 0;
+          collectedLine[coLen++] = '\x1b';
+          collectedLine[coLen++] = '[';
+          collectedLine[coLen++] = '0';
+          collectedLine[coLen++] = 'm';
+          collectedLine[coLen++] = '\x1b';
+          collectedLine[coLen++] = '[';
+          collectedLine[coLen++] = '1';
+          collectedLine[coLen++] = 'G';
+          collectedLine[coLen++] = '\x1b';
+          collectedLine[coLen++] = '[';
+          collectedLine[coLen++] = 'K';
+          collectedLine[coLen] = 0;
+          ttyRefreshInputLine = true;
+        }
+        ++s;
+        --len;
+        continue;
+      }
+      if (coLen < ARRAY_COUNT(collectedLine)-8) collectedLine[coLen++] = *s;
+      ++s;
+      --len;
+    }
   }
 
-  inline void putStr (const char *s, int len=-1) {
+  void putStr (const char *s, int len=-1) {
+    if (!s) return;
     if (len < 1) {
       if (!len || !s || !s[0]) return;
       len = (int)strlen(s);
       if (len < 1) return;
     }
-    if (ttyIsGood()) ttyRawWrite(s);
+    putStdOut(s, len);
     if (ddlogfout) fwrite(s, (size_t)len, 1, ddlogfout);
   }
 
 public:
-  inline VDedLog () noexcept : justNewlined(true) {}
+  inline VDedLog () noexcept : lastEvent(NAME_Log), justNewlined(true), coLen(0) {}
 
 public:
   virtual void Serialise (const char *Text, EName Event) noexcept override {
@@ -80,12 +126,27 @@ public:
     lastEvent = Event;
     VStr rc = VStr(Text).RemoveColors();
     const char *rstr = *rc;
-    while (rstr && *rstr) {
+    if (!rstr || !rstr[0]) return;
+    // use scroll region that is one less than the TTY height
+    /*
+    #ifndef _WIN32
+    if (ttyIsGood()) {
+      char ssr[32];
+      snprintf(ssr, sizeof(ssr), "\x1b[1;%dH", ttyGetHeight());
+      ttyRawWrite(ssr);
+    }
+    #endif
+    */
+    while (rstr && rstr[0]) {
       if (justNewlined) {
         #if !defined(_WIN32)
         bool resetColor = true;
-        const char *cs = VLog::GetColorInfoTTY(lastEvent, resetColor);
-        if (cs) putStdOut(cs); else resetColor = false;
+        if (ttyIsAvailable()) {
+          const char *cs = VLog::GetColorInfoTTY(lastEvent, resetColor);
+          if (cs) putStdOut(cs); else resetColor = false;
+        } else {
+          resetColor = false;
+        }
         #endif
         putStr(VName::SafeString(lastEvent));
         if (rstr[0] != '\n') putStr(": "); else putStr(":");
@@ -96,11 +157,11 @@ public:
       }
       const char *eol = strchr(rstr, '\n');
       if (eol) {
-         // has newline; print it too
-         ++eol;
-         putStr(rstr, (int)(ptrdiff_t)(eol-rstr));
-         rstr = eol;
-         justNewlined = true;
+        // has newline; print it too
+        ++eol;
+        putStr(rstr, (int)(ptrdiff_t)(eol-rstr));
+        rstr = eol;
+        justNewlined = true;
       } else {
         putStr(rstr);
         break;

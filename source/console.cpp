@@ -525,7 +525,6 @@ bool C_Responder (event_t *ev) {
 
     // auto complete
     case K_TAB:
-      //TODO: autocompletion with moved cursor
       if (c_iline.length() != 0) {
         VStr clineRest = c_iline.getCStr();
         VStr cline = clineRest.left(c_iline.getCurPos());

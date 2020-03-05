@@ -90,13 +90,10 @@ VDemoPlaybackNetConnection::~VDemoPlaybackNetConnection () {
 //
 //  VDemoPlaybackNetConnection::GetRawPacket
 //
-//  Handles recording and playback of demos, on top of NET_ code
+//  handles recording and playback of demos
 //
 //==========================================================================
-int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
-  //Driver->SetNetTime();
-  //LastMessageTime = Driver->NetTime;
-
+int VDemoPlaybackNetConnection::GetRawPacket (void *dest, size_t destSize) {
   // decide if it is time to grab the next message
   if (Owner->MO) { // always grab until fully connected
     if (bTimeDemo) {
@@ -110,16 +107,11 @@ int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
     }
   } else {
     /*
-    if (GClLevel) {
-      GCon->Logf("no owner (level: %s; ltime=%g)", *GClLevel->MapName, GClLevel->Time);
-    } else {
-      GCon->Logf("no owner");
-    }
-    */
     if (GClLevel && GClLevel->Time == 0.0f && NextPacketTime != 0.0f) {
       //GCon->Logf("no owner (level: %s; ltime=%g; NextPacketTime=%g)", *GClLevel->MapName, GClLevel->Time, NextPacketTime);
       //return 0;
     }
+    */
   }
 
   if (Strm->AtEnd()) {
@@ -133,9 +125,14 @@ int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
   *Strm << MsgSize;
   *Strm << Owner->ViewAngles;
 
+  if (MsgSize < 0 || MsgSize > (int)destSize) {
+    GCon->Logf(NAME_Error, "demo message corrupted (size is %d)", MsgSize);
+    State = NETCON_Closed;
+    return 0;
+  }
+
   //if (MsgSize > OUT_MESSAGE_SIZE) Sys_Error("Demo message > MAX_MSGLEN");
-  Data.SetNum(MsgSize);
-  Strm->Serialise(Data.Ptr(), MsgSize);
+  Strm->Serialise(dest, MsgSize);
   if (Strm->IsError()) {
     State = NETCON_Closed;
     return 0;
@@ -146,13 +143,7 @@ int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
     //GCon->Logf("*** NEXTPKT: %g", NextPacketTime);
   }
 
-  /*
-  static float ptt = 0;
-  GCon->Logf("demo packet: size=%d; pktime=%f; msdiff=%d", MsgSize, NextPacketTime, (int)((NextPacketTime-ptt)*1000));
-  ptt = NextPacketTime;
-  */
-
-  return 1;
+  return MsgSize;
 }
 
 
@@ -161,8 +152,7 @@ int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
 //  VDemoPlaybackNetConnection::SendMessage
 //
 //==========================================================================
-void VDemoPlaybackNetConnection::SendMessage (VMessageOut &) {
-  //Driver->SetNetTime();
+void VDemoPlaybackNetConnection::SendMessage (VMessageOut *Msg) {
 }
 
 
@@ -177,8 +167,8 @@ void VDemoPlaybackNetConnection::Intermission (bool active) {
 }
 
 
-#ifdef CLIENT
 
+#ifdef CLIENT
 //==========================================================================
 //
 //  VDemoRecordingNetConnection::VDemoRecordingNetConnection
@@ -213,23 +203,22 @@ void VDemoRecordingNetConnection::Intermission (bool active) {
 //
 //  VDemoRecordingNetConnection::GetRawPacket
 //
-//  Handles recording and playback of demos, on top of NET_ code
+//  handles recording and playback of demos
 //
 //==========================================================================
-int VDemoRecordingNetConnection::GetRawPacket (TArray<vuint8> &Data) {
-  //Driver->SetNetTime();
-  int r = VNetConnection::GetRawPacket(Data);
-  if (r == 1 && cls.demorecording) {
+int VDemoRecordingNetConnection::GetRawPacket (void *dest, size_t destSize) {
+  int len = VNetConnection::GetRawPacket(dest, destSize);
+  if (len > 0 && cls.demorecording) {
     // dumps the current net message, prefixed by the length and view angles
     float Time = (GClLevel ? GClLevel->Time : 0.0f);
     *cls.demofile << Time;
-    vint32 MsgSize = Data.Num();
+    vint32 MsgSize = (int)len;
     *cls.demofile << MsgSize;
     *cls.demofile << cl->ViewAngles;
-    cls.demofile->Serialise(Data.Ptr(), Data.Num());
+    cls.demofile->Serialise(dest, len);
     if (demo_flush_each_packet) cls.demofile->Flush();
   }
-  return r;
+  return len;
 }
 
 
@@ -238,7 +227,7 @@ int VDemoRecordingNetConnection::GetRawPacket (TArray<vuint8> &Data) {
 //  VDemoRecordingSocket::IsLocalConnection
 //
 //==========================================================================
-bool VDemoRecordingSocket::IsLocalConnection () {
+bool VDemoRecordingSocket::IsLocalConnection () const noexcept {
   return false;
 }
 
@@ -248,9 +237,8 @@ bool VDemoRecordingSocket::IsLocalConnection () {
 //  VDemoRecordingSocket::GetMessage
 //
 //==========================================================================
-int VDemoRecordingSocket::GetMessage (TArray<vuint8> &) {
-  //LastMessageTime = Sys_Time();
-  LastMessageTime = GNet->NetTime;
+int VDemoRecordingSocket::GetMessage (void *dest, size_t destSize) {
+  LastMessageTime = GNet->GetNetTime();
   return 0;
 }
 
@@ -261,18 +249,8 @@ int VDemoRecordingSocket::GetMessage (TArray<vuint8> &) {
 //
 //==========================================================================
 int VDemoRecordingSocket::SendMessage (const vuint8 *Msg, vuint32 MsgSize) {
-  //LastMessageTime = Sys_Time();
-  LastMessageTime = GNet->NetTime;
+  LastMessageTime = GNet->GetNetTime();
   if (cls.demorecording) {
-    /*
-    if (cl) {
-      if (GClLevel) {
-        GCon->Logf("SRV: no owner (level: %s; ltime=%g)", *GClLevel->MapName, GClLevel->Time);
-      } else {
-        GCon->Logf("SRV: no owner");
-      }
-    }
-    */
     // dumps the current net message, prefixed by the length and view angles
     float Time = (GClLevel ? GClLevel->Time : 0.0f);
     *cls.demofile << Time;

@@ -38,15 +38,48 @@ class VChannel;
 class VMessageIn : public VBitStreamReader {
 public:
   vuint8 ChanType;
-  vint32 ChanIndex;
+  vuint32 ChanIndex;
+  vuint32 ChanSequence;
+  // note that in unreliable message, `bOpen` is always equal to `bClose`
   bool bOpen; // open channel message
   bool bClose; // close channel message
+  bool bReliable;
+
+  VMessageIn *Next;
 
 public:
-  VV_DISABLE_COPY(VMessageIn)
+  VMessageOut &operator = (const VMessageOut &) = delete;
 
-  inline VMessageIn (VBitStreamReader &srcPacket) : VBitStreamReader(), ChanType(0), ChanIndex(-1), bOpen(false), bClose(false) { LoadFrom(srcPacket); }
+  inline VMessageIn (const VMessageIn &src)
+    : VBitStreamReader() // will be replaced anyway
+    , ChanType(src.ChanType)
+    , ChanIndex(src.ChanIndex)
+    , ChanSequence(src.ChanSequence)
+    , bOpen(src.bOpen)
+    , bClose(src.bClose)
+    , bReliable(src.bReliable)
+    , Next(nullptr)
+  {
+    cloneFrom(&src);
+  }
 
+  // this parses message header, and consumes message data
+  // first zero bit is already read, though
+  inline VMessageIn (VBitStreamReader &srcPacket)
+    : VBitStreamReader()
+    , ChanType(0)
+    , ChanIndex(-1)
+    , ChanSequence(0)
+    , bOpen(false)
+    , bClose(false)
+    , bReliable(false)
+    , Next(nullptr)
+  {
+    LoadFrom(srcPacket);
+  }
+
+  // this clears the message, parses message header, and consumes message data
+  // first zero bit is already read, though
   bool LoadFrom (VBitStreamReader &srcPacket);
 };
 
@@ -54,79 +87,56 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VMessageOut : public VBitStreamWriter {
 public:
-  // flags for ctor
-  enum {
-    Unreliable = 1u<<0,
-    Open       = 1u<<1,
-    Close      = 1u<<2,
-    // this flag means nothing, and used only to force sending empty packets
-    Keepalive  = 1u<<6,
-    //NoHeader   = 1u<<7,
-  };
+  vuint8 ChanType;
+  vuint32 ChanIndex;
+  vuint32 ChanSequence;
+  // the packet (datagram) sequence id in which this message was sent last time
+  // it is used to ack all messages in the given packet
+  vuint32 PacketId;
+  bool bOpen;
+  bool bClose;
+  bool bReliable;
 
-protected:
-  int hdrSizeBits;
-  unsigned msgflags;
-
-protected:
-  void writeHeader (vuint8 AChanType, int AChanIndex, unsigned flags);
-
-  void fixSize ();
+  VMessageOut *Next;
+  // set by the connection object
+  double Time; // time when this message was sent (updated with each resending)
+  bool bReceivedAck; // packet parser will set this flag, and will call the channel to process acked messages
 
 public:
-  // this creates message with the header for the given existing channel
-  VMessageOut (VChannel *AChannel, unsigned flags=0);
+  VMessageOut &operator = (const VMessageOut &) = delete;
 
-  // this creates message with the header for arbitrary channel
-  VMessageOut (vuint8 AChanType, int AChanIndex, unsigned flags);
+  // default messages are reliable
+  VMessageOut (VChannel *AChannel, bool areliable=true);
+  VMessageOut (vuint8 AChanType, int AChanIndex, bool areliable=true);
 
   // this copies message data, including header
   inline VMessageOut (const VMessageOut &src)
     : VBitStreamWriter(0, false) // it will be overwritten anyway
+    , ChanType(src.ChanType)
+    , ChanIndex(src.ChanIndex)
+    , ChanSequence(src.ChanSequence)
+    , PacketId(src.PacketId)
+    , bOpen(src.bOpen)
+    , bClose(src.bClose)
+    , bReliable(src.bReliable)
+    , Next(nullptr)
+    , Time(src.Time)
+    , bReceivedAck(src.bReceivedAck) //???
   {
     // clone bitstream writer
     cloneFrom(&src);
   }
 
-  // empty message contains only header
-  inline bool IsEmpty () const noexcept { return (GetNumBits() == hdrSizeBits); }
+  void Reset (VChannel *AChannel, bool areliable);
 
-  inline bool IsOpen () const noexcept { return !!(msgflags&Open); }
-  inline bool IsClose () const noexcept { return !!(msgflags&Close); }
-  inline bool IsReliable () const noexcept { return !(msgflags&Unreliable); }
-  inline bool IsUnreliable () const noexcept { return !!(msgflags&Unreliable); }
-  inline bool IsKeepalive () const noexcept { return !!(msgflags&Keepalive); }
+  // this can be called several times
+  void WriteHeader (VBitStreamWriter &strm) const;
 
-  inline void MarkKeepalive () noexcept { msgflags |= Keepalive; }
+  // estimate current packet size
+  // channel sequence, and packedid doesn't matter
+  int EstimateSizeInBits (int addbits=0) const noexcept;
 
-  // we cannot mark the packed as "open" post-factum, but we can mark is as "closing", to save bandwidth
-  void MarkClose () noexcept;
-
-  // empty packets with special flags should still be sent
-  inline bool NeedToSend () const noexcept { return (GetNumBits() > hdrSizeBits || (msgflags&(Open|Close|Keepalive))); }
-
-  void Reset (VChannel *AChannel, unsigned flags=0);
-
-  // call this before copying packet data
-  void Finalise ();
-
-  static inline int CalcFullMsgBitSize (int bitlen) noexcept {
-    // message size, one stop bit, rounded to the byte boundary
-    vassert(bitlen >= 0);
-    return ((bitlen+1+7)>>3)<<3;
-  }
-
-  inline int CalcRealMsgBitSize (int addlen=0) const noexcept { return CalcFullMsgBitSize(GetNumBits()+addlen); }
-  inline int CalcRealMsgBitSize (const VBitStreamWriter &strm) const noexcept { return CalcFullMsgBitSize(GetNumBits()+strm.GetNumBits()); }
-
-  // will this overflow a datagram?
-  inline bool WillOverflow (int moredata) const noexcept {
-    vassert(moredata >= 0);
-    return (CalcRealMsgBitSize(moredata) > MAX_MSG_SIZE_BITS);
-  }
-
-  // will this overflow a datagram?
-  inline bool WillOverflow (const VBitStreamWriter &strm) const noexcept {
-    return (CalcRealMsgBitSize(strm) > MAX_MSG_SIZE_BITS);
-  }
+  // returns `true` if appending `strm` will overflow the message
+  inline bool WillOverflow (int addbits) const noexcept { return (EstimateSizeInBits(addbits) > MAX_MSG_SIZE_BITS); }
+  inline bool WillOverflow (const VBitStreamWriter &strm) const noexcept { return WillOverflow(strm.GetNumBits()); }
 };

@@ -249,6 +249,8 @@ bool Physics (float DeltaTime) {
   // apply friction here
   //if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
 
+  #ifdef FLOAT_BOB_IN_PHYSICS
+  // moved to client ticker
   if (bFloatBob) {
     FloatBobPhase += DeltaTime;
     /* moved to renderer
@@ -281,6 +283,7 @@ bool Physics (float DeltaTime) {
     if (diffz < 10) tmp_phys_z_change += diffz;
     */
   }
+  #endif
 
   // k8: thingy bridges should be checked even if we have zero vertical velocity.
   //     the following code looks like optimization attempt, and it introduced a bug:

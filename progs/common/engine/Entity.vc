@@ -394,14 +394,20 @@ replication {
     Origin, Angles, FloorClip, State, StateTime, SpriteType,
     FixedSpriteName, ModelVersion, RenderStyle, Alpha,
     Translation, StencilColor, ScaleX, ScaleY,
-    bFly, bNoSector, bInvisible, bFullBright,
-    bFixedModel, SoundOriginID/*, bUseDispState*/, bBright,
+    bFly, bNoSector, bInvisible,
+    bFixedModel, SoundOriginID
+    // corpse state is required for proper rendering
+    // floatbob is done in renderer too
+    /*, bUseDispState*/, bFullBright, bBright, bCorpse, bPseudoCorpse, bFloatBob,
     DispSpriteFrame, DispSpriteName,
-    DecalName,
     Score, Accuracy, Stamina;
 
   reliable if (Role == ROLE_Authority && bNetInitial)
-    Radius, Height, VanillaHeight, RenderRadius, FloatBobPhase, FloatBobStrength;
+    Radius, Height, VanillaHeight, RenderRadius, FloatBobStrength,
+    DecalName;
+
+  reliable if (Role == ROLE_Authority && bNetInitial && bFloatBob)
+    FloatBobPhase;
 
   reliable if (Role == ROLE_Authority && bFixedModel)
     FixedModelName;

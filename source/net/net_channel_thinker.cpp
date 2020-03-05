@@ -42,7 +42,7 @@ VThinkerChannel::VThinkerChannel (VNetConnection *AConnection, vint32 AIndex, vu
   , ThinkerClass(nullptr)
   , OldData(nullptr)
   , NewObj(false)
-  , UpdatedThisFrame(false)
+  , LastUpdateFrame(0)
   , FieldCondValues(nullptr)
 {
   // it is ok to close it... or it isn't?
@@ -56,10 +56,12 @@ VThinkerChannel::VThinkerChannel (VNetConnection *AConnection, vint32 AIndex, vu
 //
 //==========================================================================
 VThinkerChannel::~VThinkerChannel () {
-  // mark channel as closing to prevent sending a message
-  Closing = true;
-  // if this is a client version of entity, destroy it
-  RemoveThinkerFromGame();
+  if (Connection) {
+    // mark channel as closing to prevent sending a message
+    Closing = true;
+    // if this is a client version of entity, destroy it
+    RemoveThinkerFromGame();
+  }
 }
 
 
@@ -117,43 +119,12 @@ void VThinkerChannel::RemoveThinkerFromGame () {
 
 //==========================================================================
 //
-//  VThinkerChannel::ReceivedClosingAck
-//
-//  some channels may want to set some flags here
-//
-//  WARNING! don't close/suicide here!
+//  VThinkerChannel::SetClosing
 //
 //==========================================================================
-void VThinkerChannel::ReceivedClosingAck () {
+void VThinkerChannel::SetClosing () {
   RemoveThinkerFromGame();
-}
-
-
-//==========================================================================
-//
-//  VThinkerChannel::Suicide
-//
-//==========================================================================
-void VThinkerChannel::Suicide () {
-  Closing = true;
-  // if this is a client version of entity, destroy it
-  RemoveThinkerFromGame();
-  VChannel::Suicide();
-}
-
-
-//==========================================================================
-//
-//  VThinkerChannel::Close
-//
-//==========================================================================
-void VThinkerChannel::Close (VMessageOut *msg) {
-  if (!Closing) {
-    // don't suicide here, we still need to wait for ack
-    VChannel::Close(msg);
-    // if this is a client version of entity, destroy it
-    RemoveThinkerFromGame();
-  }
+  VChannel::SetClosing();
 }
 
 
@@ -236,8 +207,8 @@ void VThinkerChannel::Update () {
   vuint8 *Data = (vuint8 *)Thinker;
   VObject *NullObj = nullptr;
 
-  VMessageOut Msg(this, (NewObj ? VMessageOut::Open : 0u));
-  SendRPCOuts(Msg);
+  VMessageOut Msg(this);
+  Msg.bOpen = NewObj;
 
   if (NewObj) {
     VClass *TmpClass = Thinker->GetClass();
@@ -248,7 +219,6 @@ void VThinkerChannel::Update () {
   const bool isServer = Connection->Context->IsServer();
   vuint8 oldRole = 0, oldRemoteRole = 0;
 
-  /*
   if (isServer && !Connection->AutoAck) {
     if (Ent && Ent->FlagsEx&VEntity::EFEX_NoTickGrav) {
       // this is Role on the client
@@ -260,7 +230,6 @@ void VThinkerChannel::Update () {
       if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_DevNet, "%s:%u: became notick, closing channel%s", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), (OpenedLocally ? " (opened locally)" : ""));
     }
   }
-  */
 
   TAVec SavedAngles;
   if (Ent) {
@@ -330,7 +299,7 @@ void VThinkerChannel::Update () {
   }
 
   if (Ent && (Ent->EntityFlags&VEntity::EF_IsPlayer)) Ent->Angles = SavedAngles;
-  UpdatedThisFrame = true;
+  LastUpdateFrame = Connection->UpdateFrameCounter;
 
   // if this object becomes "dumb proxy", transmit some additional data
   if (isServer && Thinker->Role == ROLE_DumbProxy && Ent) {
@@ -353,6 +322,8 @@ void VThinkerChannel::Update () {
   Thinker->ThinkerFlags &= ~VThinker::TF_NetInitial;
   Thinker->ThinkerFlags &= ~VThinker::TF_NetOwner;
 
+  SendMessage(&Msg);
+
   // if this object becomes "dumb proxy", mark it as detached, and close the channel
   if (isServer && Thinker->Role == ROLE_DumbProxy && Ent) {
     // remember that we already did this thinker
@@ -360,20 +331,17 @@ void VThinkerChannel::Update () {
     // restore roles
     Thinker->Role = oldRole;
     Thinker->RemoteRole = oldRemoteRole;
-    Close(&Msg); // this will send `Msg`
-  } else {
-    //SendMessage(Msg);
-    FlushMsg(Msg);
+    Close(); // this will send `Msg`
   }
 }
 
 
 //==========================================================================
 //
-//  VThinkerChannel::ParsePacket
+//  VThinkerChannel::ParseMessage
 //
 //==========================================================================
-void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
+void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
   // currently, client cannot create thinkers, so ignore incoming client packets here
   // the player has its own channel for data
   if (IsLocalChannel()) return;

@@ -36,19 +36,23 @@ static VCvarB net_debug_rpc("net_debug_rpc", false, "Dump RPC info?");
 //  VChannel::VChannel
 //
 //==========================================================================
-VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AIndex, vuint8 AOpenedLocally)
+VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AIndex, bool AOpenedLocally)
   : Connection(AConnection)
   , Index(AIndex)
   , Type(AType)
   , OpenedLocally(AOpenedLocally)
-  , OpenAcked(false/*AIndex < CHANIDX_ThinkersStart*/)
+  , OpenAcked(AIndex >= 0 && AIndex < CHANIDX_ObjectMap) // those channels are automatically opened
   , Closing(false)
-  , CloseAcked(false)
-  , rpcOutHead(nullptr)
-  , rpcOutTail(nullptr)
+  , NumInList(0)
+  , NumOutList(0)
+  , InList(nullptr)
+  , OutList(nullptr)
+  , bSentAnyMessages(false)
 {
   vassert(Index >= 0 && Index < MAX_CHANNELS);
-  Connection->RegisterChannel(this);
+  vassert(!Connection->Channels[Index]);
+  Connection->Channels[Index] = this;
+  Connection->OpenChannels.append(this);
 }
 
 
@@ -58,12 +62,25 @@ VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AInd
 //
 //==========================================================================
 VChannel::~VChannel () {
-  DropAllRPCOuts();
-  Closing = true; // just in case
-  CloseAcked = true; // just in case
-  if (Index >= 0 && Index < MAX_CHANNELS && Connection) {
-    Connection->UnregisterChannel(this);
-    Index = -1; // just in case
+  // free outgoung queue
+  while (OutList) {
+    VMessageOut *curr = OutList;
+    OutList = curr->Next;
+    delete curr;
+  }
+  // free incoming queue
+  while (InList) {
+    VMessageIn *curr = InList;
+    InList = curr->Next;
+    delete curr;
+  }
+
+  // remove from connection's channel table
+  if (Connection && Index >= 0 && Index < MAX_CHANNELS) {
+    vassert(Connection->Channels[Index] == this);
+    Connection->OpenChannels.Remove(this);
+    Connection->Channels[Index] = nullptr;
+    Connection = nullptr;
   }
 }
 
@@ -90,13 +107,33 @@ VStr VChannel::GetDebugName () const noexcept {
 
 //==========================================================================
 //
-//  VChannel::Suicide
+//  VChannel::CanSendData
 //
 //==========================================================================
-void VChannel::Suicide () {
+bool VChannel::CanSendData () const noexcept {
+  // keep some space for close message
+  if (NumOutList >= MAX_RELIABLE_BUFFER-2) return false;
+  return (Connection ? Connection->CanSendData() : false);
+}
+
+
+//==========================================================================
+//
+//  VChannel::CanSendClose
+//
+//==========================================================================
+bool VChannel::CanSendClose () const noexcept {
+  return (NumOutList < MAX_RELIABLE_BUFFER-1);
+}
+
+
+//==========================================================================
+//
+//  VChannel::SetClosing
+//
+//==========================================================================
+void VChannel::SetClosing () {
   Closing = true;
-  CloseAcked = true;
-  if (Connection) Connection->MarkChannelsDirty();
 }
 
 
@@ -105,63 +142,83 @@ void VChannel::Suicide () {
 //  VChannel::Close
 //
 //==========================================================================
-void VChannel::Close (VMessageOut *msg) {
-  if (Closing) return; // already in closing state
-  // send close message
+void VChannel::Close () {
+  // if this channel is already closing, do nothing
+  if (Closing) return;
+  // if the connection is dead, simply set the flag and get out
+  if (!Connection || Connection->IsClosed()) {
+    SetClosing();
+    return;
+  }
+  vassert(Connection->Channels[Index] == this);
   if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "%s: sending CLOSE %s", *GetDebugName(), (IsLocalChannel() ? "request" : "ack"));
-  if (msg) {
-    msg->MarkClose();
-    SendMessage(*msg);
-  } else {
-    VMessageOut CloseMsg(this, VMessageOut::Close);
-    SendMessage(CloseMsg);
+  // send a close notify, and wait for the ack
+  // we should not have any closing message in the queue (sanity check)
+  for (VMessageOut *Out = OutList; Out; Out = Out->Next) vassert(!Out->bClose);
+  // send closing message
+  {
+    VMessageOut cnotmsg(this, true); // reliable
+    cnotmsg.bClose = true;
+    SendMessage(&cnotmsg);
   }
-  // enter closing state
-  Closing = true;
+  // message queuing should set closing flag, check it
+  vassert(Closing);
 }
 
 
 //==========================================================================
 //
-//  VChannel::WillFlushMsg
+//  VChannel::PacketLost
 //
 //==========================================================================
-bool VChannel::WillFlushMsg (VMessageOut &msg, VBitStreamWriter &strm) {
-  //GCon->Logf(NAME_DevNet, "%s: msglen=%d; strmlen=%d; bothlen=%d; maxlen=%d", *GetDebugName(), msg.GetNumBits(), strm.GetNumBits(), msg.CalcRealMsgBitSize(strm), MAX_MSG_SIZE_BITS);
-  if (strm.GetNumBits() == 0) return false;
-  return msg.WillOverflow(strm);
-}
-
-
-//==========================================================================
-//
-//  VChannel::PutStream
-//
-//  moves steam to msg (sending previous msg if necessary)
-//
-//==========================================================================
-void VChannel::PutStream (VMessageOut &msg, VBitStreamWriter &strm) {
-  if (strm.GetNumBits() == 0) return;
-  if (msg.WillOverflow(strm)) {
-    SendMessage(msg);
-    msg.Reset(this);
+void VChannel::PacketLost (vuint32 PacketId) {
+  for (VMessageOut *Out = OutList; Out; Out = Out->Next) {
+    // retransmit reliable messages in the lost packet
+    if (Out->PacketId == PacketId && !Out->bReceivedAck) {
+      vassert(Out->bReliable);
+      Connection->SendMessage(Out);
+    }
   }
-  vassert(!msg.WillOverflow(strm));
-  msg.CopyFromWS(strm);
-  strm.Clear();
 }
 
 
 //==========================================================================
 //
-//  VChannel::FlushMsg
-//
-//  sends message if it is not empty
+//  VChannel::ReceivedAcks
 //
 //==========================================================================
-void VChannel::FlushMsg (VMessageOut &msg) {
-  SendMessage(msg);
-  msg.Reset(this);
+void VChannel::ReceivedAcks () {
+  vassert(Connection->Channels[Index] == this);
+
+  // sanity check
+  for (VMessageOut *Out = OutList; Out && Out->Next; Out = Out->Next) vassert(Out->Next->ChanSequence > Out->ChanSequence);
+
+  // release all acknowledged outgoing queued messages
+  bool doClose = false;
+  while (OutList && OutList->bReceivedAck) {
+    doClose = (doClose || OutList->bClose);
+    VMessageOut *curr = OutList;
+    OutList = OutList->Next;
+    delete curr;
+    --NumOutList;
+  }
+
+  // if a close has been acknowledged in sequence, we're done
+  if (doClose) {
+    // `OutList` can still contain some packets here for some reason
+    // it looks like a bug in my netcode
+    if (OutList) {
+      GCon->Logf(NAME_DevNet, "!!!! %s: acked close message, but contains some other unacked messages (%d) !!!!", *GetDebugName(), NumOutList);
+      for (VMessageOut *Out = OutList; Out; Out = Out->Next) {
+        vassert(!Out->bReceivedAck);
+        GCon->Logf(NAME_DevNet, "  pid=%u; csq=%u; cidx=%u; ctype=%u; open=%d; close=%d; reliable=%d; size=%d",
+          Out->PacketId, Out->ChanSequence, Out->ChanType, Out->ChanIndex, (int)Out->bOpen, (int)Out->bClose,
+          (int)Out->bReliable, Out->GetNumBits());
+      }
+    }
+    vassert(!OutList);
+    delete this;
+  }
 }
 
 
@@ -170,73 +227,120 @@ void VChannel::FlushMsg (VMessageOut &msg) {
 //  VChannel::SendMessage
 //
 //==========================================================================
-void VChannel::SendMessage (VMessageOut &Msg) {
-  if (Connection && Msg.NeedToSend()) {
-    //GCon->Logf(NAME_DevNet, "%s: SENDING MESSAGE! (%d in queue)", *GetDebugName(), Connection->sendQueueSize);
-    //if (Type == CHANNEL_Player && Connection->sendQueueSize > 64) abort();
-    Connection->SendMessage(Msg);
+void VChannel::SendMessage (VMessageOut *Msg) {
+  vassert(Msg);
+  vassert(!Closing);
+  vassert(Connection->Channels[Index] == this);
+  vassert(!Msg->IsError());
+
+  // set some additional message flags
+  if (OpenedLocally && !bSentAnyMessages) {
+    // first message must be reliable
+    vassert(Msg->bReliable);
+    Msg->bOpen = true;
   }
+  bSentAnyMessages = true;
+
+  if (Msg->bReliable) {
+    // put outgoint message into send queue
+    vassert(NumOutList < MAX_RELIABLE_BUFFER-1+(Msg->bClose ? 1 : 0));
+    Msg->Next = nullptr;
+    Msg->ChanSequence = ++Connection->OutReliable[Index];
+    ++NumOutList;
+    VMessageOut *OutMsg = new VMessageOut(*Msg);
+    VMessageOut **OutLink;
+    for (OutLink = &OutList; *OutLink; OutLink = &(*OutLink)->Next) {}
+    *OutLink = OutMsg;
+    Msg = OutMsg; // use this new message for sending
+  }
+
+  // send the raw message
+  Msg->bReceivedAck = false;
+  Connection->SendMessage(Msg);
+  // if we're closing the channel, mark this channel as dying, so we can reject any new data
+  // note that we can still have some fragments of the data in incoming queue, and it will be
+  // processed normally
+  if (Msg->bClose) SetClosing();
 }
 
 
 //==========================================================================
 //
-//  VChannel::ReceivedRawMessage
+//  VChannel::ProcessInMessage
 //
 //==========================================================================
-void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
-  if (!OpenAcked && !Msg.bOpen) {
-    GCon->Logf(NAME_DevNet, "<<< %s: rejected message for not open-acked channel", *GetDebugName());
-    return;
+bool VChannel::ProcessInMessage (VMessageIn &Msg) {
+  // fix channel incoming sequence
+  if (Msg.bReliable) Connection->InReliable[Index] = Msg.ChanSequence;
+
+  // parse a message
+  const bool isCloseMsg = Msg.bClose;
+  if (!Closing) ParseMessage(Msg);
+
+  // handle a close notify
+  if (isCloseMsg) {
+    if (InList) Sys_Error("ERROR: %s: closing channel #%d with unprocessed incoming queue", *GetDebugName(), Index);
+    delete this;
+    return true;
   }
+  return false;
+}
 
-  if (CloseAcked) {
-    GCon->Logf(NAME_DevNet, "<<< %s: rejected message for in-closed channel", *GetDebugName());
-    return;
-  }
 
-  /* no, we still may receive something from that side
-  if (Closing && !Msg.bClose) {
-    GCon->Logf(NAME_DevNet, "<<< %s: rejected non-close message for closing channel", *GetDebugName());
-    return;
-  }
-  */
+//==========================================================================
+//
+//  VChannel::ReceivedMessage
+//
+//  process a raw, possibly out-of-sequence message
+//  either queue it or dispatch it
+//  the message won't be discarded
+//
+//==========================================================================
+void VChannel::ReceivedMessage (VMessageIn &Msg) {
+  vassert(Connection->Channels[Index] == this);
 
-  if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "<<< %s: received message", *GetDebugName());
+  if (Msg.bReliable && Msg.ChanSequence != Connection->InReliable[Index]+1) {
+    // if this message is not in a sqeuence, buffer it
+    // out-of-sequence message cannot be open message
+    // actually, we should show channel error, and block all further messaging on it
+    // (or even close the connection, as it looks like broken/malicious)
+    vassert(!Msg.bOpen);
 
-  const bool isClosing = Msg.bClose;
-  ParsePacket(Msg);
-  // process closing message
-  if (isClosing) {
-    if (!Closing) ReceivedClosingAck();
-    if (Closing) {
-      // if we are in "closing" state, and we received closing packed, this is "close ack"
-      // ok, we'll be dead anyway, so perform suicide here
-      if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "%s: got CLOSE ACK, performing suicide", *GetDebugName());
-      Suicide();
-    } else {
-      // queue "close ack" or "close request" packet
-      Close();
-      // if this is not a local channel, kill it for good, becase network layer will take care of ack delivering
-      if (!IsLocalChannel()) {
-        if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "%s: sent CLOSE ACK, performing suicide", *GetDebugName());
-        Suicide();
-      }
+    // invariant
+    vassert(Msg.ChanSequence > Connection->InReliable[Index]);
+
+    // put this into incoming queue, keeping the queue ordered
+    VMessageIn *prev = nullptr, *curr = InList;
+    while (curr) {
+      if (Msg.ChanSequence == curr->ChanSequence) return; // duplicate message, ignore it
+      if (Msg.ChanSequence < curr->ChanSequence) break; // insert before `curr`
+      prev = curr;
+      curr = curr->Next;
+    }
+    // copy message
+    VMessageIn *newmsg = new VMessageIn(Msg);
+    if (prev) prev->Next = newmsg; else InList = newmsg;
+    newmsg->Next = curr;
+    ++NumInList;
+    vassert(NumInList <= MAX_RELIABLE_BUFFER); //FIXME: signal error here!
+    // just in case
+    for (VMessageIn *m = InList; m && m->Next; m = m->Next) vassert(m->ChanSequence < m->Next->ChanSequence);
+  } else {
+    // this is "in sequence" message, process it
+    bool removed = ProcessInMessage(Msg);
+    if (removed) return;
+
+    // dispatch any waiting messages
+    while (InList) {
+      if (InList->ChanSequence != Connection->InReliable[Index]+1) break;
+      VMessageIn *curr = InList;
+      InList = InList->Next;
+      --NumInList;
+      removed = ProcessInMessage(*curr);
+      delete curr;
+      if (removed) return;
     }
   }
-}
-
-
-//==========================================================================
-//
-//  VChannel::ReceivedClosingAck
-//
-//  some channels may want to set some flags here
-//
-//  WARNING! don't close/suicide here!
-//
-//==========================================================================
-void VChannel::ReceivedClosingAck () {
 }
 
 
@@ -251,108 +355,48 @@ void VChannel::Tick () {
 
 //==========================================================================
 //
-//  VChannel::DropUnreliableRPCOuts
+//  VChannel::WillOverflowMsg
 //
 //==========================================================================
-void VChannel::DropUnreliableRPCOuts () {
-  RPCOut *prev = nullptr, *curr = rpcOutHead;
-  while (curr) {
-    if (curr->reliable) {
-      prev = curr;
-      curr = curr->next;
-    } else {
-      RPCOut *o = curr;
-      curr = curr->next;
-      if (prev) prev->next = curr; else rpcOutHead = curr;
-      delete o->strm;
-      delete o;
-    }
-  }
-  if (!rpcOutHead) rpcOutTail = nullptr;
+bool VChannel::WillOverflowMsg (const VMessageOut *msg, const VBitStreamWriter &strm) const noexcept {
+  vassert(msg);
+  return msg->WillOverflow(strm);
 }
 
 
 //==========================================================================
 //
-//  VChannel::PutUnreliableRPCOut
+//  VChannel::PutStream
 //
-//  fill buffer with unreliable RPC data while we can, drop all unfit RPC data
+//  moves steam to msg (sending previous msg if necessary)
 //
 //==========================================================================
-void VChannel::PutUnreliableRPCOut (VBitStreamWriter &wrs, const vuint32 maxWrsSizeBits) {
-  RPCOut *prev = nullptr, *curr = rpcOutHead;
-  while (curr) {
-    if (curr->reliable) {
-      prev = curr;
-      curr = curr->next;
-    } else {
-      RPCOut *o = curr;
-      curr = curr->next;
-      if (prev) prev->next = curr; else rpcOutHead = curr;
-      if (!Closing && maxWrsSizeBits-wrs.GetNumBits() > 8) {
-        VMessageOut omsg(this, 0);
-        omsg.CopyFromWS(*o->strm);
-        omsg.Finalise();
-        if (wrs.GetNumBits()+omsg.GetNumBits() <= (int)maxWrsSizeBits) {
-          wrs.CopyFromWS(omsg);
-        }
-      }
-      delete o->strm;
-      delete o;
-    }
+void VChannel::PutStream (VMessageOut *msg, VBitStreamWriter &strm) {
+  vassert(msg);
+  if (strm.GetNumBits() == 0) return;
+  if (WillOverflowMsg(msg, strm)) {
+    SendMessage(msg);
+    msg->Reset(this, msg->bReliable);
   }
-  if (!rpcOutHead) rpcOutTail = nullptr;
+  vassert(!WillOverflowMsg(msg, strm));
+  msg->CopyFromWS(strm);
+  strm.Clear();
 }
 
 
 //==========================================================================
 //
-//  VChannel::DropAllRPCOuts
+//  VChannel::FlushMsg
+//
+//  sends message if it is not empty
 //
 //==========================================================================
-void VChannel::DropAllRPCOuts () {
-  while (rpcOutHead) {
-    RPCOut *o = rpcOutHead;
-    rpcOutHead = o->next;
-    delete o->strm;
-    delete o;
+void VChannel::FlushMsg (VMessageOut *msg) {
+  vassert(msg);
+  if (msg->GetNumBits()) {
+    SendMessage(msg);
+    msg->Reset(this, msg->bReliable);
   }
-  rpcOutHead = rpcOutTail = nullptr;
-}
-
-
-//==========================================================================
-//
-//  VChannel::SendRPCOuts
-//
-//==========================================================================
-void VChannel::SendRPCOuts (VMessageOut &msg) {
-  while (rpcOutHead) {
-    RPCOut *o = rpcOutHead;
-    rpcOutHead = rpcOutHead->next;
-    if (net_debug_rpc) GCon->Logf(NAME_DevNet, "%s: queuing RPC: <%s>", *GetDebugName(), *o->debugName);
-    PutStream(msg, *o->strm);
-    delete o->strm;
-    delete o;
-  }
-  rpcOutHead = rpcOutTail = nullptr;
-}
-
-
-//==========================================================================
-//
-//  VChannel::AllocRPCOut
-//
-//==========================================================================
-VBitStreamWriter &VChannel::AllocRPCOut (bool reliable, VStr dbgname) {
-  RPCOut *res = new RPCOut;
-  res->reliable = reliable;
-  res->strm = new VBitStreamWriter(MAX_MSG_SIZE_BITS, false); // can't expand
-  res->next = nullptr;
-  res->debugName = dbgname;
-  if (rpcOutTail) rpcOutTail->next = res; else rpcOutHead = res;
-  rpcOutTail = res;
-  return *res->strm;
 }
 
 
@@ -362,10 +406,9 @@ VBitStreamWriter &VChannel::AllocRPCOut (bool reliable, VStr dbgname) {
 //
 //==========================================================================
 void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
-  //VMessageOut Msg(this, (Func->Flags&FUNC_NetReliable ? 0u : VMessageOut::Unreliable));
-  VBitStreamWriter &Msg = AllocRPCOut(Func->Flags&FUNC_NetReliable, Func->GetFullName());
+  VMessageOut Msg(this, !!(Func->Flags&FUNC_NetReliable));
   //GCon->Logf(NAME_DevNet, "%s: creating RPC: %s", *GetDebugName(), *Func->GetFullName());
-  Msg.WriteInt(Func->NetIndex/*, Owner->GetClass()->NumNetFields*/);
+  Msg.WriteInt((unsigned)Func->NetIndex);
 
   // serialise arguments
   VStack *Param = VObject::VMGetStackPtr()-Func->ParamsSize+1; // skip self
@@ -410,7 +453,7 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
   }
 
   // send it
-  //SendMessage(Msg);
+  SendMessage(&Msg);
   if (net_debug_rpc) GCon->Logf(NAME_DevNet, "%s: created RPC: %s (%d bits)", *GetDebugName(), *Func->GetFullName(), Msg.GetNumBits());
 }
 

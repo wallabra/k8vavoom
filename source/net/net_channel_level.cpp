@@ -84,7 +84,7 @@ VLevelChannel::VLevelChannel (VNetConnection *AConnection, vint32 AIndex, vuint8
 //
 //==========================================================================
 VLevelChannel::~VLevelChannel () {
-  SetLevel(nullptr);
+  if (Connection) SetLevel(nullptr);
 }
 
 
@@ -187,7 +187,7 @@ void VLevelChannel::SendNewLevel () {
     Msg.WriteInt(svs.max_clients/*, MAXPLAYERS+1*/);
     Msg.WriteInt(deathmatch/*, 256*/);
     Msg.WriteInt((int)((sinfo.length()+999)/1000)); // number of packets in server info
-    SendMessage(Msg);
+    SendMessage(&Msg);
   }
 
   // send server info
@@ -205,7 +205,7 @@ void VLevelChannel::SendNewLevel () {
         sinfo.clear();
       }
       Msg << s;
-      SendMessage(Msg);
+      SendMessage(&Msg);
       ++pktnum;
     }
 
@@ -213,7 +213,7 @@ void VLevelChannel::SendNewLevel () {
       VMessageOut Msg(this);
       Msg.WriteInt(CMD_ServerInfoEnd/*, CMD_MAX*/);
       Msg.WriteInt(pktnum); // sequence number
-      SendMessage(Msg);
+      SendMessage(&Msg);
     }
   }
 
@@ -224,7 +224,7 @@ void VLevelChannel::SendNewLevel () {
   {
     VMessageOut Msg(this);
     Msg.WriteInt(CMD_PreRender/*, CMD_MAX*/);
-    SendMessage(Msg);
+    SendMessage(&Msg);
   }
 
   //GCon->Log(NAME_DevNet, "VLevelChannel::SendNewLevel");
@@ -237,8 +237,10 @@ void VLevelChannel::SendNewLevel () {
 //
 //==========================================================================
 void VLevelChannel::Update () {
+  if (!CanSendData()) { Connection->NeedsUpdate = true; return; }
+
   VMessageOut Msg(this);
-  VBitStreamWriter strm(MAX_MSG_SIZE_BITS, false); // no expand
+  VBitStreamWriter strm(MAX_MSG_SIZE_BITS+64, false); // no expand
 
   for (int i = 0; i < Level->NumLines; ++i) {
     line_t *Line = &Level->Lines[i];
@@ -255,7 +257,8 @@ void VLevelChannel::Update () {
       RepLine->alpha = Line->alpha;
     }
 
-    PutStream(Msg, strm);
+    PutStream(&Msg, strm);
+    if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
   }
 
   //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Sides");
@@ -376,8 +379,9 @@ void VLevelChannel::Update () {
     }
 
     //GCon->Logf(NAME_DevNet, "%s:Update:001: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
-    PutStream(Msg, strm);
+    PutStream(&Msg, strm);
     //GCon->Logf(NAME_DevNet, "%s:Update:002: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
+    if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
   }
 
   //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Sectors");
@@ -520,7 +524,7 @@ void VLevelChannel::Update () {
       strm << Sec->ceiling.MirrorAlpha;
     }
 
-    PutStream(Msg, strm);
+    PutStream(&Msg, strm);
 
     RepSec->floor_pic = Sec->floor.pic;
     RepSec->floor_dist = Sec->floor.dist;
@@ -546,6 +550,8 @@ void VLevelChannel::Update () {
     RepSec->ceil_MirrorAlpha = Sec->ceiling.MirrorAlpha;
     RepSec->lightlevel = Sec->params.lightlevel;
     RepSec->Fade = Sec->params.Fade;
+
+    if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
   }
 
   //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Polys");
@@ -570,10 +576,12 @@ void VLevelChannel::Update () {
     strm.WriteBit(RepPo->angle != Po->angle);
     if (RepPo->angle != Po->angle) strm << Po->angle;
 
-    PutStream(Msg, strm);
+    PutStream(&Msg, strm);
 
     RepPo->startSpot = Po->startSpot;
     RepPo->angle = Po->angle;
+
+    if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
   }
 
   for (int i = 0; i < Level->CameraTextures.Num(); ++i) {
@@ -598,12 +606,14 @@ void VLevelChannel::Update () {
     strm.WriteInt(Cam.TexNum/*, 0xffff*/);
     strm.WriteInt(Cam.FOV/*, 360*/);
 
-    PutStream(Msg, strm);
+    PutStream(&Msg, strm);
 
     // update replication info
     RepCam.Camera = CamEnt;
     RepCam.TexNum = Cam.TexNum;
     RepCam.FOV = Cam.FOV;
+
+    if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
   }
 
   //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Trans");
@@ -640,7 +650,9 @@ void VLevelChannel::Update () {
       Rep[j] = C;
     }
 
-    PutStream(Msg, strm);
+    PutStream(&Msg, strm);
+
+    if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
   }
 
   //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Bodies");
@@ -659,14 +671,16 @@ void VLevelChannel::Update () {
     strm << Tr->TranslStart << Tr->TranslEnd;
     strm.WriteInt(Tr->Color/*, 0x00ffffff*/);
 
-    PutStream(Msg, strm);
+    PutStream(&Msg, strm);
 
     Rep.TranslStart = Tr->TranslStart;
     Rep.TranslEnd = Tr->TranslEnd;
     Rep.Color = Tr->Color;
+
+    if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
   }
 
-  FlushMsg(Msg);
+  FlushMsg(&Msg);
 }
 
 
@@ -686,17 +700,17 @@ void VLevelChannel::SendStaticLights () {
       Msg.WriteInt(CMD_StaticLight/*, CMD_MAX*/);
       Msg << L.Origin << L.Radius << L.Color;
     }
-    SendMessage(Msg);
+    SendMessage(&Msg);
   }
 }
 
 
 //==========================================================================
 //
-//  VLevelChannel::ParsePacket
+//  VLevelChannel::ParseMessage
 //
 //==========================================================================
-void VLevelChannel::ParsePacket (VMessageIn &Msg) {
+void VLevelChannel::ParseMessage (VMessageIn &Msg) {
   while (!Msg.AtEnd()) {
     int Cmd = Msg.ReadInt(/*CMD_MAX*/);
     switch (Cmd) {

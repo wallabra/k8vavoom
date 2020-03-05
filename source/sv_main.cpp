@@ -507,7 +507,7 @@ static void SV_SendClientMessages (bool full=true) {
     for (int i = 0; i < svs.max_clients; ++i) {
       VBasePlayer *Player = GGameInfo->Players[i];
       if (!Player) continue;
-      if (Player->GetFlags()&_OF_Destroyed) continue;
+      if (Player->IsGoingToDie()) continue;
 
       VPlayerReplicationInfo *RepInfo = Player->PlayerReplicationInfo;
       if (!RepInfo) continue;
@@ -1311,7 +1311,7 @@ int NET_SendToAll (int blocktime) {
 
       if (!state1[i]) {
         state1[i] = true;
-        Player->Net->ForceAllowSendForServer();
+        //Player->Net->ForceAllowSendForServer();
         Player->Net->GetGeneralChannel()->Close();
         ++count;
         continue;
@@ -1321,7 +1321,7 @@ int NET_SendToAll (int blocktime) {
         if (Player->Net->State == NETCON_Closed) {
           state2[i] = true;
         } else {
-          Player->Net->ForceAllowSendForServer();
+          //Player->Net->ForceAllowSendForServer();
           Player->Net->GetMessages();
           Player->Net->Tick();
         }
@@ -1518,7 +1518,7 @@ COMMAND(PreSpawn) {
   // make sure level info is spawned on server side, since there could be some RPCs that depend on it
   VThinkerChannel *Chan = Player->Net->ThinkerChannels.FindPtr(GLevelInfo);
   if (!Chan) {
-    Chan = (VThinkerChannel *)Player->Net->CreateChannel(CHANNEL_Thinker, -1);
+    Chan = (VThinkerChannel *)Player->Net->CreateChannel(CHANNEL_Thinker, -1, true); // local channel
     if (!Chan) Sys_Error("cannot allocate `LevelInfo` channel, this should NOT happen!");
     Chan->SetThinker(GLevelInfo);
     Chan->Update();
@@ -1802,7 +1802,7 @@ void SV_CheckForNewClients () {
     Player->Net = new VNetConnection(sock, ServerNetContext, Player);
     Player->Net->ObjMap->SetupClassLookup();
     Player->Net->GetPlayerChannel()->SetPlayer(Player);
-    Player->Net->CreateChannel(CHANNEL_ObjectMap, -1);
+    Player->Net->CreateChannel(CHANNEL_ObjectMap, -1, true); // local channel
     SV_ConnectClient(Player);
     ++svs.num_connected;
   }
