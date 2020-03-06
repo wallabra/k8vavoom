@@ -304,8 +304,8 @@ static const MathOpHandler oplist[] = {
   DEFOP(MOP_Binary, 4, "+", VBinary::Add),
   DEFOP(MOP_Binary, 4, "-", VBinary::Subtract),
 
-  DEFOP(MOP_Binary, 5, "<<", VBinary::LShift),
-  DEFOP(MOP_Binary, 5, ">>", VBinary::RShift),
+  DEFOP(MOP_Binary, 5, "<<", VBinary::LShiftFloat),
+  DEFOP(MOP_Binary, 5, ">>", VBinary::RShiftFloat),
 
   DEFOP(MOP_Binary, 6, "<", VBinary::Less),
   DEFOP(MOP_Binary, 6, "<=", VBinary::LessEquals),
