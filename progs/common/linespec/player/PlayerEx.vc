@@ -4779,7 +4779,7 @@ void AddVisitedMap (name Map) {
 //
 //==========================================================================
 int GetMaxHealth () {
-  int Max = (PlayerPawn(MO).MaxHealth > 0 ? PlayerPawn(MO).MaxHealth :
+  int Max = (PlayerPawn(MO) && PlayerPawn(MO).MaxHealth > 0 ? PlayerPawn(MO).MaxHealth :
     Level.CompatDehHealth ? MAXHEALTH :
     HealthBonus.default.MaxAmount/2)+(MO ? MO.Stamina : 0);
   if (MorphTime) {
