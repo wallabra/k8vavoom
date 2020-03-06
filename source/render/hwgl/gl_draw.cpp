@@ -41,6 +41,7 @@ void VOpenGLDrawer::DrawPic (float x1, float y1, float x2, float y2,
   float s1, float t1, float s2, float t2, VTexture *Tex,
   VTextureTranslation *Trans, float Alpha)
 {
+  if (!Tex || Alpha <= 0.0f || Tex->Type == TEXTYPE_Null) return;
   SetPic(Tex, Trans, CM_Default);
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
@@ -66,6 +67,7 @@ void VOpenGLDrawer::DrawPic (float x1, float y1, float x2, float y2,
 void VOpenGLDrawer::DrawPicShadow (float x1, float y1, float x2, float y2,
   float s1, float t1, float s2, float t2, VTexture *Tex, float shade)
 {
+  if (!Tex || shade <= 0.0f || Tex->Type == TEXTYPE_Null) return;
   SetPic(Tex, nullptr, CM_Default);
   DrawShadow.Activate();
   DrawShadow.SetTexture(0);
@@ -92,6 +94,7 @@ void VOpenGLDrawer::DrawPicShadow (float x1, float y1, float x2, float y2,
 void VOpenGLDrawer::FillRectWithFlat (float x1, float y1, float x2, float y2,
   float s1, float t1, float s2, float t2, VTexture *Tex)
 {
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
   SetTexture(Tex, CM_Default);
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
@@ -119,6 +122,7 @@ void VOpenGLDrawer::FillRectWithFlat (float x1, float y1, float x2, float y2,
 void VOpenGLDrawer::FillRectWithFlatRepeat (float x1, float y1, float x2, float y2,
   float s1, float t1, float s2, float t2, VTexture *Tex)
 {
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
   SetTexture(Tex, CM_Default);
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
@@ -271,6 +275,7 @@ void VOpenGLDrawer::DrawConsoleBackground (int h) {
 void VOpenGLDrawer::DrawSpriteLump (float x1, float y1, float x2, float y2,
   VTexture *Tex, VTextureTranslation *Translation, bool flip)
 {
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
   SetSpriteLump(Tex, Translation, CM_Default, true);
   SetupTextureFiltering(sprite_filter);
 

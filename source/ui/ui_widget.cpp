@@ -672,7 +672,7 @@ void VWidget::DrawPicScaled (int X, int Y, int Handle, float scaleX, float scale
 //
 //==========================================================================
 void VWidget::DrawPicScaled (int X, int Y, VTexture *Tex, float scaleX, float scaleY, float Alpha, int Trans) {
-  if (!Tex) return;
+  if (!Tex || Alpha <= 0.0f || Tex->Type == TEXTYPE_Null) return;
 
   X -= (int)(Tex->GetScaledSOffset()*scaleX);
   Y -= (int)(Tex->GetScaledTOffset()*scaleY);
@@ -699,7 +699,7 @@ void VWidget::DrawPicScaled (int X, int Y, VTexture *Tex, float scaleX, float sc
 void VWidget::DrawPicScaledIgnoreOffset (int X, int Y, int Handle, float scaleX, float scaleY, float Alpha, int Trans) {
   if (Alpha <= 0.0f) return;
   VTexture *Tex = GTextureManager(Handle);
-  if (!Tex) return;
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
 
   float X1 = X;
   float Y1 = Y;
@@ -722,7 +722,7 @@ void VWidget::DrawPicScaledIgnoreOffset (int X, int Y, int Handle, float scaleX,
 //
 //==========================================================================
 void VWidget::DrawPic (int X, int Y, VTexture *Tex, float Alpha, int Trans) {
-  if (!Tex || Alpha <= 0.0f) return;
+  if (!Tex || Alpha <= 0.0f || Tex->Type == TEXTYPE_Null) return;
 
   X -= Tex->GetScaledSOffset();
   Y -= Tex->GetScaledTOffset();
@@ -747,7 +747,7 @@ void VWidget::DrawPic (int X, int Y, VTexture *Tex, float Alpha, int Trans) {
 //
 //==========================================================================
 void VWidget::DrawCharPic (int X, int Y, VTexture *Tex, float Alpha, bool shadowed) {
-  if (!Tex || Alpha <= 0.0f) return;
+  if (!Tex || Alpha <= 0.0f || Tex->Type == TEXTYPE_Null) return;
 
   //GCon->Logf(NAME_Debug, "%s: pos=(%d,%d); size=(%d,%d); scale=(%g,%g); ssize=(%d,%d)", *Tex->Name, X, Y, Tex->GetWidth(), Tex->GetHeight(), Tex->SScale, Tex->TScale, Tex->GetScaledWidth(), Tex->GetScaledHeight());
 
@@ -785,7 +785,7 @@ void VWidget::DrawShadowedPic (int X, int Y, int Handle) {
 //
 //==========================================================================
 void VWidget::DrawShadowedPic (int X, int Y, VTexture *Tex) {
-  if (!Tex) return;
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
 
   float X1 = X-Tex->GetScaledSOffset()+2;
   float Y1 = Y-Tex->GetScaledTOffset()+2;
