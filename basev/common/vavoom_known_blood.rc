@@ -1,6 +1,7 @@
 known_blood {
   name = "NashGore";
   match = ["NashGore*", "Nash_Gore*"];
+  blockspawn = true; // this is actually the default
 }
 
 known_blood {

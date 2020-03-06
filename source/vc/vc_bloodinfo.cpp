@@ -31,9 +31,10 @@ public:
   VStr name;
   TArray<VStr> matches;
   bool allowSuper;
+  bool blockSpawn;
 
 public:
-  DCKnownBlood () noexcept : name(), matches(), allowSuper(true) {}
+  DCKnownBlood () noexcept : name(), matches(), allowSuper(true), blockSpawn(true) {}
   ~DCKnownBlood () noexcept { matches.clear(); name.clear(); }
 
   bool matchClass (VClass *c) const noexcept {
@@ -84,9 +85,14 @@ static bool IsAnyBloodClass (VClass *c) {
 //  DetectKnownBloodClass
 //
 //==========================================================================
-static VStr DetectKnownBloodClass (VClass *c) {
+static VStr DetectKnownBloodClass (VClass *c, bool *blockSpawn) {
   if (!c) return VStr::EmptyString;
-  for (auto &&kb : knownBlood) if (kb.matchClass(c)) return kb.name;
+  for (auto &&kb : knownBlood) {
+    if (kb.matchClass(c)) {
+      if (blockSpawn) *blockSpawn = kb.blockSpawn;
+      return kb.name;
+    }
+  }
   return VStr::EmptyString;
 }
 
@@ -125,6 +131,15 @@ static void ParseKnownBloodSection (VScriptParser *sc) {
         sc->ExpectString();
         if (!sc->String.isEmpty()) kblood.matches.append(sc->String);
       }
+      sc->Expect(";");
+      continue;
+    }
+    // blockspawn
+    if (sc->Check("blockspawn")) {
+      sc->Expect("=");
+           if (sc->Check("true") || sc->Check("tan")) kblood.blockSpawn = true;
+      else if (sc->Check("false") || sc->Check("ona")) kblood.blockSpawn = false;
+      else sc->Error(va("boolean value expected for 'blockspawn', but got '%s'", *sc->String));
       sc->Expect(";");
       continue;
     }

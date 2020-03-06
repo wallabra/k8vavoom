@@ -39,7 +39,9 @@ static int disableBloodReplaces = 0;
 static int bloodOverrideAllowed = 0;
 static int enableKnownBlood = 0;
 
+// globals
 bool decoIgnorePlayerSpeed = false;
+TMapNC<VName, bool> BlockedSpawnSet;
 
 
 /*
@@ -296,10 +298,23 @@ static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
 
   // check for know blood classes if gore mod is active
   if (cli_GoreMod && !enableKnownBlood && IsAnyBloodClass(oldcls)) {
-    VStr kbc = DetectKnownBloodClass(newcls);
+    bool blockSpawn = false;
+    VStr kbc = DetectKnownBloodClass(newcls, &blockSpawn);
     if (!kbc.isEmpty()) {
-      GLog.Logf(NAME_Warning, "%s: skipped known blood replacement class '%s' (%s)", *newcls->Loc.toStringNoCol(), newcls->GetName(), *kbc);
+      GLog.Logf(NAME_Warning, "%s: %s known blood replacement class '%s' (%s)", *newcls->Loc.toStringNoCol(), (blockSpawn ? "blocked" : "skipped"), newcls->GetName(), *kbc);
+      if (blockSpawn) BlockedSpawnSet.put(newcls->Name, true);
       return;
+    }
+  }
+
+  // also, block spawning of all replacements of the blocked class
+  if (!BlockedSpawnSet.has(newcls->Name)) {
+    for (VClass *cc = newcls; cc; cc = cc->GetSuperClass()) {
+      if (BlockedSpawnSet.has(cc->Name)) {
+        GLog.Logf(NAME_Warning, "%s: blocked known blood replacement class '%s' (%s)", *newcls->Loc.toStringNoCol(), newcls->GetName(), cc->GetName());
+        BlockedSpawnSet.put(cc->Name, true);
+        break;
+      }
     }
   }
 
@@ -2862,6 +2877,18 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
   Class->SetFieldInt("GameFilter", (GameFilter ? GameFilter : -1));
 
   DoClassReplacement(ReplaceeClass, Class);
+
+  // also, block spawning of all children of the blocked class
+  if (!BlockedSpawnSet.has(Class->Name)) {
+    for (VClass *cc = Class; cc; cc = cc->GetSuperClass()) {
+      if (BlockedSpawnSet.has(cc->Name)) {
+        GLog.Logf(NAME_Warning, "%s: blocked known blood child class '%s' (%s)", *Class->Loc.toStringNoCol(), Class->GetName(), cc->GetName());
+        BlockedSpawnSet.put(cc->Name, true);
+        break;
+      }
+    }
+  }
+
   /*
   if (ReplaceeClass) {
     if (cli_DecorateOldReplacement) {

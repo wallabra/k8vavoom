@@ -523,17 +523,25 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
   vassert(AClass);
   VClass *Class = (AllowReplace ? AClass->GetReplacement() : AClass);
   if (!Class) Class = AClass;
+
   if (!Class) {
     VObject::VMDumpCallStack();
     GCon->Log(NAME_Error, "cannot spawn object without a class (expect engine crash soon!)");
     return nullptr;
   }
+
   // check for valid class
   if (!Class->IsChildOf(VThinker::StaticClass())) {
     VObject::VMDumpCallStack();
     GCon->Logf(NAME_Error, "cannot spawn non-thinker object with class `%s` (expect engine crash soon!)", Class->GetName());
     return nullptr;
   }
+
+  if (BlockedSpawnSet.has(Class->Name)) {
+    GCon->Logf(NAME_Debug, "blocked spawning of `%s`", Class->GetName());
+    return nullptr;
+  }
+
   // spawn it
   VThinker *Ret = (VThinker *)StaticSpawnNoReplace(Class);
   if (!Ret) {

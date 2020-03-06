@@ -55,4 +55,8 @@ extern TArray<VClass *> NumberLimitedClasses;
 // GameInfo is not spawned yet, so keep them here
 extern TArray<VDamageFactor> CustomDamageFactors;
 
+// do not spawn classes from this set
+// it is filled by decorate parser, and used to block spawning of known blood
+extern TMapNC<VName, bool> BlockedSpawnSet;
+
 extern bool decoIgnorePlayerSpeed;
