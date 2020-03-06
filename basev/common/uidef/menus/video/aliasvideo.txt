@@ -18,6 +18,15 @@ menudef AliasModelVideoOptions {
   }
 
   option bool {
+    title = "Hide Models Without Textures";
+    cvar = r_model_ignore_missing_textures;
+    help =
+      "If some model texture is not found, the engine will render it",
+      "with a default checkerboard texture. You can set this option",
+      "to 'ON' to completely ignore such models.";
+  }
+
+  option bool {
     title = "Model Autorotation";
     cvar = r_model_autorotating;
     help = "You can turn off pickup model rotation here.";
