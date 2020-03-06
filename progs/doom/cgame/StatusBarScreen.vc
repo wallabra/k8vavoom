@@ -681,11 +681,15 @@ override void SB_DrawFullscreenStats () {
   if (cl.ReadyWeapon) {
     if (cl.ReadyWeapon.Ammo1) {
       SB_DrawTallNum(ST_TDAMMOX, ST_TDAMMOY, cl.ReadyWeapon.Ammo1.Amount, fsalpha, false);
-      DrawPic(ST_TDAMMOX-60, ST_TDAMMOY+15, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), fsalpha);
+      if (cl.ReadyWeapon.Ammo1.IconName) {
+        DrawPic(ST_TDAMMOX-60, ST_TDAMMOY+15, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), fsalpha);
+      }
     }
     if (cl.ReadyWeapon.Ammo2 && cl.ReadyWeapon.Ammo2 != cl.ReadyWeapon.Ammo1) {
       SB_DrawTallNum(ST_TDAMMOX, ST_TDAMMOY-32, cl.ReadyWeapon.Ammo2.Amount, fsalpha, false);
-      DrawPic(ST_TDAMMOX-60, ST_TDAMMOY-32+15, R_RegisterPic(cl.ReadyWeapon.Ammo2.IconName), fsalpha);
+      if (cl.ReadyWeapon.Ammo2.IconName) {
+        DrawPic(ST_TDAMMOX-60, ST_TDAMMOY-32+15, R_RegisterPic(cl.ReadyWeapon.Ammo2.IconName), fsalpha);
+      }
     }
   }
 
