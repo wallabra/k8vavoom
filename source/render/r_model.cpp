@@ -42,6 +42,7 @@ static VCvarB gl_dbg_log_model_rendering("gl_dbg_log_model_rendering", false, "S
 
 static VCvarB r_model_autorotating("r_model_autorotating", true, "Allow model autorotation?", CVAR_Archive);
 static VCvarB r_model_autobobbing("r_model_autobobbing", true, "Allow model autobobbing?", CVAR_Archive);
+static VCvarB r_model_ignore_missing_textures("r_model_ignore_missing_textures", false, "Do not render models with missing textures (if `false`, renders with checkerboards)?", CVAR_Archive);
 
 static VCvarB r_preload_alias_models("r_preload_alias_models", true, "Preload all alias models and their skins?", CVAR_Archive|CVAR_PreInit);
 
@@ -1356,6 +1357,14 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     }
     if (SkinID < 0) SkinID = GTextureManager.DefaultTexture;
 
+    // check for missing texture
+    if (SkinID == GTextureManager.DefaultTexture) {
+      if (r_model_ignore_missing_textures) return;
+    }
+
+    VTexture *SkinTex = GTextureManager(SkinID);
+    if (!SkinTex || SkinTex->Type == TEXTYPE_Null) return; // do not render models without textures
+
     // get and verify frame number
     int Md2Frame = F.Index;
     if ((unsigned)Md2Frame >= (unsigned)SubMdl.Model->Frames.length()) {
@@ -1526,7 +1535,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
           newri.light = Md2Light;
           newri.alpha = Md2Alpha;
           Drawer->DrawAliasModel(Md2Org, Md2Angle, Transform,
-            SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
+            SubMdl.Model, Md2Frame, Md2NextFrame, SkinTex,
             Trans, ColorMap,
             newri,
             IsViewModel, smooth_inter, Interpolate, SubMdl.UseDepth,
@@ -1537,7 +1546,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       case RPASS_Ambient:
         if (!SubMdl.AllowTransparency) {
           Drawer->DrawAliasModelAmbient(Md2Org, Md2Angle, Transform,
-            SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
+            SubMdl.Model, Md2Frame, Md2NextFrame, SkinTex,
             Md2Light, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
             SubMdl.AllowTransparency);
         }
@@ -1549,18 +1558,18 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         break;
       case RPASS_Light:
         Drawer->DrawAliasModelLight(Md2Org, Md2Angle, Transform,
-          SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
+          SubMdl.Model, Md2Frame, Md2NextFrame, SkinTex,
           Md2Alpha, smooth_inter, Interpolate, SubMdl.AllowTransparency);
         break;
       case RPASS_Textures:
         Drawer->DrawAliasModelTextures(Md2Org, Md2Angle, Transform,
-          SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
+          SubMdl.Model, Md2Frame, Md2NextFrame, SkinTex,
           Trans, ColorMap, ri, smooth_inter, Interpolate, SubMdl.UseDepth,
           SubMdl.AllowTransparency);
         break;
       case RPASS_Fog:
         Drawer->DrawAliasModelFog(Md2Org, Md2Angle, Transform,
-          SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
+          SubMdl.Model, Md2Frame, Md2NextFrame, SkinTex,
           ri.fade, Md2Alpha, smooth_inter, Interpolate, SubMdl.AllowTransparency);
         break;
     }
