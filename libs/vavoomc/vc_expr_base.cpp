@@ -688,6 +688,9 @@ int VExpression::IsNumericLiteralExpr (VExpression *e) {
       case VBinary::RShift:
       case VBinary::URShift:
       case VBinary::And:
+      case VBinary::LShiftFloat:
+      case VBinary::RShiftFloat:
+      case VBinary::URShiftFloat:
       case VBinary::XOr:
       case VBinary::Or:
         if (IsNumericLiteralExpr(eb->op1) != ExprInt) return ExprNotNum;

@@ -615,6 +615,9 @@ int VBinary::calcPrio (EBinOp op) {
     case LShift:
     case RShift:
     case URShift:
+    case LShiftFloat:
+    case RShiftFloat:
+    case URShiftFloat:
       return 4;
     case And:
       return 5;
@@ -691,7 +694,28 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   if (op2) op2 = op2->Resolve(ec);
   if (!op1 || !op2) { delete this; return nullptr; }
 
-  // if we're doung comparisons, and one operand is int, and second is
+  // convert decorate crap
+  if (Oper == LShiftFloat || Oper == RShiftFloat || Oper == URShiftFloat) {
+    if (op1->Type.Type == TYPE_Float) {
+      if (!op2->IsIntConst() || op2->GetIntConst() != 0) {
+        ParseWarning(Loc, "shifting float value is something you should not do!");
+      }
+      // convert float to int
+      op1 = (new VScalarToInt(op1, true/*resolved*/))->Resolve(ec);
+      if (!op1) {
+        delete this;
+        return nullptr;
+      }
+    }
+    switch (Oper) {
+      case LShiftFloat: Oper = LShift; break;
+      case RShiftFloat: Oper = RShift; break;
+      case URShiftFloat: Oper = URShift; break;
+      default: VCFatalError("ooops, internal compiler error ketmar-1249692");
+    }
+  }
+
+  // if we're doing comparisons, and one operand is int, and second is
   // one-char name or one-char string, convert it to int too, as this
   // is something like `str[1] == "a"`
   switch (Oper) {
@@ -890,6 +914,43 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
         return nullptr;
       }
       break;
+    default: VCFatalError("VBinary::DoResolve: forgot to handle oper %d in typecheck", (int)Oper);
+  }
+
+  // optimise shifts
+  if (op2->IsIntConst()) {
+    vint32 Value2 = op2->GetIntConst();
+    VExpression *e = nullptr;
+    // shift by zero means "noop"
+    switch (Oper) {
+      case LShift:
+        if (Value2 == 0) {
+          e = op1;
+          op1 = nullptr;
+        } else if (Value2 > 31) {
+          e = new VIntLiteral(0, Loc);
+        }
+        break;
+      case RShift:
+        if (Value2 == 0) {
+          e = op1;
+          op1 = nullptr;
+        }
+        break;
+      case URShift:
+        if (Value2 == 0) {
+          e = op1;
+          op1 = nullptr;
+        } else if (Value2 > 31) {
+          e = new VIntLiteral(0, Loc);
+        }
+        break;
+      default: break;
+    }
+    if (e) {
+      delete this;
+      return e;
+    }
   }
 
   // optimize integer constants
@@ -918,6 +979,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
         e = new VIntLiteral(Value1%Value2, Loc);
         break;
       case LShift:
+      case LShiftFloat:
         if (Value2 < 0 || Value2 > 31) {
           ParseError(Loc, "shl by %d", Value2);
           delete this;
@@ -926,6 +988,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
         e = new VIntLiteral(Value1<<Value2, Loc);
         break;
       case RShift:
+      case RShiftFloat:
         if (Value2 < 0 || Value2 > 31) {
           ParseError(Loc, "shr by %d", Value2);
           delete this;
@@ -934,6 +997,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
         e = new VIntLiteral(Value1>>Value2, Loc);
         break;
       case URShift:
+      case URShiftFloat:
         if (Value2 < 0 || Value2 > 31) {
           ParseError(Loc, "ushr by %d", Value2);
           delete this;
@@ -1156,6 +1220,7 @@ void VBinary::Emit (VEmitContext &ec) {
       if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrCat, Loc);
       break;
     case IsA: case NotIsA: VCFatalError("wtf?!");
+    default: VCFatalError("VBinary::DoResolve: forgot to handle oper %d in code emiter", (int)Oper);
   }
 }
 
@@ -1185,6 +1250,9 @@ const char *VBinary::getOpName () const {
     case LShift: return "<<";
     case RShift: return ">>";
     case URShift: return ">>>";
+    case LShiftFloat: return "<<";
+    case RShiftFloat: return ">>";
+    case URShiftFloat: return ">>>";
     case StrCat: return "~";
     case And: return "&";
     case XOr: return "^";

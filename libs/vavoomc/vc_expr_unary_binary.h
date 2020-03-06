@@ -142,6 +142,9 @@ public:
     LShift,
     RShift,
     URShift,
+    LShiftFloat, // crap for decorate
+    RShiftFloat, // crap for decorate
+    URShiftFloat, // crap for decorate
     StrCat,
     And,
     XOr,
