@@ -515,6 +515,10 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
     if (!sc->GetString()) { sc->Error("expression expected"); return nullptr; } // no more code, wtf?
     VStr token = sc->String;
     //GCon->Logf(NAME_Debug, "%s: PRIO2! (cb=%d) %s", *sc->GetLoc().toStringNoCol(), (inCodeBlock ? 1 : 0), *token);
+    // quoted crap
+    if (sc->QuotedString && token == "-") {
+      return new VDecorateSingleName(sc->String, sc->GetLoc());
+    }
     // prefix increment
     if (inCodeBlock) {
       if (token.strEqu("++") || token.strEqu("--")) {
