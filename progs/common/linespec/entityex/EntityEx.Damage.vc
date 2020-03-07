@@ -160,23 +160,23 @@ bool K8HS_CheckHeadshot (EntityEx inflictor, TVec hitpos, int damage, name damag
   if (Height <= 56.0) {
     // humans, archvile, cacodemon, demon, imp, lost soul, pain elemental, revenant
     headshot = (fromtop <= 14.0);
-    //if (headshot && showHeadshots) print("HS56: TAN");
+    //if (headshot && showHeadshots) printdebug("HS56: TAN");
   } else if (Height <= 64.0) {
     // arachnotron(64)
     // bruiser(64)
     if (K8HS_IsIAmAKindOf('Arachnotron')) {
       headshot = (fromtop <= 18.0);
-      //if (debugme) print("*******ARACHNO!");
+      //if (debugme) printdebug("*******ARACHNO!");
     } else {
       headshot = (fromtop <= 15.0);
     }
-    //if (headshot && showHeadshots) print("HS64: TAN");
+    //if (headshot && showHeadshots) printdebug("HS64: TAN");
   } else {
     // cyberdemon(110)
     // mastermind(100)
     // keen(72)
     headshot = (fromtop <= 20.0);
-    //if (headshot && showHeadshots) print("HSBIG: TAN");
+    //if (headshot && showHeadshots) printdebug("HSBIG: TAN");
   }
 
   return headshot;
@@ -206,12 +206,12 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
   bool debugme = GetCvarB('k8HSDebug');
 
   if (debugme) {
-    print("ME: %C; inf: %C", self, GetClassReplacee(inflictor.Class));
+    printdebug("ME: %C; inf: %C", self, GetClassReplacee(inflictor.Class));
   }
 
   PlayerPawn plr = PlayerPawn(inflictor);
 
-  //if (k8CheckBoolCVar('k8HSShowKnownDamage', debugme)) print("K8HS: damage type '%s', damage=%d", damageType, damage);
+  //if (k8CheckBoolCVar('k8HSShowKnownDamage', debugme)) printdebug("K8HS: damage type '%s', damage=%s", damageType, damage);
 
   bool fastkills = GetCvarB('k8HSFastKillAnnoyingMonsters');
 
@@ -221,7 +221,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
   //float vicRadius = Radius;
   //float vicHgt = Height;
 
-  if (debugme) print("InitialHealth=%d; Health=%d", InitialHealth, Health);
+  if (debugme) printdebug("InitialHealth=%s; Health=%s", InitialHealth, Health);
 
   if (InitialHealth < 1 || Health < 1) return damage; // something is very wrong with this monster!
 
@@ -240,7 +240,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
   //      2: more fucked
   //      3: even more fucked
   if (refire > 0) {
-    //print("refire0: %s", refire);
+    //printdebug("refire0: %s", refire);
          if (refire > 20) refire = -666; // totally fucked
     else if (refire > 16) refire = 3;
     else if (refire > 8) refire = 2;
@@ -250,62 +250,62 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
       else if (rnd > 164) refire = 1; // slightly fucked
       else refire = 0; // not fucked
     }
-    //print("refire1: %s", refire);
+    //printdebug("refire1: %s", refire);
   }
 
   if (refire < 0) return damage; // totally fucked
   if (refire > 0 && P_Random() >= 255/refire) return damage; // oops
-  //print("refire2: %s", refire);
+  //printdebug("refire2: %s", refire);
 
   bool showHeadshots = false;
   if (debugme) {
     showHeadshots = GetCvarB('k8HSShowHeadshots');
     float hithgt = hitpos.z; //-Pos.z;
     float fromtop = Height-hithgt;
-    print("  hithgt=%f; fromtop=%f", hithgt, fromtop);
+    printdebug("  hithgt=%s; fromtop=%s", hithgt, fromtop);
   }
 
   bool headshot = K8HS_CheckHeadshot(inflictor, hitpos, damage, damageType, secondary);
   /*
   float hithgt = hitpos.z; //-Pos.z;
   float fromtop = Height-hithgt;
-  if (debugme) print("  hithgt=%f; fromtop=%f", hithgt, fromtop);
+  if (debugme) printdebug("  hithgt=%s; fromtop=%s", hithgt, fromtop);
 
   bool headshot = false;
   if (Height <= 56.0) {
     // humans, archvile, cacodemon, demon, imp, lost soul, pain elemental, revenant
     headshot = (fromtop <= 14.0);
-    if (headshot && showHeadshots) print("HS56: TAN");
+    if (headshot && showHeadshots) printdebug("HS56: TAN");
   } else if (Height <= 64.0) {
     // arachnotron(64)
     // bruiser(64)
     if (K8HS_IsIAmAKindOf('Arachnotron')) {
       headshot = (fromtop <= 18.0);
-      if (debugme) print("*******ARACHNO!");
+      if (debugme) printdebug("*******ARACHNO!");
     } else {
       headshot = (fromtop <= 15.0);
     }
-    if (headshot && showHeadshots) print("HS64: TAN");
+    if (headshot && showHeadshots) printdebug("HS64: TAN");
   } else {
     // cyberdemon(110)
     // mastermind(100)
     // keen(72)
     headshot = (fromtop <= 20.0);
-    if (headshot && showHeadshots) print("HSBIG: TAN");
+    if (headshot && showHeadshots) printdebug("HSBIG: TAN");
   }
   */
 
   // precision shot is headshot near thing vertical center
   int precisionShot = 0; // 0: nope; -2: very far; -1: too far; 1: almost
   if (headshot && Radius > 0 && refire < 2) {
-    //print("HITXY=(%s,%s)", hitpos.x, hitpos.y);
+    //printdebug("HITXY=(%s,%s)", hitpos.x, hitpos.y);
     float hc = fmin(fabs(hitpos.x), fabs(hitpos.y));
     float r3 = Radius/3;
          if (hc <= r3*0.7) precisionShot = 2;
     else if (hc <= r3) precisionShot = 1;
     else if (hc > r3*2.4) precisionShot = -2;
     else if (hc > r3*2) precisionShot = -1;
-    //print("HC=%s; precisionShot=%s; radius=%s; r3*0.7=%s; r3=%s; r3*2=%s; r3*2.4=%s", hc, precisionShot, Radius, r3*0.7, r3, r3*2, r3*2.4);
+    //printdebug("HC=%s; precisionShot=%s; radius=%s; r3*0.7=%s; r3=%s; r3*2=%s; r3*2.4=%s", hc, precisionShot, Radius, r3*0.7, r3, r3*2, r3*2.4);
   }
 
   // calc distance
@@ -319,7 +319,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
     //len = Distance2D(inflictor)*mult;
     len = sqrt((self.Origin.x-inflictor.Origin.x)*(self.Origin.x-inflictor.Origin.x)+(self.Origin.y-inflictor.Origin.y)*(self.Origin.y-inflictor.Origin.y));
     // 600: E1M1, from entry to top of the stairs
-    if (debugme) print("K8HS: len=%f; multlen=%f", len, len*mult);
+    if (debugme) printdebug("K8HS: len=%s; multlen=%s", len, len*mult);
     len *= mult;
   }
 
@@ -329,7 +329,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
       //Log(s:"K8HS: Headshot! ", s:vicName, s:"; Height=", d:Height, s:"; fromtop=", d:fromtop, s:"; mass=", d:vicMass, s:"; radius=", d:Radius, s:"; len=", d:len);
       float hithgt = hitpos.z; //-Pos.z;
       float fromtop = Height-hithgt;
-      print("K8HS: Headshot! %C; Height=%f; fromtop=%f; radius=%f; len=%f", Class, Height, fromtop, Radius, len);
+      printdebug("K8HS: Headshot! %C; Height=%s; fromtop=%s; radius=%s; len=%s", Class, Height, fromtop, Radius, len);
     }
     bool allowCrits = K8HS_IsCriticalsAllowed();
 
@@ -349,7 +349,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
     //TODO: int tick = gametic;
     //int tick = k8hsLastHitTick+1;
 
-    if (debugme) print("K8HS: len=%f; critChance=%d; hscount=%d", len, critChance, plr.k8hsCount);
+    if (debugme) printdebug("K8HS: len=%s; critChance=%s; hscount=%s", len, critChance, plr.k8hsCount);
     // shotgun, etc -- multiple hitscans per one tick?
     if (secondary) {
       // very rarely, shotgun can do double criticals
@@ -361,14 +361,14 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
         critChance = 1;
         if (allowCrits && Random()*100.0 > 75.0) {
           dodmg += dodmg/4;
-          if (debugCrits) print("*Critx1.25 (2); d=%d", dodmg);
+          if (debugCrits) printdebug("*Critx1.25 (2); d=%s", dodmg);
         }
       } else {
         // fourth and other hitscans; 1.25 damage sometimes
         critChance = 1;
         if (allowCrits && Random()*100.0 > 80) {
           dodmg += dodmg/4;
-          if (debugCrits) print("*Critx1.25 (3); d=%d", dodmg);
+          if (debugCrits) printdebug("*Critx1.25 (3); d=%s", dodmg);
         }
       }
     } else {
@@ -389,15 +389,15 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
       else critChance += (8-plr.k8hsCount)*9;
       if (precisionShot > 0 && plr.k8hsCount > 1) precisionShot = 0; // don't do it for secondary bullets
     }
-    if (debugme) print("oldcc=%d; critChance=%d; len=%f", oldcc, critChance, len);
+    if (debugme) printdebug("oldcc=%s; critChance=%s; len=%s", oldcc, critChance, len);
 
     if (precisionShot) {
-      //print("PREC=%s; chance-before=%s", precisionShot, critChance);
+      //printdebug("PREC=%s; chance-before=%s", precisionShot, critChance);
            if (precisionShot > 1) critChance += 23;
       else if (precisionShot > 0) critChance += 13;
       else if (precisionShot < -1) critChance -= 23;
       else if (precisionShot < 0) critChance -= 13;
-      //print("  chance-after=%s", critChance);
+      //printdebug("  chance-after=%s", critChance);
     }
 
     if (!allowCrits) critChance = 0;
@@ -409,37 +409,37 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
 
     if (critChance >= 95) {
       dodmg *= 10;
-      if (debugCrits) print("*Critx10; d=%d", dodmg);
+      if (debugCrits) printdebug("*Critx10; d=%s", dodmg);
       messageText = "CRITICAL x10!";
       messageColor = CR_YELLOW;
       showMessage = true;
     } else if (critChance >= 85) {
       dodmg *= 7;
-      if (debugCrits) print("*Critx7; d=%d", dodmg);
+      if (debugCrits) printdebug("*Critx7; d=%s", dodmg);
       messageText = "CRITICAL x7!";
       messageColor = CR_ORANGE;
       showMessage = true;
     } else if (critChance >= 75) {
       dodmg *= 3;
-      if (debugCrits) print("*Critx3; d=%d", dodmg);
+      if (debugCrits) printdebug("*Critx3; d=%s", dodmg);
       messageText = "CRITICAL x3!";
       messageColor = CR_RED;
       showMessage = true;
     } else if (critChance >= 55) {
       dodmg *= 2;
-      if (debugCrits) print("*Critx2; d=%d", dodmg);
+      if (debugCrits) printdebug("*Critx2; d=%s", dodmg);
       messageText = "CRITICAL x2!";
       messageColor = CR_RED;
       //showMessage = true;
     } else if (critChance > 10) {
       dodmg += dodmg/2; // *1.5
-      if (debugCrits) print("*Critx1.5; d=%d", dodmg);
+      if (debugCrits) printdebug("*Critx1.5; d=%s", dodmg);
       messageText = "CRITICAL x1.5!";
       messageColor = CR_RED;
       //showMessage = true;
     }
 
-    if (debugCrits) print("  critChance=%d; damage=%d; dodmg=%d", critChance, damage, dodmg);
+    if (debugCrits) printdebug("  critChance=%s; damage=%s; dodmg=%s", critChance, damage, dodmg);
 
     if (InitialHealth < 100) {
       // humans, imps, ...
@@ -485,7 +485,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
         // instakill, gore (fe, 'cause +1)
         instakill = true;
         dodmg = Health+5;
-        if (debugCrits) print("  INSTAKILL");
+        if (debugCrits) printdebug("  INSTAKILL");
       }
       // preventing normal damage will prevent monster alerting too, heh
 
@@ -501,7 +501,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
 
         // play headkill sound
         if (dodmg >= Health && GetCvarB('k8GoreOpt_HeadshotSound')) {
-          //print("HEADBANG!");
+          //printdebug("HEADBANG!");
           PlaySound('k8gore/headbang', CHAN_AUTO/*CHAN_VOICE*/, Volume:default, ATTN_NORMAL, Loop:false, Local:false);
         }
       }
@@ -523,8 +523,8 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
 //==========================================================================
 void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bool NoArmor, TVec hitp, bool secondary, optional bool spawnBlood) {
   int newdmg = K8onBeforeLineDamage(inflictor, hitp, damage, DmgType, secondary);
-  //print("THP(%s):(%f,%f,%f); dmg=%d; new=%d; type='%s'", (secondary ? "2" : "1"), hitp.x, hitp.y, hitp.z, damage, newdmg, DmgType);
-  //print("THP:(%f,%f,%f); dmg=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, "FUCK!");
+  //printdebug("THP(%s):(%s,%s,%s); dmg=%s; new=%s; type='%s'", (secondary ? "2" : "1"), hitp.x, hitp.y, hitp.z, damage, newdmg, DmgType);
+  //printdebug("THP:(%s,%s,%s); dmg=%s; type='%s'", hitp.x, hitp.y, hitp.z, damage, "FUCK!");
   if (!secondary) {
     //printdebug("%C: first shot; spawnBlood=%B", self, spawnBlood);
     if (!specified_spawnBlood && inflictor && inflictor.bIsPlayer) {
@@ -700,7 +700,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   damage = TakeSpecialDamage(inflictor, source, damage, DmgType, forced:forced!optional);
   if (damage < 0) return; // was `-1`
 
-  //printdebug("DAMAGE: self=`%C`; damage=%d; health=%s; forced=%B; dmgtype=<%s>", self, damage, Health, forced, DmgType);
+  //printdebug("DAMAGE: self=`%C`; damage=%s; health=%s; forced=%B; dmgtype=<%s>", self, damage, Health, forced, DmgType);
   // push the target unless using a weapon that should not inflict thrust
   if (inflictor && inflictor != self && bColideWithThings && !inflictor.bNoDamageThrust && !bDontThrust) {
     float kickback;
@@ -740,7 +740,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
             thrust < 10.0 &&
             !bNoGravity)
         {
-          //print("!!!!!!!!!!! damage=%s; Health=%s; distz=%s; thrust=%s; nograv=%B", damage, Health, Origin.z-inflictor.Origin.z, thrust, bNoGravity);
+          //printdebug("!!!!!!!!!!! damage=%s; Health=%s; distz=%s; thrust=%s; nograv=%B", damage, Health, Origin.z-inflictor.Origin.z, thrust, bNoGravity);
           Angles.yaw += 180.0;
           Angles.yaw = AngleMod360(Angles.yaw);
           thrust *= 4.0;
@@ -767,7 +767,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
   // player specific
   if (bIsPlayer) {
-    //print("%C: dmg=%s; invul=%B", self, damage, bInvulnerable);
+    //printdebug("%C: dmg=%s; invul=%B", self, damage, bInvulnerable);
     if (!forced && PlayerEx(Player).CheckFriendlyFire(source, damage)) return;
 
     // end of game hell hack
