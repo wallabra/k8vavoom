@@ -261,7 +261,11 @@ void R_OSDMsgShow (const char *msg, int clr, bool sendKeepalives) {
         break;
     }
     y += T_FontHeight()*currMsgNumber;
-    GRoot->ShadeRect(96, y, VirtualWidth-96*2, T_FontHeight(), 0.666f);
+    if (currMsgNumber == 0) {
+      GRoot->ShadeRect(96, y-T_FontHeight(), VirtualWidth-96*2, T_FontHeight()*3, 0.666f);
+    } else {
+      GRoot->ShadeRect(96, y+T_FontHeight(), VirtualWidth-96*2, T_FontHeight(), 0.666f);
+    }
     T_DrawText(VirtualWidth/2, y, msg, clr);
     Drawer->Update();
     ++currMsgNumber;
