@@ -533,7 +533,10 @@ void VBasePlayer::AdjustAngles () {
   if (ViewAngles.roll > 80.0f) ViewAngles.roll = 80.0f;
   if (ViewAngles.roll < -80.0f) ViewAngles.roll = -80.0f;
 
-  if (!sv_ignore_nomlook && (Level->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) ViewAngles.pitch = 0;
+  //FIXME: server should give us those flags, yeah
+  if (Level && GGameInfo->NetMode < NM_Client && GGameInfo->NetMode != NM_DedicatedServer) {
+    if (!sv_ignore_nomlook && (Level->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) ViewAngles.pitch = 0;
+  }
 }
 
 
