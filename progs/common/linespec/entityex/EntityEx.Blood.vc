@@ -571,7 +571,9 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg, optional fl
   if (!BloodType) return;
 
   EntityEx A = Spawn(BloodType, Org);
+  //printdebug("%C:000: spawning blood! (%C)", self, BloodType);
   if (!A) return; // oops
+  //printdebug("%C:001: spawned blood! (%C)", self, A);
   A.CopyBloodTranslations(self, copyNormalTranslation:true);
   //print("spawned blood `%C` for `%C` (bt=%s; A.bDontTranslate=%B; a.t=%s; a.bt=%s)", A, self, BloodTranslation, A.bDontTranslate, A.Translation, A.BloodTranslation);
   A.SetBloodArgs(self, damage:damage);
