@@ -29,6 +29,9 @@
 extern VCvarB net_fixed_name_set;
 extern VCvarB net_debug_fixed_name_set;
 
+extern VCvarF net_timeout;
+extern VCvarF net_keepalive;
+
 
 class VNetContext;
 
@@ -193,9 +196,6 @@ public:
   void *CheckUserAbortUData; // user-managed
 
 public:
-  static VCvarF MessageTimeOut;
-
-public:
   VNetworkPublic ();
 
   inline bool CheckForUserAbort () { return (CheckUserAbortCB ? CheckUserAbortCB(CheckUserAbortUData) : false); }
@@ -269,6 +269,10 @@ public:
 
   // this is called to set `Closing` flag, and can perform some cleanup
   virtual void SetClosing ();
+
+  // this is called from `ReceivedAcks()`
+  // the channel will be automatically closed and destroyed, so don't do it here
+  virtual void ReceivedCloseAck ();
 
   // this sends reliable "close" message, if the channel in not on closing state yet
   virtual void Close ();
@@ -437,7 +441,7 @@ public:
 
   // VChannel interface
   virtual VStr GetName () const noexcept override;
-  virtual void SetClosing () override; // sets `ObjMapSent` flag
+  virtual void ReceivedCloseAck () override; // sets `ObjMapSent` flag
   virtual void ParseMessage (VMessageIn &) override;
   virtual void Tick () override;
 };

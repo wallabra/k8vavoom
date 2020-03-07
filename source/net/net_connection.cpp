@@ -34,6 +34,7 @@ static VCvarB net_dbg_conn_show_outdated("net_dbg_conn_show_outdated", false, "S
 static VCvarB net_dbg_conn_show_dgrams("net_dbg_conn_show_dgrams", false, "Show datagram activity?");
 static VCvarB net_dbg_conn_show_unreliable("net_dbg_conn_show_unreliable", false, "Show datagram unreliable payload info?");
 static VCvarB net_dbg_report_missing_dgrams("net_dbg_report_missing_dgrams", false, "Report missing datagrams (this is mostly useless console spam)?");
+static VCvarB net_dbg_report_stats("net_dbg_report_stats", false, "Report some stats to the console?");
 
 VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump received packets?");
 
@@ -187,7 +188,7 @@ bool VNetConnection::IsServer () noexcept {
 //
 //==========================================================================
 double VNetConnection::CalcKeepAliveTime () noexcept {
-  return fmax(0.008, VNetworkPublic::MessageTimeOut.asFloat()*0.666);
+  return clampval(net_keepalive.asFloat(), 0.05f, 1.0f);
 }
 
 
@@ -219,8 +220,7 @@ bool VNetConnection::IsTimeoutExceeded () {
   if (AutoAck || IsLocalConnection()) return false;
   if (LastReceiveTime < 1) LastReceiveTime = Driver->GetNetTime();
   if (NetCon->LastMessageTime < 1) NetCon->LastMessageTime = Driver->GetNetTime();
-  double tout = VNetworkPublic::MessageTimeOut;
-  if (tout < 0.4) tout = 0.4;
+  double tout = clampval(net_timeout.asFloat(), 0.4f, 20.0f);
   if (Driver->GetNetTime()-LastReceiveTime <= tout) return false;
   // timeout!
   return true;
@@ -679,13 +679,6 @@ void VNetConnection::SendMessage (VMessageOut *Msg) {
 void VNetConnection::Flush () {
   if (IsClosed()) return;
 
-  // see if this connection has timed out
-  if (IsTimeoutExceeded()) {
-    ShowTimeoutStats();
-    State = NETCON_Closed;
-    return;
-  }
-
   if (Out.IsError()) {
     GCon->Logf(NAME_DevNet, "!!! %s: out collector errored! bits=%d", *GetAddress(), Out.GetNumBits());
   }
@@ -819,9 +812,11 @@ void VNetConnection::Tick () {
 
     // if in or out loss is more than... let's say 20, this is high packet loss, show something to the user
 
-    GCon->Logf("*** %s: lag:(%g,%g) %g; rate:%g/%g; packets:%g/%g; messages:%g/%g; order:%g/%g; loss:%g/%g", *GetAddress(),
-      PrevLag, AvgLag, (PrevLag+1.2*(max2(InLoss, OutLoss)*0.01)),
-      InRate, OutRate, InPackets, OutPackets, InMessages, OutMessages, InOrder, OutOrder, InLoss, OutLoss);
+    if (net_dbg_report_stats) {
+      GCon->Logf("*** %s: lag:(%d,%d) %d; rate:%g/%g; packets:%g/%g; messages:%g/%g; order:%g/%g; loss:%g/%g", *GetAddress(),
+        (int)(PrevLag*1000), (int)(AvgLag*1000), (int)((PrevLag+1.2*(max2(InLoss, OutLoss)*0.01))*1000),
+        InRate, OutRate, InPackets, OutPackets, InMessages, OutMessages, InOrder, OutOrder, InLoss, OutLoss);
+    }
 
     // init counters
     LagAcc = 0;
@@ -869,6 +864,13 @@ void VNetConnection::Tick () {
 
   // also, flush if we have no room for more data in outgoing accumulator
   if (ForceFlush || IsKeepAliveExceeded() || CalcEstimatedByteSize() == MAX_MSG_SIZE_BITS) Flush();
+
+  // see if this connection has timed out
+  if (IsTimeoutExceeded()) {
+    ShowTimeoutStats();
+    State = NETCON_Closed;
+    return;
+  }
 }
 
 

@@ -99,11 +99,10 @@ private:
 VNetworkPublic *GNet = nullptr;
 
 VCvarS VNetworkLocal::HostName("hostname", "UNNAMED", "Name of this host.");
-// k8: dunno, it was 300. but why? we can have big hiccups on level loading,
-//     and when sound is not cached, for example. it should be safe to
-//     set this to 3 seconds: the only consequence is longer timeout before
-//     detecting disconnects. not a big deal, i think.
-VCvarF VNetworkPublic::MessageTimeOut("net_messagetimeout", "10", "Network timeout value in seconds.");
+
+VCvarF net_timeout("net_timeout", "4", "Network timeout, in seconds.");
+// the network layer will force packet sending after this interval
+VCvarF net_keepalive("net_keepalive", "0.3", "Network keepalive time, in seconds.");
 
 VNetDriver *VNetworkLocal::Drivers[MAX_NET_DRIVERS];
 int VNetworkLocal::NumDrivers = 0;

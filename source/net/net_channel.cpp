@@ -139,6 +139,18 @@ void VChannel::SetClosing () {
 
 //==========================================================================
 //
+//  VChannel::ReceivedCloseAck
+//
+//  this is called from `ReceivedAcks()`
+//  the channel will be automatically closed and destroyed, so don't do it here
+//
+//==========================================================================
+void VChannel::ReceivedCloseAck () {
+}
+
+
+//==========================================================================
+//
 //  VChannel::Close
 //
 //==========================================================================
@@ -217,6 +229,7 @@ void VChannel::ReceivedAcks () {
       }
     }
     vassert(!OutList);
+    ReceivedCloseAck();
     delete this;
   }
 }
