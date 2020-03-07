@@ -25,7 +25,7 @@
 //**************************************************************************
 struct server_t {
   int intermission;
-  int intertime;
+  float intertime;
 };
 
 struct server_static_t {

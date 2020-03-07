@@ -556,7 +556,7 @@ static void SV_SendClientMessages (bool full=true) {
 //========================================================================
 static void CheckForSkip () {
   VBasePlayer *player;
-  static bool triedToSkip;
+  static bool triedToSkip = false;
   bool skip = false;
 
   /*
@@ -583,7 +583,7 @@ static void CheckForSkip () {
       }
     }
 
-    if (deathmatch && sv.intertime < 140) {
+    if (deathmatch && sv.intertime < 4) {
       // wait for 4 seconds before allowing a skip
       if (skip) {
         triedToSkip = true;
@@ -719,11 +719,11 @@ static void SV_RunClients (bool skipFrame=false) {
     }
     #endif
     CheckForSkip();
-    ++sv.intertime;
+    sv.intertime += host_frametime;
   }
 
   if (!sv.intermission) {
-#ifdef CLIENT
+    #ifdef CLIENT
     if (GDemoRecordingContext) {
       if (cls.demorecording) {
         for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
@@ -733,7 +733,22 @@ static void SV_RunClients (bool skipFrame=false) {
         }
       }
     }
-#endif
+    #endif
+  }
+}
+
+
+//==========================================================================
+//
+//  SV_UpdateMaster
+//
+//==========================================================================
+static void SV_UpdateMaster () {
+  if (GGameInfo->NetMode >= NM_DedicatedServer &&
+      (!LastMasterUpdate || host_time-LastMasterUpdate > master_heartbeat_time))
+  {
+    GNet->UpdateMaster();
+    LastMasterUpdate = host_time;
   }
 }
 
@@ -745,13 +760,6 @@ static void SV_RunClients (bool skipFrame=false) {
 //==========================================================================
 static void SV_Ticker () {
   //double saved_frametime;
-
-  if (GGameInfo->NetMode >= NM_DedicatedServer &&
-      (!LastMasterUpdate || host_time-LastMasterUpdate > master_heartbeat_time))
-  {
-    GNet->UpdateMaster();
-    LastMasterUpdate = host_time;
-  }
 
   if (host_frametime <= 0) return;
 
@@ -1004,7 +1012,8 @@ COMMAND_AC(TestFinale) {
 COMMAND_WITH_AC(TeleportNewMap) {
   int flags = 0;
 
-  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
+  // dumb clients must forward this
+  if (GGameInfo->NetMode == NM_None) return;
 
   CMD_FORWARD_TO_SERVER();
 
@@ -1074,7 +1083,8 @@ COMMAND(ACS_TeleportNewMap) {
     return;
   }
 
-  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
+  // dumb clients must forward this
+  if (GGameInfo->NetMode == NM_None /*|| GGameInfo->NetMode == NM_Client*/) return;
 
   CMD_FORWARD_TO_SERVER();
 
@@ -1777,8 +1787,10 @@ void SV_ConnectClient (VBasePlayer *player) {
 //
 //  check for new connections
 //
+//  returns `false` if we have no active connections
+//
 //==========================================================================
-void SV_CheckForNewClients () {
+static bool SV_CheckForNewClients () {
   for (;;) {
     VSocketPublic *sock = GNet->CheckNewConnections();
     if (!sock) break;
@@ -1798,51 +1810,12 @@ void SV_CheckForNewClients () {
     SV_ConnectClient(Player);
     ++svs.num_connected;
   }
-}
 
-
-//==========================================================================
-//
-//  SV_ServerInterframeBK
-//
-//==========================================================================
-void SV_ServerInterframeBK () {
-  // if we're running a server (either dedicated, or combined, and we are in game), process server bookkeeping
-  if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
-    //SV_CheckForNewClients();
-    SV_SendClientMessages(false); // not full
-  }
-}
-
-
-//==========================================================================
-//
-//  SV_AllClientsNeedsWorldUpdate
-//
-//  force world update on the next tick
-//
-//==========================================================================
-void SV_AllClientsNeedsWorldUpdate () {
-  for (int i = 0; i < MAXPLAYERS; ++i) {
-    VBasePlayer *Player = GGameInfo->Players[i];
-    if (!Player || !Player->Net) continue;
-    Player->Net->NeedsUpdate = true;
-  }
-}
-
-
-//==========================================================================
-//
-//  NET_SendNetworkHeartbeat
-//
-//==========================================================================
-void NET_SendNetworkHeartbeat (bool forced) {
-#ifdef CLIENT
-  CL_NetworkHeartbeat(forced);
-#endif
-#ifdef SERVER
-  SV_NetworkHeartbeat(forced);
-#endif
+  #ifdef CLIENT
+  return true; // always
+  #else
+  return (svs.num_connected > 0);
+  #endif
 }
 
 
@@ -2080,22 +2053,71 @@ COMMAND(MaxPlayers) {
 
 //==========================================================================
 //
+//  SV_ServerInterframeBK
+//
+//==========================================================================
+void SV_ServerInterframeBK () {
+  // if we're running a server (either dedicated, or combined, and we are in game), process server bookkeeping
+  if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
+    SV_SendClientMessages(false); // not full
+  }
+}
+
+
+//==========================================================================
+//
+//  SV_AllClientsNeedsWorldUpdate
+//
+//  force world update on the next tick
+//
+//==========================================================================
+void SV_AllClientsNeedsWorldUpdate () {
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    VBasePlayer *Player = GGameInfo->Players[i];
+    if (!Player || !Player->Net) continue;
+    Player->Net->NeedsUpdate = true;
+  }
+}
+
+
+//==========================================================================
+//
+//  NET_SendNetworkHeartbeat
+//
+//==========================================================================
+void NET_SendNetworkHeartbeat (bool forced) {
+#ifdef CLIENT
+  CL_NetworkHeartbeat(forced);
+#endif
+#ifdef SERVER
+  SV_NetworkHeartbeat(forced);
+#endif
+}
+
+
+//==========================================================================
+//
 //  ServerFrame
 //
 //==========================================================================
 void ServerFrame (int realtics) {
-  SV_CheckForNewClients();
+  const bool haveClients = SV_CheckForNewClients();
 
-  if (real_time) {
-    SV_Ticker();
-  } else {
-    // run the count dics
-    while (realtics--) SV_Ticker();
+  // there is no need to tick if we have no active clients
+  // no, really
+  if (haveClients || sv_loading || sv.intermission) {
+    if (real_time) {
+      SV_Ticker();
+    } else {
+      // run the count dics
+      while (realtics--) SV_Ticker();
+    }
   }
 
   if (mapteleport_issued) SV_MapTeleport(GLevelInfo->NextMap, mapteleport_flags, mapteleport_skill);
 
   SV_SendClientMessages(); // full
+  SV_UpdateMaster();
 }
 
 
@@ -2105,18 +2127,7 @@ void ServerFrame (int realtics) {
 //
 //==========================================================================
 VClass *SV_FindClassFromEditorId (int Id, int GameFilter) {
-  /*
-  for (int i = VClass::GMobjInfos.length()-1; i >= 0; --i) {
-    if ((!VClass::GMobjInfos[i].GameFilter ||
-         (VClass::GMobjInfos[i].GameFilter & GameFilter)) &&
-        Id == VClass::GMobjInfos[i].DoomEdNum)
-    {
-      return VClass::GMobjInfos[i].Class;
-    }
-  }
-  */
   mobjinfo_t *nfo = VClass::FindMObjId(Id, GameFilter);
-  //GCon->Logf("SV_FindClassFromEditorId: Id=%d; filter=0x%04x; class=<%s>", Id, GameFilter, (nfo && nfo->Class ? *nfo->Class->GetFullName() : "<oops>"));
   if (nfo) return nfo->Class;
   return nullptr;
 }
@@ -2128,16 +2139,6 @@ VClass *SV_FindClassFromEditorId (int Id, int GameFilter) {
 //
 //==========================================================================
 VClass *SV_FindClassFromScriptId (int Id, int GameFilter) {
-  /*
-  for (int i = VClass::GScriptIds.length()-1; i >= 0; --i) {
-    if ((!VClass::GScriptIds[i].GameFilter ||
-         (VClass::GScriptIds[i].GameFilter & GameFilter)) &&
-        Id == VClass::GScriptIds[i].DoomEdNum)
-    {
-      return VClass::GScriptIds[i].Class;
-    }
-  }
-  */
   mobjinfo_t *nfo = VClass::FindScriptId(Id, GameFilter);
   if (nfo) return nfo->Class;
   return nullptr;
