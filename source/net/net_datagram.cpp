@@ -326,16 +326,18 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     Drv->Broadcast(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes());
   }
 
-  while ((len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr)) > 0) {
+  //GCon->Logf(NAME_Debug, "SearchForHosts: trying to read a datagram...");
+  int pktleft = 128;
+  while (pktleft-- > 0 && (len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr)) > 0) {
     if (len < (int)sizeof(int)) continue;
 
     // don't answer our own query
     if (!ForMaster && Drv->AddrCompare(&readaddr, &myaddr) >= 0) continue;
 
     // is the cache full?
-    if (Net->HostCacheCount == HOSTCACHESIZE) continue;
+    //if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
-    GCon->Logf(NAME_Debug, "SearchForHosts: got packet from %s", *Drv->AddrToString(&readaddr));
+    GCon->Logf(NAME_DevNet, "SearchForHosts: got datagram from %s (len=%d)", *Drv->AddrToString(&readaddr), len);
 
     VBitStreamReader msg(packetBuffer.data, len<<3);
     msg << control;
@@ -348,7 +350,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     VStr str;
     VStr addr = Drv->AddrToString(&readaddr);
 
-    GCon->Logf(NAME_Debug, "SearchForHosts: got valid packet from %s", *Drv->AddrToString(&readaddr));
+    GCon->Logf(NAME_DevNet, "SearchForHosts: got valid packet from %s", *Drv->AddrToString(&readaddr));
 
     // search the cache for this server
     for (n = 0; n < Net->HostCacheCount; ++n) {
@@ -357,6 +359,11 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
 
     // is it already there?
     if (n < Net->HostCacheCount) continue;
+
+    if (Net->HostCacheCount == HOSTCACHESIZE) {
+      GCon->Logf(NAME_DevNet, "too many hosts, ignoring...");
+      continue;
+    }
 
     // add it
     ++Net->HostCacheCount;
@@ -376,7 +383,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     hinfo->WadFiles.clear();
     ReadPakList(hinfo->WadFiles, msg);
 
-    GCon->Logf(NAME_Debug, "SearchForHosts: got server info from %s: name=%s; map=%s; users=%d; maxusers=%d", *hinfo->CName, *hinfo->Name, *hinfo->Map, hinfo->Users, hinfo->MaxUsers);
+    GCon->Logf(NAME_DevNet, "SearchForHosts: got server info from %s: name=%s; map=%s; users=%d; maxusers=%d", *hinfo->CName, *hinfo->Name, *hinfo->Map, hinfo->Users, hinfo->MaxUsers);
 
     // check for a name conflict
     /*
@@ -693,7 +700,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     MsgOut << TmpByte;
     TmpStr = VNetworkLocal::HostName;
     MsgOut << TmpStr;
-    TmpStr = *GLevel->MapName;
+    TmpStr = (GLevel ? *GLevel->MapName : "intermission");
     MsgOut << TmpStr;
     TmpByte = svs.num_connected;
     MsgOut << TmpByte;
@@ -703,15 +710,6 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     MsgOut << TmpByte;
     // write pak list
     WritePakList(MsgOut);
-    /*
-    for (int i = 0; i < fsysWadFileNames.Num(); ++i) {
-      TmpStr = fsysWadFileNames[i]; //TODO: remove path?
-      MsgOut << TmpStr;
-    }
-    TmpStr = "";
-    MsgOut << TmpStr;
-    */
-
     Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
     return nullptr;
   }
@@ -949,16 +947,20 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     TmpByte = MCREQ_LIST;
     MsgOut << TmpByte;
     Drv->Write(Drv->MasterQuerySocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
+    GCon->Logf(NAME_DevNet, "sent query to master at %s...", *Drv->AddrToString(&sendaddr));
     return false;
   }
 
-  //GCon->Logf("waiting for master reply...");
-  while ((len = Drv->Read(Drv->MasterQuerySocket, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr)) > 0) {
+  //GCon->Logf(NAME_DevNet, "waiting for master reply...");
+
+  bool res = false;
+  int pktleft = 256;
+  while (pktleft-- > 0 && (len = Drv->Read(Drv->MasterQuerySocket, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr)) > 0) {
     if (len < 1) continue;
 
-    //GCon->Logf("got master reply...");
+    GCon->Logf(NAME_DevNet, "got master reply from %s", *Drv->AddrToString(&readaddr));
     // is the cache full?
-    if (Net->HostCacheCount == HOSTCACHESIZE) continue;
+    //if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
     //GCon->Logf("processing master reply...");
     VBitStreamReader msg(packetBuffer.data, len<<3);
@@ -971,9 +973,9 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     if (msg.IsError() || control != MCREP_LIST) continue;
 
     msg << control; // control byte: bit 0 means "first packet", bit 1 means "last packet"
-    //GCon->Logf(" control byte: 0x%02x", (unsigned)control);
+    //GCon->Logf(NAME_Dev, "  control byte: 0x%02x", (unsigned)control);
 
-    if ((control&0x01) == 0) continue; // first packed is missing
+    //if ((control&0x01) == 0) continue; // first packed is missing, but nobody cares
 
     while (!msg.AtEnd()) {
       vuint8 pver;
@@ -981,15 +983,8 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
       msg.Serialise(&pver, 1);
       msg.Serialise(tmpaddr.sa_data+2, 4);
       msg.Serialise(tmpaddr.sa_data, 2);
-      /*{
-        char buffer[28];
-        vuint32 haddr = *((vuint32 *)(tmpaddr.sa_data+2));
-        vuint16 hport = *((vuint16 *)(tmpaddr.sa_data+0));
-        snprintf(buffer, sizeof(buffer), "%u.%u.%u.%u:%u", haddr&0xff, (haddr>>8)&0xff, (haddr>>16)&0xff, (haddr>>24)&0xff, hport);
-        GCon->Logf(" proto %u: %s", (unsigned)pver, buffer);
-      }*/
-
       if (pver == NET_PROTOCOL_VERSION) {
+        GCon->Logf(NAME_DevNet, "  sending server query to %s...", *Drv->AddrToString(&tmpaddr));
         VBitStreamWriter Reply(MAX_DGRAM_SIZE<<3);
         TmpByte = NETPACKET_CTL;
         Reply << TmpByte;
@@ -999,12 +994,17 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
         TmpByte = NET_PROTOCOL_VERSION;
         Reply << TmpByte;
         Drv->Write(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes(), &tmpaddr);
+      } else {
+        GCon->Logf(NAME_DevNet, "  server: %s, bad proto version %u", *Drv->AddrToString(&tmpaddr), pver);
       }
     }
-    if (control&0x02) return true;
+
+    //if (control&0x02) return true; // nobody cares, again
     //return true;
+    res = true;
   }
-  return false;
+
+  return res;
 }
 
 

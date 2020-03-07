@@ -569,6 +569,7 @@ void VNetwork::PrintSlistTrailer () {
 void VNetwork::StartSearch (bool Master) {
   SlistSilent = true;
   SlistLocal = false;
+  GCon->Logf(NAME_DevNet, "VNetwork::StartSearch: Master=%d", (int)Master);
   if (Master) {
     MasterList();
   } else {
