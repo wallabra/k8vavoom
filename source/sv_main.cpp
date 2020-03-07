@@ -502,7 +502,7 @@ void SV_NetworkHeartbeat (bool forced) {
 //
 //==========================================================================
 static void SV_SendClientMessages (bool full=true) {
-  if (full) {
+  if (/*full*/true) {
     // update player replication infos
     for (int i = 0; i < svs.max_clients; ++i) {
       VBasePlayer *Player = GGameInfo->Players[i];
@@ -524,7 +524,13 @@ static void SV_SendClientMessages (bool full=true) {
       RepInfo->SecretCount = Player->SecretCount;
 
       // update view angle if needed
-      if (Player->PlayerFlags&VBasePlayer::PF_Spawned) Player->WriteViewData();
+      if (Player->PlayerFlags&VBasePlayer::PF_Spawned) {
+        Player->WriteViewData();
+        if (!full && Player->Net) {
+          Player->Net->GetMessages();
+          // server context ticker will tick all client connections
+        }
+      }
     }
   }
 

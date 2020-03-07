@@ -142,7 +142,8 @@ static char CurrentLanguage[4];
 static VCvarS Language("language", "en", "Game language.", /*CVAR_Archive|CVAR_PreInit|*/CVAR_Rom);
 
 static VCvarB cap_framerate("cl_cap_framerate", true, "Cap framerate for non-networking games?", CVAR_Archive);
-static VCvarI cl_framerate("cl_framerate", "0", "Cap framerate for non-networking games?", CVAR_Archive);
+static VCvarI cl_framerate("cl_framerate", "0", "Framerate cap for client rendering.", CVAR_Archive);
+static VCvarI sv_framerate("sv_framerate", "70", "Framerate cap for dedicated server.", CVAR_Archive);
 
 
 #include "dedlog.cpp"
@@ -402,6 +403,7 @@ static bool FilterTime () {
 
   if (dbg_frametime < max_fps_cap_float) {
     if (real_time) {
+      #ifdef CLIENT
       int cfr = cl_framerate;
       if (cfr < 1 || cfr > 200) cfr = 0;
       if (cfr && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
@@ -414,8 +416,14 @@ static bool FilterTime () {
         if (timeDelta < max_fps_cap_double) return false;
       } else {
         // capped fps
-        if (timeDelta < 1.0/90.0) return false; // framerate is too high
+        if (timeDelta < 1.0/70.0) return false; // framerate is too high
       }
+      #else
+      // dedicated server
+      const int sfr = clampval(sv_framerate.asInt(), 5, 70);
+      if (timeDelta < 1.0/(double)sfr) return false; // framerate is too high
+      //GCon->Logf(NAME_Debug, "headless tick! %g", timeDelta*1000);
+      #endif
     } else {
       if (timeDelta < 1.0/35.0) return false; // framerate is too high
     }
@@ -521,7 +529,7 @@ void Host_Frame () {
       // don't run frames too fast
       // but still process network activity, we may want to re-send packets and such
       const double ctt = Sys_Time();
-      if (ctt-lastNetFrameTime >= 1.0/60.0) {
+      if (ctt-lastNetFrameTime >= 1.0/70.0) {
         // perform network activity
         lastNetFrameTime = ctt;
         #ifdef CLIENT

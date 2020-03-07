@@ -140,6 +140,10 @@ void VNetContext::KeepaliveTick () {
   for (int i = 0; i < ClientConnections.Num(); ++i) {
     VNetConnection *Conn = ClientConnections[i];
     if (!Conn) continue; // just in case
+    if (Conn->IsOpen() && Conn->GetGeneralChannel()->Closing) {
+      GCon->Logf(NAME_DevNet, "Client %s closed the connection", *Conn->GetAddress());
+      Conn->State = NETCON_Closed;
+    }
     if (Conn->IsOpen()) Conn->KeepaliveTick();
   }
 }
