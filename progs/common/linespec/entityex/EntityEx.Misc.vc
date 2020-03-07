@@ -2354,6 +2354,61 @@ final EntityEx TossUpObject (class!EntityEx type) {
 
 //==========================================================================
 //
+//  ACSRenderStyleToVavoom
+//
+//==========================================================================
+final int ACSRenderStyleToVavoom (int rs) {
+  switch (rs) {
+    case 0: return STYLE_None;
+    case 1: return STYLE_Normal;
+    case 2: return STYLE_Fuzzy;
+    case 3: return STYLE_SoulTrans;
+    case 4: return STYLE_OptFuzzy;
+    case 5: return STYLE_Stencil;
+    case 64: return STYLE_Translucent;
+    case 65: return STYLE_Add;
+    case 66: return STYLE_Shaded;
+    case 67: return STYLE_TranslucentStencil;
+    case 68: return STYLE_Shadow;
+    case 69: return STYLE_Subtract;
+    case 6: return STYLE_AddStencil;
+    case 7: return STYLE_AddShaded;
+    default:
+  }
+  printwarn("%C: ACS trying to set uknown render style %d", rs);
+  return STYLE_Normal;
+}
+
+
+//==========================================================================
+//
+//  ACSRenderStyleFromVavoom
+//
+//==========================================================================
+final int ACSRenderStyleFromVavoom (int rs) {
+  switch (rs) {
+    case STYLE_None: return 0;
+    case STYLE_Normal: return 1;
+    case STYLE_Fuzzy: return 2;
+    case STYLE_SoulTrans: return 3;
+    case STYLE_OptFuzzy: return 4;
+    case STYLE_Stencil: return 5;
+    case STYLE_Translucent: return 64;
+    case STYLE_Add: return 65;
+    case STYLE_Shaded: return 66;
+    case STYLE_TranslucentStencil: return 67;
+    case STYLE_Shadow: return 68;
+    case STYLE_Subtract: return 69;
+    case STYLE_AddStencil: return 6;
+    case STYLE_AddShaded: return 7;
+    default:
+  }
+  return 1;
+}
+
+
+//==========================================================================
+//
 //  SetActorProperty
 //
 //==========================================================================
@@ -2363,7 +2418,7 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     case APROP_Speed: Speed = float(IntVal)/65536.0*35.0; if (Speed < 0) Speed = 0; break;
     case APROP_Damage: MissileDamage = IntVal; break;
     case APROP_Alpha: Alpha = float(IntVal)/65536.0; break;
-    case APROP_RenderStyle: RenderStyle = IntVal; break;
+    case APROP_RenderStyle: RenderStyle = ACSRenderStyleToVavoom(IntVal); break;
     case APROP_Ambush: bAmbush = !!IntVal; break;
     case APROP_Invulnerable: bInvulnerable = !!IntVal; break;
     case APROP_JumpZ: if (PlayerPawn(self)) PlayerPawn(self).JumpVelZ = float(IntVal)/65536.0*35.0; break;
@@ -2433,7 +2488,7 @@ override int GetActorProperty (int Prop) {
     case APROP_Speed: return int(Speed/35.0*65536.0);
     case APROP_Damage: return MissileDamage;
     case APROP_Alpha: return int(Alpha*65536.0);
-    case APROP_RenderStyle: return RenderStyle;
+    case APROP_RenderStyle: return ACSRenderStyleFromVavoom(RenderStyle);
     case APROP_Ambush: return bAmbush;
     case APROP_Invulnerable: return bInvulnerable;
     case APROP_JumpZ: return int(PlayerPawn(self).JumpVelZ/35.0*65536.0);
