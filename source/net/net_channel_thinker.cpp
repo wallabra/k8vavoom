@@ -39,11 +39,10 @@ static VCvarB net_dbg_dump_thinker_detach("net_dbg_dump_thinker_detach", false, 
 VThinkerChannel::VThinkerChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally)
   : VChannel(AConnection, CHANNEL_Thinker, AIndex, AOpenedLocally)
   , Thinker(nullptr)
-  , ThinkerClass(nullptr)
   , OldData(nullptr)
   , NewObj(false)
-  , LastUpdateFrame(0)
   , FieldCondValues(nullptr)
+  , LastUpdateFrame(0)
 {
   // it is ok to close it... or it isn't?
   //bAllowPrematureClose = true;
@@ -123,8 +122,9 @@ void VThinkerChannel::RemoveThinkerFromGame () {
 //
 //==========================================================================
 void VThinkerChannel::SetClosing () {
-  RemoveThinkerFromGame();
+  // we have to do this first!
   VChannel::SetClosing();
+  RemoveThinkerFromGame();
 }
 
 
@@ -141,7 +141,7 @@ void VThinkerChannel::SetThinker (VThinker *AThinker) {
   if (Thinker) {
     Connection->ThinkerChannels.Remove(Thinker);
     if (OldData) {
-      for (VField *F = ThinkerClass->NetFields; F; F = F->NextNetField) {
+      for (VField *F = Thinker->GetClass()->NetFields; F; F = F->NextNetField) {
         VField::DestructField(OldData+F->Ofs, F->Type);
       }
       delete[] OldData;
@@ -156,7 +156,7 @@ void VThinkerChannel::SetThinker (VThinker *AThinker) {
   Thinker = AThinker;
 
   if (Thinker) {
-    ThinkerClass = Thinker->GetClass();
+    VClass *ThinkerClass = Thinker->GetClass();
     if (OpenedLocally) {
       VThinker *Def = (VThinker *)ThinkerClass->Defaults;
       OldData = new vuint8[ThinkerClass->ClassSize];
@@ -344,6 +344,7 @@ void VThinkerChannel::Update () {
 void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
   // currently, client cannot create thinkers, so ignore incoming client packets here
   // the player has its own channel for data
+  // all locally created thinker channels are authorities for now (this may be changed in the future, though)
   if (IsLocalChannel()) return;
 
   if (Msg.bOpen) {
@@ -367,6 +368,9 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     #endif
     SetThinker(Th);
   }
+
+  vassert(Thinker);
+  VClass *ThinkerClass = Thinker->GetClass();
 
   VEntity *Ent = Cast<VEntity>(Thinker);
   TVec oldOrg(0.0f, 0.0f, 0.0f);

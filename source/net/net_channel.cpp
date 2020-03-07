@@ -163,11 +163,17 @@ void VChannel::Close () {
     return;
   }
   vassert(Connection->Channels[Index] == this);
+  vassert(!Closing);
   if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "%s: sending CLOSE %s", *GetDebugName(), (IsLocalChannel() ? "request" : "ack"));
   // send a close notify, and wait for the ack
   // we should not have any closing message in the queue (sanity check)
-  for (VMessageOut *Out = OutList; Out; Out = Out->Next) vassert(!Out->bClose);
+  for (VMessageOut *Out = OutList; Out; Out = Out->Next) {
+    if (Out->bClose) GCon->Logf(NAME_DevNet, "%s: close flag is not set, yet we already have CLOSE message in queue (pid=%u; stime=%g; time=%g)", *GetDebugName(), Out->PacketId, Out->Time, Sys_Time());
+    vassert(!Out->bClose);
+  }
   // send closing message
+  // WARNING! make sure that `SetClosing()` sets `Closing` first, and then does any cleanup!
+  // failing to do so may cause recursive call to `Close()` (in thinker channel, for example)
   {
     VMessageOut cnotmsg(this, true); // reliable
     cnotmsg.bClose = true;
@@ -482,7 +488,7 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
     }
     // thinker
     VThinkerChannel *tc = (VThinkerChannel *)this;
-    if (tc->Thinker && (tc->Thinker->ThinkerFlags&VThinker::TF_AlwaysRelevant)) {
+    if (tc->GetThinker() && (tc->GetThinker()->ThinkerFlags&VThinker::TF_AlwaysRelevant)) {
       GCon->Logf(NAME_DevNet, "%s: cannot send reliable thinker RPC (%s), closing connection", *GetDebugName(), *Func->GetFullName());
       Connection->State = NETCON_Closed;
       return;

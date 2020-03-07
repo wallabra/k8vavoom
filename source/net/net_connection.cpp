@@ -500,7 +500,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
       // ignore already processed reliable packets
       if (Msg.bReliable && Msg.ChanSequence <= InReliable[Msg.ChanIndex]) {
         // this is not fatal
-        GCon->Logf(NAME_DevNet, "%s: got outdated message (channel #%d; msgseq=%u; currseq=%u)", *GetAddress(), Msg.ChanIndex, Msg.ChanSequence, InReliable[Msg.ChanIndex]);
+        if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "%s: got outdated message (channel #%d; msgseq=%u; currseq=%u)", *GetAddress(), Msg.ChanIndex, Msg.ChanSequence, InReliable[Msg.ChanIndex]);
         continue;
       }
 
@@ -1105,7 +1105,7 @@ void VNetConnection::UpdateThinkers () {
         continue;
       }
       // remember alive gore entities
-      if (!tc->Closing && tc->Thinker && VStr::startsWith(tc->Thinker->GetClass()->GetName(), "K8Gore")) {
+      if (!tc->Closing && tc->GetThinker() && VStr::startsWith(tc->GetThinker()->GetClass()->GetName(), "K8Gore")) {
         AliveGoreChans.append(chan->Index);
       }
     }
@@ -1128,8 +1128,8 @@ void VNetConnection::UpdateThinkers () {
         vassert(Channels[idx]->IsThinker());
         // close channel
         VThinkerChannel *tc = (VThinkerChannel *)Channels[idx];
-        vassert(tc->Thinker && tc->Thinker->GetClass()->IsChildOf(VEntity::StaticClass()));
-        //PendingGoreEnts.append((VEntity *)(tc->Thinker));
+        vassert(tc->GetThinker() && tc->GetThinker()->GetClass()->IsChildOf(VEntity::StaticClass()));
+        //PendingGoreEnts.append((VEntity *)(tc->GetThinker()));
         //??? CanSendClose?
         if (tc->CanSendData()) {
           tc->Close();
@@ -1231,12 +1231,22 @@ void VNetConnection::LoadedNewLevel () {
 void VNetConnection::ResetLevel () {
   if (!GetLevelChannel()->Level) return;
   // close entity channels
-  for (auto &&chan : OpenChannels) {
-    if (!chan) continue;
+  for (int f = OpenChannels.length()-1; f >= 0; --f) {
+    VChannel *chan = OpenChannels[f];
+    if (!chan) { OpenChannels.removeAt(f); continue; }
     if (chan->IsThinker()) {
       chan->Close(); //k8: should we close it, or we can simply kill it?
+      /*
+      // we're going to destroy the level anyway, so just drop all actors, nobody cares
+      chan->Closing = true;
+      chan->Connection = nullptr;
+      delete chan;
+      OpenChannels.removeAt(f);
+      continue;
+      */
     }
   }
+  //ThinkerChannels.reset();
   GetLevelChannel()->ResetLevel();
 }
 

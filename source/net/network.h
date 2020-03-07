@@ -361,17 +361,20 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 // a channel for updating thinkers
 class VThinkerChannel : public VChannel {
-public:
+protected:
   VThinker *Thinker;
-  VClass *ThinkerClass;
   vuint8 *OldData; // old field data, for creating deltas
   bool NewObj; // is this a new object?
-  vuint32 LastUpdateFrame; // see `UpdateFrameCounter` in VNetConnection
   vuint8 *FieldCondValues;
+
+public:
+  vuint32 LastUpdateFrame; // see `UpdateFrameCounter` in VNetConnection
 
 public:
   VThinkerChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally=true);
   virtual ~VThinkerChannel () override;
+
+  inline VThinker *GetThinker () const noexcept { return Thinker; }
 
   void SetThinker (VThinker *);
   void EvalCondValues (VObject *, VClass *, vuint8 *);

@@ -62,13 +62,20 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
   if (IsClient()) {
     // client; have connection with a server
     VThinkerChannel *chan = ServerConnection->ThinkerChannels.FindPtr(Th);
-    if (chan) chan->Close();
+    if (chan) {
+      chan->SetThinker(nullptr); // notify channel that the thinker is already dead
+      chan->Close();
+    }
     // remove from detached list (just in case)
     ServerConnection->DetachedThinkers.remove(Th);
   } else {
+    // server; remove thinker from all clients
     for (auto &&it : ClientConnections) {
       VThinkerChannel *chan = it->ThinkerChannels.FindPtr(Th);
-      if (chan) chan->Close();
+      if (chan) {
+        chan->SetThinker(nullptr); // notify channel that the thinker is already dead
+        chan->Close();
+      }
       if (it->DetachedThinkers.has(Th)) GCon->Logf(NAME_Debug, "%s:%u: removed from detached list", Th->GetClass()->GetName(), Th->GetUniqueId());
       // remove from detached list
       it->DetachedThinkers.remove(Th);

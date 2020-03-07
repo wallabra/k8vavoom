@@ -70,6 +70,7 @@ VStr VPlayerChannel::GetName () const noexcept {
 //
 //==========================================================================
 void VPlayerChannel::SetClosing () {
+  VChannel::SetClosing();
   if (Connection) SetPlayer(nullptr);
 }
 

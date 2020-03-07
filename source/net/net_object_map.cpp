@@ -289,10 +289,9 @@ bool VNetObjectsMap::SerialiseObject (VStream &Strm, VObject *&Obj) {
       // it's a thinker that has an open channel
       vuint32 Index;
       Strm.SerialiseInt(Index/*, MAX_CHANNELS*/);
-      //VChannel *Chan = Connection->Channels[Index];
       VChannel *Chan = Connection->GetChannelByIndex(Index);
-      if (Chan && Chan->Type == CHANNEL_Thinker && !Chan->Closing) {
-        Obj = ((VThinkerChannel *)Chan)->Thinker;
+      if (Chan && Chan->IsThinker() && !Chan->Closing) {
+        Obj = ((VThinkerChannel *)Chan)->GetThinker();
       }
     }
     return true;
