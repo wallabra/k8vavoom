@@ -60,7 +60,9 @@ enum {
 
 enum {
   MAX_MSGLEN         = 1024,
-  MASTER_SERVER_PORT = 26002,
+
+  MASTER_SERVER_PORT   = 26002,
+  MASTER_PROTO_VERSION = 1,
 };
 
 
@@ -83,18 +85,34 @@ static TArray<TSrvItem> srvList;
 static TArray<TSrvItem> srvBlocked;
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-static char *AddrToString (sockaddr *addr) {
-  static char buffer[22];
-  int haddr = ntohl(((sockaddr_in *)addr)->sin_addr.s_addr);
-  sprintf(buffer, "%d.%d.%d.%d:%d", (haddr >> 24) & 0xff,
-    (haddr >> 16) & 0xff, (haddr >> 8) & 0xff, haddr & 0xff,
+//==========================================================================
+//
+//  AddrToString
+//
+//==========================================================================
+static char *AddrToString (const sockaddr *addr) {
+  static char buffer[64];
+  int haddr = ntohl(((const sockaddr_in *)addr)->sin_addr.s_addr);
+  snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d:%d", (haddr>>24)&0xff, (haddr>>16)&0xff,
+    (haddr>>8)&0xff, haddr&0xff,
     ntohs(((sockaddr_in *)addr)->sin_port));
   return buffer;
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  AddrToStringNoPort
+//
+//==========================================================================
+static char *AddrToStringNoPort (const sockaddr *addr) {
+  static char buffer[64];
+  int haddr = ntohl(((const sockaddr_in *)addr)->sin_addr.s_addr);
+  snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d", (haddr>>24)&0xff, (haddr>>16)&0xff, (haddr>>8)&0xff, haddr&0xff);
+  return buffer;
+}
+
+
 //==========================================================================
 //
 //  AddrCompare
@@ -110,16 +128,30 @@ static int AddrCompare (const sockaddr *addr1, const sockaddr *addr2) {
 
 //==========================================================================
 //
+//  AddrCompareNoPort
+//
+//==========================================================================
+static int AddrCompareNoPort (const sockaddr *addr1, const sockaddr *addr2) {
+  if (addr1->sa_family != addr2->sa_family) return -1;
+  if (((const sockaddr_in *)addr1)->sin_addr.s_addr != ((const sockaddr_in *)addr2)->sin_addr.s_addr) return -1;
+  //if (((const sockaddr_in *)addr1)->sin_port != ((const sockaddr_in *)addr2)->sin_port) return 1;
+  return 0;
+}
+
+
+//==========================================================================
+//
 //  CheckGameSignature
 //
 //  checks and removed game signature from packet data
 //
 //==========================================================================
 static bool CheckGameSignature (char *buf, int &len) {
-  if (len < 8) return false;
+  if (len < 10) return false;
   if (memcmp(buf, "K8VAVOOM", 8) != 0) return false;
-  len -= 8;
-  if (len > 0) memmove(buf, buf+8, len);
+  if (buf[8] != MASTER_PROTO_VERSION) return false;
+  len -= 9;
+  if (len > 0) memmove(buf, buf+9, len);
   return true;
 }
 
@@ -131,7 +163,7 @@ static bool CheckGameSignature (char *buf, int &len) {
 //==========================================================================
 static bool IsBlocked (const sockaddr *clientaddr) {
   for (auto &&blocked : srvBlocked) {
-    if (AddrCompare(&blocked.addr, clientaddr) == 0) {
+    if (AddrCompareNoPort(&blocked.addr, clientaddr) == 0) {
       return true;
     }
   }
@@ -146,10 +178,13 @@ static bool IsBlocked (const sockaddr *clientaddr) {
 //==========================================================================
 static void BlockIt (const sockaddr *clientaddr) {
   for (int i = srvList.length()-1; i >= 0; --i) {
-    if (AddrCompare(&srvList[i].addr, clientaddr) == 0) {
-      srvList.removeAt(i);
+    if (AddrCompareNoPort(&srvList[i].addr, clientaddr) == 0) {
+      srvList[i].time = time(0)+60; // block for one minute
+      srvList[i].pver = 0;
+      return;
     }
   }
+  printf("something at %s is blocked\n", AddrToStringNoPort(clientaddr));
   TSrvItem &it = srvBlocked.Alloc();
   it.addr = *clientaddr;
   it.time = time(0)+60; // block for one minute
@@ -178,7 +213,9 @@ static void ReadNet () {
   // check if it is not blocked
   if (IsBlocked(&clientaddr)) return; // ignore it
 
-  if (len < 9 || !CheckGameSignature(buf, len)) {
+  if (!CheckGameSignature(buf, len)) {
+    BlockIt(&clientaddr);
+    return;
   }
 
   if (len >= 1) {
@@ -218,7 +255,8 @@ static void ReadNet () {
           int sidx = 0;
           while (sidx < srvList.length()) {
             memcpy(buf, "K8VAVOOM", 8);
-            int bufstpos = 8;
+            buf[8] = MASTER_PROTO_VERSION;
+            int bufstpos = 9;
             buf[bufstpos+0] = MCREP_LIST;
             buf[bufstpos+1] = (sidx == 0 ? 1 : 0); // seq id: bit 0 set means 'first', bit 1 set means 'last'
             int mlen = bufstpos+2;
@@ -240,7 +278,6 @@ static void ReadNet () {
   }
 
   // if it sent invalid command, remove it immediately, and block access for 60 seconds
-  printf("something at %s is blocked\n", AddrToString(&clientaddr));
   BlockIt(&clientaddr);
 }
 
@@ -317,6 +354,7 @@ int main (int argc, const char **argv) {
     // clean blocklist
     for (int i = srvBlocked.length()-1; i >= 0; --i) {
       if (srvBlocked[i].time > 0 && srvBlocked[i].time <= CurTime) {
+        printf("lifted block from %s\n", AddrToStringNoPort(&srvBlocked[i].addr));
         srvBlocked.removeAt(i);
       }
     }

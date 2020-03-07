@@ -49,8 +49,9 @@
 //
 // CCREP_REJECT
 //    string    reason
-//    vuint16   flags
-//      if flags are there, and bit 0 is set, mod list follows
+//    bool      extflags (always false)
+//    bool      haswads
+//      if haswads is true, mod list follows
 //      modlist is asciz strings, terminated with empty string
 //
 // CCREP_SERVER_INFO
@@ -98,6 +99,7 @@ public:
 class VDatagramDriver : public VNetDriver {
 public:
   enum { MASTER_SERVER_PORT = 26002 };
+  enum { MASTER_PROTO_VERSION = 1 };
 
   // client request
   enum {
@@ -109,7 +111,7 @@ public:
   enum {
     CCREP_ACCEPT      = 11,
     CCREP_REJECT      = 12,
-    CCREP_SERVER_INFO = 13
+    CCREP_SERVER_INFO = 13,
   };
 
   // master server request
@@ -850,7 +852,9 @@ void VDatagramDriver::UpdateMaster (VNetLanDriver *Drv) {
   // send the connection request
   VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
   WriteGameSignature(MsgOut);
-  vuint8 TmpByte = MCREQ_JOIN;
+  vuint8 TmpByte = MASTER_PROTO_VERSION;
+  MsgOut << TmpByte;
+  TmpByte = MCREQ_JOIN;
   MsgOut << TmpByte;
   TmpByte = NET_PROTOCOL_VERSION;
   MsgOut << TmpByte;
@@ -893,7 +897,9 @@ void VDatagramDriver::QuitMaster (VNetLanDriver *Drv) {
   // send the quit request
   VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
   WriteGameSignature(MsgOut);
-  vuint8 TmpByte = MCREQ_QUIT;
+  vuint8 TmpByte = MASTER_PROTO_VERSION;
+  MsgOut << TmpByte;
+  TmpByte = MCREQ_QUIT;
   MsgOut << TmpByte;
   Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
 }
@@ -938,6 +944,8 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     // send the query request
     VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
     WriteGameSignature(MsgOut);
+    TmpByte = MASTER_PROTO_VERSION;
+    MsgOut << TmpByte;
     TmpByte = MCREQ_LIST;
     MsgOut << TmpByte;
     Drv->Write(Drv->MasterQuerySocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
@@ -955,8 +963,12 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     //GCon->Logf("processing master reply...");
     VBitStreamReader msg(packetBuffer.data, len<<3);
     if (!CheckGameSignature(msg)) continue;
+
+    msg << TmpByte;
+    if (msg.IsError() || TmpByte != MASTER_PROTO_VERSION) continue;
+
     msg << control;
-    if (control != MCREP_LIST) continue;
+    if (msg.IsError() || control != MCREP_LIST) continue;
 
     msg << control; // control byte: bit 0 means "first packet", bit 1 means "last packet"
     //GCon->Logf(" control byte: 0x%02x", (unsigned)control);
