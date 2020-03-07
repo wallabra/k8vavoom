@@ -1190,7 +1190,7 @@ COMMAND_WITH_AC(TeleportNewMapEx) {
     return;
   }
 
-  //GCon->Logf("TeleportNewMapEx: name=<%s>; posidx=%d; flags=0x%04x; skill=%d", *Args[1], posidx, flags, skill);
+  //GCon->Logf(NAME_Debug, "TeleportNewMapEx: name=<%s>; posidx=%d; flags=0x%04x; skill=%d", *Args[1], posidx, flags, skill);
 
   if (Args[1] == "+" || Args[1] == "*") {
     // use default next map; i.e. do nothing

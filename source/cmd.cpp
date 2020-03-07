@@ -832,6 +832,11 @@ void VCommand::ForwardToServer () {
     //fprintf(stderr, "*** local executing: <%s>\n", *Original);
     VCommand::ExecuteString(Original, VCommand::SRC_Client, cl);
   }
+#else
+  // for dedicated server, just execute it
+  // yeah, it is marked "VCommand::SRC_Client", but this is just a bad name
+  // actually, forwardig code only checks for `SRC_Command`, and forwards here
+  VCommand::ExecuteString(Original, VCommand::SRC_Client, nullptr);
 #endif
 }
 
