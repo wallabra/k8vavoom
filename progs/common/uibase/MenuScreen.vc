@@ -70,7 +70,7 @@ enum k8Developer = false;
 //
 //==========================================================================
 final static bool IsMultiplayerEnabled () {
-  return GetCvarB('dbg_enable_multiplayer');
+  return !GetCvarB('dbg_disable_multiplayer');
 }
 
 

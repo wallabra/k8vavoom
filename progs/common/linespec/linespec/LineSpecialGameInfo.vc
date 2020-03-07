@@ -309,7 +309,7 @@ override void Init () {
 
   CreateCvarBool('trans_debug_log', false, "Show translation debug log?", CVAR_ARCHIVE);
 
-  CreateCvarBool('dbg_enable_multiplayer', false, "Enable multiplayer menu?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('dbg_disable_multiplayer', false, "Disable multiplayer menu?", 0/*CVAR_ARCHIVE*/);
 
   // gozzo bug workaround
   CreateCvarBool('__gz_afall_drops', false, "Should `A_Fall()` drop items?", CVAR_ARCHIVE);
