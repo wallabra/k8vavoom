@@ -419,6 +419,10 @@ void VChannel::FlushMsg (VMessageOut *msg) {
 //
 //==========================================================================
 void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
+  if (Closing) return; // oops
+  //const bool blockSend = !CanSendData();
+  const bool blockSend = (NumOutList >= MAX_RELIABLE_BUFFER-2);
+
   VMessageOut Msg(this, !!(Func->Flags&FUNC_NetReliable));
   //GCon->Logf(NAME_DevNet, "%s: creating RPC: %s", *GetDebugName(), *Func->GetFullName());
   Msg.WriteInt((unsigned)Func->NetIndex);
@@ -466,6 +470,28 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
   }
 
   // send it
+  if (blockSend) {
+    if (!(Func->Flags&FUNC_NetReliable)) return; // nobody cares
+    // alas, cannot send reliable RPC, close the channel, and get out of here
+    // if this is non-thinker channel, it is fatal
+    // if this is thinker channel, but it has "always relevant", it is fatal
+    if (!IsThinker()) {
+      GCon->Logf(NAME_DevNet, "%s: cannot send reliable RPC (%s), closing connection", *GetDebugName(), *Func->GetFullName());
+      Connection->State = NETCON_Closed;
+      return;
+    }
+    // thinker
+    VThinkerChannel *tc = (VThinkerChannel *)this;
+    if (tc->Thinker && (tc->Thinker->ThinkerFlags&VThinker::TF_AlwaysRelevant)) {
+      GCon->Logf(NAME_DevNet, "%s: cannot send reliable thinker RPC (%s), closing connection", *GetDebugName(), *Func->GetFullName());
+      Connection->State = NETCON_Closed;
+      return;
+    }
+    GCon->Logf(NAME_DevNet, "%s: cannot send reliable thinker RPC (%s), closing channel", *GetDebugName(), *Func->GetFullName());
+    Close();
+    return;
+  }
+
   SendMessage(&Msg);
   if (net_debug_rpc) GCon->Logf(NAME_DevNet, "%s: created RPC: %s (%d bits)", *GetDebugName(), *Func->GetFullName(), Msg.GetNumBits());
 }
