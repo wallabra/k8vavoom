@@ -28,11 +28,33 @@ class MenuChoice_OnOff : MenuChoiceEnum;
 //int TextNormalColor = CR_WHITE;
 //int TextNormalColor = CR_RED;
 //int TextFocusedColor = CR_YELLOW;
+bool inverted;
 
 
 //==========================================================================
 //
-// OnDraw
+//  SetInverted
+//
+//==========================================================================
+void SetInverted (bool ainverted) {
+  if (inverted == ainverted) return;
+  inverted = ainverted;
+  vallist.length = 2;
+  vallist[0].value = 0;
+  vallist[1].value = 1;
+  if (ainverted) {
+    vallist[0].caption = "On";
+    vallist[1].caption = "Off";
+  } else {
+    vallist[0].caption = "Off";
+    vallist[1].caption = "On";
+  }
+}
+
+
+//==========================================================================
+//
+//  OnDraw
 //
 //==========================================================================
 override void OnDraw () {
@@ -52,7 +74,11 @@ override void OnDraw () {
   int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
   int Col2 = (IsFocus() ? CR_YELLOW : Value ? CR_GREEN : CR_RED);
   SetTextAlign(hleft, vtop);
-  DrawText(xx, 0, (Value ? "On" : "Off"), Col2);
+  if (inverted) {
+    DrawText(xx, 0, (Value ? "On" : "Off"), Col2);
+  } else {
+    DrawText(xx, 0, (Value ? "Off" : "On"), Col2);
+  }
 }
 
 

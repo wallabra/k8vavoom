@@ -415,6 +415,14 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGa
       opt.cvar = cvar;
       return opt;
     }
+    // fuck
+    if (par.Check("offon") || par.Check("noyes")) {
+      auto opt = SpawnObject(MenuDefOptionBool);
+      opt.title = title;
+      opt.cvar = cvar;
+      opt.inverted = true;
+      return opt;
+    }
     // this should be "OptionValue"
     par.ExpectString();
     auto opt = SpawnObject(MenuDefOptionEnum);
@@ -613,8 +621,11 @@ defaultproperties {
 // ////////////////////////////////////////////////////////////////////////// //
 class MenuDefOptionBool : MenuDefOptionBase;
 
+bool inverted;
+
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuChoice_OnOff(menu.NewChild(MenuChoice_OnOff));
+  opt.SetInverted(inverted);
   opt.SetText(title);
   if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
   if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
