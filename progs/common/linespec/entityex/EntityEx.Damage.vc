@@ -33,10 +33,20 @@
 //  virtual, so mods can override this
 //
 //==========================================================================
-bool K8HS_IsGoodDamageType (name damageType) {
+bool K8HS_IsGoodDamageType (EntityEx inflictor, name damageType) {
   if (!damageType) return true; // normal damage
-  if (nameicmp(damageType, 'Chainsaw') == 0 || !IsNormalLikeDamage(damageType)) {
-    if (GetCvarB('k8HSDebug_ShowFailedDamageType')) print("DMGTYPE: %s", damageType);
+  if (nameEquCI(damageType, 'Chainsaw')) return false; // never
+  if (!IsNormalLikeDamage(damageType)) {
+    if (GetCvarB('k8HSDebug_ShowFailedDamageType')) printdebug("DMGTYPE: %s", damageType);
+    // shitsara
+    if (inflictor && inflictor.bIsPlayer) {
+      class!Inventory shitsaraPlr = class!Inventory(FindClass('IsSamsaraClass'));
+      if (shitsaraPlr) {
+        if (inflictor.FindInventory(shitsaraPlr, disableReplacement:true)) {
+          return true;
+        }
+      }
+    }
     return false;
   }
   return true;
@@ -190,7 +200,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
   if (!inflictor.bIsPlayer) return damage;
   if (!GetCvarB('k8HSEnabled')) return damage;
 
-  if (!K8HS_IsGoodDamageType(damageType)) return damage;
+  if (!K8HS_IsGoodDamageType(inflictor, damageType)) return damage;
   if (!K8HS_IsHSAllowed()) return damage;
 
   bool debugme = GetCvarB('k8HSDebug');
