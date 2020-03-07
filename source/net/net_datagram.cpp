@@ -383,6 +383,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     if (TmpByte == NET_PROTOCOL_VERSION) hinfo->Flags |= hostcache_t::Flag_GoodProtocol;
     vuint32 mhash = 0;
     msg << mhash;
+    //GCon->Logf(NAME_DevNet, " WHASH: theirs=0x%08x  mine=0x%08x", mhash, SV_GetModListHash());
     if (mhash == SV_GetModListHash()) hinfo->Flags |= hostcache_t::Flag_GoodWadList;
     hinfo->CName = addr;
     hinfo->WadFiles.clear();
@@ -393,9 +394,13 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
       --Net->HostCacheCount;
       continue;
     }
-    if ((hinfo->Flags&hostcache_t::Flag_GoodWadList) && hinfo->WadFiles.length() != FL_GetWadPk3List().length()) hinfo->Flags &= ~hostcache_t::Flag_GoodWadList;
+    //GCon->Logf(NAME_DevNet, " wcount: %d %d", hinfo->WadFiles.length(), FL_GetWadPk3List().length());
+    if ((hinfo->Flags&hostcache_t::Flag_GoodWadList) && hinfo->WadFiles.length() != FL_GetWadPk3List().length()) {
+      hinfo->Flags &= ~hostcache_t::Flag_GoodWadList;
+    }
+    //GCon->Logf(NAME_DevNet, " flags: 0x%04x", hinfo->Flags);
 
-    GCon->Logf(NAME_DevNet, "SearchForHosts: got server info from %s: name=%s; map=%s; users=%d; maxusers=%d", *hinfo->CName, *hinfo->Name, *hinfo->Map, hinfo->Users, hinfo->MaxUsers);
+    GCon->Logf(NAME_DevNet, "SearchForHosts: got server info from %s: name=%s; map=%s; users=%d; maxusers=%d; flags=0x%02x", *hinfo->CName, *hinfo->Name, *hinfo->Map, hinfo->Users, hinfo->MaxUsers, hinfo->Flags);
     //for (int f = 0; f < hinfo->WadFiles.length(); ++f) GCon->Logf("  %d: <%s>", f, *hinfo->WadFiles[f]);
 
     // check for a name conflict
@@ -722,7 +727,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     TmpByte = NET_PROTOCOL_VERSION;
     MsgOut << TmpByte;
     vuint32 mhash = SV_GetModListHash();
-    msg << mhash;
+    MsgOut << mhash;
     // write pak list
     WritePakList(MsgOut);
     Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
