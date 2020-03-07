@@ -60,6 +60,7 @@
 //    vuint8    current_players
 //    vuint8    max_players
 //    vuint8    protocol_version    NET_PROTOCOL_VERSION
+//    vuint32   modlisthash
 //    asciiz strings with loaded archive names, terminated with empty string
 //
 //**************************************************************************
@@ -326,7 +327,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     Drv->Broadcast(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes());
   }
 
-  GCon->Logf(NAME_Debug, "SearchForHosts: trying to read a datagram (me:%s)...", *Drv->AddrToString(&myaddr));
+  //GCon->Logf(NAME_Debug, "SearchForHosts: trying to read a datagram (me:%s)...", *Drv->AddrToString(&myaddr));
   int pktleft = 128;
   while (pktleft-- > 0 && (len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr)) > 0) {
     if (len < (int)sizeof(int)) continue;
@@ -369,6 +370,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     ++Net->HostCacheCount;
     vassert(n >= 0 && n < Net->HostCacheCount);
     hostcache_t *hinfo = &Net->HostCache[n];
+    hinfo->Flags = 0;
     msg << str;
     hinfo->Name = str;
     msg << str;
@@ -378,12 +380,23 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     msg << TmpByte;
     hinfo->MaxUsers = TmpByte;
     msg << TmpByte;
-    if (TmpByte != NET_PROTOCOL_VERSION) hinfo->Name = VStr("*")+hinfo->Name;
+    if (TmpByte == NET_PROTOCOL_VERSION) hinfo->Flags |= hostcache_t::Flag_GoodProtocol;
+    vuint32 mhash = 0;
+    msg << mhash;
+    if (mhash == SV_GetModListHash()) hinfo->Flags |= hostcache_t::Flag_GoodWadList;
     hinfo->CName = addr;
     hinfo->WadFiles.clear();
     ReadPakList(hinfo->WadFiles, msg);
+    if (msg.IsError()) {
+      // remove it
+      hinfo->WadFiles.clear();
+      --Net->HostCacheCount;
+      continue;
+    }
+    if ((hinfo->Flags&hostcache_t::Flag_GoodWadList) && hinfo->WadFiles.length() != FL_GetWadPk3List().length()) hinfo->Flags &= ~hostcache_t::Flag_GoodWadList;
 
     GCon->Logf(NAME_DevNet, "SearchForHosts: got server info from %s: name=%s; map=%s; users=%d; maxusers=%d", *hinfo->CName, *hinfo->Name, *hinfo->Map, hinfo->Users, hinfo->MaxUsers);
+    //for (int f = 0; f < hinfo->WadFiles.length(); ++f) GCon->Logf("  %d: <%s>", f, *hinfo->WadFiles[f]);
 
     // check for a name conflict
     /*
@@ -708,6 +721,8 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     MsgOut << TmpByte;
     TmpByte = NET_PROTOCOL_VERSION;
     MsgOut << TmpByte;
+    vuint32 mhash = SV_GetModListHash();
+    msg << mhash;
     // write pak list
     WritePakList(MsgOut);
     Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);

@@ -165,6 +165,8 @@ struct hostcache_t {
   array!string WadFiles;
   int Users;
   int MaxUsers;
+  bool bGoodProtocol;
+  bool bGoodWadList;
 };
 
 struct slist_t {

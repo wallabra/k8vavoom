@@ -144,6 +144,11 @@ struct hostcache_t {
   TArray<VStr> WadFiles;
   vint32 Users;
   vint32 MaxUsers;
+  enum {
+    Flag_GoodProtocol = 1u<<0,
+    Flag_GoodWadList  = 1u<<1,
+  };
+  vuint32 Flags;
 };
 
 

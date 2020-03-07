@@ -100,19 +100,37 @@ override void OnDraw () {
 
   SetFont('smallfont');
 
-  int maxux = Width-TextWidth(va("99/99"))-8;
+  int maxmapwdt = 0;
+  int maxplrwdt = TextWidth(va("9/9"));
+  int maxaddrwdt = 0;
+  foreach (auto ref nfo; slist->Cache) {
+    maxmapwdt = max(maxmapwdt, TextWidth(nfo.Map));
+    maxplrwdt = max(maxplrwdt, TextWidth(va("%d/%d", nfo.Users, nfo.MaxUsers)));
+    maxaddrwdt = max(maxaddrwdt, TextWidth(nfo.CName));
+  }
+
+  // right-aligned
+  int xposUsers = Width-8;
+  // left-aligned
+  int xposAddr = xposUsers-maxplrwdt-6-maxaddrwdt;
+  int xposMap = xposAddr-6-maxmapwdt;
 
   //printdebug("====== count=%s ======", slist.Cache.length);
   foreach (int i; 0..slist->Cache.length) {
     //printdebug("  %s: name=<%s>; map=<%s>", i, slist.Cache[i].Name, slist.Cache[i].Map);
     int clr = (Cursor == i ? CR_WHITE : CR_RED);
+    if (!slist->Cache[i].bGoodProtocol || !slist->Cache[i].bGoodWadList) clr = CR_BLACK;
+    // draw server name
     SetTextAlign(hleft, vtop);
     DrawText(16, 32+10*i, slist->Cache[i].Name, clr);
-    SetTextAlign(hright, vtop);
-    DrawText(maxux, 32+10*i, slist->Cache[i].Map, clr);
-    int ipx = maxux-TextWidth(slist->Cache[i].Map)-8;
-    DrawText(ipx, 32+10*i, slist->Cache[i].CName, clr);
+    // draw server map
+    SetTextAlign(hleft, vtop);
+    DrawText(xposMap, 32+10*i, slist->Cache[i].Map, clr);
+    // draw server user address
+    DrawText(xposAddr, 32+10*i, slist->Cache[i].CName, clr);
+    // draw users
     if (slist->Cache[i].MaxUsers) {
+      SetTextAlign(hright, vtop);
       DrawText(Width-4, 32+10*i, va("%d/%d", slist->Cache[i].Users, slist->Cache[i].MaxUsers), clr);
     }
   }
@@ -127,10 +145,10 @@ override void OnDraw () {
     foreach (int i; 0..slist->Cache[Cursor].WadFiles.length) {
       if (!slist->Cache[Cursor].WadFiles[i]) break;
       int w = TextWidth(slist->Cache[Cursor].WadFiles[i]);
-      if (x+w > 312) {
+      if (x+w > Width-8) {
         x = 8;
-        y += 9;
-        if (y > 190) break;
+        y += FontHeight();
+        //if (y > 190) break;
       }
       DrawText(x, y, slist->Cache[Cursor].WadFiles[i], CR_GRAY);
       x += w+8;
@@ -172,8 +190,10 @@ override bool OnKeyDown (int key) {
     case K_PADENTER:
       if (slist->Cache.length && Cursor >= 0 && Cursor < slist->Cache.length) {
         LocalSound('menu/choose');
-        CmdBuf_AddText("connect \"%q\"\n", slist->Cache[Cursor].CName);
-        GetClGame().ForceMenuOff();
+        if (slist->Cache[Cursor].bGoodProtocol && slist->Cache[Cursor].bGoodWadList) {
+          CmdBuf_AddText("connect \"%q\"\n", slist->Cache[Cursor].CName);
+          GetClGame().ForceMenuOff();
+        }
       }
       return true;
 
