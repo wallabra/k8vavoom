@@ -644,6 +644,7 @@ void CL_StopRecording () {
 //  COMMAND Connect
 //
 //==========================================================================
+#ifdef CLIENT
 COMMAND(Connect) {
   CL_EstablishConnection(Args.Num() > 1 ? *Args[1] : "");
 }
@@ -885,3 +886,4 @@ COMMAND(VidRendererRestart) {
   GClLevel->Renderer->PreRender();
   Host_ResetSkipFrames();
 }
+#endif

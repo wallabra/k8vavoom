@@ -2515,6 +2515,7 @@ COMMAND(AutoSaveEnter) {
 //
 //==========================================================================
 COMMAND(AutoSaveLeave) {
+  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
   SV_AutoSaveOnLevelExit();
   Host_ResetSkipFrames();
 }

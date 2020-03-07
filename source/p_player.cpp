@@ -1176,10 +1176,7 @@ IMPLEMENT_FUNCTION(VBasePlayer, QS_GetFloat) {
 //
 //==========================================================================
 COMMAND(ChangeWeapon) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
+  CMD_FORWARD_TO_SERVER();
 
   if (!Player) return;
   if (Args.Num() < 2) { GCon->Logf(NAME_Warning, "SelectWeapon expects weapon list"); return; }

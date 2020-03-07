@@ -2993,6 +2993,7 @@ COMMAND(TimeRefresh) {
   float startangle;
 
   if (!cl) return;
+  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
 
   startangle = cl->ViewAngles.yaw;
 

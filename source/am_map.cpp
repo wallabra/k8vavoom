@@ -2340,6 +2340,7 @@ bool AM_Responder (event_t *ev) {
 //
 //==========================================================================
 COMMAND(Iddt) {
+  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
   am_cheating = (am_cheating+1)%3;
 }
 

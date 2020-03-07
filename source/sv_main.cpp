@@ -949,12 +949,11 @@ static const char *knownFinalesList[] = {
 //
 //==========================================================================
 COMMAND_WITH_AC(TestFinale) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-
   if (Args.length() != 2) return;
+
+  if (GGameInfo->NetMode == NM_Client) return;
+
+  CMD_FORWARD_TO_SERVER();
 
   // normalise finale name
   VStr fname = Args[1];
@@ -1005,12 +1004,9 @@ COMMAND_AC(TestFinale) {
 COMMAND_WITH_AC(TeleportNewMap) {
   int flags = 0;
 
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-
   if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
+
+  CMD_FORWARD_TO_SERVER();
 
   if (Args.Num() == 3) {
     GLevelInfo->NextMap = VName(*Args[1], VName::AddLower8);
@@ -1078,12 +1074,9 @@ COMMAND(ACS_TeleportNewMap) {
     return;
   }
 
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-
   if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
+
+  CMD_FORWARD_TO_SERVER();
 
   int posidx = 0;
   if (!Args[2].convertInt(&posidx)) {
@@ -1152,12 +1145,9 @@ COMMAND_WITH_AC(TeleportNewMapEx) {
     return;
   }
 
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-
   if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
+
+  CMD_FORWARD_TO_SERVER();
 
   int posidx = 0;
   if (Args.length() > 2) {
@@ -1709,10 +1699,9 @@ COMMAND(Restart) {
 //
 //==========================================================================
 COMMAND(Pause) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
+  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
+
+  CMD_FORWARD_TO_SERVER();
 
   if (!__dbg_cl_always_allow_pause) {
     if (GGameInfo->NetMode != NM_Standalone || svs.max_clients > 1) {
@@ -1736,10 +1725,7 @@ COMMAND(Pause) {
 //
 //==========================================================================
 COMMAND(Stats) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
+  CMD_FORWARD_TO_SERVER();
   if (Player) {
     Player->Printf("Kills: %d of %d", Player->KillCount, GLevelInfo->TotalKills);
     Player->Printf("Items: %d of %d", Player->ItemCount, GLevelInfo->TotalItems);
@@ -2164,10 +2150,7 @@ VClass *SV_FindClassFromScriptId (int Id, int GameFilter) {
 //
 //==========================================================================
 COMMAND(Say) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
+  CMD_FORWARD_TO_SERVER();
   if (Args.Num() < 2) return;
 
   VStr Text = Player->PlayerName;

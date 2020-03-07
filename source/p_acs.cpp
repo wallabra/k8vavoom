@@ -7503,10 +7503,7 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACSWithResult) {
 //
 //==========================================================================
 COMMAND(Puke) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
+  CMD_FORWARD_TO_SERVER();
 
   if (Args.Num() < 2) return;
 
@@ -7537,10 +7534,7 @@ COMMAND(Puke) {
 //
 //==========================================================================
 COMMAND(PukeName) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
+  CMD_FORWARD_TO_SERVER();
 
   if (!Player || sv.intermission || !GGameInfo || GGameInfo->NetMode < NM_Standalone) {
     GCon->Logf(NAME_Error, "cannot call named ACS script when no game is running!");

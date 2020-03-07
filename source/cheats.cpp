@@ -85,10 +85,7 @@ static bool CheatAllowed (VBasePlayer *Player, bool allowDead=false) {
 //
 //==========================================================================
 COMMAND_WITH_AC(Summon) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
+  CMD_FORWARD_TO_SERVER();
   if (CheatAllowed(Player)) Player->eventCheat_Summon();
 }
 
@@ -138,13 +135,8 @@ COMMAND_AC(Summon) {
 //==========================================================================
 /*
 COMMAND(VScript_Command) {
+  CMD_FORWARD_TO_SERVER();
   if (Args.Num() < 2) return;
-
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-
   if (!Player) return;
   if (CheatAllowed(Player)) {
     Args.removeAt(0); // remove command name
@@ -154,22 +146,20 @@ COMMAND(VScript_Command) {
 */
 
 
+#ifdef CLIENT
 //==========================================================================
 //
 //  COMMAND Resurrect
 //
 //==========================================================================
 COMMAND(Resurrect) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-
+  CMD_FORWARD_TO_SERVER();
   if (!Player) return;
   if (CheatAllowed(Player, true)) {
     if (Player->PlayerState == PST_DEAD) Player->PlayerState = PST_CHEAT_REBORN;
   }
 }
+#endif
 
 
 //==========================================================================
@@ -178,11 +168,7 @@ COMMAND(Resurrect) {
 //
 //==========================================================================
 COMMAND(Script) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-
+  CMD_FORWARD_TO_SERVER();
   if (CheatAllowed(Player)) {
     if (Args.Num() != 2) return;
     int script = VStr::atoi(*Args[1]);
@@ -201,10 +187,7 @@ COMMAND(Script) {
 //
 //==========================================================================
 COMMAND(MyPos) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
+  CMD_FORWARD_TO_SERVER();
   if (CheatAllowed(Player)) {
     const VLevel *lvl = Player->Level->XLevel;
     const subsector_t *ss = lvl->PointInSubsector_Buggy(Player->MO->Origin);
@@ -235,10 +218,7 @@ static VStr GetTexLumpName (int tid) {
 //
 //==========================================================================
 COMMAND(my_sector_info) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
+  CMD_FORWARD_TO_SERVER();
   if (!Player) { GCon->Log("NO PLAYER!"); return; }
   if (!Player->MO) { GCon->Log("NO PLAYER MOBJ!"); return; }
   if (!Player->MO->Sector) { GCon->Log("PLAYER MOBJ SECTOR IS UNKNOWN!"); return; }
@@ -322,10 +302,7 @@ COMMAND(my_sector_info) {
 //==========================================================================
 #ifdef CLIENT
 COMMAND(my_clear_automap) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
+  CMD_FORWARD_TO_SERVER();
   if (!Player) { GCon->Log("NO PLAYER!"); return; }
   if (!Player->MO) { GCon->Log("NO PLAYER MOBJ!"); return; }
   AM_ClearAutomap();

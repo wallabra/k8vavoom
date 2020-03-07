@@ -24,6 +24,11 @@
 //**
 //**************************************************************************
 
+#define CMD_FORWARD_TO_SERVER()  do { \
+  if (Source == SRC_Command) { ForwardToServer(); return; } \
+} while (0)
+
+
 // a console command
 class VCommand {
 public:
