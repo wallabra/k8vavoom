@@ -34,13 +34,14 @@
 //
 //
 // CCREQ_CONNECT
-//    string    "K8VAVOOM"
+//    bytes     "K8VAVOOM"
 //    vuint8    net_protocol_version  NET_PROTOCOL_VERSION
+//    vuint32   modlisthash
+//    vuint16   modlistcount
 //
 // CCREQ_SERVER_INFO
-//    string    "K8VAVOOM"
+//    bytes     "K8VAVOOM"
 //    vuint8    net_protocol_version  NET_PROTOCOL_VERSION
-//
 //
 //
 // CCREP_ACCEPT
@@ -48,6 +49,9 @@
 //
 // CCREP_REJECT
 //    string    reason
+//    vuint16   flags
+//      if flags are there, and bit 0 is set, mod list follows
+//      modlist is asciz strings, terminated with empty string
 //
 // CCREP_SERVER_INFO
 //    string    host_name
@@ -55,7 +59,7 @@
 //    vuint8    current_players
 //    vuint8    max_players
 //    vuint8    protocol_version    NET_PROTOCOL_VERSION
-//    string[]  wad_files       empty string terminated
+//    asciiz strings with loaded archive names, terminated with empty string
 //
 //**************************************************************************
 #include "gamedefs.h"
@@ -141,10 +145,16 @@ public:
   void SearchForHosts (VNetLanDriver *, bool, bool);
   VSocket *Connect (VNetLanDriver *, const char *);
   VSocket *CheckNewConnections (VNetLanDriver *Drv);
-  void SendConnectionReject (VNetLanDriver *Drv, VStr reason, int acceptsock, sockaddr_t clientaddr);
+  void SendConnectionReject (VNetLanDriver *Drv, VStr reason, int acceptsock, sockaddr_t clientaddr, bool sendModList=false);
   void UpdateMaster (VNetLanDriver *);
   void QuitMaster (VNetLanDriver *);
   bool QueryMaster (VNetLanDriver *, bool);
+
+  static void WriteGameSignature (VBitStreamWriter &strm);
+  static bool CheckGameSignature (VBitStreamReader &strm);
+
+  static void WritePakList (VBitStreamWriter &strm);
+  static bool ReadPakList (TArray<VStr> &list, VBitStreamReader &strm); // won't clear list
 };
 
 
@@ -165,6 +175,93 @@ static VDatagramDriver Impl;
 //==========================================================================
 VDatagramDriver::VDatagramDriver () : VNetDriver(1, "Datagram") {
   memset(&packetBuffer, 0, sizeof(packetBuffer));
+}
+
+
+//==========================================================================
+//
+//  VDatagramDriver::WriteGameSignature
+//
+//==========================================================================
+void VDatagramDriver::WriteGameSignature (VBitStreamWriter &strm) {
+  const char *sign = "K8VAVOOM";
+  strm.Serialise((void *)sign, 8);
+}
+
+
+//==========================================================================
+//
+//  VDatagramDriver::CheckGameSignature
+//
+//==========================================================================
+bool VDatagramDriver::CheckGameSignature (VBitStreamReader &strm) {
+  char sign[8];
+  if (strm.IsError()) return false;
+  memset(sign, 0, sizeof(sign));
+  strm.Serialise(sign, 8);
+  if (strm.IsError()) return false;
+  return (memcmp(sign, "K8VAVOOM", 8) == 0);
+}
+
+
+//==========================================================================
+//
+//  VDatagramDriver::WritePakList
+//
+//==========================================================================
+void VDatagramDriver::WritePakList (VBitStreamWriter &strm) {
+  // write names
+  auto list = FL_GetWadPk3List();
+  for (int f = 0; f < list.length(); ++f) {
+    VStr pak = list[f].extractFileName();
+    if (pak.length() == 0) {
+      // this is base pak
+      pak = list[f];
+    } else {
+      pak = pak.stripExtension();
+    }
+    if (pak.length() == 0) continue;
+    //GCon->Logf(NAME_Debug, "%d: <%s>", f, *pak);
+    //if (pak.length() > 255) pak = pak.right(255); // just in case
+    if (strm.GetNumBits()+pak.length()*8+8 > MAX_DGRAM_SIZE*8-8) break;
+    for (int sidx = 0; sidx < pak.length(); ++sidx) {
+      vuint8 ch = (vuint8)(pak[sidx]);
+      strm << ch;
+    }
+    vuint8 zero = 0;
+    strm << zero;
+  }
+  // write trailing zero
+  {
+    vuint8 zero = 0;
+    strm << zero;
+  }
+}
+
+
+//==========================================================================
+//
+//  VDatagramDriver::ReadPakList
+//
+//  won't clear list
+//
+//==========================================================================
+bool VDatagramDriver::ReadPakList (TArray<VStr> &list, VBitStreamReader &strm) {
+  char buf[MAX_DGRAM_SIZE+2];
+  while (!strm.AtEnd()) {
+    int bufpos = 0;
+    for (;;) {
+      vuint8 ch = 0;
+      strm << ch;
+      if (strm.IsError()) return false;
+      if (bufpos >= (int)sizeof(buf)-2) return false;
+      buf[bufpos++] = ch;
+      if (!ch) break;
+    }
+    if (buf[0] == 0) return true; // done
+    list.append(VStr(buf));
+  }
+  return false;
 }
 
 
@@ -222,8 +319,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     Reply << TmpByte;
     TmpByte = CCREQ_SERVER_INFO;
     Reply << TmpByte;
-    VStr GameName("K8VAVOOM");
-    Reply << GameName;
+    WriteGameSignature(Reply);
     TmpByte = NET_PROTOCOL_VERSION;
     Reply << TmpByte;
     Drv->Broadcast(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes());
@@ -365,10 +461,13 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
     MsgOut << TmpByte;
     TmpByte = CCREQ_CONNECT;
     MsgOut << TmpByte;
-    VStr GameName("K8VAVOOM");
-    MsgOut << GameName;
+    WriteGameSignature(MsgOut);
     TmpByte = NET_PROTOCOL_VERSION;
     MsgOut << TmpByte;
+    vuint32 modhash = SV_GetModListHash();
+    MsgOut << modhash;
+    vuint16 modcount = (vuint16)FL_GetWadPk3List().length();
+    MsgOut << modcount;
     Drv->Write(newsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
 
     bool aborted = false;
@@ -410,14 +509,14 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
   if (ret == 0) {
     reason = "No Response";
-    GCon->Logf(NAME_DevNet, "Connection failure: %s", *reason);
+    GCon->Logf(NAME_Error, "Connection failure: %s", *reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
 
   if (ret == -1) {
     reason = "Network Error";
-    GCon->Logf(NAME_DevNet, "Connection failure: %s", *reason);
+    GCon->Logf(NAME_Error, "Connection failure: %s", *reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
@@ -425,14 +524,25 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   *msg << msgtype;
   if (msgtype == CCREP_REJECT) {
     *msg << reason;
-    GCon->Logf(NAME_DevNet, "Connection rejected: %s", *reason);
+    GCon->Logf(NAME_Error, "Connection rejected: %s", *reason);
     VStr::NCpy(Net->ReturnReason, *reason, 31);
+    if (!msg->ReadBit()) {
+      if (msg->ReadBit()) {
+        TArray<VStr> list;
+        if (ReadPakList(list, *msg)) {
+          if (list.length()) {
+            GCon->Log(NAME_Error, "=== SERVER REJECTED CONNETION; WAD LIST: ===");
+            for (auto &&pak : list) GCon->Logf(NAME_Error, "  %s", *pak);
+          }
+        }
+      }
+    }
     goto ErrorReturn;
   }
 
   if (msgtype != CCREP_ACCEPT) {
     reason = "Bad Response";
-    GCon->Logf(NAME_DevNet, "Connection failure: %s", *reason);
+    GCon->Logf(NAME_Error, "Connection failure: %s", *reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
@@ -490,14 +600,25 @@ VSocket *VDatagramDriver::Connect (const char *host) {
 //  VDatagramDriver::SendConnectionReject
 //
 //==========================================================================
-void VDatagramDriver::SendConnectionReject (VNetLanDriver *Drv, VStr reason, int acceptsock, sockaddr_t clientaddr) {
+void VDatagramDriver::SendConnectionReject (VNetLanDriver *Drv, VStr reason, int acceptsock, sockaddr_t clientaddr, bool sendModList) {
   vuint8 TmpByte;
-  VBitStreamWriter MsgOut(256<<3);
+  VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
   TmpByte = NETPACKET_CTL;
   MsgOut << TmpByte;
   TmpByte = CCREP_REJECT;
   MsgOut << TmpByte;
   MsgOut << reason;
+  // "false" means "simple format"
+  MsgOut.WriteBit(false);
+  if (!sendModList) {
+    // no list
+    MsgOut.WriteBit(false);
+  } else {
+    // list flag
+    MsgOut.WriteBit(true);
+    // list itself
+    WritePakList(MsgOut);
+  }
   Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
 }
 
@@ -518,7 +639,6 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   vuint8 command;
   VDatagramSocket *sock;
   int ret;
-  VStr gamename;
   vuint8 TmpByte;
   VStr TmpStr;
 
@@ -542,8 +662,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
   msg << command;
   if (command == CCREQ_SERVER_INFO) {
-    msg << gamename;
-    if (gamename != "K8VAVOOM") {
+    if (!CheckGameSignature(msg)) {
       if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid game type from %s", *Drv->AddrToString(&clientaddr));
       return nullptr;
     }
@@ -565,12 +684,16 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     MsgOut << TmpByte;
     TmpByte = NET_PROTOCOL_VERSION;
     MsgOut << TmpByte;
+    // write pak list
+    WritePakList(MsgOut);
+    /*
     for (int i = 0; i < fsysWadFileNames.Num(); ++i) {
       TmpStr = fsysWadFileNames[i]; //TODO: remove path?
       MsgOut << TmpStr;
     }
     TmpStr = "";
     MsgOut << TmpStr;
+    */
 
     Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
     return nullptr;
@@ -581,18 +704,31 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     return nullptr;
   }
 
-  msg << gamename;
-  if (gamename != "K8VAVOOM") {
+  // check signature
+  if (!CheckGameSignature(msg)) {
     GCon->Log(NAME_DevNet, "connection error: invalid game signature");
     return nullptr;
   }
 
+  // check version
   TmpByte = 0;
   msg << TmpByte;
   if (msg.IsError() || TmpByte != NET_PROTOCOL_VERSION) {
     GCon->Logf(NAME_DevNet, "connection error: invalid protocol version, got %u, but expected %d", TmpByte, NET_PROTOCOL_VERSION);
     // send reject packet, why not?
     SendConnectionReject(Drv, "invalid protocol version", acceptsock, clientaddr);
+    return nullptr;
+  }
+
+  // check modlist
+  vuint32 modhash = 0;
+  vuint16 modcount = 0;
+  msg << modhash;
+  msg << modcount;
+  if (msg.IsError() || modhash != SV_GetModListHash() || modcount != (vuint16)FL_GetWadPk3List().length()) {
+    GCon->Log(NAME_DevNet, "connection error: incompatible mod list");
+    // send reject packet
+    SendConnectionReject(Drv, "incompatible loaded mods list", acceptsock, clientaddr, true); // send modlist
     return nullptr;
   }
 
@@ -832,8 +968,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
         Reply << TmpByte;
         TmpByte = CCREQ_SERVER_INFO;
         Reply << TmpByte;
-        VStr GameName("K8VAVOOM");
-        Reply << GameName;
+        WriteGameSignature(Reply);
         TmpByte = NET_PROTOCOL_VERSION;
         Reply << TmpByte;
         Drv->Write(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes(), &tmpaddr);
