@@ -40,4 +40,6 @@ override void CreateChoices () {
 
 defaultproperties {
   Title = "JOIN GAME";
+  Width = 580;
+  Height = 400;
 }

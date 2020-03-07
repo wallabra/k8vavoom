@@ -162,8 +162,8 @@ public:
 extern int num_connected;
 extern TArray<VStr> fsysWadFileNames; // this is from corelib
 
-static VCvarB UseMaster("use_master", false, "Use master server?", CVAR_PreInit|CVAR_Archive);
-static VCvarS MasterSrv("master_srv", "ketmar.no-ip.org", "Master server domain name.", CVAR_PreInit|CVAR_Archive);
+static VCvarB UseMaster("use_master", false, "Use master server?", CVAR_Archive);
+static VCvarS MasterSrv("master_srv", "ketmar.no-ip.org", "Master server domain name.", CVAR_Archive);
 
 static VDatagramDriver Impl;
 
@@ -309,17 +309,16 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
   vuint8 control;
   vuint8 msgtype;
   int n;
-  int i;
   vuint8 TmpByte;
 
   Drv->GetSocketAddr(Drv->controlSock, &myaddr);
   if (xmit && Drv->CanBroadcast()) {
-    VBitStreamWriter Reply(256<<3);
+    VBitStreamWriter Reply(MAX_DGRAM_SIZE<<3);
     TmpByte = NETPACKET_CTL;
     Reply << TmpByte;
+    WriteGameSignature(Reply);
     TmpByte = CCREQ_SERVER_INFO;
     Reply << TmpByte;
-    WriteGameSignature(Reply);
     TmpByte = NET_PROTOCOL_VERSION;
     Reply << TmpByte;
     Drv->Broadcast(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes());
@@ -334,15 +333,20 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     // is the cache full?
     if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
+    GCon->Logf(NAME_Debug, "SearchForHosts: got packet from %s", *Drv->AddrToString(&readaddr));
+
     VBitStreamReader msg(packetBuffer.data, len<<3);
     msg << control;
-    if (control != NETPACKET_CTL) continue;
+    if (msg.IsError() || control != NETPACKET_CTL) continue;
+    if (!CheckGameSignature(msg)) continue;
 
     msg << msgtype;
-    if (msgtype != CCREP_SERVER_INFO) continue;
+    if (msg.IsError() || msgtype != CCREP_SERVER_INFO) continue;
 
     VStr str;
     VStr addr = Drv->AddrToString(&readaddr);
+
+    GCon->Logf(NAME_Debug, "SearchForHosts: got valid packet from %s", *Drv->AddrToString(&readaddr));
 
     // search the cache for this server
     for (n = 0; n < Net->HostCacheCount; ++n) {
@@ -353,28 +357,30 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     if (n < Net->HostCacheCount) continue;
 
     // add it
-    Net->HostCacheCount++;
+    ++Net->HostCacheCount;
+    vassert(n >= 0 && n < Net->HostCacheCount);
+    hostcache_t *hinfo = &Net->HostCache[n];
     msg << str;
-    Net->HostCache[n].Name = str;
+    hinfo->Name = str;
     msg << str;
-    Net->HostCache[n].Map = str;
+    hinfo->Map = str;
     msg << TmpByte;
-    Net->HostCache[n].Users = TmpByte;
+    hinfo->Users = TmpByte;
     msg << TmpByte;
-    Net->HostCache[n].MaxUsers = TmpByte;
+    hinfo->MaxUsers = TmpByte;
     msg << TmpByte;
-    if (TmpByte != NET_PROTOCOL_VERSION) Net->HostCache[n].Name = VStr("*")+Net->HostCache[n].Name;
-    Net->HostCache[n].CName = addr;
-    i = 0;
-    do {
-      msg << str;
-      Net->HostCache[n].WadFiles[i++] = str;
-    } while (str.IsNotEmpty());
+    if (TmpByte != NET_PROTOCOL_VERSION) hinfo->Name = VStr("*")+hinfo->Name;
+    hinfo->CName = addr;
+    hinfo->WadFiles.clear();
+    ReadPakList(hinfo->WadFiles, msg);
+
+    GCon->Logf(NAME_Debug, "SearchForHosts: got server info from %s: name=%s; map=%s; users=%d; maxusers=%d", *hinfo->CName, *hinfo->Name, *hinfo->Map, hinfo->Users, hinfo->MaxUsers);
 
     // check for a name conflict
-    for (i = 0; i < Net->HostCacheCount; ++i) {
+    /*
+    for (int i = 0; i < Net->HostCacheCount; ++i) {
       if (i == n) continue;
-      if (Net->HostCache[n].Name.ICmp(Net->HostCache[i].Name) == 0) {
+      if (Net->HostCache[n].Name.strEquCI(Net->HostCache[i].Name)) {
         i = Net->HostCache[n].Name.Length();
         if (i < 15 && Net->HostCache[n].Name[i-1] > '8') {
           Net->HostCache[n].Name += '0';
@@ -385,6 +391,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
         i = -1;
       }
     }
+    */
   }
 }
 
@@ -455,13 +462,13 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
     R_OSDMsgShow("sending handshake");
 
-    VBitStreamWriter MsgOut(256<<3);
+    VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
     // save space for the header, filled in later
     TmpByte = NETPACKET_CTL;
     MsgOut << TmpByte;
+    WriteGameSignature(MsgOut);
     TmpByte = CCREQ_CONNECT;
     MsgOut << TmpByte;
-    WriteGameSignature(MsgOut);
     TmpByte = NET_PROTOCOL_VERSION;
     MsgOut << TmpByte;
     vuint32 modhash = SV_GetModListHash();
@@ -489,7 +496,13 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
         msg = new VBitStreamReader(packetBuffer.data, ret<<3);
 
         *msg << control;
-        if (control != NETPACKET_CTL) {
+        if (msg->IsError() || control != NETPACKET_CTL) {
+          ret = 0;
+          delete msg;
+          msg = nullptr;
+          continue;
+        }
+        if (!CheckGameSignature(*msg)) {
           ret = 0;
           delete msg;
           msg = nullptr;
@@ -605,6 +618,7 @@ void VDatagramDriver::SendConnectionReject (VNetLanDriver *Drv, VStr reason, int
   VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
   TmpByte = NETPACKET_CTL;
   MsgOut << TmpByte;
+  WriteGameSignature(MsgOut);
   TmpByte = CCREP_REJECT;
   MsgOut << TmpByte;
   MsgOut << reason;
@@ -655,23 +669,24 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   VBitStreamReader msg(packetBuffer.data, len<<3);
 
   msg << control;
-  if (control != NETPACKET_CTL) {
+  if (msg.IsError() || control != NETPACKET_CTL) {
+    if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid packet type (%u) from %s", control, *Drv->AddrToString(&clientaddr));
+    return nullptr;
+  }
+
+  if (!CheckGameSignature(msg)) {
     if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid packet type (%u) from %s", control, *Drv->AddrToString(&clientaddr));
     return nullptr;
   }
 
   msg << command;
   if (command == CCREQ_SERVER_INFO) {
-    if (!CheckGameSignature(msg)) {
-      if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid game type from %s", *Drv->AddrToString(&clientaddr));
-      return nullptr;
-    }
-
     GCon->Logf(NAME_DevNet, "CONN: sending server info to %s", *Drv->AddrToString(&clientaddr));
 
     VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
     TmpByte = NETPACKET_CTL;
     MsgOut << TmpByte;
+    WriteGameSignature(MsgOut);
     TmpByte = CCREP_SERVER_INFO;
     MsgOut << TmpByte;
     TmpStr = VNetworkLocal::HostName;
@@ -701,12 +716,6 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
   if (command != CCREQ_CONNECT) {
     if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: unknown packet command (%u) from %s", command, *Drv->AddrToString(&clientaddr));
-    return nullptr;
-  }
-
-  // check signature
-  if (!CheckGameSignature(msg)) {
-    GCon->Log(NAME_DevNet, "connection error: invalid game signature");
     return nullptr;
   }
 
@@ -742,10 +751,11 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
       if (ret == 0 && Net->GetNetTime()-s->ConnectTime < 2.0) {
         GCon->Logf(NAME_DevNet, "CONN: duplicate connection request from %s (this is ok)", *Drv->AddrToString(&clientaddr));
         // yes, so send a duplicate reply
-        VBitStreamWriter MsgOut(32<<3);
+        VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
         Drv->GetSocketAddr(s->LanSocket, &newaddr);
         TmpByte = NETPACKET_CTL;
         MsgOut << TmpByte;
+        WriteGameSignature(MsgOut);
         TmpByte = CCREP_ACCEPT;
         MsgOut << TmpByte;
         vint32 TmpPort = Drv->GetSocketPort(&newaddr);
@@ -785,9 +795,10 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   GCon->Logf(NAME_DevNet, "allocated socket %s for client %s", *Drv->AddrToString(&newaddr), *sock->Address);
 
   // send him back the info about the server connection he has been allocated
-  VBitStreamWriter MsgOut(32<<3);
+  VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
   TmpByte = NETPACKET_CTL;
   MsgOut << TmpByte;
+  WriteGameSignature(MsgOut);
   TmpByte = CCREP_ACCEPT;
   MsgOut << TmpByte;
   vint32 TmpPort = Drv->GetSocketPort(&newaddr);
@@ -837,7 +848,8 @@ void VDatagramDriver::UpdateMaster (VNetLanDriver *Drv) {
   }
 
   // send the connection request
-  VBitStreamWriter MsgOut(256<<3);
+  VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
+  WriteGameSignature(MsgOut);
   vuint8 TmpByte = MCREQ_JOIN;
   MsgOut << TmpByte;
   TmpByte = NET_PROTOCOL_VERSION;
@@ -879,7 +891,8 @@ void VDatagramDriver::QuitMaster (VNetLanDriver *Drv) {
   }
 
   // send the quit request
-  VBitStreamWriter MsgOut(256<<3);
+  VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
+  WriteGameSignature(MsgOut);
   vuint8 TmpByte = MCREQ_QUIT;
   MsgOut << TmpByte;
   Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
@@ -923,7 +936,8 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
       return false;
     }
     // send the query request
-    VBitStreamWriter MsgOut(256<<3);
+    VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
+    WriteGameSignature(MsgOut);
     TmpByte = MCREQ_LIST;
     MsgOut << TmpByte;
     Drv->Write(Drv->MasterQuerySocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
@@ -940,6 +954,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
 
     //GCon->Logf("processing master reply...");
     VBitStreamReader msg(packetBuffer.data, len<<3);
+    if (!CheckGameSignature(msg)) continue;
     msg << control;
     if (control != MCREP_LIST) continue;
 
@@ -963,12 +978,12 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
       }*/
 
       if (pver == NET_PROTOCOL_VERSION) {
-        VBitStreamWriter Reply(256<<3);
+        VBitStreamWriter Reply(MAX_DGRAM_SIZE<<3);
         TmpByte = NETPACKET_CTL;
         Reply << TmpByte;
+        WriteGameSignature(Reply);
         TmpByte = CCREQ_SERVER_INFO;
         Reply << TmpByte;
-        WriteGameSignature(Reply);
         TmpByte = NET_PROTOCOL_VERSION;
         Reply << TmpByte;
         Drv->Write(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes(), &tmpaddr);

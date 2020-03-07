@@ -196,6 +196,7 @@ VNetworkLocal::VNetworkLocal ()
 {
   MyIpAddress[0] = 0;
   ReturnReason[0] = 0;
+  memset((void *)HostCache, 0, sizeof(HostCache));
 }
 
 

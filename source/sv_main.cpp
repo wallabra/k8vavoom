@@ -154,7 +154,7 @@ static VCvarB sv_pushable_barrels("sv_pushable_barrels", true, "Pushable barrels
 VCvarB sv_decoration_block_projectiles("sv_decoration_block_projectiles", false, "Should decoration things block projectiles?", CVAR_Archive|CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
 static VCvarB split_frame("split_frame", true, "Splitframe mode?", CVAR_Archive|CVAR_PreInit);
 static VCvarI sv_maxmove("sv_maxmove", "400", "Maximum allowed network movement.", CVAR_Archive);
-static VCvarF master_heartbeat_time("master_heartbeat_time", "300", "Master server heartbit interval.", CVAR_Archive|CVAR_PreInit);
+static VCvarF master_heartbeat_time("master_heartbeat_time", "3", "Master server heartbit interval, seconds.", CVAR_Archive|CVAR_PreInit);
 
 static VServerNetContext *ServerNetContext = nullptr;
 

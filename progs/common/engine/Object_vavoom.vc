@@ -156,13 +156,13 @@ enum {
 
 // server list
 
-enum { HOSTCACHESIZE = 8 };
+enum { HOSTCACHESIZE = 32 };
 
 struct hostcache_t {
   string Name;
   string Map;
   string CName;
-  string WadFiles[20];
+  array!string WadFiles;
   int Users;
   int MaxUsers;
 };

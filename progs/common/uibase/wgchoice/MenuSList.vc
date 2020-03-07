@@ -90,27 +90,40 @@ void DrawTextBox (string text) {
 //
 //==========================================================================
 override void OnDraw () {
-  DrawBackground();
+  Width = Parent.Width;
+  Height = Parent.Height;
+
+  //DrawBackground();
 
   slist = GetSlist();
 
+
   SetFont('smallfont');
 
-  SetTextAlign(hleft, vtop);
+  int maxux = Width-TextWidth(va("99/99"))-8;
+
+  //printdebug("====== count=%s ======", slist.Cache.length);
   foreach (int i; 0..slist->Cache.length) {
-    DrawText(16, 32+10*i, slist->Cache[i].Name);
-    DrawText(16+128, 32+10*i, slist->Cache[i].Map);
+    //printdebug("  %s: name=<%s>; map=<%s>", i, slist.Cache[i].Name, slist.Cache[i].Map);
+    int clr = (Cursor == i ? CR_WHITE : CR_RED);
+    SetTextAlign(hleft, vtop);
+    DrawText(16, 32+10*i, slist->Cache[i].Name, clr);
+    SetTextAlign(hright, vtop);
+    DrawText(maxux, 32+10*i, slist->Cache[i].Map, clr);
+    int ipx = maxux-TextWidth(slist->Cache[i].Map)-8;
+    DrawText(ipx, 32+10*i, slist->Cache[i].CName, clr);
     if (slist->Cache[i].MaxUsers) {
-      DrawText(16+256, 32+10*i, va("%d/%d", slist->Cache[i].Users, slist->Cache[i].MaxUsers));
+      DrawText(Width-4, 32+10*i, va("%d/%d", slist->Cache[i].Users, slist->Cache[i].MaxUsers), clr);
     }
   }
-  DrawText(8, 32+Cursor*10, ">");
+  SetTextAlign(hleft, vtop);
+  DrawText(8, 32+Cursor*10, ">", CR_YELLOW);
 
   if (slist->ReturnReason) DrawText(16, 116, slist->ReturnReason);
 
   if (slist->Cache.length && Cursor >= 0 && Cursor < slist->Cache.length) {
     int x = 8;
-    int y = 124;
+    int y = 32+HOSTCACHESIZE*10;
     foreach (int i; 0..slist->Cache[Cursor].WadFiles.length) {
       if (!slist->Cache[Cursor].WadFiles[i]) break;
       int w = TextWidth(slist->Cache[Cursor].WadFiles[i]);
@@ -119,7 +132,7 @@ override void OnDraw () {
         y += 9;
         if (y > 190) break;
       }
-      DrawText(x, y, slist->Cache[Cursor].WadFiles[i]);
+      DrawText(x, y, slist->Cache[Cursor].WadFiles[i], CR_GRAY);
       x += w+8;
     }
   }
@@ -157,9 +170,10 @@ override bool OnKeyDown (int key) {
 
     case K_ENTER:
     case K_PADENTER:
-      if (slist->Cache.length) {
+      if (slist->Cache.length && Cursor >= 0 && Cursor < slist->Cache.length) {
         LocalSound('menu/choose');
         CmdBuf_AddText("connect \"%q\"\n", slist->Cache[Cursor].CName);
+        GetClGame().ForceMenuOff();
       }
       return true;
 

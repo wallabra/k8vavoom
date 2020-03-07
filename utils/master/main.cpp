@@ -32,6 +32,7 @@ using namespace VavoomUtils;
 #include <time.h>
 #ifdef _WIN32
 # include <windows.h>
+# include <sys/types.h>
 typedef int socklen_t;
 #else
 # include <sys/ioctl.h>
@@ -42,6 +43,8 @@ typedef int socklen_t;
 # include <unistd.h>
 # define closesocket   close
 #endif
+#include <sys/select.h>
+#include <sys/time.h>
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -63,7 +66,7 @@ enum {
 
 struct TSrvItem {
   sockaddr addr;
-  time_t time;
+  time_t time; // for blocked: unblock time; 0: never
   vuint8 pver; // protocol version
 };
 
@@ -107,6 +110,55 @@ static int AddrCompare (const sockaddr *addr1, const sockaddr *addr2) {
 
 //==========================================================================
 //
+//  CheckGameSignature
+//
+//  checks and removed game signature from packet data
+//
+//==========================================================================
+static bool CheckGameSignature (char *buf, int &len) {
+  if (len < 8) return false;
+  if (memcmp(buf, "K8VAVOOM", 8) != 0) return false;
+  len -= 8;
+  if (len > 0) memmove(buf, buf+8, len);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  IsBlocked
+//
+//==========================================================================
+static bool IsBlocked (const sockaddr *clientaddr) {
+  for (auto &&blocked : srvBlocked) {
+    if (AddrCompare(&blocked.addr, clientaddr) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  BlockIt
+//
+//==========================================================================
+static void BlockIt (const sockaddr *clientaddr) {
+  for (int i = srvList.length()-1; i >= 0; --i) {
+    if (AddrCompare(&srvList[i].addr, clientaddr) == 0) {
+      srvList.removeAt(i);
+    }
+  }
+  TSrvItem &it = srvBlocked.Alloc();
+  it.addr = *clientaddr;
+  it.time = time(0)+60; // block for one minute
+  it.pver = 0;
+}
+
+
+//==========================================================================
+//
 //  ReadNet
 //
 //==========================================================================
@@ -119,13 +171,14 @@ static void ReadNet () {
   // read packet
   sockaddr clientaddr;
   socklen_t addrlen = sizeof(sockaddr);
-  int len = recvfrom(acceptSocket, buf, MAX_MSGLEN, 0, &clientaddr, &addrlen);
+  int len = (int)recvfrom(acceptSocket, buf, MAX_MSGLEN, 0, &clientaddr, &addrlen);
+
+  if (len < 0) return; // some error
 
   // check if it is not blocked
-  for (int i = 0; i < srvBlocked.length(); ++i) {
-    if (AddrCompare(&srvBlocked[i].addr, &clientaddr) == 0) {
-      return; // ignore it
-    }
+  if (IsBlocked(&clientaddr)) return; // ignore it
+
+  if (len < 9 || !CheckGameSignature(buf, len)) {
   }
 
   if (len >= 1) {
@@ -164,9 +217,11 @@ static void ReadNet () {
           printf("query from %s\n", AddrToString(&clientaddr));
           int sidx = 0;
           while (sidx < srvList.length()) {
-            buf[0] = MCREP_LIST;
-            buf[1] = (sidx == 0 ? 1 : 0); // seq id: bit 0 set means 'first', bit 1 set means 'last'
-            int mlen = 2;
+            memcpy(buf, "K8VAVOOM", 8);
+            int bufstpos = 8;
+            buf[bufstpos+0] = MCREP_LIST;
+            buf[bufstpos+1] = (sidx == 0 ? 1 : 0); // seq id: bit 0 set means 'first', bit 1 set means 'last'
+            int mlen = bufstpos+2;
             while (sidx < srvList.length()) {
               if (mlen+7 > MAX_MSGLEN-1) break;
               buf[mlen+0] = srvList[sidx].pver;
@@ -175,7 +230,7 @@ static void ReadNet () {
               mlen += 7;
               ++sidx;
             }
-            if (sidx >= srvList.length()) buf[1] |= 0x02; // set "last packet" flag
+            if (sidx >= srvList.length()) buf[bufstpos+1] |= 0x02; // set "last packet" flag
             sendto(acceptSocket, buf, mlen, 0, &clientaddr, sizeof(sockaddr));
           }
           return;
@@ -185,20 +240,8 @@ static void ReadNet () {
   }
 
   // if it sent invalid command, remove it immediately, and block access for 60 seconds
-  for (int i = 0; i < srvList.length(); ++i) {
-    if (AddrCompare(&srvList[i].addr, &clientaddr) == 0) {
-      srvList.RemoveIndex(i);
-      break;
-    }
-  }
-  // append to blocklist
-  {
-    printf("something at %s is blocked\n", AddrToString(&clientaddr));
-    TSrvItem &it = srvBlocked.Alloc();
-    it.addr = clientaddr;
-    it.time = time(0);
-    it.pver = 0;
-  }
+  printf("something at %s is blocked\n", AddrToString(&clientaddr));
+  BlockIt(&clientaddr);
 }
 
 
@@ -254,34 +297,49 @@ int main (int argc, const char **argv) {
 
   // main loop
   for (;;) {
-    for (int i = 0; i < 1000; ++i) {
-      ReadNet();
-#ifdef _WIN32
-      Sleep(1);
-#else
-      //usleep(1);
-      static const struct timespec sleepTime = {0, 28500000};
-      nanosleep(&sleepTime, nullptr);
-#endif
-    }
+    fd_set rd;
+    FD_ZERO(&rd);
+    FD_SET(acceptSocket, &rd);
+    int res = select(acceptSocket+1, &rd, nullptr, nullptr, nullptr);
+    if (res <= 0) continue;
 
     // clean up list from old records
+    bool dumpServers = false;
     time_t CurTime = time(0);
-    for (int i = 0; i < srvList.length(); ++i) {
+    for (int i = srvList.length()-1; i >= 0; --i) {
       if (CurTime-srvList[i].time >= 15*60) {
         printf("server at %s leaves by timeout\n", AddrToString(&srvList[i].addr));
-        srvList.RemoveIndex(i);
-        --i;
+        srvList.removeAt(i);
+        dumpServers = true;
       }
     }
 
     // clean blocklist
-    for (int i = 0; i < srvBlocked.length(); ++i) {
-      if (CurTime-srvBlocked[i].time >= 60) {
-        srvBlocked.RemoveIndex(i);
-        --i;
+    for (int i = srvBlocked.length()-1; i >= 0; --i) {
+      if (srvBlocked[i].time > 0 && srvBlocked[i].time <= CurTime) {
+        srvBlocked.removeAt(i);
       }
     }
+
+    int scount = srvList.length();
+    ReadNet();
+
+    if (dumpServers || srvList.length() != scount) {
+      printf("===== SERVERS =====\n");
+      for (int f = 0; f < srvList.length(); ++f) {
+        printf("%3d: %s\n", f, AddrToString(&srvList[f].addr));
+      }
+    }
+
+    /*
+    #ifdef _WIN32
+    Sleep(1);
+    #else
+    //usleep(1);
+    static const struct timespec sleepTime = {0, 28500000};
+    nanosleep(&sleepTime, nullptr);
+    #endif
+    */
   }
 
   // close socket

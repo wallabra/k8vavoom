@@ -141,7 +141,7 @@ struct hostcache_t {
   VStr Name;
   VStr Map;
   VStr CName;
-  VStr WadFiles[20];
+  TArray<VStr> WadFiles;
   vint32 Users;
   vint32 MaxUsers;
 };

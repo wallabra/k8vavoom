@@ -350,6 +350,8 @@ static void DrawFPS () {
     T_SetAlign(hleft, vtop);
     int xpos = 4;
     const int nlag = clampval((int)((cl->Net->PrevLag+1.2*(max2(cl->Net->InLoss, cl->Net->OutLoss)*0.01))*1000), 0, 999);
+    //const int lag1 = clampval((int)(cl->Net->AvgLag*1000), 0, 999);
+    //T_DrawText(xpos, ypos, va("NET LAG:%3d  [%3d]", nlag, lag1), CR_DARKBROWN); ypos += 9;
     T_DrawText(xpos, ypos, va("NET LAG:%3d", nlag), CR_DARKBROWN); ypos += 9;
     ypos += 9;
   }

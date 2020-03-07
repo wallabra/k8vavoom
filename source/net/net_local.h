@@ -34,7 +34,7 @@
 
 #define MAX_NET_DRIVERS  (8)
 
-#define HOSTCACHESIZE  (8)
+#define HOSTCACHESIZE  (32)
 
 #define NET_DATAGRAMSIZE  (MAX_DGRAM_SIZE)
 
