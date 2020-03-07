@@ -29,10 +29,14 @@
 #include "neoui/neoui.h"
 #ifdef CLIENT
 # include "drawer.h"
+# include "net/network.h" /* sorry */
 #endif
 
 
 #ifdef CLIENT
+extern VCvarB draw_lag;
+
+
 //==========================================================================
 //
 //  T_Init
@@ -192,6 +196,8 @@ static int currMsgType = OSD_MapLoading;
 static int lastPBarWdt = -666;
 static double pbarStartTime = 0;
 static double pbarLastUpdateTime = 0;
+static double pbarLastLagUpdateTime = 0;
+static int pbarMaxLagWidth = 0;
 
 int R_OSDMsgColorMain = CR_FIRE;
 int R_OSDMsgColorSecondary = CR_ORANGE /*CR_PURPLE*/ /*CR_TEAL*/;
@@ -273,12 +279,45 @@ bool R_PBarReset (bool sendKeepalives) {
   lastPBarWdt = -666;
   pbarStartTime = Sys_Time();
   pbarLastUpdateTime = 0;
+  pbarLastLagUpdateTime = 0;
+  pbarMaxLagWidth = 0;
 #ifdef CLIENT
   return (Drawer && Drawer->IsInited());
 #else
   return false;
 #endif
 }
+
+
+#ifdef CLIENT
+//==========================================================================
+//
+//  RenderLag
+//
+//==========================================================================
+static bool RenderLag () {
+  if (!cl || !cl->Net) return false;
+  double ctt = Sys_Time();
+  if (ctt-pbarLastLagUpdateTime <= 1.0) return false;
+  pbarLastLagUpdateTime = ctt;
+  const int nlag = clampval((int)((cl->Net->PrevLag+1.2*(max2(cl->Net->InLoss, cl->Net->OutLoss)*0.01))*1000), 0, 999);
+  //const int lag0 = clampval((int)(cl->Net->PrevLag*1000), 0, 999);
+  //const int lag1 = clampval((int)(cl->Net->AvgLag*1000), 0, 999);
+  T_SetFont(ConFont);
+  T_SetAlign(hleft, vtop);
+  int xpos = 4;
+  int ypos = 22;
+  VStr s0(va("NET LAG:%3d", nlag));
+  //VStr s1(va("LAGS   :%3d %3d", lag0, lag1));
+  //pbarMaxLagWidth = max(pbarMaxLagWidth, max2(T_TextWidth(s0), T_TextWidth(s1))+4*2);
+  pbarMaxLagWidth = max2(pbarMaxLagWidth, T_TextWidth(s0)+4*2);
+  //GRoot->FillRect(xpos-4, ypos-4, pbarMaxLagWidth, T_FontHeight()*2+4*2, 0, 1.0f);
+  GRoot->FillRect(xpos-4, ypos-4, pbarMaxLagWidth, T_FontHeight()*1+4*2, 0, 1.0f);
+  T_DrawText(xpos, ypos, s0, CR_DARKBROWN); ypos += 9;
+  //T_DrawText(xpos, ypos, s1, CR_DARKBROWN); ypos += 9;
+  return true;
+}
+#endif
 
 
 //==========================================================================
@@ -312,10 +351,15 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced, bool send
   #ifdef CLIENT
   if (Drawer && Drawer->IsInited()) {
     int wdt = cur*(Drawer->getWidth()-PBarHPad*2)/max;
-    if (!forced && wdt == lastPBarWdt) return false;
+    if (!forced && wdt == lastPBarWdt) {
+      if (draw_lag && cl && cl->Net) {
+        if (RenderLag()) Drawer->Update();
+      }
+      return false;
+    }
     // delay update if it is too often
     double currt = Sys_Time();
-    if (!forced && currt-pbarLastUpdateTime < 0.033) return false; // ~30 FPS
+    if (!forced && currt-pbarLastUpdateTime < 1.0/30.0) return false;
     pbarLastUpdateTime = currt;
     lastPBarWdt = wdt;
     Drawer->StartUpdate();
@@ -360,6 +404,7 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced, bool send
       Drawer->FillRect(PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, Drawer->getWidth()-PBarHPad, Drawer->getHeight()-PBarVPad, 0xff8f0f00);
       if (wdt > 0) Drawer->FillRect(PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, PBarHPad+wdt, Drawer->getHeight()-PBarVPad, 0xffff7f00);
     }
+    if (draw_lag && cl && cl->Net) RenderLag();
     Drawer->Update();
   } else
   #endif

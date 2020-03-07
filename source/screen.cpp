@@ -28,6 +28,7 @@
 #include "drawer.h"
 #include "ui/ui.h"
 #include "neoui/neoui.h"
+#include "net/network.h" /* sorry */
 
 
 extern int screenblocks;
@@ -172,6 +173,8 @@ static double fps_start = 0.0;
 static double ms = 0.0;
 static int fps_frames = 0;
 static int show_fps = 0;
+
+VCvarB draw_lag("draw_lag", true, "Draw network lag value?", CVAR_Archive);
 
 static VCvarB draw_gc_stats("draw_gc_stats", false, "Draw GC stats?", CVAR_Archive);
 static VCvarI draw_gc_stats_posx("draw_gc_stats_posx", "0", "GC stats counter position (<0:left; 0:center; >0:right)", CVAR_Archive);
@@ -340,6 +343,17 @@ static void DrawFPS () {
 
   if (worldThinkTimeVM < 0) curFilterValue = 0;
   if (worldThinkTimeVM >= 0) curFilterValue = FilterFadeoff*worldThinkTimeVM+(1.0f-FilterFadeoff)*curFilterValue;
+
+  #ifdef CLIENT
+  if (draw_lag && cl && cl->Net) {
+    T_SetFont(ConFont);
+    T_SetAlign(hleft, vtop);
+    int xpos = 4;
+    const int nlag = clampval((int)((cl->Net->PrevLag+1.2*(max2(cl->Net->InLoss, cl->Net->OutLoss)*0.01))*1000), 0, 999);
+    T_DrawText(xpos, ypos, va("NET LAG:%3d", nlag), CR_DARKBROWN); ypos += 9;
+    ypos += 9;
+  }
+  #endif
 
   if ((dbg_world_think_vm_time && worldThinkTimeVM >= 0) || (dbg_world_think_decal_time && worldThinkTimeDecal >= 0)) {
     T_SetFont(ConFont);
