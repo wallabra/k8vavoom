@@ -84,6 +84,29 @@ static int acceptSocket = -1; // socket for fielding new connections
 static TArray<TSrvItem> srvList;
 static TArray<TSrvItem> srvBlocked;
 
+static bool logallowed = true;
+
+
+#define Logf(...)  do { \
+  PrintTime(stdout); printf(__VA_ARGS__); printf("%s", "\n"); \
+  if (logallowed) { \
+    FILE *fo = fopen("master.log", "a"); \
+    if (fo) { PrintTime(fo); fprintf(fo, __VA_ARGS__); fprintf(fo, "%s", "\n"); fclose(fo); } \
+  } \
+} while (0)
+
+
+//==========================================================================
+//
+//  PrintTime
+//
+//==========================================================================
+static void PrintTime (FILE *fo) {
+  time_t t = time(nullptr);
+  const tm *xtm = localtime(&t);
+  fprintf(fo, "%04d/%02d/%02d %02d:%02d:%02d: ", xtm->tm_year+1900, xtm->tm_mon+1, xtm->tm_mday, xtm->tm_hour, xtm->tm_min, xtm->tm_sec);
+}
+
 
 //==========================================================================
 //
@@ -184,10 +207,10 @@ static void BlockIt (const sockaddr *clientaddr) {
       return;
     }
   }
-  printf("something at %s is blocked\n", AddrToStringNoPort(clientaddr));
+  Logf("something at %s is blocked", AddrToStringNoPort(clientaddr));
   TSrvItem &it = srvBlocked.Alloc();
   it.addr = *clientaddr;
-  it.time = time(0)+60; // block for one minute
+  it.time = time(0)+60*3; // block for three minutes
   it.pver = 0;
 }
 
@@ -229,7 +252,7 @@ static void ReadNet () {
               return;
             }
           }
-          printf("server at %s is joined, protocol version is %u\n", AddrToString(&clientaddr), (unsigned)buf[1]);
+          Logf("server at %s is joined, protocol version is %u", AddrToString(&clientaddr), (unsigned)buf[1]);
           TSrvItem &it = srvList.Alloc();
           it.addr = clientaddr;
           it.time = time(0);
@@ -241,7 +264,7 @@ static void ReadNet () {
         if (len == 1) {
           for (int i = 0; i < srvList.length(); ++i) {
             if (AddrCompare(&srvList[i].addr, &clientaddr) == 0) {
-              printf("server at %s leaves\n", AddrToString(&srvList[i].addr));
+              Logf("server at %s leaves", AddrToString(&srvList[i].addr));
               srvList.RemoveIndex(i);
               break;
             }
@@ -251,7 +274,7 @@ static void ReadNet () {
         break;
       case MCREQ_LIST:
         if (len == 1) {
-          printf("query from %s\n", AddrToString(&clientaddr));
+          Logf("query from %s", AddrToString(&clientaddr));
           int sidx = 0;
           while (sidx < srvList.length()) {
             memcpy(buf, "K8VAVOOM", 8);
@@ -288,14 +311,14 @@ static void ReadNet () {
 //
 //==========================================================================
 int main (int argc, const char **argv) {
-  printf("k8vavoom master server at port %d.\n", MASTER_SERVER_PORT);
+  Logf("k8vavoom master server at port %d.", MASTER_SERVER_PORT);
 
 #ifdef _WIN32
   WSADATA winsockdata;
   //MAKEWORD(2, 2)
   int r = WSAStartup(MAKEWORD(1, 1), &winsockdata);
   if (r) {
-    printf("Winsock initialisation failed.\n");
+    Logf("Winsock initialisation failed.");
     return -1;
   }
   TWinSockHelper Helper;
@@ -304,7 +327,7 @@ int main (int argc, const char **argv) {
   // open socket for listening for requests
   acceptSocket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (acceptSocket == -1) {
-    printf("Unable to open accept socket\n");
+    Logf("Unable to open accept socket");
     return -1;
   }
 
@@ -317,7 +340,7 @@ int main (int argc, const char **argv) {
 #endif
   {
     closesocket(acceptSocket);
-    printf("Unable to make socket non-blocking\n");
+    Logf("Unable to make socket non-blocking");
     return -1;
   }
 
@@ -328,7 +351,7 @@ int main (int argc, const char **argv) {
   address.sin_port = htons(MASTER_SERVER_PORT);
   if (bind(acceptSocket, (sockaddr *)&address, sizeof(address)) == -1) {
     closesocket(acceptSocket);
-    printf("Unable to bind socket to a port\n");
+    Logf("Unable to bind socket to a port");
     return -1;
   }
 
@@ -345,7 +368,7 @@ int main (int argc, const char **argv) {
     time_t CurTime = time(0);
     for (int i = srvList.length()-1; i >= 0; --i) {
       if (CurTime-srvList[i].time >= 15*60) {
-        printf("server at %s leaves by timeout\n", AddrToString(&srvList[i].addr));
+        Logf("server at %s leaves by timeout", AddrToString(&srvList[i].addr));
         srvList.removeAt(i);
         dumpServers = true;
       }
@@ -354,7 +377,7 @@ int main (int argc, const char **argv) {
     // clean blocklist
     for (int i = srvBlocked.length()-1; i >= 0; --i) {
       if (srvBlocked[i].time > 0 && srvBlocked[i].time <= CurTime) {
-        printf("lifted block from %s\n", AddrToStringNoPort(&srvBlocked[i].addr));
+        Logf("lifted block from %s", AddrToStringNoPort(&srvBlocked[i].addr));
         srvBlocked.removeAt(i);
       }
     }
@@ -363,21 +386,11 @@ int main (int argc, const char **argv) {
     ReadNet();
 
     if (dumpServers || srvList.length() != scount) {
-      printf("===== SERVERS =====\n");
+      Logf("===== SERVERS =====");
       for (int f = 0; f < srvList.length(); ++f) {
-        printf("%3d: %s\n", f, AddrToString(&srvList[f].addr));
+        Logf("%3d: %s", f, AddrToString(&srvList[f].addr));
       }
     }
-
-    /*
-    #ifdef _WIN32
-    Sleep(1);
-    #else
-    //usleep(1);
-    static const struct timespec sleepTime = {0, 28500000};
-    nanosleep(&sleepTime, nullptr);
-    #endif
-    */
   }
 
   // close socket
