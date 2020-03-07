@@ -75,9 +75,9 @@ override void OnDraw () {
   int Col2 = (IsFocus() ? CR_YELLOW : Value ? CR_GREEN : CR_RED);
   SetTextAlign(hleft, vtop);
   if (inverted) {
-    DrawText(xx, 0, (Value ? "On" : "Off"), Col2);
-  } else {
     DrawText(xx, 0, (Value ? "Off" : "On"), Col2);
+  } else {
+    DrawText(xx, 0, (Value ? "On" : "Off"), Col2);
   }
 }
 
