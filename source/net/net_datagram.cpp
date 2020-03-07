@@ -326,7 +326,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     Drv->Broadcast(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes());
   }
 
-  //GCon->Logf(NAME_Debug, "SearchForHosts: trying to read a datagram...");
+  GCon->Logf(NAME_Debug, "SearchForHosts: trying to read a datagram (me:%s)...", *Drv->AddrToString(&myaddr));
   int pktleft = 128;
   while (pktleft-- > 0 && (len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr)) > 0) {
     if (len < (int)sizeof(int)) continue;

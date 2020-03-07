@@ -888,11 +888,11 @@ VNetDriver::VNetDriver (int Level, const char *AName) : name(AName), initialised
 VNetLanDriver::VNetLanDriver (int Level, const char *AName)
   : name(AName)
   , initialised(false)
-  , controlSock(0)
+  , controlSock(-1)
   , MasterQuerySocket(-1)
   , net_acceptsocket(-1)
-  , net_controlsocket(0)
-  , net_broadcastsocket(0)
+  , net_controlsocket(-1)
+  , net_broadcastsocket(-1)
   , myAddr(0)
 {
   memset(&broadcastaddr, 0, sizeof(broadcastaddr));

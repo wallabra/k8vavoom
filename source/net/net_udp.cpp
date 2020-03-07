@@ -218,7 +218,7 @@ int VUdpDriver::Init () {
     Net->HostName = buff;
   }
 
-  if ((net_controlsocket = OpenListenSocket(0)) == -1) {
+  if ((net_controlsocket = /*OpenListenSocket(0)*/ConnectSocketTo(nullptr)) == -1) {
 #ifdef WIN32
     GCon->Log(NAME_Init, "WINS_Init: Unable to open control socket");
     if (--winsock_initialised == 0) WSACleanup();
