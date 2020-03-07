@@ -35,8 +35,11 @@ struct client_static_t {
   VStream *demofile;
 
   // connection information
-  int signon; // 0 to SIGNONS
-  // set to 1 when client got a map
+  // set to 1 when client got `VLevelInfo` object from the server
+  // this means that we at least sent "Client_Spawn" to server
+  int signon;
+  // set to 1 when client loaded a map
+  // set to 2 when client executed `PreRender()`
   int gotmap;
 
   inline void clearForClient () noexcept {
@@ -46,7 +49,7 @@ struct client_static_t {
 
   inline void clearForStandalone () noexcept {
     signon = 1;
-    gotmap = 1;
+    gotmap = 2; // yeah
   }
 
   inline void clearForDisconnect () noexcept {
