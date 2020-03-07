@@ -101,6 +101,20 @@ static int textpos = 0;
 
 //==========================================================================
 //
+//  onShowCompletionMatchCB
+//
+//==========================================================================
+static void onShowCompletionMatchCB (bool isheader, VStr s) {
+  if (isheader) {
+    GCon->Logf("\034K%s", *s);
+  } else {
+    GCon->Logf("\034D  %s", *s);
+  }
+}
+
+
+//==========================================================================
+//
 //  UpdateTTYText
 //
 //==========================================================================
@@ -337,6 +351,7 @@ int main (int argc, char **argv) {
     if (!ttyExtraDisabled && ttyIsGood()) {
       ttySetRawMode(true);
       atexit(&restoreTTYOnExit);
+      VCommand::onShowCompletionMatch = &onShowCompletionMatchCB;
       //ttyRawWrite("\x1b[0m;\x1b[2J\x1b[9999F"); // clear, move cursor down
       UpdateTTYText();
     }
