@@ -30,44 +30,6 @@
 
 //==========================================================================
 //
-//  VMessageIn::LoadFrom
-//
-//==========================================================================
-bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
-  // clear stream
-  Data.reset();
-  Num = Pos = 0;
-  bError = false;
-
-  bReliable = srcPacket.ReadBit();
-  bOpen = srcPacket.ReadBit();
-  bClose = (bReliable ? srcPacket.ReadBit() : bOpen);
-  ChanIndex = srcPacket.ReadUInt();
-  ChanSequence = 0;
-  if (bReliable) srcPacket << STRM_INDEX_U(ChanSequence);
-  ChanType = (bReliable || bOpen ? srcPacket.ReadUInt() : 0);
-  const int dataBits = (int)srcPacket.ReadUInt();
-
-  if (srcPacket.IsError()) {
-    GCon->Log(NAME_DevNet, "*** inmessage: incomplete message header");
-    bError = true;
-    return false;
-  }
-
-  SetData(srcPacket, dataBits);
-  if (srcPacket.IsError() || IsError()) {
-    GCon->Logf(NAME_Debug, "*** inmessage: error reading data from packet (%d : %d)!", (int)srcPacket.IsError(), (int)IsError());
-    bError = true;
-    return false;
-  }
-
-  return !IsError();
-}
-
-
-
-//==========================================================================
-//
 //  VMessageOut::VMessageOut
 //
 //==========================================================================
@@ -127,6 +89,54 @@ void VMessageOut::Reset (VChannel *AChannel, bool areliable) {
 }
 
 
+
+//==========================================================================
+//
+//  VMessageIn::LoadFrom
+//
+//==========================================================================
+bool VMessageIn::LoadFrom (VBitStreamReader &srcPacket) {
+  // clear stream
+  Data.reset();
+  Num = Pos = 0;
+  bError = false;
+
+  bReliable = srcPacket.ReadBit();
+  bOpen = (bReliable ? srcPacket.ReadBit() : false);
+  bClose = (bReliable ? srcPacket.ReadBit() : false);
+  srcPacket << STRM_INDEX_U(ChanIndex);
+  ChanSequence = 0;
+  if (bReliable) srcPacket << STRM_INDEX_U(ChanSequence);
+  ChanType = (bReliable || bOpen ? srcPacket.ReadUInt() : 0);
+  vuint32 dataBits = 0;
+  srcPacket << STRM_INDEX_U(dataBits);
+
+  if (dataBits >= (unsigned)srcPacket.GetNumBits()) {
+    GCon->Log(NAME_DevNet, "*** inmessage: invalid number of data bits");
+    srcPacket.Clear(true);
+    (void)srcPacket.ReadBit(); // this sets error on srcpacket
+    bError = true;
+    return false;
+  }
+
+  if (srcPacket.IsError()) {
+    GCon->Log(NAME_DevNet, "*** inmessage: incomplete message header");
+    bError = true;
+    return false;
+  }
+
+  SetData(srcPacket, dataBits);
+  if (srcPacket.IsError() || IsError()) {
+    GCon->Logf(NAME_Debug, "*** inmessage: error reading data from packet (%d : %d)!", (int)srcPacket.IsError(), (int)IsError());
+    bError = true;
+    return false;
+  }
+
+  return !IsError();
+}
+
+
+
 //==========================================================================
 //
 //  VMessageOut::WriteHeader
@@ -137,21 +147,20 @@ void VMessageOut::WriteHeader (VBitStreamWriter &strm) const {
   // "normal message" flag
   strm.WriteBit(false);
   strm.WriteBit(bReliable);
-  strm.WriteBit(bOpen);
   if (bReliable) {
+    strm.WriteBit(bOpen);
     strm.WriteBit(bClose);
   } else {
-    // unreliable messages should not open/close channels
-    // the only exception is "open, shoot, and close"
-    vassert(bOpen == bClose);
+    vassert(!bOpen && !bClose);
   }
-  strm.WriteUInt(ChanIndex);
+  strm << STRM_INDEX_U(ChanIndex);
   // for reliable, write channel sequence
   if (bReliable) strm << STRM_INDEX_U(ChanSequence);
   // for reliable or open, write channel type
   // this is because non-open reliable message can arrive first, and we need to create a channel anyway
   if (bReliable || bOpen) strm.WriteUInt(ChanType);
-  strm.WriteUInt((vuint32)GetNumBits());
+  vuint32 dataBits = (vuint32)GetNumBits();
+  strm << STRM_INDEX_U(dataBits);
 }
 
 
@@ -170,12 +179,11 @@ int VMessageOut::EstimateSizeInBits (int addbits) const noexcept {
     // header
     1+ // zero
     1+ // reliable flag
-    1+ // open flag
-    (bReliable ? 1 : 0)+ // close flag
-    BitStreamCalcUIntBits(ChanIndex)+ // channel index
-    (bReliable ? 5*8 : 0)+ // channel sequence (unknown yet)
+    (bReliable ? 2 : 0)+ // open/close flags
+    calcVarIntLength(ChanIndex)*8+ // channel index
+    (bReliable ? calcVarIntLength(0xffffffffu)*8 : 0)+ // channel sequence (unknown yet)
     (bReliable || bOpen ? BitStreamCalcUIntBits(ChanType) : 0)+ // channel type
-    BitStreamCalcUIntBits(MAX_MSG_SIZE_BITS)+ // size field
+    calcVarIntLength(/*MAX_MSG_SIZE_BITS*/GetNumBits()+addbits)*8+ // size field
     // data
     GetNumBits()+addbits+
     // stop bit

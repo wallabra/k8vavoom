@@ -71,19 +71,6 @@ enum {
 
   MAX_PACKET_HEADER_BITS = 32, // packet id
 
-  MAX_MSG_HEADER_BITS =
-    // header
-    1+ // zero
-    1+ // reliable flag
-    1+ // open flag
-    1+ // close flag (assume reliable message)
-    BitStreamCalcUIntBits(MAX_CHANNELS-1)+ // assume maximum channel index
-    5*8+ // channel sequence (assume maximum)
-    BitStreamCalcUIntBits(CHANNEL_MAX-1)+ // assume reliable packed, and maximum value
-    BitStreamCalcUIntBits(MAX_DGRAM_SIZE*8-MAX_PACKET_HEADER_BITS-1)+ // size field, conservative estimate
-    // stop bit
-    1,
-
   // including message header
   MAX_MSG_SIZE_BITS = MAX_DGRAM_SIZE*8-MAX_PACKET_HEADER_BITS,
 };
@@ -546,8 +533,6 @@ public:
     return (endsize+7)>>3;
   }
 
-  static double CalcKeepAliveTime () noexcept;
-
   inline int GetNetSpeed () const noexcept {
     if (AutoAck) return 100000000;
     if (IsLocalConnection()) return 100000000;
@@ -605,7 +590,7 @@ public:
   virtual bool CanSendData () const noexcept;
 
   // resend all acks from `AcksToResend`
-  void ResendAcks ();
+  void ResendAcks (bool allowOutOverflow=true);
   // clear `AcksToResend`
   void ForgetResendAcks ();
 

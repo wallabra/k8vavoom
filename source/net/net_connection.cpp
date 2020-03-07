@@ -184,26 +184,13 @@ bool VNetConnection::IsServer () noexcept {
 
 //==========================================================================
 //
-//  VNetConnection::CalcKeepAliveTime
-//
-//==========================================================================
-double VNetConnection::CalcKeepAliveTime () noexcept {
-  return clampval(net_keepalive.asFloat(), 0.05f, 1.0f);
-}
-
-
-//==========================================================================
-//
 //  VNetConnection::IsKeepAliveExceeded
 //
 //==========================================================================
 bool VNetConnection::IsKeepAliveExceeded () {
-  const double kt = CalcKeepAliveTime();
+  const double kt = clampval(net_keepalive.asFloat(), 0.05f, 1.0f);
   const double ctt = Driver->GetNetTime();
-  if (ctt-LastSendTime > kt) return true;
-  // also, if we don't get anything from client for a long time, send something too
-  //if (ctt-LastReceiveTime > kt) return true;
-  return false;
+  return (ctt-LastSendTime > kt);
 }
 
 
@@ -407,7 +394,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
   // simulate receiving loss
   const float lossPrc = net_dbg_recv_loss.asFloat();
   if (lossPrc > 0.0f && RandomFull()*100.0f < lossPrc) {
-    GCon->Logf(NAME_Debug, "%s: simulated packet loss!", *GetAddress());
+    //GCon->Logf(NAME_Debug, "%s: simulated packet loss!", *GetAddress());
     return;
   }
 
@@ -598,10 +585,14 @@ void VNetConnection::Prepare (int addBits) {
 //  VNetConnection::ResendAcks
 //
 //==========================================================================
-void VNetConnection::ResendAcks () {
+void VNetConnection::ResendAcks (bool allowOutOverflow) {
   if (!AutoAck) {
     for (auto &&ack : AcksToResend) {
-      Prepare(STRM_INDEX_U_BYTES(ack)*8+1);
+      if (allowOutOverflow) {
+        Prepare(STRM_INDEX_U_BYTES(ack)*8+1);
+      } else {
+        if (Out.GetNumBytes()+STRM_INDEX_U_BYTES(ack)+4 >= MAX_DGRAM_SIZE-2) return;
+      }
       Out.WriteBit(true); // ack flag
       Out << STRM_INDEX_U(ack);
     }
@@ -695,16 +686,7 @@ void VNetConnection::Flush () {
       if (LastInPacketIdAck != 0xffffffffu) {
         Out.WriteBit(true);
         Out << STRM_INDEX_U(LastInPacketIdAck);
-        for (auto &&ack : AcksToResend) {
-          if (Out.GetNumBytes()+6 >= MAX_DGRAM_SIZE-2) break; // just in case
-          Out.WriteBit(true);
-          Out << STRM_INDEX_U(ack);
-        }
-        for (auto &&ack : QueuedAcks) {
-          if (Out.GetNumBytes()+6 >= MAX_DGRAM_SIZE-2) break; // just in case
-          Out.WriteBit(true);
-          Out << STRM_INDEX_U(ack);
-        }
+        ResendAcks(false); // no overflow
       }
     } else {
       ++Driver->packetsSent;
@@ -722,12 +704,8 @@ void VNetConnection::Flush () {
         State = NETCON_Closed;
         return;
       }
-      //GCon->Logf(NAME_Debug, "@@@1: %s: datagram sent", *GetAddress());
-      LastSendTime = Driver->GetNetTime();
-    } else {
-      //GCon->Logf(NAME_Debug, "@@@0: %s: simulated datagram loss", *GetAddress());
     }
-
+    LastSendTime = Driver->GetNetTime();
 
     //if (!IsLocalConnection()) ++Driver->MessagesSent;
     ++Driver->UnreliableMessagesSent;
