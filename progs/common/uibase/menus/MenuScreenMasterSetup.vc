@@ -42,17 +42,12 @@ override void CreateChoices () {
   CreateOnOffCvar("Enable Master", 'master_allowed');
     SetLastHelp(
       "Enable communication with master server?\n"~
-      "\n"~
-      "For clients, allows asking the master for any known servers.\n"~
-      "For servers, allows reporting server address to the master.");
+      "Aallows reporting server address to the master.");
 
   auto edAddress = MenuInputLine(NewChild(MenuInputLine));
-  SetChoiceInitialSizePos(edAddress);
-  edAddress.SetOrigin(/*ChoicesStartX+10*/42, currentY);
-  edAddress.CursorXOffs = -10;
+  edAddress.MakeOneLineControl();
   edAddress.Text = "Master Address";
   edAddress.Value = GetCvarS('master_address');
-  //edAddress.DisableSlotRendering();
   edAddress.ValueChanged = delegate void (Object sender) {
     auto ed = MenuInputLine(sender);
     assert(ed);

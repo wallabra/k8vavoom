@@ -131,9 +131,10 @@ override void CreateChoices () {
 
   // title filter
   il = MenuInputLine(NewChild(MenuInputLine));
-  SetChoiceInitialSizePos(il);
-  il.SetOrigin(ChoicesStartX+10, currentY);
-  il.CursorXOffs = -10;
+  //SetChoiceInitialSizePos(il);
+  //il.SetOrigin(ChoicesStartX+10, currentY);
+  //il.CursorXOffs = -10;
+  il.MakeOneLineControl();
   il.Text = "Title";
   il.Value = filterTitle;
   il.DisableSlotRendering();
@@ -149,9 +150,10 @@ override void CreateChoices () {
 
   // cvar filter
   il = MenuInputLine(NewChild(MenuInputLine));
-  SetChoiceInitialSizePos(il);
-  il.SetOrigin(ChoicesStartX+10, currentY);
-  il.CursorXOffs = -10;
+  //SetChoiceInitialSizePos(il);
+  //il.SetOrigin(ChoicesStartX+10, currentY);
+  //il.CursorXOffs = -10;
+  il.MakeOneLineControl();
   il.Text = "CVar";
   il.Value = filterCVar;
   il.DisableSlotRendering();
@@ -167,9 +169,10 @@ override void CreateChoices () {
 
   // help filter
   il = MenuInputLine(NewChild(MenuInputLine));
-  SetChoiceInitialSizePos(il);
-  il.SetOrigin(ChoicesStartX+10, currentY);
-  il.CursorXOffs = -10;
+  //SetChoiceInitialSizePos(il);
+  //il.SetOrigin(ChoicesStartX+10, currentY);
+  //il.CursorXOffs = -10;
+  il.MakeOneLineControl();
   il.Text = "Help";
   il.Value = filterHelp;
   il.DisableSlotRendering();

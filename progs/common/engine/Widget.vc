@@ -231,6 +231,7 @@ native final int SplitText (string Text, out array!SplitLine Lines, int Maxwidth
 native final string SplitTextWithNewlines (string Text, int Maxwidth, optional bool trimRight);
 // draws text
 native final void DrawText (int X, int Y, string Text, optional int Color, optional int BoldColor, optional float Alpha);
+native final int CursorWidth ();
 // draws a cursor at the end of last drawn string
 native final void DrawCursor ();
 // doesn't change current cursor position

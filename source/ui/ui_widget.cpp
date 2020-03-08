@@ -1165,6 +1165,16 @@ int VWidget::FontHeight () {
 
 //==========================================================================
 //
+//  VWidget::CursorWidth
+//
+//==========================================================================
+int VWidget::CursorWidth () {
+  return TextWidth("_");
+}
+
+
+//==========================================================================
+//
 //  VWidget::DrawCursor
 //
 //==========================================================================
@@ -1562,6 +1572,11 @@ IMPLEMENT_FUNCTION(VWidget, DrawText) {
   VOptParamFloat Alpha(1.0f);
   vobjGetParamSelf(X, Y, String, Color, BoldColor, Alpha);
   if (Self) Self->DrawText(X, Y, String, Color, BoldColor, Alpha);
+}
+
+IMPLEMENT_FUNCTION(VWidget, CursorWidth) {
+  vobjGetParamSelf();
+  RET_INT(Self ? Self->CursorWidth() : 0);
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawCursor) {

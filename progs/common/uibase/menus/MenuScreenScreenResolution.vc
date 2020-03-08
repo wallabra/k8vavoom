@@ -60,18 +60,20 @@ override void CreateChoices () {
   currentY += Mode.Height;
 
   EdWidth = MenuInputLine(NewChild(MenuInputLine));
-  SetChoiceInitialSizePos(EdWidth);
-  EdWidth.SetOrigin(ChoicesStartX+10, currentY);
-  EdWidth.CursorXOffs = -10;
+  //SetChoiceInitialSizePos(EdWidth);
+  //EdWidth.SetOrigin(ChoicesStartX+10, currentY);
+  //EdWidth.CursorXOffs = -10;
+  EdWidth.MakeOneLineControl();
   EdWidth.Text = "Width";
   EdWidth.Value = GetCvarS('screen_width');
   EdWidth.DisableSlotRendering();
   currentY += EdWidth.Height;
 
   EdHeight = MenuInputLine(NewChild(MenuInputLine));
-  SetChoiceInitialSizePos(EdHeight);
-  EdHeight.SetOrigin(ChoicesStartX+10, currentY);
-  EdHeight.CursorXOffs = -10;
+  //SetChoiceInitialSizePos(EdHeight);
+  //EdHeight.SetOrigin(ChoicesStartX+10, currentY);
+  //EdHeight.CursorXOffs = -10;
+  EdHeight.MakeOneLineControl();
   EdHeight.Text = "Height";
   EdHeight.Value = GetCvarS('screen_height');
   EdHeight.DisableSlotRendering();

@@ -55,11 +55,8 @@ override void CreateChoices() {
   JoinAt = MenuInputLine(NewChild(MenuInputLine));
   JoinAt.SetPos(ChoicesStartX, currentY);
   JoinAt.Text = "Join Game At";
-  if (CvarExists('__menu_join_game_at__')) {
-    JoinAt.Value = GetCvarS('__menu_join_game_at__');
-  } else {
-    JoinAt.Value = "127.0.0.1";
-  }
+  JoinAt.Value = GetCvarS('net_ui_last_join_address');
+  if (!JoinAt.Value) JoinAt.Value = "127.0.0.1";
   JoinAt.ValueChanged = &ChangedJoinAt;
   currentY += JoinAt.Height;
 }
@@ -91,11 +88,7 @@ void ActivateSearch (Object Sender) {
 //
 //==========================================================================
 void ChangedJoinAt (Object Sender) {
-  if (!CvarExists('__menu_join_game_at__')) {
-    CreateCvar('__menu_join_game_at__', JoinAt.Value, "___saved_menu__value___", CVAR_ARCHIVE);
-  } else {
-    SetCvarS('__menu_join_game_at__', JoinAt.Value);
-  }
+  SetCvarS('net_ui_last_join_address', JoinAt.Value);
   if (JoinAt.Value) {
     CmdBuf_AddText("Connect \"%q\"\n", JoinAt.Value);
     ClGame.ForceMenuOff();

@@ -8,7 +8,7 @@
 //**       #    ##    ##    #      ####     ####   ##       ##
 //**
 //**  Copyright (C) 1999-2006 Jānis Legzdiņš
-//**  Copyright (C) 2018-2020 Ketmar Dark
+//**  Copyright (C) 2018-2.020 Ketmar Dark
 //**
 //**  This program is free software: you can redistribute it and/or modify
 //**  it under the terms of the GNU General Public License as published by
@@ -37,6 +37,8 @@ static const char *cli_Port = nullptr;
 
 VCvarB net_fixed_name_set("net_fixed_name_set", true, "Send fixed name set (old way)? WARNING! this is experimental option!", CVAR_PreInit);
 VCvarB net_debug_fixed_name_set("net_debug_fixed_name_set", false, "Dump new names?");
+
+static VCvarS net_ui_last_join_address("net_ui_last_join_address", "127.0.0.1", "Last server address for manual connection (used in UI).", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

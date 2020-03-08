@@ -42,9 +42,25 @@ override void OnCreate () {
 void DisableSlotRendering () {
   if (DrawSlotPic) {
     DrawSlotPic = false;
-    Height = 20;
+    //Height = 20;
+    auto oldFont = GetFont();
+    scope(exit) SetFont(oldFont);
+    SetFont('smallfont');
+    Height = FontHeight();
   }
 }
+
+
+void MakeOneLineControl () {
+  DisableSlotRendering();
+  Width = Parent.Width;
+  if (MenuScreen(Parent)) {
+    MenuScreen(Parent).SetChoiceInitialSizePos(self);
+    SetOrigin(0, MenuScreen(Parent).currentY);
+  }
+  //CursorXOffs = -10;
+}
+
 
 void OnValueChanged () {
   if (ValueChanged) ValueChanged(self);
@@ -56,12 +72,38 @@ override void OnDraw () {
 
   SetFont('smallfont');
 
-  SetTextAlign(hleft, vtop);
-  DrawText(0, 0, Text, IsFocus() ? CR_YELLOW : CR_WHITE);
-  if (bEnteringText) {
-    DrawSlot(12-(DrawSlotPic ? 0 : 7), EnterText, true);
+  if (DrawSlotPic) {
+    // editor with a slot
+    SetTextAlign(hleft, vtop);
+    DrawText(0, 0, Text, IsFocus() ? CR_YELLOW : CR_WHITE);
+    if (bEnteringText) {
+      DrawSlot(12-(DrawSlotPic ? 0 : 7), EnterText, true);
+    } else {
+      DrawSlot(12-(DrawSlotPic ? 0 : 7), Value, false);
+    }
   } else {
-    DrawSlot(12-(DrawSlotPic ? 0 : 7), Value, false);
+    // editor without a slot
+    SetTextAlign(hright, vtop);
+    DrawText(CursorXOffs, 0, Text, (IsFocus() ? CR_YELLOW : CR_WHITE));
+    SetTextAlign(hleft, vtop);
+    int xx = CursorXOffs+10;
+    int inputWidth = Width-xx-3;
+    ShadeRect(xx-1, 0, inputWidth, Height, GetCvarF('menu_darkening'));
+    string text = (bEnteringText ? EnterText : Value);
+    if (bEnteringText) {
+      while (text && TextWidth(text)+CursorWidth() > inputWidth+2) text = text[1..$];
+      DrawText(xx, 0, text);
+      DrawCursor();
+    } else {
+      bool drawDot = false;
+      if (TextWidth(text) > inputWidth) {
+        while (text && TextWidth(text) > inputWidth) text = text[0..$-1];
+        if (text) text = text[0..$-1];
+        drawDot = true;
+      }
+      DrawText(xx, 0, text);
+      if (drawDot) DrawText(xx+TextWidth(text), 0, ".", CR_FIRE);
+    }
   }
 }
 

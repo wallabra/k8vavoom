@@ -240,6 +240,7 @@ public:
   int TextHeight (VStr);
   int StringWidth (VStr);
   int FontHeight ();
+  int CursorWidth ();
   void DrawCursor ();
   void DrawCursorAt (int, int);
 
@@ -345,6 +346,7 @@ public:
   DECLARE_FUNCTION(SplitText)
   DECLARE_FUNCTION(SplitTextWithNewlines)
   DECLARE_FUNCTION(DrawText)
+  DECLARE_FUNCTION(CursorWidth)
   DECLARE_FUNCTION(DrawCursor)
   DECLARE_FUNCTION(DrawCursorAt)
   DECLARE_FUNCTION(SetCursorPos)

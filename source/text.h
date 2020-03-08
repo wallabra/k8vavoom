@@ -84,6 +84,7 @@ int T_TextHeight (VStr);
 int T_StringWidth (VStr);
 int T_FontHeight ();
 
+int T_CursorWidth ();
 void T_DrawCursor ();
 void T_DrawCursorAt (int, int);
 void T_SetCursorPos (int cx, int cy);
