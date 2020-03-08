@@ -58,15 +58,25 @@ float FixLightFlatPosition (sector_t *sector, float z, optional int thingidx) {
     //float gaph = CeilingZ-FloorZ;
     float fz = GetPlanePointZ(ref sector.floor, Origin);
     float cz = GetPlanePointZ(ref sector.ceiling, Origin);
-    //printdebug("light thing #%s: fz=%s; cz=%s; z=%s; fdist=%s, cdist=%s", mthing-&XLevel.Things[0], fz, cz, Origin.z, Origin.z-fz, cz-Origin.z);
-    if (cz-fz >= 6) {
-      if (z >= fz && z < fz+4) {
-        if (specified_thingidx) printdebug("fixed z floor position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, fz+4, fz);
-        return fz+4;
+    // closed sector?
+    if (fz >= cz) {
+      // for closed sectors, rise the light a little for the rare case the sector will be opened later
+      if (z <= fz) {
+        printdebug("fixed z floor position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, fz+2, fz);
+        return fz+2;
       }
-      if (z <= cz && z > cz-4) {
-        if (specified_thingidx) printdebug("fixed z ceiling position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, cz-4, cz);
-        return cz-4;
+    } else {
+      // opened sector, move away from floor/ceiling
+      //printdebug("light thing #%s: fz=%s; cz=%s; z=%s; fdist=%s, cdist=%s", thingidx, fz, cz, Origin.z, Origin.z-fz, cz-Origin.z);
+      if (z <= fz+4) {
+        float res = (cz-fz <= 8 ? (cz+fz)/2 : fz+4);
+        if (specified_thingidx) printdebug("fixed z floor position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, res, fz);
+        return res;
+      }
+      if (z >= cz-4) {
+        float res = (cz-fz <= 8 ? (cz+fz)/2 : cz-4);
+        if (specified_thingidx) printdebug("fixed z ceiling position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, res, cz);
+        return res;
       }
     }
   }
