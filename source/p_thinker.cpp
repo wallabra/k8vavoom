@@ -116,7 +116,7 @@ void VThinker::StartSound (const TVec &origin, vint32 origin_id,
                            vint32 sound_id, vint32 channel, float volume, float Attenuation,
                            bool Loop, bool Local)
 {
-  if (!Level || !Level->Game) return; // for client-side entities
+  if (!Level || !Level->Game) return; //FIXME! for client-side entities (this should be fixed, client-side entities can emit sounds)
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (!Level->Game->Players[i]) continue;
     if (!(Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
@@ -131,7 +131,7 @@ void VThinker::StartSound (const TVec &origin, vint32 origin_id,
 //
 //==========================================================================
 void VThinker::StopSound (vint32 origin_id, vint32 channel) {
-  if (!Level || !Level->Game) return;
+  if (!Level || !Level->Game) return; //FIXME! for client-side entities (this should be fixed, client-side entities can emit sounds)
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (!Level->Game->Players[i]) continue;
     if (!(Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
@@ -146,7 +146,7 @@ void VThinker::StopSound (vint32 origin_id, vint32 channel) {
 //
 //==========================================================================
 void VThinker::StartSoundSequence (const TVec &Origin, vint32 OriginId, VName Name, vint32 ModeNum) {
-  if (!Level || !Level->Game) return; // for client-side entities
+  if (!Level || !Level->Game) return; //FIXME! for client-side entities (this should be fixed, client-side entities can emit sounds)
 
   // remove any existing sequences of this origin
   for (int i = 0; i < XLevel->ActiveSequences.length(); ++i) {
@@ -176,7 +176,7 @@ void VThinker::StartSoundSequence (const TVec &Origin, vint32 OriginId, VName Na
 //
 //==========================================================================
 void VThinker::AddSoundSequenceChoice (int origin_id, VName Choice) {
-  if (!Level || !Level->Game) return; // for client-side entities
+  if (!Level || !Level->Game) return; //FIXME! for client-side entities (this should be fixed, client-side entities can emit sounds)
 
   // remove it from server's sequences list
   for (int i = 0; i < XLevel->ActiveSequences.length(); ++i) {
@@ -199,7 +199,7 @@ void VThinker::AddSoundSequenceChoice (int origin_id, VName Choice) {
 //
 //==========================================================================
 void VThinker::StopSoundSequence (int origin_id) {
-  if (!Level || !Level->Game) return; // for client-side entities
+  if (!Level || !Level->Game) return; //FIXME! for client-side entities (this should be fixed, client-side entities can emit sounds)
 
   // remove it from server's sequences list
   for (int i = 0; i < XLevel->ActiveSequences.length(); ++i) {
