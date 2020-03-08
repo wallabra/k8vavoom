@@ -317,6 +317,25 @@ int VNetConnection::GetRawPacket (void *dest, size_t destSize) {
 
 //==========================================================================
 //
+//  VNetConnection::AckEverythingEverywhere
+//
+//  WARNING! this can change channel list!
+//
+//==========================================================================
+void VNetConnection::AckEverythingEverywhere () {
+  for (int f = OpenChannels.length()-1; f >= 0; --f) {
+    VChannel *chan = OpenChannels[f];
+    for (VMessageOut *outmsg = chan->OutList; outmsg; outmsg = outmsg->Next) {
+      outmsg->bReceivedAck = true;
+      if (outmsg->bOpen) chan->OpenAcked = true;
+    }
+    chan->ReceivedAcks(); // WARNING: channel may delete itself there!
+  }
+}
+
+
+//==========================================================================
+//
 //  VNetConnection::GetMessage
 //
 //  read and process incoming network datagram
@@ -325,7 +344,11 @@ int VNetConnection::GetRawPacket (void *dest, size_t destSize) {
 //==========================================================================
 bool VNetConnection::GetMessage () {
   // check for message arrival
-  if (IsClosed()) return false;
+  if (IsClosed()) {
+    // ack all outgoing packets, just in case (this is HACK!)
+    AckEverythingEverywhere();
+    return false;
+  }
   vassert(NetCon);
 
   vuint8 msgdata[MAX_DGRAM_SIZE+4];
@@ -362,7 +385,11 @@ bool VNetConnection::GetMessage () {
 //
 //==========================================================================
 void VNetConnection::GetMessages () {
-  if (IsClosed()) return;
+  if (IsClosed()) {
+    // ack all outgoing packets, just in case (this is HACK!)
+    AckEverythingEverywhere();
+    return;
+  }
 
   // process up to 128 packets (why not?)
   for (int f = 0; f < 128 && IsOpen(); ++f) {
@@ -558,10 +585,11 @@ void VNetConnection::Prepare (int addBits) {
 
   // flush if not enough space
   if (CalcEstimatedByteSize(addBits) > MAX_DGRAM_SIZE) {
-    //GCon->Logf(NAME_DevNet, "*** %s: FLUSHING: %d (%d) (max=%d)", *GetAddress(), Out.GetNumBits()+addBits, CalcFinalisedBitSize(Out.GetNumBits()+addBits), MAX_MSG_SIZE_BITS);
+    //GCon->Logf(NAME_DevNet, "*** %s: FLUSHING: %d (%d) (bytes=%d (%d); max=%d)", *GetAddress(), Out.GetNumBits(), addBits, CalcEstimatedByteSize(), CalcEstimatedByteSize(addBits), MAX_DGRAM_SIZE);
     Flush();
+    //GCon->Logf(NAME_DevNet, "*** %s: FLUSHED: %d (%d) (bytes=%d (%d); max=%d)", *GetAddress(), Out.GetNumBits(), addBits, CalcEstimatedByteSize(), CalcEstimatedByteSize(addBits), MAX_DGRAM_SIZE);
   } else {
-    //GCon->Logf(NAME_DevNet, "*** %s: collecting: %d (%d) (max=%d)", *GetAddress(), Out.GetNumBits()+addBits, CalcFinalisedBitSize(Out.GetNumBits()+addBits), MAX_MSG_SIZE_BITS);
+    //GCon->Logf(NAME_DevNet, "*** %s: collecting: %d (%d) (bytes=%d (%d); max=%d)", *GetAddress(), Out.GetNumBits(), addBits, CalcEstimatedByteSize(), CalcEstimatedByteSize(addBits), MAX_DGRAM_SIZE);
   }
 
   // put packet id for new packet
@@ -573,7 +601,7 @@ void VNetConnection::Prepare (int addBits) {
   // make sure there's enough space now
   if (CalcEstimatedByteSize(addBits) > MAX_DGRAM_SIZE) {
     //GCon->Logf(NAME_DevNet, "*** %s: ERROR: %d (%d) (max=%d)", *GetAddress(), Out.GetNumBits()+addBits, CalcFinalisedBitSize(Out.GetNumBits()+addBits), MAX_MSG_SIZE_BITS);
-    Sys_Error("%s: cannot send packet of size %d+%d (newsize is %d, max size is %d)", *GetAddress(), Out.GetNumBits(), addBits, CalcEstimatedByteSize(Out.GetNumBits()+addBits), MAX_DGRAM_SIZE);
+    Sys_Error("%s: cannot send packet of size %d+%d (newsize is %d, max size is %d)", *GetAddress(), Out.GetNumBits(), addBits, CalcEstimatedByteSize(addBits), MAX_DGRAM_SIZE);
   } else {
     //GCon->Logf(NAME_DevNet, "*** %s: collector: %d (%d) (max=%d)", *GetAddress(), Out.GetNumBits()+addBits, CalcFinalisedBitSize(Out.GetNumBits()+addBits), MAX_MSG_SIZE_BITS);
   }
@@ -668,7 +696,12 @@ void VNetConnection::SendMessage (VMessageOut *Msg) {
 //
 //==========================================================================
 void VNetConnection::Flush () {
-  if (IsClosed()) return;
+  // if the connection is closed, discard the data
+  if (IsClosed()) {
+    Out.Reinit(MAX_DGRAM_SIZE*8+128, false); // don't expand
+    LastSendTime = Driver->GetNetTime();
+    return;
+  }
 
   if (Out.IsError()) {
     GCon->Logf(NAME_DevNet, "!!! %s: out collector errored! bits=%d", *GetAddress(), Out.GetNumBits());
@@ -743,7 +776,11 @@ void VNetConnection::KeepaliveTick () {
 //
 //==========================================================================
 void VNetConnection::Tick () {
-  if (IsClosed()) return;
+  if (IsClosed()) {
+    // ack all outgoing packets, just in case (this is HACK!)
+    AckEverythingEverywhere();
+    // don't stop here, though, let channels tick
+  }
 
   // for bots and demo playback there's no other end that will send us
   // the ACK so just mark all outgoing messages as ACK-ed

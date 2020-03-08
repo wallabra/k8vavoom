@@ -537,7 +537,7 @@ public:
   // current estimated message byte size
   // used to check if we can add given number of bits without flushing
   inline int CalcEstimatedByteSize (int addBits=0) const noexcept {
-    int endsize = (Out.GetNumBits() ? 0 : MAX_PACKET_HEADER_BITS)+Out.GetNumBits()+addBits+1;
+    const int endsize = (Out.GetNumBits() ? 0 : MAX_PACKET_HEADER_BITS)+Out.GetNumBits()+addBits+1;
     return (endsize+7)>>3;
   }
 
@@ -546,6 +546,10 @@ public:
     if (IsLocalConnection()) return 100000000;
     return max2(2400, net_speed_limit.asInt());
   }
+
+protected:
+  // WARNING! this can change channel list!
+  void AckEverythingEverywhere ();
 
 public:
   VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, VBasePlayer *AOwner);
