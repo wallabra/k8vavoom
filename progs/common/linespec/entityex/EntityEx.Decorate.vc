@@ -307,3 +307,8 @@ const [decorate] int AAPTR_OWNER = 0x10_0000;
 [decorate] final Object decorate_GetMaster () { return Master; }
 [decorate] final Object decorate_GetOwner () { return Owner; }
 [decorate] final float decorate_GetStateTime () { return StateTime; }
+
+[decorate] final bool decorate_IsNetGame () { return Level.Game.netgame; }
+[decorate] final bool decorate_IsNetServer () { return Level.Game.IsNetServer; }
+[decorate] final bool decorate_IsNetClient () { return Level.Game.IsNetClient; }
+[decorate] final bool decorate_IsDumbClient () { return Level.Game.IsDumbClient; }

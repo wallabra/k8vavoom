@@ -73,13 +73,13 @@ bool bForceKillScripts;
 // from decorate
 array!DamageFactor CustomDamageFactors;
 
-final bool netgame {
-  get { return NetMode > NM_Standalone; }
-}
+final bool netgame { get { return NetMode > NM_Standalone; } }
 
-final bool IsNetServer {
-  get { return (NetMode == NM_DedicatedServer || NetMode == NM_ListenServer); }
-}
+final bool IsNetServer { get { return (NetMode == NM_DedicatedServer || NetMode == NM_ListenServer); } }
+final bool IsDedicatedServer { get { return (NetMode == NM_DedicatedServer); } }
+final bool IsListenServer { get { return (NetMode == NM_ListenServer); } }
+final bool IsNetClient { get { return (NetMode == NM_ListenServer || NetMode == NM_Client); } }
+final bool IsDumbClient { get { return (NetMode == NM_Client); } }
 
 // this is way more reliable than `bPaused`
 // game may be paused when menu active or something
