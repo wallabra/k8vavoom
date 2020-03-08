@@ -77,6 +77,10 @@ final bool netgame {
   get { return NetMode > NM_Standalone; }
 }
 
+final bool IsNetServer {
+  get { return (NetMode == NM_DedicatedServer || NetMode == NM_ListenServer); }
+}
+
 // this is way more reliable than `bPaused`
 // game may be paused when menu active or something
 // and `bPaused` only says that player pressed "pause" key
