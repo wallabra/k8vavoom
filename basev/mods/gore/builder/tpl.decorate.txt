@@ -554,6 +554,7 @@ Actor K8Gore_DetectCeilBloodSimpler$(Color) : K8Gore_BloodBase$(TransientSfx) {
   DamageType Blood
   +MISSILE
   +CLIENTSIDEONLY
+  +k8ServerSideOnly
   +NOTELEPORT
   +NOBLOCKMAP
   +NODAMAGETHRUST
@@ -625,6 +626,8 @@ Actor K8Gore_CeilBloodChecker$(Color) : K8Gore_FlyingBlood$(Color) {
   +NoExtremeDeath
   +NoLiftDrop
   +MOVEWITHSECTOR
+  +CLIENTSIDEONLY
+  +k8ServerSideOnly
 
   States {
     Spawn:
@@ -684,8 +687,13 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
       Goto ModelFriendly
     DoAfterSpawn:
       "####" "#" 1
-      "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPool$(Color)",0,0,0,true)
-      "####" "#" 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawner$(Color)",0,0,0,true)
+      // for network server, don't spawn dripping blood
+      "####" "#" 0 A_JumpIf(IsNetServer, "DoFadeOut")
+      "####" "#" 0
+        {
+          A_SpawnItem("K8Gore_DripingBloodLeavesSmallPool$(Color)",0,0,0,true);
+          A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawner$(Color)",0,0,0,true);
+        }
       "####" "################################################################################" 2
       "####" "################################################################################" 2
       "####" "################################################################################" 2
@@ -698,6 +706,10 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
 
     DoFadeOut:
       //"####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
+
+      // become non-scripted; from 22 secs to 3 minutes
+      "####" "#" -1 A_BecomeK8VavoomInternalNoTickGrav(frandom(800, 6300)/35.0, frandom(64, 90)/35.0/10.0)
+
       "####" "#" 2 A_FadeOut(0.01)
       Loop
 
@@ -1007,6 +1019,7 @@ Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
   //+Decals2SPass
   Renderstyle Dark
   //!Alpha 0.99
+  +k8ServerSideOnly
 
   States {
     Spawn:

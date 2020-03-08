@@ -512,6 +512,7 @@ Actor K8Gore_DetectCeilBloodSimpler : K8Gore_BloodBase {
   DamageType Blood
   +MISSILE
   +CLIENTSIDEONLY
+  +k8ServerSideOnly
   +NOTELEPORT
   +NOBLOCKMAP
   +NODAMAGETHRUST
@@ -583,6 +584,8 @@ Actor K8Gore_CeilBloodChecker : K8Gore_FlyingBlood {
   +NoExtremeDeath
   +NoLiftDrop
   +MOVEWITHSECTOR
+  +CLIENTSIDEONLY
+  +k8ServerSideOnly
 
   States {
     Spawn:
@@ -642,8 +645,13 @@ Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
       Goto ModelFriendly
     DoAfterSpawn:
       "####" "#" 1
-      "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPool",0,0,0,true)
-      "####" "#" 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawner",0,0,0,true)
+      // for network server, don't spawn dripping blood
+      "####" "#" 0 A_JumpIf(IsNetServer, "DoFadeOut")
+      "####" "#" 0
+        {
+          A_SpawnItem("K8Gore_DripingBloodLeavesSmallPool",0,0,0,true);
+          A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawner",0,0,0,true);
+        }
       "####" "################################################################################" 2
       "####" "################################################################################" 2
       "####" "################################################################################" 2
@@ -656,6 +664,10 @@ Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
 
     DoFadeOut:
       //"####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
+
+      // become non-scripted; from 22 secs to 3 minutes
+      "####" "#" -1 A_BecomeK8VavoomInternalNoTickGrav(frandom(800, 6300)/35.0, frandom(64, 90)/35.0/10.0)
+
       "####" "#" 2 A_FadeOut(0.01)
       Loop
 
@@ -940,6 +952,7 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
   //+Decals2SPass
   Renderstyle Dark
   //!Alpha 0.99
+  +k8ServerSideOnly
 
   States {
     Spawn:
@@ -1509,6 +1522,7 @@ Actor K8Gore_DetectCeilBloodSimplerTransient : K8Gore_BloodBaseTransient {
   DamageType Blood
   +MISSILE
   +CLIENTSIDEONLY
+  +k8ServerSideOnly
   +NOTELEPORT
   +NOBLOCKMAP
   +NODAMAGETHRUST
@@ -1580,6 +1594,8 @@ Actor K8Gore_CeilBloodCheckerTransient : K8Gore_FlyingBloodTransient {
   +NoExtremeDeath
   +NoLiftDrop
   +MOVEWITHSECTOR
+  +CLIENTSIDEONLY
+  +k8ServerSideOnly
 
   States {
     Spawn:
@@ -1639,8 +1655,13 @@ Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
       Goto ModelFriendly
     DoAfterSpawn:
       "####" "#" 1
-      "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolTransient",0,0,0,true)
-      "####" "#" 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawnerTransient",0,0,0,true)
+      // for network server, don't spawn dripping blood
+      "####" "#" 0 A_JumpIf(IsNetServer, "DoFadeOut")
+      "####" "#" 0
+        {
+          A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolTransient",0,0,0,true);
+          A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawnerTransient",0,0,0,true);
+        }
       "####" "################################################################################" 2
       "####" "################################################################################" 2
       "####" "################################################################################" 2
@@ -1653,6 +1674,10 @@ Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
 
     DoFadeOut:
       //"####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
+
+      // become non-scripted; from 22 secs to 3 minutes
+      "####" "#" -1 A_BecomeK8VavoomInternalNoTickGrav(frandom(800, 6300)/35.0, frandom(64, 90)/35.0/10.0)
+
       "####" "#" 2 A_FadeOut(0.01)
       Loop
 
@@ -1938,6 +1963,7 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
   //+Decals2SPass
   Renderstyle Dark
   //!Alpha 0.99
+  +k8ServerSideOnly
 
   States {
     Spawn:
