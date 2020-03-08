@@ -28,7 +28,7 @@ class StaticRGBLightSource : BaseStaticLightSource __mobjinfo__(1503);
 
 override void OnMapSpawn (mthing_t *mthing) {
   ::OnMapSpawn(mthing);
-  Level.AddStaticLightRGB(none, GetAdjustedPosition(mthing), CalcRadius(mthing), RGB(mthing->arg2, mthing->arg3, mthing->arg4));
+  Level.AddStaticLightRGB(none, GetAdjustedPosition(mthing), CalcRadius(mthing), RGB(mthing->args[2-1], mthing->args[3-1], mthing->args[4-1]));
   Destroy();
 }
 

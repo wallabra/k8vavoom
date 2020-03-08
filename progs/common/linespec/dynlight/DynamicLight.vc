@@ -83,20 +83,20 @@ override void OnMapSpawn (mthing_t *mthing) {
   //printwarn("LIGHT: r=%d; g=%d; b=%d; intensuty=%d", Args[0], Args[1], Args[2], Args[3]);
   // use static light for placed point lights that cannot be deactivated
   if (ltype == DLTYPE_Point && mthing && !TID && !bDormant) {
-    if (mthing->arg4 > 0) {
-      //printdebug("*** adding static light for class %C (%d, %d, %d, %d)", self, mthing->arg1, mthing->arg2, mthing->arg3, mthing->arg4);
+    if (mthing->args[4-1] > 0) {
+      //printdebug("*** adding static light for class %C (%d, %d, %d, %d)", self, mthing->args[1-1], mthing->args[2-1], mthing->args[3-1], mthing->args[4-1]);
       if (LightType&DLTYPE_Spot) {
         // spotlight
-        printdebug("*** adding static spotlight for class %C (%d, %d, %d, %d); angles=%s; org=%s", self, mthing->arg1, mthing->arg2, mthing->arg3, mthing->arg4, Angles, Origin);
+        printdebug("*** adding static spotlight for class %C (%d, %d, %d, %d); angles=%s; org=%s", self, mthing->args[1-1], mthing->args[2-1], mthing->args[3-1], mthing->args[4-1], Angles, Origin);
         TVec dir;
         AngleVector(Angles, out dir);
-        Level.AddStaticLightRGB(none, Origin, IntensityToRadius(float(mthing->arg4)), mthing->arg1|0xff_00_00_00, dir, AngleMod360(max(mthing->arg2, mthing->arg3)));
-      } else if (mthing->arg1 == 255 && mthing->arg2 == 255 && mthing->arg3 == 255) {
+        Level.AddStaticLightRGB(none, Origin, IntensityToRadius(float(mthing->args[4-1])), mthing->args[1-1]|0xff_00_00_00, dir, AngleMod360(max(mthing->args[2-1], mthing->args[3-1])));
+      } else if (mthing->args[1-1] == 255 && mthing->args[2-1] == 255 && mthing->args[3-1] == 255) {
         // static white light
-        Level.AddStaticLight(none, Origin, IntensityToRadius(float(mthing->arg4)));
+        Level.AddStaticLight(none, Origin, IntensityToRadius(float(mthing->args[4-1])));
       } else {
         // static colored light
-        Level.AddStaticLightRGB(none, Origin, IntensityToRadius(float(mthing->arg4)), RGB(mthing->arg1, mthing->arg2, mthing->arg3));
+        Level.AddStaticLightRGB(none, Origin, IntensityToRadius(float(mthing->args[4-1])), RGB(mthing->args[1-1], mthing->args[2-1], mthing->args[3-1]));
       }
     }
     Destroy();
@@ -108,14 +108,14 @@ override void OnMapSpawn (mthing_t *mthing) {
     if (Intensity < 0.0) Intensity = 0.0;
     if (Intensity > 255.0) Intensity = 255.0;
     //printwarn("*** FORCED static light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere); RGB=(%s,%s,%s); scale=%s; intensity=%s", Class, ltype, TID, bDormant, (mthing ? "" : "not "), Args[0], Args[1], Args[2], Scale, Intensity);
-    Level.AddStaticLightRGB(none, Origin, IntensityToRadius(Intensity), RGB(mthing->arg1, mthing->arg2, mthing->arg3));
+    Level.AddStaticLightRGB(none, Origin, IntensityToRadius(Intensity), RGB(mthing->args[1-1], mthing->args[2-1], mthing->args[3-1]));
     /*
     if (Args[0] == 255 && Args[1] == 255 && Args[2]) {
-      Level.AddStaticLight(none, Origin, IntensityToRadius(float(mthing->arg4)));
+      Level.AddStaticLight(none, Origin, IntensityToRadius(float(mthing->args[4-1])));
     } else {
       Level.AddStaticLightRGB(none, Origin,
-        IntensityToRadius(float(mthing->arg4)),
-        RGB(mthing->arg1, mthing->arg2, mthing->arg3));
+        IntensityToRadius(float(mthing->args[4-1])),
+        RGB(mthing->args[1-1], mthing->args[2-1], mthing->args[3-1]));
     }
     */
     Destroy();

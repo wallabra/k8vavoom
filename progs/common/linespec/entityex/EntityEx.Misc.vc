@@ -1288,11 +1288,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     SetTID(mthing->tid);
     Special = mthing->special;
     if (!bArgsDefined) {
-      Args[0] = mthing->arg1;
-      Args[1] = mthing->arg2;
-      Args[2] = mthing->arg3;
-      Args[3] = mthing->arg4;
-      Args[4] = mthing->arg5;
+      foreach (int f; 0..5) Args[f] = mthing->args[f];
     }
     if (bFloatBob) {
       // seed random starting index for bobbing motion
@@ -1347,9 +1343,9 @@ override void OnMapSpawn (mthing_t *mthing) {
 
   if (bStaticLight && mthing && !TID) {
     if (LightColor == 0xffffffff) {
-      Level.AddStaticLight(self, Origin+LightOffset, mthing->arg1 ? float(mthing->arg1)*8.0 : LightRadius);
+      Level.AddStaticLight(self, Origin+LightOffset, mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius);
     } else {
-      Level.AddStaticLightRGB(self, Origin+LightOffset, mthing->arg1 ? float(mthing->arg1)*8.0 : LightRadius, LightColor);
+      Level.AddStaticLightRGB(self, Origin+LightOffset, mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius, LightColor);
     }
     bStaticLightSpawned = true;
   }

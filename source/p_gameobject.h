@@ -1026,13 +1026,10 @@ struct mthing_t {
   vint32 options;
   vint32 SkillClassFilter;
   vint32 special;
-  vint32 arg1;
-  vint32 arg2;
-  vint32 arg3;
-  vint32 arg4;
-  vint32 arg5;
+  vint32 args[5]; // was `arg1`..`arg5`
   float health; // initial health; 0 means "default"
   float scaleX, scaleY; // 0 means "default"
+  VStr arg0str;
 };
 
 

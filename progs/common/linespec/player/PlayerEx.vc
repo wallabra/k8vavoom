@@ -2774,7 +2774,7 @@ mthing_t *PerformRebornSpawn () {
   foreach (auto i; 0..Level.PlayerStarts.length) {
     auto sp = &Level.PlayerStarts[i];
     if (sp.type == GetPlayerNum()+1) {
-      if (sp.arg1 == Level.Game.RebornPosition) {
+      if (sp.args[0] == Level.Game.RebornPosition) {
         // i found her!
         SpawnPlayer(sp, spawned);
         spawned = true;

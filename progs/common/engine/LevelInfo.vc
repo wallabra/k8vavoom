@@ -1081,11 +1081,11 @@ final void CopyMThing (mthing_t *from, mthing_t *to) {
   to->options = from->options;
   to->SkillClassFilter = from->SkillClassFilter;
   to->special = from->special;
-  to->arg1 = from->arg1;
-  to->arg2 = from->arg2;
-  to->arg3 = from->arg3;
-  to->arg4 = from->arg4;
-  to->arg5 = from->arg5;
+  foreach (int f; 0..from->args.length) to->args[f] = from->args[f];
+  to->health = from->health;
+  to->scaleX = from->scaleX;
+  to->scaleY = from->scaleY;
+  to->arg0str = from->arg0str;
 }
 
 
@@ -1100,7 +1100,7 @@ final mthing_t *GetPlayerStart (int PNum, int Position, optional bool failIfNotF
   mthing_t *Best = nullptr;
   foreach (int i; 0..PlayerStarts.Num; reverse) {
     if (PlayerStarts[i].type != PNum) continue;
-    if (PlayerStarts[i].arg1 == Position) return &PlayerStarts[i];
+    if (PlayerStarts[i].args[0] == Position) return &PlayerStarts[i];
     if (!Best) Best = &PlayerStarts[i];
   }
   if (failIfNotFound) {

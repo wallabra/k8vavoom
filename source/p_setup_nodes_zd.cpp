@@ -150,11 +150,11 @@ static void UploadThingsZD (VLevel *Level, ZDBSP::FLevel &zlvl) {
     thing.type = pSrc->type;
     thing.flags = pSrc->options;
     thing.special = pSrc->special;
-    thing.args[0] = pSrc->arg1;
-    thing.args[1] = pSrc->arg2;
-    thing.args[2] = pSrc->arg3;
-    thing.args[3] = pSrc->arg4;
-    thing.args[4] = pSrc->arg5;
+    thing.args[0] = pSrc->args[1-1];
+    thing.args[1] = pSrc->args[2-1];
+    thing.args[2] = pSrc->args[3-1];
+    thing.args[3] = pSrc->args[4-1];
+    thing.args[4] = pSrc->args[5-1];
     zlvl.Things.Push(thing);
   }
 }

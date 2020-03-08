@@ -56,8 +56,8 @@ override void OnMapSpawn (mthing_t *mthing) {
   mi.y = Origin.y;
   // don't set sector, let the engine to fill it for us
   //sector_t *sector; // marker sector
-  mi.thingTid = (mthing ? mthing->arg1 : 0);
-  mi.bVisible = (mthing ? !mthing->arg2 : true);
+  mi.thingTid = (mthing ? mthing->args[1-1] : 0);
+  mi.bVisible = (mthing ? !mthing->args[2-1] : true);
   mi.bActive = true;
   //printdebug("spawned map marker #%d at (%s,%s); tid=%s", mi.id, mi.x, mi.y, mi.thingTid);
 }

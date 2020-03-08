@@ -1223,13 +1223,10 @@ struct mthing_t {
   int options;
   int SkillClassFilter;
   int special;
-  int arg1;
-  int arg2;
-  int arg3;
-  int arg4;
-  int arg5;
+  int[5] args; // was `arg1`..`arg5`
   float health; // initial health (0 means "default")
   float scaleX, scaleY; // 0 means "default"
+  string arg0str;
 };
 
 //

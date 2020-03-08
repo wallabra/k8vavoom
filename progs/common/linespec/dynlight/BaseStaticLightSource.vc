@@ -35,7 +35,7 @@ TVec GetAdjustedPosition (mthing_t *mthing) {
 
 
 float CalcRadius (mthing_t *mthing) {
-  return (mthing->arg1 > 0 ? float(mthing->arg1)*8.0 : 200.0);
+  return (mthing->args[1-1] > 0 ? float(mthing->args[1-1])*8.0 : 200.0);
 }
 
 

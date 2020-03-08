@@ -945,20 +945,21 @@ void VUdmfParser::ParseThing () {
       if (Key.strEquCI("arg0str")) {
         //FIXME: actually, this is valid only for ACS specials
         //       this can be color name for dynamic lights too
-        //T.arg1 = M_ParseColor(*CheckString())&0xffffffu;
+        //T.arg0 = M_ParseColor(*CheckString())&0xffffffu;
         arg0str = CheckString();
         hasArg0Str = true;
+        T.arg0str = arg0str;
         continue;
       }
 
       if (Key.strEquCI("id")) { T.tid = CheckInt(); continue; }
       if (Key.strEquCI("dormant")) { Flag(T.options, MTF_DORMANT); continue; }
       if (Key.strEquCI("special")) { T.special = CheckInt(); continue; }
-      if (Key.strEquCI("arg0")) { T.arg1 = CheckInt(); continue; }
-      if (Key.strEquCI("arg1")) { T.arg2 = CheckInt(); continue; }
-      if (Key.strEquCI("arg2")) { T.arg3 = CheckInt(); continue; }
-      if (Key.strEquCI("arg3")) { T.arg4 = CheckInt(); continue; }
-      if (Key.strEquCI("arg4")) { T.arg5 = CheckInt(); continue; }
+      if (Key.strEquCI("arg0")) { T.args[0] = CheckInt(); continue; }
+      if (Key.strEquCI("arg1")) { T.args[1] = CheckInt(); continue; }
+      if (Key.strEquCI("arg2")) { T.args[2] = CheckInt(); continue; }
+      if (Key.strEquCI("arg3")) { T.args[3] = CheckInt(); continue; }
+      if (Key.strEquCI("arg4")) { T.args[4] = CheckInt(); continue; }
 
       if (Key.strEquCI("health")) { T.health = CheckFloat(); continue; }
 
@@ -998,10 +999,10 @@ void VUdmfParser::ParseThing () {
   if (hasArg0Str && ((T.special >= 80 && T.special <= 86) || T.special == 226)) {
     VName sn = VName(*arg0str, VName::AddLower); // 'cause script names are lowercased
     if (sn != NAME_None) {
-      T.arg1 = -(int)sn.GetIndex();
+      T.args[0] = -(int)sn.GetIndex();
       //GCon->Logf("*** ACS NAMED THING SPECIAL %d: name is (%d) '%s'", T.special, sn.GetIndex(), *sn);
     } else {
-      T.arg1 = 0;
+      T.args[0] = 0;
     }
   }
 }
@@ -1164,8 +1165,10 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
 
   // copy things
   NumThings = Parser.ParsedThings.Num();
-  Things = new mthing_t[NumThings];
-  memcpy(Things, Parser.ParsedThings.Ptr(), sizeof(mthing_t)*NumThings);
+  Things = new mthing_t[NumThings+1];
+  memset((void *)Things, 0, (NumThings+1)*sizeof(mthing_t));
+  for (int f = 0; f < Parser.ParsedThings.length(); ++f) Things[f] = Parser.ParsedThings[f];
+  //memcpy(Things, Parser.ParsedThings.Ptr(), sizeof(mthing_t)*NumThings);
 
   // create slopes from vertex heights
   if (hasVertexHeights && NumSectors > 0) {

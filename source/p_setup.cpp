@@ -806,11 +806,12 @@ void VLevel::SetupThingsFromMapinfo () {
       // special
       if (nfo->flags&mobjinfo_t::FlagSpecial) {
         th->special = nfo->special;
-        th->arg1 = nfo->args[0];
-        th->arg2 = nfo->args[1];
-        th->arg3 = nfo->args[2];
-        th->arg4 = nfo->args[3];
-        th->arg5 = nfo->args[4];
+        th->args[0] = nfo->args[0];
+        th->args[1] = nfo->args[1];
+        th->args[2] = nfo->args[2];
+        th->args[3] = nfo->args[3];
+        th->args[4] = nfo->args[4];
+        th->arg0str.clear();
       }
     }
   }
@@ -2909,11 +2910,11 @@ void VLevel::LoadThings2 (int Lump) {
     if (options&2) th->SkillClassFilter |= 0x04;
     if (options&4) th->SkillClassFilter |= 0x18;
     th->special = special;
-    th->arg1 = arg1;
-    th->arg2 = arg2;
-    th->arg3 = arg3;
-    th->arg4 = arg4;
-    th->arg5 = arg5;
+    th->args[0] = arg1;
+    th->args[1] = arg2;
+    th->args[2] = arg3;
+    th->args[3] = arg4;
+    th->args[4] = arg5;
   }
 }
 

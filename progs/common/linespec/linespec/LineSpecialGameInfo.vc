@@ -421,7 +421,7 @@ final void SlopeLineToPoint (Level InLevel, mthing_t *mthing, bool IsCeiling) {
 
   foreach (auto i; 0..InLevel.Lines.length) {
     line_t *line = &InLevel.Lines[i];
-    if (!IsLineTagEqual(line, mthing->arg1)) continue;
+    if (!IsLineTagEqual(line, mthing->args[1-1])) continue;
 
     sec = (PointOnPlaneSide(p1, *line) == 0 ? line->frontsector : line->backsector);
     if (sec == nullptr) continue;
@@ -480,9 +480,9 @@ final void SetSlope (Level InLevel, mthing_t *mthing, bool IsCeiling) {
   p1 = vector(mthing->x, mthing->y, 0.0);
   p1.z = GetPlanePointZ(ref *plane, p1)+mthing->height;
 
-       if (mthing->arg1 >= 180) zang = 179.0;
-  else if (mthing->arg1 <= 0) zang = 1.0;
-  else zang = float(mthing->arg1);
+       if (mthing->args[1-1] >= 180) zang = 179.0;
+  else if (mthing->args[1-1] <= 0) zang = 1.0;
+  else zang = float(mthing->args[1-1]);
 
   if (IsCeiling) zang += 180.0;
 
@@ -824,7 +824,7 @@ final void CopyPlaneBetweenTaggedSectors (Level InLevel, sector_t *dst, int srct
 final void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) {
   sector_t *dst = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
   sector_t *src;
-  if (InLevel.FindSectorFromTag(out src, mthing->arg1) < 0) return; // no source sector
+  if (InLevel.FindSectorFromTag(out src, mthing->args[1-1]) < 0) return; // no source sector
   if (!IsCeiling) {
     dst->floor.normal = src->floor.normal;
     dst->floor.dist = src->floor.dist;
