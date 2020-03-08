@@ -827,6 +827,9 @@ void VNetConnection::Tick () {
 
     // if in or out loss is more than... let's say 20, this is high packet loss, show something to the user
 
+    NetLagChart[NetLagChartPos] = clampval((int)((PrevLag+1.2*(max2(InLoss, OutLoss)*0.01))*1000), 0, 1000);
+    NetLagChartPos = (NetLagChartPos+1)%NETLAG_CHART_ITEMS;
+
     if (net_dbg_report_stats) {
       GCon->Logf("*** %s: lag:(%d,%d) %d; rate:%g/%g; packets:%g/%g; messages:%g/%g; order:%g/%g; loss:%g/%g", *GetAddress(),
         (int)(PrevLag*1000), (int)(AvgLag*1000), (int)((PrevLag+1.2*(max2(InLoss, OutLoss)*0.01))*1000),

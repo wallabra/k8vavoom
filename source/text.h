@@ -94,6 +94,10 @@ int T_GetCursorY ();
 extern VFont *SmallFont;
 extern VFont *ConFont;
 
+#define NETLAG_CHART_ITEMS  (128)
+extern int NetLagChart[NETLAG_CHART_ITEMS]; // [0..1000]
+extern unsigned NetLagChartPos;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // fancyprogress bar and OSD

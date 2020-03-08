@@ -151,6 +151,9 @@ public:
 
   VRootWidget *GetRootWidget();
 
+  void ToDrawerCoords (float &x, float &y) const noexcept;
+  void ToDrawerCoords (int &x, int &y) const noexcept;
+
   // methods to move widget on top or bottom
   void Lower ();
   void Raise ();
@@ -167,7 +170,7 @@ public:
   inline void SetWidth (int NewWidth) { SetSize(NewWidth, SizeHeight); }
   inline void SetHeight (int NewHeight) { SetSize(SizeWidth, NewHeight); }
   inline void SetScale (float NewScaleX, float NewScaleY) { SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, NewScaleX, NewScaleY); }
-  void SetConfiguration(int, int, int, int, float = 1.0f, float = 1.0f);
+  void SetConfiguration (int, int, int, int, float = 1.0f, float = 1.0f);
 
   // visibility methods
   void SetVisibility (bool);

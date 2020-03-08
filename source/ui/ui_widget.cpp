@@ -616,6 +616,28 @@ void VWidget::TickTree (float DeltaTime) {
 
 //==========================================================================
 //
+//  VWidget::ToDrawerCoords
+//
+//==========================================================================
+void VWidget::ToDrawerCoords (float &x, float &y) const noexcept {
+  x = ClipRect.ScaleX*x+ClipRect.OriginX;
+  y = ClipRect.ScaleY*y+ClipRect.OriginY;
+}
+
+
+//==========================================================================
+//
+//  VWidget::ToDrawerCoords
+//
+//==========================================================================
+void VWidget::ToDrawerCoords (int &x, int &y) const noexcept {
+  x = ClipRect.ScaleX*x+ClipRect.OriginX;
+  y = ClipRect.ScaleY*y+ClipRect.OriginY;
+}
+
+
+//==========================================================================
+//
 //  VWidget::TransferAndClipRect
 //
 //==========================================================================

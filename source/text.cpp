@@ -33,6 +33,10 @@
 #endif
 
 
+int NetLagChart[NETLAG_CHART_ITEMS] = {0};
+unsigned NetLagChartPos = 0;
+
+
 #ifdef CLIENT
 extern VCvarB draw_lag;
 

@@ -345,28 +345,57 @@ static void DrawFPS () {
   if (worldThinkTimeVM >= 0) curFilterValue = FilterFadeoff*worldThinkTimeVM+(1.0f-FilterFadeoff)*curFilterValue;
 
   #ifdef CLIENT
-  if (draw_lag && cl && cl->Net) {
+  const bool isClient = (GGameInfo->NetMode == NM_Client && cl && cl->Net);
+  #else
+  enum { isClient = false };
+  #endif
+
+  #ifdef CLIENT
+  if (isClient && draw_lag) {
     T_SetFont(ConFont);
     T_SetAlign(hleft, vtop);
     int xpos = 4;
     const int nlag = clampval((int)((cl->Net->PrevLag+1.2*(max2(cl->Net->InLoss, cl->Net->OutLoss)*0.01))*1000), 0, 999);
     //const int lag1 = clampval((int)(cl->Net->AvgLag*1000), 0, 999);
     //T_DrawText(xpos, ypos, va("NET LAG:%3d  [%3d]", nlag, lag1), CR_DARKBROWN); ypos += 9;
-    T_DrawText(xpos, ypos, va("NET LAG:%3d", nlag), CR_DARKBROWN); ypos += 9;
-    ypos += 9;
+    T_DrawText(xpos, ypos, va("LAG:%3d", nlag), CR_DARKBROWN); ypos += T_FontHeight();
+
+    // draw lag chart
+    ypos += 2;
+    //ypos += ChartHeight;
+
+    int sXPos = xpos;
+    int sYPos = ypos;
+    GRoot->ToDrawerCoords(sXPos, sYPos);
+    ypos += T_FontHeight()+4;
+
+    const int ChartHeight = 32;
+    sYPos += ChartHeight-1;
+    Drawer->ShadeRect(sXPos, sYPos, sXPos+NETLAG_CHART_ITEMS, sYPos-ChartHeight, 0.666f);
+    Drawer->StartAutomap(true); // as overlay
+    unsigned pos = (NetLagChartPos+1)%NETLAG_CHART_ITEMS;
+    for (int xx = 0; xx < NETLAG_CHART_ITEMS; ++xx) {
+      //const int hgt = min2(500, NetLagChart[pos])*ChartHeight/500;
+      const int hgt = NetLagChart[pos]*ChartHeight/1000;
+      Drawer->DrawLineAM(sXPos+xx, sYPos, 0xff00cf00u, sXPos+xx, sYPos-hgt-1, 0xff005f00u);
+      pos = (pos+1)%NETLAG_CHART_ITEMS;
+    }
+    Drawer->EndAutomap();
   }
   #endif
 
-  if ((dbg_world_think_vm_time && worldThinkTimeVM >= 0) || (dbg_world_think_decal_time && worldThinkTimeDecal >= 0)) {
-    T_SetFont(ConFont);
-    T_SetAlign(hleft, vtop);
-    int xpos = 4;
+  if (!isClient) {
+    if ((dbg_world_think_vm_time && worldThinkTimeVM >= 0) || (dbg_world_think_decal_time && worldThinkTimeDecal >= 0)) {
+      T_SetFont(ConFont);
+      T_SetAlign(hleft, vtop);
+      int xpos = 4;
 
-    if (dbg_world_think_vm_time && worldThinkTimeVM < 0) worldThinkTimeVM = 0;
-    if (dbg_world_think_decal_time && worldThinkTimeDecal < 0) worldThinkTimeDecal = 0;
+      if (dbg_world_think_vm_time && worldThinkTimeVM < 0) worldThinkTimeVM = 0;
+      if (dbg_world_think_decal_time && worldThinkTimeDecal < 0) worldThinkTimeDecal = 0;
 
-    if (dbg_world_think_vm_time) { T_DrawText(xpos, ypos, va("VM:%d", (int)(curFilterValue*1000+0.5)), CR_DARKBROWN); ypos += 9; }
-    if (dbg_world_think_decal_time) { T_DrawText(xpos, ypos, va("DECALS:%d", (int)(worldThinkTimeDecal*1000+0.5)), CR_DARKBROWN); ypos += 9; }
+      if (dbg_world_think_vm_time) { T_DrawText(xpos, ypos, va("VM:%d", (int)(curFilterValue*1000+0.5)), CR_DARKBROWN); ypos += 9; }
+      if (dbg_world_think_decal_time) { T_DrawText(xpos, ypos, va("DECALS:%d", (int)(worldThinkTimeDecal*1000+0.5)), CR_DARKBROWN); ypos += 9; }
+    }
   }
 }
 
