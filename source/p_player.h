@@ -271,8 +271,9 @@ public:
   void DoClientFinale(VStr);
   void DoClientChangeMusic(VName);
   void DoClientSetServerInfo(VStr, VStr);
-  void DoClientHudMessage(VStr, VName, int, int, int, VStr,
-    float, float, int, int, float, float, float);
+  void DoClientHudMessage(VStr, VName, int, int, int, VStr, float, float, int, int, float, float, float);
+
+  void DoClientFOV (float fov);
 
   void WriteViewData();
 
@@ -319,6 +320,7 @@ public:
   DECLARE_FUNCTION(ClientChangeMusic)
   DECLARE_FUNCTION(ClientSetServerInfo)
   DECLARE_FUNCTION(ClientHudMessage)
+  DECLARE_FUNCTION(ClientFOV)
 
   DECLARE_FUNCTION(ServerSetUserInfo)
 
@@ -359,6 +361,8 @@ public:
   void eventOnAfterSave (bool autosave, bool checkpoint) { static VMethodProxy method("eventOnAfterSave"); vobjPutParamSelf(autosave, checkpoint); VMT_RET_VOID(method); }
 
   void eventAfterUnarchiveThinkers () { static VMethodProxy method("eventAfterUnarchiveThinkers"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+
+  void eventClientFOV (float deltaTime) { static VMethodProxy method("ClientFOV"); vobjPutParamSelf(deltaTime); VMT_RET_VOID(method); }
 
   void QS_Save () { static VMethodProxy method("QS_Save"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParamSelf(); VMT_RET_VOID(method); }

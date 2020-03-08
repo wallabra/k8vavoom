@@ -251,7 +251,7 @@ replication {
   reliable if (!bIsClient)
     Cheats, ReadyWeapon, InvFirst, InvPtr, InventoryTime, ArtifactFlash,
     Objectives, MorphTime/*, Accuracy, Stamina*/, MapsVisited, DamageFlash,
-    BonusFlash, Attacker, bFrozen, bTotallyFrozen, DesiredFOV, FOV,
+    BonusFlash, Attacker, bFrozen, bTotallyFrozen,/* DesiredFOV, FOV,*/
     bFlashlightOn;
 
   unreliable if (!bIsClient)
@@ -262,7 +262,7 @@ replication {
 
   reliable if (!bIsClient)
     ClientVoice, ClientSpeech, ClientFinaleType, ClientSlideshow1,
-    ClientSlideshow2, SetFOV;
+    ClientSlideshow2;
 
   // from client to server
   reliable if (bIsClient)
@@ -3180,6 +3180,10 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
   k8ElvenGiftMessageTime = 666;
 
   Cheats &= ~(CF_NOCLIP|CF_TIMEFREEZE);
+
+  // reset zoom
+  FOV = DesiredFOV;
+  ClientFOV(0);
 }
 
 
@@ -4416,7 +4420,11 @@ override void PlayerTick (float deltaTime) {
       float zoom = FMax(7.0, fabs(FOV-desired)*0.025);
       if (FOV > desired) FOV = FOV-zoom; else FOV = FOV+zoom;
     }
-    SetFOV(int(FOV));
+    if (int(FOV) == int(DesiredFOV)) {
+      ClientFOV(0);
+    } else {
+      ClientFOV(FOV);
+    }
   }
 
   if (!isBot) HealthBarProcessor();
@@ -4815,18 +4823,6 @@ bool CheckFriendlyFire (EntityEx source, int damage) {
 //==========================================================================
 bool IsWeaponAlwaysExtremeDeath () {
   return false;
-}
-
-
-//==========================================================================
-//
-//  SetFOV
-//
-//  Zoom the player's FOV
-//
-//==========================================================================
-void SetFOV (int New_FOV) {
-  SetCvar('FOV', New_FOV);
 }
 
 

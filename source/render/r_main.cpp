@@ -127,7 +127,8 @@ VCvarB allow_small_screen_size("_allow_small_screen_size", false, "Allow small s
 static bool set_resolution_needed = true; // should we update screen size, FOV, and other such things?
 
 // angles in the SCREENWIDTH wide window
-VCvarF fov("fov", "90", "Field of vision.");
+VCvarF fov_main("fov", "90", "Field of vision.");
+VCvarF cl_fov("cl_fov", "0", "Client-enforced FOV (0 means 'default'.");
 VCvarB r_vertical_fov("r_vertical_fov", true, "Maintain vertical FOV for widescreen modes (i.e. keep vertical view area, and widen horizontal)?");
 
 // translation tables
@@ -1672,8 +1673,12 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   #endif
 
   // sanitise FOV
-       if (fov < 1.0f) fov = 1.0f;
-  else if (fov > 170.0f) fov = 170.0f;
+       if (fov_main < 1.0f) fov_main = 1.0f;
+  else if (fov_main > 170.0f) fov_main = 170.0f;
+
+  float fov = fov_main;
+  // apply client fov
+  if (cl_fov > 1) fov = clampval(cl_fov.asFloat(), 1.0f, 170.0f);
   old_fov = fov;
 
   if (screenblocks > 10) {
@@ -1774,7 +1779,7 @@ void VRenderLevelShared::TransformFrustum () {
 void VRenderLevelShared::SetupFrame () {
   // change the view size if needed
   if (screen_size != screenblocks || !screenblocks ||
-      set_resolution_needed || old_fov != fov ||
+      set_resolution_needed || old_fov != fov_main || cl_fov >= 1 ||
       r_aspect_ratio != prev_aspect_ratio ||
       r_vertical_fov != prev_vertical_fov_flag)
   {
@@ -2200,7 +2205,7 @@ void VRenderLevelShared::RenderPlayerView () {
   r_viewleaf = (Drawer->vieworg == lastorg ? playerViewLeaf : Level->PointInSubsector(Drawer->vieworg));
 
   // draw the psprites on top of everything
-  if (/*fov <= 90.0f &&*/ cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawPlayerSprites();
+  if (cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawPlayerSprites();
 
   Drawer->EndView();
 

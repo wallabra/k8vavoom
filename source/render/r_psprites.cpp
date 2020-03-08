@@ -37,7 +37,8 @@
 #include "sv_local.h"
 
 
-extern VCvarF fov;
+extern VCvarF fov_main;
+extern VCvarF cl_fov;
 extern VCvarB gl_pic_filtering;
 extern VCvarB r_draw_psprites;
 extern VCvarB r_chasecam;
@@ -134,13 +135,19 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   spry -= PSpriteOfsAspect;
 
   //k8: this is not right, but meh...
+  /*
   if (fov > 90) {
     // this moves sprx to the left screen edge
     //sprx += (AspectEffectiveFOVX-1.0f)*160.0f;
   }
+  */
+
+  float ourfov = clampval(fov_main.asFloat(), 1.0f, 170.0f);
+  // apply client fov
+  if (cl_fov > 1) ourfov = clampval(cl_fov.asFloat(), 1.0f, 170.0f);
 
   //k8: don't even ask me!
-  const float sxymul = (1.0f+(fov != 90 ? AspectEffectiveFOVX-1.0f : 0.0f))/160.0f;
+  const float sxymul = (1.0f+(ourfov != 90 ? AspectEffectiveFOVX-1.0f : 0.0f))/160.0f;
 
   // horizontal
   TVec start = sprorigin-(sprx*PSP_DIST*sxymul)*Drawer->viewright;
@@ -203,7 +210,7 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, const RenderStyleInfo
   TClipBase old_clip_base = clip_base;
 
   // remporarily set FOV to 90
-  const bool restoreFOV = (fov.asFloat() != 90.0f);
+  const bool restoreFOV = (fov_main.asFloat() != 90.0f || cl_fov.asFloat() >= 1.0f);
 
   if (restoreFOV) {
     refdef_t newrd = refdef;

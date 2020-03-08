@@ -44,6 +44,10 @@ static VCvarF hud_chat_time("hud_chat_time", "8", "Chat messages timeout, in sec
 static VCvarI hud_chat_nick_color("hud_chat_nick_color", "8", "Chat nick color.", CVAR_Archive);
 static VCvarI hud_chat_text_color("hud_chat_text_color", "13", "Chat font color.", CVAR_Archive);
 
+#ifdef CLIENT
+extern VCvarF cl_fov;
+#endif
+
 //VField *VBasePlayer::fldPendingWeapon = nullptr;
 //VField *VBasePlayer::fldReadyWeapon = nullptr;
 
@@ -663,6 +667,18 @@ void VBasePlayer::DoClientPause (bool Paused) {
 
 //==========================================================================
 //
+//  VBasePlayer::DoClientFOV
+//
+//==========================================================================
+void VBasePlayer::DoClientFOV (float fov) {
+  #ifdef CLIENT
+  cl_fov = fov;
+  #endif
+}
+
+
+//==========================================================================
+//
 //  VBasePlayer::DoClientSkipIntermission
 //
 //==========================================================================
@@ -1091,6 +1107,12 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClientHudMessage) {
   float HoldTime, Time1, Time2;
   vobjGetParamSelf(Message, Font, Type, Id, Color, ColorName, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
   Self->DoClientHudMessage(Message, Font, Type, Id, Color, ColorName, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+}
+
+IMPLEMENT_FUNCTION(VBasePlayer, ClientFOV) {
+  float fov;
+  vobjGetParamSelf(fov);
+  Self->DoClientFOV(fov);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ServerSetUserInfo) {

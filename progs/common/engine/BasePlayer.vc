@@ -167,7 +167,7 @@ replication {
     ClientStartSequence, ClientAddSequenceChoice, ClientStopSequence,
     ClientChatPrint, ClientPrint, ClientCenterPrint, ClientSetAngles, ClientIntermission,
     ClientPause, ClientSkipIntermission, ClientFinale, ClientChangeMusic,
-    ClientSetServerInfo, ClientHudMessage;
+    ClientSetServerInfo, ClientHudMessage, ClientFOV;
 
   // movement variables
   reliable if (bIsClient)
@@ -216,6 +216,8 @@ native void ClientHudMessage (string Message, name Font, int Type, int Id,
                               int Color, string ColorName, float x, float y,
                               int HudWidth, int HudHeight, float HoldTime,
                               float Time1, float Time2);
+
+native void ClientFOV (float fov);
 
 native void ServerSetUserInfo (string Info);
 
