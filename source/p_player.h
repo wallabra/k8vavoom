@@ -113,6 +113,7 @@ class VBasePlayer : public VGameObject {
     PF_AutomapShowThings = 0x0400u,
     PF_ReloadQueued      = 0x0800u,
     PF_ZoomDown          = 0x1000u,
+    PF_SvCheatsAllowed   = 0x2000u, // server will send us this
   };
   vuint32 PlayerFlags;
 
@@ -231,6 +232,8 @@ public:
     res.spriteIndex = GetEffectiveSpriteIndex(idx);
     return res;
   }
+
+  bool IsCheatsAllowed () const noexcept;
 
   //  VObject interface
   virtual bool ExecuteNetMethod(VMethod *) override;

@@ -100,6 +100,12 @@ static bool CheatAllowed (VBasePlayer *Player, bool allowDead=false) {
     Player->Printf("You are not in game!");
     return false;
   }
+  //GCon->Logf(NAME_Debug, "CheatAllowed: player '%s' checks for cheating!", *Player->PlayerName);
+  if (!Player->IsCheatsAllowed()) {
+    Player->Printf("No, cheater, you cannot do it!");
+    return false;
+  }
+  /*
   if (GGameInfo->NetMode >= NM_DedicatedServer) {
     Player->Printf("You cannot cheat in a network game!");
     return false;
@@ -110,6 +116,7 @@ static bool CheatAllowed (VBasePlayer *Player, bool allowDead=false) {
     //return false;
     return true;
   }
+  */
   if (!allowDead && Player->Health <= 0) {
     // dead players can't cheat
     Player->Printf("You must be alive to cheat");
@@ -483,6 +490,9 @@ VStr VCommand::AutoCompleteFromList (VStr prefix, const TArray <VStr> &list, boo
 static VBasePlayer *findPlayer () {
   if (sv.intermission) return nullptr;
   if (GGameInfo->NetMode < NM_Standalone) return nullptr; // not playing
+  #ifdef CLIENT
+  if (GGameInfo->NetMode == NM_Client) return (cl && cl->Net ? cl : nullptr);
+  #endif
   // find any active player
   for (int f = 0; f < MAXPLAYERS; ++f) {
     VBasePlayer *plr = GGameInfo->Players[f];
