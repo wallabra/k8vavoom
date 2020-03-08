@@ -135,6 +135,6 @@ void CT_Drawer () {
   if (chatmodeon) {
     T_SetFont(SmallFont);
     T_SetAlign(hleft, vtop);
-    w_chat.DrawAt(25, 10, /*CR_UNTRANSLATED*/CR_GREEN);
+    w_chat.DrawAt(25, 92, /*CR_UNTRANSLATED*/CR_GREEN);
   }
 }

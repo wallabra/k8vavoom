@@ -29,12 +29,22 @@ class StatusBarShared : Widget;
 
 ClientGameBase ClGame;
 
-const int NUM_NOTIFY_LINES = 5;
+enum NUM_NOTIFY_LINES = 8;
+enum NUM_CHAT_LINES = 16;
 
-string[NUM_NOTIFY_LINES] notify_lines;
-float[NUM_NOTIFY_LINES] notify_times;
-int num_notify;
-int first_notify;
+struct NotifyMessage {
+  string text;
+  string nick; // for chat
+  float time;
+}
+
+NotifyMessage[NUM_NOTIFY_LINES] notifyMessages;
+int notifyMsgCount;
+int notifyMsgHead;
+
+NotifyMessage[NUM_CHAT_LINES] chatMessages;
+int chatMsgCount;
+int chatMsgHead;
 
 array!SplitLine CenterMessageLines;
 int CenterMessageHeight;
@@ -86,6 +96,7 @@ void StartMap () {
 //==========================================================================
 override void OnDraw () {
   DrawNotify();
+  DrawChat();
   DrawCenterMessage();
 }
 
@@ -105,6 +116,7 @@ override void Tick (float DeltaTime) {
     HudMsgWin.SetSize(root.Width, root.Height);
   }
   UpdateNotify(DeltaTime);
+  UpdateChat(DeltaTime);
   UpdateCenterMessage(DeltaTime);
 }
 
@@ -119,8 +131,11 @@ override void Tick (float DeltaTime) {
 //
 //==========================================================================
 void ClearNotify () {
-  num_notify = 0;
-  first_notify = 0;
+  notifyMsgCount = 0;
+  notifyMsgHead = 0;
+
+  chatMsgCount = 0;
+  chatMsgHead = 0;
 }
 
 
@@ -136,13 +151,46 @@ void AddNotifyMessage (string Str) {
   SplitText(Str, Lines, GetVirtualWidth()-32);
 
   foreach (auto i; 0..Lines.length) {
-    if (num_notify >= NUM_NOTIFY_LINES) {
-      --num_notify;
-      ++first_notify;
+    string text = Lines[i].Text.xstrip;
+    if (!text) continue;
+    if (notifyMsgCount >= NUM_NOTIFY_LINES) {
+      --notifyMsgCount;
+      ++notifyMsgHead;
     }
-    notify_lines[(num_notify+first_notify)%NUM_NOTIFY_LINES] = Lines[i].Text;
-    notify_times[(num_notify+first_notify)%NUM_NOTIFY_LINES] = GetCvarF('hud_notify_time');
-    ++num_notify;
+    NotifyMessage *msg = &notifyMessages[(notifyMsgCount+notifyMsgHead)%NUM_NOTIFY_LINES];
+    ++notifyMsgCount;
+    msg.text = text;
+    msg.time = GetCvarF('hud_notify_time');
+  }
+}
+
+
+//==========================================================================
+//
+//  AddChatMessage
+//
+//==========================================================================
+void AddChatMessage (string nick, string Text) {
+  array!SplitLine Lines;
+  nick = nick.removeColors.xstrip;
+  if (!nick) nick = "<dumb>";
+  nick ~= ":";
+
+  SetFont('smallfont');
+  SplitText(Text, Lines, GetVirtualWidth()-32);
+
+  foreach (auto i; 0..Lines.length) {
+    string text = Lines[i].Text.removeColors.xstrip;
+    if (!text) continue;
+    if (chatMsgCount >= NUM_CHAT_LINES) {
+      --chatMsgCount;
+      ++chatMsgHead;
+    }
+    NotifyMessage *msg = &chatMessages[(chatMsgCount+chatMsgHead)%NUM_CHAT_LINES];
+    ++chatMsgCount;
+    msg.text = text;
+    msg.nick = nick;
+    msg.time = GetCvarF('hud_chat_time');
   }
 }
 
@@ -161,15 +209,54 @@ void DrawNotify () {
   // notify lines
   int y = 0;
   int i = 0;
-  while (i < num_notify) {
-    if (notify_times[(i+first_notify)%NUM_NOTIFY_LINES] <= 0.0) {
-      ++first_notify;
-      --num_notify;
+  while (i < notifyMsgCount) {
+    NotifyMessage *msg = &notifyMessages[(i+notifyMsgHead)%NUM_NOTIFY_LINES];
+    if (msg->time <= 0.0) {
+      ++notifyMsgHead;
+      --notifyMsgCount;
     } else {
-      DrawText(4, y, notify_lines[(i+first_notify)%NUM_NOTIFY_LINES], col);
-      y += 9;
+      DrawText(4, y, msg->text, col);
+      y += FontHeight();
       ++i;
     }
+  }
+}
+
+
+//==========================================================================
+//
+//  DrawChat
+//
+//==========================================================================
+void DrawChat () {
+  SetFont('smallfont');
+  SetTextAlign(hleft, vtop);
+
+  int ncol = GetCvar('hud_chat_nick_color');
+  int tcol = GetCvar('hud_chat_text_color');
+
+  // count messages
+  int y = Height-64;
+  int i = 0;
+  while (i < chatMsgCount) {
+    NotifyMessage *msg = &chatMessages[(i+chatMsgHead)%NUM_CHAT_LINES];
+    if (msg.time <= 0.0) {
+      ++chatMsgHead;
+      --chatMsgCount;
+    } else {
+      y -= FontHeight();
+      ++i;
+    }
+  }
+
+  i = 0;
+  while (i < NUM_CHAT_LINES) {
+    NotifyMessage *msg = &chatMessages[(i+chatMsgHead)%NUM_CHAT_LINES];
+    ++i;
+    if (msg.time <= 0.0) continue;
+    DrawText(4, y, msg.nick, ncol);
+    DrawText(4+TextWidth(msg.nick)+2, y, msg.text, tcol);
+    y += FontHeight();
   }
 }
 
@@ -180,7 +267,17 @@ void DrawNotify () {
 //
 //==========================================================================
 void UpdateNotify (float DeltaTime) {
-  foreach (auto i; 0..num_notify) notify_times[(i+first_notify)%NUM_NOTIFY_LINES] -= DeltaTime;
+  foreach (auto i; 0..notifyMsgCount) notifyMessages[(i+notifyMsgHead)%NUM_NOTIFY_LINES].time -= DeltaTime;
+}
+
+
+//==========================================================================
+//
+//  UpdateChat
+//
+//==========================================================================
+void UpdateChat (float DeltaTime) {
+  foreach (auto i; 0..chatMsgCount) chatMessages[(i+chatMsgHead)%NUM_CHAT_LINES].time -= DeltaTime;
 }
 
 

@@ -936,6 +936,9 @@ alias strStartsWithCI = StrStartsWithCI;
 native static final bool StrEndsWithCI (string Str, string Check) [property(string) endsWithCI];
 alias strEndsWithCI = StrEndsWithCI;
 
+// remove all color codes from the string
+native static final string strRemoveColors (string s) [property(string) removeColors];
+
 // removes all [0..32] chars from both string ends
 native static final string strXStrip (string s) [property(string) xstrip];
 // removes all [0..32] chars from both string ends

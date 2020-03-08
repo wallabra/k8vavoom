@@ -40,6 +40,10 @@ static VCvarB hud_msg_echo("hud_msg_echo", true, "Echo messages?", CVAR_Archive)
 static VCvarI hud_font_color("hud_font_color", "11", "Font color.", CVAR_Archive);
 static VCvarI hud_font_color_centered("hud_font_color_centered", "11", "Secondary font color.", CVAR_Archive);
 
+static VCvarF hud_chat_time("hud_chat_time", "8", "Chat messages timeout, in seconds.", CVAR_Archive);
+static VCvarI hud_chat_nick_color("hud_chat_nick_color", "8", "Chat nick color.", CVAR_Archive);
+static VCvarI hud_chat_text_color("hud_chat_text_color", "13", "Chat font color.", CVAR_Archive);
+
 //VField *VBasePlayer::fldPendingWeapon = nullptr;
 //VField *VBasePlayer::fldReadyWeapon = nullptr;
 
@@ -508,6 +512,18 @@ void VBasePlayer::DoClientPrint (VStr AStr) {
   if (hud_msg_echo) GCon->Logf("\034S%s", *Str);
 
   ClGame->eventAddNotifyMessage(Str);
+}
+
+
+//==========================================================================
+//
+//  VBasePlayer::DoClientChatPrint
+//
+//==========================================================================
+void VBasePlayer::DoClientChatPrint (VStr nick, VStr text) {
+  if (text.IsEmpty()) return;
+  GCon->Logf(NAME_Chat, "[%s]: %s", *nick.RemoveColors().xstrip(), *text.RemoveColors().xstrip());
+  ClGame->eventAddChatMessage(nick, text);
 }
 
 
@@ -1009,6 +1025,12 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClientPrint) {
   VStr Str;
   vobjGetParamSelf(Str);
   Self->DoClientPrint(Str);
+}
+
+IMPLEMENT_FUNCTION(VBasePlayer, ClientChatPrint) {
+  VStr nick, str;
+  vobjGetParamSelf(nick, str);
+  Self->DoClientChatPrint(nick, str);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientCenterPrint) {

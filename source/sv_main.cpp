@@ -2154,19 +2154,23 @@ COMMAND(Say) {
   CMD_FORWARD_TO_SERVER();
   if (Args.Num() < 2) return;
 
-  VStr Text = Player->PlayerName;
-  Text += ":";
+  VStr Text;
   for (int i = 1; i < Args.length(); ++i) {
-    Text += " ";
-    Text += Args[i];
+    VStr s = Args[i].xstrip();
+    if (!s.isEmpty()) {
+      if (!Text.isEmpty()) Text += " ";
+      Text += s;
+    }
   }
-  GLevelInfo->BroadcastPrint(*Text);
+  Text = Text.xstrip();
+  if (Text.isEmpty()) return;
+  GLevelInfo->BroadcastChatPrint(Player->PlayerName, Text);
   GLevelInfo->StartSound(TVec(0, 0, 0), 0, GSoundManager->GetSoundID("misc/chat"), 0, 1.0f, 0, false);
   #ifndef CLIENT
-  Text = VStr("[")+Player->PlayerName+"]:";
+  Text = VStr("[")+Player->PlayerName.RemoveColors().xstrip()+"]:";
   for (int i = 1; i < Args.length(); ++i) {
     Text += " ";
-    Text += Args[i];
+    Text += Args[i].RemoveColors().xstrip();
   }
   GCon->Logf(NAME_Chat, "%s", *Text);
   #endif

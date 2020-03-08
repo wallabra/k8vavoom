@@ -232,18 +232,14 @@ void VThinker::BroadcastPrint (const char *s) {
 
 //==========================================================================
 //
-//  VThinker::BroadcastPrintf
+//  VThinker::BroadcastChatPrint
 //
 //==========================================================================
-__attribute__((format(printf,2,3))) void VThinker::BroadcastPrintf (const char *s, ...) {
-  va_list v;
-  static char buf[4096];
-
-  va_start(v, s);
-  vsnprintf(buf, sizeof(buf), s, v);
-  va_end(v);
-
-  BroadcastPrint(buf);
+void VThinker::BroadcastChatPrint (VStr nick, VStr str) {
+  if (!Level || !Level->Game) return; // for client-side entities
+  for (int i = 0; i < svs.max_clients; ++i) {
+    if (Level->Game->Players[i]) Level->Game->Players[i]->eventClientChatPrint(nick, str);
+  }
 }
 
 
@@ -257,23 +253,6 @@ void VThinker::BroadcastCenterPrint (const char *s) {
   for (int i = 0; i < svs.max_clients; ++i) {
     if (Level->Game->Players[i]) Level->Game->Players[i]->eventClientCenterPrint(s);
   }
-}
-
-
-//==========================================================================
-//
-//  VThinker::BroadcastCenterPrintf
-//
-//==========================================================================
-__attribute__((format(printf,2,3))) void VThinker::BroadcastCenterPrintf (const char *s, ...) {
-  va_list v;
-  static char buf[4096];
-
-  va_start(v, s);
-  vsnprintf(buf, sizeof(buf), s, v);
-  va_end(v);
-
-  BroadcastCenterPrint(buf);
 }
 
 

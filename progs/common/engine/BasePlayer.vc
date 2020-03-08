@@ -165,7 +165,7 @@ replication {
 
   reliable if (!bIsClient)
     ClientStartSequence, ClientAddSequenceChoice, ClientStopSequence,
-    ClientPrint, ClientCenterPrint, ClientSetAngles, ClientIntermission,
+    ClientChatPrint, ClientPrint, ClientCenterPrint, ClientSetAngles, ClientIntermission,
     ClientPause, ClientSkipIntermission, ClientFinale, ClientChangeMusic,
     ClientSetServerInfo, ClientHudMessage;
 
@@ -203,6 +203,7 @@ native void ClientStartSequence (TVec Origin, int OriginId, name Name, int ModeN
 native void ClientAddSequenceChoice (int OriginId, name Choice);
 native void ClientStopSequence (int OriginId);
 native void ClientPrint (string Str);
+native void ClientChatPrint (string nick, string str);
 native void ClientCenterPrint (string Str);
 native void ClientSetAngles (TAVec Angles);
 native void ClientIntermission (name NextMap);

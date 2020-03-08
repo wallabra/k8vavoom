@@ -262,6 +262,7 @@ public:
   void DoClientAddSequenceChoice(int, VName);
   void DoClientStopSequence(int);
   void DoClientPrint(VStr);
+  void DoClientChatPrint(VStr nick, VStr text);
   void DoClientCenterPrint(VStr);
   void DoClientSetAngles(TAVec);
   void DoClientIntermission(VName);
@@ -308,6 +309,7 @@ public:
   DECLARE_FUNCTION(ClientAddSequenceChoice)
   DECLARE_FUNCTION(ClientStopSequence)
   DECLARE_FUNCTION(ClientPrint)
+  DECLARE_FUNCTION(ClientChatPrint)
   DECLARE_FUNCTION(ClientCenterPrint)
   DECLARE_FUNCTION(ClientSetAngles)
   DECLARE_FUNCTION(ClientIntermission)
@@ -401,6 +403,11 @@ public:
   void eventClientPrint (VStr Str) {
     static VMethodProxy method("ClientPrint");
     vobjPutParamSelf(Str);
+    VMT_RET_VOID(method);
+  }
+  void eventClientChatPrint (VStr nick, VStr str) {
+    static VMethodProxy method("ClientChatPrint");
+    vobjPutParamSelf(nick, str);
     VMT_RET_VOID(method);
   }
   void eventClientCenterPrint (VStr Str) {
