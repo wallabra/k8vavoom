@@ -31,8 +31,8 @@ Library libcore.a :
   src/timsort.c
   src/vector.cpp
   src/xml.cpp
-  src/xstreams.cpp
-  src/zipstreams.cpp
+  src/streamsex.cpp
+  src/streamszip.cpp
   src/xxhash.cpp
   src/ntvalue.cpp
   src/cvarsys.cpp
