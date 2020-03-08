@@ -165,8 +165,8 @@ public:
 extern int num_connected;
 extern TArray<VStr> fsysWadFileNames; // this is from corelib
 
-static VCvarB UseMaster("use_master", false, "Use master server?", CVAR_Archive);
-static VCvarS MasterSrv("master_srv", "ketmar.no-ip.org", "Master server domain name.", CVAR_Archive);
+static VCvarB UseMaster("master_allowed", false, "Is communication with master server allowed?", CVAR_Archive);
+static VCvarS MasterSrv("master_address", "ketmar.no-ip.org", "Master server domain name.", CVAR_Archive);
 
 static VDatagramDriver Impl;
 

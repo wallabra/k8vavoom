@@ -23,7 +23,14 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuScreenMultiplayer : MenuScreen;
+class MenuScreenMasterSetup : MenuScreen;
+
+MenuChoiceEnum Mode;
+MenuInputLine EdWidth;
+MenuInputLine EdHeight;
+MenuChoiceEnum Depth;
+MenuChoiceEnum Windowed;
+MenuChoiceEnum VSync;
 
 
 //==========================================================================
@@ -32,32 +39,34 @@ class MenuScreenMultiplayer : MenuScreen;
 //
 //==========================================================================
 override void CreateChoices () {
-  auto Btn = MenuTextButton(NewChild(MenuBigTextButton));
-  Btn.SetPos(ChoicesStartX, currentY);
-  Btn.Text = "New Game";
-  Btn.Activated = &ActivateNewGame;
-  currentY += Btn.Height;
+  CreateOnOffCvar("Enable Master", 'master_allowed');
+    SetLastHelp(
+      "Enable communication with master server?\n"~
+      "\n"~
+      "For clients, allows asking the master for any known servers.\n"~
+      "For servers, allows reporting server address to the master.");
 
-  CreateSubMenuBigText("Join Game", MenuScreenJoinGame);
-  CreateSubMenuBigText("Player Setup", MenuScreenPlayerSetup);
-  CreateSubMenuBigText("Master Setup", MenuScreenMasterSetup);
-}
-
-
-//==========================================================================
-//
-//  ActivateNewGame
-//
-//==========================================================================
-void ActivateNewGame (Object Sender) {
-  if (!ClGame.local_server) return;
-  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenNewNetGame));
+  auto edAddress = MenuInputLine(NewChild(MenuInputLine));
+  SetChoiceInitialSizePos(edAddress);
+  edAddress.SetOrigin(/*ChoicesStartX+10*/42, currentY);
+  edAddress.CursorXOffs = -10;
+  edAddress.Text = "Master Address";
+  edAddress.Value = GetCvarS('master_address');
+  //edAddress.DisableSlotRendering();
+  edAddress.ValueChanged = delegate void (Object sender) {
+    auto ed = MenuInputLine(sender);
+    assert(ed);
+    SetCvarS('master_address', ed.Value);
+  };
+    SetLastHelp("IP or host name of the master server.");
+  currentY += edAddress.Height;
 }
 
 
 defaultproperties {
-  ChoicesStartX = 97;
-  ChoicesStartY = 40;
-  SelectorType = MenuSelector_Big;
-  Title = "MULTIPLAYER";
+  WidthThreshold = 10;
+  ChoicesStartX = 120;
+  ChoicesStartY = 26;
+  SelectorType = MenuSelector_SmallRight;
+  Title = "MASTER SERVER";
 }

@@ -79,6 +79,7 @@ import 'linespec';
 #include "menus/MenuScreenSaveGame.vc"
 #include "menus/MenuScreenJoinGame.vc"
 #include "menus/MenuScreenMasterList.vc"
+#include "menus/MenuScreenMasterSetup.vc"
 #include "menus/MenuScreenSList.vc"
 #include "menus/MenuScreenControls.vc"
 #include "menus/MenuScreenScreenResolution.vc"
