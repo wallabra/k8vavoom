@@ -898,6 +898,11 @@ void VNetConnection::Tick () {
 //
 //==========================================================================
 void VNetConnection::SendCommand (VStr Str) {
+  if (Str.length() == 0) return; // no, really
+  if (Str.length() > 1200) {
+    GCon->Logf(NAME_Error, "%s: sorry, cannot send command that long (%d bytes): [%s...]", *GetAddress(), Str.length(), *Str.RemoveColors().left(32));
+    return;
+  }
   VMessageOut msg(GetGeneralChannel());
   msg << Str;
   GetGeneralChannel()->SendMessage(&msg);
