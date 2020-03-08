@@ -90,7 +90,13 @@ override void OnMapSpawn (mthing_t *mthing) {
         printdebug("*** adding static spotlight for class %C (%d, %d, %d, %d); angles=%s; org=%s", self, mthing->args[1-1], mthing->args[2-1], mthing->args[3-1], mthing->args[4-1], Angles, Origin);
         TVec dir;
         AngleVector(Angles, out dir);
-        Level.AddStaticLightRGB(none, Origin, IntensityToRadius(float(mthing->args[4-1])), mthing->args[1-1]|0xff_00_00_00, dir, AngleMod360(max(mthing->args[2-1], mthing->args[3-1])));
+        // point light color can be specified in string arg
+        int ptclr = mthing->args[1-1]|0xff_00_00_00;
+        if (mthing->arg0str) {
+          int c2 = ParseColor(mthing->arg0str, retZeroIfInvalid:true);
+          if (c2) ptclr = c2;
+        }
+        Level.AddStaticLightRGB(none, Origin, IntensityToRadius(float(mthing->args[4-1])), ptclr, dir, AngleMod360(max(mthing->args[2-1], mthing->args[3-1])));
       } else if (mthing->args[1-1] == 255 && mthing->args[2-1] == 255 && mthing->args[3-1] == 255) {
         // static white light
         Level.AddStaticLight(none, Origin, IntensityToRadius(float(mthing->args[4-1])));
