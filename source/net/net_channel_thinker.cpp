@@ -227,7 +227,6 @@ void VThinkerChannel::Update () {
       Thinker->RemoteRole = ROLE_Authority;
       // this is RemoteRole on the client (and Role on the server)
       Thinker->Role = ROLE_DumbProxy;
-      if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_DevNet, "%s:%u: became notick, closing channel%s", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), (OpenedLocally ? " (opened locally)" : ""));
     }
   }
 
@@ -327,6 +326,7 @@ void VThinkerChannel::Update () {
   // if this object becomes "dumb proxy", mark it as detached, and close the channel
   if (isServer && Thinker->Role == ROLE_DumbProxy && Ent) {
     // remember that we already did this thinker
+    if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_DevNet, "%s:%u: became notick, closing channel%s", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), (OpenedLocally ? " (opened locally)" : ""));
     Connection->DetachedThinkers.put(Thinker, true);
     // restore roles
     Thinker->Role = oldRole;
