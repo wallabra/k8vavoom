@@ -425,9 +425,18 @@ void VChannel::FlushMsg (VMessageOut *msg) {
 //
 //==========================================================================
 void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
-  if (Closing) return; // oops
+  // we cannot simply get out of here, because we need to pop function arguments
+
   //const bool blockSend = !CanSendData();
-  const bool blockSend = (NumOutList >= MAX_RELIABLE_BUFFER-2);
+  const bool blockSend = (Closing || NumOutList >= MAX_RELIABLE_BUFFER-2);
+  bool serverSide = Closing;
+
+  // check for server-side only
+  if (!serverSide && IsThinker()) {
+    VThinkerChannel *tc = (VThinkerChannel *)this;
+    VThinker *th = tc->GetThinker();
+    if (th && (th->ThinkerFlags&(VThinker::TF_AlwaysRelevant|VThinker::TF_ServerSideOnly)) == VThinker::TF_ServerSideOnly) serverSide = true;
+  }
 
   VMessageOut Msg(this, !!(Func->Flags&FUNC_NetReliable));
   //GCon->Logf(NAME_DevNet, "%s: creating RPC: %s", *GetDebugName(), *Func->GetFullName());
@@ -474,6 +483,8 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
       ++Param;
     }
   }
+
+  if (serverSide) return; // nothing to do
 
   // send it
   if (blockSend) {

@@ -1017,7 +1017,8 @@ bool VNetConnection::SecCheckFatPVS (sector_t *Sec) {
 //==========================================================================
 bool VNetConnection::IsRelevant (VThinker *th) {
   if (th->IsGoingToDie()) return false; // anyway
-  if (th->ThinkerFlags&VThinker::TF_AlwaysRelevant) return true;
+  if (th->ThinkerFlags&VThinker::TF_AlwaysRelevant) return true; // always
+  if (th->ThinkerFlags&VThinker::TF_ServerSideOnly) return false; // never
   // check if this thinker was detached
   if (DetachedThinkers.has(th)) return false;
   VEntity *Ent = Cast<VEntity>(th);

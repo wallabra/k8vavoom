@@ -90,8 +90,9 @@ bool bAlwaysRelevant; // always updated
 // network code manipulates 'em right in channel updater
 transient readonly bool bNetInitial; // initial update
 transient readonly bool bNetOwner; // is owned by current player
+transient bool bServerSideOnly; // if set, this thinker will never be sent to clients (but `AlwaysRelevant` has priority)
 // see C++ code for explanations (not implemented yet)
-transient bool bDetachFromServer;
+//transient bool bDetachFromServer;
 
 
 replication {

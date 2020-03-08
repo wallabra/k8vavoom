@@ -333,6 +333,8 @@
     <flag name="StickToCeiling" property="bStickToCeiling" relinktoworld="true" />
     <flag name="KillOnUnarchive" property="bKillOnUnarchive" />
     <flag_byte name="OrientedOfs" property="SpriteType" true_value="6" false_value="0" />
+    <!-- k8vavoom network flags -->
+    <flag name="k8ServerSideOnly" property="bServerSideOnly" />
     <!-- SkullTag Specific flags (useless) -->
     <flag_unsupported name="ScorePillar" />
     <flag_unsupported name="AllowClientSpawn" />
