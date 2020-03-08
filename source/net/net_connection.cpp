@@ -1012,18 +1012,37 @@ bool VNetConnection::SecCheckFatPVS (sector_t *Sec) {
 //  VNetConnection::IsRelevant
 //
 //==========================================================================
-bool VNetConnection::IsRelevant (VThinker *Th) {
-  if (Th->IsGoingToDie()) return false; // anyway
-  if (Th->ThinkerFlags&VThinker::TF_AlwaysRelevant) return true;
+bool VNetConnection::IsRelevant (VThinker *th) {
+  if (th->IsGoingToDie()) return false; // anyway
+  if (th->ThinkerFlags&VThinker::TF_AlwaysRelevant) return true;
   // check if this thinker was detached
-  if (DetachedThinkers.has(Th)) return false;
-  VEntity *Ent = Cast<VEntity>(Th);
-  if (!Ent || !Ent->Sector) return false;
+  if (DetachedThinkers.has(th)) return false;
+  VEntity *Ent = Cast<VEntity>(th);
+  if (!Ent) return false;
   if (Ent->GetTopOwner() == Owner->MO) return true; // inventory
+  if (!Ent->Sector) return false; // just in case
   if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) return false;
   //if (Ent->RemoteRole == ROLE_Authority) return false; // this should not end here
   if (!CheckFatPVS(Ent->SubSector)) return false;
   return true;
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::IsAlwaysRelevant
+//
+//  inventory is always relevant too
+//  doesn't check PVS
+//  call after `IsRelevant()` returned `true`, because this does much less
+//  checks
+//
+//==========================================================================
+bool VNetConnection::IsAlwaysRelevant (VThinker *th) {
+  if (th->ThinkerFlags&VThinker::TF_AlwaysRelevant) return true;
+  VEntity *Ent = Cast<VEntity>(th);
+  if (!Ent) return false;
+  return (Ent->GetTopOwner() == Owner->MO); // inventory?
 }
 
 
@@ -1038,6 +1057,14 @@ extern "C" {
     if (aa == bb) return 0;
     const VThinker *ta = *(const VThinker **)aa;
     const VThinker *tb = *(const VThinker **)bb;
+    // "always relewant" first (xor flags to see if they're equal)
+    if (((ta->ThinkerFlags|tb->ThinkerFlags)&VThinker::TF_AlwaysRelevant) &&
+        ((ta->ThinkerFlags^tb->ThinkerFlags)&VThinker::TF_AlwaysRelevant))
+    {
+      // only one thinker is "always relevant" here
+      vassert((ta->ThinkerFlags&VThinker::TF_AlwaysRelevant) != (tb->ThinkerFlags&VThinker::TF_AlwaysRelevant));
+      return (ta->ThinkerFlags&VThinker::TF_AlwaysRelevant ? -1 : 1);
+    }
     // entities always wins
     if (!ta->GetClass()->IsChildOf(VEntity::StaticClass())) {
       // a is not an entity
@@ -1052,8 +1079,21 @@ extern "C" {
     }
     // both are entities
     VNetConnection *nc = (VNetConnection *)ncptr;
-    const VEntity *ea = (const VEntity *)ta;
-    const VEntity *eb = (const VEntity *)tb;
+    /*const*/ VEntity *ea = (/*const*/ VEntity *)ta;
+    /*const*/ VEntity *eb = (/*const*/ VEntity *)tb;
+    // inventory should come first
+    if (ea->GetTopOwner() == nc->Owner->MO) {
+      // first is in inventory, check second
+      if (eb->GetTopOwner() != nc->Owner->MO) return -1; // a should come first, a < b
+      // both are inventories, sort by unique it
+      if (ta->GetUniqueId() < tb->GetUniqueId()) return -1;
+      if (ta->GetUniqueId() > tb->GetUniqueId()) return 1;
+      return 0;
+    } else {
+      // first is not in inventory, check second
+      if (eb->GetTopOwner() == nc->Owner->MO) return 1; // b should come first, a > b
+      // neither is in inventory, use distance sort
+    }
     // the one that is closer to the view origin should come first
     const float distaSq = (ea->Origin-nc->Owner->ViewOrg).length2DSquared();
     const float distbSq = (eb->Origin-nc->Owner->ViewOrg).length2DSquared();
@@ -1102,6 +1142,33 @@ void VNetConnection::UpdateThinkers () {
     }
   }
 
+  // send updates to the nearest objects first
+  // collect all thinkers with channels in `PendingThinkers`, and sort
+  for (auto &&it : ThinkerChannels.first()) {
+    if (IsRelevant(it.getKey())) PendingThinkers.append(it.getKey());
+  }
+
+  // sort and update existing thinkers first
+  if (PendingThinkers.length()) {
+    timsort_r(PendingThinkers.ptr(), PendingThinkers.length(), sizeof(PendingThinkers[0]), &cmpPendingThinkers, (void *)this);
+    for (auto &&th : PendingThinkers) {
+      VThinkerChannel *chan = ThinkerChannels.FindPtr(th);
+      if (!chan) continue;
+      if (chan->CanSendData()) {
+        chan->Update();
+        continue;
+      }
+      // do not mark as updated, the following loop will take care of unupdated ones
+      // this channel cannot send any data, alas
+      // still mark it as updated if it is always relevant, or an inventory
+      //if (!IsAlwaysRelevant(th)) continue;
+      //NeedsUpdate = true;
+      //chan->LastUpdateFrame = UpdateFrameCounter;
+    }
+    // don't send them twice, lol
+    PendingThinkers.reset();
+  }
+
   // update mobjs in sight
   for (TThinkerIterator<VThinker> th(Context->GetLevel()); th; ++th) {
     if (!IsRelevant(*th)) continue;
@@ -1117,6 +1184,10 @@ void VNetConnection::UpdateThinkers () {
       PendingThinkers.append(*th);
       continue;
     }
+    // skip, if already updated
+    if (chan->LastUpdateFrame == UpdateFrameCounter) continue;
+    // update if we can, but still mark as updated if we cannot (so we won't drop this object)
+    // TODO: replace unupdated object with new ones according to distance?
     if (chan->CanSendData()) {
       chan->Update();
     } else {
@@ -1124,7 +1195,6 @@ void VNetConnection::UpdateThinkers () {
       chan->LastUpdateFrame = UpdateFrameCounter;
     }
   }
-
 
   // close entity channels that were not updated in this frame
   // WARNING! `Close()` should not delete a channel!

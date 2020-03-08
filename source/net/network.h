@@ -617,7 +617,12 @@ public:
   void SendCommand (VStr Str);
 
   // fat PVS should be set up
-  bool IsRelevant (VThinker *Th);
+  bool IsRelevant (VThinker *th);
+
+  // inventory is always relevant too
+  // doesn't check PVS
+  // call after `IsRelevant()` returned `true`, because this does much less checks
+  bool IsAlwaysRelevant (VThinker *th);
 
   // this is called by server code to send updates to clients
   void UpdateLevel ();
