@@ -742,6 +742,13 @@ IMPLEMENT_FUNCTION(VObject, findExistingName) {
   RET_NAME(res);
 }
 
+// native static final string strRemoveColors (string s) [property(string) removeColors];
+IMPLEMENT_FUNCTION(VObject, strRemoveColors) {
+  VStr str;
+  vobjGetParam(str);
+  RET_STR(str.RemoveColors());
+}
+
 // native static final string strXStrip (string s) [property(string) xstrip];
 IMPLEMENT_FUNCTION(VObject, strXStrip) {
   VStr str;

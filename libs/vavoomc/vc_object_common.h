@@ -112,6 +112,7 @@
   DECLARE_FUNCTION(strIndexOf)
   DECLARE_FUNCTION(strLastIndexOf)
   DECLARE_FUNCTION(findExistingName)
+  DECLARE_FUNCTION(strRemoveColors)
   DECLARE_FUNCTION(strXStrip)
   DECLARE_FUNCTION(strTrimAll)
   DECLARE_FUNCTION(strTrimLeft)
