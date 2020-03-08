@@ -27,6 +27,8 @@
 #include "net/network.h"
 
 
+extern VCvarB sv_cheats;
+
 VCmdBuf GCmdBuf;
 
 bool VCommand::execLogInit = true;
@@ -100,11 +102,17 @@ static bool CheatAllowed (VBasePlayer *Player, bool allowDead=false) {
     Player->Printf("You are not in game!");
     return false;
   }
-  //GCon->Logf(NAME_Debug, "CheatAllowed: player '%s' checks for cheating!", *Player->PlayerName);
-  if (!Player->IsCheatsAllowed()) {
-    Player->Printf("No, cheater, you cannot do it!");
-    return false;
+  // client will forward them anyway
+  if (GGameInfo->NetMode == NM_Client) return true;
+  if (GGameInfo->NetMode == NM_ListenServer || GGameInfo->NetMode == NM_DedicatedServer) {
+    if (!sv_cheats) {
+      Player->Printf("You cannot cheat in a network game!");
+      return false;
+    }
+    return true;
   }
+  // if not a network server, cheats are always allowed
+  //return (GGameInfo->NetMode >= NM_Standalone);
   /*
   if (GGameInfo->NetMode >= NM_DedicatedServer) {
     Player->Printf("You cannot cheat in a network game!");

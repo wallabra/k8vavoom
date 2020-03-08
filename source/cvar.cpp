@@ -303,8 +303,8 @@ COMMAND(CvarInfoVar) {
     for (int f = 1; f < Args.length()-2; ++f) {
            if (Args[f].ICmp("noarchive") == 0) flags &= ~(CVAR_Archive|CVAR_AlwaysArchive);
       else if (Args[f].ICmp("cheat") == 0) flags |= CVAR_Cheat;
-      else if (Args[f].ICmp("latch") == 0) flags |= CVAR_Latch;
-      else if (Args[f].ICmp("server") == 0) flags |= CVAR_ServerInfo;
+      else if (Args[f].ICmp("latch") == 0) {/*flags |= CVAR_Latch;*/} //k8: this seems to be unnecessary
+      else if (Args[f].ICmp("server") == 0) {/*flags |= CVAR_ServerInfo;*/} //k8: this seems to be unnecessary
       else if (Args[f].ICmp("user") == 0) {}
       else if (Args[f].strEquCI("int")) { cvtname = "int"; isint = true; }
       else if (Args[f].strEquCI("float")) { cvtname = "float"; isfloat = true; }

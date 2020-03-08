@@ -65,7 +65,6 @@ bool bAutomapRevealed;
 bool bAutomapShowThings;
 bool bReloadQueued; // true if "reload" was pressed
 bool bZoomDown; // `true` if button down last tic
-transient bool bSvCheatsAllowed; // server will send us this
 
 native readonly private void *Net;
 
@@ -160,8 +159,7 @@ replication {
     ViewStates, DispSpriteFrame, DispSpriteName,
     ClientNum, WorldTimer, MO, Camera, SoundEnvironment,
     bAutomapRevealed, bAutomapShowThings,
-    bAttackDown, bReloadQueued, bZoomDown,
-    bSvCheatsAllowed;
+    bAttackDown, bReloadQueued, bZoomDown;
 
   unreliable if (!bIsClient)
     ClientStartSound, ClientStopSound, ClientSetViewOrg;

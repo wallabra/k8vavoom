@@ -92,17 +92,17 @@ static VCvarB dbg_report_orphan_weapons("dbg_report_orphan_weapons", false, "Rep
 
 VCvarB real_time("real_time", true, "Run server in real time?");
 
-static VCvarB sv_ignore_nojump("sv_ignore_nojump", false, "Ignore \"nojump\" flag in MAPINFO?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
-static VCvarB sv_ignore_nocrouch("sv_ignore_nocrouch", false, "Ignore \"nocrouch\" flag in MAPINFO?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
-/*static*/ VCvarB sv_ignore_nomlook("sv_ignore_nomlook", false, "Ignore \"nofreelook\" flag in MAPINFO?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
-static VCvarB sv_ignore_reset_health("sv_ignore_reset_health", false, "Ignore \"resethealth\" flag in MAPINFO?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
-static VCvarB sv_ignore_reset_inventory("sv_ignore_reset_inventory", false, "Ignore \"resetinventory\" flag in MAPINFO?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
-static VCvarB sv_ignore_reset_items("sv_ignore_reset_items", false, "Ignore \"resetitems\" flag in MAPINFO?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
+static VCvarB sv_ignore_nojump("sv_ignore_nojump", false, "Ignore \"nojump\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
+static VCvarB sv_ignore_nocrouch("sv_ignore_nocrouch", false, "Ignore \"nocrouch\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
+/*static*/ VCvarB sv_ignore_nomlook("sv_ignore_nomlook", false, "Ignore \"nofreelook\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
+static VCvarB sv_ignore_reset_health("sv_ignore_reset_health", false, "Ignore \"resethealth\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
+static VCvarB sv_ignore_reset_inventory("sv_ignore_reset_inventory", false, "Ignore \"resetinventory\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
+static VCvarB sv_ignore_reset_items("sv_ignore_reset_items", false, "Ignore \"resetitems\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
 
-static VCvarB sv_force_pistol_start("sv_force_pistol_start", false, "Start each new map with default weapons?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
-static VCvarB sv_force_health_reset("sv_force_health_reset", false, "Start each new map with default health?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
+static VCvarB sv_force_pistol_start("sv_force_pistol_start", false, "Start each new map with default weapons?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
+static VCvarB sv_force_health_reset("sv_force_health_reset", false, "Start each new map with default health?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
 
-static VCvarB sv_transporters_absolute("sv_transporters_absolute", true, "Use absolute movement instead of velocity for Boom transporters?", CVAR_ServerInfo|CVAR_Latch|CVAR_Archive|CVAR_PreInit);
+static VCvarB sv_transporters_absolute("sv_transporters_absolute", true, "Use absolute movement instead of velocity for Boom transporters?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_Archive|CVAR_PreInit);
 
 static VCvarB mod_allow_server_cvars("mod_allow_server_cvars", false, "Allow server cvars from CVARINFO?", CVAR_Archive|CVAR_PreInit);
 
@@ -148,10 +148,10 @@ VCvarB NoExit("NoExit", false, "Disable exiting in deathmatch?", 0/*CVAR_PreInit
 static VCvarI DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo);
 VCvarB NoMonsters("NoMonsters", false, "NoMonsters mode?", 0/*CVAR_PreInit*/);
 VCvarI Skill("Skill", "3", "Skill level.", 0/*CVAR_PreInit*/);
-VCvarB sv_cheats("sv_cheats", false, "Allow cheats in network game?", CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
-static VCvarB sv_barrel_respawn("sv_barrel_respawn", false, "Respawn barrels in network game?", CVAR_Archive|CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
-static VCvarB sv_pushable_barrels("sv_pushable_barrels", true, "Pushable barrels?", CVAR_Archive|CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
-VCvarB sv_decoration_block_projectiles("sv_decoration_block_projectiles", false, "Should decoration things block projectiles?", CVAR_Archive|CVAR_ServerInfo|CVAR_Latch|CVAR_PreInit);
+VCvarB sv_cheats("sv_cheats", false, "Allow cheats in network game?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
+static VCvarB sv_barrel_respawn("sv_barrel_respawn", false, "Respawn barrels in network game?", CVAR_Archive|/*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
+static VCvarB sv_pushable_barrels("sv_pushable_barrels", true, "Pushable barrels?", CVAR_Archive|/*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
+VCvarB sv_decoration_block_projectiles("sv_decoration_block_projectiles", false, "Should decoration things block projectiles?", CVAR_Archive|/*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
 static VCvarB split_frame("split_frame", true, "Splitframe mode?", CVAR_Archive|CVAR_PreInit);
 static VCvarI sv_maxmove("sv_maxmove", "400", "Maximum allowed network movement.", CVAR_Archive);
 static VCvarF master_heartbeat_time("master_heartbeat_time", "3", "Master server heartbit interval, seconds.", CVAR_Archive|CVAR_PreInit);

@@ -45,8 +45,8 @@ VCvarB compat_invisibility("compat_invisibility", false, "Compatibility: invisib
 
 IMPLEMENT_CLASS(V, LevelInfo)
 
-static VCvarF sv_gravity("sv_gravity", "800", "Gravity value.", CVAR_ServerInfo);
-static VCvarF sv_aircontrol("sv_aircontrol", "0.00390625", "Air control value.", CVAR_ServerInfo);
+static VCvarF sv_gravity("sv_gravity", "800", "Gravity value.", 0/*CVAR_ServerInfo*/);
+static VCvarF sv_aircontrol("sv_aircontrol", "0.00390625", "Air control value.", 0/*CVAR_ServerInfo*/);
 
 
 //==========================================================================

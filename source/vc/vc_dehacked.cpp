@@ -72,7 +72,7 @@ struct VDehFlag {
 };
 
 
-VCvarI Infighting("infighting", 0, "Allow infighting for all monster types?", CVAR_ServerInfo);
+VCvarI Infighting("infighting", 0, "Allow infighting for all monster types?", 0/*CVAR_ServerInfo*/);
 
 
 static char *Patch;

@@ -33,8 +33,6 @@ IMPLEMENT_CLASS(V, BasePlayer)
 
 bool VBasePlayer::isCheckpointSpawn = false;
 
-extern VCvarB sv_cheats;
-
 static VCvarF hud_notify_time("hud_notify_time", "3", "Notification timeout, in seconds.", CVAR_Archive);
 static VCvarF center_msg_time("hud_center_message_time", "3", "Centered message timeout.", CVAR_Archive);
 static VCvarB hud_msg_echo("hud_msg_echo", true, "Echo messages?", CVAR_Archive);
@@ -77,26 +75,6 @@ void VBasePlayer::PostCtor () {
   if (field) GCon->Logf("  k8ElvenGiftMessageTime=%g", field->GetFloat(this));
   abort();
   */
-}
-
-
-//==========================================================================
-//
-//  VBasePlayer::PostCtor
-//
-//==========================================================================
-bool VBasePlayer::IsCheatsAllowed () const noexcept {
-  //GCon->Logf(NAME_Debug, "player '%s' checks for cheating!", *PlayerName);
-  #ifdef CLIENT
-  if (GGameInfo->NetMode == NM_Client) {
-    return (cl && cl->Net && (PlayerFlags&PF_SvCheatsAllowed));
-  }
-  #endif
-  if (GGameInfo->NetMode == NM_ListenServer || GGameInfo->NetMode == NM_DedicatedServer) {
-    return sv_cheats;
-  }
-  // if not a network server, cheats are always allowed
-  return (GGameInfo->NetMode >= NM_Standalone);
 }
 
 
