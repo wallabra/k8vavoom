@@ -1802,21 +1802,35 @@ override bool SectorChanged (int CrushChange) {
     return true;
   }
 
-  if (CrushChange > 0 && !(XLevel.TicTime&3)) {
-    Damage(none, none, CrushChange);
-    // spray blood in a random direction
-    if (!bNoBlood && !bInvulnerable && BloodType && IsBloodAllowed()) {
-      EntityEx A = SpawnEntityChecked(class!EntityEx, BloodType, Origin+vector(0.0, 0.0, Height/2.0));
-      if (A) {
-        A.SetBloodArgs(self, damage:CrushChange);
-        A.Velocity.x = (Random()-Random())*16.0*35.0;
-        A.Velocity.y = (Random()-Random())*16.0*35.0;
-        //if (BloodTranslation && !A.bDontTranslate) A.Translation = BloodTranslation;
-        A.CopyBloodTranslations(self, copyNormalTranslation:false);
+  if (CrushChange > 0) {
+    int tics = XLevel.TicTime;
+    if (!(tics&3) && tics != lastCrushTicTime) {
+      //printdebug("%C: CRUSH; damage=%s; tics=%s; last=%s; delta=%s; bltic=%s; bldelta=%s", self, CrushChange, tics, lastCrushTicTime, tics-lastCrushTicTime, lastCrushTicBloodTime, tics-lastCrushTicBloodTime);
+      lastCrushTicTime = tics;
+      bool allowBlood = (lastCrushTicBloodTime > tics || tics-lastCrushTicBloodTime > 4*6);
+      if (allowBlood) lastCrushTicBloodTime = tics;
+      bool oldNoBlood = bNoBlood;
+      scope(exit) bNoBlood = oldNoBlood;
+      if (!allowBlood) bNoBlood = true;
+      Damage(none, none, CrushChange);
+      if (!oldNoBlood && !allowBlood && Health <= 0) {
+        bNoBlood = false;
+        SpawnBloodAtHeadExplosion(CrushChange);
       }
-    }
-    if (!bInvulnerable && CrushPainSound && !GetSoundPlayingInfo(self, GetSoundID(CrushPainSound))) {
-      PlaySound(CrushPainSound, CHAN_VOICE);
+      // spray blood in a random direction
+      if (!bNoBlood && !bInvulnerable && BloodType && IsBloodAllowed()) {
+        EntityEx A = SpawnEntityChecked(class!EntityEx, BloodType, Origin+vector(0.0, 0.0, Height/2.0));
+        if (A) {
+          A.SetBloodArgs(self, damage:CrushChange);
+          A.Velocity.x = (Random()-Random())*16.0*35.0;
+          A.Velocity.y = (Random()-Random())*16.0*35.0;
+          //if (BloodTranslation && !A.bDontTranslate) A.Translation = BloodTranslation;
+          A.CopyBloodTranslations(self, copyNormalTranslation:false);
+        }
+      }
+      if (!bInvulnerable && CrushPainSound && !GetSoundPlayingInfo(self, GetSoundID(CrushPainSound))) {
+        PlaySound(CrushPainSound, CHAN_VOICE);
+      }
     }
   }
 

@@ -540,6 +540,9 @@ transient TVec tmp_transporter_velocity;
 // ripper projectiles can spawn enormous blood entities, so block it for some time
 // don't save this field, it doesn't matter
 transient float lastRipBloodTime = -666; // XLevel.Time
+// this is used to prevent excessive blood in crushers
+transient int lastCrushTicTime = -666;
+transient int lastCrushTicBloodTime = -666;
 
 // so we can check it in various spawners
 // there is no need to save it
