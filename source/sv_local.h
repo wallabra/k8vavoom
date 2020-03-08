@@ -394,7 +394,8 @@ opening_t *SV_SectorOpenings (sector_t *sector, bool skipNonSolid=false);
 opening_t *SV_SectorOpenings2 (sector_t *sector, bool skipNonSolid=false);
 
 // it is used to find lowest sector point for silent teleporters
-float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point);
+float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point, bool ignore3dFloors=true);
+float SV_GetHighestSolidPointZ (sector_t *sector, const TVec &point, bool ignore3dFloors=true);
 
 // find "best fit" opening for the given coordz
 // `z1` is feet, `z2` is head

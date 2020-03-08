@@ -1264,9 +1264,54 @@ sec_region_t *SV_GetNextRegion (sector_t *sector, sec_region_t *srcreg) {
 //  FIXME: this ignores 3d floors (this is prolly the right thing to do)
 //
 //==========================================================================
-float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point) {
+float SV_GetLowestSolidPointZ (sector_t *sector, const TVec &point, bool ignore3dFloors) {
   if (!sector) return 0.0f; // idc
-  return sector->floor.GetPointZClamped(point); // cannot be lower than this
+  if (ignore3dFloors || !sector->Has3DFloors()) return sector->floor.GetPointZClamped(point); // cannot be lower than this
+  // find best solid 3d ceiling
+  vassert(sector->eregions);
+  float bestz = sector->floor.GetPointZClamped(point);
+  float bestdist = fabsf(bestz-point.z);
+  for (sec_region_t *reg = sector->eregions; reg; reg = reg->next) {
+    if ((reg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual|sec_region_t::RF_BaseRegion)) != 0) continue;
+    // ceiling is at the top
+    const float cz = reg->eceiling.GetPointZClamped(point);
+    const float dist = fabsf(cz-point.z);
+    if (dist < bestdist) {
+      bestz = cz;
+      bestdist = dist;
+    }
+  }
+  return bestz;
+}
+
+
+//==========================================================================
+//
+//  SV_GetHighestSolidPointZ
+//
+//  used for silent teleports
+//
+//  FIXME: this ignores 3d floors (this is prolly the right thing to do)
+//
+//==========================================================================
+float SV_GetHighestSolidPointZ (sector_t *sector, const TVec &point, bool ignore3dFloors) {
+  if (!sector) return 0.0f; // idc
+  if (ignore3dFloors || !sector->Has3DFloors()) return sector->ceiling.GetPointZClamped(point); // cannot be higher than this
+  // find best solid 3d floor
+  vassert(sector->eregions);
+  float bestz = sector->ceiling.GetPointZClamped(point);
+  float bestdist = fabsf(bestz-point.z);
+  for (sec_region_t *reg = sector->eregions; reg; reg = reg->next) {
+    if ((reg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual|sec_region_t::RF_BaseRegion)) != 0) continue;
+    // ceiling is at the top
+    const float fz = reg->efloor.GetPointZClamped(point);
+    const float dist = fabsf(fz-point.z);
+    if (dist < bestdist) {
+      bestz = fz;
+      bestdist = dist;
+    }
+  }
+  return bestz;
 }
 
 

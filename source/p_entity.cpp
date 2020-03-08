@@ -154,11 +154,35 @@ void VEntity::Tick (float deltaTime) {
   // skip ticker?
   const unsigned eflags = FlagsEx;
   if (eflags&EFEX_NoTickGrav) {
-    if (!(EntityFlags&EF_NoGravity) && SubSector) {
-      // it is always at floor level
-      Origin.z = SV_GetLowestSolidPointZ(SubSector->sector, Origin);
+    #ifdef CLIENT
+    //GCon->Logf(NAME_Debug, "*** %s ***", GetClass()->GetName());
+    #endif
+    // stick to floor or ceiling?
+    if (SubSector) {
+      if (eflags&(EFEX_StickToFloor|EFEX_StickToCeiling)) {
+        if (eflags&EFEX_StickToFloor) {
+          Origin.z = SV_GetLowestSolidPointZ(SubSector->sector, Origin, false); // don't ignore 3d floors
+        } else {
+          #ifdef CLIENT
+          //const float oldz = Origin.z;
+          #endif
+          Origin.z = SV_GetHighestSolidPointZ(SubSector->sector, Origin, false)-Height; // don't ignore 3d floors
+          #ifdef CLIENT
+          //GCon->Logf(NAME_Debug, "*** %s ***: stick to ceiling; oldz=%g; newz=%g", GetClass()->GetName(), oldz, Origin.z);
+          #endif
+        }
+      } else if (!(EntityFlags&EF_NoGravity)) {
+        // it is always at floor level
+        Origin.z = SV_GetLowestSolidPointZ(SubSector->sector, Origin, false); // don't ignore 3d floors
+        #ifdef CLIENT
+        //GCon->Logf(NAME_Debug, "  : %s down to earth", GetClass()->GetName());
+        #endif
+      }
     }
     if (eflags&EFEX_NoTickGravLT) {
+      #ifdef CLIENT
+      //GCon->Logf(NAME_Debug, "  : %s lifetime (lmt=%g)", GetClass()->GetName(), LastMoveTime-deltaTime);
+      #endif
       //GCon->Logf(NAME_Debug, "*** %s ***", GetClass()->GetName());
       // perform lifetime logic
       // LastMoveTime is time before the next step

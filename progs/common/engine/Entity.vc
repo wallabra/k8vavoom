@@ -309,6 +309,9 @@ bool bNoTickGrav; // do not call `Tick()` (but process gravity) (processed in C+
 bool bPseudoCorpse; // set in DECORATE for corpse decorations, so sprite offset fixer can recongize them
 bool bFloatBob; // use float bobbing z movement (moved from `EntityEx`)
 bool bNoTickGravLifeTime; // if `bNoTickGrav` set, perform lifetime logic
+// physics will put this entity to floor or ceiling (floor has precedence)
+bool bStickToFloor;
+bool bStickToCeiling;
 
 // 0: none
 // 1: switches object to "k8vavoomInternalNoTickGrav" when it enters idle state (the one with negative duration)
@@ -401,6 +404,10 @@ replication {
     /*, bUseDispState*/, bFullBright, bBright, bCorpse, bPseudoCorpse, bFloatBob,
     DispSpriteFrame, DispSpriteName,
     Score, Accuracy, Stamina;
+
+  reliable if (Role == ROLE_Authority && bNoTickGrav)
+    /*bNoInteraction,*/ bNoTickGrav, bNoTickGravLifeTime,
+    bNoGravity, bStickToFloor, bStickToCeiling;
 
   reliable if (Role == ROLE_Authority && bNetInitial)
     Radius, Height, VanillaHeight, RenderRadius, FloatBobStrength,

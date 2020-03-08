@@ -197,6 +197,10 @@ void VThinkerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Value
 void VThinkerChannel::Update () {
   if (Closing || !Thinker) return;
 
+  // currently, client cannot create thinkers, so ignore any possible client updates
+  // this may be changed later
+  if (!IsLocalChannel()) return;
+
   VEntity *Ent = Cast<VEntity>(Thinker);
 
   // set up thinker flags that can be used by field condition
