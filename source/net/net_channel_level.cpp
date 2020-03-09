@@ -317,19 +317,22 @@ void VLevelChannel::UpdateSide (VBitStreamWriter &strm, int sidx) {
 
   strm.WriteBit(Side->TopTexture != RepSide->TopTexture);
   if (Side->TopTexture != RepSide->TopTexture) {
-    strm.WriteInt(Side->TopTexture/*, MAX_VUINT16*/);
+    //strm.WriteInt(Side->TopTexture/*, MAX_VUINT16*/);
+    Side->TopTexture.Serialise(strm);
     RepSide->TopTexture = Side->TopTexture;
   }
 
   strm.WriteBit(Side->BottomTexture != RepSide->BottomTexture);
   if (Side->BottomTexture != RepSide->BottomTexture) {
-    strm.WriteInt(Side->BottomTexture/*, MAX_VUINT16*/);
+    //strm.WriteInt(Side->BottomTexture/*, MAX_VUINT16*/);
+    Side->BottomTexture.Serialise(strm);
     RepSide->BottomTexture = Side->BottomTexture;
   }
 
   strm.WriteBit(Side->MidTexture != RepSide->MidTexture);
   if (Side->MidTexture != RepSide->MidTexture) {
-    strm.WriteInt(Side->MidTexture/*, MAX_VUINT16*/);
+    //strm.WriteInt(Side->MidTexture/*, MAX_VUINT16*/);
+    Side->MidTexture.Serialise(strm);
     RepSide->MidTexture = Side->MidTexture;
   }
 
@@ -436,9 +439,9 @@ bool VLevelChannel::ParseSide (VMessageIn &Msg) {
   }
 
   side_t *Side = &Level->Sides[sidx];
-  if (Msg.ReadBit()) Side->TopTexture = Msg.ReadInt();
-  if (Msg.ReadBit()) Side->BottomTexture = Msg.ReadInt();
-  if (Msg.ReadBit()) Side->MidTexture = Msg.ReadInt();
+  if (Msg.ReadBit()) { /*Side->TopTexture = Msg.ReadInt();*/ Side->TopTexture.Serialise(Msg); }
+  if (Msg.ReadBit()) { /*Side->BottomTexture = Msg.ReadInt();*/ Side->BottomTexture.Serialise(Msg); }
+  if (Msg.ReadBit()) { /*Side->MidTexture = Msg.ReadInt();*/ Side->MidTexture.Serialise(Msg); }
   if (Msg.ReadBit()) Msg << Side->Top.TextureOffset;
   if (Msg.ReadBit()) Msg << Side->Bot.TextureOffset;
   if (Msg.ReadBit()) Msg << Side->Mid.TextureOffset;
@@ -518,9 +521,15 @@ void VLevelChannel::UpdateSector (VBitStreamWriter &strm, int sidx) {
   strm.WriteUInt((vuint32)sidx);
 
   strm.WriteBit(RepSec->floor_pic != Sec->floor.pic);
-  if (RepSec->floor_pic != Sec->floor.pic) strm.WriteInt(Sec->floor.pic/*, MAX_VUINT16*/);
+  if (RepSec->floor_pic != Sec->floor.pic) {
+    //strm.WriteInt(Sec->floor.pic/*, MAX_VUINT16*/);
+    Sec->floor.pic.Serialise(strm);
+  }
   strm.WriteBit(RepSec->ceil_pic != Sec->ceiling.pic);
-  if (RepSec->ceil_pic != Sec->ceiling.pic) strm.WriteInt(Sec->ceiling.pic/*, MAX_VUINT16*/);
+  if (RepSec->ceil_pic != Sec->ceiling.pic) {
+    //strm.WriteInt(Sec->ceiling.pic/*, MAX_VUINT16*/);
+    Sec->ceiling.pic.Serialise(strm);
+  }
   strm.WriteBit(FloorChanged);
   if (FloorChanged) {
     strm.WriteBit(RepSec->floor_dist != Sec->floor.dist);
@@ -627,8 +636,8 @@ bool VLevelChannel::ParseSector (VMessageIn &Msg) {
   sector_t *Sec = &Level->Sectors[sidx];
   const float PrevFloorDist = Sec->floor.dist;
   const float PrevCeilDist = Sec->ceiling.dist;
-  if (Msg.ReadBit()) Sec->floor.pic = Msg.ReadInt();
-  if (Msg.ReadBit()) Sec->ceiling.pic = Msg.ReadInt();
+  if (Msg.ReadBit()) { /*Sec->floor.pic = Msg.ReadInt();*/ Sec->floor.pic.Serialise(Msg); }
+  if (Msg.ReadBit()) { /*Sec->ceiling.pic = Msg.ReadInt();*/ Sec->ceiling.pic.Serialise(Msg); }
   if (Msg.ReadBit()) {
     if (Msg.ReadBit()) {
       Msg << Sec->floor.dist;
