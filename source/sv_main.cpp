@@ -31,6 +31,12 @@
 # include "drawer.h"
 #endif
 
+#ifndef CLIENT
+// this is for BDW mod, to have tracers
+VCvarB r_models("r_models", true, "Allow 3d models?", 0/*CVAR_Archive*/);
+#endif
+
+
 // arbitrary number
 #define INITIAL_TICK_DELAY  (2)
 
