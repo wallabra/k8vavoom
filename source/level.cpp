@@ -465,7 +465,7 @@ void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, 
   L.Color = Color;
   L.ConeDir = coneDirection;
   L.ConeAngle = coneAngle;
-  L.LightChanged = true;
+  L.Flags = rep_light_t::LightChanged;
 }
 
 
@@ -487,7 +487,7 @@ void VLevel::MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin) {
   if (stl) {
     if (stl->Origin != Ent->Origin) {
       stl->Origin = Ent->Origin;
-      stl->LightChanged = true;
+      stl->Flags |= rep_light_t::LightChanged;
     }
   }
   */

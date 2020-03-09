@@ -115,3 +115,9 @@ extern int cli_NoMonsters;
 extern int cli_CompileAndExit;
 extern int cli_NoExternalDeh;
 extern int cli_GoreMod; // !=0: enabled
+
+
+int FL_GetNetWadsCount ();
+vuint32 FL_GetNetWadsHash ();
+// will clear the list
+void FL_GetNetWads (TArray<VStr> &list);

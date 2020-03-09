@@ -249,14 +249,17 @@ void VThinkerChannel::Update () {
   vuint8 *Data = (vuint8 *)Thinker;
   VObject *NullObj = nullptr;
 
-  //FIXME: use bitstream and split it to the messages here
+  // use bitstream and split it to the messages here
   VMessageOut Msg(this);
   Msg.bOpen = NewObj;
+  VBitStreamWriter strm(MAX_MSG_SIZE_BITS+64, false); // no expand
+  int flushCount = 0;
 
   if (NewObj) {
     VClass *TmpClass = Thinker->GetClass();
-    Connection->ObjMap->SerialiseClass(Msg, TmpClass);
-    NewObj = false;
+    if (!Connection->ObjMap->SerialiseClass(strm, TmpClass)) {
+      Sys_Error("%s: cannot serialise thinker class '%s'", *GetDebugName(), Thinker->GetClass()->GetName());
+    }
   }
 
   TAVec SavedAngles;
@@ -274,6 +277,7 @@ void VThinkerChannel::Update () {
     SavedAngles.roll = 0;
   }
 
+  //Thinker->GetClass()->NumNetFields
   for (VField *F = Thinker->GetClass()->NetFields; F; F = F->NextNetField) {
     if (!FieldCondValues[F->NetIndex]) continue;
 
@@ -292,6 +296,7 @@ void VThinkerChannel::Update () {
       VFieldType IntType = F->Type;
       IntType.Type = F->Type.ArrayInnerType;
       int InnerSize = IntType.GetSize();
+      //F->Type.GetArrayDim()
       for (int i = 0; i < F->Type.GetArrayDim(); ++i) {
         vuint8 *Val = FieldValue+i*InnerSize;
         vuint8 *OldVal = OldData+F->Ofs+i*InnerSize;
@@ -300,31 +305,39 @@ void VThinkerChannel::Update () {
           continue;
         }
 
+        bool allowValueCopy = true;
         // if it's an object reference that cannot be serialised, send it as nullptr reference
         if (IntType.Type == TYPE_Reference && !Connection->ObjMap->CanSerialiseObject(*(VObject **)Val)) {
           if (!*(VObject **)OldVal) continue; // already sent as nullptr
           Val = (vuint8 *)&NullObj;
+          // resend
+          allowValueCopy = false;
         }
 
-        Msg.WriteInt(F->NetIndex/*, Thinker->GetClass()->NumNetFields*/);
-        Msg.WriteInt(i/*, F->Type.GetArrayDim()*/);
-        if (VField::NetSerialiseValue(Msg, Connection->ObjMap, Val, IntType)) {
+        strm.WriteUInt((unsigned)F->NetIndex);
+        strm.WriteUInt((unsigned)i);
+        if (VField::NetSerialiseValue(strm, Connection->ObjMap, Val, IntType)) {
           //GCon->Logf(NAME_DevNet, "%s:%u: sent array field #%d [%d] (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, i, F->GetName(), *IntType.GetName());
-          VField::CopyFieldValue(Val, OldVal, IntType);
+          if (allowValueCopy) VField::CopyFieldValue(Val, OldVal, IntType);
         }
+        flushCount += PutStream(&Msg, strm);
       }
     } else {
+      bool allowValueCopy = true;
       // if it's an object reference that cannot be serialised, send it as nullptr reference
       if (F->Type.Type == TYPE_Reference && !Connection->ObjMap->CanSerialiseObject(*(VObject **)FieldValue)) {
         if (!*(VObject **)(OldData+F->Ofs)) continue; // already sent as nullptr
         FieldValue = (vuint8 *)&NullObj;
+        // resend
+        allowValueCopy = false;
       }
 
-      Msg.WriteInt(F->NetIndex/*, Thinker->GetClass()->NumNetFields*/);
-      if (VField::NetSerialiseValue(Msg, Connection->ObjMap, FieldValue, F->Type)) {
+      strm.WriteUInt((unsigned)F->NetIndex);
+      if (VField::NetSerialiseValue(strm, Connection->ObjMap, FieldValue, F->Type)) {
         //GCon->Logf(NAME_DevNet, "%s:%u: sent field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
-        VField::CopyFieldValue(FieldValue, OldData+F->Ofs, F->Type);
+        if (allowValueCopy) VField::CopyFieldValue(FieldValue, OldData+F->Ofs, F->Type);
       }
+      flushCount += PutStream(&Msg, strm);
     }
   }
 
@@ -334,15 +347,22 @@ void VThinkerChannel::Update () {
   // clear temporary networking flags
   Thinker->ThinkerFlags &= ~(VThinker::TF_NetInitial|VThinker::TF_NetOwner);
 
+  flushCount += FlushMsg(&Msg);
+
   // if this is initial send, we have to flush the message, even if it is empty
-  if (Msg.bOpen || Msg.GetNumBits() ||
-      (Thinker->ThinkerFlags&VThinker::TF_AlwaysRelevant) ||
-      Thinker == Connection->Owner->MO ||
-      (Ent && Ent->IsPlayer()) ||
-      (Ent && Ent->GetTopOwner() == Connection->Owner->MO))
-  {
+  if (Msg.bOpen || Msg.GetNumBits() || (NewObj && !detachEntity)) {
     SendMessage(&Msg);
+  } else if (!detachEntity && !flushCount) {
+    if ((Thinker->ThinkerFlags&VThinker::TF_AlwaysRelevant) ||
+        Thinker == Connection->Owner->MO ||
+        (Ent && Ent->IsPlayer()) ||
+        (Ent && Ent->GetTopOwner() == Connection->Owner->MO))
+    {
+      SendMessage(&Msg);
+    }
   }
+
+  NewObj = false;
 
   // if this object becomes "dumb proxy", mark it as detached, and close the channel
   if (detachEntity) {
@@ -433,7 +453,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
   }
 
   while (!Msg.AtEnd()) {
-    int FldIdx = Msg.ReadInt();
+    int FldIdx = (int)Msg.ReadUInt();
 
     // find field
     VField *F = nullptr;
@@ -447,7 +467,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     // got field?
     if (F) {
       if (F->Type.Type == TYPE_Array) {
-        int Idx = Msg.ReadInt(/*F->Type.GetArrayDim()*/);
+        int Idx = (int)Msg.ReadUInt();
         VFieldType IntType = F->Type;
         IntType.Type = F->Type.ArrayInnerType;
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs+Idx*IntType.GetSize(), IntType);

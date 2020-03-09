@@ -90,15 +90,7 @@ void VMessageOut::SetupWith (vuint8 AChanType, int AChanIndex, bool areliable) n
 //==========================================================================
 void VMessageOut::Reset (VChannel *AChannel, bool areliable) {
   Clear();
-  ChanType = (AChannel ? AChannel->Type : 0);
-  ChanIndex = (AChannel ? AChannel->Index : -1);
-  ChanSequence = 0;
-  PacketId = 0;
-  bOpen = false;
-  bClose = false;
-  bReliable = areliable;
-  Time = 0;
-  bReceivedAck = false;
+  SetupWith((AChannel ? AChannel->Type : 0), (AChannel ? AChannel->Index : ~0u), areliable);
 }
 
 

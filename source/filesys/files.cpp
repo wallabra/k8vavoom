@@ -2821,3 +2821,78 @@ VStr FL_GetUserDataDir (bool shouldCreate) {
   if (shouldCreate) Sys_CreateDirectory(res);
   return res;
 }
+
+
+// from corelib, sorry!
+extern TArray<VSearchPath *> fsysSearchPaths;
+
+
+//==========================================================================
+//
+//  getNetPath
+//
+//==========================================================================
+static VStr getNetPath (VSearchPath *sp) {
+  if (!sp) return VStr::EmptyString;
+  if (sp->cosmetic) return VStr::EmptyString;
+  if (sp->IsNonPak()) return VStr::EmptyString;
+  VStr fname = sp->GetPrefix();
+  VStr bname = fname.extractFileName();
+  if (bname.isEmpty()) return VStr::EmptyString;
+  if (bname.strEquCI("basepak.pk3")) {
+    while (!fname.isEmpty() && fname[fname.length()-1] != '/' && fname[fname.length()-1] != '\\') fname.chopRight(1);
+    fname.chopRight(1);
+    VStr xname = fname.extractFileName();
+    if (!xname.isEmpty()) bname = xname+"/"+bname;
+  }
+  return bname;
+}
+
+
+//==========================================================================
+//
+//  FL_GetNetWadsCount
+//
+//==========================================================================
+int FL_GetNetWadsCount () {
+  int res = 0;
+  for (auto &&sp : fsysSearchPaths) {
+    if (!getNetPath(sp).isEmpty()) ++res;
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  FL_GetNetWadsHash
+//
+//==========================================================================
+vuint32 FL_GetNetWadsHash () {
+  int count = 0;
+  VStr modlist;
+  for (auto &&sp : fsysSearchPaths) {
+    VStr s = getNetPath(sp);
+    if (s.isEmpty()) continue;
+    modlist += s;
+    modlist += "\n";
+    ++count;
+  }
+  return XXHash32::hash(*modlist, (vint32)modlist.length(), (vuint32)count);
+}
+
+
+//==========================================================================
+//
+//  FL_GetNetWads
+//
+//==========================================================================
+void FL_GetNetWads (TArray<VStr> &list) {
+  list.reset();
+  for (auto &&sp : fsysSearchPaths) {
+    VStr s = getNetPath(sp);
+    if (s.isEmpty()) continue;
+    //GCon->Logf(NAME_Debug, ":: <%s> (basepak=%d; iwad=%d; userwad=%d)", *s, (int)sp->basepak, (int)sp->iwad, (int)sp->userwad);
+    list.append(s);
+  }
+}

@@ -372,7 +372,8 @@ int SemParser::expectInt () {
 
     if (token == "BODYQUESIZE") return 32; //FIXME!
     if (token == "CORPSEQUEUESIZE") return 64; //FIXME!
-    if (token == "NUM_NOTIFY_LINES") return 5; //FIXME!
+    if (token == "NUM_NOTIFY_LINES") return 8; //FIXME!
+    if (token == "NUM_CHAT_LINES") return 15; //FIXME!
     if (token == "CastCount") return 17; //FIXME!
     if (token == "MaxWeaponSlots") return 10; //FIXME!
     if (token == "MaxWeaponsInSlot") return 8; //FIXME!

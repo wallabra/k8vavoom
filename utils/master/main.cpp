@@ -59,7 +59,7 @@ enum {
 };
 
 enum {
-  MAX_MSGLEN         = 1024,
+  MAX_MSGLEN = 1400,
 
   MASTER_SERVER_PORT   = 26002,
   MASTER_PROTO_VERSION = 1,
@@ -69,7 +69,8 @@ enum {
 struct TSrvItem {
   sockaddr addr;
   time_t time; // for blocked: unblock time; 0: never
-  vuint8 pver; // protocol version
+  vuint8 pver0; // protocol version
+  vuint8 pver1; // protocol version
 };
 
 #ifdef _WIN32
@@ -203,7 +204,8 @@ static void BlockIt (const sockaddr *clientaddr) {
   for (int i = srvList.length()-1; i >= 0; --i) {
     if (AddrCompareNoPort(&srvList[i].addr, clientaddr) == 0) {
       srvList[i].time = time(0)+60; // block for one minute
-      srvList[i].pver = 0;
+      srvList[i].pver0 = 0;
+      srvList[i].pver1 = 0;
       return;
     }
   }
@@ -211,7 +213,8 @@ static void BlockIt (const sockaddr *clientaddr) {
   TSrvItem &it = srvBlocked.Alloc();
   it.addr = *clientaddr;
   it.time = time(0)+60*3; // block for three minutes
-  it.pver = 0;
+  it.pver0 = 0;
+  it.pver1 = 0;
 }
 
 
@@ -244,11 +247,12 @@ static void ReadNet () {
   if (len >= 1) {
     switch (buf[0]) {
       case MCREQ_JOIN: // payload: protocol version; can't be 0 or 255
-        if (len == 2 && buf[1] != 0 && buf[1] != 255) {
+        if (len == 3 && buf[1] != 0 && buf[1] != 255) {
           for (int i = 0; i < srvList.length(); ++i) {
             if (!AddrCompare(&srvList[i].addr, &clientaddr)) {
               srvList[i].time = time(0);
-              srvList[i].pver = buf[1];
+              srvList[i].pver0 = buf[1];
+              srvList[i].pver1 = buf[2];
               return;
             }
           }
@@ -256,7 +260,8 @@ static void ReadNet () {
           TSrvItem &it = srvList.Alloc();
           it.addr = clientaddr;
           it.time = time(0);
-          it.pver = buf[1];
+          it.pver0 = buf[1];
+          it.pver1 = buf[2];
           return;
         }
         break;
@@ -284,11 +289,12 @@ static void ReadNet () {
             buf[bufstpos+1] = (sidx == 0 ? 1 : 0); // seq id: bit 0 set means 'first', bit 1 set means 'last'
             int mlen = bufstpos+2;
             while (sidx < srvList.length()) {
-              if (mlen+7 > MAX_MSGLEN-1) break;
-              buf[mlen+0] = srvList[sidx].pver;
-              memcpy(&buf[mlen+1], srvList[sidx].addr.sa_data+2, 4);
-              memcpy(&buf[mlen+5], srvList[sidx].addr.sa_data+0, 2);
-              mlen += 7;
+              if (mlen+8 > MAX_MSGLEN-1) break;
+              buf[mlen+0] = srvList[sidx].pver0;
+              buf[mlen+1] = srvList[sidx].pver1;
+              memcpy(&buf[mlen+2], srvList[sidx].addr.sa_data+2, 4);
+              memcpy(&buf[mlen+6], srvList[sidx].addr.sa_data+0, 2);
+              mlen += 8;
               ++sidx;
             }
             if (sidx >= srvList.length()) buf[bufstpos+1] |= 0x02; // set "last packet" flag
@@ -388,7 +394,7 @@ int main (int argc, const char **argv) {
     if (dumpServers || srvList.length() != scount) {
       Logf("===== SERVERS =====");
       for (int f = 0; f < srvList.length(); ++f) {
-        Logf("%3d: %s", f, AddrToString(&srvList[f].addr));
+        Logf("%3d: %s (version: %u.%u)", f, AddrToString(&srvList[f].addr), srvList[f].pver0, srvList[f].pver1);
       }
     }
   }

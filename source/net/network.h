@@ -43,7 +43,8 @@ enum {
 
 // sent on handshake
 enum {
-  NET_PROTOCOL_VERSION = 6,
+  NET_PROTOCOL_VERSION_HI = 7,
+  NET_PROTOCOL_VERSION_LO = 0,
 };
 
 enum {

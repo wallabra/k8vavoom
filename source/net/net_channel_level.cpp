@@ -172,7 +172,7 @@ void VLevelChannel::SendNewLevel () {
     Msg.WriteUInt(CMD_NewLevel);
     VStr MapName = *Level->MapName;
     VStr MapHash = *Level->MapHash;
-    vuint32 modhash = SV_GetModListHash();
+    vuint32 modhash = FL_GetNetWadsHash();
     vassert(!Msg.IsLoading());
     Msg << MapName;
     Msg << MapHash;
@@ -570,7 +570,7 @@ void VLevelChannel::UpdateSector (VBitStreamWriter &strm, int sidx) {
     if (RepSec->ceil_SkyBox != CeilSkyBox) strm << CeilSkyBox;
   }
   strm.WriteBit(LightChanged);
-  if (LightChanged) strm.WriteInt(Sec->params.lightlevel>>2/*, 256*/);
+  if (LightChanged) strm.WriteUInt(((vuint32)Sec->params.lightlevel)>>2/*, 256*/);
   strm.WriteBit(FadeChanged);
   if (FadeChanged) strm << Sec->params.Fade;
   strm.WriteBit(SkyChanged);
@@ -657,7 +657,7 @@ bool VLevelChannel::ParseSector (VMessageIn &Msg) {
     if (Msg.ReadBit()) Sec->ceiling.BaseYOffs = Msg.ReadInt();
     if (Msg.ReadBit()) Msg << Sec->ceiling.SkyBox;
   }
-  if (Msg.ReadBit()) Sec->params.lightlevel = Msg.ReadInt()<<2;
+  if (Msg.ReadBit()) Sec->params.lightlevel = Msg.ReadUInt()<<2;
   if (Msg.ReadBit()) Msg << Sec->params.Fade;
   if (Msg.ReadBit()) Sec->Sky = Msg.ReadInt();
   if (Msg.ReadBit()) {
@@ -1017,7 +1017,7 @@ void VLevelChannel::UpdateStaticLight (VBitStreamWriter &strm, int idx, bool for
   vassert(idx >= 0 && idx < Level->NumStaticLights);
 
   rep_light_t &L = Level->StaticLights[idx];
-  if (!forced && !L.LightChanged) return;
+  if (!forced && !(L.Flags&rep_light_t::LightChanged)) return;
 
   strm.WriteUInt(CMD_StaticLight);
 
@@ -1033,7 +1033,7 @@ void VLevelChannel::UpdateStaticLight (VBitStreamWriter &strm, int idx, bool for
     strm << lConeDir << lConeAngle;
   }
 
-  if (!forced) L.LightChanged = false;
+  if (!forced) L.Flags &= ~rep_light_t::LightChanged;
 }
 
 
@@ -1219,7 +1219,7 @@ void VLevelChannel::ParseMessage (VMessageIn &Msg) {
           err = true;
           break;
         }
-        if (csi.modhash != SV_GetModListHash()) {
+        if (csi.modhash != FL_GetNetWadsHash()) {
           GCon->Logf(NAME_DevNet, "%s: server has different wad set", *GetDebugName());
           err = true;
           break;

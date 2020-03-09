@@ -539,7 +539,7 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
 
   VMessageOut Msg(this, !!(Func->Flags&FUNC_NetReliable));
   //GCon->Logf(NAME_DevNet, "%s: creating RPC: %s", *GetDebugName(), *Func->GetFullName());
-  Msg.WriteInt((unsigned)Func->NetIndex);
+  Msg.WriteUInt((unsigned)Func->NetIndex);
 
   // serialise arguments
   VStack *Param = VObject::VMGetStackPtr()-Func->ParamsSize+1; // skip self

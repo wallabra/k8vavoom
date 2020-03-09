@@ -35,13 +35,15 @@
 //
 // CCREQ_CONNECT
 //    bytes     "K8VAVOOM"
-//    vuint8    net_protocol_version  NET_PROTOCOL_VERSION
+//    vuint8    net_protocol_version_hi  NET_PROTOCOL_VERSION_HI
+//    vuint8    net_protocol_version_lo  NET_PROTOCOL_VERSION_LO
 //    vuint32   modlisthash
 //    vuint16   modlistcount
 //
 // CCREQ_SERVER_INFO
 //    bytes     "K8VAVOOM"
-//    vuint8    net_protocol_version  NET_PROTOCOL_VERSION
+//    vuint8    net_protocol_version_hi  NET_PROTOCOL_VERSION_HI
+//    vuint8    net_protocol_version_lo  NET_PROTOCOL_VERSION_LO
 //
 //
 // CCREP_ACCEPT
@@ -59,7 +61,8 @@
 //    string    level_name
 //    vuint8    current_players
 //    vuint8    max_players
-//    vuint8    protocol_version    NET_PROTOCOL_VERSION
+//    vuint8    net_protocol_version_hi  NET_PROTOCOL_VERSION_HI
+//    vuint8    net_protocol_version_lo  NET_PROTOCOL_VERSION_LO
 //    vuint32   modlisthash
 //    asciiz strings with loaded archive names, terminated with empty string
 //
@@ -214,16 +217,11 @@ bool VDatagramDriver::CheckGameSignature (VBitStreamReader &strm) {
 //==========================================================================
 void VDatagramDriver::WritePakList (VBitStreamWriter &strm) {
   // write names
-  auto list = FL_GetWadPk3List();
+  TArray<VStr> list;
+  FL_GetNetWads(list);
   for (int f = 0; f < list.length(); ++f) {
-    VStr pak = list[f].extractFileName();
-    if (pak.length() == 0) {
-      // this is base pak
-      pak = list[f];
-    } else {
-      pak = pak.stripExtension();
-    }
-    if (pak.length() == 0) continue;
+    VStr pak = list[f];
+    if (pak.isEmpty()) continue;
     //GCon->Logf(NAME_Debug, "%d: <%s>", f, *pak);
     //if (pak.length() > 255) pak = pak.right(255); // just in case
     if (strm.GetNumBits()+pak.length()*8+8 > MAX_DGRAM_SIZE*8-8) break;
@@ -322,7 +320,9 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     WriteGameSignature(Reply);
     TmpByte = CCREQ_SERVER_INFO;
     Reply << TmpByte;
-    TmpByte = NET_PROTOCOL_VERSION;
+    TmpByte = NET_PROTOCOL_VERSION_HI;
+    Reply << TmpByte;
+    TmpByte = NET_PROTOCOL_VERSION_LO;
     Reply << TmpByte;
     Drv->Broadcast(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes());
   }
@@ -380,11 +380,18 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     msg << TmpByte;
     hinfo->MaxUsers = TmpByte;
     msg << TmpByte;
-    if (TmpByte == NET_PROTOCOL_VERSION) hinfo->Flags |= hostcache_t::Flag_GoodProtocol;
+    if (TmpByte == NET_PROTOCOL_VERSION_HI) {
+      msg << TmpByte;
+      if (TmpByte == NET_PROTOCOL_VERSION_LO) {
+        hinfo->Flags |= hostcache_t::Flag_GoodProtocol;
+      }
+    } else {
+      msg << TmpByte;
+    }
     vuint32 mhash = 0;
     msg << mhash;
-    //GCon->Logf(NAME_DevNet, " WHASH: theirs=0x%08x  mine=0x%08x", mhash, SV_GetModListHash());
-    if (mhash == SV_GetModListHash()) hinfo->Flags |= hostcache_t::Flag_GoodWadList;
+    //GCon->Logf(NAME_DevNet, " WHASH: theirs=0x%08x  mine=0x%08x", mhash, FL_GetNetWadsHash());
+    if (mhash == FL_GetNetWadsHash()) hinfo->Flags |= hostcache_t::Flag_GoodWadList;
     hinfo->CName = addr;
     hinfo->WadFiles.clear();
     ReadPakList(hinfo->WadFiles, msg);
@@ -394,8 +401,8 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
       --Net->HostCacheCount;
       continue;
     }
-    //GCon->Logf(NAME_DevNet, " wcount: %d %d", hinfo->WadFiles.length(), FL_GetWadPk3List().length());
-    if ((hinfo->Flags&hostcache_t::Flag_GoodWadList) && hinfo->WadFiles.length() != FL_GetWadPk3List().length()) {
+    //GCon->Logf(NAME_DevNet, " wcount: %d %d", hinfo->WadFiles.length(), FL_GetNetWadsCount());
+    if ((hinfo->Flags&hostcache_t::Flag_GoodWadList) && hinfo->WadFiles.length() != FL_GetNetWadsCount()) {
       hinfo->Flags &= ~hostcache_t::Flag_GoodWadList;
     }
     //GCon->Logf(NAME_DevNet, " flags: 0x%04x", hinfo->Flags);
@@ -496,11 +503,13 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
     WriteGameSignature(MsgOut);
     TmpByte = CCREQ_CONNECT;
     MsgOut << TmpByte;
-    TmpByte = NET_PROTOCOL_VERSION;
+    TmpByte = NET_PROTOCOL_VERSION_HI;
     MsgOut << TmpByte;
-    vuint32 modhash = SV_GetModListHash();
+    TmpByte = NET_PROTOCOL_VERSION_LO;
+    MsgOut << TmpByte;
+    vuint32 modhash = FL_GetNetWadsHash();
     MsgOut << modhash;
-    vuint16 modcount = (vuint16)FL_GetWadPk3List().length();
+    vuint16 modcount = (vuint16)FL_GetNetWadsCount();
     MsgOut << modcount;
     Drv->Write(newsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
 
@@ -680,7 +689,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   vuint8 command;
   VDatagramSocket *sock;
   int ret;
-  vuint8 TmpByte;
+  vuint8 TmpByte, TmpByte1;
   VStr TmpStr;
 
   acceptsock = Drv->CheckNewConnections();
@@ -725,9 +734,11 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     MsgOut << TmpByte;
     TmpByte = svs.max_clients;
     MsgOut << TmpByte;
-    TmpByte = NET_PROTOCOL_VERSION;
+    TmpByte = NET_PROTOCOL_VERSION_HI;
     MsgOut << TmpByte;
-    vuint32 mhash = SV_GetModListHash();
+    TmpByte = NET_PROTOCOL_VERSION_LO;
+    MsgOut << TmpByte;
+    vuint32 mhash = FL_GetNetWadsHash();
     MsgOut << mhash;
     // write pak list
     WritePakList(MsgOut);
@@ -742,9 +753,11 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
   // check version
   TmpByte = 0;
+  TmpByte1 = 0;
   msg << TmpByte;
-  if (msg.IsError() || TmpByte != NET_PROTOCOL_VERSION) {
-    GCon->Logf(NAME_DevNet, "connection error: invalid protocol version, got %u, but expected %d", TmpByte, NET_PROTOCOL_VERSION);
+  msg << TmpByte1;
+  if (msg.IsError() || TmpByte != NET_PROTOCOL_VERSION_HI || TmpByte1 != NET_PROTOCOL_VERSION_LO) {
+    GCon->Logf(NAME_DevNet, "connection error: invalid protocol version, got %u:%u, but expected %u:%u", TmpByte, TmpByte1, NET_PROTOCOL_VERSION_HI, NET_PROTOCOL_VERSION_LO);
     // send reject packet, why not?
     SendConnectionReject(Drv, "invalid protocol version", acceptsock, clientaddr);
     return nullptr;
@@ -755,7 +768,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   vuint16 modcount = 0;
   msg << modhash;
   msg << modcount;
-  if (msg.IsError() || modhash != SV_GetModListHash() || modcount != (vuint16)FL_GetWadPk3List().length()) {
+  if (msg.IsError() || modhash != FL_GetNetWadsHash() || modcount != (vuint16)FL_GetNetWadsCount()) {
     GCon->Log(NAME_DevNet, "connection error: incompatible mod list");
     // send reject packet
     SendConnectionReject(Drv, "incompatible loaded mods list", acceptsock, clientaddr, true); // send modlist
@@ -787,9 +800,10 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
       // it is prolly somebody coming back in from a crash/disconnect
       // so close the old socket and let their retry get them back in
       // but don't do that for localhost
+      // meh, use strict comparison -- routers and such...
       if (ret != 0 && Drv->IsLocalAddress(&clientaddr) && Drv->IsLocalAddress(&s->Addr)) {
         GCon->Logf(NAME_DevNet, "CONN: LOCALHOST for %s", *Drv->AddrToString(&clientaddr));
-      } else {
+      } else if (ret == 0) {
         GCon->Logf(NAME_DevNet, "CONN: RETRYWAIT for %s", *Drv->AddrToString(&clientaddr));
         s->Invalid = true;
         return nullptr;
@@ -881,7 +895,9 @@ void VDatagramDriver::UpdateMaster (VNetLanDriver *Drv) {
   MsgOut << TmpByte;
   TmpByte = MCREQ_JOIN;
   MsgOut << TmpByte;
-  TmpByte = NET_PROTOCOL_VERSION;
+  TmpByte = NET_PROTOCOL_VERSION_HI;
+  MsgOut << TmpByte;
+  TmpByte = NET_PROTOCOL_VERSION_LO;
   MsgOut << TmpByte;
   Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
 }
@@ -1005,12 +1021,13 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     //if ((control&0x01) == 0) continue; // first packed is missing, but nobody cares
 
     while (!msg.AtEnd()) {
-      vuint8 pver;
+      vuint8 pver0 = 0, pver1 = 0;
       tmpaddr = readaddr;
-      msg.Serialise(&pver, 1);
+      msg.Serialise(&pver0, 1);
+      msg.Serialise(&pver1, 1);
       msg.Serialise(tmpaddr.sa_data+2, 4);
       msg.Serialise(tmpaddr.sa_data, 2);
-      if (pver == NET_PROTOCOL_VERSION) {
+      if (!msg.IsError() && pver0 == NET_PROTOCOL_VERSION_HI && pver1 == NET_PROTOCOL_VERSION_LO) {
         GCon->Logf(NAME_DevNet, "  sending server query to %s...", *Drv->AddrToString(&tmpaddr));
         VBitStreamWriter Reply(MAX_DGRAM_SIZE<<3);
         TmpByte = NETPACKET_CTL;
@@ -1018,11 +1035,13 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
         WriteGameSignature(Reply);
         TmpByte = CCREQ_SERVER_INFO;
         Reply << TmpByte;
-        TmpByte = NET_PROTOCOL_VERSION;
+        TmpByte = NET_PROTOCOL_VERSION_HI;
+        Reply << TmpByte;
+        TmpByte = NET_PROTOCOL_VERSION_LO;
         Reply << TmpByte;
         Drv->Write(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes(), &tmpaddr);
       } else {
-        GCon->Logf(NAME_DevNet, "  server: %s, bad proto version %u", *Drv->AddrToString(&tmpaddr), pver);
+        GCon->Logf(NAME_DevNet, "  server: %s, bad proto version %u:%u", *Drv->AddrToString(&tmpaddr), pver0, pver1);
       }
     }
 

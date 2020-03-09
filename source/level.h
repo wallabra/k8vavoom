@@ -100,7 +100,10 @@ struct rep_light_t {
   VEntity *Owner;
   TVec ConeDir;
   float ConeAngle;
-  bool LightChanged;
+  enum {
+    LightChanged = 1u<<0,
+  };
+  vuint32 Flags;
 };
 
 

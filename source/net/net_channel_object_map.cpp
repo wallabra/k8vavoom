@@ -144,11 +144,11 @@ void VObjectMapChannel::Update () {
     GCon->Logf(NAME_DevNet, "opened class/name channel for %s", *Connection->GetAddress());
     // send number of names
     vint32 NumNames = Connection->ObjMap->NameLookup.length();
-    outmsg.WriteInt(NumNames);
+    outmsg.WriteUInt((unsigned)NumNames);
     GCon->Logf(NAME_DevNet, "sending total %d names", NumNames);
     // send number of classes
     vint32 NumClasses = Connection->ObjMap->ClassLookup.length();
-    outmsg.WriteInt(NumClasses);
+    outmsg.WriteUInt((unsigned)NumClasses);
     GCon->Logf(NAME_DevNet, "sending total %d classes", NumClasses);
   }
 
@@ -159,7 +159,7 @@ void VObjectMapChannel::Update () {
     const char *EName = *VName::CreateWithIndex(CurrName);
     int Len = VStr::Length(EName);
     vassert(Len > 0 && Len <= NAME_SIZE);
-    strm.WriteInt(Len);
+    strm.WriteUInt((unsigned)Len);
     strm.Serialise((void *)EName, Len);
     // send message if this name will not fit
     if (WillOverflowMsg(&outmsg, strm)) {
@@ -238,11 +238,21 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
     RNet_PBarReset();
     RNet_OSDMsgShow("receiving names and classes");
 
-    vint32 NumNames = Msg.ReadInt();
+    vint32 NumNames = (int)Msg.ReadUInt();
+    if (NumNames < 0 || NumNames > 1024*1024*32) {
+      GCon->Logf(NAME_Debug, "%s: invalid number of names (%d)", *GetDebugName(), NumNames);
+      Connection->State = NETCON_Closed;
+      return;
+    }
     Connection->ObjMap->SetNumberOfKnownNames(NumNames);
     GCon->Logf(NAME_DevNet, "expecting %d names", NumNames);
 
-    vint32 NumClasses = Msg.ReadInt();
+    vint32 NumClasses = (int)Msg.ReadUInt();
+    if (NumClasses < 0 || NumClasses > 1024*1024) {
+      GCon->Logf(NAME_Debug, "%s: invalid number of classes (%d)", *GetDebugName(), NumClasses);
+      Connection->State = NETCON_Closed;
+      return;
+    }
     Connection->ObjMap->ClassLookup.setLength(NumClasses);
     GCon->Logf(NAME_DevNet, "expecting %d classes", NumClasses);
   }
@@ -252,8 +262,12 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
   // read names
   if (net_debug_dump_chan_objmap) GCon->Logf(NAME_Debug, "%s: ==== (%d : %d)", *GetDebugName(), CurrName, Connection->ObjMap->NameLookup.length());
   while (!Msg.AtEnd() && CurrName < Connection->ObjMap->NameLookup.length()) {
-    int Len = Msg.ReadInt();
-    vassert(Len > 0 && Len <= NAME_SIZE);
+    int Len = (int)Msg.ReadUInt();
+    if (Len < 1 || Len > NAME_SIZE) {
+      GCon->Logf(NAME_Debug, "%s: invalid name length (%d)", *GetDebugName(), Len);
+      Connection->State = NETCON_Closed;
+      return;
+    }
     Msg.Serialise(buf, Len);
     buf[Len] = 0;
     //GCon->Logf(NAME_Debug, "%s: len=%d (%s)", *GetDebugName(), Len, buf.ptr());
