@@ -406,6 +406,17 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     SetThinker(Th);
   }
 
+  if (!Thinker) {
+    if (Connection->IsServer()) {
+      GCon->Logf(NAME_Error, "SERVER: %s: for some reason it doesn't have thinker!", *GetDebugName());
+      //Close();
+      return;
+    } else {
+      GCon->Logf(NAME_Error, "CLIENT: %s: for some reason it doesn't have thinker!", *GetDebugName());
+      return;
+    }
+  }
+
   vassert(Thinker);
   VClass *ThinkerClass = Thinker->GetClass();
 

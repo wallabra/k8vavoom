@@ -2422,6 +2422,17 @@ override void PreTravel () {
   ::PreTravel();
   ClearSubSeenInfo();
   if (MO) {
+    // remove all powerups that cannot survive map teleports
+    auto inv = EntityEx(MO).Inventory;
+    while (inv) {
+      Powerup pw = Powerup(inv);
+      inv = inv.Inventory;
+      if (pw && !pw.bSurvivesMapTeleport) {
+        printdebug("*** removed powerup '%C'", pw);
+        pw.EndEffect();
+        delete pw;
+      }
+    }
     //WARNING! don't set `Owner` to none here, because `SV_MapTeleport()` checks it!
     SavedInventory = EntityEx(MO).Inventory;
     EntityEx(MO).Inventory = none;
@@ -3141,6 +3152,18 @@ void ResetACSButtons () {
 
 //==========================================================================
 //
+//  ResetRenderStyles
+//
+//==========================================================================
+void ResetRenderStyles () {
+  FixedColormap = 0;
+  ExtraLight = 0;
+  CShift = 0;
+}
+
+
+//==========================================================================
+//
 //  ResetPlayerOnSpawn
 //
 //==========================================================================
@@ -3207,6 +3230,8 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
   // reset zoom
   FOV = DesiredFOV;
   ClientFOV(0);
+
+  ResetRenderStyles();
 }
 
 
@@ -3237,6 +3262,8 @@ override void ResetInventory () {
   EntityEx PP = EntityEx(MO);
   if (!PP) return;
   while (PP.Inventory) PP.Inventory.Destroy();
+
+  ResetRenderStyles();
 
   SetWeapon(none);
   BringUpWeapon(instant:true, skipSound:true);
@@ -3387,6 +3414,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   SaveViewOrgFixInfo();
   ViewAngles = PP.Angles;
   bFixAngle = true;
+  ResetRenderStyles();
 
   ResetPlayerOnSpawn();
 

@@ -47,6 +47,9 @@ float Strength = float.nan; //k8:FIXME, i need a way to know if it is specified
 transient bool bShowTimer = false;
 transient string PowerupTimerName;
 
+bool bSurvivesMapTeleport;
+bool bSurvivesHubTeleport; // not implemented yet
+
 
 replication {
   reliable if (Role == ROLE_Authority && bNetOwner)

@@ -133,6 +133,8 @@ void VPlayerChannel::ResetLevel () {
   for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
     VField::CopyFieldValue((vuint8 *)Def+F->Ofs, OldData+F->Ofs, F->Type);
   }
+
+  NewObj = true;
 }
 
 
@@ -171,7 +173,7 @@ void VPlayerChannel::Update () {
   vuint8 *Data = (vuint8 *)Plr;
   for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
     if (!FieldCondValues[F->NetIndex]) continue;
-    if (VField::IdenticalValue(Data+F->Ofs, OldData+F->Ofs, F->Type)) {
+    if (!NewObj && VField::IdenticalValue(Data+F->Ofs, OldData+F->Ofs, F->Type)) {
       //if (VStr::strEqu(F->GetName(), "ReadyWeapon")) GCon->Logf(NAME_Debug, "%s: SAME ready weapon", *GetDebugName());
       continue;
     }
@@ -203,6 +205,7 @@ void VPlayerChannel::Update () {
     }
     */
   }
+  NewObj = false;
 
   //GCon->Logf(NAME_DevNet, "%s: sending player update (%s)", *GetDebugName(), (Connection->IsClient() ? "client" : "server"));
   /*if (Msg.GetNumBits())*/ SendMessage(&Msg);
