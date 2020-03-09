@@ -32,6 +32,7 @@ class PowerGhost : PowerInvisibility;
 //
 //==========================================================================
 override void InitEffect () {
+  if (!Owner) return;
   Owner.RenderStyle = STYLE_Translucent;
   Owner.Alpha = 0.666;
   EntityEx(Owner).bShadow = true;

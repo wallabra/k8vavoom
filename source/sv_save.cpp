@@ -2099,17 +2099,17 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
     GGameInfo->Players[i]->eventPreTravel();
   }
 
-  // collect list of thinkers that will go to the new level
+  // collect list of thinkers that will go to the new level (player inventory)
   for (VThinker *Th = GLevel->ThinkerHead; Th; Th = Th->Next) {
     VEntity *vent = Cast<VEntity>(Th);
-    if (vent != nullptr && (//(vent->EntityFlags&VEntity::EF_IsPlayer) ||
-        (vent->Owner && (vent->Owner->EntityFlags&VEntity::EF_IsPlayer))))
-    {
+    if (vent && vent->Owner && vent->Owner->IsPlayer()) {
       TravelObjs.Append(vent);
       GLevel->RemoveThinker(vent);
       vent->UnlinkFromWorld();
       GLevel->DelSectorList();
       vent->StopSound(0);
+      //GCon->Logf(NAME_Debug, "SV_MapTeleport: saved player inventory item '%s'", vent->GetClass()->GetName());
+      continue;
     }
     if (Th->IsA(VPlayerReplicationInfo::StaticClass())) {
       TravelObjs.Append(Th);
@@ -2151,6 +2151,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
 
   // add traveling thinkers to the new level
   for (int i = 0; i < TravelObjs.Num(); ++i) {
+    //GCon->Logf(NAME_Debug, "SV_MapTeleport: adding back player inventory item '%s'", TravelObjs[i]->GetClass()->GetName());
     GLevel->AddThinker(TravelObjs[i]);
     VEntity *Ent = Cast<VEntity>(TravelObjs[i]);
     if (Ent) Ent->LinkToWorld(true);
@@ -2226,6 +2227,17 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   if (!deathmatch) GLevel->Acs->CheckAcsStore();
 
   if (doSaveGame) GCmdBuf << "AutoSaveEnter\n";
+
+  /*
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    VBasePlayer *plr = GGameInfo->Players[i];
+    if (!plr) continue;
+    VEntity *sve = plr->ehGetSavedInventory();
+    if (!sve) continue;
+    GCon->Logf(NAME_Debug, "+++ player #%d saved inventory +++", i);
+    sve->DebugDumpInventory(true);
+  }
+  */
 }
 
 

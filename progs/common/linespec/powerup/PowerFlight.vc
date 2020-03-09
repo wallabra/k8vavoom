@@ -44,6 +44,7 @@ override void Tick (float DeltaTime) {
 //
 //==========================================================================
 override void InitEffect () {
+  if (!Owner) return;
   Owner.bFly = true;
   Owner.bNoGravity = true;
   if (Owner.Origin.z <= Owner.FloorZ) {
@@ -68,9 +69,9 @@ override void EndEffect () {
     if (Owner.Origin.z != Owner.FloorZ) {
       //FIXME   player->centering = true;
     }
-    Owner.bFly = false;
-    Owner.bNoGravity = false;
   }
+  Owner.bFly = false;
+  Owner.bNoGravity = false;
 }
 
 

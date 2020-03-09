@@ -32,7 +32,7 @@ class PowerScanner : Powerup;
 //
 //==========================================================================
 override void InitEffect () {
-  if (Owner.bIsPlayer) Owner.Player.bAutomapShowThings = true;
+  if (Owner && Owner.bIsPlayer) Owner.Player.bAutomapShowThings = true;
 }
 
 

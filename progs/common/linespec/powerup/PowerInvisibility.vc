@@ -32,6 +32,7 @@ class PowerInvisibility : Powerup;
 //
 //==========================================================================
 override void InitEffect () {
+  if (!Owner) return;
   Owner.RenderStyle = STYLE_OptFuzzy;
   //Owner.Alpha = 0.2;
   Owner.Alpha = 1.0-fclamp(Strength, 0.0, 100.0)/100.0;

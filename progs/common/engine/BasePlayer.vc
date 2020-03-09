@@ -584,6 +584,9 @@ int GetCurrentArmorFullAbsorb () { return 0; }
 int GetCurrentArmorActualSaveAmount () { return 0; }
 
 
+Entity EngineHelperGetSavedInventory () { return none; }
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // various cheat commands
 // if commands starts with `Cheat_`, is void, and has no args, it is console command

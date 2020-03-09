@@ -549,16 +549,27 @@ public:
     VMT_RET_VOID(method);
   }
 
-  int eventGetArmorPointsForType (VName atype) { static VMethodProxy method("GetArmorPointsForType"); vobjPutParamSelf(atype); VMT_RET_INT(method); }
+  inline int eventGetArmorPointsForType (VName atype) { static VMethodProxy method("GetArmorPointsForType"); vobjPutParamSelf(atype); VMT_RET_INT(method); }
 
-  void QS_ClearEntityInventory () { static VMethodProxy method("QS_ClearEntityInventory"); vobjPutParamSelf(); VMT_RET_VOID(method); }
-  VEntity *QS_GetEntityInventory () { static VMethodProxy method("QS_GetEntityInventory"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }
-  VEntity *QS_SpawnEntityInventory (VName className) { static VMethodProxy method("QS_SpawnEntityInventory"); vobjPutParamSelf(className); VMT_RET_REF(VEntity, method); }
+  inline void QS_ClearEntityInventory () { static VMethodProxy method("QS_ClearEntityInventory"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  inline VEntity *QS_GetEntityInventory () { static VMethodProxy method("QS_GetEntityInventory"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }
+  inline VEntity *QS_SpawnEntityInventory (VName className) { static VMethodProxy method("QS_SpawnEntityInventory"); vobjPutParamSelf(className); VMT_RET_REF(VEntity, method); }
 
   void QS_Save () { static VMethodProxy method("QS_Save"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
   float GetViewHeight () { static VMethodProxy method("GetViewHeight"); vobjPutParamSelf(); VMT_RET_FLOAT(method); }
+
+  inline VEntity *ehGetInventory () { static VMethodProxy method("EngineHelperGetInventory"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }
+
+  void DebugDumpInventory (bool startFromSelf=false) {
+    GCon->Logf(NAME_Debug, "==== INVENTORY: %s:%u (%s) ====", GetClass()->GetName(), GetUniqueId(), (IsGoingToDie() ? "dead" : "alive"));
+    for (VEntity *ent = (startFromSelf ? this : ehGetInventory()); ent; ent = ent->ehGetInventory()) {
+      GCon->Logf(NAME_Debug, "  %s:%u (%s:%u)", ent->GetClass()->GetName(), ent->GetUniqueId(), (ent->Owner ? ent->Owner->GetClass()->GetName() : "<none>"), (ent->Owner ? ent->Owner->GetUniqueId() : 0u));
+      if (ent->IsGoingToDie()) GCon->Log(NAME_Debug, "    item is going to die!");
+      if (ent->Owner && ent->Owner->IsGoingToDie()) GCon->Log(NAME_Debug, "    owner is going to die!");
+    }
+  }
 
   //bool IsMonster () { static VMethodProxy method("IsMonster"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
   inline bool IsPlayer () const noexcept { return !!(EntityFlags&EF_IsPlayer); }

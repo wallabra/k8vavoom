@@ -78,6 +78,8 @@ final void ProcessVoodoDolls (bool imm) {
 //
 //==========================================================================
 override void InitEffect () {
+  if (!Owner) return;
+
   // if we don't have any specific mode, set it to the default of the player class
   if (!Mode && Owner.bIsPlayer) Mode = PlayerPawn(Owner).InvulnerabilityMode;
 

@@ -671,6 +671,7 @@ final bool CheckAmmoAmount (ubyte Mode, optional bool RequireAmmo) {
 //
 //==========================================================================
 bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
+  //if (!Owner) printerror("%C: this weapon has no owner! (next inv is %C)", self, Inventory);
   // search for infinite ammo power; any subclass will do
   if (EntityEx(Owner).FindInfiniteAmmoPowerup()) {
     // don't waste ammo if we have an infinite ammo powerup

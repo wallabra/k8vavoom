@@ -367,6 +367,8 @@ public:
   void QS_Save () { static VMethodProxy method("QS_Save"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
+  inline VEntity *ehGetSavedInventory () { static VMethodProxy method("EngineHelperGetSavedInventory"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }
+
   // cheats
   /*
   void eventCheat_VScriptCommand (TArray<VStr> &args) {

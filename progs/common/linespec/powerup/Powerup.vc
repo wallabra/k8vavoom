@@ -50,7 +50,7 @@ transient string PowerupTimerName;
 
 replication {
   reliable if (Role == ROLE_Authority && bNetOwner)
-    EffectTime, Mode;
+    EffectTime, Mode, bShowTimer;
 }
 
 
@@ -72,10 +72,8 @@ override void Destroyed () {
 //==========================================================================
 override void Tick (float DeltaTime) {
   // powerup cannot exist without an owner
-  if (!Owner) {
-    Destroy();
-    return;
-  }
+  // k8: nope, it can -- when the player is teleporting to a new map in netgame, for example!
+  // if (!Owner) { Destroy(); return; }
 
   if (EffectTime > 0.0) {
     EffectTime -= DeltaTime;

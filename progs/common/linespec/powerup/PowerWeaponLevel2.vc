@@ -32,7 +32,7 @@ class PowerWeaponLevel2 : Powerup;
 //
 //==========================================================================
 override void InitEffect () {
-  if (!Owner.bIsPlayer) return;
+  if (!Owner || !Owner.bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Owner.Player).ReadyWeapon;
   if (!Wpn || Wpn.bPoweredUp) return; // already powered up, nothing to do

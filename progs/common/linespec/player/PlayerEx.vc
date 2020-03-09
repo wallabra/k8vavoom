@@ -193,6 +193,16 @@ struct SectorDamageInfo {
 
 //==========================================================================
 //
+//  EngineHelperGetSavedInventory
+//
+//==========================================================================
+override Entity EngineHelperGetSavedInventory () {
+  return SavedInventory;
+}
+
+
+//==========================================================================
+//
 //  ClearSubSeenInfo
 //
 //==========================================================================
@@ -2412,9 +2422,18 @@ override void PreTravel () {
   ::PreTravel();
   ClearSubSeenInfo();
   if (MO) {
+    //WARNING! don't set `Owner` to none here, because `SV_MapTeleport()` checks it!
     SavedInventory = EntityEx(MO).Inventory;
     EntityEx(MO).Inventory = none;
+    /*
+    printdebug("%C: PreTravel inventory:", self);
+    for (auto inv = SavedInventory; inv; inv = inv.Inventory) {
+      printdebug("  %C: owner=%C(%s); MO=%C(%s)", inv, inv.Owner, (inv.Owner ? inv.Owner.UniqueId : 0), MO, MO.UniqueId);
+      //inv.Owner = none; // crash if somebody will try to remove something
+    }
+    */
   } else {
+    //printdebug("%C: PreTravel inventory: CLEARED!", self);
     SavedInventory = none; // just in case
   }
   ResetACSButtons();
@@ -2829,7 +2848,7 @@ override void SpawnClient () {
   EntityEx OldMO = EntityEx(MO);
   ClearSubSeenInfo();
 
-  //print("*** SPAWN CLIENT");
+  //printdebug("*** SPAWN CLIENT");
 
   Attacker = none;
   Poisoner = none;
@@ -3307,8 +3326,9 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
 
   bool cheatReborn = false;
 
-  //print("************SpawnPlayer: 000; Voodoo=%b; PST=%d", PlayerState);
+  //printdebug("************SpawnPlayer:%C: 000; Voodoo=%B; PST=%s (SVI=%C)", self, Voodoo, PlayerState, SavedInventory);
   if (PlayerState == PST_REBORN) {
+    //printdebug("  normal reborn (SVI=%C)", SavedInventory);
     PlayerReborn();
     ResetInventory = true;
     reborned = true;
@@ -3348,7 +3368,10 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   PP.Translation = (Entity::TRANSL_Player<<Entity::TRANSL_TYPE_SHIFT)+GetPlayerNum();
 
   // if a voodoo doll has been spawned, take it's inventory
-  if (Voodoo) PP.ObtainInventory(EntityEx(MO));
+  if (Voodoo) {
+    //printdebug("  moving inventory to the Voodoo Doll from MO (SVI=%C)", SavedInventory);
+    PP.ObtainInventory(EntityEx(MO));
+  }
 
   DesiredFOV = 90.0; //float(GetCvar('FOV'));
   FOV = DesiredFOV;
@@ -3370,6 +3393,8 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   if (!Voodoo) {
     PP.Inventory = SavedInventory;
     for (Item = PP.Inventory; Item; Item = Item.Inventory) Item.Owner = MO;
+    //printdebug("%C: PostTravel inventory (%C:%s):", self, PP, PP.UniqueId);
+    //for (auto inv = PP.Inventory; inv; inv = inv.Inventory) printdebug("  %C: owner=%C(%s); MO=%C(%s)", inv, inv.Owner, (inv.Owner ? inv.Owner.UniqueId : 0), MO, MO.UniqueId);
     if (ResetInventory) {
       while (PP.Inventory) PP.Inventory.Destroy();
       AddDefaultInventory();
