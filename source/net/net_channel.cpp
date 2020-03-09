@@ -111,11 +111,20 @@ VStr VChannel::GetDebugName () const noexcept {
 //
 //  VChannel::IsQueueFull
 //
+//  returns:
+//   -1: oversaturated
+//    0: ok
+//    1: full
+//
 //==========================================================================
-bool VChannel::IsQueueFull (bool forClose) const noexcept {
+int VChannel::IsQueueFull () const noexcept {
   //if (OutListCount >= MAX_RELIABLE_BUFFER-2) return false;
   //return (OutListBits >= (MAX_RELIABLE_BUFFER-(forClose ? 1 : 2))*MAX_MSG_SIZE_BITS);
-  return (OutListBits >= 33000*8);
+  return
+    OutListBits >= /*(MAX_RELIABLE_BUFFER+13)*MAX_MSG_SIZE_BITS*/24000*8 ? -1 : // oversaturated
+    OutListBits >= /*MAX_RELIABLE_BUFFER*MAX_MSG_SIZE_BITS*/16000*8 ? 1 : // full
+    0; // ok
+  //return (OutListBits >= 33000*8);
 }
 
 
@@ -312,8 +321,9 @@ void VChannel::SendMessage (VMessageOut *Msg) {
   if (Msg->bReliable) {
     // put outgoint message into send queue
     //vassert(OutListCount < MAX_RELIABLE_BUFFER-1+(Msg->bClose ? 1 : 0));
-    if (OutListBits >= /*MAX_RELIABLE_BUFFER*MAX_MSG_SIZE_BITS*/48000*8) {
-      if (OutListBits >= /*(MAX_RELIABLE_BUFFER+13)*MAX_MSG_SIZE_BITS*/66000*8) {
+    const int satur = IsQueueFull();
+    if (satur) {
+      if (satur < 0) {
         GCon->Logf(NAME_DevNet, "NETWORK ERROR: channel %s is highly oversaturated!", *GetDebugName());
         Connection->AbortChannel(this);
         return;

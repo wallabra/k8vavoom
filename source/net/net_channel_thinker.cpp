@@ -80,6 +80,21 @@ VStr VThinkerChannel::GetName () const noexcept {
 
 //==========================================================================
 //
+//  VThinkerChannel::IsQueueFull
+//
+//  limit thinkers by the number of outgoing packets instead
+//
+//==========================================================================
+int VThinkerChannel::IsQueueFull () const noexcept {
+  return
+    OutListCount >= MAX_RELIABLE_BUFFER+8 ? -1 : // oversaturated
+    OutListCount >= MAX_RELIABLE_BUFFER ? 1 : // full
+    0; // ok
+}
+
+
+//==========================================================================
+//
 //  VThinkerChannel::RemoveThinkerFromGame
 //
 //==========================================================================

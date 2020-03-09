@@ -243,7 +243,11 @@ public:
   }
 
 protected:
-  bool IsQueueFull (bool forClose=false) const noexcept;
+  // returns:
+  //  -1: oversaturated
+  //   0: ok
+  //   1: full
+  virtual int IsQueueFull () const noexcept;
 
   // this unconditionally adds "close" message to the queue, and marks the channel for closing
   // WARNING! DOES NO CHECKS!
@@ -405,6 +409,10 @@ protected:
   bool NewObj; // is this a new object?
   vuint8 *FieldCondValues;
 
+protected:
+  // limit thinkers by the number of outgoing packets instead
+  virtual int IsQueueFull () const noexcept override;
+
 public:
   vuint32 LastUpdateFrame; // see `UpdateFrameCounter` in VNetConnection
 
@@ -460,6 +468,9 @@ private:
 
 protected:
   void UpdateSendPBar ();
+
+  // slightly higher limits
+  virtual int IsQueueFull () const noexcept override;
 
 public:
   VObjectMapChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally);
