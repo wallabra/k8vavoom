@@ -492,6 +492,18 @@ protected:
   static VCvarI net_speed_limit;
 
 public:
+  struct ThinkerSortInfo {
+    VEntity *MO;
+    TVec ViewOrg;
+    TAVec ViewAngles;
+    // everything that is behind this is behind our back
+    TPlane ViewPlane;
+
+    inline ThinkerSortInfo () noexcept {}
+    ThinkerSortInfo (VBasePlayer *Owner) noexcept;
+  };
+
+public:
   VNetworkPublic *Driver;
   VNetContext *Context;
   VBasePlayer *Owner;
@@ -565,6 +577,9 @@ private:
   TArray<VThinker *> PendingThinkers;
   TArray<VEntity *> PendingGoreEnts;
   TArray<vint32> AliveGoreChans;
+  TArray<VThinker *> AliveThinkerChans;
+
+  void CollectAndSortAliveThinkerChans (ThinkerSortInfo *snfo);
 
 public:
   // current estimated message byte size

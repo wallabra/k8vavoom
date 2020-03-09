@@ -1061,7 +1061,7 @@ bool VNetConnection::IsRelevant (VThinker *th) {
   if (DetachedThinkers.has(th)) return false;
   VEntity *Ent = Cast<VEntity>(th);
   if (!Ent) return false;
-  if (Ent->GetTopOwner() == Owner->MO) return true; // inventory
+  if (Ent == Owner->MO || Ent->GetTopOwner() == Owner->MO) return true; // inventory
   if (!Ent->Sector) return false; // just in case
   if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) return false;
   //if (Ent->RemoteRole == ROLE_Authority) return false; // this should not end here
@@ -1076,15 +1076,41 @@ bool VNetConnection::IsRelevant (VThinker *th) {
 //
 //  inventory is always relevant too
 //  doesn't check PVS
-//  call after `IsRelevant()` returned `true`, because this does much less
-//  checks
+//  call after `IsRelevant()` returned `true`,
+//  because this does much less checks
 //
 //==========================================================================
 bool VNetConnection::IsAlwaysRelevant (VThinker *th) {
   if (th->ThinkerFlags&VThinker::TF_AlwaysRelevant) return true;
   VEntity *Ent = Cast<VEntity>(th);
   if (!Ent) return false;
-  return (Ent->GetTopOwner() == Owner->MO); // inventory?
+  // we, inventory, or other player
+  return (Ent == Owner->MO || Ent->GetTopOwner() == Owner->MO || Ent->IsPlayer());
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::ThinkerSortInfo::ThinkerSortInfo
+//
+//==========================================================================
+VNetConnection::ThinkerSortInfo::ThinkerSortInfo (VBasePlayer *Owner) noexcept {
+  MO = Owner->MO;
+  ViewOrg = Owner->ViewOrg;
+  ViewAngles = Owner->ViewAngles;
+  TVec fwd;
+  #if 0
+  AngleVector(ViewAngles, fwd);
+  //GCon->Logf(NAME_DevNet, "angles=(%g,%g,%g); fwd=(%g,%g,%g)", ViewAngles.yaw, ViewAngles.pitch, ViewAngles.roll, fwd.x, fwd.y, fwd.z);
+  ViewPlane.SetPointNormal3DSafe(ViewOrg, fwd);
+  #else
+  fwd = AngleVectorYaw(ViewAngles.yaw);
+  //GCon->Logf(NAME_Debug, "yaw=%g; fwd=(%g,%g,%g)", ViewAngles.yaw, fwd.x, fwd.y, fwd.z);
+  //ViewPlane.SetPointDirXY(ViewOrg+fwd*128, fwd);
+  //ViewPlane.SetPointNormal3DSafe(ViewOrg+fwd*2048, fwd);
+  // move it back a little, so we can avoid distance check in the other code
+  ViewPlane.SetPointNormal3DSafe(ViewOrg-fwd*128, fwd);
+  #endif
 }
 
 
@@ -1120,27 +1146,99 @@ extern "C" {
       return -1;
     }
     // both are entities
-    VNetConnection *nc = (VNetConnection *)ncptr;
+    const VNetConnection::ThinkerSortInfo *snfo = (const VNetConnection::ThinkerSortInfo *)ncptr;
     /*const*/ VEntity *ea = (/*const*/ VEntity *)ta;
     /*const*/ VEntity *eb = (/*const*/ VEntity *)tb;
+
+    // player is MO always first
+    if (ea == snfo->MO) {
+      vassert(eb != snfo->MO);
+      return -1;
+    }
+    if (eb == snfo->MO) {
+      vassert(ea != snfo->MO);
+      return 1;
+    }
+
     // inventory should come first
-    if (ea->GetTopOwner() == nc->Owner->MO) {
+    if (ea->GetTopOwner() == snfo->MO) {
       // first is in inventory, check second
-      if (eb->GetTopOwner() != nc->Owner->MO) return -1; // a should come first, a < b
+      if (eb->GetTopOwner() != snfo->MO) return -1; // a should come first, a < b
       // both are inventories, sort by unique it
       if (ta->GetUniqueId() < tb->GetUniqueId()) return -1;
       if (ta->GetUniqueId() > tb->GetUniqueId()) return 1;
       return 0;
     } else {
       // first is not in inventory, check second
-      if (eb->GetTopOwner() == nc->Owner->MO) return 1; // b should come first, a > b
+      if (eb->GetTopOwner() == snfo->MO) return 1; // b should come first, a > b
       // neither is in inventory, use distance sort
     }
+
+    // type sorting
+    //TODO: pickups!
+    if (((ea->EntityFlags|eb->EntityFlags)&VEntity::EF_IsPlayer)) {
+      // at least one is player
+      if ((ea->EntityFlags^eb->EntityFlags)&VEntity::EF_IsPlayer) {
+        // one is player
+        return (ea->IsPlayer() ? -1 : 1);
+      }
+    } else if (((ea->FlagsEx|eb->FlagsEx)&VEntity::EFEX_Monster)) {
+      // at least one is monster
+      if (((ea->FlagsEx|eb->FlagsEx)^VEntity::EFEX_Monster)) {
+        // one is monster
+        return (ea->IsMonster() ? -1 : 1);
+      }
+    } else if (((ea->EntityFlags|eb->EntityFlags)&VEntity::EF_Missile)) {
+      // at least one is missile
+      if ((ea->EntityFlags^eb->EntityFlags)&VEntity::EF_Missile) {
+        // one is missile
+        return (ea->IsPlayer() ? -1 : 1);
+      }
+    } else if (((ea->EntityFlags|eb->EntityFlags)&VEntity::EF_Solid)) {
+      // at least one is solid
+      if ((ea->EntityFlags^eb->EntityFlags)&VEntity::EF_Solid) {
+        // one is solid
+        return (ea->IsPlayer() ? -1 : 1);
+      }
+    } else {
+      if (((ea->FlagsEx|eb->FlagsEx)&VEntity::EFEX_NoInteraction)) {
+        // at least one is "no interaction" (always last)
+        if (((ea->FlagsEx|eb->FlagsEx)^VEntity::EFEX_NoInteraction)) {
+          // one is "no interaction" (always last)
+          return (ea->IsMonster() ? 1 : -1);
+        }
+      }
+      if (((ea->FlagsEx|eb->FlagsEx)&VEntity::EFEX_PseudoCorpse)) {
+        // at least one is pseudocorpse (corpse decoration, always last)
+        if (((ea->FlagsEx|eb->FlagsEx)^VEntity::EFEX_PseudoCorpse)) {
+          // one is pseudocorpse (corpse decoration, always last)
+          return (ea->IsMonster() ? 1 : -1);
+        }
+      }
+      if (((ea->EntityFlags|eb->EntityFlags)&VEntity::EF_Corpse)) {
+        // at least one is corpse
+        if ((ea->EntityFlags^eb->EntityFlags)&VEntity::EF_Corpse) {
+          // one is corpse (corpses are always last)
+          return (ea->IsPlayer() ? 1 : -1);
+        }
+      }
+    }
+
+    // we moved our plane away, no need to check any distance here
+    // prefer entities which are before our eyes
+    const int sidea = snfo->ViewPlane.PointOnSide(ea->Origin);
+    const int sideb = snfo->ViewPlane.PointOnSide(eb->Origin);
+    if (sidea^sideb) {
+      // different sides, prefer one that is before the camera
+      return (sideb ? -1 : 1); // if b is behind our back, a is first (a < b), otherwise b is first (a > b)
+    }
+
     // the one that is closer to the view origin should come first
-    const float distaSq = (ea->Origin-nc->Owner->ViewOrg).length2DSquared();
-    const float distbSq = (eb->Origin-nc->Owner->ViewOrg).length2DSquared();
+    const float distaSq = (ea->Origin-snfo->ViewOrg).length2DSquared();
+    const float distbSq = (eb->Origin-snfo->ViewOrg).length2DSquared();
     if (distaSq < distbSq) return -1;
     if (distaSq > distbSq) return 1;
+
     // by unique id
     if (ta->GetUniqueId() < tb->GetUniqueId()) return -1;
     if (ta->GetUniqueId() > tb->GetUniqueId()) return 1;
@@ -1151,10 +1249,17 @@ extern "C" {
     if (aa == bb) return 0;
     const VEntity *ea = *(const VEntity **)aa;
     const VEntity *eb = *(const VEntity **)bb;
-    VNetConnection *nc = (VNetConnection *)ncptr;
+    const VNetConnection::ThinkerSortInfo *snfo = (const VNetConnection::ThinkerSortInfo *)ncptr;
     // the one that is closer to the view origin should come first
-    const float distaSq = (ea->Origin-nc->Owner->ViewOrg).length2DSquared();
-    const float distbSq = (eb->Origin-nc->Owner->ViewOrg).length2DSquared();
+    const float distaSq = (ea->Origin-snfo->ViewOrg).length2DSquared();
+    const float distbSq = (eb->Origin-snfo->ViewOrg).length2DSquared();
+    // check sides
+    const int sidea = snfo->ViewPlane.PointOnSide(ea->Origin);
+    const int sideb = snfo->ViewPlane.PointOnSide(eb->Origin);
+    if (sidea^sideb) {
+      // different sides, prefer one that is before the camera
+      return (sideb ? -1 : 1); // if b is behind our back, a is first (a < b), otherwise b is first (a > b)
+    }
     if (distaSq < distbSq) return -1;
     if (distaSq > distbSq) return 1;
     // by unique id
@@ -1167,6 +1272,32 @@ extern "C" {
 
 //==========================================================================
 //
+//  VNetConnection::CollectAndSortAliveThinkerChans
+//
+//==========================================================================
+void VNetConnection::CollectAndSortAliveThinkerChans (ThinkerSortInfo *snfo) {
+  AliveThinkerChans.reset();
+  for (auto &&it : ThinkerChannels.first()) {
+    VChannel *chan = it.getValue();
+    if (!chan || !chan->IsThinker() || chan->Closing) continue;
+    VThinkerChannel *tc = (VThinkerChannel *)chan;
+    vassert(tc->GetThinker() == it.getKey());
+    // never evict "always relevant" ones
+    if (tc->GetThinker()->ThinkerFlags&VThinker::TF_AlwaysRelevant) continue;
+    VEntity *ent = Cast<VEntity>(it.getKey());
+    if (!ent) continue;
+    // never evict players or our own MO
+    if (ent == Owner->MO || ent->IsPlayer()) continue;
+    AliveThinkerChans.append(tc->GetThinker());
+  }
+  static_assert(sizeof(AliveThinkerChans[0]) == sizeof(VThinker *), "wtf?!");
+  // sort them
+  timsort_r(AliveThinkerChans.ptr(), AliveThinkerChans.length(), sizeof(AliveThinkerChans[0]), &cmpPendingThinkers, (void *)snfo);
+}
+
+
+//==========================================================================
+//
 //  VNetConnection::UpdateThinkers
 //
 //==========================================================================
@@ -1174,6 +1305,8 @@ void VNetConnection::UpdateThinkers () {
   PendingThinkers.reset();
   PendingGoreEnts.reset();
   AliveGoreChans.reset();
+
+  ThinkerSortInfo snfo(Owner);
 
   // use counter trick to mark updated channels
   if ((++UpdateFrameCounter) == 0) {
@@ -1192,7 +1325,7 @@ void VNetConnection::UpdateThinkers () {
 
   // sort and update existing thinkers first
   if (PendingThinkers.length()) {
-    timsort_r(PendingThinkers.ptr(), PendingThinkers.length(), sizeof(PendingThinkers[0]), &cmpPendingThinkers, (void *)this);
+    timsort_r(PendingThinkers.ptr(), PendingThinkers.length(), sizeof(PendingThinkers[0]), &cmpPendingThinkers, (void *)&snfo);
     for (auto &&th : PendingThinkers) {
       VThinkerChannel *chan = ThinkerChannels.FindPtr(th);
       if (!chan) continue;
@@ -1222,6 +1355,15 @@ void VNetConnection::UpdateThinkers () {
         PendingGoreEnts.append((VEntity *)(*th));
         continue;
       }
+      // debug code
+      #if 1
+      if (!IsAlwaysRelevant(*th)) {
+        VEntity *ent = Cast<VEntity>(*th);
+        if (ent) {
+          if (snfo.ViewPlane.PointOnSide(ent->Origin)) continue;
+        }
+      }
+      #endif
       // not a gore, remember this thinker; we'll sort them later
       PendingThinkers.append(*th);
       continue;
@@ -1233,13 +1375,15 @@ void VNetConnection::UpdateThinkers () {
     if (chan->CanSendData()) {
       chan->Update();
     } else {
-      NeedsUpdate = true;
+      // there's no need to mark for updates here, as client ack will do that for us
+      //NeedsUpdate = true;
       chan->LastUpdateFrame = UpdateFrameCounter;
     }
   }
 
   // close entity channels that were not updated in this frame
   // WARNING! `Close()` should not delete a channel!
+  int closedChanCount = 0; // counts closed thinker channels
   for (auto &&chan : OpenChannels) {
     if (chan->IsThinker()) {
       VThinkerChannel *tc = (VThinkerChannel *)chan;
@@ -1248,11 +1392,12 @@ void VNetConnection::UpdateThinkers () {
           if (chan->CanSendClose()) {
             chan->Close();
           } else {
-            NeedsUpdate = true;
+            // there's no need to mark for updates here, as client ack will do that for us
+            //NeedsUpdate = true;
           }
         }
-        continue;
       }
+      if (tc->Closing) ++closedChanCount;
       // remember alive gore entities
       if (!tc->Closing && tc->GetThinker() && VStr::startsWith(tc->GetThinker()->GetClass()->GetName(), "K8Gore")) {
         AliveGoreChans.append(chan->Index);
@@ -1264,8 +1409,9 @@ void VNetConnection::UpdateThinkers () {
   if (PendingThinkers.length()) {
     static_assert(sizeof(PendingThinkers[0]) == sizeof(VThinker *), "wtf?!");
     // sort them
-    timsort_r(PendingThinkers.ptr(), PendingThinkers.length(), sizeof(PendingThinkers[0]), &cmpPendingThinkers, (void *)this);
-    // if we have not enough free channels, remove gore entities (they will be removed sometimes in the future)
+    timsort_r(PendingThinkers.ptr(), PendingThinkers.length(), sizeof(PendingThinkers[0]), &cmpPendingThinkers, (void *)&snfo);
+
+    // if we have not enough free channels, remove gore entities (they will be removed in the future)
     if (AliveGoreChans.length() && MAX_CHANNELS-OpenChannels.length() < PendingThinkers.length()) {
       int needChans = PendingThinkers.length()-(MAX_CHANNELS-OpenChannels.length());
       while (AliveGoreChans.length() && needChans-- > 0) {
@@ -1279,31 +1425,83 @@ void VNetConnection::UpdateThinkers () {
         VThinkerChannel *tc = (VThinkerChannel *)Channels[idx];
         vassert(tc->GetThinker() && tc->GetThinker()->GetClass()->IsChildOf(VEntity::StaticClass()));
         //PendingGoreEnts.append((VEntity *)(tc->GetThinker()));
-        //??? CanSendClose?
-        if (tc->CanSendData()) {
+        if (tc->CanSendClose()) {
           tc->Close();
         } else {
-          NeedsUpdate = true;
+          // there's no need to mark for updates here, as client ack will do that for us
+          //NeedsUpdate = true;
         }
+        if (tc->Closing) ++closedChanCount;
       }
     }
+
+    bool thinkChansReady = false;
+    int evictCount = 0;
+
     // append thinkers (do not check network, we need to do this unconditionally)
     for (auto &&th : PendingThinkers) {
       VThinkerChannel *chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1, true); // local channel
-      if (!chan) break; // no room
+      if (!chan) {
+        /*
+         we have no room for new thinkers. this means that the map is *VERY* crowded (like nuts.wad ;-).
+         now, check and close any channels further than the current pending thinker, so next update will be able
+         to add our surroundings.
+         there's no need to mark for updates here, as client ack will do that for us.
+         */
+        if (!thinkChansReady) {
+          thinkChansReady = true;
+          CollectAndSortAliveThinkerChans(&snfo);
+        }
+        if (AliveThinkerChans.length() == 0) break; // nobody to evict anymore
+        // if this is "always relevant" thinker, do no more checks
+        if (!(th->ThinkerFlags&VThinker::TF_AlwaysRelevant)) {
+          // only for entities; it is guaranteed that all "always relevant" thinkers are already processed
+          // also, it is guaranteed that entities are sorted by the distance
+          VEntity *ent = Cast<VEntity>(th);
+          if (!ent) continue;
+          // do not try to stuff in entities that are behind the camera
+          // this is not the best way to do it, but we are heavily starving on channels
+          if (snfo.ViewPlane.PointOnSide(ent->Origin)) {
+            // everything else should be behind our back, ignore
+            /*
+            int n = 0;
+            while (PendingThinkers[n] != th) ++n;
+            GCon->Logf(NAME_DevNet, "%s: stopped eviction at %d of %d due to back culling", *GetAddress(), n, PendingThinkers.length());
+            */
+            break;
+          }
+          const float maxDistSq = (ent->Origin-Owner->ViewOrg).length2DSquared();
+          // evict something that is far away, to make room for this one
+          ent = Cast<VEntity>(AliveThinkerChans[AliveThinkerChans.length()-1]);
+          vassert(ent);
+          const float distSq = (ent->Origin-Owner->ViewOrg).length2DSquared();
+          // if this one is further than the nearest one, stop
+          if (distSq <= maxDistSq) break;
+        }
+        // evict furthest thinker
+        VThinkerChannel *tc = ThinkerChannels.FindPtr(AliveThinkerChans[AliveThinkerChans.length()-1]);
+        vassert(tc);
+        tc->Close();
+        AliveThinkerChans.removeAt(AliveThinkerChans.length()-1);
+        ++evictCount;
+        continue;
+      }
       chan->SetThinker(th);
       chan->Update();
     }
+
+    if (evictCount) GCon->Logf(NAME_DevNet, "%s: evicted %d thinker channels", *GetAddress(), evictCount);
   }
 
   // append gore entities if we have any free slots
   if (PendingGoreEnts.length() && MAX_CHANNELS-OpenChannels.length() > 0) {
     // sort them
-    timsort_r(PendingGoreEnts.ptr(), PendingGoreEnts.length(), sizeof(PendingGoreEnts[0]), &cmpPendingGoreEnts, (void *)this);
+    timsort_r(PendingGoreEnts.ptr(), PendingGoreEnts.length(), sizeof(PendingGoreEnts[0]), &cmpPendingGoreEnts, (void *)&snfo);
     for (auto &&it : PendingGoreEnts) {
       if (!CanSendData()) {
-        NeedsUpdate = true;
-        return;
+        // there's no need to mark for updates here, as client ack will do that for us
+        //NeedsUpdate = true;
+        break;
       }
       VThinkerChannel *chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1, true); // local channel
       if (!chan) break; // no room
