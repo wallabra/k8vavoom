@@ -319,10 +319,12 @@ public: // this interface can be used to split data streams into separate messag
   bool WillOverflowMsg (const VMessageOut *msg, const VBitStreamWriter &strm) const noexcept;
 
   // *moves* steam to msg (sending previous msg if necessary)
-  void PutStream (VMessageOut *msg, VBitStreamWriter &strm);
+  // returns `true` if something was flushed
+  bool PutStream (VMessageOut *msg, VBitStreamWriter &strm);
 
   // sends message if it is not empty, and clears it
-  void FlushMsg (VMessageOut *msg);
+  // returns `true` if something was flushed
+  bool FlushMsg (VMessageOut *msg);
 };
 
 
@@ -442,6 +444,8 @@ public:
   vuint8 *OldData;
   bool NewObj;
   vuint8 *FieldCondValues;
+  // some class references may be not sent at the start; repeat 'em while we can
+  TMapNC<VField *, bool> FieldsToResend;
 
 public:
   VPlayerChannel (VNetConnection *, vint32, vuint8 = true);

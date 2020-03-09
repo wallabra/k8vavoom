@@ -93,6 +93,8 @@ void VPlayerChannel::SetPlayer (VBasePlayer *APlr) {
       delete[] FieldCondValues;
       FieldCondValues = nullptr;
     }
+    FieldsToResend.reset();
+    NewObj = false;
   }
 
   Plr = APlr;
@@ -123,6 +125,7 @@ void VPlayerChannel::SetPlayer (VBasePlayer *APlr) {
 void VPlayerChannel::ResetLevel () {
   if (!OldData || !Plr) return;
 
+  /*
   // actually, clear everything, why not?
   for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
     VField::DestructField(OldData+F->Ofs, F->Type);
@@ -133,8 +136,11 @@ void VPlayerChannel::ResetLevel () {
   for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
     VField::CopyFieldValue((vuint8 *)Def+F->Ofs, OldData+F->Ofs, F->Type);
   }
+  */
 
+  // it is enough to set this flag
   NewObj = true;
+  FieldsToResend.reset();
 }
 
 
@@ -167,15 +173,17 @@ void VPlayerChannel::Update () {
 
   EvalCondValues(Plr, Plr->GetClass(), FieldCondValues);
 
-  //FIXME: use bitstream and split it to the messages here
+  // use bitstream and split it to the messages here
   VMessageOut Msg(this);
+  VBitStreamWriter strm(MAX_MSG_SIZE_BITS+64, false); // no expand
+  int flushCount = 0;
 
   vuint8 *Data = (vuint8 *)Plr;
   for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
     if (!FieldCondValues[F->NetIndex]) continue;
     if (!NewObj && VField::IdenticalValue(Data+F->Ofs, OldData+F->Ofs, F->Type)) {
-      //if (VStr::strEqu(F->GetName(), "ReadyWeapon")) GCon->Logf(NAME_Debug, "%s: SAME ready weapon", *GetDebugName());
-      continue;
+      if (!FieldsToResend.has(F)) continue;
+      //GCon->Logf(NAME_DevNet, "%s: need to resend field '%s' (%s)", *GetDebugName(), F->GetName(), *F->Type.GetName());
     }
     //GCon->Logf(NAME_DevNet, "%s: ...sending player update (%s); field %s", *GetDebugName(), (Connection->IsClient() ? "client" : "server"), *F->GetFullName());
     if (F->Type.Type == TYPE_Array) {
@@ -183,32 +191,41 @@ void VPlayerChannel::Update () {
       IntType.Type = F->Type.ArrayInnerType;
       int InnerSize = IntType.GetSize();
       for (int i = 0; i < F->Type.GetArrayDim(); ++i) {
-        if (VField::IdenticalValue(Data+F->Ofs+i*InnerSize, OldData+F->Ofs+i*InnerSize, IntType)) continue;
-        Msg.WriteInt(F->NetIndex/*, Plr->GetClass()->NumNetFields*/);
-        Msg.WriteInt(i/*, F->Type.GetArrayDim()*/);
-        if (VField::NetSerialiseValue(Msg, Connection->ObjMap, Data+F->Ofs+i*InnerSize, IntType)) {
-          VField::CopyFieldValue(Data+F->Ofs+i*InnerSize, OldData+F->Ofs+i*InnerSize, IntType);
+        if (VField::IdenticalValue(Data+F->Ofs+i*InnerSize, OldData+F->Ofs+i*InnerSize, IntType)) {
+          //FIXME: store field index too
+          if (!FieldsToResend.has(F)) continue;
         }
+        strm.WriteInt(F->NetIndex/*, Plr->GetClass()->NumNetFields*/);
+        strm.WriteInt(i/*, F->Type.GetArrayDim()*/);
+        if (VField::NetSerialiseValue(strm, Connection->ObjMap, Data+F->Ofs+i*InnerSize, IntType)) {
+          VField::CopyFieldValue(Data+F->Ofs+i*InnerSize, OldData+F->Ofs+i*InnerSize, IntType);
+          FieldsToResend.remove(F);
+        } else {
+          if (NewObj) FieldsToResend.put(F, true);
+        }
+        flushCount += PutStream(&Msg, strm);
       }
     } else {
-      Msg.WriteInt(F->NetIndex/*, Plr->GetClass()->NumNetFields*/);
-      if (VField::NetSerialiseValue(Msg, Connection->ObjMap, Data+F->Ofs, F->Type)) {
+      strm.WriteInt(F->NetIndex/*, Plr->GetClass()->NumNetFields*/);
+      if (VField::NetSerialiseValue(strm, Connection->ObjMap, Data+F->Ofs, F->Type)) {
         VField::CopyFieldValue(Data+F->Ofs, OldData+F->Ofs, F->Type);
-        //if (VStr::strEqu(F->GetName(), "ReadyWeapon")) GCon->Logf(NAME_Debug, "%s: SENT ready weapon", *GetDebugName());
+        flushCount += PutStream(&Msg, strm);
+        FieldsToResend.remove(F);
       } else {
-        //if (VStr::strEqu(F->GetName(), "ReadyWeapon")) GCon->Logf(NAME_Debug, "%s: CANNOT SEND ready weapon", *GetDebugName());
+        if (NewObj) FieldsToResend.put(F, true);
       }
     }
-    /*
-    if (VStr::strEqu(F->GetName(), "ClientForwardMove")) {
-      GCon->Logf(NAME_DevNet, "%s: ...sengind player update (%s); field %s; value=%g", *GetDebugName(), (Connection->IsClient() ? "client" : "server"), *F->GetFullName(), F->GetFloat(Plr));
-    }
-    */
   }
   NewObj = false;
 
   //GCon->Logf(NAME_DevNet, "%s: sending player update (%s)", *GetDebugName(), (Connection->IsClient() ? "client" : "server"));
-  /*if (Msg.GetNumBits())*/ SendMessage(&Msg);
+  //SendMessage(&Msg);
+  flushCount += FlushMsg(&Msg);
+  // send something in any case
+  if (!flushCount) {
+    vassert(Msg.GetNumBits() == 0);
+    SendMessage(&Msg);
+  }
 }
 
 

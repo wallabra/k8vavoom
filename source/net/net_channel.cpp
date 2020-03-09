@@ -479,17 +479,22 @@ bool VChannel::WillOverflowMsg (const VMessageOut *msg, const VBitStreamWriter &
 //
 //  moves steam to msg (sending previous msg if necessary)
 //
+//  returns `true` if something was flushed
+//
 //==========================================================================
-void VChannel::PutStream (VMessageOut *msg, VBitStreamWriter &strm) {
+bool VChannel::PutStream (VMessageOut *msg, VBitStreamWriter &strm) {
   vassert(msg);
-  if (strm.GetNumBits() == 0) return;
+  if (strm.GetNumBits() == 0) return false;
+  bool res = false;
   if (WillOverflowMsg(msg, strm)) {
+    res = true;
     SendMessage(msg);
     msg->Reset(this, msg->bReliable);
   }
   vassert(!WillOverflowMsg(msg, strm));
   msg->CopyFromWS(strm);
   strm.Clear();
+  return res;
 }
 
 
@@ -499,13 +504,17 @@ void VChannel::PutStream (VMessageOut *msg, VBitStreamWriter &strm) {
 //
 //  sends message if it is not empty
 //
+//  returns `true` if something was flushed
+//
 //==========================================================================
-void VChannel::FlushMsg (VMessageOut *msg) {
+bool VChannel::FlushMsg (VMessageOut *msg) {
   vassert(msg);
   if (msg->GetNumBits()) {
     SendMessage(msg);
     msg->Reset(this, msg->bReliable);
+    return true;
   }
+  return false;
 }
 
 
