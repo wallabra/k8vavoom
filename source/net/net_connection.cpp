@@ -1606,6 +1606,7 @@ void VNetConnection::ResetLevel () {
   }
   //ThinkerChannels.reset();
   GetLevelChannel()->ResetLevel();
+  GetPlayerChannel()->ResetLevel();
 }
 
 

@@ -451,6 +451,9 @@ public:
   void EvalCondValues (VObject *, VClass *, vuint8 *);
   void Update ();
 
+  // call this when new level is loaded
+  void ResetLevel ();
+
   // VChannel interface
   virtual VStr GetName () const noexcept override;
   virtual void SetClosing () override;

@@ -112,6 +112,32 @@ void VPlayerChannel::SetPlayer (VBasePlayer *APlr) {
 
 //==========================================================================
 //
+//  VPlayerChannel::ResetLevel
+//
+//  we need to reset all class field values, because new map will
+//  get new thinkers, but we won't notice that, and client won't be
+//  able to recreate them.
+//  FIXME: the client will leak those objects!
+//
+//==========================================================================
+void VPlayerChannel::ResetLevel () {
+  if (!OldData || !Plr) return;
+
+  // actually, clear everything, why not?
+  for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
+    VField::DestructField(OldData+F->Ofs, F->Type);
+  }
+
+  memset(OldData, 0, Plr->GetClass()->ClassSize);
+  VBasePlayer *Def = (VBasePlayer *)Plr->GetClass()->Defaults;
+  for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
+    VField::CopyFieldValue((vuint8 *)Def+F->Ofs, OldData+F->Ofs, F->Type);
+  }
+}
+
+
+//==========================================================================
+//
 //  VPlayerChannel::EvalCondValues
 //
 //==========================================================================
@@ -145,7 +171,10 @@ void VPlayerChannel::Update () {
   vuint8 *Data = (vuint8 *)Plr;
   for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
     if (!FieldCondValues[F->NetIndex]) continue;
-    if (VField::IdenticalValue(Data+F->Ofs, OldData+F->Ofs, F->Type)) continue;
+    if (VField::IdenticalValue(Data+F->Ofs, OldData+F->Ofs, F->Type)) {
+      //if (VStr::strEqu(F->GetName(), "ReadyWeapon")) GCon->Logf(NAME_Debug, "%s: SAME ready weapon", *GetDebugName());
+      continue;
+    }
     //GCon->Logf(NAME_DevNet, "%s: ...sending player update (%s); field %s", *GetDebugName(), (Connection->IsClient() ? "client" : "server"), *F->GetFullName());
     if (F->Type.Type == TYPE_Array) {
       VFieldType IntType = F->Type;
@@ -163,6 +192,9 @@ void VPlayerChannel::Update () {
       Msg.WriteInt(F->NetIndex/*, Plr->GetClass()->NumNetFields*/);
       if (VField::NetSerialiseValue(Msg, Connection->ObjMap, Data+F->Ofs, F->Type)) {
         VField::CopyFieldValue(Data+F->Ofs, OldData+F->Ofs, F->Type);
+        //if (VStr::strEqu(F->GetName(), "ReadyWeapon")) GCon->Logf(NAME_Debug, "%s: SENT ready weapon", *GetDebugName());
+      } else {
+        //if (VStr::strEqu(F->GetName(), "ReadyWeapon")) GCon->Logf(NAME_Debug, "%s: CANNOT SEND ready weapon", *GetDebugName());
       }
     }
     /*
