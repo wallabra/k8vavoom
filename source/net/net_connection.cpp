@@ -1554,7 +1554,10 @@ void VNetConnection::UpdateLevel () {
 void VNetConnection::SendServerInfo () {
   if (!ObjMapSent) return;
 
-  GCon->Log(NAME_DevNet, "sending server info...");
+  // do not send server info if we are in the intermission (let client hang)
+  if (sv.intermission) return;
+
+  GCon->Logf(NAME_DevNet, "Sending server info for %s", *GetAddress());
   // this will load level on client side
   GetLevelChannel()->SetLevel(GLevel);
   GetLevelChannel()->SendNewLevel();

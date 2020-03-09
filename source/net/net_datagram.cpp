@@ -692,6 +692,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     if (len < 0) GCon->Logf(NAME_DevNet, "CONN: error reading incoming packet from %s", *Drv->AddrToString(&clientaddr));
     return nullptr;
   }
+  GCon->Logf(NAME_DevNet, "CONN: ACCEPTING something from %s", *Drv->AddrToString(&clientaddr));
 
   VBitStreamReader msg(packetBuffer.data, len<<3);
 
@@ -783,10 +784,16 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
         Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
         return nullptr;
       }
-      // it's somebody coming back in from a crash/disconnect
+      // it is prolly somebody coming back in from a crash/disconnect
       // so close the old socket and let their retry get them back in
-      s->Invalid = true;
-      return nullptr;
+      // but don't do that for localhost
+      if (ret != 0 && Drv->IsLocalAddress(&clientaddr) && Drv->IsLocalAddress(&s->Addr)) {
+        GCon->Logf(NAME_DevNet, "CONN: LOCALHOST for %s", *Drv->AddrToString(&clientaddr));
+      } else {
+        GCon->Logf(NAME_DevNet, "CONN: RETRYWAIT for %s", *Drv->AddrToString(&clientaddr));
+        s->Invalid = true;
+        return nullptr;
+      }
     }
   }
 

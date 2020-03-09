@@ -83,7 +83,13 @@ public:
   virtual int GetSocketAddr (int, sockaddr_t *) override;
   virtual VStr GetNameFromAddr (sockaddr_t *) override;
   virtual int GetAddrFromName (const char *, sockaddr_t *, int) override;
+  // returns:
+  //   -1 if completely not equal
+  //    0 if completely equal
+  //    1 if only ips are equal
   virtual int AddrCompare (const sockaddr_t *, const sockaddr_t *) override;
+  // used to not reject connections from localhost
+  virtual bool IsLocalAddress (const sockaddr_t *addr) override;
   virtual int GetSocketPort (const sockaddr_t *) override;
   virtual int SetSocketPort (sockaddr_t *, int) override;
 
@@ -711,12 +717,30 @@ int VUdpDriver::GetAddrFromName (const char *name, sockaddr_t *addr, int Default
 //
 //  VUdpDriver::AddrCompare
 //
+//  returns:
+//    -1 if completely not equal
+//     0 if completely equal
+//     1 if only ips are equal
+//
 //==========================================================================
 int VUdpDriver::AddrCompare (const sockaddr_t *addr1, const sockaddr_t *addr2) {
   if (addr1->sa_family != addr2->sa_family) return -1;
   if (((const sockaddr_in *)addr1)->sin_addr.s_addr != ((const sockaddr_in *)addr2)->sin_addr.s_addr) return -1;
   if (((const sockaddr_in *)addr1)->sin_port != ((const sockaddr_in *)addr2)->sin_port) return 1;
   return 0;
+}
+
+
+//==========================================================================
+//
+//  VUdpDriver::IsLocalAddress
+//
+//  used to not reject connections from localhost
+//
+//==========================================================================
+bool VUdpDriver::IsLocalAddress (const sockaddr_t *addr) {
+  int haddr = ntohl(((sockaddr_in *)addr)->sin_addr.s_addr);
+  return (((haddr>>24)&0xff) == 127);
 }
 
 

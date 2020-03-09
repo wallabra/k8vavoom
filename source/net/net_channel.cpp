@@ -114,7 +114,8 @@ VStr VChannel::GetDebugName () const noexcept {
 //==========================================================================
 bool VChannel::IsQueueFull (bool forClose) const noexcept {
   //if (OutListCount >= MAX_RELIABLE_BUFFER-2) return false;
-  return (OutListBits >= (MAX_RELIABLE_BUFFER-(forClose ? 1 : 2))*MAX_MSG_SIZE_BITS);
+  //return (OutListBits >= (MAX_RELIABLE_BUFFER-(forClose ? 1 : 2))*MAX_MSG_SIZE_BITS);
+  return (OutListBits >= 33000*8);
 }
 
 
@@ -136,7 +137,8 @@ bool VChannel::CanSendData () const noexcept {
 //
 //==========================================================================
 bool VChannel::CanSendClose () const noexcept {
-  return !IsQueueFull(true);
+  //return !IsQueueFull(true);
+  return true; // always
 }
 
 
@@ -310,8 +312,8 @@ void VChannel::SendMessage (VMessageOut *Msg) {
   if (Msg->bReliable) {
     // put outgoint message into send queue
     //vassert(OutListCount < MAX_RELIABLE_BUFFER-1+(Msg->bClose ? 1 : 0));
-    if (OutListBits >= MAX_RELIABLE_BUFFER*MAX_MSG_SIZE_BITS) {
-      if (OutListBits >= (MAX_RELIABLE_BUFFER+13)*MAX_MSG_SIZE_BITS) {
+    if (OutListBits >= /*MAX_RELIABLE_BUFFER*MAX_MSG_SIZE_BITS*/48000*8) {
+      if (OutListBits >= /*(MAX_RELIABLE_BUFFER+13)*MAX_MSG_SIZE_BITS*/66000*8) {
         GCon->Logf(NAME_DevNet, "NETWORK ERROR: channel %s is highly oversaturated!", *GetDebugName());
         Connection->AbortChannel(this);
         return;
@@ -403,7 +405,7 @@ void VChannel::ReceivedMessage (VMessageIn &Msg) {
     // just in case
     for (VMessageIn *m = InList; m && m->Next; m = m->Next) vassert(m->ChanSequence < m->Next->ChanSequence);
     //vassert(InListCount <= MAX_RELIABLE_BUFFER); //FIXME: signal error here!
-    if (InListBits > (MAX_RELIABLE_BUFFER+18)*MAX_MSG_SIZE_BITS) {
+    if (InListBits > /*(MAX_RELIABLE_BUFFER+18)*MAX_MSG_SIZE_BITS*/128000*8) {
       GCon->Logf(NAME_DevNet, "NETWORK ERROR: channel %s incoming queue overflowed!", *GetDebugName());
       Connection->AbortChannel(this);
       return;

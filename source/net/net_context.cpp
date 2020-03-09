@@ -96,9 +96,14 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
 //
 //==========================================================================
 void VNetContext::Tick () {
-  for (int i = 0; i < ClientConnections.length(); ++i) {
+  // backwards, in case some connection will remove itself
+  for (int i = ClientConnections.length()-1; i >= 0; --i) {
     VNetConnection *Conn = ClientConnections[i];
-    if (!Conn) continue; // just in case
+    // just in case
+    if (!Conn) {
+      ClientConnections.removeAt(i);
+      continue;
+    }
     if (Conn->IsOpen() && !Conn->GetGeneralChannel()) {
       GCon->Logf(NAME_DevNet, "Client %s closed the connection", *Conn->GetAddress());
       Conn->State = NETCON_Closed;
@@ -107,20 +112,27 @@ void VNetContext::Tick () {
       vassert(Conn->GetGeneralChannel());
       // send server info, if necessary
       if (Conn->ObjMapSent && !Conn->LevelInfoSent) {
-        GCon->Logf(NAME_DevNet, "Sending server info for %s", *Conn->GetAddress());
         Conn->SendServerInfo();
+        //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT000!", *Conn->GetAddress(), i);
       }
       // don't update level if the player isn't totally in the game yet
       if (Conn->IsOpen() && Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned) {
         // spam client with player updates
         Conn->GetPlayerChannel()->Update();
-        if (Conn->IsOpen() && Conn->NeedsUpdate) Conn->UpdateLevel(); // `UpdateLevel()` will reset update flag
+        //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT001!", *Conn->GetAddress(), i);
+        if (Conn->IsOpen() && Conn->NeedsUpdate) {
+          Conn->UpdateLevel(); // `UpdateLevel()` will reset update flag
+          //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT002!", *Conn->GetAddress(), i);
+        }
       }
       // tick the channel if it is still open
-      if (Conn->IsOpen()) Conn->Tick();
+      if (Conn->IsOpen()) {
+        Conn->Tick();
+        //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT003!", *Conn->GetAddress(), i);
+      }
     }
     if (Conn->IsClosed()) {
-      GCon->Logf(NAME_DevNet, "Dropping client %s", *Conn->GetAddress());
+      GCon->Logf(NAME_DevNet, "Dropping client %s (%d)", *Conn->GetAddress(), i);
       SV_DropClient(Conn->Owner, true);
     }
   }

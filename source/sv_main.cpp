@@ -532,10 +532,10 @@ static void SV_SendClientMessages (bool full=true) {
       // update view angle if needed
       if (Player->PlayerFlags&VBasePlayer::PF_Spawned) {
         Player->WriteViewData();
-        if (!full && Player->Net) {
-          Player->Net->GetMessages();
-          // server context ticker will tick all client connections
-        }
+      }
+      if (!full && Player->Net) {
+        Player->Net->GetMessages();
+        // server context ticker will tick all client connections
       }
     }
   }
@@ -565,15 +565,25 @@ static void CheckForSkip () {
   static bool triedToSkip = false;
   bool skip = false;
 
+  //GCon->Log(NAME_Debug, "CheckForSkip!");
+
   /*
   if (GDemoRecordingContext) {
     skip = true;
   } else
   */
   {
+    // if we don't have alive players, skip it forcefully
+    bool hasAlivePlayer = false;
     for (int i = 0; i < MAXPLAYERS; ++i) {
       player = GGameInfo->Players[i];
       if (player) {
+        if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
+          if (!player->Net) continue;
+        }
+        if (player->PlayerFlags&VBasePlayer::PF_Spawned) {
+          hasAlivePlayer = true;
+        }
         if (player->Buttons&BT_ATTACK) {
           if (!(player->PlayerFlags&VBasePlayer::PF_AttackDown)) skip = true;
           player->PlayerFlags |= VBasePlayer::PF_AttackDown;
@@ -601,13 +611,43 @@ static void CheckForSkip () {
         triedToSkip = false;
       }
     }
+
+    // no alive players, and network game? skip intermission
+    if (!hasAlivePlayer && (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer)) {
+      skip = true;
+      GCon->Log(NAME_Debug, "Forced Skip!");
+    }
   }
 
   if (skip) {
+    bool wasSkip = false;
     for (int i = 0; i < svs.max_clients; ++i) {
-      if (GGameInfo->Players[i]) {
-        GGameInfo->Players[i]->eventClientSkipIntermission();
+      player = GGameInfo->Players[i];
+      if (!player) continue;
+      if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
+        if (!player->Net) continue;
       }
+      wasSkip = true;
+      player->eventClientSkipIntermission();
+    }
+    // if no alive players, simply go to the next map
+    if (!wasSkip) {
+      if (VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) {
+        for (int ep = 0; ep < P_GetNumEpisodes(); ++ep) {
+          VEpisodeDef *edef = P_GetEpisodeDef(ep);
+          if (!edef) continue; // just in case
+          VName map = edef->Name;
+          if (map == NAME_None || !IsMapPresent(map)) {
+            //GCon->Logf(NAME_Debug, "  ep=%d; map '%s' is not here!", ep, *edef->Name);
+            map = edef->TeaserName;
+            if (map == NAME_None || !IsMapPresent(map)) continue;
+          }
+          GLevelInfo->NextMap = map;
+          break;
+        }
+      }
+      GCon->Logf(NAME_Debug, "*** teleporting to the new map '%s'...", *GLevelInfo->NextMap);
+      GCmdBuf << "TeleportNewMap\n";
     }
   }
 }

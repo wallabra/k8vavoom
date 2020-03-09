@@ -116,7 +116,8 @@ void VObjectMapChannel::Update () {
   //GCon->Logf(NAME_DevNet, "%s:000: qbytes=%d; outbytes=%d; sum=%d", *GetDebugName(), Connection->SaturaDepth, Connection->Out.GetNumBytes(), Connection->SaturaDepth+Connection->Out.GetNumBytes());
 
   // do not overflow queue
-  if (!CanSendData() || GetSendQueueSize() > 31) {
+  if (!CanSendData() || OutListBits > 16000*8) {
+    //GCon->Logf(NAME_DevNet, "%s:666: qbytes=%d; outbytes=%d; sum=%d; queued=%d (%d)", *GetDebugName(), Connection->SaturaDepth, Connection->Out.GetNumBytes(), Connection->SaturaDepth+Connection->Out.GetNumBytes(), GetSendQueueSize(), OutListBits);
     UpdateSendPBar();
     return;
   }
@@ -153,8 +154,8 @@ void VObjectMapChannel::Update () {
       if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...names: [%d/%d] (%d)", CurrName+1, Connection->ObjMap->NameLookup.length(), GetSendQueueSize());
       if (!OpenAcked) { UpdateSendPBar(); return; } // if not opened, don't spam with packets yet
       // is queue full?
-      if (!CanSendData() || GetSendQueueSize() > 31) {
-        //GCon->Logf(NAME_DevNet, "%s:000: qbytes=%d; outbytes=%d; sum=%d; queued=%d", *GetDebugName(), Connection->SaturaDepth, Connection->Out.GetNumBytes(), Connection->SaturaDepth+Connection->Out.GetNumBytes(), GetSendQueueSize());
+      if (!CanSendData() || OutListBits > 16000*8) {
+        //GCon->Logf(NAME_DevNet, "%s:000: qbytes=%d; outbytes=%d; sum=%d; queued=%d (%d)", *GetDebugName(), Connection->SaturaDepth, Connection->Out.GetNumBytes(), Connection->SaturaDepth+Connection->Out.GetNumBytes(), GetSendQueueSize(), OutListBits);
         UpdateSendPBar();
         return;
       }
@@ -174,8 +175,8 @@ void VObjectMapChannel::Update () {
       if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...classes: [%d/%d] (%d)", CurrClass+1, Connection->ObjMap->ClassLookup.length(), GetSendQueueSize());
       if (!OpenAcked) { UpdateSendPBar(); return; } // if not opened, don't spam with packets yet
       // is queue full?
-      if (!CanSendData() || GetSendQueueSize() > 31) {
-        //GCon->Logf(NAME_DevNet, "%s:001: qbytes=%d; outbytes=%d; sum=%d; queued=%d", *GetDebugName(), Connection->SaturaDepth, Connection->Out.GetNumBytes(), Connection->SaturaDepth+Connection->Out.GetNumBytes(), GetSendQueueSize());
+      if (!CanSendData() || OutListBits > 16000*8) {
+        //GCon->Logf(NAME_DevNet, "%s:001: qbytes=%d; outbytes=%d; sum=%d; queued=%d (%d)", *GetDebugName(), Connection->SaturaDepth, Connection->Out.GetNumBytes(), Connection->SaturaDepth+Connection->Out.GetNumBytes(), GetSendQueueSize(), OutListBits);
         UpdateSendPBar();
         return;
       }

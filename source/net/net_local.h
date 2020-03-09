@@ -168,7 +168,13 @@ public:
   virtual int GetSocketAddr (int socket, sockaddr_t *addr) = 0;
   virtual VStr GetNameFromAddr (sockaddr_t *addr) = 0;
   virtual int GetAddrFromName (const char *name, sockaddr_t *addr,int DefaultPort) = 0;
+  // returns:
+  //   -1 if completely not equal
+  //    0 if completely equal
+  //    1 if only ips are equal
   virtual int AddrCompare (const sockaddr_t *addr1, const sockaddr_t *addr2) = 0;
+  // used to not reject connections from localhost
+  virtual bool IsLocalAddress (const sockaddr_t *addr) = 0;
   virtual int GetSocketPort (const sockaddr_t *addr) = 0;
   virtual int SetSocketPort (sockaddr_t *addr, int port) = 0;
 };
