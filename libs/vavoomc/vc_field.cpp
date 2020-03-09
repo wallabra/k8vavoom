@@ -824,7 +824,7 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *
           // load angles
           vuint8 HavePitchRoll = 0;
           Strm.SerialiseBits(&HavePitchRoll, 3);
-          if (HavePitchRoll&4) {
+          if (HavePitchRoll&4u) {
             // precise
             Strm << ang->yaw;
             if (HavePitchRoll&1u) Strm << ang->pitch; else ang->pitch = 0.0f;
@@ -840,18 +840,6 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *
             ang->yaw = word2angle(wyaw);
             ang->pitch = word2angle(wpitch);
             ang->roll = word2angle(wroll);
-            /*
-            vuint8 ByteYaw;
-            vuint8 BytePitch = 0;
-            vuint8 ByteRoll = 0;
-            vuint8 HavePitchRoll = 0;
-            Strm << ByteYaw;
-            Strm.SerialiseBits(&HavePitchRoll, 1);
-            if (HavePitchRoll) Strm << BytePitch << ByteRoll;
-            ang->yaw = ByteToAngle(ByteYaw);
-            ang->pitch = ByteToAngle(BytePitch);
-            ang->roll = ByteToAngle(ByteRoll);
-            */
           }
         } else {
           // save angles
@@ -876,15 +864,6 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *
             Strm << wyaw;
             if (HavePitchRoll&1u) Strm << wpitch;
             if (HavePitchRoll&2u) Strm << wroll;
-            /*
-            vuint8 ByteYaw = AngleToByte(ang->yaw);
-            vuint8 BytePitch = AngleToByte(ang->pitch);
-            vuint8 ByteRoll = AngleToByte(ang->roll);
-            vuint8 HavePitchRoll = BytePitch || ByteRoll;
-            Strm << ByteYaw;
-            Strm.SerialiseBits(&HavePitchRoll, 1);
-            if (HavePitchRoll) Strm << BytePitch << ByteRoll;
-            */
           }
         }
       } else {
