@@ -578,11 +578,13 @@ static void CheckForSkip () {
     for (int i = 0; i < MAXPLAYERS; ++i) {
       player = GGameInfo->Players[i];
       if (player) {
-        if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
-          if (!player->Net) continue;
-        }
-        if (player->PlayerFlags&VBasePlayer::PF_Spawned) {
-          hasAlivePlayer = true;
+        if (!(player->PlayerFlags&VBasePlayer::PF_IsBot)) {
+          if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
+            if (!player->Net) continue;
+          }
+          if (player->PlayerFlags&VBasePlayer::PF_Spawned) {
+            hasAlivePlayer = true;
+          }
         }
         if (player->Buttons&BT_ATTACK) {
           if (!(player->PlayerFlags&VBasePlayer::PF_AttackDown)) skip = true;
@@ -624,10 +626,12 @@ static void CheckForSkip () {
     for (int i = 0; i < svs.max_clients; ++i) {
       player = GGameInfo->Players[i];
       if (!player) continue;
-      if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
-        if (!player->Net) continue;
+      if (!(player->PlayerFlags&VBasePlayer::PF_IsBot)) {
+        if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
+          if (!player->Net) continue;
+        }
+        if (player->PlayerFlags&VBasePlayer::PF_Spawned) wasSkip = true;
       }
-      wasSkip = true;
       player->eventClientSkipIntermission();
     }
     // if no alive players, simply go to the next map
@@ -646,8 +650,9 @@ static void CheckForSkip () {
           break;
         }
       }
+      //sv.intermission = 0;
       GCon->Logf(NAME_Debug, "*** teleporting to the new map '%s'...", *GLevelInfo->NextMap);
-      GCmdBuf << "TeleportNewMap\n";
+      GCmdBuf << "TeleportNewMap *forced*\n";
     }
   }
 }
@@ -1052,7 +1057,7 @@ COMMAND_AC(TestFinale) {
 //
 //  COMMAND TeleportNewMap
 //
-//  TeleportNewMap [mapname leaveposition] | [forced]
+//  TeleportNewMap [mapname leaveposition] | [**forced**]
 //
 //==========================================================================
 COMMAND_WITH_AC(TeleportNewMap) {
@@ -1067,7 +1072,7 @@ COMMAND_WITH_AC(TeleportNewMap) {
     GLevelInfo->NextMap = VName(*Args[1], VName::AddLower8);
     LeavePosition = VStr::atoi(*Args[2]);
   } else if (sv.intermission != 1) {
-    if (Args.length() != 2 || !Args[1].startsWithCI("force")) return;
+    if (Args.length() != 2 || !Args[1].startsWithCI("**forced**")) return;
     flags = CHANGELEVEL_REMOVEKEYS;
   }
 
@@ -1093,7 +1098,7 @@ COMMAND_WITH_AC(TeleportNewMap) {
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
 }
 
-COMMAND_AC_SIMPLE_LIST(TeleportNewMap, "forced")
+COMMAND_AC_SIMPLE_LIST(TeleportNewMap, "**forced**")
 
 
 // ////////////////////////////////////////////////////////////////////////// //

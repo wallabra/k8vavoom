@@ -2414,6 +2414,8 @@ override void PreTravel () {
   if (MO) {
     SavedInventory = EntityEx(MO).Inventory;
     EntityEx(MO).Inventory = none;
+  } else {
+    SavedInventory = none; // just in case
   }
   ResetACSButtons();
 }
