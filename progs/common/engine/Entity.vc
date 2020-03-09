@@ -303,7 +303,7 @@ int InitialHealth;
 // extra flags
 bool bMonster; // moved from `EntityEx`
 bool bWasRendered; // used in automap
-transient bool bOnScroll_Unused; // set/reset by `CreateSecNodeList()`
+transient bool bNetDetach; // server is using this flag for some replication conditions
 bool bNoInteraction; // thing is completely excluded from any gameplay related checks (moved from EntityEx)
 bool bNoTickGrav; // do not call `Tick()` (but process gravity) (processed in C++ code)
 bool bPseudoCorpse; // set in DECORATE for corpse decorations, so sprite offset fixer can recongize them
@@ -405,8 +405,10 @@ replication {
     DispSpriteFrame, DispSpriteName,
     Score, Accuracy, Stamina;
 
-  reliable if (Role == ROLE_Authority && bNoTickGrav)
-    /*bNoInteraction,*/ bNoTickGrav, bNoTickGravLifeTime,
+  // if this becomes detached object, transfer those fields too
+  reliable if (Role == ROLE_Authority && bNetDetach)
+    // see below for `PlaneAlpha`
+    bNoTickGrav, bNoTickGravLifeTime, LastMoveTime, // this is required for "notick" entities
     bNoGravity, bStickToFloor, bStickToCeiling;
 
   reliable if (Role == ROLE_Authority && bNetInitial)
@@ -422,7 +424,8 @@ replication {
   reliable if (Role == ROLE_Authority && bNetOwner)
     Owner;
 
-  reliable if (Role == ROLE_Authority && SkyViewpoint(self))
+  // `PlaneAlpha` is used for detached notickers too
+  reliable if (Role == ROLE_Authority && (bNetDetach || SkyViewpoint(self)))
     bAlways, Mate, PlaneAlpha;
 }
 

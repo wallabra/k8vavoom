@@ -1526,9 +1526,12 @@ COMMAND(PreSpawn) {
   if (!Chan) {
     Chan = (VThinkerChannel *)Player->Net->CreateChannel(CHANNEL_Thinker, -1, true); // local channel
     if (!Chan) Sys_Error("cannot allocate `LevelInfo` channel, this should NOT happen!");
+    GCon->Logf(NAME_DevNet, "%s: created channel for `GLevelInfo`", *Player->Net->GetAddress());
     Chan->SetThinker(GLevelInfo);
-    Chan->Update();
+  } else {
+    GCon->Logf(NAME_DevNet, "%s: have existing channel for `GLevelInfo` (why?!)", *Chan->GetDebugName());
   }
+  Chan->Update();
 }
 
 
@@ -2213,4 +2216,33 @@ COMMAND(gc_show_all_objects) {
 //==========================================================================
 VLevel *VServerNetContext::GetLevel () {
   return GLevel;
+}
+
+
+//==========================================================================
+//
+//  COMMAND NetChanInfo
+//
+//==========================================================================
+COMMAND(NetChanInfo) {
+  if (GGameInfo->NetMode <= NM_Standalone) {
+    GCon->Logf(NAME_Error, "no netchan info available without a network game!");
+    return;
+  }
+
+  #ifdef CLIENT
+  if (GGameInfo->NetMode == NM_Client) {
+    if (!cl || !cl->Net) return;
+    GCon->Logf(NAME_DevNet, "%s: client: %d open channels", *cl->Net->GetAddress(), cl->Net->OpenChannels.Length());
+    return;
+  }
+  #endif
+
+  if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
+    for (int i = 0; i < MAXPLAYERS; ++i) {
+      VBasePlayer *plr = GGameInfo->Players[i];
+      if (!plr || !plr->Net) continue;
+      GCon->Logf(NAME_DevNet, "%s: player #%d: %d open channels", *plr->Net->GetAddress(), i, plr->Net->OpenChannels.Length());
+    }
+  }
 }

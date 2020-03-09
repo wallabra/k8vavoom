@@ -894,15 +894,48 @@ void VNetConnection::Tick () {
 
 //==========================================================================
 //
+//  VNetConnection::AbortChannel
+//
+//  this is called by channel send/recv methods on fatal queue overflow
+//  you can `delete` channel here, as it is guaranteed that call to this
+//  method is followed by `return`
+//  you CAN call `chan->Close()` here
+//
+//==========================================================================
+void VNetConnection::AbortChannel (VChannel *chan) {
+  vassert(chan);
+  // if this is some vital channel (control, player, level) -- close connection
+  // otherwise, just close this channel, and let world updater deal with it
+  if (!chan->IsThinker()) {
+    GCon->Logf(NAME_DevNet, "%s: aborting the connection, because vital non-thinker channel %s is oversaturated!", *GetAddress(), *chan->GetDebugName());
+    State = NETCON_Closed;
+    return;
+  }
+  VThinkerChannel *tc = (VThinkerChannel *)chan;
+  if (tc->GetThinker() && (tc->GetThinker()->ThinkerFlags&VThinker::TF_AlwaysRelevant)) {
+    GCon->Logf(NAME_DevNet, "%s: aborting the connection, because vital thinker channel %s is oversaturated!", *GetAddress(), *chan->GetDebugName());
+    State = NETCON_Closed;
+    return;
+  }
+  // close this channel, and hope that nothing will go wrong
+  GCon->Logf(NAME_DevNet, "%s: closing thinker channel %s due oversaturation", *GetAddress(), *chan->GetDebugName());
+  chan->Close();
+}
+
+
+//==========================================================================
+//
 //  VNetConnection::SendCommand
 //
 //==========================================================================
 void VNetConnection::SendCommand (VStr Str) {
+  Str = Str.xstrip();
   if (Str.length() == 0) return; // no, really
   if (Str.length() > 1200) {
     GCon->Logf(NAME_Error, "%s: sorry, cannot send command that long (%d bytes): [%s...]", *GetAddress(), Str.length(), *Str.RemoveColors().left(32));
     return;
   }
+  //GCon->Logf(NAME_DevNet, "%s: sending command: \"%s\"", *GetAddress(), *Str.quote());
   VMessageOut msg(GetGeneralChannel());
   msg << Str;
   GetGeneralChannel()->SendMessage(&msg);
@@ -1183,7 +1216,7 @@ void VNetConnection::UpdateThinkers () {
     if (!IsRelevant(*th)) continue;
     VThinkerChannel *chan = ThinkerChannels.FindPtr(*th);
     if (!chan) {
-      // add gore entities as last ones
+      //HACK! add gore entities as last ones
       if (VStr::startsWith(th->GetClass()->GetName(), "K8Gore")) {
         vassert(th->GetClass()->IsChildOf(VEntity::StaticClass()));
         PendingGoreEnts.append((VEntity *)(*th));
@@ -1295,15 +1328,15 @@ void VNetConnection::UpdateLevel () {
 
   const double ctt = Sys_Time();
   if (LastLevelUpdateTime > ctt) return;
-  LastLevelUpdateTime = ctt+1.0/(double)clampval(sv_fps.asFloat(), 5.0f, 90.0f);
+  LastLevelUpdateTime = ctt+1.0/(double)clampval(sv_fps.asFloat(), 5.0f, 70.0f);
 
   NeedsUpdate = false; // note that we already sent an update
   SetupFatPVS();
 
   GetLevelChannel()->Update();
-  // we still need to call this, so the engine can send update for new thinkers
   UpdateThinkers();
-  //!GCon->Logf(NAME_DevNet, "%s: UpLevel; %d messages in queue", *GetAddress(), sendQueueSize);
+
+  //GCon->Logf(NAME_DevNet, "%s: *** UpdatateLevel done, %d active channels", *GetAddress(), OpenChannels.length());
 }
 
 

@@ -465,6 +465,7 @@ void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, 
   L.Color = Color;
   L.ConeDir = coneDirection;
   L.ConeAngle = coneAngle;
+  L.LightChanged = true;
 }
 
 
@@ -474,17 +475,25 @@ void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, 
 //
 //==========================================================================
 void VLevel::MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin) {
+  if (!Ent) return;
+  if (Ent->IsGoingToDie()) return;
   //FIXME: use proper data structure instead of reallocating it again and again
   //TODO: write this with hashmap, and replicate properly
-  /*
+  /* there is no reason to do this yet, becase we cannot update static lights via network
   rep_light_t *stl = StaticLights;
   for (int count = NumStaticLights; count--; ++stl) {
-    if (stl->Owner == Ent) {
-      stl->Origin = Origin;
+    if (stl->Owner == Ent) break;
+  }
+  if (stl) {
+    if (stl->Origin != Ent->Origin) {
+      stl->Origin = Ent->Origin;
+      stl->LightChanged = true;
     }
   }
   */
+  #ifdef CLIENT
   if (Renderer) Renderer->MoveStaticLightByOwner(Ent, Origin);
+  #endif
 }
 
 

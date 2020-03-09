@@ -45,7 +45,9 @@ VMessageOut::VMessageOut (VChannel *AChannel, bool areliable)
   , Next(nullptr)
   , Time(0)
   , bReceivedAck(false)
+  , OutEstimated(0)
 {
+  SetupWith((AChannel ? AChannel->Type : 0), (AChannel ? AChannel->Index : ~0u), areliable);
 }
 
 
@@ -56,17 +58,28 @@ VMessageOut::VMessageOut (VChannel *AChannel, bool areliable)
 //==========================================================================
 VMessageOut::VMessageOut (vuint8 AChanType, int AChanIndex, bool areliable)
   : VBitStreamWriter(MAX_MSG_SIZE_BITS+16, false) // no expand
-  , ChanType(AChanType)
-  , ChanIndex(AChanIndex)
-  , ChanSequence(0)
-  , PacketId(0)
-  , bOpen(false)
-  , bClose(false)
-  , bReliable(areliable)
-  , Next(nullptr)
-  , Time(0)
-  , bReceivedAck(false)
 {
+  SetupWith(AChanType, (vuint32)AChanIndex, areliable);
+}
+
+
+//==========================================================================
+//
+//  VMessageOut::SetupWith
+//
+//==========================================================================
+void VMessageOut::SetupWith (vuint8 AChanType, int AChanIndex, bool areliable) noexcept {
+  ChanType = AChanType;
+  ChanIndex = AChanIndex;
+  ChanSequence = 0;
+  PacketId = 0;
+  bOpen = false;
+  bClose = false;
+  bReliable = areliable;
+  Next = nullptr;
+  Time = 0;
+  bReceivedAck = false;
+  OutEstimated = 0;
 }
 
 

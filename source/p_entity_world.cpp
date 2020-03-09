@@ -30,8 +30,6 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
-//#define VV_DO_ONSCROLL_FLAG
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
@@ -158,15 +156,6 @@ void VEntity::Destroy () {
 //
 //=============================================================================
 void VEntity::CreateSecNodeList () {
-  #ifdef VV_DO_ONSCROLL_FLAG
-  // get `Scroller` class, so we can fix `EFEX_OnScroll` flag
-  static VClass *ScrollerClass = nullptr;
-  if (!ScrollerClass) {
-    ScrollerClass = VClass::FindClass("Scroller");
-    if (!ScrollerClass) Sys_Error("VM class 'Scroller' not found!");
-  }
-  #endif
-
   msecnode_t *Node;
 
   // first, clear out the existing Thing fields. as each node is
@@ -178,11 +167,6 @@ void VEntity::CreateSecNodeList () {
     Node->Thing = nullptr;
     Node = Node->TNext;
   }
-
-  #ifdef VV_DO_ONSCROLL_FLAG
-  // reset `EFEX_OnScroll`, it will be set later
-  FlagsEx &= ~EFEX_OnScroll;
-  #endif
 
   // use RenderRadius here, so we can check sectors in renderer instead of going through all objects
   // no, we cannot do this, because touching sector list is used to move objects too
@@ -229,17 +213,6 @@ void VEntity::CreateSecNodeList () {
           // be attached to the Thing's VEntity at TouchingSectorList.
 
           XLevel->SectorList = XLevel->AddSecnode(ld->frontsector, this, XLevel->SectorList);
-          #ifdef VV_DO_ONSCROLL_FLAG
-          // check sector thinkers
-          if (!(FlagsEx&EFEX_OnScroll)) {
-            for (VThinker *ssth = ld->frontsector->AffectorData; ssth; ssth = ssth->eventGetNextAffector()) {
-              if (ssth->GetClass() == ScrollerClass) {
-                FlagsEx |= EFEX_OnScroll;
-                break;
-              }
-            }
-          }
-          #endif
 
           // don't assume all lines are 2-sided, since some Things like
           // MT_TFOG are allowed regardless of whether their radius
@@ -250,17 +223,6 @@ void VEntity::CreateSecNodeList () {
 
           if (ld->backsector && ld->backsector != ld->frontsector) {
             XLevel->SectorList = XLevel->AddSecnode(ld->backsector, this, XLevel->SectorList);
-            #ifdef VV_DO_ONSCROLL_FLAG
-            // check sector thinkers
-            if (!(FlagsEx&EFEX_OnScroll)) {
-              for (VThinker *ssth = ld->backsector->AffectorData; ssth; ssth = ssth->eventGetNextAffector()) {
-                if (ssth->GetClass() == ScrollerClass) {
-                  FlagsEx |= EFEX_OnScroll;
-                  break;
-                }
-              }
-            }
-            #endif
           }
         }
       }
@@ -295,11 +257,6 @@ void VEntity::CreateSecNodeList () {
 //==========================================================================
 void VEntity::UnlinkFromWorld () {
   //!MoveFlags &= ~MVF_JustMoved;
-
-  #ifdef VV_DO_ONSCROLL_FLAG
-  // reset `EFEX_OnScroll`, because why not?
-  FlagsEx &= ~EFEX_OnScroll;
-  #endif
 
   if (!SubSector) return;
 
@@ -457,9 +414,6 @@ void VEntity::LinkToWorld (int properFloorCheck) {
     TouchingSectorList = XLevel->SectorList; // attach to thing
     XLevel->SectorList = nullptr; // clear for next time
   } else {
-    #ifdef VV_DO_ONSCROLL_FLAG
-    FlagsEx &= ~EFEX_OnScroll;
-    #endif
     XLevel->DelSectorList();
   }
 

@@ -59,8 +59,16 @@ void VControlChannel::ParseMessage (VMessageIn &msg) {
   while (!msg.AtEnd()) {
     VStr Cmd;
     msg << Cmd;
-    if (msg.IsError()) break;
-    if (Connection->Context->IsClient()) {
+    if (msg.IsError()) {
+      GCon->Logf(NAME_DevNet, "%s: cannot read control command, dropping connection", *GetDebugName());
+      Connection->State = NETCON_Closed;
+      return;
+    }
+    Cmd = Cmd.xstrip();
+    if (!Cmd.Length()) continue;
+    GCon->Logf(NAME_DevNet, "%s: got command: \"%s\"", *GetDebugName(), *Cmd.quote());
+    Cmd += "\n";
+    if (Connection->IsClient()) {
       GCmdBuf << Cmd;
     } else {
       VCommand::ExecuteString(Cmd, VCommand::SRC_Client, Connection->Owner);

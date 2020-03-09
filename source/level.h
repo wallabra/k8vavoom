@@ -100,6 +100,7 @@ struct rep_light_t {
   VEntity *Owner;
   TVec ConeDir;
   float ConeAngle;
+  bool LightChanged;
 };
 
 

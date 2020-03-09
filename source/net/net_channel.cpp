@@ -43,8 +43,10 @@ VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AInd
   , OpenedLocally(AOpenedLocally)
   , OpenAcked(AIndex >= 0 && AIndex < CHANIDX_ObjectMap) // those channels are automatically opened
   , Closing(false)
-  , NumInList(0)
-  , NumOutList(0)
+  , InListCount(0)
+  , InListBits(0)
+  , OutListCount(0)
+  , OutListBits(0)
   , InList(nullptr)
   , OutList(nullptr)
   , bSentAnyMessages(false)
@@ -107,12 +109,23 @@ VStr VChannel::GetDebugName () const noexcept {
 
 //==========================================================================
 //
+//  VChannel::IsQueueFull
+//
+//==========================================================================
+bool VChannel::IsQueueFull (bool forClose) const noexcept {
+  //if (OutListCount >= MAX_RELIABLE_BUFFER-2) return false;
+  return (OutListBits >= (MAX_RELIABLE_BUFFER-(forClose ? 1 : 2))*MAX_MSG_SIZE_BITS);
+}
+
+
+//==========================================================================
+//
 //  VChannel::CanSendData
 //
 //==========================================================================
 bool VChannel::CanSendData () const noexcept {
   // keep some space for close message
-  if (NumOutList >= MAX_RELIABLE_BUFFER-2) return false;
+  if (IsQueueFull()) return false;
   return (Connection ? Connection->CanSendData() : false);
 }
 
@@ -123,7 +136,7 @@ bool VChannel::CanSendData () const noexcept {
 //
 //==========================================================================
 bool VChannel::CanSendClose () const noexcept {
-  return (NumOutList < MAX_RELIABLE_BUFFER-1);
+  return !IsQueueFull(true);
 }
 
 
@@ -171,15 +184,14 @@ void VChannel::Close () {
     if (Out->bClose) GCon->Logf(NAME_DevNet, "%s: close flag is not set, yet we already have CLOSE message in queue (pid=%u; stime=%g; time=%g)", *GetDebugName(), Out->PacketId, Out->Time, Sys_Time());
     vassert(!Out->bClose);
   }
+  //FIXME!
+  if (!bSentAnyMessages && !OpenAcked) GCon->Logf(NAME_DevNet, "WARNING: trying to close the channel %s that wasn't used for anything!", *GetDebugName());
   // send closing message
+  SendCloseMessageForced();
   // WARNING! make sure that `SetClosing()` sets `Closing` first, and then does any cleanup!
   // failing to do so may cause recursive call to `Close()` (in thinker channel, for example)
-  {
-    VMessageOut cnotmsg(this, true); // reliable
-    cnotmsg.bClose = true;
-    SendMessage(&cnotmsg);
-  }
-  // message queuing should set closing flag, check it
+  SetClosing();
+  // closing flag should be set, check it
   vassert(Closing);
 }
 
@@ -217,8 +229,11 @@ void VChannel::ReceivedAcks () {
     doClose = (doClose || OutList->bClose);
     VMessageOut *curr = OutList;
     OutList = OutList->Next;
+    OutListBits -= curr->OutEstimated;
+    vassert(OutListBits >= 0);
     delete curr;
-    --NumOutList;
+    --OutListCount;
+    vassert(OutListCount >= 0);
   }
 
   // if a close has been acknowledged in sequence, we're done
@@ -226,7 +241,7 @@ void VChannel::ReceivedAcks () {
     // `OutList` can still contain some packets here for some reason
     // it looks like a bug in my netcode
     if (OutList) {
-      GCon->Logf(NAME_DevNet, "!!!! %s: acked close message, but contains some other unacked messages (%d) !!!!", *GetDebugName(), NumOutList);
+      GCon->Logf(NAME_DevNet, "!!!! %s: acked close message, but contains some other unacked messages (%d) !!!!", *GetDebugName(), OutListCount);
       for (VMessageOut *Out = OutList; Out; Out = Out->Next) {
         vassert(!Out->bReceivedAck);
         GCon->Logf(NAME_DevNet, "  pid=%u; csq=%u; cidx=%u; ctype=%u; open=%d; close=%d; reliable=%d; size=%d",
@@ -238,6 +253,38 @@ void VChannel::ReceivedAcks () {
     ReceivedCloseAck();
     delete this;
   }
+}
+
+
+//==========================================================================
+//
+//  VChannel::SendCloseMessageForced
+//
+//  this unconditionally adds "close" message to the
+//  queue, and marks the channel for closing
+//
+//  WARNING! DOES NO CHECKS!
+//
+//==========================================================================
+void VChannel::SendCloseMessageForced () {
+  if (!Connection) return;
+  VMessageOut cnotmsg(this, true); // reliable
+  cnotmsg.bClose = true;
+  // this should not happen, but...
+  if (OpenedLocally && !bSentAnyMessages) cnotmsg.bOpen = true;
+  // put into queue without any checks
+  cnotmsg.Next = nullptr;
+  cnotmsg.ChanSequence = ++Connection->OutReliable[Index];
+  ++OutListCount;
+  VMessageOut *OutMsg = new VMessageOut(cnotmsg);
+  VMessageOut **OutLink;
+  for (OutLink = &OutList; *OutLink; OutLink = &(*OutLink)->Next) {}
+  *OutLink = OutMsg;
+  OutMsg->OutEstimated = OutMsg->EstimateSizeInBits();
+  OutListBits += OutMsg->OutEstimated;
+  // send the raw message
+  OutMsg->bReceivedAck = false;
+  Connection->SendMessage(OutMsg);
 }
 
 
@@ -262,15 +309,26 @@ void VChannel::SendMessage (VMessageOut *Msg) {
 
   if (Msg->bReliable) {
     // put outgoint message into send queue
-    vassert(NumOutList < MAX_RELIABLE_BUFFER-1+(Msg->bClose ? 1 : 0));
+    //vassert(OutListCount < MAX_RELIABLE_BUFFER-1+(Msg->bClose ? 1 : 0));
+    if (OutListBits >= MAX_RELIABLE_BUFFER*MAX_MSG_SIZE_BITS) {
+      if (OutListBits >= (MAX_RELIABLE_BUFFER+13)*MAX_MSG_SIZE_BITS) {
+        GCon->Logf(NAME_DevNet, "NETWORK ERROR: channel %s is highly oversaturated!", *GetDebugName());
+        Connection->AbortChannel(this);
+        return;
+      } else {
+        GCon->Logf(NAME_DevNet, "NETWORK ERROR: channel %s is oversaturated!", *GetDebugName());
+      }
+    }
     Msg->Next = nullptr;
     Msg->ChanSequence = ++Connection->OutReliable[Index];
-    ++NumOutList;
+    ++OutListCount;
     VMessageOut *OutMsg = new VMessageOut(*Msg);
     VMessageOut **OutLink;
     for (OutLink = &OutList; *OutLink; OutLink = &(*OutLink)->Next) {}
     *OutLink = OutMsg;
     Msg = OutMsg; // use this new message for sending
+    Msg->OutEstimated = Msg->EstimateSizeInBits();
+    OutListBits += Msg->OutEstimated;
   }
 
   // send the raw message
@@ -340,10 +398,16 @@ void VChannel::ReceivedMessage (VMessageIn &Msg) {
     VMessageIn *newmsg = new VMessageIn(Msg);
     if (prev) prev->Next = newmsg; else InList = newmsg;
     newmsg->Next = curr;
-    ++NumInList;
-    vassert(NumInList <= MAX_RELIABLE_BUFFER); //FIXME: signal error here!
+    ++InListCount;
+    InListBits += newmsg->GetNumBits();
     // just in case
     for (VMessageIn *m = InList; m && m->Next; m = m->Next) vassert(m->ChanSequence < m->Next->ChanSequence);
+    //vassert(InListCount <= MAX_RELIABLE_BUFFER); //FIXME: signal error here!
+    if (InListBits > (MAX_RELIABLE_BUFFER+18)*MAX_MSG_SIZE_BITS) {
+      GCon->Logf(NAME_DevNet, "NETWORK ERROR: channel %s incoming queue overflowed!", *GetDebugName());
+      Connection->AbortChannel(this);
+      return;
+    }
   } else {
     // this is "in sequence" message, process it
     bool removed = ProcessInMessage(Msg);
@@ -354,7 +418,10 @@ void VChannel::ReceivedMessage (VMessageIn &Msg) {
       if (InList->ChanSequence != Connection->InReliable[Index]+1) break;
       VMessageIn *curr = InList;
       InList = InList->Next;
-      --NumInList;
+      --InListCount;
+      InListBits -= curr->GetNumBits();
+      vassert(InListCount >= 0);
+      vassert(InListBits >= 0);
       removed = ProcessInMessage(*curr);
       delete curr;
       if (removed) return;
@@ -369,6 +436,17 @@ void VChannel::ReceivedMessage (VMessageIn &Msg) {
 //
 //==========================================================================
 void VChannel::Tick () {
+}
+
+
+//==========================================================================
+//
+//  VChannel::WillOverflowMsg
+//
+//==========================================================================
+bool VChannel::WillOverflowMsg (const VMessageOut *msg, int addbits) const noexcept {
+  vassert(msg);
+  return msg->WillOverflow(addbits);
 }
 
 
@@ -428,7 +506,7 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
   // we cannot simply get out of here, because we need to pop function arguments
 
   //const bool blockSend = !CanSendData();
-  const bool blockSend = (Closing || NumOutList >= MAX_RELIABLE_BUFFER-2);
+  const bool blockSend = (Closing || IsQueueFull());
   bool serverSide = Closing;
 
   // check for server-side only

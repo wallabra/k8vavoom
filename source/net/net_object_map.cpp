@@ -282,6 +282,7 @@ bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
 //==========================================================================
 bool VNetObjectsMap::SerialiseObject (VStream &Strm, VObject *&Obj) {
   if (Strm.IsLoading()) {
+    // reading
     Obj = nullptr;
     vuint8 IsThinker = 0;
     Strm.SerialiseBits(&IsThinker, 1);
@@ -296,12 +297,13 @@ bool VNetObjectsMap::SerialiseObject (VStream &Strm, VObject *&Obj) {
     }
     return true;
   } else {
+    // writing
     VThinker *Thinker = Cast<VThinker>(Obj);
     vuint8 IsThinker = (Thinker ? 1 : 0);
     Strm.SerialiseBits(&IsThinker, 1);
     if (Thinker) {
       // it's a thinker. if it has an open channel we can use it's
-      // channel number to identify it, otherwise we can't serialise it.
+      // channel number to identify it, otherwise we can't serialise it
       bool Ret = false;
       vuint32 Index = 0;
       VThinkerChannel *Chan = Connection->ThinkerChannels.FindPtr(Thinker);

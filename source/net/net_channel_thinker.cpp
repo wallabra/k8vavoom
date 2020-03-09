@@ -28,7 +28,7 @@
 #include "net_message.h"
 
 static VCvarI net_dbg_dump_thinker_channels("net_dbg_dump_thinker_channels", "0", "Dump thinker channels creation/closing (bit 0)?");
-static VCvarB net_dbg_dump_thinker_detach("net_dbg_dump_thinker_detach", false, "Dump thinker detaches?");
+VCvarB net_dbg_dump_thinker_detach("net_dbg_dump_thinker_detach", false, "Dump thinker detaches?");
 
 
 //==========================================================================
@@ -90,7 +90,7 @@ void VThinkerChannel::RemoveThinkerFromGame () {
   if (doRemove) {
     // for clients: don't remove "authority" thinkers, they became autonomous
     if (Connection->Context->IsClient()) {
-      if (Thinker->RemoteRole == ROLE_DumbProxy) {
+      if (Thinker->Role == ROLE_Authority) {
         doRemove = false;
         if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_Debug, "VThinkerChannel::RemoveThinkerFromGame: skipping autonomous thinker '%s':%u", Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
       }
@@ -197,9 +197,9 @@ void VThinkerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Value
 void VThinkerChannel::Update () {
   if (Closing || !Thinker) return;
 
-  // currently, client cannot create thinkers, so ignore any possible client updates
-  // this may be changed later
-  if (!IsLocalChannel()) return;
+  // saturation check already done
+  // also, if this is client, and the thinker is authority, it is detached, don't send anything
+  if (Connection->IsClient() && Thinker->Role == ROLE_Authority) return;
 
   VEntity *Ent = Cast<VEntity>(Thinker);
 
@@ -207,10 +207,32 @@ void VThinkerChannel::Update () {
   if (NewObj) Thinker->ThinkerFlags |= VThinker::TF_NetInitial;
   if (Ent != nullptr && Ent->GetTopOwner() == Connection->Owner->MO) Thinker->ThinkerFlags |= VThinker::TF_NetOwner;
 
+  // we need to set `EFEX_NetDetach` flag for replication condition checking if we're going to detach it
+  const bool isServer = Connection->Context->IsServer();
+  const bool detachEntity = (isServer && !Connection->AutoAck && Ent && (Ent->FlagsEx&VEntity::EFEX_NoTickGrav));
+
+  // temporarily set `bNetDetach`
+  if (detachEntity) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
+
+  // it is important to call this *BEFORE* changing roles!
   EvalCondValues(Thinker, Thinker->GetClass(), FieldCondValues);
+
+  // switch roles if we're going to detach this entity
+  vuint8 oldRole = 0, oldRemoteRole = 0;
+  if (detachEntity) {
+    // this is Role on the client
+    oldRole = Thinker->Role;
+    oldRemoteRole = Thinker->RemoteRole;
+    // set role on the client (completely detached)
+    Thinker->RemoteRole = ROLE_Authority;
+    // set role on the server
+    Thinker->Role = ROLE_DumbProxy;
+  }
+
   vuint8 *Data = (vuint8 *)Thinker;
   VObject *NullObj = nullptr;
 
+  //FIXME: use bitstream and split it to the messages here
   VMessageOut Msg(this);
   Msg.bOpen = NewObj;
 
@@ -218,20 +240,6 @@ void VThinkerChannel::Update () {
     VClass *TmpClass = Thinker->GetClass();
     Connection->ObjMap->SerialiseClass(Msg, TmpClass);
     NewObj = false;
-  }
-
-  const bool isServer = Connection->Context->IsServer();
-  vuint8 oldRole = 0, oldRemoteRole = 0;
-
-  if (isServer && !Connection->AutoAck) {
-    if (Ent && Ent->FlagsEx&VEntity::EFEX_NoTickGrav) {
-      // this is Role on the client
-      oldRole = Thinker->Role;
-      oldRemoteRole = Thinker->RemoteRole;
-      Thinker->RemoteRole = ROLE_Authority;
-      // this is RemoteRole on the client (and Role on the server)
-      Thinker->Role = ROLE_DumbProxy;
-    }
   }
 
   TAVec SavedAngles;
@@ -253,14 +261,16 @@ void VThinkerChannel::Update () {
     if (!FieldCondValues[F->NetIndex]) continue;
 
     // set up pointer to the value and do swapping for the role fields
+    bool forceSend = false;
     vuint8 *FieldValue = Data+F->Ofs;
-         if (F == Connection->Context->RoleField) FieldValue = Data+Connection->Context->RemoteRoleField->Ofs;
-    else if (F == Connection->Context->RemoteRoleField) FieldValue = Data+Connection->Context->RoleField->Ofs;
+         if (F == Connection->Context->RoleField) { forceSend = detachEntity; FieldValue = Data+Connection->Context->RemoteRoleField->Ofs; }
+    else if (F == Connection->Context->RemoteRoleField) { forceSend = detachEntity; FieldValue = Data+Connection->Context->RoleField->Ofs; }
 
-    if (VField::IdenticalValue(FieldValue, OldData+F->Ofs, F->Type)) {
+    if (!forceSend && VField::IdenticalValue(FieldValue, OldData+F->Ofs, F->Type)) {
       //GCon->Logf(NAME_DevNet, "%s:%u: skipped field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
       continue;
     }
+
     if (F->Type.Type == TYPE_Array) {
       VFieldType IntType = F->Type;
       IntType.Type = F->Type.ArrayInnerType;
@@ -304,38 +314,23 @@ void VThinkerChannel::Update () {
   if (Ent && (Ent->EntityFlags&VEntity::EF_IsPlayer)) Ent->Angles = SavedAngles;
   LastUpdateFrame = Connection->UpdateFrameCounter;
 
-  // if this object becomes "dumb proxy", transmit some additional data
-  if (isServer && Thinker->Role == ROLE_DumbProxy && Ent) {
-    Msg.WriteInt(-1); // "special data" flag
-    vuint8 exFlags = 0;
-    if (Ent->FlagsEx&VEntity::EFEX_NoInteraction) exFlags |= 1u<<0;
-    if (Ent->FlagsEx&VEntity::EFEX_NoTickGrav) exFlags |= 1u<<1;
-    if (Ent->FlagsEx&VEntity::EFEX_NoTickGravLT) exFlags |= 1u<<2;
-    if (Ent->EntityFlags&VEntity::EF_NoGravity) exFlags |= 1u<<3;
-    Msg.SerialiseBits(&exFlags, 3);
-    // lifetime fields
-    if (exFlags&(1u<<2)) {
-      // special fields for "notick"
-      Msg << Ent->LastMoveTime;
-      Msg << Ent->PlaneAlpha;
-    }
-  }
-
   // clear temporary networking flags
-  Thinker->ThinkerFlags &= ~VThinker::TF_NetInitial;
-  Thinker->ThinkerFlags &= ~VThinker::TF_NetOwner;
+  Thinker->ThinkerFlags &= ~(VThinker::TF_NetInitial|VThinker::TF_NetOwner);
 
-  SendMessage(&Msg);
+  // if this is initial send, we have to flush the message, even if it is empty
+  if (Msg.bOpen || Msg.GetNumBits()) SendMessage(&Msg);
 
   // if this object becomes "dumb proxy", mark it as detached, and close the channel
-  if (isServer && Thinker->Role == ROLE_DumbProxy && Ent) {
-    // remember that we already did this thinker
+  if (detachEntity) {
     if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_DevNet, "%s:%u: became notick, closing channel%s", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), (OpenedLocally ? " (opened locally)" : ""));
+    // remember that we already did this thinker
     Connection->DetachedThinkers.put(Thinker, true);
+    // reset `bNetDetach`
+    if (Ent) Ent->FlagsEx &= ~VEntity::EFEX_NetDetach;
     // restore roles
     Thinker->Role = oldRole;
     Thinker->RemoteRole = oldRemoteRole;
-    Close(); // this will send `Msg`
+    Close();
   }
 }
 
@@ -346,22 +341,36 @@ void VThinkerChannel::Update () {
 //
 //==========================================================================
 void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
-  // currently, client cannot create thinkers, so ignore incoming client packets here
-  // the player has its own channel for data
-  // all locally created thinker channels are authorities for now (this may be changed in the future, though)
-  if (IsLocalChannel()) return;
+  if (Closing) return;
+
+  if (Connection->IsServer()) {
+    // if this thinker is detached, don't process any messages
+    if (Thinker && Connection->DetachedThinkers.has(Thinker)) return;
+  }
 
   if (Msg.bOpen) {
     VClass *C = nullptr;
     Connection->ObjMap->SerialiseClass(Msg, C);
 
-    if (!C) Sys_Error("%s: cannot spawn `none` thinker", *GetDebugName());
+    if (!C) {
+      //Sys_Error("%s: cannot spawn `none` thinker", *GetDebugName());
+      GCon->Logf(NAME_Debug, "%s: tried to spawn thinker without name (or with invalid name)", *GetDebugName());
+      Connection->State = NETCON_Closed;
+      return;
+    }
+
+    // in no case client can spawn anything on the server
+    if (Connection->IsServer()) {
+      GCon->Logf(NAME_Debug, "%s: client tried to spawn thinker `%s` on the server, dropping client", *GetDebugName(), C->GetName());
+      Connection->State = NETCON_Closed;
+      return;
+    }
 
     VThinker *Th = Connection->Context->GetLevel()->SpawnThinker(C, TVec(0, 0, 0), TAVec(0, 0, 0), nullptr, false); // no replacements
     #ifdef CLIENT
     //GCon->Logf(NAME_DevNet, "%s spawned thinker with class `%s`(%u)", *GetDebugName(), Th->GetClass()->GetName(), Th->GetUniqueId());
     if (Th->IsA(VLevelInfo::StaticClass())) {
-      //GCon->Logf(NAME_DevNet, "*** NET: got LevelInfo, sending 'client_spawn' command");
+      //GCon->Logf(NAME_DevNet, "*** %s: got LevelInfo, sending 'client_spawn' command", *GetDebugName());
       VLevelInfo *LInfo = (VLevelInfo *)Th;
       LInfo->Level = LInfo;
       GClLevel->LevelInfo = LInfo;
@@ -389,34 +398,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
   }
 
   while (!Msg.AtEnd()) {
-    int FldIdx = Msg.ReadInt(/*Thinker->GetClass()->NumNetFields*/);
-    // special data?
-    if (FldIdx == -1) {
-      // receive some additional fields for entities
-      vuint8 exFlags = 0;
-      Msg.SerialiseBits(&exFlags, 3);
-      if (Ent) {
-        if (exFlags&(1u<<0)) Ent->FlagsEx |= VEntity::EFEX_NoInteraction;
-        if (exFlags&(1u<<1)) Ent->FlagsEx |= VEntity::EFEX_NoTickGrav;
-        if (exFlags&(1u<<2)) Ent->FlagsEx |= VEntity::EFEX_NoTickGravLT;
-        if (exFlags&(1u<<3)) Ent->EntityFlags |= VEntity::EF_NoGravity;
-        if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_Debug, "%s:%u: got special flags 0x%02x", Ent->GetClass()->GetName(), Ent->GetUniqueId(), exFlags);
-      }
-      // lifetime fields
-      if (exFlags&(1u<<2)) {
-        if (Ent) {
-          // special fields for "notick"
-          Msg << Ent->LastMoveTime;
-          Msg << Ent->PlaneAlpha;
-          if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_Debug, "%s:%u: got special notick fields: %g, %g", Ent->GetClass()->GetName(), Ent->GetUniqueId(), Ent->LastMoveTime, Ent->PlaneAlpha);
-        } else {
-          float a, b;
-          Msg << a;
-          Msg << b;
-        }
-      }
-      continue;
-    }
+    int FldIdx = Msg.ReadInt();
 
     // find field
     VField *F = nullptr;

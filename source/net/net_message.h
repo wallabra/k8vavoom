@@ -101,13 +101,18 @@ public:
   // set by the connection object
   double Time; // time when this message was sent (updated with each resending)
   bool bReceivedAck; // packet parser will set this flag, and will call the channel to process acked messages
+  int OutEstimated; // channel stores its estimation here, so it can keep its internal accumulator in sync
+
+private:
+  // called from ctors
+  void SetupWith (vuint8 AChanType, int AChanIndex, bool areliable) noexcept;
 
 public:
   VMessageOut &operator = (const VMessageOut &) = delete;
 
   // default messages are reliable
-  VMessageOut (VChannel *AChannel, bool areliable=true);
   VMessageOut (vuint8 AChanType, int AChanIndex, bool areliable=true);
+  VMessageOut (VChannel *AChannel, bool areliable=true);
 
   // this copies message data, including header
   inline VMessageOut (const VMessageOut &src)
@@ -122,6 +127,7 @@ public:
     , Next(nullptr)
     , Time(src.Time)
     , bReceivedAck(src.bReceivedAck) //???
+    , OutEstimated(src.OutEstimated)
   {
     // clone bitstream writer
     cloneFrom(&src);

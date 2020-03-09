@@ -41,11 +41,9 @@ enum {
   NETPACKET_CTL = 0x80,
 };
 
-// sent on handshake, and with `CMD_NewLevel`
-// I don't think that communication protocol will change, but just in a case
-// k8: and it did
+// sent on handshake
 enum {
-  NET_PROTOCOL_VERSION = 5,
+  NET_PROTOCOL_VERSION = 6,
 };
 
 enum {
@@ -223,8 +221,10 @@ public:
   bool OpenedLocally; // `true` if opened locally, `false` if opened by the remote
   bool OpenAcked; // is open acked? (obviously)
   bool Closing; // channel sent "close me" message, and is waiting for ack
-  int NumInList; // number of packets in InList
-  int NumOutList; // number of packets in OutList
+  int InListCount; // number of packets in InList
+  int InListBits; // rough estimation, used to limit transfers
+  int OutListCount; // number of packets in OutList
+  int OutListBits; // rough estimation, used to limit transfers
   VMessageIn *InList; // incoming data with queued dependencies
   VMessageOut *OutList; // outgoing reliable unacked data
   bool bSentAnyMessages; // if this is `false`, force `bOpen` flag on the sending message (and set this to `true`)
@@ -242,6 +242,13 @@ public:
     }
   }
 
+protected:
+  bool IsQueueFull (bool forClose=false) const noexcept;
+
+  // this unconditionally adds "close" message to the queue, and marks the channel for closing
+  // WARNING! DOES NO CHECKS!
+  void SendCloseMessageForced ();
+
 public:
   VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AIndex, bool AOpenedLocally);
   virtual ~VChannel ();
@@ -253,8 +260,8 @@ public:
 
   inline bool IsThinker () const noexcept { return (Type == CHANNEL_Thinker); }
 
-  inline int GetSendQueueSize () const noexcept { return NumOutList; }
-  inline int GetRecvQueueSize () const noexcept { return NumInList; }
+  inline int GetSendQueueSize () const noexcept { return OutListCount; }
+  inline int GetRecvQueueSize () const noexcept { return InListCount; }
 
   // is this channel opened locally?
   inline bool IsLocalChannel () const noexcept { return OpenedLocally; }
@@ -301,6 +308,9 @@ public:
   bool ReadRpc (VMessageIn &Msg, int, VObject *);
 
 public: // this interface can be used to split data streams into separate messages
+  // returns `true` if appending `addbits` will overflow the message
+  bool WillOverflowMsg (const VMessageOut *msg, int addbits) const noexcept;
+
   // returns `true` if appending `strm` will overflow the message
   bool WillOverflowMsg (const VMessageOut *msg, const VBitStreamWriter &strm) const noexcept;
 
@@ -343,9 +353,33 @@ public:
   TArray<VBodyQueueTrInfo> BodyQueueTrans;
 
   VStr serverInfoBuf;
-  int severInfoPacketCount;
-  int severInfoCurrPacket;
   VNetClientServerInfo csi;
+
+protected:
+  // parsers returns `false` on any error
+  void UpdateLine (VBitStreamWriter &strm, int lidx);
+  bool ParseLine (VMessageIn &Msg);
+
+  void UpdateSide (VBitStreamWriter &strm, int sidx);
+  bool ParseSide (VMessageIn &Msg);
+
+  void UpdateSector (VBitStreamWriter &strm, int sidx);
+  bool ParseSector (VMessageIn &Msg);
+
+  void UpdatePObj (VBitStreamWriter &strm, int oidx);
+  bool ParsePObj (VMessageIn &Msg);
+
+  void UpdateCamTex (VBitStreamWriter &strm, int idx);
+  bool ParseCamTex (VMessageIn &Msg);
+
+  void UpdateTranslation (VBitStreamWriter &strm, int idx);
+  bool ParseTranslation (VMessageIn &Msg);
+
+  void UpdateBodyQueue (VBitStreamWriter &strm, int idx);
+  bool ParseBodyQueue (VMessageIn &Msg);
+
+  void UpdateStaticLight (VBitStreamWriter &strm, int idx, bool forced);
+  bool ParseStaticLight (VMessageIn &Msg);
 
 public:
   VLevelChannel (VNetConnection *, vint32, vuint8 = true);
@@ -354,7 +388,6 @@ public:
   void SetLevel (VLevel *);
   void Update ();
   void SendNewLevel ();
-  void SendStaticLights ();
   void ResetLevel ();
 
   // VChannel interface
@@ -583,6 +616,12 @@ public:
 
   // this is called when incoming message was read; it should decode and process network packet
   void ReceivedPacket (VBitStreamReader &Packet);
+
+  // this is called by channel send/recv methods on fatal queue overflow
+  // you *CANNOT* `delete` channel here, as it is *NOT* guaranteed that call to this
+  // method is followed by `return`!
+  // you CAN call `chan->Close()` here
+  virtual void AbortChannel (VChannel *chan);
 
   // sets `PacketId` field in the message, you can use it
   virtual void SendMessage (VMessageOut *Msg);

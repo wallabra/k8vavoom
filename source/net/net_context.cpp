@@ -27,6 +27,8 @@
 #include "network.h"
 #include "sv_local.h"
 
+extern VCvarB net_dbg_dump_thinker_detach; // from net_channel_thinker.cpp, sorry
+
 
 //==========================================================================
 //
@@ -76,7 +78,9 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
         chan->SetThinker(nullptr); // notify channel that the thinker is already dead
         chan->Close();
       }
-      if (it->DetachedThinkers.has(Th)) GCon->Logf(NAME_Debug, "%s:%u: removed from detached list", Th->GetClass()->GetName(), Th->GetUniqueId());
+      if (net_dbg_dump_thinker_detach) {
+        if (it->DetachedThinkers.has(Th)) GCon->Logf(NAME_Debug, "%s:%u: removed from detached list", Th->GetClass()->GetName(), Th->GetUniqueId());
+      }
       // remove from detached list
       it->DetachedThinkers.remove(Th);
     }
@@ -88,40 +92,32 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
 //
 //  VNetContext::Tick
 //
-//  this is directly called from server code
+//  this is called directly from the server code
 //
 //==========================================================================
 void VNetContext::Tick () {
   for (int i = 0; i < ClientConnections.length(); ++i) {
     VNetConnection *Conn = ClientConnections[i];
     if (!Conn) continue; // just in case
-    //!GCon->Logf(NAME_DevNet, "#%d: %s (oms:%d)", i, *Conn->GetAddress(), (int)Conn->ObjMapSent);
-    // don't update level if the player isn't totally in the game yet
-    if (Conn->IsOpen() && Conn->GetGeneralChannel() && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
-      //!GCon->Logf(NAME_DevNet, "  spawned: #%d: %s", i, *Conn->GetAddress());
-      if (Conn->NeedsUpdate) {
-        // reset update flag; it will be set again if we'll get any packet from the client
-        //!GCon->Logf(NAME_DevNet, "  sending level update: #%d: %s", i, *Conn->GetAddress());
-        //Conn->NeedsUpdate = false; // nope, this is set in `UpdateLevel()`
-        Conn->UpdateLevel();
-      }
-      // spam client with player updates
-      if (Conn->IsOpen()) {
-        //!GCon->Logf(NAME_DevNet, "  sending player update: #%d: %s", i, *Conn->GetAddress());
-        Conn->GetPlayerChannel()->Update();
-      }
-    }
-    if (Conn->IsOpen() && Conn->ObjMapSent && !Conn->LevelInfoSent) {
-      GCon->Logf(NAME_DevNet, "Sending server info for %s", *Conn->GetAddress());
-      Conn->SendServerInfo();
-    }
-    if (Conn->IsOpen()) {
-      //!GCon->Logf(NAME_DevNet, "  ticking: #%d: %s", i, *Conn->GetAddress());
-      Conn->Tick();
-    }
-    if (Conn->IsOpen() && Conn->GetGeneralChannel()->Closing) {
+    if (Conn->IsOpen() && !Conn->GetGeneralChannel()) {
       GCon->Logf(NAME_DevNet, "Client %s closed the connection", *Conn->GetAddress());
       Conn->State = NETCON_Closed;
+    }
+    if (Conn->IsOpen()) {
+      vassert(Conn->GetGeneralChannel());
+      // send server info, if necessary
+      if (Conn->ObjMapSent && !Conn->LevelInfoSent) {
+        GCon->Logf(NAME_DevNet, "Sending server info for %s", *Conn->GetAddress());
+        Conn->SendServerInfo();
+      }
+      // don't update level if the player isn't totally in the game yet
+      if (Conn->IsOpen() && Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned) {
+        // spam client with player updates
+        Conn->GetPlayerChannel()->Update();
+        if (Conn->IsOpen() && Conn->NeedsUpdate) Conn->UpdateLevel(); // `UpdateLevel()` will reset update flag
+      }
+      // tick the channel if it is still open
+      if (Conn->IsOpen()) Conn->Tick();
     }
     if (Conn->IsClosed()) {
       GCon->Logf(NAME_DevNet, "Dropping client %s", *Conn->GetAddress());

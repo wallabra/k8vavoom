@@ -133,10 +133,13 @@ void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values
 //
 //==========================================================================
 void VPlayerChannel::Update () {
+  if (Closing) return; // just in case
+  // if network connection is saturated, do nothing
   if (!CanSendData()) { Connection->NeedsUpdate = true; return; }
 
   EvalCondValues(Plr, Plr->GetClass(), FieldCondValues);
 
+  //FIXME: use bitstream and split it to the messages here
   VMessageOut Msg(this);
 
   vuint8 *Data = (vuint8 *)Plr;
@@ -170,7 +173,7 @@ void VPlayerChannel::Update () {
   }
 
   //GCon->Logf(NAME_DevNet, "%s: sending player update (%s)", *GetDebugName(), (Connection->IsClient() ? "client" : "server"));
-  SendMessage(&Msg);
+  /*if (Msg.GetNumBits())*/ SendMessage(&Msg);
 }
 
 
