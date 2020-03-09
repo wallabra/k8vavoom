@@ -1182,7 +1182,18 @@ extern "C" {
         // one is player
         return (ea->IsPlayer() ? -1 : 1);
       }
-    } else if (((ea->FlagsEx|eb->FlagsEx)&VEntity::EFEX_Monster)) {
+    }
+
+    // we moved our plane away, no need to check any distance here
+    // prefer entities which are before our eyes
+    const int sidea = snfo->ViewPlane.PointOnSide(ea->Origin);
+    const int sideb = snfo->ViewPlane.PointOnSide(eb->Origin);
+    if (sidea^sideb) {
+      // different sides, prefer one that is before the camera
+      return (sideb ? -1 : 1); // if b is behind our back, a is first (a < b), otherwise b is first (a > b)
+    }
+
+    if (((ea->FlagsEx|eb->FlagsEx)&VEntity::EFEX_Monster)) {
       // at least one is monster
       if (((ea->FlagsEx|eb->FlagsEx)^VEntity::EFEX_Monster)) {
         // one is monster
@@ -1224,15 +1235,6 @@ extern "C" {
       }
     }
 
-    // we moved our plane away, no need to check any distance here
-    // prefer entities which are before our eyes
-    const int sidea = snfo->ViewPlane.PointOnSide(ea->Origin);
-    const int sideb = snfo->ViewPlane.PointOnSide(eb->Origin);
-    if (sidea^sideb) {
-      // different sides, prefer one that is before the camera
-      return (sideb ? -1 : 1); // if b is behind our back, a is first (a < b), otherwise b is first (a > b)
-    }
-
     // the one that is closer to the view origin should come first
     const float distaSq = (ea->Origin-snfo->ViewOrg).length2DSquared();
     const float distbSq = (eb->Origin-snfo->ViewOrg).length2DSquared();
@@ -1250,9 +1252,6 @@ extern "C" {
     const VEntity *ea = *(const VEntity **)aa;
     const VEntity *eb = *(const VEntity **)bb;
     const VNetConnection::ThinkerSortInfo *snfo = (const VNetConnection::ThinkerSortInfo *)ncptr;
-    // the one that is closer to the view origin should come first
-    const float distaSq = (ea->Origin-snfo->ViewOrg).length2DSquared();
-    const float distbSq = (eb->Origin-snfo->ViewOrg).length2DSquared();
     // check sides
     const int sidea = snfo->ViewPlane.PointOnSide(ea->Origin);
     const int sideb = snfo->ViewPlane.PointOnSide(eb->Origin);
@@ -1260,6 +1259,9 @@ extern "C" {
       // different sides, prefer one that is before the camera
       return (sideb ? -1 : 1); // if b is behind our back, a is first (a < b), otherwise b is first (a > b)
     }
+    // the one that is closer to the view origin should come first
+    const float distaSq = (ea->Origin-snfo->ViewOrg).length2DSquared();
+    const float distbSq = (eb->Origin-snfo->ViewOrg).length2DSquared();
     if (distaSq < distbSq) return -1;
     if (distaSq > distbSq) return 1;
     // by unique id
@@ -1344,6 +1346,9 @@ void VNetConnection::UpdateThinkers () {
     PendingThinkers.reset();
   }
 
+  // if we are starving on channels, don't try to add entities behind our back
+  const bool starvingOnChannels = (OpenChannels.length() > MAX_CHANNELS-32);
+
   // update mobjs in sight
   for (TThinkerIterator<VThinker> th(Context->GetLevel()); th; ++th) {
     if (!IsRelevant(*th)) continue;
@@ -1352,18 +1357,21 @@ void VNetConnection::UpdateThinkers () {
       //HACK! add gore entities as last ones
       if (VStr::startsWith(th->GetClass()->GetName(), "K8Gore")) {
         vassert(th->GetClass()->IsChildOf(VEntity::StaticClass()));
+        // if we are starving on channels, don't try to add entities behind our back
+        if (starvingOnChannels) {
+          VEntity *ent = (VEntity *)(*th);
+          if (snfo.ViewPlane.PointOnSide(ent->Origin)) continue;
+        }
         PendingGoreEnts.append((VEntity *)(*th));
         continue;
       }
-      // debug code
-      #if 1
-      if (!IsAlwaysRelevant(*th)) {
+      // if we are starving on channels, don't try to add entities behind our back
+      if (starvingOnChannels && !IsAlwaysRelevant(*th)) {
         VEntity *ent = Cast<VEntity>(*th);
         if (ent) {
           if (snfo.ViewPlane.PointOnSide(ent->Origin)) continue;
         }
       }
-      #endif
       // not a gore, remember this thinker; we'll sort them later
       PendingThinkers.append(*th);
       continue;

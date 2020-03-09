@@ -201,6 +201,8 @@ void VThinkerChannel::Update () {
   // also, if this is client, and the thinker is authority, it is detached, don't send anything
   if (Connection->IsClient() && Thinker->Role == ROLE_Authority) return;
 
+  //GCon->Logf(NAME_DevNet, "%s:%u: updating", Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
+
   VEntity *Ent = Cast<VEntity>(Thinker);
 
   // set up thinker flags that can be used by field condition
@@ -318,7 +320,14 @@ void VThinkerChannel::Update () {
   Thinker->ThinkerFlags &= ~(VThinker::TF_NetInitial|VThinker::TF_NetOwner);
 
   // if this is initial send, we have to flush the message, even if it is empty
-  if (Msg.bOpen || Msg.GetNumBits()) SendMessage(&Msg);
+  if (Msg.bOpen || Msg.GetNumBits() ||
+      (Thinker->ThinkerFlags&VThinker::TF_AlwaysRelevant) ||
+      Thinker == Connection->Owner->MO ||
+      (Ent && Ent->IsPlayer()) ||
+      (Ent && Ent->GetTopOwner() == Connection->Owner->MO))
+  {
+    SendMessage(&Msg);
+  }
 
   // if this object becomes "dumb proxy", mark it as detached, and close the channel
   if (detachEntity) {
