@@ -70,6 +70,34 @@ void CL_ReadFromServer (float deltaTime);
 void CL_SetupLocalPlayer ();
 void CL_SetupStandaloneClient ();
 
+// for client connection
+enum {
+  CLState_None, // not a network client
+  CLState_Init, // performing initial transfer
+  CLState_InGame, // we are currently in game (menus, console, etc. are allowed)
+};
+
+// returns `CLState_XXX`
+// used in input code to decide if we should check for "esc aborts", or allow menus
+int CL_GetNetState ();
+
+// actually, this differs between "in game" and "in intermission"
+// has no sense (UB) if there is no game in progress
+// so you'd better check for `cl && cl->Net && cls.signon`, or something
+// used in input code
+bool CL_IsInGame ();
+
+// returns `false` if client networking is not active
+bool CL_SendCommandToServer (VStr cmd);
+
+// used in input code
+void CL_SetNetAbortCallback (bool (*cb) (void *udata), void *udata);
+
+// used in screen code
+// returns inclamped lag
+int CL_GetNetLag ();
+int CL_GetNumberOfChannels ();
+
 extern client_static_t cls;
 extern VBasePlayer *cl;
 

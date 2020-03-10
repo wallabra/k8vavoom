@@ -428,6 +428,80 @@ void CL_NetInterframe () {
 
 //==========================================================================
 //
+//  CL_IsInGame
+//
+//==========================================================================
+bool CL_IsInGame () {
+  return (cl && !GClGame->InIntermission());
+}
+
+
+//==========================================================================
+//
+//  CL_GetNetState
+//
+//  returns `CLState_XXX`
+//
+//==========================================================================
+int CL_GetNetState () {
+  if (GGameInfo->NetMode != NM_Client || !cl || !cl->Net) return CLState_None;
+  if (!cl->Net->ObjMapSent) return CLState_Init;
+  if (!cls.signon) return CLState_Init;
+  if (cls.gotmap < 2) return CLState_Init; //not sure
+  return CLState_InGame;
+}
+
+
+//==========================================================================
+//
+//  CL_SendCommandToServer
+//
+//  returns `false` if client networking is not active
+//
+//==========================================================================
+bool CL_SendCommandToServer (VStr cmd) {
+  if (!cl || !cl->Net) return false;
+  //GCon->Logf(NAME_Debug, "*** sending command over the network: <%s>\n", *Original);
+  cl->Net->SendCommand(cmd);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  CL_SetNetAbortCallback
+//
+//==========================================================================
+void CL_SetNetAbortCallback (bool (*cb) (void *udata), void *udata) {
+  if (GNet) {
+    GNet->CheckUserAbortCB = cb;
+    GNet->CheckUserAbortUData = udata;
+  }
+}
+
+
+//==========================================================================
+//
+//  CL_GetNetLag
+//
+//==========================================================================
+int CL_GetNetLag () {
+  return (cl && cl->Net ? (int)((cl->Net->PrevLag+1.2*(max2(cl->Net->InLoss, cl->Net->OutLoss)*0.01))*1000) : 0);
+}
+
+
+//==========================================================================
+//
+//  CL_GetNumberOfChannels
+//
+//==========================================================================
+int CL_GetNumberOfChannels () {
+  return (cl && cl->Net ? cl->Net->OpenChannels.length() : 0);
+}
+
+
+//==========================================================================
+//
 //  CL_Responder
 //
 //  get info needed to make ticcmd_ts for the players

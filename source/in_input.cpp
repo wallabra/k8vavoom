@@ -31,10 +31,8 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "cl_local.h"
 #include "ui/ui.h"
 #include "neoui/neoui.h"
-#include "net/network.h"
 
 
 static VCvarB allow_vanilla_cheats("allow_vanilla_cheats", true, "Allow vanilla keyboard cheat codes?", CVAR_Archive);
@@ -576,12 +574,7 @@ void VInput::ProcessEvents () {
     if (ev.data1 == K_LALT) { if (ev.type == ev_keydown) AltDown |= 2; else AltDown &= ~2; }
 
     // initial network client data transmit?
-    bool initNetClient = false;
-    if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && !GClGame->InIntermission()) {
-      if (!cl->Net->ObjMapSent) {
-        initNetClient = true;
-      }
-    }
+    bool initNetClient = (CL_GetNetState() == CLState_Init);
 
     if (!initNetClient) {
       if (C_Responder(&ev)) continue; // console
@@ -609,7 +602,7 @@ void VInput::ProcessEvents () {
       UnpressAll();
     }
 
-    if (cl && !GClGame->InIntermission()) {
+    if (CL_IsInGame()) {
       if (KBCheatProcessor(&ev)) continue; // cheatcode typed
       if (SB_Responder(&ev)) continue; // status window ate it
       if (AM_Responder(&ev)) continue; // automap ate it

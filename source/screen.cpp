@@ -24,11 +24,9 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "cl_local.h"
 #include "drawer.h"
 #include "ui/ui.h"
 #include "neoui/neoui.h"
-#include "net/network.h" /* sorry */
 
 
 extern int screenblocks;
@@ -356,10 +354,8 @@ static void DrawFPS () {
     T_SetAlign(hleft, vtop);
     int xpos = 4;
 
-    const int nlag = clampval((int)((cl->Net->PrevLag+1.2*(max2(cl->Net->InLoss, cl->Net->OutLoss)*0.01))*1000), 0, 999);
-    //const int lag1 = clampval((int)(cl->Net->AvgLag*1000), 0, 999);
-    //T_DrawText(xpos, ypos, va("NET LAG:%3d  [%3d]", nlag, lag1), CR_DARKBROWN); ypos += 9;
-    T_DrawText(xpos, ypos, va("LAG:%3d (%d CHANS)", nlag, cl->Net->OpenChannels.Length()), CR_DARKBROWN); ypos += T_FontHeight();
+    const int nlag = clampval(CL_GetNetLag(), 0, 999);
+    T_DrawText(xpos, ypos, va("LAG:%3d (%d CHANS)", nlag, CL_GetNumberOfChannels()), CR_DARKBROWN); ypos += T_FontHeight();
 
     // draw lag chart
     ypos += 2;
@@ -603,7 +599,7 @@ void SCR_Update (bool fullUpdate) {
   bool drawOther = true;
 
   // do buffered drawing
-  if (cl && cls.signon && cl->MO && !GClGame->InIntermission()) {
+  if (cl && cls.signon && cl->MO && /*!GClGame->InIntermission()*/CL_IsInGame()) {
     if (GGameInfo->NetMode == NM_Client && !cl->Level) {
       allowClear = false;
       allowWipeStart = false;
@@ -635,7 +631,7 @@ void SCR_Update (bool fullUpdate) {
       allowClear = false;
       allowWipeStart = false;
     }
-  } else if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && !GClGame->InIntermission()) {
+  } else if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && /*!GClGame->InIntermission()*/CL_IsInGame()) {
     allowClear = false;
     allowWipeStart = false;
     drawOther = false;
@@ -671,7 +667,7 @@ void SCR_Update (bool fullUpdate) {
         Drawer->RenderWipe(-1.0f);
       }
     }
-  } else if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && !GClGame->InIntermission()) {
+  } else if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && /*!GClGame->InIntermission()*/CL_IsInGame()) {
     T_SetFont(SmallFont);
     T_SetAlign(hleft, vtop);
     const int y = 8+cls.gotmap*8;

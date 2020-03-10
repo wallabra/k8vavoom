@@ -32,7 +32,6 @@
 #include "drawer.h"
 #include "ui/ui.h"
 #include "neoui/neoui.h"
-#include "net/network.h"
 
 #ifndef MAX_JOYSTICK_BUTTONS
 # define MAX_JOYSTICK_BUTTONS  (100)
@@ -277,10 +276,7 @@ VSdlInputDevice::VSdlInputDevice ()
   // initialise joystick
   StartupJoystick();
 
-  if (GNet) {
-    GNet->CheckUserAbortCB = &GNetCheckForUserAbortCB;
-    GNet->CheckUserAbortUData = (void *)this;
-  }
+  CL_SetNetAbortCallback(&GNetCheckForUserAbortCB, (void *)this);
 }
 
 
@@ -290,10 +286,7 @@ VSdlInputDevice::VSdlInputDevice ()
 //
 //==========================================================================
 VSdlInputDevice::~VSdlInputDevice () {
-  if (GNet) {
-    GNet->CheckUserAbortCB = nullptr;
-    GNet->CheckUserAbortUData = nullptr;
-  }
+  CL_SetNetAbortCallback(nullptr, nullptr);
   SDL_ShowCursor(1); // on
   ShutdownJoystick();
 }

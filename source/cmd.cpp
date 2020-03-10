@@ -24,7 +24,6 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "net/network.h"
 
 
 extern VCvarB sv_cheats;
@@ -843,11 +842,7 @@ void VCommand::ForwardToServer () {
     GCon->Log("You must be in a game to execute this command");
     return;
   }
-  if (cl->Net) {
-    //fprintf(stderr, "*** sending over the network: <%s>\n", *Original);
-    cl->Net->SendCommand(Original);
-  } else {
-    //fprintf(stderr, "*** local executing: <%s>\n", *Original);
+  if (!CL_SendCommandToServer(Original)) {
     VCommand::ExecuteString(Original, VCommand::SRC_Client, cl);
   }
 #else

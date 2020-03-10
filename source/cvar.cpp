@@ -24,7 +24,6 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "net/network.h"
 #include "cvar.h"
 
 
@@ -34,7 +33,7 @@
 //
 //==========================================================================
 static void cv_userInfoSet (VCvar *cvar) {
-#ifdef CLIENT
+  #ifdef CLIENT
   Info_SetValueForKey(cls.userinfo, cvar->GetName(), *cvar->asStr());
   if (cl) {
     if (GGameInfo->NetMode == NM_TitleMap ||
@@ -42,11 +41,12 @@ static void cv_userInfoSet (VCvar *cvar) {
         GGameInfo->NetMode == NM_ListenServer)
     {
       VCommand::ExecuteString(VStr("setinfo \"")+cvar->GetName()+"\" \""+cvar->asStr()+"\"\n", VCommand::SRC_Client, cl);
-    } else if (cl->Net) {
-      cl->Net->SendCommand(VStr("setinfo \"")+cvar->GetName()+"\" \""+cvar->asStr()+"\"\n");
+    } else {
+      //if (cl->Net) cl->Net->SendCommand(VStr("setinfo \"")+cvar->GetName()+"\" \""+cvar->asStr()+"\"\n");
+      CL_SendCommandToServer(VStr("setinfo \"")+cvar->GetName()+"\" \""+cvar->asStr().quote()+"\"\n");
     }
   }
-#endif
+  #endif
 }
 
 
@@ -56,7 +56,7 @@ static void cv_userInfoSet (VCvar *cvar) {
 //
 //==========================================================================
 static void cv_serverInfoSet (VCvar *cvar) {
-#ifdef SERVER
+  #ifdef SERVER
   Info_SetValueForKey(svs.serverinfo, cvar->GetName(), *cvar->asStr());
   if (GGameInfo && GGameInfo->NetMode != NM_None && GGameInfo->NetMode != NM_Client) {
     for (int i = 0; i < MAXPLAYERS; ++i) {
@@ -65,7 +65,7 @@ static void cv_serverInfoSet (VCvar *cvar) {
       }
     }
   }
-#endif
+  #endif
 }
 
 
