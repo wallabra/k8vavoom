@@ -468,16 +468,19 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
         return;
       }
 
-      if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  ack: ackpid=%u; outackpid=%u", AckPacketId, OutAckPacketId);
-
       // resend any old reliable packets that the receiver hasn't acknowledged
       if (AckPacketId > OutAckPacketId) {
+        if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  ack: ackpid=%u; outackpid=%u (future)", AckPacketId, OutAckPacketId);
         for (vuint32 LostPacketId = OutAckPacketId+1; LostPacketId < AckPacketId; ++LostPacketId, ++OutLossAcc) {
+          if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  ack:   PACKETLOST: %u", LostPacketId);
           PacketLost(LostPacketId);
         }
         OutAckPacketId = AckPacketId;
       } else if (AckPacketId < OutAckPacketId) {
         // this is harmless
+        if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  ack: ackpid=%u; outackpid=%u (outdated)", AckPacketId, OutAckPacketId);
+      } else {
+        if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  ack: ackpid=%u; outackpid=%u (current)", AckPacketId, OutAckPacketId);
       }
 
       // update lag statistics
@@ -610,30 +613,42 @@ void VNetConnection::Prepare (int addBits) {
 
 //==========================================================================
 //
-//  VNetConnection::ResendAcks
+//  VNetConnection::PutOneAck
+//
+//  returns argument for `Prepare` if putting the ack will
+//  overflow the output buffer.
+//  i.e. if it returned non-zero, ack is not put.
+//  if `forceSend` is `true`, flush the output buffer if
+//  necessary (always sends, returns 0).
 //
 //==========================================================================
-void VNetConnection::ResendAcks (bool allowOutOverflow) {
-  if (!AutoAck) {
-    for (auto &&ack : AcksToResend) {
-      if (allowOutOverflow) {
-        Prepare(STRM_INDEX_U_BYTES(ack)*8+1);
-      } else {
-        if (Out.GetNumBytes()+STRM_INDEX_U_BYTES(ack)+4 >= MAX_DGRAM_SIZE-2) return;
-      }
-      Out.WriteBit(true); // ack flag
-      Out << STRM_INDEX_U(ack);
-    }
+int VNetConnection::PutOneAck (vuint32 ackId, bool forceSend) {
+  if (AutoAck) return 0;
+  if (Out.GetNumBits() == 0) Prepare(0); // put header
+  const int outBits = STRM_INDEX_U_BYTES(ackId)*8+1;
+  if (Out.GetNumBytes()+outBits > MAX_MSG_SIZE_BITS) {
+    if (!forceSend) return outBits;
+    Prepare(outBits);
+    vassert(Out.GetNumBytes()+outBits <= MAX_MSG_SIZE_BITS);
   }
+  Out.WriteBit(true); // ack flag
+  Out << STRM_INDEX_U(ackId);
+  vassert(Out.GetNumBytes() <= MAX_MSG_SIZE_BITS);
+  return 0;
 }
 
 
 //==========================================================================
 //
-//  VNetConnection::ForgetResendAcks
+//  VNetConnection::ResendAcks
 //
 //==========================================================================
-void VNetConnection::ForgetResendAcks () {
+void VNetConnection::ResendAcks () {
+  if (!AutoAck) {
+    for (auto &&ack : AcksToResend) {
+      PutOneAckForced(ack);
+    }
+  }
   AcksToResend.reset();
 }
 
@@ -644,15 +659,12 @@ void VNetConnection::ForgetResendAcks () {
 //
 //==========================================================================
 void VNetConnection::SendPacketAck (vuint32 AckPacketId) {
-  if (AutoAck) { AcksToResend.reset(); return; }
+  if (AutoAck) { AcksToResend.reset(); QueuedAcks.reset(); return; }
   ResendAcks();
-  ForgetResendAcks();
-  // queue current ack, and send it
-  QueuedAcks.append(AckPacketId);
   // queue current ack
-  Prepare(STRM_INDEX_U_BYTES(AckPacketId)*8+1);
-  Out.WriteBit(true); // ack flag
-  Out << STRM_INDEX_U(AckPacketId);
+  QueuedAcks.append(AckPacketId);
+  // send current ack
+  PutOneAckForced(AckPacketId);
 }
 
 
@@ -716,11 +728,17 @@ void VNetConnection::Flush () {
       Prepare(0);
       // this looks like keepalive packet, so resend last acks there too
       // this is to avoid client timeout on bad connection
-      if (LastInPacketIdAck != 0xffffffffu) {
-        Out.WriteBit(true);
-        Out << STRM_INDEX_U(LastInPacketIdAck);
-        ResendAcks(false); // no overflow
+      #if 1
+      if (!AutoAck /*&& LastInPacketIdAck != 0xffffffffu*/) {
+        //Out.WriteBit(true);
+        //Out << STRM_INDEX_U(LastInPacketIdAck);
+        vassert(AcksToResend.length() == 0);
+        while (QueuedAcks.length()) {
+          if (PutOneAck(QueuedAcks[0])) break; // no room
+          QueuedAcks.removeAt(0);
+        }
       }
+      #endif
     } else {
       ++Driver->packetsSent;
     }
@@ -878,7 +896,6 @@ void VNetConnection::Tick () {
   }
 
   ResendAcks();
-  ForgetResendAcks();
 
   // also, flush if we have no room for more data in outgoing accumulator
   if (ForceFlush || IsKeepAliveExceeded() || CalcEstimatedByteSize() == MAX_MSG_SIZE_BITS) Flush();

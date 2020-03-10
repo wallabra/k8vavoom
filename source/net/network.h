@@ -674,10 +674,14 @@ public:
 
   virtual bool CanSendData () const noexcept;
 
-  // resend all acks from `AcksToResend`
-  void ResendAcks (bool allowOutOverflow=true);
-  // clear `AcksToResend`
-  void ForgetResendAcks ();
+  // returns argument for `Prepare` if putting the ack will overflow the output buffer.
+  // i.e. if it returned non-zero, ack is not put.
+  // if `forceSend` is `true`, flush the output buffer if necessary (always sends, returns 0).
+  int PutOneAck (vuint32 ackId, bool forceSend=false);
+  // for convenience
+  inline void PutOneAckForced (vuint32 ackId) { const int res = PutOneAck(ackId, true); vassert(res == 0); }
+  // resend all acks from `AcksToResend`, and clears `AcksToResend`
+  void ResendAcks ();
 
   // call this to make sure that the output buffer has enough room
   void Prepare (int addBits);

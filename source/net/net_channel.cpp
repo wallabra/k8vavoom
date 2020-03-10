@@ -120,9 +120,15 @@ VStr VChannel::GetDebugName () const noexcept {
 int VChannel::IsQueueFull () const noexcept {
   //if (OutListCount >= MAX_RELIABLE_BUFFER-2) return false;
   //return (OutListBits >= (MAX_RELIABLE_BUFFER-(forClose ? 1 : 2))*MAX_MSG_SIZE_BITS);
+  #if 0
   return
-    OutListBits >= /*(MAX_RELIABLE_BUFFER+13)*MAX_MSG_SIZE_BITS*/24000*8 ? -1 : // oversaturated
-    OutListBits >= /*MAX_RELIABLE_BUFFER*MAX_MSG_SIZE_BITS*/16000*8 ? 1 : // full
+    OutListBits >= /*(MAX_RELIABLE_BUFFER+13)*MAX_MSG_SIZE_BITS*/14000*8 ? -1 : // oversaturated
+    OutListBits >= /*MAX_RELIABLE_BUFFER*MAX_MSG_SIZE_BITS*/12000*8 ? 1 : // full
+    0; // ok
+  #endif
+  return
+    OutListCount >= MAX_RELIABLE_BUFFER+8 ? -1 : // oversaturated
+    OutListCount >= MAX_RELIABLE_BUFFER-1 ? 1 : // full
     0; // ok
   //return (OutListBits >= 33000*8);
 }
@@ -286,13 +292,13 @@ void VChannel::SendCloseMessageForced () {
   // put into queue without any checks
   cnotmsg.Next = nullptr;
   cnotmsg.ChanSequence = ++Connection->OutReliable[Index];
-  ++OutListCount;
   VMessageOut *OutMsg = new VMessageOut(cnotmsg);
   VMessageOut **OutLink;
   for (OutLink = &OutList; *OutLink; OutLink = &(*OutLink)->Next) {}
   *OutLink = OutMsg;
   OutMsg->OutEstimated = OutMsg->EstimateSizeInBits();
   OutListBits += OutMsg->OutEstimated;
+  ++OutListCount;
   // send the raw message
   OutMsg->bReceivedAck = false;
   Connection->SendMessage(OutMsg);
@@ -319,7 +325,7 @@ void VChannel::SendMessage (VMessageOut *Msg) {
   bSentAnyMessages = true;
 
   if (Msg->bReliable) {
-    // put outgoint message into send queue
+    // put outgoing message into send queue
     //vassert(OutListCount < MAX_RELIABLE_BUFFER-1+(Msg->bClose ? 1 : 0));
     const int satur = IsQueueFull();
     if (satur) {
@@ -333,7 +339,6 @@ void VChannel::SendMessage (VMessageOut *Msg) {
     }
     Msg->Next = nullptr;
     Msg->ChanSequence = ++Connection->OutReliable[Index];
-    ++OutListCount;
     VMessageOut *OutMsg = new VMessageOut(*Msg);
     VMessageOut **OutLink;
     for (OutLink = &OutList; *OutLink; OutLink = &(*OutLink)->Next) {}
@@ -341,6 +346,7 @@ void VChannel::SendMessage (VMessageOut *Msg) {
     Msg = OutMsg; // use this new message for sending
     Msg->OutEstimated = Msg->EstimateSizeInBits();
     OutListBits += Msg->OutEstimated;
+    ++OutListCount;
   }
 
   // send the raw message
@@ -410,8 +416,8 @@ void VChannel::ReceivedMessage (VMessageIn &Msg) {
     VMessageIn *newmsg = new VMessageIn(Msg);
     if (prev) prev->Next = newmsg; else InList = newmsg;
     newmsg->Next = curr;
-    ++InListCount;
     InListBits += newmsg->GetNumBits();
+    ++InListCount;
     // just in case
     for (VMessageIn *m = InList; m && m->Next; m = m->Next) vassert(m->ChanSequence < m->Next->ChanSequence);
     //vassert(InListCount <= MAX_RELIABLE_BUFFER); //FIXME: signal error here!
@@ -430,8 +436,8 @@ void VChannel::ReceivedMessage (VMessageIn &Msg) {
       if (InList->ChanSequence != Connection->InReliable[Index]+1) break;
       VMessageIn *curr = InList;
       InList = InList->Next;
-      --InListCount;
       InListBits -= curr->GetNumBits();
+      --InListCount;
       vassert(InListCount >= 0);
       vassert(InListBits >= 0);
       removed = ProcessInMessage(*curr);
@@ -527,8 +533,8 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
   // we cannot simply get out of here, because we need to pop function arguments
 
   //const bool blockSend = !CanSendData();
-  const bool blockSend = (Closing || IsQueueFull());
-  bool serverSide = Closing;
+  const bool blockSend = (Closing || IsQueueFull() < 0);
+  bool serverSide = Closing; // abuse the flag
 
   // check for server-side only
   if (!serverSide && IsThinker()) {
@@ -592,24 +598,24 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
     // if this is non-thinker channel, it is fatal
     // if this is thinker channel, but it has "always relevant", it is fatal
     if (!IsThinker()) {
-      GCon->Logf(NAME_DevNet, "%s: cannot send reliable RPC (%s), closing connection", *GetDebugName(), *Func->GetFullName());
+      GCon->Logf(NAME_DevNet, "%s: cannot send reliable RPC (%s), closing connection (queue: depth=%d; bitsize=%d)", *GetDebugName(), *Func->GetFullName(), OutListCount, OutListBits);
       Connection->State = NETCON_Closed;
       return;
     }
     // thinker
     VThinkerChannel *tc = (VThinkerChannel *)this;
     if (tc->GetThinker() && (tc->GetThinker()->ThinkerFlags&VThinker::TF_AlwaysRelevant)) {
-      GCon->Logf(NAME_DevNet, "%s: cannot send reliable thinker RPC (%s), closing connection", *GetDebugName(), *Func->GetFullName());
+      GCon->Logf(NAME_DevNet, "%s: cannot send reliable thinker RPC (%s), closing connection (queue: depth=%d; bitsize=%d)", *GetDebugName(), *Func->GetFullName(), OutListCount, OutListBits);
       Connection->State = NETCON_Closed;
       return;
     }
-    GCon->Logf(NAME_DevNet, "%s: cannot send reliable thinker RPC (%s), closing channel", *GetDebugName(), *Func->GetFullName());
+    GCon->Logf(NAME_DevNet, "%s: cannot send reliable thinker RPC (%s), closing channel (queue: depth=%d; bitsize=%d)", *GetDebugName(), *Func->GetFullName(), OutListCount, OutListBits);
     Close();
     return;
   }
 
   SendMessage(&Msg);
-  if (net_debug_rpc) GCon->Logf(NAME_DevNet, "%s: created RPC: %s (%d bits)", *GetDebugName(), *Func->GetFullName(), Msg.GetNumBits());
+  if (net_debug_rpc) GCon->Logf(NAME_DevNet, "%s: created %s RPC: %s (%d bits) (queue: depth=%d; bitsize=%d)", *GetDebugName(), (Func->Flags&FUNC_NetReliable ? "reliable" : "unreliable"), *Func->GetFullName(), Msg.GetNumBits(), OutListCount, OutListBits);
 }
 
 
