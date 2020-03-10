@@ -39,7 +39,8 @@ static VCvarB net_dbg_report_stats("net_dbg_report_stats", false, "Report some s
 VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump received packets?");
 
 //FIXME: autoadjust this according to average ping
-VCvarI VNetConnection::net_speed_limit("net_speed_limit", "560000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
+//VCvarI VNetConnection::net_speed_limit("net_speed_limit", "560000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
+VCvarI VNetConnection::net_speed_limit("net_speed_limit", "36000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
 
 static VCvarF sv_fps("sv_fps", "35", "Server update frame rate (the server will use this to send updates to clients).", 0/*CVAR_Archive*/);
 
@@ -442,15 +443,18 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
   if (PacketId > InPacketId) {
     InLossAcc += PacketId-InPacketId-1;
-    InPacketId = PacketId;
+    InPacketId = PacketId+1;
   } else {
     ++InOrdAcc;
+    if (PacketId == InPacketId) ++InPacketId;
   }
 
   // ack it
   LastInPacketIdAck = PacketId;
   SendPacketAck(PacketId);
   NeedsUpdate = true; // we got *any* activity, update the world!
+
+  if (Packet.AtEnd()) GCon->Logf(NAME_DevNet, "%s: got empty keepalive packet", *GetAddress());
 
   while (!Packet.AtEnd() && IsOpen()) {
     if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  parsing packet: %d bits eaten of %d", Packet.GetPos(), Packet.GetNumBits());
@@ -603,10 +607,7 @@ void VNetConnection::Prepare (int addBits) {
 
   // make sure there's enough space now
   if (CalcEstimatedByteSize(addBits) > MAX_DGRAM_SIZE) {
-    //GCon->Logf(NAME_DevNet, "*** %s: ERROR: %d (%d) (max=%d)", *GetAddress(), Out.GetNumBits()+addBits, CalcFinalisedBitSize(Out.GetNumBits()+addBits), MAX_MSG_SIZE_BITS);
     Sys_Error("%s: cannot send packet of size %d+%d (newsize is %d, max size is %d)", *GetAddress(), Out.GetNumBits(), addBits, CalcEstimatedByteSize(addBits), MAX_DGRAM_SIZE);
-  } else {
-    //GCon->Logf(NAME_DevNet, "*** %s: collector: %d (%d) (max=%d)", *GetAddress(), Out.GetNumBits()+addBits, CalcFinalisedBitSize(Out.GetNumBits()+addBits), MAX_MSG_SIZE_BITS);
   }
 }
 
@@ -626,14 +627,14 @@ int VNetConnection::PutOneAck (vuint32 ackId, bool forceSend) {
   if (AutoAck) return 0;
   if (Out.GetNumBits() == 0) Prepare(0); // put header
   const int outBits = STRM_INDEX_U_BYTES(ackId)*8+1;
-  if (Out.GetNumBytes()+outBits > MAX_MSG_SIZE_BITS) {
+  if (CalcEstimatedByteSize(outBits) > MAX_DGRAM_SIZE) {
     if (!forceSend) return outBits;
     Prepare(outBits);
-    vassert(Out.GetNumBytes()+outBits <= MAX_MSG_SIZE_BITS);
+    vassert(CalcEstimatedByteSize(outBits) <= MAX_DGRAM_SIZE);
   }
   Out.WriteBit(true); // ack flag
   Out << STRM_INDEX_U(ackId);
-  vassert(Out.GetNumBytes() <= MAX_MSG_SIZE_BITS);
+  vassert(CalcEstimatedByteSize(0) <= MAX_DGRAM_SIZE);
   return 0;
 }
 
@@ -699,6 +700,12 @@ void VNetConnection::SendMessage (VMessageOut *Msg) {
 
   Out.SerialiseBits(hdr.GetData(), hdr.GetNumBits());
   Out.SerialiseBits(Msg->GetData(), Msg->GetNumBits());
+
+  // send it if it is full, why not
+  if (CalcEstimatedByteSize(0) == MAX_DGRAM_SIZE) {
+    Flush();
+    vassert(Out.GetNumBits() == 0);
+  }
 }
 
 
@@ -722,10 +729,10 @@ void VNetConnection::Flush () {
   ForceFlush = false;
 
   // if there is any pending data to send, send it
-  if (Out.GetNumBits() || IsKeepAliveExceeded()) {
+  if (Out.GetNumBits() || (!AutoAck && IsKeepAliveExceeded())) {
     // if sending keepalive packet, still generate header
     if (Out.GetNumBits() == 0) {
-      Prepare(0);
+      Prepare(0); // write header
       // this looks like keepalive packet, so resend last acks there too
       // this is to avoid client timeout on bad connection
       #if 1
@@ -738,6 +745,7 @@ void VNetConnection::Flush () {
           QueuedAcks.removeAt(0);
         }
       }
+      GCon->Logf(NAME_DevNet, "%s: created keepalive packet with acks; size is %d bits", *GetAddress(), Out.GetNumBits());
       #endif
     } else {
       ++Driver->packetsSent;
@@ -898,7 +906,7 @@ void VNetConnection::Tick () {
   ResendAcks();
 
   // also, flush if we have no room for more data in outgoing accumulator
-  if (ForceFlush || IsKeepAliveExceeded() || CalcEstimatedByteSize() == MAX_MSG_SIZE_BITS) Flush();
+  if (ForceFlush || IsKeepAliveExceeded() || CalcEstimatedByteSize() == MAX_DGRAM_SIZE) Flush();
 
   // see if this connection has timed out
   if (IsTimeoutExceeded()) {

@@ -94,7 +94,10 @@ private:
   void HideRealMouse ();
   void ShowRealMouse ();
 
+
 public:
+  bool bGotCloseRequest; // used in `CheckForEscape()`
+
   bool CheckForEscape ();
 };
 
@@ -252,6 +255,7 @@ VSdlInputDevice::VSdlInputDevice ()
   , joy_y(0)
   , joy_oldx(0)
   , joy_oldy(0)
+  , bGotCloseRequest(false)
 {
   // mouse and keyboard are setup using SDL's video interface
   mouse = true;
@@ -558,6 +562,7 @@ void VSdlInputDevice::ReadInput () {
         }
         break;
       case SDL_QUIT:
+        bGotCloseRequest = true;
         GCmdBuf << "Quit\n";
         break;
       default:
@@ -797,13 +802,13 @@ void VSdlInputDevice::PostJoystick () {
 //
 //==========================================================================
 bool VSdlInputDevice::CheckForEscape () {
-  bool res = false;
+  bool res = bGotCloseRequest;
   SDL_Event ev;
 
   VInputPublic::UnpressAll();
 
   SDL_PumpEvents();
-  while (SDL_PollEvent(&ev)) {
+  while (!bGotCloseRequest && SDL_PollEvent(&ev)) {
     switch (ev.type) {
       //case SDL_KEYDOWN:
       case SDL_KEYUP:
@@ -813,6 +818,7 @@ bool VSdlInputDevice::CheckForEscape () {
         }
         break;
       case SDL_QUIT:
+        bGotCloseRequest = true;
         res = true;
         GCmdBuf << "Quit\n";
         break;

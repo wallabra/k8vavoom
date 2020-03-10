@@ -27,6 +27,8 @@
 #include "network.h"
 #include "net_message.h"
 
+#define VVNET_COMPRESS_NAMES
+
 VCvarB net_debug_dump_chan_objmap("net_debug_dump_chan_objmap", false, "Dump objectmap communication?");
 
 
@@ -40,7 +42,15 @@ VObjectMapChannel::VObjectMapChannel (VNetConnection *AConnection, vint32 AIndex
   , CurrName(1) // NAME_None is implicit
   , CurrClass(1) // `None` class is implicit
   , needOpenMessage(true)
+  , cprBufferSize(0)
+  , cprBufferPos(0)
+  , cprBuffer(nullptr)
 {
+  #ifdef VVNET_COMPRESS_NAMES
+  if (Connection->IsServer()) {
+    CompressNames();
+  }
+  #endif
 }
 
 
@@ -50,6 +60,7 @@ VObjectMapChannel::VObjectMapChannel (VNetConnection *AConnection, vint32 AIndex
 //
 //==========================================================================
 VObjectMapChannel::~VObjectMapChannel () {
+  ClearCprBuffer();
   if (Connection) Connection->ObjMapSent = true;
   //GCon->Logf(NAME_DevNet, "initial objects and names sent!");
 }
@@ -80,12 +91,126 @@ int VObjectMapChannel::IsQueueFull () const noexcept {
 
 //==========================================================================
 //
+//  VObjectMapChannel::ClearCprBuffer
+//
+//==========================================================================
+void VObjectMapChannel::ClearCprBuffer () {
+  delete cprBuffer;
+  cprBuffer = nullptr;
+  cprBufferSize = cprBufferPos = 0;
+}
+
+
+//==========================================================================
+//
+//  VObjectMapChannel::CompressNames
+//
+//==========================================================================
+void VObjectMapChannel::CompressNames () {
+  ClearCprBuffer(); // just in case
+
+  // write to buffer
+  const int nameCount = Connection->ObjMap->NameLookup.length();
+  TArray<vuint8> nameBuf;
+  for (int f = 1; f < nameCount; ++f) {
+    const char *text = *VName::CreateWithIndex(f);
+    const int len = VStr::Length(text);
+    vassert(len > 0 && len <= NAME_SIZE);
+    nameBuf.append((vuint8)len);
+    while (*text) nameBuf.append((vuint8)(*text++));
+  }
+
+  // compress buffer
+  mz_ulong resbufsz = mz_compressBound((mz_ulong)nameBuf.length());
+  if (resbufsz > 0x1fffffff) Sys_Error("too many names!");
+  if (!resbufsz) resbufsz = 1;
+
+  cprBuffer = new vuint8[(unsigned)resbufsz];
+  mz_ulong destlen = (mz_ulong)resbufsz;
+  int res = mz_compress2((unsigned char *)cprBuffer, &destlen, (const unsigned char *)nameBuf.ptr(), (mz_ulong)nameBuf.length(), 9);
+  if (res != MZ_OK) {
+    GCon->Logf(NAME_DevNet, "%s: cannot compress names", *GetDebugName());
+    Connection->State = NETCON_Closed;
+    return;
+  }
+
+  cprBufferSize = (int)destlen;
+  unpDataSize = nameBuf.length();
+  GCon->Logf(NAME_DevNet, "%s: compressed %d names from %d to %d", *GetDebugName(), nameCount, unpDataSize, cprBufferSize);
+}
+
+
+//==========================================================================
+//
+//  VObjectMapChannel::DecompressNames
+//
+//==========================================================================
+void VObjectMapChannel::DecompressNames () {
+  if (unpDataSize == 0) return; // nothing to do
+  vassert(unpDataSize > 0);
+
+  // decompress buffer
+  TArray<vuint8> nameBuf;
+  nameBuf.setLength(unpDataSize);
+  mz_ulong destlen = unpDataSize;
+  int res = mz_uncompress((unsigned char *)nameBuf.ptr(), &destlen, (const unsigned char *)cprBuffer, (mz_ulong)cprBufferSize);
+  if (res != MZ_OK || destlen != (unsigned)unpDataSize) {
+    GCon->Logf(NAME_DevNet, "%s: cannot decompress names", *GetDebugName());
+    Connection->State = NETCON_Closed;
+    return;
+  }
+
+  // read from buffer
+  char buf[NAME_SIZE+1];
+  int pos = 0;
+  for (int f = 1; f < Connection->ObjMap->NameLookup.length(); ++f) {
+    if (pos >= nameBuf.length()) {
+      GCon->Logf(NAME_DevNet, "%s: cannot decompress names", *GetDebugName());
+      Connection->State = NETCON_Closed;
+      return;
+    }
+    int len = (int)nameBuf[pos++];
+    if (len < 1 || len > NAME_SIZE) {
+      GCon->Logf(NAME_Debug, "%s: invalid name length (%d)", *GetDebugName(), len);
+      Connection->State = NETCON_Closed;
+      return;
+    }
+    if (pos+len > nameBuf.length()) {
+      GCon->Logf(NAME_DevNet, "%s: cannot decompress names", *GetDebugName());
+      Connection->State = NETCON_Closed;
+      return;
+    }
+    memcpy(buf, nameBuf.ptr()+pos, len);
+    buf[len] = 0;
+    pos += len;
+
+    VName Name(buf);
+    Connection->ObjMap->ReceivedName(f, Name);
+  }
+
+  if (pos != nameBuf.length()) {
+    GCon->Logf(NAME_DevNet, "%s: cannot decompress names", *GetDebugName());
+    Connection->State = NETCON_Closed;
+    return;
+  }
+
+  //ClearCprBuffer();
+  // completion signal
+  delete cprBuffer;
+  cprBuffer = nullptr;
+  CurrName = Connection->ObjMap->NameLookup.length();
+}
+
+
+//==========================================================================
+//
 //  VObjectMapChannel::ReceivedCloseAck
 //
 //  sets `ObjMapSent` flag
 //
 //==========================================================================
 void VObjectMapChannel::ReceivedCloseAck () {
+  ClearCprBuffer();
   if (Connection) Connection->ObjMapSent = true;
   VChannel::ReceivedCloseAck(); // just in case
 }
@@ -108,7 +233,25 @@ void VObjectMapChannel::Tick () {
 //
 //==========================================================================
 void VObjectMapChannel::UpdateSendPBar () {
+  #ifdef VVNET_COMPRESS_NAMES
+  RNet_PBarUpdate("sending names and classes", cprBufferPos+CurrClass, cprBufferSize+Connection->ObjMap->ClassLookup.length());
+  #else
   RNet_PBarUpdate("sending names and classes", CurrName+CurrClass, Connection->ObjMap->NameLookup.length()+Connection->ObjMap->ClassLookup.length());
+  #endif
+}
+
+
+//==========================================================================
+//
+//  VObjectMapChannel::UpdateRecvPBar
+//
+//==========================================================================
+void VObjectMapChannel::UpdateRecvPBar (bool forced) {
+  #ifdef VVNET_COMPRESS_NAMES
+  RNet_PBarUpdate("loading names and classes", cprBufferPos+CurrClass, cprBufferSize+Connection->ObjMap->ClassLookup.length(), forced);
+  #else
+  RNet_PBarUpdate("loading names and classes", CurrName+CurrClass, Connection->ObjMap->NameLookup.length()+Connection->ObjMap->ClassLookup.length(), forced);
+  #endif
 }
 
 
@@ -118,9 +261,13 @@ void VObjectMapChannel::UpdateSendPBar () {
 //
 //==========================================================================
 void VObjectMapChannel::Update () {
-  //if (!OpenAcked && !needOpenMessage) return; // nothing to do yet (we sent open message, and waiting for the ack)
+  if (!OpenAcked && !needOpenMessage) {
+    // nothing to do yet (we sent open message, and waiting for the ack)
+    UpdateSendPBar();
+    return;
+  }
 
-  if (CurrName >= Connection->ObjMap->NameLookup.length() && CurrClass == Connection->ObjMap->ClassLookup.length()) {
+  if (/*CurrName >= Connection->ObjMap->NameLookup.length() &&*/ CurrClass == Connection->ObjMap->ClassLookup.length()) {
     // everything has been sent
     Close(); // just in case
     return;
@@ -150,10 +297,34 @@ void VObjectMapChannel::Update () {
     vint32 NumClasses = Connection->ObjMap->ClassLookup.length();
     outmsg.WriteUInt((unsigned)NumClasses);
     GCon->Logf(NAME_DevNet, "sending total %d classes", NumClasses);
+    #ifdef VVNET_COMPRESS_NAMES
+    outmsg.WriteUInt((unsigned)cprBufferSize);
+    outmsg.WriteUInt((unsigned)unpDataSize);
+    vassert(cprBufferPos == 0);
+    #endif
   }
 
   VBitStreamWriter strm(MAX_MSG_SIZE_BITS+64, true); // allow expand, why not?
 
+  #ifdef VVNET_COMPRESS_NAMES
+  // send packed names while we have anything to send
+  while (cprBufferPos < cprBufferSize) {
+    strm << cprBuffer[cprBufferPos];
+    if (WillOverflowMsg(&outmsg, strm)) {
+      FlushMsg(&outmsg);
+      if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...names: [%d/%d] (%d)", cprBufferPos, cprBufferSize, GetSendQueueSize());
+      if (!OpenAcked) { UpdateSendPBar(); return; } // if not opened, don't spam with packets yet
+      // is queue full?
+      if (!CanSendData()) {
+        //GCon->Logf(NAME_DevNet, "%s:000: qbytes=%d; outbytes=%d; sum=%d; queued=%d (%d)", *GetDebugName(), Connection->SaturaDepth, Connection->Out.GetNumBytes(), Connection->SaturaDepth+Connection->Out.GetNumBytes(), GetSendQueueSize(), OutListBits);
+        UpdateSendPBar();
+        return;
+      }
+    }
+    PutStream(&outmsg, strm);
+    ++cprBufferPos;
+  }
+  #else
   // send names while we have anything to send
   while (CurrName < Connection->ObjMap->NameLookup.length()) {
     const char *EName = *VName::CreateWithIndex(CurrName);
@@ -177,6 +348,7 @@ void VObjectMapChannel::Update () {
     ++CurrName;
     if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :name: [%d/%d]: <%s>", CurrName, Connection->ObjMap->NameLookup.length(), EName);
   }
+  #endif
 
   // send classes while we have anything to send
   while (CurrClass < Connection->ObjMap->ClassLookup.length()) {
@@ -255,11 +427,37 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
     }
     Connection->ObjMap->ClassLookup.setLength(NumClasses);
     GCon->Logf(NAME_DevNet, "expecting %d classes", NumClasses);
+
+    #ifdef VVNET_COMPRESS_NAMES
+    ClearCprBuffer(); // just in case
+    cprBufferSize = (int)Msg.ReadUInt();
+    unpDataSize = (int)Msg.ReadUInt();
+    vassert(cprBufferPos == 0);
+    if (cprBufferSize <= 0 || unpDataSize <= 0 || cprBufferSize > 1024*1024*64 || unpDataSize > 1024*1024*64) {
+      GCon->Logf(NAME_Debug, "%s: invalid packed data sizes (%d/%d)", *GetDebugName(), cprBufferSize, unpDataSize);
+      Connection->State = NETCON_Closed;
+      return;
+    }
+    cprBuffer = new vuint8[cprBufferSize];
+    #endif
   }
 
-  char buf[NAME_SIZE+1];
-
+  #ifdef VVNET_COMPRESS_NAMES
+  if (cprBuffer) {
+    while (!Msg.AtEnd() && cprBufferPos < cprBufferSize) {
+      Msg << cprBuffer[cprBufferPos];
+      if (Msg.IsError()) {
+        GCon->Logf(NAME_Debug, "%s: error reading compressed data", *GetDebugName());
+        Connection->State = NETCON_Closed;
+        return;
+      }
+      ++cprBufferPos;
+    }
+    if (cprBufferPos == cprBufferSize) DecompressNames();
+  }
+  #else
   // read names
+  char buf[NAME_SIZE+1];
   if (net_debug_dump_chan_objmap) GCon->Logf(NAME_Debug, "%s: ==== (%d : %d)", *GetDebugName(), CurrName, Connection->ObjMap->NameLookup.length());
   while (!Msg.AtEnd() && CurrName < Connection->ObjMap->NameLookup.length()) {
     int Len = (int)Msg.ReadUInt();
@@ -276,6 +474,7 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
     ++CurrName;
     if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :name: [%d/%d]: <%s>", CurrName, Connection->ObjMap->NameLookup.length(), buf);
   }
+  #endif
 
   // read classes
   while (!Msg.AtEnd() && CurrClass < Connection->ObjMap->ClassLookup.length()) {
@@ -289,8 +488,10 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
     if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s : %s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name, C->GetName());
   }
 
+  UpdateRecvPBar(Msg.bClose);
+
   if (Msg.bClose) {
-    if (CurrName >= Connection->ObjMap->NameLookup.length() && CurrClass >= Connection->ObjMap->ClassLookup.length()) {
+    if (/*CurrName >= Connection->ObjMap->NameLookup.length() &&*/ CurrClass == Connection->ObjMap->ClassLookup.length()) {
       GCon->Logf(NAME_DevNet, "received initial names (%d) and classes (%d)", CurrName, CurrClass);
       Connection->ObjMapSent = true;
     } else {
@@ -298,6 +499,4 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
       Connection->State = NETCON_Closed;
     }
   }
-
-  RNet_PBarUpdate("loading names and classes", CurrName+CurrClass, Connection->ObjMap->NameLookup.length()+Connection->ObjMap->ClassLookup.length(), Msg.bClose/*forced*/);
 }
