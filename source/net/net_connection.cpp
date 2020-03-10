@@ -443,10 +443,9 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
   if (PacketId > InPacketId) {
     InLossAcc += PacketId-InPacketId-1;
-    InPacketId = PacketId+1;
+    InPacketId = PacketId;
   } else {
     ++InOrdAcc;
-    if (PacketId == InPacketId) ++InPacketId;
   }
 
   // ack it
@@ -882,13 +881,12 @@ void VNetConnection::Tick () {
   double DeltaTime = ctt-LastTickTime;
   LastTickTime = ctt;
 
-  // update queued byte count
-  double DeltaBytes = (double)GetNetSpeed()*DeltaTime;
-  if (DeltaBytes > 0x1fffffff) DeltaBytes = 0x1fffffff;
-  SaturaDepth -= (int)DeltaBytes;
-  double AllowedLag = DeltaBytes*2;
-  if (AllowedLag > 0x3fffffff) AllowedLag = 0x3fffffff;
-  if (SaturaDepth < -AllowedLag) SaturaDepth = (int)(-AllowedLag);
+  // see if this connection has timed out
+  if (IsTimeoutExceeded()) {
+    ShowTimeoutStats();
+    State = NETCON_Closed;
+    return;
+  }
 
   // tick the channels
   for (int f = OpenChannels.length()-1; f >= 0; --f) {
@@ -908,12 +906,13 @@ void VNetConnection::Tick () {
   // also, flush if we have no room for more data in outgoing accumulator
   if (ForceFlush || IsKeepAliveExceeded() || CalcEstimatedByteSize() == MAX_DGRAM_SIZE) Flush();
 
-  // see if this connection has timed out
-  if (IsTimeoutExceeded()) {
-    ShowTimeoutStats();
-    State = NETCON_Closed;
-    return;
-  }
+  // update queued byte count
+  double DeltaBytes = (double)GetNetSpeed()*DeltaTime;
+  if (DeltaBytes > 0x1fffffff) DeltaBytes = 0x1fffffff;
+  SaturaDepth -= (int)DeltaBytes;
+  double AllowedLag = DeltaBytes*2;
+  if (AllowedLag > 0x3fffffff) AllowedLag = 0x3fffffff;
+  if (SaturaDepth < -AllowedLag) SaturaDepth = (int)(-AllowedLag);
 }
 
 

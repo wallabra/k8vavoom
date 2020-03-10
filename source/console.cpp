@@ -793,7 +793,15 @@ static void ConSerialise (const char *str, EName Event, bool fromGLog) noexcept 
       const char *eol = strchr(rstr, '\n');
       if (!eol) eol = rstr+strlen(rstr);
       if (cpLogFileNeedName) {
-        fprintf(logfout, "%s:%s", VName::SafeString(Event), (rstr == eol ? "" : " "));
+        char buf[64];
+        if (Event == NAME_DevNet) {
+          unsigned msecs = unsigned(Sys_Time()*1000);
+          snprintf(buf, sizeof(buf), "%u:", msecs);
+          fprintf(logfout, "%s:%s%s", VName::SafeString(Event), buf, (rstr == eol ? "" : " "));
+        } else {
+          buf[0] = 0;
+        }
+        fprintf(logfout, "%s:%s%s", VName::SafeString(Event), buf, (rstr == eol ? "" : " "));
         cpLogFileNeedName = false;
       }
       if (eol != rstr) fwrite(rstr, (ptrdiff_t)(eol-rstr), 1, logfout);

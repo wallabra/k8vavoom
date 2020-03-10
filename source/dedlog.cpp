@@ -149,10 +149,17 @@ public:
         }
         #endif
         putStr(VName::SafeString(lastEvent));
-        if (rstr[0] != '\n') putStr(": "); else putStr(":");
+        putStr(":");
+        if (lastEvent == NAME_DevNet) {
+          unsigned msecs = unsigned(Sys_Time()*1000);
+          char buf[64];
+          snprintf(buf, sizeof(buf), "%u:", msecs);
+          putStr(buf);
+        }
         #if !defined(_WIN32)
         if (resetColor) putStdOut("\x1b[0m");
         #endif
+        if (rstr[0] != '\n') putStr(" ");
         justNewlined = false;
       }
       const char *eol = strchr(rstr, '\n');

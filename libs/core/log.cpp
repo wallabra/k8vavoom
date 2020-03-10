@@ -482,6 +482,12 @@ public:
         #if !defined(_WIN32)
         if (resetColor) xprintStr("\x1b[0m", fo);
         #endif
+        if (event == NAME_DevNet) {
+          unsigned msecs = unsigned(Sys_Time()*1000);
+          char buf[64];
+          snprintf(buf, sizeof(buf), "%u:", msecs);
+          xprintStr(buf, fo);
+        }
       }
     }
   }
