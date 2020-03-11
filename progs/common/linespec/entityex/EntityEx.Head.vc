@@ -188,8 +188,8 @@ bool bTelestomp; // mobj can stomp another
 bool bCannotPush; // cannot push other pushable mobjs
 bool bSmallSplash; // always use small splash
 bool bNoSplash; // things that don't splash
-bool bStaticLight; // static light source
-bool bStaticLightSpawned;
+bool bStaticLight; // static light source (set by "static_light" definition in vfxdefs)
+bool bStaticLightSpawned; // set by `OnMapSpawn()`
 bool bDynamicLight; // dynamic light source
 bool bLeaveTrail; // leave particles trail type 1 (Rocket)
 bool bLeaveTrail2; // leave particles trail type 2 (Grenade)
@@ -548,6 +548,10 @@ transient int GameFilter = -1;
 
 
 replication {
+  // this is required for decorations, so they won't spawn dynamic lights
+  reliable if (Role == ROLE_Authority && bNetInitial)
+    bStaticLightSpawned;
+
   reliable if (Role == ROLE_Authority && bNetOwner)
     Inventory, bInvulnerable;
 }

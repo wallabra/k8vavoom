@@ -96,8 +96,9 @@ transient bool bServerSideOnly; // if set, this thinker will never be sent to cl
 
 
 replication {
+  //k8: transfer some flags to client, so we can take a note
   reliable if (Role == ROLE_Authority)
-    Role, RemoteRole/*, bDetachFromServer*/;
+    Role, RemoteRole, bAlwaysRelevant, bNetInitial/*, bDetachFromServer*/;
 }
 
 

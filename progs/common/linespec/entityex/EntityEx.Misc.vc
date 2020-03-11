@@ -1357,6 +1357,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     } else {
       Level.AddStaticLightRGB(self, Origin+LightOffset, mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius, LightColor);
     }
+    //printdebug("%C: spawned static light!", self);
     bStaticLightSpawned = true;
   }
 
