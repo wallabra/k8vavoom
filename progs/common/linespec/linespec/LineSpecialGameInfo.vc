@@ -314,6 +314,10 @@ override void Init () {
   // gozzo bug workaround
   CreateCvarBool('__gz_afall_drops', false, "Should `A_Fall()` drop items?", CVAR_ARCHIVE);
 
+  // some coop options
+  CreateCvarBool('sv_coop_dm_things', false, "Do not spawn DM things in coop (reload level after change)?", CVAR_ARCHIVE);
+
+
   foreach (ref auto b; kkWeaponSlotCopy) b = true;
 
   ::Init(); // parse cvarinfo and such

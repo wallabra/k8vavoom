@@ -989,11 +989,26 @@ void TranslateSector (sector_t *sector) {
 void TranslateThing (mthing_t *mthing) {
   // translate the spawn flags to Hexen format
   int flags = mthing->options;
-  if (flags&0x100) flags &= 0x1f;
+  if (flags&0x100) flags &= 0x1f; //k8: wtf is this?
 
-  mthing->options = (flags&0xf)|0x7e0;
+  mthing->options = (flags&0xf)| /*0x7e0;*/
+    0xe0| /* player classes? */
+    LineSpecialLevelInfo::MTF_GSINGLE|
+    LineSpecialLevelInfo::MTF_GCOOP|
+    LineSpecialLevelInfo::MTF_GDEATHMATCH;
+
   if (flags&0x10) mthing->options &= ~LineSpecialLevelInfo::MTF_GSINGLE;
+  if (flags&0x20) mthing->options &= ~LineSpecialLevelInfo::MTF_GDEATHMATCH; // Boom
+  if (flags&0x40) mthing->options &= ~LineSpecialLevelInfo::MTF_GCOOP; // Boom
   if (flags&0x80) mthing->options |= LineSpecialLevelInfo::MTF_FRIENDLY; // MBF friendly monsters
+
+  // hide dm-only things for coop games
+  if ((mthing->options&(LineSpecialLevelInfo::MTF_GDEATHMATCH|LineSpecialLevelInfo::MTF_GSINGLE)) == LineSpecialLevelInfo::MTF_GDEATHMATCH &&
+      !GetCvarB('sv_coop_dm_things'))
+  {
+    mthing->options &= ~LineSpecialLevelInfo::MTF_GCOOP;
+    //mthing->options |= LineSpecialLevelInfo::MTF_GSINGLE;
+  }
 }
 
 

@@ -31,8 +31,17 @@ const int
   SLOWDARK     = 35;
 
 // map things flags
+// WARNING! keep in sync with C++ code!
 const int
-  MTF_AMBUSH      = 0x0008, // deaf monsters/do not react to sound
+  // vanilla flags
+  MTF_AMBUSH                = 0x0008, // deaf monsters/do not react to sound
+  MTF_UNTRANSLATED_MP       = 0x0010,
+  // Boom
+  MTF_UNTRANSLATED_NO_DM    = 0x0020,
+  MTF_UNTRANSLATED_NO_COOP  = 0x0040,
+  // MBF
+  MTF_UNTRANSLATED_FRIENDLY = 0x0080,
+
   MTF_DORMANT     = 0x0010, // the thing is dormant
   MTF_GSINGLE     = 0x0100, // appearing in game modes
   MTF_GCOOP       = 0x0200,
@@ -6525,7 +6534,7 @@ override void SpawnMapThing (mthing_t *mthing) {
 
   if (!IsPlayerStart || bFilterStarts) {
     // check current game type with spawn flags
-         if (Game.netgame == false) spawnMask = MTF_GSINGLE;
+         if (!Game.netgame) spawnMask = MTF_GSINGLE;
     else if (Game.deathmatch) spawnMask = MTF_GDEATHMATCH;
     else spawnMask = MTF_GCOOP;
     if (!(mthing.options&spawnMask)) return;
