@@ -317,10 +317,13 @@ void VLevel::ClearReferences () {
   }
   // static lights
   // TODO: collect all static lights with owners into separate list for speed
+  // uids are VERY unlikely to be non-unique; and we have no way to know if UId is valid too
+  /*
   for (int f = 0; f < NumStaticLights; ++f) {
     rep_light_t &sl = StaticLights[f];
     if (sl.Owner && (sl.Owner->GetFlags()&_OF_CleanupRef)) sl.Owner = nullptr;
   }
+  */
   // renderer
   if (Renderer) Renderer->ClearReferences();
 }
@@ -449,7 +452,7 @@ void VLevel::Destroy () {
 //  VLevel::AddStaticLightRGB
 //
 //==========================================================================
-void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection, float coneAngle) {
+void VLevel::AddStaticLightRGB (vuint32 owneruid, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection, float coneAngle) {
   //FIXME: use proper data structure instead of reallocating it again and again
   rep_light_t *OldLights = StaticLights;
   ++NumStaticLights;
@@ -459,7 +462,7 @@ void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, 
     delete[] OldLights;
   }
   rep_light_t &L = StaticLights[NumStaticLights-1];
-  L.Owner = Ent;
+  L.OwnerUId = owneruid;
   L.Origin = Origin;
   L.Radius = Radius;
   L.Color = Color;
@@ -474,9 +477,8 @@ void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, 
 //  VLevel::MoveStaticLightByOwner
 //
 //==========================================================================
-void VLevel::MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin) {
-  if (!Ent) return;
-  if (Ent->IsGoingToDie()) return;
+void VLevel::MoveStaticLightByOwner (vuint32 owneruid, const TVec &Origin) {
+  if (owneruid) return;
   //FIXME: use proper data structure instead of reallocating it again and again
   //TODO: write this with hashmap, and replicate properly
   /* there is no reason to do this yet, becase we cannot update static lights via network
@@ -492,8 +494,30 @@ void VLevel::MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin) {
   }
   */
   #ifdef CLIENT
-  if (Renderer) Renderer->MoveStaticLightByOwner(Ent, Origin);
+  if (Renderer) Renderer->MoveStaticLightByOwner(owneruid, Origin);
   #endif
+}
+
+
+//==========================================================================
+//
+//  VLevel::AddStaticLightRGB
+//
+//==========================================================================
+void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection, float coneAngle) {
+  AddStaticLightRGB((Ent ? Ent->GetUniqueId() : 0u), Origin, Radius, Color, coneDirection, coneAngle);
+}
+
+
+//==========================================================================
+//
+//  VLevel::MoveStaticLightByOwner
+//
+//==========================================================================
+void VLevel::MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin) {
+  if (!Ent) return;
+  if (Ent->IsGoingToDie()) return;
+  MoveStaticLightByOwner(Ent->GetUniqueId(), Origin);
 }
 
 

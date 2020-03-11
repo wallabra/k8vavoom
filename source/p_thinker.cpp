@@ -91,6 +91,9 @@ void VThinker::DestroyThinker () {
 //
 //==========================================================================
 void VThinker::AddedToLevel () {
+  if (XLevel) {
+    if (XLevel->Renderer) XLevel->Renderer->ThinkerAdded(this);
+  }
 }
 
 
@@ -101,7 +104,7 @@ void VThinker::AddedToLevel () {
 //==========================================================================
 void VThinker::RemovedFromLevel () {
   if (XLevel) {
-    if (XLevel->Renderer) XLevel->Renderer->RemoveOwnedLight(this);
+    if (XLevel->Renderer) XLevel->Renderer->ThinkerDestroyed(this);
     if (XLevel->NetContext) XLevel->NetContext->ThinkerDestroyed(this);
   }
 }

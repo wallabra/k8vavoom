@@ -1254,6 +1254,7 @@ void VRenderLevelLightmap::PreRender () {
   c_seg_div = 0;
   light_mem = 0;
 
+  RegisterAllThinkers();
   CreateWorldSurfaces();
 
   if (cl) FullWorldUpdate(true);

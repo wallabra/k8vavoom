@@ -79,6 +79,7 @@ VClass *autoclassVObject = VObject::StaticClass();
 
 // ////////////////////////////////////////////////////////////////////////// //
 static vuint32 gLastUsedUniqueId = 0;
+//!TMapNC<vuint32, VObject *> VObject::GObjectsUIdMap; // key is uid, value is object
 TArray<VObject *> VObject::GObjObjects;
 // this is LIFO queue of free slots in `GObjObjects`
 // it is not required in compacting collector
@@ -271,6 +272,7 @@ VObject::~VObject () {
 
   ConditionalDestroy();
   GObjObjects[Index] = nullptr;
+  //!if (UniqueId) GObjectsUIdMap.remove(UniqueId);
 
   if (!GInGarbageCollection) {
     vassert(GNumDeleted > 0);
@@ -477,6 +479,7 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
 void VObject::Register () {
   UniqueId = ++gLastUsedUniqueId;
   if (gLastUsedUniqueId == 0) gLastUsedUniqueId = 1;
+  //!GObjectsUIdMap.put(UniqueId, this);
   if (gObjFirstFree < GObjObjects.length()) {
     Index = gObjFirstFree;
     GObjObjects[gObjFirstFree++] = this;
@@ -514,6 +517,7 @@ void VObject::SetFlags (vuint32 NewFlags) {
     ++GNumDeleted;
     ++gcLastStats.markedDead;
     vdgclogf("marked object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
+    //(not needed)if (UniqueId) GObjectsUIdMap.remove(UniqueId);
   } else if (VObject::standaloneExecutor) {
     if ((NewFlags&_OF_DelayedDestroy) && !(ObjectFlags&_OF_DelayedDestroy)) {
       // "delayed destroy" flag is set, put it into delayed list

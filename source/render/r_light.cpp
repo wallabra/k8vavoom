@@ -51,7 +51,7 @@ extern VCvarB r_glow_flat;
   (_dl)->radius = 0; \
   (_dl)->flags = 0; \
   if ((_dl)->Owner && !(_dl)->lightid) { \
-    dlowners.del((_dl)->Owner->GetUniqueId()); \
+    dlowners.del((_dl)->Owner->/*GetUniqueId()*/ServerUId); \
     (_dl)->Owner = nullptr; \
   } \
 } while (0)
@@ -71,21 +71,22 @@ void VRenderLevelShared::RefilterStaticLights () {
 //  VRenderLevelShared::AddStaticLightRGB
 //
 //==========================================================================
-void VRenderLevelShared::AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 color, TVec coneDirection, float coneAngle) {
+void VRenderLevelShared::AddStaticLightRGB (vuint32 OwnerUId, const TVec &origin, float radius, vuint32 color, TVec coneDirection, float coneAngle) {
   staticLightsFiltered = false;
   light_t &L = Lights.Alloc();
   L.origin = origin;
   L.radius = radius;
   L.color = color;
-  L.owner = Owner;
+  //L.dynowner = nullptr;
+  L.ownerUId = OwnerUId;
   L.leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(origin)-Level->Subsectors);
   L.active = true;
   L.coneDirection = coneDirection;
   L.coneAngle = coneAngle;
-  if (Owner) {
-    auto osp = StOwners.find(Owner->GetUniqueId());
-    if (osp) Lights[*osp].owner = nullptr;
-    StOwners.put(Owner->GetUniqueId(), Lights.length()-1);
+  if (OwnerUId) {
+    auto osp = StOwners.find(OwnerUId);
+    if (osp) Lights[*osp].ownerUId = 0;
+    StOwners.put(OwnerUId, Lights.length()-1);
   }
 }
 
@@ -95,16 +96,22 @@ void VRenderLevelShared::AddStaticLightRGB (VEntity *Owner, const TVec &origin, 
 //  VRenderLevelShared::MoveStaticLightByOwner
 //
 //==========================================================================
-void VRenderLevelShared::MoveStaticLightByOwner (VEntity *Owner, const TVec &origin) {
-  if (!Owner) return;
-  if (Owner->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) return;
-  auto stp = StOwners.get(Owner->GetUniqueId());
+void VRenderLevelShared::MoveStaticLightByOwner (vuint32 OwnerUId, const TVec &origin) {
+  if (!OwnerUId) return;
+  auto stp = StOwners.get(OwnerUId);
   if (!stp) return;
   light_t &sl = Lights[*stp];
-  if (sl.origin == origin) return;
+  if (fabs(sl.origin.x-origin.x) <= 4 &&
+      fabs(sl.origin.y-origin.y) <= 4 &&
+      fabs(sl.origin.z-origin.z) <= 4)
+  {
+    return;
+  }
+  //if (sl.origin == origin) return;
   if (sl.active) InvalidateStaticLightmaps(sl.origin, sl.radius, false);
   sl.origin = origin;
-  sl.leafnum = (int)(ptrdiff_t)((Owner->SubSector ? Owner->SubSector : Level->PointInSubsector(sl.origin))-Level->Subsectors);
+  //sl.leafnum = (int)(ptrdiff_t)((Owner->SubSector ? Owner->SubSector : Level->PointInSubsector(sl.origin))-Level->Subsectors);
+  sl.leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(sl.origin)-Level->Subsectors);
   if (sl.active) InvalidateStaticLightmaps(sl.origin, sl.radius, true);
 }
 
@@ -317,7 +324,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   // first try to find owned light to replace
   if (Owner) {
     if (lightid == 0) {
-      auto idxp = dlowners.find(Owner->GetUniqueId());
+      auto idxp = dlowners.find(Owner->/*GetUniqueId()*/ServerUId);
       if (idxp) {
         dlowner = &DLights[*idxp];
         vassert(dlowner->Owner == Owner);
@@ -382,7 +389,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     if (!dl) { dl = dldying; if (!dl) { dl = dlbestdist; if (!dl) return nullptr; } }
   }
 
-  if (dl->Owner && !dl->lightid) dlowners.del(dl->Owner->GetUniqueId());
+  if (dl->Owner && !dl->lightid) dlowners.del(dl->Owner->/*GetUniqueId()*/ServerUId);
 
   // clean new light, and return it
   memset((void *)dl, 0, sizeof(*dl));
@@ -393,7 +400,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   dl->lightid = lightid;
   if (isPlr) dl->flags |= dlight_t::PlayerLight;
 
-  if (!lightid && dl->Owner) dlowners.put(dl->Owner->GetUniqueId(), (vuint32)(ptrdiff_t)(dl-&DLights[0]));
+  if (!lightid && dl->Owner) dlowners.put(dl->Owner->/*GetUniqueId()*/ServerUId, (vuint32)(ptrdiff_t)(dl-&DLights[0]));
 
   dl->origOrigin = lorg;
   if (Owner) {
@@ -463,26 +470,40 @@ void VRenderLevelShared::DecayLights (float timeDelta) {
 
 //==========================================================================
 //
-//  VRenderLevelShared::RemoveOwnedLight
+//  VRenderLevelShared::ThinkerAdded
 //
 //==========================================================================
-void VRenderLevelShared::RemoveOwnedLight (VThinker *Owner) {
+void VRenderLevelShared::ThinkerAdded (VThinker *Owner) {
   if (!Owner) return;
-  auto idxp = dlowners.find(Owner->GetUniqueId());
+  if (!Owner->GetClass()->IsChildOf(VEntity::StaticClass())) return;
+  suid2ent.put(Owner->ServerUId, (VEntity *)Owner);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::ThinkerDestroyed
+//
+//==========================================================================
+void VRenderLevelShared::ThinkerDestroyed (VThinker *Owner) {
+  if (!Owner) return;
+  auto idxp = dlowners.find(Owner->/*GetUniqueId()*/ServerUId);
   if (idxp) {
     dlight_t *dl = &DLights[*idxp];
     vassert(dl->Owner == Owner);
     dl->radius = 0;
     dl->flags = 0;
     dl->Owner = nullptr;
-    dlowners.del(Owner->GetUniqueId());
+    dlowners.del(Owner->/*GetUniqueId()*/ServerUId);
   }
-  auto stxp = StOwners.find(Owner->GetUniqueId());
+  auto stxp = StOwners.find(Owner->/*GetUniqueId()*/ServerUId);
   if (stxp) {
-    Lights[*stxp].owner = nullptr;
+    //Lights[*stxp].dynowner = nullptr;
+    Lights[*stxp].ownerUId = 0;
     Lights[*stxp].active = false;
-    StOwners.del(Owner->GetUniqueId());
+    StOwners.del(Owner->/*GetUniqueId()*/ServerUId);
   }
+  suid2ent.remove(Owner->/*GetUniqueId()*/ServerUId);
 }
 
 

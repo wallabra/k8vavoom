@@ -636,7 +636,12 @@ void VLevel::SerialiseOther (VStream &Strm) {
       vio.io(VName("Origin"), StaticLights[i].Origin);
       vio.io(VName("Radius"), StaticLights[i].Radius);
       vio.io(VName("Color"), StaticLights[i].Color);
-      vio.io(VName("Owner"), StaticLights[i].Owner);
+      //vio.io(VName("Owner"), StaticLights[i].Owner);
+      vio.io(VName("OwnerUId"), StaticLights[i].OwnerUId);
+      vio.io(VName("ConeDir"), StaticLights[i].ConeDir);
+      vio.io(VName("ConeAngle"), StaticLights[i].ConeAngle);
+      vuint32 flags = 0;
+      vio.io(VName("Flags"), flags);
     }
   }
 

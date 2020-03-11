@@ -1048,8 +1048,9 @@ void VLevelChannel::UpdateStaticLight (VBitStreamWriter &strm, int idx, bool for
   TVec lOrigin = L.Origin;
   float lRadius = L.Radius;
   vuint32 lColor = L.Color;
+  vuint32 ouid = L.OwnerUId;
 
-  strm << lOrigin << lRadius << lColor;
+  strm << STRM_INDEX_U(ouid) << lOrigin << lRadius << lColor;
   strm.WriteBit(!!L.ConeAngle);
   if (L.ConeAngle) {
     TVec lConeDir = L.ConeDir;
@@ -1067,11 +1068,11 @@ void VLevelChannel::UpdateStaticLight (VBitStreamWriter &strm, int idx, bool for
 //
 //==========================================================================
 bool VLevelChannel::ParseStaticLight (VMessageIn &Msg) {
-  //FIXME: owner!
+  vuint32 owneruid;
   TVec Origin;
   float Radius;
   vuint32 Color;
-  Msg << Origin << Radius << Color;
+  Msg << STRM_INDEX_U(owneruid) << Origin << Radius << Color;
   bool isCone = Msg.ReadBit();
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read static light header", *GetDebugName());
@@ -1086,11 +1087,11 @@ bool VLevelChannel::ParseStaticLight (VMessageIn &Msg) {
       return false;
     }
     #ifdef CLIENT
-    Level->Renderer->AddStaticLightRGB(nullptr, Origin, Radius, Color, ConeDir, ConeAngle);
+    Level->Renderer->AddStaticLightRGB(owneruid, Origin, Radius, Color, ConeDir, ConeAngle);
     #endif
   } else {
     #ifdef CLIENT
-    Level->Renderer->AddStaticLightRGB(nullptr, Origin, Radius, Color);
+    Level->Renderer->AddStaticLightRGB(owneruid, Origin, Radius, Color);
     #endif
   }
 

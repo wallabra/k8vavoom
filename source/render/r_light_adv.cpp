@@ -179,13 +179,13 @@ void VRenderLevelShadowVolume::RefilterStaticLights () {
   for (int currlidx = 0; currlidx < llen; ++currlidx) {
     light_t &cl = Lights[currlidx];
     if (!cl.active) continue; // already filtered out
-    if (onlyDecor && !cl.owner) continue;
+    if (onlyDecor && !cl.ownerUId) continue;
     // remove nearby lights with radius less than ours (or ourself if we'll hit bigger light)
     float radsq = (cl.radius*cl.radius)*coeff;
     for (int nlidx = currlidx+1; nlidx < llen; ++nlidx) {
       light_t &nl = Lights[nlidx];
       if (!nl.active) continue; // already filtered out
-      if (onlyDecor && !nl.owner) continue;
+      if (onlyDecor && !nl.ownerUId) continue;
       const float distsq = length2DSquared(cl.origin-nl.origin);
       if (distsq >= radsq) continue;
 

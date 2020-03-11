@@ -424,6 +424,7 @@ private:
 
   // private systemwide variables
   //static bool GObjInitialised;
+  //static TMapNC<vuint32, VObject *> GObjectsUIdMap; // key is uid, value is object
   static TArray<VObject *> GObjObjects; // list of all objects
   static int GNumDeleted;
   static bool GInGarbageCollection;
@@ -479,6 +480,8 @@ public:
 
   inline bool IsRefToCleanup () const noexcept { return !!(ObjectFlags&_OF_CleanupRef); }
   inline bool IsGoingToDie () const noexcept { return !!(ObjectFlags&(_OF_DelayedDestroy|_OF_Destroyed)); }
+
+  //static inline VObject *FindByUniqueId (vuint32 uid) noexcept { auto pp = GObjectsUIdMap.find(uid); return (pp ? *pp : nullptr); }
 
   // VObject interface
   virtual void Register ();

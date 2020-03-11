@@ -301,6 +301,20 @@ VRenderLevelPublic::VRenderLevelPublic () noexcept
 
 //==========================================================================
 //
+//  VRenderLevelShared::RegisterAllThinkers
+//
+//  called from `PreRender()` to register all
+//  level thinkers with `ThinkerAdded()`
+//
+//==========================================================================
+void VRenderLevelShared::RegisterAllThinkers () {
+  suid2ent.reset();
+  for (TThinkerIterator<VThinker> th(Level); th; ++th) ThinkerAdded(*th);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SetMinPoolNodeSize
 //
 //==========================================================================

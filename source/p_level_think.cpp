@@ -518,7 +518,8 @@ void VLevel::TickWorld (float DeltaTime) {
 //
 //==========================================================================
 VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
-                                const TAVec &AAngles, mthing_t *mthing, bool AllowReplace)
+                                const TAVec &AAngles, mthing_t *mthing, bool AllowReplace,
+                                vuint32 srvUId)
 {
   vassert(AClass);
   VClass *Class = (AllowReplace ? AClass->GetReplacement() : AClass);
@@ -552,6 +553,7 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
 
   // setup spawn time, add thinker
   Ret->SpawnTime = Time;
+  Ret->ServerUId = (srvUId ? srvUId : Ret->GetUniqueId());
   AddThinker(Ret);
 
   VThinker *OverRet = nullptr;

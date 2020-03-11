@@ -262,6 +262,9 @@ void VThinkerChannel::Update () {
     if (!Connection->ObjMap->SerialiseClass(strm, TmpClass)) {
       Sys_Error("%s: cannot serialise thinker class '%s'", *GetDebugName(), Thinker->GetClass()->GetName());
     }
+    // send unique id
+    vuint32 suid = Thinker->GetUniqueId();
+    strm << STRM_INDEX_U(suid);
   }
 
   TAVec SavedAngles;
@@ -419,7 +422,10 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
       return;
     }
 
-    VThinker *Th = Connection->Context->GetLevel()->SpawnThinker(C, TVec(0, 0, 0), TAVec(0, 0, 0), nullptr, false); // no replacements
+    vuint32 suid = 0;
+    // get server unique id
+    Msg << STRM_INDEX_U(suid);
+    VThinker *Th = Connection->Context->GetLevel()->SpawnThinker(C, TVec(0, 0, 0), TAVec(0, 0, 0), nullptr, false, suid); // no replacements
     #ifdef CLIENT
     //GCon->Logf(NAME_DevNet, "%s spawned thinker with class `%s`(%u)", *GetDebugName(), Th->GetClass()->GetName(), Th->GetUniqueId());
     if (Th->IsA(VLevelInfo::StaticClass())) {

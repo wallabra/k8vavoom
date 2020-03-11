@@ -84,6 +84,11 @@ float SpawnTime;
 ubyte Role;
 ubyte RemoteRole;
 
+// this is object UId as it appears on the server
+// used to mark static lights and such
+// no need to save it, and it set to UniqieId automatically
+transient int ServerUId;
+
 // flags
 bool bAlwaysRelevant; // always updated
 // there is no reason to write those flags even when i'll implement network savegames

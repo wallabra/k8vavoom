@@ -85,5 +85,6 @@ surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &
 //
 //==========================================================================
 void VRenderLevelShadowVolume::PreRender () {
+  RegisterAllThinkers();
   CreateWorldSurfaces();
 }

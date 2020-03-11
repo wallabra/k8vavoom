@@ -139,6 +139,7 @@ void VEntity::DestroyThinker () {
 //
 //==========================================================================
 void VEntity::AddedToLevel () {
+  VThinker::AddedToLevel();
   if (!XLevel->NextSoundOriginID) XLevel->NextSoundOriginID = 1;
   SoundOriginID = XLevel->NextSoundOriginID+(SNDORG_Entity<<24);
   XLevel->NextSoundOriginID = (XLevel->NextSoundOriginID+1)&0x00ffffff;

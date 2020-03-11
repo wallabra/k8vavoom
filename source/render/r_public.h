@@ -121,14 +121,20 @@ public:
   virtual void SetupFakeFloors (sector_t *) = 0;
   virtual void RenderPlayerView () = 0;
 
-  virtual void AddStaticLightRGB (VEntity *Owner, const TVec &, float, vuint32, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f) = 0;
-  virtual void MoveStaticLightByOwner (VEntity *Owner, const TVec &origin) = 0;
+  virtual void AddStaticLightRGB (vuint32 OwnerUId, const TVec &, float, vuint32, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f) = 0;
+  virtual void MoveStaticLightByOwner (vuint32 OwnerUId, const TVec &origin) = 0;
   virtual void ClearReferences () = 0;
 
   virtual dlight_t *AllocDlight (VThinker *, const TVec &lorg, float radius, int lightid=-1) = 0;
   virtual dlight_t *FindDlightById (int lightid) = 0;
   virtual void DecayLights (float) = 0;
-  virtual void RemoveOwnedLight (VThinker *Owner) = 0;
+
+  // called from `PreRender()` to register all level thinkers with `ThinkerAdded()`
+  virtual void RegisterAllThinkers () = 0;
+  // adds suid -> object mapping
+  virtual void ThinkerAdded (VThinker *Owner) = 0;
+  // this removes light, and removes suid -> object mapping
+  virtual void ThinkerDestroyed (VThinker *Owner) = 0;
 
   virtual particle_t *NewParticle (const TVec &porg) = 0;
 

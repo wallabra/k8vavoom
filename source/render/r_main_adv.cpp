@@ -262,7 +262,16 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
           timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
         }
         for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
-          VEntity *own = (sli->stlight->owner && sli->stlight->owner->IsA(VEntity::StaticClass()) ? sli->stlight->owner : nullptr);
+          //VEntity *own = (sli->stlight->owner && sli->stlight->owner->IsA(VEntity::StaticClass()) ? sli->stlight->owner : nullptr);
+          //VObject *ownobj = (sli->stlight->dynowner ? sli->stlight->dynowner : sli->stlight->ownerUId ? VObject::FindByUniqueId(sli->stlight->ownerUId) : nullptr);
+          //VObject *ownobj = (sli->stlight->ownerUId ? VObject::FindByUniqueId(sli->stlight->ownerUId) : nullptr);
+          //VObject *ownobj = (sli->stlight->ownerUId ? VObject::FindByUniqueId(sli->stlight->ownerUId) : nullptr);
+          //VEntity *own = (ownobj && !ownobj->IsGoingToDie() && ownobj->IsA(VEntity::StaticClass()) ? (VEntity *)ownobj : nullptr);
+          VEntity *own = nullptr;
+          if (sli->stlight->ownerUId) {
+            auto ownpp = suid2ent.find(sli->stlight->ownerUId);
+            if (ownpp) own = *ownpp; //else GCon->Logf(NAME_Debug, "stlight owner with uid %u not found", sli->stlight->ownerUId);
+          }
           vuint32 flags = (own && R_EntModelNoSelfShadow(own) ? dlight_t::NoSelfShadow : 0);
           //if (own) GCon->Logf("STLOWN: %s", *own->GetClass()->GetFullName());
           TVec lorg = sli->stlight->origin;

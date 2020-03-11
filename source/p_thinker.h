@@ -71,6 +71,11 @@ class VThinker : public VGameObject {
   vuint8 Role;
   vuint8 RemoteRole;
 
+  // this is object UId as it appears on the server
+  // used to mark static lights and such
+  // no need to save it, and it set to UniqieId automatically
+  vuint32 ServerUId;
+
   enum {
     TF_AlwaysRelevant   = 1u<<0,
     TF_NetInitial       = 1u<<1,

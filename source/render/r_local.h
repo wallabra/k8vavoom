@@ -261,7 +261,8 @@ public:
     TVec origin;
     float radius;
     vuint32 color;
-    VEntity *owner;
+    //VEntity *dynowner; // for dynamic
+    vuint32 ownerUId; // for static
     int leafnum;
     bool active; // for filtering
     TVec coneDirection;
@@ -331,6 +332,9 @@ protected:
   dlight_t DLights[MAX_DLIGHTS];
   DLightInfo dlinfo[MAX_DLIGHTS];
   TMapNC<vuint32, vuint32> dlowners; // key: object id; value: index in `DLights`
+
+  // server uid -> object
+  TMapNC<vuint32, VEntity *> suid2ent;
 
   // moved here so that model rendering methods can be merged
   TVec CurrLightPos;
@@ -750,14 +754,17 @@ public:
   virtual void SegMoved (seg_t *) override;
   virtual void SetupFakeFloors (sector_t *) override;
 
-  virtual void AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f) override;
-  virtual void MoveStaticLightByOwner (VEntity *Owner, const TVec &origin) override;
+  virtual void AddStaticLightRGB (vuint32 OwnerUId, const TVec &origin, float radius, vuint32 color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f) override;
+  virtual void MoveStaticLightByOwner (vuint32 OwnerUId, const TVec &origin) override;
   virtual void ClearReferences () override;
 
   virtual dlight_t *AllocDlight (VThinker *Owner, const TVec &lorg, float radius, int lightid=-1) override;
   virtual dlight_t *FindDlightById (int lightid) override;
   virtual void DecayLights (float) override;
-  virtual void RemoveOwnedLight (VThinker *Owner) override;
+
+  virtual void RegisterAllThinkers () override;
+  virtual void ThinkerAdded (VThinker *Owner) override;
+  virtual void ThinkerDestroyed (VThinker *Owner) override;
 
   virtual void ResetLightmaps (bool recalcNow) override;
 

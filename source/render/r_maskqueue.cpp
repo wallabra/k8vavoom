@@ -178,7 +178,8 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, const Render
   spr.type = 2;
   spr.TimeFrac = TimeFrac;
   spr.lump = -1; // has no sense
-  spr.objid = mobj->GetUniqueId();
+  //spr.objid = mobj->GetUniqueId();
+  spr.objid = mobj->ServerUId;
   spr.prio = 0; // normal priority
   //spr.origin = mobj->Origin;
 }
@@ -568,7 +569,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
         thing->Translation, true/*isSprite*/, /*light, Fade,*/ -sprforward,
         DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
         -sprup/scaleY, (flip ? sv[2] : sv[1]), priority
-        , true, /*sprorigin*/thing->Origin, thing->GetUniqueId());
+        , true, /*sprorigin*/thing->Origin, thing->/*GetUniqueId()*/ServerUId);
     }
     // add shadow
     if (renderShadow) {
@@ -603,7 +604,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
             /*thing->Translation*/0, true/*isSprite*/, -sprforward,
             DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
             -sprup/scaleY, (flip ? sv[2] : sv[1]), priority,
-            true, /*sprorigin*/thing->Origin, thing->GetUniqueId()/*, 666 fakeshadow type*/);
+            true, /*sprorigin*/thing->Origin, thing->/*GetUniqueId()*/ServerUId/*, 666 fakeshadow type*/);
         }
       }
     }

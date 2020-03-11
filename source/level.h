@@ -57,7 +57,6 @@ struct rep_side_t {
   int Light;
 };
 
-
 struct rep_sector_t {
   int floor_pic;
   float floor_dist;
@@ -86,18 +85,17 @@ struct rep_sector_t {
   int Sky;
 };
 
-
 struct rep_polyobj_t {
   TVec startSpot;
   float angle;
 };
 
-
 struct rep_light_t {
   TVec Origin;
   float Radius;
   vuint32 Color;
-  VEntity *Owner;
+  //VEntity *Owner;
+  vuint32 OwnerUId; // 0: no owner
   TVec ConeDir;
   float ConeAngle;
   enum {
@@ -574,9 +572,12 @@ public:
   void AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f);
   void MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin);
 
+  void AddStaticLightRGB (vuint32 owneruid, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f);
+  void MoveStaticLightByOwner (vuint32 owneruid, const TVec &Origin);
+
   VThinker *SpawnThinker (VClass *AClass, const TVec &AOrigin=TVec(0, 0, 0),
                           const TAVec &AAngles=TAVec(0, 0, 0), mthing_t *mthing=nullptr,
-                          bool AllowReplace=true);
+                          bool AllowReplace=true, vuint32 srvUId=0);
   void AddThinker (VThinker *Th);
   void RemoveThinker (VThinker *Th);
   void DestroyAllThinkers ();
