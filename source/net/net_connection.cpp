@@ -47,6 +47,7 @@ static VCvarI net_speed_limit("net_speed_limit", "560000", "Network speed limit,
 static VCvarI net_keepalive("net_keepalive", "100", "Network keepalive time, in milliseconds.", 0);
 static VCvarF net_timeout("net_timeout", "4", "Network timeout, in seconds.", 0);
 
+// level will be updated twice as more times as this, until i wrote client-side interpolation code
 static VCvarF sv_fps("sv_fps", "35", "Server update frame rate (the server will use this to send updates to clients).", 0/*CVAR_Archive*/);
 
 
@@ -64,6 +65,7 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   , NeedsUpdate(false)
   , AutoAck(false)
   , LastLevelUpdateTime(0)
+  , LastThinkersUpdateTime(0)
   , UpdateFrameCounter(0)
   , ObjMapSent(false)
   , LevelInfoSent(false)
@@ -1009,9 +1011,14 @@ void VNetConnection::Tick () {
   }
 
   // tick the channels
-  for (int f = OpenChannels.length()-1; f >= 0; --f) {
+  // channel should not delete itself in a ticker, but...
+  // we have to do it from the first opened channel, because
+  // of update priorities
+  for (int f = 0; f < OpenChannels.length(); ++f) {
     VChannel *chan = OpenChannels[f];
     chan->Tick();
+    // invariant
+    vassert(OpenChannels[f] == chan);
   }
 
   // if channel 0 has closed, mark the conection as closed
@@ -1676,15 +1683,33 @@ void VNetConnection::UpdateLevel () {
 
   if (!CanSendData()) return;
 
-  const double ctt = Sys_Time();
-  if (LastLevelUpdateTime > ctt) return;
-  LastLevelUpdateTime = ctt+1.0/(double)clampval(sv_fps.asFloat(), 5.0f, 70.0f);
+  bool wasAtLeastOneUpdate = false;
 
+  const double ctt = Sys_Time();
+
+  // update level
+  if (LastLevelUpdateTime <= ctt) {
+    LastLevelUpdateTime = ctt+1.0/(double)clampval(sv_fps.asFloat()*2.0f, 5.0f, 70.0f);
+    //const bool oldUpdateFlag = NeedsUpdate;
+    NeedsUpdate = false; // note that we already sent an update
+    SetupFatPVS();
+    GetLevelChannel()->Update();
+    wasAtLeastOneUpdate = true;
+  }
+
+  if (LastThinkersUpdateTime <= ctt) {
+    LastThinkersUpdateTime = ctt+1.0/(double)clampval(sv_fps.asFloat(), 5.0f, 70.0f);
+    NeedsUpdate = false; // note that we already sent an update
+    if (!wasAtLeastOneUpdate) SetupFatPVS();
+    UpdateThinkers();
+  }
+
+  /*
   NeedsUpdate = false; // note that we already sent an update
   SetupFatPVS();
-
   GetLevelChannel()->Update();
   UpdateThinkers();
+  */
 
   //GCon->Logf(NAME_DevNet, "%s: *** UpdatateLevel done, %d active channels", *GetAddress(), OpenChannels.length());
 }

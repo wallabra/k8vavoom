@@ -733,8 +733,8 @@ static void SV_RunClients (bool skipFrame=false) {
       // let context ticker reset it instead
       //Player->Net->NeedsUpdate = false;
       //GCon->Logf(NAME_DevNet, "player #%d: getting messages...", i);
-      // actually, force updates...
-      //Player->Net->NeedsUpdate = true;
+      // actually, force updates; the network update code will take care of rate limiting
+      Player->Net->NeedsUpdate = true;
       Player->Net->GetMessages();
       Player->Net->Tick();
     }

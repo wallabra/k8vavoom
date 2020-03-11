@@ -291,6 +291,7 @@ public:
   virtual void PacketLost (vuint32 PacketId);
 
   // call this periodically to perform various processing
+  // this handler SHOULD NOT DELETE THE CHANNEL!
   virtual void Tick ();
 
   // WARNING! this method can call `delete this`!
@@ -538,6 +539,7 @@ public:
   bool NeedsUpdate; // should we call `VNetConnection::UpdateLevel()`? this updates mobjs in sight, and sends new mobj state
   bool AutoAck; // `true` for demos: autoack all pacekts
   double LastLevelUpdateTime;
+  double LastThinkersUpdateTime;
   vuint32 UpdateFrameCounter; // monotonically increasing
 
   VNetObjectsMap *ObjMap;
@@ -669,10 +671,10 @@ public:
   virtual void SendPacketAck (vuint32 PacketId);
 
   virtual void Flush ();
-  virtual void Tick (/*bool onlyHeartbeat=false*/);
+  virtual void Tick ();
   // if we're doing only heartbeats, we will silently drop all incoming datagrams
   // this is requred so the connection won't be timeouted on map i/o, for example
-  //TODO
+  // actually, ticker never reads anything, do we need this at all?
   virtual void KeepaliveTick ();
 
   // this marks connection as "saturated"
