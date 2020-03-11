@@ -413,6 +413,8 @@ protected:
   vuint8 *OldData; // old field data, for creating deltas
   bool NewObj; // is this a new object?
   vuint8 *FieldCondValues;
+  // used in client: don't interpolate first origin
+  bool OriginUpdated;
 
 public:
   vuint32 LastUpdateFrame; // see `UpdateFrameCounter` in VNetConnection

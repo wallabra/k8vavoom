@@ -42,10 +42,9 @@ VThinkerChannel::VThinkerChannel (VNetConnection *AConnection, vint32 AIndex, vu
   , OldData(nullptr)
   , NewObj(false)
   , FieldCondValues(nullptr)
+  , OriginUpdated(false)
   , LastUpdateFrame(0)
 {
-  // it is ok to close it... or it isn't?
-  //bAllowPrematureClose = true;
 }
 
 
@@ -502,19 +501,29 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     Ent->LinkToWorld(true);
     //TODO: do not interpolate players?
     TVec newOrg = Ent->Origin;
-    if (newOrg != oldOrg) {
-      //GCon->Logf(NAME_Debug, "ENTITY '%s':%u moved! statetime=%g; state=%s", Ent->GetClass()->GetName(), Ent->GetUniqueId(), Ent->StateTime, (Ent->State ? *Ent->State->Loc.toStringNoCol() : "<none>"));
-      if (Ent->StateTime < 0) {
-        Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
-      } else if (Ent->StateTime > 0 && (newOrg-oldOrg).length2DSquared() < 64*64) {
-        Ent->LastMoveOrigin = oldOrg;
-        //Ent->LastMoveAngles = oldAngles;
-        Ent->LastMoveAngles = Ent->Angles;
-        Ent->LastMoveTime = Ent->XLevel->Time;
-        Ent->LastMoveDuration = Ent->StateTime;
-        Ent->MoveFlags |= VEntity::MVF_JustMoved;
+    if (fabs(newOrg.x-oldOrg.x) > 1 || fabs(newOrg.y-oldOrg.y) > 1 || fabs(newOrg.z-oldOrg.z) > 1) {
+      if (OriginUpdated) {
+        //GCon->Logf(NAME_Debug, "ENTITY '%s':%u moved! statetime=%g; state=%s", Ent->GetClass()->GetName(), Ent->GetUniqueId(), Ent->StateTime, (Ent->State ? *Ent->State->Loc.toStringNoCol() : "<none>"));
+        if (Ent->StateTime < 0 /*|| !Ent->IsPlayerOrMonster()*/) {
+          Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+          OriginUpdated = false;
+        } else if (Ent->StateTime > 0) {
+          if ((newOrg-oldOrg).length2DSquared() < 64*64) {
+            Ent->LastMoveOrigin = oldOrg;
+            //Ent->LastMoveAngles = oldAngles;
+            Ent->LastMoveAngles = Ent->Angles;
+            Ent->LastMoveTime = Ent->XLevel->Time;
+            Ent->LastMoveDuration = Ent->StateTime;
+            Ent->MoveFlags |= VEntity::MVF_JustMoved;
+          } else {
+            OriginUpdated = false;
+          }
+        } else {
+          Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+        }
       } else {
-        Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+        // updated for the first time, allow interpolation
+        OriginUpdated = true;
       }
     }
   }
