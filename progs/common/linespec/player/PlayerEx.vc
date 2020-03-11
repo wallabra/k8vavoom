@@ -2423,6 +2423,7 @@ override void PreTravel () {
   ClearSubSeenInfo();
   if (MO) {
     // remove all powerups that cannot survive map teleports
+    /* nope, this is done in `PlayerExitMap()`
     auto inv = EntityEx(MO).Inventory;
     while (inv) {
       Powerup pw = Powerup(inv);
@@ -2433,6 +2434,7 @@ override void PreTravel () {
         delete pw;
       }
     }
+    */
     //WARNING! don't set `Owner` to none here, because `SV_MapTeleport()` checks it!
     SavedInventory = EntityEx(MO).Inventory;
     EntityEx(MO).Inventory = none;
