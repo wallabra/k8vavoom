@@ -736,11 +736,12 @@ final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps
 //==========================================================================
 final bool ShootCheckPlanes (sector_t *sec, optional line_t *line,
                              TVec linestart, TVec lineend, float range,
-                             class!EntityEx PuffType, TVec *outHitPoint)
+                             class!EntityEx PuffType, TVec *outHitPoint,
+                             optional out EntityEx puffEntity)
 {
   TVec hitpoint, hitnormal;
   bool hitsky;
-  if (!CheckPassPlanes(sec, linestart, lineend, SPF_NOBLOCKSHOOT|SPF_IGNORE_BASE_REGION, out hitpoint, out hitnormal, out hitsky)) {
+  if (!CheckPassPlanes(sec, linestart, lineend, SPF_NOBLOCKSHOOT/*|SPF_IGNORE_BASE_REGION*/, out hitpoint, out hitnormal, out hitsky)) {
     if (outHitPoint) *outHitPoint = hitpoint;
     // if we are shooting floor or ceiling we are adjusting position
     // to spawn puff on floor or ceiling, not on wall
@@ -749,7 +750,8 @@ final bool ShootCheckPlanes (sector_t *sec, optional line_t *line,
       //hitpoint += 1.5*hitnormal;
       // spawn bullet puffs
       //SpawnPuff(lineend, range, PuffType, false, sec, li); //k8: we can't do decals on non-walls yet
-      SpawnPuff(hitpoint, range, PuffType, false);
+      //printdebug("%C: spawning puff '%C' from planes", self, PuffType);
+      puffEntity = SpawnPuff(hitpoint, range, PuffType, false);
     }
     return false;
   }
@@ -816,8 +818,8 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
     line_t *li;
     EntityEx th;
 
-    //printdebug("LineAttack: isline=%d; frac=%f", (in->bIsALine ? 1 : 0), in->frac);
-    //if (!in->bIsALine) printdebug("LineAttack: frac=%f; thing=%C; dist=%f", in->frac, in->Thing, length2D(in.Thing.Origin-Origin));
+    //printdebug("LineAttack: isline=%B; frac=%s", in->bIsALine, in->frac);
+    //if (!in->bIsALine) printdebug("LineAttack: frac=%s; thing=%C; dist=%s", in->frac, in->Thing, length2D(in.Thing.Origin-Origin));
 
     if (in->bIsALine) {
       sector_t *sec;
@@ -833,7 +835,10 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
       lineEnd = hit_point;
 
       // check for shooting floor or ceiling
-      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, PuffType, outHitPoint)) return false;
+      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, PuffType, outHitPoint, puffEntity:puffEntity)) {
+        //printdebug("%C: hit floor/ceiling (puff=%C)", self, PuffType);
+        return false;
+      }
 
       lineStart = lineEnd;
 
@@ -949,7 +954,7 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
   }
 
   lineEnd = dst;
-  if (!ShootCheckPlanes(XLevel.PointInSector(dst), default, lineStart, lineEnd, distance, PuffType, outHitPoint)) {
+  if (!ShootCheckPlanes(XLevel.PointInSector(dst), default, lineStart, lineEnd, distance, PuffType, outHitPoint, puffEntity:puffEntity)) {
     return false;
   }
 
