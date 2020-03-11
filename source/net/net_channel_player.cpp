@@ -39,6 +39,7 @@ VPlayerChannel::VPlayerChannel (VNetConnection *AConnection, vint32 AIndex, vuin
   , OldData(nullptr)
   , NewObj(false)
   , FieldCondValues(nullptr)
+  , NextUpdateTime(0)
 {
   OpenAcked = true; // this channel is pre-opened
 }
@@ -109,6 +110,7 @@ void VPlayerChannel::SetPlayer (VBasePlayer *APlr) {
     FieldCondValues = new vuint8[Plr->GetClass()->NumNetFields];
     FieldsToResend.reset();
     NewObj = true;
+    NextUpdateTime = 0; // just in case
   }
 }
 
@@ -141,6 +143,7 @@ void VPlayerChannel::ResetLevel () {
 
   // it is enough to set this flag
   NewObj = true;
+  NextUpdateTime = 0; // just in case
   FieldsToResend.reset();
 }
 
@@ -169,8 +172,16 @@ void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values
 //==========================================================================
 void VPlayerChannel::Update () {
   if (Closing) return; // just in case
+
   // if network connection is saturated, do nothing
   if (!CanSendData()) { /*Connection->NeedsUpdate = true;*/ return; }
+
+  const double ctt = Connection->Driver->GetNetTime();
+  // for server, limit client updates
+  if (!NewObj && Connection->IsServer() && NextUpdateTime > ctt) {
+    // skip updating
+    return;
+  }
 
   EvalCondValues(Plr, Plr->GetClass(), FieldCondValues);
 
@@ -196,25 +207,25 @@ void VPlayerChannel::Update () {
           //FIXME: store field index too
           if (!FieldsToResend.has(F)) continue;
         }
-        GCon->Logf(NAME_DevNet, "%s: updating array (%d) field '%s' (%s) (queue: depth=%d; bitsize=%d; satura=%d)", *GetDebugName(), i, F->GetName(), *F->Type.GetName(), OutListCount, OutListBits, Connection->SaturaDepth);
+        //GCon->Logf(NAME_DevNet, "%s: updating array (%d) field '%s' (%s) (queue: depth=%d; bitsize=%d; satura=%d)", *GetDebugName(), i, F->GetName(), *F->Type.GetName(), OutListCount, OutListBits, Connection->SaturaDepth);
         strm.WriteUInt((unsigned)F->NetIndex);
         strm.WriteUInt((unsigned)i);
         if (VField::NetSerialiseValue(strm, Connection->ObjMap, Data+F->Ofs+i*InnerSize, IntType)) {
           VField::CopyFieldValue(Data+F->Ofs+i*InnerSize, OldData+F->Ofs+i*InnerSize, IntType);
           FieldsToResend.remove(F);
         } else {
-          if (NewObj) FieldsToResend.put(F, true);
+          if (NewObj || true) FieldsToResend.put(F, true);
         }
         flushCount += PutStream(&Msg, strm);
       }
     } else {
-      GCon->Logf(NAME_DevNet, "%s: updating field '%s' (%s) (queue: depth=%d; bitsize=%d; satura=%d)", *GetDebugName(), F->GetName(), *F->Type.GetName(), OutListCount, OutListBits, Connection->SaturaDepth);
+      //GCon->Logf(NAME_DevNet, "%s: updating field '%s' (%s) (queue: depth=%d; bitsize=%d; satura=%d)", *GetDebugName(), F->GetName(), *F->Type.GetName(), OutListCount, OutListBits, Connection->SaturaDepth);
       strm.WriteUInt((unsigned)F->NetIndex);
       if (VField::NetSerialiseValue(strm, Connection->ObjMap, Data+F->Ofs, F->Type)) {
         VField::CopyFieldValue(Data+F->Ofs, OldData+F->Ofs, F->Type);
         FieldsToResend.remove(F);
       } else {
-        if (NewObj) FieldsToResend.put(F, true);
+        if (NewObj || true) FieldsToResend.put(F, true);
       }
       flushCount += PutStream(&Msg, strm);
     }
@@ -224,11 +235,15 @@ void VPlayerChannel::Update () {
   //GCon->Logf(NAME_DevNet, "%s: sending player update (%s)", *GetDebugName(), (Connection->IsClient() ? "client" : "server"));
   //SendMessage(&Msg);
   flushCount += FlushMsg(&Msg);
+  // if update happened, note it
+  if (flushCount) NextUpdateTime = ctt+1.0/60.0; // don't do it more often, because why?
   // send something in any case if we are a client
+  /* nope, there is no need to do this
   if (!flushCount && Connection->IsClient()) {
     vassert(Msg.GetNumBits() == 0);
     SendMessage(&Msg);
   }
+  */
 }
 
 

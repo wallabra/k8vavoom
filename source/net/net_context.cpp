@@ -104,9 +104,10 @@ void VNetContext::Tick () {
       ClientConnections.removeAt(i);
       continue;
     }
+    if (Conn->Driver) Conn->Driver->UpdateNetTime();
     if (Conn->IsOpen() && !Conn->GetGeneralChannel()) {
       GCon->Logf(NAME_DevNet, "Client %s closed the connection", *Conn->GetAddress());
-      Conn->State = NETCON_Closed;
+      Conn->Close();
     }
     if (Conn->IsOpen()) {
       vassert(Conn->GetGeneralChannel());
@@ -116,7 +117,7 @@ void VNetContext::Tick () {
         //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT000!", *Conn->GetAddress(), i);
       }
       // don't update level if the player isn't totally in the game yet
-      if (Conn->IsOpen() && Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned) {
+      if (Conn->IsOpen() && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
         // spam client with player updates
         Conn->GetPlayerChannel()->Update();
         //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT001!", *Conn->GetAddress(), i);
@@ -150,7 +151,7 @@ void VNetContext::KeepaliveTick () {
     if (!Conn) continue; // just in case
     if (Conn->IsOpen() && Conn->GetGeneralChannel()->Closing) {
       GCon->Logf(NAME_DevNet, "Client %s closed the connection", *Conn->GetAddress());
-      Conn->State = NETCON_Closed;
+      Conn->Close();
     }
     if (Conn->IsOpen()) Conn->KeepaliveTick();
   }

@@ -26,6 +26,8 @@
 #include "gamedefs.h"
 #include "network.h"
 
+extern VCvarB net_debug_fixed_name_set;
+
 
 //==========================================================================
 //

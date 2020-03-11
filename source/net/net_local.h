@@ -162,11 +162,11 @@ public:
   virtual int Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr) = 0;
   virtual bool CanBroadcast () = 0;
   virtual int Broadcast (int socket, const vuint8 *buf, int len) = 0;
-  virtual VStr AddrToString (sockaddr_t *addr) = 0;
-  virtual VStr AddrToStringNoPort (sockaddr_t *addr) = 0;
+  virtual const char *AddrToString (sockaddr_t *addr) = 0;
+  virtual const char *AddrToStringNoPort (sockaddr_t *addr) = 0;
   virtual int StringToAddr (const char *string, sockaddr_t *addr) = 0;
   virtual int GetSocketAddr (int socket, sockaddr_t *addr) = 0;
-  virtual VStr GetNameFromAddr (sockaddr_t *addr) = 0;
+  virtual const char *GetNameFromAddr (sockaddr_t *addr) = 0;
   virtual int GetAddrFromName (const char *name, sockaddr_t *addr,int DefaultPort) = 0;
   // returns:
   //   -1 if completely not equal

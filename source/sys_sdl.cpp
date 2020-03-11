@@ -472,6 +472,11 @@ int main (int argc, char **argv) {
       for (int c = f+1; c < argc; ++c) argv[c-1] = argv[c];
       --argc;
       --f;
+    } else if (strcmp(argv[f], "-nottylog") == 0) {
+      GLogTTYLog = false;
+      for (int c = f+1; c < argc; ++c) argv[c-1] = argv[c];
+      --argc;
+      --f;
     }
   }
 

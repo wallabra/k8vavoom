@@ -35,9 +35,6 @@ static const char *cli_Port = nullptr;
   /*&& VParsedArgs::RegisterFlagSet("-listen", nullptr, &cli_Listen)*/;
 
 
-VCvarB net_fixed_name_set("net_fixed_name_set", true, "Send fixed name set (old way)? WARNING! this is experimental option!", CVAR_PreInit);
-VCvarB net_debug_fixed_name_set("net_debug_fixed_name_set", false, "Dump new names?");
-
 static VCvarS net_ui_last_join_address("net_ui_last_join_address", "127.0.0.1", "Last server address for manual connection (used in UI).", CVAR_Archive);
 
 
@@ -102,10 +99,6 @@ VNetworkPublic *GNet = nullptr;
 
 VCvarS VNetworkLocal::HostName("hostname", "UNNAMED", "Name of this host.");
 
-VCvarF net_timeout("net_timeout", "4", "Network timeout, in seconds.");
-// the network layer will force packet sending after this interval
-VCvarF net_keepalive("net_keepalive", "0.3", "Network keepalive time, in seconds.");
-
 VNetDriver *VNetworkLocal::Drivers[MAX_NET_DRIVERS];
 int VNetworkLocal::NumDrivers = 0;
 
@@ -144,7 +137,29 @@ VNetworkPublic::VNetworkPublic ()
   , maximalSentPacket(0)
   , CheckUserAbortCB(nullptr)
   , CheckUserAbortUData(nullptr)
+  , CurrNetTime(-1)
 {
+}
+
+
+//==========================================================================
+//
+//  VNetworkPublic::UpdateNetTime
+//
+//==========================================================================
+void VNetworkPublic::UpdateNetTime () noexcept {
+  CurrNetTime = Sys_Time();
+}
+
+
+//==========================================================================
+//
+//  VNetworkPublic::GetNetTime
+//
+//==========================================================================
+double VNetworkPublic::GetNetTime () noexcept {
+  if (CurrNetTime < 0) UpdateNetTime();
+  return CurrNetTime;
 }
 
 
@@ -295,8 +310,8 @@ void VNetwork::Shutdown () {
 //
 //==========================================================================
 void VNetwork::Poll () {
-  //SetNetTime();
-  double ctt = GetNetTime();
+  UpdateNetTime();
+  const double ctt = GetNetTime();
   for (VNetPollProcedure *pp = PollProcedureList; pp; pp = pp->next) {
     if (pp->nextTime > ctt) break;
     PollProcedureList = pp->next;
@@ -810,6 +825,7 @@ VSocket::VSocket (VNetDriver *Drv) : Driver(Drv) {
   Next = Driver->Net->ActiveSockets;
   Driver->Net->ActiveSockets = this;
 
+  Driver->Net->UpdateNetTime();
   ConnectTime = Driver->Net->GetNetTime();
   Address = "UNSET ADDRESS";
   LastMessageTime = ConnectTime;
@@ -833,7 +849,7 @@ VSocket::~VSocket () {
         break;
       }
     }
-    if (!s) Sys_Error("NET_FreeQSocket: not active\n");
+    if (!s) Sys_Error("NET_FreeQSocket: not active");
   }
 }
 

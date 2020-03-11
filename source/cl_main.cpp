@@ -196,7 +196,7 @@ void CL_ReadFromServer (float deltaTime) {
   if (cl->Net) {
     ClientLastKeepAliveTime = Sys_Time();
     cl->Net->GetMessages();
-    if (cl->Net->State == NETCON_Closed) Host_EndGame("Server disconnected");
+    if (cl->Net->IsClosed()) Host_EndGame("Server disconnected");
   }
 
   if (cls.signon) {

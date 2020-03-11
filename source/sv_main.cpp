@@ -1375,7 +1375,7 @@ int NET_SendToAll (int blocktime) {
       }
 
       if (!state2[i]) {
-        if (Player->Net->State == NETCON_Closed) {
+        if (Player->Net->IsClosed()) {
           state2[i] = true;
         } else {
           //Player->Net->ForceAllowSendForServer();
@@ -2163,7 +2163,7 @@ void ServerFrame (int realtics) {
     if (real_time) {
       SV_Ticker();
     } else {
-      // run the count dics
+      // run the count tics
       while (realtics--) SV_Ticker();
     }
   }

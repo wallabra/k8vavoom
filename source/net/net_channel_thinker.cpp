@@ -220,7 +220,9 @@ void VThinkerChannel::Update () {
 
   VEntity *Ent = Cast<VEntity>(Thinker);
 
-  // set up thinker flags that can be used by field condition
+  // set up thinker flags that can be used by field conditions
+  // this is required both for the server and for the client
+  // the flags will be sent to the client, so it would be able to replicate some one-time fields too
   if (NewObj) Thinker->ThinkerFlags |= VThinker::TF_NetInitial;
   if (Ent != nullptr && Ent->GetTopOwner() == Connection->Owner->MO) Thinker->ThinkerFlags |= VThinker::TF_NetOwner;
 
@@ -231,10 +233,10 @@ void VThinkerChannel::Update () {
   // temporarily set `bNetDetach`
   if (detachEntity) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
 
-  // it is important to call this *BEFORE* changing roles!
+  // it is important to call this *BEFORE* changing the roles!
   EvalCondValues(Thinker, Thinker->GetClass(), FieldCondValues);
 
-  // switch roles if we're going to detach this entity
+  // fix the roles if we're going to detach this entity
   vuint8 oldRole = 0, oldRemoteRole = 0;
   if (detachEntity) {
     // this is Role on the client
@@ -249,7 +251,7 @@ void VThinkerChannel::Update () {
   vuint8 *Data = (vuint8 *)Thinker;
   VObject *NullObj = nullptr;
 
-  // use bitstream and split it to the messages here
+  // use bitstream and split it to the messages
   VMessageOut Msg(this);
   Msg.bOpen = NewObj;
   VBitStreamWriter strm(MAX_MSG_SIZE_BITS+64, false); // no expand
@@ -341,7 +343,10 @@ void VThinkerChannel::Update () {
     }
   }
 
+  // restore player angles
   if (Ent && (Ent->EntityFlags&VEntity::EF_IsPlayer)) Ent->Angles = SavedAngles;
+
+  // remember last update frame (this is used as "got updated" flag)
   LastUpdateFrame = Connection->UpdateFrameCounter;
 
   // clear temporary networking flags
@@ -350,9 +355,12 @@ void VThinkerChannel::Update () {
   flushCount += FlushMsg(&Msg);
 
   // if this is initial send, we have to flush the message, even if it is empty
-  if (Msg.bOpen || Msg.GetNumBits() || (NewObj && !detachEntity)) {
+  if (Msg.bOpen || Msg.bClose || Msg.GetNumBits() || NewObj || detachEntity) {
     SendMessage(&Msg);
-  } else if (!detachEntity && !flushCount) {
+  }
+  // not detached, and no interesting data: no reason to send anything
+  /*
+  else if (!detachEntity && !flushCount) {
     if ((Thinker->ThinkerFlags&VThinker::TF_AlwaysRelevant) ||
         Thinker == Connection->Owner->MO ||
         (Ent && Ent->IsPlayer()) ||
@@ -361,13 +369,14 @@ void VThinkerChannel::Update () {
       SendMessage(&Msg);
     }
   }
+  */
 
   NewObj = false;
 
   // if this object becomes "dumb proxy", mark it as detached, and close the channel
   if (detachEntity) {
     if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_DevNet, "%s:%u: became notick, closing channel%s", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), (OpenedLocally ? " (opened locally)" : ""));
-    // remember that we already did this thinker
+    // remember that we already sent this thinker
     Connection->DetachedThinkers.put(Thinker, true);
     // reset `bNetDetach`
     if (Ent) Ent->FlagsEx &= ~VEntity::EFEX_NetDetach;
@@ -399,14 +408,14 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     if (!C) {
       //Sys_Error("%s: cannot spawn `none` thinker", *GetDebugName());
       GCon->Logf(NAME_Debug, "%s: tried to spawn thinker without name (or with invalid name)", *GetDebugName());
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
 
     // in no case client can spawn anything on the server
     if (Connection->IsServer()) {
       GCon->Logf(NAME_Debug, "%s: client tried to spawn thinker `%s` on the server, dropping client", *GetDebugName(), C->GetName());
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
 

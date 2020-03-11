@@ -339,13 +339,32 @@ int main (int argc, char **argv) {
   try {
     //printf("k8vavoom dedicated server " VERSION_TEXT "\n");
 
+    //bool inGDB = false;
+    for (int f = 1; f < argc; ++f) {
+      if (strcmp(argv[f], "-gdb") == 0) {
+        //inGDB = true;
+        ttyExtraDisabled = true;
+        for (int c = f+1; c < argc; ++c) argv[c-1] = argv[c];
+        --argc;
+        --f;
+      } else if (strcmp(argv[f], "-conlog") == 0) {
+        GLogTTYLog = true;
+        for (int c = f+1; c < argc; ++c) argv[c-1] = argv[c];
+        --argc;
+        --f;
+      } else if (strcmp(argv[f], "-nottylog") == 0) {
+        GLogTTYLog = false;
+        for (int c = f+1; c < argc; ++c) argv[c-1] = argv[c];
+        --argc;
+        --f;
+      }
+    }
+
     VObject::StaticInitOptions(GParsedArgs);
     FL_InitOptions();
     GArgs.Init(argc, argv, "-file");
     FL_CollectPreinits();
     GParsedArgs.parse(GArgs);
-
-    if (GArgs.CheckParm("-gdb")) ttyExtraDisabled = true;
 
     #ifndef _WIN32
     if (!ttyExtraDisabled && ttyIsGood()) {

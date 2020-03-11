@@ -36,11 +36,16 @@ static VCvarB net_dbg_conn_show_unreliable("net_dbg_conn_show_unreliable", false
 static VCvarB net_dbg_report_missing_dgrams("net_dbg_report_missing_dgrams", false, "Report missing datagrams (this is mostly useless console spam)?");
 static VCvarB net_dbg_report_stats("net_dbg_report_stats", false, "Report some stats to the console?");
 
+static VCvarB net_dbg_conn_dump_acks("net_dbg_conn_dump_acks", false, "Show ack info?");
+
 VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump received packets?");
 
 //FIXME: autoadjust this according to average ping
-//VCvarI VNetConnection::net_speed_limit("net_speed_limit", "560000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
-VCvarI VNetConnection::net_speed_limit("net_speed_limit", "36000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
+static VCvarI net_speed_limit("net_speed_limit", "560000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
+//static VCvarI net_speed_limit("net_speed_limit", "36000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
+// the network layer will force packet sending after this interval
+static VCvarI net_keepalive("net_keepalive", "100", "Network keepalive time, in milliseconds.", 0);
+static VCvarF net_timeout("net_timeout", "4", "Network timeout, in seconds.", 0);
 
 static VCvarF sv_fps("sv_fps", "35", "Server update frame rate (the server will use this to send updates to clients).", 0/*CVAR_Archive*/);
 
@@ -91,7 +96,6 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   InPacketId = 0;
   OutPacketId = 1;
   OutAckPacketId = 0;
-  LastInPacketIdAck = 0xffffffffu;
 
   //FIXME: driver time?
   LastReceiveTime = 0;
@@ -185,11 +189,23 @@ bool VNetConnection::IsServer () noexcept {
 
 //==========================================================================
 //
+//  VNetConnection::GetNetSpeed
+//
+//==========================================================================
+int VNetConnection::GetNetSpeed () const noexcept {
+  if (AutoAck) return 100000000;
+  if (IsLocalConnection()) return 100000000;
+  return max2(2400, net_speed_limit.asInt());
+}
+
+
+//==========================================================================
+//
 //  VNetConnection::IsKeepAliveExceeded
 //
 //==========================================================================
 bool VNetConnection::IsKeepAliveExceeded () {
-  const double kt = clampval(net_keepalive.asFloat(), 0.05f, 1.0f);
+  const double kt = clampval(net_keepalive.asInt(), 5, 1000)/1000.0;
   const double ctt = Driver->GetNetTime();
   return (ctt-LastSendTime > kt);
 }
@@ -248,15 +264,49 @@ bool VNetConnection::IsLocalConnection () const noexcept {
 
 //==========================================================================
 //
+//  VNetConnection::Close
+//
+//  this marks the connection as closed, but doesn't destroy anything
+//
+//==========================================================================
+void VNetConnection::Close () {
+  if (IsClosed()) return;
+  ShowTimeoutStats();
+  State = NETCON_Closed;
+}
+
+
+//==========================================================================
+//
 //  VNetConnection::ShowTimeoutStats
 //
 //==========================================================================
 void VNetConnection::ShowTimeoutStats () {
   if (IsClosed()) return;
-  GCon->Logf(NAME_DevNet, "ERROR: Channel timed out; time delta=%g; sent %d packets (%d datagrams), received %d packets (%d datagrams)",
+  GCon->Logf(NAME_DevNet, "%s: ERROR: Channel timed out; time delta=%g; sent %d packets (%d datagrams), received %d packets (%d datagrams)",
+    *GetAddress(),
     (Driver->GetNetTime()-LastReceiveTime)*1000.0f,
     Driver->packetsSent, Driver->UnreliableMessagesSent,
     Driver->packetsReceived, Driver->UnreliableMessagesReceived);
+  // show extended stats
+  GCon->Logf(NAME_DevNet, "  connection saturation: %d", SaturaDepth);
+  GCon->Logf(NAME_DevNet, "  active channels: %d", OpenChannels.length());
+  for (int f = 0; f < OpenChannels.length(); ++f) {
+    VChannel *chan = OpenChannels[f];
+    GCon->Logf(NAME_DevNet, "  #%d:%s: %s, open is %s%s, saturation:%d", f, *chan->GetName(),
+      (chan->OpenedLocally ? "local" : "remote"),
+      (chan->OpenAcked ? "acked" : "not acked"),
+      (chan->Closing ? ", closing" : ""),
+      chan->IsQueueFull());
+    GCon->Logf(NAME_DevNet, "   in packets : %d (estimated bits: %d)", chan->InListCount, chan->InListBits);
+    for (VMessageIn *msg = chan->InList; msg; msg = msg->Next) GCon->Logf(NAME_DevNet, "    bits: %d; open=%d; close=%d; reliable=%d", msg->GetNumBits(), (int)msg->bOpen, (int)msg->bClose, (int)msg->bReliable);
+    GCon->Logf(NAME_DevNet, "   out packets: %d (estimated bits: %d)", chan->OutListCount, chan->OutListBits);
+    for (VMessageOut *msg = chan->OutList; msg; msg = msg->Next) {
+      GCon->Logf(NAME_DevNet, "    bits: %d; pid=%u; open=%d; close=%d; reliable=%d; gotack=%d; time=%u (est:%d)",
+        msg->GetNumBits(), msg->PacketId, (int)msg->bOpen, (int)msg->bClose, (int)msg->bReliable,
+        (int)msg->bReceivedAck, (unsigned)(msg->Time*1000), msg->OutEstimated);
+    }
+  }
 }
 
 
@@ -344,6 +394,8 @@ void VNetConnection::AckEverythingEverywhere () {
 //
 //==========================================================================
 bool VNetConnection::GetMessage () {
+  Driver->UpdateNetTime();
+
   // check for message arrival
   if (IsClosed()) {
     // ack all outgoing packets, just in case (this is HACK!)
@@ -355,7 +407,7 @@ bool VNetConnection::GetMessage () {
   vuint8 msgdata[MAX_DGRAM_SIZE+4];
   const int msgsize = NetCon->GetMessage(msgdata, sizeof(msgdata));
   if (msgsize == 0) return false;
-  if (msgsize < 0) { State = NETCON_Closed; return false; }
+  if (msgsize < 0) { Close(); return false; }
 
   InByteAcc += msgsize;
   ++InPktAcc;
@@ -369,10 +421,10 @@ bool VNetConnection::GetMessage () {
   Packet.SetupFrom(msgdata, msgsize*8, true); // fix the length with the trailing bit
   if (Packet.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: datagram packet is missing trailing bit", *GetAddress());
-    State = NETCON_Closed; // close connection due to invalid data
+    Close(); // close connection due to invalid data
     return false;
   }
-  if (net_dbg_conn_show_dgrams) GCon->Logf(NAME_DevNet, "%s: got datagram with a packet (%d bits of data)", *GetAddress(), Packet.GetNumBits());
+  if (net_dbg_conn_show_dgrams || net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "%s: got datagram with a packet (%d bits of data)", *GetAddress(), Packet.GetNumBits());
 
   ReceivedPacket(Packet);
 
@@ -392,10 +444,49 @@ void VNetConnection::GetMessages () {
     return;
   }
 
-  // process up to 128 packets (why not?)
+  if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "%s: GetMessages()", *GetAddress());
+  #if 0
+  if (!GetMessage()) {
+    const struct timespec sleepTime = {0, 10000}; // 1 millisecond
+    nanosleep(&sleepTime, nullptr);
+  }
+
+  // we can have alot of small packets queued, so process them all
+  // without this, everything will be delayed
+  if (!GetMessage()) return;
+
+  //const double ctt = Sys_Time();
+  int waitCount = 2;
+  for (int f = 0; f < 256 && IsOpen(); ++f) {
+    if (!GetMessage()) {
+      if (--waitCount == 0) break;
+      const struct timespec sleepTime = {0, 10000/2}; // 0.5 milliseconds
+      nanosleep(&sleepTime, nullptr);
+      continue;
+    }
+    //if (Sys_Time()-ctt >= 1.0/1000.0*2.5) break;
+  }
+  #else
+  // we can have alot of small packets queued, so process them all
+  // without this, everything will be delayed
+  if (!GetMessage()) return; // nothing's here
+  // spend no more than 2 msecs here
+  int count = 0;
+  const double ctt = Sys_Time();
+  for (;;) {
+    if (!GetMessage()) break;
+    ++count;
+    if (count == 64) {
+      count = 0;
+      if (Sys_Time()-ctt >= 1.0/1000.0*2.0) break;
+    }
+  }
+  /*
   for (int f = 0; f < 128 && IsOpen(); ++f) {
     if (!GetMessage()) break;
   }
+  */
+  #endif
 }
 
 
@@ -419,6 +510,8 @@ void VNetConnection::PacketLost (vuint32 PacketId) {
 //
 //==========================================================================
 void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
+  Driver->UpdateNetTime();
+
   // simulate receiving loss
   const float lossPrc = net_dbg_recv_loss.asFloat();
   if (lossPrc > 0.0f && RandomFull()*100.0f < lossPrc) {
@@ -431,7 +524,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
   Packet << PacketId;
   if (Packet.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: got invalid packet, connection dropped", *GetAddress());
-    State = NETCON_Closed;
+    Close();
     return;
   }
 
@@ -449,7 +542,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
   }
 
   // ack it
-  LastInPacketIdAck = PacketId;
+  if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "%s: got packet with pid=%u, sending ack", *GetAddress(), PacketId);
   SendPacketAck(PacketId);
   NeedsUpdate = true; // we got *any* activity, update the world!
 
@@ -473,17 +566,17 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
       // resend any old reliable packets that the receiver hasn't acknowledged
       if (AckPacketId > OutAckPacketId) {
-        if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  ack: ackpid=%u; outackpid=%u (future)", AckPacketId, OutAckPacketId);
+        if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "  ack: ackpid=%u; outackpid=%u (future)", AckPacketId, OutAckPacketId);
         for (vuint32 LostPacketId = OutAckPacketId+1; LostPacketId < AckPacketId; ++LostPacketId, ++OutLossAcc) {
-          if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  ack:   PACKETLOST: %u", LostPacketId);
+          if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "  ack:   PACKETLOST: %u", LostPacketId);
           PacketLost(LostPacketId);
         }
         OutAckPacketId = AckPacketId;
       } else if (AckPacketId < OutAckPacketId) {
         // this is harmless
-        if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  ack: ackpid=%u; outackpid=%u (outdated)", AckPacketId, OutAckPacketId);
+        if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "  ack: ackpid=%u; outackpid=%u (outdated)", AckPacketId, OutAckPacketId);
       } else {
-        if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  ack: ackpid=%u; outackpid=%u (current)", AckPacketId, OutAckPacketId);
+        if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "  ack: ackpid=%u; outackpid=%u (current)", AckPacketId, OutAckPacketId);
       }
 
       // update lag statistics
@@ -494,7 +587,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
         ++LagCount;
       }
 
-      // forward the ack to the respective channel
+      // forward the ack to the respective channel(s)
       for (int f = OpenChannels.length()-1; f >= 0; --f) {
         VChannel *chan = OpenChannels[f];
         for (VMessageOut *outmsg = chan->OutList; outmsg; outmsg = outmsg->Next) {
@@ -631,6 +724,7 @@ int VNetConnection::PutOneAck (vuint32 ackId, bool forceSend) {
     Prepare(outBits);
     vassert(CalcEstimatedByteSize(outBits) <= MAX_DGRAM_SIZE);
   }
+  if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "%s: putting ack with pid=%u", *GetAddress(), ackId);
   Out.WriteBit(true); // ack flag
   Out << STRM_INDEX_U(ackId);
   vassert(CalcEstimatedByteSize(0) <= MAX_DGRAM_SIZE);
@@ -674,6 +768,8 @@ void VNetConnection::SendPacketAck (vuint32 AckPacketId) {
 //
 //==========================================================================
 void VNetConnection::SendMessage (VMessageOut *Msg) {
+  Driver->UpdateNetTime();
+
   //if (net_dbg_conn_show_dgrams) GCon->Logf(NAME_DevNet, "%s: saving message to outbuf; out=%d; msg=%d", *GetAddress(), Out.GetNumBytes(), Msg.GetNumBytes());
   vassert(Msg);
   vassert(!Msg->IsError());
@@ -714,6 +810,8 @@ void VNetConnection::SendMessage (VMessageOut *Msg) {
 //
 //==========================================================================
 void VNetConnection::Flush () {
+  Driver->UpdateNetTime();
+
   // if the connection is closed, discard the data
   if (IsClosed()) {
     Out.Reinit(MAX_DGRAM_SIZE*8+128, false); // don't expand
@@ -735,13 +833,17 @@ void VNetConnection::Flush () {
       // this looks like keepalive packet, so resend last acks there too
       // this is to avoid client timeout on bad connection
       #if 1
-      if (!AutoAck /*&& LastInPacketIdAck != 0xffffffffu*/) {
-        //Out.WriteBit(true);
-        //Out << STRM_INDEX_U(LastInPacketIdAck);
+      if (!AutoAck) {
+        // only ticker can call this with empty accumulator, and in this case we have no acks to resend
         vassert(AcksToResend.length() == 0);
-        while (QueuedAcks.length()) {
-          if (PutOneAck(QueuedAcks[0])) break; // no room
-          QueuedAcks.removeAt(0);
+        if (QueuedAcks.length()) {
+          while (QueuedAcks.length()) {
+            if (PutOneAck(QueuedAcks[0])) break; // no room
+            QueuedAcks.removeAt(0);
+          }
+        } else if (InPacketId) {
+          // `InPacketId` is the last highest packet we've seen, so send ack for it, why not
+          PutOneAck(InPacketId);
         }
       }
       GCon->Logf(NAME_DevNet, "%s: created keepalive packet with acks; size is %d bits", *GetAddress(), Out.GetNumBits());
@@ -757,10 +859,18 @@ void VNetConnection::Flush () {
     // send the message
     const float lossPrc = net_dbg_send_loss.asFloat();
     if (lossPrc <= 0.0f || RandomFull()*100.0f >= lossPrc) {
-      if (NetCon->SendMessage(Out.GetData(), Out.GetNumBytes()) == -1) {
+      int res = NetCon->SendMessage(Out.GetData(), Out.GetNumBytes());
+      if (res < 0) {
         GCon->Logf(NAME_DevNet, "%s: error sending datagram", *GetAddress());
-        State = NETCON_Closed;
+        Close();
         return;
+      }
+      if (res == 0) SaturaDepth = MAX_DGRAM_SIZE; // pause it a little
+      if (net_dbg_conn_dump_acks) {
+        vassert(Out.GetNumBytes() >= 4);
+        //WARNING! invalid for big-endian!
+        const vuint32 *pid = (const vuint32 *)Out.GetData();
+        GCon->Logf(NAME_DevNet, "%s: sent packet with pid=%u (size: %d bytes)", *GetAddress(), *pid, Out.GetNumBytes());
       }
     }
     LastSendTime = Driver->GetNetTime();
@@ -780,6 +890,8 @@ void VNetConnection::Flush () {
   }
 
   // move queued acks to resend queue
+  // this way we will send acks twice, just in case they're lost
+  // (first time ack wass sent before it got into queued acks store)
   for (auto &&ack : QueuedAcks) AcksToResend.append(ack);
   QueuedAcks.reset();
 }
@@ -801,6 +913,8 @@ void VNetConnection::KeepaliveTick () {
 //
 //==========================================================================
 void VNetConnection::Tick () {
+  Driver->UpdateNetTime();
+
   if (IsClosed()) {
     // ack all outgoing packets, just in case (this is HACK!)
     AckEverythingEverywhere();
@@ -881,10 +995,16 @@ void VNetConnection::Tick () {
   double DeltaTime = ctt-LastTickTime;
   LastTickTime = ctt;
 
+  if (net_dbg_conn_dump_acks) {
+    GCon->Logf(NAME_DevNet, "%s: tick: outbits=%d(ffl=%d); lastrecv=%g(%g); lastsend=%g(%g);", *GetAddress(),
+      Out.GetNumBits(), (int)ForceFlush,
+      LastReceiveTime, (Driver->GetNetTime()-LastReceiveTime)*1000,
+      LastSendTime, (Driver->GetNetTime()-LastSendTime)*1000);
+  }
+
   // see if this connection has timed out
   if (IsTimeoutExceeded()) {
-    ShowTimeoutStats();
-    State = NETCON_Closed;
+    Close();
     return;
   }
 
@@ -896,23 +1016,23 @@ void VNetConnection::Tick () {
 
   // if channel 0 has closed, mark the conection as closed
   if (!Channels[0] && (OutReliable[0]|InReliable[0])) {
-    ShowTimeoutStats();
-    State = NETCON_Closed;
+    Close();
     return;
   }
 
   ResendAcks();
 
-  // also, flush if we have no room for more data in outgoing accumulator
-  if (ForceFlush || IsKeepAliveExceeded() || CalcEstimatedByteSize() == MAX_DGRAM_SIZE) Flush();
-
   // update queued byte count
+  // need to be here, because `Flush()` may saturate it
   double DeltaBytes = (double)GetNetSpeed()*DeltaTime;
   if (DeltaBytes > 0x1fffffff) DeltaBytes = 0x1fffffff;
   SaturaDepth -= (int)DeltaBytes;
   double AllowedLag = DeltaBytes*2;
   if (AllowedLag > 0x3fffffff) AllowedLag = 0x3fffffff;
   if (SaturaDepth < -AllowedLag) SaturaDepth = (int)(-AllowedLag);
+
+  // also, flush if we have no room for more data in outgoing accumulator
+  if (ForceFlush || IsKeepAliveExceeded() || CalcEstimatedByteSize() == MAX_DGRAM_SIZE) Flush();
 }
 
 
@@ -932,13 +1052,13 @@ void VNetConnection::AbortChannel (VChannel *chan) {
   // otherwise, just close this channel, and let world updater deal with it
   if (!chan->IsThinker()) {
     GCon->Logf(NAME_DevNet, "%s: aborting the connection, because vital non-thinker channel %s is oversaturated!", *GetAddress(), *chan->GetDebugName());
-    State = NETCON_Closed;
+    Close();
     return;
   }
   VThinkerChannel *tc = (VThinkerChannel *)chan;
   if (tc->GetThinker() && (tc->GetThinker()->ThinkerFlags&VThinker::TF_AlwaysRelevant)) {
     GCon->Logf(NAME_DevNet, "%s: aborting the connection, because vital thinker channel %s is oversaturated!", *GetAddress(), *chan->GetDebugName());
-    State = NETCON_Closed;
+    Close();
     return;
   }
   // close this channel, and hope that nothing will go wrong

@@ -486,6 +486,7 @@ void VLevelChannel::UpdateSector (VBitStreamWriter &strm, int sidx) {
   if (CeilSkyBox && !Connection->ObjMap->CanSerialiseObject(CeilSkyBox)) CeilSkyBox = nullptr;
 
   rep_sector_t *RepSec = &Sectors[sidx];
+
   bool FloorChanged = RepSec->floor_dist != Sec->floor.dist ||
     mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs) ||
     mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs) ||
@@ -495,6 +496,7 @@ void VLevelChannel::UpdateSector (VBitStreamWriter &strm, int sidx) {
     mround(RepSec->floor_BaseAngle) != mround(Sec->floor.BaseAngle) ||
     mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs) ||
     RepSec->floor_SkyBox != FloorSkyBox;
+
   bool CeilChanged = RepSec->ceil_dist != Sec->ceiling.dist ||
     mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs) ||
     mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs) ||
@@ -504,11 +506,13 @@ void VLevelChannel::UpdateSector (VBitStreamWriter &strm, int sidx) {
     mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle) ||
     mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs) ||
     RepSec->ceil_SkyBox != CeilSkyBox;
-  bool LightChanged = abs(RepSec->lightlevel-Sec->params.lightlevel) >= 4;
-  bool FadeChanged = RepSec->Fade != Sec->params.Fade;
-  bool SkyChanged = RepSec->Sky != Sec->Sky;
-  bool MirrorChanged = RepSec->floor_MirrorAlpha != Sec->floor.MirrorAlpha ||
-                       RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha;
+
+  bool LightChanged = (abs(RepSec->lightlevel-Sec->params.lightlevel) >= 4);
+  bool FadeChanged = (RepSec->Fade != Sec->params.Fade);
+  bool SkyChanged = (RepSec->Sky != Sec->Sky);
+  bool MirrorChanged = (RepSec->floor_MirrorAlpha != Sec->floor.MirrorAlpha ||
+                        RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha);
+
   if (RepSec->floor_pic == Sec->floor.pic &&
       RepSec->ceil_pic == Sec->ceiling.pic &&
       !FloorChanged && !CeilChanged && !LightChanged && !FadeChanged &&
@@ -530,6 +534,7 @@ void VLevelChannel::UpdateSector (VBitStreamWriter &strm, int sidx) {
     //strm.WriteInt(Sec->ceiling.pic/*, MAX_VUINT16*/);
     Sec->ceiling.pic.Serialise(strm);
   }
+
   strm.WriteBit(FloorChanged);
   if (FloorChanged) {
     strm.WriteBit(RepSec->floor_dist != Sec->floor.dist);
@@ -554,6 +559,7 @@ void VLevelChannel::UpdateSector (VBitStreamWriter &strm, int sidx) {
     strm.WriteBit(RepSec->floor_SkyBox != FloorSkyBox);
     if (RepSec->floor_SkyBox != FloorSkyBox) strm << FloorSkyBox;
   }
+
   strm.WriteBit(CeilChanged);
   if (CeilChanged) {
     strm.WriteBit(RepSec->ceil_dist != Sec->ceiling.dist);
@@ -578,12 +584,16 @@ void VLevelChannel::UpdateSector (VBitStreamWriter &strm, int sidx) {
     strm.WriteBit(RepSec->ceil_SkyBox != CeilSkyBox);
     if (RepSec->ceil_SkyBox != CeilSkyBox) strm << CeilSkyBox;
   }
+
   strm.WriteBit(LightChanged);
-  if (LightChanged) strm.WriteUInt(((vuint32)Sec->params.lightlevel)>>2/*, 256*/);
+  if (LightChanged) strm.WriteUInt(((vuint32)Sec->params.lightlevel)>>2); // 256
+
   strm.WriteBit(FadeChanged);
   if (FadeChanged) strm << Sec->params.Fade;
+
   strm.WriteBit(SkyChanged);
-  if (SkyChanged) strm.WriteInt(Sec->Sky/*, MAX_VUINT16*/);
+  if (SkyChanged) strm.WriteInt(Sec->Sky);
+
   strm.WriteBit(MirrorChanged);
   if (MirrorChanged) {
     strm << Sec->floor.MirrorAlpha;
@@ -638,6 +648,8 @@ bool VLevelChannel::ParseSector (VMessageIn &Msg) {
   const float PrevCeilDist = Sec->ceiling.dist;
   if (Msg.ReadBit()) { /*Sec->floor.pic = Msg.ReadInt();*/ Sec->floor.pic.Serialise(Msg); }
   if (Msg.ReadBit()) { /*Sec->ceiling.pic = Msg.ReadInt();*/ Sec->ceiling.pic.Serialise(Msg); }
+
+  // floor
   if (Msg.ReadBit()) {
     if (Msg.ReadBit()) {
       Msg << Sec->floor.dist;
@@ -652,6 +664,8 @@ bool VLevelChannel::ParseSector (VMessageIn &Msg) {
     if (Msg.ReadBit()) Sec->floor.BaseYOffs = Msg.ReadInt();
     if (Msg.ReadBit()) Msg << Sec->floor.SkyBox;
   }
+
+  // ceiling
   if (Msg.ReadBit()) {
     if (Msg.ReadBit()) {
       Msg << Sec->ceiling.dist;
@@ -666,6 +680,7 @@ bool VLevelChannel::ParseSector (VMessageIn &Msg) {
     if (Msg.ReadBit()) Sec->ceiling.BaseYOffs = Msg.ReadInt();
     if (Msg.ReadBit()) Msg << Sec->ceiling.SkyBox;
   }
+
   if (Msg.ReadBit()) Sec->params.lightlevel = Msg.ReadUInt()<<2;
   if (Msg.ReadBit()) Msg << Sec->params.Fade;
   if (Msg.ReadBit()) Sec->Sky = Msg.ReadInt();
@@ -1311,6 +1326,6 @@ void VLevelChannel::ParseMessage (VMessageIn &Msg) {
 
   if (err) {
     GCon->Logf(NAME_DevNet, "%s: clsing connection due to level update errors", *GetDebugName());
-    Connection->State = NETCON_Closed;
+    Connection->Close();
   }
 }

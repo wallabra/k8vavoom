@@ -27,10 +27,6 @@
 #define VAVOOM_NETWORK_HEADER
 
 extern VCvarB net_fixed_name_set;
-extern VCvarB net_debug_fixed_name_set;
-
-extern VCvarF net_timeout;
-extern VCvarF net_keepalive;
 
 
 class VNetContext;
@@ -44,7 +40,7 @@ enum {
 // sent on handshake
 enum {
   NET_PROTOCOL_VERSION_HI = 7,
-  NET_PROTOCOL_VERSION_LO = 0,
+  NET_PROTOCOL_VERSION_LO = 1,
 };
 
 enum {
@@ -186,6 +182,8 @@ public:
   bool (*CheckUserAbortCB) (void *udata);
   void *CheckUserAbortUData; // user-managed
 
+  double CurrNetTime; // cached time
+
 public:
   VNetworkPublic ();
 
@@ -201,7 +199,11 @@ public:
   virtual void UpdateMaster () = 0;
   virtual void QuitMaster () = 0;
 
-  static double GetNetTime () noexcept { return Sys_Time(); }
+  // call this to update current network time
+  // used to avoid calls to `Sys_Time()` everywhere
+  // should be called in connection ticker, in context ticker, and in `GetMessages()`
+  void UpdateNetTime () noexcept;
+  double GetNetTime () noexcept;
 
   void UpdateSentStats (vuint32 length) noexcept;
   void UpdateReceivedStats (vuint32 length) noexcept;
@@ -243,13 +245,6 @@ public:
     }
   }
 
-protected:
-  // returns:
-  //  -1: oversaturated
-  //   0: ok
-  //   1: full
-  virtual int IsQueueFull () const noexcept;
-
   // this unconditionally adds "close" message to the queue, and marks the channel for closing
   // WARNING! DOES NO CHECKS!
   void SendCloseMessageForced ();
@@ -267,6 +262,12 @@ public:
 
   inline int GetSendQueueSize () const noexcept { return OutListCount; }
   inline int GetRecvQueueSize () const noexcept { return InListCount; }
+
+  // returns:
+  //  -1: oversaturated
+  //   0: ok
+  //   1: full
+  virtual int IsQueueFull () const noexcept;
 
   // is this channel opened locally?
   inline bool IsLocalChannel () const noexcept { return OpenedLocally; }
@@ -412,10 +413,6 @@ protected:
   bool NewObj; // is this a new object?
   vuint8 *FieldCondValues;
 
-protected:
-  // limit thinkers by the number of outgoing packets instead
-  virtual int IsQueueFull () const noexcept override;
-
 public:
   vuint32 LastUpdateFrame; // see `UpdateFrameCounter` in VNetConnection
 
@@ -434,6 +431,8 @@ public:
   virtual VStr GetName () const noexcept override;
   virtual void ParseMessage (VMessageIn &) override;
   virtual void SetClosing () override;
+  // limit thinkers by the number of outgoing packets instead
+  virtual int IsQueueFull () const noexcept override;
 };
 
 
@@ -447,6 +446,8 @@ public:
   vuint8 *FieldCondValues;
   // some class references may be not sent at the start; repeat 'em while we can
   TMapNC<VField *, bool> FieldsToResend;
+  // this is used in server, to limit client update rate
+  double NextUpdateTime;
 
 public:
   VPlayerChannel (VNetConnection *, vint32, vuint8 = true);
@@ -487,9 +488,6 @@ protected:
   void CompressNames ();
   void DecompressNames ();
 
-  // slightly higher limits
-  virtual int IsQueueFull () const noexcept override;
-
 public:
   VObjectMapChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally);
   virtual ~VObjectMapChannel () override;
@@ -501,6 +499,8 @@ public:
   virtual void ReceivedCloseAck () override; // sets `ObjMapSent` flag
   virtual void ParseMessage (VMessageIn &) override;
   virtual void Tick () override;
+  // slightly higher limits
+  virtual int IsQueueFull () const noexcept override;
 };
 
 
@@ -517,8 +517,6 @@ enum ENetConState {
 class VNetConnection {
 protected:
   VSocketPublic *NetCon;
-
-  static VCvarI net_speed_limit;
 
 public:
   struct ThinkerSortInfo {
@@ -585,7 +583,6 @@ public:
   vuint32 InPacketId; // full incoming packet index
   vuint32 OutPacketId; // most recently sent packet
   vuint32 OutAckPacketId; // most recently acked outgoing packet
-  vuint32 LastInPacketIdAck; // if not 0xffffffffu, this is last acked received packet
 
   // channel table
   VChannel *Channels[MAX_CHANNELS];
@@ -618,11 +615,7 @@ public:
     return (endsize+7)>>3;
   }
 
-  inline int GetNetSpeed () const noexcept {
-    if (AutoAck) return 100000000;
-    if (IsLocalConnection()) return 100000000;
-    return max2(2400, net_speed_limit.asInt());
-  }
+  int GetNetSpeed () const noexcept;
 
 protected:
   // WARNING! this can change channel list!
@@ -640,6 +633,8 @@ public:
 
   inline VChannel *GetChannelByIndex (int idx) noexcept { return (idx >= 0 && idx < MAX_CHANNELS ? Channels[idx] : nullptr); }
 
+  inline VStr GetAddress () const { return (NetCon ? NetCon->Address : VStr()); }
+
   inline bool IsOpen () const noexcept { return (State > NETCON_Closed); }
   inline bool IsClosed () const noexcept { return (State <= NETCON_Closed); }
 
@@ -647,7 +642,8 @@ public:
   bool IsServer () noexcept;
   bool IsLocalConnection () const noexcept;
 
-  inline VStr GetAddress () const { return (NetCon ? NetCon->Address : VStr()); }
+  // this marks the connection as closed, but doesn't destroy anything
+  void Close ();
 
   // call this to process incoming messages
   void GetMessages ();

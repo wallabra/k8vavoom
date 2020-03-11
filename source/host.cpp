@@ -507,6 +507,8 @@ static void Host_UpdateLanguage () {
 }
 
 
+static double lastNetFrameTime = 0;
+
 //==========================================================================
 //
 //  Host_Frame
@@ -520,7 +522,6 @@ void Host_Frame () {
   static double time3 = 0;
   int pass1, pass2, pass3;
 
-  static double lastNetFrameTime = 0;
   if (!lastNetFrameTime) lastNetFrameTime = Sys_Time();
 
   try {
@@ -528,10 +529,11 @@ void Host_Frame () {
     if (!FilterTime()) {
       // don't run frames too fast
       // but still process network activity, we may want to re-send packets and such
-      const double ctt = Sys_Time();
-      if (ctt-lastNetFrameTime >= 1.0/70.0) {
+      if (lastNetFrameTime > systime) lastNetFrameTime = systime; // just in case
+      //const double ctt = Sys_Time();
+      if (systime-lastNetFrameTime >= 1.0/70.0) {
         // perform network activity
-        lastNetFrameTime = ctt;
+        lastNetFrameTime = systime;
         #ifdef CLIENT
         // process client
         CL_NetInterframe(); // this does all necessary checks
@@ -547,7 +549,7 @@ void Host_Frame () {
       return;
     }
 
-    lastNetFrameTime = Sys_Time();
+    lastNetFrameTime = systime;
 
     if (GSoundManager) GSoundManager->Process();
 

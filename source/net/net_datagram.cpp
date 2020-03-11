@@ -78,7 +78,7 @@ static int cli_NoLAN = 0;
   VParsedArgs::RegisterAlias("-no-lan", "-nolan");
 
 
-static VCvarB net_dbg_dump_rejected_connections("net_dbg_dump_rejected_connections", false, "Dump rejected connections?");
+static VCvarB net_dbg_dump_rejected_connections("net_dbg_dump_rejected_connections", true, "Dump rejected connections?");
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -306,7 +306,6 @@ void VDatagramDriver::Listen (bool state) {
 void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMaster) {
   sockaddr_t myaddr;
   sockaddr_t readaddr;
-  int len;
   vuint8 control;
   vuint8 msgtype;
   int n;
@@ -327,9 +326,11 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     Drv->Broadcast(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes());
   }
 
-  //GCon->Logf(NAME_Debug, "SearchForHosts: trying to read a datagram (me:%s)...", *Drv->AddrToString(&myaddr));
+  //GCon->Logf(NAME_Debug, "SearchForHosts: trying to read a datagram (me:%s)...", Drv->AddrToString(&myaddr));
   int pktleft = 128;
-  while (pktleft-- > 0 && (len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr)) > 0) {
+  while (pktleft-- > 0) {
+    int len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr);
+    if (len < 0) break; // no message or error
     if (len < (int)sizeof(int)) continue;
 
     // don't answer our own query
@@ -338,7 +339,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     // is the cache full?
     //if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
-    GCon->Logf(NAME_DevNet, "SearchForHosts: got datagram from %s (len=%d)", *Drv->AddrToString(&readaddr), len);
+    GCon->Logf(NAME_DevNet, "SearchForHosts: got datagram from %s (len=%d)", Drv->AddrToString(&readaddr), len);
 
     VBitStreamReader msg(packetBuffer.data, len<<3);
     msg << control;
@@ -351,7 +352,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     VStr str;
     VStr addr = Drv->AddrToString(&readaddr);
 
-    GCon->Logf(NAME_DevNet, "SearchForHosts: got valid packet from %s", *Drv->AddrToString(&readaddr));
+    GCon->Logf(NAME_DevNet, "SearchForHosts: got valid packet from %s", Drv->AddrToString(&readaddr));
 
     // search the cache for this server
     for (n = 0; n < Net->HostCacheCount; ++n) {
@@ -475,7 +476,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   if (Drv->GetAddrFromName(host, &sendaddr, Net->HostPort) == -1) return nullptr;
 
   //R_OSDMsgShow("creating socket");
-  R_OSDMsgShow(va("connecting to [%s]", *Drv->AddrToString(&sendaddr)));
+  R_OSDMsgShow(va("connecting to [%s]", Drv->AddrToString(&sendaddr)));
 
   newsock = Drv->ConnectSocketTo(&sendaddr);
   if (newsock == -1) return nullptr;
@@ -487,8 +488,9 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   sock->Address = Drv->AddrToString(&sock->Addr);
 
   // send the connection request
-  GCon->Logf(NAME_DevNet, "trying %s", *Drv->AddrToString(&sendaddr));
+  GCon->Logf(NAME_DevNet, "trying %s", Drv->AddrToString(&sendaddr));
   //SCR_Update();
+  Net->UpdateNetTime();
   start_time = Net->GetNetTime();
 
   for (reps = 0; reps < 3; ++reps) {
@@ -516,6 +518,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
     bool aborted = false;
     do {
       ret = Drv->Read(newsock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr);
+      if (ret == -2) ret = 0; // "no message" means "message with zero size"
       // if we got something, validate it
       if (ret > 0) {
         // is it from the right place?
@@ -547,10 +550,14 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
       }
 
       if (ret == 0) { aborted = Net->CheckForUserAbort(); if (aborted) break; }
+      Net->UpdateNetTime();
     } while (ret == 0 && (Net->GetNetTime()-start_time) < 2.5);
+
     if (ret || aborted) break;
-    GCon->Logf(NAME_DevNet, "still trying %s", *Drv->AddrToString(&sendaddr));
+
+    GCon->Logf(NAME_DevNet, "still trying %s", Drv->AddrToString(&sendaddr));
     //SCR_Update();
+    Net->UpdateNetTime();
     start_time = Net->GetNetTime();
   }
 
@@ -604,6 +611,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   sock->Address = Drv->AddrToString(&sock->Addr);
 
   GCon->Logf(NAME_DevNet, "Connection accepted at %s (redirected to port %u)", *sock->Address, newport);
+  Net->UpdateNetTime();
   sock->LastMessageTime = Net->GetNetTime();
 
   delete msg;
@@ -692,33 +700,35 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   vuint8 TmpByte, TmpByte1;
   VStr TmpStr;
 
+  Net->UpdateNetTime();
   acceptsock = Drv->CheckNewConnections();
   if (acceptsock == -1) return nullptr;
 
   len = Drv->Read(acceptsock, packetBuffer.data, MAX_DGRAM_SIZE, &clientaddr);
+  if (len == -2) len = 0; // "no message" means "zero size"
   if (len < (int)sizeof(vint32)) {
-    if (len >= 0 && net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: too short packet (%d) from %s", len, *Drv->AddrToString(&clientaddr));
-    if (len < 0) GCon->Logf(NAME_DevNet, "CONN: error reading incoming packet from %s", *Drv->AddrToString(&clientaddr));
+    if (len >= 0 && net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: too short packet (%d) from %s", len, Drv->AddrToString(&clientaddr));
+    if (len < 0) GCon->Logf(NAME_DevNet, "CONN: error reading incoming packet from %s", Drv->AddrToString(&clientaddr));
     return nullptr;
   }
-  GCon->Logf(NAME_DevNet, "CONN: ACCEPTING something from %s", *Drv->AddrToString(&clientaddr));
+  GCon->Logf(NAME_DevNet, "CONN: ACCEPTING something from %s", Drv->AddrToString(&clientaddr));
 
   VBitStreamReader msg(packetBuffer.data, len<<3);
 
   msg << control;
   if (msg.IsError() || control != NETPACKET_CTL) {
-    if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid packet type (%u) from %s", control, *Drv->AddrToString(&clientaddr));
+    if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid packet type (%u) from %s", control, Drv->AddrToString(&clientaddr));
     return nullptr;
   }
 
   if (!CheckGameSignature(msg)) {
-    if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid packet type (%u) from %s", control, *Drv->AddrToString(&clientaddr));
+    if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid packet type (%u) from %s", control, Drv->AddrToString(&clientaddr));
     return nullptr;
   }
 
   msg << command;
   if (command == CCREQ_SERVER_INFO) {
-    GCon->Logf(NAME_DevNet, "CONN: sending server info to %s", *Drv->AddrToString(&clientaddr));
+    GCon->Logf(NAME_DevNet, "CONN: sending server info to %s", Drv->AddrToString(&clientaddr));
 
     VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
     TmpByte = NETPACKET_CTL;
@@ -747,7 +757,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   }
 
   if (command != CCREQ_CONNECT) {
-    if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: unknown packet command (%u) from %s", command, *Drv->AddrToString(&clientaddr));
+    if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: unknown packet command (%u) from %s", command, Drv->AddrToString(&clientaddr));
     return nullptr;
   }
 
@@ -781,9 +791,9 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     VDatagramSocket *s = (VDatagramSocket *)as;
     ret = Drv->AddrCompare(&clientaddr, &s->Addr);
     if (ret >= 0) {
-      // is this a duplicate connection reqeust?
+      // is this a duplicate connection request?
       if (ret == 0 && Net->GetNetTime()-s->ConnectTime < 2.0) {
-        GCon->Logf(NAME_DevNet, "CONN: duplicate connection request from %s (this is ok)", *Drv->AddrToString(&clientaddr));
+        GCon->Logf(NAME_DevNet, "CONN: duplicate connection request from %s (this is ok)", Drv->AddrToString(&clientaddr));
         // yes, so send a duplicate reply
         VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
         Drv->GetSocketAddr(s->LanSocket, &newaddr);
@@ -802,9 +812,9 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
       // but don't do that for localhost
       // meh, use strict comparison -- routers and such...
       if (ret != 0 && Drv->IsLocalAddress(&clientaddr) && Drv->IsLocalAddress(&s->Addr)) {
-        GCon->Logf(NAME_DevNet, "CONN: LOCALHOST for %s", *Drv->AddrToString(&clientaddr));
+        GCon->Logf(NAME_DevNet, "CONN: LOCALHOST for %s", Drv->AddrToString(&clientaddr));
       } else if (ret == 0) {
-        GCon->Logf(NAME_DevNet, "CONN: RETRYWAIT for %s", *Drv->AddrToString(&clientaddr));
+        GCon->Logf(NAME_DevNet, "CONN: RETRYWAIT for %s", Drv->AddrToString(&clientaddr));
         s->Invalid = true;
         return nullptr;
       }
@@ -817,7 +827,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     return nullptr;
   }
 
-  GCon->Logf(NAME_DevNet, "new client from %s (connecting back)", *Drv->AddrToString(&clientaddr));
+  GCon->Logf(NAME_DevNet, "new client from %s (connecting back)", Drv->AddrToString(&clientaddr));
 
   // allocate new "listening" network socket
   newsock = Drv->OpenListenSocket(0);
@@ -833,7 +843,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
   Drv->GetSocketAddr(newsock, &newaddr);
 
-  GCon->Logf(NAME_DevNet, "allocated socket %s for client %s", *Drv->AddrToString(&newaddr), *sock->Address);
+  GCon->Logf(NAME_DevNet, "allocated socket %s for client %s", Drv->AddrToString(&newaddr), *sock->Address);
 
   // send him back the info about the server connection he has been allocated
   VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
@@ -968,7 +978,6 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
   sockaddr_t myaddr;
   sockaddr_t readaddr;
   sockaddr_t tmpaddr;
-  int len;
   vuint8 control;
   vuint8 TmpByte;
 
@@ -990,7 +999,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     TmpByte = MCREQ_LIST;
     MsgOut << TmpByte;
     Drv->Write(Drv->MasterQuerySocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
-    GCon->Logf(NAME_DevNet, "sent query to master at %s...", *Drv->AddrToString(&sendaddr));
+    GCon->Logf(NAME_DevNet, "sent query to master at %s...", Drv->AddrToString(&sendaddr));
     return false;
   }
 
@@ -998,10 +1007,11 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
 
   bool res = false;
   int pktleft = 256;
-  while (pktleft-- > 0 && (len = Drv->Read(Drv->MasterQuerySocket, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr)) > 0) {
-    if (len < 1) continue;
+  while (pktleft-- > 0) {
+    int len = Drv->Read(Drv->MasterQuerySocket, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr);
+    if (len < 1) continue; // error, no message, zero message
 
-    GCon->Logf(NAME_DevNet, "got master reply from %s", *Drv->AddrToString(&readaddr));
+    GCon->Logf(NAME_DevNet, "got master reply from %s", Drv->AddrToString(&readaddr));
     // is the cache full?
     //if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
@@ -1028,7 +1038,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
       msg.Serialise(tmpaddr.sa_data+2, 4);
       msg.Serialise(tmpaddr.sa_data, 2);
       if (!msg.IsError() && pver0 == NET_PROTOCOL_VERSION_HI && pver1 == NET_PROTOCOL_VERSION_LO) {
-        GCon->Logf(NAME_DevNet, "  sending server query to %s...", *Drv->AddrToString(&tmpaddr));
+        GCon->Logf(NAME_DevNet, "  sending server query to %s...", Drv->AddrToString(&tmpaddr));
         VBitStreamWriter Reply(MAX_DGRAM_SIZE<<3);
         TmpByte = NETPACKET_CTL;
         Reply << TmpByte;
@@ -1041,7 +1051,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
         Reply << TmpByte;
         Drv->Write(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes(), &tmpaddr);
       } else {
-        GCon->Logf(NAME_DevNet, "  server: %s, bad proto version %u:%u", *Drv->AddrToString(&tmpaddr), pver0, pver1);
+        GCon->Logf(NAME_DevNet, "  server: %s, bad proto version %u:%u", Drv->AddrToString(&tmpaddr), pver0, pver1);
       }
     }
 
@@ -1125,42 +1135,41 @@ int VDatagramSocket::GetMessage (void *dest, size_t destSize) {
   if (!dest) return -1;
 
   sockaddr_t readaddr;
-  int ret = 0;
   vuint8 data[MAX_DGRAM_SIZE+4];
 
   for (;;) {
     // read message
-    vuint32 length = LanDriver->Read(LanSocket, data, NET_DATAGRAMSIZE, &readaddr);
+    int length = LanDriver->Read(LanSocket, data, NET_DATAGRAMSIZE, &readaddr);
+    if (length == 0) continue; // zero-sized message, oops
 
-    if (length == 0) {
-      //if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: no data from %s (expected address is %s)", *LanDriver->AddrToString(&readaddr), *LanDriver->AddrToString(&Addr));
-      break;
+    if (length == -2) {
+      // no more messages
+      //if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: no data from %s (expected address is %s)", LanDriver->AddrToString(&readaddr), *LanDriver->AddrToString(&Addr));
+      return 0;
     }
 
-    if ((int)length < 0) {
-      GCon->Logf(NAME_DevNet, "%s: Read error", *LanDriver->AddrToString(&Addr));
+    if (length < 0) {
+      GCon->Logf(NAME_DevNet, "%s: Read error", LanDriver->AddrToString(&Addr));
       return -1;
     }
 
     if (LanDriver->AddrCompare(&readaddr, &Addr) != 0) {
-      if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: rejected packet from %s due to wrong address (%s expected)", *LanDriver->AddrToString(&readaddr), *LanDriver->AddrToString(&Addr));
+      if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: rejected packet from %s due to wrong address (%s expected)", LanDriver->AddrToString(&readaddr), LanDriver->AddrToString(&Addr));
       UpdateRejectedStats(length);
       continue;
     }
 
     UpdateReceivedStats(length);
 
-    if (length > destSize) {
-      GCon->Logf(NAME_DevNet, "%s: Read error (message too big)", *LanDriver->AddrToString(&Addr));
+    if ((unsigned)length > destSize) {
+      GCon->Logf(NAME_DevNet, "%s: Read error (message too big)", LanDriver->AddrToString(&Addr));
       return -1;
     }
 
     memcpy(dest, data, length);
-    ret = (int)length;
-    break;
+    return length;
   }
-
-  return ret;
+  abort();
 }
 
 
@@ -1171,15 +1180,17 @@ int VDatagramSocket::GetMessage (void *dest, size_t destSize) {
 //  Send a packet over the net connection.
 //  returns  1 if the packet was sent properly
 //  returns -1 if the connection died
+//  returns  0 if the connection is oversaturated (cannot send more data)
 //
 //==========================================================================
 int VDatagramSocket::SendMessage (const vuint8 *Data, vuint32 Length) {
   vensure(Length > 0);
   vensure(Length <= MAX_DGRAM_SIZE);
   if (Invalid) return -1;
-  const int res = (LanDriver->Write(LanSocket, Data, Length, &Addr) == -1 ? -1 : 1);
+  const int res = LanDriver->Write(LanSocket, Data, Length, &Addr);
   if (res > 0) UpdateSentStats(Length);
-  //GCon->Logf(NAME_DevNet, "+++ SK:%d(%s): sent %u bytes of data (res=%d)", LanSocket, *LanDriver->AddrToString(&Addr), Length, res);
+  if (res == -2) return 0;
+  //GCon->Logf(NAME_DevNet, "+++ SK:%d(%s): sent %u bytes of data (res=%d)", LanSocket, LanDriver->AddrToString(&Addr), Length, res);
   return res;
 }
 

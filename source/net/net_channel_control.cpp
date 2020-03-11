@@ -61,7 +61,7 @@ void VControlChannel::ParseMessage (VMessageIn &msg) {
     msg << Cmd;
     if (msg.IsError()) {
       GCon->Logf(NAME_DevNet, "%s: cannot read control command, dropping connection", *GetDebugName());
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
     Cmd = Cmd.xstrip();

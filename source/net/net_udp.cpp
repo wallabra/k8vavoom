@@ -52,6 +52,10 @@ static const char *cli_IP = nullptr;
   VParsedArgs::RegisterStringOption("-ip", "explicitly set your IP address", &cli_IP);
 
 
+static VCvarB net_dbg_dump_udp_inbuffer("net_dbg_dump_udp_inbuffer", false, "Dump UDP input buffer size?");
+static VCvarB net_dbg_dump_udp_outbuffer("net_dbg_dump_udp_outbuffer", false, "Dump UDP output buffer size?");
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class VUdpDriver : public VNetLanDriver {
 public:
@@ -77,11 +81,11 @@ public:
   virtual int Write (int, const vuint8 *, int, sockaddr_t *) override;
   virtual int Broadcast (int, const vuint8 *, int) override;
   virtual bool CanBroadcast () override;
-  virtual VStr AddrToString (sockaddr_t *) override;
-  virtual VStr AddrToStringNoPort (sockaddr_t *) override;
+  virtual const char *AddrToString (sockaddr_t *) override;
+  virtual const char *AddrToStringNoPort (sockaddr_t *) override;
   virtual int StringToAddr (const char *, sockaddr_t *) override;
   virtual int GetSocketAddr (int, sockaddr_t *) override;
-  virtual VStr GetNameFromAddr (sockaddr_t *) override;
+  virtual const char *GetNameFromAddr (sockaddr_t *) override;
   virtual int GetAddrFromName (const char *, sockaddr_t *, int) override;
   // returns:
   //   -1 if completely not equal
@@ -109,6 +113,10 @@ private:
 double VUdpDriver::blocktime;
 #endif
 static VUdpDriver Impl;
+
+#define IPAddrBufMax  (32)
+static thread_local char ipaddrbuf[64][IPAddrBufMax];
+static thread_local unsigned ipaddrbufcurr = 0;
 
 
 //==========================================================================
@@ -230,7 +238,7 @@ int VUdpDriver::Init () {
     if (--winsock_initialised == 0) WSACleanup();
     return -1;
 #else
-    //Sys_Error("UDP_Init: Unable to open control socket\n");
+    //Sys_Error("UDP_Init: Unable to open control socket");
     GCon->Log(NAME_Warning, "UDP_Init: Unable to open control socket");
     return -1;
 #endif
@@ -244,7 +252,7 @@ int VUdpDriver::Init () {
   if (Net->MyIpAddress[0] == 0) {
     sockaddr_t addr;
     GetSocketAddr(net_controlsocket, &addr);
-    VStr::Cpy(Net->MyIpAddress, *AddrToString(&addr));
+    VStr::Cpy(Net->MyIpAddress, AddrToString(&addr));
     char *colon = strrchr(Net->MyIpAddress, ':');
     if (colon) *colon = 0;
     //GCon->Logf(NAME_Init, "My IP address: %s", Net->MyIpAddress);
@@ -252,7 +260,7 @@ int VUdpDriver::Init () {
   {
     sockaddr_t addr;
     GetSocketAddr(net_controlsocket, &addr);
-    GCon->Logf(NAME_Init, "UDP control socket address is %s", *AddrToString(&addr));
+    GCon->Logf(NAME_Init, "UDP control socket address is %s", AddrToString(&addr));
   }
 #endif
 
@@ -352,7 +360,7 @@ void VUdpDriver::Listen (bool state) {
     // enable listening
     if (net_acceptsocket == -1) {
       net_acceptsocket = OpenListenSocket(Net->HostPort);
-      if (net_acceptsocket == -1) Sys_Error("UDP_Listen: Unable to open accept socket\n");
+      if (net_acceptsocket == -1) Sys_Error("UDP_Listen: Unable to open accept socket");
       GCon->Logf(NAME_DevNet, "created listening socket");
     }
   } else {
@@ -411,7 +419,7 @@ int VUdpDriver::OpenListenSocket (int port) {
   const int err = errno;
   closesocket(newsocket);
 
-  Sys_Error("Unable to bind to %s:%u (err=%d)", *AddrToStringNoPort((sockaddr_t *)&address), port, err);
+  Sys_Error("Unable to bind to %s:%u (err=%d)", AddrToStringNoPort((sockaddr_t *)&address), port, err);
   return -1;
 }
 
@@ -435,7 +443,7 @@ int VUdpDriver::ConnectSocketTo (sockaddr_t *addr) {
   return newsocket;
   /* k8: for some reason, after `connect` we cannot use this socket in `recvfrom()` anymore
          (it always return "no data yet). wtf?!
-  GCon->Logf(NAME_DevNet, "binding new socket connection to %s", *AddrToString(addr));
+  GCon->Logf(NAME_DevNet, "binding new socket connection to %s", AddrToString(addr));
   sockaddr_in address;
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = (((const sockaddr_in *)addr)->sin_addr.s_addr);
@@ -446,14 +454,14 @@ int VUdpDriver::ConnectSocketTo (sockaddr_t *addr) {
     socklen_t skadlen = sizeof(sockaddr_t);
     memset(&skad, 0, sizeof(sockaddr_t));
     getsockname(newsocket, (sockaddr *)&skad, &skadlen);
-    GCon->Logf(NAME_DevNet, "(bound to local address %s)", *AddrToString(&skad));
+    GCon->Logf(NAME_DevNet, "(bound to local address %s)", AddrToString(&skad));
     return newsocket;
   }
 
   const int err = errno;
   closesocket(newsocket);
 
-  GCon->Logf(NAME_Error, "Unable to bind to %s (err=%d)", *AddrToString(addr), err);
+  GCon->Logf(NAME_Error, "Unable to bind to %s (err=%d)", AddrToString(addr), err);
   return -1;
   */
 }
@@ -489,20 +497,28 @@ int VUdpDriver::CheckNewConnections () {
 //
 //  VUdpDriver::Read
 //
+//  returns:
+//    length
+//    -1: error
+//    -2: no message
+//
 //==========================================================================
 int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
+  if (net_dbg_dump_udp_inbuffer) {
+    int value = 0;
+    if (ioctl(socket, FIONREAD, &value) == 0) GCon->Logf(NAME_DevNet, "VUdpDriver::Read: FIONREAD=%d", value);
+  }
   socklen_t addrlen = sizeof(sockaddr_t);
   memset((void *)addr, 0, addrlen);
   int ret = recvfrom(socket, (char *)buf, len, 0, (sockaddr *)addr, &addrlen);
-  if (ret == -1) {
-    #ifdef WIN32
-    int e = WSAGetLastError();
-    if (e == WSAEWOULDBLOCK || e == WSAECONNREFUSED) return 0;
-    #else
-    if (errno == EWOULDBLOCK || errno == ECONNREFUSED) return 0;
-    #endif
-  }
-  return ret;
+  if (ret >= 0) return ret;
+  #ifdef WIN32
+  int e = WSAGetLastError();
+  if (e == WSAEWOULDBLOCK || e == EAGAIN) return -2;
+  #else
+  if (errno == EWOULDBLOCK || errno == EAGAIN) return -2;
+  #endif
+  return -1;
 }
 
 
@@ -510,17 +526,30 @@ int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
 //
 //  VUdpDriver::Write
 //
+//  returns:
+//    length
+//    -1: error
+//    -2: outgoung queue is full
+//
 //==========================================================================
 int VUdpDriver::Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr) {
-  int ret = sendto(socket, (const char *)buf, len, 0, (sockaddr *)addr, sizeof(sockaddr));
-  if (ret == -1) {
-    #ifdef WIN32
-    if (WSAGetLastError() == WSAEWOULDBLOCK) return 0;
-    #else
-    if (errno == EWOULDBLOCK) return 0;
-    #endif
+  if (net_dbg_dump_udp_outbuffer) {
+    int value = 0;
+    if (ioctl(socket, TIOCOUTQ, &value) == 0) GCon->Logf(NAME_DevNet, "VUdpDriver::Write:000: TIOCOUTQ=%d", value);
   }
-  return ret;
+  int ret = sendto(socket, (const char *)buf, len, 0, (sockaddr *)addr, sizeof(sockaddr));
+  if (net_dbg_dump_udp_outbuffer) {
+    int value = 0;
+    if (ioctl(socket, TIOCOUTQ, &value) == 0) GCon->Logf(NAME_DevNet, "VUdpDriver::Write:001: TIOCOUTQ=%d (res=%d)", value, ret);
+  }
+  if (ret >= 0) return ret;
+  #ifdef WIN32
+  int e = WSAGetLastError();
+  if (e == WSAEWOULDBLOCK || e == EAGAIN) return -2;
+  #else
+  if (errno == EWOULDBLOCK || errno == EAGAIN) return -2;
+  #endif
+  return -1;
 }
 
 
@@ -546,7 +575,7 @@ bool VUdpDriver::CanBroadcast () {
 int VUdpDriver::Broadcast (int socket, const vuint8 *buf, int len) {
   int i = 1;
   if (socket != net_broadcastsocket) {
-    if (net_broadcastsocket != 0) Sys_Error("Attempted to use multiple broadcasts sockets\n");
+    if (net_broadcastsocket != 0) Sys_Error("Attempted to use multiple broadcasts sockets");
     if (!CanBroadcast()) {
       GCon->Log(NAME_DevNet, "Unable to make socket broadcast capable (1)");
       return -1;
@@ -567,13 +596,16 @@ int VUdpDriver::Broadcast (int socket, const vuint8 *buf, int len) {
 //  VUdpDriver::AddrToString
 //
 //==========================================================================
-VStr VUdpDriver::AddrToString (sockaddr_t *addr) {
-  char buffer[32];
+const char *VUdpDriver::AddrToString (sockaddr_t *addr) {
+  //char buffer[32];
+  const unsigned bidx = ipaddrbufcurr++;
+  ipaddrbufcurr &= (IPAddrBufMax-1);
+  char *buffer = ipaddrbuf[bidx];
   int haddr = ntohl(((sockaddr_in *)addr)->sin_addr.s_addr);
-  snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d:%d", (haddr>>24)&0xff,
+  snprintf(buffer, sizeof(ipaddrbuf[0]), "%d.%d.%d.%d:%d", (haddr>>24)&0xff,
     (haddr>>16)&0xff, (haddr>>8)&0xff, haddr&0xff,
     ntohs(((sockaddr_in *)addr)->sin_port));
-  return VStr(buffer);
+  return buffer;
 }
 
 
@@ -582,12 +614,15 @@ VStr VUdpDriver::AddrToString (sockaddr_t *addr) {
 //  VUdpDriver::AddrToStringNoPort
 //
 //==========================================================================
-VStr VUdpDriver::AddrToStringNoPort (sockaddr_t *addr) {
-  char buffer[32];
+const char *VUdpDriver::AddrToStringNoPort (sockaddr_t *addr) {
+  //char buffer[32];
+  const unsigned bidx = ipaddrbufcurr++;
+  ipaddrbufcurr &= (IPAddrBufMax-1);
+  char *buffer = ipaddrbuf[bidx];
   int haddr = ntohl(((sockaddr_in *)addr)->sin_addr.s_addr);
-  snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d", (haddr>>24)&0xff,
+  snprintf(buffer, sizeof(ipaddrbuf[0]), "%d.%d.%d.%d", (haddr>>24)&0xff,
     (haddr>>16)&0xff, (haddr>>8)&0xff, haddr&0xff);
-  return VStr(buffer);
+  return buffer;
 }
 
 
@@ -635,7 +670,7 @@ int VUdpDriver::GetSocketAddr (int socket, sockaddr_t *addr) {
 //  VUdpDriver::GetNameFromAddr
 //
 //==========================================================================
-VStr VUdpDriver::GetNameFromAddr (sockaddr_t *addr) {
+const char *VUdpDriver::GetNameFromAddr (sockaddr_t *addr) {
   hostent *hostentry = gethostbyaddr((char *)&((sockaddr_in *)addr)->sin_addr, sizeof(struct in_addr), AF_INET);
   if (hostentry) return (char *)hostentry->h_name;
   return AddrToString(addr);
@@ -646,8 +681,8 @@ VStr VUdpDriver::GetNameFromAddr (sockaddr_t *addr) {
 //
 //  VUdpDriver::PartialIPAddress
 //
-// This lets you type only as much of the net address as required, using
-// the local network components to fill in the rest
+//  This lets you type only as much of the net address as required, using
+//  the local network components to fill in the rest
 //
 //==========================================================================
 int VUdpDriver::PartialIPAddress (const char *in, sockaddr_t *hostaddr, int DefaultPort) {

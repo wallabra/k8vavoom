@@ -56,7 +56,7 @@ public:
 
 private:
   void putStdOut (const char *s, int len=-1) {
-    if (!s || !ttyIsAvailable()) return;
+    if (!s || !GLogTTYLog || !ttyIsAvailable()) return;
     if (len < 1) {
       if (!len || !s || !s[0]) return;
       len = (int)strlen(s);

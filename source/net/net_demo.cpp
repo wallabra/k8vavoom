@@ -116,7 +116,7 @@ int VDemoPlaybackNetConnection::GetRawPacket (void *dest, size_t destSize) {
 
   if (Strm->AtEnd()) {
     //GCon->Logf("*** EOF ***");
-    State = NETCON_Closed;
+    Close();
     return 0;
   }
 
@@ -127,14 +127,14 @@ int VDemoPlaybackNetConnection::GetRawPacket (void *dest, size_t destSize) {
 
   if (MsgSize < 0 || MsgSize > (int)destSize) {
     GCon->Logf(NAME_Error, "demo message corrupted (size is %d)", MsgSize);
-    State = NETCON_Closed;
+    Close();
     return 0;
   }
 
   //if (MsgSize > OUT_MESSAGE_SIZE) Sys_Error("Demo message > MAX_MSGLEN");
   Strm->Serialise(dest, MsgSize);
   if (Strm->IsError()) {
-    State = NETCON_Closed;
+    Close();
     return 0;
   }
 
@@ -238,6 +238,7 @@ bool VDemoRecordingSocket::IsLocalConnection () const noexcept {
 //
 //==========================================================================
 int VDemoRecordingSocket::GetMessage (void *dest, size_t destSize) {
+  GNet->UpdateNetTime();
   LastMessageTime = GNet->GetNetTime();
   return 0;
 }
@@ -249,6 +250,7 @@ int VDemoRecordingSocket::GetMessage (void *dest, size_t destSize) {
 //
 //==========================================================================
 int VDemoRecordingSocket::SendMessage (const vuint8 *Msg, vuint32 MsgSize) {
+  GNet->UpdateNetTime();
   LastMessageTime = GNet->GetNetTime();
   if (cls.demorecording) {
     // dumps the current net message, prefixed by the length and view angles

@@ -29,7 +29,10 @@
 
 #define VVNET_COMPRESS_NAMES
 
-VCvarB net_debug_dump_chan_objmap("net_debug_dump_chan_objmap", false, "Dump objectmap communication?");
+static VCvarB net_debug_dump_chan_objmap("net_debug_dump_chan_objmap", false, "Dump objectmap communication?");
+VCvarB net_debug_fixed_name_set("net_debug_fixed_name_set", false, "Dump new names?");
+
+VCvarB net_fixed_name_set("net_fixed_name_set", true, "Send fixed name set (old way)? WARNING! this is experimental option!", CVAR_PreInit);
 
 
 //==========================================================================
@@ -130,7 +133,7 @@ void VObjectMapChannel::CompressNames () {
   int res = mz_compress2((unsigned char *)cprBuffer, &destlen, (const unsigned char *)nameBuf.ptr(), (mz_ulong)nameBuf.length(), 9);
   if (res != MZ_OK) {
     GCon->Logf(NAME_DevNet, "%s: cannot compress names", *GetDebugName());
-    Connection->State = NETCON_Closed;
+    Connection->Close();
     return;
   }
 
@@ -156,7 +159,7 @@ void VObjectMapChannel::DecompressNames () {
   int res = mz_uncompress((unsigned char *)nameBuf.ptr(), &destlen, (const unsigned char *)cprBuffer, (mz_ulong)cprBufferSize);
   if (res != MZ_OK || destlen != (unsigned)unpDataSize) {
     GCon->Logf(NAME_DevNet, "%s: cannot decompress names", *GetDebugName());
-    Connection->State = NETCON_Closed;
+    Connection->Close();
     return;
   }
 
@@ -166,18 +169,18 @@ void VObjectMapChannel::DecompressNames () {
   for (int f = 1; f < Connection->ObjMap->NameLookup.length(); ++f) {
     if (pos >= nameBuf.length()) {
       GCon->Logf(NAME_DevNet, "%s: cannot decompress names", *GetDebugName());
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
     int len = (int)nameBuf[pos++];
     if (len < 1 || len > NAME_SIZE) {
       GCon->Logf(NAME_Debug, "%s: invalid name length (%d)", *GetDebugName(), len);
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
     if (pos+len > nameBuf.length()) {
       GCon->Logf(NAME_DevNet, "%s: cannot decompress names", *GetDebugName());
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
     memcpy(buf, nameBuf.ptr()+pos, len);
@@ -190,7 +193,7 @@ void VObjectMapChannel::DecompressNames () {
 
   if (pos != nameBuf.length()) {
     GCon->Logf(NAME_DevNet, "%s: cannot decompress names", *GetDebugName());
-    Connection->State = NETCON_Closed;
+    Connection->Close();
     return;
   }
 
@@ -401,7 +404,7 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
     } else {
       GCon->Logf(NAME_DevNet, "%s: remote sent something to object map channel, dropping the connection", *GetDebugName());
     }
-    Connection->State = NETCON_Closed;
+    Connection->Close();
     return;
   }
 
@@ -413,7 +416,7 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
     vint32 NumNames = (int)Msg.ReadUInt();
     if (NumNames < 0 || NumNames > 1024*1024*32) {
       GCon->Logf(NAME_Debug, "%s: invalid number of names (%d)", *GetDebugName(), NumNames);
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
     Connection->ObjMap->SetNumberOfKnownNames(NumNames);
@@ -422,7 +425,7 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
     vint32 NumClasses = (int)Msg.ReadUInt();
     if (NumClasses < 0 || NumClasses > 1024*1024) {
       GCon->Logf(NAME_Debug, "%s: invalid number of classes (%d)", *GetDebugName(), NumClasses);
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
     Connection->ObjMap->ClassLookup.setLength(NumClasses);
@@ -435,7 +438,7 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
     vassert(cprBufferPos == 0);
     if (cprBufferSize <= 0 || unpDataSize <= 0 || cprBufferSize > 1024*1024*64 || unpDataSize > 1024*1024*64) {
       GCon->Logf(NAME_Debug, "%s: invalid packed data sizes (%d/%d)", *GetDebugName(), cprBufferSize, unpDataSize);
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
     cprBuffer = new vuint8[cprBufferSize];
@@ -448,7 +451,7 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
       Msg << cprBuffer[cprBufferPos];
       if (Msg.IsError()) {
         GCon->Logf(NAME_Debug, "%s: error reading compressed data", *GetDebugName());
-        Connection->State = NETCON_Closed;
+        Connection->Close();
         return;
       }
       ++cprBufferPos;
@@ -463,7 +466,7 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
     int Len = (int)Msg.ReadUInt();
     if (Len < 1 || Len > NAME_SIZE) {
       GCon->Logf(NAME_Debug, "%s: invalid name length (%d)", *GetDebugName(), Len);
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
     Msg.Serialise(buf, Len);
@@ -496,7 +499,7 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
       Connection->ObjMapSent = true;
     } else {
       GCon->Logf(NAME_DevNet, "...got %d/%d names and %d/%d classes, aborting connection!", CurrName, Connection->ObjMap->NameLookup.length(), CurrClass, Connection->ObjMap->ClassLookup.length());
-      Connection->State = NETCON_Closed;
+      Connection->Close();
     }
   }
 }

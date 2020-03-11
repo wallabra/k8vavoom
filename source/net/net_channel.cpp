@@ -599,14 +599,14 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
     // if this is thinker channel, but it has "always relevant", it is fatal
     if (!IsThinker()) {
       GCon->Logf(NAME_DevNet, "%s: cannot send reliable RPC (%s), closing connection (queue: depth=%d; bitsize=%d)", *GetDebugName(), *Func->GetFullName(), OutListCount, OutListBits);
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
     // thinker
     VThinkerChannel *tc = (VThinkerChannel *)this;
     if (tc->GetThinker() && (tc->GetThinker()->ThinkerFlags&VThinker::TF_AlwaysRelevant)) {
       GCon->Logf(NAME_DevNet, "%s: cannot send reliable thinker RPC (%s), closing connection (queue: depth=%d; bitsize=%d)", *GetDebugName(), *Func->GetFullName(), OutListCount, OutListBits);
-      Connection->State = NETCON_Closed;
+      Connection->Close();
       return;
     }
     GCon->Logf(NAME_DevNet, "%s: cannot send reliable thinker RPC (%s), closing channel (queue: depth=%d; bitsize=%d)", *GetDebugName(), *Func->GetFullName(), OutListCount, OutListBits);
