@@ -63,7 +63,7 @@ struct rep_light_t {
   TVec Origin;
   float Radius;
   int Color;
-  Entity Owner;
+  int OwnerUId;
   TVec ConeDir;
   float ConeAngle;
   bool bLightChanged;

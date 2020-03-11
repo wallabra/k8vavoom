@@ -508,6 +508,13 @@ bool ShouldStay () {
 //
 //==========================================================================
 bool ShouldRespawn () {
+  // coop?
+  if (Level.Game.netgame && !Level.Game.deathmatch) {
+    if (bBigPowerup) return false; // do not respawn big powerups
+    // respawn weapons and armor
+    return (Weapon(self) != none || BasicArmorPickup(self) != none);
+  }
+  // not a coop
   if (bBigPowerup && !LineSpecialGameInfo(Level.Game).bRespawnBigItems) return false;
   return LineSpecialGameInfo(Level.Game).bRespawnItems;
 }
@@ -572,6 +579,12 @@ final void Hide () {
     StateTime = 30.0;
   }
   if (RespawnTime) StateTime = RespawnTime;
+  // in coop, set respawn time to...
+  if (Level.Game.netgame && !Level.Game.deathmatch) {
+         if (Weapon(self) != none) StateTime = 2*60; // weapon
+    else if (BasicArmorPickup(self) != none) StateTime = 3*60; // armor
+    else StateTime = 8*60; // something else
+  }
 }
 
 
