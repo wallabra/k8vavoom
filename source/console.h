@@ -33,4 +33,10 @@ void C_StartFull ();
 void C_Stop ();
 void C_Shutdown ();
 
+// this is called for network games
+void C_DisableTTYLogs ();
+void C_EnableTTYLogs ();
+
+extern bool GConTTYLogForced;
+
 extern FOutputDevice *GCon;

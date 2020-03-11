@@ -586,6 +586,9 @@ void SCR_Update (bool fullUpdate) {
 
   if (Drawer) Drawer->IncUpdateFrame();
 
+  // disable tty logs for network games
+  if (GGameInfo->NetMode >= NM_DedicatedServer) C_DisableTTYLogs(); else C_EnableTTYLogs();
+
   if (!fullUpdate) return;
 
   if (clWipeTimer >= 0.0f && wipeStartedTime < 0.0) {

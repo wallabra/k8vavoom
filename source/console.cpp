@@ -35,6 +35,35 @@
 
 extern const char *cli_LogFileName;
 
+static bool GConTTYLogPrevious = false;
+static bool GConTTYLogDisabled = false;
+bool GConTTYLogForced = false;
+
+
+//==========================================================================
+//
+//  onShowCompletionMatchCB
+//
+//==========================================================================
+void C_DisableTTYLogs () {
+  if (GConTTYLogDisabled || GConTTYLogForced) return;
+  GConTTYLogDisabled = true;
+  GConTTYLogPrevious = GLogTTYLog;
+  GLogTTYLog = false;
+}
+
+
+//==========================================================================
+//
+//  onShowCompletionMatchCB
+//
+//==========================================================================
+void C_EnableTTYLogs () {
+  if (!GConTTYLogDisabled || GConTTYLogForced) return;
+  GConTTYLogDisabled = false;
+  GLogTTYLog = GConTTYLogPrevious;
+}
+
 
 enum cons_state_t {
   cons_closed,
