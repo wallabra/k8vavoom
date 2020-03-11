@@ -37,6 +37,34 @@ class VDecalDef;
 struct opening_t;
 
 
+// WARNING! keep in sync with VavoomC code!
+enum {
+  // vanilla flags
+  MTF_AMBUSH                = 0x0008, // deaf monsters/do not react to sound
+  MTF_UNTRANSLATED_MP       = 0x0010,
+  // Boom
+  MTF_UNTRANSLATED_NO_DM    = 0x0020,
+  MTF_UNTRANSLATED_NO_COOP  = 0x0040,
+  // MBF
+  MTF_UNTRANSLATED_FRIENDLY = 0x0080,
+
+  MTF_DORMANT     = 0x0010, // the thing is dormant
+
+  // translated k8vavoom flags
+  MTF_GSINGLE     = 0x0100, // appearing in game modes
+  MTF_GCOOP       = 0x0200,
+  MTF_GDEATHMATCH = 0x0400,
+  MTF_SHADOW      = 0x0800,
+  MTF_ALTSHADOW   = 0x1000,
+  MTF_FRIENDLY    = 0x2000,
+  MTF_STANDSTILL  = 0x4000,
+
+  MTF2_FIGHTER    = 0x000010000, // thing appearing in player classes
+  MTF2_CLERIC     = 0x000020000,
+  MTF2_MAGE       = 0x000040000,
+};
+
+
 //==========================================================================
 //
 //  Structures for level network replication
