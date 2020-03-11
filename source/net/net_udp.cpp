@@ -31,6 +31,7 @@
 # include <errno.h>
 # define socklen_t  int
 #else
+# include <ifaddrs.h>
 # include <sys/types.h>
 # include <sys/socket.h>
 # include <netinet/in.h>
@@ -96,6 +97,7 @@ public:
   virtual bool IsLocalAddress (const sockaddr_t *addr) override;
   virtual int GetSocketPort (const sockaddr_t *) override;
   virtual int SetSocketPort (sockaddr_t *, int) override;
+  virtual bool FindExternalAddress (sockaddr_t *addr) override;
 
 #ifdef WIN32
   static BOOL PASCAL FAR BlockingHook ();
@@ -144,7 +146,7 @@ int VUdpDriver::Init () {
 
   if (cli_NoUDP > 0) return -1;
 
-#ifdef WIN32
+  #ifdef WIN32
   if (winsock_initialised == 0) {
     int r = WSAStartup(MAKEWORD(1, 1), &winsockdata);
     if (r) {
@@ -153,25 +155,26 @@ int VUdpDriver::Init () {
     }
   }
   ++winsock_initialised;
-#endif
+  #endif
 
   // determine my name & address
   auto ghres = gethostname(buff, MAXHOSTNAMELEN);
-#ifdef WIN32
+  #ifdef WIN32
   if (ghres == SOCKET_ERROR) {
     GCon->Log(NAME_DevNet, "Winsock TCP/IP Initialisation failed.");
     if (--winsock_initialised == 0) WSACleanup();
     return -1;
   }
-#else
+  #else
   if (ghres == -1) {
     GCon->Log(NAME_DevNet, "Cannot get host name, defaulting to 'localhost'.");
     strcpy(buff, "localhost");
   }
-#endif
+  #endif
   GCon->Logf(NAME_Init, "Host name: %s", buff);
 
   const char *pp = cli_IP;
+  if (!pp) pp = "any";
   if (pp && pp[0]) {
     if (VStr::strEquCI(pp, "any") || VStr::strEquCI(pp, "all")) {
       myAddr = INADDR_ANY;
@@ -189,17 +192,16 @@ int VUdpDriver::Init () {
       #endif
     }
   } else {
-#ifdef WIN32
+    #ifdef WIN32
     myAddr = INADDR_ANY;
     VStr::Cpy(Net->MyIpAddress, "INADDR_ANY");
-#elif defined(__SWITCH__)
+    #elif defined(__SWITCH__)
     myAddr = gethostid();
     // if wireless is currently down and/or the nifm service is not up,
     // gethostid() will return 127.0.0.1 in network order
     // thanks nintendo (?)
-    if (myAddr == 0x7f000001)
-      myAddr = ntohl(myAddr);
-#else
+    if (myAddr == 0x7f000001) myAddr = ntohl(myAddr);
+    #else
     hostent *local = gethostbyname(buff);
     if (!local) {
       // do not crash, it is unfair!
@@ -211,12 +213,23 @@ int VUdpDriver::Init () {
       myAddr = *(int *)local->h_addr_list[0];
       Net->MyIpAddress[0] = 0;
     }
-#endif
+    #endif
   }
+
+  #ifndef WIN32
+  {
+    sockaddr_t exaddr;
+    if (FindExternalAddress(&exaddr)) {
+      //VStr::Cpy(Net->MyIpAddress, AddrToStringNoPort(&exaddr));
+      //GCon->Logf(NAME_Init, "UDP external address guessed as %s", Net->MyIpAddress);
+      GCon->Logf(NAME_Init, "UDP external address guessed as %s", AddrToStringNoPort(&exaddr));
+    }
+  }
+  #endif
 
   // if the k8vavoom hostname isn't set, set it to the machine name
   if (VStr::Cmp(Net->HostName, "UNNAMED") == 0) {
-#ifdef WIN32
+    #ifdef WIN32
     char *p;
     // see if it's a text IP address (well, close enough)
     for (p = buff; *p; ++p) if ((*p < '0' || *p > '9') && *p != '.') break;
@@ -226,29 +239,32 @@ int VUdpDriver::Init () {
       for (i = 0; i < 15; ++i) if (buff[i] == '.') break;
       buff[i] = 0;
     }
-#else
+    #else
     buff[15] = 0;
-#endif
+    #endif
     Net->HostName = buff;
   }
 
   if ((net_controlsocket = /*OpenListenSocket(0)*/ConnectSocketTo(nullptr)) == -1) {
-#ifdef WIN32
+    #ifdef WIN32
     GCon->Log(NAME_Init, "WINS_Init: Unable to open control socket");
     if (--winsock_initialised == 0) WSACleanup();
-    return -1;
-#else
+    #else
     //Sys_Error("UDP_Init: Unable to open control socket");
     GCon->Log(NAME_Warning, "UDP_Init: Unable to open control socket");
+    #endif
     return -1;
-#endif
   }
 
   ((sockaddr_in *)&broadcastaddr)->sin_family = AF_INET;
   ((sockaddr_in *)&broadcastaddr)->sin_addr.s_addr = INADDR_BROADCAST;
   ((sockaddr_in *)&broadcastaddr)->sin_port = htons((vuint16)Net->HostPort);
 
-#ifndef WIN32
+  if (Net->MyIpAddress[0] == 0) {
+    VStr::Cpy(Net->MyIpAddress, "127.0.0.1");
+  }
+  /*
+  #ifndef WIN32
   if (Net->MyIpAddress[0] == 0) {
     sockaddr_t addr;
     GetSocketAddr(net_controlsocket, &addr);
@@ -262,7 +278,8 @@ int VUdpDriver::Init () {
     GetSocketAddr(net_controlsocket, &addr);
     GCon->Logf(NAME_Init, "UDP control socket address is %s", AddrToString(&addr));
   }
-#endif
+  #endif
+  */
 
   GCon->Logf(NAME_Init, "UDP Initialised on %s", Net->MyIpAddress);
   Net->IpAvailable = true;
@@ -775,7 +792,11 @@ int VUdpDriver::AddrCompare (const sockaddr_t *addr1, const sockaddr_t *addr2) {
 //==========================================================================
 bool VUdpDriver::IsLocalAddress (const sockaddr_t *addr) {
   int haddr = ntohl(((sockaddr_in *)addr)->sin_addr.s_addr);
-  return (((haddr>>24)&0xff) == 127);
+  return
+    (((haddr>>24)&0xff) == 127) ||
+    (((haddr>>24)&0xff) == 10) || //10.0.0.0/8
+    ((((haddr>>24)&0xff) == 172) && (((haddr>>16)&0xf0) == 16)) || //172.16.0.0/12
+    ((((haddr>>24)&0xff) == 192) && (((haddr>>16)&0xff) == 168)); //192.168.0.0/16
 }
 
 
@@ -797,4 +818,33 @@ int VUdpDriver::GetSocketPort (const sockaddr_t *addr) {
 int VUdpDriver::SetSocketPort (sockaddr_t *addr, int port) {
   ((sockaddr_in *)addr)->sin_port = htons(port);
   return 0;
+}
+
+
+//==========================================================================
+//
+//  VUdpDriver::FindExternalAddress
+//
+//==========================================================================
+bool VUdpDriver::FindExternalAddress (sockaddr_t *addr) {
+  #ifdef WIN32
+  return false;
+  #else
+  ifaddrs *ifAddrStruct = nullptr;
+  ifaddrs *ifa = nullptr;
+
+  bool found = false;
+
+  getifaddrs(&ifAddrStruct);
+  for (ifa = ifAddrStruct; ifa; ifa = ifa->ifa_next) {
+    if (!ifa->ifa_addr) continue;
+    if (ifa->ifa_addr->sa_family != AF_INET) continue;
+    if (IsLocalAddress((struct sockaddr_t *)ifa->ifa_addr)) continue;
+    if (found) return false; // two addresses
+    found = true;
+    if (addr) *addr = *(struct sockaddr_t *)ifa->ifa_addr;
+  }
+  if (ifAddrStruct) freeifaddrs(ifAddrStruct);
+  return found;
+  #endif
 }

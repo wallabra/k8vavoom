@@ -46,8 +46,8 @@ class VNetLanDriver;
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct sockaddr_t {
-  vint16 sa_family;
-  vint8 sa_data[14];
+  vuint16 sa_family;
+  vuint8 sa_data[14];
 };
 
 
@@ -177,6 +177,8 @@ public:
   virtual bool IsLocalAddress (const sockaddr_t *addr) = 0;
   virtual int GetSocketPort (const sockaddr_t *addr) = 0;
   virtual int SetSocketPort (sockaddr_t *addr, int port) = 0;
+
+  virtual bool FindExternalAddress (sockaddr_t *addr) = 0;
 };
 
 
