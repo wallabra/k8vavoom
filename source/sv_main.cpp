@@ -652,7 +652,7 @@ static void CheckForSkip () {
       }
       //sv.intermission = 0;
       GCon->Logf(NAME_Debug, "*** teleporting to the new map '%s'...", *GLevelInfo->NextMap);
-      GCmdBuf << "TeleportNewMap *forced*\n";
+      GCmdBuf << "TeleportNewMap **forced**\n";
     }
   }
 }
