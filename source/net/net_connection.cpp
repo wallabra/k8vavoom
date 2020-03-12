@@ -96,7 +96,7 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   memset((void *)OutLagPacketId, 0, sizeof(OutLagPacketId));
 
   InPacketId = 0;
-  OutPacketId = 1;
+  OutPacketId = 0;
   OutAckPacketId = 0;
 
   //FIXME: driver time?
@@ -106,10 +106,10 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   LastStatsUpdateTime = 0;
 
   SaturaDepth = 0;
-  LagAcc = 9999;
-  PrevLagAcc = 9999;
-  PrevLag = 9999;
-  AvgLag = 9999;
+  //LagAcc = 9999;
+  //PrevLagAcc = 9999;
+  //PrevLag = 9999;
+  //AvgLag = 9999;
 
   ForceFlush = false;
 
