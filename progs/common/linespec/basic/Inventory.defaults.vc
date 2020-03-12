@@ -34,17 +34,15 @@ states {
 DormantPickup:
   TNT1 A 1050
   TNT1 A -1
-  {
-    EntityEx  A;
+    {
+      bInvisible = false;
+      bSpecial = true;
+      SetState(IdleState);
 
-    bInvisible = false;
-    bSpecial = true;
-    SetState(IdleState);
-
-    // spawn a teleport fog at the new spot
-    A = Spawn(ItemFog, Origin);
-    A.PlaySound('misc/spawn', CHAN_ITEM);
-  }
+      // spawn a teleport fog at the new spot
+      EntityEx A = Spawn(ItemFog, Origin);
+      if (A) A.PlaySound('misc/spawn', CHAN_ITEM);
+    }
   Stop
 
   // hide for 40 secs

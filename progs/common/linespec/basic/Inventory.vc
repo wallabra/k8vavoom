@@ -389,7 +389,7 @@ bool TryPickup (EntityEx Toucher) {
         Copy.Owner = none;
         Copy.bCreateCopyMoved = false;
       }
-      //if (doDebug) printdebug("%C: TryPickup: attaching copy `%C` to the new owner `%C` (same:%B; bTransferInventory=%B)", self, Copy, NewToucher, (Copy == self), self.bTransferInventory);
+      //if (doDebug) printdebug("%C: TryPickup: attaching copy `%C` to the new owner `%C` (same:%B; bTransferInventory=%B; AA=%B)", self, Copy, NewToucher, (Copy == self), self.bTransferInventory, bAutoActivate);
       Copy.AttachToOwner(NewToucher, self);
       if (bAutoActivate && Copy.Use(true)) {
         --Copy.Amount;
@@ -508,13 +508,6 @@ bool ShouldStay () {
 //
 //==========================================================================
 bool ShouldRespawn () {
-  // coop?
-  if (Level.Game.netgame && !Level.Game.deathmatch) {
-    if (bBigPowerup) return false; // do not respawn big powerups
-    // respawn weapons and armor
-    return (Weapon(self) != none || BasicArmorPickup(self) != none);
-  }
-  // not a coop
   if (bBigPowerup && !LineSpecialGameInfo(Level.Game).bRespawnBigItems) return false;
   return LineSpecialGameInfo(Level.Game).bRespawnItems;
 }
@@ -523,6 +516,10 @@ bool ShouldRespawn () {
 //==========================================================================
 //
 //  GoAway
+//
+//  this is used in `GoAwayAndDie()`, and also in `CreateCopy()`
+//  `CreateCopy()` is using this to decide if it should create a copy, or
+//  if it can reuse the item.
 //
 //==========================================================================
 final bool GoAway () {
@@ -564,6 +561,27 @@ final void GoAwayAndDie () {
 
 //==========================================================================
 //
+//  GetRespawnTime
+//
+//  returns item respawn time, in seconds
+//  called from `Hide()`
+//  return 0 to use some defaults
+//
+//==========================================================================
+float GetRespawnTime (bool asRavenPickup) {
+  // in coop, set respawn time to...
+  if (Level.Game.netgame && !Level.Game.deathmatch) return 8*60; // something else
+  if (RespawnTime > 0) return RespawnTime;
+  if (asRavenPickup) {
+    return (PickupFlashType ? 40+30.0/35.0 : 40);
+  } else {
+    return 30;
+  }
+}
+
+
+//==========================================================================
+//
 //  Hide
 //
 //==========================================================================
@@ -572,18 +590,17 @@ final void Hide () {
   bInvisible = true;
   if (LineSpecialGameInfo(Level.Game).bRavenStylePickupRespawn) {
     SetState(FindState('HideSpecial'));
-    StateTime = 40.0;
-    if (PickupFlashType) StateTime += 30.0/35.0;
+    StateTime = GetRespawnTime(asRavenPickup:true);
   } else {
     SetState(FindState('DormantPickup'));
-    StateTime = 30.0;
+    StateTime = GetRespawnTime(asRavenPickup:false);
   }
-  if (RespawnTime) StateTime = RespawnTime;
-  // in coop, set respawn time to...
-  if (Level.Game.netgame && !Level.Game.deathmatch) {
-         if (Weapon(self) != none) StateTime = 2*60; // weapon
-    else if (BasicArmorPickup(self) != none) StateTime = 3*60; // armor
-    else StateTime = 8*60; // something else
+  // default, just in case
+  if (StateTime <= 0) {
+    StateTime =
+      RespawnTime > 0 ? RespawnTime :
+      LineSpecialGameInfo(Level.Game).bRavenStylePickupRespawn ?
+      (PickupFlashType ? 40+30.0/35.0 : 40) : 30;
   }
 }
 

@@ -31,6 +31,45 @@ float SavePercent;
 
 //==========================================================================
 //
+//  ShouldStay
+//
+//==========================================================================
+override bool ShouldStay () {
+  // if we are in coop, always let armor stay
+  if (Level.Game.netgame && !Level.Game.deathmatch) return true;
+  return ::ShouldStay();
+}
+
+
+//==========================================================================
+//
+//  ShouldRespawn
+//
+//==========================================================================
+override bool ShouldRespawn () {
+  // coop?
+  if (Level.Game.netgame && !Level.Game.deathmatch) return true;
+  return ::ShouldRespawn();
+}
+
+
+//==========================================================================
+//
+//  GetRespawnTime
+//
+//  returns item respawn time, in seconds
+//  called from `Hide()`
+//
+//==========================================================================
+override float GetRespawnTime (bool asRavenPickup) {
+  // coop?
+  if (Level.Game.netgame && !Level.Game.deathmatch) return 3*60; // three minutes
+  return ::GetRespawnTime(asRavenPickup);
+}
+
+
+//==========================================================================
+//
 //  CreateCopy
 //
 //==========================================================================

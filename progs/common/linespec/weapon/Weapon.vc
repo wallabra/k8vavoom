@@ -499,7 +499,36 @@ bool PickupForAmmo (Weapon ExistingWeapon) {
 //
 //==========================================================================
 override bool ShouldStay () {
+  // if we are in coop, always let weapon stay, why not
+  if (Level.Game.netgame && !Level.Game.deathmatch) return true;
   return LineSpecialGameInfo(Level.Game).bWeaponsStay;
+}
+
+
+//==========================================================================
+//
+//  ShouldRespawn
+//
+//==========================================================================
+override bool ShouldRespawn () {
+  // coop?
+  if (Level.Game.netgame && !Level.Game.deathmatch) return true;
+  return ::ShouldRespawn();
+}
+
+
+//==========================================================================
+//
+//  GetRespawnTime
+//
+//  returns item respawn time, in seconds
+//  called from `Hide()`
+//
+//==========================================================================
+override float GetRespawnTime (bool asRavenPickup) {
+  // coop?
+  if (Level.Game.netgame && !Level.Game.deathmatch) return 2*60; // two minutes
+  return ::GetRespawnTime(asRavenPickup);
 }
 
 
