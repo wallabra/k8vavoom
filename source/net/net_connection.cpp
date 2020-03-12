@@ -38,6 +38,8 @@ static VCvarB net_dbg_report_stats("net_dbg_report_stats", false, "Report some s
 
 static VCvarB net_dbg_conn_dump_acks("net_dbg_conn_dump_acks", false, "Show ack info?");
 
+static VCvarB net_dbg_detailed_disconnect_stats("net_dbg_detailed_disconnect_stats", false, "Show channels on disconnect?", CVAR_Archive);
+
 VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump received packets?");
 
 //FIXME: autoadjust this according to average ping
@@ -309,23 +311,25 @@ void VNetConnection::ShowTimeoutStats () {
     (Driver->GetNetTime()-LastReceiveTime)*1000.0f,
     Driver->packetsSent, Driver->UnreliableMessagesSent,
     Driver->packetsReceived, Driver->UnreliableMessagesReceived);
-  // show extended stats
-  GCon->Logf(NAME_DevNet, "  connection saturation: %d", SaturaDepth);
-  GCon->Logf(NAME_DevNet, "  active channels: %d", OpenChannels.length());
-  for (int f = 0; f < OpenChannels.length(); ++f) {
-    VChannel *chan = OpenChannels[f];
-    GCon->Logf(NAME_DevNet, "  #%d:%s: %s, open is %s%s, saturation:%d", f, *chan->GetName(),
-      (chan->OpenedLocally ? "local" : "remote"),
-      (chan->OpenAcked ? "acked" : "not acked"),
-      (chan->Closing ? ", closing" : ""),
-      chan->IsQueueFull());
-    GCon->Logf(NAME_DevNet, "   in packets : %d (estimated bits: %d)", chan->InListCount, chan->InListBits);
-    for (VMessageIn *msg = chan->InList; msg; msg = msg->Next) GCon->Logf(NAME_DevNet, "    bits: %d; open=%d; close=%d; reliable=%d", msg->GetNumBits(), (int)msg->bOpen, (int)msg->bClose, (int)msg->bReliable);
-    GCon->Logf(NAME_DevNet, "   out packets: %d (estimated bits: %d)", chan->OutListCount, chan->OutListBits);
-    for (VMessageOut *msg = chan->OutList; msg; msg = msg->Next) {
-      GCon->Logf(NAME_DevNet, "    bits: %d; pid=%u; open=%d; close=%d; reliable=%d; gotack=%d; time=%u (est:%d)",
-        msg->GetNumBits(), msg->PacketId, (int)msg->bOpen, (int)msg->bClose, (int)msg->bReliable,
-        (int)msg->bReceivedAck, (unsigned)(msg->Time*1000), msg->OutEstimated);
+  if (net_dbg_detailed_disconnect_stats) {
+    // show extended stats
+    GCon->Logf(NAME_DevNet, "  connection saturation: %d", SaturaDepth);
+    GCon->Logf(NAME_DevNet, "  active channels: %d", OpenChannels.length());
+    for (int f = 0; f < OpenChannels.length(); ++f) {
+      VChannel *chan = OpenChannels[f];
+      GCon->Logf(NAME_DevNet, "  #%d:%s: %s, open is %s%s, saturation:%d", f, *chan->GetName(),
+        (chan->OpenedLocally ? "local" : "remote"),
+        (chan->OpenAcked ? "acked" : "not acked"),
+        (chan->Closing ? ", closing" : ""),
+        chan->IsQueueFull());
+      GCon->Logf(NAME_DevNet, "   in packets : %d (estimated bits: %d)", chan->InListCount, chan->InListBits);
+      for (VMessageIn *msg = chan->InList; msg; msg = msg->Next) GCon->Logf(NAME_DevNet, "    bits: %d; open=%d; close=%d; reliable=%d", msg->GetNumBits(), (int)msg->bOpen, (int)msg->bClose, (int)msg->bReliable);
+      GCon->Logf(NAME_DevNet, "   out packets: %d (estimated bits: %d)", chan->OutListCount, chan->OutListBits);
+      for (VMessageOut *msg = chan->OutList; msg; msg = msg->Next) {
+        GCon->Logf(NAME_DevNet, "    bits: %d; pid=%u; open=%d; close=%d; reliable=%d; gotack=%d; time=%u (est:%d)",
+          msg->GetNumBits(), msg->PacketId, (int)msg->bOpen, (int)msg->bClose, (int)msg->bReliable,
+          (int)msg->bReceivedAck, (unsigned)(msg->Time*1000), msg->OutEstimated);
+      }
     }
   }
 }

@@ -37,7 +37,7 @@ extern const char *cli_LogFileName;
 
 static bool GConTTYLogPrevious = false;
 static bool GConTTYLogDisabled = false;
-bool GConTTYLogForced = false;
+bool GConTTYLogForced = true;
 
 
 //==========================================================================

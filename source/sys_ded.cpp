@@ -343,7 +343,7 @@ int main (int argc, char **argv) {
   try {
     //printf("k8vavoom dedicated server " VERSION_TEXT "\n");
 
-    bool logEnabled = false; // postpone this
+    bool logEnabled = true; // postpone this
     dedEnableTTYLog = true;
 
     //bool inGDB = false;
@@ -359,7 +359,7 @@ int main (int argc, char **argv) {
         for (int c = f+1; c < argc; ++c) argv[c-1] = argv[c];
         --argc;
         --f;
-      } else if (strcmp(argv[f], "-nottylog") == 0) {
+      } else if (strcmp(argv[f], "-nonetlog") == 0 || strcmp(argv[f], "-nottylog") == 0) {
         logEnabled = false;
         for (int c = f+1; c < argc; ++c) argv[c-1] = argv[c];
         --argc;
