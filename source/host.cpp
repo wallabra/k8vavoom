@@ -145,6 +145,12 @@ static VCvarB cap_framerate("cl_cap_framerate", true, "Cap framerate for non-net
 static VCvarI cl_framerate("cl_framerate", "0", "Framerate cap for client rendering.", CVAR_Archive);
 static VCvarI sv_framerate("sv_framerate", "70", "Framerate cap for dedicated server.", CVAR_Archive);
 
+// this is hack for my GPU
+#ifdef CLIENT
+static double clientBadNetTimoutReleaseTime = 0;
+static VCvarI cl_framerate_net_timeout("cl_framerate_net_timeout", "28", "If we have a dangerous client timeout, slow down rendering for a while.", 0/*CVAR_Archive*/);
+#endif
+
 
 #include "dedlog.cpp"
 
@@ -386,6 +392,27 @@ void Host_ResetSkipFrames () {
 
 //==========================================================================
 //
+//  Host_IsDangerousTimeout
+//
+//  check for dangerous network timeout
+//
+//==========================================================================
+bool Host_IsDangerousTimeout () {
+  #ifdef CLIENT
+  if (!cl || !cl->Net || (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_ListenServer)) {
+    clientBadNetTimoutReleaseTime = 0;
+  } else if (CL_IsDangerousTimeout()) {
+    clientBadNetTimoutReleaseTime = systime+15; // slowdown it for 15 seconds
+  }
+  return (clientBadNetTimoutReleaseTime > 0 && clientBadNetTimoutReleaseTime > systime);
+  #else
+  return false;
+  #endif
+}
+
+
+//==========================================================================
+//
 //  FilterTime
 //
 //  Returns false if the time is too short to run a frame
@@ -404,19 +431,27 @@ static bool FilterTime () {
   if (dbg_frametime < max_fps_cap_float) {
     if (real_time) {
       #ifdef CLIENT
-      int cfr = cl_framerate;
-      if (cfr < 1 || cfr > 200) cfr = 0;
-      if (cfr && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
-        // capped fps
-        //GCon->Logf("*** FilterTime; lasttime=%g; ctime=%g; time=%g; cfr=%d; dt=%g", last_time, curr_time, time, cfr, 1.0/(double)cfr);
-        if (timeDelta < 1.0/(double)cfr) return false; // framerate is too high
-        //GCon->Logf("   OK! td=%g : %g (cfr=%g; over=%g)", timeDelta, time, 1.0/(double)cfr, timeDelta-(1.0/(double)cfr));
-      } else if (!cap_framerate && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
-        // uncapped fps
-        if (timeDelta < max_fps_cap_double) return false;
+      // check for dangerous network timeout
+      if (Host_IsDangerousTimeout()) {
+        int capfr = min2(42, cl_framerate_net_timeout.asInt());
+        if (capfr > 0) {
+          if (timeDelta < 1.0/(double)capfr) return false; // framerate is too high
+        }
       } else {
-        // capped fps
-        if (timeDelta < 1.0/70.0) return false; // framerate is too high
+        int cfr = cl_framerate.asInt();
+        if (cfr < 1 || cfr > 200) cfr = 0;
+        if (cfr && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
+          // capped fps
+          //GCon->Logf("*** FilterTime; lasttime=%g; ctime=%g; time=%g; cfr=%d; dt=%g", last_time, curr_time, time, cfr, 1.0/(double)cfr);
+          if (timeDelta < 1.0/(double)cfr) return false; // framerate is too high
+          //GCon->Logf("   OK! td=%g : %g (cfr=%g; over=%g)", timeDelta, time, 1.0/(double)cfr, timeDelta-(1.0/(double)cfr));
+        } else if (!cap_framerate && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
+          // uncapped fps
+          if (timeDelta < max_fps_cap_double) return false;
+        } else {
+          // capped fps
+          if (timeDelta < 1.0/70.0) return false; // framerate is too high
+        }
       }
       #else
       // dedicated server

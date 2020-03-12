@@ -37,6 +37,8 @@ VStr Host_GetConfigDir ();
 void Host_CLIMapStartFound ();
 bool Host_IsCLIMapStartFound ();
 
+bool Host_IsDangerousTimeout ();
+
 // call this after saving/loading/map loading, so we won't unnecessarily skip frames
 void Host_ResetSkipFrames ();
 

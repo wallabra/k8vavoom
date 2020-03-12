@@ -355,7 +355,8 @@ static void DrawFPS () {
     int xpos = 4;
 
     const int nlag = clampval(CL_GetNetLag(), 0, 999);
-    T_DrawText(xpos, ypos, va("LAG:%3d (%d CHANS)", nlag, CL_GetNumberOfChannels()), CR_DARKBROWN); ypos += T_FontHeight();
+    T_DrawText(xpos, ypos, va("LAG:%3d (%d CHANS)", nlag, CL_GetNumberOfChannels()), (Host_IsDangerousTimeout() ? CR_RED : CR_DARKBROWN));
+    ypos += T_FontHeight();
 
     // draw lag chart
     ypos += 2;

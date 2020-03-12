@@ -98,6 +98,9 @@ void CL_SetNetAbortCallback (bool (*cb) (void *udata), void *udata);
 int CL_GetNetLag ();
 int CL_GetNumberOfChannels ();
 
+bool CL_IsDangerousTimeout ();
+
+
 extern client_static_t cls;
 extern VBasePlayer *cl;
 

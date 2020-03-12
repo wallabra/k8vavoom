@@ -44,7 +44,7 @@ VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump r
 static VCvarI net_speed_limit("net_speed_limit", "560000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
 //static VCvarI net_speed_limit("net_speed_limit", "36000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
 // the network layer will force packet sending after this interval
-static VCvarI net_keepalive("net_keepalive", "100", "Network keepalive time, in milliseconds.", 0);
+static VCvarI net_keepalive("net_keepalive", "60", "Network keepalive time, in milliseconds.", 0);
 static VCvarF net_timeout("net_timeout", "4", "Network timeout, in seconds.", 0);
 
 // level will be updated twice as more times as this, until i wrote client-side interpolation code
@@ -81,7 +81,7 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   InOrder = OutOrder = 0;
   PrevLag = AvgLag = 0;
 
-  LagAcc = PrevLagAcc = 0;
+  LagAcc = 0;
   InLossAcc = OutLossAcc = 0;
   InPktAcc = OutPktAcc = 0;
   InMsgAcc = OutMsgAcc = 0;
@@ -107,7 +107,6 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
 
   SaturaDepth = 0;
   //LagAcc = 9999;
-  //PrevLagAcc = 9999;
   //PrevLag = 9999;
   //AvgLag = 9999;
 
@@ -226,10 +225,30 @@ bool VNetConnection::IsTimeoutExceeded () {
   if (AutoAck || IsLocalConnection()) return false;
   if (LastReceiveTime < 1) LastReceiveTime = Driver->GetNetTime();
   if (NetCon->LastMessageTime < 1) NetCon->LastMessageTime = Driver->GetNetTime();
-  double tout = clampval(net_timeout.asFloat(), 0.4f, 20.0f);
-  if (Driver->GetNetTime()-LastReceiveTime <= tout) return false;
+  const double tout = clampval(net_timeout.asFloat(), 0.4f, 20.0f);
+  if (Driver->GetNetTime()-LastReceiveTime <= tout) {
+    if (Driver->GetNetTime()-LastReceiveTime > 2.0) {
+      GCon->Logf(NAME_DevNet, "%s: *** TIMEOUT IS NEAR! gtime=%g; lastrecv=%g; delta=%g", *GetAddress(), Driver->GetNetTime(), LastReceiveTime, Driver->GetNetTime()-LastReceiveTime);
+    }
+    return false;
+  }
   // timeout!
   return true;
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::IsDangerousTimeout
+//
+//==========================================================================
+bool VNetConnection::IsDangerousTimeout () {
+  if (IsClosed()) return false; // no wai
+  if (AutoAck || IsLocalConnection()) return false;
+  if (LastReceiveTime < 1) LastReceiveTime = Driver->GetNetTime();
+  if (NetCon->LastMessageTime < 1) NetCon->LastMessageTime = Driver->GetNetTime();
+  //const double tout = clampval(net_timeout.asFloat(), 0.4f, 20.0f);
+  return (Driver->GetNetTime()-LastReceiveTime >= 0.6);
 }
 
 
@@ -979,7 +998,6 @@ void VNetConnection::Tick () {
 
     // init counters
     LagAcc = 0;
-    PrevLagAcc = 9999;
     InByteAcc = 0;
     OutByteAcc = 0;
     InPktAcc = 0;

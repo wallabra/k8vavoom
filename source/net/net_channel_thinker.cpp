@@ -263,6 +263,7 @@ void VThinkerChannel::Update () {
     }
     // send unique id
     vuint32 suid = Thinker->GetUniqueId();
+    //suid = 0;
     strm << STRM_INDEX_U(suid);
   }
 

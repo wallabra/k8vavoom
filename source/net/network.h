@@ -569,7 +569,7 @@ public:
   double AvgLag, PrevLag; // average lag, average lag from the previous update
 
   // statistics accumulators
-  double LagAcc, PrevLagAcc; // average lag
+  double LagAcc; // average lag
   int InLossAcc, OutLossAcc; // packet loss accumulator
   int InPktAcc, OutPktAcc; // packet accumulator
   int InMsgAcc, OutMsgAcc; // message accumulator
@@ -723,6 +723,10 @@ public:
 
   bool SecCheckFatPVS (sector_t *);
   int CheckFatPVS (subsector_t *);
+
+  // used by client to lower rendering speed
+  // this is hack for my GPU
+  bool IsDangerousTimeout ();
 
 protected:
   void SetupFatPVS ();
