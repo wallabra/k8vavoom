@@ -223,6 +223,7 @@ int VUdpDriver::Init () {
       //VStr::Cpy(Net->MyIpAddress, AddrToStringNoPort(&exaddr));
       //GCon->Logf(NAME_Init, "UDP external address guessed as %s", Net->MyIpAddress);
       GCon->Logf(NAME_Init, "UDP external address guessed as %s", AddrToStringNoPort(&exaddr));
+      //if (myAddr == INADDR_ANY) myAddr = ((sockaddr_in *)&exaddr)->sin_addr.s_addr;
     }
   }
   #endif
@@ -490,7 +491,7 @@ int VUdpDriver::ConnectSocketTo (sockaddr_t *addr) {
 //
 //==========================================================================
 int VUdpDriver::CloseSocket (int socket) {
-  if (socket == net_broadcastsocket) net_broadcastsocket = 0;
+  if (socket == net_broadcastsocket) net_broadcastsocket = -1;
   return closesocket(socket);
 }
 
@@ -579,8 +580,12 @@ bool VUdpDriver::CanBroadcast () {
   #ifdef WIN32
   GetLocalAddress();
   #endif
+  #if 1
   vuint32 addr = ntohl(myAddr);
   return (myAddr != INADDR_ANY && ((addr>>24)&0xff) != 0x7f); // ignore localhost
+  #else
+  return (myAddr != INADDR_ANY); // ignore localhost
+  #endif
 }
 
 
@@ -592,7 +597,7 @@ bool VUdpDriver::CanBroadcast () {
 int VUdpDriver::Broadcast (int socket, const vuint8 *buf, int len) {
   int i = 1;
   if (socket != net_broadcastsocket) {
-    if (net_broadcastsocket != 0) Sys_Error("Attempted to use multiple broadcasts sockets");
+    if (net_broadcastsocket >= 0) Sys_Error("Attempted to use multiple broadcasts sockets");
     if (!CanBroadcast()) {
       GCon->Log(NAME_DevNet, "Unable to make socket broadcast capable (1)");
       return -1;

@@ -313,6 +313,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
 
   Drv->GetSocketAddr(Drv->controlSock, &myaddr);
   if (xmit && Drv->CanBroadcast()) {
+    GCon->Log(NAME_DevNet, "sending broadcast query...");
     VBitStreamWriter Reply(MAX_DGRAM_SIZE<<3);
     TmpByte = NETPACKET_CTL;
     Reply << TmpByte;

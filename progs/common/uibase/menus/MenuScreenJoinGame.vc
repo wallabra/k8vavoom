@@ -44,13 +44,19 @@ override void CreateChoices() {
   Btn.TextHAlign = hleft;
   Btn.Activated = &ActivateMasterSearch;
   currentY += Btn.Height;
+    SetLastHelp(
+      "Connect to master server to get MP server info.");
 
+  #if 0
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetPos(ChoicesStartX, currentY);
   Btn.Text = "Search for LAN games...";
   Btn.TextHAlign = hleft;
   Btn.Activated = &ActivateSearch;
   currentY += Btn.Height;
+    SetLastHelp(
+      "THIS DOESN'T WORK.");
+  #endif
 
   JoinAt = MenuInputLine(NewChild(MenuInputLine));
   JoinAt.SetPos(ChoicesStartX, currentY);
@@ -59,6 +65,8 @@ override void CreateChoices() {
   if (!JoinAt.Value) JoinAt.Value = "127.0.0.1";
   JoinAt.ValueChanged = &ChangedJoinAt;
   currentY += JoinAt.Height;
+    SetLastHelp(
+      "You can use either IP address, or a host name here.");
 }
 
 
