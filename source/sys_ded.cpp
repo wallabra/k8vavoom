@@ -93,6 +93,7 @@ void Sys_Shutdown () {
 
 extern bool ttyRefreshInputLine;
 extern bool ttyExtraDisabled;
+extern bool dedEnableTTYLog;
 
 static char text[8192];
 static char text2[8192];
@@ -105,11 +106,14 @@ static int textpos = 0;
 //
 //==========================================================================
 static void onShowCompletionMatchCB (bool isheader, VStr s) {
+  const bool olddis = dedEnableTTYLog;
+  dedEnableTTYLog = true;
   if (isheader) {
     GCon->Logf("\034K%s", *s);
   } else {
     GCon->Logf("\034D  %s", *s);
   }
+  dedEnableTTYLog = olddis;
 }
 
 
@@ -328,9 +332,6 @@ extern "C" {
 #endif
 
 
-extern bool dedEnableTTYLog;
-
-
 //==========================================================================
 //
 //  main
@@ -342,6 +343,9 @@ int main (int argc, char **argv) {
   try {
     //printf("k8vavoom dedicated server " VERSION_TEXT "\n");
 
+    bool logEnabled = false; // postpone this
+    dedEnableTTYLog = true;
+
     //bool inGDB = false;
     for (int f = 1; f < argc; ++f) {
       if (strcmp(argv[f], "-gdb") == 0) {
@@ -351,12 +355,12 @@ int main (int argc, char **argv) {
         --argc;
         --f;
       } else if (strcmp(argv[f], "-conlog") == 0) {
-        dedEnableTTYLog = true;
+        logEnabled = true;
         for (int c = f+1; c < argc; ++c) argv[c-1] = argv[c];
         --argc;
         --f;
       } else if (strcmp(argv[f], "-nottylog") == 0) {
-        dedEnableTTYLog = false;
+        logEnabled = false;
         for (int c = f+1; c < argc; ++c) argv[c-1] = argv[c];
         --argc;
         --f;
@@ -379,39 +383,38 @@ int main (int argc, char **argv) {
     }
     #endif
 
-#ifdef USE_SIGNAL_HANDLER
-    // install signal handlers
-    signal(SIGABRT, signal_handler);
-    signal(SIGFPE,  signal_handler);
-    signal(SIGILL,  signal_handler);
-    signal(SIGSEGV, signal_handler);
-    signal(SIGTERM, signal_handler);
-    signal(SIGINT,  signal_handler);
-#ifdef SIGKILL
-    signal(SIGKILL, signal_handler);
-#endif
-#ifdef SIGQUIT
-    signal(SIGQUIT, signal_handler);
-#endif
-#ifdef SIGNOFP
-    signal(SIGNOFP, signal_handler);
-#endif
+    #ifdef USE_SIGNAL_HANDLER
+      // install signal handlers
+      signal(SIGABRT, signal_handler);
+      signal(SIGFPE,  signal_handler);
+      signal(SIGILL,  signal_handler);
+      signal(SIGSEGV, signal_handler);
+      signal(SIGTERM, signal_handler);
+      signal(SIGINT,  signal_handler);
+      #ifdef SIGKILL
+      signal(SIGKILL, signal_handler);
+      #endif
+      #ifdef SIGQUIT
+      signal(SIGQUIT, signal_handler);
+      #endif
+      #ifdef SIGNOFP
+      signal(SIGNOFP, signal_handler);
+      #endif
+    #else
+      #ifndef _WIN32
+      // install basic signal handlers
+      signal(SIGTERM, signal_handler);
+      signal(SIGINT,  signal_handler);
+      signal(SIGQUIT, signal_handler);
+      #else
+      signal(SIGINT,  signal_handler);
+      signal(SIGTERM, signal_handler);
+      signal(SIGBREAK,signal_handler);
+      signal(SIGABRT, signal_handler);
+      #endif
+    #endif
 
-#else
-# ifndef _WIN32
-    // install signal handlers
-    signal(SIGTERM, signal_handler);
-    signal(SIGINT,  signal_handler);
-    signal(SIGQUIT, signal_handler);
-# else
-    signal(SIGINT,  signal_handler);
-    signal(SIGTERM, signal_handler);
-    signal(SIGBREAK,signal_handler);
-    signal(SIGABRT, signal_handler);
-# endif
-#endif
-
-#ifdef VAVOOM_ALLOW_FPU_DEBUG
+    #ifdef VAVOOM_ALLOW_FPU_DEBUG
     if (GArgs.CheckParm("-dev-fpu-alltraps") || GArgs.CheckParm("-dev-fpu-all-traps")) {
       feenableexcept(FE_DIVBYZERO|FE_INVALID|FE_OVERFLOW|FE_UNDERFLOW);
     } else if (GArgs.CheckParm("-dev-fpu-traps")) {
@@ -422,10 +425,15 @@ int main (int argc, char **argv) {
     }
     // sse math can only round towards zero, so force it for FPU
     if (fesetround(0) != 0) GCon->Logf(NAME_Warning, "Cannot set float rounding mode (this is not fatal)");
-#endif
+    #endif
 
     // initialise
     Host_Init();
+
+    if (!logEnabled) {
+      GCon->Logf(NAME_Warning, "disabling TTY logs to avoid random slowdowns and disconnects.");
+      dedEnableTTYLog = false;
+    }
 
     // play game
     for (;;) {
@@ -438,11 +446,13 @@ int main (int argc, char **argv) {
       }
     }
   } catch (VavoomError &e) {
+    dedEnableTTYLog = true;
     Host_Shutdown();
     devprintf("\n\nERROR: %s\n", e.message);
     fprintf(stderr, "\n%s\n", e.message);
     Z_Exit(1);
   } catch (...) {
+    dedEnableTTYLog = true;
     Host_Shutdown();
     devprintf("\n\nExiting due to external exception\n");
     fprintf(stderr, "\nExiting due to external exception\n");

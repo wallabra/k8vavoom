@@ -42,11 +42,14 @@ bool GConTTYLogForced = false;
 
 //==========================================================================
 //
-//  onShowCompletionMatchCB
+//  C_DisableTTYLogs
 //
 //==========================================================================
 void C_DisableTTYLogs () {
   if (GConTTYLogDisabled || GConTTYLogForced) return;
+  #ifndef WIN32
+  if (GLogTTYLog) GCon->Logf(NAME_Warning, "tty logs disabled to avoid random slowdowns and disconnects.");
+  #endif
   GConTTYLogDisabled = true;
   GConTTYLogPrevious = GLogTTYLog;
   GLogTTYLog = false;
@@ -55,13 +58,16 @@ void C_DisableTTYLogs () {
 
 //==========================================================================
 //
-//  onShowCompletionMatchCB
+//  C_EnableTTYLogs
 //
 //==========================================================================
 void C_EnableTTYLogs () {
   if (!GConTTYLogDisabled || GConTTYLogForced) return;
   GConTTYLogDisabled = false;
   GLogTTYLog = GConTTYLogPrevious;
+  #ifndef WIN32
+  if (GLogTTYLog) GCon->Logf(NAME_Warning, "tty logs reenabled.");
+  #endif
 }
 
 
