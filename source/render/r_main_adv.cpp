@@ -333,7 +333,12 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
           timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
         }
         for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
-          VEntity *own = (dli->l->Owner && dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
+          //VEntity *own = (dli->l->Owner && dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
+          VEntity *own = nullptr;
+          if (dli->l->ownerUId) {
+            auto ownpp = suid2ent.find(dli->l->ownerUId);
+            if (ownpp) own = *ownpp; //else GCon->Logf(NAME_Debug, "stlight owner with uid %u not found", sli->stlight->ownerUId);
+          }
           if (own && R_EntModelNoSelfShadow(own)) dli->l->flags |= dlight_t::NoSelfShadow;
           //TVec lorg = dli->l->origin;
           //lorg.z += dli->zofs;

@@ -267,14 +267,19 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
   int ltxr = 0, ltxg = 0, ltxb = 0;
   {
-    VClass *eclass = VEntity::StaticClass();
     // check if we have any light at player's origin (rough), and owned by player
     const dlight_t *dl = DLights;
     for (int dlcount = MAX_DLIGHTS; dlcount--; ++dl) {
       if (dl->die < Level->Time || dl->radius < 1.0f) continue;
-      if (!dl->Owner || (dl->Owner->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) || !dl->Owner->IsA(eclass)) continue;
-      VEntity *e = (VEntity *)dl->Owner;
-      if ((e->EntityFlags&VEntity::EF_IsPlayer) == 0) continue;
+      //if (!dl->Owner || (dl->Owner->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) || !dl->Owner->IsA(eclass)) continue;
+      //VEntity *e = (VEntity *)dl->Owner;
+      VEntity *e;
+      if (dl->ownerUId) {
+        auto ownpp = suid2ent.find(dl->ownerUId);
+        if (!ownpp) continue;
+        e = *ownpp;
+      }
+      if (!e->IsPlayer()) continue;
       if (e != cl->MO) continue;
       if ((e->Origin-dl->origin).length() > dl->radius*0.75f) continue;
       ltxr += (dl->color>>16)&0xff;

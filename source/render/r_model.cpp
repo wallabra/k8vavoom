@@ -1409,7 +1409,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         Md2Angle.yaw = AngleMod(Md2Angle.yaw+FDef.AngleStart+(FDef.AngleEnd-FDef.AngleStart)*Inter);
       }
 
-      vuint8 rndVal = (mobj ? (hashU32(mobj->ServerUId/*GetUniqueId()*/)>>4)&0xffu : 0);
+      vuint8 rndVal = (mobj ? (hashU32(mobj->ServerUId)>>4)&0xffu : 0);
 
       Md2Angle.yaw = FDef.angleYaw.GetAngle(Md2Angle.yaw, rndVal);
       Md2Angle.pitch = FDef.anglePitch.GetAngle(Md2Angle.pitch, rndVal);

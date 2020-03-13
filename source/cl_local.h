@@ -41,7 +41,7 @@ struct dlight_t {
   float minlight; // don't add when contributing less
   /*DLType*/vint32 type;
   vuint32 color; // for colored lights
-  VThinker *Owner; // used to identify owner to reuse the same light
+  vuint32 ownerUId; // used to identify owner to reuse the same light
   vint32 lightid;
   TVec coneDirection;
   float coneAngle; // 0 means "point light", otherwise it is spotlight

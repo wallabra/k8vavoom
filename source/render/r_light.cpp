@@ -50,10 +50,12 @@ extern VCvarB r_glow_flat;
 #define RL_CLEAR_DLIGHT(_dl)  do { \
   (_dl)->radius = 0; \
   (_dl)->flags = 0; \
-  if ((_dl)->Owner && !(_dl)->lightid) { \
-    dlowners.del((_dl)->Owner->/*GetUniqueId()*/ServerUId); \
-    (_dl)->Owner = nullptr; \
-  } \
+  /* lights with lightid aren't added to the ownership map, because we may have many of them for one owner */ \
+  /* note that they will not be deleted when their owner is going away */ \
+  if ((_dl)->ownerUId && !(_dl)->lightid) dlowners.del((_dl)->ownerUId); \
+  (_dl)->lightid = 0; \
+  (_dl)->ownerUId = 0; \
+  (_dl)->ownerUId = 0; \
 } while (0)
 
 
@@ -131,17 +133,9 @@ void VRenderLevelShared::InvalidateStaticLightmaps (const TVec &org, float radiu
 //
 //==========================================================================
 void VRenderLevelShared::ClearReferences () {
-  // TODO: collect all static lights with owners into separate list for speed
-  /*
-  light_t *sl = Lights.ptr();
-  for (int count = Lights.length(); count--; ++sl) {
-    if (sl->owner && (sl->owner->GetFlags()&_OF_CleanupRef)) {
-      StOwners.del(sl->owner->GetUniqueId());
-      sl->owner = nullptr;
-    }
-  }
-  */
+  // no need to do anything here, the renderer will be notified about thinker add/remove events
   // dynlights
+  /*
   dlight_t *l = DLights;
   for (unsigned i = 0; i < MAX_DLIGHTS; ++i, ++l) {
     if (l->die < Level->Time || l->radius < 1.0f) {
@@ -152,6 +146,7 @@ void VRenderLevelShared::ClearReferences () {
       RL_CLEAR_DLIGHT(l);
     }
   }
+  */
 }
 
 
@@ -208,7 +203,11 @@ void VRenderLevelShared::PushDlights () {
       continue;
     }
     l->origin = l->origOrigin;
-    if (l->Owner && l->Owner->GetClass()->IsChildOf(VEntity::StaticClass())) l->origin += ((VEntity *)l->Owner)->GetDrawDelta();
+    //if (l->Owner && l->Owner->GetClass()->IsChildOf(VEntity::StaticClass())) l->origin += ((VEntity *)l->Owner)->GetDrawDelta();
+    if (l->ownerUId) {
+      auto ownpp = suid2ent.find(l->ownerUId);
+      if (ownpp) l->origin += (*ownpp)->GetDrawDelta();
+    }
     dlinfo[i].leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(l->origin)-Level->Subsectors);
     //dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
     //MarkLights(l, 1U<<i, Level->NumNodes-1, dlinfo[i].leafnum);
@@ -237,6 +236,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   dlight_t *dlbestdist = nullptr;
 
   if (radius <= 0) radius = 0; else if (radius < 2) return nullptr; // ignore too small lights
+  if (lightid < 0) lightid = 0;
 
   float bestdist = lengthSquared(lorg-cl->ViewOrg);
 
@@ -324,15 +324,16 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   // first try to find owned light to replace
   if (Owner) {
     if (lightid == 0) {
-      auto idxp = dlowners.find(Owner->/*GetUniqueId()*/ServerUId);
+      auto idxp = dlowners.find(Owner->ServerUId);
       if (idxp) {
         dlowner = &DLights[*idxp];
-        vassert(dlowner->Owner == Owner);
+        vassert(dlowner->ownerUId == Owner->ServerUId);
       }
     } else {
+      //FIXME: make this faster!
       dl = DLights;
       for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
-        if (dl->Owner == Owner && dl->lightid == lightid && dl->die >= Level->Time && dl->radius > 0.0f) {
+        if (dl->ownerUId == Owner->ServerUId && dl->lightid == lightid && dl->die >= Level->Time && dl->radius > 0.0f) {
           dlowner = dl;
           break;
         }
@@ -382,31 +383,31 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   if (dlowner) {
     // remove replaced light
     //if (dlreplace && dlreplace != dlowner) memset((void *)dlreplace, 0, sizeof(*dlreplace));
-    vassert(dlowner->Owner == Owner);
+    vassert(dlowner->ownerUId == Owner->ServerUId);
     dl = dlowner;
   } else {
     dl = dlreplace;
     if (!dl) { dl = dldying; if (!dl) { dl = dlbestdist; if (!dl) return nullptr; } }
   }
 
-  if (dl->Owner && !dl->lightid) dlowners.del(dl->Owner->/*GetUniqueId()*/ServerUId);
+  // tagged lights are not in the map
+  if (dl->ownerUId && !dl->lightid) dlowners.del(dl->ownerUId);
 
   // clean new light, and return it
   memset((void *)dl, 0, sizeof(*dl));
-  dl->Owner = Owner;
+  dl->ownerUId = Owner->ServerUId;
   dl->origin = lorg;
   dl->radius = radius;
   dl->type = DLTYPE_Point;
   dl->lightid = lightid;
   if (isPlr) dl->flags |= dlight_t::PlayerLight;
 
-  if (!lightid && dl->Owner) dlowners.put(dl->Owner->/*GetUniqueId()*/ServerUId, (vuint32)(ptrdiff_t)(dl-&DLights[0]));
+  // tagged lights are not in the map
+  if (!lightid && dl->ownerUId) dlowners.put(dl->ownerUId, (vuint32)(ptrdiff_t)(dl-&DLights[0]));
 
   dl->origOrigin = lorg;
-  if (Owner) {
-    if (Owner->GetClass()->IsChildOf(VEntity::StaticClass())) {
-      dl->origin += ((VEntity *)Owner)->GetDrawDelta();
-    }
+  if (Owner && Owner->GetClass()->IsChildOf(VEntity::StaticClass())) {
+    dl->origin += ((VEntity *)Owner)->GetDrawDelta();
   }
 
   return dl;
@@ -487,23 +488,23 @@ void VRenderLevelShared::ThinkerAdded (VThinker *Owner) {
 //==========================================================================
 void VRenderLevelShared::ThinkerDestroyed (VThinker *Owner) {
   if (!Owner) return;
-  auto idxp = dlowners.find(Owner->/*GetUniqueId()*/ServerUId);
+  auto idxp = dlowners.find(Owner->ServerUId);
   if (idxp) {
     dlight_t *dl = &DLights[*idxp];
-    vassert(dl->Owner == Owner);
+    vassert(dl->ownerUId == Owner->ServerUId);
     dl->radius = 0;
     dl->flags = 0;
-    dl->Owner = nullptr;
-    dlowners.del(Owner->/*GetUniqueId()*/ServerUId);
+    dl->ownerUId = 0;
+    dlowners.del(Owner->ServerUId);
   }
-  auto stxp = StOwners.find(Owner->/*GetUniqueId()*/ServerUId);
+  auto stxp = StOwners.find(Owner->ServerUId);
   if (stxp) {
     //Lights[*stxp].dynowner = nullptr;
     Lights[*stxp].ownerUId = 0;
     Lights[*stxp].active = false;
-    StOwners.del(Owner->/*GetUniqueId()*/ServerUId);
+    StOwners.del(Owner->ServerUId);
   }
-  suid2ent.remove(Owner->/*GetUniqueId()*/ServerUId);
+  suid2ent.remove(Owner->ServerUId);
 }
 
 
