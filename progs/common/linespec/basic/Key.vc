@@ -45,6 +45,43 @@ override bool HandlePickup (Inventory Item) {
 
 //==========================================================================
 //
+//  CoopPickedUp
+//
+//  give the key to all players
+//
+//==========================================================================
+override void CoopPickedUp (EntityEx Toucher) {
+  if (!Toucher.bIsPlayer) return;
+  if (!GetCvarB('sv_coop_share_keys')) return;
+  foreach (auto playnum; 0..MAXPLAYERS) {
+    auto pl = PlayerEx(Level.Game.Players[playnum]);
+    if (!pl || !pl.bSpawned || !pl.MO || pl.MO == Toucher || pl.MO == Toucher.Player.MO) continue;
+    // check if it already have this key
+    bool found = false;
+    for (auto inv = EntityEx(pl.MO).Inventory; inv; inv = inv.Inventory) {
+      if (inv.Class == Class) {
+        found = true;
+        break;
+      }
+    }
+    if (found) continue;
+    printdebug("%C: autoadding to the player #%d", self, playnum);
+    //Inventory Copy = CreateCopy(Toucher);
+    EntityEx pmo = EntityEx(pl.MO);
+    // must create a copy
+    Inventory Copy = SpawnEntityChecked(class!Inventory, class!Inventory(Class), pmo.Origin, pmo.Angles, default, AllowReplace:false);
+    assert(Copy);
+    Copy.Amount = Amount;
+    Copy.MaxAmount = MaxAmount;
+    Copy.bTransferInventory = bTransferInventory;
+    Copy.AttachToOwner(pmo);
+    printdebug("%C: autoadded to the player #%d", self, playnum);
+  }
+}
+
+
+//==========================================================================
+//
 //  ShouldStay
 //
 //==========================================================================

@@ -337,6 +337,22 @@ override void TouchSpecial (EntityEx Toucher, optional bool noflash) {
 
 //==========================================================================
 //
+//  CoopPickedUp
+//
+//  this is called when something is succesfully picked up, and we're
+//  playing coop game.
+//  it is called before `GoAwayAndDie()`, and after attaching to the new
+//  owner.
+//
+//  not called for things like health bottles, and for autoactivates.
+//
+//==========================================================================
+void CoopPickedUp (EntityEx Toucher) {
+}
+
+
+//==========================================================================
+//
 //  TryPickup
 //
 //==========================================================================
@@ -350,6 +366,7 @@ bool TryPickup (EntityEx Toucher) {
     //printdebug("%C: HANDLED; toucher=%C; maxamout=%s; amount=%s; good=%B; transfer=%B", self, Toucher, MaxAmount, Amount, bPickupGood, bTransferInventory);
     if (!bPickupGood) return false;
     if (bTransferInventory) TransferInventoryTo(Toucher);
+    if (!bAutoActivate && Level.Game.netgame && !Level.Game.deathmatch) CoopPickedUp(Toucher);
     GoAwayAndDie();
   } else if (MaxAmount == 0) {
     // a special case: items with max amount of 0 can be picked up if they are autoactivate-able
@@ -391,6 +408,7 @@ bool TryPickup (EntityEx Toucher) {
       }
       //if (doDebug) printdebug("%C: TryPickup: attaching copy `%C` to the new owner `%C` (same:%B; bTransferInventory=%B; AA=%B)", self, Copy, NewToucher, (Copy == self), self.bTransferInventory, bAutoActivate);
       Copy.AttachToOwner(NewToucher, self);
+      if (!bAutoActivate && Level.Game.netgame && !Level.Game.deathmatch) Copy.CoopPickedUp(Toucher);
       if (bAutoActivate && Copy.Use(true)) {
         --Copy.Amount;
         if (Copy.Amount <= 0) {
