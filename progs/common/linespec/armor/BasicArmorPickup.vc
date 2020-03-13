@@ -36,7 +36,8 @@ float SavePercent;
 //==========================================================================
 override bool ShouldStay () {
   // if we are in coop, always let armor stay
-  if (Level.Game.netgame && !Level.Game.deathmatch) return true;
+  // nope, it should disappear, and respawn later
+  //if (Level.Game.netgame && !Level.Game.deathmatch) return true;
   return ::ShouldStay();
 }
 
