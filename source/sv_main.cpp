@@ -148,6 +148,7 @@ static int RebornPosition = 0; // position indicator for cooperative net-play re
 static bool mapteleport_issued = false;
 static int mapteleport_flags = 0;
 static int mapteleport_skill = -1;
+static bool mapteleport_executed = false; // used for netgame autoteleport
 
 static VCvarI TimeLimit("TimeLimit", "0", "TimeLimit mode?", 0/*CVAR_PreInit*/);
 VCvarB NoExit("NoExit", false, "Disable exiting in deathmatch?", 0/*CVAR_PreInit*/);
@@ -651,8 +652,11 @@ static void CheckForSkip () {
         }
       }
       //sv.intermission = 0;
-      GCon->Logf(NAME_Debug, "*** teleporting to the new map '%s'...", *GLevelInfo->NextMap);
-      GCmdBuf << "TeleportNewMap **forced**\n";
+      if (!mapteleport_executed) {
+        mapteleport_executed = true;
+        GCon->Logf(NAME_Debug, "*** teleporting to the new map '%s'...", *GLevelInfo->NextMap);
+        GCmdBuf << "TeleportNewMap **forced**\n";
+      }
     }
   }
 }
@@ -1062,6 +1066,7 @@ COMMAND_AC(TestFinale) {
 //==========================================================================
 COMMAND_WITH_AC(TeleportNewMap) {
   int flags = 0;
+  mapteleport_executed = false; // used for netgame autoteleport
 
   // dumb clients must forward this
   if (GGameInfo->NetMode == NM_None) return;
@@ -1129,6 +1134,8 @@ static TeleportMapExFlag TMEFlags[] = {
 //
 //==========================================================================
 COMMAND(ACS_TeleportNewMap) {
+  mapteleport_executed = false; // used for netgame autoteleport
+
   if (Args.length() != 5) {
     GCon->Logf("ACS_TeleportNewMap mapname posidx flags skill");
     return;
@@ -1201,6 +1208,8 @@ COMMAND(ACS_TeleportNewMap) {
 //
 //==========================================================================
 COMMAND_WITH_AC(TeleportNewMapEx) {
+  mapteleport_executed = false; // used for netgame autoteleport
+
   if (Args.length() < 2) {
     GCon->Logf("TeleportNewMapEx mapname|+ [posidx [flags [skill]]]");
     return;
@@ -1433,6 +1442,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   GCon->Logf("Spawning %sserver with map \"%s\"%s...", (titlemap ? "titlemap " : ""), mapname, (spawn_thinkers ? "" : " (without thinkers)"));
 
   GGameInfo->Flags &= ~VGameInfo::GIF_Paused;
+  mapteleport_executed = false; // just in case
   mapteleport_issued = false;
   mapteleport_flags = 0;
   mapteleport_skill = -1;
