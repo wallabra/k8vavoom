@@ -774,6 +774,18 @@ int VNetConnection::PutOneAck (vuint32 ackId, bool forceSend) {
 }
 
 
+extern "C" {
+  static int cmpAcks (const void *aa, const void *bb, void *ncptr) {
+    const vuint32 a = *(const vuint32 *)aa;
+    const vuint32 b = *(const vuint32 *)bb;
+    return
+      a < b ? -1 :
+      a > b ? 1 :
+      0;
+  }
+}
+
+
 //==========================================================================
 //
 //  VNetConnection::ResendAcks
@@ -781,6 +793,8 @@ int VNetConnection::PutOneAck (vuint32 ackId, bool forceSend) {
 //==========================================================================
 void VNetConnection::ResendAcks () {
   if (!AutoAck) {
+    // make sure that the sequence is right
+    timsort_r(AcksToResend.ptr(), AcksToResend.length(), sizeof(AcksToResend[0]), &cmpAcks, nullptr);
     for (auto &&ack : AcksToResend) {
       PutOneAckForced(ack);
     }
@@ -796,11 +810,12 @@ void VNetConnection::ResendAcks () {
 //==========================================================================
 void VNetConnection::SendPacketAck (vuint32 AckPacketId) {
   if (AutoAck) { AcksToResend.reset(); QueuedAcks.reset(); return; }
+  // append current ack to resend queue, so it will be sent too
+  AcksToResend.append(AckPacketId);
+  // this call will clear resend queue
   ResendAcks();
-  // queue current ack
+  // queue current ack, so it will be sent one more time
   QueuedAcks.append(AckPacketId);
-  // send current ack
-  PutOneAckForced(AckPacketId);
 }
 
 
@@ -879,6 +894,8 @@ void VNetConnection::Flush () {
         // only ticker can call this with empty accumulator, and in this case we have no acks to resend
         vassert(AcksToResend.length() == 0);
         if (QueuedAcks.length()) {
+          // sort queued acks, just to be sure that the sequence is right
+          timsort_r(QueuedAcks.ptr(), QueuedAcks.length(), sizeof(QueuedAcks[0]), &cmpAcks, nullptr);
           while (QueuedAcks.length()) {
             if (PutOneAck(QueuedAcks[0])) break; // no room
             QueuedAcks.removeAt(0);
