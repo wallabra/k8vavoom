@@ -2899,8 +2899,9 @@ override void SpawnClient () {
   // setup weapon slots
   if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots(/*LineSpecialGameInfo(Level.Game)*/);
 
-  if (Level.Game.netgame && !Level.Game.deathmatch && playerWasReborn) {
-    OnNetReborn(OldMO);
+  // coop
+  if (Level.Game.netgame && !Level.Game.deathmatch) {
+    if (playerWasReborn) OnNetReborn(OldMO); else OnNetSpawn(OldMO);
   }
 
   // destroy all things touching players
@@ -4973,10 +4974,79 @@ void CreateBot () {
 
 //==========================================================================
 //
+//  CoopGetAllSharedKeys
+//
+//==========================================================================
+void CoopGetAllSharedKeys () {
+  if (!MO) return;
+  if (!GetCvarB('sv_coop_share_keys')) return;
+  // share all all keys
+  foreach (auto playnum; 0..MAXPLAYERS) {
+    auto pl = PlayerEx(Level.Game.Players[playnum]);
+    if (!pl || !pl.bSpawned || !pl.MO || pl.MO == MO || pl == self) continue;
+    for (auto inv = EntityEx(pl.MO).Inventory; inv; inv = inv.Inventory) {
+      if (!class!Key(inv.Class)) continue;
+      bool found = false;
+      for (auto myinv = EntityEx(MO).Inventory; myinv; myinv = myinv.Inventory) {
+        if (myinv.Class == inv.Class) {
+          found = true;
+          break;
+        }
+      }
+      if (found) continue;
+      printdebug("%C: autoadding to the player #%d", inv, playnum);
+      EntityEx pmo = EntityEx(MO);
+      // must create a copy
+      Inventory Copy = pmo.SpawnEntityChecked(class!Inventory, class!Inventory(inv.Class), pmo.Origin, pmo.Angles, default, AllowReplace:false);
+      assert(Copy);
+      Copy.Amount = inv.Amount;
+      Copy.MaxAmount = inv.MaxAmount;
+      Copy.bTransferInventory = inv.bTransferInventory;
+      Copy.AttachToOwner(pmo);
+      printdebug("%C: autoadded to the player #%d", inv, playnum);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  OnNetSpawn
+//
+//==========================================================================
+void OnNetSpawn (EntityEx OldMO) {
+  // give all keys other players have to this one when in coop
+  if (!Level.Game.netgame || Level.Game.deathmatch) return;
+  CoopGetAllSharedKeys();
+}
+
+
+//==========================================================================
+//
 //  OnNetReborn
 //
 //==========================================================================
 void OnNetReborn (EntityEx OldMO) {
+  // restore keys and weapons when reborn in co-op
+  if (!Level.Game.netgame || Level.Game.deathmatch) return;
+  if (!OldMO) {
+    CoopGetAllSharedKeys();
+    return;
+  }
+  //printdebug("%C: transfer weapons...", self);
+  for (auto inv = OldMO.Inventory; inv; ) {
+    //printdebug("%C:  inv=%C", self, inv);
+    Inventory next = inv.Inventory;
+    if (Weapon(inv)) {
+      if (GetCvarB('sv_coop_keep_weapons')) inv.AttachToOwner(EntityEx(MO));
+      //printdebug("%C:  inv=%C: WEAPON TRANSFER", self, inv);
+    } else if (FourthWeaponHolder(inv) || Key(inv)) {
+      //printdebug("%C:  inv=%C: KEY TRANSFER", self, inv);
+      inv.AttachToOwner(EntityEx(MO));
+    }
+    inv = next;
+  }
+  OldMO.DestroyAllInventory();
 }
 
 
