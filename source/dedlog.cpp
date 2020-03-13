@@ -33,6 +33,8 @@ bool ttyRefreshInputLine = true;
 bool ttyExtraDisabled = false;
 bool dedEnableTTYLog = false;
 
+void UpdateTTYPrompt ();
+
 
 //**************************************************************************
 //
@@ -95,6 +97,7 @@ private:
           collectedLine[coLen++] = 'K';
           collectedLine[coLen] = 0;
           ttyRefreshInputLine = true;
+          UpdateTTYPrompt();
         }
         ++s;
         --len;

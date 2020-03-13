@@ -119,10 +119,10 @@ static void onShowCompletionMatchCB (bool isheader, VStr s) {
 
 //==========================================================================
 //
-//  UpdateTTYText
+//  UpdateTTYPrompt
 //
 //==========================================================================
-static void UpdateTTYText () {
+void UpdateTTYPrompt () {
   if (!ttyRefreshInputLine) return;
   ttyRefreshInputLine = false;
   vassert(textpos < (int)ARRAY_COUNT(text));
@@ -185,21 +185,21 @@ char *Sys_ConsoleInput () {
     return text;
   }
 
-  UpdateTTYText();
+  UpdateTTYPrompt();
 
   TTYEvent evt = ttyReadKey(0);
   if (evt.type <= TTYEvent::Type::Unknown) return nullptr;
   // C-smth
   if (evt.type == TTYEvent::Type::ModChar) {
     if (evt.ch == 'C') Sys_Quit("*** ABORTED ***");
-    if (evt.ch == 'Y') { textpos = 0; ttyRefreshInputLine = true; UpdateTTYText(); return nullptr; }
+    if (evt.ch == 'Y') { textpos = 0; ttyRefreshInputLine = true; UpdateTTYPrompt(); return nullptr; }
   } else if (evt.type == TTYEvent::Type::Enter) {
     if (textpos == 0) return nullptr;
     strcpy(text2, text);
     textpos = 0;
     text[0] = 0;
     ttyRefreshInputLine = true;
-    UpdateTTYText();
+    UpdateTTYPrompt();
     GCon->Logf(">%s", text2);
     return text2;
   }
@@ -250,7 +250,7 @@ char *Sys_ConsoleInput () {
     }
   }
 
-  UpdateTTYText();
+  UpdateTTYPrompt();
   return nullptr;
 #endif
 }
@@ -379,7 +379,7 @@ int main (int argc, char **argv) {
       atexit(&restoreTTYOnExit);
       VCommand::onShowCompletionMatch = &onShowCompletionMatchCB;
       //ttyRawWrite("\x1b[0m;\x1b[2J\x1b[9999F"); // clear, move cursor down
-      UpdateTTYText();
+      UpdateTTYPrompt();
     }
     #endif
 
