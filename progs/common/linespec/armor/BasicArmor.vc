@@ -28,6 +28,11 @@ class BasicArmor : Armor;
 float SavePercent;
 class!Inventory ArmorClass; // last armor pickup name
 
+replication {
+  reliable if (Role == ROLE_Authority && bNetOwner)
+    SavePercent;
+}
+
 
 //==========================================================================
 //
