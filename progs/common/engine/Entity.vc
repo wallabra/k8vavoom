@@ -413,7 +413,7 @@ replication {
 
   reliable if (Role == ROLE_Authority && bNetInitial)
     Radius, Height, VanillaHeight, RenderRadius, FloatBobStrength,
-    DecalName;
+    DecalName, bIsPlayer;
 
   reliable if (Role == ROLE_Authority && bNetInitial && bFloatBob)
     FloatBobPhase;
