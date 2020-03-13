@@ -70,6 +70,18 @@ void VRenderLevelShared::RefilterStaticLights () {
 
 //==========================================================================
 //
+//  VRenderLevelShared::ResetStaticLights
+//
+//==========================================================================
+void VRenderLevelShared::ResetStaticLights () {
+  StOwners.reset();
+  Lights.reset();
+  //GCon->Log(NAME_Debug, "VRenderLevelShared::ResetStaticLights");
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::AddStaticLightRGB
 //
 //==========================================================================
@@ -90,6 +102,7 @@ void VRenderLevelShared::AddStaticLightRGB (vuint32 OwnerUId, const TVec &origin
     if (osp) Lights[*osp].ownerUId = 0;
     StOwners.put(OwnerUId, Lights.length()-1);
   }
+  //GCon->Logf(NAME_Debug, "VRenderLevelShared::AddStaticLightRGB: count=%d", Lights.length());
 }
 
 

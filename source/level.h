@@ -597,6 +597,8 @@ public:
     return 0x00; // this is REJECT matrix, not ACCEPT
   }
 
+  void ResetStaticLights ();
+
   void AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f);
   void MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin);
 

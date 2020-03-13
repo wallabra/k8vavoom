@@ -1087,11 +1087,13 @@ bool VLevelChannel::ParseStaticLight (VMessageIn &Msg) {
       return false;
     }
     #ifdef CLIENT
-    Level->Renderer->AddStaticLightRGB(owneruid, Origin, Radius, Color, ConeDir, ConeAngle);
+    Level->AddStaticLightRGB(owneruid, Origin, Radius, Color, ConeDir, ConeAngle);
+    //Level->Renderer->AddStaticLightRGB(owneruid, Origin, Radius, Color, ConeDir, ConeAngle);
     #endif
   } else {
     #ifdef CLIENT
-    Level->Renderer->AddStaticLightRGB(owneruid, Origin, Radius, Color);
+    Level->AddStaticLightRGB(owneruid, Origin, Radius, Color);
+    //Level->Renderer->AddStaticLightRGB(owneruid, Origin, Radius, Color);
     #endif
   }
 
@@ -1229,7 +1231,7 @@ void VLevelChannel::ParseMessage (VMessageIn &Msg) {
       case CMD_ResetStaticLights: //TODO
         // currently, there is nothing to do here, because client level is spawned without entities anyway
         #ifdef CLIENT
-        //Level->Renderer->ResetStaticLights();
+        Level->ResetStaticLights();
         #endif
         break;
       case CMD_NewLevel:

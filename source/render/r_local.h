@@ -754,8 +754,10 @@ public:
   virtual void SegMoved (seg_t *) override;
   virtual void SetupFakeFloors (sector_t *) override;
 
+  virtual void ResetStaticLights () override;
   virtual void AddStaticLightRGB (vuint32 OwnerUId, const TVec &origin, float radius, vuint32 color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f) override;
   virtual void MoveStaticLightByOwner (vuint32 OwnerUId, const TVec &origin) override;
+
   virtual void ClearReferences () override;
 
   virtual dlight_t *AllocDlight (VThinker *Owner, const TVec &lorg, float radius, int lightid=-1) override;

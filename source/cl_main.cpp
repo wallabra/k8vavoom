@@ -368,6 +368,7 @@ void CL_SetupStandaloneClient () {
 
   SB_Start();
 
+  GClLevel->Renderer->ResetStaticLights();
   for (int i = 0; i < GClLevel->NumStaticLights; ++i) {
     rep_light_t &L = GClLevel->StaticLights[i];
     GClLevel->Renderer->AddStaticLightRGB(L.OwnerUId, L.Origin, L.Radius, L.Color, L.ConeDir, L.ConeAngle);
@@ -961,6 +962,7 @@ COMMAND(VidRendererRestart) {
   GClLevel->Renderer = nullptr;
   GClLevel->cacheFileBase.clear(); // so we won't store stale lightmaps
   R_Start(GClLevel);
+  GClLevel->Renderer->ResetStaticLights();
   for (int i = 0; i < GClLevel->NumStaticLights; ++i) {
     rep_light_t &L = GClLevel->StaticLights[i];
     GClLevel->Renderer->AddStaticLightRGB(L.OwnerUId, L.Origin, L.Radius, L.Color, L.ConeDir, L.ConeAngle);

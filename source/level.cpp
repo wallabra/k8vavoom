@@ -449,6 +449,18 @@ void VLevel::Destroy () {
 
 //==========================================================================
 //
+//  VLevel::ResetStaticLights
+//
+//==========================================================================
+void VLevel::ResetStaticLights () {
+  delete StaticLights;
+  StaticLights = nullptr;
+  NumStaticLights = 0;
+}
+
+
+//==========================================================================
+//
 //  VLevel::AddStaticLightRGB
 //
 //==========================================================================
@@ -469,6 +481,9 @@ void VLevel::AddStaticLightRGB (vuint32 owneruid, const TVec &Origin, float Radi
   L.ConeDir = coneDirection;
   L.ConeAngle = coneAngle;
   L.Flags = rep_light_t::LightChanged;
+  #ifdef CLIENT
+  if (Renderer) Renderer->AddStaticLightRGB(owneruid, Origin, Radius, Color, coneDirection, coneAngle);
+  #endif
 }
 
 
