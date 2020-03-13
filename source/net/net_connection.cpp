@@ -946,6 +946,7 @@ void VNetConnection::Flush () {
     OutByteAcc += Out.GetNumBytes();
 
     Out.Reinit(MAX_DGRAM_SIZE*8+128, false); // don't expand
+    OutLastWrittenAck = 0; // just in case
   }
 
   // move queued acks to resend queue
