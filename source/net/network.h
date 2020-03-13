@@ -587,6 +587,7 @@ public:
   vuint32 InPacketId; // full incoming packet index
   vuint32 OutPacketId; // most recently sent packet
   vuint32 OutAckPacketId; // most recently acked outgoing packet
+  vuint32 OutLastWrittenAck; // starts with 0
 
   // channel table
   VChannel *Channels[MAX_CHANNELS];

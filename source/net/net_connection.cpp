@@ -97,9 +97,10 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   memset((void *)OutLagTime, 0, sizeof(OutLagTime));
   memset((void *)OutLagPacketId, 0, sizeof(OutLagPacketId));
 
-  InPacketId = 0;
-  OutPacketId = 0;
-  OutAckPacketId = 0;
+  InPacketId = 1;
+  OutPacketId = 1;
+  OutAckPacketId = 1;
+  OutLastWrittenAck = 0;
 
   //FIXME: driver time?
   LastReceiveTime = 0;
@@ -573,6 +574,8 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
   if (Packet.AtEnd()) GCon->Logf(NAME_DevNet, "%s: got empty keepalive packet", *GetAddress());
 
+  vuint32 lastSeenAck = 0;
+
   while (!Packet.AtEnd() && IsOpen()) {
     if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "  parsing packet: %d bits eaten of %d", Packet.GetPos(), Packet.GetNumBits());
     //INT StartPos = Reader.GetPosBits();
@@ -580,12 +583,14 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
     if (Packet.ReadBit()) {
       // yep, process it
       vuint32 AckPacketId = 0;
-      Packet << STRM_INDEX_U(AckPacketId);
+      if (lastSeenAck) AckPacketId = Packet.ReadUInt()+lastSeenAck; else Packet << STRM_INDEX_U(AckPacketId);
+      lastSeenAck = AckPacketId;
 
       if (Packet.IsError()) {
-        // this is not fatal
+        // this is fatal
         GCon->Logf(NAME_DevNet, "%s: missing ack id", *GetAddress());
         ++Driver->shortPacketCount;
+        Close();
         return;
       }
 
@@ -720,6 +725,7 @@ void VNetConnection::Prepare (int addBits) {
   if (Out.GetNumBits() == 0) {
     Out << OutPacketId;
     vassert(Out.GetNumBits() <= MAX_PACKET_HEADER_BITS);
+    OutLastWrittenAck = 0;
   }
 
   // make sure there's enough space now
@@ -743,16 +749,27 @@ void VNetConnection::Prepare (int addBits) {
 int VNetConnection::PutOneAck (vuint32 ackId, bool forceSend) {
   if (AutoAck) return 0;
   if (Out.GetNumBits() == 0) Prepare(0); // put header
-  const int outBits = STRM_INDEX_U_BYTES(ackId)*8+1;
+  // we cannot ack packets from the future
+  vassert(ackId <= InPacketId);
+  vassert(ackId >= OutLastWrittenAck);
+  // convert ack to delta, it will take much less room (usually just one byte)
+  unsigned ackIdDelta = ackId-OutLastWrittenAck;
+  int outBits = (OutLastWrittenAck ? BitStreamCalcUIntBits(ackIdDelta) : STRM_INDEX_U_BYTES(ackIdDelta)*8)+1;
   if (CalcEstimatedByteSize(outBits) > MAX_DGRAM_SIZE) {
     if (!forceSend) return outBits;
     Prepare(outBits);
+    // recheck, and reconvert
+    vassert(ackId <= OutPacketId);
+    vassert(OutLastWrittenAck == 0);
+    outBits = STRM_INDEX_U_BYTES(ackIdDelta)*8+1;
     vassert(CalcEstimatedByteSize(outBits) <= MAX_DGRAM_SIZE);
+    ackIdDelta = ackId;
   }
-  if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "%s: putting ack with pid=%u", *GetAddress(), ackId);
+  if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "%s: putting ack with pid=%u (delta=%u)", *GetAddress(), ackId, ackIdDelta);
   Out.WriteBit(true); // ack flag
-  Out << STRM_INDEX_U(ackId);
+  if (OutLastWrittenAck) Out.WriteUInt(ackIdDelta); else Out << STRM_INDEX_U(ackIdDelta);
   vassert(CalcEstimatedByteSize(0) <= MAX_DGRAM_SIZE);
+  OutLastWrittenAck = ackId; // update current ack
   return 0;
 }
 
