@@ -31,4 +31,8 @@ defaultproperties {
   TextHAlign = hleft;
   TextVAlign = vtop;
   Height = 23;
+  TextColor = CR_RED;
+  //TextColorFocus = CR_CYAN;
+  //TextColorFocus = CR_ICE;
+  TextColorFocus = CR_FIRE;
 }
