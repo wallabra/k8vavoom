@@ -125,7 +125,7 @@ struct RenderStyleInfo {
 
   inline RenderStyleInfo () noexcept : seclight(0u), light(0u), fade(0u), stencilColor(0u), translucency(0), alpha(1.0f), flags(0u) {}
 
-  inline bool isAdditive () const noexcept { return (translucency == Additive || translucency == AddShaded); }
+  inline bool isAdditive () const noexcept { return (translucency == Additive || translucency == AddShaded || translucency == Subtractive); }
   inline bool isTranslucent () const noexcept { return (translucency || alpha < 1.0f); }
   inline bool isShaded () const noexcept { return (translucency == Shaded || translucency == AddShaded); }
   // this is how "shadow" render style is rendered
