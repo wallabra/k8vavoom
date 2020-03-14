@@ -1367,7 +1367,7 @@ struct dlight_t {
   float minlight; // don't add when contributing less
   int type;
   int color;
-  readonly Thinker owner;
+  readonly int ownerUId;
   readonly int lightid;
   TVec coneDirection;
   float coneAngle; // 0 means "point light", otherwise it is spotlight
