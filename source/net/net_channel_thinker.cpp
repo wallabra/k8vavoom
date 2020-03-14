@@ -227,12 +227,16 @@ void VThinkerChannel::Update () {
 
   // we need to set `EFEX_NetDetach` flag for replication condition checking if we're going to detach it
   const bool isServer = Connection->Context->IsServer();
-  bool detachEntity = (isServer && !Connection->AutoAck && Ent && (Ent->FlagsEx&VEntity::EFEX_NoTickGrav));
+  const bool detachEntity =
+    isServer && !Connection->AutoAck && Ent &&
+    (Ent->FlagsEx&(VEntity::EFEX_NoTickGrav|VEntity::EFEX_DetachFromServer));
 
+  /*
   if (!detachEntity && isServer && !Connection->AutoAck && Ent && VStr::startsWith(Ent->GetClass()->GetName(), "K8Gore")) {
     detachEntity = true;
     //GCon->Logf(NAME_DevNet, "detaching Gore entity (%s)...", Ent->GetClass()->GetName());
   }
+  */
 
   // temporarily set `bNetDetach`
   if (detachEntity) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
@@ -540,5 +544,6 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
   if (Connection->IsClient() && Msg.bClose && Thinker && Thinker->Role == ROLE_Authority) {
     //GCon->Logf(NAME_Debug, "completed detaching for '%s'", Thinker->GetClass()->GetName());
     Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
+    Thinker->eventOnDetachedFromServer();
   }
 }

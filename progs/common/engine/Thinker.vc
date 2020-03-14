@@ -156,6 +156,18 @@ native final iterator RadiusThings (out Entity Ent, TVec Org, float Radius);
 
 //==========================================================================
 //
+//  OnDetachedFromServer
+//
+//  called from network code when detach is complete
+//  don't do anything complex here!
+//
+//==========================================================================
+void OnDetachedFromServer () {
+}
+
+
+//==========================================================================
+//
 //  GetNextAffector
 //
 //  used by the engine to iterate sector affectors

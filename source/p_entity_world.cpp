@@ -700,6 +700,8 @@ bool VEntity::CheckLine (tmtrace_t &cptrace, line_t *ld) {
 //
 //==========================================================================
 bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bool ignoreMonsters, bool ignorePlayers) {
+  if (GGameInfo->NetMode == NM_Client) noPickups = true;
+
   tmtrace.End = Pos;
 
   tmtrace.BBox[BOX2D_TOP] = Pos.y+Radius;
@@ -848,6 +850,8 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
 //
 //==========================================================================
 bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups) {
+  if (GGameInfo->NetMode == NM_Client) noPickups = true;
+
   // don't clip against self
   if (Other == this) return true;
   // can't hit thing
@@ -937,6 +941,8 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
 //
 //==========================================================================
 bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
+  if (GGameInfo->NetMode == NM_Client) skipSpecials = true;
+
   // check line bounding box for early out
   if (tmtrace.BBox[BOX2D_RIGHT] <= ld->bbox2d[BOX2D_LEFT] ||
       tmtrace.BBox[BOX2D_LEFT] >= ld->bbox2d[BOX2D_RIGHT] ||
@@ -1179,6 +1185,8 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
   sector_t *OldSec = Sector;
 
   if (IsGoingToDie() || !Sector) return false; // just in case, dead object is immovable
+
+  if (GGameInfo->NetMode == NM_Client) noPickups = true;
 
   bool skipEffects = (checkOnly || noPickups);
 
@@ -1518,6 +1526,8 @@ void VEntity::SlideMove (float StepVelScale, bool noPickups) {
   int hitcount;
   tmtrace_t tmtrace;
   memset((void *)&tmtrace, 0, sizeof(tmtrace)); // valgrind: AnyBlockingLine
+
+  if (GGameInfo->NetMode == NM_Client) noPickups = true;
 
   hitcount = 0;
 

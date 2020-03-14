@@ -592,37 +592,46 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
   Ret->ServerUId = (srvUId ? srvUId : Ret->GetUniqueId());
   AddThinker(Ret);
 
+  /*
+  #ifdef CLIENT
+  GCon->Logf(NAME_Debug, "SPAWNED: <%s>; forserver=%d", Ret->GetClass()->GetName(), (int)IsForServer());
+  #endif
+  */
+
   VThinker *OverRet = nullptr;
 
-  if (IsForServer() && Class->IsChildOf(VEntity::StaticClass())) {
-    VEntity *e = (VEntity *)Ret;
-    e->Origin = AOrigin;
-    e->Angles = AAngles;
-    e->eventOnMapSpawn(mthing);
-    // call it anyway, some script code may rely on this
-    /*if (!(e->GetFlags()&(_OF_Destroyed|_OF_Destroyed)))*/ {
-      if (LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_BegunPlay) {
-        e->eventBeginPlay();
-        if (e->BeginPlayResult) {
-          // check it, just in case
-          if (e->BeginPlayResult->GetClass()->IsChildOf(VEntity::StaticClass())) {
-            OverRet = e->BeginPlayResult;
-            /*
-            if (!OverRet->GetClass()->IsChildOf(AClass)) {
-              GCon->Logf(NAME_Error, "%s:BeginPlay() tried to override return with non-compatible class `%s`", e->GetClass()->GetName(), OverRet->GetClass()->GetName());
+  if (IsForServer()) {
+    #ifdef CLIENT
+    // if we're spawning something on the client side, mark it as detached
+    // this is harmless for non-authorithy entities
+    if (GGameInfo->NetMode == NM_Client) Ret->ThinkerFlags |= VThinker::TF_DetachComplete;
+    #endif
+    if (Class->IsChildOf(VEntity::StaticClass())) {
+      VEntity *e = (VEntity *)Ret;
+      e->Origin = AOrigin;
+      e->Angles = AAngles;
+      e->eventOnMapSpawn(mthing);
+      // call it anyway, some script code may rely on this
+      /*if (!(e->GetFlags()&(_OF_Destroyed|_OF_Destroyed)))*/ {
+        if (LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_BegunPlay) {
+          e->eventBeginPlay();
+          if (e->BeginPlayResult) {
+            // check it, just in case
+            if (e->BeginPlayResult->GetClass()->IsChildOf(VEntity::StaticClass())) {
+              OverRet = e->BeginPlayResult;
+              /*
+              if (!OverRet->GetClass()->IsChildOf(AClass)) {
+                GCon->Logf(NAME_Error, "%s:BeginPlay() tried to override return with non-compatible class `%s`", e->GetClass()->GetName(), OverRet->GetClass()->GetName());
+              }
+              */
+            } else {
+              GCon->Logf(NAME_Error, "%s:BeginPlay() tried to override return with non-entity class `%s`", e->GetClass()->GetName(), e->BeginPlayResult->GetClass()->GetName());
             }
-            */
-          } else {
-            GCon->Logf(NAME_Error, "%s:BeginPlay() tried to override return with non-entity class `%s`", e->GetClass()->GetName(), e->BeginPlayResult->GetClass()->GetName());
           }
         }
       }
+      if (!(e->GetFlags()&(_OF_Destroyed|_OF_Destroyed))) eventEntitySpawned(e);
     }
-  }
-
-  if (IsForServer() && Class->IsChildOf(VEntity::StaticClass())) {
-    VEntity *e = (VEntity *)Ret;
-    if (!(e->GetFlags()&(_OF_Destroyed|_OF_Destroyed))) eventEntitySpawned(e);
   }
 
   return (OverRet ? OverRet : Ret);

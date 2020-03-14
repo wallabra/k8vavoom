@@ -141,6 +141,8 @@ public:
     VMT_RET_VOID(method);
   }
 
+  void eventOnDetachedFromServer () { static VMethodProxy method("OnDetachedFromServer"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+
   VThinker *eventGetNextAffector () { static VMethodProxy method("GetNextAffector"); vobjPutParamSelf(); VMT_RET_REF(VThinker, method); }
 };
 

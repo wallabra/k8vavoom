@@ -20,6 +20,7 @@ Actor BDW_Tracer : FastProjectile {
   -ActivatePCross
   -DropOff
   -MoveWithSector
+  +k8DetachFromServer
   //+Randomize //k8:???
   //+ThruActors
   //+ThruGhost
@@ -40,6 +41,17 @@ Actor BDW_Tracer : FastProjectile {
     XDeath:
       TNT1 A 0
       Stop
+
+    SpawnInNetServer:
+      TNT1 A 0
+      TNT1 A 8 /*A_k8ConLog("dying on the server")*/
+      Stop
+
+    NetDetachedOnClient:
+      TNT1 A 0
+      TNT1 A 1 /*A_k8ConLog("detached on the client")*/
+      Goto Spawn
+
   }
 }
 

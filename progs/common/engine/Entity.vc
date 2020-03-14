@@ -312,6 +312,7 @@ bool bNoTickGravLifeTime; // if `bNoTickGrav` set, perform lifetime logic
 // physics will put this entity to floor or ceiling (floor has precedence)
 bool bStickToFloor;
 bool bStickToCeiling;
+transient bool bDetachFromServer;
 
 // 0: none
 // 1: switches object to "k8vavoomInternalNoTickGrav" when it enters idle state (the one with negative duration)

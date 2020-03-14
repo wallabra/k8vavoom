@@ -312,3 +312,5 @@ const [decorate] int AAPTR_OWNER = 0x10_0000;
 [decorate] final bool decorate_IsNetServer () { return Level.Game.IsNetServer; }
 [decorate] final bool decorate_IsNetClient () { return Level.Game.IsNetClient; }
 [decorate] final bool decorate_IsDumbClient () { return Level.Game.IsDumbClient; }
+
+[decorate] final bool decorate_IsDetached () { return bDetachComplete; }

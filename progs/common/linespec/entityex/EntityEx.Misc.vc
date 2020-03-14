@@ -1233,13 +1233,37 @@ final void FaceMovementDirection () {
 
 //==========================================================================
 //
+//  OnDetachedFromServer
+//
+//  called from network code when detach is complete
+//  don't do anything complex here!
+//
+//==========================================================================
+override void OnDetachedFromServer () {
+  //printdebug("%C: OnDetachedFromServer!", self);
+  state sss = FindState('NetDetachedOnClient');
+  if (sss) {
+    //printdebug("%C: switching state to detached", self);
+    SetInitialState(sss);
+  }
+}
+
+
+//==========================================================================
+//
 //  OnMapSpawn
 //
 //==========================================================================
 override void OnMapSpawn (mthing_t *mthing) {
   ::OnMapSpawn(mthing);
 
+  /*
+  #ifdef CLIENT
+  if (Level.Game.IsDumbClient) printdebug("MAPSPAWN: %C (monster=%B; missile=%B) (%s)", self, bMonster, bMissile, GetClassLocationStr(Class));
+  #endif
+  */
   //printdebug("MAPSPAWN: %C (monster=%B; missile=%B) (%s)", self, bMonster, bMissile, GetClassLocationStr(Class));
+
   // k8: let's hope this will work as intended
   if (bMonster && IsFast()) ReactionCount = 0;
 
@@ -1270,7 +1294,13 @@ override void OnMapSpawn (mthing_t *mthing) {
 
   // set the state, but do not use SetState, because action routines can't be called yet
   // if the spawnstate has an action routine, it will not be called
-  SetInitialState(IdleState);
+  if (Level.Game.IsNetServer) {
+    state sss = FindState('SpawnInNetServer');
+    //if (sss) printdebug("%C: spawn with netstate", self);
+    SetInitialState(sss ? sss : IdleState);
+  } else {
+    SetInitialState(IdleState);
+  }
 
   if (mthing) {
     if (bNoDeathmatch && Level.Game.deathmatch) {
@@ -1571,8 +1601,6 @@ override void Tick (float deltaTime) {
   }
   */
 
-  Inventory Item;
-
   if (Level.bFrozen && ((!bIsPlayer && !bNoTimeFreeze) ||
       (bIsPlayer && !(PlayerEx(Player).Cheats&PlayerEx::CF_TIMEFREEZE))))
   {
@@ -1580,6 +1608,7 @@ override void Tick (float deltaTime) {
   }
 
   // handle powerup effects
+  Inventory Item;
   for (Item = Inventory; Item && Item.Owner == self; Item = Item.Inventory) {
     Item.DoEffect();
   }

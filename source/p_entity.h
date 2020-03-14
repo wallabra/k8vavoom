@@ -285,16 +285,17 @@ class VEntity : public VThinker {
 
   // extra flags
   enum {
-    EFEX_Monster        = 1u<<0u, // is this a monster?
-    EFEX_Rendered       = 1u<<1u, // was this thing rendered? (unused, not set ever)
-    EFEX_NetDetach      = 1u<<2u, // server is using this flag for some replication conditions
-    EFEX_NoInteraction  = 1u<<3u, // moved from EntityEx
-    EFEX_NoTickGrav     = 1u<<4u, // do not call `Tick()` (but process gravity)
-    EFEX_PseudoCorpse   = 1u<<5u, // for sprite fixer
-    EFEX_FloatBob       = 1u<<6u, // use float bobbing z movement
-    EFEX_NoTickGravLT   = 1u<<7u, // if `EFEX_NoTickGrav` set, perform lifetime logic
-    EFEX_StickToFloor   = 1u<<8u,
-    EFEX_StickToCeiling = 1u<<9u,
+    EFEX_Monster          = 1u<<0u, // is this a monster?
+    EFEX_Rendered         = 1u<<1u, // was this thing rendered? (unused, not set ever)
+    EFEX_NetDetach        = 1u<<2u, // server is using this flag for some replication conditions
+    EFEX_NoInteraction    = 1u<<3u, // moved from EntityEx
+    EFEX_NoTickGrav       = 1u<<4u, // do not call `Tick()` (but process gravity)
+    EFEX_PseudoCorpse     = 1u<<5u, // for sprite fixer
+    EFEX_FloatBob         = 1u<<6u, // use float bobbing z movement
+    EFEX_NoTickGravLT     = 1u<<7u, // if `EFEX_NoTickGrav` set, perform lifetime logic
+    EFEX_StickToFloor     = 1u<<8u,
+    EFEX_StickToCeiling   = 1u<<9u,
+    EFEX_DetachFromServer = 1u<<10u, // set this flag to detach the entity from the server in network game
   };
   vuint32 FlagsEx;
 

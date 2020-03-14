@@ -19,6 +19,7 @@ Actor K8Gore_Blood : Blood /*: K8Gore_BloodBase*/ Replaces Blood {
   +CLIENTSIDEONLY
   -ALLOWPARTICLES
   +CopyBloodTranslation
+  +k8DetachFromServer
   Scale 0.5
   Speed 0
 
@@ -28,8 +29,10 @@ Actor K8Gore_Blood : Blood /*: K8Gore_BloodBase*/ Replaces Blood {
     Spawn:
       TNT1 A 0
       TNT1 AAAA 0 {
+        /*A_k8ConLog("SPAWN!");*/
         if (Args[0] > 20) A_SetUserVar("user_spray", 1);
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
+          /*A_k8ConLog("shooting fake blood!");*/
           A_CustomMissile("K8Gore_FlyingBloodFake", 0, 0, random(0, 360), CMF_AIMDIRECTION, random(0, 90));
         }
       }
@@ -59,9 +62,21 @@ Actor K8Gore_Blood : Blood /*: K8Gore_BloodBase*/ Replaces Blood {
       TNT1 AAAA 0 A_CustomMissile("K8Gore_FlyingBloodTrail", 0, 0, random (0, 360), CMF_AIMDIRECTION, random (0, 180))
       Stop
 
+    SpawnInNetServer:
+      TNT1 A 0
+      TNT1 A 8 /*A_k8ConLog("dying on the server")*/
+      Stop
+
+    NetDetachedOnClient:
+      TNT1 A 0
+      TNT1 A 1 /*A_k8ConLog("detached on the client")*/
+      Goto Spawn
+
+    /*
     Spray:
       TNT1 A 0 A_SetUserVar("user_spray", 1)
       Goto Spawn
+    */
   }
 }
 
@@ -78,6 +93,7 @@ Actor K8Gore_BloodHit : K8Gore_BloodBase {
   +CLIENTSIDEONLY
   +NoInteraction
   +CopyBloodTranslation
+  +k8DetachFromServer
   Scale 0.7
   Renderstyle Translucent
   Alpha 0.7
@@ -123,11 +139,13 @@ Actor K8Gore_FlyingBlood /*: K8Gore_BloodBase*/ {
   //+KillOnUnarchive
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   Mass 1
 
   States {
     Spawn:
       TNT1 A 0
+      /*TNT1 A 0 A_k8ConLog("fake blood missile!")*/
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
       //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
       //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
@@ -190,6 +208,7 @@ Actor K8Gore_FlyingBloodLevel3 : K8Gore_FlyingBlood {
   Speed 5 //7
   Mass 1
   //+KillOnUnarchive
+  +k8DetachFromServer
 }
 
 
@@ -217,6 +236,7 @@ Actor K8Gore_FlyingBloodTrail : K8Gore_BloodBase {
   +CopyBloodTranslation
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   Speed 2
 
   States {
@@ -275,6 +295,7 @@ Actor K8Gore_FlyingBloodFake : K8Gore_BloodBase {
   +CopyBloodTranslation
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   Mass 1
 
   States {
@@ -303,6 +324,7 @@ Actor K8Gore_FlyingBloodFakeNoDecal : K8Gore_FlyingBloodFake {
   
   Decal None
   -Decals2SPass
+  +k8DetachFromServer
 }
 
 
@@ -326,6 +348,7 @@ Actor K8Gore_BloodmistSmall : K8Gore_FlyingBlood {
   +CopyBloodTranslation
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   Scale 0.8
   Radius 2
   Height 2
@@ -382,6 +405,7 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   +NOBLOCKMAP
   +OrientedOfs
   +CopyBloodTranslation
+  +k8DetachFromServer
   //+NoInteraction
   Renderstyle Dark
   //!Alpha 0.99
@@ -524,6 +548,7 @@ Actor K8Gore_DetectCeilBloodSimpler : K8Gore_BloodBase {
   +NoExtremeDeath
   +NoLiftDrop
   +MOVEWITHSECTOR
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -586,6 +611,7 @@ Actor K8Gore_CeilBloodChecker : K8Gore_FlyingBlood {
   +MOVEWITHSECTOR
   +CLIENTSIDEONLY
   +k8ServerSideOnly
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -636,6 +662,7 @@ Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
   +NoTrigger
   Renderstyle Dark
   //!Alpha 0.99
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -646,6 +673,8 @@ Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
     DoAfterSpawn:
       "####" "#" 1
       // for network server, don't spawn dripping blood
+      //"####" "#" 0 A_JumpIf(IsNetServer, "DoFadeOut")
+      // it can be detached, allow local dripping blood on the client
       "####" "#" 0 A_JumpIf(IsNetServer, "DoFadeOut")
       "####" "#" 0
         {
@@ -719,6 +748,7 @@ Actor K8Gore_TinyBlood : K8Gore_BloodBase {
   //BounceFactor 0.01
   -DOOMBOUNCE
   +CopyBloodTranslation
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -754,6 +784,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawner : K8Gore_TinyBlood {
   +NoInteraction
   +SpawnCeiling
   +CopyBloodTranslation
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -784,6 +815,7 @@ Actor K8Gore_BloodDripingFromCeiling : K8Gore_TinyBlood {
   +NOBLOCKMAP
   //+KillOnUnarchive
   +CopyBloodTranslation
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -807,6 +839,7 @@ Actor K8Gore_DripingBloodLeavesSmallPool : K8Gore_TinyBlood {
   +NOBLOCKMAP
   +CopyBloodTranslation
   //+KillOnUnarchive
+  +k8DetachFromServer
   scale 0.3
 
   States {
@@ -864,6 +897,7 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
   -NoLiftDrop
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   DamageFactor "TeleportRemover", 100.0
   Renderstyle Dark
   //!Alpha 0.99
@@ -945,6 +979,7 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
   -NoLiftDrop
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   Scale 1.0
   Decal None
   -Decals2SPass
@@ -1020,6 +1055,7 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
 // ////////////////////////////////////////////////////////////////////////// //
 Actor K8Gore_Blood_SplatterReplacer : K8Gore_Blood Replaces BloodSplatter {
   
+  +k8DetachFromServer
 }
 
 
@@ -1042,6 +1078,7 @@ Actor K8Gore_BloodTransient /*: K8Gore_BloodBaseTransient*/ {
   +CLIENTSIDEONLY
   -ALLOWPARTICLES
   +CopyBloodTranslation
+  +k8DetachFromServer
   Scale 0.5
   Speed 0
 
@@ -1051,8 +1088,10 @@ Actor K8Gore_BloodTransient /*: K8Gore_BloodBaseTransient*/ {
     Spawn:
       TNT1 A 0
       TNT1 AAAA 0 {
+        /*A_k8ConLog("SPAWN!");*/
         if (Args[0] > 20) A_SetUserVar("user_spray", 1);
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
+          /*A_k8ConLog("shooting fake blood!");*/
           A_CustomMissile("K8Gore_FlyingBloodFakeTransient", 0, 0, random(0, 360), CMF_AIMDIRECTION, random(0, 90));
         }
       }
@@ -1074,9 +1113,21 @@ Actor K8Gore_BloodTransient /*: K8Gore_BloodBaseTransient*/ {
       TNT1 AAAA 0 A_CustomMissile("K8Gore_FlyingBloodTrailTransient", 0, 0, random (0, 360), CMF_AIMDIRECTION, random (0, 180))
       Stop
 
+    SpawnInNetServer:
+      TNT1 A 0
+      TNT1 A 8 /*A_k8ConLog("dying on the server")*/
+      Stop
+
+    NetDetachedOnClient:
+      TNT1 A 0
+      TNT1 A 1 /*A_k8ConLog("detached on the client")*/
+      Goto Spawn
+
+    /*
     Spray:
       TNT1 A 0 A_SetUserVar("user_spray", 1)
       Goto Spawn
+    */
   }
 }
 
@@ -1093,6 +1144,7 @@ Actor K8Gore_BloodHitTransient : K8Gore_BloodBaseTransient {
   +CLIENTSIDEONLY
   +NoInteraction
   +CopyBloodTranslation
+  +k8DetachFromServer
   Scale 0.7
   Renderstyle Translucent
   Alpha 0.7
@@ -1138,11 +1190,13 @@ Actor K8Gore_FlyingBloodTransient /*: K8Gore_BloodBaseTransient*/ {
   //+KillOnUnarchive
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   Mass 1
 
   States {
     Spawn:
       TNT1 A 0
+      /*TNT1 A 0 A_k8ConLog("fake blood missile!")*/
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
       //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
       //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
@@ -1205,6 +1259,7 @@ Actor K8Gore_FlyingBloodLevel3Transient : K8Gore_FlyingBloodTransient {
   Speed 5 //7
   Mass 1
   //+KillOnUnarchive
+  +k8DetachFromServer
 }
 
 
@@ -1232,6 +1287,7 @@ Actor K8Gore_FlyingBloodTrailTransient : K8Gore_BloodBaseTransient {
   +CopyBloodTranslation
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   Speed 2
 
   States {
@@ -1290,6 +1346,7 @@ Actor K8Gore_FlyingBloodFakeTransient : K8Gore_BloodBaseTransient {
   +CopyBloodTranslation
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   Mass 1
 
   States {
@@ -1318,6 +1375,7 @@ Actor K8Gore_FlyingBloodFakeNoDecalTransient : K8Gore_FlyingBloodFakeTransient {
   
   Decal None
   -Decals2SPass
+  +k8DetachFromServer
 }
 
 
@@ -1341,6 +1399,7 @@ Actor K8Gore_BloodmistSmallTransient : K8Gore_FlyingBloodTransient {
   +CopyBloodTranslation
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   Scale 0.8
   Radius 2
   Height 2
@@ -1397,6 +1456,7 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   +NOBLOCKMAP
   +OrientedOfs
   +CopyBloodTranslation
+  +k8DetachFromServer
   //+NoInteraction
   Renderstyle Dark
   //!Alpha 0.99
@@ -1534,6 +1594,7 @@ Actor K8Gore_DetectCeilBloodSimplerTransient : K8Gore_BloodBaseTransient {
   +NoExtremeDeath
   +NoLiftDrop
   +MOVEWITHSECTOR
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -1596,6 +1657,7 @@ Actor K8Gore_CeilBloodCheckerTransient : K8Gore_FlyingBloodTransient {
   +MOVEWITHSECTOR
   +CLIENTSIDEONLY
   +k8ServerSideOnly
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -1646,6 +1708,7 @@ Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
   +NoTrigger
   Renderstyle Dark
   //!Alpha 0.99
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -1656,6 +1719,8 @@ Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
     DoAfterSpawn:
       "####" "#" 1
       // for network server, don't spawn dripping blood
+      //"####" "#" 0 A_JumpIf(IsNetServer, "DoFadeOut")
+      // it can be detached, allow local dripping blood on the client
       "####" "#" 0 A_JumpIf(IsNetServer, "DoFadeOut")
       "####" "#" 0
         {
@@ -1729,6 +1794,7 @@ Actor K8Gore_TinyBloodTransient : K8Gore_BloodBaseTransient {
   //BounceFactor 0.01
   -DOOMBOUNCE
   +CopyBloodTranslation
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -1765,6 +1831,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawnerTransient : K8Gore_TinyBloodTransient {
   +NoInteraction
   +SpawnCeiling
   +CopyBloodTranslation
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -1795,6 +1862,7 @@ Actor K8Gore_BloodDripingFromCeilingTransient : K8Gore_TinyBloodTransient {
   +NOBLOCKMAP
   //+KillOnUnarchive
   +CopyBloodTranslation
+  +k8DetachFromServer
 
   States {
     Spawn:
@@ -1818,6 +1886,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient : K8Gore_TinyBloodTransient {
   +NOBLOCKMAP
   +CopyBloodTranslation
   //+KillOnUnarchive
+  +k8DetachFromServer
   scale 0.3
 
   States {
@@ -1875,6 +1944,7 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
   -NoLiftDrop
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   DamageFactor "TeleportRemover", 100.0
   Renderstyle Dark
   //!Alpha 0.99
@@ -1956,6 +2026,7 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
   -NoLiftDrop
   +NoTeleport
   +NoTrigger
+  +k8DetachFromServer
   Scale 1.0
   Decal None
   -Decals2SPass

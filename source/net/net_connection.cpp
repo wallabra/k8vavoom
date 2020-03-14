@@ -44,7 +44,7 @@ VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump r
 
 //FIXME: autoadjust this according to average ping
 static VCvarI net_speed_limit("net_speed_limit", "560000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
-//static VCvarI net_speed_limit("net_speed_limit", "36000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
+//static VCvarI net_speed_limit("net_speed_limit", "28000", "Network speed limit, bauds (rough).", 0/*CVAR_Archive*/);
 // the network layer will force packet sending after this interval
 static VCvarI net_keepalive("net_keepalive", "60", "Network keepalive time, in milliseconds.", 0);
 static VCvarF net_timeout("net_timeout", "4", "Network timeout, in seconds.", 0);
@@ -232,9 +232,11 @@ bool VNetConnection::IsTimeoutExceeded () {
   if (NetCon->LastMessageTime < 1) NetCon->LastMessageTime = Driver->GetNetTime();
   const double tout = clampval(net_timeout.asFloat(), 0.4f, 20.0f);
   if (Driver->GetNetTime()-LastReceiveTime <= tout) {
+    #if 0
     if (Driver->GetNetTime()-LastReceiveTime > 2.0) {
       GCon->Logf(NAME_DevNet, "%s: *** TIMEOUT IS NEAR! gtime=%g; lastrecv=%g; delta=%g", *GetAddress(), Driver->GetNetTime(), LastReceiveTime, Driver->GetNetTime()-LastReceiveTime);
     }
+    #endif
     return false;
   }
   // timeout!
@@ -906,10 +908,15 @@ void VNetConnection::Flush () {
           // `InPacketId` is the last highest packet we've seen, so send ack for it, why not
           PutOneAck(InPacketId);
         }
+        GCon->Logf(NAME_DevNet, "%s: created keepalive packet with acks; size is %d bits", *GetAddress(), Out.GetNumBits());
       }
-      GCon->Logf(NAME_DevNet, "%s: created keepalive packet with acks; size is %d bits", *GetAddress(), Out.GetNumBits());
       #endif
     } else {
+      #ifndef CLIENT
+      if (!AutoAck && IsKeepAliveExceeded()) {
+        GCon->Logf(NAME_DevNet, "%s: keex! bits=%d", *GetAddress(), Out.GetNumBits());
+      }
+      #endif
       ++Driver->packetsSent;
     }
 
