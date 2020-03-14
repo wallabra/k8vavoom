@@ -1555,6 +1555,7 @@ void NoBlockingSet () {
 override void Tick (float deltaTime) {
   //if (self isa PlayerPawn) print("*** PLAYERPAWN(%C): TICK!", self);
 
+  /*
   if (bIsPlayer && GetCvarB('k8TraceDebug')) {
     auto plr = PlayerEx(Player);
     trsplat_t tr;
@@ -1568,6 +1569,7 @@ override void Tick (float deltaTime) {
       print("*** thing %n: health=%d", GetClassName(tr.mobj.Class), tr.mobj.Health);
     }
   }
+  */
 
   Inventory Item;
 

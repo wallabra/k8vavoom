@@ -203,12 +203,15 @@ array!VMapSpecialAction SpecialActions;
 
 replication {
   reliable if (Role == ROLE_Authority)
-    LevelName, Cluster, ParTime, SuckTime, Sky1Texture, Sky2Texture,
+    LevelName, LevelNum, Cluster, ParTime, SuckTime, Sky1Texture, Sky2Texture,
     Sky1ScrollDelta, Sky2ScrollDelta, SkyBox, FadeTable, Fade, OutsideFog,
     SongLump, bDoubleSky, bLightning, bNoIntermission,
     bForceNoSkyStretch, bLookupName, TotalKills, TotalItems, TotalSecret,
-    CurrentKills, CurrentItems, CurrentSecret, CompletitionTime,
-    bNoFreelook;
+    CurrentKills, CurrentItems, CurrentSecret, CompletitionTime;
+
+  reliable if (Role == ROLE_Authority && bNetInitial)
+    bNoFreelook, bNoJump,
+    Gravity, AirControl;
 }
 
 

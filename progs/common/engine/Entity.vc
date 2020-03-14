@@ -409,11 +409,12 @@ replication {
   reliable if (Role == ROLE_Authority && bNetDetach)
     // see below for `PlaneAlpha`
     bNoTickGrav, bNoTickGravLifeTime, LastMoveTime, // this is required for "notick" entities
-    bNoGravity, bStickToFloor, bStickToCeiling;
+    bNoGravity, bStickToFloor, bStickToCeiling,
+    Velocity;
 
   reliable if (Role == ROLE_Authority && bNetInitial)
     Radius, Height, VanillaHeight, RenderRadius, FloatBobStrength,
-    DecalName, bIsPlayer;
+    /*DecalName,*/ bIsPlayer;
 
   reliable if (Role == ROLE_Authority && bNetInitial && bFloatBob)
     FloatBobPhase;

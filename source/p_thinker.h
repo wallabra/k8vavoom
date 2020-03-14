@@ -81,13 +81,9 @@ class VThinker : public VGameObject {
     TF_NetInitial       = 1u<<1,
     TF_NetOwner         = 1u<<2,
     TF_ServerSideOnly   = 1u<<3, // never sent to client (but `AlwaysRelevant` has priority)
-    // set this flag to detach the thinker from the server
-    // i.e. the server will destroy it, and the client should perform ticking for it
-    // the logic is like this: the server sets this flag on initial update, and
-    // waits for `Role` to change.
-    // when `Role` changes to `ROLE_Authority`, the client should take full control
-    // over the thinker.
-    //TF_DetachFromServer = 1u<<4,
+    // this flag will be set by network layer when the thinker is detached from
+    // the server, and its channel is closed (i.e. we got all the data)
+    TF_DetachComplete   = 1u<<4,
   };
   vuint32 ThinkerFlags;
 

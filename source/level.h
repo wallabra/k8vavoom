@@ -608,9 +608,14 @@ public:
   VThinker *SpawnThinker (VClass *AClass, const TVec &AOrigin=TVec(0, 0, 0),
                           const TAVec &AAngles=TAVec(0, 0, 0), mthing_t *mthing=nullptr,
                           bool AllowReplace=true, vuint32 srvUId=0);
+
   void AddThinker (VThinker *Th);
   void RemoveThinker (VThinker *Th);
   void DestroyAllThinkers ();
+
+  // called from netcode for client connection, after `LevelInfo` was received
+  void UpdateThinkersLevelInfo ();
+
   void TickDecals (float DeltaTime); // this should be called in `CL_UpdateMobjs()`
   void TickWorld (float DeltaTime);
 

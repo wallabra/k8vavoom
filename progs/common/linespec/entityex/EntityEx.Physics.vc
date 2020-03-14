@@ -81,6 +81,9 @@ final void GetFloorAndCeilingEx (out tmtrace_t tmtrace, TVec org, optional bool 
 //==========================================================================
 bool Physics (float DeltaTime) {
   //if (bIsPlayer) { printdebug("%C: bSlide=%B", self, bSlide); /*bSlide = true;*/ }
+  #ifdef CLIENT
+  //printdebug("%C: physics tick! (noint=%B) gravity=%s; delta=%s; vel=%s", self, bNoInteraction, Gravity, DeltaTime, Velocity);
+  #endif
 
   // GZDoom does it like this, so we should do it this way too
   if (bNoInteraction) {
@@ -629,6 +632,10 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
       }
     }
   }
+
+  #ifdef CLIENT
+  //printdebug("%C: physics tick! (noint=%B) gravity=%s; delta=%s; vel=%s; levgrav=%s", self, bNoInteraction, Gravity, DeltaTime, Velocity, Level.Gravity);
+  #endif
 
   //if (bFloatBob && bSpecial) printdebug("%C:%s: velocity.z=%s; nograv=%B; z=%s; floorz=%s", self, UniqueId, Velocity.z, bNoGravity, Origin.z, FloorZ);
 

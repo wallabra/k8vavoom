@@ -24,6 +24,9 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
+#ifdef CLIENT
+# include "cl_local.h"
+#endif
 
 
 extern VCvarB r_decals_enabled;
@@ -197,6 +200,39 @@ void VLevel::DestroyAllThinkers () {
   }
   ThinkerHead = nullptr;
   ThinkerTail = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VLevel::UpdateThinkersLevelInfo
+//
+//==========================================================================
+void VLevel::UpdateThinkersLevelInfo () {
+  if (!ThinkerHead) return;
+  int count = 0;
+  for (VThinker *th = ThinkerHead; th; th = th->Next) {
+    if (!th->Level) {
+      ++count;
+      th->Level = LevelInfo;
+    } else {
+      vassert(th->Level == LevelInfo);
+    }
+  }
+  GCon->Logf(NAME_Debug, "VLevel::UpdateThinkersLevelInfo: %d thinkers updated", count);
+  #ifdef CLIENT
+  //vassert(!LevelInfo->Game || LevelInfo->Game == GClGame->Game);
+  if (LevelInfo->Game) GCon->Logf(NAME_Debug, "*** LevelInfo->Game: %u", LevelInfo->Game->GetUniqueId());
+  GCon->Logf(NAME_Debug, "*** GGameInfo: %u", GGameInfo->GetUniqueId());
+  vassert(!LevelInfo->Game || LevelInfo->Game == GGameInfo);
+  //GLevelInfo->Game = GGameInfo;
+  //GLevelInfo->World = GGameInfo->WorldInfo;
+  LevelInfo->Game = GClGame->Game;
+  if (!LevelInfo->World) {
+    GCon->Log(NAME_Debug, "*** setting World...");
+    LevelInfo->World = GGameInfo->WorldInfo;
+  }
+  #endif
 }
 
 

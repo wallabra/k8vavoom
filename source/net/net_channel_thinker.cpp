@@ -227,7 +227,12 @@ void VThinkerChannel::Update () {
 
   // we need to set `EFEX_NetDetach` flag for replication condition checking if we're going to detach it
   const bool isServer = Connection->Context->IsServer();
-  const bool detachEntity = (isServer && !Connection->AutoAck && Ent && (Ent->FlagsEx&VEntity::EFEX_NoTickGrav));
+  bool detachEntity = (isServer && !Connection->AutoAck && Ent && (Ent->FlagsEx&VEntity::EFEX_NoTickGrav));
+
+  if (!detachEntity && isServer && !Connection->AutoAck && Ent && VStr::startsWith(Ent->GetClass()->GetName(), "K8Gore")) {
+    detachEntity = true;
+    //GCon->Logf(NAME_DevNet, "detaching Gore entity (%s)...", Ent->GetClass()->GetName());
+  }
 
   // temporarily set `bNetDetach`
   if (detachEntity) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
@@ -430,10 +435,13 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     //GCon->Logf(NAME_DevNet, "%s spawned thinker with class `%s`(%u)", *GetDebugName(), Th->GetClass()->GetName(), Th->GetUniqueId());
     if (Th->IsA(VLevelInfo::StaticClass())) {
       //GCon->Logf(NAME_DevNet, "*** %s: got LevelInfo, sending 'client_spawn' command", *GetDebugName());
+      vassert(Connection->Context->GetLevel() == GClLevel);
       VLevelInfo *LInfo = (VLevelInfo *)Th;
       LInfo->Level = LInfo;
       GClLevel->LevelInfo = LInfo;
+      GClLevel->UpdateThinkersLevelInfo();
       cl->Level = LInfo;
+      //k8: let's hope we got enough info here
       cl->Net->SendCommand("Client_Spawn\n");
       cls.signon = 1;
     }
@@ -527,5 +535,10 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
         OriginUpdated = true;
       }
     }
+  }
+
+  if (Connection->IsClient() && Msg.bClose && Thinker && Thinker->Role == ROLE_Authority) {
+    //GCon->Logf(NAME_Debug, "completed detaching for '%s'", Thinker->GetClass()->GetName());
+    Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
   }
 }

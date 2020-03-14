@@ -166,8 +166,10 @@ static void CL_UpdateMobjs (float deltaTime) {
       if (th->Role == ROLE_Authority) {
         //GCon->Logf(NAME_Debug, "%s:%u: client-local!", th->GetClass()->GetName(), th->GetUniqueId());
         // for local thinkers, call their ticker method first
-        th->Tick(deltaTime);
-        if (th->IsGoingToDie()) continue; // just in case
+        if (th->ThinkerFlags&VThinker::TF_DetachComplete) {
+          th->Tick(deltaTime);
+          if (th->IsGoingToDie()) continue; // just in case
+        }
       }
       th->eventClientTick(deltaTime);
     }
