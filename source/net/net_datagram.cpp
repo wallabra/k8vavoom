@@ -134,6 +134,14 @@ public:
     vuint8 data[MAX_DGRAM_SIZE];
   } packetBuffer;
 
+private:
+  VStr LastMasterAddrStr;
+  sockaddr_t LastMasterAddr;
+  bool LastMasterIsBad;
+
+private:
+  bool ResolveMasterAddr (VNetLanDriver *Drv);
+
 public:
   VDatagramDriver ();
 
@@ -181,6 +189,9 @@ static VDatagramDriver Impl;
 //==========================================================================
 VDatagramDriver::VDatagramDriver () : VNetDriver(1, "Datagram") {
   memset(&packetBuffer, 0, sizeof(packetBuffer));
+  memset((void *)&LastMasterAddr, 0, sizeof(LastMasterAddr));
+  LastMasterIsBad = true;
+  vassert(LastMasterAddrStr.isEmpty());
 }
 
 
@@ -882,17 +893,31 @@ VSocket *VDatagramDriver::CheckNewConnections () {
 
 //==========================================================================
 //
+//  VDatagramDriver::ResolveMasterAddr
+//
+//==========================================================================
+bool VDatagramDriver::ResolveMasterAddr (VNetLanDriver *Drv) {
+  if (LastMasterAddrStr == MasterSrv) return !LastMasterIsBad;
+  LastMasterAddrStr = MasterSrv;
+  if (Drv->GetAddrFromName(*LastMasterAddrStr, &LastMasterAddr, MASTER_SERVER_PORT) == -1) {
+    GCon->Logf(NAME_DevNet, "Could not resolve server name (%s)", *LastMasterAddrStr);
+    LastMasterIsBad = true;
+    return false;
+  }
+  GCon->Logf(NAME_DevNet, "resolved master address '%s' to '%s'", *LastMasterAddrStr, Drv->AddrToString(&LastMasterAddr));
+  LastMasterIsBad = false;
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VDatagramDriver::UpdateMaster
 //
 //==========================================================================
 void VDatagramDriver::UpdateMaster (VNetLanDriver *Drv) {
-  sockaddr_t sendaddr;
-
   // see if we can resolve the host name
-  if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1) {
-    GCon->Log(NAME_DevNet, "Could not resolve server name");
-    return;
-  }
+  if (!ResolveMasterAddr(Drv)) return;
 
   if (Drv->net_acceptsocket == -1) {
     GCon->Log(NAME_DevNet, "Listen socket not open");
@@ -910,7 +935,7 @@ void VDatagramDriver::UpdateMaster (VNetLanDriver *Drv) {
   MsgOut << TmpByte;
   TmpByte = NET_PROTOCOL_VERSION_LO;
   MsgOut << TmpByte;
-  Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
+  Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &LastMasterAddr);
 }
 
 
@@ -933,13 +958,8 @@ void VDatagramDriver::UpdateMaster () {
 //
 //==========================================================================
 void VDatagramDriver::QuitMaster (VNetLanDriver *Drv) {
-  sockaddr_t sendaddr;
-
   // see if we can resolve the host name
-  if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1) {
-    GCon->Log(NAME_DevNet, "Could not resolve server name");
-    return;
-  }
+  if (!ResolveMasterAddr(Drv)) return;
 
   if (Drv->net_acceptsocket == -1) {
     GCon->Log(NAME_DevNet, "Listen socket not open");
@@ -953,7 +973,7 @@ void VDatagramDriver::QuitMaster (VNetLanDriver *Drv) {
   MsgOut << TmpByte;
   TmpByte = MCREQ_QUIT;
   MsgOut << TmpByte;
-  Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
+  Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &LastMasterAddr);
 }
 
 
@@ -986,12 +1006,8 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
 
   Drv->GetSocketAddr(Drv->MasterQuerySocket, &myaddr);
   if (xmit) {
-    sockaddr_t sendaddr;
     // see if we can resolve the host name
-    if (Drv->GetAddrFromName(MasterSrv, &sendaddr, MASTER_SERVER_PORT) == -1) {
-      GCon->Log(NAME_DevNet, "Could not resolve server name");
-      return false;
-    }
+    if (!ResolveMasterAddr(Drv)) return false;
     // send the query request
     VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
     WriteGameSignature(MsgOut);
@@ -999,8 +1015,8 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     MsgOut << TmpByte;
     TmpByte = MCREQ_LIST;
     MsgOut << TmpByte;
-    Drv->Write(Drv->MasterQuerySocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
-    GCon->Logf(NAME_DevNet, "sent query to master at %s...", Drv->AddrToString(&sendaddr));
+    Drv->Write(Drv->MasterQuerySocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &LastMasterAddr);
+    GCon->Logf(NAME_DevNet, "sent query to master at %s...", Drv->AddrToString(&LastMasterAddr));
     return false;
   }
 

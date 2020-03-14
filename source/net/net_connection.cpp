@@ -211,9 +211,20 @@ int VNetConnection::GetNetSpeed () const noexcept {
 //
 //==========================================================================
 bool VNetConnection::IsKeepAliveExceeded () {
+  if (IsClosed()) return false; // no wai
+  if (AutoAck || IsLocalConnection()) return false;
   const double kt = clampval(net_keepalive.asInt(), 5, 1000)/1000.0;
   const double ctt = Driver->GetNetTime();
+  #if 1
   return (ctt-LastSendTime > kt);
+  #else
+  if (ctt-LastSendTime > kt) return true;
+  // also, if we're getting no data from the other side for a long time, send keepalive too
+  if (LastReceiveTime < 1) LastReceiveTime = Driver->GetNetTime();
+  if (NetCon->LastMessageTime < 1) NetCon->LastMessageTime = Driver->GetNetTime();
+  const double tout = clampval(net_timeout.asFloat(), 0.4f, 20.0f);
+  return (Driver->GetNetTime()-LastReceiveTime >= tout/3.0);
+  #endif
 }
 
 
