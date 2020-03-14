@@ -137,6 +137,7 @@ bool run_open_scripts = false;
 
 VBasePlayer *GPlayersBase[MAXPLAYERS];
 vuint8 deathmatch = 0; // only if started as net death
+bool TimerGameWarned = false;
 int TimerGame = 0; // for DM timelimit, in vanilla tics
 int FragGame = 0; // for DM fraglimit -- advance when somebody reaches this number of frags; "-1" means "calculate"
 VLevelInfo *GLevelInfo = nullptr;
@@ -902,12 +903,21 @@ static void SV_Ticker () {
       GLevel->TickWorld(host_frametime);
       //GCon->Logf("%d: ft=%f; ftleft=%f; Time=%f; tics=%d", (int)frameSkipped, host_frametime, oldft-GGameInfo->frametime, GLevel->Time, (int)GLevel->TicTime);
       // level timer
-      if (TimerGame > 0 && GLevel->TicTime >= TimerGame) {
-        TimerGame = 0;
-        FragGame = -1;
-        LeavePosition = 0;
-        completed = true;
-        timeLimitReached = true;
+      if (TimerGame > 0) {
+        if (GLevel->TicTime > TimerGame) {
+          TimerGame = 0;
+          FragGame = -1;
+          LeavePosition = 0;
+          completed = true;
+          timeLimitReached = true;
+        } else if (!TimerGameWarned && TimerGame-GLevel->TicTime <= 10*35) {
+          TimerGameWarned = true;
+          for (int i = 0; i < MAXPLAYERS; ++i) {
+            VBasePlayer *Player = GGameInfo->Players[i];
+            if (!Player || (Player->PlayerFlags&VBasePlayer::PF_IsBot)) continue;
+            if (Player->Net) Player->CenterPrintf("TIME LIMIT WILL BE REACHED IN 10 SECONDS!");
+          }
+        }
       }
       frametimeleft -= host_frametime /*currframetime*/; // next step
       frameSkipped = true;
@@ -927,6 +937,7 @@ static void SV_Ticker () {
         // setup time limit, so we won't teleport immediately after the last kill
         FragGame = 0;
         TimerGame = GLevel->TicTime+35*3; // three seconds
+        TimerGameWarned = true; // prevent warning
         GCon->Logf(NAME_Debug, "fraglimit timer activated!");
         for (int i = 0; i < MAXPLAYERS; ++i) {
           VBasePlayer *Player = GGameInfo->Players[i];
@@ -1559,6 +1570,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
     TimerGame = 0;
     FragGame = 0;
   }
+  TimerGameWarned = false;
 
   // set up world state
   Host_ResetSkipFrames();
