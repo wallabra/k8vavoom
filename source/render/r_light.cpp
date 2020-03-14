@@ -55,7 +55,6 @@ extern VCvarB r_glow_flat;
   if ((_dl)->ownerUId && !(_dl)->lightid) dlowners.del((_dl)->ownerUId); \
   (_dl)->lightid = 0; \
   (_dl)->ownerUId = 0; \
-  (_dl)->ownerUId = 0; \
 } while (0)
 
 
@@ -221,7 +220,7 @@ void VRenderLevelShared::PushDlights () {
       auto ownpp = suid2ent.find(l->ownerUId);
       if (ownpp) l->origin += (*ownpp)->GetDrawDelta();
     }
-    dlinfo[i].leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(l->origin)-Level->Subsectors);
+    if (dlinfo[i].leafnum < 0) dlinfo[i].leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(l->origin)-Level->Subsectors);
     //dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
     //MarkLights(l, 1U<<i, Level->NumNodes-1, dlinfo[i].leafnum);
     //FIXME: this has one frame latency; meh for now
@@ -263,14 +262,11 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   // if this is player's dlight, never drop it
   bool isPlr = false;
-  if (Owner) {
-    static VClass *eclass = nullptr;
-    if (!eclass) eclass = VClass::FindClass("Entity");
-    if (eclass && Owner->IsA(eclass)) {
-      VEntity *e = (VEntity *)Owner;
-      isPlr = ((e->EntityFlags&VEntity::EF_IsPlayer) != 0);
-    }
+  if (Owner && Owner->GetClass()->IsChildOf(VEntity::StaticClass())) {
+    isPlr = ((VEntity *)Owner)->IsPlayer();
   }
+
+  int leafnum = -1;
 
   if (!isPlr) {
     // if the light is behind a view, drop it if it is further than the light radius
@@ -292,8 +288,6 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       //const float rsqx = r_lights_radius+radius;
       //if (bestdist >= rsqx*rsqx) return nullptr;
     }
-
-    int leafnum = -1;
 
     // pvs check
     if (r_dynamic_clip_pvs && Level->HasPVS()) {
@@ -346,7 +340,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       //FIXME: make this faster!
       dl = DLights;
       for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
-        if (dl->ownerUId == Owner->ServerUId && dl->lightid == lightid && dl->die >= Level->Time && dl->radius > 0.0f) {
+        if (dl->ownerUId == Owner->ServerUId && dl->lightid == lightid /*&& dl->die >= Level->Time && dl->radius > 0.0f*/) {
           dlowner = dl;
           break;
         }
@@ -400,7 +394,13 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     dl = dlowner;
   } else {
     dl = dlreplace;
-    if (!dl) { dl = dldying; if (!dl) { dl = dlbestdist; if (!dl) return nullptr; } }
+    if (!dl) {
+      dl = dldying;
+      if (!dl) {
+        dl = dlbestdist;
+        if (!dl) return nullptr;
+      }
+    }
   }
 
   // tagged lights are not in the map
@@ -408,12 +408,14 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   // clean new light, and return it
   memset((void *)dl, 0, sizeof(*dl));
-  dl->ownerUId = Owner->ServerUId;
+  dl->ownerUId = (Owner ? Owner->ServerUId : 0);
   dl->origin = lorg;
   dl->radius = radius;
   dl->type = DLTYPE_Point;
   dl->lightid = lightid;
   if (isPlr) dl->flags |= dlight_t::PlayerLight;
+
+  dlinfo[(ptrdiff_t)(dl-DLights)].leafnum = leafnum;
 
   // tagged lights are not in the map
   if (!lightid && dl->ownerUId) dlowners.put(dl->ownerUId, (vuint32)(ptrdiff_t)(dl-&DLights[0]));
