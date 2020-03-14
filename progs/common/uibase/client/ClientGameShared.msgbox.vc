@@ -41,6 +41,7 @@ enum MsgBoxInputType {
   None,
   YesNo,
   Keybind,
+  Warning,
 }
 
 enum MessageBoxType {
@@ -52,6 +53,7 @@ enum MessageBoxType {
   Shareware,
   Nightmare,
   EndGame,
+  Warning,
 }
 
 
@@ -94,7 +96,8 @@ bool IsQuitPromptEnabled () {
 MsgBoxInputType GetMessageBoxInputType () {
   if (!msgboxState.active || !msgboxState.wantInput) return MsgBoxInputType.None;
   if (msgboxState.type == MessageBoxType.None) return MsgBoxInputType.None; //wtf?!
-  if (msgboxState.type == MessageBoxType.Shareware) return MsgBoxInputType.None; //wtf?!
+  if (msgboxState.type == MessageBoxType.Shareware) return MsgBoxInputType.Warning; //wtf?!
+  if (msgboxState.type == MessageBoxType.Warning) return MsgBoxInputType.Warning; //wtf?!
   if (msgboxState.type >= MessageBoxType.ControlAll && msgboxState.type <= MessageBoxType.ControlNonStrife) return MsgBoxInputType.Keybind; //wtf?!
   return MsgBoxInputType.YesNo;
 }
@@ -106,7 +109,21 @@ MsgBoxInputType GetMessageBoxInputType () {
 //
 //==========================================================================
 bool IsMessageBoxWithMenu () {
-  return (msgboxState.active && msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo);
+  return
+    msgboxState.active && msgboxState.wantInput &&
+    (GetMessageBoxInputType() == MsgBoxInputType.YesNo || GetMessageBoxInputType() == MsgBoxInputType.Warning);
+}
+
+
+//==========================================================================
+//
+//  IsMessageBoxSingleButton
+//
+//==========================================================================
+bool IsMessageBoxSingleButton () {
+  return
+    msgboxState.active && msgboxState.wantInput &&
+    GetMessageBoxInputType() == MsgBoxInputType.Warning;
 }
 
 
@@ -132,6 +149,7 @@ void QuitMessageBoxSound (name QuitSound) {
 //
 //==========================================================================
 void MessageBoxSetYesNoPos (bool yes) {
+  if (IsMessageBoxSingleButton()) yes = true; // "yes" is always at the top
   msgboxState.currYes = yes;
 }
 
@@ -179,7 +197,7 @@ void MessageBoxStartMessage (string text, MessageBoxType type, bool input) {
   wdt *= 16;
 
   int hgt = GRoot.TextHeight(text)+16;
-  if (IsMessageBoxWithMenu()) hgt += GetMessageBoxMenuItemHeight()*3;
+  if (IsMessageBoxWithMenu()) hgt += GetMessageBoxMenuItemHeight()*(IsMessageBoxSingleButton() ? 2 : 3);
   hgt = (hgt+15)/16;
   hgt *= 16;
 
@@ -219,7 +237,7 @@ void MessageBoxStartBindQuery (MenuControlKey currctl, int strifeMode) {
 //==========================================================================
 void MessageBoxShowSharewareWarning (optional string text) {
   if (!text) text = "ONLY AVAILABLE IN THE REGISTERED VERSION";
-  MessageBoxStartMessage(text, MessageBoxType.Shareware, input:false);
+  MessageBoxStartMessage(text, MessageBoxType.Shareware, input:true);
 }
 
 
@@ -243,6 +261,18 @@ void MessageBoxShowSkillQuery (string text) {
   text = TranslateString(text.xstrip);
   if (!text) text = "Are you sure? This skill level\nisn't even remotely fair.";
   MessageBoxStartMessage(text, MessageBoxType.Nightmare, true);
+}
+
+
+//==========================================================================
+//
+//  MessageBoxShowWarning
+//
+//==========================================================================
+override void MessageBoxShowWarning (string text) {
+  text = TranslateString(text.xstrip);
+  if (!text) return;
+  MessageBoxStartMessage(text, MessageBoxType.Warning, true);
 }
 
 
@@ -290,6 +320,8 @@ int MessageBoxGetMenuItemAt (int x, int y) {
   int fh = GetMessageBoxMenuItemHeight();
   int y0 = y-GetMessageBoxMenuTop();
   if (y0 < 0 || y0 >= fh*2) return -1;
+  if (y0 >= fh && IsMessageBoxSingleButton()) return -1;
+
   return y0/fh;
 }
 
@@ -324,15 +356,24 @@ override void MessageBoxDrawer () {
     GRoot.SetTextAlign(hcenter, vtop);
     //GRoot.DrawText(GetVirtualWidth()/2, GetVirtualHeight()/2, msgboxState.text);
     //GRoot.DrawText(GRoot.Width/2, GRoot.Height/2, msgboxState.text);
-    GRoot.DrawText(GRoot.Width/2, msgboxState.y+8, msgboxState.text);
+    if (GetMessageBoxInputType() == MsgBoxInputType.Warning) {
+      GRoot.DrawText(GRoot.Width/2, msgboxState.y+8, msgboxState.text, CR_RED);
+    } else {
+      GRoot.DrawText(GRoot.Width/2, msgboxState.y+8, msgboxState.text);
+    }
 
     // draw menu
     if (hasMenu) {
-      string yesText = (msgboxState.currYes ? va("\c[%s]%s\c-", YesMenuColor, YesMenuText) : YesMenuText);
-      string noText = (msgboxState.currYes ? NoMenuText : va("\c[%s]%s\c-", NoMenuColor, NoMenuText));
       GRoot.SetTextAlign(hcenter, vtop);
-      GRoot.DrawText(GRoot.Width/2, y0, yesText);
-      GRoot.DrawText(GRoot.Width/2, y0+fh, noText);
+      if (IsMessageBoxSingleButton()) {
+        string okText = va("\c[%s]%s\c-", YesMenuColor, "OK");
+        GRoot.DrawText(GRoot.Width/2, y0, okText);
+      } else {
+        string yesText = (msgboxState.currYes ? va("\c[%s]%s\c-", YesMenuColor, YesMenuText) : YesMenuText);
+        string noText = (msgboxState.currYes ? NoMenuText : va("\c[%s]%s\c-", NoMenuColor, NoMenuText));
+        GRoot.DrawText(GRoot.Width/2, y0, yesText);
+        GRoot.DrawText(GRoot.Width/2, y0+fh, noText);
+      }
     }
   }
 
@@ -352,14 +393,14 @@ override bool MessageBoxResponder (event_t *event) {
 
   // take care of any messages that need input
   if (msgboxState.active && event.type == ev_keydown) {
-    if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
+    if (msgboxState.wantInput && (GetMessageBoxInputType() == MsgBoxInputType.YesNo || GetMessageBoxInputType() == MsgBoxInputType.Warning)) {
       // menu selection
       if (event.keycode == K_ENTER || event.keycode == K_SPACE || event.keycode == K_MOUSE1) {
         // menu selection
-        event.keycode = (msgboxState.currYes ? K_y : K_n);
+        event.keycode = (msgboxState.currYes || IsMessageBoxSingleButton() ? K_y : K_n);
       } else if (event.keycode == K_ESCAPE || event.keycode == K_MOUSE2) {
         MessageBoxSetYesNoPos(false);
-        event.keycode = K_n;
+        event.keycode = (IsMessageBoxSingleButton() ? K_y : K_n);
       } else {
         switch (Widget.ConvertBoundKey(event.keycode)) {
           case K_UPARROW:
@@ -374,7 +415,7 @@ override bool MessageBoxResponder (event_t *event) {
           case K_SPACE:
           case K_MOUSE1:
             // menu selection
-            event.keycode = (msgboxState.currYes ? K_y : K_n);
+            event.keycode = (msgboxState.currYes || IsMessageBoxSingleButton() ? K_y : K_n);
             break;
           // translate some keypresses to answers
           case K_t:
@@ -386,7 +427,7 @@ override bool MessageBoxResponder (event_t *event) {
           case K_n:
           case K_ESCAPE:
             MessageBoxSetYesNoPos(false);
-            event.keycode = K_n;
+            event.keycode = (IsMessageBoxSingleButton() ? K_y : K_n);
             break;
           default:
             // eat other keys
@@ -408,6 +449,7 @@ override bool MessageBoxResponder (event_t *event) {
       case MessageBoxType.Shareware: SharewareResponse(event->data1); break;
       case MessageBoxType.Nightmare: VerifyNightmare(event->data1); break;
       case MessageBoxType.EndGame: EndGameResponse(event->data1); break;
+      case MessageBoxType.Warning: WarningResponse(event->data1); break;
     }
 
     CheckAndDeactivateUIMouse();
@@ -416,7 +458,10 @@ override bool MessageBoxResponder (event_t *event) {
 
   if (msgboxState.active && GRoot.bMouseEnabled && event.type == ev_uimouse) {
     //printdebug("mouse! x=%s; y=%s", GRoot.MouseX, GRoot.MouseY);
-    if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
+    if (msgboxState.wantInput &&
+        (GetMessageBoxInputType() == MsgBoxInputType.YesNo ||
+         GetMessageBoxInputType() == MsgBoxInputType.Warning))
+    {
       int idx = MessageBoxGetMenuItemAt(GRoot.MouseX, GRoot.MouseY);
       if (idx >= 0) MessageBoxSetYesNoPos(idx == 0);
       return true;
@@ -485,7 +530,7 @@ void ControlResponse (int key, int msgtype) {
 //
 //==========================================================================
 void VerifyNightmare (int ch) {
-  if (ch != K_y) return;
+  if (ch != K_y && ch != K_t) return;
   NewGame(SkillToConfirm);
 }
 
@@ -496,8 +541,19 @@ void VerifyNightmare (int ch) {
 //
 //==========================================================================
 void EndGameResponse (int ch) {
-  if (ch != K_y) return;
+  if (ch != K_y && ch != K_t) return;
   CmdBuf_AddText("Disconnect\n");
+}
+
+
+//==========================================================================
+//
+//  WarningResponse
+//
+//==========================================================================
+void WarningResponse (int ch) {
+  if (ch != K_y && ch != K_t) return;
+  msgboxState.active = false;
 }
 
 
@@ -566,4 +622,5 @@ void QuitResponse (int key) {
 //
 //==========================================================================
 void SharewareResponse (int key) {
+  WarningResponse(key);
 }

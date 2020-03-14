@@ -163,6 +163,7 @@ public:
   void eventSetMenu (VStr Name) { static VMethodProxy method("SetMenu"); vobjPutParamSelf(Name); VMT_RET_VOID(method); }
   void eventGetAllMenuNames (TArray<VStr> &list, int mode) { static VMethodProxy method("GetAllMenuNames"); vobjPutParamSelf(&list, mode); VMT_RET_VOID(method); }
 
+  void eventMessageBoxShowWarning (VStr text) { static VMethodProxy method("MessageBoxShowWarning"); vobjPutParamSelf(text); VMT_RET_VOID(method); }
   void eventMessageBoxDrawer () { static VMethodProxy method("MessageBoxDrawer"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   bool eventMessageBoxResponder (event_t *event) { static VMethodProxy method("MessageBoxResponder"); vobjPutParamSelf(event); VMT_RET_BOOL(method); }
   bool eventMessageBoxActive () { static VMethodProxy method("MessageBoxActive"); vobjPutParamSelf(); VMT_RET_BOOL(method); }

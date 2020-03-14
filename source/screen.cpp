@@ -657,7 +657,7 @@ void SCR_Update (bool fullUpdate) {
     // various on-screen statistics
     DrawFPS();
 
-    if (clWipeTimer >= 0.0f) {
+    if (clWipeTimer >= 0.0f && (!GLevel || GLevel->TicTime >= serverStartRenderFramesTic)) {
       // fix wipe timer
       const double ctt = Sys_Time();
       if (allowWipeStart) {
@@ -670,6 +670,10 @@ void SCR_Update (bool fullUpdate) {
       } else {
         Drawer->RenderWipe(-1.0f);
       }
+    }
+
+    if ((!GLevel || GLevel->TicTime >= serverStartRenderFramesTic) && clWipeTimer < 0.0f) {
+      MN_CheckStartupWarning();
     }
   } else if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && /*!GClGame->InIntermission()*/CL_IsInGame()) {
     T_SetFont(SmallFont);

@@ -53,6 +53,7 @@ detector "SkullDash EE" {
 detector "Boringternity" {
   info {
     type = "pwad";
+    warning = "Eviternity is not fully supported.\nYou may encounter various problems.";
   }
 
   preconditions {

@@ -34,6 +34,8 @@ enum {
 };
 */
 
+VStr flWarningMessage;
+
 
 struct VDetectorInfo {
 public:
@@ -47,6 +49,7 @@ public:
 public:
   VStr name;
   bool showMessage;
+  VStr warningMessage;
   VStr type;
   // preconditions
   int zscriptLumpCheck; // -1: don't care
@@ -68,6 +71,7 @@ public:
   inline VDetectorInfo () noexcept
     : name()
     , showMessage(true)
+    , warningMessage()
     , type("mod")
     //
     , zscriptLumpCheck(-1)
@@ -205,6 +209,7 @@ void VDetectorInfo::parseInfo (VScriptParser *sc) {
   sc->Expect("{");
   while (!sc->Check("}")) {
          if (sc->Check("showmessage")) showMessage = !!parseBool(sc);
+    else if (sc->Check("warning")) warningMessage = parseString(sc);
     else if (sc->Check("type")) type = parseString(sc);
     else sc->Error(va("unknown info command '%s'", *sc->String));
   }
@@ -372,9 +377,11 @@ static int detectFromList (FSysModDetectorHelper &hlp, int seenZScriptLump) {
   int res = AD_NONE;
 
   for (auto &&dc : detectorList) {
+    //GCon->Logf(NAME_Debug, "detecting '%s'... (000)", *dc->name);
     // zscript?
     if (dc->zscriptLumpCheck == 0 && seenZScriptLump >= 0) continue;
     if (dc->zscriptLumpCheck > 0 && seenZScriptLump < 0) continue;
+    //GCon->Logf(NAME_Debug, "detecting '%s'... (001)", *dc->name);
     // check title
     if (!dc->gameTitle.isEmpty()) {
       if (!titlescanned) { titlescanned = true; loadGameTitles(hlp, titles); }
@@ -387,7 +394,12 @@ static int detectFromList (FSysModDetectorHelper &hlp, int seenZScriptLump) {
     bool failed = false;
     for (auto &&fli : dc->reqiredContent) {
       if (fli.asLump) {
-        if (!hlp.hasLump(*fli.name, fli.size, *fli.md5)) failed = true;
+        if (fli.name.stripExtension().strEquCI("zscript")) {
+          if (seenZScriptLump < 0 || !hlp.checkLump(seenZScriptLump, fli.size, *fli.md5)) failed = true;
+        } else {
+          if (!hlp.hasLump(*fli.name, fli.size, *fli.md5)) failed = true;
+        }
+        //GCon->Logf(NAME_Debug, "detecting '%s'... (002): lump=<%s>, size=%d; md5=<%s>; failed=%d", *dc->name, *fli.name, fli.size, *fli.md5, (int)failed);
       } else {
         if (!hlp.hasFile(*fli.name, fli.size, *fli.md5)) failed = true;
       }
@@ -401,6 +413,10 @@ static int detectFromList (FSysModDetectorHelper &hlp, int seenZScriptLump) {
       } else {
         GCon->Logf(NAME_Init, "Detected %s: %s", *dc->type, *dc->name);
       }
+    }
+    if (!dc->warningMessage.isEmpty()) {
+      if (!flWarningMessage.isEmpty()) flWarningMessage += "\n\n";
+      flWarningMessage += dc->warningMessage;
     }
     // "detected", don't stop
     res = -1;

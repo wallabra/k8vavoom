@@ -73,6 +73,19 @@ void MN_DeactivateMenu () {
 
 //==========================================================================
 //
+//  MN_CheckStartupWarning
+//
+//==========================================================================
+void MN_CheckStartupWarning () {
+  if (!GClGame) return;
+  if (flWarningMessage.isEmpty()) return;
+  GClGame->eventMessageBoxShowWarning(flWarningMessage);
+  flWarningMessage.clear();
+}
+
+
+//==========================================================================
+//
 //  MN_Responder
 //
 //==========================================================================

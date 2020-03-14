@@ -116,6 +116,7 @@ extern int cli_CompileAndExit;
 extern int cli_NoExternalDeh;
 extern int cli_GoreMod; // !=0: enabled
 
+extern VStr flWarningMessage;
 
 int FL_GetNetWadsCount ();
 vuint32 FL_GetNetWadsHash ();
