@@ -1275,8 +1275,8 @@ bool VNetConnection::IsRelevant (VThinker *th) {
   if (!Ent->Sector) return false; // just in case
   if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) return false;
   // if we're in coop, always transmit other players (we need them for the automap)
-  if (!deathmatch && Ent->IsPlayer() && Ent->Player && Ent->Player->MO == Ent &&
-      (Ent->Player->PlayerFlags&VBasePlayer::PF_Spawned))
+  if (!deathmatch && Ent->IsPlayer() && !Ent->IsRealCorpse() &&
+      Ent->Player && Ent->Player->MO == Ent && (Ent->Player->PlayerFlags&VBasePlayer::PF_Spawned))
   {
     //GCon->Logf(NAME_DevNet, "%s: client #%d", *GetAddress(), Ent->Player->ClientNum);
     return true;
