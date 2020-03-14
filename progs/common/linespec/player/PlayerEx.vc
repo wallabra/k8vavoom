@@ -3427,7 +3427,18 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
     //printdebug("%C: PostTravel inventory (%C:%s):", self, PP, PP.UniqueId);
     //for (auto inv = PP.Inventory; inv; inv = inv.Inventory) printdebug("  %C: owner=%C(%s); MO=%C(%s)", inv, inv.Owner, (inv.Owner ? inv.Owner.UniqueId : 0), MO, MO.UniqueId);
     if (ResetInventory) {
-      while (PP.Inventory) PP.Inventory.Destroy();
+      //while (PP.Inventory) PP.Inventory.Destroy();
+      //FIXME!!!
+      // for some reason, bot inventory sometimes refusing to go; wtf?!
+      auto pinv = PP.Inventory;
+      while (pinv) {
+        auto pnext = pinv.Inventory;
+        //printdebug("%C: going to destroy inventory item '%C' (owner=%C %B) (inv=%C; next=%C)", PP, pinv, pinv.Owner, (pinv.Owner == PP), PP.Inventory, pnext);
+        delete pinv;
+        if (PP.Inventory != pnext) printdebug("%C: inventory item '%C' refused to go (owner=%C %B)", PP, PP.Inventory, PP.Inventory.Owner, (PP.Inventory.Owner == PP));
+        pinv = pnext;
+      }
+      PP.Inventory = none;
       AddDefaultInventory();
     } else if (Level.bResetItems && !GetCvarB('sv_ignore_reset_items')) {
       Inventory inv = PP.Inventory;
