@@ -161,7 +161,7 @@ override void Init () {
   CreateCvarBool('plr_allow_damage_thrust', true, "Can the player be knocked back when damaged?", CVAR_ARCHIVE); // prevrel was 0
   CreateCvarBool('autoaim', true, "Should weapons autoaim?", CVAR_ARCHIVE);
   CreateCvarBool('k8HitscanAutoAim', false, "Enable autoaim for hitscan weapon?", CVAR_ARCHIVE); // prevrel was 1
-  CreateCvarBool('monster_dropoff', true, "Should monsters try to move away if hanging over dropoff?", CVAR_ARCHIVE); // prevrel was 0
+  CreateCvarBool('monster_dropoff', false, "Should monsters try to move away if hanging over dropoff?", CVAR_ARCHIVE); // prevrel was 0
   // this one is only used in Hexen for now, but it could come in handy for other games if needed
   CreateCvarBool('alternate_monster_attacks', false, "Alternate monster attacks in Hexen?", CVAR_ARCHIVE);
   CreateCvarBool('wpn_autoswitch', IsReleaseMode, "Should we autoswitch to new weapon?", CVAR_ARCHIVE);
