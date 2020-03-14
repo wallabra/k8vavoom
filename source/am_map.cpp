@@ -1784,10 +1784,10 @@ static void AM_drawPlayers () {
   // draw self
   AM_drawOnePlayer(cl->ViewOrg.x, cl->ViewOrg.y, cl->ViewAngles.yaw, true);
   // draw other players in coop mode
-  if (GGameInfo->NetMode <= NM_Standalone || GGameInfo->deathmatch) return;
+  if (!GClGame || GGameInfo->NetMode <= NM_Standalone || /*GGameInfo->deathmatch*/GClGame->deathmatch) return;
   //GCon->Logf(NAME_Debug, "AUTOMAP: looking for other players...");
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
-    if (!Ent->IsPlayer()) continue;
+    if (!Ent->IsPlayer() || Ent->IsRealCorpse()) continue;
     if (*Ent == cl->MO) continue;
     //if (!(Ent->Player->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
     AM_drawOnePlayer(Ent->Origin.x, Ent->Origin.y, Ent->Angles.yaw, false);

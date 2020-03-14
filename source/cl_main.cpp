@@ -547,6 +547,10 @@ void CL_Clear () {
 //==========================================================================
 void CL_ReadFromServerInfo () {
   VCvar::SetCheating(!!VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "sv_cheats")));
+  if (GGameInfo->NetMode == NM_Client) {
+    GGameInfo->deathmatch = VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "DeathMatch"));
+    //GCon->Logf(NAME_Debug, "deathmatch mode is %u", GGameInfo->deathmatch);
+  }
 }
 
 

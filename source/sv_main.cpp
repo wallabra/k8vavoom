@@ -137,7 +137,8 @@ bool run_open_scripts = false;
 
 VBasePlayer *GPlayersBase[MAXPLAYERS];
 vuint8 deathmatch = 0; // only if started as net death
-int TimerGame = 0;
+int TimerGame = 0; // for DM timelimit, in vanilla tics
+int FragGame = 0; // for DM fraglimit -- advance when somebody reaches this number of frags; "-1" means "calculate"
 VLevelInfo *GLevelInfo = nullptr;
 int LeavePosition = 0;
 bool completed = false;
@@ -150,12 +151,13 @@ static int mapteleport_flags = 0;
 static int mapteleport_skill = -1;
 static bool mapteleport_executed = false; // used for netgame autoteleport
 
-static VCvarI TimeLimit("TimeLimit", "0", "TimeLimit mode?", 0/*CVAR_PreInit*/);
-VCvarB NoExit("NoExit", false, "Disable exiting in deathmatch?", 0/*CVAR_PreInit*/);
+static VCvarI TimeLimit("TimeLimit", "0", "Deathmatch time limit, in minutes (0 means 'none').", CVAR_ServerInfo);
+static VCvarI FragLimit("FragLimit", "0", "Deathmatch frag limit (0 means 'none')", CVAR_ServerInfo);
+VCvarB NoExit("NoExit", false, "Disable exiting in deathmatch?", CVAR_ServerInfo/*CVAR_PreInit*/);
 static VCvarI DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo);
 VCvarB NoMonsters("NoMonsters", false, "NoMonsters mode?", 0/*CVAR_PreInit*/);
 VCvarI Skill("Skill", "3", "Skill level.", 0/*CVAR_PreInit*/);
-VCvarB sv_cheats("sv_cheats", false, "Allow cheats in network game?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
+VCvarB sv_cheats("sv_cheats", false, "Allow cheats in network game?", CVAR_ServerInfo|/*CVAR_Latch|*/CVAR_PreInit);
 static VCvarB sv_barrel_respawn("sv_barrel_respawn", false, "Respawn barrels in network game?", CVAR_Archive|/*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
 static VCvarB sv_pushable_barrels("sv_pushable_barrels", true, "Pushable barrels?", CVAR_Archive|/*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
 VCvarB sv_decoration_block_projectiles("sv_decoration_block_projectiles", false, "Should decoration things block projectiles?", CVAR_Archive|/*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
@@ -716,6 +718,8 @@ static void SV_RunPlayerTick (VBasePlayer *Player, bool skipFrame) {
 //
 //==========================================================================
 static void SV_RunClients (bool skipFrame=false) {
+  int currMaxFrags = 0;
+
   // get commands
   for (int i = 0; i < MAXPLAYERS; ++i) {
     VBasePlayer *Player = GGameInfo->Players[i];
@@ -742,6 +746,7 @@ static void SV_RunClients (bool skipFrame=false) {
       Player->Net->GetMessages();
       Player->Net->Tick();
     }
+    currMaxFrags = max2(currMaxFrags, Player->Frags);
 
     // pause if in menu or console and at least one tic has been run
     if ((Player->PlayerFlags&VBasePlayer::PF_Spawned) && !sv.intermission && !GGameInfo->IsPaused()) {
@@ -750,6 +755,12 @@ static void SV_RunClients (bool skipFrame=false) {
       }
       SV_RunPlayerTick(Player, skipFrame);
     }
+  }
+
+  if (FragGame < 0) {
+    const int fl = FragLimit.asInt();
+    FragGame = (fl <= 0 ? 0 : currMaxFrags+fl);
+    GCon->Logf(NAME_Debug, "*** FRAGLIMIT set to %d (current max is %d, FragLimit is %d)", FragGame, currMaxFrags, FragLimit.asInt());
   }
 
   //GCon->Logf(NAME_Debug, "*** IMS: %d (demo=%p : %d)", (int)sv.intermission, GDemoRecordingContext, (int)cls.demorecording);
@@ -891,8 +902,9 @@ static void SV_Ticker () {
       GLevel->TickWorld(host_frametime);
       //GCon->Logf("%d: ft=%f; ftleft=%f; Time=%f; tics=%d", (int)frameSkipped, host_frametime, oldft-GGameInfo->frametime, GLevel->Time, (int)GLevel->TicTime);
       // level timer
-      if (TimerGame && TimerGame >= GLevel->TicTime) {
+      if (TimerGame > 0 && GLevel->TicTime >= TimerGame) {
         TimerGame = 0;
+        FragGame = -1;
         LeavePosition = 0;
         completed = true;
         timeLimitReached = true;
@@ -901,6 +913,28 @@ static void SV_Ticker () {
       frameSkipped = true;
     }
     if (!runClientsCalled) SV_RunClients(true);
+    // check frags
+    if (!completed && FragGame > 0) {
+      //static int lastMaxFrags = -1;
+      int maxFrags = 0;
+      for (int i = 0; i < MAXPLAYERS; ++i) {
+        VBasePlayer *Player = GGameInfo->Players[i];
+        if (!Player) continue;
+        maxFrags = max2(maxFrags, Player->Frags);
+      }
+      //if (maxFrags != lastMaxFrags) { GCon->Logf(NAME_Debug, "MAX FRAGS: %d; LIMIT: %d", maxFrags, FragGame); lastMaxFrags = maxFrags; }
+      if (maxFrags >= FragGame) {
+        // setup time limit, so we won't teleport immediately after the last kill
+        FragGame = 0;
+        TimerGame = GLevel->TicTime+35*3; // three seconds
+        GCon->Logf(NAME_Debug, "fraglimit timer activated!");
+        for (int i = 0; i < MAXPLAYERS; ++i) {
+          VBasePlayer *Player = GGameInfo->Players[i];
+          if (!Player || (Player->PlayerFlags&VBasePlayer::PF_IsBot)) continue;
+          if (Player->Net) Player->CenterPrintf("FRAGLIMIT REACHED, ACTIVATED ENDGAME TIMER!");
+        }
+      }
+    }
     if (completed) G_DoCompleted(timeLimitReached);
     // remember fractional frame time
     host_frametime = saved_frametime;
@@ -1518,9 +1552,12 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   }
 
   if (deathmatch) {
-    TimerGame = TimeLimit*35*60;
+    TimerGame = max2(0, TimeLimit.asInt()*35*60);
+    const int fl = FragLimit.asInt();
+    FragGame = (fl <= 0 ? 0 : -1); // calculate on the next tick
   } else {
     TimerGame = 0;
+    FragGame = 0;
   }
 
   // set up world state
