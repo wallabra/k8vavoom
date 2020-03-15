@@ -323,6 +323,32 @@ void VLevelChannel::SendMapLoaded () {
 
 //==========================================================================
 //
+//  VLevelChannel::BuildUpdateSets
+//
+//==========================================================================
+void VLevelChannel::BuildUpdateSets () {
+  UpdatedLines.reset();
+  UpdatedSides.reset();
+  if (!Connection || Connection->IsClosed()) return; // just in case
+  for (auto &&it : Connection->UpdatedSectors.first()) {
+    sector_t *sec = &Level->Sectors[it.getKey()];
+    // process all lines
+    line_t **lines = sec->lines;
+    for (int f = sec->linecount; f > 0; --f, ++lines) {
+      line_t *line = *lines;
+      if (!UpdatedLines.put((vint32)(ptrdiff_t)(line-&Level->Lines[0]), true)) {
+        // new line, add sides
+        if (line->sidenum[0] >= 0 && line->sidenum[0] < Level->NumSides) UpdatedSides.put(line->sidenum[0], true);
+        if (line->sidenum[1] >= 0 && line->sidenum[1] < Level->NumSides) UpdatedSides.put(line->sidenum[1], true);
+      }
+    }
+  }
+  //GCon->Logf(NAME_Debug, "optimised: %d/%d sectors, %d/%d lines, %d/%d sides", Connection->UpdatedSectors.length(), Level->NumSectors, UpdatedLines.length(), Level->NumLines, UpdatedSides.length(), Level->NumSides);
+}
+
+
+//==========================================================================
+//
 //  VLevelChannel::UpdateLine
 //
 //==========================================================================
@@ -1465,6 +1491,19 @@ bool VLevelChannel::ParseStaticLight (VMessageIn &Msg) {
 }
 
 
+#define GEN_FAST_UPDATE(name_,hashname_) do { \
+  /*GCon->Log(NAME_DevNet, "VLevelChannel::Update -- " #name_ "s");*/ \
+  for (auto &&it : hashname_.first()) { \
+    int res = Update##name_(Msg, strm, it.getKey()); \
+    if (res == -1) return; \
+    if (res > 0) { \
+      PutStream(&Msg, strm); \
+      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; } \
+    } \
+  } \
+} while (0)
+
+
 #define GEN_UPDATE(name_) do { \
   /*GCon->Log(NAME_DevNet, "VLevelChannel::Update -- " #name_ "s");*/ \
   for (int i = 0; i < Level->Num ## name_ ## s; ++i) { \
@@ -1474,7 +1513,7 @@ bool VLevelChannel::ParseStaticLight (VMessageIn &Msg) {
       return; \
     } \
     if (res > 0) { \
-      GCon->Logf(NAME_DevNet, "  flushing item #%d", i); \
+      /*GCon->Logf(NAME_DevNet, "  flushing item #%d", i);*/ \
       PutStream(&Msg, strm); \
       if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; } \
     } \
@@ -1505,12 +1544,23 @@ void VLevelChannel::Update () {
   // if network connection is saturated, do nothing
   if (!CanSendData()) { Connection->NeedsUpdate = true; return; }
 
+  BuildUpdateSets();
+
+  if (UpdatedLines.length() == 0 && UpdatedSides.length() == 0) return;
+
   VMessageOut Msg(this);
   VBitStreamWriter strm(MAX_MSG_SIZE_BITS+64, false); // no expand
 
+  GEN_FAST_UPDATE(Line, UpdatedLines);
+  GEN_FAST_UPDATE(Side, UpdatedSides);
+  GEN_FAST_UPDATE(Sector, Connection->UpdatedSectors);
+
+  /*
   GEN_UPDATE(Line);
   GEN_UPDATE(Side);
   GEN_UPDATE(Sector);
+  */
+
   GEN_UPDATE(PolyObj);
   GEN_UPDATE_ARR(CameraTexture);
   GEN_UPDATE_ARR(Translation);

@@ -366,7 +366,14 @@ public:
 
   int StaticLightsNext;
 
+  // build by `BuildUpdateSets()`
+  TMapNC<vint32, bool> UpdatedLines;
+  TMapNC<vint32, bool> UpdatedSides;
+
 protected:
+  // connection fat PVS must be built
+  void BuildUpdateSets ();
+
   // updaters returns 1 if the stream should be sent, or -1 if we should abort updating
   // parsers returns `false` on any error
 
@@ -638,8 +645,18 @@ public:
   TMapNC<VThinker *, VThinkerChannel *> ThinkerChannels;
 
 private:
-  vuint8 *UpdatePvs;
-  int UpdatePvsSize;
+  // subsectors
+  //vuint8 *UpdatePvs;
+  //int UpdatePvsSize;
+
+public:
+  // hash tables, to speed up various updates
+  // built with fat PVS
+  TMapNC<vint32, bool> UpdatedSubsectors;
+  TMapNC<vint32, bool> UpdatedSectors;
+
+private:
+  // `LeafPvs` was meant to point to glVIS info, but it is currently disabled
   const vuint8 *LeafPvs;
   VViewClipper Clipper;
   // this is used in `VNetConnection::UpdateLevel()`
@@ -763,9 +780,8 @@ public:
   void LoadedNewLevel (bool keepObjMapSent=false);
   void ResetLevel ();
 
-  bool SecCheckFatPVS (sector_t *);
-  bool SubsecCheckFatPVS (subsector_t *);
-  int CheckFatPVS (subsector_t *);
+  bool SecCheckFatPVS (const sector_t *Sec);
+  bool CheckFatPVS (const subsector_t *Subsector);
 
   // used by client to lower rendering speed
   // this is hack for my GPU
@@ -774,6 +790,8 @@ public:
 protected:
   void SetupFatPVS ();
   void SetupPvsNode (int, float *);
+  void PvsMarkExtra (sector_t *sec);
+  void PvsAddSector (sector_t *sec);
 
 protected:
   // used in `UpdateLevel()`
