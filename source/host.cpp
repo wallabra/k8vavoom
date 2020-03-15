@@ -98,7 +98,7 @@ VCvarB k8vavoom_developer_version("__k8vavoom_developer_version", CVAR_K8_DEV_VA
 int host_frametics = 0; // used only in non-realtime mode
 double host_frametime = 0;
 double host_framefrac = 0; // unused frame time left from previous `SV_Ticker()` in realtime mode
-double host_time = 0;
+double host_time = 0; // used in UI and network heartbits; accumulates frame times
 double systime = 0; // current `Sys_Time()`; used for consistency, updated in `FilterTime()`
 int host_framecount = 0;
 

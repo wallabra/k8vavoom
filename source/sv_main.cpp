@@ -164,7 +164,7 @@ static VCvarB sv_pushable_barrels("sv_pushable_barrels", true, "Pushable barrels
 VCvarB sv_decoration_block_projectiles("sv_decoration_block_projectiles", false, "Should decoration things block projectiles?", CVAR_Archive|/*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
 static VCvarB split_frame("split_frame", true, "Splitframe mode?", CVAR_Archive|CVAR_PreInit);
 static VCvarI sv_maxmove("sv_maxmove", "400", "Maximum allowed network movement.", CVAR_Archive);
-static VCvarF master_heartbeat_time("master_heartbeat_time", "3", "Master server heartbit interval, seconds.", CVAR_Archive|CVAR_PreInit);
+static VCvarI master_heartbeat_time("master_heartbeat_time", "3", "Master server heartbeat interval, minutes.", CVAR_Archive|CVAR_PreInit);
 
 static VServerNetContext *ServerNetContext = nullptr;
 
@@ -811,11 +811,15 @@ static void SV_RunClients (bool skipFrame=false) {
 //
 //==========================================================================
 static void SV_UpdateMaster () {
-  if (GGameInfo->NetMode >= NM_DedicatedServer &&
-      (!LastMasterUpdate || host_time-LastMasterUpdate > master_heartbeat_time))
-  {
+  if (GGameInfo->NetMode != NM_DedicatedServer && GGameInfo->NetMode != NM_ListenServer) {
+    LastMasterUpdate = 0;
+    return;
+  }
+  const double hbt = clampval(master_heartbeat_time.asInt(), 1, 60)*60.0;
+  if (LastMasterUpdate <= 0.0 || systime-LastMasterUpdate >= hbt) {
     GNet->UpdateMaster();
-    LastMasterUpdate = host_time;
+    // randomise update time a little
+    LastMasterUpdate = systime+(RandomFull()-RandomFull())*8;
   }
 }
 
