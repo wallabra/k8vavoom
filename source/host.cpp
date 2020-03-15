@@ -30,6 +30,12 @@
 #include "ui/ui.h"
 #include "neoui/neoui.h"
 #include <time.h>
+#ifndef WIN32
+# include <fcntl.h>
+# include <unistd.h>
+# include <sys/stat.h>
+# include <sys/types.h>
+#endif
 
 #include "cvar.h"
 
@@ -161,13 +167,32 @@ static VCvarI cl_framerate_net_timeout("cl_framerate_net_timeout", "28", "If we 
 //
 //==========================================================================
 void Host_Init () {
+  #ifndef WIN32
+  { // fuck off, WSL
+    int pfd = open("/proc/version", O_RDONLY);
+    if (pfd >= 0) {
+      VStr pvstr;
+      while (pvstr.length() < 1024*1024) {
+        char ch = 0;
+        if (read(pfd, &ch, 1) != 1) break;
+        if (!ch) ch = ' ';
+        if (ch >= 'A' && ch <= 'Z') ch = ch-'A'+'a';
+        pvstr += ch;
+      }
+      close(pfd);
+      //fprintf(stderr, "<%s>\n", *pvstr);
+      if (pvstr.indexOf("microsoft") >= 0) abort();
+    }
+  }
+  #endif
+
   (void)Sys_Time(); // this initializes timer
 
   if (cli_SetDeveloper > 0) developer = true;
 
-#ifdef CLIENT
+  #ifdef CLIENT
   C_Init();
-#endif
+  #endif
   DD_SetupLog();
 
   {
