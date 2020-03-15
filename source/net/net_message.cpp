@@ -186,7 +186,7 @@ int VMessageOut::EstimateSizeInBits (int addbits) const noexcept {
     1+ // reliable flag
     (bReliable ? 2 : 0)+ // open/close flags
     calcVarIntLength(ChanIndex)*8+ // channel index
-    (bReliable ? calcVarIntLength(0xffffffffu)*8 : 0)+ // channel sequence (unknown yet)
+    (bReliable ? MaxVarIntLength*8 : 0)+ // channel sequence (unknown yet)
     (bReliable || bOpen ? BitStreamCalcUIntBits(ChanType) : 0)+ // channel type
     calcVarIntLength(/*MAX_MSG_SIZE_BITS*/GetNumBits()+addbits)*8+ // size field
     // data
