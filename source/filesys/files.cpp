@@ -27,6 +27,9 @@
 #include "../../libs/core/fsys/fsys_local.h"
 
 
+// from corelib, sorry!
+extern TArray<VSearchPath *> fsysSearchPaths;
+
 extern VCvarB game_release_mode;
 //extern VCvarI game_override_mode;
 extern int cli_NoZMapinfo; // from mapinfo.cpp
@@ -2470,6 +2473,7 @@ void FL_Init () {
     //!int nextfid = W_NextMountFileId();
 
     //GCon->Logf(NAME_Debug, "::: %d : <%s>", nextfid, *pwf.fname);
+    int currFCount = fsysSearchPaths.length();
 
     if (pwf.asDirectory) {
       if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
@@ -2480,6 +2484,12 @@ void FL_Init () {
       if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
       AddAnyFile(pwf.fname, true);
     }
+
+    // ignore cosmetic pwads
+    if (!pwf.storeInSave) {
+      for (int f = currFCount; f < fsysSearchPaths.length(); ++f) fsysSearchPaths[f]->cosmetic = true;
+    }
+
     fsys_hasPwads = true;
   }
   FL_EndUserWads(); // stop marking
@@ -2821,10 +2831,6 @@ VStr FL_GetUserDataDir (bool shouldCreate) {
   if (shouldCreate) Sys_CreateDirectory(res);
   return res;
 }
-
-
-// from corelib, sorry!
-extern TArray<VSearchPath *> fsysSearchPaths;
 
 
 //==========================================================================
