@@ -40,7 +40,7 @@ enum {
 // sent on handshake
 enum {
   NET_PROTOCOL_VERSION_HI = 7,
-  NET_PROTOCOL_VERSION_LO = 4,
+  NET_PROTOCOL_VERSION_LO = 5,
 };
 
 enum {
@@ -364,39 +364,65 @@ public:
   VStr serverInfoBuf;
   VNetClientServerInfo csi;
 
+  int StaticLightsNext;
+
 protected:
+  // updaters returns 1 if the stream should be sent, or -1 if we should abort updating
   // parsers returns `false` on any error
-  void UpdateLine (VBitStreamWriter &strm, int lidx);
+
+  int UpdateLine (VMessageOut &Msg, VBitStreamWriter &strm, int lidx);
   bool ParseLine (VMessageIn &Msg);
 
-  void UpdateSide (VBitStreamWriter &strm, int sidx);
+  int UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sidx);
   bool ParseSide (VMessageIn &Msg);
+  bool ParseSideTexture (VMessageIn &Msg);
+  bool ParseSideTOffset (VMessageIn &Msg);
+  bool ParseSideROffset (VMessageIn &Msg);
+  bool ParseSideScale (VMessageIn &Msg);
 
-  void UpdateSector (VBitStreamWriter &strm, int sidx);
+  int UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int sidx);
   bool ParseSector (VMessageIn &Msg);
+  bool ParseSectorTexture (VMessageIn &Msg);
+  bool ParseSectorLight (VMessageIn &Msg);
 
-  void UpdatePolyObj (VBitStreamWriter &strm, int oidx);
+  int UpdatePolyObj (VMessageOut &Msg, VBitStreamWriter &strm, int oidx);
   bool ParsePolyObj (VMessageIn &Msg);
 
-  void UpdateCameraTexture (VBitStreamWriter &strm, int idx);
+  int UpdateCameraTexture (VMessageOut &Msg, VBitStreamWriter &strm, int idx);
   bool ParseCameraTexture (VMessageIn &Msg);
 
-  void UpdateTranslation (VBitStreamWriter &strm, int idx);
+  int UpdateTranslation (VMessageOut &Msg, VBitStreamWriter &strm, int idx);
   bool ParseTranslation (VMessageIn &Msg);
 
-  void UpdateBodyQueueTran (VBitStreamWriter &strm, int idx);
+  int UpdateBodyQueueTran (VMessageOut &Msg, VBitStreamWriter &strm, int idx);
   bool ParseBodyQueueTran (VMessageIn &Msg);
 
-  void UpdateStaticLight (VBitStreamWriter &strm, int idx, bool forced);
+  int UpdateStaticLight (VMessageOut &Msg, VBitStreamWriter &strm, int idx, bool forced);
   bool ParseStaticLight (VMessageIn &Msg);
+
+protected:
+  enum {
+    PhaseServerInfo,
+    PhaseStaticLights,
+    PhasePrerender,
+    PhaseDone,
+  };
+
+  int Phase;
+
+protected:
+  void SendServerInfo ();
+  void SendStaticLights ();
+  void SendPreRender ();
 
 public:
   VLevelChannel (VNetConnection *, vint32, vuint8 = true);
   virtual ~VLevelChannel () override;
 
   void SetLevel (VLevel *);
+  // returns `false` if there's nothing more to send
+  bool SendLevelData ();
   void Update ();
-  void SendNewLevel ();
   void ResetLevel ();
 
   // VChannel interface
@@ -534,6 +560,13 @@ public:
   };
 
 public:
+  enum {
+    LNFO_UNSENT,
+    LNFO_SENT_INPROGRESS, // we're still have something to send
+    LNFO_SENT_COMPLETE, // we're sending static lights
+  };
+
+public:
   VNetworkPublic *Driver;
   VNetContext *Context;
   VBasePlayer *Owner;
@@ -546,7 +579,7 @@ public:
 
   VNetObjectsMap *ObjMap;
   bool ObjMapSent;
-  bool LevelInfoSent;
+  int LevelInfoSent; // see LNFO_*
   // when we detach a thinker, there's no need to send any updates for it anymore
   // we cannot have this flag in thinker itself, because new
   // clients should still get detached thinkers once
@@ -621,6 +654,9 @@ public:
   }
 
   int GetNetSpeed () const noexcept;
+
+  // used in server context; if `false`, server context will call `SendServerInfo()`
+  inline bool IsLevelInfoSendingComplete () const noexcept { return (LevelInfoSent == LNFO_SENT_COMPLETE); }
 
 protected:
   // WARNING! this can change channel list!
@@ -717,7 +753,8 @@ public:
   void UpdateLevel ();
 
   void SendServerInfo ();
-  void LoadedNewLevel ();
+  // `keepObjMapSent` is used to record demos
+  void LoadedNewLevel (bool keepObjMapSent=false);
   void ResetLevel ();
 
   bool SecCheckFatPVS (sector_t *);

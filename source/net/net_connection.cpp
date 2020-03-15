@@ -72,7 +72,7 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   , LastThinkersUpdateTime(0)
   , UpdateFrameCounter(0)
   , ObjMapSent(false)
-  , LevelInfoSent(false)
+  , LevelInfoSent(LNFO_UNSENT)
   , Out(MAX_DGRAM_SIZE*8+128, false) // cannot grow
   , UpdatePvs(nullptr)
   , UpdatePvsSize(0)
@@ -1817,11 +1817,17 @@ void VNetConnection::SendServerInfo () {
   // do not send server info if we are in the intermission (let client hang)
   if (sv.intermission) return;
 
+  if (GetLevelChannel()->Level != GLevel) {
+    GCon->Logf(NAME_DevNet, "Preparing level for %s", *GetAddress());
+    GetLevelChannel()->SetLevel(GLevel);
+    LevelInfoSent = LNFO_UNSENT;
+  }
+
+  if (LevelInfoSent == LNFO_SENT_COMPLETE) return;
+
   GCon->Logf(NAME_DevNet, "Sending server info for %s", *GetAddress());
   // this will load level on client side
-  GetLevelChannel()->SetLevel(GLevel);
-  GetLevelChannel()->SendNewLevel();
-  LevelInfoSent = true;
+  LevelInfoSent = (GetLevelChannel()->SendLevelData() ? LNFO_SENT_INPROGRESS : LNFO_SENT_COMPLETE);
 }
 
 
@@ -1829,15 +1835,16 @@ void VNetConnection::SendServerInfo () {
 //
 //  VNetConnection::LoadedNewLevel
 //
+//  always followed by `SendServerInfo()`
+//
+//  `keepObjMapSent` is used to record demos
+//
 //==========================================================================
-void VNetConnection::LoadedNewLevel () {
+void VNetConnection::LoadedNewLevel (bool keepObjMapSent) {
   GCon->Log(NAME_DevNet, "LEVEL RESET");
-  ObjMapSent = false;
-  LevelInfoSent = false;
-  // this will load level on client side
+  if (!keepObjMapSent) ObjMapSent = false;
+  LevelInfoSent = LNFO_UNSENT;
   GetLevelChannel()->SetLevel(GLevel);
-  GetLevelChannel()->SendNewLevel();
-  LevelInfoSent = true;
 }
 
 

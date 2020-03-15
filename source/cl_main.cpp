@@ -816,6 +816,7 @@ COMMAND_WITH_AC(RecordDemo) {
     Conn->ObjMap->SetupClassLookup();
     (void)Conn->CreateChannel(CHANNEL_ObjectMap, -1, true); // local
     while (!Conn->ObjMapSent) Conn->Tick();
+    Conn->LoadedNewLevel(true); // keep "obj map sent" flag
     Conn->SendServerInfo();
     Conn->GetPlayerChannel()->SetPlayer(cl);
   }

@@ -112,18 +112,19 @@ void VNetContext::Tick () {
     if (Conn->IsOpen()) {
       vassert(Conn->GetGeneralChannel());
       // send server info, if necessary
-      if (Conn->ObjMapSent && !Conn->LevelInfoSent) {
+      if (Conn->ObjMapSent && !Conn->IsLevelInfoSendingComplete()) {
         Conn->SendServerInfo();
         //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT000!", *Conn->GetAddress(), i);
-      }
-      // don't update level if the player isn't totally in the game yet
-      if (Conn->IsOpen() && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
-        // spam client with player updates
-        Conn->GetPlayerChannel()->Update();
-        //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT001!", *Conn->GetAddress(), i);
-        if (Conn->IsOpen() && Conn->NeedsUpdate) {
-          Conn->UpdateLevel(); // `UpdateLevel()` will reset update flag
-          //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT002!", *Conn->GetAddress(), i);
+      } else {
+        // don't update level if the player isn't totally in the game yet
+        if (Conn->IsOpen() && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
+          // spam client with player updates
+          Conn->GetPlayerChannel()->Update();
+          //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT001!", *Conn->GetAddress(), i);
+          if (Conn->IsOpen() && Conn->NeedsUpdate) {
+            Conn->UpdateLevel(); // `UpdateLevel()` will reset update flag
+            //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT002!", *Conn->GetAddress(), i);
+          }
         }
       }
       // tick the channel if it is still open
