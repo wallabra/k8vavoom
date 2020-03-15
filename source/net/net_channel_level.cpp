@@ -1596,9 +1596,9 @@ void VLevelChannel::Update () {
   VMessageOut Msg(this);
   VBitStreamWriter strm(MAX_MSG_SIZE_BITS+64, false); // no expand
 
-  GEN_FAST_UPDATE(Line, UpdatedLines);
-  GEN_FAST_UPDATE(Side, UpdatedSides);
   GEN_FAST_UPDATE(Sector, Connection->UpdatedSectors);
+  GEN_FAST_UPDATE(Side, UpdatedSides);
+  GEN_FAST_UPDATE(Line, UpdatedLines);
 
   /*
   GEN_UPDATE(Line);
