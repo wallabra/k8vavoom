@@ -382,36 +382,41 @@ int VLevelChannel::UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sid
   vassert(sidx >= 0 && sidx < Level->NumSides);
 
   side_t *Side = &Level->Sides[sidx];
-  if (!Connection->SecCheckFatPVS(Side->Sector)) return 0;
+
+  if (!(Side->Sector->SectorFlags&(sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource)) &&
+      !Connection->SecCheckFatPVS(Side->Sector))
+  {
+    return 0;
+  }
 
   rep_side_t *RepSide = &Sides[sidx];
 
   const bool texturesChanged =
-    Side->TopTexture == RepSide->TopTexture &&
-    Side->BottomTexture == RepSide->BottomTexture &&
-    Side->MidTexture == RepSide->MidTexture;
+    Side->TopTexture != RepSide->TopTexture &&
+    Side->BottomTexture != RepSide->BottomTexture &&
+    Side->MidTexture != RepSide->MidTexture;
 
   const bool tofsChanged =
-    Side->Top.TextureOffset == RepSide->Top.TextureOffset &&
-    Side->Bot.TextureOffset == RepSide->Bot.TextureOffset &&
-    Side->Mid.TextureOffset == RepSide->Mid.TextureOffset;
+    Side->Top.TextureOffset != RepSide->Top.TextureOffset &&
+    Side->Bot.TextureOffset != RepSide->Bot.TextureOffset &&
+    Side->Mid.TextureOffset != RepSide->Mid.TextureOffset;
 
   const bool rofsChanged =
-    Side->Top.RowOffset == RepSide->Top.RowOffset &&
-    Side->Bot.RowOffset == RepSide->Bot.RowOffset &&
-    Side->Mid.RowOffset == RepSide->Mid.RowOffset;
+    Side->Top.RowOffset != RepSide->Top.RowOffset &&
+    Side->Bot.RowOffset != RepSide->Bot.RowOffset &&
+    Side->Mid.RowOffset != RepSide->Mid.RowOffset;
 
   const bool scaleChanged =
-    Side->Top.ScaleX == RepSide->Top.ScaleX &&
-    Side->Top.ScaleY == RepSide->Top.ScaleY &&
-    Side->Bot.ScaleX == RepSide->Bot.ScaleX &&
-    Side->Bot.ScaleY == RepSide->Bot.ScaleY &&
-    Side->Mid.ScaleX == RepSide->Mid.ScaleX &&
-    Side->Mid.ScaleY == RepSide->Mid.ScaleY;
+    Side->Top.ScaleX != RepSide->Top.ScaleX &&
+    Side->Top.ScaleY != RepSide->Top.ScaleY &&
+    Side->Bot.ScaleX != RepSide->Bot.ScaleX &&
+    Side->Bot.ScaleY != RepSide->Bot.ScaleY &&
+    Side->Mid.ScaleX != RepSide->Mid.ScaleX &&
+    Side->Mid.ScaleY != RepSide->Mid.ScaleY;
 
   const bool otherChanged =
-    Side->Flags == RepSide->Flags &&
-    Side->Light == RepSide->Light;
+    Side->Flags != RepSide->Flags &&
+    Side->Light != RepSide->Light;
 
   if (!texturesChanged && !tofsChanged && !rofsChanged && !scaleChanged && !otherChanged) return 0;
 
@@ -427,6 +432,7 @@ int VLevelChannel::UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sid
       strm.WriteBit(false);
       // data
       Side->TopTexture.Serialise(strm);
+
       RepSide->TopTexture = Side->TopTexture;
 
       PutStream(&Msg, strm);
@@ -441,6 +447,7 @@ int VLevelChannel::UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sid
       strm.WriteBit(false);
       // data
       Side->BottomTexture.Serialise(strm);
+
       RepSide->BottomTexture = Side->BottomTexture;
 
       PutStream(&Msg, strm);
@@ -455,6 +462,7 @@ int VLevelChannel::UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sid
       strm.WriteBit(true);
       // data
       Side->MidTexture.Serialise(strm);
+
       RepSide->MidTexture = Side->MidTexture;
 
       PutStream(&Msg, strm);
@@ -578,7 +586,7 @@ int VLevelChannel::UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sid
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
   }
 
-  return 0;
+  return 1;
 }
 
 
@@ -731,11 +739,9 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
   vassert(sidx >= 0 && sidx < Level->NumSectors);
 
   sector_t *Sec = &Level->Sectors[sidx];
-  //bool forced = false;
 
-  if (!Connection->SecCheckFatPVS(Sec) &&
-      !(Sec->SectorFlags&sector_t::SF_ExtrafloorSource) &&
-      !(Sec->SectorFlags&sector_t::SF_TransferSource))
+  if (!(Sec->SectorFlags&(sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource)) &&
+      !Connection->SecCheckFatPVS(Sec))
   {
     return 0;
   }
@@ -748,38 +754,7 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
 
   rep_sector_t *RepSec = &Sectors[sidx];
 
-  const bool FloorChanged = RepSec->floor_dist != Sec->floor.dist ||
-    mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs) ||
-    mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs) ||
-    RepSec->floor_XScale != Sec->floor.XScale ||
-    RepSec->floor_YScale != Sec->floor.YScale ||
-    mround(RepSec->floor_Angle) != mround(Sec->floor.Angle) ||
-    mround(RepSec->floor_BaseAngle) != mround(Sec->floor.BaseAngle) ||
-    mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs) ||
-    RepSec->floor_SkyBox != FloorSkyBox ||
-    RepSec->floor_MirrorAlpha != Sec->floor.MirrorAlpha;
-
-  const bool CeilChanged = RepSec->ceil_dist != Sec->ceiling.dist ||
-    mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs) ||
-    mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs) ||
-    RepSec->ceil_XScale != Sec->ceiling.XScale ||
-    RepSec->ceil_YScale != Sec->ceiling.YScale ||
-    mround(RepSec->ceil_Angle) != mround(Sec->ceiling.Angle) ||
-    mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle) ||
-    mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs) ||
-    RepSec->ceil_SkyBox != CeilSkyBox ||
-    RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha;
-
-  const bool LightChanged = (abs(RepSec->lightlevel-Sec->params.lightlevel) >= 4);
-  const bool FadeChanged = (RepSec->Fade != Sec->params.Fade);
-  const bool SkyChanged = (RepSec->Sky != Sec->Sky);
-
-  if (RepSec->floor_pic == Sec->floor.pic &&
-      RepSec->ceil_pic == Sec->ceiling.pic &&
-      !FloorChanged && !CeilChanged && !LightChanged && !FadeChanged && !SkyChanged)
-  {
-    return 0;
-  }
+  int res = 0;
 
   // floor texture
   if (RepSec->floor_pic != Sec->floor.pic) {
@@ -792,10 +767,11 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
 
     PutStream(&Msg, strm);
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
   }
 
   // ceiling texture
-  if (RepSec->ceil_pic == Sec->ceiling.pic) {
+  if (RepSec->ceil_pic != Sec->ceiling.pic) {
     strm.WriteUInt(CMD_SectorTexture);
     strm.WriteUInt((vuint32)sidx);
     strm.WriteBit(true); // ceiling
@@ -805,6 +781,39 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
 
     PutStream(&Msg, strm);
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
+  }
+
+  const bool FloorChanged =
+    RepSec->floor_dist != Sec->floor.dist ||
+    mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs) ||
+    mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs) ||
+    RepSec->floor_XScale != Sec->floor.XScale ||
+    RepSec->floor_YScale != Sec->floor.YScale ||
+    mround(RepSec->floor_Angle) != mround(Sec->floor.Angle) ||
+    mround(RepSec->floor_BaseAngle) != mround(Sec->floor.BaseAngle) ||
+    mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs) ||
+    RepSec->floor_SkyBox != FloorSkyBox ||
+    RepSec->floor_MirrorAlpha != Sec->floor.MirrorAlpha;
+
+  const bool CeilChanged =
+    RepSec->ceil_dist != Sec->ceiling.dist ||
+    mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs) ||
+    mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs) ||
+    RepSec->ceil_XScale != Sec->ceiling.XScale ||
+    RepSec->ceil_YScale != Sec->ceiling.YScale ||
+    mround(RepSec->ceil_Angle) != mround(Sec->ceiling.Angle) ||
+    mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle) ||
+    mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs) ||
+    RepSec->ceil_SkyBox != CeilSkyBox ||
+    RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha;
+
+  const bool LightChanged = (abs(RepSec->lightlevel-Sec->params.lightlevel) >= 2);
+  const bool FadeChanged = (RepSec->Fade != Sec->params.Fade);
+  const bool SkyChanged = (RepSec->Sky != Sec->Sky);
+
+  if (!FloorChanged && !CeilChanged && !LightChanged && !FadeChanged && !SkyChanged) {
+    return res;
   }
 
   // floor changes
@@ -819,6 +828,7 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
     if (RepSec->floor_dist != Sec->floor.dist) {
       strm << Sec->floor.dist;
       strm << Sec->floor.TexZ;
+      //GCon->Logf(NAME_DevNet, "%s: sent floor distance change (sector=%d; dist=%g)", *GetDebugName(), sidx, Sec->floor.dist);
     }
     strm.WriteBit(mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs));
     if (mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs)) strm << Sec->floor.xoffs;
@@ -865,6 +875,7 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
     if (RepSec->ceil_dist != Sec->ceiling.dist) {
       strm << Sec->ceiling.dist;
       strm << Sec->ceiling.TexZ;
+      //GCon->Logf(NAME_DevNet, "%s: sent ceiling distance change (sector=%d; dist=%g)", *GetDebugName(), sidx, Sec->ceiling.dist);
     }
     strm.WriteBit(mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs));
     if (mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs)) strm << Sec->ceiling.xoffs;
@@ -905,7 +916,7 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
     strm.WriteUInt((vuint32)sidx);
 
     strm.WriteBit(LightChanged);
-    if (LightChanged) strm.WriteUInt(((vuint32)Sec->params.lightlevel)>>2); // 256
+    if (LightChanged) strm.WriteUInt((vuint32)Sec->params.lightlevel); // 256
 
     strm.WriteBit(FadeChanged);
     if (FadeChanged) strm << Sec->params.Fade;
@@ -921,7 +932,7 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
   }
 
-  return 0;
+  return res;
 }
 
 
@@ -971,7 +982,7 @@ bool VLevelChannel::ParseSectorLight (VMessageIn &Msg) {
 
   sector_t *Sec = &Level->Sectors[sidx];
 
-  if (Msg.ReadBit()) Sec->params.lightlevel = Msg.ReadUInt()<<2;
+  if (Msg.ReadBit()) Sec->params.lightlevel = Msg.ReadUInt();
   if (Msg.ReadBit()) Msg << Sec->params.Fade;
   if (Msg.ReadBit()) Sec->Sky = Msg.ReadInt();
 
@@ -1006,6 +1017,7 @@ bool VLevelChannel::ParseSector (VMessageIn &Msg) {
     if (Msg.ReadBit()) {
       Msg << Sec->ceiling.dist;
       Msg << Sec->ceiling.TexZ;
+      //GCon->Logf(NAME_DevNet, "%s: got ceiling distance change (sector=%d; dist=%g)", *GetDebugName(), sidx, Sec->ceiling.dist);
     }
     if (Msg.ReadBit()) Sec->ceiling.xoffs = Msg.ReadInt();
     if (Msg.ReadBit()) Sec->ceiling.yoffs = Msg.ReadInt();
@@ -1442,12 +1454,10 @@ bool VLevelChannel::ParseStaticLight (VMessageIn &Msg) {
     }
     #ifdef CLIENT
     Level->AddStaticLightRGB(owneruid, Origin, Radius, Color, ConeDir, ConeAngle);
-    //Level->Renderer->AddStaticLightRGB(owneruid, Origin, Radius, Color, ConeDir, ConeAngle);
     #endif
   } else {
     #ifdef CLIENT
     Level->AddStaticLightRGB(owneruid, Origin, Radius, Color);
-    //Level->Renderer->AddStaticLightRGB(owneruid, Origin, Radius, Color);
     #endif
   }
 
@@ -1456,9 +1466,15 @@ bool VLevelChannel::ParseStaticLight (VMessageIn &Msg) {
 
 
 #define GEN_UPDATE(name_) do { \
-  /*GCon->Log(NAME_DevNet, "VLevelChannel::Update -- " # name_ # "s");*/ \
+  /*GCon->Log(NAME_DevNet, "VLevelChannel::Update -- " #name_ "s");*/ \
   for (int i = 0; i < Level->Num ## name_ ## s; ++i) { \
-    if (Update##name_(Msg, strm, i)) { \
+    int res = Update##name_(Msg, strm, i); \
+    if (res == -1) { \
+      /*GCon->Logf(NAME_DevNet, "  item #%d aborted the update", i);*/ \
+      return; \
+    } \
+    if (res > 0) { \
+      GCon->Logf(NAME_DevNet, "  flushing item #%d", i); \
       PutStream(&Msg, strm); \
       if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; } \
     } \
@@ -1467,9 +1483,11 @@ bool VLevelChannel::ParseStaticLight (VMessageIn &Msg) {
 
 
 #define GEN_UPDATE_ARR(name_) do { \
-  /*GCon->Log(NAME_DevNet, "VLevelChannel::Update -- " # name_ # "s");*/ \
+  /*GCon->Log(NAME_DevNet, "VLevelChannel::Update -- " #name_ "s");*/ \
   for (int i = 0; i < name_ ## s.length(); ++i) { \
-    if (Update##name_(Msg, strm, i)) { \
+    int res = Update##name_(Msg, strm, i); \
+    if (res == -1) return; \
+    if (res > 0) { \
       PutStream(&Msg, strm); \
       if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; } \
     } \

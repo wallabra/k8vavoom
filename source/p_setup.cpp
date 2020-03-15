@@ -3463,6 +3463,12 @@ void VLevel::CreateRepBase () {
     B.TopTexture = S.TopTexture;
     B.BottomTexture = S.BottomTexture;
     B.MidTexture = S.MidTexture;
+    B.Top.ScaleX = S.Top.ScaleX;
+    B.Top.ScaleY = S.Top.ScaleY;
+    B.Bot.ScaleX = S.Bot.ScaleX;
+    B.Bot.ScaleY = S.Bot.ScaleY;
+    B.Mid.ScaleX = S.Mid.ScaleX;
+    B.Mid.ScaleY = S.Mid.ScaleY;
     B.Flags = S.Flags;
     B.Light = S.Light;
   }

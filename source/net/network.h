@@ -764,6 +764,7 @@ public:
   void ResetLevel ();
 
   bool SecCheckFatPVS (sector_t *);
+  bool SubsecCheckFatPVS (subsector_t *);
   int CheckFatPVS (subsector_t *);
 
   // used by client to lower rendering speed

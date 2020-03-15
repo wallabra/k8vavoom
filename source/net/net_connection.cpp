@@ -1270,6 +1270,18 @@ int VNetConnection::CheckFatPVS (subsector_t *Subsector) {
 
 //==========================================================================
 //
+//  VNetConnection::SubsecCheckFatPVS
+//
+//==========================================================================
+bool VNetConnection::SubsecCheckFatPVS (subsector_t *sub) {
+  VLevel *Level = Context->GetLevel();
+  if (!Level) return false;
+  return CheckFatPVS(sub);
+}
+
+
+//==========================================================================
+//
 //  VNetConnection::SecCheckFatPVS
 //
 //==========================================================================
