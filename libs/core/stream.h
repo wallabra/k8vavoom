@@ -65,6 +65,8 @@ VVA_OKUNUSED static inline constexpr int calcVarIntLength (vuint32 n) noexcept {
   }
 }
 
+enum { MaxVarIntLength = 5 };
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // VObject knows how to serialize itself, others should inherit from this
