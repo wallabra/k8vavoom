@@ -209,8 +209,9 @@ VCvarF VAudio::snd_music_volume("snd_music_volume", "0.5", "Music volume", CVAR_
 VCvarI VAudio::snd_channels("snd_channels", "64", "Number of sound channels.", CVAR_Archive);
 VCvarB VAudio::snd_external_music("snd_external_music", false, "Allow external music remapping?", CVAR_Archive);
 
-static VCvarF snd_random_pitch("snd_random_pitch", "0.27", "Random pitch all sounds (0: none, otherwise max change).", CVAR_Archive);
-static VCvarF snd_random_pitch_boost("snd_random_pitch_boost", "1", "Random pitch will be multiplied by this value.", CVAR_Archive);
+static VCvarB snd_random_pitch_enabled("snd_random_pitch_enabled", true, "Global random pitch control.", CVAR_Archive);
+static VCvarF snd_random_pitch_default("snd_random_pitch_default", "0.27", "Random pitch sounds without specified pitch (0: none, otherwise max change; 0.27 is ok).", CVAR_Archive);
+static VCvarF snd_random_pitch_boost("snd_random_pitch_boost", "2", "Random pitch will be multiplied by this value.", CVAR_Archive);
 static VCvarI snd_max_same_sounds("snd_max_same_sounds", "4", "Maximum number of simultaneously playing same sounds?", CVAR_Archive);
 
 VCvarI snd_mid_player("snd_mid_player", "1", "MIDI player type (0:Timidity; 1:FluidSynth; -1:none)", CVAR_Archive|CVAR_PreInit);
@@ -480,15 +481,18 @@ void VAudio::PlaySound (int InSoundId, const TVec &origin, const TVec &velocity,
   }
 
   float pitch = 1.0f;
-  if (GSoundManager->S_sfx[sound_id].ChangePitch) {
-    pitch = 1.0f+(RandomFull()-RandomFull())*(GSoundManager->S_sfx[sound_id].ChangePitch*snd_random_pitch_boost);
-    //fprintf(stderr, "SND0: randompitched to %f\n", pitch);
-  } else if (!LocalPlayerSound) {
-    float rpt = snd_random_pitch;
-    if (rpt > 0) {
-      if (rpt > 1) rpt = 1;
-      pitch = 1.0f+(RandomFull()-RandomFull())*(rpt*snd_random_pitch_boost);
-      //fprintf(stderr, "SND1: randompitched to %f\n", pitch);
+  if (snd_random_pitch_enabled) {
+    float sndcp = GSoundManager->S_sfx[sound_id].ChangePitch;
+    // apply default pitch?
+    if (sndcp < 0) {
+      const char *tagstr = *GSoundManager->S_sfx[sound_id].TagName;
+      if (LocalPlayerSound || VStr::startsWithCI(tagstr, "menu/") || VStr::startsWithCI(tagstr, "misc/")) sndcp = 0;
+      else sndcp = clampval(snd_random_pitch_default.asFloat(), 0.0f, 1.0f);
+    }
+    // apply pitch
+    if (sndcp) {
+      pitch += (RandomFull()-RandomFull())*(sndcp*snd_random_pitch_boost.asFloat());
+      //GCon->Logf(NAME_Debug, "applied random pitch to sound '%s' (ccp=%g; sndcp=%g); pitch=%g", *GSoundManager->S_sfx[sound_id].TagName, GSoundManager->S_sfx[sound_id].ChangePitch, sndcp, pitch);
     }
   }
 

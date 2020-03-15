@@ -83,19 +83,33 @@ menudef SoundOptions {
 
   header ""; // empty line
 
-  option slider {
-    title = "Random sound pitch";
-    cvar = snd_random_pitch;
-    step = 0.05;
-    min = 0;
-    max = 1;
+  option bool {
+    title = "Enable Random Pitch";
+    cvar = snd_random_pitch_enabled;
+    help =
+      "If you don't like to move sliders, you can enable/disable",
+      "random pitching with this toggle.";
   }
 
   option slider {
-    title = "Random pitch boost";
+    title = "Default Random Pitch";
+    cvar = snd_random_pitch_default;
+    step = 0.03;
+    min = 0;
+    max = 1;
+    help =
+      "Setting this to non-zero value will apply random pitch to",
+      "sounds that have no specified random pitch range.",
+      "Value around 0.27 should be fine.";
+  }
+
+  option slider {
+    title = "Random Pitch Boost";
     cvar = snd_random_pitch_boost;
     step = 0.1;
-    min = 1;
+    min = 0;
     max = 4;
+    help =
+      "This will amplify random pitching (0 will disable it completely).";
   }
 }

@@ -144,7 +144,7 @@ void VSampleLoader::LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec) {
 //==========================================================================
 VSoundManager::VSoundManager ()
   : NumPlayerReserves(0)
-  , CurrentChangePitch(0) //7.0f / 255.0f)
+  , CurrentChangePitch(-1) //7.0f / 255.0f)
 {
   CurrentDefaultRolloff.RolloffType = ROLLOFF_Doom;
   CurrentDefaultRolloff.MinDistance = 0;
@@ -322,7 +322,12 @@ void VSoundManager::Init () {
   for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_sndinfo) {
       GCon->Logf(NAME_Init, "loading SNDINFO from '%s'...", *W_FullLumpName(Lump));
+      // reset current pitch change for each sndinfo file
+      // `-1` means "apply default pitch"
+      CurrentChangePitch = -1;
       ParseSndinfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), W_LumpFile(Lump));
+      // and reset it afterwards
+      CurrentChangePitch = -1;
     }
   }
 
