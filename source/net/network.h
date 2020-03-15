@@ -375,17 +375,17 @@ protected:
   void UpdateSector (VBitStreamWriter &strm, int sidx);
   bool ParseSector (VMessageIn &Msg);
 
-  void UpdatePObj (VBitStreamWriter &strm, int oidx);
-  bool ParsePObj (VMessageIn &Msg);
+  void UpdatePolyObj (VBitStreamWriter &strm, int oidx);
+  bool ParsePolyObj (VMessageIn &Msg);
 
-  void UpdateCamTex (VBitStreamWriter &strm, int idx);
-  bool ParseCamTex (VMessageIn &Msg);
+  void UpdateCameraTexture (VBitStreamWriter &strm, int idx);
+  bool ParseCameraTexture (VMessageIn &Msg);
 
   void UpdateTranslation (VBitStreamWriter &strm, int idx);
   bool ParseTranslation (VMessageIn &Msg);
 
-  void UpdateBodyQueue (VBitStreamWriter &strm, int idx);
-  bool ParseBodyQueue (VMessageIn &Msg);
+  void UpdateBodyQueueTran (VBitStreamWriter &strm, int idx);
+  bool ParseBodyQueueTran (VMessageIn &Msg);
 
   void UpdateStaticLight (VBitStreamWriter &strm, int idx, bool forced);
   bool ParseStaticLight (VMessageIn &Msg);

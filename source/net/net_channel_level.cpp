@@ -702,10 +702,10 @@ bool VLevelChannel::ParseSector (VMessageIn &Msg) {
 
 //==========================================================================
 //
-//  VLevelChannel::UpdatePObj
+//  VLevelChannel::UpdatePolyObj
 //
 //==========================================================================
-void VLevelChannel::UpdatePObj (VBitStreamWriter &strm, int oidx) {
+void VLevelChannel::UpdatePolyObj (VBitStreamWriter &strm, int oidx) {
   vassert(oidx >= 0 && oidx < Level->NumPolyObjs);
 
   polyobj_t *Po = Level->PolyObjs[oidx];
@@ -736,10 +736,10 @@ void VLevelChannel::UpdatePObj (VBitStreamWriter &strm, int oidx) {
 
 //==========================================================================
 //
-//  VLevelChannel::ParsePObj
+//  VLevelChannel::ParsePolyObj
 //
 //==========================================================================
-bool VLevelChannel::ParsePObj (VMessageIn &Msg) {
+bool VLevelChannel::ParsePolyObj (VMessageIn &Msg) {
   int oidx = (int)Msg.ReadUInt();
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read polyobject index", *GetDebugName());
@@ -769,10 +769,10 @@ bool VLevelChannel::ParsePObj (VMessageIn &Msg) {
 
 //==========================================================================
 //
-//  VLevelChannel::UpdateCamTex
+//  VLevelChannel::UpdateCameraTexture
 //
 //==========================================================================
-void VLevelChannel::UpdateCamTex (VBitStreamWriter &strm, int idx) {
+void VLevelChannel::UpdateCameraTexture (VBitStreamWriter &strm, int idx) {
   if (idx > 255) return; // oops
   vassert(idx >= 0 && idx < Level->CameraTextures.length());
 
@@ -808,10 +808,10 @@ void VLevelChannel::UpdateCamTex (VBitStreamWriter &strm, int idx) {
 
 //==========================================================================
 //
-//  VLevelChannel::ParseCamTex
+//  VLevelChannel::ParseCameraTexture
 //
 //==========================================================================
-bool VLevelChannel::ParseCamTex (VMessageIn &Msg) {
+bool VLevelChannel::ParseCameraTexture (VMessageIn &Msg) {
   int idx = (int)Msg.ReadUInt();
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read camtex index", *GetDebugName());
@@ -970,10 +970,10 @@ bool VLevelChannel::ParseTranslation (VMessageIn &Msg) {
 
 //==========================================================================
 //
-//  VLevelChannel::UpdateBodyQueue
+//  VLevelChannel::UpdateBodyQueueTran
 //
 //==========================================================================
-void VLevelChannel::UpdateBodyQueue (VBitStreamWriter &strm, int idx) {
+void VLevelChannel::UpdateBodyQueueTran (VBitStreamWriter &strm, int idx) {
   if (idx > 8191) return; // artificial limit
   vassert(idx >= 0 && idx < Level->BodyQueueTrans.length());
 
@@ -999,10 +999,10 @@ void VLevelChannel::UpdateBodyQueue (VBitStreamWriter &strm, int idx) {
 
 //==========================================================================
 //
-//  VLevelChannel::ParseBodyQueue
+//  VLevelChannel::ParseBodyQueueTran
 //
 //==========================================================================
-bool VLevelChannel::ParseBodyQueue (VMessageIn &Msg) {
+bool VLevelChannel::ParseBodyQueueTran (VMessageIn &Msg) {
   int idx = (int)Msg.ReadUInt();
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read body queue index", *GetDebugName());
@@ -1101,6 +1101,32 @@ bool VLevelChannel::ParseStaticLight (VMessageIn &Msg) {
 }
 
 
+#define GEN_UPDATE(name_) do { \
+  /*GCon->Log(NAME_DevNet, "VLevelChannel::Update -- " # name_ # "s");*/ \
+  for (int i = 0; i < Level->Num ## name_ ## s; ++i) { \
+    const int oldsize = strm.GetNumBits(); \
+    Update##name_(strm, i); \
+    if (strm.GetNumBits() != oldsize) { \
+      PutStream(&Msg, strm); \
+      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; } \
+    } \
+  } \
+} while (0)
+
+
+#define GEN_UPDATE_ARR(name_) do { \
+  /*GCon->Log(NAME_DevNet, "VLevelChannel::Update -- " # name_ # "s");*/ \
+  for (int i = 0; i < name_ ## s.length(); ++i) { \
+    const int oldsize = strm.GetNumBits(); \
+    Update##name_(strm, i); \
+    if (strm.GetNumBits() != oldsize) { \
+      PutStream(&Msg, strm); \
+      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; } \
+    } \
+  } \
+} while (0)
+
+
 //==========================================================================
 //
 //  VLevelChannel::Update
@@ -1114,74 +1140,13 @@ void VLevelChannel::Update () {
   VMessageOut Msg(this);
   VBitStreamWriter strm(MAX_MSG_SIZE_BITS+64, false); // no expand
 
-  for (int i = 0; i < Level->NumLines; ++i) {
-    const int oldsize = strm.GetNumBits();
-    UpdateLine(strm, i);
-    if (strm.GetNumBits() != oldsize) {
-      PutStream(&Msg, strm);
-      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
-    }
-  }
-
-  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Sides");
-  for (int i = 0; i < Level->NumSides; ++i) {
-    const int oldsize = strm.GetNumBits();
-    UpdateSide(strm, i);
-    if (strm.GetNumBits() != oldsize) {
-      PutStream(&Msg, strm);
-      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
-    }
-  }
-
-  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Sectors");
-  for (int i = 0; i < Level->NumSectors; ++i) {
-    const int oldsize = strm.GetNumBits();
-    UpdateSector(strm, i);
-    if (strm.GetNumBits() != oldsize) {
-      PutStream(&Msg, strm);
-      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
-    }
-  }
-
-  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Polys");
-  for (int i = 0; i < Level->NumPolyObjs; ++i) {
-    const int oldsize = strm.GetNumBits();
-    UpdatePObj(strm, i);
-    if (strm.GetNumBits() != oldsize) {
-      PutStream(&Msg, strm);
-      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
-    }
-  }
-
-  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- CamTexs");
-  for (int i = 0; i < Level->CameraTextures.Num(); ++i) {
-    const int oldsize = strm.GetNumBits();
-    UpdateCamTex(strm, i);
-    if (strm.GetNumBits() != oldsize) {
-      PutStream(&Msg, strm);
-      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
-    }
-  }
-
-  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Trans");
-  for (int i = 0; i < Level->Translations.Num(); ++i) {
-    const int oldsize = strm.GetNumBits();
-    UpdateTranslation(strm, i);
-    if (strm.GetNumBits() != oldsize) {
-      PutStream(&Msg, strm);
-      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
-    }
-  }
-
-  //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Bodies");
-  for (int i = 0; i < Level->BodyQueueTrans.Num(); ++i) {
-    const int oldsize = strm.GetNumBits();
-    UpdateBodyQueue(strm, i);
-    if (strm.GetNumBits() != oldsize) {
-      PutStream(&Msg, strm);
-      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return; }
-    }
-  }
+  GEN_UPDATE(Line);
+  GEN_UPDATE(Side);
+  GEN_UPDATE(Sector);
+  GEN_UPDATE(PolyObj);
+  GEN_UPDATE_ARR(CameraTexture);
+  GEN_UPDATE_ARR(Translation);
+  GEN_UPDATE_ARR(BodyQueueTran);
 
   // do not send static light updates yet
   // we need to move static light replication info here first
@@ -1223,10 +1188,10 @@ void VLevelChannel::ParseMessage (VMessageIn &Msg) {
       case CMD_Line: err = !ParseLine(Msg); if (err) GCon->Logf(NAME_DevNet, "%s: error reading line update", *GetDebugName()); break;
       case CMD_Side: err = !ParseSide(Msg); if (err) GCon->Logf(NAME_DevNet, "%s: error reading side update", *GetDebugName()); break;
       case CMD_Sector: err = !ParseSector(Msg); if (err) GCon->Logf(NAME_DevNet, "%s: error reading sector update", *GetDebugName()); break;
-      case CMD_PolyObj: err = !ParsePObj(Msg); if (err) GCon->Logf(NAME_DevNet, "%s: error reading polyobject update", *GetDebugName()); break;
-      case CMD_CamTex: err = !ParseCamTex(Msg); if (err) GCon->Logf(NAME_DevNet, "%s: error reading camtex update", *GetDebugName()); break;
+      case CMD_PolyObj: err = !ParsePolyObj(Msg); if (err) GCon->Logf(NAME_DevNet, "%s: error reading polyobject update", *GetDebugName()); break;
+      case CMD_CamTex: err = !ParseCameraTexture(Msg); if (err) GCon->Logf(NAME_DevNet, "%s: error reading camtex update", *GetDebugName()); break;
       case CMD_LevelTrans: err = !ParseTranslation(Msg); if (err) GCon->Logf(NAME_DevNet, "%s: error reading translation update", *GetDebugName()); break;
-      case CMD_BodyQueueTrans: err = !ParseBodyQueue(Msg); if (err) GCon->Logf(NAME_DevNet, "%s: error reading body queue update", *GetDebugName()); break;
+      case CMD_BodyQueueTrans: err = !ParseBodyQueueTran(Msg); if (err) GCon->Logf(NAME_DevNet, "%s: error reading body queue update", *GetDebugName()); break;
       case CMD_StaticLight: err = !ParseStaticLight(Msg); if (err) GCon->Logf(NAME_DevNet, "%s: error reading static light update", *GetDebugName()); break;
       case CMD_ResetStaticLights: //TODO
         // currently, there is nothing to do here, because client level is spawned without entities anyway
