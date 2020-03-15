@@ -42,6 +42,8 @@ VPlayerChannel::VPlayerChannel (VNetConnection *AConnection, vint32 AIndex, vuin
   , NextUpdateTime(0)
 {
   OpenAcked = true; // this channel is pre-opened
+  WorldTicField = VBasePlayer::StaticClass()->FindFieldChecked("WorldTic");
+  OtherWorldTicField = VBasePlayer::StaticClass()->FindFieldChecked("OtherWorldTic");
 }
 
 
@@ -271,7 +273,11 @@ void VPlayerChannel::ParseMessage (VMessageIn &Msg) {
         IntType.Type = F->Type.ArrayInnerType;
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+F->Ofs+Idx*IntType.GetSize(), IntType);
       } else {
-        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+F->Ofs, F->Type);
+        if (F != WorldTicField) {
+          VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+F->Ofs, F->Type);
+        } else {
+          VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+OtherWorldTicField->Ofs, F->Type);
+        }
       }
       continue;
     }

@@ -135,6 +135,13 @@ float PSpriteWeaponLoweringStartTime;
 float PSpriteWeaponLoweringDuration;
 
 float WorldTimer; // total time the player's been playing
+// current game tic, used in network games
+// server will track current tick in `WorldTic`, and will send it to clients.
+// clients will receive it in `OtherWorldTic` (this is hard-coded hack).
+// also, clients will send their `OtherWorldTic` back to the server, so the server
+// could perform lag compensation (by rewinding the state).
+transient int WorldTic;
+transient int OtherWorldTic;
 
 native readonly ubyte ClientNum;
 
@@ -168,11 +175,15 @@ replication {
     ClientStartSequence, ClientAddSequenceChoice, ClientStopSequence,
     ClientChatPrint, ClientPrint, ClientCenterPrint, ClientSetAngles, ClientIntermission,
     ClientPause, ClientSkipIntermission, ClientFinale, ClientChangeMusic,
-    ClientSetServerInfo, ClientHudMessage, ClientFOV;
+    ClientSetServerInfo, ClientHudMessage, ClientFOV,
+    // server sends this to the client, but it will be received into `OtherWorldTic`
+    WorldTic;
 
-  // movement variables
+  // client movement variables
   reliable if (bIsClient)
-    ViewAngles, ClientForwardMove, ClientSideMove, FlyMove, Buttons;
+    ViewAngles, ClientForwardMove, ClientSideMove, FlyMove, Buttons,
+    // client sends this back to the server
+    OtherWorldTic;
 
   // methods client can execute on server
   reliable if (bIsClient)

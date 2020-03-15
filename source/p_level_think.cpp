@@ -309,7 +309,7 @@ extern "C" {
 
 //==========================================================================
 //
-//  VLevel::TickWorld
+//  VLevel::TickDecals
 //
 //  this should be called in `CL_UpdateMobjs()`
 //
@@ -364,7 +364,7 @@ void VLevel::TickWorld (float DeltaTime) {
   corpseQueue.reset();
 
   // run thinkers
-#ifdef CLIENT
+  #ifdef CLIENT
   // first run player mobile thinker, so we'll get camera position
   VThinker *plrmo = (cl ? cl->MO : nullptr);
   if (plrmo) {
@@ -374,7 +374,7 @@ void VLevel::TickWorld (float DeltaTime) {
       plrmo->Tick(DeltaTime);
     }
   }
-#else
+  #else
   // server: run player thinkers when vm thinkers are disabled
   if (dbg_vm_disable_thinkers) {
     for (int i = 0; i < MAXPLAYERS; ++i) {
@@ -389,16 +389,16 @@ void VLevel::TickWorld (float DeltaTime) {
       }
     }
   }
-#endif
+  #endif
 
   VThinker *Th = ThinkerHead;
   if (!dbg_vm_disable_thinkers) {
     while (Th) {
       VThinker *c = Th;
       Th = c->Next;
-#ifdef CLIENT
+      #ifdef CLIENT
       if (c != plrmo)
-#endif
+      #endif
       {
         if (!(c->GetFlags()&_OF_DelayedDestroy)) c->Tick(DeltaTime);
       }

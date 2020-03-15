@@ -490,6 +490,8 @@ public:
   TMapNC<VField *, bool> FieldsToResend;
   // this is used in server, to limit client update rate
   double NextUpdateTime;
+  VField *WorldTicField;
+  VField *OtherWorldTicField;
 
 public:
   VPlayerChannel (VNetConnection *, vint32, vuint8 = true);

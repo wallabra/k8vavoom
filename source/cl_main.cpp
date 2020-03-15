@@ -212,6 +212,8 @@ void CL_ReadFromServer (float deltaTime) {
     }
 
     CL_UpdateMobjs(deltaTime);
+    // update world tick for client network games (copy from the server tic)
+    if (cl->Net && GClLevel) cl->WorldTic = cl->OtherWorldTic;
     cl->eventClientTick(deltaTime);
     if (deltaTime) CL_Ticker();
   } else {

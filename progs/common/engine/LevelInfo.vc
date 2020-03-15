@@ -203,13 +203,16 @@ array!VMapSpecialAction SpecialActions;
 
 replication {
   reliable if (Role == ROLE_Authority)
-    LevelName, LevelNum, Cluster, ParTime, SuckTime, Sky1Texture, Sky2Texture,
-    Sky1ScrollDelta, Sky2ScrollDelta, SkyBox, FadeTable, Fade, OutsideFog,
-    SongLump, bDoubleSky, bLightning, bNoIntermission,
-    bForceNoSkyStretch, bLookupName, TotalKills, TotalItems, TotalSecret,
+    SongLump,
+    Sky1Texture, Sky2Texture, Sky1ScrollDelta, Sky2ScrollDelta, SkyBox,
+    FadeTable, Fade, OutsideFog,
+    bDoubleSky, bLightning,
+    TotalKills, TotalItems, TotalSecret,
     CurrentKills, CurrentItems, CurrentSecret, CompletitionTime;
 
   reliable if (Role == ROLE_Authority && bNetInitial)
+    LevelName, LevelNum, Cluster, ParTime, SuckTime,
+    bNoIntermission, bForceNoSkyStretch, bLookupName,
     bNoFreelook, bNoJump,
     Gravity, AirControl;
 }
@@ -1234,5 +1237,5 @@ void AcsRadiusQuake2 (Entity Activator, int tid, int intensity, int duration, in
 
 defaultproperties {
   bAlwaysRelevant = true;
-  AirControl = 1.0 / 256.0;
+  AirControl = 1.0/256.0;
 }

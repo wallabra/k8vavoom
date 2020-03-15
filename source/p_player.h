@@ -185,6 +185,10 @@ class VBasePlayer : public VGameObject {
   float PSpriteWeaponLoweringDuration;
 
   float WorldTimer; // total time the player's been playing
+  // current game tic, used in network games
+  // `OtherWorldTic` is what will be used to store received `WorldTic`
+  vuint32 WorldTic;
+  vuint32 OtherWorldTic;
 
   vuint8 ClientNum;
 
