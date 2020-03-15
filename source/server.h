@@ -44,9 +44,6 @@ void SV_ShutdownGame ();
 void SV_ServerInterframeBK ();
 void SV_AllClientsNeedsWorldUpdate ();
 
-// call this on map loading
-void SV_NetworkHeartbeat (bool forced=false);
-
 void SV_ReplaceCustomDamageFactors ();
 
 // set all player fields to defaults (calls `ResetToDefaults()` method)
@@ -58,6 +55,7 @@ void SV_SendLoadedEvent ();
 void SV_SendBeforeSaveEvent (bool isAutosave, bool isCheckpoint);
 void SV_SendAfterSaveEvent (bool isAutosave, bool isCheckpoint);
 
+// call this on map loading
 void NET_SendNetworkHeartbeat (bool forced=false);
 
 // loading mods, take list from modlistfile

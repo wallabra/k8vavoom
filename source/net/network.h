@@ -651,13 +651,15 @@ public:
   void Close ();
 
   // call this to process incoming messages
-  void GetMessages ();
+  // if `asHearbeat` is `true`, update timers, but drop all received messages
+  void GetMessages (bool asHearbeat=false);
 
   virtual int GetRawPacket (void *dest, size_t destSize); // used in demos
 
   // read and process one incoming message
   // returns `false` if no message was processed
-  bool GetMessage ();
+  // if `asHearbeat` is `true`, update timers, but drop all received messages
+  bool GetMessage (bool asHearbeat);
 
   // this is called when incoming message was read; it should decode and process network packet
   void ReceivedPacket (VBitStreamReader &Packet);
@@ -677,7 +679,6 @@ public:
   virtual void Tick ();
   // if we're doing only heartbeats, we will silently drop all incoming datagrams
   // this is requred so the connection won't be timeouted on map i/o, for example
-  // actually, ticker never reads anything, do we need this at all?
   virtual void KeepaliveTick ();
 
   // this marks connection as "saturated"
@@ -718,9 +719,6 @@ public:
   void SendServerInfo ();
   void LoadedNewLevel ();
   void ResetLevel ();
-
-  // for demo playback
-  virtual void Intermission (bool active);
 
   bool SecCheckFatPVS (sector_t *);
   int CheckFatPVS (subsector_t *);
@@ -840,7 +838,6 @@ public:
   int td_lastframe; // to meter out one message a frame
   int td_startframe;  // host_framecount at start
   double td_starttime; // realtime at second frame of timedemo
-  bool inIntermission;
 
 public:
   VDemoPlaybackNetConnection (VNetContext *, VBasePlayer *, VStream *, bool);
@@ -849,23 +846,16 @@ public:
   // VNetConnection interface
   virtual int GetRawPacket (void *dest, size_t destSize) override;
   virtual void SendMessage (VMessageOut *Msg) override;
-
-  virtual void Intermission (bool active) override;
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VDemoRecordingNetConnection : public VNetConnection {
 public:
-  bool inIntermission;
-
-public:
   VDemoRecordingNetConnection (VSocketPublic *, VNetContext *, VBasePlayer *);
 
   // VNetConnection interface
   virtual int GetRawPacket (void *dest, size_t destSize) override;
-
-  virtual void Intermission (bool active) override;
 };
 
 

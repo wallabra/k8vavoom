@@ -491,7 +491,7 @@ void SV_Clear () {
 //  SV_NetworkHeartbeat
 //
 //==========================================================================
-void SV_NetworkHeartbeat (bool forced) {
+static void SV_NetworkHeartbeat (bool forced) {
   if (!ServerNetContext) return;
   if (GGameInfo->NetMode != NM_DedicatedServer && GGameInfo->NetMode != NM_ListenServer) return; // no need if server is local
   #ifdef CLIENT
@@ -766,41 +766,8 @@ static void SV_RunClients (bool skipFrame=false) {
 
   //GCon->Logf(NAME_Debug, "*** IMS: %d (demo=%p : %d)", (int)sv.intermission, GDemoRecordingContext, (int)cls.demorecording);
   if (sv.intermission) {
-    #ifdef CLIENT
-    if (GDemoRecordingContext) {
-      if (cls.demorecording) {
-        //CL_NetworkHeartbeat();
-        for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
-          //GDemoRecordingContext->ClientConnections[f]->Driver->NetTime = 0; //Sys_Time()+1000;
-          //GDemoRecordingContext->ClientConnections[f]->Flush();
-          GDemoRecordingContext->ClientConnections[f]->Intermission(true);
-        }
-      }
-      /*
-      for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
-        //GDemoRecordingContext->ClientConnections[f]->Driver->NetTime = 0; //Sys_Time()+1000;
-        //GDemoRecordingContext->ClientConnections[f]->Flush();
-        GDemoRecordingContext->ClientConnections[f]->ResetLevel();
-      }
-      */
-    }
-    #endif
     CheckForSkip();
     sv.intertime += host_frametime;
-  }
-
-  if (!sv.intermission) {
-    #ifdef CLIENT
-    if (GDemoRecordingContext) {
-      if (cls.demorecording) {
-        for (int f = 0; f < GDemoRecordingContext->ClientConnections.length(); ++f) {
-          //GDemoRecordingContext->ClientConnections[f]->Driver->NetTime = 0; //Sys_Time()+1000;
-          //GDemoRecordingContext->ClientConnections[f]->Flush();
-          GDemoRecordingContext->ClientConnections[f]->Intermission(false);
-        }
-      }
-    }
-    #endif
   }
 }
 

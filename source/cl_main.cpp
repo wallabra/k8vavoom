@@ -233,21 +233,6 @@ void CL_ReadFromServer (float deltaTime) {
 
 //==========================================================================
 //
-//  SendKeepaliveInternal
-//
-//==========================================================================
-static void SendKeepaliveInternal (double currTime, bool forced) {
-  if (currTime < 0) currTime = 0;
-  if (ClientLastKeepAliveTime > currTime) ClientLastKeepAliveTime = currTime; // wtf?!
-  if (!forced && currTime-ClientLastKeepAliveTime < 1.0/60.0) return;
-  ClientLastKeepAliveTime = currTime;
-  //if (cl->Net) cl->Net->Flush();
-  if (cl->Net) cl->Net->KeepaliveTick();
-}
-
-
-//==========================================================================
-//
 //  CL_NetworkHeartbeat
 //
 //  when the client is taking a long time to load stuff, send keepalive
@@ -258,22 +243,11 @@ void CL_NetworkHeartbeat (bool forced) {
   if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
   if (cls.demorecording || cls.demoplayback) return;
   if (!cl->Net) return;
-  SendKeepaliveInternal(Sys_Time(), forced);
-}
-
-
-//==========================================================================
-//
-//  CL_NetworkHeartbeatEx
-//
-//  pass `Sys_Time()` here
-//
-//==========================================================================
-void CL_NetworkHeartbeatEx (double currTime, bool forced) {
-  if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
-  if (cls.demorecording || cls.demoplayback) return;
-  if (!cl->Net) return;
-  SendKeepaliveInternal(currTime, forced);
+  const double currTime = Sys_Time();
+  if (ClientLastKeepAliveTime > currTime) ClientLastKeepAliveTime = currTime; // wtf?!
+  if (!forced && currTime-ClientLastKeepAliveTime < 1.0/60.0) return;
+  ClientLastKeepAliveTime = currTime;
+  cl->Net->KeepaliveTick();
 }
 
 

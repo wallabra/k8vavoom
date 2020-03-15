@@ -191,8 +191,6 @@ struct VNetClientServerInfo;
 void CL_DecayLights ();
 
 void CL_NetworkHeartbeat (bool forced=false);
-void CL_NetworkHeartbeatEx (double currTime, bool forced=false);
-//void CL_ParseServerInfo (class VMessageIn &msg);
 void CL_ParseServerInfo (const VNetClientServerInfo *sinfo);
 void CL_ReadFromServerInfo ();
 void CL_StopRecording ();

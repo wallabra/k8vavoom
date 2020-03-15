@@ -434,7 +434,7 @@ void VNetConnection::AckEverythingEverywhere () {
 //  returns `false` if no message was processed
 //
 //==========================================================================
-bool VNetConnection::GetMessage () {
+bool VNetConnection::GetMessage (bool asHearbeat) {
   Driver->UpdateNetTime();
 
   // check for message arrival
@@ -467,7 +467,11 @@ bool VNetConnection::GetMessage () {
   }
   if (net_dbg_conn_show_dgrams || net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "%s: got datagram with a packet (%d bits of data)", *GetAddress(), Packet.GetNumBits());
 
-  ReceivedPacket(Packet);
+  if (!asHearbeat) {
+    ReceivedPacket(Packet);
+  } else {
+    NetCon->LastMessageTime = LastReceiveTime = Driver->GetNetTime();
+  }
 
   return true;
 }
@@ -478,7 +482,7 @@ bool VNetConnection::GetMessage () {
 //  VNetConnection::GetMessages
 //
 //==========================================================================
-void VNetConnection::GetMessages () {
+void VNetConnection::GetMessages (bool asHearbeat) {
   if (IsClosed()) {
     // ack all outgoing packets, just in case (this is HACK!)
     AckEverythingEverywhere();
@@ -487,19 +491,19 @@ void VNetConnection::GetMessages () {
 
   if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "%s: GetMessages()", *GetAddress());
   #if 0
-  if (!GetMessage()) {
+  if (!GetMessage(asHearbeat)) {
     const struct timespec sleepTime = {0, 10000}; // 1 millisecond
     nanosleep(&sleepTime, nullptr);
   }
 
   // we can have alot of small packets queued, so process them all
   // without this, everything will be delayed
-  if (!GetMessage()) return;
+  if (!GetMessage(asHearbeat)) return;
 
   //const double ctt = Sys_Time();
   int waitCount = 2;
   for (int f = 0; f < 256 && IsOpen(); ++f) {
-    if (!GetMessage()) {
+    if (!GetMessage(asHearbeat)) {
       if (--waitCount == 0) break;
       const struct timespec sleepTime = {0, 10000/2}; // 0.5 milliseconds
       nanosleep(&sleepTime, nullptr);
@@ -510,12 +514,12 @@ void VNetConnection::GetMessages () {
   #else
   // we can have alot of small packets queued, so process them all
   // without this, everything will be delayed
-  if (!GetMessage()) return; // nothing's here
+  if (!GetMessage(asHearbeat)) return; // nothing's here
   // spend no more than 2 msecs here
   int count = 0;
   const double ctt = Sys_Time();
   for (;;) {
-    if (!GetMessage()) break;
+    if (!GetMessage(asHearbeat)) break;
     ++count;
     if (count == 64) {
       count = 0;
@@ -524,7 +528,7 @@ void VNetConnection::GetMessages () {
   }
   /*
   for (int f = 0; f < 128 && IsOpen(); ++f) {
-    if (!GetMessage()) break;
+    if (!GetMessage(asHearbeat)) break;
   }
   */
   #endif
@@ -919,15 +923,17 @@ void VNetConnection::Flush () {
           // `InPacketId` is the last highest packet we've seen, so send ack for it, why not
           PutOneAck(InPacketId);
         }
-        GCon->Logf(NAME_DevNet, "%s: created keepalive packet with acks; size is %d bits", *GetAddress(), Out.GetNumBits());
+        //GCon->Logf(NAME_DevNet, "%s: created keepalive packet with acks; size is %d bits", *GetAddress(), Out.GetNumBits());
       }
       #endif
     } else {
+      /*
       #ifndef CLIENT
       if (!AutoAck && IsKeepAliveExceeded()) {
         GCon->Logf(NAME_DevNet, "%s: keex! bits=%d", *GetAddress(), Out.GetNumBits());
       }
       #endif
+      */
       ++Driver->packetsSent;
     }
 
@@ -983,6 +989,7 @@ void VNetConnection::Flush () {
 //
 //==========================================================================
 void VNetConnection::KeepaliveTick () {
+  GetMessages(true); // update counters
   Tick();
 }
 
@@ -1860,14 +1867,4 @@ void VNetConnection::ResetLevel () {
   //ThinkerChannels.reset();
   GetLevelChannel()->ResetLevel();
   GetPlayerChannel()->ResetLevel();
-}
-
-
-//==========================================================================
-//
-//  VNetConnection::Intermission
-//
-//==========================================================================
-void VNetConnection::Intermission (bool active) {
-  (void)active;
 }

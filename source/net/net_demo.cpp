@@ -51,7 +51,6 @@ VDemoPlaybackNetConnection::VDemoPlaybackNetConnection (VNetContext *AContext, V
   , td_lastframe(0)
   , td_startframe(0)
   , td_starttime(0)
-  , inIntermission(false)
 {
   AutoAck = true;
   *Strm << NextPacketTime;
@@ -156,17 +155,6 @@ void VDemoPlaybackNetConnection::SendMessage (VMessageOut *Msg) {
 }
 
 
-//==========================================================================
-//
-//  VDemoPlaybackNetConnection::Intermission
-//
-//==========================================================================
-void VDemoPlaybackNetConnection::Intermission (bool active) {
-  //if (inIntermission == active) return;
-  //inIntermission = active;
-}
-
-
 
 #ifdef CLIENT
 //==========================================================================
@@ -176,26 +164,7 @@ void VDemoPlaybackNetConnection::Intermission (bool active) {
 //==========================================================================
 VDemoRecordingNetConnection::VDemoRecordingNetConnection (VSocketPublic *Sock, VNetContext *AContext, VBasePlayer *AOwner)
   : VNetConnection(Sock, AContext, AOwner)
-  , inIntermission(false)
 {
-}
-
-
-//==========================================================================
-//
-//  VDemoPlaybackNetConnection::Intermission
-//
-//==========================================================================
-void VDemoRecordingNetConnection::Intermission (bool active) {
-  if (inIntermission == active) return;
-  inIntermission = active;
-  /*
-  GCon->Logf("**** IMISS=%d", (int)active);
-  if (cls.demorecording) {
-    float Time = (active ? -4.0f : -6.0f);
-    *cls.demofile << Time;
-  }
-  */
 }
 
 

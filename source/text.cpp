@@ -353,10 +353,8 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced, bool send
   #ifdef CLIENT
   if (!forced) {
     if (Drawer && Drawer->IsInited()) {
-      double currt = Sys_Time();
-      if (lastPBarWdt == -666 && currt-pbarStartTime < 0.8) {
-        //if (currt-pbarStartTime > 0.033) CL_NetworkHeartbeatEx(currt); // ~30 FPS
-        return false;
+      if (lastPBarWdt == -666) {
+        if (Sys_Time()-pbarStartTime < 0.8) return false;
       }
     }
   }
@@ -376,7 +374,7 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced, bool send
       return false;
     }
     // delay update if it is too often
-    double currt = Sys_Time();
+    const double currt = Sys_Time();
     if (!forced && currt-pbarLastUpdateTime < 1.0/30.0) return false;
     pbarLastUpdateTime = currt;
     lastPBarWdt = wdt;
