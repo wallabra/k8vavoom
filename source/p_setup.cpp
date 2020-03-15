@@ -3499,9 +3499,8 @@ void VLevel::CreateRepBase () {
     B.ceil_BaseYOffs = S.ceiling.BaseYOffs;
     B.ceil_SkyBox = nullptr;
     B.ceil_MirrorAlpha = S.ceiling.MirrorAlpha;
-    B.lightlevel = S.params.lightlevel;
-    B.Fade = S.params.Fade;
     B.Sky = S.Sky;
+    B.params = S.params;
   }
 
   BasePolyObjs = new rep_polyobj_t[NumPolyObjs];

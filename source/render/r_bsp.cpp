@@ -668,7 +668,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       sec_params_t *LightParams = Ceil->esecplane.splane->LightSourceSector != -1 ?
         &Level->Sectors[Ceil->esecplane.splane->LightSourceSector].params :
         secregion->params;
-      int lLev = (FixedLight ? FixedLight : min2(255, LightParams->lightlevel+ExtraLight));
+      int lLev = (FixedLight ? FixedLight : clampval((int)LightParams->lightlevel+(int)ExtraLight, 0, 255));
       if (r_darken) lLev = light_remap[lLev];
       vuint32 Fade = GetFade(secregion);
 
@@ -703,7 +703,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       sec_params_t *LightParams = Floor->esecplane.splane->LightSourceSector != -1 ?
         &Level->Sectors[Floor->esecplane.splane->LightSourceSector].params :
         secregion->params;
-      int lLev = (FixedLight ? FixedLight : min2(255, LightParams->lightlevel+ExtraLight));
+      int lLev = (FixedLight ? FixedLight : clampval((int)LightParams->lightlevel+(int)ExtraLight, 0, 255));
       if (r_darken) lLev = light_remap[lLev];
       vuint32 Fade = GetFade(secregion);
 

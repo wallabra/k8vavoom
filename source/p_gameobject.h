@@ -561,19 +561,19 @@ struct sec_params_t {
     LFC_CeilingLight_Glow = 1u<<3,
   };
 
-  vint32 lightlevel;
-  vint32 LightColor;
-  vint32 Fade;
-  vint32 contents;
+  vuint32 lightlevel;
+  vuint32 LightColor;
+  vuint32 Fade;
+  vuint32 contents;
   // bit0: floor light is absolute; bit1: the same for ceiling
   // bit2: has floor glow; bit3: has ceiling glow
   vuint32 lightFCFlags;
   // light levels
-  vint32 lightFloor;
-  vint32 lightCeiling;
+  vuint32 lightFloor;
+  vuint32 lightCeiling;
   // glow colors
-  vint32 glowFloor;
-  vint32 glowCeiling;
+  vuint32 glowFloor;
+  vuint32 glowCeiling;
   float glowFloorHeight;
   float glowCeilingHeight;
 };

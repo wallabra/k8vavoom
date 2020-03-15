@@ -204,7 +204,7 @@ static VCvarB am_rotate("am_rotate", false, "Should automap rotate?", CVAR_Archi
 static VCvarB am_show_stats("am_show_stats", false, "Show stats on automap?", CVAR_Archive);
 static VCvarB am_show_map_name("am_show_map_name", false, "Show internal map name on automap?", CVAR_Archive);
 
-static VCvarI am_cheating("am_cheating", "0", "Oops! Automap cheats!", /*CVAR_Cheat*/0);
+static VCvarI am_cheating("am_cheating", "0", "Oops! Automap cheats!", CVAR_Cheat);
 static VCvarB am_show_keys_cheat("am_show_keys_cheat", false, "Show keys on automap.", CVAR_Cheat);
 static VCvarB am_show_secrets("am_show_secrets", false, "Show secret walls on automap!", 0);
 static VCvarB am_show_minisegs("am_show_minisegs", false, "Show minisegs on automap (cheating should be turned on).", 0);

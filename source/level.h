@@ -108,9 +108,8 @@ struct rep_sector_t {
   float ceil_BaseYOffs;
   VEntity *ceil_SkyBox;
   float ceil_MirrorAlpha;
-  int lightlevel;
-  int Fade;
   int Sky;
+  sec_params_t params;
 };
 
 struct rep_polyobj_t {

@@ -834,11 +834,21 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
     RepSec->ceil_SkyBox != CeilSkyBox ||
     RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha;
 
-  const bool LightChanged = (abs(RepSec->lightlevel-Sec->params.lightlevel) >= 2);
-  const bool FadeChanged = (RepSec->Fade != Sec->params.Fade);
-  const bool SkyChanged = (RepSec->Sky != Sec->Sky);
+  const bool ParamsChanged =
+    RepSec->Sky != Sec->Sky || /* sorry */
+    RepSec->params.lightlevel != Sec->params.lightlevel ||
+    RepSec->params.LightColor != Sec->params.LightColor ||
+    RepSec->params.Fade != Sec->params.Fade ||
+    RepSec->params.contents != Sec->params.contents ||
+    RepSec->params.lightFCFlags != Sec->params.lightFCFlags ||
+    RepSec->params.lightFloor != Sec->params.lightFloor ||
+    RepSec->params.lightCeiling != Sec->params.lightCeiling ||
+    RepSec->params.glowFloor != Sec->params.glowFloor ||
+    RepSec->params.glowCeiling != Sec->params.glowCeiling ||
+    RepSec->params.glowFloorHeight != Sec->params.glowFloorHeight ||
+    RepSec->params.glowCeilingHeight != Sec->params.glowCeilingHeight;
 
-  if (!FloorChanged && !CeilChanged && !LightChanged && !FadeChanged && !SkyChanged) {
+  if (!FloorChanged && !CeilChanged && !ParamsChanged) {
     return res;
   }
 
@@ -937,22 +947,48 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
   }
 
-  if (LightChanged || FadeChanged || SkyChanged) {
+  if (ParamsChanged) {
     strm.WriteUInt(CMD_SectorLight);
     strm.WriteUInt((vuint32)sidx);
 
-    strm.WriteBit(LightChanged);
-    if (LightChanged) strm.WriteUInt((vuint32)Sec->params.lightlevel); // 256
+    strm.WriteBit(RepSec->Sky != Sec->Sky);
+    if (RepSec->Sky != Sec->Sky) strm.WriteInt(Sec->Sky);
 
-    strm.WriteBit(FadeChanged);
-    if (FadeChanged) strm << Sec->params.Fade;
+    strm.WriteBit(RepSec->params.lightlevel != Sec->params.lightlevel);
+    if (RepSec->params.lightlevel != Sec->params.lightlevel) strm.WriteUInt((vuint32)Sec->params.lightlevel); // 256
 
-    strm.WriteBit(SkyChanged);
-    if (SkyChanged) strm.WriteInt(Sec->Sky);
+    strm.WriteBit(RepSec->params.LightColor != Sec->params.LightColor);
+    if (RepSec->params.LightColor != Sec->params.LightColor) strm << STRM_INDEX_U(Sec->params.LightColor);
 
-    RepSec->lightlevel = Sec->params.lightlevel;
-    RepSec->Fade = Sec->params.Fade;
+    strm.WriteBit(RepSec->params.Fade != Sec->params.Fade);
+    if (RepSec->params.Fade != Sec->params.Fade) strm << STRM_INDEX_U(Sec->params.Fade);
+
+    strm.WriteBit(RepSec->params.contents != Sec->params.contents);
+    if (RepSec->params.contents != Sec->params.contents) strm << STRM_INDEX_U(Sec->params.contents);
+
+    strm.WriteBit(RepSec->params.lightFCFlags != Sec->params.lightFCFlags);
+    if (RepSec->params.lightFCFlags != Sec->params.lightFCFlags) strm << STRM_INDEX_U(Sec->params.lightFCFlags);
+
+    strm.WriteBit(RepSec->params.lightFloor != Sec->params.lightFloor);
+    if (RepSec->params.lightFloor != Sec->params.lightFloor) strm << STRM_INDEX_U(Sec->params.lightFloor);
+
+    strm.WriteBit(RepSec->params.lightCeiling != Sec->params.lightCeiling);
+    if (RepSec->params.lightCeiling != Sec->params.lightCeiling) strm << STRM_INDEX_U(Sec->params.lightCeiling);
+
+    strm.WriteBit(RepSec->params.glowFloor != Sec->params.glowFloor);
+    if (RepSec->params.glowFloor != Sec->params.glowFloor) strm << STRM_INDEX_U(Sec->params.glowFloor);
+
+    strm.WriteBit(RepSec->params.glowCeiling != Sec->params.glowCeiling);
+    if (RepSec->params.glowCeiling != Sec->params.glowCeiling) strm << STRM_INDEX_U(Sec->params.glowCeiling);
+
+    strm.WriteBit(RepSec->params.glowFloorHeight != Sec->params.glowFloorHeight);
+    if (RepSec->params.glowFloorHeight != Sec->params.glowFloorHeight) strm << Sec->params.glowFloorHeight;
+
+    strm.WriteBit(RepSec->params.glowCeilingHeight != Sec->params.glowCeilingHeight);
+    if (RepSec->params.glowCeilingHeight != Sec->params.glowCeilingHeight) strm << Sec->params.glowCeilingHeight;
+
     RepSec->Sky = Sec->Sky;
+    RepSec->params = Sec->params;
 
     PutStream(&Msg, strm);
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
@@ -1008,9 +1044,18 @@ bool VLevelChannel::ParseSectorLight (VMessageIn &Msg) {
 
   sector_t *Sec = &Level->Sectors[sidx];
 
-  if (Msg.ReadBit()) Sec->params.lightlevel = Msg.ReadUInt();
-  if (Msg.ReadBit()) Msg << Sec->params.Fade;
   if (Msg.ReadBit()) Sec->Sky = Msg.ReadInt();
+  if (Msg.ReadBit()) Sec->params.lightlevel = Msg.ReadUInt();
+  if (Msg.ReadBit()) Msg << STRM_INDEX_U(Sec->params.LightColor);
+  if (Msg.ReadBit()) Msg << STRM_INDEX_U(Sec->params.Fade);
+  if (Msg.ReadBit()) Msg << STRM_INDEX_U(Sec->params.contents);
+  if (Msg.ReadBit()) Msg << STRM_INDEX_U(Sec->params.lightFCFlags);
+  if (Msg.ReadBit()) Msg << STRM_INDEX_U(Sec->params.lightFloor);
+  if (Msg.ReadBit()) Msg << STRM_INDEX_U(Sec->params.lightCeiling);
+  if (Msg.ReadBit()) Msg << STRM_INDEX_U(Sec->params.glowFloor);
+  if (Msg.ReadBit()) Msg << STRM_INDEX_U(Sec->params.glowCeiling);
+  if (Msg.ReadBit()) Msg << Sec->params.glowFloorHeight;
+  if (Msg.ReadBit()) Msg << Sec->params.glowCeilingHeight;
 
   return !Msg.IsError();
 }
