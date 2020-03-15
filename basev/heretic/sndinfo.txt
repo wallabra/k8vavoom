@@ -286,6 +286,8 @@ misc/icebreak         icebrk1a
 //
 //==========================================================================
 
+$pitchshiftrange 0
+
 misc/i_pkup           itemup
 misc/p_pkup           artiup
 misc/k_pkup           keyup
@@ -304,6 +306,8 @@ $limit misc/frag 1
 //  Engine sounds
 //
 //==========================================================================
+
+$pitchshiftrange 0
 
 misc/chat           chat
 $limit misc/chat 1

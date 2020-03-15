@@ -334,28 +334,6 @@ $random world/spark       { world/spark1  world/spark2  world/spark3 }
 misc/freeze           icedth1
 misc/icebreak         icebrk1a
 
-//==========================================================================
-//
-//  User interface sounds
-//
-//==========================================================================
-
-misc/chat           dsradio
-misc/chat2            dstink
-$pitchshift misc/chat2 0
-
-menu/activate         dsswtchn
-menu/cursor           dspstop
-menu/choose           dspistol
-menu/change           dsstnmov
-menu/backup           dsswtchn
-menu/clear            dsswtchx
-menu/invalid          dsoof
-menu/prompt           dsswtchn
-menu/dismiss          dsswtchx
-
-misc/secret           dssecret
-
 
 // Marine's Best Friend -- not just for marines anymore!
 dog/active  dsdgact
@@ -369,3 +347,28 @@ dog/sight   dsdgsit
 weapons/grbnce  dsbounce
 weapons/grenlx  dsgrnexp
 weapons/grenlf  dsglaunc
+
+
+//==========================================================================
+//
+//  User interface sounds
+//
+//==========================================================================
+
+$pitchshiftrange 0
+
+misc/chat           dsradio
+misc/chat2          dstink
+$pitchshift misc/chat2 0
+
+menu/activate         dsswtchn
+menu/cursor           dspstop
+menu/choose           dspistol
+menu/change           dsstnmov
+menu/backup           dsswtchn
+menu/clear            dsswtchx
+menu/invalid          dsoof
+menu/prompt           dsswtchn
+menu/dismiss          dsswtchx
+
+misc/secret           dssecret

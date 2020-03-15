@@ -404,6 +404,8 @@ misc/icebreak         icebrk1a
 //
 //==========================================================================
 
+$pitchshiftrange 0
+
 menu/activate         dsswtchn
 menu/cursor           dspstop
 menu/choose           dsswknob

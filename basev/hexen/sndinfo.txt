@@ -201,6 +201,8 @@ $random world/spark       { world/spark1  world/spark2  world/spark3 }
 //
 //==========================================================================
 
+$pitchshiftrange 0
+
 $alias menu/activate      DoorCloseLight
 $alias menu/cursor        FighterHammerHitWall
 $alias menu/choose        DoorCloseLight
