@@ -286,7 +286,7 @@ void VNetConnection::Saturate () noexcept {
 //
 //==========================================================================
 bool VNetConnection::CanSendData () const noexcept {
-  return (SaturaDepth+Out.GetNumBytes() <= 0);
+  return (AutoAck || SaturaDepth+Out.GetNumBytes() <= 0);
 }
 
 
@@ -1825,7 +1825,7 @@ void VNetConnection::SendServerInfo () {
 
   if (LevelInfoSent == LNFO_SENT_COMPLETE) return;
 
-  GCon->Logf(NAME_DevNet, "Sending server info for %s", *GetAddress());
+  //GCon->Logf(NAME_DevNet, "Sending server info for %s", *GetAddress());
   // this will load level on client side
   LevelInfoSent = (GetLevelChannel()->SendLevelData() ? LNFO_SENT_INPROGRESS : LNFO_SENT_COMPLETE);
 }

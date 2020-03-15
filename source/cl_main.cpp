@@ -566,6 +566,7 @@ void CL_ParseServerInfo (const VNetClientServerInfo *sinfo) {
   GClLevel->NetContext = ClientNetContext;
 
   cl->Net->GetLevelChannel()->SetLevel(GClLevel);
+  cl->Net->GetLevelChannel()->SendMapLoaded();
 
   R_Start(GClLevel);
   GAudio->Start();

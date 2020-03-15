@@ -54,6 +54,8 @@ enum {
   CMD_ResetStaticLights,
   CMD_ResetLevel,
 
+  CMD_ClientMapLoaded,
+
   CMD_MAX
 };
 
@@ -77,6 +79,7 @@ VLevelChannel::VLevelChannel (VNetConnection *AConnection, vint32 AIndex, vuint8
   csi.maxclients = 1;
   csi.deathmatch = 0;
   StaticLightsNext = 0;
+  MapLoadingStartTime = 0;
   Phase = PhaseDone;
 }
 
@@ -124,6 +127,7 @@ void VLevelChannel::SetLevel (VLevel *ALevel) {
   Level = ALevel;
   StaticLightsNext = 0;
   Phase = PhaseServerInfo;
+  MapLoadingStartTime = 0;
 
   if (Level) {
     Lines = new rep_line_t[Level->NumLines];
@@ -174,8 +178,11 @@ void VLevelChannel::ResetLevel () {
 //
 //==========================================================================
 bool VLevelChannel::SendLevelData () {
+  if (Connection->IsClosed()) return false;
+
   switch (Phase) {
     case PhaseServerInfo: SendServerInfo(); break;
+    case PhaseWaitingMapLoaded: WaitForMapLoaded(); break;
     case PhaseStaticLights: SendStaticLights(); break;
     case PhasePrerender: SendPreRender(); break;
     case PhaseDone: break;
@@ -227,7 +234,27 @@ void VLevelChannel::SendServerInfo () {
     SendMessage(&Msg);
   }
 
-  Phase = PhaseStaticLights;
+  if (!Connection->AutoAck) {
+    Phase = PhaseWaitingMapLoaded;
+    MapLoadingStartTime = Connection->Driver->GetNetTime();
+  } else {
+    // demo recording
+    Phase = PhaseStaticLights;
+  }
+}
+
+
+//==========================================================================
+//
+//  VLevelChannel::WaitForMapLoaded
+//
+//==========================================================================
+void VLevelChannel::WaitForMapLoaded () {
+  vassert(Phase == PhaseWaitingMapLoaded);
+  if (Connection->Driver->GetNetTime()-MapLoadingStartTime > 5*60) {
+    GCon->Logf(NAME_DevNet, "%s: client-side level loading takes too long", *GetDebugName());
+    Connection->Close();
+  }
 }
 
 
@@ -276,6 +303,21 @@ void VLevelChannel::SendPreRender () {
   SendMessage(&Msg);
 
   Phase = PhaseDone;
+}
+
+
+//==========================================================================
+//
+//  VLevelChannel::SendMapLoaded
+//
+//  used by the client
+//
+//==========================================================================
+void VLevelChannel::SendMapLoaded () {
+  GCon->Logf(NAME_DevNet, "%s: sending 'map loaded'", *Connection->GetAddress());
+  VMessageOut Msg(this);
+  Msg.WriteUInt(CMD_ClientMapLoaded);
+  SendMessage(&Msg);
 }
 
 
@@ -1480,13 +1522,24 @@ void VLevelChannel::Update () {
 //==========================================================================
 void VLevelChannel::ParseMessage (VMessageIn &Msg) {
   if (!Connection->IsClient()) {
+    if (!Msg.AtEnd()) {
+      int Cmd = (int)Msg.ReadUInt();
+      if (!Msg.IsError() && Cmd == CMD_ClientMapLoaded) {
+        if (Phase == PhaseWaitingMapLoaded) {
+          GCon->Logf(NAME_DevNet, "%s: client loaded the map", *GetDebugName());
+          // advance to the next phase
+          Phase = PhaseStaticLights;
+          return;
+        }
+      }
+    }
     GCon->Logf(NAME_DevNet, "%s: client sent some level updates, ignoring", *GetDebugName());
     return;
   }
 
   bool err = false;
   while (!err && !Msg.AtEnd()) {
-    int Cmd = Msg.ReadUInt();
+    int Cmd = (int)Msg.ReadUInt();
     if (Msg.IsError()) {
       GCon->Logf(NAME_DevNet, "%s: cannot read command", *GetDebugName());
       err = true;
@@ -1532,7 +1585,6 @@ void VLevelChannel::ParseMessage (VMessageIn &Msg) {
         }
         // prepare serveinfo buffer
         serverInfoBuf.clear();
-        //CL_ParseServerInfo(Msg);
         GCon->Logf(NAME_DevNet, "%s: received new map request (map name is '%s')", *GetDebugName(), *csi.mapname);
         #else
         Host_Error("CMD_NewLevel from client");
@@ -1596,8 +1648,15 @@ void VLevelChannel::ParseMessage (VMessageIn &Msg) {
         GCon->Logf(NAME_DevNet, "%s: received level reset", *GetDebugName());
         ResetLevel();
         #else
-        Host_Error("CMD_PreRender from CMD_ResetLevel");
+        Host_Error("CMD_ResetLevel from client");
         #endif
+        break;
+      case CMD_ClientMapLoaded:
+        if (Phase == PhaseWaitingMapLoaded) {
+          GCon->Logf(NAME_DevNet, "%s: client loaded the map", *GetDebugName());
+          // advance to the next phase
+          Phase = PhaseStaticLights;
+        }
         break;
       default:
         GCon->Logf(NAME_DevNet, "%s: received invalid level command from client (%d)", *GetDebugName(), Cmd);

@@ -403,15 +403,18 @@ protected:
 protected:
   enum {
     PhaseServerInfo,
+    PhaseWaitingMapLoaded,
     PhaseStaticLights,
     PhasePrerender,
     PhaseDone,
   };
 
   int Phase;
+  double MapLoadingStartTime;
 
 protected:
   void SendServerInfo ();
+  void WaitForMapLoaded ();
   void SendStaticLights ();
   void SendPreRender ();
 
@@ -424,6 +427,9 @@ public:
   bool SendLevelData ();
   void Update ();
   void ResetLevel ();
+
+  // used by the client
+  void SendMapLoaded ();
 
   // VChannel interface
   virtual VStr GetName () const noexcept override;
