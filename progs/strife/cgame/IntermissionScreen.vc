@@ -78,11 +78,11 @@ void Start()
 override void Tick(float DeltaTime)
 {
   intertime += DeltaTime;
-  if (ClGame.skipintermission || intertime > HubCount)
+  if (ClGame.bSkipIntermission || intertime > HubCount)
   {
     CmdBuf_AddText("TeleportNewMap\n");
     interstate = IMS_Done;
-    ClGame.skipintermission = false;
+    ClGame.bSkipIntermission = false;
   }
 }
 

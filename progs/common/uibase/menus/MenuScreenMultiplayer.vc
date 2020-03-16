@@ -50,7 +50,7 @@ override void CreateChoices () {
 //
 //==========================================================================
 void ActivateNewGame (Object Sender) {
-  if (!ClGame.local_server) return;
+  if (!ClGame.bLocalServer) return;
   ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenNewNetGame));
 }
 

@@ -1877,7 +1877,7 @@ void VNetConnection::SendServerInfo () {
 
   if (LevelInfoSent == LNFO_SENT_COMPLETE) return;
 
-  //GCon->Logf(NAME_DevNet, "Sending server info for %s", *GetAddress());
+  GCon->Logf(NAME_DevNet, "Sending server info for %s", *GetAddress());
   // this will load level on client side
   LevelInfoSent = (GetLevelChannel()->SendLevelData() ? LNFO_SENT_INPROGRESS : LNFO_SENT_COMPLETE);
 }
@@ -1889,12 +1889,9 @@ void VNetConnection::SendServerInfo () {
 //
 //  always followed by `SendServerInfo()`
 //
-//  `keepObjMapSent` is used to record demos
-//
 //==========================================================================
-void VNetConnection::LoadedNewLevel (bool keepObjMapSent) {
+void VNetConnection::LoadedNewLevel () {
   GCon->Log(NAME_DevNet, "LEVEL RESET");
-  if (!keepObjMapSent) ObjMapSent = false;
   LevelInfoSent = LNFO_UNSENT;
   GetLevelChannel()->SetLevel(GLevel);
 }

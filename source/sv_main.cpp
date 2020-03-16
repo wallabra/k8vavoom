@@ -150,7 +150,7 @@ static int RebornPosition = 0; // position indicator for cooperative net-play re
 static bool mapteleport_issued = false;
 static int mapteleport_flags = 0;
 static int mapteleport_skill = -1;
-static bool mapteleport_executed = false; // used for netgame autoteleport
+static bool mapteleport_executed = false; // used for netgame autoteleport; reset in `SV_SpawnServer()`
 
 static VCvarI TimeLimit("TimeLimit", "0", "Deathmatch time limit, in minutes (0 means 'none').", CVAR_ServerInfo);
 static VCvarI FragLimit("FragLimit", "0", "Deathmatch frag limit (0 means 'none')", CVAR_ServerInfo);
@@ -571,75 +571,59 @@ static void CheckForSkip () {
 
   //GCon->Log(NAME_Debug, "CheckForSkip!");
 
-  /*
-  if (GDemoRecordingContext) {
-    skip = true;
-  } else
-  */
-  {
-    // if we don't have alive players, skip it forcefully
-    bool hasAlivePlayer = false;
-    for (int i = 0; i < MAXPLAYERS; ++i) {
-      player = GGameInfo->Players[i];
-      if (player) {
-        if (!(player->PlayerFlags&VBasePlayer::PF_IsBot)) {
-          if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
-            if (!player->Net) continue;
-          }
-          if (player->PlayerFlags&VBasePlayer::PF_Spawned) {
-            hasAlivePlayer = true;
-          }
+  // if we don't have alive players, skip it forcefully
+  bool hasAlivePlayer = false;
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    player = GGameInfo->Players[i];
+    if (player) {
+      if (!(player->PlayerFlags&VBasePlayer::PF_IsBot)) {
+        if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
+          if (!player->Net) continue; // bot
         }
-        if (player->Buttons&BT_ATTACK) {
-          if (!(player->PlayerFlags&VBasePlayer::PF_AttackDown)) skip = true;
-          player->PlayerFlags |= VBasePlayer::PF_AttackDown;
-        } else {
-          player->PlayerFlags &= ~VBasePlayer::PF_AttackDown;
-        }
-        if (player->Buttons&BT_USE) {
-          if (!(player->PlayerFlags&VBasePlayer::PF_UseDown)) skip = true;
-          player->PlayerFlags |= VBasePlayer::PF_UseDown;
-        } else {
-          player->PlayerFlags &= ~VBasePlayer::PF_UseDown;
+        if (player->PlayerFlags&VBasePlayer::PF_Spawned) {
+          hasAlivePlayer = true; // alive
         }
       }
-    }
-
-    if (deathmatch && sv.intertime < 4) {
-      // wait for 4 seconds before allowing a skip
-      if (skip) {
-        triedToSkip = true;
-        skip = false;
+      if (player->Buttons&BT_ATTACK) {
+        if (!(player->PlayerFlags&VBasePlayer::PF_AttackDown)) skip = true;
+        player->PlayerFlags |= VBasePlayer::PF_AttackDown;
+      } else {
+        player->PlayerFlags &= ~VBasePlayer::PF_AttackDown;
       }
-    } else {
-      if (triedToSkip) {
-        skip = true;
-        triedToSkip = false;
+      if (player->Buttons&BT_USE) {
+        if (!(player->PlayerFlags&VBasePlayer::PF_UseDown)) skip = true;
+        player->PlayerFlags |= VBasePlayer::PF_UseDown;
+      } else {
+        player->PlayerFlags &= ~VBasePlayer::PF_UseDown;
       }
-    }
-
-    // no alive players, and network game? skip intermission
-    if (!hasAlivePlayer && (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer)) {
-      skip = true;
-      GCon->Log(NAME_Debug, "Forced Skip!");
     }
   }
 
+  if (deathmatch && sv.intertime < 4) {
+    // wait for 4 seconds before allowing a skip
+    if (skip) {
+      triedToSkip = true;
+      skip = false;
+    }
+  } else if (triedToSkip) {
+    skip = true;
+    triedToSkip = false;
+  }
+
+  // no alive players, and network game? skip intermission
+  if (!hasAlivePlayer && (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer)) {
+    skip = true;
+    GCon->Log(NAME_Debug, "Forced Skip!");
+  }
+
   if (skip) {
-    bool wasSkip = false;
     for (int i = 0; i < svs.max_clients; ++i) {
       player = GGameInfo->Players[i];
       if (!player) continue;
-      if (!(player->PlayerFlags&VBasePlayer::PF_IsBot)) {
-        if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
-          if (!player->Net) continue;
-        }
-        if (player->PlayerFlags&VBasePlayer::PF_Spawned) wasSkip = true;
-      }
       player->eventClientSkipIntermission();
     }
     // if no alive players, simply go to the next map
-    if (!wasSkip) {
+    if (!hasAlivePlayer) {
       if (VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) {
         for (int ep = 0; ep < P_GetNumEpisodes(); ++ep) {
           VEpisodeDef *edef = P_GetEpisodeDef(ep);
@@ -1082,7 +1066,7 @@ COMMAND_AC(TestFinale) {
 //==========================================================================
 COMMAND_WITH_AC(TeleportNewMap) {
   int flags = 0;
-  mapteleport_executed = false; // used for netgame autoteleport
+  //mapteleport_executed = false; // used for netgame autoteleport
 
   // dumb clients must forward this
   if (GGameInfo->NetMode == NM_None) return;
@@ -1095,6 +1079,7 @@ COMMAND_WITH_AC(TeleportNewMap) {
   } else if (sv.intermission != 1) {
     if (Args.length() != 2 || !Args[1].startsWithCI("**forced**")) return;
     flags = CHANGELEVEL_REMOVEKEYS;
+    if (Args[1].startsWithCI("**forced**")) mapteleport_executed = true; // block it again
   }
 
   if (!deathmatch) {

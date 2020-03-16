@@ -783,8 +783,7 @@ public:
   void UpdateLevel ();
 
   void SendServerInfo ();
-  // `keepObjMapSent` is used to record demos
-  void LoadedNewLevel (bool keepObjMapSent=false);
+  void LoadedNewLevel ();
   void ResetLevel ();
 
   bool SecCheckFatPVS (const sector_t *Sec);

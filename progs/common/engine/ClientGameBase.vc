@@ -25,9 +25,9 @@
 //**************************************************************************
 class ClientGameBase : Object abstract native;
 
-bool local_server;
+bool bLocalServer;
 // used to accelerate or skip a stage
-bool skipintermission;
+bool bSkipIntermission;
 
 readonly GameInfo Game;
 readonly BasePlayer cl;
@@ -297,5 +297,5 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
 
 
 defaultproperties {
-  local_server = true;
+  bLocalServer = true;
 }

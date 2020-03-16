@@ -113,11 +113,11 @@ override void Tick(float DeltaTime)
     return;
   }
   intertime += DeltaTime;
-  if (ClGame.skipintermission || (!ClGame.deathmatch && !HubCount))
+  if (ClGame.bSkipIntermission || (!ClGame.deathmatch && !HubCount))
   {
     interstate = IMS_Done;
     cnt = 0.3;
-    ClGame.skipintermission = false;
+    ClGame.bSkipIntermission = false;
   }
 }
 
@@ -184,7 +184,7 @@ void IM_InitStats()
   PlayerReplicationInfo RepInfo;
   PlayerReplicationInfo Other;
 
-  ClGame.skipintermission = false;
+  ClGame.bSkipIntermission = false;
   intertime = 0.0;
   if (!ClGame.deathmatch)
   {

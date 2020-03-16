@@ -211,7 +211,7 @@ void Start () {
   FixWidgetSize();
 
   StopAllSounds();
-  ClGame.skipintermission = false;
+  ClGame.bSkipIntermission = false;
   cnt = 0.0;
   btime = 0.0;
 
@@ -538,7 +538,7 @@ void IM_DrawTime (int x, int y, int t, string BaseText, bool sucks) {
 //==========================================================================
 void IM_InitSingleStats () {
   interstate = IMS_Stats;
-  ClGame.skipintermission = false;
+  ClGame.bSkipIntermission = false;
   sp_state = 1;
   cnt_kills[0] = -1;
   cnt_items[0] = -1;
@@ -593,8 +593,8 @@ void IM_DrawSingleStats () {
 //
 //==========================================================================
 void IM_UpdateSingleStats (float DeltaTime) {
-  if (ClGame.skipintermission && sp_state != 10) {
-    ClGame.skipintermission = false;
+  if (ClGame.bSkipIntermission && sp_state != 10) {
+    ClGame.bSkipIntermission = false;
     cnt_kills[0] = (ClGame.cl.KillCount*100)/TotalKills;
     cnt_items[0] = (ClGame.cl.ItemCount*100)/TotalItems;
     cnt_secret[0] = (ClGame.cl.SecretCount*100)/TotalSecret;
@@ -644,7 +644,7 @@ void IM_UpdateSingleStats (float DeltaTime) {
       ++sp_state;
     }
   } else if (sp_state == 10) {
-    if (ClGame.skipintermission) {
+    if (ClGame.bSkipIntermission) {
       LocalSound('weapons/shotgr');
       if (checkForDoom2()) {
         IM_InitNoState();
@@ -669,7 +669,7 @@ void IM_UpdateSingleStats (float DeltaTime) {
 //==========================================================================
 void IM_InitCooperativeStats () {
   interstate = IMS_Stats;
-  ClGame.skipintermission = false;
+  ClGame.bSkipIntermission = false;
   ng_state = 1;
   cnt_pause = 1.0;
   foreach (auto i; 0..MAXPLAYERS) {
@@ -743,8 +743,8 @@ void IM_UpdateCooperativeStats (float DeltaTime) {
 
   bool stillticking;
 
-  if (ClGame.skipintermission && ng_state != 10) {
-    ClGame.skipintermission = false;
+  if (ClGame.bSkipIntermission && ng_state != 10) {
+    ClGame.bSkipIntermission = false;
     foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       cnt_kills[RepInfo.PlayerNum] = (RepInfo.KillCount*100)/TotalKills;
       cnt_items[RepInfo.PlayerNum] = (RepInfo.ItemCount*100)/TotalItems;
@@ -827,7 +827,7 @@ void IM_UpdateCooperativeStats (float DeltaTime) {
       ++ng_state;
     }
   } else if (ng_state == 10) {
-    if (ClGame.skipintermission) {
+    if (ClGame.bSkipIntermission) {
       LocalSound('weapons/shotgr');
       if (checkForDoom2()) {
         IM_InitNoState();
@@ -854,7 +854,7 @@ void IM_InitDeathmatchStats () {
   PlayerReplicationInfo RepInfo;
 
   interstate = IMS_Stats;
-  ClGame.skipintermission = false;
+  ClGame.bSkipIntermission = false;
   dm_state = 1;
 
   cnt_pause = 1.0;
@@ -913,8 +913,8 @@ void IM_UpdateDeathmatchStats (float DeltaTime) {
   bool stillticking;
   PlayerReplicationInfo RepInfo;
 
-  if (ClGame.skipintermission && dm_state != 4) {
-    ClGame.skipintermission = false;
+  if (ClGame.bSkipIntermission && dm_state != 4) {
+    ClGame.bSkipIntermission = false;
     foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       dm_Frags[RepInfo.PlayerNum] = RepInfo.Frags;
       dm_Deaths[RepInfo.PlayerNum] = RepInfo.Deaths;
@@ -944,7 +944,7 @@ void IM_UpdateDeathmatchStats (float DeltaTime) {
       ++dm_state;
     }
   } else if (dm_state == 4) {
-    if (ClGame.skipintermission) {
+    if (ClGame.bSkipIntermission) {
       LocalSound('misc/gibbed');
       if (checkForDoom2()) {
         IM_InitNoState();
@@ -969,7 +969,7 @@ void IM_UpdateDeathmatchStats (float DeltaTime) {
 //==========================================================================
 void IM_InitNextLoc () {
   interstate = IMS_NextLoc;
-  ClGame.skipintermission = false;
+  ClGame.bSkipIntermission = false;
   cnt = SHOWNEXTLOCDELAY;
   IM_InitAnimatedBack();
 }
@@ -993,7 +993,7 @@ void IM_DrawNextLoc () {
 //==========================================================================
 void IM_UpdateNextLoc (float DeltaTime) {
   cnt -= DeltaTime;
-  if (cnt <= 0.0 || ClGame.skipintermission) IM_InitNoState();
+  if (cnt <= 0.0 || ClGame.bSkipIntermission) IM_InitNoState();
 }
 
 
@@ -1004,7 +1004,7 @@ void IM_UpdateNextLoc (float DeltaTime) {
 //==========================================================================
 void IM_InitNoState () {
   interstate = IMS_NoState;
-  ClGame.skipintermission = false;
+  ClGame.bSkipIntermission = false;
   cnt = 0.3;
 }
 
@@ -1089,7 +1089,7 @@ void IM_InitText () {
   if (!itext || !itext.Text || ClGame.deathmatch) {
     // no text, go to new map
     //interstate = IMS_NoState;
-    ClGame.skipintermission = false;
+    ClGame.bSkipIntermission = false;
     CmdBuf_AddText("TeleportNewMap\n");
     interstate = IMS_Done;
     if (Background) {
@@ -1231,11 +1231,11 @@ void IM_DrawText () {
 //==========================================================================
 void IM_UpdateText (float DeltaTime) {
   intertime += DeltaTime;
-  if (ClGame.skipintermission) {
+  if (ClGame.bSkipIntermission) {
     // check if player pressed a key to show the whole text
     // check for second keypress
     if (hubTextTypingComplete) {
-      ClGame.skipintermission = false;
+      ClGame.bSkipIntermission = false;
       // if we are in leave text, try enter text
       if (ClGame.intermissionPhase == ClientGame::IM_Phase.Leave) {
         ClGame.intermissionPhase = ClientGame::IM_Phase.Enter;
@@ -1254,7 +1254,7 @@ void IM_UpdateText (float DeltaTime) {
     // check for first keypress
     if (intertime > 0.5) {
       hubTextTypingComplete = true;
-      ClGame.skipintermission = false;
+      ClGame.bSkipIntermission = false;
       return;
     }
   }

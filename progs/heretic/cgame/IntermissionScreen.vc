@@ -166,22 +166,22 @@ override void Tick (float DeltaTime) {
         break;
     }
   }
-  if (ClGame.skipintermission) {
+  if (ClGame.bSkipIntermission) {
     if (interstate == IMS_Stats && intertime < 5.0) {
       intertime = 5.0;
-      ClGame.skipintermission = false;
+      ClGame.bSkipIntermission = false;
       return;
     } else if (interstate == IMS_PrevLoc && im_episode < 4) {
       interstate = IMS_NextLoc;
-      ClGame.skipintermission = false;
+      ClGame.bSkipIntermission = false;
       LocalSound('doors/dr1_clos');
       return;
     } else if (interstate < IMS_Text) {
       IM_InitText();
-      ClGame.skipintermission = false;
+      ClGame.bSkipIntermission = false;
       LocalSound('doors/dr1_clos');
     } else {
-      ClGame.skipintermission = false;
+      ClGame.bSkipIntermission = false;
       interstate = IMS_Done;
       Background.State = IntermissionBackground::STATE_Done;
       cnt = 0.3;
@@ -340,7 +340,7 @@ void IM_InitStats () {
   }
 
   interstate = IMS_Stats;
-  ClGame.skipintermission = false;
+  ClGame.bSkipIntermission = false;
   intertime = 0.0;
   oldintertime = (im_episode > 3 ? 35.0 : 10.0);
   im_sounds = 0;
@@ -432,7 +432,7 @@ void IM_DrawSingleStats () {
     SetFont('bigfont');
     DrawText(320, 310, ClGame.im.EnterName);
     SetTextShadow(false);
-    ClGame.skipintermission = false;
+    ClGame.bSkipIntermission = false;
   }
 }
 
@@ -630,7 +630,7 @@ void IM_InitText () {
        if (itext.TextPic) TextPic = R_RegisterPic(itext.TextPic);
   else if (itext.TextFlat) TextFlat = itext.TextFlat;
 
-  ClGame.skipintermission = false;
+  ClGame.bSkipIntermission = false;
   interstate = IMS_Text;
   intertime = 0.0;
   oldintertime = HubCount;
