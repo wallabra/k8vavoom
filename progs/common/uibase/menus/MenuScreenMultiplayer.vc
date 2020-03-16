@@ -32,26 +32,10 @@ class MenuScreenMultiplayer : MenuScreen;
 //
 //==========================================================================
 override void CreateChoices () {
-  auto Btn = MenuTextButton(NewChild(MenuBigTextButton));
-  Btn.SetPos(ChoicesStartX, currentY);
-  Btn.Text = "New Game";
-  Btn.Activated = &ActivateNewGame;
-  currentY += Btn.Height;
-
   CreateSubMenuBigText("Join Game", MenuScreenJoinGame);
+  if (ClGame.bLocalServer) CreateSubMenuBigText("New Game", MenuScreenNewNetGame);
   CreateSubMenuBigText("Player Setup", MenuScreenPlayerSetup);
   CreateSubMenuBigText("Master Setup", MenuScreenMasterSetup);
-}
-
-
-//==========================================================================
-//
-//  ActivateNewGame
-//
-//==========================================================================
-void ActivateNewGame (Object Sender) {
-  if (!ClGame.bLocalServer) return;
-  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenNewNetGame));
 }
 
 
