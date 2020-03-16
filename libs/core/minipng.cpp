@@ -188,7 +188,7 @@ static bool WriteIDAT (VStream *file, const vuint8 *data, int len);
 static void UnfilterRow (int width, vuint8 *dest, vuint8 *stream, vuint8 *prev, int bpp);
 static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const vuint8 *rowin, vuint8 *rowout, bool grayscale);
 
-int png_level = 9;
+int png_level = 6;
 float png_gamma = 0;
 
 
