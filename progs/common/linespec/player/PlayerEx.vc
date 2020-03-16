@@ -2853,6 +2853,18 @@ mthing_t *PerformRebornSpawn () {
 
 //==========================================================================
 //
+//  InitWeaponSlots
+//
+//  used by dumb client to setup weapon slots
+//
+//==========================================================================
+override void InitWeaponSlots () {
+  if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots(/*LineSpecialGameInfo(Level.Game)*/);
+}
+
+
+//==========================================================================
+//
 //  SpawnClient
 //
 //==========================================================================
@@ -2897,6 +2909,7 @@ override void SpawnClient () {
   */
 
   // setup weapon slots
+  //printdebug("*** SPAWN CLIENT: MO=%C (%C)", MO, PlayerPawn(MO));
   if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots(/*LineSpecialGameInfo(Level.Game)*/);
 
   // coop

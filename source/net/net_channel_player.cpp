@@ -40,6 +40,7 @@ VPlayerChannel::VPlayerChannel (VNetConnection *AConnection, vint32 AIndex, vuin
   , NewObj(false)
   , FieldCondValues(nullptr)
   , NextUpdateTime(0)
+  , LastMOSUid(0)
 {
   OpenAcked = true; // this channel is pre-opened
   WorldTicField = VBasePlayer::StaticClass()->FindFieldChecked("WorldTic");
@@ -114,6 +115,8 @@ void VPlayerChannel::SetPlayer (VBasePlayer *APlr) {
     NewObj = true;
     NextUpdateTime = 0; // just in case
   }
+
+  LastMOSUid = 0;
 }
 
 
@@ -147,6 +150,7 @@ void VPlayerChannel::ResetLevel () {
   NewObj = true;
   NextUpdateTime = 0; // just in case
   FieldsToResend.reset();
+  LastMOSUid = 0;
 }
 
 
@@ -246,6 +250,15 @@ void VPlayerChannel::Update () {
     SendMessage(&Msg);
   }
   */
+
+  if (Plr->MO) {
+    if (Plr->MO->ServerUId != LastMOSUid) {
+      LastMOSUid = Plr->MO->ServerUId;
+      if (Connection->IsClient()) Plr->eventInitWeaponSlots();
+    }
+  } else {
+    LastMOSUid = 0;
+  }
 }
 
 

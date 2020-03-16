@@ -490,6 +490,7 @@ public:
   TMapNC<VField *, bool> FieldsToResend;
   // this is used in server, to limit client update rate
   double NextUpdateTime;
+  vuint32 LastMOSUid;
   VField *WorldTicField;
   VField *OtherWorldTicField;
 

@@ -367,7 +367,7 @@ bool IsHHPoweredWeapon (class!Weapon wpn) {
 void InitializeWeaponSlots () {
   bool debugDump = GetCvarB('dbg_debug_weapon_slots');
 
-  //printdebug("*** InitializeWeaponSlots (%C) ***", self);
+  if (debugDump) printdebug("*** InitializeWeaponSlots (%C) ***", self);
   auto GI = LineSpecialGameInfo(Level.Game);
   assert(GI);
 

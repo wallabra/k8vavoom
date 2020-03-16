@@ -368,6 +368,8 @@ public:
 
   void eventClientFOV (float deltaTime) { static VMethodProxy method("ClientFOV"); vobjPutParamSelf(deltaTime); VMT_RET_VOID(method); }
 
+  void eventInitWeaponSlots () { static VMethodProxy method("InitWeaponSlots"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+
   void QS_Save () { static VMethodProxy method("QS_Save"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
