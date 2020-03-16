@@ -24,10 +24,10 @@
 //**
 //**************************************************************************
 
-#define VERSION_MAJOR 1
-#define VERSION_MINOR 34
-#define VERSION_RELEASE 10
-#define VERSION_TEXT  "1.34.10"
+#define VERSION_MAJOR    1
+#define VERSION_MINOR    48
+#define VERSION_RELEASE  2
+#define VERSION_TEXT     "1.48.2"
 
 // The version as seen in the Windows resource
 #define RC_FILEVERSION VERSION_MAJOR,VERSION_MINOR,VERSION_RELEASE,666
@@ -35,9 +35,13 @@
 #define RC_FILEVERSION2 VERSION_TEXT
 #define RC_PRODUCTVERSION2 VERSION_TEXT
 
-#if !defined CLIENT && !defined SERVER
+#if !defined(CLIENT) && !defined(SERVER)
 # define CLIENT
 # define SERVER
+#endif
+
+#if !defined(SERVER)
+# error "serverless client builds are not supported"
 #endif
 
 // if rangecheck is undefined, most parameter validation debugging code

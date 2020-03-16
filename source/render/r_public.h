@@ -204,10 +204,8 @@ const char *R_GetAspectRatioDsc (int idx) noexcept;
 
 bool R_EntModelNoSelfShadow (VEntity *mobj);
 
-#ifdef SERVER
 // r_sky
 void R_InitSkyBoxes ();
-#endif
 
 // checks for sky flat
 bool R_IsSkyFlatPlane (sec_plane_t *SPlane);

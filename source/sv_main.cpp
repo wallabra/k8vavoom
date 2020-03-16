@@ -205,6 +205,16 @@ static VStream *vcmodOpenFile (VStr filename, void *userdata) {
 
 //==========================================================================
 //
+//  VServerNetContext::GetLevel
+//
+//==========================================================================
+VLevel *VServerNetContext::GetLevel () {
+  return GLevel;
+}
+
+
+//==========================================================================
+//
 //  G_LoadVCMods
 //
 //  loading mods, take list from modlistfile
@@ -2272,16 +2282,6 @@ COMMAND(gc_show_all_objects) {
     else if (o->GetFlags()&_OF_DelayedDestroy) GCon->Logf("  #%5d: %p: DELAYED! (%s)", f, o, o->GetClass()->GetName());
     else GCon->Logf("  #%5d: %p: `%s`", f, o, o->GetClass()->GetName());
   }
-}
-
-
-//==========================================================================
-//
-//  VServerNetContext::GetLevel
-//
-//==========================================================================
-VLevel *VServerNetContext::GetLevel () {
-  return GLevel;
 }
 
 
