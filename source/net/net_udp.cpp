@@ -522,10 +522,12 @@ int VUdpDriver::CheckNewConnections () {
 //
 //==========================================================================
 int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
+  #ifndef WIN32
   if (net_dbg_dump_udp_inbuffer) {
     int value = 0;
     if (ioctl(socket, FIONREAD, &value) == 0) GCon->Logf(NAME_DevNet, "VUdpDriver::Read: FIONREAD=%d", value);
   }
+  #endif
   socklen_t addrlen = sizeof(sockaddr_t);
   memset((void *)addr, 0, addrlen);
   int ret = recvfrom(socket, (char *)buf, len, 0, (sockaddr *)addr, &addrlen);
@@ -551,15 +553,19 @@ int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
 //
 //==========================================================================
 int VUdpDriver::Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr) {
+  #ifndef WIN32
   if (net_dbg_dump_udp_outbuffer) {
     int value = 0;
     if (ioctl(socket, TIOCOUTQ, &value) == 0) GCon->Logf(NAME_DevNet, "VUdpDriver::Write:000: TIOCOUTQ=%d", value);
   }
+  #endif
   int ret = sendto(socket, (const char *)buf, len, 0, (sockaddr *)addr, sizeof(sockaddr));
+  #ifndef WIN32
   if (net_dbg_dump_udp_outbuffer) {
     int value = 0;
     if (ioctl(socket, TIOCOUTQ, &value) == 0) GCon->Logf(NAME_DevNet, "VUdpDriver::Write:001: TIOCOUTQ=%d (res=%d)", value, ret);
   }
+  #endif
   if (ret >= 0) return ret;
   #ifdef WIN32
   int e = WSAGetLastError();
