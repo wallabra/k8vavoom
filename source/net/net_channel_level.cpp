@@ -55,8 +55,6 @@ enum {
   CMD_ResetLevel,
 
   CMD_ClientMapLoaded,
-
-  CMD_MAX
 };
 
 
@@ -361,7 +359,7 @@ int VLevelChannel::UpdateLine (VMessageOut &Msg, VBitStreamWriter &strm, int lid
   if (Line->alpha == RepLine->alpha) return 0;
 
   strm.WriteUInt(CMD_Line);
-  strm.WriteUInt((vuint32)lidx);
+  strm << STRM_INDEX_U(lidx);
   strm.WriteBit(Line->alpha != RepLine->alpha);
   if (Line->alpha != RepLine->alpha) {
     strm << Line->alpha;
@@ -379,7 +377,8 @@ int VLevelChannel::UpdateLine (VMessageOut &Msg, VBitStreamWriter &strm, int lid
 //
 //==========================================================================
 bool VLevelChannel::ParseLine (VMessageIn &Msg) {
-  int lidx = (int)Msg.ReadUInt();
+  int lidx = 0;
+  Msg << STRM_INDEX_U(lidx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read line index", *GetDebugName());
     return false;
@@ -409,96 +408,75 @@ int VLevelChannel::UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sid
 
   side_t *Side = &Level->Sides[sidx];
 
+  /*
   if (!(Side->Sector->SectorFlags&(sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource)) &&
       !Connection->SecCheckFatPVS(Side->Sector))
   {
     return 0;
   }
+  */
 
+  int res = 0;
   rep_side_t *RepSide = &Sides[sidx];
 
-  const bool texturesChanged =
-    Side->TopTexture != RepSide->TopTexture &&
-    Side->BottomTexture != RepSide->BottomTexture &&
-    Side->MidTexture != RepSide->MidTexture;
+  // top texture
+  if (Side->TopTexture != RepSide->TopTexture) {
+    strm.WriteUInt(CMD_SideTexture);
+    strm << STRM_INDEX_U(sidx);
+    // 0
+    strm.WriteBit(false);
+    strm.WriteBit(false);
+    // data
+    Side->TopTexture.Serialise(strm);
 
-  const bool tofsChanged =
-    Side->Top.TextureOffset != RepSide->Top.TextureOffset &&
-    Side->Bot.TextureOffset != RepSide->Bot.TextureOffset &&
-    Side->Mid.TextureOffset != RepSide->Mid.TextureOffset;
+    RepSide->TopTexture = Side->TopTexture;
 
-  const bool rofsChanged =
-    Side->Top.RowOffset != RepSide->Top.RowOffset &&
-    Side->Bot.RowOffset != RepSide->Bot.RowOffset &&
-    Side->Mid.RowOffset != RepSide->Mid.RowOffset;
-
-  const bool scaleChanged =
-    Side->Top.ScaleX != RepSide->Top.ScaleX &&
-    Side->Top.ScaleY != RepSide->Top.ScaleY &&
-    Side->Bot.ScaleX != RepSide->Bot.ScaleX &&
-    Side->Bot.ScaleY != RepSide->Bot.ScaleY &&
-    Side->Mid.ScaleX != RepSide->Mid.ScaleX &&
-    Side->Mid.ScaleY != RepSide->Mid.ScaleY;
-
-  const bool otherChanged =
-    Side->Flags != RepSide->Flags &&
-    Side->Light != RepSide->Light;
-
-  if (!texturesChanged && !tofsChanged && !rofsChanged && !scaleChanged && !otherChanged) return 0;
-
-  //GCon->Logf(NAME_DevNet, "%s:Update:000: side #%d (strmlen=%d/%d)", *GetDebugName(), i, strm.GetNumBits(), MAX_MSG_SIZE_BITS);
-
-  // textures
-  if (texturesChanged) {
-    if (Side->TopTexture != RepSide->TopTexture) {
-      strm.WriteUInt(CMD_SideTexture);
-      strm.WriteUInt((vuint32)sidx);
-      // 0
-      strm.WriteBit(false);
-      strm.WriteBit(false);
-      // data
-      Side->TopTexture.Serialise(strm);
-
-      RepSide->TopTexture = Side->TopTexture;
-
-      PutStream(&Msg, strm);
-      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
-    }
-
-    if (Side->BottomTexture != RepSide->BottomTexture) {
-      strm.WriteUInt(CMD_SideTexture);
-      strm.WriteUInt((vuint32)sidx);
-      // 1
-      strm.WriteBit(true);
-      strm.WriteBit(false);
-      // data
-      Side->BottomTexture.Serialise(strm);
-
-      RepSide->BottomTexture = Side->BottomTexture;
-
-      PutStream(&Msg, strm);
-      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
-    }
-
-    if (Side->MidTexture != RepSide->MidTexture) {
-      strm.WriteUInt(CMD_SideTexture);
-      strm.WriteUInt((vuint32)sidx);
-      // 2
-      strm.WriteBit(false);
-      strm.WriteBit(true);
-      // data
-      Side->MidTexture.Serialise(strm);
-
-      RepSide->MidTexture = Side->MidTexture;
-
-      PutStream(&Msg, strm);
-      if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
-    }
+    PutStream(&Msg, strm);
+    if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
   }
 
-  if (tofsChanged) {
+  // bottom texture
+  if (Side->BottomTexture != RepSide->BottomTexture) {
+    strm.WriteUInt(CMD_SideTexture);
+    strm << STRM_INDEX_U(sidx);
+    // 1
+    strm.WriteBit(true);
+    strm.WriteBit(false);
+    // data
+    Side->BottomTexture.Serialise(strm);
+
+    RepSide->BottomTexture = Side->BottomTexture;
+
+    PutStream(&Msg, strm);
+    if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
+  }
+
+  // middle texture
+  if (Side->MidTexture != RepSide->MidTexture) {
+    strm.WriteUInt(CMD_SideTexture);
+    strm << STRM_INDEX_U(sidx);
+    // 2
+    strm.WriteBit(false);
+    strm.WriteBit(true);
+    // data
+    Side->MidTexture.Serialise(strm);
+
+    RepSide->MidTexture = Side->MidTexture;
+
+    PutStream(&Msg, strm);
+    if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
+  }
+
+  // horizontal texture offsets
+  if (Side->Top.TextureOffset != RepSide->Top.TextureOffset ||
+      Side->Bot.TextureOffset != RepSide->Bot.TextureOffset ||
+      Side->Mid.TextureOffset != RepSide->Mid.TextureOffset)
+  {
     strm.WriteUInt(CMD_SideTOffset);
-    strm.WriteUInt((vuint32)sidx);
+    strm << STRM_INDEX_U(sidx);
 
     strm.WriteBit(Side->Top.TextureOffset != RepSide->Top.TextureOffset);
     if (Side->Top.TextureOffset != RepSide->Top.TextureOffset) {
@@ -520,11 +498,16 @@ int VLevelChannel::UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sid
 
     PutStream(&Msg, strm);
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
   }
 
-  if (rofsChanged) {
+  // vertical texture offsets
+  if (Side->Top.RowOffset != RepSide->Top.RowOffset ||
+      Side->Bot.RowOffset != RepSide->Bot.RowOffset ||
+      Side->Mid.RowOffset != RepSide->Mid.RowOffset)
+  {
     strm.WriteUInt(CMD_SideROffset);
-    strm.WriteUInt((vuint32)sidx);
+    strm << STRM_INDEX_U(sidx);
 
     strm.WriteBit(Side->Top.RowOffset != RepSide->Top.RowOffset);
     if (Side->Top.RowOffset != RepSide->Top.RowOffset) {
@@ -546,11 +529,19 @@ int VLevelChannel::UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sid
 
     PutStream(&Msg, strm);
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
   }
 
-  if (scaleChanged) {
+  // texture scaling
+  if (Side->Top.ScaleX != RepSide->Top.ScaleX ||
+      Side->Top.ScaleY != RepSide->Top.ScaleY ||
+      Side->Bot.ScaleX != RepSide->Bot.ScaleX ||
+      Side->Bot.ScaleY != RepSide->Bot.ScaleY ||
+      Side->Mid.ScaleX != RepSide->Mid.ScaleX ||
+      Side->Mid.ScaleY != RepSide->Mid.ScaleY)
+  {
     strm.WriteUInt(CMD_SideScale);
-    strm.WriteUInt((vuint32)sidx);
+    strm << STRM_INDEX_U(sidx);
 
     strm.WriteBit(Side->Top.ScaleX != RepSide->Top.ScaleX);
     if (Side->Top.ScaleX != RepSide->Top.ScaleX) {
@@ -590,11 +581,15 @@ int VLevelChannel::UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sid
 
     PutStream(&Msg, strm);
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
   }
 
-  if (otherChanged) {
+  // lighting and flags
+  if (Side->Flags != RepSide->Flags ||
+      Side->Light != RepSide->Light)
+  {
     strm.WriteUInt(CMD_Side);
-    strm.WriteUInt((vuint32)sidx);
+    strm << STRM_INDEX_U(sidx);
 
     strm.WriteBit(Side->Flags != RepSide->Flags);
     if (Side->Flags != RepSide->Flags) {
@@ -610,9 +605,10 @@ int VLevelChannel::UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sid
 
     PutStream(&Msg, strm);
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
   }
 
-  return 1;
+  return res;
 }
 
 
@@ -622,7 +618,8 @@ int VLevelChannel::UpdateSide (VMessageOut &Msg, VBitStreamWriter &strm, int sid
 //
 //==========================================================================
 bool VLevelChannel::ParseSideTexture (VMessageIn &Msg) {
-  int sidx = (int)Msg.ReadUInt();
+  int sidx = 0;
+  Msg << STRM_INDEX_U(sidx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read side index", *GetDebugName());
     return false;
@@ -659,7 +656,8 @@ bool VLevelChannel::ParseSideTexture (VMessageIn &Msg) {
 //
 //==========================================================================
 bool VLevelChannel::ParseSideTOffset (VMessageIn &Msg) {
-  int sidx = (int)Msg.ReadUInt();
+  int sidx = 0;
+  Msg << STRM_INDEX_U(sidx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read side index", *GetDebugName());
     return false;
@@ -684,7 +682,8 @@ bool VLevelChannel::ParseSideTOffset (VMessageIn &Msg) {
 //
 //==========================================================================
 bool VLevelChannel::ParseSideROffset (VMessageIn &Msg) {
-  int sidx = (int)Msg.ReadUInt();
+  int sidx = 0;
+  Msg << STRM_INDEX_U(sidx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read side index", *GetDebugName());
     return false;
@@ -709,7 +708,8 @@ bool VLevelChannel::ParseSideROffset (VMessageIn &Msg) {
 //
 //==========================================================================
 bool VLevelChannel::ParseSideScale (VMessageIn &Msg) {
-  int sidx = (int)Msg.ReadUInt();
+  int sidx = 0;
+  Msg << STRM_INDEX_U(sidx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read side index", *GetDebugName());
     return false;
@@ -731,14 +731,14 @@ bool VLevelChannel::ParseSideScale (VMessageIn &Msg) {
 }
 
 
-
 //==========================================================================
 //
 //  VLevelChannel::ParseSide
 //
 //==========================================================================
 bool VLevelChannel::ParseSide (VMessageIn &Msg) {
-  int sidx = (int)Msg.ReadUInt();
+  int sidx = 0;
+  Msg << STRM_INDEX_U(sidx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read side index", *GetDebugName());
     return false;
@@ -766,11 +766,13 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
 
   sector_t *Sec = &Level->Sectors[sidx];
 
+  /*
   if (!(Sec->SectorFlags&(sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource)) &&
       !Connection->SecCheckFatPVS(Sec))
   {
     return 0;
   }
+  */
 
   VEntity *FloorSkyBox = Sec->floor.SkyBox;
   if (FloorSkyBox && !Connection->ObjMap->CanSerialiseObject(FloorSkyBox)) FloorSkyBox = nullptr;
@@ -785,7 +787,7 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
   // floor texture
   if (RepSec->floor_pic != Sec->floor.pic) {
     strm.WriteUInt(CMD_SectorTexture);
-    strm.WriteUInt((vuint32)sidx);
+    strm << STRM_INDEX_U(sidx);
     strm.WriteBit(false); // floor
     Sec->floor.pic.Serialise(strm);
 
@@ -799,7 +801,7 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
   // ceiling texture
   if (RepSec->ceil_pic != Sec->ceiling.pic) {
     strm.WriteUInt(CMD_SectorTexture);
-    strm.WriteUInt((vuint32)sidx);
+    strm << STRM_INDEX_U(sidx);
     strm.WriteBit(true); // ceiling
     Sec->floor.pic.Serialise(strm);
 
@@ -810,54 +812,20 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
     res = 1;
   }
 
-  const bool FloorChanged =
-    RepSec->floor_dist != Sec->floor.dist ||
-    mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs) ||
-    mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs) ||
-    RepSec->floor_XScale != Sec->floor.XScale ||
-    RepSec->floor_YScale != Sec->floor.YScale ||
-    mround(RepSec->floor_Angle) != mround(Sec->floor.Angle) ||
-    mround(RepSec->floor_BaseAngle) != mround(Sec->floor.BaseAngle) ||
-    mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs) ||
-    RepSec->floor_SkyBox != FloorSkyBox ||
-    RepSec->floor_MirrorAlpha != Sec->floor.MirrorAlpha;
-
-  const bool CeilChanged =
-    RepSec->ceil_dist != Sec->ceiling.dist ||
-    mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs) ||
-    mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs) ||
-    RepSec->ceil_XScale != Sec->ceiling.XScale ||
-    RepSec->ceil_YScale != Sec->ceiling.YScale ||
-    mround(RepSec->ceil_Angle) != mround(Sec->ceiling.Angle) ||
-    mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle) ||
-    mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs) ||
-    RepSec->ceil_SkyBox != CeilSkyBox ||
-    RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha;
-
-  const bool ParamsChanged =
-    RepSec->Sky != Sec->Sky || /* sorry */
-    RepSec->params.lightlevel != Sec->params.lightlevel ||
-    RepSec->params.LightColor != Sec->params.LightColor ||
-    RepSec->params.Fade != Sec->params.Fade ||
-    RepSec->params.contents != Sec->params.contents ||
-    RepSec->params.lightFCFlags != Sec->params.lightFCFlags ||
-    RepSec->params.lightFloor != Sec->params.lightFloor ||
-    RepSec->params.lightCeiling != Sec->params.lightCeiling ||
-    RepSec->params.glowFloor != Sec->params.glowFloor ||
-    RepSec->params.glowCeiling != Sec->params.glowCeiling ||
-    RepSec->params.glowFloorHeight != Sec->params.glowFloorHeight ||
-    RepSec->params.glowCeilingHeight != Sec->params.glowCeilingHeight;
-
-  if (!FloorChanged && !CeilChanged && !ParamsChanged) {
-    return res;
-  }
-
-  // floor changes
-  if (FloorChanged) {
-    const bool MirrorChanged = (RepSec->floor_MirrorAlpha != Sec->floor.MirrorAlpha);
-
+  // floor
+  if (RepSec->floor_dist != Sec->floor.dist ||
+      mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs) ||
+      mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs) ||
+      RepSec->floor_XScale != Sec->floor.XScale ||
+      RepSec->floor_YScale != Sec->floor.YScale ||
+      mround(RepSec->floor_Angle) != mround(Sec->floor.Angle) ||
+      mround(RepSec->floor_BaseAngle) != mround(Sec->floor.BaseAngle) ||
+      mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs) ||
+      RepSec->floor_SkyBox != FloorSkyBox ||
+      RepSec->floor_MirrorAlpha != Sec->floor.MirrorAlpha)
+  {
     strm.WriteUInt(CMD_Sector);
-    strm.WriteUInt((vuint32)sidx);
+    strm << STRM_INDEX_U(sidx);
     strm.WriteBit(false); // floor
 
     strm.WriteBit(RepSec->floor_dist != Sec->floor.dist);
@@ -882,8 +850,8 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
     if (mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs)) strm << Sec->floor.BaseYOffs;
     strm.WriteBit(RepSec->floor_SkyBox != FloorSkyBox);
     if (RepSec->floor_SkyBox != FloorSkyBox) strm << FloorSkyBox;
-    strm.WriteBit(MirrorChanged);
-    if (MirrorChanged) strm << Sec->floor.MirrorAlpha;
+    strm.WriteBit(RepSec->floor_MirrorAlpha != Sec->floor.MirrorAlpha);
+    if (RepSec->floor_MirrorAlpha != Sec->floor.MirrorAlpha) strm << Sec->floor.MirrorAlpha;
 
     RepSec->floor_dist = Sec->floor.dist;
     RepSec->floor_xoffs = Sec->floor.xoffs;
@@ -898,13 +866,23 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
 
     PutStream(&Msg, strm);
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
   }
 
-  if (CeilChanged) {
-    const bool MirrorChanged = (RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha);
-
+  // ceiling
+  if (RepSec->ceil_dist != Sec->ceiling.dist ||
+      mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs) ||
+      mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs) ||
+      RepSec->ceil_XScale != Sec->ceiling.XScale ||
+      RepSec->ceil_YScale != Sec->ceiling.YScale ||
+      mround(RepSec->ceil_Angle) != mround(Sec->ceiling.Angle) ||
+      mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle) ||
+      mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs) ||
+      RepSec->ceil_SkyBox != CeilSkyBox ||
+      RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha)
+  {
     strm.WriteUInt(CMD_Sector);
-    strm.WriteUInt((vuint32)sidx);
+    strm << STRM_INDEX_U(sidx);
     strm.WriteBit(true); // ceiling
 
     strm.WriteBit(RepSec->ceil_dist != Sec->ceiling.dist);
@@ -929,8 +907,8 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
     if (mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs)) strm << Sec->ceiling.BaseYOffs;
     strm.WriteBit(RepSec->ceil_SkyBox != CeilSkyBox);
     if (RepSec->ceil_SkyBox != CeilSkyBox) strm << CeilSkyBox;
-    strm.WriteBit(MirrorChanged);
-    if (MirrorChanged) strm << Sec->ceiling.MirrorAlpha;
+    strm.WriteBit(RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha);
+    if (RepSec->ceil_MirrorAlpha != Sec->ceiling.MirrorAlpha) strm << Sec->ceiling.MirrorAlpha;
 
     RepSec->ceil_dist = Sec->ceiling.dist;
     RepSec->ceil_xoffs = Sec->ceiling.xoffs;
@@ -945,11 +923,25 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
 
     PutStream(&Msg, strm);
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
   }
 
-  if (ParamsChanged) {
+  // params
+  if (RepSec->Sky != Sec->Sky || /* sorry */
+      RepSec->params.lightlevel != Sec->params.lightlevel ||
+      RepSec->params.LightColor != Sec->params.LightColor ||
+      RepSec->params.Fade != Sec->params.Fade ||
+      RepSec->params.contents != Sec->params.contents ||
+      RepSec->params.lightFCFlags != Sec->params.lightFCFlags ||
+      RepSec->params.lightFloor != Sec->params.lightFloor ||
+      RepSec->params.lightCeiling != Sec->params.lightCeiling ||
+      RepSec->params.glowFloor != Sec->params.glowFloor ||
+      RepSec->params.glowCeiling != Sec->params.glowCeiling ||
+      RepSec->params.glowFloorHeight != Sec->params.glowFloorHeight ||
+      RepSec->params.glowCeilingHeight != Sec->params.glowCeilingHeight)
+  {
     strm.WriteUInt(CMD_SectorLight);
-    strm.WriteUInt((vuint32)sidx);
+    strm << STRM_INDEX_U(sidx);
 
     strm.WriteBit(RepSec->Sky != Sec->Sky);
     if (RepSec->Sky != Sec->Sky) strm.WriteInt(Sec->Sky);
@@ -992,6 +984,7 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
 
     PutStream(&Msg, strm);
     if (!CanSendData()) { FlushMsg(&Msg); Connection->NeedsUpdate = true; return -1; }
+    res = 1;
   }
 
   return res;
@@ -1004,7 +997,8 @@ int VLevelChannel::UpdateSector (VMessageOut &Msg, VBitStreamWriter &strm, int s
 //
 //==========================================================================
 bool VLevelChannel::ParseSectorTexture (VMessageIn &Msg) {
-  int sidx = (int)Msg.ReadUInt();
+  int sidx = 0;
+  Msg << STRM_INDEX_U(sidx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read sector index", *GetDebugName());
     return false;
@@ -1032,7 +1026,8 @@ bool VLevelChannel::ParseSectorTexture (VMessageIn &Msg) {
 //
 //==========================================================================
 bool VLevelChannel::ParseSectorLight (VMessageIn &Msg) {
-  int sidx = (int)Msg.ReadUInt();
+  int sidx = 0;
+  Msg << STRM_INDEX_U(sidx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read sector index", *GetDebugName());
     return false;
@@ -1067,7 +1062,8 @@ bool VLevelChannel::ParseSectorLight (VMessageIn &Msg) {
 //
 //==========================================================================
 bool VLevelChannel::ParseSector (VMessageIn &Msg) {
-  int sidx = (int)Msg.ReadUInt();
+  int sidx = 0;
+  Msg << STRM_INDEX_U(sidx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read sector index", *GetDebugName());
     return false;
@@ -1147,7 +1143,7 @@ int VLevelChannel::UpdatePolyObj (VMessageOut &Msg, VBitStreamWriter &strm, int 
   }
 
   strm.WriteUInt(CMD_PolyObj);
-  strm.WriteUInt((vuint32)oidx);
+  strm << STRM_INDEX_U(oidx);
 
   strm.WriteBit(RepPo->startSpot.x != Po->startSpot.x);
   if (RepPo->startSpot.x != Po->startSpot.x) strm << Po->startSpot.x;
@@ -1169,7 +1165,8 @@ int VLevelChannel::UpdatePolyObj (VMessageOut &Msg, VBitStreamWriter &strm, int 
 //
 //==========================================================================
 bool VLevelChannel::ParsePolyObj (VMessageIn &Msg) {
-  int oidx = (int)Msg.ReadUInt();
+  int oidx = 0;
+  Msg << STRM_INDEX_U(oidx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read polyobject index", *GetDebugName());
     return false;
@@ -1222,7 +1219,7 @@ int VLevelChannel::UpdateCameraTexture (VMessageOut &Msg, VBitStreamWriter &strm
 
   // send message
   strm.WriteUInt(CMD_CamTex);
-  strm.WriteUInt((vuint32)idx);
+  strm << STRM_INDEX_U(idx);
 
   Connection->ObjMap->SerialiseObject(strm, *(VObject **)&CamEnt);
   strm.WriteInt(Cam.TexNum);
@@ -1243,7 +1240,8 @@ int VLevelChannel::UpdateCameraTexture (VMessageOut &Msg, VBitStreamWriter &strm
 //
 //==========================================================================
 bool VLevelChannel::ParseCameraTexture (VMessageIn &Msg) {
-  int idx = (int)Msg.ReadUInt();
+  int idx = 0;
+  Msg << STRM_INDEX_U(idx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read camtex index", *GetDebugName());
     return false;
@@ -1296,7 +1294,7 @@ int VLevelChannel::UpdateTranslation (VMessageOut &Msg, VBitStreamWriter &strm, 
 
   // send message
   strm.WriteUInt(CMD_LevelTrans);
-  strm.WriteUInt((vuint32)idx);
+  strm << STRM_INDEX_U(idx);
 
   strm.WriteUInt((vuint32)Tr->Commands.Num());
   Rep.SetNum(Tr->Commands.Num());
@@ -1321,7 +1319,8 @@ int VLevelChannel::UpdateTranslation (VMessageOut &Msg, VBitStreamWriter &strm, 
 //
 //==========================================================================
 bool VLevelChannel::ParseTranslation (VMessageIn &Msg) {
-  int idx = (int)Msg.ReadUInt();
+  int idx = 0;
+  Msg << STRM_INDEX_U(idx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read translation index", *GetDebugName());
     return false;
@@ -1420,7 +1419,7 @@ int VLevelChannel::UpdateBodyQueueTran (VMessageOut &Msg, VBitStreamWriter &strm
 
   // send message
   strm.WriteUInt(CMD_BodyQueueTrans);
-  strm.WriteUInt((vuint32)idx);
+  strm << STRM_INDEX_U(idx);
   strm << Tr->TranslStart << Tr->TranslEnd;
   strm.WriteUInt((vuint32)Tr->Color);
 
@@ -1438,7 +1437,8 @@ int VLevelChannel::UpdateBodyQueueTran (VMessageOut &Msg, VBitStreamWriter &strm
 //
 //==========================================================================
 bool VLevelChannel::ParseBodyQueueTran (VMessageIn &Msg) {
-  int idx = (int)Msg.ReadUInt();
+  int idx = 0;
+  Msg << STRM_INDEX_U(idx);
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read body queue index", *GetDebugName());
     return false;
