@@ -30,6 +30,7 @@ MenuChoiceEnum Monsters;
 MenuChoiceEnum DeathMatch;
 MenuChoiceEnum Skill;
 MenuChoiceEnum TimeLimit;
+MenuChoiceEnum FragLimit;
 MenuChoiceEnum Episode;
 MenuChoiceEnum Level;
 
@@ -113,6 +114,7 @@ override void CreateChoices () {
   DeathMatch = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   DeathMatch.SetOrigin(ChoicesStartX, currentY);
   DeathMatch.Text = "Game type";
+  DeathMatch.customHelpText = "Desired game type.";
   DeathMatch.AddItem("Cooperative");
   DeathMatch.AddItem("Classic Deathmatch");
   DeathMatch.AddItem("AltDeath Deathmatch");
@@ -122,6 +124,7 @@ override void CreateChoices () {
   Skill = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   Skill.SetOrigin(ChoicesStartX, currentY);
   Skill.Text = "Skill";
+  Skill.customHelpText = "Skill level.";
   for (int i = 0; i < P_GetNumSkills(); ++i) Skill.AddItem(P_GetSkillDef(i)->Name);
   Skill.SetSessionCvar(CreateCvarName('skill'), 2);
   currentY += Skill.Height;
@@ -129,21 +132,21 @@ override void CreateChoices () {
   TimeLimit = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   TimeLimit.SetOrigin(ChoicesStartX, currentY);
   TimeLimit.Text = "Time limit";
+  TimeLimit.customHelpText = "Deathmatch time limit.";
   TimeLimit.AddItem("None");
-  TimeLimit.AddItem("5 mins");
-  TimeLimit.AddItem("10 mins");
-  TimeLimit.AddItem("15 mins");
-  TimeLimit.AddItem("20 mins");
-  TimeLimit.AddItem("25 mins");
-  TimeLimit.AddItem("30 mins");
-  TimeLimit.AddItem("35 mins");
-  TimeLimit.AddItem("40 mins");
-  TimeLimit.AddItem("45 mins");
-  TimeLimit.AddItem("50 mins");
-  TimeLimit.AddItem("55 mins");
+  foreach (int f; 1..12) TimeLimit.AddItem(va("%d mins", f*5));
   TimeLimit.AddItem("1 hour");
   TimeLimit.SetSessionCvar(CreateCvarName('time_limit'), 0);
   currentY += TimeLimit.Height;
+
+  FragLimit = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+  FragLimit.SetOrigin(ChoicesStartX, currentY);
+  FragLimit.Text = "Frag limit";
+  FragLimit.customHelpText = "Deathmatch frag limit.";
+  FragLimit.AddItem("None");
+  foreach (int f; 1..21) FragLimit.AddItem(va("%d frags", f*5));
+  FragLimit.SetSessionCvar(CreateCvarName('frag_limit'), 0);
+  currentY += FragLimit.Height;
 
   array!string epnames;
   CreateEpisodeList(out epnames);
@@ -151,6 +154,7 @@ override void CreateChoices () {
     Episode = MenuChoiceEnum(NewChild(MenuChoiceEnum));
     Episode.SetOrigin(ChoicesStartX, currentY);
     Episode.Text = "Episode";
+    Episode.customHelpText = "Starting episode.";
     foreach (string ename; epnames) Episode.AddItem(ename);
     Episode.SetSessionCvar(CreateCvarName('episode'), 0);
     Episode.ValueChanging = &onEpisodeChanged;
@@ -162,6 +166,7 @@ override void CreateChoices () {
   Level = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   Level.SetOrigin(ChoicesStartX, currentY);
   Level.Text = "Level";
+  Level.customHelpText = "Starting map.";
   Level.SetSessionCvar(CreateCvarName('mapindex'), 0);
   currentY += Level.Height;
 
@@ -205,6 +210,7 @@ void ActivateStartNewGame (Object Sender) {
   CmdBuf_AddText("NoMonsters %d\n", !Monsters.Value);
   CmdBuf_AddText("DeathMatch %d\n", DeathMatch.Value);
   CmdBuf_AddText("TimeLimit %d\n", TimeLimit.Value*5);
+  CmdBuf_AddText("FragLimit %d\n", FragLimit.Value*5);
   CmdBuf_AddText("Skill %d\n", Skill.Value);
   CmdBuf_AddText("Map \"%q\"\n", mapname);
 }
