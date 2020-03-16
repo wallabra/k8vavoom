@@ -40,7 +40,7 @@ enum {
 // sent on handshake
 enum {
   NET_PROTOCOL_VERSION_HI = 7,
-  NET_PROTOCOL_VERSION_LO = 5,
+  NET_PROTOCOL_VERSION_LO = 6,
 };
 
 enum {
@@ -523,6 +523,8 @@ private:
   vint32 cprBufferSize;
   vint32 cprBufferPos;
   vuint8 *cprBuffer;
+  // for client
+  vuint8 serverReplicationHash[SHA512_DIGEST_SIZE];
 
 protected:
   void UpdateSendPBar ();
@@ -531,6 +533,9 @@ protected:
   void ClearCprBuffer ();
   void CompressNames ();
   void DecompressNames ();
+
+  // this fills
+  void BuildNetFieldsHash (vuint8 hash[SHA512_DIGEST_SIZE]);
 
 public:
   VObjectMapChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally);

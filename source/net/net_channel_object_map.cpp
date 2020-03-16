@@ -37,6 +37,22 @@ VCvarB net_fixed_name_set("net_fixed_name_set", true, "Send fixed name set (old 
 
 //==========================================================================
 //
+//  hash2str
+//
+//==========================================================================
+VVA_OKUNUSED static VStr hash2str (const vuint8 hash[SHA512_DIGEST_SIZE]) {
+  const char *hex = "0123456789abcdef";
+  VStr res;
+  for (int f = 0; f < SHA512_DIGEST_SIZE; ++f) {
+    res += hex[(hash[f]>>4)&0x0fu];
+    res += hex[hash[f]&0x0fu];
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VObjectMapChannel::VObjectMapChannel
 //
 //==========================================================================
@@ -89,6 +105,54 @@ int VObjectMapChannel::IsQueueFull () const noexcept {
     OutListBits >= 64000*8 ? -1 : // oversaturated
     OutListBits >= 60000*8 ? 1 : // full
     0; // ok
+}
+
+
+//==========================================================================
+//
+//  VObjectMapChannel::BuildNetFieldsHash
+//
+//  build map of replicated fields and RPC methods.
+//  this is used to check if both sides have the same progs.
+//  it doesn't matter what exactly this thing contains, we only
+//  interested if it is equal. so we won't even send it over the net,
+//  we will only check its hash.
+//
+//==========================================================================
+void VObjectMapChannel::BuildNetFieldsHash (vuint8 hash[SHA512_DIGEST_SIZE]) {
+  sha512_ctx hashctx;
+  sha512_init(&hashctx);
+  for (auto &&cls : Connection->ObjMap->ClassLookup) {
+    if (!cls) continue;
+    // class name
+    sha512_update(&hashctx, cls->GetName(), strlen(cls->GetName()));
+    // class replication field names and types
+    for (VField *fld = cls->NetFields; fld; fld = fld->NextNetField) {
+      sha512_update(&hashctx, fld->GetName(), strlen(fld->GetName()));
+      VStr tp = fld->Type.GetName();
+      sha512_update(&hashctx, *tp, tp.length());
+    }
+    // class replication methods
+    for (VMethod *mt = cls->NetMethods; mt; mt = mt->NextNetMethod) {
+      sha512_update(&hashctx, mt->GetName(), strlen(mt->GetName()));
+      // return type
+      {
+        VStr tp = mt->ReturnType.GetName();
+        sha512_update(&hashctx, *tp, tp.length());
+      }
+      // number of arguments
+      sha512_update(&hashctx, &mt->NumParams, sizeof(mt->NumParams));
+      sha512_update(&hashctx, &mt->ParamsSize, sizeof(mt->ParamsSize));
+      // flags
+      sha512_update(&hashctx, &mt->ParamFlags, sizeof(mt->ParamFlags[0])*mt->NumParams);
+      // param types
+      for (int f = 0; f < mt->NumParams; ++f) {
+        VStr tp = mt->ParamTypes[f].GetName();
+        sha512_update(&hashctx, *tp, tp.length());
+      }
+    }
+  }
+  sha512_final(&hashctx, hash);
 }
 
 
@@ -292,6 +356,11 @@ void VObjectMapChannel::Update () {
     outmsg.bOpen = true;
     RNet_PBarReset();
     GCon->Logf(NAME_DevNet, "opened class/name channel for %s", *Connection->GetAddress());
+    // write replication data hash
+    vuint8 hash[SHA512_DIGEST_SIZE];
+    BuildNetFieldsHash(hash);
+    outmsg.Serialise(hash, (int)sizeof(hash));
+    //GCon->Logf(NAME_DevNet, "%s: rephash=%s", *GetDebugName(), *hash2str(hash));
     // send number of names
     vint32 NumNames = Connection->ObjMap->NameLookup.length();
     outmsg.WriteUInt((unsigned)NumNames);
@@ -413,6 +482,10 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
     RNet_PBarReset();
     RNet_OSDMsgShow("receiving names and classes");
 
+    // read replication data hash (it will be checked later)
+    Msg.Serialise(serverReplicationHash, (int)sizeof(serverReplicationHash));
+    //GCon->Logf(NAME_DevNet, "%s: rephash=%s", *GetDebugName(), *hash2str(serverReplicationHash));
+
     vint32 NumNames = (int)Msg.ReadUInt();
     if (NumNames < 0 || NumNames > 1024*1024*32) {
       GCon->Logf(NAME_Debug, "%s: invalid number of names (%d)", *GetDebugName(), NumNames);
@@ -495,10 +568,19 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
 
   if (Msg.bClose) {
     if (/*CurrName >= Connection->ObjMap->NameLookup.length() &&*/ CurrClass == Connection->ObjMap->ClassLookup.length()) {
-      GCon->Logf(NAME_DevNet, "received initial names (%d) and classes (%d)", CurrName, CurrClass);
-      Connection->ObjMapSent = true;
+      GCon->Logf(NAME_DevNet, "%s: received initial names (%d) and classes (%d)", *GetDebugName(), CurrName, CurrClass);
+      // check replication data hash
+      vuint8 hash[SHA512_DIGEST_SIZE];
+      BuildNetFieldsHash(hash);
+      if (memcmp(hash, serverReplicationHash, SHA512_DIGEST_SIZE) != 0) {
+        GCon->Logf(NAME_DevNet, "%s: invalid replication data hash", *GetDebugName());
+        Connection->Close();
+        Host_Error("invalid replication data hash (incompatible progs)");
+      } else {
+        Connection->ObjMapSent = true;
+      }
     } else {
-      GCon->Logf(NAME_DevNet, "...got %d/%d names and %d/%d classes, aborting connection!", CurrName, Connection->ObjMap->NameLookup.length(), CurrClass, Connection->ObjMap->ClassLookup.length());
+      GCon->Logf(NAME_DevNet, "%s: ...got %d/%d names and %d/%d classes, aborting connection!", *GetDebugName(), CurrName, Connection->ObjMap->NameLookup.length(), CurrClass, Connection->ObjMap->ClassLookup.length());
       Connection->Close();
     }
   }
