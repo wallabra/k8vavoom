@@ -283,25 +283,35 @@ static void ReadNet () {
       case MCREQ_LIST:
         if (len == 1) {
           Logf("query from %s", AddrToString(&clientaddr));
-          int sidx = 0;
-          while (sidx < srvList.length()) {
+          if (srvList.length() == 0) {
+            // answer with the empty packet
             memcpy(buf, "K8VAVOOM", 8);
             buf[8] = MASTER_PROTO_VERSION;
             int bufstpos = 9;
             buf[bufstpos+0] = MCREP_LIST;
-            buf[bufstpos+1] = (sidx == 0 ? 1 : 0); // seq id: bit 0 set means 'first', bit 1 set means 'last'
-            int mlen = bufstpos+2;
+            buf[bufstpos+1] = 2; // seq id: bit 0 set means 'first', bit 1 set means 'last'
+            sendto(acceptSocket, buf, bufstpos, 0, &clientaddr, sizeof(sockaddr));
+          } else {
+            int sidx = 0;
             while (sidx < srvList.length()) {
-              if (mlen+8 > MAX_MSGLEN-1) break;
-              buf[mlen+0] = srvList[sidx].pver0;
-              buf[mlen+1] = srvList[sidx].pver1;
-              memcpy(&buf[mlen+2], srvList[sidx].addr.sa_data+2, 4);
-              memcpy(&buf[mlen+6], srvList[sidx].addr.sa_data+0, 2);
-              mlen += 8;
-              ++sidx;
+              memcpy(buf, "K8VAVOOM", 8);
+              buf[8] = MASTER_PROTO_VERSION;
+              int bufstpos = 9;
+              buf[bufstpos+0] = MCREP_LIST;
+              buf[bufstpos+1] = (sidx == 0 ? 1 : 0); // seq id: bit 0 set means 'first', bit 1 set means 'last'
+              int mlen = bufstpos+2;
+              while (sidx < srvList.length()) {
+                if (mlen+8 > MAX_MSGLEN-1) break;
+                buf[mlen+0] = srvList[sidx].pver0;
+                buf[mlen+1] = srvList[sidx].pver1;
+                memcpy(&buf[mlen+2], srvList[sidx].addr.sa_data+2, 4);
+                memcpy(&buf[mlen+6], srvList[sidx].addr.sa_data+0, 2);
+                mlen += 8;
+                ++sidx;
+              }
+              if (sidx >= srvList.length()) buf[bufstpos+1] |= 0x02; // set "last packet" flag
+              sendto(acceptSocket, buf, mlen, 0, &clientaddr, sizeof(sockaddr));
             }
-            if (sidx >= srvList.length()) buf[bufstpos+1] |= 0x02; // set "last packet" flag
-            sendto(acceptSocket, buf, mlen, 0, &clientaddr, sizeof(sockaddr));
           }
           return;
         }
