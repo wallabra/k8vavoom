@@ -174,7 +174,7 @@ static int show_fps = 0;
 
 VCvarB draw_lag("draw_lag", true, "Draw network lag value?", CVAR_Archive);
 
-static VCvarB draw_gc_stats("draw_gc_stats", false, "Draw GC stats?", CVAR_Archive);
+static VCvarI draw_gc_stats("draw_gc_stats", "0", "Draw GC stats (0: none; 1: brief; 2: full)?", CVAR_Archive);
 static VCvarI draw_gc_stats_posx("draw_gc_stats_posx", "0", "GC stats counter position (<0:left; 0:center; >0:right)", CVAR_Archive);
 
 static VCvarB draw_cycles("draw_cycles", false, "Draw cycle counter?", 0); //NOOP
@@ -286,7 +286,7 @@ static void DrawFPS () {
 
   int ypos = 0;
 
-  if (draw_gc_stats) {
+  if (draw_gc_stats > 0) {
     const VObject::GCStats &stats = VObject::GetGCStats();
     T_SetFont(ConFont);
     int xpos;
@@ -301,9 +301,16 @@ static void DrawFPS () {
       xpos = VirtualWidth-2;
     }
     if (Sys_Time()-stats.lastCollectTime > 1) VObject::ResetGCStatsLastCollected();
-    T_DrawText(xpos, ypos, va("OBJ:[\034U%3d\034-/\034U%3d\034-]  ARRAY:[\034U%5d\034-/\034U%5d\034-/\034U%d\034-]; \034U%2d\034- MSEC",
-      stats.lastCollected, stats.alive, stats.firstFree, stats.poolSize, stats.poolAllocated, (int)(stats.lastCollectDuration*1000+0.5)), CR_DARKBROWN);
-    ypos += 9;
+
+    if (draw_gc_stats == 1) {
+      T_DrawText(xpos, ypos, va("[\034U%d\034-/\034U%d\034-/\034U%d\034-]",
+        stats.lastCollected, stats.alive, (int)(stats.lastCollectDuration*1000+0.5)), CR_DARKBROWN);
+    } else {
+      T_DrawText(xpos, ypos, va("OBJ:[\034U%3d\034-/\034U%3d\034-]  ARRAY:[\034U%5d\034-/\034U%5d\034-/\034U%d\034-]; \034U%2d\034- MSEC GC",
+        stats.lastCollected, stats.alive, stats.firstFree, stats.poolSize, stats.poolAllocated, (int)(stats.lastCollectDuration*1000+0.5)), CR_DARKBROWN);
+    }
+
+    ypos += T_FontHeight();
   }
 
   if (draw_fps) {
@@ -351,24 +358,23 @@ static void DrawFPS () {
   #ifdef CLIENT
   if (isClient && draw_lag) {
     T_SetFont(ConFont);
-    T_SetAlign(hleft, vtop);
-    int xpos = 4;
+    T_SetAlign(hright, vtop);
+    int xpos = GRoot->GetWidth()-4;
+    int lypos = GRoot->GetHeight()-64;
 
     const int nlag = clampval(CL_GetNetLag(), 0, 999);
-    T_DrawText(xpos, ypos, va("LAG:%3d (%d CHANS)", nlag, CL_GetNumberOfChannels()), (Host_IsDangerousTimeout() ? CR_RED : CR_DARKBROWN));
-    ypos += T_FontHeight();
+    T_DrawText(xpos, lypos, va("(%d CHANS) LAG:%3d", nlag, CL_GetNumberOfChannels()), (Host_IsDangerousTimeout() ? CR_RED : CR_DARKBROWN));
+    //lypos -= T_FontHeight();
 
     // draw lag chart
-    ypos += 2;
-    //ypos += ChartHeight;
+    const int ChartHeight = 32;
+    lypos -= 4;
 
     int sXPos = xpos;
-    int sYPos = ypos;
+    int sYPos = lypos;
     GRoot->ToDrawerCoords(sXPos, sYPos);
-    ypos += T_FontHeight()+4;
+    sXPos -= NETLAG_CHART_ITEMS;
 
-    const int ChartHeight = 32;
-    sYPos += ChartHeight-1;
     Drawer->ShadeRect(sXPos, sYPos, sXPos+NETLAG_CHART_ITEMS, sYPos-ChartHeight, 0.666f);
     Drawer->StartAutomap(true); // as overlay
     unsigned pos = (NetLagChartPos+1)%NETLAG_CHART_ITEMS;
@@ -387,12 +393,13 @@ static void DrawFPS () {
       T_SetFont(ConFont);
       T_SetAlign(hleft, vtop);
       int xpos = 4;
+      ypos = GRoot->GetHeight()-64;
 
       if (dbg_world_think_vm_time && worldThinkTimeVM < 0) worldThinkTimeVM = 0;
       if (dbg_world_think_decal_time && worldThinkTimeDecal < 0) worldThinkTimeDecal = 0;
 
-      if (dbg_world_think_vm_time) { T_DrawText(xpos, ypos, va("VM:%d", (int)(curFilterValue*1000+0.5)), CR_DARKBROWN); ypos += 9; }
-      if (dbg_world_think_decal_time) { T_DrawText(xpos, ypos, va("DECALS:%d", (int)(worldThinkTimeDecal*1000+0.5)), CR_DARKBROWN); ypos += 9; }
+      if (dbg_world_think_decal_time) { T_DrawText(xpos, ypos, va("DECALS:%d", (int)(worldThinkTimeDecal*1000+0.5)), CR_DARKBROWN); ypos -= T_FontHeight(); }
+      if (dbg_world_think_vm_time) { T_DrawText(xpos, ypos, va("VM:%d", (int)(curFilterValue*1000+0.5)), CR_DARKBROWN); ypos -= T_FontHeight(); }
     }
   }
 }

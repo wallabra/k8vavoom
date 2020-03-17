@@ -170,7 +170,13 @@ public:
   inline void SetWidth (int NewWidth) { SetSize(NewWidth, SizeHeight); }
   inline void SetHeight (int NewHeight) { SetSize(SizeWidth, NewHeight); }
   inline void SetScale (float NewScaleX, float NewScaleY) { SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, NewScaleX, NewScaleY); }
-  void SetConfiguration (int, int, int, int, float = 1.0f, float = 1.0f);
+  void SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight, float NewScaleX=1.0f, float NewScaleY=1.0f);
+
+  inline float GetScaleX () const noexcept { return SizeScaleX; }
+  inline float GetScaleY () const noexcept { return SizeScaleY; }
+
+  inline int GetWidth () const noexcept { return SizeWidth; }
+  inline int GetHeight () const noexcept { return SizeHeight; }
 
   // visibility methods
   void SetVisibility (bool);
