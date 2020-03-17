@@ -1,0 +1,6 @@
+SubDir TOP src ;
+
+
+Main srvcheck :
+  main.cpp
+;
