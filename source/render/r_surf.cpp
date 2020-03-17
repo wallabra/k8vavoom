@@ -1338,6 +1338,125 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct WallFace {
+  float topz[2];
+  float botz[2];
+  const TVec *v[2];
+  WallFace *next;
+
+  inline WallFace () noexcept {
+    topz[0] = topz[1] = 0;
+    botz[0] = botz[1] = 0;
+    v[0] = v[1] = nullptr;
+    next = nullptr;
+  }
+
+  inline void setup (const sec_region_t *reg, const TVec *v1, const TVec *v2) noexcept {
+    v[0] = v1;
+    v[1] = v2;
+
+    topz[0] = reg->eceiling.GetPointZ(*v1);
+    topz[1] = reg->eceiling.GetPointZ(*v2);
+
+    botz[0] = reg->efloor.GetPointZ(*v1);
+    botz[1] = reg->efloor.GetPointZ(*v2);
+  }
+
+  inline void markInvalid () noexcept { topz[0] = topz[1] = -666; botz[0] = botz[1] = 666; }
+  inline bool isValid () const noexcept { return (topz[0] > botz[0] && topz[1] > botz[1]); }
+};
+
+
+//==========================================================================
+//
+//  CutWallFace
+//
+//==========================================================================
+static void CutWallFace (WallFace *face, sector_t *sec, sec_region_t *ignorereg, bool cutWithSwimmable, WallFace *&tail) {
+  if (!face->isValid()) return;
+  if (!sec) return;
+  const vuint32 skipmask = sec_region_t::RF_OnlyVisual|(cutWithSwimmable ? 0u : sec_region_t::RF_NonSolid);
+  for (sec_region_t *reg = sec->eregions; reg; reg = reg->next) {
+    if (reg->regflags&skipmask) continue; // not interesting
+    if (reg == ignorereg) continue; // ignore self
+    if (reg->regflags&sec_region_t::RF_BaseRegion) {
+      // base region, allow what is inside
+      for (int f = 0; f < 2; ++f) {
+        const float rtopz = reg->eceiling.GetPointZ(*face->v[f]);
+        const float rbotz = reg->efloor.GetPointZ(*face->v[f]);
+        // if above/below the sector, mark as invalid
+        if (face->botz[f] >= rtopz || face->topz[f] <= rbotz) {
+          face->markInvalid();
+          return;
+        }
+        // cut with sector bounds
+        face->topz[f] = min2(face->topz[f], rtopz);
+        face->botz[f] = max2(face->botz[f], rbotz);
+        if (face->topz[f] <= face->botz[f]) return; // everything was cut away
+      }
+    } else {
+      //FIXME: for now, we can cut only by non-sloped 3d floors
+      if (reg->eceiling.GetPointZ(*face->v[0]) != reg->eceiling.GetPointZ(*face->v[1]) ||
+          reg->efloor.GetPointZ(*face->v[0]) != reg->efloor.GetPointZ(*face->v[1]))
+      {
+        continue;
+      }
+      //FIXME: ...and only non-sloped 3d floors
+      if (ignorereg->eceiling.GetPointZ(*face->v[0]) != ignorereg->eceiling.GetPointZ(*face->v[1]) ||
+          ignorereg->efloor.GetPointZ(*face->v[0]) != ignorereg->efloor.GetPointZ(*face->v[1]))
+      {
+        continue;
+      }
+      // 3d floor, allow what is outside
+      for (int f = 0; f < 2; ++f) {
+        const float rtopz = reg->eceiling.GetPointZ(*face->v[f]);
+        const float rbotz = reg->efloor.GetPointZ(*face->v[f]);
+        if (rtopz <= rbotz) continue; // invalid, or paper-thin, ignore
+        // if completely above, or completely below, ignore
+        if (rbotz >= face->topz[f] || rtopz <= face->botz[f]) continue;
+        // if completely covered, mark as invalid and stop
+        if (rbotz <= face->botz[f] && rtopz >= face->topz[f]) {
+          face->markInvalid();
+          return;
+        }
+        // if inside the face, split it to two faces
+        if (rtopz > face->topz[f] && rbotz < face->botz[f]) {
+          // split; top part
+          {
+            WallFace *ftop = new WallFace;
+            *ftop = *face;
+            ftop->botz[0] = ftop->botz[1] = rtopz;
+            tail->next = ftop;
+            tail = ftop;
+          }
+          // split; bottom part
+          {
+            WallFace *fbot = new WallFace;
+            *fbot = *face;
+            fbot->topz[0] = fbot->topz[1] = rbotz;
+            tail->next = fbot;
+            tail = fbot;
+          }
+          // mark this one as invalid, and stop
+          face->markInvalid();
+          return;
+        }
+        // partially covered; is it above?
+        if (rbotz > face->botz[f]) {
+          // it is above, cut top
+          face->topz[f] = min2(face->topz[f], rbotz);
+        } else if (rtopz < face->topz[f]) {
+          // it is below, cut bottom
+          face->botz[f] = max2(face->botz[f], rtopz);
+        }
+        if (face->topz[f] <= face->botz[f]) return; // everything was cut away
+      }
+    }
+  }
+}
+
+
 //==========================================================================
 //
 //  VRenderLevelShared::SetupTwoSidedMidExtraWSurf
@@ -1358,6 +1477,12 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 
   VTexture *MTex = GTextureManager(sidedef->MidTexture);
   if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
+
+  /*
+   1. solid 3d floors should be cut only by other solids (including other sector)
+   2. swimmable (water) 3d floors should be cut by all solids (including other sector), and
+      by all swimmable (including other sector)
+   */
 
   //bool doDump = false;
   enum { doDump = 0 };
@@ -1426,6 +1551,55 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     // side 3d floor midtex should always be wrapped
     enum { wrapped = 1 };
 
+    WallFace *facehead = nullptr;
+    WallFace *facetail = nullptr;
+    WallFace *face = new WallFace;
+    face->setup(reg, seg->v1, seg->v2);
+
+    facehead = facetail = face;
+    for (WallFace *cface = facehead; cface; cface = cface->next) {
+      CutWallFace(cface, seg->frontsector, reg, !!(reg->regflags&sec_region_t::RF_NonSolid), facetail);
+      CutWallFace(cface, seg->backsector, reg, !!(reg->regflags&sec_region_t::RF_NonSolid), facetail);
+    }
+
+    // now create all surfaces
+    for (WallFace *cface = facehead; cface; cface = cface->next) {
+      if (!cface->isValid()) continue;
+
+      float topz1 = cface->topz[0];
+      float topz2 = cface->topz[1];
+      float botz1 = cface->botz[0];
+      float botz2 = cface->botz[1];
+
+      // check texture limits
+      if (!wrapped) {
+        if (max2(topz1, topz2) <= z_org-texh) continue;
+        if (min2(botz1, botz2) >= z_org) continue;
+      }
+
+      wv[0].x = wv[1].x = seg->v1->x;
+      wv[0].y = wv[1].y = seg->v1->y;
+      wv[2].x = wv[3].x = seg->v2->x;
+      wv[2].y = wv[3].y = seg->v2->y;
+
+      if (wrapped) {
+        wv[0].z = botz1;
+        wv[1].z = topz1;
+        wv[2].z = topz2;
+        wv[3].z = botz2;
+      } else {
+        wv[0].z = max2(botz1, z_org-texh);
+        wv[1].z = min2(topz1, z_org);
+        wv[2].z = min2(topz2, z_org);
+        wv[3].z = max2(botz2, z_org-texh);
+      }
+
+      if (doDump) for (int wf = 0; wf < 4; ++wf) GCon->Logf("   wf #%d: (%g,%g,%g)", wf, wv[wf].x, wv[wf].y, wv[wf].z);
+
+      CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_MIDDLE);
+    }
+
+    #if 0
     const float extratopz1 = reg->eceiling.GetPointZ(*seg->v1);
     const float extratopz2 = reg->eceiling.GetPointZ(*seg->v2);
     const float extrabotz1 = reg->efloor.GetPointZ(*seg->v1);
@@ -1481,6 +1655,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 
       CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_MIDDLE);
     }
+    #endif
 
     if (sp->surfs && (sp->texinfo.Alpha < 1.0f || sp->texinfo.Additive || MTex->isTranslucent())) {
       for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;

@@ -584,7 +584,9 @@ struct sec_params_t {
 struct sec_region_t {
   sec_region_t *next;
   // planes
+  // floor is bottom plane (and points bottom, like normal ceiling, if not base region)
   TSecPlaneRef efloor;
+  // ceiling is top plane (and points top, like normal froor, if not base region)
   TSecPlaneRef eceiling;
   // contents and lighting
   sec_params_t *params;
