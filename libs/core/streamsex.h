@@ -166,7 +166,6 @@ private:
   int size; // <0: not determined yet
 
 private:
-  void setError ();
 
 public:
   VV_DISABLE_COPY(VStdFileStreamBase)
@@ -174,6 +173,7 @@ public:
   VStdFileStreamBase (FILE *afl, VStr aname, bool asWriter);
   virtual ~VStdFileStreamBase () override;
 
+  virtual void SetError () override;
   virtual VStr GetName () const override;
   virtual void Seek (int pos) override;
   virtual int Tell () override;

@@ -125,6 +125,9 @@ public:
   //inline bool IsError () const { return bError; }
   virtual bool IsError () const;
 
+  // call this to mark the stream invalid
+  virtual void SetError ();
+
   inline void Serialize (void *buf, int len) { Serialise(buf, len); }
   inline void Serialize (const void *buf, int len) { Serialise(buf, len); }
   void Serialise (const void *buf, int len); // only write

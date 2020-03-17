@@ -723,7 +723,7 @@ VStdFileStreamBase::VStdFileStreamBase (FILE* afl, VStr aname, bool asWriter)
 {
   bLoading = !asWriter;
   if (afl && !asWriter) {
-    if (fseek(afl, 0, SEEK_SET)) setError();
+    if (fseek(afl, 0, SEEK_SET)) SetError();
   }
 }
 
@@ -757,10 +757,10 @@ bool VStdFileStreamBase::Close () {
 
 //==========================================================================
 //
-//  VStdFileStreamBase::setError
+//  VStdFileStreamBase::SetError
 //
 //==========================================================================
-void VStdFileStreamBase::setError () {
+void VStdFileStreamBase::SetError () {
   if (mFl) {
     fflush(stderr);
     fclose(mFl);
@@ -768,6 +768,7 @@ void VStdFileStreamBase::setError () {
   }
   mName.clear();
   bError = true;
+  VStream::SetError(); // just in case
 }
 
 
@@ -787,14 +788,14 @@ VStr VStdFileStreamBase::GetName () const {
 //
 //==========================================================================
 void VStdFileStreamBase::Seek (int pos) {
-  if (!mFl) { setError(); return; }
+  if (!mFl) { SetError(); return; }
 #ifdef __SWITCH__
   // I don't know how or why this works, but unless you seek to 0 first,
   // fseeking on the Switch seems to set the pointer to an incorrect
   // position, but only sometimes
   fseek(mFl, 0, SEEK_SET);
 #endif
-  if (fseek(mFl, pos, SEEK_SET)) setError();
+  if (fseek(mFl, pos, SEEK_SET)) SetError();
 }
 
 
@@ -806,10 +807,10 @@ void VStdFileStreamBase::Seek (int pos) {
 int VStdFileStreamBase::Tell () {
   if (mFl && !bError) {
     int res = (int)ftell(mFl);
-    if (res < 0) { setError(); return 0; }
+    if (res < 0) { SetError(); return 0; }
     return res;
   } else {
-    setError();
+    SetError();
     return 0;
   }
 }
@@ -821,7 +822,7 @@ int VStdFileStreamBase::Tell () {
 //
 //==========================================================================
 int VStdFileStreamBase::TotalSize () {
-  if (!mFl || bError) { setError(); return 0; }
+  if (!mFl || bError) { SetError(); return 0; }
   if (!IsLoading()) size = -1;
   if (size < 0) {
     auto opos = ftell(mFl);
@@ -849,12 +850,12 @@ bool VStdFileStreamBase::AtEnd () {
 //
 //==========================================================================
 void VStdFileStreamBase::Serialise (void *buf, int len) {
-  if (bError || !mFl || len < 0) { setError(); return; }
+  if (bError || !mFl || len < 0) { SetError(); return; }
   if (len == 0) return;
   if (bLoading) {
-    if (fread(buf, len, 1, mFl) != 1) setError();
+    if (fread(buf, len, 1, mFl) != 1) SetError();
   } else {
-    if (fwrite(buf, len, 1, mFl) != 1) setError();
+    if (fwrite(buf, len, 1, mFl) != 1) SetError();
   }
 }
 

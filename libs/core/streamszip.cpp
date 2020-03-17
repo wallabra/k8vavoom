@@ -298,7 +298,7 @@ void VZipStreamReader::setCrc (vuint32 acrc) {
   if (wholeSize >= 0) {
     // calculate crc now
     if (wholeSize > 0) currCrc32 = mz_crc32(currCrc32, (const vuint8 *)wholeBuf, wholeSize);
-    if (currCrc32 != origCrc32) setError();
+    if (currCrc32 != origCrc32) SetError();
   } else {
     forceRewind = true;
   }
@@ -322,16 +322,16 @@ bool VZipStreamReader::Close () {
 
 //==========================================================================
 //
-//  VZipStreamReader::setError
+//  VZipStreamReader::SetError
 //
 //==========================================================================
-void VZipStreamReader::setError () {
+void VZipStreamReader::SetError () {
   if (wholeBuf) { Z_Free(wholeBuf); wholeBuf = nullptr; }
   wholeSize = -2;
   deinitZStream();
   //if (srcStream) { delete srcStream; srcStream = nullptr; }
   srcStream = nullptr;
-  bError = true;
+  VStream::SetError();
 }
 
 
@@ -368,7 +368,7 @@ bool VZipStreamReader::resetZStream () {
   }
   if (wasError) {
     GLog.Log(NAME_Error, "Error seeking in source inflated stream");
-    setError();
+    SetError();
     return false;
   }
   int res = fillPackedBuffer();
@@ -376,7 +376,7 @@ bool VZipStreamReader::resetZStream () {
   int err = (strmType == Type::RAW ? mz_inflateInit2(&zStream, -MAX_WBITS) : mz_inflateInit2(&zStream, MAX_WBITS+VV_ZLIB_ALLOW_GZIP));
   if (err != MZ_OK) {
     GLog.Logf(NAME_Error, "Error initializing inflate (%d)", err);
-    setError();
+    SetError();
     return false;
   }
   initialised = true;
@@ -418,12 +418,12 @@ void VZipStreamReader::initialize () {
     }
     if (wasError) {
       GLog.Log(NAME_Error, "Error seeking in source inflated stream");
-      setError();
+      SetError();
       return;
     }
     if (!resetZStream()) return;
   } else {
-    bError = true;
+    VStream::SetError();
   }
 }
 
@@ -442,7 +442,7 @@ int VZipStreamReader::fillPackedBuffer () {
   if (left < 0) {
     GLog.Logf(NAME_Error, "internal error 0 in VZipStreamReader::fillPackedBuffer (csz=%d; stpos=%d; cpos=%d; left=%d)", (int)compressedSize, (int)stpos, (int)srccurpos, (int)left);
     //Sys_Error("fuck!");
-    setError();
+    SetError();
     return -1;
   }
   vint32 bytesToRead = BUFFER_SIZE;
@@ -469,12 +469,12 @@ int VZipStreamReader::fillPackedBuffer () {
   }
   if (seekerr) {
     GLog.Log(NAME_Error, "Error seeking in source inflated stream");
-    setError();
+    SetError();
     return -1;
   }
   if (strmerr) {
     GLog.Log(NAME_Error, "Error reading source inflated stream data");
-    setError();
+    SetError();
     return -1;
   }
   zStream.avail_in += bytesToRead;
@@ -510,7 +510,7 @@ int VZipStreamReader::readSomeBytes (void *buf, int len) {
     int err = mz_inflate(&zStream, MZ_SYNC_FLUSH/*MZ_NO_FLUSH*/);
     if (err != MZ_OK && err != MZ_STREAM_END) {
       GLog.Logf(NAME_Error, "%s (err=%d)", "Error unpacking inflated stream", err);
-      setError();
+      SetError();
       //GLog.Logf(NAME_Error, "%s (err=%s)", "Error unpacking inflated stream", zStream.msg);
       //GLog.Logf(NAME_Error, "%s (%d; avout=%u; tobef=%u; tocur=%u; inav=%u)", "Error unpacking inflated stream", err, (unsigned)zStream.avail_out, totalOutBefore, (unsigned)zStream.total_out, (unsigned)zStream.avail_in);
       return -1;
@@ -535,7 +535,7 @@ void VZipStreamReader::Serialise (void* buf, int len) {
   // use data cache?
   if (wholeSize >= 0) {
    doCached:
-    if (len < 0 || currpos < 0 || currpos >= wholeSize || wholeSize-currpos < len) setError();
+    if (len < 0 || currpos < 0 || currpos >= wholeSize || wholeSize-currpos < len) SetError();
     if (bError) return;
     // here, currpos is always valid
     if (len > 0) memcpy(buf, wholeBuf+currpos, len);
@@ -543,7 +543,7 @@ void VZipStreamReader::Serialise (void* buf, int len) {
     return;
   }
 
-  if (!initialised || len < 0 || !srcStream /*|| srcStream->IsError()*/) setError();
+  if (!initialised || len < 0 || !srcStream /*|| srcStream->IsError()*/) SetError();
   if (bError) return;
 
   vassert(wholeSize < 0);
@@ -554,7 +554,7 @@ void VZipStreamReader::Serialise (void* buf, int len) {
       // got two back-seeks, cache data
       cacheAllData();
       if (bError) return;
-      if (currpos < 0 || currpos > wholeSize) { setError(); return; }
+      if (currpos < 0 || currpos > wholeSize) { SetError(); return; }
       goto doCached;
     }
   }
@@ -566,7 +566,7 @@ void VZipStreamReader::Serialise (void* buf, int len) {
       // cache it
       cacheAllData();
       if (bError) return;
-      if (currpos < 0 || currpos > wholeSize) { setError(); return; }
+      if (currpos < 0 || currpos > wholeSize) { SetError(); return; }
       goto doCached;
     }
   }
@@ -585,26 +585,26 @@ void VZipStreamReader::Serialise (void* buf, int len) {
       if (toread > 65536) toread = 65536;
       int rd = readSomeBytes(wholeBuf, toread);
       //fprintf(stderr, "+++   SKIPREAD <%s>: currpos=%d; nextpos=%d; rd=%d; read=%d\n", *GetName(), currpos, nextpos, rd, toread);
-      if (rd <= 0) { setError(); return; }
+      if (rd <= 0) { SetError(); return; }
       currpos += rd;
     }
   }
 
-  if (nextpos != currpos) { setError(); return; } // just in case
+  if (nextpos != currpos) { SetError(); return; } // just in case
 
   //fprintf(stderr, "+++ ZREAD <%s>: pos=%d; len=%d; end=%d (%u)\n", *GetName(), currpos, len, currpos+len, uncompressedSize);
 
   vuint8 *dest = (vuint8 *)buf;
   while (len > 0) {
     int rd = readSomeBytes(dest, len);
-    if (rd <= 0) { setError(); return; }
+    if (rd <= 0) { SetError(); return; }
     len -= rd;
     nextpos = (currpos += rd);
     dest += rd;
   }
 
   if (doCrcCheck && uncompressedSize != UNKNOWN_SIZE && (vuint32)nextpos == uncompressedSize) {
-    if (currCrc32 != origCrc32) { setError(); return; } // alas
+    if (currCrc32 != origCrc32) { SetError(); return; } // alas
   }
 }
 
@@ -626,24 +626,24 @@ void VZipStreamReader::cacheAllData () {
     vuint8 *rdbuf = (vuint8 *)Z_Malloc(BUFFER_SIZE);
     for (;;) {
       int rd = readSomeBytes(rdbuf, BUFFER_SIZE);
-      if (rd < 0) { Z_Free(rdbuf); setError(); return; }
+      if (rd < 0) { Z_Free(rdbuf); SetError(); return; }
       if (rd == 0) break;
       //GLog.Logf(NAME_Debug, "  read %d bytes (new total is %d)", rd, wholeSize+rd);
-      if (wholeSize+rd < 0) { Z_Free(rdbuf); setError(); return; }
+      if (wholeSize+rd < 0) { Z_Free(rdbuf); SetError(); return; }
       wholeBuf = (vuint8 *)Z_Realloc(wholeBuf, wholeSize+rd);
       memcpy(wholeBuf+wholeSize, rdbuf, rd);
       wholeSize += rd;
     }
     Z_Free(rdbuf);
     uncompressedSize = (vuint32)wholeSize;
-    if (nextpos > wholeSize) { setError(); return; }
+    if (nextpos > wholeSize) { SetError(); return; }
   } else {
     wholeSize = (vint32)uncompressedSize;
-    if (wholeSize < 0) { setError(); return; }
+    if (wholeSize < 0) { SetError(); return; }
     wholeBuf = (vuint8 *)Z_Realloc(wholeBuf, wholeSize ? wholeSize : 1);
     if (wholeSize) {
       int rd = readSomeBytes(wholeBuf, wholeSize);
-      if (rd != wholeSize) { setError(); return; }
+      if (rd != wholeSize) { SetError(); return; }
     }
   }
 
@@ -654,7 +654,7 @@ void VZipStreamReader::cacheAllData () {
     currCrc32 = 0;
     // calculate crc now
     if (wholeSize > 0) currCrc32 = mz_crc32(currCrc32, (const vuint8 *)wholeBuf, wholeSize);
-    if (currCrc32 != origCrc32) setError();
+    if (currCrc32 != origCrc32) SetError();
   }
 
   // we don't need zlib stream anymore
@@ -675,10 +675,10 @@ void VZipStreamReader::cacheAllData () {
 void VZipStreamReader::Seek (int pos) {
   if (bError) return;
 
-  if (pos < 0) { setError(); return; }
+  if (pos < 0) { SetError(); return; }
 
   if (wholeSize >= 0) {
-    if (pos > wholeSize) { setError(); return; }
+    if (pos > wholeSize) { SetError(); return; }
     currpos = nextpos = pos;
     return;
   }
@@ -692,7 +692,7 @@ void VZipStreamReader::Seek (int pos) {
   } else {
     if ((vuint32)pos > uncompressedSize) {
       //pos = (vint32)uncompressedSize;
-      setError();
+      SetError();
       return;
     }
     nextpos = pos;
@@ -774,7 +774,7 @@ VZipStreamWriter::VZipStreamWriter (VStream *ADstStream, int clevel, Type atype)
 
   //int err = mz_deflateInit(&zStream, MZ_BEST_COMPRESSION);
   if (err != MZ_OK) {
-    bError = true;
+    VStream::SetError();
     GLog.Log(NAME_Error, "Failed to initialise deflate ZStream");
     return;
   }
@@ -802,7 +802,7 @@ VZipStreamWriter::~VZipStreamWriter () {
 //==========================================================================
 void VZipStreamWriter::setRequireCrc () {
   if (!bError && !doCrcCalc) {
-    if (zStream.total_in == 0) doCrcCalc = true; else setError();
+    if (zStream.total_in == 0) doCrcCalc = true; else SetError();
   }
 }
 
@@ -819,14 +819,14 @@ vuint32 VZipStreamWriter::getCrc32 () const {
 
 //==========================================================================
 //
-//  VZipStreamWriter::setError
+//  VZipStreamWriter::SetError
 //
 //==========================================================================
-void VZipStreamWriter::setError () {
+void VZipStreamWriter::SetError () {
   if (initialised) { mz_deflateEnd(&zStream); initialised = false; }
   //if (dstStream) { delete dstStream; dstStream = nullptr; }
   dstStream = nullptr;
-  bError = true;
+  VStream::SetError();
 }
 
 
@@ -838,7 +838,7 @@ void VZipStreamWriter::setError () {
 void VZipStreamWriter::Serialise (void *buf, int len) {
   if (len == 0) return;
 
-  if (!initialised || len < 0 || !dstStream || dstStream->IsError()) setError();
+  if (!initialised || len < 0 || !dstStream || dstStream->IsError()) SetError();
   if (bError) return;
 
   if (doCrcCalc) currCrc32 = mz_crc32(currCrc32, (const vuint8 *)buf, len);
@@ -849,10 +849,10 @@ void VZipStreamWriter::Serialise (void *buf, int len) {
     zStream.next_out = buffer;
     zStream.avail_out = BUFFER_SIZE;
     int err = mz_deflate(&zStream, MZ_NO_FLUSH);
-    if (err == MZ_STREAM_ERROR) { setError(); return; }
+    if (err == MZ_STREAM_ERROR) { SetError(); return; }
     if (zStream.avail_out != BUFFER_SIZE) {
       dstStream->Serialise(buffer, BUFFER_SIZE-zStream.avail_out);
-      if (dstStream->IsError()) { setError(); return; }
+      if (dstStream->IsError()) { SetError(); return; }
     }
   } while (zStream.avail_out == 0);
   //vassert(zStream.avail_in == 0);
@@ -866,12 +866,12 @@ void VZipStreamWriter::Serialise (void *buf, int len) {
 //==========================================================================
 void VZipStreamWriter::Seek (int pos) {
   GLog.Log(NAME_Error, "Cannot seek in compressed writer");
-  setError();
+  SetError();
 }
 
 
 void VZipStreamWriter::Flush () {
-  if (!initialised || !dstStream || dstStream->IsError()) setError();
+  if (!initialised || !dstStream || dstStream->IsError()) SetError();
   if (bError) return;
 
   zStream.avail_in = 0;
@@ -879,14 +879,14 @@ void VZipStreamWriter::Flush () {
     zStream.next_out = buffer;
     zStream.avail_out = BUFFER_SIZE;
     int err = mz_deflate(&zStream, MZ_FULL_FLUSH);
-    if (err == MZ_STREAM_ERROR) { setError(); return; }
+    if (err == MZ_STREAM_ERROR) { SetError(); return; }
     if (zStream.avail_out != BUFFER_SIZE) {
       dstStream->Serialise(buffer, BUFFER_SIZE-zStream.avail_out);
-      if (dstStream->IsError()) { setError(); return; }
+      if (dstStream->IsError()) { SetError(); return; }
     }
   } while (zStream.avail_out == 0);
   dstStream->Flush();
-  if (dstStream->IsError()) { setError(); return; }
+  if (dstStream->IsError()) { SetError(); return; }
 }
 
 
@@ -898,10 +898,10 @@ bool VZipStreamWriter::Close () {
         zStream.next_out = buffer;
         zStream.avail_out = BUFFER_SIZE;
         int err = mz_deflate(&zStream, MZ_FINISH);
-        if (err == MZ_STREAM_ERROR) { setError(); break; }
+        if (err == MZ_STREAM_ERROR) { SetError(); break; }
         if (zStream.avail_out != BUFFER_SIZE) {
           dstStream->Serialise(buffer, BUFFER_SIZE-zStream.avail_out);
-          if (dstStream->IsError()) { setError(); break; }
+          if (dstStream->IsError()) { SetError(); break; }
         }
       } while (zStream.avail_out == 0);
     }

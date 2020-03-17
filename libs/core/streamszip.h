@@ -65,12 +65,11 @@ private:
 
 private:
   void initialize ();
-  void setError ();
 
   // returns 0 if no more data, -1 on error, 1 if something was read
-  int fillPackedBuffer (); // this locks; also, calls `setError()` if necessary
+  int fillPackedBuffer (); // this locks; also, calls `SetError()` if necessary
 
-  bool resetZStream (); // this locks; also, calls `setError()` if necessary
+  bool resetZStream (); // this locks; also, calls `SetError()` if necessary
   void deinitZStream ();
 
   // just read, no `nextpos` advancement
@@ -105,6 +104,7 @@ public:
   void setCrc (vuint32 acrc); // turns on CRC checking
 
   virtual VStr GetName () const override;
+  virtual void SetError () override;
   virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
@@ -132,9 +132,6 @@ private:
   vuint32 currCrc32;
   bool doCrcCalc;
 
-private:
-  void setError ();
-
 public:
   VV_DISABLE_COPY(VZipStreamWriter)
 
@@ -145,6 +142,7 @@ public:
   void setRequireCrc ();
   vuint32 getCrc32 () const; // crc32 over uncompressed data (if enabled)
 
+  virtual void SetError () override;
   virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
   virtual void Flush () override;

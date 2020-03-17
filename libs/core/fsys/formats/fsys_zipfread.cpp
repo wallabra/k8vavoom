@@ -99,7 +99,6 @@ private:
   int currpos; // we can do several seeks in a row; perform real seek in `Serialise()`; unused if `wholeSize >= 0`
 
 private:
-  void setError ();
   bool CheckCurrentFileCoherencyHeader (vuint32 *, vuint32); // does locking
   bool LzmaRestart (); // `pos_in_zipfile` must be valid; does locking
   bool rewind ();
@@ -123,6 +122,7 @@ public:
   virtual ~VZipFileReader () override;
 
   virtual VStr GetName () const override;
+  virtual void SetError () override;
   virtual void Serialise (void *, int) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
@@ -151,6 +151,7 @@ VZipFileReader::VZipFileReader (VStr afname, VStream *InStream, vuint32 BytesBef
   , lzmainbufpos(nullptr)
   , lzmainbufleft(0)
   #endif
+  , stream_initialised(false)
   , wholeBuf(nullptr)
   , wholeSize(-2)
   , currpos(0)
@@ -158,22 +159,22 @@ VZipFileReader::VZipFileReader (VStr afname, VStream *InStream, vuint32 BytesBef
   // open the file in the zip
   // `rdlock` is not locked here
   usezlib = true;
+  //stream_initialised = false;
 
   if (!rdlock) Sys_Error("VZipFileReader::VZipFileReader: empty lock!");
 
   vuint32 iSizeVar;
   if (!CheckCurrentFileCoherencyHeader(&iSizeVar, BytesBeforeZipFile)) {
-    bError = true;
+    SetError();
     return;
   }
 
-  stream_initialised = false;
   #ifdef VAVOOM_USE_LIBLZMA
   lzmastream = LZMA_STREAM_INIT;
   #endif
 
   if (Info.compression != Z_STORE && Info.compression != MZ_DEFLATED && Info.compression != Z_LZMA) {
-    bError = true;
+    SetError();
     GLog.Logf(NAME_Error, "Compression method %d is not supported for file '%s'", Info.compression, *afname);
     return;
   }
@@ -205,7 +206,7 @@ VZipFileReader::VZipFileReader (VStr afname, VStream *InStream, vuint32 BytesBef
        * In unzip, i don't wait absolutely MZ_STREAM_END because I known the
        * size of both compressed and uncompressed data
        */
-      bError = true;
+      SetError();
       GLog.Logf(NAME_Error, "Failed to initialise inflate stream for file '%s'", *fname);
       return;
     }
@@ -248,10 +249,10 @@ VStr VZipFileReader::GetName () const {
 
 //==========================================================================
 //
-//  VZipFileReader::setError
+//  VZipFileReader::SetError
 //
 //==========================================================================
-void VZipFileReader::setError () {
+void VZipFileReader::SetError () {
   if (wholeBuf) { Z_Free(wholeBuf); wholeBuf = nullptr; }
   wholeSize = -2;
   if (stream_initialised) {
@@ -266,7 +267,7 @@ void VZipFileReader::setError () {
     }
     stream_initialised = false;
   }
-  bError = true;
+  VStream::SetError();
 }
 
 
@@ -285,7 +286,7 @@ bool VZipFileReader::Close () {
     /*
     if (!bError && rest_read_uncompressed == 0) {
       if (Crc32 != Info.crc32) {
-        bError = true;
+        SetError();
         GLog.Logf("Bad CRC for file '%s'", *fname);
       }
     }
@@ -400,7 +401,7 @@ bool VZipFileReader::LzmaRestart () {
   vuint8 lzmaprhdr[5];
 
   if (usezlib) {
-    bError = true;
+    SetError();
     GLog.Logf(NAME_Error, "Cannot lzma-restart non-lzma stream for file '%s'", *fname);
     return false;
   }
@@ -411,6 +412,7 @@ bool VZipFileReader::LzmaRestart () {
   lzmastream.total_out = 0;
   lzmastream.avail_in = 0;
   #else
+  stream_initialised = false;
   if (lzmainited) { lzmainited = false; LzmaDec_Free(&lzmastate, &fsysLzmaAlloc); }
   lzmatotalout = 0;
   lzmainbufleft = 0;
@@ -418,7 +420,7 @@ bool VZipFileReader::LzmaRestart () {
   vensure(Crc32 == 0);
 
   if (rest_read_compressed < 4+5) {
-    bError = true;
+    SetError();
     GLog.Logf(NAME_Error, "Invalid lzma header (out of data) for file '%s'", *fname);
     return false;
   }
@@ -433,13 +435,13 @@ bool VZipFileReader::LzmaRestart () {
     rest_read_compressed -= 4+5;
 
     if (err) {
-      bError = true;
+      SetError();
       GLog.Logf(NAME_Error, "Error reading lzma headers for file '%s'", *fname);
       return false;
     }
 
     if (ziplzmahdr[3] != 0 || ziplzmahdr[2] == 0 || ziplzmahdr[2] < 5) {
-      bError = true;
+      SetError();
       GLog.Logf(NAME_Error, "Invalid lzma header (0) for file '%s'", *fname);
       return false;
     }
@@ -447,7 +449,7 @@ bool VZipFileReader::LzmaRestart () {
     if (ziplzmahdr[2] > 5) {
       vuint32 skip = ziplzmahdr[2]-5;
       if (rest_read_compressed < skip) {
-        bError = true;
+        SetError();
         GLog.Logf(NAME_Error, "Invalid lzma header (out of extra data) for file '%s'", *fname);
         return false;
       }
@@ -456,7 +458,7 @@ bool VZipFileReader::LzmaRestart () {
       for (; skip > 0; --skip) {
         *FileStream << tmp;
         if (FileStream->IsError()) {
-          bError = true;
+          SetError();
           GLog.Logf(NAME_Error, "Error reading extra lzma headers for file '%s'", *fname);
           return false;
         }
@@ -465,7 +467,7 @@ bool VZipFileReader::LzmaRestart () {
 
     pos_in_zipfile = FileStream->Tell();
     if (FileStream->IsError()) {
-      bError = true;
+      SetError();
       GLog.Logf(NAME_Error, "Error reiniting lzma stream in file '%s'", *fname);
       return false;
     }
@@ -485,26 +487,26 @@ bool VZipFileReader::LzmaRestart () {
 
   vuint32 prpsize;
   if (lzma_properties_size(&prpsize, &filters[0]) != LZMA_OK) {
-    bError = true;
+    SetError();
     GLog.Logf(NAME_Error, "Failed to initialise lzma stream for file '%s'", *fname);
     return false;
   }
   if (prpsize != 5) {
-    bError = true;
+    SetError();
     GLog.Logf(NAME_Error, "Failed to initialise lzma stream for file '%s'", *fname);
     return false;
   }
 
   if (lzma_properties_decode(&filters[0], nullptr, lzmaprhdr, prpsize) != LZMA_OK) {
     lzmaopts = (lzma_options_lzma *)filters[0].options;
-    bError = true;
+    SetError();
     GLog.Logf(NAME_Error, "Failed to initialise lzma stream for file '%s'", *fname);
     return false;
   }
   lzmaopts = (lzma_options_lzma *)filters[0].options;
 
   if (lzma_raw_decoder(&lzmastream, &filters[0]) != LZMA_OK) {
-    bError = true;
+    SetError();
     GLog.Logf(NAME_Error, "Failed to initialise lzma stream for file '%s'", *fname);
     return false;
   }
@@ -519,7 +521,7 @@ bool VZipFileReader::LzmaRestart () {
   LzmaDec_Construct(&lzmastate);
   auto res = LzmaDec_Allocate(&lzmastate, lzmaheader, LZMA_PROPS_SIZE, &fsysLzmaAlloc);
   if (res != SZ_OK) {
-    bError = true;
+    SetError();
     GLog.Logf(NAME_Error, "Failed to initialise lzma stream for file '%s'", *fname);
     return false;
   }
@@ -578,7 +580,7 @@ void VZipFileReader::readBytes (void *buf, int length) {
 
   if ((vuint32)length > rest_read_uncompressed) {
     //GLog.Logf(NAME_Error, "Want to read past the end of the file '%s': rest=%d; length=%d", *fname, (vint32)rest_read_uncompressed, length);
-    setError();
+    SetError();
     return;
   }
 
@@ -614,7 +616,7 @@ void VZipFileReader::readBytes (void *buf, int length) {
         }
       }
       if (err) {
-        bError = true;
+        SetError();
         GLog.Logf(NAME_Error, "Failed to read from zip for file '%s'", *fname);
         return;
       }
@@ -658,7 +660,7 @@ void VZipFileReader::readBytes (void *buf, int length) {
       const vuint8 *bufBefore = stream.next_out;
       int err = mz_inflate(&stream, flush);
       if (err >= 0 && stream.msg != nullptr) {
-        setError();
+        SetError();
         GLog.Logf(NAME_Error, "Decompression failed: %s for file '%s'", stream.msg, *fname);
         return;
       }
@@ -679,7 +681,7 @@ void VZipFileReader::readBytes (void *buf, int length) {
         const vuint8 *bufBefore = lzmastream.next_out;
         int err = lzma_code(&lzmastream, LZMA_RUN);
         if (err != LZMA_OK && err != LZMA_STREAM_END) {
-          setError();
+          SetError();
           GLog.Logf(NAME_Error, "LZMA decompression failed (%d) for file '%s'", err, *fname);
           return;
         }
@@ -732,10 +734,10 @@ void VZipFileReader::readBytes (void *buf, int length) {
 
   if (iRead != length) {
     GLog.Logf(NAME_Error, "Only read %d of %d bytes for file '%s'", iRead, length, *fname);
-    if (!bError) setError();
+    if (!bError) SetError();
   } else if (!bError && rest_read_uncompressed == 0) {
     if (Crc32 != Info.crc32) {
-      setError();
+      SetError();
       GLog.Logf(NAME_Error, "Bad CRC for file '%s' (wanted 0x%08x, got 0x%08x)", *fname, (unsigned)Info.crc32, (unsigned)Crc32);
     }
   }
@@ -755,7 +757,7 @@ void VZipFileReader::cacheAllData () {
   // cache data
   wholeSize = (vint32)Info.filesize;
   //GLog.Logf(NAME_Debug, "*** CACHING '%s' (size=%d)", *fname, wholeSize);
-  if (wholeSize < 0) { setError(); return; }
+  if (wholeSize < 0) { SetError(); return; }
   wholeBuf = (vuint8 *)Z_Realloc(wholeBuf, (wholeSize ? wholeSize : 1));
   readBytes(wholeBuf, wholeSize);
   //GLog.Logf(NAME_Debug, "*** CACHED: %s", (bError ? "error" : "ok"));
@@ -769,11 +771,11 @@ void VZipFileReader::cacheAllData () {
 //==========================================================================
 void VZipFileReader::Serialise (void *V, int length) {
   if (bError) return;
-  if (length < 0) { setError(); return; }
+  if (length < 0) { SetError(); return; }
   if (length == 0) return;
 
   if (!V) {
-    setError();
+    SetError();
     GLog.Logf(NAME_Error, "Cannot read into nullptr buffer for file '%s'", *fname);
     return;
   }
@@ -781,15 +783,15 @@ void VZipFileReader::Serialise (void *V, int length) {
   // use data cache?
   if (wholeSize >= 0) {
     //!GLog.Logf(NAME_Debug, "  ***READING (CACHE) '%s' (currpos=%d; size=%d; left=%d; len=%d)", *fname, currpos, wholeSize, wholeSize-currpos, length);
-    if (length < 0 || currpos < 0 || currpos >= wholeSize || wholeSize-currpos < length) setError();
+    if (length < 0 || currpos < 0 || currpos >= wholeSize || wholeSize-currpos < length) SetError();
     if (bError) return;
     memcpy(V, wholeBuf+currpos, length);
     currpos += length;
   } else {
     // uncached
-    if (!FileStream) { setError(); return; }
+    if (!FileStream) { SetError(); return; }
     //!GLog.Logf(NAME_Debug, "  ***READING (DIRECT) '%s' (currpos=%d; length=%u; realpos=%d; size=%u; rru=%u)", *fname, currpos, length, totalOut(), Info.filesize, rest_read_uncompressed);
-    if (length > (int)Info.filesize || (int)Info.filesize-currpos < length) { setError(); return; }
+    if (length > (int)Info.filesize || (int)Info.filesize-currpos < length) { SetError(); return; }
     // cache file if we're seeking near the end
     if (totalOut() < 32768 && currpos >= (vint32)(Info.filesize-Info.filesize/3)) {
       ++wholeSize;
@@ -858,7 +860,7 @@ void VZipFileReader::Serialise (void *V, int length) {
 //==========================================================================
 void VZipFileReader::Seek (int InPos) {
   if (bError) return;
-  if (InPos < 0 || InPos > (int)Info.filesize) { setError(); return; }
+  if (InPos < 0 || InPos > (int)Info.filesize) { SetError(); return; }
   //!GLog.Logf(NAME_Debug, "*** SEEK '%s' (currpos=%d; newpos=%d; realpos=%d; size=%u)", *fname, currpos, InPos, totalOut(), Info.filesize);
   currpos = InPos;
 }

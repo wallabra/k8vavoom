@@ -192,22 +192,35 @@ VStr::VStr (double v) noexcept : dataptr(nullptr) {
 // ////////////////////////////////////////////////////////////////////////// //
 // serialisation operator
 VStream &VStr::Serialise (VStream &Strm) {
-  vint32 len = vint32(length());
+  vint32 len = length();
   Strm << STRM_INDEX(len);
   vassert(len >= 0);
   if (Strm.IsLoading()) {
+    if (Strm.IsError() || len < 0 || len > 1024*1024) { // arbitrary limit
+      clear();
+      Strm.SetError();
+      return Strm;
+    }
     if (len) {
       resize(len);
       makeMutable();
       Strm.Serialise(dataptr, len+1); // eat last byte which should be zero...
-      vassert(dataptr[len] == 0);
+      if (Strm.IsError() || dataptr[len] != 0) {
+        clear();
+        Strm.SetError();
+        return Strm;
+      }
       //dataptr[len] = 0; // ...and force zero
     } else {
       clear();
       // zero byte is always there
       vuint8 b;
       Strm << b;
-      vassert(b == 0);
+      if (Strm.IsError() || b != 0) {
+        clear();
+        Strm.SetError();
+        return Strm;
+      }
     }
   } else {
     if (len) Strm.Serialise(getData(), len);
@@ -222,7 +235,7 @@ VStream &VStr::Serialise (VStream &Strm) {
 // serialisation operator
 VStream &VStr::Serialise (VStream &Strm) const {
   vassert(!Strm.IsLoading());
-  vint32 len = vint32(length());
+  vint32 len = length();
   Strm << STRM_INDEX(len);
   if (len) Strm.Serialise(getData(), len);
   // always write terminating zero

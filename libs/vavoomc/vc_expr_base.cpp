@@ -30,6 +30,36 @@
 
 
 #ifdef VCC_DEBUG_COMPILER_LEAKS
+#include <string>
+#include <cstdlib>
+#include <cxxabi.h>
+
+template<typename T> VStr shitppTypeName () {
+  VStr tpn(typeid(T).name());
+  char *dmn = abi::__cxa_demangle(*tpn, nullptr, nullptr, nullptr);
+  if (dmn) {
+    tpn = VStr(dmn);
+    //Z_Free(dmn);
+    // use `free()` here, because it is not allocated via zone allocator
+    free(dmn);
+  }
+  return tpn;
+}
+
+
+template<class T> VStr shitppTypeNameObj (const T &o) {
+  VStr tpn(typeid(o).name());
+  char *dmn = abi::__cxa_demangle(*tpn, nullptr, nullptr, nullptr);
+  if (dmn) {
+    tpn = VStr(dmn);
+    //Z_Free(dmn);
+    // use `free()` here, because it is not allocated via zone allocator
+    free(dmn);
+  }
+  return tpn;
+}
+
+
 struct MemInfo {
   void *ptr;
   size_t size;
@@ -535,7 +565,11 @@ bool VExpression::IsComma () const { return false; }
 bool VExpression::IsCommaRetOp0 () const { return false; }
 bool VExpression::IsDropResult () const { return false; }
 
+#if 0
 VStr VExpression::toString () const { return VStr("<VExpression::")+shitppTypeNameObj(*this)+":no-toString>"; }
+#else
+VStr VExpression::toString () const { return VStr("<VExpression:no-toString>"); }
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
