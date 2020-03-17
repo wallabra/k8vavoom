@@ -32,6 +32,8 @@
 static VCvarB r_hack_transparent_doors("r_hack_transparent_doors", true, "Transparent doors hack.", CVAR_Archive);
 static VCvarB r_hack_zero_sky("r_hack_zero_sky", true, "ZeroSky hack (Doom II MAP01 extra floor fix).", CVAR_Archive);
 
+static VCvarB r_3dfloor_clip_both_sides("r_3dfloor_clip_both_sides", true, "Clip 3d floors with both sectors?", CVAR_Archive);
+
 static VCvarB r_hack_fake_floor_decorations("r_hack_fake_floor_decorations", true, "Fake floor/ceiling decoration fix.", /*CVAR_Archive|*/CVAR_PreInit);
 
 
@@ -1556,10 +1558,11 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     WallFace *face = new WallFace;
     face->setup(reg, seg->v1, seg->v2);
 
+    const bool isNonSolid = !!(reg->regflags&sec_region_t::RF_NonSolid);
     facehead = facetail = face;
     for (WallFace *cface = facehead; cface; cface = cface->next) {
-      CutWallFace(cface, seg->frontsector, reg, !!(reg->regflags&sec_region_t::RF_NonSolid), facetail);
-      CutWallFace(cface, seg->backsector, reg, !!(reg->regflags&sec_region_t::RF_NonSolid), facetail);
+      if (isNonSolid || r_3dfloor_clip_both_sides) CutWallFace(cface, seg->frontsector, reg, isNonSolid, facetail);
+      CutWallFace(cface, seg->backsector, reg, isNonSolid, facetail);
     }
 
     // now create all surfaces
