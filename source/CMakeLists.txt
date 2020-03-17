@@ -712,12 +712,11 @@ if(ENABLE_SERVER)
   ### endif(WIN32)
   set(SERVER_SOURCES ${SERVER_COMMON_SOURCES} sys_ded.cpp)
 
+  add_executable(k8vavoom-dedicated ${SERVER_SOURCES})
   if(CYGWIN OR MINGW)
-    # prune --out-implib from executables: it doesn't make sense, even with --export-all-symbols
-    set(CMAKE_CXX_LINK_EXECUTABLE ${CMAKE_CXX_LINK_EXECUTABLE} "-Wl,--subsystem,console")
+    set_target_properties(k8vavoom-dedicated PROPERTIES LINK_FLAGS "-Wl,--subsystem,console")
   endif()
 
-  add_executable(k8vavoom-dedicated ${SERVER_SOURCES})
   if(ENABLE_WRAPPERS)
     set_target_properties(k8vavoom-dedicated PROPERTIES OUTPUT_NAME ../k8vavoom-dedicated.bin)
   else(ENABLE_WRAPPERS)
