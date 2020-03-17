@@ -382,7 +382,7 @@ bool VCheckedStream::IsError () const {
 //==========================================================================
 void VCheckedStream::checkValidityCond (bool mustBeTrue) {
   if (!bError) {
-    if (!mustBeTrue || !srcStream || srcStream->IsError()) bError = true;
+    if (!mustBeTrue || !srcStream || srcStream->IsError()) SetError();
   }
   if (bError) checkError();
 }

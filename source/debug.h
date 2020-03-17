@@ -27,3 +27,36 @@
 void OpenDebugFile (const char *name);
 // Print into debug file
 int devprintf (const char *s, ...) __attribute__((format(printf, 1, 2)));
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+/*
+#include <string>
+#include <cstdlib>
+#include <cxxabi.h>
+
+template<typename T> VStr shitppTypeName () {
+  VStr tpn(typeid(T).name());
+  char *dmn = abi::__cxa_demangle(*tpn, nullptr, nullptr, nullptr);
+  if (dmn) {
+    tpn = VStr(dmn);
+    //Z_Free(dmn);
+    // use `free()` here, because it is not allocated via zone allocator
+    free(dmn);
+  }
+  return tpn;
+}
+
+
+template<class T> VStr shitppTypeNameObj (const T &o) {
+  VStr tpn(typeid(o).name());
+  char *dmn = abi::__cxa_demangle(*tpn, nullptr, nullptr, nullptr);
+  if (dmn) {
+    tpn = VStr(dmn);
+    //Z_Free(dmn);
+    // use `free()` here, because it is not allocated via zone allocator
+    free(dmn);
+  }
+  return tpn;
+}
+*/
