@@ -363,7 +363,7 @@ static void DrawFPS () {
     int lypos = GRoot->GetHeight()-64;
 
     const int nlag = clampval(CL_GetNetLag(), 0, 999);
-    T_DrawText(xpos, lypos, va("(%d CHANS) LAG:%3d", nlag, CL_GetNumberOfChannels()), (Host_IsDangerousTimeout() ? CR_RED : CR_DARKBROWN));
+    T_DrawText(xpos, lypos, va("(%d CHANS) LAG:%3d", CL_GetNumberOfChannels(), nlag), (Host_IsDangerousTimeout() ? CR_RED : CR_DARKBROWN));
     //lypos -= T_FontHeight();
 
     // draw lag chart
