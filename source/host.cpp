@@ -373,6 +373,8 @@ void Host_Init () {
   }
 #endif
 
+  FL_BuildRequiredWads();
+
   host_initialised = true;
   VCvar::HostInitComplete();
 }

@@ -276,6 +276,7 @@ VSearchPath::VSearchPath ()
   , basepak(false)
   , userwad(false)
   , cosmetic(false)
+  , required(false)
 {
   if (fsys_mark_as_user) userwad = true;
 }

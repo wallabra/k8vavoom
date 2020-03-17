@@ -2902,3 +2902,38 @@ void FL_GetNetWads (TArray<VStr> &list) {
     list.append(s);
   }
 }
+
+
+//==========================================================================
+//
+//  FL_BuildRequiredWads
+//
+//==========================================================================
+void FL_BuildRequiredWads () {
+  #if 0
+  // scan all textures, and mark any archive with textures as "required"
+  GCon->Logf(NAME_Debug, "scanning %d textures...", GTextureManager.GetNumTextures());
+  for (int f = 0; f < GTextureManager.GetNumTextures(); ++f) {
+    VTexture *tex = GTextureManager[f];
+    if (tex && tex->SourceLump >= 0) {
+      int fl = W_LumpFile(tex->SourceLump);
+      if (fl >= 0 && fl < fsysSearchPaths.length()) fsysSearchPaths[fl]->required = true;
+    }
+  }
+
+  // scan all archives, and mark any archives with important files as "required"
+  GCon->Log(NAME_Debug, "scanning archives...");
+  for (auto &&arc : fsysSearchPaths) {
+    if (arc->required) continue; // already marked
+    for (int fn = arc->IterateNS(0, WADNS_Global); fn >= 0; fn = arc->IterateNS(fn+1, WADNS_Global)) {
+      //GCon->Logf(NAME_Debug, "  %d: %s : %s", fn, *arc->GetPrefix(), *arc->LumpName(fn));
+      if (arc->LumpName(fn) == "decorate" || arc->LumpName(fn) == "dehacked") {
+        arc->required = true;
+        break;
+      }
+    }
+  }
+
+  for (auto &&arc : fsysSearchPaths) if (arc->required) GCon->Logf(NAME_Debug, "rq: <%s>", *arc->GetPrefix());
+  #endif
+}

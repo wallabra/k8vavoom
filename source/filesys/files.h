@@ -122,3 +122,6 @@ int FL_GetNetWadsCount ();
 vuint32 FL_GetNetWadsHash ();
 // will clear the list
 void FL_GetNetWads (TArray<VStr> &list);
+
+// should be called after initing textures
+void FL_BuildRequiredWads ();
