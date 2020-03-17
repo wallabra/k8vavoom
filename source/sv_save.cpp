@@ -2028,7 +2028,7 @@ static void SV_LoadGame (int slot) {
     if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetupLocalPlayer();
     #endif
     // launch waiting scripts
-    if (!deathmatch) GLevel->Acs->CheckAcsStore();
+    if (!svs.deathmatch) GLevel->Acs->CheckAcsStore();
 
     //GCon->Logf(NAME_Debug, "************************** (%d)", svs.max_clients);
     for (int i = 0; i < MAXPLAYERS; ++i) {
@@ -2117,7 +2117,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
     }
   }
 
-  if (!deathmatch) {
+  if (!svs.deathmatch) {
     const mapInfo_t &old_info = P_GetMapInfo(GLevel->MapName);
     const mapInfo_t &new_info = P_GetMapInfo(mapname);
     // all maps in cluster 0 are treated as in different clusters
@@ -2137,7 +2137,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   if (flags&CHANGELEVEL_NOMONSTERS) GGameInfo->nomonsters = 1;
 
   sv_map_travel = true;
-  if (!deathmatch && BaseSlot.FindMap(mapname)) {
+  if (!svs.deathmatch && BaseSlot.FindMap(mapname)) {
     // unarchive map
     SV_LoadMap(mapname, false/*allowCheckpoints*/, true/*hubTeleport*/); // don't allow checkpoints
   } else {
@@ -2224,7 +2224,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   }
 
   // launch waiting scripts
-  if (!deathmatch) GLevel->Acs->CheckAcsStore();
+  if (!svs.deathmatch) GLevel->Acs->CheckAcsStore();
 
   if (doSaveGame) GCmdBuf << "AutoSaveEnter\n";
 
@@ -2247,7 +2247,7 @@ void Draw_LoadIcon ();
 
 
 static bool CheckIfLoadIsAllowed () {
-  if (deathmatch) {
+  if (svs.deathmatch) {
     GCon->Log("Can't load in deathmatch game");
     return false;
   }
@@ -2258,7 +2258,7 @@ static bool CheckIfLoadIsAllowed () {
 
 
 static bool CheckIfSaveIsAllowed () {
-  if (deathmatch) {
+  if (svs.deathmatch) {
     GCon->Log("Can't save in deathmatch game");
     return false;
   }

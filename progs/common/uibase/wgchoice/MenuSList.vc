@@ -68,6 +68,21 @@ void DrawTextBox (string text) {
 
 //==========================================================================
 //
+//  DMMode2Str
+//
+//==========================================================================
+static final string DMMode2Str (int dmmode) {
+  switch (dmmode) {
+    case 0: return "COOP";
+    case 1: return "DM";
+    case 2: return "ALTDM";
+  }
+  return "UNKN";
+}
+
+
+//==========================================================================
+//
 //  OnDraw
 //
 //==========================================================================
@@ -87,11 +102,13 @@ override void OnDraw () {
   int maxmapwdt = 0;
   int maxplrwdt = TextWidth(va("9/9"));
   int maxaddrwdt = 0;
+  int maxmodewdt = 0;
   int newCurPos = -1;
   foreach (int idx, auto const ref nfo; slist.Cache) {
     maxmapwdt = max(maxmapwdt, TextWidth(nfo.Map));
     maxplrwdt = max(maxplrwdt, TextWidth(va("%d/%d", nfo.Users, nfo.MaxUsers)));
     maxaddrwdt = max(maxaddrwdt, TextWidth(nfo.CName));
+    maxmodewdt = max(maxmodewdt, TextWidth(DMMode2Str(nfo.DeathMatch)));
     if (lastCurrAddr && lastCurrAddr == nfo.CName) newCurPos = idx;
   }
 
@@ -109,7 +126,8 @@ override void OnDraw () {
   // right-aligned
   int xposUsers = Width-8;
   // left-aligned
-  int xposAddr = xposUsers-maxplrwdt-6-maxaddrwdt;
+  int xposMode = xposUsers-maxplrwdt-6-maxmodewdt;
+  int xposAddr = xposMode-6-maxaddrwdt;
   int xposMap = xposAddr-6-maxmapwdt;
 
   //printdebug("====== count=%s ======", slist.Cache.length);
@@ -128,6 +146,8 @@ override void OnDraw () {
     DrawText(xposMap, itemy, slist.Cache[i].Map, clr);
     // draw server user address
     DrawText(xposAddr, itemy, slist.Cache[i].CName, clr);
+    // draw server mode
+    DrawText(xposMode, itemy, DMMode2Str(slist.Cache[i].DeathMatch), clr);
     // draw users
     if (slist.Cache[i].MaxUsers) {
       SetTextAlign(hright, vtop);

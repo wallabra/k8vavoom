@@ -211,7 +211,7 @@ void VLevelChannel::SendServerInfo () {
     Msg << MapHash;
     Msg << modhash;
     Msg.WriteUInt(svs.max_clients);
-    Msg.WriteUInt(deathmatch);
+    Msg.WriteUInt(svs.deathmatch);
     SendMessage(&Msg);
   }
 

@@ -165,6 +165,7 @@ struct hostcache_t {
   array!string WadFiles;
   int Users;
   int MaxUsers;
+  int DeathMatch; // dm mode
   bool bGoodProtocol;
   bool bGoodWadList;
 };

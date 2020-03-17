@@ -52,8 +52,6 @@ static VCvarF net_timeout("net_timeout", "4", "Network timeout, in seconds.", 0)
 // level will be updated twice as more times as this, until i wrote client-side interpolation code
 static VCvarF sv_fps("sv_fps", "35", "Server update frame rate (the server will use this to send updates to clients).", 0/*CVAR_Archive*/);
 
-extern vuint8 deathmatch; // in "sv_main.cpp", sorry
-
 
 //==========================================================================
 //
@@ -1352,7 +1350,7 @@ bool VNetConnection::IsRelevant (VThinker *th) {
   if (!Ent->Sector) return false; // just in case
   if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) return false;
   // if we're in coop, always transmit other players (we need them for the automap)
-  if (!deathmatch && Ent->IsPlayer() && !Ent->IsRealCorpse() &&
+  if (!svs.deathmatch && Ent->IsPlayer() && !Ent->IsRealCorpse() &&
       Ent->Player && Ent->Player->MO == Ent && (Ent->Player->PlayerFlags&VBasePlayer::PF_Spawned))
   {
     //GCon->Logf(NAME_DevNet, "%s: client #%d", *GetAddress(), Ent->Player->ClientNum);

@@ -136,7 +136,7 @@ int sv_load_num_players = 0;
 bool run_open_scripts = false;
 
 VBasePlayer *GPlayersBase[MAXPLAYERS];
-vuint8 deathmatch = 0; // only if started as net death
+//vuint8 deathmatch = 0; // only if started as net death
 bool TimerGameWarned = false;
 int TimerGame = 0; // for DM timelimit, in vanilla tics
 int FragGame = 0; // for DM fraglimit -- advance when somebody reaches this number of frags; "-1" means "calculate"
@@ -609,7 +609,7 @@ static void CheckForSkip () {
     }
   }
 
-  if (deathmatch && sv.intertime < 4) {
+  if (svs.deathmatch && sv.intertime < 4) {
     // wait for 4 seconds before allowing a skip
     if (skip) {
       triedToSkip = true;
@@ -955,7 +955,7 @@ static void G_DoCompleted (bool ignoreNoExit) {
   completed = false;
   if (sv.intermission) return;
 
-  if (!ignoreNoExit && NoExit /*&& deathmatch*/ && (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer)) {
+  if (!ignoreNoExit && NoExit /*&& svs.deathmatch*/ && (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer)) {
     return;
   }
 
@@ -991,13 +991,13 @@ static void G_DoCompleted (bool ignoreNoExit) {
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (GGameInfo->Players[i]) {
       GGameInfo->Players[i]->eventPlayerExitMap(HubChange);
-      if (deathmatch || HubChange) {
+      if (svs.deathmatch || HubChange) {
         GGameInfo->Players[i]->eventClientIntermission(GLevelInfo->NextMap);
       }
     }
   }
 
-  if (!deathmatch && !HubChange) GCmdBuf << "TeleportNewMap\n";
+  if (!svs.deathmatch && !HubChange) GCmdBuf << "TeleportNewMap\n";
 }
 
 
@@ -1037,7 +1037,7 @@ COMMAND_WITH_AC(TestFinale) {
     }
   }
 
-  if (GGameInfo->NetMode == NM_Standalone && !deathmatch) {
+  if (GGameInfo->NetMode == NM_Standalone && !svs.deathmatch) {
     for (int i = 0; i < svs.max_clients; ++i) {
       if (GGameInfo->Players[i]) {
         GGameInfo->Players[i]->eventClientFinale(fname);
@@ -1092,7 +1092,7 @@ COMMAND_WITH_AC(TeleportNewMap) {
     if (Args[1].startsWithCI("**forced**")) mapteleport_executed = true; // block it again
   }
 
-  if (!deathmatch) {
+  if (!svs.deathmatch) {
     if (VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) {
       for (int i = 0; i < svs.max_clients; ++i) {
         if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
@@ -1188,7 +1188,7 @@ COMMAND(ACS_TeleportNewMap) {
   }
   GLevelInfo->NextMap = mname;
 
-  if (!deathmatch) {
+  if (!svs.deathmatch) {
     if (VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) {
       for (int i = 0; i < svs.max_clients; ++i) {
         if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
@@ -1277,7 +1277,7 @@ COMMAND_WITH_AC(TeleportNewMapEx) {
     GLevelInfo->NextMap = mname;
   }
 
-  if (!deathmatch) {
+  if (!svs.deathmatch) {
     if (VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) {
       for (int i = 0; i < svs.max_clients; ++i) {
         if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
@@ -1480,8 +1480,8 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
     }
   } else {
     // new game
-    deathmatch = DeathMatch;
-    GGameInfo->deathmatch = deathmatch;
+    svs.deathmatch = DeathMatch;
+    GGameInfo->deathmatch = svs.deathmatch;
 
     P_InitThinkers();
 
@@ -1525,10 +1525,10 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
 
     // spawn things
     for (int i = 0; i < GLevel->NumThings; ++i) GLevelInfo->eventSpawnMapThing(&GLevel->Things[i]);
-    if (deathmatch && GLevelInfo->DeathmatchStarts.length() < 4) Host_Error("Level needs more deathmatch start spots");
+    if (svs.deathmatch && GLevelInfo->DeathmatchStarts.length() < 4) Host_Error("Level needs more deathmatch start spots");
   }
 
-  if (deathmatch) {
+  if (svs.deathmatch) {
     TimerGame = max2(0, TimeLimit.asInt()*35*60);
     const int fl = FragLimit.asInt();
     FragGame = (fl <= 0 ? 0 : -1); // calculate on the next tick

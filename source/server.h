@@ -31,6 +31,7 @@ struct server_t {
 struct server_static_t {
   int max_clients;
   int num_connected;
+  int deathmatch; // actually, vuint8
 
   VStr serverinfo;
 };

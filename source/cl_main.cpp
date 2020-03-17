@@ -335,7 +335,7 @@ void CL_SetupStandaloneClient () {
   if (GGameInfo->NetMode == NM_TitleMap || GGameInfo->NetMode == NM_Standalone) VCvar::SetCheating(true);
 
   GClGame->maxclients = svs.max_clients;
-  GClGame->deathmatch = deathmatch;
+  GClGame->deathmatch = svs.deathmatch;
 
   const mapInfo_t &LInfo = P_GetMapInfo(*GLevel->MapName);
   GCon->Log("---------------------------------------");

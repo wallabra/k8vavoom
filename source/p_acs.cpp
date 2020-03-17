@@ -4677,7 +4677,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_GameType)
            if (GGameInfo->NetMode == NM_TitleMap) *sp = GAME_TITLE_MAP;
       else if (GGameInfo->NetMode == NM_Standalone) *sp = GAME_SINGLE_PLAYER;
-      else if (deathmatch) *sp = GAME_NET_DEATHMATCH;
+      else if (svs.deathmatch) *sp = GAME_NET_DEATHMATCH;
       else *sp = GAME_NET_COOPERATIVE;
       ++sp;
       ACSVM_BREAK;

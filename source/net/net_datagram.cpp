@@ -392,14 +392,19 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     hinfo->Users = TmpByte;
     msg << TmpByte;
     hinfo->MaxUsers = TmpByte;
-    msg << TmpByte;
-    if (TmpByte == NET_PROTOCOL_VERSION_HI) {
+    vuint8 protoHi = 0, protoLo = 0;
+    msg << protoHi << protoLo;
+    if (protoHi == NET_PROTOCOL_VERSION_HI && protoLo == NET_PROTOCOL_VERSION_LO) {
+      hinfo->Flags |= hostcache_t::Flag_GoodProtocol;
+    }
+    if (protoHi > 7 || (protoHi == 7 && protoLo >= 8)) {
+      // this is for version 7.8 and up
       msg << TmpByte;
-      if (TmpByte == NET_PROTOCOL_VERSION_LO) {
-        hinfo->Flags |= hostcache_t::Flag_GoodProtocol;
-      }
+      hinfo->DeathMatch = TmpByte;
+      if (TmpByte > 2) msg.SetError();
     } else {
-      msg << TmpByte;
+      // assume "altdeath"
+      hinfo->DeathMatch = 2;
     }
     vuint32 mhash = 0;
     msg << mhash;
@@ -407,7 +412,8 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     if (mhash == FL_GetNetWadsHash()) hinfo->Flags |= hostcache_t::Flag_GoodWadList;
     hinfo->CName = addr;
     hinfo->WadFiles.clear();
-    ReadPakList(hinfo->WadFiles, msg);
+    if (!msg.IsError()) ReadPakList(hinfo->WadFiles, msg);
+
     if (msg.IsError()) {
       // remove it
       hinfo->WadFiles.clear();
@@ -740,7 +746,20 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
   msg << command;
   if (command == CCREQ_SERVER_INFO) {
-    GCon->Logf(NAME_DevNet, "CONN: sending server info to %s", Drv->AddrToString(&clientaddr));
+    if (msg.AtEnd()) return nullptr;
+
+    // check request version
+    vuint8 reqVerHi = 7, reqVerLo = 7;
+    msg << reqVerHi << reqVerLo;
+    if (msg.IsError()) return nullptr;
+
+    // version sanity check
+    if (reqVerHi > NET_PROTOCOL_VERSION_HI) return nullptr;
+    if (reqVerHi == NET_PROTOCOL_VERSION_HI && reqVerLo > NET_PROTOCOL_VERSION_LO) return nullptr;
+
+    bool writeExtended = (reqVerHi > NET_PROTOCOL_VERSION_HI || (reqVerHi == NET_PROTOCOL_VERSION_HI && reqVerLo >= NET_PROTOCOL_VERSION_LO));
+
+    GCon->Logf(NAME_DevNet, "CONN: sending server info to %s (reqest version is %u.%u)", Drv->AddrToString(&clientaddr), reqVerHi, reqVerLo);
 
     VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
     TmpByte = NETPACKET_CTL;
@@ -748,9 +767,9 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     WriteGameSignature(MsgOut);
     TmpByte = CCREP_SERVER_INFO;
     MsgOut << TmpByte;
-    TmpStr = VNetworkLocal::HostName;
+    TmpStr = VNetworkLocal::HostName.asStr().left(120);
     MsgOut << TmpStr;
-    TmpStr = (GLevel ? *GLevel->MapName : "intermission");
+    TmpStr = VStr(GLevel ? *GLevel->MapName : "intermission").left(64);
     MsgOut << TmpStr;
     TmpByte = svs.num_connected;
     MsgOut << TmpByte;
@@ -760,6 +779,12 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     MsgOut << TmpByte;
     TmpByte = NET_PROTOCOL_VERSION_LO;
     MsgOut << TmpByte;
+    // this is for version 7.8 and up
+    if (writeExtended) {
+      TmpByte = svs.deathmatch;
+      MsgOut << TmpByte;
+    }
+    // end of 7.8 extensions
     vuint32 mhash = FL_GetNetWadsHash();
     MsgOut << mhash;
     // write pak list

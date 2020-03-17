@@ -241,7 +241,7 @@ void VLevelInfo::Completed (int InMap, int InPosition, int SaveAngle) {
   int Map = InMap;
   int Position = InPosition;
   if (Map == -1 && Position == -1) {
-    if (!deathmatch) {
+    if (!svs.deathmatch) {
       // if we have cluster exit text, process with the normal intermission sequence
       const mapInfo_t &old_info = P_GetMapInfo(GLevel->MapName);
       const VClusterDef *ClusterD = P_GetClusterDef(old_info.Cluster);

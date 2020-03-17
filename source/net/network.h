@@ -40,7 +40,7 @@ enum {
 // sent on handshake
 enum {
   NET_PROTOCOL_VERSION_HI = 7,
-  NET_PROTOCOL_VERSION_LO = 7,
+  NET_PROTOCOL_VERSION_LO = 8,
 };
 
 enum {
@@ -139,6 +139,7 @@ struct hostcache_t {
   TArray<VStr> WadFiles;
   vint32 Users;
   vint32 MaxUsers;
+  vint32 DeathMatch; // dm mode
   enum {
     Flag_GoodProtocol = 1u<<0,
     Flag_GoodWadList  = 1u<<1,
