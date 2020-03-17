@@ -1126,60 +1126,27 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
       return best->params->contents;
     }
 
-    // prefer regions with contents
+    // ignore solid regions, as we cannot be inside them legally
     float bestDist = 999999.0f; // minimum distance to region floor
-    // skip base region
-    /*
-    const sec_region_t *last = nullptr;
-    float lastz = 0.0f;
-    bool wasHit = false;
-    */
     for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
-      if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
+      if ((reg->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_BaseRegion|sec_region_t::RF_NonSolid)) != sec_region_t::RF_NonSolid) continue;
       if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: checking region..."); DumpRegion(reg); }
-      // floor height, we'll need it anyway
       const float fz = max2(secfz, reg->efloor.GetPointZClamped(p));
-      //if (!last || fz > lastz) last = reg;
-      // non-solid?
-      if (reg->regflags&sec_region_t::RF_NonSolid) {
-        // non-solid region
-        const float cz = min2(seccz, reg->eceiling.GetPointZClamped(p));
-        // check if point is inside, and for best floor dist
-        if (p.z >= fz && p.z <= cz) {
-          const float fdist = p.z-fz;
-          if (dbgDump) GCon->Logf(NAME_Debug, "SVP: non-solid check: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fdist, p.z, fz, cz);
-          if (fdist < bestDist) {
-            if (dbgDump) GCon->Log(NAME_Debug, "SVP:   NON-SOLID HIT!");
-            bestDist = fdist;
-            best = reg;
-            //wasHit = true;
-          }
-        } else {
-          if (dbgDump) GCon->Logf(NAME_Debug, "SVP: non-solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, p.z-fz, p.z, fz, cz);
+      const float cz = min2(seccz, reg->eceiling.GetPointZClamped(p));
+      // check if point is inside, and for best floor dist
+      if (p.z >= fz && p.z <= cz) {
+        const float fdist = p.z-fz;
+        if (dbgDump) GCon->Logf(NAME_Debug, "SVP: non-solid check: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fdist, p.z, fz, cz);
+        if (fdist < bestDist) {
+          if (dbgDump) GCon->Log(NAME_Debug, "SVP:   NON-SOLID HIT!");
+          bestDist = fdist;
+          best = reg;
+          //wasHit = true;
         }
       } else {
-        // solid region, check if we are below it
-        // yes, this is just like this -- the region contents is going DOWN, not up
-        if (p.z < fz) {
-          const float fdist = fz-p.z;
-          if (dbgDump) GCon->Logf(NAME_Debug, "SVP: solid check: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fdist, p.z, fz, min2(seccz, reg->eceiling.GetPointZClamped(p)));
-          if (fdist < bestDist) {
-            if (dbgDump) GCon->Log(NAME_Debug, "SVP:   SOLID HIT!");
-            bestDist = fdist;
-            best = reg;
-            //wasHit = true;
-          }
-        } else {
-          if (dbgDump) GCon->Logf(NAME_Debug, "SVP: solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fz-p.z, p.z, fz, min2(seccz, reg->eceiling.GetPointZClamped(p)));
-        }
+        if (dbgDump) GCon->Logf(NAME_Debug, "SVP: non-solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, p.z-fz, p.z, fz, cz);
       }
     }
-    /*
-    if (!wasHit && last) {
-      if (dbgDump) { GCon->Logf("SVP: best region is last"); DumpRegion(last); }
-      best = last;
-    }
-    */
   }
 
   if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: best region"); DumpRegion(best); }
