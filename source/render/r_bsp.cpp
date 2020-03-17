@@ -440,7 +440,14 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   lLev = (FixedLight ? FixedLight : lLev+ExtraLight);
   lLev = midval(0, lLev, 255);
   if (r_darken) lLev = light_remap[lLev];
-  vuint32 Fade = GetFade(secregion);
+  vuint32 Fade = GetFade(secregion, (surfaceType != SFT_Wall));
+
+  /*
+  if (surfaceType == SFT_Floor || surfaceType == SFT_Ceiling) {
+    GCon->Logf(NAME_Debug, "reg.flags=0x%08x; fade=0x%08x (0x%08x)", secregion->regflags, Fade, secregion->params->Fade);
+    Fade = FADE_LIGHT;
+  }
+  */
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
 

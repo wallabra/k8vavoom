@@ -2274,9 +2274,38 @@ bool VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
 //  VRenderLevelShared::GetFade
 //
 //==========================================================================
-vuint32 VRenderLevelShared::GetFade (sec_region_t *reg) {
+vuint32 VRenderLevelShared::GetFade (sec_region_t *reg, bool isFloorCeiling) {
   if (r_fog_test) return 0xff000000|(int(255*r_fog_r)<<16)|(int(255*r_fog_g)<<8)|int(255*r_fog_b);
-  if (reg->params->Fade) return reg->params->Fade;
+  if (reg->params->Fade) {
+    if (!(reg->regflags&sec_region_t::RF_OnlyVisual)) {
+      //if (!(reg->regflags&sec_region_t::RF_NonSolid)) return reg->params->Fade;
+      if (Drawer && (reg->regflags&(sec_region_t::RF_BaseRegion|sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual)) == sec_region_t::RF_NonSolid) {
+        if (!isFloorCeiling &&
+            Drawer->vieworg.z < reg->eceiling.GetPointZClamped(Drawer->vieworg) &&
+            Drawer->vieworg.z > reg->efloor.GetPointZClamped(Drawer->vieworg))
+        {
+          return reg->params->Fade;
+        }
+      } else {
+        return reg->params->Fade;
+      }
+    }
+  }
+  /*
+  if (reg->params->Fade) {
+    // for non-solid and non-base sectors, apply this fade only if we're inside that sector
+    if (Drawer && (reg->regflags&(sec_region_t::RF_BaseRegion|sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual)) == sec_region_t::RF_NonSolid) {
+      // check view origin
+      if (Drawer->vieworg.z < reg->eceiling.GetPointZClamped(Drawer->vieworg) &&
+          Drawer->vieworg.z > reg->efloor.GetPointZClamped(Drawer->vieworg))
+      {
+        return reg->params->Fade;
+      }
+    } else {
+      return reg->params->Fade;
+    }
+  }
+  */
   if (Level->LevelInfo->OutsideFog && reg->eceiling.splane->pic == skyflatnum) return Level->LevelInfo->OutsideFog;
   if (Level->LevelInfo->Fade) return Level->LevelInfo->Fade;
   if (Level->LevelInfo->FadeTable == NAME_fogmap) return 0xff7f7f7fU;
