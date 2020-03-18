@@ -124,6 +124,30 @@ static TArray<VStr> cliModesList;
 static int cli_oldSprites = 0;
 
 
+//==========================================================================
+//
+//  getNetPath
+//
+//==========================================================================
+static VStr getNetPath (VSearchPath *sp) {
+  if (!sp) return VStr::EmptyString;
+  if (sp->cosmetic) return VStr::EmptyString;
+  if (sp->IsNonPak()) return VStr::EmptyString;
+  VStr fname = sp->GetPrefix();
+  VStr bname = fname.extractFileName();
+  int colidx = bname.lastIndexOf(':');
+  if (colidx >= 0) bname = bname.mid(colidx+1, bname.length());
+  if (bname.isEmpty()) return VStr::EmptyString;
+  if (bname.strEquCI("basepak.pk3")) {
+    while (!fname.isEmpty() && fname[fname.length()-1] != '/' && fname[fname.length()-1] != '\\') fname.chopRight(1);
+    fname.chopRight(1);
+    VStr xname = fname.extractFileName();
+    if (!xname.isEmpty()) bname = xname+"/"+bname;
+  }
+  return bname;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
   int cliHelpSorter (const void *aa, const void *bb, void *) {
@@ -1065,6 +1089,7 @@ static void wpkAppend (VStr fname, bool asystem) {
     fn = fn.extractFileName();
     if (fn.length() == 0) fn = fname.toLowerCase();
   }
+  //if (fname.endsWithCI(".zip")) return; // ignore zip containers
   //GCon->Logf(NAME_Debug, "WPK: %s", *fn);
   // check for duplicates
   for (int f = wpklist.length()-1; f >= 0; --f) {
@@ -1078,6 +1103,40 @@ static void wpkAppend (VStr fname, bool asystem) {
   wi.isSystem = asystem;
   */
   wpklist.append(fn);
+}
+
+
+//==========================================================================
+//
+//  wpkMark
+//
+//  call this before adding archives
+//
+//==========================================================================
+static int wpkMark (bool cosmetic) {
+  return (cosmetic ? -1 : fsysSearchPaths.length());
+}
+
+
+//==========================================================================
+//
+//  wpkAddMarked
+//
+//==========================================================================
+static void wpkAddMarked (int idx) {
+  if (idx < 0) return;
+  for (; idx < fsysSearchPaths.length(); ++idx) {
+    VSearchPath *sp = fsysSearchPaths[idx];
+    /*
+    if (sp->cosmetic) continue; // just in case
+    if (sp->IsNonPak()) continue;
+    VStr fn = sp->GetPrefix().extractFileName().toLowerCase();
+    */
+    VStr fn = getNetPath(sp);
+    if (fn.isEmpty()) continue;
+    //GCon->Logf(NAME_Debug, "*** <%s> (%s) ***", *fn, *sp->GetPrefix());
+    wpklist.append(fn);
+  }
 }
 
 
@@ -1121,8 +1180,10 @@ static bool AddAnyFile (VStr fname, bool allowFail, bool fixVoices=false) {
 //
 //==========================================================================
 static void AddAnyUserFile (VStr fname, bool cosmetic) {
+  auto mark = wpkMark(cosmetic);
   if (!AddAnyFile(fname, true/*allowFail*/)) return;
-  if (!cosmetic) wpkAppend(fname, false);
+  //if (!cosmetic) wpkAppend(fname, false);
+  wpkAddMarked(mark);
 }
 
 
@@ -2475,13 +2536,15 @@ void FL_Init () {
     //GCon->Logf(NAME_Debug, "::: %d : <%s>", nextfid, *pwf.fname);
     int currFCount = fsysSearchPaths.length();
 
+    auto mark = wpkMark(!pwf.storeInSave);
+
     if (pwf.asDirectory) {
-      if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
+      //if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
       GCon->Logf(NAME_Init, "Mounting directory '%s' as emulated PK3 file.", *pwf.fname);
       //AddPakDir(pwf.fname);
       W_MountDiskDir(pwf.fname);
     } else {
-      if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
+      //if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
       AddAnyFile(pwf.fname, true);
     }
 
@@ -2489,6 +2552,8 @@ void FL_Init () {
     if (!pwf.storeInSave) {
       for (int f = currFCount; f < fsysSearchPaths.length(); ++f) fsysSearchPaths[f]->cosmetic = true;
     }
+
+    wpkAddMarked(mark);
 
     fsys_hasPwads = true;
   }
@@ -2593,66 +2658,6 @@ void FL_Init () {
   // mount pwads (actually, add already mounted ones)
   pwadsSaved.restore();
   for (auto &&it : wpklistSaved) wpklist.append(it);
-  /*
-  FL_StartUserWads(); // start marking
-  for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) {
-    PWadFile &pwf = pwadList[pwidx];
-    fsys_skipSounds = pwf.skipSounds;
-    fsys_skipSprites = pwf.skipSprites;
-    fsys_skipDehacked = pwf.skipDehacked;
-    int nextfid = W_NextMountFileId();
-
-    //GCon->Logf(NAME_Debug, "::: %d : <%s>", nextfid, *pwf.fname);
-
-    if (pwf.asDirectory) {
-      if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
-      GCon->Logf(NAME_Init, "Mounting directory '%s' as emulated PK3 file.", *pwf.fname);
-      //AddPakDir(pwf.fname);
-      W_MountDiskDir(pwf.fname);
-    } else {
-      if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
-      AddAnyFile(pwf.fname, true);
-    }
-    fsys_hasPwads = true;
-
-    //GCon->Log("**************************");
-    //doStartMap
-    // scan for maps
-    if (!fsys_hasMapPwads) {
-      if (!pwadScanInfo.processed) {
-        pwadScanInfo.clear(); // just in case
-        for (; nextfid < W_NextMountFileId(); ++nextfid) {
-          if (W_CheckNumForNameInFile(NAME_mapinfo, nextfid) >= 0 ||
-              (cli_NoZMapinfo >= 0 && W_CheckNumForNameInFile(VName("zmapinfo", VName::Add), nextfid) >= 0))
-          {
-            GCon->Logf(NAME_Init, "FOUND 'mapinfo'!");
-            pwadScanInfo.hasMapinfo = true;
-            break;
-          }
-          GCon->Logf(NAME_Init, "checking pwad '%s'...", *W_FullPakNameByFile(nextfid));
-          for (auto &&it : WadMapIterator::FromWadFile(nextfid)) {
-            if (it.getFile() != nextfid) break;
-            findMapChecker(it.lump);
-          }
-        }
-      }
-      //GCon->Logf(NAME_Debug, "hasMapinfo: %d; mapname=<%s>; episode=%d; map=%d; index=%d", (int)pwadScanInfo.hasMapinfo, *pwadScanInfo.mapname, pwadScanInfo.episode, pwadScanInfo.mapnum, pwadScanInfo.getMapIndex());
-      // set flags
-      if (pwadScanInfo.hasMapinfo) {
-        mapinfoFound = true;
-        fsys_hasMapPwads = true;
-      } else if (!pwadScanInfo.mapname.isEmpty()) {
-        mapnum = pwadScanInfo.getMapIndex();
-        mapname = pwadScanInfo.mapname;
-        fsys_hasMapPwads = true;
-      }
-    }
-  }
-  FL_EndUserWads(); // stop marking
-  fsys_skipSounds = false;
-  fsys_skipSprites = false;
-  fsys_skipDehacked = false;
-  */
 
   // load custom mode pwads
   CustomModeLoadPwads(CM_POST_PWADS);
@@ -2830,28 +2835,6 @@ VStr FL_GetUserDataDir (bool shouldCreate) {
   //res += '/'; res += game_name;
   if (shouldCreate) Sys_CreateDirectory(res);
   return res;
-}
-
-
-//==========================================================================
-//
-//  getNetPath
-//
-//==========================================================================
-static VStr getNetPath (VSearchPath *sp) {
-  if (!sp) return VStr::EmptyString;
-  if (sp->cosmetic) return VStr::EmptyString;
-  if (sp->IsNonPak()) return VStr::EmptyString;
-  VStr fname = sp->GetPrefix();
-  VStr bname = fname.extractFileName();
-  if (bname.isEmpty()) return VStr::EmptyString;
-  if (bname.strEquCI("basepak.pk3")) {
-    while (!fname.isEmpty() && fname[fname.length()-1] != '/' && fname[fname.length()-1] != '\\') fname.chopRight(1);
-    fname.chopRight(1);
-    VStr xname = fname.extractFileName();
-    if (!xname.isEmpty()) bname = xname+"/"+bname;
-  }
-  return bname;
 }
 
 
