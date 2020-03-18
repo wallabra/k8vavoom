@@ -622,6 +622,8 @@ void VLevel::SerialiseOther (VStream &Strm) {
 
   // static lights
   {
+    TMapNC<vuint32, VEntity *> suidmap;
+
     Strm << STRM_INDEX(NumStaticLights);
     if (Strm.IsLoading()) {
       if (StaticLights) {
@@ -629,15 +631,30 @@ void VLevel::SerialiseOther (VStream &Strm) {
         StaticLights = nullptr;
       }
       if (NumStaticLights) StaticLights = new rep_light_t[NumStaticLights];
+    } else {
+      // build uid map
+      for (TThinkerIterator<VEntity> ent(this); ent; ++ent) {
+        if (!ent->ServerUId) GCon->Logf(NAME_Error, "entity '%s:%u' has no suid!", ent->GetClass()->GetName(), ent->GetUniqueId());
+        suidmap.put(ent->ServerUId, *ent);
+      }
     }
+
     for (i = 0; i < NumStaticLights; ++i) {
       VNTValueIOEx vio(&Strm);
       //TODO: save static light entity
       vio.io(VName("Origin"), StaticLights[i].Origin);
       vio.io(VName("Radius"), StaticLights[i].Radius);
       vio.io(VName("Color"), StaticLights[i].Color);
-      //vio.io(VName("Owner"), StaticLights[i].Owner);
-      vio.io(VName("OwnerUId"), StaticLights[i].OwnerUId);
+      if (Strm.IsLoading()) {
+        VEntity *owner = nullptr;
+        vio.io(VName("Owner"), owner);
+        StaticLights[i].OwnerUId = (owner ? owner->ServerUId : 0);
+      } else {
+        auto opp = suidmap.find(StaticLights[i].OwnerUId);
+        VEntity *owner = (opp ? *opp : nullptr);
+        vio.io(VName("Owner"), owner);
+      }
+      //vio.io(VName("OwnerUId"), StaticLights[i].OwnerUId);
       vio.io(VName("ConeDir"), StaticLights[i].ConeDir);
       vio.io(VName("ConeAngle"), StaticLights[i].ConeAngle);
       vuint32 flags = 0;

@@ -1459,20 +1459,22 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
     *Loader << CName;
     VClass *Class = VClass::FindClass(*CName);
     if (!Class) {
-#ifdef VAVOOM_LOADER_CAN_SKIP_CLASSES
+      #ifdef VAVOOM_LOADER_CAN_SKIP_CLASSES
       GCon->Logf("I/O WARNING: No such class '%s'", *CName);
       //Loader->Exports.Append(nullptr);
       Class = VThinker::StaticClass();
       Obj = VObject::StaticSpawnNoReplace(Class);
       //deadThinkers.append((VThinker *)Obj);
       deadThinkers.put(Obj, false);
-#else
+      #else
       Sys_Error("I/O ERROR: No such class '%s'", *CName);
-#endif
+      #endif
     } else {
       // allocate object and copy data
       Obj = VObject::StaticSpawnNoReplace(Class);
     }
+    // reassign server uids
+    if (Obj && Obj->IsA(VThinker::StaticClass())) ((VThinker *)Obj)->ServerUId = Obj->GetUniqueId();
 
     // handle level info
     if (Obj->IsA(VLevelInfo::StaticClass())) {
