@@ -1270,7 +1270,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
     if (!(EntityFlags&EF_IgnoreFloorStep)) {
       if (tmtrace.FloorZ-Origin.z > MaxStepHeight) {
         // too big a step up
-        if (EntityFlags&EF_CanJump && Health > 0.0f) {
+        if ((EntityFlags&EF_CanJump) && Health > 0) {
           // check to make sure there's nothing in the way for the step up
           if (!Velocity.z || tmtrace.FloorZ-Origin.z > 48.0f ||
               (tmtrace.BlockingMobj && tmtrace.BlockingMobj->CheckOnmobj()) ||
