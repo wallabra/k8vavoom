@@ -78,6 +78,7 @@ int NumTranslationTables;
 VTextureTranslation IceTranslation;
 TArray<VTextureTranslation *> DecorateTranslations;
 TArray<VTextureTranslation *> BloodTranslations;
+TMap<VStrCI, int> NamedTranslations;
 
 // they basicly work the same as translations
 VTextureTranslation ColorMaps[CM_Max];
@@ -664,6 +665,26 @@ bool R_AreSpritesPresent (int Index) {
 
 //==========================================================================
 //
+//  InitNamedTranslations
+//
+//==========================================================================
+static void InitNamedTranslations () {
+  for (auto &&it : WadNSNameIterator("trnslate", WADNS_Global)) {
+    GCon->Logf(NAME_Init, "parsing named translation table '%s'...", *it.getFullName());
+    auto sc = new VScriptParser(it.getFullName(), W_CreateLumpReaderNum(it.lump));
+    while (sc->GetString()) {
+      VStr name = sc->String;
+      if (name.isEmpty()) Sys_Error(va("%s: empty translation name", *sc->GetLoc().toStringNoCol()));
+      sc->Expect("=");
+      R_ParseDecorateTranslation(sc, /*(GameFilter&GAME_Strife ? 7 : 3)*/3, name);
+    }
+    delete sc;
+  }
+}
+
+
+//==========================================================================
+//
 //  R_InitData
 //
 //==========================================================================
@@ -676,6 +697,8 @@ void R_InitData () {
   InitTranslationTables();
   // init color maps
   InitColorMaps();
+  // init named translations
+  InitNamedTranslations();
 }
 
 
@@ -712,7 +735,7 @@ void R_ShutdownData () {
 //  R_ParseDecorateTranslation
 //
 //==========================================================================
-int R_ParseDecorateTranslation (VScriptParser *sc, int GameMax) {
+int R_ParseDecorateTranslation (VScriptParser *sc, int GameMax, VStr trname) {
   // first check for standard translation
   if (sc->CheckNumber()) {
     if (sc->Number < 0 || sc->Number >= max2(NumTranslationTables, GameMax)) {
@@ -747,7 +770,21 @@ int R_ParseDecorateTranslation (VScriptParser *sc, int GameMax) {
     sc->Error("Too many translations in DECORATE scripts");
   }
   DecorateTranslations.Append(Tr);
-  return (TRANSL_Decorate<<TRANSL_TYPE_SHIFT)+DecorateTranslations.Num()-1;
+  int res = (TRANSL_Decorate<<TRANSL_TYPE_SHIFT)+DecorateTranslations.Num()-1;
+  if (!trname.isEmpty()) NamedTranslations.put(trname, res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  R_FindTranslationByName
+//
+//==========================================================================
+int R_FindTranslationByName (VStr trname) {
+  if (trname.isEmpty()) return 0;
+  auto tp = NamedTranslations.find(trname);
+  return (tp ? *tp : 0);
 }
 
 

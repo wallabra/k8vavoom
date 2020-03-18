@@ -221,6 +221,13 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_GetBloodTranslation) {
 }
 
 
+//native static final int R_FindNamedTranslation (string name);
+IMPLEMENT_FREE_FUNCTION(VObject, R_FindNamedTranslation) {
+  VStr name;
+  vobjGetParam(name);
+  RET_INT(R_FindTranslationByName(name));
+}
+
 // native static final int BoxOnLineSide2D (const TVec bmin, const TVec bmax, const ref GameObject::line_t line);
 IMPLEMENT_FREE_FUNCTION(VObject, BoxOnLineSide2D) {
   P_GET_PTR(line_t, ld);

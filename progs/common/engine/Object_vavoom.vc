@@ -537,6 +537,7 @@ native static final string R_GetAspectRatioDsc (int idx);
 native static final bool R_SupportsShadowVolumeRendering ();
 
 native static final int R_GetBloodTranslation (int color);
+native static final int R_FindNamedTranslation (string trname);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

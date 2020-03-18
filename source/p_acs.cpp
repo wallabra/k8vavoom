@@ -2983,7 +2983,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       return (argCount > 0 && args[0] ? Level->IsTIDUsed(args[0]) : 1);
 
     case ACSF_GetActorPowerupTics:
-      {
+      if (argCount > 0) {
         VEntity *Ent = EntityFromTID(args[0], Activator);
         if (Ent) {
           VName name = GetName(args[1]);
@@ -2992,7 +2992,20 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
           return int(ptime/35.0f);
         }
         return 0;
+      } else {
+        return 0;
       }
+
+    // void SetTranslation (int tid, str transname)
+    case ACSF_SetTranslation:
+      if (argCount >= 2) {
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (Ent) {
+          VStr name = GetStr(args[1]);
+          Ent->Translation = R_FindTranslationByName(name);
+        }
+      }
+      return 0;
 
     case ACSF_ChangeActorAngle:
     case ACSF_ChangeActorPitch:
