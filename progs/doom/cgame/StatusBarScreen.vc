@@ -367,7 +367,7 @@ override void SB_DrawMainBar (bool inAutomap) {
   }
 
   // health percentage
-  SB_DrawTallNum(ST_HEALTHX, ST_HEALTHY, cl.Health, 1.0, true);
+  SB_DrawTallNum(ST_HEALTHX, ST_HEALTHY, clamp(cl.Health, -99, 999), 1.0, true);
 
   if (ClGame.deathmatch) {
     // frags sum
@@ -656,7 +656,7 @@ override void SB_DrawFullscreenStats () {
   }
 
   // health
-  SB_DrawTallNum(ST_TDHEALTHX, ST_TDHEALTHY, cl.Health, fsalpha, false);
+  SB_DrawTallNum(ST_TDHEALTHX, ST_TDHEALTHY, clamp(cl.Health, -999, 999), fsalpha, false);
   // draw berserk pack if player has berserk powerup
   int healthicon = pic_health;
   if (pic_berserk > 0 && EntityEx(cl.MO).FindInventory(PowerStrength)) healthicon = pic_berserk;
@@ -966,7 +966,7 @@ override void SB_Drawer (int sb_view) {
 //
 //==========================================================================
 final int CalcPainOffset () {
-  int health = (cl.Health > 100 ? 100 : cl.Health);
+  int health = clamp(cl.Health, 0, 100);
   if (health != sb_cpo_oldhealth) {
     sb_cpo_lastcalc = ST_FACESTRIDE*(((100-health)*ST_NUMPAINFACES)/101);
     sb_cpo_oldhealth = health;
@@ -991,7 +991,7 @@ final void UpdateFaceWidget (float FrameTime) {
 
   if (sb_face_priority < 10) {
     // dead
-    if (!cl.Health) {
+    if (cl.Health <= 0) {
       sb_face_priority = 9;
       sb_faceindex = ST_DEADFACE;
       sb_facetime = 0.01;
@@ -1108,7 +1108,7 @@ final void UpdateFaceWidget (float FrameTime) {
   }
 
   sb_facetime -= FrameTime;
-  sb_oldhealth = cl.Health;
+  sb_oldhealth = clamp(cl.Health, 0, 100);
 }
 
 
