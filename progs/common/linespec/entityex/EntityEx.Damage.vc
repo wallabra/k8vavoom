@@ -665,7 +665,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   if (bDormant && !forced) return; // invulnerable, and won't wake up
 
   bool isBuddha = false;
-  if (bIsPlayer) {
+  if (bIsPlayer && Player) {
     // Take half damage in trainer mode
     damage = int(float(damage)*Level.World.GetDamageFactor());
     isBuddha = !!(PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA);
@@ -734,7 +734,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
       if (thrust < 0.0 || thrust > 10.0) thrust = 10.0;
       // make fall forwards sometimes
       //k8: but not if player is cheating
-      if (!bIsPlayer || (!isBuddha && !(PlayerEx(Player).Cheats&(PlayerEx::CF_BUDDHA|PlayerEx::CF_NOCLIP|PlayerEx::CF_GODMODE)))) {
+      if (!bIsPlayer || !Player || (!isBuddha && !(PlayerEx(Player).Cheats&(PlayerEx::CF_BUDDHA|PlayerEx::CF_NOCLIP|PlayerEx::CF_GODMODE)))) {
         if (damage < 40 && damage > Health &&
             Origin.z-inflictor.Origin.z > 64.0 &&
             (P_Random()&1) &&
@@ -770,7 +770,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   // player specific
   if (bIsPlayer) {
     //printdebug("%C: dmg=%s; invul=%B", self, damage, bInvulnerable);
-    if (!forced && PlayerEx(Player).CheckFriendlyFire(source, damage)) return;
+    if (!forced && Player && PlayerEx(Player).CheckFriendlyFire(source, damage)) return;
 
     // end of game hell hack
     if ((Sector->special&SECSPEC_BASE_MASK) == SECSPEC_DamageSuperHellslimeExit && damage >= Health) {

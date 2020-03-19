@@ -74,7 +74,7 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
     }
     // remove from detached list (just in case)
     ServerConnection->DetachedThinkers.remove(Th);
-    //ServerConnection->SimulatedThinkers.remove(Th);
+    ServerConnection->SimulatedThinkers.remove(Th);
   } else {
     // server; remove thinker from all clients
     for (auto &&it : ClientConnections) {
@@ -88,7 +88,7 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
       }
       // remove from detached list
       it->DetachedThinkers.remove(Th);
-      //it->SimulatedThinkers.remove(Th);
+      it->SimulatedThinkers.remove(Th);
     }
   }
 }

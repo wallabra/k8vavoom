@@ -230,20 +230,35 @@ void VThinkerChannel::Update () {
   const bool detachEntity =
     isServer && !Connection->AutoAck && Ent &&
     (Ent->FlagsEx&(VEntity::EFEX_NoTickGrav|VEntity::EFEX_DetachFromServer));
-  const bool detachSimulated =
+  bool detachSimulated =
     isServer && !Connection->AutoAck &&
-    (Thinker->ThinkerFlags&VThinker::TF_DetachSimulated) &&
-    Thinker->RemoteRole == ROLE_DumbProxy; // don't detach twice
+    (Thinker->ThinkerFlags&VThinker::TF_DetachSimulated);
+    //Thinker->RemoteRole == ROLE_DumbProxy; // don't detach twice
+  bool isSimulated = detachSimulated;
 
   //if (Thinker->ThinkerFlags&VThinker::TF_DetachSimulated) GCon->Logf(NAME_Debug, "%s: role=%u; rrole=%u; dts=%d; dt=%d", *GetDebugName(), Thinker->Role, Thinker->RemoteRole, (int)detachSimulated, (int)detachEntity);
 
-  // temporarily set `bNetDetach`
-  if (Ent && (detachEntity || detachSimulated)) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
-
   // temporarily set "detach complete"
   const vuint32 oldThFlags = Thinker->ThinkerFlags;
-  //if (Connection->SimulatedThinkers.has(Thinker)) Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
-  if (detachSimulated) Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
+  // if it was simulated, but now the server wants its authority back, remove it from the detached list
+  if (Connection->SimulatedThinkers.has(Thinker)) {
+    // in detached list
+    if (!detachSimulated) {
+      Connection->SimulatedThinkers.del(Thinker);
+    } else {
+      isSimulated = true;
+    }
+    detachSimulated = false; // reset "detach simulated" flag, so we won't send detach info
+  } else {
+    // not in detached list, prolly doing it for the first time
+    Connection->SimulatedThinkers.put(Thinker, true);
+    Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
+    isSimulated = true;
+  }
+  //if (detachSimulated) Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
+
+  // temporarily set `bNetDetach`
+  if (Ent && (detachEntity || detachSimulated)) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
 
   // it is important to call this *BEFORE* changing the roles!
   EvalCondValues(Thinker, Thinker->GetClass(), FieldCondValues);
@@ -253,14 +268,16 @@ void VThinkerChannel::Update () {
 
   // fix the roles if we're going to detach this entity
   vuint8 oldRole = 0, oldRemoteRole = 0;
-  if (detachEntity || detachSimulated) {
+  bool restoreRoles = false;
+  if (detachEntity || isSimulated) {
     // this is Role on the client
     oldRole = Thinker->Role;
     oldRemoteRole = Thinker->RemoteRole;
     // set role on the client (completely detached)
-    Thinker->RemoteRole = (detachSimulated ? ROLE_SimulatedProxy : ROLE_Authority);
+    Thinker->RemoteRole = (isSimulated ? ROLE_SimulatedProxy : ROLE_Authority);
     // set role on the server (simulated proxy is still the authority)
-    if (!detachSimulated) Thinker->Role = ROLE_DumbProxy;
+    if (!isSimulated) Thinker->Role = ROLE_DumbProxy;
+    restoreRoles = true;
   }
 
   vuint8 *Data = (vuint8 *)Thinker;
@@ -386,6 +403,12 @@ void VThinkerChannel::Update () {
   // restore player angles
   if (Ent && (Ent->EntityFlags&VEntity::EF_IsPlayer)) Ent->Angles = SavedAngles;
 
+  // restore roles
+  if (restoreRoles) {
+    Thinker->Role = oldRole;
+    Thinker->RemoteRole = oldRemoteRole;
+  }
+
   // remember last update frame (this is used as "got updated" flag)
   LastUpdateFrame = Connection->UpdateFrameCounter;
 
@@ -409,14 +432,10 @@ void VThinkerChannel::Update () {
     Connection->DetachedThinkers.put(Thinker, true);
     // reset `bNetDetach`
     if (Ent) Ent->FlagsEx &= ~VEntity::EFEX_NetDetach;
-    // restore roles
-    Thinker->Role = oldRole;
-    Thinker->RemoteRole = oldRemoteRole;
     Close();
   } else if (detachSimulated) {
     // reset `bNetDetach`
     if (Ent) Ent->FlagsEx &= ~VEntity::EFEX_NetDetach;
-    //Connection->SimulatedThinkers.put(Thinker, true);
   }
 }
 

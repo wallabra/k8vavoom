@@ -1014,7 +1014,7 @@ final bool HitFloor (float prevz) {
     if (bCanJump) JumpTime = 0.5; // delay any jumping for a short time
     // do some special action when hitting the floor
     OnHitFloor();
-    if (bIsPlayer) {
+    if (bIsPlayer && Player) {
       PlayerEx(Player).JumpTime = 0.2; // delay any jumping for a short time
       if (vdot < -DEFAULT_GRAVITY*0.25 && !bNoGravity) {
         // squat down

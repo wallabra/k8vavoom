@@ -606,7 +606,7 @@ public:
   // we cannot have this flag in thinker itself, because new
   // clients should still get detached thinkers once
   TMapNC<VThinker *, bool> DetachedThinkers;
-  //TMapNC<VThinker *, bool> SimulatedThinkers;
+  TMapNC<VThinker *, bool> SimulatedThinkers;
 
   // timings, etc.
   double LastReceiveTime; // last time a packet was received, for timeout checking
