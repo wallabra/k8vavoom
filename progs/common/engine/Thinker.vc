@@ -96,9 +96,12 @@ bool bAlwaysRelevant; // always updated
 transient readonly bool bNetInitial; // initial update
 transient readonly bool bNetOwner; // is owned by current player
 transient bool bServerSideOnly; // if set, this thinker will never be sent to clients (but `AlwaysRelevant` has priority)
-// see C++ code for explanations
+// see C++ code for explanations (but explanations here takes the priority)
+// this flag is set by the server when simulated proxy is updated after it became simulated for the first time
+// this flag is set by the client when it got closing message for fully detached entity, or when simulated got its first packet
 transient bool bDetachComplete;
 // this is set in decorate, see C++ code
+// basically, the server immediately turns this entity to simulated proxy
 transient bool bDetachSimulated;
 
 

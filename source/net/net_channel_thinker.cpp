@@ -230,7 +230,7 @@ void VThinkerChannel::Update () {
   const bool detachEntity =
     isServer && !Connection->AutoAck && Ent &&
     (Ent->FlagsEx&(VEntity::EFEX_NoTickGrav|VEntity::EFEX_DetachFromServer));
-  bool detachSimulated =
+  bool detachSimulated = // this is "detached for the first time" (can be reset if it is not the first time)
     isServer && !Connection->AutoAck &&
     (Thinker->ThinkerFlags&VThinker::TF_DetachSimulated);
     //Thinker->RemoteRole == ROLE_DumbProxy; // don't detach twice
@@ -240,22 +240,28 @@ void VThinkerChannel::Update () {
 
   // temporarily set "detach complete"
   const vuint32 oldThFlags = Thinker->ThinkerFlags;
-  // if it was simulated, but now the server wants its authority back, remove it from the detached list
+  // check if we're detaching it for the first time
   if (Connection->SimulatedThinkers.has(Thinker)) {
-    // in detached list
+    // in detached list, check if the server wants it back
     if (!detachSimulated) {
+      // yeah, it becomes dumb proxy again
       Connection->SimulatedThinkers.del(Thinker);
+      GCon->Logf(NAME_DevNet, "%s: becomes dumb proxy again", *GetDebugName());
     } else {
+      // it was already detached
       isSimulated = true;
+      // do not send unnecessary fields
+      Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
     }
     detachSimulated = false; // reset "detach simulated" flag, so we won't send detach info
   } else {
     // not in detached list, prolly doing it for the first time
-    Connection->SimulatedThinkers.put(Thinker, true);
-    Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
-    isSimulated = true;
+    if (detachSimulated) {
+      GCon->Logf(NAME_DevNet, "%s: becomes simulated proxy", *GetDebugName());
+      isSimulated = true;
+      Connection->SimulatedThinkers.put(Thinker, true);
+    }
   }
-  //if (detachSimulated) Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
 
   // temporarily set `bNetDetach`
   if (Ent && (detachEntity || detachSimulated)) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
@@ -415,6 +421,9 @@ void VThinkerChannel::Update () {
   // clear temporary networking flags
   Thinker->ThinkerFlags &= ~(VThinker::TF_NetInitial|VThinker::TF_NetOwner);
 
+  // reset detach flag
+  if (Ent && (detachEntity || detachSimulated)) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
+
   flushCount += FlushMsg(&Msg);
 
   // if this is initial send, we have to flush the message, even if it is empty
@@ -430,12 +439,7 @@ void VThinkerChannel::Update () {
     if (net_dbg_dump_thinker_detach) GCon->Logf(NAME_DevNet, "%s:%u: became notick, closing channel%s", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), (OpenedLocally ? " (opened locally)" : ""));
     // remember that we already sent this thinker
     Connection->DetachedThinkers.put(Thinker, true);
-    // reset `bNetDetach`
-    if (Ent) Ent->FlagsEx &= ~VEntity::EFEX_NetDetach;
     Close();
-  } else if (detachSimulated) {
-    // reset `bNetDetach`
-    if (Ent) Ent->FlagsEx &= ~VEntity::EFEX_NetDetach;
   }
 }
 
