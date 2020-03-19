@@ -28,6 +28,7 @@
 #include "net_message.h"
 
 static VCvarI net_dbg_dump_thinker_channels("net_dbg_dump_thinker_channels", "0", "Dump thinker channels creation/closing (bit 0)?");
+static VCvarB net_dbg_allow_simulated_proxies("net_dbg_allow_simulated_proxies", true, "Allow simulated proxies?");
 VCvarB net_dbg_dump_thinker_detach("net_dbg_dump_thinker_detach", false, "Dump thinker detaches?");
 
 
@@ -231,6 +232,7 @@ void VThinkerChannel::Update () {
     isServer && !Connection->AutoAck && Ent &&
     (Ent->FlagsEx&(VEntity::EFEX_NoTickGrav|VEntity::EFEX_DetachFromServer));
   bool detachSimulated = // this is "detached for the first time" (can be reset if it is not the first time)
+    net_dbg_allow_simulated_proxies &&
     isServer && !Connection->AutoAck &&
     (Thinker->ThinkerFlags&VThinker::TF_DetachSimulated);
     //Thinker->RemoteRole == ROLE_DumbProxy; // don't detach twice
