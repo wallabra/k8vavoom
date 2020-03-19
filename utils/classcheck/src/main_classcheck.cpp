@@ -1049,6 +1049,12 @@ Type *parseVCType (SemParser *par, bool basic=false) {
     tp->name = "VState";
     tp->pointer = true;
   }
+  /*
+  if (!tp->pointer && tp->name == "EntityEx") {
+    tp->name = "VEntity";
+    tp->pointer = true;
+  }
+  */
        if (tp->name == "StateCall") tp->name = "VStateCall";
   else if (tp->name == "SectorLink") tp->name = "VSectorLink";
   else if (tp->name == "Ctl2DestLink") tp->name = "VCtl2DestLink";
@@ -1058,6 +1064,7 @@ Type *parseVCType (SemParser *par, bool basic=false) {
   else if (tp->name == "MapMarkerInfo") tp->name = "VMapMarkerInfo";
   else if (tp->name == "DamageFactor") tp->name = "VDamageFactor";
   else if (tp->name == "IM_Phase") tp->name = "vint32";
+  else if (tp->name == "EntityEx") tp->name = "Entity";
   //GLog.Logf(NAME_Debug, "%d: <%s>", par->getTokenLine(), *tp->toString());
   return tp;
 }
@@ -1272,6 +1279,7 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
   // register type
   //GLog.Logf(NAME_Debug, "vc: %s", *tp->toString());
   if (!dontSave) {
+    compressBools(tp);
     if (vcTypes.put(tp->name, tp)) GLog.Logf(NAME_Warning, "duplicate type `%s`", *tp->toString());
   }
 
