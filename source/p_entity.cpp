@@ -313,7 +313,7 @@ bool VEntity::SetState (VState *InState) {
 
     // modified handling
     // call action functions when the state is set
-    if (st->Function) {
+    if (st->Function && Role == ROLE_Authority) {
       //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("   (011):%s: Doomer %p STATE ACTION: %p '%s'", *st->Loc.toStringNoCol(), this, st, st->Function->GetName());
       XLevel->CallingState = State;
       {

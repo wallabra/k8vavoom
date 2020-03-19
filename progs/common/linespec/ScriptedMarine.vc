@@ -216,6 +216,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 [decorate] final void decorate_A_M_Punch (optional int force) {
   TVec dir;
 
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
   if (!specified_force) force = 1;
 
@@ -244,6 +245,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 [decorate] final void A_M_BerserkPunch () {
   TVec dir;
 
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   int damage = ((P_Random()%10+1)<<1)*10;
@@ -309,6 +311,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 [decorate] final void A_M_FirePistol () {
   TVec dir;
 
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   A_FaceTarget();
@@ -327,6 +330,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 [decorate] final void decorate_A_M_FirePistol (optional bool accurate) {
   TVec dir;
 
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   if (!specified_accurate) accurate = true;
@@ -347,6 +351,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 [decorate] final void A_M_FirePistolInaccurate () {
   TVec dir;
 
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   A_FaceTarget();
@@ -365,6 +370,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 [decorate] final void A_M_FireShotgun () {
   TVec dir;
 
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   A_FaceTarget();
@@ -399,6 +405,7 @@ final void SetSprite (class!EntityEx SrcClass) {
   TAVec rot;
   TVec aimDir;
 
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   A_FaceTarget();
@@ -425,6 +432,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 [decorate] final void A_M_FireCGunAccurate () {
   TVec dir;
 
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   A_FaceTarget();
@@ -443,6 +451,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 [decorate] final void A_M_FireCGun () {
   TVec dir;
 
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   A_FaceTarget();
@@ -461,6 +470,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 [decorate] final void decorate_A_M_FireCGun (optional bool accurate) {
   TVec dir;
 
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   A_FaceTarget();
@@ -477,6 +487,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 //
 //===========================================================================
 [decorate] final void A_M_FireMissile () {
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   if (CheckMeleeRange()) {
@@ -495,6 +506,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 //
 //===========================================================================
 [decorate] final void A_M_FireRailgun () {
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   A_MonsterRail();
@@ -508,6 +520,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 //
 //===========================================================================
 [decorate] final void A_M_FirePlasma () {
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   A_FaceTarget();
@@ -522,6 +535,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 //
 //===========================================================================
 [decorate] final void A_M_BFGsound () {
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   if (Special1f) {
@@ -541,6 +555,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 //
 //===========================================================================
 [decorate] final void A_M_FireBFG () {
+  if (Role != ROLE_Authority) return; // for simulated proxies
   if (!Target) return;
 
   A_FaceTarget();

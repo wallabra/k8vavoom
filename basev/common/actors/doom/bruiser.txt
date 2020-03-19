@@ -66,6 +66,7 @@ actor BaronBall
   SeeSound "baron/attack"
   DeathSound "baron/shotx"
   Projectile
+  +k8ClientSimulation
   +Randomize
   states
   {

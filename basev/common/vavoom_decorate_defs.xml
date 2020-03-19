@@ -336,6 +336,8 @@
     <!-- k8vavoom network flags -->
     <flag name="k8ServerSideOnly" property="bServerSideOnly" />
     <flag name="k8DetachFromServer" property="bDetachFromServer" />
+    <!-- this will not run any decorate actions -->
+    <flag name="k8ClientSimulation" property="bDetachSimulated" />
     <!-- SkullTag Specific flags (useless) -->
     <flag_unsupported name="ScorePillar" />
     <flag_unsupported name="AllowClientSpawn" />

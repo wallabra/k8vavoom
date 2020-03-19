@@ -192,6 +192,8 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
 {
   EntityEx Other;
 
+  if (!Level.Game.IsAuthority) return;
+
   if (!specified_thrustZ) thrustZ = DoDamage; //k8: see below
   if (!specified_DoDamage) DoDamage = true;
 
@@ -766,6 +768,7 @@ bool CheckDoBumpSpecial (EntityEx Other) {
   // by default, only players can activate things by bumping into them
   auto swd = SwitchableDecoration(self);
   if (!swd) return false;
+  if (!Level.Game.IsAuthority) return false;
   // check if we can be hit
   if (!Other.bIsPlayer) {
     // check for switcable decorations
@@ -811,6 +814,14 @@ override bool Touch (Entity InOther) {
   int damage;
   EntityEx Other = EntityEx(InOther);
 
+  //if ((self isa 'DoomImpBall') && !Level.Game.IsAuthority) printdebug("%C:x00: ouid=%s; tuid=%s; muid=%s; truid=%s; org=%s; vel=%s; touchobj=%C (%s : %s); msl=%B", self, OwnerSUId, TargetSUId, MasterSUId, TracerSUId, Origin, Velocity, Other, Other.UniqueId, Other.ServerUId, bMissile);
+
+  // ignore owner for client-side projectiles
+  if (bMissile && !Level.Game.IsAuthority) {
+    //printdebug("%C:x01: TargetSUId=%s; Other.ServerUId=%s", self, TargetSUId, Other.ServerUId);
+    if (TargetSUId == Other.ServerUId) return true;
+  }
+
   // for Korax Arena
   if (Other.IsTouched(self)) {
     return ProcessHitFlags(Other, !Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors);
@@ -846,8 +857,10 @@ override bool Touch (Entity InOther) {
   // but different classes trigger the touchiness, but that seems less straightforwards
   {
     bArmed = false; // Disarm
-    Other.SpawnBloodAtHeadExplosion(Other.Health, self);
-    Other.Damage(none, none, Other.Health); // kill object
+    if (Level.Game.IsAuthority) {
+      Other.SpawnBloodAtHeadExplosion(Other.Health, self);
+      Other.Damage(none, none, Other.Health); // kill object
+    }
     return ProcessHitFlags(Other, true);
   }
 
@@ -859,15 +872,17 @@ override bool Touch (Entity InOther) {
   // check for blasted thing running into another
   if (bBlasted && Other.bShootable) {
     if (!Other.bBoss && Other.bMonster) {
-      Other.Velocity.x += Velocity.x;
-      Other.Velocity.y += Velocity.y;
-      if ((Other.Velocity.x+Other.Velocity.y) > 3.0*35.0) {
-        damage = (int(fmax(0, Mass))/100)+1;
-        Other.SpawnBloodAtHeadExplosion(damage, self);
-        Other.Damage(self, self, damage);
-        damage = (int(fmax(0, Other.Mass))/100)+1;
-        SpawnBloodAtHeadExplosion(damage>>2, Other);
-        Damage(Other, Other, damage>>2);
+      if (Level.Game.IsAuthority) {
+        Other.Velocity.x += Velocity.x;
+        Other.Velocity.y += Velocity.y;
+        if ((Other.Velocity.x+Other.Velocity.y) > 3.0*35.0) {
+          damage = (int(fmax(0, Mass))/100)+1;
+          Other.SpawnBloodAtHeadExplosion(damage, self);
+          Other.Damage(self, self, damage);
+          damage = (int(fmax(0, Other.Mass))/100)+1;
+          SpawnBloodAtHeadExplosion(damage>>2, Other);
+          Damage(Other, Other, damage>>2);
+        }
       }
       return ProcessHitFlags(Other, false);
     }
@@ -963,58 +978,66 @@ override bool Touch (Entity InOther) {
     if (Other.bSpectral && !bSpectral) return ProcessHitFlags(Other, true);
 
     if (bRip && !Other.bDontRip) {
-      if (!bNoBossRip || !Other.bBoss) {
-        PlaySound('misc/ripslop', /*CHAN_BODY*/CHAN_AUTO);
-        damage = GetMissileDamage(3, 2);
-        if (!Other.bNoBlood && !Other.bReflective && !Other.bInvulnerable) {
-          // ok to spawn some blood
-          Other.SpawnBloodRipper(damage, self);
-        }
-        //printdebug("%C: ripper, other is %C", self, Other);
-        Other.Damage(self, Target, damage, DamageType, spawnBlood:false); // we already spawned ripper blood
-        if (Other.bPushable && !bCannotPush) {
-          // push thing
-          Other.Velocity.x += Velocity.x/4.0;
-          Other.Velocity.y += Velocity.y/4.0;
+      if (Level.Game.IsAuthority) {
+        if (!bNoBossRip || !Other.bBoss) {
+          PlaySound('misc/ripslop', /*CHAN_BODY*/CHAN_AUTO);
+          damage = GetMissileDamage(3, 2);
+          if (!Other.bNoBlood && !Other.bReflective && !Other.bInvulnerable) {
+            // ok to spawn some blood
+            Other.SpawnBloodRipper(damage, self);
+          }
+          //printdebug("%C: ripper, other is %C", self, Other);
+          Other.Damage(self, Target, damage, DamageType, spawnBlood:false); // we already spawned ripper blood
+          if (Other.bPushable && !bCannotPush) {
+            // push thing
+            Other.Velocity.x += Velocity.x/4.0;
+            Other.Velocity.y += Velocity.y/4.0;
+          }
         }
       }
       return ProcessHitFlags(Other, true);
     }
 
     // damage / explode
-    damage = GetMissileDamage(bStrifeDamage ? 3 : 7, 1);
-    if (damage > 0) {
-      if (bBloodSplatter && !Other.bNoBlood && !Other.bReflective &&
-          !Other.bInvulnerable && !Other.bDormant &&
-          !bBloodlessImpact && P_Random() < 192)
-      {
-        TVec org = self.Origin;
-        if (self.Radius > 0) org.z += self.Radius/2.0;
-        Other.SpawnBloodSplatter(Origin, damage, org);
+    if (Level.Game.IsAuthority) {
+      damage = GetMissileDamage(bStrifeDamage ? 3 : 7, 1);
+      if (damage > 0) {
+        if (bBloodSplatter && !Other.bNoBlood && !Other.bReflective &&
+            !Other.bInvulnerable && !Other.bDormant &&
+            !bBloodlessImpact && P_Random() < 192)
+        {
+          TVec org = self.Origin;
+          if (self.Radius > 0) org.z += self.Radius/2.0;
+          Other.SpawnBloodSplatter(Origin, damage, org);
+        }
+        Other.SpawnBloodAtHeadExplosion(damage, self);
+        Other.Damage(self, Target, damage, DamageType);
       }
-      Other.SpawnBloodAtHeadExplosion(damage, self);
-      Other.Damage(self, Target, damage, DamageType);
     }
     // don't traverse any more
     return ProcessHitFlags(Other, false);
   }
 
-  if (Other.bPushable && !bCannotPush) {
-    // push thing
-    Other.Velocity.x += Velocity.x/4.0;
-    Other.Velocity.y += Velocity.y/4.0;
-  }
-
-  solid = (Other.bSolid && Other.bColideWithThings && bSolid);
-
-  // check for special pickup
-  if (Other.bSpecial /*&& Other.Origin.z < Origin.z+Height-MaxStepHeight*/) {
-    if (Other.bDehackedSpecial) {
-      Other.TouchDehackedSpecial(self);
-    } else {
-      Other.TouchSpecial(self); // can remove thing
+  if (Level.Game.IsAuthority) {
+    if (Other.bPushable && !bCannotPush) {
+      // push thing
+      Other.Velocity.x += Velocity.x/4.0;
+      Other.Velocity.y += Velocity.y/4.0;
     }
-    if (solid && (!Other || Other.IsDestroyed)) solid = false; // k8: it is no more
+
+    solid = (Other.bSolid && Other.bColideWithThings && bSolid);
+
+    // check for special pickup
+    if (Other.bSpecial /*&& Other.Origin.z < Origin.z+Height-MaxStepHeight*/) {
+      if (Other.bDehackedSpecial) {
+        Other.TouchDehackedSpecial(self);
+      } else {
+        Other.TouchSpecial(self); // can remove thing
+      }
+      if (solid && (!Other || Other.IsDestroyed)) solid = false; // k8: it is no more
+    }
+  } else {
+    solid = (Other.bSolid && Other.bColideWithThings && bSolid);
   }
 
   return ProcessHitFlags(Other, !solid);
@@ -1119,7 +1142,7 @@ static final bool IsSameSpecies (EntityEx a, EntityEx b) {
 //
 //===========================================================================
 override void CheckForPushSpecial (line_t *line, int side) {
-  if (!bNoTrigger) {
+  if (!bNoTrigger && Level.Game.IsAuthority) {
     if (bActivatePushWall) {
       LineSpecialLevelInfo(Level).ActivateLine(line, self, side, SPAC_Push);
     } else if (bActivateImpact) {
@@ -1136,6 +1159,7 @@ override void CheckForPushSpecial (line_t *line, int side) {
 //
 //==========================================================================
 override void BlastedHitLine () {
+  if (!Level.Game.IsAuthority) return;
   int damage = int(fmax(0, Mass))>>5;
   if (damage > 0) SpawnBloodAtHeadExplosion(damage);
   Damage(none, none, damage);
@@ -1149,6 +1173,7 @@ override void BlastedHitLine () {
 //==========================================================================
 override void CrossSpecialLine (line_t *ld, int side) {
   if (!ld) return; //k8: just in case
+  if (!Level.Game.IsAuthority) return;
   if (!bNoTrigger) {
     if (bIsPlayer) {
       LineSpecialLevelInfo(Level).ActivateLine(ld, self, side, SPAC_Cross);
@@ -1177,6 +1202,7 @@ override void CrossSpecialLine (line_t *ld, int side) {
 //==========================================================================
 bool Activate (EntityEx Activator) {
   //print("*** ACTIVATING THING %C (tid=%s); bMonster=%B; bDormant=%B; Target=%C; Master=%C; Tracer=%C", self, TID, bMonster, bDormant, Target, Master, Tracer);
+  if (!Level.Game.IsAuthority) return false;
   if (bMonster) {
     // Monster
     if (bDormant) {
@@ -1195,6 +1221,7 @@ bool Activate (EntityEx Activator) {
 //
 //==========================================================================
 bool Deactivate (EntityEx Activator) {
+  if (!Level.Game.IsAuthority) return false;
   if (bMonster) {
     // Monster
     if (!bDormant) {
@@ -1240,11 +1267,15 @@ final void FaceMovementDirection () {
 //
 //==========================================================================
 override void OnDetachedFromServer () {
-  //printdebug("%C: OnDetachedFromServer!", self);
-  state sss = FindState('NetDetachedOnClient');
-  if (sss) {
-    //printdebug("%C: switching state to detached", self);
-    SetInitialState(sss);
+  if (Role == ROLE_Authority) {
+    //printdebug("%C: OnDetachedFromServer!", self);
+    state sss = FindState('NetDetachedOnClient');
+    if (sss) {
+      //printdebug("%C: switching state to detached", self);
+      SetInitialState(sss);
+    }
+  } else if (Role == ROLE_SimulatedProxy) {
+    //printdebug("%C: SIMULATED: OnDetachedFromServer! org=%s; vel=%s; ang=%s", self, Origin, Velocity, Angles);
   }
 }
 
@@ -1714,7 +1745,7 @@ override void Tick (float deltaTime) {
     } else {
       bIntrJustMoved = lastInterp;
     }
-  } else {
+  } else if (Level.Game.IsAuthority) {
     // endless state
 
     // check for nightmare respawn
@@ -2088,6 +2119,7 @@ final void DoStateEffects (float DeltaTime) {
 //==========================================================================
 final void TouchDehackedSpecial (EntityEx Toucher) {
   if (!Toucher.bPickUp) return; // can't remove thing
+  if (!Level.Game.IsAuthority) return;
 
   // dead thing touching
   // can happen with a sliding player corpse
@@ -2214,6 +2246,7 @@ final EntityEx SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
   optional name decalType, optional int pufftid, optional bool disableRandomZ)
 {
   EntityEx puff;
+  if (!Level.Game.IsAuthority) return none;
 
   if (PuffType && PuffType.default.bPuffParticles && GetCvarB('r_particle_puffs')) {
     int c = P_Random()>>1;
@@ -2386,6 +2419,7 @@ final int GetSpeech () {
 //
 //==========================================================================
 final EntityEx TossUpObject (class!EntityEx type) {
+  if (!Level.Game.IsAuthority) return none;
   float randomspeed = Random()*8.0-6.0;
   EntityEx A = SpawnEntityChecked(class!EntityEx, type, GetCenter());
   if (A) {
@@ -2629,6 +2663,7 @@ final bool SetPlayerProperty (int Prop, int Set) {
 //
 //==========================================================================
 bool ShouldDropItems () {
+  if (!Level.Game.IsAuthority) return false;
   return true;
 }
 
@@ -2987,6 +3022,7 @@ final void SpawnDirt (float radius) {
 final void GunShot (bool accurate, TVec dir, name DmgType, bool secondary, optional name DecalName,
                     optional float range, optional float spreadYaw, optional float spreadPitch)
 {
+  if (!Level.Game.IsAuthority) return;
   if (!specified_range || range <= 0) range = MISSILERANGE;
 
   // make a copy of angles because inacurate shoot will modify them
@@ -3164,6 +3200,7 @@ final void DoJump (state State, optional bool affectStateCallResult) {
 //
 //==========================================================================
 override void CheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor, bool OldAboveFakeCeiling) {
+  if (!Level.Game.IsAuthority) return;
   // check for crossing fake floor or ceiling
   if (OldSec->heightsec && Sector->heightsec && Sector->ActionList) {
     float EyeZ = (bIsPlayer ? Player.ViewOrg.z : Origin.z+Height*0.5);
@@ -3207,6 +3244,7 @@ override void CheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor, b
 //
 //==========================================================================
 final void CheckFakeFloorTriggers (float OldZ, optional bool OldHasViewH) {
+  if (!Level.Game.IsAuthority) return;
   if (Sector && Sector->heightsec && Sector->ActionList) {
     float ViewH = (bIsPlayer ? PlayerEx(Player).ViewHeight : Height*0.5);
     float FakeZ = GetPointZClamped(ref Sector->heightsec->floor, Origin);
@@ -3255,6 +3293,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
   intercept_t *in;
   opening_t *open;
 
+  if (!Level.Game.IsAuthority) return false;
   bool anythingUsed = false;
   bool action = false;
   bool hitLineOrThing = false;
@@ -3427,6 +3466,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
 //==========================================================================
 bool UseThing (EntityEx Other) {
   if (Other.bNoInteraction) return false; //k8: just in case
+  if (!Level.Game.IsAuthority) return false;
 
   //print("UseThing000: self=%C; Other=%C; Other.bUseSpecial=%s; Other.Special=%s", self, Other, Other.bUseSpecial, Other.Special);
   if (Other.bUseSpecial && Other.Special) {
@@ -3661,6 +3701,7 @@ override void CalcFakeZMovement (out TVec Ret, float DeltaTime) {
 //===========================================================================
 final bool DoThingRaise (optional bool skipCheckPosition) {
   if (!bCorpse) return false; // not a monster
+  if (!Level.Game.IsAuthority) return false;
 
   if (StateTime != -1.0) {
     // not lying still yet; check frame flag

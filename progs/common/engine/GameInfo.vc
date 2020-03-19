@@ -75,6 +75,7 @@ array!DamageFactor CustomDamageFactors;
 
 final bool netgame { get { return NetMode > NM_Standalone; } }
 
+final bool IsAuthority { get { return (NetMode != NM_Client); } }
 final bool IsNetServer { get { return (NetMode == NM_DedicatedServer || NetMode == NM_ListenServer); } }
 final bool IsDedicatedServer { get { return (NetMode == NM_DedicatedServer); } }
 final bool IsListenServer { get { return (NetMode == NM_ListenServer); } }

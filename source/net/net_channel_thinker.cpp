@@ -213,9 +213,9 @@ void VThinkerChannel::Update () {
 
   // saturation check already done
   // also, if this is client, and the thinker is authority, it is detached, don't send anything
-  if (Connection->IsClient() && Thinker->Role == ROLE_Authority) return;
+  if (Connection->IsClient() && /*Thinker->Role == ROLE_Authority*/Thinker->Role != ROLE_DumbProxy && Thinker->Role != ROLE_AutonomousProxy) return;
 
-  //GCon->Logf(NAME_DevNet, "%s:%u: updating", Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
+  //if (Thinker->ThinkerFlags&VThinker::TF_DetachSimulated) GCon->Logf(NAME_DevNet, "%s:%u: updating", Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
 
   VEntity *Ent = Cast<VEntity>(Thinker);
 
@@ -230,30 +230,37 @@ void VThinkerChannel::Update () {
   const bool detachEntity =
     isServer && !Connection->AutoAck && Ent &&
     (Ent->FlagsEx&(VEntity::EFEX_NoTickGrav|VEntity::EFEX_DetachFromServer));
+  const bool detachSimulated =
+    isServer && !Connection->AutoAck &&
+    (Thinker->ThinkerFlags&VThinker::TF_DetachSimulated) &&
+    Thinker->RemoteRole == ROLE_DumbProxy; // don't detach twice
 
-  /*
-  if (!detachEntity && isServer && !Connection->AutoAck && Ent && VStr::startsWith(Ent->GetClass()->GetName(), "K8Gore")) {
-    detachEntity = true;
-    //GCon->Logf(NAME_DevNet, "detaching Gore entity (%s)...", Ent->GetClass()->GetName());
-  }
-  */
+  //if (Thinker->ThinkerFlags&VThinker::TF_DetachSimulated) GCon->Logf(NAME_Debug, "%s: role=%u; rrole=%u; dts=%d; dt=%d", *GetDebugName(), Thinker->Role, Thinker->RemoteRole, (int)detachSimulated, (int)detachEntity);
 
   // temporarily set `bNetDetach`
-  if (detachEntity) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
+  if (Ent && (detachEntity || detachSimulated)) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
+
+  // temporarily set "detach complete"
+  const vuint32 oldThFlags = Thinker->ThinkerFlags;
+  //if (Connection->SimulatedThinkers.has(Thinker)) Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
+  if (detachSimulated) Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
 
   // it is important to call this *BEFORE* changing the roles!
   EvalCondValues(Thinker, Thinker->GetClass(), FieldCondValues);
 
+  // we can reset "detach complete" now
+  Thinker->ThinkerFlags = oldThFlags;
+
   // fix the roles if we're going to detach this entity
   vuint8 oldRole = 0, oldRemoteRole = 0;
-  if (detachEntity) {
+  if (detachEntity || detachSimulated) {
     // this is Role on the client
     oldRole = Thinker->Role;
     oldRemoteRole = Thinker->RemoteRole;
     // set role on the client (completely detached)
-    Thinker->RemoteRole = ROLE_Authority;
-    // set role on the server
-    Thinker->Role = ROLE_DumbProxy;
+    Thinker->RemoteRole = (detachSimulated ? ROLE_SimulatedProxy : ROLE_Authority);
+    // set role on the server (simulated proxy is still the authority)
+    if (!detachSimulated) Thinker->Role = ROLE_DumbProxy;
   }
 
   vuint8 *Data = (vuint8 *)Thinker;
@@ -298,8 +305,8 @@ void VThinkerChannel::Update () {
     // set up pointer to the value and do swapping for the role fields
     bool forceSend = false;
     vuint8 *FieldValue = Data+F->Ofs;
-         if (F == Connection->Context->RoleField) { forceSend = detachEntity; FieldValue = Data+Connection->Context->RemoteRoleField->Ofs; }
-    else if (F == Connection->Context->RemoteRoleField) { forceSend = detachEntity; FieldValue = Data+Connection->Context->RoleField->Ofs; }
+         if (F == Connection->Context->RoleField) { forceSend = (detachEntity || detachSimulated); FieldValue = Data+Connection->Context->RemoteRoleField->Ofs; }
+    else if (F == Connection->Context->RemoteRoleField) { forceSend = (detachEntity || detachSimulated); FieldValue = Data+Connection->Context->RoleField->Ofs; }
 
     if (!forceSend && VField::IdenticalValue(FieldValue, OldData+F->Ofs, F->Type)) {
       //GCon->Logf(NAME_DevNet, "%s:%u: skipped field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
@@ -340,7 +347,11 @@ void VThinkerChannel::Update () {
       bool allowValueCopy = true;
       // if it's an object reference that cannot be serialised, send it as nullptr reference
       if (F->Type.Type == TYPE_Reference && !Connection->ObjMap->CanSerialiseObject(*(VObject **)FieldValue)) {
-        if (!*(VObject **)(OldData+F->Ofs)) continue; // already sent as nullptr
+        if (!*(VObject **)(OldData+F->Ofs)) {
+          // already sent as nullptr
+          //GCon->Logf(NAME_DevNet, "%s: `%s` is already sent as `nullptr`", *GetDebugName(), F->GetName());
+          continue;
+        }
         FieldValue = (vuint8 *)&NullObj;
         // resend
         allowValueCopy = false;
@@ -348,8 +359,25 @@ void VThinkerChannel::Update () {
 
       strm.WriteUInt((unsigned)F->NetIndex);
       if (VField::NetSerialiseValue(strm, Connection->ObjMap, FieldValue, F->Type)) {
+        //if (Thinker->RemoteRole == ROLE_SimulatedProxy) GCon->Logf(NAME_DevNet, "%s:%u: sent field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
         //GCon->Logf(NAME_DevNet, "%s:%u: sent field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
         if (allowValueCopy) VField::CopyFieldValue(FieldValue, OldData+F->Ofs, F->Type);
+      }
+      //HACK: send suids
+      if (F == Connection->Context->OwnerField ||
+          F == Connection->Context->TargetField ||
+          F == Connection->Context->TracerField ||
+          F == Connection->Context->MasterField)
+      {
+        vassert(Ent);
+        vuint32 ownersuid;
+             if (F == Connection->Context->OwnerField) ownersuid = (Ent->Owner ? Ent->Owner->GetUniqueId() : 0u);
+        else if (F == Connection->Context->TargetField) ownersuid = (Ent->Target ? Ent->Target->GetUniqueId() : 0u);
+        else if (F == Connection->Context->TracerField) ownersuid = (Ent->Tracer ? Ent->Tracer->GetUniqueId() : 0u);
+        else if (F == Connection->Context->MasterField) ownersuid = (Ent->Master ? Ent->Master->GetUniqueId() : 0u);
+        else abort();
+        strm << STRM_INDEX_U(ownersuid);
+        //GCon->Logf(NAME_DevNet, "%s: sending owner suid (%u)", *GetDebugName(), ownersuid);
       }
       flushCount += PutStream(&Msg, strm);
     }
@@ -367,21 +395,10 @@ void VThinkerChannel::Update () {
   flushCount += FlushMsg(&Msg);
 
   // if this is initial send, we have to flush the message, even if it is empty
-  if (Msg.bOpen || Msg.bClose || Msg.GetNumBits() || NewObj || detachEntity) {
+  if (Msg.bOpen || Msg.bClose || Msg.GetNumBits() || NewObj || detachEntity || detachSimulated) {
     SendMessage(&Msg);
   }
   // not detached, and no interesting data: no reason to send anything
-  /*
-  else if (!detachEntity && !flushCount) {
-    if ((Thinker->ThinkerFlags&VThinker::TF_AlwaysRelevant) ||
-        Thinker == Connection->Owner->MO ||
-        (Ent && Ent->IsPlayer()) ||
-        (Ent && Ent->GetTopOwner() == Connection->Owner->MO))
-    {
-      SendMessage(&Msg);
-    }
-  }
-  */
 
   NewObj = false;
 
@@ -396,6 +413,10 @@ void VThinkerChannel::Update () {
     Thinker->Role = oldRole;
     Thinker->RemoteRole = oldRemoteRole;
     Close();
+  } else if (detachSimulated) {
+    // reset `bNetDetach`
+    if (Ent) Ent->FlagsEx &= ~VEntity::EFEX_NetDetach;
+    //Connection->SimulatedThinkers.put(Thinker, true);
   }
 }
 
@@ -466,6 +487,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
 
   vassert(Thinker);
   VClass *ThinkerClass = Thinker->GetClass();
+  const vuint8 prevRole = Thinker->Role;
 
   VEntity *Ent = Cast<VEntity>(Thinker);
   TVec oldOrg(0.0f, 0.0f, 0.0f);
@@ -500,6 +522,21 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs+Idx*IntType.GetSize(), IntType);
       } else {
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs, F->Type);
+        //HACK: read owner suid
+        if (F == Connection->Context->OwnerField ||
+            F == Connection->Context->TargetField ||
+            F == Connection->Context->TracerField ||
+            F == Connection->Context->MasterField)
+        {
+          vassert(Ent);
+          vuint32 ownersuid = 0;
+          Msg << STRM_INDEX_U(ownersuid);
+               if (F == Connection->Context->OwnerField) Ent->OwnerSUId = ownersuid;
+          else if (F == Connection->Context->TargetField) Ent->TargetSUId = ownersuid;
+          else if (F == Connection->Context->TracerField) Ent->TracerSUId = ownersuid;
+          else if (F == Connection->Context->MasterField) Ent->MasterSUId = ownersuid;
+          else abort();
+        }
       }
       continue;
     }
@@ -541,9 +578,15 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     }
   }
 
-  if (Connection->IsClient() && Msg.bClose && Thinker && Thinker->Role == ROLE_Authority) {
-    //GCon->Logf(NAME_Debug, "completed detaching for '%s'", Thinker->GetClass()->GetName());
-    Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
-    Thinker->eventOnDetachedFromServer();
+  if (Connection->IsClient() && Thinker) {
+    //if (Thinker->Role == ROLE_SimulatedProxy) GCon->Logf(NAME_Debug, "%s: prevrole=%u; role=%u", Thinker->GetClass()->GetName(), prevRole, Thinker->Role);
+    if ((Msg.bClose && Thinker->Role == ROLE_Authority) ||
+        (prevRole != ROLE_SimulatedProxy && Thinker->Role == ROLE_SimulatedProxy))
+    {
+      //GCon->Logf(NAME_Debug, "completed detaching for '%s'", Thinker->GetClass()->GetName());
+      Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
+      Thinker->eventOnDetachedFromServer();
+      if (Ent) Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+    }
   }
 }

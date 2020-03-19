@@ -392,9 +392,24 @@ float PlaneAlpha;
 // for renderer; if <= 0, use `Radius` instead
 float RenderRadius;
 
+// thing being chased/attacked (or nullptr)
+// also the originator for missiles
+EntityEx Target; // moved from `EntityEx`
+EntityEx Tracer; // moved from `EntityEx`
+EntityEx Master; // moved from `EntityEx`
+
+// for networking; will be automatically replicated by the server when `Owner` is replicated
+transient int OwnerSUId;
+// for networking; will be automatically replicated by the server when `Tracer` is replicated
+transient int TracerSUId;
+// for networking; will be automatically replicated by the server when `Target` is replicated
+transient int TargetSUId;
+// for networking; will be automatically replicated by the server when `Master` is replicated
+transient int MasterSUId;
+
 
 replication {
-  reliable if (Role == ROLE_Authority)
+  reliable if (!bDetachComplete && (Role == ROLE_Authority || bNetDetach))
     Origin, Angles, FloorClip, State, StateTime, SpriteType,
     FixedSpriteName, ModelVersion, RenderStyle, Alpha,
     Translation, StencilColor, ScaleX, ScaleY,
@@ -416,6 +431,10 @@ replication {
   reliable if (Role == ROLE_Authority && bNetInitial)
     Radius, Height, VanillaHeight, RenderRadius, FloatBobStrength,
     /*DecalName,*/ bIsPlayer;
+
+  reliable if (Role == ROLE_Authority && bNetDetach && bMissile)
+    bMissile, bStepMissile,
+    Target, Tracer, Master;
 
   reliable if (Role == ROLE_Authority && bNetInitial && bFloatBob)
     FloatBobPhase;

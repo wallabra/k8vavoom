@@ -254,6 +254,7 @@ actor GoldWandFX1
   Damage 2
   RenderStyle Add
   Projectile
+  +k8ClientSimulation
   DeathSound "weapons/wandhit"
   states
   {
@@ -385,6 +386,7 @@ actor CrossbowFX1
   Damage 10
   RenderStyle Add
   Projectile
+  +k8ClientSimulation
   SeeSound "weapons/bowshoot"
   DeathSound "weapons/bowhit"
   states
@@ -424,6 +426,7 @@ actor CrossbowFX3
   Speed 20
   Damage 2
   Projectile
+  +k8ClientSimulation
   +WindThrust
   +ThruGhost
   DeathSound "weapons/bowhit"
@@ -623,6 +626,7 @@ actor HornRodFX1
   Damage 3
   RenderStyle Add
   Projectile
+  +k8ClientSimulation
   -NoBlockmap
   +WindThrust
   SeeSound "weapons/hornrodshoot"
@@ -711,6 +715,7 @@ actor MaceFX1
   Speed 20
   Damage 2
   Projectile
+  +k8ClientSimulation
   +HereticBounce
   +ThruGhost
   SeeSound "weapons/maceshoot"

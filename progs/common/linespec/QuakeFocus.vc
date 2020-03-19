@@ -44,6 +44,8 @@ name SoundName;
   EntityEx victim;
   float dist;
 
+  bool allowDamage = !Level.Game.netgame;
+
   //print("QuakeFocus: dur=%s; power=%s", QuakeDuration, Richters);
   if (QuakeDuration-- > 0) {
     if (Richters > 256/9) Richters = 256/9;
@@ -58,7 +60,7 @@ name SoundName;
         pl.LocalQuakeHappening = vector(Richters, Richters, 0);
       }
       // check if in damage radius
-      if (dist < DamageRadius && victim.Origin.z <= victim.FloorZ) {
+      if (allowDamage && dist < DamageRadius && victim.Origin.z <= victim.FloorZ) {
         if (Random() < 0.1953125) victim.Damage(none, none, 1+(P_Random()&7), spawnBlood:true);
         // thrust player around
         an = victim.Angles.yaw+Random()*256.0;

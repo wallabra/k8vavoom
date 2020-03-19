@@ -82,6 +82,7 @@ actor SorcererFX1
   RenderStyle Add
   DamageType "Fire"
   Projectile
+  +k8ClientSimulation
   -ActivatePCross
   -ActivateImpact
   states

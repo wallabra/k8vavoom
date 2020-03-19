@@ -163,10 +163,11 @@ static void CL_UpdateMobjs (float deltaTime) {
       VThinker *th = curr;
       curr = curr->Next;
       if (th->IsGoingToDie() || !th->Level || th->Level->IsGoingToDie()) continue;
-      if (th->Role == ROLE_Authority) {
+      if (th->Role != ROLE_DumbProxy) {
         //GCon->Logf(NAME_Debug, "%s:%u: client-local!", th->GetClass()->GetName(), th->GetUniqueId());
         // for local thinkers, call their ticker method first
         if (th->ThinkerFlags&VThinker::TF_DetachComplete) {
+          //GCon->Logf(NAME_Debug, "%s:%u: client-local TICK!", th->GetClass()->GetName(), th->GetUniqueId());
           // need to set this flag, so spawning could work
           const vuint32 oldLevelFlags = GClLevel->LevelFlags;
           GClLevel->LevelFlags |= VLevel::LF_ForServer;

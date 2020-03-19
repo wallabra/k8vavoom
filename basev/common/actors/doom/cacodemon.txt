@@ -67,6 +67,7 @@ actor CacodemonBall
   SeeSound "caco/attack"
   DeathSound "caco/shotx"
   Projectile
+  +k8ClientSimulation
   +Randomize
   states
   {

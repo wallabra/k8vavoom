@@ -582,6 +582,8 @@ bool VEntity::CheckPosition (TVec Pos) {
 bool VEntity::CheckThing (tmtrace_t &cptrace, VEntity *Other) {
   // don't clip against self
   if (Other == this) return true;
+  //if (OwnerSUId && Other && Other->ServerUId == OwnerSUId) return true;
+
   // can't hit thing
   if (!(Other->EntityFlags&EF_ColideWithThings)) return true;
   if (!(Other->EntityFlags&EF_Solid)) return true;
@@ -700,8 +702,6 @@ bool VEntity::CheckLine (tmtrace_t &cptrace, line_t *ld) {
 //
 //==========================================================================
 bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bool ignoreMonsters, bool ignorePlayers) {
-  if (GGameInfo->NetMode == NM_Client) noPickups = true;
-
   tmtrace.End = Pos;
 
   tmtrace.BBox[BOX2D_TOP] = Pos.y+Radius;
@@ -850,10 +850,10 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
 //
 //==========================================================================
 bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups) {
-  if (GGameInfo->NetMode == NM_Client) noPickups = true;
-
   // don't clip against self
   if (Other == this) return true;
+  //if (OwnerSUId && Other && Other->ServerUId == OwnerSUId) return true;
+
   // can't hit thing
   if (!(Other->EntityFlags&EF_ColideWithThings)) return true;
 
@@ -1186,12 +1186,14 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
 
   if (IsGoingToDie() || !Sector) return false; // just in case, dead object is immovable
 
-  if (GGameInfo->NetMode == NM_Client) noPickups = true;
+  const bool isClient = (GGameInfo->NetMode == NM_Client);
 
   bool skipEffects = (checkOnly || noPickups);
 
   check = CheckRelPosition(tmtrace, newPos, skipEffects);
   tmtrace.TraceFlags &= ~tmtrace_t::TF_FloatOk;
+
+  if (isClient) skipEffects = true;
 
   if (!check) {
     // cannot fit into destination point
@@ -1248,7 +1250,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
             (!CheckOnmobj() || (CheckOnmobj() &&
              CheckOnmobj() != tmtrace.BlockingMobj)))
         {
-          if (!checkOnly) Velocity.z = -8.0f*35.0f;
+          if (!checkOnly && !isClient) Velocity.z = -8.0f*35.0f;
         }
         PushLine(tmtrace, skipEffects);
         return false;
@@ -1260,7 +1262,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
             (!CheckOnmobj() || (CheckOnmobj() &&
              CheckOnmobj() != tmtrace.BlockingMobj)))
         {
-          if (!checkOnly) Velocity.z = 8.0f*35.0f;
+          if (!checkOnly && !isClient) Velocity.z = 8.0f*35.0f;
         }
         PushLine(tmtrace, skipEffects);
         return false;
@@ -1373,7 +1375,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
     FloorClip = 0.0f;
   }
 
-  if (!noPickups) {
+  if (!noPickups && !isClient) {
     // if any special lines were hit, do the effect
     if (EntityFlags&EF_ColideWithWorld) {
       while (tmtrace.SpecHit.Num() > 0) {
@@ -1409,7 +1411,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
 //
 //==========================================================================
 void VEntity::PushLine (const tmtrace_t &tmtrace, bool checkOnly) {
-  if (checkOnly) return;
+  if (checkOnly || GGameInfo->NetMode == NM_Client) return;
   if (EntityFlags&EF_ColideWithWorld) {
     if (EntityFlags&EF_Blasted) eventBlastedHitLine();
     int NumSpecHitTemp = tmtrace.SpecHit.Num();
@@ -1526,8 +1528,6 @@ void VEntity::SlideMove (float StepVelScale, bool noPickups) {
   int hitcount;
   tmtrace_t tmtrace;
   memset((void *)&tmtrace, 0, sizeof(tmtrace)); // valgrind: AnyBlockingLine
-
-  if (GGameInfo->NetMode == NM_Client) noPickups = true;
 
   hitcount = 0;
 
@@ -1808,6 +1808,7 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
     for (int by = yl; by <= yh; ++by) {
       for (VBlockThingsIterator Other(XLevel, bx, by); Other; ++Other) {
         if (*Other == this) continue; // don't clip against self
+        //if (OwnerSUId && Other->ServerUId == OwnerSUId) continue;
         //k8: can't hit corpse
         if ((Other->EntityFlags&(EF_ColideWithThings|EF_Solid|EF_Corpse)) != (EF_ColideWithThings|EF_Solid)) continue; // can't hit things, or not solid
         const float ohgt = GetBlockingHeightFor(*Other);

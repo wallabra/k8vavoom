@@ -522,6 +522,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
 //
 //==========================================================================
 void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bool NoArmor, TVec hitp, bool secondary, optional bool spawnBlood) {
+  if (!Level.Game.IsAuthority) return;
   int newdmg = K8onBeforeLineDamage(inflictor, hitp, damage, DmgType, secondary);
   //printdebug("THP(%s):(%s,%s,%s); dmg=%s; new=%s; type='%s'", (secondary ? "2" : "1"), hitp.x, hitp.y, hitp.z, damage, newdmg, DmgType);
   //printdebug("THP:(%s,%s,%s); dmg=%s; type='%s'", hitp.x, hitp.y, hitp.z, damage, "FUCK!");
@@ -577,6 +578,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
                    optional bool ignoreDamageFactors, optional bool ignorePowerups)
 {
   if (!bShootable && !forced) return; // shouldn't happen...
+  if (!Level.Game.IsAuthority) return;
 
   if (DmgType) {
     if (nameicmp(DmgType, 'None') == 0 || nameicmp(DmgType, 'Normal') == 0) DmgType = 'None';
@@ -903,7 +905,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 //
 //==========================================================================
 int DoSpecialDamage (EntityEx victim, EntityEx source, int damage) {
-  if (victim.bIsPlayer && MissilePoisonDamage > 0) {
+  if (victim.bIsPlayer && MissilePoisonDamage > 0 && Level.Game.IsAuthority) {
     victim.PoisonPlayer(source, MissilePoisonDamage);
     damage >>= 1;
   }
@@ -918,6 +920,7 @@ int DoSpecialDamage (EntityEx victim, EntityEx source, int damage) {
 //==========================================================================
 int TakeSpecialDamage (EntityEx inflictor, EntityEx source, int damage, name DmgType, optional bool forced) {
   if (bNoDamage && !forced) return 0;
+  if (!Level.Game.IsAuthority) return 0;
 
   // always apply damage if actor has regular death state or no death states at all
   if (FindState('Death') || !HasSpecialStates('Death')) return damage;
@@ -986,6 +989,7 @@ bool OkayToSwitchTarget (EntityEx source) {
 //==========================================================================
 void Died (EntityEx source, EntityEx inflictor) {
   Inventory Item;
+  if (!Level.Game.IsAuthority) return;
 
   //printdebug("%C: DIED!", self);
 
@@ -1190,6 +1194,7 @@ bool MorphedDeath (out EntityEx Morphed, out int MorphedStyle, out int MorphedHe
 //==========================================================================
 final void PoisonPlayer (EntityEx poisoner, int poison) {
   if ((PlayerEx(Player).Cheats&PlayerEx::CF_GODMODE) || bInvulnerable) return;
+  if (!Level.Game.IsAuthority) return;
   PlayerEx(Player).PoisonCount += poison;
   PlayerEx(Player).Poisoner = poisoner;
   PlayerEx(Player).PoisonerPlayer = (poisoner ? PlayerEx(poisoner.Player) : none);
@@ -1208,6 +1213,7 @@ final void PoisonPlayer (EntityEx poisoner, int poison) {
 final void PoisonDamage (EntityEx inflictor, EntityEx source, int damage, bool playPainSound) {
   if (Health <= 0) return;
   if (bInvulnerable && damage < 10000) return; // mobj is invulnerable
+  if (!Level.Game.IsAuthority) return;
 
   bool isBuddha = false;
   if (bIsPlayer) {

@@ -312,6 +312,7 @@ actor Rocket
   DeathSound "weapons/rocklx"
   Obituary "$ob_mprocket"
   Projectile
+  +k8ClientSimulation
   +Randomize
   +RocketTrail
   +DehExplosion
@@ -384,6 +385,7 @@ actor PlasmaBall
   DeathSound "weapons/plasmax"
   Obituary "$ob_mpplasmarifle"
   Projectile
+  +k8ClientSimulation
   +Randomize
   states
   {
@@ -489,6 +491,7 @@ actor BFGBall
   DeathSound "weapons/bfgx"
   Obituary "$ob_mpbfg_boom"
   Projectile
+  +k8ClientSimulation
   +Randomize
   states
   {

@@ -62,6 +62,7 @@ final bool CheckMissileSpawn () {
 
   tmtrace_t tmtrace;
   if (!TryMoveEx(out tmtrace, Origin, AllowDropOff:false)) {
+    if (!Level.Game.IsAuthority) { Destroy(); return false; }
     // don't explode ripping missiles that spawn inside another thing
     if (!tmtrace.BlockingMobj || !bRip || EntityEx(tmtrace.BlockingMobj).bDontRip) {
       if (CountsAsKill()) {
@@ -88,6 +89,17 @@ final bool CheckMissileSpawn () {
 //
 //==========================================================================
 final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
+  if (!bDetachFromServer && !Level.Game.IsAuthority) {
+    //printdebug("%C: CLIENT EXPLODING MISSILE; Victim=%C", self, Victim);
+    printdebug("%C: reverting to dumb proxy (client)", self);
+    Role = ROLE_DumbProxy; // revert to dumb, so we can get an explosion
+    bDetachSimulated = false;
+    bDetachComplete = false;
+    //Destroy();
+    return false;
+  }
+  //printdebug("%C: SERVER EXPLODING MISSILE; Victim=%C", self, Victim);
+
   if (bExploCount) {
     if (++Special2 < Special1) return false;
   }
@@ -110,6 +122,16 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
     if (!ExplState) ExplState = FindState('Death', 'Extreme');
   }
   if (!ExplState) ExplState = FindState('Death');
+
+  // revert to normal
+  if (!bDetachFromServer) {
+    printdebug("%C: reverting to dumb proxy; role=%s; remote=%s", self, Role, RemoteRole);
+    RemoteRole = ROLE_DumbProxy;
+    bDetachSimulated = false;
+    bDetachComplete = false;
+    //bNetInitial = true; // resend everything (for now)
+    printdebug("%C: reverted to dumb proxy; role=%s; remote=%s", self, Role, RemoteRole);
+  }
 
   if (!SetState(ExplState)) return false;
 

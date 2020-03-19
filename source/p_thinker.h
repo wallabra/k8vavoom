@@ -84,6 +84,11 @@ class VThinker : public VGameObject {
     // this flag will be set by network layer when the thinker is detached from
     // the server, and its channel is closed (i.e. we got all the data)
     TF_DetachComplete   = 1u<<4,
+    // this is set in decorate, and is used to switch the entity to `ROLE_SimulatedProxy`
+    // simulated proxies doesn't perform any actions, they just fly with the given velocity
+    // (and animated with decorate frames)
+    // completion is signalled by `TF_DetachComplete`, as usual
+    TF_DetachSimulated  = 1u<<5,
   };
   vuint32 ThinkerFlags;
 

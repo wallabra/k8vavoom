@@ -805,6 +805,7 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
   //Entity e; printdebug("%f", e.Height);
   puffEntity = none;
   hitEntity = none;
+  if (!Level.Game.IsAuthority) return false;
 
   shootOrigin = Origin;
   shootOrigin.z += CalculateLineAttackZOfs();
@@ -1005,6 +1006,7 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
   TVec shootOrigin;
   float sina, cosa;
 
+  if (!Level.Game.IsAuthority) return;
   if (!Silent) PlaySound('weapons/railgf', CHAN_WEAPON);
 
   if (!specified_PuffType) PuffType = BulletPuff;

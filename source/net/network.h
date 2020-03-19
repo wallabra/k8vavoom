@@ -40,7 +40,7 @@ enum {
 // sent on handshake
 enum {
   NET_PROTOCOL_VERSION_HI = 7,
-  NET_PROTOCOL_VERSION_LO = 8,
+  NET_PROTOCOL_VERSION_LO = 9,
 };
 
 enum {
@@ -606,6 +606,7 @@ public:
   // we cannot have this flag in thinker itself, because new
   // clients should still get detached thinkers once
   TMapNC<VThinker *, bool> DetachedThinkers;
+  //TMapNC<VThinker *, bool> SimulatedThinkers;
 
   // timings, etc.
   double LastReceiveTime; // last time a packet was received, for timeout checking
@@ -819,6 +820,10 @@ class VNetContext {
 public:
   VField *RoleField;
   VField *RemoteRoleField;
+  VField *OwnerField;
+  VField *TargetField;
+  VField *TracerField;
+  VField *MasterField;
   VNetConnection *ServerConnection; // non-nullptr for clients (only)
   TArray<VNetConnection *> ClientConnections; // known clients for servers
 

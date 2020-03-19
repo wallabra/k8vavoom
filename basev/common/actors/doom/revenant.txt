@@ -89,6 +89,7 @@ actor RevenantTracerSmoke
 {
   RenderStyle Translucent
   Alpha 0.666
+  +k8DetachFromServer
   +NoBlockmap
   +NoGravity
   +NoTeleport

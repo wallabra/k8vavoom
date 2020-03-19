@@ -98,6 +98,8 @@ transient readonly bool bNetOwner; // is owned by current player
 transient bool bServerSideOnly; // if set, this thinker will never be sent to clients (but `AlwaysRelevant` has priority)
 // see C++ code for explanations
 transient bool bDetachComplete;
+// this is set in decorate, see C++ code
+transient bool bDetachSimulated;
 
 
 replication {
@@ -160,6 +162,7 @@ native final iterator RadiusThings (out Entity Ent, TVec Org, float Radius);
 //
 //  called from network code when detach is complete
 //  don't do anything complex here!
+//  also called for simulated proxies
 //
 //==========================================================================
 void OnDetachedFromServer () {

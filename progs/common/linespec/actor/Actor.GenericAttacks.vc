@@ -485,6 +485,8 @@ final void DoAttack (bool DoMelee, bool DoMissile, int MeleeDamage,
 final void DoExplode (int damage, float distance, bool damageSelf, optional int dmgdistance,
                       optional EntityEx dmgsource, optional name dmgtype)
 {
+  if (!Level.Game.IsAuthority) return;
+
   if (!specified_dmgsource) dmgsource = Target;
   if (!specified_dmgtype) dmgtype = DamageType;
   if (specified_dmgdistance && dmgdistance > 0) {

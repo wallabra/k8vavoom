@@ -65,6 +65,7 @@ actor FatShot
   SeeSound "fatso/attack"
   DeathSound "fatso/shotx"
   Projectile
+  +k8ClientSimulation
   +Randomize
   states
   {

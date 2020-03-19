@@ -383,16 +383,16 @@ float WallBounceFactor;
 
 // thing being chased/attacked (or nullptr)
 // also the originator for missiles
-EntityEx Target;
+//EntityEx Target; // moved to `Entity`
 // for monster families
 string Species;
 // last known enemy -- killogh 2/15/98
 EntityEx LastEnemy;
-EntityEx Tracer;
+//EntityEx Tracer; // moved to `Entity`
 // monster's goal if not chasing anything
 EntityEx Goal;
 // master entity
-EntityEx Master;
+//EntityEx Master; // moved to `Entity`
 // last actor this one heard
 EntityEx LastHeard;
 // ketmar: last position we've seen a player

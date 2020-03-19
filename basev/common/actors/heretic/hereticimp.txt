@@ -132,6 +132,7 @@ actor HereticImpBall
   Damage 1
   RenderStyle Add
   Projectile
+  +k8ClientSimulation
   -ActivatePCross
   -ActivateImpact
   +SpawnSoundSource

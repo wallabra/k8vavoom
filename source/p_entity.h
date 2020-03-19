@@ -378,6 +378,19 @@ class VEntity : public VThinker {
   // for renderer; if <= 0, use `Radius` instead
   float RenderRadius;
 
+  VEntity *Target; // moved from `EntityEx`, and it is `EntityEx`
+  VEntity *Tracer; // moved from `EntityEx`, and it is `EntityEx`
+  VEntity *Master; // moved from `EntityEx`, and it is `EntityEx`
+
+  // for networking; will be automatically replicated by the server when `Owner` is replicated
+  vuint32 OwnerSUId;
+  // for networking; will be automatically replicated by the server when `Tracer` is replicated
+  vuint32 TracerSUId;
+  // for networking; will be automatically replicated by the server when `Target` is replicated
+  vuint32 TargetSUId;
+  // for networking; will be automatically replicated by the server when `Master` is replicated
+  vuint32 MasterSUId;
+
 protected:
   //VEntity () : SoundClass(E_NoInit), SoundGender(E_NoInit), DecalName(E_NoInit) {}
 

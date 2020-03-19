@@ -32,6 +32,7 @@ class SecActEyesDive : SectorAction __mobjinfo__(9993);
 //
 //==========================================================================
 override bool TriggerAction (EntityEx Triggerer, int ActType) {
+  if (!Level.Game.IsAuthority) return false;
   bool Ret = (ActType&SECSPAC_EyesDive) && CheckTrigger(Triggerer);
   if (::TriggerAction(Triggerer, ActType)) Ret = true;
   return Ret;

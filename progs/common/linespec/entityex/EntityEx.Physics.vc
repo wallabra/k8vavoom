@@ -245,12 +245,16 @@ bool Physics (float DeltaTime) {
     if (Velocity.xy) ApplyFriction(DeltaTime);
   }
 
+  //if ((self isa 'DoomImpBall') && !Level.Game.IsAuthority) printdebug("%C:000: org=%s; vel=%s", self, Origin, Velocity);
+
   // momentum (velocity) movement
   // handle X and Y momentums
   float oldfloorz = XYMovement(DeltaTime, CummX, CummY);
   if (IsDestroyed) return false; // mobj was removed
   // apply friction here
   //if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
+
+  //if ((self isa 'DoomImpBall') && !Level.Game.IsAuthority) printdebug("%C:001: org=%s; vel=%s", self, Origin, Velocity);
 
   #ifdef FLOAT_BOB_IN_PHYSICS
   // moved to client ticker
@@ -513,6 +517,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
   float StepXMove = xmove/float(Steps);
   float StepYMove = ymove/float(Steps);
 
+  //if ((self isa 'DoomImpBall') && !Level.Game.IsAuthority) printdebug("%C:100: org=%s; vel=%s", self, Origin, Velocity);
   //int Step = 1;
   TVec oldOrigin = Origin;
   foreach (; 0..Steps) {
@@ -524,12 +529,16 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
       // blocked move
       if (DecalName && (bDecals2SPass || bDecalsOnly2S)) {
         //print("tracing decal '%s' (hit)", DecalName);
-        TVec spdir = Velocity.normalise();
-        float spdist = length(Origin-oldOrigin);
-        TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, pass2S:bDecals2SPass, only2S:bDecalsOnly2S, translation:(bCopyBloodTranslation ? Translation : 0));
+        if (Role == ROLE_Authority) {
+          TVec spdir = Velocity.normalise();
+          float spdist = length(Origin-oldOrigin);
+          TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, pass2S:bDecals2SPass, only2S:bDecalsOnly2S, translation:(bCopyBloodTranslation ? Translation : 0));
+        }
       }
+      //if ((self isa 'DoomImpBall') && !Level.Game.IsAuthority) printdebug("%C:101: org=%s; vel=%s", self, Origin, Velocity);
       if (tmtrace.BlockingMobj) {
         //if (GetCvarB('k8ExplodeMissleTest')) print("MOBJ!");
+        //if (self isa 'DoomImpBall') printdebug("%C:600: ouid=%s; tuid=%s; muid=%s; truid=%s; org=%s; vel=%s; hitobj=%C (%s : %s)", self, OwnerSUId, TargetSUId, MasterSUId, TracerSUId, Origin, Velocity, tmtrace.BlockingMobj, tmtrace.BlockingMobj.UniqueId, tmtrace.BlockingMobj.ServerUId);
         HitMobj(tmtrace.BlockingMobj, ptryx, ptryy);
       } else {
         /*
@@ -589,9 +598,11 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
 
   if (DecalName && (bDecals2SPass || bDecalsOnly2S)) {
     //print("tracing decal '%s' (pass)", DecalName);
-    TVec spdir = Velocity.normalise();
-    float spdist = length(Origin-oldOrigin);
-    TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, pass2S:bDecals2SPass, only2S:bDecalsOnly2S, translation:(bCopyBloodTranslation ? Translation : 0));
+    if (Role == ROLE_Authority) {
+      TVec spdir = Velocity.normalise();
+      float spdist = length(Origin-oldOrigin);
+      TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, pass2S:bDecals2SPass, only2S:bDecalsOnly2S, translation:(bCopyBloodTranslation ? Translation : 0));
+    }
   }
 
   return oldfloorz;
@@ -945,7 +956,9 @@ final bool HitFloor (float prevz) {
   // allow very short drops to be safe, so that a touchy can be summoned without exploding
   if (bTouchy && (bArmed || IsSentient()) && Velocity.z < -5.0) {
     bArmed = false; // disarm
-    Damage(none, none, Health, spawnBlood:true);  // kill object
+    if (Level.Game.IsAuthority) {
+      Damage(none, none, Health, spawnBlood:true);  // kill object
+    }
     return true;
   }
 
@@ -976,7 +989,7 @@ final bool HitFloor (float prevz) {
   }
 
   float vdot = DotProduct(Velocity, EFloor.spGetNormal());
-  if (bMonster) {
+  if (bMonster && Level.Game.IsAuthority) {
     // blasted mobj falling
     if (vdot < -23.0*35.0) MonsterFallingDamage();
   }
@@ -1295,6 +1308,7 @@ final void FallingDamage () {
   float dist;
 
   if (Sector && Sector->bNoFallingDamage) return;
+  if (!Level.Game.IsAuthority) return;
 
   float mom = fabs(Velocity.z);
 
@@ -1345,6 +1359,7 @@ final void MonsterFallingDamage () {
 
   if (!Level.bMonsterFallingDamage) return;
   if (Sector && Sector->bNoFallingDamage) return;
+  if (!Level.Game.IsAuthority) return;
 
   mom = fabs(Velocity.z)/35.0;
   if (mom > 35.0) {
@@ -1412,6 +1427,7 @@ final bool HitFloorType (optional bool justLanded) {
 
   // things that don't splash go here
   if (bFloatBob || bNoSplash) return false;
+  if (!Level.Game.IsAuthority) return false;
 
   VTerrainInfo *TInfo = GetFloorType();
 

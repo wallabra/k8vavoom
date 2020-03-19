@@ -73,6 +73,7 @@ actor SpawnShot
   Speed 10
   Damage 3
   Projectile
+  +k8ClientSimulation
   -ActivatePCross
   +NoClip
   +Randomize
@@ -93,6 +94,7 @@ actor SpawnFire
   Height 78
   ProjectilePassHeight -16 // this is for dehacked
   RenderStyle Add
+  +k8ClientSimulation
   +NoBlockmap
   +NoGravity
   +NoInteraction

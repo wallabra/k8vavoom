@@ -101,6 +101,7 @@ override bool Deactivate (EntityEx Activator) {
 //
 //==========================================================================
 bool TriggerAction (EntityEx Triggerer, int ActType) {
+  if (!Level.Game.IsAuthority) return false;
   // pass action to the next sector action trigger
   if (Tracer) return SectorAction(Tracer).TriggerAction(Triggerer, ActType);
   return false;
@@ -113,6 +114,7 @@ bool TriggerAction (EntityEx Triggerer, int ActType) {
 //
 //==========================================================================
 final bool CheckTrigger (EntityEx Triggerer) {
+  if (!Level.Game.IsAuthority) return false;
   if (Special &&
       (Triggerer.bIsPlayer ||
        (bAmbush && Triggerer.bActivateMCross) ||
