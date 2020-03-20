@@ -492,8 +492,7 @@ public:
   // this is used in server, to limit client update rate
   double NextUpdateTime;
   vuint32 LastMOSUid;
-  VField *WorldTicField;
-  VField *OtherWorldTicField;
+  VField *GameTimeField;
 
 public:
   VPlayerChannel (VNetConnection *, vint32, vuint8 = true);

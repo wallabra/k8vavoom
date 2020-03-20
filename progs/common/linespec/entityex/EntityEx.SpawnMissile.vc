@@ -124,7 +124,7 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
   if (!ExplState) ExplState = FindState('Death');
 
   // revert to normal
-  if (!bDetachFromServer) {
+  if (!bDetachFromServer && RemoteRole == ROLE_SimulatedProxy) {
     printdebug("%C: reverting to dumb proxy; role=%s; remote=%s", self, Role, RemoteRole);
     RemoteRole = ROLE_DumbProxy;
     bDetachSimulated = false;

@@ -43,8 +43,7 @@ VPlayerChannel::VPlayerChannel (VNetConnection *AConnection, vint32 AIndex, vuin
   , LastMOSUid(0)
 {
   OpenAcked = true; // this channel is pre-opened
-  WorldTicField = VBasePlayer::StaticClass()->FindFieldChecked("WorldTic");
-  OtherWorldTicField = VBasePlayer::StaticClass()->FindFieldChecked("OtherWorldTic");
+  GameTimeField = VBasePlayer::StaticClass()->FindFieldChecked("GameTime");
 }
 
 
@@ -259,6 +258,8 @@ void VPlayerChannel::Update () {
   } else {
     LastMOSUid = 0;
   }
+
+  //if (Plr) GCon->Logf(NAME_Debug, "%s: sent WorldTimer=%g", *GetDebugName(), Plr->WorldTimer);
 }
 
 
@@ -268,6 +269,8 @@ void VPlayerChannel::Update () {
 //
 //==========================================================================
 void VPlayerChannel::ParseMessage (VMessageIn &Msg) {
+  if (!Plr) return; // just in case
+
   //GCon->Logf(NAME_DevNet, "%s: received player update (%s)", *GetDebugName(), (Connection->IsClient() ? "client" : "server"));
   while (!Msg.AtEnd()) {
     int FldIdx = (int)Msg.ReadUInt();
@@ -286,10 +289,10 @@ void VPlayerChannel::ParseMessage (VMessageIn &Msg) {
         IntType.Type = F->Type.ArrayInnerType;
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+F->Ofs+Idx*IntType.GetSize(), IntType);
       } else {
-        if (F != WorldTicField) {
-          VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+F->Ofs, F->Type);
-        } else {
-          VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+OtherWorldTicField->Ofs, F->Type);
+        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Plr+F->Ofs, F->Type);
+        // update client times
+        if (F == GameTimeField && Connection->IsClient()) {
+          Plr->ClLastGameTime = Plr->GameTime;
         }
       }
       continue;
@@ -299,4 +302,6 @@ void VPlayerChannel::ParseMessage (VMessageIn &Msg) {
 
     Sys_Error("Bad net field %d", FldIdx);
   }
+
+  //GCon->Logf(NAME_Debug, "%s: got WorldTimer=%g", *GetDebugName(), Plr->WorldTimer);
 }

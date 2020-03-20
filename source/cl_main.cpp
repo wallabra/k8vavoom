@@ -207,14 +207,20 @@ void CL_ReadFromServer (float deltaTime) {
   }
 
   if (cls.signon) {
+    /*
     if (GGameInfo->NetMode == NM_Client && deltaTime) {
       GClLevel->Time += deltaTime;
+      GClLevel->TicTime = (int)(GClLevel->Time*35.0f);
+    }
+    */
+    if (GGameInfo->NetMode == NM_Client) {
+      GClLevel->Time = cl->GameTime;
       GClLevel->TicTime = (int)(GClLevel->Time*35.0f);
     }
 
     CL_UpdateMobjs(deltaTime);
     // update world tick for client network games (copy from the server tic)
-    if (cl->Net && GClLevel) cl->WorldTic = cl->OtherWorldTic;
+    cl->ClCurrGameTime += deltaTime;
     cl->eventClientTick(deltaTime);
     if (deltaTime) CL_Ticker();
   } else {

@@ -1283,9 +1283,9 @@ final void Crash () {
 //===========================================================================
 final void PlayerLandedOnThing () {
   auto pex = PlayerEx(Player);
-  if (pex.MO == self) pex.DeltaViewHeight = Velocity.z/8.0;
+  if (pex && pex.MO == self) pex.DeltaViewHeight = Velocity.z/8.0;
   FallingDamage();
-  if (Health > 0 && !pex.MorphTime) {
+  if (Health > 0 && pex && !pex.MorphTime) {
     if (Velocity.z < -DEFAULT_GRAVITY*0.375) {
       PlaySound('*grunt', CHAN_VOICE);
     }
@@ -1597,7 +1597,7 @@ override void ApplyFriction (float DeltaTime) {
   // this will allow to easily climb onto small steep slopes (see "ma_put", for example)
   if (Origin.z <= FloorZ && fabs(Sector.floor.maxz-Sector.floor.minz) > MaxStepHeight) {
     TVec Vel = EFloor.spGetNormal();
-    if (bIsPlayer && PlayerEx(Player) && (PlayerEx(Player).Cheats&PlayerEx::CF_NOCLIP)) {
+    if (bIsPlayer && Player && (PlayerEx(Player).Cheats&PlayerEx::CF_NOCLIP)) {
       //print("noclip cheat!");
       Vel = vector(0, 0, 0);
     }
@@ -1640,7 +1640,7 @@ override void ApplyFriction (float DeltaTime) {
   }
 
   if (fabs(vx) < STOPSPEED && fabs(vy) < STOPSPEED &&
-      (!bIsPlayer || (Player.MO == self && !Player.ForwardMove && !Player.SideMove)))
+      (!bIsPlayer || !Player || (Player.MO == self && !Player.ForwardMove && !Player.SideMove)))
   {
     if (bIsPlayer) {
       // if in a walking frame, stop moving

@@ -4260,8 +4260,20 @@ bool doHealthAccumHealthPickup (Health item, EntityEx toucher) {
 //
 //==========================================================================
 override void PlayerTick (float deltaTime) {
+  LastDeltaTime = deltaTime;
+
   // update current world tick for server
-  if (MO) WorldTic = MO.XLevel.TicTime;
+  if (MO) {
+    // advance it, because it will be like that when sent
+    GameTime = MO.XLevel.Time+deltaTime;
+  }
+  scope(exit) {
+    if (MO) {
+      LastVelocity = MO.Velocity;
+    } else {
+      LastVelocity = vector(0, 0, 0);
+    }
+  }
 
   bool isBot = bIsBot;
 

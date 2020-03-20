@@ -134,14 +134,16 @@ float PSpriteWeaponLowerPrev;
 float PSpriteWeaponLoweringStartTime;
 float PSpriteWeaponLoweringDuration;
 
-float WorldTimer; // total time the player's been playing
-// current game tic, used in network games
-// server will track current tick in `WorldTic`, and will send it to clients.
-// clients will receive it in `OtherWorldTic` (this is hard-coded hack).
-// also, clients will send their `OtherWorldTic` back to the server, so the server
-// could perform lag compensation (by rewinding the state).
-transient int WorldTic;
-transient int OtherWorldTic;
+// server-side data (sent to client)
+float WorldTimer; // total time the player's been playing (calculated by summing deltas)
+transient float GameTime; // set in `PlayerTick`, already advanced; for client, read from the server
+transient float LastDeltaTime; // set in `PlayerTick`
+transient TVec LastVelocity; // last client velocity, used in predictor, set in `PlayerTick`
+
+// client-side data, used in predictor
+// on the client, `ClCurrGameTime` will be reset on each new player update packet, and will start ticking from that
+transient float ClLastGameTime; // updated in C++; last `GameTime` got from the server
+transient float ClCurrGameTime; // updated in C++; current client `GameTime`, advanced by delta
 
 native readonly ubyte ClientNum;
 
@@ -151,11 +153,6 @@ native readonly ClientGameBase ClGame; // valid only on client side
 
 PlayerReplicationInfo playerReplicationInfo;
 
-//private native transient void *fldPendingWeapon;
-//private native transient void *fldReadyWeapon;
-
-//private native transient Object lastReadyWeapon;
-//private native transient state lastReadyWeaponReadyState;
 private native transient Object[NUMPSPRITES] LastViewObject;
 
 
@@ -164,26 +161,26 @@ replication {
     Health, Frags, Deaths, ExtraLight, FixedColormap, CShift,
     PSpriteSY, KillCount, ItemCount, SecretCount,
     ViewStates, DispSpriteFrame, DispSpriteName,
-    ClientNum, WorldTimer, MO, Camera, SoundEnvironment,
+    ClientNum, MO, Camera, SoundEnvironment,
     bAutomapRevealed, bAutomapShowThings,
-    bAttackDown, bReloadQueued, bZoomDown;
+    bAttackDown, bReloadQueued, bZoomDown,
+    WorldTimer, GameTime, LastDeltaTime, LastVelocity;
 
   unreliable if (!bIsClient)
     ClientStartSound, ClientStopSound, ClientSetViewOrg;
 
+  // methods server can execute on client
   reliable if (!bIsClient)
     ClientStartSequence, ClientAddSequenceChoice, ClientStopSequence,
     ClientChatPrint, ClientPrint, ClientCenterPrint, ClientSetAngles, ClientIntermission,
     ClientPause, ClientSkipIntermission, ClientFinale, ClientChangeMusic,
-    ClientSetServerInfo, ClientHudMessage, ClientFOV,
-    // server sends this to the client, but it will be received into `OtherWorldTic`
-    WorldTic;
+    ClientSetServerInfo, ClientHudMessage, ClientFOV;
 
   // client movement variables
   reliable if (bIsClient)
     ViewAngles, ClientForwardMove, ClientSideMove, FlyMove, Buttons,
     // client sends this back to the server
-    OtherWorldTic;
+    ClLastGameTime, ClCurrGameTime;
 
   // methods client can execute on server
   reliable if (bIsClient)
