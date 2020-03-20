@@ -75,6 +75,8 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   , LeafPvs(nullptr)
 {
   OriginField = VEntity::StaticClass()->FindFieldChecked("Origin");
+  DataGameTimeField = VEntity::StaticClass()->FindFieldChecked("DataGameTime");
+
   InRate = OutRate = 0;
   InPackets = OutPackets = 0;
   InMessages = OutMessages = 0;

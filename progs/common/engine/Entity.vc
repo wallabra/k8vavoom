@@ -407,6 +407,11 @@ transient int TargetSUId;
 // for networking; will be automatically replicated by the server when `Master` is replicated
 transient int MasterSUId;
 
+// gametime when the data was sent; required for client-side prediction (and interpolation)
+// interpolation not yet implemented, though
+// set in `Tick()`, already delta-advanced
+transient float DataGameTime;
+
 
 replication {
   reliable if (!bDetachComplete && (Role == ROLE_Authority || bNetDetach))
@@ -428,7 +433,7 @@ replication {
     bNoGravity, bStickToFloor, bStickToCeiling;
 
   reliable if (Role == ROLE_Authority && (bNetDetach || bIsPlayer))
-    Velocity;
+    Velocity, DataGameTime;
 
   reliable if (Role == ROLE_Authority && bNetInitial)
     Radius, Height, VanillaHeight, RenderRadius, FloatBobStrength,

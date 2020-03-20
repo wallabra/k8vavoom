@@ -1616,6 +1616,10 @@ void NoBlockingSet () {
 override void Tick (float deltaTime) {
   //if (self isa PlayerPawn) print("*** PLAYERPAWN(%C): TICK!", self);
 
+  scope(exit) {
+    DataGameTime = XLevel.Time+deltaTime;
+  }
+
   /*
   if (bIsPlayer && GetCvarB('k8TraceDebug')) {
     auto plr = PlayerEx(Player);

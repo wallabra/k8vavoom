@@ -391,6 +391,9 @@ class VEntity : public VThinker {
   // for networking; will be automatically replicated by the server when `Master` is replicated
   vuint32 MasterSUId;
 
+  // used in networking; see VavoomC code for explanations
+  float DataGameTime;
+
 protected:
   //VEntity () : SoundClass(E_NoInit), SoundGender(E_NoInit), DecalName(E_NoInit) {}
 

@@ -659,6 +659,8 @@ public:
   TMapNC<VThinker *, VThinkerChannel *> ThinkerChannels;
 
   VField *OriginField;
+  VField *DataGameTimeField;
+
 private:
   // subsectors
   //vuint8 *UpdatePvs;

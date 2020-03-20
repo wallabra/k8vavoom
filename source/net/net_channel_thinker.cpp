@@ -524,6 +524,9 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
   VEntity *Ent = Cast<VEntity>(Thinker);
   TVec oldOrg(0.0f, 0.0f, 0.0f);
   TAVec oldAngles(0.0f, 0.0f, 0.0f);
+  TVec oldVel(0.0f, 0.0f, 0.0f);
+  float oldDT = 0;
+  bool gotDataGameTime = false;
   if (Ent) {
     Ent->UnlinkFromWorld();
     //TODO: use this to interpolate movements
@@ -531,6 +534,8 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     //      setup interpolation variables
     oldOrg = Ent->Origin;
     oldAngles = Ent->Angles;
+    oldVel = Ent->Velocity;
+    oldDT = Ent->DataGameTime;
   }
 
   while (!Msg.AtEnd()) {
@@ -554,6 +559,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs+Idx*IntType.GetSize(), IntType);
       } else {
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs, F->Type);
+
         //HACK: read owner suid
         if (F == Connection->Context->OwnerField ||
             F == Connection->Context->TargetField ||
@@ -578,6 +584,9 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
             auto pc = Connection->GetPlayerChannel();
             if (pc && pc->Plr && pc->Plr->MO == Thinker) pc->GotMOOrigin = true;
           }
+        }
+        else if (F == Connection->DataGameTimeField) {
+          gotDataGameTime = true;
         }
       }
       continue;
@@ -624,6 +633,14 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
       if (pc && pc->Plr && pc->Plr->MO == Thinker) Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
     }
 
+    if (gotDataGameTime && Connection->IsClient()) {
+      GCon->Logf(NAME_DevNet, "%s: oldtime=%g; newtime=%g; oldorg=(%g,%g,%g); neworg=(%g,%g,%g); oldvel=(%g,%g,%g); newvel=(%g,%g,%g)",
+        *GetDebugName(), oldDT, Ent->DataGameTime,
+        oldOrg.x, oldOrg.y, oldOrg.z,
+        Ent->Origin.x, Ent->Origin.y, Ent->Origin.z,
+        oldVel.x, oldVel.y, oldVel.z,
+        Ent->Velocity.x, Ent->Velocity.y, Ent->Velocity.z);
+    }
   }
 
   if (Connection->IsClient() && Thinker) {
