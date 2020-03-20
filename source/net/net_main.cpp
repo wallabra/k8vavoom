@@ -255,8 +255,6 @@ VNetwork::~VNetwork () {
 //
 //==========================================================================
 void VNetwork::Init () {
-  net_fixed_name_set.SetReadOnly(true); // it is dangerous to go alone!
-
   const char *p = cli_Port;
   if (p && p[0]) {
     DefaultHostPort = VStr::atoi(p);
@@ -927,7 +925,7 @@ VNetLanDriver::VNetLanDriver (int Level, const char *AName)
 //==========================================================================
 COMMAND(Listen) {
   VNetwork *Net = (VNetwork *)GNet;
-  if (Args.Num() != 2) {
+  if (Args.length() != 2) {
     GCon->Logf(NAME_DevNet, "\"listen\" is \"%d\"", Net->Listening ? 1 : 0);
     return;
   }
@@ -949,7 +947,7 @@ COMMAND(Port) {
   int n;
 
   VNetwork *Net = (VNetwork *)GNet;
-  if (Args.Num() != 2) {
+  if (Args.length() != 2) {
     GCon->Logf(NAME_DevNet, "\"port\" is \"%d\"", Net->HostPort);
     return;
   }

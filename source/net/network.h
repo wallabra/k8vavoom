@@ -26,8 +26,6 @@
 #ifndef VAVOOM_NETWORK_HEADER
 #define VAVOOM_NETWORK_HEADER
 
-extern VCvarB net_fixed_name_set;
-
 
 class VNetContext;
 
@@ -536,6 +534,11 @@ private:
   vint32 cprBufferSize;
   vint32 cprBufferPos;
   vuint8 *cprBuffer;
+  // set when we complete sending initial data (known names and classes)
+  // after we set this one: `CurrName` is next name to receive, or last acked name
+  // `NextNameToSend` is for server only
+  bool InitialDataDone;
+  vint32 NextNameToSend;
   // for client
   vuint8 serverReplicationHash[SHA512_DIGEST_SIZE];
 
@@ -549,6 +552,11 @@ protected:
 
   // this fills
   void BuildNetFieldsHash (vuint8 hash[SHA512_DIGEST_SIZE]);
+
+  // this sends new names
+  void LiveUpdate ();
+
+  void LiveParse (VMessageIn &Msg);
 
 public:
   VObjectMapChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally);
@@ -884,6 +892,8 @@ private:
   TArray<VClass *> ClassLookup;
   TMap<VClass *, vuint32> ClassMap;
 
+  // new names are collected here
+  // we can "push" new names on level reset
   TMapNC<VName, int> NewName2Idx;
   TMapNC<int, VName> NewIdx2Name;
 
@@ -894,11 +904,11 @@ public:
 
 public:
   VNetObjectsMap ();
-  VNetObjectsMap (VNetConnection *);
+  VNetObjectsMap (VNetConnection *AConnection);
   virtual ~VNetObjectsMap ();
 
   void SetupClassLookup ();
-  bool CanSerialiseObject (VObject *);
+  bool CanSerialiseObject (VObject *Obj);
 
   // called on name receiving
   void SetNumberOfKnownNames (int newlen);
@@ -907,8 +917,9 @@ public:
 
   // this is for initial class sending
   // out stream may be dropped, so we need to defer name internalising here
-  bool SerialiseNameNoIntern (VStream &, VName &);
-  void InternName (VName);
+  bool SerialiseNameNoIntern (VStream &Strm, VName &Name);
+
+  void AckNameWithIndex (int index);
 
   virtual bool SerialiseName (VStream &, VName &) override;
   virtual bool SerialiseObject (VStream &, VObject *&) override;
