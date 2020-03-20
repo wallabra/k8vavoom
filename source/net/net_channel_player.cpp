@@ -41,6 +41,7 @@ VPlayerChannel::VPlayerChannel (VNetConnection *AConnection, vint32 AIndex, vuin
   , FieldCondValues(nullptr)
   , NextUpdateTime(0)
   , LastMOSUid(0)
+  , GotMOOrigin(false)
 {
   OpenAcked = true; // this channel is pre-opened
   GameTimeField = VBasePlayer::StaticClass()->FindFieldChecked("GameTime");
@@ -113,6 +114,7 @@ void VPlayerChannel::SetPlayer (VBasePlayer *APlr) {
     FieldsToResend.reset();
     NewObj = true;
     NextUpdateTime = 0; // just in case
+    GotMOOrigin = false;
   }
 
   LastMOSUid = 0;
@@ -150,6 +152,7 @@ void VPlayerChannel::ResetLevel () {
   NextUpdateTime = 0; // just in case
   FieldsToResend.reset();
   LastMOSUid = 0;
+  GotMOOrigin = false;
 }
 
 
@@ -254,9 +257,13 @@ void VPlayerChannel::Update () {
     if (Plr->MO->ServerUId != LastMOSUid) {
       LastMOSUid = Plr->MO->ServerUId;
       if (Connection->IsClient()) Plr->eventInitWeaponSlots();
+      GotMOOrigin = false;
+      auto mop = Connection->ThinkerChannels.find(Plr->MO);
+      if (mop) GotMOOrigin = (*mop)->GotOrigin;
     }
   } else {
     LastMOSUid = 0;
+    GotMOOrigin = false;
   }
 
   //if (Plr) GCon->Logf(NAME_Debug, "%s: sent WorldTimer=%g", *GetDebugName(), Plr->WorldTimer);

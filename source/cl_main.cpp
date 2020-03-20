@@ -218,19 +218,26 @@ void CL_ReadFromServer (float deltaTime) {
       GClLevel->TicTime = (int)(GClLevel->Time*35.0f);
     }
 
+    /*
     if (cl->ClCurrGameTime < cl->ClLastGameTime) {
-      GCon->Logf(NAME_Debug, ":RECV: repredict! oldtime=%g; newtime=%g; d=%g; deltaTime=%g", cl->ClCurrGameTime, cl->ClLastGameTime, cl->ClLastGameTime-cl->ClCurrGameTime, deltaTime);
+      GCon->Logf(NAME_Debug, ":RECV: WARP: GT=%g (d:%g); cltime=%g; svtime=%g; d=%g; deltaTime=%g; MO=%g (%g)", cl->GameTime, cl->LastDeltaTime, cl->ClCurrGameTime, cl->ClLastGameTime, cl->ClLastGameTime-cl->ClCurrGameTime, deltaTime,
+        (cl->MO ? cl->MO->DataGameTime : 0), (cl->MO ? cl->ClLastGameTime-cl->MO->DataGameTime : 0));
       cl->ClCurrGameTime = cl->ClLastGameTime;
     } else {
-      GCon->Logf(NAME_Debug, ":RECV: prediction: oldtime=%g; newtime=%g; d=%g; deltaTime=%g", cl->ClCurrGameTime, cl->ClLastGameTime, cl->ClCurrGameTime-cl->ClLastGameTime, deltaTime);
+      GCon->Logf(NAME_Debug, ":RECV: REPREDICT: GT=%g (d:%g); cltime=%g; svtime=%g; d=%g; deltaTime=%g MO=%g (%g)", cl->GameTime, cl->LastDeltaTime, cl->ClCurrGameTime, cl->ClLastGameTime, cl->ClCurrGameTime-cl->ClLastGameTime, deltaTime,
+        (cl->MO ? cl->MO->DataGameTime : 0), (cl->MO ? cl->ClLastGameTime-cl->MO->DataGameTime : 0));
     }
+    */
+
     CL_UpdateMobjs(deltaTime);
     // update world tick for client network games (copy from the server tic)
-    cl->ClCurrGameTime += deltaTime;
-    cl->eventClientTick(deltaTime);
-    if (deltaTime) CL_Ticker();
+    if (deltaTime) {
+      cl->ClCurrGameTime += deltaTime;
+      cl->eventClientTick(deltaTime);
+      CL_Ticker();
+    }
 
-    GCon->Logf(NAME_Debug, ":RECV: camera is MO:%d; GameTime=%g; ClLastGameTime=%g; ClCurrGameTime=%g", (cl->Camera == cl->MO ? 1 : 0), cl->GameTime, cl->ClLastGameTime, cl->ClCurrGameTime);
+    //GCon->Logf(NAME_Debug, ":RECV: camera is MO:%d; GameTime=%g; ClLastGameTime=%g; ClCurrGameTime=%g", (cl->Camera == cl->MO ? 1 : 0), cl->GameTime, cl->ClLastGameTime, cl->ClCurrGameTime);
   } else {
     /*
     if (GGameInfo->NetMode == NM_Client && deltaTime) {
@@ -389,6 +396,22 @@ void CL_SetupStandaloneClient () {
 }
 
 
+//==========================================================================
+//
+//  CL_GotNetOrigin
+//
+//  returns `true` if not a network client, or if network
+//  client got MO origin
+//
+//==========================================================================
+bool CL_GotNetOrigin () {
+  if (!cl->Net) return true;
+  if (!cl->MO) return false;
+  return cl->Net->GetPlayerChannel()->GotMOOrigin;
+}
+
+
+extern VCvarI sv_maxmove;
 //==========================================================================
 //
 //  CL_SendMove

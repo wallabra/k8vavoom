@@ -619,7 +619,9 @@ void SCR_Update (bool fullUpdate) {
       //k8: always render level, so automap will be updated in all cases
       updateStarted = true;
       Drawer->StartUpdate();
-      if (automapactive <= 0 || am_always_update || clWipeTimer >= 0.0f) {
+      if (!CL_GotNetOrigin()) {
+        Drawer->ClearScreen(VDrawer::CLEAR_ALL);
+      } else if (automapactive <= 0 || am_always_update || clWipeTimer >= 0.0f) {
         if (dbg_disable_world_render) {
           Drawer->ClearScreen(VDrawer::CLEAR_ALL);
         } else {

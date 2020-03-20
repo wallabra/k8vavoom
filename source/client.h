@@ -87,6 +87,9 @@ int CL_GetNetState ();
 // used in input code
 bool CL_IsInGame ();
 
+// returns `true` if not a network client, or if network client got MO origin
+bool CL_GotNetOrigin ();
+
 // returns `false` if client networking is not active
 bool CL_SendCommandToServer (VStr cmd);
 

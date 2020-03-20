@@ -74,6 +74,7 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   //, UpdatePvsSize(0)
   , LeafPvs(nullptr)
 {
+  OriginField = VEntity::StaticClass()->FindFieldChecked("Origin");
   InRate = OutRate = 0;
   InPackets = OutPackets = 0;
   InMessages = OutMessages = 0;

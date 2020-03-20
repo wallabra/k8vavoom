@@ -457,6 +457,8 @@ protected:
   bool OriginUpdated;
 
 public:
+  // set by the client when it gets `Origin` update
+  bool GotOrigin;
   vuint32 LastUpdateFrame; // see `UpdateFrameCounter` in VNetConnection
 
 public:
@@ -493,6 +495,9 @@ public:
   double NextUpdateTime;
   vuint32 LastMOSUid;
   VField *GameTimeField;
+  // set at the client side after we got `MO.Origin`
+  // reset on player reset, or when MO disappears
+  bool GotMOOrigin;
 
 public:
   VPlayerChannel (VNetConnection *, vint32, vuint8 = true);
@@ -653,6 +658,7 @@ public:
   TArray<VChannel *> OpenChannels;
   TMapNC<VThinker *, VThinkerChannel *> ThinkerChannels;
 
+  VField *OriginField;
 private:
   // subsectors
   //vuint8 *UpdatePvs;

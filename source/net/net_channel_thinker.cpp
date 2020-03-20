@@ -44,6 +44,7 @@ VThinkerChannel::VThinkerChannel (VNetConnection *AConnection, vint32 AIndex, vu
   , NewObj(false)
   , FieldCondValues(nullptr)
   , OriginUpdated(false)
+  , GotOrigin(false)
   , LastUpdateFrame(0)
 {
 }
@@ -180,6 +181,9 @@ void VThinkerChannel::SetThinker (VThinker *AThinker) {
         VField::CopyFieldValue((vuint8 *)Def+F->Ofs, OldData+F->Ofs, F->Type);
       }
       FieldCondValues = new vuint8[ThinkerClass->NumNetFields];
+      GotOrigin = true;
+    } else {
+      GotOrigin = false;
     }
     NewObj = true;
     Connection->ThinkerChannels.Set(Thinker, this);
@@ -332,6 +336,7 @@ void VThinkerChannel::Update () {
     vuint8 *FieldValue = Data+F->Ofs;
          if (F == Connection->Context->RoleField) { forceSend = (detachEntity || detachSimulated); FieldValue = Data+Connection->Context->RemoteRoleField->Ofs; }
     else if (F == Connection->Context->RemoteRoleField) { forceSend = (detachEntity || detachSimulated); FieldValue = Data+Connection->Context->RoleField->Ofs; }
+    else if (NewObj && F == Connection->OriginField) forceSend = true;
 
     if (!forceSend && VField::IdenticalValue(FieldValue, OldData+F->Ofs, F->Type)) {
       //GCon->Logf(NAME_DevNet, "%s:%u: skipped field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
@@ -388,6 +393,7 @@ void VThinkerChannel::Update () {
         //GCon->Logf(NAME_DevNet, "%s:%u: sent field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
         if (allowValueCopy) VField::CopyFieldValue(FieldValue, OldData+F->Ofs, F->Type);
       }
+
       //HACK: send suids
       if (F == Connection->Context->OwnerField ||
           F == Connection->Context->TargetField ||
@@ -404,6 +410,7 @@ void VThinkerChannel::Update () {
         strm << STRM_INDEX_U(ownersuid);
         //GCon->Logf(NAME_DevNet, "%s: sending owner suid (%u)", *GetDebugName(), ownersuid);
       }
+
       flushCount += PutStream(&Msg, strm);
     }
   }
@@ -562,6 +569,16 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
           else if (F == Connection->Context->MasterField) Ent->MasterSUId = ownersuid;
           else abort();
         }
+
+        // set "got origin" flag
+        if (F == Connection->OriginField) {
+          GotOrigin = true;
+          // update player flags
+          if (Connection->IsClient()) {
+            auto pc = Connection->GetPlayerChannel();
+            if (pc && pc->Plr && pc->Plr->MO == Thinker) pc->GotMOOrigin = true;
+          }
+        }
       }
       continue;
     }
@@ -601,6 +618,12 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
         OriginUpdated = true;
       }
     }
+
+    if (Connection->IsClient()) {
+      auto pc = Connection->GetPlayerChannel();
+      if (pc && pc->Plr && pc->Plr->MO == Thinker) Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+    }
+
   }
 
   if (Connection->IsClient() && Thinker) {
