@@ -27,6 +27,9 @@
 #include "network.h"
 #include "net_message.h"
 
+//#define VV_NET_DEBUG_DUMP_ORGVEL
+
+
 static VCvarI net_dbg_dump_thinker_channels("net_dbg_dump_thinker_channels", "0", "Dump thinker channels creation/closing (bit 0)?");
 static VCvarB net_dbg_allow_simulated_proxies("net_dbg_allow_simulated_proxies", true, "Allow simulated proxies?");
 VCvarB net_dbg_dump_thinker_detach("net_dbg_dump_thinker_detach", false, "Dump thinker detaches?");
@@ -524,9 +527,11 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
   VEntity *Ent = Cast<VEntity>(Thinker);
   TVec oldOrg(0.0f, 0.0f, 0.0f);
   TAVec oldAngles(0.0f, 0.0f, 0.0f);
+  #ifdef VV_NET_DEBUG_DUMP_ORGVEL
   TVec oldVel(0.0f, 0.0f, 0.0f);
   float oldDT = 0;
   bool gotDataGameTime = false;
+  #endif
   if (Ent) {
     Ent->UnlinkFromWorld();
     //TODO: use this to interpolate movements
@@ -534,8 +539,10 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     //      setup interpolation variables
     oldOrg = Ent->Origin;
     oldAngles = Ent->Angles;
+    #ifdef VV_NET_DEBUG_DUMP_ORGVEL
     oldVel = Ent->Velocity;
     oldDT = Ent->DataGameTime;
+    #endif
   }
 
   while (!Msg.AtEnd()) {
@@ -585,9 +592,11 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
             if (pc && pc->Plr && pc->Plr->MO == Thinker) pc->GotMOOrigin = true;
           }
         }
+        #ifdef VV_NET_DEBUG_DUMP_ORGVEL
         else if (F == Connection->DataGameTimeField) {
           gotDataGameTime = true;
         }
+        #endif
       }
       continue;
     }
@@ -633,6 +642,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
       if (pc && pc->Plr && pc->Plr->MO == Thinker) Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
     }
 
+    #ifdef VV_NET_DEBUG_DUMP_ORGVEL
     if (gotDataGameTime && Connection->IsClient()) {
       GCon->Logf(NAME_DevNet, "%s: oldtime=%g; newtime=%g; oldorg=(%g,%g,%g); neworg=(%g,%g,%g); oldvel=(%g,%g,%g); newvel=(%g,%g,%g)",
         *GetDebugName(), oldDT, Ent->DataGameTime,
@@ -641,6 +651,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
         oldVel.x, oldVel.y, oldVel.z,
         Ent->Velocity.x, Ent->Velocity.y, Ent->Velocity.z);
     }
+    #endif
   }
 
   if (Connection->IsClient() && Thinker) {
