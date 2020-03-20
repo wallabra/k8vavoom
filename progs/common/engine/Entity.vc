@@ -425,7 +425,9 @@ replication {
   reliable if (Role == ROLE_Authority && bNetDetach)
     // see below for `PlaneAlpha`
     bNoTickGrav, bNoTickGravLifeTime, LastMoveTime, // this is required for "notick" entities
-    bNoGravity, bStickToFloor, bStickToCeiling,
+    bNoGravity, bStickToFloor, bStickToCeiling;
+
+  reliable if (Role == ROLE_Authority && (bNetDetach || bIsPlayer))
     Velocity;
 
   reliable if (Role == ROLE_Authority && bNetInitial)

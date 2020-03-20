@@ -109,6 +109,12 @@ transient protected array!WSlotEntry actualWeaponSlots;
 transient int secondaryBloodCount;
 
 
+replication {
+  reliable if (Role == ROLE_Authority)
+    ViewHeight;
+}
+
+
 //==========================================================================
 //
 //  GetPawnViewHeight
