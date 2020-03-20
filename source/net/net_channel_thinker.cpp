@@ -279,6 +279,22 @@ void VThinkerChannel::Update () {
   // temporarily set `bNetDetach`
   if (Ent && (detachEntity || detachSimulated)) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
 
+  vuint8 oldRole = Thinker->Role, oldRemoteRole = Thinker->RemoteRole;
+  bool restoreRoles = false;
+
+  // fix remote role for player MO
+  if (Ent && Ent->IsPlayer()) {
+    auto pc = Connection->GetPlayerChannel();
+    if (pc && pc->Plr && pc->Plr->MO == Ent) {
+      // our MO
+      restoreRoles = (Ent->RemoteRole != ROLE_AutonomousProxy);
+      Ent->RemoteRole = ROLE_AutonomousProxy;
+    } else {
+      restoreRoles = (Ent->RemoteRole != ROLE_DumbProxy);
+      Ent->RemoteRole = ROLE_DumbProxy;
+    }
+  }
+
   // it is important to call this *BEFORE* changing the roles!
   EvalCondValues(Thinker, Thinker->GetClass(), FieldCondValues);
 
@@ -286,13 +302,8 @@ void VThinkerChannel::Update () {
   Thinker->ThinkerFlags = oldThFlags;
 
   // fix the roles if we're going to detach this entity
-  vuint8 oldRole = 0, oldRemoteRole = 0;
-  bool restoreRoles = false;
   if (detachEntity || isSimulated) {
     restoreRoles = true;
-    // this is Role on the client
-    oldRole = Thinker->Role;
-    oldRemoteRole = Thinker->RemoteRole;
     // set role on the client (completely detached)
     Thinker->RemoteRole = (isSimulated ? ROLE_SimulatedProxy : ROLE_Authority);
     // set role on the server (simulated proxy is still the authority)

@@ -54,6 +54,8 @@ VCvarS cl_color("color", "00 ff 00", "Player color.", CVAR_Archive|CVAR_UserInfo
 VCvarI cl_class("class", "0", "Player class.", /*CVAR_Archive|*/CVAR_UserInfo); // do not save it, because it may interfere with other games
 VCvarS cl_model("model", "", "Player model.", CVAR_Archive|CVAR_UserInfo);
 
+static VCvarB cl_autonomous_proxy("cl_autonomous_proxy", false, "Is our client an autonomous proxy?", CVAR_PreInit);
+
 static VCvarB d_attraction_mode("d_attraction_mode", false, "Allow demo playback (won't work with non-k8vavoom demos)?", CVAR_Archive);
 
 extern VCvarB r_wipe_enabled;
@@ -424,8 +426,13 @@ extern VCvarI sv_maxmove;
 //==========================================================================
 static void CL_RunSimulatedPlayerTick (float deltaTime) {
   if (!cl || !cl->Net || !cl->MO || !cl->Net->GetPlayerChannel()->GotMOOrigin) return;
+  //if (cl->MO->Role != ROLE_AutonomousProxy) return;
+  if (!cl->isAutonomousProxy()) return;
+
   auto oldplr = cl->MO->Player;
+  auto oldRole = cl->MO->Role;
   cl->MO->Player = cl;
+  cl->MO->Role = ROLE_AutonomousProxy; // force it, why not?
 
   cl->ForwardMove = cl->ClientForwardMove;
   cl->SideMove = cl->ClientSideMove;
@@ -446,11 +453,14 @@ static void CL_RunSimulatedPlayerTick (float deltaTime) {
   */
 
   //GCon->Logf(NAME_Debug, "SIMPL:000: org=(%g,%g,%g); vel=(%g,%g,%g); fwd=%g; side=%g", cl->MO->Origin.x, cl->MO->Origin.y, cl->MO->Origin.z, cl->MO->Velocity.x, cl->MO->Velocity.y, cl->MO->Velocity.z, cl->ForwardMove, cl->SideMove);
+  //GCon->Logf(NAME_Debug, "000: ViewHeight=%g", cl->ViewHeight);
   cl->MO->Tick(deltaTime);
   cl->eventPlayerTick(deltaTime);
   cl->eventSetViewPos();
+  //GCon->Logf(NAME_Debug, "001: ViewHeight=%g", cl->ViewHeight);
   //GCon->Logf(NAME_Debug, "SIMPL:001: org=(%g,%g,%g); vel=(%g,%g,%g); fwd=%g; side=%g", cl->MO->Origin.x, cl->MO->Origin.y, cl->MO->Origin.z, cl->MO->Velocity.x, cl->MO->Velocity.y, cl->MO->Velocity.z, cl->ForwardMove, cl->SideMove);
   cl->MO->Player = oldplr;
+  cl->MO->Role = oldRole;
 }
 
 
@@ -696,6 +706,8 @@ void CL_SetupNetClient (VSocketPublic *Sock) {
   }
   ClientNetContext->ServerConnection = cl->Net;
   cl->Net->GetPlayerChannel()->SetPlayer(cl);
+  cl->eventClientSetAutonomousProxy(cl_autonomous_proxy.asBool());
+  cl->setAutonomousProxy(cl_autonomous_proxy.asBool());
 }
 
 

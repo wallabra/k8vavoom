@@ -196,6 +196,7 @@ struct tmtrace_t {
   TVec Pos; // valid for cptrace_t
 };
 
+
 // info for drawing: position
 TVec Origin;
 
@@ -208,7 +209,6 @@ native transient bool bIntrJustMoved;
 
 // momentums, used to update position
 TVec Velocity;
-
 TAVec Angles; // orientation
 
 readonly state State;

@@ -649,8 +649,8 @@ void SaveViewOrgFixInfo () {
 //  ClientSetViewOrg
 //
 //==========================================================================
-override void ClientSetViewOrg (float x, float y, float z) {
-  ::ClientSetViewOrg(x, y, z);
+override void ClientSetViewOrg (TVec neworg) {
+  ::ClientSetViewOrg(neworg);
   SaveViewOrgFixInfo();
 }
 
@@ -4260,15 +4260,16 @@ bool doHealthAccumHealthPickup (Health item, EntityEx toucher) {
 //
 //==========================================================================
 void SimulatedPlayerTick (float deltaTime) {
+  assert(bAutonomousProxy); // just in case
   assert(!bIsBot); // the thing that should not be
 
   if (PlayerState == PST_DEAD) return;
 
-  // you can only press use while totally frozen
-  if (bTotallyFrozen || (Level.bFrozen && !(Cheats&CF_TIMEFREEZE))) return;
-
   // copy view angles
   if (MO == Camera) MO.Angles = ViewAngles;
+
+  // you can only press use while totally frozen
+  if (bTotallyFrozen || (Level.bFrozen && !(Cheats&CF_TIMEFREEZE))) return;
 
   // move around
   // ReactionTime is used to prevent movement for a bit after a teleport (or water jump)
@@ -4287,11 +4288,13 @@ void SimulatedPlayerTick (float deltaTime) {
     }
   }
 
+  //printdebug("%C:000: vh=%s; movh=%s", self, ViewHeight, PlayerPawn(MO).ViewHeight);
   CalcHeight(deltaTime);
+  //printdebug("%C:001: vh=%s; movh=%s", self, ViewHeight, PlayerPawn(MO).ViewHeight);
 
   if (MO.Sector) {
     PlayerProcessScrollSectors(deltaTime);
-    if (MO.Sector->special || MO.Sector->Damage) PlayerInSpecialSector(deltaTime);
+    //if (MO.Sector->special || MO.Sector->Damage) PlayerInSpecialSector(deltaTime);
   }
 
   /*
@@ -4708,7 +4711,7 @@ override void SetViewPos () {
 
   PaletteFlash();
 
-  ClientSetViewOrg(ViewOrg.x, ViewOrg.y, ViewOrg.z);
+  ClientSetViewOrg(ViewOrg);
 
   if (Level.XLevel.Zones.length && Camera.Sector) {
     SoundEnvironment = Level.XLevel.Zones[Camera.Sector->Zone];

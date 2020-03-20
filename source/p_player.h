@@ -100,19 +100,21 @@ class VBasePlayer : public VGameObject {
   VLevelInfo *Level;
 
   enum {
-    PF_Active            = 0x0001u,
-    PF_Spawned           = 0x0002u,
-    PF_IsBot             = 0x0004u,
-    PF_FixAngle          = 0x0008u,
-    PF_AttackDown        = 0x0010u, // True if button down last tic.
-    PF_UseDown           = 0x0020u,
-    PF_DidSecret         = 0x0040u, // True if secret level has been done.
-    PF_Centering         = 0x0080u,
-    PF_IsClient          = 0x0100u, // Player on client side
-    PF_AutomapRevealed   = 0x0200u,
-    PF_AutomapShowThings = 0x0400u,
-    PF_ReloadQueued      = 0x0800u,
-    PF_ZoomDown          = 0x1000u,
+    PF_Active            = 0x00000001u,
+    PF_Spawned           = 0x00000002u,
+    PF_IsBot             = 0x00000004u,
+    PF_FixAngle          = 0x00000008u,
+    PF_AttackDown        = 0x00000010u, // True if button down last tic.
+    PF_UseDown           = 0x00000020u,
+    PF_DidSecret         = 0x00000040u, // True if secret level has been done.
+    PF_Centering         = 0x00000080u,
+    PF_IsClient          = 0x00000100u, // Player on client side
+    PF_AutomapRevealed   = 0x00000200u,
+    PF_AutomapShowThings = 0x00000400u,
+    PF_ReloadQueued      = 0x00000800u,
+    PF_ZoomDown          = 0x00001000u,
+    // this flag is set for client games if the player is using prediction engine (not yet)
+    PF_AutonomousProxy   = 0x00002000u,
   };
   vuint32 PlayerFlags;
 
@@ -226,10 +228,10 @@ public:
 
   void ResetButtons ();
 
-  const int GetEffectiveSpriteIndex (int idx) const { return DispSpriteFrame[idx]&0x00ffffff; }
-  const int GetEffectiveSpriteFrame (int idx) const { return ((DispSpriteFrame[idx]>>24)&VState::FF_FRAMEMASK); }
+  inline int GetEffectiveSpriteIndex (int idx) const noexcept { return DispSpriteFrame[idx]&0x00ffffff; }
+  inline int GetEffectiveSpriteFrame (int idx) const noexcept { return ((DispSpriteFrame[idx]>>24)&VState::FF_FRAMEMASK); }
 
-  inline VAliasModelFrameInfo getMFI (int idx) const {
+  inline VAliasModelFrameInfo getMFI (int idx) const noexcept {
     VAliasModelFrameInfo res;
     res.sprite = DispSpriteName[idx];
     res.frame = GetEffectiveSpriteFrame(idx);
@@ -237,6 +239,9 @@ public:
     res.spriteIndex = GetEffectiveSpriteIndex(idx);
     return res;
   }
+
+  inline void setAutonomousProxy (bool v) noexcept { if (v) PlayerFlags |= PF_AutonomousProxy; else PlayerFlags &= ~PF_AutonomousProxy; }
+  inline bool isAutonomousProxy () const noexcept { return !!(PlayerFlags&PF_AutonomousProxy); }
 
   //  VObject interface
   virtual bool ExecuteNetMethod(VMethod *) override;
@@ -521,4 +526,6 @@ public:
   int GetCurrentArmorMaxAbsorb () { static VMethodProxy method("GetCurrentArmorMaxAbsorb"); vobjPutParamSelf(); VMT_RET_INT(method); }
   int GetCurrentArmorFullAbsorb () { static VMethodProxy method("GetCurrentArmorFullAbsorb"); vobjPutParamSelf(); VMT_RET_INT(method); }
   int GetCurrentArmorActualSaveAmount () { static VMethodProxy method("GetCurrentArmorActualSaveAmount"); vobjPutParamSelf(); VMT_RET_INT(method); }
+
+  void eventClientSetAutonomousProxy (bool value) { static VMethodProxy method("ClientSetAutonomousProxy"); vobjPutParamSelf(value); VMT_RET_VOID(method); }
 };

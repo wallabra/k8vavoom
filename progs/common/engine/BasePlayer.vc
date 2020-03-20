@@ -65,6 +65,8 @@ bool bAutomapRevealed;
 bool bAutomapShowThings;
 bool bReloadQueued; // true if "reload" was pressed
 bool bZoomDown; // `true` if button down last tic
+// this flag is set for client games if the player is using prediction engine (not yet)
+transient bool bAutonomousProxy;
 
 native readonly private void *Net;
 
@@ -165,8 +167,19 @@ replication {
     bAttackDown, bReloadQueued, bZoomDown,
     WorldTimer, GameTime, LastDeltaTime;
 
+  // methods server can execute on client
   unreliable if (!bIsClient)
-    ClientStartSound, ClientStopSound, ClientSetViewOrg;
+    ClientStartSound, ClientStopSound;
+
+  // methods server can execute on client (we don't need this for predicted player)
+  //FIXME: but we need this for different camera
+  unreliable if (!bIsClient && (!bAutonomousProxy || Camera != MO))
+    ClientSetViewOrg;
+
+  // client know better (for now), so it informs the server
+  // the server maintains all prediction data in any case
+  reliable if (bIsClient)
+    ClientSetAutonomousProxy;
 
   // methods server can execute on client
   reliable if (!bIsClient)
@@ -419,11 +432,23 @@ void ServerImpulse (int AImpulse) {
 
 //==========================================================================
 //
+//  ClientSetAutonomousProxy
+//
+//==========================================================================
+void ClientSetAutonomousProxy (bool value) {
+  printdebug("%C: setting autonomous proxy! value=%B", self, value);
+  bAutonomousProxy = value;
+}
+
+
+//==========================================================================
+//
 //  ClientSetViewOrg
 //
 //==========================================================================
-void ClientSetViewOrg (float x, float y, float z) {
-  ViewOrg = vector(x, y, z);
+void ClientSetViewOrg (TVec neworg) {
+  //if (!bAutonomousProxy) printdebug("%C: setting view origin! value=%s : %s", self, ViewOrg, neworg);
+  ViewOrg = neworg;
 }
 
 
