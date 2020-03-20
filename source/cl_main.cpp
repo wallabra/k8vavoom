@@ -218,11 +218,19 @@ void CL_ReadFromServer (float deltaTime) {
       GClLevel->TicTime = (int)(GClLevel->Time*35.0f);
     }
 
+    if (cl->ClCurrGameTime < cl->ClLastGameTime) {
+      GCon->Logf(NAME_Debug, ":RECV: repredict! oldtime=%g; newtime=%g; d=%g; deltaTime=%g", cl->ClCurrGameTime, cl->ClLastGameTime, cl->ClLastGameTime-cl->ClCurrGameTime, deltaTime);
+      cl->ClCurrGameTime = cl->ClLastGameTime;
+    } else {
+      GCon->Logf(NAME_Debug, ":RECV: prediction: oldtime=%g; newtime=%g; d=%g; deltaTime=%g", cl->ClCurrGameTime, cl->ClLastGameTime, cl->ClCurrGameTime-cl->ClLastGameTime, deltaTime);
+    }
     CL_UpdateMobjs(deltaTime);
     // update world tick for client network games (copy from the server tic)
     cl->ClCurrGameTime += deltaTime;
     cl->eventClientTick(deltaTime);
     if (deltaTime) CL_Ticker();
+
+    GCon->Logf(NAME_Debug, ":RECV: camera is MO:%d; GameTime=%g; ClLastGameTime=%g; ClCurrGameTime=%g", (cl->Camera == cl->MO ? 1 : 0), cl->GameTime, cl->ClLastGameTime, cl->ClCurrGameTime);
   } else {
     /*
     if (GGameInfo->NetMode == NM_Client && deltaTime) {
@@ -396,6 +404,7 @@ void CL_SendMove () {
     if (cl->Net) {
       VPlayerChannel *pc = cl->Net->GetPlayerChannel();
       if (pc) pc->Update();
+      GCon->Logf(NAME_Debug, ":SEND: camera is MO:%d; GameTime=%g; ClLastGameTime=%g; ClCurrGameTime=%g", (cl->Camera == cl->MO ? 1 : 0), cl->GameTime, cl->ClLastGameTime, cl->ClCurrGameTime);
     }
   }
 
