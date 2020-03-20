@@ -415,6 +415,45 @@ bool CL_GotNetOrigin () {
 
 
 extern VCvarI sv_maxmove;
+
+
+//==========================================================================
+//
+//  CL_RunSimulatedPlayerTick
+//
+//==========================================================================
+static void CL_RunSimulatedPlayerTick (float deltaTime) {
+  if (!cl || !cl->Net || !cl->MO || !cl->Net->GetPlayerChannel()->GotMOOrigin) return;
+  auto oldplr = cl->MO->Player;
+  cl->MO->Player = cl;
+
+  cl->ForwardMove = cl->ClientForwardMove;
+  cl->SideMove = cl->ClientSideMove;
+
+  // don't move faster than maxmove
+       if (cl->ForwardMove > sv_maxmove) cl->ForwardMove = sv_maxmove;
+  else if (cl->ForwardMove < -sv_maxmove) cl->ForwardMove = -sv_maxmove;
+       if (cl->SideMove > sv_maxmove) cl->SideMove = sv_maxmove;
+  else if (cl->SideMove < -sv_maxmove) cl->SideMove = -sv_maxmove;
+  // check for disabled freelook and jumping
+  /*
+  if (!sv_ignore_nomlook && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) cl->ViewAngles.pitch = 0;
+  if (!sv_ignore_nojump && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoJump)) cl->Buttons &= ~BT_JUMP;
+  if (!sv_ignore_nocrouch && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF2_NoCrouch)) cl->Buttons &= ~BT_JUMP;
+  if (cl_disable_crouch) cl->Buttons &= ~BT_CROUCH;
+  if (cl_disable_jump) cl->Buttons &= ~BT_JUMP;
+  if (cl_disable_mlook) cl->ViewAngles.pitch = 0;
+  */
+
+  //GCon->Logf(NAME_Debug, "SIMPL:000: org=(%g,%g,%g); vel=(%g,%g,%g); fwd=%g; side=%g", cl->MO->Origin.x, cl->MO->Origin.y, cl->MO->Origin.z, cl->MO->Velocity.x, cl->MO->Velocity.y, cl->MO->Velocity.z, cl->ForwardMove, cl->SideMove);
+  cl->MO->Tick(deltaTime);
+  cl->eventPlayerTick(deltaTime);
+  cl->eventSetViewPos();
+  //GCon->Logf(NAME_Debug, "SIMPL:001: org=(%g,%g,%g); vel=(%g,%g,%g); fwd=%g; side=%g", cl->MO->Origin.x, cl->MO->Origin.y, cl->MO->Origin.z, cl->MO->Velocity.x, cl->MO->Velocity.y, cl->MO->Velocity.z, cl->ForwardMove, cl->SideMove);
+  cl->MO->Player = oldplr;
+}
+
+
 //==========================================================================
 //
 //  CL_SendMove
@@ -429,6 +468,7 @@ void CL_SendMove () {
     if (!GGameInfo->IsPaused()) cl->HandleInput();
     if (cl->Net) {
       VPlayerChannel *pc = cl->Net->GetPlayerChannel();
+      CL_RunSimulatedPlayerTick(host_frametime);
       if (pc) pc->Update();
       //GCon->Logf(NAME_Debug, ":SEND: camera is MO:%d; GameTime=%g; ClLastGameTime=%g; ClCurrGameTime=%g", (cl->Camera == cl->MO ? 1 : 0), cl->GameTime, cl->ClLastGameTime, cl->ClCurrGameTime);
     }

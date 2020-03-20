@@ -4256,17 +4256,70 @@ bool doHealthAccumHealthPickup (Health item, EntityEx toucher) {
 
 //==========================================================================
 //
+//  SimulatedPlayerTick
+//
+//==========================================================================
+void SimulatedPlayerTick (float deltaTime) {
+  assert(!bIsBot); // the thing that should not be
+
+  if (PlayerState == PST_DEAD) return;
+
+  // you can only press use while totally frozen
+  if (bTotallyFrozen || (Level.bFrozen && !(Cheats&CF_TIMEFREEZE))) return;
+
+  // copy view angles
+  if (MO == Camera) MO.Angles = ViewAngles;
+
+  // move around
+  // ReactionTime is used to prevent movement for a bit after a teleport (or water jump)
+  if (Actor(MO).ReactionTime) {
+    Actor(MO).ReactionTime -= deltaTime;
+    if (Actor(MO).ReactionTime <= 0.0) Actor(MO).ReactionTime = 0.0;
+    if (Actor(MO).bWaterJump) WaterJump();
+  } else {
+    if (MO.WaterLevel > 1) {
+      WaterMove(deltaTime);
+    } else {
+      LastWaterLevel = 0; // yes, zero
+      MovePlayer(deltaTime);
+      // allow to jump out of the water if we aren't submerged too deep
+      if (MO.WaterLevel) CheckWaterJump(asStep:true);
+    }
+  }
+
+  CalcHeight(deltaTime);
+
+  if (MO.Sector) {
+    PlayerProcessScrollSectors(deltaTime);
+    if (MO.Sector->special || MO.Sector->Damage) PlayerInSpecialSector(deltaTime);
+  }
+
+  /*
+  if (MO.Velocity.z <= -35.0*35.0 && MO.Velocity.z >= -40.0*35.0 &&
+      !MorphTime && MO.WaterLevel == 0 &&
+      !GetSoundPlayingInfo(MO, GetSoundID('*falling')))
+  {
+    MO.PlaySound('*falling', CHAN_VOICE);
+  }
+  */
+}
+
+
+//==========================================================================
+//
 //  PlayerTick
 //
 //==========================================================================
 override void PlayerTick (float deltaTime) {
+  if (!MO) return;
+
+  if (bIsClient) { SimulatedPlayerTick(deltaTime); return; }
+
   LastDeltaTime = deltaTime;
 
   // update current world tick for server
-  if (MO) {
-    // advance it, because it will be like that when sent
-    GameTime = MO.XLevel.Time+deltaTime;
-  }
+  // advance it, because it will be like that when sent
+  GameTime = MO.XLevel.Time+deltaTime;
 
   bool isBot = bIsBot;
 
