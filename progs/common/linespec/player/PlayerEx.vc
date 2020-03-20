@@ -4267,13 +4267,6 @@ override void PlayerTick (float deltaTime) {
     // advance it, because it will be like that when sent
     GameTime = MO.XLevel.Time+deltaTime;
   }
-  scope(exit) {
-    if (MO) {
-      LastVelocity = MO.Velocity;
-    } else {
-      LastVelocity = vector(0, 0, 0);
-    }
-  }
 
   bool isBot = bIsBot;
 

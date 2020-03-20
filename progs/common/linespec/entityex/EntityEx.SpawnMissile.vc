@@ -89,7 +89,7 @@ final bool CheckMissileSpawn () {
 //
 //==========================================================================
 final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
-  if (!bDetachFromServer && !Level.Game.IsAuthority) {
+  if (!bDetachFromServer && /*!Level.Game.IsAuthority*/Role == ROLE_SimulatedProxy) {
     //printdebug("%C: CLIENT EXPLODING MISSILE; Victim=%C", self, Victim);
     printdebug("%C: reverting to dumb proxy (client)", self);
     Role = ROLE_DumbProxy; // revert to dumb, so we can get an explosion
@@ -122,6 +122,8 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
     if (!ExplState) ExplState = FindState('Death', 'Extreme');
   }
   if (!ExplState) ExplState = FindState('Death');
+
+  if (self isa 'DoomImpBall') printdebug("%C: roles: role=%s; remote=%s", self, Role, RemoteRole);
 
   // revert to normal
   if (!bDetachFromServer && RemoteRole == ROLE_SimulatedProxy) {

@@ -207,12 +207,14 @@ void CL_ReadFromServer (float deltaTime) {
   }
 
   if (cls.signon) {
-    /*
+    /* // for interpolator
     if (GGameInfo->NetMode == NM_Client && deltaTime) {
       GClLevel->Time += deltaTime;
       GClLevel->TicTime = (int)(GClLevel->Time*35.0f);
     }
     */
+
+    // bad for interpolator
     if (GGameInfo->NetMode == NM_Client) {
       GClLevel->Time = cl->GameTime;
       GClLevel->TicTime = (int)(GClLevel->Time*35.0f);
@@ -427,7 +429,7 @@ void CL_SendMove () {
     if (cl->Net) {
       VPlayerChannel *pc = cl->Net->GetPlayerChannel();
       if (pc) pc->Update();
-      GCon->Logf(NAME_Debug, ":SEND: camera is MO:%d; GameTime=%g; ClLastGameTime=%g; ClCurrGameTime=%g", (cl->Camera == cl->MO ? 1 : 0), cl->GameTime, cl->ClLastGameTime, cl->ClCurrGameTime);
+      //GCon->Logf(NAME_Debug, ":SEND: camera is MO:%d; GameTime=%g; ClLastGameTime=%g; ClCurrGameTime=%g", (cl->Camera == cl->MO ? 1 : 0), cl->GameTime, cl->ClLastGameTime, cl->ClCurrGameTime);
     }
   }
 

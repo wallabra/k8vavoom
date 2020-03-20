@@ -46,7 +46,6 @@ VThinkerChannel::VThinkerChannel (VNetConnection *AConnection, vint32 AIndex, vu
   , OldData(nullptr)
   , NewObj(false)
   , FieldCondValues(nullptr)
-  , OriginUpdated(false)
   , GotOrigin(false)
   , LastUpdateFrame(0)
 {
@@ -527,10 +526,11 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
   VEntity *Ent = Cast<VEntity>(Thinker);
   TVec oldOrg(0.0f, 0.0f, 0.0f);
   TAVec oldAngles(0.0f, 0.0f, 0.0f);
-  #ifdef VV_NET_DEBUG_DUMP_ORGVEL
-  TVec oldVel(0.0f, 0.0f, 0.0f);
   float oldDT = 0;
   bool gotDataGameTime = false;
+  const bool wasGotOrigin = GotOrigin;
+  #ifdef VV_NET_DEBUG_DUMP_ORGVEL
+  TVec oldVel(0.0f, 0.0f, 0.0f);
   #endif
   if (Ent) {
     Ent->UnlinkFromWorld();
@@ -539,9 +539,9 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     //      setup interpolation variables
     oldOrg = Ent->Origin;
     oldAngles = Ent->Angles;
+    oldDT = Ent->DataGameTime;
     #ifdef VV_NET_DEBUG_DUMP_ORGVEL
     oldVel = Ent->Velocity;
-    oldDT = Ent->DataGameTime;
     #endif
   }
 
@@ -591,12 +591,9 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
             auto pc = Connection->GetPlayerChannel();
             if (pc && pc->Plr && pc->Plr->MO == Thinker) pc->GotMOOrigin = true;
           }
-        }
-        #ifdef VV_NET_DEBUG_DUMP_ORGVEL
-        else if (F == Connection->DataGameTimeField) {
+        } else if (F == Connection->DataGameTimeField) {
           gotDataGameTime = true;
         }
-        #endif
       }
       continue;
     }
@@ -609,49 +606,32 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
 
   if (Ent) {
     Ent->LinkToWorld(true);
-    //TODO: do not interpolate players?
-    TVec newOrg = Ent->Origin;
-    if (fabs(newOrg.x-oldOrg.x) > 1 || fabs(newOrg.y-oldOrg.y) > 1 || fabs(newOrg.z-oldOrg.z) > 1) {
-      if (OriginUpdated) {
-        //GCon->Logf(NAME_Debug, "ENTITY '%s':%u moved! statetime=%g; state=%s", Ent->GetClass()->GetName(), Ent->GetUniqueId(), Ent->StateTime, (Ent->State ? *Ent->State->Loc.toStringNoCol() : "<none>"));
-        if (Ent->StateTime < 0 /*|| !Ent->IsPlayerOrMonster()*/) {
-          Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
-          OriginUpdated = false;
-        } else if (Ent->StateTime > 0) {
-          if ((newOrg-oldOrg).length2DSquared() < 64*64) {
-            Ent->LastMoveOrigin = oldOrg;
-            //Ent->LastMoveAngles = oldAngles;
-            Ent->LastMoveAngles = Ent->Angles;
-            Ent->LastMoveTime = Ent->XLevel->Time;
-            Ent->LastMoveDuration = Ent->StateTime;
-            Ent->MoveFlags |= VEntity::MVF_JustMoved;
-          } else {
-            OriginUpdated = false;
-          }
-        } else {
-          Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
-        }
-      } else {
-        // updated for the first time, allow interpolation
-        OriginUpdated = true;
+    auto pc = Connection->GetPlayerChannel();
+    // do not interpolate player mobj
+    if (!wasGotOrigin || (pc && pc->Plr && pc->Plr->MO == Thinker)) {
+      Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+    } else {
+      TVec newOrg = Ent->Origin;
+      // try to compensate for teleports
+      if (fabs(newOrg.x-oldOrg.x) > 32 || fabs(newOrg.y-oldOrg.y) > 32 || fabs(newOrg.z-oldOrg.z) > 32) {
+        Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+      } else if (gotDataGameTime && Ent->DataGameTime > oldDT) {
+        Ent->LastMoveOrigin = oldOrg;
+        Ent->LastMoveAngles = oldAngles;
+        Ent->LastMoveTime = Ent->XLevel->Time; //-(Ent->DataGameTime-oldDT);
+        Ent->LastMoveDuration = (Ent->DataGameTime-oldDT);
+        Ent->MoveFlags |= VEntity::MVF_JustMoved;
+        //GCon->Logf(NAME_DevNet, "%s: INTERPOLATOR!", *GetDebugName());
+        #ifdef VV_NET_DEBUG_DUMP_ORGVEL
+        GCon->Logf(NAME_DevNet, "%s: oldtime=%g; newtime=%g; oldorg=(%g,%g,%g); neworg=(%g,%g,%g); oldvel=(%g,%g,%g); newvel=(%g,%g,%g)",
+          *GetDebugName(), oldDT, Ent->DataGameTime,
+          oldOrg.x, oldOrg.y, oldOrg.z,
+          Ent->Origin.x, Ent->Origin.y, Ent->Origin.z,
+          oldVel.x, oldVel.y, oldVel.z,
+          Ent->Velocity.x, Ent->Velocity.y, Ent->Velocity.z);
+        #endif
       }
     }
-
-    if (Connection->IsClient()) {
-      auto pc = Connection->GetPlayerChannel();
-      if (pc && pc->Plr && pc->Plr->MO == Thinker) Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
-    }
-
-    #ifdef VV_NET_DEBUG_DUMP_ORGVEL
-    if (gotDataGameTime && Connection->IsClient()) {
-      GCon->Logf(NAME_DevNet, "%s: oldtime=%g; newtime=%g; oldorg=(%g,%g,%g); neworg=(%g,%g,%g); oldvel=(%g,%g,%g); newvel=(%g,%g,%g)",
-        *GetDebugName(), oldDT, Ent->DataGameTime,
-        oldOrg.x, oldOrg.y, oldOrg.z,
-        Ent->Origin.x, Ent->Origin.y, Ent->Origin.z,
-        oldVel.x, oldVel.y, oldVel.z,
-        Ent->Velocity.x, Ent->Velocity.y, Ent->Velocity.z);
-    }
-    #endif
   }
 
   if (Connection->IsClient() && Thinker) {

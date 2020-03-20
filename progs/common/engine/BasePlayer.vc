@@ -166,7 +166,7 @@ replication {
     WorldTimer, GameTime, LastDeltaTime;
 
   unreliable if (!bIsClient)
-    ClientStartSound, ClientStopSound/*, ClientSetViewOrg*/;
+    ClientStartSound, ClientStopSound, ClientSetViewOrg;
 
   // methods server can execute on client
   reliable if (!bIsClient)

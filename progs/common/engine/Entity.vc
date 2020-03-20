@@ -415,7 +415,8 @@ transient float DataGameTime;
 
 replication {
   reliable if (!bDetachComplete && (Role == ROLE_Authority || bNetDetach))
-    Origin, Angles, FloorClip, State, StateTime, SpriteType,
+    Origin, Angles, DataGameTime,/* for interpolator*/
+    FloorClip, State, StateTime, SpriteType,
     FixedSpriteName, ModelVersion, RenderStyle, Alpha,
     Translation, StencilColor, ScaleX, ScaleY,
     bFly, bNoSector, bInvisible,
@@ -433,7 +434,7 @@ replication {
     bNoGravity, bStickToFloor, bStickToCeiling;
 
   reliable if (Role == ROLE_Authority && (bNetDetach || bIsPlayer))
-    Velocity, DataGameTime;
+    Velocity;
 
   reliable if (Role == ROLE_Authority && bNetInitial)
     Radius, Height, VanillaHeight, RenderRadius, FloatBobStrength,
