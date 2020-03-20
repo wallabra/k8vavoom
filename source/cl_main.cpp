@@ -207,18 +207,19 @@ void CL_ReadFromServer (float deltaTime) {
   }
 
   if (cls.signon) {
-    /* // for interpolator
+    // for interpolator
     if (GGameInfo->NetMode == NM_Client && deltaTime) {
       GClLevel->Time += deltaTime;
       GClLevel->TicTime = (int)(GClLevel->Time*35.0f);
     }
-    */
 
     // bad for interpolator
+    /*
     if (GGameInfo->NetMode == NM_Client) {
       GClLevel->Time = cl->GameTime;
       GClLevel->TicTime = (int)(GClLevel->Time*35.0f);
     }
+    */
 
     /*
     if (cl->ClCurrGameTime < cl->ClLastGameTime) {

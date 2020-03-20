@@ -246,6 +246,8 @@ void VThinkerChannel::Update () {
 
   //if (Thinker->ThinkerFlags&VThinker::TF_DetachSimulated) GCon->Logf(NAME_Debug, "%s: role=%u; rrole=%u; dts=%d; dt=%d", *GetDebugName(), Thinker->Role, Thinker->RemoteRole, (int)detachSimulated, (int)detachEntity);
 
+  //if (VStr::strEqu(Thinker->GetClass()->GetName(), "DoomImpBall")) GCon->Logf(NAME_DevNet, "%s:000: role=%u; remote=%u; desim=%d; issim=%d; dsflag=%d; inlist=%d", *GetDebugName(), Thinker->Role, Thinker->RemoteRole, (int)detachSimulated, (int)isSimulated, (int)(!!(Thinker->ThinkerFlags&VThinker::TF_DetachSimulated)), Connection->SimulatedThinkers.has(Thinker));
+
   // temporarily set "detach complete"
   const vuint32 oldThFlags = Thinker->ThinkerFlags;
   // check if we're detaching it for the first time
@@ -254,6 +256,7 @@ void VThinkerChannel::Update () {
     if (!detachSimulated) {
       // yeah, it becomes dumb proxy again
       Connection->SimulatedThinkers.del(Thinker);
+      Thinker->ThinkerFlags &= ~(VThinker::TF_DetachSimulated|VThinker::TF_DetachComplete); // just in case
       GCon->Logf(NAME_DevNet, "%s: becomes dumb proxy again", *GetDebugName());
     } else {
       // it was already detached
@@ -271,6 +274,8 @@ void VThinkerChannel::Update () {
     }
   }
 
+  //if (VStr::strEqu(Thinker->GetClass()->GetName(), "DoomImpBall")) GCon->Logf(NAME_DevNet, "%s:001: role=%u; remote=%u; desim=%d; issim=%d; dsflag=%d; inlist=%d", *GetDebugName(), Thinker->Role, Thinker->RemoteRole, (int)detachSimulated, (int)isSimulated, (int)(!!(Thinker->ThinkerFlags&VThinker::TF_DetachSimulated)), Connection->SimulatedThinkers.has(Thinker));
+
   // temporarily set `bNetDetach`
   if (Ent && (detachEntity || detachSimulated)) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
 
@@ -284,6 +289,7 @@ void VThinkerChannel::Update () {
   vuint8 oldRole = 0, oldRemoteRole = 0;
   bool restoreRoles = false;
   if (detachEntity || isSimulated) {
+    restoreRoles = true;
     // this is Role on the client
     oldRole = Thinker->Role;
     oldRemoteRole = Thinker->RemoteRole;
@@ -291,7 +297,6 @@ void VThinkerChannel::Update () {
     Thinker->RemoteRole = (isSimulated ? ROLE_SimulatedProxy : ROLE_Authority);
     // set role on the server (simulated proxy is still the authority)
     if (!isSimulated) Thinker->Role = ROLE_DumbProxy;
-    restoreRoles = true;
   }
 
   vuint8 *Data = (vuint8 *)Thinker;
@@ -433,7 +438,7 @@ void VThinkerChannel::Update () {
   Thinker->ThinkerFlags &= ~(VThinker::TF_NetInitial|VThinker::TF_NetOwner);
 
   // reset detach flag
-  if (Ent && (detachEntity || detachSimulated)) Ent->FlagsEx |= VEntity::EFEX_NetDetach;
+  if (Ent && (detachEntity || detachSimulated)) Ent->FlagsEx &= ~VEntity::EFEX_NetDetach;
 
   flushCount += FlushMsg(&Msg);
 
@@ -522,6 +527,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
   vassert(Thinker);
   VClass *ThinkerClass = Thinker->GetClass();
   const vuint8 prevRole = Thinker->Role;
+  const vuint8 prevRemoteRole = Thinker->RemoteRole;
 
   VEntity *Ent = Cast<VEntity>(Thinker);
   TVec oldOrg(0.0f, 0.0f, 0.0f);
@@ -533,7 +539,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
   TVec oldVel(0.0f, 0.0f, 0.0f);
   #endif
   if (Ent) {
-    Ent->UnlinkFromWorld();
+    //Ent->UnlinkFromWorld();
     //TODO: use this to interpolate movements
     //      actually, we need to quantize movements by frame tics (1/35), and
     //      setup interpolation variables
@@ -565,6 +571,8 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
         IntType.Type = F->Type.ArrayInnerType;
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs+Idx*IntType.GetSize(), IntType);
       } else {
+        if (Ent && F == Connection->OriginField) Ent->UnlinkFromWorld();
+
         VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs, F->Type);
 
         //HACK: read owner suid
@@ -585,6 +593,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
 
         // set "got origin" flag
         if (F == Connection->OriginField) {
+          if (Ent) Ent->LinkToWorld(false); // no need to do proper floor check here
           GotOrigin = true;
           // update player flags
           if (Connection->IsClient()) {
@@ -601,7 +610,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     // not a field: this must be RPC
     if (ReadRpc(Msg, FldIdx, Thinker)) continue;
 
-    Sys_Error("Bad net field %d", FldIdx);
+    Host_Error(va("%s: Bad net field %d", *GetDebugName(), FldIdx));
   }
 
   if (Ent) {
@@ -634,7 +643,10 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     }
   }
 
-  if (Connection->IsClient() && Thinker) {
+  if (!Thinker) return; // just in case
+
+  if (Connection->IsClient()) {
+    // client
     //if (Thinker->Role == ROLE_SimulatedProxy) GCon->Logf(NAME_Debug, "%s: prevrole=%u; role=%u", Thinker->GetClass()->GetName(), prevRole, Thinker->Role);
     if ((Msg.bClose && Thinker->Role == ROLE_Authority) ||
         (prevRole != ROLE_SimulatedProxy && Thinker->Role == ROLE_SimulatedProxy))
@@ -643,6 +655,15 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
       Thinker->ThinkerFlags |= VThinker::TF_DetachComplete;
       Thinker->eventOnDetachedFromServer();
       if (Ent) Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+    }
+  } else {
+    // server
+    if (prevRemoteRole != Thinker->RemoteRole || prevRole != Thinker->Role) GCon->Logf(NAME_DevNet, "%s: prev: rem=%u; role=%u; curr: rem=%u; role=%u", *GetDebugName(), prevRemoteRole, prevRole, Thinker->RemoteRole, Thinker->Role);
+    if (prevRemoteRole == ROLE_SimulatedProxy && Thinker->RemoteRole == ROLE_DumbProxy) {
+      // yeah, it becomes dumb proxy again
+      Connection->SimulatedThinkers.del(Thinker);
+      GCon->Logf(NAME_DevNet, "%s: becomes dumb proxy again (client request)", *GetDebugName());
+      Thinker->ThinkerFlags &= ~(VThinker::TF_DetachSimulated|VThinker::TF_DetachComplete);
     }
   }
 }

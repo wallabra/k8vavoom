@@ -307,7 +307,7 @@ void VPlayerChannel::ParseMessage (VMessageIn &Msg) {
 
     if (ReadRpc(Msg, FldIdx, Plr)) continue;
 
-    Sys_Error("Bad net field %d", FldIdx);
+    Host_Error(va("%s: Bad net field %d", *GetDebugName(), FldIdx));
   }
 
   //GCon->Logf(NAME_Debug, "%s: got WorldTimer=%g", *GetDebugName(), Plr->WorldTimer);

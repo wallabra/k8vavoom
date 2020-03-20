@@ -123,10 +123,10 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
   }
   if (!ExplState) ExplState = FindState('Death');
 
-  if (self isa 'DoomImpBall') printdebug("%C: roles: role=%s; remote=%s", self, Role, RemoteRole);
+  //if (self isa 'DoomImpBall') printdebug("%C: roles: role=%s; remote=%s; dts=%B", self, Role, RemoteRole, bDetachSimulated);
 
   // revert to normal
-  if (!bDetachFromServer && RemoteRole == ROLE_SimulatedProxy) {
+  if (!bDetachFromServer && Level.Game.IsAuthority /*&& RemoteRole == ROLE_SimulatedProxy*/) {
     printdebug("%C: reverting to dumb proxy; role=%s; remote=%s", self, Role, RemoteRole);
     RemoteRole = ROLE_DumbProxy;
     bDetachSimulated = false;
