@@ -369,7 +369,7 @@ void VObjectMapChannel::Update () {
     strm << cprBuffer[cprBufferPos];
     if (WillOverflowMsg(&outmsg, strm)) {
       FlushMsg(&outmsg);
-      if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...names: [%d/%d] (%d)", cprBufferPos, cprBufferSize, GetSendQueueSize());
+      //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...names: [%d/%d] (%d)", cprBufferPos, cprBufferSize, GetSendQueueSize());
       if (!OpenAcked) { UpdateSendPBar(); return; } // if not opened, don't spam with packets yet
       // is queue full?
       if (!CanSendData()) {
@@ -389,7 +389,7 @@ void VObjectMapChannel::Update () {
     // send message if this class will not fit
     if (WillOverflowMsg(&outmsg, strm)) {
       FlushMsg(&outmsg);
-      if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...classes: [%d/%d] (%d)", CurrClass+1, Connection->ObjMap->ClassLookup.length(), GetSendQueueSize());
+      //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  ...classes: [%d/%d] (%d)", CurrClass+1, Connection->ObjMap->ClassLookup.length(), GetSendQueueSize());
       if (!OpenAcked) { UpdateSendPBar(); return; } // if not opened, don't spam with packets yet
       // is queue full?
       if (!CanSendData()) {
@@ -400,7 +400,7 @@ void VObjectMapChannel::Update () {
     }
     PutStream(&outmsg, strm);
     ++CurrClass;
-    if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name);
+    //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name);
   }
 
   // this is the last message
@@ -425,6 +425,7 @@ void VObjectMapChannel::Update () {
 //==========================================================================
 void VObjectMapChannel::LiveUpdate () {
   if (NextNameToSend >= VName::GetNumNames()) return; // no new names
+  if (!CanSendData()) return; // not yet
 
   // use bitstream and split it to the messages here
   VMessageOut Msg(this);
@@ -433,12 +434,14 @@ void VObjectMapChannel::LiveUpdate () {
   while (NextNameToSend < VName::GetNumNames()) {
     const char *text = *VName::CreateWithIndex(NextNameToSend);
     const int len = VStr::Length(text);
-    GCon->Logf(NAME_DevNet, "%s: sending new name #%d (%s) (CurrName=%d; names=%d; known=%d)", *GetDebugName(), NextNameToSend, text, CurrName, VName::GetNumNames(), Connection->ObjMap->NameLookup.length());
+    if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "%s: sending new name #%d (%s) (CurrName=%d; names=%d; known=%d)", *GetDebugName(), NextNameToSend, text, CurrName, VName::GetNumNames(), Connection->ObjMap->NameLookup.length());
     vassert(len > 0 && len <= NAME_SIZE);
     strm << STRM_INDEX(len);
     strm.Serialise((char *)text, len);
     ++NextNameToSend;
-    PutStream(&Msg, strm);
+    if (PutStream(&Msg, strm)) {
+      if (!CanSendData()) break; // stop right here
+    }
   }
   FlushMsg(&Msg);
 }
@@ -471,7 +474,7 @@ void VObjectMapChannel::LiveParse (VMessageIn &Msg) {
     VMessageOut outmsg(this);
     outmsg << STRM_INDEX(nameAck);
     SendMessage(&outmsg);
-    GCon->Logf(NAME_DevNet, "%s: sent ack for name #%d", *GetDebugName(), nameAck);
+    if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "%s: sent ack for name #%d", *GetDebugName(), nameAck);
   }
 }
 
@@ -493,7 +496,7 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
         Connection->Close();
         return;
       }
-      GCon->Logf(NAME_DevNet, "%s: got ack for name #%d", *GetDebugName(), NameAck);
+      if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "%s: got ack for name #%d", *GetDebugName(), NameAck);
       // mark initial data completion
       if (NameAck >= CurrName) Connection->ObjMapSent = true;
       // internalise acked names
@@ -571,7 +574,7 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
     Connection->ObjMap->ClassLookup[CurrClass] = C;
     Connection->ObjMap->ClassMap.Set(C, CurrClass);
     ++CurrClass;
-    if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s : %s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name, C->GetName());
+    //if (net_debug_dump_chan_objmap) GCon->Logf(NAME_DevNet, "  :class: [%d/%d]: <%s : %s>", CurrClass, Connection->ObjMap->ClassLookup.length(), *Name, C->GetName());
   }
 
   UpdateRecvPBar(Msg.bClose);

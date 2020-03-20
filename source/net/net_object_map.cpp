@@ -27,6 +27,7 @@
 #include "network.h"
 
 static VCvarB net_debug_name_io("net_debug_name_io", false, "Dump name i/o?");
+static VCvarB net_debug_send_initial_names("net_debug_send_initial_names", true, "If false, no initial names will be sent.");
 
 
 //==========================================================================
@@ -35,8 +36,7 @@ static VCvarB net_debug_name_io("net_debug_name_io", false, "Dump name i/o?");
 //
 //==========================================================================
 VNetObjectsMap::VNetObjectsMap ()
-  : NewNameFirstIndex(0)
-  , Connection(nullptr)
+  : Connection(nullptr)
 {
 }
 
@@ -47,8 +47,7 @@ VNetObjectsMap::VNetObjectsMap ()
 //
 //==========================================================================
 VNetObjectsMap::VNetObjectsMap (VNetConnection *AConnection)
-  : NewNameFirstIndex(0)
-  , Connection(AConnection)
+  : Connection(AConnection)
 {
 }
 
@@ -68,16 +67,17 @@ VNetObjectsMap::~VNetObjectsMap () {
 //
 //==========================================================================
 void VNetObjectsMap::SetupClassLookup () {
-  NameMap.setLength(VName::GetNumNames());
-  NameLookup.setLength(VName::GetNumNames());
-  for (int i = 0; i < VName::GetNumNames(); ++i) {
+  // 0 is reserved for ''
+  // it is possible to send no names at all, but i see no reason to do that
+  // 200-300 kb is nothing for the current connections (and mobile connections sux anyway)
+  const int nameCount = (net_debug_send_initial_names ? VName::GetNumNames() : min2(16, VName::GetNumNames()));
+  NameMap.setLength(nameCount);
+  NameLookup.setLength(nameCount);
+  for (int i = 0; i < nameCount; ++i) {
     NameMap[i] = i;
     NameLookup[i] = VName::CreateWithIndex(i);
   }
   vassert(NameLookup[0] == NAME_None);
-
-  // 0 is reserved for ''
-  NewNameFirstIndex = NameMap.length()+1;
 
   // collect all possible thinker classes
   ClassLookup.Clear();
@@ -106,8 +106,6 @@ void VNetObjectsMap::SetNumberOfKnownNames (int newlen) {
   //NameMap.setLength(newlen);
   NameMap.setLength(0);
   NameLookup.setLength(newlen);
-  // 0 is reserved for ''
-  NewNameFirstIndex = NameMap.length()+1;
 }
 
 
@@ -162,9 +160,6 @@ bool VNetObjectsMap::SerialiseNameNoIntern (VStream &Strm, VName &Name) {
     if (net_debug_name_io) GCon->Logf(NAME_Debug, "sent empty name");
     return true;
   }
-  //const int namecount = VName::GetNumNames();
-  //vassert(namecount > 0 && namecount < 1024*1024);
-  // note that code can create names on the fly, and we need to transmit them
   // let's hope that we won't get so much such names
   if (Name.GetIndex() >= NameMap.length()) {
     // new name
@@ -214,7 +209,6 @@ void VNetObjectsMap::AckNameWithIndex (int index) {
 //
 //==========================================================================
 bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
-  vassert(NewNameFirstIndex > 0);
   if (Strm.IsLoading()) {
     // reading name
     vuint32 NameIndex;
@@ -226,9 +220,7 @@ bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
       return true;
     }
     // special?
-    if (NameIndex&0x80000000u) {
-      // new index
-      NameIndex &= 0x7fffffffu;
+    if (NameIndex == 0xffffffffu) {
       // new name
       TArray<char> buf;
       vuint32 Len = 0;
@@ -239,20 +231,10 @@ bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
       buf[Len] = 0;
       VName NewName(buf.ptr());
       Name = NewName;
-      // append it
-      NewName2Idx.put(Name, NameIndex);
-      NewIdx2Name.put(NameIndex, Name);
-      if (net_debug_name_io) GCon->Logf(NAME_Debug, "got new name '%s' (%d)", *NewName, (int)NameIndex);
-    } else if ((vint32)NameIndex >= NameLookup.length()) {
-      // try known "new name"
-      auto nip = NewIdx2Name.find(NameIndex);
-      if (nip) {
-        Name = *nip;
-        if (net_debug_name_io) GCon->Logf(NAME_Debug, "got old new name '%s' (%d)", *Name, (int)NameIndex);
-      } else {
-        Name = NAME_None;
-        GCon->Logf(NAME_Error, "got invalid name index %d", (int)NameIndex);
-      }
+      if (net_debug_name_io) GCon->Logf(NAME_Debug, "got new name '%s'", *NewName);
+    } else if (NameIndex >= (vuint32)NameLookup.length()) {
+      Name = NAME_None;
+      GCon->Logf(NAME_Error, "got invalid name index %d", (int)NameIndex);
     } else {
       Name = NameLookup[NameIndex];
     }

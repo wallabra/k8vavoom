@@ -892,13 +892,6 @@ private:
   TArray<VClass *> ClassLookup;
   TMap<VClass *, vuint32> ClassMap;
 
-  // new names are collected here
-  // we can "push" new names on level reset
-  TMapNC<VName, int> NewName2Idx;
-  TMapNC<int, VName> NewIdx2Name;
-
-  int NewNameFirstIndex;
-
 public:
   VNetConnection *Connection;
 
