@@ -144,9 +144,10 @@ enum {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static int constexpr cestlen (const char *s) { return (s && *s ? 1+cestlen(s+1) : 0); }
+static int constexpr cestlen (const char *s, int pos=0) noexcept { return (s && s[pos] ? 1+cestlen(s, pos+1) : 0); }
 static constexpr const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 008.\n";
 enum { CDSLEN = cestlen(CACHE_DATA_SIGNATURE) };
+static_assert(CDSLEN == 32, "oops!");
 static bool cacheCleanupComplete = false; // do it only once, not on each map loading
 static TMap<VStr, bool> mapTextureWarns;
 
