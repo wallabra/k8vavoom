@@ -67,6 +67,7 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   , LastLevelUpdateTime(0)
   , LastThinkersUpdateTime(0)
   , UpdateFrameCounter(0)
+  , UpdateFingerUId(0)
   , ObjMapSent(false)
   , LevelInfoSent(LNFO_UNSENT)
   , Out(MAX_DGRAM_SIZE*8+128, false) // cannot grow
@@ -1452,7 +1453,7 @@ extern "C" {
     /*const*/ VEntity *ea = (/*const*/ VEntity *)ta;
     /*const*/ VEntity *eb = (/*const*/ VEntity *)tb;
 
-    // player is MO always first
+    // player MO always first
     if (ea == snfo->MO) {
       vassert(eb != snfo->MO);
       return -1;
@@ -1473,7 +1474,7 @@ extern "C" {
     } else {
       // first is not in inventory, check second
       if (eb->GetTopOwner() == snfo->MO) return 1; // b should come first, a > b
-      // neither is in inventory, use distance sort
+      // neither is in inventory, use type/distance sort
     }
 
     // type sorting
@@ -1495,45 +1496,55 @@ extern "C" {
       return (sideb ? -1 : 1); // if b is behind our back, a is first (a < b), otherwise b is first (a > b)
     }
 
+    // monsters
     if (((ea->FlagsEx|eb->FlagsEx)&VEntity::EFEX_Monster)) {
       // at least one is monster
       if (((ea->FlagsEx|eb->FlagsEx)^VEntity::EFEX_Monster)) {
         // one is monster
         return (ea->IsMonster() ? -1 : 1);
       }
-    } else if (((ea->EntityFlags|eb->EntityFlags)&VEntity::EF_Missile)) {
+    }
+    // projectiles
+    if (((ea->EntityFlags|eb->EntityFlags)&VEntity::EF_Missile)) {
       // at least one is missile
       if ((ea->EntityFlags^eb->EntityFlags)&VEntity::EF_Missile) {
         // one is missile
         return (ea->IsPlayer() ? -1 : 1);
       }
-    } else if (((ea->EntityFlags|eb->EntityFlags)&VEntity::EF_Solid)) {
+    }
+    // solid things
+    if (((ea->EntityFlags|eb->EntityFlags)&VEntity::EF_Solid)) {
       // at least one is solid
       if ((ea->EntityFlags^eb->EntityFlags)&VEntity::EF_Solid) {
         // one is solid
         return (ea->IsPlayer() ? -1 : 1);
       }
-    } else {
-      if (((ea->FlagsEx|eb->FlagsEx)&VEntity::EFEX_NoInteraction)) {
-        // at least one is "no interaction" (always last)
-        if (((ea->FlagsEx|eb->FlagsEx)^VEntity::EFEX_NoInteraction)) {
-          // one is "no interaction" (always last)
-          return (ea->IsMonster() ? 1 : -1);
-        }
+    }
+
+    // last
+
+    // no interaction
+    if (((ea->FlagsEx|eb->FlagsEx)&VEntity::EFEX_NoInteraction)) {
+      // at least one is "no interaction" (always last)
+      if (((ea->FlagsEx|eb->FlagsEx)^VEntity::EFEX_NoInteraction)) {
+        // one is "no interaction" (always last)
+        return (ea->IsMonster() ? 1 : -1);
       }
-      if (((ea->FlagsEx|eb->FlagsEx)&VEntity::EFEX_PseudoCorpse)) {
-        // at least one is pseudocorpse (corpse decoration, always last)
-        if (((ea->FlagsEx|eb->FlagsEx)^VEntity::EFEX_PseudoCorpse)) {
-          // one is pseudocorpse (corpse decoration, always last)
-          return (ea->IsMonster() ? 1 : -1);
-        }
+    }
+    // pseudocorpse
+    if (((ea->FlagsEx|eb->FlagsEx)&VEntity::EFEX_PseudoCorpse)) {
+      // at least one is pseudocorpse (corpse decoration, always last)
+      if (((ea->FlagsEx|eb->FlagsEx)^VEntity::EFEX_PseudoCorpse)) {
+        // one is pseudocorpse (corpse decoration, always last)
+        return (ea->IsMonster() ? 1 : -1);
       }
-      if (((ea->EntityFlags|eb->EntityFlags)&VEntity::EF_Corpse)) {
-        // at least one is corpse
-        if ((ea->EntityFlags^eb->EntityFlags)&VEntity::EF_Corpse) {
-          // one is corpse (corpses are always last)
-          return (ea->IsPlayer() ? 1 : -1);
-        }
+    }
+    // corpse
+    if (((ea->EntityFlags|eb->EntityFlags)&VEntity::EF_Corpse)) {
+      // at least one is corpse
+      if ((ea->EntityFlags^eb->EntityFlags)&VEntity::EF_Corpse) {
+        // one is corpse (corpses are always last)
+        return (ea->IsPlayer() ? 1 : -1);
       }
     }
 
@@ -1621,11 +1632,44 @@ void VNetConnection::UpdateThinkers () {
     }
   }
 
+  /*
+   note: updating the closest object may not be the best strategy.
+   if our channel is very close to the saturation, we may never update anything that
+   is far away. basically, we'll be able to update only one or two thinkers, and each
+   time the same. the game is barely playable in this case anyway, but it still may
+   be better to "shuffle" things a little based on the last successfull update time.
+   that is, we may put a "finger" with entity uid, and always start with it after
+   the players and non-entities.
+   or we can make LevelInfo the top priority, our MO is next (for predictors), then
+   other players, then finger.
+   */
+
   // send updates to the nearest objects first
   // collect all thinkers with channels in `PendingThinkers`, and sort
+  // also, use finger to update the object
+  vuint32 minUId = 0xffffffffu, nextUId = 0xffffffffu;
   for (auto &&it : ThinkerChannels.first()) {
-    if (IsRelevant(it.getKey())) PendingThinkers.append(it.getKey());
+    if (IsRelevant(it.getKey())) {
+      const vuint32 currUId = it.getKey()->GetUniqueId();
+      minUId = min2(minUId, currUId);
+      // finger check
+      VThinkerChannel *chan = it.getValue();
+      if (currUId > UpdateFingerUId && nextUId > currUId) nextUId = currUId;
+      if (UpdateFingerUId) {
+        // update next uid
+        if (UpdateFingerUId == currUId && chan->CanSendData()) {
+          chan->Update();
+          //GCon->Logf(NAME_DevNet, "%s: FINGER UPDATE", *chan->GetDebugName());
+          continue;
+        }
+      }
+      PendingThinkers.append(it.getKey());
+    }
   }
+  if (minUId == 0xffffffffu) minUId = 0;
+
+  // move finger (if we have no next uid, use minimal)
+  UpdateFingerUId = (nextUId != 0xffffffffu ? nextUId : minUId);
 
   // sort and update existing thinkers first
   if (PendingThinkers.length()) {
@@ -1637,12 +1681,6 @@ void VNetConnection::UpdateThinkers () {
         chan->Update();
         continue;
       }
-      // do not mark as updated, the following loop will take care of unupdated ones
-      // this channel cannot send any data, alas
-      // still mark it as updated if it is always relevant, or an inventory
-      //if (!IsAlwaysRelevant(th)) continue;
-      //NeedsUpdate = true;
-      //chan->LastUpdateFrame = UpdateFrameCounter;
     }
     // don't send them twice, lol
     PendingThinkers.reset();

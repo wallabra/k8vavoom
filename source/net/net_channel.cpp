@@ -127,7 +127,7 @@ vuint32 VChannel::GetLastOutSeq () const noexcept {
 //    1: full
 //
 //==========================================================================
-int VChannel::IsQueueFull () const noexcept {
+int VChannel::IsQueueFull () noexcept {
   //if (OutListCount >= MAX_RELIABLE_BUFFER-2) return false;
   //return (OutListBits >= (MAX_RELIABLE_BUFFER-(forClose ? 1 : 2))*MAX_MSG_SIZE_BITS);
   #if 0
@@ -149,7 +149,7 @@ int VChannel::IsQueueFull () const noexcept {
 //  VChannel::CanSendData
 //
 //==========================================================================
-bool VChannel::CanSendData () const noexcept {
+bool VChannel::CanSendData () noexcept {
   // keep some space for close message
   if (IsQueueFull()) return false;
   return (Connection ? Connection->CanSendData() : false);
@@ -161,7 +161,7 @@ bool VChannel::CanSendData () const noexcept {
 //  VChannel::CanSendClose
 //
 //==========================================================================
-bool VChannel::CanSendClose () const noexcept {
+bool VChannel::CanSendClose () noexcept {
   //return !IsQueueFull(true);
   return true; // always
 }

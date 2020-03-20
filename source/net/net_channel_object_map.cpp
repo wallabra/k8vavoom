@@ -100,7 +100,7 @@ VStr VObjectMapChannel::GetName () const noexcept {
 //  VObjectMapChannel::IsQueueFull
 //
 //==========================================================================
-int VObjectMapChannel::IsQueueFull () const noexcept {
+int VObjectMapChannel::IsQueueFull () noexcept {
   return
     OutListBits >= 64000*8 ? -1 : // oversaturated
     OutListBits >= 60000*8 ? 1 : // full

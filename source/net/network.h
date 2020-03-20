@@ -270,7 +270,7 @@ public:
   //  -1: oversaturated
   //   0: ok
   //   1: full
-  virtual int IsQueueFull () const noexcept;
+  virtual int IsQueueFull () noexcept;
 
   // is this channel opened locally?
   inline bool IsLocalChannel () const noexcept { return OpenedLocally; }
@@ -314,8 +314,8 @@ public:
   // sets `PacketId` field in the message, you can use it
   void SendMessage (VMessageOut *Msg);
 
-  bool CanSendData () const noexcept;
-  bool CanSendClose () const noexcept;
+  bool CanSendData () noexcept;
+  bool CanSendClose () noexcept;
 
   void SendRpc (VMethod *, VObject *);
   bool ReadRpc (VMessageIn &Msg, int, VObject *);
@@ -458,6 +458,10 @@ protected:
   vuint8 *OldData; // old field data, for creating deltas
   bool NewObj; // is this a new object?
   vuint8 *FieldCondValues;
+  // this is used by the thinker updater
+  // if 1/3 of the channel is still full after this time, we'll block any updates until it is completely drained
+  double DrainTime;
+  bool bNeedToDrain;
 
 public:
   // set by the client when it gets `Origin` update
@@ -480,7 +484,7 @@ public:
   virtual void ParseMessage (VMessageIn &) override;
   virtual void SetClosing () override;
   // limit thinkers by the number of outgoing packets instead
-  virtual int IsQueueFull () const noexcept override;
+  virtual int IsQueueFull () noexcept override;
 };
 
 
@@ -558,7 +562,7 @@ public:
   virtual void ParseMessage (VMessageIn &) override;
   virtual void Tick () override;
   // slightly higher limits
-  virtual int IsQueueFull () const noexcept override;
+  virtual int IsQueueFull () noexcept override;
 };
 
 
@@ -605,6 +609,7 @@ public:
   double LastLevelUpdateTime;
   double LastThinkersUpdateTime;
   vuint32 UpdateFrameCounter; // monotonically increasing
+  vuint32 UpdateFingerUId; // see `UpdateThinkers()` for the explanation
 
   VNetObjectsMap *ObjMap;
   bool ObjMapSent;

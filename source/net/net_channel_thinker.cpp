@@ -46,6 +46,8 @@ VThinkerChannel::VThinkerChannel (VNetConnection *AConnection, vint32 AIndex, vu
   , OldData(nullptr)
   , NewObj(false)
   , FieldCondValues(nullptr)
+  , DrainTime(0)
+  , bNeedToDrain(false)
   , GotOrigin(false)
   , LastUpdateFrame(0)
 {
@@ -88,10 +90,45 @@ VStr VThinkerChannel::GetName () const noexcept {
 //  limit thinkers by the number of outgoing packets instead
 //
 //==========================================================================
-int VThinkerChannel::IsQueueFull () const noexcept {
+int VThinkerChannel::IsQueueFull () noexcept {
+  if (OutListCount >= MAX_RELIABLE_BUFFER+8) return -1; // oversaturated
+  /* no reason
+  VEntity *Ent = Cast<VEntity>(Thinker);
+  if (Ent && !Ent->IsPlayer() && OutListCount > MAX_RELIABLE_BUFFER/6) {
+    // don't overflow for entities, but still mark as updated
+    return 1; // full
+  }
+  */
+  if (bNeedToDrain) {
+    if (OutListCount > 0) return 1; // full
+    bNeedToDrain = false;
+    DrainTime = 0;
+    return 0; // ok
+  }
+
+  // drain time processing for non-player entities
+  VEntity *Ent = Cast<VEntity>(Thinker);
+  if (Ent && !Ent->IsPlayer()) {
+    if (OutListCount >= MAX_RELIABLE_BUFFER/4) {
+      if (DrainTime <= 0) DrainTime = Connection->Driver->GetNetTime()+0.666;
+      if (DrainTime >= Connection->Driver->GetNetTime()) {
+        DrainTime = 0;
+        bNeedToDrain = true;
+        GCon->Logf(NAME_DevNet, "%s: wants to drain!", *GetDebugName());
+        return 1; // full
+      } else {
+        GCon->Logf(NAME_DevNet, "%s: drain delta: %g", *GetDebugName(), Connection->Driver->GetNetTime()-DrainTime);
+      }
+    } else {
+      DrainTime = 0;
+    }
+  } else {
+    DrainTime = 0;
+    bNeedToDrain = false;
+  }
+
   return
-    OutListCount >= MAX_RELIABLE_BUFFER+8 ? -1 : // oversaturated
-    OutListCount >= MAX_RELIABLE_BUFFER ? 1 : // full
+    OutListCount >= MAX_RELIABLE_BUFFER/2 ? 1 : // full
     0; // ok
 }
 
