@@ -456,8 +456,11 @@ void VThinkerChannel::Update () {
   flushCount += FlushMsg(&Msg);
 
   // if this is initial send, we have to flush the message, even if it is empty
-  if (Msg.bOpen || Msg.bClose || Msg.GetNumBits() || NewObj || detachEntity || detachSimulated) {
+  if (Msg.bOpen || Msg.bClose || Msg.GetNumBits() ||
+      (flushCount == 0 && (NewObj || detachEntity || detachSimulated)))
+  {
     SendMessage(&Msg);
+    //flushCount += 1;
   }
   // not detached, and no interesting data: no reason to send anything
 

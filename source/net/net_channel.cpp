@@ -109,6 +109,16 @@ VStr VChannel::GetDebugName () const noexcept {
 
 //==========================================================================
 //
+//  VChannel::GetLastOutSeq
+//
+//==========================================================================
+vuint32 VChannel::GetLastOutSeq () const noexcept {
+  return (Connection ? Connection->OutReliable[Index] : 0);
+}
+
+
+//==========================================================================
+//
 //  VChannel::IsQueueFull
 //
 //  returns:
@@ -181,6 +191,17 @@ void VChannel::ReceivedCloseAck () {
 
 //==========================================================================
 //
+//  VChannel::OutMessageAcked
+//
+//  called by `ReceivedAcks()`, strictly in sequence
+//
+//==========================================================================
+void VChannel::OutMessageAcked (VMessageOut &Msg) {
+}
+
+
+//==========================================================================
+//
 //  VChannel::Close
 //
 //==========================================================================
@@ -248,6 +269,7 @@ void VChannel::ReceivedAcks () {
     OutList = OutList->Next;
     OutListBits -= curr->OutEstimated;
     vassert(OutListBits >= 0);
+    OutMessageAcked(*curr);
     delete curr;
     --OutListCount;
     vassert(OutListCount >= 0);
@@ -515,7 +537,7 @@ bool VChannel::PutStream (VMessageOut *msg, VBitStreamWriter &strm) {
 //==========================================================================
 bool VChannel::FlushMsg (VMessageOut *msg) {
   vassert(msg);
-  if (msg->GetNumBits()) {
+  if (msg->GetNumBits() || msg->bOpen || msg->bClose) {
     SendMessage(msg);
     msg->Reset(this, msg->bReliable);
     return true;

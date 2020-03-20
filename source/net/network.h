@@ -264,6 +264,8 @@ public:
   inline int GetSendQueueSize () const noexcept { return OutListCount; }
   inline int GetRecvQueueSize () const noexcept { return InListCount; }
 
+  vuint32 GetLastOutSeq () const noexcept;
+
   // returns:
   //  -1: oversaturated
   //   0: ok
@@ -294,6 +296,9 @@ public:
   // call this periodically to perform various processing
   // this handler SHOULD NOT DELETE THE CHANNEL!
   virtual void Tick ();
+
+  // called by `ReceivedAcks()`, strictly in sequence
+  virtual void OutMessageAcked (VMessageOut &Msg);
 
   // WARNING! this method can call `delete this`!
   // this is called from connection when this channel got some acks
