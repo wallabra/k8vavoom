@@ -138,7 +138,6 @@ float PSpriteWeaponLoweringDuration;
 float WorldTimer; // total time the player's been playing (calculated by summing deltas)
 transient float GameTime; // set in `PlayerTick`, already advanced; for client, read from the server
 transient float LastDeltaTime; // set in `PlayerTick`
-transient TVec LastVelocity; // last client velocity, used in predictor, set in `PlayerTick`
 
 // client-side data, used in predictor
 // on the client, `ClCurrGameTime` will be reset on each new player update packet, and will start ticking from that
@@ -164,10 +163,10 @@ replication {
     ClientNum, MO, Camera, SoundEnvironment,
     bAutomapRevealed, bAutomapShowThings,
     bAttackDown, bReloadQueued, bZoomDown,
-    WorldTimer, GameTime, LastDeltaTime, LastVelocity;
+    WorldTimer, GameTime, LastDeltaTime;
 
   unreliable if (!bIsClient)
-    ClientStartSound, ClientStopSound, ClientSetViewOrg;
+    ClientStartSound, ClientStopSound/*, ClientSetViewOrg*/;
 
   // methods server can execute on client
   reliable if (!bIsClient)

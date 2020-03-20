@@ -188,7 +188,6 @@ class VBasePlayer : public VGameObject {
   float WorldTimer; // total time the player's been playing
   float GameTime;
   float LastDeltaTime;
-  TVec LastVelocity;
 
   float ClLastGameTime;
   float ClCurrGameTime;
