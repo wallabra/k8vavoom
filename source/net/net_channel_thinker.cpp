@@ -333,7 +333,7 @@ void VThinkerChannel::Update () {
   TAVec SavedAngles;
   if (Ent) {
     SavedAngles = Ent->Angles;
-    if (Ent->EntityFlags&VEntity::EF_IsPlayer) {
+    if (Ent->IsPlayer()) {
       // clear look angles, because they must not affect model orientation
       Ent->Angles.pitch = 0;
       Ent->Angles.roll = 0;
@@ -344,6 +344,8 @@ void VThinkerChannel::Update () {
     SavedAngles.pitch = 0;
     SavedAngles.roll = 0;
   }
+
+  const bool precise = (Ent ? Ent->IsPlayer() : true); // thinkers are always precise (just in case)
 
   //Thinker->GetClass()->NumNetFields
   for (VField *F = Thinker->GetClass()->NetFields; F; F = F->NextNetField) {
@@ -356,7 +358,7 @@ void VThinkerChannel::Update () {
     else if (F == Connection->Context->RemoteRoleField) { forceSend = (detachEntity || detachSimulated); FieldValue = Data+Connection->Context->RoleField->Ofs; }
     else if (NewObj && F == Connection->OriginField) forceSend = true;
 
-    if (!forceSend && VField::IdenticalValue(FieldValue, OldData+F->Ofs, F->Type)) {
+    if (!forceSend && VField::IdenticalValue(FieldValue, OldData+F->Ofs, F->Type, precise)) {
       //GCon->Logf(NAME_DevNet, "%s:%u: skipped field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
       continue;
     }
@@ -369,7 +371,7 @@ void VThinkerChannel::Update () {
       for (int i = 0; i < F->Type.GetArrayDim(); ++i) {
         vuint8 *Val = FieldValue+i*InnerSize;
         vuint8 *OldVal = OldData+F->Ofs+i*InnerSize;
-        if (VField::IdenticalValue(Val, OldVal, IntType)) {
+        if (VField::IdenticalValue(Val, OldVal, IntType, precise)) {
           //GCon->Logf(NAME_DevNet, "%s:%u: skipped array field #%d [%d] (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, i, F->GetName(), *IntType.GetName());
           continue;
         }
@@ -385,7 +387,7 @@ void VThinkerChannel::Update () {
 
         strm.WriteUInt((unsigned)F->NetIndex);
         strm.WriteUInt((unsigned)i);
-        if (VField::NetSerialiseValue(strm, Connection->ObjMap, Val, IntType)) {
+        if (VField::NetSerialiseValue(strm, Connection->ObjMap, Val, IntType, precise)) {
           //GCon->Logf(NAME_DevNet, "%s:%u: sent array field #%d [%d] (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, i, F->GetName(), *IntType.GetName());
           if (allowValueCopy) VField::CopyFieldValue(Val, OldVal, IntType);
         }
@@ -406,7 +408,7 @@ void VThinkerChannel::Update () {
       }
 
       strm.WriteUInt((unsigned)F->NetIndex);
-      if (VField::NetSerialiseValue(strm, Connection->ObjMap, FieldValue, F->Type)) {
+      if (VField::NetSerialiseValue(strm, Connection->ObjMap, FieldValue, F->Type, precise)) {
         //if (Thinker->RemoteRole == ROLE_SimulatedProxy) GCon->Logf(NAME_DevNet, "%s:%u: sent field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
         //GCon->Logf(NAME_DevNet, "%s:%u: sent field #%d (%s : %s)", Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), F->NetIndex, F->GetName(), *F->Type.GetName());
         if (allowValueCopy) VField::CopyFieldValue(FieldValue, OldData+F->Ofs, F->Type);
@@ -562,6 +564,8 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     #endif
   }
 
+  const bool precise = (Ent ? Ent->IsPlayer() : true); // thinkers are always precise (just in case)
+
   while (!Msg.AtEnd()) {
     int FldIdx = (int)Msg.ReadUInt();
 
@@ -580,11 +584,11 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
         int Idx = (int)Msg.ReadUInt();
         VFieldType IntType = F->Type;
         IntType.Type = F->Type.ArrayInnerType;
-        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs+Idx*IntType.GetSize(), IntType);
+        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs+Idx*IntType.GetSize(), IntType, precise);
       } else {
         if (Ent && F == Connection->OriginField) Ent->UnlinkFromWorld();
 
-        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs, F->Type);
+        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)Thinker+F->Ofs, F->Type, precise);
 
         //HACK: read owner suid
         if (F == Connection->Context->OwnerField ||
