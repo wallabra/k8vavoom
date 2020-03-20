@@ -81,6 +81,8 @@ public:
   // this clears the message, parses message header, and consumes message data
   // first zero bit is already read, though
   bool LoadFrom (VBitStreamReader &srcPacket);
+
+  VStr toStringDbg () const noexcept;
 };
 
 
@@ -145,4 +147,6 @@ public:
   // returns `true` if appending `strm` will overflow the message
   inline bool WillOverflow (int addbits) const noexcept { return (EstimateSizeInBits(addbits) > MAX_MSG_SIZE_BITS); }
   inline bool WillOverflow (const VBitStreamWriter &strm) const noexcept { return WillOverflow(strm.GetNumBits()); }
+
+  VStr toStringDbg () const noexcept;
 };

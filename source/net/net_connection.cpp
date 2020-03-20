@@ -30,15 +30,13 @@
 
 static VCvarF net_dbg_send_loss("net_dbg_send_loss", "0", "Emulated sent packet loss percentage (randomly skip sending some packets).", CVAR_PreInit);
 static VCvarF net_dbg_recv_loss("net_dbg_recv_loss", "0", "Emulated received packet loss percentage (randomly skip sending some packets).", CVAR_PreInit);
-static VCvarB net_dbg_conn_show_outdated("net_dbg_conn_show_outdated", false, "Show outdated channel messages?");
 static VCvarB net_dbg_conn_show_dgrams("net_dbg_conn_show_dgrams", false, "Show datagram activity?");
-static VCvarB net_dbg_conn_show_unreliable("net_dbg_conn_show_unreliable", false, "Show datagram unreliable payload info?");
-static VCvarB net_dbg_report_missing_dgrams("net_dbg_report_missing_dgrams", false, "Report missing datagrams (this is mostly useless console spam)?");
 static VCvarB net_dbg_report_stats("net_dbg_report_stats", false, "Report some stats to the console?");
 
+static VCvarB net_dbg_conn_dump_tick("net_dbg_conn_dump_tick", false, "Dump tick/getmessage calls?");
 static VCvarB net_dbg_conn_dump_acks("net_dbg_conn_dump_acks", false, "Show ack info?");
 
-static VCvarB net_dbg_detailed_disconnect_stats("net_dbg_detailed_disconnect_stats", false, "Show channels on disconnect?", CVAR_Archive);
+static VCvarB net_dbg_detailed_disconnect_stats("net_dbg_detailed_disconnect_stats", false, "Show channels on disconnect?", 0/*CVAR_Archive*/);
 
 VCvarB net_debug_dump_recv_packets("net_debug_dump_recv_packets", false, "Dump received packets?");
 
@@ -97,9 +95,9 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   memset((void *)OutLagTime, 0, sizeof(OutLagTime));
   memset((void *)OutLagPacketId, 0, sizeof(OutLagPacketId));
 
-  InPacketId = 1;
+  InPacketId = 0;
   OutPacketId = 1;
-  OutAckPacketId = 1;
+  OutAckPacketId = 0;
   OutLastWrittenAck = 0;
 
   //FIXME: driver time?
@@ -339,13 +337,9 @@ void VNetConnection::ShowTimeoutStats () {
         (chan->Closing ? ", closing" : ""),
         chan->IsQueueFull());
       GCon->Logf(NAME_DevNet, "   in packets : %d (estimated bits: %d)", chan->InListCount, chan->InListBits);
-      for (VMessageIn *msg = chan->InList; msg; msg = msg->Next) GCon->Logf(NAME_DevNet, "    bits: %d; open=%d; close=%d; reliable=%d", msg->GetNumBits(), (int)msg->bOpen, (int)msg->bClose, (int)msg->bReliable);
+      for (VMessageIn *msg = chan->InList; msg; msg = msg->Next) GCon->Logf(NAME_DevNet, "    %s", *msg->toStringDbg());
       GCon->Logf(NAME_DevNet, "   out packets: %d (estimated bits: %d)", chan->OutListCount, chan->OutListBits);
-      for (VMessageOut *msg = chan->OutList; msg; msg = msg->Next) {
-        GCon->Logf(NAME_DevNet, "    bits: %d; pid=%u; open=%d; close=%d; reliable=%d; gotack=%d; time=%u (est:%d)",
-          msg->GetNumBits(), msg->PacketId, (int)msg->bOpen, (int)msg->bClose, (int)msg->bReliable,
-          (int)msg->bReceivedAck, (unsigned)(msg->Time*1000), msg->OutEstimated);
-      }
+      for (VMessageOut *msg = chan->OutList; msg; msg = msg->Next) GCon->Logf(NAME_DevNet, "    %s", *msg->toStringDbg());
     }
   }
 }
@@ -489,7 +483,7 @@ void VNetConnection::GetMessages (bool asHearbeat) {
     return;
   }
 
-  if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "%s: GetMessages()", *GetAddress());
+  if (net_dbg_conn_dump_tick) GCon->Logf(NAME_DevNet, "%s: GetMessages()", *GetAddress());
   #if 0
   if (!GetMessage(asHearbeat)) {
     const struct timespec sleepTime = {0, 10000}; // 1 millisecond
@@ -544,6 +538,17 @@ void VNetConnection::PacketLost (vuint32 PacketId) {
   for (int f = OpenChannels.length()-1; f >= 0; --f) {
     VChannel *chan = OpenChannels[f];
     if (!chan) continue; // just in case
+
+    if (net_dbg_conn_dump_acks) {
+      for (VMessageOut *Out = chan->OutList; Out; Out = Out->Next) {
+        // retransmit reliable messages in the lost packet
+        if (Out->PacketId == PacketId && !Out->bReceivedAck) {
+          vassert(Out->bReliable);
+          GCon->Logf(NAME_DevNet, "%s: LOST: %s", *chan->GetDebugName(), *Out->toStringDbg());
+        }
+      }
+    }
+
     chan->PacketLost(PacketId);
   }
 }
@@ -643,6 +648,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
           if (outmsg->PacketId == AckPacketId) {
             outmsg->bReceivedAck = true;
             if (outmsg->bOpen) chan->OpenAcked = true;
+            if (net_dbg_conn_dump_acks) GCon->Logf(NAME_DevNet, "%s: ACKED: %s", *chan->GetDebugName(), *outmsg->toStringDbg());
           }
         }
         chan->ReceivedAcks(); // WARNING: channel may delete itself there!
@@ -1081,7 +1087,7 @@ void VNetConnection::Tick () {
   double DeltaTime = ctt-LastTickTime;
   LastTickTime = ctt;
 
-  if (net_dbg_conn_dump_acks) {
+  if (net_dbg_conn_dump_tick) {
     GCon->Logf(NAME_DevNet, "%s: tick: outbits=%d(ffl=%d); lastrecv=%g(%g); lastsend=%g(%g);", *GetAddress(),
       Out.GetNumBits(), (int)ForceFlush,
       LastReceiveTime, (Driver->GetNetTime()-LastReceiveTime)*1000,

@@ -30,6 +30,18 @@
 
 //==========================================================================
 //
+//  VMessageIn::toStringDbg
+//
+//==========================================================================
+VStr VMessageIn::toStringDbg () const noexcept {
+  return
+    va("bits:%5d; open=%d; close=%d; reliable=%d; seq=%u",
+      GetNumBits(), (int)bOpen, (int)bClose, (int)bReliable, ChanSequence);
+}
+
+
+//==========================================================================
+//
 //  VMessageOut::VMessageOut
 //
 //==========================================================================
@@ -197,4 +209,17 @@ int VMessageOut::EstimateSizeInBits (int addbits) const noexcept {
   const int bytesize = (bitsize+7)>>3;
   // return resulting bits
   return (bytesize<<3);
+}
+
+
+//==========================================================================
+//
+//  VMessageOut::toStringDbg
+//
+//==========================================================================
+VStr VMessageOut::toStringDbg () const noexcept {
+  return
+    va("bits:%5d; pid=%u; seq=%u; open=%d; close=%d; reliable=%d; gotack=%d; time=%u (est:%d)",
+      GetNumBits(), PacketId, ChanSequence, (int)bOpen, (int)bClose, (int)bReliable,
+          (int)bReceivedAck, (unsigned)(Time*1000), OutEstimated);
 }
