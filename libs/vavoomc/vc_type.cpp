@@ -1539,7 +1539,7 @@ bool VScriptDictElem::operator == (const VScriptDictElem &e) const {
     // for x86_64, pointer size is not equal to integer size, for example
     return (memcmp(&value, &e.value, (size_t)type.GetSize()) == 0);
   }
-  return VField::IdenticalValue((const vuint8 *)value, (const vuint8 *)e.value, type);
+  return VField::IdenticalValue((const vuint8 *)value, (const vuint8 *)e.value, type, true); // precise
 }
 
 

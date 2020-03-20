@@ -85,7 +85,7 @@ public:
   static void DestructField (vuint8 *, const VFieldType &, bool zeroIt=false);
   static bool NeedToDestructField (const VFieldType &);
   static bool NeedToCleanField (const VFieldType &);
-  static bool IdenticalValue (const vuint8 *, const vuint8 *, const VFieldType &);
+  static bool IdenticalValue (const vuint8 *, const vuint8 *, const VFieldType &, bool vecprecise=true);
 
   friend inline VStream & operator << (VStream &Strm, VField *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 

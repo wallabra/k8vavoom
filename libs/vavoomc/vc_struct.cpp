@@ -619,14 +619,14 @@ void VStruct::ZeroObject (vuint8 *Data) {
 //  VStruct::IdenticalObject
 //
 //==========================================================================
-bool VStruct::IdenticalObject (const vuint8 *Val1, const vuint8 *Val2) {
+bool VStruct::IdenticalObject (const vuint8 *Val1, const vuint8 *Val2, bool vecprecise) {
   // compare parent struct's fields
   if (ParentStruct) {
-    if (!ParentStruct->IdenticalObject(Val1, Val2)) return false;
+    if (!ParentStruct->IdenticalObject(Val1, Val2, vecprecise)) return false;
   }
   // compare fields
   for (VField *F = Fields; F; F = F->Next) {
-    if (!VField::IdenticalValue(Val1+F->Ofs, Val2+F->Ofs, F->Type)) return false;
+    if (!VField::IdenticalValue(Val1+F->Ofs, Val2+F->Ofs, F->Type, vecprecise)) return false;
   }
   return true;
 }
@@ -637,13 +637,13 @@ bool VStruct::IdenticalObject (const vuint8 *Val1, const vuint8 *Val2) {
 //  VStruct::NetSerialiseObject
 //
 //==========================================================================
-bool VStruct::NetSerialiseObject (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *Data) {
+bool VStruct::NetSerialiseObject (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *Data, bool vecprecise) {
   bool Ret = true;
   // serialise parent struct's fields
-  if (ParentStruct) Ret = ParentStruct->NetSerialiseObject(Strm, Map, Data);
+  if (ParentStruct) Ret = ParentStruct->NetSerialiseObject(Strm, Map, Data, vecprecise);
   // serialise fields
   for (VField *F = Fields; F; F = F->Next) {
-    if (!VField::NetSerialiseValue(Strm, Map, Data+F->Ofs, F->Type)) Ret = false;
+    if (!VField::NetSerialiseValue(Strm, Map, Data+F->Ofs, F->Type, vecprecise)) Ret = false;
   }
   return Ret;
 }

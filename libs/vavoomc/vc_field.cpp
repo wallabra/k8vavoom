@@ -28,6 +28,41 @@
 
 //==========================================================================
 //
+//  angle2word
+//
+//==========================================================================
+static vuint16 angle2word (float angle) {
+  if (angle) {
+    angle = fmodf(angle, 360.0f); // signed
+    vuint16 v = (vuint16)((double)fabsf(angle)/360.0*32767.0);
+    v <<= 1;
+    if (v && angle < 0) v |= 1u;
+    return v;
+  } else {
+    return 0;
+  }
+}
+
+
+//==========================================================================
+//
+//  word2angle
+//
+//==========================================================================
+static float word2angle (vuint16 angle) {
+  if (angle) {
+    const vuint8 sign = angle&1u;
+    angle >>= 1;
+    float res = (float)((double)angle/32767.0*360.0);
+    return (sign ? -res : res);
+  } else {
+    return 0;
+  }
+}
+
+
+//==========================================================================
+//
 //  NeedDtor
 //
 //==========================================================================
@@ -696,7 +731,7 @@ void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
 //  VField::IdenticalValue
 //
 //==========================================================================
-bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFieldType &Type) {
+bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFieldType &Type, bool vecprecise) {
   if (Val1 == Val2) return true; // nothing to do
   VFieldType IntType;
   int InnerSize;
@@ -705,7 +740,26 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
     case TYPE_Byte: return (*(const vuint8 *)Val1 == *(const vuint8 *)Val2);
     case TYPE_Bool: return (((*(const vuint32 *)Val1)&Type.BitMask) == ((*(const vuint32 *)Val2)&Type.BitMask));
     case TYPE_Float: return (*(const float *)Val1 == *(const float *)Val2);
-    case TYPE_Vector: return (*(const TVec *)Val1 == *(const TVec *)Val2);
+    case TYPE_Vector:
+      if (vecprecise) {
+        return (*(const TVec *)Val1 == *(const TVec *)Val2);
+      } else {
+        if (Type.Struct->Name == NAME_TAVec) {
+          const TAVec *ang0 = (const TAVec *)Val1;
+          const TAVec *ang1 = (const TAVec *)Val2;
+          return
+            angle2word(ang0->yaw) == angle2word(ang1->yaw) &&
+            angle2word(ang0->pitch) == angle2word(ang1->pitch) &&
+            angle2word(ang0->roll) == angle2word(ang1->roll);
+        } else {
+          const TVec *vec0 = (const TVec *)Val1;
+          const TVec *vec1 = (const TVec *)Val2;
+          return
+            mround(vec0->x) == mround(vec1->x) &&
+            mround(vec0->y) == mround(vec1->y) &&
+            mround(vec0->z) == mround(vec1->z);
+        }
+      }
     case TYPE_Name: return (*(const VName *)Val1 == *(const VName *)Val2);
     case TYPE_String: return (*(const VStr *)Val1 == *(const VStr *)Val2);
     case TYPE_Pointer: return (*(void * const *)Val1 == *(void * const *)Val2);
@@ -715,13 +769,13 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
     case TYPE_Delegate:
       return ((const VObjectDelegate *)Val1)->Obj == ((const VObjectDelegate *)Val2)->Obj &&
              ((const VObjectDelegate *)Val1)->Func == ((const VObjectDelegate *)Val2)->Func;
-    case TYPE_Struct: return Type.Struct->IdenticalObject(Val1, Val2);
+    case TYPE_Struct: return Type.Struct->IdenticalObject(Val1, Val2, vecprecise);
     case TYPE_Array:
       IntType = Type;
       IntType.Type = Type.ArrayInnerType;
       InnerSize = IntType.GetSize();
       for (int i = 0; i < Type.GetArrayDim(); ++i) {
-        if (!IdenticalValue(Val1+i*InnerSize, Val2+i*InnerSize, IntType)) return false;
+        if (!IdenticalValue(Val1+i*InnerSize, Val2+i*InnerSize, IntType, vecprecise)) return false;
       }
       return true;
     case TYPE_DynamicArray:
@@ -733,7 +787,7 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
         IntType.Type = Type.ArrayInnerType;
         InnerSize = IntType.GetSize();
         for (int i = 0; i < Type.GetArrayDim(); ++i) {
-          if (!IdenticalValue(Arr1.Ptr()+i*InnerSize, Arr2.Ptr()+i*InnerSize, IntType)) return false;
+          if (!IdenticalValue(Arr1.Ptr()+i*InnerSize, Arr2.Ptr()+i*InnerSize, IntType, vecprecise)) return false;
         }
       }
       return true;
@@ -749,41 +803,6 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
   }
   Sys_Error("Bad field type");
   return false;
-}
-
-
-//==========================================================================
-//
-//  angle2word
-//
-//==========================================================================
-static vuint16 angle2word (float angle) {
-  if (angle) {
-    angle = fmodf(angle, 360.0f); // signed
-    vuint16 v = (vuint16)((double)fabsf(angle)/360.0*32767.0);
-    v <<= 1;
-    if (v && angle < 0) v |= 1u;
-    return v;
-  } else {
-    return 0;
-  }
-}
-
-
-//==========================================================================
-//
-//  word2angle
-//
-//==========================================================================
-static float word2angle (vuint16 angle) {
-  if (angle) {
-    const vuint8 sign = angle&1u;
-    angle >>= 1;
-    float res = (float)((double)angle/32767.0*360.0);
-    return (sign ? -res : res);
-  } else {
-    return 0;
-  }
 }
 
 
@@ -902,13 +921,13 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *
     case TYPE_Class: Ret = Map->SerialiseClass(Strm, *(VClass **)Data); break;
     case TYPE_State: Ret = Map->SerialiseState(Strm, *(VState **)Data); break;
     case TYPE_Reference: Ret = Map->SerialiseObject(Strm, *(VObject **)Data); break;
-    case TYPE_Struct: Ret = Type.Struct->NetSerialiseObject(Strm, Map, Data); break;
+    case TYPE_Struct: Ret = Type.Struct->NetSerialiseObject(Strm, Map, Data, vecprecise); break;
     case TYPE_Array:
       IntType = Type;
       IntType.Type = Type.ArrayInnerType;
       InnerSize = IntType.GetSize();
       for (int i = 0; i < Type.GetArrayDim(); ++i) {
-        if (!NetSerialiseValue(Strm, Map, Data+i*InnerSize, IntType)) Ret = false;
+        if (!NetSerialiseValue(Strm, Map, Data+i*InnerSize, IntType, vecprecise)) Ret = false;
       }
       break;
     //TODO: dynarrays, slices?

@@ -101,13 +101,13 @@ public:
   void InitDestructorFields ();
   static void SkipSerialisedObject (VStream &);
   void SerialiseObject (VStream &, vuint8 *);
-  bool NetSerialiseObject (VStream &, VNetObjectsMapBase *, vuint8 *);
+  bool NetSerialiseObject (VStream &, VNetObjectsMapBase *, vuint8 *, bool vecprecise=true);
   void CopyObject (const vuint8 *, vuint8 *);
   bool NeedToCleanObject ();
   bool CleanObject (vuint8 *); // returns `true` if something was cleaned
   void DestructObject (vuint8 *Data);
   void ZeroObject (vuint8 *Data);
-  bool IdenticalObject (const vuint8 *, const vuint8 *);
+  bool IdenticalObject (const vuint8 *, const vuint8 *, bool vecprecise=true);
 
   static VStruct *CreateWrapperStruct (VExpression *aTypeExpr, VMemberBase *AOuter, TLocation ALoc); // takes ownership
 
