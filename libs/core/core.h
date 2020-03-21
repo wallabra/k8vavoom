@@ -26,6 +26,11 @@
 #ifndef VAVOOM_CORE_HEADER
 #define VAVOOM_CORE_HEADER
 
+#if (-1 & 3) != 3
+# error "You need two's complement system to compile k8vavoom!"
+#endif
+
+
 #ifndef VAVOOM_DEBUG_BUILD
 # define VAVOOM_USE_MIMALLOC
 #endif
