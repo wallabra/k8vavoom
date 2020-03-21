@@ -191,6 +191,24 @@ int VDemoRecordingNetConnection::GetRawPacket (void *dest, size_t destSize) {
 }
 
 
+//**************************************************************************
+//
+// VDemoRecordingSocket
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VDemoRecordingSocket::VDemoRecordingSocket
+//
+//==========================================================================
+VDemoRecordingSocket::VDemoRecordingSocket ()
+  : VSocketPublic()
+{
+  VNetUtils::GenerateKey(AuthKey);
+}
+
+
 //==========================================================================
 //
 //  VDemoRecordingSocket::IsLocalConnection

@@ -157,6 +157,12 @@ VSocket *VLoopbackDriver::Connect (const char *host) {
     loop_server->Address = "LOCAL";
   }
 
+  vuint8 origkey[VNetUtils::ChaCha20KeySize];
+  VNetUtils::GenerateKey(origkey);
+
+  memcpy(loop_client->AuthKey, origkey, VNetUtils::ChaCha20KeySize);
+  memcpy(loop_server->AuthKey, origkey, VNetUtils::ChaCha20KeySize);
+
   loop_client->OtherSock = loop_server;
   loop_server->OtherSock = loop_client;
 

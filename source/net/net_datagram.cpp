@@ -34,37 +34,64 @@
 //
 //
 // CCREQ_CONNECT
+//    bytes[16] key
+//    other data is encrypted with ChaCha20, nonce is 0x29a
+//    bytes[4]  crc32c
 //    bytes     "K8VAVOOM"
+//    vuint8    CCREQ_CONNECT
 //    vuint8    net_protocol_version_hi  NET_PROTOCOL_VERSION_HI
 //    vuint8    net_protocol_version_lo  NET_PROTOCOL_VERSION_LO
 //    vuint32   modlisthash
 //    vuint16   modlistcount
 //
 // CCREQ_SERVER_INFO
+//    bytes[16] key
+//    other data is encrypted with ChaCha20, nonce is 0x29a
+//    bytes[4]  crc32c
 //    bytes     "K8VAVOOM"
+//    vuint8    CCREQ_SERVER_INFO
 //    vuint8    net_protocol_version_hi  NET_PROTOCOL_VERSION_HI
 //    vuint8    net_protocol_version_lo  NET_PROTOCOL_VERSION_LO
 //
 //
 // CCREP_ACCEPT
-//    long    port
+//    bytes[16] key
+//    other data is encrypted with ChaCha20, nonce is 0x29a
+//    bytes[4]  crc32c
+//    bytes     "K8VAVOOM"
+//    vuint8    CCREP_ACCEPT
+//    vuint8    net_protocol_version_hi  NET_PROTOCOL_VERSION_HI
+//    vuint8    net_protocol_version_lo  NET_PROTOCOL_VERSION_LO
+//    long      port
 //
 // CCREP_REJECT
-//    string    reason
-//    bool      extflags (always false)
-//    bool      haswads
-//      if haswads is true, mod list follows
+//    bytes[16] key
+//    other data is encrypted with ChaCha20, nonce is 0x29a
+//    bytes[4]  crc32c
+//    bytes     "K8VAVOOM"
+//    vuint8    CCREP_REJECT
+//    vuint8    extflags (bit 0: has wads?)
+//    string    reason (127 bytes max, with terminating 0)
+//    if bit 0 of `extflags` is set, modlist follows
 //      modlist is asciz strings, terminated with empty string
 //
 // CCREP_SERVER_INFO
-//    string    host_name
-//    string    level_name
-//    vuint8    current_players
-//    vuint8    max_players
+//    bytes[16] key
+//    other data is encrypted with ChaCha20, nonce is 0x29a
+//    bytes[4]  crc32c
+//    bytes     "K8VAVOOM"
+//    vuint8    CCREP_SERVER_INFO
 //    vuint8    net_protocol_version_hi  NET_PROTOCOL_VERSION_HI
 //    vuint8    net_protocol_version_lo  NET_PROTOCOL_VERSION_LO
+//    vuint8    extflags (bit 0: has wads?)
+//    vuint8    current_players
+//    vuint8    max_players
+//    vuint8    deathmatchMode
 //    vuint32   modlisthash
-//    asciiz strings with loaded archive names, terminated with empty string
+//    string    host_name (max 127 bytes, with terminating 0)
+//    string    level_name (max 63 bytes, with terminating 0)
+//    if bit 0 of `extflags` is set, modlist follows
+//      asciiz strings with loaded archive names, terminated with empty string
 //
 //**************************************************************************
 #include "gamedefs.h"
@@ -104,6 +131,11 @@ class VDatagramDriver : public VNetDriver {
 public:
   enum { MASTER_SERVER_PORT = 26002 };
   enum { MASTER_PROTO_VERSION = 1 };
+
+  enum {
+    SINFO_HEADER = VNetUtils::ChaCha20KeySize+4, // key and crc32c
+    MAX_INFO_DGRAM_SIZE = MAX_DGRAM_SIZE-SINFO_HEADER,
+  };
 
   // client request
   enum {
@@ -159,7 +191,7 @@ public:
   void SearchForHosts (VNetLanDriver *, bool, bool);
   VSocket *Connect (VNetLanDriver *, const char *);
   VSocket *CheckNewConnections (VNetLanDriver *Drv);
-  void SendConnectionReject (VNetLanDriver *Drv, VStr reason, int acceptsock, sockaddr_t clientaddr, bool sendModList=false);
+  void SendConnectionReject (VNetLanDriver *Drv, const vuint8 key[VNetUtils::ChaCha20KeySize], VStr reason, int acceptsock, sockaddr_t clientaddr, bool sendModList=false);
   void UpdateMaster (VNetLanDriver *);
   void QuitMaster (VNetLanDriver *);
   bool QueryMaster (VNetLanDriver *, bool);
@@ -169,6 +201,10 @@ public:
 
   static void WritePakList (VBitStreamWriter &strm);
   static bool ReadPakList (TArray<VStr> &list, VBitStreamReader &strm); // won't clear list
+
+  // returns size or -1
+  static int EncryptInfoBitStream (vuint8 *dest, VBitStreamWriter &strm, const vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept;
+  static bool DecryptInfoBitStream (vuint8 key[VNetUtils::ChaCha20KeySize], VBitStreamReader &strm, void *srcbuf, int srclen);
 };
 
 
@@ -235,7 +271,7 @@ void VDatagramDriver::WritePakList (VBitStreamWriter &strm) {
     if (pak.isEmpty()) continue;
     //GCon->Logf(NAME_Debug, "%d: <%s>", f, *pak);
     //if (pak.length() > 255) pak = pak.right(255); // just in case
-    if (strm.GetNumBits()+pak.length()*8+8 > MAX_DGRAM_SIZE*8-8) break;
+    if (strm.GetNumBits()+pak.length()*8+8 > MAX_INFO_DGRAM_SIZE*8-8) break;
     for (int sidx = 0; sidx < pak.length(); ++sidx) {
       vuint8 ch = (vuint8)(pak[sidx]);
       strm << ch;
@@ -311,13 +347,56 @@ void VDatagramDriver::Listen (bool state) {
 
 //==========================================================================
 //
+//  VDatagramDriver::EncryptInfoBitStream
+//
+//==========================================================================
+int VDatagramDriver::EncryptInfoBitStream (vuint8 *dest, VBitStreamWriter &strm, const vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept {
+  if (!dest) return -1;
+  if (strm.IsError() || strm.GetNumBytes() > MAX_INFO_DGRAM_SIZE) return -1;
+
+  // align (just in case)
+  while (strm.GetNumBits()&7) strm.WriteBit(false);
+  if (strm.IsError() || strm.GetNumBytes() > MAX_INFO_DGRAM_SIZE) return -1;
+
+  // encrypt
+  return VNetUtils::EncryptInfoPacket(dest, strm.GetData(), strm.GetNumBytes(), key);
+}
+
+
+//==========================================================================
+//
+//  VDatagramDriver::DecryptInfoBitStream
+//
+//==========================================================================
+bool VDatagramDriver::DecryptInfoBitStream (vuint8 key[VNetUtils::ChaCha20KeySize], VBitStreamReader &strm, void *srcbuf, int srclen) {
+  strm.Clear(true);
+
+  if (srclen < VNetUtils::ChaCha20KeySize+4) {
+    strm.SetError();
+    return false;
+  }
+
+  int dlen = VNetUtils::DecryptInfoPacket(key, srcbuf, srcbuf, srclen);
+  if (dlen <= 0) {
+    // it must have data
+    strm.SetError();
+    return false;
+  }
+
+  strm.SetupFrom((const vuint8 *)srcbuf, dlen<<3);
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VDatagramDriver::SearchForHosts
 //
 //==========================================================================
 void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMaster) {
   sockaddr_t myaddr;
   sockaddr_t readaddr;
-  vuint8 control;
+  //vuint8 control;
   vuint8 msgtype;
   int n;
   vuint8 TmpByte;
@@ -325,9 +404,9 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
   Drv->GetSocketAddr(Drv->controlSock, &myaddr);
   if (xmit && Drv->CanBroadcast()) {
     GCon->Log(NAME_DevNet, "sending broadcast query...");
-    VBitStreamWriter Reply(MAX_DGRAM_SIZE<<3);
-    TmpByte = NETPACKET_CTL;
-    Reply << TmpByte;
+    vuint8 edata[MAX_DGRAM_SIZE];
+
+    VBitStreamWriter Reply(MAX_INFO_DGRAM_SIZE<<3);
     WriteGameSignature(Reply);
     TmpByte = CCREQ_SERVER_INFO;
     Reply << TmpByte;
@@ -335,7 +414,13 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     Reply << TmpByte;
     TmpByte = NET_PROTOCOL_VERSION_LO;
     Reply << TmpByte;
-    Drv->Broadcast(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes());
+
+    // encrypt
+    vuint8 key[VNetUtils::ChaCha20KeySize];
+    VNetUtils::GenerateKey(key);
+    int elen = EncryptInfoBitStream(edata, Reply, key);
+    if (elen <= 0) return; // just in case
+    if (elen > 0) Drv->Broadcast(Drv->controlSock, edata, elen);
   }
 
   //GCon->Logf(NAME_Debug, "SearchForHosts: trying to read a datagram (me:%s)...", Drv->AddrToString(&myaddr));
@@ -343,19 +428,22 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
   while (pktleft-- > 0) {
     int len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr);
     if (len < 0) break; // no message or error
-    if (len < (int)sizeof(int)) continue;
+    if (len < VNetUtils::ChaCha20KeySize+4) continue;
 
     // don't answer our own query
-    if (!ForMaster && Drv->AddrCompare(&readaddr, &myaddr) >= 0) continue;
+    if (!ForMaster && Drv->AddrCompare(&readaddr, &myaddr) == 0) continue;
 
     // is the cache full?
     //if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
-    GCon->Logf(NAME_DevNet, "SearchForHosts: got datagram from %s (len=%d)", Drv->AddrToString(&readaddr), len);
+    // decrypt
+    vuint8 key[VNetUtils::ChaCha20KeySize];
+    VBitStreamReader msg;
 
-    VBitStreamReader msg(packetBuffer.data, len<<3);
-    msg << control;
-    if (msg.IsError() || control != NETPACKET_CTL) continue;
+    if (!DecryptInfoBitStream(key, msg, packetBuffer.data, len)) continue;
+
+    GCon->Logf(NAME_DevNet, "SearchForHosts: got datagram from %s (len=%d; dlen=%d)", Drv->AddrToString(&readaddr), len, msg.GetNumBytes());
+
     if (!CheckGameSignature(msg)) continue;
 
     msg << msgtype;
@@ -384,35 +472,40 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     vassert(n >= 0 && n < Net->HostCacheCount);
     hostcache_t *hinfo = &Net->HostCache[n];
     hinfo->Flags = 0;
-    msg << str;
-    hinfo->Name = str;
-    msg << str;
-    hinfo->Map = str;
-    msg << TmpByte;
-    hinfo->Users = TmpByte;
-    msg << TmpByte;
-    hinfo->MaxUsers = TmpByte;
+    // protocol version
     vuint8 protoHi = 0, protoLo = 0;
     msg << protoHi << protoLo;
+    // flags
+    vuint8 extflags = 0;
+    msg << extflags;
+    // current players
+    msg << TmpByte;
+    hinfo->Users = TmpByte;
+    // max players
+    msg << TmpByte;
+    hinfo->MaxUsers = TmpByte;
+    // deathmatch mode
+    msg << TmpByte;
+    hinfo->DeathMatch = TmpByte;
+    // wadlist hash
+    vuint32 mhash = 0;
+    msg << mhash;
+    // server name
+    msg << str;
+    hinfo->Name = str;
+    // map name
+    msg << str;
+    hinfo->Map = str;
+
     if (protoHi == NET_PROTOCOL_VERSION_HI && protoLo == NET_PROTOCOL_VERSION_LO) {
       hinfo->Flags |= hostcache_t::Flag_GoodProtocol;
     }
-    if (protoHi > 7 || (protoHi == 7 && protoLo >= 8)) {
-      // this is for version 7.8 and up
-      msg << TmpByte;
-      hinfo->DeathMatch = TmpByte;
-      if (TmpByte > 2) msg.SetError();
-    } else {
-      // assume "altdeath"
-      hinfo->DeathMatch = 2;
-    }
-    vuint32 mhash = 0;
-    msg << mhash;
+
     //GCon->Logf(NAME_DevNet, " WHASH: theirs=0x%08x  mine=0x%08x", mhash, FL_GetNetWadsHash());
     if (mhash == FL_GetNetWadsHash()) hinfo->Flags |= hostcache_t::Flag_GoodWadList;
     hinfo->CName = addr;
     hinfo->WadFiles.clear();
-    if (!msg.IsError()) ReadPakList(hinfo->WadFiles, msg);
+    if (!msg.IsError() && (extflags&1)) ReadPakList(hinfo->WadFiles, msg);
 
     if (msg.IsError()) {
       // remove it
@@ -476,12 +569,13 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   double start_time;
   int reps;
   int ret;
-  vuint8 control;
+  //vuint8 control;
   VStr reason;
   vuint8 msgtype;
   int newport;
   VBitStreamReader *msg = nullptr;
   vuint8 TmpByte;
+  vuint8 otherProtoHi, otherProtoLo;
 
   if (!host || !host[0]) return nullptr;
 
@@ -499,7 +593,11 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   newsock = Drv->ConnectSocketTo(&sendaddr);
   if (newsock == -1) return nullptr;
 
+  vuint8 origkey[VNetUtils::ChaCha20KeySize];
+  VNetUtils::GenerateKey(origkey);
+
   sock = new VDatagramSocket(this);
+  memcpy(sock->AuthKey, origkey, VNetUtils::ChaCha20KeySize);
   sock->LanSocket = newsock;
   sock->LanDriver = Drv;
   sock->Addr = sendaddr;
@@ -516,10 +614,9 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
     R_OSDMsgShow("sending handshake");
 
-    VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
-    // save space for the header, filled in later
-    TmpByte = NETPACKET_CTL;
-    MsgOut << TmpByte;
+    vuint8 edata[MAX_DGRAM_SIZE];
+
+    VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
     WriteGameSignature(MsgOut);
     TmpByte = CCREQ_CONNECT;
     MsgOut << TmpByte;
@@ -531,40 +628,52 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
     MsgOut << modhash;
     vuint16 modcount = (vuint16)FL_GetNetWadsCount();
     MsgOut << modcount;
-    Drv->Write(newsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
+
+    // encrypt
+    int elen = EncryptInfoBitStream(edata, MsgOut, origkey);
+    if (elen <= 0) {
+      ret = -1; // network error
+      break;
+    }
+    Drv->Write(newsock, edata, elen, &sendaddr);
 
     bool aborted = false;
+    vuint8 key[VNetUtils::ChaCha20KeySize];
     do {
       ret = Drv->Read(newsock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr);
       if (ret == -2) ret = 0; // "no message" means "message with zero size"
+
       // if we got something, validate it
-      if (ret > 0) {
+      if (ret > VNetUtils::ChaCha20KeySize+4) {
         // is it from the right place?
         if (sock->LanDriver->AddrCompare(&readaddr, &sendaddr) != 0) {
           ret = 0;
           continue;
         }
 
-        if (ret < (int)sizeof(vint32)) {
-          ret = 0;
-          continue;
-        }
-
-        msg = new VBitStreamReader(packetBuffer.data, ret<<3);
-
-        *msg << control;
-        if (msg->IsError() || control != NETPACKET_CTL) {
-          ret = 0;
+        // decrypt
+        msg = new VBitStreamReader();
+        if (!DecryptInfoBitStream(key, *msg, packetBuffer.data, ret)) {
           delete msg;
-          msg = nullptr;
+          ret = 0;
           continue;
         }
+
+        // check if we got the right key
+        if (memcmp(key, origkey, VNetUtils::ChaCha20KeySize) != 0) {
+          delete msg;
+          ret = 0;
+          continue;
+        }
+
         if (!CheckGameSignature(*msg)) {
           ret = 0;
           delete msg;
           msg = nullptr;
           continue;
         }
+      } else if (ret > 0) {
+        ret = 0;
       }
 
       if (ret == 0) { aborted = Net->CheckForUserAbort(); if (aborted) break; }
@@ -615,13 +724,31 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   }
 
   if (msgtype != CCREP_ACCEPT) {
-    reason = "Bad Response";
+    reason = "Bad response";
     GCon->Logf(NAME_Error, "Connection failure: %s", *reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
   }
 
+  *msg << otherProtoHi;
+  *msg << otherProtoLo;
   *msg << newport;
+
+  if (msg->IsError()) {
+    reason = "Bad response";
+    GCon->Logf(NAME_Error, "Connection failure: %s", *reason);
+    VStr::Cpy(Net->ReturnReason, *reason);
+    goto ErrorReturn;
+  }
+
+  if (otherProtoHi != NET_PROTOCOL_VERSION_HI || otherProtoLo != NET_PROTOCOL_VERSION_LO) {
+    reason = "Bad protocol version";
+    GCon->Logf(NAME_Error, "Connection failure: %s", *reason);
+    VStr::Cpy(Net->ReturnReason, *reason);
+    goto ErrorReturn;
+  }
+
+  delete msg;
 
   // switch the connection to the specified address
   memcpy(&sock->Addr, &readaddr, sizeof(sockaddr_t));
@@ -632,9 +759,6 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   Net->UpdateNetTime();
   sock->LastMessageTime = Net->GetNetTime();
 
-  delete msg;
-  msg = nullptr;
-
   R_OSDMsgShow("receiving initial data");
 
   //m_return_onerror = false;
@@ -644,12 +768,10 @@ ErrorReturn:
   delete sock;
   sock = nullptr;
   Drv->CloseSocket(newsock);
-  if (msg) {
-    delete msg;
-    msg = nullptr;
-  }
+  if (msg) delete msg;
   SCR_Update();
 #endif
+
   return nullptr;
 }
 
@@ -675,27 +797,27 @@ VSocket *VDatagramDriver::Connect (const char *host) {
 //  VDatagramDriver::SendConnectionReject
 //
 //==========================================================================
-void VDatagramDriver::SendConnectionReject (VNetLanDriver *Drv, VStr reason, int acceptsock, sockaddr_t clientaddr, bool sendModList) {
+void VDatagramDriver::SendConnectionReject (VNetLanDriver *Drv, const vuint8 key[VNetUtils::ChaCha20KeySize], VStr reason, int acceptsock, sockaddr_t clientaddr, bool sendModList) {
   vuint8 TmpByte;
-  VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
-  TmpByte = NETPACKET_CTL;
-  MsgOut << TmpByte;
+  VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
+  reason = reason.left(127);
   WriteGameSignature(MsgOut);
+
   TmpByte = CCREP_REJECT;
   MsgOut << TmpByte;
+  // flags
+  TmpByte = (sendModList ? 1u : 0u);
+  MsgOut << TmpByte;
+  // reason
   MsgOut << reason;
-  // "false" means "simple format"
-  MsgOut.WriteBit(false);
-  if (!sendModList) {
-    // no list
-    MsgOut.WriteBit(false);
-  } else {
-    // list flag
-    MsgOut.WriteBit(true);
-    // list itself
-    WritePakList(MsgOut);
-  }
-  Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
+  // modlist
+  if (sendModList) WritePakList(MsgOut);
+
+  vuint8 edata[MAX_DGRAM_SIZE];
+  int elen = EncryptInfoBitStream(edata, MsgOut, key);
+  if (elen <= 0) return;
+
+  Drv->Write(acceptsock, edata, elen, &clientaddr);
 }
 
 
@@ -711,10 +833,8 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   int acceptsock;
   int newsock;
   int len;
-  vuint8 control;
   vuint8 command;
   VDatagramSocket *sock;
-  int ret;
   vuint8 TmpByte, TmpByte1;
   VStr TmpStr;
 
@@ -722,29 +842,31 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   acceptsock = Drv->CheckNewConnections();
   if (acceptsock == -1) return nullptr;
 
+  vuint8 clientKey[VNetUtils::ChaCha20KeySize];
+  vuint8 edata[MAX_DGRAM_SIZE];
+
   len = Drv->Read(acceptsock, packetBuffer.data, MAX_DGRAM_SIZE, &clientaddr);
   if (len == -2) len = 0; // "no message" means "zero size"
-  if (len < (int)sizeof(vint32)) {
-    if (len >= 0 && net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: too short packet (%d) from %s", len, Drv->AddrToString(&clientaddr));
+  if (len < VNetUtils::ChaCha20KeySize+4) {
+    if (len > 0 && net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: too short packet (%d) from %s", len, Drv->AddrToString(&clientaddr));
     if (len < 0) GCon->Logf(NAME_DevNet, "CONN: error reading incoming packet from %s", Drv->AddrToString(&clientaddr));
     return nullptr;
   }
   GCon->Logf(NAME_DevNet, "CONN: ACCEPTING something from %s", Drv->AddrToString(&clientaddr));
 
-  VBitStreamReader msg(packetBuffer.data, len<<3);
-
-  msg << control;
-  if (msg.IsError() || control != NETPACKET_CTL) {
-    if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid packet type (%u) from %s", control, Drv->AddrToString(&clientaddr));
+  VBitStreamReader msg;
+  if (!DecryptInfoBitStream(clientKey, msg, packetBuffer.data, len)) {
+    GCon->Logf(NAME_DevNet, "CONN: got something wrong from %s", Drv->AddrToString(&clientaddr));
     return nullptr;
   }
 
   if (!CheckGameSignature(msg)) {
-    if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid packet type (%u) from %s", control, Drv->AddrToString(&clientaddr));
+    /*if (net_dbg_dump_rejected_connections)*/ GCon->Logf(NAME_DevNet, "CONN: invalid packet type from %s", Drv->AddrToString(&clientaddr));
     return nullptr;
   }
 
   msg << command;
+  //GCon->Logf(NAME_DevNet, "CONN: command=%u", command);
   if (command == CCREQ_SERVER_INFO) {
     if (msg.AtEnd()) return nullptr;
 
@@ -754,47 +876,57 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     if (msg.IsError()) return nullptr;
 
     // version sanity check
-    if (reqVerHi > NET_PROTOCOL_VERSION_HI) return nullptr;
-    if (reqVerHi == NET_PROTOCOL_VERSION_HI && reqVerLo > NET_PROTOCOL_VERSION_LO) return nullptr;
-
-    bool writeExtended = (reqVerHi > NET_PROTOCOL_VERSION_HI || (reqVerHi == NET_PROTOCOL_VERSION_HI && reqVerLo >= NET_PROTOCOL_VERSION_LO));
+    if (reqVerHi < 7 || reqVerHi > 42) {
+      // arbtrary
+      GCon->Logf(NAME_DevNet, "CONN: rejected info request due to wrong request version (%u.%u)", reqVerHi, reqVerLo);
+    }
+    //if (reqVerHi == NET_PROTOCOL_VERSION_HI && reqVerLo > NET_PROTOCOL_VERSION_LO) return nullptr;
 
     GCon->Logf(NAME_DevNet, "CONN: sending server info to %s (request version is %u.%u)", Drv->AddrToString(&clientaddr), reqVerHi, reqVerLo);
 
-    VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
-    TmpByte = NETPACKET_CTL;
-    MsgOut << TmpByte;
+    VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
     WriteGameSignature(MsgOut);
+    // type
     TmpByte = CCREP_SERVER_INFO;
     MsgOut << TmpByte;
-    TmpStr = VNetworkLocal::HostName.asStr().left(120);
-    MsgOut << TmpStr;
-    TmpStr = VStr(GLevel ? *GLevel->MapName : "intermission").left(64);
-    MsgOut << TmpStr;
-    TmpByte = svs.num_connected;
-    MsgOut << TmpByte;
-    TmpByte = svs.max_clients;
-    MsgOut << TmpByte;
+    // protocol version
     TmpByte = NET_PROTOCOL_VERSION_HI;
     MsgOut << TmpByte;
     TmpByte = NET_PROTOCOL_VERSION_LO;
     MsgOut << TmpByte;
-    // this is for version 7.8 and up
-    if (writeExtended) {
-      TmpByte = svs.deathmatch;
-      MsgOut << TmpByte;
-    }
-    // end of 7.8 extensions
+    // extflags
+    TmpByte = 1u; // has modlist
+    MsgOut << TmpByte;
+    // current number of players
+    TmpByte = svs.num_connected;
+    MsgOut << TmpByte;
+    // max number of players
+    TmpByte = svs.max_clients;
+    MsgOut << TmpByte;
+    // deathmatch type
+    TmpByte = svs.deathmatch;
+    MsgOut << TmpByte;
+    // modlist hash
     vuint32 mhash = FL_GetNetWadsHash();
     MsgOut << mhash;
+    // host name
+    TmpStr = VNetworkLocal::HostName.asStr().left(127);
+    MsgOut << TmpStr;
+    // map name
+    TmpStr = VStr(GLevel ? *GLevel->MapName : "intermission").left(63);
+    MsgOut << TmpStr;
     // write pak list
     WritePakList(MsgOut);
-    Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
+
+    int elen = EncryptInfoBitStream(edata, MsgOut, clientKey);
+    if (elen <= 0) return nullptr; // just in case
+    Drv->Write(acceptsock, edata, elen, &clientaddr);
     return nullptr;
   }
 
   if (command != CCREQ_CONNECT) {
     if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: unknown packet command (%u) from %s", command, Drv->AddrToString(&clientaddr));
+    SendConnectionReject(Drv, clientKey, "unknown query", acceptsock, clientaddr);
     return nullptr;
   }
 
@@ -806,7 +938,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   if (msg.IsError() || TmpByte != NET_PROTOCOL_VERSION_HI || TmpByte1 != NET_PROTOCOL_VERSION_LO) {
     GCon->Logf(NAME_DevNet, "connection error: invalid protocol version, got %u:%u, but expected %u:%u", TmpByte, TmpByte1, NET_PROTOCOL_VERSION_HI, NET_PROTOCOL_VERSION_LO);
     // send reject packet, why not?
-    SendConnectionReject(Drv, "invalid protocol version", acceptsock, clientaddr);
+    SendConnectionReject(Drv, clientKey, "invalid protocol version", acceptsock, clientaddr);
     return nullptr;
   }
 
@@ -818,7 +950,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   if (msg.IsError() || modhash != FL_GetNetWadsHash() || modcount != (vuint16)FL_GetNetWadsCount()) {
     GCon->Log(NAME_DevNet, "connection error: incompatible mod list");
     // send reject packet
-    SendConnectionReject(Drv, "incompatible loaded mods list", acceptsock, clientaddr, true); // send modlist
+    SendConnectionReject(Drv, clientKey, "incompatible loaded mods list", acceptsock, clientaddr, true); // send modlist
     return nullptr;
   }
 
@@ -826,13 +958,42 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   for (VSocket *as = Net->ActiveSockets; as; as = as->Next) {
     if (as->Driver != this) continue;
     VDatagramSocket *s = (VDatagramSocket *)as;
-    ret = Drv->AddrCompare(&clientaddr, &s->Addr);
-    if (ret >= 0) {
+    if (!s->Invalid) continue;
+    // if we already have this client, resent accept packet, and replace client address
+    if (memcmp(clientKey, s->AuthKey, VNetUtils::ChaCha20KeySize) == 0) {
+      if (Net->GetNetTime()-s->ConnectTime < 2.0) {
+        GCon->Logf(NAME_DevNet, "CONN: duplicate connection request from %s (this is ok)", Drv->AddrToString(&clientaddr));
+        s->Addr = clientaddr; // update address
+        // yes, so send a duplicate reply
+        VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
+        Drv->GetSocketAddr(s->LanSocket, &newaddr);
+        WriteGameSignature(MsgOut);
+        TmpByte = CCREP_ACCEPT;
+        MsgOut << TmpByte;
+        // protocol version
+        TmpByte = NET_PROTOCOL_VERSION_HI;
+        MsgOut << TmpByte;
+        TmpByte = NET_PROTOCOL_VERSION_LO;
+        MsgOut << TmpByte;
+        // client port
+        vint32 TmpPort = Drv->GetSocketPort(&newaddr);
+        MsgOut << TmpPort;
+        int elen = EncryptInfoBitStream(edata, MsgOut, clientKey);
+        if (elen > 0) {
+          Drv->Write(acceptsock, edata, elen, &clientaddr);
+          return nullptr;
+        }
+      }
+      // drop this
+      GCon->Logf(NAME_DevNet, "CONN: DROPPING %s", Drv->AddrToString(&clientaddr));
+      s->Invalid = true;
+      return nullptr;
+      /*
       // is this a duplicate connection request?
       if (ret == 0 && Net->GetNetTime()-s->ConnectTime < 2.0) {
         GCon->Logf(NAME_DevNet, "CONN: duplicate connection request from %s (this is ok)", Drv->AddrToString(&clientaddr));
         // yes, so send a duplicate reply
-        VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
+        VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
         Drv->GetSocketAddr(s->LanSocket, &newaddr);
         TmpByte = NETPACKET_CTL;
         MsgOut << TmpByte;
@@ -855,12 +1016,13 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
         s->Invalid = true;
         return nullptr;
       }
+      */
     }
   }
 
   if (svs.num_connected >= svs.max_clients) {
     // no room; try to let him know
-    SendConnectionReject(Drv, "server is full", acceptsock, clientaddr);
+    SendConnectionReject(Drv, clientKey, "server is full", acceptsock, clientaddr);
     return nullptr;
   }
 
@@ -873,6 +1035,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   // allocate a VSocket
   // everything is allocated, just fill in the details
   sock = new VDatagramSocket(this);
+  memcpy(sock->AuthKey, clientKey, VNetUtils::ChaCha20KeySize);
   sock->LanSocket = newsock;
   sock->LanDriver = Drv;
   sock->Addr = clientaddr;
@@ -883,15 +1046,24 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   GCon->Logf(NAME_DevNet, "allocated socket %s for client %s", Drv->AddrToString(&newaddr), *sock->Address);
 
   // send him back the info about the server connection he has been allocated
-  VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
-  TmpByte = NETPACKET_CTL;
-  MsgOut << TmpByte;
+  VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
   WriteGameSignature(MsgOut);
   TmpByte = CCREP_ACCEPT;
   MsgOut << TmpByte;
+  // protocol version
+  TmpByte = NET_PROTOCOL_VERSION_HI;
+  MsgOut << TmpByte;
+  TmpByte = NET_PROTOCOL_VERSION_LO;
+  MsgOut << TmpByte;
+  // cline port
   vint32 TmpPort = Drv->GetSocketPort(&newaddr);
   MsgOut << TmpPort;
-  Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
+  int elen = EncryptInfoBitStream(edata, MsgOut, clientKey);
+  if (elen <= 0) {
+    delete sock;
+    return nullptr;
+  }
+  Drv->Write(acceptsock, edata, elen, &clientaddr);
 
   return sock;
 #else
@@ -1082,17 +1254,20 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
       msg.Serialise(tmpaddr.sa_data, 2);
       if (!msg.IsError() && pver0 == NET_PROTOCOL_VERSION_HI && pver1 == NET_PROTOCOL_VERSION_LO) {
         GCon->Logf(NAME_DevNet, "  sending server query to %s...", Drv->AddrToString(&tmpaddr));
-        VBitStreamWriter Reply(MAX_DGRAM_SIZE<<3);
-        TmpByte = NETPACKET_CTL;
-        Reply << TmpByte;
-        WriteGameSignature(Reply);
+        VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
+        WriteGameSignature(MsgOut);
         TmpByte = CCREQ_SERVER_INFO;
-        Reply << TmpByte;
+        MsgOut << TmpByte;
         TmpByte = NET_PROTOCOL_VERSION_HI;
-        Reply << TmpByte;
+        MsgOut << TmpByte;
         TmpByte = NET_PROTOCOL_VERSION_LO;
-        Reply << TmpByte;
-        Drv->Write(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes(), &tmpaddr);
+        MsgOut << TmpByte;
+        // encrypt and send
+        vuint8 edata[MAX_DGRAM_SIZE];
+        vuint8 key[VNetUtils::ChaCha20KeySize];
+        VNetUtils::GenerateKey(key);
+        int elen = EncryptInfoBitStream(edata, MsgOut, key);
+        if (elen > 0) Drv->Write(Drv->controlSock, edata, elen, &tmpaddr);
       } else if (msg.IsError()) {
         GCon->Logf(NAME_DevNet, "  server: %s, error reading reply, size=%d; pos=%d", Drv->AddrToString(&tmpaddr), msg.GetNumBits(), msg.GetPos());
       } else {

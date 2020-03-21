@@ -27,18 +27,78 @@
 #define VAVOOM_NETWORK_HEADER
 
 
-class VNetContext;
+// ////////////////////////////////////////////////////////////////////////// //
+struct VNetUtils {
+  static void TVMsecs (timeval *dest, int msecs) noexcept;
 
-// packet header IDs
-// used in handshake only
-enum {
-  NETPACKET_CTL = 0x80,
+  // start with 0, continuous
+  static vuint32 CRC32C (vuint32 crc32, const void *buf, size_t length) noexcept;
+
+  // // ChaCha20 // //
+  /*
+  struct ChaCha20Ctx {
+    vuint32 input[16];
+  };
+  */
+  typedef chacha20_ctx ChaCha20Ctx;
+
+  enum {
+    ChaCha20KeySize = 16,
+    ChaCha20NonceSize = 8,
+  };
+
+  /* Key size in bits: either 256 (32 bytes), or 128 (16 bytes) */
+  /* Nonce size in bits: 64 (8 bytes) */
+  /* returns 0 on success */
+  static int ChaCha20SetupEx (ChaCha20Ctx *ctx, const void *keydata, const void *noncedata, vuint32 keybits) noexcept;
+
+  /* chacha setup for 256-bit keys */
+  static inline int ChaCha20Setup32 (ChaCha20Ctx *ctx, const void *keydata, const void *noncedata) noexcept {
+    return ChaCha20SetupEx(ctx, keydata, noncedata, 256);
+  }
+
+  /* chacha setup for 128-bit keys */
+  static inline int ChaCha20Setup16 (ChaCha20Ctx *ctx, const void *keydata, const void *noncedata) noexcept {
+    return ChaCha20SetupEx(ctx, keydata, noncedata, 128);
+  }
+
+  /* chacha setup for 128-bit keys and 32-bit nonce */
+  static inline int ChaCha20Setup (ChaCha20Ctx *ctx, const vuint8 keydata[16], const vuint32 nonce) noexcept {
+    vuint8 noncebuf[8];
+    memset(noncebuf, 0, sizeof(noncebuf));
+    noncebuf[0] = nonce&0xffu;
+    noncebuf[1] = (nonce>>8)&0xffu;
+    noncebuf[2] = (nonce>>16)&0xffu;
+    noncebuf[3] = (nonce>>24)&0xffu;
+    noncebuf[5] = 0x02;
+    noncebuf[6] = 0x9a;
+    return ChaCha20SetupEx(ctx, keydata, noncebuf, 128);
+  }
+
+  /* encrypts or decrypts a full message */
+  /* cypher is symmetric, so `ciphertextdata` and `plaintextdata` can point to the same address */
+  static void ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, const void *plaintextdata, vuint32 msglen) noexcept;
+
+  // generate ChaCha20 encryption key
+  static void GenerateKey (vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept;
+
+  // WARNING! cannot do it in-place
+  // needs 24 extra bytes (key, nonce, crc)
+  // returns new length or -1 on error
+  static int EncryptInfoPacket (void *destbuf, const void *srcbuf, int srclen, const vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept;
+  // it can decrypt in-place
+  // returns new length or -1 on error
+  // also sets key
+  static int DecryptInfoPacket (vuint8 key[VNetUtils::ChaCha20KeySize], void *destbuf, const void *srcbuf, int srclen) noexcept;
 };
+
+
+class VNetContext;
 
 // sent on handshake
 enum {
   NET_PROTOCOL_VERSION_HI = 7,
-  NET_PROTOCOL_VERSION_LO = 9,
+  NET_PROTOCOL_VERSION_LO = 10,
 };
 
 enum {
@@ -101,6 +161,7 @@ class VMessageOut;
 class VSocketPublic : public VInterface {
 public:
   VStr Address;
+  vuint8 AuthKey[VNetUtils::ChaCha20KeySize];
 
   double ConnectTime = 0;
   double LastMessageTime = 0;
@@ -612,6 +673,7 @@ public:
   VNetContext *Context;
   VBasePlayer *Owner;
   ENetConState State;
+  vuint8 AuthKey[VNetUtils::ChaCha20KeySize];
   bool NeedsUpdate; // should we call `VNetConnection::UpdateLevel()`? this updates mobjs in sight, and sends new mobj state
   bool AutoAck; // `true` for demos: autoack all pacekts
   double LastLevelUpdateTime;
@@ -956,42 +1018,10 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VDemoRecordingSocket : public VSocketPublic {
 public:
+  VDemoRecordingSocket ();
   virtual bool IsLocalConnection () const noexcept override;
   virtual int GetMessage (void *dest, size_t destSize) override;
   virtual int SendMessage (const vuint8 *, vuint32) override;
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-struct VNetUtils {
-  static void TVMsecs (timeval *dest, int msecs) noexcept;
-
-  // start with 0, continuous
-  static vuint32 CRC32C (vuint32 crc32, const void *buf, size_t length) noexcept;
-
-  // // ChaCha20 // //
-  struct ChaCha20Ctx {
-    vuint32 input[16];
-  };
-
-  /* Key size in bits: either 256 (32 bytes), or 128 (16 bytes) */
-  /* Nonce size in bits: 64 (8 bytes) */
-  /* returns 0 on success */
-  static int ChaCha20SetupEx (ChaCha20Ctx *ctx, const void *keydata, const void *noncedata, vuint32 keybits) noexcept;
-
-  /* chacha setup for 256-bit keys */
-  static inline int ChaCha20Setup32 (ChaCha20Ctx *ctx, const void *keydata, const void *noncedata) noexcept {
-    return ChaCha20SetupEx(ctx, keydata, noncedata, 256);
-  }
-
-  /* chacha setup for 128-bit keys */
-  static inline int ChaCha20Setup16 (ChaCha20Ctx *ctx, const void *keydata, const void *noncedata) noexcept {
-    return ChaCha20SetupEx(ctx, keydata, noncedata, 128);
-  }
-
-  /* encrypts or decrypts a full message */
-  /* cypher is symmetric, so `ciphertextdata` and `plaintextdata` can point to the same address */
-  static void ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, const void *plaintextdata, vuint32 msglen) noexcept;
 };
 
 
