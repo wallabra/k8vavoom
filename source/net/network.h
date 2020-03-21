@@ -43,7 +43,7 @@ struct VNetUtils {
   typedef chacha20_ctx ChaCha20Ctx;
 
   enum {
-    ChaCha20KeySize = 16,
+    ChaCha20KeySize = 32,
     ChaCha20NonceSize = 8,
   };
 
@@ -63,7 +63,7 @@ struct VNetUtils {
   }
 
   /* chacha setup for 128-bit keys and 32-bit nonce */
-  static inline int ChaCha20Setup (ChaCha20Ctx *ctx, const vuint8 keydata[16], const vuint32 nonce) noexcept {
+  static inline int ChaCha20Setup (ChaCha20Ctx *ctx, const vuint8 keydata[ChaCha20KeySize], const vuint32 nonce) noexcept {
     vuint8 noncebuf[8];
     memset(noncebuf, 0, sizeof(noncebuf));
     noncebuf[0] = nonce&0xffu;
@@ -72,7 +72,7 @@ struct VNetUtils {
     noncebuf[3] = (nonce>>24)&0xffu;
     noncebuf[5] = 0x02;
     noncebuf[6] = 0x9a;
-    return ChaCha20SetupEx(ctx, keydata, noncebuf, 128);
+    return ChaCha20SetupEx(ctx, keydata, noncebuf, 256);
   }
 
   /* encrypts or decrypts a full message */

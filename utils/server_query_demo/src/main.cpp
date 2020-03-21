@@ -395,6 +395,8 @@ static bool queryGameServer (const TSrvItem &srv) {
         continue;
       }
 
+      printf("decrypted packet from %s (from %d bytes to %d bytes)\n", sock.AddrToString(&clientaddr), len, dlen);
+
       if (memcmp(key, origKey, VNetChanSocket::ChaCha20KeySize) != 0) {
         printf("got packet with wrong key from %s\n", sock.AddrToString(&clientaddr));
         continue;
