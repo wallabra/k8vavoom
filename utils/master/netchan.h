@@ -74,12 +74,19 @@ public:
 
   static void TVMsecs (timeval *dest, int msecs) noexcept;
 
+  static uint32_t GenRandomU32 () noexcept;
+
   // start with 0
   static uint32_t CRC32C (uint32_t crc32, const void *buf, size_t length) noexcept;
 
   // // ChaCha20 // //
   struct ChaCha20Ctx {
     uint32_t input[16];
+  };
+
+  enum {
+    ChaCha20KeySize = 16,
+    ChaCha20NonceSize = 8,
   };
 
   /* Key size in bits: either 256 (32 bytes), or 128 (16 bytes) */
@@ -97,9 +104,35 @@ public:
     return ChaCha20SetupEx(ctx, keydata, noncedata, 128);
   }
 
+  /* chacha setup for 128-bit keys and 32-bit nonce */
+  static inline int ChaCha20Setup (ChaCha20Ctx *ctx, const uint8_t keydata[16], const uint32_t nonce) noexcept {
+    uint8_t noncebuf[8];
+    memset(noncebuf, 0, sizeof(noncebuf));
+    noncebuf[0] = nonce&0xffu;
+    noncebuf[1] = (nonce>>8)&0xffu;
+    noncebuf[2] = (nonce>>16)&0xffu;
+    noncebuf[3] = (nonce>>24)&0xffu;
+    noncebuf[5] = 0x02;
+    noncebuf[6] = 0x9a;
+    return ChaCha20SetupEx(ctx, keydata, noncebuf, 128);
+  }
+
   /* encrypts or decrypts a full message */
   /* cypher is symmetric, so `ciphertextdata` and `plaintextdata` can point to the same address */
   static void ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, const void *plaintextdata, uint32_t msglen) noexcept;
+
+
+  // generate ChaCha20 encryption key
+  static void GenerateKey (uint8_t key[ChaCha20KeySize]) noexcept;
+
+  // WARNING! cannot do it in-place
+  // needs 24 extra bytes (key, nonce, crc)
+  // returns new length or -1 on error
+  static int EncryptInfoPacket (void *destbuf, const void *srcbuf, int srclen, const uint8_t key[ChaCha20KeySize]) noexcept;
+  // it can decrypt in-place
+  // returns new length or -1 on error
+  // also sets key
+  static int DecryptInfoPacket (uint8_t key[ChaCha20KeySize], void *destbuf, const void *srcbuf, int srclen) noexcept;
 };
 
 

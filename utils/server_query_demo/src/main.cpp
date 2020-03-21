@@ -53,10 +53,8 @@ enum {
   MASTER_SERVER_PORT   = 26002,
   MASTER_PROTO_VERSION = 1,
 
-  NETPACKET_CTL = 0x80,
-
   NET_PROTOCOL_VERSION_HI = 7,
-  NET_PROTOCOL_VERSION_LO = 8,
+  NET_PROTOCOL_VERSION_LO = 10,
 
   CCREQ_SERVER_INFO = 2,
   CCREP_SERVER_INFO = 13,
@@ -334,16 +332,36 @@ static bool queryGameServer (const TSrvItem &srv) {
   if (!sock.create()) return false;
 
   // send request
+  uint8_t edata[MAX_MSGLEN];
+
   uint8_t buf[MAX_MSGLEN];
-  buf[0] = NETPACKET_CTL;
-  int pos = WriteHostGameSignature(buf+1)+1;
-  buf[pos++] = CCREQ_SERVER_INFO;
-  buf[pos++] = NET_PROTOCOL_VERSION_HI;
-  buf[pos++] = NET_PROTOCOL_VERSION_LO;
 
   for (int tries = 3; tries > 0; --tries) {
-    printf("sending request to game server at %s...\n", sock.AddrToString(&srv.addr));
-    if (!sock.send(&srv.addr, buf, pos)) {
+    printf("*** sending request to game server at %s...\n", sock.AddrToString(&srv.addr));
+
+    int pos = WriteHostGameSignature(buf);
+    buf[pos++] = CCREQ_SERVER_INFO;
+    buf[pos++] = NET_PROTOCOL_VERSION_HI;
+    buf[pos++] = NET_PROTOCOL_VERSION_LO;
+
+    uint8_t origKey[VNetChanSocket::ChaCha20KeySize];
+    VNetChanSocket::GenerateKey(origKey);
+    printf("  generated key...\n");
+    int elen = VNetChanSocket::EncryptInfoPacket(edata, buf, pos, origKey);
+    printf("  encrypted %d bytes to %d bytes...\n", pos, elen);
+
+    uint8_t xkey[VNetChanSocket::ChaCha20KeySize];
+    uint8_t xdata[MAX_MSGLEN];
+    int xlen = VNetChanSocket::DecryptInfoPacket(xkey, xdata, edata, elen);
+    if (xlen != pos) { fprintf(stderr, "ERROR: packet decryption failed (error)!\n"); abort(); }
+    if (memcmp(xdata, buf, xlen) != 0) { fprintf(stderr, "ERROR: packet decryption failed (bad data)!\n"); abort(); }
+
+    if (elen < 0) {
+      fprintf(stderr, "ERROR: packet encryption failed!\n");
+      abort();
+    }
+
+    if (!sock.send(&srv.addr, edata, elen)) {
       sock.close();
       fprintf(stderr, "ERROR: cannot send query to game server!\n");
       return false;
@@ -358,64 +376,84 @@ static bool queryGameServer (const TSrvItem &srv) {
     int res = select(sock.getFD()+1, &rd, nullptr, nullptr, &to);
     if (res <= 0) continue;
 
-    // parse reply packet
-    sockaddr clientaddr;
-    int len = sock.recv(&clientaddr, buf, MAX_MSGLEN);
-    if (len < 0) {
-      printf("error reading data from %s\n", sock.AddrToString(&clientaddr));
-      break;
+    // parse reply packet(s)
+    for (int rpc = 32; rpc > 0; --rpc) {
+      sockaddr clientaddr;
+      int len = sock.recv(&clientaddr, edata, MAX_MSGLEN);
+      if (len < 0) {
+        printf("error reading data from %s\n", sock.AddrToString(&clientaddr));
+        break;
+      }
+      if (len == 0) break;
+
+      printf("got packet from %s\n", sock.AddrToString(&clientaddr));
+
+      uint8_t key[VNetChanSocket::ChaCha20KeySize];
+      int dlen = VNetChanSocket::DecryptInfoPacket(key, buf, edata, len);
+      if (dlen < 0) {
+        printf("got invalid packet from %s\n", sock.AddrToString(&clientaddr));
+        continue;
+      }
+
+      if (memcmp(key, origKey, VNetChanSocket::ChaCha20KeySize) != 0) {
+        printf("got packet with wrong key from %s\n", sock.AddrToString(&clientaddr));
+        continue;
+      }
+
+      if (!CheckHostGameSignature(buf, dlen)) {
+        printf("got packet with wrong signature %s\n", sock.AddrToString(&clientaddr));
+        continue;
+      }
+
+      if (!CheckByte(buf, dlen, CCREP_SERVER_INFO)) {
+        printf("got packet with wrong command %s\n", sock.AddrToString(&clientaddr));
+        continue;
+      }
+
+      // 128 is maximum string length
+      char srvname[128];
+      char mapname[128];
+      int protoVerHi, protoVerLo;
+      int currPlr, maxPlr, dmmode;
+      int extflags;
+
+      if ((protoVerHi = ReadByte(buf, dlen)) < 0) { printf("cannot read protoVerHi\n"); continue; }
+      if ((protoVerLo = ReadByte(buf, dlen)) < 0) { printf("cannot read protoVerLo\n"); continue; }
+      if ((extflags = ReadByte(buf, dlen)) < 0) { printf("cannot read extflags\n"); continue; }
+
+      if ((currPlr = ReadByte(buf, dlen)) < 0) { printf("cannot read currPlr\n"); continue; }
+      if ((maxPlr = ReadByte(buf, dlen)) < 0) { printf("cannot read maxPlr\n"); continue; }
+      if ((dmmode = ReadByte(buf, dlen)) < 0) { printf("cannot read dmmode\n"); continue; }
+
+      // 4 bytes of wadlist hash
+      if (ReadByte(buf, dlen) < 0) { printf("cannot read hash0\n"); continue; }
+      if (ReadByte(buf, dlen) < 0) { printf("cannot read hash1\n"); continue; }
+      if (ReadByte(buf, dlen) < 0) { printf("cannot read hash2\n"); continue; }
+      if (ReadByte(buf, dlen) < 0) { printf("cannot read hash3\n"); continue; }
+
+      if (!ReadVString(srvname, buf, dlen)) { printf("cannot read srvname\n"); continue; }
+      if (!ReadVString(mapname, buf, dlen)) { printf("cannot read mapname\n"); continue; }
+
+      // print info
+      printf("  name : %s\n", srvname);
+      printf("  map  : %s\n", mapname);
+      printf("  proto: %d.%d\n", protoVerHi, protoVerLo);
+      printf("  plrs : %d/%d\n", currPlr, maxPlr);
+      printf("  mode : %s\n", mode2str(dmmode));
+
+      // print wad list (this is optional)
+      if (extflags&1) {
+        char wadname[128];
+        while (ReadCString(wadname, buf, dlen)) {
+          if (!wadname[0]) break; // empty string terminates it
+          printf("    <%s>\n", wadname);
+        }
+      }
+
+      // done
+      sock.close();
+      return true;
     }
-
-    printf("got packet from %s\n", sock.AddrToString(&clientaddr));
-
-    if (!CheckByte(buf, len, NETPACKET_CTL)) continue;
-    if (!CheckHostGameSignature(buf, len)) continue;
-    if (!CheckByte(buf, len, CCREP_SERVER_INFO)) continue;
-
-    // 128 is maximum string length
-    char srvname[128];
-    char mapname[128];
-    int protoVerHi, protoVerLo;
-    int currPlr, maxPlr, dmmode;
-
-    if (!ReadVString(srvname, buf, len)) continue;
-    if (!ReadVString(mapname, buf, len)) continue;
-    if ((currPlr = ReadByte(buf, len)) < 0) continue;
-    if ((maxPlr = ReadByte(buf, len)) < 0) continue;
-    if ((protoVerHi = ReadByte(buf, len)) < 0) continue;
-    if ((protoVerLo = ReadByte(buf, len)) < 0) continue;
-    if (protoVerHi < 7) continue;
-
-    // is this version 7.8 and up?
-    if (protoVerHi > 7 || (protoVerHi == 7 && protoVerLo >= 8)) {
-      if ((dmmode = ReadByte(buf, len)) < 0) continue;
-    } else {
-      dmmode = 2; // reasonable default
-    }
-    // end of 7.8 extensions
-
-    // 4 bytes of wadlist hash
-    if (ReadByte(buf, len) < 0) continue;
-    if (ReadByte(buf, len) < 0) continue;
-    if (ReadByte(buf, len) < 0) continue;
-    if (ReadByte(buf, len) < 0) continue;
-
-    // print info
-    printf("  name : %s\n", srvname);
-    printf("  map  : %s\n", mapname);
-    printf("  proto: %d.%d\n", protoVerHi, protoVerLo);
-    printf("  plrs : %d/%d\n", currPlr, maxPlr);
-    printf("  mode : %s\n", mode2str(dmmode));
-
-    // print wad list (this is optional)
-    char wadname[128];
-    while (ReadCString(wadname, buf, len)) {
-      if (!wadname[0]) break; // empty string terminates it
-      printf("    <%s>\n", wadname);
-    }
-
-    // done
-    break;
   }
 
   sock.close();
@@ -439,7 +477,10 @@ int main (int argc, const char **argv) {
 
   queryMasterServer(ext);
 
-  for (unsigned f = 0; f < serverCount; ++f) queryGameServer(servers[f]);
+  for (unsigned f = 0; f < serverCount; ++f) {
+    queryGameServer(servers[f]);
+    //queryGameServer(servers[f]);
+  }
 
   return 0;
 }
