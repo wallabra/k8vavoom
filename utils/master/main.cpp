@@ -52,13 +52,15 @@ typedef int socklen_t;
 
 // ////////////////////////////////////////////////////////////////////////// //
 enum {
-  MCREQ_JOIN = 1,
-  MCREQ_QUIT = 2,
-  MCREQ_LIST = 3,
+  MCREQ_JOIN   = 1,
+  MCREQ_QUIT   = 2,
+  MCREQ_LIST   = 3,
+  MCREQ_LISTEX = 4,
 };
 
 enum {
-  MCREP_LIST = 1,
+  MCREP_LIST   = 1,
+  MCREP_LISTEX = 2,
 };
 
 enum {
@@ -74,6 +76,9 @@ struct TSrvItem {
   time_t time; // for blocked: unblock time; 0: never
   vuint8 pver0; // protocol version
   vuint8 pver1; // protocol version
+  // request rate limiter
+  double lastReqTime;
+  int rateViolationCount;
 };
 
 #ifdef _WIN32
@@ -87,6 +92,7 @@ public:
 static int acceptSocket = -1; // socket for fielding new connections
 static TArray<TSrvItem> srvList;
 static TArray<TSrvItem> srvBlocked;
+static TArray<TSrvItem> srvReqested;
 
 static bool logallowed = true;
 
@@ -98,6 +104,51 @@ static bool logallowed = true;
     if (fo) { PrintTime(fo); fprintf(fo, __VA_ARGS__); fprintf(fo, "%s", "\n"); fclose(fo); } \
   } \
 } while (0)
+
+
+//==========================================================================
+//
+//  GetSysTime
+//
+//  return value should not be zero
+//
+//==========================================================================
+static __attribute__((unused)) double GetSysTime () noexcept {
+  #if defined(WIN32)
+  static uint32_t lastTickCount = 0;
+  static double addSeconds = 0;
+  static double lastSeconds = 0;
+  uint32_t res = (uint32_t)GetTickCount();
+  if (lastTickCount > res) {
+    addSeconds = lastSeconds;
+    lastTickCount = res;
+  } else {
+    lastSeconds = addSeconds+(double)res/1000.0+1.0;
+  }
+  return lastSeconds;
+  #elif defined(__linux__)
+  static bool initialized = false;
+  static time_t secbase = 0;
+  struct timespec ts;
+  if (clock_gettime(/*CLOCK_MONOTONIC*/CLOCK_MONOTONIC_RAW, &ts) != 0) abort();
+  if (!initialized) {
+    initialized = true;
+    secbase = ts.tv_sec;
+  }
+  return (ts.tv_sec-secbase)+ts.tv_nsec/1000000000.0+1.0;
+  #else
+  static bool initialized = false;
+  struct timeval tp;
+  struct timezone tzp;
+  static int secbase = 0;
+  gettimeofday(&tp, &tzp);
+  if (!initialized) {
+    initialized = true;
+    secbase = tp.tv_sec;
+  }
+  return (tp.tv_sec-secbase)+tp.tv_usec/1000000.0+1.0;
+  #endif
+}
 
 
 //==========================================================================
@@ -223,6 +274,58 @@ static void BlockIt (const sockaddr *clientaddr) {
 
 //==========================================================================
 //
+//  CheckRateLimit
+//
+//  returns `false` if blocked due to rate limit
+//
+//==========================================================================
+static bool CheckRateLimit (const sockaddr *clientaddr) {
+  // find record, drop old records
+  int fidx = -1;
+  time_t currtm = time(0);
+  for (int i = 0; i < srvReqested.length(); ++i) {
+    if (fidx < 0 && AddrCompareNoPort(&srvReqested[i].addr, clientaddr) == 0) {
+      fidx = i;
+    } else if (srvReqested[i].time+10 <= currtm) {
+      srvReqested.removeAt(i);
+      --i;
+    }
+  }
+
+  // known?
+  if (fidx >= 0) {
+    // check rate limit
+    const double ctt = GetSysTime();
+    TSrvItem *srv = &srvReqested[fidx];
+    srv->time = currtm;
+    if (ctt-srv->lastReqTime <= 50) {
+      // viloation
+      if (++srv->rateViolationCount > 4) {
+        // too many violations, block it
+        BlockIt(clientaddr);
+        // remove from the list
+        srvReqested.removeAt(fidx);
+        return false;
+      }
+    } else if (ctt-srv->lastReqTime > 300) {
+      srv->rateViolationCount = 0;
+    }
+    srv->lastReqTime = ctt;
+  } else {
+    // new query
+    TSrvItem *srv = &srvReqested.alloc();
+    srv->time = currtm;
+    srv->addr = *clientaddr;
+    srv->lastReqTime = GetSysTime();
+    srv->rateViolationCount = 0;
+  }
+
+  return true;
+}
+
+
+//==========================================================================
+//
 //  ReadNet
 //
 //==========================================================================
@@ -246,6 +349,8 @@ static void ReadNet () {
     BlockIt(&clientaddr);
     return;
   }
+
+  if (!CheckRateLimit(&clientaddr)) return;
 
   if (len >= 1) {
     switch (buf[0]) {
@@ -288,8 +393,8 @@ static void ReadNet () {
             memcpy(buf, "K8VAVOOM", 8);
             buf[8] = MASTER_PROTO_VERSION;
             int bufstpos = 9;
-            buf[bufstpos+0] = MCREP_LIST;
-            buf[bufstpos+1] = 2; // seq id: bit 0 set means 'first', bit 1 set means 'last'
+            buf[bufstpos++] = MCREP_LIST;
+            buf[bufstpos++] = 3; // seq id: bit 0 set means 'first', bit 1 set means 'last'
             sendto(acceptSocket, buf, bufstpos, 0, &clientaddr, sizeof(sockaddr));
           } else {
             int sidx = 0;
@@ -311,6 +416,44 @@ static void ReadNet () {
               }
               if (sidx >= srvList.length()) buf[bufstpos+1] |= 0x02; // set "last packet" flag
               sendto(acceptSocket, buf, mlen, 0, &clientaddr, sizeof(sockaddr));
+            }
+          }
+          return;
+        }
+        break;
+      case MCREQ_LISTEX:
+        if (len == 1) {
+          Logf("extended query from %s", AddrToString(&clientaddr));
+          if (srvList.length() == 0) {
+            // answer with the empty packet
+            memcpy(buf, "K8VAVOOM", 8);
+            buf[8] = MASTER_PROTO_VERSION;
+            int bufstpos = 9;
+            buf[bufstpos++] = MCREP_LISTEX;
+            buf[bufstpos++] = 0x80; // seq id; bit 7 means "last"
+            sendto(acceptSocket, buf, bufstpos, 0, &clientaddr, sizeof(sockaddr));
+          } else {
+            int sidx = 0;
+            int seq = 0;
+            while (seq <= 0x7f && sidx < srvList.length()) {
+              memcpy(buf, "K8VAVOOM", 8);
+              buf[8] = MASTER_PROTO_VERSION;
+              int bufstpos = 9;
+              buf[bufstpos+0] = MCREP_LISTEX;
+              buf[bufstpos+1] = seq; // seq id; bit 7 means "last"
+              int mlen = bufstpos+2;
+              while (sidx < srvList.length()) {
+                if (mlen+8 > MAX_MSGLEN-1) break;
+                buf[mlen+0] = srvList[sidx].pver0;
+                buf[mlen+1] = srvList[sidx].pver1;
+                memcpy(&buf[mlen+2], srvList[sidx].addr.sa_data+2, 4);
+                memcpy(&buf[mlen+6], srvList[sidx].addr.sa_data+0, 2);
+                mlen += 8;
+                ++sidx;
+              }
+              if (seq == 0x7f || sidx >= srvList.length()) buf[bufstpos+1] |= 0x80; // set "last packet" flag
+              sendto(acceptSocket, buf, mlen, 0, &clientaddr, sizeof(sockaddr));
+              ++seq;
             }
           }
           return;

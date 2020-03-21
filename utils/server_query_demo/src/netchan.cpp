@@ -60,35 +60,24 @@ static TWinSockHelper vnetchanHelper__;
 
 //==========================================================================
 //
-//  VNetChan::InitialiseSockets
-//
-//==========================================================================
-bool VNetChan::InitialiseSockets () {
-  #ifdef WIN32
-  if (!vnetchanSockInited) {
-    WSADATA winsockdata;
-    //MAKEWORD(2, 2)
-    int r = WSAStartup(MAKEWORD(1, 1), &winsockdata);
-    if (r) return false;
-    vnetchanSockInited = true;
-  }
-  #endif
-  return true;
-}
-
-
-
-//==========================================================================
-//
 //  GetSysTime
 //
-//  return valud should not be zero
+//  return value should not be zero
 //
 //==========================================================================
 static __attribute__((unused)) double GetSysTime () noexcept {
   #if defined(WIN32)
+  static uint32_t lastTickCount = 0;
+  static double addSeconds = 0;
+  static double lastSeconds = 0;
   uint32_t res = (uint32_t)GetTickCount();
-  return (double)res/1000.0+1.0;
+  if (lastTickCount > res) {
+    addSeconds = lastSeconds;
+    lastTickCount = res;
+  } else {
+    lastSeconds = addSeconds+(double)res/1000.0+1.0;
+  }
+  return lastSeconds;
   #elif defined(__linux__)
   static bool initialized = false;
   static time_t secbase = 0;
@@ -226,8 +215,15 @@ int VNetChanSocket::recv (sockaddr *addr, void *buf, int maxlen) noexcept {
   sockaddr tmpaddr;
   if (!addr) addr = &tmpaddr;
   socklen_t addrlen = sizeof(sockaddr);
-  int len = (int)recvfrom(sockfd, buf, maxlen, 0, addr, &addrlen);
-  if (len < 0) len = -1;
+  int len;
+  for (;;) {
+    len = (int)recvfrom(sockfd, buf, maxlen, 0, addr, &addrlen);
+    if (len < 0) {
+      if (errno == EINTR) continue;
+      len = (errno == EAGAIN || errno == EWOULDBLOCK ? 0 : -1);
+    }
+    break;
+  }
   return len;
 }
 
@@ -296,167 +292,44 @@ bool VNetChanSocket::GetAddrFromName (const char *hostname, sockaddr *addr, uint
 }
 
 
-
-//**************************************************************************
-//
-// VNetChan
-//
-//**************************************************************************
-
-
 //==========================================================================
 //
-//  VNetChan::VNetChan
+//  VNetChanSocket::InitialiseSockets
 //
 //==========================================================================
-VNetChan::VNetChan ()
-  : sock()
-  , lastSendSeq(0)
-  , lastAckSeq(0)
-  , resendCount(0)
-  , lastSendTime(0)
-  , lastRecvTime(0)
-  , bOpenAcked(false)
-  , bCloseAcked(false)
-  , bCloseSent(false)
-  , inQueue(nullptr)
-  , outQueue(nullptr)
-{
-  memset((void *)&claddr, 0, sizeof(claddr));
-}
-
-
-//==========================================================================
-//
-//  VNetChan::VNetChan
-//
-//==========================================================================
-VNetChan::~VNetChan () {
-  close();
-}
-
-
-//==========================================================================
-//
-//  VNetChan::close
-//
-//==========================================================================
-void VNetChan::close () {
-  while (inQueue) {
-    Message *msg = inQueue;
-    inQueue = msg->next;
-    delete msg;
+bool VNetChanSocket::InitialiseSockets () noexcept {
+  #ifdef WIN32
+  if (!vnetchanSockInited) {
+    WSADATA winsockdata;
+    //MAKEWORD(2, 2)
+    int r = WSAStartup(MAKEWORD(1, 1), &winsockdata);
+    if (r) return false;
+    vnetchanSockInited = true;
   }
-
-  while (outQueue) {
-    Message *msg = outQueue;
-    outQueue = msg->next;
-    delete msg;
-  }
-
-  sock.close();
-
-  lastSendSeq = 0;
-  lastAckSeq = 0;
-  resendCount = 0;
-  lastSendTime = 0;
-  lastRecvTime = 0;
-  bOpenAcked = false;
-  bCloseAcked = false;
-  bCloseSent = false;
-
-  memset((void *)&claddr, 0, sizeof(claddr));
-}
-
-
-//==========================================================================
-//
-//  VNetChan::canSendData
-//
-//==========================================================================
-bool VNetChan::canSendData () const noexcept {
-  if (!sock.isOpen()) return false;
+  #endif
   return true;
 }
 
 
 //==========================================================================
 //
-//  VNetChan::hasIncomingData
+//  VNetChanSocket::GetTime
 //
 //==========================================================================
-bool VNetChan::hasIncomingData () const noexcept {
-  return (inQueue && inQueue->acked);
+double VNetChanSocket::GetTime () noexcept {
+  return GetSysTime();
 }
 
 
 //==========================================================================
 //
-//  VNetChan::requestClose
+//  VNetChanSocket::TVMsecs
 //
 //==========================================================================
-bool VNetChan::requestClose () {
-  if (!sock.isOpen()) return false;
-  if (bCloseSent) return true;
-
-  Message *msg = new Message;
-  msg->len = 0;
-  msg->next = nullptr;
-  msg->pid = 0;
-  msg->seq = ++lastSendSeq;
-  msg->acked = false;
-  msg->close = true;
-  Message **mp = &outQueue;
-  while (*mp) mp = &(*mp)->next;
-  *mp = msg;
-  bCloseSent = true;
-  return true;
-}
-
-
-//==========================================================================
-//
-//  VNetChan::send
-//
-//==========================================================================
-bool VNetChan::send (const void *buf, int len) {
-  if (!sock.isOpen()) return false;
-  if (len < 0) return false;
-  if (len == 0) return true;
-  if (len > MAX_DATA_SIZE) return false;
-  if (!buf) return false;
-  if (bCloseSent) return false;
-
-  Message *msg = new Message;
-  msg->len = len;
-  memcpy(msg->data, buf, len);
-  msg->next = nullptr;
-  msg->pid = 0;
-  msg->seq = ++lastSendSeq;
-  msg->acked = false;
-  msg->close = true;
-  Message **mp = &outQueue;
-  while (*mp) mp = &(*mp)->next;
-  *mp = msg;
-  bCloseSent = true;
-  return true;
-}
-
-
-//==========================================================================
-//
-//  VNetChan::read
-//
-//==========================================================================
-int VNetChan::read (void *buf, int maxlen) {
-  return -1;
-}
-
-
-//==========================================================================
-//
-//  VNetChan::tick
-//
-//==========================================================================
-void VNetChan::tick () {
+void VNetChanSocket::TVMsecs (timeval *dest, int msecs) {
+  if (!dest) return;
+  if (msecs < 0) msecs = 0;
+  dest->tv_sec = msecs/1000;
+  dest->tv_usec = msecs%1000;
+  dest->tv_usec *= 100000;
 }

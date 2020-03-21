@@ -26,11 +26,14 @@
 #define VAVOOM_NETCHAN_H
 
 #include <stdint.h>
+#include <time.h>
 // for `sockaddr`
 #include <sys/socket.h>
 
 
 class VNetChanSocket {
+  friend class VNetChan;
+
 public:
   enum { MAX_DGRAM_SIZE = 1400 };
 
@@ -62,69 +65,12 @@ public:
   static bool AddrEqu (const sockaddr *addr1, const sockaddr *addr2) noexcept;
 
   static bool GetAddrFromName (const char *hostname, sockaddr *addr, uint16_t port) noexcept;
-};
 
+  static double GetTime () noexcept;
 
-class VNetChan {
-public:
-  enum { MAX_DATA_SIZE = VNetChanSocket::MAX_DGRAM_SIZE-6 };
+  static bool InitialiseSockets () noexcept;
 
-protected:
-  enum { MAX_QUEUE_SIZE = 32 };
-
-protected:
-  struct Message {
-    uint8_t data[VNetChanSocket::MAX_DGRAM_SIZE];
-    int len;
-    Message *next;
-    uint32_t pid;
-    uint32_t seq;
-    bool acked;
-    bool close;
-  };
-
-public:
-  VNetChanSocket sock;
-  // client address
-  sockaddr claddr;
-
-protected:
-  uint32_t lastSendSeq;
-  uint32_t lastAckSeq;
-  int resendCount;
-  double lastSendTime;
-  double lastRecvTime;
-  bool bOpenAcked;
-  bool bCloseAcked;
-  bool bCloseSent;
-
-  Message *inQueue;
-  Message *outQueue;
-
-public:
-  VNetChan ();
-  ~VNetChan ();
-
-  inline bool isOpen () const noexcept { return sock.isOpen(); }
-
-  inline bool isOpenAcked () const noexcept { return bOpenAcked; }
-  inline bool isCloseAcked () const noexcept { return bCloseAcked; }
-  inline bool isCloseSent () const noexcept { return bCloseSent; }
-
-  void close ();
-
-  bool requestClose ();
-
-  void tick ();
-
-  bool canSendData () const noexcept;
-  bool hasIncomingData () const noexcept;
-
-  bool send (const void *buf, int len);
-  int read (void *buf, int maxlen=MAX_DATA_SIZE);
-
-public:
-  static bool InitialiseSockets ();
+  static void TVMsecs (timeval *dest, int msecs);
 };
 
 

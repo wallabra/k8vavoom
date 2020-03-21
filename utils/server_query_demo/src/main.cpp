@@ -38,11 +38,13 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 enum {
-  MCREQ_LIST = 3,
+  MCREQ_LIST   = 3,
+  MCREQ_LISTEX = 4,
 };
 
 enum {
-  MCREP_LIST = 1,
+  MCREP_LIST   = 1,
+  MCREP_LISTEX = 2,
 };
 
 enum {
@@ -201,7 +203,7 @@ static bool ReadCString (char *dest, void *data, int &len) {
 //  queryMasterServer
 //
 //==========================================================================
-static void queryMasterServer () {
+static void queryMasterServer (bool extended) {
   VNetChanSocket sock;
   if (!sock.create()) abort();
 
@@ -213,56 +215,94 @@ static void queryMasterServer () {
   }
 
   uint8_t buf[MAX_MSGLEN];
-  int pos = WriteMasterGameSignature(buf);
-  buf[pos++] = MCREQ_LIST;
 
   // send request
   printf("sending request to master server at %s...\n", sock.AddrToString(&masteraddr));
-  if (!sock.send(&masteraddr, buf, pos)) {
-    sock.close();
-    fprintf(stderr, "ERROR: cannot send query to master server!\n");
-    abort();
-  }
 
-  // wait for the reply
-  for (int tries = 3; tries > 0; --tries) {
+  const double startTime = VNetChanSocket::GetTime();
+  double lastReqTime = 0;
+  int nextSeq = 0;
+
+  for (;;) {
+    const double ctt = VNetChanSocket::GetTime();
+    if (ctt-startTime >= 1500.0/1000.0) {
+      sock.close();
+      fprintf(stderr, "ERROR: master server timeout!\n");
+      abort();
+    }
+
+    // (re)send request
+    if (lastReqTime == 0 || lastReqTime+200.0/1000.0 >= ctt) {
+      lastReqTime = ctt;
+      int pos = WriteMasterGameSignature(buf);
+      buf[pos++] = (extended ? MCREQ_LISTEX : MCREQ_LIST);
+      if (!sock.send(&masteraddr, buf, pos)) {
+        sock.close();
+        fprintf(stderr, "ERROR: cannot send query to master server!\n");
+        abort();
+      }
+    }
+
     fd_set rd;
     FD_ZERO(&rd);
     FD_SET(sock.getFD(), &rd);
     timeval to;
-    to.tv_sec = 1;
-    to.tv_usec = 0;
+    VNetChanSocket::TVMsecs(&to, 100);
     int res = select(sock.getFD()+1, &rd, nullptr, nullptr, &to);
-    if (res <= 0) break;
+    if (res < 0) break;
+    if (res == 0) continue;
 
+    int len = 0;
     sockaddr clientaddr;
-    int len = sock.recv(&clientaddr, buf, MAX_MSGLEN);
-    if (len < 0) {
-      printf("error reading data from %s\n", sock.AddrToString(&clientaddr));
+    for (int trc = 32; trc > 0; --trc) {
+      len = sock.recv(&clientaddr, buf, MAX_MSGLEN);
+      if (len < 0) {
+        printf("error reading data from %s\n", sock.AddrToString(&clientaddr));
+        break;
+      }
+      if (len == 0) continue;
+      if (!VNetChanSocket::AddrEqu(&clientaddr, &masteraddr)) { len = 0; continue; }
       break;
     }
-    if (len == 0) continue;
+    if (!len) continue;
 
     printf("got packet from %s\n", sock.AddrToString(&clientaddr));
 
     if (!CheckMasterGameSignature(buf, len)) continue;
     if (len < 2) continue;
-    if (buf[0] != MCREP_LIST) continue;
 
-    printf("got reply from the master!\n");
-    bool last = (buf[1]&0x02u); // seq id: bit 0 set means 'first', bit 1 set means 'last'
-    pos = 2;
-    while (pos+2+4+2 <= len) {
-      if (serverCount >= MAX_SERVERS) break;
-      TSrvItem *sv = &servers[serverCount++];
-      sv->pver0 = buf[pos+0];
-      sv->pver1 = buf[pos+1];
-      memcpy(sv->addr.sa_data+2, &buf[pos+2], 4);
-      memcpy(sv->addr.sa_data+0, &buf[pos+6], 2);
-      printf("  server #%u: %s (%u.%u)\n", serverCount, sock.AddrToString(&sv->addr), sv->pver0, sv->pver1);
-      pos += 8;
+    if (!extended && buf[0] == MCREP_LIST) {
+      printf("got reply from the master!\n");
+      bool last = (buf[1]&0x02u);
+      int pos = 2;
+      while (pos+2+4+2 <= len) {
+        if (serverCount >= MAX_SERVERS) break;
+        TSrvItem *sv = &servers[serverCount++];
+        sv->pver0 = buf[pos+0];
+        sv->pver1 = buf[pos+1];
+        memcpy(sv->addr.sa_data+2, &buf[pos+2], 4);
+        memcpy(sv->addr.sa_data+0, &buf[pos+6], 2);
+        printf("  server #%u: %s (%u.%u)\n", serverCount, sock.AddrToString(&sv->addr), sv->pver0, sv->pver1);
+        pos += 8;
+      }
+      if (last) break;
+    } else if (extended && buf[0] == MCREP_LISTEX) {
+      uint8_t seq = buf[1]&0x7f;
+      if (seq != nextSeq) continue;
+      ++nextSeq;
+      int pos = 2;
+      while (pos+2+4+2 <= len) {
+        if (serverCount >= MAX_SERVERS) break;
+        TSrvItem *sv = &servers[serverCount++];
+        sv->pver0 = buf[pos+0];
+        sv->pver1 = buf[pos+1];
+        memcpy(sv->addr.sa_data+2, &buf[pos+2], 4);
+        memcpy(sv->addr.sa_data+0, &buf[pos+6], 2);
+        printf("  server #%u: %s (%u.%u)\n", serverCount, sock.AddrToString(&sv->addr), sv->pver0, sv->pver1);
+        pos += 8;
+      }
+      if (buf[1]&0x80) break; // last packet
     }
-    if (last) break;
   }
 
   sock.close();
@@ -389,12 +429,15 @@ static bool queryGameServer (const TSrvItem &srv) {
 //
 //==========================================================================
 int main (int argc, const char **argv) {
-  if (!VNetChan::InitialiseSockets()) {
+  if (!VNetChanSocket::InitialiseSockets()) {
     fprintf(stderr, "FATAL: cannot initialise sockets!\n");
     abort();
   }
 
-  queryMasterServer();
+  bool ext = true;
+  for (int f = 1; f < argc; ++f) if (strcmp(argv[f], "old")) ext = false;
+
+  queryMasterServer(ext);
 
   for (unsigned f = 0; f < serverCount; ++f) queryGameServer(servers[f]);
 
