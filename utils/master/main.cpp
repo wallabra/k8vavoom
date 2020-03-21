@@ -255,11 +255,11 @@ static bool IsBlocked (const sockaddr *clientaddr) {
 //
 //==========================================================================
 static void BlockIt (const sockaddr *clientaddr) {
-  for (int i = srvList.length()-1; i >= 0; --i) {
-    if (AddrCompareNoPort(&srvList[i].addr, clientaddr) == 0) {
-      srvList[i].time = time(0)+60; // block for one minute
-      srvList[i].pver0 = 0;
-      srvList[i].pver1 = 0;
+  for (int i = srvBlocked.length()-1; i >= 0; --i) {
+    if (AddrCompareNoPort(&srvBlocked[i].addr, clientaddr) == 0) {
+      srvBlocked[i].time = time(0)+60; // block for one minute
+      srvBlocked[i].pver0 = 0;
+      srvBlocked[i].pver1 = 0;
       return;
     }
   }
@@ -298,16 +298,18 @@ static bool CheckRateLimit (const sockaddr *clientaddr) {
     const double ctt = GetSysTime();
     TSrvItem *srv = &srvReqested[fidx];
     srv->time = currtm;
-    if (ctt-srv->lastReqTime <= 50) {
+    if (ctt-srv->lastReqTime <= 50.0/1000.0) {
       // viloation
       if (++srv->rateViolationCount > 4) {
         // too many violations, block it
+        Logf("something at %s is too fast", AddrToStringNoPort(clientaddr));
         BlockIt(clientaddr);
         // remove from the list
         srvReqested.removeAt(fidx);
         return false;
       }
-    } else if (ctt-srv->lastReqTime > 300) {
+      Logf("something at %s is almost too fast (%d) %g : %g", AddrToStringNoPort(clientaddr), srv->rateViolationCount, srv->lastReqTime, ctt);
+    } else if (ctt-srv->lastReqTime > 300.0/1000.0) {
       srv->rateViolationCount = 0;
     }
     srv->lastReqTime = ctt;
