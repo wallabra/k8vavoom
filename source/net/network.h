@@ -122,7 +122,7 @@ enum EChannelType {
 enum {
   MAX_DGRAM_SIZE = 1400, // max length of a datagram; fuck off, ipshit6
 
-  MAX_PACKET_HEADER_BITS = 32, // packet id
+  MAX_PACKET_HEADER_BITS = 32*2, // packet id, crc32
 
   // including message header
   MAX_MSG_SIZE_BITS = MAX_DGRAM_SIZE*8-MAX_PACKET_HEADER_BITS,

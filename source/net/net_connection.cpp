@@ -78,6 +78,8 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   OriginField = VEntity::StaticClass()->FindFieldChecked("Origin");
   DataGameTimeField = VEntity::StaticClass()->FindFieldChecked("DataGameTime");
 
+  memcpy(AuthKey, ANetCon->AuthKey, VNetUtils::ChaCha20KeySize);
+
   InRate = OutRate = 0;
   InPackets = OutPackets = 0;
   InMessages = OutMessages = 0;
@@ -454,6 +456,31 @@ bool VNetConnection::GetMessage (bool asHearbeat) {
   // received something
   ++Driver->UnreliableMessagesReceived;
 
+  // decrypt packet
+  if (msgsize < 8) return true; // too small
+
+  vuint32 PacketId = // this is also nonce
+    ((vuint32)msgdata[0])|
+    (((vuint32)msgdata[1])<<8)|
+    (((vuint32)msgdata[2])<<16)|
+    (((vuint32)msgdata[3])<<24);
+
+  // decrypt data
+  VNetUtils::ChaCha20Ctx cctx;
+  VNetUtils::ChaCha20Setup(&cctx, AuthKey, PacketId);
+  VNetUtils::ChaCha20XCrypt(&cctx, msgdata+4, msgdata+4, (unsigned)(msgsize-4));
+
+  // check crc32
+  vuint32 crc32 =
+    ((vuint32)msgdata[4])|
+    (((vuint32)msgdata[5])<<8)|
+    (((vuint32)msgdata[6])<<16)|
+    (((vuint32)msgdata[7])<<24);
+
+  msgdata[4] = msgdata[5] = msgdata[6] = msgdata[7] = 0;
+
+  if (crc32 != VNetUtils::CRC32C(0, msgdata, (unsigned)msgsize)) return true; // invalid crc, ignore this packet
+
   // copy received data to packet stream
   VBitStreamReader Packet;
   // nope, this will be set by the server code
@@ -573,10 +600,19 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
     return;
   }
 
-  // check packet ordering
+  // read packet id
   vuint32 PacketId = 0;
   Packet << PacketId;
   if (Packet.IsError()) {
+    GCon->Logf(NAME_DevNet, "%s: got invalid packet, connection dropped", *GetAddress());
+    Close();
+    return;
+  }
+
+  // get crc32
+  vuint32 crc32 = 0xffffffffU;
+  Packet << crc32;
+  if (Packet.IsError() || crc32 != 0) {
     GCon->Logf(NAME_DevNet, "%s: got invalid packet, connection dropped", *GetAddress());
     Close();
     return;
@@ -588,6 +624,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
   if (net_debug_dump_recv_packets) GCon->Logf(NAME_DevNet, "***!!!*** Network Packet (bitcount=%d; pid=%u; inpid=%u)", Packet.GetNum(), PacketId, InPacketId);
 
+  // check packet ordering
   if (PacketId > InPacketId) {
     InLossAcc += PacketId-InPacketId-1;
     InPacketId = PacketId;
@@ -752,8 +789,10 @@ void VNetConnection::Prepare (int addBits) {
 
   // put packet id for new packet
   if (Out.GetNumBits() == 0) {
+    vuint32 crc32 = 0; // will be fixed later
     Out << OutPacketId;
-    vassert(Out.GetNumBits() <= MAX_PACKET_HEADER_BITS);
+    Out << crc32;
+    vassert(Out.GetNumBits() == MAX_PACKET_HEADER_BITS);
     OutLastWrittenAck = 0;
   }
 
@@ -954,7 +993,35 @@ void VNetConnection::Flush () {
     // send the message
     const float lossPrc = net_dbg_send_loss.asFloat();
     if (lossPrc <= 0.0f || RandomFull()*100.0f >= lossPrc) {
-      int res = NetCon->SendMessage(Out.GetData(), Out.GetNumBytes());
+      // fix crc, encrypt the message
+      vuint8 *msgdata = Out.GetData();
+      unsigned msgsize = Out.GetNumBytes();
+      vassert(msgsize >= 4+4);
+
+      const vuint32 nonce =
+        ((vuint32)msgdata[0])|
+        (((vuint32)msgdata[1])<<8)|
+        (((vuint32)msgdata[2])<<16)|
+        (((vuint32)msgdata[3])<<24);
+
+      vassert(msgdata[4] == 0);
+      vassert(msgdata[5] == 0);
+      vassert(msgdata[6] == 0);
+      vassert(msgdata[7] == 0);
+
+      // write crc32
+      const vuint32 crc32 = VNetUtils::CRC32C(0, msgdata, msgsize);
+      msgdata[4] = crc32&0xffU;
+      msgdata[5] = (crc32>>8)&0xffU;
+      msgdata[6] = (crc32>>16)&0xffU;
+      msgdata[7] = (crc32>>24)&0xffU;
+
+      // encrypt data
+      VNetUtils::ChaCha20Ctx cctx;
+      VNetUtils::ChaCha20Setup(&cctx, AuthKey, nonce);
+      VNetUtils::ChaCha20XCrypt(&cctx, msgdata+4, msgdata+4, (unsigned)(msgsize-4));
+
+      int res = NetCon->SendMessage(msgdata, (int)msgsize);
       if (res < 0) {
         GCon->Logf(NAME_DevNet, "%s: error sending datagram", *GetAddress());
         Close();
