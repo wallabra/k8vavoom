@@ -51,8 +51,8 @@ static inline void salsa20_wordtobyte (uint8_t output[64], const uint32_t input[
 /* Nonce size in bits: 64 (8 bytes) */
 /* returns 0 on success */
 int chacha20_setup_ex (chacha20_ctx *ctx, const void *keydata, const void *noncedata, uint32_t keybits) {
-  static const char *sigma = "expand 32-byte k";
-  static const char *tau = "expand 16-byte k";
+  const char *sigma = "expand 32-byte k";
+  const char *tau = "expand 16-byte k";
 
   if (!keydata || !noncedata) return -1;
 

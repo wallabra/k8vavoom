@@ -24,6 +24,12 @@
 //**
 //**************************************************************************
 
+// based on intel's slice-by-8 idea
+// conforms to RFC 3720 (section B.4.)
+// start with 0; pass returned value for continuous calculation
+vuint32 crc32cBuffer (vuint32 crc, const void *data, size_t length);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class TCRC16 {
 private:
