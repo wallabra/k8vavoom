@@ -3,6 +3,7 @@ if(ENABLE_MASTER)
 
   add_executable(k8vavoom-master
     main.cpp
+    netchan.cpp
   )
   set_target_properties(k8vavoom-master PROPERTIES OUTPUT_NAME ../../k8vavoom-master)
   target_link_libraries(k8vavoom-master core ${NET_LIBRARIES})
