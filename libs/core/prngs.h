@@ -302,6 +302,9 @@ static inline VVA_OKUNUSED VVA_CHECKRESULT
 //vuint32 GenRandomU31 () { return bjprng_ranval(&g_bjprng_ctx)&0x7fffffffu; }
 vuint32 GenRandomU31 () { return pcg3264_next(&g_pcg3264_ctx)&0x7fffffffu; }
 
+static inline VVA_OKUNUSED VVA_CHECKRESULT
+vuint32 GenRandomU32 () { return pcg3264_next(&g_pcg3264_ctx)&0xffffffffu; }
+
 
 VVA_CHECKRESULT float Random (); // [0..1)
 VVA_CHECKRESULT float RandomFull (); // [0..1]
