@@ -917,6 +917,59 @@ VNetLanDriver::VNetLanDriver (int Level, const char *AName)
 }
 
 
+//==========================================================================
+//
+//  VNetUtils::TVMsecs
+//
+//==========================================================================
+void VNetUtils::TVMsecs (timeval *dest, int msecs) noexcept {
+  if (!dest) return;
+  if (msecs < 0) msecs = 0;
+  dest->tv_sec = msecs/1000;
+  dest->tv_usec = msecs%1000;
+  dest->tv_usec *= 100000;
+}
+
+
+//==========================================================================
+//
+//  VNetUtils::CRC32C
+//
+//  start with 0, continuous
+//
+//==========================================================================
+vuint32 VNetUtils::CRC32C (vuint32 crc32, const void *buf, size_t length) noexcept {
+  return crc32cBuffer(crc32, buf, length);
+}
+
+//==========================================================================
+//
+//  VNetUtils::ChaCha20SetupEx
+//
+//  Key size in bits: either 256 (32 bytes), or 128 (16 bytes)
+//  Nonce size in bits: 64 (8 bytes)
+//  returns 0 on success
+//
+//==========================================================================
+int VNetUtils::ChaCha20SetupEx (ChaCha20Ctx *ctx, const void *keydata, const void *noncedata, vuint32 keybits) noexcept {
+  return chacha20_setup_ex((chacha20_ctx *)ctx, keydata, noncedata, keybits);
+}
+
+
+//==========================================================================
+//
+//  VNetUtils::ChaCha20XCrypt
+//
+//  encrypts or decrypts a full message
+//  cypher is symmetric, so `ciphertextdata` and `plaintextdata`
+//  can point to the same address
+//
+//==========================================================================
+void VNetUtils::ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, const void *plaintextdata, vuint32 msglen) noexcept {
+  return chacha20_xcrypt((chacha20_ctx *)ctx, ciphertextdata, plaintextdata, msglen);
+}
+
+
 #if defined(CLIENT) && defined(SERVER) /* I think like this */
 //==========================================================================
 //

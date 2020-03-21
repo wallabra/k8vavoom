@@ -963,6 +963,39 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct VNetUtils {
+  static void TVMsecs (timeval *dest, int msecs) noexcept;
+
+  // start with 0, continuous
+  static vuint32 CRC32C (vuint32 crc32, const void *buf, size_t length) noexcept;
+
+  // // ChaCha20 // //
+  struct ChaCha20Ctx {
+    vuint32 input[16];
+  };
+
+  /* Key size in bits: either 256 (32 bytes), or 128 (16 bytes) */
+  /* Nonce size in bits: 64 (8 bytes) */
+  /* returns 0 on success */
+  static int ChaCha20SetupEx (ChaCha20Ctx *ctx, const void *keydata, const void *noncedata, vuint32 keybits) noexcept;
+
+  /* chacha setup for 256-bit keys */
+  static inline int ChaCha20Setup32 (ChaCha20Ctx *ctx, const void *keydata, const void *noncedata) noexcept {
+    return ChaCha20SetupEx(ctx, keydata, noncedata, 256);
+  }
+
+  /* chacha setup for 128-bit keys */
+  static inline int ChaCha20Setup16 (ChaCha20Ctx *ctx, const void *keydata, const void *noncedata) noexcept {
+    return ChaCha20SetupEx(ctx, keydata, noncedata, 128);
+  }
+
+  /* encrypts or decrypts a full message */
+  /* cypher is symmetric, so `ciphertextdata` and `plaintextdata` can point to the same address */
+  static void ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, const void *plaintextdata, vuint32 msglen) noexcept;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // global access to the low-level networking services
 extern VNetworkPublic *GNet;
 extern VNetContext *GDemoRecordingContext;
