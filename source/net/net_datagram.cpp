@@ -759,7 +759,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
     bool writeExtended = (reqVerHi > NET_PROTOCOL_VERSION_HI || (reqVerHi == NET_PROTOCOL_VERSION_HI && reqVerLo >= NET_PROTOCOL_VERSION_LO));
 
-    GCon->Logf(NAME_DevNet, "CONN: sending server info to %s (reqest version is %u.%u)", Drv->AddrToString(&clientaddr), reqVerHi, reqVerLo);
+    GCon->Logf(NAME_DevNet, "CONN: sending server info to %s (request version is %u.%u)", Drv->AddrToString(&clientaddr), reqVerHi, reqVerLo);
 
     VBitStreamWriter MsgOut(MAX_DGRAM_SIZE<<3);
     TmpByte = NETPACKET_CTL;
@@ -1053,7 +1053,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     int len = Drv->Read(Drv->MasterQuerySocket, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr);
     if (len < 1) continue; // error, no message, zero message
 
-    GCon->Logf(NAME_DevNet, "got master reply from %s", Drv->AddrToString(&readaddr));
+    GCon->Logf(NAME_DevNet, "got master reply from %s (%d bytes)", Drv->AddrToString(&readaddr), len);
     // is the cache full?
     //if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
@@ -1068,7 +1068,8 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     if (msg.IsError() || control != MCREP_LIST) continue;
 
     msg << control; // control byte: bit 0 means "first packet", bit 1 means "last packet"
-    //GCon->Logf(NAME_Dev, "  control byte: 0x%02x", (unsigned)control);
+    if (msg.IsError()) continue;
+    //GCon->Logf(NAME_DevNet, "  control byte: 0x%02x", (unsigned)control);
 
     //if ((control&0x01) == 0) continue; // first packed is missing, but nobody cares
 
@@ -1092,8 +1093,25 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
         TmpByte = NET_PROTOCOL_VERSION_LO;
         Reply << TmpByte;
         Drv->Write(Drv->controlSock, Reply.GetData(), Reply.GetNumBytes(), &tmpaddr);
+      } else if (msg.IsError()) {
+        GCon->Logf(NAME_DevNet, "  server: %s, error reading reply, size=%d; pos=%d", Drv->AddrToString(&tmpaddr), msg.GetNumBits(), msg.GetPos());
       } else {
         GCon->Logf(NAME_DevNet, "  server: %s, bad proto version %u:%u", Drv->AddrToString(&tmpaddr), pver0, pver1);
+        /*
+        int f = 0;
+        while (f < len) {
+          VStr s = "   ";
+          for (int c = 0; f+c < len && c < 16; ++c) {
+            if (c == 8) s += " ";
+            s += " ";
+            const char *hexd = "0123456789abcdef";
+            s += hexd[(packetBuffer.data[f+c]>>4)&0x0fu];
+            s += hexd[packetBuffer.data[f+c]&0x0fu];
+          }
+          GCon->Logf(NAME_DevNet, "%s", *s);
+          f += 16;
+        }
+        */
       }
     }
 
