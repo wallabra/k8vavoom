@@ -685,19 +685,29 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
     MsgOut << TmpByte;
     // password hash
     vuint8 cldig[SHA512_DIGEST_SIZE];
-    sha512_ctx shactx;
-    sha512_init(&shactx);
-    // salt
-    sha512_update(&shactx, origkey, VNetUtils::ChaCha20KeySize);
-    // password
-    sha512_update(&shactx, *net_server_key.asStr(), (unsigned)net_server_key.asStr().length());
-    sha512_final(&shactx, cldig);
+    // we'll fix it later
+    vassert((MsgOut.GetPos()&7) == 0);
+    int digpos = MsgOut.GetPos()>>3;
+    memset(cldig, 0, SHA512_DIGEST_SIZE);
     MsgOut.Serialise(cldig, SHA512_DIGEST_SIZE);
     // mod info
     vuint32 modhash = FL_GetNetWadsHash();
     MsgOut << modhash;
     vuint16 modcount = (vuint16)FL_GetNetWadsCount();
     MsgOut << modcount;
+
+    // fix hash
+    sha512_ctx shactx;
+    sha512_init(&shactx);
+    // hash key
+    sha512_update(&shactx, origkey, VNetUtils::ChaCha20KeySize);
+    // hash whole packet
+    sha512_update(&shactx, MsgOut.GetData(), MsgOut.GetNumBytes());
+    // hash password
+    sha512_update(&shactx, *net_server_key.asStr(), (unsigned)net_server_key.asStr().length());
+    sha512_final(&shactx, cldig);
+    // update hash
+    memcpy(MsgOut.GetData()+digpos, cldig, SHA512_DIGEST_SIZE);
 
     // encrypt
     int elen = EncryptInfoBitStream(edata, MsgOut, origkey);
@@ -906,7 +916,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   int len;
   vuint8 command;
   VDatagramSocket *sock;
-  vuint8 TmpByte, TmpByte1;
+  vuint8 TmpByte;
   VStr TmpStr;
 
   Net->UpdateNetTime();
@@ -1006,20 +1016,11 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     if (msg.IsError() || pver != RCON_PROTO_VERSION) return nullptr; // do noting
 
     // read secret
+    vassert((msg.GetPos()&7) == 0);
+    int digpos = msg.GetPos()>>3;
     vuint8 cldig[SHA512_DIGEST_SIZE];
     msg.Serialise(cldig, SHA512_DIGEST_SIZE);
     if (msg.IsError()) return nullptr; // do noting
-
-    // check secret
-    vuint8 svdig[SHA512_DIGEST_SIZE];
-    sha512_ctx shactx;
-    sha512_init(&shactx);
-    // salt
-    sha512_update(&shactx, clientKey, VNetUtils::ChaCha20KeySize);
-    // password
-    sha512_update(&shactx, *mysecret, (unsigned)mysecret.length());
-    sha512_final(&shactx, svdig);
-    if (memcmp(cldig, svdig, SHA512_DIGEST_SIZE) != 0) return nullptr; // invalid secret
 
     // read command
     bool badCommand = false;
@@ -1032,6 +1033,22 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
       if (ch != 9 && (ch < 32 || ch > 127)) { cmdtext += "?"; badCommand = true; continue; } // invalid char
       cmdtext += (char)ch;
     }
+
+    // check secret
+    vuint8 svdig[SHA512_DIGEST_SIZE];
+    // clear hash buffer
+    memset(msg.GetData()+digpos, 0, SHA512_DIGEST_SIZE);
+    sha512_ctx shactx;
+    sha512_init(&shactx);
+    // hash key
+    sha512_update(&shactx, clientKey, VNetUtils::ChaCha20KeySize);
+    // hash whole packet
+    sha512_update(&shactx, msg.GetData(), msg.GetNumBytes());
+    // hash password
+    sha512_update(&shactx, *mysecret, (unsigned)mysecret.length());
+    sha512_final(&shactx, svdig);
+    // compare
+    if (memcmp(cldig, svdig, SHA512_DIGEST_SIZE) != 0) return nullptr; // invalid secret
 
     // check for duplicate command
     if (memcmp(rconLastKey, clientKey, VNetUtils::ChaCha20KeySize) != 0) {
@@ -1078,19 +1095,19 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     return nullptr;
   }
 
-  // check version
-  TmpByte = 0;
-  TmpByte1 = 0;
-  msg << TmpByte;
-  msg << TmpByte1;
-  if (msg.IsError() || TmpByte != NET_PROTOCOL_VERSION_HI || TmpByte1 != NET_PROTOCOL_VERSION_LO) {
-    GCon->Logf(NAME_DevNet, "connection error: invalid protocol version, got %u:%u, but expected %u:%u", TmpByte, TmpByte1, NET_PROTOCOL_VERSION_HI, NET_PROTOCOL_VERSION_LO);
+  // read version
+  vuint8 remVerHi = 0, remVerLo = 0;
+  msg << remVerHi << remVerLo;
+  if (msg.IsError()) {
+    GCon->Logf(NAME_DevNet, "connection error: no version");
     // send reject packet, why not?
-    SendConnectionReject(Drv, clientKey, "invalid protocol version", acceptsock, clientaddr);
+    SendConnectionReject(Drv, clientKey, "invalid handshake", acceptsock, clientaddr);
     return nullptr;
   }
 
-  // read password
+  // read auth hash
+  vassert((msg.GetPos()&7) == 0);
+  int digpos = msg.GetPos()>>3;
   vuint8 cldig[SHA512_DIGEST_SIZE];
   msg.Serialise(cldig, SHA512_DIGEST_SIZE);
   if (msg.IsError()) {
@@ -1100,15 +1117,32 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     return nullptr;
   }
 
+  // read modlist
+  vuint32 modhash = 0;
+  vuint16 modcount = 0;
+  msg << modhash;
+  msg << modcount;
+  if (msg.IsError()) {
+    GCon->Log(NAME_DevNet, "connection error: cannot read modlist");
+    // send reject packet
+    SendConnectionReject(Drv, clientKey, "invalid handshake", acceptsock, clientaddr);
+    return nullptr;
+  }
+
+  // fix packet
+  memset(msg.GetData()+digpos, 0, SHA512_DIGEST_SIZE);
   // check password
   vuint8 svdig[SHA512_DIGEST_SIZE];
   sha512_ctx shactx;
   sha512_init(&shactx);
-  // salt
+  // hash key
   sha512_update(&shactx, clientKey, VNetUtils::ChaCha20KeySize);
-  // password
+  // hash whole packet
+  sha512_update(&shactx, msg.GetData(), msg.GetNumBytes());
+  // hash password
   sha512_update(&shactx, *net_server_key.asStr(), (unsigned)net_server_key.asStr().length());
   sha512_final(&shactx, svdig);
+  // compare
   if (memcmp(cldig, svdig, SHA512_DIGEST_SIZE) != 0) {
     GCon->Logf(NAME_DevNet, "connection error: invalid password");
     // send reject packet, why not?
@@ -1116,12 +1150,16 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     return nullptr;
   }
 
+  // check version
+  if (remVerHi != NET_PROTOCOL_VERSION_HI || remVerLo != NET_PROTOCOL_VERSION_LO) {
+    GCon->Logf(NAME_DevNet, "connection error: invalid protocol version, got %u:%u, but expected %u:%u", remVerHi, remVerLo, NET_PROTOCOL_VERSION_HI, NET_PROTOCOL_VERSION_LO);
+    // send reject packet, why not?
+    SendConnectionReject(Drv, clientKey, "invalid protocol version", acceptsock, clientaddr);
+    return nullptr;
+  }
+
   // check modlist
-  vuint32 modhash = 0;
-  vuint16 modcount = 0;
-  msg << modhash;
-  msg << modcount;
-  if (msg.IsError() || modhash != FL_GetNetWadsHash() || modcount != (vuint16)FL_GetNetWadsCount()) {
+  if (modhash != FL_GetNetWadsHash() || modcount != (vuint16)FL_GetNetWadsCount()) {
     GCon->Log(NAME_DevNet, "connection error: incompatible mod list");
     // send reject packet
     SendConnectionReject(Drv, clientKey, "incompatible loaded mods list", acceptsock, clientaddr, true); // send modlist

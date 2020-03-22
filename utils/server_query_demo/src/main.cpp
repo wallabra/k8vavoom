@@ -535,17 +535,9 @@ static void sendRConCommand (const char *hostname, const char *rconsecret, const
     buf[pos++] = RCON_PROTO_VERSION&0xff;
     buf[pos++] = (RCON_PROTO_VERSION>>8)&0xff;
 
-    // write secret
-    VNetChanSocket::SHA512Context ctx = VNetChanSocket::SHA512Init();
-    if (!ctx) abort();
-    VNetChanSocket::SHA512Digest dig;
-    // salt
-    VNetChanSocket::SHA512Update(ctx, key, VNetChanSocket::ChaCha20KeySize);
-    // password
-    VNetChanSocket::SHA512Update(ctx, rconsecret, strlen(rconsecret));
-    VNetChanSocket::SHA512Finish(ctx, dig);
-    // copy to buffer
-    memcpy(buf+pos, dig, VNetChanSocket::SHA512DigestSize);
+    // we'll write the secret later
+    int spos = pos;
+    memset(buf+spos, 0, VNetChanSocket::SHA512DigestSize);
     pos += VNetChanSocket::SHA512DigestSize;
 
     // write command
@@ -558,6 +550,20 @@ static void sendRConCommand (const char *hostname, const char *rconsecret, const
       fprintf(stderr, "ERROR: rcon packet too long!\n");
       abort();
     }
+
+    // write secret
+    VNetChanSocket::SHA512Context ctx = VNetChanSocket::SHA512Init();
+    if (!ctx) abort();
+    VNetChanSocket::SHA512Digest dig;
+    // hash key
+    VNetChanSocket::SHA512Update(ctx, key, VNetChanSocket::ChaCha20KeySize);
+    // hash whole packet
+    VNetChanSocket::SHA512Update(ctx, buf, pos);
+    // hash password
+    VNetChanSocket::SHA512Update(ctx, rconsecret, strlen(rconsecret));
+    VNetChanSocket::SHA512Finish(ctx, dig);
+    // copy to buffer
+    memcpy(buf+spos, dig, VNetChanSocket::SHA512DigestSize);
 
     int elen = VNetChanSocket::EncryptInfoPacket(edata, buf, pos, key);
     printf("  encrypted %d bytes to %d bytes...\n", pos, elen);
