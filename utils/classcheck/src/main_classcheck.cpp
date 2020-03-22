@@ -667,6 +667,7 @@ bool ignoreClass (const VStr &name, VName parent) {
     "VStrPool",
     "VSimpleTypePool",
     "LightmapTracer",
+    "VSocketPublic",
     nullptr,
   };
   for (const char *const *np = ignoreCN; *np; ++np) {
