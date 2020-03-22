@@ -142,7 +142,7 @@ void VBitStreamWriter::SerialiseBits (void *Src, int Length) {
   if (!Length) return;
   vassert(Length > 0);
 
-  #if 0
+  #if 1
   if (Pos+Length > Max) {
     if (!bAllowExpand) { bError = true; return; }
     // do it slow
@@ -158,11 +158,11 @@ void VBitStreamWriter::SerialiseBits (void *Src, int Length) {
   }
 
   if (Length <= 8) {
-    int Byte1 = Pos>>3;
-    int Byte2 = (Pos+Length-1)>>3;
+    const unsigned Byte1 = ((unsigned)Pos)>>3;
+    const unsigned Byte2 = ((unsigned)(Pos+Length-1))>>3;
 
-    vuint8 Val = ((vuint8*)Src)[0]&((1<<Length)-1);
-    int Shift = Pos&7;
+    const vuint8 Val = ((const vuint8 *)Src)[0]&((1u<<(Length&0x1f))-1);
+    const unsigned Shift = Pos&7;
     if (Byte1 == Byte2) {
       Data[Byte1] |= Val<<Shift;
     } else {
@@ -173,12 +173,12 @@ void VBitStreamWriter::SerialiseBits (void *Src, int Length) {
     return;
   }
 
-  int Bytes = Length>>3;
+  const unsigned Bytes = ((unsigned)Length)>>3;
   if (Bytes) {
     if (Pos&7) {
-      vuint8 *pSrc = (vuint8*)Src;
+      const vuint8 *pSrc = (const vuint8 *)Src;
       vuint8 *pDst = (vuint8*)Data.Ptr()+(Pos>>3);
-      for (int i = 0; i < Bytes; ++i, ++pSrc, ++pDst) {
+      for (unsigned i = 0; i < Bytes; ++i, ++pSrc, ++pDst) {
         pDst[0] |= *pSrc<<(Pos&7);
         pDst[1] |= *pSrc>>(8-(Pos&7));
       }
@@ -189,10 +189,10 @@ void VBitStreamWriter::SerialiseBits (void *Src, int Length) {
   }
 
   if (Length&7) {
-    int Byte1 = Pos>>3;
-    int Byte2 = (Pos+(Length&7)-1)>>3;
-    vuint8 Val = ((vuint8*)Src)[Length>>3]&((1<<(Length&7))-1);
-    int Shift = Pos&7;
+    const unsigned Byte1 = ((unsigned)Pos)>>3;
+    const unsigned Byte2 = ((unsigned)(Pos+(Length&7)-1))>>3;
+    const vuint8 Val = ((const vuint8 *)Src)[Length>>3]&((1<<(Length&7))-1);
+    const unsigned Shift = Pos&7;
     if (Byte1 == Byte2) {
       Data[Byte1] |= Val<<Shift;
     } else {
@@ -376,27 +376,27 @@ void VBitStreamReader::SerialiseBits (void *Dst, int Length) {
     return;
   }
 
-  #if 0
+  #if 1
   if (Pos&7) {
-    int SrcPos = Pos>>3;
-    int Shift1 = Pos&7;
-    int Shift2 = 8-Shift1;
-    int Count = Length>>3;
-    for (int i = 0; i < Count; ++i, ++SrcPos) {
-      ((vuint8*)Dst)[i] = (Data[SrcPos]>>Shift1)|Data[SrcPos+1]<<Shift2;
+    unsigned SrcPos = Pos>>3;
+    const unsigned Shift1 = Pos&7;
+    const unsigned Shift2 = 8-Shift1;
+    const unsigned Count = ((unsigned)Length)>>3;
+    for (unsigned i = 0; i < Count; ++i, ++SrcPos) {
+      ((vuint8 *)Dst)[i] = (Data[SrcPos]>>Shift1)|Data[SrcPos+1]<<Shift2;
     }
     if (Length&7) {
       if ((Length&7) > Shift2) {
-        ((vuint8*)Dst)[Count] = ((Data[SrcPos]>>Shift1)|Data[SrcPos+1]<<Shift2)&((1<<(Length&7))-1);
+        ((vuint8 *)Dst)[Count] = ((Data[SrcPos]>>Shift1)|Data[SrcPos+1]<<Shift2)&((1<<(Length&7))-1);
       } else {
-        ((vuint8*)Dst)[Count] = (Data[SrcPos]>>Shift1)&((1<<(Length&7))-1);
+        ((vuint8 *)Dst)[Count] = (Data[SrcPos]>>Shift1)&((1<<(Length&7))-1);
       }
     }
   } else {
-    int Count = Length>>3;
+    unsigned Count = ((unsigned)Length)>>3;
     memcpy(Dst, Data.Ptr()+(Pos>>3), Count);
     if (Length&7) {
-      ((vuint8*)Dst)[Count] = Data[(Pos>>3)+Count]&((1<<(Length&7))-1);
+      ((vuint8 *)Dst)[Count] = Data[(Pos>>3)+Count]&((1<<(Length&7))-1);
     }
   }
   Pos += Length;
