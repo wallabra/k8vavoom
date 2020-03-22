@@ -770,20 +770,21 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
   *msg << msgtype;
   if (msgtype == CCREP_REJECT) {
+    vuint8 extflags = 0;
+    *msg << extflags;
     *msg << reason;
     GCon->Logf(NAME_Error, "Connection rejected: %s", *reason);
     VStr::NCpy(Net->ReturnReason, *reason, 31);
-    if (!msg->ReadBit()) {
-      if (msg->ReadBit()) {
-        TArray<VStr> list;
-        if (ReadPakList(list, *msg)) {
-          if (list.length()) {
-            GCon->Log(NAME_Error, "=== SERVER REJECTED CONNETION; WAD LIST: ===");
-            for (auto &&pak : list) GCon->Logf(NAME_Error, "  %s", *pak);
-          }
+    if (extflags&1) {
+      TArray<VStr> list;
+      if (ReadPakList(list, *msg)) {
+        if (list.length()) {
+          GCon->Log(NAME_Error, "=== SERVER REJECTED CONNETION; WAD LIST: ===");
+          for (auto &&pak : list) GCon->Logf(NAME_Error, "  %s", *pak);
         }
       }
     }
+    if (!reason.isEmpty()) flWarningMessage = VStr("CONNECTION FAILURE\n\n")+reason;
     goto ErrorReturn;
   }
 
