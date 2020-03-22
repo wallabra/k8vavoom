@@ -536,8 +536,15 @@ static void sendRConCommand (const char *hostname, const char *rconsecret, const
     buf[pos++] = (RCON_PROTO_VERSION>>8)&0xff;
 
     // write secret
+    VNetChanSocket::SHA512Context ctx = VNetChanSocket::SHA512Init();
+    if (!ctx) abort();
     VNetChanSocket::SHA512Digest dig;
-    VNetChanSocket::SHA512Buffer(dig, rconsecret, strlen(rconsecret));
+    // salt
+    VNetChanSocket::SHA512Update(ctx, key, VNetChanSocket::ChaCha20KeySize);
+    // password
+    VNetChanSocket::SHA512Update(ctx, rconsecret, strlen(rconsecret));
+    VNetChanSocket::SHA512Finish(ctx, dig);
+    // copy to buffer
     memcpy(buf+pos, dig, VNetChanSocket::SHA512DigestSize);
     pos += VNetChanSocket::SHA512DigestSize;
 

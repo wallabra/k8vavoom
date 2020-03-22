@@ -685,7 +685,13 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
     MsgOut << TmpByte;
     // password hash
     vuint8 cldig[SHA512_DIGEST_SIZE];
-    sha512_buf(cldig, *net_server_key.asStr(), (unsigned)net_server_key.asStr().length());
+    sha512_ctx shactx;
+    sha512_init(&shactx);
+    // salt
+    sha512_update(&shactx, origkey, VNetUtils::ChaCha20KeySize);
+    // password
+    sha512_update(&shactx, *net_server_key.asStr(), (unsigned)net_server_key.asStr().length());
+    sha512_final(&shactx, cldig);
     MsgOut.Serialise(cldig, SHA512_DIGEST_SIZE);
     // mod info
     vuint32 modhash = FL_GetNetWadsHash();
@@ -1006,7 +1012,13 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
     // check secret
     vuint8 svdig[SHA512_DIGEST_SIZE];
-    sha512_buf(svdig, *mysecret, (unsigned)mysecret.length());
+    sha512_ctx shactx;
+    sha512_init(&shactx);
+    // salt
+    sha512_update(&shactx, clientKey, VNetUtils::ChaCha20KeySize);
+    // password
+    sha512_update(&shactx, *mysecret, (unsigned)mysecret.length());
+    sha512_final(&shactx, svdig);
     if (memcmp(cldig, svdig, SHA512_DIGEST_SIZE) != 0) return nullptr; // invalid secret
 
     // read command
@@ -1090,7 +1102,13 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
   // check password
   vuint8 svdig[SHA512_DIGEST_SIZE];
-  sha512_buf(svdig, *net_server_key.asStr(), (unsigned)net_server_key.asStr().length());
+  sha512_ctx shactx;
+  sha512_init(&shactx);
+  // salt
+  sha512_update(&shactx, clientKey, VNetUtils::ChaCha20KeySize);
+  // password
+  sha512_update(&shactx, *net_server_key.asStr(), (unsigned)net_server_key.asStr().length());
+  sha512_final(&shactx, svdig);
   if (memcmp(cldig, svdig, SHA512_DIGEST_SIZE) != 0) {
     GCon->Logf(NAME_DevNet, "connection error: invalid password");
     // send reject packet, why not?

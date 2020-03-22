@@ -1051,6 +1051,44 @@ void VNetChanSocket::ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, con
 
 //==========================================================================
 //
+//  VNetChanSocket::SHA512Init
+//
+//==========================================================================
+VNetChanSocket::SHA512Context VNetChanSocket::SHA512Init () noexcept {
+  sha512_state_t *ctx = (sha512_state_t *)malloc(sizeof(sha512_state_t));
+  if (!ctx) return nullptr;
+  sha512_init(ctx);
+  return (SHA512Context)ctx;
+}
+
+
+//==========================================================================
+//
+//  VNetChanSocket::SHA512Update
+//
+//==========================================================================
+void VNetChanSocket::SHA512Update (VNetChanSocket::SHA512Context ctx, const void *in, size_t inlen) noexcept {
+  if (!ctx) return;
+  sha512_update((sha512_state_t *)ctx, in, inlen);
+}
+
+
+//==========================================================================
+//
+//  VNetChanSocket::SHA512Finish
+//
+//  this frees context
+//
+//==========================================================================
+void VNetChanSocket::SHA512Finish (VNetChanSocket::SHA512Context ctx, VNetChanSocket::SHA512Digest hash) noexcept {
+  if (!ctx) { if (hash) memset(hash, 0, SHA512DigestSize); return; }
+  if (hash) sha512_final((sha512_state_t *)ctx, hash);
+  free(ctx);
+}
+
+
+//==========================================================================
+//
 //  VNetChanSocket::SHA512Buffer
 //
 //==========================================================================

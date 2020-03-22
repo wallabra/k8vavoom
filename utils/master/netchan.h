@@ -132,6 +132,12 @@ public:
   };
 
   typedef uint8_t SHA512Digest[VNetChanSocket::SHA512DigestSize];
+  typedef void *SHA512Context;
+
+  static SHA512Context SHA512Init () noexcept;
+  static void SHA512Update (SHA512Context ctx, const void *in, size_t inlen) noexcept;
+  // this frees context
+  static void SHA512Finish (SHA512Context ctx, SHA512Digest hash) noexcept;
 
   static void SHA512Buffer (SHA512Digest hash, const void *in, size_t inlen) noexcept;
 
