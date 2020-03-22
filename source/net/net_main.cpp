@@ -977,7 +977,7 @@ void VNetUtils::ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, const vo
 //==========================================================================
 void VNetUtils::GenerateKey (vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept {
   vuint32 *dest = (vuint32 *)key;
-  for (int f = 0; f < VNetUtils::ChaCha20KeySize/4; ++f) *dest++ = GenRandomU32();
+  for (int f = 0; f < ChaCha20KeySize/4; ++f) *dest++ = GenRandomU32();
 }
 
 
@@ -997,25 +997,25 @@ int VNetUtils::EncryptInfoPacket (void *destbuf, const void *srcbuf, int srclen,
   const vuint32 nonce = GenRandomU32();
   vuint8 *dest = (vuint8 *)destbuf;
   // copy key
-  memcpy(dest, key, VNetUtils::ChaCha20KeySize);
+  memcpy(dest, key, ChaCha20KeySize);
   // copy nonce
-  dest[VNetUtils::ChaCha20KeySize+0] = nonce&0xffU;
-  dest[VNetUtils::ChaCha20KeySize+1] = (nonce>>8)&0xffU;
-  dest[VNetUtils::ChaCha20KeySize+2] = (nonce>>16)&0xffU;
-  dest[VNetUtils::ChaCha20KeySize+3] = (nonce>>24)&0xffU;
+  dest[ChaCha20KeySize+0] = nonce&0xffU;
+  dest[ChaCha20KeySize+1] = (nonce>>8)&0xffU;
+  dest[ChaCha20KeySize+2] = (nonce>>16)&0xffU;
+  dest[ChaCha20KeySize+3] = (nonce>>24)&0xffU;
   // copy crc32
-  const vuint32 crc32 = VNetUtils::CRC32C(0, srcbuf, (unsigned)srclen);
-  dest[VNetUtils::ChaCha20KeySize+4] = crc32&0xffU;
-  dest[VNetUtils::ChaCha20KeySize+5] = (crc32>>8)&0xffU;
-  dest[VNetUtils::ChaCha20KeySize+6] = (crc32>>16)&0xffU;
-  dest[VNetUtils::ChaCha20KeySize+7] = (crc32>>24)&0xffU;
+  const vuint32 crc32 = CRC32C(0, srcbuf, (unsigned)srclen);
+  dest[ChaCha20KeySize+4] = crc32&0xffU;
+  dest[ChaCha20KeySize+5] = (crc32>>8)&0xffU;
+  dest[ChaCha20KeySize+6] = (crc32>>16)&0xffU;
+  dest[ChaCha20KeySize+7] = (crc32>>24)&0xffU;
   // copy data
-  if (srclen) memcpy(dest+VNetUtils::ChaCha20KeySize+4+4, srcbuf, (unsigned)srclen);
+  if (srclen) memcpy(dest+ChaCha20HeaderSize, srcbuf, (unsigned)srclen);
   // encrypt crc32 and data
-  VNetUtils::ChaCha20Ctx cctx;
-  VNetUtils::ChaCha20Setup(&cctx, key, nonce);
-  VNetUtils::ChaCha20XCrypt(&cctx, dest+VNetUtils::ChaCha20KeySize+4, dest+VNetUtils::ChaCha20KeySize+4, (unsigned)(srclen+4));
-  return srclen+VNetUtils::ChaCha20KeySize+4+4;
+  ChaCha20Ctx cctx;
+  ChaCha20Setup(&cctx, key, nonce);
+  ChaCha20XCrypt(&cctx, dest+ChaCha20KeySize+ChaCha20NonceSize, dest+ChaCha20KeySize+ChaCha20NonceSize, (unsigned)(srclen+ChaCha20CheckSumSize));
+  return srclen+ChaCha20HeaderSize;
 }
 
 
@@ -1029,28 +1029,28 @@ int VNetUtils::EncryptInfoPacket (void *destbuf, const void *srcbuf, int srclen,
 //
 //==========================================================================
 int VNetUtils::DecryptInfoPacket (vuint8 key[VNetUtils::ChaCha20KeySize], void *destbuf, const void *srcbuf, int srclen) noexcept {
-  if (srclen < VNetUtils::ChaCha20KeySize+4+4) return -1;
+  if (srclen < ChaCha20HeaderSize) return -1;
   if (!destbuf) return -1;
   if (!srcbuf) return -1;
-  srclen -= VNetUtils::ChaCha20KeySize+4; // key and nonce
+  srclen -= ChaCha20KeySize+ChaCha20NonceSize; // key and nonce
   const vuint8 *src = (const vuint8 *)srcbuf;
   vuint8 *dest = (vuint8 *)destbuf;
   // get key
-  memcpy(key, srcbuf, VNetUtils::ChaCha20KeySize);
+  memcpy(key, srcbuf, ChaCha20KeySize);
   // get nonce
   vuint32 nonce =
-    ((vuint32)src[VNetUtils::ChaCha20KeySize+0])|
-    (((vuint32)src[VNetUtils::ChaCha20KeySize+1])<<8)|
-    (((vuint32)src[VNetUtils::ChaCha20KeySize+2])<<16)|
-    (((vuint32)src[VNetUtils::ChaCha20KeySize+3])<<24);
+    ((vuint32)src[ChaCha20KeySize+0])|
+    (((vuint32)src[ChaCha20KeySize+1])<<8)|
+    (((vuint32)src[ChaCha20KeySize+2])<<16)|
+    (((vuint32)src[ChaCha20KeySize+3])<<24);
   // decrypt packet
-  VNetUtils::ChaCha20Ctx cctx;
-  VNetUtils::ChaCha20Setup(&cctx, key, nonce);
-  VNetUtils::ChaCha20XCrypt(&cctx, dest, src+VNetUtils::ChaCha20KeySize+4, (unsigned)srclen);
+  ChaCha20Ctx cctx;
+  ChaCha20Setup(&cctx, key, nonce);
+  ChaCha20XCrypt(&cctx, dest, src+ChaCha20KeySize+ChaCha20NonceSize, (unsigned)srclen);
   // calculate and check crc32
-  srclen -= 4;
+  srclen -= ChaCha20CheckSumSize;
   vassert(srclen >= 0);
-  vuint32 crc32 = VNetUtils::CRC32C(0, dest+4, (unsigned)srclen);
+  vuint32 crc32 = CRC32C(0, dest+ChaCha20CheckSumSize, (unsigned)srclen);
   if ((crc32&0xff) != dest[0] ||
       ((crc32>>8)&0xff) != dest[1] ||
       ((crc32>>16)&0xff) != dest[2] ||
@@ -1060,7 +1060,7 @@ int VNetUtils::DecryptInfoPacket (vuint8 key[VNetUtils::ChaCha20KeySize], void *
     return -1;
   }
   // copy decrypted data
-  if (srclen > 0) memcpy(dest, dest+4, (unsigned)srclen);
+  if (srclen > 0) memcpy(dest, dest+ChaCha20CheckSumSize, (unsigned)srclen);
   return srclen;
 }
 

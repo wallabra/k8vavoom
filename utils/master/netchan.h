@@ -86,7 +86,12 @@ public:
 
   enum {
     ChaCha20KeySize = 32,
-    ChaCha20NonceSize = 8,
+    ChaCha20NonceSize = 4,
+    ChaCha20CheckSumSize = 4,
+    ChaCha20HeaderSize = ChaCha20KeySize+ChaCha20NonceSize+ChaCha20CheckSumSize,
+
+    // for real setups
+    ChaCha20RealNonceSize = 8,
   };
 
   /* Key size in bits: either 256 (32 bytes), or 128 (16 bytes) */
@@ -121,6 +126,14 @@ public:
   /* cypher is symmetric, so `ciphertextdata` and `plaintextdata` can point to the same address */
   static void ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, const void *plaintextdata, uint32_t msglen) noexcept;
 
+  // sha512
+  enum {
+    SHA512DigestSize = 64,
+  };
+
+  typedef uint8_t SHA512Digest[VNetChanSocket::SHA512DigestSize];
+
+  static void SHA512Buffer (SHA512Digest hash, const void *in, size_t inlen) noexcept;
 
   // generate ChaCha20 encryption key
   static void GenerateKey (uint8_t key[ChaCha20KeySize]) noexcept;

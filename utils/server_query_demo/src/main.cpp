@@ -58,6 +58,12 @@ enum {
 
   CCREQ_SERVER_INFO = 2,
   CCREP_SERVER_INFO = 13,
+
+  DEFAULT_SERVER_PORT = 26000,
+
+  RCON_PROTO_VERSION = 1u, // 16-bit value
+  CCREQ_RCON_COMMAND = 25,
+  CCREP_RCON_COMMAND = 26,
 };
 
 
@@ -336,7 +342,8 @@ static bool queryGameServer (const TSrvItem &srv) {
 
   uint8_t buf[MAX_MSGLEN];
 
-  for (int tries = 3; tries > 0; --tries) {
+  // 10 times, with 100 msec pause is one second
+  for (int tries = 10; tries > 0; --tries) {
     printf("*** sending request to game server at %s...\n", sock.AddrToString(&srv.addr));
 
     int pos = WriteHostGameSignature(buf);
@@ -350,11 +357,13 @@ static bool queryGameServer (const TSrvItem &srv) {
     int elen = VNetChanSocket::EncryptInfoPacket(edata, buf, pos, origKey);
     printf("  encrypted %d bytes to %d bytes...\n", pos, elen);
 
+    /* test
     uint8_t xkey[VNetChanSocket::ChaCha20KeySize];
     uint8_t xdata[MAX_MSGLEN];
     int xlen = VNetChanSocket::DecryptInfoPacket(xkey, xdata, edata, elen);
     if (xlen != pos) { fprintf(stderr, "ERROR: packet decryption failed (error)!\n"); abort(); }
     if (memcmp(xdata, buf, xlen) != 0) { fprintf(stderr, "ERROR: packet decryption failed (bad data)!\n"); abort(); }
+    */
 
     if (elen < 0) {
       fprintf(stderr, "ERROR: packet encryption failed!\n");
@@ -371,8 +380,7 @@ static bool queryGameServer (const TSrvItem &srv) {
     FD_ZERO(&rd);
     FD_SET(sock.getFD(), &rd);
     timeval to;
-    to.tv_sec = 1;
-    to.tv_usec = 0;
+    VNetChanSocket::TVMsecs(&to, 100);
     int res = select(sock.getFD()+1, &rd, nullptr, nullptr, &to);
     if (res <= 0) continue;
 
@@ -465,6 +473,173 @@ static bool queryGameServer (const TSrvItem &srv) {
 
 //==========================================================================
 //
+//  sendRConCommand
+//
+//==========================================================================
+static void sendRConCommand (const char *hostname, const char *rconsecret, const char *command) {
+  if (!hostname || !hostname[0]) return;
+  if (!rconsecret || !rconsecret[0]) return;
+  if (!command || !command[0]) return;
+
+  sockaddr srvaddr;
+  int port = DEFAULT_SERVER_PORT;
+  char *host = (char *)alloca(strlen(hostname)+1);
+  strcpy(host, hostname);
+
+  char *colon = strrchr(host, ':');
+  if (colon && colon[1]) {
+    int n = 0;
+    char *s = colon+1;
+    while (*s) {
+      int ch = *s++;
+      if (ch < '0' || ch > '9') { n = -1; break; }
+      n = n*10+ch-'0';
+      if (n > 65535) {
+        fprintf(stderr, "ERROR: invalid port!\n");
+        abort();
+      }
+    }
+    if (n == 0) {
+      fprintf(stderr, "ERROR: invalid port!\n");
+      abort();
+    }
+    if (n != -1) {
+      port = n;
+      *colon = 0;
+    }
+  }
+
+  if (!VNetChanSocket::GetAddrFromName(host, &srvaddr, port)) {
+    fprintf(stderr, "ERROR: cannot resolve server host!\n");
+    abort();
+  }
+
+  VNetChanSocket sock;
+  if (!sock.create()) return;
+
+  // send request
+  uint8_t edata[MAX_MSGLEN];
+  uint8_t buf[MAX_MSGLEN];
+
+  // generate unique command key (it is used as command unique id, so server can detect duplicate packets)
+  uint8_t key[VNetChanSocket::ChaCha20KeySize];
+  VNetChanSocket::GenerateKey(key);
+
+  // 10 times, with 100 msec pause is one second
+  for (int tries = 10; tries > 0; --tries) {
+    printf("*** sending request to game server at %s...\n", sock.AddrToString(&srvaddr));
+
+    int pos = WriteHostGameSignature(buf);
+    buf[pos++] = CCREQ_RCON_COMMAND;
+    buf[pos++] = RCON_PROTO_VERSION&0xff;
+    buf[pos++] = (RCON_PROTO_VERSION>>8)&0xff;
+
+    // write secret
+    VNetChanSocket::SHA512Digest dig;
+    VNetChanSocket::SHA512Buffer(dig, rconsecret, strlen(rconsecret));
+    memcpy(buf+pos, dig, VNetChanSocket::SHA512DigestSize);
+    pos += VNetChanSocket::SHA512DigestSize;
+
+    // write command
+    for (const char *s = command; *s; ++s) {
+      if (pos <= MAX_MSGLEN-VNetChanSocket::ChaCha20HeaderSize) buf[pos++] = (uint8_t)s[0];
+    }
+
+    if (pos >= MAX_MSGLEN-VNetChanSocket::ChaCha20HeaderSize) {
+      sock.close();
+      fprintf(stderr, "ERROR: rcon packet too long!\n");
+      abort();
+    }
+
+    int elen = VNetChanSocket::EncryptInfoPacket(edata, buf, pos, key);
+    printf("  encrypted %d bytes to %d bytes...\n", pos, elen);
+
+    if (elen < 0) {
+      fprintf(stderr, "ERROR: packet encryption failed!\n");
+      abort();
+    }
+
+    if (!sock.send(&srvaddr, edata, elen)) {
+      sock.close();
+      fprintf(stderr, "ERROR: cannot send query to game server!\n");
+      return;
+    }
+
+    // wait for the answer
+    fd_set rd;
+    FD_ZERO(&rd);
+    FD_SET(sock.getFD(), &rd);
+    timeval to;
+    VNetChanSocket::TVMsecs(&to, 100);
+    int res = select(sock.getFD()+1, &rd, nullptr, nullptr, &to);
+    if (res <= 0) continue;
+
+    // parse reply packet(s)
+    for (int rpc = 32; rpc > 0; --rpc) {
+      sockaddr clientaddr;
+      int len = sock.recv(&clientaddr, edata, MAX_MSGLEN);
+      if (len < 0) {
+        printf("error reading data from %s\n", sock.AddrToString(&clientaddr));
+        break;
+      }
+      if (len == 0) break;
+
+      printf("got packet from %s\n", sock.AddrToString(&clientaddr));
+
+      uint8_t theirkey[VNetChanSocket::ChaCha20KeySize];
+      int dlen = VNetChanSocket::DecryptInfoPacket(theirkey, buf, edata, len);
+      if (dlen < 0) {
+        printf("got invalid packet from %s\n", sock.AddrToString(&clientaddr));
+        continue;
+      }
+
+      printf("decrypted packet from %s (from %d bytes to %d bytes)\n", sock.AddrToString(&clientaddr), len, dlen);
+
+      if (memcmp(key, theirkey, VNetChanSocket::ChaCha20KeySize) != 0) {
+        printf("got packet with wrong key from %s\n", sock.AddrToString(&clientaddr));
+        continue;
+      }
+
+      if (!CheckHostGameSignature(buf, dlen)) {
+        printf("got packet with wrong signature from %s\n", sock.AddrToString(&clientaddr));
+        continue;
+      }
+
+      if (!CheckByte(buf, dlen, CCREP_RCON_COMMAND)) {
+        printf("got packet with wrong command from %s\n", sock.AddrToString(&clientaddr));
+        continue;
+      }
+
+      if (!CheckByte(buf, dlen, RCON_PROTO_VERSION&0xff) ||
+          !CheckByte(buf, dlen, (RCON_PROTO_VERSION>>8)&0xff))
+      {
+        printf("got packet with wrong version from %s\n", sock.AddrToString(&clientaddr));
+        continue;
+      }
+
+      // just a zero-terminated message, nothing more
+      char msg[MAX_MSGLEN+1];
+      int pos = 0;
+      while (pos < MAX_MSGLEN) {
+        int ch = ReadByte(buf, dlen);
+        if (ch <= 0) break;
+        msg[pos++] = ch;
+      }
+      msg[pos] = 0;
+      printf("server %s replied: <%s>\n", sock.AddrToString(&clientaddr), msg);
+
+      // done
+      sock.close();
+      return;
+    }
+  }
+
+  sock.close();
+}
+
+
+//==========================================================================
+//
 //  main
 //
 //==========================================================================
@@ -474,8 +649,17 @@ int main (int argc, const char **argv) {
     abort();
   }
 
+  if (argc > 1 && strcmp(argv[1], "rcon") == 0) {
+    if (argc != 5) {
+      fprintf(stderr, "usage: %s rcon host secret cmd\n", argv[0]);
+      return -1;
+    }
+    sendRConCommand(argv[2], argv[3], argv[4]);
+    return 0;
+  }
+
   bool ext = true;
-  for (int f = 1; f < argc; ++f) if (strcmp(argv[f], "old")) ext = false;
+  for (int f = 1; f < argc; ++f) if (strcmp(argv[f], "old") == 0) ext = false;
 
   queryMasterServer(ext);
 

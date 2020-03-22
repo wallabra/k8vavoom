@@ -44,7 +44,12 @@ struct VNetUtils {
 
   enum {
     ChaCha20KeySize = 32,
-    ChaCha20NonceSize = 8,
+    ChaCha20NonceSize = 4,
+    ChaCha20CheckSumSize = 4,
+    ChaCha20HeaderSize = ChaCha20KeySize+ChaCha20NonceSize+ChaCha20CheckSumSize,
+
+    // for real setups
+    ChaCha20RealNonceSize = 8,
   };
 
   /* Key size in bits: either 256 (32 bytes), or 128 (16 bytes) */

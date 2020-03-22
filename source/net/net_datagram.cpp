@@ -34,8 +34,9 @@
 //
 //
 // CCREQ_CONNECT
-//    bytes[16] key
-//    other data is encrypted with ChaCha20, nonce is 0x29a
+//    bytes[32] key
+//    vuint23   nonce
+//    other data is encrypted with ChaCha20
 //    bytes[4]  crc32c
 //    bytes     "K8VAVOOM"
 //    vuint8    CCREQ_CONNECT
@@ -45,8 +46,9 @@
 //    vuint16   modlistcount
 //
 // CCREQ_SERVER_INFO
-//    bytes[16] key
-//    other data is encrypted with ChaCha20, nonce is 0x29a
+//    bytes[32] key
+//    vuint23   nonce
+//    other data is encrypted with ChaCha20
 //    bytes[4]  crc32c
 //    bytes     "K8VAVOOM"
 //    vuint8    CCREQ_SERVER_INFO
@@ -55,8 +57,9 @@
 //
 //
 // CCREP_ACCEPT
-//    bytes[16] key
-//    other data is encrypted with ChaCha20, nonce is 0x29a
+//    bytes[32] key
+//    vuint23   nonce
+//    other data is encrypted with ChaCha20
 //    bytes[4]  crc32c
 //    bytes     "K8VAVOOM"
 //    vuint8    CCREP_ACCEPT
@@ -65,8 +68,9 @@
 //    long      port
 //
 // CCREP_REJECT
-//    bytes[16] key
-//    other data is encrypted with ChaCha20, nonce is 0x29a
+//    bytes[32] key
+//    vuint23   nonce
+//    other data is encrypted with ChaCha20
 //    bytes[4]  crc32c
 //    bytes     "K8VAVOOM"
 //    vuint8    CCREP_REJECT
@@ -76,8 +80,9 @@
 //      modlist is asciz strings, terminated with empty string
 //
 // CCREP_SERVER_INFO
-//    bytes[16] key
-//    other data is encrypted with ChaCha20, nonce is 0x29a
+//    bytes[32] key
+//    vuint23   nonce
+//    other data is encrypted with ChaCha20
 //    bytes[4]  crc32c
 //    bytes     "K8VAVOOM"
 //    vuint8    CCREP_SERVER_INFO
@@ -107,6 +112,8 @@ static int cli_NoLAN = 0;
 
 static VCvarB net_dbg_dump_rejected_connections("net_dbg_dump_rejected_connections", true, "Dump rejected connections?");
 
+static VCvarS net_rcon_secret_key("net_rcon_secret_key", "", "Secret key for rcon commands");
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VDatagramSocket : public VSocket {
@@ -133,8 +140,7 @@ public:
   enum { MASTER_PROTO_VERSION = 1 };
 
   enum {
-    SINFO_HEADER = VNetUtils::ChaCha20KeySize+4, // key and crc32c
-    MAX_INFO_DGRAM_SIZE = MAX_DGRAM_SIZE-SINFO_HEADER,
+    MAX_INFO_DGRAM_SIZE = MAX_DGRAM_SIZE-VNetUtils::ChaCha20HeaderSize,
   };
 
   // client request
@@ -142,6 +148,49 @@ public:
     CCREQ_CONNECT     = 1,
     CCREQ_SERVER_INFO = 2,
   };
+
+  enum {
+    RCON_PROTO_VERSION = 1u, // 16-bit value
+
+    // client sends this to execute console command on the server
+    CCREQ_RCON_COMMAND = 25,
+    // server sends this to ack client command
+    CCREP_RCON_COMMAND = 26,
+  };
+
+  /*
+    rcon protocol:
+
+    client connects, and sends CCREQ_RCON_COMMAND. key is used to reject duplicate commands.
+    then client must wait for CCREP_RCON_COMMAND. if it got no answer, it should send its
+    request again.
+
+    if the server accepts the command, it must remember its key, and don't repeat it, just
+    answer with the CCREP_RCON_COMMAND.
+
+    client sends CCREQ_RCON_COMMAND:
+      bytes[32] key
+      vuint23   nonce
+      other data is encrypted with ChaCha20
+      bytes[4]  crc32c
+      // signed from here
+      bytes     "K8VAVOOM"
+      vuint8    CCREQ_RCON_COMMAND
+      vuint16   RCON_PROTO_VERSION
+      bytes[64] secretSHA512
+      bytes     command (trailing zero or packet end ends it)
+
+    server sends CCREP_RCON_COMMAND:
+      bytes[32] key
+      vuint23   nonce
+      other data is encrypted with ChaCha20
+      bytes[4]  crc32c
+      // signed from here
+      bytes     "K8VAVOOM"
+      vuint8    CCREP_RCON_COMMAND
+      vuint16   RCON_PROTO_VERSION
+      bytes     errmsg     ; message (zero-terminated, may be empty)
+   */
 
   // server reply
   enum {
@@ -205,6 +254,9 @@ public:
   // returns size or -1
   static int EncryptInfoBitStream (vuint8 *dest, VBitStreamWriter &strm, const vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept;
   static bool DecryptInfoBitStream (vuint8 key[VNetUtils::ChaCha20KeySize], VBitStreamReader &strm, void *srcbuf, int srclen);
+
+public: // rcon
+  vuint8 rconLastKey[VNetUtils::ChaCha20KeySize];
 };
 
 
@@ -228,6 +280,7 @@ VDatagramDriver::VDatagramDriver () : VNetDriver(1, "Datagram") {
   memset((void *)&LastMasterAddr, 0, sizeof(LastMasterAddr));
   LastMasterIsBad = true;
   vassert(LastMasterAddrStr.isEmpty());
+  memset(rconLastKey, 0, VNetUtils::ChaCha20KeySize);
 }
 
 
@@ -924,6 +977,77 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     return nullptr;
   }
 
+  // rcon
+  if (command == CCREQ_RCON_COMMAND) {
+    VStr mysecret = net_rcon_secret_key.asStr();
+    if (mysecret.isEmpty()) return nullptr; // do noting
+
+    // protocol version
+    vuint16 pver = 0;
+    msg << pver;
+    if (msg.IsError() || pver != RCON_PROTO_VERSION) return nullptr; // do noting
+
+    // read secret
+    vuint8 cldig[SHA512_DIGEST_SIZE];
+    msg.Serialise(cldig, SHA512_DIGEST_SIZE);
+    if (msg.IsError()) return nullptr; // do noting
+
+    // check secret
+    vuint8 svdig[SHA512_DIGEST_SIZE];
+    sha512_buf(svdig, *mysecret, (unsigned)mysecret.length());
+    if (memcmp(cldig, svdig, SHA512_DIGEST_SIZE) != 0) return nullptr; // invalid secret
+
+    // read command
+    bool badCommand = false;
+    VStr cmdtext;
+    while (!msg.AtEnd()) {
+      vuint8 ch = 0;
+      msg << ch;
+      if (msg.IsError()) return nullptr; // do noting
+      if (!ch) break;
+      if (ch != 9 && (ch < 32 || ch > 127)) { cmdtext += "?"; badCommand = true; continue; } // invalid char
+      cmdtext += (char)ch;
+    }
+
+    // check for duplicate command
+    if (memcmp(rconLastKey, clientKey, VNetUtils::ChaCha20KeySize) != 0) {
+      // new command
+      memcpy(rconLastKey, clientKey, VNetUtils::ChaCha20KeySize);
+      GCon->Logf(NAME_DevNet, "CONN: got new rcon command from %s: %s", Drv->AddrToString(&clientaddr), *cmdtext.quote(true));
+      if (!badCommand) {
+        cmdtext += "\n";
+        GCmdBuf << cmdtext;
+      }
+    } else {
+      GCon->Logf(NAME_DevNet, "CONN: got duplicate rcon command from %s: %s", Drv->AddrToString(&clientaddr), *cmdtext.quote(true));
+    }
+
+    // send reply
+    VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
+    WriteGameSignature(MsgOut);
+    TmpByte = CCREP_RCON_COMMAND;
+    MsgOut << TmpByte;
+    // protocol version
+    pver = RCON_PROTO_VERSION;
+    MsgOut << pver;
+    // reply text
+    VStr reptext;
+    if (badCommand) reptext = "bad command text"; else reptext = "OK"; // why not?
+    for (int f = 0; f < reptext.length(); ++f) {
+      TmpByte = (vuint8)(reptext[f]);
+      MsgOut << TmpByte;
+    }
+    TmpByte = 0;
+    MsgOut << TmpByte;
+
+    // encrypt
+    int elen = EncryptInfoBitStream(edata, MsgOut, clientKey);
+    if (elen > 0) Drv->Write(acceptsock, edata, elen, &clientaddr);
+    // done
+    return nullptr;
+  }
+
+  // it should be "connect"
   if (command != CCREQ_CONNECT) {
     if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: unknown packet command (%u) from %s", command, Drv->AddrToString(&clientaddr));
     SendConnectionReject(Drv, clientKey, "unknown query", acceptsock, clientaddr);

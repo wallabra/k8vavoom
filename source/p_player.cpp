@@ -1222,7 +1222,7 @@ COMMAND(ChangeWeapon) {
   CMD_FORWARD_TO_SERVER();
 
   if (!Player) return;
-  if (Args.Num() < 2) { GCon->Logf(NAME_Warning, "SelectWeapon expects weapon list"); return; }
+  if (Args.Num() < 2) { GCon->Logf(NAME_Warning, "ChangeWeapon expects weapon list"); return; }
 
   VEntity *curwpn = Player->eventGetReadyWeapon();
 

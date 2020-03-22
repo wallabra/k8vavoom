@@ -1148,6 +1148,8 @@ static TeleportMapExFlag TMEFlags[] = {
 COMMAND(ACS_TeleportNewMap) {
   mapteleport_executed = false; // used for netgame autoteleport
 
+  if (GGameInfo->NetMode == NM_Client) return;
+
   if (Args.length() != 5) {
     GCon->Logf("ACS_TeleportNewMap mapname posidx flags skill");
     return;

@@ -168,6 +168,7 @@ COMMAND(Resurrect) {
 //
 //==========================================================================
 COMMAND(Script) {
+  if (GGameInfo->NetMode == NM_Client) return;
   CMD_FORWARD_TO_SERVER();
   if (CheatAllowed(Player)) {
     if (Args.Num() != 2) return;
@@ -230,11 +231,11 @@ COMMAND(my_sector_info) {
   if (Args.length() > 3) {
     int snum;
     if (!VStr::convertInt(*Args[1], &snum)) {
-      GCon->Logf("invalid sector number: '%s'", *Args[1]);
+      Player->Printf("invalid sector number: '%s'", *Args[1]);
       return;
     }
     if (snum < 0 || snum >= Player->Level->XLevel->NumSectors) {
-      GCon->Logf("invalid sector number: %d (max is %d)", snum, Player->Level->XLevel->NumSectors-1);
+      Player->Printf("invalid sector number: %d (max is %d)", snum, Player->Level->XLevel->NumSectors-1);
       return;
     }
     sec = &Player->Level->XLevel->Sectors[snum];
@@ -244,24 +245,24 @@ COMMAND(my_sector_info) {
     sec = Player->MO->Sector;
   }
 
-  GCon->Logf("Sector #%d (sub #%d); tag=%d; special=%d; damage=%d; seqtype=%d; sndtrav=%d; sky=%d",
+  Player->Printf("Sector #%d (sub #%d); tag=%d; special=%d; damage=%d; seqtype=%d; sndtrav=%d; sky=%d",
     (int)(intptr_t)(sec-Player->Level->XLevel->Sectors),
     (int)(intptr_t)(Player->MO->SubSector-Player->Level->XLevel->Subsectors),
     sec->sectorTag, sec->special, sec->seqType, sec->soundtraversed, sec->Damage, sec->Sky
   );
-  GCon->Logf("  floor texture  : %s (%d) <%s>", *GTextureManager.GetTextureName(sec->floor.pic), sec->floor.pic.id, *GetTexLumpName(sec->floor.pic));
-  GCon->Logf("  ceiling texture: %s (%d) <%s>", *GTextureManager.GetTextureName(sec->ceiling.pic), sec->ceiling.pic.id, *GetTexLumpName(sec->ceiling.pic));
-  GCon->Logf("  ceil : %f %f", sec->ceiling.minz, sec->ceiling.maxz);
-  GCon->Logf("  floor: %f %f", sec->floor.minz, sec->floor.maxz);
+  Player->Printf("  floor texture  : %s (%d) <%s>", *GTextureManager.GetTextureName(sec->floor.pic), sec->floor.pic.id, *GetTexLumpName(sec->floor.pic));
+  Player->Printf("  ceiling texture: %s (%d) <%s>", *GTextureManager.GetTextureName(sec->ceiling.pic), sec->ceiling.pic.id, *GetTexLumpName(sec->ceiling.pic));
+  Player->Printf("  ceil : %f %f", sec->ceiling.minz, sec->ceiling.maxz);
+  Player->Printf("  floor: %f %f", sec->floor.minz, sec->floor.maxz);
 
   sec_region_t *reg = SV_PointRegionLight(sec, Player->MO->Origin, true);
-  GCon->Logf("  Fade : 0x%08x", reg->params->Fade);
-  GCon->Logf("  floor light source sector: %d", sec->floor.LightSourceSector);
-  GCon->Logf("  ceiling light source sector: %d", sec->ceiling.LightSourceSector);
+  Player->Printf("  Fade : 0x%08x", reg->params->Fade);
+  Player->Printf("  floor light source sector: %d", sec->floor.LightSourceSector);
+  Player->Printf("  ceiling light source sector: %d", sec->ceiling.LightSourceSector);
 
   GCon->Log("=== contents ===");
   int ct = SV_PointContents(sec, Player->MO->Origin, true);
-  GCon->Logf("contents: %d", ct);
+  Player->Printf("contents: %d", ct);
 
   if (Args.length() > 1) {
     GCon->Log("*** REGION DUMP START ***");
@@ -271,15 +272,15 @@ COMMAND(my_sector_info) {
   if (Args.length() > 2) {
     TSecPlaneRef floor, ceiling;
     SV_FindGapFloorCeiling(sec, Player->MO->Origin, Player->MO->Height, floor, ceiling, true);
-    GCon->Logf(" gap floor: %g (%g,%g,%g:%g)", floor.GetPointZClamped(Player->MO->Origin), floor.GetNormal().x, floor.GetNormal().y, floor.GetNormal().z, floor.GetDist());
-    GCon->Logf(" gap ceil : %g (%g,%g,%g:%g)", ceiling.GetPointZClamped(Player->MO->Origin), ceiling.GetNormal().x, ceiling.GetNormal().y, ceiling.GetNormal().z, ceiling.GetDist());
+    Player->Printf(" gap floor: %g (%g,%g,%g:%g)", floor.GetPointZClamped(Player->MO->Origin), floor.GetNormal().x, floor.GetNormal().y, floor.GetNormal().z, floor.GetDist());
+    Player->Printf(" gap ceil : %g (%g,%g,%g:%g)", ceiling.GetPointZClamped(Player->MO->Origin), ceiling.GetNormal().x, ceiling.GetNormal().y, ceiling.GetNormal().z, ceiling.GetDist());
     /*
     sec_region_t *gap = SV_PointRegionLight(sec, Player->MO->Origin, true);
-    if (gap) GCon->Logf("=== PT0: %p", gap);
+    if (gap) Player->Printf("=== PT0: %p", gap);
     gap = SV_PointRegionLight(sec, Player->MO->Origin+TVec(0.0f, 0.0f, Player->MO->Height*0.5f), true);
-    if (gap) GCon->Logf("=== PT1: %p", gap);
+    if (gap) Player->Printf("=== PT1: %p", gap);
     gap = SV_PointRegionLight(sec, Player->MO->Origin+TVec(0.0f, 0.0f, Player->MO->Height), true);
-    if (gap) GCon->Logf("=== PT2: %p", gap);
+    if (gap) Player->Printf("=== PT2: %p", gap);
     */
     GCon->Log("=== light ===");
     (void)SV_PointRegionLight(sec, Player->MO->Origin, true);
@@ -302,7 +303,7 @@ COMMAND(my_sector_info) {
 //==========================================================================
 #ifdef CLIENT
 COMMAND(my_clear_automap) {
-  CMD_FORWARD_TO_SERVER();
+  //CMD_FORWARD_TO_SERVER();
   if (!Player) { GCon->Log("NO PLAYER!"); return; }
   if (!Player->MO) { GCon->Log("NO PLAYER MOBJ!"); return; }
   AM_ClearAutomap();
