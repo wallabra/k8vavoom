@@ -445,11 +445,12 @@ static bool queryGameServer (const TSrvItem &srv) {
       if (!ReadVString(mapname, buf, dlen)) { printf("cannot read mapname\n"); continue; }
 
       // print info
-      printf("  name : %s\n", srvname);
-      printf("  map  : %s\n", mapname);
-      printf("  proto: %d.%d\n", protoVerHi, protoVerLo);
-      printf("  plrs : %d/%d\n", currPlr, maxPlr);
-      printf("  mode : %s\n", mode2str(dmmode));
+      printf("  name  : %s\n", srvname);
+      printf("  map   : %s\n", mapname);
+      printf("  proto : %d.%d\n", protoVerHi, protoVerLo);
+      printf("  plrs  : %d/%d\n", currPlr, maxPlr);
+      printf("  mode  : %s\n", mode2str(dmmode));
+      printf("  passwd: %s\n", (extflags&2 ? "YES" : "no"));
 
       // print wad list (this is optional)
       if (extflags&1) {

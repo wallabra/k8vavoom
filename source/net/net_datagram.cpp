@@ -42,6 +42,7 @@
 //    vuint8    CCREQ_CONNECT
 //    vuint8    net_protocol_version_hi  NET_PROTOCOL_VERSION_HI
 //    vuint8    net_protocol_version_lo  NET_PROTOCOL_VERSION_LO
+//    bytes[64] passwordSHA512
 //    vuint32   modlisthash
 //    vuint16   modlistcount
 //
@@ -88,7 +89,7 @@
 //    vuint8    CCREP_SERVER_INFO
 //    vuint8    net_protocol_version_hi  NET_PROTOCOL_VERSION_HI
 //    vuint8    net_protocol_version_lo  NET_PROTOCOL_VERSION_LO
-//    vuint8    extflags (bit 0: has wads?)
+//    vuint8    extflags (bit 0: has wads?; bit 1: server is password-protected)
 //    vuint8    current_players
 //    vuint8    max_players
 //    vuint8    deathmatchMode
@@ -113,6 +114,7 @@ static int cli_NoLAN = 0;
 static VCvarB net_dbg_dump_rejected_connections("net_dbg_dump_rejected_connections", true, "Dump rejected connections?");
 
 static VCvarS net_rcon_secret_key("net_rcon_secret_key", "", "Secret key for rcon commands");
+static VCvarS net_server_key("net_server_key", "", "Server key for password-protected servers");
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -671,12 +673,19 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
     VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
     WriteGameSignature(MsgOut);
+    // comment
     TmpByte = CCREQ_CONNECT;
     MsgOut << TmpByte;
+    // protocol version
     TmpByte = NET_PROTOCOL_VERSION_HI;
     MsgOut << TmpByte;
     TmpByte = NET_PROTOCOL_VERSION_LO;
     MsgOut << TmpByte;
+    // password hash
+    vuint8 cldig[SHA512_DIGEST_SIZE];
+    sha512_buf(cldig, *net_server_key.asStr(), (unsigned)net_server_key.asStr().length());
+    MsgOut.Serialise(cldig, SHA512_DIGEST_SIZE);
+    // mod info
     vuint32 modhash = FL_GetNetWadsHash();
     MsgOut << modhash;
     vuint16 modcount = (vuint16)FL_GetNetWadsCount();
@@ -948,7 +957,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     TmpByte = NET_PROTOCOL_VERSION_LO;
     MsgOut << TmpByte;
     // extflags
-    TmpByte = 1u; // has modlist
+    TmpByte = 1u|(net_server_key.asStr().isEmpty() ? 0u : 2u); // has modlist
     MsgOut << TmpByte;
     // current number of players
     TmpByte = svs.num_connected;
@@ -1063,6 +1072,26 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     GCon->Logf(NAME_DevNet, "connection error: invalid protocol version, got %u:%u, but expected %u:%u", TmpByte, TmpByte1, NET_PROTOCOL_VERSION_HI, NET_PROTOCOL_VERSION_LO);
     // send reject packet, why not?
     SendConnectionReject(Drv, clientKey, "invalid protocol version", acceptsock, clientaddr);
+    return nullptr;
+  }
+
+  // read password
+  vuint8 cldig[SHA512_DIGEST_SIZE];
+  msg.Serialise(cldig, SHA512_DIGEST_SIZE);
+  if (msg.IsError()) {
+    GCon->Logf(NAME_DevNet, "connection error: no password hash");
+    // send reject packet, why not?
+    SendConnectionReject(Drv, clientKey, "invalid handshake", acceptsock, clientaddr);
+    return nullptr;
+  }
+
+  // check password
+  vuint8 svdig[SHA512_DIGEST_SIZE];
+  sha512_buf(svdig, *net_server_key.asStr(), (unsigned)net_server_key.asStr().length());
+  if (memcmp(cldig, svdig, SHA512_DIGEST_SIZE) != 0) {
+    GCon->Logf(NAME_DevNet, "connection error: invalid password");
+    // send reject packet, why not?
+    SendConnectionReject(Drv, clientKey, "invalid password", acceptsock, clientaddr);
     return nullptr;
   }
 
