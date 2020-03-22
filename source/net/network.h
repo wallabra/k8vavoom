@@ -205,8 +205,9 @@ struct hostcache_t {
   vint32 MaxUsers;
   vint32 DeathMatch; // dm mode
   enum {
-    Flag_GoodProtocol = 1u<<0,
-    Flag_GoodWadList  = 1u<<1,
+    Flag_GoodProtocol      = 1u<<0,
+    Flag_GoodWadList       = 1u<<1,
+    Flag_PasswordProtected = 1u<<2,
   };
   vuint32 Flags;
 };

@@ -136,6 +136,7 @@ override void OnDraw () {
     //printdebug("  %s: name=<%s>; map=<%s>", i, slist.Cache[i].Name, slist.Cache[i].Map);
     int clr = (Cursor == i ? CR_WHITE : CR_RED);
     if (!slist.Cache[i].bGoodProtocol || !slist.Cache[i].bGoodWadList) clr = CR_BLACK;
+    else if (slist.Cache[i].bPasswordProtected) clr = CR_CYAN;
     // background
     if (allowBG && Cursor == i) FillRect(0, itemy, Width, FontHeight(), RGB(152, 205, 50), 0.6);
     // draw server name

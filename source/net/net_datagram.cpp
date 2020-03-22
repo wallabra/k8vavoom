@@ -556,6 +556,8 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
       hinfo->Flags |= hostcache_t::Flag_GoodProtocol;
     }
 
+    if (extflags&2) hinfo->Flags |= hostcache_t::Flag_PasswordProtected;
+
     //GCon->Logf(NAME_DevNet, " WHASH: theirs=0x%08x  mine=0x%08x", mhash, FL_GetNetWadsHash());
     if (mhash == FL_GetNetWadsHash()) hinfo->Flags |= hostcache_t::Flag_GoodWadList;
     hinfo->CName = addr;
