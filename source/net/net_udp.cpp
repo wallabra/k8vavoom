@@ -76,7 +76,7 @@ public:
   virtual void Listen (bool state) override;
   virtual int OpenListenSocket (int) override;
   virtual int ConnectSocketTo (sockaddr_t *addr) override; // required for UDP
-  virtual int CloseSocket (int) override;
+  virtual bool CloseSocket (int) override; // returns `false` on error
   virtual int CheckNewConnections () override;
   virtual int Read (int, vuint8 *, int, sockaddr_t *) override;
   virtual int Write (int, const vuint8 *, int, sockaddr_t *) override;
@@ -297,9 +297,9 @@ int VUdpDriver::Init () {
 void VUdpDriver::Shutdown () {
   Listen(false);
   CloseSocket(net_controlsocket);
-#ifdef WIN32
+  #ifdef WIN32
   if (--winsock_initialised == 0) WSACleanup();
-#endif
+  #endif
 }
 
 
@@ -490,9 +490,10 @@ int VUdpDriver::ConnectSocketTo (sockaddr_t *addr) {
 //  VUdpDriver::CloseSocket
 //
 //==========================================================================
-int VUdpDriver::CloseSocket (int socket) {
+bool VUdpDriver::CloseSocket (int socket) {
+  if (socket < 0) return true;
   if (socket == net_broadcastsocket) net_broadcastsocket = -1;
-  return closesocket(socket);
+  return (closesocket(socket) == 0);
 }
 
 

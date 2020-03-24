@@ -156,7 +156,7 @@ public:
   virtual void Listen (bool state) = 0;
   virtual int OpenListenSocket (int port) = 0;
   virtual int ConnectSocketTo (sockaddr_t *addr) = 0; // returns socket or -1
-  virtual int CloseSocket (int socket) = 0;
+  virtual bool CloseSocket (int socket) = 0; // returns `false` on error
   virtual int CheckNewConnections () = 0;
   virtual int Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) = 0;
   virtual int Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr) = 0;

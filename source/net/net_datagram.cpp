@@ -126,7 +126,7 @@ public:
   bool Invalid;
 
 public:
-  VDatagramSocket (VNetDriver *Drv) : VSocket(Drv), LanDriver(nullptr), LanSocket(0), Invalid(false) {}
+  VDatagramSocket (VNetDriver *Drv) : VSocket(Drv), LanDriver(nullptr), LanSocket(-1), Invalid(false) {}
   virtual ~VDatagramSocket() override;
 
   virtual int GetMessage (void *dest, size_t destSize) override;
@@ -1170,8 +1170,8 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   for (VSocket *as = Net->ActiveSockets; as; as = as->Next) {
     if (as->Driver != this) continue;
     VDatagramSocket *s = (VDatagramSocket *)as;
-    if (!s->Invalid) continue;
-    // if we already have this client, resent accept packet, and replace client address
+    if (s->Invalid) continue;
+    // if we already have this client, resend accept packet, and replace client address
     if (memcmp(clientKey, s->AuthKey, VNetUtils::ChaCha20KeySize) == 0) {
       if (Net->GetNetTime()-s->ConnectTime < 2.0) {
         GCon->Logf(NAME_DevNet, "CONN: duplicate connection request from %s (this is ok)", Drv->AddrToString(&clientaddr));
