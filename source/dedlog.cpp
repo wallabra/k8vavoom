@@ -80,30 +80,33 @@ private:
           collectedLine[coLen++] = '[';
           collectedLine[coLen++] = '0';
           collectedLine[coLen++] = 'm';
-          collectedLine[coLen++] = '\n';
-          collectedLine[coLen] = 0;
-          ttyRawWrite(collectedLine);
-          coLen = 0;
-          collectedLine[coLen++] = '\x1b';
-          collectedLine[coLen++] = '[';
-          collectedLine[coLen++] = '0';
-          collectedLine[coLen++] = 'm';
-          collectedLine[coLen++] = '\x1b';
-          collectedLine[coLen++] = '[';
-          collectedLine[coLen++] = '1';
-          collectedLine[coLen++] = 'G';
           collectedLine[coLen++] = '\x1b';
           collectedLine[coLen++] = '[';
           collectedLine[coLen++] = 'K';
+          collectedLine[coLen++] = '\n';
           collectedLine[coLen] = 0;
-          ttyRefreshInputLine = true;
-          UpdateTTYPrompt();
+          ttyRawWrite(collectedLine);
         }
+        coLen = 0;
+        collectedLine[coLen++] = '\x1b';
+        collectedLine[coLen++] = '[';
+        collectedLine[coLen++] = '0';
+        collectedLine[coLen++] = 'm';
+        collectedLine[coLen++] = '\x1b';
+        collectedLine[coLen++] = '[';
+        collectedLine[coLen++] = '1';
+        collectedLine[coLen++] = 'G';
+        collectedLine[coLen++] = '\x1b';
+        collectedLine[coLen++] = '[';
+        collectedLine[coLen++] = 'K';
+        collectedLine[coLen] = 0;
+        ttyRefreshInputLine = true;
+        UpdateTTYPrompt();
         ++s;
         --len;
         continue;
       }
-      if (coLen < ARRAY_COUNT(collectedLine)-8) collectedLine[coLen++] = *s;
+      if (coLen < ARRAY_COUNT(collectedLine)-64) collectedLine[coLen++] = *s;
       ++s;
       --len;
     }
@@ -121,7 +124,20 @@ private:
   }
 
 public:
-  inline VDedLog () noexcept : lastEvent(NAME_Log), justNewlined(true), coLen(0) {}
+  inline VDedLog () noexcept : lastEvent(NAME_Log), justNewlined(true), coLen(0) {
+    // the first line should be cleared
+    collectedLine[coLen++] = '\x1b';
+    collectedLine[coLen++] = '[';
+    collectedLine[coLen++] = '1';
+    collectedLine[coLen++] = 'G';
+    collectedLine[coLen++] = '\x1b';
+    collectedLine[coLen++] = '[';
+    collectedLine[coLen++] = '0';
+    collectedLine[coLen++] = 'm';
+    collectedLine[coLen++] = '\x1b';
+    collectedLine[coLen++] = '[';
+    collectedLine[coLen++] = 'K';
+  }
 
 public:
   virtual void Serialise (const char *Text, EName Event) noexcept override {
