@@ -97,7 +97,7 @@ private:
 // ////////////////////////////////////////////////////////////////////////// //
 VNetworkPublic *GNet = nullptr;
 
-VCvarS VNetworkLocal::HostName("hostname", "UNNAMED", "Name of this host.");
+VCvarS VNetworkLocal::HostName("hostname", "UNNAMED", "Name of this host.", CVAR_PreInit);
 
 VNetDriver *VNetworkLocal::Drivers[MAX_NET_DRIVERS];
 int VNetworkLocal::NumDrivers = 0;
