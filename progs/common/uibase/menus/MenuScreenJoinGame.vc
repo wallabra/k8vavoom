@@ -47,7 +47,7 @@ override void CreateChoices() {
     SetLastHelp(
       "Connect to master server to get MP server info.");
 
-  #if 0
+  #if 1
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetPos(ChoicesStartX, currentY);
   Btn.Text = "Search for LAN games...";
