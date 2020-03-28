@@ -587,11 +587,12 @@ bool VUdpDriver::CanBroadcast () {
   #ifdef WIN32
   GetLocalAddress();
   #endif
-  #if 1
+  #if 0
   vuint32 addr = ntohl(myAddr);
   return (myAddr != INADDR_ANY && ((addr>>24)&0xff) != 0x7f); // ignore localhost
   #else
-  return (myAddr != INADDR_ANY); // ignore localhost
+  vuint32 addr = ntohl(myAddr);
+  return (myAddr == INADDR_ANY || ((addr>>24)&0xff) != 0x7f); // ignore localhost
   #endif
 }
 
@@ -602,7 +603,6 @@ bool VUdpDriver::CanBroadcast () {
 //
 //==========================================================================
 int VUdpDriver::Broadcast (int socket, const vuint8 *buf, int len) {
-  int i = 1;
   if (socket != net_broadcastsocket) {
     if (net_broadcastsocket >= 0) Sys_Error("Attempted to use multiple broadcasts sockets");
     if (!CanBroadcast()) {
@@ -610,6 +610,7 @@ int VUdpDriver::Broadcast (int socket, const vuint8 *buf, int len) {
       return -1;
     }
     // make this socket broadcast capable
+    int i = 1;
     if (setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char *)&i, sizeof(i)) < 0) {
       GCon->Log(NAME_DevNet, "Unable to make socket broadcast capable");
       return -1;
