@@ -66,7 +66,7 @@
 //    vuint8    CCREP_ACCEPT
 //    vuint8    net_protocol_version_hi  NET_PROTOCOL_VERSION_HI
 //    vuint8    net_protocol_version_lo  NET_PROTOCOL_VERSION_LO
-//    long      port
+//    vuint16   port
 //
 // CCREP_REJECT
 //    bytes[32] key
@@ -629,7 +629,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   //vuint8 control;
   VStr reason;
   vuint8 msgtype;
-  int newport;
+  vuint16 newport;
   VBitStreamReader *msg = nullptr;
   vuint8 TmpByte;
   vuint8 otherProtoHi, otherProtoLo;
@@ -824,6 +824,13 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
   if (otherProtoHi != NET_PROTOCOL_VERSION_HI || otherProtoLo != NET_PROTOCOL_VERSION_LO) {
     reason = "Bad protocol version";
+    GCon->Logf(NAME_Error, "Connection failure: %s", *reason);
+    VStr::Cpy(Net->ReturnReason, *reason);
+    goto ErrorReturn;
+  }
+
+  if (newport == 0) {
+    reason = "Bad port";
     GCon->Logf(NAME_Error, "Connection failure: %s", *reason);
     VStr::Cpy(Net->ReturnReason, *reason);
     goto ErrorReturn;
@@ -1188,7 +1195,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
         TmpByte = NET_PROTOCOL_VERSION_LO;
         MsgOut << TmpByte;
         // client port
-        vint32 TmpPort = Drv->GetSocketPort(&newaddr);
+        vint16 TmpPort = Drv->GetSocketPort(&newaddr);
         MsgOut << TmpPort;
         int elen = EncryptInfoBitStream(edata, MsgOut, clientKey);
         if (elen > 0) {
@@ -1198,25 +1205,11 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
       }
       // drop this
       GCon->Logf(NAME_DevNet, "CONN: DROPPING %s", Drv->AddrToString(&clientaddr));
+      // marking existing socket as "invalid" will block all i/o on in (i/o attempt will return error)
+      // the corresponding connection will close itself on i/o error
       s->Invalid = true;
       return nullptr;
       /*
-      // is this a duplicate connection request?
-      if (ret == 0 && Net->GetNetTime()-s->ConnectTime < 2.0) {
-        GCon->Logf(NAME_DevNet, "CONN: duplicate connection request from %s (this is ok)", Drv->AddrToString(&clientaddr));
-        // yes, so send a duplicate reply
-        VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
-        Drv->GetSocketAddr(s->LanSocket, &newaddr);
-        TmpByte = NETPACKET_CTL;
-        MsgOut << TmpByte;
-        WriteGameSignature(MsgOut);
-        TmpByte = CCREP_ACCEPT;
-        MsgOut << TmpByte;
-        vint32 TmpPort = Drv->GetSocketPort(&newaddr);
-        MsgOut << TmpPort;
-        Drv->Write(acceptsock, MsgOut.GetData(), MsgOut.GetNumBytes(), &clientaddr);
-        return nullptr;
-      }
       // it is prolly somebody coming back in from a crash/disconnect
       // so close the old socket and let their retry get them back in
       // but don't do that for localhost
@@ -1267,8 +1260,8 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   MsgOut << TmpByte;
   TmpByte = NET_PROTOCOL_VERSION_LO;
   MsgOut << TmpByte;
-  // cline port
-  vint32 TmpPort = Drv->GetSocketPort(&newaddr);
+  // client port
+  vint16 TmpPort = Drv->GetSocketPort(&newaddr);
   MsgOut << TmpPort;
   int elen = EncryptInfoBitStream(edata, MsgOut, clientKey);
   if (elen <= 0) {
