@@ -67,6 +67,21 @@ override void CreateChoices() {
   currentY += JoinAt.Height;
     SetLastHelp(
       "You can use either IP address, or a host name here.");
+
+  auto pwd = MenuInputLine(NewChild(MenuInputLine));
+  //pwd.MakeOneLineControl();
+  pwd.SetPos(ChoicesStartX, currentY);
+  pwd.Text = "Server Password";
+  pwd.Value = GetCvarS('net_server_key');
+  pwd.ValueChanged = delegate void (Object sender) {
+    auto ed = MenuInputLine(sender);
+    assert(ed);
+    SetCvarS('net_server_key', ed.Value);
+  };
+  currentY += pwd.Height;
+    SetLastHelp(
+      "Some servers are password-protected.\n"~
+      "You can specify the password here.");
 }
 
 

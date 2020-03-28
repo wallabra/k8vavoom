@@ -171,6 +171,23 @@ override void CreateChoices () {
   currentY += Level.Height;
 
   onEpisodeChanged(none, (Episode ? Episode.Value : 0));
+
+  auto pwd = MenuInputLine(NewChild(MenuInputLine));
+  pwd.MakeOneLineControl();
+  //pwd.SetPos(ChoicesStartX, currentY);
+  pwd.CursorXOffs = ChoicesStartX;
+  pwd.CursorXOffsHR = ChoicesStartX;
+  pwd.Text = "Server Password";
+  pwd.Value = GetCvarS('net_server_key');
+  pwd.ValueChanged = delegate void (Object sender) {
+    auto ed = MenuInputLine(sender);
+    assert(ed);
+    SetCvarS('net_server_key', ed.Value);
+  };
+  currentY += pwd.Height;
+    SetLastHelp(
+      "You can password-protect your server.\n"~
+      "Use empty password if you don't want protected server.");
 }
 
 
@@ -217,6 +234,7 @@ void ActivateStartNewGame (Object Sender) {
 
 
 defaultproperties {
+  WidthThreshold = 10;
   ChoicesStartX = 128;
   ChoicesStartY = 40;
   SelectorType = MenuSelector_SmallRight;
