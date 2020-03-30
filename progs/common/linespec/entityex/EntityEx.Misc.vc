@@ -1326,8 +1326,10 @@ override void OnMapSpawn (mthing_t *mthing) {
   // set the state, but do not use SetState, because action routines can't be called yet
   // if the spawnstate has an action routine, it will not be called
   if (Level.Game.IsNetServer) {
-    state sss = FindState('SpawnInNetServer');
-    //if (sss) printdebug("%C: spawn with netstate", self);
+    state sss = none;
+    if (Level.Game.IsListenServer) sss = FindState('SpawnInListenServer');
+    if (!sss) sss = FindState('SpawnInNetServer');
+    //if (sss) printdebug("%C:%s: spawn with netstate", self, UniqueId);
     SetInitialState(sss ? sss : IdleState);
   } else {
     SetInitialState(IdleState);

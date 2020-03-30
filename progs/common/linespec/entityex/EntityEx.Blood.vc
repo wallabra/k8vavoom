@@ -253,7 +253,7 @@ void SpawnBloodSprayHead (int damage, optional bool notDead, optional bool spawn
 
 //==========================================================================
 //
-//  IsGootLineForBloodSplat
+//  IsGood2SLineForBloodSplat
 //
 //==========================================================================
 bool IsGood2SLineForBloodSplat (const line_t *li) {
@@ -589,24 +589,33 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg, optional fl
   //if (BloodTranslation && !A.bDontTranslate) { A.Translation = BloodTranslation; A.BloodTranslation = BloodTranslation; }
   A.CopyBloodTranslations(self, copyNormalTranslation:true);
 
-  if (LineSpecialGameInfo(Level.Game).bBloodSpray) {
-    if (damage > 13) {
-      state sps = A.FindState('Spray');
-      if (sps) A.SetState(sps);
-    } else {
-      damage += 2;
+  // gore mod blood is detached
+  if (!bDetachFromServer) {
+    if (LineSpecialGameInfo(Level.Game).bBloodSpray) {
+      if (damage > 13) {
+        state sps = A.FindState('Spray');
+        if (sps) A.SetState(sps);
+      } else {
+        damage += 2;
+      }
+    }
+
+    if (GetCvarB('zdoom_blood_hack')) {
+      /*
+      if (string(GetClassName(A.Class)).startsWith("K8Gore")) {
+      } else
+      */
+      if (damage <= 12 && damage >= 9) {
+        A.SetState(GetStatePlus(A.IdleState, 1));
+        //A.SetInitialState(GetStatePlus(A.IdleState, 1));
+      } else if (damage < 9) {
+        A.SetState(GetStatePlus(A.IdleState, 2));
+        //A.SetInitialState(GetStatePlus(A.IdleState, 2));
+      }
     }
   }
 
-  if (GetCvarB('zdoom_blood_hack')) {
-    if (damage <= 12 && damage >= 9) {
-      A.SetState(GetStatePlus(A.IdleState, 1));
-      //A.SetInitialState(GetStatePlus(A.IdleState, 1));
-    } else if (damage < 9) {
-      A.SetState(GetStatePlus(A.IdleState, 2));
-      //A.SetInitialState(GetStatePlus(A.IdleState, 2));
-    }
-  }
+  //printdebug("%C:%s: spawned blood (%s)", A, A.UniqueId, A.State);
 }
 
 

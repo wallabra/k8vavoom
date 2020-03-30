@@ -38,7 +38,7 @@
 //
 //==========================================================================
 [decorate] final void decorate_A_k8ConLog (string msg) {
-  printdebug("%C: DECORATE: %s", self, msg);
+  printdebug("%C:%s: DECORATE: %s", self, UniqueId, msg);
 }
 
 
