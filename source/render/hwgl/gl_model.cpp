@@ -261,7 +261,8 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     SurfModelStencil.UploadChangedUniforms();
   }
 
-  PushDepthMask();
+  bool restoreDepth = false;
+  //PushDepthMask();
 
   //if (ri.isShaded()) GCon->Logf(NAME_Debug, "!!!!! %s (0x%08x)", *Mdl->Name, ri.stencilColor);
   SetupBlending(ri);
@@ -295,7 +296,10 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
 
     p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
 
-    if ((ri.alpha < 1.0f && !ForceDepthUse) || AllowTransparency) { //k8: dunno. really.
+    //if ((ri.alpha < 1.0f && !ForceDepthUse) || AllowTransparency) { //k8: dunno. really.
+    if (!ForceDepthUse && (ri.alpha < 1.0f || AllowTransparency)) { //k8: this looks more logical
+      restoreDepth = true;
+      PushDepthMask();
       glDepthMask(GL_FALSE);
     }
 
@@ -323,7 +327,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   if (is_view_model) glDepthRange(0.0f, 1.0f);
 
   if (onlyDepth) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  PopDepthMask();
+  if (restoreDepth) PopDepthMask();
 }
 
 
@@ -390,7 +394,13 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
 
   ShadowsModelAmbient.UploadChangedUniforms();
 
-  if (Alpha < 1.0f && !ForceDepth) glDepthMask(GL_FALSE);
+  bool restoreDepth = false;
+
+  if (Alpha < 1.0f && !ForceDepth) {
+    restoreDepth = true;
+    PushDepthMask();
+    glDepthMask(GL_FALSE);
+  }
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
@@ -414,7 +424,8 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   p_glDisableVertexAttribArrayARB(ShadowsModelAmbient.loc_TexCoord);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 
-  if (Alpha < 1.0f && !ForceDepth) glDepthMask(GL_TRUE);
+  //if (Alpha < 1.0f && !ForceDepth) glDepthMask(GL_TRUE);
+  if (restoreDepth) PopDepthMask();
 }
 
 
@@ -852,8 +863,8 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
 
   SetPicModel(Skin, nullptr, CM_Default);
 
-  GLint oldDepthMask;
-  glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
+  //GLint oldDepthMask;
+  //glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
 
   VMatrix4 RotationMatrix;
   AliasSetupTransform(origin, angles, Transform, RotationMatrix);
