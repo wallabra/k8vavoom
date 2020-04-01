@@ -7,8 +7,8 @@ add_custom_command(OUTPUT ${OUTDIR}/cgame.dat
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${COMMON_PROGS_DIR} -P${OUTDIR1} -P${OUTDIR} -P${PROJECT_SOURCE_DIR}/progs/common -P${CMAKE_CURRENT_SOURCE_DIR}/../doom ${CMAKE_CURRENT_SOURCE_DIR}/cgame.vc ${OUTDIR}/cgame.dat -I${CMAKE_CURRENT_SOURCE_DIR}/../doom/cgame
   DEPENDS
     vcc
-    cgame.vc
-    ../doom/cgame/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/doom2/cgame.vc
+    ${CMAKE_SOURCE_DIR}/progs/doom/cgame/*.vc
     ${OUTDIR1}/game.dat
     #${COMMON_PROGS_DIR}/engine.dat
     ${COMMON_PROGS_DIR}/linespec.dat

@@ -10,7 +10,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     graphics/fonta63.lmp
     palette.pcx
     basepak.ls.in
-    *.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.txt
     ${CMAKE_SOURCE_DIR}/progs/heretic/cgame/*.vc
     ${CMAKE_SOURCE_DIR}/progs/heretic/game/*.vc
   )

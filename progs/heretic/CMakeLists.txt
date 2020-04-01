@@ -6,7 +6,7 @@ add_custom_command(OUTPUT ${OUTDIR}/game.dat
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${COMMON_PROGS_DIR} -P${OUTDIR} -P${PROJECT_SOURCE_DIR}/progs/common -P${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/game/classes.vc ${OUTDIR}/game.dat
   DEPENDS
     vcc
-    game/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/heretic/game/*.vc
     #${COMMON_PROGS_DIR}/engine.dat
     ${COMMON_PROGS_DIR}/linespec.dat
     ${COMMON_PROGS_DIR}/newui.dat
@@ -19,7 +19,7 @@ add_custom_command(OUTPUT ${OUTDIR}/cgame.dat
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${COMMON_PROGS_DIR} -P${OUTDIR} -P${PROJECT_SOURCE_DIR}/progs/common -P${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/cgame/classes.vc ${OUTDIR}/cgame.dat
   DEPENDS
     vcc
-    cgame/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/heretic/cgame/*.vc
     ${OUTDIR}/game.dat
     #${COMMON_PROGS_DIR}/engine.dat
     ${COMMON_PROGS_DIR}/linespec.dat

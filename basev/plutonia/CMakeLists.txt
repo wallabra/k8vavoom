@@ -4,7 +4,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
   COMMAND ${WINERUN} $<TARGET_FILE:vlumpy> ARGS basepak.ls
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.ls vlumpy
     basepak.ls.in
-    *.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.txt
   )
 add_custom_target(plutonia_basepak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3)
 add_dependencies(plutonia_basepak doom_game doom_cgame doom2_cgame)

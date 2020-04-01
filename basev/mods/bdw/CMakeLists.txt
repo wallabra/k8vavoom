@@ -4,20 +4,20 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3
   COMMAND ${WINERUN} $<TARGET_FILE:vlumpy> ARGS basepak.ls
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.ls vlumpy
     basepak.ls.in
-    *.txt
-    actors/*.txt
-    actors/gl/*.gl
-    models/*
-    models/tracer/*
-    sounds/weapons/*
-    sprites/*
-    sprites/ammo/*
-    sprites/casing/*
-    sprites/decals/*
-    sprites/muzzle/*
-    sprites/water/*
-    sprites/weapons/arifle/*
-    sprites/weapons/shotgun/*
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/actors/*.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/actors/gl/*.gl
+    ${CMAKE_CURRENT_SOURCE_DIR}/models/*
+    ${CMAKE_CURRENT_SOURCE_DIR}/models/tracer/*
+    ${CMAKE_CURRENT_SOURCE_DIR}/sounds/weapons/*
+    ${CMAKE_CURRENT_SOURCE_DIR}/sprites/*
+    ${CMAKE_CURRENT_SOURCE_DIR}/sprites/ammo/*
+    ${CMAKE_CURRENT_SOURCE_DIR}/sprites/casing/*
+    ${CMAKE_CURRENT_SOURCE_DIR}/sprites/decals/*
+    ${CMAKE_CURRENT_SOURCE_DIR}/sprites/muzzle/*
+    ${CMAKE_CURRENT_SOURCE_DIR}/sprites/water/*
+    ${CMAKE_CURRENT_SOURCE_DIR}/sprites/weapons/arifle/*
+    ${CMAKE_CURRENT_SOURCE_DIR}/sprites/weapons/shotgun/*
   )
 add_custom_target(bdw_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3)
 add_dependencies(bdw_modpak doom_game doom_cgame doom2_cgame heretic_cgame hexen_cgame strife_cgame)
