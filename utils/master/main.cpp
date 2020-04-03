@@ -28,21 +28,72 @@
 //**
 //**************************************************************************
 
-#include "cmdlib.h"
-using namespace VavoomUtils;
+//#include "cmdlib.h"
+//using namespace VavoomUtils;
 
 #include <time.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <stdint.h>
+#include <stdint.h>
 #include <unistd.h>
 #ifdef _WIN32
 # include <windows.h>
 #endif
 
 #include "netchan.h"
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+template<class T> class TArray {
+private:
+  T *data;
+  size_t used;
+  size_t size;
+
+public:
+  inline TArray () noexcept : data(nullptr), used(0), size(0) {}
+  inline ~TArray () noexcept { clear(); }
+
+  inline T &operator [] (int idx) noexcept { if (idx < 0 || (size_t)idx >= used) abort(); return data[(size_t)idx]; }
+
+  inline void clear () noexcept {
+    for (size_t f = 0; f < used; ++f) data[f].~T();
+    if (data) ::free(data);
+    data = nullptr;
+    used = size = 0;
+  }
+
+  inline int length () const noexcept { return (int)used; }
+
+  inline T &alloc () noexcept {
+    if (used >= size) {
+      const size_t newsz = size+4096;
+      data = (T *)::realloc(data, sizeof(T)*newsz);
+      if (!data) abort();
+      size = newsz;
+      memset((void *)(data+used), 0, sizeof(T)*(size-used));
+    }
+    memset((void *)(data+used), 0, sizeof(T)); // just in case
+    return data[used++];
+  }
+
+  inline void removeAt (int idx) noexcept {
+    if (idx < 0 || (size_t)idx >= used) return;
+    if (used == 0) abort();
+    data[(size_t)idx].~T();
+    memset((void *)(data+idx), 0, sizeof(T));
+    for (size_t f = (size_t)idx+1; f < used; ++f) data[f-1] = data[f];
+    --used;
+    memset((void *)(data+used), 0, sizeof(T));
+  }
+
+  inline T *begin () noexcept { return data; }
+  inline const T *begin () const noexcept { return data; }
+  inline T *end () noexcept { return (data ? data+used : nullptr); }
+  inline const T *end () const noexcept { return (data ? data+used : nullptr); }
+};
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -69,8 +120,8 @@ enum {
 struct TSrvItem {
   sockaddr addr;
   time_t time; // for blocked: unblock time; 0: never
-  vuint8 pver0; // protocol version
-  vuint8 pver1; // protocol version
+  uint8_t pver0; // protocol version
+  uint8_t pver1; // protocol version
   // request rate limiter
   double lastReqTime;
   int rateViolationCount;
@@ -151,7 +202,7 @@ static void BlockIt (const sockaddr *clientaddr) {
     }
   }
   Logf("something at %s is blocked", VNetChanSocket::AddrToStringNoPort(clientaddr));
-  TSrvItem &it = srvBlocked.Alloc();
+  TSrvItem &it = srvBlocked.alloc();
   it.addr = *clientaddr;
   it.time = time(0)+60*3; // block for three minutes
   it.pver0 = 0;
@@ -249,7 +300,7 @@ static void ReadNet () {
             }
           }
           Logf("server at %s is joined, protocol version is %u", VNetChanSocket::AddrToString(&clientaddr), (unsigned)buf[1]);
-          TSrvItem &it = srvList.Alloc();
+          TSrvItem &it = srvList.alloc();
           it.addr = clientaddr;
           it.time = time(0);
           it.pver0 = buf[1];
@@ -262,7 +313,7 @@ static void ReadNet () {
           for (int i = 0; i < srvList.length(); ++i) {
             if (VNetChanSocket::AddrEqu(&srvList[i].addr, &clientaddr)) {
               Logf("server at %s leaves", VNetChanSocket::AddrToString(&srvList[i].addr));
-              srvList.RemoveIndex(i);
+              srvList.removeAt(i);
               break;
             }
           }

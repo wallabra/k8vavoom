@@ -1,0 +1,6 @@
+SubDir TOP ;
+
+Main k8vavoom-master :
+  netchan.cpp
+  main.cpp
+;

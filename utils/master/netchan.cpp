@@ -36,10 +36,12 @@
 typedef int socklen_t;
 #endif
 
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
+#ifndef _WIN32
+# include <netdb.h>
+# include <netinet/in.h>
+# include <sys/ioctl.h>
+# include <sys/select.h>
+#endif
 //#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -262,7 +264,7 @@ static void RtlGenRandomX (PVOID RandomBuffer, ULONG RandomBufferLength) {
   static __thread int inited = 0;
   if (!inited) {
     inited = 1;
-    HANDLE libh = LoadLibrary("advapi32.dll");
+    HMODULE libh = LoadLibraryA("advapi32.dll");
     if (libh) {
       RtlGenRandomXX = (RtlGenRandomFn)(void *)GetProcAddress(libh, "SystemFunction036");
       if (!RtlGenRandomXX) fprintf(stderr, "WARNING: `RtlGenRandom()` is not found!\n");
@@ -673,7 +675,7 @@ bool VNetChanSocket::send (const sockaddr *addr, const void *buf, int len) noexc
   if (len < 0) return false;
   if (len == 0) return true;
   if (!buf) return false;
-  return (::sendto(sockfd, buf, len, 0, addr, sizeof(*addr)) == len);
+  return (::sendto(sockfd, (const char *)buf, len, 0, addr, sizeof(*addr)) == len);
 }
 
 
@@ -685,7 +687,7 @@ bool VNetChanSocket::send (const sockaddr *addr, const void *buf, int len) noexc
 bool VNetChanSocket::hasData () noexcept {
   if (sockfd < 0) return false;
   uint8_t buf[MAX_DGRAM_SIZE];
-  return (recvfrom(sockfd, buf, MAX_DGRAM_SIZE, MSG_PEEK, nullptr, nullptr) > 0);
+  return (recvfrom(sockfd, (char *)buf, MAX_DGRAM_SIZE, MSG_PEEK, nullptr, nullptr) > 0);
 }
 
 
@@ -708,7 +710,7 @@ int VNetChanSocket::recv (sockaddr *addr, void *buf, int maxlen) noexcept {
   socklen_t addrlen = sizeof(sockaddr);
   int len;
   for (;;) {
-    len = (int)recvfrom(sockfd, buf, maxlen, 0, addr, &addrlen);
+    len = (int)recvfrom(sockfd, (char *)buf, maxlen, 0, addr, &addrlen);
     if (len < 0) {
       if (errno == EINTR) continue;
       len = (errno == EAGAIN || errno == EWOULDBLOCK ? 0 : -1);

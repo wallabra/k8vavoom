@@ -28,7 +28,9 @@
 #include <stdint.h>
 #include <time.h>
 // for `sockaddr`
-#include <sys/socket.h>
+#ifndef _WIN32
+# include <sys/socket.h>
+#endif
 
 
 class VNetChanSocket {
