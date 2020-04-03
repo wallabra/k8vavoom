@@ -1,0 +1,3 @@
+if $(WINDOZE) {
+  LINKLIBS.all += -lkernel32 -lwsock32 -lws2_32 ;
+}
