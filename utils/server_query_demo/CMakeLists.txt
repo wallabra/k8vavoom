@@ -9,4 +9,6 @@ if(ENABLE_QUERY_DEMO)
     set_target_properties(k8vavoom-query PROPERTIES LINK_FLAGS "-Wl,--subsystem,console")
   endif()
   target_link_libraries(k8vavoom-query ${NET_LIBRARIES})
+
+  install(TARGETS k8vavoom-query DESTINATION ${BINDIR}/tools)
 endif(ENABLE_QUERY_DEMO)

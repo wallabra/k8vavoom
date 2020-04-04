@@ -12,4 +12,6 @@ if(ENABLE_MASTER)
   #target_link_libraries(k8vavoom-master core ${NET_LIBRARIES})
   target_link_libraries(k8vavoom-master ${NET_LIBRARIES})
   #add_dependencies(k8vavoom-master core)
+
+  install(TARGETS k8vavoom-master DESTINATION ${BINDIR}/tools)
 endif(ENABLE_MASTER)
