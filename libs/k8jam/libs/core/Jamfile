@@ -19,6 +19,7 @@ Library libcore.a :
   src/minipng.cpp
   src/name.cpp
   src/poly1305-donna.c
+  src/curve25519-donna.c
   src/prngs.cpp
   src/rg32.cpp
   #src/ryu_d2s.c
