@@ -633,13 +633,13 @@ static void sendRConCommand (const char *hostname, const char *rconsecret, const
 
       // just a zero-terminated message, nothing more
       char msg[MAX_MSGLEN+1];
-      int pos = 0;
-      while (pos < MAX_MSGLEN) {
+      int dpos = 0;
+      while (dpos < MAX_MSGLEN) {
         int ch = ReadByte(buf, dlen);
         if (ch <= 0) break;
-        msg[pos++] = ch;
+        msg[dpos++] = ch;
       }
-      msg[pos] = 0;
+      msg[dpos] = 0;
       printf("server %s replied: <%s>\n", sock.AddrToString(&clientaddr), msg);
 
       // done
