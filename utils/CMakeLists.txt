@@ -11,6 +11,7 @@ if(ENABLE_GLVIS)
   endif(NOT CMAKE_CROSSCOMPILING)
 endif(ENABLE_GLVIS)
 add_subdirectory(master)
+add_subdirectory(server_query_demo)
 add_subdirectory(vcc)
 add_subdirectory(vlumpy)
 
