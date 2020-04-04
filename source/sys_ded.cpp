@@ -96,10 +96,13 @@ extern bool ttyExtraDisabled;
 extern bool dedEnableTTYLog;
 
 static char text[8192];
+#ifndef _WIN32
 static char text2[8192];
+#endif
 static int textpos = 0;
 
 
+#ifndef _WIN32
 //==========================================================================
 //
 //  onShowCompletionMatchCB
@@ -115,6 +118,7 @@ static void onShowCompletionMatchCB (bool isheader, VStr s) {
   }
   dedEnableTTYLog = olddis;
 }
+#endif
 
 
 //==========================================================================
@@ -139,6 +143,7 @@ void UpdateTTYPrompt () {
 }
 
 
+#ifndef _WIN32
 //==========================================================================
 //
 //  PutToTTYText
@@ -155,6 +160,7 @@ static void PutToTTYText (const char *s) {
     text[textpos++] = *s++;
   }
 }
+#endif
 
 
 //==========================================================================
