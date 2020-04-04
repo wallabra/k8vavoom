@@ -286,10 +286,10 @@ vuint32 SV_GetModListHash () {
   //GCon->Logf(NAME_Debug, "modlist:\n%s", *modlist);
 #if 0
   // get list hash
-  vuint8 sha512[SHA512_DIGEST_SIZE];
-  sha512_buf(sha512, *modlist, (size_t)modlist.length());
+  vuint8 sha256[SHA256_DIGEST_SIZE];
+  sha256_buf(sha256, *modlist, (size_t)modlist.length());
   // convert to hex
-  VStr shahex = VStr::buf2hex(sha512, SHA512_DIGEST_SIZE);
+  VStr shahex = VStr::buf2hex(sha256, SHA256_DIGEST_SIZE);
 #else
   vuint32 xxhashval = XXHash32::hash(*modlist, (vint32)modlist.length(), (vuint32)wadlist.length());
   //VStr shahex = VStr::buf2hex(&xxhashval, 4);

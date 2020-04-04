@@ -54,7 +54,7 @@ enum {
   MASTER_PROTO_VERSION = 1,
 
   NET_PROTOCOL_VERSION_HI = 7,
-  NET_PROTOCOL_VERSION_LO = 10,
+  NET_PROTOCOL_VERSION_LO = 12,
 
   CCREQ_SERVER_INFO = 2,
   CCREP_SERVER_INFO = 13,
@@ -537,8 +537,8 @@ static void sendRConCommand (const char *hostname, const char *rconsecret, const
 
     // we'll write the secret later
     int spos = pos;
-    memset(buf+spos, 0, VNetChanSocket::SHA512DigestSize);
-    pos += VNetChanSocket::SHA512DigestSize;
+    memset(buf+spos, 0, VNetChanSocket::SHA256DigestSize);
+    pos += VNetChanSocket::SHA256DigestSize;
 
     // write command
     for (const char *s = command; *s; ++s) {
@@ -552,18 +552,18 @@ static void sendRConCommand (const char *hostname, const char *rconsecret, const
     }
 
     // write secret
-    VNetChanSocket::SHA512Context ctx = VNetChanSocket::SHA512Init();
+    VNetChanSocket::SHA256Context ctx = VNetChanSocket::SHA256Init();
     if (!ctx) abort();
-    VNetChanSocket::SHA512Digest dig;
+    VNetChanSocket::SHA256Digest dig;
     // hash key
-    VNetChanSocket::SHA512Update(ctx, key, VNetChanSocket::ChaCha20KeySize);
+    VNetChanSocket::SHA256Update(ctx, key, VNetChanSocket::ChaCha20KeySize);
     // hash whole packet
-    VNetChanSocket::SHA512Update(ctx, buf, pos);
+    VNetChanSocket::SHA256Update(ctx, buf, pos);
     // hash password
-    VNetChanSocket::SHA512Update(ctx, rconsecret, strlen(rconsecret));
-    VNetChanSocket::SHA512Finish(ctx, dig);
+    VNetChanSocket::SHA256Update(ctx, rconsecret, strlen(rconsecret));
+    VNetChanSocket::SHA256Finish(ctx, dig);
     // copy to buffer
-    memcpy(buf+spos, dig, VNetChanSocket::SHA512DigestSize);
+    memcpy(buf+spos, dig, VNetChanSocket::SHA256DigestSize);
 
     int elen = VNetChanSocket::EncryptInfoPacket(edata, buf, pos, key);
     printf("  encrypted %d bytes to %d bytes...\n", pos, elen);

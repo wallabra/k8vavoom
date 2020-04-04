@@ -103,7 +103,7 @@ class VNetContext;
 // sent on handshake
 enum {
   NET_PROTOCOL_VERSION_HI = 7,
-  NET_PROTOCOL_VERSION_LO = 11,
+  NET_PROTOCOL_VERSION_LO = 12,
 };
 
 enum {
@@ -607,7 +607,7 @@ private:
   bool InitialDataDone;
   vint32 NextNameToSend;
   // for client
-  vuint8 serverReplicationHash[SHA512_DIGEST_SIZE];
+  vuint8 serverReplicationHash[SHA256_DIGEST_SIZE];
 
 protected:
   void UpdateSendPBar ();
@@ -618,7 +618,7 @@ protected:
   void DecompressNames ();
 
   // this fills
-  void BuildNetFieldsHash (vuint8 hash[SHA512_DIGEST_SIZE]);
+  void BuildNetFieldsHash (vuint8 hash[SHA256_DIGEST_SIZE]);
 
   // this sends new names
   void LiveUpdate ();

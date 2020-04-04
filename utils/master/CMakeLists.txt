@@ -2,8 +2,9 @@ if(ENABLE_MASTER)
   #include_directories(../common)
 
   add_executable(k8vavoom-master
-    main.cpp
-    netchan.cpp
+    src/main.cpp
+    src/netchan.h
+    src/netchan.cpp
   )
   set_target_properties(k8vavoom-master PROPERTIES OUTPUT_NAME ../../k8vavoom-master)
   if(CYGWIN OR MINGW)

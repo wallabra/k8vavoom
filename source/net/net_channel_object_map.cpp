@@ -36,10 +36,10 @@ static VCvarB net_debug_dump_chan_objmap("net_debug_dump_chan_objmap", false, "D
 //  hash2str
 //
 //==========================================================================
-VVA_OKUNUSED static VStr hash2str (const vuint8 hash[SHA512_DIGEST_SIZE]) {
+VVA_OKUNUSED static VStr hash2str (const vuint8 hash[SHA256_DIGEST_SIZE]) {
   const char *hex = "0123456789abcdef";
   VStr res;
-  for (int f = 0; f < SHA512_DIGEST_SIZE; ++f) {
+  for (int f = 0; f < SHA256_DIGEST_SIZE; ++f) {
     res += hex[(hash[f]>>4)&0x0fu];
     res += hex[hash[f]&0x0fu];
   }
@@ -113,40 +113,40 @@ int VObjectMapChannel::IsQueueFull () noexcept {
 //  we will only check its hash.
 //
 //==========================================================================
-void VObjectMapChannel::BuildNetFieldsHash (vuint8 hash[SHA512_DIGEST_SIZE]) {
-  sha512_ctx hashctx;
-  sha512_init(&hashctx);
+void VObjectMapChannel::BuildNetFieldsHash (vuint8 hash[SHA256_DIGEST_SIZE]) {
+  sha256_ctx hashctx;
+  sha256_init(&hashctx);
   for (auto &&cls : Connection->ObjMap->ClassLookup) {
     if (!cls) continue;
     // class name
-    sha512_update(&hashctx, cls->GetName(), strlen(cls->GetName()));
+    sha256_update(&hashctx, cls->GetName(), strlen(cls->GetName()));
     // class replication field names and types
     for (VField *fld = cls->NetFields; fld; fld = fld->NextNetField) {
-      sha512_update(&hashctx, fld->GetName(), strlen(fld->GetName()));
+      sha256_update(&hashctx, fld->GetName(), strlen(fld->GetName()));
       VStr tp = fld->Type.GetName();
-      sha512_update(&hashctx, *tp, tp.length());
+      sha256_update(&hashctx, *tp, tp.length());
     }
     // class replication methods
     for (VMethod *mt = cls->NetMethods; mt; mt = mt->NextNetMethod) {
-      sha512_update(&hashctx, mt->GetName(), strlen(mt->GetName()));
+      sha256_update(&hashctx, mt->GetName(), strlen(mt->GetName()));
       // return type
       {
         VStr tp = mt->ReturnType.GetName();
-        sha512_update(&hashctx, *tp, tp.length());
+        sha256_update(&hashctx, *tp, tp.length());
       }
       // number of arguments
-      sha512_update(&hashctx, &mt->NumParams, sizeof(mt->NumParams));
-      sha512_update(&hashctx, &mt->ParamsSize, sizeof(mt->ParamsSize));
+      sha256_update(&hashctx, &mt->NumParams, sizeof(mt->NumParams));
+      sha256_update(&hashctx, &mt->ParamsSize, sizeof(mt->ParamsSize));
       // flags
-      sha512_update(&hashctx, &mt->ParamFlags, sizeof(mt->ParamFlags[0])*mt->NumParams);
+      sha256_update(&hashctx, &mt->ParamFlags, sizeof(mt->ParamFlags[0])*mt->NumParams);
       // param types
       for (int f = 0; f < mt->NumParams; ++f) {
         VStr tp = mt->ParamTypes[f].GetName();
-        sha512_update(&hashctx, *tp, tp.length());
+        sha256_update(&hashctx, *tp, tp.length());
       }
     }
   }
-  sha512_final(&hashctx, hash);
+  sha256_final(&hashctx, hash);
 }
 
 
@@ -345,7 +345,7 @@ void VObjectMapChannel::Update () {
     RNet_PBarReset();
     GCon->Logf(NAME_DevNet, "opened class/name channel for %s", *Connection->GetAddress());
     // write replication data hash
-    vuint8 hash[SHA512_DIGEST_SIZE];
+    vuint8 hash[SHA256_DIGEST_SIZE];
     BuildNetFieldsHash(hash);
     outmsg.Serialise(hash, (int)sizeof(hash));
     //GCon->Logf(NAME_DevNet, "%s: rephash=%s", *GetDebugName(), *hash2str(hash));
@@ -583,9 +583,9 @@ void VObjectMapChannel::ParseMessage (VMessageIn &Msg) {
 
   GCon->Logf(NAME_DevNet, "%s: received initial names (%d) and classes (%d)", *GetDebugName(), CurrName, CurrClass);
   // check replication data hash
-  vuint8 hash[SHA512_DIGEST_SIZE];
+  vuint8 hash[SHA256_DIGEST_SIZE];
   BuildNetFieldsHash(hash);
-  if (memcmp(hash, serverReplicationHash, SHA512_DIGEST_SIZE) != 0) {
+  if (memcmp(hash, serverReplicationHash, SHA256_DIGEST_SIZE) != 0) {
     GCon->Logf(NAME_DevNet, "%s: invalid replication data hash", *GetDebugName());
     Connection->Close();
     Host_Error("invalid replication data hash (incompatible progs)");

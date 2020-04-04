@@ -128,20 +128,20 @@ public:
   /* cypher is symmetric, so `ciphertextdata` and `plaintextdata` can point to the same address */
   static void ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, const void *plaintextdata, uint32_t msglen) noexcept;
 
-  // sha512
+  // sha256
   enum {
-    SHA512DigestSize = 64,
+    SHA256DigestSize = 32,
   };
 
-  typedef uint8_t SHA512Digest[VNetChanSocket::SHA512DigestSize];
-  typedef void *SHA512Context;
+  typedef uint8_t SHA256Digest[VNetChanSocket::SHA256DigestSize];
+  typedef void *SHA256Context;
 
-  static SHA512Context SHA512Init () noexcept;
-  static void SHA512Update (SHA512Context ctx, const void *in, size_t inlen) noexcept;
+  static SHA256Context SHA256Init () noexcept;
+  static void SHA256Update (SHA256Context ctx, const void *in, size_t inlen) noexcept;
   // this frees context
-  static void SHA512Finish (SHA512Context ctx, SHA512Digest hash) noexcept;
+  static void SHA256Finish (SHA256Context ctx, SHA256Digest hash) noexcept;
 
-  static void SHA512Buffer (SHA512Digest hash, const void *in, size_t inlen) noexcept;
+  static void SHA256Buffer (SHA256Digest hash, const void *in, size_t inlen) noexcept;
 
   // generate ChaCha20 encryption key
   static void GenerateKey (uint8_t key[ChaCha20KeySize]) noexcept;

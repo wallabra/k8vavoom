@@ -1,1 +1,1 @@
-../../master/netchan.h
+../../master/src/netchan.h
