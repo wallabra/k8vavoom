@@ -48,11 +48,17 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "curve25519-donna.h"
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #ifdef _MSC_VER
 #define inline __inline
 #endif
 
-const uint8_t curve25519_basepoint[/*CURVE25519_KEY_SIZE*/32] = {9}; // 9 followed by all zeros
+const uint8_t curve25519_basepoint[CURVE25519_KEY_SIZE] = {9}; // 9 followed by all zeros
 
 typedef uint8_t u8;
 typedef int32_t s32;
@@ -860,3 +866,19 @@ curve25519_donna(u8 *mypublic, const u8 *secret, const u8 *basepoint) {
   fcontract(mypublic, z);
   return 0;
 }
+
+
+// generate public key (will do all bit manipulations for you)
+void curve25519_donna_public (uint8_t mypublic[CURVE25519_KEY_SIZE], const uint8_t mysecret[CURVE25519_KEY_SIZE]) {
+  (void)curve25519_donna(mypublic, mysecret, curve25519_basepoint);
+}
+
+
+// generate shared key (will do all bit manipulations for you) (won't hash it)
+void curve25519_donna_shared (uint8_t sharedkey[CURVE25519_KEY_SIZE], const uint8_t mysecret[CURVE25519_KEY_SIZE], const uint8_t theirpublic[CURVE25519_KEY_SIZE]) {
+  (void)curve25519_donna(sharedkey, mysecret, theirpublic);
+}
+
+#if defined(__cplusplus)
+}
+#endif

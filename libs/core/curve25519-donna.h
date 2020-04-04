@@ -80,11 +80,24 @@ And hash the `shared_key` with a cryptographic hash function before using.
 For more information, see [djb's page](http://cr.yp.to/ecdh.html).
 */
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #define CURVE25519_KEY_SIZE  (32)
 
+// generate public key (will do all bit manipulations for you)
+void curve25519_donna_public (uint8_t mypublic[CURVE25519_KEY_SIZE], const uint8_t mysecret[CURVE25519_KEY_SIZE]);
+// generate shared key (will do all bit manipulations for you) (won't hash it)
+void curve25519_donna_shared (uint8_t sharedkey[CURVE25519_KEY_SIZE], const uint8_t mysecret[CURVE25519_KEY_SIZE], const uint8_t theirpublic[CURVE25519_KEY_SIZE]);
+
+// low-level function
 int curve25519_donna(uint8_t *mypublic, const uint8_t *secret, const uint8_t *basepoint);
 
 extern const uint8_t curve25519_basepoint[CURVE25519_KEY_SIZE];
 
+#if defined(__cplusplus)
+}
+#endif
 
 #endif
