@@ -459,15 +459,19 @@ bool VNetConnection::GetMessage (bool asHearbeat) {
   // decrypt packet
   if (msgsize < 8) return true; // too small
 
-  vuint32 PacketId = // this is also nonce
+  const vuint32 PacketId =
     ((vuint32)msgdata[0])|
     (((vuint32)msgdata[1])<<8)|
     (((vuint32)msgdata[2])<<16)|
     (((vuint32)msgdata[3])<<24);
 
+  vuint32 nonce = PacketId<<1;
+  // client sets bit 0, so if we are server, use client nonce
+  if (IsServer()) nonce |= 1u;
+
   // decrypt data
   VNetUtils::ChaCha20Ctx cctx;
-  VNetUtils::ChaCha20Setup(&cctx, AuthKey, PacketId);
+  VNetUtils::ChaCha20Setup(&cctx, AuthKey, nonce);
   VNetUtils::ChaCha20XCrypt(&cctx, msgdata+4, msgdata+4, (unsigned)(msgsize-4));
 
   // check crc32
@@ -479,7 +483,10 @@ bool VNetConnection::GetMessage (bool asHearbeat) {
 
   msgdata[4] = msgdata[5] = msgdata[6] = msgdata[7] = 0;
 
-  if (crc32 != VNetUtils::CRC32C(0, msgdata, (unsigned)msgsize)) return true; // invalid crc, ignore this packet
+  if (crc32 != VNetUtils::CRC32C(0, msgdata, (unsigned)msgsize)) {
+    GCon->Logf(NAME_DevNet, "%s: datagram packet contains invalid data", *GetAddress());
+    return true; // invalid crc, ignore this packet
+  }
 
   // copy received data to packet stream
   VBitStreamReader Packet;
@@ -998,11 +1005,15 @@ void VNetConnection::Flush () {
       unsigned msgsize = Out.GetNumBytes();
       vassert(msgsize >= 4+4);
 
-      const vuint32 nonce =
+      vuint32 nonce =
         ((vuint32)msgdata[0])|
         (((vuint32)msgdata[1])<<8)|
         (((vuint32)msgdata[2])<<16)|
         (((vuint32)msgdata[3])<<24);
+
+      nonce <<= 1;
+      // client sets bit 0, so if we are client, use client nonce
+      if (IsClient()) nonce |= 1u;
 
       vassert(msgdata[4] == 0);
       vassert(msgdata[5] == 0);
