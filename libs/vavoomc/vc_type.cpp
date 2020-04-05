@@ -1785,7 +1785,7 @@ bool VScriptDict::cleanRefs () {
   if (kt.Type == TYPE_Reference) {
     while (!it) {
       VObject *obj = *(VObject **)it.getKey().value;
-      if (obj && (obj->GetFlags()&_OF_CleanupRef) != 0) {
+      if (obj && obj->IsRefToCleanup()) {
         //VObject::VMDumpCallStack();
         //Sys_Error("dictionary key cleanup is not supported (yet)");
         res = true;

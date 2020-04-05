@@ -276,10 +276,10 @@ VObject::~VObject () {
 
   if (!GInGarbageCollection) {
     vassert(GNumDeleted > 0);
-    vassert(ObjectFlags&_OF_Destroyed);
+    vassert(ObjectFlags&VObjFlag_Destroyed);
     --GNumDeleted;
     --gcLastStats.markedDead;
-    ObjectFlags |= _OF_CleanupRef;
+    ObjectFlags |= VObjFlag_CleanupRef;
     vdgclogf("marked object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
     //fprintf(stderr, "Cleaning up for `%s`\n", *this->GetClass()->Name);
     // no need to delete index from queues, next GC cycle will take care of that
@@ -287,7 +287,7 @@ VObject::~VObject () {
     VObject **goptr = GObjObjects.ptr();
     for (int i = 0; i < ilen; ++i, ++goptr) {
       VObject *obj = *goptr;
-      if (!obj || (obj->ObjectFlags&_OF_Destroyed)) continue;
+      if (!obj || (obj->ObjectFlags&VObjFlag_Destroyed)) continue;
       obj->GetClass()->CleanObject(obj);
     }
     ++gcLastStats.lastCollected;
@@ -509,17 +509,17 @@ void VObject::Register () {
 //
 //==========================================================================
 void VObject::SetFlags (vuint32 NewFlags) {
-  if ((NewFlags&_OF_Destroyed) && !(ObjectFlags&_OF_Destroyed)) {
+  if ((NewFlags&VObjFlag_Destroyed) && !(ObjectFlags&VObjFlag_Destroyed)) {
     // new dead object
     // no need to remove from delayed deletion list, GC cycle will take care of that
     // set "cleanup ref" flag here, 'cause why not?
-    NewFlags |= _OF_CleanupRef;
+    NewFlags |= VObjFlag_CleanupRef;
     ++GNumDeleted;
     ++gcLastStats.markedDead;
     vdgclogf("marked object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
     //(not needed)if (UniqueId) GObjectsUIdMap.remove(UniqueId);
   } else if (VObject::standaloneExecutor) {
-    if ((NewFlags&_OF_DelayedDestroy) && !(ObjectFlags&_OF_DelayedDestroy)) {
+    if ((NewFlags&VObjFlag_DelayedDestroy) && !(ObjectFlags&VObjFlag_DelayedDestroy)) {
       // "delayed destroy" flag is set, put it into delayed list
       gDelayDeadObjects.push(Index);
       ++GNumDeleted;
@@ -535,8 +535,8 @@ void VObject::SetFlags (vuint32 NewFlags) {
 //
 //==========================================================================
 void VObject::ConditionalDestroy () {
-  if (!(ObjectFlags&_OF_Destroyed)) {
-    SetFlags(_OF_Destroyed);
+  if (!(ObjectFlags&VObjFlag_Destroyed)) {
+    SetFlags(VObjFlag_Destroyed);
     DecrementInstanceCounters();
     Destroy();
   }
@@ -550,9 +550,9 @@ void VObject::ConditionalDestroy () {
 //==========================================================================
 void VObject::Destroy () {
   Class->DestructObject(this);
-  if (!(ObjectFlags&_OF_Destroyed)) {
+  if (!(ObjectFlags&VObjFlag_Destroyed)) {
     DecrementInstanceCounters();
-    SetFlags(_OF_Destroyed);
+    SetFlags(VObjFlag_Destroyed);
   }
   vdgclogf("destroyed object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
 }
@@ -593,13 +593,13 @@ void VObject::CollectGarbage (bool destroyDelayed) {
       vassert(idx >= 0 && idx < gObjFirstFree);
       VObject *obj = GObjObjects[idx];
       if (!obj) continue;
-      if ((obj->ObjectFlags&(_OF_Destroyed|_OF_DelayedDestroy)) == _OF_DelayedDestroy) {
+      if ((obj->ObjectFlags&(VObjFlag_Destroyed|VObjFlag_DelayedDestroy)) == VObjFlag_DelayedDestroy) {
         obj->ConditionalDestroy();
       }
     }
   }
 
-  // no need to mark objects to be cleaned, `_OF_CleanupRef` was set in `SetFlag()`
+  // no need to mark objects to be cleaned, `VObjFlag_CleanupRef` was set in `SetFlag()`
   int alive = 0, bodycount = 0;
   double lasttime = -Sys_Time();
 
@@ -636,12 +636,12 @@ void VObject::CollectGarbage (bool destroyDelayed) {
     int finger = /*gObjFirstFree*/ilen-1;
     while (finger >= 0) {
       VObject *fgobj = goptr[finger];
-      if (fgobj && (fgobj->ObjectFlags&_OF_Destroyed) == 0) break;
+      if (fgobj && (fgobj->ObjectFlags&VObjFlag_Destroyed) == 0) break;
       --finger;
     }
 
     // sanity check
-    vassert(finger < 0 || (goptr[finger] && (goptr[finger]->ObjectFlags&_OF_Destroyed) == 0));
+    vassert(finger < 0 || (goptr[finger] && (goptr[finger]->ObjectFlags&VObjFlag_Destroyed) == 0));
 
 #ifdef VC_GARBAGE_COLLECTOR_COMPACTING_DEBUG
     fprintf(stderr, "ilen=%d; finger=%d\n", ilen, finger);
@@ -660,19 +660,19 @@ void VObject::CollectGarbage (bool destroyDelayed) {
         obj->Index = itpos;
         goptr[finger] = nullptr; // it is moved
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-        vassert(obj && (obj->ObjectFlags&_OF_Destroyed) == 0);
+        vassert(obj && (obj->ObjectFlags&VObjFlag_Destroyed) == 0);
 #endif
         // move finger
         --finger; // anyway
         while (finger > itpos) {
           VObject *fgobj = goptr[finger];
-          if (fgobj && (fgobj->ObjectFlags&_OF_Destroyed) == 0) break;
+          if (fgobj && (fgobj->ObjectFlags&VObjFlag_Destroyed) == 0) break;
           --finger;
         }
 #ifdef VC_GARBAGE_COLLECTOR_COMPACTING_DEBUG
         fprintf(stderr, "  hit free slot %d; moved object %d; new finger is %d\n", itpos, swp, finger);
 #endif
-      } else if ((obj->ObjectFlags&_OF_Destroyed) != 0) {
+      } else if ((obj->ObjectFlags&VObjFlag_Destroyed) != 0) {
         // dead object, swap with alive object
 #ifdef VC_GARBAGE_COLLECTOR_COMPACTING_DEBUG
         const int swp = finger;
@@ -680,18 +680,18 @@ void VObject::CollectGarbage (bool destroyDelayed) {
         VObject *liveobj = goptr[finger];
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
         vassert(obj->Index == itpos);
-        vassert(liveobj && liveobj->Index == finger && (liveobj->ObjectFlags&_OF_Destroyed) == 0);
+        vassert(liveobj && liveobj->Index == finger && (liveobj->ObjectFlags&VObjFlag_Destroyed) == 0);
 #endif
         obj->Index = finger;
         liveobj->Index = itpos;
         goptr[finger] = obj;
         obj = (goptr[itpos] = liveobj);
-        vassert(obj && (obj->ObjectFlags&_OF_Destroyed) == 0);
+        vassert(obj && (obj->ObjectFlags&VObjFlag_Destroyed) == 0);
         // move finger
         --finger; // anyway
         while (finger > itpos) {
           VObject *fgobj = goptr[finger];
-          if (fgobj && (fgobj->ObjectFlags&_OF_Destroyed) == 0) break;
+          if (fgobj && (fgobj->ObjectFlags&VObjFlag_Destroyed) == 0) break;
           --finger;
         }
 #ifdef VC_GARBAGE_COLLECTOR_COMPACTING_DEBUG
@@ -699,7 +699,7 @@ void VObject::CollectGarbage (bool destroyDelayed) {
 #endif
       }
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-      vassert(obj && (obj->ObjectFlags&_OF_Destroyed) == 0 && obj->Index == itpos);
+      vassert(obj && (obj->ObjectFlags&VObjFlag_Destroyed) == 0 && obj->Index == itpos);
 #endif
       // we have alive object, clear references
       obj->ClearReferences();
@@ -719,10 +719,10 @@ void VObject::CollectGarbage (bool destroyDelayed) {
       VObject *obj = goptr[itpos];
       if (obj) {
 #ifdef VC_GARBAGE_COLLECTOR_COMPACTING_DEBUG
-        fprintf(stderr, "  killing object #%d of %d (dead=%d) (%s)\n", itpos, ilen-1, (obj->ObjectFlags&_OF_Destroyed ? 1 : 0), *obj->GetClass()->Name);
+        fprintf(stderr, "  killing object #%d of %d (dead=%d) (%s)\n", itpos, ilen-1, (obj->ObjectFlags&VObjFlag_Destroyed ? 1 : 0), *obj->GetClass()->Name);
 #endif
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-        vassert(obj->Index == itpos && (obj->ObjectFlags&_OF_Destroyed) != 0);
+        vassert(obj->Index == itpos && (obj->ObjectFlags&VObjFlag_Destroyed) != 0);
 #endif
         ++bodycount;
         delete obj;
@@ -959,7 +959,7 @@ void VObject::Serialise (VStream &strm) {
     strm << STRM_INDEX(flg);
     if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", *clsname);
     if (flg) SetFlags(flg);
-    if (ObjectFlags&_OF_Destroyed) {
+    if (ObjectFlags&VObjFlag_Destroyed) {
       // no need to read anything, just skip it all
       if (strm.Tell() > endpos) VC_IO_ERROR("error reading object of class `%s` (invalid data size)", *clsname);
       strm.Seek(endpos);
@@ -986,7 +986,7 @@ void VObject::Serialise (VStream &strm) {
     vint32 flg = ObjectFlags;
     strm << STRM_INDEX(flg);
     // is object dead? don't write data of dead objects
-    if ((ObjectFlags&_OF_Destroyed) == 0) {
+    if ((ObjectFlags&VObjFlag_Destroyed) == 0) {
       // write fields
       SerialiseFields(strm);
       if (strm.IsError()) return;
@@ -1078,7 +1078,7 @@ public:
     while (Index < VObject::GetObjectsCount()) {
       VObject *Check = VObject::GetIndexObject(Index);
       ++Index;
-      if (Check != nullptr && !(Check->GetFlags()&(_OF_DelayedDestroy|_OF_Destroyed)) && Check->IsA(BaseClass)) {
+      if (Check && !Check->IsGoingToDie() && Check->IsA(BaseClass)) {
         *Out = Check;
         return true;
       }

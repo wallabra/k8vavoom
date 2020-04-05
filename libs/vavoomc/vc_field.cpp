@@ -614,13 +614,13 @@ bool VField::CleanField (vuint8 *Data, const VFieldType &Type) {
   bool res = false;
   switch (Type.Type) {
     case TYPE_Reference:
-      if (*(VObject **)Data && ((*(VObject **)Data)->GetFlags()&_OF_CleanupRef) != 0) {
+      if (*(VObject **)Data && (*(VObject **)Data)->IsRefToCleanup()) {
         *(VObject **)Data = nullptr;
         res = true;
       }
       break;
     case TYPE_Delegate:
-      if (((VObjectDelegate *)Data)->Obj && (((VObjectDelegate *)Data)->Obj->GetFlags()&_OF_CleanupRef) != 0) {
+      if (((VObjectDelegate *)Data)->Obj && ((VObjectDelegate *)Data)->Obj->IsRefToCleanup()) {
         ((VObjectDelegate *)Data)->Obj = nullptr;
         ((VObjectDelegate *)Data)->Func = nullptr;
         res = true;

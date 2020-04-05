@@ -225,10 +225,12 @@ struct event_t {
   vuint32 modflags;
 
   inline bool isEaten () const { return !!(flags&EFlag_Eaten); }
-  inline void setEaten () { flags|= EFlag_Eaten; }
+  inline void setEaten () { flags |= EFlag_Eaten; }
 
   inline bool isCancelled () const { return !!(flags&EFlag_Cancelled); }
   inline void setCancelled () { flags |= EFlag_Cancelled; }
+
+  inline bool isEatenOrCancelled () const { return !!(flags&(EFlag_Eaten|EFlag_Cancelled)); }
 
   inline bool isBubbling () const { return !!(flags&EFlag_Bubbling); }
   inline void setBubbling () { flags |= EFlag_Bubbling; }
@@ -353,14 +355,15 @@ public:
 // flags describing an object instance
 enum EObjectFlags {
   // object Destroy has already been called
-  _OF_Destroyed      = 0x00000001,
+  VObjFlag_Destroyed      = 1u<<0,
   // for k8vavoom: this thinker is marked for deletion on a next tick
   //               tick processor will take care of calling `Destroy()` on it
-  // for VccRun: you can call `CollectGarbage(true)` to destroy those objects
-  _OF_DelayedDestroy = 0x00000002,
+  //               set by `VThinker::DestroyThinker()`
+  // for vccrun: you can call `CollectGarbage(true)` to destroy those objects
+  VObjFlag_DelayedDestroy = 1u<<1,
   // this object is going to be destroyed; only GC will set this flag, and
   // you have to check it in your `ClearReferences()`
-  _OF_CleanupRef     = 0x00000004, // this object is going to be destroyed
+  VObjFlag_CleanupRef     = 1u<<2, // this object is going to be destroyed
 };
 
 
@@ -478,8 +481,12 @@ public:
   void operator delete (void *);
   void operator delete (void *, const char *, int);
 
-  inline bool IsRefToCleanup () const noexcept { return !!(ObjectFlags&_OF_CleanupRef); }
-  inline bool IsGoingToDie () const noexcept { return !!(ObjectFlags&(_OF_DelayedDestroy|_OF_Destroyed)); }
+  inline bool IsRefToCleanup () const noexcept { return !!(ObjectFlags&VObjFlag_CleanupRef); }
+  inline bool IsDelayedDestroy () const noexcept { return !!(ObjectFlags&VObjFlag_DelayedDestroy); }
+  inline bool IsGoingToDie () const noexcept { return !!(ObjectFlags&(VObjFlag_DelayedDestroy|VObjFlag_Destroyed)); }
+  inline bool IsDestroyed () const noexcept { return !!(ObjectFlags&VObjFlag_Destroyed); }
+
+  inline void SetDelayedDestroy () { SetFlags(VObjFlag_DelayedDestroy); }
 
   //static inline VObject *FindByUniqueId (vuint32 uid) noexcept { auto pp = GObjectsUIdMap.find(uid); return (pp ? *pp : nullptr); }
 
@@ -529,6 +536,10 @@ public:
   static void DumpProfileInternal (int type); // <0: only native; >0: only script; 0: everything
 
   // functions
+
+  // this should be called instead of `Destroy()`
+  // it will call `Destroy()` if necessary, and will do it only once
+  // i.e. you can call `ConditionalDestroy()` as many times as you want to
   void ConditionalDestroy ();
 
   inline bool IsA (VClass *SomeBaseClass) const noexcept {

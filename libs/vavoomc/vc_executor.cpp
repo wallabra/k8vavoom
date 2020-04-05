@@ -3107,7 +3107,7 @@ func_loop:
         {
           ++ip;
           VObject *obj = (VObject *)sp[-1].p;
-          sp[-1].i = (obj ? !!(obj->GetFlags()&(_OF_DelayedDestroy|_OF_Destroyed)) : 1);
+          sp[-1].i = (obj ? obj->IsGoingToDie() : 1);
         }
         PR_VM_BREAK;
 

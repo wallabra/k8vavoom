@@ -479,12 +479,12 @@ public:
   void SetStateLabel (VName, VState *);
   void SetStateLabel (const TArray<VName> &, VState *);
 
-  inline bool IsChildOf (const VClass *SomeBaseClass) const {
+  inline bool IsChildOf (const VClass *SomeBaseClass) const noexcept {
     for (const VClass *c = this; c; c = c->GetSuperClass()) if (SomeBaseClass == c) return true;
     return false;
   }
 
-  inline bool IsChildOfByName (VName name) const {
+  inline bool IsChildOfByName (VName name) const noexcept {
     if (name == NAME_None) return false;
     for (const VClass *c = this; c; c = c->GetSuperClass()) {
       if (VStr::strEquCI(*name, *c->Name)) return true;
@@ -493,7 +493,7 @@ public:
   }
 
   // accessors
-  inline VClass *GetSuperClass () const { return ParentClass; }
+  inline VClass *GetSuperClass () const noexcept { return ParentClass; }
 
   void CopyObject (const vuint8 *, vuint8 *);
   //void SerialiseObject (VStream &, VObject *); // moved to VObject
