@@ -136,7 +136,7 @@ bool VLevelInfo::StartButton (int sidenum, vuint8 w, int SwitchDef, VName Defaul
 
   VThinkButton *But = (VThinkButton *)XLevel->SpawnThinker(VThinkButton::StaticClass());
   if (!But) return false;
-  if (But->GetClass()->IsChildOf(VThinkButton::StaticClass())) {
+  if (But->IsA(VThinkButton::StaticClass())) {
     But->Side = sidenum;
     But->Where = w;
     But->SwitchDef = SwitchDef;

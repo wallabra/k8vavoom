@@ -215,7 +215,7 @@ void VRenderLevelShared::PushDlights () {
       continue;
     }
     l->origin = l->origOrigin;
-    //if (l->Owner && l->Owner->GetClass()->IsChildOf(VEntity::StaticClass())) l->origin += ((VEntity *)l->Owner)->GetDrawDelta();
+    //if (l->Owner && l->Owner->IsA(VEntity::StaticClass())) l->origin += ((VEntity *)l->Owner)->GetDrawDelta();
     if (l->ownerUId) {
       auto ownpp = suid2ent.find(l->ownerUId);
       if (ownpp) l->origin += (*ownpp)->GetDrawDelta();
@@ -262,7 +262,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   // if this is player's dlight, never drop it
   bool isPlr = false;
-  if (Owner && Owner->GetClass()->IsChildOf(VEntity::StaticClass())) {
+  if (Owner && Owner->IsA(VEntity::StaticClass())) {
     isPlr = ((VEntity *)Owner)->IsPlayer();
   }
 
@@ -421,7 +421,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   if (!lightid && dl->ownerUId) dlowners.put(dl->ownerUId, (vuint32)(ptrdiff_t)(dl-&DLights[0]));
 
   dl->origOrigin = lorg;
-  if (Owner && Owner->GetClass()->IsChildOf(VEntity::StaticClass())) {
+  if (Owner && Owner->IsA(VEntity::StaticClass())) {
     dl->origin += ((VEntity *)Owner)->GetDrawDelta();
   }
 
@@ -491,7 +491,7 @@ void VRenderLevelShared::DecayLights (float timeDelta) {
 //==========================================================================
 void VRenderLevelShared::ThinkerAdded (VThinker *Owner) {
   if (!Owner) return;
-  if (!Owner->GetClass()->IsChildOf(VEntity::StaticClass())) return;
+  if (!Owner->IsA(VEntity::StaticClass())) return;
   suid2ent.put(Owner->ServerUId, (VEntity *)Owner);
 }
 

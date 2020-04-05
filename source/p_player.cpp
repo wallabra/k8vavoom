@@ -254,7 +254,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
       VObject *wobj = fldReadyWeapon->GetObjectValue(this);
       if (wobj != lastReadyWeapon) {
         lastReadyWeapon = wobj;
-        if (wobj && wobj->GetClass()->IsChildOf(WeaponClass)) {
+        if (wobj && wobj->IsA(WeaponClass)) {
           VEntity *wpn = (VEntity *)wobj;
           lastReadyWeaponReadyState = wpn->FindState("Ready");
           //GCon->Logf("WEAPON CHANGED TO '%s'", *wpn->GetClass()->Name);
@@ -286,7 +286,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
       LastViewObject[PS_WEAPON_OVL] = _stateRouteSelf;
       static VClass *WeaponClass = nullptr;
       if (!WeaponClass) WeaponClass = VClass::FindClass("Weapon");
-      if (_stateRouteSelf && _stateRouteSelf->GetClass()->IsChildOf(WeaponClass)) {
+      if (_stateRouteSelf && _stateRouteSelf->IsA(WeaponClass)) {
         //GCon->Logf(NAME_Warning, "*** NEW DISPLAY STATE: %s", *_stateRouteSelf->GetClass()->GetFullName());
         VEntity *wpn = (VEntity *)_stateRouteSelf;
         SetViewState(PS_WEAPON_OVL, wpn->FindState("Display"));

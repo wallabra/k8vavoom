@@ -1519,7 +1519,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
     // create level info
     GLevelInfo = (VLevelInfo *)GLevel->SpawnThinker(GGameInfo->LevelInfoClass);
     if (!GLevelInfo) Sys_Error("SV_SpawnServer: cannot spawn LevelInfo");
-    if (!GLevelInfo->GetClass()->IsChildOf(GGameInfo->LevelInfoClass)) Sys_Error("SV_SpawnServer: spawned LevelInfo is of invalid class `%s`", GLevelInfo->GetClass()->GetName());
+    if (!GLevelInfo->IsA(GGameInfo->LevelInfoClass)) Sys_Error("SV_SpawnServer: spawned LevelInfo is of invalid class `%s`", GLevelInfo->GetClass()->GetName());
     GLevelInfo->Level = GLevelInfo;
     GLevelInfo->Game = GGameInfo;
     GLevelInfo->World = GGameInfo->WorldInfo;

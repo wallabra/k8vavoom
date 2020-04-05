@@ -1515,14 +1515,14 @@ extern "C" {
       return (ta->ThinkerFlags&VThinker::TF_AlwaysRelevant ? -1 : 1);
     }
     // entities always wins
-    if (!ta->GetClass()->IsChildOf(VEntity::StaticClass())) {
+    if (!ta->IsA(VEntity::StaticClass())) {
       // a is not an entity
-      if (tb->GetClass()->IsChildOf(VEntity::StaticClass())) return 1; // b should come first, a > b
+      if (tb->IsA(VEntity::StaticClass())) return 1; // b should come first, a > b
       // both aren't entities, sort by object id
       if (ta->GetUniqueId() < tb->GetUniqueId()) return -1;
       if (ta->GetUniqueId() > tb->GetUniqueId()) return 1;
       return 0;
-    } else if (!tb->GetClass()->IsChildOf(VEntity::StaticClass())) {
+    } else if (!tb->IsA(VEntity::StaticClass())) {
       // a is entity, b is not; a should come first (a < b)
       return -1;
     }
@@ -1774,7 +1774,7 @@ void VNetConnection::UpdateThinkers () {
     if (!chan) {
       //HACK! add gore entities as last ones
       if (VStr::startsWith(th->GetClass()->GetName(), "K8Gore")) {
-        vassert(th->GetClass()->IsChildOf(VEntity::StaticClass()));
+        vassert(th->IsA(VEntity::StaticClass()));
         // if we are starving on channels, don't try to add entities behind our back
         if (starvingOnChannels) {
           VEntity *ent = (VEntity *)(*th);
@@ -1849,7 +1849,7 @@ void VNetConnection::UpdateThinkers () {
         vassert(Channels[idx]->IsThinker());
         // close channel
         VThinkerChannel *tc = (VThinkerChannel *)Channels[idx];
-        vassert(tc->GetThinker() && tc->GetThinker()->GetClass()->IsChildOf(VEntity::StaticClass()));
+        vassert(tc->GetThinker() && tc->GetThinker()->IsA(VEntity::StaticClass()));
         //PendingGoreEnts.append((VEntity *)(tc->GetThinker()));
         if (tc->CanSendClose()) {
           tc->Close();

@@ -406,7 +406,7 @@ void VLevel::TickWorld (float DeltaTime) {
         // object is already dead, or dying
         if (c->IsDelayedDestroy()) RemoveThinker(c);
         // if it is just destroyed, call level notifier
-        if (!c->IsDestroyed() && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
+        if (!c->IsDestroyed() && c->IsA(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
         c->ConditionalDestroy();
       } else {
         // collect instances for limiters
@@ -452,9 +452,9 @@ void VLevel::TickWorld (float DeltaTime) {
         if (c->IsGoingToDie()) {
           if (c->IsDelayedDestroy()) RemoveThinker(c);
           // if it is just destroyed, call level notifier
-          if (!c->IsDestroyed() && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
+          if (!c->IsDestroyed() && c->IsA(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
           c->ConditionalDestroy();
-        } else if (c->GetClass()->IsChildOf(SSClass)) {
+        } else if (c->IsA(SSClass)) {
           c->Tick(DeltaTime);
         }
       }
@@ -615,10 +615,10 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
           e->eventBeginPlay();
           if (e->BeginPlayResult) {
             // check it, just in case
-            if (e->BeginPlayResult->GetClass()->IsChildOf(VEntity::StaticClass())) {
+            if (e->BeginPlayResult->IsA(VEntity::StaticClass())) {
               OverRet = e->BeginPlayResult;
               /*
-              if (!OverRet->GetClass()->IsChildOf(AClass)) {
+              if (!OverRet->IsA(AClass)) {
                 GCon->Logf(NAME_Error, "%s:BeginPlay() tried to override return with non-compatible class `%s`", e->GetClass()->GetName(), OverRet->GetClass()->GetName());
               }
               */

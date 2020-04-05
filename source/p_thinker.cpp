@@ -369,14 +369,14 @@ VThinker *VThinker::SpawnCommon (bool allowNoneClass, bool checkKillEntityEx, bo
   VThinker *th = Self->XLevel->SpawnThinker(Class, AOrigin, AAngles, mthing, AllowReplace);
 
   // check it
-  if (th && checkKillEntityEx && !th->GetClass()->IsChildOf(eexCls)) {
+  if (th && checkKillEntityEx && !th->IsA(eexCls)) {
     vassert(eexCls);
     GCon->Logf(NAME_Warning, "%s: tried to spawn class `%s`, got class `%s`, which is not `EntityEx` (this is mostly harmless)", Self->GetClass()->GetName(), Class->GetName(), th->GetClass()->GetName());
     th->DestroyThinker();
     th = nullptr;
   }
 
-  if (th && desiredClass && !th->GetClass()->IsChildOf(desiredClass)) {
+  if (th && desiredClass && !th->IsA(desiredClass)) {
     GCon->Logf(NAME_Warning, "%s: tried to spawn class `%s`, got class `%s`, which is not `%s`", Self->GetClass()->GetName(), Class->GetName(), th->GetClass()->GetName(), desiredClass->GetName());
     th->DestroyThinker();
     th = nullptr;
