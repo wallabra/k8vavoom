@@ -47,7 +47,12 @@ class VWidget : public VObject {
   DECLARE_CLASS(VWidget, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VWidget)
 
-private:
+  friend class VRootWidget;
+
+protected:
+  static TMapNC<VWidget *, bool> AllWidgets;
+
+protected:
   // parent container widget
   VWidget *ParentWidget;
   // linked list of child widgets
@@ -88,22 +93,19 @@ private:
   // Booleans
   enum {
     // is this widget visible?
-    WF_IsVisible    = 0x0001,
+    WF_IsVisible    = 1u<<0,
     // a flag that enables or disables Tick event
-    WF_TickEnabled  = 0x0002,
+    WF_TickEnabled  = 1u<<1,
     // is this widget enabled and can receive input
-    WF_IsEnabled    = 0x0004,
+    WF_IsEnabled    = 1u<<2,
     // can this widget be focused?
-    WF_IsFocusable  = 0x0008,
+    WF_IsFocusable  = 1u<<3,
     // mouse button state for click events
-    WF_LMouseDown   = 0x0010,
-    WF_MMouseDown   = 0x0020,
-    WF_RMouseDown   = 0x0040,
+    WF_LMouseDown   = 1u<<4,
+    WF_MMouseDown   = 1u<<5,
+    WF_RMouseDown   = 1u<<6,
     // shadowed text
-    WF_TextShadowed = 0x0080,
-    // marked as dead
-    WF_DeadManWalking = 0x4000,
-    WF_NeedCleanup = 0x8000,
+    WF_TextShadowed = 1u<<7,
   };
   vuint32 WidgetFlags;
 
@@ -113,6 +115,7 @@ private:
   VObjectDelegate KeyDown;
   VObjectDelegate KeyUp;
 
+protected:
   void AddChild (VWidget *);
   void RemoveChild (VWidget *);
 
@@ -127,25 +130,24 @@ private:
   bool TransferAndClipRect (float &, float &, float &, float &, float &, float &, float &, float &) const;
   void DrawString (int, int, VStr, int, int, float);
 
-  void cleanupWidgets ();
-
-  inline void SetCleanupFlag () { for (VWidget *w = this; w; w = w->ParentWidget) w->WidgetFlags |= WF_NeedCleanup; }
-  inline bool IsNeedCleanup () const { return ((WidgetFlags&WF_NeedCleanup) != 0); }
-
   void MarkDead ();
+  void MarkChildrenDead ();
 
-  friend class VRootWidget;
+  // called by root widget in responder
+  static void CleanupWidgets ();
 
 protected:
   void DrawCharPic (int X, int Y, VTexture *Tex, float Alpha=1.0f, bool shadowed=false);
   inline void DrawCharPicShadowed (int X, int Y, VTexture *Tex) { DrawCharPic(X, Y, Tex, 1.0f, true); }
 
 public:
+  virtual void PostCtor () override; // this is called after defaults were blit
+
   // destroys all child widgets
   virtual void Init (VWidget *);
   virtual void Destroy () override;
 
-  inline bool IsDeadManWalking () const { return ((WidgetFlags&WF_DeadManWalking) != 0); }
+  //inline bool IsDeadManWalking () const { return ((WidgetFlags&WF_DeadManWalking) != 0); }
 
   void DestroyAllChildren ();
 
@@ -293,7 +295,6 @@ public:
   // script natives
   DECLARE_FUNCTION(NewChild)
   DECLARE_FUNCTION(Destroy)
-  DECLARE_FUNCTION(MarkDead)
   DECLARE_FUNCTION(DestroyAllChildren)
 
   DECLARE_FUNCTION(GetRootWidget)

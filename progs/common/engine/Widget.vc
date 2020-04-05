@@ -88,14 +88,10 @@ private readonly ubyte VAlign;
 private readonly int LastX;
 private readonly int LastY;
 
-// is this widget visible?
-private bool bIsVisible;
-// a flag that enables or disables Tick event
-bool bTickEnabled;
-// is this widget enabled and can receive input?
-private bool bIsEnabled;
-// can this widget be focused?
-private bool bIsFocusable;
+private bool bIsVisible; // is this widget visible?
+bool bTickEnabled; // a flag that enables or disables Tick event
+private bool bIsEnabled; // is this widget enabled and can receive input?
+private bool bIsFocusable; // can this widget be focused?
 // mouse button state for click events
 private readonly bool bLMouseDown;
 private readonly bool bMMouseDown;
@@ -146,7 +142,6 @@ delegate bool KeyUp (Object Sender, int Key);
 //  Creation and destruction of widgets.
 native final spawner Widget NewChild (class!Widget ChildClass);
 override native final void Destroy ();
-native final void MarkDead ();
 native final void DestroyAllChildren ();
 
 native final RootWidget GetRootWidget ();
@@ -387,35 +382,17 @@ void Tick (float DeltaTime) {}
 
 //==========================================================================
 //
-//  SentEventToChildren
-//
-//  call this in `OnEvent()`
-//  return `true` to prevent other handlers from being called.
-//
-//==========================================================================
-bool SentEventToChildren (ref event_t evt) {
-  // sent to all children
-  Widget cw = FirstChildWidget;
-  while (cw) {
-    Widget w = cw;
-    cw = cw.NextWidget;
-    if (w.OnEvent(evt)) return true;
-  }
-  return false;
-}
-
-
-//==========================================================================
-//
 //  OnEvent
 //
 //  this is called before any other specific handler.
 //  return `true` to prevent other handlers from being called.
+//  if `evt.bubbling` is set, we're in bubble phase
+//  deepest child (destination) will have `evt.bubbling` set too
+//  also, `evt.dest` is the deepest child
 //
 //==========================================================================
 bool OnEvent (ref event_t evt) {
-  //if (evt.type == ev_resolution) printdebug("%C: *** RESOLUTION ***", self);
-  return SentEventToChildren(evt);
+  return false;
 }
 
 

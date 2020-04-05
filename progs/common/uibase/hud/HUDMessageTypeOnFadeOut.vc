@@ -106,7 +106,7 @@ override void Tick (float DeltaTime) {
       break;
     case 2:
       if (FadeOutTime < Time || !FadeOutTime) {
-        MarkDead(); //Destroy();
+        Destroy();
         return;
       }
       MsgAlpha = fclamp(1.0-Time/FadeOutTime, 0.0, 1.0);

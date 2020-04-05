@@ -241,6 +241,7 @@ override void OnMouseEnter() {
 //
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
+  if (!evt.bubbling) return ::OnEvent(evt);
   if (evt.type == ev_keydown) {
     //printdebug("key=%s (shift=%B)", evt.keycode, evt.bShift);
     if (evt.keycode == "/" && evt.bShift) {
@@ -250,7 +251,7 @@ override bool OnEvent (ref event_t evt) {
       }
     }
   }
-  return false;
+  return ::OnEvent(evt);
 }
 
 

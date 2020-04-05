@@ -30,7 +30,7 @@ class VRootWidget : public VWidget {
 private:
   enum {
     // true if mouse cursor is currently enabled
-    RWF_MouseEnabled = 0x0001,
+    RWF_MouseEnabled = 1u<<0,
   };
   vuint32 RootFlags;
 
@@ -41,12 +41,23 @@ private:
   // current mouse cursor graphic
   vint32 MouseCursorPic;
 
+private:
+  // used in `InternalResponder()`
+  // [0] is the topmost widget, [1] is child, and so on
+  TArray<VWidget *> EventPath;
+
+private:
   void MouseMoveEvent (int, int);
   bool MouseButtonEvent (int, bool);
 
+  void BuildEventPath ();
+
+  // this is called by the engine to dispatch the event
+  bool InternalResponder (event_t *evt);
+
 public:
   void Init ();
-  virtual void Init (VWidget *) override { Sys_Error("Root canot have a parent"); }
+  virtual void Init (VWidget *) override { Sys_Error("Root cannot have a parent"); }
 
   void DrawWidgets ();
   void TickWidgets (float DeltaTime);

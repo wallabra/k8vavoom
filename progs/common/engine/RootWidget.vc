@@ -35,6 +35,8 @@ readonly int MouseY;
 // current mouse cursor graphic
 readonly int MouseCursorPic;
 
+private native readonly array!(void *) EventPath;
+
 
 native final void SetMouse (bool MouseOn);
 

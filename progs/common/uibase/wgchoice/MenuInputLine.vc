@@ -109,6 +109,7 @@ override void OnDraw () {
 
 
 override bool OnEvent (ref event_t evt) {
+  if (!evt.bubbling) return ::OnEvent(evt);
   if (!bEnteringText) return false;
   if (evt.type != ev_keydown) return false;
   // ^Y
@@ -121,7 +122,7 @@ override bool OnEvent (ref event_t evt) {
     EnterText = "";
     return true;
   }
-  return false;
+  return ::OnEvent(evt);
 }
 
 

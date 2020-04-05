@@ -37,8 +37,25 @@ static VCvarF ui_msgxbox_wrap_width("ui_msgxbox_wrap_width", "0.7", "Width (1 me
 
 static TMapNC<VName, bool> reportedMissingFonts;
 
+TMapNC<VWidget *, bool> VWidget::AllWidgets;
+static TArray<VWidget *> DyingWidgets;
+
 
 IMPLEMENT_CLASS(V, Widget);
+
+
+//==========================================================================
+//
+//  VWidget::PostCtor
+//
+//  this is called after defaults were blit
+//
+//==========================================================================
+void VWidget::PostCtor () {
+  //GCon->Logf(NAME_Debug, "created widget %s:%u:%p", GetClass()->GetName(), GetUniqueId(), (void *)this);
+  AllWidgets.put(this, true);
+  Super::PostCtor();
+}
 
 
 //==========================================================================
@@ -56,49 +73,65 @@ VWidget *VWidget::CreateNewWidget (VClass *AClass, VWidget *AParent) {
 
 //==========================================================================
 //
-//  VWidget::cleanupWidgets
+//  VWidget::CleanupWidgets
+//
+//  called by root widget in responder
 //
 //==========================================================================
-void VWidget::cleanupWidgets () {
-  //if (IsDestroyed()) return;
-  // if we're marked as dead, kill us and gtfo
-  //if (IsDeadManWalking()) return;
-  if (IsDeadManWalking()) { Destroy(); return; }
-  // need cleanup?
-  if (!IsNeedCleanup()) return;
-  // do children cleanup
-  VWidget *w = FirstChildWidget;
-  while (w) {
-    VWidget *next = w->NextWidget;
-    // is child alive?
-    if (!w->IsDestroyed()) {
-      // is child marked as dead?
-      if (w->IsDeadManWalking()) {
-        // destroy it, and go on
-        w->Destroy();
-        w = next;
-        continue;
-      }
-      // do child cleanup
-      w->cleanupWidgets();
-      // is child alive?
-      /*
-      if (w->IsDestroyed()) {
-        // nope
-        w = next;
-        continue;
-      }
-      */
-      // is child marked as dead?
-      if (w->IsDeadManWalking()) {
-        // destroy it, and go on
-        w->Destroy();
-        w = next;
-        continue;
-      }
-    }
-    w = next;
+void VWidget::CleanupWidgets () {
+  if (GRoot && GRoot->IsDelayedDestroy()) {
+    if (!GRoot->IsDestroyed()) GRoot->ConditionalDestroy();
+    GRoot = nullptr;
   }
+
+  // collect all orphans and dead widgets
+  DyingWidgets.reset();
+  for (auto &&it : AllWidgets.first()) {
+    VWidget *w = it.getKey();
+    if (w == GRoot) continue;
+    //if (!w->ParentWidget && !w->IsGoingToDie()) w->MarkDead();
+    if (!w->IsDestroyed() && w->IsDelayedDestroy()) DyingWidgets.append(w);
+  }
+
+  if (DyingWidgets.length() == 0) return;
+  //GCon->Logf(NAME_Debug, "=== found %d dead widgets ===", DyingWidgets.length());
+
+  // destroy all dead widgets
+  for (auto &&it : DyingWidgets) {
+    VWidget *w = it;
+    if (!AllWidgets.has(w)) {
+      //for (auto &&ww : AllWidgets.first()) GCon->Logf("  %p : %p : %d", w, ww.getKey(), (int)(w == ww.getKey()));
+      // already destroyed
+      //GCon->Logf(NAME_Debug, "(0)skipping already destroyed widget %s:%u:%p : %d", w->GetClass()->GetName(), w->GetUniqueId(), (void *)w, (AllWidgets.find(w) ? 1 : 0));
+      continue;
+    }
+    if (w->IsDestroyed()) {
+      //GCon->Logf(NAME_Debug, "(1)skipping already destroyed widget %s:%u:%p", w->GetClass()->GetName(), w->GetUniqueId(), (void *)w);
+      continue;
+    }
+    vassert(it->IsDelayedDestroy());
+    for (;;) {
+      if (!w->ParentWidget) break;
+      if (w->ParentWidget == GRoot) break;
+      if (w->ParentWidget->IsDestroyed()) break;
+      if (!w->ParentWidget->IsDelayedDestroy()) break;
+      w = w->ParentWidget;
+    }
+    vassert(!w->IsDestroyed());
+    vassert(w->IsDelayedDestroy());
+    //GCon->Logf(NAME_Debug, "going to destroy widget %s:%u:%p", w->GetClass()->GetName(), w->GetUniqueId(), (void *)w);
+    w->ConditionalDestroy();
+  }
+}
+
+
+//==========================================================================
+//
+//  VWidget::MarkChildrenDead
+//
+//==========================================================================
+void VWidget::MarkChildrenDead () {
+  for (VWidget *w = FirstChildWidget; w; w = w->NextWidget) w->MarkDead();
 }
 
 
@@ -108,15 +141,8 @@ void VWidget::cleanupWidgets () {
 //
 //==========================================================================
 void VWidget::MarkDead () {
-  //if (IsDestroyed()) return;
-#if 1
-  WidgetFlags |= WF_DeadManWalking;
-  for (VWidget *w = FirstChildWidget; w; w = w->NextWidget) w->MarkDead();
-  for (VWidget *w = this; w; w = w->ParentWidget) w->WidgetFlags |= WF_NeedCleanup;
-#else
-  DestroyAllChildren();
-  ConditionalDestroy();
-#endif
+  SetDelayedDestroy();
+  MarkChildrenDead();
 }
 
 
@@ -143,14 +169,8 @@ void VWidget::Init (VWidget *AParent) {
 //
 //==========================================================================
 void VWidget::Destroy () {
-  /*
-  if (ParentWidget) {
-    GCon->Logf("%p: removing widget `%s` (parent is `%s`)", this, GetClass()->GetName(), ParentWidget->GetClass()->GetName());
-  } else {
-    GCon->Logf("%p: removing orphan widget `%s`", this, GetClass()->GetName());
-  }
-  */
-  //if (IsDestroyed()) return;
+  //GCon->Logf(NAME_Debug, "destroying widget %s:%u:%p", GetClass()->GetName(), GetUniqueId(), (void *)this);
+  AllWidgets.remove(this);
   OnDestroy();
   if (ParentWidget) ParentWidget->RemoveChild(this);
   DestroyAllChildren();
@@ -164,8 +184,8 @@ void VWidget::Destroy () {
 //
 //==========================================================================
 void VWidget::AddChild (VWidget *NewChild) {
-  if (!NewChild) return;
-  //!if (NewChild->IsDeadManWalking() || NewChild->IsGoingToDie()) return; //k8: still need to add?
+  if (!NewChild || NewChild->IsGoingToDie()) return;
+  if (IsGoingToDie()) return;
   if (NewChild == this) Sys_Error("VWidget::AddChild: trying to add `this` to `this`");
   if (!NewChild->ParentWidget) Sys_Error("VWidget::AddChild: trying to adopt a child without any official papers");
   if (NewChild->ParentWidget != this) Sys_Error("VWidget::AddChild: trying to adopt an alien child");
@@ -425,8 +445,7 @@ void VWidget::SetVisibility (bool NewVisibility) {
     if (NewVisibility) {
       WidgetFlags |= WF_IsVisible;
       if (ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
-    }
-    else {
+    } else {
       WidgetFlags &= ~WF_IsVisible;
       if (ParentWidget && ParentWidget->CurrentFocusChild == this) ParentWidget->FindNewFocus();
     }
@@ -1237,24 +1256,13 @@ IMPLEMENT_FUNCTION(VWidget, Destroy) {
   //k8: don't delete it, GC will do
   //delete Self;
   //Self = nullptr;
-  if (Self && !Self->IsDestroyed()) {
-    Self->SetCleanupFlag();
-    Self->Destroy();
-  }
-}
-
-IMPLEMENT_FUNCTION(VWidget, MarkDead) {
-  vobjGetParamSelf();
-  if (Self && !Self->IsDestroyed()) {
-    //Self->SetCleanupFlag();
-    //Self->WidgetFlags |= WF_DeadManWalking;
-    Self->MarkDead();
-  }
+  if (Self && !Self->IsDestroyed()) Self->MarkDead();
 }
 
 IMPLEMENT_FUNCTION(VWidget, DestroyAllChildren) {
   vobjGetParamSelf();
-  if (Self) Self->DestroyAllChildren();
+  //if (Self) Self->DestroyAllChildren();
+  if (Self) Self->MarkChildrenDead();
 }
 
 IMPLEMENT_FUNCTION(VWidget, GetRootWidget) {

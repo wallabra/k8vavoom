@@ -432,12 +432,12 @@ override void Tick (float DeltaTime) {
         HoldTime += 0.05;
       }
       if (MsgAlpha <= 0) {
-        MarkDead();
+        Destroy();
         return;
       }
     } else {
       //print("TIME=%s; HoldTime=%s; tfrm=%s; htfrm=%s; <%q>", Time, HoldTime, Time/35.0, HoldTime/35.0, (MsgLines.length ? MsgLines[0].Text : "<>"));
-      MarkDead(); //Destroy();
+      Destroy();
       return;
     }
   }

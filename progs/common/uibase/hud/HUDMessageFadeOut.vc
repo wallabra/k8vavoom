@@ -80,7 +80,7 @@ override void Tick (float DeltaTime) {
     case 1:
       if (Time > FadeOutTime || !FadeOutTime) {
         //print("  DEAD!");
-        MarkDead(); //Destroy();
+        Destroy();
         return;
       }
       MsgAlpha = fclamp(1.0-Time/FadeOutTime, 0.0, 1.0);

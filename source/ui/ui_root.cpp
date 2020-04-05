@@ -51,7 +51,8 @@ void VRootWidget::Init () {
 //
 //==========================================================================
 void VRootWidget::DrawWidgets () {
-  cleanupWidgets();
+  CleanupWidgets();
+  if (IsGoingToDie()) return;
   DrawTree();
   // draw message box
   if (GClGame) GClGame->eventMessageBoxDrawer();
@@ -83,8 +84,8 @@ void VRootWidget::RefreshScale () {
 //
 //==========================================================================
 void VRootWidget::TickWidgets (float DeltaTime) {
+  CleanupWidgets();
   if (IsGoingToDie()) return;
-  cleanupWidgets();
   if (SizeScaleX != fScaleX || SizeScaleY != fScaleY) RefreshScale();
   TickTree(DeltaTime);
 }
@@ -92,29 +93,53 @@ void VRootWidget::TickWidgets (float DeltaTime) {
 
 //==========================================================================
 //
-//  VRootWidget::Responder
+//  VRootWidget::BuildEventPath
+//
+//==========================================================================
+void VRootWidget::BuildEventPath () {
+  EventPath.reset();
+  for (VWidget *w = CurrentFocusChild; w; w = w->CurrentFocusChild) {
+    if (w->IsGoingToDie()) break;
+    EventPath.append(w);
+  }
+}
+
+
+//==========================================================================
+//
+//  VRootWidget::InternalResponder
 //
 //  this is called by the engine to dispatch the event
 //
 //==========================================================================
-bool VRootWidget::Responder (event_t *evt) {
+bool VRootWidget::InternalResponder (event_t *evt) {
   if (IsGoingToDie()) return false;
+  if (evt->isEatenOrCancelled()) return evt->isEaten();
 
-  {
-    // find the top-most focused widget
-    VWidget *W = CurrentFocusChild;
-    while (W && W->CurrentFocusChild) {
-      if (W->IsGoingToDie()) return false;
-      W = W->CurrentFocusChild;
-    }
-    // call event handlers
-    while (W) {
-      if (W->IsGoingToDie()) return false;
-      if (W->OnEvent(evt)) return true;
-      W = W->ParentWidget;
-    }
+  BuildEventPath();
+  if (EventPath.length() == 0) return false;
+
+  // first, sink
+  evt->resetBubbling();
+  evt->dest = EventPath[EventPath.length()-1];
+  // do not process deepest child yet
+  for (int f = 0; f < EventPath.length()-1; ++f) {
+    VWidget *w = EventPath[f];
+    if (w->IsGoingToDie()) return false;
+    if (w->OnEvent(evt)) { evt->setEaten(); return true; }
+    if (evt->isEatenOrCancelled()) return true;
   }
 
+  // now, bubble
+  evt->setBubbling();
+  for (int f = EventPath.length()-1; f >= 0; --f) {
+    VWidget *w = EventPath[f];
+    if (w->IsGoingToDie()) return false;
+    if (w->OnEvent(evt)) { evt->setEaten(); return true; }
+    if (evt->isEatenOrCancelled()) return true;
+  }
+
+  // process mouse by root
   if (RootFlags&RWF_MouseEnabled) {
     // handle mouse movement
     if (evt->type == ev_mouse) {
@@ -131,24 +156,33 @@ bool VRootWidget::Responder (event_t *evt) {
 
   // handle keyboard events
   if (evt->type == ev_keydown || evt->type == ev_keyup) {
-    // find the top-most focused widget
-    VWidget *W = CurrentFocusChild;
-    while (W && W->CurrentFocusChild) {
-      if (W->IsGoingToDie()) return false;
-      W = W->CurrentFocusChild;
-    }
-    // call event handlers
-    while (W) {
-      if (W->IsGoingToDie()) return false;
+    // only bubble
+    evt->setBubbling(); // just in case
+    for (int f = EventPath.length()-1; f >= 0; --f) {
+      VWidget *w = EventPath[f];
+      if (w->IsGoingToDie()) return false;
       if (evt->type == ev_keydown) {
-        if (W->OnKeyDown(evt->data1)) return true;
+        if (w->OnKeyDown(evt->data1)) { evt->setEaten(); return true; }
       } else {
-        if (W->OnKeyUp(evt->data1)) return true;
+        if (w->OnKeyUp(evt->data1)) { evt->setEaten(); return true; }
       }
-      W = W->ParentWidget;
     }
   }
   return false;
+}
+
+
+//==========================================================================
+//
+//  VRootWidget::Responder
+//
+//  this is called by the engine to dispatch the event
+//
+//==========================================================================
+bool VRootWidget::Responder (event_t *evt) {
+  const bool res = (evt ? InternalResponder(evt) : false);
+  CleanupWidgets();
+  return res;
 }
 
 

@@ -80,8 +80,25 @@ final static bool IsMultiplayerEnabled () {
 //
 //==========================================================================
 override void OnDestroy () {
+  //printdebug("%C: OnDestroy", self);
+  //if (helpText) printdebug("%C: destroying helpText(%s)", self, helpText.UniqueId);
   delete helpText;
   ::OnDestroy();
+}
+
+
+//==========================================================================
+//
+//  OnVisibilityChanged
+//
+//  Called when this widget is shown or hidden.
+//
+//==========================================================================
+override void OnVisibilityChanged (bool bNewVisibility) {
+  if (helpText) {
+    if (bNewVisibility) helpText.Show(); else helpText.Hide();
+  }
+  ::OnVisibilityChanged(bNewVisibility);
 }
 
 
@@ -807,6 +824,7 @@ override void OnDraw () {
 //
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
+  if (!evt.bubbling) return ::OnEvent(evt);
   if (evt.type == ev_resolution) {
     //printdebug("%C: *** RESOLUTION ***", self);
     // center menu
