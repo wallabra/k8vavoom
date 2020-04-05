@@ -2558,7 +2558,7 @@ int VRenderLevelShared::CollectSpriteTextures (TArray<bool> &texturepresent) {
   if (!eexCls) return 0;
   SpriteScanInfo ssi(texturepresent);
   for (VThinker *th = Level->ThinkerHead; th; th = th->Next) {
-    if (th->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) continue;
+    if (th->IsGoingToDie()) continue;
     if (!th->IsA(eexCls)) continue;
     ProcessSpriteClass(th->GetClass(), ssi);
   }

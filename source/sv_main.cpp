@@ -2281,8 +2281,8 @@ COMMAND(gc_show_all_objects) {
   for (int f = 0; f < total; ++f) {
     VObject *o = VObject::GetIndexObject(f);
     if (!o) continue;
-         if (o->GetFlags()&_OF_Destroyed) GCon->Logf("  #%5d: %p: DESTROYED! (%s)", f, o, o->GetClass()->GetName());
-    else if (o->GetFlags()&_OF_DelayedDestroy) GCon->Logf("  #%5d: %p: DELAYED! (%s)", f, o, o->GetClass()->GetName());
+         if (o->IsDestroyed()) GCon->Logf("  #%5d: %p: DESTROYED! (%s)", f, o, o->GetClass()->GetName());
+    else if (o->IsDelayedDestroy()) GCon->Logf("  #%5d: %p: DELAYED! (%s)", f, o, o->GetClass()->GetName());
     else GCon->Logf("  #%5d: %p: `%s`", f, o, o->GetClass()->GetName());
   }
 }

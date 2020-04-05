@@ -577,11 +577,11 @@ void VInput::ProcessEvents () {
     bool initNetClient = (CL_GetNetState() == CLState_Init);
 
     if (!initNetClient) {
-      if (C_Responder(&ev)) continue; // console
-      if (NUI_Responder(&ev)) continue; // new UI
-      if (CT_Responder(&ev)) continue; // chat
-      if (MN_Responder(&ev)) continue; // menu
-      if (GRoot->Responder(&ev)) continue; // root widget
+      if (!ev.isEatenOrCancelled() && C_Responder(&ev)) continue; // console
+      if (!ev.isEatenOrCancelled() && NUI_Responder(&ev)) continue; // new UI
+      if (!ev.isEatenOrCancelled() && CT_Responder(&ev)) continue; // chat
+      if (!ev.isEatenOrCancelled() && MN_Responder(&ev)) continue; // menu
+      if (!ev.isEatenOrCancelled() && GRoot && GRoot->Responder(&ev)) continue; // root widget
     } else {
       // check for user abort
       if (ev.type == ev_keydown && ev.keycode == K_ESCAPE) {

@@ -2371,9 +2371,9 @@ void VAcs::Serialise (VStream &Strm) {
 void VAcs::ClearReferences () {
   //Super::ClearReferences();
   if (!destroyed) {
-    if (Activator && (Activator->GetFlags()&_OF_CleanupRef)) Activator = nullptr;
-    if (XLevel && (XLevel->GetFlags()&_OF_CleanupRef)) XLevel = nullptr;
-    if (Level && (Level->GetFlags()&_OF_CleanupRef)) Level = nullptr;
+    if (Activator && Activator->IsRefToCleanup()) Activator = nullptr;
+    if (XLevel && XLevel->IsRefToCleanup()) XLevel = nullptr;
+    if (Level && Level->IsRefToCleanup()) Level = nullptr;
   }
 }
 

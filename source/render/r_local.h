@@ -469,7 +469,7 @@ protected:
   /*
   static inline bool IsThingRenderable (VEntity *ent) noexcept {
     return
-      ent && ent->State && !(ent->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) &&
+      ent && ent->State && !ent->IsGoingToDie() &&
       !(ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) &&
       ent->SubSector;
   }

@@ -107,7 +107,7 @@ void VEntity::SerialiseOther (VStream &Strm) {
 //
 //==========================================================================
 void VEntity::DestroyThinker () {
-  if ((GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) == 0) {
+  if (!IsGoingToDie()) {
     if (Role == ROLE_Authority) {
       eventDestroyed();
       if (TID) RemoveFromTIDList(); // remove from TID list
@@ -116,7 +116,7 @@ void VEntity::DestroyThinker () {
     }
 
     // unlink from sector and block lists
-    // but we may be insile a state action (or VC code), so keep `Sector` and `SubSector` alive
+    // but we may be inside a state action (or VC code), so keep `Sector` and `SubSector` alive
     subsector_t *oldSubSector = SubSector;
     sector_t *oldSector = Sector;
     UnlinkFromWorld();
@@ -277,7 +277,7 @@ void VEntity::RemoveFromTIDList () {
 bool VEntity::SetState (VState *InState) {
   VState *st = InState;
   //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(000): Doomer %p: state=%s (%s)", this, (st ? *st->GetFullName() : "<none>"), (st ? *st->Loc.toStringNoCol() : ""));
-  if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) {
+  if (IsGoingToDie()) {
     if (developer) GCon->Logf(NAME_Dev, "   (00):%s: dead (0x%04x) before state actions, state is %s", *GetClass()->GetFullName(), GetFlags(), (st ? *st->Loc.toStringNoCol() : "<none>"));
     State = nullptr;
     DispSpriteFrame = 0;
@@ -320,7 +320,7 @@ bool VEntity::SetState (VState *InState) {
         SavedVObjectPtr svp(&_stateRouteSelf);
         _stateRouteSelf = nullptr;
         ExecuteFunctionNoArgs(this, st->Function); //k8: allow VMT lookups (k8:why?)
-        if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) {
+        if (IsGoingToDie()) {
           /*
           GCon->Logf(NAME_Warning, "   (01):%s: dead (0x%04x) after state action, state is %s (next is %s; State is %s)", *GetClass()->GetFullName(), GetFlags(), *st->Loc.toStringNoCol(),
             (st && st->Next ? *st->Next->Loc.toStringNoCol() : "<none>"), (State ? *State->Loc.toStringNoCol() : "<none>"));
@@ -335,7 +335,7 @@ bool VEntity::SetState (VState *InState) {
       DispSpriteFrame = 0;
       DispSpriteName = NAME_None;
       StateTime = -1;
-      if ((GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) == 0) DestroyThinker();
+      if (!IsGoingToDie()) DestroyThinker();
       return false;
     }
     st = State->NextState;

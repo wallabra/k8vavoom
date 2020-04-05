@@ -154,7 +154,7 @@ void VRenderLevelShared::ClearReferences () {
       RL_CLEAR_DLIGHT(l);
       continue;
     }
-    if (l->Owner && (l->Owner->GetFlags()&_OF_CleanupRef)) {
+    if (l->Owner && l->Owner->IsRefToCleanup()) {
       RL_CLEAR_DLIGHT(l);
     }
   }

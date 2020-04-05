@@ -296,22 +296,22 @@ void VLevel::ClearReferences () {
   // clear other refs
   sector_t *sec = Sectors;
   for (int i = NumSectors-1; i >= 0; --i, ++sec) {
-    if (sec->SoundTarget && (sec->SoundTarget->GetFlags()&_OF_CleanupRef)) sec->SoundTarget = nullptr;
-    if (sec->FloorData && (sec->FloorData->GetFlags()&_OF_CleanupRef)) sec->FloorData = nullptr;
-    if (sec->CeilingData && (sec->CeilingData->GetFlags()&_OF_CleanupRef)) sec->CeilingData = nullptr;
-    if (sec->LightingData && (sec->LightingData->GetFlags()&_OF_CleanupRef)) sec->LightingData = nullptr;
-    if (sec->AffectorData && (sec->AffectorData->GetFlags()&_OF_CleanupRef)) sec->AffectorData = nullptr;
-    if (sec->ActionList && (sec->ActionList->GetFlags()&_OF_CleanupRef)) sec->ActionList = nullptr;
+    if (sec->SoundTarget && sec->SoundTarget->IsRefToCleanup()) sec->SoundTarget = nullptr;
+    if (sec->FloorData && sec->FloorData->IsRefToCleanup()) sec->FloorData = nullptr;
+    if (sec->CeilingData && sec->CeilingData->IsRefToCleanup()) sec->CeilingData = nullptr;
+    if (sec->LightingData && sec->LightingData->IsRefToCleanup()) sec->LightingData = nullptr;
+    if (sec->AffectorData && sec->AffectorData->IsRefToCleanup()) sec->AffectorData = nullptr;
+    if (sec->ActionList && sec->ActionList->IsRefToCleanup()) sec->ActionList = nullptr;
   }
   // polyobjects
   for (int i = 0; i < NumPolyObjs; ++i) {
-    if (PolyObjs[i]->SpecialData && (PolyObjs[i]->SpecialData->GetFlags()&_OF_CleanupRef)) {
+    if (PolyObjs[i]->SpecialData && PolyObjs[i]->SpecialData->IsRefToCleanup()) {
       PolyObjs[i]->SpecialData = nullptr;
     }
   }
   // cameras
   for (int i = 0; i < CameraTextures.Num(); ++i) {
-    if (CameraTextures[i].Camera && (CameraTextures[i].Camera->GetFlags()&_OF_CleanupRef)) {
+    if (CameraTextures[i].Camera && CameraTextures[i].Camera->IsRefToCleanup()) {
       CameraTextures[i].Camera = nullptr;
     }
   }
@@ -321,7 +321,7 @@ void VLevel::ClearReferences () {
   /*
   for (int f = 0; f < NumStaticLights; ++f) {
     rep_light_t &sl = StaticLights[f];
-    if (sl.Owner && (sl.Owner->GetFlags()&_OF_CleanupRef)) sl.Owner = nullptr;
+    if (sl.Owner && sl.Owner->IsRefToCleanup()) sl.Owner = nullptr;
   }
   */
   // renderer

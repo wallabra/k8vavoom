@@ -60,7 +60,7 @@ VWidget *VWidget::CreateNewWidget (VClass *AClass, VWidget *AParent) {
 //
 //==========================================================================
 void VWidget::cleanupWidgets () {
-  //if ((GetFlags()&_OF_Destroyed) != 0) return;
+  //if (IsDestroyed()) return;
   // if we're marked as dead, kill us and gtfo
   //if (IsDeadManWalking()) return;
   if (IsDeadManWalking()) { Destroy(); return; }
@@ -71,7 +71,7 @@ void VWidget::cleanupWidgets () {
   while (w) {
     VWidget *next = w->NextWidget;
     // is child alive?
-    if ((w->GetFlags()&_OF_Destroyed) == 0) {
+    if (!w->IsDestroyed()) {
       // is child marked as dead?
       if (w->IsDeadManWalking()) {
         // destroy it, and go on
@@ -83,7 +83,7 @@ void VWidget::cleanupWidgets () {
       w->cleanupWidgets();
       // is child alive?
       /*
-      if ((w->GetFlags()&_OF_Destroyed) != 0) {
+      if (w->IsDestroyed()) {
         // nope
         w = next;
         continue;
@@ -108,7 +108,7 @@ void VWidget::cleanupWidgets () {
 //
 //==========================================================================
 void VWidget::MarkDead () {
-  //if ((GetFlags()&_OF_Destroyed) != 0) return;
+  //if (IsDestroyed()) return;
 #if 1
   WidgetFlags |= WF_DeadManWalking;
   for (VWidget *w = FirstChildWidget; w; w = w->NextWidget) w->MarkDead();
@@ -150,7 +150,7 @@ void VWidget::Destroy () {
     GCon->Logf("%p: removing orphan widget `%s`", this, GetClass()->GetName());
   }
   */
-  //if ((GetFlags()&_OF_Destroyed) != 0) return;
+  //if (IsDestroyed()) return;
   OnDestroy();
   if (ParentWidget) ParentWidget->RemoveChild(this);
   DestroyAllChildren();
@@ -165,7 +165,7 @@ void VWidget::Destroy () {
 //==========================================================================
 void VWidget::AddChild (VWidget *NewChild) {
   if (!NewChild) return;
-  if (NewChild->IsDeadManWalking() || (NewChild->GetFlags()&_OF_Destroyed) != 0) return;
+  //!if (NewChild->IsDeadManWalking() || NewChild->IsGoingToDie()) return; //k8: still need to add?
   if (NewChild == this) Sys_Error("VWidget::AddChild: trying to add `this` to `this`");
   if (!NewChild->ParentWidget) Sys_Error("VWidget::AddChild: trying to adopt a child without any official papers");
   if (NewChild->ParentWidget != this) Sys_Error("VWidget::AddChild: trying to adopt an alien child");
@@ -582,7 +582,7 @@ VWidget *VWidget::GetWidgetAt (float X, float Y) {
 //
 //==========================================================================
 void VWidget::DrawTree () {
-  if (GetFlags()&_OF_Destroyed) return;
+  if (IsGoingToDie()) return;
   if (!(WidgetFlags&WF_IsVisible) || !ClipRect.HasArea()) return; // not visible or clipped away
 
   // main draw event for this widget
@@ -590,7 +590,7 @@ void VWidget::DrawTree () {
 
   // draw chid widgets
   for (VWidget *c = FirstChildWidget; c; c = c->NextWidget) {
-    if (c->GetFlags()&_OF_Destroyed) continue;
+    if (c->IsGoingToDie()) continue;
     c->DrawTree();
   }
 
@@ -605,10 +605,10 @@ void VWidget::DrawTree () {
 //
 //==========================================================================
 void VWidget::TickTree (float DeltaTime) {
-  if (GetFlags()&_OF_Destroyed) return;
+  if (IsGoingToDie()) return;
   if (WidgetFlags&WF_TickEnabled) Tick(DeltaTime);
   for (VWidget *c = FirstChildWidget; c; c = c->NextWidget) {
-    if (c->GetFlags()&_OF_Destroyed) continue;
+    if (c->IsGoingToDie()) continue;
     c->TickTree(DeltaTime);
   }
 }
@@ -1237,7 +1237,7 @@ IMPLEMENT_FUNCTION(VWidget, Destroy) {
   //k8: don't delete it, GC will do
   //delete Self;
   //Self = nullptr;
-  if (Self && (Self->GetFlags()&_OF_Destroyed) == 0) {
+  if (Self && !Self->IsDestroyed()) {
     Self->SetCleanupFlag();
     Self->Destroy();
   }
@@ -1245,7 +1245,7 @@ IMPLEMENT_FUNCTION(VWidget, Destroy) {
 
 IMPLEMENT_FUNCTION(VWidget, MarkDead) {
   vobjGetParamSelf();
-  if (Self && (Self->GetFlags()&_OF_Destroyed) == 0) {
+  if (Self && !Self->IsDestroyed()) {
     //Self->SetCleanupFlag();
     //Self->WidgetFlags |= WF_DeadManWalking;
     Self->MarkDead();

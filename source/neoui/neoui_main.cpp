@@ -1669,7 +1669,7 @@ void VGLTexture::Destroy () {
 
 IMPLEMENT_FUNCTION(VGLTexture, Destroy) {
   P_GET_SELF;
-  //if (Self) Self->SetFlags(_OF_DelayedDestroy);
+  //if (Self) Self->SetDelayedDestroy();
   if (Self) Self->ConditionalDestroy();
   //delete Self;
 }

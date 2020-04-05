@@ -65,8 +65,8 @@ bool VEntity::CanSeeEx (VEntity *Other, unsigned flags) {
   if (dbg_disable_cansee) return false;
 
   if (!Other || !Other->Sector || !Other->SubSector) return false;
-  if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) return false;
-  if (Other->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) return false;
+  if (IsGoingToDie()) return false;
+  if (Other->IsGoingToDie()) return false;
 
   if (Other == this) return true; // it can see itself (obviously)
 

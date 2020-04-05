@@ -81,7 +81,7 @@ void VThinker::Tick (float DeltaTime) {
 //
 //==========================================================================
 void VThinker::DestroyThinker () {
-  SetFlags(_OF_DelayedDestroy);
+  SetDelayedDestroy();
 }
 
 
@@ -287,7 +287,7 @@ public:
     }
     *Out = nullptr;
     while (Current) {
-      if (Current->IsA(Class) && !(Current->GetFlags()&_OF_DelayedDestroy)) {
+      if (Current->IsA(Class) && !Current->IsGoingToDie()) {
         *Out = Current;
         break;
       }

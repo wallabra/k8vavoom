@@ -388,14 +388,14 @@ static VObject *getRedirection (VName fldname, VGameObject *gobj) {
     GCon->Logf(NAME_Error, "cannot redirect field '%s' in none object", *fldname);
     return nullptr;
   }
-  if (gobj->GetFlags()&(_OF_Destroyed)) {
+  if (gobj->IsDestroyed()) {
     VObject::VMDumpCallStack();
     //Host_Error("cannot redirect field '%s' in dead object", *fldname);
     GCon->Logf(NAME_Warning, "cannot redirect field '%s' in dead object", *fldname);
     return nullptr;
   }
   if (!gobj->_stateRouteSelf) return gobj;
-  if (gobj->_stateRouteSelf->GetFlags()&(_OF_Destroyed)) {
+  if (gobj->_stateRouteSelf->IsDestroyed()) {
     VObject::VMDumpCallStack();
     //Host_Error("cannot redirect field '%s' in dead object, from '%s'", *fldname, *gobj->GetClass()->GetFullName());
     GCon->Logf(NAME_Warning, "cannot redirect field '%s' in dead object, from '%s'", *fldname, *gobj->GetClass()->GetFullName());

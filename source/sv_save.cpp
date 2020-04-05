@@ -404,7 +404,7 @@ public:
 
   virtual void io (VObject *&Ref) override {
     vint32 TmpIdx;
-    if (!Ref /*|| (Ref->GetFlags()&(_OF_DelayedDestroy|_OF_Destroyed)) != 0*/) {
+    if (!Ref /*|| !Ref->IsGoingToDie()*/) {
       TmpIdx = 0;
     } else {
       //TmpIdx = ObjectsMap[Ref->GetObjectIndex()];

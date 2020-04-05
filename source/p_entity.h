@@ -434,7 +434,7 @@ public:
 
   inline bool IsRenderable () const noexcept {
     return
-      State && !(GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) &&
+      State && !IsGoingToDie() &&
       !(EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) &&
       SubSector; // just in case
   }

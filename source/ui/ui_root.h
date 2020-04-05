@@ -50,7 +50,9 @@ public:
 
   void DrawWidgets ();
   void TickWidgets (float DeltaTime);
-  bool Responder (event_t *Event);
+
+  // this is called by the engine to dispatch the event
+  bool Responder (event_t *evt);
 
   void SetMouse (bool MouseOn);
   inline bool IsMouseAllowed () const noexcept { return !!(RootFlags&RWF_MouseEnabled); }

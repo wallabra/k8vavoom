@@ -271,7 +271,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
     const dlight_t *dl = DLights;
     for (int dlcount = MAX_DLIGHTS; dlcount--; ++dl) {
       if (dl->die < Level->Time || dl->radius < 1.0f) continue;
-      //if (!dl->Owner || (dl->Owner->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) || !dl->Owner->IsA(eclass)) continue;
+      //if (!dl->Owner || dl->Owner->IsGoingToDie() || !dl->Owner->IsA(eclass)) continue;
       //VEntity *e = (VEntity *)dl->Owner;
       VEntity *e;
       if (dl->ownerUId) {

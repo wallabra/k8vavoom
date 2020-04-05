@@ -1805,7 +1805,7 @@ static void AM_drawThings () {
   bool invisible = false;
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
     VEntity *mobj = *Ent;
-    if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
+    if (!mobj->State || mobj->IsGoingToDie()) continue;
     invisible = ((mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) || mobj->RenderStyle == STYLE_None);
     if (invisible && am_cheating != 3) {
       if (!mobj->IsMissile()) continue;
@@ -1881,7 +1881,7 @@ static void AM_drawKeys () {
   bool inSpriteMode = false;
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
     VEntity *mobj = *Ent;
-    if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
+    if (!mobj->State || mobj->IsGoingToDie()) continue;
     if (mobj->RenderStyle == STYLE_None) continue;
     if ((mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) != 0) continue;
 

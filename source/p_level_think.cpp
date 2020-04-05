@@ -190,7 +190,7 @@ void VLevel::DestroyAllThinkers () {
   while (Th) {
     VThinker *c = Th;
     Th = c->Next;
-    if (!(c->GetFlags()&_OF_DelayedDestroy)) c->DestroyThinker();
+    if (!c->IsGoingToDie()) c->DestroyThinker();
   }
   Th = ThinkerHead;
   while (Th) {
@@ -368,7 +368,7 @@ void VLevel::TickWorld (float DeltaTime) {
   // first run player mobile thinker, so we'll get camera position
   VThinker *plrmo = (cl ? cl->MO : nullptr);
   if (plrmo) {
-    if (plrmo->GetFlags()&_OF_DelayedDestroy) {
+    if (plrmo->IsGoingToDie()) {
       plrmo = nullptr;
     } else {
       plrmo->Tick(DeltaTime);
@@ -383,7 +383,7 @@ void VLevel::TickWorld (float DeltaTime) {
       if (!(Player->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
       if (Player->PlayerFlags&VBasePlayer::PF_IsBot) continue;
       VThinker *plrmo = Player->MO;
-      if (plrmo && !(plrmo->GetFlags()&_OF_DelayedDestroy)) {
+      if (plrmo && !plrmo->IsGoingToDie()) {
         //GCon->Logf("TICK: '%s'", *Player->PlayerName);
         plrmo->Tick(DeltaTime);
       }
@@ -400,17 +400,18 @@ void VLevel::TickWorld (float DeltaTime) {
       if (c != plrmo)
       #endif
       {
-        if (!(c->GetFlags()&_OF_DelayedDestroy)) c->Tick(DeltaTime);
+        if (!c->IsGoingToDie()) c->Tick(DeltaTime);
       }
-      if (c->GetFlags()&_OF_DelayedDestroy) {
-        RemoveThinker(c);
+      if (c->IsGoingToDie()) {
+        // object is already dead, or dying
+        if (c->IsDelayedDestroy()) RemoveThinker(c);
         // if it is just destroyed, call level notifier
-        if (!(c->GetFlags()&_OF_Destroyed) && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
+        if (!c->IsDestroyed() && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
         c->ConditionalDestroy();
       } else {
         // collect instances for limiters
         VClass *lcls = c->GetClass();
-        if (lcls->GetLimitInstancesWithSub() && !(c->GetFlags()&_OF_Destroyed)) {
+        if (lcls->GetLimitInstancesWithSub()) {
           lcls = (lcls->InstanceLimitBaseClass ?: lcls);
           vassert(lcls);
           if (lcls->InstanceLimitWithSub > 0 && lcls->InstanceCountWithSub >= lcls->InstanceLimitWithSub) {
@@ -448,16 +449,13 @@ void VLevel::TickWorld (float DeltaTime) {
       while (Th) {
         VThinker *c = Th;
         Th = c->Next;
-        if (!(c->GetFlags()&_OF_DelayedDestroy)) {
-          if (c->GetClass()->IsChildOf(SSClass)) {
-            c->Tick(DeltaTime);
-            if (c->GetFlags()&_OF_DelayedDestroy) {
-              RemoveThinker(c);
-              // if it is just destroyed, call level notifier
-              if (!(c->GetFlags()&_OF_Destroyed) && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
-              c->ConditionalDestroy();
-            }
-          }
+        if (c->IsGoingToDie()) {
+          if (c->IsDelayedDestroy()) RemoveThinker(c);
+          // if it is just destroyed, call level notifier
+          if (!c->IsDestroyed() && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
+          c->ConditionalDestroy();
+        } else if (c->GetClass()->IsChildOf(SSClass)) {
+          c->Tick(DeltaTime);
         }
       }
     }
@@ -498,11 +496,11 @@ void VLevel::TickWorld (float DeltaTime) {
     vassert(tokill > 0);
     for (int f = 0; f < tokill; ++f) {
       VThinker *c = (VThinker *)cls->InstanceLimitList.ptr()[f]; // no need to perform range checking
-      if (c->GetFlags()&_OF_Destroyed) {
+      if (c->IsDestroyed()) {
         if (limdbgmsg) GCon->Logf(NAME_Debug, "  %s(%u): destroyed", c->GetClass()->GetName(), c->GetUniqueId());
         continue;
       }
-      if (!(c->GetFlags()&_OF_DelayedDestroy)) {
+      if (!c->IsDelayedDestroy()) {
         if (limdbgmsg) GCon->Logf(NAME_Debug, "  %s(%u): removing", c->GetClass()->GetName(), c->GetUniqueId());
         RemoveThinker(c);
         //WARNING! death notifier will not be called for this entity!
@@ -526,8 +524,8 @@ void VLevel::TickWorld (float DeltaTime) {
     }
     for (int f = corpseLimit; f < end; ++f) {
       VEntity *e = corpseQueue.ptr()[f];
-      if (e->GetFlags()&_OF_Destroyed) continue;
-      if (!(e->GetFlags()&_OF_DelayedDestroy)) {
+      if (e->IsDestroyed()) continue;
+      if (!e->IsDelayedDestroy()) {
         //RemoveThinker(e);
         //WARNING! death notifier will not be called for this entity!
         //e->ConditionalDestroy();
@@ -612,7 +610,7 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
       e->Angles = AAngles;
       e->eventOnMapSpawn(mthing);
       // call it anyway, some script code may rely on this
-      /*if (!(e->GetFlags()&(_OF_Destroyed|_OF_Destroyed)))*/ {
+      /*if (!e->IsGoingToDie())*/ {
         if (LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_BegunPlay) {
           e->eventBeginPlay();
           if (e->BeginPlayResult) {
@@ -630,7 +628,7 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
           }
         }
       }
-      if (!(e->GetFlags()&(_OF_Destroyed|_OF_Destroyed))) eventEntitySpawned(e);
+      if (!e->IsGoingToDie()) eventEntitySpawned(e);
     }
   }
 
@@ -666,7 +664,7 @@ public:
     }
     *Out = nullptr;
     while (Current) {
-      if (Current->IsA(Class) && !(Current->GetFlags()&_OF_DelayedDestroy)) {
+      if (Current->IsA(Class) && !Current->IsGoingToDie()) {
         *Out = Current;
         break;
       }
