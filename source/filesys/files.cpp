@@ -2314,6 +2314,17 @@ void FL_Init () {
   const char *p;
   VStr mainIWad = VStr();
 
+  // check for cmake dir
+  {
+    VStr crapmakedir(GParsedArgs.getBinDir());
+    if (Sys_DirExists(crapmakedir.appendPath("CMakeFiles")) ||
+        Sys_FileExists(crapmakedir.appendPath("CMakeCache.txt")) ||
+        Sys_FileExists(crapmakedir.appendPath("cmake_install.cmake")))
+    {
+      Sys_Error("Please, do not run k8vavoom from build dir! Without proper `make install` k8vavoom will not work!");
+    }
+  }
+
   FL_RegisterModDetectors();
 
   fsys_warp_n0 = -1;
