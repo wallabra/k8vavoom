@@ -25,6 +25,7 @@ Library libcore.a :
   #src/ryu_d2s.c
   #src/ryu_f2s.c
   src/sha2.c
+  src/hmac_sha2.c
   src/str.cpp
   src/stream.cpp
   src/strtod_plan9.c

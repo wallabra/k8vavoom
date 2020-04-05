@@ -916,49 +916,49 @@ int main(void)
     message3 = malloc(message3_len);
     if (message3 == NULL) {
         fprintf(stderr, "Can't allocate memory\n");
-        return -1;
+        abort();
     }
     memset(message3, 'a', message3_len);
 
     printf("SHA-2 FIPS 180-2 Validation tests\n\n");
     printf("SHA-224 Test vectors\n");
 
-    sha224_buf((const uint8_t *) message1, strlen(message1), digest);
-    test(vectors[0][0], digest, SHA224_DIGEST_SIZE);
-    sha224_buf((const uint8_t *) message2a, strlen(message2a), digest);
-    test(vectors[0][1], digest, SHA224_DIGEST_SIZE);
-    sha224_buf(message3, message3_len, digest);
-    test(vectors[0][2], digest, SHA224_DIGEST_SIZE);
+    sha224_buf(digest, (const uint8_t *) message1, strlen(message1));
+    sha2_internal_test(vectors[0][0], digest, SHA224_DIGEST_SIZE);
+    sha224_buf(digest, (const uint8_t *) message2a, strlen(message2a));
+    sha2_internal_test(vectors[0][1], digest, SHA224_DIGEST_SIZE);
+    sha224_buf(digest, message3, message3_len);
+    sha2_internal_test(vectors[0][2], digest, SHA224_DIGEST_SIZE);
     printf("\n");
 
     printf("SHA-256 Test vectors\n");
 
-    sha256_buf((const uint8_t *) message1, strlen(message1), digest);
-    test(vectors[1][0], digest, SHA256_DIGEST_SIZE);
-    sha256_buf((const uint8_t *) message2a, strlen(message2a), digest);
-    test(vectors[1][1], digest, SHA256_DIGEST_SIZE);
-    sha256_buf(message3, message3_len, digest);
-    test(vectors[1][2], digest, SHA256_DIGEST_SIZE);
+    sha256_buf(digest, (const uint8_t *) message1, strlen(message1));
+    sha2_internal_test(vectors[1][0], digest, SHA256_DIGEST_SIZE);
+    sha256_buf(digest, (const uint8_t *) message2a, strlen(message2a));
+    sha2_internal_test(vectors[1][1], digest, SHA256_DIGEST_SIZE);
+    sha256_buf(digest, message3, message3_len);
+    sha2_internal_test(vectors[1][2], digest, SHA256_DIGEST_SIZE);
     printf("\n");
 
     printf("SHA-384 Test vectors\n");
 
-    sha384_buf((const uint8_t *) message1, strlen(message1), digest);
-    test(vectors[2][0], digest, SHA384_DIGEST_SIZE);
-    sha384_buf((const uint8_t *)message2b, strlen(message2b), digest);
-    test(vectors[2][1], digest, SHA384_DIGEST_SIZE);
-    sha384_buf(message3, message3_len, digest);
-    test(vectors[2][2], digest, SHA384_DIGEST_SIZE);
+    sha384_buf(digest, (const uint8_t *) message1, strlen(message1));
+    sha2_internal_test(vectors[2][0], digest, SHA384_DIGEST_SIZE);
+    sha384_buf(digest, (const uint8_t *)message2b, strlen(message2b));
+    sha2_internal_test(vectors[2][1], digest, SHA384_DIGEST_SIZE);
+    sha384_buf(digest, message3, message3_len);
+    sha2_internal_test(vectors[2][2], digest, SHA384_DIGEST_SIZE);
     printf("\n");
 
     printf("SHA-512 Test vectors\n");
 
-    sha512_buf((const uint8_t *) message1, strlen(message1), digest);
-    test(vectors[3][0], digest, SHA512_DIGEST_SIZE);
-    sha512_buf((const uint8_t *) message2b, strlen(message2b), digest);
-    test(vectors[3][1], digest, SHA512_DIGEST_SIZE);
-    sha512_buf(message3, message3_len, digest);
-    test(vectors[3][2], digest, SHA512_DIGEST_SIZE);
+    sha512_buf(digest, (const uint8_t *) message1, strlen(message1));
+    sha2_internal_test(vectors[3][0], digest, SHA512_DIGEST_SIZE);
+    sha512_buf(digest, (const uint8_t *) message2b, strlen(message2b));
+    sha2_internal_test(vectors[3][1], digest, SHA512_DIGEST_SIZE);
+    sha512_buf(digest, message3, message3_len);
+    sha2_internal_test(vectors[3][2], digest, SHA512_DIGEST_SIZE);
     printf("\n");
 
     printf("All tests passed.\n");

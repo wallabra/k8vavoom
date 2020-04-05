@@ -62,7 +62,10 @@ add_library(core STATIC
   prngs.cpp
   ed25519.c
   chacha20.c
+  sha2.h
   sha2.c
+  hmac_sha2.h
+  hmac_sha2.c
   md5.h
   md5.cpp
   timsort-impl.h
