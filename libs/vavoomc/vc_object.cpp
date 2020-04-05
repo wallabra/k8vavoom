@@ -947,7 +947,7 @@ void VObject::Serialise (VStream &strm) {
       }
       VC_IO_ERROR("cannot load object of unknown `%s` class (%s)", *clsname, GetClass()->GetName());
     }
-    //if (!GetClass()->IsChildOf(cls)) VC_IO_ERROR("cannot load object of class `%s` class (not a subclass of `%s`)", GetClass()->GetName(), *clsname);
+    //if (!IsA(cls)) VC_IO_ERROR("cannot load object of class `%s` class (not a subclass of `%s`)", GetClass()->GetName(), *clsname);
     if (GetClass() != cls) VC_IO_ERROR("cannot load object of class `%s` (expected class `%s`)", GetClass()->GetName(), *clsname);
     // skip data size
     vint32 size;
