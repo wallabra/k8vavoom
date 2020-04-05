@@ -2315,6 +2315,7 @@ void FL_Init () {
   VStr mainIWad = VStr();
 
   // check for cmake dir
+  #ifndef VAVOOM_K8_DEVELOPER
   {
     VStr crapmakedir(GParsedArgs.getBinDir());
     if (Sys_DirExists(crapmakedir.appendPath("CMakeFiles")) ||
@@ -2324,6 +2325,7 @@ void FL_Init () {
       Sys_Error("Please, do not run k8vavoom from build dir! Without proper `make install` k8vavoom will not work!");
     }
   }
+  #endif
 
   FL_RegisterModDetectors();
 
