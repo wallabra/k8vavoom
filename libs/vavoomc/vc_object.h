@@ -234,6 +234,7 @@ struct event_t {
 
   inline bool isBubbling () const { return !!(flags&EFlag_Bubbling); }
   inline void setBubbling () { flags |= EFlag_Bubbling; }
+  inline void resetBubbling () { flags &= ~EFlag_Bubbling; }
 
   inline bool isCtrlDown () const { return !!(modflags&bCtrl); }
   inline bool isAltDown () const { return !!(modflags&bAlt); }
@@ -471,7 +472,10 @@ public:
   // constructors
   VObject ();
   static void InternalConstructor () { new VObject(); }
-  virtual void PostCtor (); // this is called after defaults were blit
+
+  // this is called after defaults were blit
+  // `UniqueId` is already set, and the object is registered
+  virtual void PostCtor ();
 
   // destructors
   virtual ~VObject () override;

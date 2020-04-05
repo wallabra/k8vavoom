@@ -451,9 +451,6 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
     // set up object fields
     Obj->Class = AClass;
     Obj->vtable = AClass->ClassVTable;
-
-    // postinit
-    Obj->PostCtor();
   } catch (...) {
     Z_Free(Obj);
     GNewObject = nullptr;
@@ -465,6 +462,13 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
   // register in pool
   // this sets `Index` and `UniqueId`
   Obj->Register();
+
+  try {
+    // postinit
+    Obj->PostCtor();
+  } catch (...) {
+    Sys_Error("PostCtor for class `%s` aborted", AClass->GetName());
+  }
 
   // we're done
   return Obj;
