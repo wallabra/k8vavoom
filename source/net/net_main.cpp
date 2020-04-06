@@ -983,6 +983,30 @@ void VNetUtils::GenerateKey (vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept {
 
 //==========================================================================
 //
+//  VNetUtils::DerivePublicKey
+//
+//  derive public key from secret one
+//
+//==========================================================================
+void VNetUtils::DerivePublicKey (uint8_t mypk[ChaCha20KeySize], const uint8_t mysk[ChaCha20KeySize]) {
+  curve25519_donna_public(mypk, mysk);
+}
+
+
+//==========================================================================
+//
+//  VNetUtils::DeriveSharedKey
+//
+//  derive shared secret from our secret and their public
+//
+//==========================================================================
+void VNetUtils::DeriveSharedKey (uint8_t sharedk[ChaCha20KeySize], const uint8_t mysk[ChaCha20KeySize], const uint8_t theirpk[ChaCha20KeySize]) {
+  curve25519_donna_shared(sharedk, mysk, theirpk);
+}
+
+
+//==========================================================================
+//
 //  VNetUtils::EncryptInfoPacket
 //
 //  WARNING! cannot do it in-place

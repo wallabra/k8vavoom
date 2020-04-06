@@ -87,6 +87,12 @@ struct VNetUtils {
   // generate ChaCha20 encryption key
   static void GenerateKey (vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept;
 
+  // derive public key from secret one
+  static void DerivePublicKey (uint8_t mypk[ChaCha20KeySize], const uint8_t mysk[ChaCha20KeySize]);
+
+  // derive shared secret from our secret and their public
+  static void DeriveSharedKey (uint8_t sharedk[ChaCha20KeySize], const uint8_t mysk[ChaCha20KeySize], const uint8_t theirpk[ChaCha20KeySize]);
+
   // WARNING! cannot do it in-place
   // needs 24 extra bytes (key, nonce, crc)
   // returns new length or -1 on error
