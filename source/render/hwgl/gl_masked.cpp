@@ -281,6 +281,7 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
     glDepthMask(GL_FALSE); // no z-buffer writes
   }
 
+#ifndef GL4ES_HACKS
   TVec texpt(0, 0, 0);
 
   #define SPRVTX(shdr_,cv_)  do { \
@@ -329,6 +330,66 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
   glEnd();
 
   #undef SPRVTX
+#else
+  #define SPRVTX(cv_) { \
+    (cv_).x, (cv_).y, (cv_).z, \
+    DotProduct((cv_) - texorg, saxis) * tex_iw, \
+    DotProduct((cv_) - texorg, taxis) * tex_ih \
+  }
+
+  struct vbo_struct {
+    float x, y, z, s, t;
+  } buf[4] = {
+    SPRVTX(cv[0]),
+    SPRVTX(cv[1]),
+    SPRVTX(cv[2]),
+    SPRVTX(cv[3]),
+  };
+  vuint8 indices[6] = { 0, 1, 2,  0, 2, 3 };
+
+  GLuint vbo;
+  p_glGenBuffersARB(1, &vbo);
+  p_glBindBufferARB(GL_ARRAY_BUFFER, vbo);
+  int len = sizeof(vbo_struct) * 4;
+  p_glBufferDataARB(GL_ARRAY_BUFFER, len, buf, GL_STREAM_DRAW);
+  p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+
+  GLuint attribPosition;
+  GLuint attribTexCoord;
+  switch (shadtype) {
+    case ShaderMasked:
+      attribPosition = SurfMasked.loc_Position;
+      attribTexCoord = SurfMasked.loc_TexCoord;
+      break;
+    case ShaderMaskedBM:
+      attribPosition = SurfMaskedBrightmap.loc_Position;
+      attribTexCoord = SurfMaskedBrightmap.loc_TexCoord;
+      break;
+    case ShaderStencil:
+      attribPosition = SurfMaskedStencil.loc_Position;
+      attribTexCoord = SurfMaskedStencil.loc_TexCoord;
+      break;
+    case ShaderFakeShadow:
+      attribPosition = SurfMaskedFakeShadow.loc_Position;
+      attribTexCoord = SurfMaskedFakeShadow.loc_TexCoord;
+      break;
+    default: Sys_Error("ketmar forgot some shader type in `VOpenGLDrawer::DrawSpritePolygon()`");
+  }
+
+  p_glBindBufferARB(GL_ARRAY_BUFFER, vbo);
+  p_glEnableVertexAttribArrayARB(attribPosition);
+  p_glEnableVertexAttribArrayARB(attribTexCoord);
+  p_glVertexAttribPointerARB(attribPosition, 3, GL_FLOAT, false, sizeof(vbo_struct), (void*)(0 * sizeof(float)));
+  p_glVertexAttribPointerARB(attribTexCoord, 2, GL_FLOAT, false, sizeof(vbo_struct), (void*)(3 * sizeof(float)));
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices);
+  p_glDisableVertexAttribArrayARB(attribPosition);
+  p_glDisableVertexAttribArrayARB(attribTexCoord);
+  p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+
+  p_glDeleteBuffersARB(1, &vbo);
+
+  #undef SPRVTX
+#endif
 
   if (resetDepthMask) PopDepthMask();
   if (ri.flags&RenderStyleInfo::FlagOffset) GLDisableOffset();
