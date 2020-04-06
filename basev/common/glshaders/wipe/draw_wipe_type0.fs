@@ -28,7 +28,7 @@ void main () {
   float frc = 1.0-clamp(WipeTime, 0.0, WipeDuration)/WipeDuration;
 
   float y0 = (ScreenSize.y+STP_HEIGHT)*frc-STP_HEIGHT;
-  float y1 = y0+STP_HEIGHT-1;
+  float y1 = y0+STP_HEIGHT-1.0;
 
   if (gl_FragCoord.y < y0) {
     FinalColor.a = 1.0;
