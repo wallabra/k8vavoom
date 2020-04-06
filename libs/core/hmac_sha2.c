@@ -379,12 +379,71 @@ void hmac_sha512(const unsigned char *key, unsigned int key_size,
     hmac_sha512_final(&ctx, mac, mac_size);
 }
 
+
+// ketmar: i added HKDF
+
+// reskey, reskeylen: resulting key (can be of 255*DIGEST_SIZE bytes)
+// inkey, inkeysize: input key
+// salt, saltsize: optional salt; can be zero size (and you can pass nullptr for empty salt)
+// info, infosize: optional arbitrary application data; can be zero size (and you can pass nullptr for empty info)
+#define HKDF_SHA_ANY(shasize_) \
+void hkdf_sha##shasize_ (void *reskey, unsigned int reskeylen, const void *inkey, unsigned int inkeysize, \
+                         const void *salt, unsigned int saltsize, \
+                         const void *info, unsigned int infosize) \
+{ \
+  if (reskeylen == 0) return; \
+ \
+  unsigned char tmpsalt[SHA##shasize_##_DIGEST_SIZE]; \
+  if (!salt || saltsize == 0) { \
+    memset(tmpsalt, 0, SHA##shasize_##_DIGEST_SIZE); \
+    salt = tmpsalt; \
+    saltsize = SHA##shasize_##_DIGEST_SIZE; \
+  } \
+ \
+  unsigned char prk[SHA##shasize_##_DIGEST_SIZE]; \
+  hmac_sha##shasize_(salt, saltsize, inkey, inkeysize, prk, SHA##shasize_##_DIGEST_SIZE); \
+ \
+  unsigned char tbuf[SHA##shasize_##_DIGEST_SIZE]; \
+  memset(tbuf, 0, SHA##shasize_##_DIGEST_SIZE); \
+ \
+  unsigned int steps = (reskeylen+SHA##shasize_##_DIGEST_SIZE-1)/SHA##shasize_##_DIGEST_SIZE; \
+  unsigned char *dest = (unsigned char *)reskey; \
+ \
+  hmac_sha##shasize_##_ctx hctx; \
+  unsigned char currstepnum = 0; \
+  while (steps > 0) { \
+    hmac_sha##shasize_##_init(&hctx, prk, SHA##shasize_##_DIGEST_SIZE); \
+    /* previous T */ \
+    if (currstepnum) hmac_sha##shasize_##_update(&hctx, tbuf, SHA##shasize_##_DIGEST_SIZE); \
+    /* app-specific info */ \
+    if (info && infosize) hmac_sha##shasize_##_update(&hctx, (const unsigned char *)info, infosize); \
+    /* step number */ \
+    ++currstepnum; \
+    hmac_sha##shasize_##_update(&hctx, &currstepnum, 1); \
+    /* get new T */ \
+    hmac_sha##shasize_##_final(&hctx, tbuf, SHA##shasize_##_DIGEST_SIZE); \
+    /* copy T to output key */ \
+    const unsigned int cplen = (reskeylen >= SHA##shasize_##_DIGEST_SIZE ? SHA##shasize_##_DIGEST_SIZE : reskeylen); \
+    memcpy(dest, tbuf, cplen); \
+    dest += cplen; \
+    reskeylen -= cplen; \
+    --steps; \
+  } \
+}
+
+HKDF_SHA_ANY(224)
+HKDF_SHA_ANY(256)
+HKDF_SHA_ANY(384)
+HKDF_SHA_ANY(512)
+
+
 #ifdef TEST_VECTORS
 
 /* IETF Validation tests */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 void test(const char *vector, unsigned char *digest,
           unsigned int digest_size)
@@ -405,9 +464,128 @@ void test(const char *vector, unsigned char *digest,
     }
 }
 
+struct HKDF_test_t {
+  const char *name;
+  const char *ikm;
+  const char *salt;
+  const char *info;
+  unsigned int reslen;
+  const char *prk;
+  const char *okm;
+};
+
+static unsigned int hexdigit (const char ch) {
+  return
+    ch >= '0' && ch <= '9' ? ch-'0' :
+    ch >= 'A' && ch <= 'F' ? ch-'A'+10 :
+    ch >= 'a' && ch <= 'f' ? ch-'a'+10 :
+    0;
+}
+
+static unsigned int hexlen (const char *buf) {
+  return (buf && buf[0] ? strlen(buf)/2 : 0);
+}
+
+static unsigned char *hex2bin (const char *buf) {
+  if (!buf || !buf[0]) return NULL;
+  unsigned char *res = (unsigned char *)malloc(strlen(buf)/2);
+  unsigned char *d = res;
+  while (*buf) {
+    const unsigned int d0 = hexdigit(*buf++);
+    const unsigned int d1 = hexdigit(*buf++);
+    *d++ = (d0<<4)|d1;
+  }
+  return res;
+}
+
+static void hexfree (unsigned char *hbuf) {
+  if (hbuf) free(hbuf);
+}
+
+static void dumphex (const char *pfx, const unsigned char *buf, unsigned int buflen) {
+  if (pfx && pfx[0]) printf("%s", pfx);
+  for (unsigned int f = 0; f < buflen; ++f) printf("%02x", buf[f]);
+  printf("\n");
+}
+
+static void test_hkdf_one (const struct HKDF_test_t *nfo) {
+  unsigned char *ikm = hex2bin(nfo->ikm);
+  unsigned char *salt = hex2bin(nfo->salt);
+  unsigned char *info = hex2bin(nfo->info);
+  unsigned char *prk = hex2bin(nfo->prk);
+  unsigned char *okm = hex2bin(nfo->okm);
+  if (nfo->reslen != hexlen(nfo->okm)) abort();
+  unsigned char *reskey = (unsigned char *)malloc(nfo->reslen);
+
+  hkdf_sha256(reskey, nfo->reslen, ikm, hexlen(nfo->ikm), salt, hexlen(nfo->salt), info, hexlen(nfo->info));
+
+  if (memcmp(reskey, okm, nfo->reslen) != 0) {
+    printf("%s: FAILED!\n", nfo->name);
+    dumphex("EXPECTED = ", okm, hexlen(nfo->okm));
+    dumphex("     GOT = ", reskey, nfo->reslen);
+    abort();
+  } else {
+    printf("%s: OK!\n", nfo->name);
+  }
+
+  hexfree(ikm);
+  hexfree(salt);
+  hexfree(info);
+  hexfree(prk);
+  hexfree(okm);
+  free(reskey);
+}
+
+
+static void test_hkdf (void) {
+  printf("HMAC-HKDF Validation tests\n\n");
+
+  const struct HKDF_test_t vectors[] = {
+   {
+     "SHA-256-EMPTY", /* name */
+     "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b", /* IKM (22 octets) */
+     "", /* salt */
+     "", /* info */
+     42, /* L */
+     "19ef24a32c717b167f33a91d6f648bdf96596776afdb6377ac434c1c293ccb04", /* PRK (32 octets) */
+     "8da4e775a563c18f715f802a063c5a31b8a11f5c5ee1879ec3454e5f3c738d2d9d201395faa4b61a96c8", /* OKM (42 octets) */
+   },
+   {
+     "SHA-256-BASIC", /* name */
+     "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b", /* IKM (22 octets) */
+     "000102030405060708090a0b0c", /* salt (13 octets) */
+     "f0f1f2f3f4f5f6f7f8f9", /* info (10 octets) */
+     42, /* L */
+     "077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5", /* PRK (32 octets) */
+     "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865", /* OKM (42 octets) */
+   },
+   {
+     "SHA-256-LONGER",
+     "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f", /* IKM (80 octets) */
+     "606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeaf", /* salt (80 octets) */
+     "b0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff", /* info (80 octets) */
+     82, /* L */
+     "06a6b88c5853361a06104c9ceb35b45cef760014904671014a193f40c15fc244", /* PRK (32 octets) */
+     "b11e398dc80327a1c8e7f78c596a49344f012eda2d4efad8a050cc4c19afa97c59045a99cac7827271cb41c65e590e09da3275600c2f09b8367793a9aca3db71cc30c58179ec3e87c14c01d5c1f3434f1d87", /* OKM (82 octets) */
+   },
+ };
+
+  test_hkdf_one(&vectors[0]);
+  test_hkdf_one(&vectors[1]);
+  test_hkdf_one(&vectors[2]);
+
+  printf("All tests passed.\n");
+}
+
+
 int main(void)
 {
-    static const char *vectors[] =
+  #ifdef SHA2_TEST_VECTORS
+  sha2_test();
+  #endif
+
+
+    const char *vectors[] =
     {
         /* HMAC-SHA-224 */
         "896fb1128abbdf196832107cd49df33f47b4b1169912ba4f53684b22",
@@ -536,6 +714,8 @@ int main(void)
     }
 
     printf("All tests passed.\n");
+
+    test_hkdf();
 
     return 0;
 }

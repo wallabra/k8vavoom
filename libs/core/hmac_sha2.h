@@ -132,6 +132,29 @@ void hmac_sha512(const unsigned char *key, unsigned int key_size,
                  const unsigned char *message, unsigned int message_len,
                  unsigned char *mac, unsigned mac_size);
 
+
+// ketmar: i added HKDF
+
+// reskey, reskeylen: resulting key (can be of 255*DIGEST_SIZE bytes)
+// inkey, inkeysize: input key
+// salt, saltsize: optional salt; can be zero size (and you can pass nullptr for empty salt)
+// info, infosize: optional arbitrary application data; can be zero size (and you can pass nullptr for empty info)
+void hkdf_sha224 (void *reskey, unsigned int reskeylen, const void *inkey, unsigned int inkeysize,
+                  const void *salt, unsigned int saltsize,
+                  const void *info, unsigned int infosize);
+
+void hkdf_sha256 (void *reskey, unsigned int reskeylen, const void *inkey, unsigned int inkeysize,
+                  const void *salt, unsigned int saltsize,
+                  const void *info, unsigned int infosize);
+
+void hkdf_sha384 (void *reskey, unsigned int reskeylen, const void *inkey, unsigned int inkeysize,
+                  const void *salt, unsigned int saltsize,
+                  const void *info, unsigned int infosize);
+
+void hkdf_sha512 (void *reskey, unsigned int reskeylen, const void *inkey, unsigned int inkeysize,
+                  const void *salt, unsigned int saltsize,
+                  const void *info, unsigned int infosize);
+
 #ifdef __cplusplus
 }
 #endif
