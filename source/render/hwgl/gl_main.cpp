@@ -2494,9 +2494,11 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
     aowner->p_glRenderbufferStorage(GL_RENDERBUFFER, depthStencilFormat, awidth, aheight);
     GLDRW_CHECK_ERROR("create depth/stencil renderbuffer storage");
 
+#ifndef GL4ES_HACKS
     // unbind the render buffer
     aowner->p_glBindRenderbuffer(GL_RENDERBUFFER, 0);
     GLDRW_CHECK_ERROR("FBO: glBindRenderbuffer (1)");
+#endif
 
     // bind it to FBO
     aowner->p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencilRBO);

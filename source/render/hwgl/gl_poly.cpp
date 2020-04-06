@@ -160,6 +160,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     }
     */
 
+#ifndef GL4ES_HACKS
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
@@ -172,6 +173,38 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
       glVertex(surf->verts[i]);
     }
     glEnd();
+#else
+    struct vbo_struct {
+      float x, y, z, s, t;
+    } *buf = new vbo_struct[surf->count];
+    for (int i = 0; i < surf->count; i++) {
+      buf[i].x = surf->verts[i].x;
+      buf[i].y = surf->verts[i].y;
+      buf[i].z = surf->verts[i].z;
+      buf[i].s = CalcSkyTexCoordS(surf->verts[sidx[i]], tex, offs1);
+      buf[i].t = CalcSkyTexCoordT(surf->verts[i], tex);
+    }
+
+    GLuint vbo;
+    p_glGenBuffersARB(1, &vbo);
+    p_glBindBufferARB(GL_ARRAY_BUFFER, vbo);
+    int len = sizeof(vbo_struct) * surf->count;
+    p_glBufferDataARB(GL_ARRAY_BUFFER, len, buf, GL_STREAM_DRAW);
+    p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+
+    p_glBindBufferARB(GL_ARRAY_BUFFER, vbo);
+    p_glEnableVertexAttribArrayARB(SurfSky.loc_Position);
+    p_glEnableVertexAttribArrayARB(SurfSky.loc_TexCoord);
+    p_glVertexAttribPointerARB(SurfSky.loc_Position, 3, GL_FLOAT, false, sizeof(vbo_struct), (void*)(0 * sizeof(float)));
+    p_glVertexAttribPointerARB(SurfSky.loc_TexCoord, 2, GL_FLOAT, false, sizeof(vbo_struct), (void*)(3 * sizeof(float)));
+    glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
+    p_glDisableVertexAttribArrayARB(SurfSky.loc_Position);
+    p_glDisableVertexAttribArrayARB(SurfSky.loc_TexCoord);
+    p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+    p_glDeleteBuffersARB(1, &vbo);
+
+    delete buf;
+#endif
   }
 }
 

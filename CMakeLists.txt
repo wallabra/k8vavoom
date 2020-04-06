@@ -22,6 +22,10 @@ else(WIN32)
 option(WITH_SYS_FLUID "Use system FluidSynth library" ON)
 endif(WIN32)
 
+if(WITH_OPENGL)
+  option(WITH_GLES "Use hacks for GL4ES (experimental)" OFF)
+endif()
+
 option(WITH_STB_JPEG "Use stb_image to load jpegs" ON)
 option(WITH_SYS_LIBJPG "Use system libjpg (if stb_image is off)" ON)
 
@@ -751,6 +755,12 @@ endif(FLUID_FOUND AND NOT WITH_SYS_FLUID AND ENABLE_CLIENT)
     set(OPENGL_FOUND OFF)
   endif(WITH_OPENGL)
 #endif(NOT WIN32)
+
+if(WITH_OPENGL)
+  if(WITH_GLES)
+    add_definitions(-DGL4ES_HACKS)
+  endif()
+endif()
 
 if(WITH_GLAD)
   add_definitions(-DUSE_GLAD=1)
