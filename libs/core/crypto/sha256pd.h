@@ -12,11 +12,22 @@
 extern "C" {
 #endif
 
-#define SHA256PD_HASH_SIZE  (32u)
+/* uncomment this to use `sha256pd_hkdf_buf()` as PRK derivation in balloon */
+/*#define SHA256PD_BALLOON_USE_HKDF*/
 
-#define SHA256PD_CHUNK_SIZE     (64u)
-#define SHA256PD_TOTALLEN_SIZE  (8u)
-#define SHA256PD_HACCUM_SIZE    (8u)
+/* uncomment this to use ISAAC PRNG as random block selector in balloon */
+/*#define SHA256PD_BALLOON_USE_ISAAC*/
+
+/* comment this to disable `sha256pd_randombytes()` */
+#define SHA256PD_ENABLE_RANDOMBYTES
+
+
+/* no serviceable parts beyond this point */
+
+/* sha256 digest size, in bytes */
+#define SHA256PD_HASH_SIZE   (32u)
+/* sha256 chunk size, in bytes */
+#define SHA256PD_CHUNK_SIZE  (64u)
 
 
 /* this can be used instead of `memset()` to zero sensitive memory */
@@ -24,12 +35,19 @@ extern "C" {
 void *sha256pd_memerase (void *p, size_t size);
 
 
+/* generate random bytes; more-or-less cryptographically secure */
+/* use only if you have no other cryptographically secure PRNG */
+#ifdef SHA256PD_ENABLE_RANDOMBYTES
+void sha256pd_randombytes (void *p, size_t len);
+#endif
+
+
 /* sha256 context */
 typedef struct sha256pd_ctx_t {
   uint8_t chunk[SHA256PD_CHUNK_SIZE]; /* 512-bit chunks is what we will operate on */
   size_t chunk_used; /* numbed of bytes used in the current chunk */
   size_t total_len; /* accumulator */
-  uint32_t h[SHA256PD_HACCUM_SIZE]; /* current hash value */
+  uint32_t h[8]; /* current hash value */
 } sha256pd_ctx;
 
 /* this can be called at any time to reset state */
@@ -77,6 +95,30 @@ int sha256pd_hkdf_buf (void *reskey, size_t reskeylen,
                        const void *salt, size_t saltsize,
                        const void *info, size_t infosize);
 
+
+/* you can set this to your `malloc()` function */
+/* it will never be called with zero size */
+/* return NULL on allocation error */
+extern void *(*sha256pd_malloc_fn) (size_t size);
+/* you can set this to your `free()` function */
+/* it will never be called with NULL pointer */
+extern void (*sha256pd_free_fn) (void *p);
+
+
+#define SHA256PD_BALLOON_DEFAULT_SCOST  (1024u*1024u)
+#define SHA256PD_BALLOON_DEFAULT_TCOST  (16u)
+
+/* balloon-based key derivation, using sha256 as hash function */
+/* WARNING: this allocates */
+/* out: reskey is array of `SHA256PD_HASH_SIZE` bytes */
+/* in: inkey, inkeysize: input key */
+/* in: salt, saltsize: optional salt; can be zero size (and you can pass nullptr for empty salt) */
+/* returns -1 on error (invalid result key size, for example), and 0 on success */
+int sha256pd_balloon (uint8_t reskey[SHA256PD_HASH_SIZE],
+                      unsigned scost, /* space cost, main buffer size, in bytes; 0 is default (1MB) */
+                      unsigned tcost, /* time cost, number of rounds; 0 is default (16) */
+                      const void *inkey, size_t inkeysize,
+                      const void *salt, size_t saltsize);
 
 #ifdef __cplusplus
 }

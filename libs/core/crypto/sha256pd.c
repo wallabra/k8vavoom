@@ -3,13 +3,303 @@
 /* added HMAC-SHA256 and HKDF-SHA256 implementations */
 /* public domain */
 #include "sha256pd.h"
+#include <stdlib.h>
+#ifdef SHA256PD_ENABLE_RANDOMBYTES
+# ifndef WIN32
+#  include <unistd.h>
+#  include <fcntl.h>
+#  include <errno.h>
+#  include <time.h>
+#  include <sys/time.h>
+#  if defined(__linux__)
+#   include <sys/random.h>
+#  endif
+# endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-static inline uint32_t sha26pd_rra (uint32_t value, unsigned int count) { return value>>count|value<<(32-count); }
+#define SHA256PD_TOTALLEN_SIZE  (8u)
+#define SHA256PD_HACCUM_SIZE    (8u)
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void *(*sha256pd_malloc_fn) (size_t size) = NULL;
+void (*sha256pd_free_fn) (void *p) = NULL;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static inline uint32_t sha26pd_rra (uint32_t value, unsigned int count) { return (value>>count)|(value<<(32-count)); }
+
+static inline void U32TO8_LE (uint8_t *p, const uint32_t v) {
+  p[0] = (uint8_t)(v&0xffu);
+  p[1] = (uint8_t)((v>>8)&0xffu);
+  p[2] = (uint8_t)((v>>16)&0xffu);
+  p[3] = (uint8_t)((v>>24)&0xffu);
+}
+
+static inline uint32_t GET_U32 (const void *buf) {
+  const uint8_t *p = (const uint8_t *)buf;
+  return ((uint32_t)p[0])|((uint32_t)p[0]<<8)|((uint32_t)p[0]<<16)|((uint32_t)p[0]<<24);
+}
+
+
+#if defined(SHA256PD_ENABLE_RANDOMBYTES) || defined(SHA256PD_BALLOON_USE_ISAAC)
+/*
+ * ISAAC+ "variant", the paper is not clear on operator precedence and other
+ * things. This is the "first in, first out" option!
+ */
+static inline uint32_t sha26pd_rla (uint32_t value, unsigned int count) { return (value<<count)|(value>>(32-count)); }
+
+typedef struct isaacp_state_t {
+  uint32_t state[256];
+  uint8_t buffer[1024];
+  union __attribute__((packed)) {
+    uint32_t abc[3];
+    struct __attribute__((packed)) {
+      uint32_t a, b, c;
+    };
+  };
+  size_t left;
+} isaacp_state;
+
+#define isaacp_step(offset,mix) \
+  x = mm[i+offset]; \
+  a = (a^(mix))+(mm[(i+offset+128u)&0xffu]); \
+  y = (a^b)+mm[(x>>2)&0xffu]; \
+  mm[i+offset] = y; \
+  b = (x+a)^mm[(y>>10)&0xffu]; \
+  U32TO8_LE(out+(i+offset)*4u, b);
+
+static inline void isaacp_mix (isaacp_state *st) {
+  uint32_t x, y;
+  uint32_t a = st->a, b = st->b, c = st->c;
+  uint32_t *mm = st->state;
+  uint8_t *out = st->buffer;
+  c = c+1;
+  b = b+c;
+  for (unsigned i = 0; i < 256; i += 4) {
+    isaacp_step(0, sha26pd_rla(a,13))
+    isaacp_step(1, sha26pd_rra(a, 6))
+    isaacp_step(2, sha26pd_rla(a, 2))
+    isaacp_step(3, sha26pd_rra(a,16))
+  }
+  st->a = a;
+  st->b = b;
+  st->c = c;
+  st->left = 1024;
+}
+
+static void isaacp_random (isaacp_state *st, void *p, size_t len) {
+  uint8_t *c = (uint8_t *)p;
+  while (len) {
+    const size_t use = (len > st->left ? st->left : len);
+    memcpy(c, st->buffer+(sizeof(st->buffer)-st->left), use);
+    st->left -= use;
+    c += use;
+    len -= use;
+    if (!st->left) isaacp_mix(st);
+  }
+}
+#endif
+
+
+#ifdef SHA256PD_ENABLE_RANDOMBYTES
+
+// ////////////////////////////////////////////////////////////////////////// //
+// SplitMix; mostly used to generate 64-bit seeds
+static inline uint64_t splitmix64_next (uint64_t *state) {
+  uint64_t result = *state;
+  *state = result+(uint64_t)0x9E3779B97f4A7C15ULL;
+  result = (result^(result>>30))*(uint64_t)0xBF58476D1CE4E5B9ULL;
+  result = (result^(result>>27))*(uint64_t)0x94D049BB133111EBULL;
+  return result^(result>>31);
+}
+
+static inline void splitmix64_seedU64 (uint64_t *state, uint32_t seed0, uint32_t seed1) {
+  // hashU32
+  uint32_t res = seed0;
+  res -= (res<<6);
+  res ^= (res>>17);
+  res -= (res<<9);
+  res ^= (res<<4);
+  res -= (res<<3);
+  res ^= (res<<10);
+  res ^= (res>>15);
+  uint64_t n = res;
+  n <<= 32;
+  // hashU32
+  res = seed1;
+  res -= (res<<6);
+  res ^= (res>>17);
+  res -= (res<<9);
+  res ^= (res<<4);
+  res -= (res<<3);
+  res ^= (res<<10);
+  res ^= (res>>15);
+  n |= res;
+  *state = n;
+}
+
+
+#ifdef WIN32
+#include <windows.h>
+typedef BOOLEAN WINAPI (*RtlGenRandomFn) (PVOID RandomBuffer,ULONG RandomBufferLength);
+
+static void RtlGenRandomX (PVOID RandomBuffer, ULONG RandomBufferLength) {
+  if (RandomBufferLength <= 0) return;
+  RtlGenRandomFn RtlGenRandomXX = NULL;
+  HMODULE libh = LoadLibraryA("advapi32.dll");
+  if (libh) {
+    RtlGenRandomXX = (RtlGenRandomFn)(void *)GetProcAddress(libh, "SystemFunction036");
+    //if (!RtlGenRandomXX) fprintf(stderr, "WARNING: `RtlGenRandom()` is not found!\n");
+    //else fprintf(stderr, "MESSAGE: `RtlGenRandom()` found!\n");
+    if (RtlGenRandomXX) {
+      if (RtlGenRandomXX(RandomBuffer, RandomBufferLength)) return;
+      //fprintf(stderr, "WARNING: `RtlGenRandom()` fallback for %u bytes!\n", (unsigned)RandomBufferLength);
+    }
+  }
+  isaacp_state rng;
+  // initialise isaacp with some shit
+  uint32_t smxseed0 = 0;
+  uint32_t smxseed1 = (uint32_t)GetCurrentProcessId();
+  SYSTEMTIME st;
+  FILETIME ft;
+  GetLocalTime(&st);
+  if (!SystemTimeToFileTime(&st, &ft)) {
+    //fprintf(stderr, "SHIT: `SystemTimeToFileTime()` failed!\n");
+    smxseed0 = (uint32_t)(GetTickCount());
+  } else {
+    smxseed0 = (uint32_t)(ft.dwLowDateTime);
+  }
+  uint64_t smx;
+  splitmix64_seedU64(&smx, smxseed0, smxseed1);
+  for (unsigned n = 0; n < 256; ++n) rng.state[n] = splitmix64_next(&smx);
+  rng.a = splitmix64_next(&smx);
+  rng.b = splitmix64_next(&smx);
+  rng.c = splitmix64_next(&smx);
+  isaacp_mix(&rng);
+  isaacp_mix(&rng);
+  // generate random bytes with ISAAC+
+  isaacp_random(&rng, RandomBuffer, RandomBufferLength);
+}
+#endif
+
+
+//==========================================================================
+//
+//  sha256pd_randombytes_init
+//
+//  initialize ISAAC+
+//
+//==========================================================================
+static void sha256pd_randombytes_init (isaacp_state *rng) {
+  static __thread uint32_t xstate[256+3]; /* and `abc` */
+  for (unsigned f = 0u; f < 256u+3u; ++f) xstate[f] = f+666u;
+  memset(rng, 0, sizeof(isaacp_state));
+  #ifdef __SWITCH__
+  randomGet(xstate, sizeof(xstate));
+  #elif defined(WIN32)
+  RtlGenRandomX(xstate, sizeof(xstate));
+  #else
+  size_t pos = 0;
+  #if defined(__linux__)
+  /* try to use kernel syscall first */
+  while (pos < sizeof(xstate)) {
+    /* reads up to 256 bytes should not be interrupted by signals */
+    size_t len = sizeof(xstate)-pos;
+    if (len > 256) len = 256;
+    ssize_t rd = getrandom(((uint8_t *)xstate)+pos, len, 0);
+    if (rd < 0) {
+      if (errno != EINTR) break;
+    } else {
+      pos += (size_t)rd;
+    }
+  }
+  /* do not mix additional sources if we got all random bytes from kernel */
+  const unsigned mixother = (pos != sizeof(xstate));
+  #else
+  const unsigned mixother = 1u;
+  #endif
+  /* fill up what is left with "/dev/urandom" */
+  if (pos < sizeof(xstate)) {
+    int fd = open("/dev/urandom", O_RDONLY|O_CLOEXEC);
+    if (fd >= 0) {
+      while (pos < sizeof(xstate)) {
+        size_t len = sizeof(xstate)-pos;
+        ssize_t rd = read(fd, ((uint8_t *)xstate)+pos, len);
+        if (rd < 0) {
+          if (errno != EINTR) break;
+        } else {
+          pos += (size_t)rd;
+        }
+      }
+      close(fd);
+    }
+  }
+  /* mix some other random sources, just in case */
+  if (mixother) {
+    uint32_t smxseed0 = 0;
+    uint32_t smxseed1 = (uint32_t)getpid();
+    #if defined(__linux__)
+    struct timespec ts;
+    if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+      smxseed0 = ts.tv_sec;
+    } else {
+      struct timeval tp;
+      struct timezone tzp;
+      gettimeofday(&tp, &tzp);
+      smxseed0 = ts.tv_sec;
+    }
+    #else
+    struct timeval tp;
+    struct timezone tzp;
+    gettimeofday(&tp, &tzp);
+    smxseed0 = ts.tv_sec;
+    #endif
+    static __thread isaacp_state rngtmp;
+    uint64_t smx;
+    splitmix64_seedU64(&smx, smxseed0, smxseed1);
+    for (unsigned n = 0; n < 256u; ++n) rngtmp.state[n] = splitmix64_next(&smx);
+    rngtmp.a = splitmix64_next(&smx);
+    rngtmp.b = splitmix64_next(&smx);
+    rngtmp.c = splitmix64_next(&smx);
+    isaacp_mix(&rngtmp);
+    isaacp_mix(&rngtmp);
+    isaacp_random(&rngtmp, rng->state, sizeof(rng->state));
+    isaacp_random(&rngtmp, rng->abc, sizeof(rng->abc));
+  }
+  #endif
+  /* xor ISAAC+ state with random bytes for from various sources */
+  for (unsigned f = 0u; f < 256u; ++f) rng->state[f] ^= xstate[f];
+  for (unsigned f = 0u; f < 3u; ++f) rng->abc[f] ^= xstate[256u+f];
+  isaacp_mix(rng);
+  isaacp_mix(rng);
+}
+
+
+//==========================================================================
+//
+//  sha256pd_randombytes
+//
+//==========================================================================
+void sha256pd_randombytes (void *p, size_t len) {
+  static __thread unsigned initialized = 0u;
+  static __thread isaacp_state rng;
+
+  if (!len || !p) return;
+
+  if (!initialized) {
+    sha256pd_randombytes_init(&rng);
+    initialized = 1u;
+  }
+
+  isaacp_random(&rng, p, len);
+}
+#endif
 
 
 //==========================================================================
@@ -331,6 +621,162 @@ int sha256pd_hkdf_buf (void *reskey, size_t reskeylen, const void *inkey, size_t
   sha256pd_memerase(prk, sizeof(prk));
   /* and clear hmac state */
   sha256pd_memerase(&hctx, sizeof(hctx));
+
+  return 0;
+}
+
+
+
+//==========================================================================
+//
+//  sha256pd_balloon_hash_u32
+//
+//==========================================================================
+static inline void sha256pd_balloon_hash_u32 (sha256pd_ctx *state, unsigned v) {
+  uint8_t cbytes[4];
+  U32TO8_LE(cbytes, v);
+  sha256pd_update(state, cbytes, 4);
+}
+
+
+//==========================================================================
+//
+//  sha256pd_balloon
+//
+//==========================================================================
+int sha256pd_balloon (uint8_t reskey[SHA256PD_HASH_SIZE],
+                      unsigned scost, /* space cost, main buffer size, in blocks */
+                      unsigned tcost, /* time cost, number of rounds */
+                      const void *inkey, size_t inkeysize,
+                      const void *salt, size_t saltsize)
+{
+  if (!reskey) return -1;
+  if (!inkey || inkeysize == 0u) return -1;
+  if (!salt || saltsize == 0u) return -1;
+  if (scost > 0x40000000u) return -1;
+
+  if (!scost) scost = SHA256PD_BALLOON_DEFAULT_SCOST;
+  if (!tcost) tcost = SHA256PD_BALLOON_DEFAULT_TCOST;
+
+  // convert to number of blocks
+  scost = (scost+SHA256PD_HASH_SIZE-1u)/SHA256PD_HASH_SIZE;
+
+  const unsigned delta = 3u; /* number of dependencies per block */
+  unsigned cnt = 0u; /* counter, used in security proof */
+
+  /* one more for temporary block */
+  uint8_t *buf = (uint8_t *)(sha256pd_malloc_fn ? sha256pd_malloc_fn : malloc)((scost+1u)*SHA256PD_HASH_SIZE);
+  if (!buf) return -1;
+  uint8_t *tempbuf = buf+SHA256PD_HASH_SIZE*scost;
+
+  sha256pd_ctx state;
+
+  #ifdef SHA256PD_BALLOON_USE_HKDF
+  /* create initial key with HKDF */
+  U32TO8_LE(tempbuf, cnt++);
+  if (sha256pd_hkdf_buf(buf, SHA256PD_HASH_SIZE, inkey, inkeysize, salt, saltsize, tempbuf, 4) != 0) {
+    (sha256pd_free_fn ? sha256pd_free_fn : free)(buf);
+    return -1;
+  }
+  #else
+  /* create initial key */
+  sha256pd_init(&state);
+  sha256pd_update(&state, salt, saltsize);
+  sha256pd_update(&state, inkey, inkeysize);
+  sha256pd_balloon_hash_u32(&state, cnt++);
+  sha256pd_finish(&state, buf+SHA256PD_HASH_SIZE*0u); /* [0] */
+  #endif
+
+  /* expand input */
+  for (unsigned m = 1u; m < scost; ++m) {
+    sha256pd_init(&state);
+    sha256pd_update(&state, buf+SHA256PD_HASH_SIZE*(m-1u), SHA256PD_HASH_SIZE); /* [m-1] */
+    sha256pd_balloon_hash_u32(&state, cnt++);
+    sha256pd_finish(&state, buf+SHA256PD_HASH_SIZE*m); /* [m] */
+  }
+
+  #ifdef SHA256PD_BALLOON_USE_ISAAC
+  isaacp_state rng;
+  memset(&rng, 0, sizeof(rng));
+  #endif
+
+  /* mix buffer contents */
+  for (unsigned t = 0u; t < tcost; ++t) {
+    for (unsigned m = 0u; m < scost; ++m) {
+      /* hash last and current blocks */
+      sha256pd_init(&state);
+      sha256pd_update(&state, buf+SHA256PD_HASH_SIZE*m, SHA256PD_HASH_SIZE); /* [m] */
+      sha256pd_update(&state, buf+SHA256PD_HASH_SIZE*((m+scost-1u)%scost), SHA256PD_HASH_SIZE); /* [m-1] */
+      sha256pd_balloon_hash_u32(&state, cnt++);
+      sha256pd_finish(&state, buf+SHA256PD_HASH_SIZE*m); /* [m] */
+      /* hash in pseudorandomly choosen blocks */
+      for (unsigned i = 0u; i < delta; ++i) {
+        #ifdef SHA256PD_BALLOON_USE_ISAAC
+        //const unsigned bidx = ints_to_block(t, m, i);
+        sha256pd_init(&state);
+        sha256pd_balloon_hash_u32(&state, i);
+        sha256pd_balloon_hash_u32(&state, m);
+        sha256pd_balloon_hash_u32(&state, t);
+        sha256pd_finish(&state, (uint8_t *)rng.state);
+        for (unsigned f = 1u; f < 8u; ++f) {
+          sha256pd_init(&state);
+          sha256pd_update(&state, ((uint8_t *)rng.state)+(f-1u)*SHA256PD_HASH_SIZE, SHA256PD_HASH_SIZE);
+          sha256pd_finish(&state, ((uint8_t *)rng.state)+f*SHA256PD_HASH_SIZE);
+        }
+        sha256pd_init(&state);
+        sha256pd_update(&state, ((uint8_t *)rng.state)+(7u)*SHA256PD_HASH_SIZE, SHA256PD_HASH_SIZE);
+        sha256pd_finish(&state, tempbuf);
+        rng.abc[0] = GET_U32(tempbuf+4u*0u);
+        rng.abc[1] = GET_U32(tempbuf+4u*1u);
+        rng.abc[2] = GET_U32(tempbuf+4u*2u);
+        isaacp_mix(&rng);
+        isaacp_mix(&rng);
+        isaacp_random(&rng, tempbuf, 4);
+        const unsigned bidx = GET_U32(tempbuf)%scost;
+        /* hash(cnt++, salt, buf+SHA256PD_HASH_SIZE*bidx) */
+        sha256pd_init(&state);
+        sha256pd_update(&state, buf+SHA256PD_HASH_SIZE*bidx, SHA256PD_HASH_SIZE); /* [bidx] */
+        #else
+        //const unsigned bidx = ints_to_block(cnt++, salt, t, m, i);
+        sha256pd_init(&state);
+        sha256pd_balloon_hash_u32(&state, i);
+        sha256pd_balloon_hash_u32(&state, m);
+        sha256pd_balloon_hash_u32(&state, t);
+        sha256pd_update(&state, salt, saltsize);
+        sha256pd_balloon_hash_u32(&state, cnt++);
+        sha256pd_finish(&state, tempbuf);
+        const unsigned bidx = GET_U32(tempbuf)%scost;
+        sha256pd_init(&state);
+        sha256pd_update(&state, buf+SHA256PD_HASH_SIZE*bidx, SHA256PD_HASH_SIZE); /* [bidx] */
+        #endif
+        sha256pd_update(&state, salt, saltsize);
+        sha256pd_balloon_hash_u32(&state, cnt++);
+        sha256pd_finish(&state, tempbuf);
+        /* get other block number */
+        const unsigned other = GET_U32(tempbuf)%scost;
+        /* mix other block */
+        sha256pd_init(&state);
+        sha256pd_update(&state, buf+SHA256PD_HASH_SIZE*other, SHA256PD_HASH_SIZE); /* [other] */
+        sha256pd_update(&state, buf+SHA256PD_HASH_SIZE*m, SHA256PD_HASH_SIZE); /* [m] */
+        sha256pd_balloon_hash_u32(&state, cnt++);
+        sha256pd_finish(&state, buf+SHA256PD_HASH_SIZE*m); /* [m] */
+      }
+    }
+  }
+
+  /* return key */
+  memcpy(reskey, buf+SHA256PD_HASH_SIZE*(scost-1u), SHA256PD_HASH_SIZE);
+
+  #ifdef SHA256PD_BALLOON_USE_ISAAC
+  /* clear rng state */
+  sha256pd_memerase(&rng, sizeof(rng));
+  #endif
+  /* clear sha256 state */
+  sha256pd_memerase(&state, sizeof(state));
+  /* clear buffer */
+  sha256pd_memerase(buf, (scost+1u)*SHA256PD_HASH_SIZE);
+  /* free buffer */
+  (sha256pd_free_fn ? sha256pd_free_fn : free)(buf);
 
   return 0;
 }

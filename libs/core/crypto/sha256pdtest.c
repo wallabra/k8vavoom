@@ -238,7 +238,7 @@ int hmac_test (void) {
   size_t messages2and3_len = 50;
 
   for (size_t i = 0; i < 7; ++i) {
-    keys[i] = malloc(keys_len[i]);
+    keys[i] = malloc(keys_len[i]+1);
     if (!keys[i]) { fprintf(stderr, "Can't allocate memory\n"); abort(); }
   }
 
@@ -396,7 +396,13 @@ static int test_hkdf (void) {
 }
 
 
-int main (void) {
+int main (int argc, char **argv) {
+  #ifdef SHA256PD_ENABLE_RANDOMBYTES
+  uint8_t rbuf[16];
+  sha256pd_randombytes(rbuf, sizeof(rbuf));
+  printf("RND: "); for (unsigned f = 0; f < (unsigned)sizeof(rbuf); ++f) printf("%02x", rbuf[f]); printf("\n");
+  #endif
+
   printf("SHA2-256 Simple Tests\n");
   for (size_t i = 0; i < (sizeof(STRING_VECTORS)/sizeof(struct string_vector)); ++i) {
     const struct string_vector *vector = &STRING_VECTORS[i];
@@ -411,12 +417,22 @@ int main (void) {
   construct_binary_messages();
   for (size_t i = 0; i < (sizeof(vectors)/sizeof(struct vector)); ++i) {
     const struct vector *vector = &vectors[i];
-    //if (vector->input_len > 1000000) continue;
+    if (argc < 2 && vector->input_len > 1000000) continue;
     //if (vector->input_len > 536870912) continue;
     init_binary_message(i);
     if (test(vector->input, vector->input_len, vector->output)) return 1;
     deinit_binary_message(i);
   }
+
+  const unsigned scost = SHA256PD_BALLOON_DEFAULT_SCOST;
+  const unsigned tcost = SHA256PD_BALLOON_DEFAULT_TCOST;
+  printf("deriving key with balloon (%u iterations, %u memory bytes)...\n", tcost, scost);
+
+  uint8_t reskey[SHA256PD_HASH_SIZE];
+  const char *inkey = "Alice";
+  const char *insalt = "Miriel";
+  if (sha256pd_balloon(reskey, scost, tcost, inkey, strlen(inkey), insalt, strlen(insalt)) != 0) abort();
+  printf("KEY: "); for (unsigned f = 0; f < SHA256PD_HASH_SIZE; ++f) printf("%02x", reskey[f]); printf("\n");
 
   return 0;
 }
