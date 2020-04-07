@@ -133,7 +133,7 @@ public:
     SHA256DigestSize = 32,
   };
 
-  typedef uint8_t SHA256Digest[VNetChanSocket::SHA256DigestSize];
+  typedef uint8_t SHA256Digest[SHA256DigestSize];
   typedef void *SHA256Context;
 
   static SHA256Context SHA256Init () noexcept;

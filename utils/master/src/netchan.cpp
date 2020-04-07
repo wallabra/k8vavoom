@@ -45,6 +45,9 @@ typedef int socklen_t;
 //#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#if defined(__linux__)
+# include <sys/random.h>
+#endif
 
 
 #include "netchan.h"
@@ -61,94 +64,23 @@ static TWinSockHelper vnetchanHelper__;
 #endif
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// SplitMix; mostly used to generate 64-bit seeds
-static __attribute__((unused)) inline uint64_t splitmix64_next (uint64_t *state) {
-  uint64_t result = *state;
-  *state = result+(uint64_t)0x9E3779B97f4A7C15ULL;
-  result = (result^(result>>30))*(uint64_t)0xBF58476D1CE4E5B9ULL;
-  result = (result^(result>>27))*(uint64_t)0x94D049BB133111EBULL;
-  return result^(result>>31);
+static inline uint32_t isaac_rra (uint32_t value, unsigned int count) { return (value>>count)|(value<<(32-count)); }
+static inline uint32_t isaac_rla (uint32_t value, unsigned int count) { return (value<<count)|(value>>(32-count)); }
+
+static inline void isaac_getu32 (uint8_t *p, const uint32_t v) {
+  p[0] = (uint8_t)(v&0xffu);
+  p[1] = (uint8_t)((v>>8)&0xffu);
+  p[2] = (uint8_t)((v>>16)&0xffu);
+  p[3] = (uint8_t)((v>>24)&0xffu);
 }
-
-static __attribute__((unused)) inline void splitmix64_seedU32 (uint64_t *state, uint32_t seed) {
-  // hashU32
-  uint32_t res = seed;
-  res -= (res<<6);
-  res ^= (res>>17);
-  res -= (res<<9);
-  res ^= (res<<4);
-  res -= (res<<3);
-  res ^= (res<<10);
-  res ^= (res>>15);
-  uint64_t n = res;
-  n <<= 32;
-  n |= seed;
-  *state = n;
-}
-
-
-//**************************************************************************
-// *Really* minimal PCG32_64 code / (c) 2014 M.E. O'Neill / pcg-random.org
-// Licensed under Apache License 2.0 (NO WARRANTY, etc. see website)
-//**************************************************************************
-typedef struct __attribute__((packed)) {
-  /*
-  uint64_t state; // rng state: all values are possible
-  uint64_t inc; // controls which RNG sequence (stream) is selected; must *always* be odd
-  */
-  uint32_t lo, hi;
-} PCG3264Ctx_ClassChecker;
-
-typedef uint64_t PCG3264_Ctx;
-
-#if defined(__cplusplus)
-  static_assert(sizeof(PCG3264Ctx_ClassChecker) == sizeof(PCG3264_Ctx), "invalid `PCG3264_Ctx` size");
-#else
-  _Static_assert(sizeof(PCG3264Ctx_ClassChecker) == sizeof(PCG3264_Ctx), "invalid `PCG3264_Ctx` size");
-#endif
-
-
-static __attribute__((unused)) inline void pcg3264_init (PCG3264_Ctx *rng) {
-  *rng/*->state*/ = 0x853c49e6748fea9bULL;
-  /*rng->inc = 0xda3e39cb94b95bdbULL;*/
-}
-
-static __attribute__((unused)) void pcg3264_seedU32 (PCG3264_Ctx *rng, uint32_t seed) {
-  uint64_t smx;
-  splitmix64_seedU32(&smx, seed);
-  *rng/*->state*/ = splitmix64_next(&smx);
-  /*rng->inc = splitmix64(&smx)|1u;*/
-}
-
-static __attribute__((unused)) inline uint32_t pcg3264_next (PCG3264_Ctx *rng) {
-  const uint64_t oldstate = *rng/*->state*/;
-  // advance internal state
-  *rng/*->state*/ = oldstate*(uint64_t)6364136223846793005ULL+(/*rng->inc|1u*/(uint64_t)1442695040888963407ULL);
-  // calculate output function (XSH RR), uses old state for max ILP
-  const uint32_t xorshifted = ((oldstate>>18)^oldstate)>>27;
-  const uint8_t rot = oldstate>>59;
-  //return (xorshifted>>rot)|(xorshifted<<((-rot)&31));
-  return (xorshifted>>rot)|(xorshifted<<(32-rot));
-}
-
-
-static PCG3264_Ctx g_pcg3264_ctx;
-static bool g_pgc_inited = false;
-
-
-static inline __attribute__((unused)) uint32_t GenRandomU32 () noexcept { return pcg3264_next(&g_pcg3264_ctx)&0xffffffffu; }
-
 
 /*
-  ISAAC+ "variant", the paper is not clear on operator precedence and other
-  things. This is the "first in, first out" option!
-
-  Not threadsafe or securely initialized, only for deterministic testing
-*/
+ * ISAAC+ "variant", the paper is not clear on operator precedence and other
+ * things. This is the "first in, first out" option!
+ */
 typedef struct isaacp_state_t {
   uint32_t state[256];
-  unsigned char buffer[1024];
+  uint8_t buffer[1024];
   union __attribute__((packed)) {
     uint32_t abc[3];
     struct __attribute__((packed)) {
@@ -158,79 +90,57 @@ typedef struct isaacp_state_t {
   size_t left;
 } isaacp_state;
 
-/* endian */
-static inline void U32TO8_LE (unsigned char *p, const uint32_t v) {
-  p[0] = (unsigned char)(v      );
-  p[1] = (unsigned char)(v >>  8);
-  p[2] = (unsigned char)(v >> 16);
-  p[3] = (unsigned char)(v >> 24);
-}
+#define isaacp_step(offset,mix) \
+  x = mm[i+offset]; \
+  a = (a^(mix))+(mm[(i+offset+128u)&0xffu]); \
+  y = (a^b)+mm[(x>>2)&0xffu]; \
+  mm[i+offset] = y; \
+  b = (x+a)^mm[(y>>10)&0xffu]; \
+  isaac_getu32(out+(i+offset)*4u, b);
 
-#define ROTL32(a,b) (((a) << (b)) | ((a) >> (32 - b)))
-#define ROTR32(a,b) (((a) >> (b)) | ((a) << (32 - b)))
-
-#define isaacp_step(offset, mix) \
-  x = mm[i + offset]; \
-  a = (a ^ (mix)) + (mm[(i + offset + 128) & 0xff]); \
-  y = (a ^ b) + mm[(x >> 2) & 0xff]; \
-  mm[i + offset] = y; \
-  b = (x + a) ^ mm[(y >> 10) & 0xff]; \
-  U32TO8_LE(out + (i + offset) * 4, b);
-
-static void isaacp_mix (isaacp_state *st) {
-  uint32_t i, x, y;
+static inline void isaacp_mix (isaacp_state *st) {
+  uint32_t x, y;
   uint32_t a = st->a, b = st->b, c = st->c;
   uint32_t *mm = st->state;
-  unsigned char *out = st->buffer;
-
-  c = c + 1;
-  b = b + c;
-
-  for (i = 0; i < 256; i += 4) {
-    isaacp_step(0, ROTL32(a,13))
-    isaacp_step(1, ROTR32(a, 6))
-    isaacp_step(2, ROTL32(a, 2))
-    isaacp_step(3, ROTR32(a,16))
+  uint8_t *out = st->buffer;
+  c = c+1u;
+  b = b+c;
+  for (unsigned i = 0u; i < 256u; i += 4u) {
+    isaacp_step(0u, isaac_rla(a,13u))
+    isaacp_step(1u, isaac_rra(a, 6u))
+    isaacp_step(2u, isaac_rla(a, 2u))
+    isaacp_step(3u, isaac_rra(a,16u))
   }
-
   st->a = a;
   st->b = b;
   st->c = c;
-  st->left = 1024;
+  st->left = 1024u;
 }
 
-
 static void isaacp_random (isaacp_state *st, void *p, size_t len) {
-  size_t use;
-  unsigned char *c = (unsigned char *)p;
+  uint8_t *c = (uint8_t *)p;
   while (len) {
-    use = (len > st->left) ? st->left : len;
-    memcpy(c, st->buffer + (sizeof(st->buffer) - st->left), use);
-
+    const size_t use = (len > st->left ? st->left : len);
+    memcpy(c, st->buffer+(sizeof(st->buffer)-st->left), use);
     st->left -= use;
     c += use;
     len -= use;
-
-    if (!st->left)
-      isaacp_mix(st);
+    if (!st->left) isaacp_mix(st);
   }
 }
 
 
-#ifdef WIN32
 // ////////////////////////////////////////////////////////////////////////// //
 // SplitMix; mostly used to generate 64-bit seeds
-/*
-static __attribute__((unused)) inline uint64_t splitmix64_next (uint64_t *state) {
+static inline uint64_t splitmix64_next (uint64_t *state) {
   uint64_t result = *state;
   *state = result+(uint64_t)0x9E3779B97f4A7C15ULL;
   result = (result^(result>>30))*(uint64_t)0xBF58476D1CE4E5B9ULL;
   result = (result^(result>>27))*(uint64_t)0x94D049BB133111EBULL;
   return result^(result>>31);
 }
-*/
 
-static __attribute__((unused)) inline void splitmix64_seedU64 (uint64_t *state, uint32_t seed0, uint32_t seed1) {
+static inline void splitmix64_seedU64 (uint64_t *state, uint32_t seed0, uint32_t seed1) {
   // hashU32
   uint32_t res = seed0;
   res -= (res<<6);
@@ -255,99 +165,164 @@ static __attribute__((unused)) inline void splitmix64_seedU64 (uint64_t *state, 
   *state = n;
 }
 
-//#include <ntsecapi.h>
+
+#ifdef WIN32
+#include <windows.h>
 typedef BOOLEAN WINAPI (*RtlGenRandomFn) (PVOID RandomBuffer,ULONG RandomBufferLength);
 
 static void RtlGenRandomX (PVOID RandomBuffer, ULONG RandomBufferLength) {
   if (RandomBufferLength <= 0) return;
-  static __thread RtlGenRandomFn RtlGenRandomXX = NULL;
-  static __thread int inited = 0;
-  if (!inited) {
-    inited = 1;
-    HMODULE libh = LoadLibraryA("advapi32.dll");
-    if (libh) {
-      RtlGenRandomXX = (RtlGenRandomFn)(void *)GetProcAddress(libh, "SystemFunction036");
-      if (!RtlGenRandomXX) fprintf(stderr, "WARNING: `RtlGenRandom()` is not found!\n");
-      //else fprintf(stderr, "MESSAGE: `RtlGenRandom()` found!\n");
+  RtlGenRandomFn RtlGenRandomXX = NULL;
+  HMODULE libh = LoadLibraryA("advapi32.dll");
+  if (libh) {
+    RtlGenRandomXX = (RtlGenRandomFn)(void *)GetProcAddress(libh, "SystemFunction036");
+    //if (!RtlGenRandomXX) fprintf(stderr, "WARNING: `RtlGenRandom()` is not found!\n");
+    //else fprintf(stderr, "MESSAGE: `RtlGenRandom()` found!\n");
+    if (RtlGenRandomXX) {
+      if (RtlGenRandomXX(RandomBuffer, RandomBufferLength)) return;
+      //fprintf(stderr, "WARNING: `RtlGenRandom()` fallback for %u bytes!\n", (unsigned)RandomBufferLength);
     }
   }
-  if (RtlGenRandomXX) {
-    if (RtlGenRandomXX(RandomBuffer, RandomBufferLength)) return;
-    fprintf(stderr, "WARNING: `RtlGenRandom()` fallback for %u bytes!\n", (unsigned)RandomBufferLength);
+  isaacp_state rng;
+  // initialise isaacp with some shit
+  uint32_t smxseed0 = 0;
+  uint32_t smxseed1 = (uint32_t)GetCurrentProcessId();
+  SYSTEMTIME st;
+  FILETIME ft;
+  GetLocalTime(&st);
+  if (!SystemTimeToFileTime(&st, &ft)) {
+    //fprintf(stderr, "SHIT: `SystemTimeToFileTime()` failed!\n");
+    smxseed0 = (uint32_t)(GetTickCount());
+  } else {
+    smxseed0 = (uint32_t)(ft.dwLowDateTime);
   }
-  static __thread int initialized = 0;
-  static __thread isaacp_state rng;
-  // need init?
-  if (!initialized) {
-    // initialise isaacp with some shit
-    initialized = 1;
-    uint32_t smxseed0 = 0;
-    uint32_t smxseed1 = (uint32_t)GetCurrentProcessId();
-    SYSTEMTIME st;
-    FILETIME ft;
-    GetLocalTime(&st);
-    if (!SystemTimeToFileTime(&st, &ft)) {
-      fprintf(stderr, "SHIT: `SystemTimeToFileTime()` failed!\n");
-      smxseed0 = /*hashU32*/(uint32_t)(GetTickCount());
-    } else {
-      smxseed0 = /*hashU32*/(uint32_t)(ft.dwLowDateTime);
-      //fprintf(stderr, "ft=0x%08x (0x%08x)\n", (uint32_t)ft.dwLowDateTime, smxseed);
-    }
-    uint64_t smx;
-    splitmix64_seedU64(&smx, smxseed0, smxseed1);
-    for (unsigned n = 0; n < 256; ++n) rng.state[n] = splitmix64_next(&smx);
-    rng.a = splitmix64_next(&smx);
-    rng.b = splitmix64_next(&smx);
-    rng.c = splitmix64_next(&smx);
-    isaacp_mix(&rng);
-    isaacp_mix(&rng);
-  }
+  uint64_t smx;
+  splitmix64_seedU64(&smx, smxseed0, smxseed1);
+  for (unsigned n = 0; n < 256; ++n) rng.state[n] = splitmix64_next(&smx);
+  rng.a = splitmix64_next(&smx);
+  rng.b = splitmix64_next(&smx);
+  rng.c = splitmix64_next(&smx);
+  isaacp_mix(&rng);
+  isaacp_mix(&rng);
   // generate random bytes with ISAAC+
   isaacp_random(&rng, RandomBuffer, RandomBufferLength);
 }
 #endif
 
 
-static void GenerateRandomBytes (void *p, size_t len) {
-  static __thread int initialized = 0;
-  static __thread isaacp_state rng;
-
-  if (!initialized) {
-    memset(&rng, 0, sizeof(rng));
-    #ifdef __SWITCH__
-    randomGet(rng.state, sizeof(rng.state));
-    randomGet(rng.abc, sizeof(rng.abc));
-    #elif !defined(WIN32)
+//==========================================================================
+//
+//  randombytes_init
+//
+//  initialize ISAAC+
+//
+//==========================================================================
+static void randombytes_init (isaacp_state *rng) {
+  static __thread uint32_t xstate[256+3]; /* and `abc` */
+  for (unsigned f = 0u; f < 256u+3u; ++f) xstate[f] = f+666u;
+  memset(rng, 0, sizeof(isaacp_state));
+  #ifdef __SWITCH__
+  randomGet(xstate, sizeof(xstate));
+  #elif defined(WIN32)
+  RtlGenRandomX(xstate, sizeof(xstate));
+  #else
+  size_t pos = 0;
+  #if defined(__linux__)
+  /* try to use kernel syscall first */
+  while (pos < sizeof(xstate)) {
+    /* reads up to 256 bytes should not be interrupted by signals */
+    size_t len = sizeof(xstate)-pos;
+    if (len > 256) len = 256;
+    ssize_t rd = getrandom(((uint8_t *)xstate)+pos, len, 0);
+    if (rd < 0) {
+      if (errno != EINTR) break;
+    } else {
+      pos += (size_t)rd;
+    }
+  }
+  /* do not mix additional sources if we got all random bytes from kernel */
+  const unsigned mixother = (pos != sizeof(xstate));
+  #else
+  const unsigned mixother = 1u;
+  #endif
+  /* fill up what is left with "/dev/urandom" */
+  if (pos < sizeof(xstate)) {
     int fd = open("/dev/urandom", O_RDONLY|O_CLOEXEC);
     if (fd >= 0) {
-      read(fd, rng.state, sizeof(rng.state));
-      read(fd, rng.abc, sizeof(rng.abc));
+      while (pos < sizeof(xstate)) {
+        size_t len = sizeof(xstate)-pos;
+        ssize_t rd = read(fd, ((uint8_t *)xstate)+pos, len);
+        if (rd < 0) {
+          if (errno != EINTR) break;
+        } else {
+          pos += (size_t)rd;
+        }
+      }
       close(fd);
     }
+  }
+  /* mix some other random sources, just in case */
+  if (mixother) {
+    uint32_t smxseed0 = 0;
+    uint32_t smxseed1 = (uint32_t)getpid();
+    #if defined(__linux__)
+    struct timespec ts;
+    if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+      smxseed0 = ts.tv_sec;
+    } else {
+      struct timeval tp;
+      struct timezone tzp;
+      gettimeofday(&tp, &tzp);
+      smxseed0 = ts.tv_sec;
+    }
     #else
-    RtlGenRandomX(rng.state, sizeof(rng.state));
-    RtlGenRandomX(rng.abc, sizeof(rng.abc));
+    struct timeval tp;
+    struct timezone tzp;
+    gettimeofday(&tp, &tzp);
+    smxseed0 = ts.tv_sec;
     #endif
-    isaacp_mix(&rng);
-    isaacp_mix(&rng);
-    initialized = 1;
+    static __thread isaacp_state rngtmp;
+    uint64_t smx;
+    splitmix64_seedU64(&smx, smxseed0, smxseed1);
+    for (unsigned n = 0; n < 256u; ++n) rngtmp.state[n] = splitmix64_next(&smx);
+    rngtmp.a = splitmix64_next(&smx);
+    rngtmp.b = splitmix64_next(&smx);
+    rngtmp.c = splitmix64_next(&smx);
+    isaacp_mix(&rngtmp);
+    isaacp_mix(&rngtmp);
+    isaacp_random(&rngtmp, rng->state, sizeof(rng->state));
+    isaacp_random(&rngtmp, rng->abc, sizeof(rng->abc));
+  }
+  #endif
+  /* xor ISAAC+ state with random bytes for from various sources */
+  for (unsigned f = 0u; f < 256u; ++f) rng->state[f] ^= xstate[f];
+  for (unsigned f = 0u; f < 3u; ++f) rng->abc[f] ^= xstate[256u+f];
+  isaacp_mix(rng);
+  isaacp_mix(rng);
+}
+
+
+//==========================================================================
+//
+//  prng_randombytes
+//
+//==========================================================================
+static void prng_randombytes (void *p, size_t len) {
+  static __thread unsigned initialized = 0u;
+  static __thread isaacp_state rng;
+
+  if (!len || !p) return;
+
+  if (!initialized) {
+    randombytes_init(&rng);
+    initialized = 1u;
   }
 
   isaacp_random(&rng, p, len);
 }
 
 
-//==========================================================================
-//
-//  InitRandom
-//
-//==========================================================================
-static void InitRandom () noexcept {
-  if (!g_pgc_inited) {
-    GenerateRandomBytes(&g_pcg3264_ctx, sizeof(g_pcg3264_ctx));
-    g_pgc_inited = true;
-  }
-}
+static inline __attribute__((unused)) uint32_t GenRandomU32 () noexcept { uint32_t res; prng_randombytes(&res, sizeof(res)); return res; }
 
 
 //**************************************************************************
@@ -951,7 +926,7 @@ bool VNetChanSocket::InitialiseSockets () noexcept {
 //
 //==========================================================================
 double VNetChanSocket::GetTime () noexcept {
-  return GetSysTime();
+  return ::GetSysTime();
 }
 
 
@@ -970,7 +945,6 @@ void VNetChanSocket::TVMsecs (timeval *dest, int msecs) noexcept {
 
 
 uint32_t VNetChanSocket::GenRandomU32 () noexcept {
-  if (!g_pgc_inited) InitRandom();
   return ::GenRandomU32();
 }
 
@@ -1197,7 +1171,7 @@ VNetChanSocket::SHA256Context VNetChanSocket::SHA256Init () noexcept {
 //  VNetChanSocket::SHA256Update
 //
 //==========================================================================
-void VNetChanSocket::SHA256Update (VNetChanSocket::SHA256Context ctx, const void *in, size_t inlen) noexcept {
+void VNetChanSocket::SHA256Update (SHA256Context ctx, const void *in, size_t inlen) noexcept {
   if (!ctx) return;
   sha256pd_update((sha256pd_ctx *)ctx, in, inlen);
 }
@@ -1210,7 +1184,7 @@ void VNetChanSocket::SHA256Update (VNetChanSocket::SHA256Context ctx, const void
 //  this frees context
 //
 //==========================================================================
-void VNetChanSocket::SHA256Finish (VNetChanSocket::SHA256Context ctx, VNetChanSocket::SHA256Digest hash) noexcept {
+void VNetChanSocket::SHA256Finish (SHA256Context ctx, SHA256Digest hash) noexcept {
   if (!ctx) { if (hash) memset(hash, 0, SHA256DigestSize); return; }
   if (hash) sha256pd_finish((sha256pd_ctx *)ctx, hash);
   free(ctx);
@@ -1222,7 +1196,7 @@ void VNetChanSocket::SHA256Finish (VNetChanSocket::SHA256Context ctx, VNetChanSo
 //  VNetChanSocket::SHA256Buffer
 //
 //==========================================================================
-void VNetChanSocket::SHA256Buffer (VNetChanSocket::SHA256Digest hash, const void *in, size_t inlen) noexcept {
+void VNetChanSocket::SHA256Buffer (SHA256Digest hash, const void *in, size_t inlen) noexcept {
   sha256pd_buf(hash, in, inlen);
 }
 
@@ -1232,9 +1206,8 @@ void VNetChanSocket::SHA256Buffer (VNetChanSocket::SHA256Digest hash, const void
 //  VNetChanSocket::GenerateKey
 //
 //==========================================================================
-void VNetChanSocket::GenerateKey (uint8_t key[VNetChanSocket::ChaCha20KeySize]) noexcept {
-  uint32_t *dest = (uint32_t *)key;
-  for (int f = 0; f < VNetChanSocket::ChaCha20KeySize/4; ++f) *dest++ = GenRandomU32();
+void VNetChanSocket::GenerateKey (uint8_t key[ChaCha20KeySize]) noexcept {
+  prng_randombytes(key, ChaCha20KeySize);
 }
 
 
@@ -1271,7 +1244,7 @@ void VNetChanSocket::DeriveSharedKey (uint8_t sharedk[ChaCha20KeySize], const ui
 //  returns new length or -1 on error
 //
 //==========================================================================
-int VNetChanSocket::EncryptInfoPacket (void *destbuf, const void *srcbuf, int srclen, const uint8_t key[VNetChanSocket::ChaCha20KeySize]) noexcept {
+int VNetChanSocket::EncryptInfoPacket (void *destbuf, const void *srcbuf, int srclen, const uint8_t key[ChaCha20KeySize]) noexcept {
   if (srclen < 0) return -1;
   if (!destbuf) return -1;
   if (srclen > 0 && !srcbuf) return -1;
@@ -1309,7 +1282,7 @@ int VNetChanSocket::EncryptInfoPacket (void *destbuf, const void *srcbuf, int sr
 //  also sets key
 //
 //==========================================================================
-int VNetChanSocket::DecryptInfoPacket (uint8_t key[VNetChanSocket::ChaCha20KeySize], void *destbuf, const void *srcbuf, int srclen) noexcept {
+int VNetChanSocket::DecryptInfoPacket (uint8_t key[ChaCha20KeySize], void *destbuf, const void *srcbuf, int srclen) noexcept {
   if (srclen < ChaCha20HeaderSize) return -1;
   if (!destbuf) return -1;
   if (!srcbuf) return -1;
