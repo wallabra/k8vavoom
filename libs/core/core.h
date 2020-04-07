@@ -30,6 +30,12 @@
 # error "You need two's complement system to compile k8vavoom!"
 #endif
 
+// defines to include various parts
+//#define CORE_CHACHAPRNG_C
+//#define CORE_CHACHAPRNG_CPP
+//#define CORE_MORE_HASHES
+
+
 
 #ifndef VAVOOM_DEBUG_BUILD
 # define VAVOOM_USE_MIMALLOC
@@ -105,21 +111,27 @@
 #include "common.h" // common types and definitions
 #include "strtod_plan9.h"
 #include "propp.h"
-#include "hashfunc.h"
-#include "jh32.h"
-#include "rg32.h"
-#include "sha2.h"
-#include "hmac_sha2.h"
-#include "xxhash32.h"
-#include "xxhash.h"
-#include "chacha20.h"
-#include "poly1305-donna.h"
-#include "ed25519.h"
-#include "curve25519-donna.h"
+
+#include "hash/hashfunc.h"
+#include "hash/crc.h" // CRC calcuation
+#include "hash/xxhash32.h"
+#include "hash/xxhash.h"
+#include "hash/md5.h"
+#ifdef CORE_MORE_HASHES
+# include "hash/jh32.h"
+# include "hash/rg32.h"
+# include "hash/SpookyV2.h"
+#endif
+
+#include "crypto/sha2.h"
+#include "crypto/hmac_sha2.h"
+#include "crypto/chacha20.h"
+#include "crypto/poly1305-donna.h"
+#include "crypto/ed25519.h"
+#include "crypto/curve25519-donna.h"
 
 #include "lzmadec/LzmaDec.h"
 #include "miniz/miniz.h"
-#include "md5.h"
 
 #include "endianness.h" // endianes handling
 #include "exception.h" // exception handling
@@ -128,22 +140,21 @@
 #include "names.h" // built-in names
 #include "log.h" // general logging interface
 #include "name.h" // names
-#include "stream.h" // streams
+#include "stream/stream.h" // streams
 #include "array.h" // dynamic arrays
 #include "map.h" // mapping of keys to values
-#include "crc.h" // CRC calcuation
 #include "str.h" // strings
 #include "vstrci.h"
 #include "args.h" // command line arguments
-#include "streamsbit.h" // bitstreams
-#include "streamsex.h" // extended streams
-#include "streamszip.h" // packed streams
+#include "stream/streamsbit.h" // bitstreams
+#include "stream/streamsex.h" // extended streams
+#include "stream/streamszip.h" // packed streams
 #include "mathutil.h"
-#include "vector.h" // vector math
-#include "matrix.h" // matrices
+#include "vecmat/vector.h" // vector math
+#include "vecmat/matrix.h" // matrices
 #include "colorutil.h"
 #include "xml.h" // xml file parsing
-#include "ntvalue.h"
+#include "stream/ntvalue.h"
 
 #include "wlist.h"
 
@@ -158,13 +169,12 @@
 #include "cvarsys.h"
 
 #ifdef CORE_CHACHAPRNG_C
-# include "chachaprng_c.h"
+# include "crypto/chachaprng_c.h"
 #endif
 #ifdef CORE_CHACHAPRNG_CPP
-# include "chachaprng_cpp.h"
+# include "crypto/chachaprng_cpp.h"
 #endif
 
-#include "SpookyV2.h"
 
 #include "fsys/fsys.h"
 

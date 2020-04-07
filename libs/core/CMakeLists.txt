@@ -14,40 +14,34 @@ add_library(core STATIC
   core.h
   colorutil.h
   colorutil.cpp
-  crc.h
-  crc.cpp
   endianness.h
   endianness.cpp
   exception.h
   exception.cpp
-  hashfunc.h
-  jh32.h
-  jh32.cpp
-  rg32.h
-  rg32.cpp
   log.h
   log.cpp
   map_impl.h
   map.h
-  matrix.h
-  matrix.cpp
   name.h
   names.h
   name.cpp
   str.h
   vstrci.h
   str.cpp
-  stream.h
-  stream.cpp
-  streamsbit.h
-  streamsbit.cpp
-  streamsex.h
-  streamsex.cpp
-  streamszip.h
-  streamszip.cpp
+  stream/stream.h
+  stream/stream.cpp
+  stream/streamsbit.h
+  stream/streamsbit.cpp
+  stream/streamsex.h
+  stream/streamsex.cpp
+  stream/streamszip.h
+  stream/streamszip.cpp
+  stream/ntvalue.cpp
   mathutil.h
-  vector.h
-  vector.cpp
+  vecmat/vector.h
+  vecmat/vector.cpp
+  vecmat/matrix.h
+  vecmat/matrix.cpp
   wlist.h
   xml.h
   xml.cpp
@@ -57,25 +51,12 @@ add_library(core STATIC
   minipng.cpp
   syslow.h
   syslow.cpp
-  poly1305-donna.c
-  curve25519-donna.c
   prngs.cpp
-  ed25519.c
-  chacha20.c
-  sha2.h
-  sha2.c
-  hmac_sha2.h
-  hmac_sha2.c
-  md5.h
-  md5.cpp
   timsort-impl.h
   timsort.h
   timsort.c
   strtod_plan9.h
   strtod_plan9.c
-  xxhash.h
-  xxhash.cpp
-  ntvalue.cpp
   micropather.h
   micropather.cpp
   cvarsys.h
@@ -83,11 +64,36 @@ add_library(core STATIC
 
   rawtty.cpp
 
-  chachaprng_c.h
-  chachaprng_cpp.h
 
-  SpookyV2.h
-  SpookyV2.c
+  hash/hashfunc.h
+  hash/crc.h
+  hash/crc.cpp
+  hash/SpookyV2.h
+  hash/SpookyV2.c
+  hash/xxhash.h
+  hash/xxhash32.h
+  hash/xxhash.cpp
+  hash/jh32.h
+  hash/jh32.cpp
+  hash/rg32.h
+  hash/rg32.cpp
+  hash/md5.h
+  hash/md5.cpp
+
+  crypto/sha2.h
+  crypto/sha2.c
+  crypto/hmac_sha2.h
+  crypto/hmac_sha2.c
+  crypto/chacha20.h
+  crypto/chacha20.c
+  crypto/poly1305-donna.h
+  crypto/poly1305-donna.c
+  crypto/curve25519-donna.h
+  crypto/curve25519-donna.c
+  crypto/ed25519.h
+  crypto/ed25519.c
+  crypto/chachaprng_c.h
+  crypto/chachaprng_cpp.h
 
   # mimalloc
   mimalloc/mimalloc-atomic.h

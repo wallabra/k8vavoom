@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "core.h"
+#include "../core.h"
 
 #define MAX_WBITS 15
 #define MAX_MEM_LEVEL 9

@@ -105,7 +105,7 @@
 ***************************************/
 /*! Modify the local functions below should you wish to use some other memory routines
 *   for malloc(), free() */
-#include "core.h"
+#include "../core.h"
 //#include <stdlib.h>
 static void* XXH_malloc(size_t s) { return Z_Malloc(s); }
 static void  XXH_free  (void* p)  { Z_Free(p); }

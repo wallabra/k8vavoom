@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "core.h"
+#include "../core.h"
 
 // debug checks
 //#define FRUSTUM_BBOX_CHECKS

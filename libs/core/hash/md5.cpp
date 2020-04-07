@@ -17,7 +17,7 @@
 #include <string.h>   /* for memcpy() */
 
 //#include "md5.h"
-#include "core.h"
+#include "../core.h"
 
 #ifdef VAVOOM_BIG_ENDIAN
 void byteSwap (vuint32 *buf, unsigned words) {

@@ -2,7 +2,10 @@
 // http://www.samiam.org/rg32/
 // RadioGatun 32 class
 // slightly modified by Ketmar // Invisible Vector
-#include "core.h"
+#include "../core.h"
+#ifndef CORE_MORE_HASHES
+# include "rg32.h"
+#endif
 
 
 RG32::RG32 () : finished(true) {

@@ -26,7 +26,7 @@
 //**  typed and named field
 //**
 //**************************************************************************
-#include "core.h"
+#include "../core.h"
 
 //#define VNTVALUE_DEBUG_DUMP
 

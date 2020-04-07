@@ -29,7 +29,7 @@
 //**  CCITT standard CRC used by XMODEM
 //**
 //**************************************************************************
-#include "core.h"
+#include "../core.h"
 
 
 const vuint32 TCRC16::crc16Table[256] = {

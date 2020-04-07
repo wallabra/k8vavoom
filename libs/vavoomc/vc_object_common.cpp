@@ -26,7 +26,7 @@
 #define CORE_CHACHAPRNG_C
 // it must be disabled, so we can use it in VavoomC
 #define CHACHA_C_DISABLE_SSE
-#include "../core/chachaprng_c.h"
+#include "../core/crypto/chachaprng_c.h"
 static_assert(sizeof(ChaChaR) == 105, "invalid `ChaChaR` size");
 
 

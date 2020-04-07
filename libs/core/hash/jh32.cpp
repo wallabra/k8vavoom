@@ -15,7 +15,10 @@
 */
 #include <string.h>
 
-#include "core.h"
+#include "../core.h"
+#ifndef CORE_MORE_HASHES
+# include "jh32.h"
+#endif
 
 
 /*The initial hash value H(0)*/

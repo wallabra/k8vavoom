@@ -1399,7 +1399,9 @@ int main (int argc, char **argv) {
 
   TArray<VStr> shitpplist;
   shitpplist.append("../../libs/core/prngs.h");
-  shitpplist.append("../../libs/core/chachaprng_c.h");
+  shitpplist.append("../../libs/core/crypto/chachaprng_c.h");
+  shitpplist.append("../../libs/core/vecmat/vector.h");
+  shitpplist.append("../../libs/core/vecmat/matrix.h");
   scanSources(shitpplist, "../../source", "*.h", "*.cpp");
   scanSources(shitpplist, "../../libs/vavoomc", "*.h", "*.cpp");
   GLog.Logf("%d shitpplist files found", shitpplist.length());

@@ -5,43 +5,48 @@ SubDirHdrs $(TOP) src liblzma api ;
 
 Library libcore.a :
   src/args.cpp
-  src/chacha20.c
   src/common.cpp
   src/colorutil.cpp
-  src/crc.cpp
-  src/ed25519.c
   src/exception.cpp
-  src/jh32.cpp
   src/log.cpp
   src/mathutil.cpp
-  src/matrix.cpp
-  src/md5.cpp
   src/minipng.cpp
   src/name.cpp
-  src/poly1305-donna.c
-  src/curve25519-donna.c
   src/prngs.cpp
-  src/rg32.cpp
   #src/ryu_d2s.c
   #src/ryu_f2s.c
-  src/sha2.c
-  src/hmac_sha2.c
   src/str.cpp
-  src/stream.cpp
   src/strtod_plan9.c
   src/syslow.cpp
   src/timsort.c
-  src/vector.cpp
   src/xml.cpp
-  src/streamsex.cpp
-  src/streamszip.cpp
-  src/xxhash.cpp
-  src/ntvalue.cpp
   src/cvarsys.cpp
   src/micropather.cpp
   src/zone.cpp
-  src/SpookyV2.c
   src/rawtty.cpp
+
+  src/vecmat/vector.cpp
+  src/vecmat/matrix.cpp
+
+  src/stream/stream.cpp
+  src/stream/streamsex.cpp
+  src/stream/streamszip.cpp
+  src/stream/ntvalue.cpp
+
+  src/hash/crc.cpp
+  src/hash/md5.cpp
+  src/hash/xxhash.cpp
+  src/hash/jh32.cpp
+  src/hash/rg32.cpp
+  src/hash/SpookyV2.c
+
+  src/crypto/sha2.c
+  src/crypto/hmac_sha2.c
+  src/crypto/chacha20.c
+  src/crypto/ed25519.c
+  src/crypto/poly1305-donna.c
+  src/crypto/curve25519-donna.c
+
   # mi-malloc
   src/mimalloc/static.c
   # lzma

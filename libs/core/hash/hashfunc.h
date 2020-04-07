@@ -25,7 +25,7 @@
 #ifndef VAVOOM_CORE_LIB_HASHFUNC
 #define VAVOOM_CORE_LIB_HASHFUNC
 
-#include "common.h"
+#include "../common.h"
 
 
 static VVA_OKUNUSED inline int digitInBase (char ch, int base=10) {

@@ -32,7 +32,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "../libs/core/hashfunc.h"
+// we have to include it first, so map implementation will see our `GetTypeHash()`
+#include "../libs/core/hash/hashfunc.h"
 
 struct __attribute__((packed)) VectorInfo {
   float xy[2];
