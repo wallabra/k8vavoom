@@ -71,10 +71,7 @@ add_library(core STATIC
   hash/SpookyV2.h
   hash/SpookyV2.c
   hash/xxhash.h
-  hash/xxhash32.h
   hash/xxhash.cpp
-  hash/jh32.h
-  hash/jh32.cpp
   hash/rg32.h
   hash/rg32.cpp
   hash/md5.h
@@ -94,6 +91,8 @@ add_library(core STATIC
   crypto/ed25519.c
   crypto/chachaprng_c.h
   crypto/chachaprng_cpp.h
+  crypto/jh32.h
+  crypto/jh32.cpp
 
   # mimalloc
   mimalloc/mimalloc-atomic.h

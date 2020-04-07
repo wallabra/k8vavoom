@@ -2880,7 +2880,7 @@ vuint32 FL_GetNetWadsHash () {
     modlist += "\n";
     ++count;
   }
-  return XXHash32::hash(*modlist, (vint32)modlist.length(), (vuint32)count);
+  return XXH32(*modlist, (vint32)modlist.length(), (vuint32)count);
 }
 
 

@@ -291,7 +291,7 @@ vuint32 SV_GetModListHash () {
   // convert to hex
   VStr shahex = VStr::buf2hex(sha256, SHA256_DIGEST_SIZE);
 #else
-  vuint32 xxhashval = XXHash32::hash(*modlist, (vint32)modlist.length(), (vuint32)wadlist.length());
+  vuint32 xxhashval = XXH32(*modlist, (vint32)modlist.length(), (vuint32)wadlist.length());
   //VStr shahex = VStr::buf2hex(&xxhashval, 4);
   return xxhashval;
 #endif

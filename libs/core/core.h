@@ -114,11 +114,9 @@
 
 #include "hash/hashfunc.h"
 #include "hash/crc.h" // CRC calcuation
-#include "hash/xxhash32.h"
 #include "hash/xxhash.h"
 #include "hash/md5.h"
 #ifdef CORE_MORE_HASHES
-# include "hash/jh32.h"
 # include "hash/rg32.h"
 # include "hash/SpookyV2.h"
 #endif
@@ -129,6 +127,9 @@
 #include "crypto/poly1305-donna.h"
 #include "crypto/ed25519.h"
 #include "crypto/curve25519-donna.h"
+#ifdef CORE_MORE_HASHES
+# include "crypto/jh32.h"
+#endif
 
 #include "lzmadec/LzmaDec.h"
 #include "miniz/miniz.h"

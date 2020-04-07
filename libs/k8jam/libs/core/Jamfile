@@ -36,8 +36,6 @@ Library libcore.a :
   src/hash/crc.cpp
   src/hash/md5.cpp
   src/hash/xxhash.cpp
-  src/hash/jh32.cpp
-  src/hash/rg32.cpp
   src/hash/SpookyV2.c
 
   src/crypto/sha2.c
@@ -46,6 +44,8 @@ Library libcore.a :
   src/crypto/ed25519.c
   src/crypto/poly1305-donna.c
   src/crypto/curve25519-donna.c
+  src/crypto/jh32.cpp
+  src/crypto/rg32.cpp
 
   # mi-malloc
   src/mimalloc/static.c
