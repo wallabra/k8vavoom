@@ -85,7 +85,7 @@ struct VNetUtils {
   static void ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, const void *plaintextdata, vuint32 msglen) noexcept;
 
   // generate ChaCha20 encryption key
-  static void GenerateKey (vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept;
+  static void GenerateKey (vuint8 key[ChaCha20KeySize]) noexcept;
 
   // derive public key from secret one
   static void DerivePublicKey (uint8_t mypk[ChaCha20KeySize], const uint8_t mysk[ChaCha20KeySize]);
@@ -96,11 +96,11 @@ struct VNetUtils {
   // WARNING! cannot do it in-place
   // needs 24 extra bytes (key, nonce, crc)
   // returns new length or -1 on error
-  static int EncryptInfoPacket (void *destbuf, const void *srcbuf, int srclen, const vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept;
+  static int EncryptInfoPacket (void *destbuf, const void *srcbuf, int srclen, const vuint8 key[ChaCha20KeySize]) noexcept;
   // it can decrypt in-place
   // returns new length or -1 on error
   // also sets key
-  static int DecryptInfoPacket (vuint8 key[VNetUtils::ChaCha20KeySize], void *destbuf, const void *srcbuf, int srclen) noexcept;
+  static int DecryptInfoPacket (vuint8 key[ChaCha20KeySize], void *destbuf, const void *srcbuf, int srclen) noexcept;
 };
 
 

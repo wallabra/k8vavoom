@@ -975,9 +975,12 @@ void VNetUtils::ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, const vo
 //  VNetUtils::GenerateKey
 //
 //==========================================================================
-void VNetUtils::GenerateKey (vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept {
+void VNetUtils::GenerateKey (vuint8 key[ChaCha20KeySize]) noexcept {
+  /*
   vuint32 *dest = (vuint32 *)key;
   for (int f = 0; f < ChaCha20KeySize/4; ++f) *dest++ = GenRandomU32();
+  */
+  prng_randombytes(key, ChaCha20KeySize);
 }
 
 
@@ -1014,11 +1017,13 @@ void VNetUtils::DeriveSharedKey (uint8_t sharedk[ChaCha20KeySize], const uint8_t
 //  returns new length or -1 on error
 //
 //==========================================================================
-int VNetUtils::EncryptInfoPacket (void *destbuf, const void *srcbuf, int srclen, const vuint8 key[VNetUtils::ChaCha20KeySize]) noexcept {
+int VNetUtils::EncryptInfoPacket (void *destbuf, const void *srcbuf, int srclen, const vuint8 key[ChaCha20KeySize]) noexcept {
   if (srclen < 0) return -1;
   if (!destbuf) return -1;
   if (srclen > 0 && !srcbuf) return -1;
-  const vuint32 nonce = GenRandomU32();
+  //const vuint32 nonce = GenRandomU32();
+  vuint32 nonce;
+  prng_randombytes(&nonce, sizeof(nonce));
   vuint8 *dest = (vuint8 *)destbuf;
   // copy key
   memcpy(dest, key, ChaCha20KeySize);
@@ -1052,7 +1057,7 @@ int VNetUtils::EncryptInfoPacket (void *destbuf, const void *srcbuf, int srclen,
 //  also sets key
 //
 //==========================================================================
-int VNetUtils::DecryptInfoPacket (vuint8 key[VNetUtils::ChaCha20KeySize], void *destbuf, const void *srcbuf, int srclen) noexcept {
+int VNetUtils::DecryptInfoPacket (vuint8 key[ChaCha20KeySize], void *destbuf, const void *srcbuf, int srclen) noexcept {
   if (srclen < ChaCha20HeaderSize) return -1;
   if (!destbuf) return -1;
   if (!srcbuf) return -1;
