@@ -927,7 +927,7 @@ void VNetUtils::TVMsecs (timeval *dest, int msecs) noexcept {
   if (msecs < 0) msecs = 0;
   dest->tv_sec = msecs/1000;
   dest->tv_usec = msecs%1000;
-  dest->tv_usec *= 100000;
+  dest->tv_usec *= 1000;
 }
 
 

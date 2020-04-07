@@ -42,7 +42,7 @@
 //    vuint8    CCREQ_CONNECT
 //    vuint8    net_protocol_version_hi  NET_PROTOCOL_VERSION_HI
 //    vuint8    net_protocol_version_lo  NET_PROTOCOL_VERSION_LO
-//    bytes[64] passwordSHA512
+//    bytes[32] passwordSHA256
 //    vuint32   modlisthash
 //    vuint16   modlistcount
 //
@@ -179,7 +179,7 @@ public:
       bytes     "K8VAVOOM"
       vuint8    CCREQ_RCON_COMMAND
       vuint16   RCON_PROTO_VERSION
-      bytes[64] secretSHA512
+      bytes[32] secretSHA256
       bytes     command (trailing zero or packet end ends it)
 
     server sends CCREP_RCON_COMMAND:
