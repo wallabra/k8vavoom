@@ -1,3 +1,5 @@
+// MIT or PUBLIC DOMAIN
+// compatible with NaCl
 #ifndef POLY1305_DONNA_H
 #define POLY1305_DONNA_H
 
