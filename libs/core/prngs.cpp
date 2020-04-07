@@ -39,9 +39,9 @@ PCG3264_Ctx g_pcg3264_ctx = 0x853c49e6748fea9bULL;
 //==========================================================================
 void RandomInit () {
   //vint32 rn;
-  //do { ed25519_randombytes(&rn, sizeof(rn)); } while (!rn);
+  //do { prng_randombytes(&rn, sizeof(rn)); } while (!rn);
   //bjprng_raninit(&g_bjprng_ctx, rn);
-  ed25519_randombytes(&g_pcg3264_ctx, sizeof(g_pcg3264_ctx));
+  prng_randombytes(&g_pcg3264_ctx, sizeof(g_pcg3264_ctx));
 }
 
 

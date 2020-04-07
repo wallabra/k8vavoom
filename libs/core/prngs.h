@@ -26,9 +26,9 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 // http://burtleburtle.net/bob/rand/smallprng.html
-struct BJPRNGCtx {
+typedef struct BJPRNGCtx_t {
   vuint32 a, b, c, d;
-};
+} BJPRNGCtx;
 
 #define bjprng_rot(x,k) (((x)<<(k))|((x)>>(32-(k))))
 static inline VVA_OKUNUSED VVA_CHECKRESULT
@@ -78,6 +78,31 @@ static VVA_OKUNUSED inline void splitmix64_seedU32 (vuint64 *state, vuint32 seed
   vuint64 n = res;
   n <<= 32;
   n |= seed;
+  *state = n;
+}
+
+static VVA_OKUNUSED inline void splitmix64_seedU64 (vuint64 *state, vuint32 seed0, vuint32 seed1) {
+  // hashU32
+  vuint32 res = seed0;
+  res -= (res<<6);
+  res ^= (res>>17);
+  res -= (res<<9);
+  res ^= (res<<4);
+  res -= (res<<3);
+  res ^= (res<<10);
+  res ^= (res>>15);
+  vuint64 n = res;
+  n <<= 32;
+  // hashU32
+  res = seed1;
+  res -= (res<<6);
+  res ^= (res>>17);
+  res -= (res<<9);
+  res ^= (res<<4);
+  res -= (res<<3);
+  res ^= (res<<10);
+  res ^= (res>>15);
+  n |= res;
   *state = n;
 }
 
@@ -172,12 +197,12 @@ static VVA_OKUNUSED inline vuint32 pcg32_next (PCG32_Ctx *rng) {
 
 // context of random number generator
 typedef struct {
-  uint32_t randcnt;
-  uint32_t randrsl[ISAAC_RAND_SIZE];
-  uint32_t randmem[ISAAC_RAND_SIZE];
-  uint32_t randa;
-  uint32_t randb;
-  uint32_t randc;
+  vuint32 randcnt;
+  vuint32 randrsl[ISAAC_RAND_SIZE];
+  vuint32 randmem[ISAAC_RAND_SIZE];
+  vuint32 randa;
+  vuint32 randb;
+  vuint32 randc;
 } ISAAC_Ctx;
 
 
@@ -203,11 +228,11 @@ typedef struct {
 
 
 static VVA_OKUNUSED void ISAAC_nextblock (ISAAC_Ctx *ctx) {
-  uint32_t x, y, *m, *m2, *mend;
-  uint32_t *mm = ctx->randmem;
-  uint32_t *r = ctx->randrsl;
-  uint32_t a = ctx->randa;
-  uint32_t b = ctx->randb+(++ctx->randc);
+  vuint32 x, y, *m, *m2, *mend;
+  vuint32 *mm = ctx->randmem;
+  vuint32 *r = ctx->randrsl;
+  vuint32 a = ctx->randa;
+  vuint32 b = ctx->randb+(++ctx->randc);
   for (m = mm, mend = m2 = m+(ISAAC_RAND_SIZE/2u); m < mend; ) {
     ISAAC_step(a<<13, a, b, mm, m, m2, r, x);
     ISAAC_step((a&0xffffffffu) >>6 , a, b, mm, m, m2, r, x);
@@ -227,9 +252,9 @@ static VVA_OKUNUSED void ISAAC_nextblock (ISAAC_Ctx *ctx) {
 
 // if (flag==TRUE), then use the contents of randrsl[0..ISAAC_RAND_SIZE-1] to initialize mm[]
 static VVA_OKUNUSED void ISAAC_init (ISAAC_Ctx *ctx, unsigned flag) {
-  uint32_t a, b, c, d, e, f, g, h;
-  uint32_t *m;
-  uint32_t *r;
+  vuint32 a, b, c, d, e, f, g, h;
+  vuint32 *m;
+  vuint32 *r;
 
   ctx->randa = ctx->randb = ctx->randc = 0;
   m = ctx->randmem;
@@ -282,11 +307,11 @@ static VVA_OKUNUSED void ISAAC_init (ISAAC_Ctx *ctx, unsigned flag) {
 
 
 // call to retrieve a single 32-bit random value
-static VVA_OKUNUSED inline uint32_t ISAAC_next (ISAAC_Ctx *ctx) {
+static VVA_OKUNUSED inline vuint32 ISAAC_next (ISAAC_Ctx *ctx) {
   return
    ctx->randcnt-- ?
-     (uint32_t)ctx->randrsl[ctx->randcnt] :
-     (ISAAC_nextblock(ctx), ctx->randcnt = ISAAC_RAND_SIZE-1, (uint32_t)ctx->randrsl[ctx->randcnt]);
+     (vuint32)ctx->randrsl[ctx->randcnt] :
+     (ISAAC_nextblock(ctx), ctx->randcnt = ISAAC_RAND_SIZE-1, (vuint32)ctx->randrsl[ctx->randcnt]);
 }
 
 

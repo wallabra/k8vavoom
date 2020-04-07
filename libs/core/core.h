@@ -107,6 +107,7 @@
 #include "mimalloc/mimalloc.h"
 
 #include "mythreadlite.h"
+#include "crypto/prng_randombytes.h"
 
 #include "common.h" // common types and definitions
 #include "strtod_plan9.h"

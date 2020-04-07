@@ -77,6 +77,8 @@ add_library(core STATIC
   hash/md5.h
   hash/md5.cpp
 
+  crypto/prng_randombytes.h
+  crypto/prng_randombytes.c
   crypto/sha2.h
   crypto/sha2.c
   crypto/hmac_sha2.h

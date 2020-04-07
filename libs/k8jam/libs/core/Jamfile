@@ -38,6 +38,7 @@ Library libcore.a :
   src/hash/xxhash.cpp
   src/hash/SpookyV2.c
 
+  src/crypto/prng_randombytes.c
   src/crypto/sha2.c
   src/crypto/hmac_sha2.c
   src/crypto/chacha20.c
