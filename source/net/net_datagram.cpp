@@ -651,10 +651,14 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   if (newsock == -1) return nullptr;
 
   vuint8 origkey[VNetUtils::ChaCha20KeySize];
+  vuint8 srvkey[VNetUtils::ChaCha20KeySize]; // this is what we should receive from the server
+  bool replyWithServerKey = false;
   VNetUtils::GenerateKey(origkey);
+  VNetUtils::DerivePublicKey(srvkey, origkey);
 
   sock = new VDatagramSocket(this);
-  memcpy(sock->AuthKey, origkey, VNetUtils::ChaCha20KeySize);
+  memcpy(sock->AuthKey, srvkey, VNetUtils::ChaCha20KeySize);
+  memcpy(sock->ClientKey, origkey, VNetUtils::ChaCha20KeySize);
   sock->LanSocket = newsock;
   sock->LanDriver = Drv;
   sock->Addr = sendaddr;
@@ -675,7 +679,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
     VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
     WriteGameSignature(MsgOut);
-    // comment
+    // command
     TmpByte = CCREQ_CONNECT;
     MsgOut << TmpByte;
     // protocol version
@@ -719,6 +723,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
 
     bool aborted = false;
     vuint8 key[VNetUtils::ChaCha20KeySize];
+    replyWithServerKey = false;
     do {
       ret = Drv->Read(newsock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr);
       if (ret == -2) ret = 0; // "no message" means "message with zero size"
@@ -740,11 +745,15 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
         }
 
         // check if we got the right key
-        if (memcmp(key, origkey, VNetUtils::ChaCha20KeySize) != 0) {
+        // origkey may be used for rejection
+        if (memcmp(key, srvkey, VNetUtils::ChaCha20KeySize) != 0 &&
+            memcmp(key, origkey, VNetUtils::ChaCha20KeySize) != 0)
+        {
           delete msg;
           ret = 0;
           continue;
         }
+        replyWithServerKey = (memcmp(key, srvkey, VNetUtils::ChaCha20KeySize) == 0);
 
         if (!CheckGameSignature(*msg)) {
           ret = 0;
@@ -805,6 +814,14 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
   }
 
   if (msgtype != CCREP_ACCEPT) {
+    reason = "Bad response";
+    GCon->Logf(NAME_Error, "Connection failure: %s", *reason);
+    VStr::Cpy(Net->ReturnReason, *reason);
+    goto ErrorReturn;
+  }
+
+  // check for good key
+  if (!replyWithServerKey) {
     reason = "Bad response";
     GCon->Logf(NAME_Error, "Connection failure: %s", *reason);
     VStr::Cpy(Net->ReturnReason, *reason);
@@ -1179,7 +1196,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     VDatagramSocket *s = (VDatagramSocket *)as;
     if (s->Invalid) continue;
     // if we already have this client, resend accept packet, and replace client address
-    if (memcmp(clientKey, s->AuthKey, VNetUtils::ChaCha20KeySize) == 0) {
+    if (memcmp(clientKey, s->ClientKey, VNetUtils::ChaCha20KeySize) == 0) {
       if (Net->GetNetTime()-s->ConnectTime < 2.0) {
         GCon->Logf(NAME_DevNet, "CONN: duplicate connection request from %s (this is ok)", Drv->AddrToString(&clientaddr));
         s->Addr = clientaddr; // update address
@@ -1233,6 +1250,11 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
   GCon->Logf(NAME_DevNet, "new client from %s (connecting back)", Drv->AddrToString(&clientaddr));
 
+  // update client key
+  vuint8 srvKey[VNetUtils::ChaCha20KeySize];
+  VNetUtils::DerivePublicKey(srvKey, clientKey);
+  memcpy(clientKey, srvKey, sizeof(clientKey));
+
   // allocate new "listening" network socket
   newsock = Drv->OpenListenSocket(0);
   if (newsock == -1) return nullptr;
@@ -1240,7 +1262,8 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   // allocate a VSocket
   // everything is allocated, just fill in the details
   sock = new VDatagramSocket(this);
-  memcpy(sock->AuthKey, clientKey, VNetUtils::ChaCha20KeySize);
+  memcpy(sock->AuthKey, srvKey, VNetUtils::ChaCha20KeySize);
+  memcpy(sock->ClientKey, clientKey, VNetUtils::ChaCha20KeySize);
   sock->LanSocket = newsock;
   sock->LanDriver = Drv;
   sock->Addr = clientaddr;

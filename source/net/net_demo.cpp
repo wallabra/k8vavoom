@@ -206,6 +206,7 @@ VDemoRecordingSocket::VDemoRecordingSocket ()
   : VSocketPublic()
 {
   VNetUtils::GenerateKey(AuthKey);
+  memcpy(ClientKey, AuthKey, sizeof(ClientKey));
 }
 
 

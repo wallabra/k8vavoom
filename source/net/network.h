@@ -88,10 +88,10 @@ struct VNetUtils {
   static void GenerateKey (vuint8 key[ChaCha20KeySize]) noexcept;
 
   // derive public key from secret one
-  static void DerivePublicKey (uint8_t mypk[ChaCha20KeySize], const uint8_t mysk[ChaCha20KeySize]);
+  static void DerivePublicKey (vuint8 mypk[ChaCha20KeySize], const vuint8 mysk[ChaCha20KeySize]);
 
   // derive shared secret from our secret and their public
-  static void DeriveSharedKey (uint8_t sharedk[ChaCha20KeySize], const uint8_t mysk[ChaCha20KeySize], const uint8_t theirpk[ChaCha20KeySize]);
+  static void DeriveSharedKey (vuint8 sharedk[ChaCha20KeySize], const vuint8 mysk[ChaCha20KeySize], const vuint8 theirpk[ChaCha20KeySize]);
 
   // WARNING! cannot do it in-place
   // needs 24 extra bytes (key, nonce, crc)
@@ -109,7 +109,7 @@ class VNetContext;
 // sent on handshake
 enum {
   NET_PROTOCOL_VERSION_HI = 7,
-  NET_PROTOCOL_VERSION_LO = 12,
+  NET_PROTOCOL_VERSION_LO = 13,
 };
 
 enum {
@@ -146,8 +146,6 @@ enum EChannelIndex {
   CHANIDX_Level,
   CHANIDX_ObjectMap,
   CHANIDX_ThinkersStart,
-  //
-  CHANIDX_KnownBmpMask = 0x1111u,
 };
 
 
@@ -172,7 +170,10 @@ class VMessageOut;
 class VSocketPublic : public VInterface {
 public:
   VStr Address;
+  // this is the key we'll use for communication
   vuint8 AuthKey[VNetUtils::ChaCha20KeySize];
+  // this is the key we got from the client
+  vuint8 ClientKey[VNetUtils::ChaCha20KeySize];
 
   double ConnectTime = 0;
   double LastMessageTime = 0;

@@ -161,7 +161,9 @@ VSocket *VLoopbackDriver::Connect (const char *host) {
   VNetUtils::GenerateKey(origkey);
 
   memcpy(loop_client->AuthKey, origkey, VNetUtils::ChaCha20KeySize);
+  memcpy(loop_client->ClientKey, origkey, VNetUtils::ChaCha20KeySize);
   memcpy(loop_server->AuthKey, origkey, VNetUtils::ChaCha20KeySize);
+  memcpy(loop_server->ClientKey, origkey, VNetUtils::ChaCha20KeySize);
 
   loop_client->OtherSock = loop_server;
   loop_server->OtherSock = loop_client;
