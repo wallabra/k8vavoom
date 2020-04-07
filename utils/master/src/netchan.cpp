@@ -355,188 +355,151 @@ static void InitRandom () noexcept {
 // SHA256
 //
 //**************************************************************************
-#define SHA256_BLOCK_SIZE  (512/8)
+#define SHA256PD_HASH_SIZE  (32u)
 
-struct sha256_ctx {
-  uint32_t tot_len;
-  uint32_t len;
-  uint8_t block[2*SHA256_BLOCK_SIZE];
-  uint32_t h[8];
-};
+#define SHA256PD_CHUNK_SIZE     (64u)
+#define SHA256PD_TOTALLEN_SIZE  (8u)
+#define SHA256PD_HACCUM_SIZE    (8u)
 
-static const uint32_t sha256_h0[8] =
-            {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-             0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
+/* sha256 context */
+typedef struct sha256pd_ctx_t {
+  uint8_t chunk[SHA256PD_CHUNK_SIZE]; /* 512-bit chunks is what we will operate on */
+  size_t chunk_used; /* numbed of bytes used in the current chunk */
+  size_t total_len; /* accumulator */
+  uint32_t h[SHA256PD_HACCUM_SIZE]; /* current hash value */
+} sha256pd_ctx;
 
-static const uint32_t sha256_k[64] =
-            {0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
-             0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-             0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
-             0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-             0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
-             0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-             0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
-             0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-             0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
-             0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-             0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
-             0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-             0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
-             0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-             0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
-             0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
+static inline uint32_t sha26pd_rra (uint32_t value, unsigned int count) { return value>>count|value<<(32-count); }
 
-#define UNPACK32_SHA256(x, str)                      \
-{                                             \
-    *((str) + 3) = (uint8_t) ((x)      );       \
-    *((str) + 2) = (uint8_t) ((x) >>  8);       \
-    *((str) + 1) = (uint8_t) ((x) >> 16);       \
-    *((str) + 0) = (uint8_t) ((x) >> 24);       \
-}
+static void sha256pd_round (uint32_t h[SHA256PD_HACCUM_SIZE], const uint8_t *chunk) {
+  const uint32_t k[64] = {
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+  };
 
-#define PACK32_SHA256(str, x)                        \
-{                                             \
-    *(x) =   ((uint32_t) *((str) + 3)      )    \
-           | ((uint32_t) *((str) + 2) <<  8)    \
-           | ((uint32_t) *((str) + 1) << 16)    \
-           | ((uint32_t) *((str) + 0) << 24);   \
-}
-
-#define SHFR_SHA256(x, n)    (x >> n)
-#define ROTR_SHA256(x, n)   ((x >> n) | (x << ((sizeof(x) << 3) - n)))
-#define CH_SHA256(x, y, z)  ((x & y) ^ (~x & z))
-#define MAJ_SHA256(x, y, z) ((x & y) ^ (x & z) ^ (y & z))
-
-#define SHA256_F1(x) (ROTR_SHA256(x,  2) ^ ROTR_SHA256(x, 13) ^ ROTR_SHA256(x, 22))
-#define SHA256_F2(x) (ROTR_SHA256(x,  6) ^ ROTR_SHA256(x, 11) ^ ROTR_SHA256(x, 25))
-#define SHA256_F3(x) (ROTR_SHA256(x,  7) ^ ROTR_SHA256(x, 18) ^ SHFR_SHA256(x,  3))
-#define SHA256_F4(x) (ROTR_SHA256(x, 17) ^ ROTR_SHA256(x, 19) ^ SHFR_SHA256(x, 10))
-
-#define SHA256_SCR(i)                         \
-{                                             \
-    w[i] =  SHA256_F4(w[i -  2]) + w[i -  7]  \
-          + SHA256_F3(w[i - 15]) + w[i - 16]; \
-}
-
-static void sha256_transf(sha256_ctx *ctx, const uint8_t *message,
-                   uint32_t block_nb)
-{
-    uint32_t w[64];
-    uint32_t wv[8];
-    uint32_t t1, t2;
-    const uint8_t *sub_block;
-    int i, j;
-
-    for (i = 0; i < (int) block_nb; i++) {
-        sub_block = message + (i << 6);
-
-        for (j = 0; j < 16; j++) {
-            PACK32_SHA256(&sub_block[j << 2], &w[j]);
-        }
-
-        for (j = 16; j < 64; j++) {
-            SHA256_SCR(j);
-        }
-
-        for (j = 0; j < 8; j++) {
-            wv[j] = ctx->h[j];
-        }
-
-        for (j = 0; j < 64; j++) {
-            t1 = wv[7] + SHA256_F2(wv[4]) + CH_SHA256(wv[4], wv[5], wv[6])
-                + sha256_k[j] + w[j];
-            t2 = SHA256_F1(wv[0]) + MAJ_SHA256(wv[0], wv[1], wv[2]);
-            wv[7] = wv[6];
-            wv[6] = wv[5];
-            wv[5] = wv[4];
-            wv[4] = wv[3] + t1;
-            wv[3] = wv[2];
-            wv[2] = wv[1];
-            wv[1] = wv[0];
-            wv[0] = t1 + t2;
-        }
-
-        for (j = 0; j < 8; j++) {
-            ctx->h[j] += wv[j];
-        }
+  uint32_t ah[SHA256PD_HACCUM_SIZE];
+  uint32_t w[16];
+  memcpy(ah, h, sizeof(ah));
+  for (unsigned i = 0; i < 4; ++i) {
+    for (unsigned j = 0; j < 16; j++) {
+      if (i == 0) {
+        w[j] = (uint32_t)(chunk[0]<<24)|((uint32_t)chunk[1]<<16)|((uint32_t)chunk[2]<<8)|(uint32_t)chunk[3];
+        chunk += 4;
+      } else {
+        const uint32_t s0 = sha26pd_rra(w[(j+1)&0xf], 7)^sha26pd_rra(w[(j+1)&0xf], 18)^(w[(j+1)&0xf]>>3);
+        const uint32_t s1 = sha26pd_rra(w[(j+14)&0xf], 17)^sha26pd_rra(w[(j+14)&0xf], 19)^(w[(j+14)&0xf]>>10);
+        w[j] = w[j]+s0+w[(j+9)&0xf]+s1;
+      }
+      const uint32_t s1 = sha26pd_rra(ah[4], 6)^sha26pd_rra(ah[4], 11)^sha26pd_rra(ah[4], 25);
+      const uint32_t ch = (ah[4]&ah[5])^(~ah[4]&ah[6]);
+      const uint32_t temp1 = ah[7]+s1+ch+k[i<<4|j]+w[j];
+      const uint32_t s0 = sha26pd_rra(ah[0], 2)^sha26pd_rra(ah[0], 13)^sha26pd_rra(ah[0], 22);
+      const uint32_t maj = (ah[0]&ah[1])^(ah[0]&ah[2])^(ah[1]&ah[2]);
+      const uint32_t temp2 = s0+maj;
+      ah[7] = ah[6];
+      ah[6] = ah[5];
+      ah[5] = ah[4];
+      ah[4] = ah[3]+temp1;
+      ah[3] = ah[2];
+      ah[2] = ah[1];
+      ah[1] = ah[0];
+      ah[0] = temp1+temp2;
     }
+  }
+  for (unsigned i = 0; i < SHA256PD_HACCUM_SIZE; ++i) h[i] += ah[i];
 }
 
-void sha256_init(sha256_ctx *ctx)
-{
-    for (int i = 0; i < 8; i++) {
-        ctx->h[i] = sha256_h0[i];
+static void sha256pd_init (sha256pd_ctx *state) {
+  /* initial hash values (first 32 bits of the fractional parts of the square roots of the first 8 primes 2..19) */
+  const uint32_t hinit[SHA256PD_HACCUM_SIZE] = {0x6a09e667u, 0xbb67ae85u, 0x3c6ef372u, 0xa54ff53au, 0x510e527fu, 0x9b05688cu, 0x1f83d9abu, 0x5be0cd19u};
+  state->chunk_used = 0;
+  state->total_len = 0;
+  memcpy(state->h, hinit, sizeof(hinit));
+}
+
+
+static void sha256pd_update (sha256pd_ctx *state, const void *input, size_t len) {
+  if (!len) return;
+  const uint8_t *src = (const uint8_t *)input;
+  state->total_len += len;
+  /* complete current chunk (if it is not empty) */
+  if (state->chunk_used) {
+    const size_t cleft = SHA256PD_CHUNK_SIZE-state->chunk_used;
+    const size_t ccpy = (len <= cleft ? len : cleft);
+    memcpy(state->chunk+state->chunk_used, src, ccpy);
+    state->chunk_used += ccpy;
+    src += ccpy;
+    len -= ccpy;
+    /* process chunk if it is full */
+    if (state->chunk_used == SHA256PD_CHUNK_SIZE) {
+      sha256pd_round(state->h, state->chunk);
+      state->chunk_used = 0;
     }
-
-    ctx->len = 0;
-    ctx->tot_len = 0;
+  }
+  /* process full chunks, if there are any */
+  while (len >= SHA256PD_CHUNK_SIZE) {
+    sha256pd_round(state->h, src);
+    src += SHA256PD_CHUNK_SIZE;
+    len -= SHA256PD_CHUNK_SIZE;
+  }
+  /* save data for next update */
+  if (len) {
+    /* if we came here, we have no accumulated chunk data */
+    memcpy(state->chunk, src, len);
+    state->chunk_used = len;
+  }
 }
 
-void sha256_update(sha256_ctx *ctx, const void *messagep,
-                   size_t lenbig)
-{
-    uint32_t block_nb;
-    uint32_t new_len, rem_len, tmp_len;
-    const uint8_t *shifted_message;
-    const uint8_t *message = (const uint8_t *)messagep;
-    uint32_t len = (uint32_t)lenbig;
-
-    tmp_len = SHA256_BLOCK_SIZE - ctx->len;
-    rem_len = len < tmp_len ? len : tmp_len;
-
-    memcpy(&ctx->block[ctx->len], message, rem_len);
-
-    if (ctx->len + len < SHA256_BLOCK_SIZE) {
-        ctx->len += len;
-        return;
-    }
-
-    new_len = len - rem_len;
-    block_nb = new_len / SHA256_BLOCK_SIZE;
-
-    shifted_message = message + rem_len;
-
-    sha256_transf(ctx, ctx->block, 1);
-    sha256_transf(ctx, shifted_message, block_nb);
-
-    rem_len = new_len % SHA256_BLOCK_SIZE;
-
-    memcpy(ctx->block, &shifted_message[block_nb << 6],
-           rem_len);
-
-    ctx->len = rem_len;
-    ctx->tot_len += (block_nb + 1) << 6;
+static void sha256pd_finish (const sha256pd_ctx *state, uint8_t hash[SHA256PD_HASH_SIZE]) {
+  uint8_t tmpchunk[SHA256PD_CHUNK_SIZE]; /* we need temporary workspace */
+  uint32_t hh[SHA256PD_HACCUM_SIZE]; /* we don't want to destroy our current hash accumulator */
+  memcpy(hh, state->h, sizeof(hh));
+  size_t pos = state->chunk_used;
+  /* we need to put 0x80 and 8-byte length */
+  if (pos) memcpy(tmpchunk, state->chunk, pos);
+  /* put trailing bit (there is always room for at least one byte in the current chunk) */
+  tmpchunk[pos++] = 0x80;
+  /* clear chunk padding */
+  if (pos < SHA256PD_CHUNK_SIZE) memset(tmpchunk+pos, 0, SHA256PD_CHUNK_SIZE-pos);
+  /* if we don't have enough room for size, flush current chunk */
+  if (SHA256PD_CHUNK_SIZE-pos < SHA256PD_TOTALLEN_SIZE) {
+    /* flush it */
+    sha256pd_round(hh, tmpchunk);
+    /* clear chunk, so we may put the length there */
+    memset(tmpchunk, 0, SHA256PD_CHUNK_SIZE);
+  }
+  /* put length (in bits) */
+  /* don't multiply it, so it won't overflow on 32-bit systems */
+  size_t len = state->total_len;
+  tmpchunk[SHA256PD_CHUNK_SIZE-1u] = (uint8_t)((len<<3)&0xffu);
+  len >>= 5;
+  for (unsigned i = 0; i < SHA256PD_TOTALLEN_SIZE-1u; ++i) {
+    tmpchunk[SHA256PD_CHUNK_SIZE-2u-i] = (uint8_t)(len&0xffu);
+    len >>= 8;
+  }
+  /* final round */
+  sha256pd_round(hh, tmpchunk);
+  /* produce the final big-endian hash value */
+  for (unsigned i = 0; i < 8; ++i) {
+    hash[(i<<2)+0] = (uint8_t)((hh[i]>>24)&0xffu);
+    hash[(i<<2)+1] = (uint8_t)((hh[i]>>16)&0xffu);
+    hash[(i<<2)+2] = (uint8_t)((hh[i]>>8)&0xffu);
+    hash[(i<<2)+3] = (uint8_t)(hh[i]&0xffu);
+  }
 }
 
-void sha256_final(sha256_ctx *ctx, void *digestp)
-{
-    uint32_t block_nb;
-    uint32_t pm_len;
-    uint32_t len_b;
-    uint8_t *digest = (uint8_t *)digestp;
 
-    block_nb = (1 + ((SHA256_BLOCK_SIZE - 9)
-                     < (ctx->len % SHA256_BLOCK_SIZE)));
-
-    len_b = (ctx->tot_len + ctx->len) << 3;
-    pm_len = block_nb << 6;
-
-    memset(ctx->block + ctx->len, 0, pm_len - ctx->len);
-    ctx->block[ctx->len] = 0x80;
-    UNPACK32_SHA256(len_b, ctx->block + pm_len - 4);
-
-    sha256_transf(ctx, ctx->block, block_nb);
-
-    for (int i = 0 ; i < 8; i++) {
-        UNPACK32_SHA256(ctx->h[i], &digest[i << 2]);
-    }
-}
-
-static void sha256_hashBuffer (VNetChanSocket::SHA256Digest hash, const void *in, size_t inlen) {
-  sha256_ctx ctx;
-  sha256_init(&ctx);
-  sha256_update(&ctx, in, inlen);
-  sha256_final(&ctx, hash);
+static void sha256pd_buf (VNetChanSocket::SHA256Digest hash, const void *in, size_t inlen) {
+  sha256pd_ctx state;
+  sha256pd_init(&state);
+  sha256pd_update(&state, in, inlen);
+  sha256pd_finish(&state, hash);
 }
 
 
@@ -545,7 +508,7 @@ static void sha256_hashBuffer (VNetChanSocket::SHA256Digest hash, const void *in
 // CP25519 math
 //
 //**************************************************************************
-#define C25519_KEY_SIZE  32
+#define C25519_KEY_SIZE  (32)
 
 static inline void unpack25519 (int64_t o[16], const uint8_t *n) {
   for (unsigned i = 0; i < 16; ++i) o[i]=n[2*i]+((int64_t)n[2*i+1]<<8);
@@ -1002,7 +965,7 @@ void VNetChanSocket::TVMsecs (timeval *dest, int msecs) noexcept {
   if (msecs < 0) msecs = 0;
   dest->tv_sec = msecs/1000;
   dest->tv_usec = msecs%1000;
-  dest->tv_usec *= 100000;
+  dest->tv_usec *= 1000;
 }
 
 
@@ -1222,9 +1185,9 @@ void VNetChanSocket::ChaCha20XCrypt (ChaCha20Ctx *ctx, void *ciphertextdata, con
 //
 //==========================================================================
 VNetChanSocket::SHA256Context VNetChanSocket::SHA256Init () noexcept {
-  sha256_ctx *ctx = (sha256_ctx *)malloc(sizeof(sha256_ctx));
+  sha256pd_ctx *ctx = (sha256pd_ctx *)malloc(sizeof(sha256pd_ctx));
   if (!ctx) return nullptr;
-  sha256_init(ctx);
+  sha256pd_init(ctx);
   return (SHA256Context)ctx;
 }
 
@@ -1236,7 +1199,7 @@ VNetChanSocket::SHA256Context VNetChanSocket::SHA256Init () noexcept {
 //==========================================================================
 void VNetChanSocket::SHA256Update (VNetChanSocket::SHA256Context ctx, const void *in, size_t inlen) noexcept {
   if (!ctx) return;
-  sha256_update((sha256_ctx *)ctx, in, inlen);
+  sha256pd_update((sha256pd_ctx *)ctx, in, inlen);
 }
 
 
@@ -1249,7 +1212,7 @@ void VNetChanSocket::SHA256Update (VNetChanSocket::SHA256Context ctx, const void
 //==========================================================================
 void VNetChanSocket::SHA256Finish (VNetChanSocket::SHA256Context ctx, VNetChanSocket::SHA256Digest hash) noexcept {
   if (!ctx) { if (hash) memset(hash, 0, SHA256DigestSize); return; }
-  if (hash) sha256_final((sha256_ctx *)ctx, hash);
+  if (hash) sha256pd_finish((sha256pd_ctx *)ctx, hash);
   free(ctx);
 }
 
@@ -1260,7 +1223,7 @@ void VNetChanSocket::SHA256Finish (VNetChanSocket::SHA256Context ctx, VNetChanSo
 //
 //==========================================================================
 void VNetChanSocket::SHA256Buffer (VNetChanSocket::SHA256Digest hash, const void *in, size_t inlen) noexcept {
-  sha256_hashBuffer(hash, in, inlen);
+  sha256pd_buf(hash, in, inlen);
 }
 
 
