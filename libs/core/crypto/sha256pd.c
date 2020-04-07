@@ -247,18 +247,18 @@ static void sha256pd_randombytes_init (isaacp_state *rng) {
     #if defined(__linux__)
     struct timespec ts;
     if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-      smxseed0 = ts.tv_sec;
+      smxseed0 = ts.tv_sec^ts.tv_nsec;
     } else {
       struct timeval tp;
       struct timezone tzp;
       gettimeofday(&tp, &tzp);
-      smxseed0 = ts.tv_sec;
+      smxseed0 = tp.tv_sec^tp.tv_usec;
     }
     #else
     struct timeval tp;
     struct timezone tzp;
     gettimeofday(&tp, &tzp);
-    smxseed0 = ts.tv_sec;
+    smxseed0 = tp.tv_sec^tp.tv_usec;
     #endif
     static __thread isaacp_state rngtmp;
     uint64_t smx;
