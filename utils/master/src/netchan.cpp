@@ -486,14 +486,15 @@ static void sha256pd_buf (VNetChanSocket::SHA256Digest hash, const void *in, siz
 #define C25519_KEY_SIZE  (32)
 
 static inline void unpack25519 (int64_t o[16], const uint8_t *n) {
-  for (unsigned i = 0; i < 16; ++i) o[i]=n[2*i]+((int64_t)n[2*i+1]<<8);
+  for (unsigned i = 0; i < 16; ++i) o[i] = n[2*i]+((int64_t)n[2*i+1]<<8);
   o[15] &= 0x7fff;
 }
 
-static inline void sel25519 (int64_t p[16], int64_t q[16], int b) {
-  const int64_t c = ~(b-1);
+// `b` is either 0 or 1
+static inline void sel25519 (int64_t p[16], int64_t q[16], uint32_t b) {
+  const uint32_t c = ~(b-1u);
   for (unsigned i = 0; i < 16; ++i) {
-    const int64_t t = c&(p[i]^q[i]);
+    const uint32_t t = c&((uint32_t)(p[i]&0xffffu)^(uint32_t)(q[i]&0xffffu));
     p[i] ^= t;
     q[i] ^= t;
   }
@@ -509,7 +510,6 @@ static inline void car25519 (int64_t o[16]) {
 }
 
 static void pack25519 (uint8_t *o, const int64_t n[16]) {
-  int b;
   int64_t m[16];
   int64_t t[16];
   for (unsigned i = 0; i < 16; ++i) t[i] = n[i];
@@ -523,9 +523,9 @@ static void pack25519 (uint8_t *o, const int64_t n[16]) {
       m[i-1] &= 0xffff;
     }
     m[15] = t[15]-0x7fff-((m[14]>>16)&1);
-    b = (m[15]>>16)&1;
+    const uint32_t b = (m[15]>>16)&1;
     m[14] &= 0xffff;
-    sel25519(t, m, 1-b);
+    sel25519(t, m, 1u-b);
   }
   for (unsigned i = 0; i < 16; ++i) {
     o[2*i] = t[i]&0xff;
@@ -570,7 +570,6 @@ static void crypto_scalarmult (uint8_t q[C25519_KEY_SIZE], const uint8_t n[C2551
 
   uint8_t z[32];
   int64_t x[80];
-  //int64_t r, i;
   int64_t a[16];
   int64_t b[16];
   int64_t c[16];
@@ -587,7 +586,7 @@ static void crypto_scalarmult (uint8_t q[C25519_KEY_SIZE], const uint8_t n[C2551
   }
   a[0] = d[0] = 1;
   for (int i = 254; i >= 0; --i) {
-    const int r = (z[i>>3]>>(i&7))&1;
+    const uint32_t r = (z[i>>3]>>(i&7))&1;
     sel25519(a, b, r);
     sel25519(c, d, r);
     A(e, a, c);
