@@ -2,9 +2,18 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_definitions(-DVAVOOM_DEBUG_BUILD=1)
 endif()
 
-add_library(core STATIC
-  mimalloc/mimalloc.h
+if(WITH_MIMALLOC)
+  set(CORELIB_MIMALLOC_SOURCES
+    mimalloc/mimalloc.h
+    mimalloc/mimalloc-atomic.h
+    mimalloc/mimalloc-internal.h
+    mimalloc/mimalloc-types.h
+    mimalloc/mimalloc.h
+    mimalloc/static.c
+  )
+endif()
 
+add_library(core STATIC
   propp.h
   args.cpp
   args.h
@@ -97,11 +106,7 @@ add_library(core STATIC
   crypto/jh32.cpp
 
   # mimalloc
-  mimalloc/mimalloc-atomic.h
-  mimalloc/mimalloc-internal.h
-  mimalloc/mimalloc-types.h
-  mimalloc/mimalloc.h
-  mimalloc/static.c
+  ${CORELIB_MIMALLOC_SOURCES}
 
   # lzma decoder
   lzmadec/LzmaDec.h
