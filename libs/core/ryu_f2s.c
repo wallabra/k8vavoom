@@ -196,7 +196,9 @@ static inline uint32_t mulShift (const uint32_t m, const uint64_t factor, const 
 #else // RYU_32_BIT_PLATFORM
   const uint64_t sum = (bits0>>32)+bits1;
   const uint64_t shiftedSum = sum>>(shift-32);
+#ifdef UINT32_MAX // fuck android
   assert(shiftedSum <= UINT32_MAX);
+#endif
   return (uint32_t)shiftedSum;
 #endif // RYU_32_BIT_PLATFORM
 }
