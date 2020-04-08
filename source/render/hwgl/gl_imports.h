@@ -30,6 +30,11 @@
 
 #if defined(VV_GLDECLS)
 
+// fix GL4ES headers
+#ifndef GL_ZERO_TO_ONE
+#  define GL_ZERO_TO_ONE          0x935F
+#endif
+
 // ARB_multitexture
 #ifndef GL_ARB_multitexture
 #define GL_TEXTURE0_ARB           0x84C0

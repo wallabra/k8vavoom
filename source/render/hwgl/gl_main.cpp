@@ -654,6 +654,10 @@ void VOpenGLDrawer::InitResolution () {
     for (int i = 0; i < Exts.Num(); ++i) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
   }
 
+#ifdef GL4ES_NO_CONSTRUCTOR
+  // fake version for GL4ES
+  GLint major = 2, minor = 1;
+#else
   GLint major = 30000, minor = 30000;
   glGetIntegerv(GL_MAJOR_VERSION, &major);
   glGetIntegerv(GL_MINOR_VERSION, &minor);
@@ -673,6 +677,7 @@ void VOpenGLDrawer::InitResolution () {
   } else {
     GCon->Logf(NAME_Init, "OpenGL v%d.%d found", major, minor);
   }
+#endif
 
   if (!shittyGPUCheckDone) {
     shittyGPUCheckDone = true;
