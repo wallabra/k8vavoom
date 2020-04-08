@@ -12,7 +12,7 @@
 # include <errno.h>
 # include <time.h>
 # include <sys/time.h>
-# if defined(__linux__)
+# if defined(__linux__) && !defined(ANDROID)
 #  include <sys/random.h>
 # endif
 #endif
@@ -187,7 +187,7 @@ static void randombytes_init (isaacp_state *rng) {
   RtlGenRandomX(xstate, sizeof(xstate));
   #else
   size_t pos = 0;
-  #if defined(__linux__)
+  #if defined(__linux__) && !defined(ADNROID)
   /* try to use kernel syscall first */
   while (pos < sizeof(xstate)) {
     /* reads up to 256 bytes should not be interrupted by signals */
