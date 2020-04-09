@@ -31,7 +31,7 @@
 # include <errno.h>
 # define socklen_t  int
 #else
-# ifndef __SWITCH__
+# if !defined(__SWITCH__) && !defined(ANDROID)
 #  include <ifaddrs.h>
 # endif
 # include <sys/types.h>
@@ -57,7 +57,6 @@ static const char *cli_IP = nullptr;
 
 static VCvarB net_dbg_dump_udp_inbuffer("net_dbg_dump_udp_inbuffer", false, "Dump UDP input buffer size?");
 static VCvarB net_dbg_dump_udp_outbuffer("net_dbg_dump_udp_outbuffer", false, "Dump UDP output buffer size?");
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VUdpDriver : public VNetLanDriver {
@@ -842,7 +841,7 @@ int VUdpDriver::SetSocketPort (sockaddr_t *addr, int port) {
 //
 //==========================================================================
 bool VUdpDriver::FindExternalAddress (sockaddr_t *addr) {
-  #if defined(WIN32) || defined(__SWITCH__)
+  #if defined(WIN32) || defined(__SWITCH__) || defined(ANDROID)
   return false;
   #else
   ifaddrs *ifAddrStruct = nullptr;
