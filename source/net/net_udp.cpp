@@ -77,7 +77,7 @@ public:
   virtual int OpenListenSocket (int) override;
   virtual int ConnectSocketTo (sockaddr_t *addr) override; // required for UDP
   virtual bool CloseSocket (int) override; // returns `false` on error
-  virtual int CheckNewConnections () override;
+  virtual int CheckNewConnections (bool rconOnly) override;
   virtual int Read (int, vuint8 *, int, sockaddr_t *) override;
   virtual int Write (int, const vuint8 *, int, sockaddr_t *) override;
   virtual int Broadcast (int, const vuint8 *, int) override;
@@ -502,7 +502,7 @@ bool VUdpDriver::CloseSocket (int socket) {
 //  VUdpDriver::CheckNewConnections
 //
 //==========================================================================
-int VUdpDriver::CheckNewConnections () {
+int VUdpDriver::CheckNewConnections (bool rconOnly) {
   char buf[4096];
   if (net_acceptsocket == -1) return -1;
   if (recvfrom(net_acceptsocket, buf, sizeof(buf), MSG_PEEK, nullptr, nullptr) >= 0) {

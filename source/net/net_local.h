@@ -125,7 +125,7 @@ public:
   virtual void Listen (bool) = 0;
   virtual void SearchForHosts (bool, bool ForMaster) = 0;
   virtual VSocket *Connect (const char *host) = 0;
-  virtual VSocket *CheckNewConnections () = 0;
+  virtual VSocket *CheckNewConnections (bool rconOnly) = 0;
   virtual void UpdateMaster () = 0;
   virtual void QuitMaster () = 0;
   virtual bool QueryMaster (bool) = 0;
@@ -157,7 +157,7 @@ public:
   virtual int OpenListenSocket (int port) = 0;
   virtual int ConnectSocketTo (sockaddr_t *addr) = 0; // returns socket or -1
   virtual bool CloseSocket (int socket) = 0; // returns `false` on error
-  virtual int CheckNewConnections () = 0;
+  virtual int CheckNewConnections (bool rconOnly) = 0;
   virtual int Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) = 0;
   virtual int Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr) = 0;
   virtual bool CanBroadcast () = 0;

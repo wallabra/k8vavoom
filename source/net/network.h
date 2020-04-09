@@ -265,7 +265,7 @@ public:
   virtual void Init () = 0;
   virtual void Shutdown () = 0;
   virtual VSocketPublic *Connect (const char *InHost) = 0;
-  virtual VSocketPublic *CheckNewConnections () = 0;
+  virtual VSocketPublic *CheckNewConnections (bool rconOnly) = 0;
   virtual void Poll () = 0;
   virtual void StartSearch (bool) = 0;
   virtual slist_t *GetSlist () = 0;

@@ -232,7 +232,7 @@ public:
   virtual void Listen (bool) override;
   virtual void SearchForHosts (bool, bool) override;
   virtual VSocket *Connect (const char *) override;
-  virtual VSocket *CheckNewConnections () override;
+  virtual VSocket *CheckNewConnections (bool rconOnly) override;
   virtual void UpdateMaster () override;
   virtual void QuitMaster () override;
   virtual bool QueryMaster (bool) override;
@@ -241,7 +241,7 @@ public:
 
   void SearchForHosts (VNetLanDriver *, bool, bool);
   VSocket *Connect (VNetLanDriver *, const char *);
-  VSocket *CheckNewConnections (VNetLanDriver *Drv);
+  VSocket *CheckNewConnections (VNetLanDriver *Drv, bool rconOnly);
   void SendConnectionReject (VNetLanDriver *Drv, const vuint8 key[VNetUtils::ChaCha20KeySize], VStr reason, int acceptsock, sockaddr_t clientaddr, bool sendModList=false);
   void UpdateMaster (VNetLanDriver *);
   void QuitMaster (VNetLanDriver *);
@@ -931,7 +931,7 @@ void VDatagramDriver::SendConnectionReject (VNetLanDriver *Drv, const vuint8 key
 //  VDatagramDriver::CheckNewConnections
 //
 //==========================================================================
-VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
+VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv, bool rconOnly) {
 #ifdef SERVER
   sockaddr_t clientaddr;
   sockaddr_t newaddr;
@@ -944,7 +944,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   VStr TmpStr;
 
   Net->UpdateNetTime();
-  acceptsock = Drv->CheckNewConnections();
+  acceptsock = Drv->CheckNewConnections(rconOnly);
   if (acceptsock == -1) return nullptr;
 
   vuint8 clientKey[VNetUtils::ChaCha20KeySize];
@@ -972,7 +972,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
   msg << command;
   //GCon->Logf(NAME_DevNet, "CONN: command=%u", command);
-  if (command == CCREQ_SERVER_INFO) {
+  if (!rconOnly && command == CCREQ_SERVER_INFO) {
     if (msg.AtEnd()) return nullptr;
 
     // check request version
@@ -1109,6 +1109,10 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     int elen = EncryptInfoBitStream(edata, MsgOut, clientKey);
     if (elen > 0) Drv->Write(acceptsock, edata, elen, &clientaddr);
     // done
+    return nullptr;
+  }
+
+  if (rconOnly) {
     return nullptr;
   }
 
@@ -1305,10 +1309,10 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 //  VDatagramDriver::CheckNewConnections
 //
 //==========================================================================
-VSocket *VDatagramDriver::CheckNewConnections () {
+VSocket *VDatagramDriver::CheckNewConnections (bool rconOnly) {
   for (int i = 0; i < Net->NumLanDrivers; ++i) {
     if (Net->LanDrivers[i]->initialised) {
-      VSocket *ret = CheckNewConnections(Net->LanDrivers[i]);
+      VSocket *ret = CheckNewConnections(Net->LanDrivers[i], rconOnly);
       if (ret != nullptr) return ret;
     }
   }

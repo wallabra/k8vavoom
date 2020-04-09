@@ -646,6 +646,12 @@ void Host_Frame () {
         // server operations
         ServerFrame(host_frametics);
       }
+      # ifndef CLIENT
+      else {
+        // still check for rcon commands
+        GNet->CheckNewConnections(true); // rcon only
+      }
+      # endif
       #endif
 
       host_time += host_frametime;

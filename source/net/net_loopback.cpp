@@ -63,7 +63,7 @@ public:
   virtual void Listen (bool) override;
   virtual void SearchForHosts (bool, bool) override;
   virtual VSocket *Connect (const char *) override;
-  virtual VSocket *CheckNewConnections () override;
+  virtual VSocket *CheckNewConnections (bool rconOnly) override;
   virtual void UpdateMaster () override;
   virtual void QuitMaster () override;
   virtual bool QueryMaster (bool) override;
@@ -177,7 +177,8 @@ VSocket *VLoopbackDriver::Connect (const char *host) {
 //  VLoopbackDriver::CheckNewConnections
 //
 //==========================================================================
-VSocket *VLoopbackDriver::CheckNewConnections () {
+VSocket *VLoopbackDriver::CheckNewConnections (bool rconOnly) {
+  if (rconOnly) return nullptr;
   if (!localconnectpending) return nullptr;
   localconnectpending = false;
   return loop_server;

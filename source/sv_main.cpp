@@ -1874,7 +1874,7 @@ void SV_ConnectClient (VBasePlayer *player) {
 //==========================================================================
 static bool SV_CheckForNewClients () {
   for (;;) {
-    VSocketPublic *sock = GNet->CheckNewConnections();
+    VSocketPublic *sock = GNet->CheckNewConnections(false); // not only rcon
     if (!sock) break;
 
     //GCon->Logf(NAME_DevNet, "SV_CheckForNewClients: got client at %s", *sock->Address);

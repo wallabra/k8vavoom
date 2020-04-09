@@ -66,7 +66,7 @@ public:
   virtual void Init () override;
   virtual void Shutdown () override;
   virtual VSocketPublic *Connect (const char *) override;
-  virtual VSocketPublic *CheckNewConnections () override;
+  virtual VSocketPublic *CheckNewConnections (bool rconOnly) override;
   virtual void Poll () override;
   virtual void StartSearch (bool) override;
   virtual slist_t *GetSlist () override;
@@ -701,11 +701,11 @@ JustDoIt:
 //  VNetwork::CheckNewConnections
 //
 //==========================================================================
-VSocketPublic *VNetwork::CheckNewConnections () {
+VSocketPublic *VNetwork::CheckNewConnections (bool rconOnly) {
   for (int i = 0; i < NumDrivers; ++i) {
     if (Drivers[i]->initialised == false) continue;
     if (i && Listening == false) continue;
-    VSocket *ret = Drivers[i]->CheckNewConnections();
+    VSocket *ret = Drivers[i]->CheckNewConnections(rconOnly);
     if (ret) return ret;
   }
   return nullptr;
