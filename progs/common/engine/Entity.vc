@@ -398,19 +398,18 @@ EntityEx Target; // moved from `EntityEx`
 EntityEx Tracer; // moved from `EntityEx`
 EntityEx Master; // moved from `EntityEx`
 
-// for networking; will be automatically replicated by the server when `Owner` is replicated
-transient int OwnerSUId;
-// for networking; will be automatically replicated by the server when `Tracer` is replicated
-transient int TracerSUId;
-// for networking; will be automatically replicated by the server when `Target` is replicated
-transient int TargetSUId;
-// for networking; will be automatically replicated by the server when `Master` is replicated
-transient int MasterSUId;
+transient int OwnerSUId; // for networking; will be automatically replicated by the server when `Owner` is replicated
+transient int TracerSUId; // for networking; will be automatically replicated by the server when `Tracer` is replicated
+transient int TargetSUId; // for networking; will be automatically replicated by the server when `Target` is replicated
+transient int MasterSUId; // for networking; will be automatically replicated by the server when `Master` is replicated
 
 // gametime when the data was sent; required for client-side prediction (and interpolation)
 // interpolation not yet implemented, though
 // set in `Tick()`, already delta-advanced
 transient float DataGameTime;
+
+// used in network code; set to `Ent->XLevel->Time` when we got a new origin
+transient float NetLastOrgUpdateTime;
 
 
 replication {

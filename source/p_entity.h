@@ -394,6 +394,9 @@ class VEntity : public VThinker {
   // used in networking; see VavoomC code for explanations
   float DataGameTime;
 
+  // used in network code; set to `Ent->XLevel->Time` when we got a new origin
+  float NetLastOrgUpdateTime;
+
 protected:
   //VEntity () : SoundClass(E_NoInit), SoundGender(E_NoInit), DecalName(E_NoInit) {}
 
