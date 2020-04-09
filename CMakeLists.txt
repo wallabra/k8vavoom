@@ -782,6 +782,10 @@ if(WITH_OPENGL)
   endif()
 endif()
 
+if(ANDROID)
+  add_definitions(-UDEBUG)
+endif()
+
 if(WITH_GLAD)
   add_definitions(-DUSE_GLAD=1)
   if(GLAD_INCLUDE_DIR AND GLAD_LIBRARY)
