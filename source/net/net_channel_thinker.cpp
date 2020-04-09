@@ -29,6 +29,10 @@
 
 //#define VV_NET_DEBUG_DUMP_ORGVEL
 
+//#define VV_NET_OLD_INTERPOLATOR
+//#define VV_NET_PARTIAL_INTERPOLATOR
+#define VV_NET_PARTIAL_INTERPOLATOR_STATE
+
 
 static VCvarI net_dbg_dump_thinker_channels("net_dbg_dump_thinker_channels", "0", "Dump thinker channels creation/closing (bit 0)?");
 static VCvarB net_dbg_allow_simulated_proxies("net_dbg_allow_simulated_proxies", true, "Allow simulated proxies?");
@@ -585,11 +589,22 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
   VEntity *Ent = Cast<VEntity>(Thinker);
   TVec oldOrg(0.0f, 0.0f, 0.0f);
   TAVec oldAngles(0.0f, 0.0f, 0.0f);
+  #if VV_NET_OLD_INTERPOLATOR
   float oldDT = 0;
   bool gotDataGameTime = false;
+  #endif
   const bool wasGotOrigin = GotOrigin;
   #ifdef VV_NET_DEBUG_DUMP_ORGVEL
   TVec oldVel(0.0f, 0.0f, 0.0f);
+  #endif
+  #ifdef VV_NET_PARTIAL_INTERPOLATOR
+  TVec oldLastOrigin(0.0f, 0.0f, 0.0f);
+  float oldLastDur = 0;
+  float oldLastTime = 0;
+  //vuint32 oldJustMoved = 0;
+  #endif
+  #ifdef VV_NET_PARTIAL_INTERPOLATOR_STATE
+  VState *oldState = nullptr;
   #endif
   if (Ent) {
     //Ent->UnlinkFromWorld();
@@ -598,9 +613,20 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     //      setup interpolation variables
     oldOrg = Ent->Origin;
     oldAngles = Ent->Angles;
+    #if VV_NET_OLD_INTERPOLATOR
     oldDT = Ent->DataGameTime;
+    #endif
     #ifdef VV_NET_DEBUG_DUMP_ORGVEL
     oldVel = Ent->Velocity;
+    #endif
+    #ifdef VV_NET_PARTIAL_INTERPOLATOR
+    oldLastOrigin = Ent->LastMoveOrigin;
+    oldLastDur = Ent->LastMoveDuration;
+    oldLastTime = Ent->LastMoveTime;
+    //oldJustMoved = Ent->MoveFlags&VEntity::MVF_JustMoved;
+    #endif
+    #ifdef VV_NET_PARTIAL_INTERPOLATOR_STATE
+    oldState = Ent->State;
     #endif
   }
 
@@ -655,9 +681,12 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
             auto pc = Connection->GetPlayerChannel();
             if (pc && pc->Plr && pc->Plr->MO == Thinker) pc->GotMOOrigin = true;
           }
-        } else if (F == Connection->DataGameTimeField) {
+        }
+        #if VV_NET_OLD_INTERPOLATOR
+        else if (F == Connection->DataGameTimeField) {
           gotDataGameTime = true;
         }
+        #endif
       }
       continue;
     }
@@ -677,15 +706,19 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
     } else {
       TVec newOrg = Ent->Origin;
       // try to compensate for teleports
-      if (fabs(newOrg.x-oldOrg.x) > 32 || fabs(newOrg.y-oldOrg.y) > 32 || fabs(newOrg.z-oldOrg.z) > 32) {
+      const float mvdelta = fabs(newOrg.x-oldOrg.x)+fabs(newOrg.y-oldOrg.y)+fabs(newOrg.z-oldOrg.z);
+      if (mvdelta < 1 || mvdelta > 3*16) {
         Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
-      } else if (gotDataGameTime && Ent->DataGameTime > oldDT) {
+      }
+      #if VV_NET_OLD_INTERPOLATOR
+      else if (gotDataGameTime && Ent->DataGameTime > oldDT) {
         Ent->LastMoveOrigin = oldOrg;
         Ent->LastMoveAngles = oldAngles;
         Ent->LastMoveTime = Ent->XLevel->Time; //-(Ent->DataGameTime-oldDT);
+        //Ent->LastMoveTime = Ent->DataGameTime;
         Ent->LastMoveDuration = (Ent->DataGameTime-oldDT);
         Ent->MoveFlags |= VEntity::MVF_JustMoved;
-        //GCon->Logf(NAME_DevNet, "%s: INTERPOLATOR!", *GetDebugName());
+        //GCon->Logf(NAME_DevNet, "%s: INTERPOLATOR! delta=(%g,%g,%g); dtime=%g; sttime=%g", *GetDebugName(), newOrg.x-oldOrg.x, newOrg.y-oldOrg.y, newOrg.z-oldOrg.z, Ent->LastMoveDuration, Ent->LastMoveTime);
         #ifdef VV_NET_DEBUG_DUMP_ORGVEL
         GCon->Logf(NAME_DevNet, "%s: oldtime=%g; newtime=%g; oldorg=(%g,%g,%g); neworg=(%g,%g,%g); oldvel=(%g,%g,%g); newvel=(%g,%g,%g)",
           *GetDebugName(), oldDT, Ent->DataGameTime,
@@ -695,6 +728,35 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
           Ent->Velocity.x, Ent->Velocity.y, Ent->Velocity.z);
         #endif
       }
+      #endif
+      #ifdef VV_NET_PARTIAL_INTERPOLATOR
+      if (Ent->MoveFlags&VEntity::MVF_JustMoved) {
+        if (oldLastOrigin != Ent->LastMoveOrigin ||
+            oldLastDur != Ent->LastMoveDuration ||
+            oldLastTime != Ent->LastMoveTime)
+        {
+          Ent->LastMoveTime = Ent->XLevel->Time;
+          oldOrg = Ent->LastMoveOrigin;
+          //GCon->Logf(NAME_DevNet, "%s: INTERPOLATOR! delta=(%g,%g,%g); dtime=%g; sttime=%g", *GetDebugName(), newOrg.x-oldOrg.x, newOrg.y-oldOrg.y, newOrg.z-oldOrg.z, Ent->LastMoveDuration, Ent->LastMoveTime);
+        } else {
+          Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+        }
+      }
+      #endif
+      #ifdef VV_NET_PARTIAL_INTERPOLATOR_STATE
+      if (Ent->State != oldState) {
+        Ent->LastMoveOrigin = oldOrg;
+        Ent->LastMoveAngles = oldAngles;
+        Ent->LastMoveTime = Ent->XLevel->Time; //-(Ent->DataGameTime-oldDT);
+        Ent->LastMoveDuration = Ent->StateTime;
+        if (Ent->StateTime > 0) {
+          Ent->MoveFlags |= VEntity::MVF_JustMoved;
+          //GCon->Logf(NAME_DevNet, "%s: INTERPOLATOR! delta=(%g,%g,%g); dtime=%g; sttime=%g", *GetDebugName(), newOrg.x-oldOrg.x, newOrg.y-oldOrg.y, newOrg.z-oldOrg.z, Ent->LastMoveDuration, Ent->LastMoveTime);
+        } else {
+          Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+        }
+      }
+      #endif
     }
   }
 

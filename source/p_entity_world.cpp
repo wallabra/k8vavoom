@@ -1121,11 +1121,12 @@ TVec VEntity::GetDrawDelta () {
   // movement interpolation
   if (r_interpolate_thing_movement && (MoveFlags&MVF_JustMoved)) {
     const float ctt = XLevel->Time-LastMoveTime;
+    //GCon->Logf(NAME_Debug, "%s:%u: ctt=%g; delta=(%g,%g,%g)", GetClass()->GetName(), GetUniqueId(), ctt, (Origin-LastMoveOrigin).x, (Origin-LastMoveOrigin).y, (Origin-LastMoveOrigin).z);
     if (ctt >= 0.0f && ctt < LastMoveDuration && LastMoveDuration > 0.0f) {
       TVec delta = Origin-LastMoveOrigin;
       if (!delta.isZero()) {
         delta *= ctt/LastMoveDuration;
-        //return (LastMoveOrigin+delta)-Origin;
+        //GCon->Logf(NAME_Debug, "%s:%u:   ...realdelta=(%g,%g,%g)", GetClass()->GetName(), GetUniqueId(), delta.x, delta.y, delta.z);
         return (LastMoveOrigin+delta)-Origin;
       } else {
         // reset if angles are equal

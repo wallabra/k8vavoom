@@ -427,6 +427,12 @@ replication {
     DispSpriteFrame, DispSpriteName,
     Score, Accuracy, Stamina;
 
+  /* partial interpolation */
+  /*
+  reliable if (bMonster && (Role == ROLE_Authority || bNetDetach))
+    LastMoveOrigin, LastMoveAngles, LastMoveTime, LastMoveDuration, bIntrJustMoved;
+  */
+
   // if this becomes detached object, transfer those fields too
   reliable if (Role == ROLE_Authority && bNetDetach)
     // see below for `PlaneAlpha`
