@@ -159,7 +159,19 @@ struct VLightEffectDef {
   float Chance;
   float Interval;
   float Scale;
-  vint32 NoSelfShadow; // this will become flags
+
+  //vint32 NoSelfShadow; // this will become flags
+  enum {
+    Flag_NoSelfShadow = 1u<<0,
+    Flag_NoShadow     = 1u<<1,
+  };
+  vint32 Flags; // this will become flags
+
+  inline bool IsNoSelfShadow () const noexcept { return !!(Flags&Flag_NoSelfShadow); }
+  inline void SetNoSelfShadow (bool v) noexcept { if (v) Flags |= Flag_NoSelfShadow; else Flags &= ~Flag_NoSelfShadow; }
+
+  inline bool IsNoShadow () const noexcept { return !!(Flags&Flag_NoShadow); }
+  inline void SetNoShadow (bool v) noexcept { if (v) Flags |= Flag_NoShadow; else Flags &= ~Flag_NoShadow; }
 };
 
 
