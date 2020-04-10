@@ -531,7 +531,7 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
     }
   }
 
-  rensplash = SDL_CreateRenderer(winsplash, -1, 0);
+  rensplash = SDL_CreateRenderer(winsplash, -1, SDL_RENDERER_SOFTWARE);
   if (!rensplash) {
     GCon->Logf(NAME_Warning, "Cannot create splash renderer");
     SDL_DestroyWindow(winsplash);
@@ -564,6 +564,7 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
     winsplash = nullptr;
     return false;
   }
+  SDL_SetTextureBlendMode(imgsplash, SDL_BLENDMODE_NONE);
 
   #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
   // create texture font
@@ -654,7 +655,7 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
   // limit updates
   const double ctt = Sys_Time();
   #ifdef WIN32
-  if (imgtlastupdate > 0 && ctt-imgtlastupdate < 1.0/3.0) return;
+  if (imgtlastupdate > 0 && ctt-imgtlastupdate < 1.0/10.0) return;
   #else
   if (imgtlastupdate > 0 && ctt-imgtlastupdate < 1.0/30.0) return;
   #endif
@@ -665,7 +666,7 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
   // render image
   //SDL_SetRenderDrawColor(rensplash, 0, 0, 0, SDL_ALPHA_OPAQUE);
   #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
-  SDL_RenderClear(rensplash);
+  //SDL_RenderClear(rensplash);
   SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
   #endif
   // render text
