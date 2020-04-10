@@ -334,7 +334,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
       if (ltxr|ltxg|ltxb) {
         light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
       } else {
-        light = LightPoint(Drawer->vieworg, cl->MO->Radius, -1);
+        light = LightPoint(nullptr, Drawer->vieworg, cl->MO->Radius, -1);
       }
       //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
       //light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));

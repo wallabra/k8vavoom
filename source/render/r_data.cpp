@@ -849,7 +849,7 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
   L->Chance = 0.0f;
   L->Interval = 0.0f;
   L->Scale = 0.0f;
-  L->NoSelfShadow = 0;
+  L->Flags = 0;
 
   // parse light def
   sc->Expect("{");
@@ -872,7 +872,9 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
       sc->ExpectFloat();
       L->MinLight = sc->Float;
     } else if (sc->Check("noselfshadow")) {
-      L->NoSelfShadow = 1;
+      L->SetNoSelfShadow(true);
+    } else if (sc->Check("noshadow")) {
+      L->SetNoShadow(true);
     } else if (sc->Check("offset")) {
       sc->ExpectFloat();
       L->Offset.x = sc->Float;
@@ -928,7 +930,8 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
   L->Chance = 0.0f;
   L->Interval = 0.0f;
   L->Scale = 0.0f;
-  L->NoSelfShadow = 1; // by default
+  L->Flags = 0;
+  L->SetNoSelfShadow(true); // by default
 
   bool attenuated = false;
 
@@ -989,10 +992,13 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
       }
     } else if (sc->Check("noselfshadow")) {
       // k8vavoom extension
-      L->NoSelfShadow = 1;
+      L->SetNoSelfShadow(true);
     } else if (sc->Check("selfshadow")) {
       // k8vavoom extension
-      L->NoSelfShadow = 0;
+      L->SetNoSelfShadow(false);
+    } else if (sc->Check("noshadow")) {
+      // k8vavoom extension
+      L->SetNoShadow(true);
     } else {
       sc->Error(va("Bad gz light ('%s') parameter (%s)", *L->Name, *sc->String));
     }

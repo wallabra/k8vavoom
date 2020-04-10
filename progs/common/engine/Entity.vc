@@ -127,7 +127,9 @@ struct LightEffectDef {
   float Chance;
   float Interval;
   float Scale;
-  int NoSelfShadow; // this will become flags
+  // flags
+  bool bNoSelfShadow;
+  bool bNoShadow;
 };
 
 

@@ -245,7 +245,7 @@ void VRenderLevelShadowVolume::RenderMobjsShadow (VEntity *owner, vuint32 dlflag
 //  VRenderLevelShadowVolume::RenderMobjsLight
 //
 //==========================================================================
-void VRenderLevelShadowVolume::RenderMobjsLight () {
+void VRenderLevelShadowVolume::RenderMobjsLight (VEntity *owner) {
   if (!r_draw_mobjs || !r_models || !r_model_light) return;
   if (!r_dbg_advthing_draw_light) return;
   float TimeFrac;
@@ -254,6 +254,7 @@ void VRenderLevelShadowVolume::RenderMobjsLight () {
     // list is already built
     for (auto &&ent : mobjsInCurrLight) {
       if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
+      if (ent == owner) continue; // this is done in ambient pass
       //RenderThingLight(ent);
       if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
         ri.light = 0xffffffffu;
@@ -265,6 +266,7 @@ void VRenderLevelShadowVolume::RenderMobjsLight () {
   } else {
     for (auto &&ent : visibleAliasModels) {
       if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
+      if (ent == owner) continue; // this is done in ambient pass
       // skip things in subsectors that are not visible by the current light
       const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
       if (!IsSubsectorLitBspVis(SubIdx)) continue;

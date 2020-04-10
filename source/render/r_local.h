@@ -271,7 +271,7 @@ public:
 
 protected:
   struct DLightInfo {
-    int needTrace; // <0: no; >1: yes; 0: don't know
+    int needTrace; // <0: no; >1: yes; 0: invisible
     int leafnum; // -1: unknown yet
   };
 
@@ -479,10 +479,13 @@ public:
   virtual bool IsNodeRendered (const node_t *node) const noexcept override;
   virtual bool IsSubsectorRendered (const subsector_t *sub) const noexcept override;
 
-  virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr) override;
+  // defined only after `PushDlights()`
+  // `radius` is used for visibility raycasts
+  // `surfplane` is used to light masked surfaces
+  vuint32 LightPoint (VEntity *lowner, const TVec &p, float radius, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr);
   // `radius` is used for... nothing yet
   // `surfplace` is used to light masked surfaces
-  vuint32 LightPointAmbient (const TVec &p, float radius, const subsector_t *psub=nullptr);
+  vuint32 LightPointAmbient (VEntity *lowner, const TVec &p, float radius, float height, const subsector_t *psub=nullptr);
 
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) override;
 
@@ -552,10 +555,9 @@ protected:
 
   virtual void RenderScene (const refdef_t *, const VViewClipper *) = 0;
   virtual void PushDlights ();
-  //virtual vuint32 LightPoint (const TVec &p, VEntity *mobj) = 0; // defined only after `PushDlights()`
 
   // returns attenuation multiplier (0 means "out of cone")
-  static float CheckLightPointCone (const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle);
+  static float CheckLightPointCone (VEntity *lowner, const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle);
 
   virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) = 0;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) = 0;
@@ -730,13 +732,13 @@ protected:
 
   // this is common code for light point calculation
   // pass light values from ambient pass
-  void CalculateDynLightSub (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane);
+  void CalculateDynLightSub (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane);
 
   // calculate subsector's ambient light (light variables must be initialized)
-  void CalculateSubAmbient (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane);
+  void CalculateSubAmbient (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane);
 
   // calculate subsector's light from static light sources (light variables must be initialized)
-  void CalculateSubStatic (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane);
+  void CalculateSubStatic (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane);
 
   virtual void InvalidateStaticLightmaps (const TVec &org, float radius, bool relight);
 
@@ -1056,7 +1058,7 @@ protected:
 
   void RenderMobjsAmbient ();
   void RenderMobjsTextures ();
-  void RenderMobjsLight ();
+  void RenderMobjsLight (VEntity *owner);
   void RenderMobjsShadow (VEntity *owner, vuint32 dlflags);
   void RenderMobjsFog ();
 

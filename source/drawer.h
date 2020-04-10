@@ -247,13 +247,6 @@ public:
 
   virtual void BuildLightMap (surface_t *) = 0;
 
-  // defined only after `PushDlights()`
-  // public, because it is used in advrender to determine rough
-  // lightness of masked surfaces
-  // `radius` is used for visibility raycasts
-  // `surfplane` is used to light masked surfaces
-  virtual vuint32 LightPoint (const TVec &p, float raduis, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr) = 0;
-
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) = 0;
 
   inline bool IsShadowVolumeRenderer () const noexcept { return mIsShadowVolumeRenderer; }
