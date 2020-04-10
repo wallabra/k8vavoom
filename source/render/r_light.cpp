@@ -563,8 +563,8 @@ float VRenderLevelShared::CheckLightPointCone (VEntity *lowner, const TVec &p, c
   if ((p-coneOrigin).lengthSquared() <= 8.0f) return 1.0f;
 
   //if (checkSpot && dl.coneAngle > 0.0f && dl.coneAngle < 360.0f)
-  if (radius == 0.0f) {
-    if (height == 0.0f) {
+  if (radius <= 0.0f) {
+    if (height <= 0.0f) {
       if (pl.PointOnSide(p)) return 0.0f;
       return p.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
     } else {
@@ -587,7 +587,7 @@ float VRenderLevelShared::CheckLightPointCone (VEntity *lowner, const TVec &p, c
   bbox[0+2] = p.z;
   bbox[3+0] = p.x+radius*0.4f;
   bbox[3+1] = p.y+radius*0.4f;
-  bbox[3+2] = p.z+height;
+  bbox[3+2] = p.z+(height > 0.0f ? height : 0.0f);
   if (!pl.checkBox(bbox)) return 0.0f;
   float res = p.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
   if (res == 1.0f) return res;
@@ -788,7 +788,7 @@ sec_surface_t *VRenderLevelShared::GetNearestFloor (const subsector_t *sub, cons
 //  pass light values from ambient pass
 //
 //==========================================================================
-void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane) {
+void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height) {
   if (r_dynamic_lights && sub->dlightframe == currDLightFrame) {
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
@@ -813,7 +813,6 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
         const bool isowned = (lowner && lowner->ServerUId == dl.ownerUId);
         // check potential visibility
         if (!isowned && r_dynamic_clip) {
-          if (surfplane && surfplane->PointOnSide(dl.origin)) continue;
           if (dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
             const float attn = CheckLightPointCone(lowner, p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
             add *= attn;
@@ -849,7 +848,7 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
 //  (light variables must be initialized)
 //
 //==========================================================================
-void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane) {
+void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height) {
   if (r_static_lights) {
     if (!staticLightsFiltered) RefilterStaticLights();
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
@@ -865,7 +864,6 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
       if (distSq >= stl->radius*stl->radius) continue; // too far away
       float add = stl->radius-sqrtf(distSq);
       if (add > 1.0f) {
-        if (surfplane && surfplane->PointOnSide(stl->origin)) continue;
         if (stl->coneAngle > 0.0f && stl->coneAngle < 360.0f) {
           const float attn = CheckLightPointCone(lowner, p, radius, height, stl->origin, stl->coneDirection, stl->coneAngle);
           add *= attn;
@@ -892,7 +890,7 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
 //  (light variables must be initialized)
 //
 //==========================================================================
-void VRenderLevelShared::CalculateSubAmbient (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane) {
+void VRenderLevelShared::CalculateSubAmbient (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius) {
   bool skipAmbient = false;
   bool glowAllowed = true;
 
@@ -1015,7 +1013,7 @@ void VRenderLevelShared::CalculateSubAmbient (VEntity *lowner, float &l, float &
 //  VRenderLevelShared::LightPoint
 //
 //==========================================================================
-vuint32 VRenderLevelShared::LightPoint (VEntity *lowner, const TVec &p, float radius, float height, const TPlane *surfplane, const subsector_t *psub) {
+vuint32 VRenderLevelShared::LightPoint (VEntity *lowner, const TVec &p, float radius, float height, const subsector_t *psub) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   const subsector_t *sub = (psub ? psub : Level->PointInSubsector(p));
@@ -1023,13 +1021,13 @@ vuint32 VRenderLevelShared::LightPoint (VEntity *lowner, const TVec &p, float ra
   float l = 0.0f, lr = 0.0f, lg = 0.0f, lb = 0.0f;
 
   // calculate ambient light level
-  CalculateSubAmbient(lowner, l, lr, lg, lb, sub, p, radius, surfplane);
+  CalculateSubAmbient(lowner, l, lr, lg, lb, sub, p, radius);
 
   // add static lights
-  if (IsShadowVolumeRenderer()) CalculateSubStatic(lowner, l, lr, lg, lb, sub, p, radius, height, surfplane);
+  if (IsShadowVolumeRenderer()) CalculateSubStatic(lowner, l, lr, lg, lb, sub, p, radius, height);
 
   // add dynamic lights
-  CalculateDynLightSub(lowner, l, lr, lg, lb, sub, p, radius, height, surfplane);
+  CalculateDynLightSub(lowner, l, lr, lg, lb, sub, p, radius, height);
 
   return
     (((vuint32)clampToByte((int)l))<<24)|
@@ -1051,7 +1049,7 @@ vuint32 VRenderLevelShared::LightPointAmbient (VEntity *lowner, const TVec &p, f
 
   const subsector_t *sub = (psub ? psub : Level->PointInSubsector(p));
   float l = 0.0f, lr = 0.0f, lg = 0.0f, lb = 0.0f;
-  CalculateSubAmbient(lowner, l, lr, lg, lb, sub, p, radius, nullptr);
+  CalculateSubAmbient(lowner, l, lr, lg, lb, sub, p, radius);
 
   // fullight by owned lights
   if (lowner) {

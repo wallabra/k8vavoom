@@ -481,10 +481,8 @@ public:
 
   // defined only after `PushDlights()`
   // `radius` is used for visibility raycasts
-  // `surfplane` is used to light masked surfaces
-  vuint32 LightPoint (VEntity *lowner, const TVec &p, float radius, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr);
+  vuint32 LightPoint (VEntity *lowner, const TVec &p, float radius, float height, const subsector_t *psub=nullptr);
   // `radius` is used for... nothing yet
-  // `surfplace` is used to light masked surfaces
   vuint32 LightPointAmbient (VEntity *lowner, const TVec &p, float radius, float height, const subsector_t *psub=nullptr);
 
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) override;
@@ -732,13 +730,13 @@ protected:
 
   // this is common code for light point calculation
   // pass light values from ambient pass
-  void CalculateDynLightSub (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane);
+  void CalculateDynLightSub (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height);
 
   // calculate subsector's ambient light (light variables must be initialized)
-  void CalculateSubAmbient (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, const TPlane *surfplane);
+  void CalculateSubAmbient (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius);
 
   // calculate subsector's light from static light sources (light variables must be initialized)
-  void CalculateSubStatic (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane);
+  void CalculateSubStatic (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height);
 
   virtual void InvalidateStaticLightmaps (const TVec &org, float radius, bool relight);
 

@@ -244,11 +244,11 @@ void VRenderLevelShared::SetupRIThingLighting (VEntity *ent, RenderStyleInfo &ri
              (ent->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright)))
   {
     ri.light = ri.seclight = 0xffffffff;
-    if (allowBM && r_brightmaps && r_brightmaps_sprite) ri.seclight = LightPoint(ent, ent->Origin, ent->GetRenderRadius(), ent->Height, nullptr, ent->SubSector);
+    if (allowBM && r_brightmaps && r_brightmaps_sprite) ri.seclight = LightPoint(ent, ent->Origin, ent->GetRenderRadius(), ent->Height, ent->SubSector);
   } else {
     if (!asAmbient) {
       // use old way of lighting (i.e. calculate rough lighting from all light sources)
-      ri.light = ri.seclight = LightPoint(ent, ent->Origin, ent->GetRenderRadius(), ent->Height, nullptr, ent->SubSector);
+      ri.light = ri.seclight = LightPoint(ent, ent->Origin, ent->GetRenderRadius(), ent->Height, ent->SubSector);
     } else {
       // use only ambient lighting, lighting from light sources will be added later
       // this is used in advrender
