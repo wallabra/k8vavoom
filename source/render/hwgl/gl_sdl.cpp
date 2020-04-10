@@ -31,6 +31,9 @@
 #include "gl_local.h"
 #include "../../icondata/k8vavomicondata.c"
 
+// if not defined, texture will be recreated on each line render
+//#define VV_USE_CONFONT_ATLAS_TEXTURE
+
 
 extern VCvarB ui_want_mouse_at_zero;
 
@@ -43,7 +46,9 @@ protected:
   SDL_Window *winsplash;
   SDL_Renderer *rensplash;
   SDL_Texture *imgsplash;
+  #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
   SDL_Texture *imgsplashfont;
+  #endif
   int imgtx, imgty; // where text starts
   int imgtxend; // text box end
   double imgtlastupdate;
@@ -93,7 +98,9 @@ VSdlOpenGLDrawer::VSdlOpenGLDrawer ()
   , winsplash(nullptr)
   , rensplash(nullptr)
   , imgsplash(nullptr)
+  #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
   , imgsplashfont(nullptr)
+  #endif
   , imgtlastupdate(0)
   , hw_window(nullptr)
   , hw_glctx(nullptr)
@@ -558,6 +565,7 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
     return false;
   }
 
+  #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
   // create texture font
   {
     int fwdt = CONFONT_WIDTH*16;
@@ -590,6 +598,7 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
       SDL_SetTextureBlendMode(imgsplashfont, SDL_BLENDMODE_BLEND);
     }
   }
+  #endif
 
   SDL_GL_SetSwapInterval(0);
   // show it
@@ -597,9 +606,12 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
   SDL_SetWindowPosition(winsplash, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
   // render image
+  /*
   SDL_RenderClear(rensplash);
   SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
   SDL_RenderPresent(rensplash);
+  */
+  DrawLoadingSplashText("Loading...", -1);
 
   #if 0
   // need to do this to show the window (nope)
@@ -631,103 +643,120 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
 
 //==========================================================================
 //
-//  conDrawChar
-//
-//==========================================================================
-#if 0
-static void conDrawChar (SDL_Renderer *rdr, int x0, int y0, char ch) {
-  const vuint32 conColor = 0xffff7f00u;
-  int r = (conColor>>16)&0xff;
-  int g = (conColor>>8)&0xff;
-  int b = conColor&0xff;
-  const int rr = r, gg = g, bb = b;
-  for (int y = CONFONT_HEIGHT-1; y >= 0; --y) {
-    vuint16 v = glConFont10[(ch&0xff)*10+y];
-    //immutable uint cc = (b<<16)|(g<<8)|r|0xff000000;
-    //const vuint32 cc = (r<<16)|(g<<8)|b|0xff000000u;
-    SDL_SetRenderDrawColor(rdr, clampToByte(r), clampToByte(g), clampToByte(b), SDL_ALPHA_OPAQUE);
-    for (int x = 0; x < CONFONT_WIDTH; ++x) {
-      if (v&0x8000) {
-        //vsetPixel(conDrawX+x, conDrawY+y, cc);
-        SDL_RenderDrawPoint(rdr, x0+x, y0+y);
-      }
-      v <<= 1;
-    }
-    if ((r -= 7) < 0) r = rr;
-    if ((g -= 7) < 0) g = gg;
-    if ((b -= 7) < 0) b = bb;
-  }
-}
-#endif
-
-
-//==========================================================================
-//
 //  VSdlOpenGLDrawer::DrawLoadingSplashText
 //
 //==========================================================================
 void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
-  if (!winsplash || !imgsplashfont) return;
-  #ifdef WIN32
-  fprintf(stderr, "[%s]\n", text);
+  if (!winsplash) return;
+  #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
+  if (!imgsplashfont) return;
   #endif
   // limit updates
   const double ctt = Sys_Time();
-  if (ctt-imgtlastupdate < 1.0/60.0) return;
-  imgtlastupdate = ctt;
   #ifdef WIN32
-  fprintf(stderr, "![%s]\n", text);
+  if (imgtlastupdate > 0 && ctt-imgtlastupdate < 1.0/3.0) return;
+  #else
+  if (imgtlastupdate > 0 && ctt-imgtlastupdate < 1.0/30.0) return;
   #endif
+  imgtlastupdate = ctt;
+  // check text length
+  if (len < 0) len = (text && text[0] ? (int)strlen(text) : 0);
+  //if (len <= 0) return; // nothing to do
   // render image
   //SDL_SetRenderDrawColor(rensplash, 0, 0, 0, SDL_ALPHA_OPAQUE);
+  #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
   SDL_RenderClear(rensplash);
   SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
+  #endif
   // render text
-  if (len < 0) len = (text && text[0] ? (int)strlen(text) : 0);
-  if (len > 0) {
-    int tx = imgtx;
-    int ty = imgty;
+  int tx = imgtx;
+  int ty = imgty;
+  #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
     SDL_Rect srect;
     srect.w = CONFONT_WIDTH;
     srect.h = CONFONT_HEIGHT;
     SDL_Rect drect;
     drect.w = CONFONT_WIDTH;
     drect.h = CONFONT_HEIGHT;
-    while (len && tx+CONFONT_WIDTH <= imgtxend) {
-      // skip colors
-      if (text[0] == TEXT_COLOR_ESCAPE) {
-        ++text;
-        --len;
-        if (!len) break;
-        const bool sq = (text[0] == '[');
-        ++text;
-        --len;
-        if (!len) break;
-        if (sq) {
-          while (len && text[0] != ']') { ++text; --len; }
-          if (len) {
-            ++text;
-            --len;
-            if (!len) break;
-          }
+  #else
+    int fwdt = (imgtxend-imgtx)*CONFONT_WIDTH;
+    int fhgt = CONFONT_HEIGHT;
+    vuint8 *fpix = new vuint8[(fwdt*4)*fhgt];
+    // clear it to transparent
+    memset(fpix, 0, (fwdt*4)*fhgt);
+  #endif
+  // render chars
+  while (len && tx+CONFONT_WIDTH <= imgtxend) {
+    // skip colors
+    if (text[0] == TEXT_COLOR_ESCAPE) {
+      ++text;
+      --len;
+      if (!len) break;
+      const bool sq = (text[0] == '[');
+      ++text;
+      --len;
+      if (!len) break;
+      if (sq) {
+        while (len && text[0] != ']') { ++text; --len; }
+        if (len) {
+          ++text;
+          --len;
+          if (!len) break;
         }
-        continue;
       }
-      #if 0
-      conDrawChar(rensplash, tx, ty, text[0]);
-      #else
+      continue;
+    }
+    #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
       const int fch = text[0]&0xff;
       srect.x = (fch&0x0f)*srect.w;
       srect.y = (fch>>4)*srect.h;
       drect.x = tx;
       drect.y = ty;
       SDL_RenderCopy(rensplash, imgsplashfont, &srect, &drect);
-      #endif
-      ++text;
-      --len;
-      tx += CONFONT_WIDTH;
+    #else
+      conPutCharAt(fpix, fwdt, fhgt, tx-imgtx, ty-imgty, text[0]);
+    #endif
+    ++text;
+    --len;
+    tx += CONFONT_WIDTH;
+  }
+  #ifndef VV_USE_CONFONT_ATLAS_TEXTURE
+  #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    /*static*/ const Uint32 rmask = 0xff000000u;
+    /*static*/ const Uint32 gmask = 0x00ff0000u;
+    /*static*/ const Uint32 bmask = 0x0000ff00u;
+    /*static*/ const Uint32 amask = 0x000000ffu;
+  #else
+    /*static*/ const Uint32 rmask = 0x000000ffu;
+    /*static*/ const Uint32 gmask = 0x0000ff00u;
+    /*static*/ const Uint32 bmask = 0x00ff0000u;
+    /*static*/ const Uint32 amask = 0xff000000u;
+  #endif
+  // create texture with text
+  SDL_Surface *imgsfc = SDL_CreateRGBSurfaceFrom(fpix, fwdt, fhgt, 32, fwdt*4, rmask, gmask, bmask, amask);
+  // we don't need pixels anymore
+  delete fpix;
+  SDL_Texture *ttx = nullptr;
+  if (imgsfc) {
+    ttx = SDL_CreateTextureFromSurface(rensplash, imgsfc);
+    SDL_FreeSurface(imgsfc);
+    if (ttx) {
+      SDL_SetTextureBlendMode(ttx, SDL_BLENDMODE_BLEND);
     }
   }
+  // draw it all
+  SDL_RenderClear(rensplash);
+  SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
+  if (ttx) {
+    SDL_Rect drect;
+    drect.x = imgtx;
+    drect.y = imgty;
+    drect.w = fwdt;
+    drect.h = fhgt;
+    SDL_RenderCopy(rensplash, ttx, NULL, &drect);
+    SDL_DestroyTexture(ttx);
+  }
+  #endif
   // show it
   SDL_RenderPresent(rensplash);
 }
@@ -740,13 +769,17 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
 //==========================================================================
 void VSdlOpenGLDrawer::HideSplashScreens () {
   if (winsplash) {
+    #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
     if (imgsplashfont) SDL_DestroyTexture(imgsplashfont);
+    #endif
     if (imgsplash) SDL_DestroyTexture(imgsplash);
     if (rensplash) SDL_DestroyRenderer(rensplash);
     SDL_DestroyWindow(winsplash);
     winsplash = nullptr;
     rensplash = nullptr;
     imgsplash = nullptr;
+    #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
     imgsplashfont = nullptr;
+    #endif
   }
 }
