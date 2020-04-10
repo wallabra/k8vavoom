@@ -121,13 +121,15 @@ static void AliasSetupNormalTransform (const TAVec &angles, const TVec &Scale, V
   TVec alias_forward(0, 0, 0), alias_right(0, 0, 0), alias_up(0, 0, 0);
   AngleVectors(angles, alias_forward, alias_right, alias_up);
 
+  #if 0
   VMatrix4 scalemat = VMatrix4::Identity;
   scalemat[0][0] = Scale.x;
   scalemat[1][1] = Scale.y;
   scalemat[2][2] = Scale.z;
 
+  // create rotation matrix
   VMatrix4 rotmat = VMatrix4::Identity;
-  for (int i = 0; i < 3; ++i) {
+  for (unsigned i = 0; i < 3; ++i) {
     rotmat[i][0] = alias_forward[i];
     rotmat[i][1] = -alias_right[i];
     rotmat[i][2] = alias_up[i];
@@ -142,6 +144,15 @@ static void AliasSetupNormalTransform (const TAVec &angles, const TVec &Scale, V
     // non-uniform scale, do full inverse transpose
     RotationMatrix = RotationMatrix.Inverse().Transpose();
   }
+  #else
+  // create rotation matrix
+  RotationMatrix = VMatrix4::Identity;
+  for (unsigned i = 0; i < 3; ++i) {
+    RotationMatrix[i][0] = alias_forward[i];
+    RotationMatrix[i][1] = -alias_right[i];
+    RotationMatrix[i][2] = alias_up[i];
+  }
+  #endif
 }
 
 
@@ -157,7 +168,7 @@ void VOpenGLDrawer::UploadModel (VMeshModel *Mdl) {
   p_glGenBuffersARB(1, &Mdl->VertsBuffer);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
-  int Size = sizeof(VMeshSTVert)*Mdl->STVerts.length()+sizeof(TVec)*Mdl->STVerts.length()*2*Mdl->Frames.length();
+  int Size = (int)sizeof(VMeshSTVert)*Mdl->STVerts.length()+(int)sizeof(TVec)*Mdl->STVerts.length()*2*Mdl->Frames.length();
   p_glBufferDataARB(GL_ARRAY_BUFFER_ARB, Size, nullptr, GL_STATIC_DRAW_ARB);
 
   // upload data

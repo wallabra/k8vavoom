@@ -26,7 +26,8 @@ void main () {
   vec4 Vert = mix(gl_Vertex, Vert2, Inter)*ModelToWorldMat;
   gl_Position = gl_ModelViewProjectionMatrix*Vert;
 
-  Normal = NormalToWorldMat*mix(VertNormal, Vert2Normal, Inter);
+  //Normal = NormalToWorldMat*mix(VertNormal, Vert2Normal, Inter);
+  Normal = mix(VertNormal, Vert2Normal, Inter)*NormalToWorldMat;
   VertToLight = LightPos-Vert.xyz;
 
   /*
