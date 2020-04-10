@@ -30,6 +30,8 @@
 #endif
 #include "gl_local.h"
 #include "../../icondata/k8vavomicondata.c"
+#include "splashlogo.inc"
+#include "splashfont.inc"
 
 // if not defined, texture will be recreated on each line render
 //#define VV_USE_CONFONT_ATLAS_TEXTURE
@@ -41,6 +43,21 @@ extern VCvarB ui_want_mouse_at_zero;
 
 class VSdlOpenGLDrawer : public VOpenGLDrawer {
   friend struct SplashDtor;
+
+private:
+  enum {
+    #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+      rmask = 0xff000000u,
+      gmask = 0x00ff0000u,
+      bmask = 0x0000ff00u,
+      amask = 0x000000ffu,
+    #else
+      rmask = 0x000000ffu,
+      gmask = 0x0000ff00u,
+      bmask = 0x00ff0000u,
+      amask = 0xff000000u,
+    #endif
+  };
 
 private:
   bool skipAdaptiveVSync;
@@ -59,10 +76,12 @@ protected:
   // used to cleanup partially created splash window
   struct SplashDtor {
     VSdlOpenGLDrawer *drw;
-    vuint8 *pixtofree;
-    inline SplashDtor (VSdlOpenGLDrawer *adrw) noexcept : drw(adrw), pixtofree(nullptr) {}
+    vuint8 *pixels;
+    PNGHandle *png;
+    inline SplashDtor (VSdlOpenGLDrawer *adrw) noexcept : drw(adrw), pixels(nullptr), png(nullptr) {}
     inline ~SplashDtor () {
-      if (pixtofree) { delete[] pixtofree; pixtofree = nullptr; }
+      if (png) { delete png; png = nullptr; }
+      if (pixels) { delete[] pixels; pixels = nullptr; }
       if (drw) {
         #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
         if (drw->imgsplashfont) { SDL_DestroyTexture(drw->imgsplashfont); drw->imgsplashfont = nullptr; }
@@ -74,7 +93,8 @@ protected:
       }
     }
     inline void Success () noexcept { drw = nullptr; }
-    inline void FreePixels () { if (pixtofree) { delete[] pixtofree; pixtofree = nullptr; } }
+    inline void FreePixels () { if (pixels) { delete[] pixels; pixels = nullptr; } }
+    inline void FreePng () { if (png) { delete png; png = nullptr; } }
   };
 
 public:
@@ -106,6 +126,9 @@ private:
 
   // this is required for both normal and splash
   static void SetupSDLRequirements ();
+  static void SetWindowIcon (SDL_Window *win);
+
+  static void conPutCharAt (vuint8 *pixels, int pixwdt, int pixhgt, int x0, int y0, char ch);
 };
 
 
@@ -147,6 +170,33 @@ void VSdlOpenGLDrawer::Init () {
   hw_glctx = nullptr;
   mInitialized = false; // just in case
   skipAdaptiveVSync = false;
+}
+
+
+//==========================================================================
+//
+//  VSdlOpenGLDrawer::SetWindowIcon
+//
+//==========================================================================
+void VSdlOpenGLDrawer::SetWindowIcon (SDL_Window *win) {
+  enum {
+  #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    rmask = 0x0000ff00u,
+    gmask = 0x00ff0000u,
+    bmask = 0xff000000u,
+    amask = 0x000000ffu,
+  #else
+    rmask = 0x00ff0000u,
+    gmask = 0x0000ff00u,
+    bmask = 0x000000ffu,
+    amask = 0xff000000u,
+  #endif
+  };
+  if (!win) return;
+  SDL_Surface *icosfc = SDL_CreateRGBSurfaceFrom(k8vavoomicondata, 32, 32, 32, 32*4, rmask, gmask, bmask, amask);
+  if (!icosfc) return;
+  SDL_SetWindowIcon(win, icosfc);
+  SDL_FreeSurface(icosfc);
 }
 
 
@@ -307,25 +357,7 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
     GCon->Logf("SDL2: cannot create SDL2 window.");
     return false;
   }
-
-  {
-    #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-      /*static*/ const Uint32 rmask = 0x0000ff00u;
-      /*static*/ const Uint32 gmask = 0x00ff0000u;
-      /*static*/ const Uint32 bmask = 0xff000000u;
-      /*static*/ const Uint32 amask = 0x000000ffu;
-    #else
-      /*static*/ const Uint32 rmask = 0x00ff0000u;
-      /*static*/ const Uint32 gmask = 0x0000ff00u;
-      /*static*/ const Uint32 bmask = 0x000000ffu;
-      /*static*/ const Uint32 amask = 0xff000000u;
-    #endif
-    SDL_Surface *icosfc = SDL_CreateRGBSurfaceFrom(k8vavoomicondata, 32, 32, 32, 32*4, rmask, gmask, bmask, amask);
-    if (icosfc) {
-      SDL_SetWindowIcon(hw_window, icosfc);
-      SDL_FreeSurface(icosfc);
-    }
-  }
+  SetWindowIcon(hw_window);
 
   hw_glctx = SDL_GL_CreateContext(hw_window);
   if (!hw_glctx) {
@@ -409,26 +441,12 @@ void VSdlOpenGLDrawer::Shutdown () {
 }
 
 
-#include "splashlogo.inc"
-#include "splashfont.inc"
-
-
 //==========================================================================
 //
-//  VSdlOpenGLDrawer::IsLoadingSplashActive
+//  VSdlOpenGLDrawer::conPutCharAt
 //
 //==========================================================================
-bool VSdlOpenGLDrawer::IsLoadingSplashActive () {
-  return !!winsplash;
-}
-
-
-//==========================================================================
-//
-//  conPutCharAt
-//
-//==========================================================================
-static void conPutCharAt (vuint8 *pixels, int pixwdt, int pixhgt, int x0, int y0, char ch) {
+void VSdlOpenGLDrawer::conPutCharAt (vuint8 *pixels, int pixwdt, int pixhgt, int x0, int y0, char ch) {
   const vuint32 conColor = 0xffff7f00u;
   int r = (conColor>>16)&0xff;
   int g = (conColor>>8)&0xff;
@@ -463,79 +481,87 @@ static void conPutCharAt (vuint8 *pixels, int pixwdt, int pixhgt, int x0, int y0
 
 //==========================================================================
 //
+//  VSdlOpenGLDrawer::IsLoadingSplashActive
+//
+//==========================================================================
+bool VSdlOpenGLDrawer::IsLoadingSplashActive () {
+  return !!winsplash;
+}
+
+
+//==========================================================================
+//
+//  VSdlOpenGLDrawer::HideSplashScreens
+//
+//==========================================================================
+void VSdlOpenGLDrawer::HideSplashScreens () {
+  if (winsplash) {
+    #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
+    if (imgsplashfont) { SDL_DestroyTexture(imgsplashfont); imgsplashfont = nullptr; }
+    #endif
+    if (imgsplash) { SDL_DestroyTexture(imgsplash); imgsplash = nullptr; }
+    if (rensplash) { SDL_DestroyRenderer(rensplash); rensplash = nullptr; }
+    SDL_DestroyWindow(winsplash);
+    winsplash = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
 //  VSdlOpenGLDrawer::ShowLoadingSplashScreen
 //
 //==========================================================================
 bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
-  #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    /*static*/ const Uint32 rmask = 0xff000000u;
-    /*static*/ const Uint32 gmask = 0x00ff0000u;
-    /*static*/ const Uint32 bmask = 0x0000ff00u;
-    /*static*/ const Uint32 amask = 0x000000ffu;
-  #else
-    /*static*/ const Uint32 rmask = 0x000000ffu;
-    /*static*/ const Uint32 gmask = 0x0000ff00u;
-    /*static*/ const Uint32 bmask = 0x00ff0000u;
-    /*static*/ const Uint32 amask = 0xff000000u;
-  #endif
-
   //GCon->Log(NAME_Debug, "*** SPLASH ***");
   if (winsplash) return true; // just in case
 
   VMemoryStreamRO logostream("splashlogo.png", splashlogo, (int)sizeof(splashlogo));
-  PNGHandle *png = M_VerifyPNG(&logostream);
-  if (!png) return false;
 
-  if (png->width < 1 || png->width > 1024 || png->height < 1 || png->height > 768) {
-    GCon->Logf(NAME_Warning, "invalid splash logo image dimensions (%dx%d)", png->width, png->height);
-    delete png;
+  SplashDtor spdtor(this);
+
+  spdtor.png = M_VerifyPNG(&logostream);
+  if (!spdtor.png) return false;
+
+  if (spdtor.png->width < 1 || spdtor.png->width > 1024 || spdtor.png->height < 1 || spdtor.png->height > 768) {
+    GCon->Logf(NAME_Warning, "invalid splash logo image dimensions (%dx%d)", spdtor.png->width, spdtor.png->height);
     return false;
   }
 
-  if (!png->loadIDAT()) {
+  if (!spdtor.png->loadIDAT()) {
     GCon->Log(NAME_Warning, "error decoding splash logo image");
-    delete png;
     return false;
   }
 
   if (logostream.IsError()) {
     GCon->Log(NAME_Warning, "error decoding splash logo image");
-    delete png;
     return false;
   }
 
+  int splashWidth = spdtor.png->width;
+  int splashHeight = spdtor.png->height;
+  //GCon->Logf(NAME_Debug, "splash logo image dimensions (%dx%d)", splashWidth, splashHeight);
+  // text coords
+  imgtx = 155;
+  imgty = 122;
+  imgtxend = splashWidth-8;
 
-  SplashDtor spdtor(this);
-
-  vuint8 *pixels = new vuint8[png->width*png->height*4];
-  spdtor.pixtofree = pixels;
-  vuint8 *dest = pixels;
-  for (int y = 0; y < png->height; ++y) {
-    for (int x = 0; x < png->width; ++x) {
-      auto clr = png->getPixel(x, y); // unmultiplied
+  spdtor.pixels = new vuint8[spdtor.png->width*spdtor.png->height*4];
+  vuint8 *dest = spdtor.pixels;
+  for (int y = 0; y < spdtor.png->height; ++y) {
+    for (int x = 0; x < spdtor.png->width; ++x) {
+      auto clr = spdtor.png->getPixel(x, y); // unmultiplied
       *dest++ = clr.r;
       *dest++ = clr.g;
       *dest++ = clr.b;
       *dest++ = clr.a;
     }
   }
-
-  int splashWidth = png->width;
-  int splashHeight = png->height;
-  //GCon->Logf(NAME_Debug, "splash logo image dimensions (%dx%d)", splashWidth, splashHeight);
-
-  delete png;
-
-  // text coords
-  imgtx = 155;
-  imgty = 122;
-  imgtxend = splashWidth-8;
+  spdtor.FreePng();
 
   // create window
   Uint32 flags = SDL_WINDOW_OPENGL|SDL_WINDOW_HIDDEN|SDL_WINDOW_BORDERLESS|SDL_WINDOW_SKIP_TASKBAR|/*SDL_WINDOW_POPUP_MENU*/SDL_WINDOW_TOOLTIP;
-
   SetupSDLRequirements();
-
   // turn off vsync
   SDL_GL_SetSwapInterval(0);
   winsplash = SDL_CreateWindow("k8vavoom_splash", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, splashWidth, splashHeight, flags);
@@ -543,14 +569,7 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
     GCon->Logf(NAME_Warning, "Cannot create splash window");
     return false;
   }
-
-  {
-    SDL_Surface *icosfc = SDL_CreateRGBSurfaceFrom(k8vavoomicondata, 32, 32, 32, 32*4, rmask, gmask, bmask, amask);
-    if (icosfc) {
-      SDL_SetWindowIcon(winsplash, icosfc);
-      SDL_FreeSurface(icosfc);
-    }
-  }
+  SetWindowIcon(winsplash);
 
   rensplash = SDL_CreateRenderer(winsplash, -1, SDL_RENDERER_SOFTWARE);
   if (!rensplash) {
@@ -558,7 +577,7 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
     return false;
   }
 
-  SDL_Surface *imgsfc = SDL_CreateRGBSurfaceFrom(pixels, splashWidth, splashHeight, 32, splashWidth*4, rmask, gmask, bmask, amask);
+  SDL_Surface *imgsfc = SDL_CreateRGBSurfaceFrom(spdtor.pixels, splashWidth, splashHeight, 32, splashWidth*4, rmask, gmask, bmask, amask);
   if (!imgsfc) {
     GCon->Logf(NAME_Warning, "Cannot create splash image surface");
     return false;
@@ -742,17 +761,6 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
     tx += CONFONT_WIDTH;
   }
   #ifndef VV_USE_CONFONT_ATLAS_TEXTURE
-  #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    /*static*/ const Uint32 rmask = 0xff000000u;
-    /*static*/ const Uint32 gmask = 0x00ff0000u;
-    /*static*/ const Uint32 bmask = 0x0000ff00u;
-    /*static*/ const Uint32 amask = 0x000000ffu;
-  #else
-    /*static*/ const Uint32 rmask = 0x000000ffu;
-    /*static*/ const Uint32 gmask = 0x0000ff00u;
-    /*static*/ const Uint32 bmask = 0x00ff0000u;
-    /*static*/ const Uint32 amask = 0xff000000u;
-  #endif
   // create texture with text
   SDL_Surface *imgsfc = SDL_CreateRGBSurfaceFrom(fpix, fwdt, fhgt, 32, fwdt*4, rmask, gmask, bmask, amask);
   // we don't need pixels anymore
@@ -775,22 +783,4 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
   #endif
   // show it
   SDL_RenderPresent(rensplash);
-}
-
-
-//==========================================================================
-//
-//  VSdlOpenGLDrawer::HideSplashScreens
-//
-//==========================================================================
-void VSdlOpenGLDrawer::HideSplashScreens () {
-  if (winsplash) {
-    #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
-    if (imgsplashfont) { SDL_DestroyTexture(imgsplashfont); imgsplashfont = nullptr; }
-    #endif
-    if (imgsplash) { SDL_DestroyTexture(imgsplash); imgsplash = nullptr; }
-    if (rensplash) { SDL_DestroyRenderer(rensplash); rensplash = nullptr; }
-    SDL_DestroyWindow(winsplash);
-    winsplash = nullptr;
-  }
 }
