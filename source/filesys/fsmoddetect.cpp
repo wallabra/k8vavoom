@@ -303,7 +303,7 @@ static void ParseDetectors (VStr name) {
     else return;
   }
 
-  GCon->Logf(NAME_Init, "Parsing dectors file \"%s\"...", *name);
+  GCon->Logf(NAME_Init, "Parsing detectors file \"%s\"...", *name);
   VScriptParser *sc = new VScriptParser(name, FL_OpenSysFileRead(name));
   sc->SetCMode(true);
   for (;;) {
