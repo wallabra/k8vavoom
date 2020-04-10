@@ -33,6 +33,7 @@
 
 // if not defined, texture will be recreated on each line render
 //#define VV_USE_CONFONT_ATLAS_TEXTURE
+#define VV_SPLASH_PARTIAL_UPDATES
 
 
 extern VCvarB ui_want_mouse_at_zero;
@@ -607,11 +608,11 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
   SDL_SetWindowPosition(winsplash, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
   // render image
-  /*
+  #ifdef VV_SPLASH_PARTIAL_UPDATES
+  SDL_SetRenderDrawColor(rensplash, 0, 0, 0, SDL_ALPHA_OPAQUE);
   SDL_RenderClear(rensplash);
   SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
-  SDL_RenderPresent(rensplash);
-  */
+  #endif
   DrawLoadingSplashText("Loading...", -1);
 
   #if 0
@@ -664,11 +665,24 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
   if (len < 0) len = (text && text[0] ? (int)strlen(text) : 0);
   //if (len <= 0) return; // nothing to do
   // render image
-  //SDL_SetRenderDrawColor(rensplash, 0, 0, 0, SDL_ALPHA_OPAQUE);
-  #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
-  //SDL_RenderClear(rensplash);
-  SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
-  #endif
+  {
+    #ifdef VV_SPLASH_PARTIAL_UPDATES
+    // erase old text
+    SDL_Rect srectu;
+    srectu.x = imgtx;
+    srectu.y = imgty;
+    srectu.w = (imgtxend-imgtx);
+    srectu.h = CONFONT_HEIGHT;
+    SDL_Rect drectu;
+    drectu = srectu;
+    SDL_RenderCopy(rensplash, imgsplash, &srectu, &drectu);
+    #else
+    // copy whole image
+    //SDL_SetRenderDrawColor(rensplash, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    //SDL_RenderClear(rensplash);
+    SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
+    #endif
+  }
   // render text
   int tx = imgtx;
   int ty = imgty;
@@ -680,7 +694,7 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
     drect.w = CONFONT_WIDTH;
     drect.h = CONFONT_HEIGHT;
   #else
-    int fwdt = (imgtxend-imgtx)*CONFONT_WIDTH;
+    int fwdt = imgtxend-imgtx;
     int fhgt = CONFONT_HEIGHT;
     vuint8 *fpix = new vuint8[(fwdt*4)*fhgt];
     // clear it to transparent
@@ -743,19 +757,14 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
     SDL_FreeSurface(imgsfc);
     if (ttx) {
       SDL_SetTextureBlendMode(ttx, SDL_BLENDMODE_BLEND);
+      SDL_Rect drect;
+      drect.x = imgtx;
+      drect.y = imgty;
+      drect.w = fwdt;
+      drect.h = fhgt;
+      SDL_RenderCopy(rensplash, ttx, NULL, &drect);
+      SDL_DestroyTexture(ttx);
     }
-  }
-  // draw it all
-  SDL_RenderClear(rensplash);
-  SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
-  if (ttx) {
-    SDL_Rect drect;
-    drect.x = imgtx;
-    drect.y = imgty;
-    drect.w = fwdt;
-    drect.h = fhgt;
-    SDL_RenderCopy(rensplash, ttx, NULL, &drect);
-    SDL_DestroyTexture(ttx);
   }
   #endif
   // show it
