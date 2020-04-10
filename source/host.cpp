@@ -191,7 +191,7 @@ void Host_Init () {
   if (cli_SetDeveloper > 0) developer = true;
 
   #ifdef CLIENT
-  C_Init();
+  C_Init(); // init console
   #endif
   DD_SetupLog();
 
@@ -249,8 +249,11 @@ void Host_Init () {
   VObject::cliShowUndefinedBuiltins = false;
   #endif
 
-  FL_ProcessPreInits();
+  #ifdef CLIENT
+  V_Init(true); // moved here, so we can show a splash screen
+  #endif
 
+  FL_ProcessPreInits();
 
   FL_Init();
 
@@ -292,7 +295,7 @@ void Host_Init () {
   if (GAudio) GAudio->Init();
   SCR_Init();
   CT_Init();
-  V_Init();
+  //V_Init(); // moved to the top, so we can show a splash screen
 
   R_Init();
 

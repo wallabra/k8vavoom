@@ -58,8 +58,10 @@ static VCvarI k8ColormapLightAmp("k8ColormapLightAmp", "0", "LightAmp colormap r
 
 
 static const char *videoDrvName = nullptr;
+static int cli_DisableSplash = 0;
 /*static*/ bool cliRegister_rmain_args =
-  VParsedArgs::RegisterStringOption("-video", "!", &videoDrvName);
+  VParsedArgs::RegisterStringOption("-video", "!", &videoDrvName) &&
+  VParsedArgs::RegisterFlagSet("-nosplash", "disable startup splash screen", &cli_DisableSplash);
 
 
 void R_FreeSkyboxData ();
@@ -3107,7 +3109,7 @@ COMMAND(TimeRefresh) {
 //  V_Init
 //
 //==========================================================================
-void V_Init () {
+void V_Init (bool showSplash) {
   int DIdx = -1;
   for (int i = 0; i < DRAWER_MAX; ++i) {
     if (!DrawerList[i]) continue;
@@ -3121,6 +3123,7 @@ void V_Init () {
   // create drawer
   Drawer = DrawerList[DIdx]->Creator();
   Drawer->Init();
+  if (showSplash && cli_DisableSplash <= 0) Drawer->ShowLoadingSplashScreen();
 }
 
 

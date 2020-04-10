@@ -407,6 +407,16 @@ public:
   inline void IncUpdateFrame () noexcept { if (++updateFrame == 0) updateFrame = 1; }
   void ResetTextureUpdateFrames () noexcept;
 
+  // this should show some kind of splash screen
+  // it is called very early in startup sequence
+  // the drawer should destroy splash screen on first resolution change
+  // should return `false` splash screen feature is not implemented
+  virtual bool ShowLoadingSplashScreen () = 0;
+  // this is called to hide all splash screens
+  // note that it can be called many times, and
+  // even if splash screen feature is not avilable
+  virtual void HideSplashScreens () = 0;
+
   virtual void Init () = 0;
   // fsmode: 0: windowed; 1: scaled FS; 2: real FS
   virtual bool SetResolution (int AWidth, int AHeight, int fsmode) = 0;

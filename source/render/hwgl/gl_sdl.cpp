@@ -39,9 +39,19 @@ class VSdlOpenGLDrawer : public VOpenGLDrawer {
 private:
   bool skipAdaptiveVSync;
 
+protected:
+  SDL_Window *winsplash;
+  SDL_Renderer *rensplash;
+
 public:
   SDL_Window *hw_window;
   SDL_GLContext hw_glctx;
+
+public:
+  VSdlOpenGLDrawer ();
+
+  virtual bool ShowLoadingSplashScreen () override;
+  virtual void HideSplashScreens () override;
 
   virtual void Init () override;
   virtual bool SetResolution (int, int, int) override;
@@ -62,6 +72,22 @@ private:
 IMPLEMENT_DRAWER(VSdlOpenGLDrawer, DRAWER_OpenGL, "OpenGL", "SDL OpenGL rasteriser device", "-opengl");
 
 VCvarI gl_current_screen_fsmode("gl_current_screen_fsmode", "0", "Video mode: windowed(0), fullscreen scaled(1), fullscreen real(2)", CVAR_Rom);
+
+
+//==========================================================================
+//
+//  VSdlOpenGLDrawer::VSdlOpenGLDrawer
+//
+//==========================================================================
+VSdlOpenGLDrawer::VSdlOpenGLDrawer ()
+  : VOpenGLDrawer()
+  , skipAdaptiveVSync(false)
+  , winsplash(nullptr)
+  , rensplash(nullptr)
+  , hw_window(nullptr)
+  , hw_glctx(nullptr)
+{
+}
 
 
 //==========================================================================
@@ -174,6 +200,8 @@ void VSdlOpenGLDrawer::SetVSync (bool firstTime) {
 //
 //==========================================================================
 bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
+  HideSplashScreens();
+
   int Width = AWidth;
   int Height = AHeight;
   if (Width < 320 || Height < 200) {
@@ -310,6 +338,7 @@ void VSdlOpenGLDrawer::Update (bool fullUpdate) {
 //
 //==========================================================================
 void VSdlOpenGLDrawer::Shutdown () {
+  HideSplashScreens();
   if (hw_glctx && mInitialized) callICB(VCB_DeinitVideo);
   DeleteTextures();
   if (hw_glctx) {
@@ -323,4 +352,201 @@ void VSdlOpenGLDrawer::Shutdown () {
   }
   mInitialized = false;
   if (ui_want_mouse_at_zero) SDL_WarpMouseGlobal(0, 0);
+}
+
+
+#include "splashlogo.inc"
+
+
+//==========================================================================
+//
+//  VSdlOpenGLDrawer::ShowLoadingSplashScreen
+//
+//==========================================================================
+bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
+  #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    /*static*/ const Uint32 rmask = 0xff000000u;
+    /*static*/ const Uint32 gmask = 0x00ff0000u;
+    /*static*/ const Uint32 bmask = 0x0000ff00u;
+    /*static*/ const Uint32 amask = 0x000000ffu;
+  #else
+    /*static*/ const Uint32 rmask = 0x000000ffu;
+    /*static*/ const Uint32 gmask = 0x0000ff00u;
+    /*static*/ const Uint32 bmask = 0x00ff0000u;
+    /*static*/ const Uint32 amask = 0xff000000u;
+  #endif
+
+  //GCon->Log(NAME_Debug, "*** SPLASH ***");
+  if (winsplash) return true; // just in case
+
+  VMemoryStreamRO logostream("splashlogo.png", splashlogo, (int)sizeof(splashlogo));
+  PNGHandle *png = M_VerifyPNG(&logostream);
+  if (!png) return false;
+
+  if (png->width < 1 || png->width > 1024 || png->height < 1 || png->height > 768) {
+    GCon->Logf(NAME_Warning, "invalid splash logo image dimensions (%dx%d)", png->width, png->height);
+    delete png;
+    return false;
+  }
+
+  if (!png->loadIDAT()) {
+    GCon->Log(NAME_Warning, "error decoding splash logo image");
+    delete png;
+    return false;
+  }
+
+  vuint8 *pixels = new vuint8[png->width*png->height*4];
+  vuint8 *dest = pixels;
+  for (int y = 0; y < png->height; ++y) {
+    for (int x = 0; x < png->width; ++x) {
+      auto clr = png->getPixel(x, y); // unmultiplied
+      *dest++ = clr.r;
+      *dest++ = clr.g;
+      *dest++ = clr.b;
+      *dest++ = clr.a;
+    }
+  }
+
+  delete png;
+
+  if (logostream.IsError()) {
+    GCon->Log(NAME_Warning, "error decoding splash logo image");
+    delete pixels;
+    return false;
+  }
+
+  int splashWidth = png->width;
+  int splashHeight = png->height;
+  //GCon->Logf(NAME_Debug, "splash logo image dimensions (%dx%d)", splashWidth, splashHeight);
+
+  Uint32 flags = SDL_WINDOW_OPENGL|SDL_WINDOW_HIDDEN|SDL_WINDOW_BORDERLESS|SDL_WINDOW_SKIP_TASKBAR|/*SDL_WINDOW_POPUP_MENU*/SDL_WINDOW_TOOLTIP;
+
+  SDL_GL_ResetAttributes(); // just in case
+  //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+  //#ifdef __SWITCH__
+  //fgsfds: libdrm_nouveau requires this, or else shit will be trying to use GLES
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+  //#endif
+
+  // as we are doing rendering to FBO, there is no need to create depth and stencil buffers for FB
+  // but shitty intel may require this, so...
+  //SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+  winsplash = SDL_CreateWindow("k8vavoom_splash", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, splashWidth, splashHeight, flags);
+  if (!winsplash) {
+    GCon->Logf(NAME_Warning, "Cannot create splash window");
+    delete pixels;
+    return false;
+  }
+
+  {
+    SDL_Surface *icosfc = SDL_CreateRGBSurfaceFrom(k8vavoomicondata, 32, 32, 32, 32*4, rmask, gmask, bmask, amask);
+    if (icosfc) {
+      SDL_SetWindowIcon(winsplash, icosfc);
+      SDL_FreeSurface(icosfc);
+    }
+  }
+
+  /*
+  hw_glctx = SDL_GL_CreateContext(winsplash);
+  if (!hw_glctx) {
+    SDL_DestroyWindow(winsplash);
+    winsplash = nullptr;
+    GCon->Logf("SDL2: cannot initialize OpenGL 2.1 with stencil buffer.");
+    return false;
+  }
+  */
+
+  rensplash = SDL_CreateRenderer(winsplash, -1, 0);
+  if (!rensplash) {
+    GCon->Logf(NAME_Warning, "Cannot create splash renderer");
+    SDL_DestroyWindow(winsplash);
+    winsplash = nullptr;
+    delete pixels;
+    return false;
+  }
+
+  SDL_Surface *imgsfc = SDL_CreateRGBSurfaceFrom(pixels, splashWidth, splashHeight, 32, splashWidth*4, rmask, gmask, bmask, amask);
+  if (!imgsfc) {
+    GCon->Logf(NAME_Warning, "Cannot create splash image surface");
+    SDL_DestroyRenderer(rensplash);
+    SDL_DestroyWindow(winsplash);
+    winsplash = nullptr;
+    delete pixels;
+    return false;
+  }
+
+  SDL_Texture *imgtex = SDL_CreateTextureFromSurface(rensplash, imgsfc);
+  SDL_FreeSurface(imgsfc);
+
+  if (!imgtex) {
+    GCon->Logf(NAME_Warning, "Cannot create splash image texture");
+    SDL_DestroyRenderer(rensplash);
+    SDL_DestroyWindow(winsplash);
+    winsplash = nullptr;
+    delete pixels;
+    return false;
+  }
+
+  // show it
+  SDL_ShowWindow(winsplash);
+  SDL_SetWindowPosition(winsplash, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+
+  // render image
+  SDL_RenderClear(rensplash);
+  SDL_RenderCopy(rensplash, imgtex, NULL, NULL);
+  SDL_RenderPresent(rensplash);
+
+  #if 0
+  // need to do this to show the window (nope)
+  {
+    GCon->Logf(NAME_Debug, "splash event loop (enter)");
+    SDL_Event ev;
+    SDL_PumpEvents();
+    GCon->Logf(NAME_Debug, "splash event loop (pumped)");
+    while (SDL_PollEvent(&ev)) {
+      GCon->Logf(NAME_Debug, "splash event loop (event)");
+      if (ev.type == SDL_QUIT) {
+        SDL_PushEvent(&ev);
+        break;
+      }
+      /*
+      SDL_RenderClear(rensplash);
+      SDL_RenderCopy(rensplash, imgtex, NULL, NULL);
+      SDL_RenderPresent(rensplash);
+      */
+    }
+    GCon->Logf(NAME_Debug, "splash event loop (leave)");
+  }
+  //SDL_SetWindowPosition(winsplash, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+  #endif
+
+  SDL_DestroyTexture(imgtex);
+
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VSdlOpenGLDrawer::HideSplashScreens
+//
+//==========================================================================
+void VSdlOpenGLDrawer::HideSplashScreens () {
+  if (winsplash) {
+    if (rensplash) SDL_DestroyRenderer(rensplash);
+    SDL_DestroyWindow(winsplash);
+    winsplash = nullptr;
+    rensplash = nullptr;
+  }
 }
