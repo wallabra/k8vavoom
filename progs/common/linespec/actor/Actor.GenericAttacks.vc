@@ -154,6 +154,12 @@ final EntityEx helperSpawnShotSupplementalMissile (class!Actor missile, TVec hit
 //==========================================================================
 final void FireSuperBullet () {
   //Actor(MO).A_FireBullets(0, 0, 1, 10000, BulletPuff);
+
+  // do not allow this in network games if cheating is not enabled
+  if (bIsPlayer && Level.Game.netgame) {
+    if (!GetCvarB('sv_cheats')) return;
+  }
+
   bool noAAim = true;
   name decal = '';
   TVec aimDir;
