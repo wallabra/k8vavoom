@@ -45,6 +45,7 @@ protected:
   SDL_Texture *imgsplash;
   int imgtx, imgty; // where text starts
   int imgtxend; // text box end
+  double imgtlastupdate;
 
 public:
   SDL_Window *hw_window;
@@ -91,6 +92,7 @@ VSdlOpenGLDrawer::VSdlOpenGLDrawer ()
   , winsplash(nullptr)
   , rensplash(nullptr)
   , imgsplash(nullptr)
+  , imgtlastupdate(0)
   , hw_window(nullptr)
   , hw_glctx(nullptr)
 {
@@ -589,6 +591,10 @@ static void conDrawChar (SDL_Renderer *rdr, int x0, int y0, char ch) {
 //==========================================================================
 void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
   if (!winsplash) return;
+  // limit updates
+  const double ctt = Sys_Time();
+  if (ctt-imgtlastupdate < 1.0/60.0) return;
+  imgtlastupdate = ctt;
   // render image
   SDL_SetRenderDrawColor(rensplash, 0, 0, 0, SDL_ALPHA_OPAQUE);
   SDL_RenderClear(rensplash);
