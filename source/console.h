@@ -37,6 +37,9 @@ void C_Shutdown ();
 void C_DisableTTYLogs ();
 void C_EnableTTYLogs ();
 
+// console will automatically deactivate splash mode when splash deactivates
+void C_SplashActive (bool v);
+
 extern bool GConTTYLogForced;
 
 extern FOutputDevice *GCon;

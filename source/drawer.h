@@ -405,6 +405,9 @@ public:
   // the drawer should destroy splash screen on first resolution change
   // should return `false` splash screen feature is not implemented
   virtual bool ShowLoadingSplashScreen () = 0;
+  virtual bool IsLoadingSplashActive () = 0;
+  // this can be called regardless of splash screen availability, and even after splash was hidden
+  virtual void DrawLoadingSplashText (const char *text, int len=-1) = 0;
   // this is called to hide all splash screens
   // note that it can be called many times, and
   // even if splash screen feature is not avilable

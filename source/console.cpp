@@ -37,7 +37,18 @@ extern const char *cli_LogFileName;
 
 static bool GConTTYLogPrevious = false;
 static bool GConTTYLogDisabled = false;
+static bool GConSplashActive = false;
 bool GConTTYLogForced = true;
+
+
+//==========================================================================
+//
+//  C_SplashActive
+//
+//==========================================================================
+void C_SplashActive (bool v) {
+  GConSplashActive = v;
+}
 
 
 //==========================================================================
@@ -642,6 +653,14 @@ static void AddLine (const char *Data) noexcept {
   */
   ++num_lines;
   if (last_line == num_lines-1) last_line = num_lines;
+  // update splash if necessary
+  if (GConSplashActive && Drawer) {
+    if (Drawer->IsLoadingSplashActive()) {
+      Drawer->DrawLoadingSplashText(Data, len);
+    } else {
+      GConSplashActive = false;
+    }
+  }
 }
 
 

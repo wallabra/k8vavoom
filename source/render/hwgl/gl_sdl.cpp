@@ -42,6 +42,9 @@ private:
 protected:
   SDL_Window *winsplash;
   SDL_Renderer *rensplash;
+  SDL_Texture *imgsplash;
+  int imgtx, imgty; // where text starts
+  int imgtxend; // text box end
 
 public:
   SDL_Window *hw_window;
@@ -51,6 +54,9 @@ public:
   VSdlOpenGLDrawer ();
 
   virtual bool ShowLoadingSplashScreen () override;
+  virtual bool IsLoadingSplashActive () override;
+  // this can be called regardless of splash screen availability, and even after splash was hidden
+  virtual void DrawLoadingSplashText (const char *text, int len=-1) override;
   virtual void HideSplashScreens () override;
 
   virtual void Init () override;
@@ -84,6 +90,7 @@ VSdlOpenGLDrawer::VSdlOpenGLDrawer ()
   , skipAdaptiveVSync(false)
   , winsplash(nullptr)
   , rensplash(nullptr)
+  , imgsplash(nullptr)
   , hw_window(nullptr)
   , hw_glctx(nullptr)
 {
@@ -356,6 +363,17 @@ void VSdlOpenGLDrawer::Shutdown () {
 
 
 #include "splashlogo.inc"
+#include "splashfont.inc"
+
+
+//==========================================================================
+//
+//  VSdlOpenGLDrawer::IsLoadingSplashActive
+//
+//==========================================================================
+bool VSdlOpenGLDrawer::IsLoadingSplashActive () {
+  return !!winsplash;
+}
 
 
 //==========================================================================
@@ -407,8 +425,6 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
     }
   }
 
-  delete png;
-
   if (logostream.IsError()) {
     GCon->Log(NAME_Warning, "error decoding splash logo image");
     delete pixels;
@@ -419,6 +435,14 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
   int splashHeight = png->height;
   //GCon->Logf(NAME_Debug, "splash logo image dimensions (%dx%d)", splashWidth, splashHeight);
 
+  delete png;
+
+  // text coords
+  imgtx = 155;
+  imgty = 122;
+  imgtxend = splashWidth-8;
+
+  // create window
   Uint32 flags = SDL_WINDOW_OPENGL|SDL_WINDOW_HIDDEN|SDL_WINDOW_BORDERLESS|SDL_WINDOW_SKIP_TASKBAR|/*SDL_WINDOW_POPUP_MENU*/SDL_WINDOW_TOOLTIP;
 
   SDL_GL_ResetAttributes(); // just in case
@@ -457,16 +481,6 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
     }
   }
 
-  /*
-  hw_glctx = SDL_GL_CreateContext(winsplash);
-  if (!hw_glctx) {
-    SDL_DestroyWindow(winsplash);
-    winsplash = nullptr;
-    GCon->Logf("SDL2: cannot initialize OpenGL 2.1 with stencil buffer.");
-    return false;
-  }
-  */
-
   rensplash = SDL_CreateRenderer(winsplash, -1, 0);
   if (!rensplash) {
     GCon->Logf(NAME_Warning, "Cannot create splash renderer");
@@ -481,20 +495,23 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
     GCon->Logf(NAME_Warning, "Cannot create splash image surface");
     SDL_DestroyRenderer(rensplash);
     SDL_DestroyWindow(winsplash);
+    rensplash = nullptr;
     winsplash = nullptr;
     delete pixels;
     return false;
   }
 
-  SDL_Texture *imgtex = SDL_CreateTextureFromSurface(rensplash, imgsfc);
+  imgsplash = SDL_CreateTextureFromSurface(rensplash, imgsfc);
   SDL_FreeSurface(imgsfc);
+  // we don't need pixels anymore
+  delete pixels;
 
-  if (!imgtex) {
+  if (!imgsplash) {
     GCon->Logf(NAME_Warning, "Cannot create splash image texture");
     SDL_DestroyRenderer(rensplash);
     SDL_DestroyWindow(winsplash);
+    rensplash = nullptr;
     winsplash = nullptr;
-    delete pixels;
     return false;
   }
 
@@ -504,7 +521,7 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
 
   // render image
   SDL_RenderClear(rensplash);
-  SDL_RenderCopy(rensplash, imgtex, NULL, NULL);
+  SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
   SDL_RenderPresent(rensplash);
 
   #if 0
@@ -531,9 +548,84 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
   //SDL_SetWindowPosition(winsplash, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
   #endif
 
-  SDL_DestroyTexture(imgtex);
-
   return true;
+}
+
+
+//==========================================================================
+//
+//  conDrawChar
+//
+//==========================================================================
+static void conDrawChar (SDL_Renderer *rdr, int x0, int y0, char ch) {
+  const vuint32 conColor = 0xffff7f00u;
+  int r = (conColor>>16)&0xff;
+  int g = (conColor>>8)&0xff;
+  int b = conColor&0xff;
+  const int rr = r, gg = g, bb = b;
+  for (int y = CONFONT_HEIGHT-1; y >= 0; --y) {
+    vuint16 v = glConFont10[(ch&0xff)*10+y];
+    //immutable uint cc = (b<<16)|(g<<8)|r|0xff000000;
+    //const vuint32 cc = (r<<16)|(g<<8)|b|0xff000000u;
+    SDL_SetRenderDrawColor(rdr, clampToByte(r), clampToByte(g), clampToByte(b), SDL_ALPHA_OPAQUE);
+    for (int x = 0; x < CONFONT_WIDTH; ++x) {
+      if (v&0x8000) {
+        //vsetPixel(conDrawX+x, conDrawY+y, cc);
+        SDL_RenderDrawPoint(rdr, x0+x, y0+y);
+      }
+      v <<= 1;
+    }
+    if ((r -= 7) < 0) r = rr;
+    if ((g -= 7) < 0) g = gg;
+    if ((b -= 7) < 0) b = bb;
+  }
+}
+
+
+//==========================================================================
+//
+//  VSdlOpenGLDrawer::DrawLoadingSplashText
+//
+//==========================================================================
+void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
+  if (!winsplash) return;
+  // render image
+  SDL_SetRenderDrawColor(rensplash, 0, 0, 0, SDL_ALPHA_OPAQUE);
+  SDL_RenderClear(rensplash);
+  SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
+  // render text
+  if (len < 0) len = (text && text[0] ? (int)strlen(text) : 0);
+  if (len > 0) {
+    int tx = imgtx;
+    int ty = imgty;
+    while (len && tx+CONFONT_WIDTH <= imgtxend) {
+      // skip colors
+      if (text[0] == TEXT_COLOR_ESCAPE) {
+        ++text;
+        --len;
+        if (!len) break;
+        const bool sq = (text[0] == '[');
+        ++text;
+        --len;
+        if (!len) break;
+        if (sq) {
+          while (len && text[0] != ']') { ++text; --len; }
+          if (len) {
+            ++text;
+            --len;
+            if (!len) break;
+          }
+        }
+        continue;
+      }
+      conDrawChar(rensplash, tx, ty, text[0]);
+      ++text;
+      --len;
+      tx += CONFONT_WIDTH;
+    }
+  }
+  // show it
+  SDL_RenderPresent(rensplash);
 }
 
 
@@ -544,9 +636,11 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
 //==========================================================================
 void VSdlOpenGLDrawer::HideSplashScreens () {
   if (winsplash) {
+    if (imgsplash) SDL_DestroyTexture(imgsplash);
     if (rensplash) SDL_DestroyRenderer(rensplash);
     SDL_DestroyWindow(winsplash);
     winsplash = nullptr;
     rensplash = nullptr;
+    imgsplash = nullptr;
   }
 }

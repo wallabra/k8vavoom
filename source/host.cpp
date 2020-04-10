@@ -251,6 +251,7 @@ void Host_Init () {
 
   #ifdef CLIENT
   V_Init(true); // moved here, so we can show a splash screen
+  C_SplashActive(true);
   #endif
 
   FL_ProcessPreInits();
