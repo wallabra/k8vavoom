@@ -40,6 +40,8 @@ extern VCvarB ui_want_mouse_at_zero;
 
 
 class VSdlOpenGLDrawer : public VOpenGLDrawer {
+  friend struct SplashDtor;
+
 private:
   bool skipAdaptiveVSync;
 
@@ -53,6 +55,27 @@ protected:
   int imgtx, imgty; // where text starts
   int imgtxend; // text box end
   double imgtlastupdate;
+
+  // used to cleanup partially created splash window
+  struct SplashDtor {
+    VSdlOpenGLDrawer *drw;
+    vuint8 *pixtofree;
+    inline SplashDtor (VSdlOpenGLDrawer *adrw) noexcept : drw(adrw), pixtofree(nullptr) {}
+    inline ~SplashDtor () {
+      if (pixtofree) { delete[] pixtofree; pixtofree = nullptr; }
+      if (drw) {
+        #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
+        if (drw->imgsplashfont) { SDL_DestroyTexture(drw->imgsplashfont); drw->imgsplashfont = nullptr; }
+        #endif
+        if (drw->imgsplash) { SDL_DestroyTexture(drw->imgsplash); drw->imgsplash = nullptr; }
+        if (drw->rensplash) { SDL_DestroyRenderer(drw->rensplash); drw->rensplash = nullptr; }
+        if (drw->winsplash) { SDL_DestroyWindow(drw->winsplash); drw->winsplash = nullptr; }
+        drw = nullptr;
+      }
+    }
+    inline void Success () noexcept { drw = nullptr; }
+    inline void FreePixels () { if (pixtofree) { delete[] pixtofree; pixtofree = nullptr; } }
+  };
 
 public:
   SDL_Window *hw_window;
@@ -80,6 +103,9 @@ public:
 
 private:
   void SetVSync (bool firstTime);
+
+  // this is required for both normal and splash
+  static void SetupSDLRequirements ();
 };
 
 
@@ -209,6 +235,35 @@ void VSdlOpenGLDrawer::SetVSync (bool firstTime) {
 
 //==========================================================================
 //
+//  VSdlOpenGLDrawer::SetupSDLRequirements
+//
+//==========================================================================
+void VSdlOpenGLDrawer::SetupSDLRequirements () {
+  SDL_GL_ResetAttributes(); // just in case
+  //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+  //#ifdef __SWITCH__
+  //fgsfds: libdrm_nouveau requires this, or else shit will be trying to use GLES
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+  //#endif
+
+  // as we are doing rendering to FBO, there is no need to create depth and stencil buffers for FB
+  // but shitty intel may require this, so...
+  //SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+}
+
+
+//==========================================================================
+//
 //  VSdlOpenGLDrawer::SetResolution
 //
 //  set up the video mode
@@ -243,27 +298,7 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
        if (fsmode == 1) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   else if (fsmode == 2) flags |= SDL_WINDOW_FULLSCREEN;
 
-  SDL_GL_ResetAttributes(); // just in case
-  //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-  //#ifdef __SWITCH__
-  //fgsfds: libdrm_nouveau requires this, or else shit will be trying to use GLES
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-  //#endif
-
-  // as we are doing rendering to FBO, there is no need to create depth and stencil buffers for FB
-  // but shitty intel may require this, so...
-  //SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
-  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
+  SetupSDLRequirements();
   // doing it twice is required for some broken setups. oops.
   SetVSync(true); // first time
 
@@ -463,7 +498,17 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
     return false;
   }
 
+  if (logostream.IsError()) {
+    GCon->Log(NAME_Warning, "error decoding splash logo image");
+    delete png;
+    return false;
+  }
+
+
+  SplashDtor spdtor(this);
+
   vuint8 *pixels = new vuint8[png->width*png->height*4];
+  spdtor.pixtofree = pixels;
   vuint8 *dest = pixels;
   for (int y = 0; y < png->height; ++y) {
     for (int x = 0; x < png->width; ++x) {
@@ -473,12 +518,6 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
       *dest++ = clr.b;
       *dest++ = clr.a;
     }
-  }
-
-  if (logostream.IsError()) {
-    GCon->Log(NAME_Warning, "error decoding splash logo image");
-    delete pixels;
-    return false;
   }
 
   int splashWidth = png->width;
@@ -495,32 +534,13 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
   // create window
   Uint32 flags = SDL_WINDOW_OPENGL|SDL_WINDOW_HIDDEN|SDL_WINDOW_BORDERLESS|SDL_WINDOW_SKIP_TASKBAR|/*SDL_WINDOW_POPUP_MENU*/SDL_WINDOW_TOOLTIP;
 
-  SDL_GL_ResetAttributes(); // just in case
-  //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-  //#ifdef __SWITCH__
-  //fgsfds: libdrm_nouveau requires this, or else shit will be trying to use GLES
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-  //#endif
+  SetupSDLRequirements();
 
-  // as we are doing rendering to FBO, there is no need to create depth and stencil buffers for FB
-  // but shitty intel may require this, so...
-  //SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
-  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
+  // turn off vsync
   SDL_GL_SetSwapInterval(0);
   winsplash = SDL_CreateWindow("k8vavoom_splash", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, splashWidth, splashHeight, flags);
   if (!winsplash) {
     GCon->Logf(NAME_Warning, "Cannot create splash window");
-    delete pixels;
     return false;
   }
 
@@ -535,34 +555,22 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
   rensplash = SDL_CreateRenderer(winsplash, -1, SDL_RENDERER_SOFTWARE);
   if (!rensplash) {
     GCon->Logf(NAME_Warning, "Cannot create splash renderer");
-    SDL_DestroyWindow(winsplash);
-    winsplash = nullptr;
-    delete pixels;
     return false;
   }
 
   SDL_Surface *imgsfc = SDL_CreateRGBSurfaceFrom(pixels, splashWidth, splashHeight, 32, splashWidth*4, rmask, gmask, bmask, amask);
   if (!imgsfc) {
     GCon->Logf(NAME_Warning, "Cannot create splash image surface");
-    SDL_DestroyRenderer(rensplash);
-    SDL_DestroyWindow(winsplash);
-    rensplash = nullptr;
-    winsplash = nullptr;
-    delete pixels;
     return false;
   }
 
   imgsplash = SDL_CreateTextureFromSurface(rensplash, imgsfc);
   SDL_FreeSurface(imgsfc);
   // we don't need pixels anymore
-  delete pixels;
+  spdtor.FreePixels();
 
   if (!imgsplash) {
     GCon->Logf(NAME_Warning, "Cannot create splash image texture");
-    SDL_DestroyRenderer(rensplash);
-    SDL_DestroyWindow(winsplash);
-    rensplash = nullptr;
-    winsplash = nullptr;
     return false;
   }
   SDL_SetTextureBlendMode(imgsplash, SDL_BLENDMODE_NONE);
@@ -586,12 +594,6 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
     delete fpix;
     if (!imgsfc) {
       GCon->Logf(NAME_Warning, "Cannot create splash image surface");
-      SDL_DestroyTexture(imgsplash);
-      SDL_DestroyRenderer(rensplash);
-      SDL_DestroyWindow(winsplash);
-      imgsplash = nullptr;
-      rensplash = nullptr;
-      winsplash = nullptr;
       return false;
     }
     imgsplashfont = SDL_CreateTextureFromSurface(rensplash, imgsfc);
@@ -602,10 +604,13 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
   }
   #endif
 
+  // turn off vsync again
   SDL_GL_SetSwapInterval(0);
   // show it
   SDL_ShowWindow(winsplash);
   SDL_SetWindowPosition(winsplash, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+  // turn off vsync once more
+  SDL_GL_SetSwapInterval(0);
 
   // render image
   #ifdef VV_SPLASH_PARTIAL_UPDATES
@@ -639,6 +644,7 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
   //SDL_SetWindowPosition(winsplash, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
   #endif
 
+  spdtor.Success();
   return true;
 }
 
@@ -780,16 +786,11 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
 void VSdlOpenGLDrawer::HideSplashScreens () {
   if (winsplash) {
     #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
-    if (imgsplashfont) SDL_DestroyTexture(imgsplashfont);
+    if (imgsplashfont) { SDL_DestroyTexture(imgsplashfont); imgsplashfont = nullptr; }
     #endif
-    if (imgsplash) SDL_DestroyTexture(imgsplash);
-    if (rensplash) SDL_DestroyRenderer(rensplash);
+    if (imgsplash) { SDL_DestroyTexture(imgsplash); imgsplash = nullptr; }
+    if (rensplash) { SDL_DestroyRenderer(rensplash); rensplash = nullptr; }
     SDL_DestroyWindow(winsplash);
     winsplash = nullptr;
-    rensplash = nullptr;
-    imgsplash = nullptr;
-    #ifdef VV_USE_CONFONT_ATLAS_TEXTURE
-    imgsplashfont = nullptr;
-    #endif
   }
 }
