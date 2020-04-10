@@ -290,8 +290,7 @@ void VRenderLevelShadowVolume::RenderMobjsLight () {
 void VRenderLevelShadowVolume::RenderMobjsAmbient () {
   if (!r_draw_mobjs || !r_models) return;
   if (!r_dbg_advthing_draw_ambient) return;
-  //const bool oldLight = (!r_model_light || !r_model_shadows);
-  const bool oldLight = r_model_light;
+  const bool asAmbient = r_model_light;
   const bool doDump = r_dbg_advthing_dump_ambient.asBool();
   float TimeFrac;
   RenderStyleInfo ri;
@@ -306,7 +305,7 @@ void VRenderLevelShadowVolume::RenderMobjsAmbient () {
       //GCon->Logf("  <%s>", *ent->GetClass()->GetFullName());
       if (ri.isTranslucent()) continue;
 
-      SetupRIThingLighting(ent, ri, !oldLight/*asAmbient*/, false/*allowBM*/);
+      SetupRIThingLighting(ent, ri, asAmbient, false/*allowBM*/);
       ri.fade = 0;
 
       //DrawEntityModel(ent, light, 0, Alpha, Additive, TimeFrac, RPASS_Ambient);
