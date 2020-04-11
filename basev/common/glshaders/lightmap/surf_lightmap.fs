@@ -11,7 +11,7 @@ uniform sampler2D SpecularMap;
 #ifdef VV_LIGHTMAP_BRIGHTMAP
 $include "common/brightmap_vars.fs"
 #endif
-$include "common/texshade.inc"
+//$include "common/texshade.inc" // in "texlmap_vars.fs"
 
 $include "common/fog_vars.fs"
 $include "common/texlmap_vars.fs"
