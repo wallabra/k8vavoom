@@ -104,7 +104,9 @@
 #define VVA_PURE         __attribute__((pure))
 #define VVA_CONST        __attribute__((const))
 
-#include "mimalloc/mimalloc.h"
+#ifdef VAVOOM_USE_MIMALLOC
+# include "mimalloc/mimalloc.h"
+#endif
 
 #include "mythreadlite.h"
 #include "crypto/prng_randombytes.h"
