@@ -380,9 +380,9 @@ void VOpenGLDrawer::BloomDoGaussian () {
   // set up sample size workspace
   glViewport(0, 0, bloomWidth, bloomHeight);
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(0, 1, 1, 0, -666, 666);
+  //glMatrixMode(GL_PROJECTION);
+  //glLoadIdentity();
+  SetOrthoProjection(0, 1, 1, 0);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -444,9 +444,9 @@ void VOpenGLDrawer::BloomDrawEffect (int ax, int ay, int awidth, int aheight) {
   // restore full screen workspace
   glViewport(0, 0, bloomScrWdt, bloomScrHgt);
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(0, bloomScrWdt, bloomScrHgt, 0, -666, 666);
+  //glMatrixMode(GL_PROJECTION);
+  //glLoadIdentity();
+  SetOrthoProjection(0, bloomScrWdt, bloomScrHgt, 0);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -522,9 +522,9 @@ void VOpenGLDrawer::Posteffect_Bloom (int ax, int ay, int awidth, int aheight) {
     // set up full screen workspace
     glViewport(0, 0, bloomScrWdt, bloomScrHgt);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, bloomScrWdt, bloomScrHgt, 0, -666, 666);
+    //glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
+    SetOrthoProjection(0, bloomScrWdt, bloomScrHgt, 0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();

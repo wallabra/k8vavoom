@@ -489,8 +489,8 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
       GLDisableBlend();
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
+      glMatrixMode(GL_PROJECTION); glPushMatrix(); //glLoadIdentity();
       glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
-      glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
       //glMatrixMode(GL_TEXTURE); glPushMatrix();
       //glMatrixMode(GL_COLOR); glPushMatrix();
 
@@ -499,7 +499,7 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
       glStencilFunc(GL_ALWAYS, 0x0, 0xff);
       glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
 
-      glOrtho(0, Drawer->getWidth(), Drawer->getHeight(), 0, -666, 666);
+      SetOrthoProjection(0, Drawer->getWidth(), Drawer->getHeight(), 0);
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glBegin(GL_QUADS);

@@ -604,6 +604,9 @@ public:
 
   void CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *ARLev, const refdef_t *rd);
   void CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAVec &angles, bool MirrorFlip=false);
+  void CalcOrthoMatrix (VMatrix4 &OrthoMat, const float left, const float right, const float bottom, const float top);
+
+  void SetOrthoProjection (const float left, const float right, const float bottom, const float top);
 
   // call this before doing light scissor calculations (can be called once per scene)
   // sets `vpmats`

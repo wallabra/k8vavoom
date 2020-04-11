@@ -1018,9 +1018,9 @@ bool VOpenGLDrawer::SupportsShadowVolumeRendering () {
 void VOpenGLDrawer::Setup2D () {
   glViewport(0, 0, getWidth(), getHeight());
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(0, getWidth(), getHeight(), 0, -666, 666);
+  //glMatrixMode(GL_PROJECTION);
+  //glLoadIdentity();
+  SetOrthoProjection(0, getWidth(), getHeight(), 0);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -1087,7 +1087,7 @@ void VOpenGLDrawer::FinishUpdate () {
   glBindTexture(GL_TEXTURE_2D, 0);
   SetMainFBO(true); // forced
   glBindTexture(GL_TEXTURE_2D, 0);
-  glOrtho(0, getWidth(), getHeight(), 0, -666, 666);
+  SetOrthoProjection(0, getWidth(), getHeight(), 0);
   //ActivateMainFBO();
   //glFlush();
 }
@@ -1849,7 +1849,7 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
     (GLfloat)((color&255)/255.0f), ((color>>24)&0xff)/255.0f);
   DrawFixedCol.UploadChangedUniforms();
 
-  glOrtho(0, getWidth(), getHeight(), 0, -666, 666);
+  SetOrthoProjection(0, getWidth(), getHeight(), 0);
   glBegin(GL_QUADS);
     glVertex2i(x0, y0);
     glVertex2i(x1, y0);
@@ -1971,14 +1971,14 @@ bool VOpenGLDrawer::RenderWipe (float time) {
 
   glViewport(0, 0, getWidth(), getHeight());
 
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  glOrtho(0, getWidth(), getHeight(), 0, -666, 666);
-
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
+
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  //glLoadIdentity();
+  SetOrthoProjection(0, getWidth(), getHeight(), 0);
 
   if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
 
@@ -2016,10 +2016,10 @@ bool VOpenGLDrawer::RenderWipe (float time) {
   //GLDisableBlend();
   glBindTexture(GL_TEXTURE_2D, 0);
 
-  glMatrixMode(GL_MODELVIEW);
+  glMatrixMode(GL_PROJECTION);
   glPopMatrix();
 
-  glMatrixMode(GL_PROJECTION);
+  glMatrixMode(GL_MODELVIEW);
   glPopMatrix();
 
   glPopAttrib();
@@ -2620,7 +2620,7 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
     const float mytx1 = (float)srcX1/mywf;
     const float myty1 = (float)srcY1/myhf;
 
-    glOrtho(0, dest->mWidth, dest->mHeight, 0, -666, 666);
+    mOwner->SetOrthoProjection(0, dest->mWidth, dest->mHeight, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, /*GL_LINEAR*/filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, /*GL_LINEAR*/filter);
     glBegin(GL_QUADS);
@@ -2679,11 +2679,11 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     bool oldBlend = mOwner->blendEnabled;
     glViewport(0, 0, realw, realh);
     glBindTexture(GL_TEXTURE_2D, 0);
+    //glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
+    mOwner->SetOrthoProjection(0, realw, realh, 0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, realw, realh, 0, -666, 666);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     mOwner->GLDisableBlend();
@@ -2742,13 +2742,12 @@ void VOpenGLDrawer::FBO::blitToScreen () {
 
     glBindTexture(GL_TEXTURE_2D, mColorTid);
 
+    //glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
+    mOwner->SetOrthoProjection(0, realw, realh, 0);
+
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    glOrtho(0, realw, realh, 0, -666, 666);
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glDisable(GL_DEPTH_TEST);
@@ -2763,7 +2762,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
 
     if (mWidth == realw && mHeight == realh) {
       // copy texture by drawing full quad
-      //glOrtho(0, mWidth, mHeight, 0, -666, 666);
+      //mOwner->SetOrthoProjection(0, mWidth, mHeight, 0);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glBegin(GL_QUADS);
@@ -2773,7 +2772,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
         glTexCoord2f(0.0f, 0.0f); glVertex2i(0, mHeight);
       glEnd();
     } else {
-      //glOrtho(0, realw, realh, 0, -99999, 99999);
+      //mOwner->SetOrthoProjection(0, realw, realh, 0, -99999, 99999);
       //glClear(GL_COLOR_BUFFER_BIT); // just in case
       if (gl_letterbox_filter.asInt()) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

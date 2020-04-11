@@ -190,6 +190,37 @@ void VDrawer::CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAV
 }
 
 
+//==========================================================================
+//
+//  VDrawer::CalcOrthoMatrix
+//
+//==========================================================================
+void VDrawer::CalcOrthoMatrix (VMatrix4 &OrthoMat, const float left, const float right, const float bottom, const float top) {
+  const float nearVal = -666.0f;
+  const float farVal = 666.0f;
+  OrthoMat.SetZero();
+  OrthoMat[0][0] = 2.0f/(right-left);
+  OrthoMat[1][1] = 2.0f/(top-bottom); // [1+4]
+  OrthoMat[2][2] = -2.0f/(farVal-nearVal); // [2+8]
+  OrthoMat[3][0] = -(right+left)/(right-left); // [0+12]
+  OrthoMat[3][1] = -(top+bottom)/(top-bottom); // [1+12]
+  OrthoMat[3][2] = -(farVal+nearVal)/(farVal-nearVal); // [2+12]
+  OrthoMat[3][3] = 1.0f; // [3+12]
+}
+
+
+//==========================================================================
+//
+//  VDrawer::SetOrthoProjection
+//
+//==========================================================================
+void VDrawer::SetOrthoProjection (const float left, const float right, const float bottom, const float top) {
+  VMatrix4 omat;
+  CalcOrthoMatrix(omat, left, right, bottom, top);
+  SetProjectionMatrix(omat);
+}
+
+
 //**************************************************************************
 //
 // VRenderLevelDrawer methods
