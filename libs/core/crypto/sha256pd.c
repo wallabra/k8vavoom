@@ -158,7 +158,9 @@ static void RtlGenRandomX (PVOID RandomBuffer, ULONG RandomBufferLength) {
     //if (!RtlGenRandomXX) fprintf(stderr, "WARNING: `RtlGenRandom()` is not found!\n");
     //else fprintf(stderr, "MESSAGE: `RtlGenRandom()` found!\n");
     if (RtlGenRandomXX) {
-      if (RtlGenRandomXX(RandomBuffer, RandomBufferLength)) return;
+      BOOLEAN res = RtlGenRandomXX(RandomBuffer, RandomBufferLength);
+      FreeLibrary(libh);
+      if (res) return;
       //fprintf(stderr, "WARNING: `RtlGenRandom()` fallback for %u bytes!\n", (unsigned)RandomBufferLength);
     }
   }
