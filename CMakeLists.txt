@@ -794,6 +794,7 @@ endif()
 
 if(ANDROID)
   add_definitions(-UDEBUG)
+  set(MAIN_LIBS log ${MAIN_LIBS})
 endif()
 
 if(WITH_GLAD)
