@@ -5,7 +5,7 @@ uniform vec3 LightColor;
 uniform float LightRadius;
 uniform float LightMin;
 uniform sampler2D Texture;
-//$include "common/texshade.inc" // in "texlmap_vars.fs"
+//$include "common/texshade.inc" // in "texture_vars.fs"
 #ifdef VV_SPOTLIGHT
 $include "common/spotlight_vars.fs"
 #endif
