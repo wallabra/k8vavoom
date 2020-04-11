@@ -56,6 +56,7 @@ VDrawer::VDrawer () noexcept
   , shittyGPUCheckDone(false)
   , useReverseZ(false)
   , HaveDepthClamp(false)
+  , updateFrame(0)
   , RendLev(nullptr)
 {
   #ifdef CLIENT

@@ -610,7 +610,7 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
     }
     imgsfc = SDL_CreateRGBSurfaceFrom(fpix, fwdt, fhgt, 32, fwdt*4, rmask, gmask, bmask, amask);
     // we don't need pixels anymore
-    delete fpix;
+    delete[] fpix;
     if (!imgsfc) {
       GCon->Logf(NAME_Warning, "Cannot create splash image surface");
       return false;
@@ -764,7 +764,7 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
   // create texture with text
   SDL_Surface *imgsfc = SDL_CreateRGBSurfaceFrom(fpix, fwdt, fhgt, 32, fwdt*4, rmask, gmask, bmask, amask);
   // we don't need pixels anymore
-  delete fpix;
+  delete[] fpix;
   SDL_Texture *ttx = nullptr;
   if (imgsfc) {
     ttx = SDL_CreateTextureFromSurface(rensplash, imgsfc);
