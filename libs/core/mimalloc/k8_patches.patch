@@ -1,7 +1,7 @@
 diff -puEZBbw -r _pt/alloc-posix.c _curr/alloc-posix.c
---- _pt/alloc-posix.c	2019-10-13 08:38:59.000000000 +0300
-+++ _curr/alloc-posix.c	2020-01-12 11:41:54.000000000 +0200
-@@ -107,7 +107,7 @@ unsigned char* mi_mbsdup(const unsigned
+--- _pt/alloc-posix.c	2020-04-11 14:38:24.000000000 +0300
++++ _curr/alloc-posix.c	2020-04-11 14:50:22.000000000 +0300
+@@ -111,7 +111,7 @@ mi_decl_restrict unsigned char* mi_mbsdu
  int mi_dupenv_s(char** buf, size_t* size, const char* name) mi_attr_noexcept {
    if (buf==NULL || name==NULL) return EINVAL;
    if (size != NULL) *size = 0;
@@ -10,7 +10,7 @@ diff -puEZBbw -r _pt/alloc-posix.c _curr/alloc-posix.c
    char* p = getenv(name);
    if (p==NULL) {
      *buf = NULL;
-@@ -128,7 +128,7 @@ int mi_wdupenv_s(unsigned short** buf, s
+@@ -132,7 +132,7 @@ int mi_wdupenv_s(unsigned short** buf, s
    *buf = NULL;
    return EINVAL;
  #else
@@ -20,8 +20,8 @@ diff -puEZBbw -r _pt/alloc-posix.c _curr/alloc-posix.c
    if (p==NULL) {
      *buf = NULL;
 diff -puEZBbw -r _pt/alloc.c _curr/alloc.c
---- _pt/alloc.c	2020-01-12 11:36:57.000000000 +0200
-+++ _curr/alloc.c	2020-01-12 11:45:54.000000000 +0200
+--- _pt/alloc.c	2020-04-11 14:49:18.000000000 +0300
++++ _curr/alloc.c	2020-04-11 14:51:19.000000000 +0300
 @@ -11,9 +11,11 @@ terms of the MIT license. A copy of the
  #include <string.h>  // memset, memcpy, strlen
  #include <stdlib.h>  // malloc, exit
@@ -34,25 +34,24 @@ diff -puEZBbw -r _pt/alloc.c _curr/alloc.c
  
  // ------------------------------------------------------
  // Allocation
-@@ -624,7 +626,8 @@ with a C++ compiler we can implement thi
- use a C compiler we cannot throw a `bad_alloc` exception
+@@ -723,6 +725,8 @@ use a C compiler we cannot throw a `bad_
  but we call `exit` instead (i.e. not returning).
  -------------------------------------------------------*/
--
+ 
 +#if 0
 +//k8: get lost, i'm not using overrides
  #ifdef __cplusplus
  #include <new>
  static bool mi_try_new_handler(bool nothrow) {
-@@ -705,3 +708,4 @@ void* mi_new_aligned_nothrow(size_t n, s
-   while (p == NULL && mi_try_new_handler(true));
-   return p;
+@@ -833,3 +837,4 @@ void* mi_new_reallocn(void* p, size_t ne
+     return mi_new_realloc(p, total);
+   }
  }
 +#endif
 diff -puEZBbw -r _pt/init.c _curr/init.c
---- _pt/init.c	2020-01-12 11:36:57.000000000 +0200
-+++ _curr/init.c	2020-01-12 12:03:33.000000000 +0200
-@@ -308,6 +308,14 @@ static void _mi_thread_done(mi_heap_t* d
+--- _pt/init.c	2020-04-11 14:38:24.000000000 +0300
++++ _curr/init.c	2020-04-11 15:22:00.000000000 +0300
+@@ -300,6 +300,14 @@ static void _mi_thread_done(mi_heap_t* d
    #pragma message("define a way to call mi_thread_done when a thread is done")
  #endif
  
@@ -67,7 +66,7 @@ diff -puEZBbw -r _pt/init.c _curr/init.c
  // Set up handlers so `mi_thread_done` is called automatically
  static void mi_process_setup_auto_thread_done(void) {
    static bool tls_initialized = false; // fine if it races
-@@ -512,6 +520,12 @@ static void mi_process_done(void) {
+@@ -511,6 +519,12 @@ static void mi_process_done(void) {
      return TRUE;
    }
  
@@ -80,7 +79,7 @@ diff -puEZBbw -r _pt/init.c _curr/init.c
  #elif defined(__cplusplus)
    // C++: use static initialization to detect process start
    static bool _mi_process_init(void) {
-@@ -520,12 +534,6 @@ static void mi_process_done(void) {
+@@ -519,12 +533,6 @@ static void mi_process_done(void) {
    }
    static bool mi_initialized = _mi_process_init();
  
@@ -93,22 +92,34 @@ diff -puEZBbw -r _pt/init.c _curr/init.c
  #elif defined(_MSC_VER)
    // MSVC: use data section magic for static libraries
    // See <https://www.codeguru.com/cpp/misc/misc/applicationcontrol/article.php/c6945/Running-Code-Before-and-After-Main.htm>
+diff -puEZBbw -r _pt/mimalloc-internal.h _curr/mimalloc-internal.h
+--- _pt/mimalloc-internal.h	2020-04-11 14:38:24.000000000 +0300
++++ _curr/mimalloc-internal.h	2020-04-11 14:50:16.000000000 +0300
+@@ -18,7 +18,7 @@ terms of the MIT license. A copy of the
+ 
+ #define MI_CACHE_LINE          64
+ #if defined(_MSC_VER)
+-#pragma warning(disable:4127)   // suppress constant conditional warning (due to MI_SECURE paths)
++//k8:fuck you, m$vc:#pragma warning(disable:4127)   // suppress constant conditional warning (due to MI_SECURE paths)
+ #define mi_decl_noinline        __declspec(noinline)
+ #define mi_decl_thread          __declspec(thread)
+ #define mi_decl_cache_align     __declspec(align(MI_CACHE_LINE))
 diff -puEZBbw -r _pt/mimalloc-types.h _curr/mimalloc-types.h
---- _pt/mimalloc-types.h	2020-01-12 11:36:57.000000000 +0200
-+++ _curr/mimalloc-types.h	2020-01-12 12:15:24.000000000 +0200
-@@ -10,14 +10,16 @@ terms of the MIT license. A copy of the
+--- _pt/mimalloc-types.h	2020-04-11 14:38:24.000000000 +0300
++++ _curr/mimalloc-types.h	2020-04-11 15:07:16.000000000 +0300
+@@ -10,7 +10,7 @@ terms of the MIT license. A copy of the
  
  #include <stddef.h>   // ptrdiff_t
  #include <stdint.h>   // uintptr_t, uint16_t, etc
 -#include <mimalloc-atomic.h>  // _Atomic
 +#include "mimalloc-atomic.h"  // _Atomic
  
- // ------------------------------------------------------
- // Variants
- // ------------------------------------------------------
+ // Minimal alignment necessary. On most platforms 16 bytes are needed
+ // due to SSE registers for example. This must be at least `MI_INTPTR_SIZE`
+@@ -22,6 +22,9 @@ terms of the MIT license. A copy of the
  
  // Define NDEBUG in the release version to disable assertions.
--// #define NDEBUG
+ // #define NDEBUG
 +#ifndef NDEBUG
 +# define NDEBUG
 +#endif
@@ -116,11 +127,11 @@ diff -puEZBbw -r _pt/mimalloc-types.h _curr/mimalloc-types.h
  // Define MI_STAT as 1 to maintain statistics; set it to 2 to have detailed statistics (but costs some performance).
  // #define MI_STAT 1
 diff -puEZBbw -r _pt/mimalloc.h _curr/mimalloc.h
---- _pt/mimalloc.h	2020-01-12 11:36:57.000000000 +0200
-+++ _curr/mimalloc.h	2020-01-12 12:13:04.000000000 +0200
+--- _pt/mimalloc.h	2020-04-11 14:38:24.000000000 +0300
++++ _curr/mimalloc.h	2020-04-11 14:53:36.000000000 +0300
 @@ -10,6 +10,26 @@ terms of the MIT license. A copy of the
  
- #define MI_MALLOC_VERSION 120   // major + 2 digits minor
+ #define MI_MALLOC_VERSION 161   // major + 2 digits minor
  
 +#if defined(_MSC_VER)
 +# error "k8: m$vc support in mi-malloc is intentionally broken."
@@ -146,28 +157,40 @@ diff -puEZBbw -r _pt/mimalloc.h _curr/mimalloc.h
  // Compiler specific attributes
  // ------------------------------------------------------
 diff -puEZBbw -r _pt/options.c _curr/options.c
---- _pt/options.c	2020-01-12 11:36:57.000000000 +0200
-+++ _curr/options.c	2020-01-12 11:48:50.000000000 +0200
-@@ -58,7 +58,8 @@ static mi_option_desc_t options[_mi_opti
+--- _pt/options.c	2020-04-11 14:38:24.000000000 +0300
++++ _curr/options.c	2020-04-11 15:01:52.000000000 +0300
+@@ -57,7 +57,9 @@ static mi_option_desc_t options[_mi_opti
+ 
    // the following options are experimental and not all combinations make sense.
-   { 1, UNINIT, MI_OPTION(eager_commit) },        // note: needs to be on when eager_region_commit is enabled
-   #ifdef _WIN32   // and BSD?
--  { 0, UNINIT, MI_OPTION(eager_region_commit) }, // don't commit too eagerly on windows (just for looks...)
-+  //k8: fuck off, i don't care how it looks in shitdows shitmanager
-+  { 1, UNINIT, MI_OPTION(eager_region_commit) }, // don't commit too eagerly on windows (just for looks...)
+   { 1, UNINIT, MI_OPTION(eager_commit) },        // commit on demand
+-  #if defined(_WIN32) || (MI_INTPTR_SIZE <= 4)   // and other OS's without overcommit?
++  //k8: we're not "long-running", and we want it to be fast
++  //#if defined(_WIN32) || (MI_INTPTR_SIZE <= 4)   // and other OS's without overcommit?
++  #if 0
+   { 0, UNINIT, MI_OPTION(eager_region_commit) },
+   { 1, UNINIT, MI_OPTION(reset_decommits) },     // reset decommits memory
    #else
-   { 1, UNINIT, MI_OPTION(eager_region_commit) },
-   #endif
-@@ -202,7 +203,7 @@ static void mi_out_buf_stderr(const char
+@@ -75,7 +77,9 @@ static mi_option_desc_t options[_mi_opti
+ #else
+   { 1, UNINIT, MI_OPTION(eager_commit_delay) },  // the first N segments per thread are not eagerly committed
+ #endif
+-  { 100, UNINIT, MI_OPTION(reset_delay) },       // reset delay in milli-seconds
++  //k8: bigger delay, why not?
++  //{ 100, UNINIT, MI_OPTION(reset_delay) },       // reset delay in milli-seconds
++  { 3600, UNINIT, MI_OPTION(reset_delay) },       // reset delay in milli-seconds
+   { 0,   UNINIT, MI_OPTION(use_numa_nodes) },    // 0 = use available numa nodes, otherwise use at most N nodes.
+   { 100, UNINIT, MI_OPTION(os_tag) },            // only apple specific for now but might serve more or less related purpose
+   { 16,  UNINIT, MI_OPTION(max_errors) }         // maximum errors that are output
+@@ -211,7 +215,7 @@ static void mi_out_buf_stderr(const char
  
  // Should be atomic but gives errors on many platforms as generally we cannot cast a function pointer to a uintptr_t.
  // For now, don't register output from multiple threads.
 -#pragma warning(suppress:4180)
 +//k8:fuck you, m$vc:#pragma warning(suppress:4180)
  static mi_output_fun* volatile mi_out_default; // = NULL
+ static volatile _Atomic(void*) mi_out_arg; // = NULL
  
- static mi_output_fun* mi_out_get_default(void) {
-@@ -320,13 +321,13 @@ mi_attr_noreturn void _mi_fatal_error(co
+@@ -376,13 +380,13 @@ void _mi_error_message(int err, const ch
  
  static void mi_strlcpy(char* dest, const char* src, size_t dest_size) {
    dest[0] = 0;
@@ -184,9 +207,9 @@ diff -puEZBbw -r _pt/options.c _curr/options.c
    dest[dest_size - 1] = 0;
  }
 diff -puEZBbw -r _pt/os.c _curr/os.c
---- _pt/os.c	2020-01-12 11:36:57.000000000 +0200
-+++ _curr/os.c	2020-01-12 12:00:50.000000000 +0200
-@@ -55,7 +55,7 @@ static void* mi_align_down_ptr(void* p,
+--- _pt/os.c	2020-04-11 14:38:24.000000000 +0300
++++ _curr/os.c	2020-04-11 15:22:15.000000000 +0300
+@@ -53,7 +53,7 @@ static void* mi_align_down_ptr(void* p,
  static size_t os_page_size = 4096;
  
  // minimal allocation granularity
@@ -195,7 +218,7 @@ diff -puEZBbw -r _pt/os.c _curr/os.c
  
  // if non-zero, use large page allocation
  static size_t large_os_page_size = 0;
-@@ -96,6 +96,7 @@ size_t _mi_os_good_alloc_size(size_t siz
+@@ -94,6 +94,7 @@ size_t _mi_os_good_alloc_size(size_t siz
  #include <winternl.h>
  typedef PVOID    (__stdcall *PVirtualAlloc2)(HANDLE, PVOID, SIZE_T, ULONG, ULONG, /* MEM_EXTENDED_PARAMETER* */ void*, ULONG);
  typedef NTSTATUS (__stdcall *PNtAllocateVirtualMemoryEx)(HANDLE, PVOID*, SIZE_T*, ULONG, ULONG, /* MEM_EXTENDED_PARAMETER* */ PVOID, ULONG);
@@ -203,7 +226,7 @@ diff -puEZBbw -r _pt/os.c _curr/os.c
  static PVirtualAlloc2 pVirtualAlloc2 = NULL;
  static PNtAllocateVirtualMemoryEx pNtAllocateVirtualMemoryEx = NULL;
  
-@@ -133,6 +134,7 @@ static bool mi_win_enable_large_os_pages
+@@ -131,6 +132,7 @@ static bool mi_win_enable_large_os_pages
    }
    return (ok!=0);
  }
@@ -211,32 +234,32 @@ diff -puEZBbw -r _pt/os.c _curr/os.c
  
  void _mi_os_init(void) {
    // get the page size
-@@ -141,6 +143,7 @@ void _mi_os_init(void) {
+@@ -139,6 +141,7 @@ void _mi_os_init(void) {
    if (si.dwPageSize > 0) os_page_size = si.dwPageSize;
    if (si.dwAllocationGranularity > 0) os_alloc_granularity = si.dwAllocationGranularity;
    // get the VirtualAlloc2 function
-+  /*k8:fuck you, shitdoze:
++/*k8:fuck you, shitdoze!
    HINSTANCE  hDll;
    hDll = LoadLibrary(TEXT("kernelbase.dll"));
    if (hDll != NULL) {
-@@ -157,6 +160,7 @@ void _mi_os_init(void) {
+@@ -155,6 +158,7 @@ void _mi_os_init(void) {
    if (mi_option_is_enabled(mi_option_large_os_pages) || mi_option_is_enabled(mi_option_reserve_huge_os_pages)) {
      mi_win_enable_large_os_pages();
    }
-+  */
++*/
  }
  #elif defined(__wasi__)
  void _mi_os_init() {
-@@ -194,7 +198,7 @@ static bool mi_os_mem_free(void* addr, s
-   if (was_committed) _mi_stat_decrease(&stats->committed, size); 
+@@ -192,7 +196,7 @@ static bool mi_os_mem_free(void* addr, s
+   if (was_committed) _mi_stat_decrease(&stats->committed, size);
    _mi_stat_decrease(&stats->reserved, size);
    if (err) {
--#pragma warning(suppress:4996)
-+//k8:fuck you, m$vc:#pragma warning(suppress:4996)
+-    #pragma warning(suppress:4996)
++    //k8:fuck you, m$vc:#pragma warning(suppress:4996)
      _mi_warning_message("munmap failed: %s, addr 0x%8li, size %lu\n", strerror(errno), (size_t)addr, size);
      return false;
    }
-@@ -203,7 +207,7 @@ static bool mi_os_mem_free(void* addr, s
+@@ -201,7 +205,7 @@ static bool mi_os_mem_free(void* addr, s
    }
  }
  
@@ -245,48 +268,162 @@ diff -puEZBbw -r _pt/os.c _curr/os.c
  
  #ifdef _WIN32
  static void* mi_win_virtual_allocx(void* addr, size_t size, size_t try_alignment, DWORD flags) {
-@@ -422,7 +426,7 @@ static void* mi_unix_mmap(void* addr, si
- static volatile _Atomic(intptr_t) aligned_base;
+@@ -1009,17 +1013,23 @@ Support NUMA aware allocation
+ -----------------------------------------------------------------------------*/
+ #ifdef WIN32
+ static size_t mi_os_numa_nodex() {
++/*k8: fuck off
+   PROCESSOR_NUMBER pnum;
+   USHORT numa_node = 0;
+   GetCurrentProcessorNumberEx(&pnum);
+   GetNumaProcessorNodeEx(&pnum,&numa_node);
+   return numa_node;
++*/
++  return 0;
+ }
  
- // Return a 4MiB aligned address that is probably available
--static void* mi_os_get_aligned_hint(size_t try_alignment, size_t size) {
-+static __attribute__((unused)) void* mi_os_get_aligned_hint(size_t try_alignment, size_t size) {
-   if (try_alignment == 0 || try_alignment > MI_SEGMENT_SIZE) return NULL;
-   if ((size%MI_SEGMENT_SIZE) != 0) return NULL;
-   intptr_t hint = mi_atomic_add(&aligned_base, size);
+ static size_t mi_os_numa_node_countx(void) {
++/*k8: fuck off
+   ULONG numa_max = 0;
+   GetNumaHighestNodeNumber(&numa_max);
+   return (numa_max + 1);
++*/
++  return 1;
+ }
+ #elif defined(__linux__)
+ #include <sys/syscall.h>  // getcpu
+diff -puEZBbw -r _pt/random.c _curr/random.c
+--- _pt/random.c	2020-04-11 14:38:24.000000000 +0300
++++ _curr/random.c	2020-04-11 15:19:59.000000000 +0300
+@@ -162,11 +162,95 @@ If we cannot get good randomness, we fal
+ -----------------------------------------------------------------------------*/
+ 
+ #if defined(_WIN32)
++/*k8: fuck off
+ #pragma comment (lib,"bcrypt.lib")
+ #include <bcrypt.h>
+ static bool os_random_buf(void* buf, size_t buf_len) {
+   return (BCryptGenRandom(NULL, (PUCHAR)buf, (ULONG)buf_len, BCRYPT_USE_SYSTEM_PREFERRED_RNG) >= 0);
+ }
++*/
++// SplitMix; mostly used to generate 64-bit seeds
++static inline uint64_t splitmix64_next (uint64_t *state) {
++  uint64_t result = *state;
++  *state = result+(uint64_t)0x9E3779B97f4A7C15ULL;
++  result = (result^(result>>30))*(uint64_t)0xBF58476D1CE4E5B9ULL;
++  result = (result^(result>>27))*(uint64_t)0x94D049BB133111EBULL;
++  return result^(result>>31);
++}
++
++static inline void splitmix64_seedU64 (uint64_t *state, uint32_t seed0, uint32_t seed1) {
++  // hashU32
++  uint32_t res = seed0;
++  res -= (res<<6);
++  res ^= (res>>17);
++  res -= (res<<9);
++  res ^= (res<<4);
++  res -= (res<<3);
++  res ^= (res<<10);
++  res ^= (res>>15);
++  uint64_t n = res;
++  n <<= 32;
++  // hashU32
++  res = seed1;
++  res -= (res<<6);
++  res ^= (res>>17);
++  res -= (res<<9);
++  res ^= (res<<4);
++  res -= (res<<3);
++  res ^= (res<<10);
++  res ^= (res>>15);
++  n |= res;
++  *state = n;
++}
++
++typedef BOOLEAN WINAPI (*RtlGenRandomFn) (PVOID RandomBuffer,ULONG RandomBufferLength);
++static void RtlGenRandomX (PVOID RandomBuffer, ULONG RandomBufferLength) {
++  if (RandomBufferLength <= 0) return;
++  RtlGenRandomFn RtlGenRandomXX = NULL;
++  HMODULE libh = LoadLibraryA("advapi32.dll");
++  if (libh) {
++    RtlGenRandomXX = (RtlGenRandomFn)(void *)GetProcAddress(libh, "SystemFunction036");
++    //if (!RtlGenRandomXX) fprintf(stderr, "WARNING: `RtlGenRandom()` is not found!\n");
++    //else fprintf(stderr, "MESSAGE: `RtlGenRandom()` found!\n");
++    if (RtlGenRandomXX) {
++      if (RtlGenRandomXX(RandomBuffer, RandomBufferLength)) return;
++      //fprintf(stderr, "WARNING: `RtlGenRandom()` fallback for %u bytes!\n", (unsigned)RandomBufferLength);
++    }
++  }
++  // initialise isaacp with some shit
++  uint32_t smxseed0 = 0;
++  uint32_t smxseed1 = (uint32_t)GetCurrentProcessId();
++  SYSTEMTIME st;
++  FILETIME ft;
++  GetLocalTime(&st);
++  if (!SystemTimeToFileTime(&st, &ft)) {
++    //fprintf(stderr, "SHIT: `SystemTimeToFileTime()` failed!\n");
++    smxseed0 = (uint32_t)(GetTickCount());
++  } else {
++    smxseed0 = (uint32_t)(ft.dwLowDateTime);
++  }
++  uint64_t smx;
++  splitmix64_seedU64(&smx, smxseed0, smxseed1);
++  uint8_t *dest = (uint8_t *)RandomBuffer;
++  while (RandomBufferLength >= 8) {
++    *(uint64_t *)dest = splitmix64_next(&smx);
++    dest += 8;
++    RandomBufferLength -= 8;
++  }
++  if (RandomBufferLength > 0) {
++    uint64_t v = splitmix64_next(&smx);
++    const uint8_t *src = (const uint8_t *)&v;
++    while (RandomBufferLength > 0) {
++      *dest++ = *src++;
++      --RandomBufferLength;
++    }
++  }
++}
++
++static bool os_random_buf(void* buf, size_t buf_len) {
++  RtlGenRandomX(buf, (ULONG)buf_len);
++  return true;
++}
+ /*
+ #define SystemFunction036 NTAPI SystemFunction036
+ #include <NTSecAPI.h>
 diff -puEZBbw -r _pt/stats.c _curr/stats.c
---- _pt/stats.c	2020-01-12 11:36:57.000000000 +0200
-+++ _curr/stats.c	2020-01-12 11:51:50.000000000 +0200
-@@ -392,7 +392,7 @@ double _mi_clock_end(double start) {
+--- _pt/stats.c	2020-04-11 14:38:24.000000000 +0300
++++ _curr/stats.c	2020-04-11 15:06:33.000000000 +0300
+@@ -397,7 +397,7 @@ mi_msecs_t _mi_clock_end(mi_msecs_t star
  #if defined(_WIN32)
  #include <windows.h>
  #include <psapi.h>
 -#pragma comment(lib,"psapi.lib")
 +/*k8:fuck you, m$vc:#pragma comment(lib,"psapi.lib")
  
- static double filetime_secs(const FILETIME* ftime) {
+ static mi_msecs_t filetime_msecs(const FILETIME* ftime) {
    ULARGE_INTEGER i;
-@@ -401,7 +401,9 @@ static double filetime_secs(const FILETI
-   double secs = (double)(i.QuadPart) * 1.0e-7; // FILETIME is in 100 nano seconds
-   return secs;
+@@ -406,7 +406,9 @@ static mi_msecs_t filetime_msecs(const F
+   mi_msecs_t msecs = (i.QuadPart / 10000); // FILETIME is in 100 nano seconds
+   return msecs;
  }
 +*/
- static void mi_process_info(double* utime, double* stime, size_t* peak_rss, size_t* page_faults, size_t* page_reclaim, size_t* peak_commit) {
+ static void mi_process_info(mi_msecs_t* utime, mi_msecs_t* stime, size_t* peak_rss, size_t* page_faults, size_t* page_reclaim, size_t* peak_commit) {
 +/*k8:fuck you, m$vc:
    FILETIME ct;
    FILETIME ut;
    FILETIME st;
-@@ -416,6 +418,13 @@ static void mi_process_info(double* utim
+@@ -421,6 +423,13 @@ static void mi_process_info(mi_msecs_t*
    *page_faults = (size_t)info.PageFaultCount;
    *peak_commit = (size_t)info.PeakPagefileUsage;
    *page_reclaim = 0;
 +*/
 +  *utime = 0;
 +  *stime = 0;
-+  *peak_rss = 0;
-+  *page_faults = 0;
++  *peak_rss = (size_t)0;
++  *page_faults = (size_t)0;
 +  *page_reclaim = 0;
-+  *peak_commit = 0;
++  *peak_commit = (size_t)0;
  }
  
  #elif defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
