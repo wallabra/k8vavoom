@@ -237,6 +237,7 @@ static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *myc
   struct timespec ts;
   pthread_condattr_t condattr;
 
+#ifndef ANDROID // CrystaX 10.3.2 not support this
   // POSIX doesn't seem to *require* that pthread_condattr_setclock()
   // will fail if given an unsupported clock ID. Test that
   // CLOCK_MONOTONIC really is supported using clock_gettime().
@@ -249,6 +250,7 @@ static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *myc
       return 0;
     }
   }
+#endif
 
   // If anything above fails, fall back to the default CLOCK_REALTIME.
   // POSIX requires that all implementations of clock_gettime() must

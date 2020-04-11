@@ -462,7 +462,11 @@ double Sys_Time () {
 #ifdef __linux__
   static time_t secbase = 0;
   struct timespec ts;
+#ifdef ANDROID // CrystaX 10.3.2 supports only this
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) Sys_Error("clock_gettime failed");
+#else
   if (clock_gettime(/*CLOCK_MONOTONIC*/CLOCK_MONOTONIC_RAW, &ts) != 0) Sys_Error("clock_gettime failed");
+#endif
   if (!initialized) {
     initialized = true;
     secbase = ts.tv_sec;
@@ -494,7 +498,11 @@ vuint64 Sys_GetTimeNano () {
   static bool initialized = false;
   static time_t secbase = 0;
   struct timespec ts;
+#ifdef ANDROID // CrystaX 10.3.2 supports only this
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) Sys_Error("clock_gettime failed");
+#else
   if (clock_gettime(/*CLOCK_MONOTONIC*/CLOCK_MONOTONIC_RAW, &ts) != 0) Sys_Error("clock_gettime failed");
+#endif
   if (!initialized) {
     initialized = true;
     secbase = ts.tv_sec;
