@@ -68,7 +68,7 @@ public:
   bool mGetLocAddrCalled;
 #endif
 
-  enum { MAXHOSTNAMELEN = 256 };
+  enum { INET_HOST_NAME_SIZE = 256 };
 
   VUdpDriver ();
   virtual int Init () override;
@@ -142,7 +142,7 @@ VUdpDriver::VUdpDriver ()
 //
 //==========================================================================
 int VUdpDriver::Init () {
-  char buff[MAXHOSTNAMELEN];
+  char buff[INET_HOST_NAME_SIZE];
 
   if (cli_NoUDP > 0) return -1;
 
@@ -158,7 +158,7 @@ int VUdpDriver::Init () {
   #endif
 
   // determine my name & address
-  auto ghres = gethostname(buff, MAXHOSTNAMELEN);
+  auto ghres = gethostname(buff, INET_HOST_NAME_SIZE);
   #ifdef WIN32
   if (ghres == SOCKET_ERROR) {
     GCon->Log(NAME_DevNet, "Winsock TCP/IP Initialisation failed.");
@@ -339,7 +339,7 @@ BOOL PASCAL FAR VUdpDriver::BlockingHook () {
 //==========================================================================
 void VUdpDriver::GetLocalAddress () {
   hostent *local;
-  char buff[MAXHOSTNAMELEN];
+  char buff[INET_HOST_NAME_SIZE];
   vuint32 addr;
 
   if (myAddr != INADDR_ANY) return;
@@ -347,7 +347,7 @@ void VUdpDriver::GetLocalAddress () {
   if (mGetLocAddrCalled) return;
   mGetLocAddrCalled = true;
 
-  if (gethostname(buff, MAXHOSTNAMELEN) == SOCKET_ERROR) {
+  if (gethostname(buff, INET_HOST_NAME_SIZE) == SOCKET_ERROR) {
     myAddr = inet_addr("127.0.0.1");
     VStr::Cpy(Net->MyIpAddress, "127.0.0.1");
     if (myAddr == INADDR_NONE) Sys_Error("'127.0.0.1' is not a valid IP address (why?!)");
