@@ -68,6 +68,13 @@ VDrawer::VDrawer () noexcept
   ScrHgt = 200;
   #endif
   LightFadeMult = 1.0f;
+
+  vieworg = TVec(0.0f, 0.0f, 0.0f);
+  viewangles = TAVec(0.0f, 0.0f, 0.0f);
+  viewforward = TVec(0.0f, 0.0f, 0.0f);
+  viewright = TVec(0.0f, 0.0f, 0.0f);
+  viewup = TVec(0.0f, 0.0f, 0.0f);
+  MirrorFlip = MirrorClip = false;
 }
 
 
