@@ -27,6 +27,9 @@
 #include "cl_local.h"
 #include "drawer.h"
 
+#ifdef ANDROID
+#  include <android/log.h>
+#endif
 
 #define MAXHISTORY       (64)
 #define MAX_LINES        (1024)
@@ -837,6 +840,13 @@ static void ConSerialise (const char *str, EName Event, bool fromGLog) noexcept 
     cpPrintCurrColor();
   }
   DoPrint(str);
+#ifdef ANDROID
+  {
+    VStr rc = VStr(str).RemoveColors();
+    const char *rstr = *rc;
+    __android_log_print(ANDROID_LOG_DEBUG, "K8VAVOOM", "%s", rstr);
+  }
+#endif
   // write to log
   if (logfout) {
     VStr rc = VStr(str).RemoveColors();
