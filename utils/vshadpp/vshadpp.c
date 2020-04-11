@@ -1076,6 +1076,47 @@ const char *getShitppAmp (const char *shitppType) {
 }
 
 
+void writeInitValueNoChecks (FILE *fo, const LocInfo *loc) {
+  if (!loc || !fo) return;
+  if (strEqu(loc->glslType, "float")) {
+    if (loc->isAttr) {
+      fprintf(fo, "curr_%s = 0.0f;", loc->name);
+    } else {
+      fprintf(fo, "last_%s = curr_%s = 0.0f;", loc->name, loc->name);
+    }
+  } else if (strEqu(loc->glslType, "bool")) {
+    if (loc->isAttr) {
+      fprintf(fo, "curr_%s = false;", loc->name);
+    } else {
+      fprintf(fo, "last_%s = curr_%s = false;", loc->name, loc->name);
+    }
+  } else if (strEqu(loc->glslType, "sampler2D")) {
+    if (loc->isAttr) {
+      fprintf(fo, "curr_%s = 0;", loc->name);
+    } else {
+      fprintf(fo, "last_%s = curr_%s = 0;", loc->name, loc->name);
+    }
+  } else {
+    if (strEqu(loc->glslType, "vec3")) {
+      if (loc->isAttr) {
+        fprintf(fo, "curr_%s = TVec(0.0f, 0.0f, 0.0f);", loc->name);
+      } else {
+        fprintf(fo, "last_%s = curr_%s = TVec(0.0f, 0.0f, 0.0f);", loc->name, loc->name);
+      }
+    } else if (strEqu(loc->glslType, "mat4")) {
+      if (!loc->isAttr) fprintf(fo, "last_%s.SetZero(); ", loc->name);
+      fprintf(fo, "curr_%s.SetZero();", loc->name);
+    } else if (strEqu(loc->glslType, "vec4") || strEqu(loc->glslType, "vec2") || strEqu(loc->glslType, "mat3")) {
+      if (!loc->isAttr) fprintf(fo, "memset((void *)last_%s, 0, sizeof(last_%s)); ", loc->name, loc->name);
+      fprintf(fo, "memset((void *)curr_%s, 0, sizeof(curr_%s));", loc->name, loc->name);
+    } else {
+      fprintf(stderr, "FATAL: cannot emit initialiser for GLSL type '%s'\n", loc->glslType);
+      abort();
+    }
+  }
+}
+
+
 void writeUploadNoChecks (FILE *fo, const LocInfo *loc) {
   if (!loc || !fo) return;
   fprintf(fo, "owner->%s", (loc->isAttr ? "p_glVertexAttrib" : "p_glUniform"));
@@ -1304,8 +1345,13 @@ int main (int argc, char **argv) {
       fprintf(foc, "  , loc_%s(-1)\n", loc->name);
       if (!loc->isAttr) fprintf(foc, "  , changed_%s(false)\n", loc->name);
     }
-    fprintf(foc, "{}\n");
-    fprintf(foc, "\n");
+    fprintf(foc, "{\n");
+    for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
+      fprintf(foc, "  ");
+      writeInitValueNoChecks(foc, loc);
+      fprintf(foc, "\n");
+    }
+    fprintf(foc, "}\n");
 
     fprintf(foc, "void VOpenGLDrawer::VShaderDef_%s::Setup (VOpenGLDrawer *aowner) {\n", si->name);
     fprintf(foc, "  MainSetup(aowner, \"%s\", \"%s\", \"glshaders/%s.vs\", \"glshaders/%s.fs\");\n", si->name, (si->incdir ? si->incdir : ""), si->vssrc, si->fssrc);
@@ -1340,8 +1386,8 @@ int main (int argc, char **argv) {
       fprintf(foc, "  if (loc_%s >= 0 && (forced || changed_%s || notEqual_%s(last_%s, curr_%s))) {\n", loc->name, loc->name, loc->glslType, loc->name, loc->name);
       fprintf(foc, "    ");
       writeUploadNoChecks(foc, loc);
-      fprintf(foc, "    changed_%s = false;\n", loc->name);
-      fprintf(foc, "    copyValue_%s(last_%s, curr_%s);", loc->glslType, loc->name, loc->name);
+      fprintf(foc, "\n    changed_%s = false;\n", loc->name);
+      fprintf(foc, "    copyValue_%s(last_%s, curr_%s);\n", loc->glslType, loc->name, loc->name);
       fprintf(foc, "  }\n");
     }
     fprintf(foc, "}\n");
