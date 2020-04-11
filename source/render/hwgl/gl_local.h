@@ -29,6 +29,10 @@
 #include "gamedefs.h"
 #include "../r_shared.h"
 
+#ifdef GL4ES_NO_CONSTRUCTOR
+#  define GL_GLEXT_PROTOTYPES
+#endif
+
 #ifdef _WIN32
 # include <windows.h>
 #endif

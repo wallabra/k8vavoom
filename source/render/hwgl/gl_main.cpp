@@ -786,6 +786,17 @@ void VOpenGLDrawer::InitResolution () {
   }
 
   glClipControl_t savedClipControl = p_glClipControl;
+#ifdef GL4ES_NO_CONSTRUCTOR
+  #define VV_GLIMPORTS
+  #define VV_GLIMPORTS_PROC
+  #define VGLAPIPTR(x,required)  do { \
+    p_##x = &x; \
+  } while(0)
+  #include "gl_imports.h"
+  #undef VGLAPIPTR
+  #undef VV_GLIMPORTS_PROC
+  #undef VV_GLIMPORTS
+#else
   #define VV_GLIMPORTS
   #define VGLAPIPTR(x,required)  do { \
     p_##x = x##_t(GetExtFuncPtr(#x)); \
@@ -803,6 +814,7 @@ void VOpenGLDrawer::InitResolution () {
   #include "gl_imports.h"
   #undef VGLAPIPTR
   #undef VV_GLIMPORTS
+#endif
   p_glClipControl = savedClipControl;
 
   if (p_glBlitFramebuffer) GCon->Logf(NAME_Init, "OpenGL: `glBlitFramebuffer()` found");
