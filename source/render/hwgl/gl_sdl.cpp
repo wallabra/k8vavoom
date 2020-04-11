@@ -763,8 +763,6 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
   #ifndef VV_USE_CONFONT_ATLAS_TEXTURE
   // create texture with text
   SDL_Surface *imgsfc = SDL_CreateRGBSurfaceFrom(fpix, fwdt, fhgt, 32, fwdt*4, rmask, gmask, bmask, amask);
-  // we don't need pixels anymore
-  delete[] fpix;
   SDL_Texture *ttx = nullptr;
   if (imgsfc) {
     ttx = SDL_CreateTextureFromSurface(rensplash, imgsfc);
@@ -780,6 +778,8 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
       SDL_DestroyTexture(ttx);
     }
   }
+  // we don't need pixels anymore
+  delete[] fpix;
   #endif
   // show it
   SDL_RenderPresent(rensplash);
