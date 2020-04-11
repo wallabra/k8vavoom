@@ -15,6 +15,6 @@ add_subdirectory(server_query_demo)
 add_subdirectory(vcc)
 add_subdirectory(vlumpy)
 
-if(ENABLE_CLIENT)
+if(ENABLE_CLIENT OR ENABLE_UTILS_ONLY)
   add_subdirectory(vshadpp)
-endif(ENABLE_CLIENT)
+endif()
