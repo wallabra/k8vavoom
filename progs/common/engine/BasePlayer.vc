@@ -64,6 +64,7 @@ readonly bool bIsClient; // player on client side
 bool bAutomapRevealed;
 bool bAutomapShowThings;
 bool bReloadQueued; // true if "reload" was pressed
+bool bReloadDown; // `true` if button down last tic
 bool bZoomDown; // `true` if button down last tic
 // this flag is set for client games if the player is using prediction engine (not yet)
 transient bool bAutonomousProxy;
@@ -164,7 +165,7 @@ replication {
     ViewStates, DispSpriteFrame, DispSpriteName,
     ClientNum, MO, Camera, SoundEnvironment,
     bAutomapRevealed, bAutomapShowThings,
-    bAttackDown, bReloadQueued, bZoomDown,
+    bAttackDown, bReloadQueued, bReloadDown, bZoomDown,
     WorldTimer, GameTime, LastDeltaTime;
 
   // methods server can execute on client

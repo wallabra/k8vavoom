@@ -100,21 +100,22 @@ class VBasePlayer : public VGameObject {
   VLevelInfo *Level;
 
   enum {
-    PF_Active            = 0x00000001u,
-    PF_Spawned           = 0x00000002u,
-    PF_IsBot             = 0x00000004u,
-    PF_FixAngle          = 0x00000008u,
-    PF_AttackDown        = 0x00000010u, // True if button down last tic.
-    PF_UseDown           = 0x00000020u,
-    PF_DidSecret         = 0x00000040u, // True if secret level has been done.
-    PF_Centering         = 0x00000080u,
-    PF_IsClient          = 0x00000100u, // Player on client side
-    PF_AutomapRevealed   = 0x00000200u,
-    PF_AutomapShowThings = 0x00000400u,
-    PF_ReloadQueued      = 0x00000800u,
-    PF_ZoomDown          = 0x00001000u,
+    PF_Active            = 1u<<0,
+    PF_Spawned           = 1u<<1,
+    PF_IsBot             = 1u<<2,
+    PF_FixAngle          = 1u<<3,
+    PF_AttackDown        = 1u<<4, // set if button was down last tic
+    PF_UseDown           = 1u<<5,
+    PF_DidSecret         = 1u<<6, // set if secret level has been done
+    PF_Centering         = 1u<<7, // player view centering in progress
+    PF_IsClient          = 1u<<8, // this player is on dumb client side
+    PF_AutomapRevealed   = 1u<<9,
+    PF_AutomapShowThings = 1u<<10,
+    PF_ReloadQueued      = 1u<<11,
+    PF_ReloadDown        = 1u<<12, // set if button was down last tic
+    PF_ZoomDown          = 1u<<13,
     // this flag is set for client games if the player is using prediction engine (not yet)
-    PF_AutonomousProxy   = 0x00002000u,
+    PF_AutonomousProxy   = 1u<<14,
   };
   vuint32 PlayerFlags;
 

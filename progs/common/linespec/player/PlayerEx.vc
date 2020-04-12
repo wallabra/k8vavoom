@@ -3753,6 +3753,7 @@ void PlayerReborn () {
   bUseDown = true; // don't do anything immediately
   bAttackDown = true;
   bZoomDown = false;
+  bReloadDown = false;
   ResetWeaponReloadRefire();
   PlayerState = PST_LIVE;
   Health = GetRebornHealth();
@@ -4425,7 +4426,11 @@ override void PlayerTick (float deltaTime) {
 
   // queue reload
   if (Buttons&BT_RELOAD) {
-    bReloadQueued = true;
+    // set "reload queued" only if the button was released and pressed again
+    if (!bReloadDown) bReloadQueued = true;
+    bReloadDown = true;
+  } else {
+    bReloadDown = false;
   }
 
   // copy view angles
