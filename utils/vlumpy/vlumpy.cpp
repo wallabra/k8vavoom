@@ -905,6 +905,7 @@ struct DiskFile {
 //
 //==========================================================================
 static void CreateFileList (TArray<DiskFile> &flist, VStr diskpath, VStr destpath, bool recurse, VStr ext) {
+  if (Sys_FileExists(diskpath.appendPath(".baseignoredir"))) return;
   auto dir = Sys_OpenDir(diskpath, recurse); // want directories?
   if (!dir) return;
   if (destpath.length()) {
