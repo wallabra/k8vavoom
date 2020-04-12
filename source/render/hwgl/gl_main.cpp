@@ -742,14 +742,18 @@ void VOpenGLDrawer::InitResolution () {
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max texture image units: %d", tmp);
     if (tmp < 4) Sys_Error("OpenGL: your GPU must support at least 4 texture samplers, but it has only %d", tmp);
+#ifndef GL4ES_HACKS
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max vertex uniform components: %d", tmp);
     glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max varying floats: %d", tmp);
+#endif
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max vertex attribs: %d", tmp);
+#ifndef GL4ES_HACKS
     glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max fragment uniform components: %d", tmp);
+#endif
   } else {
     Sys_Error("OpenGL FATAL: no shader support");
   }
@@ -964,7 +968,9 @@ void VOpenGLDrawer::InitResolution () {
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glShadeModel(GL_FLAT);
 
+#ifndef GL4ES_HACKS
   glDisable(GL_POLYGON_SMOOTH);
+#endif
 
   // shaders
   shaderHead = nullptr; // just in case
