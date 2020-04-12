@@ -1476,6 +1476,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 
   const line_t *linedef = reg->extraline;
   const side_t *sidedef = &Level->Sides[linedef->sidenum[0]];
+  const side_t *segsidedef = seg->sidedef;
+  const side_t *texsideparm = (segsidedef ? segsidedef : sidedef);
 
   VTexture *MTex = GTextureManager(sidedef->MidTexture);
   if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
@@ -1529,18 +1531,35 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     ops = SV_SectorOpenings(seg->frontsector);
   }
 
-  SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &sidedef->Mid);
+  SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &texsideparm->Mid);
 
-  const float texh = DivByScale(MTex->GetScaledHeight(), sidedef->Mid.ScaleY);
+  const float texh = DivByScale(MTex->GetScaledHeight(), texsideparm->Mid.ScaleY);
   float z_org; // texture top
-  if (linedef->flags&ML_DONTPEGBOTTOM) {
-    // bottom of texture at bottom
-    z_org = reg->efloor.splane->TexZ+texh;
+  if (reg->regflags&sec_region_t::RF_SaneRegion) {
+    // vavoom 3d floor
+    if (linedef->flags&ML_DONTPEGBOTTOM) {
+      // bottom of texture at bottom
+      z_org = reg->efloor.splane->TexZ+texh;
+    } else {
+      // top of texture at top
+      z_org = reg->eceiling.splane->TexZ;
+    }
   } else {
-    // top of texture at top
-    z_org = reg->eceiling.splane->TexZ;
+    // gzdoom 3d floor
+    if (linedef->flags&ML_DONTPEGBOTTOM) {
+      // bottom of texture at bottom
+      z_org = reg->efloor.splane->TexZ+texh;
+    } else {
+      // top of texture at top
+      z_org = reg->eceiling.splane->TexZ;
+    }
+    //z_org = 0;
   }
-  FixMidTextureOffsetAndOrigin(z_org, linedef, sidedef, &sp->texinfo, MTex, &sidedef->Mid, true);
+  FixMidTextureOffsetAndOrigin(z_org, linedef, sidedef, &sp->texinfo, MTex, &texsideparm->Mid, true);
+
+  // apply offsets from seg side
+  sp->texinfo.toffs *= TextureTScale(MTex)*texsideparm->Mid.ScaleY;
+  sp->texinfo.toffs += texsideparm->Mid.RowOffset*TextureOffsetTScale(MTex);
 
   sp->texinfo.Alpha = (reg->efloor.splane->Alpha < 1.0f ? reg->efloor.splane->Alpha : 1.1f);
   sp->texinfo.Additive = !!(reg->efloor.splane->flags&SPF_ADDITIVE);
@@ -1677,8 +1696,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   sp->frontBotDist = r_floor.splane->dist;
   sp->backTopDist = reg->eceiling.splane->dist;
   sp->backBotDist = reg->efloor.splane->dist;
-  sp->TextureOffset = sidedef->Mid.TextureOffset;
-  sp->RowOffset = sidedef->Mid.RowOffset;
+  sp->TextureOffset = texsideparm->Mid.TextureOffset;
+  sp->RowOffset = texsideparm->Mid.RowOffset;
   SetupFakeDistances(seg, sp);
 }
 
