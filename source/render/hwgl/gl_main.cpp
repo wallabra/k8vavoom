@@ -100,7 +100,11 @@ VCvarS gl_dbg_advlight_color("gl_dbg_advlight_color", "0xff7f7f", "Color for deb
 
 VCvarB gl_dbg_wireframe("gl_dbg_wireframe", false, "Render wireframe level?", CVAR_PreInit);
 
+#ifdef GL4ES_HACKS
+VCvarB gl_dbg_fbo_blit_with_texture("gl_dbg_fbo_blit_with_texture", true, "Always blit FBOs using texture mapping?", CVAR_PreInit);
+#else
 VCvarB gl_dbg_fbo_blit_with_texture("gl_dbg_fbo_blit_with_texture", false, "Always blit FBOs using texture mapping?", CVAR_PreInit);
+#endif
 
 VCvarB r_brightmaps("r_brightmaps", true, "Allow brightmaps?", CVAR_Archive);
 VCvarB r_brightmaps_sprite("r_brightmaps_sprite", true, "Allow sprite brightmaps?", CVAR_Archive);
