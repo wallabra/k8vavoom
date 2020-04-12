@@ -22,5 +22,6 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-
+#if 0
 //IMPLEMENT_FREE_FUNCTION(VObject, get_GC_AliveObjects) { RET_INT(gcLastStats.alive); }
+#endif

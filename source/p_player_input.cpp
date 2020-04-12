@@ -43,7 +43,9 @@
 #include "gamedefs.h"
 #ifdef CLIENT
 # include "cl_local.h"
-# include "neoui/neoui.h"
+# ifdef VAVOOM_NEOUI
+#  include "neoui/neoui.h"
+# endif
 #endif
 
 

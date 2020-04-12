@@ -22,6 +22,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#if 0
 #include "../gamedefs.h"
 
 #ifdef CLIENT
@@ -2674,5 +2675,7 @@ int NUIFont::textHeight (VStr s) const {
   return res;
 }
 
+
+#endif
 
 #endif

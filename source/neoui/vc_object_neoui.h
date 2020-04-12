@@ -22,5 +22,6 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-
+#if 0
   //DECLARE_FUNCTION(Destroy)
+#endif

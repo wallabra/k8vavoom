@@ -29,7 +29,9 @@
 //**************************************************************************
 #include "gamedefs.h"
 #ifdef CLIENT
-# include "neoui/neoui.h"
+# ifdef VAVOOM_NEOUI
+#  include "neoui/neoui.h"
+# endif
 # include "render/r_local.h" /*FIXME: sorry, i have to do this for textured automap*/
 #endif
 

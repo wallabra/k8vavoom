@@ -24,7 +24,9 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "neoui/neoui.h"
+#ifdef VAVOOM_NEOUI
+# include "neoui/neoui.h"
+#endif
 
 
 IMPLEMENT_CLASS(V, GameInfo)
@@ -92,7 +94,16 @@ bool VGameInfo::IsPaused () {
   if (NetMode <= NM_TitleMap) return false;
 #ifdef CLIENT
   // in single player pause game if in menu or console
-  return (Flags&GIF_Paused) || IsInWipe() || (NetMode == NM_Standalone && (MN_Active() || C_Active() || NUI_IsPaused()));
+  return
+    (Flags&GIF_Paused) ||
+    IsInWipe() ||
+    (NetMode == NM_Standalone &&
+      (MN_Active() || C_Active()
+        #ifdef VAVOOM_NEOUI
+        || NUI_IsPaused()
+        #endif
+      )
+    );
 #else
   return !!(Flags&GIF_Paused);
 #endif

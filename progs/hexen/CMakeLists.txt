@@ -9,7 +9,7 @@ add_custom_command(OUTPUT ${OUTDIR}/game.dat
     ${CMAKE_SOURCE_DIR}/progs/hexen/game/*.vc
     #${COMMON_PROGS_DIR}/engine.dat
     ${COMMON_PROGS_DIR}/linespec.dat
-    ${COMMON_PROGS_DIR}/newui.dat
+    #${COMMON_PROGS_DIR}/newui.dat -- not yet
     ${COMMON_PROGS_DIR}/uibase.dat)
 add_custom_target(hexen_game ALL DEPENDS ${OUTDIR}/game.dat)
 #add_dependencies(hexen_game vcc engine linespec uibase)
@@ -23,7 +23,7 @@ add_custom_command(OUTPUT ${OUTDIR}/cgame.dat
     ${OUTDIR}/game.dat
     #${COMMON_PROGS_DIR}/engine.dat
     ${COMMON_PROGS_DIR}/linespec.dat
-    ${COMMON_PROGS_DIR}/newui.dat
+    #${COMMON_PROGS_DIR}/newui.dat -- not yet
     ${COMMON_PROGS_DIR}/uibase.dat)
 add_custom_target(hexen_cgame ALL DEPENDS ${OUTDIR}/cgame.dat)
 #add_dependencies(hexen_cgame vcc engine linespec uibase hexen_game)

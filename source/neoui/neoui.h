@@ -24,6 +24,7 @@
 //**************************************************************************
 #ifndef NEW_UI_H
 #define NEW_UI_H
+#if 0
 
 #include "../gamedefs.h"
 
@@ -38,4 +39,5 @@ static inline __attribute((unused)) bool NUI_Responder (event_t *ev) { return fa
 #endif
 
 
+#endif
 #endif

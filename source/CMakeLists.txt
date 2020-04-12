@@ -415,7 +415,7 @@ set(MAIN_COMMON_SOURCES
   text.cpp
   text.h
   ${UIWIDGETS_SOURCES}
-  ${NEWUI_SOURCES}
+  #${NEWUI_SOURCES} -- not yet
   ${VCCLIB_SOURCES}
   video.h
   ${AJBSP_SOURCES}

@@ -32,7 +32,9 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "ui/ui.h"
-#include "neoui/neoui.h"
+#ifdef VAVOOM_NEOUI
+# include "neoui/neoui.h"
+#endif
 
 
 static VCvarB allow_vanilla_cheats("allow_vanilla_cheats", true, "Allow vanilla keyboard cheat codes?", CVAR_Archive);
@@ -578,7 +580,9 @@ void VInput::ProcessEvents () {
 
     if (!initNetClient) {
       if (!ev.isEatenOrCancelled() && C_Responder(&ev)) continue; // console
+      #ifdef VAVOOM_NEOUI
       if (!ev.isEatenOrCancelled() && NUI_Responder(&ev)) continue; // new UI
+      #endif
       if (!ev.isEatenOrCancelled() && CT_Responder(&ev)) continue; // chat
       if (!ev.isEatenOrCancelled() && MN_Responder(&ev)) continue; // menu
       if (!ev.isEatenOrCancelled() && GRoot && GRoot->Responder(&ev)) continue; // root widget
