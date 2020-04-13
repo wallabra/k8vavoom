@@ -963,9 +963,9 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, unsigned *gl
   for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     // ignore base (just in case) and visual-only regions
     if (reg->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_BaseRegion)) continue;
-    // ignore paper-thin regions
     const float rtopz = reg->eceiling.GetPointZ(p);
     const float rbotz = reg->efloor.GetPointZ(p);
+    // ignore paper-thin regions
     if (rtopz <= rbotz) continue; // invalid, or paper-thin, ignore
     float botDist;
     if (reg->regflags&sec_region_t::RF_NonSolid) {
@@ -1032,12 +1032,14 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
     for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
       if ((reg->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_BaseRegion|sec_region_t::RF_NonSolid)) != sec_region_t::RF_NonSolid) continue;
       if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: checking region..."); DumpRegion(reg); }
-      const float fz = max2(secfz, reg->efloor.GetPointZClamped(p));
-      const float cz = min2(seccz, reg->eceiling.GetPointZClamped(p));
-      // check if point is inside, and for best floor dist
-      if (p.z >= fz && p.z <= cz) {
-        const float fdist = p.z-fz;
-        if (dbgDump) GCon->Logf(NAME_Debug, "SVP: non-solid check: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fdist, p.z, fz, cz);
+      const float rtopz = reg->eceiling.GetPointZ(p);
+      const float rbotz = reg->efloor.GetPointZ(p);
+      // ignore paper-thin regions
+      if (rtopz <= rbotz) continue; // invalid, or paper-thin, ignore
+      // check if point is inside, and for best ceiling dist
+      if (p.z >= rbotz && p.z < rtopz) {
+        const float fdist = rtopz-p.z;
+        if (dbgDump) GCon->Logf(NAME_Debug, "SVP: non-solid check: bestDist=%g; fdist=%g; p.z=%g; botz=%g; topz=%g", bestDist, fdist, p.z, rbotz, rtopz);
         if (fdist < bestDist) {
           if (dbgDump) GCon->Log(NAME_Debug, "SVP:   NON-SOLID HIT!");
           bestDist = fdist;
@@ -1045,7 +1047,7 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
           //wasHit = true;
         }
       } else {
-        if (dbgDump) GCon->Logf(NAME_Debug, "SVP: non-solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, p.z-fz, p.z, fz, cz);
+        if (dbgDump) GCon->Logf(NAME_Debug, "SVP: non-solid SKIP: bestDist=%g; cdist=%g; p.z=%g; botz=%g; topz=%g", bestDist, rtopz-p.z, p.z, rbotz, rtopz);
       }
     }
   }
