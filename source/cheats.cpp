@@ -255,7 +255,7 @@ COMMAND(my_sector_info) {
   Player->Printf("  ceil : %f %f", sec->ceiling.minz, sec->ceiling.maxz);
   Player->Printf("  floor: %f %f", sec->floor.minz, sec->floor.maxz);
 
-  sec_region_t *reg = SV_PointRegionLight(sec, Player->MO->Origin, true);
+  sec_region_t *reg = SV_PointRegionLight(sec, Player->MO->Origin);
   Player->Printf("  Fade : 0x%08x", reg->params->Fade);
   Player->Printf("  floor light source sector: %d", sec->floor.LightSourceSector);
   Player->Printf("  ceiling light source sector: %d", sec->ceiling.LightSourceSector);
@@ -282,10 +282,10 @@ COMMAND(my_sector_info) {
     gap = SV_PointRegionLight(sec, Player->MO->Origin+TVec(0.0f, 0.0f, Player->MO->Height), true);
     if (gap) Player->Printf("=== PT2: %p", gap);
     */
-    GCon->Log("=== light ===");
-    (void)SV_PointRegionLight(sec, Player->MO->Origin, true);
-    GCon->Log("=== light sub ===");
-    (void)SV_PointRegionLightSub(Player->MO->SubSector, Player->MO->Origin, nullptr, true);
+    //GCon->Log("=== light ===");
+    //(void)SV_PointRegionLight(sec, Player->MO->Origin, true);
+    //GCon->Log("=== light sub ===");
+    //(void)SV_PointRegionLightSub(Player->MO->SubSector, Player->MO->Origin, nullptr, true);
 
     #ifdef CLIENT
       if (Args.length() > 3) {

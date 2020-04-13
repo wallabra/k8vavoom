@@ -934,96 +934,10 @@ void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, f
 //
 //  this is used to get lighting for the given point
 //
-//==========================================================================
-sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump) {
-  if (!sector->Has3DFloors()) return sector->eregions;
-  const float secfz = sector->floor.GetPointZClamped(p);
-  if (p.z <= secfz) return sector->eregions;
-  //const float seccz = sector->ceiling.GetPointZClamped(p);
-
-  bool wasHit = false;
-  sec_region_t *best = sector->eregions;
-  float bestDist = p.z-secfz; // minimum distance to region floor
-  bool bestFloor = false;
-
-  if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: base region"); DumpRegion(best); }
-  // skip base region
-  for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
-    if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
-    const float fz = reg->efloor.GetPointZClamped(p);
-    const float cz = reg->eceiling.GetPointZClamped(p);
-    if (fz >= cz) continue;
-    // non-solid?
-    if (reg->regflags&sec_region_t::RF_NonSolid) {
-      // for non-solid regions calculate distance to ceiling
-      //const float cz = reg->eceiling.GetPointZClamped(p);
-      if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: non-solid: z=%g; fz=%g; cz=%g; dist=%g; best=%g", p.z, fz, cz, cz-p.z, bestDist); DumpRegion(reg); }
-      if (p.z < cz) {
-        const float fdist = cz-p.z;
-        if (fdist < bestDist) {
-          wasHit = true;
-          bestDist = fdist;
-          best = reg;
-          bestFloor = false;
-          if (dbgDump) { GCon->Log(NAME_Debug, "   HIT!"); }
-        }
-      }
-    } else {
-      // for solid regions calculate distance to floor
-      //const float fz = reg->efloor.GetPointZClamped(p);
-      if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: solid: z=%g; fz=%g; cz=%g; dist=%g; best=%g", p.z, fz, cz, fz-p.z, bestDist); DumpRegion(reg); }
-      if (p.z <= fz) {
-        const float fdist = fz-p.z;
-        if (fdist < bestDist) {
-          wasHit = true;
-          bestDist = fdist;
-          best = reg;
-          bestFloor = true;
-          if (dbgDump) { GCon->Log(NAME_Debug, "   HIT!"); }
-        }
-      }
-    }
-  }
-
-  if (!wasHit /*&& last*/) {
-    if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: USING LAST"); /*DumpRegion(last);*/ }
-    //best = last;
-  } else if (bestFloor) {
-    // floor hit should use lighting from the upper region
-    /*
-    for (best = best->next; best; best = best->next) {
-      if (best->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_NonSolid)) continue;
-      break;
-    }
-    if (!best) best = sector->eregions;
-    */
-    best = SV_GetNextRegion(sector, best);
-  }
-
-  if (dbgDump) {
-    if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: hit region"); DumpRegion(best); }
-    GCon->Logf(NAME_Debug, "params: lightlevel=%d; lightcolor=0x%08x; fade=0x%08x; contents=%d", best->params->lightlevel, (unsigned)best->params->LightColor, best->params->Fade, best->params->contents);
-  }
-
-  return best;
-}
-
-
-//==========================================================================
-//
-//  SV_PointRegionLightSub
-//
-//  this is used to get region lighting
-//  used in thing ambient lighting calculations
-//
-//  TODO: join this with the previous function
-//
 //  glowFlags: bit 0: floor glow allowed; bit 1: ceiling glow allowed
 //
 //==========================================================================
-sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, unsigned *glowFlags, bool dbgDump) {
-  sector_t *sector = sub->sector;
-
+sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, unsigned *glowFlags) {
   // early exit if we have no 3d floors
   if (!sector->Has3DFloors()) {
     if (glowFlags) *glowFlags = 3u; // both glows allowed
@@ -1043,7 +957,6 @@ sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, unsigned 
    ceiling glow is allowed if we are above the top-most solid region
   */
 
-  #if 1
   sec_region_t *best = nullptr;
   float bestDist = 99999.0f; // minimum distance to region floor
   *glowFlags = 3u; // will be reset when necessary
@@ -1080,77 +993,6 @@ sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, unsigned 
   }
 
   return best;
-  #else
-  const float secfz = sector->floor.GetPointZClamped(p);
-  if (p.z <= secfz) {
-    if (bestfit) *bestfit = sector->eregions;
-    return sector->eregions;
-  }
-
-  bool wasHit = false;
-  sec_region_t *best = sector->eregions;
-  float bestDist = p.z-secfz; // minimum distance to region floor
-  bool bestFloor = false;
-
-  // skip base region
-  for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
-    if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
-    // non-solid?
-    if (reg->regflags&sec_region_t::RF_NonSolid) {
-      // for non-solid regions calculate distance to ceiling
-      const float cz = reg->eceiling.GetPointZClamped(p);
-      if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: non-solid: z=%g; cz=%g; dist=%g; best=%g", p.z, cz, cz-p.z, bestDist); DumpRegion(reg); }
-      if (p.z < cz) {
-        const float fdist = cz-p.z;
-        if (fdist <= bestDist) {
-          wasHit = true;
-          bestDist = fdist;
-          best = reg;
-          bestFloor = false;
-        }
-      }
-    } else {
-      // for solid regions calculate distance to floor
-      const float fz = reg->efloor.GetPointZClamped(p);
-      if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: solid: z=%g; fz=%g; dist=%g; best=%g", p.z, fz, fz-p.z, bestDist); DumpRegion(reg); }
-      if (p.z <= fz) {
-        const float fdist = fz-p.z;
-        if (fdist <= bestDist) {
-          wasHit = true;
-          bestDist = fdist;
-          best = reg;
-          bestFloor = true;
-        }
-      }
-    }
-  }
-
-  vassert(best);
-  if (bestfit) *bestfit = best;
-  if (wasHit && bestFloor) {
-    // floor hit should use lighting from the upper region
-    /*
-    for (best = best->next; best; best = best->next) {
-      if (best->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_NonSolid)) continue;
-      break;
-    }
-    if (!best) best = sector->eregions;
-    */
-    /*
-    if (bestDist == 0 && best->efloor.GetPointZClamped(p) == best->eceiling.GetPointZClamped(p)) {
-    } else
-    */
-    {
-      if (dbgDump) { GCon->Logf(NAME_Debug, " * getting upper region due to floor hit; z=%g; fz=%g", p.z, best->efloor.GetPointZClamped(p)); }
-      best = SV_GetNextRegion(sector, best);
-      if (dbgDump) { GCon->Logf(NAME_Debug, " * got upper region due to floor hit; z=%g; fz=%g", p.z, best->efloor.GetPointZClamped(p)); }
-    }
-  }
-
-  //if (dbgDump) GCon->Logf(NAME_Debug, "params: lightlevel=%d; lightcolor=0x%08x; fade=0x%08x; contents=%d", best->params->lightlevel, (unsigned)best->params->LightColor, best->params->Fade, best->params->contents);
-
-  return best;
-  #endif
 }
 
 
