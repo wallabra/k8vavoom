@@ -1531,6 +1531,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     ops = SV_SectorOpenings(seg->frontsector);
   }
 
+  // apply offsets from seg side
   SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &texsideparm->Mid);
 
   const float texh = DivByScale(MTex->GetScaledHeight(), texsideparm->Mid.ScaleY);
@@ -1555,11 +1556,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     }
     //z_org = 0;
   }
-  FixMidTextureOffsetAndOrigin(z_org, linedef, sidedef, &sp->texinfo, MTex, &texsideparm->Mid, true);
-
   // apply offsets from seg side
-  sp->texinfo.toffs *= TextureTScale(MTex)*texsideparm->Mid.ScaleY;
-  sp->texinfo.toffs += texsideparm->Mid.RowOffset*TextureOffsetTScale(MTex);
+  FixMidTextureOffsetAndOrigin(z_org, linedef, sidedef, &sp->texinfo, MTex, &texsideparm->Mid, true);
 
   sp->texinfo.Alpha = (reg->efloor.splane->Alpha < 1.0f ? reg->efloor.splane->Alpha : 1.1f);
   sp->texinfo.Additive = !!(reg->efloor.splane->flags&SPF_ADDITIVE);
@@ -2013,7 +2011,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
         }
         SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling, ops);
       } else {
-        UpdateTextureOffsets(sub, seg, sp, &extraside->Mid);
+        const side_t *texsideparm = (seg->sidedef ? seg->sidedef : extraside);
+        UpdateTextureOffsets(sub, seg, sp, &texsideparm->Mid);
       }
       sp->texinfo.ColorMap = ColorMap;
     }
