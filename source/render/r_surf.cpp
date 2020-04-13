@@ -1470,9 +1470,11 @@ static void CutWallFace (WallFace *face, sector_t *sec, sec_region_t *ignorereg,
 //
 //==========================================================================
 void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsector_t *sub, seg_t *seg, segpart_t *sp,
-                                                     TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, opening_t *ops)
+                                                     TSecPlaneRef r_floor, TSecPlaneRef r_ceiling)
 {
   FreeWSurfs(sp->surfs);
+
+  //ops = SV_SectorOpenings(seg->frontsector); // skip non-solid
 
   const line_t *linedef = reg->extraline;
   const side_t *sidedef = &Level->Sides[linedef->sidenum[0]];
@@ -1503,7 +1505,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     GCon->Log(" === front openings ===");
     for (opening_t *bop = SV_SectorOpenings2(seg->frontsector, true); bop; bop = bop->next) DumpOpening(bop);
     GCon->Log(" === real openings ===");
-    for (opening_t *bop = ops; bop; bop = bop->next) DumpOpening(bop);
+    //for (opening_t *bop = ops; bop; bop = bop->next) DumpOpening(bop);
   }
 
   if (seg->backsector && seg->backsector-&Level->Sectors[0] == 70) {
@@ -1514,7 +1516,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     GCon->Log(" === front openings ===");
     for (opening_t *bop = SV_SectorOpenings2(seg->frontsector, true); bop; bop = bop->next) DumpOpening(bop);
     GCon->Log(" === real openings ===");
-    for (opening_t *bop = ops; bop; bop = bop->next) DumpOpening(bop);
+    for (opening_t *bop = SV_SectorOpenings(seg->frontsector); bop; bop = bop->next) DumpOpening(bop);
   }
   */
 
@@ -1525,10 +1527,10 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     GCon->Log(NAME_Debug, "=== REGIONS:BACK ===");
     VLevel::dumpSectorRegions(seg->backsector);
     GCon->Log(NAME_Debug, "=== OPENINGS:FRONT ===");
-    for (opening_t *bop = ops; bop; bop = bop->next) DumpOpening(bop);
+    for (opening_t *bop = SV_SectorOpenings(seg->frontsector); bop; bop = bop->next) DumpOpening(bop);
     GCon->Log(NAME_Debug, "=== OPENINGS:BACK ===");
     for (opening_t *bop = SV_SectorOpenings(seg->backsector); bop; bop = bop->next) DumpOpening(bop);
-    ops = SV_SectorOpenings(seg->frontsector);
+    //ops = SV_SectorOpenings(seg->frontsector); // this should be done to update openings
   }
 
   // apply offsets from seg side
@@ -1536,25 +1538,13 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 
   const float texh = DivByScale(MTex->GetScaledHeight(), texsideparm->Mid.ScaleY);
   float z_org; // texture top
-  if (reg->regflags&sec_region_t::RF_SaneRegion) {
-    // vavoom 3d floor
-    if (linedef->flags&ML_DONTPEGBOTTOM) {
-      // bottom of texture at bottom
-      z_org = reg->efloor.splane->TexZ+texh;
-    } else {
-      // top of texture at top
-      z_org = reg->eceiling.splane->TexZ;
-    }
+  // (reg->regflags&sec_region_t::RF_SaneRegion) // vavoom 3d floor
+  if (linedef->flags&ML_DONTPEGBOTTOM) {
+    // bottom of texture at bottom
+    z_org = reg->efloor.splane->TexZ+texh;
   } else {
-    // gzdoom 3d floor
-    if (linedef->flags&ML_DONTPEGBOTTOM) {
-      // bottom of texture at bottom
-      z_org = reg->efloor.splane->TexZ+texh;
-    } else {
-      // top of texture at top
-      z_org = reg->eceiling.splane->TexZ;
-    }
-    //z_org = 0;
+    // top of texture at top
+    z_org = reg->eceiling.splane->TexZ;
   }
   // apply offsets from seg side
   FixMidTextureOffsetAndOrigin(z_org, linedef, sidedef, &sp->texinfo, MTex, &texsideparm->Mid, true);
@@ -1618,64 +1608,6 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 
       CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_MIDDLE);
     }
-
-    #if 0
-    const float extratopz1 = reg->eceiling.GetPointZ(*seg->v1);
-    const float extratopz2 = reg->eceiling.GetPointZ(*seg->v2);
-    const float extrabotz1 = reg->efloor.GetPointZ(*seg->v1);
-    const float extrabotz2 = reg->efloor.GetPointZ(*seg->v2);
-
-    // find opening for this side
-    const float exbotz = min2(extrabotz1, extrabotz2);
-    const float extopz = max2(extratopz1, extratopz2);
-
-    for (opening_t *cop = ops; cop; cop = cop->next) {
-      if (extopz <= cop->bottom || exbotz >= cop->top) {
-        if (doDump) GCon->Logf("  (%g,%g): skip opening (%g,%g)", exbotz, extopz, cop->bottom, cop->top);
-        continue;
-      }
-      // ok, we are at least partially in this opening
-
-      float topz1 = cop->eceiling.GetPointZ(*seg->v1);
-      float topz2 = cop->eceiling.GetPointZ(*seg->v2);
-      float botz1 = cop->efloor.GetPointZ(*seg->v1);
-      float botz2 = cop->efloor.GetPointZ(*seg->v2);
-
-      if (doDump) GCon->Logf("  (%g,%g): HIT opening (%g,%g) (%g:%g,%g:%g); ex=(%g:%g,%g:%g)", exbotz, extopz, cop->bottom, cop->top, botz1, botz2, topz1, topz2, extrabotz1, extrabotz2, extratopz1, extratopz2);
-
-      /*
-      botz1 = extrabotz1;
-      botz2 = extrabotz2;
-      */
-
-      // check texture limits
-      if (!wrapped) {
-        if (max2(topz1, topz2) <= z_org-texh) continue;
-        if (min2(botz1, botz2) >= z_org) continue;
-      }
-
-      wv[0].x = wv[1].x = seg->v1->x;
-      wv[0].y = wv[1].y = seg->v1->y;
-      wv[2].x = wv[3].x = seg->v2->x;
-      wv[2].y = wv[3].y = seg->v2->y;
-
-      if (wrapped) {
-        wv[0].z = max2(extrabotz1, botz1);
-        wv[1].z = min2(extratopz1, topz1);
-        wv[2].z = min2(extratopz2, topz2);
-        wv[3].z = max2(extrabotz2, botz2);
-      } else {
-        wv[0].z = max3(extrabotz1, botz1, z_org-texh);
-        wv[1].z = min3(extratopz1, topz1, z_org);
-        wv[2].z = min3(extratopz2, topz2, z_org);
-        wv[3].z = max3(extrabotz2, botz2, z_org-texh);
-      }
-
-      if (doDump) for (int wf = 0; wf < 4; ++wf) GCon->Logf("   wf #%d: (%g,%g,%g)", wf, wv[wf].x, wv[wf].y, wv[wf].z);
-
-      CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_MIDDLE);
-    }
-    #endif
 
     if (sp->surfs && (sp->texinfo.Alpha < 1.0f || sp->texinfo.Additive || MTex->isTranslucent())) {
       for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
@@ -1761,8 +1693,6 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
     // create region sides
     // this creates sides for neightbour 3d floors
-    opening_t *ops = nullptr;
-    bool opsCreated = false;
     for (sec_region_t *reg = seg->backsector->eregions->next; reg; reg = reg->next) {
       if (!reg->extraline) continue; // no need to create extra side
 
@@ -1775,11 +1705,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
       sp->next = dseg->extra;
       dseg->extra = sp;
 
-      if (!opsCreated) {
-        opsCreated = true;
-        ops = SV_SectorOpenings(seg->frontsector); // skip non-solid
-      }
-      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling, ops);
+      SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling);
     }
   }
 }
@@ -1989,8 +1915,6 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       }
     }
 
-    opening_t *ops = nullptr;
-    bool opsCreated = false;
     // update 3d floors
     for (sp = dseg->extra; sp; sp = sp->next) {
       sec_region_t *reg = sp->basereg;
@@ -2005,11 +1929,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
 
       if (CheckCommonRecreateEx(sp, MTex, r_floor.splane, r_ceiling.splane, reg->efloor.splane, reg->eceiling.splane)) {
-        if (!opsCreated) {
-          opsCreated = true;
-          ops = SV_SectorOpenings(seg->frontsector);
-        }
-        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling, ops);
+        SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling);
       } else {
         const side_t *texsideparm = (seg->sidedef ? seg->sidedef : extraside);
         UpdateTextureOffsets(sub, seg, sp, &texsideparm->Mid);
