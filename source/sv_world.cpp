@@ -1014,15 +1014,73 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
 //  SV_PointRegionLightSub
 //
 //  this is used to get region lighting
+//  used in thing ambient lighting calculations
+//
 //  TODO: join this with the previous function
 //
+//  glowFlags: bit 0: floor glow allowed; bit 1: ceiling glow allowed
+//
 //==========================================================================
-sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, sec_region_t **bestfit, bool dbgDump) {
+sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, unsigned *glowFlags, bool dbgDump) {
   sector_t *sector = sub->sector;
+
+  // early exit if we have no 3d floors
   if (!sector->Has3DFloors()) {
-    if (bestfit) *bestfit = sector->eregions;
+    if (glowFlags) *glowFlags = 3u; // both glows allowed
     return sector->eregions;
   }
+
+  unsigned tmp = 0;
+  if (glowFlags) *glowFlags = 0; else glowFlags = &tmp;
+
+  /*
+   (?) if the point is in a water (swimmable), use swimmable region
+   otherwise, check distance to region floor (region is from ceiling down to floor), and use the smallest one
+   also, ignore paper-thin regions
+
+   additionally, calculate glow flags:
+   floor glow is allowed if we are under the bottom-most solid region
+   ceiling glow is allowed if we are above the top-most solid region
+  */
+
+  #if 1
+  sec_region_t *best = nullptr;
+  float bestDist = 99999.0f; // minimum distance to region floor
+  *glowFlags = 3u; // will be reset when necessary
+  for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
+    // ignore base (just in case) and visual-only regions
+    if (reg->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_BaseRegion)) continue;
+    // ignore paper-thin regions
+    const float rtopz = reg->eceiling.GetPointZ(p);
+    const float rbotz = reg->efloor.GetPointZ(p);
+    if (rtopz <= rbotz) continue; // invalid, or paper-thin, ignore
+    float botDist;
+    if (reg->regflags&sec_region_t::RF_NonSolid) {
+      // swimmable, use region ceiling
+      botDist = rtopz-p.z;
+    } else {
+      // solid, use region floor
+      // calc glow flags
+      if (p.z < rtopz) *glowFlags &= ~2u; // we have solid region above us, no ceiling glow
+      if (p.z > rbotz) *glowFlags &= ~1u; // we have solid region below us, no floor glow
+      // check best distance
+      botDist = rbotz-p.z;
+    }
+    // if we're not in bounds, ignore
+    // if further than the current best, ignore
+    if (botDist <= 0.0f || botDist > bestDist) continue;
+    // found new good region
+    best = reg;
+    bestDist = botDist;
+  }
+
+  if (!best) {
+    // use base region
+    best = sector->eregions;
+  }
+
+  return best;
+  #else
   const float secfz = sector->floor.GetPointZClamped(p);
   if (p.z <= secfz) {
     if (bestfit) *bestfit = sector->eregions;
@@ -1092,6 +1150,7 @@ sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, sec_regio
   //if (dbgDump) GCon->Logf(NAME_Debug, "params: lightlevel=%d; lightcolor=0x%08x; fade=0x%08x; contents=%d", best->params->lightlevel, (unsigned)best->params->LightColor, best->params->Fade, best->params->contents);
 
   return best;
+  #endif
 }
 
 

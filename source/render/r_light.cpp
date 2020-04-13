@@ -892,16 +892,16 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
 //==========================================================================
 void VRenderLevelShared::CalculateSubAmbient (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius) {
   bool skipAmbient = false;
-  bool glowAllowed = true;
+  unsigned glowFlags = 3u; // bit 0: floor glow allowed; bit 1: ceiling glow allowed
 
   //FIXME: this is slightly wrong (and slow)
   if (!skipAmbient && sub->regions) {
-    sec_region_t *regbase;
-    sec_region_t *reglight = SV_PointRegionLightSub((subsector_t *)sub, p, &regbase);
+    //sec_region_t *regbase;
+    sec_region_t *reglight = SV_PointRegionLightSub((subsector_t *)sub, p, &glowFlags);
 
     // allow glow only for bottom regions
     //FIXME: this is not right, we should calculate glow for translucent/transparent floors too!
-    glowAllowed = !!(regbase->regflags&sec_region_t::RF_BaseRegion);
+    //glowAllowed = !!(regbase->regflags&sec_region_t::RF_BaseRegion);
 
     // region's base light
     if (r_allow_ambient) {
@@ -984,17 +984,17 @@ void VRenderLevelShared::CalculateSubAmbient (VEntity *lowner, float &l, float &
 
 
   // glowing flats
-  if (glowAllowed && r_glow_flat && sub->sector) {
+  if (glowFlags && r_glow_flat && sub->sector) {
     const sector_t *sec = sub->sector;
     // fuckin' pasta!
-    if (sec->floor.pic) {
+    if ((glowFlags&1u) && sec->floor.pic) {
       VTexture *gtex = GTextureManager(sec->floor.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
         const float hgt = p.z-sub->sector->floor.GetPointZClamped(p);
         MIX_FLAT_GLOW
       }
     }
-    if (sec->ceiling.pic) {
+    if ((glowFlags&2u) && sec->ceiling.pic) {
       VTexture *gtex = GTextureManager(sec->ceiling.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
         const float hgt = sub->sector->ceiling.GetPointZClamped(p)-p.z;
