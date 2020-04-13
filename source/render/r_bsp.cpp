@@ -376,40 +376,28 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     surfs->plane.normal.z == 0.0f ? SFT_Wall :
     (surfs->plane.normal.z > 0.0f ? SFT_Floor : SFT_Ceiling);
 
+  vuint32 lightColor;
+
   // calculate lighting for floors and ceilings
   //TODO: do this in 3d floor setup
   sec_params_t *LightParams;
   if (LightSourceSector < 0 || LightSourceSector >= Level->NumSectors) {
     LightParams = secregion->params;
+    lightColor = LightParams->LightColor;
     // if this is top flat of insane 3d floor, its light level should be taken from the upper region (or main sector, if this region is the last one)
+    //??? should we ignore visual regions here? (sec_region_t::RF_OnlyVisual)
     if (surfaceType == SFT_Floor && secregion->extraline &&
-        (secregion->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual|sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) == 0)
+        (secregion->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) == 0)
     {
-      /*
-      sec_region_t *nreg = secregion->next;
-      while (nreg && (nreg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual|sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) != 0) nreg = nreg->next;
-      */
       sec_region_t *nreg = SV_GetNextRegion(sub->sector, secregion);
-      if (nreg) {
-        /*
-        GCon->Logf(NAME_Debug, "sub #%d: has NEXT!", (int)(ptrdiff_t)(sub-&Level->Subsectors[0]));
-        Level->dumpRegion(secregion);
-        Level->dumpRegion(nreg);
-        */
-        if (nreg->params) LightParams = nreg->params;
-        //AbsSideLight = true;
-        //SideLight = 255;
-      } else {
-        /*
-        GCon->Logf(NAME_Debug, "sub #%d: BASE!", (int)(ptrdiff_t)(sub-&Level->Subsectors[0]));
-        Level->dumpRegion(secregion);
-        Level->dumpRegion(sub->sector->eregions);
-        */
-        if (sub->sector->eregions->params) LightParams = sub->sector->eregions->params;
+      if (nreg->params) {
+        LightParams = nreg->params;
+        lightColor = LightParams->LightColor;
       }
     }
   } else {
     LightParams = &Level->Sectors[LightSourceSector].params;
+    lightColor = LightParams->LightColor;
   }
 
   int lLev = (AbsSideLight ? 0 : LightParams->lightlevel)+SideLight;
@@ -546,7 +534,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         Portal->Surfs.Append(surfs);
         if (doRenderSurf && surfs->queueframe != currQueueFrame) {
           //GCon->Logf("  SURF!");
-          surfs->Light = (lLev<<24)|LightParams->LightColor;
+          surfs->Light = (lLev<<24)|lightColor;
           surfs->Fade = Fade;
           surfs->dlightframe = sub->dlightframe;
           surfs->dlightbits = sub->dlightbits;
@@ -578,7 +566,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     }
   } // done skybox rendering
 
-  vuint32 sflight = (lLev<<24)|LightParams->LightColor;
+  vuint32 sflight = (lLev<<24)|lightColor;
 
 #if 0
   if ((int)(ptrdiff_t)(sub->sector-Level->Sectors) == 40 ||
@@ -587,7 +575,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     GCon->Logf("#%d: light=%d; ls=%d; sl=%d; asl=%d; lp->llev=%d; fixed=%d; extra=%d; remap=%d; fade=0x%08x; lc=0x%08x; sflight=0x%08x; ta=%g",
       (int)(ptrdiff_t)(sub->sector-Level->Sectors),
       lLev, LightSourceSector, SideLight, (int)AbsSideLight,
-      LightParams->lightlevel, (int)FixedLight, ExtraLight, light_remap[Clamp(LightParams->lightlevel, 0, 255)], Fade, (unsigned)LightParams->LightColor, sflight, texinfo->Alpha);
+      LightParams->lightlevel, (int)FixedLight, ExtraLight, light_remap[Clamp(LightParams->lightlevel, 0, 255)], Fade, (unsigned)lightColor, sflight, texinfo->Alpha);
     //lLev = 250;
     //Fade = 0xffffffff;
     /*

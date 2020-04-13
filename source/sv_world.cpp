@@ -1059,36 +1059,6 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
 
 //==========================================================================
 //
-//  SV_GetPrevRegion
-//
-//  the one that is lower
-//
-//==========================================================================
-/*
-sec_region_t *SV_GetPrevRegion (sector_t *sector, sec_region_t *srcreg) {
-  vassert(sector);
-  if (!srcreg) return sector->eregions;
-  const float floordist = srcreg->efloor.GetDist();
-  float bestdist = 0.0f;
-  sec_region_t *bestreg = nullptr;
-  float lowestdist = 0.0f;
-  sec_region_t *lowestreg = nullptr;
-  for (sec_region_t *reg = sector->eregions; reg; reg = reg->next) {
-    if (reg == srcreg || (reg->regflags&sec_region_t::RF_OnlyVisual) != 0) continue;
-    const float cd = -reg->eceiling.GetDist(); // for ceiling it is negative
-    if (cd <= floordist) continue; // too low
-    if (!bestreg || floordist-cd < bestdist) {
-      bestdist = floordist-cd;
-      bestreg = reg;
-    }
-  }
-  return (bestreg ? bestreg : sector->eregions);
-}
-*/
-
-
-//==========================================================================
-//
 //  SV_GetNextRegion
 //
 //  the one that is higher
@@ -1100,28 +1070,23 @@ sec_region_t *SV_GetNextRegion (sector_t *sector, sec_region_t *srcreg) {
   if (!srcreg || !sector->eregions->next) return sector->eregions;
   // get distance to ceiling
   // we want the best sector that is higher
-  const float updist = srcreg->eceiling.GetRealDist();
-  float bestdist = 0.0f;
-  sec_region_t *bestreg = nullptr;
+  const float srcrtopz = srcreg->eceiling.GetRealDist();
+  float bestdist = 99999.0f;
+  sec_region_t *bestreg = sector->eregions;
   for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg == srcreg || (reg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual|sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) != 0) continue;
-    // "best" means:
-    //   for touching region: distance to ceiling
-    //   for non-touching region: distance to floor
-    const float cdist = reg->eceiling.GetRealDist();
-    if (cdist <= updist) continue; // too low
-    const float fdist = reg->efloor.GetRealDist();
-    float dist =
-      fdist <= updist ?
-        cdist-updist : // touching
-        fdist-updist; // above
-    if (dist <= 0.0f) continue; // just in case
-    if (!bestreg || dist < bestdist) {
+    const float rtopz = reg->eceiling.GetRealDist();
+    const float rbotz = reg->efloor.GetRealDist();
+    // ignore paper-thin regions
+    if (rtopz <= rbotz) continue; // invalid, or paper-thin, ignore
+    const float dist = srcrtopz-rbotz;
+    if (dist <= 0.0f) continue; // too low
+    if (dist < bestdist) {
       bestdist = dist;
       bestreg = reg;
     }
   }
-  return (bestreg ? bestreg : sector->eregions);
+  return bestreg;
 }
 
 
