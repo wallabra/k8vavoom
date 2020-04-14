@@ -122,13 +122,13 @@ override bool OnEvent (ref event_t evt) {
       }
       switch (evt.keycode) {
         case K_ESCAPE:
-        case K_MOUSE2:
+        //case K_MOUSE2:
           bEnteringText = false;
           EnterText = Value;
           break;
         case K_ENTER:
         case K_PADENTER:
-        case K_MOUSE1:
+        //case K_MOUSE1:
           bEnteringText = false;
           Value = EnterText;
           OnValueChanged();
@@ -149,7 +149,7 @@ override bool OnEvent (ref event_t evt) {
     } else {
       // not entering text
       int key = ConvertBoundKey(evt.keycode);
-      if (key == K_ENTER || key == K_PADENTER || key == K_MOUSE1 || key == K_JOY1) {
+      if (key == K_ENTER || key == K_PADENTER || /*key == K_MOUSE1 ||*/ key == K_JOY1) {
         // switch to text entering mode
         bEnteringText = true;
         EnterText = Value;
@@ -175,6 +175,19 @@ override void OnMouseClick (int X, int Y) {
   bEnteringText = true;
   EnterText = Value;
   LocalSound('menu/choose');
+}
+
+
+override void OnRMouseClick (int X, int Y) {
+  SetFocus();
+
+  if (bEnteringText) {
+    bEnteringText = false;
+    EnterText = Value;
+    return;
+  }
+
+  GetClGame().PopMenu();
 }
 
 

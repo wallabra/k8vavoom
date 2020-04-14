@@ -131,7 +131,7 @@ override bool OnEvent (ref event_t evt) {
     int key = ConvertBoundKey(evt.keycode);
     switch (key) {
       case K_LEFTARROW:
-      case K_MOUSE2:
+      //case K_MOUSE2:
       case K_MWHEELUP:
         if (idx > 0) {
           --idx;
@@ -144,14 +144,13 @@ override bool OnEvent (ref event_t evt) {
       case K_RIGHTARROW:
       case K_ENTER:
       case K_PADENTER:
-      case K_MOUSE1:
+      //case K_MOUSE1:
       case K_MWHEELDOWN:
         if (idx < 9) {
           ++idx;
           if (isValidValue(idx)) {
             value = idx;
             LocalSound('menu/change');
-            break;
           }
         }
         return true;
@@ -163,27 +162,37 @@ override bool OnEvent (ref event_t evt) {
 
 
 override void OnMouseClick (int X, int Y) {
-  SetFocus();
-  int idx = value;
-  if (idx < 9) {
-    ++idx;
-    if (isValidValue(idx)) {
-      value = idx;
-      LocalSound('menu/change');
+  if (IsFocus()) {
+    /*
+    int idx = value;
+    if (idx < 9) {
+      ++idx;
+      if (isValidValue(idx)) {
+        value = idx;
+        LocalSound('menu/change');
+      }
     }
+    */
+  } else {
+    SetFocus();
   }
 }
 
 
 override void OnRMouseClick (int X, int Y) {
-  SetFocus();
-  int idx = value;
-  if (idx > 0) {
-    --idx;
-    if (isValidValue(idx)) {
-      value = idx;
-      LocalSound('menu/change');
+  if (IsFocus()) {
+    /*
+    int idx = value;
+    if (idx > 0) {
+      --idx;
+      if (isValidValue(idx)) {
+        value = idx;
+        LocalSound('menu/change');
+      }
     }
+    */
+  } else {
+    SetFocus();
   }
 }
 

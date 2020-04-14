@@ -788,6 +788,7 @@ static final void wgGetBindingKeys (string cmd, int *key1, int *key2) {
 
 static final int ConvertBoundKey (int key) {
   if (key <= 0) return key;
+  if (key >= K_MOUSE1 && key <= K_MWHEELDOWN) return key;
 
   int key1, key2;
 

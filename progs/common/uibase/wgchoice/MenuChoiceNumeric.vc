@@ -150,9 +150,14 @@ override bool OnEvent (ref event_t evt) {
 //
 //==========================================================================
 override void OnMouseClick (int X, int Y) {
-  SetFocus();
-  float newValue = Value-ValueDelta;
-  if (SetNewValue(ref newValue)) LocalSound('menu/change');
+  if (IsFocus()) {
+    /*
+    float newValue = Value-ValueDelta;
+    if (SetNewValue(ref newValue)) LocalSound('menu/change');
+    */
+  } else {
+    SetFocus();
+  }
 }
 
 
@@ -162,9 +167,14 @@ override void OnMouseClick (int X, int Y) {
 //
 //==========================================================================
 override void OnRMouseClick (int X, int Y) {
-  SetFocus();
-  float newValue = Value+ValueDelta;
-  if (SetNewValue(ref newValue)) LocalSound('menu/change');
+  if (IsFocus()) {
+    /*
+    float newValue = Value+ValueDelta;
+    if (SetNewValue(ref newValue)) LocalSound('menu/change');
+    */
+  } else {
+    SetFocus();
+  }
 }
 
 

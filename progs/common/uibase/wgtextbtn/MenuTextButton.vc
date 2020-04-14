@@ -129,7 +129,7 @@ void ActivateEvent () {
 override bool OnEvent (ref event_t evt) {
   if (evt.bubbling && evt.type == ev_keydown) {
     int key = ConvertBoundKey(evt.keycode);
-    if (key == K_ENTER || key == K_PADENTER || key == K_MOUSE1 || key == K_JOY1) {
+    if (key == K_ENTER || key == K_PADENTER || /*key == K_MOUSE1 ||*/ key == K_JOY1) {
       ActivateEvent();
       LocalSound(ActivateSound);
       return true;

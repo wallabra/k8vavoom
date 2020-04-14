@@ -104,13 +104,13 @@ override bool OnEvent (ref event_t evt) {
       // save game string input
       switch (evt.keycode) {
         case K_ESCAPE:
-        case K_MOUSE2:
+        //case K_MOUSE2:
           waitingDeletion = false;
           bEnteringText = false;
           break;
         case K_ENTER:
         case K_PADENTER:
-        case K_MOUSE1:
+        //case K_MOUSE1:
         case K_JOY1:
           waitingDeletion = false;
           bEnteringText = false;
@@ -160,7 +160,7 @@ override bool OnEvent (ref event_t evt) {
         return true;
       case K_ENTER:
       case K_PADENTER:
-      case K_MOUSE1:
+      //case K_MOUSE1:
       case K_JOY1:
         waitingDeletion = false;
         ActivateSlot();
@@ -193,6 +193,17 @@ override void OnMouseClick (int X, int Y) {
     }
   }
   ActivateSlot();
+}
+
+
+//==========================================================================
+//
+//  OnRMouseClick
+//
+//==========================================================================
+override void OnRMouseClick (int X, int Y) {
+  SetFocus();
+  GetClGame().PopMenu();
 }
 
 

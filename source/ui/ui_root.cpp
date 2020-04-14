@@ -150,7 +150,7 @@ bool VRootWidget::InternalResponder (event_t *evt) {
     if ((evt->type == ev_keydown || evt->type == ev_keyup) &&
         evt->data1 >= K_MOUSE1 && evt->data1 <= K_MOUSE3)
     {
-      return MouseButtonEvent(evt->data1, evt->type == ev_keydown);
+      return MouseButtonEvent(evt->data1, (evt->type == ev_keydown));
     }
   }
 
@@ -215,8 +215,15 @@ void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
   float ScaledOldY = OldMouseY*SizeScaleY;
   float ScaledNewX = MouseX*SizeScaleX;
   float ScaledNewY = MouseY*SizeScaleY;
+
+  // only bubble
   VWidget *OldFocus = GetWidgetAt(ScaledOldX, ScaledOldY);
-  for (VWidget *W = OldFocus; W != nullptr; W = W->ParentWidget) {
+
+  EventPath.reset();
+  for (VWidget *W = OldFocus; W; W = W->ParentWidget) EventPath.append(W);
+
+  for (auto &&W : EventPath) {
+    if (W->IsGoingToDie()) break;
     if (W->OnMouseMove(
       (int)((ScaledOldX-W->ClipRect.OriginX)/W->ClipRect.ScaleX),
       (int)((ScaledOldY-W->ClipRect.OriginY)/W->ClipRect.ScaleY),
@@ -226,11 +233,17 @@ void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
       break;
     }
   }
+
   VWidget *NewFocus = GetWidgetAt(ScaledNewX, ScaledNewY);
-  if (OldFocus != nullptr && OldFocus != NewFocus) {
-    OldFocus->WidgetFlags &= ~(WF_LMouseDown|WF_MMouseDown|WF_RMouseDown);
-    OldFocus->OnMouseLeave();
-    NewFocus->OnMouseEnter();
+  if (OldFocus != NewFocus) {
+    if (OldFocus) {
+      OldFocus->WidgetFlags &= ~(WF_LMouseDown|WF_MMouseDown|WF_RMouseDown);
+      OldFocus->OnMouseLeave();
+    }
+    if (NewFocus) {
+      NewFocus->WidgetFlags &= ~(WF_LMouseDown|WF_MMouseDown|WF_RMouseDown);
+      NewFocus->OnMouseEnter();
+    }
   }
 }
 
@@ -244,8 +257,8 @@ bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
   if (IsGoingToDie()) return false;
 
   // find widget under mouse
-  float ScaledX = MouseX*SizeScaleX;
-  float ScaledY = MouseY*SizeScaleY;
+  const float ScaledX = MouseX*SizeScaleX;
+  const float ScaledY = MouseY*SizeScaleY;
   VWidget *Focus = GetWidgetAt(ScaledX, ScaledY);
 
   if (Down) {
@@ -269,7 +282,12 @@ bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
     }
   }
 
-  for (VWidget *W = Focus; W; W = W->ParentWidget) {
+  // only bubble
+  EventPath.reset();
+  for (VWidget *W = Focus; W; W = W->ParentWidget) EventPath.append(W);
+
+  for (auto &&W : EventPath) {
+    if (W->IsGoingToDie()) break;
     int LocalX = (int)((ScaledX-W->ClipRect.OriginX)/W->ClipRect.ScaleX);
     int LocalY = (int)((ScaledY-W->ClipRect.OriginY)/W->ClipRect.ScaleY);
     if (Down) {
@@ -278,6 +296,7 @@ bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
       if (W->OnMouseUp(LocalX, LocalY, Button)) return true;
     }
   }
+
   return false;
 }
 

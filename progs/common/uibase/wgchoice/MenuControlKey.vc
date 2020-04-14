@@ -111,12 +111,12 @@ override bool OnEvent (ref event_t evt) {
         return true;
       case K_ENTER:
       case K_PADENTER:
-      case K_MOUSE1:
+      //case K_MOUSE1:
       case K_JOY1:
         if (!Disabled) GetClGame().MessageBoxStartBindQuery(self, strifeMode);
         return true;
       case K_BACKSPACE:
-      case K_MOUSE2:
+      //case K_MOUSE2:
       case K_DELETE:
         if (!Disabled) {
           int isActive;
@@ -152,6 +152,14 @@ override void OnMouseClick (int X, int Y) {
   if (!Disabled) {
     SetFocus();
     GetClGame().MessageBoxStartBindQuery(self, strifeMode);
+  }
+}
+
+
+override void OnRMouseClick (int X, int Y) {
+  if (!Disabled) {
+    SetFocus();
+    GetClGame().PopMenu();
   }
 }
 
