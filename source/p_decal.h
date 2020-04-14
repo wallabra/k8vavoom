@@ -32,17 +32,25 @@ class VDecalGroup;
 
 
 struct DecalFloatVal {
+  enum Type {
+    T_Fixed,
+    T_Random,
+    T_Undefined,
+  };
+
   float value;
-  bool rnd;
+  int type;
   float rndMin, rndMax;
 
-  DecalFloatVal () : value(0.0f), rnd(false), rndMin(0.0f), rndMax(0.0f) {}
-  DecalFloatVal (float aval) : value(aval), rnd(false), rndMin(aval), rndMax(aval) {}
+  DecalFloatVal () : value(0.0f), type(T_Undefined), rndMin(0.0f), rndMax(0.0f) {}
+  DecalFloatVal (float aval) : value(aval), type(T_Fixed), rndMin(aval), rndMax(aval) {}
   DecalFloatVal clone ();
 
-  void genValue ();
+  void genValue (float defval);
 
   void doIO (VStr prefix, VStream &strm, VNTValueIOEx &vio);
+
+  inline bool isDefined () const noexcept { return (type != T_Undefined); }
 };
 
 
@@ -263,7 +271,7 @@ public:
   virtual bool parse (VScriptParser *sc) override;
 
 public:
-  VDecalAnimFader () : VDecalAnim(), startTime(), actionTime() {}
+  VDecalAnimFader () : VDecalAnim(), startTime(0), actionTime(0) {}
   virtual ~VDecalAnimFader ();
 
   // this does deep clone, so we can attach it to the actual decal object
@@ -294,7 +302,7 @@ public:
   virtual bool parse (VScriptParser *sc) override;
 
 public:
-  VDecalAnimStretcher () : goalX(), goalY(), startTime(), actionTime() {}
+  VDecalAnimStretcher () : goalX(), goalY(), startTime(0), actionTime(0) {}
   virtual ~VDecalAnimStretcher ();
 
   // this does deep clone, so we can attach it to the actual decal object
@@ -326,7 +334,7 @@ public:
   virtual bool parse (VScriptParser *sc) override;
 
 public:
-  VDecalAnimSlider () : VDecalAnim(), distX(), distY(), startTime(), actionTime(), k8reversey(false) {}
+  VDecalAnimSlider () : VDecalAnim(), distX(), distY(), startTime(0), actionTime(0), k8reversey(false) {}
   virtual ~VDecalAnimSlider ();
 
   // this does deep clone, so we can attach it to the actual decal object
@@ -357,7 +365,7 @@ public:
   virtual bool parse (VScriptParser *sc) override;
 
 public:
-  VDecalAnimColorChanger () : VDecalAnim(), startTime(), actionTime() { dest[0] = dest[1] = dest[2] = 0; }
+  VDecalAnimColorChanger () : VDecalAnim(), startTime(0), actionTime(0) { dest[0] = dest[1] = dest[2] = 0; }
   virtual ~VDecalAnimColorChanger ();
 
   // this does deep clone, so we can attach it to the actual decal object

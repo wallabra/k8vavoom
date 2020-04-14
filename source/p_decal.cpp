@@ -84,23 +84,37 @@ static bool parseHexRGB (VStr str, int *clr) {
 // ////////////////////////////////////////////////////////////////////////// //
 DecalFloatVal DecalFloatVal::clone () {
   DecalFloatVal res;
-  res.value = (rnd ? RandomBetween(rndMin, rndMax) : value);
+  res.type = type;
+  res.rndMin = rndMin;
+  res.rndMax = rndMax;
+  res.value = (type == T_Random ? RandomBetween(rndMin, rndMax) : value);
   return res;
 }
 
 
-void DecalFloatVal::genValue () {
-  if (rnd) value = RandomBetween(rndMin, rndMax);
+void DecalFloatVal::genValue (float defval) {
+  switch (type) {
+    case T_Fixed:
+      break;
+    case T_Random:
+      value = RandomBetween(rndMin, rndMax);
+      break;
+    case T_Undefined:
+      value = defval;
+      break;
+  }
 }
 
 
 void DecalFloatVal::doIO (VStr prefix, VStream &strm, VNTValueIOEx &vio) {
-  vint32 rndflag = (rnd ? 1 : 0);
+  vint32 rndflag = (type == T_Random ? 1 : 0);
+  vint32 tt = type;
   vio.io(VName(*(prefix+"_randomized")), rndflag);
+  vio.io(VName(*(prefix+"_type")), tt);
   vio.io(VName(*(prefix+"_value")), value);
   vio.io(VName(*(prefix+"_rndmin")), rndMin);
   vio.io(VName(*(prefix+"_rndmax")), rndMax);
-  if (strm.IsLoading()) rnd = !!rndflag;
+  if (strm.IsLoading()) type = (rndflag ? T_Random : tt);
 }
 
 
@@ -192,11 +206,11 @@ VDecalDef::~VDecalDef () {
 
 void VDecalDef::genValues () {
   if (useCommonScale) {
-    commonScale.genValue();
+    commonScale.genValue(1);
     scaleX.value = scaleY.value = commonScale.value;
   } else {
-    scaleX.genValue();
-    scaleY.genValue();
+    scaleX.genValue(1);
+    scaleY.genValue(1);
   }
 
   switch (scaleSpecial) {
@@ -205,8 +219,8 @@ void VDecalDef::genValues () {
     default: break;
   }
 
-  alpha.genValue();
-  addAlpha.genValue();
+  alpha.genValue(1);
+  addAlpha.genValue(0);
 }
 
 
@@ -220,7 +234,7 @@ void VDecalDef::fixup () {
 void VDecalDef::parseNumOrRandom (VScriptParser *sc, DecalFloatVal *value, bool withSign) {
   if (sc->Check("random")) {
     // `random(min, max)`
-    value->rnd = true;
+    value->type = DecalFloatVal::T_Random;
     if (withSign) sc->ExpectFloatWithSign(); else sc->ExpectFloat();
     value->rndMin = sc->Float;
     if (withSign) sc->ExpectFloatWithSign(); else sc->ExpectFloat();
@@ -228,13 +242,13 @@ void VDecalDef::parseNumOrRandom (VScriptParser *sc, DecalFloatVal *value, bool 
     if (value->rndMin > value->rndMax) { const float tmp = value->rndMin; value->rndMin = value->rndMax; value->rndMax = tmp; }
     if (value->rndMin == value->rndMax) {
       value->value = value->rndMin;
-      value->rnd = false;
+      value->type = DecalFloatVal::T_Fixed;
     } else {
       value->value = RandomBetween(value->rndMin, value->rndMax); // just in case
     }
   } else {
     // normal
-    value->rnd = false;
+    value->type = DecalFloatVal::T_Fixed;
     if (withSign) sc->ExpectFloatWithSign(); else sc->ExpectFloat();
     value->value = sc->Float;
     value->rndMin = value->rndMax = value->value; // just in case
@@ -618,16 +632,17 @@ bool VDecalAnimStretcher::animate (decal_t *decal, float timeDelta) {
   timePassed += timeDelta;
   if (timePassed < startTime.value) return true; // not yet
   if (timePassed >= startTime.value+actionTime.value || actionTime.value <= 0) {
-    if ((decal->scaleX = goalX.value) <= 0) { decal->alpha = 0; return false; }
-    if ((decal->scaleY = goalY.value) <= 0) { decal->alpha = 0; return false; }
+    if (goalX.isDefined()) decal->scaleX = goalX.value;
+    if (goalY.isDefined()) decal->scaleY = goalY.value;
+    if (decal->scaleX <= 0 || decal->scaleY <= 0) { decal->alpha = 0; return false; }
     return false;
   }
   float dtx = timePassed-startTime.value;
-  {
+  if (goalX.isDefined()) {
     float aleft = goalX.value-decal->origScaleX;
     if ((decal->scaleX = decal->origScaleX+aleft*dtx/actionTime.value) <= 0) { decal->alpha = 0; return false; }
   }
-  {
+  if (goalY.isDefined()) {
     float aleft = goalY.value-decal->origScaleY;
     if ((decal->scaleY = decal->origScaleY+aleft*dtx/actionTime.value) <= 0) { decal->alpha = 0; return false; }
   }
@@ -687,13 +702,13 @@ bool VDecalAnimSlider::animate (decal_t *decal, float timeDelta) {
   timePassed += timeDelta;
   if (timePassed < startTime.value) return true; // not yet
   if (timePassed >= startTime.value+actionTime.value || actionTime.value <= 0) {
-    decal->ofsX = distX.value;
-    decal->ofsY = distY.value*(k8reversey ? 1.0f : -1.0f);
+    if (distX.isDefined()) decal->ofsX = distX.value;
+    if (distY.isDefined()) decal->ofsY = distY.value*(k8reversey ? 1.0f : -1.0f);
     return false;
   }
   float dtx = timePassed-startTime.value;
-  decal->ofsX = distX.value*dtx/actionTime.value;
-  decal->ofsY = (distY.value*dtx/actionTime.value)*(k8reversey ? 1.0f : -1.0f);
+  if (distX.isDefined()) decal->ofsX = distX.value*dtx/actionTime.value;
+  if (distY.isDefined()) decal->ofsY = (distY.value*dtx/actionTime.value)*(k8reversey ? 1.0f : -1.0f);
   return true;
 }
 
