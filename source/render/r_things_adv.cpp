@@ -42,8 +42,6 @@ extern VCvarB r_draw_mobjs;
 extern VCvarB r_model_shadows;
 extern VCvarB r_camera_player_shadows;
 extern VCvarB r_model_light;
-extern VCvarB r_drawfuzz;
-extern VCvarF r_transsouls;
 extern VCvarI r_max_model_shadows;
 
 static VCvarB r_dbg_thing_dump_vislist("r_dbg_thing_dump_vislist", false, "Dump built list of visible things?", 0);

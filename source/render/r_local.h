@@ -35,7 +35,8 @@
 //#define MAX_SPRITE_MODELS  (10*1024)
 
 // was 0.1
-#define FUZZY_ALPHA  (0.7f)
+// moved to "r_fuzzalpha" cvar
+//#define FUZZY_ALPHA  (0.7f)
 
 #define BSPIDX_IS_LEAF(bidx_)         ((bidx_)&(NF_SUBSECTOR))
 #define BSPIDX_IS_NON_LEAF(bidx_)     (!((bidx_)&(NF_SUBSECTOR)))

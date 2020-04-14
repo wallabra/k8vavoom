@@ -46,11 +46,12 @@ extern VCvarB r_fake_shadows_alias_models;
 VCvarB r_sort_sprites("r_sort_sprites", true, "Sprite sorting.", CVAR_Archive);
 VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", /*CVAR_Archive|*/CVAR_PreInit);
-VCvarB r_model_light("r_model_light", true, "Draw model light in advanced renderer?", CVAR_Archive);
-VCvarB r_drawfuzz("r_drawfuzz", false, "Draw fuzz effect?", CVAR_Archive);
-VCvarF r_transsouls("r_transsouls", "1", "Translucent Lost Souls?", CVAR_Archive);
+VCvarI r_drawfuzz("r_drawfuzz", "0", "Fuzz effect (0:alpha; 1:shadow)", CVAR_Archive);
+VCvarF r_fuzzalpha("r_fuzzalpha", "0.34", "Alpha for fuzzy sprites.", CVAR_Archive);
+VCvarF r_transsouls("r_transsouls", "1", "Lost Souls alpha.", CVAR_Archive);
 
 VCvarB r_models("r_models", true, "Allow 3d models?", CVAR_Archive);
+VCvarB r_model_light("r_model_light", true, "Draw model light in advanced renderer?", CVAR_Archive);
 VCvarB r_models_view("r_models_view", true, "Allow HUD weapon models?", CVAR_Archive);
 VCvarB r_models_strict("r_models_strict", true, "Strict 3D model->class search?", CVAR_Archive);
 
@@ -84,8 +85,11 @@ static VCvarB r_draw_adjacent_sector_things("r_draw_adjacent_sector_things", tru
 //
 //==========================================================================
 bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int RenderStyle, float Alpha, vuint32 StencilColor) noexcept {
-  const float a = Alpha;
-  if (a < 0.004f) return false; // ~1.02
+  const float a = min2(1.0f, Alpha);
+  if (a < 0.004f) { // ~1.02
+    if (RenderStyle != STYLE_Shadow) return false;
+    // a doesn't matter for `STYLE_Shadow`
+  }
 
   switch (RenderStyle) {
     case STYLE_None: // do not draw
@@ -96,35 +100,40 @@ bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int Rend
       ri.alpha = 1.0f;
       return true;
     case STYLE_Fuzzy: // draw silhouette using "fuzz" effect
-      ri.stencilColor = 0u;
-      ri.translucency = RenderStyleInfo::Translucent;
-      ri.alpha = FUZZY_ALPHA;
-      break;
+    case STYLE_OptFuzzy: // draw as fuzzy or translucent, based on user preference
+      if (r_drawfuzz) {
+        ri.stencilColor = 0xff000000u;
+        ri.translucency = RenderStyleInfo::Translucent;
+        ri.alpha = 0.4f; // was 0.3f
+      } else {
+        ri.stencilColor = 0u;
+        ri.translucency = RenderStyleInfo::Translucent;
+        //if (RenderStyle == STYLE_OptFuzzy) ri.alpha = (r_drawfuzz ? FUZZY_ALPHA : a); else ri.alpha = FUZZY_ALPHA;
+        ri.alpha = clampval(r_fuzzalpha.asFloat(), 0.02f, 1.0f);
+        if (ri.alpha >= 1.0f) ri.translucency = RenderStyleInfo::Normal;
+      }
+      return true;
     case STYLE_SoulTrans: // draw translucent with amount in r_transsouls
       ri.stencilColor = 0u;
       ri.translucency = RenderStyleInfo::Translucent;
-      ri.alpha = r_transsouls.asFloat();
-      break;
-    case STYLE_OptFuzzy: // draw as fuzzy or translucent, based on user preference
-      ri.stencilColor = 0u;
-      ri.translucency = RenderStyleInfo::Translucent;
-      ri.alpha = (r_drawfuzz ? FUZZY_ALPHA : a);
-      break;
+      ri.alpha = clampval(r_transsouls.asFloat(), 0.02f, 1.0f);
+      if (ri.alpha >= 1.0f) ri.translucency = RenderStyleInfo::Normal;
+      return true;
     case STYLE_Stencil: // solid color
     case STYLE_TranslucentStencil: // seems to be the same as stencil anyway
       ri.stencilColor = (vuint32)StencilColor|0xff000000u;
       ri.translucency = RenderStyleInfo::Translucent;
-      ri.alpha = min2(1.0f, a);
+      ri.alpha = a;
       return true;
     case STYLE_Translucent: // draw translucent
       ri.stencilColor = 0u;
       ri.translucency = RenderStyleInfo::Translucent;
       ri.alpha = a;
-      break;
+      return true;
     case STYLE_Add: // draw additive
       ri.stencilColor = 0u;
       ri.translucency = RenderStyleInfo::Additive;
-      ri.alpha = min2(1.0f, a);
+      ri.alpha = a;
       return true;
     case STYLE_Shaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
       ri.stencilColor = (vuint32)StencilColor|0xff000000u;
@@ -139,35 +148,30 @@ bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int Rend
     case STYLE_Subtract:
       ri.stencilColor = 0u;
       ri.translucency = RenderStyleInfo::Subtractive;
-      ri.alpha = min2(1.0f, a);
+      ri.alpha = a;
       return true;
     case STYLE_AddStencil:
       ri.stencilColor = (vuint32)StencilColor|0xff000000u;
       ri.translucency = RenderStyleInfo::Additive;
-      ri.alpha = min2(1.0f, a);
+      ri.alpha = a;
       return true;
     case STYLE_AddShaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
       ri.stencilColor = (vuint32)StencilColor|0xff000000u;
       ri.translucency = RenderStyleInfo::AddShaded;
-      ri.alpha = min2(1.0f, a);
+      ri.alpha = a;
       return true;
     case STYLE_Dark:
       ri.stencilColor = 0u;
       ri.translucency = RenderStyleInfo::DarkTrans;
-      ri.alpha = min2(1.0f, a);
-      return true;
-    default: // translucent (will be converted to normal if necessary)
-      GCon->Logf(NAME_Error, "unknown render style %d", RenderStyle);
-      ri.stencilColor = 0u;
-      ri.translucency = RenderStyleInfo::Translucent;
       ri.alpha = a;
+      return true;
+    default:
       break;
   }
-  if (ri.alpha < 0.004f) return false;
-  if (ri.alpha >= 1.0f) {
-    //ri.translucency = 0;
-    ri.alpha = 1.0f;
-  }
+  GCon->Logf(NAME_Error, "unknown render style %d", RenderStyle);
+  ri.stencilColor = 0u;
+  ri.translucency = (a < 1.0f ? RenderStyleInfo::Translucent : RenderStyleInfo::Normal);
+  ri.alpha = a;
   return true;
 }
 

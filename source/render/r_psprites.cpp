@@ -42,8 +42,6 @@ extern VCvarF cl_fov;
 extern VCvarB gl_pic_filtering;
 extern VCvarB r_draw_psprites;
 extern VCvarB r_chasecam;
-extern VCvarB r_drawfuzz;
-extern VCvarF r_transsouls;
 
 static VCvarI crosshair("crosshair", "2", "Crosshair type (0-2).", CVAR_Archive);
 static VCvarF crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
