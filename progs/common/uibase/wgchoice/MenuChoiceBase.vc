@@ -241,31 +241,15 @@ override void OnMouseEnter() {
 //
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
-  if (!evt.bubbling) return ::OnEvent(evt);
-  if (evt.type == ev_keydown) {
+  if (evt.bubbling && evt.type == ev_keydown) {
     //printdebug("key=%s (shift=%B)", evt.keycode, evt.bShift);
-    if (evt.keycode == "/" && evt.bShift) {
-      if (CvarExists(cvarSession)) {
+    if (cvarSession && CvarExists(cvarSession)) {
+      if (evt.bShift && evt.keycode == "/") {
         print("option cvar: %s", cvarSession);
         return true;
       }
-    }
-  }
-  return ::OnEvent(evt);
-}
-
-
-//==========================================================================
-//
-//  OnKeyDown
-//
-//==========================================================================
-override bool OnKeyDown (int key) {
-  if (!cvarSession) return false;
-  // restore default value
-  switch (key) {
-    case K_BACKSPACE: // [R]estore
-      if (CvarExists(cvarSession)) {
+      // restore default value
+      if (evt.keycode == K_BACKSPACE) { // [R]estore
         string s = GetCvarDefault(cvarSession);
         if (s) {
           bool err;
@@ -277,9 +261,9 @@ override bool OnKeyDown (int key) {
           }
         }
       }
-      break;
+    }
   }
-  return false;
+  return ::OnEvent(evt);
 }
 
 

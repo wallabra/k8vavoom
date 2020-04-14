@@ -87,19 +87,26 @@ void PlayPage()
   }
 }
 
-override bool OnKeyDown(int key)
-{
-  switch (key)
-  {
-  case K_ESCAPE:
-  case K_MOUSE2:
-    StopLocalSounds();
-    CmdBuf_AddText("Impulse 200\n");
-    ClGame.PopMenu();
-    return true;
+
+//==========================================================================
+//
+//  OnEvent
+//
+//==========================================================================
+override bool OnEvent (ref event_t evt) {
+  if (evt.bubbling && evt.type == ev_keydown) {
+    switch (ConvertBoundKey(evt.keycode)) {
+      case K_ESCAPE:
+      case K_MOUSE2:
+        StopLocalSounds();
+        CmdBuf_AddText("Impulse 200\n");
+        ClGame.PopMenu();
+        return true;
+    }
   }
-  return ::OnKeyDown(key);
+  return ::OnEvent(evt);
 }
+
 
 defaultproperties
 {

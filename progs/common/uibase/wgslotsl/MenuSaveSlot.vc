@@ -95,81 +95,84 @@ void ActivateSlot () {
 
 //==========================================================================
 //
-//  OnKeyDown
+//  OnEvent
 //
 //==========================================================================
-override bool OnKeyDown (int key) {
-  if (bEnteringText) {
-    // save game string input
-    switch (key) {
-      case K_ESCAPE:
-      case K_MOUSE2:
-        waitingDeletion = false;
-        bEnteringText = false;
-        break;
+override bool OnEvent (ref event_t evt) {
+  if (evt.bubbling && evt.type == ev_keydown) {
+    if (bEnteringText) {
+      // save game string input
+      switch (evt.keycode) {
+        case K_ESCAPE:
+        case K_MOUSE2:
+          waitingDeletion = false;
+          bEnteringText = false;
+          break;
+        case K_ENTER:
+        case K_PADENTER:
+        case K_MOUSE1:
+        case K_JOY1:
+          waitingDeletion = false;
+          bEnteringText = false;
+          if (evt.keycode == K_JOY1 && !EnterText) EnterText = va("saved game %d", SlotNum);
+          if (EnterText) {
+            Text = EnterText;
+            CmdBuf_AddText("Save %d \"%q\"\n", SlotNum, Text);
+            GetClGame().ForceMenuOff();
+          }
+          break;
+        case K_BACKSPACE:
+          waitingDeletion = false;
+          if (EnterText) EnterText = EnterText[0..$-1];
+          break;
+        default:
+          if (EnterText.length < SLOTTEXTLEN-1) {
+            string tk = TranslateKey(evt.keycode);
+            if (tk && tk[0] >= 32 && tk[0] < 128) {
+              EnterText ~= tk;
+            }
+          }
+          break;
+      }
+      return true;
+    }
 
+    switch (ConvertBoundKey(evt.keycode)) {
+      case K_DELETE:
+      case K_PADDOT:
+        if (Status) {
+          if (!waitingDeletion) {
+            waitingDeletion = true;
+          } else {
+            waitingDeletion = false;
+            Status = 0;
+            Text = "*deleted slot*";
+            //print("DEL! slot=%d; status=%d", SlotNum, Status);
+            CmdBuf_AddText("DeleteSavedGame %d\n", SlotNum);
+            auto pm = MenuScreenLoadSaveGame(Parent);
+            if (pm) pm.SignalSlotDeletion();
+          }
+        }
+        return true;
+      case K_INSERT:
+      case K_PAD0:
+        waitingDeletion = false;
+        return true;
       case K_ENTER:
       case K_PADENTER:
       case K_MOUSE1:
       case K_JOY1:
         waitingDeletion = false;
-        bEnteringText = false;
-        if (key == K_JOY1 && !EnterText) EnterText = va("saved game %d", SlotNum);
-        if (EnterText) {
-          Text = EnterText;
-          CmdBuf_AddText("Save %d \"%q\"\n", SlotNum, Text);
-          GetClGame().ForceMenuOff();
-        }
-        break;
-
-      case K_BACKSPACE:
-        waitingDeletion = false;
-        if (EnterText) EnterText = EnterText[0..$-1];
-        break;
-
-      default:
-        if (EnterText.length < SLOTTEXTLEN-1) {
-          string tk = TranslateKey(key);
-          if (tk && tk[0] >= 32 && tk[0] < 128) {
-            EnterText ~= tk;
-          }
-        }
-        break;
+        ActivateSlot();
+        return true;
     }
+  }
+
+  if (evt.bubbling && evt.type == ev_keyup && bEnteringText) {
     return true;
   }
 
-  key = ConvertBoundKey(key);
-
-  if (key == K_DELETE || key == K_PADDOT) {
-    if (Status) {
-      if (!waitingDeletion) {
-        waitingDeletion = true;
-      } else {
-        waitingDeletion = false;
-        Status = 0;
-        Text = "*deleted slot*";
-        //print("DEL! slot=%d; status=%d", SlotNum, Status);
-        CmdBuf_AddText("DeleteSavedGame %d\n", SlotNum);
-        auto pm = MenuScreenLoadSaveGame(Parent);
-        if (pm) pm.SignalSlotDeletion();
-      }
-    }
-    return true;
-  }
-
-  if (key == K_INSERT || key == K_PAD0) {
-    waitingDeletion = false;
-    return true;
-  }
-
-  if (key == K_ENTER || key == K_PADENTER || key == K_MOUSE1 || key == K_JOY1) {
-    waitingDeletion = false;
-    ActivateSlot();
-    return true;
-  }
-
-  return false;
+  return ::OnEvent(evt);
 }
 
 

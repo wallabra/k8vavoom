@@ -95,55 +95,56 @@ override void OnDraw () {
 }
 
 
-override bool OnKeyDown (int key) {
-  int key1;
-  int key2;
+override bool OnEvent (ref event_t evt) {
+  if (evt.bubbling && evt.type == ev_keydown) {
+    int key1;
+    int key2;
 
-  switch (key) {
-    case K_LEFTARROW:
-      GetClGame().ControlColumn = 0;
-      MenuScreen(Parent).CursorMoved();
-      return true;
-    case K_RIGHTARROW:
-      GetClGame().ControlColumn = 1;
-      MenuScreen(Parent).CursorMoved();
-      return true;
-    case K_ENTER:
-    case K_PADENTER:
-    case K_MOUSE1:
-    case K_JOY1:
-      if (!Disabled) GetClGame().MessageBoxStartBindQuery(self, strifeMode);
-      return true;
-    case K_BACKSPACE:
-    case K_MOUSE2:
-    case K_DELETE:
-      if (!Disabled) {
-        int isActive;
-        IN_GetBindingKeys(CommandOn, &key1, &key2, strifeMode, ModSection, out isActive);
-        if (GetClGame().ControlColumn == 0) IN_SetBinding(key1, "", "", strifeMode, ModSection);
-        if (GetClGame().ControlColumn == 1) IN_SetBinding(key2, "", "", strifeMode, ModSection);
-        // restore default mod key?
-        if (key == K_BACKSPACE && ModSection) {
-          int mkey1, mkey2;
-          IN_GetDefaultModBindingKeys(CommandOn, &mkey1, &mkey2, ModSection);
-          //printdebug("mod=%s; command=%s; key=(%s,%s); mkey=(%s,%s)", ModSection, CommandOn, key1, key2, mkey1, mkey2);
-          // first, remove any mod bindings for the old key
-          // second, setup default mod bindings for the default mod key
-          if (mkey1 > 0 && GetClGame().ControlColumn == 0) {
-            IN_SetBinding(key1, "<modclear>", "", strifeMode, ModSection);
-            IN_SetBinding(mkey1, "<default>", "", strifeMode, ModSection);
-          }
-          if (mkey2 > 0 && GetClGame().ControlColumn == 1) {
-            IN_SetBinding(key2, "<modclear>", "", strifeMode, ModSection);
-            IN_SetBinding(mkey2, "<default>", "", strifeMode, ModSection);
+    switch (ConvertBoundKey(evt.keycode)) {
+      case K_LEFTARROW:
+        GetClGame().ControlColumn = 0;
+        MenuScreen(Parent).CursorMoved();
+        return true;
+      case K_RIGHTARROW:
+        GetClGame().ControlColumn = 1;
+        MenuScreen(Parent).CursorMoved();
+        return true;
+      case K_ENTER:
+      case K_PADENTER:
+      case K_MOUSE1:
+      case K_JOY1:
+        if (!Disabled) GetClGame().MessageBoxStartBindQuery(self, strifeMode);
+        return true;
+      case K_BACKSPACE:
+      case K_MOUSE2:
+      case K_DELETE:
+        if (!Disabled) {
+          int isActive;
+          IN_GetBindingKeys(CommandOn, &key1, &key2, strifeMode, ModSection, out isActive);
+          if (GetClGame().ControlColumn == 0) IN_SetBinding(key1, "", "", strifeMode, ModSection);
+          if (GetClGame().ControlColumn == 1) IN_SetBinding(key2, "", "", strifeMode, ModSection);
+          // restore default mod key?
+          if (evt.keycode == K_BACKSPACE && ModSection) {
+            int mkey1, mkey2;
+            IN_GetDefaultModBindingKeys(CommandOn, &mkey1, &mkey2, ModSection);
+            //printdebug("mod=%s; command=%s; key=(%s,%s); mkey=(%s,%s)", ModSection, CommandOn, key1, key2, mkey1, mkey2);
+            // first, remove any mod bindings for the old key
+            // second, setup default mod bindings for the default mod key
+            if (mkey1 > 0 && GetClGame().ControlColumn == 0) {
+              IN_SetBinding(key1, "<modclear>", "", strifeMode, ModSection);
+              IN_SetBinding(mkey1, "<default>", "", strifeMode, ModSection);
+            }
+            if (mkey2 > 0 && GetClGame().ControlColumn == 1) {
+              IN_SetBinding(key2, "<modclear>", "", strifeMode, ModSection);
+              IN_SetBinding(mkey2, "<default>", "", strifeMode, ModSection);
+            }
           }
         }
-      }
-      return true;
+        return true;
+    }
   }
 
-  //return ::OnKeyDown(key);
-  return false; //k8:FIXME!
+  return ::OnEvent(evt);
 }
 
 

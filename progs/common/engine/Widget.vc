@@ -134,9 +134,6 @@ final void dumpClipRect (optional string msg) {
 delegate void FocusLost (Object Sender);
 delegate void FocusReceived (Object Sender);
 
-delegate bool KeyDown (Object Sender, int Key);
-delegate bool KeyUp (Object Sender, int Key);
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 //  Creation and destruction of widgets.
@@ -396,26 +393,6 @@ void Tick (float DeltaTime) {}
 bool OnEvent (ref event_t evt) {
   return false;
 }
-
-
-//==========================================================================
-//
-//  OnKeyDown
-//
-//  Called for focused widget and it's parents when a key is pressed.
-//
-//==========================================================================
-bool OnKeyDown (int Key) { return (KeyDown ? KeyDown(self, Key) : false); }
-
-
-//==========================================================================
-//
-//  OnKeyUp
-//
-//  Called for focused widget and it's parents when a key is released.
-//
-//==========================================================================
-bool OnKeyUp (int Key) { return (KeyUp ? KeyUp(self, Key) : false); }
 
 
 //==========================================================================
@@ -864,4 +841,27 @@ defaultproperties {
   ScaleY = 1.0;
   Visible = true;
   Enabled = true;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class RootWidget : Widget native;
+
+// true if mouse cursor is currently enabled
+readonly bool bMouseEnabled;
+
+// current mouse cursor position
+readonly int MouseX;
+readonly int MouseY;
+
+// current mouse cursor graphic
+readonly int MouseCursorPic;
+
+private native readonly array!(void *) EventPath;
+
+
+native final void SetMouse (bool MouseOn);
+
+
+defaultproperties {
 }

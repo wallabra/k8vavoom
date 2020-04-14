@@ -163,20 +163,22 @@ override void OnDraw () {
 
 //==========================================================================
 //
-//  OnKeyDown
+//  OnEvent
 //
 //==========================================================================
-override bool OnKeyDown (int key) {
-  int nkey = ConvertBoundKey(key);
-  switch (nkey) {
-    case K_ESCAPE:
-    case K_MOUSE2:
-      CmdBuf_AddText("Impulse 200\n");
-      StopLocalSounds();
-      ClGame.PopMenu();
-      return true;
+override bool OnEvent (ref event_t evt) {
+  if (evt.bubbling && evt.type == ev_keydown) {
+    int key = ConvertBoundKey(evt.keycode);
+    switch (key) {
+      case K_ESCAPE:
+      case K_MOUSE2:
+        CmdBuf_AddText("Impulse 200\n");
+        StopLocalSounds();
+        ClGame.PopMenu();
+        return true;
+    }
   }
-  return ::OnKeyDown(key);
+  return ::OnEvent(evt);
 }
 
 

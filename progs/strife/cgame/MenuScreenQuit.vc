@@ -79,8 +79,16 @@ override void OnDraw () {
 }
 
 
-override bool OnKeyDown (int key) {
-  return true;
+//==========================================================================
+//
+//  OnEvent
+//
+//==========================================================================
+override bool OnEvent (ref event_t evt) {
+  if (evt.bubbling && (evt.type == ev_keydown || evt.type == ev_keyup)) {
+    return true;
+  }
+  return ::OnEvent(evt);
 }
 
 

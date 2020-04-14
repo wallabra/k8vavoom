@@ -112,9 +112,6 @@ protected:
   VObjectDelegate FocusLost;
   VObjectDelegate FocusReceived;
 
-  VObjectDelegate KeyDown;
-  VObjectDelegate KeyUp;
-
 protected:
   void AddChild (VWidget *);
   void RemoveChild (VWidget *);
@@ -283,8 +280,6 @@ public:
   virtual void OnPostDraw () { static VMethodProxy method("OnPostDraw"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void Tick (float DeltaTime) { if (DeltaTime <= 0.0f) return; static VMethodProxy method("Tick"); vobjPutParamSelf(DeltaTime); VMT_RET_VOID(method); }
   virtual bool OnEvent (event_t *evt) { static VMethodProxy method("OnEvent"); vobjPutParamSelf(evt); VMT_RET_BOOL(method); }
-  virtual bool OnKeyDown (int Key) { static VMethodProxy method("OnKeyDown"); vobjPutParamSelf(Key); VMT_RET_BOOL(method); }
-  virtual bool OnKeyUp (int Key) { static VMethodProxy method("OnKeyUp"); vobjPutParamSelf(Key); VMT_RET_BOOL(method); }
   virtual bool OnMouseMove (int OldX, int OldY, int NewX, int NewY) { static VMethodProxy method("OnMouseMove"); vobjPutParamSelf(OldX, OldY, NewX, NewY); VMT_RET_BOOL(method); }
   virtual void OnMouseEnter () { static VMethodProxy method("OnMouseEnter"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void OnMouseLeave () { static VMethodProxy method("OnMouseLeave"); vobjPutParamSelf(); VMT_RET_VOID(method); }

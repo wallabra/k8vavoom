@@ -122,40 +122,43 @@ override void OnDraw () {
 
 //==========================================================================
 //
-//  OnKeyDown
+//  OnEvent
 //
 //==========================================================================
-override bool OnKeyDown (int key) {
-  int idx = value;
-  key = ConvertBoundKey(key);
-  switch (key) {
-    case K_LEFTARROW:
-    case K_MOUSE2:
-    case K_MWHEELUP:
-      if (idx > 0) {
-        --idx;
-        if (isValidValue(idx)) {
-          value = idx;
-          LocalSound('menu/change');
+override bool OnEvent (ref event_t evt) {
+  if (evt.bubbling && evt.type == ev_keydown) {
+    int idx = value;
+    int key = ConvertBoundKey(evt.keycode);
+    switch (key) {
+      case K_LEFTARROW:
+      case K_MOUSE2:
+      case K_MWHEELUP:
+        if (idx > 0) {
+          --idx;
+          if (isValidValue(idx)) {
+            value = idx;
+            LocalSound('menu/change');
+          }
         }
-      }
-      return true;
-    case K_RIGHTARROW:
-    case K_ENTER:
-    case K_PADENTER:
-    case K_MOUSE1:
-    case K_MWHEELDOWN:
-      if (idx < 9) {
-        ++idx;
-        if (isValidValue(idx)) {
-          value = idx;
-          LocalSound('menu/change');
-          break;
+        return true;
+      case K_RIGHTARROW:
+      case K_ENTER:
+      case K_PADENTER:
+      case K_MOUSE1:
+      case K_MWHEELDOWN:
+        if (idx < 9) {
+          ++idx;
+          if (isValidValue(idx)) {
+            value = idx;
+            LocalSound('menu/change');
+            break;
+          }
         }
-      }
-      return true;
+        return true;
+    }
   }
-  return false;//k8:FIXME!
+
+  return ::OnEvent(evt);
 }
 
 

@@ -187,52 +187,55 @@ override void OnDraw () {
 
 //==========================================================================
 //
-//  OnKeyDown
+//  OnEvent
 //
 //==========================================================================
-override bool OnKeyDown (int key) {
-  auto slist = GetSlist();
-  assert(slist);
+override bool OnEvent (ref event_t evt) {
+  if (evt.bubbling && evt.type == ev_keydown) {
+    auto slist = GetSlist();
+    assert(slist);
 
-  key = ConvertBoundKey(key);
-  switch (key) {
-    case K_DOWNARROW:
-      if (slist.Cache.length) {
-        if (++Cursor >= slist.Cache.length) Cursor = 0;
-        LocalSound('menu/cursor');
-        lastCurrAddr = "";
-      }
-      return true;
-
-    case K_UPARROW:
-      if (slist.Cache.length) {
-        if (--Cursor < 0) Cursor = slist.Cache.length-1;
-        LocalSound('menu/cursor');
-        lastCurrAddr = "";
-      }
-      return true;
-
-    case K_ENTER:
-    case K_PADENTER:
-      if (lastCurrAddr && slist.Cache.length && Cursor >= 0 && Cursor < slist.Cache.length) {
-        LocalSound('menu/choose');
-        if (slist.Cache[Cursor].bGoodProtocol && slist.Cache[Cursor].bGoodWadList) {
-          CmdBuf_AddText("connect \"%q\"\n", slist.Cache[Cursor].CName);
-          GetClGame().ForceMenuOff();
+    int key = ConvertBoundKey(evt.keycode);
+    switch (key) {
+      case K_DOWNARROW:
+        if (slist.Cache.length) {
+          if (++Cursor >= slist.Cache.length) Cursor = 0;
+          LocalSound('menu/cursor');
+          lastCurrAddr = "";
         }
-      }
-      return true;
+        return true;
 
-    case K_SPACE:
-      if (!slist.bInProgress) {
-        Cursor = -1;
-        StartSearch(Master);
-      }
-      return true;
+      case K_UPARROW:
+        if (slist.Cache.length) {
+          if (--Cursor < 0) Cursor = slist.Cache.length-1;
+          LocalSound('menu/cursor');
+          lastCurrAddr = "";
+        }
+        return true;
+
+      case K_ENTER:
+      case K_PADENTER:
+        if (lastCurrAddr && slist.Cache.length && Cursor >= 0 && Cursor < slist.Cache.length) {
+          LocalSound('menu/choose');
+          if (slist.Cache[Cursor].bGoodProtocol && slist.Cache[Cursor].bGoodWadList) {
+            CmdBuf_AddText("connect \"%q\"\n", slist.Cache[Cursor].CName);
+            GetClGame().ForceMenuOff();
+          }
+        }
+        return true;
+
+      case K_SPACE:
+        if (!slist.bInProgress) {
+          Cursor = -1;
+          StartSearch(Master);
+        }
+        return true;
+    }
+
+    if (slist.bInProgress) return true;
   }
 
-  if (slist.bInProgress) return true;
-  return false;
+  return ::OnEvent(evt);
 }
 
 

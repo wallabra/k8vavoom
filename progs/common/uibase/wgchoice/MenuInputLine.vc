@@ -109,63 +109,56 @@ override void OnDraw () {
 
 
 override bool OnEvent (ref event_t evt) {
-  if (!evt.bubbling) return ::OnEvent(evt);
-  if (!bEnteringText) return false;
-  if (evt.type != ev_keydown) return false;
-  // ^Y
-  if (evt.keycode == K_y && evt.bCtrl) {
-    EnterText = "";
-    return true;
-  }
-  // ^DEL
-  if (evt.keycode == K_DELETE && evt.bCtrl) {
-    EnterText = "";
-    return true;
+  if (evt.bubbling && evt.type == ev_keydown) {
+    if (bEnteringText) {
+      if (evt.bCtrl) {
+        switch (evt.keycode) {
+          case K_y: // ^Y
+          case K_DELETE: // ^DEL
+            EnterText = "";
+            return true;
+        }
+        return true;
+      }
+      switch (evt.keycode) {
+        case K_ESCAPE:
+        case K_MOUSE2:
+          bEnteringText = false;
+          EnterText = Value;
+          break;
+        case K_ENTER:
+        case K_PADENTER:
+        case K_MOUSE1:
+          bEnteringText = false;
+          Value = EnterText;
+          OnValueChanged();
+          break;
+        case K_BACKSPACE:
+          if (EnterText) EnterText = EnterText[0..$-1];
+          break;
+        default:
+          if (EnterText.length < 30) {
+            string cc = TranslateKey(evt.keycode);
+            if (cc && cc[0] >= 32 && cc[0] < 128) {
+              EnterText ~= cc;
+            }
+          }
+          break;
+      }
+      return true;
+    } else {
+      // not entering text
+      int key = ConvertBoundKey(evt.keycode);
+      if (key == K_ENTER || key == K_PADENTER || key == K_MOUSE1 || key == K_JOY1) {
+        // switch to text entering mode
+        bEnteringText = true;
+        EnterText = Value;
+        LocalSound('menu/choose');
+        return true;
+      }
+    }
   }
   return ::OnEvent(evt);
-}
-
-
-override bool OnKeyDown (int key) {
-  if (bEnteringText) {
-    switch (key) {
-      case K_ESCAPE:
-      case K_MOUSE2:
-        bEnteringText = false;
-        EnterText = Value;
-        break;
-      case K_ENTER:
-      case K_PADENTER:
-      case K_MOUSE1:
-        bEnteringText = false;
-        Value = EnterText;
-        OnValueChanged();
-        break;
-      case K_BACKSPACE:
-        if (EnterText) EnterText = EnterText[0..$-1];
-        break;
-      default:
-        if (EnterText.length < 30) {
-          string cc = TranslateKey(key);
-          if (cc && cc[0] >= 32 && cc[0] < 128) {
-            EnterText ~= cc;
-          }
-        }
-        break;
-    }
-    return true;
-  }
-
-  int cvtkey = ConvertBoundKey(key);
-  if (cvtkey == K_ENTER || cvtkey == K_PADENTER || cvtkey == K_MOUSE1 || cvtkey == K_JOY1) {
-    // we are going to be intercepting all chars
-    bEnteringText = true;
-    EnterText = Value;
-    LocalSound('menu/choose');
-    return true;
-  }
-
-  return ::OnKeyDown(key);
 }
 
 

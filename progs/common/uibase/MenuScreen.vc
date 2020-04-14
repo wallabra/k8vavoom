@@ -96,7 +96,12 @@ override void OnDestroy () {
 //==========================================================================
 override void OnVisibilityChanged (bool bNewVisibility) {
   if (helpText) {
-    if (bNewVisibility) helpText.Show(); else helpText.Hide();
+    if (bNewVisibility) {
+      helpText.Show();
+      helpText.Raise();
+    } else {
+      helpText.Hide();
+    }
   }
   ::OnVisibilityChanged(bNewVisibility);
 }
@@ -593,6 +598,7 @@ final void FixTopIndex () {
   if (Items.Num == 0) return;
   if (CursorPos < 0) CursorPos = Items.length-1; else if (CursorPos >= Items.length) CursorPos = 0;
   helpText.text = Items[CursorPos].getHelp();
+  helpText.Raise();
   if (Items.Num == 1) { helpText.atTop = false; CursorPos = 0; ChildrenOfsY = 0; return; }
   if (!MenuScrollable) { helpText.atTop = false; ChildrenOfsY = 0; return; }
   // check if this is first selectable item
@@ -753,57 +759,6 @@ void DoEnd () {
 
 //==========================================================================
 //
-//  OnKeyDown
-//
-//==========================================================================
-override bool OnKeyDown (int key) {
-  key = ConvertBoundKey(key);
-  switch (key) {
-    case K_UPARROW:
-    case K_PAD8:
-    case K_MWHEELUP:
-      if (Items.Num > 1) {
-        CyclePrevChoice();
-        LocalSound('menu/cursor');
-      }
-      return true;
-
-    case K_DOWNARROW:
-    case K_PAD2:
-    case K_MWHEELDOWN:
-      if (Items.Num > 1) {
-        CycleNextChoice();
-        LocalSound('menu/cursor');
-      }
-      return true;
-
-    case K_HOME:
-    case K_PAD7:
-      if (Items.Num > 1) {
-        DoHome();
-        LocalSound('menu/cursor');
-      }
-      return true;
-
-    case K_END:
-    case K_PAD1:
-      if (Items.Num > 1) {
-        DoEnd();
-        LocalSound('menu/cursor');
-      }
-      return true;
-
-    case K_ESCAPE:
-    case K_MOUSE2:
-      ClGame.PopMenu();
-      return true;
-  }
-  return false;
-}
-
-
-//==========================================================================
-//
 //  OnDraw
 //
 //  fade all the screen buffer, so that the menu is more readable,
@@ -824,8 +779,46 @@ override void OnDraw () {
 //
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
-  if (!evt.bubbling) return ::OnEvent(evt);
-  if (evt.type == ev_resolution) {
+  if (evt.bubbling && evt.type == ev_keydown) {
+    int key = ConvertBoundKey(evt.keycode);
+    switch (key) {
+      case K_UPARROW:
+      case K_PAD8:
+      case K_MWHEELUP:
+        if (Items.Num > 1) {
+          CyclePrevChoice();
+          LocalSound('menu/cursor');
+        }
+        return true;
+      case K_DOWNARROW:
+      case K_PAD2:
+      case K_MWHEELDOWN:
+        if (Items.Num > 1) {
+          CycleNextChoice();
+          LocalSound('menu/cursor');
+        }
+        return true;
+      case K_HOME:
+      case K_PAD7:
+        if (Items.Num > 1) {
+          DoHome();
+          LocalSound('menu/cursor');
+        }
+        return true;
+      case K_END:
+      case K_PAD1:
+        if (Items.Num > 1) {
+          DoEnd();
+          LocalSound('menu/cursor');
+        }
+        return true;
+      case K_ESCAPE:
+      case K_MOUSE2:
+        ClGame.PopMenu();
+        return true;
+    }
+  }
+  if (evt.bubbling && evt.type == ev_resolution) {
     //printdebug("%C: *** RESOLUTION ***", self);
     // center menu
     SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);

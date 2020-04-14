@@ -154,20 +154,6 @@ bool VRootWidget::InternalResponder (event_t *evt) {
     }
   }
 
-  // handle keyboard events
-  if (evt->type == ev_keydown || evt->type == ev_keyup) {
-    // only bubble
-    evt->setBubbling(); // just in case
-    for (int f = EventPath.length()-1; f >= 0; --f) {
-      VWidget *w = EventPath[f];
-      if (w->IsGoingToDie()) return false;
-      if (evt->type == ev_keydown) {
-        if (w->OnKeyDown(evt->data1)) { evt->setEaten(); return true; }
-      } else {
-        if (w->OnKeyUp(evt->data1)) { evt->setEaten(); return true; }
-      }
-    }
-  }
   return false;
 }
 

@@ -165,35 +165,35 @@ override void OnDraw () {
 
 //==========================================================================
 //
-//  OnKeyDown
+//  OnEvent
 //
 //==========================================================================
-override bool OnKeyDown (int key) {
-  if (vallist.length == 0) return false;
-  int cvtkey = ConvertBoundKey(key);
-  float newValue;
-  int idx;
-  switch (cvtkey) {
-    case K_LEFTARROW:
-    case K_MOUSE2:
-    case K_MWHEELUP:
-      idx = findValue(Value);
-      if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
-      newValue = vallist[idx].value;
-      if (SetNewValue(ref newValue)) LocalSound('menu/change');
-      return true;
-    case K_RIGHTARROW:
-    case K_ENTER:
-    case K_PADENTER:
-    case K_MOUSE1:
-    case K_MWHEELDOWN:
-      idx = findValue(Value);
-      if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
-      newValue = vallist[idx].value;
-      if (SetNewValue(ref newValue)) LocalSound('menu/change');
-      return true;
+override bool OnEvent (ref event_t evt) {
+  if (evt.bubbling && evt.type == ev_keydown && vallist.length != 0) {
+    float newValue;
+    int idx;
+    switch (ConvertBoundKey(evt.keycode)) {
+      case K_LEFTARROW:
+      case K_MOUSE2:
+      case K_MWHEELUP:
+        idx = findValue(Value);
+        if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
+        newValue = vallist[idx].value;
+        if (SetNewValue(ref newValue)) LocalSound('menu/change');
+        return true;
+      case K_RIGHTARROW:
+      case K_ENTER:
+      case K_PADENTER:
+      case K_MOUSE1:
+      case K_MWHEELDOWN:
+        idx = findValue(Value);
+        if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
+        newValue = vallist[idx].value;
+        if (SetNewValue(ref newValue)) LocalSound('menu/change');
+        return true;
+    }
   }
-  return ::OnKeyDown(key);
+  return ::OnEvent(evt);
 }
 
 
