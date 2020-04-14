@@ -1,0 +1,92 @@
+// assault rifle, firing frames
+brightmap sprite rif1a0 {
+  map brightmaps/weapons/ariflebf.png
+  thiswad
+}
+
+brightmap sprite rif2a0 {
+  map brightmaps/weapons/ariflebf.png
+  thiswad
+}
+
+brightmap sprite rif3a0 {
+  map brightmaps/weapons/ariflebf.png
+  thiswad
+}
+
+brightmap sprite rif4a0 {
+  map brightmaps/weapons/ariflebf.png
+  thiswad
+}
+
+// assault rifle, other frames
+brightmap sprite rif1b0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif1c0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif1d0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif2b0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif2c0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif2d0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif3b0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif3c0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif3d0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif4b0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif4c0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif4d0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+brightmap sprite rif9a0 {
+  map brightmaps/weapons/ariflebn.png
+  thiswad
+}
+
+// assault rifle pickup
+brightmap sprite rifla0 {
+  map brightmaps/weapons/ariflepk.png
+  thiswad
+}
