@@ -1,8 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 // RED BLOOD
 ////////////////////////////////////////////////////////////////////////////////
+// the only special decals used:
+//    K8GoreBloodSplat
+//    K8GoreBloodSuper
 
-
+// engine scripts will use:
+//    BloodSmear[Radius][Color]
+//    BloodSplat[Radius][Color]
 
 
 //==========================================================================
@@ -11,7 +16,7 @@
 //
 //==========================================================================
 DECAL K8Gore_NewBloodSplat01 {
-  Pic BSPLAT01
+  Pic BSPK8X01
   shade "50 00 00"
   //Scale 0.26
   Scale random 0.22 0.37
@@ -20,7 +25,7 @@ DECAL K8Gore_NewBloodSplat01 {
 }
 
 DECAL K8Gore_NewBloodSplat02 {
-  Pic BSPLAT02
+  Pic BSPK8X02
   shade "50 00 00"
   //Scale 0.28
   Scale random 0.22 0.37
@@ -29,7 +34,7 @@ DECAL K8Gore_NewBloodSplat02 {
 }
 
 DECAL K8Gore_NewBloodSplat03 {
-  Pic BSPLAT03
+  Pic BSPK8X03
   shade "50 00 00"
   //Scale 0.26
   Scale random 0.22 0.37
@@ -38,7 +43,7 @@ DECAL K8Gore_NewBloodSplat03 {
 }
 
 DECAL K8Gore_NewBloodSplat04 {
-  Pic BSPLAT04
+  Pic BSPK8X04
   shade "50 00 00"
   //Scale 0.28
   Scale random 0.22 0.37
@@ -47,7 +52,7 @@ DECAL K8Gore_NewBloodSplat04 {
 }
 
 DECAL K8Gore_NewBloodSplat05 {
-  Pic BSPLAT05
+  Pic BSPK8X05
   shade "50 00 00"
   //Scale 0.26
   Scale random 0.22 0.37
@@ -56,7 +61,7 @@ DECAL K8Gore_NewBloodSplat05 {
 }
 
 DECAL K8Gore_NewBloodSplat06 {
-  Pic BSPLAT06
+  Pic BSPK8X06
   shade "50 00 00"
   //X-Scale 0.3
   //Y-Scale 0.6
@@ -67,7 +72,7 @@ DECAL K8Gore_NewBloodSplat06 {
 }
 
 DECAL K8Gore_NewBloodSplat07 {
-  Pic BSPLAT07
+  Pic BSPK8X07
   shade "50 00 00"
   //Scale 0.28
   Scale random 0.22 0.37
@@ -76,7 +81,7 @@ DECAL K8Gore_NewBloodSplat07 {
 }
 
 DECAL K8Gore_NewBloodSplat08 {
-  Pic BSPLAT08
+  Pic BSPK8X08
   shade "50 00 00"
   //Scale 0.26
   Scale random 0.22 0.37
@@ -85,7 +90,7 @@ DECAL K8Gore_NewBloodSplat08 {
 }
 
 DECAL K8Gore_NewBloodSplat09 {
-  Pic BSPLAT09
+  Pic BSPK8X09
   shade "50 00 00"
   //Scale 0.28
   Scale random 0.22 0.37
@@ -94,7 +99,7 @@ DECAL K8Gore_NewBloodSplat09 {
 }
 
 DECAL K8Gore_NewBloodSplat10 {
-  Pic BSPLAT10
+  Pic BSPK8X10
   shade "50 00 00"
   //Scale 0.26
   Scale random 0.22 0.37
@@ -120,42 +125,48 @@ DECALGROUP BloodSplat {
 STRETCHER K8Gore_NewBloodStretcher1 {
   StretchStart 0
   StretchTime random 12 18
-  GoalX random 0.35 0.55
-  GoalY random 0.6 0.8
+  GoalX random 1.35 1.65
+  GoalY random 1.6 1.9
 }
 
 STRETCHER K8Gore_NewBloodStretcher2 {
   StretchStart 0
   StretchTime random 16 20
-  GoalX random 0.35 0.55 //0.45
-  GoalY random 0.6 0.85 //0.8
+  GoalX random 1.35 1.65 //0.45
+  GoalY random 1.6 1.95 //0.8
 }
 
 SLIDER K8Gore_NewBloodSlider {
   SlideTime random 17 24 // 22
   //DistY -132
   DistY random 4 8
-  k8reversey
+  //!k8reversey
 }
 
 COMBINER K8Gore_NewBloodSmearer1 {
   K8Gore_NewBloodStretcher1
   //K8Gore_NewBloodStretcher2
   //K8Gore_NewBloodSlider
+  // meh, let it stay
+  //animator K8GoreBloodSplat_FaderAnimSmear
 }
 
 COMBINER K8Gore_NewBloodSmearer2 {
   K8Gore_NewBloodStretcher2
   //K8Gore_NewBloodStretcher2
   K8Gore_NewBloodSlider
+  // meh, let it stay
+  //animator K8GoreBloodSplat_FaderAnimSmear
 }
 
 
 DECAL K8Gore_NewBloodSmear1 {
-  Pic BSMEAR01
+  //!Pic BSMEAR01
   //X-Scale 0.46
   //Y-Scale 0.46
-  Scale random 0.42 0.48
+  //!Scale random 0.42 0.48
+  Pic BSPK8SM0
+  Scale random 0.8 1.3
   shade "50 00 00"
   RandomFlipX
   RandomFlipY
@@ -163,10 +174,12 @@ DECAL K8Gore_NewBloodSmear1 {
 }
 
 DECAL K8Gore_NewBloodSmear2 {
-  Pic BSMEAR02
+  //!Pic BSMEAR02
   //X-Scale 0.44
   //Y-Scale 0.44
-  Scale random 0.42 0.48
+  //!Scale random 0.42 0.48
+  Pic BSPK8SM0
+  Scale random 0.8 1.3
   shade "50 00 00"
   RandomFlipX
   RandomFlipY
@@ -195,9 +208,16 @@ fader K8GoreBloodSplat_FaderAnim {
 }
 
 
+// non-transient
+fader K8GoreBloodSplat_FaderAnimSmear {
+  DecayStart random 30 120
+  DecayTime random 10 40
+}
+
+
 
 DECAL K8Gore_NewBloodSplatFade01 {
-  Pic BSPLAT01
+  Pic BSPK8X01
   shade "50 00 00"
   //Scale 0.26
   Scale random 0.22 0.37
@@ -207,7 +227,7 @@ DECAL K8Gore_NewBloodSplatFade01 {
 }
 
 DECAL K8Gore_NewBloodSplatFade02 {
-  Pic BSPLAT02
+  Pic BSPK8X02
   shade "50 00 00"
   //Scale 0.28
   Scale random 0.22 0.37
@@ -217,7 +237,7 @@ DECAL K8Gore_NewBloodSplatFade02 {
 }
 
 DECAL K8Gore_NewBloodSplatFade03 {
-  Pic BSPLAT03
+  Pic BSPK8X03
   shade "50 00 00"
   //Scale 0.26
   Scale random 0.22 0.37
@@ -227,7 +247,7 @@ DECAL K8Gore_NewBloodSplatFade03 {
 }
 
 DECAL K8Gore_NewBloodSplatFade04 {
-  Pic BSPLAT04
+  Pic BSPK8X04
   shade "50 00 00"
   //Scale 0.28
   Scale random 0.22 0.37
@@ -237,7 +257,7 @@ DECAL K8Gore_NewBloodSplatFade04 {
 }
 
 DECAL K8Gore_NewBloodSplatFade05 {
-  Pic BSPLAT05
+  Pic BSPK8X05
   shade "50 00 00"
   //Scale 0.26
   Scale random 0.22 0.37
@@ -247,7 +267,7 @@ DECAL K8Gore_NewBloodSplatFade05 {
 }
 
 DECAL K8Gore_NewBloodSplatFade06 {
-  Pic BSPLAT06
+  Pic BSPK8X06
   shade "50 00 00"
   //X-Scale 0.3
   //Y-Scale 0.6
@@ -259,7 +279,7 @@ DECAL K8Gore_NewBloodSplatFade06 {
 }
 
 DECAL K8Gore_NewBloodSplatFade07 {
-  Pic BSPLAT07
+  Pic BSPK8X07
   shade "50 00 00"
   //Scale 0.28
   Scale random 0.22 0.37
@@ -269,7 +289,7 @@ DECAL K8Gore_NewBloodSplatFade07 {
 }
 
 DECAL K8Gore_NewBloodSplatFade08 {
-  Pic BSPLAT08
+  Pic BSPK8X08
   shade "50 00 00"
   //Scale 0.26
   Scale random 0.22 0.37
@@ -279,7 +299,7 @@ DECAL K8Gore_NewBloodSplatFade08 {
 }
 
 DECAL K8Gore_NewBloodSplatFade09 {
-  Pic BSPLAT09
+  Pic BSPK8X09
   shade "50 00 00"
   //Scale 0.28
   Scale random 0.22 0.37
@@ -289,7 +309,7 @@ DECAL K8Gore_NewBloodSplatFade09 {
 }
 
 DECAL K8Gore_NewBloodSplatFade10 {
-  Pic BSPLAT10
+  Pic BSPK8X10
   shade "50 00 00"
   //Scale 0.26
   Scale random 0.22 0.37
@@ -328,234 +348,16 @@ decalgroup K8GoreBloodSuper {
 
 
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // RED TRANSIENT BLOOD
 ////////////////////////////////////////////////////////////////////////////////
+// the only special decals used:
+//    K8GoreBloodSplat
+//    K8GoreBloodSuper
 
-
-/// +++++++++++++++++////
-/// Blood Base
-/// +++++++++++++++++////
-decalgroup BloodSplatTransient {
-  K8GoreBloodSplat01Transient 6
-  K8GoreBloodSplat02Transient 6
-
-  K8GoreBloodSuper01Transient 1
-  K8GoreBloodSuper02Transient 1
-}
-
-decalgroup BloodSmearTransient {
-  K8GoreBloodSmearSmall1Transient  3
-  K8GoreBloodSmearSmall2Transient  3
-
-  K8GoreBloodSmear1Transient 1
-  K8GoreBloodSmear2Transient 1
-}
-
-// radius damage
-decalgroup BloodSmearRadiusTransient {
-  K8GoreBloodSmear1Transient 1
-  K8GoreBloodSmear2Transient 1
-}
-
-decalgroup BloodSplatRadiusTransient {
-  K8GoreBloodSplat01Transient 6
-  K8GoreBloodSplat02Transient 6
-
-  K8GoreBloodSuper01Transient 3
-  K8GoreBloodSuper02Transient 3
-}
-
-
-/*
-decal BloodSplatTransient {
-  pic NONE
-}
-decal BloodSmearTransient {
-  pic NONE
-}
-decal BloodSmearRadiusTransient {
-  pic NONE
-}
-decal BloodSplatRadiusTransient {
-  pic NONE
-}
-*/
-
-
-/// +++++++++++++++++////
-/// Blood Animators
-/// +++++++++++++++++////
-fader K8GoreBloodSmearer_FaderTransient {
-  DecayStart 9.0
-  DecayTime 16.0
-}
-
-
-fader K8GoreBlood_FaderTransient {
-  DecayStart 14.0
-  DecayTime 23.0
-}
-
-slider K8GoreBSlide1Transient {
-  DistY -26
-  SlideStart 0
-  SlideTime 9
-  k8reversey
-}
-
-stretcher K8GoreBStretch1Transient {
-  GoalX 1.0
-  GoalY 3.5
-  StretchStart 0
-  StretchTime 9
-}
-
-slider K8GoreBSlide2Transient {
-  DistY -20
-  SlideStart 0
-  SlideTime 12
-  k8reversey
-}
-
-stretcher K8GoreBStretch2Transient {
-  GoalX 1.0
-  GoalY 3.2
-  StretchStart 0
-  StretchTime 12
-}
-
-combiner K8GoreBloodSlide1Transient {
-  K8GoreBSlide1Transient
-  K8GoreBStretch1Transient
-}
-
-combiner K8GoreBloodSlide2Transient {
-  K8GoreBSlide2Transient
-  K8GoreBStretch2Transient
-}
-
-stretcher K8GoreBloodSmearer_StretcherTransient {
-  GoalX 0.4
-  GoalY 2.0
-  StretchStart 1
-  StretchTime 24
-}
-
-
-combiner K8GoreBloodSmearerTransient {
-  K8GoreBloodSmearer_StretcherTransient
-  K8GoreBloodSmearer_FaderTransient
-}
-
-
-/// +++++++++++++++++////
-/// Gore Blood Decals
-/// +++++++++++++++++////
-decal K8GoreBloodSmear1Transient {
-  pic BSPLNEW4
-  shade "4f 00 00"
-  x-scale 0.6
-  y-scale 0.6
-  randomflipx
-  animator K8GoreBloodSmearerTransient
-}
-
-decal K8GoreBloodSmear2Transient {
-  pic BSPLNEW5
-  shade "4f 00 00"
-  x-scale 0.6
-  y-scale 0.6
-  randomflipx
-  animator K8GoreBloodSmearerTransient
-}
-
-decalgroup K8GoreBloodSmearTransient {
-  K8GoreBloodSmear1Transient 1
-  K8GoreBloodSmear2Transient 1
-}
-
-
-
-decal K8GoreBloodSmearSmall1Transient {
-  pic BSPLNEW8
-  shade "4f 00 00"
-  x-scale 0.6
-  y-scale 0.6
-  randomflipx
-  animator K8GoreBloodSmearerTransient
-}
-
-decal K8GoreBloodSmearSmall2Transient {
-  pic BSPLNEW7
-  shade "4f 00 00"
-  x-scale 0.6
-  y-scale 0.6
-  randomflipx
-  animator K8GoreBloodSmearerTransient
-}
-
-decalgroup K8GoreBloodSmearSmallTransient {
-  K8GoreBloodSmearSmall1Transient 1
-  K8GoreBloodSmearSmall2Transient 1
-}
-
-
-decal K8GoreBloodSplat01Transient {
-  pic BSPLNEW1
-  shade "4f 00 00"
-  x-scale 0.6
-  y-scale 0.6
-  randomflipx
-  randomflipy
-  lowerdecal K8GoreBloodSmearSmallTransient
-  animator K8GoreBlood_FaderTransient
-}
-
-decal K8GoreBloodSplat02Transient {
-  pic BSPLNEW2
-  shade "4f 00 00"
-  x-scale 0.6
-  y-scale 0.6
-  randomflipx
-  randomflipy
-  lowerdecal K8GoreBloodSmearTransient
-  animator K8GoreBlood_FaderTransient
-}
-
-decalgroup K8GoreBloodSplatTransient {
-  K8GoreBloodSplat01Transient 6
-  K8GoreBloodSplat02Transient 6
-}
-
-
-decal K8GoreBloodSuper01Transient {
-  pic BSPLBIG1
-  shade "4f 00 00"
-  x-scale 0.9
-  y-scale 0.9
-  randomflipx
-  randomflipy
-  lowerdecal K8GoreBloodSmearTransient
-  animator K8GoreBlood_FaderTransient
-}
-
-decal K8GoreBloodSuper02Transient {
-  pic BSPLBIG2
-  shade "4f 00 00"
-  x-scale 0.9
-  y-scale 0.9
-  randomflipx
-  lowerdecal K8GoreBloodSmearTransient
-  animator K8GoreBlood_FaderTransient
-}
-
-decalgroup K8GoreBloodSuperTransient {
-  K8GoreBloodSuper01Transient 6
-  K8GoreBloodSuper02Transient 6
-}
+// engine scripts will use:
+//    BloodSmear[Radius][Color]
+//    BloodSplat[Radius][Color]
 
 
 //==========================================================================
@@ -563,3 +365,341 @@ decalgroup K8GoreBloodSuperTransient {
 //  NEW DECALS
 //
 //==========================================================================
+DECAL K8Gore_NewBloodSplat01Transient {
+  Pic BSPK8X01
+  shade "4f 00 00"
+  //Scale 0.26
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplat02Transient {
+  Pic BSPK8X02
+  shade "4f 00 00"
+  //Scale 0.28
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplat03Transient {
+  Pic BSPK8X03
+  shade "4f 00 00"
+  //Scale 0.26
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplat04Transient {
+  Pic BSPK8X04
+  shade "4f 00 00"
+  //Scale 0.28
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplat05Transient {
+  Pic BSPK8X05
+  shade "4f 00 00"
+  //Scale 0.26
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplat06Transient {
+  Pic BSPK8X06
+  shade "4f 00 00"
+  //X-Scale 0.3
+  //Y-Scale 0.6
+  X-Scale random 0.22 0.40
+  Y-Scale multiply X-Scale 2
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplat07Transient {
+  Pic BSPK8X07
+  shade "4f 00 00"
+  //Scale 0.28
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplat08Transient {
+  Pic BSPK8X08
+  shade "4f 00 00"
+  //Scale 0.26
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplat09Transient {
+  Pic BSPK8X09
+  shade "4f 00 00"
+  //Scale 0.28
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplat10Transient {
+  Pic BSPK8X10
+  shade "4f 00 00"
+  //Scale 0.26
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+
+DECALGROUP BloodSplatTransient {
+  K8Gore_NewBloodSplat01Transient 6
+  K8Gore_NewBloodSplat02Transient 6
+  K8Gore_NewBloodSplat03Transient 6
+  K8Gore_NewBloodSplat04Transient 6
+  K8Gore_NewBloodSplat05Transient 6
+  K8Gore_NewBloodSplat06Transient 6
+  K8Gore_NewBloodSplat07Transient 6
+  K8Gore_NewBloodSplat08Transient 6
+  K8Gore_NewBloodSplat09Transient 6
+  K8Gore_NewBloodSplat10Transient 6
+}
+
+
+STRETCHER K8Gore_NewBloodStretcher1Transient {
+  StretchStart 0
+  StretchTime random 12 18
+  GoalX random 1.35 1.65
+  GoalY random 1.6 1.9
+}
+
+STRETCHER K8Gore_NewBloodStretcher2Transient {
+  StretchStart 0
+  StretchTime random 16 20
+  GoalX random 1.35 1.65 //0.45
+  GoalY random 1.6 1.95 //0.8
+}
+
+SLIDER K8Gore_NewBloodSliderTransient {
+  SlideTime random 17 24 // 22
+  //DistY -132
+  DistY random 4 8
+  //!k8reversey
+}
+
+COMBINER K8Gore_NewBloodSmearer1Transient {
+  K8Gore_NewBloodStretcher1Transient
+  //K8Gore_NewBloodStretcher2Transient
+  //K8Gore_NewBloodSliderTransient
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+COMBINER K8Gore_NewBloodSmearer2Transient {
+  K8Gore_NewBloodStretcher2Transient
+  //K8Gore_NewBloodStretcher2Transient
+  K8Gore_NewBloodSliderTransient
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+
+DECAL K8Gore_NewBloodSmear1Transient {
+  //!Pic BSMEAR01
+  //X-Scale 0.46
+  //Y-Scale 0.46
+  //!Scale random 0.42 0.48
+  Pic BSPK8SM0
+  Scale random 0.8 1.3
+  shade "4f 00 00"
+  RandomFlipX
+  RandomFlipY
+  Animator K8Gore_NewBloodSmearer1Transient
+}
+
+DECAL K8Gore_NewBloodSmear2Transient {
+  //!Pic BSMEAR02
+  //X-Scale 0.44
+  //Y-Scale 0.44
+  //!Scale random 0.42 0.48
+  Pic BSPK8SM0
+  Scale random 0.8 1.3
+  shade "4f 00 00"
+  RandomFlipX
+  RandomFlipY
+  Animator K8Gore_NewBloodSmearer2Transient
+}
+
+
+DECALGROUP BloodSmearTransient {
+  K8Gore_NewBloodSmear1Transient 6
+  K8Gore_NewBloodSmear2Transient 6
+}
+
+
+decalgroup BloodSmearRadiusTransient {
+  BloodSmearTransient 1
+}
+
+decalgroup BloodSplatRadiusTransient {
+  BloodSmearTransient 1
+}
+
+
+fader K8GoreBloodSplat_FaderAnimTransient {
+  DecayStart random 10 20
+  DecayTime random 10 40
+}
+
+
+// non-transient
+fader K8GoreBloodSplat_FaderAnimSmearTransient {
+  DecayStart random 30 120
+  DecayTime random 10 40
+}
+
+
+
+DECAL K8Gore_NewBloodSplatFade01Transient {
+  Pic BSPK8X01
+  shade "4f 00 00"
+  //Scale 0.26
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplatFade02Transient {
+  Pic BSPK8X02
+  shade "4f 00 00"
+  //Scale 0.28
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplatFade03Transient {
+  Pic BSPK8X03
+  shade "4f 00 00"
+  //Scale 0.26
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplatFade04Transient {
+  Pic BSPK8X04
+  shade "4f 00 00"
+  //Scale 0.28
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplatFade05Transient {
+  Pic BSPK8X05
+  shade "4f 00 00"
+  //Scale 0.26
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplatFade06Transient {
+  Pic BSPK8X06
+  shade "4f 00 00"
+  //X-Scale 0.3
+  //Y-Scale 0.6
+  X-Scale random 0.22 0.40
+  Y-Scale multiply X-Scale 2
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplatFade07Transient {
+  Pic BSPK8X07
+  shade "4f 00 00"
+  //Scale 0.28
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplatFade08Transient {
+  Pic BSPK8X08
+  shade "4f 00 00"
+  //Scale 0.26
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplatFade09Transient {
+  Pic BSPK8X09
+  shade "4f 00 00"
+  //Scale 0.28
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+DECAL K8Gore_NewBloodSplatFade10Transient {
+  Pic BSPK8X10
+  shade "4f 00 00"
+  //Scale 0.26
+  Scale random 0.22 0.37
+  RandomFlipX
+  RandomFlipY
+  animator K8GoreBloodSplat_FaderAnimTransient
+}
+
+
+decalgroup K8GoreBloodSplatTransient {
+  K8Gore_NewBloodSplatFade01Transient 6
+  K8Gore_NewBloodSplatFade02Transient 6
+  K8Gore_NewBloodSplatFade03Transient 6
+  K8Gore_NewBloodSplatFade04Transient 6
+  K8Gore_NewBloodSplatFade05Transient 6
+  K8Gore_NewBloodSplatFade06Transient 6
+  K8Gore_NewBloodSplatFade07Transient 6
+  K8Gore_NewBloodSplatFade08Transient 6
+  K8Gore_NewBloodSplatFade09Transient 6
+  K8Gore_NewBloodSplatFade10Transient 6
+}
+
+
+decalgroup K8GoreBloodSuperTransient {
+  K8Gore_NewBloodSplatFade01Transient 6
+  K8Gore_NewBloodSplatFade02Transient 6
+  K8Gore_NewBloodSplatFade03Transient 6
+  K8Gore_NewBloodSplatFade04Transient 6
+  K8Gore_NewBloodSplatFade05Transient 6
+  K8Gore_NewBloodSplatFade06Transient 6
+  K8Gore_NewBloodSplatFade07Transient 6
+  K8Gore_NewBloodSplatFade08Transient 6
+  K8Gore_NewBloodSplatFade09Transient 6
+  K8Gore_NewBloodSplatFade10Transient 6
+}

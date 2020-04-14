@@ -1,19 +1,11 @@
 $dest gore.pk3
 
-// graphics
-$recursedir sprites/  @CMAKE_CURRENT_SOURCE_DIR@/sprites/
-
-// decals
+$recursedir sprites/   @CMAKE_CURRENT_SOURCE_DIR@/sprites/
 $recursedir graphics/  @CMAKE_CURRENT_SOURCE_DIR@/graphics/
+$recursedir sounds/    @CMAKE_CURRENT_SOURCE_DIR@/sounds/
+$recursedir progs/     @CMAKE_CURRENT_SOURCE_DIR@/progs/
 
-// sounds
-$recursedir sounds/  @CMAKE_CURRENT_SOURCE_DIR@/sounds/
-
-// models
 //$recursedir models/  @CMAKE_CURRENT_SOURCE_DIR@/models/
-
-// progs
-$recursedir progs/  @CMAKE_CURRENT_SOURCE_DIR@/progs/
 
 
 // scripts
