@@ -1350,14 +1350,21 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
 //  ApplyGlowToTexture
 //
 //==========================================================================
-static void ApplyGlowToTexture (VName txname, bool isWall, bool allowOtherType, bool fullbright) {
+static void ApplyGlowToTexture (VName txname, bool isWall, bool allowOtherType, bool fullbright, vuint32 clr=0u) {
 #ifdef CLIENT
   if (txname != NAME_None && !VTextureManager::IsDummyTextureName(txname)) {
     VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(txname), (isWall ? TEXTYPE_Wall : TEXTYPE_Flat));
     if (!basetex && allowOtherType) basetex = GTextureManager.GetExistingTextureByName(VStr(txname), (!isWall ? TEXTYPE_Wall : TEXTYPE_Flat));
     if (basetex) {
       //GCon->Logf("GLOW: <%s>", *txname);
-      rgb_t gclr = basetex->GetAverageColor(153);
+      rgb_t gclr;
+      if (clr) {
+        gclr.r = (clr>>16)&0xffu;
+        gclr.g = (clr>>8)&0xffu;
+        gclr.b = clr&0xffu;
+      } else {
+        gclr = basetex->GetAverageColor(153);
+      }
       if (gclr.r || gclr.g || gclr.b) {
         basetex->glowing = (fullbright ? 0xff000000u : 0xfe000000u)|(gclr.r<<16)|(gclr.g<<8)|gclr.b;
       } else {
@@ -1414,6 +1421,7 @@ static void ParseGlow (VScriptParser *sc) {
       while (!sc->Check("}")) {
         if (sc->Check(",")) continue;
         bool xfbr = fullbright;
+        vuint32 gclr = 0u;
         if (sc->Check("texture")) {
           sc->ExpectName8Warn();
           txname = sc->Name8;
@@ -1423,8 +1431,18 @@ static void ParseGlow (VScriptParser *sc) {
         } else {
           sc->ExpectName8Warn();
           txname = sc->Name8;
+          // check for glow color and fullbright flag
+          while (sc->GetString()) {
+            if (sc->Crossed) { sc->UnGet(); break; }
+            if (sc->String.strEquCI("fullbright")) { xfbr = true; continue; }
+            // try to parse as color
+            vuint32 cc = M_ParseColor(*sc->String, true/*retZeroIfInvalid*/);
+            if (!cc) { sc->UnGet(); break; }
+            gclr = cc;
+          }
+          //if (gclr || xfbr) GCon->Logf(NAME_Debug, "GLOW for '%s': gclr=0x%08x; fbr=%d", *txname, gclr, (int)xfbr);
         }
-        ApplyGlowToTexture(sc->Name8, (ttype == TEXTYPE_Wall), false, xfbr);
+        ApplyGlowToTexture(sc->Name8, (ttype == TEXTYPE_Wall), false, xfbr, gclr);
       }
       continue;
     }
