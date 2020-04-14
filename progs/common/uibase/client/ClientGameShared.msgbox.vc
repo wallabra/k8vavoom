@@ -413,7 +413,8 @@ override void MessageBoxDrawer () {
       //int y0 = (GetVirtualHeight()-GRoot.TextHeight(msgboxState.text))/2;
       fh = GetMessageBoxMenuItemHeight();
       y0 = GetMessageBoxMenuTop();
-      GRoot.ShadeRect(msgboxState.x+2, y0+(msgboxState.currYes ? 0 : 1)*fh, msgboxState.width-4, fh, 0.6);
+      //GRoot.ShadeRect(msgboxState.x+2, y0+(msgboxState.currYes ? 0 : 1)*fh, msgboxState.width-4, fh, 0.6);
+      GRoot.FillRect(msgboxState.x+2, y0+(msgboxState.currYes ? 0 : 1)*fh, msgboxState.width-4, fh, RGB(152, 205, 50), 0.6);
     }
 
     // draw text
