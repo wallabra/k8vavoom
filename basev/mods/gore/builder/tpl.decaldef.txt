@@ -252,14 +252,14 @@ DECALGROUP BloodSplat${Color} {
 STRETCHER K8Gore_NewBloodStretcher1${Color} {
   StretchStart 0
   StretchTime random 12 18
-  GoalX random 1.35 1.65
+  //!GoalX random 1.35 1.65
   GoalY random 1.6 1.9
 }
 
 STRETCHER K8Gore_NewBloodStretcher2${Color} {
   StretchStart 0
   StretchTime random 16 20
-  GoalX random 1.35 1.65 //0.45
+  //!GoalX random 1.35 1.65 //0.45
   GoalY random 1.6 1.95 //0.8
 }
 
@@ -314,7 +314,7 @@ DECAL K8Gore_NewBloodSmear1${Color} {
   shade "00 $(Shade) 00"
 #endif
   RandomFlipX
-  RandomFlipY
+  //RandomFlipY
   Animator K8Gore_NewBloodSmearer1${Color}
 }
 
@@ -323,7 +323,7 @@ DECAL K8Gore_NewBloodSmear2${Color} {
   //X-Scale 0.44
   //Y-Scale 0.44
   //!Scale random 0.42 0.48
-  Pic BSPK8SM0
+  Pic BSPK8SM1
   Scale random 0.8 1.3
 #ifndef BLUE
 # ifndef GREEN
@@ -337,7 +337,7 @@ DECAL K8Gore_NewBloodSmear2${Color} {
   shade "00 $(Shade) 00"
 #endif
   RandomFlipX
-  RandomFlipY
+  //RandomFlipY
   Animator K8Gore_NewBloodSmearer2${Color}
 }
 
