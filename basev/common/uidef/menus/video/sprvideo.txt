@@ -106,9 +106,25 @@ menudef SpriteVideoOptions {
     max = 1;
   }
 
-  option bool {
-    title = "Optional Fuzzy Effect";
+  option enum {
+    title = "Fuzzy Effect";
     cvar = r_drawfuzz;
+    list {
+      "Translucency",
+      "Shadow",
+    }
+    help =
+      "Fuzzy (like Specter) sprite effect.",
+      "'Translucency' is normal translucency effect.",
+      "'Shadow' is the same as 'Shadow' render style.";
+  }
+
+  option slider {
+    title = "Fuzzy Translucency";
+    cvar = r_fuzzalpha;
+    step = 0.05;
+    min = 0;
+    max = 1;
   }
 
 
