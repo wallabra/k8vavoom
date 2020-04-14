@@ -22,7 +22,7 @@
     // options applied on succesfull detection
     options {
       //allowzscript = <true|false>; // should zscript be allowed (ignored), or not? (default: false): NOT IMPLEMENTED YET
-      nomore = <true|false>; // stop detection on hit? (default: true)
+      nomore = <true|false>; // stop detection on hit? (default: false)
       gamename = "name"; // force game name (default: don't force)
       nakedbase = <true|false>; // disable autoloads? (default: false)
       bdw = <true|false|dontcare>; // bdw mod: force-enable, force-disable, don't change (default: dontcare)
@@ -45,7 +45,6 @@ detector "SkullDash EE" {
 
   options {
     addmod = "skeehud"; // do not use this if you don't know what you're doing! (i.e. don't use this at all)
-    nomore = false; // allow other mods, why not
   }
 }
 
@@ -59,11 +58,6 @@ detector "Boringternity" {
   preconditions {
     zscript = true;
     lump { name = "zscript"; size = 13153; md5 = "9e53e2d46de1d0f6cfc004c74e1660cf"; }
-  }
-
-  options {
-    //allowzscript = true;
-    nomore = false; // allow more detections
   }
 }
 
@@ -83,6 +77,7 @@ detector "Harmony v1.1" {
     nakedbase = true;
     bdw = false;
     iwad = false;
+    nomore = true; // no more mods
   }
 }
 
@@ -108,6 +103,7 @@ detector "Adventures of Square" {
     bdw = false;
     gore = false;
     sprofslump = false;
+    nomore = true; // no more mods
   }
 }
 
@@ -141,6 +137,17 @@ detector "Green Shit" {
 
   options {
     gamename = "plutonia";
-    nomore = false; // allow other mods
+  }
+}
+
+
+detector "CzechBox" {
+  info {
+    type = "pwad";
+    warning = "CzechBox is not supported.\nPlease, do not report any problems.\nThank you.";
+  }
+
+  preconditions {
+    lump { name = "credit"; size = 68168; md5 = "8899d7193f124737317f35ef7cb29c14"; }
   }
 }

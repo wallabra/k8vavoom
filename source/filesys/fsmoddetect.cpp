@@ -79,7 +79,7 @@ public:
     , reqiredContent()
     //
     , addmod()
-    , nomore(true)
+    , nomore(false)
     , gamename()
     , nakedbase(false)
     , bdw(-1)
@@ -101,7 +101,7 @@ public:
 
   void clearOpts () {
     addmod.clear();
-    nomore = true;
+    nomore = false;
     gamename.clear();
     nakedbase = false;
     bdw = -1;
