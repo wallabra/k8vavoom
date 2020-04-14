@@ -679,6 +679,33 @@ static inline void SetupTextureAxesOffset (seg_t *seg, texinfo_t *texinfo, VText
 
 //==========================================================================
 //
+//  SetupTextureAxesOffsetEx
+//
+//==========================================================================
+static inline void SetupTextureAxesOffsetEx (seg_t *seg, texinfo_t *texinfo, VTexture *tex, const side_tex_params_t *tparam, const side_tex_params_t *tparam2) {
+  texinfo->Tex = tex;
+  texinfo->noDecals = tex->noDecals;
+  // can be fixed later
+  texinfo->Alpha = 1.1f;
+  texinfo->Additive = false;
+  texinfo->ColorMap = 0;
+
+  texinfo->saxisLM = seg->dir;
+  texinfo->saxis = seg->dir*(TextureSScale(tex)*tparam->ScaleX*tparam2->ScaleX);
+  texinfo->taxisLM = TVec(0, 0, -1);
+  texinfo->taxis = TVec(0, 0, -1)*(TextureTScale(tex)*tparam->ScaleY*tparam2->ScaleY);
+
+  texinfo->soffs = -DotProduct(*seg->v1, texinfo->saxis)+
+                      seg->offset*(TextureSScale(tex)*tparam->ScaleX*tparam2->ScaleX)+ //k8: maybe we need to *divide* to scale here?
+                      (tparam->TextureOffset+tparam2->TextureOffset)*TextureOffsetSScale(tex);
+
+  texinfo->toffs = 0.0f;
+  // toffs is not calculated here, as its calculation depends of texture position and pegging
+}
+
+
+//==========================================================================
+//
 //  IsTransDoorHack
 //
 //  HACK: sector with height of 1, and only middle
@@ -733,6 +760,18 @@ static inline VVA_OKUNUSED bool IsTransDoorHackBot (const seg_t *seg) {
 //==========================================================================
 static inline float DivByScale (float v, float scale) {
   return (scale > 0 ? v/scale : v);
+}
+
+
+//==========================================================================
+//
+//  DivByScale2
+//
+//==========================================================================
+static inline float DivByScale2 (float v, float scale, float scale2) {
+  if (scale2 <= 0.0f) return DivByScale(v, scale);
+  if (scale <= 0.0f) return DivByScale(v, scale2);
+  return v/(scale*scale2);
 }
 
 
@@ -1160,6 +1199,18 @@ static inline void FixMidTextureOffsetAndOrigin (float &z_org, const line_t *lin
 
 //==========================================================================
 //
+//  FixMidTextureOffsetAndOriginEx
+//
+//==========================================================================
+static inline void FixMidTextureOffsetAndOriginEx (float &z_org, const line_t *linedef, const side_t *sidedef, texinfo_t *texinfo, VTexture *MTex, const side_tex_params_t *tparam, const side_tex_params_t *tparam2) {
+  // it is always wrapped, so just slide it
+  texinfo->toffs = (tparam->RowOffset+tparam2->RowOffset)*TextureOffsetTScale(MTex);
+  texinfo->toffs += z_org*(TextureTScale(MTex)*tparam->ScaleY*tparam2->ScaleY);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SetupTwoSidedMidWSurf
 //
 //  create normal midtexture surface
@@ -1479,7 +1530,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   const line_t *linedef = reg->extraline;
   const side_t *sidedef = &Level->Sides[linedef->sidenum[0]];
   const side_t *segsidedef = seg->sidedef;
-  const side_t *texsideparm = (segsidedef ? segsidedef : sidedef);
+  //const side_t *texsideparm = (segsidedef ? segsidedef : sidedef);
 
   VTexture *MTex = GTextureManager(sidedef->MidTexture);
   if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
@@ -1534,9 +1585,10 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   }
 
   // apply offsets from seg side
-  SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &texsideparm->Mid);
+  SetupTextureAxesOffsetEx(seg, &sp->texinfo, MTex, &sidedef->Mid, &segsidedef->Mid);
 
-  const float texh = DivByScale(MTex->GetScaledHeight(), texsideparm->Mid.ScaleY);
+  //const float texh = DivByScale(MTex->GetScaledHeight(), texsideparm->Mid.ScaleY);
+  const float texh = DivByScale2(MTex->GetScaledHeight(), sidedef->Mid.ScaleY, segsidedef->Mid.ScaleY);
   float z_org; // texture top
   // (reg->regflags&sec_region_t::RF_SaneRegion) // vavoom 3d floor
   if (linedef->flags&ML_DONTPEGBOTTOM) {
@@ -1546,8 +1598,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
     // top of texture at top
     z_org = reg->eceiling.splane->TexZ;
   }
-  // apply offsets from seg side
-  FixMidTextureOffsetAndOrigin(z_org, linedef, sidedef, &sp->texinfo, MTex, &texsideparm->Mid, true);
+  // apply offsets from both sides
+  FixMidTextureOffsetAndOriginEx(z_org, linedef, sidedef, &sp->texinfo, MTex, &sidedef->Mid, &segsidedef->Mid);
 
   sp->texinfo.Alpha = (reg->efloor.splane->Alpha < 1.0f ? reg->efloor.splane->Alpha : 1.1f);
   sp->texinfo.Additive = !!(reg->efloor.splane->flags&SPF_ADDITIVE);
@@ -1626,8 +1678,12 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   sp->frontBotDist = r_floor.splane->dist;
   sp->backTopDist = reg->eceiling.splane->dist;
   sp->backBotDist = reg->efloor.splane->dist;
+  /*
   sp->TextureOffset = texsideparm->Mid.TextureOffset;
   sp->RowOffset = texsideparm->Mid.RowOffset;
+  */
+  sp->TextureOffset = sidedef->Mid.TextureOffset+segsidedef->Mid.TextureOffset;
+  sp->RowOffset = sidedef->Mid.RowOffset+segsidedef->Mid.RowOffset;
   SetupFakeDistances(seg, sp);
 }
 
@@ -1828,6 +1884,35 @@ void VRenderLevelShared::UpdateTextureOffsets (subsector_t *sub, seg_t *seg, seg
 
 //==========================================================================
 //
+//  VRenderLevelShared::UpdateTextureOffsetsEx
+//
+//==========================================================================
+void VRenderLevelShared::UpdateTextureOffsetsEx (subsector_t *sub, seg_t *seg, segpart_t *sp, const side_tex_params_t *tparam, const side_tex_params_t *tparam2) {
+  bool reinitSurfs = false;
+
+  const float ctofs = tparam->TextureOffset+tparam2->TextureOffset;
+  if (FASI(sp->TextureOffset) != FASI(ctofs)) {
+    reinitSurfs = true;
+    sp->texinfo.soffs += (ctofs-sp->TextureOffset)*TextureOffsetSScale(sp->texinfo.Tex);
+    sp->TextureOffset = ctofs;
+  }
+
+  const float rwofs = tparam->RowOffset+tparam2->RowOffset;
+  if (FASI(sp->RowOffset) != FASI(rwofs)) {
+    reinitSurfs = true;
+    sp->texinfo.toffs += (rwofs-sp->RowOffset)*TextureOffsetTScale(sp->texinfo.Tex);
+    sp->RowOffset = rwofs;
+  }
+
+  if (reinitSurfs) {
+    // do not recalculate static lightmaps
+    InitSurfs(false, sp->surfs, &sp->texinfo, seg, sub);
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::UpdateDrawSeg
 //
 //==========================================================================
@@ -1931,8 +2016,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (CheckCommonRecreateEx(sp, MTex, r_floor.splane, r_ceiling.splane, reg->efloor.splane, reg->eceiling.splane)) {
         SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling);
       } else {
-        const side_t *texsideparm = (seg->sidedef ? seg->sidedef : extraside);
-        UpdateTextureOffsets(sub, seg, sp, &texsideparm->Mid);
+        UpdateTextureOffsetsEx(sub, seg, sp, &extraside->Mid, &seg->sidedef->Mid);
       }
       sp->texinfo.ColorMap = ColorMap;
     }
