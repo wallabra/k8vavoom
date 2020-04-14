@@ -193,7 +193,9 @@ native final void DrawPic (int X, int Y, int Handle, optional float Alpha, optio
 native final void DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, optional float Alpha, optional int Translation);
 native final void DrawShadowedPic (int X, int Y, int Handle);
 native final void FillRectWithFlat (int x, int y, int width, int height, name Name);
+native final void FillRectWithFlatHandle (int x, int y, int width, int height, int handle);
 native final void FillRectWithFlatRepeat (int x, int y, int width, int height, name Name);
+native final void FillRectWithFlatRepeatHandle (int x, int y, int width, int height, int handle);
 native final void FillRect (int x, int y, int width, int height, int color, optional float alpha/*=1.0*/);
 // the last point will not be drawn
 native final void DrawLine (int x0, int y0, int x1, int y1, int color, optional float alpha/*=1.0*/);

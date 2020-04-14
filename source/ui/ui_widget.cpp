@@ -875,6 +875,29 @@ void VWidget::FillRectWithFlat (int X, int Y, int Width, int Height, VName Name)
 
 //==========================================================================
 //
+//  VWidget::FillRectWithFlatHandle
+//
+//==========================================================================
+void VWidget::FillRectWithFlatHandle (int X, int Y, int Width, int Height, int Handle) {
+  if (Handle <= 0) return;
+  VTexture *tex = GTextureManager.getIgnoreAnim(Handle);
+  if (!tex || tex->Type == TEXTYPE_Null) return;
+  float X1 = X;
+  float Y1 = Y;
+  float X2 = X+Width;
+  float Y2 = Y+Height;
+  float S1 = 0;
+  float T1 = 0;
+  float S2 = Width;
+  float T2 = Height;
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    Drawer->FillRectWithFlat(X1, Y1, X2, Y2, S1, T1, S2, T2, tex);
+  }
+}
+
+
+//==========================================================================
+//
 //  VWidget::FillRectWithFlatRepeat
 //
 //==========================================================================
@@ -886,15 +909,44 @@ void VWidget::FillRectWithFlatRepeat (int X, int Y, int Width, int Height, VName
     tex = GTextureManager.getIgnoreAnim(screenBackTexNum);
   } else {
     int nn = GTextureManager.CheckNumForName(Name, TEXTYPE_Flat, true);
-    if (nn < 0) {
-      // no flat: fill rect with gray color
-      FillRect(X, Y, Width, Height, 0x222222, 1.0f);
-      return;
-    }
-    //tex = GTextureManager.getIgnoreAnim(GTextureManager.NumForName(Name, TEXTYPE_Flat, true));
-    tex = GTextureManager.getIgnoreAnim(GTextureManager.NumForName(Name, TEXTYPE_Flat, true));
+    tex = (nn >= 0 ? GTextureManager.getIgnoreAnim(GTextureManager.NumForName(Name, TEXTYPE_Flat, true)) : nullptr);
   }
-  if (!tex || tex->Type == TEXTYPE_Null) return;
+  if (!tex) {
+    // no flat: fill rect with gray color
+    FillRect(X, Y, Width, Height, 0x222222, 1.0f);
+    return;
+  }
+  if (tex->Type == TEXTYPE_Null) return;
+  float X1 = X;
+  float Y1 = Y;
+  float X2 = X+Width;
+  float Y2 = Y+Height;
+  float S1 = 0;
+  float T1 = 0;
+  float S2 = Width;
+  float T2 = Height;
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    Drawer->FillRectWithFlatRepeat(X1, Y1, X2, Y2, S1, T1, S2, T2, tex);
+  }
+}
+
+
+//==========================================================================
+//
+//  VWidget::FillRectWithFlatRepeatHandle
+//
+//==========================================================================
+void VWidget::FillRectWithFlatRepeatHandle (int X, int Y, int Width, int Height, int Handle) {
+  if (Handle <= 0) {
+    // no flat: fill rect with gray color
+    FillRect(X, Y, Width, Height, 0x222222, 1.0f);
+  }
+  VTexture *tex = GTextureManager.getIgnoreAnim(Handle);
+  if (!tex || tex->Type == TEXTYPE_Null) {
+    // no flat: fill rect with gray color
+    FillRect(X, Y, Width, Height, 0x222222, 1.0f);
+    return;
+  }
   float X1 = X;
   float Y1 = Y;
   float X2 = X+Width;
@@ -1472,11 +1524,23 @@ IMPLEMENT_FUNCTION(VWidget, FillRectWithFlat) {
   if (Self) Self->FillRectWithFlat(X, Y, Width, Height, Name);
 }
 
+IMPLEMENT_FUNCTION(VWidget, FillRectWithFlatHandle) {
+  int X, Y, Width, Height, Handle;
+  vobjGetParamSelf(X, Y, Width, Height, Handle);
+  if (Self) Self->FillRectWithFlatHandle(X, Y, Width, Height, Handle);
+}
+
 IMPLEMENT_FUNCTION(VWidget, FillRectWithFlatRepeat) {
   int X, Y, Width, Height;
   VName Name;
   vobjGetParamSelf(X, Y, Width, Height, Name);
   if (Self) Self->FillRectWithFlatRepeat(X, Y, Width, Height, Name);
+}
+
+IMPLEMENT_FUNCTION(VWidget, FillRectWithFlatRepeatHandle) {
+  int X, Y, Width, Height, Handle;
+  vobjGetParamSelf(X, Y, Width, Height, Handle);
+  if (Self) Self->FillRectWithFlatRepeatHandle(X, Y, Width, Height, Handle);
 }
 
 IMPLEMENT_FUNCTION(VWidget, FillRect) {

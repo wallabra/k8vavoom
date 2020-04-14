@@ -77,6 +77,68 @@ struct MessageBoxState {
 
 MessageBoxState msgboxState;
 
+// border pics
+int picBorderL;
+int picBorderR;
+int picBorderT;
+int picBorderB;
+int picBorderTL;
+int picBorderTR;
+int picBorderBL;
+int picBorderBR;
+// background pic
+int picBack;
+
+
+//==========================================================================
+//
+//  MsgBoxLoadPictures
+//
+//==========================================================================
+void MsgBoxLoadPictures () {
+  picBorderL = R_RegisterPicPath('graphics/msgbox/border_l.png');
+  picBorderR = R_RegisterPicPath('graphics/msgbox/border_r.png');
+  picBorderT = R_RegisterPicPath('graphics/msgbox/border_t.png');
+  picBorderB = R_RegisterPicPath('graphics/msgbox/border_b.png');
+  picBorderTL = R_RegisterPicPath('graphics/msgbox/border_tl.png');
+  picBorderTR = R_RegisterPicPath('graphics/msgbox/border_tr.png');
+  picBorderBL = R_RegisterPicPath('graphics/msgbox/border_bl.png');
+  picBorderBR = R_RegisterPicPath('graphics/msgbox/border_br.png');
+  picBack = R_RegisterPicPath('graphics/msgbox/background.png');
+}
+
+
+//==========================================================================
+//
+//  MsgBoxDrawBorder
+//
+//  Draws message box border
+//
+//==========================================================================
+void MsgBoxDrawBorder (int x, int y, int w, int h) {
+  if (!picBorderL) MsgBoxLoadPictures();
+
+  if (w < 1 || h < 1) return;
+
+  // top and bottom
+  for (int i = 0; i < w; i += 16) {
+    GRoot.DrawPic(x+i, y-4, picBorderT);
+    GRoot.DrawPic(x+i, y+h, picBorderB);
+  }
+
+  // left and right
+  for (int i = 0; i < h; i += 16) {
+    GRoot.DrawPic(x-4, y+i, picBorderL);
+    GRoot.DrawPic(x+w, y+i, picBorderR);
+  }
+
+  // corners
+  GRoot.DrawPic(x-4, y-4, picBorderTL);
+  GRoot.DrawPic(x+w, y-4, picBorderTR);
+  GRoot.DrawPic(x-4, y+h, picBorderBL);
+  GRoot.DrawPic(x+w, y+h, picBorderBR);
+}
+
 
 //==========================================================================
 //
@@ -334,10 +396,13 @@ int MessageBoxGetMenuItemAt (int x, int y) {
 override void MessageBoxDrawer () {
   // horiz. & vertically center string and print it
   if (msgboxState.active) {
+    if (!picBack) MsgBoxLoadPictures();
+
     GRoot.SetFont('smallfont');
 
-    GRoot.FillRectWithFlatRepeat(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height, msgboxState.flatName);
-    DrawBorder(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height);
+    GRoot.FillRectWithFlatRepeatHandle(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height, picBack);
+    //DrawBorder(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height);
+    MsgBoxDrawBorder(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height);
     //GRoot.DrawRect(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height, RGB(255, 0, 0));
 
     bool hasMenu = IsMessageBoxWithMenu();

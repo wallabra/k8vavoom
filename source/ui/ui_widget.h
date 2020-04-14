@@ -235,7 +235,9 @@ public:
   void DrawShadowedPic (int, int, int);
   void DrawShadowedPic (int, int, VTexture *);
   void FillRectWithFlat (int, int, int, int, VName);
+  void FillRectWithFlatHandle (int, int, int, int, int);
   void FillRectWithFlatRepeat (int, int, int, int, VName);
+  void FillRectWithFlatRepeatHandle (int, int, int, int, int);
   void FillRect (int, int, int, int, int, float);
   void ShadeRect (int, int, int, int, float);
   void DrawRect (int X, int Y, int Width, int Height, int color, float alpha);
@@ -338,7 +340,9 @@ public:
   DECLARE_FUNCTION(DrawPicScaled)
   DECLARE_FUNCTION(DrawShadowedPic)
   DECLARE_FUNCTION(FillRectWithFlat)
+  DECLARE_FUNCTION(FillRectWithFlatHandle)
   DECLARE_FUNCTION(FillRectWithFlatRepeat)
+  DECLARE_FUNCTION(FillRectWithFlatRepeatHandle)
   DECLARE_FUNCTION(FillRect)
   DECLARE_FUNCTION(DrawRect)
   DECLARE_FUNCTION(ShadeRect)
