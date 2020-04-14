@@ -219,6 +219,7 @@ vuint32 M_LookupColorName (const char *Name) {
 
   // normalize color name
   size_t dpos = 0;
+  bool hadSpaces = false;
   for (const vuint8 *s = (const vuint8 *)Name; *s; ++s) {
     vuint8 ch = *s;
     if (ch == '"' || ch == '\'') continue; // why not?
@@ -229,6 +230,7 @@ vuint32 M_LookupColorName (const char *Name) {
         tmpbuf[dpos++] = ' ';
       }
       */
+      hadSpaces = true;
     } else {
       if (dpos >= sizeof(tmpbuf)-1) { dpos = 0; break; }
       if (ch >= 'A' && ch <= 'Z') ch += 32; // poor man's tolower
@@ -262,7 +264,7 @@ vuint32 M_LookupColorName (const char *Name) {
       return clr|0xff000000U;
     }
     return 0;
-  } else if (dpos == 6) {
+  } else if (dpos == 6 && !hadSpaces) {
     bool valid = true;
     vuint32 clr = 0;
     for (int f = 0; f < 6; ++f) {
@@ -272,7 +274,7 @@ vuint32 M_LookupColorName (const char *Name) {
     }
     //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, Name, clr);
     if (valid) return clr|0xff000000U;
-  } else if (dpos == 3) {
+  } else if (dpos == 3 && !hadSpaces) {
     bool valid = true;
     vuint32 clr = 0;
     for (int f = 1; f < 4; ++f) {
@@ -327,7 +329,11 @@ static int tryHexByte (const char *s) noexcept {
 vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid) {
   if (!Name || !Name[0]) return (retZeroIfInvalid ? 0U : 0xff000000U);
   vuint32 res = M_LookupColorName(Name);
-  if (res) return res;
+  if (res) {
+    //if (retZeroIfInvalid) GCon->Logf(NAME_Debug, "COLOR <%s>: PARSED to 0x%08x", Name, res);
+    return res;
+  }
+  //if (retZeroIfInvalid) GCon->Logf(NAME_Debug, "COLOR <%s>: wtf?", Name);
   vuint8 Col[3];
   if (Name[0] == '#') {
     const size_t nlen = strlen(Name);
@@ -379,7 +385,7 @@ vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid) {
       int digCount = 0;
       int n = 0, decn = 0;
       while (*s) {
-        if (s[0] <= ' ') break;
+        if (s[0] <= ' ' || *s == '"' || *s == '\'') break;
         int d = VStr::digitInBase(s[0], 16);
         if (d < 0) {
           GCon->Logf(NAME_Warning, "Invalid color <%s> (1)", Name);
@@ -401,10 +407,12 @@ vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid) {
         ++digCount;
       }
       if (n > 255) { warnColor = true; n = 255; }
+      if (digCount >= 3) warnColor = true;
       if (digCount == 1) n = (n<<4)|n;
       Col[i] = n;
       colDec[i] = decn;
     }
+    //GCon->Logf(NAME_Debug, "COLOR <%s>: dec(%d,%d,%d); hex(%02x,%02x,%02x)", Name, colDec[0], colDec[1], colDec[2], Col[0], Col[1], Col[2]);
     if (warnColor) {
       if (colDec[0] >= 0 && colDec[1] >= 0 && colDec[2] >= 0 &&
           colDec[0] <= 255 && colDec[1] <= 255 && colDec[2] <= 255)
