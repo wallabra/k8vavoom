@@ -1640,12 +1640,19 @@ void R_ParseEffectDefs () {
     for (int j = 0; j < CD.SpriteEffects.Num(); j++) {
       VTempSpriteEffectDef &SprDef = CD.SpriteEffects[j];
       // sprite name must be either 4 or 5 chars
-      if (SprDef.Sprite.Length() != 4 && SprDef.Sprite.Length() != 5) {
+      // 6-char is for '0' frames (not properly implemented yet, just a hack)
+      if (SprDef.Sprite.Length() == 6) {
+        if (SprDef.Sprite[5] != '0') {
+          GCon->Logf(NAME_Warning, "Bad sprite name length '%s', sprite effects ignored.", *SprDef.Sprite);
+          continue;
+        }
+        GCon->Logf(NAME_Warning, "Applying sprite effects from '%s' to all rotations.", *SprDef.Sprite);
+      } else if (SprDef.Sprite.Length() != 4 && SprDef.Sprite.Length() != 5) {
         GCon->Logf(NAME_Warning, "Bad sprite name length '%s', sprite effects ignored.", *SprDef.Sprite);
         continue;
       }
 
-      if (SprDef.Sprite.length() == 5) {
+      if (SprDef.Sprite.length() >= 5) {
         char ch = VStr::ToUpper(SprDef.Sprite[4]);
         if (ch < 'A' || ch-'A' > 36) {
           GCon->Logf(NAME_Warning, "Bad sprite frame in '%s', sprite effects ignored.", *SprDef.Sprite);
