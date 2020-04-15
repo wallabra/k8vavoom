@@ -205,58 +205,6 @@ override bool FinaleResponder (event_t *event) {
 
 //==========================================================================
 //
-//  DeactivateMenu
-//
-//==========================================================================
-override void DeactivateMenu () {
-  ForceMenuOff();
-}
-
-
-//==========================================================================
-//
-//  MenuResponder
-//
-//==========================================================================
-override bool MenuResponder (event_t *event) {
-  if (!CurrentMenuScreen) {
-    // pop-up menu?
-    if (event->type == ev_keydown && event->keycode == K_ESCAPE) {
-      PushMenuScreen(SpawnMenu(MenuScreenMain));
-      return true;
-    }
-  }
-  return false;
-}
-
-
-//==========================================================================
-//
-//  MenuActive
-//
-//==========================================================================
-override bool MenuActive () {
-  return (CurrentMenuScreen != none);
-}
-
-
-//==========================================================================
-//
-//  SetMenu
-//
-//==========================================================================
-override void SetMenu (string Name) {
-  if (SetCommonMenu(Name)) return;
-  if (!stricmp(Name, "Main")) { PushMenuScreen(SpawnMenu(MenuScreenMain)); return; }
-  if (!stricmp(Name, "PSetup")) { PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup)); return; }
-  if (!stricmp(Name, "Help")) { PushMenuScreen(SpawnMenu(MenuScreenHelp)); return; }
-  if (!stricmp(Name, "Quit")) { ShowQuitPrompt(); return; }
-  PushMenuScreen(SpawnMenu(MenuScreenMain));
-}
-
-
-//==========================================================================
-//
 //  GetQuitPromptText
 //
 //==========================================================================
@@ -343,4 +291,8 @@ defaultproperties {
   DefaultFinaleType = 'EndGamePic1';
   YesMenuColor = "Red";
   NoMenuColor = "Red";
+
+  namedmenus.put("main", MenuScreenMain);
+  namedmenus.put("psetup", MenuScreenPlayerSetup);
+  namedmenus.put("help", MenuScreenHelp);
 }

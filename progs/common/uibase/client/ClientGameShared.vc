@@ -69,6 +69,7 @@ name DefaultFinaleType;
 
 
 array!MenuDefinition menudefs;
+dictionary!(string, class!MenuScreen) namedmenus;
 
 
 #include "ClientGameShared.msgbox.vc"
@@ -511,20 +512,18 @@ void GetAllMenuNames (ref array!string names, int mode) {
 //
 //==========================================================================
 bool SetCommonMenu (string Name) {
-  //if (!stricmp(Name, "Main")) { PushMenuScreen(SpawnMenu(MenuScreenMain)); return true; }
   if (!stricmp(Name, "Save")) { PushMenuScreen(SpawnMenu(MenuScreenSaveGame)); return true; }
   if (!stricmp(Name, "Load")) { PushMenuScreen(SpawnMenu(MenuScreenLoadGame)); return true; }
-  //if (!stricmp(Name, "PSetup")) { PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup)); return true; }
   if (!stricmp(Name, "Options") || !stricmp(Name, "OptionsMenu")) { PushMenuScreen(SpawnNamedMenu('OptionsMenu')); return true; }
-  //if (!stricmp(Name, "Controls")) { PushMenuScreen(SpawnMenu(MenuScreenControls)); return true; }
   if (!stricmp(Name, "Controls")) { PushMenuScreen(SpawnNamedMenu('ControlsMain')); return true; }
   if (!stricmp(Name, "Mouse")) { PushMenuScreen(SpawnNamedMenu('MouseOptions')); return true; }
   if (!stricmp(Name, "Resolution")) { PushMenuScreen(SpawnMenu(MenuScreenScreenResolution)); return true; }
   if (!stricmp(Name, "Video")) { PushMenuScreen(SpawnNamedMenu('VideoOptions')); return true; }
   if (!stricmp(Name, "Sound")) { PushMenuScreen(SpawnNamedMenu('SoundOptions')); return true; }
   if (!stricmp(Name, "MenuSearch")) { PushMenuScreen(SpawnMenu(MenuScreenSearchFilter)); return true; }
+  if (!stricmp(Name, "Quit")) { ShowQuitPrompt(); return true; }
 
-  // find named menu
+  // find textual named menu
   foreach (MenuDefinition mdef; menudefs) {
     if (stricmp(mdef.menuName, Name) == 0) {
       PushMenuScreen(SpawnNamedMenu(name(Name)));
@@ -532,10 +531,23 @@ bool SetCommonMenu (string Name) {
     }
   }
 
-  //if (!stricmp(Name, "Help")) { PushMenuScreen(SpawnMenu(MenuScreenHelp)); return true; }
-  //if (!stricmp(Name, "Quit")) { ShowQuitPrompt(); return true; }
-  //PushMenuScreen(SpawnMenu(MenuScreenMain));
+  // find named menu by classs
+  Name = Name.toLowerCase;
+  auto cp = namedmenus.find(Name);
+  if (cp) { PushMenuScreen(SpawnMenu(*cp)); return true; }
+
   return false;
+}
+
+
+//==========================================================================
+//
+//  SetMenu
+//
+//==========================================================================
+override void SetMenu (string Name) {
+  if (SetCommonMenu(Name)) return;
+  SetCommonMenu("Main");
 }
 
 
@@ -867,6 +879,43 @@ void NewGame (int SkillLevel) {
   CmdBuf_AddText("MaxPlayers 1\n");
   CmdBuf_AddText("Map \"%q\"\n", MenuStartMap);
 
+  ForceMenuOff();
+}
+
+
+//==========================================================================
+//
+//  MenuResponder
+//
+//==========================================================================
+override bool MenuResponder (event_t *event) {
+  if (!CurrentMenuScreen) {
+    // pop-up menu?
+    if (event->type == ev_keydown && event->keycode == K_ESCAPE) {
+      SetMenu("Main");
+      return true;
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  MenuActive
+//
+//==========================================================================
+override bool MenuActive () {
+  return (CurrentMenuScreen != none);
+}
+
+
+//==========================================================================
+//
+//  DeactivateMenu
+//
+//==========================================================================
+override void DeactivateMenu () {
   ForceMenuOff();
 }
 
