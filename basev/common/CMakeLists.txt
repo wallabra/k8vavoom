@@ -39,6 +39,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_CURRENT_SOURCE_DIR}/graphics/screenback/*.png
     ${CMAKE_CURRENT_SOURCE_DIR}/graphics/k8vavoom_special/*.png
     ${CMAKE_CURRENT_SOURCE_DIR}/graphics/msgbox/*.png
+    ${CMAKE_CURRENT_SOURCE_DIR}/graphics/ui/*.png
 
     ${CMAKE_CURRENT_SOURCE_DIR}/sounds/*
 
