@@ -131,6 +131,12 @@ final void dumpClipRect (optional string msg) {
 }
 
 
+// fix scale so pixel size of this widget will be equal to real pixels
+final void SetScaleOneToOne () {
+  SetScale(1.0/ClipRect.ScaleX, 1.0/ClipRect.ScaleY);
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 delegate void FocusLost (Object Sender);
 delegate void FocusReceived (Object Sender);
