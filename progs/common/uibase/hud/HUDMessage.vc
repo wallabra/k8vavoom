@@ -103,9 +103,9 @@ void Reset () {
 //
 //==========================================================================
 void HBarLoadGfx () {
-  hbarPicBack = R_RegisterPicPath('graphics/healthbar/hbarbot.png');
-  hbarPicFill = R_RegisterPicPath('graphics/healthbar/hbartop.png');
-  hbarPicBorder = R_RegisterPicPath('graphics/healthbar/hbarbrd.png');
+  hbarPicBack = R_RegisterPicPath('graphics/healthbar/healthbar_bottom.png');
+  hbarPicFill = R_RegisterPicPath('graphics/healthbar/healthbar_top.png');
+  hbarPicBorder = R_RegisterPicPath('graphics/healthbar/healthbar_border.png');
   if (hbarPicBack < 0 || hbarPicFill < 0 || hbarPicBorder < 0) {
     hbarPicBack = -666;
   }

@@ -69,9 +69,9 @@ override void OnCreate () {
   HudMsgWin.Height = Height;
   lastWasFullscreen = false;
   // load healthbar graphics
-  R_RegisterPicPath('graphics/healthbar/hbarbot.png');
-  R_RegisterPicPath('graphics/healthbar/hbartop.png');
-  R_RegisterPicPath('graphics/healthbar/hbarbrd.png');
+  R_RegisterPicPath('graphics/healthbar/healthbar_bottom.png');
+  R_RegisterPicPath('graphics/healthbar/healthbar_top.png');
+  R_RegisterPicPath('graphics/healthbar/healthbar_border.png');
 }
 
 

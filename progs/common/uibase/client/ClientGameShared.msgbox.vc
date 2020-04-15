@@ -96,15 +96,15 @@ int picBack;
 //
 //==========================================================================
 void MsgBoxLoadPictures () {
-  picBorderL = R_RegisterPicPath('graphics/msgbox/border_l.png');
-  picBorderR = R_RegisterPicPath('graphics/msgbox/border_r.png');
-  picBorderT = R_RegisterPicPath('graphics/msgbox/border_t.png');
-  picBorderB = R_RegisterPicPath('graphics/msgbox/border_b.png');
-  picBorderTL = R_RegisterPicPath('graphics/msgbox/border_tl.png');
-  picBorderTR = R_RegisterPicPath('graphics/msgbox/border_tr.png');
-  picBorderBL = R_RegisterPicPath('graphics/msgbox/border_bl.png');
-  picBorderBR = R_RegisterPicPath('graphics/msgbox/border_br.png');
-  picBack = R_RegisterPicPath('graphics/msgbox/background.png');
+  picBorderL = R_RegisterPicPath('graphics/msgbox/mbox_border_l.png');
+  picBorderR = R_RegisterPicPath('graphics/msgbox/mbox_border_r.png');
+  picBorderT = R_RegisterPicPath('graphics/msgbox/mbox_border_t.png');
+  picBorderB = R_RegisterPicPath('graphics/msgbox/mbox_border_b.png');
+  picBorderTL = R_RegisterPicPath('graphics/msgbox/mbox_border_tl.png');
+  picBorderTR = R_RegisterPicPath('graphics/msgbox/mbox_border_tr.png');
+  picBorderBL = R_RegisterPicPath('graphics/msgbox/mbox_border_bl.png');
+  picBorderBR = R_RegisterPicPath('graphics/msgbox/mbox_border_br.png');
+  picBack = R_RegisterPicPath('graphics/msgbox/mbox_background.png');
 }
 
 
