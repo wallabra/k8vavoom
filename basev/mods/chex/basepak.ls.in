@@ -1,4 +1,4 @@
-$dest chex.pk3
+$dest basepak.pk3
 
 $recursedirext|.txt|  actors/chex/  @CMAKE_CURRENT_SOURCE_DIR@/actors/chex/
 

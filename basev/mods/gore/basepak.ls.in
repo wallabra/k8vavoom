@@ -1,4 +1,4 @@
-$dest gore.pk3
+$dest basepak.pk3
 
 $recursedir sprites/   @CMAKE_CURRENT_SOURCE_DIR@/sprites/
 $recursedir graphics/  @CMAKE_CURRENT_SOURCE_DIR@/graphics/

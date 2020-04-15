@@ -1,4 +1,4 @@
-$dest skeehud.pk3
+$dest basepak.pk3
 
 $recursedir progs/    @CMAKE_CURRENT_SOURCE_DIR@/progs/
 

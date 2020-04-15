@@ -1,4 +1,4 @@
-$dest bdw.pk3
+$dest basepak.pk3
 
 $recursedir sprites/     @CMAKE_CURRENT_SOURCE_DIR@/sprites/
 $recursedir brightmaps/  @CMAKE_CURRENT_SOURCE_DIR@/brightmaps/
