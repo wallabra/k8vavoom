@@ -25,6 +25,121 @@
 //**************************************************************************
 #include "../core.h"
 
+#ifdef ANDROID
+#  include <SDL.h>
+#  include <android/asset_manager.h>
+#  include <android/asset_manager_jni.h>
+#  include <jni.h>
+#endif
+
+#ifdef ANDROID
+
+// note that some code copypasted from syslow.cpp
+
+static AAssetManager *androidAssetManager;
+static void getApkAssetManager () {
+  if (androidAssetManager == nullptr) {
+    JNIEnv *env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    assert(env != nullptr);
+    jobject activity = (jobject)SDL_AndroidGetActivity();
+    assert(activity != nullptr);
+    jclass clazz(env->GetObjectClass(activity));
+    //jclass clazz(env->FindClass("android/view/ContextThemeWrapper"));
+    assert(clazz != nullptr);
+    jmethodID method = env->GetMethodID(clazz, "getAssets", "()Landroid/content/res/AssetManager;");
+    assert(method != nullptr);
+    jobject assetManager = env->CallObjectMethod(activity, method);
+    assert(assetManager != nullptr);
+    androidAssetManager = AAssetManager_fromJava(env, assetManager);
+    env->DeleteLocalRef(activity);
+    env->DeleteLocalRef(clazz);
+  }
+}
+
+static inline bool isApkPath (const VStr &s) noexcept {
+  return s.length() >= 1 && (s[0] == '.') && (s.length() == 1 || s[1] == '/');
+}
+
+static inline VStr getApkPath (const VStr &s) noexcept {
+  return isApkPath(s) ? VStr(s, 2, s.length() - 2) : VStr();
+}
+
+class VAndroidFileStreamRO : public VStream {
+private:
+  AAsset *myAss;
+  VStr myName;
+  off_t myOff;
+
+public:
+  VV_DISABLE_COPY(VAndroidFileStreamRO)
+
+  VAndroidFileStreamRO (AAsset *ass, VStr aname) : myAss(ass), myName(aname), myOff(0) {
+    vassert(myAss != nullptr);
+    vassert(AAsset_seek(myAss, 0, SEEK_SET) == 0);
+    bLoading = true;
+  }
+
+  virtual ~VAndroidFileStreamRO () override {
+    Close();
+  }
+
+  virtual void SetError () override {
+    Close();
+    bError = true;
+    VStream::SetError();
+  }
+
+  virtual VStr GetName () /* override */ {
+    return myName.cloneUnique();
+  }
+
+  virtual void Seek (int pos) override {
+    if (myAss == nullptr || AAsset_seek(myAss, pos, SEEK_SET) == -1) {
+      SetError();
+    } else {
+      myOff = pos;
+    }
+  }
+
+  virtual int Tell () override {
+    return myAss ? myOff : 0;
+  }
+
+  virtual int TotalSize () override {
+    return myAss ? AAsset_getLength(myAss) : 0;
+  }
+
+  virtual bool Close () override {
+    if (myAss) {
+      AAsset_close(myAss);
+      myAss = nullptr;
+    }
+    myName.clear();
+    return !bError;
+  }
+
+  virtual void Serialise (void *buf, int len) override {
+    vassert(buf != nullptr);
+    vassert(len >= 0);
+    vassert(AAsset_read(myAss, buf, len) == len);
+    myOff += len;
+  }
+
+};
+
+static VAndroidFileStreamRO *openAndroidFileStreamRO (VStr aname) {
+  if (isApkPath(aname)) {
+    getApkAssetManager();
+    if (androidAssetManager) {
+      VStr p = getApkPath(aname);
+      AAsset *a = AAssetManager_open(androidAssetManager, *p, AASSET_MODE_UNKNOWN);
+      return a ? new VAndroidFileStreamRO(a, aname) : nullptr;
+    }
+  }
+  return nullptr;
+}
+#endif // ANDROID
+
 
 //==========================================================================
 //
@@ -1242,6 +1357,12 @@ void VPartialStreamRO::SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
 VStream *CreateDiskStreamRead (VStr fname) {
   if (fname.isEmpty()) return nullptr;
   // here you can put various custom handlers
+//  GLog.Logf("CreateDiskStreamRead(%s)", *fname);
+#ifdef ANDROID
+  if (isApkPath(fname)) {
+    return openAndroidFileStreamRO(fname);
+  }
+#endif
   FILE *fl = fopen(*fname, "rb");
   if (!fl) return nullptr;
   return new VStdFileStreamRead(fl, fname);
