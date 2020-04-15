@@ -72,7 +72,7 @@ override void OnDraw () {
   SetFont('smallfont');
 
   SetTextAlign(hright, vtop);
-  DrawText(CursorXOffs, 2+1, Text, IsFocus() ? TextColorFocus : TextColor);
+  DrawText(CursorXOffs, 2+1, Text, (IsFocused ? TextColorFocus : TextColor));
 
   bool oldflt = GetCvarB('gl_pic_filtering');
   scope(exit) SetCvar('gl_pic_filtering', oldflt ? 1 : 0);

@@ -36,7 +36,7 @@ override void OnDraw () {
 
   string text = Text;
   if (Price) {
-    if (IsFocus()) {
+    if (IsFocused) {
       text = va("%s \cDfor \cJ%d\cD gold", text, Price);
     } else {
       text = va("%s \cQfor \cX%d\cQ gold", text, Price);
@@ -45,7 +45,7 @@ override void OnDraw () {
 
   SetFont(TextFont);
   SetTextAlign(TextHAlign, TextVAlign);
-  DrawText(CursorXOffs, y, text, IsFocus() ? TextColorFocus : TextColor);
+  DrawText(CursorXOffs, y, text, (IsFocused ? TextColorFocus : TextColor));
 }
 
 

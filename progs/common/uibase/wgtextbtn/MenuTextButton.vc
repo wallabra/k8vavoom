@@ -144,8 +144,9 @@ override bool OnEvent (ref event_t evt) {
 //  OnMouseClick
 //
 //==========================================================================
-override void OnMouseClick (int X, int Y) {
+override void OnMouseClick (int X, int Y, int Button) {
   SetFocus();
+  if (Button != K_MOUSE1) return;
   ActivateEvent();
   LocalSound(ActivateSound);
 }
@@ -178,7 +179,7 @@ void CheckSubMenu (optional bool changeEnabled) {
 override void OnDraw () {
   CheckSubMenu();
 
-  int clr = (IsFocus() ? TextColorFocus : TextColor);
+  int clr = (IsFocused ? TextColorFocus : TextColor);
   if (hasSubMenuChecked < 0 || !Enabled) clr = CR_DARKGRAY;
 
   SetFont(TextFont);

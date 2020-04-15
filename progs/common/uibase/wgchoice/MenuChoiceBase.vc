@@ -202,7 +202,7 @@ ClientGameShared GetClGame () {
 //
 //==========================================================================
 void DrawBackground () {
-  if (IsFocus()) {
+  if (IsFocused) {
     //ShadeRect(0, 0, Width, Height-2, 0.6);
     int hgt = Height;
     if (hgt == 10) hgt -= 2; else hgt -= 1;

@@ -244,7 +244,7 @@ void VWidget::DestroyAllChildren () {
 //  VWidget::GetRootWidget
 //
 //==========================================================================
-VRootWidget *VWidget::GetRootWidget () {
+VRootWidget *VWidget::GetRootWidget () noexcept {
   VWidget *W = this;
   while (W->ParentWidget) W = W->ParentWidget;
   return (VRootWidget *)W;
@@ -382,7 +382,7 @@ void VWidget::MoveAfter (VWidget *Other) {
 //  VWidget::ClipTree
 //
 //==========================================================================
-void VWidget::ClipTree () {
+void VWidget::ClipTree () noexcept {
   // set up clipping rectangle
   if (ParentWidget) {
     // clipping rectangle is relative to the parent widget
@@ -441,7 +441,7 @@ void VWidget::SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight,
 //
 //==========================================================================
 void VWidget::SetVisibility (bool NewVisibility) {
-  if (!!(WidgetFlags&WF_IsVisible) != NewVisibility) {
+  if (IsVisibleFlag() != NewVisibility) {
     if (NewVisibility) {
       WidgetFlags |= WF_IsVisible;
       if (ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
@@ -460,7 +460,7 @@ void VWidget::SetVisibility (bool NewVisibility) {
 //
 //==========================================================================
 void VWidget::SetEnabled (bool NewEnabled) {
-  if (!!(WidgetFlags&WF_IsEnabled) != NewEnabled) {
+  if (IsEnabledFlag() != NewEnabled) {
     if (NewEnabled) {
       WidgetFlags |= WF_IsEnabled;
       if (ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
@@ -479,7 +479,7 @@ void VWidget::SetEnabled (bool NewEnabled) {
 //
 //==========================================================================
 void VWidget::SetFocusable (bool NewFocusable) {
-  if (!!(WidgetFlags&WF_IsFocusable) != NewFocusable) {
+  if (IsFocusableFlag() != NewFocusable) {
     if (NewFocusable) {
       WidgetFlags |= WF_IsFocusable;
       if (ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
@@ -502,13 +502,7 @@ void VWidget::SetCurrentFocusChild (VWidget *NewFocus) {
   if (CurrentFocusChild == NewFocus) return;
 
   // make sure it's visible, enabled and focusable
-  if (NewFocus &&
-      (!(NewFocus->WidgetFlags&WF_IsVisible) ||
-       !(NewFocus->WidgetFlags&WF_IsEnabled) ||
-       !(NewFocus->WidgetFlags&WF_IsFocusable)))
-  {
-    return;
-  }
+  if (NewFocus && !NewFocus->CanBeFocused()) return;
 
   // if we have a focused child, send focus lost event
   if (CurrentFocusChild) CurrentFocusChild->OnFocusLost();
@@ -521,53 +515,19 @@ void VWidget::SetCurrentFocusChild (VWidget *NewFocus) {
 
 //==========================================================================
 //
-//  VWidget::IsFocus
-//
-//==========================================================================
-bool VWidget::IsFocus (bool Recurse) const {
-  // root is always focused
-  if (!ParentWidget) return true;
-  if (Recurse) {
-    const VWidget *W = this;
-    while (W->ParentWidget && W->ParentWidget->CurrentFocusChild == W) W = W->ParentWidget;
-    return !W->ParentWidget;
-  } else {
-    return (ParentWidget->CurrentFocusChild == this);
-  }
-}
-
-
-//==========================================================================
-//
-//  VWidget::SetFocus
-//
-//==========================================================================
-void VWidget::SetFocus () {
-  if (ParentWidget) ParentWidget->SetCurrentFocusChild(this);
-}
-
-
-//==========================================================================
-//
 //  VWidget::FindNewFocus
 //
 //==========================================================================
 void VWidget::FindNewFocus () {
   for (VWidget *W = CurrentFocusChild->NextWidget; W; W = W->NextWidget) {
-    if ((W->WidgetFlags&WF_IsFocusable) &&
-        (W->WidgetFlags&WF_IsVisible) &&
-        (W->WidgetFlags&WF_IsEnabled))
-    {
+    if (W->CanBeFocused()) {
       SetCurrentFocusChild(W);
       return;
     }
   }
 
   for (VWidget *W = CurrentFocusChild->PrevWidget; W; W = W->PrevWidget) {
-    if ((W->WidgetFlags&WF_IsFocusable) &&
-        (W->WidgetFlags&WF_IsVisible) &&
-        (W->WidgetFlags&WF_IsEnabled))
-    {
+    if (W->CanBeFocused()) {
       SetCurrentFocusChild(W);
       return;
     }
@@ -582,9 +542,9 @@ void VWidget::FindNewFocus () {
 //  VWidget::GetWidgetAt
 //
 //==========================================================================
-VWidget *VWidget::GetWidgetAt (float X, float Y) {
+VWidget *VWidget::GetWidgetAt (float X, float Y) noexcept {
   for (VWidget *W = LastChildWidget; W; W = W->PrevWidget) {
-    if (!(W->WidgetFlags&WF_IsVisible)) continue;
+    if (!IsVisibleFlag()) continue;
     if (X >= W->ClipRect.ClipX1 && X < W->ClipRect.ClipX2 &&
         Y >= W->ClipRect.ClipY1 && Y < W->ClipRect.ClipY2)
     {
@@ -602,7 +562,7 @@ VWidget *VWidget::GetWidgetAt (float X, float Y) {
 //==========================================================================
 void VWidget::DrawTree () {
   if (IsGoingToDie()) return;
-  if (!(WidgetFlags&WF_IsVisible) || !ClipRect.HasArea()) return; // not visible or clipped away
+  if (!IsVisibleFlag() || !ClipRect.HasArea()) return; // not visible or clipped away
 
   // main draw event for this widget
   OnDraw();
@@ -625,7 +585,7 @@ void VWidget::DrawTree () {
 //==========================================================================
 void VWidget::TickTree (float DeltaTime) {
   if (IsGoingToDie()) return;
-  if (WidgetFlags&WF_TickEnabled) Tick(DeltaTime);
+  if (IsTickEnabledFlag()) Tick(DeltaTime);
   for (VWidget *c = FirstChildWidget; c; c = c->NextWidget) {
     if (c->IsGoingToDie()) continue;
     c->TickTree(DeltaTime);
@@ -661,7 +621,7 @@ void VWidget::ToDrawerCoords (int &x, int &y) const noexcept {
 //
 //==========================================================================
 bool VWidget::TransferAndClipRect (float &X1, float &Y1, float &X2, float &Y2,
-  float &S1, float &T1, float &S2, float &T2) const
+  float &S1, float &T1, float &S2, float &T2) const noexcept
 {
   X1 = ClipRect.ScaleX*X1+ClipRect.OriginX;
   Y1 = ClipRect.ScaleY*Y1+ClipRect.OriginY;
@@ -1111,7 +1071,7 @@ void VWidget::SetTextShadow (bool State) {
 //
 //==========================================================================
 void VWidget::DrawString (int x, int y, VStr String, int NormalColor, int BoldColor, float Alpha) {
-  if (String.length() == 0) return;
+  if (String.isEmpty() || !Font) return;
 
   int cx = x;
   int cy = y;
@@ -1472,10 +1432,10 @@ IMPLEMENT_FUNCTION(VWidget, GetCurrentFocus) {
   RET_REF(Self ? Self->GetCurrentFocus() : nullptr);
 }
 
-IMPLEMENT_FUNCTION(VWidget, IsFocus) {
+IMPLEMENT_FUNCTION(VWidget, IsFocused) {
   VOptParamBool Recurse(true);
   vobjGetParamSelf(Recurse);
-  RET_BOOL(Self ? Self->IsFocus(Recurse) : false);
+  RET_BOOL(Self ? Self->IsFocused(Recurse) : false);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetFocus) {

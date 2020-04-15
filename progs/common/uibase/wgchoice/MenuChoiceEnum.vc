@@ -149,7 +149,7 @@ override void OnDraw () {
   } else {
     caption = vallist[idx].caption;
   }
-  int Col = (IsFocus() ? TextColorFocus : TextColor);
+  int Col = (IsFocused ? TextColorFocus : TextColor);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
     DrawText(0, 0, Text, Col);
@@ -159,7 +159,7 @@ override void OnDraw () {
   }
   int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
   SetTextAlign(hleft, vtop);
-  DrawText(xx, 0, caption, (IsFocus() ? ValueColorFocus : ValueColor));
+  DrawText(xx, 0, caption, (IsFocused ? ValueColorFocus : ValueColor));
 }
 
 
@@ -197,24 +197,17 @@ override bool OnEvent (ref event_t evt) {
 }
 
 
-override void OnMouseClick (int X, int Y) {
-  if (IsFocus()) {
+override void OnMouseClick (int X, int Y, int Button) {
+  if (IsFocused) {
     if (vallist.length == 0) return;
     int idx = findValue(Value);
-    if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
-    float newValue = vallist[idx].value;
-    if (SetNewValue(ref newValue)) LocalSound('menu/change');
-  } else {
-    SetFocus();
-  }
-}
-
-
-override void OnRMouseClick (int X, int Y) {
-  if (IsFocus()) {
-    if (vallist.length == 0) return;
-    int idx = findValue(Value);
-    if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
+    if (Button == K_MOUSE1) {
+      if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
+    } else if (Button == K_MOUSE2) {
+      if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
+    } else {
+      return;
+    }
     float newValue = vallist[idx].value;
     if (SetNewValue(ref newValue)) LocalSound('menu/change');
   } else {

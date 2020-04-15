@@ -97,7 +97,7 @@ override void OnDraw () {
 
   SetFont('smallfont');
 
-  int Col = (IsFocus() ? TextColorFocus : TextColor);
+  int Col = (IsFocused ? TextColorFocus : TextColor);
 
   /*
   if (bLeftAlign) {
@@ -112,7 +112,7 @@ override void OnDraw () {
 
   //int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
   int xx = CursorXOffs+10;
-  int Col2 = (IsFocus() ? ValueColorFocus : ValueColor);
+  int Col2 = (IsFocused ? ValueColorFocus : ValueColor);
   SetTextAlign(hleft, vtop);
   //k8: we have much better fp->str now, so there's no need to perform any string trickery here
   DrawText(xx, 0, va("%f", Value), Col2);
@@ -149,30 +149,8 @@ override bool OnEvent (ref event_t evt) {
 //  OnMouseClick
 //
 //==========================================================================
-override void OnMouseClick (int X, int Y) {
-  if (IsFocus()) {
-    /*
-    float newValue = Value-ValueDelta;
-    if (SetNewValue(ref newValue)) LocalSound('menu/change');
-    */
-  } else {
-    SetFocus();
-  }
-}
-
-
-//==========================================================================
-//
-//  OnRMouseClick
-//
-//==========================================================================
-override void OnRMouseClick (int X, int Y) {
-  if (IsFocus()) {
-    /*
-    float newValue = Value+ValueDelta;
-    if (SetNewValue(ref newValue)) LocalSound('menu/change');
-    */
-  } else {
+override void OnMouseClick (int X, int Y, int Button) {
+  if (!IsFocused) {
     SetFocus();
   }
 }

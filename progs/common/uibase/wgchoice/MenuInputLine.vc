@@ -75,7 +75,7 @@ override void OnDraw () {
   if (DrawSlotPic) {
     // editor with a slot
     SetTextAlign(hleft, vtop);
-    DrawText(0, 0, Text, IsFocus() ? CR_YELLOW : CR_WHITE);
+    DrawText(0, 0, Text, IsFocused ? CR_YELLOW : CR_WHITE);
     if (bEnteringText) {
       DrawSlot(12-(DrawSlotPic ? 0 : 7), EnterText, true);
     } else {
@@ -84,7 +84,7 @@ override void OnDraw () {
   } else {
     // editor without a slot
     SetTextAlign(hright, vtop);
-    DrawText(CursorXOffs, 0, Text, (IsFocus() ? CR_YELLOW : CR_WHITE));
+    DrawText(CursorXOffs, 0, Text, (IsFocused ? CR_YELLOW : CR_WHITE));
     SetTextAlign(hleft, vtop);
     int xx = CursorXOffs+10;
     int inputWidth = Width-xx-3;
@@ -162,32 +162,30 @@ override bool OnEvent (ref event_t evt) {
 }
 
 
-override void OnMouseClick (int X, int Y) {
+override void OnMouseClick (int X, int Y, int Button) {
   SetFocus();
 
-  if (bEnteringText) {
-    bEnteringText = false;
-    Value = EnterText;
-    OnValueChanged();
+  if (Button == K_MOUSE1) {
+    if (bEnteringText) {
+      /*
+      bEnteringText = false;
+      Value = EnterText;
+      OnValueChanged();
+      */
+    } else {
+      // we are going to be intercepting all chars
+      bEnteringText = true;
+      EnterText = Value;
+      LocalSound('menu/choose');
+    }
+  } else if (Button == K_MOUSE2) {
+    if (bEnteringText) {
+      bEnteringText = false;
+      EnterText = Value;
+    } else {
+      GetClGame().PopMenu();
+    }
   }
-
-  // we are going to be intercepting all chars
-  bEnteringText = true;
-  EnterText = Value;
-  LocalSound('menu/choose');
-}
-
-
-override void OnRMouseClick (int X, int Y) {
-  SetFocus();
-
-  if (bEnteringText) {
-    bEnteringText = false;
-    EnterText = Value;
-    return;
-  }
-
-  GetClGame().PopMenu();
 }
 
 

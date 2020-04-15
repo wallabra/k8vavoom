@@ -36,7 +36,7 @@ bool drawAlways;
 override void OnDraw () {
   if (drawAlways || GetCvarB('ui_mouse')) {
     SetFont('bigfont');
-    int Col = (IsFocus() ? CR_YELLOW : CR_UNTRANSLATED);
+    int Col = (IsFocused ? CR_YELLOW : CR_UNTRANSLATED);
     DrawText(0, 0, Text, Col);
   }
 }
@@ -47,7 +47,8 @@ override void OnDraw () {
 //  OnMouseClick
 //
 //==========================================================================
-override void OnMouseClick (int X, int Y) {
+override void OnMouseClick (int X, int Y, int Button) {
+  if (Button != K_MOUSE1) return;
   GetClGame().PopMenu();
 }
 

@@ -95,7 +95,7 @@ override void OnDraw () {
   auto slist = GetSlist();
   assert(slist);
 
-  bool allowBG = IsFocus();
+  bool allowBG = IsFocused;
 
   SetFont('smallfont');
 

@@ -68,7 +68,7 @@ override void OnDraw () {
   SetFont(TextFont);
   SetTextAlign(TextHAlign, TextVAlign);
 
-  int clr = (IsFocus() ? TextColorFocus : TextColor);
+  int clr = (IsFocused ? TextColorFocus : TextColor);
   if (hasSubMenuChecked < 0) clr = CR_DARKGRAY;
   DrawText(CursorXOffs, y, Text, clr);
 }

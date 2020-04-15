@@ -117,6 +117,7 @@ final float ScaleY { get { return SizeScaleY; } set { SetScale(SizeScaleX, value
 final bool Visible { get { return IsVisible(); } set { SetVisibility(value); } default bIsVisible; }
 final bool Enabled { get { return IsEnabled(); } set { SetEnabled(value); } default bIsEnabled; }
 final bool Focusable { get { return IsFocusable(); } set { SetFocusable(value); } default bIsFocusable; }
+final bool Focused { get { return IsFocused(); } }
 
 final int OldOriginX { get { return int(ClipRect.OriginX/ClipRect.ScaleX); } }
 final int OldOriginY { get { return int(ClipRect.OriginY/ClipRect.ScaleY); } }
@@ -166,13 +167,13 @@ native final void SetConfiguration (int NewX, int NewY, int NewWidth,
 native final void SetVisibility (bool bNewVisibility);
 native final void Show ();
 native final void Hide ();
-native final bool IsVisible (optional bool Recurse);
+native final bool IsVisible (optional bool Recurse/*=true*/);
 
 // enable state methods
 native final void SetEnabled (bool bNewEnable);
 native final void Enable ();
 native final void Disable ();
-native final bool IsEnabled (optional bool Recurse);
+native final bool IsEnabled (optional bool Recurse/*=true*/);
 
 // focusable state methods
 native final void SetFocusable (bool bNewFocusable);
@@ -181,7 +182,7 @@ native final bool IsFocusable ();
 // focus methods
 native final void SetCurrentFocusChild (Widget NewFocus);
 native final Widget GetCurrentFocus ();
-native final bool IsFocus (optional bool Recurse);
+native final bool IsFocused (optional bool Recurse/*=true*/);
 native final void SetFocus ();
 
 native final void DrawPicScaledIgnoreOffset (int X, int Y, int Handle, optional float scaleX/*=1.0f*/, optional float scaleY/*=1.0f*/, optional float Alpha/*=1.0f*/, optional int Trans/*=0*/);
@@ -430,6 +431,7 @@ void OnMouseLeave () {}
 //  OnMouseDown
 //
 //  Called when mouse button is pressed.
+//  `Button` is `K_MOUSE\d`
 //
 //==========================================================================
 bool OnMouseDown (int X, int Y, int Button) { return false; }
@@ -440,6 +442,7 @@ bool OnMouseDown (int X, int Y, int Button) { return false; }
 //  OnMouseUp
 //
 //  Called when mouse button is released.
+//  `Button` is `K_MOUSE\d`
 //
 //==========================================================================
 bool OnMouseUp (int X, int Y, int Button) { return false; }
@@ -449,30 +452,11 @@ bool OnMouseUp (int X, int Y, int Button) { return false; }
 //
 //  OnMouseClick
 //
-//  Callec when left mouse button is clicked on this widget.
+//  Called when left mouse button is clicked on this widget.
+//  `Button` is `K_MOUSE\d`
 //
 //==========================================================================
-void OnMouseClick (int X, int Y) {}
-
-
-//==========================================================================
-//
-//  OnMMouseClick
-//
-//  Callec when middle mouse button is clicked on this widget.
-//
-//==========================================================================
-void OnMMouseClick (int X, int Y) {}
-
-
-//==========================================================================
-//
-//  OnRMouseClick
-//
-//  Callec when right mouse button is clicked on this widget.
-//
-//==========================================================================
-void OnRMouseClick (int X, int Y) {}
+void OnMouseClick (int X, int Y, int Button) {}
 
 
 //==========================================================================

@@ -62,7 +62,7 @@ override void OnDraw () {
 
   SetFont('smallfont');
 
-  int Col = (IsFocus() ? TextColorFocus : TextColor);
+  int Col = (IsFocused ? TextColorFocus : TextColor);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
     DrawText(0, 0, Text, Col);
@@ -72,7 +72,7 @@ override void OnDraw () {
   }
 
   int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
-  int Col2 = (IsFocus() ? CR_YELLOW : Value ? CR_GREEN : CR_RED);
+  int Col2 = (IsFocused ? CR_YELLOW : Value ? CR_GREEN : CR_RED);
   SetTextAlign(hleft, vtop);
   if (inverted) {
     DrawText(xx, 0, (Value ? "Off" : "On"), Col2);

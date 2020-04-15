@@ -270,15 +270,15 @@ bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
     int LocalY = (int)((ScaledY-Focus->ClipRect.OriginY)/Focus->ClipRect.ScaleY);
     if (Button == K_MOUSE1 && (Focus->WidgetFlags&WF_LMouseDown)) {
       Focus->WidgetFlags &= ~WF_LMouseDown;
-      Focus->OnMouseClick(LocalX, LocalY);
+      Focus->OnMouseClick(LocalX, LocalY, Button);
     }
     if (Button == K_MOUSE3 && (Focus->WidgetFlags&WF_MMouseDown)) {
       Focus->WidgetFlags &= ~WF_MMouseDown;
-      Focus->OnMMouseClick(LocalX, LocalY);
+      Focus->OnMouseClick(LocalX, LocalY, Button);
     }
     if (Button == K_MOUSE2 && (Focus->WidgetFlags&WF_RMouseDown)) {
       Focus->WidgetFlags &= ~WF_RMouseDown;
-      Focus->OnRMouseClick(LocalX, LocalY);
+      Focus->OnMouseClick(LocalX, LocalY, Button);
     }
   }
 

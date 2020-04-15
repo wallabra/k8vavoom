@@ -65,7 +65,7 @@ override void OnDraw () {
   int key1 = -1;
   int key2 = -1;
 
-  int Col = (Disabled ? CR_BLACK : IsFocus() ? CR_YELLOW : CR_WHITE);
+  int Col = (Disabled ? CR_BLACK : IsFocused ? CR_YELLOW : CR_WHITE);
   SetTextAlign(hright, vtop);
   //int ctpos = 160;
   int ctpos = CursorXOffs;
@@ -77,8 +77,8 @@ override void OnDraw () {
   //if (ModSection) printdebug("%s (%s): %s %s", CommandOn, ModSection, key1, key2);
 
   SetTextAlign(hleft, vtop);
-  //Col = IsFocus() ? CR_YELLOW : CR_OLIVE;
-  Col = (Disabled ? CR_BLACK : IsFocus() ? CR_FIRE : /*CR_LIGHTBLUE*/CR_DARKGREEN);
+  //Col = IsFocused ? CR_YELLOW : CR_OLIVE;
+  Col = (Disabled ? CR_BLACK : IsFocused ? CR_FIRE : /*CR_LIGHTBLUE*/CR_DARKGREEN);
   // this binding can be inactive, if it is a mod default binding
   //if (!Disabled && !isActive) Col = CR_RED;
 
@@ -148,18 +148,14 @@ override bool OnEvent (ref event_t evt) {
 }
 
 
-override void OnMouseClick (int X, int Y) {
+override void OnMouseClick (int X, int Y, int Button) {
   if (!Disabled) {
     SetFocus();
-    GetClGame().MessageBoxStartBindQuery(self, strifeMode);
-  }
-}
-
-
-override void OnRMouseClick (int X, int Y) {
-  if (!Disabled) {
-    SetFocus();
-    GetClGame().PopMenu();
+    if (Button == K_MOUSE1) {
+      GetClGame().MessageBoxStartBindQuery(self, strifeMode);
+    } else if (Button == K_MOUSE2) {
+      GetClGame().PopMenu();
+    }
   }
 }
 

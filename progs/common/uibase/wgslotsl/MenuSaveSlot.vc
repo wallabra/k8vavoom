@@ -53,7 +53,7 @@ override void OnCreate () {
 //==========================================================================
 override void OnDraw () {
   DrawStrikeLine = waitingDeletion;
-  if (bEnteringText && IsFocus()) {
+  if (bEnteringText && IsFocused) {
     DrawSlot(0, EnterText, true);
   } else {
     DrawSlot(0, Text, false, (Status ? CR_UNTRANSLATED : CR_DARKBROWN));
@@ -181,29 +181,24 @@ override bool OnEvent (ref event_t evt) {
 //  OnMouseClick
 //
 //==========================================================================
-override void OnMouseClick (int X, int Y) {
+override void OnMouseClick (int X, int Y, int Button) {
   SetFocus();
   waitingDeletion = false;
-  if (bEnteringText) {
-    bEnteringText = false;
-    if (EnterText) {
-      Text = EnterText;
-      CmdBuf_AddText("Save %d \"%q\"\n", SlotNum, Text);
-      GetClGame().ForceMenuOff();
+  if (Button == K_MOUSE1) {
+    /*
+    if (bEnteringText) {
+      bEnteringText = false;
+      if (EnterText) {
+        Text = EnterText;
+        CmdBuf_AddText("Save %d \"%q\"\n", SlotNum, Text);
+        GetClGame().ForceMenuOff();
+      }
     }
+    */
+    ActivateSlot();
+  } else if (Button == K_MOUSE2) {
+    GetClGame().PopMenu();
   }
-  ActivateSlot();
-}
-
-
-//==========================================================================
-//
-//  OnRMouseClick
-//
-//==========================================================================
-override void OnRMouseClick (int X, int Y) {
-  SetFocus();
-  GetClGame().PopMenu();
 }
 
 

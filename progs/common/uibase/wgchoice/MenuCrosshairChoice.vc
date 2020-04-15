@@ -103,7 +103,7 @@ override void OnDraw () {
 
   SetFont('smallfont');
 
-  int Col = (IsFocus() ? TextColorFocus : TextColor);
+  int Col = (IsFocused ? TextColorFocus : TextColor);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
     DrawText(0, 3, Text, Col);
@@ -161,37 +161,8 @@ override bool OnEvent (ref event_t evt) {
 }
 
 
-override void OnMouseClick (int X, int Y) {
-  if (IsFocus()) {
-    /*
-    int idx = value;
-    if (idx < 9) {
-      ++idx;
-      if (isValidValue(idx)) {
-        value = idx;
-        LocalSound('menu/change');
-      }
-    }
-    */
-  } else {
-    SetFocus();
-  }
-}
-
-
-override void OnRMouseClick (int X, int Y) {
-  if (IsFocus()) {
-    /*
-    int idx = value;
-    if (idx > 0) {
-      --idx;
-      if (isValidValue(idx)) {
-        value = idx;
-        LocalSound('menu/change');
-      }
-    }
-    */
-  } else {
+override void OnMouseClick (int X, int Y, int Button) {
+  if (!IsFocused) {
     SetFocus();
   }
 }

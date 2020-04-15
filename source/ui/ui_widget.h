@@ -39,7 +39,7 @@ struct VClipRect {
   float ClipX2;
   float ClipY2;
 
-  inline bool HasArea () const { return (ClipX1 < ClipX2 && ClipY1 < ClipY2); }
+  inline bool HasArea () const noexcept { return (ClipX1 < ClipX2 && ClipY1 < ClipY2); }
 };
 
 
@@ -113,25 +113,36 @@ protected:
   VObjectDelegate FocusReceived;
 
 protected:
-  void AddChild (VWidget *);
-  void RemoveChild (VWidget *);
+  void AddChild (VWidget *NewChild);
+  void RemoveChild (VWidget *InChild);
 
-  void ClipTree ();
+  void ClipTree () noexcept;
   void DrawTree ();
   void TickTree (float DeltaTime);
 
   void FindNewFocus ();
 
-  VWidget *GetWidgetAt (float, float);
+  VWidget *GetWidgetAt (float X, float Y) noexcept;
 
-  bool TransferAndClipRect (float &, float &, float &, float &, float &, float &, float &, float &) const;
-  void DrawString (int, int, VStr, int, int, float);
+  // translate screen and texture coordinates
+  bool TransferAndClipRect (float &X1, float &Y1, float &X2, float &Y2, float &S1, float &T1, float &S2, float &T2) const noexcept;
+
+  void DrawString (int x, int y, VStr String, int NormalColor, int BoldColor, float Alpha);
 
   void MarkDead ();
   void MarkChildrenDead ();
 
   // called by root widget in responder
   static void CleanupWidgets ();
+
+  inline bool CanBeFocused () const noexcept {
+    return ((WidgetFlags&(WF_IsVisible|WF_IsEnabled|WF_IsFocusable)) == (WF_IsVisible|WF_IsEnabled|WF_IsFocusable));
+  }
+
+  inline bool IsVisibleFlag () const noexcept { return (WidgetFlags&WF_IsVisible); }
+  inline bool IsTickEnabledFlag () const noexcept { return (WidgetFlags&WF_TickEnabled); }
+  inline bool IsEnabledFlag () const noexcept { return (WidgetFlags&WF_IsEnabled); }
+  inline bool IsFocusableFlag () const noexcept { return (WidgetFlags&WF_IsFocusable); }
 
 protected:
   void DrawCharPic (int X, int Y, VTexture *Tex, float Alpha=1.0f, bool shadowed=false);
@@ -144,11 +155,9 @@ public:
   virtual void Init (VWidget *);
   virtual void Destroy () override;
 
-  //inline bool IsDeadManWalking () const { return ((WidgetFlags&WF_DeadManWalking) != 0); }
-
   void DestroyAllChildren ();
 
-  VRootWidget *GetRootWidget();
+  VRootWidget *GetRootWidget () noexcept;
 
   void ToDrawerCoords (float &x, float &y) const noexcept;
   void ToDrawerCoords (int &x, int &y) const noexcept;
@@ -156,8 +165,8 @@ public:
   // methods to move widget on top or bottom
   void Lower ();
   void Raise ();
-  void MoveBefore (VWidget *);
-  void MoveAfter (VWidget *);
+  void MoveBefore (VWidget *Other);
+  void MoveAfter (VWidget *Other);
 
   // methods to set position, size and scale
   inline void SetPos (int NewX, int NewY) { SetConfiguration(NewX, NewY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY); }
@@ -178,11 +187,11 @@ public:
   inline int GetHeight () const noexcept { return SizeHeight; }
 
   // visibility methods
-  void SetVisibility (bool);
+  void SetVisibility (bool NewVisibility);
   inline void Show () { SetVisibility(true); }
   inline void Hide () { SetVisibility(false); }
 
-  inline bool IsVisible (bool bRecurse = true) const {
+  inline bool IsVisible (bool bRecurse=true) const noexcept {
     if (bRecurse) {
       const VWidget *pParent = this;
       while (pParent) {
@@ -196,11 +205,11 @@ public:
   }
 
   // enable state methods
-  void SetEnabled (bool);
+  void SetEnabled (bool NewEnabled);
   inline void Enable () { SetEnabled(true); }
   inline void Disable () { SetEnabled(false); }
 
-  inline bool IsEnabled (bool bRecurse = true) const {
+  inline bool IsEnabled (bool bRecurse=true) const noexcept {
     if (bRecurse) {
       const VWidget *pParent = this;
       while (pParent) {
@@ -214,14 +223,25 @@ public:
   }
 
   // focusable state methods
-  void SetFocusable (bool);
+  void SetFocusable (bool NewFocusable);
   inline bool IsFocusable () const { return !!(WidgetFlags&WF_IsFocusable); }
 
   // focus methods
-  void SetCurrentFocusChild (VWidget *);
+  void SetCurrentFocusChild (VWidget *NewFocus);
   inline VWidget *GetCurrentFocus () const { return CurrentFocusChild; }
-  bool IsFocus (bool Recurse = true) const;
-  void SetFocus ();
+  inline void SetFocus () { if (ParentWidget) ParentWidget->SetCurrentFocusChild(this); }
+
+  inline bool IsFocused (bool Recurse=true) const noexcept {
+    // root is always focused
+    if (!ParentWidget) return true;
+    if (Recurse) {
+      const VWidget *W = this;
+      while (W->ParentWidget && W->ParentWidget->CurrentFocusChild == W) W = W->ParentWidget;
+      return !W->ParentWidget;
+    } else {
+      return (ParentWidget->CurrentFocusChild == this);
+    }
+  }
 
   void DrawPicScaledIgnoreOffset (int X, int Y, int Handle, float scaleX=1.0f, float scaleY=1.0f, float Alpha=1.0f, int Trans=0);
 
@@ -274,8 +294,16 @@ public:
   virtual void OnVisibilityChanged (bool NewVisibility) { static VMethodProxy method("OnVisibilityChanged"); vobjPutParamSelf(NewVisibility); VMT_RET_VOID(method); }
   virtual void OnEnableChanged (bool bNewEnable) { static VMethodProxy method("OnEnableChanged"); vobjPutParamSelf(bNewEnable); VMT_RET_VOID(method); }
   virtual void OnFocusableChanged (bool bNewFocusable) { static VMethodProxy method("OnFocusableChanged"); vobjPutParamSelf(bNewFocusable); VMT_RET_VOID(method); }
-  virtual void OnFocusReceived () { static VMethodProxy method("OnFocusReceived"); vobjPutParamSelf(); VMT_RET_VOID(method); }
-  virtual void OnFocusLost () { static VMethodProxy method("OnFocusLost"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+
+  virtual void OnFocusReceived () {
+    WidgetFlags &= ~(WF_LMouseDown|WF_MMouseDown|WF_RMouseDown);
+    static VMethodProxy method("OnFocusReceived"); vobjPutParamSelf(); VMT_RET_VOID(method);
+  }
+  virtual void OnFocusLost () {
+    WidgetFlags &= ~(WF_LMouseDown|WF_MMouseDown|WF_RMouseDown);
+    static VMethodProxy method("OnFocusLost"); vobjPutParamSelf(); VMT_RET_VOID(method);
+  }
+
   virtual void OnDraw () { static VMethodProxy method("OnDraw"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void OnPostDraw () { static VMethodProxy method("OnPostDraw"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void Tick (float DeltaTime) { if (DeltaTime <= 0.0f) return; static VMethodProxy method("Tick"); vobjPutParamSelf(DeltaTime); VMT_RET_VOID(method); }
@@ -283,11 +311,13 @@ public:
   virtual bool OnMouseMove (int OldX, int OldY, int NewX, int NewY) { static VMethodProxy method("OnMouseMove"); vobjPutParamSelf(OldX, OldY, NewX, NewY); VMT_RET_BOOL(method); }
   virtual void OnMouseEnter () { static VMethodProxy method("OnMouseEnter"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void OnMouseLeave () { static VMethodProxy method("OnMouseLeave"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+
+  // `Button` is `K_MOUSE\d`
   virtual bool OnMouseDown (int X, int Y, int Button) { static VMethodProxy method("OnMouseDown"); vobjPutParamSelf(X, Y, Button); VMT_RET_BOOL(method); }
   virtual bool OnMouseUp (int X, int Y, int Button) { static VMethodProxy method("OnMouseUp"); vobjPutParamSelf(X, Y, Button); VMT_RET_BOOL(method); }
-  virtual void OnMouseClick (int X, int Y) { static VMethodProxy method("OnMouseClick"); vobjPutParamSelf(X, Y); VMT_RET_VOID(method); }
-  virtual void OnMMouseClick (int X, int Y) { static VMethodProxy method("OnMMouseClick"); vobjPutParamSelf(X, Y); VMT_RET_VOID(method); }
-  virtual void OnRMouseClick (int X, int Y) { static VMethodProxy method("OnRMouseClick"); vobjPutParamSelf(X, Y); VMT_RET_VOID(method); }
+
+  // `Button` is `K_MOUSE\d`
+  virtual void OnMouseClick (int X, int Y, int Button) { static VMethodProxy method("OnMouseClick"); vobjPutParamSelf(X, Y, Button); VMT_RET_VOID(method); }
 
   // script natives
   DECLARE_FUNCTION(NewChild)
@@ -327,7 +357,7 @@ public:
 
   DECLARE_FUNCTION(SetCurrentFocusChild)
   DECLARE_FUNCTION(GetCurrentFocus)
-  DECLARE_FUNCTION(IsFocus)
+  DECLARE_FUNCTION(IsFocused)
   DECLARE_FUNCTION(SetFocus)
 
   DECLARE_FUNCTION(DrawPicScaledIgnoreOffset)
