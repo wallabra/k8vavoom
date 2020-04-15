@@ -301,9 +301,7 @@ void FL_CreatePath (VStr Path) {
 //==========================================================================
 VStream *FL_OpenSysFileRead (VStr Name) {
   if (Name.isEmpty()) return nullptr;
-  FILE *File = fopen(*Name, "rb");
-  if (!File) return nullptr;
-  return new VStdFileStreamRead(File, Name);
+  return CreateDiskStreamRead(Name);
 }
 
 

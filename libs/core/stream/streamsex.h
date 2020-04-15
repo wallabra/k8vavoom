@@ -200,6 +200,11 @@ public:
 };
 
 
+// this function is called by the engine to open disk files
+// return any reading stream or `nullptr` for "file not found"
+extern VStream *CreateDiskStreamRead (VStr fname);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // doesn't own srcstream by default
 // does full stream proxing (i.e. forwards all virtual methods)

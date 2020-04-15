@@ -1229,3 +1229,20 @@ void VPartialStreamRO::SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
     srccurpos = cpos-stpos;
   }
 }
+
+
+//==========================================================================
+//
+//  CreateDiskStreamRead
+//
+//  this function is called by the engine to open disk files
+//  return any reading stream or `nullptr` for "file not found"
+//
+//==========================================================================
+VStream *CreateDiskStreamRead (VStr fname) {
+  if (fname.isEmpty()) return nullptr;
+  // here you can put various custom handlers
+  FILE *fl = fopen(*fname, "rb");
+  if (!fl) return nullptr;
+  return new VStdFileStreamRead(fl, fname);
+}
