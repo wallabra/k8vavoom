@@ -31,6 +31,12 @@
 
 #include "core.h"
 
+#ifdef ANDROID
+#  include <android/asset_manager.h>
+#  include <android/asset_manager_jni.h>
+#  include <SDL.h>
+#  include <jni.h>
+#endif
 
 /*
   static void *operator new (size_t size);
@@ -90,6 +96,63 @@ static inline int getRootPathLength (const VStr &s) noexcept {
    s.length() > 0 && (s[0] == '/' || s[0] == '\\') ? 1 :
    s.length() > 2 && s[1] == ':' && (s[2] == '/' || s[2] == '\\') ? 3 : 0;
 }
+#endif
+
+#ifdef ANDROID
+static inline bool isApkPath (const VStr &s) noexcept {
+  return s.length() >= 1 && (s[0] == '.') && (s.length() == 1 || s[1] == '/');
+}
+static inline VStr getApkPath (const VStr &s) noexcept {
+  return isApkPath(s) ? VStr(s, 2, s.length() - 2) : VStr();
+}
+static AAssetManager *androidAssetManager;
+static void getApkAssetManager () {
+  if (androidAssetManager == nullptr) {
+    JNIEnv *env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    assert(env != nullptr);
+    jobject activity = (jobject)SDL_AndroidGetActivity();
+    assert(activity != nullptr);
+    jclass clazz(env->GetObjectClass(activity));
+    //jclass clazz(env->FindClass("android/view/ContextThemeWrapper"));
+    assert(clazz != nullptr);
+    jmethodID method = env->GetMethodID(clazz, "getAssets", "()Landroid/content/res/AssetManager;");
+    assert(method != nullptr);
+    jobject assetManager = env->CallObjectMethod(activity, method);
+    assert(assetManager != nullptr);
+    androidAssetManager = AAssetManager_fromJava(env, assetManager);
+    env->DeleteLocalRef(activity);
+    env->DeleteLocalRef(clazz);
+  }
+}
+
+static bool tryApkFile (VStr path) {
+  if (isApkPath(path)) {
+    getApkAssetManager();
+    if (androidAssetManager != nullptr) {
+      VStr s = getApkPath(path);
+      AAsset *a = AAssetManager_open(androidAssetManager, *s, AASSET_MODE_STREAMING);
+      bool res = a != nullptr;
+      AAsset_close(a);
+      return res;
+    }
+  }
+  return false;
+}
+
+static bool tryApkDir (VStr path) {
+  if (isApkPath(path)) {
+    getApkAssetManager();
+    if (androidAssetManager != nullptr) {
+      VStr s = getApkPath(path);
+      AAssetDir* d = AAssetManager_openDir(androidAssetManager, *s);
+      bool res = d != nullptr;
+      AAssetDir_close(d);
+      return res;
+    }
+  }
+  return false;
+}
+
 #endif
 
 
@@ -273,6 +336,9 @@ struct DirInfo {
   DIR *dh;
   VStr path; // with slash
   bool wantDirs;
+#ifdef ANDROID
+  AAssetDir *adir;
+#endif
 };
 
 
@@ -282,6 +348,12 @@ struct DirInfo {
 //
 //==========================================================================
 static bool isRegularFile (VStr filename) {
+//  GLog.Logf("isRegularFile(%s)", *filename);
+#ifdef ANDROID
+  if (isApkPath(filename)) {
+    return tryApkFile(filename);
+  }
+#endif
   struct stat st;
   if (filename.length() == 0) return false;
   if (stat(*filename, &st) == -1) return false;
@@ -295,6 +367,12 @@ static bool isRegularFile (VStr filename) {
 //
 //==========================================================================
 static bool isDirectory (VStr filename) {
+//  GLog.Logf("isDirectory(%s)", *filename);
+#ifdef ANDROID
+  if (isApkPath(filename)) {
+    return tryApkDir(filename);
+  }
+#endif
   struct stat st;
   if (filename.length() == 0) return false;
   if (stat(*filename, &st) == -1) return false;
@@ -308,7 +386,14 @@ static bool isDirectory (VStr filename) {
 //
 //==========================================================================
 bool Sys_FileExists (VStr filename) {
-  return (!filename.isEmpty() && access(*filename, R_OK) == 0 && isRegularFile(filename));
+//  GLog.Logf("Sys_FileExists(%s)", *filename);
+  if (filename.isEmpty()) return false;
+#ifdef ANDROID
+  if (isApkPath(filename)) {
+    return tryApkFile(filename);
+  }
+#endif
+  return access(*filename, R_OK) == 0 && isRegularFile(filename);
 }
 
 
@@ -318,6 +403,10 @@ bool Sys_FileExists (VStr filename) {
 //
 //==========================================================================
 void Sys_FileDelete (VStr filename) {
+//  GLog.Logf("Sys_FileDelete(%s)", *filename);
+#ifdef ANDROID
+  if (isApkPath(filename)) return;
+#endif
   if (filename.length()) unlink(*filename);
 }
 
@@ -330,7 +419,11 @@ void Sys_FileDelete (VStr filename) {
 //
 //==========================================================================
 int Sys_FileTime (VStr path) {
+//  GLog.Logf("Sys_FileTime(%s)", *path);
   if (path.isEmpty()) return -1;
+#ifdef ANDROID
+  if (isApkPath(path)) return 0;
+#endif
   struct stat buf;
   if (stat(*path, &buf) == -1) return -1;
   return (S_ISREG(buf.st_mode) ? buf.st_mtime : -1);
@@ -343,7 +436,11 @@ int Sys_FileTime (VStr path) {
 //
 //==========================================================================
 bool Sys_Touch (VStr path) {
+//  GLog.Logf("Sys_Touch(%s)", *path);
   if (path.isEmpty()) return -1;
+#ifdef ANDROID
+  if (isApkPath(path)) return 0;
+#endif
   utimbuf tv;
   tv.actime = tv.modtime = time(NULL);
   return (utime(*path, &tv) == 0);
@@ -366,7 +463,11 @@ int Sys_CurrFileTime () {
 //
 //==========================================================================
 bool Sys_CreateDirectory (VStr path) {
+//  GLog.Logf("Sys_CreateDirectory(%s)", *path);
   if (path.isEmpty()) return false;
+#ifdef ANDROID
+  if (isApkPath(path)) return false;
+#endif
   return (mkdir(*path, 0777) == 0);
 }
 
@@ -377,8 +478,27 @@ bool Sys_CreateDirectory (VStr path) {
 //
 //==========================================================================
 void *Sys_OpenDir (VStr path, bool wantDirs) {
+//  GLog.Logf("Sys_OpenDir(%s)", *path);
   if (path.isEmpty()) return nullptr;
   path = path.removeTrailingSlash();
+#ifdef ANDROID
+  getApkAssetManager();
+  if (androidAssetManager != nullptr) {
+    VStr s = getApkPath(path);
+    AAssetDir* d = AAssetManager_openDir(androidAssetManager, *s);
+    if (d != nullptr) {
+      auto res = (DirInfo *)Z_Malloc(sizeof(DirInfo));
+      if (!res) {
+        AAssetDir_close(d);
+        return nullptr;
+      }
+      memset((void *)res, 0, sizeof(DirInfo));
+      res->adir = d;
+      res->path = "./" + s;
+      res->wantDirs = wantDirs;
+    }
+  }
+#endif
   DIR *dh = opendir(*path);
   if (!dh) return nullptr;
   auto res = (DirInfo *)Z_Malloc(sizeof(DirInfo));
@@ -399,8 +519,25 @@ void *Sys_OpenDir (VStr path, bool wantDirs) {
 //
 //==========================================================================
 VStr Sys_ReadDir (void *adir) {
+//  GLog.Logf("Sys_ReadDir");
   if (!adir) return VStr();
   DirInfo *dh = (DirInfo *)adir;
+#ifdef ANDROID
+  // android library returns only list of files
+  // make your own jni wrapper if you really need directories
+  if (dh->adir != nullptr) {
+    const char *n;
+    while ((n = AAssetDir_getNextFileName(dh->adir)) != nullptr) {
+      int len = strlen(n);
+      if (n[len - 1] == '/' && dh->wantDirs) continue;
+      return dh->path + VStr(n);
+    }
+    AAssetDir_close(dh->adir);
+    dh->adir = nullptr;
+    dh->path.clear();
+    return VStr();
+  }
+#endif
   if (!dh->dh) return VStr();
   for (;;) {
     struct dirent *de = readdir(dh->dh);
@@ -427,8 +564,12 @@ VStr Sys_ReadDir (void *adir) {
 //
 //==========================================================================
 void Sys_CloseDir (void *adir) {
+//  GLog.Logf("Sys_CloseDir");
   if (adir) {
     DirInfo *dh = (DirInfo *)adir;
+#ifdef ANDROID
+    if (dh->adir) AAssetDir_close(dh->adir);
+#endif
     if (dh->dh) closedir(dh->dh);
     dh->path.clear();
     Z_Free((void *)dh);
@@ -442,8 +583,14 @@ void Sys_CloseDir (void *adir) {
 //
 //==========================================================================
 bool Sys_DirExists (VStr path) {
+//  GLog.Logf("Sys_DirExists(%s)", *path);
   if (path.isEmpty()) return false;
   path = path.removeTrailingSlash();
+#ifdef ANDROID
+  if (isApkPath(path)) {
+    return tryApkDir(path);
+  }
+#endif
   struct stat s;
   if (stat(*path, &s) == -1) return false;
   return !!S_ISDIR(s.st_mode);
@@ -633,7 +780,7 @@ vuint32 Sys_GetCurrentTID () {
 //
 //==========================================================================
 VStr Sys_GetUserName () {
-#ifndef __SWITCH__
+#if !defined(__SWITCH__) && !defined(ANDROID)
   uid_t uid = geteuid();
   struct passwd *pw = getpwuid(uid);
   if (pw) return sys_NormalizeUserName(pw->pw_name);
