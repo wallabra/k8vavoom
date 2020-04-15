@@ -1367,6 +1367,7 @@ static void AddGameDir (VStr basedir, VStr dir) {
     for (VStr test = Sys_ReadDir(dirit); test.IsNotEmpty(); test = Sys_ReadDir(dirit)) {
       //fprintf(stderr, "  <%s>\n", *test);
       if (test[0] == '_' || test[0] == '.') continue; // skip it
+      if (test.extractFileName().strEquCI("basepak.pk3")) continue; // it will be explicitly added later
       VStr ext = test.ExtractFileExtension();
            if (ext.strEquCI(".wad")) WadFiles.Append(test);
       else if (ext.strEquCI(".pk3")) ZipFiles.Append(test);
@@ -1374,6 +1375,14 @@ static void AddGameDir (VStr basedir, VStr dir) {
     Sys_CloseDir(dirit);
     qsort(WadFiles.Ptr(), WadFiles.length(), sizeof(VStr), cmpfuncCINoExt);
     qsort(ZipFiles.Ptr(), ZipFiles.length(), sizeof(VStr), cmpfuncCINoExt);
+  }
+
+  // use `VStdFileStreamRead` so android port can override it
+  auto bps = FL_OpenSysFileRead(bdx.appendPath("basepak.pk3"));
+  if (bps) {
+    delete bps;
+    ZipFiles.insert(0, "basepak.pk3");
+    GCon->Logf(NAME_Init, "found basepak at '%s'", *bdx.appendPath("basepak.pk3"));
   }
 
   // add system dir, if it has any files
