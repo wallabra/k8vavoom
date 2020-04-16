@@ -24,19 +24,20 @@
 //**
 //**************************************************************************
 //#define SPOTLIGHT_DISCO_TEST
+//#define SPOTLIGHT_DISCO_CROWN_TEST
 
 class PlayerEx : BasePlayer abstract;
 
 // player internal flags, for cheats and debug
-enum /*cheat_t*/ {
-  CF_NOCLIP            = 1<<0, // No clipping, walk through barriers.
-  CF_GODMODE           = 1<<1, // No damage, no health loss.
-  CF_REGENERATION      = 1<<2, // Regenerate Health points.
-  CF_FRIGHTENING       = 1<<3, // Scare monsters away.
-  CF_DOUBLEFIRINGSPEED = 1<<4, // Player owns a double firing speed artifact
-  CF_HIGHJUMP          = 1<<5, // Player owns a high jump artifact
-  CF_TIMEFREEZE        = 1<<6, // Player owns a time freeze artifact
-  CF_BUDDHA            = 1<<7, // Normal play, but never looses last 1% of health
+bitenum {
+  CF_NOCLIP, // No clipping, walk through barriers.
+  CF_GODMODE, // No damage, no health loss.
+  CF_REGENERATION, // Regenerate Health points.
+  CF_FRIGHTENING, // Scare monsters away.
+  CF_DOUBLEFIRINGSPEED, // Player owns a double firing speed artifact
+  CF_HIGHJUMP, // Player owns a high jump artifact
+  CF_TIMEFREEZE, // Player owns a time freeze artifact
+  CF_BUDDHA, // Normal play, but never looses last 1% of health
 };
 
 enum FlashlightLightId = 3_669_666;
@@ -476,6 +477,7 @@ override void ClearEntityInventoryQS () {
 //==========================================================================
 void ResetWeaponReloadRefire () {
   bReloadQueued = false;
+  bReloadDown = false;
   Refire = 0;
 }
 
@@ -1744,6 +1746,7 @@ void MovePsprites (float deltaTime) {
 //===========================================================================
 void FireWeapon (optional state firestate) {
   bReloadQueued = false;
+  bReloadDown = false;
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:true)) return;
 
   //print("FireWeapon: self=`%C`; MO=`%C`; PS_WEAPON=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, PS_WEAPON, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
@@ -1767,6 +1770,7 @@ void FireWeapon (optional state firestate) {
 //===========================================================================
 void AltFireWeapon (optional state firestate) {
   bReloadQueued = false;
+  bReloadDown = false;
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, AutoSwitch:true)) return;
 
   //print("AltFireWeapon: self=`%C`; MO=`%C`; PS_WEAPON=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, PS_WEAPON, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
@@ -1829,6 +1833,7 @@ void SetPendingWeapon (Weapon NewWpn) {
   // do not select morph weapon, do not change morph weapon
   if (NewWpn.bGivenAsMorphWeapon || (ReadyWeapon && ReadyWeapon.bGivenAsMorphWeapon)) return;
   bReloadQueued = false;
+  bReloadDown = false;
   PendingWeapon = NewWpn;
 }
 
@@ -4594,16 +4599,6 @@ override void PlayerTick (float deltaTime) {
   }
 
   //ProcessFlashligh(); // nope, it is done in `ClientTick()`
-
-#ifdef SPOTLIGHT_DISCO_TEST
-  {
-    DebugPutRotatingSpotlight(vector(1100, -3270, 110), 100, 512, 0xff_ff_00_00, 0);
-
-    DebugPutRotatingSpotlight(vector(990, -2990, 68), 100, 512, 0xff_00_ff_00, 1);
-
-    DebugPutRotatingSpotlight(vector(588, -3226, 100), 100, 512, 0xff_ff_00_00, 2);
-  }
-#endif
 }
 
 
@@ -4642,29 +4637,6 @@ void ProcessFlashligh () {
       fl.bPlayerLight = true;
     }
   }
-}
-
-
-//==========================================================================
-//
-//  DebugPutRotatingSpotlight
-//
-//==========================================================================
-final void DebugPutRotatingSpotlight (TVec florg, float speed, float flradius, int color, int id) {
-  TAVec ag;
-  ag.yaw = AngleMod360(MO.XLevel.Time*speed);
-  TVec dir;
-  AngleVector(ag, out dir);
-  dlight_t *fl = MO.AllocDlight(MO, florg, flradius, 669+id);
-  if (!fl) return;
-  fl.coneDirection = dir;
-  fl.coneAngle = 42.0f;
-  fl.color = color|0xff_00_00_00;
-  fl.die = MO.XLevel.Time+(2.0/35.0);
-  fl.type = DynamicLight::DLTYPE_Spot;
-  //fl.minlight = 64;
-  fl.bNoShadow = false;
-  fl.bPlayerLight = true; // so it won't be rejected
 }
 
 
@@ -4739,6 +4711,53 @@ override void SetViewPos () {
 
 //==========================================================================
 //
+//  DebugPutRotatingSpotlight
+//
+//==========================================================================
+final void DebugPutRotatingSpotlight (TVec florg, float speed, float flradius, int color, int id) {
+  TAVec ag;
+  ag.yaw = AngleMod360(MO.XLevel.Time*speed);
+  TVec dir;
+  AngleVector(ag, out dir);
+  dlight_t *fl = MO.AllocDlight(MO, florg, flradius, 669+id);
+  if (!fl) return;
+  fl.coneDirection = dir;
+  fl.coneAngle = 42.0f;
+  fl.color = color|0xff_00_00_00;
+  fl.die = MO.XLevel.Time+(2.0/35.0);
+  fl.type = DynamicLight::DLTYPE_Spot;
+  //fl.minlight = 64;
+  fl.bNoShadow = false;
+  fl.bPlayerLight = true; // so it won't be rejected
+}
+
+
+//==========================================================================
+//
+//  DebugPutRotatingSpotlightHead
+//
+//==========================================================================
+final void DebugPutRotatingSpotlightHead (TVec florg, float speed, float flradius, int color, int id) {
+  TAVec ag;
+  ag.yaw = AngleMod360(MO.XLevel.Time*speed+id*120);
+  TVec dir;
+  AngleVector(ag, out dir);
+  florg += dir*8;
+  dlight_t *fl = MO.AllocDlight(MO, florg, flradius, 669+id);
+  if (!fl) return;
+  fl.coneDirection = dir;
+  fl.coneAngle = 42.0f;
+  fl.color = color|0xff_00_00_00;
+  fl.die = MO.XLevel.Time+(2.0/35.0);
+  fl.type = DynamicLight::DLTYPE_Spot;
+  //fl.minlight = 64;
+  fl.bNoShadow = false;
+  fl.bPlayerLight = true; // so it won't be rejected
+}
+
+
+//==========================================================================
+//
 //  ClientTick
 //
 //==========================================================================
@@ -4747,6 +4766,18 @@ override void ClientTick (float deltaTime) {
   //printdebug("%C: flashlight=%B", self, bFlashlightOn);
   //if (MO) printdebug("%C: va=%s; %C: a=%s", self, ViewAngles, MO, MO.Angles);
   ProcessFlashligh();
+#ifdef SPOTLIGHT_DISCO_TEST
+  DebugPutRotatingSpotlight(vector(1100, -3270, 110), 100, 512, 0xff_ff_00_00, 0);
+  DebugPutRotatingSpotlight(vector(990, -2990, 68), 100, 512, 0xff_00_ff_00, 1);
+  DebugPutRotatingSpotlight(vector(588, -3226, 100), 100, 512, 0xff_ff_00_00, 2);
+#endif
+#ifdef SPOTLIGHT_DISCO_CROWN_TEST
+  if (MO) {
+    DebugPutRotatingSpotlightHead(MO.Origin+vector(0, 0, MO.Height+32), 100, 512, 0xff_ff_00_00, 0);
+    DebugPutRotatingSpotlightHead(MO.Origin+vector(0, 0, MO.Height+32), 100, 512, 0xff_00_ff_00, 1);
+    DebugPutRotatingSpotlightHead(MO.Origin+vector(0, 0, MO.Height+32), 100, 512, 0xff_ff_00_00, 2);
+  }
+#endif
 }
 
 
