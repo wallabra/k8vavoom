@@ -424,6 +424,10 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
 
   callICB(VCB_InitVideo);
 
+#ifdef ANDROID
+  SDL_StartTextInput();
+#endif
+
   return true;
 }
 
