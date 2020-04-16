@@ -216,6 +216,7 @@ static void* mi_win_virtual_allocx(void* addr, size_t size, size_t try_alignment
     return VirtualAlloc(hint, size, flags, PAGE_READWRITE);
   }
 #endif
+/*k8:fuck you, shitdoze!
 #if defined(MEM_EXTENDED_PARAMETER_TYPE_BITS)
   // on modern Windows try use VirtualAlloc2 for aligned allocation
   if (try_alignment > 0 && (try_alignment % _mi_os_page_size()) == 0 && pVirtualAlloc2 != NULL) {
@@ -227,6 +228,7 @@ static void* mi_win_virtual_allocx(void* addr, size_t size, size_t try_alignment
     return (*pVirtualAlloc2)(GetCurrentProcess(), addr, size, flags, PAGE_READWRITE, &param, 1);
   }
 #endif
+*/
   return VirtualAlloc(addr, size, flags, PAGE_READWRITE);
 }
 
@@ -859,12 +861,14 @@ static void* mi_os_alloc_huge_os_pagesx(void* addr, size_t size, int numa_node)
       _mi_warning_message("unable to allocate using huge (1gb) pages, trying large (2mb) pages instead (status 0x%lx)\n", err);
     }
   }
+/*k8:fuck you, shitdoze!
   // on modern Windows try use VirtualAlloc2 for numa aware large OS page allocation
   if (pVirtualAlloc2 != NULL && numa_node >= 0) {
     params[0].Type = MemExtendedParameterNumaNode;
     params[0].ULong = (unsigned)numa_node;
     return (*pVirtualAlloc2)(GetCurrentProcess(), addr, size, flags, PAGE_READWRITE, params, 1);
   }
+*/
   #endif
   // otherwise use regular virtual alloc on older windows
   return VirtualAlloc(addr, size, flags, PAGE_READWRITE);
