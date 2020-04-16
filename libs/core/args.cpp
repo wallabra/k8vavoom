@@ -115,6 +115,15 @@ void VArgs::Init (int argc, char **argv, const char *filearg) {
     fclose(rf);
     Argv[Argc++] = xstrdup("@./args.txt");
   }
+#elif defined(ANDROID)
+  // $HOME are setted in sys_sdl.cpp
+  VStr p = VStr((const char *)getenv("HOME")) + "/.k8vavoom/args.txt";
+  FILE *rf = fopen(*p, "rb");
+  if (rf) {
+    fclose(rf);
+    p = "@" + p;
+    Argv[Argc++] = xstrdup(*p);
+  }
 #endif
   FindResponseFile();
   InsertFileArg(filearg);
