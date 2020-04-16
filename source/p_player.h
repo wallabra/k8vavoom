@@ -59,27 +59,27 @@ enum playerstate_t {
 
 // button/action code definitions
 enum {
-  BT_ATTACK      = 0x00000001, // press "fire"
-  BT_USE         = 0x00000002, // use button, to open doors, activate switches
-  BT_JUMP        = 0x00000004,
-  BT_ALT_ATTACK  = 0x00000008,
-  BT_BUTTON_5    = 0x00000010,
-  BT_BUTTON_6    = 0x00000020,
-  BT_BUTTON_7    = 0x00000040,
-  BT_BUTTON_8    = 0x00000080,
-  BT_RELOAD      = 0x00000100,
-  BT_SPEED       = 0x00000200,
-  BT_STRAFE      = 0x00000400,
-  BT_CROUCH      = 0x00000800,
-  BT_MOVELEFT    = 0x00001000,
-  BT_MOVERIGHT   = 0x00002000,
-  BT_LEFT        = 0x00004000,
-  BT_RIGHT       = 0x00008000,
-  BT_FORWARD     = 0x00010000,
-  BT_BACKWARD    = 0x00020000,
-  BT_FLASHLIGHT  = 0x00100000,
-  BT_SUPERBULLET = 0x00200000,
-  BT_ZOOM        = 0x00400000,
+  BT_ATTACK      = 1u<<0, // press "fire"
+  BT_USE         = 1u<<1, // use button, to open doors, activate switches
+  BT_JUMP        = 1u<<2,
+  BT_ALT_ATTACK  = 1u<<3,
+  BT_BUTTON_5    = 1u<<4,
+  BT_BUTTON_6    = 1u<<5,
+  BT_BUTTON_7    = 1u<<6,
+  BT_BUTTON_8    = 1u<<7,
+  BT_RELOAD      = 1u<<8,
+  BT_SPEED       = 1u<<9,
+  BT_STRAFE      = 1u<<10,
+  BT_CROUCH      = 1u<<11,
+  BT_MOVELEFT    = 1u<<12,
+  BT_MOVERIGHT   = 1u<<13,
+  BT_LEFT        = 1u<<14,
+  BT_RIGHT       = 1u<<15,
+  BT_FORWARD     = 1u<<16,
+  BT_BACKWARD    = 1u<<17,
+  BT_FLASHLIGHT  = 1u<<18,
+  BT_SUPERBULLET = 1u<<19,
+  BT_ZOOM        = 1u<<20,
 };
 
 struct VViewState {
@@ -114,8 +114,9 @@ class VBasePlayer : public VGameObject {
     PF_ReloadQueued      = 1u<<11,
     PF_ReloadDown        = 1u<<12, // set if button was down last tic
     PF_ZoomDown          = 1u<<13,
+    PF_AltAttackDown     = 1u<<14,
     // this flag is set for client games if the player is using prediction engine (not yet)
-    PF_AutonomousProxy   = 1u<<14,
+    PF_AutonomousProxy   = 1u<<15,
   };
   vuint32 PlayerFlags;
 

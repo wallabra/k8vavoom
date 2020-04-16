@@ -3752,6 +3752,7 @@ void PlayerReborn () {
   ResetPlayerOnSpawn(keepPlayerState:true);
   bUseDown = true; // don't do anything immediately
   bAttackDown = true;
+  bAltAttackDown = false;
   bZoomDown = false;
   bReloadDown = false;
   ResetWeaponReloadRefire();

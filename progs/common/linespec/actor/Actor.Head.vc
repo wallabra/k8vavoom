@@ -748,6 +748,8 @@ final bool InWeaponReadyCheckSetRecurseGuard () {
 //
 //  WeaponReadyResetAttackState
 //
+//  changes player state (animation)
+//
 //==========================================================================
 final void WeaponReadyResetAttackState () {
   // get out of attack state
@@ -845,7 +847,7 @@ final void WeaponReadyResetAttackState () {
         return;
       }
     } else if (!(Flags&WRF_NOSECONDARY) && (Player.Buttons&BT_ALT_ATTACK) && Wpn.FindState('AltFire')) {
-      if (((Flags&WRF_ALLOWREFIRE) || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
+      if (((Flags&WRF_ALLOWREFIRE) || !Player.bAltAttackDown) || !Wpn.bNoAutoFire) {
         if (InWeaponReadyCheckSetRecurseGuard()) {
           printwarn("A_WeaponReady: secondary fire recursed");
           return;
@@ -853,34 +855,20 @@ final void WeaponReadyResetAttackState () {
         scope(exit) k8InWeaponReady = false;
         WeaponReadyResetAttackState();
         Wpn.bBobDisabled = true;
-        Player.bAttackDown = true;
+        Player.bAltAttackDown = true;
         Player.bReloadQueued = false;
         PlayerEx(Player).AltFireWeapon();
         //if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
         return;
       }
     } else {
-      if (Player.bAttackDown) {
+      if (Player.bAttackDown || Player.bAltAttackDown) {
         //k8: i don't think that we need any checks here
         WeaponReadyResetAttackState();
       }
       Player.bAttackDown = false;
+      Player.bAltAttackDown = false;
     }
-    // still reset player state
-    //k8: i don't think that we need any checks here
-    //WeaponReadyResetAttackState();
-    /*
-    {
-      if (InWeaponReadyCheckSetRecurseGuard()) {
-        printwarn("A_WeaponReady: fire state recursed");
-        //WeaponReadyResetAttackState();
-        return;
-      } else {
-        scope(exit) k8InWeaponReady = false;
-        WeaponReadyResetAttackState();
-      }
-    }
-    */
   }
 
   // check for reload
@@ -893,6 +881,7 @@ final void WeaponReadyResetAttackState () {
     WeaponReadyResetAttackState();
     Wpn.bBobDisabled = true;
     Player.bAttackDown = true;
+    Player.bAltAttackDown = true;
     Player.bZoomDown = false;
     PlayerEx(Player).ReloadWeapon();
     return;

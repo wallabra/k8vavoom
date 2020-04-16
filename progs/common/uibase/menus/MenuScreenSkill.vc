@@ -63,7 +63,15 @@ override void CreateChoices () {
     currentY += Btn.Height;
   }
   maxwdt += 60;
-  if (Width < maxwdt) Width = maxwdt;
+  if (Width < maxwdt) {
+    int delta = maxwdt-Width;
+    Width = maxwdt;
+    foreach (auto it; Items) {
+      auto sk = MenuChoiceSkill(it);
+      if (!sk) continue;
+      sk.Width = sk.Width+delta;
+    }
+  }
 }
 
 

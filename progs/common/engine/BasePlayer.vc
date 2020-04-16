@@ -56,7 +56,7 @@ readonly bool bActive;
 readonly bool bSpawned;
 readonly bool bIsBot;
 bool bFixAngle;
-bool bAttackDown; // `true` if button down last tic
+bool bAttackDown; // `true` if button was down last tic
 bool bUseDown;
 bool bDidSecret; // `true` if secret level has been done
 readonly private bool bCentering;
@@ -64,8 +64,9 @@ readonly bool bIsClient; // player on client side
 bool bAutomapRevealed;
 bool bAutomapShowThings;
 bool bReloadQueued; // true if "reload" was pressed
-bool bReloadDown; // `true` if button down last tic
-bool bZoomDown; // `true` if button down last tic
+bool bReloadDown; // `true` if button was down last tic
+bool bZoomDown; // `true` if button was down last tic
+bool bAltAttackDown; // `true` if button was down last tic
 // this flag is set for client games if the player is using prediction engine (not yet)
 transient bool bAutonomousProxy;
 
@@ -165,7 +166,7 @@ replication {
     ViewStates, DispSpriteFrame, DispSpriteName,
     ClientNum, MO, Camera, SoundEnvironment,
     bAutomapRevealed, bAutomapShowThings,
-    bAttackDown, bReloadQueued, bReloadDown, bZoomDown,
+    bAttackDown, bReloadQueued, bReloadDown, bZoomDown, bAltAttackDown,
     WorldTimer, GameTime, LastDeltaTime;
 
   // methods server can execute on client
