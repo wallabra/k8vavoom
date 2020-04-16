@@ -131,9 +131,10 @@ static bool tryApkFile (VStr path) {
     if (androidAssetManager != nullptr) {
       VStr s = getApkPath(path);
       AAsset *a = AAssetManager_open(androidAssetManager, *s, AASSET_MODE_STREAMING);
-      bool res = a != nullptr;
-      AAsset_close(a);
-      return res;
+      if (a != nullptr) {
+        AAsset_close(a);
+        return true;
+      }
     }
   }
   return false;
@@ -145,9 +146,10 @@ static bool tryApkDir (VStr path) {
     if (androidAssetManager != nullptr) {
       VStr s = getApkPath(path);
       AAssetDir* d = AAssetManager_openDir(androidAssetManager, *s);
-      bool res = d != nullptr;
-      AAssetDir_close(d);
-      return res;
+      if (d != nullptr) {
+        AAssetDir_close(d);
+        return true;
+      }
     }
   }
   return false;
