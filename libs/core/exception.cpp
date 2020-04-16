@@ -29,6 +29,10 @@
 # include <windows.h>
 #endif
 
+#ifdef ANDROID
+# include <SDL.h>
+#endif
+
 
 #ifdef USE_GUARD_SIGNAL_CONTEXT
 jmp_buf VSigContextHack::Env;
@@ -124,6 +128,9 @@ void Sys_Error (const char *error, ...) noexcept {
 
 #if defined(WIN32)
   MessageBox(NULL, buf, "k8vavoom Fatal Error", MB_OK);
+#elif defined(ANDROID)
+  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "k8vavoom Fatal Error", buf, NULL);
+  _Exit(1);
 /*
 #else //if defined(VCC_STANDALONE_EXECUTOR)
   fputs("FATAL: ", stderr);
