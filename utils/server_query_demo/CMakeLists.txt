@@ -10,5 +10,7 @@ if(ENABLE_QUERY_DEMO)
   endif()
   target_link_libraries(k8vavoom-query ${NET_LIBRARIES})
 
-  install(TARGETS k8vavoom-query DESTINATION ${BINDIR}/tools)
+  if(CYGWIN OR MINGW)
+    install(TARGETS k8vavoom-query DESTINATION ${BINDIR}/tools)
+  endif()
 endif(ENABLE_QUERY_DEMO)
