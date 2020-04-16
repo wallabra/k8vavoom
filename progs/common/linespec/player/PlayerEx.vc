@@ -477,7 +477,6 @@ override void ClearEntityInventoryQS () {
 //==========================================================================
 void ResetWeaponReloadRefire () {
   bReloadQueued = false;
-  bReloadDown = false;
   Refire = 0;
 }
 
@@ -1746,7 +1745,6 @@ void MovePsprites (float deltaTime) {
 //===========================================================================
 void FireWeapon (optional state firestate) {
   bReloadQueued = false;
-  bReloadDown = false;
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:true)) return;
 
   //print("FireWeapon: self=`%C`; MO=`%C`; PS_WEAPON=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, PS_WEAPON, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
@@ -1770,7 +1768,6 @@ void FireWeapon (optional state firestate) {
 //===========================================================================
 void AltFireWeapon (optional state firestate) {
   bReloadQueued = false;
-  bReloadDown = false;
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, AutoSwitch:true)) return;
 
   //print("AltFireWeapon: self=`%C`; MO=`%C`; PS_WEAPON=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, PS_WEAPON, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));

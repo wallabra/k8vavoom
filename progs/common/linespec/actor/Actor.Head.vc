@@ -842,7 +842,6 @@ final void WeaponReadyResetAttackState () {
         Wpn.bBobDisabled = true;
         Player.bAttackDown = true;
         Player.bReloadQueued = false;
-        Player.bReloadDown = false;
         PlayerEx(Player).FireWeapon();
         //if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
         return;
@@ -858,7 +857,6 @@ final void WeaponReadyResetAttackState () {
         Wpn.bBobDisabled = true;
         Player.bAltAttackDown = true;
         Player.bReloadQueued = false;
-        Player.bReloadDown = false;
         PlayerEx(Player).AltFireWeapon();
         //if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
         return;
