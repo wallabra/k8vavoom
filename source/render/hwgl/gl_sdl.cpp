@@ -359,9 +359,20 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
     Width = 800;
     Height = 600;
     */
+#ifdef ANDROID
+    SDL_DisplayMode mode;
+    if (SDL_GetCurrentDisplayMode(0, &mode) == 0) {
+      Width = mode.w;
+      Height = mode.h;
+      fsmode = 1;
+    } else {
+      Sys_Error("Failed to get display mode: %s", SDL_GetError());
+    }
+#else
     //k8: 'cmon, this is silly! let's set something better!
     Width = 1024;
     Height = 768;
+#endif
   }
 
   if (fsmode < 0 || fsmode > 2) fsmode = 0;
