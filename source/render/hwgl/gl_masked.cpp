@@ -373,6 +373,10 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
       attribPosition = SurfMaskedFakeShadow.loc_Position;
       attribTexCoord = SurfMaskedFakeShadow.loc_TexCoord;
       break;
+    case ShaderFuzzy:
+      attribPosition = SurfMaskedFuzzy.loc_Position;
+      attribTexCoord = SurfMaskedFuzzy.loc_TexCoord;
+      break;
     default: Sys_Error("ketmar forgot some shader type in `VOpenGLDrawer::DrawSpritePolygon()`");
   }
 
