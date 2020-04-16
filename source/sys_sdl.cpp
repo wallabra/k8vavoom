@@ -460,6 +460,17 @@ int main (int argc, char **argv) {
 # endif
 #endif
 
+#ifdef ANDROID
+  const char *s = SDL_AndroidGetExternalStoragePath();
+  SDL_Log("External storage: [%s]", s);
+  if (s) {
+    setenv("HOME", s, 1); // HACK
+  } else {
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Holy shit", "External storage not available", NULL);
+    return 1;
+  }
+#endif
+
   bool inGDB = false;
   for (int f = 1; f < argc; ++f) {
     if (strcmp(argv[f], "-gdb") == 0) {
