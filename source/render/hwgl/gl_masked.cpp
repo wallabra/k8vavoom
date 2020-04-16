@@ -149,7 +149,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 //  VOpenGLDrawer::DrawSpritePolygon
 //
 //==========================================================================
-void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
+void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex,
                                        const RenderStyleInfo &ri,
                                        VTextureTranslation *Translation, int CMap,
                                        const TVec &sprnormal, float sprpdist,
@@ -162,6 +162,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     ShaderMaskedBM,
     ShaderStencil,
     ShaderFakeShadow,
+    ShaderFuzzy,
   };
 
   // ignore translucent textures here: some idiots are trying to make "smoothed" sprites in this manner
@@ -173,6 +174,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   } else {
     if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap) shadtype = ShaderMaskedBM;
     if (ri.isTranslucent()) resetDepthMask = true;
+    if (ri.translucency == RenderStyleInfo::Fuzzy) shadtype = ShaderFuzzy;
   }
 
   const bool trans = (ri.translucency || ri.alpha < 1.0f || Tex->isTranslucent());
@@ -230,6 +232,20 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       SurfMaskedFakeShadow.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
       SurfMaskedFakeShadow.SetFogFade(ri.fade, ri.alpha);
       SurfMaskedFakeShadow.UploadChangedUniforms();
+      break;
+    case ShaderFuzzy:
+      SurfMaskedFuzzy.Activate();
+      SurfMaskedFuzzy.SetTexture(0);
+      /*
+      SurfMaskedFuzzy.SetLight(
+        ((ri.light>>16)&255)/255.0f,
+        ((ri.light>>8)&255)/255.0f,
+        (ri.light&255)/255.0f, ri.alpha);
+      */
+      SurfMaskedFuzzy.SetTime(time);
+      SurfMaskedFuzzy.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
+      SurfMaskedFuzzy.SetFogFade(ri.fade, ri.alpha);
+      SurfMaskedFuzzy.UploadChangedUniforms();
       break;
     default: Sys_Error("ketmar forgot some shader type in `VOpenGLDrawer::DrawSpritePolygon()`");
   }
@@ -301,6 +317,12 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
         SPRVTX(SurfMaskedFakeShadow, cv[1]);
         SPRVTX(SurfMaskedFakeShadow, cv[2]);
         SPRVTX(SurfMaskedFakeShadow, cv[3]);
+        break;
+      case ShaderFuzzy:
+        SPRVTX(SurfMaskedFuzzy, cv[0]);
+        SPRVTX(SurfMaskedFuzzy, cv[1]);
+        SPRVTX(SurfMaskedFuzzy, cv[2]);
+        SPRVTX(SurfMaskedFuzzy, cv[3]);
         break;
       default: Sys_Error("ketmar forgot some shader type in `VOpenGLDrawer::DrawSpritePolygon()`");
     }

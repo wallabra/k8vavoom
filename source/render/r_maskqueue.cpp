@@ -198,7 +198,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
 
   bool renderShadow =
     sprtype == SPR_VP_PARALLEL_UPRIGHT &&
-    !ri.isShadow() && !ri.isShaded() && // yep
+    !ri.isShadow() && !ri.isShaded() /*yep*/ && !ri.isFuzzy() &&
     r_fake_sprite_shadows.asBool() &&
     r_sort_sprites.asBool() &&
     (r_fake_shadow_scale.asFloat() > 0.0f);
@@ -608,7 +608,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
       }
     }
   } else {
-    Drawer->DrawSpritePolygon(sv, Tex, ri,
+    Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), sv, Tex, ri,
       GetTranslation(thing->Translation), ColorMap,
       -sprforward, DotProduct(sprorigin, -sprforward),
       (flip ? -sprright : sprright)/scaleX,
@@ -754,7 +754,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
           // reset pofs
           pofs = 0;
         }
-        Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
+        Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), spr.Verts, GTextureManager[spr.lump],
                                   spr.rstyle, GetTranslation(spr.translation),
                                   ColorMap, spr.normal, spr.pdist,
                                   spr.saxis, spr.taxis, spr.texorg);

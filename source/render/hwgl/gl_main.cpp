@@ -526,6 +526,7 @@ void VOpenGLDrawer::SetupBlending (const RenderStyleInfo &ri) {
   switch (ri.translucency) {
     case RenderStyleInfo::Translucent: // normal translucency
     case RenderStyleInfo::Shaded: // normal translucency
+    case RenderStyleInfo::Fuzzy: // normal translucency
       //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
       break;
     case RenderStyleInfo::Additive: // additive translucency

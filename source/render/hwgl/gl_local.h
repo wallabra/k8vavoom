@@ -318,7 +318,7 @@ public:
   virtual void BeginTranslucentPolygonDecals () override;
   virtual void DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) override;
 
-  virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex,
+  virtual void DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex,
                                   const RenderStyleInfo &ri,
                                   VTextureTranslation *Translation, int CMap,
                                   const TVec &sprnormal, float sprpdist,

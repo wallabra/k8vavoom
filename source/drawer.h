@@ -99,6 +99,7 @@ struct RenderStyleInfo {
     DarkTrans = 3, // k8vavoom special
     Shaded = 4, // translucent, shaded; `stencilColor` is shade color
     AddShaded = 5, // additive, shaded; `stencilColor` is shade color
+    Fuzzy = 6,
   };
 
   enum {
@@ -130,6 +131,7 @@ struct RenderStyleInfo {
   inline bool isShaded () const noexcept { return (translucency == Shaded || translucency == AddShaded); }
   // this is how "shadow" render style is rendered
   inline bool isShadow () const noexcept { return (translucency == Translucent && stencilColor == 0xff000000u); }
+  inline bool isFuzzy () const noexcept { return (translucency == Fuzzy); }
   inline bool isStenciled () const noexcept { return (stencilColor && translucency != Shaded && translucency != AddShaded); }
 
   const char *toCString () const noexcept { return va("light=0x%08x; fade=0x%08x; stc=0x%08x; trans=%d; alpha=%g; flags=0x%04x", light, fade, stencilColor, translucency, alpha, flags); }
@@ -487,7 +489,7 @@ public:
   virtual void BeginTranslucentPolygonDecals () = 0;
   virtual void DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) = 0;
 
-  virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex,
+  virtual void DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex,
                                   const RenderStyleInfo &ri,
                                   VTextureTranslation *Translation, int CMap,
                                   const TVec &sprnormal, float sprpdist,

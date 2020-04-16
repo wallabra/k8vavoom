@@ -229,6 +229,7 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader SurfMaskedGlow both="masked/surf_masked" { define "VV_MASKED_GLOW"; }
   Shader SurfMaskedBrightmapGlow both="masked/surf_masked" { defines { "VV_MASKED_BRIGHTMAP", "VV_MASKED_GLOW" } }
   Shader SurfMaskedFakeShadow vertex="masked/surf_masked" fragment="masked/surf_masked_fakeshadow";
+  Shader SurfMaskedFuzzy vertex="masked/surf_masked" fragment="masked/surf_masked_fuzzy";
   Shader SurfMaskedStencil vertex="masked/surf_masked" fragment="masked/surf_masked_stencil";
 
   Shader SurfPartSq vertex="particle/particle" fragment="particle/particle_sq";

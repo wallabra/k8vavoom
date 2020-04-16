@@ -102,9 +102,15 @@ bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int Rend
     case STYLE_Fuzzy: // draw silhouette using "fuzz" effect
     case STYLE_OptFuzzy: // draw as fuzzy or translucent, based on user preference
       if (r_drawfuzz) {
+        // shadow
+        /*
         ri.stencilColor = 0xff000000u;
         ri.translucency = RenderStyleInfo::Translucent;
         ri.alpha = 0.4f; // was 0.3f
+        */
+        ri.stencilColor = 0u;
+        ri.translucency = RenderStyleInfo::Fuzzy;
+        ri.alpha = 0.98f; // just in case, to mark it as translucent for sorters
       } else {
         ri.stencilColor = 0u;
         ri.translucency = RenderStyleInfo::Translucent;
