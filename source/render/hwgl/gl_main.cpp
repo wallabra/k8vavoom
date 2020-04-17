@@ -2285,6 +2285,9 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdirc
       if (needToAddDefines) {
         if (isVersionLine(line)) { res += line; continue; }
         if (needToAddRevZ) { res += "#define VAVOOM_REVERSE_Z\n"; needToAddRevZ = false; }
+        #ifdef GL4ES_HACKS
+        res += "#define GL4ES_HACKS\n";
+        #endif
         // add other defines
         for (int didx = 0; didx < defines.length(); ++didx) {
           VStr def = defines[didx];
