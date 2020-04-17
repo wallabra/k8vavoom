@@ -61,6 +61,42 @@ class_ignore "Skulltag" {
   type = Skulltag;
 }
 
+// invasion spawn spots (unimplemented yet)
+class_ignore "Skulltag" {
+  parent = "CustomPickupInvasionSpot";
+  type = Skulltag;
+}
+
+class_ignore "Skulltag" {
+  parent = "CustomMonsterInvasionSpot";
+  type = Skulltag;
+}
+
+class_ignore "Skulltag" {
+  parent = "CustomWeaponInvasionSpot";
+  type = Skulltag;
+}
+
+class_ignore "Skulltag" {
+  parent = "WeakDoomMonsterSpot";
+  type = Skulltag;
+}
+
+class_ignore "Skulltag" {
+  parent = "PowerfulDoomMonsterSpot";
+  type = Skulltag;
+}
+
+class_ignore "Skulltag" {
+  parent = "VeryPowerfulDoomMonsterSpot";
+  type = Skulltag;
+}
+
+class_ignore "Skulltag" {
+  parent = "AnyDoomMonsterSpot";
+  type = Skulltag;
+}
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // Unimplemented
