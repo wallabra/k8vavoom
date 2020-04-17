@@ -676,9 +676,22 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
 
   // render image
   #ifdef VV_SPLASH_PARTIAL_UPDATES
-  SDL_SetRenderDrawColor(rensplash, 0, 0, 0, SDL_ALPHA_OPAQUE);
-  SDL_RenderClear(rensplash);
-  SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
+    SDL_SetRenderDrawColor(rensplash, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(rensplash);
+    #ifdef ANDROID
+      int www, hhh;
+      if (SDL_GetRendererOutputSize(rensplash, &www, &hhh) == 0) {
+        SDL_Rect r = (SDL_Rect) {
+          .x = www / 2 - splashWidth / 2,
+          .y = hhh / 2 - splashHeight / 2,
+          .w = splashWidth,
+          .h = splashHeight
+        };
+        SDL_RenderCopy(rensplash, imgsplash, NULL, &r);
+      }
+    #else
+      SDL_RenderCopy(rensplash, imgsplash, NULL, NULL);
+    #endif
   #endif
   DrawLoadingSplashText("Loading...", -1);
 
@@ -767,6 +780,16 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
     srectu.h = CONFONT_HEIGHT*(int)IMG_TEXT_LINES;
     SDL_Rect drectu;
     drectu = srectu;
+    #ifdef ANDROID
+      int www, hhh;
+      if (SDL_GetRendererOutputSize(rensplash, &www, &hhh) == 0) {
+        int swww, shhh;
+        if (SDL_QueryTexture(imgsplash, NULL, NULL, &swww, &shhh) == 0) {
+          drectu.x += www / 2 - swww / 2;
+          drectu.y += hhh / 2 - shhh / 2;
+        }
+      }
+    #endif
     SDL_RenderCopy(rensplash, imgsplash, &srectu, &drectu);
     #else
     // copy whole image
@@ -828,6 +851,16 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
       drect.y = imgty;
       drect.w = fwdt;
       drect.h = fhgt;
+      #ifdef ANDROID
+        int www, hhh;
+        if (SDL_GetRendererOutputSize(rensplash, &www, &hhh) == 0) {
+          int swww, shhh;
+          if (SDL_QueryTexture(imgsplash, NULL, NULL, &swww, &shhh) == 0) {
+            drect.x += www / 2 - swww / 2;
+            drect.y += hhh / 2 - shhh / 2;
+          }
+        }
+      #endif
       SDL_RenderCopy(rensplash, ttx, NULL, &drect);
       SDL_DestroyTexture(ttx);
     }
