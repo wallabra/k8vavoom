@@ -61,7 +61,7 @@ void main () {
   float test = mod(xtime*2.0+(vX+vY), 0.5);
   #endif
 
-  FinalColor.a = TexColor.a*test;
+  FinalColor.a = TexColor.a*(test*1.6);
   FinalColor.rgb = vec3(0.0,0.0,0.0);
   $include "common/fog_calc.fs"
 
