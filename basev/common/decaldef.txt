@@ -882,6 +882,7 @@ decal CrossbowScorch
   randomflipy
 }
 
+/*
 decal k8TestDecal001
 {
   pic CBOWMARK
@@ -891,6 +892,7 @@ decal k8TestDecal001
   //randomflipx
   //randomflipy
 }
+*/
 
 /***** Heretic Imp Scorches ************************************************/
 
@@ -1448,6 +1450,7 @@ generator Mauler      RailScorchLower
 
 
 
+/*
 decal k8TestDecal {
   pic K8TESTDC
   shade "ff 7f 00"
@@ -1456,3 +1459,4 @@ decal k8TestDecal {
   fullbright
   //randomflipy
 }
+*/
