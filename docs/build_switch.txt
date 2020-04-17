@@ -1,0 +1,41 @@
+To build k8vavoom for the Nintendo Switch:
+
+1. Install devkitA64.
+
+2. Install the following dependencies:
+  * libnx >= 3.1.0
+  * switch-sdl2 >= 2.0.12 (also pulls the GL libraries)
+  * devkitpro-pkgbuild-helpers
+  * switch-zlib
+  * switch-libmad
+  * switch-libogg
+  * switch-libopus
+  * switch-libvorbis
+  * switch-opusfile
+  * switch-flac
+  * openal-soft for Switch ( https://github.com/fgsfdsfgs/openal-soft )
+  * fluidsynth-lite for Switch ( https://github.com/fgsfdsfgs/fluidsynth-lite )
+You can use [dkp-]pacman in your devkitA64 environment for all of those, except
+the last two.
+
+3. Build k8vavoom for your host platform, e. g.:
+
+mkdir nativebuild && cd nativebuild
+cmake ..
+make -j4
+
+4. Build k8vavoom for the Switch in a different directory like so:
+
+mkdir switchbuild && cd switchbuild
+source $DEVKITPRO/switchvars.sh
+cmake .. -G"Unix Makefiles" \
+-DCMAKE_TOOLCHAIN_FILE="$DEVKITPRO/switch.cmake" \
+-DPKG_CONFIG_EXECUTABLE="$DEVKITPRO/portlibs/switch/bin/aarch64-none-elf-pkg-config" \
+-DWITH_SYS_FLUID=ON \
+-DWITH_GLAD=ON
+PATH="$PATH:$NATIVEBUILD/utils/bin" make -j4
+
+...where $NATIVEBUILD is the path to the native build produced in step 3.
+
+5. Copy k8vavoom.nro and the basev folder from your native build to
+/switch/k8vavoom/ on your Switch and run k8vavoom from hbmenu.
