@@ -116,7 +116,7 @@ menudef SpriteVideoOptions {
     help =
       "Fuzzy (like Specter) sprite effect.",
       "'Translucency' is normal translucency effect.",
-      "'Shadow' is the same as 'Shadow' render style.";
+      "'Shadow' is (very) rough approximation of 'fuzzy' effect.";
   }
 
   option slider {
@@ -125,6 +125,7 @@ menudef SpriteVideoOptions {
     step = 0.05;
     min = 0;
     max = 1;
+    help = "Translucency for 'Translucent' fuzzy effect style.";
   }
 
 
