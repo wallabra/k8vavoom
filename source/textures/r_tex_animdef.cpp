@@ -1063,7 +1063,7 @@ static void ParseCameraTexture (VScriptParser *sc) {
   if (sc->Check("worldpanning")) worldPan = true;
 
   if (Width < 1 || FitWidth < 1 || Height < 1 || FitHeight < 1 ||
-      Width > 512 || FitWidth > 512 || Height > 512 || FitHeight > 512)
+      Width > 1280 || FitWidth > 1280 || Height > 1280 || FitHeight > 1280)
   {
     GCon->Logf(NAME_Error, "bad (too big or too small) camera texture '%s' dimensions: (%dx%d); fit is (%dx%d)", *Name, Width, Height, FitWidth, FitHeight);
     Width = clampval(Width, 1, 2048);
