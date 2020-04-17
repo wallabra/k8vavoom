@@ -254,8 +254,6 @@ void VRenderLevelShared::DrawPlayerSprites () {
   if (!r_draw_psprites || r_chasecam) return;
   if (!cl || !cl->MO) return;
 
-  static
-
   int RendStyle = STYLE_Normal;
   float Alpha = 1.0f;
   cl->MO->eventGetViewEntRenderParams(Alpha, RendStyle);
