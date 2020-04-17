@@ -123,12 +123,17 @@ void VOpenGLDrawer::DeleteTextures () {
 //==========================================================================
 void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
   if (!Tex) return;
-  glBindTexture(GL_TEXTURE_2D, 0);
   if (Tex->DriverHandle) {
+    glBindTexture(GL_TEXTURE_2D, 0);
     glDeleteTextures(1, (GLuint *)&Tex->DriverHandle);
     Tex->DriverHandle = 0;
   }
-  for (auto &&it : Tex->DriverTranslated) if (it.Handle) glDeleteTextures(1, (GLuint *)&it.Handle);
+  for (auto &&it : Tex->DriverTranslated) {
+    if (it.Handle) {
+      glBindTexture(GL_TEXTURE_2D, 0);
+      glDeleteTextures(1, (GLuint *)&it.Handle);
+    }
+  }
   Tex->ResetTranslations();
   Tex->lastUpdateFrame = 0;
   if (Tex->Brightmap) FlushTexture(Tex->Brightmap);
@@ -142,12 +147,17 @@ void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
 //==========================================================================
 void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
   if (!Tex) return;
-  glBindTexture(GL_TEXTURE_2D, 0);
   if (Tex->DriverHandle) {
+    glBindTexture(GL_TEXTURE_2D, 0);
     glDeleteTextures(1, (GLuint *)&Tex->DriverHandle);
     Tex->DriverHandle = 0;
   }
-  for (auto &&it : Tex->DriverTranslated) if (it.Handle) glDeleteTextures(1, (GLuint *)&it.Handle);
+  for (auto &&it : Tex->DriverTranslated) {
+    if (it.Handle) {
+      glBindTexture(GL_TEXTURE_2D, 0);
+      glDeleteTextures(1, (GLuint *)&it.Handle);
+    }
+  }
   Tex->ClearTranslations();
   Tex->lastUpdateFrame = 0;
   if (Tex->Brightmap) DeleteTexture(Tex->Brightmap);
