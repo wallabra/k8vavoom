@@ -46,7 +46,7 @@ extern VCvarB r_fake_shadows_alias_models;
 VCvarB r_sort_sprites("r_sort_sprites", true, "Sprite sorting.", CVAR_Archive);
 VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", /*CVAR_Archive|*/CVAR_PreInit);
-VCvarI r_drawfuzz("r_drawfuzz", "0", "Fuzz effect (0:alpha; 1:shadow)", CVAR_Archive);
+VCvarI r_drawfuzz("r_drawfuzz", "1", "Fuzz effect (0:alpha; 1:shadow)", CVAR_Archive);
 VCvarF r_fuzzalpha("r_fuzzalpha", "0.34", "Alpha for fuzzy sprites.", CVAR_Archive);
 VCvarF r_transsouls("r_transsouls", "1", "Lost Souls alpha.", CVAR_Archive);
 
