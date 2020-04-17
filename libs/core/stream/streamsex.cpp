@@ -745,11 +745,11 @@ VStdFileStreamBase::~VStdFileStreamBase () {
 //==========================================================================
 bool VStdFileStreamBase::Close () {
   if (mFl) {
-    if (!bLoading) fflush(mFl);
+    //if (!bLoading) fflush(mFl);
     fclose(mFl);
     mFl = nullptr;
   }
-  fflush(stderr);
+  //fflush(stderr);
   mName.clear();
   return !bError;
 }
@@ -762,7 +762,7 @@ bool VStdFileStreamBase::Close () {
 //==========================================================================
 void VStdFileStreamBase::SetError () {
   if (mFl) {
-    fflush(stderr);
+    //fflush(stderr);
     fclose(mFl);
     mFl = nullptr;
   }
