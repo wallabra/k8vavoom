@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifndef _WIN32
+#ifndef NO_RAWTTY
 # include <stdint.h>
 # include <sys/ioctl.h>
 # include <sys/select.h>
@@ -49,7 +49,7 @@ enum TermType {
 };
 
 
-#ifdef _WIN32
+#ifdef NO_RAWTTY
 # define  isGood     false
 # define  isRawMode  false
 # define  isWaitKey  true
@@ -414,7 +414,7 @@ bool ttyIsInRawMode () noexcept {
 //
 //==========================================================================
 int ttyGetWidth () noexcept {
-  #ifdef _WIN32
+  #ifdef NO_RAWTTY
   return 80;
   #else
   if (!isGood) return 80;
@@ -431,7 +431,7 @@ int ttyGetWidth () noexcept {
 //
 //==========================================================================
 int ttyGetHeight () noexcept {
-  #ifdef _WIN32
+  #ifdef NO_RAWTTY
   return 25;
   #else
   if (!isGood) return 25;
@@ -449,7 +449,7 @@ int ttyGetHeight () noexcept {
 //
 //==========================================================================
 bool ttySetRawMode (bool enable) noexcept {
-  #ifdef _WIN32
+  #ifdef NO_RAWTTY
   return false;
   #else
   if (!isGood) return false; // oops
@@ -502,7 +502,7 @@ bool ttyIsWaitKey () noexcept {
 //
 //==========================================================================
 bool ttySetWaitKey (bool doWait) noexcept {
-  #ifdef _WIN32
+  #ifdef NO_RAWTTY
   return false;
   #else
   if (!isGood || !isRawMode) return false;
@@ -527,7 +527,7 @@ static bool ttyIsFuckedFlag = false;
 //
 //==========================================================================
 void ttyRawWrite (const char *str...) noexcept {
-  #ifndef _WIN32
+  #ifndef NO_RAWTTY
   if (str && str[0]) write(STDOUT_FILENO, str, strlen(str));
   #endif
 }
@@ -634,7 +634,7 @@ void ttyDisableMouseReports () noexcept {
  *  true if key was pressed, false if no key was pressed in the given time
  */
 bool ttyWaitKey (int toMSec) noexcept {
-  #ifdef _WIN32
+  #ifdef NO_RAWTTY
   return false;
   #else
   if (!isGood || !isRawMode) return false;
@@ -676,7 +676,7 @@ bool ttyIsKeyHit () noexcept {
  *  read byte or -1 on error/timeout
  */
 int ttyReadKeyByte (int toMSec) noexcept {
-  #ifdef _WIN32
+  #ifdef NO_RAWTTY
   return -1;
   #else
   if (!isGood || !isRawMode) return -1;
@@ -1054,7 +1054,7 @@ class RawTTYInternalInitClass {
 public:
   RawTTYInternalInitClass () {
     isAvailable = (isatty(STDIN_FILENO) && isatty(STDOUT_FILENO));
-    #ifndef _WIN32
+    #ifndef NO_RAWTTY
     ttyIsFuckedFlag = false;
 
     const char *lang = getenv("LANG");

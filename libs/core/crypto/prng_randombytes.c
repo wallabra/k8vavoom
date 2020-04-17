@@ -12,7 +12,9 @@
 # include <errno.h>
 # include <time.h>
 # include <sys/time.h>
-# if defined(__linux__) && !defined(ANDROID)
+# if defined(__SWITCH__)
+#  include <switch/kernel/random.h> // for randomGet()
+# elif defined(__linux__) && !defined(ANDROID)
 #  include <sys/random.h>
 # endif
 #endif

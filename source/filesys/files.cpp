@@ -2379,7 +2379,6 @@ void FL_Init () {
   } else {
     /*static*/ const char *defaultBaseDirs[] = {
 #ifdef __SWITCH__
-      "/switch/k8vavoom",
       ".",
 #elif !defined(_WIN32)
       "/opt/vavoom/share/k8vavoom",
@@ -2448,8 +2447,7 @@ void FL_Init () {
       ".",
       "!/.",
 #ifdef __SWITCH__
-      "/switch/k8vavoom/iwads",
-      "/switch/k8vavoom",
+      "./iwads",
 #elif !defined(_WIN32)
       "~/.k8vavoom/iwads",
       "~/.k8vavoom/iwad",

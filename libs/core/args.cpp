@@ -47,7 +47,7 @@ char *VArgs::GetBinaryDir () {
   static char mydir[8192];
   memset(mydir, 0, sizeof(mydir));
 #ifdef __SWITCH__
-  strncpy(mydir, "/switch/vavoom", sizeof(mydir)-1);
+  strcpy(mydir, ".");
 #elif !defined(_WIN32)
   char buf[128];
   pid_t pid = getpid();
@@ -110,10 +110,10 @@ void VArgs::Init (int argc, char **argv, const char *filearg) {
   }
 #ifdef __SWITCH__
   // add static response file if it exists
-  FILE *rf = fopen("/switch/vavoom/args.txt", "rb");
+  FILE *rf = fopen("./args.txt", "rb");
   if (rf) {
     fclose(rf);
-    Argv[Argc++] = xstrdup("@/switch/vavoom/args.txt");
+    Argv[Argc++] = xstrdup("@./args.txt");
   }
 #endif
   FindResponseFile();

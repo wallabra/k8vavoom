@@ -195,8 +195,10 @@ static __attribute__((unused)) inline int mythread_mutex_init_recursive (mythrea
   pthread_mutexattr_t attr;
   int res = pthread_mutexattr_init(&attr);
   if (res) return res;
+#ifdef PTHREAD_PROCESS_PRIVATE
   res = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE);
   if (res) { pthread_mutexattr_destroy(&attr); return res; }
+#endif
   res = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
   if (res) { pthread_mutexattr_destroy(&attr); return res; }
   res = pthread_mutex_init(mutex, &attr);

@@ -45,7 +45,9 @@ typedef int socklen_t;
 //#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#if defined(__linux__)
+#if defined(__SWITCH__)
+# include <switch/kernel/random.h> // for randomGet()
+#elif defined(__linux__)
 # include <sys/random.h>
 #endif
 

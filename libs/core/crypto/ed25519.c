@@ -8,8 +8,7 @@
 #include <string.h>
 
 #ifdef __SWITCH__
-// for randomGet()
-#include <switch/kernel/random.h>
+# include <switch/kernel/random.h> // for randomGet()
 #endif
 
 #include <sys/param.h>

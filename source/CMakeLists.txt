@@ -684,6 +684,15 @@ exec \"${CMAKE_INSTALL_PREFIX}/${BINDIR}/k8vavoom.bin\" \"\$\@\" -basedir \"${CM
 ")
     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/k8vavoom DESTINATION ${BINDIR})
   endif(ENABLE_WRAPPERS)
+
+  if(SWITCH_LIBNX)
+    add_custom_command(
+      TARGET k8vavoom POST_BUILD
+      COMMAND nacptool --create "${CMAKE_PROJECT_NAME}" \"\" \"\" "k8vavoom.nacp"
+      COMMAND aarch64-none-elf-strip -o ${CMAKE_BINARY_DIR}/k8vavoom_stripped ${CMAKE_BINARY_DIR}/k8vavoom
+      COMMAND elf2nro ${CMAKE_BINARY_DIR}/k8vavoom_stripped ${CMAKE_BINARY_DIR}/k8vavoom.nro --icon=${CMAKE_SOURCE_DIR}/branding/k8vavoom_switch.jpg --nacp=k8vavoom.nacp
+    )
+  endif(SWITCH_LIBNX)
 endif(ENABLE_CLIENT)
 
 

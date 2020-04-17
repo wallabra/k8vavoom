@@ -35,9 +35,11 @@ option(WITH_SSE42 "Use SSE4.2 instruction set (may not compile)" OFF)
 option(NO_SSE "Disable all SSE instructions" OFF)
 option(INSANE_AVX "Use AVX2 instruction set (don't do this, it won't give you any noticeable speedup and may be broken)" OFF)
 
+
 option(WITH_GLAD "Use supplied GLAD for GL bindings" OFF)
 option(NO_PTHREAD "Disable pthreads, use C11 threads instead" OFF)
 option(NO_MEMRCHR "Disable usage of memrchr()" OFF)
+option(NO_RAWTTY "Disable raw TTY control" OFF)
 
 option(WITH_STRTODEX "Use internal strtod implementation to parse floats" ON)
 
@@ -56,6 +58,8 @@ endif(CMAKE_CROSSCOMPILING AND WIN32)
 
 if(SWITCH_LIBNX)
   option(WITH_NXLINK "Redirect standard output to NXLink" OFF)
+  set(NO_SSE ON) # set it right away for proper logging and cflags
+  set(WITH_MIMALLOC OFF)
 endif(SWITCH_LIBNX)
 
 
@@ -344,6 +348,7 @@ if(NOT WIN32)
 else(NOT WIN32)
   set(CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE} -mwindows")
   set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -mwindows")
+  set(NO_RAWTTY ON)
 endif(NOT WIN32)
 
 
@@ -526,13 +531,7 @@ endif(ENABLE_CLIENT OR ENABLE_SERVER OR ENABLE_VCCRUN)
 #  **** Check for OpenAL ****
 #
 if(ENABLE_CLIENT OR ENABLE_VCCRUN)
-  if(SWITCH_LIBNX)
-    # massive fucking hack because nothing works right
-    set(OPENAL_LIBRARY "openal-soft")
-    set(OPENAL_INCLUDE_DIR "$ENV{PORTLIBS_PREFIX}/include/AL")
-  else(SWITCH_LIBNX)
-    find_package(OpenAL REQUIRED)
-  endif(SWITCH_LIBNX)
+  find_package(OpenAL REQUIRED)
   include_directories(${OPENAL_INCLUDE_DIR})
   ##find_path(OPENALAL_INCLUDE_DIR AL/al.h)
   ##set(MAIN_LIBS OpenAL32 ${MAIN_LIBS})
@@ -675,7 +674,13 @@ if(WITH_FLUID AND ENABLE_CLIENT)
     if(FLUID_FOUND)
       message(STATUS "Found FluidSynth: ${FLUID_LIBRARIES}")
       set(FLUID_FOUND ON)
-      include_directories(${FLUID_INCLUDE_DIRS})
+      if(SWITCH_LIBNX)
+        # catch all possible fluid installs (only one dir in there anyway)
+        include_directories(${FLUID_INCLUDE_DIRS})
+        include_directories(${FLUID_INCLUDE_DIRS}/fluidsynth)
+      else(SWITCH_LIBNX)
+        include_directories(${FLUID_INCLUDE_DIRS})
+      endif(SWITCH_LIBNX)
       set(MAIN_LIBS ${FLUID_LIBRARIES} ${MAIN_LIBS})
     else(FLUID_INCLUDE_DIRS AND FLUID_LIBRARIES)
       message(STATUS "Could NOT find FluidSynth libraries")
@@ -778,9 +783,11 @@ if(SWITCH_LIBNX)
   set(NO_SYSCONF ON)
   set(NO_SINCOS ON)
   set(NO_MEMRCHR ON)
+  set(NO_RAWTTY ON)
+  set(WITH_MIMALLOC OFF)
   # turn on nxlink if necessary
   if(WITH_NXLINK)
-    add_definitions(-DSWITCH_NXLINK)
+    add_definitions(-DSWITCH_NXLINK=1)
   endif(WITH_NXLINK)
 else(SWITCH_LIBNX)
   ### GnuTLS
@@ -833,6 +840,9 @@ if(NO_MEMRCHR)
   add_definitions(-DNO_MEMRCHR=1)
 endif(NO_MEMRCHR)
 
+if(NO_RAWTTY)
+  add_definitions(-DNO_RAWTTY=1)
+endif(NO_RAWTTY)
 
 ### if(CMAKE_EXECUTABLE_FORMAT STREQUAL "ELF")
 ###   add_subdirectory(libs/libbacktrace)

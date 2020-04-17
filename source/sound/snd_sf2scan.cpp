@@ -37,11 +37,9 @@ static bool diskScanned = false;
 
 static const char *SF2SearchPathes[] = {
   "!",
-#if !defined(__SWITCH__)
   "!/sf2",
   "!/dls",
   "!/soundfonts",
-#endif
 #if defined(_WIN32)
   "!/share",
   "!/share/sf2",
@@ -87,12 +85,6 @@ static const char *SF2SearchPathes[] = {
   "!/../share/k8vavoom/sf2",
   "!/../share/k8vavoom/dls",
   "!/../share/k8vavoom/soundfonts",
-#endif
-#if defined(__SWITCH__)
-  "/switch/k8vavoom",
-  "/switch/k8vavoom/sf2",
-  "/switch/k8vavoom/dls",
-  "/switch/k8vavoom/soundfonts",
 #endif
   nullptr,
 };
@@ -165,16 +157,16 @@ void SF2_ScanDiskBanks () {
   }
 
 #if defined(__SWITCH__)
-  // try "/switch/k8vavoom/gzdoom.sf2"
-  if (Sys_FileExists("/switch/k8vavoom/gzdoom.sf2")) {
+  // try "./gzdoom.sf2"
+  if (Sys_FileExists("./gzdoom.sf2")) {
     bool found = false;
     for (auto &&fn : sf2FileList) {
-      if (fn.strEquCI("/switch/k8vavoom/gzdoom.sf2")) {
+      if (fn.strEquCI("./gzdoom.sf2")) {
         found = true;
         break;
       }
     }
-    if (!found) sf2FileList.append("/switch/k8vavoom/gzdoom.sf2");
+    if (!found) sf2FileList.append("./gzdoom.sf2");
   }
 #endif
 

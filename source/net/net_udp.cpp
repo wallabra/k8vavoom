@@ -31,7 +31,9 @@
 # include <errno.h>
 # define socklen_t  int
 #else
-# include <ifaddrs.h>
+# ifndef __SWITCH__
+#  include <ifaddrs.h>
+# endif
 # include <sys/types.h>
 # include <sys/socket.h>
 # include <netinet/in.h>
@@ -554,14 +556,14 @@ int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
 //
 //==========================================================================
 int VUdpDriver::Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr) {
-  #ifndef WIN32
+  #if !defined(WIN32) && !defined(__SWITCH__)
   if (net_dbg_dump_udp_outbuffer) {
     int value = 0;
     if (ioctl(socket, TIOCOUTQ, &value) == 0) GCon->Logf(NAME_DevNet, "VUdpDriver::Write:000: TIOCOUTQ=%d", value);
   }
   #endif
   int ret = sendto(socket, (const char *)buf, len, 0, (sockaddr *)addr, sizeof(sockaddr));
-  #ifndef WIN32
+  #if !defined(WIN32) && !defined(__SWITCH__)
   if (net_dbg_dump_udp_outbuffer) {
     int value = 0;
     if (ioctl(socket, TIOCOUTQ, &value) == 0) GCon->Logf(NAME_DevNet, "VUdpDriver::Write:001: TIOCOUTQ=%d (res=%d)", value, ret);
@@ -840,7 +842,7 @@ int VUdpDriver::SetSocketPort (sockaddr_t *addr, int port) {
 //
 //==========================================================================
 bool VUdpDriver::FindExternalAddress (sockaddr_t *addr) {
-  #ifdef WIN32
+  #if defined(WIN32) || defined(__SWITCH__)
   return false;
   #else
   ifaddrs *ifAddrStruct = nullptr;

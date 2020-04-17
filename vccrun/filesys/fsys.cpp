@@ -63,7 +63,7 @@ static char *getBinaryPath () {
   gotMyDir = true;
   memset(mydir, 0, sizeof(mydir));
 #ifdef __SWITCH__
-  strncpy(mydir, "/switch/vavoom/", sizeof(mydir)-1);
+  strcpy(mydir, "./");
 #elif !defined(_WIN32)
   char buf[128];
   pid_t pid = getpid();

@@ -374,7 +374,7 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
 
   hw_window = SDL_CreateWindow("k8vavoom", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Width, Height, flags);
   if (!hw_window) {
-    GCon->Logf("SDL2: cannot create SDL2 window.");
+    GCon->Logf("SDL2: cannot create SDL2 window: %s.", SDL_GetError());
     return false;
   }
   SetWindowIcon(hw_window);
@@ -390,7 +390,8 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   SDL_GL_MakeCurrent(hw_window, hw_glctx);
 #ifdef USE_GLAD
   GCon->Logf("Loading GL procs using GLAD");
-  if (!gladLoadGLLoader(SDL_GL_GetProcAddress)) GCon->Logf("GLAD failed to load GL procs!\n");
+  if (!gladLoadGLLoader(SDL_GL_GetProcAddress))
+    GCon->Logf("GLAD failed to load GL procs!");
 #endif
 
   SetVSync(false); // second time

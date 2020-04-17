@@ -253,7 +253,9 @@ VStr Sys_FindFileCI (VStr path, bool lastIsDir) {
 #include <dirent.h>
 #include <pwd.h>
 #include <sys/stat.h>
-#include <sys/syscall.h>   /* For SYS_xxx definitions */
+#ifndef __SWITCH__
+# include <sys/syscall.h>   /* For SYS_xxx definitions */
+#endif
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>

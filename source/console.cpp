@@ -233,10 +233,8 @@ void C_Init () {
     logfout = fopen(cli_LogFileName, "w");
   }
 
-#if defined(_WIN32)
+#if defined(_WIN32) || (defined(__SWITCH__) && !defined(SWITCH_NXLINK))
   if (!logfout) logfout = fopen("conlog.log", "w");
-#elif defined(__SWITCH__) && !defined(SWITCH_NXLINK)
-  if (!logfout) logfout = fopen("/switch/k8vavoom/conlog.log", "w");
 #endif
 
   SysErrorCB = &C_SysErrorCallback;

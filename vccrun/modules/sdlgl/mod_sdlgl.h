@@ -36,10 +36,10 @@
 # include <SDL.h>
 #endif
 #ifdef USE_GLAD
-#include "glad.h"
+# include "glad.h"
 #else
-#include <GL/gl.h>
-#include <GL/glext.h>
+# include <GL/gl.h>
+# include <GL/glext.h>
 #endif
 
 

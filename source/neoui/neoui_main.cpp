@@ -31,12 +31,8 @@
 #else
 # include <SDL.h>
 #endif
-#ifdef USE_GLAD
-# include "glad.h"
-#else
-# include <GL/gl.h>
-# include <GL/glext.h>
-#endif
+#include <GL/gl.h>
+#include <GL/glext.h>
 #include "../cl_local.h"
 #include "../drawer.h"
 #include "../../libs/imago/imago.h"
