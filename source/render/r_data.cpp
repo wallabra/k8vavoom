@@ -398,12 +398,12 @@ static void InstallSpriteLump (int lumpnr, int frame, char Rot, bool flipped) {
 }
 
 
-struct SpriteTexInfo {
+struct SpriteTextureIdInfo {
   int texid;
   int next; // next id of texture with this 4-letter prefix, or 0
 };
 
-static TArray<SpriteTexInfo> spriteTextures;
+static TArray<SpriteTextureIdInfo> spriteTextures;
 static TMap<vuint32, int> spriteTexMap; // key: 4 bytes of a name; value: index in spriteTextures
 static int spriteTexturesLengthCheck = -1;
 
@@ -445,7 +445,7 @@ static void BuildSpriteTexturesList () {
       if (!pfx) continue;
       // create new record
       int cidx = spriteTextures.length();
-      SpriteTexInfo &sti = spriteTextures.alloc();
+      SpriteTextureIdInfo &sti = spriteTextures.alloc();
       sti.texid = l;
       sti.next = 0;
       // append to list

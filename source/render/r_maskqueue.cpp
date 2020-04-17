@@ -103,6 +103,38 @@ extern "C" {
 
 //==========================================================================
 //
+//  R_GetSpriteTextureInfo
+//
+//  returns `false` if no texture found
+//
+//==========================================================================
+bool R_GetSpriteTextureInfo (SpriteTexInfo *nfo, int sprindex, int sprframeidx) {
+  // decide which patch to use for sprite relative to player
+  if ((unsigned)sprindex >= (unsigned)sprites.length()) {
+    if (nfo) memset((void *)nfo, 0, sizeof(*nfo));
+    return false;
+  }
+
+  const spritedef_t *sprdef = &sprites.ptr()[sprindex];
+  if (sprframeidx >= sprdef->numframes) {
+    if (nfo) memset((void *)nfo, 0, sizeof(*nfo));
+    return false;
+  }
+
+  const spriteframe_t *sprframe = &sprdef->spriteframes[sprframeidx];
+
+  // use single rotation for all views
+  if (nfo) {
+    nfo->texid = sprframe->lump[0];
+    nfo->flags = (sprframe->flip[0] ? SpriteTexInfo::Flipped : 0u);
+  }
+
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::QueueTranslucentPoly
 //
 //==========================================================================
@@ -250,7 +282,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
 
   int SpriteIndex = thing->GetEffectiveSpriteIndex();
   int FrameIndex = thing->GetEffectiveSpriteFrame();
-  if (thing->FixedSpriteName != NAME_None) SpriteIndex = VClass::FindSprite(thing->FixedSpriteName);
+  if (thing->FixedSpriteName != NAME_None) SpriteIndex = VClass::FindSprite(thing->FixedSpriteName, false); // don't append
 
   // decide which patch to use for sprite relative to player
   if ((unsigned)SpriteIndex >= (unsigned)sprites.length()) {

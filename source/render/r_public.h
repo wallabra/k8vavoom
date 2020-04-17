@@ -222,6 +222,21 @@ bool R_IsStrictlySkyFlatPlane (sec_plane_t *SPlane);
 VName R_HasNamedSkybox (VStr aname);
 
 
+struct SpriteTexInfo {
+  enum {
+    Flipped = 1u<<0,
+  };
+
+  int texid; // <0: no texture
+  vuint32 flags;
+
+  inline bool isFlipped () const noexcept { return (flags&Flipped); }
+};
+
+//  returns `false` if no texture found
+bool R_GetSpriteTextureInfo (SpriteTexInfo *nfo, int sprindex, int sprframe);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // camera texture
 class VCameraTexture : public VTexture {
