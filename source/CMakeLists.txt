@@ -1,3 +1,7 @@
+if(WITH_GLES)
+  set(VSHADPP_DEFINES -DGL4ES_HACKS)
+endif()
+
 function(sxx_compile output filename)
   get_filename_component(ext ${filename} EXT)
   if(NOT ext STREQUAL ".sxx")
@@ -12,7 +16,7 @@ function(sxx_compile output filename)
     # assume we have vshadpp in PATH
     add_custom_command(
       OUTPUT ${outfiles}
-      COMMAND vshadpp -o ${CMAKE_CURRENT_BINARY_DIR} -b ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+      COMMAND vshadpp ${VSHADPP_DEFINES} -o ${CMAKE_CURRENT_BINARY_DIR} -b ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
         ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.vs
         ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.fs
@@ -46,7 +50,7 @@ function(sxx_compile output filename)
   else()
     add_custom_command(
       OUTPUT ${outfiles}
-      COMMAND ${WINERUN} $<TARGET_FILE:vshadpp> -o ${CMAKE_CURRENT_BINARY_DIR} -b ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+      COMMAND ${WINERUN} $<TARGET_FILE:vshadpp> ${VSHADPP_DEFINES} -o ${CMAKE_CURRENT_BINARY_DIR} -b ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
       DEPENDS vshadpp ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
         ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.vs
         ${CMAKE_SOURCE_DIR}/basev/common/glshaders/*.fs
