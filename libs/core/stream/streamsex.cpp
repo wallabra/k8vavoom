@@ -216,7 +216,7 @@ void VAndroidFileStreamRO::Serialise (void *buf, int len) {
   vassert(buf != nullptr);
   vassert(len >= 0);
   #ifndef VV_ANDROID_TEST
-  if (AAsset_read(myAss, buf, len) != len) Sys_Error("VAndroidFileStreamRO: cannot read %d bytes from '%s'", len, *aname);
+  if (AAsset_read(myAss, buf, len) != len) Sys_Error("VAndroidFileStreamRO: cannot read %d bytes from '%s'", len, *myName);
   #endif
   myOff += len;
 }
