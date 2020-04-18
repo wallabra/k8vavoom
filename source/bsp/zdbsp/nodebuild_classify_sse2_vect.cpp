@@ -27,7 +27,7 @@
 
 namespace ZDBSP {
 
-#define FAR_ENOUGH 17179869184.f    // 4<<32
+#define FAR_ENOUGH 17179869184.f    /* 4<<32 */
 
 // You may notice that this function is identical to ClassifyLine2.
 // The reason it is SSE2 is because this file is explicitly compiled

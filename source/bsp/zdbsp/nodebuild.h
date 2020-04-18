@@ -273,7 +273,7 @@ private:
 const double SIDE_EPSILON = 6.5536;
 
 // Vertices within this distance of each other will be considered as the same vertex.
-#define VERTEX_EPSILON  6   // This is a fixed_t value
+#define VERTEX_EPSILON  6   /* This is a fixed_t value */
 
 inline int FNodeBuilder::PointOnSide (int x, int y, int x1, int y1, int dx, int dy)
 {

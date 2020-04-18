@@ -29,7 +29,7 @@ namespace ZDBSP {
   #define _xs_iexp_       0
   #define _xs_iman_       1
 #else
-  #define _xs_iexp_       1       //intel is little endian
+  #define _xs_iexp_       1       /*intel is little endian*/
   #define _xs_iman_       0
 #endif //BigEndian_
 

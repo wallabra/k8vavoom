@@ -30,7 +30,7 @@
 #include "gamedefs.h"
 
 
-#define BUTTONTIME  (1.0f) // 1 second
+#define BUTTONTIME  (1.0f) /* 1 second */
 
 
 enum EBWhere {

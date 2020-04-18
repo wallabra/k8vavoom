@@ -24,7 +24,7 @@
 
 namespace ZDBSP {
 
-#define FAR_ENOUGH 17179869184.f    // 4<<32
+#define FAR_ENOUGH 17179869184.f    /* 4<<32 */
 
 extern "C" int ClassifyLine2 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2])
 {

@@ -1563,7 +1563,7 @@ static stbi__uint32 stbi__get32le(stbi__context *s)
 }
 #endif
 
-#define STBI__BYTECAST(x)  ((stbi_uc) ((x) & 255))  // truncate int to byte without warnings
+#define STBI__BYTECAST(x)  ((stbi_uc) ((x) & 255))  /* truncate int to byte without warnings */
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1754,7 +1754,7 @@ static stbi_uc *stbi__hdr_to_ldr(float   *data, int x, int y, int comp)
 #ifndef STBI_NO_JPEG
 
 // huffman decoding acceleration
-#define FAST_BITS   9  // larger handles more cases; smaller stomps less cache
+#define FAST_BITS   9  /* larger handles more cases; smaller stomps less cache */
 
 typedef struct
 {
@@ -3856,7 +3856,7 @@ static int stbi__jpeg_info(stbi__context *s, int *x, int *y, int *comp)
 #ifndef STBI_NO_ZLIB
 
 // fast-way is faster to check than jpeg huffman, but slow way is slower
-#define STBI__ZFAST_BITS  9 // accelerate all cases in default tables
+#define STBI__ZFAST_BITS  9 /* accelerate all cases in default tables */
 #define STBI__ZFAST_MASK  ((1 << STBI__ZFAST_BITS) - 1)
 
 // zlib-style huffman encoding
