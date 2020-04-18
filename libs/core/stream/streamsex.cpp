@@ -24,6 +24,7 @@
 //**
 //**************************************************************************
 #include "../core.h"
+//#define VV_ANDROID_TEST
 
 #ifdef ANDROID
 #  include <SDL.h>
@@ -32,10 +33,12 @@
 #  include <jni.h>
 #endif
 
-#ifdef ANDROID
+
+#if defined(ANDROID) || defined(VV_ANDROID_TEST)
 
 // note that some code copypasted from syslow.cpp
 
+#ifndef VV_ANDROID_TEST
 static AAssetManager *androidAssetManager;
 
 static void getApkAssetManager () {
@@ -57,13 +60,19 @@ static void getApkAssetManager () {
   }
 }
 
-static inline bool isApkPath (const VStr &s) noexcept {
-  return s.length() >= 1 && (s[0] == '.') && (s.length() == 1 || s[1] == '/');
+static __attribute__((unused)) inline bool isApkPath (VStr s) noexcept {
+  return (s.length() >= 1 && (s[0] == '.') && (s.length() == 1 || s[1] == '/'));
 }
 
-static inline VStr getApkPath (const VStr &s) noexcept {
-  return isApkPath(s) ? VStr(s, 2, s.length() - 2) : VStr();
+static __attribute__((unused)) inline VStr getApkPath (VStr s) noexcept {
+  return (isApkPath(s) ? VStr(s, 2, s.length()-2) : VStr());
 }
+
+#else
+#define AAsset  void
+static __attribute__((unused)) inline bool isApkPath (VStr s) noexcept { return false; }
+static __attribute__((unused)) inline VStr getApkPath (VStr s) noexcept { return s; }
+#endif
 
 
 class VAndroidFileStreamRO : public VStream {
@@ -100,7 +109,9 @@ VAndroidFileStreamRO::VAndroidFileStreamRO (AAsset *ass, VStr aname)
   , myOff(0)
 {
   vassert(myAss != nullptr);
-  vassert(AAsset_seek(myAss, 0, SEEK_SET) == 0);
+  #ifndef VV_ANDROID_TEST
+  if (AAsset_seek(myAss, 0, SEEK_SET) != 0) Sys_Error("VAndroidFileStreamRO: cannot create stream for '%s'", *aname);
+  #endif
   bLoading = true;
 }
 
@@ -143,11 +154,15 @@ VStr VAndroidFileStreamRO::GetName () const {
 //
 //==========================================================================
 void VAndroidFileStreamRO::Seek (int pos) {
+  #ifndef VV_ANDROID_TEST
   if (myAss == nullptr || AAsset_seek(myAss, pos, SEEK_SET) == -1) {
     SetError();
   } else {
     myOff = pos;
   }
+  #else
+  SetError();
+  #endif
 }
 
 
@@ -157,7 +172,7 @@ void VAndroidFileStreamRO::Seek (int pos) {
 //
 //==========================================================================
 int VAndroidFileStreamRO::Tell () {
-  return myAss ? myOff : 0;
+  return (myAss ? myOff : 0);
 }
 
 
@@ -167,7 +182,11 @@ int VAndroidFileStreamRO::Tell () {
 //
 //==========================================================================
 int VAndroidFileStreamRO::TotalSize () {
+  #ifndef VV_ANDROID_TEST
   return (myAss ? (int)AAsset_getLength(myAss) : 0);
+  #else
+  return 0;
+  #endif
 }
 
 
@@ -178,7 +197,9 @@ int VAndroidFileStreamRO::TotalSize () {
 //==========================================================================
 bool VAndroidFileStreamRO::Close () {
   if (myAss) {
+    #ifndef VV_ANDROID_TEST
     AAsset_close(myAss);
+    #endif
     myAss = nullptr;
   }
   myName.clear();
@@ -194,7 +215,9 @@ bool VAndroidFileStreamRO::Close () {
 void VAndroidFileStreamRO::Serialise (void *buf, int len) {
   vassert(buf != nullptr);
   vassert(len >= 0);
-  vassert(AAsset_read(myAss, buf, len) == len);
+  #ifndef VV_ANDROID_TEST
+  if (AAsset_read(myAss, buf, len) != len) Sys_Error("VAndroidFileStreamRO: cannot read %d bytes from '%s'", len, *aname);
+  #endif
   myOff += len;
 }
 
@@ -204,7 +227,8 @@ void VAndroidFileStreamRO::Serialise (void *buf, int len) {
 //  openAndroidFileStreamRO
 //
 //==========================================================================
-static VAndroidFileStreamRO *openAndroidFileStreamRO (VStr aname, VStr streamname) {
+static __attribute__((unused)) VAndroidFileStreamRO *openAndroidFileStreamRO (VStr aname, VStr streamname) {
+  #ifndef VV_ANDROID_TEST
   if (isApkPath(aname)) {
     getApkAssetManager();
     if (androidAssetManager) {
@@ -213,6 +237,7 @@ static VAndroidFileStreamRO *openAndroidFileStreamRO (VStr aname, VStr streamnam
       if (a) return new VAndroidFileStreamRO(a, streamname);
     }
   }
+  #endif
   return nullptr;
 }
 #endif // ANDROID
@@ -1435,12 +1460,10 @@ VStream *CreateDiskStreamRead (VStr fname, VStr streamname) {
   if (fname.isEmpty()) return nullptr;
   if (streamname.isEmpty()) streamname = fname;
   // here you can put various custom handlers
-//  GLog.Logf("CreateDiskStreamRead(%s)", *fname);
-#ifdef ANDROID
-  if (isApkPath(fname)) {
-    return openAndroidFileStreamRO(fname, streamname);
-  }
-#endif
+  //GLog.Logf("CreateDiskStreamRead(%s)", *fname);
+  #ifdef ANDROID
+  if (isApkPath(fname)) return openAndroidFileStreamRO(fname, streamname);
+  #endif
   FILE *fl = fopen(*fname, "rb");
   if (!fl) return nullptr;
   return new VStdFileStreamRead(fl, streamname);
