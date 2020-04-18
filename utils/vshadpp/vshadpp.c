@@ -714,6 +714,79 @@ int checkSet (SetInfo *set, LocInfo *locs) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// defines (nullptr, or array of chars, each define terminates with '\0')
+typedef struct DefineTable_t {
+  char *defines;
+  size_t defsize;
+} DefineTable;
+
+static DefineTable globaldefines = {NULL, 0};
+
+
+static void clearTblDefine (DefineTable *tbl) {
+  if (!tbl) return;
+  xfree(tbl->defines);
+  tbl->defines = NULL;
+  tbl->defsize = 0;
+}
+
+
+static void initTblDefineFrom (DefineTable *dest, const DefineTable *src) {
+  if (!dest || dest == src) return;
+  if (!src || !src->defines || !src->defsize) {
+    dest->defines = NULL;
+    dest->defsize = 0;
+  } else {
+    dest->defines = xalloc(src->defsize);
+    memcpy(dest->defines, src->defines, src->defsize);
+    dest->defsize = src->defsize;
+  }
+}
+
+
+static void addTblDefine (DefineTable *tbl, const char *defstr) {
+  if (!defstr) return;
+  while (*defstr && *(const unsigned char *)defstr <= ' ') ++defstr;
+  if (!defstr[0]) return;
+  size_t slen = strlen(defstr);
+  while (slen > 0 && *(const unsigned char *)(defstr+slen-1) <= ' ') --slen;
+  if (slen == 0) return;
+  if (!tbl->defines) {
+    tbl->defines = xalloc(slen+2);
+    memcpy(tbl->defines, defstr, slen);
+    tbl->defines[slen] = 0;
+    tbl->defines[slen+1] = 0;
+    tbl->defsize = slen+2;
+  } else {
+    tbl->defines = realloc(tbl->defines, tbl->defsize+slen+1);
+    memcpy(tbl->defines+tbl->defsize-1, defstr, slen);
+    tbl->defines[tbl->defsize-1+slen] = 0;
+    tbl->defines[tbl->defsize-1+slen+1] = 0;
+    tbl->defsize += slen+1;
+  }
+}
+
+
+static int hasTblDefine (DefineTable *tbl, const char *defstr) {
+  if (!tbl || !defstr) return 0;
+  if (tbl->defsize == 0 || !tbl->defines) return 0;
+  while (*defstr && *(const unsigned char *)defstr <= ' ') ++defstr;
+  if (!defstr[0]) return 0;
+  size_t slen = strlen(defstr);
+  while (slen > 0 && *(const unsigned char *)(defstr+slen-1) <= ' ') --slen;
+  if (slen == 0) return 0;
+  const char *dss = tbl->defines;
+  while (*dss) {
+    size_t xlen = strlen(dss);
+    if (xlen == slen) {
+      if (memcmp(dss, defstr, slen) == 0) return 1;
+    }
+    dss += xlen+1;
+  }
+  return 0;
+}
+
+
 typedef struct ShaderInfo ShaderInfo;
 
 struct ShaderInfo {
@@ -727,8 +800,7 @@ struct ShaderInfo {
   // inclide dir (build from basedir)
   char *incdir;
   // defines (nullptr, or array of chars, each define terminates with '\0')
-  char *defines;
-  size_t defsize;
+  DefineTable defines;
   ShaderInfo *next;
 };
 
@@ -746,7 +818,7 @@ void clearShaderList (ShaderInfo **slist) {
     xfree(si->fssrc);
     xfree(si->basedir);
     xfree(si->incdir);
-    xfree(si->defines);
+    clearTblDefine(&si->defines);
     clearLocs(&si->locs);
     xfree(si);
   }
@@ -754,34 +826,13 @@ void clearShaderList (ShaderInfo **slist) {
 
 
 void appendDefine (ShaderInfo *si, const char *defstr) {
-  if (!defstr) return;
-  while (*defstr && *(const unsigned char *)defstr <= ' ') ++defstr;
-  if (!defstr[0]) return;
-  size_t slen = strlen(defstr);
-  if (!si->defines) {
-    si->defines = xalloc(slen+2);
-    strcpy(si->defines, defstr);
-    si->defsize = slen+2;
-  } else {
-    si->defines = realloc(si->defines, si->defsize+slen+1);
-    strcpy(si->defines+si->defsize-1, defstr);
-    si->defsize += slen+1;
-    si->defines[si->defsize-1] = 0;
-  }
+  addTblDefine(&si->defines, defstr);
 }
 
 
 int hasDefine (ShaderInfo *si, const char *defstr) {
-  if (!defstr) return 0;
-  const char *dss = si->defines;
-  while (*defstr && *(const unsigned char *)defstr <= ' ') ++defstr;
-  if (!defstr[0]) return 0;
-  if (!dss) return 0;
-  while (*dss) {
-    if (strEqu(dss, defstr)) return 1;
-    dss += strlen(dss)+1;
-  }
-  return 0;
+  if (hasTblDefine(&globaldefines, defstr)) return 1;
+  return hasTblDefine(&si->defines, defstr);
 }
 
 
@@ -915,9 +966,8 @@ int parseGLSL (Parser *par, ShaderInfo *si) {
   prExpect(par, "version");
   prExpect(par, "120");
 
-  size_t olddefsize = si->defsize;
-  char *olddef = (si->defines ? xalloc(olddefsize) : nullptr);
-  if (olddefsize) memcpy(olddef, si->defines, olddefsize);
+  DefineTable savedtbl;
+  initTblDefineFrom(&savedtbl, &si->defines);
 
   int brclevel = 0;
 
@@ -1027,9 +1077,9 @@ int parseGLSL (Parser *par, ShaderInfo *si) {
   if (brclevel != 0) prError(par, "unbalanced compounds");
 
   // restore defines
-  xfree(si->defines);
-  si->defines = olddef;
-  si->defsize = olddefsize;
+  clearTblDefine(&si->defines);
+  initTblDefineFrom(&si->defines, &savedtbl);
+  clearTblDefine(&savedtbl);
 
   return 1;
 }
@@ -1143,6 +1193,13 @@ void writeUploadWithChecks (FILE *fo, const LocInfo *loc) {
 }
 
 
+void checkSpecialModes (void) {
+  const char *spmode = getenv("VSHADPP_MODE");
+  if (!spmode || !spmode[0]) return;
+  if (strEqu(spmode, "GLES")) addTblDefine(&globaldefines, "GL4ES_HACKS");
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 int main (int argc, char **argv) {
   char *infname = nullptr;
@@ -1166,9 +1223,17 @@ int main (int argc, char **argv) {
       continue;
     }
     if (strEqu(arg, "-")) { toStdout = 1; continue; }
+    if (arg[0] == '-' && arg[1] == 'D') {
+      // new define
+      arg += 2;
+      addTblDefine(&globaldefines, arg);
+      continue;
+    }
     if (infname) { fprintf(stderr, "FATAL: duplicate file name!\n"); abort(); }
     infname = xstrdup(arg);
   }
+
+  checkSpecialModes();
 
   if (!infname) { fprintf(stderr, "FATAL: file name expected!\n"); abort(); }
 
@@ -1420,7 +1485,7 @@ int main (int argc, char **argv) {
   fprintf(foc, "void VOpenGLDrawer::LoadAllShaders () {\n");
   for (ShaderInfo *si = shaderlist; si; si = si->next) {
     fprintf(foc, "  %s.Setup(this);", si->name);
-    const char *dss = si->defines;
+    const char *dss = si->defines.defines;
     if (dss) {
       while (*dss) {
         fprintf(foc, " %s.defines.append(\"%s\");", si->name, dss);
