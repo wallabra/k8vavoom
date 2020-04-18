@@ -532,7 +532,8 @@ static VState *FindClassStateByIndex (VClass *cls, int idx) {
 //  inexisting sprites are valid!
 //
 //==========================================================================
-static bool IsValidSpriteFrame (VName sprname, int sprframe, bool iwadonly) {
+static bool IsValidSpriteFrame (int lump, VName sprname, int sprframe, bool iwadonly, bool thiswadonly) {
+  if (lump < 0) return true;
   int sprindex = VClass::FindSprite(sprname, false); /* don't append */
   if (sprindex <= 0) return true;
   SpriteTexInfo txnfo;
@@ -540,6 +541,7 @@ static bool IsValidSpriteFrame (VName sprname, int sprframe, bool iwadonly) {
   VTexture *basetex = GTextureManager[txnfo.texid];
   if (!basetex) return true;
   if (iwadonly && !W_IsIWADLump(basetex->SourceLump)) return false;
+  if (thiswadonly && W_LumpFile(basetex->SourceLump) != W_LumpFile(lump)) return false;
   return true;
 }
 
@@ -551,9 +553,10 @@ static bool IsValidSpriteFrame (VName sprname, int sprframe, bool iwadonly) {
 //  inexisting states/sprites are valid!
 //
 //==========================================================================
-static bool IsValidSpriteState (VState *state, bool iwadonly) {
+static bool IsValidSpriteState (int lump, VState *state, bool iwadonly, bool thiswadonly) {
+  if (lump < 0) return true;
   if (!state) return true;
-  return IsValidSpriteFrame(state->SpriteName, state->Frame&VState::FF_FRAMEMASK, iwadonly);
+  return IsValidSpriteFrame(lump, state->SpriteName, (state->Frame&VState::FF_FRAMEMASK), iwadonly, thiswadonly);
 }
 
 
@@ -562,7 +565,7 @@ static bool IsValidSpriteState (VState *state, bool iwadonly) {
 //  ParseModelXml
 //
 //==========================================================================
-static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) {
+static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) {
   // verify that it's a model definition file
   if (Doc->Root.Name != "vavoom_model_definition") Sys_Error("%s is not a valid model definition file", *Mdl->Name);
 
@@ -758,7 +761,7 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         F.sprite = NAME_None;
         F.frame = -1;
         if (Cls->iwadonly || Cls->thiswadonly) {
-          if (!xcls || !IsValidSpriteState(FindClassStateByIndex(xcls, F.Number), Cls->iwadonly)) {
+          if (!xcls || !IsValidSpriteState(lump, FindClassStateByIndex(xcls, F.Number), Cls->iwadonly, Cls->thiswadonly)) {
             F.disabled = true;
             GCon->Logf(NAME_Warning, "skipped model '%s' class '%s' state #%d due to iwadonly restriction", *Mdl->Name, *Cls->Name, F.Number);
           }
@@ -777,7 +780,7 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         F.frame = sfr;
         // check sprite frame validity
         if (Cls->iwadonly || Cls->thiswadonly) {
-          if (!IsValidSpriteFrame(sprname, F.frame, Cls->iwadonly)) {
+          if (!IsValidSpriteFrame(lump, sprname, F.frame, Cls->iwadonly, Cls->thiswadonly)) {
             F.disabled = true;
             GCon->Logf(NAME_Warning, "skipped model '%s' class '%s' frame '%s%C' due to iwadonly restriction", *Mdl->Name, *Cls->Name, *sprname, sprframe[0]);
           }
@@ -815,7 +818,7 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
           ffr.copyFrom(F);
           ffr.Number = cfidx;
           if (Cls->iwadonly || Cls->thiswadonly) {
-            if (!xcls || !IsValidSpriteState(FindClassStateByIndex(xcls, ffr.Number), Cls->iwadonly)) {
+            if (!xcls || !IsValidSpriteState(lump, FindClassStateByIndex(xcls, ffr.Number), Cls->iwadonly, Cls->thiswadonly)) {
               ffr.disabled = true;
               GCon->Logf(NAME_Warning, "skipped model '%s' class '%s' state #%d due to iwadonly restriction", *Mdl->Name, *Cls->Name, ffr.Number);
             }
@@ -857,11 +860,11 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
 //  ParseModelScript
 //
 //==========================================================================
-static void ParseModelScript (VModel *Mdl, VStream &Strm, bool isGZDoom=false) {
+static void ParseModelScript (int lump, VModel *Mdl, VStream &Strm, bool isGZDoom=false) {
   // parse xml file
   VXmlDocument *Doc = new VXmlDocument();
   Doc->Parse(Strm, Mdl->Name);
-  ParseModelXml(Mdl, Doc, isGZDoom);
+  ParseModelXml(lump, Mdl, Doc, isGZDoom);
 }
 
 
@@ -869,7 +872,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm, bool isGZDoom=false) {
 //
 //  Mod_FindName
 //
-//  used in VC `InstallModel()`
+//  used in VC `InstallModel()` and in model.xml loader
 //
 //==========================================================================
 VModel *Mod_FindName (VStr name) {
@@ -883,10 +886,11 @@ VModel *Mod_FindName (VStr name) {
   mod_known.Append(mod);
 
   // load the file
-  VStream *Strm = FL_OpenFileRead(mod->Name);
+  int lump = -1;
+  VStream *Strm = FL_OpenFileRead(mod->Name, &lump);
   if (!Strm) Sys_Error("Couldn't load `%s` (Mod_FindName)", *mod->Name);
   if (mdl_verbose_loading > 1) GCon->Logf(NAME_Init, "parsing model script '%s'...", *mod->Name);
-  ParseModelScript(mod, *Strm);
+  ParseModelScript(lump, mod, *Strm);
   delete Strm;
 
   return mod;
@@ -1036,7 +1040,7 @@ static void ParseGZModelDefs () {
     mod_known.Append(mod);
     // parse xml
     VStream *Strm = new VMemoryStreamRO(mdl->className, xml.getCStr(), xml.length());
-    ParseModelScript(mod, *Strm, true); // gzdoom flag
+    ParseModelScript(-1, mod, *Strm, true); // gzdoom flag
     delete Strm;
     // this is not strictly safe, but meh
     delete mdl;
