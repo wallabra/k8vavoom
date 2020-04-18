@@ -2255,7 +2255,8 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdirc
 
   // build source text
   bool needToAddRevZ = CanUseRevZ();
-  bool needToAddDefines = (needToAddRevZ || defines.length() > 0);
+  bool needToAddDefines = true;
+  //bool needToAddDefines = (needToAddRevZ || defines.length() > 0);
 
   VStr incdir(incdircs);
   incdir = incdir.fixSlashes();
