@@ -335,6 +335,7 @@ typedef void (APIENTRY*glGetBufferPointervARB_t)(GLenum, GLenum, GLvoid **);
 #endif
 
 typedef void (APIENTRY*glDrawRangeElements_t)(GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *);
+typedef void (APIENTRY*glDrawArrays_t)(GLenum mode, GLint first, GLsizei count);
 
 #ifndef GL_FRAMEBUFFER
 # define GL_FRAMEBUFFER  0x8D40
@@ -424,8 +425,8 @@ typedef void (APIENTRY *glGenerateMipmap_t) (GLenum target);
 
   VGLAPIPTR(glActiveTextureARB, true);
 
-  VGLAPIPTR(glStencilFuncSeparate, false);
-  VGLAPIPTR(glStencilOpSeparate, false);
+  //VGLAPIPTR(glStencilFuncSeparate, false); // not actually used
+  VGLAPIPTR(glStencilOpSeparate, false); // used in shadow volumes
 
   VGLAPIPTR(glDeleteObjectARB, true);
   VGLAPIPTR(glGetHandleARB, true);
@@ -517,17 +518,20 @@ typedef void (APIENTRY *glGenerateMipmap_t) (GLenum target);
   VGLAPIPTR(glBindBufferARB, true);
   VGLAPIPTR(glDeleteBuffersARB, true);
   VGLAPIPTR(glGenBuffersARB, true);
-  VGLAPIPTR(glIsBufferARB, true);
+  //VGLAPIPTR(glIsBufferARB, true);
   VGLAPIPTR(glBufferDataARB, true);
-  VGLAPIPTR(glBufferSubDataARB, true);
-  VGLAPIPTR(glGetBufferSubDataARB, true);
-  VGLAPIPTR(glMapBufferARB, true);
-  VGLAPIPTR(glUnmapBufferARB, true);
-  VGLAPIPTR(glGetBufferParameterivARB, true);
-  VGLAPIPTR(glGetBufferPointervARB, true);
+  VGLAPIPTR(glBufferSubDataARB, true); // used in models
+  //VGLAPIPTR(glGetBufferSubDataARB, true);
+  VGLAPIPTR(glMapBufferARB, false); // used in bloom autoexposure, optional
+  VGLAPIPTR(glUnmapBufferARB, false); // used in bloom autoexposure, optional
+  //VGLAPIPTR(glGetBufferParameterivARB, true);
+  //VGLAPIPTR(glGetBufferPointervARB, true);
 
   //VGLAPIPTR(glDrawRangeElementsEXT, true);
   VGLAPIPTR(glDrawRangeElements, true);
+#ifdef GL4ES_HACKS
+  VGLAPIPTR(glDrawArrays, true);
+#endif
 
 #if !defined(GL4ES_NO_CONSTRUCTOR) || !defined(VV_GLIMPORTS_PROC)
   VGLAPIPTR(glClipControl, false);
@@ -539,9 +543,9 @@ typedef void (APIENTRY *glGenerateMipmap_t) (GLenum target);
   VGLAPIPTR(glGetProgramiv, true);
   //VGLAPIPTR(glGetPointerv, true);
 
-  VGLAPIPTR(glBlendFuncSeparate, false);
-  VGLAPIPTR(glBlendEquationSeparate, false);
-  VGLAPIPTR(glBlendEquation, true);
+  //VGLAPIPTR(glBlendFuncSeparate, false);
+  VGLAPIPTR(glBlendEquationSeparate, false); // used for subtractive blending
+  VGLAPIPTR(glBlendEquation, true); // used for subtractive blending
 
   VGLAPIPTR(glDeleteRenderbuffers, true);
   VGLAPIPTR(glGenRenderbuffers, true);

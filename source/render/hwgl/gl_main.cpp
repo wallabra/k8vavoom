@@ -844,21 +844,21 @@ void VOpenGLDrawer::InitResolution () {
     GCon->Logf(NAME_Init, "OpenGL: GL_EXT_depth_bounds_test found, but no `glDepthBounds()` exported");
   }
 
-  if (p_glStencilFuncSeparate && p_glStencilOpSeparate) {
+  if (/*p_glStencilFuncSeparate &&*/ p_glStencilOpSeparate) {
     GCon->Log(NAME_Init, "Found OpenGL 2.0 separate stencil methods");
   } else if (CheckExtension("GL_ATI_separate_stencil")) {
-    p_glStencilFuncSeparate = glStencilFuncSeparate_t(GetExtFuncPtr("glStencilFuncSeparateATI"));
+    //p_glStencilFuncSeparate = glStencilFuncSeparate_t(GetExtFuncPtr("glStencilFuncSeparateATI"));
     p_glStencilOpSeparate = glStencilOpSeparate_t(GetExtFuncPtr("glStencilOpSeparateATI"));
-    if (p_glStencilFuncSeparate && p_glStencilOpSeparate) {
+    if (/*p_glStencilFuncSeparate &&*/ p_glStencilOpSeparate) {
       GCon->Log(NAME_Init, "Found GL_ATI_separate_stencil...");
     } else {
       GCon->Log(NAME_Init, "No separate stencil methods found");
-      p_glStencilFuncSeparate = nullptr;
+      //p_glStencilFuncSeparate = nullptr;
       p_glStencilOpSeparate = nullptr;
     }
   } else {
     GCon->Log(NAME_Init, "No separate stencil methods found");
-    p_glStencilFuncSeparate = nullptr;
+    //p_glStencilFuncSeparate = nullptr;
     p_glStencilOpSeparate = nullptr;
   }
 
@@ -883,7 +883,8 @@ void VOpenGLDrawer::InitResolution () {
 
   if (!HaveStencilWrap) GCon->Log(NAME_Init, "*** no stencil wrap --> no shadow volumes");
   if (!HaveDepthClamp) GCon->Log(NAME_Init, "*** no depth clamp --> no shadow volumes");
-  if (!p_glStencilFuncSeparate) GCon->Log(NAME_Init, "*** no separate stencil funcs --> no shadow volumes");
+  //if (!p_glStencilFuncSeparate) GCon->Log(NAME_Init, "*** no separate stencil ops --> no shadow volumes");
+  if (!p_glStencilOpSeparate) GCon->Log(NAME_Init, "*** no separate stencil ops --> no shadow volumes");
 
   if (!p_glGenerateMipmap || gl_dbg_fbo_blit_with_texture) {
     GCon->Logf(NAME_Init, "OpenGL: bloom postprocessing effect disabled due to missing API");
@@ -1034,7 +1035,7 @@ bool VOpenGLDrawer::CheckExtension (const char *ext) {
 //
 //==========================================================================
 bool VOpenGLDrawer::SupportsShadowVolumeRendering () {
-  return (HaveStencilWrap && p_glStencilFuncSeparate && HaveDepthClamp);
+  return (HaveStencilWrap && /*p_glStencilFuncSeparate*/p_glStencilOpSeparate && HaveDepthClamp);
 }
 
 

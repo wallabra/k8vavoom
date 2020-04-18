@@ -273,7 +273,7 @@ void VOpenGLDrawer::BloomDarken () {
   // auto-exposure -- adjust the light bloom intensity based on how dark or light the scene is.
   // we use a PBO and give it a whole frame to compute the color average and transfer it into
   // main memory in the background. the extra delay from using last frame's average is harmless.
-  if (r_bloom_autoexposure) {
+  if (r_bloom_autoexposure && p_glMapBufferARB && p_glUnmapBufferARB) {
     static constexpr float BrightnessBias = 0.8f;
     static constexpr float BrightnessReverseBias = 0.2f;
 

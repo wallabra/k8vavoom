@@ -197,7 +197,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     p_glEnableVertexAttribArrayARB(SurfSky.loc_TexCoord);
     p_glVertexAttribPointerARB(SurfSky.loc_Position, 3, GL_FLOAT, false, sizeof(vbo_struct), (void*)(0 * sizeof(float)));
     p_glVertexAttribPointerARB(SurfSky.loc_TexCoord, 2, GL_FLOAT, false, sizeof(vbo_struct), (void*)(3 * sizeof(float)));
-    glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
+    p_glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
     p_glDisableVertexAttribArrayARB(SurfSky.loc_Position);
     p_glDisableVertexAttribArrayARB(SurfSky.loc_TexCoord);
     p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
