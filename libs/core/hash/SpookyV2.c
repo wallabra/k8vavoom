@@ -10,8 +10,9 @@
 //   August 5 2012: SpookyV2: d = should be d += in short hash, and remove extra mix from long hash
 // C conversion by Ketmar Dark
 
-#include <memory.h>
 #include "SpookyV2.h"
+#include <memory.h>
+#include <string.h>
 
 #define ALLOW_UNALIGNED_READS  1
 
