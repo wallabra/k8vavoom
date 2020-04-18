@@ -37,6 +37,7 @@
 // note that some code copypasted from syslow.cpp
 
 static AAssetManager *androidAssetManager;
+
 static void getApkAssetManager () {
   if (androidAssetManager == nullptr) {
     JNIEnv *env = (JNIEnv*)SDL_AndroidGetJNIEnv();
@@ -64,6 +65,7 @@ static inline VStr getApkPath (const VStr &s) noexcept {
   return isApkPath(s) ? VStr(s, 2, s.length() - 2) : VStr();
 }
 
+
 class VAndroidFileStreamRO : public VStream {
 private:
   AAsset *myAss;
@@ -73,67 +75,142 @@ private:
 public:
   VV_DISABLE_COPY(VAndroidFileStreamRO)
 
-  VAndroidFileStreamRO (AAsset *ass, VStr aname) : myAss(ass), myName(aname), myOff(0) {
-    vassert(myAss != nullptr);
-    vassert(AAsset_seek(myAss, 0, SEEK_SET) == 0);
-    bLoading = true;
-  }
+  VAndroidFileStreamRO (AAsset *ass, VStr aname);
 
-  virtual ~VAndroidFileStreamRO () override {
-    Close();
-  }
+  virtual ~VAndroidFileStreamRO () override;
 
-  virtual void SetError () override {
-    Close();
-    bError = true;
-    VStream::SetError();
-  }
-
-  virtual VStr GetName () /* override */ {
-    return myName.cloneUnique();
-  }
-
-  virtual void Seek (int pos) override {
-    if (myAss == nullptr || AAsset_seek(myAss, pos, SEEK_SET) == -1) {
-      SetError();
-    } else {
-      myOff = pos;
-    }
-  }
-
-  virtual int Tell () override {
-    return myAss ? myOff : 0;
-  }
-
-  virtual int TotalSize () override {
-    return myAss ? AAsset_getLength(myAss) : 0;
-  }
-
-  virtual bool Close () override {
-    if (myAss) {
-      AAsset_close(myAss);
-      myAss = nullptr;
-    }
-    myName.clear();
-    return !bError;
-  }
-
-  virtual void Serialise (void *buf, int len) override {
-    vassert(buf != nullptr);
-    vassert(len >= 0);
-    vassert(AAsset_read(myAss, buf, len) == len);
-    myOff += len;
-  }
-
+  virtual void SetError () override;
+  virtual VStr GetName () const override;
+  virtual void Seek (int pos) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+  virtual bool Close () override;
+  virtual void Serialise (void *buf, int len) override;
 };
 
-static VAndroidFileStreamRO *openAndroidFileStreamRO (VStr aname) {
+
+//==========================================================================
+//
+//  VAndroidFileStreamRO::VAndroidFileStreamRO
+//
+//==========================================================================
+VAndroidFileStreamRO::VAndroidFileStreamRO (AAsset *ass, VStr aname)
+  : myAss(ass)
+  , myName(aname)
+  , myOff(0)
+{
+  vassert(myAss != nullptr);
+  vassert(AAsset_seek(myAss, 0, SEEK_SET) == 0);
+  bLoading = true;
+}
+
+
+//==========================================================================
+//
+//  VAndroidFileStreamRO::~VAndroidFileStreamRO
+//
+//==========================================================================
+VAndroidFileStreamRO::~VAndroidFileStreamRO () {
+  Close();
+}
+
+
+//==========================================================================
+//
+//  VAndroidFileStreamRO::SetError
+//
+//==========================================================================
+void VAndroidFileStreamRO::SetError () {
+  Close();
+  bError = true;
+  VStream::SetError();
+}
+
+
+//==========================================================================
+//
+//  VAndroidFileStreamRO::GetName
+//
+//==========================================================================
+VStr VAndroidFileStreamRO::GetName () const {
+  return myName.cloneUnique();
+}
+
+
+//==========================================================================
+//
+//  VAndroidFileStreamRO::Seek
+//
+//==========================================================================
+void VAndroidFileStreamRO::Seek (int pos) {
+  if (myAss == nullptr || AAsset_seek(myAss, pos, SEEK_SET) == -1) {
+    SetError();
+  } else {
+    myOff = pos;
+  }
+}
+
+
+//==========================================================================
+//
+//  VAndroidFileStreamRO::Tell
+//
+//==========================================================================
+int VAndroidFileStreamRO::Tell () {
+  return myAss ? myOff : 0;
+}
+
+
+//==========================================================================
+//
+//  VAndroidFileStreamRO::TotalSize
+//
+//==========================================================================
+int VAndroidFileStreamRO::TotalSize () {
+  return (myAss ? (int)AAsset_getLength(myAss) : 0);
+}
+
+
+//==========================================================================
+//
+//  VAndroidFileStreamRO::Close
+//
+//==========================================================================
+bool VAndroidFileStreamRO::Close () {
+  if (myAss) {
+    AAsset_close(myAss);
+    myAss = nullptr;
+  }
+  myName.clear();
+  return !bError;
+}
+
+
+//==========================================================================
+//
+//  VAndroidFileStreamRO::Serialise
+//
+//==========================================================================
+void VAndroidFileStreamRO::Serialise (void *buf, int len) {
+  vassert(buf != nullptr);
+  vassert(len >= 0);
+  vassert(AAsset_read(myAss, buf, len) == len);
+  myOff += len;
+}
+
+
+//==========================================================================
+//
+//  openAndroidFileStreamRO
+//
+//==========================================================================
+static VAndroidFileStreamRO *openAndroidFileStreamRO (VStr aname, VStr streamname) {
   if (isApkPath(aname)) {
     getApkAssetManager();
     if (androidAssetManager) {
       VStr p = getApkPath(aname);
       AAsset *a = AAssetManager_open(androidAssetManager, *p, AASSET_MODE_UNKNOWN);
-      return a ? new VAndroidFileStreamRO(a, aname) : nullptr;
+      if (a) return new VAndroidFileStreamRO(a, streamname);
     }
   }
   return nullptr;
@@ -1354,16 +1431,35 @@ void VPartialStreamRO::SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
 //  return any reading stream or `nullptr` for "file not found"
 //
 //==========================================================================
-VStream *CreateDiskStreamRead (VStr fname) {
+VStream *CreateDiskStreamRead (VStr fname, VStr streamname) {
   if (fname.isEmpty()) return nullptr;
+  if (streamname.isEmpty()) streamname = fname;
   // here you can put various custom handlers
 //  GLog.Logf("CreateDiskStreamRead(%s)", *fname);
 #ifdef ANDROID
   if (isApkPath(fname)) {
-    return openAndroidFileStreamRO(fname);
+    return openAndroidFileStreamRO(fname, streamname);
   }
 #endif
   FILE *fl = fopen(*fname, "rb");
   if (!fl) return nullptr;
-  return new VStdFileStreamRead(fl, fname);
+  return new VStdFileStreamRead(fl, streamname);
+}
+
+
+//==========================================================================
+//
+//  CreateDiskStreamWrite
+//
+//  this function is called by the engine to create disk files
+//  return any writing stream or `nullptr` for "cannot create"
+//
+//==========================================================================
+VStream *CreateDiskStreamWrite (VStr fname, VStr streamname) {
+  if (fname.isEmpty()) return nullptr;
+  if (streamname.isEmpty()) streamname = fname;
+  // here you can put various custom handlers
+  FILE *fl = fopen(*fname, "wb");
+  if (!fl) return nullptr;
+  return new VStdFileStreamWrite(fl, streamname);
 }

@@ -40,16 +40,18 @@ void FSYS_Shutdown ();
 
 void FSYS_InitOptions (VParsedArgs &pargs);
 
-bool FL_FileExists (VStr fname);
+bool FL_FileExists (VStr fname, int *lump=nullptr);
 void FL_CreatePath (VStr Path);
 
-VStream *FL_OpenFileRead (VStr Name);
+// if `lump` is not `nullptr`, sets it to file lump or to -1
+VStream *FL_OpenFileRead (VStr Name, int *lump=nullptr);
 
 VStream *FL_OpenSysFileRead (VStr Name);
 VStream *FL_OpenSysFileWrite (VStr Name);
 
 // search file only in "basepaks"
-VStream *FL_OpenFileReadBaseOnly (VStr Name);
+// if `lump` is not `nullptr`, sets it to file lump or to -1
+VStream *FL_OpenFileReadBaseOnly (VStr Name, int *lump=nullptr);
 
 // reject absolute names, names with ".", and names with ".."
 bool FL_IsSafeDiskFileName (VStr fname);

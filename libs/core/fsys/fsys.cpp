@@ -204,12 +204,14 @@ bool FL_CheckFilterName (VStr &fname) {
 //  FL_FileExists
 //
 //==========================================================================
-bool FL_FileExists (VStr fname) {
-  if (fname.isEmpty()) return false;
-  MyThreadLocker glocker(&fsys_glock);
-  for (int i = fsysSearchPaths.length()-1; i >= 0; --i) {
-    if (fsysSearchPaths[i]->FileExists(fname)) return true;
+bool FL_FileExists (VStr fname, int *lump) {
+  if (!fname.isEmpty()) {
+    MyThreadLocker glocker(&fsys_glock);
+    for (int i = fsysSearchPaths.length()-1; i >= 0; --i) {
+      if (fsysSearchPaths[i]->FileExists(fname, lump)) return true;
+    }
   }
+  if (lump) *lump = -1;
   return false;
 }
 
@@ -218,14 +220,18 @@ bool FL_FileExists (VStr fname) {
 //
 //  FL_OpenFileReadBaseOnly_NoLock
 //
+//  if `lump` is not `nullptr`, sets it to file lump or to -1
+//
 //==========================================================================
-VStream *FL_OpenFileReadBaseOnly_NoLock (VStr Name) {
-  if (Name.isEmpty()) return nullptr;
-  for (int i = fsysSearchPaths.length()-1; i >= 0; --i) {
-    if (!fsysSearchPaths[i]->basepak) continue;
-    VStream *Strm = fsysSearchPaths[i]->OpenFileRead(Name);
-    if (Strm) return Strm;
+VStream *FL_OpenFileReadBaseOnly_NoLock (VStr Name, int *lump) {
+  if (!Name.isEmpty()) {
+    for (int i = fsysSearchPaths.length()-1; i >= 0; --i) {
+      if (!fsysSearchPaths[i]->basepak) continue;
+      VStream *Strm = fsysSearchPaths[i]->OpenFileRead(Name, lump);
+      if (Strm) return Strm;
+    }
   }
+  if (lump) *lump = -1;
   return nullptr;
 }
 
@@ -234,17 +240,21 @@ VStream *FL_OpenFileReadBaseOnly_NoLock (VStr Name) {
 //
 //  FL_OpenFileRead_NoLock
 //
+//  if `lump` is not `nullptr`, sets it to file lump or to -1
+//
 //==========================================================================
-VStream *FL_OpenFileRead_NoLock (VStr Name) {
-  if (Name.isEmpty()) return nullptr;
-  if (Name.length() >= 2 && Name[0] == '/' && Name[1] == '/') {
-    return FL_OpenFileReadBaseOnly_NoLock(Name.mid(2, Name.length()));
-  } else {
-    for (int i = fsysSearchPaths.length()-1; i >= 0; --i) {
-      VStream *Strm = fsysSearchPaths[i]->OpenFileRead(Name);
-      if (Strm) return Strm;
+VStream *FL_OpenFileRead_NoLock (VStr Name, int *lump) {
+  if (!Name.isEmpty()) {
+    if (Name.length() >= 2 && Name[0] == '/' && Name[1] == '/') {
+      return FL_OpenFileReadBaseOnly_NoLock(Name.mid(2, Name.length()), lump);
+    } else {
+      for (int i = fsysSearchPaths.length()-1; i >= 0; --i) {
+        VStream *Strm = fsysSearchPaths[i]->OpenFileRead(Name, lump);
+        if (Strm) return Strm;
+      }
     }
   }
+  if (lump) *lump = -1;
   return nullptr;
 }
 
@@ -253,11 +263,16 @@ VStream *FL_OpenFileRead_NoLock (VStr Name) {
 //
 //  FL_OpenFileReadBaseOnly
 //
+//  if `lump` is not `nullptr`, sets it to file lump or to -1
+//
 //==========================================================================
-VStream *FL_OpenFileReadBaseOnly (VStr Name) {
-  if (Name.isEmpty()) return nullptr;
+VStream *FL_OpenFileReadBaseOnly (VStr Name, int *lump) {
+  if (Name.isEmpty()) {
+    if (lump) *lump = -1;
+    return nullptr;
+  }
   MyThreadLocker glocker(&fsys_glock);
-  return FL_OpenFileReadBaseOnly_NoLock(Name);
+  return FL_OpenFileReadBaseOnly_NoLock(Name, lump);
 }
 
 
@@ -265,11 +280,16 @@ VStream *FL_OpenFileReadBaseOnly (VStr Name) {
 //
 //  FL_OpenFileRead
 //
+//  if `lump` is not `nullptr`, sets it to file lump or to -1
+//
 //==========================================================================
-VStream *FL_OpenFileRead (VStr Name) {
-  if (Name.isEmpty()) return nullptr;
+VStream *FL_OpenFileRead (VStr Name, int *lump) {
+  if (Name.isEmpty()) {
+    if (lump) *lump = -1;
+    return nullptr;
+  }
   MyThreadLocker glocker(&fsys_glock);
-  return FL_OpenFileRead_NoLock(Name);
+  return FL_OpenFileRead_NoLock(Name, lump);
 }
 
 
@@ -313,9 +333,7 @@ VStream *FL_OpenSysFileRead (VStr Name) {
 VStream *FL_OpenSysFileWrite (VStr Name) {
   if (Name.isEmpty()) return nullptr;
   FL_CreatePath(Name.ExtractFilePath());
-  FILE *File = fopen(*Name, "wb");
-  if (!File) return nullptr;
-  return new VStdFileStreamWrite(File, Name);
+  return CreateDiskStreamWrite(Name);
 }
 
 

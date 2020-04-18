@@ -720,11 +720,25 @@ VName VFileDirectory::normalizeLumpName (VName lname) {
 //
 //  VFileDirectory::fileExists
 //
+//  if `lump` is not `nullptr`, sets it to file lump or to -1
+//
 //==========================================================================
-bool VFileDirectory::fileExists (VStr fname) {
+bool VFileDirectory::fileExists (VStr fname, int *lump) {
   normalizeFileName(fname);
-  if (fname.length() == 0) return false;
-  return filemap.has(fname);
+  if (lump) {
+    if (fname.length() != 0) {
+      auto pp = filemap.find(fname);
+      if (pp) {
+        *lump = *pp;
+        return true;
+      }
+    }
+    *lump = -1;
+    return false;
+  } else {
+    if (fname.length() == 0) return false;
+    return filemap.has(fname);
+  }
 }
 
 
@@ -928,9 +942,11 @@ void VPakFileBase::RenameSprites (const TArray<VSpriteRename> &A, const TArray<V
 //
 //  VPakFileBase::FileExists
 //
+//  if `lump` is not `nullptr`, sets it to file lump or to -1
+//
 //==========================================================================
-bool VPakFileBase::FileExists (VStr fname) {
-  return pakdir.fileExists(fname);
+bool VPakFileBase::FileExists (VStr fname, int *lump) {
+  return pakdir.fileExists(fname, lump);
 }
 
 
@@ -1176,9 +1192,12 @@ VStr VPakFileBase::CalculateMD5 (int lumpidx) {
 //
 //  VPakFileBase::OpenFileRead
 //
+//  if `lump` is not `nullptr`, sets it to file lump or to -1
+//
 //==========================================================================
-VStream *VPakFileBase::OpenFileRead (VStr fname) {
+VStream *VPakFileBase::OpenFileRead (VStr fname, int *lump) {
   int fidx = pakdir.findFile(fname);
+  if (lump) *lump = fidx;
   if (fidx < 0) return nullptr;
   return CreateLumpReaderNum(fidx);
 }

@@ -217,7 +217,7 @@ static void AddArchiveFile_NoLock (VStr filename, VSearchPath *arc, bool allowpk
   if (allowpk3) arc->ListPk3Files(wadlist);
 
   for (auto &&wadname : wadlist) {
-    VStream *WadStrm = arc->OpenFileRead(wadname);
+    VStream *WadStrm = arc->OpenFileRead(wadname, nullptr);
     if (!WadStrm) continue;
     if (WadStrm->TotalSize() > 0x1fffffff) { delete WadStrm; continue; } // file is too big (arbitrary limit)
     // decompress WAD file into a memory stream, since reading from ZIP will be very slow
@@ -410,7 +410,7 @@ int W_OpenAuxiliary (VStr FileName) {
   W_CloseAuxiliary_NoLock();
   vassert(AuxiliaryIndex < 0);
   AuxiliaryIndex = fsysSearchPaths.length();
-  VStream *WadStrm = FL_OpenFileRead_NoLock(FileName);
+  VStream *WadStrm = FL_OpenFileRead_NoLock(FileName, nullptr);
   if (!WadStrm) { AuxiliaryIndex = -1; return -1; }
   //fprintf(stderr, "*** AUX: '%s'\n", *FileName);
   auto olen = fsysWadFileNames.length();
@@ -477,7 +477,7 @@ static void zipAddWads (VSearchPath *zip, VStr zipName) {
   // scan for wads
   zip->ListWadFiles(list);
   for (auto &&wadname : list) {
-    VStream *wadstrm = zip->OpenFileRead(wadname);
+    VStream *wadstrm = zip->OpenFileRead(wadname, nullptr);
     if (!wadstrm) continue;
     if (wadstrm->TotalSize() < 16) { delete wadstrm; continue; }
     VStream *memstrm = new VMemoryStream(zip->GetPrefix()+":"+wadname, wadstrm);
@@ -521,7 +521,7 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
       TArray<VStr> list;
       zip->ListPk3Files(list);
       for (auto &&pk3name : list) {
-        VStream *zipstrm = zip->OpenFileRead(pk3name);
+        VStream *zipstrm = zip->OpenFileRead(pk3name, nullptr);
         if (!zipstrm) continue;
         if (zipstrm->TotalSize() < 16) { delete zipstrm; continue; }
         VStream *memstrm = new VMemoryStream(zip->GetPrefix()+":"+pk3name, zipstrm);

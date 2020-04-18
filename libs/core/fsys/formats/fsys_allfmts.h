@@ -114,7 +114,7 @@ private:
 public:
   VDirPakFile (VStr);
 
-  virtual VStream *OpenFileRead (VStr)  override;
+  virtual VStream *OpenFileRead (VStr, int *lump)  override;
   virtual VStream *CreateLumpReaderNum (int) override;
 };
 

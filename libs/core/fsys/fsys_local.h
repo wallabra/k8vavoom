@@ -80,8 +80,10 @@ public:
 
   // all following methods are supposed to be called with global mutex protection
   // (i.e. they should not be called from multiple threads simultaneously)
-  virtual bool FileExists (VStr Name) = 0;
-  virtual VStream *OpenFileRead (VStr Name) = 0;
+  // if `lump` is not `nullptr`, sets it to file lump or to -1
+  virtual bool FileExists (VStr Name, int *lump) = 0;
+  // if `lump` is not `nullptr`, sets it to file lump or to -1
+  virtual VStream *OpenFileRead (VStr Name, int *lump) = 0;
   virtual void Close () = 0;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) = 0;
   virtual int CheckNumForFileName (VStr Name) = 0;
@@ -175,7 +177,7 @@ public:
   // call this when all lump names are built
   void buildNameMaps (bool rebuilding=false, VPakFileBase *pak=nullptr); // `true` to suppress warnings
 
-  bool fileExists (VStr name);
+  bool fileExists (VStr name, int *lump);
   bool lumpExists (VName lname, vint32 ns); // namespace -1 means "any"
 
   int findFile (VStr fname);
@@ -217,8 +219,10 @@ public:
 
   virtual void Close () override;
 
-  virtual bool FileExists (VStr fname) override;
-  virtual VStream *OpenFileRead (VStr fname) override;
+  // if `lump` is not `nullptr`, sets it to file lump or to -1
+  virtual bool FileExists (VStr fname, int *lump) override;
+  // if `lump` is not `nullptr`, sets it to file lump or to -1
+  virtual VStream *OpenFileRead (VStr fname, int *lump) override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
   virtual int CheckNumForFileName (VStr fname) override;
   virtual int FindACSObject (VStr fname) override;
@@ -275,8 +279,8 @@ bool VFS_ShouldIgnoreExt (VStr fname);
 // returns `true` if file should be kept (and modifies name if necessary)
 bool FL_CheckFilterName (VStr &fname);
 
-VStream *FL_OpenFileRead_NoLock (VStr Name);
-VStream *FL_OpenFileReadBaseOnly_NoLock (VStr Name);
+VStream *FL_OpenFileRead_NoLock (VStr Name, int *lump);
+VStream *FL_OpenFileReadBaseOnly_NoLock (VStr Name, int *lump);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

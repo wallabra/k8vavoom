@@ -202,7 +202,8 @@ public:
 
 // this function is called by the engine to open disk files
 // return any reading stream or `nullptr` for "file not found"
-extern VStream *CreateDiskStreamRead (VStr fname);
+extern VStream *CreateDiskStreamRead (VStr fname, VStr streamname=VStr::EmptyString);
+extern VStream *CreateDiskStreamWrite (VStr fname, VStr streamname=VStr::EmptyString);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
