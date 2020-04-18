@@ -2757,15 +2757,11 @@ VStream *FL_OpenFileWrite (VStr Name, bool isFullName) {
 //
 //==========================================================================
 VStream *FL_OpenFileReadInCfgDir (VStr Name) {
-  VStr diskName = FL_GetConfigDir()+"/"+Name;
+  if (Name.isEmpty()) return nullptr;
+  VStr diskName = FL_GetConfigDir().appendPath(Name);
   VStream *strm = FL_OpenSysFileRead(diskName);
   if (strm) return strm;
   return FL_OpenFileRead(Name);
-  /*
-  FILE *File = fopen(*diskName, "rb");
-  if (File) return new VStdFileStreamRead(File, diskName);
-  return FL_OpenFileRead(Name);
-  */
 }
 
 
@@ -2775,7 +2771,8 @@ VStream *FL_OpenFileReadInCfgDir (VStr Name) {
 //
 //==========================================================================
 VStream *FL_OpenFileWriteInCfgDir (VStr Name) {
-  VStr diskName = FL_GetConfigDir()+"/"+Name;
+  if (Name.isEmpty()) return nullptr;
+  VStr diskName = FL_GetConfigDir().appendPath(Name);
   return FL_OpenSysFileWrite(diskName);
 }
 

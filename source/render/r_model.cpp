@@ -559,7 +559,7 @@ static bool IsValidSpriteState (VState *state, bool iwadonly) {
 
 //==========================================================================
 //
-//  ParseModelScript
+//  ParseModelXml
 //
 //==========================================================================
 static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) {
