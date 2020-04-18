@@ -234,9 +234,11 @@ if(SWITCH_LIBNX)
 endif(SWITCH_LIBNX)
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wall")
 #set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-frame-address")
-# k8: fuck you, gcc. i have my own style, gtfo.
-set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-misleading-indentation")
-set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-ignored-attributes")
+if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 6.0)
+  # k8: fuck you, gcc. i have my own style, gtfo.
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-misleading-indentation")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-ignored-attributes")
+endif()
 
 if(WITH_STRTODEX)
   add_definitions(-DVCORE_ALLOW_STRTODEX=1)
@@ -275,7 +277,10 @@ if(NOT DEBUG_FPU_CHECKS AND NOT SWITCH_LIBNX)
   # use -ffast-math, 'cause why not?
   # k8: nope, i command my former self to not do this
   #set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -ffast-math")
-  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-math-errno")
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 6.0)
+    # on gcc 5.x leads to internal compiler errors
+    set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-math-errno")
+  endif()
 endif(NOT DEBUG_FPU_CHECKS AND NOT SWITCH_LIBNX)
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-unsafe-math-optimizations")
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-associative-math")
