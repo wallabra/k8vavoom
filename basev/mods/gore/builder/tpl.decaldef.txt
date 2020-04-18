@@ -275,10 +275,10 @@ COMBINER K8Gore_NewBloodSmearer1${Color} {
   //K8Gore_NewBloodStretcher2${Color}
   //K8Gore_NewBloodSlider${Color}
 #ifdef TRANSIENT
-  animator K8GoreBloodSplat_FaderAnim${Color}
+  K8GoreBloodSplat_FaderAnim${Color}
 #else
   // meh, let it stay
-  //animator K8GoreBloodSplat_FaderAnimSmear${Color}
+  //K8GoreBloodSplat_FaderAnimSmear${Color}
 #endif
 }
 
@@ -287,10 +287,10 @@ COMBINER K8Gore_NewBloodSmearer2${Color} {
   //K8Gore_NewBloodStretcher2${Color}
   K8Gore_NewBloodSlider${Color}
 #ifdef TRANSIENT
-  animator K8GoreBloodSplat_FaderAnim${Color}
+  K8GoreBloodSplat_FaderAnim${Color}
 #else
   // meh, let it stay
-  //animator K8GoreBloodSplat_FaderAnimSmear${Color}
+  //K8GoreBloodSplat_FaderAnimSmear${Color}
 #endif
 }
 
