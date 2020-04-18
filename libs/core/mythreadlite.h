@@ -234,7 +234,7 @@ static __attribute__((unused)) inline int mythread_mutex_trylock (mythread_mutex
 //
 // If clock_gettime() isn't available at all, gettimeofday() will be used.
 static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *mycond) VC_MYTHREAD_NOEXCEPT {
-#ifndef ANDROID // CrystaX 10.3.2 not support this
+#ifndef ANDROID /* CrystaX 10.3.2 doesn't support this */
   struct timespec ts;
   pthread_condattr_t condattr;
 
