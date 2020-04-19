@@ -71,11 +71,7 @@ extern VCvarB loader_cache_data;
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarI Skill;
-//bool sv_autoenter_checkpoints = true;
 static VCvarB sv_autoenter_checkpoints("sv_autoenter_checkpoints", true, "Use checkpoints for autosaves when possible?", CVAR_Archive);
-
-//static bool enterAutosavesEnabled = true;
-LastLoadedMapType mapLoaded = LMT_Unknown;
 
 static VStr saveFileBase;
 
@@ -2170,39 +2166,17 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
     CL_SetupStandaloneClient();
     doSaveGame = sv_new_map_autosave;
   }
-  //if (!enterAutosavesEnabled) doSaveGame = false;
 
-  if (doSaveGame && fsys_hasMapPwads) {
-    switch (mapLoaded) {
-      case LastLoadedMapType::LMT_Unknown:
-        // nothing was loaded yet, the thing that should not be
-        mapLoaded = LastLoadedMapType::LMT_Other;
+  if (doSaveGame && fsys_hasMapPwads && fsys_PWadMaps.length()) {
+    // do not autosave on iwad maps
+    doSaveGame = false;
+    for (auto &&lmp : fsys_PWadMaps) {
+      if (lmp.mapname.strEquCI(*mapname)) {
+        doSaveGame = true;
         break;
-      case LastLoadedMapType::LMT_E1M1:
-      case LastLoadedMapType::LMT_MAP01:
-        // looks like we're playing stadard iwad, go on
-        mapLoaded = LastLoadedMapType::LMT_Other;
-        break;
-      case LastLoadedMapType::LMT_OtherFirstD1:
-        // first map, but not from standard iwad
-        if (GLevel->MapName == "e1m2" && GLevel->MapHashMD5 == "81a4cc5136cbfa49345654190a626c09") {
-          // second map is from standard iwad, don't autosave
-          doSaveGame = false;
-          GCon->Logf("Detector: autosave skipped");
-        }
-        break;
-      case LastLoadedMapType::LMT_OtherFirstD2:
-        // first map, but not from standard iwad
-        if (GLevel->MapName == "map02" && GLevel->MapHashMD5 == "ab24ae6e2cb13cbdd04600a4d37f9189") {
-          // second map is from standard iwad, don't autosave
-          doSaveGame = false;
-          GCon->Logf("Detector: autosave skipped");
-        }
-        break;
-      case LastLoadedMapType::LMT_Other:
-        // cannot detect map, stop detection
-        break;
+      }
     }
+    if (!doSaveGame) GCon->Logf(NAME_Warning, "autosave skipped due to iwad map");
   }
 #else
   const bool doSaveGame = false;
