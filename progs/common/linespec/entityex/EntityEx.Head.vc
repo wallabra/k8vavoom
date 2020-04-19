@@ -1320,3 +1320,18 @@ static final bool IsSpawnableClass (class cls) {
   // debug
   //if (bNoTickGravLifeTime) { LastMoveTime = 3; /*PlaneAlpha = 0.2;*/ }
 }
+
+
+//==========================================================================
+//
+//  ACSIsPointerEqual
+//
+//==========================================================================
+override bool ACSIsPointerEqual (int aptr0, int aptr1, Entity src1) {
+  EntityEx sex = EntityEx(self);
+  if (!sex) return false;
+  if (!EntityEx(src1)) return false;
+  Entity e0 = sex.DecorDoAAPtr('ACSIsPointerEqual', aptr0);
+  Entity e1 = EntityEx(src1).DecorDoAAPtr('ACSIsPointerEqual', aptr1);
+  return (e0 == e1);
+}

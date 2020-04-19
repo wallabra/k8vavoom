@@ -3011,7 +3011,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     case ACSF_ChangeActorPitch:
     case ACSF_ChangeActorRoll:
     case ACSF_SetActorRoll:
-      // ignores interpolation for now (args[2]
+      // ignores interpolation for now (args[2])
       if (argCount >= 2) {
         int count = 0;
         float newAngle = (float)(args[1]&0xffff)*360.0f/(float)0x10000;
@@ -3038,6 +3038,13 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
           }
         }
         return count;
+      }
+      return 0;
+
+    case ACSF_GetActorRoll:
+      if (argCount >= 1) {
+        VEntity *ent = EntityFromTID(args[0], Activator);
+        if (ent) return (int)(AngleMod(ent->Angles.roll)*65536.0f/360.0f);
       }
       return 0;
 
@@ -3798,6 +3805,15 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 
     case ACSF_SpawnDecal:
       GCon->Logf(NAME_Error, "unimplemented ACSF function '%s' (%d args)", "SpawnDecal", argCount);
+      return 0;
+
+    // bool IsPointerEqual (int ptr_select1, int ptr_select2 [, int tid1 [, int tid2]]);
+    case ACSF_IsPointerEqual:
+      if (argCount >= 2) {
+        VEntity *ent1 = EntityFromTID((argCount > 2 ? args[2] : 0), Activator);
+        VEntity *ent2 = EntityFromTID((argCount > 3 ? args[3] : 0), Activator);
+        if (ent1 && ent2) return (ent1->eventACSIsPointerEqual(args[0], args[1], ent2) ? 1 : 0);
+      }
       return 0;
   }
 

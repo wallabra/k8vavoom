@@ -106,13 +106,13 @@
   ACS_EXTFUNC(GetArmorInfo) // partially implemented
   ACS_EXTFUNC(DropInventory) // implemented
   ACS_EXTFUNC(PickActor) // implemented
-  ACS_EXTFUNC(IsPointerEqual)
+  ACS_EXTFUNC(IsPointerEqual) // implemented
   ACS_EXTFUNC(CanRaiseActor)
   ACS_EXTFUNC(SetActorTeleFog) // 86
   ACS_EXTFUNC(SwapActorTeleFog)
   ACS_EXTFUNC(SetActorRoll) // implemented
   ACS_EXTFUNC(ChangeActorRoll) // implemented
-  ACS_EXTFUNC(GetActorRoll)
+  ACS_EXTFUNC(GetActorRoll) // implemented
   ACS_EXTFUNC(QuakeEx)
   ACS_EXTFUNC(Warp) // 92
   ACS_EXTFUNC(GetMaxInventory)

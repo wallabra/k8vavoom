@@ -531,6 +531,13 @@ public:
     VMT_RET_BOOL(method);
   }
 
+  // bool ACSIsPointerEqual (int aptr0, int aptr1, Entity src1)
+  bool eventACSIsPointerEqual (int aptr0, int aptr1, VEntity *src1) {
+    static VMethodProxy method("ACSIsPointerEqual");
+    vobjPutParamSelf(aptr0, aptr1, src1);
+    VMT_RET_BOOL(method);
+  }
+
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   VEntity *eventPickActor (bool specified_orig, TVec orig, TVec dir, float dist, bool specified_actmask, int actmask, bool specified_wallmask, int wallmask) {
     static VMethodProxy method("PickActor");
