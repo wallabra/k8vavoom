@@ -1429,7 +1429,7 @@ final bool HitFloorType (optional bool justLanded) {
   }
   //if (bIsPlayer && tsec != Sector) printdebug("%C: orgz=%s; fz=%s", self, Origin.z, FloorZ);
   // don't splash if landing on the edge above water/lava/etc....
-  if (FloorZ != GetPointZClamped(ref tsec->floor, Origin)) return false;
+  //if (FloorZ != GetPointZClamped(ref tsec->floor, Origin)) return false;
 
   /*
   if (!Sector || FloorZ != GetPointZClamped(ref Sector->floor, Origin)) {
