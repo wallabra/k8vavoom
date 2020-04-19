@@ -1549,6 +1549,27 @@ override bool eventDropItem (name itemName, int amount, float chance) {
 
 //==========================================================================
 //
+//  eventACSDropInventory
+//
+//==========================================================================
+override bool eventACSDropInventory (name itemName) {
+  if (!itemName) return false;
+  class!EntityEx ee = class!EntityEx(FindClassNoCase(itemName));
+  if (!ee) return false;
+  if (class!Inventory(ee)) {
+    for (Inventory inv = Inventory; inv; inv = inv.Inventory) {
+      if (inv.Class == ee) {
+        DropInventory(inv, 1);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  DropItem
 //
 //==========================================================================

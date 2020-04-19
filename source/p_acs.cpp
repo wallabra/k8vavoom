@@ -3692,6 +3692,18 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       }
       return 0;
 
+    // void DropInventory (int tid, str itemtodrop);
+    case ACSF_DropInventory:
+      if (argCount >= 2) {
+        VName itemName = GetNameLowerCase(args[1]);
+        if (itemName == NAME_None || itemName == "null" || itemName == "none") return 0;
+        int tid = args[0];
+        for (VEntity *mobj = Level->FindMobjFromTID(tid, nullptr); mobj; mobj = Level->FindMobjFromTID(tid, mobj)) {
+          mobj->eventACSDropInventory(itemName);
+        }
+      }
+      return 0;
+
     case ACSF_GetPolyobjX:
     case ACSF_GetPolyobjY:
       if (argCount > 0) {

@@ -524,6 +524,13 @@ public:
     VMT_RET_BOOL(method);
   }
 
+  // bool eventACSDropInventory (name itemName)
+  bool eventACSDropInventory (VName itemName) {
+    static VMethodProxy method("eventACSDropInventory");
+    vobjPutParamSelf(itemName);
+    VMT_RET_BOOL(method);
+  }
+
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   VEntity *eventPickActor (bool specified_orig, TVec orig, TVec dir, float dist, bool specified_actmask, int actmask, bool specified_wallmask, int wallmask) {
     static VMethodProxy method("PickActor");
