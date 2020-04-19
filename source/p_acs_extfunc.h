@@ -116,8 +116,8 @@
   ACS_EXTFUNC(QuakeEx)
   ACS_EXTFUNC(Warp) // 92
   ACS_EXTFUNC(GetMaxInventory)
-  ACS_EXTFUNC(SetSectorDamage)
-  ACS_EXTFUNC(SetSectorTerrain)
+  ACS_EXTFUNC(SetSectorDamage) // implemented
+  ACS_EXTFUNC(SetSectorTerrain) // ignored
   ACS_EXTFUNC(SpawnParticle) // ignored
   ACS_EXTFUNC(SetMusicVolume) // ignored
   ACS_EXTFUNC(CheckProximity) // implemented

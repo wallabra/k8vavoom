@@ -3759,6 +3759,27 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       }
       return 0;
 
+    // void SetSectorDamage (int tag, int amount [, string damagetype [, int interval [, int leaky]]])
+    case ACSF_SetSectorDamage:
+      if (argCount >= 1) {
+        const int amount = clampval((argCount > 1 ? args[1] : 0), 0, 10000);
+        VName dmgType = (argCount > 2 ? GetNameLowerCase(args[2]) : NAME_None);
+        const int interval = max2(0, (argCount > 3 ? args[3] : 32));
+        const int leaky = clampval((argCount > 4 ? args[4] : 0), 0, 256);
+        sector_t *sector;
+        for (int sidx = FindSectorFromTag(sector, args[0]); sidx >= 0; sidx = FindSectorFromTag(sector, args[0], sidx)) {
+          sector->Damage = amount;
+          sector->DamageType = dmgType;
+          sector->DamageInterval = interval;
+          sector->DamageLeaky = leaky;
+        }
+      }
+      return 0;
+
+    case ACSF_SetSectorTerrain:
+      GCon->Logf(NAME_Warning, "ACSF `SetSectorTerrain` is not implemented yet");
+      return 0;
+
     case ACSF_SetFogDensity:
       GCon->Logf(NAME_Warning, "ignored ACSF `SetFogDensity`");
       return 0;
