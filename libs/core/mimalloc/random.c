@@ -169,89 +169,9 @@ static bool os_random_buf(void* buf, size_t buf_len) {
   return (BCryptGenRandom(NULL, (PUCHAR)buf, (ULONG)buf_len, BCRYPT_USE_SYSTEM_PREFERRED_RNG) >= 0);
 }
 */
-// SplitMix; mostly used to generate 64-bit seeds
-static inline uint64_t splitmix64_next (uint64_t *state) {
-  uint64_t result = *state;
-  *state = result+(uint64_t)0x9E3779B97f4A7C15ULL;
-  result = (result^(result>>30))*(uint64_t)0xBF58476D1CE4E5B9ULL;
-  result = (result^(result>>27))*(uint64_t)0x94D049BB133111EBULL;
-  return result^(result>>31);
-}
-
-static inline void splitmix64_seedU64 (uint64_t *state, uint32_t seed0, uint32_t seed1) {
-  // hashU32
-  uint32_t res = seed0;
-  res -= (res<<6);
-  res ^= (res>>17);
-  res -= (res<<9);
-  res ^= (res<<4);
-  res -= (res<<3);
-  res ^= (res<<10);
-  res ^= (res>>15);
-  uint64_t n = res;
-  n <<= 32;
-  // hashU32
-  res = seed1;
-  res -= (res<<6);
-  res ^= (res>>17);
-  res -= (res<<9);
-  res ^= (res<<4);
-  res -= (res<<3);
-  res ^= (res<<10);
-  res ^= (res>>15);
-  n |= res;
-  *state = n;
-}
-
-typedef BOOLEAN WINAPI (*RtlGenRandomFn) (PVOID RandomBuffer,ULONG RandomBufferLength);
-static void RtlGenRandomX (PVOID RandomBuffer, ULONG RandomBufferLength) {
-  if (RandomBufferLength <= 0) return;
-  RtlGenRandomFn RtlGenRandomXX = NULL;
-  HMODULE libh = LoadLibraryA("advapi32.dll");
-  if (libh) {
-    RtlGenRandomXX = (RtlGenRandomFn)(void *)GetProcAddress(libh, "SystemFunction036");
-    //if (!RtlGenRandomXX) fprintf(stderr, "WARNING: `RtlGenRandom()` is not found!\n");
-    //else fprintf(stderr, "MESSAGE: `RtlGenRandom()` found!\n");
-    if (RtlGenRandomXX) {
-      BOOLEAN res = RtlGenRandomXX(RandomBuffer, RandomBufferLength);
-      FreeLibrary(libh);
-      if (res) return;
-      //fprintf(stderr, "WARNING: `RtlGenRandom()` fallback for %u bytes!\n", (unsigned)RandomBufferLength);
-    }
-  }
-  // initialise isaacp with some shit
-  uint32_t smxseed0 = 0;
-  uint32_t smxseed1 = (uint32_t)GetCurrentProcessId();
-  SYSTEMTIME st;
-  FILETIME ft;
-  GetLocalTime(&st);
-  if (!SystemTimeToFileTime(&st, &ft)) {
-    //fprintf(stderr, "SHIT: `SystemTimeToFileTime()` failed!\n");
-    smxseed0 = (uint32_t)(GetTickCount());
-  } else {
-    smxseed0 = (uint32_t)(ft.dwLowDateTime);
-  }
-  uint64_t smx;
-  splitmix64_seedU64(&smx, smxseed0, smxseed1);
-  uint8_t *dest = (uint8_t *)RandomBuffer;
-  while (RandomBufferLength >= 8) {
-    *(uint64_t *)dest = splitmix64_next(&smx);
-    dest += 8;
-    RandomBufferLength -= 8;
-  }
-  if (RandomBufferLength > 0) {
-    uint64_t v = splitmix64_next(&smx);
-    const uint8_t *src = (const uint8_t *)&v;
-    while (RandomBufferLength > 0) {
-      *dest++ = *src++;
-      --RandomBufferLength;
-    }
-  }
-}
-
 static bool os_random_buf(void* buf, size_t buf_len) {
-  RtlGenRandomX(buf, (ULONG)buf_len);
-  return true;
+  // this will fall back to "weak random"
+  return false;
 }
 /*
 #define SystemFunction036 NTAPI SystemFunction036

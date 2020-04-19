@@ -94,7 +94,6 @@ size_t _mi_os_good_alloc_size(size_t size) {
 #include <winternl.h>
 typedef PVOID    (__stdcall *PVirtualAlloc2)(HANDLE, PVOID, SIZE_T, ULONG, ULONG, /* MEM_EXTENDED_PARAMETER* */ void*, ULONG);
 typedef NTSTATUS (__stdcall *PNtAllocateVirtualMemoryEx)(HANDLE, PVOID*, SIZE_T*, ULONG, ULONG, /* MEM_EXTENDED_PARAMETER* */ PVOID, ULONG);
-/*k8:fuck you, shitdoze!
 static PVirtualAlloc2 pVirtualAlloc2 = NULL;
 static PNtAllocateVirtualMemoryEx pNtAllocateVirtualMemoryEx = NULL;
 
@@ -102,6 +101,7 @@ static bool mi_win_enable_large_os_pages()
 {
   if (large_os_page_size > 0) return true;
 
+/*k8: get lost
   // Try to see if large OS pages are supported
   // To use large pages on Windows, we first need access permission
   // Set "Lock pages in memory" permission in the group policy editor
@@ -131,8 +131,9 @@ static bool mi_win_enable_large_os_pages()
     _mi_warning_message("cannot enable large OS page support, error %lu\n", err);
   }
   return (ok!=0);
-}
 */
+  return false;
+}
 
 void _mi_os_init(void) {
   // get the page size
@@ -141,7 +142,6 @@ void _mi_os_init(void) {
   if (si.dwPageSize > 0) os_page_size = si.dwPageSize;
   if (si.dwAllocationGranularity > 0) os_alloc_granularity = si.dwAllocationGranularity;
   // get the VirtualAlloc2 function
-/*k8:fuck you, shitdoze!
   HINSTANCE  hDll;
   hDll = LoadLibrary(TEXT("kernelbase.dll"));
   if (hDll != NULL) {
@@ -158,7 +158,6 @@ void _mi_os_init(void) {
   if (mi_option_is_enabled(mi_option_large_os_pages) || mi_option_is_enabled(mi_option_reserve_huge_os_pages)) {
     mi_win_enable_large_os_pages();
   }
-*/
 }
 #elif defined(__wasi__)
 void _mi_os_init() {
@@ -216,7 +215,6 @@ static void* mi_win_virtual_allocx(void* addr, size_t size, size_t try_alignment
     return VirtualAlloc(hint, size, flags, PAGE_READWRITE);
   }
 #endif
-/*k8:fuck you, shitdoze!
 #if defined(MEM_EXTENDED_PARAMETER_TYPE_BITS)
   // on modern Windows try use VirtualAlloc2 for aligned allocation
   if (try_alignment > 0 && (try_alignment % _mi_os_page_size()) == 0 && pVirtualAlloc2 != NULL) {
@@ -228,7 +226,6 @@ static void* mi_win_virtual_allocx(void* addr, size_t size, size_t try_alignment
     return (*pVirtualAlloc2)(GetCurrentProcess(), addr, size, flags, PAGE_READWRITE, &param, 1);
   }
 #endif
-*/
   return VirtualAlloc(addr, size, flags, PAGE_READWRITE);
 }
 
@@ -861,14 +858,12 @@ static void* mi_os_alloc_huge_os_pagesx(void* addr, size_t size, int numa_node)
       _mi_warning_message("unable to allocate using huge (1gb) pages, trying large (2mb) pages instead (status 0x%lx)\n", err);
     }
   }
-/*k8:fuck you, shitdoze!
   // on modern Windows try use VirtualAlloc2 for numa aware large OS page allocation
   if (pVirtualAlloc2 != NULL && numa_node >= 0) {
     params[0].Type = MemExtendedParameterNumaNode;
     params[0].ULong = (unsigned)numa_node;
     return (*pVirtualAlloc2)(GetCurrentProcess(), addr, size, flags, PAGE_READWRITE, params, 1);
   }
-*/
   #endif
   // otherwise use regular virtual alloc on older windows
   return VirtualAlloc(addr, size, flags, PAGE_READWRITE);

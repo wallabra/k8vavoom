@@ -208,7 +208,7 @@ diff -puEZBbw -r _pt/options.c _curr/options.c
  }
 diff -puEZBbw -r _pt/os.c _curr/os.c
 --- _pt/os.c	2020-04-11 14:38:24.000000000 +0300
-+++ _curr/os.c	2020-04-11 15:22:15.000000000 +0300
++++ _curr/os.c	2020-04-19 10:51:04.000000000 +0300
 @@ -53,7 +53,7 @@ static void* mi_align_down_ptr(void* p,
  static size_t os_page_size = 4096;
  
@@ -218,39 +218,24 @@ diff -puEZBbw -r _pt/os.c _curr/os.c
  
  // if non-zero, use large page allocation
  static size_t large_os_page_size = 0;
-@@ -94,6 +94,7 @@ size_t _mi_os_good_alloc_size(size_t siz
- #include <winternl.h>
- typedef PVOID    (__stdcall *PVirtualAlloc2)(HANDLE, PVOID, SIZE_T, ULONG, ULONG, /* MEM_EXTENDED_PARAMETER* */ void*, ULONG);
- typedef NTSTATUS (__stdcall *PNtAllocateVirtualMemoryEx)(HANDLE, PVOID*, SIZE_T*, ULONG, ULONG, /* MEM_EXTENDED_PARAMETER* */ PVOID, ULONG);
-+/*k8:fuck you, shitdoze!
- static PVirtualAlloc2 pVirtualAlloc2 = NULL;
- static PNtAllocateVirtualMemoryEx pNtAllocateVirtualMemoryEx = NULL;
+@@ -101,6 +101,7 @@ static bool mi_win_enable_large_os_pages
+ {
+   if (large_os_page_size > 0) return true;
  
-@@ -131,6 +132,7 @@ static bool mi_win_enable_large_os_pages
++/*k8: get lost
+   // Try to see if large OS pages are supported
+   // To use large pages on Windows, we first need access permission
+   // Set "Lock pages in memory" permission in the group policy editor
+@@ -130,6 +131,8 @@ static bool mi_win_enable_large_os_pages
+     _mi_warning_message("cannot enable large OS page support, error %lu\n", err);
    }
    return (ok!=0);
- }
 +*/
++  return false;
+ }
  
  void _mi_os_init(void) {
-   // get the page size
-@@ -139,6 +141,7 @@ void _mi_os_init(void) {
-   if (si.dwPageSize > 0) os_page_size = si.dwPageSize;
-   if (si.dwAllocationGranularity > 0) os_alloc_granularity = si.dwAllocationGranularity;
-   // get the VirtualAlloc2 function
-+/*k8:fuck you, shitdoze!
-   HINSTANCE  hDll;
-   hDll = LoadLibrary(TEXT("kernelbase.dll"));
-   if (hDll != NULL) {
-@@ -155,6 +158,7 @@ void _mi_os_init(void) {
-   if (mi_option_is_enabled(mi_option_large_os_pages) || mi_option_is_enabled(mi_option_reserve_huge_os_pages)) {
-     mi_win_enable_large_os_pages();
-   }
-+*/
- }
- #elif defined(__wasi__)
- void _mi_os_init() {
-@@ -192,7 +196,7 @@ static bool mi_os_mem_free(void* addr, s
+@@ -192,7 +195,7 @@ static bool mi_os_mem_free(void* addr, s
    if (was_committed) _mi_stat_decrease(&stats->committed, size);
    _mi_stat_decrease(&stats->reserved, size);
    if (err) {
@@ -259,7 +244,7 @@ diff -puEZBbw -r _pt/os.c _curr/os.c
      _mi_warning_message("munmap failed: %s, addr 0x%8li, size %lu\n", strerror(errno), (size_t)addr, size);
      return false;
    }
-@@ -201,7 +205,7 @@ static bool mi_os_mem_free(void* addr, s
+@@ -201,7 +204,7 @@ static bool mi_os_mem_free(void* addr, s
    }
  }
  
@@ -268,7 +253,7 @@ diff -puEZBbw -r _pt/os.c _curr/os.c
  
  #ifdef _WIN32
  static void* mi_win_virtual_allocx(void* addr, size_t size, size_t try_alignment, DWORD flags) {
-@@ -1009,17 +1013,23 @@ Support NUMA aware allocation
+@@ -1009,17 +1012,23 @@ Support NUMA aware allocation
  -----------------------------------------------------------------------------*/
  #ifdef WIN32
  static size_t mi_os_numa_nodex() {
@@ -294,8 +279,8 @@ diff -puEZBbw -r _pt/os.c _curr/os.c
  #include <sys/syscall.h>  // getcpu
 diff -puEZBbw -r _pt/random.c _curr/random.c
 --- _pt/random.c	2020-04-11 14:38:24.000000000 +0300
-+++ _curr/random.c	2020-04-11 15:19:59.000000000 +0300
-@@ -162,11 +162,95 @@ If we cannot get good randomness, we fal
++++ _curr/random.c	2020-04-19 10:54:21.000000000 +0300
+@@ -162,11 +162,17 @@ If we cannot get good randomness, we fal
  -----------------------------------------------------------------------------*/
  
  #if defined(_WIN32)
@@ -306,87 +291,9 @@ diff -puEZBbw -r _pt/random.c _curr/random.c
    return (BCryptGenRandom(NULL, (PUCHAR)buf, (ULONG)buf_len, BCRYPT_USE_SYSTEM_PREFERRED_RNG) >= 0);
  }
 +*/
-+// SplitMix; mostly used to generate 64-bit seeds
-+static inline uint64_t splitmix64_next (uint64_t *state) {
-+  uint64_t result = *state;
-+  *state = result+(uint64_t)0x9E3779B97f4A7C15ULL;
-+  result = (result^(result>>30))*(uint64_t)0xBF58476D1CE4E5B9ULL;
-+  result = (result^(result>>27))*(uint64_t)0x94D049BB133111EBULL;
-+  return result^(result>>31);
-+}
-+
-+static inline void splitmix64_seedU64 (uint64_t *state, uint32_t seed0, uint32_t seed1) {
-+  // hashU32
-+  uint32_t res = seed0;
-+  res -= (res<<6);
-+  res ^= (res>>17);
-+  res -= (res<<9);
-+  res ^= (res<<4);
-+  res -= (res<<3);
-+  res ^= (res<<10);
-+  res ^= (res>>15);
-+  uint64_t n = res;
-+  n <<= 32;
-+  // hashU32
-+  res = seed1;
-+  res -= (res<<6);
-+  res ^= (res>>17);
-+  res -= (res<<9);
-+  res ^= (res<<4);
-+  res -= (res<<3);
-+  res ^= (res<<10);
-+  res ^= (res>>15);
-+  n |= res;
-+  *state = n;
-+}
-+
-+typedef BOOLEAN WINAPI (*RtlGenRandomFn) (PVOID RandomBuffer,ULONG RandomBufferLength);
-+static void RtlGenRandomX (PVOID RandomBuffer, ULONG RandomBufferLength) {
-+  if (RandomBufferLength <= 0) return;
-+  RtlGenRandomFn RtlGenRandomXX = NULL;
-+  HMODULE libh = LoadLibraryA("advapi32.dll");
-+  if (libh) {
-+    RtlGenRandomXX = (RtlGenRandomFn)(void *)GetProcAddress(libh, "SystemFunction036");
-+    //if (!RtlGenRandomXX) fprintf(stderr, "WARNING: `RtlGenRandom()` is not found!\n");
-+    //else fprintf(stderr, "MESSAGE: `RtlGenRandom()` found!\n");
-+    if (RtlGenRandomXX) {
-+      if (RtlGenRandomXX(RandomBuffer, RandomBufferLength)) return;
-+      //fprintf(stderr, "WARNING: `RtlGenRandom()` fallback for %u bytes!\n", (unsigned)RandomBufferLength);
-+    }
-+  }
-+  // initialise isaacp with some shit
-+  uint32_t smxseed0 = 0;
-+  uint32_t smxseed1 = (uint32_t)GetCurrentProcessId();
-+  SYSTEMTIME st;
-+  FILETIME ft;
-+  GetLocalTime(&st);
-+  if (!SystemTimeToFileTime(&st, &ft)) {
-+    //fprintf(stderr, "SHIT: `SystemTimeToFileTime()` failed!\n");
-+    smxseed0 = (uint32_t)(GetTickCount());
-+  } else {
-+    smxseed0 = (uint32_t)(ft.dwLowDateTime);
-+  }
-+  uint64_t smx;
-+  splitmix64_seedU64(&smx, smxseed0, smxseed1);
-+  uint8_t *dest = (uint8_t *)RandomBuffer;
-+  while (RandomBufferLength >= 8) {
-+    *(uint64_t *)dest = splitmix64_next(&smx);
-+    dest += 8;
-+    RandomBufferLength -= 8;
-+  }
-+  if (RandomBufferLength > 0) {
-+    uint64_t v = splitmix64_next(&smx);
-+    const uint8_t *src = (const uint8_t *)&v;
-+    while (RandomBufferLength > 0) {
-+      *dest++ = *src++;
-+      --RandomBufferLength;
-+    }
-+  }
-+}
-+
 +static bool os_random_buf(void* buf, size_t buf_len) {
-+  RtlGenRandomX(buf, (ULONG)buf_len);
-+  return true;
++  // this will fall back to "weak random"
++  return false;
 +}
  /*
  #define SystemFunction036 NTAPI SystemFunction036
