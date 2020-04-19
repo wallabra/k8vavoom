@@ -473,6 +473,8 @@ public:
     return Ret;
   }
 
+  sector_t *GetTouchedFloorSector ();
+
   /*
   bool eventSkyBoxGetAlways () { static VMethodProxy method("SkyBoxGetAlways"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
   VEntity *eventSkyBoxGetMate () { static VMethodProxy method("SkyBoxGetMate"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }
@@ -526,7 +528,7 @@ public:
 
   // bool eventACSDropInventory (name itemName)
   bool eventACSDropInventory (VName itemName) {
-    static VMethodProxy method("eventACSDropInventory");
+    static VMethodProxy method("ACSDropInventory");
     vobjPutParamSelf(itemName);
     VMT_RET_BOOL(method);
   }
@@ -536,6 +538,13 @@ public:
     static VMethodProxy method("ACSIsPointerEqual");
     vobjPutParamSelf(aptr0, aptr1, src1);
     VMT_RET_BOOL(method);
+  }
+
+  // bool eventCanRaise ()
+  VState *eventCanRaise () {
+    static VMethodProxy method("CanRaise");
+    vobjPutParamSelf();
+    VMT_RET_REF(VState, method);
   }
 
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
@@ -814,4 +823,6 @@ public:
   DECLARE_FUNCTION(UpdateVelocity);
 
   DECLARE_FUNCTION(GetBlockingHeightFor);
+
+  DECLARE_FUNCTION(GetTouchedFloorSector);
 };

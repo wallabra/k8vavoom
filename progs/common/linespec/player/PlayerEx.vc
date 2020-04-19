@@ -1432,14 +1432,22 @@ void PlayerInSpecialSector (float deltaTime) {
     if (GetCvarB('play_secret_sound')) MO.PlaySound('misc/secret', /*CHAN_VOICE*/CHAN_AUTO);
   }
 
-  if (MO.Origin.z != GetPointZClamped(ref MO.Sector->floor, MO.Origin) && !MO.WaterLevel) {
-    // player is not touching the floor
-    return;
-  }
-
   // do not apply damage continuously on the same tick
   if (LastSectorDamageTic < Level.XLevel.TicTime) {
-    ApplySectorDamage(deltaTime, EntityEx(MO), MO.Sector);
+    // this correctly processes 3d floors
+    sector_t *tsec = EntityEx(MO).GetTouchedFloorSector();
+    if (!tsec) return;
+
+    /*
+    if (MO.Origin.z != GetPointZClamped(ref MO.Sector->floor, MO.Origin) && !MO.WaterLevel) {
+      // player is (possibly) not touching the floor
+      tsec = EntityEx(MO).GetTouchedFloorSector();
+      if (!tsec) return;
+      printdebug("%C: orgz=%s; fz=%s; 3dfloor", self, MO.Origin.z, MO.FloorZ);
+    }
+    */
+
+    ApplySectorDamage(deltaTime, EntityEx(MO), tsec);
   }
 }
 
@@ -4469,7 +4477,7 @@ override void PlayerTick (float deltaTime) {
 
   if (MO.Sector) {
     PlayerProcessScrollSectors(deltaTime);
-    if (MO.Sector->special || MO.Sector->Damage) PlayerInSpecialSector(deltaTime);
+    if (MO.Sector->special || MO.Sector->Damage || SectorHas3DFloors(MO.Sector)) PlayerInSpecialSector(deltaTime);
   }
 
   // do not apply effects continuously on the same tick

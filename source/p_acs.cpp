@@ -3815,6 +3815,14 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         if (ent1 && ent2) return (ent1->eventACSIsPointerEqual(args[0], args[1], ent2) ? 1 : 0);
       }
       return 0;
+
+    // bool CanRaiseActor (int tid);
+    case ACSF_CanRaiseActor:
+      if (argCount >= 0) {
+        VEntity *ent = EntityFromTID((argCount > 0 ? args[1] : 0), Activator);
+        if (ent) return (ent->eventCanRaise() ? 1 : 0);
+      }
+      return 0;
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {

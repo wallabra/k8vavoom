@@ -1209,10 +1209,10 @@ bool eventDropItem (name itemName, int amount, float chance) {
 
 //==========================================================================
 //
-//  eventACSDropInventory
+//  ACSDropInventory
 //
 //==========================================================================
-bool eventACSDropInventory (name itemName) {
+bool ACSDropInventory (name itemName) {
   return false;
 }
 
@@ -1224,6 +1224,16 @@ bool eventACSDropInventory (name itemName) {
 //==========================================================================
 bool ACSIsPointerEqual (int aptr0, int aptr1, Entity src1) {
   return false;
+}
+
+
+//===========================================================================
+//
+//  ACSCanRaise
+//
+//===========================================================================
+state CanRaise () {
+  return none;
 }
 
 
@@ -1281,6 +1291,18 @@ void QS_Load () {}
 bool do_CheckProximity (name classname, float distance, optional int count, optional int flags, optional int aptr) {
   return false;
 }
+
+
+//==========================================================================
+//
+//  GetTouchedFloorSector
+//
+//  used for 3d floors
+//  can return `nullptr`
+//  `orgsector` can be used to avoid BSP search (nullptr allowed)
+//
+//==========================================================================
+native final sector_t *GetTouchedFloorSector ();
 
 
 // ////////////////////////////////////////////////////////////////////////// //

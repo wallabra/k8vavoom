@@ -1549,10 +1549,10 @@ override bool eventDropItem (name itemName, int amount, float chance) {
 
 //==========================================================================
 //
-//  eventACSDropInventory
+//  ACSDropInventory
 //
 //==========================================================================
-override bool eventACSDropInventory (name itemName) {
+override bool ACSDropInventory (name itemName) {
   if (!itemName) return false;
   class!EntityEx ee = class!EntityEx(FindClassNoCase(itemName));
   if (!ee) return false;
@@ -3724,20 +3724,30 @@ override void CalcFakeZMovement (out TVec Ret, float DeltaTime) {
 
 //===========================================================================
 //
+//  CanRaise
+//
+//===========================================================================
+override state CanRaise () {
+  if (!bCorpse) return none; // not a monster
+  if (!Level.Game.IsAuthority) return none;
+
+  if (StateTime != -1.0) {
+    // not lying still yet; check frame flag
+    if (!State) return none;
+    if ((GetStateSpriteFrame(State)&FF_CANRAISE) == 0) return none;
+  }
+
+  return FindState('Raise');
+}
+
+
+//===========================================================================
+//
 //  DoThingRaise
 //
 //===========================================================================
 final bool DoThingRaise (optional bool skipCheckPosition) {
-  if (!bCorpse) return false; // not a monster
-  if (!Level.Game.IsAuthority) return false;
-
-  if (StateTime != -1.0) {
-    // not lying still yet; check frame flag
-    if (!State) return false;
-    if ((GetStateSpriteFrame(State)&FF_CANRAISE) == 0) return false;
-  }
-
-  state RaiseState = FindState('Raise');
+  state RaiseState = CanRaise();
   if (!RaiseState) return false; // monster doesn't have a raise state
 
   Velocity.x = 0.0;

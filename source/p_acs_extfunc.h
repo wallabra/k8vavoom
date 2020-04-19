@@ -107,7 +107,7 @@
   ACS_EXTFUNC(DropInventory) // implemented
   ACS_EXTFUNC(PickActor) // implemented
   ACS_EXTFUNC(IsPointerEqual) // implemented
-  ACS_EXTFUNC(CanRaiseActor)
+  ACS_EXTFUNC(CanRaiseActor) // implemented
   ACS_EXTFUNC(SetActorTeleFog) // 86
   ACS_EXTFUNC(SwapActorTeleFog)
   ACS_EXTFUNC(SetActorRoll) // implemented

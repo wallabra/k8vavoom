@@ -1416,23 +1416,34 @@ void CheckSplash (float distance) {
 //
 //==========================================================================
 final bool HitFloorType (optional bool justLanded) {
-  EntityEx A;
-  TVec org;
-  bool smallsplash = false;
-
-  if (!Sector || FloorZ != GetPointZClamped(ref Sector->floor, Origin)) {
-    // don't splash if landing on the edge above water/lava/etc....
-    return false;
-  }
-
   // things that don't splash go here
   if (bFloatBob || bNoSplash) return false;
   if (!Level.Game.IsAuthority) return false;
 
+  // 3d floors
+  sector_t *tsec = GetTouchedFloorSector();
+  if (!tsec) {
+    //if (bIsPlayer) printdebug("%C: orgz=%s; fz=%s", self, Origin.z, FloorZ);
+    // don't splash if landing on the edge above water/lava/etc....
+    return false;
+  }
+  //if (bIsPlayer && tsec != Sector) printdebug("%C: orgz=%s; fz=%s", self, Origin.z, FloorZ);
+  // don't splash if landing on the edge above water/lava/etc....
+  if (FloorZ != GetPointZClamped(ref tsec->floor, Origin)) return false;
+
+  /*
+  if (!Sector || FloorZ != GetPointZClamped(ref Sector->floor, Origin)) {
+    // don't splash if landing on the edge above water/lava/etc....
+    //if (bIsPlayer) printdebug("%C: orgz=%s; fz=%s", self, Origin.z, FloorZ);
+    return false;
+  }
+  */
+
   VTerrainInfo *TInfo = GetFloorType();
+  //if (bIsPlayer /*&& tsec != Sector*/) printdebug("%C: orgz=%s; fz=%s; TInfo->DamageAmount=%s; floor=%s", self, Origin.z, FloorZ, TInfo->DamageAmount, EFloor.splane->pic);
 
   // small splash for small masses
-  if (Mass < 10.0 || bSmallSplash) smallsplash = true;
+  bool smallsplash = (Mass < 10.0 || bSmallSplash);
 
   // this should be done for Voodoo Dolls only, because for the main player entity it is done in `PlayerEx`
   // also, don't do it more than once per tick
@@ -1477,8 +1488,9 @@ final bool HitFloorType (optional bool justLanded) {
   tmp_phys_last_splash_time = XLevel.Time;
 
   // spawn splash
-  org = Origin;
+  TVec org = Origin;
   org.z = FloorZ;
+  EntityEx A;
 
   if (smallsplash) {
     if (SInfo->SmallClass) {

@@ -664,9 +664,72 @@ void VEntity::StopSoundSequence () {
 
 //==========================================================================
 //
+//  VEntity::GetTouchedFloorSector
+//
+//  used for 3d floors
+//  can return `nullptr`
+//  `orgsector` can be used to avoid BSP search (nullptr allowed)
+//
+//==========================================================================
+sector_t *VEntity::GetTouchedFloorSector () {
+  if (!Sector) return nullptr;
+  const float orgz = Origin.z;
+  //if (Origin.z != FloorZ) return nullptr;
+  if (!Sector->Has3DFloors()) {
+    if (Sector->floor.GetPointZClamped(Origin) != orgz) return nullptr;
+    return Sector;
+  }
+  sector_t *bestNonSolid = nullptr;
+  sector_t *bestSolid = nullptr;
+  float bestNSDist = 99999.0f;
+  // check 3d floors
+  for (sec_region_t *reg = Sector->eregions; reg; reg = reg->next) {
+    if ((reg->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_BaseRegion)) != 0) continue;
+    if (!reg->extraline) continue;
+    if (!reg->extraline->frontsector) continue;
+    const float rtopz = reg->eceiling.GetPointZClamped(Origin);
+    const float rbotz = reg->efloor.GetPointZClamped(Origin);
+    // ignore paper-thin regions
+    if (rtopz <= rbotz) continue; // invalid, or paper-thin, ignore
+    if (reg->regflags&sec_region_t::RF_NonSolid) {
+      // swimmable sector
+      if (orgz > rbotz && orgz < rtopz) {
+        // inside, check for best distance
+        const float bdist = orgz-rbotz;
+        const float tdist = rtopz-orgz;
+        if (bdist < bestNSDist) {
+          bestNSDist = bdist;
+          bestNonSolid = reg->extraline->frontsector;
+        } else if (tdist < bestNSDist) {
+          bestNSDist = tdist;
+          bestNonSolid = reg->extraline->frontsector;
+        }
+      }
+    } else {
+      // solid sector, check floor
+      if (rtopz == orgz) {
+        //return reg->extraline->frontsector;
+        if (!bestSolid) bestSolid = reg->extraline->frontsector;
+      }
+    }
+  }
+  // liquids first
+  if (bestNonSolid) return bestNonSolid;
+  // then solids
+  return bestSolid;
+}
+
+
+//==========================================================================
+//
 //  Script natives
 //
 //==========================================================================
+IMPLEMENT_FUNCTION(VEntity, GetTouchedFloorSector) {
+  vobjGetParamSelf();
+  RET_PTR((Self ? Self->GetTouchedFloorSector() : nullptr));
+}
+
 IMPLEMENT_FUNCTION(VEntity, SetTID) {
   P_GET_INT(tid);
   P_GET_SELF;
