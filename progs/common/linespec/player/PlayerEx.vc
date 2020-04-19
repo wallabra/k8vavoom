@@ -1435,8 +1435,10 @@ void PlayerInSpecialSector (float deltaTime) {
   // do not apply damage continuously on the same tick
   if (LastSectorDamageTic < Level.XLevel.TicTime) {
     // this correctly processes 3d floors
-    sector_t *tsec = EntityEx(MO).GetTouchedFloorSector();
-    if (!tsec) return;
+    sector_t *swimmable;
+    sector_t *tsec = EntityEx(MO).GetTouchedFloorSectorEx(out swimmable);
+    if (tsec) ApplySectorDamage(deltaTime, EntityEx(MO), tsec);
+    if (swimmable) ApplySectorDamage(deltaTime, EntityEx(MO), swimmable);
 
     /*
     if (MO.Origin.z != GetPointZClamped(ref MO.Sector->floor, MO.Origin) && !MO.WaterLevel) {
@@ -1446,8 +1448,6 @@ void PlayerInSpecialSector (float deltaTime) {
       printdebug("%C: orgz=%s; fz=%s; 3dfloor", self, MO.Origin.z, MO.FloorZ);
     }
     */
-
-    ApplySectorDamage(deltaTime, EntityEx(MO), tsec);
   }
 }
 

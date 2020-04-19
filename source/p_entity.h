@@ -473,7 +473,7 @@ public:
     return Ret;
   }
 
-  sector_t *GetTouchedFloorSector ();
+  sector_t *GetTouchedFloorSectorEx (sector_t **swimmable);
 
   /*
   bool eventSkyBoxGetAlways () { static VMethodProxy method("SkyBoxGetAlways"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
@@ -825,4 +825,5 @@ public:
   DECLARE_FUNCTION(GetBlockingHeightFor);
 
   DECLARE_FUNCTION(GetTouchedFloorSector);
+  DECLARE_FUNCTION(GetTouchedFloorSectorEx);
 };

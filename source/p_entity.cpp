@@ -664,14 +664,15 @@ void VEntity::StopSoundSequence () {
 
 //==========================================================================
 //
-//  VEntity::GetTouchedFloorSector
+//  VEntity::GetTouchedFloorSectorEx
 //
 //  used for 3d floors
 //  can return `nullptr`
 //  `orgsector` can be used to avoid BSP search (nullptr allowed)
 //
 //==========================================================================
-sector_t *VEntity::GetTouchedFloorSector () {
+sector_t *VEntity::GetTouchedFloorSectorEx (sector_t **swimmable) {
+  if (swimmable) *swimmable = nullptr;
   if (!Sector) return nullptr;
   const float orgz = Origin.z;
   //if (Origin.z != FloorZ) return nullptr;
@@ -713,9 +714,12 @@ sector_t *VEntity::GetTouchedFloorSector () {
       }
     }
   }
-  // liquids first
-  if (bestNonSolid) return bestNonSolid;
-  // then solids
+  if (swimmable) {
+    *swimmable = bestNonSolid;
+  } else {
+    // prefer swimmable
+    if (bestNonSolid) return bestNonSolid;
+  }
   return bestSolid;
 }
 
@@ -727,7 +731,13 @@ sector_t *VEntity::GetTouchedFloorSector () {
 //==========================================================================
 IMPLEMENT_FUNCTION(VEntity, GetTouchedFloorSector) {
   vobjGetParamSelf();
-  RET_PTR((Self ? Self->GetTouchedFloorSector() : nullptr));
+  RET_PTR((Self ? Self->GetTouchedFloorSectorEx(nullptr) : nullptr));
+}
+
+IMPLEMENT_FUNCTION(VEntity, GetTouchedFloorSectorEx) {
+  sector_t **swimmable;
+  vobjGetParamSelf(swimmable);
+  RET_PTR((Self ? Self->GetTouchedFloorSectorEx(swimmable) : nullptr));
 }
 
 IMPLEMENT_FUNCTION(VEntity, SetTID) {
