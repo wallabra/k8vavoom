@@ -456,10 +456,10 @@ endif(ENABLE_SIGNAL_HANDLER)
 #
 #  **** Check for inttypes.h ****
 #
-find_path(INTTYPES_INCLUDE_DIR inttypes.h)
-if(INTTYPES_INCLUDE_DIR)
-  add_definitions(-DHAVE_INTTYPES_H=1)
-endif(INTTYPES_INCLUDE_DIR)
+### find_path(INTTYPES_INCLUDE_DIR inttypes.h)
+### if(INTTYPES_INCLUDE_DIR)
+###   add_definitions(-DHAVE_INTTYPES_H=1)
+### endif(INTTYPES_INCLUDE_DIR)
 
 
 #
@@ -470,6 +470,12 @@ if(WIN32)
 else(WIN32)
   set(NET_LIBRARIES "")
 endif(WIN32)
+
+
+#
+#  **** pkg-config is required ****
+#
+FIND_PACKAGE(PkgConfig REQUIRED)
 
 
 #
@@ -557,8 +563,6 @@ endif(ENABLE_CLIENT OR ENABLE_SERVER OR ENABLE_VCCRUN)
 if(ENABLE_CLIENT OR ENABLE_VCCRUN)
   find_package(OpenAL REQUIRED)
   include_directories(${OPENAL_INCLUDE_DIR})
-  ##find_path(OPENALAL_INCLUDE_DIR AL/al.h)
-  ##set(MAIN_LIBS OpenAL32 ${MAIN_LIBS})
   if(WITH_STATIC_OPENAL)
     #k8: my MXE builds are static. live with it.
     add_definitions(-DAL_LIBTYPE_STATIC=1)
@@ -579,19 +583,28 @@ set(MAIN_LIBS ${VAVOOM_SHITDOZE_LIBS} ${MAIN_LIBS})
 
 
 #
+#  **** Check for libogg ****
+#
+if(WITH_VORBIS OR WITH_OPUS)
+  PKG_CHECK_MODULES(OGG ogg)
+  if(OGG_FOUND)
+    message(STATUS "Found libogg: ${OGG_LIBRARY}")
+    include_directories(${VORBIS_INCLUDE_DIR})
+    set(MAIN_LIBS ${OGG_LIBRARY} ${MAIN_LIBS})
+  endif(OGG_FOUND)
+endif()
+
+
+#
 #  **** Check for Vorbis ****
 #
 if(WITH_VORBIS)
-  find_path(OGG_INCLUDE_DIR ogg/ogg.h)
-  find_path(VORBIS_INCLUDE_DIR vorbis/codec.h)
-  find_library(OGG_LIBRARY NAMES ogg)
-  find_library(VORBIS_LIBRARY NAMES vorbis)
+  PKG_CHECK_MODULES(VORBIS vorbis)
   if (OGG_INCLUDE_DIR AND VORBIS_INCLUDE_DIR AND OGG_LIBRARY AND VORBIS_LIBRARY)
-    message(STATUS "Found OggVorbis: ${OGG_LIBRARY} ${VORBIS_LIBRARY}")
+    message(STATUS "Found Vorbis: ${VORBIS_LIBRARY}")
     set(VORBIS_FOUND ON)
     include_directories(${OGG_INCLUDE_DIR})
-    include_directories(${VORBIS_INCLUDE_DIR})
-    set(MAIN_LIBS ${VORBIS_LIBRARY} ${OGG_LIBRARY} ${MAIN_LIBS})
+    set(MAIN_LIBS ${VORBIS_LIBRARY} ${MAIN_LIBS})
   else (OGG_INCLUDE_DIR AND VORBIS_INCLUDE_DIR AND OGG_LIBRARY AND VORBIS_LIBRARY)
     message(STATUS "Could NOT find OggVorbis libraries")
     set(VORBIS_FOUND OFF)
@@ -607,24 +620,23 @@ endif(WITH_VORBIS)
 #  **** Check for Opus ****
 #
 if(WITH_OPUS)
-  FIND_PACKAGE(PkgConfig REQUIRED)
-  #PKG_CHECK_MODULES(OPUS opusfile libopusenc ogg)
-  PKG_CHECK_MODULES(OPUS opusfile opus ogg)
-  #if(OPUS_INCLUDE_DIRS AND OPUS_LIBRARIES)
-  if(OPUS_LIBRARIES)
+  PKG_CHECK_MODULES(OPUS opusfile opus)
+  if(OPUS_FOUND AND OGG_FOUND)
     message(STATUS "Found Opus: ${OPUS_LIBRARIES}")
     set(OPUS_FOUND ON)
     include_directories(${OPUS_INCLUDE_DIRS})
     set(MAIN_LIBS ${OPUS_LIBRARIES} ${MAIN_LIBS})
-  else(OPUS_LIBRARIES)
+  else(OPUS_FOUND AND OGG_FOUND)
     message(STATUS "Could NOT find Opus libraries")
     set(OPUS_FOUND OFF)
     message(FATAL_ERROR "You need libopus to compile k8vavoom.")
     return()
-  endif(OPUS_LIBRARIES)
+  endif(OPUS_FOUND AND OGG_FOUND)
 else(WITH_OPUS)
   set(OPUS_FOUND OFF)
 endif(WITH_OPUS)
+
+
 
 
 if(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY OR ENABLE_VCCRUN)
@@ -640,8 +652,7 @@ endif(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY OR ENABLE_VCCRUN)
 #  **** Check for libmad ****
 #
 if(WITH_LIBMAD)
-  find_path(MAD_INCLUDE_DIR mad.h)
-  find_library(MAD_LIBRARY NAMES mad)
+  PKG_CHECK_MODULES(MAD mad)
   if(MAD_INCLUDE_DIR AND MAD_LIBRARY)
     message(STATUS "Found LibMAD: ${MAD_LIBRARY}")
     set(LIBMAD_FOUND ON)
@@ -660,9 +671,7 @@ endif(WITH_LIBMAD)
 #  **** Check for FLAC ****
 #
 if(WITH_FLAC)
-  find_path(FLAC_INCLUDE_DIR FLAC++/decoder.h)
-  find_library(FLAC_LIBRARY NAMES FLAC)
-  find_library(FLACPP_LIBRARY NAMES FLAC++)
+  PKG_CHECK_MODULES(FLAC flac flac++)
   if(FLAC_INCLUDE_DIR AND FLAC_LIBRARY AND FLACPP_LIBRARY)
     message(STATUS "Found FLAC: ${FLAC_LIBRARY} ${FLACPP_LIBRARY}")
     set(FLAC_FOUND ON)
@@ -682,7 +691,6 @@ endif(WITH_FLAC)
 #
 if(WITH_FLUID AND ENABLE_CLIENT)
   if(WITH_SYS_FLUID)
-    FIND_PACKAGE(PkgConfig REQUIRED)
     PKG_CHECK_MODULES(FLUID fluidsynth)
     #message(STATUS, "FINC:" ${FLUID_INCLUDE_DIRS})
     #message(STATUS, "FLIB:" ${FLUID_LIBRARIES})
@@ -853,7 +861,6 @@ else(SWITCH_LIBNX)
   # # endif(GNUTLS_FOUND)
 
   if(ENABLE_VCCRUN)
-    FIND_PACKAGE(PkgConfig REQUIRED)
     PKG_CHECK_MODULES(GNUTLS gnutls)
     if(GNUTLS_FOUND)
       #message(STATUS "GnuTLS INC: " ${GNUTLS_INCLUDE_DIR})
