@@ -7,7 +7,9 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_CURRENT_SOURCE_DIR}/*.txt
   )
 add_custom_target(doom1_basepak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3)
-add_dependencies(doom_basepak doom_game doom_cgame)
+if(ENABLE_VCC)
+  add_dependencies(doom_basepak doom_game doom_cgame)
+endif(ENABLE_VCC)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
   DESTINATION ${DATADIR}/basev/doom1)

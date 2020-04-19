@@ -21,7 +21,9 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_CURRENT_SOURCE_DIR}/brightmaps/weapons/*
   )
 add_custom_target(bdw_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3)
-add_dependencies(bdw_modpak doom_game doom_cgame doom2_cgame heretic_cgame hexen_cgame strife_cgame)
+if(ENABLE_VCC)
+  add_dependencies(bdw_modpak doom_game doom_cgame doom2_cgame heretic_cgame hexen_cgame strife_cgame)
+endif(ENABLE_VCC)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
   DESTINATION ${DATADIR}/basev/mods/bdw)

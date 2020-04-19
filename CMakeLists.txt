@@ -105,6 +105,8 @@ endif(NOT CMAKE_COMPILER_IS_GNUCC)
 
 option(ENABLE_SIGNAL_HANDLER "Intercept system signals" OFF)
 
+option(ENABLE_VCC         "Use vcc to fast syntax check" OFF)
+
 option(ENABLE_CLIENT      "Build client executable" ON)
 option(ENABLE_SERVER      "Build dedicated server executable (don't do that!)" OFF)
 option(ENABLE_MASTER      "Build master server (no reason to build it)" OFF)
