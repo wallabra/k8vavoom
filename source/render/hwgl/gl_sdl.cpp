@@ -359,7 +359,7 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
     Width = 800;
     Height = 600;
     */
-#ifdef ANDROID
+#if defined(ANDROID)
     SDL_DisplayMode mode;
     if (SDL_GetCurrentDisplayMode(0, &mode) == 0) {
       Width = mode.w;
@@ -368,6 +368,10 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
     } else {
       Sys_Error("Failed to get display mode: %s", SDL_GetError());
     }
+#elif defined(__SWITCH__)
+    // GetCurrentDisplayMode always returns 1920x1080, so force 720p
+    Width = 1280;
+    Height = 720;
 #else
     //k8: 'cmon, this is silly! let's set something better!
     Width = 1024;
@@ -607,7 +611,11 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
   SetupSDLRequirements();
   // turn off vsync
   SDL_GL_SetSwapInterval(0);
+  #ifdef __SWITCH__
+  winsplash = SDL_CreateWindow("k8vavoom_splash", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, flags);
+  #else
   winsplash = SDL_CreateWindow("k8vavoom_splash", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, splashWidth, splashHeight, flags);
+  #endif
   if (!winsplash) {
     GCon->Logf(NAME_Warning, "Cannot create splash window");
     return false;
@@ -678,7 +686,7 @@ bool VSdlOpenGLDrawer::ShowLoadingSplashScreen () {
   #ifdef VV_SPLASH_PARTIAL_UPDATES
     SDL_SetRenderDrawColor(rensplash, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(rensplash);
-    #ifdef ANDROID
+    #if defined(ANDROID) || defined(__SWITCH__)
       int www, hhh;
       if (SDL_GetRendererOutputSize(rensplash, &www, &hhh) == 0) {
         SDL_Rect r = (SDL_Rect) {
@@ -780,7 +788,7 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
     srectu.h = CONFONT_HEIGHT*(int)IMG_TEXT_LINES;
     SDL_Rect drectu;
     drectu = srectu;
-    #ifdef ANDROID
+    #if defined(ANDROID) || defined(__SWITCH__)
       int www, hhh;
       if (SDL_GetRendererOutputSize(rensplash, &www, &hhh) == 0) {
         int swww, shhh;
@@ -851,7 +859,7 @@ void VSdlOpenGLDrawer::DrawLoadingSplashText (const char *text, int len) {
       drect.y = imgty;
       drect.w = fwdt;
       drect.h = fhgt;
-      #ifdef ANDROID
+      #if defined(ANDROID) || defined(__SWITCH__)
         int www, hhh;
         if (SDL_GetRendererOutputSize(rensplash, &www, &hhh) == 0) {
           int swww, shhh;
