@@ -3871,7 +3871,6 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
   float   speed;
   float   vspeed;
   class!EntityEx moType;
-  Entity    A;
   EntityEx  newA;
   bool    success;
 
@@ -3899,11 +3898,12 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
   vspeed = float(AVSpeed)/8.0;
 
   //print("projectile '%C', vspeed=%f (%f); intercept=%B", moType, AVSpeed, vspeed, Intercept);
-  for (A = tid ? FindMobjFromTID(tid, none) : Activator; A; A = FindMobjFromTID(tid, A)) {
+  foreach (EntityEx A; eachTID(tid, Activator)) {
     Entity Targ = ForceDest;
     if (DestTID) {
       Targ = FindMobjFromTID(DestTID, none);
       if (!Targ) continue;
+      if (Targ == self) Targ = none; // just in case
     }
 
     newA = Spawn(moType, A.Origin);
@@ -3912,7 +3912,7 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
     //print("%C: *** special:%B; gravity:%B, nogravity:%B; grav=%f", newA, newA.bSpecial, gravity, newA.bNoGravity, newA.Gravity);
     if (newA.SightSound) newA.PlaySound(newA.SightSound, CHAN_VOICE);
 
-    newA.Target = EntityEx(A);  // Originator
+    newA.Target = A;  // Originator
     if (Targ) {
       TVec TargOrg = Targ.Origin+vector(0.0, 0.0, Targ.Height/2.0);
       TVec Delta = TargOrg-newA.Origin;
@@ -3997,7 +3997,6 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 {
   int       tid;
   float     angle;
-  Entity      A;
   EntityEx    newAct;
   class!EntityEx moType;
   bool      success;
@@ -4018,9 +4017,7 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   auto moRepl = class!EntityEx(GetClassReplacement(moType));
   if (moRepl) moType = moRepl;
   angle = float(Arg3)*360.0/256.0;
-  for (A = tid ? FindMobjFromTID(tid, none) : Activator; A;
-    A = FindMobjFromTID(tid, A))
-  {
+  foreach (EntityEx A; eachTID(tid, Activator)) {
     newAct = Spawn(moType, A.Origin);
     if (newAct.bFloatBob)
     {
@@ -4123,8 +4120,7 @@ override int AcsSpawnThing (name Name, TVec Org, int Tid, float Angle, bool forc
 //==========================================================================
 override int AcsSpawnSpot (name Name, int SpotTid, int Tid, float Angle, bool forced) {
   int NumSpawned = 0;
-  Entity A;
-  for (A = FindMobjFromTID(SpotTid, none); A; A = FindMobjFromTID(SpotTid, A)) {
+  foreach (EntityEx A; eachTID(SpotTid)) {
     NumSpawned += AcsSpawnThing(Name, A.Origin, Tid, Angle, forced);
   }
   return NumSpawned;
@@ -4138,8 +4134,7 @@ override int AcsSpawnSpot (name Name, int SpotTid, int Tid, float Angle, bool fo
 //==========================================================================
 override int AcsSpawnSpotFacing (name Name, int SpotTid, int Tid, bool forced) {
   int NumSpawned = 0;
-  Entity A;
-  for (A = FindMobjFromTID(SpotTid, none); A; A = FindMobjFromTID(SpotTid, A)) {
+  foreach (EntityEx A; eachTID(SpotTid)) {
     NumSpawned += AcsSpawnThing(Name, A.Origin, Tid, A.Angles.yaw, forced:forced);
   }
   return NumSpawned;
@@ -4151,41 +4146,24 @@ override int AcsSpawnSpotFacing (name Name, int SpotTid, int Tid, bool forced) {
 //  EV_ThingActivate
 //
 //==========================================================================
-
-final bool EV_ThingActivate(int tid, EntityEx Activator)
-{
-  Entity  A;
-  bool  success;
-
-  success = false;
-  for (A = FindMobjFromTID(tid, none); A; A = FindMobjFromTID(tid, A))
-  {
-    if (EntityEx(A).Activate(Activator))
-    {
-      success = true;
-    }
+final bool EV_ThingActivate (int tid, EntityEx Activator) {
+  bool success = false;
+  foreach (EntityEx A; eachTID(tid, Activator)) {
+    if (EntityEx(A).Activate(Activator)) success = true;
   }
   return success;
 }
+
 
 //==========================================================================
 //
 //  EV_ThingDeactivate
 //
 //==========================================================================
-
-final bool EV_ThingDeactivate(int tid, EntityEx Activator)
-{
-  Entity  A;
-  bool  success;
-
-  success = false;
-  for (A = FindMobjFromTID(tid, none); A; A = FindMobjFromTID(tid, A))
-  {
-    if (EntityEx(A).Deactivate(Activator))
-    {
-      success = true;
-    }
+final bool EV_ThingDeactivate (int tid, EntityEx Activator) {
+  bool success = false;
+  foreach (EntityEx A; eachTID(tid, Activator)) {
+    if (EntityEx(A).Deactivate(Activator)) success = true;
   }
   return success;
 }
@@ -4273,82 +4251,48 @@ final int EV_ThingDamage (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, Enti
 //  DoThingDamage
 //
 //==========================================================================
-
-override int DoThingDamage(int Tid, int Amount, name DmgType, Entity Activator)
-{
-  Entity  A;
-  int   NumDamaged;
-
-  NumDamaged = 0;
-  for (A = Tid ? FindMobjFromTID(Tid, none) : Activator; A;
-    A = FindMobjFromTID(Tid, A))
-  {
-    if (EntityEx(A).bShootable)
-    {
-      if (Amount > 0)
-      {
-        EntityEx(A).Damage(none, EntityEx(Activator), Amount, DmgType, spawnBlood:true);
-      }
-      else if (A.Health < A.InitialHealth)
-      {
-        //  Negative amount heals thing.
+override int DoThingDamage (int Tid, int Amount, name DmgType, Entity Activator) {
+  int NumDamaged = 0;
+  foreach (EntityEx A; eachTID(Tid, Activator)) {
+    if (A.bShootable) {
+      if (Amount > 0) {
+        A.Damage(none, EntityEx(Activator), Amount, DmgType, spawnBlood:true);
+      } else if (A.Health < A.InitialHealth) {
+        // negative amount heals thing
         A.Health -= Amount;
-        if (A.Health > A.InitialHealth)
-        {
-          A.Health = A.InitialHealth;
-        }
-        if (A.bIsPlayer)
-        {
-          A.Player.Health = A.Health;
-        }
+        if (A.Health > A.InitialHealth) A.Health = A.InitialHealth;
+        if (A.bIsPlayer) A.Player.Health = A.Health;
       }
-      NumDamaged++;
-    }
-    if (!Tid)
-    {
-      break;
+      ++NumDamaged;
     }
   }
   return NumDamaged;
 }
+
 
 //===========================================================================
 //
 //  EV_ThingSetGoal
 //
 //===========================================================================
-
-final bool EV_ThingSetGoal(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
-{
-  Entity Ent;
+final bool EV_ThingSetGoal (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5) {
   EntityEx NewGoal = none;
-  for (Ent = FindMobjFromTID(Arg2, none); Ent;
-    Ent = FindMobjFromTID(Arg2, Ent))
-  {
-    if (!Ent.IsA('PatrolPoint'))
-    {
-      continue;
-    }
-    NewGoal = EntityEx(Ent);
+  foreach (EntityEx Ent; eachTID(Arg2)) {
+    if (!Ent.IsA('PatrolPoint')) continue;
+    NewGoal = Ent;
     break;
   }
 
   bool Ret = false;
-  for (Ent = FindMobjFromTID(Arg1, none); Ent;
-    Ent = FindMobjFromTID(Arg1, Ent))
-  {
-    EntityEx E = EntityEx(Ent);
+  foreach (EntityEx E; eachTID(Arg1)) {
     Ret = true;
-    if (E.bShootable)
-    {
+    if (E.bShootable) {
       E.Goal = NewGoal;
       E.bChaseGoal = !!Arg4;
-      if (!E.Target)
-      {
-        E.ReactionTime = float(Arg3);
-      }
+      if (!E.Target) E.ReactionTime = float(Arg3);
     }
   }
+
   return Ret;
 }
 
@@ -4406,90 +4350,67 @@ final bool EV_ChangeCamera(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   return true;
 }
 
+
 //===========================================================================
 //
 //  EV_ThingSetTranslation
 //
 //===========================================================================
-
-final bool EV_ThingSetTranslation(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, EntityEx A)
-{
+final bool EV_ThingSetTranslation (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, EntityEx A) {
   int Trans;
-  if (Arg2 == -1 && A)
-  {
+  if (Arg2 == -1 && A) {
     Trans = A.Translation;
-  }
-  else if (Arg2 >= 1 && Arg2 < Level::MAX_LEVEL_TRANSLATIONS)
-  {
+  } else if (Arg2 >= 1 && Arg2 < Level::MAX_LEVEL_TRANSLATIONS) {
     Trans = (Entity::TRANSL_Level<<Entity::TRANSL_TYPE_SHIFT)+Arg2-1;
-  }
-  else
-  {
+  } else {
     Trans = 0;
   }
 
   bool Ret = false;
-  if (Arg1)
-  {
-    Entity Ent;
-    for (Ent = FindMobjFromTID(Arg1, none); Ent;
-      Ent = FindMobjFromTID(Arg1, Ent))
-    {
+  if (Arg1) {
+    foreach (EntityEx Ent; eachTID(Arg1)) {
       Ret = true;
       Ent.Translation = Trans ? Trans : Ent.default.Translation;
     }
-  }
-  else if (A)
-  {
+  } else if (A) {
     Ret = true;
-    A.Translation = Trans ? Trans : A.default.Translation;
+    A.Translation = (Trans ? Trans : A.default.Translation);
   }
   return Ret;
 }
+
 
 //===========================================================================
 //
 //  EV_ThingHate
 //
 //===========================================================================
-
-final bool EV_ThingHate(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  EntityEx A)
-{
+final bool EV_ThingHate (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, EntityEx A) {
   EntityEx Hatee = none;
   bool NothingToHate = false;
-  if (Arg2)
-  {
-    for (Hatee = EntityEx(FindMobjFromTID(Arg2, none)); Hatee;
-      Hatee = EntityEx(FindMobjFromTID(Arg2, Hatee)))
-    {
+
+  if (Arg2) {
+    foreach (Hatee; eachTID(Arg2)) {
       if (Hatee.bShootable && // can't hate nonshootable things
-        Hatee.Health > 0 && // can't hate dead things
-        !Hatee.bDormant)  // can't target dormant things
+          Hatee.Health > 0 && // can't hate dead things
+          !Hatee.bDormant)  // can't target dormant things
       {
         break;
       }
     }
-    if (!Hatee)
-    {
-      // Nothing to hate
-      NothingToHate = true;
-    }
+    if (!Hatee) NothingToHate = true;
   }
 
-  EntityEx Hater;
-  if (Arg1 == 0)
-  {
-    if (A && A.bIsPlayer)
-    {
-      // Players cannot have their attitudes set
-      return false;
-    }
-    else
-    {
-      Hater = A;
-    }
+  if (Arg1 == 0 && Arg2 == 0) {
+    // cannot hate itself
+    Hatee = none;
+    NothingToHate = true;
+  }
+
+  /*
+  if (Arg1 == 0) {
+    if (A && A.bIsPlayer) return false; // Players cannot have their attitudes set
+    Hater = A;
   }
   else
   {
@@ -4502,101 +4423,62 @@ final bool EV_ThingHate(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       }
     }
   }
+  */
 
-  while (Hater)
-  {
-    // Can't hate if can't attack.
-    if (Hater.SeeState)
-    {
-      // If hating a group of things, record the TID and nullptr
-      // the target (if its TID doesn't match). A_Look will
-      // find an appropriate thing to go chase after.
-      if (Arg3)
-      {
-        Hater.TIDToHate = Arg2;
-        Hater.LastLookActor = none;
+  foreach (EntityEx Hater; eachTID(Arg1, A)) {
+    if (Hater.bIsPlayer) continue; // players cannot have their attitudes set
+    if (Hater.Health <= 0 || !Hater.bShootable) continue;
+    if (!Hater.SeeState) continue; // can't hate if can't attack
+    // If hating a group of things, record the TID and nullptr
+    // the target (if its TID doesn't match). A_Look will
+    // find an appropriate thing to go chase after.
+    if (Arg3) {
+      Hater.TIDToHate = Arg2;
+      Hater.LastLookActor = none;
 
-        // If the TID to hate is 0, then don't forget the target and
-        // lastenemy fields.
-        if (Arg2)
-        {
-          if (Hater.Target && Hater.Target.TID != Arg2)
-          {
-            Hater.Target = none;
-          }
-          if (Hater.LastEnemy && Hater.LastEnemy.TID != Arg2)
-          {
-            Hater.LastEnemy = none;
-          }
-        }
-      }
-      // Hate types for Arg3:
-      //
-      // 0 - Just hate one specific actor
-      // 1 - Hate actors with given TID and attack players when shot
-      // 2 - Same as 1, but will go after enemies without seeing them first
-      // 3 - Hunt actors with given TID and also players
-      // 4 - Same as 3, but will go after monsters without seeing them first
-      // 5 - Hate actors with given TID and ignore player attacks
-      // 6 - Same as 5, but will go after enemies without seeing them first
-
-      // Note here: If you use Thing_Hate (tid, 0, 2), you can make
-      // a monster go after a player without seeing him first.
-      Hater.bNoSightCheck = Arg3 == 2 || Arg3 == 4 || Arg3 == 6;
-      Hater.bHuntPlayers = Arg3 == 3 || Arg3 == 4;
-      Hater.bNoHatePlayers = Arg3 == 5 || Arg3 == 6;
-
-      if (Arg2 == 0)
-      {
-        Hatee = A;
-      }
-      else if (NothingToHate)
-      {
-        Hatee = none;
-      }
-      else if (Arg3)
-      {
-        do
-        {
-          Hatee = EntityEx(FindMobjFromTID(Arg2, Hatee));
-        }
-        while (!Hatee ||
-          Hatee == Hater ||   // can't hate self
-          !Hatee.bShootable ||  // can't hate nonshootable things
-          Hatee.Health <= 0 ||  // can't hate dead things
-          Hatee.bDormant);
-      }
-
-      if (Hatee && Hatee != Hater && (Arg3 == 0 || (Hater.Goal && Hater.Target != Hater.Goal)))
-      {
-        if (Hater.Target)
-        {
-          Hater.LastEnemy = Hater.Target;
-        }
-        Hater.Target = Hatee;
-        if (!Hater.bDormant)
-        {
-          if (Hater.Health > 0)
-          {
-            Hater.SetState(Hater.SeeState);
-          }
-        }
+      // if the TID to hate is 0, then don't forget the target and lastenemy fields
+      if (Arg2) {
+        if (Hater.Target && Hater.Target.TID != Arg2) Hater.Target = none;
+        if (Hater.LastEnemy && Hater.LastEnemy.TID != Arg2) Hater.LastEnemy = none;
       }
     }
-    if (Arg1)
-    {
-      for (Hater = EntityEx(FindMobjFromTID(Arg1, Hater)); Hater;
-        Hater = EntityEx(FindMobjFromTID(Arg1, Hater)))
-      {
-        if (Hater.Health > 0 && Hater.bShootable)
-        {
-          break;
-        }
-      }
+    // Hate types for Arg3:
+    //
+    // 0 - Just hate one specific actor
+    // 1 - Hate actors with given TID and attack players when shot
+    // 2 - Same as 1, but will go after enemies without seeing them first
+    // 3 - Hunt actors with given TID and also players
+    // 4 - Same as 3, but will go after monsters without seeing them first
+    // 5 - Hate actors with given TID and ignore player attacks
+    // 6 - Same as 5, but will go after enemies without seeing them first
+
+    // Note here: If you use Thing_Hate (tid, 0, 2), you can make
+    // a monster go after a player without seeing him first.
+    Hater.bNoSightCheck = (Arg3 == 2 || Arg3 == 4 || Arg3 == 6);
+    Hater.bHuntPlayers = (Arg3 == 3 || Arg3 == 4);
+    Hater.bNoHatePlayers = (Arg3 == 5 || Arg3 == 6);
+
+    if (Arg2 == 0) {
+      Hatee = A;
+    } else if (NothingToHate) {
+      Hatee = none;
+    } else if (Arg3) {
+      do {
+        Hatee = EntityEx(FindMobjFromTID(Arg2, Hatee));
+      } while (!Hatee ||
+               Hatee == Hater ||   // can't hate self
+               !Hatee.bShootable ||  // can't hate nonshootable things
+               Hatee.Health <= 0 ||  // can't hate dead things
+               Hatee.bDormant);
     }
-    else
+
+    if (Hatee && Hatee != Hater && (Arg3 == 0 || (Hater.Goal && Hater.Target != Hater.Goal)))
     {
-      Hater = none;
+      if (Hater.Target) Hater.LastEnemy = Hater.Target;
+      Hater.Target = Hatee;
+      if (!Hater.bDormant) {
+        if (Hater.Health > 0) Hater.SetState(Hater.SeeState);
+      }
     }
   }
   return true;
@@ -4628,6 +4510,7 @@ final bool EV_ThingMove (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, Entit
   }
   return false;
 }
+
 
 //===========================================================================
 //
