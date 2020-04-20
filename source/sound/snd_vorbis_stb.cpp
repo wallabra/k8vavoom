@@ -153,6 +153,7 @@ bool VVorbisAudioCodec::fillInBuffer () {
   Strm->Serialise(inbuf+inbufFilled, rd);
   if (Strm->IsError()) { BytesLeft = 0; eos = true; return false; }
   inbufFilled += rd;
+  BytesLeft -= rd;
   return true;
 }
 
@@ -162,11 +163,11 @@ bool VVorbisAudioCodec::fillInBuffer () {
 //  f2i
 //
 //==========================================================================
-static inline int f2i (float f) noexcept {
-  const int v =
+static inline vint16 f2i (float f) noexcept {
+  const vint16 v =
     f < -1.0f ? -32767 :
     f > +1.0f ? 32767 :
-    (int)(f*32767.0f);
+    (vint16)(f*32767.0f);
   return v;
 }
 
@@ -185,9 +186,11 @@ bool VVorbisAudioCodec::decodeFrame () {
   float **fltpcm;
   for (;;) {
     if (!fillInBuffer()) return false;
+    //GCon->Logf(NAME_Debug, "...decoding frame from '%s'", *Strm->GetName());
     int chans = 0;
     int samples = 0;
     int res = stb_vorbis_decode_frame_pushdata(decoder, (const unsigned char *)(inbuf+inbufUsed), inbufSize-inbufUsed, &chans, &fltpcm, &samples);
+    //GCon->Logf(NAME_Debug, "...decoded frame from '%s' (res=%d; chans=%d; samples=%d)", *Strm->GetName(), res, chans, samples);
     if (res <= 0 || chans < 1 || chans > 2) {
       // it needs more data, but we cannot provide it
       eos = true;
@@ -228,26 +231,35 @@ bool VVorbisAudioCodec::decodeFrame () {
 bool VVorbisAudioCodec::Init () {
   Cleanup();
   eos = false;
-  if (!fillInBuffer()) return false;
+  if (!fillInBuffer()) {
+    //GCon->Logf(NAME_Debug, "oops (%s)", *Strm->GetName());
+    return false;
+  }
 
+  //GCon->Logf(NAME_Debug, "buffer filled (%s) (%d/%d/%d)", *Strm->GetName(), inbufUsed, inbufFilled, inbufSize);
   int usedData = 0;
   int error = 0;
   decoder = stb_vorbis_open_pushdata((const unsigned char *)inbuf, inbufFilled-inbufUsed, &usedData, &error, nullptr);
   if (!decoder || error != 0) {
+    //GCon->Logf(NAME_Debug, "stb_vorbis error: %d", error);
     Cleanup();
     return false;
   }
+  inbufUsed += usedData;
 
   stb_vorbis_info info = stb_vorbis_get_info(decoder);
 
   if (info.sample_rate < 64 || info.sample_rate > 96000*2 || info.channels < 1 || info.channels > 2) {
+    //GCon->Logf(NAME_Debug, "stb_vorbis cannot get info (%d : %d)", (int)info.sample_rate, (int)info.channels);
     Cleanup();
     return false;
   }
 
   SampleRate = info.sample_rate;
   SampleBits = 16;
-  NumChannels = info.channels;
+  NumChannels = 2; // always
+  //GCon->Logf(NAME_Debug, "stb_vorbis created (%s); rate=%d; chans=%d", *Strm->GetName(), SampleRate, NumChannels);
+  //GCon->Logf(NAME_Debug, "buffer filled (%s) (%d/%d/%d)", *Strm->GetName(), inbufUsed, inbufFilled, inbufSize);
   return true;
 }
 
@@ -260,7 +272,7 @@ bool VVorbisAudioCodec::Init () {
 int VVorbisAudioCodec::Decode (short *Data, int NumSamples) {
   int CurSample = 0;
   short *dest = Data;
-  while (!eos && CurSample < NumSamples) {
+  while (CurSample < NumSamples) {
     if (outbufUsed >= outbufFilled) {
       if (!decodeFrame()) break;
     }
@@ -281,7 +293,7 @@ int VVorbisAudioCodec::Decode (short *Data, int NumSamples) {
 //
 //==========================================================================
 bool VVorbisAudioCodec::Finished () {
-  return eos;
+  return (eos && outbufUsed >= outbufFilled);
 }
 
 
@@ -322,6 +334,7 @@ VAudioCodec *VVorbisAudioCodec::Create (VStream *InStrm) {
 //==========================================================================
 void VVorbisSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
   VVorbisAudioCodec *Codec = new VVorbisAudioCodec(&Stream, false);
+  //GCon->Logf(NAME_Debug, "trying sfx '%s' (VVorbisSampleLoader)", *Stream.GetName());
   if (!Codec->Init()) {
     Codec->Cleanup();
   } else {
