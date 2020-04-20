@@ -274,7 +274,7 @@ void VLevelInfo::Completed (int InMap, int InPosition, int SaveAngle) {
 //==========================================================================
 VEntity *VLevelInfo::FindMobjFromTID (int tid, VEntity *Prev) {
   for (VEntity *E = (Prev ? Prev->TIDHashNext : TIDHash[tid&(TID_HASH_SIZE-1)]); E; E = E->TIDHashNext) {
-    if (E->TID == tid) return E;
+    if (!E->IsGoingToDie() && E->TID == tid) return E;
   }
   return nullptr;
 }
@@ -305,7 +305,7 @@ int VLevelInfo::FindFreeTID (int tidstart, int limit) const {
     // do several random hits, then linear search
     for (int rndtry = 1024; rndtry; --rndtry) {
       do { tidstart = GenRandomU31()&0x7fff; } while (tidstart == 0);
-      if (!IsTIDUsed(tidstart)) return tidstart;
+      if (!IsTIDUsed(tidstart, true)) return tidstart;
     }
     // fallback to linear search
     tidstart = 1;
@@ -314,7 +314,7 @@ int VLevelInfo::FindFreeTID (int tidstart, int limit) const {
   }
   // linear search
   while (limit-- > 0) {
-    if (!IsTIDUsed(tidstart)) return tidstart;
+    if (!IsTIDUsed(tidstart, true)) return tidstart;
     ++tidstart;
     if (tidstart == 0x1fffffff) return 0; // arbitrary limit
     //if (tidstart == 0x8000) return 0; // arbitrary limit
@@ -328,12 +328,11 @@ int VLevelInfo::FindFreeTID (int tidstart, int limit) const {
 //  VLevelInfo::FindFreeTID
 //
 //==========================================================================
-bool VLevelInfo::IsTIDUsed (int tid) const {
+bool VLevelInfo::IsTIDUsed (int tid, bool allowdead) const {
   if (tid == 0) return true; // this is "self"
-  VEntity *E = Level->TIDHash[tid&(TID_HASH_SIZE-1)];
-  while (E) {
+  for (VEntity *E = Level->TIDHash[tid&(TID_HASH_SIZE-1)]; E; E = E->TIDHashNext) {
+    if (!allowdead && E->IsGoingToDie()) continue;
     if (E->TID == tid) return true;
-    E = E->TIDHashNext;
   }
   return false;
 }
