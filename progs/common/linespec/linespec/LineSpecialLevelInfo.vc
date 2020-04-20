@@ -835,10 +835,10 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
       buttonSuccess = EV_ThingDeactivate(Arg1, A);
       break;
     case LNSPEC_ThingRemove:
-      buttonSuccess = EV_ThingRemove(Arg1);
+      buttonSuccess = EV_ThingRemove(Arg1, A);
       break;
     case LNSPEC_ThingDestroy:
-      buttonSuccess = EV_ThingDestroy(Arg1, Arg2);
+      buttonSuccess = EV_ThingDestroy(Arg1, Arg2, A);
       break;
     case LNSPEC_ThingProjectile:
       buttonSuccess = EV_ThingProjectile(Arg1, Arg2, Arg3, Arg4, Arg5, 0, 0, '', A);
@@ -4190,29 +4190,18 @@ final bool EV_ThingDeactivate(int tid, EntityEx Activator)
   return success;
 }
 
+
 //==========================================================================
 //
 //  EV_ThingRemove
 //
 //==========================================================================
-
-final bool EV_ThingRemove(int tid)
-{
-  Entity  A;
-  bool  success;
-
-  success = false;
-  for (A = FindMobjFromTID(tid, none); A; A = FindMobjFromTID(tid, A))
-  {
+final bool EV_ThingRemove (int tid, Entity activator) {
+  bool success = false;
+  foreach (EntityEx A; Level.eachTID(tid, activator)) {
     //  Be friendly to level statistics.
-    if (EntityEx(A).CountsAsKill() && A.Health > 0)
-    {
-      TotalKills--;
-    }
-    if (EntityEx(A).bCountItem)
-    {
-      TotalItems--;
-    }
+    if (EntityEx(A).CountsAsKill() && A.Health > 0) --TotalKills;
+    if (EntityEx(A).bCountItem) --TotalItems;
     A.RemoveThing();
     success = true;
   }
@@ -4225,9 +4214,9 @@ final bool EV_ThingRemove(int tid)
 //  EV_ThingDestroy
 //
 //==========================================================================
-final bool EV_ThingDestroy(int tid, int Extreme) {
+final bool EV_ThingDestroy (int tid, int Extreme, Entity activator) {
   bool success = false;
-  foreach (EntityEx A; eachTID(tid, none)) {
+  foreach (EntityEx A; eachTID(tid, activator)) {
     if (A.bShootable) {
       A.Damage(none, none, (Extreme ? 1000000 : A.Health), '', forced:true, spawnBlood:true);
       success = true;
