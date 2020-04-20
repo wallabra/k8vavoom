@@ -4149,7 +4149,7 @@ override int AcsSpawnSpotFacing (name Name, int SpotTid, int Tid, bool forced) {
 final bool EV_ThingActivate (int tid, EntityEx Activator) {
   bool success = false;
   foreach (EntityEx A; eachTID(tid, Activator)) {
-    if (EntityEx(A).Activate(Activator)) success = true;
+    if (A.Activate(Activator)) success = true;
   }
   return success;
 }
@@ -4163,7 +4163,7 @@ final bool EV_ThingActivate (int tid, EntityEx Activator) {
 final bool EV_ThingDeactivate (int tid, EntityEx Activator) {
   bool success = false;
   foreach (EntityEx A; eachTID(tid, Activator)) {
-    if (EntityEx(A).Deactivate(Activator)) success = true;
+    if (A.Deactivate(Activator)) success = true;
   }
   return success;
 }
@@ -4178,8 +4178,8 @@ final bool EV_ThingRemove (int tid, Entity activator) {
   bool success = false;
   foreach (EntityEx A; Level.eachTID(tid, activator)) {
     //  Be friendly to level statistics.
-    if (EntityEx(A).CountsAsKill() && A.Health > 0) --TotalKills;
-    if (EntityEx(A).bCountItem) --TotalItems;
+    if (A.CountsAsKill() && A.Health > 0) --TotalKills;
+    if (A.bCountItem) --TotalItems;
     A.RemoveThing();
     success = true;
   }
@@ -4520,31 +4520,18 @@ final bool EV_ThingMove (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, Entit
 // arguments.
 //
 //===========================================================================
-
-final bool EV_ThingSetSpecial(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, EntityEx A)
-{
-  if (Arg1)
-  {
-    Entity Ent;
-    for (Ent = FindMobjFromTID(Arg1, none); Ent;
-      Ent = FindMobjFromTID(Arg1, Ent))
-    {
-      Ent.Special = Arg2;
-      Ent.Args[0] = Arg3;
-      Ent.Args[1] = Arg4;
-      Ent.Args[2] = Arg5;
-    }
+final bool EV_ThingSetSpecial (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, EntityEx A) {
+  bool success = false;
+  foreach (EntityEx Ent; eachTID(Arg1, A)) {
+    Ent.Special = Arg2;
+    Ent.Args[0] = Arg3;
+    Ent.Args[1] = Arg4;
+    Ent.Args[2] = Arg5;
+    success = true;
   }
-  else if (A)
-  {
-    A.Special = Arg2;
-    A.Args[0] = Arg3;
-    A.Args[1] = Arg4;
-    A.Args[2] = Arg5;
-  }
-  return true;
+  return success;
 }
+
 
 //===========================================================================
 //
@@ -4590,69 +4577,35 @@ final bool EV_ThrustThingZ (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, En
 //  EV_ThingChangeTID
 //
 //===========================================================================
-
-final bool EV_ThingChangeTID(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  EntityEx A)
-{
-  if (!Arg1)
-  {
-    if (A)
-    {
-      A.SetTID(Arg2);
-    }
-  }
-  else
-  {
-    Entity Ent;
-    for (Ent = FindMobjFromTID(Arg1, none); Ent;
-      Ent = FindMobjFromTID(Arg1, Ent))
-    {
-      Ent.SetTID(Arg2);
-    }
+final bool EV_ThingChangeTID (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, EntityEx A) {
+  foreach (EntityEx Ent; eachTID(Arg1, A)) {
+    if (Ent.TID != Arg2) Ent.SetTID(Arg2);
   }
   return true;
 }
+
 
 //===========================================================================
 //
 //  EV_ThingStop
 //
 //===========================================================================
-
-final bool EV_ThingStop(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  EntityEx A)
-{
+final bool EV_ThingStop (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, EntityEx A) {
   bool Ret = false;
-  if (!Arg1)
-  {
-    if (A)
-    {
-      A.Velocity = vector(0.0, 0.0, 0.0);
-      Ret = true;
-    }
-  }
-  else
-  {
-    Entity Ent;
-    for (Ent = FindMobjFromTID(Arg1, none); Ent;
-      Ent = FindMobjFromTID(Arg1, Ent))
-    {
-      Ent.Velocity = vector(0.0, 0.0, 0.0);
-      Ret = true;
-    }
+  foreach (EntityEx Ent; eachTID(Arg1, A)) {
+    Ent.Velocity = vector(0.0, 0.0, 0.0);
+    Ret = true;
   }
   return Ret;
 }
+
 
 //===========================================================================
 //
 //  EV_SetPlayerProperty
 //
 //===========================================================================
-
-final bool EV_SetPlayerProperty(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, EntityEx A)
-{
+final bool EV_SetPlayerProperty (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, EntityEx A) {
   if (!Arg1)
   {
     if (!A || !A.bIsPlayer)
@@ -4680,52 +4633,20 @@ final bool EV_SetPlayerProperty(int Arg1, int Arg2, int Arg3, int Arg4,
   }
 }
 
+
 //===========================================================================
 //
 //  EV_ThingRaise
 //
 //===========================================================================
-
-final bool EV_ThingRaise(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  EntityEx A)
-{
+final bool EV_ThingRaise (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, EntityEx A) {
   bool Ret = false;
-  if (!Arg1)
-  {
-    if (A)
-    {
-      Ret = DoThingRaise(A);
-    }
-  }
-  else
-  {
-    Entity Ent;
-    for (Ent = FindMobjFromTID(Arg1, none); Ent;
-      Ent = FindMobjFromTID(Arg1, Ent))
-    {
-      if (DoThingRaise(EntityEx(Ent)))
-      {
-        Ret = true;
-      }
-    }
+  foreach (EntityEx Ent; eachTID(Arg1, A)) {
+    if (Ent.DoThingRaise()) Ret = true;
   }
   return true;
 }
 
-//===========================================================================
-//
-//  DoThingRaise
-//
-//===========================================================================
-
-final bool DoThingRaise(EntityEx A)
-{
-  if (!A.DoThingRaise())
-  {
-    return false;
-  }
-  return true;
-}
 
 //**************************************************************************
 //
@@ -4897,6 +4818,7 @@ final bool EV_Teleport (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   return false;
 }
 
+
 //==========================================================================
 //
 //  EV_TeleportOther
@@ -4904,23 +4826,16 @@ final bool EV_Teleport (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //  Teleport anything matching other_tid to dest_tid
 //
 //==========================================================================
-
-final bool EV_TeleportOther(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
-{
-  bool    Ret;
-  EntityEx  A;
-
-  Ret = false;
-  if (Arg1 && Arg2)
-  {
-    for (A = EntityEx(FindMobjFromTID(Arg1, none)); A;
-      A = EntityEx(FindMobjFromTID(Arg1, A)))
-    {
-      Ret |= EV_Teleport(Arg2, 0, 0, 0, 0, A, nullptr, !!Arg3);
+final bool EV_TeleportOther(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5) {
+  bool Ret = false;
+  if (Arg1 && Arg2) {
+    foreach (EntityEx A; eachTID(Arg1, none)) {
+      if (EV_Teleport(Arg2, 0, 0, 0, 0, A, nullptr, !!Arg3)) Ret = true;
     }
   }
   return Ret;
 }
+
 
 //==========================================================================
 //
@@ -5504,8 +5419,6 @@ final EntityEx GetPushThing(int s)
 
 final void SpawnPushers()
 {
-  Pusher    P;
-  EntityEx  thing;
   sector_t *Sec;
 
   foreach (int i; 0..XLevel.Lines.length)
@@ -5517,7 +5430,7 @@ final void SpawnPushers()
       for (int hidx = XLevel.FindSectorFromTag(out Sec, l->arg1); hidx >= 0;
            hidx = XLevel.FindSectorFromTag(out Sec, l->arg1, hidx))
       {
-        P = SpawnThinker(Pusher);
+        Pusher P = SpawnThinker(Pusher);
         P.Init(Pusher::PUSHER_Wind, l->arg4 ? l : nullptr, l->arg2, l->arg3, none, Sec-&XLevel.Sectors[0]);
       }
       break;
@@ -5526,7 +5439,7 @@ final void SpawnPushers()
       for (int hidx = XLevel.FindSectorFromTag(out Sec, l->arg1); hidx >= 0;
            hidx = XLevel.FindSectorFromTag(out Sec, l->arg1, hidx))
       {
-        P = SpawnThinker(Pusher);
+        Pusher P = SpawnThinker(Pusher);
         P.Init(Pusher::PUSHER_Current, l->arg4 ? l : nullptr, l->arg2, l->arg3, none, Sec-&XLevel.Sectors[0]);
       }
       break;
@@ -5539,14 +5452,14 @@ final void SpawnPushers()
              hidx = XLevel.FindSectorFromTag(out Sec, l->arg1, hidx))
         {
           int ssnum = Sec-&XLevel.Sectors[0];
-          thing = GetPushThing(ssnum);
+          EntityEx thing = GetPushThing(ssnum);
           if (thing)
           {
             // No MT_P* means no effect
             // [RH] Allow narrowing it down by tid
             if (!l->arg2 || l->arg2 == thing.TID)
             {
-              P = SpawnThinker(Pusher);
+              Pusher P = SpawnThinker(Pusher);
               P.Init(Pusher::PUSHER_Push, l->arg4 ? l : nullptr, l->arg3, 0, thing, ssnum);
             }
           }
@@ -5555,17 +5468,16 @@ final void SpawnPushers()
       else
       {
         // [RH] Find thing by tid
-        for (thing = EntityEx(FindMobjFromTID(l->arg2, none));
-             thing;
-             thing = EntityEx(FindMobjFromTID(l->arg2, thing)))
-        {
+        foreach (EntityEx thing; eachTID(l->arg2)) {
           if (PointPuller(thing) || PointPusher(thing))
           {
+            /*
             int s;
-            for (s = 0; s < XLevel.Sectors.length; s++) {
-              if (&XLevel.Sectors[s] == thing.Sector) break;
-            }
-            P = SpawnThinker(Pusher);
+            for (s = 0; s < XLevel.Sectors.length; ++s) if (&XLevel.Sectors[s] == thing.Sector) break;
+            */
+            if (!thing.Sector) continue;
+            int s = thing.Sector-&XLevel.Sectors[0];
+            Pusher P = SpawnThinker(Pusher);
             P.Init(Pusher::PUSHER_Push, l->arg4 ? l : nullptr, l->arg3, 0, thing, s);
           }
         }
@@ -5848,28 +5760,17 @@ final bool EV_SendToCommunicator(EntityEx A, int Arg1, int Arg2, int Arg3,
   return false;
 }
 
+
 //==========================================================================
 //
 //  EV_StartConversation
 //
 //==========================================================================
-
-final bool EV_StartConversation(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, EntityEx A)
-{
-  EntityEx  Ent;
-
-  if (!A || !A.bIsPlayer)
-  {
-    return false;
-  }
-  for (Ent = EntityEx(FindMobjFromTID(Arg1, none)); Ent;
-    Ent = EntityEx(FindMobjFromTID(Arg1, Ent)))
-  {
-    if (StartConversation(A, Ent))
-    {
-      if (Arg2)
-      {
+final bool EV_StartConversation (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, EntityEx A) {
+  if (!A || !A.bIsPlayer) return false;
+  foreach (EntityEx Ent; eachTID(Arg1)) {
+    if (StartConversation(A, Ent)) {
+      if (Arg2) {
         A.Angles.yaw = atan2(Ent.Origin.y-A.Origin.y, Ent.Origin.x-A.Origin.x);
         A.Player.bFixAngle = true;
       }
@@ -5887,7 +5788,6 @@ final bool EV_StartConversation(int Arg1, int Arg2, int Arg3, int Arg4,
 //===========================================================================
 final int implLocalQuake (int intensity, int duration, float damrad, float tremrad, int tid, Entity Activator, optional name sound) {
   QuakeFocus focus;
-  EntityEx target;
   int count = 0;
 
   //print("A_LocalQuake: intensity=%s; dur=%s; dmgradius=%s; tremorradius=%s; tid=%s", intensity, duration, damrad, tremrad, tid);
@@ -5908,7 +5808,7 @@ final int implLocalQuake (int intensity, int duration, float damrad, float tremr
   }
 
   // find all quake foci
-  for (target = EntityEx(FindMobjFromTID(tid, none)); target; target = EntityEx(FindMobjFromTID(tid, target))) {
+  foreach (EntityEx target; eachTID(tid)) {
     //print(" spawning quaker for '%C'", target);
     focus = SpawnEntityChecked(class!QuakeFocus, QuakeFocus, target.Origin);
     if (focus) {
@@ -6222,75 +6122,36 @@ override int ThingCount(int type, name TypeName, int tid, int SectorTag)
   return Count;
 }
 
+
 //==========================================================================
 //
 //  DoThingCount
 //
 //==========================================================================
-
-final int DoThingCount(class!EntityEx moType, int tid, int SectorTag)
-{
-  int         count;
-  EntityEx      Ent;
-
-  count = 0;
-  if (tid)
-  {
-    // Count TID things
-    for (Ent = EntityEx(FindMobjFromTID(tid, none)); Ent != none;
-      Ent = EntityEx(FindMobjFromTID(tid, Ent)))
-    {
-      if (Ent.Health <= 0)
-      {
-        // Don't count dead monsters
-        continue;
-      }
-      if (Inventory(Ent) && Ent.Owner)
-      {
-        //  Don't count things in somebody's inventory
-        continue;
-      }
-      if (SectorTag != -1 && !IsSectorTagEqual(Ent.Sector, SectorTag))
-      {
-        //  Wrong sector tag.
-        continue;
-      }
-      if (!moType || moType == Ent.Class)
-      {
-        count++;
-      }
+final int DoThingCount (class!EntityEx moType, int tid, int SectorTag) {
+  int count = 0;
+  if (tid) {
+    // count TID things
+    foreach (EntityEx Ent; eachTID(tid)) {
+      if (Ent.Health <= 0) continue; // don't count dead monsters
+      if (Inventory(Ent) && Ent.Owner) continue; // don't count things in somebody's inventory
+      if (SectorTag != -1 && !IsSectorTagEqual(Ent.Sector, SectorTag)) continue; // wrong sector tag
+      if (!moType || moType == Ent.Class) ++count;
     }
-  }
-  else if (moType)
-  {
-    // Count only types
-    foreach AllThinkers(moType, Ent)
-    {
-      if (Ent.Class != moType)
-      {
-        // Doesn't match
-        continue;
-      }
-      if (Ent.Health <= 0)
-      {
-        // Don't count dead monsters
-        continue;
-      }
-      if (Inventory(Ent) && Ent.Owner)
-      {
-        //  Don't count things in somebody's inventory
-        continue;
-      }
-      if (SectorTag != -1 && !IsSectorTagEqual(Ent.Sector, SectorTag))
-      {
-        //  Wrong sector tag.
-        continue;
-      }
-      count++;
+  } else if (moType) {
+    // count only types
+    EntityEx Ent;
+    foreach AllThinkers(moType, Ent) {
+      if (Ent.Class != moType) continue; // doesn't match
+      if (Ent.Health <= 0) continue; // don't count dead monsters
+      if (Inventory(Ent) && Ent.Owner) continue; // don't count things in somebody's inventory
+      if (SectorTag != -1 && !IsSectorTagEqual(Ent.Sector, SectorTag)) continue; // wrong sector tag
+      ++count;
     }
   }
   return count;
 }
+
 
 //==========================================================================
 //
@@ -7200,60 +7061,31 @@ final int P_MassacreEx (string classmask, bool spawnBlood) {
 //  SetMarineWeapon
 //
 //==========================================================================
-
-override void SetMarineWeapon(int Tid, int Weapon, Entity Activator)
-{
-  if (Tid)
-  {
-    Entity Ent;
-    for (Ent = Level.FindMobjFromTID(Tid, none); Ent;
-      Ent = Level.FindMobjFromTID(Tid, Ent))
-    {
-      if (ScriptedMarine(Ent))
-      {
-        ScriptedMarine(Ent).SetWeapon(Weapon);
-      }
-    }
-  }
-  else if (ScriptedMarine(Activator))
-  {
-    ScriptedMarine(Activator).SetWeapon(Weapon);
+override void SetMarineWeapon (int Tid, int Weapon, Entity Activator) {
+  foreach (EntityEx Ent; eachTID(Tid, Activator)) {
+    if (ScriptedMarine(Ent)) ScriptedMarine(Ent).SetWeapon(Weapon);
   }
 }
+
 
 //==========================================================================
 //
 //  SetMarineSprite
 //
 //==========================================================================
-
-override void SetMarineSprite(int Tid, name SrcClassName, Entity Activator)
-{
-  //  If there's no such class, print message and do nothing.
+override void SetMarineSprite (int Tid, name SrcClassName, Entity Activator) {
+  // if there's no such class, print message and do nothing
   class TmpClass = FindClass(SrcClassName);
-  if (!TmpClass)
-  {
-    print("Unknown class %n", SrcClassName);
+  if (!TmpClass) {
+    printwarn("SetMarineSprite: Unknown class `%s`", SrcClassName);
     return;
   }
-  //  If it's not a valid actor class, it will set sprite back to default.
+
+  // if it's not a valid actor class, it will set sprite back to default
   class!EntityEx SrcClass = class!EntityEx(TmpClass);
 
-  if (Tid)
-  {
-    Entity Ent;
-    for (Ent = Level.FindMobjFromTID(Tid, none); Ent;
-      Ent = Level.FindMobjFromTID(Tid, Ent))
-    {
-      if (ScriptedMarine(Ent))
-      {
-        ScriptedMarine(Ent).SetSprite(SrcClass);
-      }
-    }
-  }
-  else if (ScriptedMarine(Activator))
-  {
-    ScriptedMarine(Activator).SetSprite(SrcClass);
+  foreach (EntityEx Ent; eachTID(Tid, Activator)) {
+    if (ScriptedMarine(Ent)) ScriptedMarine(Ent).SetSprite(SrcClass);
   }
 }
 
