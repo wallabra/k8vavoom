@@ -652,7 +652,8 @@ endif(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY OR ENABLE_VCCRUN)
 #  **** Check for libmad ****
 #
 if(WITH_LIBMAD)
-  PKG_CHECK_MODULES(MAD mad)
+  find_path(MAD_INCLUDE_DIRS mad.h)
+  find_library(MAD_LIBRARIES NAMES mad)
   if(MAD_INCLUDE_DIRS AND MAD_LIBRARIES)
     message(STATUS "Found LibMAD: ${MAD_LIBRARY}")
     set(LIBMAD_FOUND ON)
