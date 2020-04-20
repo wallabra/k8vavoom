@@ -1,0 +1,331 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2020 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, version 3 of the License ONLY.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+/*#define STB_VORBIS_NO_PUSHDATA_API*/
+#define STB_VORBIS_NO_PULLDATA_API
+#define STB_VORBIS_NO_STDIO
+#define STB_VORBIS_NO_FAST_SCALED_FLOAT
+
+#include "stbdr/stb_vorbis.c"
+
+#include "gamedefs.h"
+#include "snd_local.h"
+
+
+class VVorbisAudioCodec : public VAudioCodec {
+public:
+  VStream *Strm;
+  bool FreeStream;
+  int BytesLeft;
+  stb_vorbis *decoder;
+  bool eos;
+  vuint8 *inbuf;
+  int inbufSize;
+  int inbufUsed;
+  int inbufFilled;
+  vint16 *outbuf; // stereo
+  int outbufSize; // in shorts
+  int outbufUsed; // in shorts
+  int outbufFilled; // in shorts
+
+  VVorbisAudioCodec (VStream *AStrm, bool AFreeStream);
+  virtual ~VVorbisAudioCodec () override;
+  bool Init ();
+  void Cleanup ();
+  virtual int Decode (short *Data, int NumSamples) override;
+  virtual bool Finished () override;
+  virtual void Restart () override;
+
+  static VAudioCodec *Create (VStream *);
+
+protected:
+  // returns `false` on error or eof
+  bool fillInBuffer ();
+  // returns `false` on error or eof
+  bool decodeFrame ();
+};
+
+
+class VVorbisSampleLoader : public VSampleLoader {
+public:
+  virtual void Load (sfxinfo_t &, VStream &) override;
+};
+
+IMPLEMENT_AUDIO_CODEC(VVorbisAudioCodec, "Vorbis");
+
+VVorbisSampleLoader VorbisSampleLoader;
+
+
+//==========================================================================
+//
+//  VVorbisAudioCodec::VVorbisAudioCodec
+//
+//==========================================================================
+VVorbisAudioCodec::VVorbisAudioCodec (VStream *AStrm, bool AFreeStream)
+  : Strm(AStrm)
+  , FreeStream(AFreeStream)
+  , decoder(nullptr)
+  , eos(false)
+  , inbuf(nullptr)
+  , inbufSize(65536)
+  , inbufUsed(0)
+  , inbufFilled(0)
+  , outbuf(nullptr)
+  , outbufSize(0)
+  , outbufUsed(0)
+  , outbufFilled(0)
+{
+  BytesLeft = Strm->TotalSize();
+  Strm->Seek(0);
+  inbuf = (vuint8 *)Z_Malloc(inbufSize);
+}
+
+
+//==========================================================================
+//
+//  VVorbisAudioCodec::~VVorbisAudioCodec
+//
+//==========================================================================
+VVorbisAudioCodec::~VVorbisAudioCodec () {
+  Cleanup();
+  if (FreeStream) {
+    Strm->Close();
+    delete Strm;
+  }
+  Strm = nullptr;
+  if (inbuf) Z_Free(inbuf);
+  if (outbuf) Z_Free(outbuf);
+}
+
+
+//==========================================================================
+//
+//  VVorbisAudioCodec::Cleanup
+//
+//==========================================================================
+void VVorbisAudioCodec::Cleanup () {
+  if (decoder) { stb_vorbis_close(decoder); decoder = nullptr; }
+  inbufUsed = inbufFilled = 0;
+  outbufUsed = outbufFilled = 0;
+}
+
+
+//==========================================================================
+//
+//  VVorbisAudioCodec::fillInBuffer
+//
+//  returns `false` on error or eof
+//
+//==========================================================================
+bool VVorbisAudioCodec::fillInBuffer () {
+  if (BytesLeft == 0 || eos) {
+    if (inbufUsed >= inbufFilled) eos = true;
+    return (inbufUsed < inbufFilled);
+  }
+  if (inbufUsed > 0) {
+    if (inbufUsed < inbufFilled) memmove(inbuf, inbuf+inbufUsed, inbufFilled-inbufUsed);
+    inbufFilled -= inbufUsed;
+  }
+  vassert(inbufUsed == 0);
+  int rd = min2(BytesLeft, inbufSize-inbufFilled);
+  Strm->Serialise(inbuf+inbufFilled, rd);
+  if (Strm->IsError()) { BytesLeft = 0; eos = true; return false; }
+  inbufFilled += rd;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  f2i
+//
+//==========================================================================
+static inline int f2i (float f) noexcept {
+  const int v =
+    f < -1.0f ? -32767 :
+    f > +1.0f ? 32767 :
+    (int)(f*32767.0f);
+  return v;
+}
+
+
+//==========================================================================
+//
+//  VVorbisAudioCodec::decodeFrame
+//
+//  returns `false` on error or eof
+//
+//==========================================================================
+bool VVorbisAudioCodec::decodeFrame () {
+  if (outbufUsed < outbufFilled) return true;
+  if (eos || !decoder || !Strm || Strm->IsError()) return false;
+  //float *fltpcm[STB_VORBIS_MAX_CHANNELS];
+  float **fltpcm;
+  for (;;) {
+    if (!fillInBuffer()) return false;
+    int chans = 0;
+    int samples = 0;
+    int res = stb_vorbis_decode_frame_pushdata(decoder, (const unsigned char *)(inbuf+inbufUsed), inbufSize-inbufUsed, &chans, &fltpcm, &samples);
+    if (res <= 0 || chans < 1 || chans > 2) {
+      // it needs more data, but we cannot provide it
+      eos = true;
+      return false;
+    }
+    inbufUsed += res;
+    if (samples > 0) {
+      // alloc samples for two channels
+      if (outbufSize < samples*2) {
+        outbufSize = samples*2;
+        outbuf = (vint16 *)Z_Realloc(outbuf, outbufSize*2);
+      }
+      outbufUsed = 0;
+      if (chans == 1) {
+        // mono, expand to stereo
+        for (int f = 0; f < samples; ++f) {
+          outbuf[f*2+0] = outbuf[f*2+1] = f2i(fltpcm[0][f]);
+        }
+      } else {
+        // stereo
+        for (int f = 0; f < samples; ++f) {
+          outbuf[f*2+0] = f2i(fltpcm[0][f]);
+          outbuf[f*2+1] = f2i(fltpcm[1][f]);
+        }
+      }
+      outbufFilled = samples*2;
+      return true;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VVorbisAudioCodec::Init
+//
+//==========================================================================
+bool VVorbisAudioCodec::Init () {
+  Cleanup();
+  eos = false;
+  if (!fillInBuffer()) return false;
+
+  int usedData = 0;
+  int error = 0;
+  decoder = stb_vorbis_open_pushdata((const unsigned char *)inbuf, inbufFilled-inbufUsed, &usedData, &error, nullptr);
+  if (!decoder || error != 0) {
+    Cleanup();
+    return false;
+  }
+
+  stb_vorbis_info info = stb_vorbis_get_info(decoder);
+
+  if (info.sample_rate < 64 || info.sample_rate > 96000*2 || info.channels < 1 || info.channels > 2) {
+    Cleanup();
+    return false;
+  }
+
+  SampleRate = info.sample_rate;
+  SampleBits = 16;
+  NumChannels = info.channels;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VVorbisAudioCodec::Decode
+//
+//==========================================================================
+int VVorbisAudioCodec::Decode (short *Data, int NumSamples) {
+  int CurSample = 0;
+  short *dest = Data;
+  while (!eos && CurSample < NumSamples) {
+    if (outbufUsed >= outbufFilled) {
+      if (!decodeFrame()) break;
+    }
+    while (CurSample < NumSamples && outbufUsed+2 <= outbufFilled) {
+      *dest++ = outbuf[outbufUsed++];
+      *dest++ = outbuf[outbufUsed++];
+      ++CurSample;
+    }
+    if (outbufUsed+2 > outbufFilled) outbufUsed = outbufFilled; // just in case
+  }
+  return CurSample;
+}
+
+
+//==========================================================================
+//
+//  VVorbisAudioCodec::Finished
+//
+//==========================================================================
+bool VVorbisAudioCodec::Finished () {
+  return eos;
+}
+
+
+//==========================================================================
+//
+//  VVorbisAudioCodec::Restart
+//
+//==========================================================================
+void VVorbisAudioCodec::Restart () {
+  Cleanup();
+  Strm->Seek(0);
+  BytesLeft = Strm->TotalSize();
+  Init();
+}
+
+
+//==========================================================================
+//
+//  VVorbisAudioCodec::Create
+//
+//==========================================================================
+VAudioCodec *VVorbisAudioCodec::Create (VStream *InStrm) {
+  VVorbisAudioCodec *Codec = new VVorbisAudioCodec(InStrm, true);
+  if (!Codec->Init()) {
+    Codec->Cleanup();
+    delete Codec;
+    Codec = nullptr;
+    return nullptr;
+  }
+  return Codec;
+}
+
+
+//==========================================================================
+//
+//  VVorbisAudioCodec::Create
+//
+//==========================================================================
+void VVorbisSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
+  VVorbisAudioCodec *Codec = new VVorbisAudioCodec(&Stream, false);
+  if (!Codec->Init()) {
+    Codec->Cleanup();
+  } else {
+    LoadFromAudioCodec(Sfx, Codec);
+  }
+  delete Codec;
+}

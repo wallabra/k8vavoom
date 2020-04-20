@@ -571,6 +571,8 @@ if(ENABLE_CLIENT)
 
   if(VORBIS_FOUND)
     set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_vorbis.cpp)
+  else(VORBIS_FOUND)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_vorbis_stb.cpp)
   endif(VORBIS_FOUND)
 
   if(OPUS_FOUND)
