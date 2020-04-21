@@ -149,13 +149,28 @@ bool VVorbisAudioCodec::fillInBuffer () {
     return (inbufUsed < inbufFilled);
   }
   if (inbufUsed > 0) {
-    if (inbufUsed < inbufFilled) memmove(inbuf, inbuf+inbufUsed, inbufFilled-inbufUsed);
-    inbufFilled -= inbufUsed;
+    if (inbufUsed < inbufFilled) {
+      memmove(inbuf, inbuf+inbufUsed, inbufFilled-inbufUsed);
+      inbufFilled -= inbufUsed;
+    } else {
+      inbufFilled = 0;
+    }
+    inbufUsed = 0;
   }
   vassert(inbufUsed == 0);
   int rd = min2(BytesLeft, inbufSize-inbufFilled);
+  vassert(rd >= 0);
+  if (rd == 0) {
+    if (inbufFilled > 0) return true;
+    if (BytesLeft > 0) {
+      GCon->Logf(NAME_Error, "stb_vorbis decoder glitched at '%s'", *Strm->GetName());
+      BytesLeft = 0;
+    }
+    eos = true;
+    return false;
+  }
   Strm->Serialise(inbuf+inbufFilled, rd);
-  if (Strm->IsError()) { BytesLeft = 0; eos = true; return false; }
+  if (Strm->IsError()) { inbufFilled = 0; BytesLeft = 0; eos = true; return false; }
   inbufFilled += rd;
   BytesLeft -= rd;
   return true;
