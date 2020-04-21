@@ -404,7 +404,7 @@ static void appendFile (TArray<VStr> &list, VStr path) {
   if (path.isEmpty()) return;
   if (path[path.length()-1] == '/') return;
   if (path.indexOf("BotPlayer_pather_old.vc") >= 0) return;
-  if (path.indexOf("Object_vavoom.vc") >= 0) return;
+  //if (path.indexOf("Object_vavoom.vc") >= 0) return;
   struct stat st;
   if (stat(*path, &st) != 0) return;
   if (st.st_ino) {
@@ -1136,16 +1136,12 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
   Type *tp = nullptr;
   if (!par->eat("class")) {
     //GLog.Logf(NAME_Warning, "file '%s' doesn't start with `class`!", *filename);
-    /*
-    if (filename.extractFileBaseName() != "Object_vavoom.vc" &&
-        filename.extractFileBaseName() != "Object_common.vc")
-    */
-    {
+    if (filename.extractFileBaseName() != "Object_vavoom.vc") {
       delete par;
       return;
     }
-    //dontSave = true;
-    //tp = *vcTypes.find(VName("Object"));
+    dontSave = true;
+    tp = *vcTypes.find(VName("Object"));
   } else {
     VStr name = par->expectId();
 
@@ -1217,7 +1213,7 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
       stp->srcfile = par->srcfile;
       stp->shitpp = false;
       stp->name = VName(*par->expectId(), VName::Add);
-      //!GLog.Logf(NAME_Debug, "%s: struct '%s'", *stp->loc.toStringNoCol(), *stp->name);
+      //GLog.Logf(NAME_Debug, "%s: struct '%s'", *stp->loc.toStringNoCol(), *stp->name);
       if (par->eat(":")) {
         stp->parentName = VName(*par->expectId(), VName::Add);
       }
@@ -1499,6 +1495,15 @@ int main (int argc, char **argv) {
   TArray<VStr> vclist;
   scanPrepare();
   scanSources(vclist, "../../progs", "*.vc");
+  // put "Object.vc" at the top
+  for (int objvcidx = 0; objvcidx < vclist.length(); ++objvcidx) {
+    if (vclist[objvcidx].endsWith("/Object.vc")) {
+      VStr s = vclist[objvcidx];
+      vclist.removeAt(objvcidx);
+      vclist.insert(0, s);
+      break;
+    }
+  }
   GLog.Logf("%d VavoomC files found", vclist.length());
 
   for (auto &&fname : shitpplist) parseShitppSource(fname);
