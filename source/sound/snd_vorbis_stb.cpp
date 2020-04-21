@@ -49,6 +49,7 @@ public:
   int outbufSize; // in shorts
   int outbufUsed; // in shorts
   int outbufFilled; // in shorts
+  bool inited;
 
   VVorbisAudioCodec (VStream *AStrm, bool AFreeStream);
   virtual ~VVorbisAudioCodec () override;
@@ -96,6 +97,7 @@ VVorbisAudioCodec::VVorbisAudioCodec (VStream *AStrm, bool AFreeStream)
   , outbufSize(0)
   , outbufUsed(0)
   , outbufFilled(0)
+  , inited(false)
 {
   BytesLeft = Strm->TotalSize();
   Strm->Seek(0);
@@ -109,10 +111,12 @@ VVorbisAudioCodec::VVorbisAudioCodec (VStream *AStrm, bool AFreeStream)
 //
 //==========================================================================
 VVorbisAudioCodec::~VVorbisAudioCodec () {
-  Cleanup();
-  if (FreeStream) {
-    Strm->Close();
-    delete Strm;
+  if (inited) {
+    Cleanup();
+    if (FreeStream) {
+      Strm->Close();
+      delete Strm;
+    }
   }
   Strm = nullptr;
   if (inbuf) Z_Free(inbuf);
@@ -231,6 +235,7 @@ bool VVorbisAudioCodec::decodeFrame () {
 bool VVorbisAudioCodec::Init () {
   Cleanup();
   eos = false;
+  inited = false;
   if (!fillInBuffer()) {
     //GCon->Logf(NAME_Debug, "oops (%s)", *Strm->GetName());
     return false;
@@ -260,6 +265,7 @@ bool VVorbisAudioCodec::Init () {
   NumChannels = 2; // always
   //GCon->Logf(NAME_Debug, "stb_vorbis created (%s); rate=%d; chans=%d", *Strm->GetName(), SampleRate, NumChannels);
   //GCon->Logf(NAME_Debug, "buffer filled (%s) (%d/%d/%d)", *Strm->GetName(), inbufUsed, inbufFilled, inbufSize);
+  inited = true;
   return true;
 }
 
@@ -320,7 +326,6 @@ VAudioCodec *VVorbisAudioCodec::Create (VStream *InStrm) {
   if (!Codec->Init()) {
     Codec->Cleanup();
     delete Codec;
-    Codec = nullptr;
     return nullptr;
   }
   return Codec;
