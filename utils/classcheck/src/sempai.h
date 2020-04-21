@@ -30,6 +30,17 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct SemLocation {
+  VStr file;
+  int line;
+  int col;
+
+  VStr toStringNoCol () const;
+  VStr toString () const;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // this is a very simplistic text parser
 // its only purpose is to parse shitpp/vc code, and extract tokens
 class SemParser {
@@ -54,10 +65,14 @@ public:
 
   inline SavedPos savePos () const { return SavedPos(*this); }
   inline void restorePos (const SavedPos &pos) { pos.restore(*this); }
+  SemLocation getSavedLoc (const SavedPos &pos) const;
+  SemLocation getSavedTokenLoc (const SavedPos &pos) const;
 
 protected:
   // to `token`
   void collectBasedNumber (int base);
+
+  void calcLocation (SemLocation &loc, int pos) const;
 
 public:
   // this will destroy a stream after reading
@@ -101,4 +116,7 @@ public:
   bool eat (const VStr &s);
   bool check (const VStr &s); // same as eat, but doesn't eat
   bool eatStartsWith (const VStr &s);
+
+  SemLocation getLoc () const;
+  SemLocation getTokenLoc () const;
 };

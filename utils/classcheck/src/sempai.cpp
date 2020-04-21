@@ -27,6 +27,28 @@
 
 //==========================================================================
 //
+//  SemLocation::toStringNoCol
+//
+//==========================================================================
+VStr SemLocation::toStringNoCol () const {
+  if (!file.isEmpty()) return va("%s:%d", *file, line);
+  return va("%d", line);
+}
+
+
+//==========================================================================
+//
+//  SemLocation::toString
+//
+//==========================================================================
+VStr SemLocation::toString () const {
+  if (file.isEmpty()) return va("%d:%d", line, col);
+  return va("%s:%d:%d", *file, line, col);
+}
+
+
+//==========================================================================
+//
 //  SemParser::SemParser
 //
 //  this will destroy a stream after reading
@@ -94,13 +116,9 @@ SemParser &SemParser::operator = (const SemParser &src) {
 //
 //==========================================================================
 int SemParser::getLineForPos (int pos) const {
-  if (pos <= 0) return 1;
-  int linenum = 1;
-  for (int cpos = 0; cpos < text.length(); ++cpos) {
-    if (cpos == pos) break;
-    if (text[cpos] == '\n') ++linenum;
-  }
-  return linenum;
+  SemLocation loc;
+  calcLocation(loc, pos);
+  return loc.line;
 }
 
 
@@ -391,4 +409,80 @@ int SemParser::expectInt () {
     Sys_Error("%s:%d: integer expected", *srcfile, getCurrLine());
   }
   return res;
+}
+
+
+//==========================================================================
+//
+//  SemParser::calcLocation
+//
+//==========================================================================
+void SemParser::calcLocation (SemLocation &loc, int pos) const {
+  loc.line = 1;
+  loc.col = 1;
+  if (pos <= 0) return;
+  const int len = text.length();
+  const char *s = *text;
+  for (int cpos = 0; cpos < len; ++cpos, ++s) {
+    if (cpos == pos) break;
+    if (*s == '\n') {
+      ++loc.line;
+      loc.col = 1;
+    } else {
+      ++loc.col;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  SemParser::getLoc
+//
+//==========================================================================
+SemLocation SemParser::getLoc () const {
+  SemLocation loc;
+  loc.file = srcfile;
+  calcLocation(loc, currpos);
+  return loc;
+}
+
+
+//==========================================================================
+//
+//  SemParser::getTokenLoc
+//
+//==========================================================================
+SemLocation SemParser::getTokenLoc () const {
+  SemLocation loc;
+  loc.file = srcfile;
+  calcLocation(loc, tokpos);
+  return loc;
+}
+
+
+//==========================================================================
+//
+//  SemParser::getSavedLoc
+//
+//==========================================================================
+SemLocation SemParser::getSavedLoc (const SavedPos &pos) const {
+  SemLocation loc;
+  loc.file = srcfile;
+  calcLocation(loc, pos.currpos);
+  return loc;
+}
+
+
+
+//==========================================================================
+//
+//  SemParser::getSavedTokenLoc
+//
+//==========================================================================
+SemLocation SemParser::getSavedTokenLoc (const SavedPos &pos) const {
+  SemLocation loc;
+  loc.file = srcfile;
+  calcLocation(loc, pos.tokpos);
+  return loc;
 }

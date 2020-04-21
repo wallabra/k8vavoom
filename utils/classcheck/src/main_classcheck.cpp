@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "libs/core.h"
 
@@ -45,10 +47,11 @@ struct Type {
   VName parentName;
   VStr srcfile;
   bool isClassDef;
+  SemLocation loc;
 
   Type () : name(NAME_None), shitpp(false), pointer(false), delegate(false), dimension(0), fields(nullptr), next(nullptr), parentName(NAME_None), srcfile(), isClassDef(false) {}
 
-  Type (const Type *src) : name(src->name), shitpp(src->shitpp), pointer(src->pointer), delegate(src->delegate), dimension(src->dimension), fields(src->fields), next(src->next), parentName(src->parentName), srcfile(src->srcfile), isClassDef(src->isClassDef) {}
+  Type (const Type *src) : name(src->name), shitpp(src->shitpp), pointer(src->pointer), delegate(src->delegate), dimension(src->dimension), fields(src->fields), next(src->next), parentName(src->parentName), srcfile(src->srcfile), isClassDef(src->isClassDef) { loc = src->loc; }
 
   Type *clone () const { return new Type(*this); }
 
@@ -305,11 +308,12 @@ void Type::dumpFields () const {
 //  createVCIntType
 //
 //==========================================================================
-Type *createVCIntType (const VStr &srcfile) {
+Type *createVCIntType (const VStr &srcfile, const SemLocation &loc) {
   Type *tp = new Type();
   tp->name = VName("vint32");
   tp->shitpp = false;
   tp->srcfile = srcfile;
+  tp->loc = loc;
   return tp;
 }
 
@@ -327,7 +331,7 @@ void compressBools (Type *tp) {
     if (!fld->type->isBool()) { fld = fld->next; continue; }
     //GLog.Logf(NAME_Debug, "%s: zero bit boolean is `%s`", *tp->toString(), *fld->name);
     fld->name = VName(*(VStr(fld->name)+"_bool"), VName::Add);
-    fld->type = createVCIntType(fld->type->srcfile);
+    fld->type = createVCIntType(fld->type->srcfile, fld->type->loc);
     int bitnum = 0;
     Field *fln = fld->next;
     while (fln && fln->type->isBool()) {
@@ -345,7 +349,7 @@ void compressBools (Type *tp) {
     if (fld->type->dimension != -1) { fld = fld->next; continue; }
     Field *cf = new Field();
     cf->name = VName(*(VStr("Num")+VStr(fld->name)), VName::Add);
-    cf->type = createVCIntType(fld->type->srcfile);
+    cf->type = createVCIntType(fld->type->srcfile, fld->type->loc);
     cf->owner = fld->owner;
     cf->next = fld->next;
     fld->next = cf;
@@ -378,6 +382,38 @@ static __attribute__((noreturn)) void usage () {
 */
 
 
+static TMapNC<vuint64, bool> knownINodes;
+
+
+//==========================================================================
+//
+//  scanPrepare
+//
+//==========================================================================
+void scanPrepare () {
+  knownINodes.clear();
+}
+
+
+//==========================================================================
+//
+//  appendFile
+//
+//==========================================================================
+static void appendFile (TArray<VStr> &list, VStr path) {
+  if (path.isEmpty()) return;
+  if (path[path.length()-1] == '/') return;
+  if (path.indexOf("BotPlayer_pather_old.vc") >= 0) return;
+  if (path.indexOf("Object_vavoom.vc") >= 0) return;
+  struct stat st;
+  if (stat(*path, &st) != 0) return;
+  if (st.st_ino) {
+    if (knownINodes.has((vuint64)st.st_ino)) return;
+  }
+  list.append(path);
+}
+
+
 //==========================================================================
 //
 //  scanSources
@@ -394,11 +430,13 @@ void scanSources (TArray<VStr> &list, VStr path, const VStr &mask1, const VStr &
     if (name.endsWith("/")) {
       if (name == "bsp/") continue;
       if (name == "vccrun/") continue;
+      if (name == "game/") continue;
+      if (name == "cgame/") continue;
       scanSources(list, path+name, mask1, mask2);
     } else {
       if (name.startsWith("stb_")) continue;
-           if (!mask1.isEmpty() && name.globMatch(mask1)) list.append(path+name);
-      else if (!mask2.isEmpty() && name.globMatch(mask2)) list.append(path+name);
+           if (!mask1.isEmpty() && name.globMatch(mask1)) appendFile(list, path+name);
+      else if (!mask2.isEmpty() && name.globMatch(mask2)) appendFile(list, path+name);
     }
   }
 }
@@ -563,6 +601,7 @@ Type *parseShitppType (SemParser *par, VStr tpname) {
   tp->shitpp = true;
   tp->srcfile = par->srcfile;
   tp->name = VName(*tpname, VName::Add);
+  tp->loc = par->getTokenLoc();
   // check for template
   if (par->eat("<")) {
     Type *last = nullptr;
@@ -746,6 +785,7 @@ void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=
   tp->isClassDef = isClass;
   tp->srcfile = par->srcfile;
   tp->name = VName(*name, VName::Add);
+  tp->loc = par->getTokenLoc();
 
   // parse inheritance
   if (par->eat(":")) {
@@ -999,6 +1039,7 @@ Type *parseVCType (SemParser *par, bool basic=false) {
   Type *tp = new Type();
   tp->shitpp = false;
   tp->srcfile = par->srcfile;
+  tp->loc = par->getTokenLoc();
 
   if (tpname == "class" && par->eat("!")) {
     tpname = par->expectId();
@@ -1095,14 +1136,16 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
   Type *tp = nullptr;
   if (!par->eat("class")) {
     //GLog.Logf(NAME_Warning, "file '%s' doesn't start with `class`!", *filename);
+    /*
     if (filename.extractFileBaseName() != "Object_vavoom.vc" &&
         filename.extractFileBaseName() != "Object_common.vc")
+    */
     {
       delete par;
       return;
     }
-    dontSave = true;
-    tp = *vcTypes.find(VName("Object"));
+    //dontSave = true;
+    //tp = *vcTypes.find(VName("Object"));
   } else {
     VStr name = par->expectId();
 
@@ -1112,6 +1155,7 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
     tp->isClassDef = true;
     tp->srcfile = par->srcfile;
     tp->name = VName(*name, VName::Add);
+    tp->loc = par->getTokenLoc();
 
     // parse inheritance
     if (par->eat(":")) {
@@ -1153,7 +1197,11 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
       par->skipBlanks();
       if (par->peekChar() != '!') {
         par->restorePos(tkpos);
-        if (!dontSave) { compressBools(tp); if (vcTypes.put(tp->name, tp)) GLog.Logf(NAME_Warning, "duplicate type `%s`", *tp->toString()); }
+        if (!dontSave) {
+          compressBools(tp);
+          auto oldtp = vcTypes.find(tp->name);
+          if (vcTypes.put(tp->name, tp)) GLog.Logf(NAME_Warning, "%s: duplicate type `%s` (%s) (0)", *par->getSavedLoc(tkpos).toStringNoCol(), *tp->toString(), *(*oldtp)->loc.toStringNoCol());
+        }
         goto again;
       }
       par->restorePos(tkpos);
@@ -1165,9 +1213,11 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
 
     if (par->eat("struct")) {
       Type *stp = new Type();
+      stp->loc = par->getTokenLoc();
       stp->srcfile = par->srcfile;
       stp->shitpp = false;
       stp->name = VName(*par->expectId(), VName::Add);
+      //!GLog.Logf(NAME_Debug, "%s: struct '%s'", *stp->loc.toStringNoCol(), *stp->name);
       if (par->eat(":")) {
         stp->parentName = VName(*par->expectId(), VName::Add);
       }
@@ -1193,7 +1243,8 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
         par->expect(";");
       }
       compressBools(stp);
-      if (vcTypes.put(stp->name, stp)) GLog.Logf(NAME_Warning, "duplicate type `%s`", *tp->toString());
+      auto oldtp = vcTypes.find(stp->name);
+      if (vcTypes.put(stp->name, stp)) GLog.Logf(NAME_Warning, "%s: duplicate type `%s` (%s) (1)", *stp->loc.toStringNoCol(), *stp->toString(), *(*oldtp)->loc.toStringNoCol());
       //skipBrackets(par);
       continue;
     }
@@ -1213,7 +1264,11 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
     if (par->eat("defaultproperties")) {
       par->expect("{");
       skipBrackets(par);
-      if (!dontSave) { compressBools(tp); if (vcTypes.put(tp->name, tp)) GLog.Logf(NAME_Warning, "duplicate type `%s`", *tp->toString()); }
+      if (!dontSave) {
+        compressBools(tp);
+        auto oldtp = vcTypes.find(tp->name);
+        if (vcTypes.put(tp->name, tp)) GLog.Logf(NAME_Warning, "%s: duplicate type `%s` (%s) (2)", *par->getSavedLoc(tkpos).toStringNoCol(), *tp->toString(), *(*oldtp)->loc.toStringNoCol());
+      }
       goto again;
       continue;
     }
@@ -1282,10 +1337,32 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
   //GLog.Logf(NAME_Debug, "vc: %s", *tp->toString());
   if (!dontSave) {
     compressBools(tp);
-    if (vcTypes.put(tp->name, tp)) GLog.Logf(NAME_Warning, "duplicate type `%s`", *tp->toString());
+    auto oldtp = vcTypes.find(tp->name);
+    if (vcTypes.put(tp->name, tp)) GLog.Logf(NAME_Warning, "%s: duplicate type `%s` (%s) (3)", *tp->loc.toStringNoCol(), *tp->toString(), *(*oldtp)->loc.toStringNoCol());
   }
 
   delete par;
+}
+
+
+struct PassInfo {
+  VStr vcType;
+  int vcfcount;
+  VStr ppType;
+  int ppfcount;
+};
+
+static TArray<PassInfo> passed;
+static bool wasFail = false;
+
+
+extern "C" {
+  static int cmpPassed (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const PassInfo *a = (const PassInfo *)aa;
+    const PassInfo *b = (const PassInfo *)bb;
+    return a->vcType.ICmp(b->vcType);
+  }
 }
 
 
@@ -1327,6 +1404,8 @@ void checkVCType (Type *tp) {
     }
   }
 
+  bool doAdd = true;
+
   for (int f = 0; f < fcount; ++f) {
     Field *vcf = tp->fieldAt(f);
     Field *spf = spt->fieldAt(f);
@@ -1356,13 +1435,22 @@ void checkVCType (Type *tp) {
         ok = (vcType->toString() == "array!vint32");
       }
       if (!ok) {
+        wasFail = true;
+        doAdd = false;
         GLog.Logf(NAME_Error, "%s <-> %s: field #%d (%s : %s) has different types (%s : %s)", *tp->toString(), *spt->toString(), f, *vcf->name, *spf->name, *vcType->toString(), *spType->toString());
         //return;
       }
     }
   }
 
-  GLog.Logf("PASSED: %s <-> %s: (%d : %d)", *tp->toString(), *spt->toString(), fcount, spt->fieldCount());
+  //GLog.Logf("PASSED: %s <-> %s: (%d : %d)", *tp->toString(), *spt->toString(), fcount, spt->fieldCount());
+  if (doAdd) {
+    PassInfo &nfo = passed.alloc();
+    nfo.vcType = tp->toString();
+    nfo.vcfcount = fcount;
+    nfo.ppType = spt->toString();
+    nfo.ppfcount = spt->fieldCount();
+  }
 }
 
 
@@ -1403,16 +1491,19 @@ int main (int argc, char **argv) {
   shitpplist.append("../../libs/core/crypto/chachaprng_c.h");
   shitpplist.append("../../libs/core/vecmat/vector.h");
   shitpplist.append("../../libs/core/vecmat/matrix.h");
+  scanPrepare();
   scanSources(shitpplist, "../../source", "*.h", "*.cpp");
   scanSources(shitpplist, "../../libs/vavoomc", "*.h", "*.cpp");
   GLog.Logf("%d shitpplist files found", shitpplist.length());
 
   TArray<VStr> vclist;
+  scanPrepare();
   scanSources(vclist, "../../progs", "*.vc");
   GLog.Logf("%d VavoomC files found", vclist.length());
 
   for (auto &&fname : shitpplist) parseShitppSource(fname);
 
+  /*
   {
     Type *tpvcObj = new Type();
     tpvcObj->shitpp = false;
@@ -1421,6 +1512,7 @@ int main (int argc, char **argv) {
     tpvcObj->name = VName("Object");
     vcTypes.put(tpvcObj->name, tpvcObj);
   }
+  */
 
   for (auto &&fname : vclist) {
     VStr filename = fname.extractFileBaseName();
@@ -1461,8 +1553,16 @@ int main (int argc, char **argv) {
     checkVCType(tp);
   }
 
+  if (!wasFail) {
+    timsort_r(passed.ptr(), passed.length(), sizeof(PassInfo), &cmpPassed, nullptr);
+    for (auto &&it : passed) {
+      GLog.Logf("PASSED: %s <-> %s: (%d : %d)", *it.vcType, *it.ppType, it.vcfcount, it.ppfcount);
+    }
+    GLog.Logf("%d types compared", passed.length());
+  }
+
   Z_ShuttingDown();
-  return 0;
+  return (wasFail ? 1 : 0);
 }
 
 
