@@ -138,8 +138,8 @@ final void SetScaleOneToOne () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-delegate void FocusLost (Object Sender);
-delegate void FocusReceived (Object Sender);
+//delegate void FocusLost (Object Sender);
+//delegate void FocusReceived (Object Sender);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -343,7 +343,7 @@ void OnFocusableChanged (bool bNewFocusable) {}
 //  Called when focus enters this widget.
 //
 //==========================================================================
-void OnFocusReceived () { if (FocusReceived) FocusReceived(self); }
+void OnFocusReceived () {}
 
 
 //==========================================================================
@@ -353,7 +353,7 @@ void OnFocusReceived () { if (FocusReceived) FocusReceived(self); }
 //  Called when focus leaves this widget.
 //
 //==========================================================================
-void OnFocusLost () { if (FocusLost) FocusLost(self); }
+void OnFocusLost () {}
 
 
 //==========================================================================
@@ -397,9 +397,7 @@ void Tick (float DeltaTime) {}
 //  also, `evt.dest` is the deepest child
 //
 //==========================================================================
-bool OnEvent (ref event_t evt) {
-  return false;
-}
+bool OnEvent (ref event_t evt) { return false; }
 
 
 //==========================================================================

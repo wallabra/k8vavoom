@@ -98,10 +98,10 @@ int k8hsCount;
 transient protected array!(class!Weapon) decoWeaponsClasses;
 
 
-struct WSlotEntry {
+struct PlrWeaponSlotEntry {
   array!(class!Weapon) weapons;
 }
-transient protected array!WSlotEntry actualWeaponSlots;
+transient protected array!PlrWeaponSlotEntry actualWeaponSlots;
 
 // used in `AllowSecondaryBloodSpawn()`
 // 0: do nothing, return false

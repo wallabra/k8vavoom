@@ -109,8 +109,8 @@ protected:
   };
   vuint32 WidgetFlags;
 
-  VObjectDelegate FocusLost;
-  VObjectDelegate FocusReceived;
+  //VObjectDelegate FocusLost;
+  //VObjectDelegate FocusReceived;
 
 protected:
   void AddChild (VWidget *NewChild);

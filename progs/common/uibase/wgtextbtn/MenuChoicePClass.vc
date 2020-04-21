@@ -27,6 +27,9 @@ class MenuChoicePClass : MenuBigTextButton;
 
 int Index;
 
+delegate void FocusLost (Object Sender);
+delegate void FocusReceived (Object Sender);
+
 
 //==========================================================================
 //
@@ -41,6 +44,30 @@ void SetSmallFont (bool useSmallFont) {
     TextFont = default.TextFont;
     Height = default.Height;
   }
+}
+
+
+//==========================================================================
+//
+//  OnFocusReceived
+//
+//  Called when focus enters this widget.
+//
+//==========================================================================
+override void OnFocusReceived () {
+  if (FocusReceived) FocusReceived(self);
+}
+
+
+//==========================================================================
+//
+//  OnFocusLost
+//
+//  Called when focus leaves this widget.
+//
+//==========================================================================
+override void OnFocusLost () {
+  if (FocusLost) FocusLost(self);
 }
 
 
