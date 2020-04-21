@@ -2116,8 +2116,8 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   }
 
   if (!svs.deathmatch) {
-    const mapInfo_t &old_info = P_GetMapInfo(GLevel->MapName);
-    const mapInfo_t &new_info = P_GetMapInfo(mapname);
+    const VMapInfo &old_info = P_GetMapInfo(GLevel->MapName);
+    const VMapInfo &new_info = P_GetMapInfo(mapname);
     // all maps in cluster 0 are treated as in different clusters
     if (old_info.Cluster && old_info.Cluster == new_info.Cluster &&
         (P_GetClusterDef(old_info.Cluster)->Flags&CLUSTERF_Hub))

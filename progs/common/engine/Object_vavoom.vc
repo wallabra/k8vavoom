@@ -408,7 +408,7 @@ struct VMapSpecialAction {
 };
 
 
-struct mapInfo_t {
+struct MapInfo {
   name LumpName;
   string Name; // name of map
   int LevelNum; // level number for action specials
@@ -453,7 +453,7 @@ native static final int P_GetMapIndexByLevelNum (int map);
 
 native static final int P_GetNumMaps ();
 // by index; [0..P_GetNumMaps)
-native static final mapInfo_t *P_GetMapInfo (int map);
+native static final MapInfo *P_GetMapInfo (int map);
 
 
 //==========================================================================

@@ -30,7 +30,7 @@ struct VMapSpecialAction {
   vint32 Args[5];
 };
 
-struct mapInfo_t {
+struct VMapInfo {
   VName LumpName;
   VStr Name; // name of map
   vint32 LevelNum; // level number for action specials
@@ -149,7 +149,7 @@ struct VSkillDef {
 
 void InitMapInfo ();
 void ShutdownMapInfo ();
-const mapInfo_t &P_GetMapInfo (VName);
+const VMapInfo &P_GetMapInfo (VName);
 VStr P_GetMapName (int);
 VName P_GetMapLumpName (int);
 int P_GetMapIndexByLevelNum (int);
@@ -160,7 +160,7 @@ void P_PutMapSongLump (int, VName);
 const VClusterDef *P_GetClusterDef (int);
 int P_GetNumEpisodes ();
 int P_GetNumMaps ();
-mapInfo_t *P_GetMapInfoPtr (int mapidx);
+VMapInfo *P_GetMapInfoPtr (int mapidx);
 VEpisodeDef *P_GetEpisodeDef (int);
 int P_GetNumSkills ();
 const VSkillDef *P_GetSkillDef (int);

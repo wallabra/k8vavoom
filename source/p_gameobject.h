@@ -35,8 +35,16 @@ class VTextureTranslation;
 class VAcsLevel;
 class VNetContext;
 
+class VThinker;
+class VLevelInfo;
+class VEntity;
+class VBasePlayer;
+class VWorldInfo;
+class VGameInfo;
+
+struct VMapInfo;
+
 struct sector_t;
-struct mapInfo_t;
 struct fakefloor_t;
 struct seg_t;
 struct subsector_t;
@@ -49,13 +57,6 @@ struct subregion_t;
 
 struct decal_t;
 struct opening_t;
-
-class VThinker;
-class VLevelInfo;
-class VEntity;
-class VBasePlayer;
-class VWorldInfo;
-class VGameInfo;
 
 
 // line specials that are used by the loader

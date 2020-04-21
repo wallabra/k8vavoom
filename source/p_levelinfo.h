@@ -144,7 +144,7 @@ public:
   //VLevelInfo ();
   virtual void PostCtor () override;
 
-  void SetMapInfo (const mapInfo_t &);
+  void SetMapInfo (const VMapInfo &);
 
   void SectorStartSound (const sector_t *, int, int, float, float);
   void SectorStopSound (const sector_t *, int);

@@ -155,10 +155,10 @@ public:
 
 public:
   VUdmfParser (int Lump);
-  void Parse (VLevel *Level, const mapInfo_t &MInfo);
+  void Parse (VLevel *Level, const VMapInfo &MInfo);
   void ParseVertex ();
   void ParseSector (VLevel *Level);
-  void ParseLineDef (const mapInfo_t &MInfo);
+  void ParseLineDef (const VMapInfo &MInfo);
   void ParseSideDef ();
   void ParseThing ();
   void ParseKey ();
@@ -394,7 +394,7 @@ void VUdmfParser::ParseMoreIds (TArray<vint32> &idlist) {
 //  VUdmfParser::Parse
 //
 //==========================================================================
-void VUdmfParser::Parse (VLevel *Level, const mapInfo_t &MInfo) {
+void VUdmfParser::Parse (VLevel *Level, const VMapInfo &MInfo) {
   sc.SetCMode(true);
 
   bExtended = false;
@@ -657,7 +657,7 @@ void VUdmfParser::ParseSector (VLevel *Level) {
 //  VUdmfParser::ParseLineDef
 //
 //==========================================================================
-void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
+void VUdmfParser::ParseLineDef (const VMapInfo &MInfo) {
   VParsedLine &L = ParsedLines.Alloc();
   memset((void *)&L, 0, sizeof(VParsedLine));
   L.index = ParsedLines.length()-1;
@@ -1003,7 +1003,7 @@ void VUdmfParser::ParseThing () {
 //  VLevel::LoadTextMap
 //
 //==========================================================================
-void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
+void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
   VUdmfParser Parser(Lump);
   Parser.Parse(this, MInfo);
 

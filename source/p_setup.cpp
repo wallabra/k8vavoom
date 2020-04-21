@@ -934,7 +934,7 @@ load_again:
   bool UseComprGLNodes = false;
   bool NeedNodesBuild = false;
   char GLNodesHdr[4];
-  const mapInfo_t &MInfo = P_GetMapInfo(MapName);
+  const VMapInfo &MInfo = P_GetMapInfo(MapName);
   memset(GLNodesHdr, 0, sizeof(GLNodesHdr));
 
   VisData = nullptr;
@@ -1903,7 +1903,7 @@ void VLevel::LoadSideDefs (int Lump) {
 //  For Doom and Heretic
 //
 //==========================================================================
-void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) {
+void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const VMapInfo &MInfo) {
   NumLines = W_LumpLength(Lump)/14;
   Lines = new line_t[NumLines];
   memset((void *)Lines, 0, sizeof(line_t)*NumLines);
@@ -1944,7 +1944,7 @@ void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
 //  Hexen format
 //
 //==========================================================================
-void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) {
+void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const VMapInfo &MInfo) {
   NumLines = W_LumpLength(Lump)/16;
   Lines = new line_t[NumLines];
   memset((void *)Lines, 0, sizeof(line_t)*NumLines);

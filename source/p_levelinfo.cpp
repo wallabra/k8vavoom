@@ -66,7 +66,7 @@ void VLevelInfo::PostCtor () {
 //  VLevelInfo::SetMapInfo
 //
 //==========================================================================
-void VLevelInfo::SetMapInfo (const mapInfo_t &Info) {
+void VLevelInfo::SetMapInfo (const VMapInfo &Info) {
   const VClusterDef *CInfo = P_GetClusterDef(Info.Cluster);
 
   LevelName = Info.Name;
@@ -243,7 +243,7 @@ void VLevelInfo::Completed (int InMap, int InPosition, int SaveAngle) {
   if (Map == -1 && Position == -1) {
     if (!svs.deathmatch) {
       // if we have cluster exit text, process with the normal intermission sequence
-      const mapInfo_t &old_info = P_GetMapInfo(GLevel->MapName);
+      const VMapInfo &old_info = P_GetMapInfo(GLevel->MapName);
       const VClusterDef *ClusterD = P_GetClusterDef(old_info.Cluster);
       if (ClusterD && !ClusterD->ExitText.xstrip().isEmpty()) {
         LeavePosition = Position; // just in case

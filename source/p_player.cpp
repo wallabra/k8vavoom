@@ -607,7 +607,7 @@ void VBasePlayer::DoClientIntermission (VName NextMap) {
   im.LeaveText.clear();
   im.EnterText.clear();
 
-  const mapInfo_t &linfo = P_GetMapInfo(Level->XLevel->MapName);
+  const VMapInfo &linfo = P_GetMapInfo(Level->XLevel->MapName);
   im.LeaveMap = Level->XLevel->MapName;
   im.LeaveCluster = linfo.Cluster;
   im.LeaveName = linfo.GetName();
@@ -615,7 +615,7 @@ void VBasePlayer::DoClientIntermission (VName NextMap) {
   im.ExitPic = linfo.ExitPic;
   im.InterMusic = linfo.InterMusic;
 
-  const mapInfo_t &einfo = P_GetMapInfo(NextMap);
+  const VMapInfo &einfo = P_GetMapInfo(NextMap);
   im.EnterMap = NextMap;
   im.EnterCluster = einfo.Cluster;
   im.EnterName = einfo.GetName();

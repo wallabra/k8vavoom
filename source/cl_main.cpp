@@ -366,7 +366,7 @@ void CL_SetupStandaloneClient () {
   GClGame->maxclients = svs.max_clients;
   GClGame->deathmatch = svs.deathmatch;
 
-  const mapInfo_t &LInfo = P_GetMapInfo(*GLevel->MapName);
+  const VMapInfo &LInfo = P_GetMapInfo(*GLevel->MapName);
   GCon->Log("---------------------------------------");
   GCon->Log(LInfo.GetName());
   GCon->Log("");
@@ -653,7 +653,7 @@ void CL_ParseServerInfo (const VNetClientServerInfo *sinfo) {
   GClGame->maxclients = sinfo->maxclients;
   GClGame->deathmatch = sinfo->deathmatch;
 
-  const mapInfo_t &LInfo = P_GetMapInfo(MapName);
+  const VMapInfo &LInfo = P_GetMapInfo(MapName);
   GCon->Log("---------------------------------------");
   GCon->Log(LInfo.GetName());
   GCon->Log("");

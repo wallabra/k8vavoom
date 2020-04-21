@@ -933,7 +933,7 @@ static void SV_Ticker () {
 //
 //==========================================================================
 static VName CheckRedirects (VName Map) {
-  const mapInfo_t &Info = P_GetMapInfo(Map);
+  const VMapInfo &Info = P_GetMapInfo(Map);
   if (Info.RedirectType == NAME_None || Info.RedirectMap == NAME_None) return Map; // no redirect for this map
   // check all players
   for (int i = 0; i < MAXPLAYERS; ++i) {
@@ -984,8 +984,8 @@ static void G_DoCompleted (bool ignoreNoExit) {
 
   GLevelInfo->NextMap = CheckRedirects(GLevelInfo->NextMap);
 
-  const mapInfo_t &old_info = P_GetMapInfo(GLevel->MapName);
-  const mapInfo_t &new_info = P_GetMapInfo(GLevelInfo->NextMap);
+  const VMapInfo &old_info = P_GetMapInfo(GLevel->MapName);
+  const VMapInfo &new_info = P_GetMapInfo(GLevelInfo->NextMap);
   const VClusterDef *ClusterD = P_GetClusterDef(old_info.Cluster);
   bool HubChange = (!old_info.Cluster || !(ClusterD->Flags&CLUSTERF_Hub) || old_info.Cluster != new_info.Cluster);
 
@@ -1513,7 +1513,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   if (GGameInfo->NetMode <= NM_Standalone) SCR_SignalWipeStart();
 #endif
 
-  const mapInfo_t &info = P_GetMapInfo(GLevel->MapName);
+  const VMapInfo &info = P_GetMapInfo(GLevel->MapName);
 
   if (spawn_thinkers) {
     // create level info

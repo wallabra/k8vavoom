@@ -1276,7 +1276,7 @@ COMMAND(__k8_run_first_map) {
     }
     */
 
-    const mapInfo_t &mi = P_GetMapInfo(map);
+    const VMapInfo &mi = P_GetMapInfo(map);
     //GCon->Logf(NAME_Debug, "  ep=%d; map '%s': LumpName=<%s> (%s); LevelNum=%d", ep, *map, *mi.LumpName, *mi.Name, mi.LevelNum); mi.dump("!!!");
 
     //k8: i don't care about levelnum here

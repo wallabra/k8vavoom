@@ -93,7 +93,7 @@ override void CreateMapList (int episode, out array!string mapnames) {
 //==========================================================================
 override string GetMapName (int episode, int map) {
   if (IsAnyDoom2) {
-    mapInfo_t *mi = P_GetMapInfo(map);
+    MapInfo *mi = P_GetMapInfo(map);
     if (!mi) return "";
     return string(mi->LumpName);
   } else {

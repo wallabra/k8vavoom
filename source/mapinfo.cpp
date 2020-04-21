@@ -87,7 +87,7 @@ struct SpawnEdFixup {
 // ////////////////////////////////////////////////////////////////////////// //
 struct MapInfoCommand {
   const char *cmd;
-  void (*handler) (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode);
+  void (*handler) (VScriptParser *sc, bool newFormat, VMapInfo *info, bool &HexenMode);
   MapInfoCommand *next;
 };
 
@@ -113,11 +113,11 @@ public: \
       last->next = &mci; \
     } \
   } \
-  static void Handler (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode); \
+  static void Handler (VScriptParser *sc, bool newFormat, VMapInfo *info, bool &HexenMode); \
 }; \
 /*MapInfoCommand MapInfoCommandImpl##name_ mci;*/ \
 MapInfoCommandImpl##name_ mpiprzintrnlz_mici_##name_(#name_); \
-void MapInfoCommandImpl##name_::Handler (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode)
+void MapInfoCommandImpl##name_::Handler (VScriptParser *sc, bool newFormat, VMapInfo *info, bool &HexenMode)
 
 
 //==========================================================================
@@ -165,8 +165,8 @@ VVA_OKUNUSED __attribute__((format(printf, 2, 3))) static void miWarning (const 
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static mapInfo_t DefaultMap;
-static TArray<mapInfo_t> MapInfo;
+static VMapInfo DefaultMap;
+static TArray<VMapInfo> MapInfo;
 static TArray<FMapSongInfo> MapSongList;
 static VClusterDef DefaultClusterDef;
 static TArray<VClusterDef> ClusterDefs;
@@ -184,20 +184,20 @@ static TMapDtor<int, SpawnEdFixup> DoomEdNumFixups; // keyed by num
 
 //==========================================================================
 //
-//  mapInfo_t::GetName
+//  VMapInfo::GetName
 //
 //==========================================================================
-VStr mapInfo_t::GetName () const {
+VStr VMapInfo::GetName () const {
   return (Flags&VLevelInfo::LIF_LookupName ? GLanguage[*Name] : Name);
 }
 
 
 //==========================================================================
 //
-//  mapInfo_t::dump
+//  VMapInfo::dump
 //
 //==========================================================================
-void mapInfo_t::dump (const char *msg) const {
+void VMapInfo::dump (const char *msg) const {
   if (msg && msg[0]) GCon->Logf("==== mapinfo: %s ===", msg); else GCon->Log("==== mapinfo ===");
   GCon->Logf("  LumpName: \"%s\"", *VStr(LumpName).quote());
   GCon->Logf("  Name: \"%s\"", *Name.quote());
@@ -602,7 +602,7 @@ void InitMapInfo () {
 //  SetMapDefaults
 //
 //==========================================================================
-static void SetMapDefaults (mapInfo_t &Info) {
+static void SetMapDefaults (VMapInfo &Info) {
   Info.LumpName = NAME_None;
   Info.Name = VStr();
   Info.LevelNum = 0;
@@ -687,7 +687,7 @@ static VName ParseNextMapName (VScriptParser *sc, bool HexenMode) {
 //  DoCompatFlag
 //
 //==========================================================================
-static void DoCompatFlag (VScriptParser *sc, mapInfo_t *info, int Flag) {
+static void DoCompatFlag (VScriptParser *sc, VMapInfo *info, int Flag) {
   int Set = 1;
   sc->Check("=");
   if (sc->CheckNumber()) Set = sc->Number;
@@ -1159,7 +1159,7 @@ MAPINFOCMD(evenlighting) { info->FakeContrast = 2; }
 //  another zdoom hack: check for "sky_maplump" sky texture
 //
 //==========================================================================
-static void FixOneSkyTextureHack (VScriptParser *sc, mapInfo_t *info, int skynum, vint32 &tx) {
+static void FixOneSkyTextureHack (VScriptParser *sc, VMapInfo *info, int skynum, vint32 &tx) {
   if (tx < 1) return;
 
   //GCon->Logf(NAME_Debug, "map '%s': sky1 '%s'", *info->LumpName, *GTextureManager.GetTextureName(tx));
@@ -1194,7 +1194,7 @@ static void FixOneSkyTextureHack (VScriptParser *sc, mapInfo_t *info, int skynum
 //  another zdoom hack: check for "sky_maplump" sky texture
 //
 //==========================================================================
-static void FixSkyTexturesHack (VScriptParser *sc, mapInfo_t *info) {
+static void FixSkyTexturesHack (VScriptParser *sc, VMapInfo *info) {
   FixOneSkyTextureHack(sc, info, 1, info->Sky1Texture);
   //FixOneSkyTextureHack(sc, info, 2, info->Sky2Texture);
 }
@@ -1205,7 +1205,7 @@ static void FixSkyTexturesHack (VScriptParser *sc, mapInfo_t *info) {
 //  ParseMapCommon
 //
 //==========================================================================
-static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode) {
+static void ParseMapCommon (VScriptParser *sc, VMapInfo *info, bool &HexenMode) {
   // build command map, if it is not built yet
   if (mcmap.length() == 0 && mclist) {
     for (MapInfoCommand *mcp = mclist; mcp; mcp = mcp->next) {
@@ -1346,8 +1346,8 @@ static void ParseNameOrLookup (VScriptParser *sc, vint32 lookupFlag, VStr *name,
 //  ParseMap
 //
 //==========================================================================
-static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default, int milumpnum) {
-  mapInfo_t *info = nullptr;
+static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int milumpnum) {
+  VMapInfo *info = nullptr;
   VName MapLumpName;
   if (sc->CheckNumber()) {
     // map number, for Hexen compatibility
@@ -2117,7 +2117,7 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
   bool error = false;
 
   // set up default map info
-  mapInfo_t Default;
+  VMapInfo Default;
   SetMapDefaults(Default);
 
   for (;;) {
@@ -2316,7 +2316,7 @@ static int QualifyMap (int map) {
 //  P_GetMapInfo
 //
 //==========================================================================
-const mapInfo_t &P_GetMapInfo (VName map) {
+const VMapInfo &P_GetMapInfo (VName map) {
   for (int i = 0; i < MapInfo.Num(); ++i) {
     if (map == MapInfo[i].LumpName) return MapInfo[i];
   }
@@ -2458,7 +2458,7 @@ int P_GetNumMaps () {
 //  P_GetMapInfo
 //
 //==========================================================================
-mapInfo_t *P_GetMapInfoPtr (int mapidx) {
+VMapInfo *P_GetMapInfoPtr (int mapidx) {
   return (mapidx >= 0 && mapidx < MapInfo.Num() ? &MapInfo[mapidx] : nullptr);
 }
 

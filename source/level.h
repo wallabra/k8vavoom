@@ -799,8 +799,8 @@ private:
   void LoadVertexes (int, int, int &);
   void LoadSectors (int);
   void LoadSideDefs (int);
-  void LoadLineDefs1 (int, int, const mapInfo_t &);
-  void LoadLineDefs2 (int, int, const mapInfo_t &);
+  void LoadLineDefs1 (int, int, const VMapInfo &);
+  void LoadLineDefs2 (int, int, const VMapInfo &);
   void LoadGLSegs (int, int);
   void LoadSubsectors (int);
   void LoadNodes (int);
@@ -812,7 +812,7 @@ private:
   void LoadThings2 (int);
   void LoadLoadACS (int lacsLump, int XMapLump); // load libraries from 'loadacs'
   void LoadACScripts (int BehLump, int XMapLump);
-  void LoadTextMap (int, const mapInfo_t &);
+  void LoadTextMap (int, const VMapInfo &);
   // call this after loading things
   void SetupThingsFromMapinfo ();
 
