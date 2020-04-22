@@ -585,6 +585,8 @@ if(ENABLE_CLIENT)
 
   if(FLAC_FOUND)
     set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_flac.cpp)
+  else(FLAC_FOUND)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_flac_dr.cpp)
   endif(FLAC_FOUND)
 
   if(FLUID_FOUND)
