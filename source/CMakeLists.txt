@@ -580,7 +580,9 @@ if(ENABLE_CLIENT)
   endif(OPUS_FOUND)
 
   if(LIBMAD_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_mp3.cpp)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_mp3_mad.cpp)
+  else(LIBMAD_FOUND)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_mp3_dr.cpp)
   endif(LIBMAD_FOUND)
 
   if(FLAC_FOUND)
