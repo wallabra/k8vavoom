@@ -23,7 +23,11 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include <opus/opusfile.h>
+#ifdef VV_BUILTIN_OPUS
+# include "opusfile.h"
+#else
+# include <opus/opusfile.h>
+#endif
 
 #include "gamedefs.h"
 #include "snd_local.h"
@@ -57,7 +61,12 @@ public:
   virtual void Load (sfxinfo_t &, VStream &) override;
 };
 
-IMPLEMENT_AUDIO_CODEC(VOpusAudioCodec, "Opus");
+#ifdef VV_BUILTIN_OPUS
+# define VV_OPUS_CODEC_SUFFIX  "(builtin)"
+#else
+# define VV_OPUS_CODEC_SUFFIX  "(system)"
+#endif
+IMPLEMENT_AUDIO_CODEC(VOpusAudioCodec, "Opus" VV_OPUS_CODEC_SUFFIX);
 
 VOpusSampleLoader OpusSampleLoader;
 

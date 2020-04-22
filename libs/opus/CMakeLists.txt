@@ -1,0 +1,5 @@
+if(NOT OGG_FOUND)
+  add_subdirectory(libogg)
+endif(NOT OGG_FOUND)
+add_subdirectory(libopus)
+add_subdirectory(libopusfile)

@@ -575,9 +575,10 @@ if(ENABLE_CLIENT)
     set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_vorbis_stb.cpp)
   endif(VORBIS_FOUND)
 
-  if(OPUS_FOUND)
+  #k8: we have internal opus library
+  if(OPUS_FOUND OR OPUS_USE_INTERNAL)
     set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_opus.cpp)
-  endif(OPUS_FOUND)
+  endif(OPUS_FOUND OR OPUS_USE_INTERNAL)
 
   if(LIBMAD_FOUND)
     set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_mp3_mad.cpp)
