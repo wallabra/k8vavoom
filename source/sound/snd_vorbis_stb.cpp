@@ -62,6 +62,7 @@ public:
   static VAudioCodec *Create (VStream *);
 
 protected:
+  void stopFeeding (bool setEOS=false);
   // returns `false` on error or eof
   bool fillInBuffer ();
   // returns `false` on error or eof
@@ -74,7 +75,7 @@ public:
   virtual void Load (sfxinfo_t &, VStream &) override;
 };
 
-IMPLEMENT_AUDIO_CODEC(VVorbisAudioCodec, "Vorbis");
+IMPLEMENT_AUDIO_CODEC(VVorbisAudioCodec, "Vorbis(stb)");
 
 VVorbisSampleLoader VorbisSampleLoader;
 
@@ -138,6 +139,18 @@ void VVorbisAudioCodec::Cleanup () {
 
 //==========================================================================
 //
+//  VVorbisAudioCodec::stopFeeding
+//
+//==========================================================================
+void VVorbisAudioCodec::stopFeeding (bool setEOS) {
+  if (setEOS) eos = true;
+  BytesLeft = 0;
+  inbufUsed = inbufFilled = 0;
+}
+
+
+//==========================================================================
+//
 //  VVorbisAudioCodec::fillInBuffer
 //
 //  returns `false` on error or eof
@@ -145,7 +158,7 @@ void VVorbisAudioCodec::Cleanup () {
 //==========================================================================
 bool VVorbisAudioCodec::fillInBuffer () {
   if (BytesLeft == 0 || eos) {
-    if (inbufUsed >= inbufFilled) eos = true;
+    if (inbufUsed >= inbufFilled) stopFeeding();
     return (inbufUsed < inbufFilled);
   }
   if (inbufUsed > 0) {
@@ -162,15 +175,12 @@ bool VVorbisAudioCodec::fillInBuffer () {
   vassert(rd >= 0);
   if (rd == 0) {
     if (inbufFilled > 0) return true;
-    if (BytesLeft > 0) {
-      GCon->Logf(NAME_Error, "stb_vorbis decoder glitched at '%s'", *Strm->GetName());
-      BytesLeft = 0;
-    }
-    eos = true;
+    if (BytesLeft > 0) GCon->Logf(NAME_Error, "stb_vorbis decoder glitched at '%s'", *Strm->GetName());
+    stopFeeding(true);
     return false;
   }
   Strm->Serialise(inbuf+inbufFilled, rd);
-  if (Strm->IsError()) { inbufFilled = 0; BytesLeft = 0; eos = true; return false; }
+  if (Strm->IsError()) { stopFeeding(true); return false; }
   inbufFilled += rd;
   BytesLeft -= rd;
   return true;
@@ -182,12 +192,20 @@ bool VVorbisAudioCodec::fillInBuffer () {
 //  f2i
 //
 //==========================================================================
-static inline vint16 f2i (float f) noexcept {
-  const vint16 v =
-    f < -1.0f ? -32767 :
-    f > +1.0f ? 32767 :
-    (vint16)(f*32767.0f);
-  return v;
+static inline void floatbuf2short (vint16 *dest, const float *src, unsigned length, bool mono2stereo=false) noexcept {
+  if (!mono2stereo) {
+    while (length--) {
+      *dest = (vint16)(clampval(*src, -1.0f, 1.0f)*32767.0f);
+      ++src;
+      dest += 2;
+    }
+  } else {
+    while (length--) {
+      dest[0] = dest[1] = (vint16)(clampval(*src, -1.0f, 1.0f)*32767.0f);
+      ++src;
+      dest += 2;
+    }
+  }
 }
 
 
@@ -200,43 +218,57 @@ static inline vint16 f2i (float f) noexcept {
 //==========================================================================
 bool VVorbisAudioCodec::decodeFrame () {
   if (outbufUsed < outbufFilled) return true;
-  if (eos || !decoder || !Strm || Strm->IsError()) return false;
+  if (eos || !decoder || !Strm || Strm->IsError()) { stopFeeding(true); return false; }
   //float *fltpcm[STB_VORBIS_MAX_CHANNELS];
   float **fltpcm;
+  //GCon->Logf(NAME_Debug, "...decodeFrame: '%s' (used=%d; filled=%d; size=%d); oused=%d; ofilled=%d; osize=%d", *Strm->GetName(), inbufUsed, inbufFilled, inbufSize, outbufUsed, outbufFilled, outbufSize);
   for (;;) {
-    if (!fillInBuffer()) return false;
-    //GCon->Logf(NAME_Debug, "...decoding frame from '%s'", *Strm->GetName());
+    if (inbufUsed >= inbufFilled) {
+      fillInBuffer();
+      //GCon->Logf(NAME_Debug, "...read new buffer from '%s' (used=%d; filled=%d; size=%d)", *Strm->GetName(), inbufUsed, inbufFilled, inbufSize);
+    }
+    //GCon->Logf(NAME_Debug, "...decoding frame from '%s' (used=%d; filled=%d; size=%d)", *Strm->GetName(), inbufUsed, inbufFilled, inbufSize);
     int chans = 0;
     int samples = 0;
-    int res = stb_vorbis_decode_frame_pushdata(decoder, (const unsigned char *)(inbuf+inbufUsed), inbufSize-inbufUsed, &chans, &fltpcm, &samples);
+    int res = stb_vorbis_decode_frame_pushdata(decoder, (const unsigned char *)(inbuf+inbufUsed), inbufFilled-inbufUsed, &chans, &fltpcm, &samples);
     //GCon->Logf(NAME_Debug, "...decoded frame from '%s' (res=%d; chans=%d; samples=%d)", *Strm->GetName(), res, chans, samples);
-    if (res <= 0 || chans < 1 || chans > 2) {
-      // it needs more data, but we cannot provide it
-      eos = true;
-      return false;
-    }
+    if (res < 0) { stopFeeding(true); return false; } // something's strange in the neighbourhood
     inbufUsed += res;
+    // check samples first
     if (samples > 0) {
+      if (chans < 1 || chans > 2) { stopFeeding(true); return false; } // why is that?
       // alloc samples for two channels
       if (outbufSize < samples*2) {
         outbufSize = samples*2;
         outbuf = (vint16 *)Z_Realloc(outbuf, outbufSize*2);
       }
+      vassert(outbufSize >= samples*2);
       outbufUsed = 0;
       if (chans == 1) {
         // mono, expand to stereo
-        for (int f = 0; f < samples; ++f) {
-          outbuf[f*2+0] = outbuf[f*2+1] = f2i(fltpcm[0][f]);
-        }
+        floatbuf2short(outbuf, fltpcm[0], (unsigned)samples, true);
       } else {
         // stereo
-        for (int f = 0; f < samples; ++f) {
-          outbuf[f*2+0] = f2i(fltpcm[0][f]);
-          outbuf[f*2+1] = f2i(fltpcm[1][f]);
-        }
+        floatbuf2short(outbuf, fltpcm[0], (unsigned)samples);
+        floatbuf2short(outbuf+1, fltpcm[1], (unsigned)samples);
       }
       outbufFilled = samples*2;
+      //GCon->Logf(NAME_Debug, "...DECODED: '%s' (used=%d; filled=%d; size=%d); oused=%d; ofilled=%d; osize=%d", *Strm->GetName(), inbufUsed, inbufFilled, inbufSize, outbufUsed, outbufFilled, outbufSize);
       return true;
+    }
+    // ok, no samples, we may need more data
+    if (res == 0) {
+      //GCon->Logf(NAME_Debug, "...needs more data from '%s'", *Strm->GetName());
+      // just need more data
+      int oldInbufAvail = inbufFilled-inbufUsed;
+      fillInBuffer();
+      if (inbufFilled-inbufUsed == oldInbufAvail) {
+        // cannot get more data, set "end of stream" flag
+        //GCon->Logf(NAME_Debug, "cannot get more data from '%s'", *Strm->GetName());
+        stopFeeding(true);
+        return false;
+      }
+      //GCon->Logf(NAME_Debug, "...Decoding frame from '%s' (used=%d; filled=%d; size=%d)", *Strm->GetName(), inbufUsed, inbufFilled, inbufSize);
     }
   }
 }
