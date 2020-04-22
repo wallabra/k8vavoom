@@ -190,14 +190,16 @@ bool VFlacAudioCodec::Init () {
     return false;
   }
 
+  /*
   if (decoder->bitsPerSample != 8 && decoder->bitsPerSample != 16) {
     GCon->Logf(NAME_Warning, "cannot open flac '%s' with %u bits per sample", *Strm->GetName(), (unsigned)decoder->bitsPerSample);
     Cleanup();
     return false;
   }
+  */
 
   SampleRate = decoder->sampleRate;
-  SampleBits = decoder->bitsPerSample;
+  SampleBits = /*decoder->bitsPerSample*/16;
   NumChannels = 2; // always
   inited = true;
   return true;
