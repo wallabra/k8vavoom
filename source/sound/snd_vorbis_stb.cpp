@@ -23,15 +23,19 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#include "gamedefs.h"
+#include "snd_local.h"
+
 /*#define STB_VORBIS_NO_PUSHDATA_API*/
 #define STB_VORBIS_NO_PULLDATA_API
 #define STB_VORBIS_NO_STDIO
 #define STB_VORBIS_NO_FAST_SCALED_FLOAT
 
-#include "stbdr/stb_vorbis.c"
+#define stb_malloc   Z_Malloc
+#define stb_realloc  Z_Realloc
+#define stb_free     Z_Free
 
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "stbdr/stb_vorbis.c"
 
 
 class VVorbisAudioCodec : public VAudioCodec {
@@ -40,6 +44,7 @@ public:
   bool FreeStream;
   int BytesLeft;
   stb_vorbis *decoder;
+  stb_vorbis_alloc tmpbuf;
   bool eos;
   vuint8 *inbuf;
   int inbufSize;
@@ -103,6 +108,8 @@ VVorbisAudioCodec::VVorbisAudioCodec (VStream *AStrm, bool AFreeStream)
   BytesLeft = Strm->TotalSize();
   Strm->Seek(0);
   inbuf = (vuint8 *)Z_Malloc(inbufSize);
+  tmpbuf.alloc_buffer_length_in_bytes = 0;
+  tmpbuf.alloc_buffer = nullptr;
 }
 
 
@@ -112,12 +119,10 @@ VVorbisAudioCodec::VVorbisAudioCodec (VStream *AStrm, bool AFreeStream)
 //
 //==========================================================================
 VVorbisAudioCodec::~VVorbisAudioCodec () {
-  if (inited) {
-    Cleanup();
-    if (FreeStream) {
-      Strm->Close();
-      delete Strm;
-    }
+  Cleanup();
+  if (inited && FreeStream && Strm) {
+    Strm->Close();
+    delete Strm;
   }
   Strm = nullptr;
   if (inbuf) Z_Free(inbuf);
@@ -134,6 +139,9 @@ void VVorbisAudioCodec::Cleanup () {
   if (decoder) { stb_vorbis_close(decoder); decoder = nullptr; }
   inbufUsed = inbufFilled = 0;
   outbufUsed = outbufFilled = 0;
+  if (tmpbuf.alloc_buffer) Z_Free(tmpbuf.alloc_buffer);
+  tmpbuf.alloc_buffer_length_in_bytes = 0;
+  tmpbuf.alloc_buffer = nullptr;
 }
 
 
@@ -281,6 +289,11 @@ bool VVorbisAudioCodec::decodeFrame () {
 //==========================================================================
 bool VVorbisAudioCodec::Init () {
   Cleanup();
+  vassert(!tmpbuf.alloc_buffer);
+
+  tmpbuf.alloc_buffer_length_in_bytes = 1024*1024; // 1MB should be enough
+  tmpbuf.alloc_buffer = (char *)Z_Malloc(tmpbuf.alloc_buffer_length_in_bytes);
+
   eos = false;
   inited = false;
   if (!fillInBuffer()) {
@@ -291,7 +304,7 @@ bool VVorbisAudioCodec::Init () {
   //GCon->Logf(NAME_Debug, "buffer filled (%s) (%d/%d/%d)", *Strm->GetName(), inbufUsed, inbufFilled, inbufSize);
   int usedData = 0;
   int error = 0;
-  decoder = stb_vorbis_open_pushdata((const unsigned char *)inbuf, inbufFilled-inbufUsed, &usedData, &error, nullptr);
+  decoder = stb_vorbis_open_pushdata((const unsigned char *)inbuf, inbufFilled-inbufUsed, &usedData, &error, &tmpbuf);
   if (!decoder || error != 0) {
     //GCon->Logf(NAME_Debug, "stb_vorbis error: %d", error);
     Cleanup();

@@ -87,6 +87,17 @@ extern "C" {
 // them from multiple threads at the same time. However, you can have multiple
 // stb_vorbis* handles and decode from them independently in multiple thrads.
 
+#ifndef stb_malloc
+# define stb_malloc  malloc
+#endif
+
+#ifndef stb_realloc
+# define stb_realloc  realloc
+#endif
+
+#ifndef stb_free
+# define stb_free  free
+#endif
 
 ///////////   MEMORY ALLOCATION
 
@@ -938,13 +949,13 @@ static void *setup_malloc(vorb *f, int sz)
       f->setup_offset += sz;
       return p;
    }
-   return sz ? malloc(sz) : NULL;
+   return sz ? stb_malloc(sz) : NULL;
 }
 
 static void setup_free(vorb *f, void *p)
 {
    if (f->alloc.alloc_buffer) return; // do nothing; setup mem is a stack
-   free(p);
+   stb_free(p);
 }
 
 static void *setup_temp_malloc(vorb *f, int sz)
@@ -955,7 +966,7 @@ static void *setup_temp_malloc(vorb *f, int sz)
       f->temp_offset -= sz;
       return (char *) f->alloc.alloc_buffer + f->temp_offset;
    }
-   return malloc(sz);
+   return stb_malloc(sz);
 }
 
 static void setup_temp_free(vorb *f, void *p, int sz)
@@ -964,7 +975,7 @@ static void setup_temp_free(vorb *f, void *p, int sz)
       f->temp_offset += (sz+3)&~3;
       return;
    }
-   free(p);
+   stb_free(p);
 }
 
 #define CRC32_POLY    0x04c11db7   // from spec
@@ -2284,7 +2295,7 @@ void inverse_mdct_slow(float *buffer, int n)
 {
    int i,j;
    int n2 = n >> 1;
-   float *x = (float *) malloc(sizeof(*x) * n2);
+   float *x = (float *) stb_malloc(sizeof(*x) * n2);
    memcpy(x, buffer, sizeof(*x) * n2);
    for (i=0; i < n; ++i) {
       float acc = 0;
@@ -2299,7 +2310,7 @@ void inverse_mdct_slow(float *buffer, int n)
          acc += x[j] * (float) cos(M_PI / 2 / n * (2 * i + 1 + n/2.0)*(2*j+1));
       buffer[i] = acc;
    }
-   free(x);
+   stb_free(x);
 }
 #elif 0
 // same as above, but just barely able to run in real time on modern machines
@@ -2308,7 +2319,7 @@ void inverse_mdct_slow(float *buffer, int n, vorb *f, int blocktype)
    float mcos[16384];
    int i,j;
    int n2 = n >> 1, nmask = (n << 2) -1;
-   float *x = (float *) malloc(sizeof(*x) * n2);
+   float *x = (float *) stb_malloc(sizeof(*x) * n2);
    memcpy(x, buffer, sizeof(*x) * n2);
    for (i=0; i < 4*n; ++i)
       mcos[i] = (float) cos(M_PI / 2 * i / n);
@@ -2319,7 +2330,7 @@ void inverse_mdct_slow(float *buffer, int n, vorb *f, int blocktype)
          acc += x[j] * mcos[(2 * i + 1 + n2)*(2*j+1) & nmask];
       buffer[i] = acc;
    }
-   free(x);
+   stb_free(x);
 }
 #elif 0
 // transform to use a slow dct-iv; this is STILL basically trivial,
@@ -5347,7 +5358,7 @@ int stb_vorbis_decode_filename(const char *filename, int *channels, int *sample_
       *sample_rate = v->sample_rate;
    offset = data_len = 0;
    total = limit;
-   data = (short *) malloc(total * sizeof(*data));
+   data = (short *) stb_malloc(total * sizeof(*data));
    if (data == NULL) {
       stb_vorbis_close(v);
       return -2;
@@ -5360,9 +5371,9 @@ int stb_vorbis_decode_filename(const char *filename, int *channels, int *sample_
       if (offset + limit > total) {
          short *data2;
          total *= 2;
-         data2 = (short *) realloc(data, total * sizeof(*data));
+         data2 = (short *) stb_realloc(data, total * sizeof(*data));
          if (data2 == NULL) {
-            free(data);
+            stb_free(data);
             stb_vorbis_close(v);
             return -2;
          }
@@ -5387,7 +5398,7 @@ int stb_vorbis_decode_memory(const uint8 *mem, int len, int *channels, int *samp
       *sample_rate = v->sample_rate;
    offset = data_len = 0;
    total = limit;
-   data = (short *) malloc(total * sizeof(*data));
+   data = (short *) stb_malloc(total * sizeof(*data));
    if (data == NULL) {
       stb_vorbis_close(v);
       return -2;
@@ -5400,9 +5411,9 @@ int stb_vorbis_decode_memory(const uint8 *mem, int len, int *channels, int *samp
       if (offset + limit > total) {
          short *data2;
          total *= 2;
-         data2 = (short *) realloc(data, total * sizeof(*data));
+         data2 = (short *) stb_realloc(data, total * sizeof(*data));
          if (data2 == NULL) {
-            free(data);
+            stb_free(data);
             stb_vorbis_close(v);
             return -2;
          }
