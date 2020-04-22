@@ -82,7 +82,7 @@ detector "Harmony v1.1" {
 }
 
 
-detector "Adventures of Square" {
+detector "Adventures of Square/Zandro by TDRR" {
   info {
     type = "TC";
   }
