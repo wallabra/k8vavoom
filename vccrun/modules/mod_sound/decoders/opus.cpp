@@ -22,7 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-#include <opus/opusfile.h>
+#ifdef VV_BUILTIN_OPUS
+# include "opusfile.h"
+#else
+# include <opus/opusfile.h>
+#endif
 
 #include "../sound_private.h"
 #include "../sound.h"
