@@ -82,7 +82,7 @@ detector "Harmony v1.1" {
 }
 
 
-detector "Adventures of Square/Zandro by TDRR" {
+detector "The Adventures of Square/Zandro, ported by TDRR" {
   info {
     type = "TC";
   }
