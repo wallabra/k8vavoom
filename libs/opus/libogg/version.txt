@@ -1,0 +1,7 @@
+AC_INIT([libogg],[1.3.4],[ogg-dev@xiph.org])
+
+dnl Library versioning
+
+LIB_CURRENT=8
+LIB_REVISION=4
+LIB_AGE=8
