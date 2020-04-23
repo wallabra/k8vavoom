@@ -81,6 +81,31 @@ endif(SWITCH_LIBNX)
 
 
 # perform some platform and compiler checks
+if(CMAKE_CROSSCOMPILING AND WIN32)
+  # cross-compiling to shitdoze
+  message(STATUS "Cross-compiling to shitdoze...")
+elseif(CMAKE_CROSSCOMPILING)
+  # cross-compiling to something else, let's play safe
+  message(STATUS "Turning off SSE and mi-malloc")
+  set(NO_SSE ON)
+  set(WITH_MIMALLOC OFF)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i[0-9]86|x86|X86|amd64|AMD64|x86_64)")
+  # compiling to x86
+  #if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  #  set(OPUS_CPU_X64 1)
+  #else()
+  #  set(OPUS_CPU_X86 1)
+  #endif()
+#elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(arm|aarch64)")
+#  set(OPUS_CPU_ARM 1)
+else()
+  # compiling to something else, let's play safe
+  message(STATUS "Turning off SSE and mi-malloc")
+  set(NO_SSE ON)
+  set(WITH_MIMALLOC OFF)
+endif()
+
+
 set(K8_UNFUCK_AS_GCC ON)
 set(K8_UNFUCK_AS_SHITLANG OFF)
 if(NOT CMAKE_COMPILER_IS_GNUCC)
