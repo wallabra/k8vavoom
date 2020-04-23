@@ -13,8 +13,19 @@ menudef SoundOptions {
     title = "MIDI Decoder";
     cvar = snd_mid_player;
     list {
-      "Timidity",
+      "None",
       "FluidSynth",
+      "Timidity",
+      "NukedOPL",
+    }
+  }
+
+  option enum {
+    title = "Module Decoder";
+    cvar = snd_mod_player;
+    list {
+      "None",
+      "XMP Lite",
     }
   }
 
@@ -24,10 +35,15 @@ menudef SoundOptions {
   }
 
   option submenu {
-    title = "Module Decoder Options";
-    //smclass = MenuScreenMODOptions;
-    submenu = "ModPlayerOptions";
+    title = "XMP Lite Options";
+    submenu = "XMPLiteOptions";
   }
+
+  option submenu {
+    title = "NukedOPL Options";
+    submenu = "NukedOPLOptions";
+  }
+
 
   header ""; // empty line
 

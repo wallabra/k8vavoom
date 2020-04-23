@@ -22,6 +22,7 @@ menus {
 
   "menus/sound/xmp.txt",
   "menus/sound/fluid.txt",
+  "menus/sound/nuked.txt",
 
   "menus/debug/amcheatoptions.txt",
   "menus/debug/clipdebug.txt",

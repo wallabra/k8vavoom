@@ -1,0 +1,29 @@
+// xmplite options menu
+menudef NukedOPLOptions {
+  Title = "NUKEDOPL CONFIG";
+
+  option bool {
+    title = "Stereo";
+    cvar = snd_nukedopl_stereo;
+    help = "This option will take effect on music change.";
+  }
+
+  option enum {
+    title = "OPL Chip Type";
+    cvar = snd_nukedopl_type;
+    list {
+      "OPL2",
+      "OPL3",
+    }
+    help = "This option will take effect on music change.";
+  }
+
+  option slider {
+    title = "Amplification";
+    cvar = snd_nukedopl_amplify;
+    step = 0.2;
+    min = 0;
+    max = 8;
+    help = "This option will take effect immediately.";
+  }
+}

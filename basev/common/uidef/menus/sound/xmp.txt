@@ -1,5 +1,5 @@
-// module player options menu
-menudef ModPlayerOptions {
+// xmplite options menu
+menudef XMPLiteOptions {
   //selector = MenuSelector_SmallRight;
   Title = "XMPLITE CONFIG";
 
