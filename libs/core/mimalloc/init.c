@@ -309,7 +309,7 @@ static void _mi_thread_done(mi_heap_t* default_heap);
 __declspec(dllimport) DWORD WINAPI FlsAlloc (PFLS_CALLBACK_FUNCTION lpCallback);
 //__declspec(dllimport) PVOID WINAPI FlsGetValue (DWORD dwFlsIndex);
 __declspec(dllimport) WINBOOL WINAPI FlsSetValue (DWORD dwFlsIndex, PVOID lpFlsData);
-//__declspec(dllimport) WINBOOL WINAPI FlsFree (DWORD dwFlsIndex);
+__declspec(dllimport) WINBOOL WINAPI FlsFree (DWORD dwFlsIndex);
 #endif
 
 // Set up handlers so `mi_thread_done` is called automatically
