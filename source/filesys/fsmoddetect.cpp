@@ -425,8 +425,14 @@ static int detectFromList (FSysModDetectorHelper &hlp, int seenZScriptLump) {
     if (!dc->gamename.isEmpty()) mdetect_SetGameName(dc->gamename);
     if (dc->nakedbase) mdetect_ClearAndBlockCustomModes();
     if (dc->bdw >= 0) { fsys_DisableBDW = (dc->bdw == 0); cli_BDWMod = dc->bdw; }
-    if (dc->gore >= 0) { cli_GoreMod = dc->gore; }
-    if (dc->modblood <= 0) { if (dc->modblood < 0) dc->modblood = (cli_GoreMod == 0); fsys_DisableBloodReplacement = (dc->modblood == 0); }
+    if (dc->gore >= 0) {
+      if (cli_GoreMod != dc->gore) GCon->Logf(NAME_Init, "Gore mod %s.", (dc->gore ? "enabled" : "disabled"));
+      cli_GoreMod = dc->gore;
+    }
+    if (dc->modblood <= 0) {
+      if (dc->modblood < 0) dc->modblood = (cli_GoreMod == 0);
+      fsys_DisableBloodReplacement = (dc->modblood == 0);
+    }
     if (!dc->iwad) mdetect_DisableIWads();
     if (!dc->sprofslump) modNoBaseSprOfs = true;
     if (dc->ignorePlayerSpeed) decoIgnorePlayerSpeed = true;

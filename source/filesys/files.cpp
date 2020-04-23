@@ -72,6 +72,7 @@ static int cli_FastMonsters = -1; // not specified
 static int cli_Respawn = -1; // not specified
 static int cli_NoMenuDef = -1; // not specified
 /*static*/ int cli_GoreMod = -1; // not specified
+static int cli_GoreModForce = 0;
 static int cli_BDWMod = -1; // not specified
 static int cli_SkeeHUD = -1; // not specified
 
@@ -602,6 +603,7 @@ VVA_OKUNUSED static void mdetect_ClearAndBlockCustomModes () {
 //
 //==========================================================================
 VVA_OKUNUSED static void mdetect_DisableBDW () {
+  if (!fsys_DisableBDW) GCon->Logf(NAME_Init, "BDW mod disabled.");
   fsys_DisableBDW = true;
 }
 
@@ -612,6 +614,7 @@ VVA_OKUNUSED static void mdetect_DisableBDW () {
 //
 //==========================================================================
 VVA_OKUNUSED static void mdetect_DisableGore () {
+  if (cli_GoreMod != 0) GCon->Logf(NAME_Init, "Gore mod disabled.");
   cli_GoreMod = 0;
 }
 
@@ -622,6 +625,7 @@ VVA_OKUNUSED static void mdetect_DisableGore () {
 //
 //==========================================================================
 VVA_OKUNUSED static void mdetect_DisableIWads () {
+  if (!modDetectorDisabledIWads) GCon->Logf(NAME_Init, "IWAD disabled.");
   modDetectorDisabledIWads = true;
 }
 
@@ -2243,6 +2247,8 @@ void FL_InitOptions () {
   GParsedArgs.RegisterFlagReset("-nogore", "disable gore mod", &cli_GoreMod);
   GParsedArgs.RegisterAlias("-no-gore", "-nogore");
 
+  GParsedArgs.RegisterFlagSet("-force-gore", "force gore mod", &cli_GoreModForce);
+
   GParsedArgs.RegisterFlagSet("-bdw", "enable BDW (weapons) mod", &cli_BDWMod);
   GParsedArgs.RegisterFlagReset("-nobdw", "disable BDW (weapons) mod", &cli_BDWMod);
   GParsedArgs.RegisterAlias("-no-bdw", "-nobdw");
@@ -2645,7 +2651,10 @@ void FL_Init () {
 
   //customMode.dump();
 
-  if (!customMode.disableGoreMod) {
+  if (cli_GoreModForce != 0) {
+    GCon->Logf(NAME_Init, "Forcing gore mod.");
+    AddGameDir("basev/mods/gore"); // not disabled
+  } else if (!customMode.disableGoreMod) {
     #if 0
     if (/*game_release_mode ||*/ isChex) {
       if (cli_GoreMod == 1) AddGameDir("basev/mods/gore"); // explicitly enabled
@@ -2656,7 +2665,7 @@ void FL_Init () {
     if (cli_GoreMod != 0) AddGameDir("basev/mods/gore"); // not disabled
     #endif
   } else {
-    GCon->Logf(NAME_Init, "Gore mod disabled");
+    GCon->Logf(NAME_Init, "Gore mod disabled.");
   }
 
   //if (isChex) AddGameDir("basev/mods/chex");
