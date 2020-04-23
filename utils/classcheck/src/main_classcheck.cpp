@@ -432,6 +432,8 @@ void scanSources (TArray<VStr> &list, VStr path, const VStr &mask1, const VStr &
       if (name == "vccrun/") continue;
       if (name == "game/") continue;
       if (name == "cgame/") continue;
+      if (name == "nukedopl/") continue;
+      if (name == "stbdr/") continue;
       scanSources(list, path+name, mask1, mask2);
     } else {
       if (name.startsWith("stb_")) continue;
