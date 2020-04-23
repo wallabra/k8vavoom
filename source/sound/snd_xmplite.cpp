@@ -269,7 +269,7 @@ void VXMPAudioCodec::Restart () {
 //
 //==========================================================================
 VAudioCodec *VXMPAudioCodec::Create (VStream *InStrm) {
-  if (snd_mod_player != 2) return nullptr;
+  if (snd_mod_player != 1) return nullptr;
   VXMPAudioCodec *Codec = new VXMPAudioCodec(InStrm, true);
   if (!Codec->Init()) {
     Codec->Cleanup();

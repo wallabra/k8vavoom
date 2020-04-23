@@ -214,8 +214,8 @@ static VCvarF snd_random_pitch_default("snd_random_pitch_default", "0.27", "Rand
 static VCvarF snd_random_pitch_boost("snd_random_pitch_boost", "2", "Random pitch will be multiplied by this value.", CVAR_Archive);
 static VCvarI snd_max_same_sounds("snd_max_same_sounds", "4", "Maximum number of simultaneously playing same sounds?", CVAR_Archive);
 
-VCvarI snd_mid_player("snd_mid_player", "1", "MIDI player type (0:Timidity; 1:FluidSynth; -1:none)", CVAR_Archive|CVAR_PreInit);
-VCvarI snd_mod_player("snd_mod_player", "2", "Module player type", CVAR_Archive);
+VCvarI snd_mid_player("snd_mid_player", "3", "MIDI player type (0:none; 1:FluidSynth; 2:Timidity; 3:NukedOPL)", CVAR_Archive|CVAR_PreInit);
+VCvarI snd_mod_player("snd_mod_player", "1", "Module player type (0:none; 1:XMPLite)", CVAR_Archive);
 
 //k8: it seems to be weirdly unstable (at least under windoze). sigh.
 static VCvarB snd_bgloading_music("snd_bgloading_music", false, "Load music in the background thread?", CVAR_Archive|CVAR_PreInit);
@@ -1068,24 +1068,28 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying, bool f
     return nullptr;
   }
 
-  vuint8 Hdr[4];
-  Strm->Serialise(Hdr, 4);
-  if (!memcmp(Hdr, MUSMAGIC, 4)) {
-    // convert mus to mid with a wonderfull function
-    // thanks to S.Bacquet for the source of qmus2mid
-    Strm->Seek(0);
-    VMemoryStream *MidStrm = new VMemoryStream();
-    MidStrm->BeginWrite();
-    VQMus2Mid Conv;
-    int MidLength = Conv.Run(*Strm, *MidStrm);
-    delete Strm;
-    if (!MidLength) {
-      delete MidStrm;
-      return nullptr;
+  // do not convert mus to midi if current midi player is NukedOPL (3)
+  if (snd_mid_player.asInt() != 3) {
+    vuint8 Hdr[4];
+    Strm->Serialise(Hdr, 4);
+    if (!Strm->IsError() && memcmp(Hdr, MUSMAGIC, 4) == 0) {
+      // convert mus to mid with a wonderfull function
+      // thanks to S.Bacquet for the source of qmus2mid
+      Strm->Seek(0);
+      VMemoryStream *MidStrm = new VMemoryStream();
+      MidStrm->BeginWrite();
+      VQMus2Mid Conv;
+      int MidLength = Conv.Run(*Strm, *MidStrm);
+      delete Strm;
+      if (!MidLength) {
+        delete MidStrm;
+        return nullptr;
+      }
+      MidStrm->Seek(0);
+      MidStrm->BeginRead();
+      Strm = MidStrm;
+      GCon->Logf("converted MUS '%s' to MIDI", *W_FullLumpName(Lump));
     }
-    MidStrm->Seek(0);
-    MidStrm->BeginRead();
-    Strm = MidStrm;
   }
 
   // try to create audio codec

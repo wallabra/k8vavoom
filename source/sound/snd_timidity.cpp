@@ -354,7 +354,7 @@ void VTimidityAudioCodec::Restart () {
 //
 //==========================================================================
 VAudioCodec *VTimidityAudioCodec::Create (VStream *InStrm) {
-  if (snd_mid_player != 0) return nullptr;
+  if (snd_mid_player != 2) return nullptr;
 
   int Size = InStrm->TotalSize();
   if (Size < 0x0e) {

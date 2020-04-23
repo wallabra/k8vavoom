@@ -197,6 +197,10 @@ set(SOUNDSYS_SOURCES
   sound/snd_wav.cpp
   # xmplite is always here
   sound/snd_xmplite.cpp
+  # NukedOPL too
+  sound/nukedopl/opl3.c
+  sound/nukedopl/musmid.cpp
+  sound/snd_nuked.cpp
 )
 
 
