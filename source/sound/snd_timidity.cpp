@@ -354,7 +354,7 @@ void VTimidityAudioCodec::Restart () {
 //
 //==========================================================================
 VAudioCodec *VTimidityAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
-  if (snd_mid_player != 2) return nullptr;
+  if (snd_midi_player != 2) return nullptr;
 
   // check if it's a MIDI file
   if (memcmp(sign, MIDIMAGIC, 4)) return nullptr;

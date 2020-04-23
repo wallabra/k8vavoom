@@ -535,7 +535,7 @@ void VFluidAudioCodec::Restart () {
 //
 //==========================================================================
 VAudioCodec *VFluidAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
-  if (snd_mid_player != 1) return nullptr;
+  if (snd_midi_player != 1) return nullptr;
   if (InStrm->IsError()) return nullptr;
 
   int size = InStrm->TotalSize();

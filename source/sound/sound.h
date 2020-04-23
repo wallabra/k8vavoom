@@ -228,8 +228,8 @@ public:
 };
 
 
-extern VCvarI snd_mid_player;
-extern VCvarI snd_mod_player;
+extern VCvarI snd_midi_player;
+extern VCvarI snd_module_player;
 
 extern VSoundManager *GSoundManager;
 extern VAudioPublic *GAudio;

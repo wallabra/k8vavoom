@@ -215,8 +215,8 @@ static VCvarF snd_random_pitch_default("snd_random_pitch_default", "0.27", "Rand
 static VCvarF snd_random_pitch_boost("snd_random_pitch_boost", "2", "Random pitch will be multiplied by this value.", CVAR_Archive);
 static VCvarI snd_max_same_sounds("snd_max_same_sounds", "4", "Maximum number of simultaneously playing same sounds?", CVAR_Archive);
 
-VCvarI snd_mid_player("snd_mid_player", "3", "MIDI player type (0:none; 1:FluidSynth; 2:Timidity; 3:NukedOPL)", CVAR_Archive|CVAR_PreInit);
-VCvarI snd_mod_player("snd_mod_player", "1", "Module player type (0:none; 1:XMPLite)", CVAR_Archive);
+VCvarI snd_midi_player("snd_midi_player", "3", "MIDI player type (0:none; 1:FluidSynth; 2:Timidity; 3:NukedOPL)", CVAR_Archive|CVAR_PreInit);
+VCvarI snd_module_player("snd_module_player", "1", "Module player type (0:none; 1:XMPLite)", CVAR_Archive);
 
 //k8: it seems to be weirdly unstable (at least under windoze). sigh.
 static VCvarB snd_bgloading_music("snd_bgloading_music", false, "Load music in the background thread?", CVAR_Archive|CVAR_PreInit);
@@ -1079,7 +1079,7 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying, bool f
   }
 
   // do not convert mus to midi if current midi player is NukedOPL (3)
-  if (snd_mid_player.asInt() != 3 && memcmp(sign, MUSMAGIC, 4) == 0) {
+  if (snd_midi_player.asInt() != 3 && memcmp(sign, MUSMAGIC, 4) == 0) {
     // convert mus to mid with a wonderfull function
     // thanks to S.Bacquet for the source of qmus2mid
     Strm->Seek(0);

@@ -329,7 +329,7 @@ BOOL VMikModAudioCodec::ArchiveReader_Eof(MREADER *rd)
 
 VAudioCodec *VMikModAudioCodec::Create(VStream *InStrm)
 {
-  if (snd_mod_player != 0)
+  if (snd_module_player != 0)
   {
     return nullptr;
   }

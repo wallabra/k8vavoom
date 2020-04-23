@@ -213,7 +213,7 @@ void VNukedOPLAudioCodec::Restart () {
 //
 //==========================================================================
 VAudioCodec *VNukedOPLAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
-  if (snd_mid_player != 3) return nullptr; // we are the latest one
+  if (snd_midi_player != 3) return nullptr; // we are the latest one
 
   // check for valid file format
   if (memcmp(sign, "MThd", 4) != 0 && memcmp(sign, "MUS\x1a", 4) != 0) return nullptr;

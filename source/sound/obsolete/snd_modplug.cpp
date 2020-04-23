@@ -146,7 +146,7 @@ void VModPlugAudioCodec::Restart()
 
 VAudioCodec *VModPlugAudioCodec::Create(VStream *InStrm)
 {
-  if (snd_mod_player != 1)
+  if (snd_module_player != 1)
   {
     return nullptr;
   }
