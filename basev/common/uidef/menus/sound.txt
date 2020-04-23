@@ -11,7 +11,7 @@ menudef SoundOptions {
 
   option enum {
     title = "MIDI Decoder";
-    cvar = snd_mid_player;
+    cvar = snd_midi_player;
     list {
       "None",
       "FluidSynth",
@@ -22,7 +22,7 @@ menudef SoundOptions {
 
   option enum {
     title = "Module Decoder";
-    cvar = snd_mod_player;
+    cvar = snd_module_player;
     list {
       "None",
       "XMP Lite",
