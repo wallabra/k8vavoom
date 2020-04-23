@@ -128,7 +128,7 @@ VNukedOPLAudioCodec::VNukedOPLAudioCodec (VStream *InStrm)
   // load song data
   InStrm->Seek(0);
   int size = InStrm->TotalSize();
-  if (size < 8 || size > 1024*1024*8 || InStrm->IsError()) return;
+  if (size < 8 || size > 1024*1024*2 || InStrm->IsError()) return;
   songdata.setLength(size);
   InStrm->Serialise(songdata.ptr(), size);
   if (InStrm->IsError()) { songdata.clear(); }
@@ -151,9 +151,9 @@ VNukedOPLAudioCodec::~VNukedOPLAudioCodec () {
 //==========================================================================
 bool VNukedOPLAudioCodec::Init () {
   eos = true;
-  if (songdata.length() < 8) return false;
-  if (!musplr.load(songdata.ptr(), (size_t)songdata.length())) return false;
-  if (!musplr.play()) return false;
+  if (songdata.length() < 8) { songdata.clear(); return false; }
+  if (!musplr.load(songdata.ptr(), (size_t)songdata.length())) { songdata.clear(); return false; }
+  if (!musplr.play()) { songdata.clear(); return false; }
   eos = false;
   SampleRate = 48000;
   NumChannels = 2;
@@ -214,6 +214,14 @@ void VNukedOPLAudioCodec::Restart () {
 //==========================================================================
 VAudioCodec *VNukedOPLAudioCodec::Create (VStream *InStrm) {
   if (snd_mid_player != 3) return nullptr; // we are the latest one
+
+  // check for valid file format
+  char header[4];
+  InStrm->Seek(0);
+  InStrm->Serialise(header, 4);
+  if (InStrm->IsError()) return nullptr;
+
+  if (memcmp(header, "MThd", 4) != 0 && memcmp(header, "MUS\x1a", 4) != 0) return nullptr;
 
   VNukedOPLAudioCodec *codec = new VNukedOPLAudioCodec(InStrm);
   if (!codec->Init()) {
