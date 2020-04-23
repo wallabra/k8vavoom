@@ -198,7 +198,8 @@ private:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-FAudioCodecDesc *FAudioCodecDesc::List = nullptr;
+FAudioCodecDesc *FAudioCodecDesc::ListWithSign = nullptr;
+FAudioCodecDesc *FAudioCodecDesc::ListWithoutSign = nullptr;
 VAudioPublic *GAudio = nullptr;
 
 VCvarF snd_master_volume("snd_master_volume", "1", "Master volume", CVAR_Archive);
@@ -1068,36 +1069,66 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying, bool f
     return nullptr;
   }
 
+  // load signature, so we can pass it to codecs
+  vuint8 sign[4];
+  Strm->Serialise(sign, 4);
+  if (Strm->IsError()) {
+    GCon->Logf(NAME_Error, "error loading song '%s'", *W_FullLumpName(Lump));
+    delete Strm;
+    return nullptr;
+  }
+
   // do not convert mus to midi if current midi player is NukedOPL (3)
-  if (snd_mid_player.asInt() != 3) {
-    vuint8 Hdr[4];
-    Strm->Serialise(Hdr, 4);
-    if (!Strm->IsError() && memcmp(Hdr, MUSMAGIC, 4) == 0) {
-      // convert mus to mid with a wonderfull function
-      // thanks to S.Bacquet for the source of qmus2mid
-      Strm->Seek(0);
-      VMemoryStream *MidStrm = new VMemoryStream();
-      MidStrm->BeginWrite();
-      VQMus2Mid Conv;
-      int MidLength = Conv.Run(*Strm, *MidStrm);
-      delete Strm;
-      if (!MidLength) {
-        delete MidStrm;
-        return nullptr;
-      }
-      MidStrm->Seek(0);
-      MidStrm->BeginRead();
-      Strm = MidStrm;
-      GCon->Logf("converted MUS '%s' to MIDI", *W_FullLumpName(Lump));
+  if (snd_mid_player.asInt() != 3 && memcmp(sign, MUSMAGIC, 4) == 0) {
+    // convert mus to mid with a wonderfull function
+    // thanks to S.Bacquet for the source of qmus2mid
+    Strm->Seek(0);
+    VMemoryStream *MidStrm = new VMemoryStream();
+    MidStrm->BeginWrite();
+    VQMus2Mid Conv;
+    int MidLength = Conv.Run(*Strm, *MidStrm);
+    delete Strm;
+    if (!MidLength) {
+      delete MidStrm;
+      return nullptr;
     }
+    MidStrm->Seek(0);
+    MidStrm->BeginRead();
+    Strm = MidStrm;
+    Strm->Serialise(sign, 4);
+    if (Strm->IsError()) {
+      GCon->Logf(NAME_Error, "error loading song '%s'", *W_FullLumpName(Lump));
+      delete Strm;
+      return nullptr;
+    }
+    GCon->Logf("converted MUS '%s' to MIDI", *W_FullLumpName(Lump));
   }
 
   // try to create audio codec
   const char *codecName = nullptr;
   VAudioCodec *Codec = nullptr;
-  for (FAudioCodecDesc *Desc = FAudioCodecDesc::List; Desc && !Codec; Desc = Desc->Next) {
-    //GCon->Logf(va("Using %s to open the stream", Desc->Description));
-    Codec = Desc->Creator(Strm);
+
+  for (FAudioCodecDesc *Desc = FAudioCodecDesc::ListWithSign; Desc && !Codec; Desc = Desc->Next) {
+    //GCon->Logf(va("Trying %s to open the stream", Desc->Description));
+    Strm->Seek(0);
+    if (Strm->IsError()) {
+      GCon->Logf(NAME_Error, "error loading song '%s'", *W_FullLumpName(Lump));
+      delete Strm;
+      return nullptr;
+    }
+    Codec = Desc->Creator(Strm, sign, 4);
+    if (Codec) codecName = Desc->Description;
+  }
+
+  for (FAudioCodecDesc *Desc = FAudioCodecDesc::ListWithoutSign; Desc && !Codec; Desc = Desc->Next) {
+    //GCon->Logf(va("Trying %s to open the stream", Desc->Description));
+    Strm->Seek(0);
+    if (Strm->IsError()) {
+      GCon->Logf(NAME_Error, "error loading song '%s'", *W_FullLumpName(Lump));
+      delete Strm;
+      return nullptr;
+    }
+    Codec = Desc->Creator(Strm, sign, 4);
     if (Codec) codecName = Desc->Description;
   }
 

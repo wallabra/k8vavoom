@@ -39,11 +39,11 @@ public:
 public:
   VTimidityAudioCodec (MidiSong *InSong);
   virtual ~VTimidityAudioCodec () override;
-  virtual int Decode (short *Data, int NumSamples) override;
+  virtual int Decode (vint16 *Data, int NumFrames) override;
   virtual bool Finished () override;
   virtual void Restart () override;
 
-  static VAudioCodec *Create (VStream *InStrm);
+  static VAudioCodec *Create (VStream *InStrm, const vuint8 sign[], int signsize);
 
 };
 
@@ -84,7 +84,7 @@ public:
 static TimidityManager timidityManager;
 
 
-IMPLEMENT_AUDIO_CODEC(VTimidityAudioCodec, "Timidity");
+IMPLEMENT_AUDIO_CODEC(VTimidityAudioCodec, "Timidity", true); // with signature
 
 ControlMode TimidityManager::MyControlMode = {
   TimidityManager::ctl_msg,
@@ -323,8 +323,8 @@ VTimidityAudioCodec::~VTimidityAudioCodec () {
 //  VTimidityAudioCodec::Decode
 //
 //==========================================================================
-int VTimidityAudioCodec::Decode (short *Data, int NumSamples) {
-  return Timidity_PlaySome(Song, Data, NumSamples);
+int VTimidityAudioCodec::Decode (vint16 *Data, int NumFrames) {
+  return Timidity_PlaySome(Song, Data, NumFrames);
 }
 
 
@@ -353,20 +353,17 @@ void VTimidityAudioCodec::Restart () {
 //  VTimidityAudioCodec::Create
 //
 //==========================================================================
-VAudioCodec *VTimidityAudioCodec::Create (VStream *InStrm) {
+VAudioCodec *VTimidityAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
   if (snd_mid_player != 2) return nullptr;
+
+  // check if it's a MIDI file
+  if (memcmp(sign, MIDIMAGIC, 4)) return nullptr;
 
   int Size = InStrm->TotalSize();
   if (Size < 0x0e) {
     GCon->Logf(NAME_Warning, "Failed to load MIDI song");
     return nullptr;
   }
-
-  // check if it's a MIDI file
-  char Header[4];
-  InStrm->Seek(0);
-  InStrm->Serialise(Header, 4);
-  if (InStrm->IsError() || memcmp(Header, MIDIMAGIC, 4)) return nullptr;
 
   if (!timidityManager.InitTimidity()) return nullptr;
 

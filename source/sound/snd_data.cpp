@@ -85,8 +85,8 @@ void VSampleLoader::LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec) {
   //fprintf(stderr, "loading from audio codec; chans=%d; rate=%d; bits=%d\n", Codec->NumChannels, Codec->SampleRate, Codec->SampleBits);
   const int MAX_FRAMES = 65536;
 
-  TArray<short> Data;
-  short *buf = (short *)Z_Malloc(MAX_FRAMES*2*2);
+  TArray<vint16> Data;
+  vint16 *buf = (vint16 *)Z_Malloc(MAX_FRAMES*2*2);
   if (!buf) return; // oops
   do {
     int SamplesDecoded = Codec->Decode(buf, MAX_FRAMES);
@@ -94,12 +94,12 @@ void VSampleLoader::LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec) {
       int oldlen = Data.length();
       Data.SetNumWithReserve(oldlen+SamplesDecoded);
       // downmix stereo to mono
-      const short *src = buf;
-      short *dst = ((short *)Data.Ptr())+oldlen;
+      const vint16 *src = buf;
+      vint16 *dst = ((vint16 *)Data.Ptr())+oldlen;
       for (int i = 0; i < SamplesDecoded; ++i, src += 2) {
         int v = (src[0]+src[1])/2;
         if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
-        *dst++ = (short)v;
+        *dst++ = (vint16)v;
       }
     } else {
       break;

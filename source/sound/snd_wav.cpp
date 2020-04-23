@@ -66,11 +66,11 @@ public:
 
   VWavAudioCodec(VStream *InStrm);
   virtual ~VWavAudioCodec() override;
-  virtual int Decode(short *Data, int NumSamples) override;
+  virtual int Decode(vint16 *Data, int NumFrames) override;
   virtual bool Finished() override;
   virtual void Restart() override;
 
-  static VAudioCodec *Create(VStream *InStrm);
+  static VAudioCodec *Create (VStream *InStrm, const vuint8 sign[], int signsize);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -87,7 +87,7 @@ public:
 
 static VWaveSampleLoader    WaveSampleLoader;
 
-IMPLEMENT_AUDIO_CODEC(VWavAudioCodec, "Wav");
+IMPLEMENT_AUDIO_CODEC(VWavAudioCodec, "Wav", true); // with signature
 
 // CODE --------------------------------------------------------------------
 
@@ -197,13 +197,13 @@ void VWaveSampleLoader::Load(sfxinfo_t &Sfx, VStream &Strm)
     }
   } else {
     vuint8 *pSrc = (vuint8 *)WavData;
-    short *pDst = (short *)Sfx.Data;
+    vint16 *pDst = (vint16 *)Sfx.Data;
     for (int i = 0; i < DataSize; i++, pSrc += BlockAlign) {
       int v = 0;
-      for (int f = 0; f < WavChannels; ++f) v += (int)(LittleShort(*(((short *)pSrc)+f)));
+      for (int f = 0; f < WavChannels; ++f) v += (int)(LittleShort(*(((vint16 *)pSrc)+f)));
       v /= WavChannels;
       if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
-      *pDst++ = (short)v;
+      *pDst++ = (vint16)v;
     }
   }
   Z_Free(WavData);
@@ -271,20 +271,20 @@ VWavAudioCodec::~VWavAudioCodec()
 //
 //==========================================================================
 
-int VWavAudioCodec::Decode(short *Data, int NumSamples)
+int VWavAudioCodec::Decode(vint16 *Data, int NumFrames)
 {
-  int CurSample = 0;
+  int CurFrame = 0;
   vuint8 Buf[1024];
-  while (SamplesLeft && CurSample < NumSamples)
+  while (SamplesLeft && CurFrame < NumFrames)
   {
     int ReadSamples = 1024/BlockAlign;
-    if (ReadSamples > NumSamples-CurSample) ReadSamples = NumSamples-CurSample;
+    if (ReadSamples > NumFrames-CurFrame) ReadSamples = NumFrames-CurFrame;
     if (ReadSamples > SamplesLeft) ReadSamples = SamplesLeft;
     Strm->Serialise(Buf, ReadSamples*BlockAlign);
     for (int i = 0; i < 2; ++i) {
       vuint8 *pSrc = Buf;
       if (i && WavChannels > 1) pSrc += WavBits/8;
-      short *pDst = Data+CurSample*2+i;
+      vint16 *pDst = Data+CurFrame*2+i;
       if (WavBits == 8) {
         for (int j = 0; j < ReadSamples; j++, pSrc += BlockAlign, pDst += 2) {
           *pDst = (*pSrc - 127) << 8;
@@ -296,9 +296,9 @@ int VWavAudioCodec::Decode(short *Data, int NumSamples)
       }
     }
     SamplesLeft -= ReadSamples;
-    CurSample += ReadSamples;
+    CurFrame += ReadSamples;
   }
-  return CurSample;
+  return CurFrame;
 }
 
 //==========================================================================
@@ -329,22 +329,22 @@ void VWavAudioCodec::Restart()
 //
 //==========================================================================
 
-VAudioCodec *VWavAudioCodec::Create(VStream *InStrm)
+VAudioCodec *VWavAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize)
 {
+  if (memcmp(sign, "RIFF", 4) != 0) return nullptr;
   char Header[12];
-  InStrm->Seek(0);
-  InStrm->Serialise(Header, 12);
-  if (!memcmp(Header, "RIFF", 4) && !memcmp(Header + 8, "WAVE", 4))
-  {
-    //  It's a WAVE file.
-    VWavAudioCodec *Codec = new VWavAudioCodec(InStrm);
-    if (Codec->SamplesLeft != -1)
-    {
-      return Codec;
-    }
-    //  File seams to be broken.
-    delete Codec;
-    Codec = nullptr;
+  if (signsize >= 12) {
+    memcpy(Header, sign, 12);
+  } else {
+    InStrm->Seek(0);
+    InStrm->Serialise(Header, 12);
   }
+  if (memcmp(Header, "RIFF", 4) != 0 || memcmp(Header+8, "WAVE", 4) != 0) return nullptr;
+
+  // it's a WAVE file
+  VWavAudioCodec *Codec = new VWavAudioCodec(InStrm);
+  if (Codec->SamplesLeft != -1) return Codec;
+  // file seams to be broken
+  delete Codec;
   return nullptr;
 }

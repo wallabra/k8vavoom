@@ -54,11 +54,11 @@ public:
   virtual ~VFlacAudioCodec () override;
   bool Init ();
   void Cleanup ();
-  virtual int Decode (short *Data, int NumSamples) override;
+  virtual int Decode (vint16 *Data, int NumFrames) override;
   virtual bool Finished () override;
   virtual void Restart () override;
 
-  static VAudioCodec *Create (VStream *InStream);
+  static VAudioCodec *Create (VStream *InStrm, const vuint8 sign[], int signsize);
 
 protected:
   static size_t readCB (void *pUserData, void *pBufferOut, size_t bytesToRead);
@@ -74,7 +74,7 @@ public:
 
 VFlacSampleLoader FlacSampleLoader;
 
-IMPLEMENT_AUDIO_CODEC(VFlacAudioCodec, "FLAC(dr)");
+IMPLEMENT_AUDIO_CODEC(VFlacAudioCodec, "FLAC(dr)", true); // with signature
 
 
 //==========================================================================
@@ -211,30 +211,30 @@ bool VFlacAudioCodec::Init () {
 //  VFlacAudioCodec::Decode
 //
 //==========================================================================
-int VFlacAudioCodec::Decode (short *Data, int NumSamples) {
-  int CurSample = 0;
+int VFlacAudioCodec::Decode (vint16 *Data, int NumFrames) {
+  int CurFrame = 0;
   if (eos) return 0;
-  while (!eos && CurSample < NumSamples) {
+  while (!eos && CurFrame < NumFrames) {
     if (decoder->channels == 2) {
-      drflac_uint64 rd = drflac_read_pcm_frames_s16(decoder, (unsigned)(NumSamples-CurSample), (drflac_int16 *)(Data+CurSample));
-      if (rd < (unsigned)(NumSamples-CurSample)) eos = true;
-      CurSample += (int)rd;
+      drflac_uint64 rd = drflac_read_pcm_frames_s16(decoder, (unsigned)(NumFrames-CurFrame), (drflac_int16 *)(Data+CurFrame));
+      if (rd < (unsigned)(NumFrames-CurFrame)) eos = true;
+      CurFrame += (int)rd;
     } else {
       // read mono data
-      if (tmpbufsize < NumSamples-CurSample) {
-        tmpbufsize = NumSamples-CurSample;
+      if (tmpbufsize < NumFrames-CurFrame) {
+        tmpbufsize = NumFrames-CurFrame;
         tmpbuf = (vint16 *)Z_Realloc(tmpbuf, tmpbufsize*2);
       }
-      drflac_uint64 rd = drflac_read_pcm_frames_s16(decoder, (unsigned)(NumSamples-CurSample), (drflac_int16 *)tmpbuf);
+      drflac_uint64 rd = drflac_read_pcm_frames_s16(decoder, (unsigned)(NumFrames-CurFrame), (drflac_int16 *)tmpbuf);
       // expand it to stereo
       for (int f = 0; f < (int)rd; ++f) {
-        Data[(CurSample+f)*2+0] = Data[(CurSample+f)*2+1] = tmpbuf[f];
+        Data[(CurFrame+f)*2+0] = Data[(CurFrame+f)*2+1] = tmpbuf[f];
       }
-      if (rd < (unsigned)(NumSamples-CurSample)) eos = true;
-      CurSample += (int)rd;
+      if (rd < (unsigned)(NumFrames-CurFrame)) eos = true;
+      CurFrame += (int)rd;
     }
   }
-  return CurSample;
+  return CurFrame;
 }
 
 
@@ -265,18 +265,13 @@ void VFlacAudioCodec::Restart () {
 //  VFlacAudioCodec::Create
 //
 //==========================================================================
-VAudioCodec *VFlacAudioCodec::Create (VStream *InStream) {
-  // check if it's a FLAC file
-  InStream->Seek(0);
-  char Hdr[4];
-  InStream->Serialise(Hdr, 4);
-  if (InStream->IsError()) return nullptr;
-  if ((Hdr[0] != 'f' || Hdr[1] != 'L' || Hdr[2] != 'a' || Hdr[3] != 'C') &&
-      (Hdr[0] != 'o' || Hdr[1] != 'g' || Hdr[2] != 'g' || Hdr[3] != 'S'))
+VAudioCodec *VFlacAudioCodec::Create (VStream *InStream, const vuint8 sign[], int signsize) {
+  // check if it's a possible FLAC file
+  if ((sign[0] != 'f' || sign[1] != 'L' || sign[2] != 'a' || sign[3] != 'C') &&
+      (sign[0] != 'O' || sign[1] != 'g' || sign[2] != 'g' || sign[3] != 'S'))
   {
     return nullptr;
   }
-
   VFlacAudioCodec *Codec = new VFlacAudioCodec(InStream, true);
   if (!Codec->Init()) {
     Codec->Cleanup();

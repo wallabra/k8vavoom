@@ -57,7 +57,7 @@ static bool doTick (VStreamMusicPlayer *strm) {
     return false;
   }
   for (int Len = strm->SoundDevice->GetStreamAvailable(); Len; Len = strm->SoundDevice->GetStreamAvailable()) {
-    short *Data = strm->SoundDevice->GetStreamBuffer();
+    vint16 *Data = strm->SoundDevice->GetStreamBuffer();
     int StartPos = 0;
     int decodedFromLoop = 0, loopCount = 0;
     while (!strm->Stopping && StartPos < Len) {

@@ -46,7 +46,7 @@ public:
   //  VAudioCodec interface.
   VModPlugAudioCodec(ModPlugFile *InFile);
   ~VModPlugAudioCodec();
-  virtual int Decode(short *Data, int NumSamples) override;
+  virtual int Decode(vint16 *Data, int NumFrames) override;
   virtual bool Finished() override;
   virtual void Restart() override;
 
@@ -104,12 +104,12 @@ VModPlugAudioCodec::~VModPlugAudioCodec()
 //
 //==========================================================================
 
-int VModPlugAudioCodec::Decode(short *Data, int NumSamples)
+int VModPlugAudioCodec::Decode(vint16 *Data, int NumFrames)
 {
-  int count = ModPlug_Read(file, Data, NumSamples * 4);
-  if (count < NumSamples * 4)
+  int count = ModPlug_Read(file, Data, NumFrames * 4);
+  if (count < NumFrames * 4)
   {
-    memset(Data+count, 0, NumSamples*4-count);
+    memset(Data+count, 0, NumFrames*4-count);
     playing = false;
   }
   return count/4;

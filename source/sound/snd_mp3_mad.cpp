@@ -56,11 +56,11 @@ public:
   bool Init ();
   int ReadData ();
 
-  virtual int Decode (short *Data, int NumSamples) override;
+  virtual int Decode (vint16 *Data, int NumFrames) override;
   virtual bool Finished () override;
   virtual void Restart () override;
 
-  static VAudioCodec *Create (VStream *InStrm);
+  static VAudioCodec *Create (VStream *InStrm, const vuint8 sign[], int signsize);
 };
 
 
@@ -70,7 +70,7 @@ public:
 };
 
 
-IMPLEMENT_AUDIO_CODEC(VMp3AudioCodec, "MP3");
+IMPLEMENT_AUDIO_CODEC(VMp3AudioCodec, "MP3", false); // no signature
 
 VMp3SampleLoader Mp3SampleLoader;
 
@@ -171,19 +171,19 @@ bool VMp3AudioCodec::Init () {
 //  VMp3AudioCodec::Decode
 //
 //==========================================================================
-int VMp3AudioCodec::Decode (short *Data, int NumSamples) {
-  int CurSample = 0;
+int VMp3AudioCodec::Decode (vint16 *Data, int NumFrames) {
+  int CurFrame = 0;
   for (;;) {
     if (HaveFrame) {
-      // convert stream from fixed point to short
+      // convert stream from fixed point to vint16
       for (; FramePos < Synth.pcm.length; ++FramePos) {
         // left channel
-        short Sample;
+        vint16 Sample;
         mad_fixed_t Fixed = Synth.pcm.samples[0][FramePos];
              if (Fixed >= MAD_F_ONE) Sample = 0x7fff;
         else if (Fixed <= -MAD_F_ONE) Sample = -0x7fff;
         else Sample = Fixed>>(MAD_F_FRACBITS-15);
-        Data[CurSample*2] = Sample;
+        Data[CurFrame*2] = Sample;
 
         // right channel
         // if the decoded stream is monophonic then the right output channel is the same as the left one
@@ -193,11 +193,11 @@ int VMp3AudioCodec::Decode (short *Data, int NumSamples) {
           else if (Fixed <= -MAD_F_ONE) Sample = -0x7fff;
           else Sample = Fixed>>(MAD_F_FRACBITS-15);
         }
-        Data[CurSample*2+1] = Sample;
+        Data[CurFrame*2+1] = Sample;
 
-        ++CurSample;
+        ++CurFrame;
         // check if we already have decoded enough
-        if (CurSample >= NumSamples) return CurSample;
+        if (CurFrame >= NumFrames) return CurFrame;
       }
       // we are done with the frame
       HaveFrame = false;
@@ -219,7 +219,7 @@ int VMp3AudioCodec::Decode (short *Data, int NumSamples) {
     FramePos = 0;
     HaveFrame = true;
   }
-  return CurSample;
+  return CurFrame;
 }
 
 
@@ -293,7 +293,7 @@ void VMp3AudioCodec::Restart () {
 //  VMp3AudioCodec::Create
 //
 //==========================================================================
-VAudioCodec *VMp3AudioCodec::Create (VStream *InStrm) {
+VAudioCodec *VMp3AudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
   VMp3AudioCodec *Codec = new VMp3AudioCodec(InStrm, true);
   if (!Codec->Init()) {
     delete Codec;

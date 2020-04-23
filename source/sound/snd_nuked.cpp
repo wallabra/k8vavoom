@@ -41,11 +41,11 @@ public:
 
   bool Init ();
 
-  virtual int Decode (short *Data, int NumSamples) override;
+  virtual int Decode (vint16 *Data, int NumFrames) override;
   virtual bool Finished () override;
   virtual void Restart () override;
 
-  static VAudioCodec *Create (VStream *InStrm);
+  static VAudioCodec *Create (VStream *InStrm, const vuint8 sign[], int signsize);
 
 private:
   static OPLPlayer musplr;
@@ -55,7 +55,7 @@ private:
 };
 
 
-IMPLEMENT_AUDIO_CODEC(VNukedOPLAudioCodec, "NukedOPL");
+IMPLEMENT_AUDIO_CODEC(VNukedOPLAudioCodec, "NukedOPL", true); // with signature
 
 static VCvarI snd_nukedopl_type("snd_nukedopl_type", "1", "OPL chip type (0:OPL2; 1:OPL3)", CVAR_Archive);
 static VCvarB snd_nukedopl_stereo("snd_nukedopl_stereo", true, "Use stereo mode?", CVAR_Archive);
@@ -166,17 +166,17 @@ bool VNukedOPLAudioCodec::Init () {
 //  VNukedOPLAudioCodec::Decode
 //
 //==========================================================================
-int VNukedOPLAudioCodec::Decode (short *Data, int NumSamples) {
+int VNukedOPLAudioCodec::Decode (vint16 *Data, int NumFrames) {
   if (eos || !musplr.isPlaying()) return 0;
-  int scount = (int)musplr.generate(Data, NumSamples*2, true); // always generate stereo output
-  eos = (scount < NumSamples);
+  int scount = (int)musplr.generate(Data, NumFrames*2, true); // always generate stereo output
+  eos = (scount < NumFrames);
   if (scount) {
     const float amp = clampval(snd_nukedopl_amplify.asFloat(), 0.0f, 8.0f);
     if (amp != 1.0f) {
-      short *d = Data;
-      for (int f = 0; f < NumSamples*2; ++f) {
+      vint16 *d = Data;
+      for (int f = 0; f < NumFrames*2; ++f) {
         const float v = clampval((*d)/32767.0f*amp, -1.0f, 1.0f);
-        *d++ = (short)(v*32767.0f);
+        *d++ = (vint16)(v*32767.0f);
       }
     }
   }
@@ -212,16 +212,11 @@ void VNukedOPLAudioCodec::Restart () {
 //  VNukedOPLAudioCodec::Create
 //
 //==========================================================================
-VAudioCodec *VNukedOPLAudioCodec::Create (VStream *InStrm) {
+VAudioCodec *VNukedOPLAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
   if (snd_mid_player != 3) return nullptr; // we are the latest one
 
   // check for valid file format
-  char header[4];
-  InStrm->Seek(0);
-  InStrm->Serialise(header, 4);
-  if (InStrm->IsError()) return nullptr;
-
-  if (memcmp(header, "MThd", 4) != 0 && memcmp(header, "MUS\x1a", 4) != 0) return nullptr;
+  if (memcmp(sign, "MThd", 4) != 0 && memcmp(sign, "MUS\x1a", 4) != 0) return nullptr;
 
   VNukedOPLAudioCodec *codec = new VNukedOPLAudioCodec(InStrm);
   if (!codec->Init()) {

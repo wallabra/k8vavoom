@@ -54,11 +54,11 @@ public:
   virtual ~VXMPAudioCodec () override;
   bool Init ();
   void Cleanup ();
-  virtual int Decode (short *, int) override;
+  virtual int Decode (vint16 *, int) override;
   virtual bool Finished () override;
   virtual void Restart () override;
 
-  static VAudioCodec *Create (VStream *);
+  static VAudioCodec *Create (VStream *InStrm, const vuint8 sign[], int signsize);
 
 private:
   bool loadModuleData ();
@@ -71,7 +71,7 @@ public:
   virtual void Load (sfxinfo_t &, VStream &) override;
 };
 
-IMPLEMENT_AUDIO_CODEC(VXMPAudioCodec, "XMP");
+IMPLEMENT_AUDIO_CODEC(VXMPAudioCodec, "XMP", false); // without signature (oh, well...)
 
 VXMPSampleLoader XMPSampleLoader;
 
@@ -204,14 +204,14 @@ void VXMPAudioCodec::Cleanup () {
 //
 //  VXMPAudioCodec::Decode
 //
-//  `NumSamples` is number of frames, actually
+//  `NumFrames` is number of frames, actually
 //
 //==========================================================================
-int VXMPAudioCodec::Decode (short *Data, int NumSamples) {
+int VXMPAudioCodec::Decode (vint16 *Data, int NumFrames) {
   if (!xmpctx) return 0;
   /*struct*/ xmp_frame_info mi;
-  int CurSample = 0;
-  while (CurSample < NumSamples) {
+  int CurFrame = 0;
+  while (CurFrame < NumFrames) {
     if (frmbufPos >= frmbufUsed) {
       if (eos) break;
       int fres = xmp_play_frame(xmpctx);
@@ -230,15 +230,15 @@ int VXMPAudioCodec::Decode (short *Data, int NumSamples) {
       //fprintf(stderr, "got %d bytes of data (loopcount: %d)\n", frmbufUsed, (int)mi.loop_count);
     }
     int frames = (frmbufUsed-frmbufPos)/4; // two channels, 16-bit data
-    int toread = (NumSamples-CurSample);
+    int toread = (NumFrames-CurFrame);
     if (toread > frames) toread = frames;
-    //fprintf(stderr, "  reading %d frames (%d frames left)\n", toread, NumSamples-CurSample);
-    memcpy(Data+CurSample*2, frmbuf+frmbufPos, toread*4);
+    //fprintf(stderr, "  reading %d frames (%d frames left)\n", toread, NumFrames-CurFrame);
+    memcpy(Data+CurFrame*2, frmbuf+frmbufPos, toread*4);
     frmbufPos += toread*4;
-    CurSample += toread;
+    CurFrame += toread;
   }
-  if (CurSample == 0) eos = true;
-  return CurSample;
+  if (CurFrame == 0) eos = true;
+  return CurFrame;
 }
 
 
@@ -268,7 +268,7 @@ void VXMPAudioCodec::Restart () {
 //  VXMPAudioCodec::Create
 //
 //==========================================================================
-VAudioCodec *VXMPAudioCodec::Create (VStream *InStrm) {
+VAudioCodec *VXMPAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
   if (snd_mod_player != 1) return nullptr;
   VXMPAudioCodec *Codec = new VXMPAudioCodec(InStrm, true);
   if (!Codec->Init()) {

@@ -670,7 +670,7 @@ int VOpenALDevice::GetStreamAvailable () {
 //  VOpenALDevice::GetStreamBuffer
 //
 //==========================================================================
-short *VOpenALDevice::GetStreamBuffer () {
+vint16 *VOpenALDevice::GetStreamBuffer () {
   return StrmDataBuffer;
 }
 
@@ -680,7 +680,7 @@ short *VOpenALDevice::GetStreamBuffer () {
 //  VOpenALDevice::SetStreamData
 //
 //==========================================================================
-void VOpenALDevice::SetStreamData (short *Data, int Len) {
+void VOpenALDevice::SetStreamData (vint16 *Data, int Len) {
   ALint State;
   ALuint Buf = StrmAvailableBuffers[StrmNumAvailableBuffers-1];
   --StrmNumAvailableBuffers;

@@ -60,11 +60,11 @@ public:
   virtual ~VVorbisAudioCodec () override;
   bool Init ();
   void Cleanup ();
-  virtual int Decode (short *Data, int NumSamples) override;
+  virtual int Decode (vint16 *Data, int NumFrames) override;
   virtual bool Finished () override;
   virtual void Restart () override;
 
-  static VAudioCodec *Create (VStream *);
+  static VAudioCodec *Create (VStream *InStrm, const vuint8 sign[], int signsize);
 
 protected:
   void stopFeeding (bool setEOS=false);
@@ -80,7 +80,7 @@ public:
   virtual void Load (sfxinfo_t &, VStream &) override;
 };
 
-IMPLEMENT_AUDIO_CODEC(VVorbisAudioCodec, "Vorbis(stb)");
+IMPLEMENT_AUDIO_CODEC(VVorbisAudioCodec, "Vorbis(stb)", true); // with signature
 
 VVorbisSampleLoader VorbisSampleLoader;
 
@@ -335,21 +335,21 @@ bool VVorbisAudioCodec::Init () {
 //  VVorbisAudioCodec::Decode
 //
 //==========================================================================
-int VVorbisAudioCodec::Decode (short *Data, int NumSamples) {
-  int CurSample = 0;
-  short *dest = Data;
-  while (CurSample < NumSamples) {
+int VVorbisAudioCodec::Decode (vint16 *Data, int NumFrames) {
+  int CurFrame = 0;
+  vint16 *dest = Data;
+  while (CurFrame < NumFrames) {
     if (outbufUsed >= outbufFilled) {
       if (!decodeFrame()) break;
     }
-    while (CurSample < NumSamples && outbufUsed+2 <= outbufFilled) {
+    while (CurFrame < NumFrames && outbufUsed+2 <= outbufFilled) {
       *dest++ = outbuf[outbufUsed++];
       *dest++ = outbuf[outbufUsed++];
-      ++CurSample;
+      ++CurFrame;
     }
     if (outbufUsed+2 > outbufFilled) outbufUsed = outbufFilled; // just in case
   }
-  return CurSample;
+  return CurFrame;
 }
 
 
@@ -381,7 +381,8 @@ void VVorbisAudioCodec::Restart () {
 //  VVorbisAudioCodec::Create
 //
 //==========================================================================
-VAudioCodec *VVorbisAudioCodec::Create (VStream *InStrm) {
+VAudioCodec *VVorbisAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
+  if (sign[0] != 'O' || sign[1] != 'g' || sign[2] != 'g' || sign[3] != 'S') return nullptr;
   VVorbisAudioCodec *Codec = new VVorbisAudioCodec(InStrm, true);
   if (!Codec->Init()) {
     Codec->Cleanup();

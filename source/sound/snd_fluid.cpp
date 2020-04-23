@@ -123,7 +123,7 @@ public:
   VFluidAudioCodec (MIDIData *amididata); // takes ownership
   virtual ~VFluidAudioCodec () override;
 
-  virtual int Decode (short *Data, int NumSamples) override;
+  virtual int Decode (vint16 *Data, int NumFrames) override;
   virtual bool Finished () override;
   virtual void Restart () override;
 
@@ -131,7 +131,7 @@ private:
   static void eventCB (double timemsecs, const MIDIData::MidiEvent &ev, void *);
 
 public:
-  static VAudioCodec *Create (VStream *InStrm);
+  static VAudioCodec *Create (VStream *InStrm, const vuint8 sign[], int signsize);
 };
 
 
@@ -191,7 +191,7 @@ public:
 static FluidManager fluidManager;
 
 
-IMPLEMENT_AUDIO_CODEC(VFluidAudioCodec, "FluidSynth");
+IMPLEMENT_AUDIO_CODEC(VFluidAudioCodec, "FluidSynth", true); // with signature
 
 
 fluid_settings_t *FluidManager::settings = nullptr;
@@ -475,11 +475,11 @@ void VFluidAudioCodec::eventCB (double timemsecs, const MIDIData::MidiEvent &ev,
 //  VFluidAudioCodec::Decode
 //
 //==========================================================================
-int VFluidAudioCodec::Decode (short *Data, int NumSamples) {
+int VFluidAudioCodec::Decode (vint16 *Data, int NumFrames) {
   if (!mididata) return 0;
   int res = 0;
   // use adaptive stepping
-  while (NumSamples > 0) {
+  while (NumFrames > 0) {
     if (framesUntilEvent == 0) {
       framesUntilEvent = mididata->decodeStep(&eventCB, 44100, nullptr);
       if (framesUntilEvent <= 0) {
@@ -488,17 +488,17 @@ int VFluidAudioCodec::Decode (short *Data, int NumSamples) {
         break;
       }
     }
-    int rdf = NumSamples;
+    int rdf = NumFrames;
     if (rdf > framesUntilEvent) rdf = framesUntilEvent;
     if (fluid_synth_write_s16(FluidManager::synth, rdf, Data, 0, 2, Data, 1, 2) != FLUID_OK) {
       GCon->Log(NAME_Error, "FluidSynth: error getting a sample, playback aborted!");
       mididata->abort();
       break;
     }
-    //GCon->Logf("FLUID: got a sample (total=%d, left=%d)!", res, NumSamples);
+    //GCon->Logf("FLUID: got a sample (total=%d, left=%d)!", res, NumFrames);
     Data += rdf*2;
     res += rdf*2;
-    NumSamples -= rdf;
+    NumFrames -= rdf;
     framesUntilEvent -= rdf;
     vassert(framesUntilEvent >= 0);
   }
@@ -534,7 +534,7 @@ void VFluidAudioCodec::Restart () {
 //  VFluidAudioCodec::Create
 //
 //==========================================================================
-VAudioCodec *VFluidAudioCodec::Create (VStream *InStrm) {
+VAudioCodec *VFluidAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
   if (snd_mid_player != 1) return nullptr;
   if (InStrm->IsError()) return nullptr;
 

@@ -61,6 +61,7 @@ enum ESSCmds {
 
 class VSoundSeqNode;
 
+
 // rolloff types
 enum {
   ROLLOFF_Doom, // linear rolloff with a logarithmic volume scale
@@ -69,9 +70,8 @@ enum {
   ROLLOFF_Custom, // lookup volume from SNDCURVE
 };
 
-//
-// SoundFX struct.
-//
+
+// SoundFX struct
 struct sfxinfo_t {
   enum { ST_Invalid = -1, ST_NotLoaded = 0, ST_Loading = 1, ST_Loaded = 2 };
 
@@ -121,6 +121,7 @@ enum {
   REVERBF_ModulationTimeScale   = 0x80,
 };
 
+
 struct VReverbProperties {
   int Environment;
   float EnvironmentSize;
@@ -154,6 +155,7 @@ struct VReverbProperties {
   int Flags;
 };
 
+
 #if defined(VAVOOM_REVERB)
 struct VReverbInfo {
   VReverbInfo *Next;
@@ -186,7 +188,7 @@ private:
   ALuint StrmAvailableBuffers[NUM_STRM_BUFFERS];
   int StrmNumAvailableBuffers;
   ALuint StrmSource;
-  short StrmDataBuffer[STRM_BUFFER_SIZE*2];
+  vint16 StrmDataBuffer[STRM_BUFFER_SIZE*2];
 
   // if sound is queued to be loaded, we'll remember sound source here
   struct PendingSrc {
@@ -238,8 +240,8 @@ public:
   bool OpenStream (int Rate, int Bits, int Channels);
   void CloseStream ();
   int GetStreamAvailable ();
-  short *GetStreamBuffer ();
-  void SetStreamData (short *data, int len);
+  vint16 *GetStreamBuffer ();
+  void SetStreamData (vint16 *data, int len);
   void SetStreamVolume (float vol);
   void PauseStream ();
   void ResumeStream ();
@@ -259,6 +261,7 @@ class VOpenALDevice {};
 
 class VAudioCodec;
 
+
 // loader of sound samples
 class VSampleLoader : public VInterface {
 public:
@@ -268,11 +271,12 @@ public:
 
 public:
   VSampleLoader () { Next = List; List = this; }
-  virtual void Load (sfxinfo_t &, VStream &) = 0;
+  virtual void Load (sfxinfo_t &Sfx, VStream &Strm) = 0;
 
   // codec must be initialized, and it will not be owned
   void LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec);
 };
+
 
 // streamed audio decoder interface
 class VAudioCodec : public VInterface {
@@ -283,34 +287,48 @@ public:
 
 public:
   VAudioCodec () : SampleRate(44100), SampleBits(16), NumChannels(2) {}
-  // always decodes stereo, returns number of frames
-  // `NumSamples` is number of stereo samples
-  virtual int Decode (short *Data, int NumSamples) = 0;
+  // always decodes interleaved stereo, returns number of frames
+  // `NumFrames` is number of stereo samples (frames), and it will never be zero
+  // it should always decode `NumFrames`, unless end-of-stream happens
+  virtual int Decode (vint16 *Data, int NumFrames) = 0;
   virtual bool Finished () = 0;
   virtual void Restart () = 0;
 };
 
+
+// audio codec creator
+// `sign` will always contain at least 4 bytes
+typedef VAudioCodec *(*CreatorFn) (VStream *InStrm, const vuint8 sign[], int signsize);
+
 // description of an audio codec
 struct FAudioCodecDesc {
   const char *Description;
-  VAudioCodec *(*Creator) (VStream *);
+  CreatorFn Creator;
   FAudioCodecDesc *Next;
 
-  static FAudioCodecDesc *List;
+  static FAudioCodecDesc *ListWithSign;
+  static FAudioCodecDesc *ListWithoutSign;
 
 public:
-  FAudioCodecDesc (const char *InDescription, VAudioCodec *(*InCreator) (VStream *))
+  // codecs with `hasGoodSignature` will be checked last
+  FAudioCodecDesc (const char *InDescription, CreatorFn InCreator, bool hasGoodSignature)
     : Description(InDescription)
     , Creator(InCreator)
   {
-    Next = List;
-    List = this;
+    if (hasGoodSignature) {
+      Next = ListWithSign;
+      ListWithSign = this;
+    } else {
+      Next = ListWithoutSign;
+      ListWithoutSign = this;
+    }
   }
 };
 
 // audio codec registration helper
-#define IMPLEMENT_AUDIO_CODEC(TClass, Description) \
-FAudioCodecDesc   TClass##Desc(Description, TClass::Create);
+#define IMPLEMENT_AUDIO_CODEC(TClass,Description,WithSign) \
+  FAudioCodecDesc TClass##Desc(Description, TClass::Create, WithSign);
+
 
 // quick MUS to MIDI converter
 class VQMus2Mid {
@@ -344,6 +362,8 @@ public:
   int Run (VStream &, VStream &);
 };
 
+
+// music player (controls streaming thread)
 class VStreamMusicPlayer {
 public:
   // stream player is using a separate thread
@@ -422,6 +442,7 @@ public:
 
   void stpThreadSendCommand (STPCommand acmd);
 };
+
 
 //**************************************************************************
 //

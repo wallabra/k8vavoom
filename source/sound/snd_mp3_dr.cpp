@@ -54,11 +54,11 @@ public:
   virtual ~VMP3AudioCodec () override;
   bool Init ();
   void Cleanup ();
-  virtual int Decode (short *Data, int NumSamples) override;
+  virtual int Decode (vint16 *Data, int NumFrames) override;
   virtual bool Finished () override;
   virtual void Restart () override;
 
-  static VAudioCodec *Create (VStream *InStream);
+  static VAudioCodec *Create (VStream *InStrm, const vuint8 sign[], int signsize);
 
 protected:
   static size_t readCB (void *pUserData, void *pBufferOut, size_t bytesToRead);
@@ -74,7 +74,7 @@ public:
 
 VMP3SampleLoader MP3SampleLoader;
 
-IMPLEMENT_AUDIO_CODEC(VMP3AudioCodec, "MP3(dr)");
+IMPLEMENT_AUDIO_CODEC(VMP3AudioCodec, "MP3(dr)", false); // no signature
 
 
 //==========================================================================
@@ -207,30 +207,30 @@ bool VMP3AudioCodec::Init () {
 //  VMP3AudioCodec::Decode
 //
 //==========================================================================
-int VMP3AudioCodec::Decode (short *Data, int NumSamples) {
-  int CurSample = 0;
+int VMP3AudioCodec::Decode (vint16 *Data, int NumFrames) {
+  int CurFrame = 0;
   if (eos) return 0;
-  while (!eos && CurSample < NumSamples) {
+  while (!eos && CurFrame < NumFrames) {
     if (decoder.channels == 2) {
-      drmp3_uint64 rd = drmp3_read_pcm_frames_s16(&decoder, (unsigned)(NumSamples-CurSample), (drmp3_int16 *)(Data+CurSample));
-      if (rd < (unsigned)(NumSamples-CurSample)) eos = true;
-      CurSample += (int)rd;
+      drmp3_uint64 rd = drmp3_read_pcm_frames_s16(&decoder, (unsigned)(NumFrames-CurFrame), (drmp3_int16 *)(Data+CurFrame));
+      if (rd < (unsigned)(NumFrames-CurFrame)) eos = true;
+      CurFrame += (int)rd;
     } else {
       // read mono data
-      if (tmpbufsize < NumSamples-CurSample) {
-        tmpbufsize = NumSamples-CurSample;
+      if (tmpbufsize < NumFrames-CurFrame) {
+        tmpbufsize = NumFrames-CurFrame;
         tmpbuf = (vint16 *)Z_Realloc(tmpbuf, tmpbufsize*2);
       }
-      drmp3_uint64 rd = drmp3_read_pcm_frames_s16(&decoder, (unsigned)(NumSamples-CurSample), (drmp3_int16 *)tmpbuf);
+      drmp3_uint64 rd = drmp3_read_pcm_frames_s16(&decoder, (unsigned)(NumFrames-CurFrame), (drmp3_int16 *)tmpbuf);
       // expand it to stereo
       for (int f = 0; f < (int)rd; ++f) {
-        Data[(CurSample+f)*2+0] = Data[(CurSample+f)*2+1] = tmpbuf[f];
+        Data[(CurFrame+f)*2+0] = Data[(CurFrame+f)*2+1] = tmpbuf[f];
       }
-      if (rd < (unsigned)(NumSamples-CurSample)) eos = true;
-      CurSample += (int)rd;
+      if (rd < (unsigned)(NumFrames-CurFrame)) eos = true;
+      CurFrame += (int)rd;
     }
   }
-  return CurSample;
+  return CurFrame;
 }
 
 
@@ -261,7 +261,7 @@ void VMP3AudioCodec::Restart () {
 //  VMP3AudioCodec::Create
 //
 //==========================================================================
-VAudioCodec *VMP3AudioCodec::Create (VStream *InStream) {
+VAudioCodec *VMP3AudioCodec::Create (VStream *InStream, const vuint8 sign[], int signsize) {
   VMP3AudioCodec *Codec = new VMP3AudioCodec(InStream, true);
   if (!Codec->Init()) {
     Codec->Cleanup();

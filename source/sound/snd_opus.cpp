@@ -48,11 +48,11 @@ public:
   virtual ~VOpusAudioCodec () override;
   bool Init ();
   void Cleanup ();
-  virtual int Decode (short *, int) override;
+  virtual int Decode (vint16 *, int) override;
   virtual bool Finished () override;
   virtual void Restart () override;
 
-  static VAudioCodec *Create (VStream *);
+  static VAudioCodec *Create (VStream *InStream, const vuint8 sign[], int signsize);
 };
 
 
@@ -66,7 +66,7 @@ public:
 #else
 # define VV_OPUS_CODEC_SUFFIX  "(system)"
 #endif
-IMPLEMENT_AUDIO_CODEC(VOpusAudioCodec, "Opus" VV_OPUS_CODEC_SUFFIX);
+IMPLEMENT_AUDIO_CODEC(VOpusAudioCodec, "Opus" VV_OPUS_CODEC_SUFFIX, true); // with signature
 
 VOpusSampleLoader OpusSampleLoader;
 
@@ -203,21 +203,21 @@ void VOpusAudioCodec::Cleanup () {
 //
 //  VOpusAudioCodec::Decode
 //
-//  `NumSamples` is number of frames, actually
+//  `NumFrames` is number of frames, actually
 //
 //==========================================================================
-int VOpusAudioCodec::Decode (short *Data, int NumSamples) {
+int VOpusAudioCodec::Decode (vint16 *Data, int NumFrames) {
   if (!opus) return 0;
-  int CurSample = 0;
-  while (!eos && CurSample < NumSamples) {
-    int toread = (NumSamples-CurSample);
-    auto rdsmp = op_read_stereo(opus, Data+CurSample*2, toread*2); // we always has two channels, and a room for this
+  int CurFrame = 0;
+  while (!eos && CurFrame < NumFrames) {
+    int toread = (NumFrames-CurFrame);
+    auto rdsmp = op_read_stereo(opus, Data+CurFrame*2, toread*2); // we always has two channels, and a room for this
     if (rdsmp == 0) { eos = true; break; }
     //fprintf(stderr, "toread: %d; rdsmp: %d\n", toread, rdsmp);
-    CurSample += rdsmp;
+    CurFrame += rdsmp;
   }
   if (Strm->IsError()) eos = true;
-  return CurSample;
+  return CurFrame;
 }
 
 
@@ -249,7 +249,9 @@ void VOpusAudioCodec::Restart () {
 //  VOpusAudioCodec::Create
 //
 //==========================================================================
-VAudioCodec *VOpusAudioCodec::Create (VStream *InStrm) {
+VAudioCodec *VOpusAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
+  // check if it's a possible Opus file
+  if (sign[0] != 'O' || sign[1] != 'g' || sign[2] != 'g' || sign[3] != 'S') return nullptr;
   VOpusAudioCodec *Codec = new VOpusAudioCodec(InStrm, true);
   if (!Codec->Init()) {
     Codec->Cleanup();

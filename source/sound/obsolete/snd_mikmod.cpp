@@ -55,7 +55,7 @@ public:
   //  VAudioCodec interface.
   VMikModAudioCodec(MODULE *InModule);
   ~VMikModAudioCodec();
-  virtual int Decode(short *Data, int NumSamples) override;
+  virtual int Decode(vint16 *Data, int NumFrames) override;
   virtual bool Finished() override;
   virtual void Restart() override;
 
@@ -168,9 +168,9 @@ VMikModAudioCodec::~VMikModAudioCodec()
 //
 //==========================================================================
 
-int VMikModAudioCodec::Decode(short *Data, int NumSamples)
+int VMikModAudioCodec::Decode(vint16 *Data, int NumFrames)
 {
-  return VC_WriteBytes((SBYTE*)Data, NumSamples * 4) / 4;
+  return VC_WriteBytes((SBYTE*)Data, NumFrames * 4) / 4;
 }
 
 //==========================================================================

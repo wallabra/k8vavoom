@@ -78,7 +78,7 @@ public:
     size_t PoolUsed;
     size_t PoolPos;
 
-    short *StrmBuf;
+    vint16 *StrmBuf;
     size_t StrmSize;
 
     FStream (VStream *InStream);
@@ -101,16 +101,16 @@ public:
 
   VFlacAudioCodec (FStream *InStream);
   virtual ~VFlacAudioCodec () override;
-  virtual int Decode (short *Data, int NumSamples) override;
+  virtual int Decode (vint16 *Data, int NumFrames) override;
   virtual bool Finished () override;
   virtual void Restart () override;
-  static VAudioCodec *Create (VStream *InStream);
+  static VAudioCodec *Create (VStream *InStream, const vuint8 sign[], int signsize);
 };
 
 
 VFlacSampleLoader FlacSampleLoader;
 
-IMPLEMENT_AUDIO_CODEC(VFlacAudioCodec, "FLAC");
+IMPLEMENT_AUDIO_CODEC(VFlacAudioCodec, "FLAC", true); // with signature
 
 
 //==========================================================================
@@ -338,13 +338,13 @@ VFlacAudioCodec::~VFlacAudioCodec () {
 //  VFlacAudioCodec::Decode
 //
 //==========================================================================
-int VFlacAudioCodec::Decode (short *Data, int NumSamples) {
+int VFlacAudioCodec::Decode (vint16 *Data, int NumFrames) {
   Stream->StrmBuf = Data;
-  Stream->StrmSize = NumSamples;
+  Stream->StrmSize = NumFrames;
 
   if (Stream->PoolUsed > Stream->PoolPos) {
     size_t poolGrab = Stream->PoolUsed-Stream->PoolPos;
-    if (poolGrab > (size_t)NumSamples) poolGrab = (size_t)NumSamples;
+    if (poolGrab > (size_t)NumFrames) poolGrab = (size_t)NumFrames;
     Stream->StrmWrite(Stream->SamplePool, Stream->PoolPos, poolGrab);
     Stream->PoolPos += poolGrab;
     if (Stream->PoolPos == Stream->PoolUsed) {
@@ -357,7 +357,7 @@ int VFlacAudioCodec::Decode (short *Data, int NumSamples) {
     if (!Stream->ProcessSingle()) break;
   }
 
-  return NumSamples-Stream->StrmSize;
+  return NumFrames-Stream->StrmSize;
 }
 
 
@@ -491,11 +491,11 @@ bool VFlacAudioCodec::FStream::IsEndOfStream () {
 void VFlacAudioCodec::FStream::StrmWrite (const FLAC__int32 *const Buf[], size_t Offs, size_t Len) {
   for (int i = 0; i < 2; ++i) {
     const FLAC__int32 *pSrc = Buf[NumChannels == 1 ? 0 : i]+Offs;
-    short *pDst = StrmBuf+i;
+    vint16 *pDst = StrmBuf+i;
     if (SampleBits == 8) {
       for (size_t j = 0; j < Len; j++, pSrc++, pDst += 2) *pDst = char(*pSrc) << 8;
     } else {
-      for (size_t j = 0; j < Len; j++, pSrc++, pDst += 2) *pDst = short(*pSrc);
+      for (size_t j = 0; j < Len; j++, pSrc++, pDst += 2) *pDst = vint16(*pSrc);
     }
   }
   StrmBuf += Len*2;
@@ -591,17 +591,12 @@ void VFlacAudioCodec::FStream::error_callback (const FLAC__StreamDecoder * /*dec
 //  VFlacAudioCodec::Create
 //
 //==========================================================================
-VAudioCodec *VFlacAudioCodec::Create (VStream *InStream) {
+VAudioCodec *VFlacAudioCodec::Create (VStream *InStream, const vuint8 sign[], int signsize) {
   // check if it's a FLAC file
-  InStream->Seek(0);
-  char Hdr[4];
-  InStream->Serialise(Hdr, 4);
-  if (Hdr[0] != 'f' || Hdr[1] != 'L' || Hdr[2] != 'a' || Hdr[3] != 'C') return nullptr;
-
+  if (sign[0] != 'f' || sign[1] != 'L' || sign[2] != 'a' || sign[3] != 'C') return nullptr;
   FStream *Strm = new FStream(InStream);
   if (!Strm->SampleRate) {
     delete Strm;
-    Strm = nullptr;
     return nullptr;
   }
   return new VFlacAudioCodec(Strm);

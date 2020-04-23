@@ -49,12 +49,12 @@ public:
   virtual ~VVorbisAudioCodec () override;
   bool Init ();
   void Cleanup ();
-  virtual int Decode (short *, int) override;
+  virtual int Decode (vint16 *, int) override;
   int ReadData ();
   virtual bool Finished () override;
   virtual void Restart () override;
 
-  static VAudioCodec *Create (VStream *);
+  static VAudioCodec *Create (VStream *InStream, const vuint8 sign[], int signsize);
 };
 
 
@@ -63,7 +63,7 @@ public:
   virtual void Load (sfxinfo_t &, VStream &) override;
 };
 
-IMPLEMENT_AUDIO_CODEC(VVorbisAudioCodec, "Vorbis");
+IMPLEMENT_AUDIO_CODEC(VVorbisAudioCodec, "Vorbis", true); // with signature
 
 VVorbisSampleLoader VorbisSampleLoader;
 
@@ -171,20 +171,20 @@ void VVorbisAudioCodec::Cleanup () {
 //  VVorbisAudioCodec::Decode
 //
 //==========================================================================
-int VVorbisAudioCodec::Decode (short *Data, int NumSamples) {
+int VVorbisAudioCodec::Decode (vint16 *Data, int NumFrames) {
   ogg_page og;
   ogg_packet op;
-  int CurSample = 0;
+  int CurFrame = 0;
 
   while (!eos) {
     // while we have data ready, read it
     float **pcm;
     int samples = vorbis_synthesis_pcmout(&vd, &pcm);
     if (samples > 0) {
-      int bout = NumSamples-CurSample;
+      int bout = NumFrames-CurFrame;
       if (bout > samples) bout = samples;
       for (int i = 0; i < 2; ++i) {
-        short *dst = Data+CurSample*2+i;
+        vint16 *dst = Data+CurFrame*2+i;
         float *src = pcm[vi.channels > 1 ? i : 0];
         for (int j = 0; j < bout; ++j, dst += 2) {
           int val = int(src[j]*32767.0f);
@@ -196,8 +196,8 @@ int VVorbisAudioCodec::Decode (short *Data, int NumSamples) {
       }
       // tell libvorbis how many samples we actually consumed
       vorbis_synthesis_read(&vd, bout);
-      CurSample += bout;
-      if (CurSample == NumSamples) return CurSample;
+      CurFrame += bout;
+      if (CurFrame == NumFrames) return CurFrame;
     }
 
     if (ogg_stream_packetout(&os, &op) > 0) {
@@ -209,7 +209,7 @@ int VVorbisAudioCodec::Decode (short *Data, int NumSamples) {
       eos = true;
     }
   }
-  return CurSample;
+  return CurFrame;
 }
 
 
@@ -258,7 +258,9 @@ void VVorbisAudioCodec::Restart () {
 //  VVorbisAudioCodec::Create
 //
 //==========================================================================
-VAudioCodec *VVorbisAudioCodec::Create (VStream *InStrm) {
+VAudioCodec *VVorbisAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
+  // check if it's a possible Vorbis file
+  if (sign[0] != 'O' || sign[1] != 'g' || sign[2] != 'g' || sign[3] != 'S') return nullptr;
   VVorbisAudioCodec *Codec = new VVorbisAudioCodec(InStrm, true);
   if (!Codec->Init()) {
     Codec->Cleanup();
