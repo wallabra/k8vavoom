@@ -6,22 +6,9 @@ include(opus_functions.cmake)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-cpp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cpp")
 
-### get_library_version(OPUS_LIBRARY_VERSION OPUS_LIBRARY_VERSION_MAJOR)
-### message(STATUS "Opus library version: ${OPUS_LIBRARY_VERSION}")
-
-#get_package_version(PACKAGE_VERSION)
 set(PACKAGE_VERSION "1.3.1")
 message(STATUS "Opus package version: ${PACKAGE_VERSION}")
 
-### string(REGEX
-###        REPLACE "^([0-9]+.[0-9]+\\.?([0-9]+)?).*"
-###                "\\1"
-###                PROJECT_VERSION
-###                ${PACKAGE_VERSION})
-### set(PROJECT_VERSION "1.3.1")
-### message(STATUS "Opus project version: ${PROJECT_VERSION}")
-
-### project(Opus LANGUAGES C VERSION ${PROJECT_VERSION})
 project(Opus LANGUAGES C)
 include(opus_buildtype.cmake)
 
@@ -91,10 +78,6 @@ set(BUILD_TESTING OFF)
 set(OPUS_BUILD_TESTING OFF)
 set(BUILD_TESTING OFF)
 
-### if(OPUS_BUILD_TESTING OR BUILD_TESTING)
-###   set(OPUS_BUILD_TESTING ON)
-###   set(BUILD_TESTING ON)
-### endif()
 
 if(OPUS_STACK_PROTECTOR)
   if(MSVC) # GC on by default on MSVC
@@ -171,63 +154,6 @@ if(OPUS_CPU_X86 OR OPUS_CPU_X64)
                          OFF)
 endif()
 
-### set_package_properties(Git
-###                        PROPERTIES
-###                        TYPE
-###                        REQUIRED
-###                        DESCRIPTION
-###                        "fast, scalable, distributed revision control system"
-###                        URL
-###                        "https://git-scm.com/"
-###                        PURPOSE
-###                        "required to set up package version")
-
-### add_feature_info(OPUS_BUILD_SHARED_LIBRARY OPUS_BUILD_SHARED_LIBRARY "Build shared library")
-### add_feature_info(OPUS_STACK_PROTECTOR STACK_PROTECTOR_SUPPORTED "Use stack protection")
-### add_feature_info(OPUS_VAR_ARRAYS OPUS_VAR_ARRAYS
-###                  "Use variable length arrays for stack arrays")
-### add_feature_info(OPUS_USE_ALLOCA OPUS_USE_ALLOCA
-###                  "Use alloca for stack arrays (on non-C99 compilers)")
-### add_feature_info(OPUS_NONTHREADSAFE_PSEUDOSTACK OPUS_NONTHREADSAFE_PSEUDOSTACK
-###                  "Use a non threadsafe pseudostack when neither variable length arrays or alloca is supported")
-### add_feature_info(OPUS_CUSTOM_MODES OPUS_CUSTOM_MODES
-###                  "Enable non-Opus modes, e.g. 44.1 kHz & 2^n frames")
-### add_feature_info(OPUS_BUILD_TESTING OPUS_BUILD_TESTING "Build test programs")
-### add_feature_info(OPUS_BUILD_PROGRAMS OPUS_BUILD_PROGRAMS "Build programs")
-### add_feature_info(
-###   OPUS_FIXED_POINT OPUS_FIXED_POINT
-###   "compile as fixed-point (for machines without a fast enough FPU)")
-### add_feature_info(
-###   OPUS_FLOAT_API OPUS_ENABLE_FLOAT_API
-###   "compile with the floating point API (for machines with float library)")
-### add_feature_info(OPUS_FLOAT_APPROX OPUS_FLOAT_APPROX
-###   "Enable floating point approximations (Ensure your platform supports IEEE 754 before enabling)")
-### add_feature_info(OPUS_FAST_MATH FAST_MATH_SUPPORTED "Enable fast math, (depending on OPUS_FLOAT_APPROX to be enabled)")
-### add_feature_info(OPUS_INSTALL_PKG_CONFIG_MODULE OPUS_INSTALL_PKG_CONFIG_MODULE
-###                  "install PkgConfig module")
-### add_feature_info(OPUS_INSTALL_CMAKE_CONFIG_MODULE OPUS_INSTALL_CMAKE_CONFIG_MODULE
-###                  "install CMake package config module")
-
-### if(OPUS_CPU_X86 OR OPUS_CPU_X64)
-###   add_feature_info(OPUS_X86_MAY_HAVE_SSE OPUS_X86_MAY_HAVE_SSE
-###                    "does runtime check for SSE1 support")
-###   add_feature_info(OPUS_X86_MAY_HAVE_SSE2 OPUS_X86_MAY_HAVE_SSE2
-###                    "does runtime check for SSE2 support")
-###   add_feature_info(OPUS_X86_MAY_HAVE_SSE4_1 OPUS_X86_MAY_HAVE_SSE4_1
-###                    "does runtime check for SSE4_1 support")
-###   add_feature_info(OPUS_X86_MAY_HAVE_AVX OPUS_X86_MAY_HAVE_AVX
-###                    "does runtime check for AVX support")
-###   add_feature_info(OPUS_X86_PRESUME_SSE OPUS_X86_PRESUME_SSE
-###                    "assume target CPU has SSE1 support will override the runtime check")
-###   add_feature_info(OPUS_X86_PRESUME_SSE2 OPUS_X86_PRESUME_SSE2
-###                    "assume target CPU has SSE2 support will override the runtime check")
-###   add_feature_info(OPUS_X86_PRESUME_SSE4_1 OPUS_X86_PRESUME_SSE4_1
-###                    "assume target CPU has SSE4_1 support will override the runtime check")
-###   add_feature_info(OPUS_X86_PRESUME_AVX OPUS_X86_PRESUME_AVX
-###                    "assume target CPU has AVX support will override the runtime check")
-### endif()
-
-### feature_summary(WHAT ALL)
 
 add_library(opus ${opus_sources} ${opus_sources_float})
 
@@ -262,10 +188,6 @@ target_include_directories(
 target_link_libraries(opus PRIVATE ${OPUS_REQUIRED_LIBRARIES})
 target_compile_definitions(opus PRIVATE OPUS_BUILD ENABLE_HARDENING)
 
-### if(NOT MSVC)
-###   target_compile_definitions(opus PRIVATE _FORTIFY_SOURCE=2)
-### endif()
-
 if(OPUS_FLOAT_APPROX)
   target_compile_definitions(opus PRIVATE FLOAT_APPROX)
 endif()
@@ -283,18 +205,6 @@ endif()
 if(OPUS_CUSTOM_MODES)
   target_compile_definitions(opus PRIVATE CUSTOM_MODES)
 endif()
-
-### if(BUILD_SHARED_LIBS)
-###   if(WIN32)
-###     target_compile_definitions(opus PRIVATE DLL_EXPORT)
-###   else()
-###     include(CheckCCompilerFlag)
-###     check_c_compiler_flag(-fvisibility=hidden COMPILER_HAS_HIDDEN_VISIBILITY)
-###     if(COMPILER_HAS_HIDDEN_VISIBILITY)
-###       set_target_properties(opus PROPERTIES C_VISIBILITY_PRESET hidden)
-###     endif()
-###   endif()
-### endif()
 
 add_sources_group(opus silk ${silk_sources})
 add_sources_group(opus celt ${celt_sources})
@@ -450,110 +360,3 @@ target_compile_definitions(opus
                            PRIVATE
                            $<$<BOOL:${HAVE_LRINT}>:HAVE_LRINT>
                            $<$<BOOL:${HAVE_LRINTF}>:HAVE_LRINTF>)
-
-### install(TARGETS opus
-###         EXPORT OpusTargets
-###         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-###         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-###         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-###         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opus)
-
-### if(OPUS_INSTALL_PKG_CONFIG_MODULE)
-###   set(prefix ${CMAKE_INSTALL_PREFIX})
-###   set(exec_prefix ${CMAKE_INSTALL_PREFIX})
-###   set(libdir ${CMAKE_INSTALL_FULL_LIBDIR})
-###   set(includedir ${CMAKE_INSTALL_FULL_INCLUDEDIR})
-###   set(VERSION ${PACKAGE_VERSION})
-###   if(HAVE_LIBM)
-###     set(LIBM "-lm")
-###   endif()
-###   configure_file(opus.pc.in opus.pc)
-###   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/opus.pc
-###           DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-### endif()
-
-### if(OPUS_INSTALL_CMAKE_CONFIG_MODULE)
-###   set(CPACK_GENERATOR TGZ)
-###   include(CPack)
-###   set(CMAKE_INSTALL_PACKAGEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
-###   install(EXPORT OpusTargets
-###           NAMESPACE Opus::
-###           DESTINATION ${CMAKE_INSTALL_PACKAGEDIR})
-###
-###   include(CMakePackageConfigHelpers)
-###
-###   set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
-###   configure_package_config_file(OpusConfig.cmake.in
-###                                 OpusConfig.cmake
-###                                 INSTALL_DESTINATION
-###                                 ${CMAKE_INSTALL_PACKAGEDIR}
-###                                 PATH_VARS
-###                                 INCLUDE_INSTALL_DIR
-###                                 INSTALL_PREFIX
-###                                 ${CMAKE_INSTALL_PREFIX})
-###   write_basic_package_version_file(OpusConfigVersion.cmake
-###                                    VERSION ${PROJECT_VERSION}
-###                                    COMPATIBILITY SameMajorVersion)
-###   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/OpusConfig.cmake
-###                 ${CMAKE_CURRENT_BINARY_DIR}/OpusConfigVersion.cmake
-###           DESTINATION ${CMAKE_INSTALL_PACKAGEDIR})
-### endif()
-
-### if(OPUS_BUILD_PROGRAMS)
-###   # demo
-###   if(OPUS_CUSTOM_MODES)
-###     add_executable(opus_custom_demo ${opus_custom_demo_sources})
-###     target_include_directories(opus_custom_demo
-###                                PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-###     target_link_libraries(opus_custom_demo PRIVATE opus)
-###   endif()
-###
-###   add_executable(opus_demo ${opus_demo_sources})
-###   target_include_directories(opus_demo PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-###   target_include_directories(opus_demo PRIVATE silk) # debug.h
-###   target_include_directories(opus_demo PRIVATE celt) # arch.h
-###   target_link_libraries(opus_demo PRIVATE opus ${OPUS_REQUIRED_LIBRARIES})
-###
-###   # compare
-###   add_executable(opus_compare ${opus_compare_sources})
-###   target_include_directories(opus_compare PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-###   target_link_libraries(opus_compare PRIVATE opus ${OPUS_REQUIRED_LIBRARIES})
-### endif()
-
-### if(BUILD_TESTING)
-###   enable_testing()
-###
-###   # tests
-###   add_executable(test_opus_decode ${test_opus_decode_sources})
-###   target_include_directories(test_opus_decode
-###                              PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-###   target_link_libraries(test_opus_decode PRIVATE opus)
-###   if(OPUS_FIXED_POINT)
-###     target_compile_definitions(test_opus_decode PRIVATE DISABLE_FLOAT_API)
-###   endif()
-###   add_test(test_opus_decode test_opus_decode)
-###
-###   add_executable(test_opus_padding ${test_opus_padding_sources})
-###   target_include_directories(test_opus_padding
-###                              PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-###   target_link_libraries(test_opus_padding PRIVATE opus)
-###   add_test(test_opus_padding test_opus_padding)
-###
-###   if(NOT BUILD_SHARED_LIBS)
-###     # disable tests that depends on private API when building shared lib
-###     add_executable(test_opus_api ${test_opus_api_sources})
-###     target_include_directories(test_opus_api
-###                                PRIVATE ${CMAKE_CURRENT_BINARY_DIR} celt)
-###     target_link_libraries(test_opus_api PRIVATE opus)
-###     if(OPUS_FIXED_POINT)
-###       target_compile_definitions(test_opus_api PRIVATE DISABLE_FLOAT_API)
-###     endif()
-###     add_test(test_opus_api test_opus_api)
-###
-###     add_executable(test_opus_encode ${test_opus_encode_sources})
-###     target_include_directories(test_opus_encode
-###                                PRIVATE ${CMAKE_CURRENT_BINARY_DIR} celt)
-###     target_link_libraries(test_opus_encode PRIVATE opus)
-###     add_test(test_opus_encode test_opus_encode)
-###   endif()
-### endif()

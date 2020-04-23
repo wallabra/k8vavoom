@@ -1,0 +1,5 @@
+# For libtool.
+dnl Please update these for releases.
+OPUS_LT_CURRENT=8
+OPUS_LT_REVISION=0
+OPUS_LT_AGE=8

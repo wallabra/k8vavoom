@@ -5,7 +5,7 @@ but still have the option to use CMake with only lists at one place]]
 cmake_minimum_required(VERSION 3.1)
 
 function(get_library_version OPUS_LIBRARY_VERSION OPUS_LIBRARY_VERSION_MAJOR)
-  file(STRINGS configure.ac opus_lt_current_string
+  file(STRINGS version.txt opus_lt_current_string
        LIMIT_COUNT 1
        REGEX "OPUS_LT_CURRENT=")
   string(REGEX MATCH
@@ -14,7 +14,7 @@ function(get_library_version OPUS_LIBRARY_VERSION OPUS_LIBRARY_VERSION_MAJOR)
                ${opus_lt_current_string})
   set(OPUS_LT_CURRENT ${CMAKE_MATCH_1})
 
-  file(STRINGS configure.ac opus_lt_revision_string
+  file(STRINGS version.txt opus_lt_revision_string
        LIMIT_COUNT 1
        REGEX "OPUS_LT_REVISION=")
   string(REGEX MATCH
@@ -23,7 +23,7 @@ function(get_library_version OPUS_LIBRARY_VERSION OPUS_LIBRARY_VERSION_MAJOR)
                ${opus_lt_revision_string})
   set(OPUS_LT_REVISION ${CMAKE_MATCH_1})
 
-  file(STRINGS configure.ac opus_lt_age_string
+  file(STRINGS version.txt opus_lt_age_string
        LIMIT_COUNT 1
        REGEX "OPUS_LT_AGE=")
   string(REGEX MATCH
