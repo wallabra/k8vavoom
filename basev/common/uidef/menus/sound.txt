@@ -29,6 +29,9 @@ menudef SoundOptions {
     }
   }
 
+
+  header ""; // empty line
+
   option submenu {
     title = "FluidSynth Options";
     submenu = "FluidSynthOptions";
