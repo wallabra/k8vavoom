@@ -212,7 +212,12 @@ static void* mi_win_virtual_allocx(void* addr, size_t size, size_t try_alignment
   // on 64-bit systems, try to use the virtual address area after 4TiB for 4MiB aligned allocations
   void* hint;
   if (addr == NULL && (hint = mi_os_get_aligned_hint(try_alignment,size)) != NULL) {
-    return VirtualAlloc(hint, size, flags, PAGE_READWRITE);
+    void* p = VirtualAlloc(hint, size, flags, PAGE_READWRITE);
+    if (p != NULL) return p;
+    DWORD err = GetLastError();
+    if (err != ERROR_INVALID_ADDRESS) { // if linked with multiple instances, we may have tried to allocate at an already allocated area
+      return NULL;
+    }
   }
 #endif
 #if defined(MEM_EXTENDED_PARAMETER_TYPE_BITS)
@@ -903,6 +908,7 @@ static void* mi_os_alloc_huge_os_pagesx(void* addr, size_t size, int numa_node) 
 }
 #else
 static void* mi_os_alloc_huge_os_pagesx(void* addr, size_t size, int numa_node) {
+  UNUSED(addr); UNUSED(size); UNUSED(numa_node);
   return NULL;
 }
 #endif
@@ -938,6 +944,7 @@ static uint8_t* mi_os_claim_huge_pages(size_t pages, size_t* total_size) {
 }
 #else
 static uint8_t* mi_os_claim_huge_pages(size_t pages, size_t* total_size) {
+  UNUSED(pages);
   if (total_size != NULL) *total_size = 0;
   return NULL;
 }
