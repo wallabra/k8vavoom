@@ -496,13 +496,13 @@ void VMethod::DumpAsm () {
   VPackage *Package = (VPackage *)PM;
 
   GLog.Logf(NAME_Debug, "--------------------------------------------");
-  GLog.Logf(NAME_Debug, "Dump ASM function %s.%s (%d instructions)", *Outer->Name, *Name, (Flags&FUNC_Native ? 0 : Instructions.Num()));
+  GLog.Logf(NAME_Debug, "Dump ASM function %s.%s (%d instructions)", *Outer->Name, *Name, (Flags&FUNC_Native ? 0 : Instructions.length()));
   if (Flags&FUNC_Native) {
     //  Builtin function
     GLog.Logf(NAME_Debug, "*** Builtin function.");
     return;
   }
-  for (int s = 0; s < Instructions.Num(); ++s) {
+  for (int s = 0; s < Instructions.length(); ++s) {
     // opcode
     VStr disstr;
     int st = Instructions[s].Opcode;
@@ -689,9 +689,9 @@ void VMethod::WriteType (const VFieldType &tp) {
 
 
 #define WriteUInt8(p)  Statements.Append(p)
-#define WriteInt16(p)  Statements.SetNum(Statements.Num()+2); *(vint16 *)&Statements[Statements.Num()-2] = (p)
-#define WriteInt32(p)  Statements.SetNum(Statements.Num()+4); *(vint32 *)&Statements[Statements.Num()-4] = (p)
-#define WritePtr(p)    Statements.SetNum(Statements.Num()+sizeof(void *)); *(void **)&Statements[Statements.Num()-sizeof(void *)] = (p)
+#define WriteInt16(p)  Statements.SetNum(Statements.length()+2); *(vint16 *)&Statements[Statements.length()-2] = (p)
+#define WriteInt32(p)  Statements.SetNum(Statements.length()+4); *(vint32 *)&Statements[Statements.length()-4] = (p)
+#define WritePtr(p)    Statements.SetNum(Statements.length()+sizeof(void *)); *(void **)&Statements[Statements.length()-sizeof(void *)] = (p)
 
 
 //==========================================================================
@@ -700,17 +700,18 @@ void VMethod::WriteType (const VFieldType &tp) {
 //
 //  this generates VM (or other) executable code (to `Statements`)
 //  from IR `Instructions`
+//
 //==========================================================================
 void VMethod::GenerateCode () {
   Statements.Clear();
-  if (!Instructions.Num()) return;
+  if (!Instructions.length()) return;
 
   TArray<int> iaddr; // addresses of all generated instructions
   iaddr.resize(Instructions.length()); // we know the size beforehand
 
   // generate VM bytecode
-  for (int i = 0; i < Instructions.Num()-1; ++i) {
-    //Instructions[i].Address = Statements.Num();
+  for (int i = 0; i < Instructions.length()-1; ++i) {
+    //Instructions[i].Address = Statements.length();
     vassert(iaddr.length() == i);
     iaddr.append(Statements.length());
     Statements.Append(Instructions[i].Opcode);
@@ -820,12 +821,12 @@ void VMethod::GenerateCode () {
     }
     while (StatLocs.length() < Statements.length()) StatLocs.Append(Instructions[i].loc);
   }
-  //Instructions[Instructions.Num()-1].Address = Statements.Num();
+  //Instructions[Instructions.length()-1].Address = Statements.length();
   vassert(iaddr.length() == Instructions.length()-1);
   iaddr.append(Statements.length());
 
   // fix jump destinations
-  for (int i = 0; i < Instructions.Num()-1; ++i) {
+  for (int i = 0; i < Instructions.length()-1; ++i) {
     switch (StatementInfo[Instructions[i].Opcode].Args) {
       case OPCARGS_BranchTargetB:
         Statements[iaddr[i]+1] = iaddr[Instructions[i].Arg1]-iaddr[i];
