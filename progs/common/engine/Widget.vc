@@ -99,17 +99,10 @@ private bool bIsVisible; // is this widget visible?
 bool bTickEnabled; // a flag that enables or disables Tick event
 private bool bIsEnabled; // is this widget enabled and can receive input?
 private bool bIsFocusable; // can this widget be focused?
-private bool bCloseOnBlur; // should this widget be closed if it loses focus? (not implemented yet)
-private bool bIsModal; // is this widget "modal" (i.e. can't loose focus)? (not implemented yet)
-private bool bOnTop; // should this widget be "always on top"? (not implemented yet)
-// mouse button state for click events
-/*
-private readonly bool bLMouseDown;
-private readonly bool bMMouseDown;
-private readonly bool bRMouseDown;
-*/
-// shadowed text
-private readonly bool bTextShadowed;
+private bool bCloseOnBlur; // should this widget be closed if it loses focus?
+private bool bIsModal; // is this widget "modal" (i.e. can't lose focus)? (not implemented yet)
+private bool bOnTop; // should this widget be "always on top"?
+private readonly bool bTextShadowed; // shadowed text
 
 // mouse down time (0 means "isn't down")
 native VMouseDownInfo MouseDownState[9]; // K_MOUSE1..K_MOUSE9
@@ -133,6 +126,9 @@ final bool Visible { get { return IsVisible(); } set { SetVisibility(value); } d
 final bool Enabled { get { return IsEnabled(); } set { SetEnabled(value); } default bIsEnabled; }
 final bool Focusable { get { return IsFocusable(); } set { SetFocusable(value); } default bIsFocusable; }
 final bool Focused { get { return IsFocused(); } }
+final bool Modal { get { return IsModal(); } }
+final bool OnTop { get { return IsOnTop(); } set { SetOnTop(value); } default bOnTop; }
+final bool CloseOnBlur { get { return IsCloseOnBlur(); } set { SetCloseOnBlur(value); } default bCloseOnBlur; }
 
 final int OldOriginX { get { return int(ClipRect.OriginX/ClipRect.ScaleX); } }
 final int OldOriginY { get { return int(ClipRect.OriginY/ClipRect.ScaleY); } }
@@ -189,6 +185,17 @@ native final void SetVisibility (bool bNewVisibility);
 native final void Show ();
 native final void Hide ();
 native final bool IsVisible (optional bool Recurse/*=true*/);
+
+// "on top" methods
+native final void SetOnTop (bool v);
+native final bool IsOnTop ();
+
+// "close on defocus" methods
+native final void SetCloseOnBlur (bool v);
+native final bool IsCloseOnBlur ();
+
+// modality check
+native final bool IsModal ();
 
 // enable state methods
 native final void SetEnabled (bool bNewEnable);
@@ -289,6 +296,16 @@ void OnCreate () {}
 //
 //==========================================================================
 void OnDestroy () {}
+
+
+//==========================================================================
+//
+//  OnClose
+//
+//  Called when widget is about to be closed.
+//
+//==========================================================================
+void OnClose () {}
 
 
 //==========================================================================

@@ -103,9 +103,9 @@ protected:
     WF_TickEnabled  = 1u<<1, // a flag that enables or disables Tick event
     WF_IsEnabled    = 1u<<2, // is this widget enabled and can receive input
     WF_IsFocusable  = 1u<<3, // can this widget be focused?
-    WF_CloseOnBlur  = 1u<<4, // should this widget be closed if it loses focus? (not implemented yet)
-    WF_Modal        = 1u<<5, // is this widget "modal" (i.e. can't loose focus)? (not implemented yet)
-    WF_OnTop        = 1u<<6, // should this widget be "always on top"? (not implemented yet)
+    WF_CloseOnBlur  = 1u<<4, // should this widget be closed if it loses focus?
+    WF_Modal        = 1u<<5, // is this widget "modal" (i.e. can't lose focus)? (not implemented yet)
+    WF_OnTop        = 1u<<6, // should this widget be "always on top"?
     WF_TextShadowed = 1u<<7, // shadowed text
   };
   vuint32 WidgetFlags;
@@ -147,12 +147,34 @@ protected:
   inline bool IsTickEnabledFlag () const noexcept { return (WidgetFlags&WF_TickEnabled); }
   inline bool IsEnabledFlag () const noexcept { return (WidgetFlags&WF_IsEnabled); }
   inline bool IsFocusableFlag () const noexcept { return (WidgetFlags&WF_IsFocusable); }
+  inline bool IsCloseOnBlurFlag () const noexcept { return (WidgetFlags&WF_CloseOnBlur); }
+  inline bool IsModalFlag () const noexcept { return (WidgetFlags&WF_Modal); }
+  inline bool IsOnTopFlag () const noexcept { return (WidgetFlags&WF_OnTop); }
+
+  inline bool IsChildAdded () const noexcept {
+    if (!ParentWidget) return false;
+    if (PrevWidget || NextWidget) return true;
+    // check if parent widget list points to us
+    if (ParentWidget->FirstChildWidget != ParentWidget->LastChildWidget) return false;
+    return (ParentWidget->FirstChildWidget == this);
+  }
 
   inline void ResetMouseDowns () noexcept { for (unsigned f = 0; f < 9; ++f) MouseDownState[f].time = 0; }
 
   // used to calculate local widget coords
   inline float ScaledXToLocal (const float v) const noexcept { return (v-ClipRect.OriginX)/ClipRect.ScaleX; }
   inline float ScaledYToLocal (const float v) const noexcept { return (v-ClipRect.OriginY)/ClipRect.ScaleY; }
+
+  VWidget *FindFirstOnTopChild () noexcept;
+  VWidget *FindLastNormalChild () noexcept;
+
+  inline bool HasOnTopChildren () const noexcept { return (LastChildWidget && LastChildWidget->IsOnTopFlag()); }
+
+  void UnlinkFromParent () noexcept;
+  // if `w` is null, link as first
+  void LinkToParentBefore (VWidget *w) noexcept;
+  // if `w` is null, link as last
+  void LinkToParentAfter (VWidget *w) noexcept;
 
 protected:
   void DrawCharPic (int X, int Y, VTexture *Tex, float Alpha=1.0f, bool shadowed=false);
@@ -171,6 +193,9 @@ public:
 
   void ToDrawerCoords (float &x, float &y) const noexcept;
   void ToDrawerCoords (int &x, int &y) const noexcept;
+
+  // call this to close widget instead of destroying it
+  void Close ();
 
   // methods to move widget on top or bottom
   void Lower ();
@@ -253,6 +278,14 @@ public:
     }
   }
 
+  void SetOnTop (bool v) noexcept;
+  inline bool IsOnTop () noexcept { return IsOnTopFlag(); }
+
+  void SetCloseOnBlur (bool v) noexcept;
+  inline bool IsCloseOnBlur () noexcept { return IsCloseOnBlurFlag(); }
+
+  inline bool IsModal () noexcept { return IsModalFlag(); }
+
   void DrawPicScaledIgnoreOffset (int X, int Y, int Handle, float scaleX=1.0f, float scaleY=1.0f, float Alpha=1.0f, int Trans=0);
 
   void DrawPic (int, int, int, float = 1.0f, int = 0);
@@ -296,8 +329,9 @@ public:
   static VWidget *CreateNewWidget (VClass *, VWidget *);
 
   // events
-  void OnCreate () { static VMethodProxy method("OnCreate"); vobjPutParamSelf(); VMT_RET_VOID(method); }
-  void OnDestroy () { static VMethodProxy method("OnDestroy"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  virtual void OnCreate () { static VMethodProxy method("OnCreate"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  virtual void OnDestroy () { static VMethodProxy method("OnDestroy"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  virtual void OnClose () { static VMethodProxy method("OnClose"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void OnChildAdded (VWidget *Child) { static VMethodProxy method("OnChildAdded"); vobjPutParamSelf(Child); VMT_RET_VOID(method); }
   virtual void OnChildRemoved (VWidget *Child) { static VMethodProxy method("OnChildRemoved"); vobjPutParamSelf(Child); VMT_RET_VOID(method); }
   virtual void OnConfigurationChanged () { static VMethodProxy method("OnConfigurationChanged"); vobjPutParamSelf(); VMT_RET_VOID(method); }
@@ -361,6 +395,14 @@ public:
   DECLARE_FUNCTION(Enable)
   DECLARE_FUNCTION(Disable)
   DECLARE_FUNCTION(IsEnabled)
+
+  DECLARE_FUNCTION(SetOnTop)
+  DECLARE_FUNCTION(IsOnTop)
+
+  DECLARE_FUNCTION(SetCloseOnBlur)
+  DECLARE_FUNCTION(IsCloseOnBlur)
+
+  DECLARE_FUNCTION(IsModal)
 
   DECLARE_FUNCTION(SetFocusable)
   DECLARE_FUNCTION(IsFocusable)

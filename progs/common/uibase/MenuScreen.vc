@@ -97,13 +97,31 @@ override void OnDestroy () {
 override void OnVisibilityChanged (bool bNewVisibility) {
   if (helpText) {
     if (bNewVisibility) {
+      //printdebug("raising help text (%s)", helpText.UniqueId);
       helpText.Show();
-      helpText.Raise();
+      //helpText.Raise();
     } else {
       helpText.Hide();
     }
   }
   ::OnVisibilityChanged(bNewVisibility);
+}
+
+
+//==========================================================================
+//
+//  ShowAndActivate
+//
+//==========================================================================
+void ShowAndActivate () {
+  Show();
+  Raise();
+  SetFocus();
+  if (helpText) {
+    //printdebug("showing help text (%s)", helpText.UniqueId);
+    helpText.Show();
+    //helpText.Raise();
+  }
 }
 
 
@@ -140,6 +158,7 @@ void FinishCreatingMenu () {
 //==========================================================================
 void CreateMenu () {
   if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
+  helpText.OnTop = true;
   helpText.text = "";
   CreateTitle();
   CreateBackButton();
@@ -656,14 +675,34 @@ void SetDefaultChoice () {
   CursorPrev = 0;
 
   // force first available item to have focus
-  for (int i = 0; i < Items.Num; ++i) {
-    if (Items[i].Focusable && Items[i].Enabled && !MenuChoice_BackButton(Items[i])) {
+  foreach (int idx, MenuChoice item; Items) {
+    if (item.Focusable && item.Enabled && !MenuChoice_BackButton(item)) {
       CursorPrev = -1;
-      CursorPos = i;
+      CursorPos = idx;
       CursorMoved();
       break;
     }
   }
+}
+
+
+//==========================================================================
+//
+//  MakeItemSelected
+//
+//==========================================================================
+bool MakeItemSelected (MenuChoice it) {
+  if (!it || MenuChoice_BackButton(it)) return false;
+  foreach (int idx, MenuChoice item; Items) {
+    if (item == it && item.Focusable && item.Enabled && !MenuChoice_BackButton(item)) {
+      if (CursorPos == idx) return true; // nothing to do
+      CursorPrev = -1;
+      CursorPos = idx;
+      CursorMoved();
+      return true;
+    }
+  }
+  return false;
 }
 
 

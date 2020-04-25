@@ -53,16 +53,6 @@ override void OnMouseClick (int X, int Y, int Button, Widget Dest) {
 }
 
 
-//==========================================================================
-//
-//  OnFocusReceived
-//
-//==========================================================================
-override void OnFocusReceived() {
-  //::OnFocusReceived();
-}
-
-
 defaultproperties {
   TextFont = 'bigfont';
   Text = "x";

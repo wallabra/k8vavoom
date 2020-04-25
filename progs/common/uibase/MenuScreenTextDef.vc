@@ -123,6 +123,7 @@ void CreateMenuFromDef (MenuDefinition mdef) {
   }
 
   if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
+  helpText.OnTop = true;
   helpText.text = "";
   CreateTitle();
   CreateBackButton();

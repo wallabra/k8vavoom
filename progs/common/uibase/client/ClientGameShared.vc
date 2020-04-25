@@ -742,9 +742,7 @@ void PopMenu () {
   if (menuStack.length) {
     if (menu) LocalSound(menu.DeactivateSound);
     CurrentMenuScreen = menuStack[$-1];
-    CurrentMenuScreen.Show();
-    CurrentMenuScreen.Raise();
-    CurrentMenuScreen.SetFocus();
+    CurrentMenuScreen.ShowAndActivate();
   } else {
     if (menu) LocalSound(menu.ClearMenusSound);
     CurrentMenuScreen = none;

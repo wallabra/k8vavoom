@@ -148,6 +148,20 @@ void VWidget::MarkDead () {
 
 //==========================================================================
 //
+//  VWidget::Close
+//
+//  don't delete it, GC will do
+//
+//==========================================================================
+void VWidget::Close () {
+  if (IsDestroyed()) return;
+  MarkDead();
+  if (ParentWidget && IsChildAdded()) { OnClose(); ParentWidget->RemoveChild(this); }
+}
+
+
+//==========================================================================
+//
 //  VWidget::Init
 //
 //==========================================================================
@@ -171,8 +185,8 @@ void VWidget::Init (VWidget *AParent) {
 void VWidget::Destroy () {
   //GCon->Logf(NAME_Debug, "destroying widget %s:%u:%p", GetClass()->GetName(), GetUniqueId(), (void *)this);
   AllWidgets.remove(this);
+  if (ParentWidget && IsChildAdded()) { OnClose(); ParentWidget->RemoveChild(this); }
   OnDestroy();
-  if (ParentWidget) ParentWidget->RemoveChild(this);
   DestroyAllChildren();
   Super::Destroy();
 }
@@ -189,15 +203,17 @@ void VWidget::AddChild (VWidget *NewChild) {
   if (NewChild == this) Sys_Error("VWidget::AddChild: trying to add `this` to `this`");
   if (!NewChild->ParentWidget) Sys_Error("VWidget::AddChild: trying to adopt a child without any official papers");
   if (NewChild->ParentWidget != this) Sys_Error("VWidget::AddChild: trying to adopt an alien child");
+  if (NewChild->IsChildAdded()) { GCon->Log(NAME_Error, "VWidget::AddChild: adopting already adopted child"); return; }
 
+  // link as last widget
   NewChild->PrevWidget = LastChildWidget;
   NewChild->NextWidget = nullptr;
-  if (LastChildWidget) {
-    LastChildWidget->NextWidget = NewChild;
-  } else {
-    FirstChildWidget = NewChild;
-  }
+  if (LastChildWidget) LastChildWidget->NextWidget = NewChild; else FirstChildWidget = NewChild;
   LastChildWidget = NewChild;
+
+  // raise it (this fixes normal widgets when there are "on top" ones)
+  NewChild->Raise();
+
   OnChildAdded(NewChild);
   if (!CurrentFocusChild) SetCurrentFocusChild(NewChild);
 }
@@ -210,7 +226,8 @@ void VWidget::AddChild (VWidget *NewChild) {
 //==========================================================================
 void VWidget::RemoveChild (VWidget *InChild) {
   if (!InChild) return;
-  if (InChild->ParentWidget != this) Sys_Error("VWidget::AddChild: trying to orphan an alien child");
+  if (InChild->ParentWidget != this) Sys_Error("VWidget::RemoveChild: trying to orphan an alien child");
+  if (!InChild->IsChildAdded()) { GCon->Log(NAME_Error, "VWidget::RemoveChild: trying to orphan already orphaned child"); return; }
   if (InChild->PrevWidget) {
     InChild->PrevWidget->NextWidget = InChild->NextWidget;
   } else {
@@ -253,27 +270,117 @@ VRootWidget *VWidget::GetRootWidget () noexcept {
 
 //==========================================================================
 //
+//  VWidget::FindFirstOnTopChild
+//
+//==========================================================================
+VWidget *VWidget::FindFirstOnTopChild () noexcept {
+  // start from the last widget, because it is likely to be on top
+  for (VWidget *w = LastChildWidget; w; w = w->PrevWidget) {
+    if (!w->IsOnTopFlag()) return w->NextWidget;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VWidget::FindLastNormalChild
+//
+//==========================================================================
+VWidget *VWidget::FindLastNormalChild () noexcept {
+  // start from the last widget, because it is likely to be on top
+  for (VWidget *w = LastChildWidget; w; w = w->PrevWidget) {
+    if (!w->IsOnTopFlag()) return w;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VWidget::UnlinkFromParent
+//
+//==========================================================================
+void VWidget::UnlinkFromParent () noexcept {
+  if (!ParentWidget || !IsChildAdded()) return;
+  // unlink from current location
+  if (PrevWidget) PrevWidget->NextWidget = NextWidget; else ParentWidget->FirstChildWidget = NextWidget;
+  if (NextWidget) NextWidget->PrevWidget = PrevWidget; else ParentWidget->LastChildWidget = PrevWidget;
+  PrevWidget = NextWidget = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VWidget::LinkToParentBefore
+//
+//  if `w` is null, link as first
+//
+//==========================================================================
+void VWidget::LinkToParentBefore (VWidget *w) noexcept {
+  if (!ParentWidget || w == this) return;
+  if (!w) {
+    if (ParentWidget->FirstChildWidget == this) return; // already there
+    // unlink from current location
+    UnlinkFromParent();
+    // link to bottom (i.e. as first child)
+    PrevWidget = nullptr;
+    NextWidget = ParentWidget->FirstChildWidget;
+    ParentWidget->FirstChildWidget->PrevWidget = this;
+    ParentWidget->FirstChildWidget = this;
+  } else {
+    if (w->PrevWidget == this) return; // already there
+    // unlink from current location
+    UnlinkFromParent();
+    // link before `w`
+    PrevWidget = w->PrevWidget;
+    NextWidget = w;
+    w->PrevWidget = this;
+    if (PrevWidget) PrevWidget->NextWidget = this; else ParentWidget->FirstChildWidget = this;
+  }
+}
+
+
+//==========================================================================
+//
+//  VWidget::LinkToParentAfter
+//
+//  if `w` is null, link as last
+//
+//==========================================================================
+void VWidget::LinkToParentAfter (VWidget *w) noexcept {
+  if (!ParentWidget || w == this) return;
+  if (!w) {
+    //GCon->Logf(NAME_Debug, "LinkToParentAfter:(nullptr):%u (%d)", GetUniqueId(), (int)(ParentWidget->LastChildWidget == this));
+    if (ParentWidget->LastChildWidget == this) return; // already there
+    // unlink from current location
+    UnlinkFromParent();
+    // link to top (i.e. as last child)
+    PrevWidget = ParentWidget->LastChildWidget;
+    NextWidget = nullptr;
+    ParentWidget->LastChildWidget->NextWidget = this;
+    ParentWidget->LastChildWidget = this;
+  } else {
+    if (w->NextWidget == this) return; // already there
+    // unlink from current location
+    UnlinkFromParent();
+    // link after `w`
+    PrevWidget = w;
+    NextWidget = w->NextWidget;
+    w->NextWidget = this;
+    if (NextWidget) NextWidget->PrevWidget = this; else ParentWidget->LastChildWidget = this;
+  }
+}
+
+
+//==========================================================================
+//
 //  VWidget::Lower
 //
 //==========================================================================
 void VWidget::Lower () {
-  if (!ParentWidget) Sys_Error("Can't lower root window");
-
-  if (ParentWidget->FirstChildWidget == this) return; // already there
-
-  // unlink from current location
-  PrevWidget->NextWidget = NextWidget;
-  if (NextWidget) {
-    NextWidget->PrevWidget = PrevWidget;
-  } else {
-    ParentWidget->LastChildWidget = PrevWidget;
-  }
-
-  // link on bottom
-  PrevWidget = nullptr;
-  NextWidget = ParentWidget->FirstChildWidget;
-  ParentWidget->FirstChildWidget->PrevWidget = this;
-  ParentWidget->FirstChildWidget = this;
+  if (!ParentWidget) { GCon->Log(NAME_Error, "Can't lower root window"); return; }
+  LinkToParentBefore(IsOnTopFlag() ? ParentWidget->FindFirstOnTopChild() : nullptr);
 }
 
 
@@ -283,23 +390,9 @@ void VWidget::Lower () {
 //
 //==========================================================================
 void VWidget::Raise () {
-  if (!ParentWidget) Sys_Error("Can't raise root window");
-
-  if (ParentWidget->LastChildWidget == this) return; // already there
-
-  // unlink from current location
-  NextWidget->PrevWidget = PrevWidget;
-  if (PrevWidget) {
-    PrevWidget->NextWidget = NextWidget;
-  } else {
-    ParentWidget->FirstChildWidget = NextWidget;
-  }
-
-  // link on top
-  PrevWidget = ParentWidget->LastChildWidget;
-  NextWidget = nullptr;
-  ParentWidget->LastChildWidget->NextWidget = this;
-  ParentWidget->LastChildWidget = this;
+  if (!ParentWidget) { GCon->Log(NAME_Error, "Can't raise root window"); return; }
+  //GCon->Logf(NAME_Debug, "raising %u (ontop=%d)", GetUniqueId(), (int)IsOnTopFlag());
+  LinkToParentAfter(IsOnTopFlag() ? nullptr : ParentWidget->FindLastNormalChild());
 }
 
 
@@ -309,34 +402,22 @@ void VWidget::Raise () {
 //
 //==========================================================================
 void VWidget::MoveBefore (VWidget *Other) {
-  if (!Other) return;
-  if (ParentWidget != Other->ParentWidget) Sys_Error("Must have the same parent widget");
-  if (Other == this) Sys_Error("Can't move before self");
+  if (!Other || Other == this) return;
+  if (ParentWidget != Other->ParentWidget) { GCon->Log(NAME_Error, "Must have the same parent widget"); return; }
 
-  if (Other->PrevWidget == this) return; // already there
-
-  // unlink from current location
-  if (PrevWidget) {
-    PrevWidget->NextWidget = NextWidget;
-  } else {
-    ParentWidget->FirstChildWidget = NextWidget;
-  }
-
-  if (NextWidget) {
-    NextWidget->PrevWidget = PrevWidget;
-  } else {
-    ParentWidget->LastChildWidget = PrevWidget;
+  if (IsOnTopFlag() != Other->IsOnTopFlag()) {
+    if (IsOnTopFlag()) {
+      // self is "on top", other is "normal": just lower it
+      Lower();
+    } else {
+      // other is "on top", self is "normal": just raise it
+      Raise();
+    }
+    return;
   }
 
   // link in new position
-  PrevWidget = Other->PrevWidget;
-  NextWidget = Other;
-  Other->PrevWidget = this;
-  if (PrevWidget) {
-    PrevWidget->NextWidget = this;
-  } else {
-    ParentWidget->FirstChildWidget = this;
-  }
+  LinkToParentBefore(Other);
 }
 
 
@@ -346,34 +427,49 @@ void VWidget::MoveBefore (VWidget *Other) {
 //
 //==========================================================================
 void VWidget::MoveAfter (VWidget *Other) {
-  if (!Other) return;
-  if (ParentWidget != Other->ParentWidget) Sys_Error("Must have the same parent widget");
-  if (Other == this) Sys_Error("Can't move after self");
+  if (!Other || Other == this) return;
+  if (ParentWidget != Other->ParentWidget) { GCon->Log(NAME_Error, "Must have the same parent widget"); return; }
 
-  if (Other->NextWidget == this) return; // already there
-
-  // unlink from current location
-  if (PrevWidget) {
-    PrevWidget->NextWidget = NextWidget;
-  } else {
-    ParentWidget->FirstChildWidget = NextWidget;
-  }
-
-  if (NextWidget) {
-    NextWidget->PrevWidget = PrevWidget;
-  } else {
-    ParentWidget->LastChildWidget = PrevWidget;
+  if (IsOnTopFlag() != Other->IsOnTopFlag()) {
+    if (IsOnTopFlag()) {
+      // self is "on top", other is "normal": just lower it
+      Lower();
+    } else {
+      // other is "on top", self is "normal": just raise it
+      Raise();
+    }
+    return;
   }
 
   // link in new position
-  NextWidget = Other->NextWidget;
-  PrevWidget = Other;
-  Other->NextWidget = this;
-  if (NextWidget) {
-    NextWidget->PrevWidget = this;
-  } else {
-    ParentWidget->LastChildWidget = this;
-  }
+  LinkToParentAfter(Other);
+}
+
+
+//==========================================================================
+//
+//  VWidget::SetOnTop
+//
+//==========================================================================
+void VWidget::SetOnTop (bool v) noexcept {
+  if (v == IsOnTopFlag()) return;
+  if (v) WidgetFlags |= WF_OnTop; else WidgetFlags &= ~WF_OnTop;
+  if (!IsChildAdded()) return; // nothing to do yet
+  Raise(); // this fixes position
+}
+
+
+//==========================================================================
+//
+//  VWidget::SetCloseOnBlur
+//
+//==========================================================================
+void VWidget::SetCloseOnBlur (bool v) noexcept {
+  if (v == IsCloseOnBlurFlag()) return;
+  if (v) WidgetFlags |= WF_CloseOnBlur; else WidgetFlags &= ~WF_CloseOnBlur;
+  if (!v || !IsChildAdded()) return; // nothing to do
+  // if "close on blur" and not focused, close it
+  if (v && !IsFocused()) Close();
 }
 
 
@@ -444,7 +540,15 @@ void VWidget::SetVisibility (bool NewVisibility) {
   if (IsVisibleFlag() != NewVisibility) {
     if (NewVisibility) {
       WidgetFlags |= WF_IsVisible;
-      if (ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
+      if (IsChildAdded() && ParentWidget) {
+        // re-raise it, why not
+        if (IsOnTopFlag()) {
+          if (PrevWidget && !PrevWidget->IsOnTopFlag()) Raise();
+        } else {
+          if (PrevWidget && PrevWidget->IsOnTopFlag()) Raise();
+        }
+        if (!ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
+      }
     } else {
       WidgetFlags &= ~WF_IsVisible;
       if (ParentWidget && ParentWidget->CurrentFocusChild == this) ParentWidget->FindNewFocus();
@@ -463,7 +567,7 @@ void VWidget::SetEnabled (bool NewEnabled) {
   if (IsEnabledFlag() != NewEnabled) {
     if (NewEnabled) {
       WidgetFlags |= WF_IsEnabled;
-      if (ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
+      if (IsChildAdded() && ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
     } else {
       WidgetFlags &= ~WF_IsEnabled;
       if (ParentWidget && ParentWidget->CurrentFocusChild == this) ParentWidget->FindNewFocus();
@@ -482,10 +586,10 @@ void VWidget::SetFocusable (bool NewFocusable) {
   if (IsFocusableFlag() != NewFocusable) {
     if (NewFocusable) {
       WidgetFlags |= WF_IsFocusable;
-      if (ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
+      if (IsChildAdded() && ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
     } else {
       WidgetFlags &= ~WF_IsFocusable;
-      if (ParentWidget && ParentWidget->CurrentFocusChild == this) ParentWidget->FindNewFocus();
+      if (IsChildAdded() && ParentWidget && ParentWidget->CurrentFocusChild == this) ParentWidget->FindNewFocus();
     }
     OnFocusableChanged(NewFocusable);
   }
@@ -502,14 +606,20 @@ void VWidget::SetCurrentFocusChild (VWidget *NewFocus) {
   if (CurrentFocusChild == NewFocus) return;
 
   // make sure it's visible, enabled and focusable
-  if (NewFocus && !NewFocus->CanBeFocused()) return;
+  if (NewFocus) {
+    if (!NewFocus->IsChildAdded()) return; // if it is not added, get out of here
+    if (!NewFocus->CanBeFocused()) return;
+  }
 
   // if we have a focused child, send focus lost event
+  VWidget *fcc = (CurrentFocusChild && CurrentFocusChild->IsCloseOnBlurFlag() ? CurrentFocusChild : nullptr);
   if (CurrentFocusChild) CurrentFocusChild->OnFocusLost();
 
   // make it the current focus
   CurrentFocusChild = NewFocus;
   if (CurrentFocusChild) CurrentFocusChild->OnFocusReceived();
+
+  if (fcc) fcc->Close();
 }
 
 
@@ -519,17 +629,26 @@ void VWidget::SetCurrentFocusChild (VWidget *NewFocus) {
 //
 //==========================================================================
 void VWidget::FindNewFocus () {
-  for (VWidget *W = CurrentFocusChild->NextWidget; W; W = W->NextWidget) {
-    if (W->CanBeFocused()) {
-      SetCurrentFocusChild(W);
-      return;
+  if (CurrentFocusChild) {
+    for (VWidget *W = CurrentFocusChild->NextWidget; W; W = W->NextWidget) {
+      if (W->CanBeFocused()) {
+        SetCurrentFocusChild(W);
+        return;
+      }
     }
-  }
 
-  for (VWidget *W = CurrentFocusChild->PrevWidget; W; W = W->PrevWidget) {
-    if (W->CanBeFocused()) {
-      SetCurrentFocusChild(W);
-      return;
+    for (VWidget *W = CurrentFocusChild->PrevWidget; W; W = W->PrevWidget) {
+      if (W->CanBeFocused()) {
+        SetCurrentFocusChild(W);
+        return;
+      }
+    }
+  } else {
+    for (VWidget *W = FirstChildWidget; W; W = W->NextWidget) {
+      if (W->CanBeFocused()) {
+        SetCurrentFocusChild(W);
+        return;
+      }
     }
   }
 
@@ -1027,14 +1146,13 @@ void VWidget::SetFont (VFont *AFont) noexcept {
 //  VWidget::SetFont
 //
 //==========================================================================
-void VWidget::SetFont(VName FontName) {
+void VWidget::SetFont (VName FontName) {
   VFont *F = VFont::GetFont(FontName, FontName);
   if (F) {
     Font = F;
   } else {
-    if (!reportedMissingFonts.find(FontName)) {
-      reportedMissingFonts.put(FontName, true);
-      GCon->Logf("No such font '%s'", *FontName);
+    if (!reportedMissingFonts.put(FontName, true)) {
+      GCon->Logf(NAME_Warning, "No such font '%s'", *FontName);
     }
   }
 }
@@ -1266,9 +1384,7 @@ IMPLEMENT_FUNCTION(VWidget, NewChild) {
 IMPLEMENT_FUNCTION(VWidget, Destroy) {
   vobjGetParamSelf();
   //k8: don't delete it, GC will do
-  //delete Self;
-  //Self = nullptr;
-  if (Self && !Self->IsDestroyed()) Self->MarkDead();
+  if (Self) Self->Close();
 }
 
 IMPLEMENT_FUNCTION(VWidget, DestroyAllChildren) {
@@ -1408,6 +1524,33 @@ IMPLEMENT_FUNCTION(VWidget, IsEnabled) {
   VOptParamBool Recurse(true);
   vobjGetParamSelf(Recurse);
   RET_BOOL(Self ? Self->IsEnabled(Recurse) : false);
+}
+
+IMPLEMENT_FUNCTION(VWidget, SetOnTop) {
+  bool bNewOnTop;
+  vobjGetParamSelf(bNewOnTop);
+  if (Self) Self->SetOnTop(bNewOnTop);
+}
+
+IMPLEMENT_FUNCTION(VWidget, IsOnTop) {
+  vobjGetParamSelf();
+  RET_BOOL(Self ? Self->IsOnTop() : false);
+}
+
+IMPLEMENT_FUNCTION(VWidget, SetCloseOnBlur) {
+  bool bNewCloseOnBlur;
+  vobjGetParamSelf(bNewCloseOnBlur);
+  if (Self) Self->SetCloseOnBlur(bNewCloseOnBlur);
+}
+
+IMPLEMENT_FUNCTION(VWidget, IsCloseOnBlur) {
+  vobjGetParamSelf();
+  RET_BOOL(Self ? Self->IsCloseOnBlur() : false);
+}
+
+IMPLEMENT_FUNCTION(VWidget, IsModal) {
+  vobjGetParamSelf();
+  RET_BOOL(Self ? Self->IsModal() : false);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetFocusable) {
