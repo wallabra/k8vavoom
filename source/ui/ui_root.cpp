@@ -123,11 +123,22 @@ bool VRootWidget::InternalResponder (event_t *evt) {
   // first, sink
   evt->resetBubbling();
   evt->dest = EventPath[EventPath.length()-1];
+  const int oldx = evt->x;
+  const int oldy = evt->y;
+  //const bool fixCoords = (evt->type == ev_mouse || (evt->keycode >= K_MOUSE_FIRST && evt->keycode <= K_MOUSE_LAST && (evt->type == ev_keydown || evt->type == ev_keyup)));
+  const bool fixCoords = (evt->type == ev_uimouse);
+
   // do not process deepest child yet
   for (int f = 0; f < EventPath.length()-1; ++f) {
     VWidget *w = EventPath[f];
     if (w->IsGoingToDie()) return false;
-    if (w->OnEvent(evt)) { evt->setEaten(); return true; }
+    if (fixCoords) {
+      evt->x = (int)w->ScaledXToLocal(oldx*SizeScaleX);
+      evt->y = (int)w->ScaledXToLocal(oldx*SizeScaleX);
+    }
+    const bool done = w->OnEvent(evt);
+    if (fixCoords) { evt->x = oldx; evt->y = oldy; }
+    if (done) { evt->setEaten(); return true; }
     if (evt->isEatenOrCancelled()) return true;
   }
 
@@ -136,7 +147,13 @@ bool VRootWidget::InternalResponder (event_t *evt) {
   for (int f = EventPath.length()-1; f >= 0; --f) {
     VWidget *w = EventPath[f];
     if (w->IsGoingToDie()) return false;
-    if (w->OnEvent(evt)) { evt->setEaten(); return true; }
+    if (fixCoords) {
+      evt->x = (int)w->ScaledXToLocal(oldx*SizeScaleX);
+      evt->y = (int)w->ScaledXToLocal(oldx*SizeScaleX);
+    }
+    const bool done = w->OnEvent(evt);
+    if (fixCoords) { evt->x = oldx; evt->y = oldy; }
+    if (done) { evt->setEaten(); return true; }
     if (evt->isEatenOrCancelled()) return true;
   }
 
@@ -144,14 +161,14 @@ bool VRootWidget::InternalResponder (event_t *evt) {
   if (RootFlags&RWF_MouseEnabled) {
     // handle mouse movement
     if (evt->type == ev_mouse) {
-      MouseMoveEvent(MouseX+evt->data2, MouseY-evt->data3);
+      MouseMoveEvent(MouseX+evt->dx, MouseY-evt->dy);
       return true;
     }
     // handle mouse buttons
     if ((evt->type == ev_keydown || evt->type == ev_keyup) &&
-        evt->data1 >= K_MOUSE1 && evt->data1 <= K_MOUSE9)
+        evt->keycode >= K_MOUSE1 && evt->keycode <= K_MOUSE9)
     {
-      return MouseButtonEvent(evt->data1, (evt->type == ev_keydown));
+      return MouseButtonEvent(evt->keycode, (evt->type == ev_keydown));
     }
   }
 
