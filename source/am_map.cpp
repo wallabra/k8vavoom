@@ -2246,7 +2246,7 @@ bool AM_Responder (event_t *ev) {
   bool rc = false;
   if (ev->type == ev_keydown) {
     rc = true;
-    switch (ev->data1) {
+    switch (ev->keycode) {
       case AM_PANRIGHTKEY: // pan right
         if (!am_follow_player) m_paninc.x = FTOM(F_PANINC/2.0f); else rc = false;
         break;
@@ -2335,7 +2335,7 @@ bool AM_Responder (event_t *ev) {
     }
   } else if (ev->type == ev_keyup) {
     rc = false;
-    switch (ev->data1) {
+    switch (ev->keycode) {
       case AM_PANRIGHTKEY:
         if (!am_follow_player) m_paninc.x = 0.0f;
         break;

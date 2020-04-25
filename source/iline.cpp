@@ -260,7 +260,7 @@ void TILine::WordRight () {
 bool TILine::Key (const event_t &ev) {
   if (ev.type != ev_keydown) return false;
 
-  switch (ev.data1) {
+  switch (ev.keycode) {
     // clipboard
     case K_INSERT:
       {

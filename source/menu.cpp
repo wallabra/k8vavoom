@@ -98,10 +98,10 @@ bool MN_Responder (event_t *ev) {
   if (!MN_Active() && ev->type == ev_keydown && !C_Active() &&
       (!cl || cls.demoplayback || GGameInfo->NetMode == NM_TitleMap))
   {
-    bool doActivate = (ev->data1 < K_F1 || ev->data1 > K_F12);
+    bool doActivate = (ev->keycode < K_F1 || ev->keycode > K_F12);
     if (doActivate) {
       VStr down, up;
-      GInput->GetBinding(ev->data1, down, up);
+      GInput->GetBinding(ev->keycode, down, up);
       if (down.ICmp("ToggleConsole") == 0) doActivate = false;
     }
     if (doActivate) {

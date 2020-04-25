@@ -88,14 +88,14 @@ bool CT_Responder (event_t *ev) {
 
   if (GInput->AltDown) {
     if (ev->type != ev_keyup) return true;
-    if (ev->data1 >= '0' && ev->data1 <= '9') {
-      GCmdBuf << "Say " << VStr(chat_macros[ev->data1-'0']->asStr()).quote() << "\n";
+    if (ev->keycode >= '0' && ev->keycode <= '9') {
+      GCmdBuf << "Say " << VStr(chat_macros[ev->keycode-'0']->asStr()).quote() << "\n";
       CT_Stop();
       return true;
     }
   }
 
-  if (ev->data1 == K_ENTER || ev->data1 == K_PADENTER) {
+  if (ev->keycode == K_ENTER || ev->keycode == K_PADENTER) {
     if (ev->type != ev_keyup) return true;
     if (w_chat.length() != 0) {
       GCmdBuf << "Say " << VStr(w_chat.getCStr()).quote(true) << "\n";
@@ -104,7 +104,7 @@ bool CT_Responder (event_t *ev) {
     return true;
   }
 
-  if (ev->data1 == K_ESCAPE) {
+  if (ev->keycode == K_ESCAPE) {
     if (ev->type != ev_keyup) return true;
     CT_Stop();
     return true;

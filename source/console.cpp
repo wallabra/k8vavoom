@@ -447,14 +447,14 @@ bool C_Responder (event_t *ev) {
   //if (ev->type != ev_keydown && ev->type != ev_keyup) return false;
 
   // shit; i have to perform more fine-grained locking
-  switch (ev->data1) {
+  switch (ev->keycode) {
     // close console
     case K_ESCAPE:
       if (consolestate != cons_open) return false;
       /* fallthrough */
     case '`':
     case K_BACKQUOTE:
-      //GCon->Logf("::: %d", (int)(ev->data1 == K_BACKQUOTE));
+      //GCon->Logf("::: %d", (int)(ev->keycode == K_BACKQUOTE));
       if (ev->isShiftDown()) {
         c_iline.AddChar('~');
       } else {

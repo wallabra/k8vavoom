@@ -166,13 +166,13 @@ enum {
 
 
 // mouse values are used once
-static float mousex;
-static float mousey;
+static float mousex; // relative, scaled by sensitivity
+static float mousey; // relative, scaled by sensitivity
 // joystick values are repeated
 static int joyxmove;
 static int joyymove;
 
-static int impulse_cmd;
+static int currImpulse;
 
 
 static VCvarB always_run("always_run", false, "Always run?", CVAR_Archive);
@@ -385,7 +385,7 @@ void TCmdKeyUp::Run () {
 //==========================================================================
 COMMAND(Impulse) {
   if (Args.Num() < 2) return;
-  impulse_cmd = VStr::atoi(*Args[1]);
+  currImpulse = VStr::atoi(*Args[1]);
 }
 
 
@@ -631,9 +631,9 @@ void VBasePlayer::HandleInput () {
   //GCon->Logf("VBasePlayer::HandleInput(%p): %d; Buttons=0x%08x; OldButtons=0x%08x", this, (KeyJump.KeyState() ? 1 : 0), Buttons, OldButtons);
 
   // impulse
-  if (impulse_cmd) {
-    eventServerImpulse(impulse_cmd);
-    impulse_cmd = 0;
+  if (currImpulse) {
+    eventServerImpulse(currImpulse);
+    currImpulse = 0;
   }
 
   ClientForwardMove = forward;
@@ -658,16 +658,14 @@ void VBasePlayer::HandleInput () {
 bool VBasePlayer::Responder (event_t *ev) {
   switch (ev->type) {
     case ev_mouse:
-      mousex = ev->data2*mouse_x_sensitivity;
-      mousey = ev->data3*mouse_y_sensitivity;
+      mousex = ev->dx*mouse_x_sensitivity;
+      mousey = ev->dy*mouse_y_sensitivity;
       if (invert_mouse) mousey = -mousey;
       return true; // eat events
-
     case ev_joystick:
-      joyxmove = ev->data2;
-      joyymove = ev->data3;
+      joyxmove = ev->dx;
+      joyymove = ev->dy;
       return true; // eat events
-
     default:
       break;
   }
@@ -684,7 +682,7 @@ void VBasePlayer::ClearInput () {
   // clear cmd building stuff
   joyxmove = joyymove = 0;
   mousex = mousey = 0;
-  impulse_cmd = 0;
+  currImpulse = 0;
 }
 
 

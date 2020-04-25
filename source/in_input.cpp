@@ -245,10 +245,10 @@ void VInputPublic::KBCheatAppend (VStr keys, VStr concmd) {
 bool VInputPublic::KBCheatProcessor (event_t *ev) {
   if (!allow_vanilla_cheats) { currkbcheat[0] = 0; return false; }
   if (ev->type != ev_keydown) return false;
-  if (ev->data1 < ' ' || ev->data1 >= 127) { currkbcheat[0] = 0; return false; }
+  if (ev->keycode < ' ' || ev->keycode >= 127) { currkbcheat[0] = 0; return false; }
   int slen = (int)strlen(currkbcheat);
   if (slen >= MAX_KBCHEAT_LENGTH) { currkbcheat[0] = 0; return false; }
-  currkbcheat[slen] = (char)ev->data1;
+  currkbcheat[slen] = (char)ev->keycode;
   currkbcheat[slen+1] = 0;
   ++slen;
   int clen = kbcheats.length();
@@ -543,7 +543,7 @@ bool VInputPublic::PostKeyEvent (int key, int press, vuint32 modflags) {
   event_t ev;
   memset((void *)&ev, 0, sizeof(event_t));
   ev.type = (press ? ev_keydown : ev_keyup);
-  ev.data1 = key;
+  ev.keycode = key;
   ev.modflags = modflags;
   return VObject::PostEvent(ev);
 }
@@ -566,14 +566,14 @@ void VInput::ProcessEvents () {
     wasEvent = true;
 
     // shift key state
-    if (ev.data1 == K_RSHIFT) { if (ev.type == ev_keydown) ShiftDown |= 1; else ShiftDown &= ~1; }
-    if (ev.data1 == K_LSHIFT) { if (ev.type == ev_keydown) ShiftDown |= 2; else ShiftDown &= ~2; }
+    if (ev.keycode == K_RSHIFT) { if (ev.type == ev_keydown) ShiftDown |= 1; else ShiftDown &= ~1; }
+    if (ev.keycode == K_LSHIFT) { if (ev.type == ev_keydown) ShiftDown |= 2; else ShiftDown &= ~2; }
     // ctrl key state
-    if (ev.data1 == K_RCTRL) { if (ev.type == ev_keydown) CtrlDown |= 1; else CtrlDown &= ~1; }
-    if (ev.data1 == K_LCTRL) { if (ev.type == ev_keydown) CtrlDown |= 2; else CtrlDown &= ~2; }
+    if (ev.keycode == K_RCTRL) { if (ev.type == ev_keydown) CtrlDown |= 1; else CtrlDown &= ~1; }
+    if (ev.keycode == K_LCTRL) { if (ev.type == ev_keydown) CtrlDown |= 2; else CtrlDown &= ~2; }
     // alt key state
-    if (ev.data1 == K_RALT) { if (ev.type == ev_keydown) AltDown |= 1; else AltDown &= ~1; }
-    if (ev.data1 == K_LALT) { if (ev.type == ev_keydown) AltDown |= 2; else AltDown &= ~2; }
+    if (ev.keycode == K_RALT) { if (ev.type == ev_keydown) AltDown |= 1; else AltDown &= ~1; }
+    if (ev.keycode == K_LALT) { if (ev.type == ev_keydown) AltDown |= 2; else AltDown &= ~2; }
 
     // initial network client data transmit?
     bool initNetClient = (CL_GetNetState() == CLState_Init);
@@ -615,15 +615,15 @@ void VInput::ProcessEvents () {
     if (F_Responder(&ev)) continue; // finale
 
     // key bindings
-    if ((ev.type == ev_keydown || ev.type == ev_keyup) && (ev.data1 > 0 && ev.data1 < 256)) {
+    if ((ev.type == ev_keydown || ev.type == ev_keyup) && (ev.keycode > 0 && ev.keycode < 256)) {
       //VStr kb;
-      //if (isAllowed(ev.data1&0xff)) kb = (ev.type == ev_keydown ? KeyBindingsDown[ev.data1&0xff] : KeyBindingsUp[ev.data1&0xff]);
-      VStr kb = getBinding((ev.type == ev_keydown), ev.data1&0xff);
-      //GCon->Logf("KEY %s is %s; action is '%s'", *GInput->KeyNameForNum(ev.data1&0xff), (ev.type == ev_keydown ? "down" : "up"), *kb);
+      //if (isAllowed(ev.keycode&0xff)) kb = (ev.type == ev_keydown ? KeyBindingsDown[ev.keycode&0xff] : KeyBindingsUp[ev.keycode&0xff]);
+      VStr kb = getBinding((ev.type == ev_keydown), ev.keycode&0xff);
+      //GCon->Logf("KEY %s is %s; action is '%s'", *GInput->KeyNameForNum(ev.keycode&0xff), (ev.type == ev_keydown ? "down" : "up"), *kb);
       if (kb.IsNotEmpty()) {
         if (kb[0] == '+' || kb[0] == '-') {
           // button commands add keynum as a parm
-          if (kb.length() > 1) GCmdBuf << kb << " " << VStr(ev.data1) << "\n";
+          if (kb.length() > 1) GCmdBuf << kb << " " << VStr(ev.keycode) << "\n";
         } else {
           GCmdBuf << kb << "\n";
         }
@@ -656,7 +656,7 @@ int VInput::ReadKey () {
     Device->ReadInput();
     event_t ev;
     while (!ret && VObject::GetEvent(&ev)) {
-      if (ev.type == ev_keydown) ret = ev.data1;
+      if (ev.type == ev_keydown) ret = ev.keycode;
     }
   } while (!ret);
   return ret;
