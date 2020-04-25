@@ -27,6 +27,11 @@
 #include "cl_local.h"
 #include "ui.h"
 
+
+static VCvarI ui_click_threshold("ui_click_threshold", "6", "Amount of pixels mouse cursor can move before aborting a click event.", CVAR_Archive);
+static VCvarF ui_click_timeout("ui_click_timeout", "0.1", "Click timeout in seconds.", CVAR_Archive);
+
+
 IMPLEMENT_CLASS(V, RootWidget);
 
 VRootWidget *GRoot;
@@ -301,8 +306,11 @@ bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
     } else {
       const float otime = Focus->MouseDownState[mnum].time;
       Focus->MouseDownState[mnum].time = 0;
-      if (otime > 0 && abs(Focus->MouseDownState[mnum].x-MouseX) <= 6 && abs(Focus->MouseDownState[mnum].y-MouseY) <= 6) {
-        Focus->OnMouseClick((int)msx, (int)msy, Button, Focus);
+      if (otime > 0 && (ui_click_timeout.asFloat() <= 0 || ct-otime < ui_click_timeout.asFloat())) {
+        const int th = ui_click_threshold.asInt();
+        if (th < 0 || (abs(Focus->MouseDownState[mnum].x-MouseX) <= th && abs(Focus->MouseDownState[mnum].y-MouseY) <= th)) {
+          Focus->OnMouseClick((int)msx, (int)msy, Button, Focus);
+        }
       }
     }
   }
