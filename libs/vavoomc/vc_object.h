@@ -229,36 +229,43 @@ struct event_t {
   VObject *dest;
   vuint32 modflags;
 
-  inline bool isEaten () const { return !!(flags&EFlag_Eaten); }
-  inline void setEaten () { flags |= EFlag_Eaten; }
+  inline bool isEaten () const noexcept { return !!(flags&EFlag_Eaten); }
+  inline void setEaten () noexcept { flags |= EFlag_Eaten; }
 
-  inline bool isCancelled () const { return !!(flags&EFlag_Cancelled); }
-  inline void setCancelled () { flags |= EFlag_Cancelled; }
+  inline bool isCancelled () const noexcept { return !!(flags&EFlag_Cancelled); }
+  inline void setCancelled () noexcept { flags |= EFlag_Cancelled; }
 
-  inline bool isEatenOrCancelled () const { return !!(flags&(EFlag_Eaten|EFlag_Cancelled)); }
+  inline bool isEatenOrCancelled () const noexcept { return !!(flags&(EFlag_Eaten|EFlag_Cancelled)); }
 
-  inline bool isBubbling () const { return !!(flags&EFlag_Bubbling); }
-  inline void setBubbling () { flags |= EFlag_Bubbling; }
-  inline void resetBubbling () { flags &= ~EFlag_Bubbling; }
+  inline bool isBubbling () const noexcept { return !!(flags&EFlag_Bubbling); }
+  inline void setBubbling () noexcept { flags |= EFlag_Bubbling; }
+  inline void resetBubbling () noexcept { flags &= ~EFlag_Bubbling; }
 
-  inline bool isCtrlDown () const { return !!(modflags&bCtrl); }
-  inline bool isAltDown () const { return !!(modflags&bAlt); }
-  inline bool isShiftDown () const { return !!(modflags&bShift); }
-  inline bool isHyperDown () const { return !!(modflags&bHyper); }
+  inline bool isCtrlDown () const noexcept { return !!(modflags&bCtrl); }
+  inline bool isAltDown () const noexcept { return !!(modflags&bAlt); }
+  inline bool isShiftDown () const noexcept { return !!(modflags&bShift); }
+  inline bool isHyperDown () const noexcept { return !!(modflags&bHyper); }
 
-  inline bool isLMBDown () const { return !!(modflags&bLMB); }
-  inline bool isMMBDown () const { return !!(modflags&bMMB); }
-  inline bool isRMBDown () const { return !!(modflags&bRMB); }
+  inline bool isLMBDown () const noexcept { return !!(modflags&bLMB); }
+  inline bool isMMBDown () const noexcept { return !!(modflags&bMMB); }
+  inline bool isRMBDown () const noexcept { return !!(modflags&bRMB); }
 
-  inline bool isMBDown (int index) const { return (index >= 0 && index <= 2 ? !!(modflags&(bLMB<<(index&0x0f))) : false); }
+  inline bool isMBDown (int index) const noexcept { return (index >= 0 && index <= 2 ? !!(modflags&(bLMB<<(index&0x0f))) : false); }
 
-  inline bool isLCtrlDown () const { return !!(modflags&bCtrlLeft); }
-  inline bool isLAltDown () const { return !!(modflags&bAltLeft); }
-  inline bool isLShiftDown () const { return !!(modflags&bShiftLeft); }
+  inline bool isLCtrlDown () const noexcept { return !!(modflags&bCtrlLeft); }
+  inline bool isLAltDown () const noexcept { return !!(modflags&bAltLeft); }
+  inline bool isLShiftDown () const noexcept { return !!(modflags&bShiftLeft); }
 
-  inline bool isRCtrlDown () const { return !!(modflags&bCtrlRight); }
-  inline bool isRAltDown () const { return !!(modflags&bAltRight); }
-  inline bool isRShiftDown () const { return !!(modflags&bShiftRight); }
+  inline bool isRCtrlDown () const noexcept { return !!(modflags&bCtrlRight); }
+  inline bool isRAltDown () const noexcept { return !!(modflags&bAltRight); }
+  inline bool isRShiftDown () const noexcept { return !!(modflags&bShiftRight); }
+
+  inline bool isAnyMouseEvent () const noexcept {
+    return
+      type == ev_mouse ||
+      type == ev_uimouse ||
+      ((type == ev_keydown || type == ev_keyup) && (keycode >= K_MOUSE_FIRST && keycode <= K_MOUSE_LAST));
+  }
 };
 
 
