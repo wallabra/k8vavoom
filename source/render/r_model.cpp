@@ -519,7 +519,7 @@ static float ParseFloatWithDefault (VXmlNode *SN, const char *fieldname, float d
 static VState *FindClassStateByIndex (VClass *cls, int idx) {
   if (!cls) return nullptr;
   for (VState *s = cls->States; s; s = s->Next) {
-    if (s->InClassIndex == idx) return s;
+    if (s->InClassIndex == idx && (s->Frame&VState::FF_SKIPMODEL) == 0) return s;
   }
   return nullptr;
 }
@@ -532,14 +532,14 @@ static VState *FindClassStateByIndex (VClass *cls, int idx) {
 //  inexisting sprites are valid!
 //
 //==========================================================================
-static bool IsValidSpriteFrame (int lump, VName sprname, int sprframe, bool iwadonly, bool thiswadonly) {
+static bool IsValidSpriteFrame (int lump, VName sprname, int sprframe, bool iwadonly, bool thiswadonly, bool prevvalid=true) {
   if (lump < 0) return true;
   int sprindex = VClass::FindSprite(sprname, false); /* don't append */
-  if (sprindex <= 0) return true;
+  if (sprindex <= 1) return prevvalid; // <0: not found; 0: tnt1; 1: ----
   SpriteTexInfo txnfo;
-  if (!R_GetSpriteTextureInfo(&txnfo, sprindex, sprframe)) return true;
+  if (!R_GetSpriteTextureInfo(&txnfo, sprindex, sprframe)) return prevvalid;
   VTexture *basetex = GTextureManager[txnfo.texid];
-  if (!basetex) return true;
+  if (!basetex) return prevvalid;
   if (iwadonly && !W_IsIWADLump(basetex->SourceLump)) return false;
   if (thiswadonly && W_LumpFile(basetex->SourceLump) != W_LumpFile(lump)) return false;
   return true;
@@ -553,10 +553,10 @@ static bool IsValidSpriteFrame (int lump, VName sprname, int sprframe, bool iwad
 //  inexisting states/sprites are valid!
 //
 //==========================================================================
-static bool IsValidSpriteState (int lump, VState *state, bool iwadonly, bool thiswadonly) {
-  if (lump < 0) return true;
-  if (!state) return true;
-  return IsValidSpriteFrame(lump, state->SpriteName, (state->Frame&VState::FF_FRAMEMASK), iwadonly, thiswadonly);
+static bool IsValidSpriteState (int lump, VState *state, bool iwadonly, bool thiswadonly, bool prevvalid=true) {
+  if (lump < 0) return prevvalid;
+  if (!state) return prevvalid;
+  return IsValidSpriteFrame(lump, state->SpriteName, (state->Frame&VState::FF_FRAMEMASK), iwadonly, thiswadonly, prevvalid);
 }
 
 
@@ -730,6 +730,7 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
 
     bool hasOneAll = false;
     bool hasOthers = false;
+    bool prevValid = true;
 
     // process frames
     for (VXmlNode *N = CN->FindChild("state"); N; N = N->FindNext()) {
@@ -760,11 +761,20 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
         lastIndex = ParseIntWithDefault(N, "last_index", lastIndex);
         F.sprite = NAME_None;
         F.frame = -1;
+        /*
+        {
+          VState *dbgst = FindClassStateByIndex(xcls, F.Number);
+          if (dbgst) GCon->Logf(NAME_Warning, "%s:%s:%d: %s (%s %c)", *Mdl->Name, *Cls->Name, F.Number, *dbgst->Loc.toStringNoCol(), *dbgst->SpriteName, (dbgst->Frame&VState::FF_FRAMEMASK)+'A');
+        }
+        */
         if (Cls->iwadonly || Cls->thiswadonly) {
-          if (!xcls || !IsValidSpriteState(lump, FindClassStateByIndex(xcls, F.Number), Cls->iwadonly, Cls->thiswadonly)) {
+          if (!xcls || !IsValidSpriteState(lump, FindClassStateByIndex(xcls, F.Number), Cls->iwadonly, Cls->thiswadonly, prevValid)) {
+            prevValid = false;
             F.disabled = true;
             GCon->Logf(NAME_Warning, "skipped model '%s' class '%s' state #%d due to iwadonly restriction", *Mdl->Name, *Cls->Name, F.Number);
           }
+        } else {
+          prevValid = true;
         }
       } else if (N->HasAttribute("sprite") && N->HasAttribute("sprite_frame")) {
         VName sprname = VName(*VStr(N->GetAttribute("sprite")).toLowerCase());
@@ -780,10 +790,13 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
         F.frame = sfr;
         // check sprite frame validity
         if (Cls->iwadonly || Cls->thiswadonly) {
-          if (!IsValidSpriteFrame(lump, sprname, F.frame, Cls->iwadonly, Cls->thiswadonly)) {
+          if (!IsValidSpriteFrame(lump, sprname, F.frame, Cls->iwadonly, Cls->thiswadonly, prevValid)) {
+            prevValid = false;
             F.disabled = true;
             GCon->Logf(NAME_Warning, "skipped model '%s' class '%s' frame '%s%C' due to iwadonly restriction", *Mdl->Name, *Cls->Name, *sprname, sprframe[0]);
           }
+        } else {
+          prevValid = true;
         }
       } else {
         Sys_Error("Model '%s' has invalid state", *Mdl->Name);
@@ -818,9 +831,12 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
           ffr.copyFrom(F);
           ffr.Number = cfidx;
           if (Cls->iwadonly || Cls->thiswadonly) {
-            if (!xcls || !IsValidSpriteState(lump, FindClassStateByIndex(xcls, ffr.Number), Cls->iwadonly, Cls->thiswadonly)) {
+            if (!xcls || !IsValidSpriteState(lump, FindClassStateByIndex(xcls, ffr.Number), Cls->iwadonly, Cls->thiswadonly, prevValid)) {
+              prevValid = false;
               ffr.disabled = true;
               GCon->Logf(NAME_Warning, "skipped model '%s' class '%s' state #%d due to iwadonly restriction", *Mdl->Name, *Cls->Name, ffr.Number);
+            } else {
+              prevValid = true;
             }
           }
         }
