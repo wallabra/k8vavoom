@@ -81,11 +81,9 @@ static void AppendSurfaces (segpart_t *sp, surface_t *newsurfs) {
 //==========================================================================
 void VRenderLevelShared::SetupSky () {
   skyheight = -99999.0f;
-  for (int i = 0; i < Level->NumSectors; ++i) {
-    if (Level->Sectors[i].ceiling.pic == skyflatnum &&
-        Level->Sectors[i].ceiling.maxz > skyheight)
-    {
-      skyheight = Level->Sectors[i].ceiling.maxz;
+  for (auto &&sec : Level->allSectors()) {
+    if (sec.ceiling.pic == skyflatnum && sec.ceiling.maxz > skyheight) {
+      skyheight = sec.ceiling.maxz;
     }
   }
   // make it a bit higher to avoid clipping of the sprites
@@ -2071,9 +2069,9 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   SetupSky();
 
   // set up fake floors
-  for (int i = 0; i < Level->NumSectors; ++i) {
-    if (Level->Sectors[i].heightsec || Level->Sectors[i].deepref) {
-      SetupFakeFloors(&Level->Sectors[i]);
+  for (auto &&sec : Level->allSectors()) {
+    if (sec.heightsec || sec.deepref) {
+      SetupFakeFloors(&sec);
     }
   }
 
@@ -2086,19 +2084,18 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   int count = 0;
   int dscount = 0;
   int spcount = 0;
-  subsector_t *sub = &Level->Subsectors[0];
-  for (int i = Level->NumSubsectors; i--; ++sub) {
-    if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
+  for (auto &&sub : Level->allSubsectors()) {
+    if (!sub.sector->linecount) continue; // skip sectors containing original polyobjs
     count += 4*2; //k8: dunno
-    for (sec_region_t *reg = sub->sector->eregions; reg; reg = reg->next) {
+    for (sec_region_t *reg = sub.sector->eregions; reg; reg = reg->next) {
       ++count;
-      dscount += sub->numlines;
-      if (sub->HasPObjs()) {
-        for (auto &&it : sub->PObjFirst()) dscount += it.value()->numsegs; // polyobj
+      dscount += sub.numlines;
+      if (sub.HasPObjs()) {
+        for (auto &&it : sub.PObjFirst()) dscount += it.value()->numsegs; // polyobj
       }
-      for (int j = 0; j < sub->numlines; ++j) spcount += CountSegParts(&Level->Segs[sub->firstline+j]);
-      if (sub->HasPObjs()) {
-        for (auto &&it : sub->PObjFirst()) {
+      for (int j = 0; j < sub.numlines; ++j) spcount += CountSegParts(&Level->Segs[sub.firstline+j]);
+      if (sub.HasPObjs()) {
+        for (auto &&it : sub.PObjFirst()) {
           polyobj_t *pobj = it.value();
           seg_t *const *polySeg = pobj->segs;
           for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) spcount += CountSegParts(*polySeg);
@@ -2125,8 +2122,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   AllocatedSegParts = pspart;
 
   // create sector surfaces
-  sub = &Level->Subsectors[0];
-  for (int i = Level->NumSubsectors; i--; ++sub) {
+  for (auto &&it : Level->allSubsectorsIdx()) {
+    subsector_t *sub = it.value();
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
 
     TSecPlaneRef main_floor = sub->sector->eregions->efloor;
@@ -2176,7 +2173,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 
       sreg->count = sub->numlines;
       if (ridx == 0 && sub->HasPObjs()) {
-        for (auto &&it : sub->PObjFirst()) sreg->count += it.value()->numsegs; // polyobj
+        for (auto &&poit : sub->PObjFirst()) sreg->count += poit.value()->numsegs; // polyobj
       }
       if (pdsLeft < sreg->count) Sys_Error("out of drawsegs in surface creator");
       sreg->lines = pds;
@@ -2187,8 +2184,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       if (ridx == 0 && sub->HasPObjs()) {
         // polyobj
         int j = sub->numlines;
-        for (auto &&it : sub->PObjFirst()) {
-          polyobj_t *pobj = it.value();
+        for (auto &&poit : sub->PObjFirst()) {
+          polyobj_t *pobj = poit.value();
           seg_t **polySeg = pobj->segs;
           for (int polyCount = pobj->numsegs; polyCount--; ++polySeg, ++j) {
             CreateSegParts(sub, &sreg->lines[j], *polySeg, main_floor, main_ceiling, nullptr, true);
@@ -2196,10 +2193,6 @@ void VRenderLevelShared::CreateWorldSurfaces () {
         }
       }
 
-      /*
-      sreg->next = sub->regions;
-      sub->regions = sreg;
-      */
       // proper append
       sreg->next = nullptr;
       if (lastsreg) lastsreg->next = sreg; else sub->regions = sreg;
@@ -2209,7 +2202,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       --sregLeft;
     }
 
-    if (inWorldCreation) R_PBarUpdate("Surfaces", Level->NumSubsectors-i, Level->NumSubsectors);
+    if (inWorldCreation) R_PBarUpdate("Surfaces", it.index(), Level->NumSubsectors);
   }
 
   InitialWorldUpdate();
