@@ -51,6 +51,13 @@ struct SplitLine {
 }
 
 
+struct VMouseDownInfo {
+  float time; // mouse down time (0 means "isn't down")
+  int x, y; // where it was "downed" (global coords)
+  float localx, localy; // local to widget
+}
+
+
 // parent container widget
 private readonly Widget ParentWidget;
 // linked list of child widgets
@@ -92,12 +99,20 @@ private bool bIsVisible; // is this widget visible?
 bool bTickEnabled; // a flag that enables or disables Tick event
 private bool bIsEnabled; // is this widget enabled and can receive input?
 private bool bIsFocusable; // can this widget be focused?
+private bool bCloseOnBlur; // should this widget be closed if it loses focus? (not implemented yet)
+private bool bIsModal; // is this widget "modal" (i.e. can't loose focus)? (not implemented yet)
+private bool bOnTop; // should this widget be "always on top"? (not implemented yet)
 // mouse button state for click events
+/*
 private readonly bool bLMouseDown;
 private readonly bool bMMouseDown;
 private readonly bool bRMouseDown;
+*/
 // shadowed text
 private readonly bool bTextShadowed;
+
+// mouse down time (0 means "isn't down")
+native VMouseDownInfo MouseDownState[9]; // K_MOUSE1..K_MOUSE9
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -402,16 +417,6 @@ bool OnEvent (ref event_t evt) { return false; }
 
 //==========================================================================
 //
-//  OnMouseMove
-//
-//  Called when mouse moves over this widget.
-//
-//==========================================================================
-bool OnMouseMove (int OldX, int OldY, int NewX, int NewY) { return false; }
-
-
-//==========================================================================
-//
 //  OnMouseEnter
 //
 //  Called when mouse enters this widget.
@@ -432,13 +437,23 @@ void OnMouseLeave () {}
 
 //==========================================================================
 //
+//  OnMouseMove
+//
+//  Called when mouse moves over this widget.
+//
+//==========================================================================
+bool OnMouseMove (int OldX, int OldY, int NewX, int NewY, Widget Dest) { return false; }
+
+
+//==========================================================================
+//
 //  OnMouseDown
 //
 //  Called when mouse button is pressed.
 //  `Button` is `K_MOUSE\d`
 //
 //==========================================================================
-bool OnMouseDown (int X, int Y, int Button) { return false; }
+bool OnMouseDown (int X, int Y, int Button, Widget Dest) { return false; }
 
 
 //==========================================================================
@@ -449,7 +464,7 @@ bool OnMouseDown (int X, int Y, int Button) { return false; }
 //  `Button` is `K_MOUSE\d`
 //
 //==========================================================================
-bool OnMouseUp (int X, int Y, int Button) { return false; }
+bool OnMouseUp (int X, int Y, int Button, Widget Dest) { return false; }
 
 
 //==========================================================================
@@ -460,7 +475,7 @@ bool OnMouseUp (int X, int Y, int Button) { return false; }
 //  `Button` is `K_MOUSE\d`
 //
 //==========================================================================
-void OnMouseClick (int X, int Y, int Button) {}
+void OnMouseClick (int X, int Y, int Button, Widget Dest) {}
 
 
 //==========================================================================

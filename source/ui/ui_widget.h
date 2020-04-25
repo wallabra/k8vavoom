@@ -43,6 +43,13 @@ struct VClipRect {
 };
 
 
+struct VMouseDownInfo {
+  float time; // mouse down time (0 means "isn't down")
+  vint32 x, y; // where it was "downed" (global coords)
+  float localx, localy; // local to widget
+};
+
+
 class VWidget : public VObject {
   DECLARE_CLASS(VWidget, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VWidget)
@@ -92,22 +99,19 @@ protected:
 
   // Booleans
   enum {
-    // is this widget visible?
-    WF_IsVisible    = 1u<<0,
-    // a flag that enables or disables Tick event
-    WF_TickEnabled  = 1u<<1,
-    // is this widget enabled and can receive input
-    WF_IsEnabled    = 1u<<2,
-    // can this widget be focused?
-    WF_IsFocusable  = 1u<<3,
-    // mouse button state for click events
-    WF_LMouseDown   = 1u<<4,
-    WF_MMouseDown   = 1u<<5,
-    WF_RMouseDown   = 1u<<6,
-    // shadowed text
-    WF_TextShadowed = 1u<<7,
+    WF_IsVisible    = 1u<<0, // is this widget visible?
+    WF_TickEnabled  = 1u<<1, // a flag that enables or disables Tick event
+    WF_IsEnabled    = 1u<<2, // is this widget enabled and can receive input
+    WF_IsFocusable  = 1u<<3, // can this widget be focused?
+    WF_CloseOnBlur  = 1u<<4, // should this widget be closed if it loses focus? (not implemented yet)
+    WF_Modal        = 1u<<5, // is this widget "modal" (i.e. can't loose focus)? (not implemented yet)
+    WF_OnTop        = 1u<<6, // should this widget be "always on top"? (not implemented yet)
+    WF_TextShadowed = 1u<<7, // shadowed text
   };
   vuint32 WidgetFlags;
+
+  // mouse down time (0 means "isn't down")
+  VMouseDownInfo MouseDownState[9]; // K_MOUSE1..K_MOUSE9
 
   //VObjectDelegate FocusLost;
   //VObjectDelegate FocusReceived;
@@ -143,6 +147,12 @@ protected:
   inline bool IsTickEnabledFlag () const noexcept { return (WidgetFlags&WF_TickEnabled); }
   inline bool IsEnabledFlag () const noexcept { return (WidgetFlags&WF_IsEnabled); }
   inline bool IsFocusableFlag () const noexcept { return (WidgetFlags&WF_IsFocusable); }
+
+  inline void ResetMouseDowns () noexcept { for (unsigned f = 0; f < 9; ++f) MouseDownState[f].time = 0; }
+
+  // used to calculate local widget coords
+  inline float ScaledXToLocal (const float v) const noexcept { return (v-ClipRect.OriginX)/ClipRect.ScaleX; }
+  inline float ScaledYToLocal (const float v) const noexcept { return (v-ClipRect.OriginY)/ClipRect.ScaleY; }
 
 protected:
   void DrawCharPic (int X, int Y, VTexture *Tex, float Alpha=1.0f, bool shadowed=false);
@@ -296,11 +306,11 @@ public:
   virtual void OnFocusableChanged (bool bNewFocusable) { static VMethodProxy method("OnFocusableChanged"); vobjPutParamSelf(bNewFocusable); VMT_RET_VOID(method); }
 
   virtual void OnFocusReceived () {
-    WidgetFlags &= ~(WF_LMouseDown|WF_MMouseDown|WF_RMouseDown);
+    ResetMouseDowns();
     static VMethodProxy method("OnFocusReceived"); vobjPutParamSelf(); VMT_RET_VOID(method);
   }
   virtual void OnFocusLost () {
-    WidgetFlags &= ~(WF_LMouseDown|WF_MMouseDown|WF_RMouseDown);
+    ResetMouseDowns();
     static VMethodProxy method("OnFocusLost"); vobjPutParamSelf(); VMT_RET_VOID(method);
   }
 
@@ -308,16 +318,16 @@ public:
   virtual void OnPostDraw () { static VMethodProxy method("OnPostDraw"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void Tick (float DeltaTime) { if (DeltaTime <= 0.0f) return; static VMethodProxy method("Tick"); vobjPutParamSelf(DeltaTime); VMT_RET_VOID(method); }
   virtual bool OnEvent (event_t *evt) { static VMethodProxy method("OnEvent"); vobjPutParamSelf(evt); VMT_RET_BOOL(method); }
-  virtual bool OnMouseMove (int OldX, int OldY, int NewX, int NewY) { static VMethodProxy method("OnMouseMove"); vobjPutParamSelf(OldX, OldY, NewX, NewY); VMT_RET_BOOL(method); }
+  virtual bool OnMouseMove (int OldX, int OldY, int NewX, int NewY, VWidget *Dest) { static VMethodProxy method("OnMouseMove"); vobjPutParamSelf(OldX, OldY, NewX, NewY, Dest); VMT_RET_BOOL(method); }
   virtual void OnMouseEnter () { static VMethodProxy method("OnMouseEnter"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void OnMouseLeave () { static VMethodProxy method("OnMouseLeave"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
   // `Button` is `K_MOUSE\d`
-  virtual bool OnMouseDown (int X, int Y, int Button) { static VMethodProxy method("OnMouseDown"); vobjPutParamSelf(X, Y, Button); VMT_RET_BOOL(method); }
-  virtual bool OnMouseUp (int X, int Y, int Button) { static VMethodProxy method("OnMouseUp"); vobjPutParamSelf(X, Y, Button); VMT_RET_BOOL(method); }
+  virtual bool OnMouseDown (int X, int Y, int Button, VWidget *Dest) { static VMethodProxy method("OnMouseDown"); vobjPutParamSelf(X, Y, Button, Dest); VMT_RET_BOOL(method); }
+  virtual bool OnMouseUp (int X, int Y, int Button, VWidget *Dest) { static VMethodProxy method("OnMouseUp"); vobjPutParamSelf(X, Y, Button, Dest); VMT_RET_BOOL(method); }
 
   // `Button` is `K_MOUSE\d`
-  virtual void OnMouseClick (int X, int Y, int Button) { static VMethodProxy method("OnMouseClick"); vobjPutParamSelf(X, Y, Button); VMT_RET_VOID(method); }
+  virtual void OnMouseClick (int X, int Y, int Button, VWidget *Dest) { static VMethodProxy method("OnMouseClick"); vobjPutParamSelf(X, Y, Button, Dest); VMT_RET_VOID(method); }
 
   // script natives
   DECLARE_FUNCTION(NewChild)

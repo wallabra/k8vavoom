@@ -149,7 +149,7 @@ bool VRootWidget::InternalResponder (event_t *evt) {
     }
     // handle mouse buttons
     if ((evt->type == ev_keydown || evt->type == ev_keyup) &&
-        evt->data1 >= K_MOUSE1 && evt->data1 <= K_MOUSE3)
+        evt->data1 >= K_MOUSE1 && evt->data1 <= K_MOUSE9)
     {
       return MouseButtonEvent(evt->data1, (evt->type == ev_keydown));
     }
@@ -217,9 +217,9 @@ void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
   float ScaledNewX = MouseX*SizeScaleX;
   float ScaledNewY = MouseY*SizeScaleY;
 
-  // only bubble
   VWidget *OldFocus = GetWidgetAt(ScaledOldX, ScaledOldY);
 
+  // only bubble
   EventPath.reset();
   for (VWidget *W = OldFocus; W; W = W->ParentWidget) EventPath.append(W);
 
@@ -229,7 +229,7 @@ void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
       (int)((ScaledOldX-W->ClipRect.OriginX)/W->ClipRect.ScaleX),
       (int)((ScaledOldY-W->ClipRect.OriginY)/W->ClipRect.ScaleY),
       (int)((ScaledNewX-W->ClipRect.OriginX)/W->ClipRect.ScaleX),
-      (int)((ScaledNewY-W->ClipRect.OriginY)/W->ClipRect.ScaleY)))
+      (int)((ScaledNewY-W->ClipRect.OriginY)/W->ClipRect.ScaleY), OldFocus))
     {
       break;
     }
@@ -237,14 +237,8 @@ void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
 
   VWidget *NewFocus = GetWidgetAt(ScaledNewX, ScaledNewY);
   if (OldFocus != NewFocus) {
-    if (OldFocus) {
-      OldFocus->WidgetFlags &= ~(WF_LMouseDown|WF_MMouseDown|WF_RMouseDown);
-      OldFocus->OnMouseLeave();
-    }
-    if (NewFocus) {
-      NewFocus->WidgetFlags &= ~(WF_LMouseDown|WF_MMouseDown|WF_RMouseDown);
-      NewFocus->OnMouseEnter();
-    }
+    if (OldFocus) OldFocus->OnMouseLeave();
+    if (NewFocus) NewFocus->OnMouseEnter();
   }
 }
 
@@ -262,24 +256,23 @@ bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
   const float ScaledY = MouseY*SizeScaleY;
   VWidget *Focus = GetWidgetAt(ScaledX, ScaledY);
 
-  if (Down) {
-         if (Button == K_MOUSE1) Focus->WidgetFlags |= WF_LMouseDown;
-    else if (Button == K_MOUSE3) Focus->WidgetFlags |= WF_MMouseDown;
-    else if (Button == K_MOUSE2) Focus->WidgetFlags |= WF_RMouseDown;
-  } else {
-    int LocalX = (int)((ScaledX-Focus->ClipRect.OriginX)/Focus->ClipRect.ScaleX);
-    int LocalY = (int)((ScaledY-Focus->ClipRect.OriginY)/Focus->ClipRect.ScaleY);
-    if (Button == K_MOUSE1 && (Focus->WidgetFlags&WF_LMouseDown)) {
-      Focus->WidgetFlags &= ~WF_LMouseDown;
-      Focus->OnMouseClick(LocalX, LocalY, Button);
-    }
-    if (Button == K_MOUSE3 && (Focus->WidgetFlags&WF_MMouseDown)) {
-      Focus->WidgetFlags &= ~WF_MMouseDown;
-      Focus->OnMouseClick(LocalX, LocalY, Button);
-    }
-    if (Button == K_MOUSE2 && (Focus->WidgetFlags&WF_RMouseDown)) {
-      Focus->WidgetFlags &= ~WF_RMouseDown;
-      Focus->OnMouseClick(LocalX, LocalY, Button);
+  if (Focus && Button >= K_MOUSE1 && Button <= K_MOUSE9) {
+    const float ct = Sys_Time();
+    const unsigned mnum = (unsigned)(Button-K_MOUSE1);
+    const float msx = Focus->ScaledXToLocal(ScaledX);
+    const float msy = Focus->ScaledYToLocal(ScaledY);
+    if (Down) {
+      Focus->MouseDownState[mnum].time = ct;
+      Focus->MouseDownState[mnum].x = MouseX;
+      Focus->MouseDownState[mnum].y = MouseY;
+      Focus->MouseDownState[mnum].localx = msx;
+      Focus->MouseDownState[mnum].localy = msy;
+    } else {
+      const float otime = Focus->MouseDownState[mnum].time;
+      Focus->MouseDownState[mnum].time = 0;
+      if (otime > 0 && abs(Focus->MouseDownState[mnum].x-MouseX) <= 6 && abs(Focus->MouseDownState[mnum].y-MouseY) <= 6) {
+        Focus->OnMouseClick((int)msx, (int)msy, Button, Focus);
+      }
     }
   }
 
@@ -289,12 +282,12 @@ bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
 
   for (auto &&W : EventPath) {
     if (W->IsGoingToDie()) break;
-    int LocalX = (int)((ScaledX-W->ClipRect.OriginX)/W->ClipRect.ScaleX);
-    int LocalY = (int)((ScaledY-W->ClipRect.OriginY)/W->ClipRect.ScaleY);
+    int LocalX = (int)W->ScaledXToLocal(ScaledX);
+    int LocalY = (int)W->ScaledYToLocal(ScaledY);
     if (Down) {
-      if (W->OnMouseDown(LocalX, LocalY, Button)) return true;
+      if (W->OnMouseDown(LocalX, LocalY, Button, Focus)) return true;
     } else {
-      if (W->OnMouseUp(LocalX, LocalY, Button)) return true;
+      if (W->OnMouseUp(LocalX, LocalY, Button, Focus)) return true;
     }
   }
 

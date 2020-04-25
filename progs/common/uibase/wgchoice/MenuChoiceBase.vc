@@ -217,8 +217,9 @@ void DrawBackground () {
 //
 //==========================================================================
 override void OnFocusReceived () {
-  if (MenuScreen(Parent) && MenuScreen(Parent).Selector) {
-    MenuScreen(Parent).Selector.SetOriginCentered(X+CursorXOffs, Y+CursorYOffs, Height);
+  MenuScreen pp = MenuScreen(Parent);
+  if (pp && pp.Selector) {
+    pp.Selector.SetOriginCentered(X+CursorXOffs, Y+CursorYOffs, Height);
   }
   ::OnFocusReceived();
 }
@@ -229,9 +230,32 @@ override void OnFocusReceived () {
 //  OnMouseEnter
 //
 //==========================================================================
-override void OnMouseEnter() {
+override void OnMouseEnter () {
   //SetFocus();
   //LocalSound('menu/cursor');
+}
+
+
+//==========================================================================
+//
+//  OnMouseDown
+//
+//  Called when mouse button is pressed.
+//  `Button` is `K_MOUSE\d`
+//
+//==========================================================================
+override bool OnMouseDown (int X, int Y, int Button, Widget Dest) {
+  if (Dest != self) return false;
+  if (Button != K_MOUSE1) return false;
+  if (!IsFocused) {
+    // remember down time
+    auto tm = MouseDownState[0].time;
+    SetFocus(); // this resets down time
+    // and restore it
+    MouseDownState[0].time = tm;
+    return true;
+  }
+  return false;
 }
 
 
@@ -242,6 +266,14 @@ override void OnMouseEnter() {
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
   if (evt.bubbling && evt.type == ev_keydown) {
+    /*
+    if (evt.keycode == K_MOUSE1 && evt.dest == self) {
+      printdebug("%s: mdown!", self);
+      SetFocus();
+      //evt.eaten = true;
+      //return true;
+    }
+    */
     //printdebug("key=%s (shift=%B)", evt.keycode, evt.bShift);
     if (cvarSession && CvarExists(cvarSession)) {
       if (evt.bShift && evt.keycode == "/") {

@@ -47,8 +47,8 @@ override void OnDraw () {
 //  OnMouseClick
 //
 //==========================================================================
-override void OnMouseClick (int X, int Y, int Button) {
-  if (Button != K_MOUSE1) return;
+override void OnMouseClick (int X, int Y, int Button, Widget Dest) {
+  if (Button != K_MOUSE1 || Dest != self) return;
   GetClGame().PopMenu();
 }
 

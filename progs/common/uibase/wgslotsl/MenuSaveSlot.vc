@@ -181,7 +181,8 @@ override bool OnEvent (ref event_t evt) {
 //  OnMouseClick
 //
 //==========================================================================
-override void OnMouseClick (int X, int Y, int Button) {
+override void OnMouseClick (int X, int Y, int Button, Widget Dest) {
+  if (Dest != self) return;
   SetFocus();
   waitingDeletion = false;
   if (Button == K_MOUSE1) {
