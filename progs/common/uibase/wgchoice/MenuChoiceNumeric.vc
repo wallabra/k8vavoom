@@ -126,18 +126,24 @@ override void OnDraw () {
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
   if (evt.bubbling && evt.type == ev_keydown) {
-    float newValue;
+    float newValue = Value;
     switch (ConvertBoundKey(evt.keycode)) {
       case K_LEFTARROW:
       case K_MWHEELDOWN:
-        newValue = Value-ValueDelta;
-        if (SetNewValue(ref newValue)) LocalSound('menu/change');
-        return true;
+        if (evt.keycode != K_MWHEELDOWN || (IsFocused() && evt.y >= 0 && evt.y < Height)) {
+          newValue = Value-ValueDelta;
+        }
+        break;
       case K_RIGHTARROW:
       case K_MWHEELUP:
-        newValue = Value+ValueDelta;
-        if (SetNewValue(ref newValue)) LocalSound('menu/change');
-        return true;
+        if (evt.keycode != K_MWHEELUP || (IsFocused() && evt.y >= 0 && evt.y < Height)) {
+          newValue = Value+ValueDelta;
+        }
+        break;
+    }
+    if (newValue != Value) {
+      if (SetNewValue(ref newValue)) LocalSound('menu/change');
+      return true;
     }
   }
   return ::OnEvent(evt);

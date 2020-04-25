@@ -133,27 +133,33 @@ override bool OnEvent (ref event_t evt) {
       case K_LEFTARROW:
       //case K_MOUSE2:
       case K_MWHEELUP:
-        if (idx > 0) {
-          --idx;
-          if (isValidValue(idx)) {
-            value = idx;
-            LocalSound('menu/change');
+        if (evt.keycode != K_MWHEELUP || (IsFocused() && evt.y >= 0 && evt.y < Height)) {
+          if (idx > 0) {
+            --idx;
+            if (isValidValue(idx)) {
+              value = idx;
+              LocalSound('menu/change');
+            }
           }
+          return true;
         }
-        return true;
+        break;
       case K_RIGHTARROW:
       case K_ENTER:
       case K_PADENTER:
       //case K_MOUSE1:
       case K_MWHEELDOWN:
-        if (idx < 9) {
-          ++idx;
-          if (isValidValue(idx)) {
-            value = idx;
-            LocalSound('menu/change');
+        if (evt.keycode != K_MWHEELDOWN || (IsFocused() && evt.y >= 0 && evt.y < Height)) {
+          if (idx < 9) {
+            ++idx;
+            if (isValidValue(idx)) {
+              value = idx;
+              LocalSound('menu/change');
+            }
           }
+          return true;
         }
-        return true;
+        break;
     }
   }
 

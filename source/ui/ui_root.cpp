@@ -113,6 +113,24 @@ void VRootWidget::BuildEventPath () {
 
 //==========================================================================
 //
+//  VRootWidget::FixEventCoords
+//
+//==========================================================================
+void VRootWidget::FixEventCoords (VWidget *w, event_t *evt) {
+  if (!evt || !evt->isAnyMouseEvent()) return;
+  if (!w) w = this;
+  if (evt->type != ev_mouse) {
+    evt->x = (int)w->ScaledXToLocal(MouseX*SizeScaleX);
+    evt->y = (int)w->ScaledYToLocal(MouseY*SizeScaleX);
+  } else {
+    evt->dx = (int)(evt->dx*SizeScaleX/w->ClipRect.ScaleX);
+    evt->dy = (int)(evt->dy*SizeScaleY/w->ClipRect.ScaleY);
+  }
+}
+
+
+//==========================================================================
+//
 //  VRootWidget::InternalResponder
 //
 //  this is called by the engine to dispatch the event
@@ -134,19 +152,15 @@ bool VRootWidget::InternalResponder (event_t *evt) {
     evt->dest = EventPath[EventPath.length()-1];
     const int oldx = evt->x;
     const int oldy = evt->y;
-    //const bool fixCoords = (evt->type == ev_mouse || (evt->keycode >= K_MOUSE_FIRST && evt->keycode <= K_MOUSE_LAST && (evt->type == ev_keydown || evt->type == ev_keyup)));
-    const bool fixCoords = (evt->type == ev_uimouse);
 
     // do not process deepest child yet
     for (int f = 0; f < EventPath.length()-1; ++f) {
       VWidget *w = EventPath[f];
       if (w->IsGoingToDie()) return false;
-      if (fixCoords) {
-        evt->x = (int)w->ScaledXToLocal(oldx*SizeScaleX);
-        evt->y = (int)w->ScaledXToLocal(oldx*SizeScaleX);
-      }
+      FixEventCoords(w, evt);
       const bool done = w->OnEvent(evt);
-      if (fixCoords) { evt->x = oldx; evt->y = oldy; }
+      evt->x = oldx;
+      evt->y = oldy;
       if (done) { evt->setEaten(); return true; }
       if (evt->isEatenOrCancelled()) return true;
     }
@@ -156,12 +170,10 @@ bool VRootWidget::InternalResponder (event_t *evt) {
     for (int f = EventPath.length()-1; f >= 0; --f) {
       VWidget *w = EventPath[f];
       if (w->IsGoingToDie()) return false;
-      if (fixCoords) {
-        evt->x = (int)w->ScaledXToLocal(oldx*SizeScaleX);
-        evt->y = (int)w->ScaledXToLocal(oldx*SizeScaleX);
-      }
+      FixEventCoords(w, evt);
       const bool done = w->OnEvent(evt);
-      if (fixCoords) { evt->x = oldx; evt->y = oldy; }
+      evt->x = oldx;
+      evt->y = oldy;
       if (done) { evt->setEaten(); return true; }
       if (evt->isEatenOrCancelled()) return true;
     }
