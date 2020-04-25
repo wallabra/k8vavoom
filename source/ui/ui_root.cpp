@@ -120,45 +120,50 @@ bool VRootWidget::InternalResponder (event_t *evt) {
   BuildEventPath();
   if (EventPath.length() == 0) return false;
 
-  // first, sink
-  evt->resetBubbling();
-  evt->dest = EventPath[EventPath.length()-1];
-  const int oldx = evt->x;
-  const int oldy = evt->y;
-  //const bool fixCoords = (evt->type == ev_mouse || (evt->keycode >= K_MOUSE_FIRST && evt->keycode <= K_MOUSE_LAST && (evt->type == ev_keydown || evt->type == ev_keyup)));
-  const bool fixCoords = (evt->type == ev_uimouse);
+  const bool mouseAllowed = (RootFlags&RWF_MouseEnabled);
 
-  // do not process deepest child yet
-  for (int f = 0; f < EventPath.length()-1; ++f) {
-    VWidget *w = EventPath[f];
-    if (w->IsGoingToDie()) return false;
-    if (fixCoords) {
-      evt->x = (int)w->ScaledXToLocal(oldx*SizeScaleX);
-      evt->y = (int)w->ScaledXToLocal(oldx*SizeScaleX);
-    }
-    const bool done = w->OnEvent(evt);
-    if (fixCoords) { evt->x = oldx; evt->y = oldy; }
-    if (done) { evt->setEaten(); return true; }
-    if (evt->isEatenOrCancelled()) return true;
-  }
+  // do not send mouse events if UI mouse is disabled
+  if (mouseAllowed || !evt->isAnyMouseEvent()) {
+    // first, sink
+    evt->resetBubbling();
+    evt->dest = EventPath[EventPath.length()-1];
+    const int oldx = evt->x;
+    const int oldy = evt->y;
+    //const bool fixCoords = (evt->type == ev_mouse || (evt->keycode >= K_MOUSE_FIRST && evt->keycode <= K_MOUSE_LAST && (evt->type == ev_keydown || evt->type == ev_keyup)));
+    const bool fixCoords = (evt->type == ev_uimouse);
 
-  // now, bubble
-  evt->setBubbling();
-  for (int f = EventPath.length()-1; f >= 0; --f) {
-    VWidget *w = EventPath[f];
-    if (w->IsGoingToDie()) return false;
-    if (fixCoords) {
-      evt->x = (int)w->ScaledXToLocal(oldx*SizeScaleX);
-      evt->y = (int)w->ScaledXToLocal(oldx*SizeScaleX);
+    // do not process deepest child yet
+    for (int f = 0; f < EventPath.length()-1; ++f) {
+      VWidget *w = EventPath[f];
+      if (w->IsGoingToDie()) return false;
+      if (fixCoords) {
+        evt->x = (int)w->ScaledXToLocal(oldx*SizeScaleX);
+        evt->y = (int)w->ScaledXToLocal(oldx*SizeScaleX);
+      }
+      const bool done = w->OnEvent(evt);
+      if (fixCoords) { evt->x = oldx; evt->y = oldy; }
+      if (done) { evt->setEaten(); return true; }
+      if (evt->isEatenOrCancelled()) return true;
     }
-    const bool done = w->OnEvent(evt);
-    if (fixCoords) { evt->x = oldx; evt->y = oldy; }
-    if (done) { evt->setEaten(); return true; }
-    if (evt->isEatenOrCancelled()) return true;
+
+    // now, bubble
+    evt->setBubbling();
+    for (int f = EventPath.length()-1; f >= 0; --f) {
+      VWidget *w = EventPath[f];
+      if (w->IsGoingToDie()) return false;
+      if (fixCoords) {
+        evt->x = (int)w->ScaledXToLocal(oldx*SizeScaleX);
+        evt->y = (int)w->ScaledXToLocal(oldx*SizeScaleX);
+      }
+      const bool done = w->OnEvent(evt);
+      if (fixCoords) { evt->x = oldx; evt->y = oldy; }
+      if (done) { evt->setEaten(); return true; }
+      if (evt->isEatenOrCancelled()) return true;
+    }
   }
 
   // process mouse by root
-  if (RootFlags&RWF_MouseEnabled) {
+  if (mouseAllowed) {
     // handle mouse movement
     if (evt->type == ev_mouse) {
       MouseMoveEvent(MouseX+evt->dx, MouseY-evt->dy);
@@ -170,6 +175,8 @@ bool VRootWidget::InternalResponder (event_t *evt) {
     {
       return MouseButtonEvent(evt->keycode, (evt->type == ev_keydown));
     }
+  } else {
+    if (evt->type == ev_mouse) (void)UpdateMousePosition(MouseX+evt->dx, MouseY-evt->dy);
   }
 
   return false;
@@ -196,12 +203,27 @@ bool VRootWidget::Responder (event_t *evt) {
 //
 //==========================================================================
 void VRootWidget::SetMouse (bool MouseOn) {
-  if (MouseOn) {
-    RootFlags |= RWF_MouseEnabled;
-  } else {
-    RootFlags &= ~RWF_MouseEnabled;
-  }
+  if (MouseOn) RootFlags |= RWF_MouseEnabled; else RootFlags &= ~RWF_MouseEnabled;
   if (!MouseOn && GInput) GInput->RegrabMouse();
+}
+
+
+//==========================================================================
+//
+//  VRootWidget::UpdateMousePosition
+//
+//  returns `true` if the mouse was moved
+//
+//==========================================================================
+bool VRootWidget::UpdateMousePosition (int NewX, int NewY) {
+  const int OldMouseX = MouseX;
+  const int OldMouseY = MouseY;
+
+  // update and clip mouse coordinates against window boundaries
+  MouseX = clampval(NewX, 0, SizeWidth-1);
+  MouseY = clampval(NewY, 0, SizeHeight-1);
+
+  return (OldMouseX != MouseX || OldMouseY != MouseY);
 }
 
 
@@ -214,25 +236,17 @@ void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
   if (IsGoingToDie()) return;
 
   // remember old mouse coordinates
-  int OldMouseX = MouseX;
-  int OldMouseY = MouseY;
+  const int OldMouseX = MouseX;
+  const int OldMouseY = MouseY;
 
   // update mouse position
-  MouseX = NewX;
-  MouseY = NewY;
-
-  // clip mouse coordinates against window boundaries
-  if (MouseX < 0) MouseX = 0; else if (MouseX >= SizeWidth) MouseX = SizeWidth-1;
-  if (MouseY < 0) MouseY = 0; else if (MouseY >= SizeHeight) MouseY = SizeHeight-1;
-
-  // check if mouse position has changed
-  if (MouseX == OldMouseX && MouseY == OldMouseY) return;
+  if (!UpdateMousePosition(NewX, NewY)) return; // not moved
 
   // find widget under old position
-  float ScaledOldX = OldMouseX*SizeScaleX;
-  float ScaledOldY = OldMouseY*SizeScaleY;
-  float ScaledNewX = MouseX*SizeScaleX;
-  float ScaledNewY = MouseY*SizeScaleY;
+  const float ScaledOldX = OldMouseX*SizeScaleX;
+  const float ScaledOldY = OldMouseY*SizeScaleY;
+  const float ScaledNewX = MouseX*SizeScaleX;
+  const float ScaledNewY = MouseY*SizeScaleY;
 
   VWidget *OldFocus = GetWidgetAt(ScaledOldX, ScaledOldY);
 

@@ -52,6 +52,9 @@ private:
 
   void BuildEventPath ();
 
+  // returns `true` if the mouse was moved
+  bool UpdateMousePosition (int NewX, int NewY);
+
   // this is called by the engine to dispatch the event
   bool InternalResponder (event_t *evt);
 
