@@ -139,13 +139,18 @@ enum {
   K_SCROLLLOCK,
   K_PAUSE,
 
-  K_MOUSE1, K_MOUSE2, K_MOUSE3, K_MOUSE4, K_MOUSE5,
+  K_MOUSE1, // left
+  K_MOUSE2, // right
+  K_MOUSE3, // middle
+  K_MOUSE4, // x1
+  K_MOUSE5, // x2
   K_MOUSE6, K_MOUSE7, K_MOUSE8, K_MOUSE9,
   K_MWHEELUP, K_MWHEELDOWN,
 
   K_JOY1, K_JOY2, K_JOY3, K_JOY4, K_JOY5, K_JOY6, K_JOY7, K_JOY8, K_JOY9,
   K_JOY10, K_JOY11, K_JOY12, K_JOY13, K_JOY14, K_JOY15, K_JOY16,
 
+  // intervals
   K_MOUSE_FIRST = K_MOUSE1,
   K_MOUSE_LAST = K_MWHEELDOWN,
 
@@ -224,7 +229,7 @@ struct event_t {
   // for ev_mouse
   alias dx = data2;
   alias dy = data3;
-  // for ev_uimouse
+  // for ev_uimouse, mouse button down/up
   alias x = data2;
   alias y = data3;
   // for focus
