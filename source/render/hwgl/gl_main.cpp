@@ -372,6 +372,10 @@ VOpenGLDrawer::VOpenGLDrawer ()
   //cameraFBO[1].mOwner = nullptr;
 
   depthMaskSP = 0;
+
+  vboSprite = 0;
+  vboSky = 0;
+  vboSkyNumVerts = 0;
 }
 
 
@@ -610,6 +614,17 @@ void VOpenGLDrawer::ReactivateCurrentFBO () {
 //
 //==========================================================================
 void VOpenGLDrawer::DeinitResolution () {
+  // delete VBOs
+  if (vboSprite) {
+    p_glDeleteBuffersARB(1, &vboSprite);
+    vboSprite = 0;
+  }
+  if (vboSky) {
+    p_glDeleteBuffersARB(1, &vboSky);
+    vboSky = 0;
+  }
+  vboSkyNumVerts = 0;
+  // FBOs
   if (currentActiveFBO != nullptr) {
     currentActiveFBO = nullptr;
     ReactivateCurrentFBO();
@@ -943,6 +958,23 @@ void VOpenGLDrawer::InitResolution () {
   wipeFBO.createTextureOnly(this, ScreenWidth, ScreenHeight);
 
   mainFBO.activate();
+
+  // create VBO for sprites
+  vassert(vboSprite == 0);
+  GLDRW_RESET_ERROR();
+  p_glGenBuffersARB(1, &vboSprite);
+  if (vboSprite == 0) Sys_Error("OpenGL: cannot create VBO for sprites");
+  GLDRW_CHECK_ERROR("VBO: glGenBuffersARB");
+  // reserve room for 4 vertices
+  {
+    p_glBindBufferARB(GL_ARRAY_BUFFER, vboSprite);
+    SpriteVertex buf[4];
+    int len = (int)sizeof(SpriteVertex)*4;
+    memset((void *)buf, 0, sizeof(buf));
+    p_glBufferDataARB(GL_ARRAY_BUFFER, len, buf, /*GL_STREAM_DRAW*/GL_DYNAMIC_DRAW);
+    p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+    GLDRW_CHECK_ERROR("VBO: sprite VBO");
+  }
 
   // init some defaults
   glBindTexture(GL_TEXTURE_2D, 0);

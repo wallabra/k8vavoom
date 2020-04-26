@@ -629,6 +629,12 @@ private:
   };
 
 protected:
+  // for sprite VBOs
+  struct __attribute__((packed)) SpriteVertex {
+    float x, y, z, s, t;
+  };
+
+protected:
   vuint8 *tmpImgBuf0;
   vuint8 *tmpImgBuf1;
   int tmpImgBufSize;
@@ -679,6 +685,14 @@ protected:
 
   TArray<GLhandleARB> CreatedShaderObjects;
   TArray<VMeshModel *> UploadedModels;
+
+  // VBO for sprite rendering
+  GLuint vboSprite;
+
+  // VBO for sky rendering (created lazily, because we don't know the proper size initially)
+  GLuint vboSky;
+  int vboSkyNumVerts;
+  TArray<SpriteVertex> vboSkyVerts;
 
   // console variables
   static VCvarI texture_filter;

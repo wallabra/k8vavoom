@@ -529,9 +529,7 @@ typedef void (APIENTRY *glGenerateMipmap_t) (GLenum target);
 
   //VGLAPIPTR(glDrawRangeElementsEXT, true);
   VGLAPIPTR(glDrawRangeElements, true);
-  #ifdef GL4ES_HACKS
-  VGLAPIPTR(glDrawArrays, true);
-  #endif
+  VGLAPIPTR(glDrawArrays, true); // was only for GL4ES, but now it is always required, and should be available
 
   #if !defined(GL4ES_NO_CONSTRUCTOR) || !defined(VV_GLIMPORTS_PROC)
   VGLAPIPTR(glClipControl, false);

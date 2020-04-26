@@ -160,7 +160,8 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     }
     */
 
-#ifndef GL4ES_HACKS
+/*#ifndef GL4ES_HACKS*/
+#if 0 /* old non-vbo code */
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
@@ -174,36 +175,64 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     }
     glEnd();
 #else
-    struct vbo_struct {
-      float x, y, z, s, t;
-    } *buf = new vbo_struct[surf->count];
-    for (int i = 0; i < surf->count; i++) {
-      buf[i].x = surf->verts[i].x;
-      buf[i].y = surf->verts[i].y;
-      buf[i].z = surf->verts[i].z;
-      buf[i].s = CalcSkyTexCoordS(surf->verts[sidx[i]], tex, offs1);
-      buf[i].t = CalcSkyTexCoordT(surf->verts[i], tex);
+    enum { SurfOverallocate = 32 };
+
+    // grow vertex buffer
+    if (vboSkyVerts.length() < surf->count) vboSkyVerts.setLength(surf->count+SurfOverallocate); // make it "huge", why not?
+
+    // reallocate sky VBO if necessary
+    if (vboSkyNumVerts < surf->count) {
+      p_glDeleteBuffersARB(1, &vboSky);
+      vboSky = 0;
+      // create VBO for sky
+      vassert(vboSky == 0);
+      GLDRW_RESET_ERROR();
+      p_glGenBuffersARB(1, &vboSky);
+      if (vboSky == 0) Sys_Error("OpenGL: cannot create VBO for skies");
+      GLDRW_CHECK_ERROR("VBO: glGenBuffersARB");
+      // reserve room for vertices
+      vboSkyNumVerts = surf->count+SurfOverallocate; // make it "huge", why not?
+      vassert(vboSkyNumVerts <= vboSkyVerts.length());
+      p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
+      int len = (int)sizeof(SpriteVertex)*vboSkyNumVerts;
+      memset((void *)vboSkyVerts.ptr(), 0, (unsigned)len);
+      p_glBufferDataARB(GL_ARRAY_BUFFER, len, vboSkyVerts.ptr(), /*GL_STREAM_DRAW*/GL_DYNAMIC_DRAW);
+      p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+      GLDRW_CHECK_ERROR("VBO: sprite VBO");
+
+      GCon->Logf(NAME_Debug, "OpenGL: created sky VBO for %d vertices", vboSkyNumVerts);
     }
 
-    GLuint vbo;
-    p_glGenBuffersARB(1, &vbo);
-    p_glBindBufferARB(GL_ARRAY_BUFFER, vbo);
-    int len = sizeof(vbo_struct) * surf->count;
-    p_glBufferDataARB(GL_ARRAY_BUFFER, len, buf, GL_STREAM_DRAW);
-    p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+    // copy vertices to VBO
+    vassert(vboSkyVerts.length() >= surf->count);
+    SpriteVertex *vbovtx = vboSkyVerts.ptr();
+    const unsigned scount = (unsigned)surf->count;
+    for (unsigned i = 0; i < scount; ++i, ++vbovtx) {
+      vbovtx->x = surf->verts[i].x;
+      vbovtx->y = surf->verts[i].y;
+      vbovtx->z = surf->verts[i].z;
+      vbovtx->s = CalcSkyTexCoordS(surf->verts[sidx[i]], tex, offs1);
+      vbovtx->t = CalcSkyTexCoordT(surf->verts[i], tex);
+    }
 
-    p_glBindBufferARB(GL_ARRAY_BUFFER, vbo);
+    //GLuint vboSky;
+    //p_glGenBuffersARB(1, &vboSky);
+    p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
+    int len = (int)sizeof(SpriteVertex)*surf->count;
+    //p_glBufferDataARB(GL_ARRAY_BUFFER, len, buf, GL_STREAM_DRAW);
+    p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, vboSkyVerts.ptr());
+    //p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+
+    //p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
     p_glEnableVertexAttribArrayARB(SurfSky.loc_Position);
     p_glEnableVertexAttribArrayARB(SurfSky.loc_TexCoord);
-    p_glVertexAttribPointerARB(SurfSky.loc_Position, 3, GL_FLOAT, false, sizeof(vbo_struct), (void*)(0 * sizeof(float)));
-    p_glVertexAttribPointerARB(SurfSky.loc_TexCoord, 2, GL_FLOAT, false, sizeof(vbo_struct), (void*)(3 * sizeof(float)));
+    p_glVertexAttribPointerARB(SurfSky.loc_Position, 3, GL_FLOAT, false, sizeof(SpriteVertex), (void*)(0 * sizeof(float)));
+    p_glVertexAttribPointerARB(SurfSky.loc_TexCoord, 2, GL_FLOAT, false, sizeof(SpriteVertex), (void*)(3 * sizeof(float)));
     p_glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
     p_glDisableVertexAttribArrayARB(SurfSky.loc_Position);
     p_glDisableVertexAttribArrayARB(SurfSky.loc_TexCoord);
     p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
-    p_glDeleteBuffersARB(1, &vbo);
-
-    delete buf;
+    //p_glDeleteBuffersARB(1, &vboSky);
 #endif
   }
 }
