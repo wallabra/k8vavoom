@@ -133,16 +133,62 @@ extern "C" {
     if (sa == sb) return 0;
     const texinfo_t *ta = sa->texinfo;
     const texinfo_t *tb = sb->texinfo;
-    if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
-    if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
     // brightmap textures comes last (so we can avoid switching shaders)
-    if (ta->Tex->Brightmap) {
-      if (!tb->Tex->Brightmap) return 1; // a > b
-    } else if (tb->Tex->Brightmap) {
+    if (ta->Tex && ta->Tex->Brightmap) {
+      if (!tb->Tex || !tb->Tex->Brightmap) return 1; // a > b
+    } else if (tb->Tex && tb->Tex->Brightmap) {
       // ta has no brightmap here
       return -1; // a < b
     }
+    // same brightmap league, sort by glow (glowing comes last)
+    if (sa->gp.isActive()) {
+      if (!sb->gp.isActive()) return 1; // a > b
+    } else if (sb->gp.isActive()) {
+      // b is not glowing here
+      return -1; // a < b
+    }
+    // sort by texture id (just use texture pointer)
+    if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
+    if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+    // and by colormap, why not?
     return ((int)ta->ColorMap)-((int)tb->ColorMap);
+  }
+
+  static inline int compareSurfacesByGlow (const surface_t *sa, const surface_t *sb) {
+    if (sa == sb) return 0;
+    // same brightmap league, sort by glow (glowing comes last)
+    if (sa->gp.isActive()) {
+      if (!sb->gp.isActive()) return 1; // a > b
+    } else if (sb->gp.isActive()) {
+      // b is not glowing here
+      return -1; // a < b
+    }
+    if ((uintptr_t)sa < (uintptr_t)sa) return -1;
+    if ((uintptr_t)sb > (uintptr_t)sb) return 1;
+    return 0;
+  }
+
+  static inline int compareSurfacesByGlowBM (const surface_t *sa, const surface_t *sb) {
+    if (sa == sb) return 0;
+    const texinfo_t *ta = sa->texinfo;
+    const texinfo_t *tb = sb->texinfo;
+    // brightmap textures comes last (so we can avoid switching shaders)
+    if (ta->Tex && ta->Tex->Brightmap) {
+      if (!tb->Tex || !tb->Tex->Brightmap) return 1; // a > b
+    } else if (tb->Tex && tb->Tex->Brightmap) {
+      // ta has no brightmap here
+      return -1; // a < b
+    }
+    // same brightmap league, sort by glow (glowing comes last)
+    if (sa->gp.isActive()) {
+      if (!sb->gp.isActive()) return 1; // a > b
+    } else if (sb->gp.isActive()) {
+      // b is not glowing here
+      return -1; // a < b
+    }
+    if ((uintptr_t)sa < (uintptr_t)sa) return -1;
+    if ((uintptr_t)sb > (uintptr_t)sb) return 1;
+    return 0;
   }
 
   static int drawListItemCmpByTexture (const void *a, const void *b, void *udata) {
@@ -151,6 +197,67 @@ extern "C" {
 
   static int drawListItemCmpByTextureBM (const void *a, const void *b, void *udata) {
     return compareSurfacesByTextureBM(*(const surface_t **)a, *(const surface_t **)b);
+  }
+
+  static int drawListItemCmpByGlow (const void *a, const void *b, void *udata) {
+    return compareSurfacesByGlow(*(const surface_t **)a, *(const surface_t **)b);
+  }
+
+  static int drawListItemCmpByGlowBM (const void *a, const void *b, void *udata) {
+    return compareSurfacesByGlowBM(*(const surface_t **)a, *(const surface_t **)b);
+  }
+}
+
+
+enum {
+  SFST_Normal,
+  SFST_NormalGlow,
+  SFST_BMap,
+  SFST_BMapGlow,
+};
+
+
+//==========================================================================
+//
+//  ClassifySurfaceShader
+//
+//  do not call on invisible or texture-less surfaces
+//
+//==========================================================================
+static VVA_OKUNUSED inline int ClassifySurfaceShader (const surface_t *surf) {
+  if (r_brightmaps && surf->texinfo->Tex->Brightmap) return (surf->gp.isActive() ? SFST_BMapGlow : SFST_BMap);
+  return (surf->gp.isActive() ? SFST_NormalGlow : SFST_Normal);
+}
+
+
+//==========================================================================
+//
+//  CheckListSortValidity
+//
+//==========================================================================
+static VVA_OKUNUSED void CheckListSortValidity (TArray<surface_t *> &list, const char *listname) {
+  const int len = list.length();
+  const surface_t *const *sptr = list.ptr();
+  // find first valid surface
+  int idx;
+  for (idx = 0; idx < len; ++idx, ++sptr) {
+    const surface_t *surf = *sptr;
+    if (surf->plvisible) break;
+  }
+  if (idx >= len) return; // nothing to do
+  int phase = ClassifySurfaceShader(list[idx]);
+  int previdx = idx;
+  // check surfaces
+  for (; idx < len; ++idx, ++sptr) {
+    const surface_t *surf = *sptr;
+    if (!surf->plvisible) continue; // viewer is in back side or on plane
+    vassert(surf->texinfo->Tex);
+    const int newphase = ClassifySurfaceShader(surf);
+    if (newphase < phase) {
+      Sys_Error("CheckListSortValidity (%s): shader order check failed at %d of %d; previdx is %d; prevphase is %d; phase is %d", listname, idx, len, previdx, phase, newphase);
+    }
+    previdx = idx;
+    phase = newphase;
   }
 }
 
@@ -199,6 +306,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
   if (dls.DrawSurfListSolid.length() != 0 || dls.DrawSurfListMasked.length() != 0) {
     // precalculate some crap
     for (auto &&surf : dls.DrawSurfListSolid) {
+      surf->gp.clear();
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) { surf->plvisible = 0; continue; }
       if (surf->drawflags&surface_t::DF_MASKED) { surf->plvisible = 0; continue; } // this should not end up here
@@ -213,6 +321,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     }
 
     for (auto &&surf : dls.DrawSurfListMasked) {
+      surf->gp.clear();
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) { surf->plvisible = 0; continue; }
       if ((surf->drawflags&surface_t::DF_MASKED) == 0) { surf->plvisible = 0; continue; } // this should not end up here
@@ -260,25 +369,30 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     // do not sort surfaces by texture here, because
     // textures will be put later, and BSP sorted them by depth for us
     // other passes can skip surface sorting
-    if (gl_sort_textures) {
+    if (/*gl_sort_textures*/true) {
       // do not sort surfaces with solid textures, as we don't care about textures here
       // this gives us front-to-back rendering
       //timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
       // but sort masked textures, because masked texture configuration can be arbitrary
       if (r_brightmaps) {
         timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTextureBM, nullptr);
+        // sort solid textures too, so we can avoid shader switches
+        // this sorts only by glow and brightmaps
+        timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByGlowBM, nullptr);
       } else {
         timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+        // sort solid textures too, so we can avoid shader switches
+        // this sorts only by glow
+        timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByGlow, nullptr);
       }
+      CheckListSortValidity(dls.DrawSurfListSolid, "solid");
+      CheckListSortValidity(dls.DrawSurfListMasked, "masked");
     }
 
     float prevsflight = -666;
     vuint32 prevlight = 0;
     texinfo_t lastTexinfo;
     lastTexinfo.initLastUsed();
-
-    //bool prevGlowActive[3] = { false, false, false };
-    //GlowParams gp;
 
     enum {
       BMAP_INACTIVE = 1u,
@@ -292,13 +406,158 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
     // solid textures
     if (dls.DrawSurfListSolid.length() != 0) {
+      const int len = dls.DrawSurfListSolid.length();
+      const surface_t *const *sptr = dls.DrawSurfListSolid.ptr();
+      // find first valid surface
+      int idx;
+      for (idx = 0; idx < len; ++idx, ++sptr) {
+        const surface_t *surf = *sptr;
+        if (surf->plvisible) break;
+      }
+
+      // normal textures
+      prevsflight = -666; // force light setup
+      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_Normal) {
+        ShadowsAmbient.Activate();
+        VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
+        if (glTextureEnabled) { glTextureEnabled = false; glDisable(GL_TEXTURE_2D); }
+        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_Normal; ++idx, ++sptr) {
+          const surface_t *surf = *sptr;
+          // setup new light if necessary
+          const float lev = getSurfLightLevel(surf);
+          if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
+            prevsflight = lev;
+            prevlight = surf->Light;
+            ShadowsAmbient.SetLight(
+              ((prevlight>>16)&255)*lev/255.0f,
+              ((prevlight>>8)&255)*lev/255.0f,
+              (prevlight&255)*lev/255.0f, 1.0f);
+          }
+          if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+          currentActiveShader->UploadChangedUniforms();
+          glBegin(GL_TRIANGLE_FAN);
+            for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
+          glEnd();
+          if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+        }
+      }
+
+      // normal glowing textures
+      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_NormalGlow) {
+        ShadowsAmbient.Activate();
+        if (glTextureEnabled) { glTextureEnabled = false; glDisable(GL_TEXTURE_2D); }
+        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_NormalGlow; ++idx, ++sptr) {
+          const surface_t *surf = *sptr;
+          // setup new light if necessary
+          const float lev = getSurfLightLevel(surf);
+          if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
+            prevsflight = lev;
+            prevlight = surf->Light;
+            ShadowsAmbient.SetLight(
+              ((prevlight>>16)&255)*lev/255.0f,
+              ((prevlight>>8)&255)*lev/255.0f,
+              (prevlight&255)*lev/255.0f, 1.0f);
+          }
+          if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+          VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbient, surf->gp);
+          currentActiveShader->UploadChangedUniforms();
+          glBegin(GL_TRIANGLE_FAN);
+            for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
+          glEnd();
+          if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+        }
+      }
+
+      // brightmap textures
+      prevsflight = -666; // force light setup
+      lastTexinfo.resetLastUsed();
+      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_BMap) {
+        ShadowsAmbientBrightmap.Activate();
+        VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
+        if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
+        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_BMap; ++idx, ++sptr) {
+          const surface_t *surf = *sptr;
+          // setup new light if necessary
+          const float lev = getSurfLightLevel(surf);
+          if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
+            prevsflight = lev;
+            prevlight = surf->Light;
+            ShadowsAmbientBrightmap.SetLight(
+              ((prevlight>>16)&255)*lev/255.0f,
+              ((prevlight>>8)&255)*lev/255.0f,
+              (prevlight&255)*lev/255.0f, 1.0f);
+          }
+
+          const texinfo_t *currTexinfo = surf->texinfo;
+          const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
+          if (textureChanded) {
+            lastTexinfo.updateLastUsed(*currTexinfo);
+            SelectTexture(1);
+            SetBrightmapTexture(currTexinfo->Tex->Brightmap);
+            SelectTexture(0);
+            // set normal texture
+            SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+            ShadowsAmbientBrightmap.SetTex(currTexinfo);
+          }
+
+          if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+          currentActiveShader->UploadChangedUniforms();
+          glBegin(GL_TRIANGLE_FAN);
+            for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
+          glEnd();
+          if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+        }
+      }
+
+      // brightmap glow textures
+      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_BMapGlow) {
+        ShadowsAmbientBrightmap.Activate();
+        if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
+        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_BMapGlow; ++idx, ++sptr) {
+          const surface_t *surf = *sptr;
+          // setup new light if necessary
+          const float lev = getSurfLightLevel(surf);
+          if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
+            prevsflight = lev;
+            prevlight = surf->Light;
+            ShadowsAmbientBrightmap.SetLight(
+              ((prevlight>>16)&255)*lev/255.0f,
+              ((prevlight>>8)&255)*lev/255.0f,
+              (prevlight&255)*lev/255.0f, 1.0f);
+          }
+
+          const texinfo_t *currTexinfo = surf->texinfo;
+          const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
+          if (textureChanded) {
+            lastTexinfo.updateLastUsed(*currTexinfo);
+            SelectTexture(1);
+            SetBrightmapTexture(currTexinfo->Tex->Brightmap);
+            SelectTexture(0);
+            // set normal texture
+            SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+            ShadowsAmbientBrightmap.SetTex(currTexinfo);
+          }
+
+          if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+          VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbient, surf->gp);
+          currentActiveShader->UploadChangedUniforms();
+          glBegin(GL_TRIANGLE_FAN);
+            for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
+          glEnd();
+          if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+        }
+      }
+
+      #if 0
       // activate non-brightmap shader
       unsigned char brightmapActiveMask = BMAP_INACTIVE;
       unsigned char prevGlowActiveMask = 0u;
       //ShadowsAmbient.Activate();
       //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
       lastTexinfo.resetLastUsed();
-      for (auto &&surf : dls.DrawSurfListSolid) {
+      const surface_t *const *surfptr = dls.DrawSurfListSolid.ptr();
+      for (int fcnt = dls.DrawSurfListSolid.length(); fcnt != 0; --fcnt, ++surfptr) {
+        const surface_t *surf = *surfptr;
         if (!surf->plvisible) continue; // viewer is in back side or on plane, or some invalid texture, skip it
 
         const texinfo_t *currTexinfo = surf->texinfo;
@@ -469,6 +728,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         glEnd();
         if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
       }
+      #endif
     }
 
     if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
@@ -1130,7 +1390,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   //GLDisableBlend();
 
   // sort by textures
-  if (gl_sort_textures) {
+  if (/*gl_sort_textures*/true) {
     // sort surfaces with solid textures, because here we need them sorted
     if (r_brightmaps) {
       timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTextureBM, nullptr);
