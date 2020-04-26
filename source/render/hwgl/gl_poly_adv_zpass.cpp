@@ -85,14 +85,14 @@ static VVA_OKUNUSED void R_ProjectPointsToPlane (TVec *dest, const TVec *src, un
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, const TVec &LightPos, float Radius) {
   const unsigned vcount = (unsigned)surf->count;
-  const SurfVBOVertex *sverts = surf->verts;
-  const SurfVBOVertex *v = sverts;
+  const SurfVertex *sverts = surf->verts;
+  const SurfVertex *v = sverts;
 
-  static SurfVBOVertex *dest = nullptr;
+  static SurfVertex *dest = nullptr;
   static unsigned destSize = 0;
   if (destSize < vcount+1) {
     destSize = (vcount|0x7f)+1;
-    dest = (SurfVBOVertex *)Z_Realloc(dest, destSize*sizeof(SurfVBOVertex));
+    dest = (SurfVertex *)Z_Realloc(dest, destSize*sizeof(SurfVertex));
   }
 
   // zpass, project to near clip plane

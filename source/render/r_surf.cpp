@@ -193,7 +193,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
     // new sector surface
     ssurf = new sec_surface_t;
     memset((void *)ssurf, 0, sizeof(sec_surface_t));
-    surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(vcount-1)*sizeof(SurfVBOVertex));
+    surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(vcount-1)*sizeof(SurfVertex));
   } else {
     // change sector surface
     // we still may have to recreate it if it was a "sky <-> non-sky" change, so check for it
@@ -254,7 +254,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
     surf->plane = plane;
     surf->count = vcount;
     const seg_t *seg = &Level->Segs[sub->firstline];
-    SurfVBOVertex *dptr = surf->verts;
+    SurfVertex *dptr = surf->verts;
     if (spl.GetNormalZ() < 0.0f) {
       // backward
       for (seg += (vcount-1); vcount--; ++dptr, --seg) {
@@ -282,7 +282,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
     // update z coords
     bool changed = false;
     for (; surf; surf = surf->next) {
-      SurfVBOVertex *svert = surf->verts;
+      SurfVertex *svert = surf->verts;
       for (int i = surf->count; i--; ++svert) {
         const float oldZ = svert->z;
         svert->z = spl.GetPointZ(svert->x, svert->y);
@@ -377,7 +377,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     ssurf->edist = splane.splane->dist;
     for (surface_t *surf = ssurf->surfs; surf; surf = surf->next) {
       surf->plane = plane;
-      SurfVBOVertex *svert = surf->verts;
+      SurfVertex *svert = surf->verts;
       for (int i = surf->count; i--; ++svert) {
         const float oldZ = svert->z;
         svert->z = splane.GetPointZ(svert->x, svert->y);
@@ -412,7 +412,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
 //
 //==========================================================================
 surface_t *VRenderLevelShared::NewWSurf () {
-  enum { WSURFSIZE = sizeof(surface_t)+sizeof(SurfVBOVertex)*(surface_t::MAXWVERTS-1) };
+  enum { WSURFSIZE = sizeof(surface_t)+sizeof(SurfVertex)*(surface_t::MAXWVERTS-1) };
 #if 1
   if (!free_wsurfs) {
     // allocate some more surfs
@@ -489,8 +489,8 @@ surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t 
   surf->next = nullptr;
   surf->count = wvcount;
   surf->typeFlags = typeFlags;
-  //memcpy(surf->verts, wv, wvcount*sizeof(SurfVBOVertex));
-  memset((void *)surf->verts, 0, wvcount*sizeof(SurfVBOVertex));
+  //memcpy(surf->verts, wv, wvcount*sizeof(SurfVertex));
+  memset((void *)surf->verts, 0, wvcount*sizeof(SurfVertex));
   for (int f = 0; f < wvcount; ++f) surf->verts[f].setVec(wv[f]);
 
   if (texinfo->Tex == GTextureManager[skyflatnum]) {
@@ -2737,15 +2737,15 @@ surface_t *VRenderLevelShared::ReallocSurface (surface_t *surfs, int vcount) {
     surf->next = nullptr;
     // realloc first surface (if necessary)
     if (surf->count != vcount) {
-      const size_t msize = sizeof(surface_t)+(vcount-1)*sizeof(SurfVBOVertex);
+      const size_t msize = sizeof(surface_t)+(vcount-1)*sizeof(SurfVertex);
       surf = (surface_t *)Z_Realloc(surf, msize);
       memset((void *)surf, 0, msize);
     } else {
-      memset((void *)surf, 0, sizeof(surface_t)+(vcount-1)*sizeof(SurfVBOVertex));
+      memset((void *)surf, 0, sizeof(surface_t)+(vcount-1)*sizeof(SurfVertex));
     }
     surf->count = vcount;
   } else {
-    surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(vcount-1)*sizeof(SurfVBOVertex));
+    surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(vcount-1)*sizeof(SurfVertex));
     surf->count = vcount;
   }
   return surf;

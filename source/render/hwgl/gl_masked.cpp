@@ -363,7 +363,7 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
   p_glVertexAttribPointerARB(attribPosition, 3, GL_FLOAT, false, sizeof(TVec), (void *)(0*sizeof(float)));
   /*
   p_glEnableVertexAttribArrayARB(attribTexCoord);
-  p_glVertexAttribPointerARB(attribTexCoord, 2, GL_FLOAT, false, sizeof(SurfVBOVertex), (void *)(3*sizeof(float)));
+  p_glVertexAttribPointerARB(attribTexCoord, 2, GL_FLOAT, false, sizeof(SurfVertex), (void *)(3*sizeof(float)));
   */
   //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices);
   p_glDrawRangeElements(GL_TRIANGLES, 0, 5, 6, GL_UNSIGNED_BYTE, indices);

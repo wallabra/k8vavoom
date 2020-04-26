@@ -390,7 +390,7 @@ public:
 
   virtual void BeginTexturedPolys () override;
   virtual void EndTexturedPolys () override;
-  virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const SurfVBOVertex *origverts=nullptr) override;
+  virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const SurfVertex *origverts=nullptr) override;
 
   // automap
   virtual void StartAutomap (bool asOverlay) override;
@@ -691,9 +691,17 @@ protected:
   // VBO for sprite rendering
   GLuint vboSprite;
 
+  // for VBOs
+  struct __attribute__((packed)) SkyVBOVertex {
+    float x, y, z;
+    float s, t;
+  };
+  static_assert(sizeof(SkyVBOVertex) == sizeof(float)*5, "invalid SkyVBOVertex size");
+
   // VBO for sky rendering (created lazily, because we don't know the proper size initially)
   GLuint vboSky;
   int vboSkyNumVerts;
+  TArray<SkyVBOVertex> vboSkyVertBuf;
 
   // console variables
   static VCvarI texture_filter;

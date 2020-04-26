@@ -97,7 +97,7 @@ static inline void spvReserve (int size) {
 static bool CalcSurfMinMax (surface_t *surf, float &outmins, float &outmaxs, const TVec axis/*, const float offs=0.0f*/) {
   float mins = +99999.0f;
   float maxs = -99999.0f;
-  const SurfVBOVertex *vt = surf->verts;
+  const SurfVertex *vt = surf->verts;
   for (int i = surf->count; i--; ++vt) {
     if (!vt->vec().isValid()) {
       GCon->Log(NAME_Warning, "ERROR(SF): invalid surface vertex; THIS IS INTERNAL K8VAVOOM BUG!");
@@ -287,7 +287,7 @@ static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
   TVec *verts1 = spvPoolV1;
   TVec *verts2 = spvPoolV2;
 
-  const SurfVBOVertex *vt = surf->verts;
+  const SurfVertex *vt = surf->verts;
 
   int backSideCount = 0, frontSideCount = 0;
   for (int i = 0; i < surfcount; ++i, ++vt) {
@@ -378,21 +378,21 @@ surface_t *VRenderLevelLightmap::SubdivideFace (surface_t *surf, const TVec &axi
   surface_t *next = surf->next;
   Z_Free(surf);
 
-  surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[1]-1)*sizeof(SurfVBOVertex));
+  surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[1]-1)*sizeof(SurfVertex));
   back->drawflags = drawflags;
   back->typeFlags = typeFlags;
   back->subsector = sub;
   back->seg = seg;
   back->count = clip.vcount[1];
-  memcpy(back->verts, clip.verts[1], back->count*sizeof(SurfVBOVertex));
+  memcpy(back->verts, clip.verts[1], back->count*sizeof(SurfVertex));
 
-  surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[0]-1)*sizeof(SurfVBOVertex));
+  surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[0]-1)*sizeof(SurfVertex));
   front->drawflags = drawflags;
   front->typeFlags = typeFlags;
   front->subsector = sub;
   front->seg = seg;
   front->count = clip.vcount[0];
-  memcpy(front->verts, clip.verts[0], front->count*sizeof(SurfVBOVertex));
+  memcpy(front->verts, clip.verts[0], front->count*sizeof(SurfVertex));
 
   front->next = next;
   back->next = SubdivideFace(front, axis, nextaxis);
@@ -435,7 +435,7 @@ surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis
 
   vassert(clip.vcount[1] <= surface_t::MAXWVERTS);
   surf->count = clip.vcount[1];
-  memcpy(surf->verts, clip.verts[1], surf->count*sizeof(SurfVBOVertex));
+  memcpy(surf->verts, clip.verts[1], surf->count*sizeof(SurfVertex));
 
   surface_t *news = NewWSurf();
   news->drawflags = surf->drawflags;
@@ -443,7 +443,7 @@ surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis
   news->subsector = sub;
   news->seg = seg;
   news->count = clip.vcount[0];
-  memcpy(news->verts, clip.verts[0], news->count*sizeof(SurfVBOVertex));
+  memcpy(news->verts, clip.verts[0], news->count*sizeof(SurfVertex));
 
   news->next = surf->next;
   surf->next = SubdivideSeg(news, axis, nextaxis, seg);

@@ -177,6 +177,8 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
 #else
     enum { SurfOverallocate = 32 };
 
+    if (vboSkyVertBuf.length() < surf->count+SurfOverallocate) vboSkyVertBuf.setLength(surf->count+SurfOverallocate);
+
     // reallocate sky VBO if necessary
     if (vboSkyNumVerts < surf->count) {
       p_glDeleteBuffersARB(1, &vboSky);
@@ -189,22 +191,21 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
       GLDRW_CHECK_ERROR("VBO: glGenBuffersARB");
       // reserve room for vertices
       vboSkyNumVerts = surf->count+SurfOverallocate; // make it "huge", why not?
-      TArray<SurfVBOVertex> tmpbuf;
-      tmpbuf.setLength(vboSkyNumVerts);
-      memset((void *)tmpbuf.ptr(), 0, sizeof(SurfVBOVertex)*vboSkyNumVerts);
+      vassert(vboSkyVertBuf.length() >= vboSkyNumVerts);
+      memset((void *)vboSkyVertBuf.ptr(), 0, sizeof(SkyVBOVertex)*vboSkyNumVerts);
       p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
-      int len = (int)sizeof(SurfVBOVertex)*vboSkyNumVerts;
-      p_glBufferDataARB(GL_ARRAY_BUFFER, len, tmpbuf.ptr(), /*GL_STREAM_DRAW*/GL_DYNAMIC_DRAW);
-      p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+      const int len = (int)sizeof(SkyVBOVertex)*vboSkyNumVerts;
+      p_glBufferDataARB(GL_ARRAY_BUFFER, len, vboSkyVertBuf.ptr(), /*GL_STREAM_DRAW*/GL_DYNAMIC_DRAW);
+      //p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
       GLDRW_CHECK_ERROR("VBO: sprite VBO");
-
       GCon->Logf(NAME_Debug, "OpenGL: created sky VBO for %d vertices", vboSkyNumVerts);
+    } else {
+      p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
     }
 
     // copy vertices to VBO
     const unsigned scount = (unsigned)surf->count;
-    #if 0
-    SurfVBOVertex *vbovtx = vboSkyVerts.ptr();
+    SkyVBOVertex *vbovtx = vboSkyVertBuf.ptr();
     for (unsigned i = 0; i < scount; ++i, ++vbovtx) {
       vbovtx->x = surf->verts[i].x;
       vbovtx->y = surf->verts[i].y;
@@ -212,33 +213,18 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
       vbovtx->s = CalcSkyTexCoordS(surf->verts[sidx[i]].vec(), tex, offs1);
       vbovtx->t = CalcSkyTexCoordT(surf->verts[i].vec(), tex);
     }
-    #else
-    SurfVBOVertex *vbovtx = surf->verts;
-    for (unsigned i = 0; i < scount; ++i, ++vbovtx) {
-      vbovtx->s = CalcSkyTexCoordS(surf->verts[sidx[i]].vec(), tex, offs1);
-      vbovtx->t = CalcSkyTexCoordT(surf->verts[i].vec(), tex);
-    }
-    #endif
 
-    //GLuint vboSky;
-    //p_glGenBuffersARB(1, &vboSky);
-    p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
-    int len = (int)sizeof(SurfVBOVertex)*surf->count;
-    //p_glBufferDataARB(GL_ARRAY_BUFFER, len, buf, GL_STREAM_DRAW);
-    //!p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, vboSkyVerts.ptr());
-    p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, surf->verts);
-    //p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+    const int len = (int)sizeof(SkyVBOVertex)*surf->count;
+    p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, vboSkyVertBuf.ptr());
 
-    //p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
     p_glEnableVertexAttribArrayARB(SurfSky.loc_Position);
     p_glEnableVertexAttribArrayARB(SurfSky.loc_TexCoord);
-    p_glVertexAttribPointerARB(SurfSky.loc_Position, 3, GL_FLOAT, false, sizeof(SurfVBOVertex), (void *)(0*sizeof(float)));
-    p_glVertexAttribPointerARB(SurfSky.loc_TexCoord, 2, GL_FLOAT, false, sizeof(SurfVBOVertex), (void *)(3*sizeof(float)));
+    p_glVertexAttribPointerARB(SurfSky.loc_Position, 3, GL_FLOAT, false, sizeof(SkyVBOVertex), (void *)(0*sizeof(float)));
+    p_glVertexAttribPointerARB(SurfSky.loc_TexCoord, 2, GL_FLOAT, false, sizeof(SkyVBOVertex), (void *)(3*sizeof(float)));
     p_glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
     p_glDisableVertexAttribArrayARB(SurfSky.loc_Position);
     p_glDisableVertexAttribArrayARB(SurfSky.loc_TexCoord);
     p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
-    //p_glDeleteBuffersARB(1, &vboSky);
 #endif
   }
 }

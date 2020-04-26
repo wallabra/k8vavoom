@@ -242,7 +242,7 @@ void VSky::InitOldSky (int Sky1Texture, int Sky2Texture,
       float sina1, cosa1;
       msincos(a1, &sina1, &cosa1);
 
-      SurfVBOVertex *surfverts = &s.surf.verts[0]; //k8: cache it, and silence compiler warnings
+      SurfVertex *surfverts = &s.surf.verts[0]; //k8: cache it, and silence compiler warnings
       surfverts[0].setVec(cosa0*vradius, sina0*vradius, bheight);
       surfverts[1].setVec(cosa0*tradius, sina0*tradius, theight);
       surfverts[2].setVec(cosa1*tradius, sina1*tradius, theight);

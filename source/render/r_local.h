@@ -129,7 +129,7 @@ struct sec_surface_t {
 
 
 struct skysurface_t : surface_t {
-  SurfVBOVertex __verts[3]; // so we have 4 of 'em here
+  SurfVertex __verts[3]; // so we have 4 of 'em here
 };
 
 
@@ -701,7 +701,7 @@ protected:
   bool IsShadowAllowedFor (VEntity *Ent);
 
   // things
-  void QueueTranslucentPoly (surface_t *surf, const SurfVBOVertex *sv, int count, int lump,
+  void QueueTranslucentPoly (surface_t *surf, const SurfVertex *sv, int count, int lump,
                              const RenderStyleInfo &ri, int translation,
                              bool isSprite, const TVec &normal, float pdist,
                              const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority=0,

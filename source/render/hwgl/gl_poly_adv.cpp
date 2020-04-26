@@ -843,8 +843,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   if (gl_smart_reject_shadow_surfaces && !CanSurfaceCastShadow(surf, LightPos, Radius)) return;
 
   const unsigned vcount = (unsigned)surf->count;
-  const SurfVBOVertex *sverts = surf->verts;
-  const SurfVBOVertex *v = sverts;
+  const SurfVertex *sverts = surf->verts;
+  const SurfVertex *v = sverts;
 
   if (spotLight) {
     // reject all surfaces behind a spotlight
@@ -852,7 +852,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
     //      or even better: perform such rejection earilier
     TPlane pl;
     pl.SetPointNormal3D(LightPos, coneDir);
-    const SurfVBOVertex *vv = sverts;
+    const SurfVertex *vv = sverts;
     bool splhit = false;
     /*
     for (unsigned f = vcount; f--; ++vv) {

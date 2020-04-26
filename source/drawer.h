@@ -39,11 +39,10 @@ extern VCvarF r_lights_radius;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// for VBOs
-struct __attribute__((packed)) SurfVBOVertex {
+struct __attribute__((packed)) SurfVertex {
   //TVec vec;
   float x, y, z;
-  float s, t;
+  //float s, t; // nope, we don't need this; sky will be rendered with internal buffer
 
   #ifdef VV_NOT_X86
   // just in case, to avoid align problems
@@ -55,7 +54,7 @@ struct __attribute__((packed)) SurfVBOVertex {
   inline void setVec (const float ax, const float ay, const float az) noexcept { x = ax; y = ay; z = az; }
   inline void setVec (const TVec &v) noexcept { x = v.x; y = v.y; z = v.z; }
 };
-static_assert(sizeof(SurfVBOVertex) == sizeof(float)*5, "invalid SurfVBOVertex size");
+static_assert(sizeof(SurfVertex) == sizeof(float)*3, "invalid SurfVertex size");
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -164,7 +163,7 @@ protected:
 
 public:
   struct trans_sprite_t {
-    /*SurfVBOVertex*/TVec Verts[4]; // only for sprites
+    /*SurfVertex*/TVec Verts[4]; // only for sprites
     union {
       surface_t *surf; // for masked polys and sprites
       VEntity *Ent; // only for alias models
@@ -556,7 +555,7 @@ public:
 
   virtual void BeginTexturedPolys () = 0;
   virtual void EndTexturedPolys () = 0;
-  virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const SurfVBOVertex *origverts=nullptr) = 0;
+  virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const SurfVertex *origverts=nullptr) = 0;
 
   // automap
   virtual void StartAutomap (bool asOverlay) = 0;

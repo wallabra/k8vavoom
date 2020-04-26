@@ -386,7 +386,7 @@ void VOpenGLDrawer::EndTexturedPolys () {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha,
-                                      int vcount, const TVec *verts, const SurfVBOVertex *origverts)
+                                      int vcount, const TVec *verts, const SurfVertex *origverts)
 {
   if (!tinfo || !tinfo->Tex || vcount < 3 || alpha < 0.0f || tinfo->Tex->Type == TEXTYPE_Null) return;
   if (tinfo->Tex != texturedPolyLastTex) {

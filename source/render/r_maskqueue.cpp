@@ -138,7 +138,7 @@ bool R_GetSpriteTextureInfo (SpriteTexInfo *nfo, int sprindex, int sprframeidx) 
 //  VRenderLevelShared::QueueTranslucentPoly
 //
 //==========================================================================
-void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, const SurfVBOVertex *sv,
+void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, const SurfVertex *sv,
   int count, int lump, const RenderStyleInfo &ri, int translation,
   bool isSprite, const TVec &normal, float pdist,
   const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
@@ -174,7 +174,7 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, const SurfVBOVer
 
   trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
   if (isSprite) {
-    //memcpy(spr.Verts, sv, sizeof(SurfVBOVertex)*4);
+    //memcpy(spr.Verts, sv, sizeof(SurfVertex)*4);
     spr.Verts[0] = sv[0].vec();
     spr.Verts[1] = sv[1].vec();
     spr.Verts[2] = sv[2].vec();

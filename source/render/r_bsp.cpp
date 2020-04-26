@@ -34,7 +34,7 @@
 #include "r_local.h"
 #include "../sv_local.h"
 
-#define HORIZON_SURF_SIZE  (sizeof(surface_t)+sizeof(SurfVBOVertex)*3)
+#define HORIZON_SURF_SIZE  (sizeof(surface_t)+sizeof(SurfVertex)*3)
 
 //#define VRBSP_DISABLE_SKY_PORTALS
 
@@ -674,7 +674,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       Surf->Light = (lLev<<24)|LightParams->LightColor;
       Surf->Fade = Fade;
       Surf->count = 4;
-      SurfVBOVertex *svs = &Surf->verts[0];
+      SurfVertex *svs = &Surf->verts[0];
       svs[0].setVec(*seg->v1); svs[0].z = max2(BotZ, HorizonZ);
       svs[1].setVec(*seg->v1); svs[1].z = TopZ;
       svs[2].setVec(*seg->v2); svs[2].z = TopZ;
@@ -709,7 +709,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       Surf->Light = (lLev<<24)|LightParams->LightColor;
       Surf->Fade = Fade;
       Surf->count = 4;
-      SurfVBOVertex *svs = &Surf->verts[0];
+      SurfVertex *svs = &Surf->verts[0];
       svs[0].setVec(*seg->v1); svs[0].z = BotZ;
       svs[1].setVec(*seg->v1); svs[1].z = min2(TopZ, HorizonZ);
       svs[2].setVec(*seg->v2); svs[2].z = min2(TopZ, HorizonZ);
