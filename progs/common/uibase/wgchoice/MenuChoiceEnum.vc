@@ -319,11 +319,11 @@ void addItem (string text, bool current) {
   SetSize(wdt+8, hgt+8);
 
   int x0 = xbase-1;
-  if (x0+wdt+8 > Parent.Width) x0 = Parent.Width-wdt-8;
+  if (x0+wdt+10 > Parent.Width) x0 = Parent.Width-wdt-10;
   if (x0 < 0) x0 = 0;
 
   int y0 = ybase-1;
-  if (y0+hgt+8 > Parent.Height) y0 = Parent.Height-hgt-8;
+  if (y0+hgt+10 > Parent.Height) y0 = Parent.Height-hgt-10;
   if (y0 < 0) y0 = 0;
 
   SetOrigin(x0, y0);
