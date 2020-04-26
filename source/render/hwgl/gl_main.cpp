@@ -101,10 +101,11 @@ VCvarS gl_dbg_advlight_color("gl_dbg_advlight_color", "0xff7f7f", "Color for deb
 VCvarB gl_dbg_wireframe("gl_dbg_wireframe", false, "Render wireframe level?", CVAR_PreInit);
 
 #ifdef GL4ES_HACKS
-VCvarB gl_dbg_fbo_blit_with_texture("gl_dbg_fbo_blit_with_texture", true, "Always blit FBOs using texture mapping?", CVAR_PreInit);
+# define FBO_WITH_TEXTURE_DEFAULT  true
 #else
-VCvarB gl_dbg_fbo_blit_with_texture("gl_dbg_fbo_blit_with_texture", false, "Always blit FBOs using texture mapping?", CVAR_PreInit);
+# define FBO_WITH_TEXTURE_DEFAULT  false
 #endif
+VCvarB gl_dbg_fbo_blit_with_texture("gl_dbg_fbo_blit_with_texture", FBO_WITH_TEXTURE_DEFAULT, "Always blit FBOs using texture mapping?", CVAR_PreInit);
 
 VCvarB r_brightmaps("r_brightmaps", true, "Allow brightmaps?", CVAR_Archive);
 VCvarB r_brightmaps_sprite("r_brightmaps_sprite", true, "Allow sprite brightmaps?", CVAR_Archive);
@@ -746,18 +747,16 @@ void VOpenGLDrawer::InitResolution () {
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max texture image units: %d", tmp);
     if (tmp < 4) Sys_Error("OpenGL: your GPU must support at least 4 texture samplers, but it has only %d", tmp);
-#ifndef GL4ES_HACKS
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &tmp);
+    GCon->Logf(NAME_Init, "Max vertex attribs: %d", tmp);
+    #ifndef GL4ES_HACKS
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max vertex uniform components: %d", tmp);
     glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max varying floats: %d", tmp);
-#endif
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &tmp);
-    GCon->Logf(NAME_Init, "Max vertex attribs: %d", tmp);
-#ifndef GL4ES_HACKS
     glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max fragment uniform components: %d", tmp);
-#endif
+    #endif
   } else {
     Sys_Error("OpenGL FATAL: no shader support");
   }
@@ -973,9 +972,9 @@ void VOpenGLDrawer::InitResolution () {
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glShadeModel(GL_FLAT);
 
-#ifndef GL4ES_HACKS
+  #ifndef GL4ES_HACKS
   glDisable(GL_POLYGON_SMOOTH);
-#endif
+  #endif
 
   // shaders
   shaderHead = nullptr; // just in case
@@ -2564,11 +2563,11 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
     aowner->p_glRenderbufferStorage(GL_RENDERBUFFER, depthStencilFormat, awidth, aheight);
     GLDRW_CHECK_ERROR("create depth/stencil renderbuffer storage");
 
-#ifndef GL4ES_HACKS
+    #ifndef GL4ES_HACKS
     // unbind the render buffer
     aowner->p_glBindRenderbuffer(GL_RENDERBUFFER, 0);
     GLDRW_CHECK_ERROR("FBO: glBindRenderbuffer (1)");
-#endif
+    #endif
 
     // bind it to FBO
     aowner->p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencilRBO);

@@ -529,15 +529,15 @@ typedef void (APIENTRY *glGenerateMipmap_t) (GLenum target);
 
   //VGLAPIPTR(glDrawRangeElementsEXT, true);
   VGLAPIPTR(glDrawRangeElements, true);
-#ifdef GL4ES_HACKS
+  #ifdef GL4ES_HACKS
   VGLAPIPTR(glDrawArrays, true);
-#endif
+  #endif
 
-#if !defined(GL4ES_NO_CONSTRUCTOR) || !defined(VV_GLIMPORTS_PROC)
+  #if !defined(GL4ES_NO_CONSTRUCTOR) || !defined(VV_GLIMPORTS_PROC)
   VGLAPIPTR(glClipControl, false);
   //VGLAPIPTR(glDepthBoundsEXT, false);
   VGLAPIPTR(glDepthBounds, false);
-#endif
+  #endif
   VGLAPIPTR(glBlitFramebuffer, false);
 
   VGLAPIPTR(glGetProgramiv, true);
