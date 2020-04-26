@@ -77,6 +77,27 @@ Set PureLightmapSTSet {
 }
 
 
+Set TextureSpriteSTSet {
+  //forbidden set TextureSTSetSky;
+
+  uniform vec3 SAxis;
+  uniform vec3 TAxis;
+  uniform float TexIW;
+  uniform float TexIH;
+  uniform vec3 TexOrg;
+
+  code [[
+    inline void SetSpriteTex (const TVec &texorg, const TVec &saxis, const TVec &taxis, float tex_iw, float tex_ih) {
+      curr_TexOrg = texorg;
+      curr_SAxis = saxis;
+      curr_TexIW = tex_iw;
+      curr_TAxis = taxis;
+      curr_TexIH = tex_ih;
+    }
+  ]]
+}
+
+
 Set TextureSTSet {
   //forbidden set TextureSTSetSky;
 
@@ -95,6 +116,15 @@ Set TextureSTSet {
       curr_TAxis = textr->taxis;
       curr_TOffs = textr->toffs;
       curr_TexIH = owner->tex_ih;
+    }
+
+    inline void SetSpriteTex (const TVec &texorg, const TVec &saxis, const TVec &taxis, float tex_iw, float tex_ih) {
+      curr_SAxis = saxis;
+      curr_SOffs = 0/*soffs*/;
+      curr_TexIW = tex_iw;
+      curr_TAxis = taxis;
+      curr_TOffs = 0/*toffs*/;
+      curr_TexIH = tex_ih;
     }
   ]]
 }
