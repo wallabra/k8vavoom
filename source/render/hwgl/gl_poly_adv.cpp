@@ -392,12 +392,13 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
     if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "=== ambsurface VBO: maxEls=%d; maxcnt=%d ===", maxEls, vboCounters.length());
 
+    //WARNING! don't forget to flush VBO on each shader uniform change! this includes glow changes (glow values aren't cached yet)
+
     #define SAMB_FLUSH_VBO()  do { \
       if (vboIdx) { \
         if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "flushing ambsurface VBO: vboIdx=%d; vboCountIdx=%d", vboIdx, vboCountIdx); \
         vboAdvSurf.uploadData(vboIdx); \
         vboAdvSurf.setupAttribNoEnable(attribPosition, 3); \
-        /*p_glMultiDrawElements(GL_TRIANGLE_FAN, vboCounters.ptr(), GL_UNSIGNED_INT, vboStartInds.ptr(), (GLsizei)vboCountIdx);*/ \
         p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboStartInds.ptr(), vboCounters.ptr(), (GLsizei)vboCountIdx); \
         vboIdx = 0; \
         vboCountIdx = 0; \
@@ -418,7 +419,6 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           glEnable(GL_CULL_FACE); \
         } \
       } \
-      /*SAMB_FLUSH_VBO();*/ \
       currentActiveShader->UploadChangedUniforms(); \
       /* remember counter */ \
       vboCounters.ptr()[vboCountIdx] = (GLsizei)surf->count; \
@@ -635,11 +635,10 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     }
 
     // deactivate VBO
-    //vboAdvSurf.disableAttrib(attribPosition);
     vboAdvSurf.deactivate();
 
-    if (!lastCullFace) { /*lastCullFace = true;*/ glEnable(GL_CULL_FACE); }
-    if (!glTextureEnabled) { /*glTextureEnabled = true;*/ glEnable(GL_TEXTURE_2D); }
+    if (!lastCullFace) glEnable(GL_CULL_FACE);
+    if (!glTextureEnabled) glEnable(GL_TEXTURE_2D);
   }
 
   // restore depth function
