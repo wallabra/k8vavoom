@@ -175,13 +175,11 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
 
     vboSky.uploadData(surf->count);
 
-    p_glEnableVertexAttribArrayARB(SurfSky.loc_Position);
-    p_glEnableVertexAttribArrayARB(SurfSky.loc_TexCoord);
-    p_glVertexAttribPointerARB(SurfSky.loc_Position, 3, GL_FLOAT, false, sizeof(SkyVBOVertex), (void *)(0*sizeof(float)));
-    p_glVertexAttribPointerARB(SurfSky.loc_TexCoord, 2, GL_FLOAT, false, sizeof(SkyVBOVertex), (void *)(3*sizeof(float)));
+    vboSky.setupAttrib(SurfSky.loc_Position, 3);
+    vboSky.setupAttrib(SurfSky.loc_TexCoord, 2, (ptrdiff_t)(3*sizeof(float)));
     p_glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
-    p_glDisableVertexAttribArrayARB(SurfSky.loc_Position);
-    p_glDisableVertexAttribArrayARB(SurfSky.loc_TexCoord);
+    vboSky.disableAttrib(SurfSky.loc_Position);
+    vboSky.disableAttrib(SurfSky.loc_TexCoord);
 
     vboSky.deactivate();
   }

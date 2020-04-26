@@ -702,6 +702,8 @@ protected:
     inline VBO () noexcept : mOwner(nullptr), vboId(0), maxElems(0), isStream(false), data() {}
     inline VBO (VOpenGLDrawer *aOwner, bool aStream) noexcept : mOwner(aOwner), vboId(0), maxElems(0), isStream(aStream), data() {}
 
+    static size_t getTypeSize () noexcept { return sizeof(T); }
+
     inline void setOwner (VOpenGLDrawer *aOwner) noexcept {
       if (mOwner != aOwner) {
         destroy();
@@ -785,7 +787,7 @@ protected:
     }
 
     // this activates VBO
-    inline void uploadData (int count, const T *buf=nullptr) {
+    inline void uploadData (int count, const T *buf=nullptr) noexcept {
       if (count <= 0) return;
       if (!mOwner) Sys_Error("VBO: trying to upload data to uninitialised VBO");
       ensure(count);
@@ -794,6 +796,21 @@ protected:
       const int len = (int)sizeof(T)*count;
       mOwner->p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, buf);
     }
+
+    // VBO should be activated!
+    // this enables attribute
+    inline void setupAttrib (GLuint attrIdx, int elemCount, ptrdiff_t byteOfs=0) noexcept {
+      mOwner->p_glEnableVertexAttribArrayARB(attrIdx);
+      mOwner->p_glVertexAttribPointerARB(attrIdx, elemCount, GL_FLOAT, GL_FALSE, sizeof(T), (void *)byteOfs);
+    }
+
+    inline void setupAttribNoEnable (GLuint attrIdx, int elemCount, ptrdiff_t byteOfs=0) noexcept {
+      mOwner->p_glVertexAttribPointerARB(attrIdx, elemCount, GL_FLOAT, GL_FALSE, sizeof(T), (void *)byteOfs);
+    }
+
+    // VBO should be activated!
+    inline void enableAttrib (GLuint attrIdx) const noexcept { mOwner->p_glEnableVertexAttribArrayARB(attrIdx); }
+    inline void disableAttrib (GLuint attrIdx) const noexcept { mOwner->p_glDisableVertexAttribArrayARB(attrIdx); }
   };
 
   // VBO for sprite rendering

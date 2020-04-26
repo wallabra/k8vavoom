@@ -136,11 +136,9 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   //vboMaskedSurf.ensure(surf->count);
   vboMaskedSurf.uploadData(surf->count, surf->verts);
 
-  p_glEnableVertexAttribArrayARB(attribPosition);
-  p_glVertexAttribPointerARB(attribPosition, 3, GL_FLOAT, false, sizeof(TVec), (void *)(0*sizeof(float)));
+  vboMaskedSurf.setupAttrib(attribPosition, 3);
   p_glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
-  p_glDisableVertexAttribArrayARB(attribPosition);
-
+  vboMaskedSurf.disableAttrib(attribPosition);
   vboMaskedSurf.deactivate();
 #endif
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
@@ -313,22 +311,14 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
   vboSprite.ensure(4);
   vboSprite.uploadData(4, cv);
 
-  p_glEnableVertexAttribArrayARB(attribPosition);
-  p_glVertexAttribPointerARB(attribPosition, 3, GL_FLOAT, false, sizeof(TVec), (void *)(0*sizeof(float)));
-  /*
-  p_glEnableVertexAttribArrayARB(attribTexCoord);
-  p_glVertexAttribPointerARB(attribTexCoord, 2, GL_FLOAT, false, sizeof(SurfVertex), (void *)(3*sizeof(float)));
-  */
-  //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices);
+  vboSprite.setupAttrib(attribPosition, 3);
   #if 0
   const vuint8 indices[6] = { 0, 1, 2,  0, 2, 3 };
   p_glDrawRangeElements(GL_TRIANGLES, 0, 5, 6, GL_UNSIGNED_BYTE, indices);
   #else
   p_glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
   #endif
-  p_glDisableVertexAttribArrayARB(attribPosition);
-  //p_glDisableVertexAttribArrayARB(attribTexCoord);
-
+  vboSprite.disableAttrib(attribPosition);
   vboSprite.deactivate();
 
   if (resetDepthMask) PopDepthMask();
