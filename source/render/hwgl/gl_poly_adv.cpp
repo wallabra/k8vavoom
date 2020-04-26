@@ -169,7 +169,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       if (surf->count < 3) continue;
       //glBegin(GL_POLYGON);
       glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
       glEnd();
     }
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -322,7 +322,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
         currentActiveShader->UploadChangedUniforms();
         glBegin(GL_TRIANGLE_FAN);
-          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
         glEnd();
         if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
       }
@@ -422,7 +422,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
         currentActiveShader->UploadChangedUniforms();
         glBegin(GL_TRIANGLE_FAN);
-          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
         glEnd();
         if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
       }
@@ -843,8 +843,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   if (gl_smart_reject_shadow_surfaces && !CanSurfaceCastShadow(surf, LightPos, Radius)) return;
 
   const unsigned vcount = (unsigned)surf->count;
-  const TVec *sverts = surf->verts;
-  const TVec *v = sverts;
+  const SurfVBOVertex *sverts = surf->verts;
+  const SurfVBOVertex *v = sverts;
 
   if (spotLight) {
     // reject all surfaces behind a spotlight
@@ -852,15 +852,15 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
     //      or even better: perform such rejection earilier
     TPlane pl;
     pl.SetPointNormal3D(LightPos, coneDir);
-    const TVec *vv = sverts;
+    const SurfVBOVertex *vv = sverts;
     bool splhit = false;
     /*
     for (unsigned f = vcount; f--; ++vv) {
-      if (vv->isInSpotlight(LightPos, coneDir, coneAngle)) { splhit = true; break; }
+      if (vv->vec().isInSpotlight(LightPos, coneDir, coneAngle)) { splhit = true; break; }
     }
     */
     for (unsigned f = vcount; f--; ++vv) {
-      if (!pl.PointOnSide(*vv)) { splhit = true; break; }
+      if (!pl.PointOnSide(vv->vec())) { splhit = true; break; }
     }
     if (!splhit) return;
   }
@@ -884,23 +884,23 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
     // render far cap
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
-      for (unsigned i = vcount; i--; ) glVertex4(v[i], 0);
+      for (unsigned i = vcount; i--; ) glVertex4(v[i].vec(), 0);
     glEnd();
 
     // render near cap
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
-      for (unsigned i = 0; i < vcount; ++i) glVertex(sverts[i]);
+      for (unsigned i = 0; i < vcount; ++i) glVertex(sverts[i].vec());
     glEnd();
 
     // render side caps
     glBegin(GL_TRIANGLE_STRIP);
       for (unsigned i = 0; i < vcount; ++i) {
-        glVertex(sverts[i]);
-        glVertex4(v[i], 0);
+        glVertex(sverts[i].vec());
+        glVertex4(v[i].vec(), 0);
       }
-      glVertex(sverts[0]);
-      glVertex4(v[0], 0);
+      glVertex(sverts[0].vec());
+      glVertex4(v[0].vec(), 0);
     glEnd();
   }
 }
@@ -1032,7 +1032,7 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   //glBegin(GL_POLYGON);
   currentActiveShader->UploadChangedUniforms();
   glBegin(GL_TRIANGLE_FAN);
-    for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+    for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
   glEnd();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 }
@@ -1130,10 +1130,10 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
         for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
           /*
           p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
-            (DotProduct(surf->verts[i], currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
-            (DotProduct(surf->verts[i], currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
+            (DotProduct(surf->verts[i].vec(), currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
+            (DotProduct(surf->verts[i].vec(), currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
           */
-          glVertex(surf->verts[i]);
+          glVertex(surf->verts[i].vec());
         }
       glEnd();
       if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
@@ -1183,10 +1183,10 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
         for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
           /*
           p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
-            (DotProduct(surf->verts[i], currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
-            (DotProduct(surf->verts[i], currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
+            (DotProduct(surf->verts[i].vec(), currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
+            (DotProduct(surf->verts[i].vec(), currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
           */
-          glVertex(surf->verts[i]);
+          glVertex(surf->verts[i].vec());
         }
       glEnd();
       if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
@@ -1260,7 +1260,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
       //glBegin(GL_POLYGON);
       currentActiveShader->UploadChangedUniforms();
       glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
       glEnd();
       if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
     }
@@ -1302,7 +1302,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
       //glBegin(GL_POLYGON);
       currentActiveShader->UploadChangedUniforms();
       glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
       glEnd();
       if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
     }

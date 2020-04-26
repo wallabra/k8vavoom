@@ -97,9 +97,9 @@ static inline void spvReserve (int size) {
 static bool CalcSurfMinMax (surface_t *surf, float &outmins, float &outmaxs, const TVec axis/*, const float offs=0.0f*/) {
   float mins = +99999.0f;
   float maxs = -99999.0f;
-  const TVec *vt = surf->verts;
+  const SurfVBOVertex *vt = surf->verts;
   for (int i = surf->count; i--; ++vt) {
-    if (!vt->isValid()) {
+    if (!vt->vec().isValid()) {
       GCon->Log(NAME_Warning, "ERROR(SF): invalid surface vertex; THIS IS INTERNAL K8VAVOOM BUG!");
       surf->count = 0;
       outmins = outmaxs = 0.0f;
@@ -107,7 +107,7 @@ static bool CalcSurfMinMax (surface_t *surf, float &outmins, float &outmaxs, con
     }
     // ignore offset, we don't need it anymore
     //const float dot = DotProduct(*vt, axis)+offs;
-    const float dot = DotProduct(*vt, axis);
+    const float dot = DotProduct(vt->vec(), axis);
     if (dot < mins) mins = dot;
     if (dot > maxs) maxs = dot;
   }
@@ -287,11 +287,11 @@ static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
   TVec *verts1 = spvPoolV1;
   TVec *verts2 = spvPoolV2;
 
-  const TVec *vt = surf->verts;
+  const SurfVBOVertex *vt = surf->verts;
 
   int backSideCount = 0, frontSideCount = 0;
   for (int i = 0; i < surfcount; ++i, ++vt) {
-    const float dot = DotProduct(*vt, plane.normal)-plane.dist;
+    const float dot = DotProduct(vt->vec(), plane.normal)-plane.dist;
     dots[i] = dot;
          if (dot < -ON_EPSILON) { ++backSideCount; sides[i] = PlaneBack; }
     else if (dot > ON_EPSILON) { ++frontSideCount; sides[i] = PlaneFront; }
@@ -310,19 +310,19 @@ static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
   vt = surf->verts;
   for (int i = 0; i < surfcount; ++i) {
     if (sides[i] == PlaneCoplanar) {
-      clip.verts[0][clip.vcount[0]++] = vt[i];
-      clip.verts[1][clip.vcount[1]++] = vt[i];
+      clip.verts[0][clip.vcount[0]++] = vt[i].vec();
+      clip.verts[1][clip.vcount[1]++] = vt[i].vec();
       continue;
     }
 
     unsigned cvidx = (sides[i] == PlaneFront ? 0 : 1);
-    clip.verts[cvidx][clip.vcount[cvidx]++] = vt[i];
+    clip.verts[cvidx][clip.vcount[cvidx]++] = vt[i].vec();
 
     if (sides[i+1] == PlaneCoplanar || sides[i] == sides[i+1]) continue;
 
     // generate a split point
-    const TVec &p1 = vt[i];
-    const TVec &p2 = vt[(i+1)%surfcount];
+    const TVec &p1 = vt[i].vec();
+    const TVec &p2 = vt[(i+1)%surfcount].vec();
 
     const float dot = dots[i]/(dots[i]-dots[i+1]);
     for (int j = 0; j < 3; ++j) {
@@ -378,21 +378,21 @@ surface_t *VRenderLevelLightmap::SubdivideFace (surface_t *surf, const TVec &axi
   surface_t *next = surf->next;
   Z_Free(surf);
 
-  surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[1]-1)*sizeof(TVec));
+  surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[1]-1)*sizeof(SurfVBOVertex));
   back->drawflags = drawflags;
   back->typeFlags = typeFlags;
   back->subsector = sub;
   back->seg = seg;
   back->count = clip.vcount[1];
-  memcpy(back->verts, clip.verts[1], back->count*sizeof(TVec));
+  memcpy(back->verts, clip.verts[1], back->count*sizeof(SurfVBOVertex));
 
-  surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[0]-1)*sizeof(TVec));
+  surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[0]-1)*sizeof(SurfVBOVertex));
   front->drawflags = drawflags;
   front->typeFlags = typeFlags;
   front->subsector = sub;
   front->seg = seg;
   front->count = clip.vcount[0];
-  memcpy(front->verts, clip.verts[0], front->count*sizeof(TVec));
+  memcpy(front->verts, clip.verts[0], front->count*sizeof(SurfVBOVertex));
 
   front->next = next;
   back->next = SubdivideFace(front, axis, nextaxis);
@@ -435,7 +435,7 @@ surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis
 
   vassert(clip.vcount[1] <= surface_t::MAXWVERTS);
   surf->count = clip.vcount[1];
-  memcpy(surf->verts, clip.verts[1], surf->count*sizeof(TVec));
+  memcpy(surf->verts, clip.verts[1], surf->count*sizeof(SurfVBOVertex));
 
   surface_t *news = NewWSurf();
   news->drawflags = surf->drawflags;
@@ -443,7 +443,7 @@ surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis
   news->subsector = sub;
   news->seg = seg;
   news->count = clip.vcount[0];
-  memcpy(news->verts, clip.verts[0], news->count*sizeof(TVec));
+  memcpy(news->verts, clip.verts[0], news->count*sizeof(SurfVBOVertex));
 
   news->next = surf->next;
   surf->next = SubdivideSeg(news, axis, nextaxis, seg);
@@ -554,7 +554,7 @@ struct SurfaceInfoBlock {
       seg == sfc->seg &&
       plane.normal == sfc->plane.normal &&
       plane.dist == sfc->plane.dist &&
-      vert0 == sfc->verts[0];
+      vert0 == sfc->verts[0].vec();
   }
 
   void initWith (VLevel *Level, const surface_t *sfc) noexcept {
@@ -583,7 +583,7 @@ struct SurfaceInfoBlock {
       lightmap_rgb = nullptr;
     }
     count = sfc->count;
-    vert0 = (sfc->count > 0 ? sfc->verts[0] : TVec(0, 0, 0));
+    vert0 = (sfc->count > 0 ? sfc->verts[0].vec() : TVec(0, 0, 0));
     texturemins[0] = sfc->texturemins[0];
     texturemins[1] = sfc->texturemins[1];
     extents[0] = sfc->extents[0];
@@ -910,7 +910,7 @@ static bool LoadLightSurfaces (VLevel *Level, VStream *strm, surface_t *s, unsig
           (int)(s->seg == sb.seg),
           (int)(s->plane.normal == sb.plane.normal),
           (int)(s->plane.dist == sb.plane.dist),
-          (int)(s->verts[0] == sb.vert0));
+          (int)(s->verts[0].vec() == sb.vert0.vec()));
         #endif
       }
     }

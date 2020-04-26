@@ -85,14 +85,14 @@ static VVA_OKUNUSED void R_ProjectPointsToPlane (TVec *dest, const TVec *src, un
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, const TVec &LightPos, float Radius) {
   const unsigned vcount = (unsigned)surf->count;
-  const TVec *sverts = surf->verts;
-  const TVec *v = sverts;
+  const SurfVBOVertex *sverts = surf->verts;
+  const SurfVBOVertex *v = sverts;
 
-  static TVec *dest = nullptr;
+  static SurfVBOVertex *dest = nullptr;
   static unsigned destSize = 0;
   if (destSize < vcount+1) {
     destSize = (vcount|0x7f)+1;
-    dest = (TVec *)Z_Realloc(dest, destSize*sizeof(TVec));
+    dest = (SurfVBOVertex *)Z_Realloc(dest, destSize*sizeof(SurfVBOVertex));
   }
 
   // zpass, project to near clip plane
@@ -110,13 +110,13 @@ void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, c
   if (ldist <= 0.0f) {
     // on the back, project only if some surface vertices are on the back too
     for (unsigned f = 0; f < vcount; ++f) {
-      const float sdist = znear.PointDistance(sverts[f]);
+      const float sdist = znear.PointDistance(sverts[f].vec());
       if (sdist >= ldist && sdist <= 0.0f) { doProject = true; break; }
     }
   } else {
     // before camera, project only if some surface vertices are nearer (but not on the back)
     for (unsigned f = 0; f < vcount; ++f) {
-      const float sdist = znear.PointDistance(sverts[f]);
+      const float sdist = znear.PointDistance(sverts[f].vec());
       if (sdist <= ldist && sdist >= 0.0f) { doProject = true; break; }
     }
   }
@@ -154,7 +154,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, c
     glBegin(GL_TRIANGLE_FAN);
       for (unsigned f = 0; f < vcount; ++f) {
         //glVertex(dest[f]);
-        TVec vv = (sverts[f]-LightPos).normalised();
+        TVec vv = (sverts[f].vec()-LightPos).normalised();
         vv *= 32767.0f; // kind of infinity
         vv += LightPos;
         glVertex(vv);
@@ -167,7 +167,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, c
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
       for (unsigned f = 0; f < vcount; ++f) {
-        glVertex(sverts[f]);
+        glVertex(sverts[f].vec());
       }
     glEnd();
 #endif
@@ -180,11 +180,11 @@ void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, c
     // render side caps
     glBegin(GL_TRIANGLE_STRIP);
       for (unsigned i = 0; i < vcount; ++i) {
-        glVertex(sverts[i]);
-        glVertex4(v[i], 0);
+        glVertex(sverts[i].vec());
+        glVertex4(v[i].vec(), 0);
       }
-      glVertex(sverts[0]);
-      glVertex4(v[0], 0);
+      glVertex(sverts[0].vec());
+      glVertex4(v[0].vec(), 0);
     glEnd();
   }
 }
@@ -240,7 +240,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, c
     // render near cap (it should be front-facing, so it will do "teh right thing")
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
-      for (unsigned i = 0; i < vcount; ++i) glVertex(sverts[i]);
+      for (unsigned i = 0; i < vcount; ++i) glVertex(sverts[i].vec());
     glEnd();
     {
       glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
@@ -250,8 +250,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, c
       glColor3f(1.0f, 1.0f, 0.0f);
       glBegin(GL_LINES);
         for (unsigned i = 0; i < vcount; ++i) {
-          glVertex(sverts[i]);
-          glVertex(sverts[(i+1)%vcount]);
+          glVertex(sverts[i].vec());
+          glVertex(sverts[(i+1)%vcount].vec());
         }
       glEnd();
       glColor3f(1.0f, 1.0f, 1.0f);

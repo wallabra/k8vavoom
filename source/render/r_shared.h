@@ -177,7 +177,8 @@ struct surface_t {
   surfcache_t *CacheSurf;
   int plvisible; // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
   //vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")
-  TVec verts[1]; // dynamic array
+  /*TVec verts[1];*/ // dynamic array
+  SurfVBOVertex verts[1]; // dynamic array
 
   // to use in renderer
   inline bool IsVisible (const TVec &point) const {

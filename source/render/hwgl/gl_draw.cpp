@@ -386,7 +386,7 @@ void VOpenGLDrawer::EndTexturedPolys () {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha,
-                                      int vcount, const TVec *verts, const TVec *origverts)
+                                      int vcount, const TVec *verts, const SurfVBOVertex *origverts)
 {
   if (!tinfo || !tinfo->Tex || vcount < 3 || alpha < 0.0f || tinfo->Tex->Type == TEXTYPE_Null) return;
   if (tinfo->Tex != texturedPolyLastTex) {
@@ -406,8 +406,8 @@ void VOpenGLDrawer::DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float 
   if (origverts) {
     for (; vcount--; ++verts, ++origverts) {
       glTexCoord2f(
-        (DotProduct(*origverts, tinfo->saxis)+tinfo->soffs)*tex_iw,
-        (DotProduct(*origverts, tinfo->taxis)+tinfo->toffs)*tex_ih);
+        (DotProduct(origverts->vec(), tinfo->saxis)+tinfo->soffs)*tex_iw,
+        (DotProduct(origverts->vec(), tinfo->taxis)+tinfo->toffs)*tex_ih);
       glVertex2f(verts->x, verts->y);
     }
   } else {

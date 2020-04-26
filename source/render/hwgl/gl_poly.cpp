@@ -125,20 +125,20 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
       float s1, s2;
-      CalcSkyTexCoordS2(&s1, &s2, surf->verts[sidx[i]], tex, offs1, offs2);
-      const float t = CalcSkyTexCoordT(surf->verts[i], tex);
+      CalcSkyTexCoordS2(&s1, &s2, surf->verts[sidx[i]].vec(), tex, offs1, offs2);
+      const float t = CalcSkyTexCoordT(surf->verts[i].vec(), tex);
       SurfDSky.SetTexCoordAttr(s1, t);
         /*
-        (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs1)*tex_iw,
-        (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+        (DotProduct(surf->verts[sidx[i]].vec(), tex->saxis)+tex->soffs-offs1)*tex_iw,
+        (DotProduct(surf->verts[i].vec(), tex->taxis)+tex->toffs)*tex_ih);
         */
       SurfDSky.SetTexCoord2Attr(s2, t);
         /*
-        (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs2)*tex_iw,
-        (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+        (DotProduct(surf->verts[sidx[i]].vec(), tex->saxis)+tex->soffs-offs2)*tex_iw,
+        (DotProduct(surf->verts[i].vec(), tex->taxis)+tex->toffs)*tex_ih);
         */
       //SurfDSky.UploadChangedAttrs();
-      glVertex(surf->verts[i]);
+      glVertex(surf->verts[i].vec());
     }
     glEnd();
   } else {
@@ -165,20 +165,17 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-      SurfSky.SetTexCoordAttr(CalcSkyTexCoordS(surf->verts[sidx[i]], tex, offs1), CalcSkyTexCoordT(surf->verts[i], tex));
+      SurfSky.SetTexCoordAttr(CalcSkyTexCoordS(surf->verts[sidx[i]].vec(), tex, offs1), CalcSkyTexCoordT(surf->verts[i].vec(), tex));
         /*
-        (DotProduct(surf->verts[sidx[i]], tex->saxis*tex_scale_x)+(tex->soffs-offs1)*tex_scale_x)*tex_iw,
-        (DotProduct(surf->verts[i], tex->taxis*tex_scale_y)+tex->toffs*tex_scale_y)*tex_ih);
+        (DotProduct(surf->verts[sidx[i]].vec(), tex->saxis*tex_scale_x)+(tex->soffs-offs1)*tex_scale_x)*tex_iw,
+        (DotProduct(surf->verts[i].vec(), tex->taxis*tex_scale_y)+tex->toffs*tex_scale_y)*tex_ih);
         */
       //SurfSky.UploadChangedAttrs();
-      glVertex(surf->verts[i]);
+      glVertex(surf->verts[i].vec());
     }
     glEnd();
 #else
     enum { SurfOverallocate = 32 };
-
-    // grow vertex buffer
-    if (vboSkyVerts.length() < surf->count) vboSkyVerts.setLength(surf->count+SurfOverallocate); // make it "huge", why not?
 
     // reallocate sky VBO if necessary
     if (vboSkyNumVerts < surf->count) {
@@ -192,11 +189,12 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
       GLDRW_CHECK_ERROR("VBO: glGenBuffersARB");
       // reserve room for vertices
       vboSkyNumVerts = surf->count+SurfOverallocate; // make it "huge", why not?
-      vassert(vboSkyNumVerts <= vboSkyVerts.length());
+      TArray<SurfVBOVertex> tmpbuf;
+      tmpbuf.setLength(vboSkyNumVerts);
+      memset((void *)tmpbuf.ptr(), 0, sizeof(SurfVBOVertex)*vboSkyNumVerts);
       p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
-      int len = (int)sizeof(SpriteVertex)*vboSkyNumVerts;
-      memset((void *)vboSkyVerts.ptr(), 0, (unsigned)len);
-      p_glBufferDataARB(GL_ARRAY_BUFFER, len, vboSkyVerts.ptr(), /*GL_STREAM_DRAW*/GL_DYNAMIC_DRAW);
+      int len = (int)sizeof(SurfVBOVertex)*vboSkyNumVerts;
+      p_glBufferDataARB(GL_ARRAY_BUFFER, len, tmpbuf.ptr(), /*GL_STREAM_DRAW*/GL_DYNAMIC_DRAW);
       p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
       GLDRW_CHECK_ERROR("VBO: sprite VBO");
 
@@ -204,30 +202,38 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     }
 
     // copy vertices to VBO
-    vassert(vboSkyVerts.length() >= surf->count);
-    SpriteVertex *vbovtx = vboSkyVerts.ptr();
     const unsigned scount = (unsigned)surf->count;
+    #if 0
+    SurfVBOVertex *vbovtx = vboSkyVerts.ptr();
     for (unsigned i = 0; i < scount; ++i, ++vbovtx) {
       vbovtx->x = surf->verts[i].x;
       vbovtx->y = surf->verts[i].y;
       vbovtx->z = surf->verts[i].z;
-      vbovtx->s = CalcSkyTexCoordS(surf->verts[sidx[i]], tex, offs1);
-      vbovtx->t = CalcSkyTexCoordT(surf->verts[i], tex);
+      vbovtx->s = CalcSkyTexCoordS(surf->verts[sidx[i]].vec(), tex, offs1);
+      vbovtx->t = CalcSkyTexCoordT(surf->verts[i].vec(), tex);
     }
+    #else
+    SurfVBOVertex *vbovtx = surf->verts;
+    for (unsigned i = 0; i < scount; ++i, ++vbovtx) {
+      vbovtx->s = CalcSkyTexCoordS(surf->verts[sidx[i]].vec(), tex, offs1);
+      vbovtx->t = CalcSkyTexCoordT(surf->verts[i].vec(), tex);
+    }
+    #endif
 
     //GLuint vboSky;
     //p_glGenBuffersARB(1, &vboSky);
     p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
-    int len = (int)sizeof(SpriteVertex)*surf->count;
+    int len = (int)sizeof(SurfVBOVertex)*surf->count;
     //p_glBufferDataARB(GL_ARRAY_BUFFER, len, buf, GL_STREAM_DRAW);
-    p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, vboSkyVerts.ptr());
+    //!p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, vboSkyVerts.ptr());
+    p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, surf->verts);
     //p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
 
     //p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
     p_glEnableVertexAttribArrayARB(SurfSky.loc_Position);
     p_glEnableVertexAttribArrayARB(SurfSky.loc_TexCoord);
-    p_glVertexAttribPointerARB(SurfSky.loc_Position, 3, GL_FLOAT, false, sizeof(SpriteVertex), (void*)(0 * sizeof(float)));
-    p_glVertexAttribPointerARB(SurfSky.loc_TexCoord, 2, GL_FLOAT, false, sizeof(SpriteVertex), (void*)(3 * sizeof(float)));
+    p_glVertexAttribPointerARB(SurfSky.loc_Position, 3, GL_FLOAT, false, sizeof(SurfVBOVertex), (void *)(0*sizeof(float)));
+    p_glVertexAttribPointerARB(SurfSky.loc_TexCoord, 2, GL_FLOAT, false, sizeof(SurfVBOVertex), (void *)(3*sizeof(float)));
     p_glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
     p_glDisableVertexAttribArrayARB(SurfSky.loc_Position);
     p_glDisableVertexAttribArrayARB(SurfSky.loc_TexCoord);
@@ -249,34 +255,34 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
   const float Dist = 4096.0f;
   TVec v[4];
   if (surf->HorizonPlane->normal.z > 0.0f) {
-    v[0] = surf->verts[0];
-    v[3] = surf->verts[3];
+    v[0] = surf->verts[0].vec();
+    v[3] = surf->verts[3].vec();
     TVec HDir = -surf->GetNormal();
 
-    TVec Dir1 = Normalise(vieworg-surf->verts[1]);
-    TVec Dir2 = Normalise(vieworg-surf->verts[2]);
+    TVec Dir1 = Normalise(vieworg-surf->verts[1].vec());
+    TVec Dir2 = Normalise(vieworg-surf->verts[2].vec());
     float Mul1 = 1.0f/DotProduct(HDir, Dir1);
-    v[1] = surf->verts[1]+Dir1*Mul1*Dist;
+    v[1] = surf->verts[1].vec()+Dir1*Mul1*Dist;
     float Mul2 = 1.0f/DotProduct(HDir, Dir2);
-    v[2] = surf->verts[2]+Dir2*Mul2*Dist;
+    v[2] = surf->verts[2].vec()+Dir2*Mul2*Dist;
     if (v[1].z < v[0].z) {
-      v[1] = surf->verts[1]+Dir1*Mul1*Dist*(surf->verts[1].z-surf->verts[0].z)/(surf->verts[1].z-v[1].z);
-      v[2] = surf->verts[2]+Dir2*Mul2*Dist*(surf->verts[2].z-surf->verts[3].z)/(surf->verts[2].z-v[2].z);
+      v[1] = surf->verts[1].vec()+Dir1*Mul1*Dist*(surf->verts[1].z-surf->verts[0].z)/(surf->verts[1].z-v[1].z);
+      v[2] = surf->verts[2].vec()+Dir2*Mul2*Dist*(surf->verts[2].z-surf->verts[3].z)/(surf->verts[2].z-v[2].z);
     }
   } else {
-    v[1] = surf->verts[1];
-    v[2] = surf->verts[2];
+    v[1] = surf->verts[1].vec();
+    v[2] = surf->verts[2].vec();
     TVec HDir = -surf->GetNormal();
 
-    TVec Dir1 = Normalise(vieworg-surf->verts[0]);
-    TVec Dir2 = Normalise(vieworg-surf->verts[3]);
+    TVec Dir1 = Normalise(vieworg-surf->verts[0].vec());
+    TVec Dir2 = Normalise(vieworg-surf->verts[3].vec());
     float Mul1 = 1.0f/DotProduct(HDir, Dir1);
-    v[0] = surf->verts[0]+Dir1*Mul1*Dist;
+    v[0] = surf->verts[0].vec()+Dir1*Mul1*Dist;
     float Mul2 = 1.0f/DotProduct(HDir, Dir2);
-    v[3] = surf->verts[3]+Dir2*Mul2*Dist;
+    v[3] = surf->verts[3].vec()+Dir2*Mul2*Dist;
     if (v[1].z < v[0].z) {
-      v[0] = surf->verts[0]+Dir1*Mul1*Dist*(surf->verts[1].z-surf->verts[0].z)/(v[0].z-surf->verts[0].z);
-      v[3] = surf->verts[3]+Dir2*Mul2*Dist*(surf->verts[2].z-surf->verts[3].z)/(v[3].z-surf->verts[3].z);
+      v[0] = surf->verts[0].vec()+Dir1*Mul1*Dist*(surf->verts[1].z-surf->verts[0].z)/(v[0].z-surf->verts[0].z);
+      v[3] = surf->verts[3].vec()+Dir2*Mul2*Dist*(surf->verts[2].z-surf->verts[3].z)/(v[3].z-surf->verts[3].z);
     }
   }
 
@@ -311,7 +317,7 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   //glBegin(GL_POLYGON);
   glBegin(GL_TRIANGLE_FAN);
-    for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+    for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
   glEnd();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
@@ -401,7 +407,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   currentActiveShader->UploadChangedUniforms();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
   glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
+    for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
   glEnd();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 
@@ -582,7 +588,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
   currentActiveShader->UploadChangedUniforms();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
   glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
+    for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
   glEnd();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 
@@ -668,7 +674,7 @@ void VOpenGLDrawer::WorldDrawing () {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) continue;
       glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
       glEnd();
     }
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -691,7 +697,7 @@ void VOpenGLDrawer::WorldDrawing () {
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
       glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
       glEnd();
     }
     // collect masked
@@ -704,7 +710,7 @@ void VOpenGLDrawer::WorldDrawing () {
       surfListAppend(surf);
       /*
       glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
       glEnd();
       */
     }
@@ -721,7 +727,7 @@ void VOpenGLDrawer::WorldDrawing () {
           surfListAppend(surf);
         } else {
           glBegin(GL_TRIANGLE_FAN);
-            for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+            for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
           glEnd();
         }
       }
@@ -747,7 +753,7 @@ void VOpenGLDrawer::WorldDrawing () {
           lastTexinfo.updateLastUsed(*currTexinfo);
         }
         glBegin(GL_TRIANGLE_FAN);
-          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
         glEnd();
       }
     }

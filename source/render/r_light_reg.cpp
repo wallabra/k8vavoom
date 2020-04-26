@@ -208,7 +208,7 @@ bool VRenderLevelLightmap::CastStaticRay (float *dist, sector_t *srcsector, cons
 void VRenderLevelLightmap::CalcMinMaxs (LMapTraceInfo &lmi, const surface_t *surf) {
   TVec smins(999999.0f, 999999.0f, 999999.0f);
   TVec smaxs(-999999.0f, -999999.0f, -999999.0f);
-  const TVec *v = &surf->verts[0];
+  const SurfVBOVertex *v = &surf->verts[0];
   for (int i = surf->count; i--; ++v) {
     if (smins.x > v->x) smins.x = v->x;
     if (smins.y > v->y) smins.y = v->y;

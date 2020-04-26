@@ -242,21 +242,21 @@ void VSky::InitOldSky (int Sky1Texture, int Sky2Texture,
       float sina1, cosa1;
       msincos(a1, &sina1, &cosa1);
 
-      TVec *surfverts = &s.surf.verts[0]; //k8: cache it, and silence compiler warnings
-      surfverts[0] = TVec(cosa0*vradius, sina0*vradius, bheight);
-      surfverts[1] = TVec(cosa0*tradius, sina0*tradius, theight);
-      surfverts[2] = TVec(cosa1*tradius, sina1*tradius, theight);
-      surfverts[3] = TVec(cosa1*vradius, sina1*vradius, bheight);
+      SurfVBOVertex *surfverts = &s.surf.verts[0]; //k8: cache it, and silence compiler warnings
+      surfverts[0].setVec(cosa0*vradius, sina0*vradius, bheight);
+      surfverts[1].setVec(cosa0*tradius, sina0*tradius, theight);
+      surfverts[2].setVec(cosa1*tradius, sina1*tradius, theight);
+      surfverts[3].setVec(cosa1*vradius, sina1*vradius, bheight);
 
-      TVec hdir = (j < VDIVS/2 ? surfverts[3]-surfverts[0] : surfverts[2]-surfverts[1]);
-      TVec vdir = surfverts[0]-surfverts[1];
+      TVec hdir = (j < VDIVS/2 ? surfverts[3].vec()-surfverts[0].vec() : surfverts[2].vec()-surfverts[1].vec());
+      TVec vdir = surfverts[0].vec()-surfverts[1].vec();
       TVec normal = Normalise(CrossProduct(vdir, hdir));
-      s.plane.Set(normal, DotProduct(surfverts[1], normal));
+      s.plane.Set(normal, DotProduct(surfverts[1].vec(), normal));
 
       s.texinfo.saxis = hdir*(1024/HDIVS/DotProduct(hdir, hdir));
       const float tk = skyh/RADIUS;
       s.texinfo.taxis = TVec(0, 0, -tk);
-      s.texinfo.soffs = -DotProduct(s.surf.verts[j < VDIVS/2 ? 0 : 1], s.texinfo.saxis);
+      s.texinfo.soffs = -DotProduct(s.surf.verts[j < VDIVS/2 ? 0 : 1].vec(), s.texinfo.saxis);
       s.texinfo.toffs = skyh;
 
       s.columnOffset1 = s.columnOffset2 = -i*(1024/HDIVS)+128;
@@ -269,11 +269,11 @@ void VSky::InitOldSky (int Sky1Texture, int Sky2Texture,
         s.columnOffset1 = -s.columnOffset1;
         s.columnOffset2 = -s.columnOffset2;
 
-        mins = DotProduct(surfverts[j < VDIVS/2 ? 3 : 2], s.texinfo.saxis)+s.texinfo.soffs;
-        maxs = DotProduct(surfverts[j < VDIVS/2 ? 0 : 1], s.texinfo.saxis)+s.texinfo.soffs;
+        mins = DotProduct(surfverts[j < VDIVS/2 ? 3 : 2].vec(), s.texinfo.saxis)+s.texinfo.soffs;
+        maxs = DotProduct(surfverts[j < VDIVS/2 ? 0 : 1].vec(), s.texinfo.saxis)+s.texinfo.soffs;
       } else {
-        mins = DotProduct(surfverts[j < VDIVS/2 ? 0 : 1], s.texinfo.saxis)+s.texinfo.soffs;
-        maxs = DotProduct(surfverts[j < VDIVS/2 ? 3 : 2], s.texinfo.saxis)+s.texinfo.soffs;
+        mins = DotProduct(surfverts[j < VDIVS/2 ? 0 : 1].vec(), s.texinfo.saxis)+s.texinfo.soffs;
+        maxs = DotProduct(surfverts[j < VDIVS/2 ? 3 : 2].vec(), s.texinfo.saxis)+s.texinfo.soffs;
       }
 
       int bmins = (int)floorf(mins/16.0f);
@@ -281,8 +281,8 @@ void VSky::InitOldSky (int Sky1Texture, int Sky2Texture,
       s.surf.texturemins[0] = bmins*16;
       s.surf.extents[0] = (bmaxs-bmins)*16;
       //s.surf.extents[0] = 256;
-      mins = DotProduct(surfverts[1], s.texinfo.taxis)+s.texinfo.toffs;
-      maxs = DotProduct(surfverts[0], s.texinfo.taxis)+s.texinfo.toffs;
+      mins = DotProduct(surfverts[1].vec(), s.texinfo.taxis)+s.texinfo.toffs;
+      maxs = DotProduct(surfverts[0].vec(), s.texinfo.taxis)+s.texinfo.toffs;
 
       bmins = (int)floorf(mins/16.0f);
       bmaxs = (int)ceilf(maxs/16.0f);
@@ -340,10 +340,10 @@ void VSky::InitSkyBox (VName Name1, VName Name2) {
   sky[0].texinfo.soffs = 128;
   sky[0].texinfo.toffs = 128;
 
-  sky[0].surf.verts[0] = TVec(128, 128, -128);
-  sky[0].surf.verts[1] = TVec(128, 128, 128);
-  sky[0].surf.verts[2] = TVec(128, -128, 128);
-  sky[0].surf.verts[3] = TVec(128, -128, -128);
+  sky[0].surf.verts[0].setVec(128, 128, -128);
+  sky[0].surf.verts[1].setVec(128, 128, 128);
+  sky[0].surf.verts[2].setVec(128, -128, 128);
+  sky[0].surf.verts[3].setVec(128, -128, -128);
 
   sky[1].plane.Set(TVec(0, 1, 0), -128);
   sky[1].texinfo.saxis = TVec(-1.0f, 0, 0);
@@ -351,10 +351,10 @@ void VSky::InitSkyBox (VName Name1, VName Name2) {
   sky[1].texinfo.soffs = 128;
   sky[1].texinfo.toffs = 128;
 
-  sky[1].surf.verts[0] = TVec(128, -128, -128);
-  sky[1].surf.verts[1] = TVec(128, -128, 128);
-  sky[1].surf.verts[2] = TVec(-128, -128, 128);
-  sky[1].surf.verts[3] = TVec(-128, -128, -128);
+  sky[1].surf.verts[0].setVec(128, -128, -128);
+  sky[1].surf.verts[1].setVec(128, -128, 128);
+  sky[1].surf.verts[2].setVec(-128, -128, 128);
+  sky[1].surf.verts[3].setVec(-128, -128, -128);
 
   sky[2].plane.Set(TVec(1, 0, 0), -128);
   sky[2].texinfo.saxis = TVec(0, 1.0f, 0);
@@ -362,10 +362,10 @@ void VSky::InitSkyBox (VName Name1, VName Name2) {
   sky[2].texinfo.soffs = 128;
   sky[2].texinfo.toffs = 128;
 
-  sky[2].surf.verts[0] = TVec(-128, -128, -128);
-  sky[2].surf.verts[1] = TVec(-128, -128, 128);
-  sky[2].surf.verts[2] = TVec(-128, 128, 128);
-  sky[2].surf.verts[3] = TVec(-128, 128, -128);
+  sky[2].surf.verts[0].setVec(-128, -128, -128);
+  sky[2].surf.verts[1].setVec(-128, -128, 128);
+  sky[2].surf.verts[2].setVec(-128, 128, 128);
+  sky[2].surf.verts[3].setVec(-128, 128, -128);
 
   sky[3].plane.Set(TVec(0, -1, 0), -128);
   sky[3].texinfo.saxis = TVec(1.0f, 0, 0);
@@ -373,10 +373,10 @@ void VSky::InitSkyBox (VName Name1, VName Name2) {
   sky[3].texinfo.soffs = 128;
   sky[3].texinfo.toffs = 128;
 
-  sky[3].surf.verts[0] = TVec(-128, 128, -128);
-  sky[3].surf.verts[1] = TVec(-128, 128, 128);
-  sky[3].surf.verts[2] = TVec(128, 128, 128);
-  sky[3].surf.verts[3] = TVec(128, 128, -128);
+  sky[3].surf.verts[0].setVec(-128, 128, -128);
+  sky[3].surf.verts[1].setVec(-128, 128, 128);
+  sky[3].surf.verts[2].setVec(128, 128, 128);
+  sky[3].surf.verts[3].setVec(128, 128, -128);
 
   sky[4].plane.Set(TVec(0, 0, -1), -128);
   sky[4].texinfo.saxis = TVec(0, -1.0f, 0);
@@ -390,10 +390,10 @@ void VSky::InitSkyBox (VName Name1, VName Name2) {
     sky[4].texinfo.saxis = TVec(1.0f, 0, 0);
   }
 
-  sky[4].surf.verts[0] = TVec(+128.0f, +128.0f, 128);
-  sky[4].surf.verts[1] = TVec(-128.0f, +128.0f, 128);
-  sky[4].surf.verts[2] = TVec(-128.0f, -128.0f, 128);
-  sky[4].surf.verts[3] = TVec(+128.0f, -128.0f, 128);
+  sky[4].surf.verts[0].setVec(+128.0f, +128.0f, 128);
+  sky[4].surf.verts[1].setVec(-128.0f, +128.0f, 128);
+  sky[4].surf.verts[2].setVec(-128.0f, -128.0f, 128);
+  sky[4].surf.verts[3].setVec(+128.0f, -128.0f, 128);
 
   sky[5].plane.Set(TVec(0, 0, 1), -128);
   sky[5].texinfo.saxis = TVec(0, -1.0f, 0);
@@ -406,10 +406,10 @@ void VSky::InitSkyBox (VName Name1, VName Name2) {
     sky[5].texinfo.saxis = -TVec(-1.0f, 0, 0);
   }
 
-  sky[5].surf.verts[0] = TVec(128, 128, -128);
-  sky[5].surf.verts[1] = TVec(128, -128, -128);
-  sky[5].surf.verts[2] = TVec(-128, -128, -128);
-  sky[5].surf.verts[3] = TVec(-128, 128, -128);
+  sky[5].surf.verts[0].setVec(128, 128, -128);
+  sky[5].surf.verts[1].setVec(128, -128, -128);
+  sky[5].surf.verts[2].setVec(-128, -128, -128);
+  sky[5].surf.verts[3].setVec(-128, 128, -128);
 
   NumSkySurfs = 6;
   for (int j = 0; j < 6; ++j) {

@@ -138,7 +138,7 @@ bool R_GetSpriteTextureInfo (SpriteTexInfo *nfo, int sprindex, int sprframeidx) 
 //  VRenderLevelShared::QueueTranslucentPoly
 //
 //==========================================================================
-void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
+void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, SurfVBOVertex *sv,
   int count, int lump, const RenderStyleInfo &ri, int translation,
   bool isSprite, const TVec &normal, float pdist,
   const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
@@ -155,15 +155,15 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   } else {
 #if 0
     TVec mid(0, 0, 0);
-    for (int i = 0; i < count; ++i) mid += sv[i];
+    for (int i = 0; i < count; ++i) mid += sv[i].vec();
     mid /= count;
     //dist = fabsf(DotProduct(mid-Drawer->vieworg, Drawer->viewforward));
     dist = LengthSquared(mid-Drawer->vieworg);
 #else
     // select nearest vertex
-    dist = LengthSquared(sv[0]-Drawer->vieworg);
+    dist = LengthSquared(sv[0].vec()-Drawer->vieworg);
     for (int i = 1; i < count; ++i) {
-      const float nd = LengthSquared(sv[i]-Drawer->vieworg);
+      const float nd = LengthSquared(sv[i].vec()-Drawer->vieworg);
       if (dist > nd) dist = nd;
     }
 #endif
@@ -173,7 +173,7 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   //float dist = Length(mid-Drawer->vieworg);
 
   trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
-  if (isSprite) memcpy(spr.Verts, sv, sizeof(TVec)*4);
+  if (isSprite) memcpy(spr.Verts, sv, sizeof(SurfVBOVertex)*4);
   spr.dist = dist;
   spr.lump = lump;
   spr.normal = normal;
@@ -514,7 +514,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   float scaleX = max2(0.001f, thing->ScaleX/Tex->SScale);
   float scaleY = max2(0.001f, thing->ScaleY/Tex->TScale);
 
-  TVec sv[4];
+  SurfVBOVertex sv[4];
 
   TVec start = -TexSOffset*sprright*scaleX;
   TVec end = (TexWidth-TexSOffset)*sprright*scaleX;
@@ -576,10 +576,10 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   TVec topdelta = TexTOffset*sprup*scaleY;
   TVec botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
 
-  sv[0] = sprorigin+start+botdelta;
-  sv[1] = sprorigin+start+topdelta;
-  sv[2] = sprorigin+end+topdelta;
-  sv[3] = sprorigin+end+botdelta;
+  sv[0].setVec(sprorigin+start+botdelta);
+  sv[1].setVec(sprorigin+start+topdelta);
+  sv[2].setVec(sprorigin+end+topdelta);
+  sv[3].setVec(sprorigin+end+botdelta);
 
   //if (Fade != FADE_LIGHT) GCon->Logf("<%s>: Fade=0x%08x", *thing->GetClass()->GetFullName(), Fade);
 
@@ -599,7 +599,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
       QueueTranslucentPoly(nullptr, sv, 4, lump, ri, /*Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,*/
         thing->Translation, true/*isSprite*/, /*light, Fade,*/ -sprforward,
         DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
-        -sprup/scaleY, (flip ? sv[2] : sv[1]), priority
+        -sprup/scaleY, (flip ? sv[2].vec() : sv[1].vec()), priority
         , true, /*sprorigin*/thing->Origin, thing->ServerUId);
     }
     // add shadow
@@ -622,10 +622,10 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
           topdelta = TexTOffset*sprup*scaleY;
           botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
 
-          sv[0] = sprorigin+start+botdelta;
-          sv[1] = sprorigin+start+topdelta;
-          sv[2] = sprorigin+end+topdelta;
-          sv[3] = sprorigin+end+botdelta;
+          sv[0].setVec(sprorigin+start+botdelta);
+          sv[1].setVec(sprorigin+start+topdelta);
+          sv[2].setVec(sprorigin+end+topdelta);
+          sv[3].setVec(sprorigin+end+botdelta);
 
           ri.alpha = Alpha;
           ri.flags = RenderStyleInfo::FlagShadow|RenderStyleInfo::FlagNoDepthWrite;
@@ -634,7 +634,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
           QueueTranslucentPoly(nullptr, sv, 4, lump, ri,
             /*thing->Translation*/0, true/*isSprite*/, -sprforward,
             DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
-            -sprup/scaleY, (flip ? sv[2] : sv[1]), priority,
+            -sprup/scaleY, (flip ? sv[2].vec() : sv[1].vec()), priority,
             true, /*sprorigin*/thing->Origin, thing->ServerUId/*, 666 fakeshadow type*/);
         }
       }
@@ -644,7 +644,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
       GetTranslation(thing->Translation), ColorMap,
       -sprforward, DotProduct(sprorigin, -sprforward),
       (flip ? -sprright : sprright)/scaleX,
-      -sprup/scaleY, (flip ? sv[2] : sv[1]));
+      -sprup/scaleY, (flip ? sv[2].vec() : sv[1].vec()));
   }
 }
 

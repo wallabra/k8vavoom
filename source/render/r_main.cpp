@@ -1243,7 +1243,7 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], surface_t *surfs, 
     const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
     if (dist <= 0.0f || dist >= CurrLightRadius) continue; // light is too far away, or surface is not lit
     LitSurfaceHit = true;
-    const TVec *vert = surf->verts;
+    const SurfVBOVertex *vert = surf->verts;
     for (int vcount = surf->count; vcount--; ++vert) {
       bbox[0].x = min2(bbox[0].x, vert->x);
       bbox[0].y = min2(bbox[0].y, vert->y);

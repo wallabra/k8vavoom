@@ -34,7 +34,7 @@
 #include "r_local.h"
 #include "../sv_local.h"
 
-#define HORIZON_SURF_SIZE  (sizeof(surface_t)+sizeof(TVec)*3)
+#define HORIZON_SURF_SIZE  (sizeof(surface_t)+sizeof(SurfVBOVertex)*3)
 
 //#define VRBSP_DISABLE_SKY_PORTALS
 
@@ -674,11 +674,11 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       Surf->Light = (lLev<<24)|LightParams->LightColor;
       Surf->Fade = Fade;
       Surf->count = 4;
-      TVec *svs = &Surf->verts[0];
-      svs[0] = *seg->v1; svs[0].z = max2(BotZ, HorizonZ);
-      svs[1] = *seg->v1; svs[1].z = TopZ;
-      svs[2] = *seg->v2; svs[2].z = TopZ;
-      svs[3] = *seg->v2; svs[3].z = max2(BotZ, HorizonZ);
+      SurfVBOVertex *svs = &Surf->verts[0];
+      svs[0].setVec(*seg->v1); svs[0].z = max2(BotZ, HorizonZ);
+      svs[1].setVec(*seg->v1); svs[1].z = TopZ;
+      svs[2].setVec(*seg->v2); svs[2].z = TopZ;
+      svs[3].setVec(*seg->v2); svs[3].z = max2(BotZ, HorizonZ);
       if (Ceil->esecplane.splane->pic == skyflatnum) {
         // if it's a sky, render it as a regular sky surface
         DrawSurfaces(sub, secregion, nullptr, Surf, &Ceil->texinfo, secregion->eceiling.splane->SkyBox, -1,
@@ -709,11 +709,11 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
       Surf->Light = (lLev<<24)|LightParams->LightColor;
       Surf->Fade = Fade;
       Surf->count = 4;
-      TVec *svs = &Surf->verts[0];
-      svs[0] = *seg->v1; svs[0].z = BotZ;
-      svs[1] = *seg->v1; svs[1].z = min2(TopZ, HorizonZ);
-      svs[2] = *seg->v2; svs[2].z = min2(TopZ, HorizonZ);
-      svs[3] = *seg->v2; svs[3].z = BotZ;
+      SurfVBOVertex *svs = &Surf->verts[0];
+      svs[0].setVec(*seg->v1); svs[0].z = BotZ;
+      svs[1].setVec(*seg->v1); svs[1].z = min2(TopZ, HorizonZ);
+      svs[2].setVec(*seg->v2); svs[2].z = min2(TopZ, HorizonZ);
+      svs[3].setVec(*seg->v2); svs[3].z = BotZ;
       if (Floor->esecplane.splane->pic == skyflatnum) {
         // if it's a sky, render it as a regular sky surface
         DrawSurfaces(sub, secregion, nullptr, Surf, &Floor->texinfo, secregion->efloor.splane->SkyBox, -1,

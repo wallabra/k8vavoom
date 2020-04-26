@@ -39,6 +39,26 @@ extern VCvarF r_lights_radius;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// for VBOs
+struct __attribute__((packed)) SurfVBOVertex {
+  //TVec vec;
+  float x, y, z;
+  float s, t;
+
+  #ifdef VV_NOT_X86
+  // just in case, to avoid align problems
+  inline const TVec vec () const noexcept { return TVec(x, y, z); }
+  #else
+  inline const TVec &vec () const noexcept { return *(TVec *)&x; }
+  #endif
+
+  inline void setVec (const float ax, const float ay, const float az) noexcept { x = ax; y = ay; z = az; }
+  inline void setVec (const TVec &v) noexcept { x = v.x; y = v.y; z = v.z; }
+};
+static_assert(sizeof(SurfVBOVertex) == sizeof(float)*5, "invalid SurfVBOVertex size");
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct particle_t {
   // drawing info
   TVec org; // position
@@ -144,7 +164,7 @@ protected:
 
 public:
   struct trans_sprite_t {
-    TVec Verts[4]; // only for sprites
+    SurfVBOVertex Verts[4]; // only for sprites
     union {
       surface_t *surf; // for masked polys and sprites
       VEntity *Ent; // only for alias models
@@ -492,7 +512,8 @@ public:
   virtual void BeginTranslucentPolygonDecals () = 0;
   virtual void DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) = 0;
 
-  virtual void DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex,
+  //WARNING! it may modify `cv`!
+  virtual void DrawSpritePolygon (float time, SurfVBOVertex *cv, VTexture *Tex,
                                   const RenderStyleInfo &ri,
                                   VTextureTranslation *Translation, int CMap,
                                   const TVec &sprnormal, float sprpdist,
@@ -536,7 +557,7 @@ public:
 
   virtual void BeginTexturedPolys () = 0;
   virtual void EndTexturedPolys () = 0;
-  virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const TVec *origverts=nullptr) = 0;
+  virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const SurfVBOVertex *origverts=nullptr) = 0;
 
   // automap
   virtual void StartAutomap (bool asOverlay) = 0;

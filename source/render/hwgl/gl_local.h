@@ -324,7 +324,8 @@ public:
   virtual void BeginTranslucentPolygonDecals () override;
   virtual void DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) override;
 
-  virtual void DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex,
+  //WARNING! it may modify `cv`!
+  virtual void DrawSpritePolygon (float time, SurfVBOVertex *cv, VTexture *Tex,
                                   const RenderStyleInfo &ri,
                                   VTextureTranslation *Translation, int CMap,
                                   const TVec &sprnormal, float sprpdist,
@@ -390,7 +391,7 @@ public:
 
   virtual void BeginTexturedPolys () override;
   virtual void EndTexturedPolys () override;
-  virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const TVec *origverts=nullptr) override;
+  virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const SurfVBOVertex *origverts=nullptr) override;
 
   // automap
   virtual void StartAutomap (bool asOverlay) override;
@@ -630,9 +631,11 @@ private:
 
 protected:
   // for sprite VBOs
+  /*
   struct __attribute__((packed)) SpriteVertex {
     float x, y, z, s, t;
   };
+  */
 
 protected:
   vuint8 *tmpImgBuf0;
@@ -692,7 +695,6 @@ protected:
   // VBO for sky rendering (created lazily, because we don't know the proper size initially)
   GLuint vboSky;
   int vboSkyNumVerts;
-  TArray<SpriteVertex> vboSkyVerts;
 
   // console variables
   static VCvarI texture_filter;

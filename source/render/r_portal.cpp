@@ -245,11 +245,11 @@ void VPortal::SetupRanges (const refdef_t &refdef, VViewClipper &Range, bool Rev
       for (int j = 0; j < Surfs[i]->count; ++j) {
         TVec v1, v2;
         if ((Surfs[i]->GetNormalZ() < 0) != Revert) {
-          v1 = Surfs[i]->verts[j < Surfs[i]->count-1 ? j+1 : 0];
-          v2 = Surfs[i]->verts[j];
+          v1 = Surfs[i]->verts[j < Surfs[i]->count-1 ? j+1 : 0].vec();
+          v2 = Surfs[i]->verts[j].vec();
         } else {
-          v1 = Surfs[i]->verts[j];
-          v2 = Surfs[i]->verts[j < Surfs[i]->count-1 ? j+1 : 0];
+          v1 = Surfs[i]->verts[j].vec();
+          v2 = Surfs[i]->verts[j < Surfs[i]->count-1 ? j+1 : 0].vec();
         }
         TVec Dir = v2-v1;
         Dir.z = 0;
