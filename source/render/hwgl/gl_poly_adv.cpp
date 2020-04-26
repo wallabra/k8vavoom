@@ -214,6 +214,7 @@ enum {
   SFST_NormalGlow,
   SFST_BMap,
   SFST_BMapGlow,
+  SFST_MAX,
 };
 
 
@@ -245,14 +246,14 @@ static VVA_OKUNUSED void CheckListSortValidity (TArray<surface_t *> &list, const
     if (surf->plvisible) break;
   }
   if (idx >= len) return; // nothing to do
-  int phase = ClassifySurfaceShader(list[idx]);
+  int phase = /*ClassifySurfaceShader(list[idx])*/list[idx]->shaderClass;
   int previdx = idx;
   // check surfaces
   for (; idx < len; ++idx, ++sptr) {
     const surface_t *surf = *sptr;
     if (!surf->plvisible) continue; // viewer is in back side or on plane
     vassert(surf->texinfo->Tex);
-    const int newphase = ClassifySurfaceShader(surf);
+    const int newphase = /*ClassifySurfaceShader(surf)*/surf->shaderClass;
     if (newphase < phase) {
       Sys_Error("CheckListSortValidity (%s): shader order check failed at %d of %d; previdx is %d; prevphase is %d; phase is %d", listname, idx, len, previdx, phase, newphase);
     }
@@ -304,7 +305,10 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
   // draw normal surfaces
   if (dls.DrawSurfListSolid.length() != 0 || dls.DrawSurfListMasked.length() != 0) {
+    // reserve room for max number of elements in VBO, because why not?
+    int currEls[SFST_MAX];
     // precalculate some crap
+    memset(currEls, 0, sizeof(currEls));
     for (auto &&surf : dls.DrawSurfListSolid) {
       surf->gp.clear();
       if (!surf->plvisible) continue; // viewer is in back side or on plane
@@ -318,6 +322,8 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) { surf->plvisible = 0; continue; } // just in case
 
       CalcGlow(surf->gp, surf);
+      surf->shaderClass = ClassifySurfaceShader(surf);
+      currEls[surf->shaderClass] += surf->count;
     }
 
     for (auto &&surf : dls.DrawSurfListMasked) {
@@ -333,38 +339,12 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) { surf->plvisible = 0; continue; } // just in case
 
       CalcGlow(surf->gp, surf);
+      surf->shaderClass = ClassifySurfaceShader(surf);
+      currEls[surf->shaderClass] += surf->count;
     }
 
-    // setup samplers for all shaders
-    // masked
-    ShadowsAmbientMasked.Activate();
-    ShadowsAmbientMasked.SetTexture(0);
-    VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
-    // brightmap
-    ShadowsAmbientBrightmap.Activate();
-    ShadowsAmbientBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
-    ShadowsAmbientBrightmap.SetTexture(0);
-    ShadowsAmbientBrightmap.SetTextureBM(1);
-    VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
-    // normal
-    ShadowsAmbient.Activate();
-    VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
-
-    //FIXME!
-    if (gl_dbg_wireframe) {
-      DrawAutomap.Activate();
-      DrawAutomap.UploadChangedUniforms();
-      GLEnableBlend();
-      glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-      SelectTexture(1);
-      glBindTexture(GL_TEXTURE_2D, 0);
-      SelectTexture(0);
-      return;
-    }
-
-    //ShadowsAmbient.Activate();
-    //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
+    int maxEls = currEls[0];
+    for (int fcnt = 1; fcnt < SFST_MAX; ++fcnt) maxEls = max2(maxEls, currEls[fcnt]);
 
     // do not sort surfaces by texture here, because
     // textures will be put later, and BSP sorted them by depth for us
@@ -389,6 +369,37 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       CheckListSortValidity(dls.DrawSurfListMasked, "masked");
     }
 
+    //FIXME!
+    if (gl_dbg_wireframe) {
+      DrawAutomap.Activate();
+      DrawAutomap.UploadChangedUniforms();
+      GLEnableBlend();
+      glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+      SelectTexture(1);
+      glBindTexture(GL_TEXTURE_2D, 0);
+      SelectTexture(0);
+      return;
+    }
+
+    // setup samplers for all shaders
+    // masked
+    ShadowsAmbientMasked.Activate();
+    ShadowsAmbientMasked.SetTexture(0);
+    //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
+    // brightmap
+    ShadowsAmbientBrightmap.Activate();
+    ShadowsAmbientBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
+    ShadowsAmbientBrightmap.SetTexture(0);
+    ShadowsAmbientBrightmap.SetTextureBM(1);
+    //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
+    // normal
+    ShadowsAmbient.Activate();
+    //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
+
+    //ShadowsAmbient.Activate();
+    //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
+
     float prevsflight = -666;
     vuint32 prevlight = 0;
     texinfo_t lastTexinfo;
@@ -406,11 +417,76 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
     //GCon->Logf(NAME_Debug, "::: solid=%d; masked=%d", dls.DrawSurfListSolid.length(), dls.DrawSurfListMasked.length());
 
+    // activate VBO
+    GLuint attribPosition = 0; /* shut up, gcc! */
+    vboAdvSurf.ensure(maxEls);
+    vboAdvSurf.enableAttrib(attribPosition);
+
+    int vboIdx = 0; // data index
+    int vboCountIdx = 0; // counter index
+    int vboIndexIdx = 0; // index index
+    TArray<GLsizei> vboCounters; // number of indicies in each primitive
+    TArray<GLint> vboIndicies; // starting indicies
+    vboCounters.setLength(maxEls+4);
+    vboIndicies.setLength(maxEls+4);
+
+    bool lastCullFace = true;
+    glEnable(GL_CULL_FACE);
+
+    #define SAMB_FLUSH_VBO()  do { \
+      if (vboIdx) { \
+        GCon->Logf(NAME_Debug, "flushing ambsurface VBO: vboIdx=%d; vboIndexIdx=%d; vboCountIdx=%d", vboIdx, vboIndexIdx, vboCountIdx); \
+        vboAdvSurf.uploadData(vboIdx); \
+        vboAdvSurf.setupAttribNoEnable(attribPosition, 3); \
+        /*p_glMultiDrawElements(GL_TRIANGLE_FAN, vboCounters.ptr(), GL_UNSIGNED_INT, vboIndicies.ptr(), (GLsizei)vboCountIdx);*/ \
+        p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboIndicies.ptr(), vboCounters.ptr(), (GLsizei)vboCountIdx); \
+        vboIdx = 0; \
+        vboCountIdx = 0; \
+        vboIndexIdx = 0; \
+      } \
+    } while (0)
+
+    #define SAMB_DO_RENDER()  \
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) { \
+        if (lastCullFace) { \
+          SAMB_FLUSH_VBO(); \
+          lastCullFace = false; \
+          glDisable(GL_CULL_FACE); \
+        } \
+      } else { \
+        if (!lastCullFace) { \
+          SAMB_FLUSH_VBO(); \
+          lastCullFace = true; \
+          glEnable(GL_CULL_FACE); \
+        } \
+      } \
+      SAMB_FLUSH_VBO(); \
+      currentActiveShader->UploadChangedUniforms(); \
+      /* remember counter */ \
+      vboCounters.ptr()[vboCountIdx++] = (GLsizei)surf->count; /* put counter */ \
+      /* vectors will be put here */ \
+      TVec *vp = vboAdvSurf.data.ptr()+vboIdx; \
+      /* indicies will be put here */ \
+      GLint *ip = vboIndicies.ptr()+vboIndexIdx; \
+      /* fill arrays */ \
+      for (unsigned i = 0; i < (unsigned)surf->count; ++i) { \
+        *vp++ = surf->verts[i].vec(); \
+        *ip++ = (GLint)((unsigned)vboIdx+i); \
+      } \
+      /* advance array positions */ \
+      vboIdx += surf->count; \
+      vboIndexIdx += surf->count; \
+      /*glBegin(GL_TRIANGLE_FAN);*/ \
+        /*for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());*/ \
+      /*glEnd();*/ \
+      /*if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);*/
+
     #define SAMB_DO_HEAD_LIGHT(shader_)  \
       const surface_t *surf = *sptr; \
       /* setup new light if necessary */ \
       const float lev = getSurfLightLevel(surf); \
       if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) { \
+        SAMB_FLUSH_VBO(); \
         prevsflight = lev; \
         prevlight = surf->Light; \
         (shader_).SetLight( \
@@ -419,18 +495,11 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           (prevlight&255)*lev/255.0f, 1.0f); \
       }
 
-    #define SAMB_DO_RENDER()  \
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE); \
-      currentActiveShader->UploadChangedUniforms(); \
-      glBegin(GL_TRIANGLE_FAN); \
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec()); \
-      glEnd(); \
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
-
     #define SAMB_CHECK_TEXTURE_BM(shader_)  \
       const texinfo_t *currTexinfo = surf->texinfo; \
       const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame); \
       if (textureChanded) { \
+        SAMB_FLUSH_VBO(); \
         lastTexinfo.updateLastUsed(*currTexinfo); \
         SelectTexture(1); \
         SetBrightmapTexture(currTexinfo->Tex->Brightmap); \
@@ -444,6 +513,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       const texinfo_t *currTexinfo = surf->texinfo; \
       const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame); \
       if (textureChanded) { \
+        SAMB_FLUSH_VBO(); \
         lastTexinfo.updateLastUsed(*currTexinfo); \
         /* set normal texture */ \
         SetTexture(currTexinfo->Tex, currTexinfo->ColorMap); \
@@ -463,51 +533,69 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
       // normal textures
       prevsflight = -666; // force light setup
-      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_Normal) {
+      if (idx < len && (*sptr)->shaderClass == SFST_Normal) {
         ShadowsAmbient.Activate();
+        attribPosition = ShadowsAmbient.loc_Position;
+        vboAdvSurf.enableAttrib(attribPosition);
         VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
         if (glTextureEnabled) { glTextureEnabled = false; glDisable(GL_TEXTURE_2D); }
-        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_Normal; ++idx, ++sptr) {
+        for (; idx < len && (*sptr)->shaderClass == SFST_Normal; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbient)
           SAMB_DO_RENDER()
         }
+        SAMB_FLUSH_VBO();
+        vboAdvSurf.disableAttrib(attribPosition);
       }
 
       // normal glowing textures
-      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_NormalGlow) {
+      if (idx < len && (*sptr)->shaderClass == SFST_NormalGlow) {
         ShadowsAmbient.Activate();
+        attribPosition = ShadowsAmbient.loc_Position;
+        vboAdvSurf.enableAttrib(attribPosition);
         if (glTextureEnabled) { glTextureEnabled = false; glDisable(GL_TEXTURE_2D); }
-        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_NormalGlow; ++idx, ++sptr) {
+        for (; idx < len && (*sptr)->shaderClass == SFST_NormalGlow; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbient)
+          SAMB_FLUSH_VBO();
           VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbient, surf->gp);
           SAMB_DO_RENDER()
         }
+        SAMB_FLUSH_VBO();
+        vboAdvSurf.disableAttrib(attribPosition);
       }
 
       // brightmap textures
       prevsflight = -666; // force light setup
       lastTexinfo.resetLastUsed();
-      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_BMap) {
+      if (idx < len && (*sptr)->shaderClass == SFST_BMap) {
         ShadowsAmbientBrightmap.Activate();
+        attribPosition = ShadowsAmbientBrightmap.loc_Position;
+        vboAdvSurf.enableAttrib(attribPosition);
         VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
         if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
-        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_BMap; ++idx, ++sptr) {
+        for (; idx < len && (*sptr)->shaderClass == SFST_BMap; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbientBrightmap)
           SAMB_CHECK_TEXTURE_BM(ShadowsAmbientBrightmap)
           SAMB_DO_RENDER()
         }
+        SAMB_FLUSH_VBO();
+        vboAdvSurf.disableAttrib(attribPosition);
       }
 
       // brightmap glow textures
-      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_BMapGlow) {
+      if (idx < len && (*sptr)->shaderClass == SFST_BMapGlow) {
         ShadowsAmbientBrightmap.Activate();
+        attribPosition = ShadowsAmbientBrightmap.loc_Position;
+        vboAdvSurf.enableAttrib(attribPosition);
         if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
-        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_BMapGlow; ++idx, ++sptr) {
+        for (; idx < len && (*sptr)->shaderClass == SFST_BMapGlow; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbientBrightmap)
           SAMB_CHECK_TEXTURE_BM(ShadowsAmbientBrightmap)
+          SAMB_FLUSH_VBO();
           VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, surf->gp);
           SAMB_DO_RENDER()
         }
+        SAMB_FLUSH_VBO();
+        vboAdvSurf.disableAttrib(attribPosition);
       }
     }
 
@@ -525,55 +613,79 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       // normal textures
       prevsflight = -666; // force light setup
       lastTexinfo.resetLastUsed();
-      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_Normal) {
+      if (idx < len && (*sptr)->shaderClass == SFST_Normal) {
         ShadowsAmbientMasked.Activate();
+        attribPosition = ShadowsAmbientMasked.loc_Position;
+        vboAdvSurf.enableAttrib(attribPosition);
         VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
         if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
-        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_Normal; ++idx, ++sptr) {
+        for (; idx < len && (*sptr)->shaderClass == SFST_Normal; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbientMasked)
           SAMB_CHECK_TEXTURE_NORMAL(ShadowsAmbientMasked)
           SAMB_DO_RENDER()
         }
+        SAMB_FLUSH_VBO();
+        vboAdvSurf.disableAttrib(attribPosition);
       }
 
       // normal glowing textures
-      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_NormalGlow) {
+      if (idx < len && (*sptr)->shaderClass == SFST_NormalGlow) {
         ShadowsAmbientMasked.Activate();
+        attribPosition = ShadowsAmbientMasked.loc_Position;
+        vboAdvSurf.enableAttrib(attribPosition);
         if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
-        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_NormalGlow; ++idx, ++sptr) {
+        for (; idx < len && (*sptr)->shaderClass == SFST_NormalGlow; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbientMasked)
           SAMB_CHECK_TEXTURE_NORMAL(ShadowsAmbientMasked)
+          SAMB_FLUSH_VBO();
           VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientMasked, surf->gp);
           SAMB_DO_RENDER()
         }
+        SAMB_FLUSH_VBO();
+        vboAdvSurf.disableAttrib(attribPosition);
       }
 
       // brightmap textures
       prevsflight = -666; // force light setup
       lastTexinfo.resetLastUsed();
-      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_BMap) {
+      if (idx < len && (*sptr)->shaderClass == SFST_BMap) {
         ShadowsAmbientBrightmap.Activate();
+        attribPosition = ShadowsAmbientBrightmap.loc_Position;
+        vboAdvSurf.enableAttrib(attribPosition);
         VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
         if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
-        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_BMap; ++idx, ++sptr) {
+        for (; idx < len && (*sptr)->shaderClass == SFST_BMap; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbientBrightmap)
           SAMB_CHECK_TEXTURE_BM(ShadowsAmbientBrightmap)
           SAMB_DO_RENDER()
         }
+        SAMB_FLUSH_VBO();
+        vboAdvSurf.disableAttrib(attribPosition);
       }
 
       // brightmap glow textures
-      if (idx < len && ClassifySurfaceShader(*sptr) == SFST_BMapGlow) {
+      if (idx < len && (*sptr)->shaderClass == SFST_BMapGlow) {
         ShadowsAmbientBrightmap.Activate();
+        attribPosition = ShadowsAmbientBrightmap.loc_Position;
+        vboAdvSurf.enableAttrib(attribPosition);
         if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
-        for (; idx < len && ClassifySurfaceShader(*sptr) == SFST_BMapGlow; ++idx, ++sptr) {
+        for (; idx < len && (*sptr)->shaderClass == SFST_BMapGlow; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbientBrightmap)
           SAMB_CHECK_TEXTURE_BM(ShadowsAmbientBrightmap)
+          SAMB_FLUSH_VBO();
           VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, surf->gp);
           SAMB_DO_RENDER()
         }
+        SAMB_FLUSH_VBO();
+        vboAdvSurf.disableAttrib(attribPosition);
       }
     }
+
+    // deactivate VBO
+    //vboAdvSurf.disableAttrib(attribPosition);
+    vboAdvSurf.deactivate();
+
+    if (!lastCullFace) { /*lastCullFace = true;*/ glEnable(GL_CULL_FACE); }
 
     #if 0
     if (dls.DrawSurfListSolid.length() != 0) {
@@ -759,7 +871,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     }
     #endif
 
-    if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
+    if (!glTextureEnabled) { /*glTextureEnabled = true;*/ glEnable(GL_TEXTURE_2D); }
   }
 
   // restore depth function

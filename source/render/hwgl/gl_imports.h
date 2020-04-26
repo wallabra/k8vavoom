@@ -335,6 +335,8 @@ typedef void (APIENTRY*glGetBufferPointervARB_t)(GLenum, GLenum, GLvoid **);
 #endif
 
 typedef void (APIENTRY*glDrawRangeElements_t)(GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *);
+//typedef void (APIENTRY*glMultiDrawElements_t)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid * const * indices, GLsizei drawcount);
+typedef void (APIENTRY*glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei * count, GLsizei drawcount);
 typedef void (APIENTRY*glDrawArrays_t)(GLenum mode, GLint first, GLsizei count);
 
 #ifndef GL_FRAMEBUFFER
@@ -529,6 +531,8 @@ typedef void (APIENTRY *glGenerateMipmap_t) (GLenum target);
 
   //VGLAPIPTR(glDrawRangeElementsEXT, true);
   VGLAPIPTR(glDrawRangeElements, true);
+  //VGLAPIPTR(glMultiDrawElements, true);
+  VGLAPIPTR(glMultiDrawArrays, true);
   VGLAPIPTR(glDrawArrays, true); // was only for GL4ES, but now it is always required, and should be available
 
   #if !defined(GL4ES_NO_CONSTRUCTOR) || !defined(VV_GLIMPORTS_PROC)

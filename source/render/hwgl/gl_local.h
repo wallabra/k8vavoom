@@ -821,6 +821,9 @@ protected:
   // VBO for sky rendering (created lazily, because we don't know the proper size initially)
   VBO<SkyVBOVertex> vboSky;
 
+  // VBO for advrender surfaces
+  VBO<TVec> vboAdvSurf;
+
   // console variables
   static VCvarI texture_filter;
   static VCvarI sprite_filter;
