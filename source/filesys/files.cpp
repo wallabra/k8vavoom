@@ -1145,11 +1145,13 @@ static void wpkAddMarked (int idx) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/*
 VVA_OKUNUSED static int cmpfuncCI (const void *v1, const void *v2) {
   return ((VStr *)v1)->ICmp((*(VStr *)v2));
 }
+*/
 
-VVA_OKUNUSED static int cmpfuncCINoExt (const void *v1, const void *v2) {
+VVA_OKUNUSED static int cmpfuncCINoExt (const void *v1, const void *v2, void *) {
   return ((VStr *)v1)->StripExtension().ICmp(((VStr *)v2)->StripExtension());
 }
 
@@ -1329,8 +1331,8 @@ static void AddGameAutoloads (VStr basedir, bool addAutoload=true) {
       else if (ext.strEquCI(".pk3")) ZipFiles.Append(test);
     }
     Sys_CloseDir(dirit);
-    qsort(WadFiles.Ptr(), WadFiles.length(), sizeof(VStr), cmpfuncCINoExt);
-    qsort(ZipFiles.Ptr(), ZipFiles.length(), sizeof(VStr), cmpfuncCINoExt);
+    timsort_r(WadFiles.Ptr(), WadFiles.length(), sizeof(VStr), cmpfuncCINoExt, nullptr);
+    timsort_r(ZipFiles.Ptr(), ZipFiles.length(), sizeof(VStr), cmpfuncCINoExt, nullptr);
   }
 
   basedir = basedir.appendTrailingSlash();
@@ -1377,8 +1379,8 @@ static void AddGameDir (VStr basedir, VStr dir) {
       else if (ext.strEquCI(".pk3")) ZipFiles.Append(test);
     }
     Sys_CloseDir(dirit);
-    qsort(WadFiles.Ptr(), WadFiles.length(), sizeof(VStr), cmpfuncCINoExt);
-    qsort(ZipFiles.Ptr(), ZipFiles.length(), sizeof(VStr), cmpfuncCINoExt);
+    timsort_r(WadFiles.Ptr(), WadFiles.length(), sizeof(VStr), cmpfuncCINoExt, nullptr);
+    timsort_r(ZipFiles.Ptr(), ZipFiles.length(), sizeof(VStr), cmpfuncCINoExt, nullptr);
   }
 
   // use `VStdFileStreamRead` so android port can override it

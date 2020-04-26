@@ -234,7 +234,7 @@ void FNodeBuilder::CreateSubsectorsForReal ()
     sub.numlines = (DWORD)(SegList.Size() - sub.firstline);
 
     // Sort segs by linedef for special effects
-    qsort (&SegList[sub.firstline], sub.numlines, sizeof(USegPtr), SortSegs);
+    qsort (&SegList[sub.firstline], sub.numlines, sizeof(USegPtr), &SortSegs);
 
     // Convert seg pointers into indices
     D(printf ("Output subsector %d:\n", Subsectors.Size()));
