@@ -208,7 +208,8 @@ static VVA_OKUNUSED inline int ClassifySurfaceShader (const surface_t *surf) {
 //  CheckListSortValidity
 //
 //==========================================================================
-static VVA_OKUNUSED void CheckListSortValidity (TArray<surface_t *> &list, const char *listname) {
+#if 0
+static void CheckListSortValidity (TArray<surface_t *> &list, const char *listname) {
   const int len = list.length();
   const surface_t *const *sptr = list.ptr();
   // find first valid surface
@@ -233,6 +234,7 @@ static VVA_OKUNUSED void CheckListSortValidity (TArray<surface_t *> &list, const
     phase = newphase;
   }
 }
+#endif
 
 
 //==========================================================================
@@ -328,8 +330,10 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       // sort solid textures too, so we can avoid shader switches
       // but do this only by shader class, to retain as much front-to-back order as possible
       timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByShaderBMTexture, nullptr);
+      #if 0
       CheckListSortValidity(dls.DrawSurfListSolid, "solid");
       CheckListSortValidity(dls.DrawSurfListMasked, "masked");
+      #endif
     }
 
     //FIXME!
@@ -368,17 +372,8 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     texinfo_t lastTexinfo;
     lastTexinfo.initLastUsed();
 
-    #if 0
-    enum {
-      BMAP_INACTIVE = 1u,
-      BMAP_ACTIVE   = 2u,
-    };
-    #endif
-
     bool glTextureEnabled = false;
     glDisable(GL_TEXTURE_2D);
-
-    //GCon->Logf(NAME_Debug, "::: solid=%d; masked=%d", dls.DrawSurfListSolid.length(), dls.DrawSurfListMasked.length());
 
     // activate VBO
     GLuint attribPosition = 0; /* shut up, gcc! */
@@ -386,12 +381,11 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     vboAdvSurf.enableAttrib(attribPosition);
 
     int vboIdx = 0; // data index
-    int vboCountIdx = 0; // counter index
-    int vboIndexIdx = 0; // index index
+    int vboCountIdx = 0; // element (counter) index
     TArray<GLsizei> vboCounters; // number of indicies in each primitive
-    TArray<GLint> vboIndicies; // starting indicies
+    TArray<GLint> vboStartInds; // starting indicies
     vboCounters.setLength(dls.DrawSurfListSolid.length()+dls.DrawSurfListMasked.length()+4);
-    vboIndicies.setLength(vboCounters.length());
+    vboStartInds.setLength(vboCounters.length());
 
     bool lastCullFace = true;
     glEnable(GL_CULL_FACE);
@@ -400,14 +394,13 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
     #define SAMB_FLUSH_VBO()  do { \
       if (vboIdx) { \
-        if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "flushing ambsurface VBO: vboIdx=%d; vboIndexIdx=%d; vboCountIdx=%d", vboIdx, vboIndexIdx, vboCountIdx); \
+        if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "flushing ambsurface VBO: vboIdx=%d; vboCountIdx=%d", vboIdx, vboCountIdx); \
         vboAdvSurf.uploadData(vboIdx); \
         vboAdvSurf.setupAttribNoEnable(attribPosition, 3); \
-        /*p_glMultiDrawElements(GL_TRIANGLE_FAN, vboCounters.ptr(), GL_UNSIGNED_INT, vboIndicies.ptr(), (GLsizei)vboCountIdx);*/ \
-        p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboIndicies.ptr(), vboCounters.ptr(), (GLsizei)vboCountIdx); \
+        /*p_glMultiDrawElements(GL_TRIANGLE_FAN, vboCounters.ptr(), GL_UNSIGNED_INT, vboStartInds.ptr(), (GLsizei)vboCountIdx);*/ \
+        p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboStartInds.ptr(), vboCounters.ptr(), (GLsizei)vboCountIdx); \
         vboIdx = 0; \
         vboCountIdx = 0; \
-        vboIndexIdx = 0; \
       } \
     } while (0)
 
@@ -428,9 +421,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       /*SAMB_FLUSH_VBO();*/ \
       currentActiveShader->UploadChangedUniforms(); \
       /* remember counter */ \
-      vboCounters.ptr()[vboCountIdx++] = (GLsizei)surf->count; \
+      vboCounters.ptr()[vboCountIdx] = (GLsizei)surf->count; \
       /* remember first index */ \
-      vboIndicies.ptr()[vboIndexIdx++] = (GLint)vboIdx; \
+      vboStartInds.ptr()[vboCountIdx] = (GLint)vboIdx; \
       /* vectors will be put here */ \
       TVec *vp = vboAdvSurf.data.ptr()+vboIdx; \
       /* fill arrays */ \
@@ -439,10 +432,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       } \
       /* advance array positions */ \
       vboIdx += surf->count; \
-      /*glBegin(GL_TRIANGLE_FAN);*/ \
-        /*for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());*/ \
-      /*glEnd();*/ \
-      /*if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);*/
+      ++vboCountIdx;
 
     #define SAMB_DO_HEAD_LIGHT(shader_)  \
       const surface_t *surf = *sptr; \
@@ -649,191 +639,6 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     vboAdvSurf.deactivate();
 
     if (!lastCullFace) { /*lastCullFace = true;*/ glEnable(GL_CULL_FACE); }
-
-    #if 0
-    if (dls.DrawSurfListSolid.length() != 0) {
-      // activate non-brightmap shader
-      unsigned char brightmapActiveMask = BMAP_INACTIVE;
-      unsigned char prevGlowActiveMask = 0u;
-      //ShadowsAmbient.Activate();
-      //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
-      lastTexinfo.resetLastUsed();
-      const surface_t *const *surfptr = dls.DrawSurfListSolid.ptr();
-      for (int fcnt = dls.DrawSurfListSolid.length(); fcnt != 0; --fcnt, ++surfptr) {
-        const surface_t *surf = *surfptr;
-        if (!surf->plvisible) continue; // viewer is in back side or on plane, or some invalid texture, skip it
-
-        const texinfo_t *currTexinfo = surf->texinfo;
-
-        // this is done above
-        //CalcGlow(gp, surf);
-
-        if (r_brightmaps && currTexinfo->Tex->Brightmap) {
-          // texture with brightmap
-          //GCon->Logf("WALL BMAP: wall texture is '%s', brightmap is '%s'", *currTexinfo->Tex->Name, *currTexinfo->Tex->Brightmap->Name);
-          if (brightmapActiveMask != BMAP_ACTIVE) {
-            brightmapActiveMask = BMAP_ACTIVE;
-            ShadowsAmbientBrightmap.Activate();
-            prevsflight = -666; // force light setup
-          }
-          if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
-          SelectTexture(1);
-          SetBrightmapTexture(currTexinfo->Tex->Brightmap);
-          SelectTexture(0);
-          // set normal texture
-          SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
-          ShadowsAmbientBrightmap.SetTex(currTexinfo);
-          // glow
-          if (surf->gp.isActive()) {
-            prevGlowActiveMask |= brightmapActiveMask;
-            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, surf->gp);
-          } else if (prevGlowActiveMask&brightmapActiveMask) {
-            prevGlowActiveMask &= ~brightmapActiveMask;
-            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
-          }
-          lastTexinfo.resetLastUsed();
-        } else {
-          // normal wall
-          //GCon->Logf("SOLID WALL: wall texture is '%s' (%p:%p)", *currTexinfo->Tex->Name, currTexinfo->Tex, currTexinfo->Tex->Brightmap);
-          if (brightmapActiveMask != BMAP_INACTIVE) {
-            brightmapActiveMask = BMAP_INACTIVE;
-            ShadowsAmbient.Activate();
-            //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
-            prevsflight = -666; // force light setup
-          }
-          if (glTextureEnabled) { glTextureEnabled = false; glDisable(GL_TEXTURE_2D); }
-          // glow
-          if (surf->gp.isActive()) {
-            prevGlowActiveMask |= brightmapActiveMask;
-            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbient, surf->gp);
-          } else if (prevGlowActiveMask&brightmapActiveMask) {
-            prevGlowActiveMask &= ~brightmapActiveMask;
-            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
-          }
-        }
-
-        float lev = getSurfLightLevel(surf);
-        if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
-          prevsflight = lev;
-          prevlight = surf->Light;
-          if (brightmapActiveMask == BMAP_INACTIVE) {
-            ShadowsAmbient.SetLight(
-              ((prevlight>>16)&255)*lev/255.0f,
-              ((prevlight>>8)&255)*lev/255.0f,
-              (prevlight&255)*lev/255.0f, 1.0f);
-          } else {
-            ShadowsAmbientBrightmap.SetLight(
-              ((prevlight>>16)&255)*lev/255.0f,
-              ((prevlight>>8)&255)*lev/255.0f,
-              (prevlight&255)*lev/255.0f, 1.0f);
-          }
-        }
-
-        if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-        currentActiveShader->UploadChangedUniforms();
-        glBegin(GL_TRIANGLE_FAN);
-          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
-        glEnd();
-        if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
-      }
-    }
-
-    // masked textures
-    if (dls.DrawSurfListMasked.length() != 0) {
-      // activate non-brightmap shader
-      unsigned char brightmapActiveMask = BMAP_ACTIVE;
-      unsigned char prevGlowActiveMask = 0u;
-      ShadowsAmbientBrightmap.Activate();
-      VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
-      lastTexinfo.resetLastUsed();
-      if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
-      for (auto &&surf : dls.DrawSurfListMasked) {
-        if (!surf->plvisible) continue; // viewer is in back side or on plane, or some invalid texture, skip it
-
-        const texinfo_t *currTexinfo = surf->texinfo;
-
-        // this is done above
-        //CalcGlow(gp, surf);
-
-        if (r_brightmaps && currTexinfo->Tex->Brightmap) {
-          // texture with brightmap
-          //GCon->Logf("WALL BMAP: wall texture is '%s', brightmap is '%s'", *currTexinfo->Tex->Name, *currTexinfo->Tex->Brightmap->Name);
-          if (brightmapActiveMask != BMAP_ACTIVE) {
-            brightmapActiveMask = BMAP_ACTIVE;
-            ShadowsAmbientBrightmap.Activate();
-            prevsflight = -666; // force light setup
-          }
-          SelectTexture(1);
-          SetBrightmapTexture(currTexinfo->Tex->Brightmap);
-          SelectTexture(0);
-          // set normal texture
-          SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
-          ShadowsAmbientBrightmap.SetTex(currTexinfo);
-          // glow
-          if (surf->gp.isActive()) {
-            prevGlowActiveMask |= brightmapActiveMask;
-            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, surf->gp);
-          } else if (prevGlowActiveMask&brightmapActiveMask) {
-            prevGlowActiveMask &= ~brightmapActiveMask;
-            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
-          }
-          lastTexinfo.resetLastUsed();
-        } else {
-          //GCon->Logf("MASKED WALL: wall texture is '%s'", *currTexinfo->Tex->Name);
-          // normal wall
-          bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
-          if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
-
-          if (brightmapActiveMask != BMAP_INACTIVE) {
-            brightmapActiveMask = BMAP_INACTIVE;
-            ShadowsAmbientMasked.Activate();
-            //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
-            prevsflight = -666; // force light setup
-            textureChanded = true;
-          }
-
-          if (textureChanded) {
-            SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
-            ShadowsAmbientMasked.SetTex(currTexinfo);
-          }
-
-          // glow
-          if (surf->gp.isActive()) {
-            prevGlowActiveMask |= brightmapActiveMask;
-            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientMasked, surf->gp);
-          } else if (prevGlowActiveMask&brightmapActiveMask) {
-            prevGlowActiveMask &= ~brightmapActiveMask;
-            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
-          }
-        }
-
-        float lev = getSurfLightLevel(surf);
-        if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
-          prevsflight = lev;
-          prevlight = surf->Light;
-          if (brightmapActiveMask == BMAP_INACTIVE) {
-            ShadowsAmbientMasked.SetLight(
-              ((prevlight>>16)&255)*lev/255.0f,
-              ((prevlight>>8)&255)*lev/255.0f,
-              (prevlight&255)*lev/255.0f, 1.0f);
-          } else {
-            ShadowsAmbientBrightmap.SetLight(
-              ((prevlight>>16)&255)*lev/255.0f,
-              ((prevlight>>8)&255)*lev/255.0f,
-              (prevlight&255)*lev/255.0f, 1.0f);
-          }
-        }
-
-        if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-        currentActiveShader->UploadChangedUniforms();
-        glBegin(GL_TRIANGLE_FAN);
-          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
-        glEnd();
-        if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
-      }
-    }
-    #endif
-
     if (!glTextureEnabled) { /*glTextureEnabled = true;*/ glEnable(GL_TEXTURE_2D); }
   }
 
