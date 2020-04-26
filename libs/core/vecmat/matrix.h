@@ -331,7 +331,6 @@ public:
   VMatrix4 &invert () noexcept;
 
   void toQuaternion (float quat[4]) const noexcept;
-
 };
 
 
@@ -388,17 +387,17 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 // view matrices
-class VViewPortMats {
+class VViewportMats {
 public:
   // usually bottom-to-up
-  struct ViewPort {
+  struct Viewport {
   public:
     int x0, y0;
     int width, height;
     float scrwmid, scrhmid; // width/2, height/2
   public:
     // default is "not initialised"
-    ViewPort () noexcept /*: x0(0), y0(0), width(640), height(480), scrwmid(320), scrhmid(240)*/ {}
+    Viewport () noexcept /*: x0(0), y0(0), width(640), height(480), scrwmid(320), scrhmid(240)*/ {}
     inline void setOrigin (int x, int y) noexcept { x0 = x; y0 = y; }
     inline void setSize (int w, int h) noexcept { width = w; height = h; scrwmid = w*0.5f; scrhmid = h*0.5f; }
     inline bool isValid () const noexcept { return (width > 0 && height > 0); }
@@ -410,11 +409,11 @@ public:
 public:
   VMatrix4 projMat; // projection matrix, can be taken from OpenGL
   VMatrix4 modelMat; // model->world transformation matrix, can be taken from OpenGL
-  ViewPort vport;
+  Viewport vport;
 
 public:
   // default is "not initialised"
-  VViewPortMats () noexcept : projMat(), modelMat(), vport() {}
+  VViewportMats () noexcept : projMat(), modelMat(), vport() {}
 
   // transform model coords to world coords
   inline TVec toWorld (const TVec &point) const noexcept { return modelMat*point; }

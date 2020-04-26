@@ -360,7 +360,7 @@ protected:
   static void callICB (int phase);
 
 public:
-  VViewPortMats vpmats;
+  VViewportMats vpmats;
   // the following is here because alot of code can access it
   // current rendering position and angles
   TVec vieworg;
@@ -370,7 +370,7 @@ public:
   TVec viewright;
   TVec viewup;
   // calculated from `vieworg` and `viewangles`
-  TFrustum view_frustum;
+  TFrustum viewfrustum;
   bool MirrorFlip;
   bool MirrorClip;
   static float LightFadeMult;
@@ -443,6 +443,9 @@ public:
   virtual void SetupViewOrg () = 0;
   virtual void WorldDrawing () = 0;
   virtual void EndView (bool ignoreColorTint=false) = 0;
+
+  // call this
+  virtual void DisableClipPlanes () = 0;
 
   virtual void SetMainFBO (bool forced=false) = 0;
 

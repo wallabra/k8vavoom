@@ -463,7 +463,7 @@ protected:
 
 protected:
   // entity must not be `nullptr`, and must have `SubSector` set
-  // also, `view_frustum` should be valid here
+  // also, `viewfrustum` should be valid here
   // this is usually called once for each entity, but try to keep it reasonably fast anyway
   bool IsThingVisible (VEntity *ent) const noexcept;
 

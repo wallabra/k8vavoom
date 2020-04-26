@@ -202,8 +202,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, c
     float alpha;
     VMatrix4 trans = VMatrix4::Translate(-LightPos);
     VMatrix4 newmmat = trans*mmat;
-    //GCon->Logf("=== %u", view_frustum.planes[TFrustum::Near].clipflag);
-    if (view_frustum.planes[TFrustum::Near].PointOnSide(LightPos)) {
+    //GCon->Logf("=== %u", viewfrustum.planes[TFrustum::Near].clipflag);
+    if (viewfrustum.planes[TFrustum::Near].PointOnSide(LightPos)) {
       newmmat = mmat*VMatrix4::RotateY(180.0f);
       alpha = -1.0f;
     } else {

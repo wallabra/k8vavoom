@@ -187,7 +187,7 @@ bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int Rend
 //  VRenderLevelShared::IsThingVisible
 //
 //  entity must not be `nullptr`, and must have `SubSector` set
-//  also, `view_frustum` should be valid here
+//  also, `viewfrustum` should be valid here
 //  this is usually called once for each entity, but try to keep it
 //  reasonably fast anyway
 //
@@ -200,11 +200,11 @@ bool VRenderLevelShared::IsThingVisible (VEntity *ent) const noexcept {
   // check if it is in visible sector
   if (BspVisSector[SecIdx>>3]&(1u<<(SecIdx&7))) {
     // in visible sector; check frustum, because sector shapes can be quite bizarre
-    return Drawer->view_frustum.checkSphere(ent->Origin, ent->GetRenderRadius());
+    return Drawer->viewfrustum.checkSphere(ent->Origin, ent->GetRenderRadius());
   } else if (r_draw_adjacent_sector_things) {
     // in invisible sector, and we have to perform adjacency check
     // do frustum check first
-    if (Drawer->view_frustum.checkSphere(ent->Origin, ent->GetRenderRadius())) {
+    if (Drawer->viewfrustum.checkSphere(ent->Origin, ent->GetRenderRadius())) {
       // check if this thing is touching any visible sector
       for (msecnode_t *mnode = ent->TouchingSectorList; mnode; mnode = mnode->TNext) {
         const unsigned snum = (unsigned)(ptrdiff_t)(mnode->Sector-Level->Sectors);

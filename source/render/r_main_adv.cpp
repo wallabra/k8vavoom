@@ -103,8 +103,6 @@ VRenderLevelShadowVolume::~VRenderLevelShadowVolume () {
 }
 
 
-
-
 static TArray<StLightInfo> visstatlights;
 static TArray<DynLightInfo> visdynlights;
 
@@ -144,23 +142,23 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
       planes[f].dist /= len;
       //planes[f].Normalise();
       GCon->Logf("  GL plane #%u: (%9f,%9f,%9f) : %f", f, planes[f].normal.x, planes[f].normal.y, planes[f].normal.z, planes[f].dist);
-      GCon->Logf("  MY plane #%u: (%9f,%9f,%9f) : %f", f, Drawer->view_frustum.planes[f].normal.x, Drawer->view_frustum.planes[f].normal.y, Drawer->view_frustum.planes[f].normal.z, Drawer->view_frustum.planes[f].dist);
+      GCon->Logf("  MY plane #%u: (%9f,%9f,%9f) : %f", f, Drawer->viewfrustum.planes[f].normal.x, Drawer->viewfrustum.planes[f].normal.y, Drawer->viewfrustum.planes[f].normal.z, Drawer->viewfrustum.planes[f].dist);
     }
 
     // we aren't interested in far plane
     for (unsigned f = 0; f < 4; ++f) {
-      Drawer->view_frustum.planes[f] = planes[f];
-      Drawer->view_frustum.planes[f].clipflag = 1U<<f;
+      Drawer->viewfrustum.planes[f] = planes[f];
+      Drawer->viewfrustum.planes[f].clipflag = 1U<<f;
     }
     // near plane for reverse z is "far"
     if (Drawer->CanUseRevZ()) {
-      Drawer->view_frustum.planes[TFrustum::Back] = planes[5];
+      Drawer->viewfrustum.planes[TFrustum::Back] = planes[5];
     } else {
-      Drawer->view_frustum.planes[TFrustum::Back] = planes[4];
+      Drawer->viewfrustum.planes[TFrustum::Back] = planes[4];
     }
-    Drawer->view_frustum.planes[TFrustum::Back].clipflag = TFrustum::BackBit;
-    Drawer->view_frustum.planeCount = 5;
-    //vassert(Drawer->view_frustum.planes[4].PointOnSide(Drawer->vieworg));
+    Drawer->viewfrustum.planes[TFrustum::Back].clipflag = TFrustum::BackBit;
+    Drawer->viewfrustum.planeCount = 5;
+    //vassert(Drawer->viewfrustum.planes[4].PointOnSide(Drawer->vieworg));
   }
 #endif
 
@@ -395,8 +393,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
   }
 
   DrawParticles();
-
   DrawTranslucentPolys();
-
+  Drawer->DisableClipPlanes();
   RenderPortals();
 }

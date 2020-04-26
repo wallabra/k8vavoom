@@ -152,8 +152,8 @@ void VPortal::Draw (bool UseStencil) {
   vuint8 *SavedBspVis = RLev->BspVis;
   vuint8 *SavedBspVisSector = RLev->BspVisSector;
   bool SavedMirrorClip = Drawer->MirrorClip;
-  const TClipPlane SavedClip = Drawer->view_frustum.planes[5]; // save far/mirror plane
-  const unsigned planeCount = Drawer->view_frustum.planeCount;
+  const TClipPlane SavedClip = Drawer->viewfrustum.planes[TFrustum::Forward]; // save far/mirror plane
+  const unsigned planeCount = Drawer->viewfrustum.planeCount;
 
   VRenderLevelShared::PPMark pmark;
   VRenderLevelShared::MarkPortalPool(&pmark);
@@ -204,8 +204,8 @@ void VPortal::Draw (bool UseStencil) {
   Drawer->MirrorClip = SavedMirrorClip;
   // restore original frustum
   RLev->TransformFrustum();
-  Drawer->view_frustum.planes[5] = SavedClip; // restore far/mirror plane
-  Drawer->view_frustum.planeCount = planeCount;
+  Drawer->viewfrustum.planes[TFrustum::Forward] = SavedClip; // restore far/mirror plane
+  Drawer->viewfrustum.planeCount = planeCount;
   Drawer->SetupViewOrg();
 
   Drawer->EndPortal(this, UseStencil);
@@ -468,16 +468,16 @@ void VMirrorPortal::DrawContents () {
   SetupRanges(rd, Range, true, false);
 
   // use "far plane" (it is unused by default)
-  const TClipPlane SavedClip = Drawer->view_frustum.planes[5]; // save far/mirror plane
-  const unsigned planeCount = Drawer->view_frustum.planeCount;
-  Drawer->view_frustum.planes[5] = *Plane;
-  Drawer->view_frustum.planes[5].clipflag = TFrustum::ForwardBit; //0x20U;
-  Drawer->view_frustum.planeCount = 6;
+  const TClipPlane SavedClip = Drawer->viewfrustum.planes[TFrustum::Forward]; // save far/mirror plane
+  const unsigned planeCount = Drawer->viewfrustum.planeCount;
+  Drawer->viewfrustum.planes[TFrustum::Forward] = *Plane;
+  Drawer->viewfrustum.planes[TFrustum::Forward].clipflag = TFrustum::ForwardBit; //0x20U;
+  Drawer->viewfrustum.planeCount = 6;
 
   RLev->RenderScene(&rd, &Range);
 
-  Drawer->view_frustum.planes[5] = SavedClip;
-  Drawer->view_frustum.planeCount = planeCount;
+  Drawer->viewfrustum.planes[TFrustum::Forward] = SavedClip;
+  Drawer->viewfrustum.planeCount = planeCount;
 
   --RLev->MirrorLevel;
   Drawer->MirrorFlip = RLev->MirrorLevel&1;

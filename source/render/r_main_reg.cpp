@@ -351,8 +351,7 @@ void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *
   }
 
   DrawParticles();
-
   DrawTranslucentPolys();
-
+  Drawer->DisableClipPlanes();
   RenderPortals();
 }

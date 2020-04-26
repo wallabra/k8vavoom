@@ -792,9 +792,9 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     return;
   }
 
-  if (MirrorClipSegs && clip_frustum && clip_frustum_mirror && /*clip_frustum_bsp &&*/ Drawer->view_frustum.planes[5].isValid()) {
+  if (MirrorClipSegs && clip_frustum && clip_frustum_mirror && /*clip_frustum_bsp &&*/ Drawer->viewfrustum.planes[TFrustum::Forward].isValid()) {
     // clip away segs that are behind mirror
-    if (Drawer->view_frustum.planes[5].PointOnSide(*seg->v1) && Drawer->view_frustum.planes[5].PointOnSide(*seg->v2)) return; // behind mirror
+    if (Drawer->viewfrustum.planes[TFrustum::Forward].PointOnSide(*seg->v1) && Drawer->viewfrustum.planes[TFrustum::Forward].PointOnSide(*seg->v2)) return; // behind mirror
   }
 
   /*
@@ -962,7 +962,7 @@ void VRenderLevelShared::AddPolyObjToClipper (VViewClipper &clip, subsector_t *s
       for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
         seg_t *seg = (*polySeg)->drawsegs->seg;
         if (seg->linedef) {
-          clip.CheckAddClipSeg(seg, (MirrorClipSegs && Drawer->view_frustum.planes[5].isValid() ? &Drawer->view_frustum.planes[5] : nullptr));
+          clip.CheckAddClipSeg(seg, (MirrorClipSegs && Drawer->viewfrustum.planes[TFrustum::Forward].isValid() ? &Drawer->viewfrustum.planes[TFrustum::Forward] : nullptr));
         }
       }
     }
@@ -1050,7 +1050,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
     if (Level->HasPVS()) {
       if (sub->VisFrame != currVisFrame) {
         if (clip_use_1d_clipper) {
-          ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && Drawer->view_frustum.planes[5].isValid() ? &Drawer->view_frustum.planes[5] : nullptr));
+          ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && Drawer->viewfrustum.planes[TFrustum::Forward].isValid() ? &Drawer->viewfrustum.planes[TFrustum::Forward] : nullptr));
         }
         return;
       }
@@ -1087,7 +1087,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
   if (clip_use_1d_clipper) {
-    ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && Drawer->view_frustum.planes[5].isValid() ? &Drawer->view_frustum.planes[5] : nullptr));
+    ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && Drawer->viewfrustum.planes[TFrustum::Forward].isValid() ? &Drawer->viewfrustum.planes[TFrustum::Forward] : nullptr));
   }
 }
 
@@ -1120,8 +1120,8 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
       //memcpy(newbbox, bbox, sizeof(float)*6);
       //newbbox[2] = -32767.0f;
       //newbbox[5] = +32767.0f;
-      const TClipPlane *cp = &Drawer->view_frustum.planes[0];
-      for (unsigned i = Drawer->view_frustum.planeCount; i--; ++cp) {
+      const TClipPlane *cp = &Drawer->viewfrustum.planes[0];
+      for (unsigned i = Drawer->viewfrustum.planeCount; i--; ++cp) {
         if (!(clipflags&cp->clipflag)) continue; // don't need to clip against it
         //k8: this check is always true, because view origin is outside of frustum (oops)
         //if (cp->PointOnSide(Drawer->vieworg)) continue; // viewer is in back side or on plane (k8: why check this?)
@@ -1195,17 +1195,17 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
   if (PortalLevel == 0) {
     if (WorldSurfs.NumAllocated() < 4096) WorldSurfs.Resize(4096);
   }
-  MirrorClipSegs = (Drawer->MirrorClip && !Drawer->view_frustum.planes[5].normal.z);
+  MirrorClipSegs = (Drawer->MirrorClip && !Drawer->viewfrustum.planes[TFrustum::Forward].normal.z);
   if (!clip_frustum_mirror) {
     MirrorClipSegs = false;
-    Drawer->view_frustum.planes[5].clipflag = 0;
+    Drawer->viewfrustum.planes[TFrustum::Forward].clipflag = 0;
   }
 
   // head node is the last node output
   {
     unsigned clipflags = 0;
-    const TClipPlane *cp = &Drawer->view_frustum.planes[0];
-    for (unsigned i = Drawer->view_frustum.planeCount; i--; ++cp) clipflags |= cp->clipflag;
+    const TClipPlane *cp = &Drawer->viewfrustum.planes[0];
+    for (unsigned i = Drawer->viewfrustum.planeCount; i--; ++cp) clipflags |= cp->clipflag;
     RenderBSPNode(Level->NumNodes-1, dummy_bbox, clipflags /*(Drawer->MirrorClip ? 0x3f : 0x1f)*/);
   }
 

@@ -1777,12 +1777,12 @@ void R_DrawViewBorder () {
 //
 //==========================================================================
 void VRenderLevelShared::TransformFrustum () {
-  //view_frustum.setup(clip_base, vieworg, viewangles, false/*no back plane*/, -1.0f/*no forward plane*/);
+  //viewfrustum.setup(clip_base, vieworg, viewangles, false/*no back plane*/, -1.0f/*no forward plane*/);
   bool useFrustumFar = (gl_maxdist > 1.0f);
   if (useFrustumFar && !r_clip_maxdist) {
     useFrustumFar = (Drawer ? Drawer->UseFrustumFarClip() : false);
   }
-  Drawer->view_frustum.setup(clip_base, TFrustumParam(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup), true/*create back plane*/,
+  Drawer->viewfrustum.setup(clip_base, TFrustumParam(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup), true/*create back plane*/,
     (useFrustumFar ? gl_maxdist : -1.0f/*no forward plane*/));
 }
 
@@ -1811,7 +1811,7 @@ void VRenderLevelShared::SetupFrame () {
   }
   AngleVectors(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
 
-  Drawer->view_frustum.clear(); // why not?
+  Drawer->viewfrustum.clear(); // why not?
 
   if (r_chasecam && cl->MO == cl->Camera) {
     //Drawer->vieworg = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;

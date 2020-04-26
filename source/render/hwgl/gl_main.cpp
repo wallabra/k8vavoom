@@ -1062,6 +1062,8 @@ void VOpenGLDrawer::Setup2D () {
   GLEnableBlend();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
+
+  glDisable(GL_CLIP_PLANE0);
 }
 
 
@@ -1636,6 +1638,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   CalcProjectionMatrix(vpmats.projMat, ARLev, rd);
   glMatrixMode(GL_PROJECTION);
   glLoadMatrixf(vpmats.projMat[0]);
+  glDisable(GL_CLIP_PLANE0);
 
   //vpmats.projMat = ProjMat;
   vpmats.modelMat.SetIdentity();
@@ -1665,6 +1668,9 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   glDisable(GL_SCISSOR_TEST);
   currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = 0;
   currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 32000;
+
+  // just in case
+  glDisable(GL_CLIP_PLANE0);
 }
 
 
@@ -1681,14 +1687,36 @@ void VOpenGLDrawer::SetupViewOrg () {
 
   glCullFace(MirrorClip ? GL_BACK : GL_FRONT);
 
-  if (MirrorClip && view_frustum.planes[5].isValid()) {
+  if (MirrorClip && viewfrustum.planes[TFrustum::Forward].isValid()) {
     glEnable(GL_CLIP_PLANE0);
     const GLdouble eq[4] = {
-      view_frustum.planes[5].normal.x, view_frustum.planes[5].normal.y, view_frustum.planes[5].normal.z,
-      -view_frustum.planes[5].dist
+      viewfrustum.planes[TFrustum::Forward].normal.x,
+      viewfrustum.planes[TFrustum::Forward].normal.y,
+      viewfrustum.planes[TFrustum::Forward].normal.z,
+      -viewfrustum.planes[TFrustum::Forward].dist,
     };
     glClipPlane(GL_CLIP_PLANE0, eq);
-  } else {
+  }
+  #if 0 /*k8: i am too dumb to figure this out*/
+  else if (/*!MirrorClip && viewfrustum.planes[TFrustum::Forward].isValid()*/true) {
+    //GCon->Logf(NAME_Debug, "mclip: (%g,%g,%g) : %g", viewfrustum.planes[TFrustum::Forward].normal.x, viewfrustum.planes[TFrustum::Forward].normal.y, viewfrustum.planes[TFrustum::Forward].normal.z, viewfrustum.planes[TFrustum::Forward].dist);
+
+    // do not transform matrix
+    glLoadIdentity();
+
+    glEnable(GL_CLIP_PLANE0);
+    const GLdouble eq[4] = {
+      0.0f, //viewfrustum.planes[TFrustum::Forward].normal.x,
+      0.0f, //viewfrustum.planes[TFrustum::Forward].normal.y,
+      -1.0f, //viewfrustum.planes[TFrustum::Forward].normal.z,
+      8.0f, //-viewfrustum.planes[TFrustum::Forward].dist,
+    };
+    glClipPlane(GL_CLIP_PLANE0, eq);
+
+    glLoadMatrixf(vpmats.modelMat[0]);
+  }
+  #endif
+  else {
     glDisable(GL_CLIP_PLANE0);
   }
 
@@ -1726,6 +1754,16 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
     //GLDisableBlend();
     glEnable(GL_TEXTURE_2D);
   }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DisableClipPlanes
+//
+//==========================================================================
+void VOpenGLDrawer::DisableClipPlanes () {
+  glDisable(GL_CLIP_PLANE0);
 }
 
 

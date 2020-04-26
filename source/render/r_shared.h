@@ -777,7 +777,7 @@ extern TVec viewforward;
 extern TVec viewright;
 extern TVec viewup;
 extern TAVec viewangles;
-extern TFrustum view_frustum;
+extern TFrustum viewfrustum;
 
 extern bool MirrorFlip;
 extern bool MirrorClip;
