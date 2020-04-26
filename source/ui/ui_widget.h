@@ -124,6 +124,7 @@ protected:
   void DrawTree ();
   void TickTree (float DeltaTime);
 
+  // ignores `CurrentFocusChild`, selects next focusable or `nullptr`
   void FindNewFocus ();
 
   VWidget *GetWidgetAt (float X, float Y) noexcept;
@@ -140,7 +141,7 @@ protected:
   static void CleanupWidgets ();
 
   inline bool CanBeFocused () const noexcept {
-    return ((WidgetFlags&(WF_IsVisible|WF_IsEnabled|WF_IsFocusable)) == (WF_IsVisible|WF_IsEnabled|WF_IsFocusable));
+    return (!IsGoingToDie() && ((WidgetFlags&(WF_IsVisible|WF_IsEnabled|WF_IsFocusable)) == (WF_IsVisible|WF_IsEnabled|WF_IsFocusable)));
   }
 
   inline bool IsVisibleFlag () const noexcept { return (WidgetFlags&WF_IsVisible); }
@@ -150,6 +151,8 @@ protected:
   inline bool IsCloseOnBlurFlag () const noexcept { return (WidgetFlags&WF_CloseOnBlur); }
   inline bool IsModalFlag () const noexcept { return (WidgetFlags&WF_Modal); }
   inline bool IsOnTopFlag () const noexcept { return (WidgetFlags&WF_OnTop); }
+
+  inline void SetCloseOnBlurFlag (bool v) noexcept { if (v) WidgetFlags |= WF_CloseOnBlur; else WidgetFlags &= ~WF_CloseOnBlur; }
 
   inline bool IsChildAdded () const noexcept {
     if (!ParentWidget) return false;

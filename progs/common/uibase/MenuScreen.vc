@@ -616,10 +616,12 @@ final int GetItemYH (int idx) {
 final void FixTopIndex () {
   if (Items.Num == 0) return;
   if (CursorPos < 0) CursorPos = Items.length-1; else if (CursorPos >= Items.length) CursorPos = 0;
-  helpText.text = Items[CursorPos].getHelp();
-  helpText.Raise();
-  if (Items.Num == 1) { helpText.atTop = false; CursorPos = 0; ChildrenOfsY = 0; return; }
-  if (!MenuScrollable) { helpText.atTop = false; ChildrenOfsY = 0; return; }
+  if (helpText) {
+    helpText.text = Items[CursorPos].getHelp();
+    helpText.Raise();
+  }
+  if (Items.Num == 1) { if (helpText) helpText.atTop = false; CursorPos = 0; ChildrenOfsY = 0; return; }
+  if (!MenuScrollable) { if (helpText) helpText.atTop = false; ChildrenOfsY = 0; return; }
   // check if this is first selectable item
   bool isFirstItem = true;
   foreach (auto index, auto item; Items) {
@@ -628,7 +630,7 @@ final void FixTopIndex () {
     isFirstItem = index == CursorPos;
     break;
   }
-  if (isFirstItem) { helpText.atTop = false; ChildrenOfsY = 0; return; }
+  if (isFirstItem) { if (helpText) helpText.atTop = false; ChildrenOfsY = 0; return; }
   // make sure that cursor is visible
   int th = CalcTotalHeight();
   int ys = GetItemYS(CursorPos);
@@ -637,7 +639,7 @@ final void FixTopIndex () {
        if (ys+ChildrenOfsY < ChoicesStartY) ChildrenOfsY = -ys+ChoicesStartY;
   else if (ye+ChildrenOfsY > Height) ChildrenOfsY = -(ye-Height);
   // make sure that help is visible
-  if (helpText.Height > 0) {
+  if (helpText && helpText.Height > 0) {
     helpText.atTop = (Y2Virtual(ye) >= GetVirtualHeight()-helpText.Height-4);
   }
 }

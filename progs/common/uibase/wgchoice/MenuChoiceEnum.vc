@@ -207,6 +207,7 @@ override bool OnEvent (ref event_t evt) {
 override void OnMouseClick (int X, int Y, int Button, Widget Dest) {
   if (Dest != self) return;
   if (IsFocused) {
+    /*
     if (vallist.length == 0) return;
     int idx = findValue(Value);
     if (Button == K_MOUSE1) {
@@ -218,6 +219,11 @@ override void OnMouseClick (int X, int Y, int Button, Widget Dest) {
     }
     float newValue = vallist[idx].value;
     if (SetNewValue(ref newValue)) LocalSound('menu/change');
+    */
+    MenuComboBoxPopup pp = MenuComboBoxPopup(GetRootWidget.NewChild(MenuComboBoxPopup));
+    pp.text = "test!";
+    printdebug("%s: created", pp.UniqueId);
+    LocalSound('menu/change');
   } else {
     SetFocus();
   }
@@ -228,4 +234,86 @@ defaultproperties {
   Width = 360;
   Height = 10;
   cvarSession = '';
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuComboBoxPopup : Widget;
+
+private string mText;
+
+
+final string text {
+  get { return mText; }
+  set { setText(value); }
+}
+
+
+//==========================================================================
+//
+//  setText
+//
+//==========================================================================
+void setText (string text) {
+  text = text.xstrip;
+  mText = SplitTextWithNewlines(text, GetVirtualWidth()-16);
+
+  SetFont('smallfont');
+  SetTextAlign(hleft, vtop);
+  SetSize(TextWidth(mText)+8, TextHeight(mText)+8);
+}
+
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
+  if (!mText || Width < 1 || Height < 1) return;
+  //printdebug("%s: cob=%B; focused=%B", UniqueId, CloseOnBlur, IsFocused());
+  SetOrigin((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
+  SetFont('smallfont');
+  SetTextAlign(hleft, vtop);
+  ShadeRect(0, 0, Width, Height, /*GetCvarF('menu_darkening')*/0.8);
+  DrawRect(0, 0, Width, Height, RGB(255, 127, 0));
+  DrawText(4, 4, mText, CR_ORANGE);
+}
+
+
+override bool OnEvent (ref event_t evt) {
+  //printdebug("%s: event:%s", UniqueId, evt.type);
+  if (evt.bubbling) {
+    if (evt.type == ev_keydown) {
+      if (evt.keycode >= K_MOUSE1 && evt.keycode <= K_MOUSE9) {
+        if (evt.x < 0 || evt.y < 0 || evt.x >= Width || evt.y >= Height) {
+          printdebug("xclick!");
+          Destroy();
+          return true;
+        }
+      }
+    }
+    return true;
+  }
+  return ::OnEvent(evt);
+}
+
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnClose () {
+  printdebug("%s: closing", UniqueId);
+}
+
+
+defaultproperties {
+  X = 0;
+  Y = 0;
+  Width = 0;
+  Height = 0;
+  Focusable = true;
+  CloseOnBlur = true;
 }

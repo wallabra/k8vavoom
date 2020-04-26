@@ -47,8 +47,8 @@ private:
   TArray<VWidget *> EventPath;
 
 private:
-  void MouseMoveEvent (int, int);
-  bool MouseButtonEvent (int, bool);
+  void MouseMoveEvent (int OldMouseX, int OldMouseY);
+  bool MouseButtonEvent (int Button, bool Down);
 
   void BuildEventPath ();
 

@@ -29,7 +29,7 @@
 
 
 static VCvarI ui_click_threshold("ui_click_threshold", "6", "Amount of pixels mouse cursor can move before aborting a click event.", CVAR_Archive);
-static VCvarF ui_click_timeout("ui_click_timeout", "0.1", "Click timeout in seconds.", CVAR_Archive);
+static VCvarF ui_click_timeout("ui_click_timeout", "0.3", "Click timeout in seconds.", CVAR_Archive);
 
 
 IMPLEMENT_CLASS(V, RootWidget);
@@ -141,9 +141,15 @@ bool VRootWidget::InternalResponder (event_t *evt) {
   if (evt->isEatenOrCancelled()) return evt->isEaten();
 
   BuildEventPath();
+  //GCon->Logf(NAME_Debug, "evt=%d; len=%d", evt->type, EventPath.length());
   if (EventPath.length() == 0) return false;
 
   const bool mouseAllowed = (RootFlags&RWF_MouseEnabled);
+
+  // remember old mouse coordinates
+  const int OldMouseX = MouseX;
+  const int OldMouseY = MouseY;
+  const bool doMouseMoved = (evt->type == ev_mouse ? UpdateMousePosition(MouseX+evt->dx, MouseY-evt->dy) : false);
 
   // do not send mouse events if UI mouse is disabled
   if (mouseAllowed || !evt->isAnyMouseEvent()) {
@@ -183,7 +189,7 @@ bool VRootWidget::InternalResponder (event_t *evt) {
   if (mouseAllowed) {
     // handle mouse movement
     if (evt->type == ev_mouse) {
-      MouseMoveEvent(MouseX+evt->dx, MouseY-evt->dy);
+      if (doMouseMoved) MouseMoveEvent(OldMouseX, OldMouseY);
       return true;
     }
     // handle mouse buttons
@@ -249,15 +255,8 @@ bool VRootWidget::UpdateMousePosition (int NewX, int NewY) {
 //  VRootWidget::MouseMoveEvent
 //
 //==========================================================================
-void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
+void VRootWidget::MouseMoveEvent (int OldMouseX, int OldMouseY) {
   if (IsGoingToDie()) return;
-
-  // remember old mouse coordinates
-  const int OldMouseX = MouseX;
-  const int OldMouseY = MouseY;
-
-  // update mouse position
-  if (!UpdateMousePosition(NewX, NewY)) return; // not moved
 
   // find widget under old position
   const float ScaledOldX = OldMouseX*SizeScaleX;

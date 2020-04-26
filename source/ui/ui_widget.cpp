@@ -141,8 +141,9 @@ void VWidget::MarkChildrenDead () {
 //
 //==========================================================================
 void VWidget::MarkDead () {
-  SetDelayedDestroy();
   MarkChildrenDead();
+  if (ParentWidget && IsChildAdded()) ParentWidget->RemoveChild(this);
+  SetDelayedDestroy();
 }
 
 
@@ -154,9 +155,7 @@ void VWidget::MarkDead () {
 //
 //==========================================================================
 void VWidget::Close () {
-  if (IsDestroyed()) return;
   MarkDead();
-  if (ParentWidget && IsChildAdded()) { OnClose(); ParentWidget->RemoveChild(this); }
 }
 
 
@@ -185,7 +184,8 @@ void VWidget::Init (VWidget *AParent) {
 void VWidget::Destroy () {
   //GCon->Logf(NAME_Debug, "destroying widget %s:%u:%p", GetClass()->GetName(), GetUniqueId(), (void *)this);
   AllWidgets.remove(this);
-  if (ParentWidget && IsChildAdded()) { OnClose(); ParentWidget->RemoveChild(this); }
+  MarkChildrenDead();
+  if (ParentWidget && IsChildAdded()) ParentWidget->RemoveChild(this);
   OnDestroy();
   DestroyAllChildren();
   Super::Destroy();
@@ -215,7 +215,10 @@ void VWidget::AddChild (VWidget *NewChild) {
   NewChild->Raise();
 
   OnChildAdded(NewChild);
-  if (!CurrentFocusChild) SetCurrentFocusChild(NewChild);
+  if (NewChild->CanBeFocused()) {
+    if (!CurrentFocusChild || NewChild->IsCloseOnBlurFlag()) SetCurrentFocusChild(NewChild);
+  }
+  if (NewChild->IsCloseOnBlurFlag() && CurrentFocusChild != NewChild) NewChild->Close(); // just in case
 }
 
 
@@ -226,8 +229,14 @@ void VWidget::AddChild (VWidget *NewChild) {
 //==========================================================================
 void VWidget::RemoveChild (VWidget *InChild) {
   if (!InChild) return;
+  if (!InChild->IsChildAdded()) { /*GCon->Log(NAME_Error, "VWidget::RemoveChild: trying to orphan already orphaned child");*/ return; }
   if (InChild->ParentWidget != this) Sys_Error("VWidget::RemoveChild: trying to orphan an alien child");
-  if (!InChild->IsChildAdded()) { GCon->Log(NAME_Error, "VWidget::RemoveChild: trying to orphan already orphaned child"); return; }
+  //if (InChild->IsCloseOnBlurFlag()) GCon->Logf(NAME_Debug, "VWidget::RemoveChild: removing %u (focus=%u)", InChild->GetUniqueId(), (CurrentFocusChild ? CurrentFocusChild->GetUniqueId() : 0));
+  //if (InChild->IsCloseOnBlurFlag()) GCon->Logf(NAME_Debug, "VWidget::RemoveChild: removed %u (focus=%u)", InChild->GetUniqueId(), (CurrentFocusChild ? CurrentFocusChild->GetUniqueId() : 0));
+  // remove "close on blur", because we're going to close it anyway
+  //const bool oldCOB = InChild->IsCloseOnBlurFlag();
+  InChild->SetCloseOnBlurFlag(false);
+  // remove from parent list
   if (InChild->PrevWidget) {
     InChild->PrevWidget->NextWidget = InChild->NextWidget;
   } else {
@@ -238,11 +247,15 @@ void VWidget::RemoveChild (VWidget *InChild) {
   } else {
     LastChildWidget = InChild->PrevWidget;
   }
+  // fix focus
+  if (CurrentFocusChild == InChild) FindNewFocus();
+  //GCon->Logf(NAME_Debug, "%u: OnClose(); parent=%u", InChild->GetUniqueId(), GetUniqueId());
+  InChild->OnClose();
+  // mark as removed
   InChild->PrevWidget = nullptr;
   InChild->NextWidget = nullptr;
   InChild->ParentWidget = nullptr;
   OnChildRemoved(InChild);
-  if (CurrentFocusChild == InChild) FindNewFocus();
 }
 
 
@@ -537,6 +550,7 @@ void VWidget::SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight,
 //
 //==========================================================================
 void VWidget::SetVisibility (bool NewVisibility) {
+  if (IsGoingToDie()) return;
   if (IsVisibleFlag() != NewVisibility) {
     if (NewVisibility) {
       WidgetFlags |= WF_IsVisible;
@@ -564,6 +578,7 @@ void VWidget::SetVisibility (bool NewVisibility) {
 //
 //==========================================================================
 void VWidget::SetEnabled (bool NewEnabled) {
+  if (IsGoingToDie()) return;
   if (IsEnabledFlag() != NewEnabled) {
     if (NewEnabled) {
       WidgetFlags |= WF_IsEnabled;
@@ -583,6 +598,7 @@ void VWidget::SetEnabled (bool NewEnabled) {
 //
 //==========================================================================
 void VWidget::SetFocusable (bool NewFocusable) {
+  if (IsGoingToDie()) return;
   if (IsFocusableFlag() != NewFocusable) {
     if (NewFocusable) {
       WidgetFlags |= WF_IsFocusable;
@@ -603,10 +619,16 @@ void VWidget::SetFocusable (bool NewFocusable) {
 //==========================================================================
 void VWidget::SetCurrentFocusChild (VWidget *NewFocus) {
   // check if it's already focused
-  if (CurrentFocusChild == NewFocus) return;
+  if (CurrentFocusChild == NewFocus) {
+    if (!CurrentFocusChild) return;
+    if (!CurrentFocusChild->IsGoingToDie()) return;
+    FindNewFocus();
+    return;
+  }
 
   // make sure it's visible, enabled and focusable
   if (NewFocus) {
+    if (NewFocus->IsGoingToDie()) return;
     if (!NewFocus->IsChildAdded()) return; // if it is not added, get out of here
     if (!NewFocus->CanBeFocused()) return;
   }
@@ -615,11 +637,19 @@ void VWidget::SetCurrentFocusChild (VWidget *NewFocus) {
   VWidget *fcc = (CurrentFocusChild && CurrentFocusChild->IsCloseOnBlurFlag() ? CurrentFocusChild : nullptr);
   if (CurrentFocusChild) CurrentFocusChild->OnFocusLost();
 
-  // make it the current focus
-  CurrentFocusChild = NewFocus;
-  if (CurrentFocusChild) CurrentFocusChild->OnFocusReceived();
+  if (NewFocus) {
+    // make it the current focus
+    if (!NewFocus->IsGoingToDie()) {
+      CurrentFocusChild = NewFocus;
+      CurrentFocusChild->OnFocusReceived();
+    } else {
+      FindNewFocus();
+    }
+  } else {
+    CurrentFocusChild = NewFocus;
+  }
 
-  if (fcc) fcc->Close();
+  if (fcc && fcc != CurrentFocusChild) fcc->Close();
 }
 
 
@@ -1389,7 +1419,6 @@ IMPLEMENT_FUNCTION(VWidget, Destroy) {
 
 IMPLEMENT_FUNCTION(VWidget, DestroyAllChildren) {
   vobjGetParamSelf();
-  //if (Self) Self->DestroyAllChildren();
   if (Self) Self->MarkChildrenDead();
 }
 
