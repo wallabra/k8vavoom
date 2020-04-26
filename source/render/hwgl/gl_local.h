@@ -482,15 +482,7 @@ private:
 
   void RestoreDepthFunc ();
 
-  //WARNING! take care of setting heights to non-zero, or glow shaders will fail!
-  struct GlowParams {
-    vuint32 glowCC, glowCF; // glow colors
-    float floorZ, ceilingZ;
-    float floorGlowHeight, ceilingGlowHeight;
-    GlowParams () : glowCC(0), glowCF(0), floorZ(0), ceilingZ(0), floorGlowHeight(128), ceilingGlowHeight(128) {}
-    inline bool isActive () const { return !!(glowCC|glowCF); }
-    inline void clear () { glowCC = glowCF = 0; floorGlowHeight = ceilingGlowHeight = 128; }
-  };
+  // see "r_shared.h" for `struct GlowParams`
 
 #define VV_GLDRAWER_ACTIVATE_GLOW(shad_,gp_)  do { \
   shad_.SetGlowColorFloor(((gp_.glowCF>>16)&0xff)/255.0f, ((gp_.glowCF>>8)&0xff)/255.0f, (gp_.glowCF&0xff)/255.0f, ((gp_.glowCF>>24)&0xff)/255.0f); \

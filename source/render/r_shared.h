@@ -127,6 +127,17 @@ struct texinfo_t {
 };
 
 
+//WARNING! take care of setting heights to non-zero, or glow shaders will fail!
+struct GlowParams {
+  vuint32 glowCC, glowCF; // glow colors
+  float floorZ, ceilingZ;
+  float floorGlowHeight, ceilingGlowHeight;
+  GlowParams () : glowCC(0), glowCF(0), floorZ(0), ceilingZ(0), floorGlowHeight(128), ceilingGlowHeight(128) {}
+  inline bool isActive () const { return !!(glowCC|glowCF); }
+  inline void clear () { glowCC = glowCF = 0; floorGlowHeight = ceilingGlowHeight = 128; }
+};
+
+
 struct surface_t {
   enum {
     MAXWVERTS = 8+8, // maximum number of vertices in wsurf (world/wall surface)
@@ -177,6 +188,7 @@ struct surface_t {
   surfcache_t *CacheSurf;
   int plvisible; // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
   //vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")
+  GlowParams gp; // used in renderer to cache glow info
   /*TVec verts[1];*/ // dynamic array
   SurfVertex verts[1]; // dynamic array
 

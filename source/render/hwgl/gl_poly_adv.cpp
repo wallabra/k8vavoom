@@ -129,8 +129,28 @@ extern "C" {
     return ((int)ta->ColorMap)-((int)tb->ColorMap);
   }
 
+  static inline int compareSurfacesByTextureBM (const surface_t *sa, const surface_t *sb) {
+    if (sa == sb) return 0;
+    const texinfo_t *ta = sa->texinfo;
+    const texinfo_t *tb = sb->texinfo;
+    if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
+    if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+    // brightmap textures comes last (so we can avoid switching shaders)
+    if (ta->Tex->Brightmap) {
+      if (!tb->Tex->Brightmap) return 1; // a > b
+    } else if (tb->Tex->Brightmap) {
+      // ta has no brightmap here
+      return -1; // a < b
+    }
+    return ((int)ta->ColorMap)-((int)tb->ColorMap);
+  }
+
   static int drawListItemCmpByTexture (const void *a, const void *b, void *udata) {
     return compareSurfacesByTexture(*(const surface_t **)a, *(const surface_t **)b);
+  }
+
+  static int drawListItemCmpByTextureBM (const void *a, const void *b, void *udata) {
+    return compareSurfacesByTextureBM(*(const surface_t **)a, *(const surface_t **)b);
   }
 }
 
@@ -177,6 +197,35 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
   // draw normal surfaces
   if (dls.DrawSurfListSolid.length() != 0 || dls.DrawSurfListMasked.length() != 0) {
+    // precalculate some crap
+    for (auto &&surf : dls.DrawSurfListSolid) {
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (surf->count < 3) { surf->plvisible = 0; continue; }
+      if (surf->drawflags&surface_t::DF_MASKED) { surf->plvisible = 0; continue; } // this should not end up here
+
+      // don't render translucent surfaces
+      // they should not end up here, but...
+      const texinfo_t *currTexinfo = surf->texinfo;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) { surf->plvisible = 0; continue; } // just in case
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) { surf->plvisible = 0; continue; } // just in case
+
+      CalcGlow(surf->gp, surf);
+    }
+
+    for (auto &&surf : dls.DrawSurfListMasked) {
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (surf->count < 3) { surf->plvisible = 0; continue; }
+      if ((surf->drawflags&surface_t::DF_MASKED) == 0) { surf->plvisible = 0; continue; } // this should not end up here
+
+      // don't render translucent surfaces
+      // they should not end up here, but...
+      const texinfo_t *currTexinfo = surf->texinfo;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) { surf->plvisible = 0; continue; } // just in case
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) { surf->plvisible = 0; continue; } // just in case
+
+      CalcGlow(surf->gp, surf);
+    }
+
     // setup samplers for all shaders
     // masked
     ShadowsAmbientMasked.Activate();
@@ -216,7 +265,11 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       // this gives us front-to-back rendering
       //timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
       // but sort masked textures, because masked texture configuration can be arbitrary
-      timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+      if (r_brightmaps) {
+        timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTextureBM, nullptr);
+      } else {
+        timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+      }
     }
 
     float prevsflight = -666;
@@ -225,7 +278,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     lastTexinfo.initLastUsed();
 
     //bool prevGlowActive[3] = { false, false, false };
-    GlowParams gp;
+    //GlowParams gp;
 
     enum {
       BMAP_INACTIVE = 1u,
@@ -246,17 +299,12 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
       lastTexinfo.resetLastUsed();
       for (auto &&surf : dls.DrawSurfListSolid) {
-        if (!surf->plvisible) continue; // viewer is in back side or on plane
-        if (surf->count < 3) continue;
-        if (surf->drawflags&surface_t::DF_MASKED) continue; // later
+        if (!surf->plvisible) continue; // viewer is in back side or on plane, or some invalid texture, skip it
 
-        // don't render translucent surfaces
-        // they should not end up here, but...
         const texinfo_t *currTexinfo = surf->texinfo;
-        if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-        if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
-        CalcGlow(gp, surf);
+        // this is done above
+        //CalcGlow(gp, surf);
 
         if (r_brightmaps && currTexinfo->Tex->Brightmap) {
           // texture with brightmap
@@ -274,9 +322,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
           ShadowsAmbientBrightmap.SetTex(currTexinfo);
           // glow
-          if (gp.isActive()) {
+          if (surf->gp.isActive()) {
             prevGlowActiveMask |= brightmapActiveMask;
-            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, gp);
+            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, surf->gp);
           } else if (prevGlowActiveMask&brightmapActiveMask) {
             prevGlowActiveMask &= ~brightmapActiveMask;
             VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
@@ -293,9 +341,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           }
           if (glTextureEnabled) { glTextureEnabled = false; glDisable(GL_TEXTURE_2D); }
           // glow
-          if (gp.isActive()) {
+          if (surf->gp.isActive()) {
             prevGlowActiveMask |= brightmapActiveMask;
-            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbient, gp);
+            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbient, surf->gp);
           } else if (prevGlowActiveMask&brightmapActiveMask) {
             prevGlowActiveMask &= ~brightmapActiveMask;
             VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
@@ -338,17 +386,12 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       lastTexinfo.resetLastUsed();
       if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
       for (auto &&surf : dls.DrawSurfListMasked) {
-        if (!surf->plvisible) continue; // viewer is in back side or on plane
-        if (surf->count < 3) continue;
-        if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
+        if (!surf->plvisible) continue; // viewer is in back side or on plane, or some invalid texture, skip it
 
-        // don't render translucent surfaces
-        // they should not end up here, but...
         const texinfo_t *currTexinfo = surf->texinfo;
-        if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-        if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
-        CalcGlow(gp, surf);
+        // this is done above
+        //CalcGlow(gp, surf);
 
         if (r_brightmaps && currTexinfo->Tex->Brightmap) {
           // texture with brightmap
@@ -365,9 +408,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
           ShadowsAmbientBrightmap.SetTex(currTexinfo);
           // glow
-          if (gp.isActive()) {
+          if (surf->gp.isActive()) {
             prevGlowActiveMask |= brightmapActiveMask;
-            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, gp);
+            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, surf->gp);
           } else if (prevGlowActiveMask&brightmapActiveMask) {
             prevGlowActiveMask &= ~brightmapActiveMask;
             VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
@@ -393,9 +436,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           }
 
           // glow
-          if (gp.isActive()) {
+          if (surf->gp.isActive()) {
             prevGlowActiveMask |= brightmapActiveMask;
-            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientMasked, gp);
+            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientMasked, surf->gp);
           } else if (prevGlowActiveMask&brightmapActiveMask) {
             prevGlowActiveMask &= ~brightmapActiveMask;
             VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
@@ -1089,7 +1132,11 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   // sort by textures
   if (gl_sort_textures) {
     // sort surfaces with solid textures, because here we need them sorted
-    timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+    if (r_brightmaps) {
+      timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTextureBM, nullptr);
+    } else {
+      timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+    }
   }
 
   texinfo_t lastTexinfo;
