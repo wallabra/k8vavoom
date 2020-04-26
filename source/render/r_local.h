@@ -701,21 +701,11 @@ protected:
   bool IsShadowAllowedFor (VEntity *Ent);
 
   // things
-  void QueueTranslucentPoly (surface_t *surf, const SurfVertex *sv, int count, int lump,
-                             const RenderStyleInfo &ri, int translation,
-                             bool isSprite, const TVec &normal, float pdist,
-                             const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority=0,
-                             bool useSprOrigin=false, const TVec &sprOrigin=TVec(), vuint32 objid=0);
+  void QueueTranslucentSurface (surface_t *surf, const RenderStyleInfo &ri);
 
   void QueueSpritePoly (const TVec *sv, int lump, const RenderStyleInfo &ri, int translation,
                         const TVec &normal, float pdist, const TVec &saxis, const TVec &taxis,
                         const TVec &texorg, int priority, const TVec &sprOrigin, vuint32 objid);
-
-  void QueueTranslucentPolyVec (surface_t *surf, const TVec *sv, int count, int lump,
-                                const RenderStyleInfo &ri, int translation,
-                                bool isSprite, const TVec &normal, float pdist,
-                                const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority=0,
-                                bool useSprOrigin=false, const TVec &sprOrigin=TVec(), vuint32 objid=0);
 
   void QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool onlyShadow=false); // this can modify `ri`!
   void QueueTranslucentAliasModel (VEntity *mobj, const RenderStyleInfo &ri, float TimeFrac);

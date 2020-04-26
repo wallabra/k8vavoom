@@ -135,63 +135,33 @@ bool R_GetSpriteTextureInfo (SpriteTexInfo *nfo, int sprindex, int sprframeidx) 
 
 //==========================================================================
 //
-//  VRenderLevelShared::QueueTranslucentPoly
+//  VRenderLevelShared::QueueTranslucentSurface
 //
 //==========================================================================
-void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, const SurfVertex *sv,
-  int count, int lump, const RenderStyleInfo &ri, int translation,
-  bool isSprite, const TVec &normal, float pdist,
-  const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
-  bool useSprOrigin, const TVec &sprOrigin, vuint32 objid)
-{
-  vassert(count >= 0);
-  if (count == 0 || ri.alpha < 0.004f) return;
+void VRenderLevelShared::QueueTranslucentSurface (surface_t *surf, const RenderStyleInfo &ri) {
+  if (!surf || surf->count < 3 || ri.alpha < 0.004f) return;
+  const SurfVertex *sv = surf->verts;
+  const int count = surf->count;
 
-  float dist;
-  if (useSprOrigin) {
-    TVec mid = sprOrigin;
-    //dist = fabsf(DotProduct(mid-Drawer->vieworg, Drawer->viewforward));
-    dist = LengthSquared(mid-Drawer->vieworg);
-  } else {
 #if 0
-    TVec mid(0, 0, 0);
-    for (int i = 0; i < count; ++i) mid += sv[i].vec();
-    mid /= count;
-    //dist = fabsf(DotProduct(mid-Drawer->vieworg, Drawer->viewforward));
-    dist = LengthSquared(mid-Drawer->vieworg);
-#else
-    // select nearest vertex
-    dist = LengthSquared(sv[0].vec()-Drawer->vieworg);
-    for (int i = 1; i < count; ++i) {
-      const float nd = LengthSquared(sv[i].vec()-Drawer->vieworg);
-      if (dist > nd) dist = nd;
-    }
-#endif
-  }
-
+  TVec mid(0, 0, 0);
+  for (int i = 0; i < count; ++i) mid += sv[i].vec();
+  mid /= count;
   //const float dist = fabsf(DotProduct(mid-Drawer->vieworg, Drawer->viewforward));
-  //float dist = Length(mid-Drawer->vieworg);
+  const float dist = LengthSquared(mid-Drawer->vieworg);
+#else
+  // select nearest vertex
+  float dist = LengthSquared(sv[0].vec()-Drawer->vieworg);
+  for (int i = 1; i < count; ++i) {
+    const float nd = LengthSquared(sv[i].vec()-Drawer->vieworg);
+    if (dist > nd) dist = nd;
+  }
+#endif
 
   trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
-  if (isSprite) {
-    //memcpy(spr.Verts, sv, sizeof(SurfVertex)*4);
-    spr.Verts[0] = sv[0].vec();
-    spr.Verts[1] = sv[1].vec();
-    spr.Verts[2] = sv[2].vec();
-    spr.Verts[3] = sv[3].vec();
-  }
   spr.dist = dist;
-  spr.lump = lump;
-  spr.normal = normal;
-  spr.pdist = pdist;
-  spr.saxis = saxis;
-  spr.taxis = taxis;
-  spr.texorg = texorg;
   spr.surf = surf;
-  spr.translation = translation;
-  spr.type = (isSprite ? 1 : 0);
-  spr.objid = objid;
-  spr.prio = priority;
+  spr.type = 0/*(isSprite ? 1 : 0)*/;
   //spr.origin = sprOrigin;
   spr.rstyle = ri;
 }

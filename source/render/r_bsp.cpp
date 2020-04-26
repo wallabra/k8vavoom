@@ -550,12 +550,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
               ri.alpha = alpha;
               ri.translucency = RenderStyleInfo::Translucent;
               ri.fade = Fade;
-              QueueTranslucentPoly(surfs, surfs->verts, surfs->count, 0,
-                ri,
-                //alpha, false, // alpha, additive
-                0, false,
-                //0, Fade, // light, fade
-                TVec(), 0, TVec(), TVec(), TVec());
+              QueueTranslucentSurface(surfs, ri);
             }
           }
         }
@@ -621,12 +616,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
             ri.alpha = texinfo->Alpha;
             ri.translucency = (texinfo->Additive ? RenderStyleInfo::Additive : RenderStyleInfo::Translucent);
             ri.fade = Fade;
-            QueueTranslucentPoly(surfs, surfs->verts, surfs->count, 0,
-              ri,
-              //texinfo->Alpha, texinfo->Additive,
-              0, false,
-              //0, Fade, // light, fade
-              TVec(), 0, TVec(), TVec(), TVec());
+            QueueTranslucentSurface(surfs, ri);
           }
         }
       }
