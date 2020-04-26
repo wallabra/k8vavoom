@@ -168,6 +168,9 @@ protected:
   inline float ScaledXToLocal (const float v) const noexcept { return (v-ClipRect.OriginX)/ClipRect.ScaleX; }
   inline float ScaledYToLocal (const float v) const noexcept { return (v-ClipRect.OriginY)/ClipRect.ScaleY; }
 
+  inline float LocalXToRoot (const float v) const noexcept { return (v+ClipRect.OriginX)*ClipRect.ScaleX; }
+  inline float LocalYToRoot (const float v) const noexcept { return (v+ClipRect.OriginY)*ClipRect.ScaleY; }
+
   VWidget *FindFirstOnTopChild () noexcept;
   VWidget *FindLastNormalChild () noexcept;
 
