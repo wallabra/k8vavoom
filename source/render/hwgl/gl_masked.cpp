@@ -184,6 +184,7 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
   SetSpriteLump(Tex, Translation, CMap, true, (ri.isShaded() ? ri.stencilColor : 0u));
   SetupTextureFiltering(sprite_filter);
 
+  GLuint attribPosition;
   switch (shadtype) {
     case ShaderMasked:
       SurfMasked.Activate();
@@ -195,7 +196,7 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
       SurfMasked.SetFogFade(ri.fade, ri.alpha);
       SurfMasked.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
       SurfMasked.SetSpriteTex(texorg, saxis, taxis, tex_iw, tex_ih);
-      SurfMasked.UploadChangedUniforms();
+      attribPosition = SurfMasked.loc_Position;
       break;
     case ShaderMaskedBM:
       SurfMaskedBrightmap.Activate();
@@ -212,7 +213,7 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
       SurfMaskedBrightmap.SetFogFade(ri.fade, ri.alpha);
       SurfMaskedBrightmap.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
       SurfMaskedBrightmap.SetSpriteTex(texorg, saxis, taxis, tex_iw, tex_ih);
-      SurfMaskedBrightmap.UploadChangedUniforms();
+      attribPosition = SurfMaskedBrightmap.loc_Position;
       break;
     case ShaderStencil:
       SurfMaskedStencil.Activate();
@@ -228,7 +229,7 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
       SurfMaskedStencil.SetFogFade(ri.fade, ri.alpha);
       SurfMaskedStencil.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
       SurfMaskedStencil.SetSpriteTex(texorg, saxis, taxis, tex_iw, tex_ih);
-      SurfMaskedStencil.UploadChangedUniforms();
+      attribPosition = SurfMaskedStencil.loc_Position;
       break;
     case ShaderFakeShadow:
       SurfMaskedFakeShadow.Activate();
@@ -237,10 +238,10 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
         ((ri.light>>16)&255)/255.0f,
         ((ri.light>>8)&255)/255.0f,
         (ri.light&255)/255.0f, ri.alpha);
-      SurfMaskedFakeShadow.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
       SurfMaskedFakeShadow.SetFogFade(ri.fade, ri.alpha);
+      SurfMaskedFakeShadow.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
       SurfMaskedFakeShadow.SetSpriteTex(texorg, saxis, taxis, tex_iw, tex_ih);
-      SurfMaskedFakeShadow.UploadChangedUniforms();
+      attribPosition = SurfMaskedFakeShadow.loc_Position;
       break;
     case ShaderFuzzy:
       SurfMaskedFuzzy.Activate();
@@ -252,13 +253,14 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
         (ri.light&255)/255.0f, ri.alpha);
       */
       SurfMaskedFuzzy.SetTime(time);
-      SurfMaskedFuzzy.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
       SurfMaskedFuzzy.SetFogFade(ri.fade, ri.alpha);
+      SurfMaskedFuzzy.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
       SurfMaskedFuzzy.SetSpriteTex(texorg, saxis, taxis, tex_iw, tex_ih);
-      SurfMaskedFuzzy.UploadChangedUniforms();
+      attribPosition = SurfMaskedFuzzy.loc_Position;
       break;
     default: Sys_Error("ketmar forgot some shader type in `VOpenGLDrawer::DrawSpritePolygon()`");
   }
+  currentActiveShader->UploadChangedUniforms();
 
   // setup hangups
   if (ri.flags) {
@@ -288,76 +290,10 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
     glDepthMask(GL_FALSE); // no z-buffer writes
   }
 
-/*#ifndef GL4ES_HACKS*/
-#if 0 /* old non-vbo code */
-  /*TVec texpt(0, 0, 0);*/
-
-  #define SPRVTX(shdr_,cv_)  do { \
-    /*texpt = (cv_)-texorg;*/ \
-    /*(shdr_).SetTexCoordAttr(*/ \
-    /*  DotProduct(texpt, saxis)*tex_iw,*/ \
-    /*  DotProduct(texpt, taxis)*tex_ih);*/ \
-    /*(shdr_).UploadChangedAttrs();*/ \
-    glVertex(cv_); \
-  } while (0)
-
-  glBegin(GL_QUADS);
-    switch (shadtype) {
-      case ShaderMasked:
-        SPRVTX(SurfMasked, cv[0]);
-        SPRVTX(SurfMasked, cv[1]);
-        SPRVTX(SurfMasked, cv[2]);
-        SPRVTX(SurfMasked, cv[3]);
-        break;
-      case ShaderMaskedBM:
-        SPRVTX(SurfMaskedBrightmap, cv[0]);
-        SPRVTX(SurfMaskedBrightmap, cv[1]);
-        SPRVTX(SurfMaskedBrightmap, cv[2]);
-        SPRVTX(SurfMaskedBrightmap, cv[3]);
-        break;
-      case ShaderStencil:
-        SPRVTX(SurfMaskedStencil, cv[0]);
-        SPRVTX(SurfMaskedStencil, cv[1]);
-        SPRVTX(SurfMaskedStencil, cv[2]);
-        SPRVTX(SurfMaskedStencil, cv[3]);
-        break;
-      case ShaderFakeShadow:
-        SPRVTX(SurfMaskedFakeShadow, cv[0]);
-        SPRVTX(SurfMaskedFakeShadow, cv[1]);
-        SPRVTX(SurfMaskedFakeShadow, cv[2]);
-        SPRVTX(SurfMaskedFakeShadow, cv[3]);
-        break;
-      case ShaderFuzzy:
-        SPRVTX(SurfMaskedFuzzy, cv[0]);
-        SPRVTX(SurfMaskedFuzzy, cv[1]);
-        SPRVTX(SurfMaskedFuzzy, cv[2]);
-        SPRVTX(SurfMaskedFuzzy, cv[3]);
-        break;
-      default: Sys_Error("ketmar forgot some shader type in `VOpenGLDrawer::DrawSpritePolygon()`");
-    }
-  glEnd();
-
-  #undef SPRVTX
-#else
   const vuint8 indices[6] = { 0, 1, 2,  0, 2, 3 };
 
-  p_glBindBufferARB(GL_ARRAY_BUFFER, vboSprite);
-  const int len = (int)sizeof(TVec)*4;
-  p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, cv);
-
-  #define SETUP_SPR_SHADER(name_)  attribPosition = (name_).loc_Position
-
-  GLuint attribPosition;
-  switch (shadtype) {
-    case ShaderMasked: SETUP_SPR_SHADER(SurfMasked); break;
-    case ShaderMaskedBM: SETUP_SPR_SHADER(SurfMaskedBrightmap); break;
-    case ShaderStencil: SETUP_SPR_SHADER(SurfMaskedStencil); break;
-    case ShaderFakeShadow: SETUP_SPR_SHADER(SurfMaskedFakeShadow); break;
-    case ShaderFuzzy: SETUP_SPR_SHADER(SurfMaskedFuzzy); break;
-    default: Sys_Error("ketmar forgot some shader type in `VOpenGLDrawer::DrawSpritePolygon()`");
-  }
-
-  #undef SETUP_SPR_SHADER
+  vboSprite.activate();
+  vboSprite.uploadData(4, cv);
 
   p_glEnableVertexAttribArrayARB(attribPosition);
   p_glVertexAttribPointerARB(attribPosition, 3, GL_FLOAT, false, sizeof(TVec), (void *)(0*sizeof(float)));
@@ -369,8 +305,8 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
   p_glDrawRangeElements(GL_TRIANGLES, 0, 5, 6, GL_UNSIGNED_BYTE, indices);
   p_glDisableVertexAttribArrayARB(attribPosition);
   //p_glDisableVertexAttribArrayARB(attribTexCoord);
-  p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
-#endif
+
+  vboSprite.deactivate();
 
   if (resetDepthMask) PopDepthMask();
   if (ri.flags&RenderStyleInfo::FlagOffset) GLDisableOffset();
@@ -433,8 +369,8 @@ void VOpenGLDrawer::DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, 
 
   SetTexture(tex->Tex, tex->ColorMap);
 
+  currentActiveShader->UploadChangedUniforms();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-  ShadowsSurfTransDecals.UploadChangedUniforms();
   glBegin(GL_POLYGON);
     for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
   glEnd();

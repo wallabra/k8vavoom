@@ -372,10 +372,6 @@ VOpenGLDrawer::VOpenGLDrawer ()
   //cameraFBO[1].mOwner = nullptr;
 
   depthMaskSP = 0;
-
-  vboSprite = 0;
-  vboSky = 0;
-  vboSkyNumVerts = 0;
 }
 
 
@@ -615,15 +611,8 @@ void VOpenGLDrawer::ReactivateCurrentFBO () {
 //==========================================================================
 void VOpenGLDrawer::DeinitResolution () {
   // delete VBOs
-  if (vboSprite) {
-    p_glDeleteBuffersARB(1, &vboSprite);
-    vboSprite = 0;
-  }
-  if (vboSky) {
-    p_glDeleteBuffersARB(1, &vboSky);
-    vboSky = 0;
-  }
-  vboSkyNumVerts = 0;
+  vboSprite.destroy();
+  vboSky.destroy();
   // FBOs
   if (currentActiveFBO != nullptr) {
     currentActiveFBO = nullptr;
@@ -960,21 +949,13 @@ void VOpenGLDrawer::InitResolution () {
   mainFBO.activate();
 
   // create VBO for sprites
-  vassert(vboSprite == 0);
-  GLDRW_RESET_ERROR();
-  p_glGenBuffersARB(1, &vboSprite);
-  if (vboSprite == 0) Sys_Error("OpenGL: cannot create VBO for sprites");
-  GLDRW_CHECK_ERROR("VBO: glGenBuffersARB");
-  // reserve room for 4 vertices
-  {
-    p_glBindBufferARB(GL_ARRAY_BUFFER, vboSprite);
-    TVec buf[4];
-    const int len = (int)sizeof(buf[0])*4;
-    memset((void *)buf, 0, sizeof(buf));
-    p_glBufferDataARB(GL_ARRAY_BUFFER, len, buf, /*GL_STREAM_DRAW*/GL_DYNAMIC_DRAW);
-    p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
-    GLDRW_CHECK_ERROR("VBO: sprite VBO");
-  }
+  vassert(!vboSprite.isValid());
+  vassert(!vboSky.isValid());
+
+  vboSprite.setOwner(this);
+  vboSprite.ensure(4); // sprite is always a quad, so we can allocate it right here
+
+  vboSky.setOwner(this);
 
   // init some defaults
   glBindTexture(GL_TEXTURE_2D, 0);

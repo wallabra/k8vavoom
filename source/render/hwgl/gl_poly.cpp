@@ -160,52 +160,11 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     }
     */
 
-/*#ifndef GL4ES_HACKS*/
-#if 0 /* old non-vbo code */
-    //glBegin(GL_POLYGON);
-    glBegin(GL_TRIANGLE_FAN);
-    for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-      SurfSky.SetTexCoordAttr(CalcSkyTexCoordS(surf->verts[sidx[i]].vec(), tex, offs1), CalcSkyTexCoordT(surf->verts[i].vec(), tex));
-        /*
-        (DotProduct(surf->verts[sidx[i]].vec(), tex->saxis*tex_scale_x)+(tex->soffs-offs1)*tex_scale_x)*tex_iw,
-        (DotProduct(surf->verts[i].vec(), tex->taxis*tex_scale_y)+tex->toffs*tex_scale_y)*tex_ih);
-        */
-      //SurfSky.UploadChangedAttrs();
-      glVertex(surf->verts[i].vec());
-    }
-    glEnd();
-#else
-    enum { SurfOverallocate = 32 };
-
-    if (vboSkyVertBuf.length() < surf->count+SurfOverallocate) vboSkyVertBuf.setLength(surf->count+SurfOverallocate);
-
-    // reallocate sky VBO if necessary
-    if (vboSkyNumVerts < surf->count) {
-      p_glDeleteBuffersARB(1, &vboSky);
-      vboSky = 0;
-      // create VBO for sky
-      vassert(vboSky == 0);
-      GLDRW_RESET_ERROR();
-      p_glGenBuffersARB(1, &vboSky);
-      if (vboSky == 0) Sys_Error("OpenGL: cannot create VBO for skies");
-      GLDRW_CHECK_ERROR("VBO: glGenBuffersARB");
-      // reserve room for vertices
-      vboSkyNumVerts = surf->count+SurfOverallocate; // make it "huge", why not?
-      vassert(vboSkyVertBuf.length() >= vboSkyNumVerts);
-      memset((void *)vboSkyVertBuf.ptr(), 0, sizeof(SkyVBOVertex)*vboSkyNumVerts);
-      p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
-      const int len = (int)sizeof(SkyVBOVertex)*vboSkyNumVerts;
-      p_glBufferDataARB(GL_ARRAY_BUFFER, len, vboSkyVertBuf.ptr(), /*GL_STREAM_DRAW*/GL_DYNAMIC_DRAW);
-      //p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
-      GLDRW_CHECK_ERROR("VBO: sprite VBO");
-      GCon->Logf(NAME_Debug, "OpenGL: created sky VBO for %d vertices", vboSkyNumVerts);
-    } else {
-      p_glBindBufferARB(GL_ARRAY_BUFFER, vboSky);
-    }
+    vboSky.ensure(surf->count, 16);
 
     // copy vertices to VBO
     const unsigned scount = (unsigned)surf->count;
-    SkyVBOVertex *vbovtx = vboSkyVertBuf.ptr();
+    SkyVBOVertex *vbovtx = vboSky.data.ptr();
     for (unsigned i = 0; i < scount; ++i, ++vbovtx) {
       vbovtx->x = surf->verts[i].x;
       vbovtx->y = surf->verts[i].y;
@@ -214,8 +173,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
       vbovtx->t = CalcSkyTexCoordT(surf->verts[i].vec(), tex);
     }
 
-    const int len = (int)sizeof(SkyVBOVertex)*surf->count;
-    p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, vboSkyVertBuf.ptr());
+    vboSky.uploadData(surf->count);
 
     p_glEnableVertexAttribArrayARB(SurfSky.loc_Position);
     p_glEnableVertexAttribArrayARB(SurfSky.loc_TexCoord);
@@ -224,8 +182,8 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     p_glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
     p_glDisableVertexAttribArrayARB(SurfSky.loc_Position);
     p_glDisableVertexAttribArrayARB(SurfSky.loc_TexCoord);
-    p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
-#endif
+
+    vboSky.deactivate();
   }
 }
 

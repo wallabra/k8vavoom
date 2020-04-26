@@ -688,8 +688,114 @@ protected:
   TArray<GLhandleARB> CreatedShaderObjects;
   TArray<VMeshModel *> UploadedModels;
 
+  template<typename T> class VBO {
+  protected:
+    class VOpenGLDrawer *mOwner;
+    GLuint vboId;
+    int maxElems;
+    bool isStream;
+
+  public:
+    TArray<T> data;
+
+  public:
+    inline VBO () noexcept : mOwner(nullptr), vboId(0), maxElems(0), isStream(false), data() {}
+    inline VBO (VOpenGLDrawer *aOwner, bool aStream) noexcept : mOwner(aOwner), vboId(0), maxElems(0), isStream(aStream), data() {}
+
+    inline void setOwner (VOpenGLDrawer *aOwner) noexcept {
+      if (mOwner != aOwner) {
+        destroy();
+        mOwner = aOwner;
+      }
+    }
+
+    VBO (VOpenGLDrawer *aOwner, int aMaxElems, bool aStream=false) noexcept
+      : mOwner(aOwner)
+      , vboId(0)
+      , maxElems(aMaxElems)
+      , isStream(aStream)
+      , data()
+    {
+      vassert(aMaxElems >= 0);
+      if (aMaxElems == 0) return;
+      data.setLength(aMaxElems);
+      memset((void *)data.ptr(), 0, sizeof(T));
+      GLDRW_RESET_ERROR();
+      mOwner->p_glGenBuffersARB(1, &vboId);
+      if (vboId == 0) Sys_Error("VBO: ctor (cannot create)");
+      GLDRW_CHECK_ERROR("VBO: ctor (creation)");
+      // reserve room for vertices
+      mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
+      const int len = (int)sizeof(T)*aMaxElems;
+      mOwner->p_glBufferDataARB(GL_ARRAY_BUFFER, len, data.ptr(), (isStream ? GL_STREAM_DRAW : GL_DYNAMIC_DRAW));
+      GLDRW_CHECK_ERROR("VBO: VBO ctor (allocating)");
+      mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+    }
+
+    inline ~VBO () noexcept { destroy(); }
+
+    inline void destroy () noexcept {
+      data.clear();
+      if (vboId) {
+        if (mOwner) mOwner->p_glDeleteBuffersARB(1, &vboId);
+        vboId = 0;
+      }
+      maxElems = 0;
+    }
+
+    inline bool isValid () const noexcept { return (vboId != 0); }
+    inline GLuint getId () const noexcept { return vboId; }
+
+    inline int capacity () const noexcept { return maxElems; }
+
+    // this activates VBO
+    void ensure (int count, int extraReserve=0) noexcept {
+      if (!mOwner) Sys_Error("VBO: trying to ensure uninitialised VBO");
+      const int oldlen = maxElems;
+      if (count > oldlen || !vboId) {
+        count += (extraReserve > 0 ? extraReserve : 0);
+        maxElems = count;
+        data.setLength(count);
+        if (vboId) { mOwner->p_glDeleteBuffersARB(1, &vboId); vboId = 0; }
+        // cleare newly allocated array part
+        memset((void *)(data.ptr()+oldlen), 0, sizeof(T)*(unsigned)(count-oldlen));
+        GLDRW_RESET_ERROR();
+        mOwner->p_glGenBuffersARB(1, &vboId);
+        if (vboId == 0) Sys_Error("VBO: ensure (cannot create)");
+        GLDRW_CHECK_ERROR("VBO: ensure (creation)");
+        // reserve room for vertices
+        mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
+        const int len = (int)sizeof(T)*count;
+        mOwner->p_glBufferDataARB(GL_ARRAY_BUFFER, len, data.ptr(), (isStream ? GL_STREAM_DRAW : GL_DYNAMIC_DRAW));
+        GLDRW_CHECK_ERROR("VBO: VBO ensure (allocating)");
+      } else {
+        mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
+      }
+      //p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+    }
+
+    inline void deactivate () const noexcept {
+      if (mOwner) mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+    }
+
+    inline void activate () const noexcept {
+      if (!vboId || !mOwner) Sys_Error("cannot activate invalid VBO");
+      mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
+    }
+
+    inline void uploadData (int count, const T *buf=nullptr) {
+      if (count <= 0) return;
+      if (!mOwner) Sys_Error("VBO: trying to upload data to uninitialised VBO");
+      ensure(count);
+      if (!buf) buf = data.ptr();
+      // upload data
+      const int len = (int)sizeof(T)*count;
+      mOwner->p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, buf);
+    }
+  };
+
   // VBO for sprite rendering
-  GLuint vboSprite;
+  VBO<TVec> vboSprite;
 
   // for VBOs
   struct __attribute__((packed)) SkyVBOVertex {
@@ -699,9 +805,7 @@ protected:
   static_assert(sizeof(SkyVBOVertex) == sizeof(float)*5, "invalid SkyVBOVertex size");
 
   // VBO for sky rendering (created lazily, because we don't know the proper size initially)
-  GLuint vboSky;
-  int vboSkyNumVerts;
-  TArray<SkyVBOVertex> vboSkyVertBuf;
+  VBO<SkyVBOVertex> vboSky;
 
   // console variables
   static VCvarI texture_filter;
