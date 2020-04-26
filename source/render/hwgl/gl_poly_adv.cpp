@@ -36,6 +36,8 @@ static VCvarB gl_smart_reject_shadow_surfaces("gl_smart_reject_shadow_surfaces",
 static VCvarB gl_smart_reject_shadow_segs("gl_smart_reject_shadow_segs", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
 static VCvarB gl_smart_reject_shadow_flats("gl_smart_reject_shadow_flats", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
 
+static VCvarB gl_dbg_vbo_adv_ambient("gl_dbg_vbo_adv_ambient", false, "dump some VBO statistics for advrender abmient pass VBO utilisation?", CVAR_PreInit);
+
 
 /* TODO
   clear stencil buffer before first shadow shadow rendered.
@@ -110,105 +112,6 @@ static void appendDirtyRect (const GLint arect[4]) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-extern "C" {
-  static inline int compareSurfacesByTexture (const surface_t *sa, const surface_t *sb) {
-    if (sa == sb) return 0;
-    const texinfo_t *ta = sa->texinfo;
-    const texinfo_t *tb = sb->texinfo;
-    // put masked textures on bottom (this is useful in fog rendering)
-    // no need to do this, masked textures now lives in the separate list
-    /*
-    if (sa->drawflags&surface_t::DF_MASKED) {
-      if (!(sb->drawflags&surface_t::DF_MASKED)) return 1;
-    } else if (sb->drawflags&surface_t::DF_MASKED) {
-      if (!(sa->drawflags&surface_t::DF_MASKED)) return -1;
-    }
-    */
-    if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
-    if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
-    return ((int)ta->ColorMap)-((int)tb->ColorMap);
-  }
-
-  static inline int compareSurfacesByTextureBM (const surface_t *sa, const surface_t *sb) {
-    if (sa == sb) return 0;
-    const texinfo_t *ta = sa->texinfo;
-    const texinfo_t *tb = sb->texinfo;
-    // brightmap textures comes last (so we can avoid switching shaders)
-    if (ta->Tex && ta->Tex->Brightmap) {
-      if (!tb->Tex || !tb->Tex->Brightmap) return 1; // a > b
-    } else if (tb->Tex && tb->Tex->Brightmap) {
-      // ta has no brightmap here
-      return -1; // a < b
-    }
-    // same brightmap league, sort by glow (glowing comes last)
-    if (sa->gp.isActive()) {
-      if (!sb->gp.isActive()) return 1; // a > b
-    } else if (sb->gp.isActive()) {
-      // b is not glowing here
-      return -1; // a < b
-    }
-    // sort by texture id (just use texture pointer)
-    if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
-    if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
-    // and by colormap, why not?
-    return ((int)ta->ColorMap)-((int)tb->ColorMap);
-  }
-
-  static inline int compareSurfacesByGlow (const surface_t *sa, const surface_t *sb) {
-    if (sa == sb) return 0;
-    // same brightmap league, sort by glow (glowing comes last)
-    if (sa->gp.isActive()) {
-      if (!sb->gp.isActive()) return 1; // a > b
-    } else if (sb->gp.isActive()) {
-      // b is not glowing here
-      return -1; // a < b
-    }
-    if ((uintptr_t)sa < (uintptr_t)sa) return -1;
-    if ((uintptr_t)sb > (uintptr_t)sb) return 1;
-    return 0;
-  }
-
-  static inline int compareSurfacesByGlowBM (const surface_t *sa, const surface_t *sb) {
-    if (sa == sb) return 0;
-    const texinfo_t *ta = sa->texinfo;
-    const texinfo_t *tb = sb->texinfo;
-    // brightmap textures comes last (so we can avoid switching shaders)
-    if (ta->Tex && ta->Tex->Brightmap) {
-      if (!tb->Tex || !tb->Tex->Brightmap) return 1; // a > b
-    } else if (tb->Tex && tb->Tex->Brightmap) {
-      // ta has no brightmap here
-      return -1; // a < b
-    }
-    // same brightmap league, sort by glow (glowing comes last)
-    if (sa->gp.isActive()) {
-      if (!sb->gp.isActive()) return 1; // a > b
-    } else if (sb->gp.isActive()) {
-      // b is not glowing here
-      return -1; // a < b
-    }
-    if ((uintptr_t)sa < (uintptr_t)sa) return -1;
-    if ((uintptr_t)sb > (uintptr_t)sb) return 1;
-    return 0;
-  }
-
-  static int drawListItemCmpByTexture (const void *a, const void *b, void *udata) {
-    return compareSurfacesByTexture(*(const surface_t **)a, *(const surface_t **)b);
-  }
-
-  static int drawListItemCmpByTextureBM (const void *a, const void *b, void *udata) {
-    return compareSurfacesByTextureBM(*(const surface_t **)a, *(const surface_t **)b);
-  }
-
-  static int drawListItemCmpByGlow (const void *a, const void *b, void *udata) {
-    return compareSurfacesByGlow(*(const surface_t **)a, *(const surface_t **)b);
-  }
-
-  static int drawListItemCmpByGlowBM (const void *a, const void *b, void *udata) {
-    return compareSurfacesByGlowBM(*(const surface_t **)a, *(const surface_t **)b);
-  }
-}
-
-
 enum {
   SFST_Normal,
   SFST_NormalGlow,
@@ -216,6 +119,75 @@ enum {
   SFST_BMapGlow,
   SFST_MAX,
 };
+
+
+extern "C" {
+  // full shader and texture sorting
+  static int drawListItemCmpByShaderTexture (const void *a, const void *b, void * /*udata*/) {
+    if (a == b) return 0;
+    const surface_t *sa = *(const surface_t **)a;
+    const surface_t *sb = *(const surface_t **)b;
+    // shader class first
+    const int stp = sa->shaderClass-sb->shaderClass;
+    if (stp) return stp;
+    // here shader classes are equal
+    // invalid shader classes are sorted by element address
+    if (sa->shaderClass < 0) {
+      if ((uintptr_t)a < (uintptr_t)b) return -1;
+      if ((uintptr_t)a > (uintptr_t)b) return 1;
+      return 0;
+    }
+    // here both surfaces are valid to render
+    const texinfo_t *ta = sa->texinfo;
+    const texinfo_t *tb = sb->texinfo;
+    // sort by texture id (just use texture pointer)
+    if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
+    if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+    // by light level/color
+    if (sa->Light < sb->Light) return -1;
+    if (sa->Light > sb->Light) return 1;
+    // and by colormap, why not?
+    return ((int)ta->ColorMap)-((int)tb->ColorMap);
+  }
+
+  // only shaders and brightmap textures will be sorted
+  static int drawListItemCmpByShaderBMTexture (const void *a, const void *b, void * /*udata*/) {
+    if (a == b) return 0;
+    const surface_t *sa = *(const surface_t **)a;
+    const surface_t *sb = *(const surface_t **)b;
+    // shader class first
+    const int stp = sa->shaderClass-sb->shaderClass;
+    if (stp) return stp;
+    // here shader classes are equal
+    // invalid shader classes are sorted by element address
+    if (sa->shaderClass < 0) {
+      if ((uintptr_t)a < (uintptr_t)b) return -1;
+      if ((uintptr_t)a > (uintptr_t)b) return 1;
+      return 0;
+    }
+    // non-brightmap classes are sorted by light, and then by element address
+    if (sa->shaderClass != SFST_BMap && sa->shaderClass != SFST_BMapGlow) {
+      // by light level/color
+      if (sa->Light < sb->Light) return -1;
+      if (sa->Light > sb->Light) return 1;
+      // same light level
+      if ((uintptr_t)a < (uintptr_t)b) return -1;
+      if ((uintptr_t)a > (uintptr_t)b) return 1;
+      return 0;
+    }
+    // here both surfaces are valid to render
+    const texinfo_t *ta = sa->texinfo;
+    const texinfo_t *tb = sb->texinfo;
+    // sort by texture id (just use texture pointer)
+    if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
+    if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+    // by light level/color
+    if (sa->Light < sb->Light) return -1;
+    if (sa->Light > sb->Light) return 1;
+    // and by colormap, why not?
+    return ((int)ta->ColorMap)-((int)tb->ColorMap);
+  }
+}
 
 
 //==========================================================================
@@ -328,6 +300,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
     for (auto &&surf : dls.DrawSurfListMasked) {
       surf->gp.clear();
+      surf->shaderClass = -1; // so they will float up
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) { surf->plvisible = 0; continue; }
       if ((surf->drawflags&surface_t::DF_MASKED) == 0) { surf->plvisible = 0; continue; } // this should not end up here
@@ -350,21 +323,11 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     // textures will be put later, and BSP sorted them by depth for us
     // other passes can skip surface sorting
     if (/*gl_sort_textures*/true) {
-      // do not sort surfaces with solid textures, as we don't care about textures here
-      // this gives us front-to-back rendering
-      //timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
-      // but sort masked textures, because masked texture configuration can be arbitrary
-      if (r_brightmaps) {
-        timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTextureBM, nullptr);
-        // sort solid textures too, so we can avoid shader switches
-        // this sorts only by glow and brightmaps
-        timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByGlowBM, nullptr);
-      } else {
-        timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
-        // sort solid textures too, so we can avoid shader switches
-        // this sorts only by glow
-        timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByGlow, nullptr);
-      }
+      // sort masked textures by shader class and texture
+      timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByShaderTexture, nullptr);
+      // sort solid textures too, so we can avoid shader switches
+      // but do this only by shader class, to retain as much front-to-back order as possible
+      timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByShaderBMTexture, nullptr);
       CheckListSortValidity(dls.DrawSurfListSolid, "solid");
       CheckListSortValidity(dls.DrawSurfListMasked, "masked");
     }
@@ -427,15 +390,17 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     int vboIndexIdx = 0; // index index
     TArray<GLsizei> vboCounters; // number of indicies in each primitive
     TArray<GLint> vboIndicies; // starting indicies
-    vboCounters.setLength(maxEls+4);
-    vboIndicies.setLength(maxEls+4);
+    vboCounters.setLength(dls.DrawSurfListSolid.length()+dls.DrawSurfListMasked.length()+4);
+    vboIndicies.setLength(vboCounters.length());
 
     bool lastCullFace = true;
     glEnable(GL_CULL_FACE);
 
+    if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "=== ambsurface VBO: maxEls=%d; maxcnt=%d ===", maxEls, vboCounters.length());
+
     #define SAMB_FLUSH_VBO()  do { \
       if (vboIdx) { \
-        GCon->Logf(NAME_Debug, "flushing ambsurface VBO: vboIdx=%d; vboIndexIdx=%d; vboCountIdx=%d", vboIdx, vboIndexIdx, vboCountIdx); \
+        if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "flushing ambsurface VBO: vboIdx=%d; vboIndexIdx=%d; vboCountIdx=%d", vboIdx, vboIndexIdx, vboCountIdx); \
         vboAdvSurf.uploadData(vboIdx); \
         vboAdvSurf.setupAttribNoEnable(attribPosition, 3); \
         /*p_glMultiDrawElements(GL_TRIANGLE_FAN, vboCounters.ptr(), GL_UNSIGNED_INT, vboIndicies.ptr(), (GLsizei)vboCountIdx);*/ \
@@ -460,22 +425,20 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           glEnable(GL_CULL_FACE); \
         } \
       } \
-      SAMB_FLUSH_VBO(); \
+      /*SAMB_FLUSH_VBO();*/ \
       currentActiveShader->UploadChangedUniforms(); \
       /* remember counter */ \
-      vboCounters.ptr()[vboCountIdx++] = (GLsizei)surf->count; /* put counter */ \
+      vboCounters.ptr()[vboCountIdx++] = (GLsizei)surf->count; \
+      /* remember first index */ \
+      vboIndicies.ptr()[vboIndexIdx++] = (GLint)vboIdx; \
       /* vectors will be put here */ \
       TVec *vp = vboAdvSurf.data.ptr()+vboIdx; \
-      /* indicies will be put here */ \
-      GLint *ip = vboIndicies.ptr()+vboIndexIdx; \
       /* fill arrays */ \
       for (unsigned i = 0; i < (unsigned)surf->count; ++i) { \
         *vp++ = surf->verts[i].vec(); \
-        *ip++ = (GLint)((unsigned)vboIdx+i); \
       } \
       /* advance array positions */ \
       vboIdx += surf->count; \
-      vboIndexIdx += surf->count; \
       /*glBegin(GL_TRIANGLE_FAN);*/ \
         /*for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());*/ \
       /*glEnd();*/ \
@@ -1532,11 +1495,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   // sort by textures
   if (/*gl_sort_textures*/true) {
     // sort surfaces with solid textures, because here we need them sorted
-    if (r_brightmaps) {
-      timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTextureBM, nullptr);
-    } else {
-      timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
-    }
+    timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByShaderTexture, nullptr);
   }
 
   texinfo_t lastTexinfo;
