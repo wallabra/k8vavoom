@@ -138,7 +138,7 @@ bool R_GetSpriteTextureInfo (SpriteTexInfo *nfo, int sprindex, int sprframeidx) 
 //  VRenderLevelShared::QueueTranslucentPoly
 //
 //==========================================================================
-void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, SurfVBOVertex *sv,
+void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, const SurfVBOVertex *sv,
   int count, int lump, const RenderStyleInfo &ri, int translation,
   bool isSprite, const TVec &normal, float pdist,
   const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
@@ -173,7 +173,13 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, SurfVBOVertex *s
   //float dist = Length(mid-Drawer->vieworg);
 
   trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
-  if (isSprite) memcpy(spr.Verts, sv, sizeof(SurfVBOVertex)*4);
+  if (isSprite) {
+    //memcpy(spr.Verts, sv, sizeof(SurfVBOVertex)*4);
+    spr.Verts[0] = sv[0].vec();
+    spr.Verts[1] = sv[1].vec();
+    spr.Verts[2] = sv[2].vec();
+    spr.Verts[3] = sv[3].vec();
+  }
   spr.dist = dist;
   spr.lump = lump;
   spr.normal = normal;
@@ -184,6 +190,39 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, SurfVBOVertex *s
   spr.surf = surf;
   spr.translation = translation;
   spr.type = (isSprite ? 1 : 0);
+  spr.objid = objid;
+  spr.prio = priority;
+  //spr.origin = sprOrigin;
+  spr.rstyle = ri;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::QueueSpritePoly
+//
+//==========================================================================
+void VRenderLevelShared::QueueSpritePoly (const TVec *sv, int lump, const RenderStyleInfo &ri, int translation,
+                                          const TVec &normal, float pdist, const TVec &saxis, const TVec &taxis,
+                                          const TVec &texorg, int priority, const TVec &sprOrigin, vuint32 objid)
+{
+  if (ri.alpha < 0.004f) return;
+
+  //const float dist = fabsf(DotProduct(sprOrigin-Drawer->vieworg, Drawer->viewforward));
+  const float dist = LengthSquared(sprOrigin-Drawer->vieworg);
+
+  trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
+  memcpy(spr.Verts, sv, sizeof(TVec)*4);
+  spr.dist = dist;
+  spr.lump = lump;
+  spr.normal = normal;
+  spr.pdist = pdist;
+  spr.saxis = saxis;
+  spr.taxis = taxis;
+  spr.texorg = texorg;
+  spr.surf = nullptr;
+  spr.translation = translation;
+  spr.type = 1/*(isSprite ? 1 : 0)*/;
   spr.objid = objid;
   spr.prio = priority;
   //spr.origin = sprOrigin;
@@ -514,7 +553,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   float scaleX = max2(0.001f, thing->ScaleX/Tex->SScale);
   float scaleY = max2(0.001f, thing->ScaleY/Tex->TScale);
 
-  SurfVBOVertex sv[4];
+  TVec sv[4];
 
   TVec start = -TexSOffset*sprright*scaleX;
   TVec end = (TexWidth-TexSOffset)*sprright*scaleX;
@@ -576,10 +615,10 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   TVec topdelta = TexTOffset*sprup*scaleY;
   TVec botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
 
-  sv[0].setVec(sprorigin+start+botdelta);
-  sv[1].setVec(sprorigin+start+topdelta);
-  sv[2].setVec(sprorigin+end+topdelta);
-  sv[3].setVec(sprorigin+end+botdelta);
+  sv[0] = sprorigin+start+botdelta;
+  sv[1] = sprorigin+start+topdelta;
+  sv[2] = sprorigin+end+topdelta;
+  sv[3] = sprorigin+end+botdelta;
 
   //if (Fade != FADE_LIGHT) GCon->Logf("<%s>: Fade=0x%08x", *thing->GetClass()->GetFullName(), Fade);
 
@@ -596,11 +635,10 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
       else if (thing->EntityFlags&VEntity::EF_NoBlockmap) priority = -200;
     }
     if (!onlyShadow) {
-      QueueTranslucentPoly(nullptr, sv, 4, lump, ri, /*Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,*/
-        thing->Translation, true/*isSprite*/, /*light, Fade,*/ -sprforward,
-        DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
-        -sprup/scaleY, (flip ? sv[2].vec() : sv[1].vec()), priority
-        , true, /*sprorigin*/thing->Origin, thing->ServerUId);
+      QueueSpritePoly(sv, lump, ri, thing->Translation,
+        -sprforward, DotProduct(sprorigin, -sprforward),
+        (flip ? -sprright : sprright)/scaleX, -sprup/scaleY,
+        (flip ? sv[2] : sv[1]), priority, thing->Origin, thing->ServerUId);
     }
     // add shadow
     if (renderShadow) {
@@ -622,20 +660,19 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
           topdelta = TexTOffset*sprup*scaleY;
           botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
 
-          sv[0].setVec(sprorigin+start+botdelta);
-          sv[1].setVec(sprorigin+start+topdelta);
-          sv[2].setVec(sprorigin+end+topdelta);
-          sv[3].setVec(sprorigin+end+botdelta);
+          sv[0] = sprorigin+start+botdelta;
+          sv[1] = sprorigin+start+topdelta;
+          sv[2] = sprorigin+end+topdelta;
+          sv[3] = sprorigin+end+botdelta;
 
           ri.alpha = Alpha;
           ri.flags = RenderStyleInfo::FlagShadow|RenderStyleInfo::FlagNoDepthWrite;
           ri.stencilColor = 0xff000000u; // shadows are black-stenciled
           ri.translucency = RenderStyleInfo::Translucent;
-          QueueTranslucentPoly(nullptr, sv, 4, lump, ri,
-            /*thing->Translation*/0, true/*isSprite*/, -sprforward,
-            DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
-            -sprup/scaleY, (flip ? sv[2].vec() : sv[1].vec()), priority,
-            true, /*sprorigin*/thing->Origin, thing->ServerUId/*, 666 fakeshadow type*/);
+          QueueSpritePoly(sv, lump, ri, /*translation*/0,
+            -sprforward, DotProduct(sprorigin, -sprforward),
+            (flip ? -sprright : sprright)/scaleX, -sprup/scaleY,
+            (flip ? sv[2] : sv[1]), priority, thing->Origin, thing->ServerUId);
         }
       }
     }
@@ -644,7 +681,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
       GetTranslation(thing->Translation), ColorMap,
       -sprforward, DotProduct(sprorigin, -sprforward),
       (flip ? -sprright : sprright)/scaleX,
-      -sprup/scaleY, (flip ? sv[2].vec() : sv[1].vec()));
+      -sprup/scaleY, (flip ? sv[2] : sv[1]));
   }
 }
 

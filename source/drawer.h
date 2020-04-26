@@ -164,7 +164,7 @@ protected:
 
 public:
   struct trans_sprite_t {
-    SurfVBOVertex Verts[4]; // only for sprites
+    /*SurfVBOVertex*/TVec Verts[4]; // only for sprites
     union {
       surface_t *surf; // for masked polys and sprites
       VEntity *Ent; // only for alias models
@@ -512,8 +512,7 @@ public:
   virtual void BeginTranslucentPolygonDecals () = 0;
   virtual void DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) = 0;
 
-  //WARNING! it may modify `cv`!
-  virtual void DrawSpritePolygon (float time, SurfVBOVertex *cv, VTexture *Tex,
+  virtual void DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex,
                                   const RenderStyleInfo &ri,
                                   VTextureTranslation *Translation, int CMap,
                                   const TVec &sprnormal, float sprpdist,

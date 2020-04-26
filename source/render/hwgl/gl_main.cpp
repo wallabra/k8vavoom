@@ -968,8 +968,8 @@ void VOpenGLDrawer::InitResolution () {
   // reserve room for 4 vertices
   {
     p_glBindBufferARB(GL_ARRAY_BUFFER, vboSprite);
-    SurfVBOVertex buf[4];
-    int len = (int)sizeof(SurfVBOVertex)*4;
+    TVec buf[4];
+    const int len = (int)sizeof(buf[0])*4;
     memset((void *)buf, 0, sizeof(buf));
     p_glBufferDataARB(GL_ARRAY_BUFFER, len, buf, /*GL_STREAM_DRAW*/GL_DYNAMIC_DRAW);
     p_glBindBufferARB(GL_ARRAY_BUFFER, 0);

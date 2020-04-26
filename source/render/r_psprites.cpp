@@ -160,11 +160,11 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
     botdelta /= PixelAspect;
   }
 
-  SurfVBOVertex dv[4];
-  dv[0].setVec(start+botdelta);
-  dv[1].setVec(start+topdelta);
-  dv[2].setVec(end+topdelta);
-  dv[3].setVec(end+botdelta);
+  TVec dv[4];
+  dv[0] = start+botdelta;
+  dv[1] = start+topdelta;
+  dv[2] = end+topdelta;
+  dv[3] = end+botdelta;
 
   TVec saxis(0, 0, 0);
   TVec taxis(0, 0, 0);
@@ -176,10 +176,10 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   const float saxmul = 160.0f*axismul;
   if (flip) {
     saxis = -(Drawer->viewright*saxmul*PSP_DISTI);
-    texorg = dv[2].vec();
+    texorg = dv[2];
   } else {
     saxis = Drawer->viewright*saxmul*PSP_DISTI;
-    texorg = dv[1].vec();
+    texorg = dv[1];
   }
 
   taxis = -(Drawer->viewup*100.0f*axismul*(320.0f/200.0f)*PSP_DISTI);
@@ -189,7 +189,7 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
 
   Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), dv, GTextureManager[lump], ri,
     nullptr, ColorMap, -Drawer->viewforward,
-    DotProduct(dv[0].vec(), -Drawer->viewforward), saxis, taxis, texorg);
+    DotProduct(dv[0], -Drawer->viewforward), saxis, taxis, texorg);
 }
 
 
