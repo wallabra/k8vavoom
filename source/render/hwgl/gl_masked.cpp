@@ -132,7 +132,6 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   }
   glEnd();
 #else
-  // we can reuse sprite VBO here, why not?
   //vboMaskedSurf.activate();
   //vboMaskedSurf.ensure(surf->count);
   vboMaskedSurf.uploadData(surf->count, surf->verts);
