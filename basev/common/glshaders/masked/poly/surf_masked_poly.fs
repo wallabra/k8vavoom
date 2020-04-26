@@ -13,7 +13,8 @@ uniform float AlphaRef;
 
 $include "common/fog_vars.fs"
 
-varying vec2 TextureCoordinate;
+//varying vec2 TextureCoordinate;
+$include "common/texture_vars.fs"
 
 #ifdef VV_MASKED_GLOW
 $include "common/glow_vars.fs"

@@ -7,7 +7,6 @@ attribute vec3 Position;
 //attribute vec2 TexCoord;
 //
 
-// vertex shader for simple (non-lightmapped) surfaces
 //$include "common/texture_vars.vs"
 uniform vec3 SAxis;
 uniform vec3 TAxis;

@@ -59,6 +59,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     }
   }
 
+  GLuint attribPosition;
+
   if (doBrightmap) {
     SurfMaskedPolyBrightmapGlow.Activate();
     SurfMaskedPolyBrightmapGlow.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
@@ -78,6 +80,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       ((surf->Light>>8)&255)*lightLevel/255.0f,
       (surf->Light&255)*lightLevel/255.0f, Alpha);
     SurfMaskedPolyBrightmapGlow.SetFogFade(surf->Fade, Alpha);
+    SurfMaskedPolyBrightmapGlow.SetSpriteTex(TVec(tex->soffs, tex->toffs), tex->saxis, tex->taxis, tex_iw, tex_ih);
+    attribPosition = SurfMaskedPolyBrightmapGlow.loc_Position;
   } else {
     SurfMaskedPolyGlow.Activate();
     SurfMaskedPolyGlow.SetTexture(0);
@@ -93,6 +97,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       ((surf->Light>>8)&255)*lightLevel/255.0f,
       (surf->Light&255)*lightLevel/255.0f, Alpha);
     SurfMaskedPolyGlow.SetFogFade(surf->Fade, Alpha);
+    SurfMaskedPolyGlow.SetSpriteTex(TVec(tex->soffs, tex->toffs), tex->saxis, tex->taxis, tex_iw, tex_ih);
+    attribPosition = SurfMaskedPolyGlow.loc_Position;
   }
 
   if (Additive) glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
@@ -107,6 +113,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   currentActiveShader->UploadChangedUniforms();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+#if 0
   //glBegin(GL_POLYGON);
   glBegin(GL_TRIANGLE_FAN);
   for (int i = 0; i < surf->count; ++i) {
@@ -124,6 +131,19 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     glVertex(surf->verts[i].vec());
   }
   glEnd();
+#else
+  // we can reuse sprite VBO here, why not?
+  //vboMaskedSurf.activate();
+  //vboMaskedSurf.ensure(surf->count);
+  vboMaskedSurf.uploadData(surf->count, surf->verts);
+
+  p_glEnableVertexAttribArrayARB(attribPosition);
+  p_glVertexAttribPointerARB(attribPosition, 3, GL_FLOAT, false, sizeof(TVec), (void *)(0*sizeof(float)));
+  p_glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
+  p_glDisableVertexAttribArrayARB(attribPosition);
+
+  vboMaskedSurf.deactivate();
+#endif
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 
   // draw decals
@@ -290,9 +310,8 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
     glDepthMask(GL_FALSE); // no z-buffer writes
   }
 
-  const vuint8 indices[6] = { 0, 1, 2,  0, 2, 3 };
-
-  vboSprite.activate();
+  //vboSprite.activate();
+  vboSprite.ensure(4);
   vboSprite.uploadData(4, cv);
 
   p_glEnableVertexAttribArrayARB(attribPosition);
@@ -302,7 +321,12 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
   p_glVertexAttribPointerARB(attribTexCoord, 2, GL_FLOAT, false, sizeof(SurfVertex), (void *)(3*sizeof(float)));
   */
   //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices);
+  #if 0
+  const vuint8 indices[6] = { 0, 1, 2,  0, 2, 3 };
   p_glDrawRangeElements(GL_TRIANGLES, 0, 5, 6, GL_UNSIGNED_BYTE, indices);
+  #else
+  p_glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+  #endif
   p_glDisableVertexAttribArrayARB(attribPosition);
   //p_glDisableVertexAttribArrayARB(attribTexCoord);
 

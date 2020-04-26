@@ -743,7 +743,7 @@ protected:
       maxElems = 0;
     }
 
-    inline bool isValid () const noexcept { return (vboId != 0); }
+    inline bool isValid () const noexcept { return (mOwner && vboId != 0); }
     inline GLuint getId () const noexcept { return vboId; }
 
     inline int capacity () const noexcept { return maxElems; }
@@ -779,10 +779,12 @@ protected:
     }
 
     inline void activate () const noexcept {
-      if (!vboId || !mOwner) Sys_Error("cannot activate invalid VBO");
+      if (!mOwner) Sys_Error("cannot activate uninitialised VBO");
+      if (!vboId) Sys_Error("cannot activate empty VBO");
       mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
     }
 
+    // this activates VBO
     inline void uploadData (int count, const T *buf=nullptr) {
       if (count <= 0) return;
       if (!mOwner) Sys_Error("VBO: trying to upload data to uninitialised VBO");
@@ -796,6 +798,9 @@ protected:
 
   // VBO for sprite rendering
   VBO<TVec> vboSprite;
+
+  // VBO for masked surface rendering
+  VBO<SurfVertex> vboMaskedSurf;
 
   // for VBOs
   struct __attribute__((packed)) SkyVBOVertex {
