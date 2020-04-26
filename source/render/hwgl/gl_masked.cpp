@@ -113,25 +113,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   currentActiveShader->UploadChangedUniforms();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-#if 0
-  //glBegin(GL_POLYGON);
-  glBegin(GL_TRIANGLE_FAN);
-  for (int i = 0; i < surf->count; ++i) {
-    if (doBrightmap) {
-      SurfMaskedPolyBrightmapGlow.SetTexCoordAttr(
-        (DotProduct(surf->verts[i].vec(), tex->saxis)+tex->soffs)*tex_iw,
-        (DotProduct(surf->verts[i].vec(), tex->taxis)+tex->toffs)*tex_ih);
-      //SurfMaskedPolyBrightmapGlow.UploadChangedAttrs();
-    } else {
-      SurfMaskedPolyGlow.SetTexCoordAttr(
-        (DotProduct(surf->verts[i].vec(), tex->saxis)+tex->soffs)*tex_iw,
-        (DotProduct(surf->verts[i].vec(), tex->taxis)+tex->toffs)*tex_ih);
-      //SurfMaskedPolyGlow.UploadChangedAttrs();
-    }
-    glVertex(surf->verts[i].vec());
-  }
-  glEnd();
-#else
+
   //vboMaskedSurf.activate();
   //vboMaskedSurf.ensure(surf->count);
   vboMaskedSurf.uploadData(surf->count, surf->verts);
@@ -140,7 +122,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   p_glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
   vboMaskedSurf.disableAttrib(attribPosition);
   vboMaskedSurf.deactivate();
-#endif
+
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 
   // draw decals
