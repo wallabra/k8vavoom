@@ -449,4 +449,5 @@ defaultproperties {
   Height = 0;
   Focusable = true;
   CloseOnBlur = true;
+  OnTop = true;
 }
