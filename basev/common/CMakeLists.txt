@@ -115,6 +115,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/lightmap/*.vs
     ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/masked/*.fs
     ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/masked/*.vs
+    ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/masked/poly/*.fs
+    ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/masked/poly/*.vs
     ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/particle/*.fs
     ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/particle/*.vs
     ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/shadowvol/*.fs

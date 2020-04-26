@@ -1011,7 +1011,9 @@ void VOpenGLDrawer::InitResolution () {
   // shaders
   shaderHead = nullptr; // just in case
 
+  GCon->Logf(NAME_Init, "OpenGL: loading shaders...");
   LoadAllShaders();
+  GCon->Logf(NAME_Init, "OpenGL: compiling shaders...");
   CompileShaders();
 
   GLDRW_CHECK_ERROR("finish OpenGL initialization");
@@ -1039,6 +1041,7 @@ void VOpenGLDrawer::InitResolution () {
   currentActiveFBO = nullptr;
   ReactivateCurrentFBO();
   */
+  GCon->Logf(NAME_Init, "OpenGL: finished initialization.");
 }
 
 #undef gl_

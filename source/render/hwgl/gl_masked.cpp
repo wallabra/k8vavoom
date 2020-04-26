@@ -60,39 +60,39 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   }
 
   if (doBrightmap) {
-    SurfMaskedBrightmapGlow.Activate();
-    SurfMaskedBrightmapGlow.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
-    SurfMaskedBrightmapGlow.SetTexture(0);
-    SurfMaskedBrightmapGlow.SetTextureBM(1);
+    SurfMaskedPolyBrightmapGlow.Activate();
+    SurfMaskedPolyBrightmapGlow.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
+    SurfMaskedPolyBrightmapGlow.SetTexture(0);
+    SurfMaskedPolyBrightmapGlow.SetTextureBM(1);
     SelectTexture(1);
     SetBrightmapTexture(tex->Tex->Brightmap);
     SelectTexture(0);
     if (gp.isActive()) {
-      VV_GLDRAWER_ACTIVATE_GLOW(SurfMaskedBrightmapGlow, gp);
+      VV_GLDRAWER_ACTIVATE_GLOW(SurfMaskedPolyBrightmapGlow, gp);
     } else {
-      VV_GLDRAWER_DEACTIVATE_GLOW(SurfMaskedBrightmapGlow);
+      VV_GLDRAWER_DEACTIVATE_GLOW(SurfMaskedPolyBrightmapGlow);
     }
-    SurfMaskedBrightmapGlow.SetAlphaRef(Additive || isAlphaTrans ? getAlphaThreshold() : 0.666f);
-    SurfMaskedBrightmapGlow.SetLight(
+    SurfMaskedPolyBrightmapGlow.SetAlphaRef(Additive || isAlphaTrans ? getAlphaThreshold() : 0.666f);
+    SurfMaskedPolyBrightmapGlow.SetLight(
       ((surf->Light>>16)&255)*lightLevel/255.0f,
       ((surf->Light>>8)&255)*lightLevel/255.0f,
       (surf->Light&255)*lightLevel/255.0f, Alpha);
-    SurfMaskedBrightmapGlow.SetFogFade(surf->Fade, Alpha);
+    SurfMaskedPolyBrightmapGlow.SetFogFade(surf->Fade, Alpha);
   } else {
-    SurfMaskedGlow.Activate();
-    SurfMaskedGlow.SetTexture(0);
-    //SurfMaskedGlow.SetFogType();
+    SurfMaskedPolyGlow.Activate();
+    SurfMaskedPolyGlow.SetTexture(0);
+    //SurfMaskedPolyGlow.SetFogType();
     if (gp.isActive()) {
-      VV_GLDRAWER_ACTIVATE_GLOW(SurfMaskedGlow, gp);
+      VV_GLDRAWER_ACTIVATE_GLOW(SurfMaskedPolyGlow, gp);
     } else {
-      VV_GLDRAWER_DEACTIVATE_GLOW(SurfMaskedGlow);
+      VV_GLDRAWER_DEACTIVATE_GLOW(SurfMaskedPolyGlow);
     }
-    SurfMaskedGlow.SetAlphaRef(Additive || isAlphaTrans ? getAlphaThreshold() : 0.666f);
-    SurfMaskedGlow.SetLight(
+    SurfMaskedPolyGlow.SetAlphaRef(Additive || isAlphaTrans ? getAlphaThreshold() : 0.666f);
+    SurfMaskedPolyGlow.SetLight(
       ((surf->Light>>16)&255)*lightLevel/255.0f,
       ((surf->Light>>8)&255)*lightLevel/255.0f,
       (surf->Light&255)*lightLevel/255.0f, Alpha);
-    SurfMaskedGlow.SetFogFade(surf->Fade, Alpha);
+    SurfMaskedPolyGlow.SetFogFade(surf->Fade, Alpha);
   }
 
   if (Additive) glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
@@ -111,15 +111,15 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   glBegin(GL_TRIANGLE_FAN);
   for (int i = 0; i < surf->count; ++i) {
     if (doBrightmap) {
-      SurfMaskedBrightmapGlow.SetTexCoordAttr(
+      SurfMaskedPolyBrightmapGlow.SetTexCoordAttr(
         (DotProduct(surf->verts[i].vec(), tex->saxis)+tex->soffs)*tex_iw,
         (DotProduct(surf->verts[i].vec(), tex->taxis)+tex->toffs)*tex_ih);
-      //SurfMaskedBrightmapGlow.UploadChangedAttrs();
+      //SurfMaskedPolyBrightmapGlow.UploadChangedAttrs();
     } else {
-      SurfMaskedGlow.SetTexCoordAttr(
+      SurfMaskedPolyGlow.SetTexCoordAttr(
         (DotProduct(surf->verts[i].vec(), tex->saxis)+tex->soffs)*tex_iw,
         (DotProduct(surf->verts[i].vec(), tex->taxis)+tex->toffs)*tex_ih);
-      //SurfMaskedGlow.UploadChangedAttrs();
+      //SurfMaskedPolyGlow.UploadChangedAttrs();
     }
     glVertex(surf->verts[i].vec());
   }
