@@ -233,6 +233,12 @@ override void OnFocusReceived () {
 //
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
+  /*
+  if (evt.bubbling && evt.dest == self) {
+    printdebug("%C: evt=%s; Parent.Width=%s; Width=%s; Height=%s", self, evt.type, Parent.Width, Width, Height);
+  }
+  */
+
   if (evt.bubbling && evt.type == ev_keydown) {
     /*
     if (evt.keycode == K_MOUSE1 && evt.dest == self) {

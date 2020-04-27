@@ -28,10 +28,26 @@ class MenuSelector_SmallLeft : MenuSelector_SmallBase;
 
 //==========================================================================
 //
+//  OnCreate
+//
+//==========================================================================
+override void OnCreate () {
+  ::OnCreate();
+  auto oldFont = GetFont();
+  scope(exit) SetFont(oldFont);
+  SetFont('smallfont');
+  Width = TextWidth("*")+8;
+  Height = TextHeight("*");
+}
+
+
+//==========================================================================
+//
 //  OnDraw
 //
 //==========================================================================
 override void OnDraw () {
+  SetFont('smallfont');
   SetTextAlign(hright, vtop);
   DrawText(8, yofs, "*", GetMarkColor());
 }

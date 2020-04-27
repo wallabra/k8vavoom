@@ -87,6 +87,7 @@ void CreateMenuItemsFromList (ref array!MenuDefOptionBase options) {
         currentY -= 2;
       }
       if (opt.help) mc.customHelpText = opt.help;
+      //printdebug("%C: mc.Width=%s; Width=%s", self, mc.Width, Width);
       mc.Width = Width;
       mc.CursorXOffs = Width/2;
       if (opt isa MenuDefOptionSubHeader) {

@@ -288,9 +288,10 @@ void SetLastHelp (string help) {
 void SetChoiceInitialSizeSimple (MenuChoice cc, optional bool doCurOffs/*=true*/) {
   if (!cc) return;
   if (!specified_doCurOffs) doCurOffs = true;
+  cc.Width = Width;
   if (Width > WidthThreshold) {
     //print("[%s] wdt=%d", text, Width);
-    cc.Width = Width;
+    //!cc.Width = Width;
     if (doCurOffs) {
       cc.CursorXOffs = Width/2;
       cc.CursorXOffsHR = Width/2;
@@ -306,9 +307,10 @@ void SetChoiceInitialSizeSimple (MenuChoice cc, optional bool doCurOffs/*=true*/
 //==========================================================================
 void SetChoiceInitialSizePos (MenuChoice cc) {
   if (!cc) return;
+  cc.Width = Width;
   if (Width > WidthThreshold) {
     //print("[%s] wdt=%d", text, Width);
-    cc.Width = Width;
+    //!cc.Width = Width;
     cc.CursorXOffs = Width/2;
     cc.CursorXOffsHR = Width/2;
     cc.SetOrigin(Width/2, currentY);
