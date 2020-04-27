@@ -123,6 +123,20 @@ enum {
 
 extern "C" {
   // full shader and texture sorting
+  static int drawListItemCmpByTextureOnly (const void *a, const void *b, void * /*udata*/) {
+    if (a == b) return 0;
+    const surface_t *sa = *(const surface_t **)a;
+    const surface_t *sb = *(const surface_t **)b;
+    const texinfo_t *ta = sa->texinfo;
+    const texinfo_t *tb = sb->texinfo;
+    // sort by texture id (just use texture pointer)
+    if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
+    if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+    // and by colormap, why not?
+    return ((int)ta->ColorMap)-((int)tb->ColorMap);
+  }
+
+  // full shader and texture sorting
   static int drawListItemCmpByShaderTexture (const void *a, const void *b, void * /*udata*/) {
     if (a == b) return 0;
     const surface_t *sa = *(const surface_t **)a;
@@ -237,6 +251,12 @@ static void CheckListSortValidity (TArray<surface_t *> &list, const char *listna
 #endif
 
 
+// these will be moved to drawer eventually
+//static int vboCountIdx = 0; // element (counter) index
+static TArray<GLsizei> vboCounters; // number of indicies in each primitive
+static TArray<GLint> vboStartInds; // starting indicies
+
+
 //==========================================================================
 //
 //  VOpenGLDrawer::BeforeDrawWorldSV
@@ -320,6 +340,12 @@ void VOpenGLDrawer::BeforeDrawWorldSV () {
 
   // turn off VBO for now
   vboAdvSurf.deactivate();
+
+  const int counterLength = dls.DrawSurfListSolid.length()+dls.DrawSurfListMasked.length()+4;
+  if (vboCounters.length() < counterLength) {
+    vboCounters.setLength(counterLength);
+    vboStartInds.setLength(counterLength);
+  }
 }
 
 
@@ -418,12 +444,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     // activate VBO
     vboAdvSurf.activate();
     GLuint attribPosition = 0; /* shut up, gcc! */
-
     int vboCountIdx = 0; // element (counter) index
-    TArray<GLsizei> vboCounters; // number of indicies in each primitive
-    TArray<GLint> vboStartInds; // starting indicies
-    vboCounters.setLength(dls.DrawSurfListSolid.length()+dls.DrawSurfListMasked.length()+4);
-    vboStartInds.setLength(vboCounters.length());
 
     if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "=== ambsurface VBO: maxEls=%d; maxcnt=%d ===", vboAdvSurfMaxEls, vboCounters.length());
 
@@ -458,7 +479,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       /* remember first index */ \
       vboStartInds.ptr()[vboCountIdx] = (GLint)surf->firstIndex; \
       /* advance array positions */ \
-      ++vboCountIdx;
+      ++vboCountIdx
 
     #define SAMB_DO_HEAD_LIGHT(shader_)  \
       const surface_t *surf = *sptr; \
@@ -520,7 +541,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         if (glTextureEnabled) { glTextureEnabled = false; glDisable(GL_TEXTURE_2D); }
         for (; idx < len && (*sptr)->shaderClass == SFST_Normal; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbient)
-          SAMB_DO_RENDER()
+          SAMB_DO_RENDER();
         }
         SAMB_FLUSH_VBO();
         vboAdvSurf.disableAttrib(attribPosition);
@@ -536,7 +557,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbient)
           SAMB_FLUSH_VBO();
           VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbient, surf->gp);
-          SAMB_DO_RENDER()
+          SAMB_DO_RENDER();
         }
         SAMB_FLUSH_VBO();
         vboAdvSurf.disableAttrib(attribPosition);
@@ -554,7 +575,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         for (; idx < len && (*sptr)->shaderClass == SFST_BMap; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbientBrightmap)
           SAMB_CHECK_TEXTURE_BM(ShadowsAmbientBrightmap)
-          SAMB_DO_RENDER()
+          SAMB_DO_RENDER();
         }
         SAMB_FLUSH_VBO();
         vboAdvSurf.disableAttrib(attribPosition);
@@ -571,7 +592,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           SAMB_CHECK_TEXTURE_BM(ShadowsAmbientBrightmap)
           SAMB_FLUSH_VBO();
           VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, surf->gp);
-          SAMB_DO_RENDER()
+          SAMB_DO_RENDER();
         }
         SAMB_FLUSH_VBO();
         vboAdvSurf.disableAttrib(attribPosition);
@@ -601,7 +622,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         for (; idx < len && (*sptr)->shaderClass == SFST_Normal; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbientMasked)
           SAMB_CHECK_TEXTURE_NORMAL(ShadowsAmbientMasked)
-          SAMB_DO_RENDER()
+          SAMB_DO_RENDER();
         }
         SAMB_FLUSH_VBO();
         vboAdvSurf.disableAttrib(attribPosition);
@@ -618,7 +639,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           SAMB_CHECK_TEXTURE_NORMAL(ShadowsAmbientMasked)
           SAMB_FLUSH_VBO();
           VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientMasked, surf->gp);
-          SAMB_DO_RENDER()
+          SAMB_DO_RENDER();
         }
         SAMB_FLUSH_VBO();
         vboAdvSurf.disableAttrib(attribPosition);
@@ -636,7 +657,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         for (; idx < len && (*sptr)->shaderClass == SFST_BMap; ++idx, ++sptr) {
           SAMB_DO_HEAD_LIGHT(ShadowsAmbientBrightmap)
           SAMB_CHECK_TEXTURE_BM(ShadowsAmbientBrightmap)
-          SAMB_DO_RENDER()
+          SAMB_DO_RENDER();
         }
         SAMB_FLUSH_VBO();
         vboAdvSurf.disableAttrib(attribPosition);
@@ -653,7 +674,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           SAMB_CHECK_TEXTURE_BM(ShadowsAmbientBrightmap)
           SAMB_FLUSH_VBO();
           VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, surf->gp);
-          SAMB_DO_RENDER()
+          SAMB_DO_RENDER();
         }
         SAMB_FLUSH_VBO();
         vboAdvSurf.disableAttrib(attribPosition);
@@ -665,6 +686,12 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
     if (!lastCullFace) glEnable(GL_CULL_FACE);
     if (!glTextureEnabled) glEnable(GL_TEXTURE_2D);
+
+    #undef SAMB_FLUSH_VBO
+    #undef SAMB_DO_RENDER
+    #undef SAMB_DO_HEAD_LIGHT
+    #undef SAMB_CHECK_TEXTURE_BM
+    #undef SAMB_CHECK_TEXTURE_NORMAL
   }
 
   // restore depth function
@@ -724,121 +751,154 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
   //GLDisableBlend();
 
-  // sort by textures
-  if (/*gl_sort_textures*/true) {
-    // sort surfaces with solid textures, because here we need them sorted
-    timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByShaderTexture, nullptr);
-  }
+  // sort surfaces with solid textures, because here we need them fully sorted
+  //timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByShaderTexture, nullptr);
+
+  // sort all surfaces by texture only, it is faster this way
+  timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTextureOnly, nullptr);
+  timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTextureOnly, nullptr);
 
   texinfo_t lastTexinfo;
   lastTexinfo.initLastUsed();
+
+  bool lastCullFace = true;
+  glEnable(GL_CULL_FACE);
+
+  // activate VBO
+  vboAdvSurf.activate();
+  GLuint attribPosition = 0; /* shut up, gcc! */
+
+  int vboCountIdx = 0; // element (counter) index
+
+  //WARNING! don't forget to flush VBO on each shader uniform change! this includes glow changes (glow values aren't cached yet)
+
+  #define SAMB_FLUSH_VBO()  do { \
+    if (vboCountIdx) { \
+      if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "flushing ambsurface VBO: vboCountIdx=%d", vboCountIdx); \
+      vboAdvSurf.setupAttribNoEnable(attribPosition, 3); \
+      p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboStartInds.ptr(), vboCounters.ptr(), (GLsizei)vboCountIdx); \
+      vboCountIdx = 0; \
+    } \
+  } while (0)
+
+  #define SAMB_DO_RENDER()  \
+    if (surf->drawflags&surface_t::DF_NO_FACE_CULL) { \
+      if (lastCullFace) { \
+        SAMB_FLUSH_VBO(); \
+        lastCullFace = false; \
+        glDisable(GL_CULL_FACE); \
+      } \
+    } else { \
+      if (!lastCullFace) { \
+        SAMB_FLUSH_VBO(); \
+        lastCullFace = true; \
+        glEnable(GL_CULL_FACE); \
+      } \
+    } \
+    currentActiveShader->UploadChangedUniforms(); \
+    /* remember counter */ \
+    vboCounters.ptr()[vboCountIdx] = (GLsizei)surf->count; \
+    /* remember first index */ \
+    vboStartInds.ptr()[vboCountIdx] = (GLint)surf->firstIndex; \
+    /* advance array positions */ \
+    ++vboCountIdx
 
   // normal
   if (dls.DrawSurfListSolid.length() != 0) {
     lastTexinfo.resetLastUsed();
     ShadowsTexture.Activate();
+    attribPosition = ShadowsAmbient.loc_Position;
+    vboAdvSurf.enableAttrib(attribPosition);
+
     for (auto &&surf : dls.DrawSurfListSolid) {
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) continue;
-      if (surf->drawflags&surface_t::DF_MASKED) continue; // later
-
-      // don't render translucent surfaces
-      // they should not end up here, but...
       const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
-
       const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
       if (textureChanded) {
+        SAMB_FLUSH_VBO();
         // update dynamic texture
         lastTexinfo.updateLastUsed(*currTexinfo);
         SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
         ShadowsTexture.SetTex(currTexinfo);
       }
 
-      bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
+      const bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
 
       // fill stencil buffer for decals
-      if (doDecals) RenderPrepareShaderDecals(surf);
+      if (doDecals) {
+        SAMB_FLUSH_VBO();
+        RenderPrepareShaderDecals(surf);
+      }
 
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      //glBegin(GL_POLYGON);
-      currentActiveShader->UploadChangedUniforms();
-      glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-          /*
-          p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
-            (DotProduct(surf->verts[i].vec(), currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
-            (DotProduct(surf->verts[i].vec(), currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
-          */
-          glVertex(surf->verts[i].vec());
-        }
-      glEnd();
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+      SAMB_DO_RENDER();
 
       if (doDecals) {
+        SAMB_FLUSH_VBO();
+        vboAdvSurf.disableAttrib(attribPosition);
+        vboAdvSurf.deactivate();
         if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
           ShadowsTexture.Activate();
           glBlendFunc(GL_DST_COLOR, GL_ZERO);
           //GLEnableBlend();
           lastTexinfo.resetLastUsed(); // resetup texture
+          lastCullFace = true; // changed by decal renderer
         }
+        vboAdvSurf.activate();
+        vboAdvSurf.enableAttrib(attribPosition);
       }
     }
+
+    SAMB_FLUSH_VBO();
+    vboAdvSurf.disableAttrib(attribPosition);
   }
 
   // masked
   if (dls.DrawSurfListMasked.length() != 0) {
     lastTexinfo.resetLastUsed();
     ShadowsTextureMasked.Activate();
+    attribPosition = ShadowsTextureMasked.loc_Position;
+    vboAdvSurf.enableAttrib(attribPosition);
+
     for (auto &&surf : dls.DrawSurfListMasked) {
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) continue;
-      if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
-
-      // don't render translucent surfaces
-      // they should not end up here, but...
       const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
-
       const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
       if (textureChanded) {
+        SAMB_FLUSH_VBO();
         lastTexinfo.updateLastUsed(*currTexinfo);
         SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
         ShadowsTextureMasked.SetTex(currTexinfo);
       }
 
-      bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
+      const bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
 
       // fill stencil buffer for decals
-      if (doDecals) RenderPrepareShaderDecals(surf);
+      if (doDecals) {
+        SAMB_FLUSH_VBO();
+        RenderPrepareShaderDecals(surf);
+      }
 
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      //glBegin(GL_POLYGON);
-      currentActiveShader->UploadChangedUniforms();
-      glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-          /*
-          p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
-            (DotProduct(surf->verts[i].vec(), currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
-            (DotProduct(surf->verts[i].vec(), currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
-          */
-          glVertex(surf->verts[i].vec());
-        }
-      glEnd();
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+      SAMB_DO_RENDER();
 
       if (doDecals) {
+        SAMB_FLUSH_VBO();
+        vboAdvSurf.disableAttrib(attribPosition);
+        vboAdvSurf.deactivate();
         if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
           ShadowsTextureMasked.Activate();
           glBlendFunc(GL_DST_COLOR, GL_ZERO);
           //GLEnableBlend();
           lastTexinfo.resetLastUsed(); // resetup texture
+          lastCullFace = true; // changed by decal renderer
         }
+        vboAdvSurf.activate();
+        vboAdvSurf.enableAttrib(attribPosition);
       }
     }
   }
+
+  vboAdvSurf.deactivate();
+
+  #undef SAMB_FLUSH_VBO
+  #undef SAMB_DO_RENDER
 }
 
 
@@ -1560,5 +1620,3 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   glEnd();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 }
-
-
