@@ -132,7 +132,7 @@ extern "C" {
     if (stp) return stp;
     // here shader classes are equal
     // invalid shader classes are sorted by element address
-    if (sa->shaderClass < 0) {
+    if (sa->shaderClass < 0 || sa->shaderClass >= SFST_MAX) {
       if ((uintptr_t)a < (uintptr_t)b) return -1;
       if ((uintptr_t)a > (uintptr_t)b) return 1;
       return 0;
@@ -160,7 +160,7 @@ extern "C" {
     if (stp) return stp;
     // here shader classes are equal
     // invalid shader classes are sorted by element address
-    if (sa->shaderClass < 0) {
+    if (sa->shaderClass < 0 || sa->shaderClass >= SFST_MAX) {
       if ((uintptr_t)a < (uintptr_t)b) return -1;
       if ((uintptr_t)a > (uintptr_t)b) return 1;
       return 0;
@@ -219,14 +219,14 @@ static void CheckListSortValidity (TArray<surface_t *> &list, const char *listna
     if (surf->plvisible) break;
   }
   if (idx >= len) return; // nothing to do
-  int phase = /*ClassifySurfaceShader(list[idx])*/list[idx]->shaderClass;
+  int phase = list[idx]->shaderClass;
   int previdx = idx;
   // check surfaces
   for (; idx < len; ++idx, ++sptr) {
     const surface_t *surf = *sptr;
     if (!surf->plvisible) continue; // viewer is in back side or on plane
     vassert(surf->texinfo->Tex);
-    const int newphase = /*ClassifySurfaceShader(surf)*/surf->shaderClass;
+    const int newphase = surf->shaderClass;
     if (newphase < phase) {
       Sys_Error("CheckListSortValidity (%s): shader order check failed at %d of %d; previdx is %d; prevphase is %d; phase is %d", listname, idx, len, previdx, phase, newphase);
     }
@@ -245,6 +245,81 @@ static void CheckListSortValidity (TArray<surface_t *> &list, const char *listna
 //
 //==========================================================================
 void VOpenGLDrawer::BeforeDrawWorldSV () {
+  VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
+
+  vboAdvSurfMaxEls = 0;
+  if (dls.DrawSurfListSolid.length() == 0 && dls.DrawSurfListMasked.length() == 0) return;
+
+  // reserve room for max number of elements in VBO, because why not?
+  int maxEls = 0;
+
+  // precalculate various surface info
+  for (int f = 0; f < dls.DrawSurfListSolid.length(); ) {
+    surface_t *surf = dls.DrawSurfListSolid.ptr()[f];
+    /*
+    surf->gp.clear();
+    surf->shaderClass = -1; // so they will float up
+    */
+    if (!surf->plvisible) { dls.DrawSurfListSolid.removeAt(f); continue; }; // viewer is in back side or on plane
+    if (surf->count < 3) { dls.DrawSurfListSolid.removeAt(f); continue; }
+    if (surf->drawflags&surface_t::DF_MASKED) { dls.DrawSurfListSolid.removeAt(f); continue; } // this should not end up here
+
+    // don't render translucent surfaces
+    // they should not end up here, but...
+    const texinfo_t *currTexinfo = surf->texinfo;
+    if (!currTexinfo || currTexinfo->isEmptyTexture()) { dls.DrawSurfListSolid.removeAt(f); continue; } // just in case
+    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) { dls.DrawSurfListSolid.removeAt(f); continue; } // just in case
+
+    CalcGlow(surf->gp, surf);
+    surf->shaderClass = ClassifySurfaceShader(surf);
+    maxEls += surf->count;
+    ++f;
+  }
+
+  for (int f = 0; f < dls.DrawSurfListMasked.length(); ) {
+    surface_t *surf = dls.DrawSurfListMasked.ptr()[f];
+    /*
+    surf->gp.clear();
+    surf->shaderClass = -1; // so they will float up
+    */
+    if (!surf->plvisible) { dls.DrawSurfListMasked.removeAt(f); continue; } // viewer is in back side or on plane
+    if (surf->count < 3) { dls.DrawSurfListMasked.removeAt(f); continue; }
+    if ((surf->drawflags&surface_t::DF_MASKED) == 0) { dls.DrawSurfListMasked.removeAt(f); continue; } // this should not end up here
+
+    // don't render translucent surfaces
+    // they should not end up here, but...
+    const texinfo_t *currTexinfo = surf->texinfo;
+    if (!currTexinfo || currTexinfo->isEmptyTexture()) { dls.DrawSurfListMasked.removeAt(f); continue; } // just in case
+    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) { dls.DrawSurfListMasked.removeAt(f); continue; } // just in case
+
+    CalcGlow(surf->gp, surf);
+    surf->shaderClass = ClassifySurfaceShader(surf);
+    maxEls += surf->count;
+    ++f;
+  }
+
+  if (dls.DrawSurfListSolid.length() == 0 && dls.DrawSurfListMasked.length() == 0) return;
+
+  vassert(maxEls > 0);
+  vboAdvSurfMaxEls = maxEls;
+
+  // put into VBO
+  vboAdvSurf.ensure(maxEls);
+  int vboIdx = 0;
+  TVec *dest = vboAdvSurf.data.ptr();
+  for (auto &&surf : dls.DrawSurfListSolid) {
+    surf->firstIndex = vboIdx;
+    const unsigned len = (unsigned)surf->count;
+    for (unsigned i = 0; i < len; ++i) *dest++ = surf->verts[i].vec();
+    vboIdx += surf->count;
+  }
+  vassert(vboIdx <= vboAdvSurf.capacity());
+
+  // upload data
+  vboAdvSurf.uploadData(vboIdx);
+
+  // turn off VBO for now
+  vboAdvSurf.deactivate();
 }
 
 
@@ -290,62 +365,19 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
   // draw normal surfaces
   if (dls.DrawSurfListSolid.length() != 0 || dls.DrawSurfListMasked.length() != 0) {
-    // reserve room for max number of elements in VBO, because why not?
-    int currEls[SFST_MAX];
-    // precalculate some crap
-    memset(currEls, 0, sizeof(currEls));
-    for (auto &&surf : dls.DrawSurfListSolid) {
-      surf->gp.clear();
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) { surf->plvisible = 0; continue; }
-      if (surf->drawflags&surface_t::DF_MASKED) { surf->plvisible = 0; continue; } // this should not end up here
-
-      // don't render translucent surfaces
-      // they should not end up here, but...
-      const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || currTexinfo->isEmptyTexture()) { surf->plvisible = 0; continue; } // just in case
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) { surf->plvisible = 0; continue; } // just in case
-
-      CalcGlow(surf->gp, surf);
-      surf->shaderClass = ClassifySurfaceShader(surf);
-      currEls[surf->shaderClass] += surf->count;
-    }
-
-    for (auto &&surf : dls.DrawSurfListMasked) {
-      surf->gp.clear();
-      surf->shaderClass = -1; // so they will float up
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) { surf->plvisible = 0; continue; }
-      if ((surf->drawflags&surface_t::DF_MASKED) == 0) { surf->plvisible = 0; continue; } // this should not end up here
-
-      // don't render translucent surfaces
-      // they should not end up here, but...
-      const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || currTexinfo->isEmptyTexture()) { surf->plvisible = 0; continue; } // just in case
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) { surf->plvisible = 0; continue; } // just in case
-
-      CalcGlow(surf->gp, surf);
-      surf->shaderClass = ClassifySurfaceShader(surf);
-      currEls[surf->shaderClass] += surf->count;
-    }
-
-    int maxEls = currEls[0];
-    for (int fcnt = 1; fcnt < SFST_MAX; ++fcnt) maxEls = max2(maxEls, currEls[fcnt]);
-
     // do not sort surfaces by texture here, because
     // textures will be put later, and BSP sorted them by depth for us
     // other passes can skip surface sorting
-    if (/*gl_sort_textures*/true) {
-      // sort masked textures by shader class and texture
-      timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByShaderTexture, nullptr);
-      // sort solid textures too, so we can avoid shader switches
-      // but do this only by shader class, to retain as much front-to-back order as possible
-      timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByShaderBMTexture, nullptr);
-      #if 0
-      CheckListSortValidity(dls.DrawSurfListSolid, "solid");
-      CheckListSortValidity(dls.DrawSurfListMasked, "masked");
-      #endif
-    }
+
+    // sort masked textures by shader class and texture
+    timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByShaderTexture, nullptr);
+    // sort solid textures too, so we can avoid shader switches
+    // but do this only by shader class, to retain as much front-to-back order as possible
+    timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByShaderBMTexture, nullptr);
+    #if 0
+    CheckListSortValidity(dls.DrawSurfListSolid, "solid");
+    CheckListSortValidity(dls.DrawSurfListMasked, "masked");
+    #endif
 
     //FIXME!
     if (gl_dbg_wireframe) {
@@ -364,19 +396,13 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     // masked
     ShadowsAmbientMasked.Activate();
     ShadowsAmbientMasked.SetTexture(0);
-    //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
     // brightmap
     ShadowsAmbientBrightmap.Activate();
     ShadowsAmbientBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
     ShadowsAmbientBrightmap.SetTexture(0);
     ShadowsAmbientBrightmap.SetTextureBM(1);
-    //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
     // normal
     ShadowsAmbient.Activate();
-    //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
-
-    //ShadowsAmbient.Activate();
-    //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
 
     float prevsflight = -666;
     vuint32 prevlight = 0;
@@ -386,32 +412,28 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     bool glTextureEnabled = false;
     glDisable(GL_TEXTURE_2D);
 
-    // activate VBO
-    GLuint attribPosition = 0; /* shut up, gcc! */
-    vboAdvSurf.ensure(maxEls);
-    vboAdvSurf.enableAttrib(attribPosition);
+    bool lastCullFace = true;
+    glEnable(GL_CULL_FACE);
 
-    int vboIdx = 0; // data index
+    // activate VBO
+    vboAdvSurf.activate();
+    GLuint attribPosition = 0; /* shut up, gcc! */
+
     int vboCountIdx = 0; // element (counter) index
     TArray<GLsizei> vboCounters; // number of indicies in each primitive
     TArray<GLint> vboStartInds; // starting indicies
     vboCounters.setLength(dls.DrawSurfListSolid.length()+dls.DrawSurfListMasked.length()+4);
     vboStartInds.setLength(vboCounters.length());
 
-    bool lastCullFace = true;
-    glEnable(GL_CULL_FACE);
-
-    if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "=== ambsurface VBO: maxEls=%d; maxcnt=%d ===", maxEls, vboCounters.length());
+    if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "=== ambsurface VBO: maxEls=%d; maxcnt=%d ===", vboAdvSurfMaxEls, vboCounters.length());
 
     //WARNING! don't forget to flush VBO on each shader uniform change! this includes glow changes (glow values aren't cached yet)
 
     #define SAMB_FLUSH_VBO()  do { \
-      if (vboIdx) { \
-        if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "flushing ambsurface VBO: vboIdx=%d; vboCountIdx=%d", vboIdx, vboCountIdx); \
-        vboAdvSurf.uploadData(vboIdx); \
+      if (vboCountIdx) { \
+        if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "flushing ambsurface VBO: vboCountIdx=%d", vboCountIdx); \
         vboAdvSurf.setupAttribNoEnable(attribPosition, 3); \
         p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboStartInds.ptr(), vboCounters.ptr(), (GLsizei)vboCountIdx); \
-        vboIdx = 0; \
         vboCountIdx = 0; \
       } \
     } while (0)
@@ -434,15 +456,8 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       /* remember counter */ \
       vboCounters.ptr()[vboCountIdx] = (GLsizei)surf->count; \
       /* remember first index */ \
-      vboStartInds.ptr()[vboCountIdx] = (GLint)vboIdx; \
-      /* vectors will be put here */ \
-      TVec *vp = vboAdvSurf.data.ptr()+vboIdx; \
-      /* fill arrays */ \
-      for (unsigned i = 0; i < (unsigned)surf->count; ++i) { \
-        *vp++ = surf->verts[i].vec(); \
-      } \
+      vboStartInds.ptr()[vboCountIdx] = (GLint)surf->firstIndex; \
       /* advance array positions */ \
-      vboIdx += surf->count; \
       ++vboCountIdx;
 
     #define SAMB_DO_HEAD_LIGHT(shader_)  \

@@ -189,8 +189,8 @@ struct surface_t {
   int plvisible; // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
   //vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")
   int shaderClass; // used in renderers
+  int firstIndex; // address in VBO buffer; only used in world rendering
   GlowParams gp; // used in renderer to cache glow info
-  /*TVec verts[1];*/ // dynamic array
   SurfVertex verts[1]; // dynamic array
 
   // to use in renderer

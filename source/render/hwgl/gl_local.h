@@ -827,6 +827,7 @@ protected:
 
   // VBO for advrender surfaces
   VBO<TVec> vboAdvSurf;
+  int vboAdvSurfMaxEls;
 
   // console variables
   static VCvarI texture_filter;
