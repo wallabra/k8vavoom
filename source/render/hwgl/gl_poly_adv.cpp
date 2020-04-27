@@ -678,6 +678,294 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::DrawWorldTexturesPass
+//
+//  this renders textured level with ambient lighting applied
+//  this is for advanced renderer only
+//  depth mask should be off
+//
+//==========================================================================
+void VOpenGLDrawer::DrawWorldTexturesPass () {
+  if (gl_dbg_wireframe) return;
+  // stop stenciling now
+  glDisable(GL_STENCIL_TEST);
+  glDepthMask(GL_FALSE); // no z-buffer writes
+  glEnable(GL_TEXTURE_2D);
+  //p_glBlendEquation(GL_FUNC_ADD);
+
+  // copy ambient light texture to FBO, so we can use it to light decals
+  auto mfbo = GetMainFBO();
+  mfbo->blitTo(&ambLightFBO, 0, 0, mfbo->getWidth(), mfbo->getHeight(), 0, 0, ambLightFBO.getWidth(), ambLightFBO.getHeight(), GL_NEAREST);
+  mfbo->activate();
+
+  glDepthMask(GL_FALSE); // no z-buffer writes
+  glEnable(GL_TEXTURE_2D);
+  glDisable(GL_STENCIL_TEST);
+  glDisable(GL_SCISSOR_TEST);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  GLDisableOffset();
+  glEnable(GL_CULL_FACE);
+  RestoreDepthFunc();
+
+
+  glBlendFunc(GL_DST_COLOR, GL_ZERO);
+  GLEnableBlend();
+
+  if (!gl_dbg_adv_render_surface_textures) return;
+
+  VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
+  if (dls.DrawSurfListSolid.length() == 0 && dls.DrawSurfListMasked.length() == 0) return;
+
+  ShadowsTextureMasked.Activate();
+  ShadowsTextureMasked.SetTexture(0);
+
+  ShadowsTexture.Activate();
+  ShadowsTexture.SetTexture(0);
+
+  //GLDisableBlend();
+
+  // sort by textures
+  if (/*gl_sort_textures*/true) {
+    // sort surfaces with solid textures, because here we need them sorted
+    timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByShaderTexture, nullptr);
+  }
+
+  texinfo_t lastTexinfo;
+  lastTexinfo.initLastUsed();
+
+  // normal
+  if (dls.DrawSurfListSolid.length() != 0) {
+    lastTexinfo.resetLastUsed();
+    ShadowsTexture.Activate();
+    for (auto &&surf : dls.DrawSurfListSolid) {
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (surf->count < 3) continue;
+      if (surf->drawflags&surface_t::DF_MASKED) continue; // later
+
+      // don't render translucent surfaces
+      // they should not end up here, but...
+      const texinfo_t *currTexinfo = surf->texinfo;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
+
+      const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
+      if (textureChanded) {
+        // update dynamic texture
+        lastTexinfo.updateLastUsed(*currTexinfo);
+        SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+        ShadowsTexture.SetTex(currTexinfo);
+      }
+
+      bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
+
+      // fill stencil buffer for decals
+      if (doDecals) RenderPrepareShaderDecals(surf);
+
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+      //glBegin(GL_POLYGON);
+      currentActiveShader->UploadChangedUniforms();
+      glBegin(GL_TRIANGLE_FAN);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
+          /*
+          p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
+            (DotProduct(surf->verts[i].vec(), currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
+            (DotProduct(surf->verts[i].vec(), currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
+          */
+          glVertex(surf->verts[i].vec());
+        }
+      glEnd();
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+
+      if (doDecals) {
+        if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
+          ShadowsTexture.Activate();
+          glBlendFunc(GL_DST_COLOR, GL_ZERO);
+          //GLEnableBlend();
+          lastTexinfo.resetLastUsed(); // resetup texture
+        }
+      }
+    }
+  }
+
+  // masked
+  if (dls.DrawSurfListMasked.length() != 0) {
+    lastTexinfo.resetLastUsed();
+    ShadowsTextureMasked.Activate();
+    for (auto &&surf : dls.DrawSurfListMasked) {
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (surf->count < 3) continue;
+      if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
+
+      // don't render translucent surfaces
+      // they should not end up here, but...
+      const texinfo_t *currTexinfo = surf->texinfo;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
+
+      const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
+      if (textureChanded) {
+        lastTexinfo.updateLastUsed(*currTexinfo);
+        SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+        ShadowsTextureMasked.SetTex(currTexinfo);
+      }
+
+      bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
+
+      // fill stencil buffer for decals
+      if (doDecals) RenderPrepareShaderDecals(surf);
+
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+      //glBegin(GL_POLYGON);
+      currentActiveShader->UploadChangedUniforms();
+      glBegin(GL_TRIANGLE_FAN);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
+          /*
+          p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
+            (DotProduct(surf->verts[i].vec(), currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
+            (DotProduct(surf->verts[i].vec(), currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
+          */
+          glVertex(surf->verts[i].vec());
+        }
+      glEnd();
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+
+      if (doDecals) {
+        if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
+          ShadowsTextureMasked.Activate();
+          glBlendFunc(GL_DST_COLOR, GL_ZERO);
+          //GLEnableBlend();
+          lastTexinfo.resetLastUsed(); // resetup texture
+        }
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DrawWorldFogPass
+//
+//==========================================================================
+void VOpenGLDrawer::DrawWorldFogPass () {
+  if (gl_dbg_wireframe) return;
+  GLEnableBlend();
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // fog is not premultiplied
+  glDepthMask(GL_FALSE); // no z-buffer writes
+
+  // draw surfaces
+  //ShadowsFog.Activate();
+  //ShadowsFog.SetFogType();
+
+  if (!gl_dbg_adv_render_surface_fog) return;
+
+  VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
+  if (dls.DrawSurfListSolid.length() == 0 && dls.DrawSurfListMasked.length() == 0) return;
+
+  /*
+  ShadowsFog.SetTexture(0);
+  ShadowsFog.SetFogFade(lastFade, 1.0f);
+  */
+
+  texinfo_t lastTexinfo;
+  lastTexinfo.initLastUsed();
+
+  // normal
+  if (dls.DrawSurfListSolid.length() != 0) {
+    lastTexinfo.resetLastUsed();
+    ShadowsFog.Activate();
+    ShadowsFog.SetFogFade(0, 1.0f);
+    vuint32 lastFade = 0;
+    glDisable(GL_TEXTURE_2D);
+    for (auto &&surf : dls.DrawSurfListSolid) {
+      if (!surf->Fade) continue;
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (surf->count < 3) continue;
+      if (surf->drawflags&surface_t::DF_MASKED) continue; // later
+
+      // don't render translucent surfaces
+      // they should not end up here, but...
+      const texinfo_t *currTexinfo = surf->texinfo;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
+
+      if (lastFade != surf->Fade) {
+        lastFade = surf->Fade;
+        ShadowsFog.SetFogFade(surf->Fade, 1.0f);
+      }
+
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+      //glBegin(GL_POLYGON);
+      currentActiveShader->UploadChangedUniforms();
+      glBegin(GL_TRIANGLE_FAN);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
+      glEnd();
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+    }
+    glEnable(GL_TEXTURE_2D);
+  }
+
+  // masked
+  if (dls.DrawSurfListMasked.length() != 0) {
+    lastTexinfo.resetLastUsed();
+    ShadowsFogMasked.Activate();
+    ShadowsFogMasked.SetFogFade(0, 1.0f);
+    ShadowsFogMasked.SetTexture(0);
+    vuint32 lastFade = 0;
+    for (auto &&surf : dls.DrawSurfListMasked) {
+      if (!surf->Fade) continue;
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (surf->count < 3) continue;
+      if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
+
+      // don't render translucent surfaces
+      // they should not end up here, but...
+      const texinfo_t *currTexinfo = surf->texinfo;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
+
+      if (lastFade != surf->Fade) {
+        lastFade = surf->Fade;
+        ShadowsFogMasked.SetFogFade(surf->Fade, 1.0f);
+      }
+
+      const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
+      if (textureChanded) {
+        lastTexinfo.updateLastUsed(*currTexinfo);
+        SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+        ShadowsFogMasked.SetTex(currTexinfo);
+      }
+
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+      //glBegin(GL_POLYGON);
+      currentActiveShader->UploadChangedUniforms();
+      glBegin(GL_TRIANGLE_FAN);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
+      glEnd();
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+    }
+  }
+
+  //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::EndFogPass
+//
+//==========================================================================
+void VOpenGLDrawer::EndFogPass () {
+  //GLDisableBlend();
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
+  // back to normal z-buffering
+  glDepthMask(GL_TRUE); // allow z-buffer writes
+  RestoreDepthFunc();
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::BeginShadowVolumesPass
 //
 //  setup general rendering parameters for shadow volume rendering
@@ -1274,289 +1562,3 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
 }
 
 
-//==========================================================================
-//
-//  VOpenGLDrawer::DrawWorldTexturesPass
-//
-//  this renders textured level with ambient lighting applied
-//  this is for advanced renderer only
-//  depth mask should be off
-//
-//==========================================================================
-void VOpenGLDrawer::DrawWorldTexturesPass () {
-  if (gl_dbg_wireframe) return;
-  // stop stenciling now
-  glDisable(GL_STENCIL_TEST);
-  glDepthMask(GL_FALSE); // no z-buffer writes
-  glEnable(GL_TEXTURE_2D);
-  //p_glBlendEquation(GL_FUNC_ADD);
-
-  // copy ambient light texture to FBO, so we can use it to light decals
-  auto mfbo = GetMainFBO();
-  mfbo->blitTo(&ambLightFBO, 0, 0, mfbo->getWidth(), mfbo->getHeight(), 0, 0, ambLightFBO.getWidth(), ambLightFBO.getHeight(), GL_NEAREST);
-  mfbo->activate();
-
-  glDepthMask(GL_FALSE); // no z-buffer writes
-  glEnable(GL_TEXTURE_2D);
-  glDisable(GL_STENCIL_TEST);
-  glDisable(GL_SCISSOR_TEST);
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  GLDisableOffset();
-  glEnable(GL_CULL_FACE);
-  RestoreDepthFunc();
-
-
-  glBlendFunc(GL_DST_COLOR, GL_ZERO);
-  GLEnableBlend();
-
-  if (!gl_dbg_adv_render_surface_textures) return;
-
-  VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
-  if (dls.DrawSurfListSolid.length() == 0 && dls.DrawSurfListMasked.length() == 0) return;
-
-  ShadowsTextureMasked.Activate();
-  ShadowsTextureMasked.SetTexture(0);
-
-  ShadowsTexture.Activate();
-  ShadowsTexture.SetTexture(0);
-
-  //GLDisableBlend();
-
-  // sort by textures
-  if (/*gl_sort_textures*/true) {
-    // sort surfaces with solid textures, because here we need them sorted
-    timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByShaderTexture, nullptr);
-  }
-
-  texinfo_t lastTexinfo;
-  lastTexinfo.initLastUsed();
-
-  // normal
-  if (dls.DrawSurfListSolid.length() != 0) {
-    lastTexinfo.resetLastUsed();
-    ShadowsTexture.Activate();
-    for (auto &&surf : dls.DrawSurfListSolid) {
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) continue;
-      if (surf->drawflags&surface_t::DF_MASKED) continue; // later
-
-      // don't render translucent surfaces
-      // they should not end up here, but...
-      const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
-
-      const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
-      if (textureChanded) {
-        // update dynamic texture
-        lastTexinfo.updateLastUsed(*currTexinfo);
-        SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
-        ShadowsTexture.SetTex(currTexinfo);
-      }
-
-      bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
-
-      // fill stencil buffer for decals
-      if (doDecals) RenderPrepareShaderDecals(surf);
-
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      //glBegin(GL_POLYGON);
-      currentActiveShader->UploadChangedUniforms();
-      glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-          /*
-          p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
-            (DotProduct(surf->verts[i].vec(), currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
-            (DotProduct(surf->verts[i].vec(), currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
-          */
-          glVertex(surf->verts[i].vec());
-        }
-      glEnd();
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
-
-      if (doDecals) {
-        if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
-          ShadowsTexture.Activate();
-          glBlendFunc(GL_DST_COLOR, GL_ZERO);
-          //GLEnableBlend();
-          lastTexinfo.resetLastUsed(); // resetup texture
-        }
-      }
-    }
-  }
-
-  // masked
-  if (dls.DrawSurfListMasked.length() != 0) {
-    lastTexinfo.resetLastUsed();
-    ShadowsTextureMasked.Activate();
-    for (auto &&surf : dls.DrawSurfListMasked) {
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) continue;
-      if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
-
-      // don't render translucent surfaces
-      // they should not end up here, but...
-      const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
-
-      const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
-      if (textureChanded) {
-        lastTexinfo.updateLastUsed(*currTexinfo);
-        SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
-        ShadowsTextureMasked.SetTex(currTexinfo);
-      }
-
-      bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
-
-      // fill stencil buffer for decals
-      if (doDecals) RenderPrepareShaderDecals(surf);
-
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      //glBegin(GL_POLYGON);
-      currentActiveShader->UploadChangedUniforms();
-      glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-          /*
-          p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
-            (DotProduct(surf->verts[i].vec(), currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
-            (DotProduct(surf->verts[i].vec(), currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
-          */
-          glVertex(surf->verts[i].vec());
-        }
-      glEnd();
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
-
-      if (doDecals) {
-        if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
-          ShadowsTextureMasked.Activate();
-          glBlendFunc(GL_DST_COLOR, GL_ZERO);
-          //GLEnableBlend();
-          lastTexinfo.resetLastUsed(); // resetup texture
-        }
-      }
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::DrawWorldFogPass
-//
-//==========================================================================
-void VOpenGLDrawer::DrawWorldFogPass () {
-  if (gl_dbg_wireframe) return;
-  GLEnableBlend();
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // fog is not premultiplied
-  glDepthMask(GL_FALSE); // no z-buffer writes
-
-  // draw surfaces
-  //ShadowsFog.Activate();
-  //ShadowsFog.SetFogType();
-
-  if (!gl_dbg_adv_render_surface_fog) return;
-
-  VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
-  if (dls.DrawSurfListSolid.length() == 0 && dls.DrawSurfListMasked.length() == 0) return;
-
-  /*
-  ShadowsFog.SetTexture(0);
-  ShadowsFog.SetFogFade(lastFade, 1.0f);
-  */
-
-  texinfo_t lastTexinfo;
-  lastTexinfo.initLastUsed();
-
-  // normal
-  if (dls.DrawSurfListSolid.length() != 0) {
-    lastTexinfo.resetLastUsed();
-    ShadowsFog.Activate();
-    ShadowsFog.SetFogFade(0, 1.0f);
-    vuint32 lastFade = 0;
-    glDisable(GL_TEXTURE_2D);
-    for (auto &&surf : dls.DrawSurfListSolid) {
-      if (!surf->Fade) continue;
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) continue;
-      if (surf->drawflags&surface_t::DF_MASKED) continue; // later
-
-      // don't render translucent surfaces
-      // they should not end up here, but...
-      const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
-
-      if (lastFade != surf->Fade) {
-        lastFade = surf->Fade;
-        ShadowsFog.SetFogFade(surf->Fade, 1.0f);
-      }
-
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      //glBegin(GL_POLYGON);
-      currentActiveShader->UploadChangedUniforms();
-      glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
-      glEnd();
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
-    }
-    glEnable(GL_TEXTURE_2D);
-  }
-
-  // masked
-  if (dls.DrawSurfListMasked.length() != 0) {
-    lastTexinfo.resetLastUsed();
-    ShadowsFogMasked.Activate();
-    ShadowsFogMasked.SetFogFade(0, 1.0f);
-    ShadowsFogMasked.SetTexture(0);
-    vuint32 lastFade = 0;
-    for (auto &&surf : dls.DrawSurfListMasked) {
-      if (!surf->Fade) continue;
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) continue;
-      if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
-
-      // don't render translucent surfaces
-      // they should not end up here, but...
-      const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
-
-      if (lastFade != surf->Fade) {
-        lastFade = surf->Fade;
-        ShadowsFogMasked.SetFogFade(surf->Fade, 1.0f);
-      }
-
-      const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
-      if (textureChanded) {
-        lastTexinfo.updateLastUsed(*currTexinfo);
-        SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
-        ShadowsFogMasked.SetTex(currTexinfo);
-      }
-
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      //glBegin(GL_POLYGON);
-      currentActiveShader->UploadChangedUniforms();
-      glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
-      glEnd();
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
-    }
-  }
-
-  //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::EndFogPass
-//
-//==========================================================================
-void VOpenGLDrawer::EndFogPass () {
-  //GLDisableBlend();
-  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
-  // back to normal z-buffering
-  glDepthMask(GL_TRUE); // allow z-buffer writes
-  RestoreDepthFunc();
-}
