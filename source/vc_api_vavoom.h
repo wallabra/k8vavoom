@@ -93,8 +93,6 @@
   DECLARE_FUNCTION(StopLocalSounds)
 
   DECLARE_FUNCTION(TranslateKey)
-
-#include "../neoui/vc_object_neoui.h"
 #endif // CLIENT
 
   DECLARE_FUNCTION(IsLineTagEqual)

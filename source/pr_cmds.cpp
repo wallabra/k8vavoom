@@ -296,9 +296,6 @@ IMPLEMENT_FREE_FUNCTION(VObject, LoadTextLump) {
 
 #ifdef CLIENT
 # define CVC_CALC_EXPR(expr_)  expr_
-# ifdef VAVOOM_NEOUI
-#  include "neoui/vc_object_neoui.cpp"
-# endif
 #else
 # define CVC_CALC_EXPR(expr_)  0
 #endif

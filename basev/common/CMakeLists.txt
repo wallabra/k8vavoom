@@ -60,7 +60,6 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_SOURCE_DIR}/progs/common/botai/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/engine/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/engine/vccrun/*.vc
-    #${CMAKE_SOURCE_DIR}/progs/common/newui/*.vc -- not yet
 
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/client/*.vc

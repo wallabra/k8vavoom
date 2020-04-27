@@ -45,7 +45,4 @@
 # include "vccrun/IniFile.vc"
 # include "vccrun/FileRider.vc"
 # include "vccrun/EntityGridBase.vc"
-//#else // this was in newui
-//# include "GLVideo.vc"
-//# include "GLTexture.vc"
 #endif

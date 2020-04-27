@@ -43,9 +43,6 @@
 #include "gamedefs.h"
 #ifdef CLIENT
 # include "cl_local.h"
-# ifdef VAVOOM_NEOUI
-#  include "neoui/neoui.h"
-# endif
 #endif
 
 
@@ -399,7 +396,6 @@ COMMAND(ToggleAlwaysRun) {
   if (!cl || !GClGame || !GGameInfo || GClGame->InIntermission() || GGameInfo->NetMode <= NM_TitleMap) {
     return;
   }
-  //if (MN_Active() || C_Active() || NUI_IsPaused()) return;
   if (GGameInfo->IsPaused()) return;
 #endif
   always_run = !always_run;

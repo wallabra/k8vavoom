@@ -28,9 +28,6 @@
 #include "net/network.h"
 #include "cl_local.h"
 #include "ui/ui.h"
-#ifdef VAVOOM_NEOUI
-# include "neoui/neoui.h"
-#endif
 #include "sv_local.h"
 
 #define VAVOOM_DEMO_VERSION  (1)

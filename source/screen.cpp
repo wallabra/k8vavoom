@@ -26,9 +26,6 @@
 #include "gamedefs.h"
 #include "drawer.h"
 #include "ui/ui.h"
-#ifdef VAVOOM_NEOUI
-# include "neoui/neoui.h"
-#endif
 
 
 extern int screenblocks;

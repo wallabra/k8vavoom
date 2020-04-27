@@ -9,19 +9,6 @@ set(OUTDIR ${CMAKE_BINARY_DIR}/basev/common/progs)
 ### add_custom_target(engine ALL DEPENDS ${OUTDIR}/engine.dat)
 ### add_dependencies(engine vcc)
 
-### -- not yet
-### add_custom_command(OUTPUT ${OUTDIR}/newui.dat
-###   COMMAND mkdir ARGS -p ${OUTDIR}
-###   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} -P${PROJECT_SOURCE_DIR}/progs/common ${CMAKE_CURRENT_SOURCE_DIR}/newui/classes.vc ${OUTDIR}/newui.dat
-###   DEPENDS
-###     vcc
-###     ${CMAKE_SOURCE_DIR}/progs/common/engine/*.vc
-###     ${CMAKE_SOURCE_DIR}/progs/common/newui/*.vc)
-###     #${OUTDIR}/engine.dat)
-### add_custom_target(newui ALL DEPENDS ${OUTDIR}/newui.dat)
-### #add_dependencies(newui vcc engine)
-### add_dependencies(newui vcc)
-
 add_custom_command(OUTPUT ${OUTDIR}/linespec.dat
   COMMAND mkdir ARGS -p ${OUTDIR}
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} -P${PROJECT_SOURCE_DIR}/progs/common ${CMAKE_CURRENT_SOURCE_DIR}/linespec/classes.vc ${OUTDIR}/linespec.dat
@@ -78,9 +65,6 @@ add_custom_command(OUTPUT ${OUTDIR}/uibase.dat
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/wgtextbtn/*.vc
     #${OUTDIR}/engine.dat
     ${OUTDIR}/linespec.dat
-    #${OUTDIR}/newui.dat -- not yet
     )
 add_custom_target(uibase ALL DEPENDS ${OUTDIR}/uibase.dat)
-#add_dependencies(uibase vcc engine linespec newui)
-#add_dependencies(uibase vcc linespec newui)
 add_dependencies(uibase vcc linespec)

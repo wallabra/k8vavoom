@@ -24,9 +24,6 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#ifdef VAVOOM_NEOUI
-# include "neoui/neoui.h"
-#endif
 
 
 IMPLEMENT_CLASS(V, GameInfo)
@@ -97,13 +94,7 @@ bool VGameInfo::IsPaused () {
   return
     (Flags&GIF_Paused) ||
     IsInWipe() ||
-    (NetMode == NM_Standalone &&
-      (MN_Active() || C_Active()
-        #ifdef VAVOOM_NEOUI
-        || NUI_IsPaused()
-        #endif
-      )
-    );
+    (NetMode == NM_Standalone && (MN_Active() || C_Active()));
 #else
   return !!(Flags&GIF_Paused);
 #endif

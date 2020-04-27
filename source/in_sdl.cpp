@@ -31,9 +31,6 @@
 #include "gamedefs.h"
 #include "drawer.h"
 #include "ui/ui.h"
-#ifdef VAVOOM_NEOUI
-# include "neoui/neoui.h"
-#endif
 
 #ifndef MAX_JOYSTICK_BUTTONS
 # define MAX_JOYSTICK_BUTTONS  (100)

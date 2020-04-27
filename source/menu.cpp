@@ -31,9 +31,6 @@
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "ui/ui.h"
-#ifdef VAVOOM_NEOUI
-# include "neoui/neoui.h"
-#endif
 
 
 //==========================================================================

@@ -29,9 +29,6 @@
 //**************************************************************************
 #include "gamedefs.h"
 #ifdef CLIENT
-# ifdef VAVOOM_NEOUI
-#  include "neoui/neoui.h"
-# endif
 # include "render/r_local.h" /*FIXME: sorry, i have to do this for textured automap*/
 #endif
 
@@ -2380,7 +2377,6 @@ COMMAND(toggle_automap) {
     return;
   }
 #ifdef CLIENT
-  //if (MN_Active() || C_Active() || NUI_IsPaused()) return;
   if (GGameInfo->IsPaused()) return;
 #endif
   am_active = !am_active;
