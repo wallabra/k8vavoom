@@ -109,6 +109,35 @@ override void OnDraw () {
 
 
 override bool OnEvent (ref event_t evt) {
+  // "on click"
+  if (evt.bubbling && evt.type == ev_click && evt.dest == self) {
+    switch (evt.keycode) {
+      case K_MOUSE1:
+        if (bEnteringText) {
+          /*
+          bEnteringText = false;
+          Value = EnterText;
+          OnValueChanged();
+          */
+        } else {
+          // we are going to be intercepting all chars
+          bEnteringText = true;
+          EnterText = Value;
+          LocalSound('menu/choose');
+        }
+        return true;
+      case K_MOUSE2:
+        if (IsFocused) {
+          if (bEnteringText) {
+            bEnteringText = false;
+            EnterText = Value;
+          }
+          return true;
+        }
+        break;
+    }
+  }
+
   if (evt.bubbling && evt.type == ev_keydown) {
     if (bEnteringText) {
       if (evt.bCtrl) {
@@ -159,34 +188,6 @@ override bool OnEvent (ref event_t evt) {
     }
   }
   return ::OnEvent(evt);
-}
-
-
-override void OnMouseClick (int X, int Y, int Button, Widget Dest) {
-  if (Dest != self) return;
-  SetFocus();
-
-  if (Button == K_MOUSE1) {
-    if (bEnteringText) {
-      /*
-      bEnteringText = false;
-      Value = EnterText;
-      OnValueChanged();
-      */
-    } else {
-      // we are going to be intercepting all chars
-      bEnteringText = true;
-      EnterText = Value;
-      LocalSound('menu/choose');
-    }
-  } else if (Button == K_MOUSE2) {
-    if (bEnteringText) {
-      bEnteringText = false;
-      EnterText = Value;
-    } else {
-      GetClGame().PopMenu();
-    }
-  }
 }
 
 

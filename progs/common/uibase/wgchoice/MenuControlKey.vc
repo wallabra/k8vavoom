@@ -96,6 +96,17 @@ override void OnDraw () {
 
 
 override bool OnEvent (ref event_t evt) {
+  // "on click"
+  if (evt.bubbling && evt.type == ev_click && evt.dest == self) {
+    if (!Disabled) {
+      if (evt.keycode == K_MOUSE1) {
+        SetFocus();
+        GetClGame().MessageBoxStartBindQuery(self, strifeMode);
+        return true;
+      }
+    }
+  }
+
   if (evt.bubbling && evt.type == ev_keydown) {
     int key1;
     int key2;
@@ -145,19 +156,6 @@ override bool OnEvent (ref event_t evt) {
   }
 
   return ::OnEvent(evt);
-}
-
-
-override void OnMouseClick (int X, int Y, int Button, Widget Dest) {
-  if (Dest != self) return;
-  if (!Disabled) {
-    SetFocus();
-    if (Button == K_MOUSE1) {
-      GetClGame().MessageBoxStartBindQuery(self, strifeMode);
-    } else if (Button == K_MOUSE2) {
-      GetClGame().PopMenu();
-    }
-  }
 }
 
 

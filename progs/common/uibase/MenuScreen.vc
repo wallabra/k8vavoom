@@ -815,11 +815,13 @@ override void OnDraw () {
 //
 //  OnEvent
 //
-//  this is called before any other specific handler.
-//  return `true` to prevent other handlers from being called.
-//
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
+  if (evt.bubbling && evt.type == ev_keydown && evt.keycode == K_MOUSE2) {
+    ClGame.PopMenu();
+    return true;
+  }
+
   if (evt.bubbling && evt.type == ev_keydown) {
     int key = ConvertBoundKey(evt.keycode);
     switch (key) {
@@ -854,16 +856,17 @@ override bool OnEvent (ref event_t evt) {
         }
         return true;
       case K_ESCAPE:
-      case K_MOUSE2:
         ClGame.PopMenu();
         return true;
     }
   }
+
   if (evt.bubbling && evt.type == ev_resolution) {
     //printdebug("%C: *** RESOLUTION ***", self);
     // center menu
     SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
   }
+
   return ::OnEvent(evt);
 }
 

@@ -620,15 +620,16 @@ void VSdlInputDevice::ReadInput () {
       int dy = mouse_oldy-mouse_y;
       if (dx || dy) {
         if (!firsttime) {
-          memset((void *)&vev, 0, sizeof(vev));
+          vev.clear();
           vev.modflags = curmodflags;
           vev.type = ev_mouse;
-          vev.data1 = 0;
           vev.dx = dx;
           vev.dy = dy;
           VObject::PostEvent(vev);
+
+          vev.clear();
+          vev.modflags = curmodflags;
           vev.type = ev_uimouse;
-          vev.data1 = 0;
           vev.x = mouse_x;
           vev.y = mouse_y;
           VObject::PostEvent(vev);
@@ -768,13 +769,12 @@ void VSdlInputDevice::StartupJoystick () {
 //
 //==========================================================================
 void VSdlInputDevice::PostJoystick () {
-  event_t event;
-
   if (!joystick_started || !joystick) return;
 
   if (joy_oldx != joy_x || joy_oldy != joy_y) {
+    event_t event;
+    event.clear();
     event.type = ev_joystick;
-    event.data1 = 0;
     event.dx = joy_x;
     event.dy = joy_y;
     event.modflags = curmodflags;

@@ -447,76 +447,14 @@ void Tick (float DeltaTime) {}
 //  OnEvent
 //
 //  this is called before any other specific handler.
-//  return `true` to prevent other handlers from being called.
-//  if `evt.bubbling` is set, we're in bubble phase
-//  deepest child (destination) will have `evt.bubbling` set too
-//  also, `evt.dest` is the deepest child
+//  return `true` to prevent other handlers from being called
+//  (i.e. to "eat" the event).
+//  if `evt.bubbling` is set, we're in bubble phase.
+//  deepest child (destination) will have `evt.bubbling` set too.
+//  also, `evt.dest` is usually the deepest child.
 //
 //==========================================================================
 bool OnEvent (ref event_t evt) { return false; }
-
-
-//==========================================================================
-//
-//  OnMouseEnter
-//
-//  Called when mouse enters this widget.
-//
-//==========================================================================
-void OnMouseEnter () {}
-
-
-//==========================================================================
-//
-//  OnMouseLeave
-//
-//  Called when mouse leaves this widget.
-//
-//==========================================================================
-void OnMouseLeave () {}
-
-
-//==========================================================================
-//
-//  OnMouseMove
-//
-//  Called when mouse moves over this widget.
-//
-//==========================================================================
-bool OnMouseMove (int OldX, int OldY, int NewX, int NewY, Widget Dest) { return false; }
-
-
-//==========================================================================
-//
-//  OnMouseDown
-//
-//  Called when mouse button is pressed.
-//  `Button` is `K_MOUSE\d`
-//
-//==========================================================================
-bool OnMouseDown (int X, int Y, int Button, Widget Dest) { return false; }
-
-
-//==========================================================================
-//
-//  OnMouseUp
-//
-//  Called when mouse button is released.
-//  `Button` is `K_MOUSE\d`
-//
-//==========================================================================
-bool OnMouseUp (int X, int Y, int Button, Widget Dest) { return false; }
-
-
-//==========================================================================
-//
-//  OnMouseClick
-//
-//  Called when left mouse button is clicked on this widget.
-//  `Button` is `K_MOUSE\d`
-//
-//==========================================================================
-void OnMouseClick (int X, int Y, int Button, Widget Dest) {}
 
 
 //==========================================================================

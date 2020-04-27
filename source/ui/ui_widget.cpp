@@ -694,6 +694,7 @@ void VWidget::FindNewFocus () {
 VWidget *VWidget::GetWidgetAt (float X, float Y) noexcept {
   for (VWidget *W = LastChildWidget; W; W = W->PrevWidget) {
     if (!IsVisibleFlag()) continue;
+    if (W->IsGoingToDie()) break;
     if (X >= W->ClipRect.ClipX1 && X < W->ClipRect.ClipX2 &&
         Y >= W->ClipRect.ClipY1 && Y < W->ClipRect.ClipY2)
     {

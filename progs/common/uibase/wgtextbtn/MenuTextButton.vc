@@ -127,6 +127,16 @@ void ActivateEvent () {
 //
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
+  // "on click"
+  if (evt.bubbling && evt.type == ev_click && evt.dest == self) {
+    if (evt.keycode == K_MOUSE1) {
+      SetFocus();
+      ActivateEvent();
+      LocalSound(ActivateSound);
+      return true;
+    }
+  }
+
   if (evt.bubbling && evt.type == ev_keydown) {
     int key = ConvertBoundKey(evt.keycode);
     if (key == K_ENTER || key == K_PADENTER || /*key == K_MOUSE1 ||*/ key == K_JOY1) {
@@ -135,21 +145,8 @@ override bool OnEvent (ref event_t evt) {
       return true;
     }
   }
+
   return ::OnEvent(evt);
-}
-
-
-//==========================================================================
-//
-//  OnMouseClick
-//
-//==========================================================================
-override void OnMouseClick (int X, int Y, int Button, Widget Dest) {
-  if (Dest != self) return;
-  SetFocus();
-  if (Button != K_MOUSE1) return;
-  ActivateEvent();
-  LocalSound(ActivateSound);
 }
 
 

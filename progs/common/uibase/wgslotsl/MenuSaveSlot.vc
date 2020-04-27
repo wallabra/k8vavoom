@@ -99,6 +99,26 @@ void ActivateSlot () {
 //
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
+  // "on click"
+  if (evt.bubbling && evt.type == ev_click && evt.dest == self) {
+    if (evt.keycode == K_MOUSE1) {
+      SetFocus();
+      waitingDeletion = false;
+      /*
+      if (bEnteringText) {
+        bEnteringText = false;
+        if (EnterText) {
+          Text = EnterText;
+          CmdBuf_AddText("Save %d \"%q\"\n", SlotNum, Text);
+          GetClGame().ForceMenuOff();
+        }
+      }
+      */
+      ActivateSlot();
+      return true;
+    }
+  }
+
   if (evt.bubbling && evt.type == ev_keydown) {
     if (bEnteringText) {
       // save game string input
@@ -173,33 +193,6 @@ override bool OnEvent (ref event_t evt) {
   }
 
   return ::OnEvent(evt);
-}
-
-
-//==========================================================================
-//
-//  OnMouseClick
-//
-//==========================================================================
-override void OnMouseClick (int X, int Y, int Button, Widget Dest) {
-  if (Dest != self) return;
-  SetFocus();
-  waitingDeletion = false;
-  if (Button == K_MOUSE1) {
-    /*
-    if (bEnteringText) {
-      bEnteringText = false;
-      if (EnterText) {
-        Text = EnterText;
-        CmdBuf_AddText("Save %d \"%q\"\n", SlotNum, Text);
-        GetClGame().ForceMenuOff();
-      }
-    }
-    */
-    ActivateSlot();
-  } else if (Button == K_MOUSE2) {
-    GetClGame().PopMenu();
-  }
 }
 
 

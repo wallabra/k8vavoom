@@ -126,6 +126,14 @@ override void OnDraw () {
 //
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
+  // "on click"
+  if (evt.bubbling && evt.type == ev_click && evt.dest == self) {
+    if (evt.keycode == K_MOUSE1) {
+      SetFocus();
+      return true;
+    }
+  }
+
   if (evt.bubbling && evt.type == ev_keydown) {
     int idx = value;
     int key = ConvertBoundKey(evt.keycode);
@@ -164,14 +172,6 @@ override bool OnEvent (ref event_t evt) {
   }
 
   return ::OnEvent(evt);
-}
-
-
-override void OnMouseClick (int X, int Y, int Button, Widget Dest) {
-  if (Dest != self) return;
-  if (!IsFocused) {
-    SetFocus();
-  }
 }
 
 

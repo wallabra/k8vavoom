@@ -267,7 +267,14 @@ public:
   void SetFocusable (bool NewFocusable);
   inline bool IsFocusable () const { return !!(WidgetFlags&WF_IsFocusable); }
 
-  // focus methods
+  // this returns "deepest" focused child
+  VWidget *FindFocused () noexcept {
+    VWidget *w = this;
+    while (w && w->CurrentFocusChild) w = w->CurrentFocusChild;
+    return w;
+  }
+
+  // other focus methods
   void SetCurrentFocusChild (VWidget *NewFocus);
   inline VWidget *GetCurrentFocus () const { return CurrentFocusChild; }
   inline void SetFocus () { if (ParentWidget) ParentWidget->SetCurrentFocusChild(this); }
@@ -338,36 +345,22 @@ public:
   virtual void OnCreate () { static VMethodProxy method("OnCreate"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void OnDestroy () { static VMethodProxy method("OnDestroy"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void OnClose () { static VMethodProxy method("OnClose"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+
   virtual void OnChildAdded (VWidget *Child) { static VMethodProxy method("OnChildAdded"); vobjPutParamSelf(Child); VMT_RET_VOID(method); }
   virtual void OnChildRemoved (VWidget *Child) { static VMethodProxy method("OnChildRemoved"); vobjPutParamSelf(Child); VMT_RET_VOID(method); }
+
   virtual void OnConfigurationChanged () { static VMethodProxy method("OnConfigurationChanged"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void OnVisibilityChanged (bool NewVisibility) { static VMethodProxy method("OnVisibilityChanged"); vobjPutParamSelf(NewVisibility); VMT_RET_VOID(method); }
   virtual void OnEnableChanged (bool bNewEnable) { static VMethodProxy method("OnEnableChanged"); vobjPutParamSelf(bNewEnable); VMT_RET_VOID(method); }
   virtual void OnFocusableChanged (bool bNewFocusable) { static VMethodProxy method("OnFocusableChanged"); vobjPutParamSelf(bNewFocusable); VMT_RET_VOID(method); }
 
-  virtual void OnFocusReceived () {
-    ResetMouseDowns();
-    static VMethodProxy method("OnFocusReceived"); vobjPutParamSelf(); VMT_RET_VOID(method);
-  }
-  virtual void OnFocusLost () {
-    ResetMouseDowns();
-    static VMethodProxy method("OnFocusLost"); vobjPutParamSelf(); VMT_RET_VOID(method);
-  }
+  virtual void OnFocusReceived () { static VMethodProxy method("OnFocusReceived"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  virtual void OnFocusLost () { static VMethodProxy method("OnFocusLost"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
   virtual void OnDraw () { static VMethodProxy method("OnDraw"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void OnPostDraw () { static VMethodProxy method("OnPostDraw"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void Tick (float DeltaTime) { if (DeltaTime <= 0.0f) return; static VMethodProxy method("Tick"); vobjPutParamSelf(DeltaTime); VMT_RET_VOID(method); }
   virtual bool OnEvent (event_t *evt) { static VMethodProxy method("OnEvent"); vobjPutParamSelf(evt); VMT_RET_BOOL(method); }
-  virtual bool OnMouseMove (int OldX, int OldY, int NewX, int NewY, VWidget *Dest) { static VMethodProxy method("OnMouseMove"); vobjPutParamSelf(OldX, OldY, NewX, NewY, Dest); VMT_RET_BOOL(method); }
-  virtual void OnMouseEnter () { static VMethodProxy method("OnMouseEnter"); vobjPutParamSelf(); VMT_RET_VOID(method); }
-  virtual void OnMouseLeave () { static VMethodProxy method("OnMouseLeave"); vobjPutParamSelf(); VMT_RET_VOID(method); }
-
-  // `Button` is `K_MOUSE\d`
-  virtual bool OnMouseDown (int X, int Y, int Button, VWidget *Dest) { static VMethodProxy method("OnMouseDown"); vobjPutParamSelf(X, Y, Button, Dest); VMT_RET_BOOL(method); }
-  virtual bool OnMouseUp (int X, int Y, int Button, VWidget *Dest) { static VMethodProxy method("OnMouseUp"); vobjPutParamSelf(X, Y, Button, Dest); VMT_RET_BOOL(method); }
-
-  // `Button` is `K_MOUSE\d`
-  virtual void OnMouseClick (int X, int Y, int Button, VWidget *Dest) { static VMethodProxy method("OnMouseClick"); vobjPutParamSelf(X, Y, Button, Dest); VMT_RET_VOID(method); }
 
   // script natives
   DECLARE_FUNCTION(NewChild)

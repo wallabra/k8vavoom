@@ -159,11 +159,14 @@ static_assert(K_KEYCODE_MAX < 256, "too many keycodes");
 enum {
   ev_keydown,
   ev_keyup,
-  ev_mouse,
+  ev_mouse, // "mouse moved" event, with deltas in `dx`/`dy`
   ev_joystick,
+  ev_click, // click or doubleclick (see `clickcnt`); keycode is K_MOUSEn; `x` and `y` holds widget-local coords
+  ev_enter, // mouse enters the widget; `x` and `y` holds widget-local coords
+  ev_leave, // mouse leaves the widget; `x` and `y` holds widget-local coords
   // extended events for vcc_run
-  ev_uimouse,
-  ev_winfocus, // data1: focused
+  ev_uimouse, // "mouse moved" event, with actual coords in `x`/`y` (widget-locals)
+  ev_winfocus,
   // only for vccrun
   ev_timer, // data1: timer id
   ev_closequery,
@@ -211,6 +214,8 @@ struct event_t {
     vint32 focused; // ev_winfocus
     vint32 timerid; // ev_timer
     vint32 sockev; // ev_socket
+    // for ev_mouse
+    vint32 msx;
   };
   union {
     vint32 data2; // mouse / joystick x move
@@ -224,10 +229,18 @@ struct event_t {
     vint32 y; // ev_uimouse; mouse button down/up
     vint32 sockdata; // ev_socket
   };
+  union {
+    vint32 data4;
+    vint32 clickcnt; // 1 for click, 2 for doubleclick
+    // for ev_mouse
+    vint32 msy;
+  };
   vuint32 flags; // EFlag_XXX
   VObject *obj;
   VObject *dest;
   vuint32 modflags;
+
+  inline void clear () noexcept { memset((void *)this, 0, sizeof(event_t)); }
 
   inline bool isEaten () const noexcept { return !!(flags&EFlag_Eaten); }
   inline void setEaten () noexcept { flags |= EFlag_Eaten; }
@@ -264,6 +277,9 @@ struct event_t {
     return
       type == ev_mouse ||
       type == ev_uimouse ||
+      type == ev_click ||
+      type == ev_enter ||
+      type == ev_leave ||
       ((type == ev_keydown || type == ev_keyup) && (keycode >= K_MOUSE_FIRST && keycode <= K_MOUSE_LAST));
   }
 };

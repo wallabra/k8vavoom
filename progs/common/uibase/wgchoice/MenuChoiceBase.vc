@@ -229,40 +229,6 @@ override void OnFocusReceived () {
 
 //==========================================================================
 //
-//  OnMouseEnter
-//
-//==========================================================================
-override void OnMouseEnter () {
-  //SetFocus();
-  //LocalSound('menu/cursor');
-}
-
-
-//==========================================================================
-//
-//  OnMouseDown
-//
-//  Called when mouse button is pressed.
-//  `Button` is `K_MOUSE\d`
-//
-//==========================================================================
-override bool OnMouseDown (int X, int Y, int Button, Widget Dest) {
-  if (Dest != self) return false;
-  if (Button != K_MOUSE1) return false;
-  if (!IsFocused) {
-    // remember down time
-    auto tm = MouseDownState[0].time;
-    SetFocus(); // this resets down time
-    // and restore it
-    MouseDownState[0].time = tm;
-    return true;
-  }
-  return false;
-}
-
-
-//==========================================================================
-//
 //  OnEvent
 //
 //==========================================================================
@@ -297,6 +263,24 @@ override bool OnEvent (ref event_t evt) {
       }
     }
   }
+
+  // "on mouse down"
+  if (evt.bubbling && evt.dest == self && evt.type == ev_keydown && evt.keycode == K_MOUSE1) {
+    // focus if we're clicked
+    if (evt.x >= 0 && evt.y >= 0 && evt.x < Width && evt.y < Height) {
+      if (!IsFocused) SetFocus();
+      return true;
+    }
+  }
+
+  // "on click"
+  if (evt.bubbling && evt.type == ev_click && evt.dest == self) {
+    if (evt.keycode == K_MOUSE1) {
+      SetFocus();
+      return true;
+    }
+  }
+
   return ::OnEvent(evt);
 }
 

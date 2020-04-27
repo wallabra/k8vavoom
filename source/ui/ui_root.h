@@ -47,13 +47,20 @@ private:
   TArray<VWidget *> EventPath;
 
 private:
-  void MouseMoveEvent (int OldMouseX, int OldMouseY);
-  bool MouseButtonEvent (int Button, bool Down);
+  // this generates mouse leave/enter
+  void MouseMoveEvent (const event_t *evt, int OldMouseX, int OldMouseY);
 
-  void BuildEventPath ();
+  void MouseClickEvent (const event_t *evt);
 
-  // returns `true` if the mouse was moved
-  bool UpdateMousePosition (int NewX, int NewY);
+  // adds `lastOne` if it is not the last one already
+  void BuildEventPath (VWidget *lastOne=nullptr);
+
+  // the path should be already built
+  // returns `true` if any handler returned `true`
+  // sets `eaten`  if any handler returned `true`
+  bool DispatchEvent (event_t *evt);
+
+  void UpdateMousePosition (int NewX, int NewY);
 
   void FixEventCoords (VWidget *w, event_t *evt);
 

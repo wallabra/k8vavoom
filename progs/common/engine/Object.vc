@@ -166,11 +166,14 @@ enum {
 enum {
   ev_keydown,
   ev_keyup,
-  ev_mouse,
+  ev_mouse, // "mouse moved" event, with deltas in `dx`/`dy`
   ev_joystick,
+  ev_click, // click or doubleclick (see `clickcnt`); keycode is K_MOUSEn; `x` and `y` holds widget-local coords
+  ev_enter, // mouse enters the widget; `x` and `y` holds widget-local coords
+  ev_leave, // mouse leaves the widget; `x` and `y` holds widget-local coords
   // extended events
-  ev_uimouse,
-  ev_winfocus, // data1: focused
+  ev_uimouse, // "mouse moved" event, with actual coords in `x`/`y` (widget-locals)
+  ev_winfocus,
   // only for vccrun
   ev_timer, // data1: timer id
   ev_closequery,
@@ -216,6 +219,7 @@ struct event_t {
   int data1; // keys / mouse / joystick buttons
   int data2; // mouse / joystick x move
   int data3; // mouse / joystick y move
+  int data4;
   //int flags; // EFlag.XXX bitset
   bool eaten;
   bool cancelled;
@@ -226,9 +230,12 @@ struct event_t {
   Object dest; // usually `none`, used as "destination widget" in UI system
   // for key
   alias keycode = data1;
-  // for ev_mouse
+  // for ev_mouse/ev_joystick
   alias dx = data2;
   alias dy = data3;
+  // for ev_mouse
+  alias msx = data1;
+  alias msy = data4;
   // for ev_uimouse, mouse button down/up
   alias x = data2;
   alias y = data3;
@@ -240,6 +247,8 @@ struct event_t {
   alias sockev = data1;
   alias sockid = data2;
   alias sockdata = data3;
+  // for ev_click
+  alias clickcnt = data4;
   // modifiers/buttons state
   // modifiers state changed *after* processing an even
   // i.e. if `K_?CTRL` is pressed, the flag will be set after calling `onEvent()`,

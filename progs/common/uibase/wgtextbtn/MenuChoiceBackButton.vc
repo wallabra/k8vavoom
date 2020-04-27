@@ -44,12 +44,18 @@ override void OnDraw () {
 
 //==========================================================================
 //
-//  OnMouseClick
+//  OnEvent
 //
 //==========================================================================
-override void OnMouseClick (int X, int Y, int Button, Widget Dest) {
-  if (Button != K_MOUSE1 || Dest != self) return;
-  GetClGame().PopMenu();
+override bool OnEvent (ref event_t evt) {
+  // "on click"
+  if (evt.bubbling && evt.type == ev_click && evt.dest == self) {
+    if (evt.keycode == K_MOUSE1) {
+      GetClGame().PopMenu();
+      return true;
+    }
+  }
+  return ::OnEvent(evt);
 }
 
 
