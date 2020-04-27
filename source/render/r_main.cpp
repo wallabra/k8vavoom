@@ -1236,7 +1236,7 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], surface_t *surfs, 
 
   for (surface_t *surf = surfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
-    if (!surf->IsVisible(Drawer->vieworg)) {
+    if (!surf->IsVisibleFor(Drawer->vieworg)) {
       // viewer is in back side or on plane
       /*
       if (!HasBackLit) {

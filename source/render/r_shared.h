@@ -150,6 +150,8 @@ struct surface_t {
     DF_CALC_LMAP    = 1u<<3, // calculate static lightmap
     //DF_FLIP_PLANE   = 1u<<4, // flip plane
     DF_NO_FACE_CULL = 1u<<5, // ignore face culling
+    // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
+    DF_PL_VISIBLE   = 1u<<31,
   };
 
   enum {
@@ -178,41 +180,50 @@ struct surface_t {
   int lmsize, lmrgbsize; // to track static lightmap memory
   vuint8 *lightmap;
   rgb_t *lightmap_rgb;
-  vuint32 queueframe; // this is used to prevent double queuing
-  vuint32 dlightframe;
-  vuint32 dlightbits;
-  vuint32 drawflags; // DF_XXX
-  int count;
+  unsigned queueframe; // this is used to prevent double queuing
+  unsigned dlightframe;
+  unsigned dlightbits;
+  unsigned drawflags; // DF_XXX
   /*short*/int texturemins[2];
   /*short*/int extents[2];
   surfcache_t *CacheSurf;
-  int plvisible; // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
+  //int plvisible; // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
   //vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")
   int shaderClass; // used in renderers
   int firstIndex; // address in VBO buffer; only used in world rendering
   GlowParams gp; // used in renderer to cache glow info
-  SurfVertex verts[1]; // dynamic array
+  int count; // number of vertices
+  SurfVertex verts[1]; // dynamic array of vertices
 
   // to use in renderer
-  inline bool IsVisible (const TVec &point) const {
+  inline void SetPlVisible (const bool v) noexcept {
+    if (v) drawflags |= DF_PL_VISIBLE; else drawflags &= ~DF_PL_VISIBLE;
+  }
+
+  // to use in renderer
+  inline unsigned IsPlVisible () const noexcept { return (drawflags&DF_PL_VISIBLE); }
+
+  // to use in renderer
+  inline bool IsVisibleFor (const TVec &point) const noexcept {
     return (!(drawflags&DF_NO_FACE_CULL) ? !plane.PointOnSide(point) : (plane.PointOnSide2(point) != 2));
   }
 
-  inline int PointOnSide (const TVec &point) const {
+  inline int PointOnSide (const TVec &point) const noexcept {
     return plane.PointOnSide(point);
   }
 
-  inline bool SphereTouches (const TVec &center, float radius) const {
+  inline bool SphereTouches (const TVec &center, float radius) const noexcept {
     return plane.SphereTouches(center, radius);
   }
 
-  inline float GetNormalZ () const { return plane.normal.z; }
-  inline const TVec &GetNormal () const { return plane.normal; }
-  inline float GetDist () const { return plane.dist; }
-  inline float PointDistance (const TVec &p) const { return plane.PointDistance(p); }
+  inline float GetNormalZ () const noexcept { return plane.normal.z; }
+  inline const TVec &GetNormal () const noexcept { return plane.normal; }
+  inline float GetDist () const noexcept { return plane.dist; }
+  inline float PointDistance (const TVec &p) const noexcept { return plane.PointDistance(p); }
 
-  inline void GetPlane (TPlane *p) const { *p = plane; }
+  inline void GetPlane (TPlane *p) const noexcept { *p = plane; }
 };
+static_assert(sizeof(unsigned) >= 4, "struct surface_t expects `unsigned` of at least 4 bytes");
 
 
 // ////////////////////////////////////////////////////////////////////////// //

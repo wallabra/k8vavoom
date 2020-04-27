@@ -253,7 +253,7 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
   }
 
   surf->queueframe = currQueueFrame;
-  surf->plvisible = surf->IsVisible(Drawer->vieworg);
+  surf->SetPlVisible(surf->IsVisibleFor(Drawer->vieworg));
 
   // alpha: 1.0 is masked wall, 1.1 is solid wall
   if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive ||
@@ -271,7 +271,8 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
     }
   }
 
-  if (!surf->plvisible && (surf->drawflags&surface_t::DF_NO_FACE_CULL)) surf->plvisible = true;
+  //if (surf->drawflags&surface_t::DF_NO_FACE_CULL) surf->SetPlVisible(true);
+  if (surf->drawflags&surface_t::DF_NO_FACE_CULL) surf->drawflags |= surface_t::DF_PL_VISIBLE;
 
   return true;
 }
@@ -525,7 +526,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       }
       for (; surfs; surfs = surfs->next) {
         /*k8: ?
-        if (!surfs->IsVisible(Drawer->vieworg)) {
+        if (!surfs->IsVisibleFor(Drawer->vieworg)) {
           // viewer is in back side or on plane
           //GCon->Logf("  SURF SKIP!");
           continue;
@@ -543,7 +544,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
           surfs->glowFloorColor = glowFloorColor;
           surfs->glowCeilingColor = glowCeilingColor;
           if (SurfPrepareForRender(surfs)) {
-            if (surfs->plvisible) {
+            if (surfs->IsPlVisible()) {
               //GCon->Logf(NAME_Debug, "  SURF! norm=(%g,%g,%g); alpha=%g", surfs->plane.normal.x, surfs->plane.normal.y, surfs->plane.normal.z, SkyBox->GetSkyBoxPlaneAlpha());
               //surfs->drawflags |= surface_t::DF_MASKED;
               RenderStyleInfo ri;
@@ -587,7 +588,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   const bool isCommon = (texinfo->Alpha >= 1.0f && !texinfo->Additive && !texinfo->Tex->isTranslucent());
 
   for (; surfs; surfs = surfs->next) {
-    //if (!surfs->IsVisible(Drawer->vieworg)) continue;
+    //if (!surfs->IsVisibleFor(Drawer->vieworg)) continue;
 
     surfs->Light = sflight;
     surfs->Fade = Fade;
@@ -605,9 +606,9 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       CommonQueueSurface(surfs, SFCType::SFCT_World);
     } else if (surfs->queueframe != currQueueFrame) {
       //surfs->queueframe = currQueueFrame;
-      //surfs->plvisible = surfs->IsVisible(Drawer->vieworg);
+      //surfs->SetPlVisible(surfs->IsVisibleFor(Drawer->vieworg));
       if (SurfPrepareForRender(surfs)) {
-        if (surfs->plvisible) {
+        if (surfs->IsPlVisible()) {
           if (r_separate_translucent_lists) {
             //GCon->Logf(NAME_Debug, "***: add=%d(%d); PortalLevel=%d", (int)texinfo->Additive, (int)surfs->texinfo->Additive, PortalLevel);
             if (texinfo->Additive) GetCurrentDLS().DrawSurfListAdditive.append(surfs); else GetCurrentDLS().DrawSurfListAlpha.append(surfs);

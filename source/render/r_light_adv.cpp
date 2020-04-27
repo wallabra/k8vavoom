@@ -273,7 +273,7 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
     if (LightCanCross < 0) {
       // horizon
       // k8: can horizon surfaces block light? i think they shouldn't
-      //if (!surf->IsVisible(Drawer->vieworg)) return; // viewer is in back side or on plane
+      //if (!surf->IsVisibleFor(Drawer->vieworg)) return; // viewer is in back side or on plane
       continue;
     }
 
@@ -590,7 +590,7 @@ void VRenderLevelShadowVolume::DrawLightSurfaces (surface_t *InSurfs, texinfo_t 
 
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
-    if (!surf->plvisible) continue; // viewer is in back side or on plane
+    if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
     const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
     if (dist <= 0.0f || dist >= CurrLightRadius) continue; // light is too far away, or surface is not lit
     Drawer->DrawSurfaceLight(surf);

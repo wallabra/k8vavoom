@@ -32,7 +32,7 @@
 //
 //==========================================================================
 void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) {
-  if (!surf->plvisible) return; // viewer is in back side or on plane
+  if (!surf->IsPlVisible()) return; // viewer is in back side or on plane
   if (surf->count < 3 || Alpha < 0.004f) return;
 
   texinfo_t *tex = surf->texinfo;
@@ -343,7 +343,7 @@ void VOpenGLDrawer::BeginTranslucentPolygonDecals () {
 //==========================================================================
 void VOpenGLDrawer::DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) {
   //if (!Additive && Alpha < 0.3f) return; //k8: dunno
-  if (!surf->plvisible) return; // viewer is in back side or on plane
+  if (!surf->IsPlVisible()) return; // viewer is in back side or on plane
   if (surf->count < 3) return;
 
   texinfo_t *tex = surf->texinfo;

@@ -630,7 +630,7 @@ void VOpenGLDrawer::DrawLightmapWorld () {
     surface_t **surfptr = dls.DrawHorizonList.ptr();
     for (int count = dls.DrawHorizonList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
       DoHorizonPolygon(surf);
     }
   }
@@ -643,7 +643,7 @@ void VOpenGLDrawer::DrawLightmapWorld () {
     surface_t **surfptr = dls.DrawSkyList.ptr();
     for (int count = dls.DrawSkyList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
       if (surf->count < 3) continue;
       glBegin(GL_TRIANGLE_FAN);
         for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
@@ -664,7 +664,7 @@ void VOpenGLDrawer::DrawLightmapWorld () {
     glDisable(GL_TEXTURE_2D);
     // solid
     for (auto &&surf : dls.DrawSurfListSolid) {
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
       if (surf->drawflags&surface_t::DF_MASKED) continue; // later
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
@@ -675,7 +675,7 @@ void VOpenGLDrawer::DrawLightmapWorld () {
     // collect masked
     surfListClear();
     for (auto &&surf : dls.DrawSurfListMasked) {
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
       if (!(surf->drawflags&surface_t::DF_MASKED)) continue; // not here
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
@@ -692,7 +692,7 @@ void VOpenGLDrawer::DrawLightmapWorld () {
       vassert(lb < NUM_BLOCK_SURFS);
       for (surfcache_t *cache = RendLev->GetLightChainFirst(lb); cache; cache = cache->chain) {
         surface_t *surf = cache->surf;
-        if (!surf->plvisible) continue; // viewer is in back side or on plane
+        if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
         const texinfo_t *currTexinfo = surf->texinfo;
         if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
         if (surf->drawflags&surface_t::DF_MASKED) {
@@ -759,7 +759,7 @@ void VOpenGLDrawer::DrawLightmapWorld () {
     // normal
     lastTexinfo.resetLastUsed();
     for (auto &&surf : dls.DrawSurfListSolid) {
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
       if (surf->drawflags&surface_t::DF_MASKED) continue; // later
@@ -772,7 +772,7 @@ void VOpenGLDrawer::DrawLightmapWorld () {
     lastTexinfo.resetLastUsed();
     if (dls.DrawSurfListMasked.length()) {
       for (auto &&surf : dls.DrawSurfListMasked) {
-        if (!surf->plvisible) continue; // viewer is in back side or on plane
+        if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
         const texinfo_t *currTexinfo = surf->texinfo;
         if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
         if (!(surf->drawflags&surface_t::DF_MASKED)) continue; // not here
@@ -929,7 +929,7 @@ void VOpenGLDrawer::DrawLightmapWorld () {
       if (!gl_sort_textures) {
         for (surfcache_t *cache = RendLev->GetLightChainFirst(lb); cache; cache = cache->chain) {
           surface_t *surf = cache->surf;
-          if (!surf->plvisible) continue; // viewer is in back side or on plane
+          if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
           const texinfo_t *currTexinfo = surf->texinfo;
           if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
           const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
@@ -940,7 +940,7 @@ void VOpenGLDrawer::DrawLightmapWorld () {
         surfListClear();
         for (surfcache_t *cache = RendLev->GetLightChainFirst(lb); cache; cache = cache->chain) {
           surface_t *surf = cache->surf;
-          if (!surf->plvisible) continue; // viewer is in back side or on plane
+          if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
           surfListAppend(surf, cache);
         }
         if (surfList.length() > 0) {

@@ -233,7 +233,7 @@ static void CheckListSortValidity (TArray<surface_t *> &list, const char *listna
   int idx;
   for (idx = 0; idx < len; ++idx, ++sptr) {
     const surface_t *surf = *sptr;
-    if (surf->plvisible) break;
+    if (surf->IsPlVisible()) break;
   }
   if (idx >= len) return; // nothing to do
   int phase = list[idx]->shaderClass;
@@ -241,7 +241,7 @@ static void CheckListSortValidity (TArray<surface_t *> &list, const char *listna
   // check surfaces
   for (; idx < len; ++idx, ++sptr) {
     const surface_t *surf = *sptr;
-    if (!surf->plvisible) continue; // viewer is in back side or on plane
+    if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
     vassert(surf->texinfo->Tex);
     const int newphase = surf->shaderClass;
     if (newphase < phase) {
@@ -276,7 +276,7 @@ void VOpenGLDrawer::BeforeDrawWorldSV () {
     surf->gp.clear();
     surf->shaderClass = -1; // so they will float up
     */
-    if (!surf->plvisible) { dls.DrawSurfListSolid.removeAt(f); continue; }; // viewer is in back side or on plane
+    if (!surf->IsPlVisible()) { dls.DrawSurfListSolid.removeAt(f); continue; }; // viewer is in back side or on plane
     if (surf->count < 3) { dls.DrawSurfListSolid.removeAt(f); continue; }
     if (surf->drawflags&surface_t::DF_MASKED) { dls.DrawSurfListSolid.removeAt(f); continue; } // this should not end up here
 
@@ -298,7 +298,7 @@ void VOpenGLDrawer::BeforeDrawWorldSV () {
     surf->gp.clear();
     surf->shaderClass = -1; // so they will float up
     */
-    if (!surf->plvisible) { dls.DrawSurfListMasked.removeAt(f); continue; } // viewer is in back side or on plane
+    if (!surf->IsPlVisible()) { dls.DrawSurfListMasked.removeAt(f); continue; } // viewer is in back side or on plane
     if (surf->count < 3) { dls.DrawSurfListMasked.removeAt(f); continue; }
     if ((surf->drawflags&surface_t::DF_MASKED) == 0) { dls.DrawSurfListMasked.removeAt(f); continue; } // this should not end up here
 
@@ -419,7 +419,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     surface_t **surfptr = dls.DrawHorizonList.ptr();
     for (int count = dls.DrawHorizonList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
       DoHorizonPolygon(surf);
     }
   }
@@ -432,7 +432,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     surface_t **surfptr = dls.DrawSkyList.ptr();
     for (int count = dls.DrawSkyList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
       if (surf->count < 3) continue;
       //glBegin(GL_POLYGON);
       glBegin(GL_TRIANGLE_FAN);
@@ -539,7 +539,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       int idx;
       for (idx = 0; idx < len; ++idx, ++sptr) {
         const surface_t *surf = *sptr;
-        if (surf->plvisible) break;
+        if (surf->IsPlVisible()) break;
       }
 
       // normal textures
@@ -618,7 +618,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       int idx;
       for (idx = 0; idx < len; ++idx, ++sptr) {
         const surface_t *surf = *sptr;
-        if (surf->plvisible) break;
+        if (surf->IsPlVisible()) break;
       }
 
       // normal textures
@@ -1528,7 +1528,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 //==========================================================================
 void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   if (gl_dbg_wireframe) return;
-  if (!surf->plvisible) return; // viewer is in back side or on plane
+  if (!surf->IsPlVisible()) return; // viewer is in back side or on plane
   if (surf->count < 3) return;
 
   const texinfo_t *tex = surf->texinfo;
