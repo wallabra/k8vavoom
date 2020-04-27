@@ -36,8 +36,27 @@ extern "C" {
     if (sa == sb) return 0;
     const texinfo_t *ta = sa->texinfo;
     const texinfo_t *tb = sb->texinfo;
+    // surfaces without textures should float up
+    if (!ta->Tex) {
+      return (!tb->Tex ? 0 : -1);
+    } else if (!tb->Tex) {
+      return 1;
+    }
+    // brightmapped textures comes last
+    if (r_brightmaps) {
+      if (ta->Tex->Brightmap) {
+        if (!tb->Tex->Brightmap) return 1;
+      } else if (tb->Tex->Brightmap) {
+        return -1;
+      }
+    }
+    // sort by texture id (just use texture pointer)
     if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
     if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+    // by light level/color
+    if (sa->Light < sb->Light) return -1;
+    if (sa->Light > sb->Light) return 1;
+    // and by colormap, why not?
     return ((int)ta->ColorMap)-((int)tb->ColorMap);
   }
 
