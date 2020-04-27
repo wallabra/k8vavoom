@@ -254,12 +254,6 @@ static void CheckListSortValidity (TArray<surface_t *> &list, const char *listna
 #endif
 
 
-// these will be moved to drawer eventually
-//static int vboCountIdx = 0; // element (counter) index
-static TArray<GLsizei> vboCounters; // number of indicies in each primitive
-static TArray<GLint> vboStartInds; // starting indicies
-
-
 //==========================================================================
 //
 //  VOpenGLDrawer::BeforeDrawWorldSV
@@ -270,7 +264,6 @@ static TArray<GLint> vboStartInds; // starting indicies
 void VOpenGLDrawer::BeforeDrawWorldSV () {
   VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
 
-  vboAdvSurfMaxEls = 0;
   if (dls.DrawSurfListSolid.length() == 0 && dls.DrawSurfListMasked.length() == 0) return;
 
   // reserve room for max number of elements in VBO, because why not?
@@ -324,7 +317,6 @@ void VOpenGLDrawer::BeforeDrawWorldSV () {
   if (dls.DrawSurfListSolid.length() == 0 && dls.DrawSurfListMasked.length() == 0) return;
 
   vassert(maxEls > 0);
-  vboAdvSurfMaxEls = maxEls;
 
   // put into VBO
   vboAdvSurf.ensure(maxEls);
@@ -357,6 +349,8 @@ void VOpenGLDrawer::BeforeDrawWorldSV () {
     vboCounters.setLength(counterLength);
     vboStartInds.setLength(counterLength);
   }
+
+  if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "=== ambsurface VBO: maxEls=%d; maxcnt=%d ===", maxEls, counterLength);
 }
 
 
@@ -456,8 +450,6 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     vboAdvSurf.activate();
     GLuint attribPosition = 0; /* shut up, gcc! */
     int vboCountIdx = 0; // element (counter) index
-
-    if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "=== ambsurface VBO: maxEls=%d; maxcnt=%d ===", vboAdvSurfMaxEls, vboCounters.length());
 
     //WARNING! don't forget to flush VBO on each shader uniform change! this includes glow changes (glow values aren't cached yet)
 

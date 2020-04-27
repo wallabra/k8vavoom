@@ -30,11 +30,6 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-static VCvarB r_reg_disable_world("r_reg_disable_world", false, "Disable rendering of world (regular renderer).", 0/*CVAR_Archive*/);
-static VCvarB r_reg_disable_portals("r_reg_disable_portals", false, "Disable rendering of portals (regular renderer).", 0/*CVAR_Archive*/);
-static VCvarB dbg_show_dlight_trace_info("dbg_show_dlight_trace_info", false, "Show number of properly traced dynlights per frame.", 0/*CVAR_Archive*/);
-
-
 //==========================================================================
 //
 //  VRenderLevelLightmap::QueueWorldSurface
@@ -67,30 +62,22 @@ void VRenderLevelLightmap::QueueWorldSurface (surface_t *surf) {
 
 //==========================================================================
 //
-//  VRenderLevelLightmap::RenderWorld
+//  VRenderLevelLightmap::RenderCollectSurfaces
+//
+//  this does BSP traversing, and collect world surfaces into various
+//  lists to drive GPU rendering
 //
 //==========================================================================
-extern vuint32 gf_dynlights_processed;
-extern vuint32 gf_dynlights_traced;
+void VRenderLevelLightmap::RenderCollectSurfaces (const refdef_t *rd, const VViewClipper *Range) {
+  //GCon->Logf(NAME_Debug, "::: VRenderLevelLightmap::RenderCollectSurfaces ::: (%d)", currQueueFrame);
 
-
-void VRenderLevelLightmap::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
-  gf_dynlights_processed = 0;
-  gf_dynlights_traced = 0;
-
-  //GCon->Logf(NAME_Debug, "::: VRenderLevelLightmap::RenderWorld ::: (%d)", currQueueFrame);
-
+  MiniStopTimer profPrep("PrepareWorldRender", prof_r_world_prepare.asBool());
   PrepareWorldRender(rd, Range);
+  profPrep.stopAndReport();
+
+  MiniStopTimer profBSPCollect("RenderBspWorld", prof_r_bsp_collect.asBool());
   RenderBspWorld(rd, Range);
+  profBSPCollect.stopAndReport();
+
   ProcessCachedSurfaces();
-
-  if (!r_reg_disable_world) {
-    //GCon->Logf("vfz: %f", Drawer->viewforward.z);
-    Drawer->BeforeDrawWorldLMap();
-    Drawer->DrawLightmapWorld();
-  }
-
-  //if (!r_reg_disable_portals) RenderPortals();
-
-  if (dbg_show_dlight_trace_info) GCon->Logf("DYNLIGHT: %u total, %u traced", gf_dynlights_processed, gf_dynlights_traced);
 }

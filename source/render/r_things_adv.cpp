@@ -84,7 +84,7 @@ static inline bool SetupRenderStyleAndTime (const VEntity *ent, RenderStyleInfo 
 //
 //  VRenderLevelShared::BuildVisibleObjectsList
 //
-//  this should be called after `RenderWorld()`
+//  this should be called after `RenderCollectSurfaces()`
 //
 //  this is not called for "regular" renderer
 //

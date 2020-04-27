@@ -27,6 +27,14 @@
 #include "r_local.h"
 
 
+extern vuint32 gf_dynlights_processed;
+extern vuint32 gf_dynlights_traced;
+
+static VCvarB r_reg_disable_world("r_reg_disable_world", false, "Disable rendering of world (regular renderer).", 0/*CVAR_Archive*/);
+static VCvarB r_reg_disable_portals("r_reg_disable_portals", false, "Disable rendering of portals (regular renderer).", 0/*CVAR_Archive*/);
+static VCvarB dbg_show_dlight_trace_info("dbg_show_dlight_trace_info", false, "Show number of properly traced dynlights per frame.", 0/*CVAR_Archive*/);
+
+
 //**************************************************************************
 //
 // VLMapCache
@@ -311,18 +319,39 @@ void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *
   //r_viewleaf = Level->PointInSubsector(Drawer->vieworg); // moved to `PrepareWorldRender()`
 
   TransformFrustum();
-
   Drawer->SetupViewOrg();
+
+  MiniStopTimer profRenderScene("RenderScene", IsAnyProfRActive());
+  if (profRenderScene.isEnabled()) GCon->Log(NAME_Debug, "=== RenderScene ===");
 
   //ClearQueues(); // moved to `PrepareWorldRender()`
   //MarkLeaves(); // moved to `PrepareWorldRender()`
   //if (!MirrorLevel && !r_disable_world_update) UpdateFakeSectors();
 
-  RenderWorld(RD, Range);
+  gf_dynlights_processed = 0;
+  gf_dynlights_traced = 0;
+
+  RenderCollectSurfaces(RD, Range);
+
+  if (!r_reg_disable_world) {
+    //GCon->Logf("vfz: %f", Drawer->viewforward.z);
+    MiniStopTimer profBeforeDraw("BeforeDrawWorldLMap", prof_r_bsp_world_render.asBool());
+    Drawer->BeforeDrawWorldLMap();
+    profBeforeDraw.stopAndReport();
+
+    MiniStopTimer profDrawLMap("DrawLightmapWorld", prof_r_bsp_world_render.asBool());
+    Drawer->DrawLightmapWorld();
+    profDrawLMap.stopAndReport();
+  }
+
+  //if (!r_reg_disable_portals) RenderPortals(); //k8: it was here before, why?
+  if (dbg_show_dlight_trace_info) GCon->Logf("DYNLIGHT: %u total, %u traced", gf_dynlights_processed, gf_dynlights_traced);
 
   //k8: no need to build list here, as things only processed once
   //BuildVisibleObjectsList();
+  MiniStopTimer profDrawMObj("RenderMobjs", prof_r_bsp_mobj_render.asBool());
   RenderMobjs(RPASS_Normal);
+  profDrawMObj.stopAndReport();
 
   // draw light bulbs
   if (r_dbg_lightbulbs_static) {
@@ -351,7 +380,14 @@ void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *
   }
 
   DrawParticles();
+
+  MiniStopTimer profDrawTransSpr("DrawTranslucentPolys", prof_r_bsp_world_render.asBool());
   DrawTranslucentPolys();
+  profDrawTransSpr.stopAndReport();
+
   Drawer->DisableClipPlanes();
   RenderPortals();
+
+  profRenderScene.stopAndReport();
+  if (profRenderScene.isEnabled()) GCon->Log(NAME_Debug, "===:::=== RenderScene ===:::===");
 }

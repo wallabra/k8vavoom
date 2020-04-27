@@ -154,6 +154,12 @@ VCvarF r_dbg_lightbulbs_zofs_static("r_dbg_lightbulbs_zofs_static", "0", "Z offs
 VCvarF r_dbg_lightbulbs_zofs_dynamic("r_dbg_lightbulbs_zofs_dynamic", "0", "Z offset for dynamic lightbulbs.", 0);
 
 
+VCvarB prof_r_world_prepare("prof_r_world_prepare", false, "Show pre-render world preparation time.", 0);
+VCvarB prof_r_bsp_collect("prof_r_bsp_collect", false, "Show BSP surface collection time.", 0);
+VCvarB prof_r_bsp_world_render("prof_r_bsp_world_render", false, "Show world rendering time (GPU).", 0);
+VCvarB prof_r_bsp_mobj_render("prof_r_bsp_mobj_render", false, "Show total mobj rendering time (including collection time).", 0);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // pool allocator for portal data
 // ////////////////////////////////////////////////////////////////////////// //

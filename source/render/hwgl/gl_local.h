@@ -829,6 +829,9 @@ protected:
   // VBO for advrender surfaces
   VBO<TVec> vboAdvSurf;
   int vboAdvSurfMaxEls;
+  // used in advrender
+  TArray<GLsizei> vboCounters; // number of indicies in each primitive
+  TArray<GLint> vboStartInds; // starting indicies
 
   // console variables
   static VCvarI texture_filter;

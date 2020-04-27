@@ -52,14 +52,20 @@ void VRenderLevelShadowVolume::ProcessCachedSurfaces () {
 
 //==========================================================================
 //
-//  VRenderLevelShadowVolume::RenderWorld
+//  VRenderLevelShadowVolume::RenderCollectSurfaces
+//
+//  this does BSP traversing, and collect world surfaces into various
+//  lists to drive GPU rendering
 //
 //==========================================================================
-void VRenderLevelShadowVolume::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
+void VRenderLevelShadowVolume::RenderCollectSurfaces (const refdef_t *rd, const VViewClipper *Range) {
+  MiniStopTimer profPrep("PrepareWorldRender", prof_r_world_prepare.asBool());
   PrepareWorldRender(rd, Range);
+  profPrep.stopAndReport();
+
+  MiniStopTimer profBSPCollect("RenderBspWorld", prof_r_bsp_collect.asBool());
   RenderBspWorld(rd, Range);
+  profBSPCollect.stopAndReport();
+
   ProcessCachedSurfaces();
-  Drawer->BeforeDrawWorldSV();
-  Drawer->DrawWorldAmbientPass();
-  //RenderPortals();
 }

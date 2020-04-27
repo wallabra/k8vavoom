@@ -118,8 +118,12 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
   //r_viewleaf = Level->PointInSubsector(Drawer->vieworg); // moved to `PrepareWorldRender()`
 
   TransformFrustum();
-
   Drawer->SetupViewOrg();
+
+  MiniStopTimer profRenderScene("RenderScene", IsAnyProfRActive());
+  if (profRenderScene.isEnabled()) GCon->Log(NAME_Debug, "=== RenderScene ===");
+
+  double totalRenderTime = 0.0;
 
 #if 0
   {
@@ -166,10 +170,25 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
   //MarkLeaves(); // moved to `PrepareWorldRender()`
   //if (!MirrorLevel && !r_disable_world_update) UpdateFakeSectors();
 
-  RenderWorld(RD, Range);
-  BuildVisibleObjectsList();
+  RenderCollectSurfaces(RD, Range);
 
+  MiniStopTimer profBeforeDraw("BeforeDrawWorldSV", prof_r_bsp_world_render.asBool());
+  Drawer->BeforeDrawWorldSV();
+  totalRenderTime += profBeforeDraw.stopAndReport();
+
+  MiniStopTimer profDrawAmbient("DrawWorldAmbientPass", prof_r_bsp_world_render.asBool());
+  Drawer->DrawWorldAmbientPass();
+  totalRenderTime += profDrawAmbient.stopAndReport();
+
+  //RenderPortals(); //k8: it was here before, why?
+
+  MiniStopTimer profBuildMObj("BuildVisibleObjectsList", prof_r_bsp_mobj_render.asBool());
+  BuildVisibleObjectsList();
+  profBuildMObj.stopAndReport();
+
+  MiniStopTimer profDrawMObjAmb("RenderMobjsAmbient", prof_r_bsp_mobj_render.asBool());
   RenderMobjsAmbient();
+  profDrawMObjAmb.stopAndReport();
 
   unsigned visibleStaticLightCount = 0;
   unsigned visibleDynamicLightCount = 0;
@@ -180,6 +199,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
   //GCon->Log("***************** RenderScene *****************");
   //FIXME: mirrors can use stencils, and advlight too...
   if (!MirrorLevel) {
+    MiniStopTimer profDrawSVol("ShadowVolumes", prof_r_bsp_world_render.asBool());
     Drawer->BeginShadowVolumesPass();
 
     linetrace_t Trace;
@@ -347,6 +367,8 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
       }
     }
 
+    profDrawSVol.stopAndReport();
+
     if (dbg_adv_show_light_count) {
       GCon->Logf("total lights per frame: %d (%d static, %d dynamic)", LightsRendered, LightsRendered-DynLightsRendered, DynLightsRendered);
     }
@@ -356,14 +378,27 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     }
   }
 
+  MiniStopTimer profDrawTextures("DrawWorldTexturesPass", prof_r_bsp_world_render.asBool());
   Drawer->DrawWorldTexturesPass();
-  RenderMobjsTextures();
+  totalRenderTime += profDrawTextures.stopAndReport();
 
+  MiniStopTimer profDrawMObjTex("RenderMobjsTextures", prof_r_bsp_mobj_render.asBool());
+  RenderMobjsTextures();
+  profDrawMObjTex.stopAndReport();
+
+  MiniStopTimer profDrawFog("DrawWorldFogPass", prof_r_bsp_world_render.asBool());
   Drawer->DrawWorldFogPass();
+  totalRenderTime += profDrawFog.stopAndReport();
+
+  MiniStopTimer profDrawMObjFog("RenderMobjsFog", prof_r_bsp_mobj_render.asBool());
   RenderMobjsFog();
+  profDrawMObjFog.stopAndReport();
+
   Drawer->EndFogPass();
 
+  MiniStopTimer profDrawMObjNonShadow("RenderMobjsNonShadow", prof_r_bsp_mobj_render.asBool());
   RenderMobjs(RPASS_NonShadow);
+  profDrawMObjNonShadow.stopAndReport();
 
   // render light bulbs
   // use "normal" model rendering code here (yeah)
@@ -393,7 +428,17 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
   }
 
   DrawParticles();
+
+  MiniStopTimer profDrawTransSpr("DrawTranslucentPolys", prof_r_bsp_world_render.asBool());
   DrawTranslucentPolys();
+  totalRenderTime += profDrawTransSpr.stopAndReport();
+
   Drawer->DisableClipPlanes();
   RenderPortals();
+
+  profRenderScene.stopAndReport();
+  if (profRenderScene.isEnabled()) {
+    if (totalRenderTime) GCon->Logf(NAME_Debug, "PROF: total advpasses time %g seconds (%d msecs)", ((int)totalRenderTime == 0 ? 0.0 : totalRenderTime), (int)(totalRenderTime*1000.0));
+    GCon->Log(NAME_Debug, "===:::=== RenderScene ===:::===");
+  }
 }

@@ -47,6 +47,20 @@ extern VCvarF gl_maxdist;
 extern VCvarF r_lights_radius;
 extern VCvarB r_models_strict;
 
+extern VCvarB prof_r_world_prepare;
+extern VCvarB prof_r_bsp_collect;
+extern VCvarB prof_r_bsp_world_render;
+extern VCvarB prof_r_bsp_mobj_render;
+
+
+static VVA_OKUNUSED inline bool IsAnyProfRActive () noexcept {
+  return
+    prof_r_world_prepare.asBool() ||
+    prof_r_bsp_collect.asBool() ||
+    prof_r_bsp_world_render.asBool() ||
+    prof_r_bsp_mobj_render.asBool();
+}
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // dynamic light types
@@ -570,7 +584,7 @@ protected:
   virtual void ProcessCachedSurfaces ();
 
   void PrepareWorldRender (const refdef_t *, const VViewClipper *);
-  // this should be called after `RenderWorld()`
+  // this should be called after `RenderCollectSurfaces()`
   void BuildVisibleObjectsList ();
 
   // general
@@ -974,7 +988,8 @@ protected:
 
   // world BSP rendering
   virtual void QueueWorldSurface (surface_t *) override;
-  void RenderWorld (const refdef_t *, const VViewClipper *);
+  // this does BSP traversing, and collect world surfaces into various lists to drive GPU rendering
+  void RenderCollectSurfaces (const refdef_t *rd, const VViewClipper *Range);
 
   void RelightMap (bool recalcNow, bool onlyMarked);
 
@@ -1032,7 +1047,8 @@ protected:
 
   // world BSP rendering
   virtual void QueueWorldSurface (surface_t *) override;
-  void RenderWorld (const refdef_t *, const VViewClipper *);
+  // this does BSP traversing, and collect world surfaces into various lists to drive GPU rendering
+  void RenderCollectSurfaces (const refdef_t *rd, const VViewClipper *Range);
 
   void AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow);
 
