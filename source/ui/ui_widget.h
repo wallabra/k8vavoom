@@ -127,7 +127,7 @@ protected:
   // ignores `CurrentFocusChild`, selects next focusable or `nullptr`
   void FindNewFocus ();
 
-  VWidget *GetWidgetAt (float X, float Y) noexcept;
+  VWidget *GetWidgetAt (float X, float Y, bool allowDisabled=false) noexcept;
 
   // translate screen and texture coordinates
   bool TransferAndClipRect (float &X1, float &Y1, float &X2, float &Y2, float &S1, float &T1, float &S2, float &T2) const noexcept;

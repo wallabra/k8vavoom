@@ -99,6 +99,28 @@ void VRootWidget::TickWidgets (float DeltaTime) {
 
 //==========================================================================
 //
+//  VRootWidget::UpdateMousePosition
+//
+//==========================================================================
+void VRootWidget::UpdateMousePosition (int NewX, int NewY) {
+  // update and clip mouse coordinates against window boundaries
+  MouseX = clampval(NewX, 0, SizeWidth-1);
+  MouseY = clampval(NewY, 0, SizeHeight-1);
+}
+
+
+//==========================================================================
+//
+//  VRootWidget::GetWidgetAtScreenXY
+//
+//==========================================================================
+VWidget *VRootWidget::GetWidgetAtScreenXY (int x, int y) noexcept {
+  return GetWidgetAt(x*SizeScaleX, y*SizeScaleY);
+}
+
+
+//==========================================================================
+//
 //  VRootWidget::BuildEventPath
 //
 //==========================================================================
@@ -180,6 +202,133 @@ bool VRootWidget::DispatchEvent (event_t *evt) {
 
 //==========================================================================
 //
+//  VRootWidget::MouseMoveEvent
+//
+//==========================================================================
+void VRootWidget::MouseMoveEvent (const event_t *evt, int OldMouseX, int OldMouseY) {
+  if (IsGoingToDie()) return;
+
+  // check if this is a mouse movement event
+  if (evt->type != ev_mouse) return;
+
+  // check if mouse really moved
+  if (OldMouseX == MouseX && OldMouseY == MouseY) return;
+
+  // find widgets under old and new positions
+  VWidget *OldFocus = GetWidgetAtScreenXY(OldMouseX, OldMouseY);
+  VWidget *NewFocus = GetWidgetAtScreenXY(MouseX, MouseY);
+
+  //GCon->Logf(NAME_Debug, "mmoved");
+
+  if (OldFocus == NewFocus) {
+    //GCon->Logf(NAME_Debug, "mmoved; old=(%d,%d); new=(%d,%d)", OldMouseX, OldMouseY, MouseX, MouseY);
+    //if (OldFocus) GCon->Logf(NAME_Debug, "  ow:%u: size=(%d,%d)", OldFocus->GetUniqueId(), OldFocus->SizeWidth, OldFocus->SizeHeight);
+    return;
+  }
+
+  if (OldFocus && !OldFocus->IsGoingToDie()) {
+    //OldFocus->OnMouseLeave();
+    // generate leave event
+    event_t cev;
+    cev.clear();
+    cev.type = ev_leave;
+    cev.dest = OldFocus;
+    // the event is dispatched through the whole chain down to the current focused widget, and then to the leaved one
+    BuildEventPath(OldFocus);
+    // dispatch it
+    DispatchEvent(&cev);
+  }
+
+  if (NewFocus && !NewFocus->IsGoingToDie()) {
+    //NewFocus->OnMouseEnter();
+    // generate enter event
+    event_t cev;
+    cev.clear();
+    cev.type = ev_enter;
+    cev.dest = NewFocus;
+    // the event is dispatched through the whole chain down to the current focused widget, and then to the entered one
+    BuildEventPath(NewFocus);
+    // dispatch it
+    DispatchEvent(&cev);
+  }
+
+  /*
+  // only bubble
+  EventPath.reset();
+  for (VWidget *W = OldFocus; W; W = W->ParentWidget) EventPath.append(W);
+
+  const float ScaledOldX = OldMouseX*SizeScaleX;
+  const float ScaledOldY = OldMouseY*SizeScaleY;
+
+  const float ScaledNewX = MouseX*SizeScaleX;
+  const float ScaledNewY = MouseY*SizeScaleY;
+
+  for (auto &&W : EventPath) {
+    if (W->IsGoingToDie()) break;
+    if (W->OnMouseMove(
+      (int)((ScaledOldX-W->ClipRect.OriginX)/W->ClipRect.ScaleX),
+      (int)((ScaledOldY-W->ClipRect.OriginY)/W->ClipRect.ScaleY),
+      (int)((ScaledNewX-W->ClipRect.OriginX)/W->ClipRect.ScaleX),
+      (int)((ScaledNewY-W->ClipRect.OriginY)/W->ClipRect.ScaleY), OldFocus))
+    {
+      break;
+    }
+  }
+  */
+}
+
+
+//==========================================================================
+//
+//  VRootWidget::MouseClickEvent
+//
+//==========================================================================
+void VRootWidget::MouseClickEvent (const event_t *evt) {
+  if (IsGoingToDie()) return;
+
+  // check if this is a mouse button event
+  if (evt->type != ev_keydown && evt->type != ev_keyup) return;
+  if (evt->keycode < K_MOUSE1 || evt->keycode > K_MOUSE9) return;
+
+  // find widget under mouse
+  VWidget *Focus = GetWidgetAtScreenXY(MouseX, MouseY);
+
+  if (!Focus) return; // oopsie
+
+  const float ct = Sys_Time();
+  const unsigned mnum = (unsigned)(evt->keycode-K_MOUSE1);
+  if (evt->type == ev_keydown) {
+    Focus->MouseDownState[mnum].time = ct;
+    Focus->MouseDownState[mnum].x = MouseX;
+    Focus->MouseDownState[mnum].y = MouseY;
+    Focus->MouseDownState[mnum].localx = Focus->ScaledXToLocal(MouseX*SizeScaleX);
+    Focus->MouseDownState[mnum].localy = Focus->ScaledYToLocal(MouseY*SizeScaleY);
+  } else {
+    const float otime = Focus->MouseDownState[mnum].time;
+    Focus->MouseDownState[mnum].time = 0;
+    if (otime > 0 && (ui_click_timeout.asFloat() <= 0 || ct-otime < ui_click_timeout.asFloat())) {
+      const int th = ui_click_threshold.asInt();
+      if (th < 0 || (abs(Focus->MouseDownState[mnum].x-MouseX) <= th && abs(Focus->MouseDownState[mnum].y-MouseY) <= th)) {
+        //Focus->OnMouseClick((int)msx, (int)msy, evt->keycode, Focus);
+        // generate click event
+        event_t cev;
+        cev.clear();
+        cev.type = ev_click;
+        cev.keycode = evt->keycode;
+        cev.clickcnt = 1;
+        cev.dest = Focus;
+        // the event is dispatched through the whole chain down to the current focused widget, and then to the clicked one
+        BuildEventPath(Focus);
+        // dispatch it
+        DispatchEvent(&cev);
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VRootWidget::InternalResponder
 //
 //  this is called by the engine to dispatch the event
@@ -189,14 +338,14 @@ bool VRootWidget::InternalResponder (event_t *evt) {
   if (IsGoingToDie()) return false;
   if (evt->isEatenOrCancelled()) return evt->isEaten();
 
-  const bool mouseAllowed = (RootFlags&RWF_MouseEnabled);
-
   // remember old mouse coordinates (we may need it for enter/leave events)
   const int OldMouseX = MouseX;
   const int OldMouseY = MouseY;
 
   // update mouse position
   if (evt->type == ev_mouse) UpdateMousePosition(MouseX+evt->dx, MouseY-evt->dy);
+
+  const bool mouseAllowed = (RootFlags&RWF_MouseEnabled);
 
   // mouse down/up should still be processed to generate click events
   // also, "click" event should be delivered *before* "mouse up"
@@ -216,9 +365,7 @@ bool VRootWidget::InternalResponder (event_t *evt) {
         ((evt->type == ev_keydown || evt->type == ev_keyup) && (evt->keycode >= K_MOUSE_FIRST && evt->keycode <= K_MOUSE_LAST)))
     {
       // find widget under mouse
-      const float ScaledX = MouseX*SizeScaleX;
-      const float ScaledY = MouseY*SizeScaleY;
-      VWidget *Focus = GetWidgetAt(ScaledX, ScaledY);
+      VWidget *Focus = GetWidgetAtScreenXY(MouseX, MouseY);
       if (Focus && (EventPath.length() == 0 || EventPath[EventPath.length()-1] != Focus)) {
         EventPath.append(Focus);
       }
@@ -252,142 +399,6 @@ bool VRootWidget::Responder (event_t *evt) {
 void VRootWidget::SetMouse (bool MouseOn) {
   if (MouseOn) RootFlags |= RWF_MouseEnabled; else RootFlags &= ~RWF_MouseEnabled;
   if (!MouseOn && GInput) GInput->RegrabMouse();
-}
-
-
-//==========================================================================
-//
-//  VRootWidget::UpdateMousePosition
-//
-//==========================================================================
-void VRootWidget::UpdateMousePosition (int NewX, int NewY) {
-  // update and clip mouse coordinates against window boundaries
-  MouseX = clampval(NewX, 0, SizeWidth-1);
-  MouseY = clampval(NewY, 0, SizeHeight-1);
-}
-
-
-//==========================================================================
-//
-//  VRootWidget::MouseMoveEvent
-//
-//==========================================================================
-void VRootWidget::MouseMoveEvent (const event_t *evt, int OldMouseX, int OldMouseY) {
-  if (IsGoingToDie()) return;
-
-  // check if this is a mouse movement event
-  if (evt->type != ev_mouse) return;
-
-  // check if mouse really moved
-  if (OldMouseX == MouseX && OldMouseY == MouseY) return;
-
-  const float ScaledOldX = OldMouseX*SizeScaleX;
-  const float ScaledOldY = OldMouseY*SizeScaleY;
-  const float ScaledNewX = MouseX*SizeScaleX;
-  const float ScaledNewY = MouseY*SizeScaleY;
-
-  // find widgets under old and new positions
-  VWidget *OldFocus = GetWidgetAt(ScaledOldX, ScaledOldY);
-  VWidget *NewFocus = GetWidgetAt(ScaledNewX, ScaledNewY);
-
-  if (OldFocus == NewFocus) return;
-
-  if (OldFocus && !OldFocus->IsGoingToDie()) {
-    //OldFocus->OnMouseLeave();
-    // generate leave event
-    event_t cev;
-    cev.clear();
-    cev.type = ev_leave;
-    cev.dest = OldFocus;
-    // the event is dispatched through the whole chain down to the current focused widget, and then to the leaved one
-    BuildEventPath(OldFocus);
-    // dispatch it
-    DispatchEvent(&cev);
-  }
-
-  if (NewFocus && !NewFocus->IsGoingToDie()) {
-    //NewFocus->OnMouseEnter();
-    // generate enter event
-    event_t cev;
-    cev.clear();
-    cev.type = ev_enter;
-    cev.dest = NewFocus;
-    // the event is dispatched through the whole chain down to the current focused widget, and then to the entered one
-    BuildEventPath(NewFocus);
-    // dispatch it
-    DispatchEvent(&cev);
-  }
-
-  /*
-  // only bubble
-  EventPath.reset();
-  for (VWidget *W = OldFocus; W; W = W->ParentWidget) EventPath.append(W);
-
-  for (auto &&W : EventPath) {
-    if (W->IsGoingToDie()) break;
-    if (W->OnMouseMove(
-      (int)((ScaledOldX-W->ClipRect.OriginX)/W->ClipRect.ScaleX),
-      (int)((ScaledOldY-W->ClipRect.OriginY)/W->ClipRect.ScaleY),
-      (int)((ScaledNewX-W->ClipRect.OriginX)/W->ClipRect.ScaleX),
-      (int)((ScaledNewY-W->ClipRect.OriginY)/W->ClipRect.ScaleY), OldFocus))
-    {
-      break;
-    }
-  }
-  */
-}
-
-
-//==========================================================================
-//
-//  VRootWidget::MouseClickEvent
-//
-//==========================================================================
-void VRootWidget::MouseClickEvent (const event_t *evt) {
-  if (IsGoingToDie()) return;
-
-  // check if this is a mouse button event
-  if (evt->type != ev_keydown && evt->type != ev_keyup) return;
-  if (evt->keycode < K_MOUSE1 || evt->keycode > K_MOUSE9) return;
-
-  // find widget under mouse
-  const float ScaledX = MouseX*SizeScaleX;
-  const float ScaledY = MouseY*SizeScaleY;
-  VWidget *Focus = GetWidgetAt(ScaledX, ScaledY);
-
-  if (!Focus) return; // oopsie
-
-  const float ct = Sys_Time();
-  const unsigned mnum = (unsigned)(evt->keycode-K_MOUSE1);
-  const float msx = Focus->ScaledXToLocal(ScaledX);
-  const float msy = Focus->ScaledYToLocal(ScaledY);
-  if (evt->type == ev_keydown) {
-    Focus->MouseDownState[mnum].time = ct;
-    Focus->MouseDownState[mnum].x = MouseX;
-    Focus->MouseDownState[mnum].y = MouseY;
-    Focus->MouseDownState[mnum].localx = msx;
-    Focus->MouseDownState[mnum].localy = msy;
-  } else {
-    const float otime = Focus->MouseDownState[mnum].time;
-    Focus->MouseDownState[mnum].time = 0;
-    if (otime > 0 && (ui_click_timeout.asFloat() <= 0 || ct-otime < ui_click_timeout.asFloat())) {
-      const int th = ui_click_threshold.asInt();
-      if (th < 0 || (abs(Focus->MouseDownState[mnum].x-MouseX) <= th && abs(Focus->MouseDownState[mnum].y-MouseY) <= th)) {
-        //Focus->OnMouseClick((int)msx, (int)msy, evt->keycode, Focus);
-        // generate click event
-        event_t cev;
-        cev.clear();
-        cev.type = ev_click;
-        cev.keycode = evt->keycode;
-        cev.clickcnt = 1;
-        cev.dest = Focus;
-        // the event is dispatched through the whole chain down to the current focused widget, and then to the clicked one
-        BuildEventPath(Focus);
-        // dispatch it
-        DispatchEvent(&cev);
-      }
-    }
-  }
 }
 
 

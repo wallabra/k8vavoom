@@ -214,6 +214,8 @@ void VWidget::AddChild (VWidget *NewChild) {
   // raise it (this fixes normal widgets when there are "on top" ones)
   NewChild->Raise();
 
+  //GCon->Logf(NAME_Debug, "NewChild:%s:%u", NewChild->GetClass()->GetName(), NewChild->GetUniqueId());
+
   OnChildAdded(NewChild);
   if (NewChild->CanBeFocused()) {
     if (!CurrentFocusChild || NewChild->IsCloseOnBlurFlag()) SetCurrentFocusChild(NewChild);
@@ -691,14 +693,17 @@ void VWidget::FindNewFocus () {
 //  VWidget::GetWidgetAt
 //
 //==========================================================================
-VWidget *VWidget::GetWidgetAt (float X, float Y) noexcept {
+VWidget *VWidget::GetWidgetAt (float X, float Y, bool allowDisabled) noexcept {
+  if (!IsEnabled(false)) return nullptr; // don't perform recursive check
   for (VWidget *W = LastChildWidget; W; W = W->PrevWidget) {
     if (!IsVisibleFlag()) continue;
-    if (W->IsGoingToDie()) break;
+    if (W->IsGoingToDie()) continue;
     if (X >= W->ClipRect.ClipX1 && X < W->ClipRect.ClipX2 &&
         Y >= W->ClipRect.ClipY1 && Y < W->ClipRect.ClipY2)
     {
-      return W->GetWidgetAt(X, Y);
+      // this can return `nullptr` for disabled widgets
+      VWidget *res = W->GetWidgetAt(X, Y);
+      if (res) return res;
     }
   }
   return this;

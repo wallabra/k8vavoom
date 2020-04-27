@@ -34,7 +34,7 @@ private:
   };
   vuint32 RootFlags;
 
-  // current mouse cursor position
+  // current mouse cursor position (screen coords)
   vint32 MouseX;
   vint32 MouseY;
 
@@ -81,6 +81,8 @@ public:
   inline bool IsMouseAllowed () const noexcept { return !!(RootFlags&RWF_MouseEnabled); }
 
   void RefreshScale ();
+
+  VWidget *GetWidgetAtScreenXY (int x, int y) noexcept;
 
   static void StaticInit ();
 
