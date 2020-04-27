@@ -391,3 +391,70 @@ public:
     return true;
   }
 };
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// poor man's profiler
+class MiniStopTimer {
+private:
+  const char *mName;
+  bool mEnabled;
+  bool mActive;
+  bool mCPUTime;
+  double sttime;
+  double accum; // accumulates time for pauses
+
+public:
+  VV_DISABLE_COPY(MiniStopTimer)
+  MiniStopTimer () = delete;
+
+  inline MiniStopTimer (const char *aName, const bool aEnabled, const bool aStartNow=true, const bool aUseCPUTime=true) noexcept
+    : mName(aName)
+    , mEnabled(aEnabled)
+    , mActive(aEnabled)
+    , mCPUTime(aUseCPUTime)
+    , sttime(0.0)
+    , accum(0.0)
+  {
+    if (aEnabled) {
+      if (aStartNow) sttime = -(aUseCPUTime ? Sys_Time_CPU() : Sys_Time()); else mActive = false;
+    }
+  }
+
+  inline bool getName () const noexcept { return mName; }
+
+  inline bool isEnabled () const noexcept { return mEnabled; }
+  inline bool isActive () const noexcept { return mActive; }
+  inline bool isPaused () const noexcept { return !mActive; }
+
+  inline void addTime (const double tm) noexcept { accum += tm; }
+
+  inline void pause () noexcept {
+    if (mEnabled && mActive) {
+      accum += (mCPUTime ? Sys_Time_CPU() : Sys_Time())+sttime;
+      mActive = false;
+    }
+  }
+
+  inline void resume () noexcept {
+    if (mEnabled && !mActive) {
+      mActive = true;
+      sttime = -(mCPUTime ? Sys_Time_CPU() : Sys_Time());
+    }
+  }
+
+  inline double getCurrent () const noexcept {
+    return (mEnabled ? (accum+(mActive ? (mCPUTime ? Sys_Time_CPU() : Sys_Time())+sttime : 0.0)) : 0.0);
+  }
+
+  // this does a report
+  inline double stopAndReport () noexcept {
+    if (!mEnabled) return 0.0;
+    if (mActive) {
+      accum += (mCPUTime ? Sys_Time_CPU() : Sys_Time())+sttime;
+      mActive = false;
+    }
+    GLog.Logf(NAME_Debug, "PROF: %s time is %g seconds (%d msesc)", mName, ((int)accum == 0 ? 0.0 : accum), (int)(accum*1000.0));
+    return accum;
+  }
+};
