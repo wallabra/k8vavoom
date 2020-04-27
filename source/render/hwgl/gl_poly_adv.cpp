@@ -327,7 +327,15 @@ void VOpenGLDrawer::BeforeDrawWorldSV () {
   vboAdvSurf.ensure(maxEls);
   int vboIdx = 0;
   TVec *dest = vboAdvSurf.data.ptr();
+  // solid surfaces
   for (auto &&surf : dls.DrawSurfListSolid) {
+    surf->firstIndex = vboIdx;
+    const unsigned len = (unsigned)surf->count;
+    for (unsigned i = 0; i < len; ++i) *dest++ = surf->verts[i].vec();
+    vboIdx += surf->count;
+  }
+  // masked surfaces
+  for (auto &&surf : dls.DrawSurfListMasked) {
     surf->firstIndex = vboIdx;
     const unsigned len = (unsigned)surf->count;
     for (unsigned i = 0; i < len; ++i) *dest++ = surf->verts[i].vec();
@@ -893,6 +901,9 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
         vboAdvSurf.enableAttrib(attribPosition);
       }
     }
+
+    SAMB_FLUSH_VBO();
+    vboAdvSurf.disableAttrib(attribPosition);
   }
 
   vboAdvSurf.deactivate();
