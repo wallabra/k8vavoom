@@ -961,7 +961,7 @@ void VOpenGLDrawer::InitResolution () {
 
   vboSky.setOwner(this);
   vboMaskedSurf.setOwner(this);
-  vboAdvSurf.setOwner(this);
+  vboAdvSurf.setOwner(this, true); // streaming
 
   // init some defaults
   glBindTexture(GL_TEXTURE_2D, 0);

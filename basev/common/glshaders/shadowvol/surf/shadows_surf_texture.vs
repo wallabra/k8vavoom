@@ -1,7 +1,6 @@
 #version 120
 $include "common/common.inc"
 
-//attribute vec2 TexCoord;
 attribute vec3 Position;
 
 $include "common/texture_vars.vs"

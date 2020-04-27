@@ -122,8 +122,8 @@ enum {
 
 
 extern "C" {
-  // full shader and texture sorting
-  static int drawListItemCmpByTextureOnly (const void *a, const void *b, void * /*udata*/) {
+  // this also sorts by fade, so we can avoid resorting in fog pass
+  static int drawListItemCmpByTextureAndFade (const void *a, const void *b, void * /*udata*/) {
     if (a == b) return 0;
     const surface_t *sa = *(const surface_t **)a;
     const surface_t *sb = *(const surface_t **)b;
@@ -132,6 +132,9 @@ extern "C" {
     // sort by texture id (just use texture pointer)
     if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
     if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+    // by fade
+    if (sa->Fade < sb->Fade) return -1;
+    if (sa->Fade > sb->Fade) return 1;
     // and by colormap, why not?
     return ((int)ta->ColorMap)-((int)tb->ColorMap);
   }
@@ -763,8 +766,9 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   //timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByShaderTexture, nullptr);
 
   // sort all surfaces by texture only, it is faster this way
-  timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTextureOnly, nullptr);
-  timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTextureOnly, nullptr);
+  // this also sorts by fade, so we can avoid resorting in fog pass
+  timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTextureAndFade, nullptr);
+  timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTextureAndFade, nullptr);
 
   texinfo_t lastTexinfo;
   lastTexinfo.initLastUsed();
@@ -938,41 +942,71 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   ShadowsFog.SetFogFade(lastFade, 1.0f);
   */
 
+  vboAdvSurf.activate();
+  GLuint attribPosition = 0; /* shut up, gcc! */
+
+  int vboCountIdx = 0; // element (counter) index
+
+  //WARNING! don't forget to flush VBO on each shader uniform change! this includes glow changes (glow values aren't cached yet)
+
+  #define SAMB_FLUSH_VBO()  do { \
+    if (vboCountIdx) { \
+      if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "flushing ambsurface VBO: vboCountIdx=%d", vboCountIdx); \
+      vboAdvSurf.setupAttribNoEnable(attribPosition, 3); \
+      p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboStartInds.ptr(), vboCounters.ptr(), (GLsizei)vboCountIdx); \
+      vboCountIdx = 0; \
+    } \
+  } while (0)
+
+  #define SAMB_DO_RENDER()  \
+    if (surf->drawflags&surface_t::DF_NO_FACE_CULL) { \
+      if (lastCullFace) { \
+        SAMB_FLUSH_VBO(); \
+        lastCullFace = false; \
+        glDisable(GL_CULL_FACE); \
+      } \
+    } else { \
+      if (!lastCullFace) { \
+        SAMB_FLUSH_VBO(); \
+        lastCullFace = true; \
+        glEnable(GL_CULL_FACE); \
+      } \
+    } \
+    currentActiveShader->UploadChangedUniforms(); \
+    /* remember counter */ \
+    vboCounters.ptr()[vboCountIdx] = (GLsizei)surf->count; \
+    /* remember first index */ \
+    vboStartInds.ptr()[vboCountIdx] = (GLint)surf->firstIndex; \
+    /* advance array positions */ \
+    ++vboCountIdx
+
+
   texinfo_t lastTexinfo;
   lastTexinfo.initLastUsed();
+
+  bool lastCullFace = true;
+  glEnable(GL_CULL_FACE);
 
   // normal
   if (dls.DrawSurfListSolid.length() != 0) {
     lastTexinfo.resetLastUsed();
     ShadowsFog.Activate();
     ShadowsFog.SetFogFade(0, 1.0f);
+    attribPosition = ShadowsFog.loc_Position;
+    vboAdvSurf.enableAttrib(attribPosition);
     vuint32 lastFade = 0;
     glDisable(GL_TEXTURE_2D);
     for (auto &&surf : dls.DrawSurfListSolid) {
       if (!surf->Fade) continue;
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) continue;
-      if (surf->drawflags&surface_t::DF_MASKED) continue; // later
-
-      // don't render translucent surfaces
-      // they should not end up here, but...
-      const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
-
       if (lastFade != surf->Fade) {
+        SAMB_FLUSH_VBO();
         lastFade = surf->Fade;
         ShadowsFog.SetFogFade(surf->Fade, 1.0f);
       }
-
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      //glBegin(GL_POLYGON);
-      currentActiveShader->UploadChangedUniforms();
-      glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
-      glEnd();
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+      SAMB_DO_RENDER();
     }
+    SAMB_FLUSH_VBO();
+    vboAdvSurf.disableAttrib(attribPosition);
     glEnable(GL_TEXTURE_2D);
   }
 
@@ -982,42 +1016,38 @@ void VOpenGLDrawer::DrawWorldFogPass () {
     ShadowsFogMasked.Activate();
     ShadowsFogMasked.SetFogFade(0, 1.0f);
     ShadowsFogMasked.SetTexture(0);
+    attribPosition = ShadowsFog.loc_Position;
+    vboAdvSurf.enableAttrib(attribPosition);
     vuint32 lastFade = 0;
     for (auto &&surf : dls.DrawSurfListMasked) {
       if (!surf->Fade) continue;
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) continue;
-      if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
-
-      // don't render translucent surfaces
-      // they should not end up here, but...
       const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
-
       if (lastFade != surf->Fade) {
+        SAMB_FLUSH_VBO();
         lastFade = surf->Fade;
         ShadowsFogMasked.SetFogFade(surf->Fade, 1.0f);
       }
 
       const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
       if (textureChanded) {
+        SAMB_FLUSH_VBO();
         lastTexinfo.updateLastUsed(*currTexinfo);
         SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
         ShadowsFogMasked.SetTex(currTexinfo);
       }
 
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      //glBegin(GL_POLYGON);
-      currentActiveShader->UploadChangedUniforms();
-      glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
-      glEnd();
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+      SAMB_DO_RENDER();
     }
+    SAMB_FLUSH_VBO();
+    vboAdvSurf.disableAttrib(attribPosition);
   }
 
   //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
+
+  vboAdvSurf.deactivate();
+
+  #undef SAMB_FLUSH_VBO
+  #undef SAMB_DO_RENDER
 }
 
 

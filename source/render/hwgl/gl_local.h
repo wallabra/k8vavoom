@@ -700,10 +700,11 @@ protected:
 
     static size_t getTypeSize () noexcept { return sizeof(T); }
 
-    inline void setOwner (VOpenGLDrawer *aOwner) noexcept {
-      if (mOwner != aOwner) {
+    inline void setOwner (VOpenGLDrawer *aOwner, bool aStream=false) noexcept {
+      if (mOwner != aOwner || isStream != aStream) {
         destroy();
         mOwner = aOwner;
+        isStream = aStream;
       }
     }
 
