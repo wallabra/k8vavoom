@@ -239,6 +239,17 @@ static void CheckListSortValidity (TArray<surface_t *> &list, const char *listna
 
 //==========================================================================
 //
+//  VOpenGLDrawer::BeforeDrawWorldSV
+//
+//  populate VBO with world surfaces
+//
+//==========================================================================
+void VOpenGLDrawer::BeforeDrawWorldSV () {
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::DrawWorldAmbientPass
 //
 //  this renders sector ambient light based on sector light level

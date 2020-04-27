@@ -267,6 +267,17 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::BeforeDrawWorldLMap
+//
+//  populate VBO with world surfaces
+//
+//==========================================================================
+void VOpenGLDrawer::BeforeDrawWorldLMap () {
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::RenderSimpleSurface
 //
 //  returns `true` if we need to re-setup texture
@@ -584,12 +595,12 @@ COMMAND(dgl_ForceAtlasUpdate) {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::WorldDrawing
+//  VOpenGLDrawer::DrawLightmapWorld
 //
 //  lightmapped rendering
 //
 //==========================================================================
-void VOpenGLDrawer::WorldDrawing () {
+void VOpenGLDrawer::DrawLightmapWorld () {
   texinfo_t lastTexinfo;
   lastTexinfo.initLastUsed();
 

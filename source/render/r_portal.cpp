@@ -306,7 +306,7 @@ void VSkyPortal::DrawContents () {
 
   Sky->Draw(RLev->ColorMap);
 
-  Drawer->WorldDrawing();
+  Drawer->DrawLightmapWorld();
 }
 
 

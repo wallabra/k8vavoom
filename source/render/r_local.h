@@ -566,6 +566,7 @@ protected:
   virtual void FreeSurfCache (surfcache_t *&block);
   virtual bool CacheSurface (surface_t *);
   // this is called after surface queues built, so lightmap renderer can calculate new lightmaps
+  // it is called right before starting world drawing
   virtual void ProcessCachedSurfaces ();
 
   void PrepareWorldRender (const refdef_t *, const VViewClipper *);
@@ -1023,6 +1024,8 @@ protected:
   virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) override;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) override;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) override;
+
+  virtual void ProcessCachedSurfaces () override;
 
   // light methods
   //virtual void PushDlights () override;

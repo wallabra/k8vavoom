@@ -299,8 +299,12 @@ public:
   // texture stuff
   virtual void PrecacheTexture (VTexture *) override;
 
+  virtual void BeforeDrawWorldLMap () override;
+  virtual void BeforeDrawWorldSV () override;
+
   // polygon drawing
-  virtual void WorldDrawing () override;
+  virtual void DrawLightmapWorld () override;
+
   virtual void DrawWorldAmbientPass () override;
 
   virtual void BeginShadowVolumesPass () override;

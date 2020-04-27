@@ -86,7 +86,8 @@ void VRenderLevelLightmap::RenderWorld (const refdef_t *rd, const VViewClipper *
 
   if (!r_reg_disable_world) {
     //GCon->Logf("vfz: %f", Drawer->viewforward.z);
-    Drawer->WorldDrawing();
+    Drawer->BeforeDrawWorldLMap();
+    Drawer->DrawLightmapWorld();
   }
 
   //if (!r_reg_disable_portals) RenderPortals();

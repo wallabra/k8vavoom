@@ -460,8 +460,14 @@ public:
   virtual bool UseFrustumFarClip () = 0;
   virtual void SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) = 0;
   virtual void SetupViewOrg () = 0;
-  virtual void WorldDrawing () = 0;
   virtual void EndView (bool ignoreColorTint=false) = 0;
+
+  // you can populate VBOs here
+  virtual void BeforeDrawWorldLMap () = 0;
+  virtual void BeforeDrawWorldSV () = 0;
+
+  // lightmapped renderer
+  virtual void DrawLightmapWorld () = 0;
 
   // call this
   virtual void DisableClipPlanes () = 0;

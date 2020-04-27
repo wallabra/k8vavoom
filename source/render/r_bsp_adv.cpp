@@ -43,6 +43,15 @@ void VRenderLevelShadowVolume::QueueWorldSurface (surface_t *surf) {
 
 //==========================================================================
 //
+//  VRenderLevelShadowVolume::ProcessCachedSurfaces
+//
+//==========================================================================
+void VRenderLevelShadowVolume::ProcessCachedSurfaces () {
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShadowVolume::RenderWorld
 //
 //==========================================================================
@@ -50,6 +59,7 @@ void VRenderLevelShadowVolume::RenderWorld (const refdef_t *rd, const VViewClipp
   PrepareWorldRender(rd, Range);
   RenderBspWorld(rd, Range);
   ProcessCachedSurfaces();
+  Drawer->BeforeDrawWorldSV();
   Drawer->DrawWorldAmbientPass();
   //RenderPortals();
 }
