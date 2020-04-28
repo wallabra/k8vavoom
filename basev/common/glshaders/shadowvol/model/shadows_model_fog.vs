@@ -14,7 +14,6 @@ varying vec2 TextureCoordinate;
 
 void main () {
   vec4 Vert;
-  //Vert.xyz = (mix(gl_Vertex, Vert2, Inter)*ModelToWorldMat).xyz;
   Vert.xyz = (mix(vec4(Position, 1.0), Vert2, Inter)*ModelToWorldMat).xyz;
   Vert.w = 1.0;
   gl_Position = gl_ModelViewProjectionMatrix*Vert;

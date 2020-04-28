@@ -18,7 +18,6 @@ $include "common/glow_vars.vs"
 
 void main () {
   // transforming the vertex
-  //gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
   gl_Position = gl_ModelViewProjectionMatrix*vec4(Position, 1.0);
 #ifdef VV_AMBIENT_MASKED_WALL
   $include "common/texture_calc_pos.vs"
