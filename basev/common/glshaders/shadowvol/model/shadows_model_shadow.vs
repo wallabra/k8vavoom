@@ -1,6 +1,8 @@
 #version 120
 $include "common/common.inc"
 
+attribute vec3 Position;
+
 uniform float Inter;
 uniform vec3 LightPos;
 uniform mat4 ModelToWorldMat;
@@ -10,7 +12,8 @@ attribute float Offset; //0 means "offset to infinity"
 
 
 void main () {
-  vec4 Vert = mix(gl_Vertex, Vert2, Inter)*ModelToWorldMat;
+  //vec4 Vert = mix(gl_Vertex, Vert2, Inter)*ModelToWorldMat;
+  vec4 Vert = mix(vec4(Position, 1.0), Vert2, Inter)*ModelToWorldMat;
   // transforming the vertex
   // t will be 1 for w == 0, and 0 otherwise
   float t = 1.0-Offset;
