@@ -251,6 +251,10 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   VMatrix4 RotationMatrix;
   AliasSetupTransform(origin, angles, Transform, RotationMatrix);
 
+  GLuint attrPosition;
+  GLuint attrVert2;
+  GLuint attrTexCoord;
+
   if (!ri.isStenciled()) {
     SurfModel.Activate();
     SurfModel.SetTexture(0);
@@ -260,6 +264,9 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     SurfModel.SetAllowTransparency(AllowTransparency);
     SurfModel.SetInter(Inter);
     SurfModel.UploadChangedUniforms();
+    attrPosition = SurfModel.loc_Position;
+    attrVert2 = SurfModel.loc_Vert2;
+    attrTexCoord = SurfModel.loc_TexCoord;
   } else {
     SurfModelStencil.Activate();
     SurfModelStencil.SetTexture(0);
@@ -270,6 +277,9 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     SurfModelStencil.SetInter(Inter);
     SurfModelStencil.SetStencilColor(((ri.stencilColor>>16)&255)/255.0f, ((ri.stencilColor>>8)&255)/255.0f, (ri.stencilColor&255)/255.0f);
     SurfModelStencil.UploadChangedUniforms();
+    attrPosition = SurfModelStencil.loc_Position;
+    attrVert2 = SurfModelStencil.loc_Vert2;
+    attrTexCoord = SurfModelStencil.loc_TexCoord;
   }
 
   bool restoreDepth = false;
@@ -284,24 +294,18 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
 
     p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
-    p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
-    p_glEnableVertexAttribArrayARB(0);
+    p_glVertexAttribPointerARB(attrPosition, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
+    p_glEnableVertexAttribArrayARB(attrPosition);
+
+    p_glVertexAttribPointerARB(attrVert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
+    p_glEnableVertexAttribArrayARB(attrVert2);
+
+    p_glVertexAttribPointerARB(attrTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    p_glEnableVertexAttribArrayARB(attrTexCoord);
 
     if (!ri.isStenciled()) {
-      p_glVertexAttribPointerARB(SurfModel.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
-      p_glEnableVertexAttribArrayARB(SurfModel.loc_Vert2);
-
-      p_glVertexAttribPointerARB(SurfModel.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-      p_glEnableVertexAttribArrayARB(SurfModel.loc_TexCoord);
-
       SurfModel.SetLightValAttr(((ri.light>>16)&255)/255.0f, ((ri.light>>8)&255)/255.0f, (ri.light&255)/255.0f, ri.alpha);
     } else {
-      p_glVertexAttribPointerARB(SurfModelStencil.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
-      p_glEnableVertexAttribArrayARB(SurfModelStencil.loc_Vert2);
-
-      p_glVertexAttribPointerARB(SurfModelStencil.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-      p_glEnableVertexAttribArrayARB(SurfModelStencil.loc_TexCoord);
-
       SurfModelStencil.SetLightValAttr(((ri.light>>16)&255)/255.0f, ((ri.light>>8)&255)/255.0f, (ri.light&255)/255.0f, ri.alpha);
     }
 
@@ -318,14 +322,9 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
 
     p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
-    p_glDisableVertexAttribArrayARB(0);
-    if (!ri.isStenciled()) {
-      p_glDisableVertexAttribArrayARB(SurfModel.loc_Vert2);
-      p_glDisableVertexAttribArrayARB(SurfModel.loc_TexCoord);
-    } else {
-      p_glDisableVertexAttribArrayARB(SurfModelStencil.loc_Vert2);
-      p_glDisableVertexAttribArrayARB(SurfModelStencil.loc_TexCoord);
-    }
+    p_glDisableVertexAttribArrayARB(attrPosition);
+    p_glDisableVertexAttribArrayARB(attrVert2);
+    p_glDisableVertexAttribArrayARB(attrTexCoord);
     p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
   }
 
