@@ -38,7 +38,7 @@ override void CreateChoices() {
   //int currentY;
   //currentY = ChoicesStartY;
 
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn = NewChild(MenuSmallTextButton);
   Btn.SetPos(ChoicesStartX, currentY);
   Btn.Text = "Search for internet games...";
   Btn.TextHAlign = hleft;
@@ -47,18 +47,16 @@ override void CreateChoices() {
     SetLastHelp(
       "Connect to master server to get MP server info.");
 
-  #if 1
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn = NewChild(MenuSmallTextButton);
   Btn.SetPos(ChoicesStartX, currentY);
   Btn.Text = "Search for LAN games...";
   Btn.TextHAlign = hleft;
   Btn.Activated = &ActivateSearch;
   currentY += Btn.Height;
     SetLastHelp(
-      "THIS DOESN'T WORK.");
-  #endif
+      "Search for game servers in LAN.");
 
-  JoinAt = MenuInputLine(NewChild(MenuInputLine));
+  JoinAt = NewChild(MenuInputLine);
   JoinAt.SetPos(ChoicesStartX, currentY);
   JoinAt.Text = "Join Game At";
   JoinAt.Value = GetCvarS('net_ui_last_join_address');
@@ -68,7 +66,7 @@ override void CreateChoices() {
     SetLastHelp(
       "You can use either IP address, or a host name here.");
 
-  auto pwd = MenuInputLine(NewChild(MenuInputLine));
+  auto pwd = NewChild(MenuInputLine);
   //pwd.MakeOneLineControl();
   pwd.SetPos(ChoicesStartX, currentY);
   pwd.Text = "Server Password";

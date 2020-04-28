@@ -45,10 +45,10 @@ int pic_bordbr;
 //
 //==========================================================================
 override void RootWindowCreated () {
-  GTitle = TitleScreen(GRoot.NewChild(TitleScreen));
-  GSBar = StatusBarScreen(GRoot.NewChild(StatusBarScreen));
-  GImission = IntermissionScreen(GRoot.NewChild(IntermissionScreen));
-  GFinale = FinaleScreen(GRoot.NewChild(FinaleScreen));
+  GTitle = GRoot.NewChild(TitleScreen);
+  GSBar = GRoot.NewChild(StatusBarScreen);
+  GImission = GRoot.NewChild(IntermissionScreen);
+  GFinale = GRoot.NewChild(FinaleScreen);
   GTitle.ClGame = self;
   GSBar.ClGame = self;
   GSBar.Hide();

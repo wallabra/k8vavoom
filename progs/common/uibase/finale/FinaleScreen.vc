@@ -213,7 +213,7 @@ void StartCast () {
   Background.InitPic('bossback');
 
   if (!CastWin) {
-    CastWin = ActorDisplayWindow(NewChild(ActorDisplayWindow));
+    CastWin = NewChild(ActorDisplayWindow);
     CastWin.SetPos(0, 0);
     CastWin.SetSize(640, 480);
   }

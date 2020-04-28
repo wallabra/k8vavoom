@@ -141,7 +141,7 @@ void CreateMenuFromDef (MenuDefinition mdef) {
 //==========================================================================
 override void CreateTitle () {
   if (Title) {
-    if (!titleItem) titleItem = MenuTitleText(NewChild(MenuTitleText));
+    if (!titleItem) titleItem = NewChild(MenuTitleText);
     titleItem.Width = Width;
     titleItem.Text = Title;
     //titleItem.SetOrigin(TitleX, TitleY);

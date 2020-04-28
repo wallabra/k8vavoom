@@ -78,7 +78,7 @@ override void CreateChoices () {
   R_InstallSpriteComplete();
 
 
-  PlayerName = MenuInputLine(NewChild(MenuInputLine));
+  PlayerName = NewChild(MenuInputLine);
   PlayerName.SetOrigin(ChoicesStartX+10, currentY);
   PlayerName.CursorXOffs = -10;
   PlayerName.Text = "Name";
@@ -87,7 +87,7 @@ override void CreateChoices () {
   currentY += PlayerName.Height;
 
   if (PClasses.length > 1) {
-    EPClass = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+    EPClass = NewChild(MenuChoiceEnum);
     EPClass.SetOrigin(ChoicesStartX, currentY);
     EPClass.Text = "Class";
     foreach (const ref auto pcl; PClasses) EPClass.AddItem(pcl.className);
@@ -127,7 +127,7 @@ override void CreateChoices () {
   currentY += ColB.Height;
 
 
-  Anim = MenuSpriteAnim(NewChild(MenuSpriteAnim));
+  Anim = NewChild(MenuSpriteAnim);
   Anim.SetPos(220, 150);
   Anim.SprDef = 500;
   Anim.Speed = 8;
@@ -144,7 +144,7 @@ override void CreateChoices () {
 
     SetCvarS('model', "doomguy");
 
-    Mdl = MenuModel(NewChild(MenuModel));
+    Mdl = NewChild(MenuModel);
     Mdl.Origin = vector(-128.0, 64.0, -32.0);
     Mdl.Angle = 345.0;
     Mdl.Model = model;

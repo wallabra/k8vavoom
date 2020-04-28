@@ -96,7 +96,7 @@ void SetSpeech (EntityEx Speaker, int SpeechNum) {
 
   foreach (auto i; 0..Speech.Choices.length) {
     if (!Speech.Choices[i].Text) continue;
-    WinChoices[NumChoices] = ConDlgChoice(NewChild(ConDlgChoice));
+    WinChoices[NumChoices] = NewChild(ConDlgChoice);
     WinChoices[NumChoices].Text = Speech.Choices[i].Text;
     if (Speech.Choices[i].NeedItem1 == 168 && Speech.Choices[i].NeedAmount1 > 0) {
       //WinChoices[NumChoices].Text = va("%s \cDfor \cX%d\cD gold", Speech.Choices[i].Text, Speech.Choices[i].NeedAmount1);
@@ -107,7 +107,7 @@ void SetSpeech (EntityEx Speaker, int SpeechNum) {
     ++NumChoices;
   }
 
-  WinChoices[NumChoices] = ConDlgChoice(NewChild(ConDlgChoice));
+  WinChoices[NumChoices] = NewChild(ConDlgChoice);
   WinChoices[NumChoices].Text = CancelTexts[P_Random()%3];
   WinChoices[NumChoices].ImpulseNum = 200;
   ++NumChoices;

@@ -69,7 +69,7 @@ override void CreateChoices () {
   CreateSubMenuBigTextNamed("Options", 'OptionsMenu');
   CreateSubMenuBigText((!IsAnyDoom2 && !WadLumpPresent('e2m1') ? "Read This!" : "Help"), MenuScreenHelp);
 
-  auto btn = MenuBigTextButton(NewChild(MenuBigTextButton));
+  auto btn = NewChild(MenuBigTextButton);
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Quit game";
   btn.Activated = delegate void (Object Sender) { ClGame.ShowQuitPrompt(); };

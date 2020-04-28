@@ -32,7 +32,7 @@ class MenuScreenSList : MenuScreen;
 //
 //==========================================================================
 override void CreateChoices () {
-  MenuSList Lst = MenuSList(NewChild(MenuSList));
+  MenuSList Lst = NewChild(MenuSList);
   Lst.StartSearching();
 }
 

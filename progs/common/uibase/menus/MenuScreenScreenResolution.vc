@@ -47,7 +47,7 @@ MenuChoiceNumeric ScrScale;
 //
 //==========================================================================
 override void CreateChoices () {
-  Mode = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+  Mode = NewChild(MenuChoiceEnum);
   SetChoiceInitialSizePos(Mode);
   Mode.Text = "Resolution";
   foreach (ref auto mi; modes) Mode.AddItem(va("%dx%d", mi.width, mi.height));
@@ -61,7 +61,7 @@ override void CreateChoices () {
   currentY += Mode.Height;
     SetLastHelp("Choose one of the predefined screen sizes.");
 
-  EdWidth = MenuInputLine(NewChild(MenuInputLine));
+  EdWidth = NewChild(MenuInputLine);
   //SetChoiceInitialSizePos(EdWidth);
   //EdWidth.SetOrigin(ChoicesStartX+10, currentY);
   //EdWidth.CursorXOffs = -10;
@@ -72,7 +72,7 @@ override void CreateChoices () {
   currentY += EdWidth.Height;
     SetLastHelp("Custom screen resolution.");
 
-  EdHeight = MenuInputLine(NewChild(MenuInputLine));
+  EdHeight = NewChild(MenuInputLine);
   //SetChoiceInitialSizePos(EdHeight);
   //EdHeight.SetOrigin(ChoicesStartX+10, currentY);
   //EdHeight.CursorXOffs = -10;
@@ -125,7 +125,7 @@ override void CreateChoices () {
     SetLastHelp(
       "Which texture filter the engine should use to scale image in Scaled FS?");
 
-  VSync = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
+  VSync = NewChild(MenuChoice_OnOff);
   SetChoiceInitialSizePos(VSync);
   //VSync.SetOrigin(ChoicesStartX, currentY);
   VSync.Text = "VSync";
@@ -145,7 +145,7 @@ override void CreateChoices () {
   );
   */
 
-  auto itemRatio = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+  auto itemRatio = NewChild(MenuChoiceEnum);
   SetChoiceInitialSizePos(itemRatio);
   itemRatio.Text = "Aspect Ratio";
   // add all known aspect ratios
@@ -161,7 +161,7 @@ override void CreateChoices () {
       "Screen aspect ratio."/*~
       "\n'Vanilla' is for square pixels, regardless of screen resolution.\n"*/);
 
-  MenuTextButton Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  MenuTextButton Btn = NewChild(MenuSmallTextButton);
   //SetTextButtonInitialSizePos(Btn);
   SetChoiceInitialSizePos(Btn);
   //Btn.SetOrigin(ChoicesStartX, currentY);

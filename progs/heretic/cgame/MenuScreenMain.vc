@@ -91,7 +91,7 @@ override void CreateChoices () {
   CreateSubMenuBigTextNamed("Options", 'OptionsMenu');
   CreateSubMenuBigText("Help", MenuScreenHelp);
 
-  auto btn = MenuBigTextButton(NewChild(MenuBigTextButton));
+  auto btn = NewChild(MenuBigTextButton);
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Quit game";
   btn.Activated = delegate void (Object Sender) { ClGame.ShowQuitPrompt(); };
