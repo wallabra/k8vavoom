@@ -74,6 +74,9 @@ $recursedirext|.inc| glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/
 
 // console font
 $load @CMAKE_CURRENT_SOURCE_DIR@/confont.pcx
+// this will be used by k8vavoom
+k8vavoom/fonts/consolefont.fnt  fon1
+// and this one is just in case some mod may need this lump
 confont.lmp  fon1
 
 // default big font

@@ -101,7 +101,20 @@ public:
   static void StaticInit ();
   static void StaticShutdown ();
   static VFont *FindFont (VName AName);
+  static VFont *FindFont (VStr AName);
+  static VFont *GetFont (VStr AName, VStr LumpName);
   static VFont *GetFont (VName AName, VName LumpName);
+  static VFont *GetFont (VStr AName);
   static int ParseColorEscape (const char *&, int, int, VStr *escstr=nullptr);
   static int FindTextColor (VName);
+
+  // generates lump name from font name
+  // names in the format of 'name:path' will be split on ':'
+  // (and `aname` will be modified)
+  // otherwiser, returns `aname`
+  static VStr GetPathFromFontName (VStr aname);
+  static VStr TrimPathFromFontName (VStr aname);
+
+private:
+  static VFont *FindAndLoadFontFromLumpIdx (VStr AName, int LumpIdx);
 };

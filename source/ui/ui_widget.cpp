@@ -1183,7 +1183,7 @@ void VWidget::SetFont (VFont *AFont) noexcept {
 //
 //==========================================================================
 void VWidget::SetFont (VName FontName) {
-  VFont *F = VFont::GetFont(FontName, FontName);
+  VFont *F = VFont::GetFont(VStr(FontName)); // this doesn't allocate
   if (F) {
     Font = F;
   } else {

@@ -29,6 +29,8 @@
 
 #define VAVOOM_NAME_FONT_TEXTURES
 
+#define VAVOOM_CON_FONT_PATH  "k8vavoom/fonts/consolefont.fnt"
+
 
 struct VColTranslationDef {
   rgba_t From;
@@ -165,7 +167,7 @@ void VFont::StaticInit () {
 
   if (SmallFont->GetFontName() == NAME_None) {
     GCon->Log(NAME_Init, "  SmallFont: cannot create it, using ConsoleFont instead...");
-    SmallFont = GetFont(NAME_smallfont, NAME_confont);
+    SmallFont = GetFont(VStr(NAME_smallfont), VStr(VAVOOM_CON_FONT_PATH));
     if (!SmallFont) Sys_Error("cannot create console font");
   }
 
@@ -204,12 +206,12 @@ void VFont::StaticInit () {
   }
   if (!haveBigFont) {
     GCon->Log(NAME_Init, "  BigFont: from console font");
-    if (!GetFont(NAME_bigfont, NAME_confont)) Sys_Error("cannot create console font");
+    if (!GetFont(VStr(NAME_bigfont), VStr(VAVOOM_CON_FONT_PATH))) Sys_Error("cannot create console font");
   }
 
   // console font
   GCon->Log(NAME_Init, "  ConsoleFont: from FON lump");
-  ConFont = GetFont(NAME_consolefont, NAME_confont);
+  ConFont = GetFont(VStr(NAME_consolefont), /*NAME_confont*/VStr(VAVOOM_CON_FONT_PATH));
   if (!ConFont) Sys_Error("cannot create console font");
 
   // load custom fonts (they can override standard fonts)
@@ -488,21 +490,119 @@ void VFont::ParseFontDefs () {
 
 //==========================================================================
 //
+//  VFont::GetPathFromFontName
+//
+//==========================================================================
+VStr VFont::GetPathFromFontName (VStr aname) {
+  int cp = aname.indexOf(':');
+  if (cp < 0) return aname;
+  VStr res(*aname+cp+1);
+  res = res.xstrip();
+  if (res.isEmpty()) return aname;
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VFont::TrimPathFromFontName
+//
+//==========================================================================
+VStr VFont::TrimPathFromFontName (VStr aname) {
+  int cp = aname.indexOf(':');
+  if (cp < 0) return aname;
+  VStr res(*aname, cp);
+  res = res.xstrip();
+  if (res.isEmpty()) return aname;
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VFont::FindFont
+//
+//==========================================================================
+VFont *VFont::FindFont (VStr AName) {
+  #if 0
+  for (VFont *F = Fonts; F; F = F->Next) {
+    if (F->Name == AName || VStr::strEquCI(F->Name, *AName)) return F;
+  }
+  #else
+  if (!AName.isEmpty()) {
+    VStr n = TrimPathFromFontName(AName);
+    auto fpp = FontMap.find(n);
+    if (fpp) return *fpp;
+  }
+  #endif
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VFont::FindFont
 //
 //==========================================================================
 VFont *VFont::FindFont (VName AName) {
-  #if 0
-  for (VFont *F = Fonts; F; F = F->Next) {
-    if (F->Name == AName || VStr::strEquCI(*F->Name, *AName)) return F;
+  if (AName != NAME_None) return FindFont(VStr(AName)); // this doesn't allocate
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VFont::FindAndLoadFontFromLumpIdx
+//
+//==========================================================================
+VFont *VFont::FindAndLoadFontFromLumpIdx (VStr AName, int LumpIdx) {
+  if (LumpIdx < 0 || AName.isEmpty()) return nullptr;
+  // read header
+  char Hdr[4];
+  { // so the stream will be destroyed automatically
+    VStream *lumpstream = W_CreateLumpReaderNum(LumpIdx);
+    VCheckedStream Strm(lumpstream);
+    Strm.Serialise(Hdr, 4);
   }
-  #else
-  if (AName != NAME_None) {
-    VStr fn(AName); // this doesn't allocate
-    auto fpp = FontMap.find(fn);
-    if (fpp) return *fpp;
+  if (Hdr[0] == 'F' && Hdr[1] == 'O' && Hdr[2] == 'N') {
+    if (Hdr[3] == '1') return new VFon1Font(VName(*AName), LumpIdx);
+    if (Hdr[3] == '2') return new VFon2Font(VName(*AName), LumpIdx);
   }
-  #endif
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VFont::GetFont
+//
+//==========================================================================
+VFont *VFont::GetFont (VStr AName, VStr LumpName) {
+  VFont *F = FindFont(AName);
+  if (F) return F;
+
+  if (AName.isEmpty()) return nullptr;
+
+  if (LumpName.isEmpty()) return nullptr;
+
+  VName ln(*LumpName, VName::FindLower);
+
+  if (ln == NAME_None) {
+    // try file path (there is no reason to try a lump, we don't have one)
+    int flump = W_CheckNumForFileName(LumpName);
+    return FindAndLoadFontFromLumpIdx(AName, flump);
+  }
+
+  // check for wad lump
+  const int Lump = W_CheckNumForName(ln);
+  F = FindAndLoadFontFromLumpIdx(AName, Lump);
+  if (F) return F;
+
+  // try a texture
+  int TexNum = GTextureManager.CheckNumForName(ln, TEXTYPE_Any);
+  if (TexNum <= 0) TexNum = GTextureManager.AddPatch(ln, TEXTYPE_Pic);
+  if (TexNum > 0) return new VSingleTextureFont(VName(*AName), TexNum);
+
   return nullptr;
 }
 
@@ -513,30 +613,19 @@ VFont *VFont::FindFont (VName AName) {
 //
 //==========================================================================
 VFont *VFont::GetFont (VName AName, VName LumpName) {
-  VFont *F = FindFont(AName);
-  if (F) return F;
+  return GetFont(VStr(AName), VStr(LumpName)); // this doesn't allocate
+}
 
-  // check for wad lump
-  const int Lump = (LumpName != NAME_None ? W_CheckNumForName(LumpName) : -1);
-  if (Lump >= 0) {
-    // read header
-    char Hdr[4];
-    { // so the stream will be destroyed automatically
-      VStream *lumpstream = W_CreateLumpReaderNum(Lump);
-      VCheckedStream Strm(lumpstream);
-      Strm.Serialise(Hdr, 4);
-    }
-    if (Hdr[0] == 'F' && Hdr[1] == 'O' && Hdr[2] == 'N') {
-      if (Hdr[3] == '1') return new VFon1Font(AName, Lump);
-      if (Hdr[3] == '2') return new VFon2Font(AName, Lump);
-    }
-  }
 
-  int TexNum = GTextureManager.CheckNumForName(LumpName, TEXTYPE_Any);
-  if (TexNum <= 0) TexNum = GTextureManager.AddPatch(LumpName, TEXTYPE_Pic);
-  if (TexNum > 0) return new VSingleTextureFont(AName, TexNum);
-
-  return nullptr;
+//==========================================================================
+//
+//  VFont::GetFont
+//
+//==========================================================================
+VFont *VFont::GetFont (VStr AName) {
+  VStr LumpName = GetPathFromFontName(AName);
+  AName = TrimPathFromFontName(AName);
+  return GetFont(AName, LumpName);
 }
 
 

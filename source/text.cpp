@@ -87,7 +87,7 @@ void T_SetAlign (halign_e NewHAlign, valign_e NewVAlign) {
 //==========================================================================
 bool T_IsFontExists (VName fontname) {
   if (fontname == NAME_None) return false;
-  return !!VFont::GetFont(fontname, fontname);
+  return !!VFont::GetFont(VStr(fontname)); // this doesn't allocate
 }
 
 
