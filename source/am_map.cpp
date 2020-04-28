@@ -2374,10 +2374,14 @@ COMMAND(Iddt) {
 //==========================================================================
 COMMAND(toggle_automap) {
   if (!cl || !GClGame || !GGameInfo || GClGame->InIntermission() || GGameInfo->NetMode <= NM_TitleMap) {
+    GCon->Log(NAME_Warning, "Cannot toggle automap while not in game!");
     return;
   }
 #ifdef CLIENT
-  if (GGameInfo->IsPaused()) return;
+  if (GGameInfo->IsPaused()) {
+    if (cl) cl->Printf("Cannot toggle autorun while the game is paused!"); else GCon->Log(NAME_Warning, "Cannot toggle autorun while the game is paused!");
+    return;
+  }
 #endif
   am_active = !am_active;
 }

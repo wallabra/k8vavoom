@@ -123,7 +123,7 @@ public:
 public:
   //VGameInfo ();
 
-  bool IsPaused ();
+  bool IsPaused (bool ignoreOpenConsole=false);
   bool IsInWipe ();
   bool IsWipeAllowed ();
 

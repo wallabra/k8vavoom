@@ -87,16 +87,16 @@ IMPLEMENT_FUNCTION(VGameInfo, get_isInWipe) {
 //  VGameInfo::IsPaused
 //
 //==========================================================================
-bool VGameInfo::IsPaused () {
+bool VGameInfo::IsPaused (bool ignoreOpenConsole) {
   if (NetMode <= NM_TitleMap) return false;
 #ifdef CLIENT
   // in single player pause game if in menu or console
   return
     (Flags&GIF_Paused) ||
     IsInWipe() ||
-    (NetMode == NM_Standalone && (MN_Active() || C_Active()));
+    (NetMode == NM_Standalone && (MN_Active() || (!ignoreOpenConsole && C_Active())));
 #else
-  return !!(Flags&GIF_Paused);
+  return !(Flags&GIF_Paused);
 #endif
 }
 

@@ -394,9 +394,13 @@ COMMAND(Impulse) {
 COMMAND(ToggleAlwaysRun) {
 #ifdef CLIENT
   if (!cl || !GClGame || !GGameInfo || GClGame->InIntermission() || GGameInfo->NetMode <= NM_TitleMap) {
+    GCon->Log(NAME_Warning, "Cannot toggle autorun while not in game!");
     return;
   }
-  if (GGameInfo->IsPaused()) return;
+  if (GGameInfo->IsPaused()) {
+    if (cl) cl->Printf("Cannot toggle autorun while the game is paused!"); else GCon->Log(NAME_Warning, "Cannot toggle autorun while the game is paused!");
+    return;
+  }
 #endif
   always_run = !always_run;
 #ifdef CLIENT
@@ -419,6 +423,7 @@ COMMAND(Use) {
   if (Args.Num() < 1) return;
 #ifdef CLIENT
   if (!cl || !GClGame || !GGameInfo || GClGame->InIntermission() || GGameInfo->NetMode <= NM_TitleMap) {
+    if (cl) cl->Printf("Cannot use artifact while not in game!"); else GCon->Log(NAME_Warning, "Cannot use artifact while not in game!");
     return;
   }
   //if (GGameInfo->IsPaused()) return;
