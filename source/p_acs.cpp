@@ -54,7 +54,6 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 #ifdef CLIENT
-# include "ui/ui.h"
 # include "cl_local.h"
 #endif
 #include "p_acs.h"
@@ -3644,15 +3643,13 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 
     case ACSF_CheckFont:
       if (argCount > 0) {
-#ifdef CLIENT
-        VName FontName = GetNameLowerCase(args[0]);
-        VFont *fnt = VFont::GetFont(FontName, FontName);
-        return (fnt ? 1 : 0);
-#else
+        #ifdef CLIENT
+        return (T_IsFontExists(GetNameLowerCase(args[0])) ? 1 : 0);
+        #else
         //FIXME
         //TODO
         return 1;
-#endif
+        #endif
       }
       return 0;
 

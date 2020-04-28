@@ -82,6 +82,17 @@ void T_SetAlign (halign_e NewHAlign, valign_e NewVAlign) {
 
 //==========================================================================
 //
+//  T_IsFontExists
+//
+//==========================================================================
+bool T_IsFontExists (VName fontname) {
+  if (fontname == NAME_None) return false;
+  return !!VFont::GetFont(fontname, fontname);
+}
+
+
+//==========================================================================
+//
 //  T_DrawText
 //
 //==========================================================================

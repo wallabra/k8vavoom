@@ -77,6 +77,7 @@ void T_Shutdown ();
 
 void T_SetFont (VFont *);
 void T_SetAlign (halign_e, valign_e);
+bool T_IsFontExists (VName fontname);
 
 void T_DrawText (int, int, VStr, int);
 int T_TextWidth (VStr);

@@ -517,11 +517,11 @@ VFont *VFont::GetFont (VName AName, VName LumpName) {
   if (F) return F;
 
   // check for wad lump
-  int Lump = W_CheckNumForName(LumpName);
+  const int Lump = (LumpName != NAME_None ? W_CheckNumForName(LumpName) : -1);
   if (Lump >= 0) {
     // read header
     char Hdr[4];
-    {
+    { // so the stream will be destroyed automatically
       VStream *lumpstream = W_CreateLumpReaderNum(Lump);
       VCheckedStream Strm(lumpstream);
       Strm.Serialise(Hdr, 4);
