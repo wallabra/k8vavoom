@@ -45,6 +45,7 @@ protected:
 
   // font characters
   TArray<FFontChar> Chars;
+  TMapNC<vint32, vint32> CharMap; // key: code; value: index in `Chars`
   // fast look-up for ASCII characters
   int AsciiChars[128];
   // range of available characters
@@ -60,15 +61,20 @@ protected:
 
   rgba_t *Translation;
 
+protected:
   static VFont *Fonts;
   static TMap<VStrCI, VFont *> FontMap;
 
+protected:
   // set font name, and register it as known font
   static void RegisterFont (VFont *font, VName aname);
 
+protected:
   void BuildTranslations (const bool *ColorsUsed, rgba_t *Pal, bool ConsoleTrans, bool Rescale);
-  int FindChar (int) const;
+  void BuildCharMap ();
+  int FindChar (int);
 
+protected:
   static void ParseTextColors ();
   static void ParseFontDefs ();
   static void MarkUsedColors (VTexture *, bool *);
@@ -80,17 +86,17 @@ public:
 
   inline VName GetFontName () const noexcept { return Name; }
 
-  VTexture *GetChar (int, int *, int) const;
-  int GetCharWidth (int) const;
-  int StringWidth (VStr) const;
-  int TextWidth (VStr) const;
-  int TextHeight (VStr) const;
-  int SplitText (VStr, TArray<VSplitLine>&, int, bool trimRight=true) const;
-  VStr SplitTextWithNewlines (VStr Text, int MaxWidth, bool trimRight=true) const;
+  VTexture *GetChar (int, int *, int);
+  int GetCharWidth (int);
+  int StringWidth (VStr);
+  int TextWidth (VStr);
+  int TextHeight (VStr);
+  int SplitText (VStr, TArray<VSplitLine>&, int, bool trimRight=true);
+  VStr SplitTextWithNewlines (VStr Text, int MaxWidth, bool trimRight=true);
 
-  inline int GetSpaceWidth () const { return SpaceWidth; }
-  inline int GetHeight () const { return FontHeight; }
-  inline int GetKerning () const { return Kerning; }
+  inline int GetSpaceWidth () const noexcept { return SpaceWidth; }
+  inline int GetHeight () const noexcept { return FontHeight; }
+  inline int GetKerning () const noexcept { return Kerning; }
 
   static void StaticInit ();
   static void StaticShutdown ();

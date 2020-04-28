@@ -747,18 +747,15 @@ void VFont::BuildTranslations (const bool *ColorsUsed, rgba_t *Pal, bool Console
 
 //==========================================================================
 //
-//  VFont::GetChar
+//  VFont::BuildCharMap
 //
 //==========================================================================
-int VFont::FindChar (int Chr) const {
-  // check if character is outside of available character range
-  if (Chr < FirstChar || Chr > LastChar) return -1;
-  // fast look-up for ASCII characters
-  if (Chr < 128) return AsciiChars[Chr];
-  // a slower one for unicode
-  for (int i = 0; i < Chars.Num(); ++i) if (Chars[i].Char == Chr) return i;
-  // oops
-  return -1;
+void VFont::BuildCharMap () {
+  if (CharMap.length() || !Chars.length()) return;
+  CharMap.clear();
+  for (auto &&it : Chars.itemsIdx()) {
+    CharMap.put(it.value().Char, it.index());
+  }
 }
 
 
@@ -767,7 +764,29 @@ int VFont::FindChar (int Chr) const {
 //  VFont::GetChar
 //
 //==========================================================================
-VTexture *VFont::GetChar (int Chr, int *pWidth, int Color) const {
+int VFont::FindChar (int Chr) {
+  // check if character is outside of available character range
+  if (Chr < FirstChar || Chr > LastChar) return -1;
+  // fast look-up for ASCII characters
+  if (Chr < 128) return AsciiChars[Chr];
+  BuildCharMap();
+  auto pp = CharMap.find(Chr);
+  return (pp ? *pp : -1);
+  /*
+  // a slower one for unicode
+  for (int i = 0; i < Chars.Num(); ++i) if (Chars[i].Char == Chr) return i;
+  // oops
+  return -1;
+  */
+}
+
+
+//==========================================================================
+//
+//  VFont::GetChar
+//
+//==========================================================================
+VTexture *VFont::GetChar (int Chr, int *pWidth, int Color) {
   int Idx = FindChar(Chr);
   if (Idx < 0) {
     // try upper-case letter
@@ -793,7 +812,7 @@ VTexture *VFont::GetChar (int Chr, int *pWidth, int Color) const {
 //  VFont::GetCharWidth
 //
 //==========================================================================
-int VFont::GetCharWidth (int Chr) const {
+int VFont::GetCharWidth (int Chr) {
   int Idx = FindChar(Chr);
   if (Idx < 0) {
     // try upper-case letter
@@ -883,7 +902,7 @@ int VFont::FindTextColor (VName Name) {
 //  VFont::StringWidth
 //
 //==========================================================================
-int VFont::StringWidth (VStr String) const {
+int VFont::StringWidth (VStr String) {
   int w = 0;
   for (const char *SPtr = *String; *SPtr; ) {
     int c = VStr::Utf8GetChar(SPtr);
@@ -903,7 +922,7 @@ int VFont::StringWidth (VStr String) const {
 //  VFont::TextWidth
 //
 //==========================================================================
-int VFont::TextWidth (VStr String) const {
+int VFont::TextWidth (VStr String) {
   const int len = String.length();
   if (len == 0) return 0;
   int res = 0, pos = 0, start = 0;
@@ -926,7 +945,7 @@ int VFont::TextWidth (VStr String) const {
 //  VFont::TextHeight
 //
 //==========================================================================
-int VFont::TextHeight (VStr String) const {
+int VFont::TextHeight (VStr String) {
   int h = FontHeight;
   const int len = String.length();
   if (len > 0) {
@@ -942,7 +961,7 @@ int VFont::TextHeight (VStr String) const {
 //  VFont::SplitText
 //
 //==========================================================================
-int VFont::SplitText (VStr Text, TArray<VSplitLine> &Lines, int MaxWidth, bool trimRight) const {
+int VFont::SplitText (VStr Text, TArray<VSplitLine> &Lines, int MaxWidth, bool trimRight) {
   Lines.Clear();
   const char *Start = *Text;
   bool WordStart = true;
@@ -1022,7 +1041,7 @@ int VFont::SplitText (VStr Text, TArray<VSplitLine> &Lines, int MaxWidth, bool t
 //  VFont::SplitTextWithNewlines
 //
 //==========================================================================
-VStr VFont::SplitTextWithNewlines (VStr Text, int MaxWidth, bool trimRight) const {
+VStr VFont::SplitTextWithNewlines (VStr Text, int MaxWidth, bool trimRight) {
   TArray<VSplitLine> Lines;
   SplitText(Text, Lines, MaxWidth, trimRight);
   VStr Ret;
