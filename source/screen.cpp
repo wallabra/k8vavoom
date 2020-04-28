@@ -518,8 +518,9 @@ static void CheckResolutionChange () {
     if (GRoot) GRoot->RefreshScale();
     // post "resolution changed" event
     event_t ev;
-    memset((void *)&ev, 0, sizeof(event_t));
-    ev.type = ev_resolution;
+    ev.clear();
+    ev.type = ev_broadcast;
+    ev.data1 = ev_resolution;
     VObject::PostEvent(ev);
     // recalculate view size and other data
     //R_SetViewSize(screenblocks);

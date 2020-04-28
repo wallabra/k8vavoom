@@ -538,7 +538,7 @@ void VInput::Shutdown () {
 bool VInputPublic::PostKeyEvent (int key, int press, vuint32 modflags) {
   if (!key) return true; // always succeed
   event_t ev;
-  memset((void *)&ev, 0, sizeof(event_t));
+  ev.clear();
   ev.type = (press ? ev_keydown : ev_keyup);
   ev.keycode = key;
   ev.modflags = modflags;

@@ -819,6 +819,15 @@ override void OnDraw () {
 //
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
+  if (evt.type == ev_broadcast) {
+    if (evt.data1 == ev_resolution) {
+      //printdebug("%C: *** RESOLUTION ***", self);
+      // center menu
+      SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
+    }
+    return ::OnEvent(evt);
+  }
+
   if (evt.bubbling && evt.type == ev_keydown && evt.keycode == K_MOUSE2) {
     ClGame.PopMenu();
     return true;
@@ -861,12 +870,6 @@ override bool OnEvent (ref event_t evt) {
         ClGame.PopMenu();
         return true;
     }
-  }
-
-  if (evt.bubbling && evt.type == ev_resolution) {
-    //printdebug("%C: *** RESOLUTION ***", self);
-    // center menu
-    SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
   }
 
   return ::OnEvent(evt);
