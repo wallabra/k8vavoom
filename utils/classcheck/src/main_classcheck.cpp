@@ -589,6 +589,22 @@ void parseTypeDims (SemParser *par, Type *tp) {
 
 //==========================================================================
 //
+//  parseShitppSkipTemplateShit
+//
+//==========================================================================
+void parseShitppSkipTemplateShit (SemParser *par) {
+  int stline = par->getTokenLine();
+  for (;;) {
+    if (par->eat("{")) { skipBrackets(par); par->eat(";"); break; }
+    if (par->eat(";")) break;
+    par->skipToken();
+    if (par->token.isEmpty()) Sys_Error("%s:%d: skip 'template' fucked!", *par->srcfile, stline);
+  }
+}
+
+
+//==========================================================================
+//
 //  parseShitppType
 //
 //==========================================================================
@@ -599,11 +615,13 @@ Type *parseShitppType (SemParser *par, VStr tpname) {
   if (tpname == "vint8") tpname = "vuint8";
   if (tpname == "TArray") tpname = "array";
   if (tpname == "VTextureID") tpname = "vint32";
+  if (tpname == "template") { parseShitppSkipTemplateShit(par); return nullptr; }
   Type *tp = new Type();
   tp->shitpp = true;
   tp->srcfile = par->srcfile;
   tp->name = VName(*tpname, VName::Add);
   tp->loc = par->getTokenLoc();
+  //GLog.Logf(NAME_Debug, "%s:%d: '%s'", *par->srcfile, tp->loc.line, *tp->name);
   // check for template
   if (par->eat("<")) {
     Type *last = nullptr;
@@ -907,22 +925,6 @@ void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=
   // register type
   //GLog.Logf(NAME_Debug, "shitpp: %s", *tp->toString());
   shitppTypes.put(tp->name, tp);
-}
-
-
-//==========================================================================
-//
-//  parseShitppSkipTemplateShit
-//
-//==========================================================================
-void parseShitppSkipTemplateShit (SemParser *par) {
-  int stline = par->getTokenLine();
-  for (;;) {
-    if (par->eat("{")) { skipBrackets(par); par->eat(";"); break; }
-    if (par->eat(";")) break;
-    par->skipToken();
-    if (par->token.isEmpty()) Sys_Error("%s:%d: skip 'template' fucked!", *par->srcfile, stline);
-  }
 }
 
 
