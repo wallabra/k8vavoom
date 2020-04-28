@@ -163,6 +163,13 @@ menudef GameplayOptions {
   header "Misc. Options";
 
   option bool {
+    title = "Always Run";
+    cvar = always_run;
+    help =
+      "Controls 'always run' mode.";
+  }
+
+  option bool {
     title = "Global Autoaim";
     cvar = autoaim;
     help =
