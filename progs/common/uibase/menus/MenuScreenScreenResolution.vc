@@ -38,6 +38,7 @@ MenuInputLine EdHeight;
 MenuChoiceEnum Depth;
 MenuChoiceEnum Windowed;
 MenuChoiceEnum VSync;
+MenuChoiceNumeric ScrScale;
 
 
 //==========================================================================
@@ -58,6 +59,7 @@ override void CreateChoices () {
     return true;
   };
   currentY += Mode.Height;
+    SetLastHelp("Choose one of the predefined screen sizes.");
 
   EdWidth = MenuInputLine(NewChild(MenuInputLine));
   //SetChoiceInitialSizePos(EdWidth);
@@ -68,6 +70,7 @@ override void CreateChoices () {
   EdWidth.Value = GetCvarS('screen_width');
   EdWidth.DisableSlotRendering();
   currentY += EdWidth.Height;
+    SetLastHelp("Custom screen resolution.");
 
   EdHeight = MenuInputLine(NewChild(MenuInputLine));
   //SetChoiceInitialSizePos(EdHeight);
@@ -78,6 +81,22 @@ override void CreateChoices () {
   EdHeight.Value = GetCvarS('screen_height');
   EdHeight.DisableSlotRendering();
   currentY += EdHeight.Height;
+    SetLastHelp("Custom screen resolution.");
+
+  ScrScale = NewChild(MenuChoiceNumeric);//CreateFloatNumericCvar("Screen Scale", 'gl_scale', 1, 1, 64);
+  SetChoiceInitialSizePos(ScrScale);
+  ScrScale.Text = "Screen Scale";
+  //ScrScale.cvarSession = cvname;
+  ScrScale.ValueDelta = 1;
+  ScrScale.Value = GetCvarF('screen_scale');
+  ScrScale.MinValue = 1;
+  ScrScale.MaxValue = 8;
+  //ScrScale.SetSessionCvar(cvname);
+  currentY += ScrScale.Height;
+    SetLastHelp(
+      "Screen scaling factor.\n"~
+      "You can set it to >1 to render screen in lower resolution.\n"~
+      "\cGWARNING! Requires applying of 'SET RESOLUTION' option!");
 
   Windowed = CreateEnumCvar("Fullscreen mode", 'screen_fsmode',
     "Window",
@@ -90,7 +109,7 @@ override void CreateChoices () {
       "Scaled Fullscreen mode will not change your desktop resolution,\n"~
       "it will scale rendered image instead.\n"~
       "Real Fullscreen mode will change your desktop resolution.\n"~
-      "WARNING: The engine trusts you, and will not check if videomode is valid.");
+      "\cGWARNING: The engine trusts you, and will not check if videomode is valid.");
 
   CreateEnumCvar("FS Letterbox", 'gl_letterbox',
     "No",
@@ -174,6 +193,7 @@ int GetModeValue () {
 void ActivateSetMode (Object Sender) {
   SetCvar('screen_fsmode', int(Windowed.Value));
   SetCvar('r_vsync', int(VSync.Value));
+  SetCvarF('screen_scale', ScrScale.Value);
   CmdBuf_AddText("SetResolution %d %d\n", atoi(EdWidth.Value) ? atoi(EdWidth.Value) : modes[int(Mode.Value)].width,
     atoi(EdHeight.Value) ? atoi(EdHeight.Value) : modes[int(Mode.Value)].height);
 }

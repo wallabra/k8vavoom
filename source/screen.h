@@ -30,5 +30,8 @@ void SCR_Update (bool fullUpdate=true);
 void SCR_SignalWipeStart ();
 
 
+extern int RealScreenWidth;
+extern int RealScreenHeight;
+
 extern int ScreenWidth;
 extern int ScreenHeight;

@@ -55,6 +55,7 @@ VCvarS gl_letterbox_color("gl_letterbox_color", "00 00 00", "Letterbox color", C
 static ColorCV letterboxColor(&gl_letterbox_color);
 static VCvarF gl_letterbox_scale("gl_letterbox_scale", "1", "Letterbox scaling factor in range (0..1].", CVAR_Archive);
 
+
 VCvarI VOpenGLDrawer::texture_filter("gl_texture_filter", "0", "Texture filtering mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::sprite_filter("gl_sprite_filter", "0", "Sprite filtering mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::model_filter("gl_model_filter", "0", "Model filtering mode.", CVAR_Archive);
@@ -650,7 +651,10 @@ void VOpenGLDrawer::InitResolution () {
     ReactivateCurrentFBO();
   }
 
-  GCon->Logf(NAME_Init, "Setting up new resolution: %dx%d", ScreenWidth, ScreenHeight);
+  const int calcWidth = ScreenWidth;
+  const int calcHeight = ScreenHeight;
+
+  GCon->Logf(NAME_Init, "Setting up new resolution: %dx%d (%dx%d)", RealScreenWidth, RealScreenHeight, calcWidth, calcHeight);
 
   if (gl_dump_vendor) {
     GCon->Logf(NAME_Init, "GL_VENDOR: %s", glGetString(GL_VENDOR));
@@ -911,10 +915,9 @@ void VOpenGLDrawer::InitResolution () {
   glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, 0);
 
 
-  //GCon->Logf("********* %d : %d *********", ScreenWidth, ScreenHeight);
-
   // allocate main FBO object
-  mainFBO.createDepthStencil(this, ScreenWidth, ScreenHeight);
+  mainFBO.createDepthStencil(this, calcWidth, calcHeight);
+  mainFBO.scrScaled = (RealScreenWidth != ScreenWidth || RealScreenHeight != ScreenHeight);
   GCon->Logf(NAME_Init, "OpenGL: reverse z is %s", (useReverseZ ? "enabled" : "disabled"));
 
   mainFBO.activate();
@@ -943,10 +946,10 @@ void VOpenGLDrawer::InitResolution () {
   }
 
   // allocate ambient light FBO object
-  ambLightFBO.createTextureOnly(this, ScreenWidth, ScreenHeight);
+  ambLightFBO.createTextureOnly(this, calcWidth, calcHeight);
 
   // allocate wipe FBO object
-  wipeFBO.createTextureOnly(this, ScreenWidth, ScreenHeight);
+  wipeFBO.createTextureOnly(this, calcWidth, calcHeight);
 
   mainFBO.activate();
 
@@ -1024,7 +1027,7 @@ void VOpenGLDrawer::InitResolution () {
   callICB(VCB_InitResolution);
 
   /*
-  if (canIntoBloomFX && r_bloom) Posteffect_Bloom(0, 0, ScreenWidth, ScreenHeight);
+  if (canIntoBloomFX && r_bloom) Posteffect_Bloom(0, 0, calcWidth, calcHeight);
   currentActiveFBO = nullptr;
   ReactivateCurrentFBO();
   */
@@ -2452,6 +2455,7 @@ VOpenGLDrawer::FBO::FBO ()
   , mWidth(0)
   , mHeight(0)
   , mLinearFilter(false)
+  , scrScaled(false)
 {
 }
 
@@ -2754,18 +2758,23 @@ void VOpenGLDrawer::FBO::blitToScreen () {
   mOwner->GetRealWindowSize(&realw, &realh);
   int scaledWidth = realw, scaledHeight = realh;
   int blitOfsX = 0, blitOfsY = 0;
-  if (gl_letterbox && (realw != mWidth || realh != mHeight)) {
+
+  const int calcWidth = mWidth;
+  const int calcHeight = mHeight;
+  //GCon->Logf(NAME_Debug, "VOpenGLDrawer::FBO::blitToScreen: scrScaled=%d; size=(%d,%d); calcSize=(%d,%d); realSize=(%d,%d)", (int)scrScaled, mWidth, mHeight, calcWidth, calcHeight, realw, realh);
+
+  if ((gl_letterbox || scrScaled) && (realw != calcWidth || realh != calcHeight)) {
     //const float aspect = R_GetAspectRatio();
     const float llscale = clampval(gl_letterbox_scale.asFloat(), 0.0f, 1.0f);
     const float aspect = 1.0f;
-    const float scaleX = float(realw)/float(mWidth);
-    const float scaleY = float(realh*aspect)/float(mHeight);
+    const float scaleX = float(realw)/float(calcWidth);
+    const float scaleY = float(realh*aspect)/float(calcHeight);
     const float scale = (scaleX <= scaleY ? scaleX : scaleY)*(llscale ? llscale : 1.0f);
-    scaledWidth = int(mWidth*scale);
-    scaledHeight = int(mHeight/aspect*scale);
+    scaledWidth = int(calcWidth*scale);
+    scaledHeight = int(calcHeight/aspect*scale);
     blitOfsX = (realw-scaledWidth)/2;
     blitOfsY = (realh-scaledHeight)/2;
-    //GCon->Logf(NAME_Debug, "letterbox: size=(%d,%d); real=(%d,%d); scaled=(%d,%d); offset=(%d,%d); scale=(%g,%g)", mWidth, mHeight, realw, realh, scaledWidth, scaledHeight, blitOfsX, blitOfsY, scaleX, scaleY);
+    //GCon->Logf(NAME_Debug, "letterbox: size=(%d,%d); real=(%d,%d); scaled=(%d,%d); offset=(%d,%d); scale=(%g,%g)", calcWidth, calcHeight, realw, realh, scaledWidth, scaledHeight, blitOfsX, blitOfsY, scaleX, scaleY);
     // clear stripes
     //glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
     //glClear(GL_COLOR_BUFFER_BIT);
@@ -2854,16 +2863,16 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     mOwner->p_glUseProgramObjectARB(0);
     mOwner->currentActiveShader = nullptr;
 
-    if (mWidth == realw && mHeight == realh) {
+    if (calcWidth == realw && calcHeight == realh) {
       // copy texture by drawing full quad
       //mOwner->SetOrthoProjection(0, mWidth, mHeight, 0);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glBegin(GL_QUADS);
         glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
-        glTexCoord2f(1.0f, 1.0f); glVertex2i(mWidth, 0);
-        glTexCoord2f(1.0f, 0.0f); glVertex2i(mWidth, mHeight);
-        glTexCoord2f(0.0f, 0.0f); glVertex2i(0, mHeight);
+        glTexCoord2f(1.0f, 1.0f); glVertex2i(calcWidth, 0);
+        glTexCoord2f(1.0f, 0.0f); glVertex2i(calcWidth, calcHeight);
+        glTexCoord2f(0.0f, 0.0f); glVertex2i(0, calcHeight);
       glEnd();
     } else {
       //mOwner->SetOrthoProjection(0, realw, realh, 0, -99999, 99999);

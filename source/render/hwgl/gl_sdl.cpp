@@ -39,6 +39,7 @@
 
 
 extern VCvarB ui_want_mouse_at_zero;
+extern VCvarF screen_scale;
 
 
 class VSdlOpenGLDrawer : public VOpenGLDrawer {
@@ -419,8 +420,17 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   //SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
   // Everything is fine, set some globals and finish
-  ScreenWidth = Width;
-  ScreenHeight = Height;
+  RealScreenWidth = Width;
+  RealScreenHeight = Height;
+
+  int calcWidth = RealScreenWidth, calcHeight = RealScreenHeight;
+  const float scrScale = screen_scale.asFloat();
+  if (scrScale > 1.0f) {
+    calcWidth = max2(4, (int)(calcWidth/scrScale));
+    calcHeight = max2(4, (int)(calcHeight/scrScale));
+  }
+  ScreenWidth = calcWidth;
+  ScreenHeight = calcHeight;
 
   //SDL_DisableScreenSaver();
 

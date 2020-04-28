@@ -182,6 +182,9 @@ public:
     int mHeight;
     bool mLinearFilter;
 
+  public:
+    bool scrScaled;
+
   private:
     void createInternal (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil, bool mirroredRepeat);
 

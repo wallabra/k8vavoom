@@ -41,6 +41,8 @@ static bool wipeStarted = false;
 
 int ScreenWidth = 0;
 int ScreenHeight = 0;
+int RealScreenWidth = 0;
+int RealScreenHeight = 0;
 
 int VirtualWidth = 640;
 int VirtualHeight = 480;
@@ -147,8 +149,9 @@ const vuint8 *getGammaTable (int idx) {
 }
 
 static bool setresolutionneeded = false;
-static int setwidth;
-static int setheight;
+static int setwidth = 0;
+static int setheight = 0;
+static float lastScrScale = 0;
 
 static VCvarB dbg_disable_world_render("dbg_disable_world_render", false, "Disable world rendering?", 0);
 
@@ -159,8 +162,11 @@ static VCvarB draw_world_timer("draw_world_timer", false, "Draw playing time?", 
 VCvarB r_wipe_enabled("r_wipe_enabled", true, "Is screen wipe effect enabled?", CVAR_Archive);
 VCvarI r_wipe_type("r_wipe_type", "0", "Wipe type?", CVAR_Archive);
 
+VCvarF screen_scale("screen_scale", "1", "Screen scaling factor (you can set it to >1 to render screen in lower resolution).", CVAR_Archive);
 static VCvarI screen_width("screen_width", "0", "Custom screen width", CVAR_Archive);
 static VCvarI screen_height("screen_height", "0", "Custom screen height", CVAR_Archive);
+static VCvarI screen_width_internal("screen_width_internal", "0", "Internal (rendering) screen width", CVAR_Rom);
+static VCvarI screen_height_internal("screen_height_internal", "0", "Internal (rendering) screen height", CVAR_Rom);
 VCvarI screen_fsmode("screen_fsmode", "0", "Video mode: windowed(0), fullscreen scaled(1), fullscreen real(2)", CVAR_Archive);
 static VCvarI brightness("brightness", "0", "Brightness.", CVAR_Archive);
 
@@ -426,8 +432,8 @@ static void ChangeResolution (int InWidth, int InHeight) {
   // changing resolution
   if (!Drawer->SetResolution(width, height, screen_fsmode)) {
     GCon->Logf("Failed to set resolution %dx%d", width, height);
-    if (ScreenWidth && lastFSMode >= 0) {
-      if (!Drawer->SetResolution(ScreenWidth, ScreenHeight, lastFSMode)) {
+    if (RealScreenWidth && lastFSMode >= 0) {
+      if (!Drawer->SetResolution(RealScreenWidth, RealScreenHeight, lastFSMode)) {
         Sys_Error("ChangeResolution: failed to restore resolution");
       } else {
         GCon->Log("Restoring previous resolution");
@@ -445,8 +451,13 @@ static void ChangeResolution (int InWidth, int InHeight) {
   }
   //GCon->Logf("%dx%d.", ScreenWidth, ScreenHeight);
 
-  screen_width = ScreenWidth;
-  screen_height = ScreenHeight;
+  screen_width = RealScreenWidth;
+  screen_height = RealScreenHeight;
+
+  screen_width_internal = ScreenWidth;
+  screen_height_internal = ScreenHeight;
+
+  lastScrScale = max2(1.0f, screen_scale.asFloat());
 
   VirtualWidth = (ScreenWidth >= 1280 ? ScreenWidth/2 : 640);
   VirtualHeight = (ScreenHeight >= 960 ? ScreenHeight/2 : 480);
@@ -495,7 +506,7 @@ static void CheckResolutionChange () {
     ChangeResolution(setwidth, setheight);
     setresolutionneeded = false;
     res_changed = true;
-  } else if (!screen_width || screen_width != ScreenWidth || screen_height != ScreenHeight) {
+  } else if (!screen_width || screen_width != RealScreenWidth || screen_height != RealScreenHeight || lastScrScale != max2(1.0f, screen_scale.asFloat())) {
     ChangeResolution(screen_width, screen_height);
     res_changed = true;
   }
@@ -513,6 +524,7 @@ static void CheckResolutionChange () {
     // recalculate view size and other data
     //R_SetViewSize(screenblocks);
     if (Drawer->RendLev) R_ForceViewSizeUpdate();
+    //GCon->Logf(NAME_Debug, "RES: real=(%dx%d); scr=(%dx%d)", RealScreenWidth, RealScreenHeight, ScreenWidth, ScreenHeight);
   }
   graphics_started = true;
 }
@@ -546,8 +558,8 @@ COMMAND(SetResolution) {
 //
 //==========================================================================
 COMMAND(vid_restart) {
-  setwidth = ScreenWidth;
-  setheight = ScreenHeight;
+  setwidth = RealScreenWidth;
+  setheight = RealScreenHeight;
   setresolutionneeded = true;
 }
 
