@@ -33,12 +33,22 @@ string EnterText;
 delegate void ValueChanged (Object Sender);
 
 
+//==========================================================================
+//
+//  OnCreate
+//
+//==========================================================================
 override void OnCreate () {
   ::OnCreate();
   InitSlot();
 }
 
 
+//==========================================================================
+//
+//  DisableSlotRendering
+//
+//==========================================================================
 void DisableSlotRendering () {
   if (DrawSlotPic) {
     DrawSlotPic = false;
@@ -51,6 +61,11 @@ void DisableSlotRendering () {
 }
 
 
+//==========================================================================
+//
+//  MakeOneLineControl
+//
+//==========================================================================
 void MakeOneLineControl () {
   DisableSlotRendering();
   Width = Parent.Width;
@@ -62,11 +77,21 @@ void MakeOneLineControl () {
 }
 
 
+//==========================================================================
+//
+//  OnValueChanged
+//
+//==========================================================================
 void OnValueChanged () {
   if (ValueChanged) ValueChanged(self);
 }
 
 
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
 override void OnDraw () {
   DrawBackground();
 
@@ -108,6 +133,11 @@ override void OnDraw () {
 }
 
 
+//==========================================================================
+//
+//  OnEvent
+//
+//==========================================================================
 override bool OnEvent (ref event_t evt) {
   // "on click"
   if (evt.bubbling && evt.type == ev_click && evt.dest == self) {

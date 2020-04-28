@@ -36,12 +36,22 @@ int TranslEnd;
 int Color;
 
 
+//==========================================================================
+//
+//  OnCreate
+//
+//==========================================================================
 override void OnCreate () {
   ::OnCreate();
   Disable();
 }
 
 
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
 override void OnDraw () {
   R_DrawModelFrame(Origin, Angle, Model, Frame, NextFrame, Skin, TranslStart, TranslEnd, Color);
 }

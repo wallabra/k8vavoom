@@ -26,6 +26,11 @@
 class MenuChoice_LoadSlot : MenuSaveSlot;
 
 
+//==========================================================================
+//
+//  ActivateSlot
+//
+//==========================================================================
 override void ActivateSlot () {
   if (!Status) return; // don't try to load from an empty slot
   CmdBuf_AddText("Load %d\n", SlotNum);

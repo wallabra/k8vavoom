@@ -22,6 +22,12 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+
+//**************************************************************************
+//
+// MenuDefConditionBase
+//
+//**************************************************************************
 class MenuDefConditionBase : Object;
 
 string cond;
@@ -31,6 +37,11 @@ string sval;
 bool isfloat;
 
 
+//==========================================================================
+//
+//  test
+//
+//==========================================================================
 bool test () {
   if (!cvar || !CvarExists(cvar)) return false;
   if (isfloat) {
@@ -54,7 +65,13 @@ bool test () {
 }
 
 
-// '[' eaten
+//==========================================================================
+//
+//  parse
+//
+//  '[' eaten
+//
+//==========================================================================
 void parse (ScriptsParser par) {
   par.ExpectIdentifier();
   cvar = name(par.String);
@@ -76,7 +93,12 @@ void parse (ScriptsParser par) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefinition
+//
+//**************************************************************************
 class MenuDefinition : Object;
 
 string menuName;
@@ -99,6 +121,11 @@ static final string readText (string fname) {
 */
 
 
+//==========================================================================
+//
+//  str2bool
+//
+//==========================================================================
 static final bool str2bool (string s) {
   return
     stricmp(s, "tan") == 0 ||
@@ -109,6 +136,11 @@ static final bool str2bool (string s) {
 }
 
 
+//==========================================================================
+//
+//  openParser
+//
+//==========================================================================
 static final ScriptsParser openParser (string fname) {
   auto par = SpawnObject(ScriptsParser);
   //par.OpenString('menudef', readText(fname));
@@ -119,6 +151,11 @@ static final ScriptsParser openParser (string fname) {
 }
 
 
+//==========================================================================
+//
+//  openParserFromLump
+//
+//==========================================================================
 static final ScriptsParser openParserFromLump (int lump) {
   auto par = SpawnObject(ScriptsParser);
   //par.OpenString('menudef', readText(fname));
@@ -129,6 +166,11 @@ static final ScriptsParser openParserFromLump (int lump) {
 }
 
 
+//==========================================================================
+//
+//  findModSubMenuOption
+//
+//==========================================================================
 MenuDefOptionModSubMenus findModSubMenuOption () {
   foreach (MenuDefOptionBase opt; options) {
     if (opt isa MenuDefOptionModSubMenus) return MenuDefOptionModSubMenus(opt);
@@ -140,7 +182,13 @@ MenuDefOptionModSubMenus findModSubMenuOption () {
 }
 
 
-// fix GZDoom-style menudefs
+//==========================================================================
+//
+//  fixGZList
+//
+//  fix GZDoom-style menudefs
+//
+//==========================================================================
 private final static void fixGZList (ref array!MenuDefOptionBase options, ref array!(ClientGameShared::OptionValue) ovals,
                                      bool delegate (string subname) gzCheckSub)
 {
@@ -177,11 +225,21 @@ private final static void fixGZList (ref array!MenuDefOptionBase options, ref ar
 }
 
 
+//==========================================================================
+//
+//  fixGZOptionValues
+//
+//==========================================================================
 void fixGZOptionValues (ref array!(ClientGameShared::OptionValue) ovals, bool delegate (string subname) gzCheckSub) {
   fixGZList(options, ovals, gzCheckSub);
 }
 
 
+//==========================================================================
+//
+//  filterOptionList
+//
+//==========================================================================
 static final void filterOptionList (ref array!MenuDefOptionBase options, optional int stidx) {
   if (stidx < 0) stidx = 0;
   while (stidx < options.length) {
@@ -197,7 +255,13 @@ static final void filterOptionList (ref array!MenuDefOptionBase options, optiona
 }
 
 
-// "menudef" eaten
+//==========================================================================
+//
+//  parse
+//
+//  "menudef" eaten
+//
+//==========================================================================
 void parse (ScriptsParser par) {
   par.ExpectIdentifier();
   menuName = par.String.toLowerCase();
@@ -273,7 +337,12 @@ void parse (ScriptsParser par) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionBase
+//
+//**************************************************************************
 class MenuDefOptionBase : Object;
 
 MenuDefConditionBase cond;
@@ -284,23 +353,43 @@ int textColor = CR_UNDEFINED;
 int textColorFocus = CR_UNDEFINED;
 
 
+//==========================================================================
+//
+//  Destroy
+//
+//==========================================================================
 override void Destroy () {
   delete cond;
   ::Destroy();
 }
 
 
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 MenuChoice CreateOption (MenuScreen menu) {
   return none;
 }
 
 
+//==========================================================================
+//
+//  test
+//
+//==========================================================================
 bool test () {
   if (!cond) return true;
   return cond.test();
 }
 
 
+//==========================================================================
+//
+//  parseTextColorName
+//
+//==========================================================================
 final static int parseTextColorName (ScriptsParser par) {
        if (par.Check("undefined") || par.Check("default")) return CR_UNDEFINED;
   else if (par.Check("brick")) return CR_BRICK;
@@ -334,7 +423,13 @@ final static int parseTextColorName (ScriptsParser par) {
 }
 
 
-// "option" skipped
+//==========================================================================
+//
+//  parse
+//
+//  "option" skipped
+//
+//==========================================================================
 final static MenuDefOptionBase parse (ScriptsParser par) {
   MenuDefOptionBase res;
   par.SetCMode(true);
@@ -366,7 +461,13 @@ final static MenuDefOptionBase parse (ScriptsParser par) {
 }
 
 
-// parse GZDoom-style menudef
+//==========================================================================
+//
+//  MenuDefOptionBase
+//
+//  parse GZDoom-style menudef
+//
+//==========================================================================
 final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGameShared::OptionValue) ovals*/) {
   par.SetCMode(true);
   par.SetEscape(true);
@@ -535,6 +636,11 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGa
 }
 
 
+//==========================================================================
+//
+//  parseOne
+//
+//==========================================================================
 bool parseOne (ScriptsParser par) {
   if (par.Check("title")) {
     par.Expect("=");
@@ -583,7 +689,12 @@ bool parseOne (ScriptsParser par) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionModSubMenus
+//
+//**************************************************************************
 class MenuDefOptionModSubMenus : MenuDefOptionBase;
 
 array!MenuDefOptionBase options;
@@ -595,9 +706,19 @@ defaultproperties {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionSubHeader
+//
+//**************************************************************************
 class MenuDefOptionSubHeader : MenuDefOptionBase;
 
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuSmallTextButton(menu.NewChild(MenuSmallTextButton));
   opt.TextHAlign = hcenter;
@@ -618,11 +739,22 @@ defaultproperties {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionBool
+//
+//**************************************************************************
 class MenuDefOptionBool : MenuDefOptionBase;
 
 bool inverted;
 
+
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuChoice_OnOff(menu.NewChild(MenuChoice_OnOff));
   opt.SetInverted(inverted);
@@ -634,13 +766,23 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionEnum
+//
+//**************************************************************************
 class MenuDefOptionEnum : MenuDefOptionBase;
 
 array!(ClientGameShared::OptionValueDef) list;
 string gzOptValName;
 
 
+//==========================================================================
+//
+//  parseOne
+//
+//==========================================================================
 override bool parseOne (ScriptsParser par) {
   if (::parseOne(par)) return true;
 
@@ -697,6 +839,11 @@ override bool parseOne (ScriptsParser par) {
 }
 
 
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuChoiceEnum(menu.NewChild(MenuChoiceEnum));
   opt.SetText(title);
@@ -708,16 +855,30 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionRenderType
+//
+//**************************************************************************
 class MenuDefOptionRenderType : MenuDefOptionBase;
 
-
+//==========================================================================
+//
+//  parseOne
+//
+//==========================================================================
 override bool parseOne (ScriptsParser par) {
   if (::parseOne(par)) return true;
   return false;
 }
 
 
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   // if we have only one renderer available, there's no need to choose anything
   if (!R_SupportsShadowVolumeRendering()) return none;
@@ -733,7 +894,12 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionSlider
+//
+//**************************************************************************
 class MenuDefOptionSlider : MenuDefOptionBase;
 
 float step = 0.1;
@@ -742,6 +908,11 @@ float maxv = 1.0;
 name maxcvar;
 
 
+//==========================================================================
+//
+//  parseOne
+//
+//==========================================================================
 override bool parseOne (ScriptsParser par) {
   if (::parseOne(par)) return true;
 
@@ -781,6 +952,11 @@ override bool parseOne (ScriptsParser par) {
 }
 
 
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuChoiceSlider(menu.NewChild(MenuChoiceSlider));
   opt.SetText(title);
@@ -794,9 +970,19 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionNumeric
+//
+//**************************************************************************
 class MenuDefOptionNumeric : MenuDefOptionSlider;
 
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuChoiceNumeric(menu.NewChild(MenuChoiceNumeric));
   opt.SetText(title);
@@ -811,7 +997,12 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionSubMenu
+//
+//**************************************************************************
 class MenuDefOptionSubMenu : MenuDefOptionBase;
 
 class!MenuScreen smclass;
@@ -819,6 +1010,11 @@ string subname;
 bool gzPostFilter; // this is gz "OptionsMenu" submenu, postfilter it
 
 
+//==========================================================================
+//
+//  parseOne
+//
+//==========================================================================
 override bool parseOne (ScriptsParser par) {
   if (::parseOne(par)) return true;
 
@@ -847,6 +1043,11 @@ override bool parseOne (ScriptsParser par) {
 }
 
 
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   if (!smclass && !subname) return none;
   auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
@@ -858,10 +1059,19 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionSubMenuBig
+//
+//**************************************************************************
 class MenuDefOptionSubMenuBig : MenuDefOptionSubMenu;
 
-
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   if (!smclass && !subname) return none;
   auto opt = MenuTextButton(menu.NewChild(MenuBigTextButton));
@@ -873,10 +1083,19 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionControls
+//
+//**************************************************************************
 class MenuDefOptionControls : MenuDefOptionBase;
 
-
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   // add "Special Controls" for MODs if keyconf lump is present,
   // and it has an "addkeysection" command
@@ -909,10 +1128,19 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionConsole
+//
+//**************************************************************************
 class MenuDefOptionConsole : MenuDefOptionBase;
 
-
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
   opt.SetText(title);
@@ -923,12 +1151,22 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionConCmd
+//
+//**************************************************************************
 class MenuDefOptionConCmd : MenuDefOptionBase;
 
 string concmd;
 
 
+//==========================================================================
+//
+//  parseOne
+//
+//==========================================================================
 override bool parseOne (ScriptsParser par) {
   if (::parseOne(par)) return true;
 
@@ -943,6 +1181,12 @@ override bool parseOne (ScriptsParser par) {
   return false;
 }
 
+
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
   opt.SetText(title);
@@ -959,10 +1203,19 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionCrosshair
+//
+//**************************************************************************
 class MenuDefOptionCrosshair : MenuDefOptionBase;
 
-
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   auto opt = MenuCrosshairChoice(menu.NewChild(MenuCrosshairChoice));
   opt.SetText(title);
@@ -973,7 +1226,12 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// MenuDefOptionBind
+//
+//**************************************************************************
 class MenuDefOptionBind : MenuDefOptionBase;
 
 bool button; // commandOn prepends with "+" and "-"
@@ -991,6 +1249,11 @@ int strifeMode; // 0: don't care; -1: disabled in Strife; 1: enabled in Strife
   }
 */
 
+//==========================================================================
+//
+//  parseOne
+//
+//==========================================================================
 override bool parseOne (ScriptsParser par) {
   if (::parseOne(par)) return true;
 
@@ -1039,6 +1302,11 @@ override bool parseOne (ScriptsParser par) {
 }
 
 
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
 override MenuChoice CreateOption (MenuScreen menu) {
   auto newCtl = MenuControlKey(menu.NewChild(MenuControlKey));
   //newCtl.SetOrigin(ChoicesStartX, ChoicesStartY+NumControls*10);
