@@ -26,8 +26,10 @@
 #include "gitversion.h"
 #include "gamedefs.h"
 #include "net/network.h"
-#include "cl_local.h"
-#include "ui/ui.h"
+#ifdef CLIENT
+# include "cl_local.h"
+# include "ui/ui.h"
+#endif
 #include <time.h>
 #ifndef WIN32
 # include <fcntl.h>
