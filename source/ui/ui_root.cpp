@@ -102,7 +102,7 @@ void VRootWidget::TickWidgets (float DeltaTime) {
 //  VRootWidget::UpdateMousePosition
 //
 //==========================================================================
-void VRootWidget::UpdateMousePosition (int NewX, int NewY) {
+void VRootWidget::UpdateMousePosition (int NewX, int NewY) noexcept {
   // update and clip mouse coordinates against window boundaries
   MouseX = clampval(NewX, 0, SizeWidth-1);
   MouseY = clampval(NewY, 0, SizeHeight-1);
@@ -124,7 +124,7 @@ VWidget *VRootWidget::GetWidgetAtScreenXY (int x, int y) noexcept {
 //  VRootWidget::BuildEventPath
 //
 //==========================================================================
-void VRootWidget::BuildEventPath (VWidget *lastOne) {
+void VRootWidget::BuildEventPath (VWidget *lastOne) noexcept {
   if (lastOne && lastOne->IsGoingToDie()) lastOne = nullptr;
   EventPath.reset();
   for (VWidget *w = CurrentFocusChild; w; w = w->CurrentFocusChild) {
@@ -142,17 +142,48 @@ void VRootWidget::BuildEventPath (VWidget *lastOne) {
 //  VRootWidget::FixEventCoords
 //
 //==========================================================================
-void VRootWidget::FixEventCoords (VWidget *w, event_t *evt) {
+void VRootWidget::FixEventCoords (VWidget *w, event_t *evt, SavedEventParts &svparts) noexcept {
+  svparts.type = 0;
   if (!evt || !evt->isAnyMouseEvent()) return;
   if (!w) w = this;
   if (evt->type != ev_mouse) {
+    svparts.type = 1;
+    svparts.x = evt->x;
+    svparts.y = evt->y;
     evt->x = (int)w->ScaledXToLocal(MouseX*SizeScaleX);
     evt->y = (int)w->ScaledYToLocal(MouseY*SizeScaleX);
   } else {
+    svparts.type = 2;
+    svparts.dx = evt->dx;
+    svparts.dy = evt->dy;
+    svparts.msx = evt->msx;
+    svparts.msy = evt->msy;
     evt->dx = (int)(evt->dx*SizeScaleX/w->ClipRect.ScaleX);
     evt->dy = (int)(evt->dy*SizeScaleY/w->ClipRect.ScaleY);
     evt->msx = (int)w->ScaledXToLocal(MouseX*SizeScaleX);
     evt->msy = (int)w->ScaledYToLocal(MouseY*SizeScaleX);
+  }
+}
+
+
+//==========================================================================
+//
+//  VRootWidget::RestoreEventCoords
+//
+//==========================================================================
+void VRootWidget::RestoreEventCoords (event_t *evt, const SavedEventParts &svparts) noexcept {
+  if (!evt) return;
+  switch (svparts.type) {
+    case 1:
+      evt->x = svparts.x;
+      evt->y = svparts.y;
+      break;
+    case 2:
+      evt->dx = svparts.dx;
+      evt->dy = svparts.dy;
+      evt->msx = svparts.msx;
+      evt->msy = svparts.msy;
+      break;
   }
 }
 
@@ -165,35 +196,34 @@ void VRootWidget::FixEventCoords (VWidget *w, event_t *evt) {
 bool VRootWidget::DispatchEvent (event_t *evt) {
   if (!evt || evt->isEatenOrCancelled() || EventPath.length() == 0) return false;
 
-  // first, sink
-  evt->resetBubbling();
-  evt->dest = EventPath[EventPath.length()-1];
-  const int oldx = evt->x;
-  const int oldy = evt->y;
+  SavedEventParts svparts;
 
-  // do not process deepest child yet
-  for (int f = 0; f < EventPath.length()-1; ++f) {
-    VWidget *w = EventPath[f];
-    if (w->IsGoingToDie()) return false;
-    FixEventCoords(w, evt);
-    const bool done = w->OnEvent(evt);
-    evt->x = oldx;
-    evt->y = oldy;
-    if (done) { evt->setEaten(); return true; }
-    if (evt->isEatenOrCancelled()) return true;
-  }
+  // sink down to the destination parent, then bubble up from the destination
+  // i.e. destination widget will get only "bubbling" event
 
-  // now, bubble
-  evt->setBubbling();
-  for (int f = EventPath.length()-1; f >= 0; --f) {
-    VWidget *w = EventPath[f];
-    if (w->IsGoingToDie()) return false;
-    FixEventCoords(w, evt);
-    const bool done = w->OnEvent(evt);
-    evt->x = oldx;
-    evt->y = oldy;
-    if (done) { evt->setEaten(); return true; }
-    if (evt->isEatenOrCancelled()) return true;
+  int dir = 1; // 1: sinking; -1: bubbling
+  int widx = 0;
+  while (widx >= 0 && widx < EventPath.length()) {
+    if (dir == 1 && widx == EventPath.length()-1) dir = -1; // stop sinking, start bubbling
+    VWidget *w = EventPath[widx];
+    if (w->IsGoingToDie()) {
+      // if sinking, don't sink furhter
+      // if bubbling, do nothing
+      dir = -1;
+    } else {
+      // protect from accidental changes
+      if (dir == 1) evt->setSinking(); else evt->setBubbling();
+      evt->dest = EventPath[EventPath.length()-1];
+      // fix mouse coords
+      FixEventCoords(w, evt, svparts);
+      // call event handler
+      if (w->OnEvent(evt)) evt->setEaten();
+      // restore modified event fields
+      RestoreEventCoords(evt, svparts);
+      // get out if event is consumed or cancelled
+      if (evt->isEatenOrCancelled()) return true;
+    }
+    widx += dir;
   }
 
   return false;

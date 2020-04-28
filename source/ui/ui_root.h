@@ -28,6 +28,12 @@ class VRootWidget : public VWidget {
   NO_DEFAULT_CONSTRUCTOR(VRootWidget)
 
 private:
+  struct SavedEventParts {
+    int type; // 0: none; 1: x,y; 2: d/m
+    int x, y, dx, dy, msx, msy;
+  };
+
+private:
   enum {
     // true if mouse cursor is currently enabled
     RWF_MouseEnabled = 1u<<0,
@@ -53,16 +59,17 @@ private:
   void MouseClickEvent (const event_t *evt);
 
   // adds `lastOne` if it is not the last one already
-  void BuildEventPath (VWidget *lastOne=nullptr);
+  void BuildEventPath (VWidget *lastOne=nullptr) noexcept;
 
   // the path should be already built
   // returns `true` if any handler returned `true`
   // sets `eaten`  if any handler returned `true`
   bool DispatchEvent (event_t *evt);
 
-  void UpdateMousePosition (int NewX, int NewY);
+  void UpdateMousePosition (int NewX, int NewY) noexcept;
 
-  void FixEventCoords (VWidget *w, event_t *evt);
+  void FixEventCoords (VWidget *w, event_t *evt, SavedEventParts &svparts) noexcept;
+  void RestoreEventCoords (event_t *evt, const SavedEventParts &svparts) noexcept;
 
   // this is called by the engine to dispatch the event
   bool InternalResponder (event_t *evt);
