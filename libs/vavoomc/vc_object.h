@@ -254,6 +254,10 @@ struct event_t {
   inline void setBubbling () noexcept { flags |= EFlag_Bubbling; }
   inline void resetBubbling () noexcept { flags &= ~EFlag_Bubbling; }
 
+  inline bool isSinking () const noexcept { return !(flags&EFlag_Bubbling); }
+  inline void setSinking () noexcept { flags &= ~EFlag_Bubbling; }
+  inline void resetSinking () noexcept { flags |= EFlag_Bubbling; }
+
   inline bool isCtrlDown () const noexcept { return !!(modflags&bCtrl); }
   inline bool isAltDown () const noexcept { return !!(modflags&bAlt); }
   inline bool isShiftDown () const noexcept { return !!(modflags&bShift); }
