@@ -1,13 +1,8 @@
 #version 120
 $include "common/common.inc"
 
-//#ifdef GL4ES_HACKS
 attribute vec3 Position;
-//#endif
-//attribute vec2 TexCoord;
-//
 
-//$include "common/texture_vars.vs"
 uniform vec3 SAxis;
 uniform vec3 TAxis;
 uniform float TexIW;
@@ -22,16 +17,9 @@ $include "common/glow_vars.vs"
 
 void main () {
   // transforming the vertex
-//#ifdef GL4ES_HACKS
+  //gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
   gl_Position = gl_ModelViewProjectionMatrix*vec4(Position, 1.0);
-/*
-#else
-  gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
-#endif
-*/
   // pass texture coordinates
-  //TextureCoordinate = TexCoord;
-  //$include "common/texture_calc.vs"
   TextureCoordinate = vec2(
     dot(Position-TexOrg, SAxis)*TexIW,
     dot(Position-TexOrg, TAxis)*TexIH
