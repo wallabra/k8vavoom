@@ -103,7 +103,6 @@ public:
   static VFont *FindFont (VName AName);
   static VFont *FindFont (VStr AName);
   static VFont *GetFont (VStr AName, VStr LumpName);
-  static VFont *GetFont (VName AName, VName LumpName);
   static VFont *GetFont (VStr AName);
   static int ParseColorEscape (const char *&, int, int, VStr *escstr=nullptr);
   static int FindTextColor (VName);

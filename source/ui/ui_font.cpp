@@ -167,7 +167,7 @@ void VFont::StaticInit () {
 
   if (SmallFont->GetFontName() == NAME_None) {
     GCon->Log(NAME_Init, "  SmallFont: cannot create it, using ConsoleFont instead...");
-    SmallFont = GetFont(VStr(NAME_smallfont), VStr(VAVOOM_CON_FONT_PATH));
+    SmallFont = GetFont(VStr(VName(NAME_smallfont)), VStr(VAVOOM_CON_FONT_PATH));
     if (!SmallFont) Sys_Error("cannot create console font");
   }
 
@@ -181,7 +181,7 @@ void VFont::StaticInit () {
   bool haveBigFont = false;
   if (W_CheckNumForName(NAME_bigfont) >= 0) {
     GCon->Log(NAME_Init, "  BigFont: from FON lump");
-    if (!GetFont(NAME_bigfont, NAME_bigfont)) {
+    if (!GetFont(VStr(VName(NAME_bigfont)), VStr(VName(NAME_bigfont)))) {
       GCon->Log(NAME_Init, "  BigFont: cannot create");
     } else {
       haveBigFont = true;
@@ -198,7 +198,7 @@ void VFont::StaticInit () {
   }
   if (!haveBigFont && W_CheckNumForName("dbigfont") >= 0) {
     GCon->Log(NAME_Init, "  BigFont: from default FON lump");
-    if (!GetFont(NAME_bigfont, "dbigfont")) {
+    if (!GetFont(VStr(VName(NAME_bigfont)), VStr("dbigfont"))) {
       GCon->Log(NAME_Init, "  BigFont: cannot create");
     } else {
       haveBigFont = true;
@@ -206,12 +206,12 @@ void VFont::StaticInit () {
   }
   if (!haveBigFont) {
     GCon->Log(NAME_Init, "  BigFont: from console font");
-    if (!GetFont(VStr(NAME_bigfont), VStr(VAVOOM_CON_FONT_PATH))) Sys_Error("cannot create console font");
+    if (!GetFont(VStr(VName(NAME_bigfont)), VStr(VAVOOM_CON_FONT_PATH))) Sys_Error("cannot create console font");
   }
 
   // console font
   GCon->Log(NAME_Init, "  ConsoleFont: from FON lump");
-  ConFont = GetFont(VStr(NAME_consolefont), /*NAME_confont*/VStr(VAVOOM_CON_FONT_PATH));
+  ConFont = GetFont(VStr(VName(NAME_consolefont)), /*NAME_confont*/VStr(VAVOOM_CON_FONT_PATH));
   if (!ConFont) Sys_Error("cannot create console font");
 
   // load custom fonts (they can override standard fonts)
@@ -565,8 +565,9 @@ VFont *VFont::FindAndLoadFontFromLumpIdx (VStr AName, int LumpIdx) {
     Strm.Serialise(Hdr, 4);
   }
   if (Hdr[0] == 'F' && Hdr[1] == 'O' && Hdr[2] == 'N') {
-    if (Hdr[3] == '1') return new VFon1Font(VName(*AName), LumpIdx);
-    if (Hdr[3] == '2') return new VFon2Font(VName(*AName), LumpIdx);
+    //GCon->Logf(NAME_Debug, "FONT%c: <%s>", Hdr[3], *AName);
+    if (Hdr[3] == '1') return new VFon1Font(VName(*AName, VName::AddLower), LumpIdx);
+    if (Hdr[3] == '2') return new VFon2Font(VName(*AName, VName::AddLower), LumpIdx);
   }
   return nullptr;
 }
@@ -578,6 +579,8 @@ VFont *VFont::FindAndLoadFontFromLumpIdx (VStr AName, int LumpIdx) {
 //
 //==========================================================================
 VFont *VFont::GetFont (VStr AName, VStr LumpName) {
+  //GCon->Logf(NAME_Debug, "VFont::GetFont: name=<%s>; lump=<%s>", *AName, *LumpName);
+
   VFont *F = FindFont(AName);
   if (F) return F;
 
@@ -601,19 +604,9 @@ VFont *VFont::GetFont (VStr AName, VStr LumpName) {
   // try a texture
   int TexNum = GTextureManager.CheckNumForName(ln, TEXTYPE_Any);
   if (TexNum <= 0) TexNum = GTextureManager.AddPatch(ln, TEXTYPE_Pic);
-  if (TexNum > 0) return new VSingleTextureFont(VName(*AName), TexNum);
+  if (TexNum > 0) return new VSingleTextureFont(VName(*AName, VName::AddLower), TexNum);
 
   return nullptr;
-}
-
-
-//==========================================================================
-//
-//  VFont::GetFont
-//
-//==========================================================================
-VFont *VFont::GetFont (VName AName, VName LumpName) {
-  return GetFont(VStr(AName), VStr(LumpName)); // this doesn't allocate
 }
 
 
