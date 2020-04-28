@@ -277,7 +277,17 @@ public:
   // other focus methods
   void SetCurrentFocusChild (VWidget *NewFocus);
   inline VWidget *GetCurrentFocus () const { return CurrentFocusChild; }
-  inline void SetFocus () { if (ParentWidget) ParentWidget->SetCurrentFocusChild(this); }
+
+  inline void SetFocus (bool onlyInParent=false) {
+    if (!ParentWidget) return;
+    if (onlyInParent) {
+      ParentWidget->SetCurrentFocusChild(this);
+    } else {
+      for (VWidget *w = this; w->ParentWidget; w = w->ParentWidget) {
+        w->ParentWidget->SetCurrentFocusChild(w);
+      }
+    }
+  }
 
   inline bool IsFocused (bool Recurse=true) const noexcept {
     // root is always focused

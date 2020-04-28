@@ -1617,8 +1617,9 @@ IMPLEMENT_FUNCTION(VWidget, IsFocused) {
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetFocus) {
-  vobjGetParamSelf();
-  if (Self) Self->SetFocus();
+  VOptParamBool onlyInParent(false);
+  vobjGetParamSelf(onlyInParent);
+  if (Self) Self->SetFocus(onlyInParent);
 }
 
 

@@ -212,7 +212,7 @@ native final bool IsFocusable ();
 native final void SetCurrentFocusChild (Widget NewFocus);
 native final Widget GetCurrentFocus ();
 native final bool IsFocused (optional bool Recurse/*=true*/);
-native final void SetFocus ();
+native final void SetFocus (optional bool onlyInParent/*=false*/);
 
 native final void DrawPicScaledIgnoreOffset (int X, int Y, int Handle, optional float scaleX/*=1.0f*/, optional float scaleY/*=1.0f*/, optional float Alpha/*=1.0f*/, optional int Trans/*=0*/);
 
