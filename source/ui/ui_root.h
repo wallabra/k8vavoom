@@ -89,11 +89,13 @@ public:
 
   void RefreshScale ();
 
-  VWidget *GetWidgetAtScreenXY (int x, int y) noexcept;
+  // can return `none` if coords are out of any widget
+  VWidget *GetWidgetAtScreenXY (int x, int y, bool allowDisabled=false) noexcept;
 
   static void StaticInit ();
 
   DECLARE_FUNCTION(SetMouse)
+  DECLARE_FUNCTION(GetWidgetAtScreenXY)
 };
 
 extern VRootWidget *GRoot;

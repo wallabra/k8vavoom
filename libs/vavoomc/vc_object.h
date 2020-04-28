@@ -174,6 +174,9 @@ enum {
   ev_socket,
   // sent when resolution changed; no data
   ev_resolution,
+  // this event will be broadcased to all widgets
+  // it cannot be canceled or consumed, and all modifications will be reverted
+  ev_broadcast,
   // for neoUI library
   ev_neoui = 69,
   ev_user = 666,
@@ -285,6 +288,18 @@ struct event_t {
       type == ev_enter ||
       type == ev_leave ||
       ((type == ev_keydown || type == ev_keyup) && (keycode >= K_MOUSE_FIRST && keycode <= K_MOUSE_LAST));
+  }
+
+  inline bool isAnyMouseButtonEvent () const noexcept {
+    return ((type == ev_keydown || type == ev_keyup) && (keycode >= K_MOUSE1 && keycode <= K_MOUSE9));
+  }
+
+  inline bool isAnyMouseButtonDownEvent () const noexcept {
+    return (type == ev_keydown && (keycode >= K_MOUSE1 && keycode <= K_MOUSE9));
+  }
+
+  inline bool isAnyMouseButtonUpEvent () const noexcept {
+    return (type == ev_keyup && (keycode >= K_MOUSE1 && keycode <= K_MOUSE9));
   }
 };
 

@@ -257,6 +257,10 @@
   DECLARE_FUNCTION(RayLineIntersection2D)
   DECLARE_FUNCTION(RayLineIntersection2DDir)
 
+  DECLARE_FUNCTION(EventClear)
+  DECLARE_FUNCTION(EventIsAnyMouse)
+  DECLARE_FUNCTION(EventIsMouseButton)
+
   DECLARE_FUNCTION(PostEvent)
   DECLARE_FUNCTION(InsertEvent)
   DECLARE_FUNCTION(CountQueuedEvents)

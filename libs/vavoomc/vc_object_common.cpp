@@ -1993,5 +1993,34 @@ IMPLEMENT_FUNCTION(VObject, GetEventQueueSize) {
 }
 
 
+//native static final void EventClear (ref event_t evt);
+IMPLEMENT_FUNCTION(VObject, EventClear) {
+  event_t *ev;
+  vobjGetParam(ev);
+  if (ev) ev->clear();
+}
+
+//native static final bool EventIsAnyMouse (ref event_t evt);
+IMPLEMENT_FUNCTION(VObject, EventIsAnyMouse) {
+  event_t *ev;
+  vobjGetParam(ev);
+  RET_BOOL(ev ? ev->isAnyMouseEvent() : false);
+}
+
+// default is both press and release
+//native static final bool EventIsMouseButton (ref event_t evt, optional bool down/*=undefined*/);
+IMPLEMENT_FUNCTION(VObject, EventIsMouseButton) {
+  event_t *ev;
+  VOptParamBool down(true);
+  vobjGetParam(ev, down);
+  if (!ev) { RET_BOOL(false); return; }
+  if (down.specified) {
+    RET_BOOL(down ? ev->isAnyMouseButtonDownEvent() : ev->isAnyMouseButtonUpEvent());
+  } else {
+    RET_BOOL(ev->isAnyMouseButtonEvent());
+  }
+}
+
+
 //#include "vc_zastar.h"
 #include "vc_zastar.cpp"

@@ -302,6 +302,10 @@ final void LocalXYToRoot (out int rx, out int ry, float lx, float ly) {
 }
 
 
+// can return `none` if coords are out of any widget, including this one
+native final Widget GetWidgetAt (float x, float y, optional bool allowDisabled/*=false*/);
+
+
 //==========================================================================
 //
 //  OnCreate
@@ -838,12 +842,15 @@ readonly int MouseX;
 readonly int MouseY;
 
 // current mouse cursor graphic
-readonly int MouseCursorPic;
+int MouseCursorPic;
 
 private native readonly array!(void *) EventPath;
 
 
 native final void SetMouse (bool MouseOn);
+
+// can return `none` if coords are out of any widget
+native final Widget GetWidgetAtScreenXY (int x, int y, optional bool allowDisabled/*=false*/);
 
 
 defaultproperties {

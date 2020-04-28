@@ -694,7 +694,7 @@ void VWidget::FindNewFocus () {
 //
 //==========================================================================
 VWidget *VWidget::GetWidgetAt (float X, float Y, bool allowDisabled) noexcept {
-  if (!IsEnabled(false)) return nullptr; // don't perform recursive check
+  if (!allowDisabled && !IsEnabled(false)) return nullptr; // don't perform recursive check
   for (VWidget *W = LastChildWidget; W; W = W->PrevWidget) {
     if (!IsVisibleFlag()) continue;
     if (W->IsGoingToDie()) continue;
@@ -702,7 +702,7 @@ VWidget *VWidget::GetWidgetAt (float X, float Y, bool allowDisabled) noexcept {
         Y >= W->ClipRect.ClipY1 && Y < W->ClipRect.ClipY2)
     {
       // this can return `nullptr` for disabled widgets
-      VWidget *res = W->GetWidgetAt(X, Y);
+      VWidget *res = W->GetWidgetAt(X, Y, allowDisabled);
       if (res) return res;
     }
   }
@@ -1408,6 +1408,27 @@ void VWidget::DrawCursorAt (int x, int y) {
 
 //==========================================================================
 //
+//  VWidget::BroadcastEvent
+//
+//  to self, then to children
+//  ignores cancel/consume, will prevent event modification
+//
+//==========================================================================
+void VWidget::BroadcastEvent (event_t *evt) {
+  if (!evt || !IsEnabled(false)) return; // don't perform recursive check
+  event_t evsaved = *evt;
+  OnEvent(evt);
+  *evt = evsaved;
+  for (VWidget *w = LastChildWidget; w; w = w->PrevWidget) {
+    if (w->IsGoingToDie()) continue;
+    w->BroadcastEvent(evt);
+    *evt = evsaved;
+  }
+}
+
+
+//==========================================================================
+//
 //  Natives
 //
 //==========================================================================
@@ -1860,6 +1881,20 @@ IMPLEMENT_FUNCTION(VWidget, FindTextColor) {
 IMPLEMENT_FUNCTION(VWidget, TranslateXY) {
   float *px, *py;
   vobjGetParamSelf(px, py);
-  if (px) *px = (Self->ClipRect.ScaleX*(*px)+Self->ClipRect.OriginX)/fScaleX;
-  if (py) *py = (Self->ClipRect.ScaleY*(*py)+Self->ClipRect.OriginY)/fScaleY;
+  if (Self) {
+    if (px) *px = (Self->ClipRect.ScaleX*(*px)+Self->ClipRect.OriginX)/fScaleX;
+    if (py) *py = (Self->ClipRect.ScaleY*(*py)+Self->ClipRect.OriginY)/fScaleY;
+  } else {
+    if (px) *px = 0;
+    if (py) *py = 0;
+  }
+}
+
+
+// native final Widget GetWidgetAt (float x, float y, optional bool allowDisabled/*=false*/);
+IMPLEMENT_FUNCTION(VWidget, GetWidgetAt) {
+  float x, y;
+  VOptParamBool allowDisabled(false);
+  vobjGetParamSelf(x, y, allowDisabled);
+  RET_REF(Self ? Self->GetWidgetAt(x, y, allowDisabled) : nullptr);
 }

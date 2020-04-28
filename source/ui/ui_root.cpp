@@ -63,7 +63,7 @@ void VRootWidget::DrawWidgets () {
   // draw message box
   if (GClGame) GClGame->eventMessageBoxDrawer();
   // draw mouse cursor
-  if (RootFlags&RWF_MouseEnabled) DrawPic(MouseX, MouseY, MouseCursorPic);
+  if (MouseCursorPic > 0 && (RootFlags&RWF_MouseEnabled)) DrawPic(MouseX, MouseY, MouseCursorPic);
 }
 
 
@@ -114,8 +114,8 @@ void VRootWidget::UpdateMousePosition (int NewX, int NewY) noexcept {
 //  VRootWidget::GetWidgetAtScreenXY
 //
 //==========================================================================
-VWidget *VRootWidget::GetWidgetAtScreenXY (int x, int y) noexcept {
-  return GetWidgetAt(x*SizeScaleX, y*SizeScaleY);
+VWidget *VRootWidget::GetWidgetAtScreenXY (int x, int y, bool allowDisabled) noexcept {
+  return GetWidgetAt(x*SizeScaleX, y*SizeScaleY, allowDisabled);
 }
 
 
@@ -125,10 +125,10 @@ VWidget *VRootWidget::GetWidgetAtScreenXY (int x, int y) noexcept {
 //
 //==========================================================================
 void VRootWidget::BuildEventPath (VWidget *lastOne) noexcept {
-  if (lastOne && lastOne->IsGoingToDie()) lastOne = nullptr;
+  if (lastOne && (lastOne->IsGoingToDie() || !lastOne->IsEnabled())) lastOne = nullptr;
   EventPath.reset();
   for (VWidget *w = CurrentFocusChild; w; w = w->CurrentFocusChild) {
-    if (w->IsGoingToDie()) break;
+    if (w->IsGoingToDie() || !w->IsEnabled(false)) break;
     EventPath.append(w);
   }
   if (lastOne && (EventPath.length() == 0 || EventPath[EventPath.length()-1] != lastOne)) {
@@ -366,11 +366,18 @@ void VRootWidget::MouseClickEvent (const event_t *evt) {
 //==========================================================================
 bool VRootWidget::InternalResponder (event_t *evt) {
   if (IsGoingToDie()) return false;
+  if (!IsEnabled(false)) return false;
   if (evt->isEatenOrCancelled()) return evt->isEaten();
 
+  // process broadcast event
+  if (evt->type == ev_broadcast) {
+    BroadcastEvent(evt);
+    return false;
+  }
+
   // remember old mouse coordinates (we may need it for enter/leave events)
-  const int OldMouseX = MouseX;
-  const int OldMouseY = MouseY;
+  const int oldMouseX = MouseX;
+  const int oldMouseY = MouseY;
 
   // update mouse position
   if (evt->type == ev_mouse) UpdateMousePosition(MouseX+evt->dx, MouseY-evt->dy);
@@ -382,24 +389,22 @@ bool VRootWidget::InternalResponder (event_t *evt) {
   // do it here and now, why not?
   if (mouseAllowed) {
     // those method will take care of everything
-    MouseMoveEvent(evt, OldMouseX, OldMouseY);
+    MouseMoveEvent(evt, oldMouseX, oldMouseY);
     MouseClickEvent(evt);
   }
 
   // do not send mouse events if UI mouse is disabled
   if (mouseAllowed || !evt->isAnyMouseEvent()) {
-    BuildEventPath();
+    VWidget *Focus = nullptr;
     // special processing for mouse events
     if (evt->type == ev_mouse ||
         evt->type == ev_uimouse ||
         ((evt->type == ev_keydown || evt->type == ev_keyup) && (evt->keycode >= K_MOUSE_FIRST && evt->keycode <= K_MOUSE_LAST)))
     {
       // find widget under mouse
-      VWidget *Focus = GetWidgetAtScreenXY(MouseX, MouseY);
-      if (Focus && (EventPath.length() == 0 || EventPath[EventPath.length()-1] != Focus)) {
-        EventPath.append(Focus);
-      }
+      Focus = GetWidgetAtScreenXY(MouseX, MouseY);
     }
+    BuildEventPath(Focus);
     DispatchEvent(evt);
   }
 
@@ -453,4 +458,12 @@ IMPLEMENT_FUNCTION(VRootWidget, SetMouse) {
   P_GET_BOOL(MouseOn);
   P_GET_SELF;
   Self->SetMouse(MouseOn);
+}
+
+// native final Widget GetWidgetAtScreenXY (int x, int y, optional bool allowDisabled/*=false*/);
+IMPLEMENT_FUNCTION(VRootWidget, GetWidgetAtScreenXY) {
+  int x, y;
+  VOptParamBool allowDisabled(false);
+  vobjGetParamSelf(x, y, allowDisabled);
+  RET_REF(Self ? Self->GetWidgetAtScreenXY(x, y, allowDisabled) : nullptr);
 }

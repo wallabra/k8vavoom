@@ -127,6 +127,7 @@ protected:
   // ignores `CurrentFocusChild`, selects next focusable or `nullptr`
   void FindNewFocus ();
 
+  // can return `none` if coords are out of any widget, including this one
   VWidget *GetWidgetAt (float X, float Y, bool allowDisabled=false) noexcept;
 
   // translate screen and texture coordinates
@@ -185,6 +186,10 @@ protected:
 protected:
   void DrawCharPic (int X, int Y, VTexture *Tex, float Alpha=1.0f, bool shadowed=false);
   inline void DrawCharPicShadowed (int X, int Y, VTexture *Tex) { DrawCharPic(X, Y, Tex, 1.0f, true); }
+
+  // to self, then to children
+  // ignores cancel/consume, will prevent event modification
+  void BroadcastEvent (event_t *evt);
 
 public:
   virtual void PostCtor () override; // this is called after defaults were blit
@@ -370,7 +375,7 @@ public:
   virtual void OnDraw () { static VMethodProxy method("OnDraw"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void OnPostDraw () { static VMethodProxy method("OnPostDraw"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   virtual void Tick (float DeltaTime) { if (DeltaTime <= 0.0f) return; static VMethodProxy method("Tick"); vobjPutParamSelf(DeltaTime); VMT_RET_VOID(method); }
-  virtual bool OnEvent (event_t *evt) { static VMethodProxy method("OnEvent"); vobjPutParamSelf(evt); VMT_RET_BOOL(method); }
+  virtual bool OnEvent (event_t *evt) { static VMethodProxy method("OnEvent"); if (!evt) return false; vobjPutParamSelf(evt); VMT_RET_BOOL(method); }
 
   // script natives
   DECLARE_FUNCTION(NewChild)
@@ -457,4 +462,6 @@ public:
   DECLARE_FUNCTION(FindTextColor)
 
   DECLARE_FUNCTION(TranslateXY)
+
+  DECLARE_FUNCTION(GetWidgetAt)
 };

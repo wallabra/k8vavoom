@@ -181,6 +181,9 @@ enum {
   ev_socket, // see below
   // sent when resolution changed; no data
   ev_resolution,
+  // this event will be broadcased to all widgets
+  // it cannot be canceled or consumed, and all modifications will be reverted
+  ev_broadcast,
   // for neoUI library
   ev_neoui = 69,
   ev_user = 666,
@@ -267,6 +270,12 @@ struct event_t {
   bool bAltRight;
   bool bShiftRight;
 };
+
+native static final void EventClear (ref event_t evt);
+native static final bool EventIsAnyMouse (ref event_t evt);
+// default is both press and release
+native static final bool EventIsMouseButton (ref event_t evt, optional bool down/*=undefined*/);
+
 
 bitenum ModMask {
   Empty = none,
