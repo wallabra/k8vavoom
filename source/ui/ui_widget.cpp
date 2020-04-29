@@ -1416,7 +1416,7 @@ void VWidget::DrawCursorAt (int x, int y, int cursorChar, int cursorColor) {
 //
 //==========================================================================
 void VWidget::BroadcastEvent (event_t *evt) {
-  if (!evt || !IsEnabled(false)) return; // don't perform recursive check
+  if (!evt || IsGoingToDie()) return;
   event_t evsaved = *evt;
   OnEvent(evt);
   *evt = evsaved;

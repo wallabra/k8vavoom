@@ -183,6 +183,7 @@ enum {
   ev_resolution,
   // this event will be broadcased to all widgets
   // it cannot be canceled or consumed, and all modifications will be reverted
+  // note that is will be broadcasted to disabled and invisible widgets too
   ev_broadcast,
   // for neoUI library
   ev_neoui = 69,
