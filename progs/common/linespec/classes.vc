@@ -140,7 +140,6 @@ enum {
 
 #include "health/Health.vc"
 #include "health/HealthPickup.vc"
-#include "health/HealthFillup.vc"
 #include "health/HealthTraining.vc"
 
 #include "armor/Armor.vc"
@@ -362,6 +361,9 @@ enum {
 #include "strife/PrisonPass.vc"
 #include "strife/ForceFieldGuard.vc"
 #include "strife/PowerCoupling.vc"
+
+// it is based on `DummyStrifeItem`
+#include "health/HealthFillup.vc"
 
 #include "incomplete/FadeSetterColorSetter.vc"
 #include "incomplete/MapMarker.vc"

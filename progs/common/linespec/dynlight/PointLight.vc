@@ -75,7 +75,7 @@ defaultproperties {
   Attenuated = true;
 }
 
-class PointLightFlickerAdditive : PointLightFlickerRandom __mobjinfo__(9812);
+class PointLightFlickerAdditive : PointLightFlicker __mobjinfo__(9812);
 defaultproperties {
   LightType = DLTYPE_Flicker|DLTYPE_Additive;
 }
