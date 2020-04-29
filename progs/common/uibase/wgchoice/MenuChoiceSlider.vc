@@ -23,8 +23,10 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+//#define UI_USE_LUMP_SLIDER
 class MenuChoiceSlider : MenuChoiceNumeric;
 
+#ifdef UI_USE_LUMP_SLIDER
 int pic_M_THERML;
 int pic_M_THERMM;
 int pic_M_THERMR;
@@ -35,6 +37,14 @@ int pic_M_SLDMD1;
 int pic_M_SLDMD2;
 int pic_M_SLDRT;
 int pic_M_SLDKB;
+#else
+enum SliderCharLen = 17; // this is 128
+int SliderWidth;
+int SliderKnobWidth;
+int SliderHeight;
+int SliderSY;
+bool draggingKnob;
+#endif
 
 
 //==========================================================================
@@ -44,6 +54,7 @@ int pic_M_SLDKB;
 //==========================================================================
 override void OnCreate () {
   ::OnCreate();
+  #ifdef UI_USE_LUMP_SLIDER
   if (WadLumpPresent('m_sldlt')) {
     pic_M_SLDLT = R_RegisterPic('m_sldlt');
     pic_M_SLDMD1 = R_RegisterPic('m_sldmd1');
@@ -56,7 +67,170 @@ override void OnCreate () {
     pic_M_THERMR = R_RegisterPic('m_thermr');
     pic_M_THERMO = R_RegisterPic('m_thermo');
   }
+  #else
+  FixMinimumHeight();
+  #endif
 }
+
+
+#ifndef UI_USE_LUMP_SLIDER
+//==========================================================================
+//
+//  OnFocusLost
+//
+//==========================================================================
+override void OnFocusLost () {
+  AbortKnobDrag();
+}
+
+
+//==========================================================================
+//
+//  FixMinimumHeight
+//
+//==========================================================================
+override void FixMinimumHeight () {
+  auto oldFont = GetFont();
+  scope(exit) SetFont(oldFont);
+  SetFont('smallfont');
+  int height = clamp(FontHeight(), 10, 32);
+  SetFont('consolefont');
+  height = max(height, FontHeight());
+  string s = "\x10";
+  foreach (; 2..SliderCharLen) s ~= "\x11";
+  s ~= "\x12";
+  SliderWidth = TextWidth(s);
+  SliderKnobWidth = TextWidth("\x14");
+  SliderHeight = FontHeight();
+  SliderSY = (SliderHeight > Height+1 ? (Height-SliderHeight)/2 : 0);
+  //printdebug("SliderWidth=%s", SliderWidth);
+  //printdebug("SliderKnobWidth=%s", SliderKnobWidth);
+  //printdebug("SliderWidthN=%s", SliderWidth-SliderKnobWidth);
+  if (Height < height) Height = height;
+}
+
+
+//==========================================================================
+//
+//  GetSliderPos
+//
+//==========================================================================
+final int GetSliderPos (float v) {
+  float range = MaxValue-MinValue;
+  if (range <= 0) return 0;
+  v = fclamp(v, MinValue, MaxValue);
+  return int((v-MinValue)*(SliderWidth-SliderKnobWidth)/range);
+}
+
+
+//==========================================================================
+//
+//  GetSliderValue
+//
+//==========================================================================
+final float GetSliderValue (int slx) {
+  float range = MaxValue-MinValue;
+  if (range <= 0 || ValueDelta <= 0) return MinValue;
+  int slw = SliderWidth-SliderKnobWidth;
+  if (slx > slw) return MaxValue;
+  slx -= 3;
+  if (slx < 0) return MinValue;
+  slx = clamp(slx, 0, slw);
+  // calc number of steps in range
+  int stepsInRange = int(range/ValueDelta);
+  // calc step number
+  int snum = int(float(slx)/float(slw)*stepsInRange+(stepsInRange < slw ? 0.5 : 0));
+  // calc new value
+  float newVal = fclamp(MinValue+snum*ValueDelta, MinValue, MaxValue);
+  return newVal;
+}
+
+
+//==========================================================================
+//
+//  GetSliderStartX
+//
+//==========================================================================
+final int GetSliderStartX () {
+  return CursorXOffs+10;
+}
+
+
+//==========================================================================
+//
+//  IsInsideSlider
+//
+//==========================================================================
+bool IsInsideSlider (int x, int y) {
+  return
+    SliderWidth > 0 &&
+    y >= 0 && y < Height &&
+    x >= GetSliderStartX()-3 && x < GetSliderStartX()+SliderWidth;
+}
+
+
+//==========================================================================
+//
+//  OnEvent
+//
+//==========================================================================
+void AbortKnobDrag () {
+  if (!draggingKnob) return;
+  draggingKnob = false;
+}
+
+
+//==========================================================================
+//
+//  OnEvent
+//
+//==========================================================================
+override bool OnEvent (ref event_t evt) {
+  // if dragging knob, eat mouse movement events
+  if (draggingKnob) {
+    if (evt.type == ev_mouse) {
+      float newValue = GetSliderValue(evt.msx-GetSliderStartX());
+      if (newValue != Value) {
+        if (SetNewValue(ref newValue)) LocalSound('menu/change');
+        return true;
+      }
+    }
+    if (evt.type == ev_mouse || (evt.type == ev_keydown && evt.keycode == K_MOUSE1)) return true; // eat it
+    if (evt.bubbling && evt.type == ev_keyup && evt.keycode == K_MOUSE1) {
+      AbortKnobDrag();
+    }
+  }
+
+  if (IsFocused && evt.bubbling && evt.type == ev_keydown && MinValue < MaxValue) {
+    bool eatIt = false;
+    float newValue = Value;
+    if (evt.keycode == K_MWHEELDOWN) {
+      if (!IsInsideSlider(evt.x, evt.y)) return false; // don't allow numeric to process it
+      newValue -= ValueDelta;
+      eatIt = true;
+    } else if (evt.keycode == K_MWHEELUP) {
+      if (!IsInsideSlider(evt.x, evt.y)) return false; // don't allow numeric to process it
+      newValue += ValueDelta;
+      eatIt = true;
+    }
+    // check for knob drag
+    if (evt.keycode == K_MOUSE1 && IsInsideSlider(evt.x, evt.y)) {
+      draggingKnob = true;
+      newValue = GetSliderValue(evt.x-GetSliderStartX());
+      eatIt = true;
+    }
+    if (newValue != Value) {
+      newValue = fclamp(newValue, MinValue, MaxValue);
+      if (newValue != Value) {
+        if (SetNewValue(ref newValue)) LocalSound('menu/change');
+        return true;
+      }
+    }
+    if (eatIt) return true;
+  }
+  return ::OnEvent(evt);
+}
+#endif
 
 
 //==========================================================================
@@ -71,9 +245,16 @@ override void OnDraw () {
 
   SetFont('smallfont');
 
-  SetTextAlign(hright, vtop);
-  DrawText(CursorXOffs, 2+1, Text, (IsFocused ? TextColorFocus : TextColor));
+  #ifdef UI_USE_LUMP_SLIDER
+  int ty = 3;
+  #else
+  int ty = (FontHeight() > Height+1 ? (Height-FontHeight())/2 : 0);
+  #endif
 
+  SetTextAlign(hright, vtop);
+  DrawText(CursorXOffs, ty, Text, (IsFocused ? TextColorFocus : TextColor));
+
+  #ifdef UI_USE_LUMP_SLIDER
   bool oldflt = GetCvarB('gl_pic_filtering');
   scope(exit) SetCvar('gl_pic_filtering', oldflt ? 1 : 0);
   SetCvar('gl_pic_filtering', GetCvarB('gl_font_filtering') ? 1 : 0);
@@ -106,14 +287,30 @@ override void OnDraw () {
     xx = CursorXOffs+8+6+int((Value-MinValue)*100.0/(MaxValue-MinValue));
     DrawPic(xx, 0, pic_M_THERMO);
   }
+  #else
+  SetFont('consolefont');
+  xt = GetSliderStartX();
+  SetTextAlign(hleft, vtop);
+  string sld = "\x10";
+  foreach (; 2..SliderCharLen) sld ~= "\x11";
+  sld ~= "\x12";
+  DrawText(xt, SliderSY, sld, CR_UNTRANSLATED);
+  DrawText(xt+GetSliderPos(Value), SliderSY, "\x13", (IsFocused ? CR_SLIDER_HI_KNOB : CR_UNTRANSLATED));
+  xt += SliderWidth;
+  SetFont('smallfont');
+  #endif
 
   SetTextAlign(hleft, vtop);
   //k8: we have much better fp->str now, so there's no need to perform any string trickery here
-  DrawText(xt+3, 3, va("%f", Value), CR_BLACK);
+  DrawText(xt+3, ty, va("%f", Value), CR_BLACK);
 }
 
 
 defaultproperties {
+  #ifdef UI_USE_LUMP_SLIDER
   Height = 16-2;
   pic_M_SLDLT = -1;
+  #else
+  Height = 10;
+  #endif
 }
