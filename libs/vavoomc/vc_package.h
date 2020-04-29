@@ -47,9 +47,13 @@ private:
   int StringLookup[4096];
   int StringCount;
 
+private:
   static vuint32 StringHashFunc (const char *);
 
   void InitStringPool ();
+
+  // this tries to sort parsed classes so subclasses will be defined after superclasses
+  void SortParsedClasses ();
 
 public:
   // compiler fields

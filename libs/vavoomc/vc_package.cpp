@@ -261,6 +261,73 @@ VClass *VPackage::FindDecorateImportClass (VName AName) const {
 }
 
 
+struct Lists {
+  //TArray<VClass *> &oldList;
+  TMapNC<VName, VClass *> nameMap; // because classes aren't defined yet
+  TMapNC<VClass *, int> oldIndex;
+  TArray<VClass *> newList;
+  TMapNC<VClass *, int> newIndex;
+};
+
+
+//==========================================================================
+//
+//  PutClassToList
+//
+//==========================================================================
+static void PutClassToList (Lists &l, VClass *cls) {
+  if (!cls) return;
+  if (!l.oldIndex.has(cls)) return; // not our class
+  if (l.newIndex.has(cls)) return; // already processed
+  // put parent first
+  auto pcp = l.nameMap.find(cls->ParentClassName);
+  VClass *parent = (pcp ? *pcp : nullptr);
+  //GLog.Logf(NAME_Debug, "CLASS '%s': parent is '%s' (%s)", *cls->GetFullName(), *cls->ParentClassName, (parent ? *parent->GetFullName() : "<none>"));
+  vassert(parent != cls);
+  if (parent && l.oldIndex.has(parent)) {
+    if (!l.newIndex.has(parent)) {
+      ParseWarning(cls->Loc, "class `%s` is defined before class `%s` (at %s)", cls->GetName(), parent->GetName(), *parent->Loc.toStringNoCol());
+      PutClassToList(l, parent);
+    }
+  }
+  // now put us
+  //GLog.Logf(NAME_Debug, "PutClassToList: %s : %s", *cls->GetFullName(), (cls->GetSuperClass() ? *cls->GetSuperClass()->GetFullName() : "FUCK!"));
+  //GLog.Logf(NAME_Debug, "PutClassToList: %s : %s", *cls->GetFullName(), (parent ? *parent->GetFullName() : "<none>"));
+  l.newIndex.put(cls, l.newList.length());
+  l.newList.append(cls);
+}
+
+
+//==========================================================================
+//
+//  VPackage::SortParsedClasses
+//
+//  this tries to sort parsed classes so subclasses will be
+//  defined after superclasses
+//
+//==========================================================================
+void VPackage::SortParsedClasses () {
+  if (ParsedClasses.length() == 0) return;
+  //GLog.Log(NAME_Debug, "Sorting classes...");
+  // build class map
+  Lists l;
+  for (auto &&it : ParsedClasses.itemsIdx()) {
+    l.nameMap.put(it.value()->Name, it.value());
+    l.oldIndex.put(it.value(), it.index());
+  }
+  // build new list
+  for (auto &&cls : ParsedClasses) PutClassToList(l, cls);
+  // sanity check
+  vassert(l.newList.length() == ParsedClasses.length());
+  for (auto &&cls : l.newList) {
+    vassert(l.oldIndex.has(cls));
+    vassert(l.newIndex.has(cls));
+  }
+  // update list
+  ParsedClasses = l.newList;
+}
+
+
 //==========================================================================
 //
 //  VPackage::Emit
@@ -272,6 +339,8 @@ void VPackage::Emit () {
     vdlogf("  importing package '%s'...", *pkg.Name);
     pkg.Pkg = StaticLoadPackage(pkg.Name, pkg.Loc);
   }
+
+  SortParsedClasses();
 
   if (vcErrorCount) BailOut();
 

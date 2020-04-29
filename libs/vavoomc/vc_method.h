@@ -207,7 +207,7 @@ public:
   VClass *SelfTypeClass; // set to non-nullptr if `SelfTypeName` is non-empty; set from `VEmitContext`
 
   // guard them, why not?
-  int defineResult; // -1: not called yet
+  int defineResult; // -1: not called yet; 0: error; 1: ok; 666: ok, don't show warning
   bool emitCalled;
 
 public:

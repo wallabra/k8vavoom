@@ -166,7 +166,7 @@ void VMethod::Serialise (VStream &Strm) {
 bool VMethod::Define () {
   if (emitCalled) Sys_Error("`Define()` after `Emit()` for %s", *GetFullName());
   if (defineResult >= 0) {
-    GLog.Logf(NAME_Debug, "`Define()` for `%s` already called!", *GetFullName());
+    if (defineResult != 666) GLog.Logf(NAME_Debug, "`Define()` for `%s` already called!", *GetFullName());
     return (defineResult > 0);
   }
   defineResult = 0;
@@ -241,6 +241,25 @@ bool VMethod::Define () {
   }
 
   if (SuperMethod) {
+    // class order may be wrong, so define supermethod manually
+    // this can happen if include order in "classes.vc" is wrong
+    // it usually doesn't hurt, so let it work this way too
+    // actually, this should not happen, because package sorts its classes,
+    // but let's play safe here
+    if (!SuperMethod->IsDefined()) {
+      if (SuperMethod->Outer->MemberType == MEMBER_Class) {
+        VClass *cc = (VClass *)SuperMethod->Outer;
+        if (!cc->Defined) ParseError(Loc, "Defining virtual method `%s`, but parent class `%s` is not processed (internal compiler error)", *GetFullName(), *cc->GetFullName());
+      }
+      SuperMethod->Define();
+      if (SuperMethod->defineResult > 0) {
+        ParseWarning(Loc, "Forward-defined method `%s` for `%s`", *SuperMethod->GetFullName(), *GetFullName());
+        SuperMethod->defineResult = 666;
+      } else {
+        Ret = false;
+      }
+    }
+
     if (VMemberBase::optDeprecatedLaxOverride || VMemberBase::koraxCompatibility) Flags |= FUNC_Override; // force `override`
     if ((Flags&FUNC_Override) == 0) {
       ParseError(Loc, "Overriding virtual method `%s` without `override` keyword", *GetFullName());
@@ -269,7 +288,11 @@ bool VMethod::Define () {
       Ret = false;
     }
     if (!SuperMethod->ReturnType.Equals(ReturnType)) {
-      if (Ret) ParseError(Loc, "Method `%s` redefined with different return type", *GetFullName());
+      if (Ret) {
+        GLog.Logf(NAME_Debug, "::: %s", *SuperMethod->Loc.toString());
+        ParseError(Loc, "Method `%s` redefined with different return type (wants '%s', got '%s')", *GetFullName(), *SuperMethod->ReturnType.GetName(), *ReturnType.GetName());
+        abort();
+      }
       Ret = false;
     } else if (SuperMethod->NumParams != NumParams) {
       if (Ret) ParseError(Loc, "Method `%s` redefined with different number of arguments", *GetFullName());
