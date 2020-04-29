@@ -815,6 +815,23 @@ override void OnDraw () {
 
 //==========================================================================
 //
+//  OnPostDraw
+//
+//==========================================================================
+override void OnPostDraw () {
+  int y0 = ChildrenOfsY; // negative means "scrolled down"
+  int y1 = CalcTotalHeight()+y0;
+  if (y0 < 0 || y1 > Height) {
+    SetFont('consolefont');
+    if (y0 < 0) DrawText(4, 4, "\x1a", CR_GOLD); // up arrow
+    if (y1 > Height) DrawText(4, 4+FontHeight(), "\x1b", CR_GOLD); // down arrow
+    SetFont('smallfont');
+  }
+}
+
+
+//==========================================================================
+//
 //  OnEvent
 //
 //==========================================================================
