@@ -1376,7 +1376,8 @@ int VWidget::FontHeight () {
 //
 //==========================================================================
 int VWidget::CursorWidth () {
-  return TextWidth("_");
+  //return TextWidth("_");
+  return (Font ? Font->GetCharWidth(CursorChar) : 8);
 }
 
 
@@ -1385,8 +1386,8 @@ int VWidget::CursorWidth () {
 //  VWidget::DrawCursor
 //
 //==========================================================================
-void VWidget::DrawCursor () {
-  DrawCursorAt(LastX, LastY);
+void VWidget::DrawCursor (int cursorColor) {
+  DrawCursorAt(LastX, LastY, CursorChar, cursorColor);
 }
 
 
@@ -1395,12 +1396,12 @@ void VWidget::DrawCursor () {
 //  VWidget::DrawCursorAt
 //
 //==========================================================================
-void VWidget::DrawCursorAt (int x, int y) {
+void VWidget::DrawCursorAt (int x, int y, int cursorChar, int cursorColor) {
   if ((int)(host_time*4)&1) {
     int w;
     bool oldflt = gl_pic_filtering;
     gl_pic_filtering = gl_font_filtering;
-    DrawPic(x, y, Font->GetChar('_', &w, CR_UNTRANSLATED));
+    DrawPic(x, y, Font->GetChar(cursorChar, &w, cursorColor/*CR_UNTRANSLATED*/));
     gl_pic_filtering = oldflt;
   }
 }
@@ -1834,14 +1835,16 @@ IMPLEMENT_FUNCTION(VWidget, CursorWidth) {
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawCursor) {
-  vobjGetParamSelf();
-  if (Self) Self->DrawCursor();
+  VOptParamInt Color(CR_UNTRANSLATED);
+  vobjGetParamSelf(Color);
+  if (Self) Self->DrawCursor(Color);
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawCursorAt) {
   int cx, cy;
-  vobjGetParamSelf(cx, cy);
-  if (Self) Self->DrawCursorAt(cx, cy);
+  VOptParamInt Color(CR_UNTRANSLATED);
+  vobjGetParamSelf(cx, cy, Color);
+  if (Self) Self->DrawCursorAt(cx, cy, Color);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetCursorPos) {

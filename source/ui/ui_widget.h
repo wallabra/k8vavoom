@@ -113,6 +113,8 @@ protected:
   // mouse down time (0 means "isn't down")
   VMouseDownInfo MouseDownState[9]; // K_MOUSE1..K_MOUSE9
 
+  vint32 CursorChar;
+
   //VObjectDelegate FocusLost;
   //VObjectDelegate FocusReceived;
 
@@ -232,6 +234,9 @@ public:
   inline int GetWidth () const noexcept { return SizeWidth; }
   inline int GetHeight () const noexcept { return SizeHeight; }
 
+  inline int GetCursorChar () const noexcept { return CursorChar; }
+  inline void SetCursorChar (int ch) noexcept { if (ch < 0) ch = '_'; CursorChar = ch; }
+
   // visibility methods
   void SetVisibility (bool NewVisibility);
   inline void Show () { SetVisibility(true); }
@@ -342,8 +347,8 @@ public:
   int StringWidth (VStr);
   int FontHeight ();
   int CursorWidth ();
-  void DrawCursor ();
-  void DrawCursorAt (int, int);
+  void DrawCursor (int cursorColor=CR_UNTRANSLATED);
+  void DrawCursorAt (int x, int y, int cursorChar, int cursorColor=CR_UNTRANSLATED);
 
   // returns text bounds with respect to the current text align
   void TextBounds (int x, int y, VStr String, int *x0, int *y0, int *width, int *height, bool trimTrailNL=true);

@@ -50,8 +50,11 @@ protected:
   void ensureCursorVisible ();
 
 public:
-  TILine () : data(nullptr), len(0), maxlen(0), curpos(0), vischars(80), visfirst(0), temp(nullptr), tempsize(0) { setup(); }
-  TILine (int amaxlen) : data(nullptr), len(0), maxlen(amaxlen), curpos(0), vischars(80), visfirst(0), temp(nullptr), tempsize(0) { setup(); }
+  char cursorChar;
+
+public:
+  TILine () : data(nullptr), len(0), maxlen(0), curpos(0), vischars(80), visfirst(0), temp(nullptr), tempsize(0), cursorChar('_') { setup(); }
+  TILine (int amaxlen) : data(nullptr), len(0), maxlen(amaxlen), curpos(0), vischars(80), visfirst(0), temp(nullptr), tempsize(0), cursorChar('_') { setup(); }
   ~TILine ();
 
   inline int length () const { return len; }

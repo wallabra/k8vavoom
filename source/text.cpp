@@ -167,7 +167,17 @@ void T_DrawCursor () {
 //
 //==========================================================================
 void T_DrawCursorAt (int x, int y) {
-  GRoot->DrawCursorAt(x, y);
+  GRoot->DrawCursorAt(x, y, GRoot->GetCursorChar());
+}
+
+
+//==========================================================================
+//
+//  T_DrawCursorAt
+//
+//==========================================================================
+void T_DrawCursorAt (int x, int y, int cursorChar, int cursorColor) {
+  GRoot->DrawCursorAt(x, y, cursorChar, cursorColor);
 }
 
 

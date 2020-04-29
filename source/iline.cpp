@@ -401,7 +401,7 @@ void TILine::DrawAt (int x0, int y0, int clrNormal, int clrLR) {
   if (!data) return; // just in case
   ensureCursorVisible();
   T_SetCursorPos(x0, y0); // for empty input lines
-  if (len == 0) { T_DrawCursor(); return; }
+  if (len == 0) { T_DrawCursorAt(x0, y0, cursorChar, CR_DEBUG_GREEN); return; }
   // ensure that our temporary buffer is ok
   if (tempsize < vischars+8) {
     tempsize = vischars+16;
@@ -437,5 +437,5 @@ void TILine::DrawAt (int x0, int y0, int clrNormal, int clrLR) {
     if (cpos < len) T_DrawText(T_GetCursorX(), y0, ">", CR_FIRE);
   }
   // draw cursor
-  T_DrawCursorAt(x0, y0);
+  T_DrawCursorAt(x0, y0, cursorChar, CR_DEBUG_GREEN);
 }

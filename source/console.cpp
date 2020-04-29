@@ -366,6 +366,7 @@ bool C_Active () {
 //==========================================================================
 static void DrawInputLine (int y) {
   // input line
+  c_iline.cursorChar = '\x0b';
   T_DrawText(4, y, ">", CR_YELLOW);
   c_iline.DrawAt(12, y, CR_ORANGE, CR_FIRE);
 }

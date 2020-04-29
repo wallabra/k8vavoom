@@ -67,6 +67,14 @@ enum {
   CR_FIRE, //X
   CR_SAPPHIRE, //Y
   CR_TEAL, //Z
+  // special
+  CR_RED_ERROR,
+  CR_WARNING_YELLOW,
+  CR_DEBUG_GREEN,
+  CR_DEBUG_CYAN,
+  CR_INIT_CYAN,
+  CR_SLIDER_HI_KNOB,
+  // no more
   NUM_TEXT_COLORS
 };
 
@@ -87,7 +95,8 @@ int T_FontHeight ();
 
 int T_CursorWidth ();
 void T_DrawCursor ();
-void T_DrawCursorAt (int, int);
+void T_DrawCursorAt (int x, int y);
+void T_DrawCursorAt (int x, int y, int cursorChar, int cursorColor=CR_UNTRANSLATED);
 void T_SetCursorPos (int cx, int cy);
 int T_GetCursorX ();
 int T_GetCursorY ();
