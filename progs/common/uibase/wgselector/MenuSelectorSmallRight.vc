@@ -35,9 +35,14 @@ override void OnCreate () {
   ::OnCreate();
   auto oldFont = GetFont();
   scope(exit) SetFont(oldFont);
+  /*
   SetFont('smallfont');
   Width = TextWidth("*")+2;
   Height = TextHeight("*");
+  */
+  SetFont('consolefont');
+  Width = TextWidth("\x0d")+2;
+  Height = TextHeight("\x0d");
 }
 
 
@@ -47,9 +52,15 @@ override void OnCreate () {
 //
 //==========================================================================
 override void OnDraw () {
+  /*
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
   DrawText(2, yofs, "*", GetMarkColor());
+  */
+  SetFont('consolefont');
+  SetTextAlign(hleft, vtop);
+  DrawText(2, yofs, "\x0d", GetMarkColor());
+  SetFont('smallfont');
 }
 
 

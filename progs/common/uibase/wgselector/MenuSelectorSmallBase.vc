@@ -48,8 +48,8 @@ override void OnCreate () {
 //
 //==========================================================================
 override void SetYOfs (int hgt) {
-  if (hgt < 12) { yofs = 0; return; }
-  yofs = max(0, (hgt-8)/2);
+  if (hgt < 12) { yofs = -1; return; }
+  yofs = max(-1, (hgt-8)/2-1);
 }
 
 
@@ -91,7 +91,8 @@ int GetMarkColor () {
   }
 #else
   int phase = int(Time*1000/400)%2;
-  int clr = (phase ? CR_DARKGREEN : CR_WHITE);
+  //int clr = (phase ? CR_DARKGREEN : CR_WHITE);
+  int clr = (phase ? CR_DEBUG_GREEN : CR_FIRE);
 #endif
   return clr;
 }
