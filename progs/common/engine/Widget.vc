@@ -830,6 +830,7 @@ defaultproperties {
   ScaleY = 1.0;
   Visible = true;
   Enabled = true;
+  CursorChar = 95; // '_'
 }
 
 
