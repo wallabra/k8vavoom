@@ -355,16 +355,27 @@ public:
   void FillHex (float x0, float y0, float w, float h, vuint32 color, float alpha=1.0f);
   void ShadeHex (float x0, float y0, float w, float h, float darkening);
 
-  void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH, float aspect=1.0f);
+  void CalcHexColorPatternDims (float *w, float *h, int radius, float cellW, float cellH);
+  // returns `true` if the given "internal" hex pattern coordinates are valid
+  bool IsValidHexColorPatternCoords (int hpx, int hpy, int radius);
+  // calcs "internal" hex pattern coordinates, returns `false` if passed coords are outside any hex
+  bool CalcHexColorPatternCoords (int *hpx, int *hpy, float x, float y, float x0, float y0, int radius, float cellW, float cellH);
+  // calcs coordinates of the individual hex; returns `false` if the given "internal" hex pattern coordinates are not valid
+  // those coords can be used in `*Hex()` methods
+  bool CalcHexColorPatternHexCoordsAt (float *hx, float *hy, int hpx, int hpy, float x0, float y0, int radius, float cellW, float cellH);
+  // returns opaque color at the given "internal" hex pattern coordinates (with high byte set), or 0
+  int GetHexColorPatternColorAt (int hpx, int hpy, int radius);
+  // draws hex pattern (WARNING: no clipping!)
+  void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH);
 
   // returns text bounds with respect to the current text align
   void TextBounds (int x, int y, VStr String, int *x0, int *y0, int *width, int *height, bool trimTrailNL=true);
 
-  inline void SetCursorPos (int ax, int ay) { LastX = ax; LastY = ay; }
-  inline void SetCursorX (int v) { LastX = v; }
-  inline void SetCursorY (int v) { LastY = v; }
-  inline int GetCursorX () const { return LastX; }
-  inline int GetCursorY () const { return LastY; }
+  inline void SetCursorPos (int ax, int ay) noexcept { LastX = ax; LastY = ay; }
+  inline void SetCursorX (int v) noexcept { LastX = v; }
+  inline void SetCursorY (int v) noexcept { LastY = v; }
+  inline int GetCursorX () const noexcept { return LastX; }
+  inline int GetCursorY () const noexcept { return LastY; }
 
   static VWidget *CreateNewWidget (VClass *, VWidget *);
 
@@ -456,6 +467,12 @@ public:
   DECLARE_FUNCTION(FillHex)
   DECLARE_FUNCTION(ShadeHex)
 
+  DECLARE_FUNCTION(CalcHexColorPatternWidth)
+  DECLARE_FUNCTION(CalcHexColorPatternHeight)
+  DECLARE_FUNCTION(IsValidHexColorPatternCoords)
+  DECLARE_FUNCTION(CalcHexColorPatternCoords)
+  DECLARE_FUNCTION(CalcHexColorPatternHexCoordsAt)
+  DECLARE_FUNCTION(GetHexColorPatternColorAt)
   DECLARE_FUNCTION(DrawHexColorPattern)
 
   DECLARE_FUNCTION(GetFont)

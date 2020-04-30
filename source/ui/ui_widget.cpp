@@ -1446,33 +1446,6 @@ static bool TranslateCoords (const VClipRect &ClipRect, float &x, float &y) {
 
 //==========================================================================
 //
-//  CalcHexColorByCoords
-//
-//==========================================================================
-static vuint32 CalcHexColorByCoords (int x, int y, int radius) {
-  const float diameter = radius*2;
-  const float h = 360.0f*(0.5f-0.5f*atan2f(y, -x)/(float)(M_PI));
-  const float s = sqrtf(x*x+y*y)/diameter;
-  const float v = 1.0f;
-  float r, g, b;
-  M_HsvToRgb(h, s, v, r, g, b);
-  return PackRGBf(r, g, b);
-}
-
-
-//==========================================================================
-//
-//  VWidget::CalcHexHeight
-//
-//==========================================================================
-float VWidget::CalcHexHeight (float h) {
-  if (h <= 0.0f) return 0.0f;
-  return Drawer->CalcRealHexHeight(h*ClipRect.ScaleY)/ClipRect.ScaleY;
-}
-
-
-//==========================================================================
-//
 //  VWidget::DrawHex
 //
 //==========================================================================
@@ -1515,20 +1488,109 @@ void VWidget::ShadeHex (float x0, float y0, float w, float h, float darkening) {
 
 //==========================================================================
 //
+//  VWidget::CalcHexHeight
+//
+//==========================================================================
+float VWidget::CalcHexHeight (float h) {
+  if (h <= 0.0f) return 0.0f;
+  return Drawer->CalcRealHexHeight(h*ClipRect.ScaleY)/ClipRect.ScaleY;
+}
+
+
+//==========================================================================
+//
+//  VWidget::CalcHexColorPatternDims
+//
+//==========================================================================
+void VWidget::CalcHexColorPatternDims (float *w, float *h, int radius, float cellW, float cellH) {
+  if (!w && !h) return;
+  if (radius < 1) radius = 1;
+  // width
+  if (w) {
+    const float scrW = cellW*ClipRect.ScaleX;
+    *w = scrW*(radius*2+1)/ClipRect.ScaleX;
+  }
+  // height
+  if (h) {
+    const float scrH = cellH*ClipRect.ScaleY;
+    // calculate real hex height
+    const float realScrH = Drawer->CalcRealHexHeight(scrH);
+    //*h = (realScrH*(radius*2+1)+scrH/3.0f)/ClipRect.ScaleY;
+    *h = realScrH*(radius*2+1)/ClipRect.ScaleY+cellH/3.0f;
+  }
+}
+
+
+// returns `true` if the given "internal" hex pattern
+// coordinates are valid
+bool VWidget::IsValidHexColorPatternCoords (int hpx, int hpy, int radius) {
+  if (radius < 1) radius = 1;
+  const int diameter = radius*2;
+  if (hpy < -diameter || hpy > diameter) return false;
+  const int rowSize = diameter-abs(hpy/2);
+  return (hpx >= -rowSize && hpx <= rowSize);
+ }
+
+
+// calcs "internal" hex pattern coordinates,
+// returns `false` if passed coords are outside any hex
+bool VWidget::CalcHexColorPatternCoords (int *hpx, int *hpy, float x, float y, float x0, float y0, int radius, float cellW, float cellH) {
+  return false;
+}
+
+
+// calcs coordinates of the individual hex;
+// returns `false` if the given "internal" hp coordinates are not valid
+// those coords can be used in `*Hex()` methods
+bool VWidget::CalcHexColorPatternHexCoordsAt (float *hx, float *hy, int hpx, int hpy, float x0, float y0, int radius, float cellW, float cellH) {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  CalcHexColorByCoords
+//
+//==========================================================================
+static vuint32 CalcHexColorByCoords (int x, int y, int radius) {
+  const float diameter = radius*2;
+  const float h = 360.0f*(0.5f-0.5f*atan2f(y, -x)/(float)(M_PI));
+  const float s = sqrtf(x*x+y*y)/diameter;
+  /*
+  const float h = 360.0f*(0.5f-0.5f*atan2f(y*2, -(x*2))/(float)(M_PI));
+  const float s = sqrtf(x*x+y*y)/(radius*2);
+  */
+  const float v = 1.0f;
+  float r, g, b;
+  M_HsvToRgb(h, s, v, r, g, b);
+  return PackRGBf(r, g, b);
+}
+
+
+// returns opaque color at the given "internal" hex pattern
+// coordinates (with high byte set), or 0
+int VWidget::GetHexColorPatternColorAt (int hpx, int hpy, int radius) {
+  return 0;
+}
+
+
+//==========================================================================
+//
 //  VWidget::DrawHexColorPattern
 //
 //==========================================================================
-void VWidget::DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH, float aspect) {
+void VWidget::DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH) {
   if (radius < 1) radius = 1;
   if (cellW < 1.0f) cellW = 1.0f;
   if (cellH < 1.0f) cellH = 1.0f;
-  if (aspect <= 0.0f) aspect = 1.0f;
   const float scrW = cellW*ClipRect.ScaleX;
-  const float scrH = cellH*ClipRect.ScaleY*aspect;
+  const float scrH = cellH*ClipRect.ScaleY;
   // calculate real hex height
   const float realScrH = Drawer->CalcRealHexHeight(scrH);
 
   TranslateCoords(ClipRect, x0, y0);
+  x0 += scrW*radius;
+  y0 += realScrH*radius;
 
   const int diameter = radius*2;
   for (int y = -diameter; y <= diameter; y += 2) {
@@ -2053,12 +2115,77 @@ IMPLEMENT_FUNCTION(VWidget, ShadeHex) {
 }
 
 
-// native final void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH, optional float aspect/*=1.0f*/);
+// native final void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH);
 IMPLEMENT_FUNCTION(VWidget, DrawHexColorPattern) {
   float x0, y0;
   int radius;
   float cellW, cellH;
-  VOptParamFloat aspect(1.0f);
-  vobjGetParamSelf(x0, y0, radius, cellW, cellH, aspect);
-  if (Self) Self->DrawHexColorPattern(x0, y0, radius, cellW, cellH, aspect);
+  vobjGetParamSelf(x0, y0, radius, cellW, cellH);
+  if (Self) Self->DrawHexColorPattern(x0, y0, radius, cellW, cellH);
+}
+
+
+// native final float CalcHexColorPatternWidth (int radius, float cellW, float cellH);
+IMPLEMENT_FUNCTION(VWidget, CalcHexColorPatternWidth) {
+  int radius;
+  float cellW, cellH;
+  vobjGetParamSelf(radius, cellW, cellH);
+  if (Self) {
+    float w;
+    Self->CalcHexColorPatternDims(&w, nullptr, radius, cellW, cellH);
+    RET_FLOAT(w);
+  } else {
+    RET_FLOAT(0.0f);
+  }
+}
+
+// native final float CalcHexColorPatternHeight (int radius, float cellW, float cellH);
+IMPLEMENT_FUNCTION(VWidget, CalcHexColorPatternHeight) {
+  int radius;
+  float cellW, cellH;
+  vobjGetParamSelf(radius, cellW, cellH);
+  if (Self) {
+    float h;
+    Self->CalcHexColorPatternDims(nullptr, &h, radius, cellW, cellH);
+    RET_FLOAT(h);
+  } else {
+    RET_FLOAT(0.0f);
+  }
+}
+
+// native final bool IsValidHexColorPatternCoords (int hpx, int hpy, int radius);
+IMPLEMENT_FUNCTION(VWidget, IsValidHexColorPatternCoords) {
+  int hpx, hpy, radius;
+  vobjGetParamSelf(hpx, hpy, radius);
+  RET_BOOL(Self ? Self->IsValidHexColorPatternCoords(hpx, hpy, radius) : false);
+}
+
+// native final bool CalcHexColorPatternCoords (out int hpx, out int hpy, float x, float y, float x0, float y0, int radius, float cellW, float cellH);
+IMPLEMENT_FUNCTION(VWidget, CalcHexColorPatternCoords) {
+  int *hpx;
+  int *hpy;
+  float x, y, x0, y0;
+  int radius;
+  float cellW, cellH;
+  vobjGetParamSelf(hpx, hpy, x, y, x0, y0, radius, cellW, cellH);
+  RET_BOOL(Self ? Self->CalcHexColorPatternCoords(hpx, hpy, x, y, x0, y0, radius, cellW, cellH) : false);
+}
+
+// native final bool CalcHexColorPatternHexCoordsAt (out float hx, out float hy, int hpx, int hpy, float x0, float y0, int radius, float cellW, float cellH);
+IMPLEMENT_FUNCTION(VWidget, CalcHexColorPatternHexCoordsAt) {
+  float *hx;
+  float *hy;
+  int hpx, hpy;
+  float x0, y0;
+  int radius;
+  float cellW, cellH;
+  vobjGetParamSelf(hx, hy, hpx, hpy, x0, y0, radius, cellW, cellH);
+  RET_BOOL(Self ? Self->CalcHexColorPatternHexCoordsAt(hx, hy, hpx, hpy, x0, y0, radius, cellW, cellH) : false);
+}
+
+// native final int GetHexColorPatternColorAt (int hpx, int hpy, int radius);
+IMPLEMENT_FUNCTION(VWidget, GetHexColorPatternColorAt) {
+  int hpx, hpy, radius;
+  vobjGetParamSelf(hpx, hpy, radius);
+  RET_BOOL(Self ? Self->GetHexColorPatternColorAt(hpx, hpy, radius) : 0);
 }

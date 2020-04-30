@@ -152,6 +152,7 @@ void VDrawer::CalcHexVertices (float vx[6], float vy[6], float x0, float y0, flo
   const float dividery = 3.0f;
   const float hdiv = h/dividery;
   const float wdiv = w/2.0f;
+  y0 += hdiv;
   const float yr0 = y0;
   const float yr1 = y0+h;
   const float ytop = yr0-hdiv;

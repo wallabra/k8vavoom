@@ -129,7 +129,20 @@ override void OnDraw () {
     root.SetTextAlign(hleft, vtop);
   }
 
-  //root.DrawHexColorPattern(root.Width/2, root.Height/2, 6, 8, 8);
+  #if 1
+  {
+    int radius = 6;
+    int cellW = 8;
+    int cellH = 8;
+    int x = root.Width/2;
+    int y = root.Height/2;
+    int w = int(root.CalcHexColorPatternWidth(radius, cellW, cellH));
+    int h = int(root.CalcHexColorPatternHeight(radius, cellW, cellH));
+
+    root.DrawHexColorPattern(x, y, radius, cellW, cellH);
+    root.DrawRect(x, y, w, h, RGB(255, 255, 0));
+  }
+  #endif
 }
 
 

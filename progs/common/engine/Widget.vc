@@ -273,7 +273,19 @@ native final void DrawHex (float x0, float y0, float w, float h, int color, opti
 native final void FillHex (float x0, float y0, float w, float h, int color, optional float alpha/*=1.0f*/);
 native final void ShadeHex (float x0, float y0, float w, float h, float darkening);
 
-native final void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH, optional float aspect/*=1.0f*/);
+native final float CalcHexColorPatternWidth (int radius, float cellW, float cellH);
+native final float CalcHexColorPatternHeight (int radius, float cellW, float cellH);
+// returns `true` if the given "internal" hex pattern coordinates are valid
+native final bool IsValidHexColorPatternCoords (int hpx, int hpy, int radius);
+// calcs "internal" hex pattern coordinates, returns `false` if passed coords are outside any hex
+native final bool CalcHexColorPatternCoords (out int hpx, out int hpy, float x, float y, float x0, float y0, int radius, float cellW, float cellH);
+// calcs coordinates of the individual hex; returns `false` if the given "internal" hex pattern coordinates are not valid
+// those coords can be used in `*Hex()` methods
+native final bool CalcHexColorPatternHexCoordsAt (out float hx, out float hy, int hpx, int hpy, float x0, float y0, int radius, float cellW, float cellH);
+// returns opaque color at the given "internal" hex pattern coordinates (with high byte set), or 0
+native final int GetHexColorPatternColorAt (int hpx, int hpy, int radius);
+// draws hex pattern (WARNING: no clipping!)
+native final void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH);
 
 /*
 final int X2Virtual (float x) { return int(ClipRect.ScaleX*x+ClipRect.OriginX); }
