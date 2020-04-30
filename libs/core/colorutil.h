@@ -35,6 +35,65 @@ void M_RgbToHsl (float r, float g, float b, float &h, float &s, float &l);
 void M_HslToRgb (float h, float s, float l, float &r, float &g, float &b);
 
 
+static VVA_OKUNUSED inline void UnpackRGBf (const vuint32 clr, float &r, float &g, float &b) noexcept {
+  r = ((clr>>16)&0xffu)/255.0f;
+  g = ((clr>>8)&0xffu)/255.0f;
+  b = (clr&0xffu)/255.0f;
+}
+
+static VVA_OKUNUSED inline void UnpackRGBAf (const vuint32 clr, float &r, float &g, float &b, float &a) noexcept {
+  r = ((clr>>16)&0xffu)/255.0f;
+  g = ((clr>>8)&0xffu)/255.0f;
+  b = (clr&0xffu)/255.0f;
+  a = ((clr>>24)&0xffu)/255.0f;
+}
+
+static VVA_OKUNUSED inline vuint32 PackRGBf (const float r, const float g, const float b) noexcept {
+  return
+   0xff000000u|
+   (((vuint32)(clampToByte((int)(clampval(r, 0.0f, 1.0f)*255.0f))))<<16)|
+   (((vuint32)(clampToByte((int)(clampval(g, 0.0f, 1.0f)*255.0f))))<<8)|
+   ((vuint32)(clampToByte((int)(clampval(b, 0.0f, 1.0f)*255.0f))));
+}
+
+static VVA_OKUNUSED inline vuint32 PackRGBAf (const float r, const float g, const float b, const float a) noexcept {
+  return
+   (((vuint32)(clampToByte((int)(clampval(a, 0.0f, 1.0f)*255.0f))))<<24)|
+   (((vuint32)(clampToByte((int)(clampval(r, 0.0f, 1.0f)*255.0f))))<<16)|
+   (((vuint32)(clampToByte((int)(clampval(g, 0.0f, 1.0f)*255.0f))))<<8)|
+   ((vuint32)(clampToByte((int)(clampval(b, 0.0f, 1.0f)*255.0f))));
+}
+
+static VVA_OKUNUSED inline void UnpackRGB (const vuint32 clr, vuint8 &r, vuint8 &g, vuint8 &b) noexcept {
+  r = (clr>>16)&0xffu;
+  g = (clr>>8)&0xffu;
+  b = clr&0xffu;
+}
+
+static VVA_OKUNUSED inline void UnpackRGBA (const vuint32 clr, vuint8 &r, vuint8 &g, vuint8 &b, vuint8 &a) noexcept {
+  r = (clr>>16)&0xffu;
+  g = (clr>>8)&0xffu;
+  b = clr&0xffu;
+  a = (clr>>24)&0xffu;
+}
+
+static VVA_OKUNUSED inline vuint32 PackRGB (const int r, const int g, const int b) noexcept {
+  return
+   0xff000000u|
+   (((vuint32)(clampToByte(r)))<<16)|
+   (((vuint32)(clampToByte(g)))<<8)|
+   ((vuint32)clampToByte(b));
+}
+
+static VVA_OKUNUSED inline vuint32 PackRGBA (const int r, const int g, const int b, const int a) noexcept {
+  return
+   (((vuint32)(clampToByte(a)))<<24)|
+   (((vuint32)(clampToByte(r)))<<16)|
+   (((vuint32)(clampToByte(g)))<<8)|
+   ((vuint32)clampToByte(b));
+}
+
+
 //==========================================================================
 //
 //  rgbDistanceSquared
