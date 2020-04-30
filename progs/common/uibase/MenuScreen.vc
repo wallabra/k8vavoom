@@ -561,16 +561,14 @@ void CreateSelector () {
 //
 //  CalcTotalHeight
 //
-//  ////////////////////////////////////////////////////////////////////////// //
-//
 //==========================================================================
 final int CalcTotalHeight () {
-  int res = 0;
-  for (int n = 0; n < Items.Length; ++n) {
-    int e = Items[n].Y+Items[n].Height;
-    if (res < e) res = e;
+  foreach (auto it; Items; reverse) {
+    if (it.IsFocusable && it.IsEnabled) {
+      return it.Y+it.Height;
+    }
   }
-  return res;
+  return 0;
 }
 
 
