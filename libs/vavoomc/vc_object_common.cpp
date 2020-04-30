@@ -2100,28 +2100,6 @@ CREATE_RGBA_ELEMENT_GETTERS_SETTERS(B, 0)
 #undef CREATE_RGBA_ELEMENT_GETTERS_SETTERS
 
 
-static inline void UnpackRGBf (const vuint32 clr, float &r, float &g, float &b) noexcept {
-  r = ((clr>>16)&0xffu)/255.0f;
-  g = ((clr>>8)&0xffu)/255.0f;
-  b = (clr&0xffu)/255.0f;
-}
-
-static inline vuint32 PackRGBf (const float r, const float g, const float b) noexcept {
-  return
-   0xff000000u|
-   (((vuint32)(clampToByte((int)(clampval(r, 0.0f, 1.0f)*255.0f))))<<16)|
-   (((vuint32)(clampToByte((int)(clampval(g, 0.0f, 1.0f)*255.0f))))<<8)|
-   ((vuint32)(clampToByte((int)(clampval(b, 0.0f, 1.0f)*255.0f))));
-}
-
-
-static inline void UnpackRGB (const vuint32 clr, vuint8 &r, vuint8 &g, vuint8 &b) noexcept {
-  r = (clr>>16)&0xffu;
-  g = (clr>>8)&0xffu;
-  b = clr&0xffu;
-}
-
-
 // native static final void RGB2HSV (int rgb, out float h, out float s, out float v);
 IMPLEMENT_FUNCTION(VObject, RGB2HSV) {
   vuint32 clr;
