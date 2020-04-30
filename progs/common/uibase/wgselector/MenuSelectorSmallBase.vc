@@ -50,6 +50,12 @@ override void OnCreate () {
 override void SetYOfs (int hgt) {
   if (hgt < 12) { yofs = -1; return; }
   yofs = max(-1, (hgt-8)/2-1);
+  // fix height
+  auto oldFont = GetFont();
+  scope(exit) SetFont(oldFont);
+  SetFont('consolefont');
+  int hh = TextHeight("\x0d");
+  Height = yofs+hh;
 }
 
 
