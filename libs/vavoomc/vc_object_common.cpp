@@ -2024,3 +2024,185 @@ IMPLEMENT_FUNCTION(VObject, EventIsMouseButton) {
 
 //#include "vc_zastar.h"
 #include "vc_zastar.cpp"
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// colors
+IMPLEMENT_FUNCTION(VObject, RGB) {
+  int r, g, b;
+  vobjGetParam(r, g, b);
+  RET_INT((vint32)(0xff000000u|(((vuint32)clampToByte(r))<<16)|(((vuint32)clampToByte(g))<<8)|((vuint32)clampToByte(b))));
+}
+
+IMPLEMENT_FUNCTION(VObject, RGBA) {
+  int r, g, b, a;
+  vobjGetParam(r, g, b, a);
+  RET_INT((vint32)((((vuint32)clampToByte(a))<<24)|(((vuint32)clampToByte(r))<<16)|(((vuint32)clampToByte(g))<<8)|((vuint32)clampToByte(b))));
+}
+
+IMPLEMENT_FUNCTION(VObject, RGBf) {
+  float fr, fg, fb;
+  vobjGetParam(fr, fg, fb);
+  const vuint32 r = clampToByte((int)(clampval(fr, 0.0f, 1.0f)*255.0f));
+  const vuint32 g = clampToByte((int)(clampval(fg, 0.0f, 1.0f)*255.0f));
+  const vuint32 b = clampToByte((int)(clampval(fb, 0.0f, 1.0f)*255.0f));
+  RET_INT((vint32)(0xff000000u|(r<<16)|(g<<8)|b));
+}
+
+IMPLEMENT_FUNCTION(VObject, RGBAf) {
+  float fr, fg, fb, fa;
+  vobjGetParam(fr, fg, fb, fa);
+  const vuint32 r = clampToByte((int)(clampval(fr, 0.0f, 1.0f)*255.0f));
+  const vuint32 g = clampToByte((int)(clampval(fg, 0.0f, 1.0f)*255.0f));
+  const vuint32 b = clampToByte((int)(clampval(fb, 0.0f, 1.0f)*255.0f));
+  const vuint32 a = clampToByte((int)(clampval(fa, 0.0f, 1.0f)*255.0f));
+  RET_INT((vint32)((a<<24)|(r<<16)|(g<<8)|b));
+}
+
+
+#define CREATE_RGBA_ELEMENT_GETTERS_SETTERS(name_,shift_)  \
+  /* ubyte gettter */ \
+  IMPLEMENT_FUNCTION(VObject, RGBGet##name_) { \
+    vuint32 clr; \
+    vobjGetParam(clr); \
+    RET_BYTE((clr>>(shift_))&0xffu); \
+  }\
+  /* int setter */ \
+  IMPLEMENT_FUNCTION(VObject, RGBSet##name_) { \
+    vuint32 clr; \
+    int v; \
+    vobjGetParam(clr, v); \
+    clr &= ~(0xffu<<(shift_)); \
+    clr |= ((vuint32)(clampToByte(v)))<<(shift_); \
+    RET_INT(clr); \
+  } \
+  /* float getter */ \
+  IMPLEMENT_FUNCTION(VObject, RGBGet##name_##f) { \
+    vuint32 clr; \
+    vobjGetParam(clr); \
+    RET_FLOAT(((clr>>(shift_))&0xffu)/255.0f); \
+  } \
+  /* float setter */ \
+  IMPLEMENT_FUNCTION(VObject, RGBSet##name_##f) { \
+    vuint32 clr; \
+    float v; \
+    vobjGetParam(clr, v); \
+    clr &= ~(0xffu<<(shift_)); \
+    clr |= ((vuint32)(clampToByte((int)(clampval(v, 0.0f, 1.0f)*255.0f))))<<(shift_); \
+    RET_INT(clr); \
+  } \
+
+CREATE_RGBA_ELEMENT_GETTERS_SETTERS(A, 24)
+CREATE_RGBA_ELEMENT_GETTERS_SETTERS(R, 16)
+CREATE_RGBA_ELEMENT_GETTERS_SETTERS(G, 8)
+CREATE_RGBA_ELEMENT_GETTERS_SETTERS(B, 0)
+
+#undef CREATE_RGBA_ELEMENT_GETTERS_SETTERS
+
+
+static inline void UnpackRGBf (const vuint32 clr, float &r, float &g, float &b) noexcept {
+  r = ((clr>>16)&0xffu)/255.0f;
+  g = ((clr>>8)&0xffu)/255.0f;
+  b = (clr&0xffu)/255.0f;
+}
+
+static inline vuint32 PackRGBf (const float r, const float g, const float b) noexcept {
+  return
+   0xff000000u|
+   (((vuint32)(clampToByte((int)(clampval(r, 0.0f, 1.0f)*255.0f))))<<16)|
+   (((vuint32)(clampToByte((int)(clampval(g, 0.0f, 1.0f)*255.0f))))<<8)|
+   ((vuint32)(clampToByte((int)(clampval(b, 0.0f, 1.0f)*255.0f))));
+}
+
+
+static inline void UnpackRGB (const vuint32 clr, vuint8 &r, vuint8 &g, vuint8 &b) noexcept {
+  r = (clr>>16)&0xffu;
+  g = (clr>>8)&0xffu;
+  b = clr&0xffu;
+}
+
+
+// native static final void RGB2HSV (int rgb, out float h, out float s, out float v);
+IMPLEMENT_FUNCTION(VObject, RGB2HSV) {
+  vuint32 clr;
+  float r, g, b;
+  float *h;
+  float *s;
+  float *v;
+  float tmph, tmps, tmpv;
+  vobjGetParam(clr, h, s, v);
+  if (!h) h = &tmph;
+  if (!s) s = &tmps;
+  if (!v) v = &tmpv;
+  UnpackRGBf(clr, r, g, b);
+  M_RgbToHsv(r, g, b, *h, *s, *v);
+}
+
+// native static final int HSV2RGB (float h, float s, float v);
+IMPLEMENT_FUNCTION(VObject, HSV2RGB) {
+  float r, g, b;
+  float h, s, v;
+  vobjGetParam(h, s, v);
+  M_HsvToRgb(h, s, v, r, g, b);
+  RET_INT((vint32)PackRGBf(r, g, b));
+}
+
+// native static final void RGB2HSL (int rgb, out float h, out float s, out float l);
+IMPLEMENT_FUNCTION(VObject, RGB2HSL) {
+  vuint32 clr;
+  float r, g, b;
+  float *h;
+  float *s;
+  float *l;
+  float tmph, tmps, tmpv;
+  vobjGetParam(clr, h, s, l);
+  if (!h) h = &tmph;
+  if (!s) s = &tmps;
+  if (!l) l = &tmpv;
+  UnpackRGBf(clr, r, g, b);
+  M_RgbToHsl(r, g, b, *h, *s, *l);
+}
+
+// native static final int HSL2RGB (float h, float s, float l);
+IMPLEMENT_FUNCTION(VObject, HSL2RGB) {
+  float r, g, b;
+  float h, s, l;
+  vobjGetParam(h, s, l);
+  M_HslToRgb(h, s, l, r, g, b);
+  RET_INT((vint32)PackRGBf(r, g, b));
+}
+
+
+// native static final int RGBDistanceSquared (int c0, int c1);
+IMPLEMENT_FUNCTION(VObject, RGBDistanceSquared) {
+  vuint32 c0, c1;
+  vobjGetParam(c0, c1);
+  vuint8 r0, g0, b0;
+  vuint8 r1, g1, b1;
+  UnpackRGB(c0, r0, g0, b0);
+  UnpackRGB(c1, r1, g1, b1);
+  RET_INT(rgbDistanceSquared(r0, g0, b0, r1, g1, b1));
+}
+
+// native static final ubyte sRGBGamma (float v);
+IMPLEMENT_FUNCTION(VObject, sRGBGamma) {
+  float v;
+  vobjGetParam(v);
+  RET_BYTE(clampToByte(sRGBgamma(v)));
+}
+
+// native static final float sRGBUngamma (int v);
+IMPLEMENT_FUNCTION(VObject, sRGBUngamma) {
+  int v;
+  vobjGetParam(v);
+  RET_FLOAT((float)sRGBungamma(clampToByte(v)));
+}
+
+// native static final ubyte sRGBIntensity (int clr);
+IMPLEMENT_FUNCTION(VObject, sRGBIntensity) {
+  vuint32 clr;
+  vuint8 r, g, b;
+  vobjGetParam(clr);
+  UnpackRGB(clr, r, g, b);
+  RET_BYTE(colorIntensity(r, g, b));
+}

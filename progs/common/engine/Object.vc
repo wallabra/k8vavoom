@@ -584,6 +584,60 @@ native static final bool PlaneLineIntersect (const ref TPlane plane, TVec v0, TV
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// colors
+
+// opaque alpha is 255
+// color is: AA_RR_GG_BB
+// int RGBA components range is [0..255] (they will be clamped)
+// float RGBA components range is [0..1] (they will be clamped)
+native static final int RGB (int r, int g, int b);
+native static final int RGBA (int r, int g, int b, int a);
+
+native static final int RGBf (float r, float g, float b);
+native static final int RGBAf (float r, float g, float b, float a);
+
+native static final ubyte RGBGetR (int clr);
+native static final ubyte RGBGetG (int clr);
+native static final ubyte RGBGetB (int clr);
+native static final ubyte RGBGetA (int clr);
+
+native static final int RGBSetR (int clr, int v);
+native static final int RGBSetG (int clr, int v);
+native static final int RGBSetB (int clr, int v);
+native static final int RGBSetA (int clr, int v);
+
+native static final float RGBGetRf (int clr);
+native static final float RGBGetGf (int clr);
+native static final float RGBGetBf (int clr);
+native static final float RGBGetAf (int clr);
+
+native static final int RGBSetRf (int clr, float v);
+native static final int RGBSetGf (int clr, float v);
+native static final int RGBSetBf (int clr, float v);
+native static final int RGBSetAf (int clr, float v);
+
+// saturation is [0..1]
+// hue is in degrees [0..360)
+// input values won't be clamped/sanitized
+native static final void RGB2HSV (int rgb, out float h, out float s, out float v);
+native static final int HSV2RGB (float h, float s, float v);
+
+// hue is in degrees [0..360)
+// input values won't be clamped/sanitized
+native static final void RGB2HSL (int rgb, out float h, out float s, out float l);
+native static final int HSL2RGB (float h, float s, float l);
+
+native static final int RGBDistanceSquared (int c0, int c1);
+
+// input: [0..1]; output: [0..255]
+native static final ubyte sRGBGamma (float v);
+// input: [0..255]; output: [0..1]
+native static final float sRGBUngamma (int v);
+
+native static final ubyte sRGBIntensity (int clr);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // returns number of planes created (0 for point)
 // max result is six planes: two for line, two+two axial bevels
 struct CD_LinePlanes {

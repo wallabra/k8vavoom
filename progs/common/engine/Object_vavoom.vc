@@ -386,8 +386,6 @@ native static final bool AreStateSpritesPresent (state State);
 // ////////////////////////////////////////////////////////////////////////// //
 // misc
 
-native static final int RGB (ubyte r, ubyte g, ubyte b);
-native static final int RGBA (ubyte r, ubyte g, ubyte b, ubyte a);
 // reads key value from info string (userinfo or serverinfo)
 native static final string Info_ValueForKey (string info, string key);
 // checks if WAD lump is present, used to check for shareware/extended WADs

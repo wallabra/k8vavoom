@@ -930,7 +930,7 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 
 // method return macros
 #define RET_INT(v)    VObject::PR_Push(v)
-#define RET_BYTE(v)   VObject::PR_Push(v)
+#define RET_BYTE(v)   VObject::PR_Push((v)&0xff)
 #define RET_FLOAT(v)  VObject::PR_Pushf(v)
 #define RET_BOOL(v)   VObject::PR_PushBool(!!(v))
 #define RET_NAME(v)   VObject::PR_PushName(v)

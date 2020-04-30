@@ -286,21 +286,6 @@ IMPLEMENT_FREE_FUNCTION(VObject, TranslateString) {
   RET_STR(GLanguage.Translate(id));
 }
 
-IMPLEMENT_FREE_FUNCTION(VObject, RGB) {
-  P_GET_BYTE(b);
-  P_GET_BYTE(g);
-  P_GET_BYTE(r);
-  RET_INT(0xff000000+(r<<16)+(g<<8)+b);
-}
-
-IMPLEMENT_FREE_FUNCTION(VObject, RGBA) {
-  P_GET_BYTE(a);
-  P_GET_BYTE(b);
-  P_GET_BYTE(g);
-  P_GET_BYTE(r);
-  RET_INT((a<<24)+(r<<16)+(g<<8)+b);
-}
-
 IMPLEMENT_FREE_FUNCTION(VObject, GetLockDef) {
   P_GET_INT(Lock);
   RET_PTR(GetLockDef(Lock));
