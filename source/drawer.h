@@ -559,6 +559,13 @@ public:
   virtual void DrawSpriteLump (float x1, float y1, float x2, float y2,
                                VTexture *Tex, VTextureTranslation *Translation, bool flip) = 0;
 
+  static float CalcRealHexHeight (float h) noexcept;
+  static void CalcHexVertices (float vx[6], float vy[6], float x0, float y0, float w, float h) noexcept;
+
+  virtual void DrawHex (float x0, float y0, float w, float h, vuint32 color, float alpha=1.0f) = 0;
+  virtual void FillHex (float x0, float y0, float w, float h, vuint32 color, float alpha=1.0f) = 0;
+  virtual void ShadeHex (float x0, float y0, float w, float h, float darkening) = 0;
+
   virtual void BeginTexturedPolys () = 0;
   virtual void EndTexturedPolys () = 0;
   virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const SurfVertex *origverts=nullptr) = 0;

@@ -173,6 +173,90 @@ void VOpenGLDrawer::FillRect (float x1, float y1, float x2, float y2, vuint32 co
 
 //==========================================================================
 //
+//  VOpenGLDrawer::DrawHex
+//
+//==========================================================================
+void VOpenGLDrawer::DrawHex (float x0, float y0, float w, float h, vuint32 color, float alpha) {
+  if (alpha < 0.0f || w < 1.0f || h < 1.0f) return;
+  DrawFixedCol.Activate();
+  if (alpha < 1.0f) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  DrawFixedCol.SetColor(
+    (GLfloat)(((color>>16)&255)/255.0f),
+    (GLfloat)(((color>>8)&255)/255.0f),
+    (GLfloat)((color&255)/255.0f), min2(1.0f, alpha));
+  DrawFixedCol.UploadChangedUniforms();
+  float vx[6];
+  float vy[6];
+  CalcHexVertices(vx, vy, x0, y0, w, h);
+  glBegin(GL_LINE_LOOP);
+    glVertex2f(vx[0], vy[0]);
+    glVertex2f(vx[1], vy[1]);
+    glVertex2f(vx[2], vy[2]);
+    glVertex2f(vx[3], vy[3]);
+    glVertex2f(vx[4], vy[4]);
+    glVertex2f(vx[5], vy[5]);
+  glEnd();
+  if (alpha < 1.0f) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FillHex
+//
+//==========================================================================
+void VOpenGLDrawer::FillHex (float x0, float y0, float w, float h, vuint32 color, float alpha) {
+  if (alpha < 0.0f || w < 1.0f || h < 1.0f) return;
+  DrawFixedCol.Activate();
+  if (alpha < 1.0f) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  DrawFixedCol.SetColor(
+    (GLfloat)(((color>>16)&255)/255.0f),
+    (GLfloat)(((color>>8)&255)/255.0f),
+    (GLfloat)((color&255)/255.0f), min2(1.0f, alpha));
+  DrawFixedCol.UploadChangedUniforms();
+  float vx[6];
+  float vy[6];
+  CalcHexVertices(vx, vy, x0, y0, w, h);
+  glBegin(GL_POLYGON);
+    glVertex2f(vx[0], vy[0]);
+    glVertex2f(vx[1], vy[1]);
+    glVertex2f(vx[2], vy[2]);
+    glVertex2f(vx[3], vy[3]);
+    glVertex2f(vx[4], vy[4]);
+    glVertex2f(vx[5], vy[5]);
+  glEnd();
+  if (alpha < 1.0f) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::ShadeHex
+//
+//==========================================================================
+void VOpenGLDrawer::ShadeHex (float x0, float y0, float w, float h, float darkening) {
+  if (w < 1.0f || h < 1.0f) return;
+  DrawFixedCol.Activate();
+  DrawFixedCol.SetColor(0.0f, 0.0f, 0.0f, darkening);
+  DrawFixedCol.UploadChangedUniforms();
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  float vx[6];
+  float vy[6];
+  CalcHexVertices(vx, vy, x0, y0, w, h);
+  glBegin(GL_POLYGON);
+    glVertex2f(vx[0], vy[0]);
+    glVertex2f(vx[1], vy[1]);
+    glVertex2f(vx[2], vy[2]);
+    glVertex2f(vx[3], vy[3]);
+    glVertex2f(vx[4], vy[4]);
+    glVertex2f(vx[5], vy[5]);
+  glEnd();
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::ShadeRect
 //
 //  Fade all the screen buffer, so that the menu is more readable,

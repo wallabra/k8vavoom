@@ -350,6 +350,13 @@ public:
   void DrawCursor (int cursorColor=CR_UNTRANSLATED);
   void DrawCursorAt (int x, int y, int cursorChar, int cursorColor=CR_UNTRANSLATED);
 
+  float CalcHexHeight (float h);
+  void DrawHex (float x0, float y0, float w, float h, vuint32 color, float alpha=1.0f);
+  void FillHex (float x0, float y0, float w, float h, vuint32 color, float alpha=1.0f);
+  void ShadeHex (float x0, float y0, float w, float h, float darkening);
+
+  void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH, float aspect=1.0f);
+
   // returns text bounds with respect to the current text align
   void TextBounds (int x, int y, VStr String, int *x0, int *y0, int *width, int *height, bool trimTrailNL=true);
 
@@ -443,6 +450,13 @@ public:
   DECLARE_FUNCTION(DrawRect)
   DECLARE_FUNCTION(ShadeRect)
   DECLARE_FUNCTION(DrawLine)
+
+  DECLARE_FUNCTION(CalcHexHeight)
+  DECLARE_FUNCTION(DrawHex)
+  DECLARE_FUNCTION(FillHex)
+  DECLARE_FUNCTION(ShadeHex)
+
+  DECLARE_FUNCTION(DrawHexColorPattern)
 
   DECLARE_FUNCTION(GetFont)
   DECLARE_FUNCTION(SetFont)

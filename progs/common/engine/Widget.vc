@@ -268,6 +268,13 @@ native final int CursorY { get; set; }
 // returns color ID for specified name
 native static final int FindTextColor (string Name);
 
+native final float CalcHexHeight (float h);
+native final void DrawHex (float x0, float y0, float w, float h, int color, optional float alpha/*=1.0f*/);
+native final void FillHex (float x0, float y0, float w, float h, int color, optional float alpha/*=1.0f*/);
+native final void ShadeHex (float x0, float y0, float w, float h, float darkening);
+
+native final void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH, optional float aspect/*=1.0f*/);
+
 /*
 final int X2Virtual (float x) { return int(ClipRect.ScaleX*x+ClipRect.OriginX); }
 final int Y2Virtual (float y) { return int(ClipRect.ScaleY*y+ClipRect.OriginY); }

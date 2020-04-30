@@ -128,6 +128,44 @@ void VDrawer::ResetTextureUpdateFrames () noexcept {
 }
 
 
+//==========================================================================
+//
+//  VDrawer::CalcRealHexHeight
+//
+//==========================================================================
+float VDrawer::CalcRealHexHeight (float h) noexcept {
+  if (h < 1.0f) return 0.0f;
+  h = h/3.0f*2.0f;
+  const float dividery = 3.0f;
+  const float hdiv = h/dividery;
+  return h+hdiv;
+}
+
+
+//==========================================================================
+//
+//  VDrawer::CalcHexVertices
+//
+//==========================================================================
+void VDrawer::CalcHexVertices (float vx[6], float vy[6], float x0, float y0, float w, float h) noexcept {
+  h = h/3.0f*2.0f;
+  const float dividery = 3.0f;
+  const float hdiv = h/dividery;
+  const float wdiv = w/2.0f;
+  const float yr0 = y0;
+  const float yr1 = y0+h;
+  const float ytop = yr0-hdiv;
+  const float ybot = yr1+hdiv;
+  vx[0] = x0;      vy[0] = yr0;
+  vx[1] = x0+wdiv; vy[1] = ytop;
+  vx[2] = x0+w;    vy[2] = yr0;
+  vx[3] = x0+w;    vy[3] = yr1;
+  vx[4] = x0+wdiv; vy[4] = ybot;
+  vx[5] = x0;      vy[5] = yr1;
+}
+
+
+
 //**************************************************************************
 //
 // calculate matrices

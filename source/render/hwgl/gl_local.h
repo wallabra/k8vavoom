@@ -395,6 +395,10 @@ public:
   virtual void DrawSpriteLump (float x1, float y1, float x2, float y2,
                                VTexture *Tex, VTextureTranslation *Translation, bool flip) override;
 
+  virtual void DrawHex (float x0, float y0, float w, float h, vuint32 color, float alpha=1.0f) override;
+  virtual void FillHex (float x0, float y0, float w, float h, vuint32 color, float alpha=1.0f) override;
+  virtual void ShadeHex (float x0, float y0, float w, float h, float darkening) override;
+
   virtual void BeginTexturedPolys () override;
   virtual void EndTexturedPolys () override;
   virtual void DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float alpha, int vcount, const TVec *verts, const SurfVertex *origverts=nullptr) override;

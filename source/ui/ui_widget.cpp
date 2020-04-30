@@ -1430,6 +1430,123 @@ void VWidget::BroadcastEvent (event_t *evt) {
 
 //==========================================================================
 //
+//  TranslateCoords
+//
+//==========================================================================
+static bool TranslateCoords (const VClipRect &ClipRect, float &x, float &y) {
+  x = ClipRect.ScaleX*x+ClipRect.OriginX;
+  y = ClipRect.ScaleY*y+ClipRect.OriginY;
+  return
+    x >= ClipRect.ClipX1 &&
+    y >= ClipRect.ClipY1 &&
+    x <= ClipRect.ClipX2 &&
+    y <= ClipRect.ClipY2;
+}
+
+
+//==========================================================================
+//
+//  CalcHexColorByCoords
+//
+//==========================================================================
+static vuint32 CalcHexColorByCoords (int x, int y, int radius) {
+  const float diameter = radius*2;
+  const float h = 360.0f*(0.5f-0.5f*atan2f(y, -x)/(float)(M_PI));
+  const float s = sqrtf(x*x+y*y)/diameter;
+  const float v = 1.0f;
+  float r, g, b;
+  M_HsvToRgb(h, s, v, r, g, b);
+  return PackRGBf(r, g, b);
+}
+
+
+//==========================================================================
+//
+//  VWidget::CalcHexHeight
+//
+//==========================================================================
+float VWidget::CalcHexHeight (float h) {
+  if (h <= 0.0f) return 0.0f;
+  return Drawer->CalcRealHexHeight(h*ClipRect.ScaleY)/ClipRect.ScaleY;
+}
+
+
+//==========================================================================
+//
+//  VWidget::DrawHex
+//
+//==========================================================================
+void VWidget::DrawHex (float x0, float y0, float w, float h, vuint32 color, float alpha) {
+  if (alpha <= 0.0f || w <= 0.0f || h <= 0.0f) return;
+  w *= ClipRect.ScaleX;
+  h *= ClipRect.ScaleY;
+  TranslateCoords(ClipRect, x0, y0);
+  Drawer->DrawHex(x0, y0, w, h, color, alpha);
+}
+
+
+//==========================================================================
+//
+//  VWidget::FillHex
+//
+//==========================================================================
+void VWidget::FillHex (float x0, float y0, float w, float h, vuint32 color, float alpha) {
+  if (alpha <= 0.0f || w <= 0.0f || h <= 0.0f) return;
+  w *= ClipRect.ScaleX;
+  h *= ClipRect.ScaleY;
+  TranslateCoords(ClipRect, x0, y0);
+  Drawer->FillHex(x0, y0, w, h, color, alpha);
+}
+
+
+//==========================================================================
+//
+//  VWidget::ShadeHex
+//
+//==========================================================================
+void VWidget::ShadeHex (float x0, float y0, float w, float h, float darkening) {
+  if (darkening <= 0.0f || w <= 0.0f || h <= 0.0f) return;
+  w *= ClipRect.ScaleX;
+  h *= ClipRect.ScaleY;
+  TranslateCoords(ClipRect, x0, y0);
+  Drawer->ShadeHex(x0, y0, w, h, darkening);
+}
+
+
+//==========================================================================
+//
+//  VWidget::DrawHexColorPattern
+//
+//==========================================================================
+void VWidget::DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH, float aspect) {
+  if (radius < 1) radius = 1;
+  if (cellW < 1.0f) cellW = 1.0f;
+  if (cellH < 1.0f) cellH = 1.0f;
+  if (aspect <= 0.0f) aspect = 1.0f;
+  const float scrW = cellW*ClipRect.ScaleX;
+  const float scrH = cellH*ClipRect.ScaleY*aspect;
+  // calculate real hex height
+  const float realScrH = Drawer->CalcRealHexHeight(scrH);
+
+  TranslateCoords(ClipRect, x0, y0);
+
+  const int diameter = radius*2;
+  for (int y = -diameter; y <= diameter; y += 2) {
+    const int rowSize = diameter-abs(y/2);
+    for (int x = -rowSize; x <= rowSize; x += 2) {
+      vuint32 clr = CalcHexColorByCoords(x, y, radius);
+      float xc = (float)x/2.0f;
+      float yc = (float)y/2.0f;
+      xc = x0+xc*scrW;
+      yc = y0+yc*realScrH;
+      Drawer->FillHex(xc, yc, scrW, scrH, clr);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  Natives
 //
 //==========================================================================
@@ -1900,4 +2017,48 @@ IMPLEMENT_FUNCTION(VWidget, GetWidgetAt) {
   VOptParamBool allowDisabled(false);
   vobjGetParamSelf(x, y, allowDisabled);
   RET_REF(Self ? Self->GetWidgetAt(x, y, allowDisabled) : nullptr);
+}
+
+
+// native final float CalcHexHeight (float h);
+IMPLEMENT_FUNCTION(VWidget, CalcHexHeight) {
+  float h;
+  vobjGetParamSelf(h);
+  RET_FLOAT(Self ? Self->CalcHexHeight(h) : 0.0f);
+}
+
+// native final void DrawHex (float x0, float y0, float w, float h, int color, optional float alpha/*=1.0f*/);
+IMPLEMENT_FUNCTION(VWidget, DrawHex) {
+  float x0, y0, w, h;
+  vuint32 color;
+  VOptParamFloat alpha(1.0f);
+  vobjGetParamSelf(x0, y0, w, h, color, alpha);
+  if (Self) Self->DrawHex(x0, y0, w, h, color, alpha);
+}
+
+// native final void FillHex (float x0, float y0, float w, float h, int color, optional float alpha/*=1.0f*/);
+IMPLEMENT_FUNCTION(VWidget, FillHex) {
+  float x0, y0, w, h;
+  vuint32 color;
+  VOptParamFloat alpha(1.0f);
+  vobjGetParamSelf(x0, y0, w, h, color, alpha);
+  if (Self) Self->FillHex(x0, y0, w, h, color, alpha);
+}
+
+// native final void ShadeHex (float x0, float y0, float w, float h, float darkening);
+IMPLEMENT_FUNCTION(VWidget, ShadeHex) {
+  float x0, y0, w, h, darkening;
+  vobjGetParamSelf(x0, y0, w, h, darkening);
+  if (Self) Self->ShadeHex(x0, y0, w, h, darkening);
+}
+
+
+// native final void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH, optional float aspect/*=1.0f*/);
+IMPLEMENT_FUNCTION(VWidget, DrawHexColorPattern) {
+  float x0, y0;
+  int radius;
+  float cellW, cellH;
+  VOptParamFloat aspect(1.0f);
+  vobjGetParamSelf(x0, y0, radius, cellW, cellH, aspect);
+  if (Self) Self->DrawHexColorPattern(x0, y0, radius, cellW, cellH, aspect);
 }

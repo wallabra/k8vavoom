@@ -114,18 +114,22 @@ override void CreateBackButton () {
 //
 //==========================================================================
 override void OnDraw () {
+  Widget root = GetRootWidget;
+
   if (currPage < 0 || currPage >= pages.length) {
     // bad page
     ShadeRect(0, 0, Width, Height, GetCvarF('menu_darkening'));
   } else {
     DrawFullScreenPic(pages[currPage].pichandle);
     // draw page number
-    GetRootWidget.SetFont('smallfont');
-    GetRootWidget.SetTextAlign(hright, vbottom);
-    GetRootWidget.DrawText(GetRootWidget.Width, GetRootWidget.Height, va("%d/%d", currPage+1, pages.length), CR_DARKGRAY);
+    root.SetFont('smallfont');
+    root.SetTextAlign(hright, vbottom);
+    root.DrawText(root.Width, root.Height, va("%d/%d", currPage+1, pages.length), CR_DARKGRAY);
     // restore text align
-    GetRootWidget.SetTextAlign(hleft, vtop);
+    root.SetTextAlign(hleft, vtop);
   }
+
+  //root.DrawHexColorPattern(root.Width/2, root.Height/2, 6, 8, 8);
 }
 
 
