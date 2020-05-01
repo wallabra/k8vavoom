@@ -343,7 +343,9 @@ static void BuildTextureRange (int wadfile, VName nfirst, VName nlast, int txtyp
     //k8: this seems to be unnecessary
     //!!!if (it.getFile() > wadfile) continue;
     if (it.getFile() == skipFile) continue;
-    if (!W_IsWADFile(it.getFile())) continue; // ignore non-wad paks
+    // ignore non-wad paks
+    //k8: nope, Gothic Dreams: Definitive Edition, for example, is using sequences in pk3
+    //if (!W_IsWADFile(it.getFile())) continue;
     vassert(it.getName() == nfirst);
     // skip this file in any case
     skipFile = it.getFile();
