@@ -11,6 +11,31 @@ menudef AdvVideoOptions {
   }
 
   option bool {
+    title = "Recalc Static Lightmaps";
+    cvar = r_lmap_recalc_static;
+    help =
+      "Recalculate static lightmaps when map geometry changed?",
+      "This may cause major slowdowns for maps with huge light sources",
+      "near doors/lifts.",
+      "You can switch this option off if it is your case.",
+      "Please, note that lighting will be less correct with this option",
+      "turned off.",
+      "\cJIf unsure, leave it enabled.";
+  }
+
+  option bool {
+    title = "Recalc Lightmaps For Static Lights";
+    cvar = r_lmap_recalc_moved_static;
+    help =
+      "Recalculate lightmaps when static light source was moved?",
+      "If the map has something like candelabra on a lift, and that",
+      "lift was moved, the engine can recalculate lighting.",
+      "This is usually almost unnoticeable, but you can turn this off",
+      "if you're playing some decoration-heavy map.",
+      "\cJIf unsure, leave it enabled.";
+  }
+
+  option bool {
     title = "Partial Lightmap Update";
     cvar = gl_lmap_allow_partial_updates;
     help =
