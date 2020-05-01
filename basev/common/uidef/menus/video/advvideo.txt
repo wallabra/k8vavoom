@@ -35,6 +35,21 @@ menudef AdvVideoOptions {
       "\cJIf unsure, leave it enabled.";
   }
 
+  option slider {
+    title = "Static Lightmap Recalc Timeout";
+    cvar = r_lmap_recalc_timeout;
+    min = 0;
+    max = 30;
+    step = 1;
+    help =
+      "Do not use more than this number of milliseconds to recalculate",
+      "static lightmaps.",
+      "If the engine needs to update static lightmaps, and updating takes",
+      "more than this, some surfaces will be scheduled to update in the next",
+      "frame. '0' means 'no limit'.",
+      "\cJIf unsure, leave it as is.";
+  }
+
   option bool {
     title = "Partial Lightmap Update";
     cvar = gl_lmap_allow_partial_updates;
