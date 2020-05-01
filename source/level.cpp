@@ -821,12 +821,13 @@ void VLevel::dumpRegion (const sec_region_t *reg) {
   if (reg->regflags&sec_region_t::RF_OnlyVisual) strcat(xflags, " [visual]");
   if (reg->regflags&sec_region_t::RF_SkipFloorSurf) strcat(xflags, " [skip-floor]");
   if (reg->regflags&sec_region_t::RF_SkipCeilSurf) strcat(xflags, " [skip-ceil]");
-  GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x%s",
+  if (reg->params && reg->params->contents) strcat(xflags, va(" [contents:%u]", reg->params->contents));
+  GCon->Logf("  %p: floor=(%g,%g,%g:%g)%s; (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g)%s; (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x%s",
     reg,
-    reg->efloor.GetNormal().x, reg->efloor.GetNormal().y, reg->efloor.GetNormal().z, reg->efloor.GetDist(),
+    reg->efloor.GetNormal().x, reg->efloor.GetNormal().y, reg->efloor.GetNormal().z, reg->efloor.GetDist(), (reg->efloor.isFloor() ? " OK" : ""),
     reg->efloor.splane->minz, reg->efloor.splane->maxz,
     reg->efloor.splane->flags,
-    reg->eceiling.GetNormal().x, reg->eceiling.GetNormal().y, reg->eceiling.GetNormal().z, reg->eceiling.GetDist(),
+    reg->eceiling.GetNormal().x, reg->eceiling.GetNormal().y, reg->eceiling.GetNormal().z, reg->eceiling.GetDist(), (reg->eceiling.isCeiling() ? " OK" : ""),
     reg->eceiling.splane->minz, reg->eceiling.splane->maxz,
     reg->eceiling.splane->flags,
     (reg->extraline ? 1 : 0),

@@ -604,7 +604,7 @@ struct sec_region_t {
     // ignore this region in gap/opening processing
     // this flags affects collision detection
     RF_OnlyVisual    = 1u<<2,
-    // the following flags are only for renderer, collision detection igonres then
+    // the following flags are only for renderer, collision detection igonres them
     RF_SkipFloorSurf = 1u<<3, // do not create floor surface for this region
     RF_SkipCeilSurf  = 1u<<4, // do not create ceiling surface for this region
     RF_SaneRegion    = 1u<<5, // k8vavoom-style 3d floor region

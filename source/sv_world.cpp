@@ -1004,6 +1004,7 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, unsigned *gl
 int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
   if (!sector) return 0;
 
+  //dbgDump = true;
   if (sector->heightsec && (sector->heightsec->SectorFlags&sector_t::SF_UnderWater) &&
       p.z <= sector->heightsec->floor.GetPointZClamped(p))
   {
@@ -1030,7 +1031,26 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
     // ignore solid regions, as we cannot be inside them legally
     float bestDist = 999999.0f; // minimum distance to region floor
     for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
-      if ((reg->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_BaseRegion|sec_region_t::RF_NonSolid)) != sec_region_t::RF_NonSolid) continue;
+      if (reg->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_BaseRegion)) continue;
+      // "sane" regions may represent Vavoom water
+      if ((reg->regflags&(sec_region_t::RF_SaneRegion|sec_region_t::RF_NonSolid)) == sec_region_t::RF_SaneRegion) {
+        if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: sane region..."); DumpRegion(reg); }
+        if (!reg->params || (int)reg->params->contents <= 0) continue;
+        if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: sane non-solid region..."); DumpRegion(reg); }
+        if (dbgDump) { GCon->Logf(NAME_Debug, "   botz=%g; topz=%g", reg->efloor.GetPointZ(p), reg->eceiling.GetPointZ(p)); }
+        // it may be paper-thin
+        const float topz = reg->eceiling.GetPointZ(p);
+        const float botz = reg->efloor.GetPointZ(p);
+        const float minz = min2(botz, topz);
+        // everything beneath it is a water
+        if (p.z <= minz) {
+          best = reg;
+          break;
+        }
+      } else if (!(reg->regflags&sec_region_t::RF_NonSolid)) {
+        continue;
+      }
+      // non-solid
       if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: checking region..."); DumpRegion(reg); }
       const float rtopz = reg->eceiling.GetPointZ(p);
       const float rbotz = reg->efloor.GetPointZ(p);
