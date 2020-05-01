@@ -38,6 +38,7 @@ VCvarB r_dynamic_clip_pvs("r_dynamic_clip_pvs", false, "Clip dynamic lights with
 VCvarB r_dynamic_clip_more("r_dynamic_clip_more", true, "Do some extra checks when clipping dynamic lights?", CVAR_Archive);
 VCvarB r_static_lights("r_static_lights", true, "Allow static lights?", CVAR_Archive);
 VCvarB r_light_opt_shadow("r_light_opt_shadow", false, "Check if light can potentially cast a shadow.", CVAR_Archive);
+VCvarB r_lmap_recalc_static("r_lmap_recalc_static", true, "Recalc static lightmaps when map geometry changed?", CVAR_Archive);
 VCvarB r_lmap_recalc_moved_static("r_lmap_recalc_moved_static", true, "Recalc static lightmaps when static light source moved?", CVAR_Archive);
 
 VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How close dynamic lights should be to be filtered out?\n(0.2-0.4 is usually ok).", CVAR_Archive);

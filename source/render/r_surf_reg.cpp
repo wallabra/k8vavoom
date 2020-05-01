@@ -50,6 +50,8 @@ static_assert(CDSLEN == 32, "oops!");
 // ////////////////////////////////////////////////////////////////////////// //
 VCvarB r_precalc_static_lights("r_precalc_static_lights", true, "Precalculate static lights?", CVAR_Archive);
 int r_precalc_static_lights_override = -1; // <0: not set
+
+extern VCvarB r_lmap_recalc_static;
 extern VCvarB r_lmap_bsp_trace_static;
 
 extern VCvarB loader_cache_data;
@@ -232,7 +234,7 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
         surf->drawflags |= surface_t::DF_CALC_LMAP;
       } else {
         // recalculate lightmap when we'll need to
-        if (recalcStaticLightmaps || inWorldCreation) surf->drawflags |= surface_t::DF_CALC_LMAP;
+        if ((recalcStaticLightmaps && r_lmap_recalc_static) || inWorldCreation) surf->drawflags |= surface_t::DF_CALC_LMAP;
       }
     }
   }
