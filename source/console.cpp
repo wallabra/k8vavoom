@@ -88,8 +88,10 @@ void C_EnableTTYLogs () {
 enum cons_state_t {
   cons_closed,
   cons_opening,
+  cons_opening_imm,
   cons_open,
   cons_closing,
+  cons_closing_imm,
 };
 
 
@@ -275,14 +277,14 @@ void C_Shutdown () {
 //  Open console
 //
 //==========================================================================
-void C_Start () {
+void C_Start (bool immediate) {
   MN_DeactivateMenu();
   MyThreadLocker lock(&conLogLock);
   if (consolestate == cons_closed) {
     if (con_clear_input_on_open) c_iline.Init();
     last_line = num_lines;
   }
-  consolestate = cons_opening;
+  consolestate = (immediate ? cons_opening_imm : cons_opening);
   c_history_current = -1;
 }
 
@@ -311,8 +313,8 @@ void C_StartFull () {
 //  Close console
 //
 //==========================================================================
-void C_Stop () {
-  consolestate = cons_closing;
+void C_Stop (bool immediate) {
+  consolestate = (immediate ? cons_closing_imm : cons_closing);
 }
 
 
@@ -333,7 +335,7 @@ COMMAND(ToggleConsole) {
 //
 //==========================================================================
 COMMAND(ShowConsole) {
-  C_Start();
+  C_Start(Args.length() > 1 && Args[1].startsWithCI("imm"));
 }
 
 
@@ -343,7 +345,7 @@ COMMAND(ShowConsole) {
 //
 //==========================================================================
 COMMAND(HideConsole) {
-  C_Stop();
+  C_Stop(Args.length() > 1 && Args[1].startsWithCI("imm"));
 }
 
 
@@ -388,6 +390,9 @@ void C_Drawer () {
       cons_h = 0;
       consolestate = cons_closed;
     }
+  } else if (consolestate == cons_closing_imm) {
+    cons_h = 0;
+    consolestate = cons_closed;
   }
 
   // scroll console down when opening
@@ -398,6 +403,9 @@ void C_Drawer () {
       cons_h = con_height;
       consolestate = cons_open;
     }
+  } else if (consolestate == cons_opening_imm) {
+    cons_h = con_height;
+    consolestate = cons_open;
   }
 
   if (!consolestate) return;

@@ -28,9 +28,9 @@ void C_Init ();
 bool C_Responder (event_t *);
 void C_Drawer ();
 bool C_Active ();
-void C_Start ();
+void C_Start (bool immediate=false);
 void C_StartFull ();
-void C_Stop ();
+void C_Stop (bool immediate=false);
 void C_Shutdown ();
 
 // this is called for network games
