@@ -1507,20 +1507,9 @@ void VWidget::CalcHexColorPatternDims (float *w, float *h, int radius, float cel
   if (radius < 1) radius = 1;
   if (cellW < 1.0f) cellW = 1.0f;
   if (cellH < 1.0f) cellH = 1.0f;
-  const int diameter = radius*2;
-  // width
-  if (w) {
-    const float scrW = cellW*ClipRect.ScaleX;
-    *w = scrW*(diameter+1)/ClipRect.ScaleX;
-  }
-  // height
-  if (h) {
-    const float scrH = cellH*ClipRect.ScaleY;
-    // calculate real hex height
-    const float realScrH = VDrawer::CalcRealHexHeight(scrH);
-    //*h = (realScrH*(radius*2+1)+scrH/3.0f)/ClipRect.ScaleY;
-    *h = realScrH*(diameter+1)/ClipRect.ScaleY+cellH/3.0f*2.0f/3.0f;
-  }
+  const int diameter = radius*2+1;
+  if (w) *w = cellW*diameter;
+  if (h) *h = VDrawer::CalcRealHexHeight(cellH)*diameter+cellH/3.0f*2.0f/3.0f;
 }
 
 
@@ -1528,13 +1517,11 @@ void VWidget::CalcHexColorPatternDims (float *w, float *h, int radius, float cel
 // coordinates are valid
 bool VWidget::IsValidHexColorPatternCoords (int hpx, int hpy, int radius) {
   if (radius < 1) radius = 1;
+  if (hpy < -radius || hpy > radius) return false;
+  const int rowSize = radius*2-abs(hpy);
   hpx *= 2;
-  hpy *= 2;
-  const int diameter = radius*2;
-  if (hpy < -diameter || hpy > diameter) return false;
-  const int rowSize = diameter-abs(hpy/2);
-  return (hpx >= -rowSize && hpx <= rowSize);
- }
+  return (hpx >= -rowSize && hpx <= rowSize+(hpy&1));
+}
 
 
 // calcs "internal" hex pattern coordinates,
@@ -1543,28 +1530,28 @@ bool VWidget::CalcHexColorPatternCoords (int *hpx, int *hpy, float x, float y, f
   int tmpx, tmpy;
   if (!hpx) hpx = &tmpx;
   if (!hpy) hpy = &tmpy;
-  if (x < x0 || y < y0) { *hpx = -1; *hpy = -1; return false; }
+  x -= x0;
+  y -= y0;
+  if (x < 0.0f || y < 0.0f) { *hpx = *hpy = 0.0f; return false; }
   if (radius < 1) radius = 1;
   if (cellW < 1.0f) cellW = 1.0f;
   if (cellH < 1.0f) cellH = 1.0f;
   const int diameter = radius*2;
-  // width
-  const float scrW = cellW*ClipRect.ScaleX;
-  const float scrH = cellH*ClipRect.ScaleY;
-  // calculate real hex height
-  const float realScrH = VDrawer::CalcRealHexHeight(scrH);
-  const float w = scrW*(diameter+1)/ClipRect.ScaleX;
-  const float h = realScrH*(diameter+1)/ClipRect.ScaleY+cellH/3.0f*2.0f/3.0f;
-  if (x >= x0+w || y >= y0+h) { *hpx = -1; *hpy = -1; return false; }
-  int tx = (int)((x-x0)/cellW/2.0f);
-  int ty = (int)((y-y0)/VDrawer::CalcRealHexHeight(cellH)/2.0f);
+  const float realCH = VDrawer::CalcRealHexHeight(cellH);
+  const float w = cellW*(diameter+1);
+  const float h = realCH*(diameter+1)+cellH*2.0f/3.0f/3.0f;
+  if (x >= w || y >= h) { *hpx = *hpy = -1.0f; return false; }
+  y += cellH*2.0f/3.0f/3.0f;
+  x -= cellW*radius;
+  y -= realCH*radius;
+  //GCon->Logf("x=%g; y=%g", x, y);
+  if (y <= 0.0f) y -= cellH;
+  int ty = (int)(y/realCH);
+  if (!(ty&1)) x -= cellW*0.5f;
+  int tx = (int)(x/cellW);
   *hpx = tx;
   *hpy = ty;
-  tx *= 2;
-  ty *= 2;
-  if (ty < -diameter || ty > diameter) return false;
-  const int rowSize = diameter-abs(ty/2);
-  return (tx >= -rowSize && tx <= rowSize);
+  return IsValidHexColorPatternCoords(tx, ty, radius);
 }
 
 
@@ -1575,9 +1562,7 @@ bool VWidget::CalcHexColorPatternHexCoordsAt (float *hx, float *hy, int hpx, int
   if (radius < 1) radius = 1;
   if (cellW < 1.0f) cellW = 1.0f;
   if (cellH < 1.0f) cellH = 1.0f;
-  if (hx) {
-    *hx = x0+cellW*radius+(float)hpx*cellW;
-  }
+  if (hx) *hx = x0+cellW*radius+(float)hpx*cellW-cellW*(0.5f*(hpy&1));
   if (hy) {
     const float realCH = VDrawer::CalcRealHexHeight(cellH);
     *hy = y0+realCH*radius+(float)hpy*realCH;

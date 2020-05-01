@@ -68,19 +68,19 @@ private readonly Widget PrevWidget;
 private readonly Widget NextWidget;
 
 // position of the widget in the parent widget
-private int PosX;
-private int PosY;
+readonly int PosX;
+readonly int PosY;
 // offset for children
-private int OfsX;
-private int OfsY;
+readonly int OfsX;
+readonly int OfsY;
 // size of the child area of the widget
-private int SizeWidth;
-private int SizeHeight;
+readonly int SizeWidth;
+readonly int SizeHeight;
 // scaling of the widget
-private float SizeScaleX;
-private float SizeScaleY;
+readonly float SizeScaleX;
+readonly float SizeScaleY;
 
-private readonly VClipRect ClipRect;
+readonly VClipRect ClipRect;
 
 // currently focused child widget
 private readonly Widget CurrentFocusChild;

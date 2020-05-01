@@ -23,6 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+//#define VV_TEST_HEX_WHEEL
 class MenuScreenHelpBase : MenuScreen;
 
 struct PageInfo {
@@ -33,6 +34,14 @@ struct PageInfo {
 
 array!PageInfo pages;
 int currPage;
+
+#ifdef VV_TEST_HEX_WHEEL
+float lastMouseX = -6666;
+float lastMouseY = -6666;
+int radius = 6;
+int cellW = 8;
+int cellH = 8;
+#endif
 
 
 //==========================================================================
@@ -108,6 +117,33 @@ override void CreateBackButton () {
 }
 
 
+#ifdef VV_TEST_HEX_WHEEL
+final int GetWheelX () { return GetRootWidget.Width/2; }
+final int GetWheelY () { return GetRootWidget.Height/2; }
+
+final void DrawWheel () {
+  Widget root = GetRootWidget;
+
+  int x = GetWheelX();
+  int y = GetWheelY();
+  int w = int(root.CalcHexColorPatternWidth(radius, cellW, cellH));
+  int h = int(root.CalcHexColorPatternHeight(radius, cellW, cellH));
+
+  root.DrawHexColorPattern(x, y, radius, cellW, cellH);
+  root.DrawRect(x, y, w, h, RGB(255, 255, 0));
+}
+
+final void HiHex (float mx, float my) {
+  Widget root = GetRootWidget;
+  int hpx, hpy;
+  if (!root.CalcHexColorPatternCoords(out hpx, out hpy, mx, my, GetWheelX(), GetWheelY(), radius, cellW, cellH)) return;
+  float hx, hy;
+  root.CalcHexColorPatternHexCoordsAt(out hx, out hy, hpx, hpy, GetWheelX(), GetWheelY(), radius, cellW, cellH);
+  root.ShadeHex(hx, hy, cellW, cellH, 0.8);
+}
+#endif
+
+
 //==========================================================================
 //
 //  OnDraw
@@ -129,19 +165,9 @@ override void OnDraw () {
     root.SetTextAlign(hleft, vtop);
   }
 
-  #if 1
-  {
-    int radius = 6;
-    int cellW = 8;
-    int cellH = 8;
-    int x = root.Width/2;
-    int y = root.Height/2;
-    int w = int(root.CalcHexColorPatternWidth(radius, cellW, cellH));
-    int h = int(root.CalcHexColorPatternHeight(radius, cellW, cellH));
-
-    root.DrawHexColorPattern(x, y, radius, cellW, cellH);
-    root.DrawRect(x, y, w, h, RGB(255, 255, 0));
-  }
+  #ifdef VV_TEST_HEX_WHEEL
+  DrawWheel();
+  HiHex(lastMouseX, lastMouseY);
   #endif
 }
 
@@ -152,6 +178,17 @@ override void OnDraw () {
 //
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
+  #ifdef VV_TEST_HEX_WHEEL
+  if (evt.bubbling && evt.type == ev_mouse) {
+    lastMouseX = evt.msx+ClipRect.OriginX/ClipRect.ScaleX;
+    lastMouseY = evt.msy+ClipRect.OriginY/ClipRect.ScaleY;
+    Widget root = GetRootWidget;
+    int hpx, hpy;
+    bool ok = root.CalcHexColorPatternCoords(out hpx, out hpy, lastMouseX, lastMouseY, GetWheelX(), GetWheelY(), radius, cellW, cellH);
+    printdebug("!!! hpos=(%s,%s); pos=(%s,%s); ok=%B", hpx, hpy, lastMouseX, lastMouseY, ok);
+  }
+  #endif
+
   if (evt.bubbling && evt.type == ev_keydown) {
     int key = ConvertBoundKey(evt.keycode);
     switch (key) {
