@@ -176,7 +176,7 @@ override bool OnEvent (ref event_t evt) {
 
 
 defaultproperties {
-  Width = 360;
+  //Width = 360;
   Height = 14;
   cvarSession = '';
 

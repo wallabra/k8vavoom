@@ -48,6 +48,7 @@ delegate bool ValueChanging (Object Sender, float NewValue);
 //==========================================================================
 void SetText (string AText) {
   Text = TranslateString(AText);
+  int ohgt = Height;
   FixMinimumHeight();
 }
 
@@ -283,9 +284,9 @@ override void OnVisibilityChanged (bool bNewVisibility) {
 
 
 defaultproperties {
-  Width = 360;
-  Height = 10;
-  cvarSession = '';
+  //Width = 360;
+  //Height = 10;
+  //cvarSession = '';
 }
 
 

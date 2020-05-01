@@ -159,8 +159,8 @@ override bool OnEvent (ref event_t evt) {
 
 
 defaultproperties {
-  Width = 360;
-  Height = 10;
+  //Width = 360;
+  //Height = 10;
   CursorXOffs = 200;
   Value = 0.0;
   ValueDelta = 1.0;

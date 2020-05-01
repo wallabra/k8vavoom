@@ -78,14 +78,6 @@ void CreateMenuItemsFromList (ref array!MenuDefOptionBase options) {
     auto xlen = Items.length;
     auto mc = opt.CreateOption(self);
     if (mc) {
-      //HACK!
-      if (Items.length > 1 && GetClassName(mc.Class) == 'MenuChoiceSlider' &&
-          GetClassName(Items[$-2].Class) != 'MenuChoiceSlider' &&
-          Items[$-2].Height == 10)
-      {
-        Items[$-2].Height = 8;
-        currentY -= 2;
-      }
       if (opt.help) mc.customHelpText = opt.help;
       //printdebug("%C: mc.Width=%s; Width=%s", self, mc.Width, Width);
       mc.Width = Width;

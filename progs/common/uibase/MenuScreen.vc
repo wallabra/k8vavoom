@@ -661,6 +661,7 @@ void CursorMoved () {
   }
   CursorPrev = CursorPos;
   OfsYPrev = ChildrenOfsY;
+  //printdebug("CURR: %C:%s: height=%s", Items[CursorPos], Items[CursorPos].UniqueId, Items[CursorPos].Height);
 }
 
 

@@ -295,7 +295,8 @@ defaultproperties {
   Focusable = true;
   Width = 320;
   //Height = 200;
-  Height = 24;
+  //Height = 24;
+  Height = 10;
   cvarSession = '';
   CursorXOffsHR = 200;
 }
