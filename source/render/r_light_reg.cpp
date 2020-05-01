@@ -38,6 +38,10 @@
 static VCvarB r_lmap_stfix_enabled("r_lmap_stfix_enabled", true, "Enable lightmap \"inside wall\" fixing?", CVAR_Archive);
 static VCvarF r_lmap_stfix_step("r_lmap_stfix_step", "2", "Lightmap \"inside wall\" texel step", CVAR_Archive);
 
+VCvarI r_lmap_recalc_timeout("r_lmap_recalc_timeout", "6", "Do not use more than this number of milliseconds for static lightmap updates (0 means 'no limit').", CVAR_Archive);
+VCvarB r_lmap_recalc_static("r_lmap_recalc_static", true, "Recalc static lightmaps when map geometry changed?", CVAR_Archive);
+VCvarB r_lmap_recalc_moved_static("r_lmap_recalc_moved_static", true, "Recalc static lightmaps when static light source moved?", CVAR_Archive);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarI r_ambient_min;
@@ -687,6 +691,23 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
 //==========================================================================
 void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
   if (surf->count < 3) return; // wtf?!
+
+  // check for timeout (but not if we're creating world surfaces)
+  if (!inWorldCreation) {
+    const int msec = r_lmap_recalc_timeout.asInt();
+    if (msec > 0) {
+      if (lastLMapStaticRecalcFrame != currDLightFrame) {
+        lastLMapStaticRecalcFrame = currDLightFrame;
+        lmapStaticRecalcStartTime = -Sys_Time();
+      } else {
+        const double tt = lmapStaticRecalcStartTime+Sys_Time();
+        if (tt >= (double)msec/1000.0) {
+          return;
+        }
+      }
+    }
+  }
+
 
   LMapTraceInfo lmi;
   //lmi.points_calculated = false;

@@ -115,6 +115,8 @@ VRenderLevelLightmap::VRenderLevelLightmap (VLevel *ALevel)
   , lmcache()
   , nukeLightmapsOnNextFrame(false)
   , invalidateRelight(false)
+  , lastLMapStaticRecalcFrame(0)
+  , lmapStaticRecalcStartTime(0)
 {
   mIsShadowVolumeRenderer = false;
   lmcache.renderer = this;

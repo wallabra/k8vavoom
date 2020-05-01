@@ -2065,6 +2065,7 @@ void VRenderLevelShared::SegMoved (seg_t *seg) {
 //
 //==========================================================================
 void VRenderLevelShared::CreateWorldSurfaces () {
+  const bool oldIWC = inWorldCreation;
   inWorldCreation = true;
 
   vassert(!free_wsurfs);
@@ -2211,7 +2212,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 
   if (inWorldCreation) R_PBarUpdate("Surfaces", Level->NumSubsectors, Level->NumSubsectors, true);
 
-  inWorldCreation = false;
+  inWorldCreation = oldIWC;
 }
 
 

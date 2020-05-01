@@ -882,6 +882,10 @@ private:
   // set if some surface wasn't found
   unsigned lmcacheUnknownSurfaceCount;
 
+  // this is used to limit static lightmap recalc time
+  vuint32 lastLMapStaticRecalcFrame;
+  double lmapStaticRecalcStartTime;
+
 public:
   void releaseAtlas (vuint32 id) noexcept;
   void allocAtlas (vuint32 aid) noexcept;

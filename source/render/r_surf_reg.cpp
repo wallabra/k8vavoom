@@ -1256,6 +1256,7 @@ void VRenderLevelLightmap::PreRender () {
   c_subdivides = 0;
   c_seg_div = 0;
   light_mem = 0;
+  inWorldCreation = true;
 
   RegisterAllThinkers();
   CreateWorldSurfaces();
@@ -1328,6 +1329,8 @@ void VRenderLevelLightmap::PreRender () {
       }
     }
   }
+
+  inWorldCreation = false;
 
   GCon->Logf("%d subdivides", c_subdivides);
   GCon->Logf("%d seg subdivides", c_seg_div);
