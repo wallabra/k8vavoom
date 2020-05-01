@@ -289,7 +289,7 @@ game "chex2" {
 
 
 // Chex Quest 3
-game "chex2" {
+game "chex3" {
   description = "Chex Quest 3";
   game = "basev/chex";
   base = "basev/doom";
