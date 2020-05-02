@@ -227,7 +227,7 @@ void VRenderLevelShared::PushDlights () {
     //MarkLights(l, 1U<<i, Level->NumNodes-1, dlinfo[i].leafnum);
     //FIXME: this has one frame latency; meh for now
     LitCalcBBox = false; // we don't need any lists
-    if (CalcLightVis(l->origin, l->radius, 1U<<i)) {
+    if (CalcLightVis(l->origin, l->radius, (int)i)) {
       dlinfo[i].needTrace = (doShadows ? 1 : -1);
     } else {
       // this one is invisible
@@ -862,7 +862,7 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       // check visibility
       if (!(dlbits&(1U<<i))) continue;
-      if (!dlinfo[i].needTrace) continue;
+      if (!dlinfo[i].isVisible()) continue;
       // reject owned light, because they are processed by another method
       const dlight_t &dl = DLights[i];
       if (lowner && lowner->ServerUId == dl.ownerUId) continue;
@@ -888,7 +888,7 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
           if (add <= 1.0f) continue;
         }
         // trace light that needs shadows
-        if (dynclip && !(dl.flags&dlight_t::NoShadow) && dlinfo[i].leafnum != snum) {
+        if (dynclip && !(dl.flags&dlight_t::NoShadow) && dlinfo[i].leafnum != snum && dlinfo[i].isNeedTrace()) {
           if (!RadiusCastRay(sub->sector, p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
         }
         //!if (dl.type&DLTYPE_Subtractive) add = -add;

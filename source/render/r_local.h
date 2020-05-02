@@ -293,6 +293,9 @@ protected:
   struct DLightInfo {
     int needTrace; // <0: no; >1: yes; 0: invisible
     int leafnum; // -1: unknown yet
+
+    inline bool isVisible () const noexcept { return (needTrace != 0); }
+    inline bool isNeedTrace () const noexcept { return (needTrace > 0); }
   };
 
 protected:
@@ -571,7 +574,9 @@ protected:
   // if we will use this for dynamic lights, they will have one-frame latency
   // sets `CurrLightPos` and `CurrLightRadius`, and other lvis fields
   // returns `false` if the light is invisible
-  bool CalcLightVis (const TVec &org, const float radius, vuint32 currltbit=0);
+  // this also sets the list of touched subsectors for dynamic light
+  // (this is used in `LightPoint()` and such
+  bool CalcLightVis (const TVec &org, const float radius, int dlnum=-1);
 
   // does some sanity checks, possibly moves origin a little
   // returns `false` if this light can be dropped
@@ -583,7 +588,9 @@ protected:
   //void MarkLights (dlight_t *light, vuint32 bit, int bspnum, int lleafnum);
 
   virtual void RenderScene (const refdef_t *, const VViewClipper *) = 0;
-  virtual void PushDlights ();
+
+  // this calculates final dlight visibility, list of affected subsectors, and so on
+  void PushDlights ();
 
   // returns attenuation multiplier (0 means "out of cone")
   static float CheckLightPointCone (VEntity *lowner, const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle);
@@ -1016,7 +1023,6 @@ protected:
   void CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool lowres); // for dynlights, set `lowres` to `true`
   void SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf, const vuint8 *facevis);
   void AddDynamicLights (surface_t *surf);
-  //virtual void PushDlights () override;
 
   // lightmap cache manager
   void FlushCaches ();
@@ -1080,9 +1086,6 @@ protected:
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) override;
 
   virtual void ProcessCachedSurfaces () override;
-
-  // light methods
-  //virtual void PushDlights () override;
 
   // world BSP rendering
   virtual void QueueWorldSurface (surface_t *) override;

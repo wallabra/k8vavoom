@@ -1492,7 +1492,8 @@ bool VRenderLevelShared::CheckValidLightPosRough (TVec &lorg, const sector_t *se
 //  TODO: clip invisible geometry for spotlights
 //
 //==========================================================================
-bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuint32 currltbit) {
+bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, int dlnum) {
+  //if (dlnum >= 0) dlinfo[dlnum].touchedSubs.reset();
   if (radius < 2) return false;
 
   //bool skipShadowCheck = !r_light_opt_shadow;
@@ -1501,7 +1502,7 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuin
 
   CurrLightPos = org;
   CurrLightRadius = radius;
-  CurrLightBit = currltbit;
+  CurrLightBit = (dlnum >= 0 ? 1u<<dlnum : 0u);
 
   /*LightSubs.reset();*/ // all affected subsectors
   /*LightVisSubs.reset();*/ // visible affected subsectors

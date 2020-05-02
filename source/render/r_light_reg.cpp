@@ -941,6 +941,7 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
     //if (dl.type == DLTYPE_Subtractive) GCon->Logf("***SUBTRACTIVE LIGHT!");
     if (dl.type&DLTYPE_Subtractive) continue;
 
+    // for speed
     const int xnfo = dlinfo[lnum].needTrace;
     if (!xnfo) continue;
 
