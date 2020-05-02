@@ -318,7 +318,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
       light = 0xffffffff;
     } else {
       /*
-      light = LightPoint(nullptr, Drawer->vieworg, cl->MO->Radius, -1);
+      light = LightPoint(nullptr, Drawer->vieworg, cl->MO->Radius, -1, r_viewleaf);
       if (ltxr|ltxg|ltxb) {
         //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
         int r = max2(ltxr, (int)((light>>16)&0xff));
@@ -330,7 +330,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
       if (ltxr|ltxg|ltxb) {
         light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
       } else {
-        light = LightPoint(nullptr, Drawer->vieworg-TVec(0.0f, 0.0f, cl->MO->Height), cl->MO->Radius, cl->MO->Height);
+        light = LightPoint(nullptr, Drawer->vieworg-TVec(0.0f, 0.0f, cl->MO->Height), cl->MO->Radius, cl->MO->Height, r_viewleaf);
       }
       //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
       //light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
