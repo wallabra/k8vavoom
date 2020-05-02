@@ -32,7 +32,8 @@ class MenuSelector_Big : MenuStaticAnim;
 //
 //==========================================================================
 ClientGameShared GetClGame () {
-  return MenuScreen(Parent).ClGame;
+  //return MenuScreen(Parent).ClGame;
+  return (Parent ? MenuScreen(Parent).ClGame : none);
 }
 
 
@@ -57,7 +58,8 @@ override void OnCreate () {
 //
 //==========================================================================
 override void SetOrigin (int X, int Y) {
-  ::SetOrigin(X+GetClGame().BigSelectorXOffset, Y+GetClGame().BigSelectorYOffset);
+  auto cl = GetClGame();
+  if (cl) ::SetOrigin(X+cl.BigSelectorXOffset, Y+cl.BigSelectorYOffset);
 }
 
 

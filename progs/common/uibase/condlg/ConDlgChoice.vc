@@ -51,8 +51,10 @@ override void OnDraw () {
 
 override void ActivateEvent () {
   CmdBuf_AddText("Impulse %d\n", ImpulseNum);
-  StopLocalSounds();
-  GetClGame().PopMenu();
+  //StopLocalSounds();
+  //GetClGame().PopMenu();
+  auto par = MenuScreen(Parent);
+  if (par) par.DoPopMenu(userAbort:false);
 }
 
 

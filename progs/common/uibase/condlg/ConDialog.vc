@@ -163,10 +163,28 @@ override void OnDraw () {
 
 //==========================================================================
 //
+//  OnBeforePopMenu
+//
+//  this is called before `ClGame.PopMenu()`
+//  return `false` to prevent closing (but still eat the event)
+//
+//==========================================================================
+override bool OnBeforePopMenu (bool userAbort) {
+  if (userAbort) {
+    CmdBuf_AddText("Impulse 200\n");
+  }
+  StopLocalSounds();
+  return true;
+}
+
+
+//==========================================================================
+//
 //  OnEvent
 //
 //==========================================================================
 override bool OnEvent (ref event_t evt) {
+  /*
   if (evt.bubbling && evt.type == ev_keydown) {
     int key = ConvertBoundKey(evt.keycode);
     switch (key) {
@@ -178,6 +196,7 @@ override bool OnEvent (ref event_t evt) {
         return true;
     }
   }
+  */
   return ::OnEvent(evt);
 }
 

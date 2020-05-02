@@ -51,7 +51,8 @@ override bool OnEvent (ref event_t evt) {
   // "on click"
   if (evt.bubbling && evt.type == ev_click && evt.dest == self) {
     if (evt.keycode == K_MOUSE1) {
-      GetClGame().PopMenu();
+      auto par = MenuScreen(Parent);
+      if (par) par.DoPopMenu(userAbort:true);
       return true;
     }
   }

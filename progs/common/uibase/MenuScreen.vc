@@ -110,6 +110,34 @@ override void OnVisibilityChanged (bool bNewVisibility) {
 
 //==========================================================================
 //
+//  OnBeforePopMenu
+//
+//  this is called before `ClGame.PopMenu()`
+//  return `false` to prevent closing (but still eat the event)
+//  `userAbort` is true if closed via `esc`
+//
+//==========================================================================
+bool OnBeforePopMenu (bool userAbort) {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  DoPopMenu
+//
+//  call this instead of `ClGame.PopMenu()`
+//
+//==========================================================================
+void DoPopMenu (bool userAbort) {
+  if (OnBeforePopMenu(userAbort)) {
+    ClGame.PopMenu();
+  }
+}
+
+
+//==========================================================================
+//
 //  ShowAndActivate
 //
 //==========================================================================
@@ -845,7 +873,7 @@ override bool OnEvent (ref event_t evt) {
   }
 
   if (evt.bubbling && evt.type == ev_keydown && evt.keycode == K_MOUSE2) {
-    ClGame.PopMenu();
+    DoPopMenu(userAbort:true);
     return true;
   }
 
@@ -883,7 +911,7 @@ override bool OnEvent (ref event_t evt) {
         }
         return true;
       case K_ESCAPE:
-        ClGame.PopMenu();
+        DoPopMenu(userAbort:true);
         return true;
     }
   }
