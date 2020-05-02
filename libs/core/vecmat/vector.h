@@ -38,8 +38,8 @@
 // this is for 2d line/node bboxes
 // bounding box
 enum {
-  BOX2D_TOP,
-  BOX2D_BOTTOM,
+  BOX2D_TOP, // the top is greater than the bottom
+  BOX2D_BOTTOM, // the bottom is lesser than the top
   BOX2D_LEFT,
   BOX2D_RIGHT,
   // or this
@@ -1096,6 +1096,23 @@ static VVA_OKUNUSED VVA_CHECKRESULT inline bool CheckSphereVsAABBIgnoreZ (const 
   ++li;
   ++bbox;
   s = (*li < bbox[0] ? (*li)-bbox[0] : *li > bbox[0+3] ? (*li)-bbox[0+3] : 0.0f);
+  d += s*s;
+
+  return (d < radius*radius); // or <= if you want exact touching
+}
+
+
+// check to see if the sphere overlaps the 2D AABB
+static VVA_OKUNUSED VVA_CHECKRESULT inline bool CheckSphereVs2dAABB (const float bbox[4], const TVec &lorg, const float radius) noexcept {
+  float d = 0.0f, s;
+  // find the square of the distance from the sphere to the box
+  // first check is min, second check is max
+  const float *li = &lorg[0];
+
+  s = (*li < bbox[BOX2D_LEFT] ? (*li)-bbox[BOX2D_LEFT] : *li > bbox[BOX2D_RIGHT] ? (*li)-bbox[BOX2D_RIGHT] : 0.0f);
+  d += s*s;
+  ++li;
+  s = (*li < bbox[BOX2D_BOTTOM] ? (*li)-bbox[BOX2D_BOTTOM] : *li > bbox[BOX2D_TOP] ? (*li)-bbox[BOX2D_TOP] : 0.0f);
   d += s*s;
 
   return (d < radius*radius); // or <= if you want exact touching
