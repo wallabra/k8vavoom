@@ -559,6 +559,8 @@ static final void DrawFullScreenPic (int Handle, optional bool dontRestoreVScree
     //print("scaleX=%s; scaleY=%s; vsize=(%s,%s); psize=(%s,%s); ratio=%s", scaleX, scaleY, GetVirtualWidth(), GetVirtualHeight(), pinf.width, pinf.height, R_GetAspectRatio());
     xofs = (GetVirtualWidth()-pinf.width)/2;
     yofs = (GetVirtualHeight()-pinf.height)/2;
+    xofs += pinf.xoffset;
+    yofs += pinf.yoffset;
     R_DrawPic(xofs, yofs, Handle);
 #else
     if (pinf.width >= 320 && pinf.height >= 200) {
