@@ -648,7 +648,8 @@ void VWidget::SetCurrentFocusChild (VWidget *NewFocus) {
       FindNewFocus();
     }
   } else {
-    CurrentFocusChild = NewFocus;
+    vassert(!NewFocus);
+    CurrentFocusChild = nullptr;
   }
 
   if (fcc && fcc != CurrentFocusChild) fcc->Close();
