@@ -475,8 +475,16 @@ override void TranslateLevel (Level InLevel) {
 //
 //==========================================================================
 override name GetConScriptName (name LevelName) {
-  foreach (auto i; 1..99) if (LevelName == name(va("map%02d", i))) return name(va("script%02d", i));
-  return '';
+  //foreach (auto i; 1..99) if (LevelName == name(va("map%02d", i))) return name(va("script%02d", i));
+  //printdebug("GetConScriptName: '%s'", LevelName);
+  string s = string(LevelName);
+  if (s.length != 5) return '';
+  if (!s.startsWith("map")) return '';
+  if (s[3] < "0" || s[3] > "9" || s[4] < "0" || s[3] > "9") return '';
+  if (s[3] == "0" && s[4] == "0") return '';
+  s = "script"~s[3..5];
+  //printdebug("GetConScriptName: res='%s'", s);
+  return name(s);
 }
 
 
