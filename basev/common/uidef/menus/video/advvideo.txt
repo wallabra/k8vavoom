@@ -47,6 +47,8 @@ menudef AdvVideoOptions {
       "If the engine needs to update static lightmaps, and updating takes",
       "more than this, some surfaces will be scheduled to update in the next",
       "frame. '0' means 'no limit'.",
+      "Please, note that lighting may flicker a little if lightmap rebuilding",
+      "cannot be finished in time. This is harmless, but can be slightly annoying.",
       "\cJIf unsure, leave it as is.";
   }
 

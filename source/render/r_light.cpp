@@ -101,6 +101,7 @@ void VRenderLevelShared::AddStaticLightRGB (vuint32 OwnerUId, const TVec &origin
     if (osp) Lights[*osp].ownerUId = 0;
     StOwners.put(OwnerUId, Lights.length()-1);
   }
+  CalcStaticLightTouchingSubs(Lights.length()-1, L);
   //GCon->Logf(NAME_Debug, "VRenderLevelShared::AddStaticLightRGB: count=%d", Lights.length());
 }
 
@@ -126,6 +127,7 @@ void VRenderLevelShared::MoveStaticLightByOwner (vuint32 OwnerUId, const TVec &o
   sl.origin = origin;
   //sl.leafnum = (int)(ptrdiff_t)((Owner->SubSector ? Owner->SubSector : Level->PointInSubsector(sl.origin))-Level->Subsectors);
   sl.leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(sl.origin)-Level->Subsectors);
+  CalcStaticLightTouchingSubs(*stp, sl);
   if (sl.active && r_lmap_recalc_moved_static) InvalidateStaticLightmaps(sl.origin, sl.radius, true);
 }
 
@@ -853,6 +855,8 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
     if (!staticLightsFiltered) RefilterStaticLights();
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     const light_t *stl = Lights.Ptr();
+    //const int snum = (int)(ptrdiff_t)(sub-&Level->SubSectors[0]);
+    //SubStaticLigtInfo *subslinfo = &SubStaticLights[snum];
     for (int i = Lights.length(); i--; ++stl) {
       //if (!stl->radius) continue;
       if (!stl->active) continue;
@@ -1104,5 +1108,91 @@ vuint32 VRenderLevelShared::LightPointAmbient (VEntity *lowner, const TVec &p, f
     ((vuint32)clampToByte((int)lb));
 }
 
-
 #undef RL_CLEAR_DLIGHT
+
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CalcBSPNodeLMaps
+//
+//==========================================================================
+void VRenderLevelShared::CalcBSPNodeLMaps (int slindex, light_t &sl, int bspnum, const float *bbox) {
+  if (bspnum == -1) return; // one-sector map, ignore
+
+  //if (!CheckSphereVsAABBIgnoreZ(bbox, sl.origin, sl.radius)) return;
+
+  // found a subsector?
+  if (BSPIDX_IS_NON_LEAF(bspnum)) {
+    node_t *bsp = &Level->Nodes[bspnum];
+    // decide which side the light is on
+    const float dist = DotProduct(sl.origin, bsp->normal)-bsp->dist;
+    if (dist > sl.radius) {
+      // light is completely on the front side
+      return CalcBSPNodeLMaps(slindex, sl, bsp->children[0], bsp->bbox[0]);
+    } else if (dist < -sl.radius) {
+      // light is completely on the back side
+      return CalcBSPNodeLMaps(slindex, sl, bsp->children[1], bsp->bbox[1]);
+    } else {
+      //int side = bsp->PointOnSide(CurrLightPos);
+      unsigned side = (unsigned)(dist <= 0.0f);
+      // recursively divide front space
+      CalcBSPNodeLMaps(slindex, sl, bsp->children[side], bsp->bbox[side]);
+      // possibly divide back space
+      side ^= 1;
+      return CalcBSPNodeLMaps(slindex, sl, bsp->children[side], bsp->bbox[side]);
+    }
+  } else {
+    //subsector_t *sub = &Level->Subsectors[BSPIDX_LEAF_SUBSECTOR(bspnum)];
+    //CalcSubsectorLMaps(slindex, sl, BSPIDX_LEAF_SUBSECTOR(bspnum));
+    const int num = BSPIDX_LEAF_SUBSECTOR(bspnum);
+    subsector_t *sub = &Level->Subsectors[num];
+    if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
+    if (!CheckSphereVs2dAABB(sub->bbox2d, sl.origin, sl.radius)) return;
+    // polyobj
+    /*
+    if (sub->HasPObjs()) {
+      for (auto &&it : sub->PObjFirst()) {
+        polyobj_t *pobj = it.value();
+        sl.touchedPolys.append(pobj);
+      }
+    }
+    */
+    sl.touchedSubs.append(sub);
+    SubStaticLights[num].touchedStatic.put(slindex, true);
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CalcStaticLightTouchingSubs
+//
+//==========================================================================
+void VRenderLevelShared::CalcStaticLightTouchingSubs (int slindex, light_t &sl) {
+  //FIXME: make this faster!
+  if (sl.radius < 1.0f) return;
+  float bbox[6];
+  bbox[0] = bbox[1] = bbox[2] = -999999.0f;
+  bbox[3] = bbox[4] = bbox[5] = 999999.0f;
+
+  // remove from all subsectors
+  if (SubStaticLights.length() < Level->NumSubsectors) SubStaticLights.setLength(Level->NumSubsectors);
+  for (auto &&it : sl.touchedSubs) {
+    const int snum = (int)(ptrdiff_t)(it-&Level->Subsectors[0]);
+    SubStaticLights[snum].touchedStatic.remove(slindex);
+  }
+
+  sl.touchedSubs.reset();
+  //sl.touchedPolys.reset();
+  CalcBSPNodeLMaps(slindex, sl, Level->NumNodes-1, bbox);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::InvalidateStaticLightmapsSubs
+//
+//==========================================================================
+void VRenderLevelShared::InvalidateStaticLightmapsSubs (subsector_t *sub) {
+}

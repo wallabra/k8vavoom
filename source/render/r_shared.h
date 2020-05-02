@@ -43,6 +43,9 @@
 #define NUM_BLOCK_SURFS  (64)
 
 
+extern int light_mem;
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // color maps
 enum {
@@ -148,7 +151,7 @@ struct surface_t {
     DF_WSURF        = 1u<<1, // is this world/wall surface? such surfs are guaranteed to have space for `MAXWVERTS`
     DF_FIX_CRACKS   = 1u<<2, // this surface must be subdivised to fix "cracks"
     DF_CALC_LMAP    = 1u<<3, // calculate static lightmap
-    //DF_FLIP_PLANE   = 1u<<4, // flip plane
+    //DF_BUILD_LMAP   = 1u<<4, // nope, not used
     DF_NO_FACE_CULL = 1u<<5, // ignore face culling
     // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
     DF_PL_VISIBLE   = 1u<<31,
@@ -186,7 +189,7 @@ struct surface_t {
   unsigned drawflags; // DF_XXX
   /*short*/int texturemins[2];
   /*short*/int extents[2];
-  surfcache_t *CacheSurf;
+  surfcache_t *CacheSurf; // lightmap atlas cache
   //int plvisible; // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
   //vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")
   int shaderClass; // used in renderers
@@ -222,6 +225,50 @@ struct surface_t {
   inline float PointDistance (const TVec &p) const noexcept { return plane.PointDistance(p); }
 
   inline void GetPlane (TPlane *p) const noexcept { *p = plane; }
+
+  inline void FreeLightmaps () noexcept {
+    if (lightmap) {
+      light_mem -= lmsize;
+      Z_Free(lightmap);
+      lightmap = nullptr;
+      lmsize = 0;
+    }
+    if (lightmap_rgb) {
+      light_mem -= lmrgbsize;
+      Z_Free(lightmap_rgb);
+      lightmap_rgb = nullptr;
+      lmrgbsize = 0;
+    }
+  }
+
+  inline void FreeRGBLightmap () noexcept {
+    if (lightmap_rgb) {
+      light_mem -= lmrgbsize;
+      Z_Free(lightmap_rgb);
+      lightmap_rgb = nullptr;
+      lmrgbsize = 0;
+    }
+  }
+
+  inline void ReserveMonoLightmap (int sz) noexcept {
+    vassert(sz > 0);
+    if (lmsize < sz) {
+      light_mem -= lmsize;
+      light_mem += sz;
+      lightmap = (vuint8 *)Z_Realloc(lightmap, sz);
+      lmsize = sz;
+    }
+  }
+
+  inline void ReserveRGBLightmap (int sz) noexcept {
+    vassert(sz > 0);
+    if (lmrgbsize < sz) {
+      light_mem -= lmrgbsize;
+      light_mem += sz;
+      lmrgbsize = sz;
+      lightmap_rgb = (rgb_t *)Z_Realloc(lightmap_rgb, sz);
+    }
+  }
 };
 static_assert(sizeof(unsigned) >= 4, "struct surface_t expects `unsigned` of at least 4 bytes");
 

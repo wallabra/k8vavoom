@@ -206,15 +206,6 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
         //GCon->Logf("AXIS=(%g,%g,%g)", texinfo->taxis.x, texinfo->taxis.y, texinfo->taxis.z);
       }
 
-      /*
-      if (!doPrecalc && inWorldCreation && !surf->lightmap) {
-        surf->drawflags |= surface_t::DF_CALC_LMAP;
-      } else {
-        surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
-        LightFace(surf, sub);
-      }
-      */
-
       // reset surface cache only if something was changed
       bool minMaxChanged =
         recalcStaticLightmaps ||
@@ -225,16 +216,16 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
 
       if (minMaxChanged) FlushSurfCaches(surf);
 
+      vassert(surf->subsector == sub);
       if (inWorldCreation && doPrecalc) {
-        /*
-        surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
-        LightFace(surf, sub);
-        */
-        // we'll do it later
+        //LightFace(surf); // we'll do it later
         surf->drawflags |= surface_t::DF_CALC_LMAP;
       } else {
-        // recalculate lightmap when we'll need to
-        if ((recalcStaticLightmaps && r_lmap_recalc_static) || inWorldCreation) surf->drawflags |= surface_t::DF_CALC_LMAP;
+        // mark this surface for static lightmap recalc
+        if ((recalcStaticLightmaps && r_lmap_recalc_static) || inWorldCreation) {
+          surf->drawflags |= surface_t::DF_CALC_LMAP;
+          InvalidateStaticLightmapsSubs(surf->subsector);
+        }
       }
     }
   }
@@ -1168,7 +1159,7 @@ static int LightSurfaces (VRenderLevelLightmap *rdr, surface_t *s, bool recalcNo
       ++res;
       if (onlyMarked && (s->drawflags&surface_t::DF_CALC_LMAP) == 0) continue;
       s->drawflags &= ~surface_t::DF_CALC_LMAP;
-      if (s->count >= 3) rdr->LightFace(s, s->subsector);
+      if (s->count >= 3) rdr->LightFace(s);
     }
   } else {
     for (; s; s = s->next) {

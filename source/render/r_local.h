@@ -282,6 +282,11 @@ public:
     bool active; // for filtering
     TVec coneDirection;
     float coneAngle;
+    // all subsectors touched by this static light
+    // this is used to trigger static lightmap updates
+    TArray<subsector_t *> touchedSubs;
+    vuint32 invalidateFrame; // to avoid double-processing lights; using `currDLightFrame`
+    //TArray<polyobj_t *> touchedPolys;
   };
 
 protected:
@@ -343,6 +348,13 @@ protected:
   // static lights
   TArray<light_t> Lights;
   TMapNC<vuint32, vint32> StOwners; // key: object id; value: index in `Lights`
+
+  struct SubStaticLigtInfo {
+    TMapNC<int, bool> touchedStatic;
+    vuint32 invalidateFrame; // to avoid double-processing lights; using `currDLightFrame`
+  };
+  TArray<SubStaticLigtInfo> SubStaticLights; // length == Level->NumSubsectors
+
   // dynamic lights
   dlight_t DLights[MAX_DLIGHTS];
   DLightInfo dlinfo[MAX_DLIGHTS];
@@ -756,6 +768,13 @@ protected:
   // calculate subsector's light from static light sources (light variables must be initialized)
   void CalculateSubStatic (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height);
 
+  void CalcBSPNodeLMaps (int slindex, light_t &sl, int bspnum, const float *bbox);
+  void CalcStaticLightTouchingSubs (int slindex, light_t &sl);
+
+  // called when some surface from the given subsector changed
+  // invalidates lightmaps for all touching lights
+  virtual void InvalidateStaticLightmapsSubs (subsector_t *sub);
+
   virtual void InvalidateStaticLightmaps (const TVec &org, float radius, bool relight);
 
 public:
@@ -884,11 +903,15 @@ private:
 
   // this is used to limit static lightmap recalc time
   vuint32 lastLMapStaticRecalcFrame;
-  double lmapStaticRecalcStartTime;
+  double lmapStaticRecalcEndTime;
+  bool doneLMapStaticOnThisFrame; // to avoid endless checking
 
 public:
   void releaseAtlas (vuint32 id) noexcept;
   void allocAtlas (vuint32 aid) noexcept;
+
+  // returns `true` if expired
+  bool IsStaticLightmapTimeLimitExpired ();
 
 private:
   // returns `false` if cannot allocate lightmap block
@@ -962,6 +985,14 @@ protected:
   // clears render queues
   virtual void ClearQueues () override;
 
+  void InvalidateStaticLightmapsSurfaces (surface_t *surf);
+  void InvalidateStaticLightmapsLine (drawseg_t *dseg);
+  void InvalidateStaticLightmapsSubsector (subsector_t *sub);
+
+  // called when some surface from the given subsector changed
+  // invalidates lightmaps for all touching lights
+  virtual void InvalidateStaticLightmapsSubs (subsector_t *sub) override;
+
   virtual void InvalidateStaticLightmaps (const TVec &org, float radius, bool relight) override;
 
   // general
@@ -1000,7 +1031,8 @@ protected:
 public:
   // this has to be public for now
   // this method calculates static lightmap for a surface
-  void LightFace (surface_t *surf, subsector_t *leaf);
+  void LightFace (surface_t *surf);
+  void LightFaceTimeCheckedFreeCaches (surface_t *surf);
 
 public:
   VRenderLevelLightmap (VLevel *);

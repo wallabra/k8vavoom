@@ -38,7 +38,7 @@
 static VCvarB r_lmap_stfix_enabled("r_lmap_stfix_enabled", true, "Enable lightmap \"inside wall\" fixing?", CVAR_Archive);
 static VCvarF r_lmap_stfix_step("r_lmap_stfix_step", "2", "Lightmap \"inside wall\" texel step", CVAR_Archive);
 
-VCvarI r_lmap_recalc_timeout("r_lmap_recalc_timeout", "6", "Do not use more than this number of milliseconds for static lightmap updates (0 means 'no limit').", CVAR_Archive);
+VCvarI r_lmap_recalc_timeout("r_lmap_recalc_timeout", "8", "Do not use more than this number of milliseconds for static lightmap updates (0 means 'no limit').", CVAR_Archive);
 VCvarB r_lmap_recalc_static("r_lmap_recalc_static", true, "Recalc static lightmaps when map geometry changed?", CVAR_Archive);
 VCvarB r_lmap_recalc_moved_static("r_lmap_recalc_moved_static", true, "Recalc static lightmaps when static light source moved?", CVAR_Archive);
 
@@ -161,6 +161,40 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
   slins = max2(slins, r_ambient_min.asInt());
   //if (slins > 255) slins = 255;
   return (surf->Light&0xffffffu)|(((vuint32)clampToByte(slins))<<24);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::IsStaticLightmapTimeLimitExpired
+//
+//  returns `true` if expired
+//
+//==========================================================================
+bool VRenderLevelLightmap::IsStaticLightmapTimeLimitExpired () {
+  // if we're creating the world, there is no time limit
+  if (inWorldCreation) return false;
+  // possibly done with the current frame?
+  if (doneLMapStaticOnThisFrame) {
+    if (lastLMapStaticRecalcFrame == currDLightFrame) return true;
+    doneLMapStaticOnThisFrame = false;
+  }
+  // either not done, or a new frame
+  // new frame?
+  if (lastLMapStaticRecalcFrame != currDLightFrame) {
+    const int msec = r_lmap_recalc_timeout.asInt();
+    if (msec <= 0) return false;
+    lastLMapStaticRecalcFrame = currDLightFrame;
+    lmapStaticRecalcEndTime = Sys_Time()+(double)msec/1000.0;
+    return false;
+  }
+  // check current frame timeout
+  if (Sys_Time() > lmapStaticRecalcEndTime) {
+    doneLMapStaticOnThisFrame = true;
+    return true;
+  }
+  // timeout is not reached
+  return false;
 }
 
 
@@ -686,28 +720,40 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
 
 //==========================================================================
 //
+//  VRenderLevelLightmap::LightFaceTimeCheckedFreeCaches
+//
+//==========================================================================
+void VRenderLevelLightmap::LightFaceTimeCheckedFreeCaches (surface_t *surf) {
+  if (!surf) return;
+
+  if (surf->count < 3) {
+    surf->drawflags &= ~surface_t::DF_CALC_LMAP;
+    if (surf->CacheSurf) FreeSurfCache(surf->CacheSurf);
+    return;
+  }
+
+  if (IsStaticLightmapTimeLimitExpired()) return;
+
+  if (surf->CacheSurf) {
+    FreeSurfCache(surf->CacheSurf);
+    vassert(!surf->CacheSurf);
+  }
+  LightFace(surf);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelLightmap::LightFace
 //
 //==========================================================================
-void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
-  if (surf->count < 3) return; // wtf?!
+void VRenderLevelLightmap::LightFace (surface_t *surf) {
+  if (!surf) return;
 
-  // check for timeout (but not if we're creating world surfaces)
-  if (!inWorldCreation) {
-    const int msec = r_lmap_recalc_timeout.asInt();
-    if (msec > 0) {
-      if (lastLMapStaticRecalcFrame != currDLightFrame) {
-        lastLMapStaticRecalcFrame = currDLightFrame;
-        lmapStaticRecalcStartTime = -Sys_Time();
-      } else {
-        const double tt = lmapStaticRecalcStartTime+Sys_Time();
-        if (tt >= (double)msec/1000.0) {
-          return;
-        }
-      }
-    }
-  }
+  surf->drawflags &= ~surface_t::DF_CALC_LMAP;
 
+  subsector_t *leaf = surf->subsector;
+  if (surf->count < 3 || !leaf) return;
 
   LMapTraceInfo lmi;
   //lmi.points_calculated = false;
@@ -725,19 +771,8 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
   }
 
   if (!lmi.light_hit) {
-    // no light hit it
-    if (surf->lightmap) {
-      light_mem -= surf->lmsize;
-      Z_Free(surf->lightmap);
-      surf->lightmap = nullptr;
-      surf->lmsize = 0;
-    }
-    if (surf->lightmap_rgb) {
-      light_mem -= surf->lmrgbsize;
-      Z_Free(surf->lightmap_rgb);
-      surf->lightmap_rgb = nullptr;
-      surf->lmrgbsize = 0;
-    }
+    // no light hit it, no need to have lightmaps
+    surf->FreeLightmaps();
     return;
   }
 
@@ -751,12 +786,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
   if (lmtracer.isColored) {
     // need colored lightmap
     int sz = w*h*(int)sizeof(surf->lightmap_rgb[0]);
-    if (surf->lmrgbsize != sz) {
-      light_mem -= surf->lmrgbsize;
-      light_mem += sz;
-      surf->lmrgbsize = sz;
-      surf->lightmap_rgb = (rgb_t *)Z_Realloc(surf->lightmap_rgb, sz);
-    }
+    surf->ReserveRGBLightmap(sz);
 
     if (!lmi.didExtra) {
       if (w*h <= MaxSurfPoints) {
@@ -802,24 +832,14 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
       }
     }
   } else {
-    // free rgb lightmap
-    if (surf->lightmap_rgb) {
-      light_mem -= surf->lmrgbsize;
-      Z_Free(surf->lightmap_rgb);
-      surf->lightmap_rgb = nullptr;
-      surf->lmrgbsize = 0;
-    }
+    // free rgb lightmap, because our light is monochrome
+    surf->FreeRGBLightmap();
   }
 
   {
     // monochrome lightmap
     int sz = w*h*(int)sizeof(surf->lightmap[0]);
-    if (surf->lmsize != sz) {
-      light_mem -= surf->lmsize;
-      light_mem += sz;
-      surf->lightmap = (vuint8 *)Z_Realloc(surf->lightmap, sz);
-      surf->lmsize = sz;
-    }
+    surf->ReserveMonoLightmap(sz);
 
     if (!lmi.didExtra) {
       if (w*h <= MaxSurfPoints) {
@@ -1230,10 +1250,8 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
   }
 
   if (surf->drawflags&surface_t::DF_CALC_LMAP) {
-    //if (surf->subsector) GCon->Logf("relighting subsector %d", (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
-    surf->drawflags &= ~surface_t::DF_CALC_LMAP;
     //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
-    if (surf->subsector) LightFace(surf, surf->subsector);
+    if (!IsStaticLightmapTimeLimitExpired()) LightFace(surf);
   }
 
   lmtracer.isColored = false;
@@ -1432,7 +1450,7 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
       GCon->Log(NAME_Warning, "duplicate surface caching");
       return true;
     }
-    if (!(surface->drawflags&surface_t::DF_CALC_LMAP)) {
+    if (!(surface->drawflags&surface_t::DF_CALC_LMAP) || IsStaticLightmapTimeLimitExpired()) {
       if (!cache->dlight && surface->dlightframe != currDLightFrame && cache->Light == srflight) {
         chainLightmap(cache);
         //GCon->Logf(NAME_Debug, "unchanged lightmap %p for surface %p", cache, surface);
@@ -1559,8 +1577,114 @@ void VRenderLevelLightmap::ProcessCachedSurfaces () {
 bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
   // HACK: return `true` for invalid surfaces, so they won't be queued as normal ones
   if (!SurfPrepareForRender(surface)) return true;
-
   // remember this surface, it will be processed later
   LMSurfList.append(surface);
   return true;
+}
+
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::InvalidateStaticLightmapsSurfaces
+//
+//==========================================================================
+void VRenderLevelLightmap::InvalidateStaticLightmapsSurfaces (surface_t *surf) {
+  for (; surf; surf = surf->next) {
+    if (surf->count < 3) continue; // just in case
+    // mark only surfaces with already built lightmaps (it is faster this way)
+    /*if (surf->lightmap || surf->lightmap_rgb)*/ {
+      surf->drawflags |= surface_t::DF_CALC_LMAP;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::InvalidateStaticLightmapsLine
+//
+//==========================================================================
+void VRenderLevelLightmap::InvalidateStaticLightmapsLine (drawseg_t *dseg) {
+  const seg_t *seg = dseg->seg;
+
+  if (!seg->linedef) return; // miniseg
+
+  if (dseg->mid) InvalidateStaticLightmapsSurfaces(dseg->mid->surfs);
+  if (seg->backsector) {
+    // two sided line
+    if (dseg->top) InvalidateStaticLightmapsSurfaces(dseg->top->surfs);
+    // no lightmaps on sky anyway
+    //if (dseg->topsky) InvalidateSurfacesLMaps(org, radius, dseg->topsky->surfs);
+    if (dseg->bot) InvalidateStaticLightmapsSurfaces(dseg->bot->surfs);
+    for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
+      InvalidateStaticLightmapsSurfaces(sp->surfs);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::InvalidateStaticLightmapsSubsector
+//
+//==========================================================================
+void VRenderLevelLightmap::InvalidateStaticLightmapsSubsector (subsector_t *sub) {
+  if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
+
+  // polyobj
+  if (sub->HasPObjs()) {
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      seg_t **polySeg = pobj->segs;
+      for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
+        InvalidateStaticLightmapsLine((*polySeg)->drawsegs);
+      }
+    }
+  }
+
+  //TODO: invalidate only relevant segs
+  for (subregion_t *subregion = sub->regions; subregion; subregion = subregion->next) {
+    drawseg_t *ds = subregion->lines;
+    for (int dscount = sub->numlines; dscount--; ++ds) {
+      InvalidateStaticLightmapsLine(ds);
+    }
+    if (subregion->realfloor) InvalidateStaticLightmapsSurfaces(subregion->realfloor->surfs);
+    if (subregion->realceil) InvalidateStaticLightmapsSurfaces(subregion->realceil->surfs);
+    if (subregion->fakefloor) InvalidateStaticLightmapsSurfaces(subregion->fakefloor->surfs);
+    if (subregion->fakeceil) InvalidateStaticLightmapsSurfaces(subregion->fakeceil->surfs);
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::InvalidateStaticLightmapsSubs
+//
+//==========================================================================
+void VRenderLevelLightmap::InvalidateStaticLightmapsSubs (subsector_t *sub) {
+  if (!sub) return;
+
+  const int snum = (int)(ptrdiff_t)(sub-&Level->Subsectors[0]);
+  SubStaticLigtInfo *si = &SubStaticLights[snum];
+  if (si->invalidateFrame == currDLightFrame) return; // already processed
+
+  // mark subsector to avoid endless recursion
+  si->invalidateFrame = currDLightFrame;
+
+  // invalidate subsector lightmaps
+  InvalidateStaticLightmapsSubsector(sub);
+
+  // recursively process all touching static lights
+  for (auto it : si->touchedStatic.first()) {
+    const int stidx = it.getValue();
+    if (stidx < 0 || stidx >= Lights.length()) continue; // just in case
+    light_t *lt = &Lights.ptr()[stidx];
+    // check if it is already processed
+    if (lt->invalidateFrame == currDLightFrame) continue;
+    // mark it
+    lt->invalidateFrame = currDLightFrame;
+    // and recurse
+    for (auto &&ltsub : lt->touchedSubs) InvalidateStaticLightmapsSubs(ltsub);
+  }
 }
