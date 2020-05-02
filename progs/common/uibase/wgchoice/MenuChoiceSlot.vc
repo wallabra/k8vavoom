@@ -43,6 +43,22 @@ bool DrawStrikeLine;
 
 //==========================================================================
 //
+//  FixMinimumHeight
+//
+//==========================================================================
+override void FixMinimumHeight () {
+  /*
+  auto oldFont = GetFont();
+  scope(exit) SetFont(oldFont);
+  SetFont('smallfont');
+  int height = clamp(FontHeight(), 10, 32);
+  */
+  if (Height < 30) Height = 30;
+}
+
+
+//==========================================================================
+//
 //  InitSlot
 //
 //==========================================================================
@@ -97,4 +113,5 @@ int DrawSlot (int y, string text, bool entering, optional int color) {
 defaultproperties {
   pic_M_FSLOT = -1;
   DrawSlotPic = true;
+  Height = 30;
 }
