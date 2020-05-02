@@ -506,11 +506,14 @@ public:
   virtual bool IsNodeRendered (const node_t *node) const noexcept override;
   virtual bool IsSubsectorRendered (const subsector_t *sub) const noexcept override;
 
+  void CalcEntityStaticLightingFromOwned (VEntity *lowner, const TVec &p, float radius, float height, float &l, float &lr, float &lg, float &lb);
+  void CalcEntityDynamicLightingFromOwned (VEntity *lowner, const TVec &p, float radius, float height, float &l, float &lr, float &lg, float &lb);
+
   // defined only after `PushDlights()`
   // `radius` is used for visibility raycasts
-  vuint32 LightPoint (VEntity *lowner, const TVec &p, float radius, float height, const subsector_t *psub=nullptr);
+  vuint32 LightPoint (VEntity *lowner, TVec p, float radius, float height, const subsector_t *psub=nullptr);
   // `radius` is used for... nothing yet
-  vuint32 LightPointAmbient (VEntity *lowner, const TVec &p, float radius, float height, const subsector_t *psub=nullptr);
+  vuint32 LightPointAmbient (VEntity *lowner, TVec p, float radius, float height, const subsector_t *psub=nullptr);
 
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) override;
 

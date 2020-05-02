@@ -1677,7 +1677,7 @@ void VRenderLevelLightmap::InvalidateStaticLightmapsSubs (subsector_t *sub) {
 
   // recursively process all touching static lights
   for (auto it : si->touchedStatic.first()) {
-    const int stidx = it.getValue();
+    const int stidx = it.getKey();
     if (stidx < 0 || stidx >= Lights.length()) continue; // just in case
     light_t *lt = &Lights.ptr()[stidx];
     // check if it is already processed
