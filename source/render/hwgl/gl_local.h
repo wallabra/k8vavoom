@@ -247,6 +247,14 @@ private:
   bool canIntoBloomFX;
   bool lastOverbrightEnable;
 
+  bool scissorEnabled;
+  int scissorX, scissorY, scissorW, scissorH;
+  bool scissorActive;
+  bool scissorNeedUpdate;
+
+  // returns `false` if scissor is empty
+  bool UploadCurrentScissorRect ();
+
 protected:
   VGLShader *shaderHead;
 
@@ -434,6 +442,18 @@ public:
   //virtual void GetRealWindowSize (int *rw, int *rh) override;
 
   virtual void DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint32 color) override;
+
+  virtual void SetScissorEnabled (bool v) override;
+  virtual bool IsScissorEnabled () override;
+
+  // scissor is set in screen coords, with (0,0) at the top left corner
+  // returns `enabled` flag
+  virtual bool GetScissor (int *x, int *y, int *w, int *h) override;
+  virtual void SetScissor (int x, int y, int w, int h) override;
+
+  // call this if you modified scissor by direct calls
+  // this resets scissor state to disabled and (0,0)-(0,0), but won't call any graphics API
+  virtual void ForceClearScissorState () override;
 
 private:
   vuint8 decalStcVal;

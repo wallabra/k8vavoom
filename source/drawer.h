@@ -659,6 +659,18 @@ public:
   virtual void ResetScissor () = 0;
 
   virtual void DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint32 color) = 0;
+
+  virtual void SetScissorEnabled (bool v) = 0;
+  virtual bool IsScissorEnabled () = 0;
+
+  // scissor is set in screen coords, with (0,0) at the top left corner
+  // returns `enabled` flag
+  virtual bool GetScissor (int *x, int *y, int *w, int *h) = 0;
+  virtual void SetScissor (int x, int y, int w, int h) = 0;
+
+  // call this if you modified scissor by direct calls
+  // this resets scissor state to disabled and (0,0)-(0,0), but won't call any graphics API
+  virtual void ForceClearScissorState () = 0;
 };
 
 

@@ -720,17 +720,51 @@ void VWidget::DrawTree () {
   if (IsGoingToDie()) return;
   if (!IsVisibleFlag() || !ClipRect.HasArea()) return; // not visible or clipped away
 
+  bool useScissor = IsUseScissor();
+
+  if (useScissor) {
+    Drawer->SetScissor((int)ClipRect.ClipX1, (int)ClipRect.ClipY1, (int)(ClipRect.ClipX2-ClipRect.ClipX1+1), (int)(ClipRect.ClipY2-ClipRect.ClipY1+1));
+    Drawer->SetScissorEnabled(true);
+  }
+
   // main draw event for this widget
   OnDraw();
+
+  if (useScissor && !IsUseScissor()) {
+    Drawer->SetScissorEnabled(false);
+    useScissor = false;
+  }
 
   // draw chid widgets
   for (VWidget *c = FirstChildWidget; c; c = c->NextWidget) {
     if (c->IsGoingToDie()) continue;
+    if (IsUseScissor()) {
+      Drawer->SetScissor((int)ClipRect.ClipX1, (int)ClipRect.ClipY1, (int)(ClipRect.ClipX2-ClipRect.ClipX1+1), (int)(ClipRect.ClipY2-ClipRect.ClipY1+1));
+      Drawer->SetScissorEnabled(true);
+      useScissor = true;
+    } else if (useScissor) {
+      Drawer->SetScissorEnabled(false);
+      useScissor = false;
+    }
     c->DrawTree();
   }
 
   // do any drawing after child wigets have been drawn
+  if (IsUseScissor()) {
+    Drawer->SetScissor((int)ClipRect.ClipX1, (int)ClipRect.ClipY1, (int)(ClipRect.ClipX2-ClipRect.ClipX1+1), (int)(ClipRect.ClipY2-ClipRect.ClipY1+1));
+    Drawer->SetScissorEnabled(true);
+    useScissor = true;
+  } else if (useScissor) {
+    Drawer->SetScissorEnabled(false);
+    useScissor = false;
+  }
+
   OnPostDraw();
+
+  if (useScissor) {
+    Drawer->SetScissorEnabled(false);
+    useScissor = false;
+  }
 }
 
 

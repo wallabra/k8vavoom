@@ -1227,6 +1227,8 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
   if (!scoord) scoord = tmpscoord;
 
+  ForceClearScissorState();
+
   if (radius < 4) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
@@ -1958,6 +1960,147 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
   p_glUseProgramObjectARB(0);
   currentActiveShader = nullptr;
   blendEnabled = oldBlend;
+}
+
+
+//==========================================================================
+//
+//  FixScissorCoords
+//
+//  returns `false` if scissor is empty
+//
+//==========================================================================
+static bool FixScissorCoords (int &x, int &y, int &w, int &h, const int ScrWdt, const int ScrHgt) {
+  //TODO: proper overflow checks
+  if (w < 1 || h < 1 || x >= ScrWdt || y >= ScrHgt ||
+      (x < 0 && x+w <= 0) ||
+      (y < 0 && y+h <= 0) ||
+      ScrWdt < 1 || ScrHgt < 1)
+  {
+    x = y = w = h = 0;
+    return false;
+  }
+  if (x < 0) {
+    if ((w -= x) <= 0) { x = y = w = h = 0; return false; }
+    x = 0;
+  }
+  if (y < 0) {
+    if ((h -= y) <= 0) { x = y = w = h = 0; return false; }
+    y = 0;
+  }
+  if (w > ScrWdt) w = ScrWdt;
+  if (h > ScrHgt) h = ScrHgt;
+  if (x+w > ScrWdt) { if ((w = ScrWdt-x) <= 0) { x = y = w = h = 0; return false; } }
+  if (y+h > ScrHgt) { if ((h = ScrHgt-y) <= 0) { x = y = w = h = 0; return false; } }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::UploadCurrentScissorRect
+//
+//  returns `false` if scissor is empty
+//
+//==========================================================================
+bool VOpenGLDrawer::UploadCurrentScissorRect () {
+  int x = scissorX;
+  int y = scissorY;
+  int w = scissorW;
+  int h = scissorH;
+  if (!FixScissorCoords(x, y, w, h, ScrWdt, ScrHgt)) return false;
+  const int y0 = ScrHgt-y-1;
+  const int y1 = ScrHgt-(y+h);
+  const int hh = y1-y0+1;
+  //GCon->Logf(NAME_Debug, "scissor: (%d,%d)-(%d,%d)", x, y0, w, hh);
+  glScissor(x, y0, w, hh);
+  scissorNeedUpdate = false;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::ForceClearScissorState
+//
+//==========================================================================
+void VOpenGLDrawer::ForceClearScissorState () {
+  scissorEnabled = false;
+  scissorX = scissorY = scissorW = scissorH = 0;
+  scissorActive = false;
+  scissorNeedUpdate = true; // just in case
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SetScissorEnabled
+//
+//==========================================================================
+void VOpenGLDrawer::SetScissorEnabled (bool v) {
+  if (v == scissorEnabled) return;
+  scissorEnabled = v;
+  if (v && scissorNeedUpdate) {
+    if (!UploadCurrentScissorRect()) v = false;
+  }
+  if (scissorActive != v) {
+    scissorActive = v;
+    if (v) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
+  }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::IsScissorEnabled
+//
+//==========================================================================
+bool VOpenGLDrawer::IsScissorEnabled () {
+  return scissorEnabled;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GetScissor
+//
+//==========================================================================
+bool VOpenGLDrawer::GetScissor (int *x, int *y, int *w, int *h) {
+  if (x) *x = scissorX;
+  if (y) *y = scissorY;
+  if (w) *w = scissorW;
+  if (h) *h = scissorH;
+  return scissorEnabled;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SetScissor
+//
+//==========================================================================
+void VOpenGLDrawer::SetScissor (int x, int y, int w, int h) {
+  FixScissorCoords(x, y, w, h, ScrWdt, ScrHgt);
+  if (x != scissorX || y != scissorY || w != scissorW || h != scissorH) {
+    scissorX = x;
+    scissorY = y;
+    scissorW = w;
+    scissorH = h;
+    scissorNeedUpdate = true;
+    if (scissorEnabled) {
+      if (!UploadCurrentScissorRect()) {
+        if (scissorActive) {
+          scissorActive = false;
+          glDisable(GL_SCISSOR_TEST);
+        }
+      } else {
+        if (!scissorActive) {
+          scissorActive = true;
+          glEnable(GL_SCISSOR_TEST);
+        }
+      }
+    }
+  }
 }
 
 

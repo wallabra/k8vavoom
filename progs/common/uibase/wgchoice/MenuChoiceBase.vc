@@ -293,6 +293,7 @@ override bool OnEvent (ref event_t evt) {
 
 defaultproperties {
   Focusable = true;
+  UseScissor = true;
   Width = 320;
   //Height = 200;
   //Height = 24;

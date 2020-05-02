@@ -929,6 +929,7 @@ defaultproperties {
   TitleX = 160;
   TitleY = 24;
   Focusable = true;
+  UseScissor = true;
   MenuScrollable = false;
   AllowVerticalResize = false;
 

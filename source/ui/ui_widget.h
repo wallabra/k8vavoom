@@ -107,6 +107,7 @@ protected:
     WF_Modal        = 1u<<5, // is this widget "modal" (i.e. can't lose focus)? (not implemented yet)
     WF_OnTop        = 1u<<6, // should this widget be "always on top"?
     WF_TextShadowed = 1u<<7, // shadowed text
+    WF_UseScissor   = 1u<<8, // use scissor in rendering?
   };
   vuint32 WidgetFlags;
 
@@ -154,6 +155,7 @@ protected:
   inline bool IsCloseOnBlurFlag () const noexcept { return (WidgetFlags&WF_CloseOnBlur); }
   inline bool IsModalFlag () const noexcept { return (WidgetFlags&WF_Modal); }
   inline bool IsOnTopFlag () const noexcept { return (WidgetFlags&WF_OnTop); }
+  inline bool IsUseScissor () const noexcept { return (WidgetFlags&WF_UseScissor); }
 
   inline void SetCloseOnBlurFlag (bool v) noexcept { if (v) WidgetFlags |= WF_CloseOnBlur; else WidgetFlags &= ~WF_CloseOnBlur; }
 
