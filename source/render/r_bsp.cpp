@@ -1067,6 +1067,18 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
         sub->updateWorldFrame = updateWorldFrame;
         if (!r_disable_world_update) UpdateSubRegion(sub, sub->regions);
       }
+
+      // update static light info
+      SubStaticLigtInfo *sli = &SubStaticLights.ptr()[num];
+      if (sli->touchedStatic.length()) {
+        for (auto it : sli->touchedStatic.first()) {
+          const int slidx = it.getKey();
+          if (slidx >= 0 && slidx < Lights.length()) {
+            Lights.ptr()[slidx].dlightframe = currDLightFrame;
+          }
+        }
+      }
+
       // render the polyobj in the subsector first, and add it to clipper
       // this blocks view with polydoors
       RenderPolyObj(sub);

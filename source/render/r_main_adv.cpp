@@ -239,6 +239,13 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
         //if (!Lights[i].radius) continue;
         if (!stlight->active || stlight->radius < 8) continue;
 
+        if (stlight->leafnum < 0 || stlight->leafnum >= Level->NumSubsectors) {
+          stlight->leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(stlight->origin)-Level->Subsectors);
+        }
+
+        // drop invisible lights without further processing
+        if (stlight->dlightframe != currDLightFrame) continue;
+
         TVec lorg = stlight->origin;
 
         // don't do lights that are too far away
@@ -259,10 +266,6 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
         }
 
         // drop lights inside sectors without height
-        if (stlight->leafnum < 0 || stlight->leafnum >= Level->NumSubsectors) {
-          stlight->leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(stlight->origin)-Level->Subsectors);
-        }
-
         const sector_t *sec = Level->Subsectors[stlight->leafnum].sector;
         if (!CheckValidLightPosRough(lorg, sec)) continue;
         if (checkLightVis && !CheckBSPVisibilityBox(lorg, stlight->radius, &Level->Subsectors[stlight->leafnum])) continue;

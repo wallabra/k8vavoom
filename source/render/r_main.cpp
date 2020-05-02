@@ -2953,6 +2953,16 @@ vuint32 VRenderLevelShared::CountAllSurfaces () const noexcept {
 
 //==========================================================================
 //
+//  VRenderLevelShared::GetNumberOfStaticLights
+//
+//==========================================================================
+int VRenderLevelShared::GetNumberOfStaticLights () {
+  return Lights.length();
+}
+
+
+//==========================================================================
+//
 //  R_SetMenuPlayerTrans
 //
 //==========================================================================
@@ -3110,6 +3120,18 @@ COMMAND(TimeRefresh) {
   GCon->Logf("Render peak free calls: %d", renderPeakFree);
 
   cl->ViewAngles.yaw = startangle;
+}
+
+
+//==========================================================================
+//
+//  COMMAND dbg_count_all_static_lights
+//
+//==========================================================================
+COMMAND(dbg_count_all_static_lights) {
+  if (GClLevel && GClLevel->Renderer) {
+    GCon->Logf(NAME_Debug, "static lights count: %d", GClLevel->Renderer->GetNumberOfStaticLights());
+  }
 }
 
 

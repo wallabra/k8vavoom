@@ -285,7 +285,8 @@ public:
     // all subsectors touched by this static light
     // this is used to trigger static lightmap updates
     TArray<subsector_t *> touchedSubs;
-    vuint32 invalidateFrame; // to avoid double-processing lights; using `currDLightFrame`
+    unsigned invalidateFrame; // to avoid double-processing lights; using `currDLightFrame`
+    unsigned dlightframe; // set to `currDLightFrame` if BSP renderer touched any subsector that is connected with this light
     //TArray<polyobj_t *> touchedPolys;
   };
 
@@ -537,6 +538,8 @@ public:
   virtual void NukeLightmapCache () override;
 
   virtual void FullWorldUpdate (bool forceClientOrigin) override;
+
+  virtual int GetNumberOfStaticLights () override;
 
 public:
   static vuint32 CountSurfacesInChain (const surface_t *s) noexcept;
