@@ -839,6 +839,24 @@ bool VWidget::TransferAndClipRect (float &X1, float &Y1, float &X2, float &Y2,
 
 //==========================================================================
 //
+//  VWidget::TransferAndClipRect
+//
+//==========================================================================
+bool VWidget::TransferAndClipRect (float &X1, float &Y1, float &X2, float &Y2) const noexcept {
+  X1 = ClipRect.ScaleX*X1+ClipRect.OriginX;
+  Y1 = ClipRect.ScaleY*Y1+ClipRect.OriginY;
+  X2 = ClipRect.ScaleX*X2+ClipRect.OriginX;
+  Y2 = ClipRect.ScaleY*Y2+ClipRect.OriginY;
+  if (X1 < ClipRect.ClipX1) X1 = ClipRect.ClipX1;
+  if (X2 > ClipRect.ClipX2) X2 = ClipRect.ClipX2;
+  if (Y1 < ClipRect.ClipY1) Y1 = ClipRect.ClipY1;
+  if (Y2 > ClipRect.ClipY2) Y2 = ClipRect.ClipY2;
+  return (X1 < X2 && Y1 < Y2);
+}
+
+
+//==========================================================================
+//
 //  VWidget::DrawPic
 //
 //==========================================================================
@@ -1126,7 +1144,7 @@ void VWidget::FillRect (int X, int Y, int Width, int Height, int color, float al
   float S2 = Width;
   float T2 = Height;
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    Drawer->FillRect(X1, Y1, X2, Y2, color, alpha);
+    Drawer->FillRect(truncf(X1), truncf(Y1), truncf(X2), truncf(Y2), color, alpha);
   }
 }
 
@@ -1137,16 +1155,13 @@ void VWidget::FillRect (int X, int Y, int Width, int Height, int color, float al
 //
 //==========================================================================
 void VWidget::ShadeRect (int X, int Y, int Width, int Height, float Shade) {
+  if (Width < 1 || Height < 1 || Shade <= 0.0f) return;
   float X1 = X;
   float Y1 = Y;
   float X2 = X+Width;
   float Y2 = Y+Height;
-  float S1 = 0;
-  float T1 = 0;
-  float S2 = 0;
-  float T2 = 0;
-  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    Drawer->ShadeRect(X1, Y1, X2, Y2, Shade);
+  if (TransferAndClipRect(X1, Y1, X2, Y2)) {
+    Drawer->ShadeRect(truncf(X1), truncf(Y1), truncf(X2), truncf(Y2), Shade);
   }
 }
 
@@ -1157,16 +1172,13 @@ void VWidget::ShadeRect (int X, int Y, int Width, int Height, float Shade) {
 //
 //==========================================================================
 void VWidget::DrawRect (int X, int Y, int Width, int Height, int color, float alpha) {
+  if (Width < 1 || Height < 1 || alpha <= 0.0f) return;
   float X1 = X;
   float Y1 = Y;
   float X2 = X+Width;
   float Y2 = Y+Height;
-  float S1 = 0;
-  float T1 = 0;
-  float S2 = Width;
-  float T2 = Height;
-  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    Drawer->DrawRect(X1, Y1, X2, Y2, color, alpha);
+  if (TransferAndClipRect(X1, Y1, X2, Y2)) {
+    Drawer->DrawRect(truncf(X1), truncf(Y1), truncf(X2), truncf(Y2), color, alpha);
   }
 }
 
@@ -1181,12 +1193,8 @@ void VWidget::DrawLine (int aX0, int aY0, int aX1, int aY1, int color, float alp
   float Y1 = aY0;
   float X2 = aX1;
   float Y2 = aY1;
-  float S1 = 0;
-  float T1 = 0;
-  float S2 = 1;
-  float T2 = 1;
-  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    Drawer->DrawLine(X1, Y1, X2, Y2, color, alpha);
+  if (TransferAndClipRect(X1, Y1, X2, Y2)) {
+    Drawer->DrawLine(truncf(X1), truncf(Y1), truncf(X2), truncf(Y2), color, alpha);
   }
 }
 

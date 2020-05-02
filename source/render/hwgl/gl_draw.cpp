@@ -285,8 +285,9 @@ void VOpenGLDrawer::ShadeRect (float x1, float y1, float x2, float y2, float dar
 //  VOpenGLDrawer::DrawLine
 //
 //==========================================================================
-void VOpenGLDrawer::DrawLine (float x1, float y1, float x2, float y2, vuint32 color, float alpha) {
+void VOpenGLDrawer::DrawLine (int x1, int y1, int x2, int y2, vuint32 color, float alpha) {
   if (alpha < 0.0f) return;
+  if (x1 == x2 && y1 == y2) return;
   DrawFixedCol.Activate();
   if (alpha < 1.0f) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   DrawFixedCol.SetColor(
@@ -295,8 +296,8 @@ void VOpenGLDrawer::DrawLine (float x1, float y1, float x2, float y2, vuint32 co
     (GLfloat)((color&255)/255.0f), min2(1.0f, alpha));
   DrawFixedCol.UploadChangedUniforms();
   glBegin(GL_LINES);
-    glVertex2f(x1, y1);
-    glVertex2f(x2, y2);
+    glVertex2f(x1+0.375f, y1+0.375f);
+    glVertex2f(x2+0.375f, y2+0.375f);
   glEnd();
   if (alpha < 1.0f) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }

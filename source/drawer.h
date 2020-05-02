@@ -554,7 +554,8 @@ public:
   virtual void FillRect (float x1, float y1, float x2, float y2, vuint32 color, float alpha=1.0f) = 0;
   virtual void DrawRect (float x1, float y1, float x2, float y2, vuint32 color, float alpha=1.0f) = 0;
   virtual void ShadeRect (float x1, float y1, float x2, float y2, float darkening) = 0;
-  virtual void DrawLine (float x1, float y1, float x2, float y2, vuint32 color, float alpha=1.0f) = 0;
+  // last pixel is not set
+  virtual void DrawLine (int x1, int y1, int x2, int y2, vuint32 color, float alpha=1.0f) = 0;
   virtual void DrawConsoleBackground (int h) = 0;
   virtual void DrawSpriteLump (float x1, float y1, float x2, float y2,
                                VTexture *Tex, VTextureTranslation *Translation, bool flip) = 0;
