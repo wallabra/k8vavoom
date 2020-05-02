@@ -383,6 +383,7 @@ void TCmdKeyUp::Run () {
 COMMAND(Impulse) {
   if (Args.Num() < 2) return;
   currImpulse = VStr::atoi(*Args[1]);
+  //GCon->Logf(NAME_Debug, "IMPULSE COMMAND: %d (%s)", currImpulse, *Args[1]);
 }
 
 

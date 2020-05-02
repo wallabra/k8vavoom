@@ -593,6 +593,9 @@ void VInput::ProcessEvents () {
     // actually, when console is active, it eats everything
     if (initNetClient || C_Active()) continue;
 
+    // do not process bindings if the event is eaten
+    if (ev.isEatenOrCancelled()) continue;
+
     reachedBinding = true;
     if (!lastWasGameBinding) {
       //GCon->Log("unpressing(0)...");
@@ -601,31 +604,33 @@ void VInput::ProcessEvents () {
     }
 
     if (CL_IsInGame()) {
-      if (KBCheatProcessor(&ev)) continue; // cheatcode typed
-      if (SB_Responder(&ev)) continue; // status window ate it
-      if (AM_Responder(&ev)) continue; // automap ate it
+      if (!ev.isEatenOrCancelled() && KBCheatProcessor(&ev)) continue; // cheatcode typed
+      if (!ev.isEatenOrCancelled() && SB_Responder(&ev)) continue; // status window ate it
+      if (!ev.isEatenOrCancelled() && AM_Responder(&ev)) continue; // automap ate it
     }
 
-    if (F_Responder(&ev)) continue; // finale
+    if (!ev.isEatenOrCancelled() && F_Responder(&ev)) continue; // finale
 
     // key bindings
-    if ((ev.type == ev_keydown || ev.type == ev_keyup) && (ev.keycode > 0 && ev.keycode < 256)) {
-      //VStr kb;
-      //if (isAllowed(ev.keycode&0xff)) kb = (ev.type == ev_keydown ? KeyBindingsDown[ev.keycode&0xff] : KeyBindingsUp[ev.keycode&0xff]);
-      VStr kb = getBinding((ev.type == ev_keydown), ev.keycode&0xff);
-      //GCon->Logf("KEY %s is %s; action is '%s'", *GInput->KeyNameForNum(ev.keycode&0xff), (ev.type == ev_keydown ? "down" : "up"), *kb);
-      if (kb.IsNotEmpty()) {
-        if (kb[0] == '+' || kb[0] == '-') {
-          // button commands add keynum as a parm
-          if (kb.length() > 1) GCmdBuf << kb << " " << VStr(ev.keycode) << "\n";
-        } else {
-          GCmdBuf << kb << "\n";
+    if (!ev.isEatenOrCancelled()) {
+      if ((ev.type == ev_keydown || ev.type == ev_keyup) && (ev.keycode > 0 && ev.keycode < 256)) {
+        //VStr kb;
+        //if (isAllowed(ev.keycode&0xff)) kb = (ev.type == ev_keydown ? KeyBindingsDown[ev.keycode&0xff] : KeyBindingsUp[ev.keycode&0xff]);
+        VStr kb = getBinding((ev.type == ev_keydown), ev.keycode&0xff);
+        //GCon->Logf("KEY %s is %s; action is '%s'", *GInput->KeyNameForNum(ev.keycode&0xff), (ev.type == ev_keydown ? "down" : "up"), *kb);
+        if (kb.IsNotEmpty()) {
+          if (kb[0] == '+' || kb[0] == '-') {
+            // button commands add keynum as a parm
+            if (kb.length() > 1) GCmdBuf << kb << " " << VStr(ev.keycode) << "\n";
+          } else {
+            GCmdBuf << kb << "\n";
+          }
+          continue;
         }
-        continue;
       }
     }
 
-    if (CL_Responder(&ev)) continue;
+    if (!ev.isEatenOrCancelled() && CL_Responder(&ev)) continue;
   }
 
   if (wasEvent && !reachedBinding) {
