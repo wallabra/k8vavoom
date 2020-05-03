@@ -334,7 +334,7 @@ bool R_EntModelNoSelfShadow (VEntity *mobj) {
 //
 //==========================================================================
 void R_InitModels () {
-  GCon->Log(NAME_Init, "loading model scripts...");
+  GCon->Log(NAME_Init, "loading model scripts");
   for (int Lump = W_IterateFile(-1, "models/models.xml"); Lump != -1; Lump = W_IterateFile(Lump, "models/models.xml")) {
     VStream *lumpstream = W_CreateLumpReaderNum(Lump);
     VCheckedStream Strm(lumpstream);
@@ -905,7 +905,7 @@ VModel *Mod_FindName (VStr name) {
   int lump = -1;
   VStream *Strm = FL_OpenFileRead(mod->Name, &lump);
   if (!Strm) Sys_Error("Couldn't load `%s` (Mod_FindName)", *mod->Name);
-  if (mdl_verbose_loading > 1) GCon->Logf(NAME_Init, "parsing model script '%s'...", *mod->Name);
+  if (mdl_verbose_loading > 1) GCon->Logf(NAME_Init, "parsing model script '%s'", *mod->Name);
   ParseModelScript(lump, mod, *Strm);
   delete Strm;
 
@@ -950,7 +950,7 @@ static void ParseGZModelDefs () {
   // parse all modeldefs
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) != mdfname) continue;
-    GCon->Logf(NAME_Init, "parsing GZDoom ModelDef script \"%s\"...", *W_FullLumpName(Lump));
+    GCon->Logf(NAME_Init, "parsing GZDoom ModelDef script \"%s\"", *W_FullLumpName(Lump));
     // parse modeldef
     TArray<IncStackItem> includeStack;
     auto sc = new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));

@@ -50,7 +50,7 @@ void VPackage::LoadObject (TLocation l) {
     VStr mainVC = va("progs/%s/%s", *Name, pif);
     if (FL_FileExists(*mainVC)) {
       // compile package
-      //fprintf(stderr, "Loading package '%s' (%s)...\n", *Name, *mainVC);
+      //fprintf(stderr, "Loading package '%s' (%s)\n", *Name, *mainVC);
       VStream *Strm = vc_OpenFile(*mainVC);
       LoadSourceObject(Strm, mainVC, l);
       return;

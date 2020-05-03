@@ -495,7 +495,7 @@ static void FindBlockmapLimits(bbox_t *bbox)
 	bbox->minx = bbox->miny = SHRT_MAX;
 	bbox->maxx = bbox->maxy = SHRT_MIN;
 
-	//InfoMessage("FindBlockmapLimits...");
+	//InfoMessage("FindBlockmapLimits");
 	for (i=0 ; i < num_linedefs ; i++)
 	{
 		linedef_t *L = LookupLinedef(i);

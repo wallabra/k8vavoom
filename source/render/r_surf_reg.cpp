@@ -910,7 +910,7 @@ static bool LoadLightSurfaces (VLevel *Level, VStream *strm, surface_t *s, unsig
     if (!sp) {
       if (!missingWarned) {
         missingWarned = true;
-        GCon->Logf(NAME_Warning, "*** lightmap cache is missing some surface info...");
+        GCon->Logf(NAME_Warning, "*** lightmap cache is missing some surface info");
       }
       ++lmcacheUnknownSurfaceCount;
       #ifdef VV_DUMP_LMAP_CACHE_COMPARISONS
@@ -1007,7 +1007,7 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
   if ((int)sscount != Level->NumSubsectors || strm->IsError()) { GCon->Log(NAME_Warning, "invalid lightmap cache subsector count"); return false; }
   if ((int)sgcount != Level->NumSegs || strm->IsError()) { GCon->Log(NAME_Warning, "invalid lightmap cache seg count"); return false; }
   if (sfcount != surfCount || strm->IsError()) { GCon->Logf(NAME_Warning, "invalid lightmap cache surface count (%u instead of %u)", sfcount, surfCount); /*return false;*/ }
-  GCon->Log(NAME_Debug, "lightmap cache validated, trying to load it...");
+  GCon->Log(NAME_Debug, "lightmap cache validated, trying to load it");
 
   bool missingWarned = false;
 
@@ -1267,7 +1267,7 @@ void VRenderLevelLightmap::PreRender () {
   if (doReadCache || doWriteCache) GCon->Logf(NAME_Debug, "lightmap cache file: '%s'", *ccfname);
 
   if (doPrecalc || doReadCache || doWriteCache) {
-    R_OSDMsgShowSecondary("CREATING LIGHTMAPS...");
+    R_OSDMsgShowSecondary("CREATING LIGHTMAPS");
 
     bool recalcLight = true;
     if (doReadCache) {
@@ -1288,9 +1288,9 @@ void VRenderLevelLightmap::PreRender () {
 
     if (recalcLight || lmcacheUnknownSurfaceCount) {
       if (lmcacheUnknownSurfaceCount) {
-        GCon->Logf("calculating static lighting due to lightmap cache inconsistencies (%u out of %u surfaces)...", lmcacheUnknownSurfaceCount, CountAllSurfaces());
+        GCon->Logf("calculating static lighting due to lightmap cache inconsistencies (%u out of %u surfaces)", lmcacheUnknownSurfaceCount, CountAllSurfaces());
       } else {
-        GCon->Log("calculating static lighting...");
+        GCon->Log("calculating static lighting");
       }
       double stt = -Sys_Time();
       RelightMap(true, true); // only marked
@@ -1303,18 +1303,18 @@ void VRenderLevelLightmap::PreRender () {
         if (dbg_cache_lightmap_always || lmcacheUnknownSurfaceCount || stt >= tlim) {
           VStream *lmc = FL_OpenSysFileWrite(ccfname);
           if (lmc) {
-            GCon->Logf("writing lightmap cache to '%s'...", *ccfname);
+            GCon->Logf("writing lightmap cache to '%s'", *ccfname);
             saveLightmaps(lmc);
             bool err = lmc->IsError();
             lmc->Close();
             err = (err || lmc->IsError());
             delete lmc;
             if (err) {
-              GCon->Logf(NAME_Warning, "removed broken lightmap cache '%s'...", *ccfname);
+              GCon->Logf(NAME_Warning, "removed broken lightmap cache '%s'", *ccfname);
               Sys_FileDelete(ccfname);
             }
           } else {
-            GCon->Logf(NAME_Warning, "cannot create lightmap cache file '%s'...", *ccfname);
+            GCon->Logf(NAME_Warning, "cannot create lightmap cache file '%s'", *ccfname);
           }
         }
       }
@@ -1351,7 +1351,7 @@ COMMAND_WITH_AC(LightmapsReset) {
   if (GClLevel && GClLevel->Renderer) {
     bool recalcNow = true;
     if (Args.Num() > 1) recalcNow = false;
-    GCon->Log("resetting lightmaps...");
+    GCon->Log("resetting lightmaps");
     double stt = -Sys_Time();
     GClLevel->Renderer->ResetLightmaps(recalcNow);
     stt += Sys_Time();

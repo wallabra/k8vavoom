@@ -598,7 +598,7 @@ void VInput::ProcessEvents () {
 
     reachedBinding = true;
     if (!lastWasGameBinding) {
-      //GCon->Log("unpressing(0)...");
+      //GCon->Log("unpressing(0)");
       lastWasGameBinding = true;
       UnpressAll();
     }
@@ -636,7 +636,7 @@ void VInput::ProcessEvents () {
   if (wasEvent && !reachedBinding) {
     // something ate all the keys, so unpress buttons
     if (lastWasGameBinding) {
-      //GCon->Log("unpressing(1)...");
+      //GCon->Log("unpressing(1)");
       lastWasGameBinding = false;
       UnpressAll();
     }

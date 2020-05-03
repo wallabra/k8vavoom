@@ -384,9 +384,9 @@ void VDecalGroup::addToList (VDecalGroup *dg) {
   if (dg->name == NAME_None) { delete dg; return; }
   // remove old definitions
   //FIXME: memory leak
-  //if (VDecalDef::find(dg->name)) GCon->Logf("replaced decal '%s'...", *dg->name);
+  //if (VDecalDef::find(dg->name)) GCon->Logf("replaced decal '%s'", *dg->name);
   VDecalDef::removeFromList(VDecalDef::find(dg->name));
-  //if (VDecalGroup::find(dg->name)) GCon->Logf("replaced group '%s'...", *dg->name);
+  //if (VDecalGroup::find(dg->name)) GCon->Logf("replaced group '%s'", *dg->name);
   VDecalGroup::removeFromList(VDecalGroup::find(dg->name));
   //GCon->Logf("new group: '%s' (%d items)", *dg->name, dg->nameList.Num());
   // insert new one
@@ -425,7 +425,7 @@ VDecalGroup *VDecalGroup::find (VName aname) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VDecalGroup::fixup () {
-  //GCon->Logf("fixing decal group '%s'...", *name);
+  //GCon->Logf("fixing decal group '%s'", *name);
   for (int f = 0; f < nameList.Num(); ++f) {
     auto it = VDecalDef::find(nameList[f].name);
     if (it) {
@@ -958,7 +958,7 @@ void ParseDecalDef (VScriptParser *sc) {
             error = true;
             break;
           }
-          GCon->Logf(NAME_Init, "Including '%s'...", *sc->String);
+          GCon->Logf(NAME_Init, "Including '%s'", *sc->String);
           scstack[scsp++] = sc;
           sc = new VScriptParser(/**sc->String*/W_FullLumpName(lmp), W_CreateLumpReaderNum(lmp));
         } else {
@@ -1077,7 +1077,7 @@ void ProcessDecalDefs () {
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     //fprintf(stderr, "<%s>\n", *W_LumpName(Lump));
     if (W_LumpName(Lump) == NAME_decaldef) {
-      GCon->Logf(NAME_Init, "Parsing decal definition script '%s'...", *W_FullLumpName(Lump));
+      GCon->Logf(NAME_Init, "Parsing decal definition script '%s'", *W_FullLumpName(Lump));
       ParseDecalDef(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
   }

@@ -159,7 +159,7 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
           Skip = false;
         }
         if (!GotLanguageCode && !Skip) {
-          GCon->Logf(NAME_Dev, "parsing language script '%s' for language '%s'...", *W_FullLumpName(Lump), Code);
+          GCon->Logf(NAME_Dev, "parsing language script '%s' for language '%s'", *W_FullLumpName(Lump), Code);
         }
         GotLanguageCode = true;
       }

@@ -199,13 +199,13 @@ int VOpenALDevice::SetChannels (int InNumChannels) {
 //
 //==========================================================================
 void VOpenALDevice::Shutdown () {
-  if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): shutting down OpenAL...");
+  if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): shutting down OpenAL");
 
   srcPendingSet.clear();
   srcErrorSet.clear();
 
   if (activeSourceSet.length()) {
-    if (developer) GLog.Logf(NAME_Dev, "VOpenALDevice::Shutdown(): aborting %d active sources...", activeSourceSet.length());
+    if (developer) GLog.Logf(NAME_Dev, "VOpenALDevice::Shutdown(): aborting %d active sources", activeSourceSet.length());
     while (activeSourceSet.length()) {
       auto it = activeSourceSet.first();
       ALuint src = it.getKey();
@@ -217,7 +217,7 @@ void VOpenALDevice::Shutdown () {
 
   // delete buffers
   if (Buffers) {
-    if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): deleting sound buffers...");
+    if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): deleting sound buffers");
     //alDeleteBuffers(GSoundManager->S_sfx.length(), Buffers);
     for (int bidx = 0; bidx < BufferCount; ++bidx) {
       if (Buffers[bidx]) {
@@ -232,7 +232,7 @@ void VOpenALDevice::Shutdown () {
 
   // destroy context
   if (Context) {
-    if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): destroying context...");
+    if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): destroying context");
     alcSetThreadContext(nullptr);
     //alcSetThreadContext(Context);
     alcDestroyContext(Context);
@@ -242,7 +242,7 @@ void VOpenALDevice::Shutdown () {
 
   // disconnect from a device
   if (Device) {
-    if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): closing device...");
+    if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): closing device");
     alcCloseDevice(Device);
     Device = nullptr;
     Context = nullptr;

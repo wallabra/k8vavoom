@@ -1706,7 +1706,7 @@ static bool SV_SaveCheckpoint () {
     cp.AddEntity(invFirst);
     if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: inventory item '%s'", invFirst->GetClass()->GetName());
   }
-  if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: getting properties...");
+  if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: getting properties");
 
   plr->QS_Save();
   for (auto &&qse : cp.EList) qse.ent->QS_Save();
@@ -1848,7 +1848,7 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) 
     if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: --- (inventory before setting properties)");
     if (dbg_checkpoints) plr->CallDumpInventory();
     if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: ---");
-    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: calling loaders...");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: calling loaders");
     // call player loader, then entity loaders
     plr->QS_Load();
     for (int f = 0; f < cp.EList.length(); ++f) {
@@ -1978,18 +1978,18 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
         GLevel->cacheFlags &= ~VLevel::CacheFlag_Ignore;
         VStream *lmc = FL_OpenSysFileWrite(ccfname);
         if (lmc) {
-          GCon->Logf("writing lightmap cache to '%s'...", *ccfname);
+          GCon->Logf("writing lightmap cache to '%s'", *ccfname);
           GLevel->Renderer->saveLightmaps(lmc);
           bool err = lmc->IsError();
           lmc->Close();
           err = (err || lmc->IsError());
           delete lmc;
           if (err) {
-            GCon->Logf(NAME_Warning, "removed broken lightmap cache '%s'...", *ccfname);
+            GCon->Logf(NAME_Warning, "removed broken lightmap cache '%s'", *ccfname);
             Sys_FileDelete(ccfname);
           }
         } else {
-          GCon->Logf(NAME_Warning, "cannot create lightmap cache file '%s'...", *ccfname);
+          GCon->Logf(NAME_Warning, "cannot create lightmap cache file '%s'", *ccfname);
         }
       }
     }
@@ -2417,7 +2417,7 @@ COMMAND(Load) {
     BroadcastSaveText("Empty slot!");
     return;
   }
-  GCon->Logf("Loading \"%s\"...", *desc);
+  GCon->Logf("Loading \"%s\"", *desc);
 
   Draw_LoadIcon();
   SV_LoadGame(slot);
@@ -2458,7 +2458,7 @@ COMMAND(QuickLoad) {
     BroadcastSaveText("Empty quicksave slot");
     return;
   }
-  GCon->Log("Loading quicksave...");
+  GCon->Log("Loading quicksave");
 
   Draw_LoadIcon();
   SV_LoadGame(QUICKSAVE_SLOT);

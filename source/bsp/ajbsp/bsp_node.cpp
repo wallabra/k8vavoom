@@ -1518,7 +1518,7 @@ superblock_t *CreateSegs(void)
 
 	// step through linedefs and get side numbers
 
-	//InfoMessage("creating initial segs...");
+	//InfoMessage("creating initial segs");
 	cur_info->donesegs = cur_info->totalsegs = 0;
 	for (i=0 ; i < num_linedefs ; i++)
 	{

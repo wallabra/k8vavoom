@@ -446,7 +446,7 @@ void VMeshModel::Load_MD3 (vuint8 *Data, int DataSize) {
     pmesh = (MD3Surface *)((vuint8 *)pmesh+pmesh->endOfs);
   }
 
-  if (r_models_verbose_loading) GCon->Logf(NAME_Debug, "*** MD3 model '%s': loading mesh #%d...", *this->Name, this->MeshIndex);
+  if (r_models_verbose_loading) GCon->Logf(NAME_Debug, "*** MD3 model '%s': loading mesh #%d", *this->Name, this->MeshIndex);
 
   // convert and copy shader data
   MD3Shader *pshader = (MD3Shader *)((vuint8 *)pmesh+pmesh->shaderOfs);
@@ -640,11 +640,11 @@ void VMeshModel::LoadFromData (vuint8 *Data, int DataSize) {
 
   if (LittleLong(*(vuint32 *)Data) == IDPOLY2HEADER) {
     // MD2
-    if (r_models_verbose_loading) GCon->Logf(NAME_Debug, "loading MD2 model '%s'...", *Name);
+    if (r_models_verbose_loading) GCon->Logf(NAME_Debug, "loading MD2 model '%s'", *Name);
     Load_MD2(Data, DataSize);
   } else if (LittleLong(*(vuint32 *)Data) == IDPOLY3HEADER) {
     // MD3
-    if (r_models_verbose_loading) GCon->Logf(NAME_Debug, "loading MD3 model '%s'...", *Name);
+    if (r_models_verbose_loading) GCon->Logf(NAME_Debug, "loading MD3 model '%s'", *Name);
     Load_MD3(Data, DataSize);
   } else {
     Sys_Error("model '%s' is in unknown format", *Name);

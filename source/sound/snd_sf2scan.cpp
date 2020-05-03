@@ -144,7 +144,7 @@ void SF2_ScanDiskBanks () {
         dirname = VStr(home)+dirname;
       }
       #endif
-      //GCon->Logf("Timidity: scanning '%s'...", *dirname);
+      //GCon->Logf("Timidity: scanning '%s'", *dirname);
       auto dir = Sys_OpenDir(dirname);
       for (;;) {
         auto fname = Sys_ReadDir(dir);

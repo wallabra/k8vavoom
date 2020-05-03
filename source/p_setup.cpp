@@ -917,7 +917,7 @@ load_again:
 
   //FIXME: reload saved background screen from FBO
   R_OSDMsgReset(OSD_MapLoading);
-  R_OSDMsgShowMain("LOADING...");
+  R_OSDMsgShowMain("LOADING");
 
   bool saveCachedData = false;
   int gl_lumpnum = -100;
@@ -1047,7 +1047,7 @@ load_again:
     GCon->Logf("Selected nodes builder: %s", nbname);
   }
 
-  if (AuxiliaryMap) GCon->Log("loading map from nested wad...");
+  if (AuxiliaryMap) GCon->Log("loading map from nested wad");
 
   if (sha224valid) {
     vuint8 sha224hash[SHA224_DIGEST_SIZE];
@@ -1198,14 +1198,14 @@ load_again:
   // and again; sorry!
   if (!cachedDataLoaded || forceNodeRebuildFromFixer) {
     if (NeedNodesBuild || forceNodeRebuildFromFixer) {
-      GCon->Logf("building GL nodes...");
-      //R_OSDMsgShowSecondary("BUILDING NODES...");
+      GCon->Logf("building GL nodes");
+      //R_OSDMsgShowSecondary("BUILDING NODES");
       BuildNodes();
       saveCachedData = true;
     } else if (UseComprGLNodes) {
       if (!LoadCompressedGLNodes(CompressedGLNodesLump, GLNodesHdr)) {
-        GCon->Logf("rebuilding GL nodes...");
-        //R_OSDMsgShowSecondary("BUILDING NODES...");
+        GCon->Logf("rebuilding GL nodes");
+        //R_OSDMsgShowSecondary("BUILDING NODES");
         BuildNodes();
         saveCachedData = true;
       }
@@ -1228,7 +1228,7 @@ load_again:
 
   // create blockmap
   if (!BlockMapLump) {
-    GCon->Logf("creating BLOCKMAP...");
+    GCon->Logf("creating BLOCKMAP");
     CreateBlockMap();
   }
 
@@ -1364,7 +1364,7 @@ load_again:
   CreateRepBase();
   RepBaseTime += Sys_Time();
 
-  //GCon->Logf("Building Lidedef VV list...");
+  //GCon->Logf("Building Lidedef VV list");
   double LineVVListTime = -Sys_Time();
   BuildDecalsVVList();
   LineVVListTime += Sys_Time();
@@ -3255,11 +3255,11 @@ void VLevel::LoadRogueConScript (VName LumpName, int ALumpNum, FRogueConSpeech *
 //
 //==========================================================================
 void VLevel::PostProcessForDecals () {
-  GCon->Logf(NAME_Dev, "postprocessing level for faster decals...");
+  GCon->Logf(NAME_Dev, "postprocessing level for faster decals");
 
   for (auto &&line : allLines()) line.firstseg = nullptr;
 
-  GCon->Logf(NAME_Dev, "postprocessing level for faster decals: assigning segs...");
+  GCon->Logf(NAME_Dev, "postprocessing level for faster decals: assigning segs");
   // collect segments, so we won't go thru the all segs in decal spawner
   for (auto &&seg : allSegs()) {
     line_t *li = seg.linedef;
@@ -3533,7 +3533,7 @@ void VLevel::HashSectors () {
     }
   }
   */
-  //GCon->Log("hashing sectors...");
+  //GCon->Log("hashing sectors");
   tagHashClear(sectorTags);
   for (int i = 0; i < NumSectors; ++i) {
     //GCon->Logf("sector #%d: tag=%d; moretags=%d", i, Sectors[i].sectorTag, Sectors[i].moreTags.length());
@@ -4147,7 +4147,7 @@ void VLevel::FixDeepWaters () {
       bool valid = true;
       bool foundSomething = false;
       float surheight = 0;
-      //GCon->Logf(NAME_Debug, "::: checking sector #%d for a bridge...", sidx);
+      //GCon->Logf(NAME_Debug, "::: checking sector #%d for a bridge", sidx);
       sector_t *sursec = nullptr;
       for (int lcnt = 0; lcnt < sec->linecount; ++lcnt) {
         line_t *line = sec->lines[lcnt];

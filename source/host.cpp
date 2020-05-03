@@ -958,41 +958,41 @@ void Host_Shutdown () {
 
 #ifdef CLIENT
   //k8:no need to do this:SAFE_SHUTDOWN(C_Shutdown, ()) // console
-  if (developer) GLog.Log(NAME_Dev, "shutting down client...");
+  if (developer) GLog.Log(NAME_Dev, "shutting down client");
   SAFE_SHUTDOWN(CL_Shutdown, ())
 #endif
 #ifdef SERVER
-  if (developer) GLog.Log(NAME_Dev, "shutting down server...");
+  if (developer) GLog.Log(NAME_Dev, "shutting down server");
   SAFE_SHUTDOWN(SV_Shutdown, ())
 #endif
   if (GNet) {
-    if (developer) GLog.Log(NAME_Dev, "shutting down network...");
+    if (developer) GLog.Log(NAME_Dev, "shutting down network");
     SAFE_SHUTDOWN(delete GNet,)
     GNet = nullptr;
   }
 #ifdef CLIENT
   if (GInput) {
-    if (developer) GLog.Log(NAME_Dev, "shutting down input...");
+    if (developer) GLog.Log(NAME_Dev, "shutting down input");
     SAFE_SHUTDOWN(delete GInput,)
     GInput = nullptr;
   }
 
-  if (developer) GLog.Log(NAME_Dev, "shutting down video...");
+  if (developer) GLog.Log(NAME_Dev, "shutting down video");
   SAFE_SHUTDOWN(V_Shutdown, ()) // video
 
   if (GAudio) {
-    if (developer) GLog.Log(NAME_Dev, "shutting down audio...");
+    if (developer) GLog.Log(NAME_Dev, "shutting down audio");
     GAudio->Shutdown();
     SAFE_SHUTDOWN(delete GAudio,)
     GAudio = nullptr;
-    if (developer) GLog.Log(NAME_Dev, "audio deleted...");
+    if (developer) GLog.Log(NAME_Dev, "audio deleted");
   }
   //k8:no need to do this:SAFE_SHUTDOWN(T_Shutdown, ()) // font system
 #endif
   //k8:no need to do this:SAFE_SHUTDOWN(Sys_Shutdown, ()) // nothing at all
 
   if (GSoundManager) {
-    if (developer) GLog.Log(NAME_Dev, "shutting down sound manager...");
+    if (developer) GLog.Log(NAME_Dev, "shutting down sound manager");
     SAFE_SHUTDOWN(delete GSoundManager,)
     GSoundManager = nullptr;
   }
@@ -1008,20 +1008,20 @@ void Host_Shutdown () {
   //k8:no need to do this:SAFE_SHUTDOWN(GLanguage.FreeData, ())
   //k8:no need to do this:SAFE_SHUTDOWN(ShutdownDecorate, ())
 
-  if (developer) GLog.Log(NAME_Dev, "shutting down VObject...");
+  if (developer) GLog.Log(NAME_Dev, "shutting down VObject");
   SAFE_SHUTDOWN(VObject::StaticExit, ())
   //k8:no need to do this:SAFE_SHUTDOWN(VName::StaticExit, ())
   //SAFE_SHUTDOWN(Z_Shutdown, ())
   //GLog.Log("k8vavoom: shutdown complete");
 
 #ifdef CLIENT
-  if (developer) GLog.Log(NAME_Dev, "shutting down console...");
+  if (developer) GLog.Log(NAME_Dev, "shutting down console");
   C_Shutdown(); // save log
 #endif
 
   DD_ShutdownLog();
 
   // prevent shitdoze crashes
-  if (developer) GLog.Log(NAME_Dev, "shutting down memory manager...");
+  if (developer) GLog.Log(NAME_Dev, "shutting down memory manager");
   Z_ShuttingDown();
 }

@@ -1449,7 +1449,7 @@ static void LoadDehackedFile (VStream *Strm, int sourceLump) {
       if (Lump < 0) {
         Warning("Lump '%s' not found", *LumpName);
       } else {
-        Message("including '%s' from '%s'...", *LumpName, *W_FullLumpName(Lump));
+        Message("including '%s' from '%s'", *LumpName, *W_FullLumpName(Lump));
         char *SavedPatch = Patch;
         char *SavedPatchPtr = PatchPtr;
         char *SavedString = String;
@@ -1480,7 +1480,7 @@ static void LoadDehackedDefinitions () {
   VStream *Strm = FL_OpenFileReadBaseOnly("dehinfo.txt");
   if (!Strm) Sys_Error("dehinfo.txt is required to parse dehacked patches");
 
-  GCon->Logf(NAME_Init, "loading dehacked definitions from '%s'...", *Strm->GetName());
+  GCon->Logf(NAME_Init, "loading dehacked definitions from '%s'", *Strm->GetName());
   VScriptParser *sc = new VScriptParser("dehinfo.txt", Strm);
 
   // read sprite names
@@ -1755,7 +1755,7 @@ static void FindDehackedLumps (TArray<int> &lumplist) {
             if (wi.dlump >= 0) {
               for (auto &&lit : lumplist.itemsIdx()) {
                 if (lit.value() == wi.dlump) {
-                  GCon->Logf(NAME_Init, "  dropped old deh \"%s\"...", *W_FullLumpName(lit.value()));
+                  GCon->Logf(NAME_Init, "  dropped old deh \"%s\"", *W_FullLumpName(lit.value()));
                   lumplist.removeAt(lit.index());
                   break;
                 }

@@ -1413,7 +1413,7 @@ void VRenderLevelLightmap::FlushCaches () {
 //
 //==========================================================================
 void VRenderLevelLightmap::NukeLightmapCache () {
-  //GCon->Logf(NAME_Warning, "nuking lightmap atlases...");
+  //GCon->Logf(NAME_Warning, "nuking lightmap atlases");
   // nuke all lightmap caches
   FlushCaches();
 }
@@ -1542,7 +1542,7 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
 void VRenderLevelLightmap::ProcessCachedSurfaces () {
   if (LMSurfList.length() == 0) return; // nothing to do here
   if (nukeLightmapsOnNextFrame) {
-    if (dbg_show_lightmap_cache_messages) GCon->Log(NAME_Debug, "LIGHTMAP: *** previous frame requested lightmaps nuking...");
+    if (dbg_show_lightmap_cache_messages) GCon->Log(NAME_Debug, "LIGHTMAP: *** previous frame requested lightmaps nuking");
     FlushCaches();
   }
   // first pass, try to perform normal allocation
@@ -1554,7 +1554,7 @@ void VRenderLevelLightmap::ProcessCachedSurfaces () {
     return;
   }
   // second pass, nuke all lightmap caches, and do it all again
-  GCon->Log(NAME_Warning, "LIGHTMAP: *** out of surface cache blocks, retrying...");
+  GCon->Log(NAME_Warning, "LIGHTMAP: *** out of surface cache blocks, retrying");
   FlushCaches();
   for (auto &&sfc : LMSurfList) {
     if (!BuildSurfaceLightmap(sfc)) {

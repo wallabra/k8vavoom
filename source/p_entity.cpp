@@ -558,7 +558,7 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
       break;
     }
 
-    //if (dbg) GCon->Logf(NAME_Debug, "*** %u:%s(%s):%s:   calling state...", GetUniqueId(), GetClass()->GetName(), Actor->GetClass()->GetName(), *S->Loc.toStringShort());
+    //if (dbg) GCon->Logf(NAME_Debug, "*** %u:%s(%s):%s:   calling state", GetUniqueId(), GetClass()->GetName(), Actor->GetClass()->GetName(), *S->Loc.toStringShort());
     Call.State = S;
     // call action function
     if (S->Function) {

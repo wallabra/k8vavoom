@@ -2079,7 +2079,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   }
 
   if (inWorldCreation) {
-    R_OSDMsgShowSecondary("CREATING WORLD SURFACES...");
+    R_OSDMsgShowSecondary("CREATING WORLD SURFACES");
     R_PBarReset();
   }
 

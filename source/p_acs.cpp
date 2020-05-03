@@ -1413,7 +1413,7 @@ void VAcsObject::Serialise (VStream &Strm) {
   Strm << xver;
   if (xver != 1) Host_Error("invalid ACS object version in save file");
 
-  //GCon->Logf("serializing ACS object...");
+  //GCon->Logf("serializing ACS object");
 
   // scripts
   vint32 scriptCount = NumScripts;
@@ -1851,7 +1851,7 @@ void VAcsLevel::Serialise (VStream &Strm) {
   Strm << xver;
   if (xver != 1) Host_Error("invalid ACS level version in save file");
 
-  //GCon->Logf("serializing ACS level...");
+  //GCon->Logf("serializing ACS level");
 
   // objects
   int objCount = LoadedObjects.length();
@@ -2277,7 +2277,7 @@ void VAcs::Serialise (VStream &Strm) {
     vuint8 isDead;
     Strm << isDead;
     if (isDead) {
-      //GCon->Logf("serializing (load) destroyed VAcs...");
+      //GCon->Logf("serializing (load) destroyed VAcs");
       if (!destroyed) Destroy();
       return;
     }
@@ -2286,12 +2286,12 @@ void VAcs::Serialise (VStream &Strm) {
     vuint8 isDead = (destroyed ? 1 : 0);
     Strm << isDead;
     if (destroyed) {
-      //GCon->Logf("serializing (save) destroyed VAcs...");
+      //GCon->Logf("serializing (save) destroyed VAcs");
       return;
     }
   }
 
-  //GCon->Logf("*** serializing VAcs...");
+  //GCon->Logf("*** serializing VAcs");
 
   Strm << Level;
   Strm << XLevel;
@@ -3895,7 +3895,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   //fprintf(stderr, "VAcs::RunScript:000: self name is '%s' (number is %d)\n", *info->Name, info->Number);
   //if (info->RunningScript) fprintf(stderr, "VAcs::RunScript:001: rs name is '%s' (number is %d)\n", *info->RunningScript->info->Name, info->RunningScript->info->Number);
 
-  //if (info->Name != NAME_None) GCon->Logf(NAME_Dev, "ACS: running \"%s\"...", *info->Name);
+  //if (info->Name != NAME_None) GCon->Logf(NAME_Dev, "ACS: running \"%s\"", *info->Name);
 
   if (!acs_enabled) State = ASTE_Terminating;
 

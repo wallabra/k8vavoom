@@ -232,14 +232,14 @@ void G_LoadVCMods (VName modlistfile, const char *modtypestr) {
     //vcmodCurrFile = W_LumpFile(ScLump);
     vcmodCurrFileLump = ScLump;
     VScriptParser *sc = new VScriptParser(W_FullLumpName(ScLump), W_CreateLumpReaderNum(ScLump));
-    GCon->Logf(NAME_Init, "parsing Vavoom C mod list from '%s'...", *W_FullLumpName(ScLump));
+    GCon->Logf(NAME_Init, "parsing Vavoom C mod list from '%s'", *W_FullLumpName(ScLump));
     while (!sc->AtEnd()) {
       sc->ExpectString();
       //fprintf(stderr, "  <%s>\n", *sc->String.quote());
       while (sc->String.length() && (vuint8)sc->String[0] <= ' ') sc->String.chopLeft(1);
       while (sc->String.length() && (vuint8)sc->String[sc->String.length()-1] <= ' ') sc->String.chopRight(1);
       if (sc->String.length() == 0 || sc->String[0] == '#' || sc->String[0] == ';') continue;
-      GCon->Logf(NAME_Init, "loading %s Vavoom C mod '%s'...", modtypestr, *sc->String);
+      GCon->Logf(NAME_Init, "loading %s Vavoom C mod '%s'", modtypestr, *sc->String);
       VMemberBase::StaticLoadPackage(VName(*sc->String), TLocation());
     }
     delete sc;
@@ -326,7 +326,7 @@ void SV_Init () {
   if (cli_SVDumpDoomEd > 0) VClass::StaticDumpMObjInfo();
   if (cli_SVDumpScriptId > 0) VClass::StaticDumpScriptIds();
 
-  GCon->Logf(NAME_Init, "registering %d sprites...", VClass::GetSpriteCount());
+  GCon->Logf(NAME_Init, "registering %d sprites", VClass::GetSpriteCount());
   for (int i = 0; i < VClass::GetSpriteCount(); ++i) R_InstallSprite(*VClass::GetSpriteNameAt(i), i);
   R_InstallSpriteComplete(); // why not?
 
@@ -652,7 +652,7 @@ static void CheckForSkip () {
       //sv.intermission = 0;
       if (!mapteleport_executed) {
         mapteleport_executed = true;
-        GCon->Logf(NAME_Debug, "*** teleporting to the new map '%s'...", *GLevelInfo->NextMap);
+        GCon->Logf(NAME_Debug, "*** teleporting to the new map '%s'", *GLevelInfo->NextMap);
         GCmdBuf << "TeleportNewMap **forced**\n";
       }
     }
@@ -736,7 +736,7 @@ static void SV_RunClients (bool skipFrame=false) {
       // (because they aren't sent yet)
       // let context ticker reset it instead
       //Player->Net->NeedsUpdate = false;
-      //GCon->Logf(NAME_DevNet, "player #%d: getting messages...", i);
+      //GCon->Logf(NAME_DevNet, "player #%d: getting messages", i);
       // actually, force updates; the network update code will take care of rate limiting
       Player->Net->NeedsUpdate = true;
       Player->Net->GetMessages();
@@ -1453,7 +1453,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   if (GSoundManager) GSoundManager->CleanupSounds();
 
   GCon->Log("===============================================");
-  GCon->Logf("Spawning %sserver with map \"%s\"%s...", (titlemap ? "titlemap " : ""), mapname, (spawn_thinkers ? "" : " (without thinkers)"));
+  GCon->Logf("Spawning %sserver with map \"%s\"%s", (titlemap ? "titlemap " : ""), mapname, (spawn_thinkers ? "" : " (without thinkers)"));
 
   GGameInfo->Flags &= ~VGameInfo::GIF_Paused;
   mapteleport_executed = false; // just in case

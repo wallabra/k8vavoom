@@ -104,7 +104,7 @@ int VLevel::GetNodesBuilder () const {
 //==========================================================================
 void VLevel::BuildNodes () {
 #ifdef CLIENT
-  R_OSDMsgShowSecondary("BUILDING NODES...");
+  R_OSDMsgShowSecondary("BUILDING NODES");
   R_PBarReset();
 #endif
   switch (GetNodesBuilder()) {

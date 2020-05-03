@@ -458,7 +458,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
 
   Drv->GetSocketAddr(Drv->controlSock, &myaddr);
   if (xmit && Drv->CanBroadcast()) {
-    GCon->Log(NAME_DevNet, "sending broadcast query...");
+    GCon->Log(NAME_DevNet, "sending broadcast query");
     vuint8 edata[MAX_DGRAM_SIZE];
 
     VBitStreamWriter Reply(MAX_INFO_DGRAM_SIZE<<3);
@@ -478,7 +478,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     if (elen > 0) Drv->Broadcast(Drv->controlSock, edata, elen);
   }
 
-  //GCon->Logf(NAME_Debug, "SearchForHosts: trying to read a datagram (me:%s)...", Drv->AddrToString(&myaddr));
+  //GCon->Logf(NAME_Debug, "SearchForHosts: trying to read a datagram (me:%s)", Drv->AddrToString(&myaddr));
   int pktleft = 128;
   while (pktleft-- > 0) {
     int len = Drv->Read(Drv->controlSock, packetBuffer.data, MAX_DGRAM_SIZE, &readaddr);
@@ -518,7 +518,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     if (n < Net->HostCacheCount) continue;
 
     if (Net->HostCacheCount == HOSTCACHESIZE) {
-      GCon->Logf(NAME_DevNet, "too many hosts, ignoring...");
+      GCon->Logf(NAME_DevNet, "too many hosts, ignoring");
       continue;
     }
 
@@ -1445,11 +1445,11 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     TmpByte = MCREQ_LIST;
     MsgOut << TmpByte;
     Drv->Write(Drv->MasterQuerySocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &LastMasterAddr);
-    GCon->Logf(NAME_DevNet, "sent query to master at %s...", Drv->AddrToString(&LastMasterAddr));
+    GCon->Logf(NAME_DevNet, "sent query to master at %s", Drv->AddrToString(&LastMasterAddr));
     return false;
   }
 
-  //GCon->Logf(NAME_DevNet, "waiting for master reply...");
+  //GCon->Logf(NAME_DevNet, "waiting for master reply");
 
   bool res = false;
   int pktleft = 256;
@@ -1461,7 +1461,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     // is the cache full?
     //if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
-    //GCon->Logf("processing master reply...");
+    //GCon->Logf("processing master reply");
     VBitStreamReader msg(packetBuffer.data, len<<3);
     if (!CheckGameSignature(msg)) continue;
 
@@ -1485,7 +1485,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
       msg.Serialise(tmpaddr.sa_data+2, 4);
       msg.Serialise(tmpaddr.sa_data, 2);
       if (!msg.IsError() && pver0 == NET_PROTOCOL_VERSION_HI && pver1 == NET_PROTOCOL_VERSION_LO) {
-        GCon->Logf(NAME_DevNet, "  sending server query to %s...", Drv->AddrToString(&tmpaddr));
+        GCon->Logf(NAME_DevNet, "  sending server query to %s", Drv->AddrToString(&tmpaddr));
         VBitStreamWriter MsgOut(MAX_INFO_DGRAM_SIZE<<3);
         WriteGameSignature(MsgOut);
         TmpByte = CCREQ_SERVER_INFO;

@@ -162,7 +162,7 @@ VSoundManager::VSoundManager ()
 VSoundManager::~VSoundManager () {
   // wait for thread deinit
   if (loaderThreadStarted) {
-    GCon->Log("shutting down sound loader thread...");
+    GCon->Log("shutting down sound loader thread");
     {
       if (developer) GCon->Log(NAME_Dev, "   ...getting lock...");
       MyThreadLocker lock(&loaderLock);
@@ -321,7 +321,7 @@ void VSoundManager::Init () {
   // load SNDINFO script
   for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_sndinfo) {
-      GCon->Logf(NAME_Init, "loading SNDINFO from '%s'...", *W_FullLumpName(Lump));
+      GCon->Logf(NAME_Init, "loading SNDINFO from '%s'", *W_FullLumpName(Lump));
       // reset current pitch change for each sndinfo file
       // `-1` means "apply default pitch"
       CurrentChangePitch = -1;
@@ -366,7 +366,7 @@ void VSoundManager::Init () {
       GCon->Logf(NAME_Warning, "cannot create sound streaming thread (this is harmless)");
       sndThreadDebug = false;
     } else {
-      GCon->Log(NAME_Init, "starting sound loader thread...");
+      GCon->Log(NAME_Init, "starting sound loader thread");
       loaderThreadStarted = true;
     }
   }
@@ -971,7 +971,7 @@ int VSoundManager::ResolveSound (int ClassID, int GenderID, int InSoundId) {
   }
   // just in case
   if (sound_id < 0 || sound_id >= slen) {
-    GCon->Logf(NAME_Error, "SOUND: cannot resolve sound %d...", InSoundId);
+    GCon->Logf(NAME_Error, "SOUND: cannot resolve sound %d", InSoundId);
     return 0;
   }
   return sound_id;

@@ -710,7 +710,7 @@ VRenderLevelShared::~VRenderLevelShared () {
       VCameraTexture *Tex = (VCameraTexture *)BaseTex;
       Tex->camfboidx = -1;
     }
-    GCon->Logf("freeing %d camera FBOs out of %d camera textures...", bcnt, Level->CameraTextures.length());
+    GCon->Logf("freeing %d camera FBOs out of %d camera textures", bcnt, Level->CameraTextures.length());
   }
 
   UncacheLevel();
@@ -2128,7 +2128,7 @@ void VRenderLevelShared::FullWorldUpdate (bool forceClientOrigin) {
     Drawer->vieworg = cl->ViewOrg;
     //GCon->Logf(NAME_Debug, "*** vo=(%g,%g,%g)", Drawer->vieworg.x, Drawer->vieworg.y, Drawer->vieworg.z);
   } else {
-    GCon->Log(NAME_Debug, "performing full world update...");
+    GCon->Log(NAME_Debug, "performing full world update");
   }
   UpdateFakeSectors();
   InitialWorldUpdate();
@@ -2196,7 +2196,7 @@ void VRenderLevelShared::RenderPlayerView () {
     if (!BaseTex || !BaseTex->bIsCameraTexture) continue;
     VCameraTexture *CamTex = (VCameraTexture *)BaseTex;
     if (CamTex->camfboidx < 0) {
-      GCon->Logf(NAME_Debug, "new camera texture added, allocating...");
+      GCon->Logf(NAME_Debug, "new camera texture added, allocating");
       CamTex->camfboidx = Drawer->GetCameraFBO(camtexinfo.TexNum, max2(1, BaseTex->Width), max2(1, BaseTex->Height));
       vassert(CamTex->camfboidx >= 0);
       CamTex->NextUpdateTime = 0; // force updating
@@ -2684,11 +2684,11 @@ void VRenderLevelShared::PrecacheLevel () {
   int maxpbar = 0, currpbar = 0;
   for (auto &&b : texturepresent) { if (b) ++maxpbar; }
 
-  R_OSDMsgShowSecondary("PRECACHING TEXTURES...");
+  R_OSDMsgShowSecondary("PRECACHING TEXTURES");
   R_PBarReset();
 
   if (maxpbar > 0) {
-    GCon->Logf("precaching %d textures...", maxpbar);
+    GCon->Logf("precaching %d textures", maxpbar);
     for (int f = 1; f < maxtex; ++f) {
       if (texturepresent[f]) {
         ++currpbar;
@@ -2732,9 +2732,9 @@ void VRenderLevelShared::UncacheLevel () {
     if (!lvltexcount) return;
 
     if (r_reupload_level_textures) {
-      GCon->Logf("unloading%s %d level textures...", (gl_release_ram_textures_mode.asInt() >= 1 ? " and releasing" : ""), lvltexcount);
+      GCon->Logf("unloading%s %d level textures", (gl_release_ram_textures_mode.asInt() >= 1 ? " and releasing" : ""), lvltexcount);
     } else {
-      GCon->Logf("releasing %d level textures...", lvltexcount);
+      GCon->Logf("releasing %d level textures", lvltexcount);
     }
     for (int f = 1; f < texturepresent.length(); ++f) {
       if (!texturepresent[f]) continue;

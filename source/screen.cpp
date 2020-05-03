@@ -702,10 +702,10 @@ void SCR_Update (bool fullUpdate) {
     const int y = 8+cls.gotmap*8;
     // slightly off vcenter
     switch (cls.gotmap) {
-      case 0: T_DrawText(4, y, "getting network data (map)...", CR_TAN); break;
-      case 1: T_DrawText(4, y, "getting network data (world)...", CR_TAN); break;
-      case 2: T_DrawText(4, y, "getting network data (spawning)...", CR_TAN); break;
-      default: T_DrawText(4, y, "getting network data (something)...", CR_TAN); break;
+      case 0: T_DrawText(4, y, "getting network data (map)", CR_TAN); break;
+      case 1: T_DrawText(4, y, "getting network data (world)", CR_TAN); break;
+      case 2: T_DrawText(4, y, "getting network data (spawning)", CR_TAN); break;
+      default: T_DrawText(4, y, "getting network data (something)", CR_TAN); break;
     }
   }
 

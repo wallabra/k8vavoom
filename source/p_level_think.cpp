@@ -229,7 +229,7 @@ void VLevel::UpdateThinkersLevelInfo () {
   //GLevelInfo->World = GGameInfo->WorldInfo;
   LevelInfo->Game = GClGame->Game;
   if (!LevelInfo->World) {
-    GCon->Log(NAME_Debug, "*** setting World...");
+    GCon->Log(NAME_Debug, "*** setting World");
     LevelInfo->World = GGameInfo->WorldInfo;
   }
   #endif
@@ -512,7 +512,7 @@ void VLevel::TickWorld (float DeltaTime) {
   // process corpse limit
   if (corpseLimit >= 0 && corpseQueue.length() > corpseLimit) {
     const int end = corpseQueue.length();
-    GCon->Logf(NAME_Debug, "removing %d corpses out of %d...", end-corpseLimit, end);
+    GCon->Logf(NAME_Debug, "removing %d corpses out of %d", end-corpseLimit, end);
     // shuffle corpse queue, so we'll remove random corpses
     for (int f = 0; f < end; ++f) {
       // swap current and another random corpse

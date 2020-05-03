@@ -73,7 +73,7 @@ static bool doTick (VStreamMusicPlayer *strm) {
           ++loopCount;
           if (loopCount == 1) decodedFromLoop = 0;
           if (loopCount == 3 && decodedFromLoop < 256) {
-            GLog.WriteLine("Looped music stream is too short, aborting it...");
+            GLog.WriteLine("Looped music stream is too short, aborting it");
             strm->CurrLoop = false;
             strm->Stopping = true;
             strm->FinishTime = Sys_Time();
@@ -122,10 +122,10 @@ bool VStreamMusicPlayer::stpThreadWaitPing (unsigned int msecs) {
 //
 //==========================================================================
 void VStreamMusicPlayer::stpThreadSendPong () {
-  SDLOG("STP: getting lock for pong sending...");
+  SDLOG("STP: getting lock for pong sending");
   // we'll aquire lock if another thread is in cond_wait
   mythread_mutex_lock(&stpLockPong);
-  SDLOG("STP: releasing lock for pong sending...");
+  SDLOG("STP: releasing lock for pong sending");
   // and immediately release it
   mythread_mutex_unlock(&stpLockPong);
   // send signal
@@ -142,11 +142,11 @@ void VStreamMusicPlayer::stpThreadSendPong () {
 //==========================================================================
 void VStreamMusicPlayer::stpThreadSendCommand (STPCommand acmd) {
   stpcmd = acmd;
-  SDLOG("MAIN: sending command %u...", (unsigned)stpcmd);
-  SDLOG("MAIN:   getting lock for ping sending...");
+  SDLOG("MAIN: sending command %u", (unsigned)stpcmd);
+  SDLOG("MAIN:   getting lock for ping sending");
   // we'll aquire lock if another thread is in cond_wait
   mythread_mutex_lock(&stpPingLock);
-  SDLOG("MAIN:   releasing lock for ping sending...");
+  SDLOG("MAIN:   releasing lock for ping sending");
   // and immediately release it
   mythread_mutex_unlock(&stpPingLock);
   // send signal
@@ -183,7 +183,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
   bool doLoadNewSong = false;
   SDLOG("STP: streaming thread started.");
   for (;;) {
-    //SDLOG("STP: streaming thread waiting...");
+    //SDLOG("STP: streaming thread waiting");
     if (strm->stpThreadWaitPing(100*5)) {
       SDLOG("STP: streaming thread received the command: %u", (unsigned)strm->stpcmd);
       // ping received
@@ -250,7 +250,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
       // quit doesn't require pong
       if (doQuit) break;
       // send confirmation
-      SDLOG("STP:   sending pong...");
+      SDLOG("STP:   sending pong");
       strm->stpThreadSendPong();
       SDLOG("STP:   pong sent.");
     }
@@ -279,14 +279,14 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
         // k8: nope, it won't work anyway
         //mythread_mutex_unlock(&stpPingLock);
         //mythread_mutex_lock(&stpPingLock);
-        //GLog.Logf("STRM: loading song '%s'...", *newSongName);
+        //GLog.Logf("STRM: loading song '%s'", *newSongName);
         VAudioCodec *codec = GAudio->LoadSongInternal(*newSongName, wasPlaying, true); // called from streaming thread
         if (codec) {
           bool xopened = strm->SoundDevice->OpenStream(codec->SampleRate, codec->SampleBits, codec->NumChannels);
           if (!xopened) {
-            GLog.WriteLine(NAME_Warning, "cannot' start song '%s'...", *newSongName);
+            GLog.WriteLine(NAME_Warning, "cannot' start song '%s'", *newSongName);
           } else {
-            //GLog.Logf("STRM: starting song '%s'...", *newSongName);
+            //GLog.Logf("STRM: starting song '%s'", *newSongName);
             strm->Codec = codec;
             strm->CurrSong = newSongName;
             strm->CurrLoop = doLoop;
@@ -304,7 +304,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
     }
     // tick
     if (strm->StrmOpened) {
-      //SDLOG("STP: streaming thread ticking...");
+      //SDLOG("STP: streaming thread ticking");
       // advance playing stream
 #ifndef VCCRUN_SOUND_THREAD_DUMMY
       if (doTick(strm)) {
@@ -393,7 +393,7 @@ void VStreamMusicPlayer::Play (VAudioCodec *InCodec, const char *InName, bool In
   if (InName && InName[0]) {
     bool xopened = SoundDevice->OpenStream(InCodec->SampleRate, InCodec->SampleBits, InCodec->NumChannels);
     if (!xopened) {
-      GLog.WriteLine("WARNING: cannot' start song '%s'...", InName);
+      GLog.WriteLine("WARNING: cannot' start song '%s'", InName);
       return;
     }
     Codec = InCodec;

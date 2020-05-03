@@ -87,7 +87,7 @@ static void bloomDrawFSQuad () {
 //
 //==========================================================================
 void VOpenGLDrawer::BloomDeinit () {
-  //GCon->Logf(NAME_Debug, "OpenGL: deinit bloom...");
+  //GCon->Logf(NAME_Debug, "OpenGL: deinit bloom");
 
   if (bloomFullSizeDownsampleRBOid) {
     //GCon->Logf(NAME_Debug, "*** deleting bloom RBO: id=%u", bloomFullSizeDownsampleRBOid);
@@ -202,7 +202,7 @@ void VOpenGLDrawer::BloomInitTextures () {
 
   GLDRW_RESET_ERROR();
 
-  //GCon->Logf(NAME_Debug, "OpenGL: initalize bloom...");
+  //GCon->Logf(NAME_Debug, "OpenGL: initalize bloom");
 
   // validate bloom size and init the bloom effect texture
   BloomInitEffectTexture();

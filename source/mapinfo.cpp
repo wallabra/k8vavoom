@@ -246,7 +246,7 @@ void VMapInfo::dump (const char *msg) const {
 void P_SetupMapinfoPlayerClasses () {
   if (cli_NoMapinfoPlrClasses > 0) return;
   if (MapInfoPlayerClasses.length() == 0) return;
-  GCon->Logf("setting up %d player class%s from mapinfo...", MapInfoPlayerClasses.length(), (MapInfoPlayerClasses.length() != 1 ? "es" : ""));
+  GCon->Logf("setting up %d player class%s from mapinfo", MapInfoPlayerClasses.length(), (MapInfoPlayerClasses.length() != 1 ? "es" : ""));
   GGameInfo->PlayerClasses.Clear();
   for (int f = 0; f < MapInfoPlayerClasses.length(); ++f) {
     VClass *Class = VClass::FindClassNoCase(*MapInfoPlayerClasses[f]);
@@ -307,7 +307,7 @@ static void appendNumFixup (TMapDtor<int, SpawnEdFixup> &arr, VStr className, in
 //
 //==========================================================================
 static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, SpawnEdFixup> &fixups) {
-  //GCon->Logf("fixing '%s'... (%d)", errname, fixups.count());
+  //GCon->Logf("fixing '%s' (%d)", errname, fixups.count());
 #if 0
   int f = 0;
   while (f < list.length()) {
@@ -346,7 +346,7 @@ static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, Sp
     ++f;
   }
 #endif
-  //GCon->Logf("  appending '%s'... (%d)", errname, fixups.count());
+  //GCon->Logf("  appending '%s' (%d)", errname, fixups.count());
   // append new
   for (auto it = fixups.first(); it; ++it) {
     SpawnEdFixup *fxp = &it.getValue();
@@ -1230,7 +1230,7 @@ static void ParseMapCommon (VScriptParser *sc, VMapInfo *info, bool &HexenMode) 
       if (!newFormat) break;
       if (sc->Check("}")) break;
       if (!sc->GetString()) break;
-      //sc->Message(va("*** unknown mapinfo command '%s', skipping...", *sc->String));
+      //sc->Message(va("*** unknown mapinfo command '%s', skipping", *sc->String));
       skipUnimplementedCommand(sc, false); // don't force args, but skip them
       if (sc->Check("}")) break;
       continue;
@@ -2150,7 +2150,7 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
             error = true;
             break;
           }
-          GCon->Logf("Including '%s'...", *sc->String);
+          GCon->Logf("Including '%s'", *sc->String);
           scstack[scsp++] = sc;
           sc = new VScriptParser(/**sc->String*/W_FullLumpName(lmp), W_CreateLumpReaderNum(lmp));
           //ParseMapInfo(new VScriptParser(*sc->String, W_CreateLumpReaderNum(lmp)));

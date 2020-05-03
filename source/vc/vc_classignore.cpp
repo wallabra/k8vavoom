@@ -178,7 +178,7 @@ static void ParseKnownClassIgnoreFile (VScriptParser *sc) {
 //==========================================================================
 static void LoadKnownClassIgnores () {
   for (auto &&it : WadFileIterator("vavoom_class_ignores.rc")) {
-    GLog.Logf(NAME_Init, "Parsing known class ignore script '%s'...", *it.getFullName());
+    GLog.Logf(NAME_Init, "Parsing known class ignore script '%s'", *it.getFullName());
     ParseKnownClassIgnoreFile(new VScriptParser(it.getFullName(), W_CreateLumpReaderNum(it.lump)));
   }
 }

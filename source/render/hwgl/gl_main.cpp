@@ -256,7 +256,7 @@ void VOpenGLDrawer::VGLShader::Deactivate () {
 //
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Compile () {
-  if (developer) GCon->Logf(NAME_Dev, "compiling shader '%s'...", progname);
+  if (developer) GCon->Logf(NAME_Dev, "compiling shader '%s'", progname);
   GLhandleARB VertexShader = owner->LoadShader(progname, incdir, GL_VERTEX_SHADER_ARB, vssrcfile, defines);
   GLhandleARB FragmentShader = owner->LoadShader(progname, incdir, GL_FRAGMENT_SHADER_ARB, fssrcfile, defines);
   prog = owner->CreateProgram(progname, VertexShader, FragmentShader);
@@ -270,7 +270,7 @@ void VOpenGLDrawer::VGLShader::Compile () {
 //
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Unload () {
-  if (developer) GCon->Logf(NAME_Dev, "unloading shader '%s'...", progname);
+  if (developer) GCon->Logf(NAME_Dev, "unloading shader '%s'", progname);
   // actual program object will be destroyed elsewhere
   prog = 0;
   UnloadUniforms();
@@ -410,7 +410,7 @@ void VOpenGLDrawer::DestroyCameraFBOList () {
 //
 //==========================================================================
 void VOpenGLDrawer::registerShader (VGLShader *shader) {
-  if (developer) GCon->Logf(NAME_Dev, "registering shader '%s'...", shader->progname);
+  if (developer) GCon->Logf(NAME_Dev, "registering shader '%s'", shader->progname);
   shader->owner = this;
   shader->next = shaderHead;
   shaderHead = shader;
@@ -822,7 +822,7 @@ void VOpenGLDrawer::InitResolution () {
       VStr extfn(#x); \
       extfn += "EXT"; \
       /*extfn += "ARB";*/ \
-      GCon->Logf(NAME_Init, "OpenGL: trying `%s` instead of `%s`...", *extfn, #x); \
+      GCon->Logf(NAME_Init, "OpenGL: trying `%s` instead of `%s`", *extfn, #x); \
       p_##x = x##_t(GetExtFuncPtr(*extfn)); \
       if (p_##x) GCon->Logf(NAME_Init, "OpenGL: ...found `%s`.", *extfn); \
     } \
@@ -859,7 +859,7 @@ void VOpenGLDrawer::InitResolution () {
     //p_glStencilFuncSeparate = glStencilFuncSeparate_t(GetExtFuncPtr("glStencilFuncSeparateATI"));
     p_glStencilOpSeparate = glStencilOpSeparate_t(GetExtFuncPtr("glStencilOpSeparateATI"));
     if (/*p_glStencilFuncSeparate &&*/ p_glStencilOpSeparate) {
-      GCon->Log(NAME_Init, "Found GL_ATI_separate_stencil...");
+      GCon->Log(NAME_Init, "Found GL_ATI_separate_stencil");
     } else {
       GCon->Log(NAME_Init, "No separate stencil methods found");
       //p_glStencilFuncSeparate = nullptr;
@@ -872,10 +872,10 @@ void VOpenGLDrawer::InitResolution () {
   }
 
   if (!gl_dbg_disable_depth_clamp && CheckExtension("GL_ARB_depth_clamp")) {
-    GCon->Log(NAME_Init, "Found GL_ARB_depth_clamp...");
+    GCon->Log(NAME_Init, "Found GL_ARB_depth_clamp");
     HaveDepthClamp = true;
   } else if (!gl_dbg_disable_depth_clamp && CheckExtension("GL_NV_depth_clamp")) {
-    GCon->Log(NAME_Init, "Found GL_NV_depth_clamp...");
+    GCon->Log(NAME_Init, "Found GL_NV_depth_clamp");
     HaveDepthClamp = true;
   } else {
     GCon->Log(NAME_Init, "Symbol not found, depth clamp extensions disabled.");
@@ -883,7 +883,7 @@ void VOpenGLDrawer::InitResolution () {
   }
 
   if (CheckExtension("GL_EXT_stencil_wrap")) {
-    GCon->Log(NAME_Init, "Found GL_EXT_stencil_wrap...");
+    GCon->Log(NAME_Init, "Found GL_EXT_stencil_wrap");
     HaveStencilWrap = true;
   } else {
     GCon->Log(NAME_Init, "Symbol not found, stencil wrap extensions disabled.");
@@ -903,7 +903,7 @@ void VOpenGLDrawer::InitResolution () {
     canIntoBloomFX = true;
   }
 
-  if (hasBoundsTest) GCon->Logf(NAME_Init, "Found GL_EXT_depth_bounds_test...");
+  if (hasBoundsTest) GCon->Logf(NAME_Init, "Found GL_EXT_depth_bounds_test");
 
 
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -1001,9 +1001,9 @@ void VOpenGLDrawer::InitResolution () {
   // shaders
   shaderHead = nullptr; // just in case
 
-  GCon->Logf(NAME_Init, "OpenGL: loading shaders...");
+  GCon->Logf(NAME_Init, "OpenGL: loading shaders");
   LoadAllShaders();
-  GCon->Logf(NAME_Init, "OpenGL: compiling shaders...");
+  GCon->Logf(NAME_Init, "OpenGL: compiling shaders");
   CompileShaders();
 
   GLDRW_CHECK_ERROR("finish OpenGL initialization");

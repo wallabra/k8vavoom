@@ -444,9 +444,9 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
 
     // copy values from the default object
     vassert(AClass->Defaults);
-    //GLog.Logf(NAME_Debug, "000: INITIALIZING fields of `%s`...", AClass->GetName());
+    //GLog.Logf(NAME_Debug, "000: INITIALIZING fields of `%s`", AClass->GetName());
     AClass->CopyObject(AClass->Defaults, (vuint8 *)Obj);
-    //GLog.Logf(NAME_Debug, "001: DONE INITIALIZING fields of `%s`...", AClass->GetName());
+    //GLog.Logf(NAME_Debug, "001: DONE INITIALIZING fields of `%s`", AClass->GetName());
 
     // set up object fields
     Obj->Class = AClass;
@@ -588,7 +588,7 @@ void VObject::CollectGarbage (bool destroyDelayed) {
 
   GInGarbageCollection = true;
 
-  vdgclogf("collecting garbage...");
+  vdgclogf("collecting garbage");
 
   // destroy all delayed-destroy objects
   if (destroyDelayed) {
@@ -851,7 +851,7 @@ void VObject::SerialiseFields (VStream &Strm) {
         if (fldseen.put(fldname, true)) {
           GLog.WriteLine(NAME_Warning, "duplicate saved field `%s` in class `%s`", *fldname, GetClass()->GetName());
         }
-        if (debugDump) GLog.WriteLine("VC I/O: loading field `%s` of class `%s`...",  *fldname, GetClass()->GetName());
+        if (debugDump) GLog.WriteLine("VC I/O: loading field `%s` of class `%s`",  *fldname, GetClass()->GetName());
         VField *fld = *fpp;
         VField::SerialiseFieldValue(Strm, (vuint8 *)this+fld->Ofs, fld->Type);
       }

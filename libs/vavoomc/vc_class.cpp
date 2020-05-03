@@ -1323,7 +1323,7 @@ bool VClass::Define () {
         ParentClass->DefinedAsDependency = true;
         if (!xdres) return false;
       }
-      vdrlogf("VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...", GetName(), *ParentClassName, ParentClass->GetName());
+      vdrlogf("VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)", GetName(), *ParentClassName, ParentClass->GetName());
       // now set replacement for the actual replacement
       if (!ParentClass->SetReplacement(this)) {
         ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
@@ -2517,11 +2517,11 @@ void VClass::CreateDefaults () {
 void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
   // copy parent class fields
   if (GetSuperClass()) {
-    //GLog.Logf(NAME_Dev, "COPYING SUPER fields of `%s` (super is '%s')...", GetName(), GetSuperClass()->GetName());
+    //GLog.Logf(NAME_Dev, "COPYING SUPER fields of `%s` (super is '%s')", GetName(), GetSuperClass()->GetName());
     GetSuperClass()->CopyObject(Src, Dst);
   }
   // copy fields
-  //GLog.Logf(NAME_Dev, "COPYING fields of `%s`...", GetName());
+  //GLog.Logf(NAME_Dev, "COPYING fields of `%s`", GetName());
   for (VField *F = Fields; F; F = F->Next) {
     if (F->Flags&FIELD_Internal) {
       //fprintf(stderr, "skipping field '%s' of `%s`... (ofs=%d, type=%s)\n", F->GetName(), GetName(), F->Ofs, *F->Type.GetName());
@@ -2530,7 +2530,7 @@ void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
     //GLog.Logf(NAME_Dev, "  COPYING field '%s' of `%s`... (ofs=%d, type=%s)", F->GetName(), GetName(), F->Ofs, *F->Type.GetName());
     VField::CopyFieldValue(Src+F->Ofs, Dst+F->Ofs, F->Type);
   }
-  //GLog.Logf(NAME_Dev, "DONE COPYING fields of `%s`...", GetName());
+  //GLog.Logf(NAME_Dev, "DONE COPYING fields of `%s`", GetName());
 }
 
 

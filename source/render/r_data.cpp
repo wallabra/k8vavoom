@@ -172,7 +172,7 @@ static void InitPalette () {
 //==========================================================================
 static void InitRgbTable () {
   VStr rtblsize = VStr::size2human((unsigned)sizeof(r_rgbtable));
-  if (developer) GCon->Logf(NAME_Dev, "building color translation table (%d bits, %d items per color, %s)...", VAVOOM_COLOR_COMPONENT_BITS, VAVOOM_COLOR_COMPONENT_MAX, *rtblsize);
+  if (developer) GCon->Logf(NAME_Dev, "building color translation table (%d bits, %d items per color, %s)", VAVOOM_COLOR_COMPONENT_BITS, VAVOOM_COLOR_COMPONENT_MAX, *rtblsize);
   memset(r_rgbtable, 0, sizeof(r_rgbtable));
   for (int ir = 0; ir < VAVOOM_COLOR_COMPONENT_MAX; ++ir) {
     for (int ig = 0; ig < VAVOOM_COLOR_COMPONENT_MAX; ++ig) {
@@ -211,7 +211,7 @@ static void InitRgbTable () {
 //
 //==========================================================================
 static void InitTranslationTables () {
-  GCon->Log(NAME_Init, "building texture translations tables...");
+  GCon->Log(NAME_Init, "building texture translations tables");
   {
     int tlump = W_GetNumForName(NAME_translat);
     GCon->Logf(NAME_Init, "using translation table from '%s'", *W_FullLumpName(tlump));
@@ -256,7 +256,7 @@ static void InitTranslationTables () {
 //
 //==========================================================================
 static void InitColorMaps () {
-  GCon->Log(NAME_Init, "building colormaps...");
+  GCon->Log(NAME_Init, "building colormaps");
 
   // calculate inverse colormap
   VTextureTranslation *T = &ColorMaps[CM_Inverse];
@@ -670,7 +670,7 @@ bool R_AreSpritesPresent (int Index) {
 //==========================================================================
 static void InitNamedTranslations () {
   for (auto &&it : WadNSNameIterator("trnslate", WADNS_Global)) {
-    GCon->Logf(NAME_Init, "parsing named translation table '%s'...", *it.getFullName());
+    GCon->Logf(NAME_Init, "parsing named translation table '%s'", *it.getFullName());
     auto sc = new VScriptParser(it.getFullName(), W_CreateLumpReaderNum(it.lump));
     while (sc->GetString()) {
       VStr name = sc->String;
@@ -1196,7 +1196,7 @@ static void ParseClassEffects (VScriptParser *sc, TArray<VTempClassEffects> &Cla
 //
 //==========================================================================
 static void ParseEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &ClassDefs) {
-  if (developer) GCon->Logf(NAME_Dev, "...parsing k8vavoom effect definitions '%s'...", *sc->GetScriptName());
+  if (developer) GCon->Logf(NAME_Dev, "parsing k8vavoom effect definitions '%s'", *sc->GetScriptName());
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
       sc->ExpectString();
@@ -1528,7 +1528,7 @@ static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempC
   // for old mods (before Apr 2018) it should be `0.667f` (see https://forum.zdoom.org/viewtopic.php?t=60280 )
   // sadly, there is no way to autodetect it, so let's use what GZDoom is using now
   float lightsizefactor = 1.0; // for attenuated lights
-  if (developer) GCon->Logf(NAME_Dev, "...parsing GZDoom light definitions '%s'...", *sc->GetScriptName());
+  if (developer) GCon->Logf(NAME_Dev, "parsing GZDoom light definitions '%s'", *sc->GetScriptName());
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
       sc->ExpectString();
@@ -1543,7 +1543,7 @@ static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempC
           if (nn != NAME_None) Lump = W_CheckNumForName(nn);
         }
         if (Lump < 0) sc->Error(va("Lump '%s' not found", *incfile));
-        //GCon->Logf(NAME_Debug, "...including '%s' (%s)", *incfile, *W_FullLumpName(Lump));
+        //GCon->Logf(NAME_Debug, "including '%s' (%s)", *incfile, *W_FullLumpName(Lump));
         ParseGZDoomEffectDefs(Lump, new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
       } else {
         GCon->Logf(NAME_Init, "gldefs include file '%s' skipped due to condition", *incfile);
@@ -1579,7 +1579,7 @@ static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempC
 //
 //==========================================================================
 void R_ParseEffectDefs () {
-  GCon->Log(NAME_Init, "Parsing effect defs...");
+  GCon->Log(NAME_Init, "Parsing effect defs");
 
   TArray<VTempClassEffects> ClassDefs;
 
@@ -1590,7 +1590,7 @@ void R_ParseEffectDefs () {
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     VName lname = W_LumpName(Lump);
     if (lname == NAME_vfxdefs) {
-      GCon->Logf(NAME_Init, "Parsing k8vavoom effect definitions '%s'...", *W_FullLumpName(Lump));
+      GCon->Logf(NAME_Init, "Parsing k8vavoom effect definitions '%s'", *W_FullLumpName(Lump));
       ParseEffectDefs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
       continue;
     }
@@ -1603,7 +1603,7 @@ void R_ParseEffectDefs () {
   }
 
   for (auto &&lmpidx : gldefslist) {
-    GCon->Logf(NAME_Init, "Parsing GZDoom light definitions '%s'...", *W_FullLumpName(lmpidx));
+    GCon->Logf(NAME_Init, "Parsing GZDoom light definitions '%s'", *W_FullLumpName(lmpidx));
     ParseGZDoomEffectDefs(lmpidx, new VScriptParser(W_FullLumpName(lmpidx), W_CreateLumpReaderNum(lmpidx)), ClassDefs);
   }
 

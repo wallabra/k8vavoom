@@ -1034,9 +1034,9 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
       if (reg->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_BaseRegion)) continue;
       // "sane" regions may represent Vavoom water
       if ((reg->regflags&(sec_region_t::RF_SaneRegion|sec_region_t::RF_NonSolid)) == sec_region_t::RF_SaneRegion) {
-        if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: sane region..."); DumpRegion(reg); }
+        if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: sane region"); DumpRegion(reg); }
         if (!reg->params || (int)reg->params->contents <= 0) continue;
-        if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: sane non-solid region..."); DumpRegion(reg); }
+        if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: sane non-solid region"); DumpRegion(reg); }
         if (dbgDump) { GCon->Logf(NAME_Debug, "   botz=%g; topz=%g", reg->efloor.GetPointZ(p), reg->eceiling.GetPointZ(p)); }
         // it may be paper-thin
         const float topz = reg->eceiling.GetPointZ(p);
@@ -1051,7 +1051,7 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
         continue;
       }
       // non-solid
-      if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: checking region..."); DumpRegion(reg); }
+      if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: checking region"); DumpRegion(reg); }
       const float rtopz = reg->eceiling.GetPointZ(p);
       const float rbotz = reg->efloor.GetPointZ(p);
       // ignore paper-thin regions

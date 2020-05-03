@@ -245,7 +245,7 @@ void CL_ReadFromServer (float deltaTime) {
   } else {
     /*
     if (GGameInfo->NetMode == NM_Client && deltaTime) {
-      GCon->Logf(NAME_Debug, "client is not signed on yet... (%g)", Sys_Time());
+      GCon->Logf(NAME_Debug, "client is not signed on yet (%g)", Sys_Time());
     }
     */
   }
@@ -289,20 +289,20 @@ void CL_NetworkHeartbeat (bool forced) {
 void CL_EstablishConnection (const char *host) {
   if (GGameInfo->NetMode == NM_DedicatedServer) return;
 
-  GCon->Log("shutting down current game...");
+  GCon->Log("shutting down current game");
   SV_ShutdownGame();
 
   //R_OSDMsgReset(OSD_Network);
   //R_OSDMsgShow(va("initiating connection to [%s]", (host ? host : "")));
 
-  GCon->Logf("connecting to '%s'...", (host ? host : ""));
+  GCon->Logf("connecting to '%s'", (host ? host : ""));
   VSocketPublic *Sock = GNet->Connect(host);
   if (!Sock) {
     GCon->Log(NAME_Error, "Failed to connect to the server");
     return;
   }
 
-  GCon->Log("initialising net client...");
+  GCon->Log("initialising net client");
   CL_SetupNetClient(Sock);
   GCon->Logf(NAME_Dev, "CL_EstablishConnection: connected to '%s'", host);
   GGameInfo->NetMode = NM_Client;
@@ -721,7 +721,7 @@ void CL_PlayDemo (VStr DemoName, bool IsTimeDemo) {
   // open the demo file
   VStr name = VStr("demos/")+DemoName.DefaultExtension(".dem");
 
-  GCon->Logf("Playing demo from '%s'...", *name);
+  GCon->Logf("Playing demo from '%s'", *name);
   VStream *Strm = FL_OpenFileReadInCfgDir(name);
   if (!Strm) {
     GCon->Logf("ERROR: couldn't open '%s'.", *name);
@@ -884,7 +884,7 @@ COMMAND_WITH_AC(RecordDemo) {
   if (c > 2) VCommand::ExecuteString(VStr("map ")+Args[2], SRC_Command, nullptr);
 
   // open the demo file
-  GCon->Logf("recording to '%s'...", *name);
+  GCon->Logf("recording to '%s'", *name);
   cls.demofile = FL_OpenFileWriteInCfgDir(name);
   if (!cls.demofile) {
     GCon->Logf("ERROR: couldn't create '%s'.", *name);

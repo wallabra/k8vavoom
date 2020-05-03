@@ -308,7 +308,7 @@ static void PutClassToList (Lists &l, VClass *cls) {
 //==========================================================================
 void VPackage::SortParsedClasses () {
   if (ParsedClasses.length() == 0) return;
-  //GLog.Log(NAME_Debug, "Sorting classes...");
+  //GLog.Log(NAME_Debug, "Sorting classes");
   // build class map
   Lists l;
   for (auto &&it : ParsedClasses.itemsIdx()) {
@@ -334,9 +334,9 @@ void VPackage::SortParsedClasses () {
 //
 //==========================================================================
 void VPackage::Emit () {
-  vdlogf("Importing packages for '%s'...", *Name);
+  vdlogf("Importing packages for '%s'", *Name);
   for (auto &&pkg : PackagesToLoad) {
-    vdlogf("  importing package '%s'...", *pkg.Name);
+    vdlogf("  importing package '%s'", *pkg.Name);
     pkg.Pkg = StaticLoadPackage(pkg.Name, pkg.Loc);
   }
 
@@ -344,51 +344,51 @@ void VPackage::Emit () {
 
   if (vcErrorCount) BailOut();
 
-  vdlogf("Defining constants for '%s'...", *Name);
+  vdlogf("Defining constants for '%s'", *Name);
   for (auto &&cc : ParsedConstants) {
-    vdlogf("  defining constant '%s'...", *cc->Name);
+    vdlogf("  defining constant '%s'", *cc->Name);
     cc->Define();
   }
 
-  vdlogf("Defining structs for '%s'...", *Name);
+  vdlogf("Defining structs for '%s'", *Name);
   for (auto &&st : ParsedStructs) {
-    vdlogf("  defining struct '%s'...", *st->Name);
+    vdlogf("  defining struct '%s'", *st->Name);
     st->Define();
   }
 
-  vdlogf("Defining classes for '%s'...", *Name);
+  vdlogf("Defining classes for '%s'", *Name);
   for (auto &&cls : ParsedClasses) {
-    vdlogf("  defining class '%s'...", *cls->Name);
+    vdlogf("  defining class '%s'", *cls->Name);
     cls->Define();
   }
 
   if (vcErrorCount) BailOut();
 
   for (auto &&dcl : ParsedDecorateImportClasses) {
-    vdlogf("  defining decorate import class '%s'...", *dcl->Name);
+    vdlogf("  defining decorate import class '%s'", *dcl->Name);
     dcl->Define();
   }
 
   if (vcErrorCount) BailOut();
 
-  vdlogf("Defining struct members for '%s'...", *Name);
+  vdlogf("Defining struct members for '%s'", *Name);
   for (auto &&st : ParsedStructs) {
-    vdlogf("  defining members for struct '%s'...", *st->Name);
+    vdlogf("  defining members for struct '%s'", *st->Name);
     st->DefineMembers();
   }
 
-  vdlogf("Defining class members for '%s'...", *Name);
+  vdlogf("Defining class members for '%s'", *Name);
   for (auto &&cls : ParsedClasses) {
-    vdlogf("  defining members for class '%s'...", *cls->Name);
+    vdlogf("  defining members for class '%s'", *cls->Name);
     cls->DefineMembers();
   }
 
   if (vcErrorCount) BailOut();
 
   /*
-  vdlogf("Emiting classes for '%s'...", *Name);
+  vdlogf("Emiting classes for '%s'", *Name);
   for (auto &&cls : ParsedClasses) {
-    vdlogf("  emitting class '%s'...", *cls->Name);
+    vdlogf("  emitting class '%s'", *cls->Name);
     cls->Emit();
   }
 
@@ -412,9 +412,9 @@ void VPackage::Emit () {
 void VPackage::StaticEmitPackages () {
   for (auto &pkg : PackagesToEmit) {
     if (pkg->ParsedClasses.length() > 0) {
-      vdlogf("Emiting %d class%s for '%s'...", pkg->ParsedClasses.length(), (pkg->ParsedClasses.length() != 1 ? "es" : ""), *pkg->Name);
+      vdlogf("Emiting %d class%s for '%s'", pkg->ParsedClasses.length(), (pkg->ParsedClasses.length() != 1 ? "es" : ""), *pkg->Name);
       for (auto &&cls : pkg->ParsedClasses) {
-        vdlogf("  emitting class '%s' (parent is '%s')...", *cls->Name, (cls->ParentClass ? *cls->ParentClass->Name : "none"));
+        vdlogf("  emitting class '%s' (parent is '%s')", *cls->Name, (cls->ParentClass ? *cls->ParentClass->Name : "none"));
         cls->Emit();
       }
       if (vcErrorCount) BailOut();
@@ -426,7 +426,7 @@ void VPackage::StaticEmitPackages () {
 
     for (auto &pkg : PackagesToEmit) {
       wasEngine = wasEngine || (pkg->Name == NAME_engine);
-      if (VObject::cliShowPackageLoading) GLog.Logf(NAME_Init, "VavoomC: generating code for package '%s'...", *pkg->Name);
+      if (VObject::cliShowPackageLoading) GLog.Logf(NAME_Init, "VavoomC: generating code for package '%s'", *pkg->Name);
       for (auto &&mm : GMembers) {
         if (mm->IsIn(pkg)) {
           //vdlogf("  package '%s': calling `PostLoad()` for %s `%s`", *pkg->Name, mm->GetMemberTypeString(), *mm->Name);

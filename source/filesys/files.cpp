@@ -705,7 +705,7 @@ static void ParseUserModes () {
   if (game_name.asStr().isEmpty()) return; // just in case
   VStream *rcstrm = FL_OpenFileReadInCfgDir("modes.rc");
   if (!rcstrm) return;
-  GCon->Logf(NAME_Init, "parsing user mode definitions from '%s'...", *rcstrm->GetName());
+  GCon->Logf(NAME_Init, "parsing user mode definitions from '%s'", *rcstrm->GetName());
 
   // load modes
   LoadModesFromStream(rcstrm, userModes);
@@ -757,7 +757,7 @@ static void SetupCustomMode (VStr basedir) {
   if (!basedir.isEmpty() && !basedir.endsWith("/")) basedir += "/";
   VStream *rcstrm = FL_OpenSysFileRead(basedir+"modes.rc");
   if (!rcstrm) return;
-  GCon->Logf(NAME_Init, "parsing mode definitions from '%s'...", *rcstrm->GetName());
+  GCon->Logf(NAME_Init, "parsing mode definitions from '%s'", *rcstrm->GetName());
 
   // load modes
   TArray<CustomModeInfo> modes;
@@ -1041,7 +1041,7 @@ static void performPWadScan () {
   }
 
   // guess the name of the first map
-  GCon->Log(NAME_Init, "detecting pwad maps...");
+  GCon->Log(NAME_Init, "detecting pwad maps");
   for (auto &&it : WadMapIterator::FromWadFile(0)/*!!! FromFirstAuxFile()*/) findMapChecker(it.lump);
   // if no ordinary maps, try to find "maps/xxx.wad" files
   if (!pwadScanInfo.isMapIndexValid()) {
@@ -1209,7 +1209,7 @@ static void CustomModeLoadPwads (int type) {
   if (type == CM_POST_PWADS && postPWads.length() > 0) {
     GCon->Logf(NAME_Init, "loading autoload post-pwads");
     for (auto &&wn : postPWads) {
-      GCon->Logf(NAME_Init, "autoload %spost-pwad: %s...", (wn.cosmetic ? "cosmetic " : ""), *wn.filename);
+      GCon->Logf(NAME_Init, "autoload %spost-pwad: %s", (wn.cosmetic ? "cosmetic " : ""), *wn.filename);
       AddAnyUserFile(wn.filename, wn.cosmetic); // allow fail
     }
   }
@@ -1218,7 +1218,7 @@ static void CustomModeLoadPwads (int type) {
     if (ww.filename.isEmpty()) continue;
     VStr fname = ww.filename;
     if (!fname.startsWith("/")) fname = customMode.basedir+fname;
-    GCon->Logf(NAME_Init, "%smode pwad: %s...", (ww.cosmetic ? "cosmetic " : ""), *fname);
+    GCon->Logf(NAME_Init, "%smode pwad: %s", (ww.cosmetic ? "cosmetic " : ""), *fname);
     AddAnyUserFile(fname, ww.cosmetic); // allow fail
   }
 }
@@ -1248,7 +1248,7 @@ void AddAutoloadRC (VStr aubasedir) {
     }
   }
 
-  GCon->Logf(NAME_Init, "parsing autoload groups from '%s'...", *aurc->GetName());
+  GCon->Logf(NAME_Init, "parsing autoload groups from '%s'", *aurc->GetName());
   VScriptParser *sc = new VScriptParser(aurc->GetName(), aurc);
 
   while (!sc->AtEnd()) {
@@ -1338,7 +1338,7 @@ static void AddGameAutoloads (VStr basedir, bool addAutoload=true) {
   basedir = basedir.appendTrailingSlash();
 
   if (WadFiles.length() || ZipFiles.length()) {
-    GCon->Logf(NAME_Init, "adding game autoloads from '%s'...", *basedir);
+    GCon->Logf(NAME_Init, "adding game autoloads from '%s'", *basedir);
     // now add wads, then pk3s
     for (auto &&fn : WadFiles) W_AddDiskFile(basedir.appendPath(fn), false);
     for (auto &&fn : ZipFiles) W_AddDiskFile(basedir.appendPath(fn));
@@ -1354,7 +1354,7 @@ static void AddGameAutoloads (VStr basedir, bool addAutoload=true) {
 //
 //==========================================================================
 static void AddGameDir (VStr basedir, VStr dir) {
-  GCon->Logf(NAME_Init, "adding game dir '%s'...", *dir);
+  GCon->Logf(NAME_Init, "adding game dir '%s'", *dir);
 
   VStr bdx = basedir;
   if (bdx.length() == 0) bdx = "./";
@@ -1486,7 +1486,7 @@ static void AddGameDir (VStr dir) {
 static VStr FindMainWad (VStr MainWad) {
   if (MainWad.length() == 0) return VStr();
 
-  //GLog.Logf(NAME_Debug, "trying to find iwad '%s'...", *MainWad);
+  //GLog.Logf(NAME_Debug, "trying to find iwad '%s'", *MainWad);
 
   // if we have path separators, try relative path first
   bool hasSep = false;
@@ -1508,7 +1508,7 @@ static VStr FindMainWad (VStr MainWad) {
 
   // first check in IWAD directories
   for (auto &&dir : IWadDirs) {
-    //GLog.Logf(NAME_Debug, "  looking for iwad '%s/%s'...", *dir, *MainWad);
+    //GLog.Logf(NAME_Debug, "  looking for iwad '%s/%s'", *dir, *MainWad);
     VStr wadfname = Sys_FindFileCI(dir+"/"+MainWad);
     if (wadfname.length() != 0) {
       //GLog.Logf(NAME_Debug, "    FOUND iwad '%s/%s'!", *dir, *MainWad);
@@ -1744,10 +1744,10 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   else if (Sys_FileExists(fl_basedir+"/"+name)) UseName = fl_basedir+"/"+name;
   else return;
 
-  if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "Parsing game definition file \"%s\"...", *UseName);
+  if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "Parsing game definition file \"%s\"", *UseName);
   VScriptParser *sc = new VScriptParser(UseName, FL_OpenSysFileRead(UseName));
   ParseGamesDefinition(sc, games);
-  if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "Done parsing game definition file \"%s\"...", *UseName);
+  if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "Done parsing game definition file \"%s\"", *UseName);
   if (games.length() == 0) Sys_Error("No game definitions found!");
 
   for (auto &&game : games) {
@@ -1875,10 +1875,10 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   if (!modDetectorDisabledIWads) {
     // try user-specified iwad
     if (mainiwad.length() > 0) {
-      GCon->Logf(NAME_Init, "trying custom IWAD '%s'...", *mainiwad);
+      GCon->Logf(NAME_Init, "trying custom IWAD '%s'", *mainiwad);
       mainWadPath = FindMainWad(mainiwad);
       if (mainWadPath.isEmpty()) Sys_Error("custom IWAD '%s' not found!", *mainiwad);
-      GCon->Logf(NAME_Init, "found custom IWAD '%s'...", *mainWadPath);
+      GCon->Logf(NAME_Init, "found custom IWAD '%s'", *mainWadPath);
       gameDsc = game.description;
     } else {
       // try default iwads
@@ -1917,13 +1917,13 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   if (!modDetectorDisabledIWads) {
     // if iwad is pk3, add it last
     if (mainWadPath.endsWithCI("wad")) {
-      GCon->Logf(NAME_Init, "adding iwad \"%s\"...", *mainWadPath);
+      GCon->Logf(NAME_Init, "adding iwad \"%s\"", *mainWadPath);
       iwadAdded = true;
       IWadIndex = fsysSearchPaths.length();
       wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
       AddAnyFile(mainWadPath, false, game.FixVoices);
     } else {
-      GCon->Logf(NAME_Init, "using iwad \"%s\"...", *mainWadPath);
+      GCon->Logf(NAME_Init, "using iwad \"%s\"", *mainWadPath);
     }
   }
 
@@ -1937,7 +1937,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
         if (optional) continue;
         Sys_Error("Required file \"%s\" not found", *xfn);
       }
-      GCon->Logf(NAME_Init, "additing game file \"%s\"...", *fname);
+      GCon->Logf(NAME_Init, "additing game file \"%s\"", *fname);
       wpkAppend(fname, false); // mark additional files as "non-system", so path won't be stored in savegame
       AddAnyFile(fname, false);
     }
@@ -1951,7 +1951,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   // add iwad here
   if (!modDetectorDisabledIWads) {
     if (!iwadAdded) {
-      GCon->Logf(NAME_Init, "adding iwad \"%s\"...", *mainWadPath);
+      GCon->Logf(NAME_Init, "adding iwad \"%s\"", *mainWadPath);
       IWadIndex = fsysSearchPaths.length();
       wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
       AddAnyFile(mainWadPath, false, game.FixVoices);
@@ -2700,7 +2700,7 @@ void FL_Init () {
   if (cli_SkeeHUD > 0) mdetect_AddMod("skeehud");
 
   for (auto &&xmod : modAddMods) {
-    GCon->Logf(NAME_Init, "adding special built-in mod '%s'...", *xmod);
+    GCon->Logf(NAME_Init, "adding special built-in mod '%s'", *xmod);
     AddGameDir(va("basev/mods/%s", *xmod));
   }
   modAddMods.clear(); // don't need it anymore
@@ -2928,7 +2928,7 @@ void FL_GetNetWads (TArray<VStr> &list) {
 void FL_BuildRequiredWads () {
   #if 0
   // scan all textures, and mark any archive with textures as "required"
-  GCon->Logf(NAME_Debug, "scanning %d textures...", GTextureManager.GetNumTextures());
+  GCon->Logf(NAME_Debug, "scanning %d textures", GTextureManager.GetNumTextures());
   for (int f = 0; f < GTextureManager.GetNumTextures(); ++f) {
     VTexture *tex = GTextureManager[f];
     if (tex && tex->SourceLump >= 0) {
@@ -2938,7 +2938,7 @@ void FL_BuildRequiredWads () {
   }
 
   // scan all archives, and mark any archives with important files as "required"
-  GCon->Log(NAME_Debug, "scanning archives...");
+  GCon->Log(NAME_Debug, "scanning archives");
   for (auto &&arc : fsysSearchPaths) {
     if (arc->required) continue; // already marked
     for (int fn = arc->IterateNS(0, WADNS_Global); fn >= 0; fn = arc->IterateNS(fn+1, WADNS_Global)) {

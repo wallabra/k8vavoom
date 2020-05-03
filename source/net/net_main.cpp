@@ -351,7 +351,7 @@ void VNetwork::Slist () {
   if (SlistInProgress) return;
 
   if (!SlistSilent) {
-    GCon->Log(NAME_DevNet, "Looking for k8vavoom servers...");
+    GCon->Log(NAME_DevNet, "Looking for k8vavoom servers");
     PrintSlistHeader();
   }
 
@@ -438,7 +438,7 @@ void VNetwork::MasterList () {
   if (SlistInProgress) return;
 
   if (!SlistSilent) {
-    GCon->Log(NAME_DevNet, "Looking for k8vavoom servers...");
+    GCon->Log(NAME_DevNet, "Looking for k8vavoom servers");
     PrintSlistHeader();
   }
 
@@ -666,7 +666,7 @@ VSocketPublic *VNetwork::Connect (const char *InHost) {
   if (host.IsEmpty()) {
     if (HostCacheCount != 1) return nullptr;
     host = HostCache[0].CName;
-    GCon->Log(NAME_DevNet, "Connecting to...");
+    GCon->Log(NAME_DevNet, "Connecting to");
     GCon->Logf(NAME_DevNet, "%s @ %s", *HostCache[0].Name, *host);
   }
 

@@ -157,7 +157,7 @@ void VThinkerChannel::RemoveThinkerFromGame () {
     }
   }
   if (doRemove) {
-    if (net_dbg_dump_thinker_channels.asInt()&1) GCon->Logf(NAME_Debug, "VThinkerChannel #%d: removing thinker '%s':%u from game...", Index, Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
+    if (net_dbg_dump_thinker_channels.asInt()&1) GCon->Logf(NAME_Debug, "VThinkerChannel #%d: removing thinker '%s':%u from game", Index, Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
     // avoid loops
     VThinker *th = Thinker;
     Thinker = nullptr;

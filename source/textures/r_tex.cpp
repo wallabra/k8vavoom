@@ -230,32 +230,32 @@ void VTextureManager::Init () {
   AddTexture(new VDummyTexture);
 
   // initialise wall textures
-  GCon->Log(NAME_Init, "initializing wall textures...");
+  GCon->Log(NAME_Init, "initializing wall textures");
   AddTextures();
 
   // initialise flats
-  GCon->Log(NAME_Init, "initializing flat textures...");
+  GCon->Log(NAME_Init, "initializing flat textures");
   AddGroup(TEXTYPE_Flat, WADNS_Flats);
 
   // initialise overloaded textures
-  GCon->Log(NAME_Init, "initializing overloaded textures...");
+  GCon->Log(NAME_Init, "initializing overloaded textures");
   AddGroup(TEXTYPE_Overload, WADNS_NewTextures);
 
   // initialise sprites
-  GCon->Log(NAME_Init, "initializing sprite textures...");
+  GCon->Log(NAME_Init, "initializing sprite textures");
   AddGroup(TEXTYPE_Sprite, WADNS_Sprites);
 
   // initialise hires textures
-  GCon->Log(NAME_Init, "initializing advanced textures...");
+  GCon->Log(NAME_Init, "initializing advanced textures");
   AddTextureTextLumps(); // only normal for now
 
   // force-load numbered textures
   if (numberedNamesList.length()) {
-    GCon->Logf(NAME_Init, "making finishing touches (%d)...", numberedNamesList.length());
+    GCon->Logf(NAME_Init, "making finishing touches (%d)", numberedNamesList.length());
     AddMissingNumberedTextures();
   }
 
-  //GCon->Log(NAME_Init, "initializing hires textures...");
+  //GCon->Log(NAME_Init, "initializing hires textures");
   R_InitHiResTextures();
 
   // we don't need numbered names anymore
@@ -359,7 +359,7 @@ void VTextureManager::ResetMapTextures () {
   if (MapTextures.length() == 0) {
 #ifdef CLIENT
     if (r_reupload_textures && Drawer) {
-      GCon->Logf("Unloading textures from GPU...");
+      GCon->Logf("Unloading textures from GPU");
       Drawer->FlushTextures(true); // forced
       //rehashTextures();
     }
@@ -1864,9 +1864,9 @@ void VTextureManager::ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, i
   const double ctt = Sys_Time();
   if (hitexLastMessageTime < 0 || ctt-hitexLastMessageTime >= 1.5) {
     if (hitexLastMessageTime < 0) {
-      GCon->Log(NAME_Init, "loading hires textures...");
+      GCon->Log(NAME_Init, "loading hires textures");
     } else {
-      GCon->Logf(NAME_Init, "   %d hires textures processed...", hitexNewCount+hitexReplaceCount);
+      GCon->Logf(NAME_Init, "   %d hires textures processed", hitexNewCount+hitexReplaceCount);
     }
     hitexLastMessageTime = ctt;
   }
@@ -1924,7 +1924,7 @@ void VTextureManager::AddHiResTextures () {
 //
 //==========================================================================
 void VTextureManager::ParseTextureTextLump (int lump, bool asHiRes) {
-  GCon->Logf(NAME_Init, "parsing %stextures script \"%s\"...", (asHiRes ? "hires " : ""), *W_FullLumpName(lump));
+  GCon->Logf(NAME_Init, "parsing %stextures script \"%s\"", (asHiRes ? "hires " : ""), *W_FullLumpName(lump));
   VScriptParser *sc = new VScriptParser(W_FullLumpName(lump), W_CreateLumpReaderNum(lump));
   while (!sc->AtEnd()) {
     if (sc->Check("remap")) {

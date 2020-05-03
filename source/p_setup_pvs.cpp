@@ -391,9 +391,9 @@ void VLevel::BuildPVS () {
     return;
   }
 
-  GCon->Logf("building PVS...");
+  GCon->Logf("building PVS");
 #ifdef CLIENT
-  R_OSDMsgShowSecondary("BUILDING PVS...");
+  R_OSDMsgShowSecondary("BUILDING PVS");
   R_PBarReset();
 #endif
 
@@ -472,7 +472,7 @@ void VLevel::BuildPVS () {
   // for now, let's do it this way.
   if (ok && GetNodesBuilder() == BSP_ZD) {
     int mtfixcount = 0;
-    GCon->Log("fixind pvs...");
+    GCon->Log("fixind pvs");
     const int sslen = NumSubsectors;
     const int vslen = (sslen+7)>>3;
     vuint8 *vd0 = VisData;

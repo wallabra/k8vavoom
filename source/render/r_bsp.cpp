@@ -1255,7 +1255,7 @@ void VRenderLevelShared::RenderPortals () {
     if (oldMaxMirrors != r_maxmirrors || oldPortalDepth != GetMaxPortalDepth() ||
         oldHorizons != r_allow_horizons || oldMirrors != r_allow_mirrors)
     {
-      //GCon->Logf("portal settings changed, resetting portal info...");
+      //GCon->Logf("portal settings changed, resetting portal info");
       for (int i = 0; i < Portals.length(); ++i) {
         if (Portals[i]) {
           delete Portals[i];

@@ -303,7 +303,7 @@ static void ParseDetectors (VStr name) {
     else return;
   }
 
-  GCon->Logf(NAME_Init, "Parsing detectors file \"%s\"...", *name);
+  GCon->Logf(NAME_Init, "Parsing detectors file \"%s\"", *name);
   VScriptParser *sc = new VScriptParser(name, FL_OpenSysFileRead(name));
   sc->SetCMode(true);
   for (;;) {
@@ -377,11 +377,11 @@ static int detectFromList (FSysModDetectorHelper &hlp, int seenZScriptLump) {
   int res = AD_NONE;
 
   for (auto &&dc : detectorList) {
-    //GCon->Logf(NAME_Debug, "detecting '%s'... (000)", *dc->name);
+    //GCon->Logf(NAME_Debug, "detecting '%s' (000)", *dc->name);
     // zscript?
     if (dc->zscriptLumpCheck == 0 && seenZScriptLump >= 0) continue;
     if (dc->zscriptLumpCheck > 0 && seenZScriptLump < 0) continue;
-    //GCon->Logf(NAME_Debug, "detecting '%s'... (001)", *dc->name);
+    //GCon->Logf(NAME_Debug, "detecting '%s' (001)", *dc->name);
     // check title
     if (!dc->gameTitle.isEmpty()) {
       if (!titlescanned) { titlescanned = true; loadGameTitles(hlp, titles); }
@@ -399,7 +399,7 @@ static int detectFromList (FSysModDetectorHelper &hlp, int seenZScriptLump) {
         } else {
           if (!hlp.hasLump(*fli.name, fli.size, *fli.md5)) failed = true;
         }
-        //GCon->Logf(NAME_Debug, "detecting '%s'... (002): lump=<%s>, size=%d; md5=<%s>; failed=%d", *dc->name, *fli.name, fli.size, *fli.md5, (int)failed);
+        //GCon->Logf(NAME_Debug, "detecting '%s' (002): lump=<%s>, size=%d; md5=<%s>; failed=%d", *dc->name, *fli.name, fli.size, *fli.md5, (int)failed);
       } else {
         if (!hlp.hasFile(*fli.name, fli.size, *fli.md5)) failed = true;
       }

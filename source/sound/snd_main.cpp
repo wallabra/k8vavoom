@@ -400,25 +400,25 @@ void VAudio::Init () {
 void VAudio::Shutdown () {
   // stop playback of all sounds
   if (StreamMusicPlayer) {
-    //if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): shutting down music player...");
+    //if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): shutting down music player");
     //StreamMusicPlayer->Shutdown();
-    if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): deleting music player...");
+    if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): deleting music player");
     StreamMusicPlayer->Shutdown();
     delete StreamMusicPlayer;
     StreamMusicPlayer = nullptr;
   }
-  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): stopping sequences...");
+  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): stopping sequences");
   StopAllSequences();
-  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): stopping sounds...");
+  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): stopping sounds");
   StopAllSound();
   if (SoundDevice) {
-    //if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): shutting down sound device...");
+    //if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): shutting down sound device");
     //SoundDevice->Shutdown();
-    if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): deleting sound device...");
+    if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): deleting sound device");
     delete SoundDevice;
     SoundDevice = nullptr;
   }
-  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): resetting all channels...");
+  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): resetting all channels");
   ResetAllChannels();
   if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): shutdown complete!");
 }

@@ -155,7 +155,7 @@ static int CheckTerrainKW (VScriptParser *sc) {
 //
 //==========================================================================
 static void ParseTerrainScript (VScriptParser *sc) {
-  GCon->Logf(NAME_Init, "parsing terrain script '%s'...", *sc->GetScriptName());
+  GCon->Logf(NAME_Init, "parsing terrain script '%s'", *sc->GetScriptName());
   bool insideIf = false;
   int tkw;
   while (!sc->AtEnd()) {

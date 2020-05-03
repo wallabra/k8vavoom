@@ -386,7 +386,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
   // seg visibility
   bool segvisLoaded = false;
   if (hasSegVisibility) {
-    //if (Strm.IsLoading()) GCon->Log("loading seg mapping...");
+    //if (Strm.IsLoading()) GCon->Log("loading seg mapping");
     vint32 dcSize = 0;
     int dcStartPos = Strm.Tell();
     if (segsHashOK) {

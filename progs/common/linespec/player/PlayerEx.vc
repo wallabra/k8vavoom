@@ -3406,7 +3406,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
 
   PP = Level.SpawnEntityChecked(class!PlayerPawn, class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, AllowReplace:false);
   if (!PP) Error("Player::SpawnPlayer: cannot spawn `%C` (it is prolly not a player pawn)", Level.Game.PlayerClasses[PClass]);
-  print("spawned player with class <%C>...", PP);
+  printdebug("spawned player with class <%C>", PP);
   PP.InitializeWeaponSlots();
   //print("falling damage: normal=%B; old=%B; strife=%B", Level.bFallingDamage, Level.bOldFallingDamage, Level.bStrifeFallingDamage);
   if (GetCvarS('player_default_gender')) PP.SoundGender = name(GetCvarS('player_default_gender'));

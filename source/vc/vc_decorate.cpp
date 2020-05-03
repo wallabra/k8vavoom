@@ -2234,7 +2234,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_FloatOpt2:
             sc->ExpectFloat();
             if (decoIgnorePlayerSpeed && (P.Field->Name == "ForwardMove1" || P.Field->Name == "SideMove1")) {
-              GCon->Log(NAME_Init, "...ignored playerpawn movement speed property");
+              GCon->Log(NAME_Warning, "ignored playerpawn movement speed property by user request");
               if (sc->Check(",")) sc->ExpectFloat(); else (void)sc->CheckFloat();
             } else {
               P.Field->SetFloat(DefObj, sc->Float);
@@ -3574,7 +3574,7 @@ void ProcessDecorateScripts () {
   RegisterDecorateMethods();
 
   for (int Lump = W_IterateFile(-1, "decorate_ignore.txt"); Lump != -1; Lump = W_IterateFile(Lump, "decorate_ignore.txt")) {
-    GLog.Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *W_FullLumpName(Lump));
+    GLog.Logf(NAME_Init, "Parsing DECORATE ignore file '%s'", *W_FullLumpName(Lump));
     VStream *Strm = W_CreateLumpReaderNum(Lump);
     vassert(Strm);
     VScriptParser *sc = new VScriptParser(W_FullLumpName(Lump), Strm);
@@ -3590,7 +3590,7 @@ void ProcessDecorateScripts () {
     if (Sys_FileExists(fname)) {
       VStream *Strm = FL_OpenSysFileRead(fname);
       if (Strm) {
-        GLog.Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *fname);
+        GLog.Logf(NAME_Init, "Parsing DECORATE ignore file '%s'", *fname);
         VScriptParser *sc = new VScriptParser(fname, Strm);
         while (sc->GetString()) {
           if (sc->String.length() == 0) continue;
@@ -3602,7 +3602,7 @@ void ProcessDecorateScripts () {
     }
   }
 
-  GLog.Log(NAME_Init, "Parsing DECORATE definition files...");
+  GLog.Log(NAME_Init, "Parsing DECORATE definition files");
   for (int Lump = W_IterateFile(-1, "vavoom_decorate_defs.xml"); Lump != -1; Lump = W_IterateFile(Lump, "vavoom_decorate_defs.xml")) {
     //GLog.Logf(NAME_Init, "  %s", *W_FullLumpName(Lump));
     VStream *Strm = W_CreateLumpReaderNum(Lump);
@@ -3614,13 +3614,13 @@ void ProcessDecorateScripts () {
     delete Doc;
   }
 
-  GLog.Log(NAME_Init, "Parsing known blood definition files...");
+  GLog.Log(NAME_Init, "Parsing known blood definition files");
   LoadKnownBlood();
 
-  GLog.Log(NAME_Init, "Parsing known class ignores definition files...");
+  GLog.Log(NAME_Init, "Parsing known class ignores definition files");
   LoadKnownClassIgnores();
 
-  GLog.Log(NAME_Init, "Processing DECORATE scripts...");
+  GLog.Log(NAME_Init, "Processing DECORATE scripts");
 
   DecPkg = new VPackage(NAME_decorate);
 
@@ -3659,7 +3659,7 @@ void ProcessDecorateScripts () {
     //GLog.Logf(NAME_Init, "DC: 0x%08x (%s) : <%s>", Lump, *W_LumpName(Lump), *W_FullLumpName(Lump));
     if (W_LumpName(Lump) == NAME_decorate) {
       mainDecorateLump = Lump;
-      GLog.Logf(NAME_Init, "Parsing decorate script '%s'...", *W_FullLumpName(Lump));
+      GLog.Logf(NAME_Init, "Parsing decorate script '%s'", *W_FullLumpName(Lump));
       if (lastDecoFile != W_LumpFile(Lump)) {
         lastDecoFile = W_LumpFile(Lump);
         ResetReplacementBase();
@@ -3682,7 +3682,7 @@ void ProcessDecorateScripts () {
     Sys_Error("Not all DECORATE class imports were defined");
   }
 
-  GLog.Logf(NAME_Init, "Post-procesing decorate code...");
+  GLog.Logf(NAME_Init, "Post-procesing decorate code");
   //VMemberBase::StaticDumpMObjInfo();
 
   // set class properties
@@ -3789,7 +3789,7 @@ void ProcessDecorateScripts () {
     newWSlots.clear();
   }
 
-  GLog.Logf(NAME_Init, "Compiling decorate code...");
+  GLog.Logf(NAME_Init, "Compiling decorate code");
   // emit code
   for (auto &&dcls : DecPkg->ParsedClasses) {
     if (getDecorateDebug()) GLog.Logf("Emiting Class %s", *dcls->GetFullName());
@@ -3800,7 +3800,7 @@ void ProcessDecorateScripts () {
     #endif
   }
 
-  GLog.Logf(NAME_Init, "Generating decorate code...");
+  GLog.Logf(NAME_Init, "Generating decorate code");
   // compile and set up for execution
   for (auto &&dcls : DecPkg->ParsedClasses) {
     if (getDecorateDebug()) GLog.Logf("Compiling Class %s", *dcls->GetFullName());

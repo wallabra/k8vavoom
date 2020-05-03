@@ -577,35 +577,35 @@ void VLevel::BuildNodesAJ () {
   GCon->Logf("AJBSP: copied %d original vertexes out of %d", ajbsp::num_vertices, NumVertexes);
   GCon->Logf("AJBSP: building nodes (%s mode)", (nodes_fast_mode ? "fast" : "normal"));
 
-  GCon->Logf("AJBSP: detecting overlapped vertices...");
+  GCon->Logf("AJBSP: detecting overlapped vertices");
   ajbsp::DetectOverlappingVertices();
-  GCon->Logf("AJBSP: detecting overlapped linedefs...");
+  GCon->Logf("AJBSP: detecting overlapped linedefs");
   ajbsp::DetectOverlappingLines();
-  GCon->Logf("AJBSP: caclulating wall tips...");
+  GCon->Logf("AJBSP: caclulating wall tips");
   ajbsp::CalculateWallTips();
 
   //k8: always try polyobjects, why not?
-  GCon->Logf("AJBSP: detecting polyobjects...");
+  GCon->Logf("AJBSP: detecting polyobjects");
   /*if (lev_doing_hexen)*/ ajbsp::DetectPolyobjSectors(); // -JL- Find sectors containing polyobjs
 
   //if (cur_info->window_fx) ajbsp::DetectWindowEffects();
-  GCon->Logf("AJBSP: building blockmap...");
+  GCon->Logf("AJBSP: building blockmap");
   ajbsp::InitBlockmap();
 
-  GCon->Logf("AJBSP: creating initial segs...");
+  GCon->Logf("AJBSP: creating initial segs");
   // create initial segs
   ajbsp::superblock_t *seg_list = ajbsp::CreateSegs();
   ajbsp::node_t *root_node;
   ajbsp::subsec_t *root_sub;
   ajbsp::bbox_t seg_bbox;
-  GCon->Logf("AJBSP: calculating total limits...");
+  GCon->Logf("AJBSP: calculating total limits");
   ajbsp::FindLimits(seg_list, &seg_bbox);
-  GCon->Logf("AJBSP: building nodes...");
+  GCon->Logf("AJBSP: building nodes");
   build_result_e ret = ajbsp::BuildNodes(seg_list, &root_node, &root_sub, 0, &seg_bbox);
   ajbsp::FreeSuper(seg_list);
 
   if (ret == build_result_e::BUILD_OK) {
-    GCon->Log("AJBSP: finalising the tree...");
+    GCon->Log("AJBSP: finalising the tree");
     ajbsp::ClockwiseBspTree();
     ajbsp::CheckLimits();
     //k8: this seems to be unnecessary for GL nodes

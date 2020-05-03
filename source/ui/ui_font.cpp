@@ -137,9 +137,9 @@ void VFont::RegisterFont (VFont *font, VName aname) {
 
   // add to font map
   if (FontMap.has(VStr(aname))) {
-    GCon->Logf(NAME_Init, "replacing font '%s'...", *aname);
+    GCon->Logf(NAME_Init, "replacing font '%s'", *aname);
   } else {
-    GCon->Logf(NAME_Init, "registering font '%s'...", *aname);
+    GCon->Logf(NAME_Init, "registering font '%s'", *aname);
   }
   FontMap.put(VStr(aname), font);
 }
@@ -154,7 +154,7 @@ void VFont::StaticInit () {
   ParseTextColors();
 
   // initialise standard fonts
-  GCon->Log(NAME_Init, "creading default fonts...");
+  GCon->Log(NAME_Init, "creading default fonts");
 
   // small font
   if (W_CheckNumForName(NAME_fonta_s) >= 0) {
@@ -166,7 +166,7 @@ void VFont::StaticInit () {
   }
 
   if (SmallFont->GetFontName() == NAME_None) {
-    GCon->Log(NAME_Init, "  SmallFont: cannot create it, using ConsoleFont instead...");
+    GCon->Log(NAME_Init, "  SmallFont: cannot create it, using ConsoleFont instead");
     SmallFont = GetFont(VStr(VName(NAME_smallfont)), VStr(VAVOOM_CON_FONT_PATH));
     if (!SmallFont) Sys_Error("cannot create console font");
   }
@@ -467,7 +467,7 @@ void VFont::ParseFontDefs () {
 
       if (FontName != NAME_None) {
         if (FontType == 1) {
-          GCon->Logf(NAME_Init, "creating font '%s'...", *FontName);
+          GCon->Logf(NAME_Init, "creating font '%s'", *FontName);
           auto fnt = new VFont(FontName, Template, First, Count, Start, SpaceWidth);
           if (fnt->GetFontName() == NAME_None) {
             GCon->Logf(NAME_Error, "FONT: cannot create font '%s'!", *FontName);
@@ -475,7 +475,7 @@ void VFont::ParseFontDefs () {
           }
         } else if (FontType == 2) {
           if (CharIndexes.Num()) {
-            GCon->Logf(NAME_Init, "creating special font '%s'...", *FontName);
+            GCon->Logf(NAME_Init, "creating special font '%s'", *FontName);
             new VSpecialFont(FontName, CharIndexes, CharLumps, NoTranslate, SpaceWidth);
           }
         } else {

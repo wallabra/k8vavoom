@@ -638,7 +638,7 @@ void VObject::PR_WriteOne (const VFieldType &type) {
         }
       }
       break;
-    default: Sys_Error("Tried to print something strange...");
+    default: Sys_Error("Tried to print something strange");
   }
   PR_DoWriteBuf(buf);
 }

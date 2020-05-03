@@ -1167,24 +1167,24 @@ COMMAND(Exec) {
   VStr dskname = Host_GetConfigDir()+"/"+Args[1];
   if (Sys_FileExists(dskname)) {
     Strm = FL_OpenSysFileRead(dskname);
-    if (Strm) GCon->Logf((execLogInit ? NAME_Init : NAME_Log), "Executing '%s'...", *dskname);
+    if (Strm) GCon->Logf((execLogInit ? NAME_Init : NAME_Log), "Executing '%s'", *dskname);
   }
 
   // try wad file
   if (!Strm && FL_FileExists(Args[1])) {
     Strm = FL_OpenFileRead(Args[1]);
     if (Strm) {
-      GCon->Logf((execLogInit ? NAME_Init : NAME_Log), "Executing '%s'...", *Args[1]);
+      GCon->Logf((execLogInit ? NAME_Init : NAME_Log), "Executing '%s'", *Args[1]);
       //GCon->Logf("<%s>", *Strm->GetName());
     }
   }
 
   if (!Strm) {
-    if (Args.length() == 2) GCon->Logf(NAME_Warning, "Can't find '%s'...", *Args[1]);
+    if (Args.length() == 2) GCon->Logf(NAME_Warning, "Can't find '%s'", *Args[1]);
     return;
   }
 
-  //GCon->Logf("Executing '%s'...", *Args[1]);
+  //GCon->Logf("Executing '%s'", *Args[1]);
 
   int flsize = Strm->TotalSize();
   if (flsize == 0) { delete Strm; return; }
@@ -1299,7 +1299,7 @@ COMMAND(__k8_run_first_map) {
   }
 
   if (startMap == NAME_None && fsys_PWadMaps.length()) {
-    GCon->Log(NAME_Init, "cannot find starting map from mapinfo, taking from pwad map list...");
+    GCon->Log(NAME_Init, "cannot find starting map from mapinfo, taking from pwad map list");
     startMap = VName(*fsys_PWadMaps[0].mapname);
   }
 
