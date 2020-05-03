@@ -571,7 +571,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
             TVec scvel = vector(ScrollX/DeltaTime, ScrollY/DeltaTime);
             Velocity += scvel;
             //if (bIsPlayer) printdebug("%C: 00: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
-            HitLine(&tmtrace, DeltaTime/float(Steps), true);
+            HitLine(ref tmtrace, DeltaTime/float(Steps), true);
             //if (bIsPlayer) printdebug("%C: 01: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
             Velocity -= scvel;
             //if (bIsPlayer) printdebug("%C: 02: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
@@ -581,15 +581,15 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
             //if (bIsPlayer) printdebug("%C: 03: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
             */
             tmp_transporter_velocity = vector(ScrollX/DeltaTime, ScrollY/DeltaTime);
-            HitLine(&tmtrace, DeltaTime/float(Steps), forceSlide:true);
+            HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:true);
             tmp_transporter_velocity = vector(0, 0, 0);
           } else {
             tmp_transporter_velocity = vector(0, 0, 0);
-            HitLine(&tmtrace, DeltaTime/float(Steps), forceSlide:true);
+            HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:true);
           }
         } else {
           //tmp_transporter_velocity = vector(0, 0, 0); // just in case
-          HitLine(&tmtrace, DeltaTime/float(Steps), forceSlide:false);
+          HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:false);
         }
       }
       return oldfloorz;
@@ -709,6 +709,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
 
   // clip movement
   if (!bNoInteraction) {
+    //if (bMissile) printdebug("%C: HitFloor: z=%s; floorz=%s; hit=%B", self, Origin.z, FloorZ, (Origin.z <= FloorZ+0.1));
     if (origz <= FloorZ+0.1) {
       // hit the floor
       if (!HitFloor(oldz)) return;
@@ -732,26 +733,61 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
 //  in any case
 //
 //==========================================================================
-final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
+final void HitLine (ref tmtrace_t tmtrace, float StepVelScale, bool forceSlide) {
+  // it may hit a sloped 3d floor
+  if (!bNoInteraction && !tmtrace.BlockingLine && bMissile) {
+    //printdebug("%C: z=%s; FloorZ=%s; CeilingZ=%s; hitf=%B; hitc=%B", self, Origin.z, tmtrace.FloorZ, tmtrace.CeilingZ, (Origin.z <= tmtrace.FloorZ+0.1), (Origin.z+Height > tmtrace.CeilingZ));
+    float origz = Origin.z;
+    if (origz <= tmtrace.FloorZ+0.1) {
+      // hit the floor
+      FloorZ = tmtrace.FloorZ; // we need to do this to register a hit
+      if (!HitFloor(/*oldz*/origz)) return;
+      return;
+    }
+
+    if (origz+Height > tmtrace.CeilingZ) {
+      // hit the ceiling
+      CeilingZ = tmtrace.CeilingZ; // we need to do this to register a hit
+      if (!HitCeiling(/*oldz*/origz)) return;
+      return;
+    }
+
+    CheckFakeFloorTriggers(/*oldz*/origz);
+    return;
+  }
+
   if (bMissile) {
+    /*
+    if (bMissile) {
+      printdebug("%C: HitLine: z=%s; floorz=%s; hit=%B", self, Origin.z, FloorZ, (Origin.z <= FloorZ+0.1));
+      if (tmtrace.BlockingLine) printdebug("%C:   BlockingLine=%s", self, tmtrace.BlockingLine-&XLevel.Lines[0]);
+      if (tmtrace.CeilingLine) printdebug("%C:   CeilingLine=%s", self, tmtrace.CeilingLine-&XLevel.Lines[0]);
+      if (tmtrace.FloorLine) printdebug("%C:   FloorLine=%s", self, tmtrace.CeilingLine-&XLevel.Lines[0]);
+      printdebug("%C:   EFloor=%s", self, spGetPointZ(ref tmtrace.EFloor, Origin));
+      printdebug("%C:   ECeiling=%s", self, spGetPointZ(ref tmtrace.ECeiling, Origin));
+      printdebug("%C:   FloorZ=%s", self, tmtrace.FloorZ);
+      printdebug("%C:   CeilingZ=%s", self, tmtrace.CeilingZ);
+      printdebug("%C:   hit=%B", self, (Origin.z <= tmtrace.FloorZ+0.1));
+    }
+    */
     if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) {
       // if number of bounces is limited
       if (BounceCount > 0 && --BounceCount <= 0) {
-        ExplodeMissile(none, line:(tmtrace ? tmtrace.BlockingLine : nullptr));
+        ExplodeMissile(none, line:tmtrace.BlockingLine);
         return;
       }
 
       // explode a missile
-      if (tmtrace->CeilingLine && tmtrace->CeilingLine->backsector &&
-          tmtrace->CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
+      if (tmtrace.CeilingLine && tmtrace.CeilingLine->backsector &&
+          tmtrace.CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
       {
         // hack to prevent missiles exploding against the sky
         // does not handle sky floors
-        float pf = tmtrace->CeilingLine->frontsector->floor.maxz;
-        float pb = tmtrace->CeilingLine->backsector->floor.maxz;
+        float pf = tmtrace.CeilingLine->frontsector->floor.maxz;
+        float pb = tmtrace.CeilingLine->backsector->floor.maxz;
         bool hitsky = true;
         if (pf != pb) {
-          int siden = PointOnPlaneSide(Origin-Velocity*2, ref *tmtrace->CeilingLine);
+          int siden = PointOnPlaneSide(Origin-Velocity*2, ref *tmtrace.CeilingLine);
           if (!siden) {
             hitsky = (pf < pb && tmtrace.End.z > pb);
           } else {
@@ -766,7 +802,7 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
         }
       }
 
-      if (tmtrace->BlockingLine && tmtrace->BlockingLine->special == LNSPEC_LineHorizon) {
+      if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon) {
         SightSound = '';
         Destroy();
         return;
@@ -783,16 +819,16 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
     }
 
     // explode a missile
-    if (tmtrace->CeilingLine && tmtrace->CeilingLine->backsector &&
-        tmtrace->CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
+    if (tmtrace.CeilingLine && tmtrace.CeilingLine->backsector &&
+        tmtrace.CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
     {
       // hack to prevent missiles exploding against the sky
       // does not handle sky floors
-      float pf = tmtrace->CeilingLine->frontsector->floor.maxz;
-      float pb = tmtrace->CeilingLine->backsector->floor.maxz;
+      float pf = tmtrace.CeilingLine->frontsector->floor.maxz;
+      float pb = tmtrace.CeilingLine->backsector->floor.maxz;
       bool hitsky = true;
       if (pf != pb) {
-        int siden = PointOnPlaneSide(Origin-Velocity*2, ref *tmtrace->CeilingLine);
+        int siden = PointOnPlaneSide(Origin-Velocity*2, ref *tmtrace.CeilingLine);
         if (!siden) {
           hitsky = (pf < pb && tmtrace.End.z > pb);
         } else {
@@ -807,25 +843,25 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
       }
     }
 
-    if (tmtrace->BlockingLine && tmtrace->BlockingLine->special == LNSPEC_LineHorizon) {
+    if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon) {
       if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0); else Destroy();
       return;
     }
 
-    line_t *hitline = tmtrace->BlockingLine;
-    if (!hitline) hitline = tmtrace->CeilingLine;
-    if (!hitline) hitline = tmtrace->FloorLine;
-    if (!hitline) hitline = tmtrace->AnyBlockingLine; //k8: nope; this was my hack, and it is wrong here
-    if (!hitline && tmtrace->SpecHit.Length) {
+    line_t *hitline = tmtrace.BlockingLine;
+    if (!hitline) hitline = tmtrace.CeilingLine;
+    if (!hitline) hitline = tmtrace.FloorLine;
+    if (!hitline) hitline = tmtrace.AnyBlockingLine; //k8: nope; this was my hack, and it is wrong here
+    if (!hitline && tmtrace.SpecHit.Length) {
       bool wasBlockAll = false;
       line_t *blockall;
-      foreach (int f; 0..tmtrace->SpecHit.Length) {
-        line_t *ln = tmtrace->SpecHit[f];
+      foreach (int f; 0..tmtrace.SpecHit.Length) {
+        line_t *ln = tmtrace.SpecHit[f];
         if (ln->flags&ML_BLOCKING) { hitline = ln; break; }
         if (!wasBlockAll && (ln->flags&ML_BLOCKEVERYTHING) != 0) { blockall = ln; wasBlockAll = true; }
       }
       if (!hitline) {
-        if (wasBlockAll) hitline = blockall; else hitline = tmtrace->SpecHit[0];
+        if (wasBlockAll) hitline = blockall; else hitline = tmtrace.SpecHit[0];
       }
     }
 
@@ -1055,8 +1091,10 @@ final bool HitCeiling (float prevz) {
 
   // physics caller will setup interpolation with `tmp_phys_z_change`
   // if we have no velocity, don't bother interpolating
-  if (Velocity.xy) tmp_phys_z_change += (CeilingZ-Height)-Origin.z;
-  Origin.z = CeilingZ-Height;
+  float fixz = CeilingZ-Height;
+  //printdebug("%C:  HITCEILING! prevz=%s; z=%s; fixz=%s", self, prevz, Origin.z, fixz);
+  if (Velocity.xy) tmp_phys_z_change += fixz-Origin.z;
+  Origin.z = fixz;
 
   if (bMissile && (bColideWithWorld || !LineSpecialGameInfo(Level.Game).bNoClipIgnoreFloor)) {
     if (bBounceCeilings || BounceType != BOUNCE_None) {
