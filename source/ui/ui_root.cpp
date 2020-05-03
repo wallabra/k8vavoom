@@ -31,6 +31,8 @@
 static VCvarI ui_click_threshold("ui_click_threshold", "6", "Amount of pixels mouse cursor can move before aborting a click event.", CVAR_Archive);
 static VCvarF ui_click_timeout("ui_click_timeout", "0.3", "Click timeout in seconds.", CVAR_Archive);
 
+extern VCvarB ui_mouse_forced;
+
 
 IMPLEMENT_CLASS(V, RootWidget);
 
@@ -53,6 +55,18 @@ void VRootWidget::Init () {
 
 //==========================================================================
 //
+//  VRootWidget::UpdateMouseForced
+//
+//==========================================================================
+void VRootWidget::UpdateMouseForced () {
+  //FIXME: make this faster!
+  if (IsWantMouseInput()) RootFlags |= RWF_MouseForced; else RootFlags &= ~RWF_MouseForced;
+  ui_mouse_forced = !!(RootFlags&RWF_MouseForced);
+}
+
+
+//==========================================================================
+//
 //  VRootWidget::DrawWidgets
 //
 //==========================================================================
@@ -63,7 +77,10 @@ void VRootWidget::DrawWidgets () {
   // draw message box
   if (GClGame) GClGame->eventMessageBoxDrawer();
   // draw mouse cursor
-  if (MouseCursorPic > 0 && (RootFlags&RWF_MouseEnabled)) DrawPic(MouseX, MouseY, MouseCursorPic);
+  UpdateMouseForced();
+  if (MouseCursorPic > 0) {
+    if (RootFlags&(RWF_MouseEnabled|RWF_MouseForced)) DrawPic(MouseX, MouseY, MouseCursorPic);
+  }
 }
 
 
@@ -375,6 +392,8 @@ bool VRootWidget::InternalResponder (event_t *evt) {
     return false;
   }
 
+  UpdateMouseForced();
+
   // remember old mouse coordinates (we may need it for enter/leave events)
   const int oldMouseX = MouseX;
   const int oldMouseY = MouseY;
@@ -382,7 +401,7 @@ bool VRootWidget::InternalResponder (event_t *evt) {
   // update mouse position
   if (evt->type == ev_mouse) UpdateMousePosition(MouseX+evt->dx, MouseY-evt->dy);
 
-  const bool mouseAllowed = (RootFlags&RWF_MouseEnabled);
+  const bool mouseAllowed = (RootFlags&(RWF_MouseEnabled|RWF_MouseForced));
 
   // mouse down/up should still be processed to generate click events
   // also, "click" event should be delivered *before* "mouse up"
@@ -433,7 +452,8 @@ bool VRootWidget::Responder (event_t *evt) {
 //==========================================================================
 void VRootWidget::SetMouse (bool MouseOn) {
   if (MouseOn) RootFlags |= RWF_MouseEnabled; else RootFlags &= ~RWF_MouseEnabled;
-  if (!MouseOn && GInput) GInput->RegrabMouse();
+  UpdateMouseForced();
+  if (GInput && (RootFlags&(RWF_MouseEnabled|RWF_MouseForced))) GInput->RegrabMouse();
 }
 
 

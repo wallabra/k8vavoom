@@ -34,7 +34,7 @@ bool drawAlways;
 //
 //==========================================================================
 override void OnDraw () {
-  if (drawAlways || GetCvarB('ui_mouse')) {
+  if (drawAlways || GetRootWidget.bMouseEnabled || GetRootWidget.bMouseForced /*|| GetCvarB('ui_mouse')*/) {
     SetFont('bigfont');
     int Col = (IsFocused ? CR_YELLOW : CR_UNTRANSLATED);
     DrawText(0, 0, Text, Col);

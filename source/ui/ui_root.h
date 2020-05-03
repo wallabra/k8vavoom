@@ -37,6 +37,7 @@ private:
   enum {
     // true if mouse cursor is currently enabled
     RWF_MouseEnabled = 1u<<0,
+    RWF_MouseForced  = 1u<<1, // set if any child want mouse input
   };
   vuint32 RootFlags;
 
@@ -53,6 +54,8 @@ private:
   TArray<VWidget *> EventPath;
 
 private:
+  void UpdateMouseForced ();
+
   // this generates mouse leave/enter
   void MouseMoveEvent (const event_t *evt, int OldMouseX, int OldMouseY);
 

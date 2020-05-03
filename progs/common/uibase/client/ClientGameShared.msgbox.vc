@@ -522,7 +522,7 @@ override bool MessageBoxResponder (event_t *event) {
     return true;
   }
 
-  if (msgboxState.active && GRoot.bMouseEnabled && event.type == ev_uimouse) {
+  if (msgboxState.active && (GRoot.bMouseEnabled || GRoot.bMouseForced) && event.type == ev_uimouse) {
     //printdebug("mouse! x=%s; y=%s", GRoot.MouseX, GRoot.MouseY);
     if (msgboxState.wantInput &&
         (GetMessageBoxInputType() == MsgBoxInputType.YesNo ||

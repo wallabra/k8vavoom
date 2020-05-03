@@ -936,4 +936,6 @@ defaultproperties {
   ActivateSound = 'menu/activate';
   DeactivateSound = 'menu/backup';
   ClearMenusSound = 'menu/clear';
+
+  //WantMouseInput = true;
 }

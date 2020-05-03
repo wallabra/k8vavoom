@@ -108,6 +108,7 @@ protected:
     WF_OnTop        = 1u<<6, // should this widget be "always on top"?
     WF_TextShadowed = 1u<<7, // shadowed text
     WF_UseScissor   = 1u<<8, // use scissor in rendering?
+    WF_WantMouse    = 1u<<9, // set if this widget want mouse input (mouse will be stolen unconditionally)
   };
   vuint32 WidgetFlags;
 
@@ -158,6 +159,7 @@ protected:
   inline bool IsModalFlag () const noexcept { return (WidgetFlags&WF_Modal); }
   inline bool IsOnTopFlag () const noexcept { return (WidgetFlags&WF_OnTop); }
   inline bool IsUseScissor () const noexcept { return (WidgetFlags&WF_UseScissor); }
+  inline bool IsWantMouse () const noexcept { return (WidgetFlags&WF_WantMouse); }
 
   inline void SetCloseOnBlurFlag (bool v) noexcept { if (v) WidgetFlags |= WF_CloseOnBlur; else WidgetFlags &= ~WF_CloseOnBlur; }
 
@@ -240,6 +242,17 @@ public:
 
   inline int GetCursorChar () const noexcept { return CursorChar; }
   inline void SetCursorChar (int ch) noexcept { if (ch < 0) ch = '_'; CursorChar = ch; }
+
+  inline bool IsWantMouseInput (bool bRecurse=true) const noexcept {
+    if (IsGoingToDie()) return false;
+    if (IsWantMouse()) return true;
+    if (bRecurse) {
+      for (const VWidget *w = LastChildWidget; w; w = w->PrevWidget) {
+        if (w->IsWantMouseInput(true)) return true;
+      }
+    }
+    return false;
+  }
 
   // visibility methods
   void SetVisibility (bool NewVisibility);

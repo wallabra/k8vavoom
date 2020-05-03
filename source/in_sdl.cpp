@@ -115,11 +115,14 @@ static bool GNetCheckForUserAbortCB (void *udata) {
 // ////////////////////////////////////////////////////////////////////////// //
 VCvarB ui_freemouse("__ui_freemouse", false, "Don't pass mouse movement to the camera. Used in various debug modes.", 0);
 VCvarB ui_want_mouse_at_zero("ui_want_mouse_at_zero", false, "Move real mouse cursor to (0,0) when UI activated?", CVAR_Archive);
+VCvarB ui_mouse_forced("__ui_mouse_forced", false, "Forge-grab mouse for UI?", 0);
 static VCvarB ui_mouse("ui_mouse", false, "Allow using mouse in UI?", CVAR_Archive);
 static VCvarB ui_active("__ui_active", false, "Is UI active (used to stop mouse warping if \"ui_mouse\" is false)?", 0);
 static VCvarB ui_control_waiting("__ui_control_waiting", false, "Waiting for new control key (pass mouse buttons)?", 0);
 static VCvarB m_nograb("m_nograb", false, "Do not grab mouse?", CVAR_Archive);
 static VCvarB m_dbg_cursor("m_dbg_cursor", false, "Do not hide (true) mouse cursor on startup?", CVAR_PreInit);
+
+static inline bool IsUIMouse () noexcept { return (ui_mouse.asBool() || ui_mouse_forced.asBool()); }
 
 #ifdef VAVOOM_K8_DEVELOPER
 # define IN_HYPER_BLOCK_DEFAULT      true
@@ -478,7 +481,7 @@ void VSdlInputDevice::ReadInput () {
         else if (ev.button.button == SDL_BUTTON_X2) vev.keycode = K_MOUSE5;
         else break;
         if (Drawer) Drawer->GetMousePosition(&vev.x, &vev.y);
-        if (ui_mouse || !ui_active || ui_control_waiting || ui_freemouse) VObject::PostEvent(vev);
+        if (IsUIMouse() || !ui_active || ui_control_waiting || ui_freemouse) VObject::PostEvent(vev);
         // now fix flags
              if (ev.button.button == SDL_BUTTON_LEFT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bLMB; else curmodflags &= ~bLMB; }
         else if (ev.button.button == SDL_BUTTON_RIGHT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bRMB; else curmodflags &= ~bRMB; }
@@ -490,7 +493,7 @@ void VSdlInputDevice::ReadInput () {
         else if (ev.wheel.y < 0) vev.keycode = K_MWHEELDOWN;
         else break;
         if (Drawer) Drawer->GetMousePosition(&vev.x, &vev.y);
-        if (ui_mouse || !ui_active || ui_control_waiting || ui_freemouse) VObject::PostEvent(vev);
+        if (IsUIMouse() || !ui_active || ui_control_waiting || ui_freemouse) VObject::PostEvent(vev);
         break;
       case SDL_JOYAXISMOTION:
         normal_value = ev.jaxis.value*127/32767;
@@ -516,7 +519,7 @@ void VSdlInputDevice::ReadInput () {
             vev.modflags = 0;
             if (!winactive && mouse) {
               if (Drawer) {
-                if (!ui_freemouse && (!ui_active || ui_mouse)) Drawer->WarpMouseToWindowCenter();
+                if (!ui_freemouse && (!ui_active || IsUIMouse())) Drawer->WarpMouseToWindowCenter();
                 //SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
                 Drawer->GetMousePosition(&mouse_oldx, &mouse_oldy);
               }
@@ -572,7 +575,7 @@ void VSdlInputDevice::ReadInput () {
   // read mouse separately
   if (mouse && winactive && Drawer) {
     bool currMouseInUI = (ui_active.asBool() || ui_freemouse.asBool());
-    bool currMouseGrabbed = (ui_freemouse.asBool() ? false : ui_mouse.asBool());
+    bool currMouseGrabbed = (ui_freemouse.asBool() ? false : IsUIMouse());
     //SDL_GetMouseState(&mouse_x, &mouse_y);
     Drawer->GetMousePosition(&mouse_x, &mouse_y);
     // check for UI activity changes
