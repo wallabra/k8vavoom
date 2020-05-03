@@ -59,6 +59,19 @@ void CreateClasses () {
 
 //==========================================================================
 //
+//  Byte2Float
+//
+//==========================================================================
+final float Byte2Float (int b) {
+  if (b <= 0) return 0.0;
+  if (b >= 255) return 1.0;
+  int v = (b*10+5)/255;
+  return v/10.0;
+}
+
+
+//==========================================================================
+//
 //  CreateChoices
 //
 //==========================================================================
@@ -104,7 +117,7 @@ override void CreateChoices () {
   ColR.SetOrigin(ChoicesStartX, currentY);
   ColR.Text = "Red";
   ColR.ValueDelta = 0.1;
-  ColR.SetInitialValue(float((Col>>16)&0xff)/255.0);
+  ColR.SetInitialValue(Byte2Float((Col>>16)&0xff));
   ColR.ValueChanging = &ChangeColor;
   currentY += ColR.Height;
 
@@ -113,7 +126,7 @@ override void CreateChoices () {
   ColG.SetOrigin(ChoicesStartX, currentY);
   ColG.Text = "Green";
   ColG.ValueDelta = 0.1;
-  ColG.SetInitialValue(float((Col>>8)&0xff)/255.0);
+  ColG.SetInitialValue(Byte2Float((Col>>8)&0xff));
   ColG.ValueChanging = &ChangeColor;
   currentY += ColG.Height;
 
@@ -122,7 +135,7 @@ override void CreateChoices () {
   ColB.SetOrigin(ChoicesStartX, currentY);
   ColB.Text = "Blue";
   ColB.ValueDelta = 0.1;
-  ColB.SetInitialValue(float(Col&0xff)/255.0);
+  ColB.SetInitialValue(Byte2Float(Col&0xff));
   ColB.ValueChanging = &ChangeColor;
   currentY += ColB.Height;
 
