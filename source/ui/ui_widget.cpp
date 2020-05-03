@@ -1713,13 +1713,19 @@ void VWidget::DrawHexColorPattern (float x0, float y0, int radius, float cellW, 
 bool VWidget::FindHexColorCoords (int *hpx, int *hpy, int radius, float h, float s) {
   if (radius < 1) radius = 1;
 
+  if (h <= 0.0f && s <= 0.0f) {
+    if (hpx) *hpx = 0;
+    if (hpy) *hpy = 0;
+    return true;
+  }
+
   int bestX = 0, bestY = 0;
   float bestDist = 0;
   bool hasBest = false;
   bool directHit = false;
 
   for (int y = -radius; y <= radius; ++y) {
-    for (int x = -radius; x <= radius; ++x) {
+    for (int x = -radius*2; x <= radius*2; ++x) {
       if (!IsValidHexColorPatternCoords(x, y, radius)) continue;
       float ch, cs;
       CalcHexHSByCoords(x*2, y*2, radius, &ch, &cs);
