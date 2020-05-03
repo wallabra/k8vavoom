@@ -42,6 +42,7 @@ static int enableKnownBlood = 0;
 // globals
 bool decoIgnorePlayerSpeed = false;
 TMapNC<VName, bool> BlockedSpawnSet;
+TMapNC<VName, VClass *> ForceReplacements;
 
 
 /*
@@ -296,10 +297,10 @@ static void ResetReplacementBase () {
 static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
   if (!oldcls) return;
 
-  // check for know blood classes if gore mod is active
-  if (cli_GoreMod && !enableKnownBlood && IsAnyBloodClass(oldcls)) {
+  // check for knows blood classes if gore mod is active
+  if (cli_GoreMod && !enableKnownBlood) {
     bool blockSpawn = false;
-    VStr kbc = DetectKnownBloodClass(newcls, &blockSpawn);
+    VStr kbc = DetectKnownBloodClass(newcls, &blockSpawn, IsAnyBloodClass(oldcls));
     if (!kbc.isEmpty()) {
       GLog.Logf(NAME_Warning, "%s: %s known blood replacement class '%s' (%s)", *newcls->Loc.toStringNoCol(), (blockSpawn ? "blocked" : "skipped"), newcls->GetName(), *kbc);
       if (blockSpawn) BlockedSpawnSet.put(newcls->Name, true);
@@ -308,14 +309,9 @@ static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
   }
 
   // also, block spawning of all replacements of the blocked class
-  if (!BlockedSpawnSet.has(newcls->Name)) {
-    for (VClass *cc = newcls; cc; cc = cc->GetSuperClass()) {
-      if (BlockedSpawnSet.has(cc->Name)) {
-        GLog.Logf(NAME_Warning, "%s: blocked known blood replacement class '%s' (%s)", *newcls->Loc.toStringNoCol(), newcls->GetName(), cc->GetName());
-        BlockedSpawnSet.put(cc->Name, true);
-        break;
-      }
-    }
+  if (BlockedSpawnSet.has(oldcls->Name) && !BlockedSpawnSet.has(newcls->Name)) {
+    GLog.Logf(NAME_Warning, "%s: blocked known blood replacement class '%s' (%s)", *newcls->Loc.toStringNoCol(), newcls->GetName(), oldcls->GetName());
+    BlockedSpawnSet.put(newcls->Name, true);
   }
 
   const bool doOldRepl = (cli_DecorateOldReplacement > 0);
@@ -2878,14 +2874,33 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
 
   DoClassReplacement(ReplaceeClass, Class);
 
+  // check for known "any" blood classes if gore mod is active
+  if (!ReplaceeClass && cli_GoreMod && !enableKnownBlood) {
+    bool blockSpawn = false;
+    VStr kbc = DetectKnownBloodClass(Class, &blockSpawn, false);
+    if (!kbc.isEmpty()) {
+      GLog.Logf(NAME_Warning, "%s: %s known blood class '%s' (%s)", *Class->Loc.toStringNoCol(), (blockSpawn ? "blocked" : "skipped"), Class->GetName(), *kbc);
+      if (blockSpawn) BlockedSpawnSet.put(Class->Name, true);
+    }
+  }
+
   // also, block spawning of all children of the blocked class
   if (!BlockedSpawnSet.has(Class->Name)) {
     for (VClass *cc = Class; cc; cc = cc->GetSuperClass()) {
       if (BlockedSpawnSet.has(cc->Name)) {
         GLog.Logf(NAME_Warning, "%s: blocked known blood child class '%s' (%s)", *Class->Loc.toStringNoCol(), Class->GetName(), cc->GetName());
-        BlockedSpawnSet.put(cc->Name, true);
+        BlockedSpawnSet.put(Class->Name, true);
         break;
       }
+    }
+  }
+
+  // check for forced replamenet
+  if (cli_GoreMod && !enableKnownBlood && !ForceReplacements.has(Class->Name) && !BlockedSpawnSet.has(Class->Name)) {
+    VClass *rep = FindKnowBloodForcedReplacement(Class);
+    if (rep) {
+      GLog.Logf(NAME_Warning, "%s: forced known blood class '%s' replacement (%s)", *Class->Loc.toStringNoCol(), Class->GetName(), rep->GetName());
+      ForceReplacements.put(Class->Name, rep);
     }
   }
 

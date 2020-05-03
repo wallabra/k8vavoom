@@ -34,3 +34,13 @@ known_blood {
   name = "Samsara";
   match = "SamsaraBloodyHellBlood*";
 }
+
+
+known_blood {
+  name = "Doom Tribute";
+  match = "RedBlood_LM"; // standard blood replacement
+  matchany = "Bloodpiece_*"; // block all blood pieces
+  //matchany = ["Bloodpiece_*", "*Blood_LM"];
+  // force-replace various colored blood
+  replace "*Blood_LM" with "Blood";
+}

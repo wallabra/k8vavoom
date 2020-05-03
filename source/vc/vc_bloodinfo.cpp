@@ -28,25 +28,61 @@
 
 struct DCKnownBlood {
 public:
+  struct ReplInfo {
+    VStr oldname;
+    VStr newname;
+  };
+
+public:
   VStr name;
   TArray<VStr> matches;
+  TArray<VStr> anymatches;
+  TArray<ReplInfo> replaces;
   bool allowSuper;
   bool blockSpawn;
 
-public:
-  DCKnownBlood () noexcept : name(), matches(), allowSuper(true), blockSpawn(true) {}
-  ~DCKnownBlood () noexcept { matches.clear(); name.clear(); }
-
-  bool matchClass (VClass *c) const noexcept {
+private:
+  static bool doMatch (const TArray<VStr> &mtlist, VClass *c, bool allowSuper) noexcept {
     for (; c; c = c->GetSuperClass()) {
       VStr cname(c->Name);
-      for (auto &&mts : matches) {
+      for (auto &&mts : mtlist) {
         if (mts.isEmpty()) continue; // just in case
         if (cname.globMatchCI(mts)) return true;
       }
       if (!allowSuper) break;
     }
     return false;
+  }
+
+public:
+  DCKnownBlood () noexcept : name(), matches(), anymatches(), replaces(), allowSuper(true), blockSpawn(true) {}
+  ~DCKnownBlood () noexcept { matches.clear(); anymatches.clear(); replaces.clear(); name.clear(); }
+
+  void appendReplace (VStr src, VStr dest) noexcept {
+    if (src.isEmpty() || dest.isEmpty()) return;
+    ReplInfo &ri = replaces.alloc();
+    ri.oldname = src;
+    ri.newname = dest;
+  }
+
+  bool matchClass (VClass *c, bool isBloodReplacement) const noexcept {
+    if (isBloodReplacement && doMatch(matches, c, allowSuper)) return true;
+    if (doMatch(anymatches, c, allowSuper)) return true;
+    return false;
+  }
+
+  VClass *findReplace (VClass *c) const noexcept {
+    if (!c) return nullptr;
+    VStr cname(c->Name);
+    for (auto &&it : replaces) {
+      if (it.oldname.isEmpty()) continue; // just in case
+      if (cname.globMatchCI(it.oldname)) {
+        if (it.newname.isEmpty()) return nullptr; //wtf?!
+        VClass *rep = VClass::FindClassNoCase(*it.newname);
+        if (rep) return rep;
+      }
+    }
+    return nullptr;
   }
 };
 
@@ -82,13 +118,32 @@ static bool IsAnyBloodClass (VClass *c) {
 
 //==========================================================================
 //
+//  FindKnowBloodForcedReplacement
+//
+//==========================================================================
+static VClass *FindKnowBloodForcedReplacement (VClass *c) {
+  if (!c) return nullptr;
+  for (auto &&kb : knownBlood) {
+    VClass *rep = kb.findReplace(c);
+    if (rep) {
+      if (rep == c) return nullptr;
+      return rep;
+    }
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  DetectKnownBloodClass
 //
 //==========================================================================
-static VStr DetectKnownBloodClass (VClass *c, bool *blockSpawn) {
+static VStr DetectKnownBloodClass (VClass *c, bool *blockSpawn, bool isBloodReplacement) {
   if (!c) return VStr::EmptyString;
+  //GCon->Logf(NAME_Debug, "KNB: <%s> (%s)", c->GetName(), (isBloodReplacement ? "brepl" : "normal"));
   for (auto &&kb : knownBlood) {
-    if (kb.matchClass(c)) {
+    if (kb.matchClass(c, isBloodReplacement)) {
       if (blockSpawn) *blockSpawn = kb.blockSpawn;
       return kb.name;
     }
@@ -117,19 +172,24 @@ static void ParseKnownBloodSection (VScriptParser *sc) {
       continue;
     }
     // match
-    if (sc->Check("match")) {
+    int matchtype = (sc->Check("match") ? 1 : sc->Check("matchany") ? 2 : 0);
+    if (matchtype) {
       sc->Expect("=");
       if (sc->Check("[")) {
         while (!sc->Check("]")) {
           sc->ExpectString();
-          if (!sc->String.isEmpty()) kblood.matches.append(sc->String);
+          if (!sc->String.isEmpty()) {
+            if (matchtype == 1) kblood.matches.append(sc->String); else kblood.anymatches.append(sc->String);
+          }
           if (sc->Check(",")) continue;
           sc->Expect("]");
           break;
         }
       } else {
         sc->ExpectString();
-        if (!sc->String.isEmpty()) kblood.matches.append(sc->String);
+        if (!sc->String.isEmpty()) {
+          if (matchtype == 1) kblood.matches.append(sc->String); else kblood.anymatches.append(sc->String);
+        }
       }
       sc->Expect(";");
       continue;
@@ -143,10 +203,21 @@ static void ParseKnownBloodSection (VScriptParser *sc) {
       sc->Expect(";");
       continue;
     }
+    // replace
+    if (sc->Check("replace")) {
+      sc->ExpectString();
+      VStr src = sc->String;
+      sc->Expect("with");
+      sc->ExpectString();
+      VStr dest = sc->String;
+      sc->Expect(";");
+      kblood.appendReplace(src, dest);
+      continue;
+    }
     sc->Error(va("unknown `know_blood` property '%s'", *sc->String));
   }
   if (kblood.name.isEmpty()) sc->Error("nameless `known_blood`");
-  if (kblood.matches.length() == 0) return; // will never match anyway
+  if (kblood.matches.length() == 0 && kblood.anymatches.length() == 0 && kblood.replaces.length() == 0) return; // will never match anyway
   knownBlood.append(kblood);
 }
 

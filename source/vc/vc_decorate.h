@@ -58,5 +58,7 @@ extern TArray<VDamageFactor> CustomDamageFactors;
 // do not spawn classes from this set
 // it is filled by decorate parser, and used to block spawning of known blood
 extern TMapNC<VName, bool> BlockedSpawnSet;
+// forced replacements
+extern TMapNC<VName, VClass *> ForceReplacements;
 
 extern bool decoIgnorePlayerSpeed;

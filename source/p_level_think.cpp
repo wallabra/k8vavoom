@@ -577,6 +577,15 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
     return nullptr;
   }
 
+  // check for forced replacement
+  auto repclspp = ForceReplacements.find(Class->Name);
+  if (repclspp) {
+    VClass *ocls = Class;
+    Class = *repclspp;
+    Class = Class->GetReplacement();
+    if (Class != ocls) GCon->Logf(NAME_Debug, "force-replaced spawning of `%s` with `%s`", ocls->GetName(), Class->GetName());
+  }
+
   // spawn it
   VThinker *Ret = (VThinker *)StaticSpawnNoReplace(Class);
   if (!Ret) {
