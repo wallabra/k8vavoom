@@ -2,7 +2,7 @@
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
-add_subdirectory(acc)
+#add_subdirectory(acc)
 add_subdirectory(fixmd2)
 #add_subdirectory(glbsp)
 if(ENABLE_GLVIS)
