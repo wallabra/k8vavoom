@@ -34,6 +34,7 @@ MenuChoiceSlider ColB;
 MenuSpriteAnim Anim;
 MenuModel Mdl;
 MenuChoiceEnum EPClass;
+MenuChoiceColor ColorBox;
 int PClass;
 
 
@@ -91,6 +92,15 @@ override void CreateChoices () {
   R_InstallSpriteComplete();
 
 
+  int Col = ParseColor(GetCvarS('color'));
+
+  ColorBox = NewChild(MenuChoiceColor);
+  ColorBox.SetInitialValue(Col);
+  ColorBox.SetText("Color");
+  ColorBox.SetOrigin(ChoicesStartX, currentY);
+  currentY += ColorBox.Height;
+
+
   PlayerName = NewChild(MenuInputLine);
   PlayerName.SetOrigin(ChoicesStartX+10, currentY);
   PlayerName.CursorXOffs = -10;
@@ -109,8 +119,6 @@ override void CreateChoices () {
     currentY += EPClass.Height;
   }
 
-
-  int Col = ParseColor(GetCvarS('color'));
 
   ColR = NewChild(MenuChoiceSlider);
   ColR.Width = 420;
@@ -196,6 +204,7 @@ bool ChangeColor (Object Sender, float newValue) {
   SetCvarS('color', va("#%02x%02x%02x", int(r*255.0), int(g*255.0), int(b*255.0)));
   Anim.Color = Col;
   if (Mdl) Mdl.Color = Col;
+  ColorBox.SetNewColor(Col);
   return true;
 }
 

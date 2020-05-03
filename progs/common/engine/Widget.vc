@@ -288,6 +288,8 @@ native final int GetHexColorPatternColorAt (int hpx, int hpy, int radius);
 // draws hex pattern (WARNING: no clipping!)
 native final void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH);
 
+native final bool FindHexColorCoords (out int hpx, out int hpy, int radius, float h, float s);
+
 /*
 final int X2Virtual (float x) { return int(ClipRect.ScaleX*x+ClipRect.OriginX); }
 final int Y2Virtual (float y) { return int(ClipRect.ScaleY*y+ClipRect.OriginY); }

@@ -1,0 +1,459 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2020 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, version 3 of the License ONLY.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+class MenuChoiceColor : MenuChoice;
+
+string Text;
+bool bLeftAlign;
+
+int ColorValue;
+
+MenuColorPopup cbox;
+
+delegate bool ValueChanging (Object Sender, int NewValue);
+
+
+//==========================================================================
+//
+//  SetText
+//
+//==========================================================================
+void SetText (string AText) {
+  Text = TranslateString(AText);
+  int ohgt = Height;
+  FixMinimumHeight();
+}
+
+
+//==========================================================================
+//
+//  SetOrigin
+//
+//==========================================================================
+override void SetOrigin (int x, int y) {
+  if (bLeftAlign) {
+    SetPos(x, y);
+  } else {
+    CursorXOffs = /*200*/CursorXOffsHR;
+    SetPos(x-CursorXOffs, y);
+  }
+}
+
+
+//==========================================================================
+//
+//  SetNewColor
+//
+//==========================================================================
+bool SetNewColor (int v) {
+  if (ValueChanging) {
+    if (!ValueChanging(self, v)) return false;
+  }
+  ColorValue = v;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  SetInitialValue
+//
+//==========================================================================
+void SetInitialValue (int AValue) {
+  ColorValue = AValue;
+}
+
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
+  DrawBackground();
+
+  SetFont('smallfont');
+
+  string caption = "boo";
+  /*
+  int idx = findValue(Value);
+  if (idx < 0) {
+    caption = (float(int(Value)) == Value ? va("i:%d", int(Value)) : va("f:%f", Value));
+  } else {
+    caption = vallist[idx].caption;
+  }
+  */
+
+  int Col = (IsFocused ? TextColorFocus : TextColor);
+  if (bLeftAlign) {
+    SetTextAlign(hleft, vtop);
+    DrawText(0, 0, Text, Col);
+  } else {
+    SetTextAlign(hright, vtop);
+    DrawText(CursorXOffs, 0, Text, Col);
+  }
+
+  int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
+  /*
+  SetTextAlign(hleft, vtop);
+  DrawText(xx, 0, caption, (IsFocused ? ValueColorFocus : ValueColor));
+  */
+  FillRect(xx+2, 1, 64, 6, ColorValue);
+}
+
+
+//==========================================================================
+//
+//  OnEvent
+//
+//==========================================================================
+override bool OnEvent (ref event_t evt) {
+  // "on click"
+  if (evt.bubbling && evt.type == ev_click && evt.dest == self) {
+    if (evt.keycode == K_MOUSE1) {
+      if (IsFocused) {
+        OpenColorPopup(/*X*/default, /*Y*/default);
+      } else {
+        SetFocus();
+      }
+      return true;
+    }
+  }
+
+  if (evt.bubbling && evt.type == ev_keydown) {
+    if (evt.keycode >= K_MOUSE1 && evt.keycode <= K_MOUSE9) return ::OnEvent(evt);
+    switch (ConvertBoundKey(evt.keycode)) {
+      case K_ENTER:
+      case K_PADENTER:
+      case K_SPACE:
+        OpenColorPopup();
+        return true;
+    }
+  }
+
+  return ::OnEvent(evt);
+}
+
+
+//==========================================================================
+//
+//  OpenColorPopup
+//
+//==========================================================================
+void OpenColorPopup (optional int X, optional int Y) {
+  cbox = GetRootWidget.NewChild(MenuColorPopup);
+  if (!cbox) return;
+  cbox.choice = self;
+  if (!specified_X) {
+    auto oldFont = GetFont();
+    scope(exit) SetFont(oldFont);
+    SetFont('smallfont');
+    int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
+    X = xx;
+  }
+  if (!specified_Y) Y = -2;
+  LocalXYToRoot(out cbox.xbase, out cbox.ybase, X, Y);
+  //foreach (int c, const ref auto vv; vallist) cbox.addItem(vv.caption, (c == idx));
+  cbox.SetColor(ColorValue);
+  LocalSound('menu/change');
+}
+
+
+//==========================================================================
+//
+//  OnClose
+//
+//==========================================================================
+override void OnClose () {
+  if (cbox) delete cbox;
+  ::OnClose();
+}
+
+
+//==========================================================================
+//
+//  OnVisibilityChanged
+//
+//==========================================================================
+override void OnVisibilityChanged (bool bNewVisibility) {
+  if (!bNewVisibility) {
+    if (cbox) delete cbox;
+  }
+  ::OnVisibilityChanged(bNewVisibility);
+}
+
+
+defaultproperties {
+  //cvarSession = '';
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuColorPopup : Widget;
+
+int currColor;
+float h, s, v;
+int xbase, ybase;
+MenuChoiceColor choice;
+
+int wheelX = 4;
+int wheelY = 4;
+int wheelW;
+int wheelH;
+
+enum WheelRadius = 6;
+enum WheelW = 8;
+enum WheelH = 8;
+
+float Time;
+
+
+//==========================================================================
+//
+//  OnCreate
+//
+//==========================================================================
+override void OnCreate () {
+  ::OnCreate();
+
+  auto oldFont = GetFont();
+  scope(exit) SetFont(oldFont);
+
+  SetFont('consolefont');
+
+  wheelW = int(CalcHexColorPatternWidth(WheelRadius, WheelW, WheelH));
+  wheelH = int(CalcHexColorPatternHeight(WheelRadius, WheelW, WheelH));
+
+  int ey = wheelY+wheelH+8;
+  ey += 3*FontHeight();
+  ey += 2*FontHeight();
+  ey += 2*FontHeight();
+  ey += wheelY;
+
+  if (Height < ey) Height = ey;
+
+  int ex = wheelX+wheelW+14+64+4;
+  ex += wheelX;
+  if (Width < ex) Width = ex;
+}
+
+
+//==========================================================================
+//
+//  Tick
+//
+//==========================================================================
+override void Tick (float DeltaTime) {
+  Time += DeltaTime;
+}
+
+
+//==========================================================================
+//
+//  SetColor
+//
+//==========================================================================
+void SetColor (int color) {
+  currColor = color;
+  RGB2HSV(color, out h, out s, out v);
+  /*
+  text = text.xstrip;
+  if (!text) text = "<undefined>";
+  if (current) {
+    currItem = items.length;
+    defItem = currItem;
+  }
+  items[$] = text;
+
+  auto oldFont = GetFont();
+  scope(exit) SetFont(oldFont);
+
+  SetFont('smallfont');
+  //SetTextAlign(hleft, vtop);
+  int hgt = 0, wdt = 0;
+  foreach (auto str; items) {
+    hgt += TextHeight(str);
+    wdt = max(wdt, TextWidth(str));
+  }
+  */
+  int wdt = Width;
+  int hgt = Height;
+
+  SetSize(wdt+8, hgt+8);
+
+  int x0 = xbase-1;
+  if (x0+wdt+10 > Parent.Width) x0 = Parent.Width-wdt-10;
+  if (x0 < 0) x0 = 0;
+
+  int y0 = ybase-1;
+  if (y0+hgt+10 > Parent.Height) y0 = Parent.Height-hgt-10;
+  if (y0 < 0) y0 = 0;
+
+  SetOrigin(x0, y0);
+}
+
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
+  if (Width < 1 || Height < 1) return;
+  //printdebug("%s: cob=%B; focused=%B", UniqueId, CloseOnBlur, IsFocused());
+  //SetFont('smallfont');
+  SetFont('consolefont');
+  SetTextAlign(hleft, vtop);
+
+  ShadeRect(0, 0, Width, Height, /*GetCvarF('menu_darkening')*/0.8);
+  DrawRect(0, 0, Width, Height, RGB(255, 255, 255));
+
+  DrawHexColorPattern(wheelX, wheelY, WheelRadius, WheelW, WheelH);
+
+  int phase = int(Time*1000/400)%2;
+  if (phase) {
+    int hpx, hpy;
+    FindHexColorCoords(out hpx, out hpy, WheelRadius, h, s);
+
+    float hx, hy;
+    CalcHexColorPatternHexCoordsAt(out hx, out hy, hpx, hpy, wheelX, wheelY, WheelRadius, WheelW, WheelH);
+    ShadeHex(hx, hy, WheelW, WheelH, 0.6);
+  }
+
+  // draw vertical color stripes
+  foreach (int dy; 0..11) {
+    float vv = dy/10.0;
+    int nc = HSV2RGB(h, s, vv);
+    FillRect(wheelX+wheelW+16, 8+dy*12, 64, 8, nc);
+    if (vv >= v && ((dy-1)/10.0) < v) {
+      DrawRect(wheelX+wheelW+14, 6+dy*12, 64+4, 8+4, RGB(255, 255, 255));
+    }
+  }
+
+  int ty = wheelY+wheelH+8;
+
+  int clr = HSV2RGB(h, s, v);
+
+  DrawText(4, ty, va("RED  :%3d", RGBGetR(clr)), CR_UNTRANSLATED); ty += FontHeight();
+  DrawText(4, ty, va("GREEN:%3d", RGBGetG(clr)), CR_UNTRANSLATED); ty += FontHeight();
+  DrawText(4, ty, va("BLUE :%3d", RGBGetB(clr)), CR_UNTRANSLATED); ty += FontHeight();
+  ty += FontHeight()*2;
+
+  DrawText(4, ty, va("H:%s", h), CR_UNTRANSLATED); ty += FontHeight();
+  DrawText(4, ty, va("S:%s", s), CR_UNTRANSLATED); ty += FontHeight();
+  DrawText(4, ty, va("V:%s", v), CR_UNTRANSLATED); ty += FontHeight();
+}
+
+
+//==========================================================================
+//
+//  OnEvent
+//
+//==========================================================================
+override bool OnEvent (ref event_t evt) {
+  //printdebug("%s: event:%s", UniqueId, evt.type);
+
+  // any events are always processed by us (i.e. we intercept everything, because we are the popup)
+
+  if (evt.type == ev_mouse) {
+    if (evt.msx >= 1 && evt.msy >= 4 && evt.msx < Width-1 && evt.msy < Height-4) {
+      //int idx = FindItemAt(evt.msx, evt.msy);
+      //if (idx >= 0) currItem = idx;
+    }
+    return true;
+  }
+
+  if (evt.type == ev_click) {
+    /*
+    int idx = FindItemAt(evt.x, evt.y);
+    if (idx >= 0) {
+      currItem = idx;
+      if (choice) choice.SetComboChoice(currItem);
+      Destroy();
+    }
+    */
+    return true;
+  }
+
+  // keys/mouse
+  if (evt.type == ev_keydown) {
+    if (evt.keycode >= K_MOUSE1 && evt.keycode <= K_MOUSE9) {
+      if (evt.keycode != K_MOUSE1 || evt.x < 0 || evt.y < 0 || evt.x >= Width || evt.y >= Height) {
+        Destroy();
+        return true;
+      }
+    }
+    switch (ConvertBoundKey(evt.keycode)) {
+      case K_ESCAPE:
+        Destroy();
+        return true;
+      case K_ENTER: case K_PADENTER:
+        //if (choice) choice.SetComboChoice(currItem);
+        Destroy();
+        return true;
+      /*
+      case K_UPARROW: case K_MWHEELUP:
+        if (currItem > 0) --currItem;
+        return true;
+      case K_DOWNARROW: case K_MWHEELDOWN:
+        if (currItem < items.length-1) ++currItem;
+        return true;
+      case K_HOME:
+        currItem = 0;
+        return true;
+      case K_END:
+        currItem = items.length-1;
+        return true;
+      */
+    }
+  }
+
+  ::OnEvent(evt);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  OnClose
+//
+//==========================================================================
+override void OnClose () {
+  //printdebug("%s: closing", UniqueId);
+  if (choice) choice.cbox = none;
+  ::OnClose();
+}
+
+
+defaultproperties {
+  X = 0;
+  Y = 0;
+  Width = 10;
+  Height = 10;
+  Focusable = true;
+  CloseOnBlur = true;
+  OnTop = true;
+  bTickEnabled = true;
+}

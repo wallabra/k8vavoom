@@ -38,6 +38,7 @@ import 'linespec';
 #include "wgselector/MenuSelectorBig.vc"
 
 #include "wgchoice/MenuChoiceBase.vc"
+#include "wgchoice/MenuChoiceColor.vc"
 #include "wgchoice/MenuChoiceEnum.vc"
 #include "wgchoice/MenuChoiceOnOff.vc"
 #include "wgchoice/MenuChoiceNumeric.vc"

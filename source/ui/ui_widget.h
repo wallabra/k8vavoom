@@ -372,6 +372,9 @@ public:
   // draws hex pattern (WARNING: no clipping!)
   void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH);
 
+  // ignores `v`
+  bool FindHexColorCoords (int *hpx, int *hpy, int radius, float h, float s);
+
   // returns text bounds with respect to the current text align
   void TextBounds (int x, int y, VStr String, int *x0, int *y0, int *width, int *height, bool trimTrailNL=true);
 
@@ -478,6 +481,7 @@ public:
   DECLARE_FUNCTION(CalcHexColorPatternHexCoordsAt)
   DECLARE_FUNCTION(GetHexColorPatternColorAt)
   DECLARE_FUNCTION(DrawHexColorPattern)
+  DECLARE_FUNCTION(FindHexColorCoords)
 
   DECLARE_FUNCTION(GetFont)
   DECLARE_FUNCTION(SetFont)

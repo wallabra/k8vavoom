@@ -1139,11 +1139,7 @@ void VWidget::FillRect (int X, int Y, int Width, int Height, int color, float al
   float Y1 = Y;
   float X2 = X+Width;
   float Y2 = Y+Height;
-  float S1 = 0;
-  float T1 = 0;
-  float S2 = Width;
-  float T2 = Height;
-  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+  if (TransferAndClipRect(X1, Y1, X2, Y2)) {
     Drawer->FillRect(truncf(X1), truncf(Y1), truncf(X2), truncf(Y2), color, alpha);
   }
 }
@@ -1556,8 +1552,14 @@ void VWidget::CalcHexColorPatternDims (float *w, float *h, int radius, float cel
 }
 
 
-// returns `true` if the given "internal" hex pattern
-// coordinates are valid
+//==========================================================================
+//
+//  VWidget::IsValidHexColorPatternCoords
+//
+//  returns `true` if the given "internal" hex pattern
+//  coordinates are valid
+//
+//==========================================================================
 bool VWidget::IsValidHexColorPatternCoords (int hpx, int hpy, int radius) {
   if (radius < 1) radius = 1;
   if (hpy < -radius || hpy > radius) return false;
@@ -1567,8 +1569,14 @@ bool VWidget::IsValidHexColorPatternCoords (int hpx, int hpy, int radius) {
 }
 
 
-// calcs "internal" hex pattern coordinates,
-// returns `false` if passed coords are outside any hex
+//==========================================================================
+//
+//  VWidget::CalcHexColorPatternCoords
+//
+//  calcs "internal" hex pattern coordinates,
+//  returns `false` if passed coords are outside any hex
+//
+//==========================================================================
 bool VWidget::CalcHexColorPatternCoords (int *hpx, int *hpy, float x, float y, float x0, float y0, int radius, float cellW, float cellH) {
   int tmpx, tmpy;
   if (!hpx) hpx = &tmpx;
@@ -1598,9 +1606,15 @@ bool VWidget::CalcHexColorPatternCoords (int *hpx, int *hpy, float x, float y, f
 }
 
 
-// calcs coordinates of the individual hex;
-// returns `false` if the given "internal" hp coordinates are not valid
-// those coords can be used in `*Hex()` methods
+//==========================================================================
+//
+//  VWidget::CalcHexColorPatternHexCoordsAt
+//
+//  calcs coordinates of the individual hex;
+//  returns `false` if the given "internal" hp coordinates are not valid
+//  those coords can be used in `*Hex()` methods
+//
+//==========================================================================
 bool VWidget::CalcHexColorPatternHexCoordsAt (float *hx, float *hy, int hpx, int hpy, float x0, float y0, int radius, float cellW, float cellH) {
   if (radius < 1) radius = 1;
   if (cellW < 1.0f) cellW = 1.0f;
@@ -1616,13 +1630,25 @@ bool VWidget::CalcHexColorPatternHexCoordsAt (float *hx, float *hy, int hpx, int
 
 //==========================================================================
 //
+//  CalcHexHSByCoords
+//
+//==========================================================================
+static void CalcHexHSByCoords (int x, int y, int radius, float *h, float *s) {
+  if (radius < 1) radius = 1;
+  const float diameter = radius*2;
+  if (h) *h = 360.0f*(0.5f-0.5f*atan2f(y, -x)/(float)(M_PI));
+  if (s) *s = sqrtf(x*x+y*y)/diameter;
+}
+
+
+//==========================================================================
+//
 //  CalcHexColorByCoords
 //
 //==========================================================================
 static vuint32 CalcHexColorByCoords (int x, int y, int radius) {
-  const float diameter = radius*2;
-  const float h = 360.0f*(0.5f-0.5f*atan2f(y, -x)/(float)(M_PI));
-  const float s = sqrtf(x*x+y*y)/diameter;
+  float h, s;
+  CalcHexHSByCoords(x, y, radius, &h, &s);
   const float v = 1.0f;
   float r, g, b;
   M_HsvToRgb(h, s, v, r, g, b);
@@ -1630,8 +1656,14 @@ static vuint32 CalcHexColorByCoords (int x, int y, int radius) {
 }
 
 
-// returns opaque color at the given "internal" hex pattern
-// coordinates (with high byte set), or 0
+//==========================================================================
+//
+//  VWidget::GetHexColorPatternColorAt
+//
+//  returns opaque color at the given "internal" hex pattern
+//  coordinates (with high byte set), or 0
+//
+//==========================================================================
 int VWidget::GetHexColorPatternColorAt (int hpx, int hpy, int radius) {
   if (!IsValidHexColorPatternCoords(hpx, hpy, radius)) return 0;
   return CalcHexColorByCoords(hpx*2, hpy*2, radius);
@@ -1668,6 +1700,49 @@ void VWidget::DrawHexColorPattern (float x0, float y0, int radius, float cellW, 
       Drawer->FillHex(xc, yc, scrW, scrH, clr);
     }
   }
+}
+
+
+//==========================================================================
+//
+//  VWidget::FindHexColorCoords
+//
+//  ignores `v`
+//
+//==========================================================================
+bool VWidget::FindHexColorCoords (int *hpx, int *hpy, int radius, float h, float s) {
+  if (radius < 1) radius = 1;
+
+  int bestX = 0, bestY = 0;
+  float bestDist = 0;
+  bool hasBest = false;
+  bool directHit = false;
+
+  for (int y = -radius; y <= radius; ++y) {
+    for (int x = -radius; x <= radius; ++x) {
+      if (!IsValidHexColorPatternCoords(x, y, radius)) continue;
+      float ch, cs;
+      CalcHexHSByCoords(x*2, y*2, radius, &ch, &cs);
+      if (ch == h && cs == s) {
+        directHit = true;
+        bestX = x;
+        bestY = y;
+        hasBest = true;
+        break;
+      }
+      const float dist = (h-ch)*(h-ch)+(s-cs)*(s-cs);
+      if (!hasBest || dist < bestDist) {
+        hasBest = true;
+        bestX = x;
+        bestY = y;
+        bestDist = dist;
+      }
+    }
+  }
+
+  if (hpx) *hpx = bestX;
+  if (hpy) *hpy = bestY;
+  return directHit;
 }
 
 
@@ -2251,5 +2326,15 @@ IMPLEMENT_FUNCTION(VWidget, CalcHexColorPatternHexCoordsAt) {
 IMPLEMENT_FUNCTION(VWidget, GetHexColorPatternColorAt) {
   int hpx, hpy, radius;
   vobjGetParamSelf(hpx, hpy, radius);
-  RET_BOOL(Self ? Self->GetHexColorPatternColorAt(hpx, hpy, radius) : 0);
+  RET_INT(Self ? Self->GetHexColorPatternColorAt(hpx, hpy, radius) : 0);
+}
+
+// native final bool FindHexColorCoords (out int hpx, out int hpy, int radius, float h, float s);
+IMPLEMENT_FUNCTION(VWidget, FindHexColorCoords) {
+  int *hpx;
+  int *hpy;
+  int radius;
+  float h, s;
+  vobjGetParamSelf(hpx, hpy, radius, h, s);
+  RET_BOOL(Self ? Self->FindHexColorCoords(hpx, hpy, radius, h, s) : false);
 }
