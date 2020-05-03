@@ -180,7 +180,7 @@ bool ChangeColor (Object Sender, float newValue) {
   float b = (Sender == ColB ? newValue : ColB.Value);
   int Col = RGBA(int(r*255.0), int(g*255.0), int(b*255.0), 255);
 
-  SetCvarS('color', va("%x %x %x", int(r*255.0), int(g*255.0), int(b*255.0)));
+  SetCvarS('color', va("#%02x%02x%02x", int(r*255.0), int(g*255.0), int(b*255.0)));
   Anim.Color = Col;
   if (Mdl) Mdl.Color = Col;
   return true;
