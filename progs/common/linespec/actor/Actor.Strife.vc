@@ -679,7 +679,7 @@ final bool InquisitorCheckDistance () {
 //==========================================================================
 [decorate] final void A_ProgrammerDeath () {
   if (!CheckBossDeath()) return;
-
+  //FIXME: is this a bug?
   Level.ExecuteActionSpecial(LNSPEC_ExitNormal, 0, 0, 0, 0, 0, nullptr, 0, self);
   // this will execute sky changes
   A_BossDeath();

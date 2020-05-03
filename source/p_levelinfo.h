@@ -169,6 +169,8 @@ public:
   int FindFreeTID (int tidstart, int limit=0) const;
   bool IsTIDUsed (int tid, bool allowdead=false) const;
 
+  void ChangeSky (VStr skytex1, VStr skytex2);
+
   // static lights
   DECLARE_FUNCTION(AddStaticLight)
   DECLARE_FUNCTION(AddStaticLightRGB)
@@ -194,6 +196,8 @@ public:
 
   DECLARE_FUNCTION(FindFreeTID)
   DECLARE_FUNCTION(IsTIDUsed)
+
+  DECLARE_FUNCTION(ChangeSky)
 
   DECLARE_FUNCTION (get_CompatShortTex)
   DECLARE_FUNCTION (get_CompatStairs)

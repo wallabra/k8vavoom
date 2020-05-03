@@ -491,7 +491,8 @@ override name GetConScriptName (name LevelName) {
 defaultproperties {
   LevelInfoClass = StrifeLevelInfo;
   GameFilterFlag = EntityEx::GAME_Strife;
-  AcsHelper = 'strfhelp';
+  //AcsHelper = 'strfhelp';
+  AcsHelper = ''; //k8: there is no need to load ACS helper anymore
   GenericConScript = 'script00';
   TeleportFogState = 'Strife';
   DefaultKickBack = 100.0;

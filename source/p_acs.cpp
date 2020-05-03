@@ -6119,22 +6119,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ChangeSky)
-      {
-        // allow loading new skies as map textures
-        //int sky1tid = GTextureManager.NumForName(GetName8(sp[-2]), TEXTYPE_Wall, true, true);
-        //int sky2tid = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Wall, true, true);
-        int sky1tid = GTextureManager.FindOrLoadFullyNamedTextureAsMapTexture(GetStr(sp[-2]), nullptr, TEXTYPE_Wall, true);
-        int sky2tid = GTextureManager.FindOrLoadFullyNamedTextureAsMapTexture(GetStr(sp[-1]), nullptr, TEXTYPE_Wall, true);
-        /*
-        GCon->Logf("NEW SKY: %s (%d)  %s (%d)", *GetName8(sp[-2]), sky1tid, *GetName8(sp[-1]), sky2tid);
-        if (sky1tid > 0) {
-          VTexture *tex = GTextureManager(sky1tid);
-          GCon->Logf("  <%s> %s", *tex->Name, VTexture::TexTypeToStr(tex->Type));
-        }
-        */
-        if (sky1tid > 0) Level->Sky1Texture = sky1tid;
-        if (sky2tid > 0) Level->Sky2Texture = sky2tid;
-      }
+      Level->ChangeSky(GetStr(sp[-2]), GetStr(sp[-1]));
       sp -= 2;
       ACSVM_BREAK;
 

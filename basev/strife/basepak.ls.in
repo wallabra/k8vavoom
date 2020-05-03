@@ -13,7 +13,7 @@ $recursedirext|.vc|  progs/cgame/  @CMAKE_SOURCE_DIR@/progs/strife/cgame/
 $recursedirext|.vc|  progs/game/   @CMAKE_SOURCE_DIR@/progs/strife/game/
 
 // ACS helper
-acs/strfhelp.o  strfhelp.o
+//k8:no need! -- acs/strfhelp.o  strfhelp.o
 
 // temporary solution to make teaser versions work
 script32.lmp  @CMAKE_CURRENT_SOURCE_DIR@/script32.lmp

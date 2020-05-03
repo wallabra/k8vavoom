@@ -340,6 +340,29 @@ bool VLevelInfo::IsTIDUsed (int tid, bool allowdead) const {
 
 //==========================================================================
 //
+//  VLevelInfo::ChangeSky
+//
+//==========================================================================
+void VLevelInfo::ChangeSky (VStr skytex1, VStr skytex2) {
+  // allow loading new skies as map textures
+  //int sky1tid = GTextureManager.NumForName(GetName8(sp[-2]), TEXTYPE_Wall, true, true);
+  //int sky2tid = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Wall, true, true);
+  int sky1tid = GTextureManager.FindOrLoadFullyNamedTextureAsMapTexture(skytex1, nullptr, TEXTYPE_Wall, true);
+  int sky2tid = GTextureManager.FindOrLoadFullyNamedTextureAsMapTexture(skytex2, nullptr, TEXTYPE_Wall, true);
+  /*
+  GCon->Logf("NEW SKY: %s (%d)  %s (%d)", *GetName8(sp[-2]), sky1tid, *GetName8(sp[-1]), sky2tid);
+  if (sky1tid > 0) {
+    VTexture *tex = GTextureManager(sky1tid);
+    GCon->Logf("  <%s> %s", *tex->Name, VTexture::TexTypeToStr(tex->Type));
+  }
+  */
+  if (sky1tid > 0) Sky1Texture = sky1tid;
+  if (sky2tid > 0) Sky2Texture = sky2tid;
+}
+
+
+//==========================================================================
+//
 //  VLevelInfo natives
 //
 //==========================================================================
@@ -463,6 +486,15 @@ IMPLEMENT_FUNCTION(VLevelInfo, IsTIDUsed) {
   P_GET_INT(tid);
   P_GET_SELF;
   RET_BOOL(Self->IsTIDUsed(tid));
+}
+
+// native final void ChangeSky (string skytex1, optional string skytex2/*=skytex1*/);
+IMPLEMENT_FUNCTION(VLevelInfo, ChangeSky) {
+  VStr skytex1;
+  VOptParamStr skytex2(VStr::EmptyString);
+  vobjGetParamSelf(skytex1, skytex2);
+  if (!skytex2.specified) skytex2 = skytex1;
+  Self->ChangeSky(skytex1, skytex2);
 }
 
 // compat getters

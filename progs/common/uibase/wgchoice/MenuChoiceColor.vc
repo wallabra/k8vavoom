@@ -278,26 +278,7 @@ override void Tick (float DeltaTime) {
 void SetColor (int color) {
   currColor = color;
   RGB2HSV(color, out h, out s, out v);
-  /*
-  text = text.xstrip;
-  if (!text) text = "<undefined>";
-  if (current) {
-    currItem = items.length;
-    defItem = currItem;
-  }
-  items[$] = text;
 
-  auto oldFont = GetFont();
-  scope(exit) SetFont(oldFont);
-
-  SetFont('smallfont');
-  //SetTextAlign(hleft, vtop);
-  int hgt = 0, wdt = 0;
-  foreach (auto str; items) {
-    hgt += TextHeight(str);
-    wdt = max(wdt, TextWidth(str));
-  }
-  */
   int wdt = Width;
   int hgt = Height;
 
@@ -336,6 +317,7 @@ override void OnDraw () {
   if (phase) {
     int hpx, hpy;
     FindHexColorCoords(out hpx, out hpy, WheelRadius, h, s);
+    //printdebug("hpx=%s; hpy=%s", hpx, hpy);
 
     float hx, hy;
     CalcHexColorPatternHexCoordsAt(out hx, out hy, hpx, hpy, wheelX, wheelY, WheelRadius, WheelW, WheelH);
@@ -356,9 +338,9 @@ override void OnDraw () {
 
   int clr = HSV2RGB(h, s, v);
 
-  DrawText(4, ty, va("RED  :%3d", RGBGetR(clr)), CR_UNTRANSLATED); ty += FontHeight();
-  DrawText(4, ty, va("GREEN:%3d", RGBGetG(clr)), CR_UNTRANSLATED); ty += FontHeight();
-  DrawText(4, ty, va("BLUE :%3d", RGBGetB(clr)), CR_UNTRANSLATED); ty += FontHeight();
+  DrawText(4, ty, va("RED  :%3d  %02x", RGBGetR(clr), RGBGetR(clr)), CR_UNTRANSLATED); ty += FontHeight();
+  DrawText(4, ty, va("GREEN:%3d  %02x", RGBGetG(clr), RGBGetG(clr)), CR_UNTRANSLATED); ty += FontHeight();
+  DrawText(4, ty, va("BLUE :%3d  %02x", RGBGetB(clr), RGBGetB(clr)), CR_UNTRANSLATED); ty += FontHeight();
   ty += FontHeight()*2;
 
   DrawText(4, ty, va("H:%s", h), CR_UNTRANSLATED); ty += FontHeight();

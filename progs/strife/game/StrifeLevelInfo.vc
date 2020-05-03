@@ -25,6 +25,549 @@
 //**************************************************************************
 class StrifeLevelInfo : LineSpecialLevelInfo;
 
+enum VDOORSPEED = 16;
+enum VDOORWAIT = 150;
+
+enum LINE_FRONT = 0;
+enum LINE_BACK = 1;
+
+enum SIDE_FRONT = 0;
+enum SIDE_BACK = 1;
+
+
+//==========================================================================
+//
+//  GetQuestItemName
+//
+//==========================================================================
+name GetQuestItemName (int idx) {
+  if (idx <= 0) return 'QuestItemThatDoesNotExist';
+  return name(va("QuestItem%d", idx));
+}
+
+
+//==========================================================================
+//
+//  GetMusicName
+//
+//==========================================================================
+name GetMusicName (int idx) {
+  switch (idx) {
+    case 1: return 'd_action';
+    case 2: return 'd_tavern';
+    case 3: return 'd_danger';
+    case 4: return 'd_fast';
+    case 5: return 'd_intro';
+    case 6: return 'd_darker';
+    case 7: return 'd_strike';
+    case 8: return 'd_slide';
+    case 9: return 'd_tribal';
+    case 10: return 'd_march';
+    case 11: return 'd_danger';
+    case 12: return 'd_mood';
+    case 13: return 'd_castle';
+    case 14: return 'd_darker';
+    case 15: return 'd_action';
+    case 16: return 'd_fight';
+    case 17: return 'd_spense';
+    case 18: return 'd_slide';
+    case 19: return 'd_strike';
+    case 20: return 'd_dark';
+    case 21: return 'd_tech';
+    case 22: return 'd_slide';
+    case 23: return 'd_drone';
+    case 24: return 'd_panthr';
+    case 25: return 'd_sad';
+    case 26: return 'd_instry';
+    case 27: return 'd_tech';
+    case 28: return 'd_action';
+    case 29: return 'd_instry';
+    case 30: return 'd_drone';
+    case 31: return 'd_fight';
+    case 32: return 'd_happy';
+    case 33: return 'd_end';
+  }
+  return '';
+}
+
+
+//==========================================================================
+//
+//  StrifeCheckInv
+//
+//==========================================================================
+int StrifeCheckInv (Entity ent, name invName) {
+  if (!invName) return 0;
+  EntityEx e = EntityEx(ent);
+  if (!e) return 0;
+  return e.CheckInventory(invName, allowReplacement:false);
+}
+
+
+//==========================================================================
+//
+//  StrifeCheckQuestInv
+//
+//==========================================================================
+int StrifeCheckQuestInv (Entity ent, line_t *line, optional int side) {
+  if (!line) return 0;
+  if (!specified_side) side = 0; // just in case
+  int qidx = int(XLevel.Sides[line.sidenum[side]].Mid.RowOffset);
+  return StrifeCheckInv(ent, GetQuestItemName(qidx&31));
+}
+
+
+//==========================================================================
+//
+//  StrifeGiveInv
+//
+//==========================================================================
+void StrifeGiveInv (Entity ent, name invName, optional int amount) {
+  if (!invName) return;
+  EntityEx e = EntityEx(ent);
+  if (!e) return;
+  if (!specified_amount) amount = 1;
+  e.GiveInventory(invName, amount, allowReplacement:false);
+}
+
+
+//==========================================================================
+//
+//  ClientPrint
+//
+//==========================================================================
+void ClientPrint (Entity ent, string s) {
+  EntityEx e = EntityEx(ent);
+  if (!e || !s || !e.Player) return;
+  e.Player.ClientCenterPrint(s);
+}
+
+
+//==========================================================================
+//
+//  EntitySound
+//
+//==========================================================================
+void EntitySound (Entity ent, name snd) {
+  EntityEx e = EntityEx(ent);
+  if (!e || !snd) return;
+  //Activator->StartSound(GetName(sp[-2]), 0, sp[-1]/127.0f, 1.0f, false);
+  e.PlaySound(snd, CHAN_VOICE);
+}
+
+
+//==========================================================================
+//
+//  ExecSpecial
+//
+//==========================================================================
+int ExecSpecial (Entity ent, line_t *line, int side, int spec, optional int arg1, optional int arg2, optional int arg3, optional int arg4, optional int arg5) {
+  return ::ExecuteActionSpecial(spec, arg1, arg2, arg3, arg4, arg5, line, side, ent);
+}
+
+
+//==========================================================================
+//
+//  ExecuteActionSpecial
+//
+//==========================================================================
+override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
+                                   int Arg4, int Arg5, line_t *line, int side, Entity ent)
+{
+  if (Level.Game.IsDumbClient) return 0;
+
+  if (Special == LNSPEC_ACSExecuteWithResult && Arg1 == 0) {
+    // Arg1 is stript number
+    // Arg2 is type
+    // Arg3 is tag
+    bool isdm = (Level.Game.netgame && Level.Game.deathmatch);
+    EntityEx e = EntityEx(ent);
+    printdebug("%C: exec special #%d (%d,%d,%d,%d,%d) (A=%C; line=%d; side=%d)", self, Special, Arg1, Arg2, Arg3, Arg4, Arg5, ent, (line ? line-&XLevel.Lines[0] : -1), side);
+    int type = Arg2;
+    int tag = Arg3;
+    int res = 0;
+    switch (type) {
+      // lower floor, raise ceiling
+      case 40:
+        //SetResultValue(Door_Open(tag, VDOORSPEED/2)|Floor_LowerToLowest(tag, VDOORSPEED/2));
+        res = ExecSpecial(ent, line, side, LNSPEC_DoorOpen, tag, VDOORSPEED/2);
+        res |= ExecSpecial(ent, line, side, LNSPEC_FloorLowerToLowest, tag, VDOORSPEED/2);
+        return res;
+
+      // map teleport
+      case 52:
+        //UNUSED: probably because as once-trigger it makes no use in Strife
+        tag /= 100;
+        //if (tag == 0) Exit_Normal(0); else Teleport_NewMap(tag, 0, FALSE);
+        if (tag == 0) {
+          res = ExecSpecial(ent, line, side, LNSPEC_ExitNormal);
+        } else {
+          res = ExecSpecial(ent, line, side, LNSPEC_TeleportNewMap, tag);
+        }
+        return res;
+
+      // teleport to new map
+      case 145:
+        if (isdm) {
+          //Floor_RaiseByValue(tag, 128, 64);
+          res = ExecSpecial(ent, line, side, LNSPEC_FloorLowerToNearest, tag, 128, 64);
+          if (line) line->special = 0; //clearlinespecial();
+        } else {
+          //printdebug("TELEPORT! arg1=%s; arg2=%s", tag/100, tag%100);
+          //Teleport_NewMap(tag/100, tag%100, TRUE);
+          res = ExecSpecial(ent, line, side, LNSPEC_TeleportNewMap, tag/100, tag%100, 1);
+        }
+        return res;
+
+      // lower platform, lock gold key
+      case 154:
+        //SetResultValue(Plat_DownWaitUpStayLip(tag, 32, 105, 0));
+        return ExecSpecial(ent, line, side, LNSPEC_PlatDownWaitUpStayLip, tag, 32, 105);
+
+      // lower floor, raise ceiling
+      case 174:
+        //SetResultValue(Door_Open(tag, VDOORSPEED/2)|Floor_LowerToLowest(tag, VDOORSPEED/2));
+        res = ExecSpecial(ent, line, side, LNSPEC_DoorOpen, tag, VDOORSPEED/2);
+        res |= ExecSpecial(ent, line, side, LNSPEC_FloorLowerToLowest, tag, VDOORSPEED/2);
+        return res;
+
+      // raise alert if touched laser
+      case 175:
+        //if (GetActorFloorZ(0)+16.0 > GetActorZ(0)) NoiseAlert(0, 0);
+        if (ent) {
+          if (ent.FloorZ+16 > ent.Origin.z) res = ExecSpecial(ent, line, side, LNSPEC_NoiseAlert);
+        }
+        return res;
+
+      // lower platform, lock power 3 key
+      case 177:
+        //SetResultValue(Plat_DownWaitUpStayLip(tag, 32, 105, 0));
+        return ExecSpecial(ent, line, side, LNSPEC_PlatDownWaitUpStayLip, tag, 32, 105);
+
+      // raise floor by 512, change texture and special
+      case 180:
+      case 181:
+        //SetResultValue(Floor_RaiseByValueTxTy(tag, 8, 512));
+        return ExecSpecial(ent, line, side, LNSPEC_FloorRaiseByValueChange, tag, 8, 512);
+
+      // lower floor, raise ceiling
+      case 183:
+        //SetResultValue(Door_Open(tag, VDOORSPEED/2)|Floor_LowerToHighest(tag, VDOORSPEED/2, 128));
+        res = ExecSpecial(ent, line, side, LNSPEC_DoorOpen, tag, VDOORSPEED/2);
+        res |= ExecSpecial(ent, line, side, LNSPEC_FloorLowerToHighest, tag, VDOORSPEED/2, 128);
+        return res;
+
+      // platform up
+      case 184:
+        // what needs to be fixed?
+        //if (Plat_UpNearestWaitDownStay(tag, 16, 35)) { /*FIXME*/ }
+        res = ExecSpecial(ent, line, side, LNSPEC_PlaneUpNearestWaitDownStay, tag, 16, 35);
+        //if (res) { /*FIXME*/ }
+        return res;
+
+      // teleport to new map, only if front side crossed
+      case 186:
+        if (side != LINE_FRONT) return 0;
+        if (isdm) {
+          //Floor_RaiseByValue(tag, 128, 64);
+          res = ExecSpecial(ent, line, side, LNSPEC_FloorRaiseByValue, tag, 128, 64);
+          if (line) line->special = 0; //clearlinespecial();
+        } else {
+          //Teleport_NewMap(tag/100, tag%100, TRUE);
+          res = ExecSpecial(ent, line, side, LNSPEC_TeleportNewMap, tag/100, tag%100, 1);
+        }
+        return res;
+
+      // remove force field when have required item
+      case 187:
+        //if (CheckInventory(QuestItems[GetLineRowOffset()&31]) || gametype() == GAME_NET_DEATHMATCH) {
+        if (isdm || StrifeCheckQuestInv(e, line, side)) {
+          //ClearForceField(tag);
+          res = ExecSpecial(ent, line, side, LNSPEC_ClearForceField, tag);
+          if (line) line->special = 0; //clearlinespecial();
+        }
+        return res;
+
+      // open door when blown up gates
+      case 188:
+        if (isdm || StrifeCheckInv(e, 'QuestItem16')) {
+          //Door_Open(tag, VDOORSPEED);
+          res = ExecSpecial(ent, line, side, LNSPEC_DoorOpen, tag, VDOORSPEED);
+          if (line) line->special = 0; //clearlinespecial();
+        }
+        return res;
+
+      // lower floor, raise ceiling
+      case 189:
+        //SetResultValue(Door_Open(tag, VDOORSPEED/2)|Floor_LowerToLowest(tag, VDOORSPEED/2));
+        res = ExecSpecial(ent, line, side, LNSPEC_DoorOpen, tag, VDOORSPEED/2);
+        res |= ExecSpecial(ent, line, side, LNSPEC_FloorLowerToLowest, tag, VDOORSPEED/2);
+        return res;
+
+      // lower floor when got a quest item
+      case 193:
+        if (isdm || StrifeCheckQuestInv(e, line, side)) {
+          //Floor_LowerToLowest(tag, 8);
+          res = ExecSpecial(ent, line, side, LNSPEC_FloorLowerToLowest, tag, 8);
+          if (line) line->special = 0; //clearlinespecial();
+        }
+        return res;
+
+      // open door and give "Freed prisoners" quest item
+      case 194:
+        if (ExecSpecial(ent, line, side, LNSPEC_DoorOpen, tag, VDOORSPEED)) {
+          ClientPrint(e, "You've freed the prisoners!");
+          StrifeGiveInv(e, 'QuestItem13');
+        } else {
+          //SetResultValue(0);
+        }
+        return res;
+
+      // lower floor if killed Bishop
+      case 196:
+        //UNUSED
+        if (e && e.GetSigilPieces() > 1) {
+          //Floor_LowerToLowest(tag, 8);
+          res = ExecSpecial(ent, line, side, LNSPEC_FloorLowerToLowest, tag, 8);
+          if (line) line->special = 0; //clearlinespecial();
+        }
+        return res;
+
+      // close door if killed Bishop
+      // funny that this is also used in final boss level,
+      // since it's clear that player has 2 pieces so normal Door_Close could be used
+      case 197:
+        if (e && e.GetSigilPieces() > 1) {
+          //Door_Close(tag, VDOORSPEED*4);
+          res = ExecSpecial(ent, line, side, LNSPEC_DoorClose, tag, VDOORSPEED*4);
+          if (line) line->special = 0; //clearlinespecial();
+        }
+        return res;
+
+      // raise alert if not wearing officers uniform
+      case 198:
+        if (!StrifeCheckInv(e, 'OfficersUniform')) res = ExecSpecial(ent, line, side, LNSPEC_NoiseAlert);
+        return res;
+
+      // destroys the converter in factory
+      case 199:
+        if (ExecSpecial(ent, line, side, LNSPEC_CeilingLowerAndCrush, tag, 8, 10)) {
+          ClientPrint(e, "You've destroyed the Converter!");
+          StrifeGiveInv(e, 'QuestItem25', 1);
+          StrifeGiveInv(e, 'UpgradeStamina', 10);
+          StrifeGiveInv(e, 'UpgradeAccuracy', 10);
+        } else {
+          //SetResultValue(0);
+        }
+        return res;
+
+      // open door if got sigil (killed Programmer)
+      case 200:
+        //UNUSED: Probably replaced with quest-requiring specials
+        if (StrifeCheckInv(e, 'Sigil')) {
+          //Door_Open(tag, VDOORSPEED);
+          res = ExecSpecial(ent, line, side, LNSPEC_DoorOpen, tag, VDOORSPEED);
+          if (line) line->special = 0; //clearlinespecial();
+        }
+        return res;
+
+      // change music
+      case 203:
+      case 204:
+        //UNUSED
+        //if (tag >= 0 && tag <= 33) SetMusic(MusicNames[tag]);
+        if (tag >= 0 && tag <= 33) Level.ChangeMusic(GetMusicName(tag));
+        return 0;
+
+      // raise alert if have chalice
+      case 206:
+        if (StrifeCheckInv(e, 'OfferingChalice')) res = ExecSpecial(ent, line, side, LNSPEC_NoiseAlert);
+        return res;
+
+      // raise alert if got flamethrower
+      case 208:
+        //UNUSED
+        if (StrifeCheckInv(e, 'FlameThrower')) res = ExecSpecial(ent, line, side, LNSPEC_NoiseAlert);
+        return res;
+
+      // raise stairs if have Chalice
+      case 209:
+        //UNUSED
+        if (StrifeCheckInv(e, 'OfferingChalice')) {
+          //SetResultValue(Generic_Stairs(tag, 16, 16, 0, 0));
+          res = ExecSpecial(ent, line, side, LNSPEC_StairsGeneric, tag, 16, 16);
+        } else {
+          ClientPrint(e, "You need the chalice!");
+          EntitySound(e, '*usefail');
+          //SetResultValue(0);
+        }
+        return res;
+
+      // lower floor when got flamethrower; used only in teaser version
+      case 212:
+        if (StrifeCheckInv(e, 'FlameThrower')) {
+          //Floor_LowerToLowest(tag, 8);
+          res = ExecSpecial(ent, line, side, LNSPEC_FloorLowerToLowest, tag, 8);
+          if (line) line->special = 0; //clearlinespecial();
+        }
+        return res;
+
+      // open door if have chalice; used only in teaser version
+      case 213:
+        if (!StrifeCheckInv(e, 'OfferingChalice')) {
+          ClientPrint(e, "You need the chalice !");
+          EntitySound(e, '*usefail');
+          //SetResultValue(0);
+        } else {
+          //SetResultValue(Door_Raise(0, VDOORSPEED, VDOORWAIT, tag));
+          res = ExecSpecial(ent, line, side, LNSPEC_DoorRaise, 0, VDOORSPEED, VDOORWAIT, tag);
+        }
+        return res;
+
+      // platform lower for 30 secs
+      // this only needs to be ACS for the long delay
+      case 214:
+        //SetResultValue(Plat_DownWaitUpStayLip(tag, 8, 1050, 0, 1));
+        return ExecSpecial(ent, line, side, LNSPEC_PlatDownWaitUpStayLip, tag, 8, 1050, 0, 1);
+
+      // play Blackbird voice if got a quest item
+      case 215:
+        if (StrifeCheckInv(e, GetQuestItemName((tag%100)&31))) {
+          //SendToCommunicator(tag/100, 0, 1, 0);
+          res = ExecSpecial(ent, line, side, LNSPEC_SendToCommunicator, tag/100, 0, 1, 0);
+          if (line) line->special = 0; //clearlinespecial();
+        }
+        return res;
+
+      // raise door if got a quest item
+      case 216:
+        if (isdm || StrifeCheckQuestInv(e, line, side)) {
+          //Door_Raise(tag, VDOORSPEED, VDOORWAIT);
+          res = ExecSpecial(ent, line, side, LNSPEC_DoorRaise, tag, VDOORSPEED, VDOORWAIT);
+        }
+        return res;
+
+      // lower floor, locked
+      case 219:
+      case 220:
+        //SetResultValue(Floor_LowerToHighest(tag, 8, 128));
+        return ExecSpecial(ent, line, side, LNSPEC_FloorLowerToHighest, tag, 8, 128);
+
+      // lower floor, give stats upgrade
+      case 226:
+        if (ExecSpecial(ent, line, side, LNSPEC_FloorLowerToHighest, tag, 8, 128)) {
+          StrifeGiveInv(e, 'UpgradeStamina', 10);
+          StrifeGiveInv(e, 'UpgradeAccuracy', 10);
+          ClientPrint(e, "Congratulations! You have completed the training area");
+        } else {
+          //SetResultValue(0);
+        }
+        return res;
+
+      // close door when have a quest item
+      case 227:
+        if (isdm || StrifeCheckQuestInv(e, line, side)) {
+          //Door_Close(tag, VDOORSPEED);
+          res = ExecSpecial(ent, line, side, LNSPEC_DoorClose, tag, VDOORSPEED);
+          if (line) line->special = 0; //clearlinespecial();
+        }
+        return res;
+
+      // play Entity boss voice
+      case 228:
+        if (StrifeCheckInv(e, 'QuestItem24')) {
+          if (StrifeCheckInv(e, 'QuestItem28')) {
+            //SendToCommunicator(130, 0, 2, 1);
+            res = ExecSpecial(ent, line, side, LNSPEC_SendToCommunicator, 130, 0, 2, 1);
+          } else {
+            //SendToCommunicator(128, 0, 2, 1);
+            res = ExecSpecial(ent, line, side, LNSPEC_SendToCommunicator, 128, 0, 2, 1);
+          }
+          if (line) line->special = 0; //clearlinespecial();
+        }
+        return res;
+
+      // open animated door if have all sigil pieces
+      case 229:
+        //SetResultValue(0);
+        res = 0;
+        if (e && e.GetSigilPieces() == 5) {
+          //SetResultValue(Door_Animated(tag, 4, 105));
+          res = ExecSpecial(ent, line, side, LNSPEC_DoorAnimated, tag, 4, 105);
+        }
+        return res;
+
+      // open door when have a quest item
+      case 230:
+        if (isdm || StrifeCheckQuestInv(e, line, side)) {
+          //Door_Open(tag, VDOORSPEED);
+          res = ExecSpecial(ent, line, side, LNSPEC_DoorOpen, tag, VDOORSPEED);
+          if (line) line->special = 0; //clearlinespecial();
+        }
+        return res;
+
+      // open door if have Oracle pass
+      case 232:
+        //k8: `!isdm`?
+        if (isdm || !StrifeCheckInv(e, 'QuestItem18')) {
+          ClientPrint(e, "You need the Oracle Pass!");
+          EntitySound(e, '*usefail');
+          //SetResultValue(0);
+          res = 0;
+        } else {
+          //SetResultValue(Door_Raise(0, VDOORSPEED, VDOORWAIT, tag));
+          res = ExecSpecial(ent, line, side, LNSPEC_DoorRaise, 0, VDOORSPEED, VDOORWAIT, tag);
+        }
+        return res;
+
+      // lower floor, raise ceiling, play voice
+      case 233:
+        //if (Door_Open(tag, VDOORSPEED/2)|Floor_LowerToLowest(tag, VDOORSPEED/2)) {
+        res = ExecSpecial(ent, line, side, LNSPEC_DoorOpen, tag, VDOORSPEED/2);
+        res |= ExecSpecial(ent, line, side, LNSPEC_FloorLowerToLowest, tag, VDOORSPEED/2);
+        if (res) {
+          //SendToCommunicator(70, 0, 0, 0);
+          res = ExecSpecial(ent, line, side, LNSPEC_SendToCommunicator, 70, 0, 0, 0);
+          //SetResultValue(1);
+          res = 1;
+        } else {
+          //SetResultValue(0);
+        }
+        return res;
+
+      // open door when got quest to go to prison
+      case 234:
+        if (isdm || StrifeCheckInv(e, 'QuestItem3')) {
+          //SetResultValue(Door_Raise(tag, VDOORSPEED, VDOORWAIT));
+          res = ExecSpecial(ent, line, side, LNSPEC_DoorRaise, tag, VDOORSPEED, VDOORWAIT);
+        } else {
+          //SetResultValue(Door_LockedRaise(0, 0, 0, 102));
+          res = ExecSpecial(ent, line, side, LNSPEC_DoorLockedRaise, 0, 0, 0, 102);
+        }
+        return res;
+
+      // lower floor, raise ceiling when have all 5 sigil pieces
+      case 235:
+        if (e && e.GetSigilPieces() < 5) {
+          //SetResultValue(0);
+          return 0;
+        }
+        //SetResultValue(Door_Open(tag, VDOORSPEED/2)|Floor_LowerToLowest(tag, VDOORSPEED/2));
+        res = ExecSpecial(ent, line, side, LNSPEC_DoorOpen, tag, VDOORSPEED/2);
+        res |= ExecSpecial(ent, line, side, LNSPEC_FloorLowerToLowest, tag, VDOORSPEED/2);
+        return res;
+
+      // not a line type, but used by the Programmer death script
+      //FIXME: this seems to be a bug
+      case 256:
+        Level.ChangeSky("SKYMNT01", "SKYMNT01");
+        return 1;
+    }
+  }
+
+  return ::ExecuteActionSpecial(Special, Arg1, Arg2, Arg3, Arg4, Arg5, line, side, ent);
+}
+
 
 //==========================================================================
 //

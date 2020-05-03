@@ -266,6 +266,9 @@ native final void ChangeMusic (name SongName);
 native final int FindFreeTID (optional int tidstart, optional int limit);
 native final bool IsTIDUsed (int tid);
 
+// the same as ACS call
+native final void ChangeSky (string skytex1, optional string skytex2/*=skytex1*/);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct MobjByTIDIteratorInfo {
