@@ -32,9 +32,6 @@
 #include "gamedefs.h"
 //#include "sv_local.h"
 
-// alas, i couldn't do that yet
-//#define VV_HACK_3D_SLOPES_PATH_TRAVERSE
-
 static VCvarB dbg_use_buggy_thing_traverser("dbg_use_buggy_thing_traverser", false, "Use old and buggy thing traverser (for debug)?", 0);
 static VCvarB dbg_use_vavoom_thing_coldet("dbg_use_vavoom_thing_coldet", false, "Use original Vavoom buggy thing coldet (for debug)?", 0);
 
@@ -238,12 +235,9 @@ static TMapNC<VEntity *, bool> vptSeenThings;
 //
 //==========================================================================
 VPathTraverse::VPathTraverse (VThinker *Self, intercept_t **AInPtr, float InX1,
-                              float InY1, float x2, float y2, int flags,
-                              float az1, float az2)
+                              float InY1, float x2, float y2, int flags)
   : seen3DSlopes(false)
   , seenThing(false)
-  , trStart(InX1, InY1, az1)
-  , trEnd(x2, y2, az2)
   , Count(0)
   , In(nullptr)
   , InPtr(AInPtr)
@@ -290,6 +284,7 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
     const bool wantThings = (flags&PT_ADDTHINGS);
     const bool wantLines = (flags&PT_ADDLINES);
     const bool earlyOut = (flags&PT_EARLYOUT);
+
     int mapx, mapy;
     while (walker.next(mapx, mapy)) {
       if (wantThings) AddThingIntercepts(Self, mapx, mapy);
@@ -318,7 +313,11 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
   Count = Intercepts.Num();
   In = Intercepts.Ptr();
 
-  if (seen3DSlopes && seenThing) ResortIntercepts(Self);
+  // add "extra thing check" flag
+  if (seen3DSlopes && seenThing) {
+    intercept_t *ip = In;
+    for (int f = Count; f > 0; --f, ++ip) ip->Flags |= intercept_t::IF_ExtraThingCheck;
+  }
 
   // just in case
 #ifdef PARANOID
@@ -398,13 +397,11 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
     if (frac < 0 || frac > 1.0f) continue; // behind source or beyond end point
 
     // check if any of line sectors contains 3d floors with slopes
-    #ifdef VV_HACK_3D_SLOPES_PATH_TRAVERSE
     if (wantThings && !seen3DSlopes) {
       if (ld->frontsector && ld->frontsector->Has3DSlopes()) seen3DSlopes = true;
       else if (ld->backsector && ld->backsector->Has3DSlopes()) seen3DSlopes = true;
       //if (seen3DSlopes) GCon->Logf(NAME_Debug, "AddLineIntercepts: line #%d has 3d slopes", (int)(ptrdiff_t)(ld-&Self->XLevel->Lines[0]));
     }
-    #endif
 
     bool doExit = false;
     // try to early out the check
@@ -575,124 +572,4 @@ bool VPathTraverse::GetNext () {
   //k8: it is already sorted
   *InPtr = In++;
   return true;
-}
-
-
-//==========================================================================
-//
-//  VPathTraverse::CompareTempDists
-//
-//==========================================================================
-int VPathTraverse::CompareTempDists (const void *aa, const void *bb, void *) {
-  if (aa == bb) return 0;
-  const intercept_t *a = (const intercept_t *)aa;
-  const intercept_t *b = (const intercept_t *)bb;
-  if (a->tmpHitDist < b->tmpHitDist) return -1;
-  if (a->tmpHitDist > b->tmpHitDist) return 1;
-  return 0;
-}
-
-
-//==========================================================================
-//
-//  VPathTraverse::ResortIntercepts
-//
-//==========================================================================
-void VPathTraverse::ResortIntercepts (VThinker *Self) {
-#ifdef VV_HACK_3D_SLOPES_PATH_TRAVERSE
-  if (Count < 2) return; // just in case
-
-  // calculate hit distances
-  const TVec delta = trEnd-trStart;
-  intercept_t *ip = In;
-  TVec lineStart = trStart;
-  for (int f = 0; f < Count; ++f, ++ip) {
-    if (ip->line) {
-      // hit a line
-      sector_t *sec;
-      line_t *li = ip->line;
-      TVec hp = trStart+ip->frac*delta;
-      //lineEnd = hp;
-
-      if ((li->flags&ML_TWOSIDED) && li->PointOnSide(trStart)) {
-        sec = li->backsector;
-      } else {
-        sec = li->frontsector;
-      }
-
-      /*
-      // check for shooting floor or ceiling
-      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, PuffType, outHitPoint, puffEntity:puffEntity)) {
-        //printdebug("%C: hit floor/ceiling (puff=%C)", self, PuffType);
-        return false;
-      }
-      */
-      TVec hp2;
-      if (!Self->XLevel->CheckPassPlanes(sec, lineStart, /*lineEnd*/hp, SPF_NOBLOCKSHOOT, &hp2, nullptr, nullptr, nullptr)) {
-        //GCon->Logf(NAME_Debug, "  plane hit!");
-        // cut here
-        Count = f;
-        return;
-        /*
-        lineStart = hp;
-        hp = hp2;
-        */
-      } else {
-        lineStart = hp;
-      }
-
-      if (li->flags&ML_TWOSIDED) {
-        // crosses a two sided line
-        float opentop = 0.0;
-        opening_t *open = SV_LineOpenings(li, hp, SPF_NOBLOCKING|SPF_NOBLOCKSHOOT, false/*no midtex*/);
-        if (open) opentop = open->top;
-        while (open) {
-          if (open->bottom <= hp.z && open->top >= hp.z) {
-            if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN))) break; // shot continues
-          }
-          open = open->next;
-        }
-        if (!open) {
-          /*
-          if (li->frontsector->ceiling.pic == skyflatnum &&
-              li->backsector->ceiling.pic == skyflatnum &&
-              hp.z > opentop)
-          {
-            // it's a sky hack wall
-            if (outHitPoint) *outHitPoint = hp;
-            return false;
-          }
-          */
-          GCon->Logf(NAME_Debug, "   no opening for line #%d", (int)(ptrdiff_t)(ip->line-&Self->XLevel->Lines[0]));
-          // cut here
-          Count = f;
-          return;
-        }
-      }
-
-      ip->tmpHitDist = (hp-trStart).lengthSquared();
-    } else {
-      // hit a thing
-      vassert(ip->thing);
-      TVec hp = ip->frac*delta;
-      ip->tmpHitDist = hp.lengthSquared();
-    }
-  }
-
-  GCon->Log(NAME_Debug, "=============== BEFORE");
-  ip = In;
-  for (int f = Count; f > 0; --f, ++ip) {
-    GCon->Logf(NAME_Debug, "  frac=%g; dist=%g; line=#%d", ip->frac, ip->tmpHitDist, (ip->line ? (int)(ptrdiff_t)(ip->line-&Self->XLevel->Lines[0]) : -1));
-  }
-
-  return;
-
-  timsort_r(In, (unsigned)Count, sizeof(ip[0]), &CompareTempDists, nullptr);
-
-  GCon->Log(NAME_Debug, "=============== AFTER");
-  ip = In;
-  for (int f = Count; f > 0; --f, ++ip) {
-    GCon->Logf(NAME_Debug, "  frac=%g; dist=%g; line=#%d", ip->frac, ip->tmpHitDist, (ip->line ? (int)(ptrdiff_t)(ip->line-&Self->XLevel->Lines[0]) : -1));
-  }
-#endif
 }

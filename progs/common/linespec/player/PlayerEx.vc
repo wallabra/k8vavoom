@@ -2060,11 +2060,9 @@ bool UsePuzzleItem (int PuzzleItemType) {
   AngleVector(MO.Angles, out PuzzleUseDir);
   float x1 = MO.Origin.x;
   float y1 = MO.Origin.y;
-  float z1 = MO.Origin.z;
   float x2 = x1+USERANGE*PuzzleUseDir.x;
   float y2 = y1+USERANGE*PuzzleUseDir.y;
-  float z2 = z1+USERANGE*PuzzleUseDir.z;
-  foreach MO.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/, z1, z2) {
+  foreach MO.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     EntityEx mobj;
     TVec hit_point;
     opening_t *open;

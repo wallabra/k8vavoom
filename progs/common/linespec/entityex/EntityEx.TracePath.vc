@@ -373,7 +373,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
   float y2 = y1+dist*bottracedir.y;
 
   intercept_t *in;
-  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/, srcOrigin.z, srcOrigin.z) {
+  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     float currDist = dist*in->frac;
     if (in->bIsALine) {
       // line
@@ -549,7 +549,7 @@ final EntityEx CheckLineAttackWithCB (TVec dir, float distance, bool delegate (E
   dst = shootOrigin+distance*dir;
   lineStart = shootOrigin;
 
-  foreach PathTraverse(in, Origin.x, Origin.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/, shootOrigin.z, dst.z) {
+  foreach PathTraverse(in, Origin.x, Origin.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     //TVec hit_point, real_hit_point;
     //EntityEx th;
     if (in->bIsALine) {

@@ -150,7 +150,7 @@ override Entity PickActor (optional TVec org, TVec dir, float distance, optional
   TVec dst = shootOrigin+distance*dir;
   TVec lineStart = shootOrigin;
 
-  foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/, org.z, dst.z) {
+  foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     TVec hit_point, real_hit_point;
     line_t *li;
     EntityEx th;
@@ -234,6 +234,11 @@ override Entity PickActor (optional TVec org, TVec dir, float distance, optional
 
     if (th.Origin.z+th.Height < hit_point.z) continue; // shot over the thing
     if (th.Origin.z > hit_point.z) continue; // shot under the thing
+
+    if (in->bExtraThingCheck && !XLevel.BSPTraceLine(shootOrigin, hit_point, nullptr, nullptr, SPF_NOBLOCKING)) {
+      //printdebug("%C: cannot be hit!", th);
+      continue;
+    }
 
     // hit thing
     // position a bit closer
@@ -368,7 +373,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
   }
 
   lineStart = shootOrigin;
-  foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES|(allowEntities ? PT_ADDTHINGS : 0)/*|PT_EARLYOUT*/, org.z, dst.z) {
+  foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES|(allowEntities ? PT_ADDTHINGS : 0)/*|PT_EARLYOUT*/) {
     TVec hit_point, real_hit_point;
     line_t *li;
 
@@ -508,7 +513,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
 final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
                               optional bool noVertAutoAim, optional class!EntityEx rocketType)
 {
-  float x2, y2, z2;
+  float x2, y2;
   float topangle, botangle;
   TVec dir;
   intercept_t *in;
@@ -527,7 +532,6 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
   AngleVector(angles, out aim_dir);
   x2 = Origin.x+distance*aim_dir.x;
   y2 = Origin.y+distance*aim_dir.y;
-  z2 = Origin.z+distance*aim_dir.z;
   aim_z = Origin.z+(rocketType ? CalculateMissileAttackZOfs(rocketType) : CalculateLineAttackZOfs());
   aim_range2d = Length2D(vector(distance*aim_dir.x, distance*aim_dir.y));
 
@@ -542,7 +546,9 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
   aim_range = distance;
   linetarget = none;
 
-  foreach PathTraverse(in, Origin.x, Origin.y, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/, Origin.z, z2) {
+  TVec shootOrigin = vector(Origin.x, Origin.z, aim_z);
+
+  foreach PathTraverse(in, Origin.x, Origin.y, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     line_t *li;
     EntityEx th;
     float thingtopslope;
@@ -604,7 +610,16 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
 
     if (thingbottomslope > aim_topslope) continue; // shot under the thing
 
-    // this thing can be hit!
+    // this thing can be hit! (maybe)
+    if (in->bExtraThingCheck) {
+      // check angles to see if the thing can be aimed at
+      TVec hit_point = shootOrigin+(distance*in->frac)*aim_dir;
+      if (!XLevel.BSPTraceLine(shootOrigin, hit_point, nullptr, nullptr, SPF_NOBLOCKING)) {
+        //printdebug("%C: cannot be hit!", th);
+        continue;
+      }
+    }
+
     if (thingtopslope > aim_topslope) thingtopslope = aim_topslope;
 
     if (thingbottomslope < aim_bottomslope) thingbottomslope = aim_bottomslope;
@@ -819,7 +834,7 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
   EntityEx th;
 
   //printdebug("=== LineAttack ===");
-  foreach PathTraverse(in, Origin.x, Origin.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/, Origin.z, dst.z) {
+  foreach PathTraverse(in, Origin.x, Origin.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     //printdebug("LineAttack: isline=%B; frac=%s; lstart=%s", in->bIsALine, in->frac, lineStart);
     //if (!in->bIsALine) printdebug("LineAttack:   thing: frac=%s; thing=%C; dist=%s", in->frac, in->Thing, length2D(in.Thing.Origin-Origin));
 
@@ -916,8 +931,9 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
     // check for physical attacks on a ghost
     if (th.bGhost && NoAttackGhosts) continue;
 
-    if (!XLevel.BSPTraceLine(shootOrigin, hit_point, nullptr, nullptr, SPF_NOBLOCKING)) {
-      printdebug("%C: cannot be hit!", th);
+    if (in->bExtraThingCheck && !XLevel.BSPTraceLine(shootOrigin, hit_point, nullptr, nullptr, SPF_NOBLOCKING)) {
+      //printdebug("%C: cannot be hit!", th);
+      continue;
     }
 
     // hit a thing
@@ -1035,7 +1051,7 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
   dst = shootOrigin+distance*dir;
   lineStart = shootOrigin;
   bool DidHit = false;
-  foreach PathTraverse(in, Origin.x, Origin.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/, Origin.z, dst.z) {
+  foreach PathTraverse(in, Origin.x, Origin.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     TVec hit_point;
     line_t *li;
     EntityEx th;
@@ -1123,6 +1139,11 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
     }
 
     // hit thing
+    if (in->bExtraThingCheck && !XLevel.BSPTraceLine(shootOrigin, hit_point, nullptr, nullptr, SPF_NOBLOCKING)) {
+      //printdebug("%C: cannot be hit!", th);
+      continue;
+    }
+
     // position a bit closer
     hit_point -= 10.0*dir;
 

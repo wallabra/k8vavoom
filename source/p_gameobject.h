@@ -1097,14 +1097,13 @@ enum {
 struct intercept_t {
   float frac; // along trace line
   enum {
-    IF_IsALine  = 0x01,
-    IF_BackSide = 0x02, // not yet
+    IF_IsALine  = 1u<<0,
+    IF_BackSide = 1u<<1, // not yet
+    IF_ExtraThingCheck = 1u<<2,
   };
   vuint32 Flags;
   VEntity *thing;
   line_t *line;
-  // used in path traverser, absolutely unreliable!
-  float tmpHitDist;
 };
 
 
