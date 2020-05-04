@@ -611,7 +611,7 @@ native void UpdateVelocity (float DeltaTime);
 //
 //===========================================================================
 void OnMapSpawn (mthing_t *mthing) {
-  if (mthing && mthing.health) {
+  if (mthing && mthing./*health*/bUseHealth) {
     // per specs
     Health = int((mthing.health < 0 ? -1 : Health)*mthing.health);
     // overflow protection

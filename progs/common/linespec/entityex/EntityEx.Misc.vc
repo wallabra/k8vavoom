@@ -1371,11 +1371,22 @@ override void OnMapSpawn (mthing_t *mthing) {
     if (!bSynchronised && StateTime > 0.0) StateTime = 0.1+Random()*StateTime;
 
     Angles.yaw = AngleMod360(float(AngleIncrements()*(mthing->angle/AngleIncrements())));
-    Angles.pitch = AngleMod360(mthing->pitch);
-    Angles.roll = AngleMod360(mthing->roll);
+    if (mthing->bUsePitch) Angles.pitch = AngleMod360(mthing->pitch);
+    if (mthing->bUseRoll) Angles.roll = AngleMod360(mthing->roll);
 
-    if (mthing->scaleX > 0) ScaleX *= mthing->scaleX;
-    if (mthing->scaleY > 0) ScaleY *= mthing->scaleY;
+    if (mthing->bUseScaleX && mthing->scaleX > 0) ScaleX *= mthing->scaleX;
+    if (mthing->bUseScaleY && mthing->scaleY > 0) ScaleY *= mthing->scaleY;
+
+    if (mthing->bUseRenderStyle) RenderStyle = mthing->renderStyle;
+    if (mthing->bUseRenderAlpha) Alpha = mthing->renderAlpha;
+    if (mthing->bUseStencilColor) StencilColor = mthing->stencilColor|0xff_00_00_00;
+
+    if (mthing->bUseGravity) {
+      float gr = mthing->gravity;
+      //printdebug("%C: thing #%d UDMF gravity is %s", self, mthing-&XLevel.Things[0], gr);
+      Gravity = (gr < 0 ? -gr : Gravity*gr);
+      //printdebug("%C: new thing gravity is %s", self, Gravity);
+    }
 
     if (mthing->options&LineSpecialLevelInfo::MTF_AMBUSH) bAmbush = true;
     if (mthing->options&LineSpecialLevelInfo::MTF_STANDSTILL) bStanding = true;

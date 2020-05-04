@@ -1227,7 +1227,25 @@ struct mthing_t {
   int[5] args; // was `arg1`..`arg5`
   float health; // initial health (0 means "default")
   float scaleX, scaleY; // 0 means "default"
+  float gravity; // see flags
   string arg0str;
+  int renderStyle;
+  float renderAlpha;
+  int stencilColor;
+  int conversationId;
+  // flags
+  bool bUseHealth;
+  bool bUseScaleX;
+  bool bUseScaleY;
+  bool bUseGravity;
+  bool bUseArg0Str;
+  bool bUsePitch;
+  bool bUseRoll;
+  bool bUseRenderStyle;
+  bool bUseRenderAlpha;
+  bool bUseStencilColor;
+  bool UseConversationId;
+  bool bCountAsSecret;
 };
 
 //

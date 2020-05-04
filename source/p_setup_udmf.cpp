@@ -897,17 +897,18 @@ void VUdmfParser::ParseThing () {
     if (Key.strEquCI("y")) { hasXY |= 2u; T.y = CheckFloat(); continue; }
     if (Key.strEquCI("height")) { T.height = CheckFloat(); continue; }
     if (Key.strEquCI("angle")) { T.angle = CheckFloat(); continue; }
-    if (Key.strEquCI("pitch")) { T.pitch = CheckFloat(); continue; }
-    if (Key.strEquCI("roll")) { T.roll = CheckFloat(); continue; }
+    if (Key.strEquCI("pitch")) { T.pitch = CheckFloat(); T.udmfExFlags |= mthing_t::MTHF_UsePitch; continue; }
+    if (Key.strEquCI("roll")) { T.roll = CheckFloat(); T.udmfExFlags |= mthing_t::MTHF_UseRoll; continue; }
     if (Key.strEquCI("yaw")) { T.angle = CheckFloat(); continue; }
     if (Key.strEquCI("type")) { hasType = true; T.type = CheckInt(); continue; }
     if (Key.strEquCI("ambush")) { Flag(T.options, MTF_AMBUSH); continue; }
     if (Key.strEquCI("single")) { Flag(T.options, MTF_GSINGLE); continue; }
     if (Key.strEquCI("dm")) { Flag(T.options, MTF_GDEATHMATCH); continue; }
     if (Key.strEquCI("coop")) { Flag(T.options, MTF_GCOOP); continue; }
-    if (Key.strEquCI("scalex")) { T.scaleX = CheckFloat(); continue; }
-    if (Key.strEquCI("scaley")) { T.scaleY = CheckFloat(); continue; }
-    if (Key.strEquCI("scale")) { T.scaleX = T.scaleY = CheckFloat(); continue; }
+    if (Key.strEquCI("scalex")) { T.scaleX = CheckFloat(); T.udmfExFlags |= mthing_t::MTHF_UseScaleX; continue; }
+    if (Key.strEquCI("scaley")) { T.scaleY = CheckFloat(); T.udmfExFlags |= mthing_t::MTHF_UseScaleY; continue; }
+    if (Key.strEquCI("scale")) { T.scaleX = T.scaleY = CheckFloat(); T.udmfExFlags |= mthing_t::MTHF_UseScaleX|mthing_t::MTHF_UseScaleY; continue; }
+    if (Key.strEquCI("gravity")) { T.gravity = CheckFloat(); T.udmfExFlags |= mthing_t::MTHF_UseGravity; continue; }
 
     // skills (up to, and including 16)
     if (Key.startsWithCI("skill")) {
@@ -939,6 +940,7 @@ void VUdmfParser::ParseThing () {
         arg0str = CheckString();
         hasArg0Str = true;
         T.arg0str = arg0str;
+        T.udmfExFlags |= mthing_t::MTHF_UseArg0Str;
         continue;
       }
 
@@ -951,16 +953,43 @@ void VUdmfParser::ParseThing () {
       if (Key.strEquCI("arg3")) { T.args[3] = CheckInt(); continue; }
       if (Key.strEquCI("arg4")) { T.args[4] = CheckInt(); continue; }
 
-      if (Key.strEquCI("health")) { T.health = CheckFloat(); continue; }
+      if (Key.strEquCI("health")) { T.health = CheckFloat(); T.udmfExFlags |= mthing_t::MTHF_UseHealth; continue; }
 
       if (Key.strEquCI("renderstyle")) {
-        VStr s = CheckString();
-        while (s.length() && (vuint8)s[0] <= ' ') s.chopLeft(1);
-        while (s.length() && (vuint8)s[s.length()-1] <= ' ') s.chopRight(1);
+        VStr s = CheckString().xstrip();
         if (s.length() == 0) continue;
-        if (s.strEquCI("normal")) continue;
+        if (s.strEquCI("none")) { T.renderStyle = STYLE_None; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("normal")) { T.renderStyle = STYLE_Normal; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("add")) { T.renderStyle = STYLE_Add; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("additive")) { T.renderStyle = STYLE_Add; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("sub")) { T.renderStyle = STYLE_Subtract; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("subtract")) { T.renderStyle = STYLE_Subtract; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("subtractive")) { T.renderStyle = STYLE_Subtract; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("stencil")) { T.renderStyle = STYLE_Stencil; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("translucentstencil")) { T.renderStyle = STYLE_TranslucentStencil; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("addstencil")) { T.renderStyle = STYLE_AddStencil; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("shaded")) { T.renderStyle = STYLE_Shaded; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("addshaded")) { T.renderStyle = STYLE_AddShaded; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("translucent")) { T.renderStyle = STYLE_Translucent; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("fuzzy")) { T.renderStyle = STYLE_Fuzzy; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("optfuzzy")) { T.renderStyle = STYLE_OptFuzzy; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("soultrans")) { T.renderStyle = STYLE_SoulTrans; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("shadow")) { T.renderStyle = STYLE_Shadow; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
+        if (s.strEquCI("k8dark")) { T.renderStyle = STYLE_Dark; T.udmfExFlags |= mthing_t::MTHF_UseRenderStyle; continue; }
         //sc.Message(va("UDMF: `renderstyle` property with value \"%s\" is not supported yet", *s));
         keyWarning(WT_THING);
+        continue;
+      }
+
+      if (Key.strEquCI("fillcolor")) {
+        T.stencilColor = CheckColor(0);
+        T.udmfExFlags |= mthing_t::MTHF_UseStencilColor;
+        continue;
+      }
+
+      if (Key.strEquCI("alpha")) {
+        T.renderAlpha = clampval(CheckFloat(), 0.0f, 1.0f);
+        T.udmfExFlags |= mthing_t::MTHF_UseRenderAlpha;
         continue;
       }
 
@@ -974,6 +1003,13 @@ void VUdmfParser::ParseThing () {
           }
         }
       }
+
+      if (Key.startsWithCI("countsecret")) {
+        if (CheckBool()) T.udmfExFlags |= mthing_t::MTHF_CountAsSecret; else T.udmfExFlags &= ~mthing_t::MTHF_CountAsSecret;
+        continue;
+      }
+
+      if (Key.startsWithCI("conversation")) { T.conversationId = CheckInt(); T.udmfExFlags |= mthing_t::MTHF_UseConversationId; continue; }
 
       // ignored properties
       if (Key.startsWithCI("score")) { if (CheckInt() == 0) continue; }

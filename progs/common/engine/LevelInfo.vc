@@ -1088,6 +1088,8 @@ final void CopyMThing (mthing_t *from, mthing_t *to) {
   to->y = from->y;
   to->height = from->height;
   to->angle = from->angle;
+  to->pitch = from->pitch;
+  to->roll = from->roll;
   to->type = from->type;
   to->options = from->options;
   to->SkillClassFilter = from->SkillClassFilter;
@@ -1096,7 +1098,25 @@ final void CopyMThing (mthing_t *from, mthing_t *to) {
   to->health = from->health;
   to->scaleX = from->scaleX;
   to->scaleY = from->scaleY;
+  to->gravity = from->gravity;
   to->arg0str = from->arg0str;
+  to->renderStyle = from->renderStyle;
+  to->renderAlpha = from->renderAlpha;
+  to->stencilColor = from->stencilColor;
+  to->conversationId = from->conversationId;
+  // flags
+  to->bUseHealth = from->bUseHealth;
+  to->bUseScaleX = from->bUseScaleX;
+  to->bUseScaleY = from->bUseScaleY;
+  to->bUseGravity = from->bUseGravity;
+  to->bUseArg0Str = from->bUseArg0Str;
+  to->bUsePitch = from->bUsePitch;
+  to->bUseRoll = from->bUseRoll;
+  to->bUseRenderStyle = from->bUseRenderStyle;
+  to->bUseRenderAlpha = from->bUseRenderAlpha;
+  to->bUseStencilColor = from->bUseStencilColor;
+  to->UseConversationId = from->UseConversationId;
+  to->bCountAsSecret = from->bCountAsSecret;
 }
 
 

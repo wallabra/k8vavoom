@@ -1040,7 +1040,28 @@ struct mthing_t {
   vint32 args[5]; // was `arg1`..`arg5`
   float health; // initial health; 0 means "default"
   float scaleX, scaleY; // 0 means "default"
+  float gravity; // see flags
   VStr arg0str;
+  vint32 renderStyle;
+  float renderAlpha;
+  vint32 stencilColor;
+  vint32 conversationId;
+  // flags
+  enum {
+    MTHF_UseHealth         = 1u<<0,
+    MTHF_UseScaleX         = 1u<<1,
+    MTHF_UseScaleY         = 1u<<2,
+    MTHF_UseGravity        = 1u<<3,
+    MTHF_UseArg0Str        = 1u<<4,
+    MTHF_UsePitch          = 1u<<5,
+    MTHF_UseRoll           = 1u<<6,
+    MTHF_UseRenderStyle    = 1u<<7,
+    MTHF_UseRenderAlpha    = 1u<<8,
+    MTHF_UseStencilColor   = 1u<<9,
+    MTHF_UseConversationId = 1u<<10,
+    MTHF_CountAsSecret     = 1u<<11,
+  };
+  vuint32 udmfExFlags;
 };
 
 
