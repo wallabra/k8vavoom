@@ -1708,7 +1708,7 @@ void VLevel::LoadSectors (int Lump) {
     ss->sectorTag = tag;
 
     ss->seqType = -1; // default seqType
-    ss->Gravity = 1.0f;  // default sector gravity of 1.0
+    ss->Gravity = 1.0f; // default sector gravity of 1.0
     ss->Zone = -1;
 
     ss->CreateBaseRegion();

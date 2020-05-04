@@ -702,6 +702,8 @@ bool VEntity::CheckLine (tmtrace_t &cptrace, line_t *ld) {
 //
 //==========================================================================
 bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bool ignoreMonsters, bool ignorePlayers) {
+  //if (IsPlayer()) GCon->Logf(NAME_Debug, "*** CheckRelPosition: pos=(%g,%g,%g)", Pos.x, Pos.y, Pos.z);
+
   tmtrace.End = Pos;
 
   tmtrace.BBox[BOX2D_TOP] = Pos.y+Radius;
@@ -943,6 +945,7 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
 bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
   if (GGameInfo->NetMode == NM_Client) skipSpecials = true;
 
+  //if (IsPlayer()) GCon->Logf(NAME_Debug, "  trying line: %d", (int)(ptrdiff_t)(ld-&XLevel->Lines[0]));
   // check line bounding box for early out
   if (tmtrace.BBox[BOX2D_RIGHT] <= ld->bbox2d[BOX2D_LEFT] ||
       tmtrace.BBox[BOX2D_LEFT] >= ld->bbox2d[BOX2D_RIGHT] ||
@@ -1023,7 +1026,18 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
   const float hgt = (Height > 0 ? Height : 0.0f);
   TVec hit_point = tmtrace.End-(DotProduct(tmtrace.End, ld->normal)-ld->dist)*ld->normal;
   opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
+
+  /*
+  if (IsPlayer()) {
+    GCon->Logf(NAME_Debug, "  checking line: %d; sz=%g; ez=%g; hgt=%g", (int)(ptrdiff_t)(ld-&XLevel->Lines[0]), tmtrace.End.z, tmtrace.End.z+hgt, hgt);
+    for (opening_t *op = open; op; op = op->next) {
+      GCon->Logf(NAME_Debug, "   %p: bot=%g; top=%g; range=%g; lowfloor=%g; highceil=%g", op, op->bottom, op->top, op->range, op->lowfloor, op->highceiling);
+    }
+  }
+  */
+
   open = SV_FindRelOpening(open, tmtrace.End.z, tmtrace.End.z+hgt);
+  //if (IsPlayer()) GCon->Logf(NAME_Debug, "  open=%p", open);
 
   if (open) {
     // adjust floor / ceiling heights
@@ -1193,6 +1207,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
 
   check = CheckRelPosition(tmtrace, newPos, skipEffects);
   tmtrace.TraceFlags &= ~tmtrace_t::TF_FloatOk;
+  //if (IsPlayer()) GCon->Logf(NAME_Debug, "trying to move from (%g,%g,%g) to (%g,%g,%g); check=%d", Origin.x, Origin.y, Origin.z, newPos.x, newPos.y, newPos.z, (int)check);
 
   if (isClient) skipEffects = true;
 
