@@ -3328,11 +3328,13 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
   AngleVector(Angles, out useDir);
   float x1 = Origin.x;
   float y1 = Origin.y;
+  float z1 = Origin.z;
 
   // check things
   float x2 = x1+UseThingRange*useDir.x;
   float y2 = y1+UseThingRange*useDir.y;
-  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
+  float z2 = z1+UseThingRange*useDir.z;
+  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/, z1, z2) {
     if (!in->bIsALine) {
       // check height
       if (Origin.z >= in->Thing.Origin.z+in->Thing.Height ||
@@ -3374,11 +3376,12 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
   // check lines
   x2 = x1+UseRange*useDir.x;
   y2 = y1+UseRange*useDir.y;
+  z2 = z1+UseRange*useDir.z;
   bool DoSecAct = true;
   bool FoundLine = false;
   bool buttonSuccess;
   int useType, useSide;
-  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES) {
+  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES, z1, z2) {
     line_t *line = in->line;
 
     if (!line->special || (!(line->SpacFlags&(SPAC_Use|SPAC_UseThrough|SPAC_UseBack)))) {

@@ -1294,8 +1294,11 @@ struct intercept_t {
   float frac; // along trace line
   bool bIsALine;
   bool bIsABackSide; // not yet
+  //bool bExtraThingCheck; // this will be set if we hit some 3d slopes, to perform extra checks
   Entity Thing;
   line_t *line;
+  // used in path traverser, absolutely unreliable!
+  float tmpHitDist;
 };
 
 

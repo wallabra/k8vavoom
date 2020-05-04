@@ -119,19 +119,28 @@ private:
   TVec trace_delta;
   TVec trace_dir;
   float trace_len;
+  bool seen3DSlopes;
+  bool seenThing;
+  TVec trStart;
+  TVec trEnd;
 
   int Count;
   intercept_t *In;
   intercept_t **InPtr;
 
 public:
-  VPathTraverse (VThinker *, intercept_t **, float, float, float, float, int);
+  VPathTraverse (VThinker *Self, intercept_t **AInPtr, float InX1, float InY1, float x2, float y2, int flags, float az1, float az2);
   virtual bool GetNext () override;
 
 private:
-  void Init (VThinker *, float, float, float, float, int);
-  bool AddLineIntercepts (VThinker *, int, int, bool);
-  void AddThingIntercepts (VThinker *, int, int);
+  void Init (VThinker *Self, float InX1, float InY1, float x2, float y2, int flags);
+  bool AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool EarlyOut, bool wantThings);
+  void AddThingIntercepts (VThinker *Self, int mapx, int mapy);
   intercept_t &NewIntercept (const float frac);
   void RemoveInterceptsAfter (const float frac); // >=
+
+  // this is called if we want things, and hit at least one sector with 3d slopes
+  void ResortIntercepts (VThinker *Self);
+
+  static int CompareTempDists (const void *aa, const void *bb, void *);
 };

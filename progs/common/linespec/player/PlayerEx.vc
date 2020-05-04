@@ -2054,16 +2054,17 @@ Weapon GetNextWeapon (Weapon Current) {
 //
 //==========================================================================
 bool UsePuzzleItem (int PuzzleItemType) {
-  float x1, y1, x2, y2;
   TVec PuzzleUseDir;
   intercept_t* in;
 
   AngleVector(MO.Angles, out PuzzleUseDir);
-  x1 = MO.Origin.x;
-  y1 = MO.Origin.y;
-  x2 = x1+USERANGE*PuzzleUseDir.x;
-  y2 = y1+USERANGE*PuzzleUseDir.y;
-  foreach MO.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
+  float x1 = MO.Origin.x;
+  float y1 = MO.Origin.y;
+  float z1 = MO.Origin.z;
+  float x2 = x1+USERANGE*PuzzleUseDir.x;
+  float y2 = y1+USERANGE*PuzzleUseDir.y;
+  float z2 = z1+USERANGE*PuzzleUseDir.z;
+  foreach MO.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/, z1, z2) {
     EntityEx mobj;
     TVec hit_point;
     opening_t *open;

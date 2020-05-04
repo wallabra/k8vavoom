@@ -1456,7 +1456,8 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
   TVec SlideOrg(x, y, Origin.z);
   TVec SlideDir = Velocity*StepVelScale;
   intercept_t *in;
-  for (VPathTraverse It(this, &in, x, y, x+SlideDir.x, y+SlideDir.y, PT_ADDLINES); It.GetNext(); ) {
+  //NOTE: z has no meaning if we aren't interested in things
+  for (VPathTraverse It(this, &in, x, y, x+SlideDir.x, y+SlideDir.y, PT_ADDLINES, 0, 0); It.GetNext(); ) {
     if (!(in->Flags&intercept_t::IF_IsALine)) Host_Error("PTR_SlideTraverse: not a line?");
 
     line_t *li = in->line;
@@ -1728,7 +1729,8 @@ void VEntity::BounceWall (float overbounce, float bouncefactor) {
   line_t *BestSlideLine = nullptr;
   intercept_t *in;
 
-  for (VPathTraverse It(this, &in, SlideOrg.x, SlideOrg.y, SlideOrg.x+SlideDir.x, SlideOrg.y+SlideDir.y, PT_ADDLINES); It.GetNext(); ) {
+  //NOTE: z has no meaning if we aren't interested in things
+  for (VPathTraverse It(this, &in, SlideOrg.x, SlideOrg.y, SlideOrg.x+SlideDir.x, SlideOrg.y+SlideDir.y, PT_ADDLINES, 0, 0); It.GetNext(); ) {
     if (!(in->Flags&intercept_t::IF_IsALine)) Host_Error("PTR_BounceTraverse: not a line?");
     line_t *li = in->line;
     TVec hit_point = SlideOrg+in->frac*SlideDir;

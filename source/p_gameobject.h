@@ -767,8 +767,16 @@ struct sector_t {
   sector_t *othersecCeiling;
 
 
-  inline bool Has3DFloors () const { return !!eregions->next; }
-  inline bool HasAnyExtraFloors () const { return (!!eregions->next) || (!!heightsec); }
+  inline bool Has3DFloors () const noexcept { return !!eregions->next; }
+  inline bool HasAnyExtraFloors () const noexcept { return (!!eregions->next) || (!!heightsec); }
+
+  inline bool Has3DSlopes () const noexcept {
+    for (const sec_region_t *reg = eregions->next; reg; reg = reg->next) {
+      if (reg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual)) continue;
+      if (reg->efloor.isSlope() || reg->eceiling.isSlope()) return true;
+    }
+    return false;
+  }
 
   // should be called for new sectors to setup base region
   void CreateBaseRegion ();
@@ -1095,6 +1103,8 @@ struct intercept_t {
   vuint32 Flags;
   VEntity *thing;
   line_t *line;
+  // used in path traverser, absolutely unreliable!
+  float tmpHitDist;
 };
 
 
