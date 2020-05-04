@@ -720,6 +720,16 @@ IMPLEMENT_FUNCTION(VGameObject, SectorHas3DFloors) {
   }
 }
 
+//native static final bool SectorHas3DSlopes (const sector_t *sector);
+IMPLEMENT_FUNCTION(VGameObject, SectorHas3DSlopes) {
+  P_GET_PTR(sector_t, sector);
+  if (sector) {
+    RET_BOOL(sector->Has3DSlopes());
+  } else {
+    RET_BOOL(false);
+  }
+}
+
 
 //==========================================================================
 //

@@ -1233,6 +1233,7 @@ public:
 
   DECLARE_FUNCTION(GetSectorFloorPointZ)
   DECLARE_FUNCTION(SectorHas3DFloors)
+  DECLARE_FUNCTION(SectorHas3DSlopes)
 
   DECLARE_FUNCTION(CheckPlanePass)
   DECLARE_FUNCTION(CheckPassPlanes)

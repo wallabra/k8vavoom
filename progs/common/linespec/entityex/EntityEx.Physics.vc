@@ -735,7 +735,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
 //==========================================================================
 final void HitLine (ref tmtrace_t tmtrace, float StepVelScale, bool forceSlide) {
   // it may hit a sloped 3d floor
-  if (!bNoInteraction && !tmtrace.BlockingLine && bMissile) {
+  if (!bNoInteraction && !tmtrace.BlockingLine && bMissile && SectorHas3DSlopes(Sector)) {
     //printdebug("%C: z=%s; FloorZ=%s; CeilingZ=%s; hitf=%B; hitc=%B", self, Origin.z, tmtrace.FloorZ, tmtrace.CeilingZ, (Origin.z <= tmtrace.FloorZ+0.1), (Origin.z+Height > tmtrace.CeilingZ));
     float origz = Origin.z;
     if (origz <= tmtrace.FloorZ+0.1) {
