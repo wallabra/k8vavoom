@@ -766,10 +766,10 @@ void VRenderLevelLightmap::LightFace (surface_t *surf) {
 
   // cast all static lights
   if (r_static_lights && surf->subsector) {
-    /*
+    #if 0
     light_t *stl = Lights.ptr();
     for (int i = Lights.length(); i--; ++stl) SingleLightFace(lmi, stl, surf, facevis);
-    */
+    #else
     const int snum = (int)(ptrdiff_t)(surf->subsector-&Level->Subsectors[0]);
     if (snum >= 0 && snum < SubStaticLights.length()) {
       SubStaticLigtInfo *sli = SubStaticLights.ptr()+snum;
@@ -778,6 +778,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf) {
         SingleLightFace(lmi, stl, surf, facevis);
       }
     }
+    #endif
   }
 
   if (!lmi.light_hit) {
