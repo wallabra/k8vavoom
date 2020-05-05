@@ -175,26 +175,22 @@ bool VRenderLevelLightmap::IsStaticLightmapTimeLimitExpired () {
   // if we're creating the world, there is no time limit
   if (inWorldCreation) return false;
   // possibly done with the current frame?
-  if (doneLMapStaticOnThisFrame) {
-    if (lastLMapStaticRecalcFrame == currDLightFrame) return true;
-    doneLMapStaticOnThisFrame = false;
-  }
+  if (lastLMapStaticRecalcFrame == currDLightFrame && lmapStaticRecalcTimeLeft == 0) return true;
   // either not done, or a new frame
   // new frame?
   if (lastLMapStaticRecalcFrame != currDLightFrame) {
     const int msec = r_lmap_recalc_timeout.asInt();
-    if (msec <= 0) return false;
+    if (msec <= 0) {
+      lmapStaticRecalcTimeLeft = -1;
+      return false;
+    }
     lastLMapStaticRecalcFrame = currDLightFrame;
-    lmapStaticRecalcEndTime = Sys_Time()+(double)msec/1000.0;
+    lmapStaticRecalcTimeLeft = (double)msec/1000.0;
     return false;
   }
   // check current frame timeout
-  if (Sys_Time() > lmapStaticRecalcEndTime) {
-    doneLMapStaticOnThisFrame = true;
-    return true;
-  }
-  // timeout is not reached
-  return false;
+  if (lmapStaticRecalcTimeLeft < 0) return false;
+  return (lmapStaticRecalcTimeLeft == 0);
 }
 
 
@@ -755,6 +751,9 @@ void VRenderLevelLightmap::LightFace (surface_t *surf) {
   subsector_t *leaf = surf->subsector;
   if (surf->count < 3 || !leaf) return;
 
+  const bool accountTime = (lmapStaticRecalcTimeLeft > 0);
+  double stt = (accountTime ? -Sys_Time() : 0);
+
   LMapTraceInfo lmi;
   //lmi.points_calculated = false;
   vassert(!lmi.pointsCalced);
@@ -763,16 +762,31 @@ void VRenderLevelLightmap::LightFace (surface_t *surf) {
   lmi.light_hit = false;
   lmtracer.isColored = false;
 
-  // cast all static lights
   CalcMinMaxs(lmi, surf);
-  if (r_static_lights) {
+
+  // cast all static lights
+  if (r_static_lights && surf->subsector) {
+    /*
     light_t *stl = Lights.ptr();
     for (int i = Lights.length(); i--; ++stl) SingleLightFace(lmi, stl, surf, facevis);
+    */
+    const int snum = (int)(ptrdiff_t)(surf->subsector-&Level->Subsectors[0]);
+    if (snum >= 0 && snum < SubStaticLights.length()) {
+      SubStaticLigtInfo *sli = SubStaticLights.ptr()+snum;
+      for (auto it : sli->touchedStatic.first()) {
+        light_t *stl = &Lights[it.getKey()];
+        SingleLightFace(lmi, stl, surf, facevis);
+      }
+    }
   }
 
   if (!lmi.light_hit) {
     // no light hit it, no need to have lightmaps
     surf->FreeLightmaps();
+    if (accountTime) {
+      stt += Sys_Time();
+      if ((lmapStaticRecalcTimeLeft -= stt) <= 0) lmapStaticRecalcTimeLeft = 0;
+    }
     return;
   }
 
@@ -866,6 +880,11 @@ void VRenderLevelLightmap::LightFace (surface_t *surf) {
         surf->lightmap[i] = clampToByte((int)total);
       }
     }
+  }
+
+  if (accountTime) {
+    stt += Sys_Time();
+    if ((lmapStaticRecalcTimeLeft -= stt) <= 0) lmapStaticRecalcTimeLeft = 0;
   }
 }
 

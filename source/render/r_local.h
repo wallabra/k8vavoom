@@ -916,8 +916,7 @@ private:
 
   // this is used to limit static lightmap recalc time
   vuint32 lastLMapStaticRecalcFrame;
-  double lmapStaticRecalcEndTime;
-  bool doneLMapStaticOnThisFrame; // to avoid endless checking
+  double lmapStaticRecalcTimeLeft; // <0: no limit
 
 public:
   void releaseAtlas (vuint32 id) noexcept;
