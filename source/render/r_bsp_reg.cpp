@@ -43,15 +43,6 @@ void VRenderLevelLightmap::QueueWorldSurface (surface_t *surf) {
     //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
     LightFaceTimeCheckedFreeCaches(surf);
     lightmaped = (surf->lightmap != nullptr || surf->dlightframe == currDLightFrame);
-    /*
-    if (surf->subsector) {
-      LightFaceTimeCheckedFreeCaches(surf);
-      //if (!lightmaped && surf->lightmap) lightmaped = true;
-      lightmaped = (surf->lightmap != nullptr || surf->dlightframe == currDLightFrame);
-    } else {
-      surf->drawflags |= surface_t::DF_CALC_LMAP;
-    }
-    */
   }
 
   if (lightmaped) {

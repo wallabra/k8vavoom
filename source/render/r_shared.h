@@ -149,10 +149,9 @@ struct surface_t {
   enum {
     DF_MASKED       = 1u<<0, // this surface has "masked" texture
     DF_WSURF        = 1u<<1, // is this world/wall surface? such surfs are guaranteed to have space for `MAXWVERTS`
-    DF_FIX_CRACKS   = 1u<<2, // this surface must be subdivised to fix "cracks"
+    DF_FIX_CRACKS   = 1u<<2, // this surface must be processed with t-junction fixer (not implemented yet)
     DF_CALC_LMAP    = 1u<<3, // calculate static lightmap
-    //DF_BUILD_LMAP   = 1u<<4, // nope, not used
-    DF_NO_FACE_CULL = 1u<<5, // ignore face culling
+    DF_NO_FACE_CULL = 1u<<4, // ignore face culling
     // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
     DF_PL_VISIBLE   = 1u<<31,
   };
@@ -197,6 +196,11 @@ struct surface_t {
   GlowParams gp; // used in renderer to cache glow info
   int count; // number of vertices
   SurfVertex verts[1]; // dynamic array of vertices
+
+
+  inline bool NeedRecalcStaticLightmap () const noexcept { return (drawflags&DF_CALC_LMAP); }
+  inline bool IsMasked () const noexcept { return (drawflags&DF_MASKED); }
+  inline bool IsTwoSided () const noexcept { return (drawflags&DF_NO_FACE_CULL); }
 
   // to use in renderer
   inline void SetPlVisible (const bool v) noexcept {

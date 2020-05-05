@@ -448,8 +448,7 @@ void VRenderLevelShared::FreeWSurfs (surface_t *&InSurfs) {
   surface_t *surfs = InSurfs;
   FlushSurfCaches(surfs);
   while (surfs) {
-    if (surfs->lightmap) Z_Free(surfs->lightmap);
-    if (surfs->lightmap_rgb) Z_Free(surfs->lightmap_rgb);
+    surfs->FreeLightmaps();
     surface_t *next = surfs->next;
     surfs->next = free_wsurfs;
     free_wsurfs = surfs;
@@ -461,8 +460,7 @@ void VRenderLevelShared::FreeWSurfs (surface_t *&InSurfs) {
     surface_t *surf = InSurfs;
     InSurfs = InSurfs->next;
     if (surf->CacheSurf) FreeSurfCache(surf->CacheSurf);
-    if (surf->lightmap) Z_Free(surf->lightmap);
-    if (surf->lightmap_rgb) Z_Free(surf->lightmap_rgb);
+    surf->FreeLightmaps();
     Z_Free(surf);
   }
 #endif
@@ -2724,14 +2722,12 @@ surface_t *VRenderLevelShared::ReallocSurface (surface_t *surfs, int vcount) {
   if (surf) {
     // clear first surface
     if (surf->CacheSurf) FreeSurfCache(surf->CacheSurf);
-    if (surf->lightmap) Z_Free(surf->lightmap);
-    if (surf->lightmap_rgb) Z_Free(surf->lightmap_rgb);
+    surf->FreeLightmaps();
     // free extra surfaces
     surface_t *next;
     for (surface_t *s = surfs->next; s; s = next) {
       if (s->CacheSurf) FreeSurfCache(s->CacheSurf);
-      if (s->lightmap) Z_Free(s->lightmap);
-      if (s->lightmap_rgb) Z_Free(s->lightmap_rgb);
+      s->FreeLightmaps();
       next = s->next;
       Z_Free(s);
     }
@@ -2762,8 +2758,7 @@ void VRenderLevelShared::FreeSurfaces (surface_t *InSurf) {
   surface_t *next;
   for (surface_t *s = InSurf; s; s = next) {
     if (s->CacheSurf) FreeSurfCache(s->CacheSurf);
-    if (s->lightmap) Z_Free(s->lightmap);
-    if (s->lightmap_rgb) Z_Free(s->lightmap_rgb);
+    s->FreeLightmaps();
     next = s->next;
     Z_Free(s);
   }

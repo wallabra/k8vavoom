@@ -38,7 +38,7 @@
 static VCvarB r_lmap_stfix_enabled("r_lmap_stfix_enabled", true, "Enable lightmap \"inside wall\" fixing?", CVAR_Archive);
 static VCvarF r_lmap_stfix_step("r_lmap_stfix_step", "2", "Lightmap \"inside wall\" texel step", CVAR_Archive);
 
-VCvarI r_lmap_recalc_timeout("r_lmap_recalc_timeout", "8", "Do not use more than this number of milliseconds for static lightmap updates (0 means 'no limit').", CVAR_Archive);
+VCvarI r_lmap_recalc_timeout("r_lmap_recalc_timeout", "20", "Do not use more than this number of milliseconds for static lightmap updates (0 means 'no limit').", CVAR_Archive);
 VCvarB r_lmap_recalc_static("r_lmap_recalc_static", true, "Recalc static lightmaps when map geometry changed?", CVAR_Archive);
 VCvarB r_lmap_recalc_moved_static("r_lmap_recalc_moved_static", true, "Recalc static lightmaps when static light source moved?", CVAR_Archive);
 
@@ -716,15 +716,34 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
 
 //==========================================================================
 //
+//  VRenderLevelLightmap::CanFaceBeStaticallyLit
+//
+//==========================================================================
+bool VRenderLevelLightmap::CanFaceBeStaticallyLit (surface_t *surf) {
+  if (!surf || surf->count < 3 || !surf->subsector) return false;
+  // check if we have any touching static lights
+  const int snum = (int)(ptrdiff_t)(surf->subsector-&Level->Subsectors[0]);
+  if (snum < 0 || snum >= SubStaticLights.length()) return false; // just in case
+  SubStaticLigtInfo *sli = SubStaticLights.ptr()+snum;
+  return (sli->touchedStatic.length() > 0);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelLightmap::LightFaceTimeCheckedFreeCaches
+//
+//  returns `false` if the face should be relit, but relight
+//  time limit is expired
 //
 //==========================================================================
 void VRenderLevelLightmap::LightFaceTimeCheckedFreeCaches (surface_t *surf) {
   if (!surf) return;
 
-  if (surf->count < 3) {
+  if (!CanFaceBeStaticallyLit(surf)) {
     surf->drawflags &= ~surface_t::DF_CALC_LMAP;
     if (surf->CacheSurf) FreeSurfCache(surf->CacheSurf);
+    surf->FreeLightmaps();
     return;
   }
 
@@ -734,6 +753,7 @@ void VRenderLevelLightmap::LightFaceTimeCheckedFreeCaches (surface_t *surf) {
     FreeSurfCache(surf->CacheSurf);
     vassert(!surf->CacheSurf);
   }
+
   LightFace(surf);
 }
 
@@ -748,9 +768,12 @@ void VRenderLevelLightmap::LightFace (surface_t *surf) {
 
   surf->drawflags &= ~surface_t::DF_CALC_LMAP;
 
-  subsector_t *leaf = surf->subsector;
-  if (surf->count < 3 || !leaf) return;
+  if (!CanFaceBeStaticallyLit(surf)) {
+    surf->FreeLightmaps(); // just in case
+    return;
+  }
 
+  subsector_t *leaf = surf->subsector;
   const bool accountTime = (lmapStaticRecalcTimeLeft > 0);
   double stt = (accountTime ? -Sys_Time() : 0);
 
@@ -765,7 +788,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf) {
   CalcMinMaxs(lmi, surf);
 
   // cast all static lights
-  if (r_static_lights && surf->subsector) {
+  if (r_static_lights) {
     #if 0
     light_t *stl = Lights.ptr();
     for (int i = Lights.length(); i--; ++stl) SingleLightFace(lmi, stl, surf, facevis);
@@ -1272,7 +1295,7 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
 
   if (surf->drawflags&surface_t::DF_CALC_LMAP) {
     //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
-    if (!IsStaticLightmapTimeLimitExpired()) LightFace(surf);
+    if (!IsStaticLightmapTimeLimitExpired() || !CanFaceBeStaticallyLit(surf)) LightFace(surf);
   }
 
   lmtracer.isColored = false;

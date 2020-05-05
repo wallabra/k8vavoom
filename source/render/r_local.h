@@ -1040,9 +1040,15 @@ protected:
   void RelightMap (bool recalcNow, bool onlyMarked);
 
 public:
+  // this is fast and rough check
+  bool CanFaceBeStaticallyLit (surface_t *surf);
+
   // this has to be public for now
   // this method calculates static lightmap for a surface
   void LightFace (surface_t *surf);
+
+  // this is called from BSP renderer
+  // you can use `surf->NeedRecalcStaticLightmap()` to check success
   void LightFaceTimeCheckedFreeCaches (surface_t *surf);
 
 public:
