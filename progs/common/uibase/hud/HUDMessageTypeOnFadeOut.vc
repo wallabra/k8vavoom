@@ -87,7 +87,7 @@ override void Tick (float DeltaTime) {
       while (LineChars > LineLen && State == 0) {
         Time -= float(LineLen)*TypeOnTime;
         ++CurrentLine;
-        if (CurrentLine >= MsgLines.Num) {
+        if (CurrentLine >= MsgLines.length) {
           State = 1;
           //return;
           goto case;

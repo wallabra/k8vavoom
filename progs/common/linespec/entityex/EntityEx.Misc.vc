@@ -2802,16 +2802,8 @@ final void AutoUseHealth (int saveHealth) {
     if (inv.Amount > 0 && ClassIsChildOf(inv.Class, HealthPickup)) {
       int mode = HealthPickup(inv).AutoUseMode;
       if (mode == 1) {
-        /*
-        normal[normal.Num] = inv;
-        normal.Num = normal.Num+1;
-        */
         normal[$] = inv;
       } else if (mode == 2) {
-        /*
-        super[super.Num] = inv;
-        super.Num = super.Num+1;
-        */
         super[$] = inv;
       }
     }
@@ -2946,10 +2938,6 @@ final void AutoUseStrifeHealth (int saveHealth) {
     if (inv && inv.Amount > 0 && ClassIsChildOf(inv.Class, HealthPickup)) {
       int mode = HealthPickup(inv).AutoUseMode;
       if (mode == 3) {
-        /*
-        Items.Num = Items.Num+1;
-        Items[Items.Num-1] = inv;
-        */
         Items[$] = inv;
       }
     }

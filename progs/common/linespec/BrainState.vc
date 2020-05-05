@@ -38,7 +38,8 @@ bool bEasy;
 void FindTargets () {
   Actor m;
   // find all the target spots
-  Targets.Num = 0;
+  //Targets.length = 0;
+  Targets.reset(); // don't deallocate
   foreach AllThinkers(BossTarget, m) {
     Targets[$] = m;
   }

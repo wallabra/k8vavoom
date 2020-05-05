@@ -2904,7 +2904,7 @@ final void SetWallScroller(int LineId, float XSpeed, float YSpeed,
       if (Scroll.SideParts != Where) continue;
       //  Found it.
       Scroll.AdjustTextureBoth(XSpeed, YSpeed);
-      FoundScrollers[FoundScrollers.Num] = Scroll;
+      FoundScrollers[FoundScrollers.length] = Scroll;
     }
 
     int     Searcher;
@@ -2915,14 +2915,14 @@ final void SetWallScroller(int LineId, float XSpeed, float YSpeed,
       Other = XLevel.FindLine(LineId, &Searcher))
     {
       //  Check if this line already has scroller.
-      for (i = 0; i < FoundScrollers.Num; i++)
+      for (i = 0; i < FoundScrollers.length; i++)
       {
         if (FoundScrollers[i].Affectee == Other->sidenum[WhichSide])
         {
           break;
         }
       }
-      if (i == FoundScrollers.Num)
+      if (i == FoundScrollers.length)
       {
         //  Start a new scroller.
         Scroll = SpawnThinker(Scroller);
@@ -6419,7 +6419,7 @@ final bool CheckLockDef (LockDef *Lock, EntityEx User) {
   if (!Lock) return false; // just in case
 
   // empty lock list means check for any key
-  if (!Lock->Locks.Num) {
+  if (!Lock->Locks.length) {
     for (Inventory Item = User.Inventory; Item; Item = Item.Inventory) {
       if (Key(Item)) return true;
     }

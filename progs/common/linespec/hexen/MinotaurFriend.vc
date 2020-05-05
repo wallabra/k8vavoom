@@ -103,5 +103,5 @@ defaultproperties
   bStayMorphed = true;
   bTelestomp = true;
   bSummonedMonster = true;
-  DropItemList.Num = 0;
+  DropItemList.length = 0;
 }

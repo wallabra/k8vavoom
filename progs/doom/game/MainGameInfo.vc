@@ -1050,7 +1050,7 @@ defaultproperties {
   INITIAL_HEALTH = 100;
   GOD_HEALTH = 100;
 
-  PlayerClasses.Num = 1;
+  PlayerClasses.length = 1;
 #ifdef CHEX_QUEST
   PlayerClasses[0] = ChexPlayer;
   /*

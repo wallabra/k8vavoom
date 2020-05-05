@@ -707,14 +707,14 @@ final void DoSPosAttack () {
     BState.FindTargets();
   }
 
-  if (!BState.Targets.Num) return; // no brain targets placed on a map
+  if (!BState.Targets.length) return; // no brain targets placed on a map
 
   BState.bEasy = !BState.bEasy;
   if (Level.World.bSkillEasyBossBrain && !BState.bEasy) return;
 
   // shoot a cube at current target
   EntityEx targ = BState.Targets[BState.TargetOn];
-  BState.TargetOn = (BState.TargetOn+1)%BState.Targets.Num;
+  BState.TargetOn = (BState.TargetOn+1)%BState.Targets.length;
 
   class!Actor brnmiss = SpawnShot;
   if (specified_actname) {

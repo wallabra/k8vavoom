@@ -43,7 +43,7 @@ override bool Use(bool Pickup)
 
   if (Level.Game.deathmatch)
   {
-    i = P_Random() % Level.DeathmatchStarts.Num;
+    i = P_Random() % Level.DeathmatchStarts.length;
     destX = Level.DeathmatchStarts[i].x;
     destY = Level.DeathmatchStarts[i].y;
     destAngle = float(45 * (Level.DeathmatchStarts[i].angle / 45));

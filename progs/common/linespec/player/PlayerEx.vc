@@ -2126,8 +2126,8 @@ bool AddRevealedMap () {
   foreach (auto i; 0..RevealedMaps.length) {
     if (RevealedMaps[i] == Level.XLevel.MapName) return false; // already revealed
   }
-  RevealedMaps.Num = RevealedMaps.Num+1;
-  RevealedMaps[RevealedMaps.Num-1] = Level.XLevel.MapName;
+  RevealedMaps.length = RevealedMaps.length+1;
+  RevealedMaps[RevealedMaps.length-1] = Level.XLevel.MapName;
   return true;
 }
 
@@ -3143,10 +3143,10 @@ bool CheckSpot (mthing_t *mthing, optional bool onlyCheck) {
 //==========================================================================
 void SetupPlayerClass () {
   if (LineSpecialGameInfo(Level.Game).bRandomClass &&
-      Level.Game.deathmatch && Level.Game.PlayerClasses.Num > 1)
+      Level.Game.deathmatch && Level.Game.PlayerClasses.length > 1)
   {
-    PClass = P_Random()%Level.Game.PlayerClasses.Num;
-    if (PClass == BaseClass) PClass = (PClass+1)%Level.Game.PlayerClasses.Num;
+    PClass = P_Random()%Level.Game.PlayerClasses.length;
+    if (PClass == BaseClass) PClass = (PClass+1)%Level.Game.PlayerClasses.length;
     BaseClass = PClass;
     SB_Start();
   } else {
@@ -3401,7 +3401,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   float x = spawnOrigin.x;
   float y = spawnOrigin.y;
   float z = spawnOrigin.z;
-  if (PClass >= Level.Game.PlayerClasses.Num) Error("Player::SpawnPlayer: Unknown class type (class=%s; max=%s)", PClass, Level.Game.PlayerClasses.Num-1);
+  if (PClass >= Level.Game.PlayerClasses.length) Error("Player::SpawnPlayer: Unknown class type (class=%s; max=%s)", PClass, Level.Game.PlayerClasses.length-1);
 
   PP = Level.SpawnEntityChecked(class!PlayerPawn, class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, AllowReplace:false);
   if (!PP) Error("Player::SpawnPlayer: cannot spawn `%C` (it is prolly not a player pawn)", Level.Game.PlayerClasses[PClass]);
@@ -4823,7 +4823,7 @@ bool UndoPlayerMorph (bool Force, PlayerEx Activator) {
   int CorrectWeapon = MorphStyle&EntityEx::MORPH_LOSEACTUALWEAPON;
 
   MO.UnlinkFromWorld();
-  if (BaseClass >= Level.Game.PlayerClasses.Num) Error("UndoPlayerMorph: Unknown class type");
+  if (BaseClass >= Level.Game.PlayerClasses.length) Error("UndoPlayerMorph: Unknown class type");
 
   A = Level.SpawnEntityChecked(class!PlayerPawn, class!PlayerPawn(Level.Game.PlayerClasses[BaseClass]), MO.Origin, default, default, AllowReplace:false);
   if (!A) Error("UndoPlayerMorph: class `%C` is prolly not a player pawn", Level.Game.PlayerClasses[BaseClass]);
@@ -4902,7 +4902,7 @@ void ActivateMorphWeapon () {
     if (Wpn) Wpn.bGivenAsMorphWeapon = true;
   } else {
     // couldn't find any weapons, use the default weapon for this player (from initial inventory)
-    foreach (int i; 0..EntityEx(MO).DropItemList.Num) {
+    foreach (int i; 0..EntityEx(MO).DropItemList.length) {
       class!EntityEx itc = class!EntityEx(EntityEx(MO).DropItemList[i].Type);
       if (!itc) continue;
       class!EntityEx itcrepl = class!EntityEx(GetClassReplacement(itc));

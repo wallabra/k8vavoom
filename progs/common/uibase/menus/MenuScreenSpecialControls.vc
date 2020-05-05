@@ -284,12 +284,12 @@ override void CreateChoices () {
   }
 
   /*
-  if (menukeys_list.Num > 0) {
+  if (menukeys_list.length > 0) {
     foreach (auto i; 0..menukeys_list.length) {
       // for each menukey, we must check the alias name inside of all defaultbinds and binds, to extract key binds
 
       // first look inside of default binds list
-      if (dbinds_list.Num > 0) {
+      if (dbinds_list.length > 0) {
         foreach (auto j; 0..dbinds_list.length) {
           if (!strcmp(menukeys_list[i].alias_name, dbinds_list[j].alias_name)) {
             // the alias name is the same, so we'll use the bind for a MenuControlKey

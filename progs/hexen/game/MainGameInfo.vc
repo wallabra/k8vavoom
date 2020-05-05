@@ -350,7 +350,7 @@ defaultproperties
 
   botskill = 2;
 
-  PlayerClasses.Num = 3;
+  PlayerClasses.length = 3;
   PlayerClasses[0] = FighterPlayer;
   PlayerClasses[1] = ClericPlayer;
   PlayerClasses[2] = MagePlayer;

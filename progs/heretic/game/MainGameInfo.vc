@@ -540,7 +540,7 @@ defaultproperties
 
   botskill = 2;
 
-  PlayerClasses.Num = 1;
+  PlayerClasses.length = 1;
   PlayerClasses[0] = HereticPlayer;
 
   WeaponSlots[1].Weapons[0] = Staff;

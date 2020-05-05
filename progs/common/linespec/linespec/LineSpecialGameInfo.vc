@@ -1481,7 +1481,7 @@ override void CmdWeaponSection (string Section) {
 //
 //==========================================================================
 override void CmdSetSlot (ref array!string Args, bool asKeyconf) {
-  if (Args.Num < 2) {
+  if (Args.length < 2) {
     print("Usage: SetSlot <slot> <weapon> ...");
     return;
   }
@@ -1501,7 +1501,7 @@ override void CmdSetSlot (ref array!string Args, bool asKeyconf) {
   kkWeaponSlots[Slot-1].weapons.clear();
   kkWeaponSlotCopy[Slot-1] = false;
 
-  if (Args.Num == 2) {
+  if (Args.length == 2) {
     print("Slot %s cleared", Slot);
   } else {
     foreach (auto i; 2..Args.length) {
@@ -1525,7 +1525,7 @@ override void CmdSetSlot (ref array!string Args, bool asKeyconf) {
 //
 //==========================================================================
 override void CmdAddSlotDefault (ref array!string Args, bool asKeyconf) {
-  if (Args.Num != 3) {
+  if (Args.length != 3) {
     print("Usage: AddSlotDefault <slot> <weapon>");
     return;
   }

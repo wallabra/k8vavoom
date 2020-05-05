@@ -151,11 +151,11 @@ void Clean () {
   BackgroundPic = 0;
   BackgroundFlat = '';
   SplatPic = 0;
-  PointerPics.Num = 0;
+  PointerPics.length = 0;
   bNoAutoStartMap = false;
   btime = 0.0;
-  Anims.Num = 0;
-  Spots.Num = 0;
+  Anims.length = 0;
+  Spots.length = 0;
   State = STATE_Default;
 }
 
@@ -195,7 +195,7 @@ void ParseScript (name ScriptName) {
     if (sc.Check("Pointer")) {
       while (sc.GetString()) {
         if (!sc.Crossed) {
-          int i = PointerPics.Num;
+          int i = PointerPics.length;
           PointerPics.length = i+1;
           PointerPics[i] = R_RegisterPic(name(strlwr(sc.String)));
         } else {
@@ -209,7 +209,7 @@ void ParseScript (name ScriptName) {
     if (sc.Check("Spots")) {
       sc.Expect("{");
       while (!sc.Check("}")) {
-        int i = Spots.Num;
+        int i = Spots.length;
         Spots.length = i+1;
         sc.ExpectString();
         Spots[i].Map = name(strlwr(sc.String));
@@ -221,7 +221,7 @@ void ParseScript (name ScriptName) {
       continue;
     }
 
-    int i = Anims.Num;
+    int i = Anims.length;
     Anims.length = i+1;
 
     if (sc.Check("IfLeaving")) {
@@ -272,8 +272,8 @@ void ParseScript (name ScriptName) {
       if (sc.Check("Once")) Anims[i].bOnce = true;
       sc.Expect("{");
       while (!sc.Check("}")) {
-        int j = Anims[i].Pics.Num;
-        Anims[i].Pics.Num = j+1;
+        int j = Anims[i].Pics.length;
+        Anims[i].Pics.length = j+1;
         sc.ExpectString();
         Anims[i].Pics[j] = R_RegisterPic(name(strlwr(sc.String)));
       }
@@ -287,7 +287,7 @@ void ParseScript (name ScriptName) {
       sc.ExpectNumber();
       Anims[i].Y = sc.Number;
       Anims[i].Period = 0.0;
-      Anims[i].Pics.Num = 1;
+      Anims[i].Pics.length = 1;
       sc.ExpectString();
       Anims[i].Pics[0] = R_RegisterPic(name(strlwr(sc.String)));
       // init variables
@@ -312,12 +312,12 @@ void ParseScript (name ScriptName) {
 override void Tick (float DeltaTime) {
   // counter for general background animation
   btime += DeltaTime;
-  for (int i = 0; i < Anims.Num; ++i) {
+  for (int i = 0; i < Anims.length; ++i) {
     if (btime >= Anims[i].NextTime) {
       Anims[i].Ctr++;
-      if (Anims[i].Ctr >= Anims[i].Pics.Num) {
+      if (Anims[i].Ctr >= Anims[i].Pics.length) {
         if (Anims[i].bOnce) {
-          Anims[i].Ctr = Anims[i].Pics.Num-1;
+          Anims[i].Ctr = Anims[i].Pics.length-1;
         } else {
           Anims[i].Ctr = 0;
         }
@@ -431,9 +431,9 @@ final private void DrawPointer (int n, int xofs, int yofs) {
     } else {
       ++i;
     }
-  } while (!fits && i != PointerPics.Num);
+  } while (!fits && i != PointerPics.length);
 
-  if (fits && i < PointerPics.Num) {
+  if (fits && i < PointerPics.length) {
     DrawPicEx(Spots[n].X, Spots[n].Y, PointerPics[i], xofs, yofs);
   } else {
     // DEBUG

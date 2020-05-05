@@ -464,7 +464,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
       if (fastkills) {
         fastdamage = K8HS_HeadshotFastKillHook(dodmg);
         if (fastdamage > 0) {
-          printdebug("%C: OLD dodmg=%s; NEW dodmg=%s", self, dodmg, fastdamage);
+          if (debugme) printdebug("%C: OLD dodmg=%s; NEW dodmg=%s", self, dodmg, fastdamage);
           dodmg = fastdamage;
         }
         /*

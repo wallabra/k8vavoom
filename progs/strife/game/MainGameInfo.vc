@@ -499,7 +499,7 @@ defaultproperties {
   bDefaultLaxMonsterActivation = true;
   bAlwaysSwitchNewWeapon = true;
   bBloodSpray = true;
-  PlayerClasses.Num = 1;
+  PlayerClasses.length = 1;
   PlayerClasses[0] = StrifePlayer;
 
   WeaponSlots[1].Weapons[0] = PunchDagger;

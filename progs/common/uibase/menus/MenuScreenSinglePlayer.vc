@@ -96,7 +96,7 @@ override void Tick (float DeltaTime) {
 //==========================================================================
 void ActivateNewGame (Object Sender) {
   if (!ClGame.bLocalServer) return;
-  if (ClGame.Game.PlayerClasses.Num > 1) {
+  if (ClGame.Game.PlayerClasses.length > 1) {
     ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenClass));
   } else {
     ClientGameShared(ClGame).SetPClass(0);

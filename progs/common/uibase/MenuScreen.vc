@@ -219,7 +219,7 @@ void CreateMenu () {
 override void OnChildAdded (Widget Child) {
   // do not add "close" button to item list
   if (MenuChoice(Child) && !MenuChoice_BackButton(Child)) {
-    if (Items.Num > 1024) FatalError("Too many menu items");
+    if (Items.length > 1024) FatalError("Too many menu items");
     Items[Items.Length] = MenuChoice(Child);
   }
   ::OnChildAdded(Child);
@@ -642,13 +642,13 @@ final int GetItemYH (int idx) {
 //
 //==========================================================================
 final void FixTopIndex () {
-  if (Items.Num == 0) return;
+  if (Items.length == 0) return;
   if (CursorPos < 0) CursorPos = Items.length-1; else if (CursorPos >= Items.length) CursorPos = 0;
   if (helpText) {
     helpText.text = Items[CursorPos].getHelp();
     helpText.Raise();
   }
-  if (Items.Num == 1) { if (helpText) helpText.atTop = false; CursorPos = 0; ChildrenOfsY = 0; return; }
+  if (Items.length == 1) { if (helpText) helpText.atTop = false; CursorPos = 0; ChildrenOfsY = 0; return; }
   if (!MenuScrollable) { if (helpText) helpText.atTop = false; ChildrenOfsY = 0; return; }
   // check if this is first selectable item
   bool isFirstItem = true;
@@ -679,10 +679,10 @@ final void FixTopIndex () {
 //
 //==========================================================================
 void CursorMoved () {
-  if (Items.Num == 0) return;
+  if (Items.length == 0) return;
   FixTopIndex();
   if ((CursorPrev == CursorPos && ChildrenOfsY == OfsYPrev) || MenuChoice_BackButton(Items[CursorPos])) return;
-  if (CursorPos >= 0 && CursorPos < Items.Num) SetCurrentFocusChild(Items[CursorPos]);
+  if (CursorPos >= 0 && CursorPos < Items.length) SetCurrentFocusChild(Items[CursorPos]);
   if (Selector) {
     Selector.SetOriginCentered(Items[CursorPos].X+Items[CursorPos].CursorXOffs, Items[CursorPos].Y+Items[CursorPos].CursorYOffs, Items[CursorPos].Height);
     //print("000: cp=%s; %s %s %s w=%s", CursorPos, Items[CursorPos].X, Items[CursorPos].CursorXOffs, Items[CursorPos].X+Items[CursorPos].CursorXOffs, Width);
@@ -757,7 +757,7 @@ int GetChoiceForSaving () {
 void SetSavedChoice (int saval) {
   int idx = saval%10000;
   int top = saval/10000;
-  if (idx < 0 || idx >= Items.Num || CursorPos == idx) return;
+  if (idx < 0 || idx >= Items.length || CursorPos == idx) return;
   if (Items[idx].Focusable && Items[idx].Enabled) {
     CursorPrev = -1;
     CursorPos = idx;
@@ -773,10 +773,10 @@ void SetSavedChoice (int saval) {
 //
 //==========================================================================
 void CyclePrevChoice () {
-  if (Items.Num < 2) return;
+  if (Items.length < 2) return;
   CursorPrev = CursorPos;
   do {
-    if (!CursorPos) CursorPos = Items.Num-1; else --CursorPos;
+    if (!CursorPos) CursorPos = Items.length-1; else --CursorPos;
   } while ((!Items[CursorPos].Focusable || !Items[CursorPos].Enabled) && !MenuChoice_BackButton(Items[CursorPos]) && CursorPrev != CursorPos);
   CursorMoved();
 }
@@ -788,10 +788,10 @@ void CyclePrevChoice () {
 //
 //==========================================================================
 void CycleNextChoice () {
-  if (Items.Num < 2) return;
+  if (Items.length < 2) return;
   CursorPrev = CursorPos;
   do {
-    if (CursorPos == Items.Num - 1) CursorPos = 0; else ++CursorPos;
+    if (CursorPos == Items.length-1) CursorPos = 0; else ++CursorPos;
   } while ((!Items[CursorPos].Focusable || !Items[CursorPos].Enabled) && !MenuChoice_BackButton(Items[CursorPos]) && CursorPrev != CursorPos);
   CursorMoved();
 }
@@ -803,7 +803,7 @@ void CycleNextChoice () {
 //
 //==========================================================================
 void DoHome () {
-  if (Items.Num < 2) return;
+  if (Items.length < 2) return;
   CursorPrev = CursorPos;
   for (CursorPos = 0; CursorPos < Items.Length; ++CursorPos) {
     if (Items[CursorPos].Focusable && Items[CursorPos].Enabled && !MenuChoice_BackButton(Items[CursorPos])) break;
@@ -818,7 +818,7 @@ void DoHome () {
 //
 //==========================================================================
 void DoEnd () {
-  if (Items.Num < 2) return;
+  if (Items.length < 2) return;
   CursorPrev = CursorPos;
   for (CursorPos = Items.Length-1; CursorPos >= 0; --CursorPos) {
     if (Items[CursorPos].Focusable && Items[CursorPos].Enabled && !MenuChoice_BackButton(Items[CursorPos])) break;
@@ -883,7 +883,7 @@ override bool OnEvent (ref event_t evt) {
       case K_UPARROW:
       case K_PAD8:
       case K_MWHEELUP:
-        if (Items.Num > 1) {
+        if (Items.length > 1) {
           CyclePrevChoice();
           LocalSound('menu/cursor');
         }
@@ -891,21 +891,21 @@ override bool OnEvent (ref event_t evt) {
       case K_DOWNARROW:
       case K_PAD2:
       case K_MWHEELDOWN:
-        if (Items.Num > 1) {
+        if (Items.length > 1) {
           CycleNextChoice();
           LocalSound('menu/cursor');
         }
         return true;
       case K_HOME:
       case K_PAD7:
-        if (Items.Num > 1) {
+        if (Items.length > 1) {
           DoHome();
           LocalSound('menu/cursor');
         }
         return true;
       case K_END:
       case K_PAD1:
-        if (Items.Num > 1) {
+        if (Items.length > 1) {
           DoEnd();
           LocalSound('menu/cursor');
         }

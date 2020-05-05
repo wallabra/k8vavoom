@@ -1129,7 +1129,7 @@ final mthing_t *GetPlayerStart (int PNum, int Position, optional bool failIfNotF
   if (!specified_failIfNotFound) failIfNotFound = true;
   ++PNum;
   mthing_t *Best = nullptr;
-  foreach (int i; 0..PlayerStarts.Num; reverse) {
+  foreach (int i; 0..PlayerStarts.length; reverse) {
     if (PlayerStarts[i].type != PNum) continue;
     if (PlayerStarts[i].args[0] == Position) return &PlayerStarts[i];
     if (!Best) Best = &PlayerStarts[i];
