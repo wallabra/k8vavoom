@@ -668,7 +668,7 @@ final void FixTopIndex () {
   else if (ye+ChildrenOfsY > Height) ChildrenOfsY = -(ye-Height);
   // make sure that help is visible
   if (helpText && helpText.Height > 0) {
-    helpText.atTop = (Y2Virtual(ye) >= GetVirtualHeight()-helpText.Height-4);
+    helpText.atTop = (Y2Virtual(ye)+ChildrenOfsY >= GetVirtualHeight()-helpText.Height-4);
   }
 }
 
