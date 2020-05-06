@@ -147,6 +147,14 @@ final void dumpClipRect (optional string msg) {
 }
 
 
+final spawner Widget FindParentWithClass (class!Widget wclass) {
+  for (Widget w = Parent; w; w = w.Parent) {
+    if (wclass(w)) return wclass(w);
+  }
+  return none;
+}
+
+
 // fix scale so pixel size of this widget will be equal to real pixels
 final void SetScaleOneToOne () {
   SetScale(1.0/ClipRect.ScaleX, 1.0/ClipRect.ScaleY);

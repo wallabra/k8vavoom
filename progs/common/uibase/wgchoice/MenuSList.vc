@@ -32,6 +32,17 @@ string lastCurrAddr;
 
 //==========================================================================
 //
+//  OnCreate
+//
+//==========================================================================
+override void OnCreate () {
+  Width = Parent.Width;
+  Height = Parent.Height;
+}
+
+
+//==========================================================================
+//
 //  StartSearching
 //
 //==========================================================================
@@ -87,9 +98,6 @@ static final string DMMode2Str (int dmmode) {
 //
 //==========================================================================
 override void OnDraw () {
-  Width = Parent.Width;
-  Height = Parent.Height;
-
   //DrawBackground();
 
   auto slist = GetSlist();

@@ -53,7 +53,7 @@ override void ActivateEvent () {
   CmdBuf_AddText("Impulse %d\n", ImpulseNum);
   //StopLocalSounds();
   //GetClGame().PopMenu();
-  auto par = MenuScreen(Parent);
+  auto par = FindParentWithClass(MenuScreen);
   if (par) par.DoPopMenu(userAbort:false);
 }
 

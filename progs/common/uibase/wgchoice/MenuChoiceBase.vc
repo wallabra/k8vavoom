@@ -192,7 +192,8 @@ void SetSessionCvar (name Name, optional float defval) {
 //
 //==========================================================================
 ClientGameShared GetClGame () {
-  return (Parent ? MenuScreen(Parent).ClGame : none);
+  auto par = FindParentWithClass(MenuScreen);
+  return (par ? par.ClGame : none);
 }
 
 
@@ -217,7 +218,7 @@ void DrawBackground () {
 //
 //==========================================================================
 override void OnFocusReceived () {
-  MenuScreen pp = MenuScreen(Parent);
+  MenuScreen pp = FindParentWithClass(MenuScreen);
   if (pp && pp.Selector) {
     if (pp.MakeItemSelected(self)) {
       pp.Selector.SetOriginCentered(X+CursorXOffs, Y+CursorYOffs, Height);

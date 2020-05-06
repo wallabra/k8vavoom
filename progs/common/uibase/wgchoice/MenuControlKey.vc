@@ -124,11 +124,11 @@ override bool OnEvent (ref event_t evt) {
     switch (ConvertBoundKey(evt.keycode)) {
       case K_LEFTARROW:
         GetClGame().ControlColumn = 0;
-        MenuScreen(Parent).CursorMoved();
+        FindParentWithClass(MenuScreen).CursorMoved();
         return true;
       case K_RIGHTARROW:
         GetClGame().ControlColumn = 1;
-        MenuScreen(Parent).CursorMoved();
+        FindParentWithClass(MenuScreen).CursorMoved();
         return true;
       case K_ENTER:
       case K_PADENTER:

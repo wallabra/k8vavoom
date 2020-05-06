@@ -69,9 +69,10 @@ void DisableSlotRendering () {
 void MakeOneLineControl () {
   DisableSlotRendering();
   Width = Parent.Width;
-  if (MenuScreen(Parent)) {
-    MenuScreen(Parent).SetChoiceInitialSizePos(self);
-    SetOrigin(0, MenuScreen(Parent).currentY);
+  auto par = FindParentWithClass(MenuScreen);
+  if (par) {
+    par.SetChoiceInitialSizePos(self);
+    SetOrigin(0, par.currentY);
   }
   //CursorXOffs = -10;
 }

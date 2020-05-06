@@ -168,7 +168,6 @@ void VWidget::Init (VWidget *AParent) {
   // set default values
   SetFont(SmallFont);
   SetTextAlign(hleft, vtop);
-
   ParentWidget = AParent;
   if (ParentWidget) ParentWidget->AddChild(this);
   ClipTree();

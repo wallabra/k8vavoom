@@ -169,7 +169,7 @@ override bool OnEvent (ref event_t evt) {
             Text = "*deleted slot*";
             //print("DEL! slot=%d; status=%d", SlotNum, Status);
             CmdBuf_AddText("DeleteSavedGame %d\n", SlotNum);
-            auto pm = MenuScreenLoadSaveGame(Parent);
+            auto pm = FindParentWithClass(MenuScreenLoadSaveGame);
             if (pm) pm.SignalSlotDeletion();
           }
         }
