@@ -428,6 +428,20 @@ protected:
   double prevChaseCamTime = -1.0;
   TVec prevChaseCamPos;
 
+  // automap
+  TArray<sec_surface_t *> amSurfList;
+  TArray<TVec> amTmpVerts;
+  bool amDoFloors;
+  VTexture *amSkyTex;
+  AMCheckSubsectorCB amCheckSubsector;
+  float amX, amY, amX2, amY2;
+
+  inline bool AM_isBBox3DVisible (const float bbox3d[6]) const noexcept {
+    return
+      amX2 >= bbox3d[0+0] && amY2 >= bbox3d[0+1] &&
+      amX <= bbox3d[3+0] && amY <= bbox3d[3+1];
+  }
+
 private:
   VDirtyArea unusedDirty; // required to return reference to it
 
@@ -603,7 +617,6 @@ protected:
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) = 0;
   virtual void QueueWorldSurface (surface_t *) = 0;
   virtual void FreeSurfCache (surfcache_t *&block);
-  virtual bool CacheSurface (surface_t *);
   // this is called after surface queues built, so lightmap renderer can calculate new lightmaps
   // it is called right before starting world drawing
   virtual void ProcessCachedSurfaces ();
@@ -646,7 +659,10 @@ protected:
 
   // world BSP rendering
   //void QueueTranslucentSurf (surface_t *surf);
+
+  // WARNING: `SurfPrepareForRender()` should be already called!
   void QueueSimpleSurf (surface_t *surf);
+
   void QueueSkyPortal (surface_t *surf);
   void QueueHorizonPortal (surface_t *surf);
 
@@ -824,6 +840,23 @@ public:
   virtual void saveLightmaps (VStream *strm) override;
   virtual bool loadLightmaps (VStream *strm) override;
 
+public: // automap
+  virtual void RenderTexturedAutomap (
+    float m_x, float m_y, float m_x2, float m_y2,
+    bool doFloors, // floors or ceiling?
+    float alpha,
+    AMCheckSubsectorCB CheckSubsector,
+    AMIsHiddenSubsectorCB IsHiddenSubsector,
+    AMMapXYtoFBXYCB MapXYtoFBXY
+  ) override;
+
+private: // automap
+  static sec_surface_t *AM_getFlatSurface (subregion_t *reg, bool doFloors);
+  void amFlatsCheckSubsector (int num);
+  void amFlatsCheckNode (int bspnum);
+
+  void amFlatsCollectSurfaces ();
+
 public: // k8: so i don't have to fuck with friends
   struct PPNode {
     vuint8 *mem;
@@ -905,7 +938,9 @@ private:
 
   // surface (lightmap) cache
   VLMapCache lmcache;
-  TArray<surface_t *> LMSurfList; // list of all surfaces with lightmaps
+  // list of all surfaces with lightmaps; used only in `ProcessCachedSurfaces()`
+  // surfaces from this list will be put either to lightmap chains, or to normal lists
+  TArray<surface_t *> LMSurfList;
   bool nukeLightmapsOnNextFrame;
 
   bool invalidateRelight;
@@ -1027,9 +1062,11 @@ protected:
   void AddDynamicLights (surface_t *surf);
 
   // lightmap cache manager
+  // WARNING: `SurfPrepareForRender()` should be already called!
+  bool QueueLMapSurface (surface_t *); // returns `true` if surface was queued
+
   void FlushCaches ();
   virtual void FreeSurfCache (surfcache_t *&block) override;
-  virtual bool CacheSurface (surface_t *) override;
   virtual void ProcessCachedSurfaces () override;
 
   // world BSP rendering

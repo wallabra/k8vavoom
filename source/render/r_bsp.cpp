@@ -301,7 +301,7 @@ void VRenderLevelShared::QueueSimpleSurf (surface_t *surf) {
   // i.e. there is no need to pass them to "transparent wall" route.
   // only alpha-blended and additive surfaces must be rendered in a separate pass.
   //const bool isCommon = (texinfo->Alpha >= 1.0f && !texinfo->Additive && !texinfo->Tex->isTranslucent());
-  if (!SurfPrepareForRender(surf)) return;
+  //if (!SurfPrepareForRender(surf)) return; // should be done by the caller
   if ((surf->drawflags&surface_t::DF_MASKED) == 0) {
     GetCurrentDLS().DrawSurfListSolid.append(surf);
   } else {

@@ -1584,29 +1584,42 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
 //==========================================================================
 void VRenderLevelLightmap::ProcessCachedSurfaces () {
   if (LMSurfList.length() == 0) return; // nothing to do here
+
   if (nukeLightmapsOnNextFrame) {
     if (dbg_show_lightmap_cache_messages) GCon->Log(NAME_Debug, "LIGHTMAP: *** previous frame requested lightmaps nuking");
     FlushCaches();
   }
+
   // first pass, try to perform normal allocation
   bool success = true;
-  for (auto &&sfc : LMSurfList) if (!BuildSurfaceLightmap(sfc)) { success = false; break; }
+  for (auto &&sfc : LMSurfList) {
+    if (!BuildSurfaceLightmap(sfc)) {
+      success = false;
+      break;
+    }
+  }
   if (success) {
+    // all surfaces succesfully lightmapped
+    // if we used more lightmaps than allowed, nuke lightmap cache on the next frame
     const int lim = r_lmap_atlas_limit.asInt();
     if (lim > 0 && lmcache.getAtlasCount() > lim) nukeLightmapsOnNextFrame = true;
     return;
   }
+
   // second pass, nuke all lightmap caches, and do it all again
   GCon->Log(NAME_Warning, "LIGHTMAP: *** out of surface cache blocks, retrying");
   FlushCaches();
   for (auto &&sfc : LMSurfList) {
     if (!BuildSurfaceLightmap(sfc)) {
-      // render this surface as non-lightmapped: it is better than completely loosing it
+      // render this surface as non-lightmapped: it is better than completely losing it
       //DrawSurfList.append(sfc);
+      // do not call `SurfCheckAndQueue()` here, because it is already done
       if ((sfc->drawflags&surface_t::DF_MASKED) == 0) {
-        SurfCheckAndQueue(GetCurrentDLS().DrawSurfListSolid, sfc);
+        //SurfCheckAndQueue(GetCurrentDLS().DrawSurfListSolid, sfc);
+        GetCurrentDLS().DrawSurfListSolid.append(sfc);
       } else {
-        SurfCheckAndQueue(GetCurrentDLS().DrawSurfListMasked, sfc);
+        //SurfCheckAndQueue(GetCurrentDLS().DrawSurfListMasked, sfc);
+        GetCurrentDLS().DrawSurfListMasked.append(sfc);
       }
     }
   }
@@ -1615,12 +1628,12 @@ void VRenderLevelLightmap::ProcessCachedSurfaces () {
 
 //==========================================================================
 //
-//  VRenderLevelLightmap::CacheSurface
+//  VRenderLevelLightmap::QueueLMapSurface
 //
 //==========================================================================
-bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
+bool VRenderLevelLightmap::QueueLMapSurface (surface_t *surface) {
   // HACK: return `true` for invalid surfaces, so they won't be queued as normal ones
-  if (!SurfPrepareForRender(surface)) return true;
+  //if (!SurfPrepareForRender(surface)) return true; // should be done by the caller
   // remember this surface, it will be processed later
   LMSurfList.append(surface);
   return true;

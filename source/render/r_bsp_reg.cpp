@@ -36,6 +36,8 @@
 //
 //==========================================================================
 void VRenderLevelLightmap::QueueWorldSurface (surface_t *surf) {
+  if (!SurfPrepareForRender(surf)) return;
+
   bool lightmaped = (surf->lightmap != nullptr || surf->dlightframe == currDLightFrame);
 
   // check if static lightmap recalc requested
@@ -46,7 +48,7 @@ void VRenderLevelLightmap::QueueWorldSurface (surface_t *surf) {
   }
 
   if (lightmaped) {
-    if (CacheSurface(surf)) return;
+    if (QueueLMapSurface(surf)) return;
     // cannot do lightmapping, draw as normal surface instead
     // this is ugly, but much better than lost surfaces
   }

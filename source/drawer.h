@@ -277,6 +277,25 @@ public:
 
   virtual void PrecacheLevel () = 0;
 
+public: // automap
+  typedef bool (*AMCheckSubsectorCB) (const subsector_t *sub);
+  typedef bool (*AMIsHiddenSubsectorCB) (const subsector_t *sub);
+  typedef void (*AMMapXYtoFBXYCB) (float *destx, float *desty, float x, float y);
+
+  virtual void RenderTexturedAutomap (
+    // coords to check BSP bbox visibility
+    float m_x, float m_y, float m_x2, float m_y2,
+    bool doFloors, // floors or ceiling?
+    float alpha,
+    // returns `true` if this subsector should be rendered
+    AMCheckSubsectorCB CheckSubsector,
+    // returns `true` if this subsector is hidden (called only for subsectors that passed the previous check)
+    AMIsHiddenSubsectorCB IsHiddenSubsector,
+    // converts map coords to framebuffer coords
+    // passed as callback, so automap can do its business with scale, rotation, and such
+    AMMapXYtoFBXYCB MapXYtoFBXY
+  ) = 0;
+
 public:
   static bool CalculateRenderStyleInfo (RenderStyleInfo &ri, int RenderStyle, float Alpha, vuint32 StencilColor=0) noexcept;
 

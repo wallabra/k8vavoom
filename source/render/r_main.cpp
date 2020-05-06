@@ -2961,6 +2961,9 @@ int VRenderLevelShared::GetNumberOfStaticLights () {
 }
 
 
+#include "r_main_automap.cpp"
+
+
 //==========================================================================
 //
 //  R_SetMenuPlayerTrans

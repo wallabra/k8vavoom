@@ -414,32 +414,28 @@ void VOpenGLDrawer::BeforeDrawWorldSV () {
 void VOpenGLDrawer::DrawWorldAmbientPass () {
   VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
 
-  // draw horizons
+  // draw horizons and z-skies
   if (!gl_dbg_wireframe) {
-    surface_t **surfptr = dls.DrawHorizonList.ptr();
-    for (int count = dls.DrawHorizonList.length(); count--; ++surfptr) {
-      surface_t *surf = *surfptr;
+    for (auto &&surf : dls.DrawHorizonList) {
       if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
       DoHorizonPolygon(surf);
     }
-  }
 
-  // set z-buffer for skies
-  if (dls.DrawSkyList.length() && !gl_dbg_wireframe) {
-    SurfZBuf.Activate();
-    SurfZBuf.UploadChangedUniforms();
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    surface_t **surfptr = dls.DrawSkyList.ptr();
-    for (int count = dls.DrawSkyList.length(); count--; ++surfptr) {
-      surface_t *surf = *surfptr;
-      if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
-      if (surf->count < 3) continue;
-      //glBegin(GL_POLYGON);
-      glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
-      glEnd();
+    // set z-buffer for skies
+    if (dls.DrawSkyList.length()) {
+      SurfZBuf.Activate();
+      SurfZBuf.UploadChangedUniforms();
+      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+      for (auto &&surf : dls.DrawSkyList) {
+        if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
+        if (surf->count < 3) continue;
+        //glBegin(GL_POLYGON);
+        glBegin(GL_TRIANGLE_FAN);
+          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
+        glEnd();
+      }
+      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   }
 
   // draw normal surfaces

@@ -29,7 +29,8 @@
 //**************************************************************************
 #include "gamedefs.h"
 #ifdef CLIENT
-# include "render/r_local.h" /*FIXME: sorry, i have to do this for textured automap*/
+# include "cl_local.h"
+# include "drawer.h"
 #endif
 
 // there is no need to do this anymore: OpenGL will do it for us
@@ -220,7 +221,8 @@ static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchme
 static VCvarF am_texture_alpha("am_texture_alpha", "0.6", "Automap texture alpha", CVAR_Archive);
 static VCvarI am_draw_type("am_draw_type", "0", "Automap rendering type (0:lines; 1:floors; 2:ceilings)", CVAR_Archive);
 static VCvarB am_draw_texture_lines("am_draw_texture_lines", true, "Draw automap lines on textured automap?", CVAR_Archive);
-static VCvarB am_draw_texture_with_bsp("am_draw_texture_with_bsp", true, "Draw textured automap using BSP tree?", CVAR_Archive);
+// used by drawer
+VCvarB am_draw_texture_with_bsp("am_draw_texture_with_bsp", true, "Draw textured automap using BSP tree?", CVAR_Archive);
 
 
 static VCvarB am_default_whole("am_default_whole", false, "Default scale is \"show all\"?", CVAR_Archive);
@@ -1221,18 +1223,6 @@ static inline bool AM_isBBox2DVisible (const float bbox2d[4]) {
 
 //==========================================================================
 //
-//  AM_isBBox3DVisible
-//
-//==========================================================================
-static inline bool AM_isBBox3DVisible (const float bbox3d[6]) {
-  return
-    m_x2 >= bbox3d[0+0] && m_y2 >= bbox3d[0+1] &&
-    m_x <= bbox3d[3+0] && m_y <= bbox3d[3+1];
-}
-
-
-//==========================================================================
-//
 //  AM_isSubVisible
 //
 //  check bounding box
@@ -1398,7 +1388,7 @@ static void AM_drawWalls () {
 //  AM_mapxy2fbxy
 //
 //==========================================================================
-static inline void AM_mapxy2fbxy (float *destx, float *desty, float x, float y) {
+static void AM_mapxy2fbxy (float *destx, float *desty, float x, float y) {
   if (am_rotate) AM_rotatePoint(&x, &y);
   if (destx) *destx = CXMTOFF(x);
   if (desty) *desty = CYMTOFF(y);
@@ -1407,133 +1397,26 @@ static inline void AM_mapxy2fbxy (float *destx, float *desty, float x, float y) 
 
 //==========================================================================
 //
-//  AM_getFlatSurface
-//
-//==========================================================================
-static sec_surface_t *AM_getFlatSurface (subregion_t *reg, bool doFloors) {
-  if (!reg) return nullptr;
-  sec_surface_t *flatsurf;
-  if (doFloors) {
-    // get floor
-    flatsurf = reg->realfloor;
-    if (!flatsurf) {
-      flatsurf = reg->fakefloor;
-    } else if (reg->fakefloor && reg->fakefloor->esecplane.GetDist() < flatsurf->esecplane.GetDist()) {
-      flatsurf = reg->fakefloor;
-    }
-  } else {
-    // get ceiling
-    flatsurf = reg->realceil;
-    if (!flatsurf) {
-      flatsurf = reg->fakeceil;
-    } else if (reg->fakeceil && reg->fakeceil->esecplane.GetDist() > flatsurf->esecplane.GetDist()) {
-      flatsurf = reg->fakeceil;
-    }
-  }
-  return flatsurf;
-}
-
-
-#ifdef CLIENT
-extern "C" {
-  static int ssurfCmp (const void *aa, const void *bb, void *) {
-    if (aa == bb) return 0;
-    const sec_surface_t *a = *(const sec_surface_t **)aa;
-    const sec_surface_t *b = *(const sec_surface_t **)bb;
-    const auto atx = (uintptr_t)(a->texinfo.Tex);
-    const auto btx = (uintptr_t)(b->texinfo.Tex);
-    return (atx < btx ? -1 : atx > btx ? 1 : 0);
-  }
-}
-#endif
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-static TArray<sec_surface_t *> amSurfList;
-static bool amDoFloors;
-static VTexture *amSkyTex;
-//static int amFlatsRej, amFlatsAcc;
-
-
-//==========================================================================
-//
 //  amFlatsCheckSubsector
 //
 //==========================================================================
-static void amFlatsCheckSubsector (int num) {
-  subsector_t *sub = &GClLevel->Subsectors[num];
-  if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
+static bool amFlatsCheckSubsector (const subsector_t *sub) {
+  //if (!sub->sector->linecount) return; // skip sectors containing original polyobjs (done by the caller)
   if (am_cheating < 1 && !(sub->miscFlags&subsector_t::SSMF_Rendered)) {
     // check for "allmap" powerup
-    if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) return;
+    if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) return false;
   }
-  if (!AM_isSubVisible(sub)) return;
-  // first subregion is main sector subregion
-  subregion_t *reg = sub->regions;
-  if (!reg) return; // just in case
-  // get flat surface
-  sec_surface_t *flatsurf = AM_getFlatSurface(reg, amDoFloors);
-  if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null) return; // just in case
-  // if this is a sky, and we're rendering ceiling, render floor instead
-  if (/*!amDoFloors &&*/ flatsurf->texinfo.Tex == amSkyTex) {
-    //if (amDoFloors) return;
-    flatsurf = AM_getFlatSurface(reg, !amDoFloors);
-    if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null || flatsurf->texinfo.Tex == amSkyTex) return; // just in case
-  }
-  if (!flatsurf->surfs) return;
-  //vassert(flatsurf->surfs->subsector == sub);
-  // update textures (why not? this updates floor animation)
-  Drawer->RendLev->UpdateSubsectorFlatSurfaces(sub, amDoFloors, !amDoFloors);
-  amSurfList.append(flatsurf);
+  return AM_isSubVisible(sub);
 }
 
 
 //==========================================================================
 //
-//  amFlatsCheckNode
+//  amIsHiddenSubsector
 //
 //==========================================================================
-static VVA_OKUNUSED void amFlatsCheckNode (int bspnum) {
-  // found a subsector?
-  if (!(bspnum&NF_SUBSECTOR)) {
-    // nope, this is a normal node
-    node_t *bsp = &GClLevel->Nodes[bspnum];
-    // decide which side the view point is on
-    for (unsigned side = 0; side < 2; ++side) {
-      if (AM_isBBox3DVisible(bsp->bbox[side])) {
-        amFlatsCheckNode(bsp->children[side]);
-        //++amFlatsAcc;
-      }/* else {
-        ++amFlatsRej;
-      }*/
-    }
-  } else {
-    // leaf node (subsector)
-    amFlatsCheckSubsector(bspnum&(~NF_SUBSECTOR));
-  }
-}
-
-
-//==========================================================================
-//
-//  amFlatsCollectSurfaces
-//
-//==========================================================================
-static void amFlatsCollectSurfaces () {
-  amSurfList.reset();
-  //amFlatsRej = amFlatsAcc = 0;
-  if (GClLevel->NumSectors == 0 || GClLevel->NumSubsectors == 0) return; // just in case
-  amSkyTex = GTextureManager.getIgnoreAnim(skyflatnum);
-  // for "view whole map"
-  if (am_draw_texture_with_bsp) {
-    if (GClLevel->NumNodes == 0) {
-      amFlatsCheckSubsector(0);
-    } else {
-      amFlatsCheckNode(GClLevel->NumNodes-1);
-    }
-  } else {
-    for (int f = 0; f < GClLevel->NumSubsectors; ++f) amFlatsCheckSubsector(f);
-  }
+static bool amIsHiddenSubsector (const subsector_t *sub) {
+  return (am_cheating < 1 && !(sub->miscFlags&subsector_t::SSMF_Rendered));
 }
 
 
@@ -1543,56 +1426,11 @@ static void amFlatsCollectSurfaces () {
 //
 //==========================================================================
 static void AM_drawFlats () {
-#ifdef CLIENT
   if (!Drawer || !Drawer->RendLev || (am_draw_type&3) == 0) return;
   float alpha = (am_overlay ? clampval(am_texture_alpha.asFloat(), 0.0f, 1.0f) : 1.0f);
   if (alpha <= 0.0f) return;
-
-  // collect surfaces
-  amDoFloors = ((am_draw_type&3) == 1);
-  amFlatsCollectSurfaces();
-  if (amSurfList.length() == 0) return; // nothing to do
-
-  //GCon->Logf("am: nodes reject=%d; accept=%d", amFlatsRej, amFlatsAcc);
-
-  // sort surfaces by texture
-  timsort_r(amSurfList.ptr(), amSurfList.length(), sizeof(sec_surface_t *), &ssurfCmp, nullptr);
-
-  // render surfaces
-  static TArray<TVec> verts;
-  Drawer->BeginTexturedPolys();
-  {
-    const sec_surface_t *const *css = amSurfList.ptr();
-    for (int csscount = amSurfList.length(); csscount--; ++css) {
-      const subsector_t *subsec = (*css)->surfs->subsector;
-      const sector_t *sector = subsec->sector;
-      // calculate lighting
-      const float lev = clampval(sector->params.lightlevel/255.0f, 0.0f, 1.0f);
-      const vuint32 light = sector->params.LightColor;
-      TVec vlight(
-        ((light>>16)&255)*lev/255.0f,
-        ((light>>8)&255)*lev/255.0f,
-        (light&255)*lev/255.0f);
-      // draw hidden parts bluish
-      if (am_cheating < 1 && !(subsec->miscFlags&subsector_t::SSMF_Rendered)) {
-        const float intensity = colorIntensity((light>>16)&255, (light>>8)&255, light&255)/255.0f;
-        vlight = TVec(0.1f, 0.1f, intensity);
-      }
-      // render surfaces
-      for (surface_t *surf = (*css)->surfs; surf; surf = surf->next) {
-        if (surf->count < 3) continue;
-        verts.reset();
-        float sx, sy;
-        for (int vn = 0; vn < surf->count; ++vn) {
-          AM_mapxy2fbxy(&sx, &sy, surf->verts[vn].x, surf->verts[vn].y);
-          verts.append(TVec(sx, sy, 0));
-        }
-        Drawer->DrawTexturedPoly(&(*css)->texinfo, vlight, alpha, verts.length(), verts.ptr(), surf->verts);
-      }
-    }
-  }
-  Drawer->EndTexturedPolys();
-#endif
+  const bool amDoFloors = ((am_draw_type&3) == 1);
+  Drawer->RendLev->RenderTexturedAutomap(m_x, m_y, m_x2, m_y2, amDoFloors, alpha, &amFlatsCheckSubsector, &amIsHiddenSubsector, &AM_mapxy2fbxy);
 }
 
 
