@@ -54,14 +54,14 @@ override void CreateChoices () {
     SetCvarS('master_address', ed.Value);
   };
     SetLastHelp("IP or host name of the master server.");
-  currentY += edAddress.Height;
+  //currentY += edAddress.Height;
 }
 
 
 defaultproperties {
   WidthThreshold = 10;
   ChoicesStartX = 120;
-  ChoicesStartY = 26;
+  //ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;
   Title = "MASTER SERVER";
 }

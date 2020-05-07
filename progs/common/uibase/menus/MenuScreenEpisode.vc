@@ -33,10 +33,10 @@ class MenuScreenEpisode : MenuScreen;
 //==========================================================================
 override void CreateChoices () {
   MenuChoiceEpisode Epi;
-  int currentY = ChoicesStartY;
+  int currentY = GetChoicesStartY();
   int ecount = P_GetNumEpisodes();
   //if (ecount > 6) Height = 400;
-  int calcHeight = ChoicesStartY;
+  int calcHeight = currentY;
   int maxwdt = -1;
   foreach (auto i; 0..ecount) {
     EpisodeDef *EDef = P_GetEpisodeDef(i);
@@ -93,7 +93,7 @@ void ActivateEpisode (Object Sender) {
 
 defaultproperties {
   ChoicesStartX = 48;
-  ChoicesStartY = 40;
+  //ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
   Title = "WHICH EPISODE?";
   MenuScrollable = true;

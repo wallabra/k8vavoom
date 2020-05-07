@@ -72,7 +72,7 @@ void MakeOneLineControl () {
   auto par = FindParentWithClass(MenuScreen);
   if (par) {
     par.SetChoiceInitialSizePos(self);
-    SetOrigin(0, par.currentY);
+    SetOrigin(0, par.GetCurrentY());
   }
   //CursorXOffs = -10;
 }

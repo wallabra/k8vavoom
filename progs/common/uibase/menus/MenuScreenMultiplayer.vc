@@ -41,7 +41,7 @@ override void CreateChoices () {
 
 defaultproperties {
   ChoicesStartX = 97;
-  ChoicesStartY = 40;
+  //ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
   Title = "MULTIPLAYER";
 }

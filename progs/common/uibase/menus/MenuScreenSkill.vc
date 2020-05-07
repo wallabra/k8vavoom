@@ -36,7 +36,7 @@ override void CreateChoices () {
   foreach (auto i; 0..P_GetNumSkills()) {
     MenuChoiceSkill Btn = GetItemContainer().NewChild(MenuChoiceSkill);
     SkillDef *SDef = P_GetSkillDef(i);
-    Btn.SetPos(ChoicesStartX, currentY);
+    Btn.SetPos(ChoicesStartX, GetCurrentY());
     int wdt = -1;
     if (SDef->bMenuNameIsPic) {
       Btn.PicHandle = R_RegisterPic(name(SDef->MenuName));
@@ -60,7 +60,7 @@ override void CreateChoices () {
     Btn.bMustConfirm = SDef->bMustConfirm;
     Btn.ConfirmationText = SDef->ConfirmationText;
     Btn.Activated = &ActivateSkill;
-    currentY += Btn.Height;
+    //currentY += Btn.Height;
   }
   maxwdt += 60;
   if (Width < maxwdt) {
@@ -114,7 +114,7 @@ void ActivateSkill (Object Sender) {
 
 defaultproperties {
   ChoicesStartX = 38;
-  ChoicesStartY = 40;
+  //ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
   Title = "CHOOSE SKILL LEVEL:";
   MenuScrollable = true;

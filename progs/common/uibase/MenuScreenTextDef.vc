@@ -83,12 +83,12 @@ void CreateMenuItemsFromList (ref array!MenuDefOptionBase options) {
       mc.Width = Width;
       mc.CursorXOffs = Width/2;
       if (opt isa MenuDefOptionSubHeader) {
-        mc.SetOrigin(0, currentY);
+        mc.SetOrigin(0, GetCurrentY());
       } else {
         mc.CursorXOffsHR = Width/2;
-        mc.SetOrigin(Width/2, currentY);
+        mc.SetOrigin(Width/2, GetCurrentY());
       }
-      currentY += mc.Height;
+      //currentY += mc.Height;
     }
   }
 }
@@ -109,7 +109,7 @@ void CreateMenuFromDef (MenuDefinition mdef) {
     if (cc) SelectorType = cc;
     ChoicesStartX = Width/2; //190;
     //ChoicesStartX = 0;
-    ChoicesStartY = 26;
+    //ChoicesStartY = 26;
   } else if (mdef.seltype) {
     class!MenuSelectorBase cc = class!MenuSelectorBase(FindClass(mdef.seltype));
     if (cc) SelectorType = cc;
@@ -120,7 +120,7 @@ void CreateMenuFromDef (MenuDefinition mdef) {
   helpText.text = "";
   CreateTitle();
   CreateBackButton();
-  currentY = ChoicesStartY;
+  //currentY = ChoicesStartY;
 
   CreateMenuItemsFromList(mdef.options);
 }
@@ -143,6 +143,8 @@ override void CreateTitle () {
   } else {
     delete titleItem;
   }
+  // fix item container size
+  OnConfigurationChanged();
 }
 
 
@@ -170,7 +172,7 @@ defaultproperties {
   Width = 520;
   Height = 260;
   ChoicesStartX = 200;
-  ChoicesStartY = 26;
+  //ChoicesStartY = 26;
   TitleX = 180;
   SelectorType = MenuSelector_SmallRight;
 }

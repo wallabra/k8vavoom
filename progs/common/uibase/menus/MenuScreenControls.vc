@@ -52,7 +52,7 @@ defaultproperties {
 
   ChoicesStartX = 190;
   //ChoicesStartX = 0;
-  ChoicesStartY = 26;
+  //ChoicesStartY = 26;
 
   TitleX = 190;
 

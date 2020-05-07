@@ -39,36 +39,36 @@ override void CreateChoices() {
   //currentY = ChoicesStartY;
 
   Btn = GetItemContainer().NewChild(MenuSmallTextButton);
-  Btn.SetPos(ChoicesStartX, currentY);
+  Btn.SetPos(ChoicesStartX, GetCurrentY());
   Btn.Text = "Search for internet games...";
   Btn.TextHAlign = hleft;
   Btn.Activated = &ActivateMasterSearch;
-  currentY += Btn.Height;
+  //currentY += Btn.Height;
     SetLastHelp(
       "Connect to master server to get MP server info.");
 
   Btn = GetItemContainer().NewChild(MenuSmallTextButton);
-  Btn.SetPos(ChoicesStartX, currentY);
+  Btn.SetPos(ChoicesStartX, GetCurrentY());
   Btn.Text = "Search for LAN games...";
   Btn.TextHAlign = hleft;
   Btn.Activated = &ActivateSearch;
-  currentY += Btn.Height;
+  //currentY += Btn.Height;
     SetLastHelp(
       "Search for game servers in LAN.");
 
   JoinAt = GetItemContainer().NewChild(MenuInputLine);
-  JoinAt.SetPos(ChoicesStartX, currentY);
+  JoinAt.SetPos(ChoicesStartX, GetCurrentY());
   JoinAt.Text = "Join Game At";
   JoinAt.Value = GetCvarS('net_ui_last_join_address');
   if (!JoinAt.Value) JoinAt.Value = "127.0.0.1";
   JoinAt.ValueChanged = &ChangedJoinAt;
-  currentY += JoinAt.Height;
+  //currentY += JoinAt.Height;
     SetLastHelp(
       "You can use either IP address, or a host name here.");
 
   auto pwd = GetItemContainer().NewChild(MenuInputLine);
   //pwd.MakeOneLineControl();
-  pwd.SetPos(ChoicesStartX, currentY);
+  pwd.SetPos(ChoicesStartX, GetCurrentY());
   pwd.Text = "Server Password";
   pwd.Value = GetCvarS('net_server_key');
   pwd.ValueChanged = delegate void (Object sender) {
@@ -76,7 +76,7 @@ override void CreateChoices() {
     assert(ed);
     SetCvarS('net_server_key', ed.Value);
   };
-  currentY += pwd.Height;
+  //currentY += pwd.Height;
     SetLastHelp(
       "Some servers are password-protected.\n"~
       "You can specify the password here.");
@@ -119,7 +119,7 @@ void ChangedJoinAt (Object Sender) {
 
 defaultproperties {
   ChoicesStartX = 64;
-  ChoicesStartY = 40;
+  //ChoicesStartY = 40;
   SelectorType = MenuSelector_SmallLeft;
   Title = "JOIN GAME";
 }

@@ -44,8 +44,8 @@ override void CreateChoices () {
   CreateSubMenuBigTextNamed("Options", 'OptionsMenu');
   CreateSubMenuBigText("Help", MenuScreenHelp);
 
-  auto btn = NewChild(MenuBigTextButton);
-  btn.SetPos(ChoicesStartX, currentY);
+  auto btn = GetItemContainer().NewChild(MenuBigTextButton);
+  btn.SetPos(ChoicesStartX, GetCurrentY());
   btn.Text = "Quit game";
   btn.Activated = delegate void (Object Sender) { ClGame.ShowQuitPrompt(); };
 }
@@ -53,6 +53,6 @@ override void CreateChoices () {
 
 defaultproperties {
   ChoicesStartX = 97;
-  ChoicesStartY = 64;
+  //ChoicesStartY = 64;
   SelectorType = MenuSelector_Big;
 }

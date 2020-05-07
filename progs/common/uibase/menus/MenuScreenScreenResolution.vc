@@ -58,29 +58,29 @@ override void CreateChoices () {
     EdHeight.Value = va("%d", modes[NewValue].height);
     return true;
   };
-  currentY += Mode.Height;
+  //currentY += Mode.Height;
     SetLastHelp("Choose one of the predefined screen sizes.");
 
   EdWidth = GetItemContainer().NewChild(MenuInputLine);
   //SetChoiceInitialSizePos(EdWidth);
-  //EdWidth.SetOrigin(ChoicesStartX+10, currentY);
+  //EdWidth.SetOrigin(ChoicesStartX+10, GetCurrentY());
   //EdWidth.CursorXOffs = -10;
   EdWidth.MakeOneLineControl();
   EdWidth.Text = "Width";
   EdWidth.Value = GetCvarS('screen_width');
   EdWidth.DisableSlotRendering();
-  currentY += EdWidth.Height;
+  //currentY += EdWidth.Height;
     SetLastHelp("Custom screen resolution.");
 
   EdHeight = GetItemContainer().NewChild(MenuInputLine);
   //SetChoiceInitialSizePos(EdHeight);
-  //EdHeight.SetOrigin(ChoicesStartX+10, currentY);
+  //EdHeight.SetOrigin(ChoicesStartX+10, GetCurrentY());
   //EdHeight.CursorXOffs = -10;
   EdHeight.MakeOneLineControl();
   EdHeight.Text = "Height";
   EdHeight.Value = GetCvarS('screen_height');
   EdHeight.DisableSlotRendering();
-  currentY += EdHeight.Height;
+  //currentY += EdHeight.Height;
     SetLastHelp("Custom screen resolution.");
 
   ScrScale = GetItemContainer().NewChild(MenuChoiceNumeric);//CreateFloatNumericCvar("Screen Scale", 'gl_scale', 1, 1, 64);
@@ -92,7 +92,7 @@ override void CreateChoices () {
   ScrScale.MinValue = 1;
   ScrScale.MaxValue = 8;
   //ScrScale.SetSessionCvar(cvname);
-  currentY += ScrScale.Height;
+  //currentY += ScrScale.Height;
     SetLastHelp(
       "Screen scaling factor.\n"~
       "You can set it to >1 to render screen in lower resolution.\n"~
@@ -127,14 +127,14 @@ override void CreateChoices () {
 
   VSync = GetItemContainer().NewChild(MenuChoice_OnOff);
   SetChoiceInitialSizePos(VSync);
-  //VSync.SetOrigin(ChoicesStartX, currentY);
+  //VSync.SetOrigin(ChoicesStartX, GetCurrentY());
   VSync.Text = "VSync";
   VSync.SetInitialValue(GetCvar('r_vsync'));
     SetLastHelp(
       "The engine will try to use adaptive vsync automatically.\n"~
       "You have to use \"Set Resolution\" to activate new setting.\n"~
       "Note that FPS is capped at 90, so don't expect glaring numbers without vsync.");
-  currentY += VSync.Height;
+  //currentY += VSync.Height;
 
   /*
   CreateEnumCvar("Aspect Ratio", 'r_aspect_ratio',
@@ -156,7 +156,7 @@ override void CreateChoices () {
     itemRatio.AddItem(R_GetAspectRatioDsc(ridx), ridx);
   }
   itemRatio.SetSessionCvar('r_aspect_ratio');
-  currentY += itemRatio.Height;
+  //currentY += itemRatio.Height;
     SetLastHelp(
       "Screen aspect ratio."/*~
       "\n'Vanilla' is for square pixels, regardless of screen resolution.\n"*/);
@@ -164,7 +164,7 @@ override void CreateChoices () {
   MenuTextButton Btn = GetItemContainer().NewChild(MenuSmallTextButton);
   //SetTextButtonInitialSizePos(Btn);
   SetChoiceInitialSizePos(Btn);
-  //Btn.SetOrigin(ChoicesStartX, currentY);
+  //Btn.SetOrigin(ChoicesStartX, GetCurrentY());
   Btn.Text = "Set Resolution";
   Btn.Activated = &ActivateSetMode;
 }
@@ -202,7 +202,7 @@ void ActivateSetMode (Object Sender) {
 defaultproperties {
   WidthThreshold = 10;
   ChoicesStartX = 120;
-  ChoicesStartY = 26;
+  //ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;
   Title = "SCREEN RESOLUTION";
   modes[0].width = 640; modes[0].height = 480;

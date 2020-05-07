@@ -84,11 +84,9 @@ override void CreateChoices () {
   }
 
   bool useSmallFont = (ClGame.Game.PlayerClasses.length > 6);
-  if (useSmallFont) {
-    ChoicesStartY = 26;
-  }
+  //if (useSmallFont) ChoicesStartY = 26;
 
-  int currentY = ChoicesStartY;
+  int currentY = GetChoicesStartY();
   foreach (int i; 0..ClGame.Game.PlayerClasses.length) {
     MenuChoicePClass Btn = GetItemContainer().NewChild(MenuChoicePClass);
     Btn.SetSmallFont(useSmallFont);
@@ -156,7 +154,7 @@ void PClassItemActivate (Object Sender) {
 
 defaultproperties {
   ChoicesStartX = 66;
-  ChoicesStartY = 66;
+  //ChoicesStartY = 66;
   SelectorType = MenuSelector_Big;
   Title = "CHOOSE CLASS:";
   // 34, TEXT_BIG

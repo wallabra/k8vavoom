@@ -36,7 +36,7 @@ name QuitSounds[8];
 override void CreateChoices () {
   ::CreateChoices();
   /*
-  Page = NewChild(MenuStaticBitmap);
+  Page = GetItemContainer().NewChild(MenuStaticBitmap);
   Page.SetPic('panel7');
   */
   currPic = R_RegisterPic('panel7');

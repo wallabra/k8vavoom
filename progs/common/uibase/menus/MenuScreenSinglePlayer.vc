@@ -38,31 +38,31 @@ override void CreateChoices () {
   MenuTextButton Btn;
 
   Btn = GetItemContainer().NewChild(MenuBigTextButton);
-  Btn.SetPos(ChoicesStartX, currentY);
+  Btn.SetPos(ChoicesStartX, GetCurrentY());
   Btn.Text = "New Game";
   Btn.Activated = &ActivateNewGame;
-  currentY += Btn.Height;
+  //currentY += Btn.Height;
 
   Btn = GetItemContainer().NewChild(MenuBigTextButton);
-  Btn.SetPos(ChoicesStartX, currentY);
+  Btn.SetPos(ChoicesStartX, GetCurrentY());
   Btn.Text = "Load Game";
   Btn.Activated = &ActivateLoad;
-  currentY += Btn.Height;
+  //currentY += Btn.Height;
 
   Btn = GetItemContainer().NewChild(MenuBigTextButton);
-  Btn.SetPos(ChoicesStartX, currentY);
+  Btn.SetPos(ChoicesStartX, GetCurrentY());
   Btn.Text = "Save Game";
   Btn.Activated = &ActivateSave;
-  currentY += Btn.Height;
+  //currentY += Btn.Height;
   savegameBtn = Btn;
   // disable "save game" button if we're not in the game
   if (ClGame.Game.NetMode < GameInfo::NM_Standalone) Btn.Enabled = false;
 
   Btn = GetItemContainer().NewChild(MenuBigTextButton);
-  Btn.SetPos(ChoicesStartX, currentY);
+  Btn.SetPos(ChoicesStartX, GetCurrentY());
   Btn.Text = "End Game";
   Btn.Activated = &ActivateEndGame;
-  currentY += Btn.Height;
+  //currentY += Btn.Height;
   endgameBtn = Btn;
   // disable "end game" button if we're not in the game
   if (ClGame.Game.NetMode < GameInfo::NM_Standalone) Btn.Enabled = false;
@@ -137,7 +137,7 @@ void ActivateEndGame (Object Sender) {
 defaultproperties {
   bTickEnabled = true; // to update endgame button status
   ChoicesStartX = 97;
-  ChoicesStartY = 40;
+  //ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
   Title = "SINGLE PLAYER";
 }

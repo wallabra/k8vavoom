@@ -23,6 +23,31 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+class ItemContainerWidget : Widget;
+
+
+//==========================================================================
+//
+//  OnChildAdded
+//
+//  append it to the parent menu child list
+//
+//==========================================================================
+override void OnChildAdded (Widget Child) {
+  auto menu = FindParentWithClass(MenuScreen);
+  if (menu) menu.NewItemAdded(Child);
+  ::OnChildAdded(Child);
+}
+
+
+defaultproperties {
+  Focusable = true;
+  //UseScissor = true;
+  //WantMouseInput = true;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class MenuScreen : Widget;
 
 ClientGameShared ClGame;
@@ -39,7 +64,7 @@ int CursorPos;
 int CursorPrev;
 
 int ChoicesStartX;
-int ChoicesStartY;
+//int ChoicesStartY;
 
 class!MenuSelectorBase SelectorType;
 MenuSelectorBase Selector;
@@ -52,7 +77,7 @@ name ActivateSound;
 name DeactivateSound;
 name ClearMenusSound;
 
-int currentY;
+//int currentY;
 
 HelpText helpText;
 
@@ -122,6 +147,23 @@ override void OnVisibilityChanged (bool bNewVisibility) {
 
 //==========================================================================
 //
+//  OnConfigurationChanged
+//
+//  Called when position or size has been changed.
+//
+//==========================================================================
+override void OnConfigurationChanged () {
+  ::OnConfigurationChanged();
+  //printdebug("%C: config changed; size=%dx%d", self, Width, Height);
+  if (ItemContainer) {
+    int sy = GetItemContainerOfsY();
+    ItemContainer.SetConfiguration(0, sy, Width, Height-sy);
+  }
+}
+
+
+//==========================================================================
+//
 //  OnBeforePopMenu
 //
 //  this is called before `ClGame.PopMenu()`
@@ -172,6 +214,7 @@ void ShowAndActivate () {
 //==========================================================================
 void FinishCreatingMenu () {
   //if (AllowVerticalResize) Height = max(Height, Items[$-1].Y+Items[$-1].Height+4);
+  //printdebug("%C: FinishCreatingMenu! (avs=%B; itemcount=%s)", self, AllowVerticalResize, Items.length);
   CreateSelector();
   SetDefaultChoice();
   if (AllowVerticalResize && Items.length > 0) {
@@ -180,6 +223,7 @@ void FinishCreatingMenu () {
       newHeight = GetVirtualHeight()-28;
       MenuScrollable = true;
     }
+    //printdebug("%C: old height=%s; new height=%s", self, Height, newHeight);
     Height = newHeight;
   }
 
@@ -201,7 +245,7 @@ void CreateMenu () {
   helpText.text = "";
   CreateTitle();
   CreateBackButton();
-  currentY = ChoicesStartY;
+  //currentY = ChoicesStartY;
   CreateChoices();
   FinishCreatingMenu();
   /* this is in `FinishCreatingMenu()` now
@@ -224,15 +268,26 @@ void CreateMenu () {
 
 //==========================================================================
 //
-//  OnChildAdded
+//  NewItemAdded
 //
 //==========================================================================
-override void OnChildAdded (Widget Child) {
+void NewItemAdded (Widget Child) {
+  if (!Child) return;
   // do not add "close" button to item list
   if (MenuChoice(Child) && !MenuChoice_BackButton(Child)) {
     if (Items.length > 1024) FatalError("Too many menu items");
     Items[Items.Length] = MenuChoice(Child);
   }
+}
+
+
+//==========================================================================
+//
+//  OnChildAdded
+//
+//==========================================================================
+override void OnChildAdded (Widget Child) {
+  NewItemAdded(Child);
   ::OnChildAdded(Child);
 }
 
@@ -251,6 +306,8 @@ void CreateTitle () {
   } else {
     delete titleItem;
   }
+  // fix item container size
+  OnConfigurationChanged();
 }
 
 
@@ -290,7 +347,10 @@ void CreateBackButton () {
 //
 //==========================================================================
 Widget CreateItemContainer () {
-  return none;
+  //return none;
+  Widget itc = NewChild(ItemContainerWidget);
+  itc.SetConfiguration(0, 0, Width, Height);
+  return itc;
 }
 
 
@@ -301,6 +361,38 @@ Widget CreateItemContainer () {
 //==========================================================================
 Widget GetItemContainer () {
   return (ItemContainer ? ItemContainer : Widget(self));
+}
+
+
+//==========================================================================
+//
+//  GetItemContainerOfsY
+//
+//==========================================================================
+int GetItemContainerOfsY () {
+  return (titleItem ? titleItem.Y+titleItem.Height+2 : 0);
+}
+
+
+//==========================================================================
+//
+//  GetChoicesStartY
+//
+//==========================================================================
+int GetChoicesStartY () {
+  if (ItemContainer) return 0;
+  return (titleItem ? titleItem.Y+titleItem.Height+2 : 0);
+}
+
+
+//==========================================================================
+//
+//  GetCurrentY
+//
+//==========================================================================
+int GetCurrentY () {
+  int sy = (Items.length > 1 ? Items[$-2].Y+Items[$-2].Height : GetChoicesStartY());
+  return sy;
 }
 
 
@@ -372,9 +464,9 @@ void SetChoiceInitialSizePos (MenuChoice cc) {
     //!cc.Width = Width;
     cc.CursorXOffs = Width/2;
     cc.CursorXOffsHR = Width/2;
-    cc.SetOrigin(Width/2, currentY);
+    cc.SetOrigin(Width/2, GetCurrentY());
   } else {
-    cc.SetOrigin(ChoicesStartX, currentY);
+    cc.SetOrigin(ChoicesStartX, GetCurrentY());
   }
 }
 
@@ -386,7 +478,7 @@ void SetChoiceInitialSizePos (MenuChoice cc) {
 //==========================================================================
 void SetTextButtonInitialSizePos (MenuTextButton cc) {
   if (!cc) return;
-  cc.SetOrigin(ChoicesStartX, currentY);
+  cc.SetOrigin(ChoicesStartX, GetCurrentY());
   if (Width > WidthThreshold) cc.Width = Width;
 }
 
@@ -403,7 +495,7 @@ MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
   SetChoiceInitialSizePos(onoff);
   onoff.Text = text;
   onoff.SetSessionCvar(cvname);
-  currentY += onoff.Height;
+  //currentY += onoff.Height;
   return onoff;
 }
 
@@ -457,7 +549,7 @@ MenuChoiceEnum CreateEnumCvar (string text, name cvname,
   if (specified_item25) en.AddItem(item25);
   if (specified_item26) en.AddItem(item26);
   en.SetSessionCvar(cvname);
-  currentY += en.Height;
+  //currentY += en.Height;
   return en;
 }
 
@@ -470,10 +562,12 @@ MenuChoiceEnum CreateEnumCvar (string text, name cvname,
 //
 //==========================================================================
 MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, optional float min, optional float max) {
+  /*
   if (Items.length > 0 && Items[$-1] !isa MenuChoiceSlider && Items[$-1].Height == 10) {
     Items[$-1].Height = 8;
     currentY -= 2;
   }
+  */
   auto slider = GetItemContainer().NewChild(MenuChoiceSlider);
   SetChoiceInitialSizePos(slider);
   slider.Text = text;
@@ -482,7 +576,7 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
   if (specified_min) slider.MinValue = min;
   if (specified_max) slider.MaxValue = max;
   slider.SetSessionCvar(cvname);
-  currentY += slider.Height;
+  //currentY += slider.Height;
   return slider;
 }
 
@@ -503,7 +597,7 @@ MenuChoiceNumeric CreateFloatNumericCvar (string text, name cvname, float delta,
   if (specified_min) slider.MinValue = min;
   if (specified_max) slider.MaxValue = max;
   slider.SetSessionCvar(cvname);
-  currentY += slider.Height;
+  //currentY += slider.Height;
   return slider;
 }
 
@@ -523,9 +617,9 @@ MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
   if (Width > WidthThreshold) {
     btn.Width = Width;
     btn.CursorXOffs = Width/2;
-    btn.SetOrigin(0, currentY);
+    btn.SetOrigin(0, GetCurrentY());
   } else {
-    btn.SetOrigin(ChoicesStartX, currentY);
+    btn.SetOrigin(ChoicesStartX, GetCurrentY());
   }
   btn.Text = text;
   btn.Focusable = false;
@@ -537,7 +631,7 @@ MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
     btn.TextColorFocus = CR_ORANGE;
   }
   btn.Height = 12;
-  currentY += btn.Height;
+  //currentY += btn.Height;
   return btn;
 }
 
@@ -549,11 +643,11 @@ MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
 //==========================================================================
 MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
   auto btn = GetItemContainer().NewChild(MenuSmallTextButton);
-  btn.SetOrigin(ChoicesStartX, currentY);
+  btn.SetOrigin(ChoicesStartX, GetCurrentY());
   if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
   btn.SetSubMenuClass(asubmenuClass);
-  currentY += btn.Height;
+  //currentY += btn.Height;
   return btn;
 }
 
@@ -565,11 +659,11 @@ MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
 //==========================================================================
 MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass) {
   auto btn = GetItemContainer().NewChild(MenuBigTextButton);
-  btn.SetOrigin(ChoicesStartX, currentY);
+  btn.SetOrigin(ChoicesStartX, GetCurrentY());
   if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
   btn.SetSubMenuClass(asubmenuClass);
-  currentY += btn.Height;
+  //currentY += btn.Height;
   return btn;
 }
 
@@ -581,11 +675,11 @@ MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass
 //==========================================================================
 MenuTextButton CreateSubMenuTextNamed (string text, name menuName) {
   auto btn = GetItemContainer().NewChild(MenuSmallTextButton);
-  btn.SetOrigin(ChoicesStartX, currentY);
+  btn.SetOrigin(ChoicesStartX, GetCurrentY());
   if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
   btn.SetSubMenuName(string(menuName));
-  currentY += btn.Height;
+  //currentY += btn.Height;
   return btn;
 }
 
@@ -597,11 +691,11 @@ MenuTextButton CreateSubMenuTextNamed (string text, name menuName) {
 //==========================================================================
 MenuTextButton CreateSubMenuBigTextNamed (string text, name menuName) {
   auto btn = GetItemContainer().NewChild(MenuBigTextButton);
-  btn.SetOrigin(ChoicesStartX, currentY);
+  btn.SetOrigin(ChoicesStartX, GetCurrentY());
   if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
   btn.SetSubMenuName(string(menuName));
-  currentY += btn.Height;
+  //currentY += btn.Height;
   return btn;
 }
 
@@ -679,8 +773,8 @@ final void FixTopIndex () {
     helpText.text = Items[CursorPos].getHelp();
     helpText.Raise();
   }
-  if (Items.length == 1) { if (helpText) helpText.atTop = false; CursorPos = 0; ChildrenOfsY = 0; return; }
-  if (!MenuScrollable) { if (helpText) helpText.atTop = false; ChildrenOfsY = 0; return; }
+  if (Items.length == 1) { if (helpText) helpText.atTop = false; CursorPos = 0; GetItemContainer().ChildrenOfsY = 0; return; }
+  if (!MenuScrollable) { if (helpText) helpText.atTop = false; GetItemContainer().ChildrenOfsY = 0; return; }
   // check if this is first selectable item
   bool isFirstItem = true;
   foreach (auto index, auto item; Items) {
@@ -689,17 +783,18 @@ final void FixTopIndex () {
     isFirstItem = index == CursorPos;
     break;
   }
-  if (isFirstItem) { if (helpText) helpText.atTop = false; ChildrenOfsY = 0; return; }
+  if (isFirstItem) { if (helpText) helpText.atTop = false; GetItemContainer().ChildrenOfsY = 0; return; }
   // make sure that cursor is visible
   int th = CalcTotalHeight();
   int ys = GetItemYS(CursorPos);
   int ye = GetItemYE(CursorPos);
-  //print("Menu <%C>; ofs=%d; ys=%d; ye=%d; th=%d; height=%d; hh=%d; bs=%d; OriginY=%s", Class, ChildrenOfsY, ys, ye, th, Height, helpText.Height, GetVirtualHeight()-helpText.Height-4, Y2Virtual(ye));
-       if (ys+ChildrenOfsY < ChoicesStartY) ChildrenOfsY = -ys+ChoicesStartY;
-  else if (ye+ChildrenOfsY > Height) ChildrenOfsY = -(ye-Height);
+  //print("Menu <%C>; ofs=%d; ys=%d; ye=%d; th=%d; height=%d; hh=%d; bs=%d; OriginY=%s", Class, GetItemContainer().ChildrenOfsY, ys, ye, th, Height, helpText.Height, GetVirtualHeight()-helpText.Height-4, Y2Virtual(ye));
+  int csy = GetChoicesStartY();
+       if (ys+GetItemContainer().ChildrenOfsY < csy) GetItemContainer().ChildrenOfsY = -ys+csy;
+  else if (ye+GetItemContainer().ChildrenOfsY > GetItemContainer().Height) GetItemContainer().ChildrenOfsY = -(ye-GetItemContainer().Height);
   // make sure that help is visible
   if (helpText && helpText.Height > 0) {
-    helpText.atTop = (Y2Virtual(ye)+ChildrenOfsY >= GetVirtualHeight()-helpText.Height-4);
+    helpText.atTop = (Y2Virtual(ye)+GetItemContainer().ChildrenOfsY >= GetVirtualHeight()-helpText.Height-4);
   }
 }
 
@@ -712,14 +807,14 @@ final void FixTopIndex () {
 void CursorMoved () {
   if (Items.length == 0) return;
   FixTopIndex();
-  if ((CursorPrev == CursorPos && ChildrenOfsY == OfsYPrev) || MenuChoice_BackButton(Items[CursorPos])) return;
+  if ((CursorPrev == CursorPos && GetItemContainer().ChildrenOfsY == OfsYPrev) || MenuChoice_BackButton(Items[CursorPos])) return;
   if (CursorPos >= 0 && CursorPos < Items.length) SetCurrentFocusChild(Items[CursorPos]);
   if (Selector) {
     Selector.SetOriginCentered(Items[CursorPos].X+Items[CursorPos].CursorXOffs, Items[CursorPos].Y+Items[CursorPos].CursorYOffs, Items[CursorPos].Height);
     //print("000: cp=%s; %s %s %s w=%s", CursorPos, Items[CursorPos].X, Items[CursorPos].CursorXOffs, Items[CursorPos].X+Items[CursorPos].CursorXOffs, Width);
   }
   CursorPrev = CursorPos;
-  OfsYPrev = ChildrenOfsY;
+  OfsYPrev = GetItemContainer().ChildrenOfsY;
   //printdebug("CURR: %C:%s: height=%s", Items[CursorPos], Items[CursorPos].UniqueId, Items[CursorPos].Height);
 }
 
@@ -731,7 +826,7 @@ void CursorMoved () {
 //==========================================================================
 void SetDefaultChoice () {
   // default cursor position
-  ChildrenOfsY = 0;
+  GetItemContainer().ChildrenOfsY = 0;
   OfsYPrev = 0;
   CursorPos = 0;
   CursorPrev = 0;
@@ -774,7 +869,7 @@ bool MakeItemSelected (MenuChoice it) {
 //
 //==========================================================================
 int GetChoiceForSaving () {
-  return (CursorPos+(-ChildrenOfsY)*10000);
+  return (CursorPos+(-GetItemContainer().ChildrenOfsY)*10000);
 }
 
 
@@ -792,7 +887,7 @@ void SetSavedChoice (int saval) {
   if (Items[idx].Focusable && Items[idx].Enabled) {
     CursorPrev = -1;
     CursorPos = idx;
-    ChildrenOfsY = -top;
+    GetItemContainer().ChildrenOfsY = -top;
     CursorMoved();
   }
 }
@@ -877,7 +972,7 @@ override void OnDraw () {
 //
 //==========================================================================
 override void OnPostDraw () {
-  int y0 = ChildrenOfsY; // negative means "scrolled down"
+  int y0 = GetItemContainer().ChildrenOfsY; // negative means "scrolled down"
   int y1 = CalcTotalHeight()+y0;
   if (y0 < 0 || y1 > Height) {
     SetFont('consolefont');
@@ -960,7 +1055,7 @@ defaultproperties {
   TitleX = 160;
   TitleY = 24;
   Focusable = true;
-  UseScissor = true;
+  //UseScissor = true;
   MenuScrollable = false;
   AllowVerticalResize = false;
 

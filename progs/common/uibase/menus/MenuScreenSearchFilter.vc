@@ -30,7 +30,7 @@ string filterCVar;
 string filterHelp;
 
 int foptStartIdx;
-int savedCurrentY;
+//int savedCurrentY;
 
 array!MenuDefOptionBase optlist;
 
@@ -114,7 +114,7 @@ void FilterOptions () {
     });
   }
 
-  currentY = savedCurrentY;
+  //currentY = savedCurrentY;
   CreateMenuItemsFromList(optlist);
 }
 
@@ -143,7 +143,7 @@ override void CreateChoices () {
     SaveFilters();
     FilterOptions();
   };
-  currentY += il.Height;
+  //currentY += il.Height;
     SetLastHelp(
       "Filtering substring for titles.\n"~
       "Supports DOS-style globs.\n");
@@ -162,7 +162,7 @@ override void CreateChoices () {
     SaveFilters();
     FilterOptions();
   };
-  currentY += il.Height;
+  //currentY += il.Height;
     SetLastHelp(
       "Filtering substring for cvar names.\n"~
       "Supports DOS-style globs.\n");
@@ -181,15 +181,15 @@ override void CreateChoices () {
     SaveFilters();
     FilterOptions();
   };
-  currentY += il.Height;
+  //currentY += il.Height;
     SetLastHelp(
       "Filtering substring for help text.\n"~
       "Supports DOS-style globs.\n");
 
-  currentY += 8;
+  //currentY += 8;
 
   foptStartIdx = Items.length;
-  savedCurrentY = currentY;
+  //savedCurrentY = currentY;
 
   FilterOptions();
 }
@@ -199,8 +199,8 @@ defaultproperties {
   defFileName = " <custom> ";
 
   WidthThreshold = 10;
-  ChoicesStartX = 120;
-  ChoicesStartY = 26;
+  //ChoicesStartX = 120;
+  //ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;
   Title = "MENU SEARCH";
 
@@ -212,7 +212,7 @@ defaultproperties {
   Width = 520;
   Height = 460;
   ChoicesStartX = 200;
-  ChoicesStartY = 26;
+  //ChoicesStartY = 26;
   TitleX = 180;
   SelectorType = MenuSelector_SmallRight;
 }

@@ -215,7 +215,7 @@ void AddControl (string Text, string CommandOn, string CommandOff, string modNam
   newCtl.Width = Width;
   newCtl.CursorXOffs = Width/2;
   newCtl.CursorXOffsHR = Width/2;
-  newCtl.SetOrigin(/*ChoicesStartX*/Width/2, currentY);
+  newCtl.SetOrigin(/*ChoicesStartX*/Width/2, GetCurrentY());
   newCtl.Height = 10;
   newCtl.Text = Text;
   newCtl.CommandOn = CommandOn;
@@ -228,7 +228,7 @@ void AddControl (string Text, string CommandOn, string CommandOff, string modNam
        if (strifeMode < 0) newCtl.Disabled = IsStrife;
   else if (strifeMode > 0) newCtl.Disabled = !IsStrife;
   */
-  currentY += newCtl.Height;
+  //currentY += newCtl.Height;
 }
 
 
@@ -241,18 +241,18 @@ void AddHeader (string Text, bool firstHdr) {
   auto Btn = GetItemContainer().NewChild(MenuSmallTextButton);
   Btn.TextHAlign = hcenter;
   Btn.TextVAlign = vbottom;
-  if (!firstHdr) currentY += 4;
+  //if (!firstHdr) currentY += 4;
   //SetChoiceInitialSizeSimple(Btn);
   Btn.Width = Width;
   Btn.CursorXOffs = Width/2;
   Btn.CursorXOffsHR = Width/2;
-  Btn.SetOrigin(/*ChoicesStartX*//*Width/2*/0, currentY);
+  Btn.SetOrigin(/*ChoicesStartX*//*Width/2*/0, GetCurrentY()+(firstHdr ? 0 : 4));
   Btn.Text = Text;
   Btn.Focusable = false;
   Btn.TextColor = CR_FIRE;
   Btn.TextColorFocus = CR_FIRE;
   Btn.Height = 10;
-  currentY += Btn.Height;
+  //currentY += Btn.Height;
 }
 
 
@@ -265,7 +265,7 @@ override void CreateChoices () {
   // first, generate arrays for using for building controls list
   GenerateArrays();
 
-  currentY = ChoicesStartY;
+  //currentY = ChoicesStartY;
 
   bool firstHdr = true;
   foreach (const ref auto sec; sections) {

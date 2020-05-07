@@ -97,55 +97,55 @@ override void CreateChoices () {
   ColorBox = GetItemContainer().NewChild(MenuChoiceColor);
   ColorBox.SetInitialValue(Col);
   ColorBox.SetText("Color");
-  ColorBox.SetOrigin(ChoicesStartX, currentY);
-  currentY += ColorBox.Height;
+  ColorBox.SetOrigin(ChoicesStartX, GetCurrentY());
+  //currentY += ColorBox.Height;
 
 
   PlayerName = GetItemContainer().NewChild(MenuInputLine);
-  PlayerName.SetOrigin(ChoicesStartX+10, currentY);
+  PlayerName.SetOrigin(ChoicesStartX+10, GetCurrentY());
   PlayerName.CursorXOffs = -10;
   PlayerName.Text = "Name";
   PlayerName.Value = GetCvarS('Name');
   PlayerName.ValueChanged = &ChangeName;
-  currentY += PlayerName.Height;
+  //currentY += PlayerName.Height;
 
   if (PClasses.length > 1) {
     EPClass = GetItemContainer().NewChild(MenuChoiceEnum);
-    EPClass.SetOrigin(ChoicesStartX, currentY);
+    EPClass.SetOrigin(ChoicesStartX, GetCurrentY());
     EPClass.Text = "Class";
     foreach (const ref auto pcl; PClasses) EPClass.AddItem(pcl.className);
     EPClass.SetInitialValue(GetCvar('class'));
     EPClass.ValueChanging = &ChangeClass;
-    currentY += EPClass.Height;
+    //currentY += EPClass.Height;
   }
 
 
   ColR = GetItemContainer().NewChild(MenuChoiceSlider);
   ColR.Width = 420;
-  ColR.SetOrigin(ChoicesStartX, currentY);
+  ColR.SetOrigin(ChoicesStartX, GetCurrentY());
   ColR.Text = "Red";
   ColR.ValueDelta = 0.1;
   ColR.SetInitialValue(Byte2Float((Col>>16)&0xff));
   ColR.ValueChanging = &ChangeColor;
-  currentY += ColR.Height;
+  //currentY += ColR.Height;
 
   ColG = GetItemContainer().NewChild(MenuChoiceSlider);
   ColG.Width = 420;
-  ColG.SetOrigin(ChoicesStartX, currentY);
+  ColG.SetOrigin(ChoicesStartX, GetCurrentY());
   ColG.Text = "Green";
   ColG.ValueDelta = 0.1;
   ColG.SetInitialValue(Byte2Float((Col>>8)&0xff));
   ColG.ValueChanging = &ChangeColor;
-  currentY += ColG.Height;
+  //currentY += ColG.Height;
 
   ColB = GetItemContainer().NewChild(MenuChoiceSlider);
   ColB.Width = 420;
-  ColB.SetOrigin(ChoicesStartX, currentY);
+  ColB.SetOrigin(ChoicesStartX, GetCurrentY());
   ColB.Text = "Blue";
   ColB.ValueDelta = 0.1;
   ColB.SetInitialValue(Byte2Float(Col&0xff));
   ColB.ValueChanging = &ChangeColor;
-  currentY += ColB.Height;
+  //currentY += ColB.Height;
 
 
   Anim = GetItemContainer().NewChild(MenuSpriteAnim);
@@ -234,7 +234,7 @@ void SetPClass () {
 
 defaultproperties {
   ChoicesStartX = 64;
-  ChoicesStartY = 40;
+  //ChoicesStartY = 40;
   SelectorType = MenuSelector_SmallRight;
   Title = "PLAYER SETUP";
 }
