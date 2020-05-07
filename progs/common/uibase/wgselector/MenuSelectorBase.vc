@@ -44,6 +44,8 @@ void SetYOfs (int hgt) {
 //
 //==========================================================================
 void SetOriginCentered (int OrgX, int OrgY, int hgt) {
+  auto menu = FindParentWithClass(MenuScreen);
+  if (menu) OrgY += menu.GetSelectorBaseY();
   SetOrigin(OrgX, OrgY);
   SetYOfs(hgt);
 }

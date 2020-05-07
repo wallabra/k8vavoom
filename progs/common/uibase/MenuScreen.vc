@@ -185,6 +185,7 @@ override void OnConfigurationChanged () {
     int sy = GetItemContainerOfsY();
     ItemContainer.SetConfiguration(0, sy, Width, Height-sy);
   }
+  if (Selector && Items.length) CursorMoved(forced:true); // this fixes selector position
 }
 
 
@@ -241,8 +242,8 @@ void ShowAndActivate () {
 void FinishCreatingMenu () {
   //if (AllowVerticalResize) Height = max(Height, Items[$-1].Y+Items[$-1].Height+4);
   //printdebug("%C: FinishCreatingMenu! (avs=%B; itemcount=%s)", self, AllowVerticalResize, Items.length);
-  CreateSelector();
   SetDefaultChoice();
+  CreateSelector();
   if (AllowVerticalResize && Items.length > 0) {
     int newHeight = max(Height, Items[$-1].Y+Items[$-1].Height+2+GetItemContainerOfsY());
     if (newHeight > GetVirtualHeight()-28) {
@@ -275,8 +276,8 @@ void CreateMenu () {
   CreateChoices();
   FinishCreatingMenu();
   /* this is in `FinishCreatingMenu()` now
-  CreateSelector();
   SetDefaultChoice();
+  CreateSelector();
   if (AllowVerticalResize && Items.length > 0) {
     int newHeight = max(Height, Items[$-1].Y+Items[$-1].Height+2);
     if (newHeight > GetVirtualHeight()-8) {
@@ -407,7 +408,7 @@ int GetItemContainerOfsY () {
 //==========================================================================
 int GetChoicesStartY () {
   int sy = (ItemContainer ? 0 : titleItem ? titleItem.Y+titleItem.Height+2 : 0);
-  if (SelectorType == MenuSelector_Big) sy += 6;
+  //if (SelectorType == MenuSelector_Big) sy += 6;
   return sy;
 }
 
@@ -733,7 +734,27 @@ MenuTextButton CreateSubMenuBigTextNamed (string text, name menuName) {
 //
 //==========================================================================
 void CreateSelector () {
-  if (SelectorType) Selector = GetItemContainer().NewChild(SelectorType);
+  if (!SelectorType || Selector) return;
+  if (Items.length == 0) return;
+  /*
+  FixTopIndex();
+  if (CursorPos < 0 || CursorPos >= Items.length) return;
+  auto it = Items[CursorPos];
+  Selector = NewChild(SelectorType);
+  Selector.SetOriginCentered(it.X+it.CursorXOffs, it.Y+Items[CursorPos].CursorYOffs, it.Height);
+  */
+  Selector = NewChild(SelectorType);
+  CursorMoved(forced:true); // this fixes selector position
+}
+
+
+//==========================================================================
+//
+//  GetSelectorBaseY
+//
+//==========================================================================
+int GetSelectorBaseY () {
+  return (ItemContainer ? ItemContainer.Y : 0);
 }
 
 
@@ -831,21 +852,18 @@ final void FixTopIndex () {
 //  CursorMoved
 //
 //==========================================================================
-void CursorMoved () {
+void CursorMoved (optional bool forced) {
   if (Items.length == 0) return;
   FixTopIndex();
-  if ((CursorPrev == CursorPos && GetItemContainer().ChildrenOfsY == OfsYPrev) || MenuChoice_BackButton(Items[CursorPos])) return;
-  if (CursorPos >= 0 && CursorPos < Items.length && !Items[CursorPos].IsFocused()) {
-    //SetCurrentFocusChild(Items[CursorPos]);
-    Items[CursorPos].SetFocus();
-  }
+  assert(CursorPos >= 0 && CursorPos < Items.length);
+  if (MenuChoice_BackButton(Items[CursorPos])) return; //FIXME: still set selector position!
+  if (!forced && CursorPrev == CursorPos && GetItemContainer().ChildrenOfsY == OfsYPrev && Items[CursorPos].IsFocused()) return;
+  if (!Items[CursorPos].IsFocused()) Items[CursorPos].SetFocus();
   if (Selector) {
     Selector.SetOriginCentered(Items[CursorPos].X+Items[CursorPos].CursorXOffs, Items[CursorPos].Y+Items[CursorPos].CursorYOffs, Items[CursorPos].Height);
-    //print("000: cp=%s; %s %s %s w=%s", CursorPos, Items[CursorPos].X, Items[CursorPos].CursorXOffs, Items[CursorPos].X+Items[CursorPos].CursorXOffs, Width);
   }
   CursorPrev = CursorPos;
   OfsYPrev = GetItemContainer().ChildrenOfsY;
-  //printdebug("CURR: %C:%s: height=%s", Items[CursorPos], Items[CursorPos].UniqueId, Items[CursorPos].Height);
 }
 
 
@@ -879,7 +897,10 @@ void SetDefaultChoice () {
 //
 //==========================================================================
 bool MakeItemSelected (MenuChoiceBase it) {
-  if (!it || MenuChoice_BackButton(it)) return false;
+  if (!it || MenuChoice_BackButton(it)) {
+    //if (Selector) Selector.Hide();
+    return false;
+  }
   //printdebug("%C: MakeItemSelected: %C (%s)", self, it, it.UniqueId);
   foreach (int idx, MenuChoiceBase item; Items) {
     if (item == it && item.Focusable && item.Enabled && !MenuChoice_BackButton(item)) {
@@ -887,6 +908,12 @@ bool MakeItemSelected (MenuChoiceBase it) {
       CursorPrev = -1;
       CursorPos = idx;
       CursorMoved();
+      /*
+      if (Selector) {
+        Selector.SetOriginCentered(it.X+it.CursorXOffs, it.Y+it.CursorYOffs, it.Height);
+        Selector.Show();
+      }
+      */
       return true;
     }
   }

@@ -223,11 +223,7 @@ void DrawBackground () {
 //==========================================================================
 override void OnFocusReceived () {
   MenuScreen pp = FindParentWithClass(MenuScreen);
-  if (pp && pp.Selector) {
-    if (pp.MakeItemSelected(self)) {
-      pp.Selector.SetOriginCentered(X+CursorXOffs, Y+CursorYOffs, Height);
-    }
-  }
+  if (pp) pp.MakeItemSelected(self);
   ::OnFocusReceived();
 }
 

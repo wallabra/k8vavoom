@@ -117,6 +117,7 @@ void SetSpeech (EntityEx Speaker, int SpeechNum) {
   if (Speech.Voice) LocalSound(Speech.Voice);
 
   SetDefaultChoice();
+  CreateSelector();
 }
 
 
