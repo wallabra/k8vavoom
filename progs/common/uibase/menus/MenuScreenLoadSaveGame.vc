@@ -93,9 +93,11 @@ override void OnDraw () {
   SetFont('smallfont');
   //SetTextAlign(hleft, vtop);
   SetTextAlign(hright, vtop);
-  DrawText(Width-16, Items[$-1].Y+21, datestr);
+  int ty = Height-FontHeight()*2-2;
+  DrawText(Width-16, ty, datestr);
   if (qsdatestr) {
-    DrawText(Width-16, Items[0].Y-10, qsdatestr);
+    ty += FontHeight()+2;
+    DrawText(Width-16, ty, qsdatestr);
   }
 }
 
