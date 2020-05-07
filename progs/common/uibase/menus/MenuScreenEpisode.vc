@@ -41,7 +41,7 @@ override void CreateChoices () {
   foreach (auto i; 0..ecount) {
     EpisodeDef *EDef = P_GetEpisodeDef(i);
     if (EDef->bOptional && !IsMapPresent(EDef->Name)) continue;
-    Epi = NewChild(MenuChoiceEpisode);
+    Epi = GetItemContainer().NewChild(MenuChoiceEpisode);
     Epi.SetPos(ChoicesStartX, currentY);
     int wdt = -1;
     if (EDef->PicName) {

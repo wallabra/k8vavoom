@@ -47,7 +47,7 @@ MenuChoiceNumeric ScrScale;
 //
 //==========================================================================
 override void CreateChoices () {
-  Mode = NewChild(MenuChoiceEnum);
+  Mode = GetItemContainer().NewChild(MenuChoiceEnum);
   SetChoiceInitialSizePos(Mode);
   Mode.Text = "Resolution";
   foreach (ref auto mi; modes) Mode.AddItem(va("%dx%d", mi.width, mi.height));
@@ -61,7 +61,7 @@ override void CreateChoices () {
   currentY += Mode.Height;
     SetLastHelp("Choose one of the predefined screen sizes.");
 
-  EdWidth = NewChild(MenuInputLine);
+  EdWidth = GetItemContainer().NewChild(MenuInputLine);
   //SetChoiceInitialSizePos(EdWidth);
   //EdWidth.SetOrigin(ChoicesStartX+10, currentY);
   //EdWidth.CursorXOffs = -10;
@@ -72,7 +72,7 @@ override void CreateChoices () {
   currentY += EdWidth.Height;
     SetLastHelp("Custom screen resolution.");
 
-  EdHeight = NewChild(MenuInputLine);
+  EdHeight = GetItemContainer().NewChild(MenuInputLine);
   //SetChoiceInitialSizePos(EdHeight);
   //EdHeight.SetOrigin(ChoicesStartX+10, currentY);
   //EdHeight.CursorXOffs = -10;
@@ -83,7 +83,7 @@ override void CreateChoices () {
   currentY += EdHeight.Height;
     SetLastHelp("Custom screen resolution.");
 
-  ScrScale = NewChild(MenuChoiceNumeric);//CreateFloatNumericCvar("Screen Scale", 'gl_scale', 1, 1, 64);
+  ScrScale = GetItemContainer().NewChild(MenuChoiceNumeric);//CreateFloatNumericCvar("Screen Scale", 'gl_scale', 1, 1, 64);
   SetChoiceInitialSizePos(ScrScale);
   ScrScale.Text = "Screen Scale";
   //ScrScale.cvarSession = cvname;
@@ -125,7 +125,7 @@ override void CreateChoices () {
     SetLastHelp(
       "Which texture filter the engine should use to scale image in Scaled FS?");
 
-  VSync = NewChild(MenuChoice_OnOff);
+  VSync = GetItemContainer().NewChild(MenuChoice_OnOff);
   SetChoiceInitialSizePos(VSync);
   //VSync.SetOrigin(ChoicesStartX, currentY);
   VSync.Text = "VSync";
@@ -145,7 +145,7 @@ override void CreateChoices () {
   );
   */
 
-  auto itemRatio = NewChild(MenuChoiceEnum);
+  auto itemRatio = GetItemContainer().NewChild(MenuChoiceEnum);
   SetChoiceInitialSizePos(itemRatio);
   itemRatio.Text = "Aspect Ratio";
   // add all known aspect ratios
@@ -161,7 +161,7 @@ override void CreateChoices () {
       "Screen aspect ratio."/*~
       "\n'Vanilla' is for square pixels, regardless of screen resolution.\n"*/);
 
-  MenuTextButton Btn = NewChild(MenuSmallTextButton);
+  MenuTextButton Btn = GetItemContainer().NewChild(MenuSmallTextButton);
   //SetTextButtonInitialSizePos(Btn);
   SetChoiceInitialSizePos(Btn);
   //Btn.SetOrigin(ChoicesStartX, currentY);

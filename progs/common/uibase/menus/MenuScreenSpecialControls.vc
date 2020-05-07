@@ -210,7 +210,7 @@ void GenerateArrays () {
 //
 //==========================================================================
 void AddControl (string Text, string CommandOn, string CommandOff, string modName) {
-  MenuControlKey newCtl = NewChild(MenuControlKey);
+  MenuControlKey newCtl = GetItemContainer().NewChild(MenuControlKey);
   //SetChoiceInitialSizeSimple(newCtl);
   newCtl.Width = Width;
   newCtl.CursorXOffs = Width/2;
@@ -238,7 +238,7 @@ void AddControl (string Text, string CommandOn, string CommandOff, string modNam
 //
 //==========================================================================
 void AddHeader (string Text, bool firstHdr) {
-  auto Btn = NewChild(MenuSmallTextButton);
+  auto Btn = GetItemContainer().NewChild(MenuSmallTextButton);
   Btn.TextHAlign = hcenter;
   Btn.TextVAlign = vbottom;
   if (!firstHdr) currentY += 4;

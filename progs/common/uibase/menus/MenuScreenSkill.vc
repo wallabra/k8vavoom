@@ -34,7 +34,7 @@ class MenuScreenSkill : MenuScreen;
 override void CreateChoices () {
   int maxwdt = -1;
   foreach (auto i; 0..P_GetNumSkills()) {
-    MenuChoiceSkill Btn = NewChild(MenuChoiceSkill);
+    MenuChoiceSkill Btn = GetItemContainer().NewChild(MenuChoiceSkill);
     SkillDef *SDef = P_GetSkillDef(i);
     Btn.SetPos(ChoicesStartX, currentY);
     int wdt = -1;

@@ -28,6 +28,7 @@ class MenuScreen : Widget;
 ClientGameShared ClGame;
 
 MenuTitleText titleItem;
+Widget ItemContainer;
 array!MenuChoice Items;
 MenuChoice_BackButton BackButton;
 
@@ -84,6 +85,17 @@ override void OnDestroy () {
   //if (helpText) printdebug("%C: destroying helpText(%s)", self, helpText.UniqueId);
   delete helpText;
   ::OnDestroy();
+}
+
+
+//==========================================================================
+//
+//  OnCreate
+//
+//==========================================================================
+override void OnCreate () {
+  ::OnCreate();
+  ItemContainer = CreateItemContainer();
 }
 
 
@@ -160,7 +172,6 @@ void ShowAndActivate () {
 //==========================================================================
 void FinishCreatingMenu () {
   //if (AllowVerticalResize) Height = max(Height, Items[$-1].Y+Items[$-1].Height+4);
-
   CreateSelector();
   SetDefaultChoice();
   if (AllowVerticalResize && Items.length > 0) {
@@ -275,6 +286,26 @@ void CreateBackButton () {
 
 //==========================================================================
 //
+//  CreateItemContainer
+//
+//==========================================================================
+Widget CreateItemContainer () {
+  return none;
+}
+
+
+//==========================================================================
+//
+//  GetItemContainer
+//
+//==========================================================================
+Widget GetItemContainer () {
+  return (ItemContainer ? ItemContainer : Widget(self));
+}
+
+
+//==========================================================================
+//
 //  CreateChoices
 //
 //==========================================================================
@@ -368,7 +399,7 @@ void SetTextButtonInitialSizePos (MenuTextButton cc) {
 //
 //==========================================================================
 MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
-  auto onoff = NewChild(MenuChoice_OnOff);
+  auto onoff = GetItemContainer().NewChild(MenuChoice_OnOff);
   SetChoiceInitialSizePos(onoff);
   onoff.Text = text;
   onoff.SetSessionCvar(cvname);
@@ -395,7 +426,7 @@ MenuChoiceEnum CreateEnumCvar (string text, name cvname,
   optional string item21, optional string item22, optional string item23,
   optional string item24, optional string item25, optional string item26)
 {
-  auto en = NewChild(MenuChoiceEnum);
+  auto en = GetItemContainer().NewChild(MenuChoiceEnum);
   SetChoiceInitialSizePos(en);
   en.Text = text;
   if (specified_item0) en.AddItem(item0);
@@ -443,7 +474,7 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
     Items[$-1].Height = 8;
     currentY -= 2;
   }
-  auto slider = NewChild(MenuChoiceSlider);
+  auto slider = GetItemContainer().NewChild(MenuChoiceSlider);
   SetChoiceInitialSizePos(slider);
   slider.Text = text;
   slider.cvarSession = cvname;
@@ -464,7 +495,7 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
 //
 //==========================================================================
 MenuChoiceNumeric CreateFloatNumericCvar (string text, name cvname, float delta, optional float min, optional float max) {
-  auto slider = NewChild(MenuChoiceNumeric);
+  auto slider = GetItemContainer().NewChild(MenuChoiceNumeric);
   SetChoiceInitialSizePos(slider);
   slider.Text = text;
   slider.cvarSession = cvname;
@@ -486,7 +517,7 @@ MenuChoiceNumeric CreateFloatNumericCvar (string text, name cvname, float delta,
 //
 //==========================================================================
 MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
-  auto btn = NewChild(MenuSmallTextButton);
+  auto btn = GetItemContainer().NewChild(MenuSmallTextButton);
   btn.TextHAlign = hcenter;
   btn.TextVAlign = vbottom;
   if (Width > WidthThreshold) {
@@ -517,7 +548,7 @@ MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
 //
 //==========================================================================
 MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
-  auto btn = NewChild(MenuSmallTextButton);
+  auto btn = GetItemContainer().NewChild(MenuSmallTextButton);
   btn.SetOrigin(ChoicesStartX, currentY);
   if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
@@ -533,7 +564,7 @@ MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
 //
 //==========================================================================
 MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass) {
-  auto btn = NewChild(MenuBigTextButton);
+  auto btn = GetItemContainer().NewChild(MenuBigTextButton);
   btn.SetOrigin(ChoicesStartX, currentY);
   if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
@@ -549,7 +580,7 @@ MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass
 //
 //==========================================================================
 MenuTextButton CreateSubMenuTextNamed (string text, name menuName) {
-  auto btn = NewChild(MenuSmallTextButton);
+  auto btn = GetItemContainer().NewChild(MenuSmallTextButton);
   btn.SetOrigin(ChoicesStartX, currentY);
   if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
@@ -565,7 +596,7 @@ MenuTextButton CreateSubMenuTextNamed (string text, name menuName) {
 //
 //==========================================================================
 MenuTextButton CreateSubMenuBigTextNamed (string text, name menuName) {
-  auto btn = NewChild(MenuBigTextButton);
+  auto btn = GetItemContainer().NewChild(MenuBigTextButton);
   btn.SetOrigin(ChoicesStartX, currentY);
   if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
@@ -581,7 +612,7 @@ MenuTextButton CreateSubMenuBigTextNamed (string text, name menuName) {
 //
 //==========================================================================
 void CreateSelector () {
-  if (SelectorType) Selector = NewChild(SelectorType);
+  if (SelectorType) Selector = GetItemContainer().NewChild(SelectorType);
 }
 
 

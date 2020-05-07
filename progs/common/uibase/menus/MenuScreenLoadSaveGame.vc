@@ -52,7 +52,7 @@ void SignalSlotDeletion () {
 //==========================================================================
 void CreateLoadSaveChoices (class!MenuSaveSlot destClass) {
   foreach (auto i; 0..10) {
-    MenuSaveSlot newChoice = NewChild(destClass);
+    MenuSaveSlot newChoice = GetItemContainer().NewChild(destClass);
     newChoice.SetOrigin(ChoicesStartX, ChoicesStartY+i*18);
     newChoice.SlotNum = (autosaves ? -1-i : i);
     newChoice.Status = SV_GetSaveString(newChoice.SlotNum, out newChoice.Text);

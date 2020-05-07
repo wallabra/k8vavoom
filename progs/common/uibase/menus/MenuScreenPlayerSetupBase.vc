@@ -94,14 +94,14 @@ override void CreateChoices () {
 
   int Col = ParseColor(GetCvarS('color'));
 
-  ColorBox = NewChild(MenuChoiceColor);
+  ColorBox = GetItemContainer().NewChild(MenuChoiceColor);
   ColorBox.SetInitialValue(Col);
   ColorBox.SetText("Color");
   ColorBox.SetOrigin(ChoicesStartX, currentY);
   currentY += ColorBox.Height;
 
 
-  PlayerName = NewChild(MenuInputLine);
+  PlayerName = GetItemContainer().NewChild(MenuInputLine);
   PlayerName.SetOrigin(ChoicesStartX+10, currentY);
   PlayerName.CursorXOffs = -10;
   PlayerName.Text = "Name";
@@ -110,7 +110,7 @@ override void CreateChoices () {
   currentY += PlayerName.Height;
 
   if (PClasses.length > 1) {
-    EPClass = NewChild(MenuChoiceEnum);
+    EPClass = GetItemContainer().NewChild(MenuChoiceEnum);
     EPClass.SetOrigin(ChoicesStartX, currentY);
     EPClass.Text = "Class";
     foreach (const ref auto pcl; PClasses) EPClass.AddItem(pcl.className);
@@ -120,7 +120,7 @@ override void CreateChoices () {
   }
 
 
-  ColR = NewChild(MenuChoiceSlider);
+  ColR = GetItemContainer().NewChild(MenuChoiceSlider);
   ColR.Width = 420;
   ColR.SetOrigin(ChoicesStartX, currentY);
   ColR.Text = "Red";
@@ -129,7 +129,7 @@ override void CreateChoices () {
   ColR.ValueChanging = &ChangeColor;
   currentY += ColR.Height;
 
-  ColG = NewChild(MenuChoiceSlider);
+  ColG = GetItemContainer().NewChild(MenuChoiceSlider);
   ColG.Width = 420;
   ColG.SetOrigin(ChoicesStartX, currentY);
   ColG.Text = "Green";
@@ -138,7 +138,7 @@ override void CreateChoices () {
   ColG.ValueChanging = &ChangeColor;
   currentY += ColG.Height;
 
-  ColB = NewChild(MenuChoiceSlider);
+  ColB = GetItemContainer().NewChild(MenuChoiceSlider);
   ColB.Width = 420;
   ColB.SetOrigin(ChoicesStartX, currentY);
   ColB.Text = "Blue";
@@ -148,7 +148,7 @@ override void CreateChoices () {
   currentY += ColB.Height;
 
 
-  Anim = NewChild(MenuSpriteAnim);
+  Anim = GetItemContainer().NewChild(MenuSpriteAnim);
   Anim.SetPos(220, 150);
   Anim.SprDef = 500;
   Anim.Speed = 8;
@@ -165,7 +165,7 @@ override void CreateChoices () {
 
     SetCvarS('model', "doomguy");
 
-    Mdl = NewChild(MenuModel);
+    Mdl = GetItemContainer().NewChild(MenuModel);
     Mdl.Origin = vector(-128.0, 64.0, -32.0);
     Mdl.Angle = 345.0;
     Mdl.Model = model;

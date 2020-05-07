@@ -40,12 +40,12 @@ MenuStaticAnim MageWalk;
 //==========================================================================
 override void CreateChoices () {
   if (WadLumpPresent('m_fbox')) {
-    FighterBox = NewChild(MenuStaticBitmap);
+    FighterBox = GetItemContainer().NewChild(MenuStaticBitmap);
     FighterBox.SetOrigin(174, 28);
     FighterBox.SetPic('m_fbox');
     FighterBox.Hide();
 
-    FighterWalk = NewChild(MenuStaticAnim);
+    FighterWalk = GetItemContainer().NewChild(MenuStaticAnim);
     FighterWalk.SetOrigin(174+24, 28+12);
     FighterWalk.Speed = 8;
     FighterWalk.AddFrame('m_fwalk1');
@@ -54,12 +54,12 @@ override void CreateChoices () {
     FighterWalk.AddFrame('m_fwalk4');
     FighterWalk.Hide();
 
-    ClericBox = NewChild(MenuStaticBitmap);
+    ClericBox = GetItemContainer().NewChild(MenuStaticBitmap);
     ClericBox.SetOrigin(174, 28);
     ClericBox.SetPic('m_cbox');
     ClericBox.Hide();
 
-    ClericWalk = NewChild(MenuStaticAnim);
+    ClericWalk = GetItemContainer().NewChild(MenuStaticAnim);
     ClericWalk.SetOrigin(174+24, 28+12);
     ClericWalk.Speed = 8;
     ClericWalk.AddFrame('m_cwalk1');
@@ -68,12 +68,12 @@ override void CreateChoices () {
     ClericWalk.AddFrame('m_cwalk4');
     ClericWalk.Hide();
 
-    MageBox = NewChild(MenuStaticBitmap);
+    MageBox = GetItemContainer().NewChild(MenuStaticBitmap);
     MageBox.SetOrigin(174, 28);
     MageBox.SetPic('m_mbox');
     MageBox.Hide();
 
-    MageWalk = NewChild(MenuStaticAnim);
+    MageWalk = GetItemContainer().NewChild(MenuStaticAnim);
     MageWalk.SetOrigin(174+24, 28+12);
     MageWalk.Speed = 8;
     MageWalk.AddFrame('m_mwalk1');
@@ -90,7 +90,7 @@ override void CreateChoices () {
 
   int currentY = ChoicesStartY;
   foreach (int i; 0..ClGame.Game.PlayerClasses.length) {
-    MenuChoicePClass Btn = NewChild(MenuChoicePClass);
+    MenuChoicePClass Btn = GetItemContainer().NewChild(MenuChoicePClass);
     Btn.SetSmallFont(useSmallFont);
     Btn.SetPos(ChoicesStartX, currentY);
     Btn.Text = class!PlayerPawn(ClGame.Game.PlayerClasses[i]).default.DisplayName;

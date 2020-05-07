@@ -44,7 +44,7 @@ override void CreateChoices () {
       "Enable communication with master server?\n"~
       "Aallows reporting server address to the master.");
 
-  auto edAddress = NewChild(MenuInputLine);
+  auto edAddress = GetItemContainer().NewChild(MenuInputLine);
   edAddress.MakeOneLineControl();
   edAddress.Text = "Master Address";
   edAddress.Value = GetCvarS('master_address');

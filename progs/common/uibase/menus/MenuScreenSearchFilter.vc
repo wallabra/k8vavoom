@@ -130,7 +130,7 @@ override void CreateChoices () {
   MenuInputLine il;
 
   // title filter
-  il = NewChild(MenuInputLine);
+  il = GetItemContainer().NewChild(MenuInputLine);
   //SetChoiceInitialSizePos(il);
   //il.SetOrigin(ChoicesStartX+10, currentY);
   //il.CursorXOffs = -10;
@@ -149,7 +149,7 @@ override void CreateChoices () {
       "Supports DOS-style globs.\n");
 
   // cvar filter
-  il = NewChild(MenuInputLine);
+  il = GetItemContainer().NewChild(MenuInputLine);
   //SetChoiceInitialSizePos(il);
   //il.SetOrigin(ChoicesStartX+10, currentY);
   //il.CursorXOffs = -10;
@@ -168,7 +168,7 @@ override void CreateChoices () {
       "Supports DOS-style globs.\n");
 
   // help filter
-  il = NewChild(MenuInputLine);
+  il = GetItemContainer().NewChild(MenuInputLine);
   //SetChoiceInitialSizePos(il);
   //il.SetOrigin(ChoicesStartX+10, currentY);
   //il.CursorXOffs = -10;
