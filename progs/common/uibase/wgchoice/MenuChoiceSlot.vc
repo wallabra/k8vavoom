@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuChoiceSlot : MenuChoice;
+class MenuChoiceSlot : MenuChoiceBase;
 
 int pic_M_LSLEFT;
 int pic_M_LSCNTR;

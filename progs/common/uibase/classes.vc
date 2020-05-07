@@ -71,6 +71,7 @@ import 'linespec';
 
 #include "menus/MenuScreenHelpBase.vc"
 
+#include "menus/MenuScreenMainBase.vc"
 #include "menus/MenuScreenSinglePlayer.vc"
 #include "menus/MenuScreenClass.vc"
 #include "menus/MenuScreenEpisode.vc"

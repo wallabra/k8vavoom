@@ -23,7 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuScreenMain : MenuScreen;
+class MenuScreenMain : MenuScreenMainBase;
+
 
 override void CreateTitle () {
   MenuStaticBitmap Img;
@@ -82,24 +83,14 @@ override void CreateTitle () {
 
 //==========================================================================
 //
-//  CreateChoices
+//  CreateReadThis
 //
 //==========================================================================
-override void CreateChoices () {
-  CreateSubMenuBigText("Single Player", MenuScreenSinglePlayer);
-  CreateSubMenuBigText("Multiplayer", MenuScreenMultiplayer).Enabled = IsMultiplayerEnabled();
-  CreateSubMenuBigTextNamed("Options", 'OptionsMenu');
+override void CreateReadThis () {
   CreateSubMenuBigText("Help", MenuScreenHelp);
-
-  auto btn = GetItemContainer().NewChild(MenuBigTextButton);
-  btn.SetPos(ChoicesStartX, GetCurrentY());
-  btn.Text = "Quit game";
-  btn.Activated = delegate void (Object Sender) { ClGame.ShowQuitPrompt(); };
 }
 
 
 defaultproperties {
-  ChoicesStartX = 110;
-  //ChoicesStartY = 56;
-  SelectorType = MenuSelector_Big;
+  imgHeight = 56;
 }

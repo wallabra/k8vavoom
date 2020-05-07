@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuChoiceNumeric : MenuChoice;
+class MenuChoiceNumeric : MenuChoiceBase;
 
 //int TextColor = CR_WHITE;
 string Text;

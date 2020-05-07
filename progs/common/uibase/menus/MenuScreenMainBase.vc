@@ -23,44 +23,18 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuScreenMain : MenuScreenMainBase;
+class MenuScreenMainBase : MenuScreen;
+
+int imgHeight = 80;
 
 
 //==========================================================================
 //
-//  CreateTitle
+//  GetItemContainerOfsY
 //
 //==========================================================================
-override void CreateTitle () {
-  MenuStaticBitmap Img;
-  MenuStaticAnim Anim;
-
-  Img = NewChild(MenuStaticBitmap);
-  Img.SetOrigin(88, 0);
-  Img.SetPic('m_htic');
-
-  // left one starts at frame 2
-  Anim = NewChild(MenuStaticAnim);
-  Anim.SetOrigin(37, 80);
-  Anim.Speed = 7;
-  Anim.AddFrame('fbulc0');
-  Anim.AddFrame('fbuld0');
-  Anim.AddFrame('fbule0');
-  Anim.AddFrame('fbulf0');
-  Anim.AddFrame('fbulg0');
-  Anim.AddFrame('fbula0');
-  Anim.AddFrame('fbulb0');
-
-  Anim = NewChild(MenuStaticAnim);
-  Anim.SetOrigin(278, 80);
-  Anim.Speed = 7;
-  Anim.AddFrame('fbula0');
-  Anim.AddFrame('fbulb0');
-  Anim.AddFrame('fbulc0');
-  Anim.AddFrame('fbuld0');
-  Anim.AddFrame('fbule0');
-  Anim.AddFrame('fbulf0');
-  Anim.AddFrame('fbulg0');
+override int GetItemContainerOfsY () {
+  return imgHeight+12;
 }
 
 
@@ -69,11 +43,30 @@ override void CreateTitle () {
 //  CreateReadThis
 //
 //==========================================================================
-override void CreateReadThis () {
-  CreateSubMenuBigText("Help", MenuScreenHelp);
+void CreateReadThis () {
+}
+
+
+//==========================================================================
+//
+//  CreateChoices
+//
+//==========================================================================
+override void CreateChoices () {
+  CreateSubMenuBigText("Single Player", MenuScreenSinglePlayer);
+  CreateSubMenuBigText("Multiplayer", MenuScreenMultiplayer).Enabled = IsMultiplayerEnabled();
+  CreateSubMenuBigTextNamed("Options", 'OptionsMenu');
+  CreateReadThis();
+
+  auto btn = GetItemContainer().NewChild(MenuBigTextButton);
+  btn.SetPos(ChoicesStartX, GetCurrentY());
+  btn.Text = "Quit game";
+  btn.Activated = delegate void (Object Sender) { ClGame.ShowQuitPrompt(); };
 }
 
 
 defaultproperties {
-  imgHeight = 56;
+  ChoicesStartX = 97;
+  //ChoicesStartY = 80;
+  SelectorType = MenuSelector_Big;
 }

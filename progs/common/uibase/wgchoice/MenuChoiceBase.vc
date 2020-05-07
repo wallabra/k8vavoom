@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuChoice : Widget;
+class MenuChoiceBase : Widget;
 
 int CursorXOffs;
 int CursorYOffs;
@@ -35,6 +35,8 @@ int TextColor = CR_RED;
 int TextColorFocus = CR_YELLOW;
 int ValueColor = CR_TAN;
 int ValueColorFocus = CR_YELLOW;
+
+bool HighlightBackground;
 
 
 //==========================================================================
@@ -203,12 +205,14 @@ ClientGameShared GetClGame () {
 //
 //==========================================================================
 void DrawBackground () {
+  /*
   if (IsFocused) {
     //ShadeRect(0, 0, Width, Height-2, 0.6);
     int hgt = Height;
     if (hgt == 10) hgt -= 2; else hgt -= 1;
     FillRect(0, 0, Width, hgt, RGB(152, 205, 50), 0.6);
   }
+  */
 }
 
 
@@ -301,4 +305,5 @@ defaultproperties {
   Height = 10;
   cvarSession = '';
   CursorXOffsHR = 200;
+  HighlightBackground = true;
 }

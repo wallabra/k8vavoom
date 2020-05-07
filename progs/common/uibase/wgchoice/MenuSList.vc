@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuSList : MenuChoice;
+class MenuSList : MenuChoiceBase;
 
 int Cursor;
 bool Master;
@@ -248,4 +248,5 @@ override bool OnEvent (ref event_t evt) {
 
 
 defaultproperties {
+  HighlightBackground = false;
 }

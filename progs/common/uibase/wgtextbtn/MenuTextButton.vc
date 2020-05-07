@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuTextButton : MenuChoice;
+class MenuTextButton : MenuChoiceBase;
 
 name ActivateSound;
 string Text;

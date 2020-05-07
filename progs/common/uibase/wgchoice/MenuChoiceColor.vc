@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuChoiceColor : MenuChoice;
+class MenuChoiceColor : MenuChoiceBase;
 
 string Text;
 bool bLeftAlign;

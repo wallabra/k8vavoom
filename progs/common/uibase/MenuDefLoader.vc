@@ -369,7 +369,7 @@ override void Destroy () {
 //  CreateOption
 //
 //==========================================================================
-MenuChoice CreateOption (MenuScreen menu) {
+MenuChoiceBase CreateOption (MenuScreen menu) {
   return none;
 }
 
@@ -719,7 +719,7 @@ class MenuDefOptionSubHeader : MenuDefOptionBase;
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   auto opt = MenuSmallTextButton(menu.GetItemContainer().NewChild(MenuSmallTextButton));
   opt.TextHAlign = hcenter;
   opt.TextVAlign = vbottom;
@@ -755,7 +755,7 @@ bool inverted;
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   auto opt = MenuChoice_OnOff(menu.GetItemContainer().NewChild(MenuChoice_OnOff));
   opt.SetInverted(inverted);
   opt.SetText(title);
@@ -844,7 +844,7 @@ override bool parseOne (ScriptsParser par) {
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   auto opt = MenuChoiceEnum(menu.GetItemContainer().NewChild(MenuChoiceEnum));
   opt.SetText(title);
   if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
@@ -879,7 +879,7 @@ override bool parseOne (ScriptsParser par) {
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   // if we have only one renderer available, there's no need to choose anything
   if (!R_SupportsShadowVolumeRendering()) return none;
   auto opt = MenuChoiceEnum(menu.GetItemContainer().NewChild(MenuChoiceEnum));
@@ -957,7 +957,7 @@ override bool parseOne (ScriptsParser par) {
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   auto opt = MenuChoiceSlider(menu.GetItemContainer().NewChild(MenuChoiceSlider));
   opt.SetText(title);
   if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
@@ -983,7 +983,7 @@ class MenuDefOptionNumeric : MenuDefOptionSlider;
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   auto opt = MenuChoiceNumeric(menu.GetItemContainer().NewChild(MenuChoiceNumeric));
   opt.SetText(title);
   if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
@@ -1048,7 +1048,7 @@ override bool parseOne (ScriptsParser par) {
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   if (!smclass && !subname) return none;
   auto opt = MenuTextButton(menu.GetItemContainer().NewChild(MenuSmallTextButton));
   opt.SetText(title);
@@ -1072,7 +1072,7 @@ class MenuDefOptionSubMenuBig : MenuDefOptionSubMenu;
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   if (!smclass && !subname) return none;
   auto opt = MenuTextButton(menu.GetItemContainer().NewChild(MenuBigTextButton));
   opt.SetText(title);
@@ -1096,7 +1096,7 @@ class MenuDefOptionControls : MenuDefOptionBase;
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   // add "Special Controls" for MODs if keyconf lump is present,
   // and it has an "addkeysection" command
   bool found = false;
@@ -1141,7 +1141,7 @@ class MenuDefOptionConsole : MenuDefOptionBase;
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   auto opt = MenuTextButton(menu.GetItemContainer().NewChild(MenuSmallTextButton));
   opt.SetText(title);
   if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
@@ -1187,7 +1187,7 @@ override bool parseOne (ScriptsParser par) {
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   auto opt = MenuTextButton(menu.GetItemContainer().NewChild(MenuSmallTextButton));
   opt.SetText(title);
   opt.concmd = concmd;
@@ -1216,7 +1216,7 @@ class MenuDefOptionCrosshair : MenuDefOptionBase;
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   auto opt = MenuCrosshairChoice(menu.GetItemContainer().NewChild(MenuCrosshairChoice));
   opt.SetText(title);
   opt.cvar = cvar;
@@ -1307,7 +1307,7 @@ override bool parseOne (ScriptsParser par) {
 //  CreateOption
 //
 //==========================================================================
-override MenuChoice CreateOption (MenuScreen menu) {
+override MenuChoiceBase CreateOption (MenuScreen menu) {
   auto newCtl = MenuControlKey(menu.GetItemContainer().NewChild(MenuControlKey));
   //newCtl.SetOrigin(ChoicesStartX, ChoicesStartY+NumControls*10);
   newCtl.Height = 10;
