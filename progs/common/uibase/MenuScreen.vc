@@ -754,7 +754,7 @@ void CreateSelector () {
 //
 //==========================================================================
 int GetSelectorBaseY () {
-  return (ItemContainer ? ItemContainer.Y : 0);
+  return (ItemContainer ? ItemContainer.Y+ItemContainer.ChildrenOfsY : 0);
 }
 
 
@@ -842,7 +842,7 @@ final void FixTopIndex () {
   else if (ye+GetItemContainer().ChildrenOfsY > GetItemContainer().Height) GetItemContainer().ChildrenOfsY = -(ye-GetItemContainer().Height);
   // make sure that help is visible
   if (helpText && helpText.Height > 0) {
-    helpText.atTop = (Y2Virtual(ye)+GetItemContainer().ChildrenOfsY >= GetVirtualHeight()-helpText.Height-4);
+    helpText.atTop = (GetItemContainer().Y2Virtual(ye)+GetItemContainer().ChildrenOfsY >= GetVirtualHeight()-helpText.Height-4);
   }
 }
 
@@ -1030,12 +1030,13 @@ override void OnDraw () {
 //
 //==========================================================================
 override void OnPostDraw () {
-  int y0 = GetItemContainer().ChildrenOfsY; // negative means "scrolled down"
+  auto ctr = GetItemContainer();
+  int y0 = ctr.ChildrenOfsY; // negative means "scrolled down"
   int y1 = CalcTotalHeight()+y0;
-  if (y0 < 0 || y1 > Height) {
+  if (y0 < 0 || y1 > ctr.Height) {
     SetFont('consolefont');
     if (y0 < 0) DrawText(4, 4, "\x1a", CR_GOLD); // up arrow
-    if (y1 > Height) DrawText(4, 4+FontHeight(), "\x1b", CR_GOLD); // down arrow
+    if (y1 > ctr.Height) DrawText(4, 4+FontHeight(), "\x1b", CR_GOLD); // down arrow
     SetFont('smallfont');
   }
 }
