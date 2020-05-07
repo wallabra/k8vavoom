@@ -76,6 +76,10 @@ class MenuScreen : Widget;
 
 ClientGameShared ClGame;
 
+string defFileName;
+name menuName;
+bool isControls;
+
 MenuTitleText titleItem;
 Widget ItemContainer;
 array!MenuChoiceBase Items;
@@ -263,33 +267,116 @@ void FinishCreatingMenu () {
 
 //==========================================================================
 //
-//  CreateMenu
+//  LoadMenu
 //
 //==========================================================================
-void CreateMenu () {
+final static MenuDefinition LoadMenu (string defFileName) {
+  if (!defFileName) FatalError("undefined menudef");
+  auto par = MenuDefinition.openParser(defFileName);
+  scope(exit) delete par;
+  par.Expect("menudef");
+  auto mdef = SpawnObject(MenuDefinition);
+  mdef.parse(par);
+  return mdef;
+}
+
+
+//==========================================================================
+//
+//  CreateMenuItemsFromList
+//
+//==========================================================================
+void CreateMenuItemsFromList (ref array!MenuDefOptionBase options) {
+  foreach (auto opt; options) {
+    if (!opt.test()) continue;
+    if (opt isa MenuDefOptionModSubMenus) {
+      auto smm = MenuDefOptionModSubMenus(opt);
+      CreateMenuItemsFromList(smm.options);
+      continue;
+    }
+    auto xlen = Items.length;
+    auto mc = opt.CreateOption(self);
+    if (mc) {
+      if (opt.help) mc.customHelpText = opt.help;
+      //printdebug("%C: mc.Width=%s; Width=%s", self, mc.Width, Width);
+      mc.Width = Width;
+      mc.CursorXOffs = Width/2;
+      if (opt isa MenuDefOptionSubHeader) {
+        mc.SetOrigin(0, GetCurrentY());
+      } else {
+        mc.CursorXOffsHR = Width/2;
+        mc.SetOrigin(Width/2, GetCurrentY());
+      }
+      //currentY += mc.Height;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  CreateMenuFromDef
+//
+//==========================================================================
+void CreateMenuFromDef (MenuDefinition mdef) {
+  Width = 520;
+  Height = 260;
+  ChoicesStartX = 200;
+  SelectorType = MenuSelector_SmallRight;
+
+  menuName = name(mdef.menuName.toLowerCase());
+  Title = mdef.title;
+
+  if (nameicmp(mdef.seltype, 'Controls') == 0) {
+    isControls = true;
+    class!MenuSelectorBase cc = class!MenuSelectorBase(MenuSelector_SmallRight);
+    if (cc) SelectorType = cc;
+    ChoicesStartX = Width/2; //190;
+    //ChoicesStartX = 0;
+    //ChoicesStartY = 26;
+  } else if (mdef.seltype) {
+    class!MenuSelectorBase cc = class!MenuSelectorBase(FindClass(mdef.seltype));
+    if (cc) SelectorType = cc;
+  }
+
   if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
   helpText.OnTop = true;
   helpText.text = "";
   CreateTitle();
   CreateBackButton();
   //currentY = ChoicesStartY;
-  CreateChoices();
-  FinishCreatingMenu();
-  /* this is in `FinishCreatingMenu()` now
-  SetDefaultChoice();
-  CreateSelector();
-  if (AllowVerticalResize && Items.length > 0) {
-    int newHeight = max(Height, Items[$-1].Y+Items[$-1].Height+2);
-    if (newHeight > GetVirtualHeight()-8) {
-      newHeight = GetVirtualHeight()-8;
-      MenuScrollable = true;
+
+  CreateMenuItemsFromList(mdef.options);
+}
+
+
+//==========================================================================
+//
+//  CreateMenu
+//
+//==========================================================================
+void CreateMenu () {
+  if (!defFileName || defFileName == " <custom> ") {
+    if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
+    if (defFileName == " <custom> ") {
+      Width = 520;
+      Height = 260;
+      ChoicesStartX = 200;
+      SelectorType = MenuSelector_SmallRight;
     }
-    Height = newHeight;
+    helpText.OnTop = true;
+    helpText.text = "";
+    CreateTitle();
+    CreateBackButton();
+    //currentY = ChoicesStartY;
+    CreateChoices();
+    FinishCreatingMenu();
+  } else {
+    auto mdef = LoadMenu(defFileName);
+    scope(exit) delete mdef;
+    //mdef.dump();
+    CreateMenuFromDef(mdef);
   }
-  FixTitleWidthClosePos();
-  // center menu
-  SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
-  */
 }
 
 
@@ -302,7 +389,7 @@ void NewItemAdded (Widget Child) {
   if (!Child) return;
   // do not add "close" button to item list
   if (MenuChoiceBase(Child) && !MenuChoice_BackButton(Child)) {
-    if (Items.length > 1024) FatalError("Too many menu items");
+    //if (Items.length > 1024) FatalError("Too many menu items");
     Items[Items.Length] = MenuChoiceBase(Child);
   }
 }
@@ -328,7 +415,6 @@ void CreateTitle () {
   if (Title) {
     if (!titleItem) titleItem = NewChild(MenuTitleText);
     titleItem.Text = Title;
-    titleItem.SetOrigin(TitleX, TitleY);
     titleItem.FixSize();
   } else {
     delete titleItem;
@@ -858,9 +944,11 @@ void CursorMoved (optional bool forced) {
   assert(CursorPos >= 0 && CursorPos < Items.length);
   if (MenuChoice_BackButton(Items[CursorPos])) return; //FIXME: still set selector position!
   if (!forced && CursorPrev == CursorPos && GetItemContainer().ChildrenOfsY == OfsYPrev && Items[CursorPos].IsFocused()) return;
-  if (!Items[CursorPos].IsFocused()) Items[CursorPos].SetFocus();
+  auto it = Items[CursorPos];
+  if (!it.IsFocused()) it.SetFocus();
   if (Selector) {
-    Selector.SetOriginCentered(Items[CursorPos].X+Items[CursorPos].CursorXOffs, Items[CursorPos].Y+Items[CursorPos].CursorYOffs, Items[CursorPos].Height);
+    int xofs = (isControls && ClGame ? ClGame.ControlColumn*90 : 0);
+    Selector.SetOriginCentered(it.X+it.CursorXOffs+xofs, it.Y+it.CursorYOffs, it.Height);
   }
   CursorPrev = CursorPos;
   OfsYPrev = GetItemContainer().ChildrenOfsY;
@@ -1106,6 +1194,11 @@ override bool OnEvent (ref event_t evt) {
 
 
 defaultproperties {
+  Focusable = true;
+  MenuScrollable = true; // was `false`
+  AllowVerticalResize = true; // was `false`
+  //UseScissor = true;
+
   X = 160;
   Y = 140;
   Width = 320;
@@ -1113,10 +1206,6 @@ defaultproperties {
 
   TitleX = 160;
   TitleY = 24;
-  Focusable = true;
-  //UseScissor = true;
-  MenuScrollable = false;
-  AllowVerticalResize = false;
 
   ActivateSound = 'menu/activate';
   DeactivateSound = 'menu/backup';
@@ -1124,4 +1213,14 @@ defaultproperties {
 
   //WantMouseInput = true;
   HighlightBackground = true;
+
+  /* for text menus
+  //Width = 380;
+  Width = 520;
+  Height = 260;
+  ChoicesStartX = 200;
+  //ChoicesStartY = 26;
+  TitleX = 180;
+  SelectorType = MenuSelector_SmallRight;
+  */
 }

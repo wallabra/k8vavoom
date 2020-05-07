@@ -26,19 +26,6 @@
 class MenuTitleText : Widget;
 
 string Text;
-//bool centerText;
-
-
-//==========================================================================
-//
-//  SetOrigin
-//
-//==========================================================================
-override void SetOrigin(int OrgX, int OrgY) {
-  SetFont('bigfont');
-  SetPos(OrgX-TextWidth(Text)/2, OrgY-TextHeight(Text));
-  SetSize(TextWidth(Text), TextHeight(Text));
-}
 
 
 //==========================================================================
@@ -48,8 +35,7 @@ override void SetOrigin(int OrgX, int OrgY) {
 //==========================================================================
 void FixSize (optional int deltay) {
   SetFont('bigfont');
-  SetSize(TextWidth(Text), TextHeight(Text)+deltay);
-  //print("FixSize: <%q>", Text);
+  SetConfiguration(0, 0, Parent.Width, TextHeight(Text)+deltay);
 }
 
 
@@ -60,8 +46,8 @@ void FixSize (optional int deltay) {
 //==========================================================================
 override void OnDraw () {
   SetFont('bigfont');
-  SetTextAlign(0, 0);
-  DrawText(0, 0, Text);
+  SetTextAlign(hcenter, vcenter);
+  DrawText(Width/2, Height/2, Text);
 }
 
 

@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuScreenSearchFilter : /*MenuScreen*/MenuScreenTextDef;
+class MenuScreenSearchFilter : MenuScreen;
 
 string filterTitle;
 string filterCVar;

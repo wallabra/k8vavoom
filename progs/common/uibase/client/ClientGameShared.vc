@@ -178,7 +178,7 @@ void LoadMenuDefs () {
       if (par.Check(",")) continue;
       par.ExpectString();
       string fname = va("//uidef/%s", par.String);
-      MenuDefinition mdef = MenuScreenTextDef.LoadMenu(fname);
+      MenuDefinition mdef = MenuScreen.LoadMenu(fname);
       if (!mdef) continue;
       if (!mdef.menuName) { delete mdef; continue; }
       menudefs[$] = mdef;
@@ -612,7 +612,7 @@ MenuScreen SpawnNamedMenuStr (string menuName) {
   }
 
   // create menu
-  auto m = MenuScreenTextDef(GRoot.NewChild(MenuScreenTextDef));
+  auto m = GRoot.NewChild(MenuScreen);
   m.ClGame = self;
   m.CreateMenuFromDef(mdefmain);
   m.FinishCreatingMenu();
@@ -652,9 +652,9 @@ void PushMenuScreen (MenuScreen menu) {
   // avoid stacking menus invoked by hotkeys
   foreach (auto i, auto msc; menuStack) {
     if (!msc) continue;
-    if (menu isa MenuScreenTextDef) {
-      if (msc !isa MenuScreenTextDef) continue;
-      if (MenuScreenTextDef(msc).menuName != MenuScreenTextDef(menu).menuName) continue;
+    if (menu isa MenuScreen) {
+      if (msc !isa MenuScreen) continue;
+      if (MenuScreen(msc).menuName != MenuScreen(menu).menuName) continue;
     } else {
       if (msc.Class != menu.Class) continue;
     }
@@ -690,8 +690,8 @@ void PushMenuScreen (MenuScreen menu) {
 //==========================================================================
 void SaveMenuChoice (MenuScreen menu) {
   if (!menu) return;
-  if (menu isa MenuScreenTextDef) {
-    auto md = MenuScreenTextDef(menu);
+  if (menu isa MenuScreen) {
+    auto md = MenuScreen(menu);
     name menuName = md.menuName;
     if (!menuName) return; // just in case
     // save choice
