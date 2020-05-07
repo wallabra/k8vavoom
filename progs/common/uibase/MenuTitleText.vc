@@ -33,9 +33,9 @@ string Text;
 //  FixSize
 //
 //==========================================================================
-void FixSize (optional int deltay) {
+void FixSize () {
   SetFont('bigfont');
-  SetConfiguration(0, 0, Parent.Width, TextHeight(Text)+deltay);
+  SetConfiguration(0, 0, Parent.Width, TextHeight(Text)+4);
 }
 
 

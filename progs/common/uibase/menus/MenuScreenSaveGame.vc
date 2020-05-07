@@ -48,5 +48,6 @@ override void SwitchAutoNormal () {
 
 
 defaultproperties {
+  MenuName = 'Save_Game_Menu';
   Title = "SAVE GAME";
 }

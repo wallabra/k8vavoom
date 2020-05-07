@@ -233,8 +233,8 @@ void SetPClass () {
 
 
 defaultproperties {
+  MenuName = 'Player_Setup_Menu';
   ChoicesStartX = 64;
-  //ChoicesStartY = 40;
   SelectorType = MenuSelector_SmallRight;
   Title = "PLAYER SETUP";
 }

@@ -42,6 +42,7 @@ override void CursorMoved (optional bool forced) {
 
 
 defaultproperties {
+  MenuName = 'Controls_Menu';
   WidthThreshold = 10;
   X = 130;
   Y = 60;
@@ -52,9 +53,6 @@ defaultproperties {
 
   ChoicesStartX = 190;
   //ChoicesStartX = 0;
-  //ChoicesStartY = 26;
-
-  TitleX = 190;
 
   SelectorType = MenuSelector_SmallRight;
   Title = "SETUP CONTROLS";

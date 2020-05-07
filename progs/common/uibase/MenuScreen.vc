@@ -77,7 +77,7 @@ class MenuScreen : Widget;
 ClientGameShared ClGame;
 
 string defFileName;
-name menuName;
+name MenuName;
 bool isControls;
 
 MenuTitleText titleItem;
@@ -92,14 +92,11 @@ int CursorPos;
 int CursorPrev;
 
 int ChoicesStartX;
-//int ChoicesStartY;
 
 class!MenuSelectorBase SelectorType;
 MenuSelectorBase Selector;
 
 string Title;
-int TitleX;
-int TitleY;
 
 name ActivateSound;
 name DeactivateSound;
@@ -324,7 +321,7 @@ void CreateMenuFromDef (MenuDefinition mdef) {
   ChoicesStartX = 200;
   SelectorType = MenuSelector_SmallRight;
 
-  menuName = name(mdef.menuName.toLowerCase());
+  MenuName = name(mdef.menuName.toLowerCase());
   Title = mdef.title;
 
   if (nameicmp(mdef.seltype, 'Controls') == 0) {
@@ -333,7 +330,6 @@ void CreateMenuFromDef (MenuDefinition mdef) {
     if (cc) SelectorType = cc;
     ChoicesStartX = Width/2; //190;
     //ChoicesStartX = 0;
-    //ChoicesStartY = 26;
   } else if (mdef.seltype) {
     class!MenuSelectorBase cc = class!MenuSelectorBase(FindClass(mdef.seltype));
     if (cc) SelectorType = cc;
@@ -344,7 +340,6 @@ void CreateMenuFromDef (MenuDefinition mdef) {
   helpText.text = "";
   CreateTitle();
   CreateBackButton();
-  //currentY = ChoicesStartY;
 
   CreateMenuItemsFromList(mdef.options);
 }
@@ -368,7 +363,6 @@ void CreateMenu () {
     helpText.text = "";
     CreateTitle();
     CreateBackButton();
-    //currentY = ChoicesStartY;
     CreateChoices();
     FinishCreatingMenu();
   } else {
@@ -525,12 +519,7 @@ void CreateChoices () {
 //
 //==========================================================================
 void FixTitleWidthClosePos () {
-  //print("FixTitleWidthClosePos: %C", Class);
-  if (titleItem) {
-    //titleItem.centerText = false;
-    titleItem.FixSize();
-    titleItem.SetPos((Width-titleItem.Width)/2, titleItem.Y);
-  }
+  if (titleItem) titleItem.FixSize();
   if (BackButton) BackButton.SetOrigin(Width-20, 1);
 }
 
@@ -1204,9 +1193,6 @@ defaultproperties {
   Width = 320;
   Height = 200;
 
-  TitleX = 160;
-  TitleY = 24;
-
   ActivateSound = 'menu/activate';
   DeactivateSound = 'menu/backup';
   ClearMenusSound = 'menu/clear';
@@ -1219,8 +1205,6 @@ defaultproperties {
   Width = 520;
   Height = 260;
   ChoicesStartX = 200;
-  //ChoicesStartY = 26;
-  TitleX = 180;
   SelectorType = MenuSelector_SmallRight;
   */
 }

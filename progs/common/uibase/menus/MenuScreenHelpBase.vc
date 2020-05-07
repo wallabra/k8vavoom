@@ -221,6 +221,7 @@ override bool OnEvent (ref event_t evt) {
 
 
 defaultproperties {
+  MenuName = 'Help_Menu';
   X = 0;
   Y = 0;
   //ScaleX = 2.0;

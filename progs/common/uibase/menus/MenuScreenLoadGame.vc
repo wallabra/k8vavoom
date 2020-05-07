@@ -48,5 +48,6 @@ override void SwitchAutoNormal () {
 
 
 defaultproperties {
+  MenuName = 'Load_Game_Menu';
   Title = "LOAD GAME";
 }

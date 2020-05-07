@@ -153,8 +153,8 @@ void PClassItemActivate (Object Sender) {
 
 
 defaultproperties {
+  MenuName = 'Player_Class_Menu';
   ChoicesStartX = 66;
-  //ChoicesStartY = 66;
   SelectorType = MenuSelector_Big;
   Title = "CHOOSE CLASS:";
   // 34, TEXT_BIG

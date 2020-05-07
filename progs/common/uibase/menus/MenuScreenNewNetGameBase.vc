@@ -234,9 +234,9 @@ void ActivateStartNewGame (Object Sender) {
 
 
 defaultproperties {
+  MenuName = 'Net_Game_Menu';
   WidthThreshold = 10;
   ChoicesStartX = 128;
-  //ChoicesStartY = 40;
   SelectorType = MenuSelector_SmallRight;
   Title = "NEW GAME";
 }

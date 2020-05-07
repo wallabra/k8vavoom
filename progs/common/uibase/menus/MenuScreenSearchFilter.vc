@@ -196,11 +196,11 @@ override void CreateChoices () {
 
 
 defaultproperties {
+  MenuName = 'Search_Filter_Menu';
   defFileName = " <custom> ";
 
   WidthThreshold = 10;
   //ChoicesStartX = 120;
-  //ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;
   Title = "MENU SEARCH";
 
@@ -212,7 +212,5 @@ defaultproperties {
   Width = 520;
   Height = 460;
   ChoicesStartX = 200;
-  //ChoicesStartY = 26;
-  TitleX = 180;
   SelectorType = MenuSelector_SmallRight;
 }

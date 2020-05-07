@@ -157,8 +157,8 @@ override bool OnEvent (ref event_t evt) {
 
 
 defaultproperties {
+  MenuName = 'LoadSave_Game_Menu';
   ChoicesStartX = 80;
-  //ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
   Title = "LOAD OR SAVE GAME";
   Height = 240;

@@ -59,9 +59,9 @@ override void CreateChoices () {
 
 
 defaultproperties {
+  MenuName = 'Master_Setup_Menu';
   WidthThreshold = 10;
   ChoicesStartX = 120;
-  //ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;
   Title = "MASTER SERVER";
 }

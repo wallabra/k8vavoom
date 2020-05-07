@@ -200,9 +200,9 @@ void ActivateSetMode (Object Sender) {
 
 
 defaultproperties {
+  MenuName = 'Screen_Resolution_Menu';
   WidthThreshold = 10;
   ChoicesStartX = 120;
-  //ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;
   Title = "SCREEN RESOLUTION";
   modes[0].width = 640; modes[0].height = 480;

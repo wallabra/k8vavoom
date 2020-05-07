@@ -501,6 +501,7 @@ void GetAllMenuNames (ref array!string names, int mode) {
   }
   foreach (MenuDefinition mdef; menudefs) {
     if ((mode < 0 && !mdef.gzMenu) || (mode > 0 && mdef.gzMenu)) continue;
+    if (!mdef.menuName) continue;
     names[$] = mdef.menuName;
   }
 }
@@ -512,6 +513,8 @@ void GetAllMenuNames (ref array!string names, int mode) {
 //
 //==========================================================================
 bool SetCommonMenu (string Name) {
+  if (!Name) return false;
+
   if (!stricmp(Name, "Save")) { PushMenuScreen(SpawnMenu(MenuScreenSaveGame)); return true; }
   if (!stricmp(Name, "Load")) { PushMenuScreen(SpawnMenu(MenuScreenLoadGame)); return true; }
   if (!stricmp(Name, "Options") || !stricmp(Name, "OptionsMenu")) { PushMenuScreen(SpawnNamedMenu('OptionsMenu')); return true; }
@@ -650,20 +653,17 @@ MenuScreen SpawnNamedMenu (name menuName) {
 //==========================================================================
 void PushMenuScreen (MenuScreen menu) {
   // avoid stacking menus invoked by hotkeys
-  foreach (auto i, auto msc; menuStack) {
-    if (!msc) continue;
-    if (menu isa MenuScreen) {
-      if (msc !isa MenuScreen) continue;
-      if (MenuScreen(msc).menuName != MenuScreen(menu).menuName) continue;
-    } else {
-      if (msc.Class != menu.Class) continue;
+  if (menu.MenuName) {
+    foreach (auto i, auto msc; menuStack) {
+      if (!msc) continue; // just in case
+      if (msc.MenuName != menu.MenuName) continue;
+      while (menuStack.length > i) {
+        delete menuStack[$-1];
+        menuStack.remove(menuStack.length-1);
+      }
+      CurrentMenuScreen = none;
+      break;
     }
-    while (menuStack.length > i) {
-      delete menuStack[$-1];
-      menuStack.remove(menuStack.length-1);
-    }
-    CurrentMenuScreen = none;
-    break;
   }
 
   if (menuStack.length >= MAX_MENU_STACK) FatalError("PushMenu: menu stack overflow");
@@ -690,10 +690,8 @@ void PushMenuScreen (MenuScreen menu) {
 //==========================================================================
 void SaveMenuChoice (MenuScreen menu) {
   if (!menu) return;
-  if (menu isa MenuScreen) {
-    auto md = MenuScreen(menu);
-    name menuName = md.menuName;
-    if (!menuName) return; // just in case
+  if (menu.MenuName) {
+    name menuName = menu.MenuName;
     // save choice
     bool found = false;
     foreach (auto i, ref auto scc; savedChoices) {
@@ -706,21 +704,6 @@ void SaveMenuChoice (MenuScreen menu) {
     // if not found, append it
     if (!found) {
       savedChoices[$] = menuName;
-      savedChoicesIdx[$] = menu.GetChoiceForSaving();
-    }
-  } else {
-    // save choice
-    bool found = false;
-    foreach (auto i, ref auto scc; savedChoices) {
-      if (savedChoices[i] == GetClassName(menu.Class)) {
-        savedChoicesIdx[i] = menu.GetChoiceForSaving();
-        found = true;
-        break;
-      }
-    }
-    // if not found, append it
-    if (!found) {
-      savedChoices[$] = GetClassName(menu.Class);
       savedChoicesIdx[$] = menu.GetChoiceForSaving();
     }
   }

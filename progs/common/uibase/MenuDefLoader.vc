@@ -1309,7 +1309,6 @@ override bool parseOne (ScriptsParser par) {
 //==========================================================================
 override MenuChoiceBase CreateOption (MenuScreen menu) {
   auto newCtl = MenuControlKey(menu.GetItemContainer().NewChild(MenuControlKey));
-  //newCtl.SetOrigin(ChoicesStartX, ChoicesStartY+NumControls*10);
   newCtl.Height = 10;
   newCtl.SetText(title);
   if (button) {

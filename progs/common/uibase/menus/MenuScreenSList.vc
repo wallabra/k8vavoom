@@ -38,6 +38,7 @@ override void CreateChoices () {
 
 
 defaultproperties {
+  MenuName = 'LAN_List_Menu';
   Title = "JOIN LOCAL GAME";
   Width = 580;
   Height = 400;

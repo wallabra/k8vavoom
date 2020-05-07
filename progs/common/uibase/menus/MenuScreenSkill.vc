@@ -113,8 +113,8 @@ void ActivateSkill (Object Sender) {
 
 
 defaultproperties {
+  MenuName = 'Skill_Menu';
   ChoicesStartX = 38;
-  //ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
   Title = "CHOOSE SKILL LEVEL:";
   MenuScrollable = true;

@@ -265,8 +265,6 @@ override void CreateChoices () {
   // first, generate arrays for using for building controls list
   GenerateArrays();
 
-  //currentY = ChoicesStartY;
-
   bool firstHdr = true;
   foreach (const ref auto sec; sections) {
     bool addHeader = true;
@@ -314,6 +312,7 @@ override void CreateChoices () {
 
 
 defaultproperties {
+  MenuName = 'Mod_Controls_Menu';
   Title = "MOD CONTROLS";
   strifeMode = -1; // mods are usually for non-strife
 }

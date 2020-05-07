@@ -135,9 +135,9 @@ void ActivateEndGame (Object Sender) {
 
 
 defaultproperties {
+  MenuName = 'Single_Player_Menu';
   bTickEnabled = true; // to update endgame button status
   ChoicesStartX = 97;
-  //ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
   Title = "SINGLE PLAYER";
 }

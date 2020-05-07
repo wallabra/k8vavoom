@@ -36,7 +36,6 @@ MenuInputLine JoinAt;
 override void CreateChoices() {
   MenuTextButton Btn;
   //int currentY;
-  //currentY = ChoicesStartY;
 
   Btn = GetItemContainer().NewChild(MenuSmallTextButton);
   Btn.SetPos(ChoicesStartX, GetCurrentY());
@@ -118,8 +117,8 @@ void ChangedJoinAt (Object Sender) {
 
 
 defaultproperties {
+  MenuName = 'Join_Game_Menu';
   ChoicesStartX = 64;
-  //ChoicesStartY = 40;
   SelectorType = MenuSelector_SmallLeft;
   Title = "JOIN GAME";
 }

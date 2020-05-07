@@ -39,6 +39,7 @@ override void CreateChoices () {
 
 
 defaultproperties {
+  MenuName = 'Master_List_Menu';
   Title = "JOIN GAME";
   Width = 580;
   Height = 400;
