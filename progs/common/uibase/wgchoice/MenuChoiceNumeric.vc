@@ -138,13 +138,13 @@ override bool OnEvent (ref event_t evt) {
     switch (ConvertBoundKey(evt.keycode)) {
       case K_LEFTARROW:
       case K_MWHEELDOWN:
-        if (evt.keycode != K_MWHEELDOWN || (IsFocused() && evt.y >= 0 && evt.y < Height)) {
+        if (evt.keycode != K_MWHEELDOWN || (IsFocused() && evt.y >= 0 && evt.y < Height && evt.x > CursorXOffs)) {
           newValue = Value-ValueDelta;
         }
         break;
       case K_RIGHTARROW:
       case K_MWHEELUP:
-        if (evt.keycode != K_MWHEELUP || (IsFocused() && evt.y >= 0 && evt.y < Height)) {
+        if (evt.keycode != K_MWHEELUP || (IsFocused() && evt.y >= 0 && evt.y < Height && evt.x > CursorXOffs)) {
           newValue = Value+ValueDelta;
         }
         break;

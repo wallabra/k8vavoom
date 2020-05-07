@@ -190,31 +190,22 @@ override bool OnEvent (ref event_t evt) {
     if (evt.keycode >= K_MOUSE1 && evt.keycode <= K_MOUSE9) return ::OnEvent(evt);
     switch (ConvertBoundKey(evt.keycode)) {
       case K_LEFTARROW:
-      //case K_MOUSE2:
-      case K_MWHEELUP:
-        if (evt.keycode != K_MWHEELUP || (IsFocused() && evt.y >= 0 && evt.y < Height)) {
-          idx = findValue(Value);
-          if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
-          newValue = vallist[idx].value;
-          if (SetNewValue(ref newValue)) LocalSound('menu/change');
-          return true;
-        }
-        break;
+        idx = findValue(Value);
+        if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
+        newValue = vallist[idx].value;
+        if (SetNewValue(ref newValue)) LocalSound('menu/change');
+        return true;
       case K_ENTER:
       case K_PADENTER:
       case K_SPACE:
         OpenComboPopup();
         return true;
       case K_RIGHTARROW:
-      //case K_MOUSE1:
-      case K_MWHEELDOWN:
-        if (evt.keycode != K_MWHEELDOWN || (IsFocused() && evt.y >= 0 && evt.y < Height)) {
-          idx = findValue(Value);
-          if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
-          newValue = vallist[idx].value;
-          if (SetNewValue(ref newValue)) LocalSound('menu/change');
-          return true;
-        }
+        idx = findValue(Value);
+        if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
+        newValue = vallist[idx].value;
+        if (SetNewValue(ref newValue)) LocalSound('menu/change');
+        return true;
         break;
     }
   }
@@ -409,10 +400,10 @@ override bool OnEvent (ref event_t evt) {
         if (choice) choice.SetComboChoice(currItem);
         Destroy();
         return true;
-      case K_UPARROW: case K_MWHEELUP:
+      case K_UPARROW:
         if (currItem > 0) --currItem;
         return true;
-      case K_DOWNARROW: case K_MWHEELDOWN:
+      case K_DOWNARROW:
         if (currItem < items.length-1) ++currItem;
         return true;
       case K_HOME:
