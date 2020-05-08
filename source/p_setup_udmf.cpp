@@ -1232,6 +1232,7 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
 
     // if we don't have good sectors, there is no reason to process anything
     if (goodSectorCount) {
+      //GCon->Logf(NAME_Debug, "goodSectorCount=%d", goodSectorCount);
       for (int lineindex = 0; lineindex < NumLines; ++lineindex) {
         line_t *line = &Lines[lineindex];
         VUdmfParser::VParsedLine &uline = Parser.ParsedLines[lineindex];
@@ -1239,10 +1240,11 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
         VUdmfParser::VParsedVertex &v2 = Parser.ParsedVertexes[uline.V2Index];
 
         if (v1.hasFloorZ || v2.hasFloorZ || v1.hasCeilingZ || v2.hasCeilingZ) {
+          //GCon->Logf(NAME_Debug, "line #%d: v1(%d):f=%d;c=%d; v2(%d):f=%d;c=%d", lineindex, uline.V1Index, (int)v1.hasFloorZ, (int)v1.hasCeilingZ, uline.V2Index, (int)v2.hasFloorZ, (int)v2.hasCeilingZ);
           for (int sideidx = 0; sideidx < 2; ++sideidx) {
             if (line->sidenum[sideidx] < 0) continue;
             sector_t *sector = Sides[line->sidenum[sideidx]].Sector;
-            int snum = (int)(ptrdiff_t)(sector-&Sectors[0]);
+            const int snum = (int)(ptrdiff_t)(sector-&Sectors[0]);
             vassert(snum >= 0 && snum < NumSectors);
             SecLines *sl = &seclines[snum];
             if (sl->invalid) continue;
@@ -1289,18 +1291,21 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
               }
             }
             if (v1.hasCeilingZ || v2.hasCeilingZ) {
+              //GCon->Logf(NAME_Debug, "  sector #%d: fixing ceiling (normalz=%g)", snum, sector->ceiling.normal.z);
               // ceiling
               // check if it is already sloped
-              if (sector->ceiling.normal.z != 1.0f) continue;
+              if (sector->ceiling.normal.z != -1.0f) continue;
               TVec tvs[3];
               for (int f = 0; f < 3; ++f) {
                 VUdmfParser::VParsedVertex *pv = &Parser.ParsedVertexes[verts[f]];
                 tvs[f].x = pv->x;
                 tvs[f].y = pv->y;
                 tvs[f].z = (pv->hasCeilingZ ? pv->ceilingz : -sector->ceiling.dist);
+                //GCon->Logf(NAME_Debug, "  sector #%d: vertex #%d is (%g,%g,%g)", snum, f, tvs[f].x, tvs[f].y, tvs[f].z);
               }
               TPlane pl;
               pl.SetFromTriangle(tvs[0], tvs[1], tvs[2]);
+              //GCon->Logf(NAME_Debug, "  sector #%d: new plane is (%g,%g,%g,%g)", snum, pl.normal.x, pl.normal.y, pl.normal.z, pl.dist);
               // sanity check
               if (fabs(pl.normal.z) > 0.01f) {
                 // flip, if necessary
