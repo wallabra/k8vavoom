@@ -394,6 +394,106 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// this does periodic reports for lenghty operations
+template<EName T> class TimedReportBase {
+private:
+  const char *mName;
+  const char *mMsg2;
+  int mCheckDelta; // check time once per this
+  int mCurrent;
+  int mTotal; // can be 0
+  int mCounter2;
+  bool wasReport;
+  double sttime;
+  double lasttime;
+
+public:
+  VV_DISABLE_COPY(TimedReportBase)
+  TimedReportBase () = delete;
+
+  inline TimedReportBase (const char *aName, int aTotal=0, int aCheckDelta=16) noexcept
+    : mName(aName)
+    , mMsg2(nullptr)
+    , mCheckDelta(aCheckDelta > 0 ? aCheckDelta : 1)
+    , mCurrent(-1)
+    , mTotal(aTotal > 0 ? aTotal : 0)
+    , mCounter2(0)
+    , wasReport(false)
+  {
+    sttime = lasttime = -Sys_Time();
+  }
+
+  inline TimedReportBase (const char *aName, const char *aMsg2, int aTotal=0, int aCheckDelta=128) noexcept
+    : mName(aName)
+    , mMsg2(aMsg2)
+    , mCheckDelta(aCheckDelta > 0 ? aCheckDelta : 1)
+    , mCurrent(-1)
+    , mTotal(aTotal > 0 ? aTotal : 0)
+    , mCounter2(0)
+    , wasReport(false)
+  {
+    sttime = lasttime = -Sys_Time();
+  }
+
+  inline bool getWasReport () const noexcept { return wasReport; }
+
+  inline int getCurrent () const noexcept { return mCurrent; }
+  inline int getTotal () const noexcept { return mTotal; }
+  inline int getCheckDelta () const noexcept { return mCheckDelta; }
+
+  inline void setCurrent (int v) noexcept { mCurrent = v; }
+  inline void setTotal (int v) noexcept { mTotal = (v > 0 ? v : 0); }
+  inline void setCheckDelta (int v) noexcept { mCheckDelta = (v > 0 ? v : 1); }
+
+  inline void setCounter2 (int v) noexcept { mCounter2 = v; }
+  inline void stepCounter2 (int v=1) noexcept { mCounter2 += v; }
+
+  inline bool getName () const noexcept { return mName; }
+
+  inline void step (int delta=1) noexcept {
+    if (delta <= 0) return;
+    const int od = mCurrent/mCheckDelta;
+    mCurrent += delta;
+    const int nd = mCurrent/mCheckDelta;
+    if (od == nd) return; // no need to check anything yet
+    const double ctt = Sys_Time();
+    const double tout = lasttime+ctt;
+    if (tout >= 1.5) {
+      // report it
+      wasReport = true;
+      lasttime = -ctt;
+      if (mMsg2) {
+        if (mTotal) {
+          GLog.Logf(T, "%s %d of %d items processed (%d %s) (%d seconds)", mName, mCurrent, mTotal, mCounter2, mMsg2, (int)(sttime+ctt));
+        } else {
+          GLog.Logf(T, "%s %d items processed (%d %s) (%d seconds)", mName, mCurrent, mCounter2, mMsg2, (int)(sttime+ctt));
+        }
+      } else {
+        if (mTotal) {
+          GLog.Logf(T, "%s %d of %d items processed (%d seconds)", mName, mCurrent, mTotal, (int)(sttime+ctt));
+        } else {
+          GLog.Logf(T, "%s %d items processed (%d seconds)", mName, mCurrent, (int)(sttime+ctt));
+        }
+      }
+    }
+  }
+
+  inline void finalReport (bool totalAlways=false) noexcept {
+    if (wasReport || (mTotal || totalAlways)) {
+      const double et = Sys_Time()+sttime;
+      if (mMsg2) {
+        GLog.Logf(T, "%s %d items processed (%d %s) (%d seconds)", mName, mCurrent, mCounter2, mMsg2, (int)et);
+      } else {
+        GLog.Logf(T, "%s %d items processed (%d seconds)", mName, mCurrent, (int)et);
+      }
+    }
+  }
+};
+
+typedef TimedReportBase<NAME_Init> TimedReportInit;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // poor man's profiler
 class MiniStopTimer {
 private:

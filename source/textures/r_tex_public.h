@@ -655,7 +655,7 @@ private:
   void AddToHash (int Index);
   void AddTextures ();
   void AddMissingNumberedTextures ();
-  void AddTexturesLump (TArray<WallPatchInfo> &, int, int, bool);
+  void AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, int TexLump, int FirstTex, bool First);
   void AddGroup (int, EWadNamespace);
 
   void ParseTextureTextLump (int Lump, bool asHiRes);

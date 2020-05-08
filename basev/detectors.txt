@@ -141,7 +141,7 @@ detector "Green Shit" {
 }
 
 
-detector "CzechBox" {
+detector "CzechBox/Release" {
   info {
     type = "pwad";
     warning = "CzechBox is not supported.\nPlease, do not report any problems.\nThank you.";
@@ -149,5 +149,17 @@ detector "CzechBox" {
 
   preconditions {
     lump { name = "credit"; size = 68168; md5 = "8899d7193f124737317f35ef7cb29c14"; }
+  }
+}
+
+
+detector "CzechBox/v07e" {
+  info {
+    type = "pwad";
+    warning = "CzechBox is not supported.\nPlease, do not report any problems.\nThank you.";
+  }
+
+  preconditions {
+    lump { name = "credit"; size = 68168; md5 = "1f5be046b3014c074e5e74b47d4ecb9a"; }
   }
 }

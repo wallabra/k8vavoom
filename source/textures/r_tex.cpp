@@ -1539,7 +1539,10 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
     vint32 nummappatches = Streamer<vint32>(Strm);
     if (nummappatches < 0 || nummappatches > 1024*1024) Sys_Error("%s: invalid number of patches in pnames (%d)", *W_FullLumpName(NamesLump), nummappatches);
     //VTexture **patchtexlookup = new VTexture *[nummappatches];
-    for (int i = 0; i < nummappatches; ++i) {
+    GCon->Logf(NAME_Init, "loading pnames from '%s' (%d patches)", *W_FullLumpName(NamesLump), nummappatches);
+    TimedReportInit report("  ", nummappatches);
+
+    for (int i = 0; i < nummappatches; ++i, report.step()) {
       // read patch name
       char TmpName[12];
       Strm.Serialise(TmpName, 8);
@@ -1572,6 +1575,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
         continue;
       }
 
+      //GCon->Logf(NAME_Init, "  [%d/%d]: <%s>", i+1, nummappatches, TmpName);
       VName PatchName(TmpName, VName::AddLower8);
       CheckAddNumberedName(PatchName);
 
@@ -1616,9 +1620,11 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
         }
       }
     }
+    report.finalReport();
     // next one
     NamesLump = W_IterateNS(NamesLump, WADNS_Global);
   }
+
 
   if (developer) {
     for (int f = 0; f < patchtexlookup.length(); ++f) {
@@ -1697,10 +1703,13 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
     VCheckedStream Strm(lumpstream);
     vint32 NumTex = Streamer<vint32>(Strm);
 
+    GCon->Logf(NAME_Init, "loading TEXTURES from '%s' (%d textures)", *W_FullLumpName(TexLump), NumTex);
+    TimedReportInit report("  ", NumTex);
+
     // check the texture file format
     bool IsStrife = false;
     vint32 PrevOffset = Streamer<vint32>(Strm);
-    for (int i = 0; i < NumTex-1; ++i) {
+    for (int i = 0; i < NumTex-1; ++i, report.step()) {
       vint32 Offset = Streamer<vint32>(Strm);
       if (Offset-PrevOffset == 24) {
         IsStrife = true;
@@ -1732,6 +1741,7 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
         AddTexture(Tex);
       }
     }
+    report.finalReport();
     // next one
     TexLump = W_IterateNS(TexLump, WADNS_Global);
   }
@@ -1746,30 +1756,19 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
 void VTextureManager::AddGroup (int Type, EWadNamespace Namespace) {
   int counter = 0;
   for (int Lump = W_IterateNS(-1, Namespace); Lump >= 0; Lump = W_IterateNS(Lump, Namespace)) ++counter;
-  double stt = Sys_Time();
-  int current = 0;
-  int added = 0;
-  bool dumped = false;
+  TimedReportInit report("  ", "textures added", counter);
   for (int Lump = W_IterateNS(-1, Namespace); Lump >= 0; Lump = W_IterateNS(Lump, Namespace)) {
-    ++current;
     // to avoid duplicates, add only the last one
-    if (W_GetNumForName(W_LumpName(Lump), Namespace) != Lump) {
+    if (W_GetNumForName(W_LumpName(Lump), Namespace) == Lump) {
+      //GCon->Logf("VTextureManager::AddGroup(%d:%d): loading lump '%s'", Type, Namespace, *W_FullLumpName(Lump));
+      report.stepCounter2();
+      AddTexture(VTexture::CreateTexture(Type, Lump));
+    } else {
       //GCon->Logf(NAME_Dev, "VTextureManager::AddGroup(%d:%d): skipped lump '%s'", Type, Namespace, *W_FullLumpName(Lump));
-      continue;
     }
-    //GCon->Logf("VTextureManager::AddGroup(%d:%d): loading lump '%s'", Type, Namespace, *W_FullLumpName(Lump));
-    ++added;
-    AddTexture(VTexture::CreateTexture(Type, Lump));
-    if (current%128 == 0) {
-      const double ctt = Sys_Time();
-      if (ctt-stt >= 2.5) {
-        stt = ctt;
-        GCon->Logf(NAME_Init, "  [%d/%d] lumps processed (%d textures added)", current, counter, added);
-        dumped = true;
-      }
-    }
+    report.step();
   }
-  if (dumped) GCon->Logf(NAME_Init, "  [%d/%d] lumps processed (%d textures added)", current, counter, added);
+  report.finalReport();
 }
 
 
