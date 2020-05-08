@@ -113,7 +113,7 @@
   ACS_EXTFUNC(SetActorRoll) // implemented
   ACS_EXTFUNC(ChangeActorRoll) // implemented
   ACS_EXTFUNC(GetActorRoll) // implemented
-  ACS_EXTFUNC(QuakeEx)
+  ACS_EXTFUNC(QuakeEx) // routed to `Radius_Quake`
   ACS_EXTFUNC(Warp) // 92
   ACS_EXTFUNC(GetMaxInventory)
   ACS_EXTFUNC(SetSectorDamage) // implemented

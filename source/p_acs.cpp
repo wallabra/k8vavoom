@@ -3634,6 +3634,21 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       }
       return 0;
 
+    // void QuakeEx (int tid, int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx [, int flags [, fixed mulwavex [, fixed mulwavey [, fixed mulwavez [, int falloff [, int highpoint [, fixed rollintensity [, fixed rollwave]]]]]]]])
+    case ACSF_QuakeEx:
+      GCon->Logf(NAME_Warning, "partially implemented ACSF function '%s' (%d args)", "QuakeEx", argCount);
+      if (argCount >= 7) {
+        VName sndname = NAME_None;
+        const int tid = args[0];
+        const int intensity = (args[1]+args[2]+args[3])/3; // for now
+        const int dur = args[4];
+        const int damrad = args[5];
+        const int tremrad = args[6];
+        if (argCount > 7) sndname = GetNameLowerCase(args[7]);
+        Level->eventAcsRadiusQuake2(Activator, tid, intensity, dur, damrad, tremrad, sndname);
+      }
+      return 0;
+
     case ACSF_SetHUDClipRect:
       GCon->Logf(NAME_Error, "unimplemented ACSF function '%s' (%d args)", "SetHUDClipRect", argCount);
       return 0;
