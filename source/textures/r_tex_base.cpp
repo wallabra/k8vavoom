@@ -60,16 +60,36 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
 
   if (LumpNum < 0) return nullptr;
   VStream *lumpstream = W_CreateLumpReaderNum(LumpNum);
-  VCheckedStream Strm(lumpstream);
+  int lumpSize = lumpstream->TotalSize();
+  if (lumpSize < 1) return nullptr; // just in ase
+
+  VStream *datastream;
+  TArray<vuint8> databytes;
+  if (lumpSize > 1024*1024*32) {
+    // more than 32 mb, wtf?!
+    datastream = new VCheckedStream(lumpstream);
+  } else {
+    // load to memory, for faster parsing
+    databytes.setLength(lumpSize);
+    lumpstream->Serialise(databytes.ptr(), lumpSize);
+    const bool err = lumpstream->IsError();
+    delete lumpstream;
+    if (err) Sys_Error("error reading texture lump '%s'", *W_FullLumpName(LumpNum));
+    VArrayStream *astrm = new VArrayStream(W_FullLumpName(LumpNum), databytes);
+    astrm->BeginRead();
+    datastream = astrm;
+  }
+  //VCheckedStream Strm(lumpstream);
   bool doSeek = false;
 
   int ffcount = 0;
   if (dbg_verbose_texture_loader) GLog.Logf(NAME_Debug, "*** TRYING TO LOAD TEXTURE '%s'", *W_FullLumpName(LumpNum));
   for (size_t i = 0; i < ARRAY_COUNT(TexTable); ++i) {
     if (Type == TEXTYPE_Any || TexTable[i].Type == Type || TexTable[i].Type == TEXTYPE_Any) {
-      if (doSeek) Strm.Seek(0); else doSeek = true;
-      VTexture *Tex = TexTable[i].Create(Strm, LumpNum);
+      if (doSeek) datastream->Seek(0); else doSeek = true;
+      VTexture *Tex = TexTable[i].Create(*datastream, LumpNum);
       if (Tex) {
+        delete datastream; // we don't need it anymore
         if (dbg_verbose_texture_loader) GLog.Logf(NAME_Debug, "***    LOADED TEXTURE '%s' (%s)", *W_FullLumpName(LumpNum), TexTable[i].fmtname);
         if (setName) {
           if (Tex->Name == NAME_None) {
@@ -85,6 +105,7 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
     }
   }
 
+  delete datastream; // we don't need it anymore
   if (dbg_verbose_texture_loader) GLog.Logf(NAME_Debug, "*** FAILED TO LOAD TEXTURE '%s' (%d attempts made)", *W_FullLumpName(LumpNum), ffcount);
   return nullptr;
 }
