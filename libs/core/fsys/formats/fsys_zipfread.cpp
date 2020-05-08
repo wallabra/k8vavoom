@@ -753,7 +753,11 @@ void VZipFileReader::readBytes (void *buf, int length) {
 //==========================================================================
 void VZipFileReader::cacheAllData () {
   //GLog.Logf(NAME_Debug, "Back-seek in '%s' (curr=%d; new=%d)", *fname, Tell(), InPos);
-  if (!rewind()) return; // error already set
+  //if (!skipRewind && !rewind()) return; // error already set
+  if (totalOut() != 0) {
+    if (!rewind()) return; // error already set
+  }
+  vassert(totalOut() == 0);
   // cache data
   wholeSize = (vint32)Info.filesize;
   //GLog.Logf(NAME_Debug, "*** CACHING '%s' (size=%d)", *fname, wholeSize);
@@ -792,10 +796,20 @@ void VZipFileReader::Serialise (void *V, int length) {
     if (!FileStream) { SetError(); return; }
     //!GLog.Logf(NAME_Debug, "  ***READING (DIRECT) '%s' (currpos=%d; length=%u; realpos=%d; size=%u; rru=%u)", *fname, currpos, length, totalOut(), Info.filesize, rest_read_uncompressed);
     if (length > (int)Info.filesize || (int)Info.filesize-currpos < length) { SetError(); return; }
+    // cache file if it is LZMA (LZMA is quite slow, and texture detection seeks alot)
+    /*
+    if (Info.compression == Z_LZMA) {
+      cacheAllData();
+      if (bError) return;
+      Serialise(V, length);
+      return;
+    }
+    */
     // cache file if we're seeking near the end
     if (totalOut() < 32768 && currpos >= (vint32)(Info.filesize-Info.filesize/3)) {
       ++wholeSize;
-      if (wholeSize >= 0) {
+      // cache file if it is LZMA (LZMA is quite slow, and texture detection seeks alot)
+      if (wholeSize >= 0 || Info.compression == Z_LZMA) {
         //!GLog.Logf(NAME_Debug, "*** (0)CACHING '%s' (cpos=%d; newpos=%d; size=%u)", *fname, totalOut(), currpos, Info.filesize);
         cacheAllData();
         if (bError) return;
@@ -806,9 +820,10 @@ void VZipFileReader::Serialise (void *V, int length) {
     // rewind if necessary
     if (currpos < totalOut()) {
       // check if we have to cache data
-      if (totalOut() > 8192) {
+      // cache file if it is LZMA (LZMA is quite slow, and texture detection seeks alot)
+      if (totalOut() > 8192 || Info.compression == Z_LZMA) {
         ++wholeSize;
-        if (wholeSize >= 0) {
+        if (wholeSize >= 0 || Info.compression == Z_LZMA) {
           //!GLog.Logf(NAME_Debug, "*** (1)CACHING '%s' (cpos=%d; newpos=%d; size=%u)", *fname, totalOut(), currpos, Info.filesize);
           cacheAllData();
           if (bError) return;
@@ -816,7 +831,7 @@ void VZipFileReader::Serialise (void *V, int length) {
           return;
         }
       }
-      //GLog.Logf(NAME_Debug, "Back-seek in '%s' (curr=%d; new=%d)", *fname, Tell(), InPos);
+      //!GLog.Logf(NAME_Debug, "Back-seek in '%s' (curr=%d; new=%d)", *fname, totalOut(), currpos);
       if (!rewind()) return; // error already set
       vassert(totalOut() == 0);
     }
