@@ -3212,7 +3212,10 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       //GCon->Logf(NAME_Warning, "ERROR: unimplemented ACSF function #%d'", 102);
       //if (!acs_emulate_zandronum_acsf) return 0;
       #ifdef CLIENT
-      if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client) {
+      if (GGameInfo->NetMode == NM_Standalone ||
+          GGameInfo->NetMode == NM_Client ||
+          GGameInfo->NetMode == NM_ListenServer)
+      {
         if (cl && cls.signon && cl->MO) {
           //GCon->Logf(NAME_Warning, "CONPLRNUM: %d", cl->ClientNum);
           return cl->ClientNum;
