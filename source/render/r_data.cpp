@@ -118,7 +118,7 @@ static void InitPalette () {
   // Strife uses color 0 as transparent. I already had problems with fact
   // that color 255 is normal color, now there shouldn't be any problems.
   VStream *lumpstream = W_CreateLumpReaderName(NAME_playpal);
-  VCheckedStream Strm(lumpstream);
+  VCheckedStream Strm(lumpstream, true); // load to memory
   rgba_t *pal = r_palette;
   int best_dist_black = 0x7fffffff;
   int best_dist_white = (r_color_distance_algo ? 0x7fffffff : -0x7fffffff);
@@ -216,7 +216,7 @@ static void InitTranslationTables () {
     int tlump = W_GetNumForName(NAME_translat);
     GCon->Logf(NAME_Init, "using translation table from '%s'", *W_FullLumpName(tlump));
     VStream *lumpstream = W_CreateLumpReaderName(NAME_translat);
-    VCheckedStream Strm(lumpstream);
+    VCheckedStream Strm(lumpstream, true); // load to memory
     NumTranslationTables = Strm.TotalSize()/256;
     TranslationTables = new VTextureTranslation*[NumTranslationTables];
     for (int j = 0; j < NumTranslationTables; ++j) {

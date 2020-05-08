@@ -78,9 +78,11 @@ public:
   VV_DISABLE_COPY(VCheckedStream)
 
   VCheckedStream (VStream *ASrcStream); // this should not be used with `new`
+  // this seeks to 0
+  VCheckedStream (VStream *ASrcStream, bool doCopy); // this should not be used with `new`
   virtual ~VCheckedStream () override;
 
-  void SetStream (VStream *ASrcStream);
+  //void SetStream (VStream *ASrcStream);
 
   // stream interface
   virtual VStr GetName () const override;

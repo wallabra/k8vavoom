@@ -411,7 +411,7 @@ public:
   VV_DISABLE_COPY(TimedReportBase)
   TimedReportBase () = delete;
 
-  inline TimedReportBase (const char *aName, int aTotal=0, int aCheckDelta=16) noexcept
+  inline TimedReportBase (const char *aName, int aTotal=0, int aCheckDelta=128) noexcept
     : mName(aName)
     , mMsg2(nullptr)
     , mCheckDelta(aCheckDelta > 0 ? aCheckDelta : 1)
@@ -479,7 +479,7 @@ public:
   }
 
   inline void finalReport (bool totalAlways=false) noexcept {
-    if (wasReport || (mTotal || totalAlways)) {
+    if (wasReport || (totalAlways && mTotal)) {
       const double et = Sys_Time()+sttime;
       if (mMsg2) {
         GLog.Logf(T, "%s %d items processed (%d %s) (%d seconds)", mName, mCurrent, mCounter2, mMsg2, (int)et);

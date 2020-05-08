@@ -540,11 +540,25 @@ VMemoryStream::VMemoryStream (VStr strmName, VStream *strm)
 
 //==========================================================================
 //
-//  ~VMemoryStream::~VMemoryStream
+//  VMemoryStream::~VMemoryStream
 //
 //==========================================================================
 VMemoryStream::~VMemoryStream () {
   Close();
+}
+
+
+//==========================================================================
+//
+//  VMemoryStream::Close
+//
+//==========================================================================
+bool VMemoryStream::Close () {
+  if (bLoading) {
+    Array.setLength(0);
+    Pos = 0;
+  }
+  return !bError;
 }
 
 

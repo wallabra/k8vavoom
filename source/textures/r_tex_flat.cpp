@@ -112,7 +112,7 @@ vuint8 *VFlatTexture::GetPixels () {
   } else {
     // read data
     VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
-    VCheckedStream Strm(lumpstream);
+    VCheckedStream Strm(lumpstream, true); // load to memory
     for (int i = 0; i < Width*Height; ++i) {
       Strm << Pixels[i];
       if (!Pixels[i]) Pixels[i] = r_black_color;

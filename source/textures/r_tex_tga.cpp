@@ -146,7 +146,7 @@ vuint8 *VTgaTexture::GetPixels () {
 
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
   if (!lumpstream) Sys_Error("Couldn't find file %s", *Name);
-  VCheckedStream Strm(lumpstream);
+  VCheckedStream Strm(lumpstream, true); // load to memory
 
   TGAHeader_t hdr;
   Strm << hdr;

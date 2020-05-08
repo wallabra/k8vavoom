@@ -82,6 +82,7 @@ public:
   virtual void Seek (int) override;
   virtual int Tell () override;
   virtual int TotalSize () override;
+  virtual bool Close () override;
 
   inline void BeginRead () { bLoading = true; }
   inline void BeginWrite () { bLoading = false; }

@@ -337,7 +337,7 @@ void R_InitModels () {
   GCon->Log(NAME_Init, "loading model scripts");
   for (int Lump = W_IterateFile(-1, "models/models.xml"); Lump != -1; Lump = W_IterateFile(Lump, "models/models.xml")) {
     VStream *lumpstream = W_CreateLumpReaderNum(Lump);
-    VCheckedStream Strm(lumpstream);
+    VCheckedStream Strm(lumpstream, true); // load to memory
     if (mdl_verbose_loading) {
       GCon->Logf(NAME_Init, "parsing model definition '%s'", *W_FullLumpName(Lump));
     }

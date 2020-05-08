@@ -80,7 +80,7 @@ vuint8 *VAutopageTexture::GetPixels () {
 
   // read data
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
-  VCheckedStream Strm(lumpstream);
+  VCheckedStream Strm(lumpstream, true); // load to memory
   int len = Strm.TotalSize();
   Pixels = new vuint8[len];
   vuint8 *dst = Pixels;

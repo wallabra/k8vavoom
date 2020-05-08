@@ -109,7 +109,7 @@ vuint8 *VPatchTexture::GetPixels () {
 
   // open stream
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
-  VCheckedStream Strm(lumpstream);
+  VCheckedStream Strm(lumpstream, true); // load to memory
 
   const int stsize = Strm.TotalSize();
 

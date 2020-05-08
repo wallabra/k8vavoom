@@ -93,7 +93,7 @@ vuint8 *VImgzTexture::GetPixels () {
   translucent = false;
 
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
-  VCheckedStream Strm(lumpstream);
+  VCheckedStream Strm(lumpstream, true); // load to memory
 
   // read header
   Strm.Seek(4); // skip magic
