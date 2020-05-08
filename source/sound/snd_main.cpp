@@ -1069,11 +1069,33 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying, bool f
     return nullptr;
   }
 
+  // if the song is quite small, load it in memory
+  const int strmsize = Strm->TotalSize();
+  if (strmsize < 1024*1024*32) {
+    VMemoryStream *ms = new VMemoryStream(Strm->GetName());
+    TArray<vuint8> &arr = ms->GetArray();
+    arr.setLength(strmsize);
+    Strm->Serialise(arr.ptr(), strmsize);
+    const bool err = Strm->IsError();
+    Strm->Close();
+    delete Strm;
+    if (err) {
+      ms->Close();
+      delete ms;
+      GCon->Logf(NAME_Warning, "Lump '%s' for song \"%s\" cannot be read", *W_FullLumpName(Lump), Song);
+      return nullptr;
+    }
+    ms->BeginRead();
+    Strm = ms;
+    GCon->Logf(NAME_Debug, "Lump '%s' for song \"%s\" loaded into memory (%d bytes)", *W_FullLumpName(Lump), Song, strmsize);
+  }
+
   // load signature, so we can pass it to codecs
   vuint8 sign[4];
   Strm->Serialise(sign, 4);
   if (Strm->IsError()) {
     GCon->Logf(NAME_Error, "error loading song '%s'", *W_FullLumpName(Lump));
+    Strm->Close();
     delete Strm;
     return nullptr;
   }
@@ -1087,6 +1109,7 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying, bool f
     MidStrm->BeginWrite();
     VQMus2Mid Conv;
     int MidLength = Conv.Run(*Strm, *MidStrm);
+    Strm->Close();
     delete Strm;
     if (!MidLength) {
       delete MidStrm;
@@ -1098,6 +1121,7 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying, bool f
     Strm->Serialise(sign, 4);
     if (Strm->IsError()) {
       GCon->Logf(NAME_Error, "error loading song '%s'", *W_FullLumpName(Lump));
+      Strm->Close();
       delete Strm;
       return nullptr;
     }
@@ -1113,6 +1137,7 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying, bool f
     Strm->Seek(0);
     if (Strm->IsError()) {
       GCon->Logf(NAME_Error, "error loading song '%s'", *W_FullLumpName(Lump));
+      Strm->Close();
       delete Strm;
       return nullptr;
     }
@@ -1125,6 +1150,7 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying, bool f
     Strm->Seek(0);
     if (Strm->IsError()) {
       GCon->Logf(NAME_Error, "error loading song '%s'", *W_FullLumpName(Lump));
+      Strm->Close();
       delete Strm;
       return nullptr;
     }
@@ -1140,6 +1166,7 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying, bool f
   }
 
   GCon->Logf(NAME_Warning, "couldn't find codec for song '%s'", *W_FullLumpName(Lump));
+  Strm->Close();
   delete Strm;
   return nullptr;
 }
