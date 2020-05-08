@@ -1115,6 +1115,30 @@ bool VSoundManager::LoadSoundInternal (int sound_id) {
     return false;
   }
 
+  // if the sound is quite small, load it in memory
+  const int strmsize = Strm->TotalSize();
+  if (strmsize < 1024*1024*32) {
+    VMemoryStream *ms = new VMemoryStream(Strm->GetName());
+    TArray<vuint8> &arr = ms->GetArray();
+    arr.setLength(strmsize);
+    Strm->Serialise(arr.ptr(), strmsize);
+    const bool err = Strm->IsError();
+    Strm->Close();
+    delete Strm;
+    if (err) {
+      ms->Close();
+      delete ms;
+      GCon->Logf(NAME_Warning, "Sound lump '%s' cannot be read", *W_FullLumpName(Lump));
+      MyThreadLocker lock(&loaderLock);
+      sfx->LumpNum = Lump;
+      sfx->loadedState = sfxinfo_t::ST_Invalid;
+      return false;
+    }
+    ms->BeginRead();
+    Strm = ms;
+    //GCon->Logf(NAME_Debug, "Sound lump '%s' loaded into memory (%d bytes)", *W_FullLumpName(Lump), strmsize);
+  }
+
   for (VSampleLoader *Ldr = VSampleLoader::List; Ldr && !S_sfx[sound_id].Data; Ldr = Ldr->Next) {
     Strm->Seek(0);
     Ldr->Load(*sfx, *Strm);
@@ -1124,6 +1148,7 @@ bool VSoundManager::LoadSoundInternal (int sound_id) {
       break;
     }
   }
+  Strm->Close();
   delete Strm;
 
   if (!sfx->Data) {
