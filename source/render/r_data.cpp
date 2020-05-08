@@ -1350,12 +1350,17 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
 //  ApplyGlowToTexture
 //
 //==========================================================================
-static void ApplyGlowToTexture (VName txname, bool isWall, bool allowOtherType, bool fullbright, vuint32 clr=0u) {
+static void ApplyGlowToTexture (VName txname, bool isWall, bool allowOtherType, bool fullbright, bool iwad, vuint32 clr=0u) {
 #ifdef CLIENT
   if (txname != NAME_None && !VTextureManager::IsDummyTextureName(txname)) {
     VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(txname), (isWall ? TEXTYPE_Wall : TEXTYPE_Flat));
     if (!basetex && allowOtherType) basetex = GTextureManager.GetExistingTextureByName(VStr(txname), (!isWall ? TEXTYPE_Wall : TEXTYPE_Flat));
     if (basetex) {
+      if (iwad && !W_IsIWADLump(basetex->SourceLump)) {
+        // oops
+        GCon->Logf(NAME_Warning, "IWAD GLOW SKIP: %s[%d]; '%s'", *W_FullLumpName(basetex->SourceLump), basetex->SourceLump, *basetex->Name);
+        return;
+      }
       //GCon->Logf("GLOW: <%s>", *txname);
       rgb_t gclr;
       if (clr) {
@@ -1385,8 +1390,14 @@ static void ApplyGlowToTexture (VName txname, bool isWall, bool allowOtherType, 
 //==========================================================================
 static void ParseGlow (VScriptParser *sc) {
   bool allFullBright = true;
-       if (sc->Check("fullbright")) allFullBright = true;
-  else if (sc->Check("nofullbright")) {} // just for completeness
+  bool allIWad = false;
+  // parse global options
+  for (;;) {
+    if (sc->Check("fullbright")) { allFullBright = true; continue; }
+    if (sc->Check("nofullbright")) { allFullBright = false; continue; }
+    if (sc->Check("iwad")) { allIWad = true; continue; }
+    break;
+  }
   sc->Expect("{");
   while (!sc->Check("}")) {
     // not implemented gozzo feature (in gozzo too)
@@ -1402,9 +1413,14 @@ static void ParseGlow (VScriptParser *sc) {
       } else {
         // no parameters, apply normal glow
         bool fullbright = allFullBright;
-             if (sc->Check("fullbright")) fullbright = true;
-        else if (sc->Check("nofullbright")) fullbright = false;
-        ApplyGlowToTexture(txname, true, true, fullbright);
+        bool iwad = allIWad;
+        for (;;) {
+          if (sc->Check("fullbright")) { fullbright = true; continue; }
+          if (sc->Check("nofullbright")) { fullbright = false; continue; }
+          if (sc->Check("iwad")) { iwad = true; continue; }
+          break;
+        }
+        ApplyGlowToTexture(txname, true, true, fullbright, iwad);
       }
       continue;
     }
@@ -1414,13 +1430,19 @@ static void ParseGlow (VScriptParser *sc) {
     else if (sc->Check("walls")) ttype = TEXTYPE_Wall;
     if (ttype > 0) {
       bool fullbright = allFullBright;
-           if (sc->Check("fullbright")) fullbright = true;
-      else if (sc->Check("nofullbright")) fullbright = false; // just for completeness
+      bool iwad = allIWad;
+      for (;;) {
+        if (sc->Check("fullbright")) { fullbright = true; continue; }
+        if (sc->Check("nofullbright")) { fullbright = false; continue; }
+        if (sc->Check("iwad")) { iwad = true; continue; }
+        break;
+      }
       sc->Expect("{");
       VName txname;
       while (!sc->Check("}")) {
         if (sc->Check(",")) continue;
         bool xfbr = fullbright;
+        bool xiwad = iwad;
         vuint32 gclr = 0u;
         if (sc->Check("texture")) {
           sc->ExpectName8Warn();
@@ -1435,6 +1457,8 @@ static void ParseGlow (VScriptParser *sc) {
           while (sc->GetString()) {
             if (sc->Crossed) { sc->UnGet(); break; }
             if (sc->String.strEquCI("fullbright")) { xfbr = true; continue; }
+            if (sc->String.strEquCI("nofullbright")) { xfbr = false; continue; }
+            if (sc->String.strEquCI("iwad")) { xiwad = true; continue; }
             // try to parse as color
             vuint32 cc = M_ParseColor(*sc->String, true/*retZeroIfInvalid*/);
             if (!cc) { sc->UnGet(); break; }
@@ -1442,7 +1466,7 @@ static void ParseGlow (VScriptParser *sc) {
           }
           //if (gclr || xfbr) GCon->Logf(NAME_Debug, "GLOW for '%s': gclr=0x%08x; fbr=%d", *txname, gclr, (int)xfbr);
         }
-        ApplyGlowToTexture(sc->Name8, (ttype == TEXTYPE_Wall), false, xfbr, gclr);
+        ApplyGlowToTexture(sc->Name8, (ttype == TEXTYPE_Wall), false, xfbr, xiwad, gclr);
       }
       continue;
     }
