@@ -75,6 +75,8 @@ static VCvarB acs_use_doomtic_granularity("acs_use_doomtic_granularity", false, 
 static VCvarB acs_enabled("acs_enabled", true, "DEBUG: are ACS scripts enabled?", CVAR_PreInit);
 static VCvarB acs_show_started_scripts("acs_show_started_scripts", false, "DEBUG: are ACS scripts enabled?", CVAR_PreInit);
 static VCvarB acs_show_stopped_scripts("acs_show_stopped_scripts", false, "DEBUG: are ACS scripts enabled?", CVAR_PreInit);
+static VCvarB acs_abort_on_unknown_acsf("acs_abort_on_unknown_acsf", true, "Abort on unknown ACSF function? (WARNING: setting this 'off' may break some maps)", CVAR_Archive);
+static VCvarB acs_emulate_zandronum_acsf("acs_emulate_zandronum_acsf", false, "Emulate some Zandronum ACSF functions? (WARNING: setting this 'off' may break some maps)", CVAR_Archive);
 
 extern VCvarF mouse_x_sensitivity;
 extern VCvarF mouse_y_sensitivity;
@@ -3201,30 +3203,32 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       return 0;
 
 
-    case ACSF_PlayerIsSpectator_Zadro:
+    case ACSF_PlayerIsSpectator_Zandro:
       return 0;
 
     // https://zdoom.org/wiki/ConsolePlayerNumber
     //FIXME: disconnect?
-    case ACSF_ConsolePlayerNumber_Zadro:
+    case ACSF_ConsolePlayerNumber_Zandro:
       //GCon->Logf(NAME_Warning, "ERROR: unimplemented ACSF function #%d'", 102);
-#ifdef CLIENT
+      //if (!acs_emulate_zandronum_acsf) return 0;
+      #ifdef CLIENT
       if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client) {
         if (cl && cls.signon && cl->MO) {
           //GCon->Logf(NAME_Warning, "CONPLRNUM: %d", cl->ClientNum);
           return cl->ClientNum;
         }
       }
-#endif
+      #endif
       return -1;
 
     // int RequestScriptPuke (int script[, int arg0[, int arg1[, int arg2[, int arg3]]]])
-    case ACSF_RequestScriptPuke_Zadro:
+    case ACSF_RequestScriptPuke_Zandro:
+      //if (!acs_emulate_zandronum_acsf) return 0;
       {
-#ifdef CLIENT
+        #ifdef CLIENT
         if (argCount < 1) return 0;
         if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone && GGameInfo->NetMode != NM_TitleMap) {
-          GCon->Logf(NAME_Warning, "ACS: Zadro RequestScriptPuke can be executed only by clients (%d).", GGameInfo->NetMode);
+          GCon->Logf(NAME_Warning, "ACS: Zandro RequestScriptPuke can be executed only by clients (%d).", GGameInfo->NetMode);
           return 0;
         }
         // ignore this in demos
@@ -3248,19 +3252,20 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         }
         if (!ActiveObject->Level->Start(abs(args[0]), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], plr, line, side, (args[0] < 0)/*always*/, false/*wantresult*/, true/*net*/)) return 0;
         return 1;
-#else
-        GCon->Log(NAME_Warning, "ACS: Zadro RequestScriptPuke can be executed only by clients.");
+        #else
+        GCon->Log(NAME_Warning, "ACS: Zandro RequestScriptPuke can be executed only by clients.");
         return 0;
-#endif
+        #endif
       }
 
     // int NamedRequestScriptPuke (str script[, int arg0[, int arg1[, int arg2[, int arg3]]]])
-    case ACSF_NamedRequestScriptPuke_Zadro:
+    case ACSF_NamedRequestScriptPuke_Zandro:
+      //if (!acs_emulate_zandronum_acsf) return 0;
       {
-#ifdef CLIENT
+        #ifdef CLIENT
         if (argCount < 1) return 0;
         if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone && GGameInfo->NetMode != NM_TitleMap) {
-          GCon->Logf(NAME_Warning, "ACS: Zadro NamedRequestScriptPuke can be executed only by clients (%d).", GGameInfo->NetMode);
+          GCon->Logf(NAME_Warning, "ACS: Zandro NamedRequestScriptPuke can be executed only by clients (%d).", GGameInfo->NetMode);
           return 0;
         }
         // ignore this in demos
@@ -3282,10 +3287,10 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         }
         if (!ActiveObject->Level->Start(-name.GetIndex(), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], plr, line, side, false/*always*/, false/*wantresult*/, true/*net*/)) return 0;
         return 1;
-#else
-        GCon->Log(NAME_Warning, "ACS: Zadro NamedRequestScriptPuke can be executed only by clients.");
+        #else
+        GCon->Log(NAME_Warning, "ACS: Zandro NamedRequestScriptPuke can be executed only by clients.");
         return 0;
-#endif
+        #endif
       }
 
     // int PickActor (int source, fixed angle, fixed pitch, fixed distance, int tid [, int actorMask [, int wallMask [, int flags]]])
@@ -3526,9 +3531,12 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     case ACSF_AnnouncerSound: // ignored
       return 0;
 
-    case ACSF_PlayerIsLoggedIn_Zadro: return 0; // player is never logged in
-    //case ACSF_GetPlayerAccountName_Zadro: return 0; // `0` means "not implemented" //ActiveObject->Level->PutNewString(""); // always unnamed
-    case ACSF_GetPlayerAccountName_Zadro: return ActiveObject->Level->PutNewString(""); // always unnamed
+    case ACSF_PlayerIsLoggedIn_Zandro:
+      return 0; // player is never logged in
+    //case ACSF_GetPlayerAccountName_Zandro: return 0; // `0` means "not implemented" //ActiveObject->Level->PutNewString(""); // always unnamed
+    case ACSF_GetPlayerAccountName_Zandro:
+      if (!acs_emulate_zandronum_acsf) return 0;
+      return ActiveObject->Level->PutNewString(""); // always unnamed
 
     // bool SetPointer(int assign_slot, int tid[, int pointer_selector[, int flags]])
     case ACSF_SetPointer:
@@ -3640,7 +3648,8 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       if (argCount >= 7) {
         VName sndname = NAME_None;
         const int tid = args[0];
-        const int intensity = (args[1]+args[2]+args[3])/3; // for now
+        //const int intensity = (args[1]+args[2]+args[3])/3; // for now
+        const int intensity = max3(args[1], args[2], args[3]); // for now
         const int dur = args[4];
         const int damrad = args[5];
         const int tremrad = args[6];
@@ -3839,11 +3848,22 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
     if (nfo->index == funcIndex) {
-      //GCon->Logf("ERROR: unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
-      Host_Error("unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
+      if (acs_abort_on_unknown_acsf) {
+        Host_Error("unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
+      } else {
+        GCon->Logf(NAME_Error, "unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
+      }
+      return 0;
     }
   }
-  Host_Error("unimplemented ACSF function #%d (%d args)", funcIndex, argCount);
+
+  if (acs_abort_on_unknown_acsf) {
+    Host_Error("unimplemented ACSF function #%d (%d args)", funcIndex, argCount);
+  } else {
+    GCon->Logf(NAME_Error, "unimplemented ACSF function #%d (%d args)", funcIndex, argCount);
+  }
+
+  return 0;
 }
 
 

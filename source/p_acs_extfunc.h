@@ -132,38 +132,38 @@
   -106 : KickFromGame(2)
   */
 
-  ACS_EXTFUNC_NUM(ResetMap_Zadro, 100)
-  ACS_EXTFUNC(PlayerIsSpectator_Zadro) // implemented
-  ACS_EXTFUNC(ConsolePlayerNumber_Zadro) // implemented
-  ACS_EXTFUNC(GetTeamProperty_Zadro) // [Dusk]
-  ACS_EXTFUNC(GetPlayerLivesLeft_Zadro)
-  ACS_EXTFUNC(SetPlayerLivesLeft_Zadro)
-  ACS_EXTFUNC(ForceToSpectate_Zadro)
-  ACS_EXTFUNC(GetGamemodeState_Zadro)
-  ACS_EXTFUNC(SetDBEntry_Zadro)
-  ACS_EXTFUNC(GetDBEntry_Zadro)
-  ACS_EXTFUNC(SetDBEntryString_Zadro)
-  ACS_EXTFUNC(GetDBEntryString_Zadro)
-  ACS_EXTFUNC(IncrementDBEntry_Zadro)
-  ACS_EXTFUNC(PlayerIsLoggedIn_Zadro) // ignored
-  ACS_EXTFUNC(GetPlayerAccountName_Zadro) // ignored
-  ACS_EXTFUNC(SortDBEntries_Zadro)
-  ACS_EXTFUNC(CountDBResults_Zadro)
-  ACS_EXTFUNC(FreeDBResults_Zadro)
-  ACS_EXTFUNC(GetDBResultKeyString_Zadro)
-  ACS_EXTFUNC(GetDBResultValueString_Zadro)
-  ACS_EXTFUNC(GetDBResultValue_Zadro)
-  ACS_EXTFUNC(GetDBEntryRank_Zadro)
-  ACS_EXTFUNC(RequestScriptPuke_Zadro) // implemented
-  ACS_EXTFUNC(BeginDBTransaction_Zadro)
-  ACS_EXTFUNC(EndDBTransaction_Zadro)
-  ACS_EXTFUNC(GetDBEntries_Zadro)
-  ACS_EXTFUNC(NamedRequestScriptPuke_Zadro) // implemented
-  ACS_EXTFUNC(SystemTime_Zadro)
-  ACS_EXTFUNC(GetTimeProperty_Zadro)
-  ACS_EXTFUNC(Strftime_Zadro)
-  ACS_EXTFUNC(SetDeadSpectator_Zadro)
-  ACS_EXTFUNC(SetActivatorToPlayer_Zadro)
+  ACS_EXTFUNC_NUM(ResetMap_Zandro, 100)
+  ACS_EXTFUNC(PlayerIsSpectator_Zandro) // implemented
+  ACS_EXTFUNC(ConsolePlayerNumber_Zandro) // implemented
+  ACS_EXTFUNC(GetTeamProperty_Zandro) // [Dusk]
+  ACS_EXTFUNC(GetPlayerLivesLeft_Zandro)
+  ACS_EXTFUNC(SetPlayerLivesLeft_Zandro)
+  ACS_EXTFUNC(ForceToSpectate_Zandro)
+  ACS_EXTFUNC(GetGamemodeState_Zandro)
+  ACS_EXTFUNC(SetDBEntry_Zandro)
+  ACS_EXTFUNC(GetDBEntry_Zandro)
+  ACS_EXTFUNC(SetDBEntryString_Zandro)
+  ACS_EXTFUNC(GetDBEntryString_Zandro)
+  ACS_EXTFUNC(IncrementDBEntry_Zandro)
+  ACS_EXTFUNC(PlayerIsLoggedIn_Zandro) // ignored
+  ACS_EXTFUNC(GetPlayerAccountName_Zandro) // ignored
+  ACS_EXTFUNC(SortDBEntries_Zandro)
+  ACS_EXTFUNC(CountDBResults_Zandro)
+  ACS_EXTFUNC(FreeDBResults_Zandro)
+  ACS_EXTFUNC(GetDBResultKeyString_Zandro)
+  ACS_EXTFUNC(GetDBResultValueString_Zandro)
+  ACS_EXTFUNC(GetDBResultValue_Zandro)
+  ACS_EXTFUNC(GetDBEntryRank_Zandro)
+  ACS_EXTFUNC(RequestScriptPuke_Zandro) // implemented
+  ACS_EXTFUNC(BeginDBTransaction_Zandro)
+  ACS_EXTFUNC(EndDBTransaction_Zandro)
+  ACS_EXTFUNC(GetDBEntries_Zandro)
+  ACS_EXTFUNC(NamedRequestScriptPuke_Zandro) // implemented
+  ACS_EXTFUNC(SystemTime_Zandro)
+  ACS_EXTFUNC(GetTimeProperty_Zandro)
+  ACS_EXTFUNC(Strftime_Zandro)
+  ACS_EXTFUNC(SetDeadSpectator_Zandro)
+  ACS_EXTFUNC(SetActivatorToPlayer_Zandro)
 
 
   ACS_EXTFUNC_NUM(CheckClass, 200) // implemented
