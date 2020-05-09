@@ -115,6 +115,7 @@ enum k8Developer = false;
 #endif
 
 bool HighlightBackground;
+bool CenterChoicesVert;
 
 
 //==========================================================================
@@ -259,6 +260,21 @@ void FinishCreatingMenu () {
 
   // center menu
   SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
+
+  if (CenterChoicesVert && Items) {
+    auto ctr = GetItemContainer();
+    int y0 = ctr.ChildrenOfsY; // negative means "scrolled down"
+    int y1 = Items[$-1].Y+Items[$-1].Height+y0;
+    if (y0 == 0 && y1 < ctr.Height) {
+      // smaller than container, center
+      int yofs = (ctr.Height-y1)/2-Items[0].Y;
+      //printdebug("%s: y1=%s; height=%s; i0y=%s; yofs=%s", MenuName, y1, ctr.Height, Items[0].Y, yofs);
+      if (yofs) {
+        foreach (auto it; Items) it.Y = it.Y+yofs;
+        CursorMoved(forced:true); // this fixes selector position
+      }
+    }
+  }
 }
 
 
@@ -283,7 +299,7 @@ final static MenuDefinition LoadMenu (string defFileName) {
 //  CreateMenuItemsFromList
 //
 //==========================================================================
-void CreateMenuItemsFromList (ref array!MenuDefOptionBase options) {
+void CreateMenuItemsFromList (ref array!MenuDefOptionBase options, optional int styofs) {
   foreach (auto opt; options) {
     if (!opt.test()) continue;
     if (opt isa MenuDefOptionModSubMenus) {
@@ -304,6 +320,7 @@ void CreateMenuItemsFromList (ref array!MenuDefOptionBase options) {
         mc.CursorXOffsHR = Width/2;
         mc.SetOrigin(Width/2, GetCurrentY());
       }
+      if (styofs) { mc.Y = mc.Y+styofs; styofs = 0; }
       //currentY += mc.Height;
     }
   }
@@ -1200,6 +1217,7 @@ defaultproperties {
 
   //WantMouseInput = true;
   HighlightBackground = true;
+  CenterChoicesVert = true;
 
   /* for text menus
   //Width = 380;

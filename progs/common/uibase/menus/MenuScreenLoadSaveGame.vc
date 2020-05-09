@@ -162,4 +162,5 @@ defaultproperties {
   SelectorType = MenuSelector_Big;
   Title = "LOAD OR SAVE GAME";
   Height = 240;
+  CenterChoicesVert = false;
 }
