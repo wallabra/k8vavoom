@@ -342,6 +342,7 @@ void CreateMenuFromDef (MenuDefinition mdef) {
   CreateBackButton();
 
   CreateMenuItemsFromList(mdef.options);
+  FinishCreatingMenu();
 }
 
 

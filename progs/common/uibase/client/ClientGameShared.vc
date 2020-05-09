@@ -38,9 +38,7 @@ struct OptionValue {
 
 array!OptionValue optvals;
 
-
-array!name savedChoices;
-array!int savedChoicesIdx;
+transient dictionary!(name, int) savedChoices; // menu name, saved choice
 
 const int MAX_MENU_STACK = 64;
 
@@ -565,12 +563,7 @@ MenuScreen SpawnMenu (class!MenuScreen CID) {
   MenuScreen m = MenuScreen(GRoot.NewChild(CID));
   m.ClGame = self;
   m.CreateMenu();
-  foreach (auto i, auto scc; savedChoices) {
-    if (scc == GetClassName(CID)) {
-      m.SetSavedChoice(savedChoicesIdx[i]);
-      break;
-    }
-  }
+  LoadMenuChoice(m);
   return m;
 }
 
@@ -598,7 +591,7 @@ bool HasNamedMenuStr (string menuName) {
 //==========================================================================
 MenuScreen SpawnNamedMenuStr (string menuName) {
   if (!menuName) {
-    FatalError("Cannot spawn unnamed menu");
+    printerror("Cannot spawn unnamed menu");
     return none;
   }
 
@@ -610,7 +603,7 @@ MenuScreen SpawnNamedMenuStr (string menuName) {
     }
   }
   if (!mdefmain) {
-    FatalError("Menu '%n' not found (name)", menuName);
+    printerror("Menu '%n' not found (name)", menuName);
     return none;
   }
 
@@ -618,15 +611,7 @@ MenuScreen SpawnNamedMenuStr (string menuName) {
   auto m = GRoot.NewChild(MenuScreen);
   m.ClGame = self;
   m.CreateMenuFromDef(mdefmain);
-  m.FinishCreatingMenu();
-  // set saved choice
-  name mnm = name(mdefmain.menuName);
-  foreach (auto i, auto scc; savedChoices) {
-    if (scc == mnm) {
-      m.SetSavedChoice(savedChoicesIdx[i]);
-      break;
-    }
-  }
+  LoadMenuChoice(m);
 
   return m;
 }
@@ -690,23 +675,24 @@ void PushMenuScreen (MenuScreen menu) {
 //==========================================================================
 void SaveMenuChoice (MenuScreen menu) {
   if (!menu) return;
-  if (menu.MenuName) {
-    name menuName = menu.MenuName;
-    // save choice
-    bool found = false;
-    foreach (auto i, ref auto scc; savedChoices) {
-      if (savedChoices[i] == menuName) {
-        savedChoicesIdx[i] = menu.GetChoiceForSaving();
-        found = true;
-        break;
-      }
-    }
-    // if not found, append it
-    if (!found) {
-      savedChoices[$] = menuName;
-      savedChoicesIdx[$] = menu.GetChoiceForSaving();
-    }
-  }
+  name menuName = menu.MenuName;
+  if (!menuName) return;
+  savedChoices.put(menuName, menu.GetChoiceForSaving());
+}
+
+
+//==========================================================================
+//
+//  LoadMenuChoice
+//
+//==========================================================================
+void LoadMenuChoice (MenuScreen menu) {
+  if (!menu) return;
+  name menuName = menu.MenuName;
+  if (!menuName) return;
+  auto cp = savedChoices.find(menuName);
+  if (!cp) return;
+  menu.SetSavedChoice(*cp);
 }
 
 
