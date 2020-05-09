@@ -204,6 +204,11 @@ replication {
 
 native static final bool IsCheckpointSpawn { get; }
 
+native final bool IsRunEnabled ();
+native final bool IsMLookEnabled ();
+native final bool IsCrouchEnabled ();
+native final bool IsJumpEnabled ();
+
 // print to client
 native final void cprint (string format, ...) [printf,1];
 // client's center message

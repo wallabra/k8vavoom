@@ -230,6 +230,11 @@ public:
 
   void ResetButtons ();
 
+  bool IsRunEnabled () const noexcept;
+  bool IsMLookEnabled () const noexcept;
+  bool IsCrouchEnabled () const noexcept;
+  bool IsJumpEnabled () const noexcept;
+
   inline int GetEffectiveSpriteIndex (int idx) const noexcept { return DispSpriteFrame[idx]&0x00ffffff; }
   inline int GetEffectiveSpriteFrame (int idx) const noexcept { return ((DispSpriteFrame[idx]>>24)&VState::FF_FRAMEMASK); }
 
@@ -306,6 +311,11 @@ public:
   void CallDumpInventory ();
 
   DECLARE_FUNCTION(get_IsCheckpointSpawn)
+
+  DECLARE_FUNCTION(IsRunEnabled)
+  DECLARE_FUNCTION(IsMLookEnabled)
+  DECLARE_FUNCTION(IsCrouchEnabled)
+  DECLARE_FUNCTION(IsJumpEnabled)
 
   DECLARE_FUNCTION(cprint)
   DECLARE_FUNCTION(centerprint)

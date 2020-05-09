@@ -98,12 +98,13 @@ static VCvarB dbg_report_orphan_weapons("dbg_report_orphan_weapons", false, "Rep
 
 VCvarB real_time("real_time", true, "Run server in real time?");
 
-static VCvarB sv_ignore_nojump("sv_ignore_nojump", false, "Ignore \"nojump\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
-static VCvarB sv_ignore_nocrouch("sv_ignore_nocrouch", false, "Ignore \"nocrouch\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
-/*static*/ VCvarB sv_ignore_nomlook("sv_ignore_nomlook", false, "Ignore \"nofreelook\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
-static VCvarB sv_ignore_reset_health("sv_ignore_reset_health", false, "Ignore \"resethealth\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
-static VCvarB sv_ignore_reset_inventory("sv_ignore_reset_inventory", false, "Ignore \"resetinventory\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
-static VCvarB sv_ignore_reset_items("sv_ignore_reset_items", false, "Ignore \"resetitems\" flag in MAPINFO?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
+VCvarB sv_ignore_nojump("sv_ignore_nojump", false, "Ignore \"nojump\" flag in MAPINFO?", CVAR_Archive);
+VCvarB sv_ignore_nocrouch("sv_ignore_nocrouch", false, "Ignore \"nocrouch\" flag in MAPINFO?", CVAR_Archive);
+VCvarB sv_ignore_nomlook("sv_ignore_nomlook", false, "Ignore \"nofreelook\" flag in MAPINFO?", CVAR_Archive);
+
+static VCvarB sv_ignore_reset_health("sv_ignore_reset_health", false, "Ignore \"resethealth\" flag in MAPINFO?", CVAR_Archive);
+static VCvarB sv_ignore_reset_inventory("sv_ignore_reset_inventory", false, "Ignore \"resetinventory\" flag in MAPINFO?", CVAR_Archive);
+static VCvarB sv_ignore_reset_items("sv_ignore_reset_items", false, "Ignore \"resetitems\" flag in MAPINFO?", CVAR_Archive);
 
 static VCvarB sv_force_pistol_start("sv_force_pistol_start", false, "Start each new map with default weapons?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
 static VCvarB sv_force_health_reset("sv_force_health_reset", false, "Start each new map with default health?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
@@ -111,10 +112,6 @@ static VCvarB sv_force_health_reset("sv_force_health_reset", false, "Start each 
 static VCvarB sv_transporters_absolute("sv_transporters_absolute", true, "Use absolute movement instead of velocity for Boom transporters?", /*CVAR_ServerInfo|CVAR_Latch|*/CVAR_Archive|CVAR_PreInit);
 
 static VCvarB mod_allow_server_cvars("mod_allow_server_cvars", false, "Allow server cvars from CVARINFO?", CVAR_Archive|CVAR_PreInit);
-
-static VCvarB cl_disable_crouch("cl_disable_crouch", false, "Disable crouching?", CVAR_Archive);
-static VCvarB cl_disable_jump("cl_disable_jump", false, "Disable jumping?", CVAR_Archive);
-static VCvarB cl_disable_mlook("cl_disable_mlook", false, "Disable mouselook?", CVAR_Archive);
 
 extern VCvarI host_max_skip_frames;
 extern VCvarB NoExit;
@@ -159,6 +156,12 @@ static VCvarI DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo)
 VCvarB NoMonsters("NoMonsters", false, "NoMonsters mode?", 0/*CVAR_PreInit*/);
 VCvarI Skill("Skill", "3", "Skill level.", 0/*CVAR_PreInit*/);
 VCvarB sv_cheats("sv_cheats", false, "Allow cheats in network game?", CVAR_ServerInfo|/*CVAR_Latch|*/CVAR_PreInit);
+
+VCvarB sv_disable_run("sv_disable_run", false, "Disable running?", CVAR_ServerInfo/*|CVAR_Archive*/|CVAR_PreInit);
+VCvarB sv_disable_crouch("sv_disable_crouch", false, "Disable crouching?", CVAR_ServerInfo/*|CVAR_Archive*/|CVAR_PreInit);
+VCvarB sv_disable_jump("sv_disable_jump", false, "Disable jumping?", CVAR_ServerInfo/*|CVAR_Archive*/|CVAR_PreInit);
+VCvarB sv_disable_mlook("sv_disable_mlook", false, "Disable mouselook?", CVAR_ServerInfo/*|CVAR_Archive*/|CVAR_PreInit);
+
 static VCvarB sv_barrel_respawn("sv_barrel_respawn", false, "Respawn barrels in network game?", CVAR_Archive|/*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
 static VCvarB sv_pushable_barrels("sv_pushable_barrels", true, "Pushable barrels?", CVAR_Archive|/*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
 VCvarB sv_decoration_block_projectiles("sv_decoration_block_projectiles", false, "Should decoration things block projectiles?", CVAR_Archive|/*CVAR_ServerInfo|CVAR_Latch|*/CVAR_PreInit);
@@ -671,18 +674,16 @@ static void SV_RunPlayerTick (VBasePlayer *Player, bool skipFrame) {
   Player->ForwardMove = (skipFrame && dbg_skipframe_player_block_move ? 0 : Player->ClientForwardMove);
   Player->SideMove = (skipFrame && dbg_skipframe_player_block_move ? 0 : Player->ClientSideMove);
   //if (Player->ForwardMove) GCon->Logf("ffm: %f (%d)", Player->ClientForwardMove, (int)skipFrame);
-  // don't move faster than maxmove
-       if (Player->ForwardMove > sv_maxmove) Player->ForwardMove = sv_maxmove;
-  else if (Player->ForwardMove < -sv_maxmove) Player->ForwardMove = -sv_maxmove;
-       if (Player->SideMove > sv_maxmove) Player->SideMove = sv_maxmove;
-  else if (Player->SideMove < -sv_maxmove) Player->SideMove = -sv_maxmove;
-  // check for disabled freelook and jumping
-  if (!sv_ignore_nomlook && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) Player->ViewAngles.pitch = 0;
-  if (!sv_ignore_nojump && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoJump)) Player->Buttons &= ~BT_JUMP;
-  if (!sv_ignore_nocrouch && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF2_NoCrouch)) Player->Buttons &= ~BT_JUMP;
-  if (cl_disable_crouch) Player->Buttons &= ~BT_CROUCH;
-  if (cl_disable_jump) Player->Buttons &= ~BT_JUMP;
-  if (cl_disable_mlook) Player->ViewAngles.pitch = 0;
+  // don't move faster than maxmove (halved, if running is disabled)
+  //FIXME: this should not assume anything, but take walking speed from cvars!
+  const float maxmove = sv_maxmove.asFloat()*(sv_disable_run ? 0.5f : 1.0f);
+       if (Player->ForwardMove > maxmove) Player->ForwardMove = maxmove;
+  else if (Player->ForwardMove < -maxmove) Player->ForwardMove = -maxmove;
+       if (Player->SideMove > maxmove) Player->SideMove = maxmove;
+  else if (Player->SideMove < -maxmove) Player->SideMove = -maxmove;
+  // check for disabled freelook (this is required for server)
+       if (sv_disable_mlook) Player->ViewAngles.pitch = 0;
+  else if (!svs.deathmatch && !sv_ignore_nomlook && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) Player->ViewAngles.pitch = 0;
   //GCon->Logf("*** 000: PLAYER TICK(%p) ***: Buttons=0x%08x; OldButtons=0x%08x", Player, Player->Buttons, Player->OldButtons);
   Player->eventPlayerTick(host_frametime);
   //GCon->Logf("*** 001: PLAYER TICK(%p) ***: Buttons=0x%08x; OldButtons=0x%08x", Player, Player->Buttons, Player->OldButtons);

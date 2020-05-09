@@ -793,6 +793,7 @@ void CrouchMove (int direction) {
 //
 //==========================================================================
 final bool IsCrouchButtonCrouch () {
+  if (!IsCrouchEnabled()) return false;
   if (Buttons&BT_CROUCH) {
     return (!bFly || MO.Origin.z <= MO.FloorZ);
   }
@@ -887,12 +888,12 @@ void MovePlayer (float deltaTime) {
     if ((Buttons&BT_JUMP) && MO.Velocity.z < 160) MO.Velocity.z += 30;
     if ((Buttons&BT_CROUCH) && MO.Velocity.z > -160) MO.Velocity.z -= 30;
     // sanitize
-    float limit = (Buttons&BT_SPEED ? 400 : 200);
+    float limit = ((Buttons&BT_SPEED) && IsRunEnabled() ? 400 : 200);
     MO.Velocity.z = fclamp(MO.Velocity.z, -limit, limit);
     //print("VZ=%s; FH=%s; fvwd=%s", MO.Velocity.z, FlyHeight, vforward);
   }
 
-  if ((Buttons&BT_JUMP) && !bFly && onground && !JumpTime) {
+  if ((Buttons&BT_JUMP) && !bFly && onground && !JumpTime && IsJumpEnabled()) {
     MO.Velocity.z = (PlayerPawn(MO).JumpVelZ*(Cheats&CF_HIGHJUMP ? 2.0 : 1.0))*1.1;
     EntityEx(MO).bOnMobj = false;
     JumpTime = 0.5;
@@ -1035,7 +1036,7 @@ void WaterMove (float deltaTime) {
     if (/*!forward*/!wishvz) {
       if (MO.Velocity.z < -20) MO.Velocity.z = fmin(-20, MO.Velocity.z+20);
     } else {
-      float limit = (Buttons&BT_SPEED ? 140 : 140*2);
+      float limit = ((Buttons&BT_SPEED) && IsRunEnabled() ? 140 : 140*2);
       MO.Velocity.z = fclamp(MO.Velocity.z, -limit, limit);
     }
   }

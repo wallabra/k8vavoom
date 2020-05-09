@@ -903,6 +903,25 @@ IMPLEMENT_FUNCTION(VBasePlayer, get_IsCheckpointSpawn) {
   RET_BOOL(isCheckpointSpawn);
 }
 
+IMPLEMENT_FUNCTION(VBasePlayer, IsRunEnabled) {
+  vobjGetParamSelf();
+  RET_BOOL(Self->IsRunEnabled());
+}
+
+IMPLEMENT_FUNCTION(VBasePlayer, IsMLookEnabled) {
+  vobjGetParamSelf();
+  RET_BOOL(Self->IsMLookEnabled());
+}
+
+IMPLEMENT_FUNCTION(VBasePlayer, IsCrouchEnabled) {
+  vobjGetParamSelf();
+  RET_BOOL(Self->IsCrouchEnabled());
+}
+
+IMPLEMENT_FUNCTION(VBasePlayer, IsJumpEnabled) {
+  vobjGetParamSelf();
+  RET_BOOL(Self->IsJumpEnabled());
+}
 
 IMPLEMENT_FUNCTION(VBasePlayer, cprint) {
   VStr msg = PF_FormatString();

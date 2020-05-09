@@ -43,6 +43,11 @@ readonly ubyte deathmatch;
 ubyte respawn;
 ubyte nomonsters;
 ubyte fastparm; // 0:normal; 1:fast; 2:slow
+// the following flags are valid only for `NM_Client`
+readonly bool bRunDisabled;
+readonly bool bMouseLookDisabled;
+readonly bool bCrouchDisabled;
+readonly bool bJumpDisabled;
 
 readonly int *validcount;
 readonly int skyflatnum;

@@ -275,22 +275,39 @@ menudef GameplayOptions {
     help = "Force default health on new map (but don't reset weapons).";
   }
 
+
+  header "Advanced Features Limits";
+
+  option bool {
+    title = "Disable Running";
+    cvar = sv_disable_run;
+    help =
+      "Disable running.",
+      "\cJYou need to restart network game for this to take effect.";
+  }
+
   option bool {
     title = "Disable Jumping";
-    cvar = cl_disable_jump;
-    help = "Disable jumping.";
+    cvar = sv_disable_jump;
+    help =
+      "Disable jumping.",
+      "\cJYou need to restart network game for this to take effect.";
   }
 
   option bool {
     title = "Disable Crouching";
-    cvar = cl_disable_crouch;
-    help = "Disable crouching.";
+    cvar = sv_disable_crouch;
+    help =
+      "Disable crouching.",
+      "\cJYou need to restart network game for this to take effect.";
   }
 
   option bool {
     title = "Disable Freelook";
-    cvar = cl_disable_mlook;
-    help = "Disable mouse freelook.";
+    cvar = sv_disable_mlook;
+    help =
+      "Disable mouse freelook.",
+      "\cJYou need to restart network game for this to take effect.";
   }
 
 

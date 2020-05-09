@@ -1195,7 +1195,7 @@ final void onLineUsed (line_t *ld) {
 //==========================================================================
 void PerformLastCheckActions (const ref EntityEx::PathInfo pi) {
 #ifdef BOT_ALLOW_JUMPS
-  if (pi.needJump && !bot_no_jump) player.Buttons |= BT_JUMP;
+  if (pi.needJump && !bot_no_jump && player.IsJumpEnabled()) player.Buttons |= BT_JUMP;
 #endif
   if (pi.needUse) {
     //EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
@@ -1704,7 +1704,7 @@ void RoamRandom (out TVec dest) {
   forwardmove = FORWARDWALK;
   // do random jump in case we can free ourself with it
 #ifdef BOT_ALLOW_JUMPS
-  if (P_Random() > 127 && !bot_no_jump) player.Buttons |= BT_JUMP;
+  if (P_Random() > 127 && !bot_no_jump && player.IsJumpEnabled()) player.Buttons |= BT_JUMP;
 #endif
 
   return;

@@ -39,6 +39,14 @@ class VGameInfo : public VGameObject {
   DECLARE_CLASS(VGameInfo, VGameObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VGameInfo)
 
+  // client flags
+  enum {
+    CLF_RUN_DISABLED    = 1u<<0,
+    CLF_MLOOK_DISABLED  = 1u<<1,
+    CLF_CROUCH_DISABLED = 1u<<2,
+    CLF_JUMP_DISABLED   = 1u<<3,
+  };
+
   VName AcsHelper;
   VName GenericConScript;
 
@@ -47,6 +55,8 @@ class VGameInfo : public VGameObject {
   vuint8 respawn;
   vuint8 nomonsters;
   vuint8 fastparm; // 0:normal; 1:fast; 2:slow
+  // the following flags are valid only for `NM_Client`
+  vuint32 clientFlags; // see `CLF_XXX`
 
   vint32 *validcount;
   vint32 skyflatnum;

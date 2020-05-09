@@ -47,6 +47,14 @@
 
 
 extern VCvarB sv_ignore_nomlook;
+extern VCvarB sv_ignore_nojump;
+extern VCvarB sv_ignore_nocrouch;
+extern VCvarB sv_ignore_nomlook;
+
+extern VCvarB sv_disable_run;
+extern VCvarB sv_disable_crouch;
+extern VCvarB sv_disable_jump;
+extern VCvarB sv_disable_mlook;
 
 
 #define BUTTON(name) \
@@ -456,11 +464,74 @@ void VBasePlayer::StopPitchDrift () {
 
 //==========================================================================
 //
+//  VBasePlayer::IsRunEnabled
+//
+//==========================================================================
+bool VBasePlayer::IsRunEnabled () const noexcept {
+  if (GGameInfo->NetMode == NM_Client) return !(GGameInfo->clientFlags&VGameInfo::CLF_RUN_DISABLED);
+  return !sv_disable_run.asBool();
+}
+
+
+//==========================================================================
+//
+//  VBasePlayer::IsMLookEnabled
+//
+//==========================================================================
+bool VBasePlayer::IsMLookEnabled () const noexcept {
+  if (GGameInfo->NetMode == NM_Client) return !(GGameInfo->clientFlags&VGameInfo::CLF_MLOOK_DISABLED);
+  if (sv_disable_mlook.asBool()) return false;
+  if (!Level) return true; // no map
+  if (sv_ignore_nomlook.asBool()) return true; // ignore mapinfo option
+  // dedicated server ignores map flags in DM mode
+  if (GGameInfo->NetMode == NM_DedicatedServer && svs.deathmatch) return true;
+  // don't forget to send this flags to client!
+  return !(Level->LevelInfoFlags&VLevelInfo::LIF_NoFreelook);
+}
+
+
+//==========================================================================
+//
+//  VBasePlayer::IsCrouchEnabled
+//
+//==========================================================================
+bool VBasePlayer::IsCrouchEnabled () const noexcept {
+  if (GGameInfo->NetMode == NM_Client) return !(GGameInfo->clientFlags&VGameInfo::CLF_CROUCH_DISABLED);
+  if (sv_disable_crouch.asBool()) return false;
+  if (!Level) return true; // no map
+  if (sv_ignore_nocrouch.asBool()) return true; // ignore mapinfo option
+  // dedicated server ignores map flags in DM mode
+  if (GGameInfo->NetMode == NM_DedicatedServer && svs.deathmatch) return true;
+  // don't forget to send this flags to client!
+  return !(Level->LevelInfoFlags2&VLevelInfo::LIF2_NoCrouch);
+}
+
+
+//==========================================================================
+//
+//  VBasePlayer::IsJumpEnabled
+//
+//==========================================================================
+bool VBasePlayer::IsJumpEnabled () const noexcept {
+  if (GGameInfo->NetMode == NM_Client) return !(GGameInfo->clientFlags&VGameInfo::CLF_JUMP_DISABLED);
+  if (sv_disable_jump.asBool()) return false;
+  if (!Level) return true; // no map
+  if (sv_ignore_nojump.asBool()) return true; // ignore mapinfo option
+  // dedicated server ignores map flags in DM mode
+  if (GGameInfo->NetMode == NM_DedicatedServer && svs.deathmatch) return true;
+  // don't forget to send this flags to client!
+  return !(Level->LevelInfoFlags&VLevelInfo::LIF_NoJump);
+}
+
+
+//==========================================================================
+//
 //  VBasePlayer::AdjustAngles
 //
 //==========================================================================
 void VBasePlayer::AdjustAngles () {
-  float speed = host_frametime*(KeySpeed.IsDown() ? cl_anglespeedkey : 1.0f);
+  const bool isRunning = (IsRunEnabled() ? KeySpeed.IsDown() : false);
+  float speed = host_frametime*(isRunning ? cl_anglespeedkey : 1.0f);
 
   bool mlookJustUp = KeyMouseLook.IsJustUp();
   bool mlookIsDown = KeyMouseLook.IsDown();
@@ -494,6 +565,9 @@ void VBasePlayer::AdjustAngles () {
   ViewAngles.pitch += cl_pitchspeed*down*speed;
   if (up || down || KeyMouseLook.IsDown()) StopPitchDrift();
   if (mouse_look_vertical && (mouse_look || KeyMouseLook.IsDown()) && !KeyStrafe.IsDown()) ViewAngles.pitch -= mousey*m_pitch;
+
+  // reset pitch if mouse look is disabled
+  if (!IsMLookEnabled()) ViewAngles.pitch = 0;
 
   // center look
   if (KeyLookCenter.IsDown() || KeyFlyCenter.IsDown()) StartPitchDrift();
@@ -536,11 +610,6 @@ void VBasePlayer::AdjustAngles () {
 
   if (ViewAngles.roll > 80.0f) ViewAngles.roll = 80.0f;
   if (ViewAngles.roll < -80.0f) ViewAngles.roll = -80.0f;
-
-  //FIXME: server should give us those flags, yeah
-  if (Level && GGameInfo->NetMode < NM_Client && GGameInfo->NetMode != NM_DedicatedServer) {
-    if (!sv_ignore_nomlook && (Level->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) ViewAngles.pitch = 0;
-  }
 }
 
 
@@ -552,6 +621,8 @@ void VBasePlayer::AdjustAngles () {
 //
 //==========================================================================
 void VBasePlayer::HandleInput () {
+  const bool runEnabled = IsRunEnabled();
+
   float forward = 0;
   float side = 0;
   float flyheight = 0;
@@ -590,7 +661,7 @@ void VBasePlayer::HandleInput () {
   forward = midval(forward, -cl_backspeed, cl_forwardspeed.asFloat());
   side = midval(side, -cl_sidespeed, cl_sidespeed.asFloat());
 
-  if (always_run || KeySpeed.IsDown()) {
+  if (runEnabled && (always_run || KeySpeed.IsDown())) {
     forward *= cl_movespeedkey;
     side *= cl_movespeedkey;
     flyheight *= cl_movespeedkey;

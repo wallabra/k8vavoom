@@ -436,19 +436,15 @@ static void CL_RunSimulatedPlayerTick (float deltaTime) {
   cl->ForwardMove = cl->ClientForwardMove;
   cl->SideMove = cl->ClientSideMove;
 
-  // don't move faster than maxmove
-       if (cl->ForwardMove > sv_maxmove) cl->ForwardMove = sv_maxmove;
-  else if (cl->ForwardMove < -sv_maxmove) cl->ForwardMove = -sv_maxmove;
-       if (cl->SideMove > sv_maxmove) cl->SideMove = sv_maxmove;
-  else if (cl->SideMove < -sv_maxmove) cl->SideMove = -sv_maxmove;
-  // check for disabled freelook and jumping
+  // client movement handling should take care of this
+  // don't move faster than maxmove (halved, if running is disabled)
+  //FIXME: this should not assume anything, but take walking speed from cvars!
   /*
-  if (!sv_ignore_nomlook && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) cl->ViewAngles.pitch = 0;
-  if (!sv_ignore_nojump && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoJump)) cl->Buttons &= ~BT_JUMP;
-  if (!sv_ignore_nocrouch && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF2_NoCrouch)) cl->Buttons &= ~BT_JUMP;
-  if (cl_disable_crouch) cl->Buttons &= ~BT_CROUCH;
-  if (cl_disable_jump) cl->Buttons &= ~BT_JUMP;
-  if (cl_disable_mlook) cl->ViewAngles.pitch = 0;
+  const float maxmove = sv_maxmove.asFloat()*(oldplr ? !oldplr->IsRunEnabled() ? 0.5f : 1.0f);
+       if (cl->ForwardMove > maxmove) cl->ForwardMove = maxmove;
+  else if (cl->ForwardMove < -maxmove) cl->ForwardMove = -maxmove;
+       if (cl->SideMove > maxmove) cl->SideMove = maxmove;
+  else if (cl->SideMove < -maxmove) cl->SideMove = -maxmove;
   */
 
   //GCon->Logf(NAME_Debug, "SIMPL:000: org=(%g,%g,%g); vel=(%g,%g,%g); fwd=%g; side=%g", cl->MO->Origin.x, cl->MO->Origin.y, cl->MO->Origin.z, cl->MO->Velocity.x, cl->MO->Velocity.y, cl->MO->Velocity.z, cl->ForwardMove, cl->SideMove);
@@ -620,9 +616,17 @@ void CL_Clear () {
 //==========================================================================
 void CL_ReadFromServerInfo () {
   VCvar::SetCheating(!!VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "sv_cheats")));
+  GGameInfo->clientFlags = 0;
   if (GGameInfo->NetMode == NM_Client) {
     GGameInfo->deathmatch = VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "DeathMatch"));
+    // setup flags
+    if (VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "sv_disable_run"))) GGameInfo->clientFlags |= VGameInfo::CLF_RUN_DISABLED;
+    if (VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "sv_disable_crouch"))) GGameInfo->clientFlags |= VGameInfo::CLF_CROUCH_DISABLED;
+    if (VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "sv_disable_jump"))) GGameInfo->clientFlags |= VGameInfo::CLF_JUMP_DISABLED;
+    if (VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "sv_disable_mlook"))) GGameInfo->clientFlags |= VGameInfo::CLF_MLOOK_DISABLED;
     //GCon->Logf(NAME_Debug, "deathmatch mode is %u", GGameInfo->deathmatch);
+  } else {
+    GGameInfo->deathmatch = 0;
   }
 }
 
