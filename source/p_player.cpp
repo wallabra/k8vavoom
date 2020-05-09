@@ -181,6 +181,8 @@ void VBasePlayer::SpawnClient () {
     sv_map_travel = false;
   }
 
+  //GCon->Logf(NAME_Debug, "MO Origin: (%g,%g,%g)", MO->Origin.x, MO->Origin.y, MO->Origin.z);
+
   // for single play, save immediately into the reborn slot
   //!if (GGameInfo->NetMode < NM_DedicatedServer) SV_SaveGameToReborn();
 }

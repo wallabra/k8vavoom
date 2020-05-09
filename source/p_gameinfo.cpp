@@ -96,7 +96,7 @@ bool VGameInfo::IsPaused (bool ignoreOpenConsole) {
     IsInWipe() ||
     (NetMode == NM_Standalone && (MN_Active() || (!ignoreOpenConsole && C_Active())));
 #else
-  return !(Flags&GIF_Paused);
+  return !!(Flags&GIF_Paused);
 #endif
 }
 

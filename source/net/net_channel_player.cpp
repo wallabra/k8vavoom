@@ -175,6 +175,29 @@ void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values
 
 //==========================================================================
 //
+//  VPlayerChannel::CheckPlayerMO
+//
+//  sets flags, calls methods, etc.
+//
+//==========================================================================
+void VPlayerChannel::CheckPlayerMO () {
+  if (Plr->MO) {
+    if (Plr->MO->ServerUId != LastMOSUid) {
+      LastMOSUid = Plr->MO->ServerUId;
+      if (Connection->IsClient()) Plr->eventInitWeaponSlots();
+      GotMOOrigin = false;
+      auto mop = Connection->ThinkerChannels.find(Plr->MO);
+      if (mop) GotMOOrigin = (*mop)->GotOrigin;
+    }
+  } else {
+    LastMOSUid = 0;
+    GotMOOrigin = false;
+  }
+}
+
+
+//==========================================================================
+//
 //  VPlayerChannel::Update
 //
 //==========================================================================
@@ -253,19 +276,7 @@ void VPlayerChannel::Update () {
   }
   */
 
-  if (Plr->MO) {
-    if (Plr->MO->ServerUId != LastMOSUid) {
-      LastMOSUid = Plr->MO->ServerUId;
-      if (Connection->IsClient()) Plr->eventInitWeaponSlots();
-      GotMOOrigin = false;
-      auto mop = Connection->ThinkerChannels.find(Plr->MO);
-      if (mop) GotMOOrigin = (*mop)->GotOrigin;
-    }
-  } else {
-    LastMOSUid = 0;
-    GotMOOrigin = false;
-  }
-
+  CheckPlayerMO();
   //if (Plr) GCon->Logf(NAME_Debug, "%s: sent WorldTimer=%g", *GetDebugName(), Plr->WorldTimer);
 }
 
@@ -289,7 +300,7 @@ void VPlayerChannel::ParseMessage (VMessageIn &Msg) {
       }
     }
     if (F) {
-      //GCon->Logf(NAME_DevNet, "%s: ...received player update (%s); field %s", *GetDebugName(), (Connection->IsClient() ? "client" : "server"), *F->GetFullName());
+      //if (!VStr::strEqu(F->GetName(), "ClCurrGameTime")) GCon->Logf(NAME_DevNet, "%s: ...received player update (%s); field %s", *GetDebugName(), (Connection->IsClient() ? "client" : "server"), *F->GetFullName());
       if (F->Type.Type == TYPE_Array) {
         int Idx = (int)Msg.ReadUInt();
         VFieldType IntType = F->Type;
@@ -310,5 +321,6 @@ void VPlayerChannel::ParseMessage (VMessageIn &Msg) {
     Host_Error(va("%s: Bad net field %d", *GetDebugName(), FldIdx));
   }
 
+  CheckPlayerMO();
   //GCon->Logf(NAME_Debug, "%s: got WorldTimer=%g", *GetDebugName(), Plr->WorldTimer);
 }

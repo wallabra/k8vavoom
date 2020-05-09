@@ -578,6 +578,10 @@ public:
   // reset on player reset, or when MO disappears
   bool GotMOOrigin;
 
+protected:
+  // sets flags, calls methods, etc.
+  void CheckPlayerMO ();
+
 public:
   VPlayerChannel (VNetConnection *, vint32, vuint8 = true);
   virtual ~VPlayerChannel () override;

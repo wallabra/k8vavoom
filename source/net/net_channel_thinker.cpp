@@ -686,7 +686,10 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
           // update player flags
           if (Connection->IsClient()) {
             auto pc = Connection->GetPlayerChannel();
-            if (pc && pc->Plr && pc->Plr->MO == Thinker) pc->GotMOOrigin = true;
+            if (pc && pc->Plr && pc->Plr->MO == Thinker) {
+              //GCon->Logf(NAME_Debug, "GOT PLAYER ORIGIN!");
+              pc->GotMOOrigin = true;
+            }
           }
           if (Ent) Ent->NetLastOrgUpdateTime = Ent->XLevel->Time;
         }
