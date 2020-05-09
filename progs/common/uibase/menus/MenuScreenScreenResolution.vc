@@ -39,6 +39,7 @@ MenuChoiceEnum Depth;
 MenuChoiceEnum Windowed;
 MenuChoiceEnum VSync;
 MenuChoiceNumeric ScrScale;
+MenuChoiceNumeric UIScale;
 
 
 //==========================================================================
@@ -58,7 +59,6 @@ override void CreateChoices () {
     EdHeight.Value = va("%d", modes[NewValue].height);
     return true;
   };
-  //currentY += Mode.Height;
     SetLastHelp("Choose one of the predefined screen sizes.");
 
   EdWidth = GetItemContainer().NewChild(MenuInputLine);
@@ -69,7 +69,6 @@ override void CreateChoices () {
   EdWidth.Text = "Width";
   EdWidth.Value = GetCvarS('screen_width');
   EdWidth.DisableSlotRendering();
-  //currentY += EdWidth.Height;
     SetLastHelp("Custom screen resolution.");
 
   EdHeight = GetItemContainer().NewChild(MenuInputLine);
@@ -80,7 +79,6 @@ override void CreateChoices () {
   EdHeight.Text = "Height";
   EdHeight.Value = GetCvarS('screen_height');
   EdHeight.DisableSlotRendering();
-  //currentY += EdHeight.Height;
     SetLastHelp("Custom screen resolution.");
 
   ScrScale = GetItemContainer().NewChild(MenuChoiceNumeric);//CreateFloatNumericCvar("Screen Scale", 'gl_scale', 1, 1, 64);
@@ -92,10 +90,24 @@ override void CreateChoices () {
   ScrScale.MinValue = 1;
   ScrScale.MaxValue = 8;
   //ScrScale.SetSessionCvar(cvname);
-  //currentY += ScrScale.Height;
     SetLastHelp(
       "Screen scaling factor.\n"~
       "You can set it to >1 to render screen in lower resolution.\n"~
+      "\cGWARNING! Requires applying of 'SET RESOLUTION' option!");
+
+  UIScale = GetItemContainer().NewChild(MenuChoiceNumeric);
+  SetChoiceInitialSizePos(UIScale);
+  UIScale.Text = "Max UI Scale";
+  //UIScale.cvarSession = cvname;
+  UIScale.ValueDelta = 1;
+  UIScale.Value = GetCvarI('ui_max_scale');
+  UIScale.MinValue = 0;
+  UIScale.MaxValue = 8;
+  //UIScale.SetSessionCvar(cvname);
+    SetLastHelp(
+      "Maximum UI scaling factor. Set to 0 to let the engine choose\n"~
+      "You can choose `1` to get unscaled UI.\n"~
+      "Please, note that this also affects Fullscreen HUD, and HUD messages.\n"~
       "\cGWARNING! Requires applying of 'SET RESOLUTION' option!");
 
   Windowed = CreateEnumCvar("Fullscreen mode", 'screen_fsmode',
@@ -134,7 +146,6 @@ override void CreateChoices () {
       "The engine will try to use adaptive vsync automatically.\n"~
       "You have to use \"Set Resolution\" to activate new setting.\n"~
       "Note that FPS is capped at 90, so don't expect glaring numbers without vsync.");
-  //currentY += VSync.Height;
 
   /*
   CreateEnumCvar("Aspect Ratio", 'r_aspect_ratio',
@@ -156,7 +167,6 @@ override void CreateChoices () {
     itemRatio.AddItem(R_GetAspectRatioDsc(ridx), ridx);
   }
   itemRatio.SetSessionCvar('r_aspect_ratio');
-  //currentY += itemRatio.Height;
     SetLastHelp(
       "Screen aspect ratio."/*~
       "\n'Vanilla' is for square pixels, regardless of screen resolution.\n"*/);
@@ -194,6 +204,7 @@ void ActivateSetMode (Object Sender) {
   SetCvar('screen_fsmode', int(Windowed.Value));
   SetCvar('r_vsync', int(VSync.Value));
   SetCvarF('screen_scale', ScrScale.Value);
+  SetCvarI('ui_max_scale', max(0, int(UIScale.Value)));
   CmdBuf_AddText("SetResolution %d %d\n", atoi(EdWidth.Value) ? atoi(EdWidth.Value) : modes[int(Mode.Value)].width,
     atoi(EdHeight.Value) ? atoi(EdHeight.Value) : modes[int(Mode.Value)].height);
 }
