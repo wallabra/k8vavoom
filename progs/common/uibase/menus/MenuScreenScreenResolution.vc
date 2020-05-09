@@ -39,7 +39,8 @@ MenuChoiceEnum Depth;
 MenuChoiceEnum Windowed;
 MenuChoiceEnum VSync;
 MenuChoiceNumeric ScrScale;
-MenuChoiceNumeric UIScale;
+MenuChoiceNumeric UIMinScale;
+MenuChoiceNumeric UIMaxScale;
 
 
 //==========================================================================
@@ -95,19 +96,33 @@ override void CreateChoices () {
       "You can set it to >1 to render screen in lower resolution.\n"~
       "\cGWARNING! Requires applying of 'SET RESOLUTION' option!");
 
-  UIScale = GetItemContainer().NewChild(MenuChoiceNumeric);
-  SetChoiceInitialSizePos(UIScale);
-  UIScale.Text = "Max UI Scale";
-  //UIScale.cvarSession = cvname;
-  UIScale.ValueDelta = 1;
-  UIScale.Value = GetCvarI('ui_max_scale');
-  UIScale.MinValue = 0;
-  UIScale.MaxValue = 8;
-  //UIScale.SetSessionCvar(cvname);
+  UIMaxScale = GetItemContainer().NewChild(MenuChoiceNumeric);
+  SetChoiceInitialSizePos(UIMaxScale);
+  UIMaxScale.Text = "Max UI Scale";
+  //UIMaxScale.cvarSession = cvname;
+  UIMaxScale.ValueDelta = 1;
+  UIMaxScale.Value = GetCvarI('ui_max_scale');
+  UIMaxScale.MinValue = 0;
+  UIMaxScale.MaxValue = 8;
+  //UIMaxScale.SetSessionCvar(cvname);
     SetLastHelp(
       "Maximum UI scaling factor. Set to 0 to let the engine choose\n"~
       "You can choose `1` to get unscaled UI.\n"~
       "Please, note that this also affects Fullscreen HUD, and HUD messages.\n"~
+      "\cGWARNING! Requires applying of 'SET RESOLUTION' option!");
+
+  UIMinScale = GetItemContainer().NewChild(MenuChoiceNumeric);
+  SetChoiceInitialSizePos(UIMinScale);
+  UIMinScale.Text = "Min UI Scale";
+  //UIMinScale.cvarSession = cvname;
+  UIMinScale.ValueDelta = 1;
+  UIMinScale.Value = GetCvarI('ui_min_scale');
+  UIMinScale.MinValue = 0;
+  UIMinScale.MaxValue = 8;
+  //UIMinScale.SetSessionCvar(cvname);
+    SetLastHelp(
+      "Minumum UI scaling factor. Set to 0 to let the engine choose\n"~
+      "\cGWARNING! You can make UI unusable by setting big values here!\n"~
       "\cGWARNING! Requires applying of 'SET RESOLUTION' option!");
 
   Windowed = CreateEnumCvar("Fullscreen mode", 'screen_fsmode',
@@ -204,7 +219,8 @@ void ActivateSetMode (Object Sender) {
   SetCvar('screen_fsmode', int(Windowed.Value));
   SetCvar('r_vsync', int(VSync.Value));
   SetCvarF('screen_scale', ScrScale.Value);
-  SetCvarI('ui_max_scale', max(0, int(UIScale.Value)));
+  SetCvarI('ui_max_scale', max(0, int(UIMaxScale.Value)));
+  SetCvarI('ui_min_scale', max(0, int(UIMinScale.Value)));
   CmdBuf_AddText("SetResolution %d %d\n", atoi(EdWidth.Value) ? atoi(EdWidth.Value) : modes[int(Mode.Value)].width,
     atoi(EdHeight.Value) ? atoi(EdHeight.Value) : modes[int(Mode.Value)].height);
 }

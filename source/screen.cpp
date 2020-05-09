@@ -160,7 +160,8 @@ static VCvarB draw_world_timer("draw_world_timer", false, "Draw playing time?", 
 VCvarB r_wipe_enabled("r_wipe_enabled", true, "Is screen wipe effect enabled?", CVAR_Archive);
 VCvarI r_wipe_type("r_wipe_type", "0", "Wipe type?", CVAR_Archive);
 
-VCvarI ui_max_scale("ui_max_scale", "0", "Maximal UI scale (0 means unlimited).", CVAR_Archive);
+static VCvarI ui_max_scale("ui_max_scale", "0", "Maximal UI scale (0 means unlimited).", CVAR_Archive);
+static VCvarI ui_min_scale("ui_min_scale", "0", "Minimal UI scale (0 means unlimited).", CVAR_Archive);
 
 VCvarF screen_scale("screen_scale", "1", "Screen scaling factor (you can set it to >1 to render screen in lower resolution).", CVAR_Archive);
 static VCvarI screen_width("screen_width", "0", "Custom screen width", CVAR_Archive);
@@ -467,11 +468,14 @@ static void ChangeResolution (int InWidth, int InHeight) {
   while (VirtualWidth/scale >= 640 && VirtualHeight/scale >= 480) ++scale;
   if (scale > 1) --scale;
   if (ui_max_scale.asInt() > 0 && scale > ui_max_scale.asInt()) scale = ui_max_scale.asInt();
+  if (ui_min_scale.asInt() > 0 && scale < ui_min_scale.asInt()) scale = ui_min_scale.asInt();
   VirtualWidth /= scale;
   VirtualHeight /= scale;
 
   fScaleX = (float)ScreenWidth/(float)VirtualWidth;
   fScaleY = (float)ScreenHeight/(float)VirtualHeight;
+
+  if (GRoot) GRoot->RefreshScale();
 
   // don't forget to call `GRoot->RefreshScale()`!
   //GCon->Logf("***SCALE0: %g, %g; scr:%dx%d; vscr:%dx%d", fScaleX, fScaleY, ScreenWidth, ScreenHeight, VirtualWidth, VirtualHeight);
