@@ -189,15 +189,28 @@ COMMAND(Script) {
 //==========================================================================
 COMMAND(MyPos) {
   CMD_FORWARD_TO_SERVER();
-  if (CheatAllowed(Player)) {
+  if (/*CheatAllowed(Player)*/true) {
     const VLevel *lvl = Player->Level->XLevel;
     const subsector_t *ss = lvl->PointInSubsector_Buggy(Player->MO->Origin);
-    GCon->Logf("sub: %d; sector: %d", (int)(ptrdiff_t)(ss-lvl->Subsectors), (int)(ptrdiff_t)(ss->sector-lvl->Sectors));
-    Player->Printf("MAP %s (%f,%f,%f) v:(%f,%f)",
-      *GLevel->MapName, Player->MO->Origin.x,
-      Player->MO->Origin.y, Player->MO->Origin.z,
-      Player->MO->Angles.yaw, Player->MO->Angles.pitch);
-    GCon->Logf("+map %s; \"+warpto %d %d %d\"", *GLevel->MapName, (int)Player->MO->Origin.x, (int)Player->MO->Origin.y, (int)Player->MO->Origin.z);
+    TArray<VStr> info;
+    info.append(va("Map Hash (sha): %s", *Player->Level->XLevel->MapHash));
+    info.append(va("Map Hash (md5): %s", *Player->Level->XLevel->MapHashMD5));
+    info.append(va("sub: %d; sector: %d", (int)(ptrdiff_t)(ss-lvl->Subsectors), (int)(ptrdiff_t)(ss->sector-lvl->Sectors)));
+    info.append(va("pos:(%g,%g,%g)  angles:(%g,%g)",
+      Player->MO->Origin.x, Player->MO->Origin.y, Player->MO->Origin.z,
+      Player->MO->Angles.yaw, Player->MO->Angles.pitch));
+    info.append(va("+map %s \"+warpto %d %d %d\"", *GLevel->MapName, (int)Player->MO->Origin.x, (int)Player->MO->Origin.y, (int)Player->MO->Origin.z));
+    // send to player if we're in a net
+    if (Player->Net) {
+      VStr pstr;
+      for (auto &&s : info) {
+        if (pstr.length()) pstr += "\n";
+        pstr += s;
+      }
+      Player->Printf("%s", *pstr);
+    }
+    // print to console
+    for (auto &&s : info) GCon->Logf("%s", *s);
   }
 }
 
