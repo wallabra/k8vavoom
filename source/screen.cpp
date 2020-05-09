@@ -51,8 +51,6 @@ static int lastFSMode = -1;
 
 float fScaleX;
 float fScaleY;
-//float fScaleXI;
-//float fScaleYI;
 
 int usegamma = 0;
 
@@ -459,23 +457,17 @@ static void ChangeResolution (int InWidth, int InHeight) {
 
   lastScrScale = max2(1.0f, screen_scale.asFloat());
 
-  VirtualWidth = (ScreenWidth >= 1280 ? ScreenWidth/2 : 640);
-  VirtualHeight = (ScreenHeight >= 960 ? ScreenHeight/2 : 480);
-  if (ScreenWidth/3 >= 640 && ScreenHeight/3 >= 480) {
-    VirtualWidth = ScreenWidth/3;
-    VirtualHeight = ScreenHeight/3;
+  VirtualWidth = ScreenWidth;
+  VirtualHeight = ScreenHeight;
+  //GCon->Logf(NAME_Debug, "000: %dx%d", VirtualWidth, VirtualHeight);
+  while (VirtualWidth/2 >= 640 && VirtualHeight/2 >= 480) {
+    VirtualWidth /= 2;
+    VirtualHeight /= 2;
+    //GCon->Logf(NAME_Debug, "001:   %dx%d", VirtualWidth, VirtualHeight);
   }
-
-  if (ScreenHeight > 480 && ScreenHeight < 960) VirtualHeight = ScreenHeight/2;
-
-  //VirtualWidth = ScreenWidth;
-  //VirtualHeight = ScreenHeight;
 
   fScaleX = (float)ScreenWidth/(float)VirtualWidth;
   fScaleY = (float)ScreenHeight/(float)VirtualHeight;
-
-  //fScaleXI = (float)VirtualWidth/(float)ScreenWidth;
-  //fScaleYI = (float)VirtualHeight/(float)ScreenHeight;
 
   // don't forget to call `GRoot->RefreshScale()`!
   //GCon->Logf("***SCALE0: %g, %g; scr:%dx%d; vscr:%dx%d", fScaleX, fScaleY, ScreenWidth, ScreenHeight, VirtualWidth, VirtualHeight);
@@ -775,8 +767,6 @@ void SCR_SetVirtualScreen (int Width, int Height) {
   VirtualHeight = Height;
   fScaleX = (float)ScreenWidth/(float)VirtualWidth;
   fScaleY = (float)ScreenHeight/(float)VirtualHeight;
-  //fScaleXI = (float)VirtualWidth/(float)ScreenWidth;
-  //fScaleYI = (float)VirtualHeight/(float)ScreenHeight;
   if (GRoot) GRoot->RefreshScale();
   //GCon->Logf("***SCALE1: %g, %g; scr:%dx%d; vscr:%dx%d", fScaleX, fScaleY, ScreenWidth, ScreenHeight, VirtualWidth, VirtualHeight);
 }

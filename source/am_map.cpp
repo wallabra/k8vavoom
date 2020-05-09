@@ -1832,9 +1832,7 @@ static void AM_drawMarks () {
     if (am_rotate) AM_rotatePoint(&pt.x, &pt.y);
 
     float fx = (CXMTOF(pt.x)/fScaleX);
-    float fy = (CYMTOF(pt.y)/fScaleX);
-    //fx = (int)(CXMTOF(markpoints[i].x)*fScaleXI);
-    //fy = (int)(CYMTOF(markpoints[i].y)*fScaleXI);
+    float fy = (CYMTOF(pt.y)/fScaleY);
     /*
     if (fx >= f_x && fx <= f_w-w && fy >= f_y && fy <= f_h-h) {
       R_DrawPicFloat(fx, fy, marknums[i]);
