@@ -303,3 +303,18 @@ game "chex3" {
     "chex.chex3",
   }
 }
+
+
+// HacX v1.2
+game "hacx" {
+  description = "HacX v1.2";
+  game = "basev/hacx";
+  base = "basev/doom";
+  iwad = "hacx.wad";
+  warp = "MAP##"; // template for "-warp"
+  filter = {
+    "hacx",
+    "game-hacx",
+    "doom.hacx",
+  }
+}

@@ -13,6 +13,7 @@ add_subdirectory(plutonia)
 add_subdirectory(tnt)
 add_subdirectory(strife)
 add_subdirectory(chex)
+add_subdirectory(hacx)
 
 add_subdirectory(mods)
 

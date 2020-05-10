@@ -2229,6 +2229,8 @@ void FL_InitOptions () {
   GParsedArgs.RegisterCallback("-chex2", "Chex Quest 2 game (semi-broken)", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "chex2"; return 0; });
   GParsedArgs.RegisterCallback("-chex3", "!Chex Quest 3 game (semi-broken)", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "chex3"; return 0; });
 
+  GParsedArgs.RegisterCallback("-hacx", "HacX (untested) game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "hacx"; return 0; });
+
   GParsedArgs.RegisterFlagSet("-k8runmap", "try to detect and run first pwad map automatically", &doStartMap);
 
   GParsedArgs.RegisterFlagSet("-fast", "fast monsters", &cli_FastMonsters);
