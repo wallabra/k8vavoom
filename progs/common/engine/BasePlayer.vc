@@ -647,6 +647,23 @@ Entity EngineHelperGetSavedInventory () { return none; }
 //   `newArg==true` means "want to autocomplete next arg in the list"
 //   `newArg==false` means "want to autocomplete last arg in the list"
 
+//==========================================================================
+//
+//  CheatHelperCheckOnOff
+//
+//  returns -1 if no toggle was found, or 0/1
+//
+//==========================================================================
+int CheatHelperCheckOnOff () {
+  int res = -1;
+  foreach (auto i; 1..Cmd_GetArgC()) {
+    string s = Cmd_GetArgV(i);
+         if (s.strEquCI("on") || s.strEquCI("true") || s.strEquCI("tan")) res = 1;
+    else if (s.strEquCI("off") || s.strEquCI("false") || s.strEquCI("ona")) res = 0;
+  }
+  return res;
+}
+
 /*
 void Cheat_Resurrect () {}
 void Cheat_God () {}

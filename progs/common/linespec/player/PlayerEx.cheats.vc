@@ -78,12 +78,25 @@ protected void CheatHelper_GimmePowers () {
 
 //==========================================================================
 //
+//  CheatHelperFlag
+//
+//==========================================================================
+bool CheatHelperFlag (int mask) {
+  int v = CheatHelperCheckOnOff();
+       if (v < 0) Cheats ^= mask;
+  else if (v > 0) Cheats |= mask;
+  else  Cheats &= ~mask;
+  return !!(Cheats&mask);
+}
+
+
+//==========================================================================
+//
 //  Cheat_Jumper
 //
 //==========================================================================
 void Cheat_Jumper () {
-  Cheats ^= CF_HIGHJUMP;
-  if (Cheats&CF_HIGHJUMP) cprint("High Jump Cheat is On"); else cprint("High Jump Cheat is Off");
+  if (CheatHelperFlag(CF_HIGHJUMP)) cprint("High Jump Cheat is On"); else cprint("High Jump Cheat is Off");
 }
 
 
@@ -93,8 +106,7 @@ void Cheat_Jumper () {
 //
 //==========================================================================
 void Cheat_ShooterKing () {
-  Cheats ^= CF_DOUBLEFIRINGSPEED;
-  if (Cheats&CF_DOUBLEFIRINGSPEED) cprint("Double Firing Speed Cheat is On"); else cprint("Double Firing Speed Cheat is Off");
+  if (CheatHelperFlag(CF_DOUBLEFIRINGSPEED)) cprint("Double Firing Speed Cheat is On"); else cprint("Double Firing Speed Cheat is Off");
 }
 
 
@@ -104,8 +116,7 @@ void Cheat_ShooterKing () {
 //
 //==========================================================================
 void Cheat_Regeneration () {
-  Cheats ^= CF_REGENERATION;
-  if (Cheats&CF_REGENERATION) cprint("Regeneration Cheat is On"); else cprint("Regeneration Cheat is Off");
+  if (CheatHelperFlag(CF_REGENERATION)) cprint("Regeneration Cheat is On"); else cprint("Regeneration Cheat is Off");
 }
 
 
@@ -446,8 +457,7 @@ void Cheat_Resurrect () {
 //
 //==========================================================================
 void Cheat_God () {
-  Cheats ^= CF_GODMODE;
-  if (Cheats&CF_GODMODE) {
+  if (CheatHelperFlag(CF_GODMODE)) {
     if (LineSpecialGameInfo(Level.Game).GOD_HEALTH) {
       if (MO) MO.Health = LineSpecialGameInfo(Level.Game).GOD_HEALTH;
       Health = LineSpecialGameInfo(Level.Game).GOD_HEALTH;
@@ -471,8 +481,7 @@ void Cheat_God () {
 //
 //==========================================================================
 void Cheat_Buddha () {
-  Cheats ^= CF_BUDDHA;
-  if (Cheats&CF_BUDDHA) cprint("Buddha Mode On"); else cprint("Buddha Mode Off");
+  if (CheatHelperFlag(CF_BUDDHA)) cprint("Buddha Mode On"); else cprint("Buddha Mode Off");
 }
 
 
@@ -908,8 +917,7 @@ void Cheat_ForceWeapon () {
 //
 //==========================================================================
 void Cheat_NoClip () {
-  Cheats ^= CF_NOCLIP;
-  if (Cheats&CF_NOCLIP) {
+  if (CheatHelperFlag(CF_NOCLIP)) {
     MO.bColideWithThings = false;
     MO.bColideWithWorld = false;
     cprint("No Clipping Mode ON");
@@ -1029,7 +1037,10 @@ void Cheat_NoWeapons () {
 //
 //==========================================================================
 void Cheat_Fly () {
-  if (!bFly) {
+  int v = CheatHelperCheckOnOff();
+  bool newFly = (v < 0 ? !bFly : v > 0 ? true : false);
+  if (bFly == newFly) return;
+  if (newFly) {
     bFly = true;
     MO.bFly = true;
     MO.bNoGravity = true;
@@ -1060,12 +1071,11 @@ void Cheat_Fly () {
 //
 //==========================================================================
 void Cheat_NoTarget () {
-  bNoTarget = !bNoTarget;
-  if (bNoTarget) {
-    cprint("No Target Mode ON");
-  } else {
-    cprint("No Target Mode OFF");
-  }
+  int v = CheatHelperCheckOnOff();
+       if (v < 0) bNoTarget = !bNoTarget;
+  else if (v > 0) bNoTarget = true;
+  else bNoTarget = false;
+  if (bNoTarget) cprint("No Target Mode ON"); else cprint("No Target Mode OFF");
 }
 
 
@@ -1075,12 +1085,7 @@ void Cheat_NoTarget () {
 //
 //==========================================================================
 void Cheat_Anubis () {
-  Cheats ^= CF_FRIGHTENING;
-  if (Cheats&CF_FRIGHTENING) {
-    cprint("\"Quake with fear!\"");
-  } else {
-    cprint("No more ogre armor");
-  }
+  if (CheatHelperFlag(CF_FRIGHTENING)) cprint("\"Quake with fear!\""); else cprint("No more ogre armor");
 }
 
 
@@ -1090,8 +1095,7 @@ void Cheat_Anubis () {
 //
 //==========================================================================
 void Cheat_Freeze () {
-  Cheats ^= CF_TIMEFREEZE;
-  if (Cheats&CF_TIMEFREEZE) {
+  if (CheatHelperFlag(CF_TIMEFREEZE)) {
     cprint("Freeze mode on");
     Level.bFrozen = true;
   } else {
