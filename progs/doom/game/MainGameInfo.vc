@@ -1034,7 +1034,7 @@ defaultproperties {
   }
   */
 #ifdef CHEX_QUEST
-  GameFilterFlag = EntityEx::GAME_Chex;
+  GameFilterFlag = EntityEx::GAME_Chex|EntityEx::GAME_Doom;
 #else
   GameFilterFlag = EntityEx::GAME_Doom;
 #endif
