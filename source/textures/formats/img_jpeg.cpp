@@ -23,8 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "r_tex.h"
+#include "../../gamedefs.h"
+#include "../r_tex.h"
 
 
 #ifdef VAVOOM_DISABLE_STB_IMAGE_JPEG

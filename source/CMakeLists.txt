@@ -104,20 +104,21 @@ set(TEXTURELIB_SOURCES
   textures/r_tex.cpp
   textures/r_tex_id.cpp
   textures/r_tex_animdef.cpp
-  textures/r_tex_automap.cpp
   textures/r_tex_base.cpp
   textures/r_tex_camera.cpp
-  textures/r_tex_flat.cpp
-  textures/r_tex_imgz.cpp
-  textures/r_tex_jpeg.cpp
-  textures/r_tex_multipatch.cpp
-  textures/r_tex_patch.cpp
-  textures/r_tex_pcx.cpp
-  textures/r_tex_png.cpp
-  textures/r_tex_raw.cpp
-  textures/r_tex_tga.cpp
   textures/r_tex_warp.cpp
   textures/r_tex_translation.cpp
+  # image loaders
+  textures/formats/img_automap.cpp
+  textures/formats/img_flat.cpp
+  textures/formats/img_imgz.cpp
+  textures/formats/img_jpeg.cpp
+  textures/formats/img_multipatch.cpp
+  textures/formats/img_patch.cpp
+  textures/formats/img_pcx.cpp
+  textures/formats/img_png.cpp
+  textures/formats/img_raw.cpp
+  textures/formats/img_tga.cpp
 )
 
 set(RENDERBASE_SOURCES

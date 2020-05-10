@@ -23,43 +23,57 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "r_tex.h"
+#include "../../gamedefs.h"
+#include "../r_tex.h"
 
 
 //==========================================================================
 //
-//  VAutopageTexture::VAutopageTexture
+//  VImgzTexture::Create
 //
 //==========================================================================
-VTexture *VAutopageTexture::Create (VStream &Strm, int LumpNum) {
-  if (Strm.TotalSize() < 320) return nullptr;
-  return new VAutopageTexture(LumpNum);
+VTexture *VImgzTexture::Create (VStream &Strm, int LumpNum) {
+  if (Strm.TotalSize() < 24) return nullptr; // not enough space for IMGZ header
+
+  vuint8 Id[4];
+  vuint16 Width;
+  vuint16 Height;
+  vuint16 SOffset;
+  vuint16 TOffset;
+
+  Strm.Seek(0);
+  Strm.Serialise(Id, 4);
+  if (memcmp(Id, "IMGZ", 4) != 0) return nullptr;
+
+  Strm << Width << Height << SOffset << TOffset;
+  return new VImgzTexture(LumpNum, Width, Height, SOffset, TOffset);
 }
 
 
 //==========================================================================
 //
-//  VAutopageTexture::VAutopageTexture
+//  VImgzTexture::VImgzTexture
 //
 //==========================================================================
-VAutopageTexture::VAutopageTexture (int ALumpNum)
+VImgzTexture::VImgzTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, int ATOffset)
   : VTexture()
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
-  Width = 320;
-  Height = W_LumpLength(SourceLump)/320;
   mFormat = mOrigFormat = TEXFMT_8;
+  Width = AWidth;
+  Height = AHeight;
+  SOffset = ASOffset;
+  TOffset = ATOffset;
 }
 
 
 //==========================================================================
 //
-//  VAutopageTexture::~VAutopageTexture
+//  VImgzTexture::~VImgzTexture
 //
 //==========================================================================
-VAutopageTexture::~VAutopageTexture () {
+VImgzTexture::~VImgzTexture () {
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -69,25 +83,71 @@ VAutopageTexture::~VAutopageTexture () {
 
 //==========================================================================
 //
-//  VAutopageTexture::GetPixels
+//  VImgzTexture::GetPixels
 //
 //==========================================================================
-vuint8 *VAutopageTexture::GetPixels () {
+vuint8 *VImgzTexture::GetPixels () {
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
   transparent = false;
   translucent = false;
 
-  // read data
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
   VCheckedStream Strm(lumpstream, true); // load to memory
-  int len = Strm.TotalSize();
-  Pixels = new vuint8[len];
-  vuint8 *dst = Pixels;
-  for (int i = 0; i < len; ++i, ++dst) {
-    Strm << *dst;
-    if (!*dst) *dst = r_black_color;
+
+  // read header
+  Strm.Seek(4); // skip magic
+  Width = Streamer<vuint16>(Strm);
+  Height = Streamer<vuint16>(Strm);
+  SOffset = Streamer<vint16>(Strm);
+  TOffset = Streamer<vint16>(Strm);
+  vuint8 Compression = Streamer<vuint8>(Strm);
+  Strm.Seek(24); // skip reserved space
+
+  // read data
+  Pixels = new vuint8[Width*Height];
+  memset(Pixels, 0, Width*Height);
+  if (!Compression) {
+    Strm.Serialise(Pixels, Width*Height);
+  } else {
+    // IMGZ compression is the same RLE used by IFF ILBM files
+    vuint8 *pDst = Pixels;
+    int runlen = 0, setlen = 0;
+    vuint8 setval = 0; // shut up, GCC
+
+    for (int y = Height; y != 0; --y) {
+      for (int x = Width; x != 0; ) {
+        if (runlen != 0) {
+          Strm << *pDst;
+          ++pDst;
+          --x;
+          --runlen;
+        } else if (setlen != 0) {
+          *pDst = setval;
+          ++pDst;
+          --x;
+          --setlen;
+        } else {
+          vint8 code;
+          Strm << code;
+          if (code >= 0) {
+            runlen = code+1;
+          } else if (code != -128) {
+            setlen = (-code)+1;
+            Strm << setval;
+          }
+        }
+      }
+    }
   }
 
+  if (Width > 0 && Height > 0) {
+    const vuint8 *s = Pixels;
+    for (int count = Width*Height; count--; ++s) {
+      if (s[0] == 0) { transparent = true; break; }
+    }
+  }
+
+  ConvertPixelsToShaded();
   return Pixels;
 }
