@@ -154,22 +154,6 @@ set(RENDERBASE_SOURCES
 
 #---------------------------------------
 #
-# UI library (widgets) sources
-#
-#---------------------------------------
-set(UIWIDGETS_SOURCES
-  ui/ui.h
-  ui/ui_actor.cpp
-  ui/ui_font.cpp
-  ui/ui_font.h
-  ui/ui_root.cpp
-  ui/ui_root.h
-  ui/ui_widget.cpp
-  ui/ui_widget.h
-)
-
-#---------------------------------------
-#
 # sound subsystem sources
 #
 #---------------------------------------
@@ -287,12 +271,6 @@ set(SV_SOURCES
   server/sv_world.cpp
 )
 
-set(CL_SOURCES
-  client/client.h
-  client/cl_local.h
-  client/cl_main.cpp
-)
-
 set(MAPLOADER_SOURCES
   maploader/p_setup_calc.cpp
   maploader/p_setup.cpp
@@ -303,6 +281,38 @@ set(ACS_SOURCES
   acs/p_acs.h
   acs/p_acs_extfunc.h
   acs/p_acs.cpp
+)
+
+set(PSIM_SOURCES
+  p_clip.cpp
+  p_clip.h
+  p_decal.cpp
+  p_decal.h
+  p_entity.cpp
+  p_entity.h
+  p_entity_sight.cpp
+  p_entity_world.cpp
+  p_gameinfo.cpp
+  p_gameinfo.h
+  p_gameobject.cpp
+  p_gameobject.h
+  p_levelinfo.cpp
+  p_levelinfo.h
+  p_player.cpp
+  p_player.h
+  p_player_input.cpp
+  p_playerreplicationinfo.cpp
+  p_playerreplicationinfo.h
+  p_polyobj.cpp
+  p_switch.cpp
+  p_terrain.cpp
+  p_thinker.cpp
+  p_thinker.h
+  p_trace.cpp
+  p_world.cpp
+  p_world.h
+  p_worldinfo.cpp
+  p_worldinfo.h
 )
 
 
@@ -333,107 +343,116 @@ configure_file(
   gitversion.h
 )
 
-#-- Common files --
-set(MAIN_COMMON_SOURCES
-  am_map.cpp
-  automap.h
+
+#---------------------------------------
+#
+# Sources shared between cliend and server
+#
+#---------------------------------------
+set(CS_SHARED_SOURCES
+  gitversion.h.in
   build.h
-  chat.cpp
-  chat.h
-  cheats.cpp
-  ${CL_SOURCES}
-  cmd.cpp
-  cmd.h
   common.h
-  console.cpp
-  console.h
-  cvar.cpp
+  gamedefs.h
+  cheats.cpp
+  cmd.h
+  cmd.cpp
   cvar.h
-  debug.cpp
+  cvar.cpp
   debug.h
+  debug.cpp
+
+  misc.h
+  misc.cpp
+
+  # yeah, the server needs this too
   drawer.h
   drawer.cpp
-  finale.cpp
-  finale.h
-  ${FILESYS_SOURCES}
-  gamedefs.h
-  gitversion.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/gitversion.h
-  host.cpp
+  # ...and this
+  text.h
+  text.cpp
+
+  system.h
   host.h
-  iline.cpp
-  iline.h
-  in_input.cpp
-  infostr.cpp
+  host.cpp
   infostr.h
-  input.h
-  #l_glbsp.cpp
-  #l_glvis.cpp
-  language.cpp
+  infostr.cpp
   language.h
-  ${VLEVEL_CLASS_SOURCES}
-  lockdefs.cpp
+  language.cpp
   lockdefs.h
-  mapinfo.cpp
+  lockdefs.cpp
+
   mapinfo.h
-  menu.cpp
-  menu.h
-  misc.cpp
-  misc.h
-  ${NETSUB_SOURCES}
+  mapinfo.cpp
+
   qs_data.h
   qs_data.cpp
-  ${ACS_SOURCES}
-  p_clip.cpp
-  p_clip.h
-  p_decal.cpp
-  p_decal.h
-  p_entity.cpp
-  p_entity.h
-  p_entity_sight.cpp
-  p_entity_world.cpp
-  p_gameinfo.cpp
-  p_gameinfo.h
-  p_gameobject.cpp
-  p_gameobject.h
-  p_levelinfo.cpp
-  p_levelinfo.h
-  p_player.cpp
-  p_player.h
-  p_player_input.cpp
-  p_playerreplicationinfo.cpp
-  p_playerreplicationinfo.h
-  p_polyobj.cpp
-  ${MAPLOADER_SOURCES}
-  p_switch.cpp
-  p_terrain.cpp
-  p_thinker.cpp
-  p_thinker.h
-  p_trace.cpp
-  p_world.cpp
-  p_world.h
-  p_worldinfo.cpp
-  p_worldinfo.h
-  pr_cmds.cpp
-  ${RENDERBASE_SOURCES}
-  ${TEXTURELIB_SOURCES}
+  ntvalueioex.h
   ntvalueioex.cpp
-  sbar.cpp
-  sbar.h
-  screen.cpp
-  screen.h
-  scripts.cpp
+
+  pr_cmds.cpp
+
   scripts.h
-  ${SOUNDSYS_SOURCES}
-  ${SV_SOURCES}
-  system.h
-  text.cpp
-  text.h
-  ${UIWIDGETS_SOURCES}
+  scripts.cpp
+
+  ${FILESYS_SOURCES}
+  ${VLEVEL_CLASS_SOURCES}
+  ${NETSUB_SOURCES}
+  ${ACS_SOURCES}
+  ${PSIM_SOURCES}
+  ${MAPLOADER_SOURCES}
+  # yeah, server loads textures too
+  ${TEXTURELIB_SOURCES}
+
   ${VCCLIB_SOURCES}
-  video.h
+
   ${AJBSP_SOURCES}
   ${ZDBSP_SOURCES}
+
+  ${SV_SOURCES}
+)
+
+
+#-- source files for combined client/server --
+set(COMBINED_SOURCES
+  ${CMAKE_CURRENT_BINARY_DIR}/gitversion.h
+  ${CS_SHARED_SOURCES}
+
+  ${RENDERBASE_SOURCES}
+  ${SOUNDSYS_SOURCES}
+
+  client/client.h
+  client/cl_local.h
+  client/cl_main.cpp
+
+  ui/ui.h
+  ui/ui_actor.cpp
+  ui/ui_font.cpp
+  ui/ui_font.h
+  ui/ui_root.cpp
+  ui/ui_root.h
+  ui/ui_widget.cpp
+  ui/ui_widget.h
+
+  automap.h
+  automap.cpp
+  chat.h
+  chat.cpp
+  console.cpp
+  console.h
+  finale.h
+  finale.cpp
+  iline.h
+  iline.cpp
+  in_input.cpp
+  input.h
+  menu.h
+  menu.cpp
+  sbar.h
+  sbar.cpp
+  screen.h
+  screen.cpp
+  video.h
 )
 
 #-- Common OpenGL files --
@@ -478,62 +497,16 @@ include_directories( .
 # Dedicated server sources
 #
 #---------------------------------------
-
 set(SERVER_COMMON_SOURCES
-  cheats.cpp
-  cmd.cpp
-  cvar.cpp
-  debug.cpp
-  drawer.h
-  drawer.cpp
-  ${FILESYS_SOURCES}
-  host.cpp
-  infostr.cpp
-  language.cpp
-  ${VLEVEL_CLASS_SOURCES}
-  lockdefs.cpp
-  mapinfo.cpp
-  misc.cpp
-  ${NETSUB_SOURCES}
-  ${ACS_SOURCES}
-  p_clip.cpp
-  p_decal.cpp
-  p_decal.h
-  p_entity.cpp
-  p_entity_sight.cpp
-  p_entity_world.cpp
-  p_gameinfo.cpp
-  p_gameobject.cpp
-  p_levelinfo.cpp
-  p_player.cpp
-  p_player_input.cpp
-  p_playerreplicationinfo.cpp
-  p_polyobj.cpp
-  ${MAPLOADER_SOURCES}
-  p_switch.cpp
-  p_terrain.cpp
-  p_thinker.cpp
-  p_trace.cpp
-  p_world.cpp
-  p_worldinfo.cpp
-  pr_cmds.cpp
-  ${TEXTURELIB_SOURCES}
-  ntvalueioex.h
-  ntvalueioex.cpp
-  qs_data.h
-  qs_data.cpp
-  render/r_data.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gitversion.h
+  ${CS_SHARED_SOURCES}
+
+  # for loading various definitions
   sound/snd_data.cpp
-  scripts.cpp
-  sv_main.cpp
-  sv_save.cpp
-  sv_world.cpp
-  text.cpp
-  ${VCCLIB_SOURCES}
-  ${AJBSP_SOURCES}
-  ${ZDBSP_SOURCES}
   # for skybox parsing
   render/r_sky.cpp
+  # for loading various definitions
+  render/r_data.cpp
 )
 
 
@@ -571,7 +544,7 @@ endif(NOT WIN32)
 #
 #---------------------------------------
 if(ENABLE_CLIENT)
-  set(MAIN_SOURCES ${MAIN_COMMON_SOURCES})
+  set(MAIN_SOURCES ${COMBINED_SOURCES})
   #set(MAIN_LIBS glbsp libglvis timidity vavoomc core ${VAVOOM_MAIN_DEPS} ${NET_LIBRARIES} ${MAIN_LIBS})
   set(MAIN_LIBS timidity vavoomc core ${VAVOOM_MAIN_DEPS} ${NET_LIBRARIES} ${MAIN_LIBS})
   set(MAIN_COMPILE_FLAGS "")
