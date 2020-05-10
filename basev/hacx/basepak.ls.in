@@ -1,3 +1,6 @@
 $dest basepak.pk3
 
 after_iwad/decorate.txt  @CMAKE_CURRENT_SOURCE_DIR@/after_iwad/decorate.txt
+
+// lights
+vfxdefs.txt  @CMAKE_CURRENT_SOURCE_DIR@/vfxdefs.txt

@@ -1,0 +1,138 @@
+//------------------------------------------------------------------------------
+class HacxSamuraiStatue {}
+class HacxOfficeChair {}
+class Rickshaw {}
+class HacxWaterDrop {}
+class HacxWaterDrop2 {}
+
+
+//------------------------------------------------------------------------------
+pointlight HacxComputer
+{
+  color 0.2 1 0.2
+  radius 60
+  offset 0 0 20
+  noselfshadow
+}
+
+class HacxComputer
+{
+  static_light HacxComputer
+  frame COLU { light HacxComputer }
+}
+
+
+//------------------------------------------------------------------------------
+pointlight HacxPulsar
+{
+  color 1 0.6 0.6
+  radius 200
+  offset 0 0 46
+  noselfshadow
+}
+
+class HacxPulsar
+{
+  static_light HacxPulsar
+  frame CEYE { light HacxPulsar }
+}
+
+
+//------------------------------------------------------------------------------
+pointlight HacxElectron
+{
+  color 1 1 1
+  radius 160
+  offset 0 0 55
+  noselfshadow
+}
+
+class HacxElectron
+{
+  static_light HacxElectron
+  frame TGRN { light HacxElectron }
+}
+
+
+//------------------------------------------------------------------------------
+pointlight HacxWallTorch
+{
+  color 1 1 0.1
+  radius 160
+  offset 0 0 55
+  noselfshadow
+}
+
+class HacxWallTorch
+{
+  static_light HacxWallTorch
+  frame SMGT { light HacxWallTorch }
+}
+
+
+//------------------------------------------------------------------------------
+pointlight HacxDeskLamp
+{
+  color 1 1 0.6
+  radius 80
+  offset 0 0 16
+  noselfshadow
+}
+
+class HacxDeskLamp
+{
+  static_light HacxDeskLamp
+  frame SMBTA { light HacxDeskLamp }
+}
+
+
+//------------------------------------------------------------------------------
+pointlight HacxFloorLamp
+{
+  color 1 1 0.2
+  radius 160
+  offset 0 0 35
+  noselfshadow
+}
+
+class HacxFloorLamp
+{
+  static_light HacxFloorLamp
+  frame SMRTA { light HacxFloorLamp }
+}
+
+
+//------------------------------------------------------------------------------
+spotlight HacxCeilingLight
+{
+  color 1 1 0.6
+  radius 140
+  offset 0 0 10
+  conedir 0 0 -1
+  coneangle 60
+  noselfshadow
+}
+
+class HacxCeilingLight
+{
+  static_light HacxCeilingLight
+  frame TBLU { light HacxCeilingLight }
+}
+
+
+//------------------------------------------------------------------------------
+spotlight HacxLongCeilingLamp
+{
+  color 1 1 0.6
+  radius 180
+  offset 0 0 -26
+  conedir 0 0 -1
+  coneangle 90
+  noselfshadow
+}
+
+class HacxLongCeilingLamp
+{
+  static_light HacxLongCeilingLamp
+  frame TRED { light HacxLongCeilingLamp }
+}
