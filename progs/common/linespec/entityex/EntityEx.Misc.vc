@@ -1426,7 +1426,7 @@ override void OnMapSpawn (mthing_t *mthing) {
   }
 
   if (bStaticLight && mthing && !TID) {
-    // fix for dehacked overrides that spawns the light inside the ceiling
+    // fix for dehacked overrides that spawns the light inside the ceiling (for HacX)
     TVec lorg = Origin+LightOffset;
     if (bSpawnCeiling) {
       if (lorg.z > Sector.ceiling.minz-1) {
