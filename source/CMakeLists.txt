@@ -299,6 +299,12 @@ set(MAPLOADER_SOURCES
   maploader/p_setup_udmf.cpp
 )
 
+set(ACS_SOURCES
+  acs/p_acs.h
+  acs/p_acs_extfunc.h
+  acs/p_acs.cpp
+)
+
 
 #---------------------------------------
 #
@@ -377,8 +383,7 @@ set(MAIN_COMMON_SOURCES
   ${NETSUB_SOURCES}
   qs_data.h
   qs_data.cpp
-  p_acs.cpp
-  p_acs.h
+  ${ACS_SOURCES}
   p_clip.cpp
   p_clip.h
   p_decal.cpp
@@ -490,7 +495,7 @@ set(SERVER_COMMON_SOURCES
   mapinfo.cpp
   misc.cpp
   ${NETSUB_SOURCES}
-  p_acs.cpp
+  ${ACS_SOURCES}
   p_clip.cpp
   p_decal.cpp
   p_decal.h

@@ -51,10 +51,10 @@
 //** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "server/sv_local.h"
+#include "../gamedefs.h"
+#include "../server/sv_local.h"
 #ifdef CLIENT
-# include "client/cl_local.h"
+# include "../client/cl_local.h"
 #endif
 #include "p_acs.h"
 
