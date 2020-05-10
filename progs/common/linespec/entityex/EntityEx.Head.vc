@@ -438,9 +438,15 @@ int VisDir;
 float RDFactor;
 
 // static light parameters
+// used only when spawning map things, to create static lights
+// so there is no reason to save them
+// (but save light offset, because it can be changed in spawner)
 TVec LightOffset;
-int LightColor;
-float LightRadius;
+transient int LightColor;
+transient float LightRadius;
+// for spotlights
+transient TVec LightConeDir;
+transient float LightConeAngle;
 
 // dynamic light parameters
 int DLightColor;
@@ -545,6 +551,10 @@ transient int lastCrushTicBloodTime = -666;
 // set in decorate parser
 // default value is "everything"
 transient int GameFilter = -1;
+
+// moved here, so we don't have to realloc 'em again and again
+transient array!(LightEffectDef *) FXLights;
+transient array!(ParticleEffectDef *) FXParticles;
 
 
 replication {

@@ -159,6 +159,8 @@ struct VLightEffectDef {
   float Chance;
   float Interval;
   float Scale;
+  float ConeAngle;
+  TVec ConeDir;
 
   //vint32 NoSelfShadow; // this will become flags
   enum {

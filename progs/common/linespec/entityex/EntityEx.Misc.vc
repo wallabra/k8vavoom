@@ -1440,11 +1440,18 @@ override void OnMapSpawn (mthing_t *mthing) {
       lorg = Origin+LightOffset;
     }
     float radius = (mthing && mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius);
+    if (LightConeAngle > 0 && LightConeAngle < 360) {
+       Level.AddStaticLightRGB(self, lorg, radius, LightColor, LightConeDir, LightConeAngle);
+    } else {
+       Level.AddStaticLightRGB(self, lorg, radius, LightColor);
+    }
+    /*
     if (LightColor == 0xffffffff) {
       Level.AddStaticLight(self, lorg, radius);
     } else {
       Level.AddStaticLightRGB(self, lorg, radius, LightColor);
     }
+    */
     //printdebug("%C: spawned static light! org=%s (ofs=%s); ceiling=%s", self, lorg, LightOffset, Sector.ceiling.minz);
     //bSpawnCeiling
     bStaticLightSpawned = true;
@@ -2026,11 +2033,22 @@ override void ClientTick (float DeltaTime) {
 //
 //==========================================================================
 final void DoStateEffects (float DeltaTime) {
-  array!(LightEffectDef *) Lights;
-  array!(ParticleEffectDef *) Particles;
+  //array!(LightEffectDef *) FXLights;
+  //array!(ParticleEffectDef *) FXParticles;
 
-  GetStateEffects(Lights, Particles);
-  if (!Lights.length && !Particles.length) return;
+  GetStateEffects(FXLights, FXParticles);
+
+  // if we have a static light, check if there are no light effects for the current state
+  if (bStaticLightSpawned && !FXLights.length) {
+    // remove static light, and let dynamic lighting do the thing
+    bStaticLightSpawned = false;
+    Level.RemoveStaticLightByOwner(self);
+  }
+
+  if (!FXLights.length && !FXParticles.length) {
+    PrevEffectState = State;
+    return;
+  }
 
   TVec Forward;
   TVec Right;
@@ -2039,7 +2057,8 @@ final void DoStateEffects (float DeltaTime) {
   AngleVectors(Angles, out Forward, out Right, out Up);
 
   if (!bStaticLightSpawned) {
-    //if (self isa 'ExplosiveBarrel') printdebug("%C: numdynlights=%s (static=%B)", self, Lights.length, bStaticLightSpawned);
+    //if (self isa 'ExplosiveBarrel') printdebug("%C: numdynlights=%s (static=%B)", self, FXLights.length, bStaticLightSpawned);
+    //if (FXLights && (self isa 'HacxLongCeilingLamp')) printdebug("%C: l0ofs=%s; up=%s; org.z=%s; ceil=%s", self, FXLights[0].Offset, Up, Origin.z, Sector.ceiling.minz);
     // dynamic lights
     float LightTime;
     float max;
@@ -2050,8 +2069,8 @@ final void DoStateEffects (float DeltaTime) {
     // or give each dynlight an id, to allow replacing?
     // note that sprite effects can have several lights attached, and that can be changed with each new frame, so
     // i think that it will be better to use ids, and allow unreplaced lights to decay
-    foreach (auto i; 0..Lights.length) {
-      LightEffectDef *L = Lights[i];
+    foreach (auto i; 0..FXLights.length) {
+      LightEffectDef *L = FXLights[i];
       TVec lorg = Origin+Forward*L->Offset.x-Right*L->Offset.y+Up*L->Offset.z;
       // fix lights put into the floor or into the ceiling (why not?)
       if (/*!L->Offset.z &&*/ Sector) {
@@ -2066,7 +2085,14 @@ final void DoStateEffects (float DeltaTime) {
       }
       dlight_t *dl = AllocDlight(self, lorg, radius:fmax(0, fmax(prev_rad, L->Radius)), lightid:i); // pass "light id" to allow replacing
       if (!dl) continue; // alas
+      //if (self isa 'HacxLongCeilingLamp') printdebug("%C: type=%s", self, L->Type);
+      if (L->Type&DynamicLight::DLTYPE_Spot) {
+        dl->coneDirection = L->ConeDir;
+        dl->coneAngle = L->ConeAngle;
+        //printdebug("%C: spotlight! dir=%s; angle=%s", self, L->ConeDir, L->ConeAngle);
+      }
       //if (self isa 'ExplosiveBarrel') printdebug("%C:  dlight=%s; org=%s; lorg=%s; lrad=%s; type=%s", self, i, Origin, dl->origin, dl->radius, L->Type);
+      //if (self isa 'HacxLongCeilingLamp') printdebug("%C:   lorg=%s; Origin=%s", self, dl->origin, Origin);
       //print("%C: rad: %s", self, dl->radius);
       //dl->origin = Origin + Forward * L->Offset.x - Right * L->Offset.y + Up * L->Offset.z;
       switch (L->Type&DynamicLight::DLTYPE_TypeMask) {
@@ -2150,9 +2176,9 @@ final void DoStateEffects (float DeltaTime) {
 
   if (State != PrevEffectState) {
     // particle effects
-    if (Particles.length > 0 && GetCvarB('r_particle_effects')) {
-      foreach (auto i; 0..Particles.length) {
-        ParticleEffectDef *P = Particles[i];
+    if (FXParticles.length > 0 && GetCvarB('r_particle_effects')) {
+      foreach (auto i; 0..FXParticles.length) {
+        ParticleEffectDef *P = FXParticles[i];
         if (!P) continue;
         if (!Level) { print("WTF?! no level in particle effect!"); break; }
         Level.ParticleEffect(P->Count, P->Type, P->Type2,

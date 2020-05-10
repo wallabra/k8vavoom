@@ -663,6 +663,7 @@ public:
   VState *FindStateEx (VStr StateName, bool Exact);
   bool HasSpecialStates (VName);
   void GetStateEffects (TArray<VLightEffectDef *> &, TArray<VParticleEffectDef *> &) const;
+  bool HasAnyLightEffects () const;
   bool CallStateChain (VEntity *, VState *);
 
   void CheckWater (); // this sets `WaterLevel` and `WaterType`
@@ -780,6 +781,7 @@ public:
   DECLARE_FUNCTION(FindStateEx)
   DECLARE_FUNCTION(HasSpecialStates)
   DECLARE_FUNCTION(GetStateEffects)
+  DECLARE_FUNCTION(HasAnyLightEffects)
   DECLARE_FUNCTION(CallStateChain)
   DECLARE_FUNCTION(PlaySound)
   DECLARE_FUNCTION(StopSound)

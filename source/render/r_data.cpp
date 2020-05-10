@@ -850,6 +850,8 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
   L->Interval = 0.0f;
   L->Scale = 0.0f;
   L->Flags = 0;
+  L->ConeAngle = 0;
+  L->ConeDir = TVec(0, 0, 0);
 
   // parse light def
   sc->Expect("{");
@@ -882,8 +884,27 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
       L->Offset.y = sc->Float;
       sc->ExpectFloat();
       L->Offset.z = sc->Float;
+    } else if (sc->Check("coneangle")) {
+      sc->ExpectFloat();
+      L->ConeAngle = clampval(sc->Float, 0.0, 360.0);
+    } else if (sc->Check("conedir")) {
+      sc->ExpectFloat();
+      L->ConeDir.x = sc->Float;
+      sc->ExpectFloat();
+      L->ConeDir.y = sc->Float;
+      sc->ExpectFloat();
+      L->ConeDir.z = sc->Float;
+      L->ConeDir = L->ConeDir.Normalised();
+      if (!L->ConeDir.isValid()) L->ConeDir = TVec(0, 0, 0);
     } else {
       sc->Error(va("Bad point light parameter (%s)", *sc->String));
+    }
+  }
+
+  if (L->Type&DLTYPE_Spot) {
+    //GCon->Logf(NAME_Debug, "dir=(%g,%g,%g); angle=%g", L->ConeDir.x, L->ConeDir.y, L->ConeDir.z, L->ConeAngle);
+    if (L->ConeAngle < 1 || L->ConeAngle >= 360 || L->ConeDir.isZero()) {
+      L->Type &= ~DLTYPE_Spot;
     }
   }
 }
@@ -931,6 +952,8 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
   L->Interval = 0.0f;
   L->Scale = 0.0f;
   L->Flags = 0;
+  L->ConeAngle = 0;
+  L->ConeDir = TVec(0, 0, 0);
   L->SetNoSelfShadow(true); // by default
 
   bool attenuated = false;
@@ -1210,6 +1233,7 @@ static void ParseEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &Class
       continue;
     }
     else if (sc->Check("pointlight")) ParseLightDef(sc, DLTYPE_Point);
+    else if (sc->Check("spotlight")) ParseLightDef(sc, DLTYPE_Point|DLTYPE_Spot);
     else if (sc->Check("muzzleflashlight")) ParseLightDef(sc, DLTYPE_MuzzleFlash);
     else if (sc->Check("particleeffect")) ParseParticleEffect(sc);
     else if (sc->Check("class")) ParseClassEffects(sc, ClassDefs);
@@ -1663,6 +1687,13 @@ void R_ParseEffectDefs () {
         Cls->SetFieldInt("LightColor", SLight->Color);
         Cls->SetFieldFloat("LightRadius", SLight->Radius);
         Cls->SetFieldVec("LightOffset", SLight->Offset);
+        if (SLight->Type&DLTYPE_Spot) {
+          Cls->SetFieldFloat("LightConeAngle", SLight->ConeAngle);
+          Cls->SetFieldVec("LightConeDir", SLight->ConeDir);
+        } else {
+          Cls->SetFieldFloat("LightConeAngle", 0);
+          Cls->SetFieldVec("LightConeDir", TVec(0, 0, 0));
+        }
       } else {
         GCon->Logf(NAME_Warning, "Light \"%s\" not found.", *CD.StaticLight);
       }

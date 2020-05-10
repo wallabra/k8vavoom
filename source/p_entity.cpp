@@ -529,6 +529,34 @@ void VEntity::GetStateEffects (TArray<VLightEffectDef *> &Lights, TArray<VPartic
 
 //==========================================================================
 //
+//  VEntity::HasAnyLightEffects
+//
+//==========================================================================
+bool VEntity::HasAnyLightEffects () const {
+  // check for valid state
+  if (!State) return false;
+
+  // init state light effect
+  if (!State->LightInited) {
+    State->LightInited = true;
+    State->LightDef = nullptr;
+    if (State->LightName.length()) State->LightDef = R_FindLightEffect(State->LightName);
+  }
+  if (State->LightDef) return true;
+
+  // add class sprite effects
+  for (auto &&it : GetClass()->SpriteEffects) {
+    if (it.SpriteIndex != State->SpriteIndex) continue;
+    if (it.Frame != -1 && it.Frame != (State->Frame&VState::FF_FRAMEMASK)) continue;
+    if (it.LightDef) return true;
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VEntity::CallStateChain
 //
 //==========================================================================
@@ -790,6 +818,11 @@ IMPLEMENT_FUNCTION(VEntity, GetStateEffects) {
   P_GET_PTR(TArray<VLightEffectDef *>, Lights);
   P_GET_SELF;
   Self->GetStateEffects(*Lights, *Part);
+}
+
+IMPLEMENT_FUNCTION(VEntity, HasAnyLightEffects) {
+  P_GET_SELF;
+  RET_BOOL(Self->HasAnyLightEffects());
 }
 
 IMPLEMENT_FUNCTION(VEntity, CallStateChain) {
