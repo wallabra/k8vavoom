@@ -6417,28 +6417,28 @@ override void SpawnMapThing (mthing_t *mthing) {
 //==========================================================================
 final bool CheckLockDef (LockDef *Lock, EntityEx User) {
   if (!Lock) return false; // just in case
-
   // empty lock list means check for any key
   if (!Lock->Locks.length) {
     for (Inventory Item = User.Inventory; Item; Item = Item.Inventory) {
       if (Key(Item)) return true;
     }
     return false;
-  }
-
-  foreach (auto i; 0..Lock->Locks.length) {
-    bool good = false;
-    foreach (auto j; 0..Lock->Locks[i].AnyKeyList.length) {
-      if (User.FindInventory(class!Inventory(Lock->Locks[i].AnyKeyList[j]))) {
-        good = true;
-        break;
+  } else {
+    foreach (auto ref lockinfo; Lock->Locks) {
+      bool good = false;
+      foreach (class keyclass; lockinfo.AnyKeyList) {
+        //printdebug("%C: looking for key `%C`", User, keyclass);
+        if (User.FindInventoryKey(class!Inventory(keyclass))) {
+          good = true;
+          break;
+        }
       }
+      if (!good) return false;
     }
-    if (!good) return false;
+    return true;
   }
-
-  return true;
 }
+
 
 //**************************************************************************
 //

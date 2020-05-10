@@ -271,6 +271,26 @@ final Inventory FindInventory (class!Inventory ItemClass, optional bool disableR
 
 //==========================================================================
 //
+//  FindInventoryKey
+//
+//==========================================================================
+final Inventory FindInventoryKey (class!Inventory ItemClass) {
+  if (!ItemClass) return none;
+
+  // look for exact class, or for a replacement, or for a child
+  class!Inventory repl = class!Inventory(GetClassReplacement(ItemClass));
+  for (Inventory inv = Inventory; inv; inv = inv.Inventory) {
+    if (inv.Class == ItemClass) return inv;
+    if (GetClassReplacement(inv.Class) == repl) return inv;
+    if (inv.Class isa ItemClass) return inv;
+  }
+
+  return none;
+}
+
+
+//==========================================================================
+//
 //  FindInfiniteAmmoPowerup
 //
 //==========================================================================
