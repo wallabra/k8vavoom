@@ -103,6 +103,8 @@ enum EWadNamespace {
   // jdoom/doomsday hires textures
   WADNS_HiResTexturesDDay,
   WADNS_HiResFlatsDDay,
+  // special pk3 directory for base paks
+  WADNS_AfterIWad,
 
   // special namespaces for zip files, in wad file they will be searched in global namespace
   WADNS_ZipSpecial,

@@ -57,6 +57,7 @@ const VPK3ResDirInfo PK3ResourceDirs[] = {
   { "graphics/", WADNS_Graphics },
   { "sounds/", WADNS_Sounds },
   { "music/", WADNS_Music },
+  { "after_iwad/", WADNS_AfterIWad },
   { nullptr, WADNS_ZipSpecial },
 };
 
