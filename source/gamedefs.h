@@ -51,7 +51,7 @@
 #include "system.h"   //  System specific routines
 #include "filesys/files.h"    //  File I/O routines
 #include "../libs/vavoomc/vc_public.h"
-#include "vc_dehacked.h"//  DeHackEd support
+#include "vc/vc_dehacked.h"//  DeHackEd support
 #include "scripts.h"  //  Script parsing
 #include "input.h"    //  Input from keyboard, mouse and joystick
 #include "video.h"    //  Graphics
@@ -60,7 +60,7 @@
 #include "p_gameobject.h"
 #include "textures/r_tex_id.h"
 #include "ntvalueioex.h"
-#include "level.h"    //  Level data
+#include "level/level.h"    //  Level data
 #include "mapinfo.h"
 #include "lockdefs.h"
 #include "host.h"
@@ -74,8 +74,8 @@
 #include "sbar.h"
 #include "chat.h"
 #include "finale.h"
-#include "save.h"
-#include "server.h"
+#include "server/server.h"
+#include "server/sv_save.h"
 #include "qs_data.h"
 #include "p_clip.h"
 #include "p_decal.h"
@@ -83,11 +83,11 @@
 #include "p_thinker.h"
 #include "p_levelinfo.h"
 #include "p_entity.h"
-#include "vc_decorate.h"//  Decorate scripts
+#include "vc/vc_decorate.h"//  Decorate scripts
 #include "p_playerreplicationinfo.h"
 #include "p_player.h"
 #include "p_gameinfo.h"
 #include "p_world.h"
-#include "client.h"
+#include "client/client.h"
 
 #endif

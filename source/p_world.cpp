@@ -30,7 +30,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-//#include "sv_local.h"
+//#include "server/sv_local.h"
 
 static VCvarB dbg_use_buggy_thing_traverser("dbg_use_buggy_thing_traverser", false, "Use old and buggy thing traverser (for debug)?", 0);
 static VCvarB dbg_use_vavoom_thing_coldet("dbg_use_vavoom_thing_coldet", false, "Use original Vavoom buggy thing coldet (for debug)?", 0);

@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 
 //#define VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
 //#define VAVOOM_DECALS_DEBUG

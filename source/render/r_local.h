@@ -26,7 +26,7 @@
 #ifndef VAVOOM_R_LOCAL_HEADER
 #define VAVOOM_R_LOCAL_HEADER
 
-#include "cl_local.h"
+#include "../client/cl_local.h"
 #include "r_shared.h"
 #include "fmd2defs.h"
 

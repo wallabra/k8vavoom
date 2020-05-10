@@ -26,8 +26,8 @@
 #include "gamedefs.h"
 #include "network.h"
 #include "net_message.h"
-#include "cl_local.h"
-#include "sv_local.h"
+#include "../client/cl_local.h"
+#include "../server/sv_local.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //

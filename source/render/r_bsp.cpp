@@ -32,7 +32,7 @@
 
 #include "gamedefs.h"
 #include "r_local.h"
-#include "../sv_local.h"
+#include "../server/sv_local.h"
 
 #define HORIZON_SURF_SIZE  (sizeof(surface_t)+sizeof(SurfVertex)*3)
 

@@ -24,7 +24,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "sv_local.h"
+#include "server/sv_local.h"
 
 
 static int cli_NoMapinfoPlrClasses = 0;

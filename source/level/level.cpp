@@ -23,10 +23,10 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "sv_local.h"
+#include "../gamedefs.h"
+#include "../server/sv_local.h"
 #ifdef CLIENT
-# include "cl_local.h"
+# include "../client/cl_local.h"
 #endif
 
 

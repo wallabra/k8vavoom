@@ -27,6 +27,8 @@
 //**    Build nodes using ajbsp.
 //**
 //**************************************************************************
+// directly included from "p_setup_calc.cpp"
+
 static VCvarB ajbsp_roundoff_tree("__ajbsp_roundoff_tree", false, "Roundoff vertices in AJBSP?", CVAR_PreInit);
 
 

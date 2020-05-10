@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 // we have to include it first, so map implementation will see our `GetTypeHash()`
-#include "../libs/core/hash/hashfunc.h"
+#include "../../libs/core/hash/hashfunc.h"
 
 struct __attribute__((packed)) VectorInfo {
   float xy[2];
@@ -50,10 +50,8 @@ static inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(v
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#include "gamedefs.h"
-#ifdef SERVER
-# include "sv_local.h"
-#endif
+#include "../gamedefs.h"
+#include "../server/sv_local.h"
 
 
 static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", CVAR_PreInit/*|CVAR_Archive*/);

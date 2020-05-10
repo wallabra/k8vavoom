@@ -27,8 +27,10 @@
 //**    Build nodes using zdbsp.
 //**
 //**************************************************************************
-//#include "bsp/zdbsp/xs_Float.h"
-#include "bsp/zdbsp/nodebuild.h"
+// directly included from "p_setup_calc.cpp"
+
+//#include "../bsp/zdbsp/xs_Float.h"
+#include "../bsp/zdbsp/nodebuild.h"
 
 
 static inline int toFix (double val) { return (int)(val*(1<<16)); }

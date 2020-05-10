@@ -25,7 +25,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "network.h"
-#include "sv_local.h"
+#include "../server/sv_local.h"
 
 extern VCvarB net_dbg_dump_thinker_detach; // from net_channel_thinker.cpp, sorry
 

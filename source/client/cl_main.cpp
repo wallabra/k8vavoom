@@ -28,7 +28,7 @@
 #include "net/network.h"
 #include "cl_local.h"
 #include "ui/ui.h"
-#include "sv_local.h"
+#include "server/sv_local.h"
 
 #define VAVOOM_DEMO_VERSION  (1)
 

@@ -27,6 +27,7 @@
 //**    Build rough PVS
 //**
 //**************************************************************************
+// directly included from "p_setup_calc.cpp"
 
 static int numOfThreads = -1;
 

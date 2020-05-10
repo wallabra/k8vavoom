@@ -30,8 +30,8 @@
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 # include "gamedefs.h"
 # include "net/network.h" /* for server list */
-# include "sv_local.h"
-# include "cl_local.h"
+# include "server/sv_local.h"
+# include "client/cl_local.h"
 # include "drawer.h"
 #else
 # if defined(IN_VCC)

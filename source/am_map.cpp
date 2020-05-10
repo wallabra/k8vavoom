@@ -29,7 +29,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #ifdef CLIENT
-# include "cl_local.h"
+# include "client/cl_local.h"
 # include "drawer.h"
 #endif
 

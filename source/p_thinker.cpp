@@ -33,7 +33,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "net/network.h"
-#include "cl_local.h" // for dlight_t
+#include "client/cl_local.h" // for dlight_t
 
 
 IMPLEMENT_CLASS(V, Thinker)

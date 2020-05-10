@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 
 
 static int cli_WGozzo3D = 0;

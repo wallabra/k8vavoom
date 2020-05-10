@@ -24,7 +24,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "sv_local.h"
+#include "server/sv_local.h"
 
 
 VCvarB compat_shorttex("compat_shorttex", false, "Compatibility: shorttex", 0);

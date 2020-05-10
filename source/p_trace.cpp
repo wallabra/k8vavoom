@@ -24,7 +24,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "sv_local.h"
+#include "server/sv_local.h"
 
 static VCvarB dbg_bsp_trace_strict_flats("dbg_bsp_trace_strict_flats", false, "use strict checks for flats?", /*CVAR_Archive|*/CVAR_PreInit);
 

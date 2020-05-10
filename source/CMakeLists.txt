@@ -263,18 +263,40 @@ set(FILESYS_SOURCES
 
 
 set(VLEVEL_CLASS_SOURCES
-  level.h
-  level.cpp
-  level_3dcoldet.cpp
-  level_3dfloors.cpp
-  level_calclineseg.cpp
-  level_dbgexport.cpp
-  level_decals.cpp
-  level_nodebbox.cpp
-  level_saveio.cpp
-  level_secnode.cpp
-  level_soundprop.cpp
-  level_miscapi.cpp
+  level/level.h
+  level/level.cpp
+  level/level_3dcoldet.cpp
+  level/level_3dfloors.cpp
+  level/level_calclineseg.cpp
+  level/level_dbgexport.cpp
+  level/level_decals.cpp
+  level/level_nodebbox.cpp
+  level/level_saveio.cpp
+  level/level_secnode.cpp
+  level/level_soundprop.cpp
+  level/level_miscapi.cpp
+  level/level_think.cpp
+)
+
+set(SV_SOURCES
+  server/server.h
+  server/sv_save.h
+  server/sv_local.h
+  server/sv_main.cpp
+  server/sv_save.cpp
+  server/sv_world.cpp
+)
+
+set(CL_SOURCES
+  client/client.h
+  client/cl_local.h
+  client/cl_main.cpp
+)
+
+set(MAPLOADER_SOURCES
+  maploader/p_setup_calc.cpp
+  maploader/p_setup.cpp
+  maploader/p_setup_udmf.cpp
 )
 
 
@@ -313,9 +335,7 @@ set(MAIN_COMMON_SOURCES
   chat.cpp
   chat.h
   cheats.cpp
-  client.h
-  cl_local.h
-  cl_main.cpp
+  ${CL_SOURCES}
   cmd.cpp
   cmd.h
   common.h
@@ -367,23 +387,19 @@ set(MAIN_COMMON_SOURCES
   p_entity.h
   p_entity_sight.cpp
   p_entity_world.cpp
-  #p_level_tracebox.cpp
   p_gameinfo.cpp
   p_gameinfo.h
   p_gameobject.cpp
   p_gameobject.h
-  p_level_think.cpp
   p_levelinfo.cpp
   p_levelinfo.h
-  p_setup_calc.cpp
   p_player.cpp
   p_player.h
   p_player_input.cpp
   p_playerreplicationinfo.cpp
   p_playerreplicationinfo.h
   p_polyobj.cpp
-  p_setup.cpp
-  p_setup_udmf.cpp
+  ${MAPLOADER_SOURCES}
   p_switch.cpp
   p_terrain.cpp
   p_thinker.cpp
@@ -397,19 +413,14 @@ set(MAIN_COMMON_SOURCES
   ${RENDERBASE_SOURCES}
   ${TEXTURELIB_SOURCES}
   ntvalueioex.cpp
-  save.h
   sbar.cpp
   sbar.h
   screen.cpp
   screen.h
   scripts.cpp
   scripts.h
-  server.h
   ${SOUNDSYS_SOURCES}
-  sv_local.h
-  sv_main.cpp
-  sv_save.cpp
-  sv_world.cpp
+  ${SV_SOURCES}
   system.h
   text.cpp
   text.h
@@ -488,15 +499,12 @@ set(SERVER_COMMON_SOURCES
   p_entity_world.cpp
   p_gameinfo.cpp
   p_gameobject.cpp
-  p_level_think.cpp
   p_levelinfo.cpp
-  p_setup_calc.cpp
   p_player.cpp
   p_player_input.cpp
   p_playerreplicationinfo.cpp
   p_polyobj.cpp
-  p_setup.cpp
-  p_setup_udmf.cpp
+  ${MAPLOADER_SOURCES}
   p_switch.cpp
   p_terrain.cpp
   p_thinker.cpp

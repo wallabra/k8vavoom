@@ -25,8 +25,8 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "net/network.h" /* for demos and RPC */
-#include "sv_local.h"
-#include "cl_local.h"
+#include "server/sv_local.h"
+#include "client/cl_local.h"
 
 
 IMPLEMENT_CLASS(V, BasePlayer)

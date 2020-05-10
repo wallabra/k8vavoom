@@ -25,8 +25,8 @@
 //**************************************************************************
 #include <stdlib.h>
 #include <string.h>
-//#include "../libs/core/hashfunc.h"
-#include "../libs/core/core.h"
+//#include "../../libs/core/hashfunc.h"
+#include "../../libs/core/core.h"
 
 struct VertexInfo {
   float xy[2];
@@ -50,7 +50,7 @@ static int cli_WarnUnknownKeys = 1;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#include "gamedefs.h"
+#include "../gamedefs.h"
 
 
 enum {

@@ -24,7 +24,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "sv_local.h"
+#include "server/sv_local.h"
 
 
 IMPLEMENT_CLASS(V, WorldInfo)

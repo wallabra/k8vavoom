@@ -27,8 +27,8 @@
 //**    Build nodes using ajbsp.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "bsp/ajbsp/bsp.h"
+#include "../gamedefs.h"
+#include "../bsp/ajbsp/bsp.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
