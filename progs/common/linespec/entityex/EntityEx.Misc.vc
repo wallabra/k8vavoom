@@ -1439,10 +1439,11 @@ override void OnMapSpawn (mthing_t *mthing) {
       }
       lorg = Origin+LightOffset;
     }
+    float radius = (mthing && mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius);
     if (LightColor == 0xffffffff) {
-      Level.AddStaticLight(self, lorg, mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius);
+      Level.AddStaticLight(self, lorg, radius);
     } else {
-      Level.AddStaticLightRGB(self, lorg, mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius, LightColor);
+      Level.AddStaticLightRGB(self, lorg, radius, LightColor);
     }
     //printdebug("%C: spawned static light! org=%s (ofs=%s); ceiling=%s", self, lorg, LightOffset, Sector.ceiling.minz);
     //bSpawnCeiling
