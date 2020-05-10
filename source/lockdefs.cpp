@@ -44,11 +44,13 @@ static void ParseLockDefs (VScriptParser *sc) {
       }
       continue;
     }
+
     if (sc->Check("Lock")) {
+      auto loc = sc->GetLoc();
       // lock number
       sc->ExpectNumber();
       int Lock = sc->Number;
-      if (Lock <= 0 || Lock >= 255) sc->Error(va("Bad lock number (%d)", sc->Number));
+      if (Lock <= 0 || Lock > 255) sc->Error(va("Bad lock number (%d)", sc->Number));
       if (LockDefs[Lock]) {
         delete LockDefs[Lock];
         LockDefs[Lock] = nullptr;
@@ -57,13 +59,15 @@ static void ParseLockDefs (VScriptParser *sc) {
       LockDefs[Lock] = LDef;
       LDef->MapColor = 0;
       LDef->LockedSound = "misc/keytry";
+      vuint32 GameFilter = 0;
 
-      // skip game specifier
-      if (sc->Check("Doom") || sc->Check("Heretic") ||
-          sc->Check("Hexen") || sc->Check("Strife") ||
-          sc->Check("Chex"))
-      {
+      // parse game specifier
+      for (;;) {
+        const vuint32 ngf = SC_ParseGameDef(sc);
+        if (!ngf) break;
+        GameFilter |= ngf;
       }
+      const bool validLock = (GameFilter == 0 || (GameFilter&GGameInfo->GameFilterFlag) != 0);
 
       sc->Expect("{");
       while (!sc->Check("}")) {
@@ -79,12 +83,12 @@ static void ParseLockDefs (VScriptParser *sc) {
         }
         if (sc->Check("MapColor")) {
           sc->ExpectNumber();
-          int r = sc->Number;
+          int r = clampToByte(sc->Number);
           sc->ExpectNumber();
-          int g = sc->Number;
+          int g = clampToByte(sc->Number);
           sc->ExpectNumber();
-          int b = sc->Number;
-          LDef->MapColor = 0xff000000 | (r << 16) | (g << 8) | b;
+          int b = clampToByte(sc->Number);
+          LDef->MapColor = 0xff000000|(r<<16)|(g<<8)|b;
           continue;
         }
         if (sc->Check("LockedSound")) {
@@ -97,28 +101,42 @@ static void ParseLockDefs (VScriptParser *sc) {
           VLockGroup &Grp = LDef->Locks.Alloc();
           while (!sc->Check("}")) {
             sc->ExpectString();
-            VClass *Cls = VClass::FindClassNoCase(*sc->String);
-            if (!Cls) {
-              GCon->Logf(NAME_Warning, "%s: No lockdef class '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
-            } else {
-              Grp.AnyKeyList.Append(Cls);
+            if (validLock) {
+              VClass *Cls = VClass::FindClassNoCase(*sc->String);
+              if (!Cls) {
+                GCon->Logf(NAME_Warning, "%s: No lockdef class '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
+              } else {
+                Grp.AnyKeyList.Append(Cls);
+              }
             }
           }
           continue;
         }
         sc->ExpectString();
-        VClass *Cls = VClass::FindClassNoCase(*sc->String);
-        if (!Cls) {
-          GCon->Logf(NAME_Warning, "%s: No lockdef class '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
-        } else {
-          LDef->Locks.Alloc().AnyKeyList.Append(Cls);
+        if (validLock) {
+          VClass *Cls = VClass::FindClassNoCase(*sc->String);
+          if (!Cls) {
+            GCon->Logf(NAME_Warning, "%s: No lockdef class '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
+          } else {
+            LDef->Locks.Alloc().AnyKeyList.Append(Cls);
+          }
         }
       }
+
       // copy message if other one is not defined
       if (LDef->Message.IsEmpty()) LDef->Message = LDef->RemoteMessage;
       if (LDef->RemoteMessage.IsEmpty()) LDef->RemoteMessage = LDef->Message;
+
+      // remove lock for another game
+      if (!validLock) {
+        GCon->Logf(NAME_Init, "%s: skipped lock for another game", *loc.toStringNoCol());
+        delete LockDefs[Lock];
+        LockDefs[Lock] = nullptr;
+      }
+
       continue;
     }
+
     sc->Error(va("invalid lockdef command (%s)", *sc->String));
   }
   delete sc;

@@ -284,6 +284,25 @@ static void ResetReplacementBase () {
 }
 
 
+//==========================================================================
+//
+//  SC_ParseGameDef
+//
+//==========================================================================
+vuint32 SC_ParseGameDef (VScriptParser *sc, bool allowAny) {
+  vassert(sc);
+  vuint32 GameFilter = 0;
+       if (sc->Check("Doom")) GameFilter |= GAME_Doom;
+  else if (sc->Check("Heretic")) GameFilter |= GAME_Heretic;
+  else if (sc->Check("Hexen")) GameFilter |= GAME_Hexen;
+  else if (sc->Check("Strife")) GameFilter |= GAME_Strife;
+  else if (sc->Check("Raven")) GameFilter |= GAME_Raven;
+  else if (allowAny && sc->Check("Any")) GameFilter |= GAME_Any;
+  else if (sc->Check("Chex")) GameFilter |= GAME_Chex;
+  return GameFilter;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 #include "vc_bloodinfo.cpp"
 #include "vc_classignore.cpp"
@@ -2301,14 +2320,11 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             ParseParentState(sc, Class, *P.PropName);
             break;
           case PROP_Game:
-                 if (sc->Check("Doom")) GameFilter |= GAME_Doom;
-            else if (sc->Check("Heretic")) GameFilter |= GAME_Heretic;
-            else if (sc->Check("Hexen")) GameFilter |= GAME_Hexen;
-            else if (sc->Check("Strife")) GameFilter |= GAME_Strife;
-            else if (sc->Check("Raven")) GameFilter |= GAME_Raven;
-            else if (sc->Check("Any")) GameFilter |= GAME_Any;
-            else if (sc->Check("Chex")) GameFilter |= GAME_Chex;
-            else if (GameFilter) sc->Error("Unknown game filter");
+            {
+              const vuint32 ngf = SC_ParseGameDef(sc);
+              if (!ngf) sc->Error("Unknown game filter");
+              GameFilter |= ngf;
+            }
             break;
           case PROP_SpawnId:
             if (sc->CheckNumber()) {

@@ -62,3 +62,6 @@ extern TMapNC<VName, bool> BlockedSpawnSet;
 extern TMapNC<VName, VClass *> ForceReplacements;
 
 extern bool decoIgnorePlayerSpeed;
+
+// 0: no game defs, otherwise bitor of GAME_xxx
+extern vuint32 SC_ParseGameDef (VScriptParser *sc, bool allowAny=true);
