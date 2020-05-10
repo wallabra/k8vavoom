@@ -107,6 +107,7 @@ bool Physics (float DeltaTime) {
       Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
       bIntrJustMoved = false; // disable movement interpolation
     }
+    if (bStaticLightSpawned) Level.MoveStaticLightByOwner(self, Origin+LightOffset);
     return true;
   }
 
