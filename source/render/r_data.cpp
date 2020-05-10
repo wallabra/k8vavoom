@@ -1631,13 +1631,20 @@ void R_ParseEffectDefs () {
     ParseGZDoomEffectDefs(lmpidx, new VScriptParser(W_FullLumpName(lmpidx), W_CreateLumpReaderNum(lmpidx)), ClassDefs);
   }
 
+  // build known effects list, so we can properly apply replacements
+  TMap<VStrCI, bool> knownClasses;
+  for (auto &&cd : ClassDefs) knownClasses.put(cd.ClassName, true);
+
   // add effects to the classes
   for (int i = 0; i < ClassDefs.Num(); ++i) {
     VTempClassEffects &CD = ClassDefs[i];
     VClass *Cls = VClass::FindClassNoCase(*CD.ClassName);
     if (Cls) {
       // get class replacement
-      Cls = Cls->GetReplacement();
+      VClass *repl = Cls->GetReplacement();
+      // check if we have separate definition for replacement class
+      if (repl != Cls && !knownClasses.has(repl->GetName())) Cls = repl;
+      //Cls = Cls->GetReplacement();
     } else {
       if (dbg_show_missing_classes) {
         if (CD.StaticLight.IsNotEmpty()) {
