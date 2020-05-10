@@ -220,6 +220,7 @@ void VRenderLevelShadowVolume::RefilterStaticLights () {
     } else {
       //if (cl.owner) GCon->Logf(NAME_Debug, "ADVR: filtered static light from `%s`; org=(%g,%g,%g); radius=%g", cl.owner->GetClass()->GetName(), cl.origin.x, cl.origin.y, cl.origin.z, cl.radius);
     }
+    CalcStaticLightTouchingSubs(currlidx, cl);
   }
 
   if (actlights < llen) GCon->Logf("filtered %d static lights out of %d (%d left)", llen-actlights, llen, actlights);

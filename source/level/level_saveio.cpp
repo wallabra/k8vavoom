@@ -623,14 +623,12 @@ void VLevel::SerialiseOther (VStream &Strm) {
   // static lights
   {
     TMapNC<vuint32, VEntity *> suidmap;
+    vint32 slcount = StaticLights.length();
 
-    Strm << STRM_INDEX(NumStaticLights);
+    Strm << STRM_INDEX(slcount);
     if (Strm.IsLoading()) {
-      if (StaticLights) {
-        delete[] StaticLights;
-        StaticLights = nullptr;
-      }
-      if (NumStaticLights) StaticLights = new rep_light_t[NumStaticLights];
+      StaticLights.setLength(slcount);
+      if (StaticLightsMap) StaticLightsMap->clear();
     } else {
       // build uid map
       for (TThinkerIterator<VEntity> ent(this); ent; ++ent) {
@@ -639,26 +637,42 @@ void VLevel::SerialiseOther (VStream &Strm) {
       }
     }
 
-    for (i = 0; i < NumStaticLights; ++i) {
+    int lidx = -1;
+    for (auto &&sl : StaticLights) {
+      ++lidx;
       VNTValueIOEx vio(&Strm);
-      //TODO: save static light entity
-      vio.io(VName("Origin"), StaticLights[i].Origin);
-      vio.io(VName("Radius"), StaticLights[i].Radius);
-      vio.io(VName("Color"), StaticLights[i].Color);
+      vio.io(VName("Origin"), sl.Origin);
+      vio.io(VName("Radius"), sl.Radius);
+      vio.io(VName("Color"), sl.Color);
+      vint32 inactive = (Strm.IsLoading() ? 0 : (sl.Flags&rep_light_t::LightActive ? 0 : 1));
+      vio.iodef(VName("Inactive"), inactive, 0);
+      // owner
       if (Strm.IsLoading()) {
         VEntity *owner = nullptr;
         vio.io(VName("Owner"), owner);
-        StaticLights[i].OwnerUId = (owner ? owner->ServerUId : 0);
+        sl.OwnerUId = (owner ? owner->ServerUId : 0);
+        if (sl.OwnerUId) {
+          if (!StaticLightsMap) StaticLightsMap = new TMapNC<vuint32, int>();
+          auto oidp = StaticLightsMap->find(sl.OwnerUId);
+          if (oidp) StaticLights[*oidp].OwnerUId = 0; //FIXME
+          StaticLightsMap->put(sl.OwnerUId, lidx);
+        }
       } else {
-        auto opp = suidmap.find(StaticLights[i].OwnerUId);
+        auto opp = suidmap.find(sl.OwnerUId);
         VEntity *owner = (opp ? *opp : nullptr);
         vio.io(VName("Owner"), owner);
       }
-      //vio.io(VName("OwnerUId"), StaticLights[i].OwnerUId);
-      vio.io(VName("ConeDir"), StaticLights[i].ConeDir);
-      vio.io(VName("ConeAngle"), StaticLights[i].ConeAngle);
-      vuint32 flags = 0;
-      vio.io(VName("Flags"), flags);
+      vio.io(VName("ConeDir"), sl.ConeDir);
+      vio.io(VName("ConeAngle"), sl.ConeAngle);
+      vio.io(VName("Flags"), sl.Flags);
+      if (Strm.IsLoading()) {
+        if (inactive) {
+          sl.Flags &= ~rep_light_t::LightActive;
+        } else {
+          sl.Flags |= rep_light_t::LightActive;
+        }
+        sl.Flags |= rep_light_t::LightChanged;
+      }
     }
   }
 

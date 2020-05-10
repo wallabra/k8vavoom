@@ -263,7 +263,7 @@ void VLevelChannel::WaitForMapLoaded () {
 //==========================================================================
 void VLevelChannel::SendStaticLights () {
   // just in case
-  if (StaticLightsNext >= Level->NumStaticLights) {
+  if (StaticLightsNext >= Level->StaticLights.length()) {
     SendPreRender();
     return;
   }
@@ -274,7 +274,7 @@ void VLevelChannel::SendStaticLights () {
 
   if (StaticLightsNext == 0) strm.WriteUInt(CMD_ResetStaticLights);
 
-  for (int i = 0; i < Level->NumStaticLights; ++i) {
+  for (int i = 0; i < Level->StaticLights.length(); ++i) {
     StaticLightsNext = i+1;
     // forced update
     if (UpdateStaticLight(Msg, strm, i, true)) {
@@ -295,7 +295,7 @@ void VLevelChannel::SendStaticLights () {
 //
 //==========================================================================
 void VLevelChannel::SendPreRender () {
-  GCon->Logf(NAME_DevNet, "sending prerender to %s (%d of %d static lights sent)", *Connection->GetAddress(), StaticLightsNext, Level->NumStaticLights);
+  GCon->Logf(NAME_DevNet, "sending prerender to %s (%d of %d static lights sent)", *Connection->GetAddress(), StaticLightsNext, Level->StaticLights.length());
   VMessageOut Msg(this);
   Msg.WriteUInt(CMD_PreRender);
   SendMessage(&Msg);
@@ -1473,9 +1473,13 @@ bool VLevelChannel::ParseBodyQueueTran (VMessageIn &Msg) {
 //==========================================================================
 int VLevelChannel::UpdateStaticLight (VMessageOut &Msg, VBitStreamWriter &strm, int idx, bool forced) {
   if (idx > 65535) return 0; // arbitrary limit
-  vassert(idx >= 0 && idx < Level->NumStaticLights);
+  vassert(idx >= 0 && idx < Level->StaticLights.length());
 
   rep_light_t &L = Level->StaticLights[idx];
+
+  //FIXME: send deactivation too
+  if (!L.IsActive()) return 0;
+
   if (!forced && !(L.Flags&rep_light_t::LightChanged)) return 0;
 
   strm.WriteUInt(CMD_StaticLight);

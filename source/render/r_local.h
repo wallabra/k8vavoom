@@ -823,6 +823,9 @@ public:
   virtual void ResetStaticLights () override;
   virtual void AddStaticLightRGB (vuint32 OwnerUId, const TVec &origin, float radius, vuint32 color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f) override;
   virtual void MoveStaticLightByOwner (vuint32 OwnerUId, const TVec &origin) override;
+  virtual void RemoveStaticLightByOwner (vuint32 OwnerUId) override;
+
+  void RemoveStaticLightByIndex (int slidx);
 
   virtual void ClearReferences () override;
 

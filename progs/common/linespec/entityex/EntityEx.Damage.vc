@@ -1152,6 +1152,11 @@ void Died (EntityEx source, EntityEx inflictor) {
     SetState(DeathState);
     StateTime -= Random()*0.1;
     if (StateTime < 1.0/35.0) StateTime = 1.0/35.0;
+    // remove static light if we are shootable (hack for various shootable lamps)
+    if (bStaticLightSpawned && !bMonster && !bMissile && !bIsPlayer /*&& bSolid*/) {
+      //bStaticLightSpawned = false; // do not reset this, or the thing will spawn dynamic lights
+      Level.RemoveStaticLightByOwner(self);
+    }
   } else {
     //if (bIsPlayer) writeln("************ DESTROYING PLAYER!");
     Destroy();

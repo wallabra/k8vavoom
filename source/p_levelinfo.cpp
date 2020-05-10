@@ -396,6 +396,12 @@ IMPLEMENT_FUNCTION(VLevelInfo, MoveStaticLightByOwner) {
   Self->XLevel->MoveStaticLightByOwner(Ent, Origin);
 }
 
+IMPLEMENT_FUNCTION(VLevelInfo, RemoveStaticLightByOwner) {
+  P_GET_REF(VEntity, Ent);
+  P_GET_SELF;
+  Self->XLevel->RemoveStaticLightByOwner(Ent);
+}
+
 IMPLEMENT_FUNCTION(VLevelInfo, SectorStartSequence) {
   P_GET_INT(ModeNum);
   P_GET_NAME(name);

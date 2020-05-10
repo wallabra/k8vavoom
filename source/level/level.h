@@ -125,10 +125,15 @@ struct rep_light_t {
   vuint32 OwnerUId; // 0: no owner
   TVec ConeDir;
   float ConeAngle;
+  //int NextUIdIndex; // -1 or next light for this OwnerUId
   enum {
     LightChanged = 1u<<0,
+    LightActive  = 1u<<1,
   };
   vuint32 Flags;
+
+  inline bool IsChanged () const noexcept { return (Flags&LightChanged); }
+  inline bool IsActive () const noexcept { return (Flags&LightActive); }
 };
 
 
@@ -322,8 +327,8 @@ class VLevel : public VGameObject {
   rep_sector_t *BaseSectors;
   rep_polyobj_t *BasePolyObjs;
 
-  rep_light_t *StaticLights;
-  vint32 NumStaticLights;
+  TArray<rep_light_t> StaticLights;
+  TMapNC<vuint32, int> *StaticLightsMap; // key: owner; value: index in `StaticLights`
 
   TArray<VSndSeqInfo> ActiveSequences;
   TArray<VCameraTextureInfo> CameraTextures;
@@ -600,9 +605,11 @@ public:
 
   void AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f);
   void MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin);
+  void RemoveStaticLightByOwner (VEntity *Ent);
 
   void AddStaticLightRGB (vuint32 owneruid, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f);
   void MoveStaticLightByOwner (vuint32 owneruid, const TVec &Origin);
+  void RemoveStaticLightByOwner (vuint32 owneruid);
 
   VThinker *SpawnThinker (VClass *AClass, const TVec &AOrigin=TVec(0, 0, 0),
                           const TAVec &AAngles=TAVec(0, 0, 0), mthing_t *mthing=nullptr,

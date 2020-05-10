@@ -315,15 +315,7 @@ void VLevel::ClearReferences () {
       CameraTextures[i].Camera = nullptr;
     }
   }
-  // static lights
-  // TODO: collect all static lights with owners into separate list for speed
-  // uids are VERY unlikely to be non-unique; and we have no way to know if UId is valid too
-  /*
-  for (int f = 0; f < NumStaticLights; ++f) {
-    rep_light_t &sl = StaticLights[f];
-    if (sl.Owner && sl.Owner->IsRefToCleanup()) sl.Owner = nullptr;
-  }
-  */
+  // static lights will be cleaned in thinker remover
   // renderer
   if (Renderer) Renderer->ClearReferences();
 }
@@ -409,17 +401,22 @@ void VLevel::Destroy () {
     delete Acs;
     Acs = nullptr;
   }
+
   if (GenericSpeeches) {
     delete[] GenericSpeeches;
     GenericSpeeches = nullptr;
   }
+
   if (LevelSpeeches) {
     delete[] LevelSpeeches;
     LevelSpeeches = nullptr;
   }
-  if (StaticLights) {
-    delete[] StaticLights;
-    StaticLights = nullptr;
+
+  StaticLights.clear();
+  if (StaticLightsMap) {
+    StaticLightsMap->clear();
+    delete StaticLightsMap;
+    StaticLightsMap = nullptr;
   }
 
   ActiveSequences.Clear();
@@ -453,9 +450,8 @@ void VLevel::Destroy () {
 //
 //==========================================================================
 void VLevel::ResetStaticLights () {
-  delete StaticLights;
-  StaticLights = nullptr;
-  NumStaticLights = 0;
+  StaticLights.clear();
+  if (StaticLightsMap) StaticLightsMap->clear();
 }
 
 
@@ -465,22 +461,22 @@ void VLevel::ResetStaticLights () {
 //
 //==========================================================================
 void VLevel::AddStaticLightRGB (vuint32 owneruid, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection, float coneAngle) {
-  //FIXME: use proper data structure instead of reallocating it again and again
-  rep_light_t *OldLights = StaticLights;
-  ++NumStaticLights;
-  StaticLights = new rep_light_t[NumStaticLights];
-  if (OldLights) {
-    memcpy(StaticLights, OldLights, (NumStaticLights-1)*sizeof(rep_light_t));
-    delete[] OldLights;
-  }
-  rep_light_t &L = StaticLights[NumStaticLights-1];
+  if (owneruid && !StaticLightsMap) StaticLightsMap = new TMapNC<vuint32, int>();
+  const int idx = StaticLights.length();
+  rep_light_t &L = StaticLights.alloc();
   L.OwnerUId = owneruid;
   L.Origin = Origin;
   L.Radius = Radius;
   L.Color = Color;
   L.ConeDir = coneDirection;
   L.ConeAngle = coneAngle;
-  L.Flags = rep_light_t::LightChanged;
+  L.Flags = rep_light_t::LightChanged|rep_light_t::LightActive;
+  if (owneruid) {
+    vassert(StaticLightsMap);
+    auto oidxp = StaticLightsMap->find(owneruid);
+    if (oidxp) StaticLights[*oidxp].OwnerUId = 0; //FIXME!
+    StaticLightsMap->put(owneruid, idx);
+  }
   #ifdef CLIENT
   if (Renderer) Renderer->AddStaticLightRGB(owneruid, Origin, Radius, Color, coneDirection, coneAngle);
   #endif
@@ -494,22 +490,41 @@ void VLevel::AddStaticLightRGB (vuint32 owneruid, const TVec &Origin, float Radi
 //==========================================================================
 void VLevel::MoveStaticLightByOwner (vuint32 owneruid, const TVec &Origin) {
   if (!owneruid) return;
-  //FIXME: use proper data structure instead of reallocating it again and again
-  //TODO: write this with hashmap, and replicate properly
-  /* there is no reason to do this yet, becase we cannot update static lights via network
-  rep_light_t *stl = StaticLights;
-  for (int count = NumStaticLights; count--; ++stl) {
-    if (stl->Owner == Ent) break;
+  if (!StaticLightsMap) return; // no owned lights
+  auto oidxp = StaticLightsMap->find(owneruid);
+  if (!oidxp) return; // no such owned light
+  // check if it is moved far enough
+  rep_light_t &sl = StaticLights[*oidxp];
+  if (fabs(sl.Origin.x-Origin.x) <= 4 &&
+      fabs(sl.Origin.y-Origin.y) <= 4 &&
+      fabs(sl.Origin.z-Origin.z) <= 4)
+  {
+    return;
   }
-  if (stl) {
-    if (stl->Origin != Ent->Origin) {
-      stl->Origin = Ent->Origin;
-      stl->Flags |= rep_light_t::LightChanged;
-    }
-  }
-  */
+  StaticLights[*oidxp].Origin = Origin;
   #ifdef CLIENT
   if (Renderer) Renderer->MoveStaticLightByOwner(owneruid, Origin);
+  #endif
+}
+
+
+//==========================================================================
+//
+//  VLevel::RemoveStaticLightByOwner
+//
+//==========================================================================
+void VLevel::RemoveStaticLightByOwner (vuint32 owneruid) {
+  if (!owneruid) return;
+  if (!StaticLightsMap) return; // no owned lights
+  auto oidxp = StaticLightsMap->find(owneruid);
+  if (!oidxp) return; // no such owned light
+  rep_light_t &sl = StaticLights[*oidxp];
+  sl.Flags = rep_light_t::LightChanged;
+  sl.Flags &= ~rep_light_t::LightActive;
+  sl.OwnerUId = 0;
+  StaticLightsMap->del(owneruid);
+  #ifdef CLIENT
+  if (Renderer) Renderer->RemoveStaticLightByOwner(owneruid);
   #endif
 }
 
@@ -531,8 +546,20 @@ void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, 
 //==========================================================================
 void VLevel::MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin) {
   if (!Ent) return;
-  if (Ent->IsGoingToDie()) return;
+  if (Ent->IsGoingToDie()) return; // the engine will remove it on GC
   MoveStaticLightByOwner(Ent->/*GetUniqueId()*/ServerUId, Origin);
+}
+
+
+//==========================================================================
+//
+//  VLevel::RemoveStaticLightByOwner
+//
+//==========================================================================
+void VLevel::RemoveStaticLightByOwner (VEntity *Ent) {
+  if (!Ent) return;
+  if (Ent->IsGoingToDie()) return; // the engine will remove it on GC
+  RemoveStaticLightByOwner(Ent->/*GetUniqueId()*/ServerUId);
 }
 
 

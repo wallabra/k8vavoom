@@ -501,6 +501,7 @@ template<typename T> void FilterLightmap (T *lmap, const int wdt, const int hgt)
 //==========================================================================
 void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf, const vuint8 *facevis) {
   if (surf->count < 3) return; // wtf?!
+  if (!light->active || light->radius < 2) return;
 
   // check potential visibility
   if (facevis) {
@@ -1737,6 +1738,7 @@ void VRenderLevelLightmap::InvalidateStaticLightmapsSubs (subsector_t *sub) {
     const int stidx = it.getKey();
     if (stidx < 0 || stidx >= Lights.length()) continue; // just in case
     light_t *lt = &Lights.ptr()[stidx];
+    if (!lt->active || lt->radius < 2) return;
     // check if it is already processed
     if (lt->invalidateFrame == currDLightFrame) continue;
     // mark it

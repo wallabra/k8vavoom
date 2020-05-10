@@ -76,6 +76,11 @@ void VRenderLevelShared::ResetStaticLights () {
   StOwners.reset();
   Lights.reset();
   //GCon->Log(NAME_Debug, "VRenderLevelShared::ResetStaticLights");
+  // clear touching subs
+  for (auto &&ssl : SubStaticLights) {
+    ssl.touchedStatic.reset();
+    ssl.invalidateFrame = 0;
+  }
 }
 
 
@@ -122,6 +127,7 @@ void VRenderLevelShared::MoveStaticLightByOwner (vuint32 OwnerUId, const TVec &o
   {
     return;
   }
+  //GCon->Logf(NAME_Debug, "moving static light #%d (owner uid=%u)", *stp, sl.ownerUId);
   //if (sl.origin == origin) return;
   if (sl.active && r_lmap_recalc_moved_static) InvalidateStaticLightmaps(sl.origin, sl.radius, false);
   sl.origin = origin;
@@ -129,6 +135,41 @@ void VRenderLevelShared::MoveStaticLightByOwner (vuint32 OwnerUId, const TVec &o
   sl.leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(sl.origin)-Level->Subsectors);
   CalcStaticLightTouchingSubs(*stp, sl);
   if (sl.active && r_lmap_recalc_moved_static) InvalidateStaticLightmaps(sl.origin, sl.radius, true);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::RemoveStaticLightByIndex
+//
+//==========================================================================
+void VRenderLevelShared::RemoveStaticLightByIndex (int slidx) {
+  if (slidx < 0 || slidx >= Lights.length()) return;
+  light_t *sl = Lights.ptr()+slidx;
+  //GCon->Logf(NAME_Debug, "removing static light #%d (owner uid=%u)", slidx, sl->ownerUId);
+  if (sl->active) {
+    if (r_lmap_recalc_moved_static) InvalidateStaticLightmaps(sl->origin, sl->radius, false);
+    sl->active = false;
+  }
+  if (sl->ownerUId) {
+    StOwners.del(sl->ownerUId);
+    sl->ownerUId = 0;
+    CalcStaticLightTouchingSubs(slidx, *sl);
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::RemoveStaticLightByOwner
+//
+//==========================================================================
+void VRenderLevelShared::RemoveStaticLightByOwner (vuint32 OwnerUId) {
+  if (!OwnerUId) return;
+  auto stp = StOwners.get(OwnerUId);
+  if (!stp) return;
+  //GCon->Logf(NAME_Debug, "removing static light with owner uid %u (%d)", OwnerUId, *stp);
+  RemoveStaticLightByIndex(*stp);
 }
 
 
@@ -505,6 +546,7 @@ void VRenderLevelShared::ThinkerAdded (VThinker *Owner) {
 //==========================================================================
 void VRenderLevelShared::ThinkerDestroyed (VThinker *Owner) {
   if (!Owner) return;
+  // remove dynamic light
   auto idxp = dlowners.find(Owner->ServerUId);
   if (idxp) {
     dlight_t *dl = &DLights[*idxp];
@@ -514,13 +556,9 @@ void VRenderLevelShared::ThinkerDestroyed (VThinker *Owner) {
     dl->ownerUId = 0;
     dlowners.del(Owner->ServerUId);
   }
+  // remove static light
   auto stxp = StOwners.find(Owner->ServerUId);
-  if (stxp) {
-    //Lights[*stxp].dynowner = nullptr;
-    Lights[*stxp].ownerUId = 0;
-    Lights[*stxp].active = false;
-    StOwners.del(Owner->ServerUId);
-  }
+  if (stxp) RemoveStaticLightByIndex(*stxp);
   suid2ent.remove(Owner->ServerUId);
 }
 
@@ -1231,7 +1269,6 @@ void VRenderLevelShared::CalcBSPNodeLMaps (int slindex, light_t &sl, int bspnum,
 //==========================================================================
 void VRenderLevelShared::CalcStaticLightTouchingSubs (int slindex, light_t &sl) {
   //FIXME: make this faster!
-  if (sl.radius < 1.0f) return;
   float bbox[6];
   bbox[0] = bbox[1] = bbox[2] = -999999.0f;
   bbox[3] = bbox[4] = bbox[5] = 999999.0f;
@@ -1244,6 +1281,8 @@ void VRenderLevelShared::CalcStaticLightTouchingSubs (int slindex, light_t &sl) 
   }
 
   sl.touchedSubs.reset();
+  if (!sl.active || sl.radius < 2.0f) return;
+
   //sl.touchedPolys.reset();
   CalcBSPNodeLMaps(slindex, sl, Level->NumNodes-1, bbox);
 }
