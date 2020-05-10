@@ -209,5 +209,6 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
 }
 
 
+// heretic
 Actor (optional) K8BDW_CrossbowSG : BDW_Shotgun Replaces Crossbow {}
 Actor (optional) K8BDW_CrossbowPoweredSG : BDW_Shotgun Replaces CrossbowPowered {}

@@ -323,5 +323,6 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
 }
 
 
+// heretic
 Actor (optional) K8BDW_GoldWandRifle : BDW_Rifle Replaces GoldWand {}
 Actor (optional) K8BDW_GoldWandPoweredRifle : BDW_Rifle Replaces GoldWandPowered {}
