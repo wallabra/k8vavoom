@@ -1426,12 +1426,26 @@ override void OnMapSpawn (mthing_t *mthing) {
   }
 
   if (bStaticLight && mthing && !TID) {
-    if (LightColor == 0xffffffff) {
-      Level.AddStaticLight(self, Origin+LightOffset, mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius);
-    } else {
-      Level.AddStaticLightRGB(self, Origin+LightOffset, mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius, LightColor);
+    // fix for dehacked overrides that spawns the light inside the ceiling
+    TVec lorg = Origin+LightOffset;
+    if (bSpawnCeiling) {
+      if (lorg.z > Sector.ceiling.minz-1) {
+        lorg = Origin-LightOffset;
+        if (lorg.z > Sector.ceiling.minz-1) {
+          LightOffset.z = (Origin.z > Sector.ceiling.minz-1 ? Sector.ceiling.minz-Origin.z-1 : 0);
+        } else {
+          LightOffset.z = -LightOffset.z;
+        }
+      }
+      lorg = Origin+LightOffset;
     }
-    //printdebug("%C: spawned static light!", self);
+    if (LightColor == 0xffffffff) {
+      Level.AddStaticLight(self, lorg, mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius);
+    } else {
+      Level.AddStaticLightRGB(self, lorg, mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius, LightColor);
+    }
+    //printdebug("%C: spawned static light! org=%s (ofs=%s); ceiling=%s", self, lorg, LightOffset, Sector.ceiling.minz);
+    //bSpawnCeiling
     bStaticLightSpawned = true;
   }
 
