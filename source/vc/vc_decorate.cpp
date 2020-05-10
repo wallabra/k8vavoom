@@ -3577,6 +3577,27 @@ static void SetupLimiters () {
 
 //==========================================================================
 //
+//  ParseDecorateLump
+//
+//==========================================================================
+static void ParseDecorateLump (int Lump, int &lastDecoFile, TArray<VClassFixup> &ClassFixups, TArray<VWeaponSlotFixups> &newWSlots) {
+  if (Lump < 0) return;
+  mainDecorateLump = Lump;
+  GLog.Logf(NAME_Init, "Parsing decorate script '%s'", *W_FullLumpName(Lump));
+  if (lastDecoFile != W_LumpFile(Lump)) {
+    lastDecoFile = W_LumpFile(Lump);
+    ResetReplacementBase();
+  }
+  thisIsBasePak = false;
+  bloodOverrideAllowed = false;
+  ParseDecorate(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
+  thisIsBasePak = false; // reset it
+  mainDecorateLump = -1;
+}
+
+
+//==========================================================================
+//
 //  ProcessDecorateScripts
 //
 //==========================================================================
@@ -3667,26 +3688,62 @@ void ProcessDecorateScripts () {
   FuncA_FreezeDeath = ActorClass->FindMethodChecked("A_FreezeDeath");
   FuncA_FreezeDeathChunks = ActorClass->FindMethodChecked("A_FreezeDeathChunks");
 
+  // find "after_iwad" scripts
+  TArray<int> afterIWadDecLumps;
+  for (int Lump = W_IterateNS(-1, WADNS_AfterIWad); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_AfterIWad)) {
+    if (W_LumpName(Lump) == NAME_decorate) {
+      //GCon->Logf(NAME_Debug, "*** AFTERIWAD: <%s>", *W_FullLumpName(Lump));
+      afterIWadDecLumps.append(Lump);
+    }
+  }
+
   // parse scripts
   TArray<VClassFixup> ClassFixups;
   TArray<VWeaponSlotFixups> newWSlots;
   int lastDecoFile = -1;
+  bool iwadWatch = (afterIWadDecLumps.length() > 0);
+  bool wasIWad = false;
+  int lastFileSeen = -1;
+
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
+    if (iwadWatch) {
+      int fno = W_LumpFile(Lump);
+      if (lastFileSeen < fno) {
+        bool currIWad = false;
+        ++lastFileSeen;
+        while (lastFileSeen <= fno) {
+          if (W_IsIWADFile(lastFileSeen)) {
+            wasIWad = true;
+            currIWad = true;
+          } else {
+            currIWad = false;
+          }
+          ++lastFileSeen;
+        }
+        --lastFileSeen;
+        if (wasIWad && !currIWad) {
+          GLog.Logf(NAME_Init, "Adding \"after iwad\" decorates");
+          for (auto &&lmp : afterIWadDecLumps) ParseDecorateLump(lmp, lastDecoFile, ClassFixups, newWSlots);
+          afterIWadDecLumps.clear();
+          iwadWatch = false;
+          GLog.Logf(NAME_Init, "Done with \"after iwad\" decorates");
+        }
+      }
+    }
+
     //GLog.Logf(NAME_Init, "DC: 0x%08x (%s) : <%s>", Lump, *W_LumpName(Lump), *W_FullLumpName(Lump));
     if (W_LumpName(Lump) == NAME_decorate) {
-      mainDecorateLump = Lump;
-      GLog.Logf(NAME_Init, "Parsing decorate script '%s'", *W_FullLumpName(Lump));
-      if (lastDecoFile != W_LumpFile(Lump)) {
-        lastDecoFile = W_LumpFile(Lump);
-        ResetReplacementBase();
-      }
-      thisIsBasePak = false;
-      bloodOverrideAllowed = false;
-      ParseDecorate(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
-      thisIsBasePak = false; // reset it
-      mainDecorateLump = -1;
+      ParseDecorateLump(Lump, lastDecoFile, ClassFixups, newWSlots);
     }
   }
+
+  if (iwadWatch && afterIWadDecLumps.length() > 0) {
+    GLog.Logf(NAME_Init, "Adding \"after iwad\" decorates");
+    for (auto &&lmp : afterIWadDecLumps) ParseDecorateLump(lmp, lastDecoFile, ClassFixups, newWSlots);
+    afterIWadDecLumps.clear();
+    GLog.Logf(NAME_Init, "Done with \"after iwad\" decorates");
+  }
+
   //VMemberBase::StaticDumpMObjInfo();
   ClearReplacementBase();
 
