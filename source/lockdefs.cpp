@@ -49,14 +49,10 @@ static void ParseLockDefs (VScriptParser *sc) {
       auto loc = sc->GetLoc();
       // lock number
       sc->ExpectNumber();
-      int Lock = sc->Number;
+      const int Lock = sc->Number;
       if (Lock <= 0 || Lock > 255) sc->Error(va("Bad lock number (%d)", sc->Number));
-      if (LockDefs[Lock]) {
-        delete LockDefs[Lock];
-        LockDefs[Lock] = nullptr;
-      }
+
       VLockDef *LDef = new VLockDef;
-      LockDefs[Lock] = LDef;
       LDef->MapColor = 0;
       LDef->LockedSound = "misc/keytry";
       vuint32 GameFilter = 0;
@@ -129,9 +125,11 @@ static void ParseLockDefs (VScriptParser *sc) {
 
       // remove lock for another game
       if (!validLock) {
-        GCon->Logf(NAME_Init, "%s: skipped lock for another game", *loc.toStringNoCol());
-        delete LockDefs[Lock];
-        LockDefs[Lock] = nullptr;
+        GCon->Logf(NAME_Init, "%s: skipped lock #%d for another game", *loc.toStringNoCol(), Lock);
+        delete LDef;
+      } else {
+        if (LockDefs[Lock]) delete LockDefs[Lock];
+        LockDefs[Lock] = LDef;
       }
 
       continue;
