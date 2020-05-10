@@ -1440,7 +1440,7 @@ override void OnMapSpawn (mthing_t *mthing) {
       lorg = Origin+LightOffset;
     }
     float radius = (mthing && mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius);
-    if (LightConeAngle > 0 && LightConeAngle < 360) {
+    if (LightConeDir && LightConeAngle > 0) {
        Level.AddStaticLightRGB(self, lorg, radius, LightColor, LightConeDir, LightConeAngle);
     } else {
        Level.AddStaticLightRGB(self, lorg, radius, LightColor);
