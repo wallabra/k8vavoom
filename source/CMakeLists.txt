@@ -365,10 +365,7 @@ set(CS_SHARED_SOURCES
   misc.h
   misc.cpp
 
-  # yeah, the server needs this too
-  drawer.h
-  drawer.cpp
-  # ...and this
+  # yeah, the server needs this
   text.h
   text.cpp
 
@@ -440,6 +437,8 @@ set(COMBINED_SOURCES
   chat.cpp
   console.cpp
   console.h
+  drawer.h
+  drawer.cpp
   finale.h
   finale.cpp
   iline.h
