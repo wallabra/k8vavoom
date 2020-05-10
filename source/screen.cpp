@@ -153,7 +153,7 @@ static float lastScrScale = 0;
 
 static VCvarB dbg_disable_world_render("dbg_disable_world_render", false, "Disable world rendering?", 0);
 
-static VCvarF menu_darkening("menu_darkening", "0.6", "Screen darkening for active menus.", CVAR_Archive);
+static VCvarF menu_darkening("menu_darkening", "0.7", "Screen darkening for active menus.", CVAR_Archive);
 static VCvarB draw_pause("draw_pause", true, "Draw \"paused\" text?", CVAR_Archive);
 static VCvarB draw_world_timer("draw_world_timer", false, "Draw playing time?", CVAR_Archive);
 

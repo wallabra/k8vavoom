@@ -836,7 +836,7 @@ void Host_SaveConfiguration () {
   GInput->WriteBindings(&cst);
   cst.writef("//\n// aliases\n//\n");
   VCommand::WriteAlias(&cst);
-  cst.writef("//\n// variables\n//\n");
+  cst.writef("\n//\n// variables\n//\n");
   VCvar::WriteVariablesToStream(&cst);
 
   // compare with existing config (if there is any)
