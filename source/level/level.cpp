@@ -493,7 +493,7 @@ void VLevel::AddStaticLightRGB (vuint32 owneruid, const TVec &Origin, float Radi
 //
 //==========================================================================
 void VLevel::MoveStaticLightByOwner (vuint32 owneruid, const TVec &Origin) {
-  if (owneruid) return;
+  if (!owneruid) return;
   //FIXME: use proper data structure instead of reallocating it again and again
   //TODO: write this with hashmap, and replicate properly
   /* there is no reason to do this yet, becase we cannot update static lights via network
@@ -520,7 +520,7 @@ void VLevel::MoveStaticLightByOwner (vuint32 owneruid, const TVec &Origin) {
 //
 //==========================================================================
 void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection, float coneAngle) {
-  AddStaticLightRGB((Ent ? Ent->GetUniqueId() : 0u), Origin, Radius, Color, coneDirection, coneAngle);
+  AddStaticLightRGB((Ent ? Ent->/*GetUniqueId()*/ServerUId : 0u), Origin, Radius, Color, coneDirection, coneAngle);
 }
 
 
@@ -532,7 +532,7 @@ void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, 
 void VLevel::MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin) {
   if (!Ent) return;
   if (Ent->IsGoingToDie()) return;
-  MoveStaticLightByOwner(Ent->GetUniqueId(), Origin);
+  MoveStaticLightByOwner(Ent->/*GetUniqueId()*/ServerUId, Origin);
 }
 
 
