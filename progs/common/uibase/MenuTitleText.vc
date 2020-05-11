@@ -35,7 +35,7 @@ string Text;
 //==========================================================================
 void FixSize () {
   SetFont('bigfont');
-  SetConfiguration(0, 0, Parent.Width, TextHeight(Text)+4);
+  SetConfiguration(0, 0, Parent.Width, TextHeight(Text)+6);
 }
 
 
@@ -46,8 +46,10 @@ void FixSize () {
 //==========================================================================
 override void OnDraw () {
   SetFont('bigfont');
-  SetTextAlign(hcenter, vcenter);
-  DrawText(Width/2, Height/2, Text);
+  SetTextAlign(hcenter, vtop);
+  int y = (Height-TextHeight(Text))/2;
+  DrawText(Width/2, y, Text);
+  FillRect(0, Height-1, Width, 1, RGB(255, 60, 0));
 }
 
 
