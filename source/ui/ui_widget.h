@@ -191,6 +191,8 @@ protected:
   // if `w` is null, link as last
   void LinkToParentAfter (VWidget *w) noexcept;
 
+  bool SetupScissor ();
+
 protected:
   void DrawCharPic (int X, int Y, VTexture *Tex, float Alpha=1.0f, bool shadowed=false);
   inline void DrawCharPicShadowed (int X, int Y, VTexture *Tex) { DrawCharPic(X, Y, Tex, 1.0f, true); }
@@ -209,6 +211,8 @@ public:
   void DestroyAllChildren ();
 
   VRootWidget *GetRootWidget () noexcept;
+
+  inline const VClipRect &GetClipRect () const noexcept { return ClipRect; }
 
   void ToDrawerCoords (float &x, float &y) const noexcept;
   void ToDrawerCoords (int &x, int &y) const noexcept;
@@ -372,6 +376,8 @@ public:
   void FillHex (float x0, float y0, float w, float h, vuint32 color, float alpha=1.0f);
   void ShadeHex (float x0, float y0, float w, float h, float darkening);
 
+  bool IsPointInsideHex (float x, float y, float x0, float y0, float w, float h) noexcept;
+
   void CalcHexColorPatternDims (float *w, float *h, int radius, float cellW, float cellH);
   // returns `true` if the given "internal" hex pattern coordinates are valid
   bool IsValidHexColorPatternCoords (int hpx, int hpy, int radius);
@@ -384,6 +390,9 @@ public:
   int GetHexColorPatternColorAt (int hpx, int hpy, int radius);
   // draws hex pattern (WARNING: no clipping!)
   void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH);
+
+  // cannot move diagonally yet
+  void MoveHexCoords (int &hpx, int &hpy, int dx, int dy, int radius);
 
   // ignores `v`
   bool FindHexColorCoords (int *hpx, int *hpy, int radius, float h, float s);
@@ -487,6 +496,8 @@ public:
   DECLARE_FUNCTION(FillHex)
   DECLARE_FUNCTION(ShadeHex)
 
+  DECLARE_FUNCTION(IsPointInsideHex)
+
   DECLARE_FUNCTION(CalcHexColorPatternWidth)
   DECLARE_FUNCTION(CalcHexColorPatternHeight)
   DECLARE_FUNCTION(IsValidHexColorPatternCoords)
@@ -495,6 +506,8 @@ public:
   DECLARE_FUNCTION(GetHexColorPatternColorAt)
   DECLARE_FUNCTION(DrawHexColorPattern)
   DECLARE_FUNCTION(FindHexColorCoords)
+
+  DECLARE_FUNCTION(MoveHexCoords)
 
   DECLARE_FUNCTION(GetFont)
   DECLARE_FUNCTION(SetFont)

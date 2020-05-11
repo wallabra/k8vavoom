@@ -712,6 +712,22 @@ VWidget *VWidget::GetWidgetAt (float X, float Y, bool allowDisabled) noexcept {
 
 //==========================================================================
 //
+//  VWidget::SetupScissor
+//
+//==========================================================================
+bool VWidget::SetupScissor () {
+  if (IsUseScissor()) {
+    Drawer->SetScissor((int)ClipRect.ClipX1, (int)ClipRect.ClipY1, (int)(ClipRect.ClipX2-ClipRect.ClipX1+1), (int)(ClipRect.ClipY2-ClipRect.ClipY1+1));
+    Drawer->SetScissorEnabled(true);
+    return true;
+  }
+  if (!ParentWidget) return false;
+  return ParentWidget->SetupScissor();
+}
+
+
+//==========================================================================
+//
 //  VWidget::DrawTree
 //
 //==========================================================================
@@ -719,51 +735,26 @@ void VWidget::DrawTree () {
   if (IsGoingToDie()) return;
   if (!IsVisibleFlag() || !ClipRect.HasArea()) return; // not visible or clipped away
 
-  bool useScissor = IsUseScissor();
-
-  if (useScissor) {
-    Drawer->SetScissor((int)ClipRect.ClipX1, (int)ClipRect.ClipY1, (int)(ClipRect.ClipX2-ClipRect.ClipX1+1), (int)(ClipRect.ClipY2-ClipRect.ClipY1+1));
-    Drawer->SetScissorEnabled(true);
-  }
-
   // main draw event for this widget
-  OnDraw();
+  bool scissorSet = SetupScissor();
+  //Drawer->SetScissor(0, 0, 10, 10);
+  //Drawer->SetScissorEnabled(true);
 
-  if (useScissor && !IsUseScissor()) {
-    Drawer->SetScissorEnabled(false);
-    useScissor = false;
-  }
+  OnDraw();
 
   // draw chid widgets
   for (VWidget *c = FirstChildWidget; c; c = c->NextWidget) {
     if (c->IsGoingToDie()) continue;
-    if (IsUseScissor()) {
-      Drawer->SetScissor((int)ClipRect.ClipX1, (int)ClipRect.ClipY1, (int)(ClipRect.ClipX2-ClipRect.ClipX1+1), (int)(ClipRect.ClipY2-ClipRect.ClipY1+1));
-      Drawer->SetScissorEnabled(true);
-      useScissor = true;
-    } else if (useScissor) {
-      Drawer->SetScissorEnabled(false);
-      useScissor = false;
-    }
+    if (SetupScissor()) scissorSet = true;
     c->DrawTree();
   }
 
   // do any drawing after child wigets have been drawn
-  if (IsUseScissor()) {
-    Drawer->SetScissor((int)ClipRect.ClipX1, (int)ClipRect.ClipY1, (int)(ClipRect.ClipX2-ClipRect.ClipX1+1), (int)(ClipRect.ClipY2-ClipRect.ClipY1+1));
-    Drawer->SetScissorEnabled(true);
-    useScissor = true;
-  } else if (useScissor) {
-    Drawer->SetScissorEnabled(false);
-    useScissor = false;
-  }
-
+  if (SetupScissor()) scissorSet = true;
   OnPostDraw();
 
-  if (useScissor) {
-    Drawer->SetScissorEnabled(false);
-    useScissor = false;
-  }
+  if (scissorSet) Drawer->SetScissorEnabled(false);
+  Drawer->SetScissorEnabled(false);
 }
 
 
@@ -1484,6 +1475,17 @@ static bool TranslateCoords (const VClipRect &ClipRect, float &x, float &y) {
 
 //==========================================================================
 //
+//  UntranslateCoords
+//
+//==========================================================================
+static void UntranslateCoords (const VClipRect &ClipRect, float &x, float &y) {
+  x = (x-ClipRect.OriginX)/ClipRect.ScaleX;
+  y = (y-ClipRect.OriginY)/ClipRect.ScaleY;
+}
+
+
+//==========================================================================
+//
 //  VWidget::DrawHex
 //
 //==========================================================================
@@ -1537,17 +1539,186 @@ float VWidget::CalcHexHeight (float h) {
 
 //==========================================================================
 //
+//  VWidget::IsPointInsideHex
+//
+//==========================================================================
+bool VWidget::IsPointInsideHex (float x, float y, float x0, float y0, float w, float h) noexcept {
+  if (w <= 0.0f || h <= 0.0f) return false;
+  w *= ClipRect.ScaleX;
+  h *= ClipRect.ScaleY;
+  TranslateCoords(ClipRect, x0, y0);
+  TranslateCoords(ClipRect, x, y);
+  return VDrawer::IsPointInsideHex(x, y, x0, y0, w, h);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct HexHive {
+public:
+  int diameter;
+
+public:
+  inline HexHive (int radius) noexcept : diameter((radius < 1 ? 1 : radius)*2) {}
+
+  inline int getMinCY () const noexcept { return -diameter; }
+  inline int getMaxCY () const noexcept { return diameter; }
+  inline int getCYStep () const noexcept { return 2; }
+
+  inline int calcRowSize (const int cy) const noexcept { return diameter-abs(cy/2); }
+
+  inline int getMinCX (const int cy) const noexcept { return -calcRowSize(cy); }
+  inline int getMaxCX (const int cy) const noexcept { return calcRowSize(cy); }
+  inline int getCXStep () const noexcept { return 2; }
+
+  inline bool isValidCoordsInternal (const int cx, const int cy) const noexcept {
+    if (cy < -diameter || cy > diameter) return false;
+    const int rsz = calcRowSize(cy);
+    return (cx >= -rsz && cx <= rsz);
+  }
+
+  inline bool isValidCoordsPublic (int x, int y) const noexcept {
+    xyToInternal(x, y);
+    return isValidCoordsInternal(x, y);
+  }
+
+  inline int xToPublic (const int cx, const int cy) const noexcept { return (cx+calcRowSize(cy))/2; }
+  inline int yToPublic (const int cx, const int cy) const noexcept { return (cy+diameter)/2; }
+  inline int yToPublic (const int cy) const noexcept { return (cy+diameter)/2; }
+  inline void xyToPublic (int &cx, int &cy) const noexcept { const int sx = cx; const int sy = cy; cx = xToPublic(sx, sy); cy = yToPublic(sx, sy); }
+
+  inline int xToInternal (const int x, const int y) const noexcept { return x*2-calcRowSize(y*2-diameter); }
+  inline int yToInternal (const int x, const int y) const noexcept { return y*2-diameter; }
+  inline int yToInternal (const int y) const noexcept { return y*2-diameter; }
+  inline void xyToInternal (int &x, int &y) const noexcept { const int sx = x; const int sy = y; x = xToInternal(sx, sy); y = yToInternal(sx, sy); }
+
+  inline void clampXY (int &x, int &y) const noexcept {
+    // clamp y
+    if (y < 0) y = 0; else if (y > diameter) y = diameter;
+    // clamp x
+    if (x < 0) x = 0;
+    x = xToInternal(x, y);
+    const int cy = yToInternal(y);
+    if (x < getMinCX(cy)) x = getMinCX(cy); else if (x > getMaxCX(cy)) x = getMaxCX(cy);
+    x = xToPublic(x, cy);
+  }
+
+  inline void first (int &cx, int &cy) const noexcept {
+    cy = getMinCY();
+    cx = getMinCX(cy);
+  }
+
+  // returns `false` when iteration is complete (and coords are undefined)
+  inline bool next (int &cx, int &cy) noexcept {
+    // just in case
+    if (cy < getMinCY()) {
+      first(cx, cy);
+      return true;
+    }
+    if (cy > getMaxCY()) return false;
+    // walk horizontally
+    cx += getCYStep();
+    if (cx <= getMaxCX(cy)) return true;
+    // next vertical line
+    cy += getCYStep();
+    if (cy > getMaxCY()) return false;
+    cx = getMinCX(cy);
+    return true;
+  }
+
+  inline void move (int &x, int &y, int dx, int dy) {
+    // move vertically
+    if (dy) {
+      // don't even ask me
+      dy = (dy < 0 ? -1 : 1);
+      y += dy;
+      if (y*2 < diameter) {
+        if (dy < 0) {
+          x -= abs(y*2-diameter)/2%2;
+        } else {
+          x += 1-abs(y*2-diameter)/2%2;
+        }
+      } else if (y*2 > diameter) {
+        if (dy < 0) {
+          x += 1-abs(y*2-diameter)/2%2;
+        } else {
+          x -= abs(y*2-diameter)/2%2;
+        }
+      } else {
+        x += 1;
+      }
+    }
+    // move horizontally
+    if (dx) x += (dx < 0 ? -1 : 1);
+    // clamp
+    clampXY(x, y);
+  }
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct HexHiveWalker {
+public:
+  VWidget *w;
+  HexHive hive;
+  float cellW, cellH;
+  float scrX0, scrY0;
+  float scrW, scrH, realScrH;
+  int cx, cy;
+
+public:
+  HexHiveWalker (VWidget *aw, float x0, float y0, int radius, float acellW, float acellH) noexcept : w(aw), hive(radius) {
+    if (acellW < 1.0f) acellW = 1.0f;
+    if (acellH < 1.0f) acellH = 1.0f;
+    cellW = acellW;
+    cellH = acellH;
+    scrW = cellW*w->GetClipRect().ScaleX;
+    scrH = cellH*w->GetClipRect().ScaleY;
+    // calculate real hex height
+    realScrH = VDrawer::CalcRealHexHeight(scrH);
+    // calculate real starting coords
+    TranslateCoords(w->GetClipRect(), x0, y0);
+    scrX0 = x0+scrW*radius;
+    scrY0 = y0+realScrH*radius;
+    // setup starting coords
+    hive.first(cx, cy);
+  }
+
+  // returns widget coords
+  inline float calcDimX () const noexcept { return cellW*(hive.diameter+1); }
+  inline float calcDimY () const noexcept { return VDrawer::CalcRealHexHeight(cellH)*(hive.diameter+1)+cellH/3.0f*2.0f/3.0f; }
+
+  // returns `false` when iteration is complete
+  inline bool next () noexcept { return hive.next(cx, cy); }
+
+  inline float getScreenX () const noexcept { return scrX0+(float)cx/2.0f*scrW; }
+  inline float getScreenY () const noexcept { return scrY0+(float)cy/2.0f*realScrH; }
+
+  inline float getCellScrW () const noexcept { return scrW; }
+  inline float getCellScrH () const noexcept { return scrH; }
+
+  inline int getPublicX () const noexcept { return hive.xToPublic(cx, cy); }
+  inline int getPublicY () const noexcept { return hive.yToPublic(cx, cy); }
+
+  // the following operates on "public" coords
+  inline float getScreenXAt (int hpx, int hpy) const noexcept { return scrX0+(float)hive.xToInternal(hpx, hpy)/2.0f*scrW; }
+  inline float getScreenYAt (int hpx, int hpy) const noexcept { return scrY0+(float)hive.yToInternal(hpx, hpy)/2.0f*realScrH; }
+
+  inline bool isScreenPointInsideCurrentHex (float px, float py) {
+    return VDrawer::IsPointInsideHex(px, py, getScreenX(), getScreenY(), getCellScrW(), getCellScrH());
+  }
+};
+
+
+//==========================================================================
+//
 //  VWidget::CalcHexColorPatternDims
 //
 //==========================================================================
 void VWidget::CalcHexColorPatternDims (float *w, float *h, int radius, float cellW, float cellH) {
   if (!w && !h) return;
-  if (radius < 1) radius = 1;
-  if (cellW < 1.0f) cellW = 1.0f;
-  if (cellH < 1.0f) cellH = 1.0f;
-  const int diameter = radius*2+1;
-  if (w) *w = cellW*diameter;
-  if (h) *h = VDrawer::CalcRealHexHeight(cellH)*diameter+cellH/3.0f*2.0f/3.0f;
+  HexHiveWalker wk(this, 0, 0, radius, cellW, cellH);
+  if (w) *w = wk.calcDimX();
+  if (h) *h = wk.calcDimY();
 }
 
 
@@ -1560,11 +1731,8 @@ void VWidget::CalcHexColorPatternDims (float *w, float *h, int radius, float cel
 //
 //==========================================================================
 bool VWidget::IsValidHexColorPatternCoords (int hpx, int hpy, int radius) {
-  if (radius < 1) radius = 1;
-  if (hpy < -radius || hpy > radius) return false;
-  const int rowSize = radius*2-abs(hpy);
-  hpx *= 2;
-  return (hpx >= -rowSize && hpx <= rowSize+(hpy&1));
+  HexHive hive(radius);
+  return hive.isValidCoordsPublic(hpx, hpy);
 }
 
 
@@ -1576,32 +1744,32 @@ bool VWidget::IsValidHexColorPatternCoords (int hpx, int hpy, int radius) {
 //  returns `false` if passed coords are outside any hex
 //
 //==========================================================================
-bool VWidget::CalcHexColorPatternCoords (int *hpx, int *hpy, float x, float y, float x0, float y0, int radius, float cellW, float cellH) {
-  int tmpx, tmpy;
-  if (!hpx) hpx = &tmpx;
-  if (!hpy) hpy = &tmpy;
-  x -= x0;
-  y -= y0;
-  if (x < 0.0f || y < 0.0f) { *hpx = *hpy = 0.0f; return false; }
-  if (radius < 1) radius = 1;
-  if (cellW < 1.0f) cellW = 1.0f;
-  if (cellH < 1.0f) cellH = 1.0f;
-  const int diameter = radius*2;
-  const float realCH = VDrawer::CalcRealHexHeight(cellH);
-  const float w = cellW*(diameter+1);
-  const float h = realCH*(diameter+1)+cellH*2.0f/3.0f/3.0f;
-  if (x >= w || y >= h) { *hpx = *hpy = -1.0f; return false; }
-  y += cellH*2.0f/3.0f/3.0f;
-  x -= cellW*radius;
-  y -= realCH*radius;
-  //GCon->Logf("x=%g; y=%g", x, y);
-  if (y <= 0.0f) y -= cellH;
-  int ty = (int)(y/realCH);
-  if (!(ty&1)) x -= cellW*0.5f;
-  int tx = (int)(x/cellW);
-  *hpx = tx;
-  *hpy = ty;
-  return IsValidHexColorPatternCoords(tx, ty, radius);
+bool VWidget::CalcHexColorPatternCoords (int *hpx, int *hpy, float px, float py, float x0, float y0, int radius, float cellW, float cellH) {
+  HexHiveWalker wk(this, x0, y0, radius, cellW, cellH);
+  TranslateCoords(ClipRect, px, py);
+  do {
+    if (wk.isScreenPointInsideCurrentHex(px, py)) {
+      if (hpx) *hpx = wk.getPublicX();
+      if (hpy) *hpy = wk.getPublicY();
+      return true;
+    }
+  } while (wk.next());
+  if (hpx) *hpx = -1;
+  if (hpy) *hpy = -1;
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VWidget::MoveHexCoords
+//
+//  cannot move diagonally yet
+//
+//==========================================================================
+void VWidget::MoveHexCoords (int &hpx, int &hpy, int dx, int dy, int radius) {
+  HexHive hive(radius);
+  hive.move(hpx, hpy, dx, dy);
 }
 
 
@@ -1615,15 +1783,13 @@ bool VWidget::CalcHexColorPatternCoords (int *hpx, int *hpy, float x, float y, f
 //
 //==========================================================================
 bool VWidget::CalcHexColorPatternHexCoordsAt (float *hx, float *hy, int hpx, int hpy, float x0, float y0, int radius, float cellW, float cellH) {
-  if (radius < 1) radius = 1;
-  if (cellW < 1.0f) cellW = 1.0f;
-  if (cellH < 1.0f) cellH = 1.0f;
-  if (hx) *hx = x0+cellW*radius+(float)hpx*cellW-cellW*(0.5f*(hpy&1));
-  if (hy) {
-    const float realCH = VDrawer::CalcRealHexHeight(cellH);
-    *hy = y0+realCH*radius+(float)hpy*realCH;
-  }
-  return IsValidHexColorPatternCoords(hpx, hpy, radius);
+  HexHiveWalker wk(this, x0, y0, radius, cellW, cellH);
+  float x = wk.getScreenXAt(hpx, hpy);
+  float y = wk.getScreenYAt(hpx, hpy);
+  UntranslateCoords(ClipRect, x, y);
+  if (hx) *hx = x;
+  if (hy) *hy = y;
+  return wk.hive.isValidCoordsPublic(hpx, hpy);
 }
 
 
@@ -1632,11 +1798,9 @@ bool VWidget::CalcHexColorPatternHexCoordsAt (float *hx, float *hy, int hpx, int
 //  CalcHexHSByCoords
 //
 //==========================================================================
-static void CalcHexHSByCoords (int x, int y, int radius, float *h, float *s) {
-  if (radius < 1) radius = 1;
-  const float diameter = radius*2;
-  if (h) *h = 360.0f*(0.5f-0.5f*atan2f(y, -x)/(float)(M_PI));
-  if (s) *s = sqrtf(x*x+y*y)/diameter;
+static void CalcHexHSByCoords (int x, int y, int diameter, float *h, float *s) {
+  if (h) *h = AngleMod(360.0f*(0.5f-0.5f*atan2f(y, -x)/(float)(M_PI)));
+  if (s) *s = clampval(sqrtf(x*x+y*y)/(float)diameter, 0.0f, 1.0f);
 }
 
 
@@ -1645,9 +1809,9 @@ static void CalcHexHSByCoords (int x, int y, int radius, float *h, float *s) {
 //  CalcHexColorByCoords
 //
 //==========================================================================
-static vuint32 CalcHexColorByCoords (int x, int y, int radius) {
+static vuint32 CalcHexColorByCoords (int x, int y, int diameter) {
   float h, s;
-  CalcHexHSByCoords(x, y, radius, &h, &s);
+  CalcHexHSByCoords(x, y, diameter, &h, &s);
   const float v = 1.0f;
   float r, g, b;
   M_HsvToRgb(h, s, v, r, g, b);
@@ -1664,8 +1828,11 @@ static vuint32 CalcHexColorByCoords (int x, int y, int radius) {
 //
 //==========================================================================
 int VWidget::GetHexColorPatternColorAt (int hpx, int hpy, int radius) {
-  if (!IsValidHexColorPatternCoords(hpx, hpy, radius)) return 0;
-  return CalcHexColorByCoords(hpx*2, hpy*2, radius);
+  HexHive hive(radius);
+  //GCon->Logf(NAME_Debug, "hpos=(%d,%d); valid=%d; rad=%d; hx=%d; hy=%d; rsz=%d", hpx, hpy, (int)wk.isValidHexCoords(hpx, hpy), radius, wk.hpx2hx(hpx, hpy), wk.hpy2hy(hpx, hpy), wk.calcRowSize(wk.hpy2hy(hpx, hpy)));
+  if (!hive.isValidCoordsPublic(hpx, hpy)) return 0;
+  hive.xyToInternal(hpx, hpy);
+  return CalcHexColorByCoords(hpx, hpy, hive.diameter);
 }
 
 
@@ -1675,30 +1842,11 @@ int VWidget::GetHexColorPatternColorAt (int hpx, int hpy, int radius) {
 //
 //==========================================================================
 void VWidget::DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH) {
-  if (radius < 1) radius = 1;
-  if (cellW < 1.0f) cellW = 1.0f;
-  if (cellH < 1.0f) cellH = 1.0f;
-  const float scrW = cellW*ClipRect.ScaleX;
-  const float scrH = cellH*ClipRect.ScaleY;
-  // calculate real hex height
-  const float realScrH = VDrawer::CalcRealHexHeight(scrH);
-
-  TranslateCoords(ClipRect, x0, y0);
-  x0 += scrW*radius;
-  y0 += realScrH*radius;
-
-  const int diameter = radius*2;
-  for (int y = -diameter; y <= diameter; y += 2) {
-    const int rowSize = diameter-abs(y/2);
-    for (int x = -rowSize; x <= rowSize; x += 2) {
-      vuint32 clr = CalcHexColorByCoords(x, y, radius);
-      float xc = (float)x/2.0f;
-      float yc = (float)y/2.0f;
-      xc = x0+xc*scrW;
-      yc = y0+yc*realScrH;
-      Drawer->FillHex(xc, yc, scrW, scrH, clr);
-    }
-  }
+  HexHiveWalker wk(this, x0, y0, radius, cellW, cellH);
+  do {
+    const vuint32 clr = CalcHexColorByCoords(wk.cx, wk.cy, wk.hive.diameter);
+    Drawer->FillHex(wk.getScreenX(), wk.getScreenY(), wk.getCellScrW(), wk.getCellScrH(), clr);
+  } while (wk.next());
 }
 
 
@@ -1712,38 +1860,34 @@ void VWidget::DrawHexColorPattern (float x0, float y0, int radius, float cellW, 
 bool VWidget::FindHexColorCoords (int *hpx, int *hpy, int radius, float h, float s) {
   if (radius < 1) radius = 1;
 
-  if (h <= 0.0f && s <= 0.0f) {
-    if (hpx) *hpx = 0;
-    if (hpy) *hpy = 0;
-    return true;
-  }
+  h = AngleMod(h);
+  s = clampval(s, 0.0f, 1.0f);
+
+  float fr, fg, fb;
+  M_HsvToRgb(h, s, 1.0f, fr, fg, fb);
 
   int bestX = 0, bestY = 0;
-  float bestDist = 0;
-  bool hasBest = false;
+  float bestDist = -1;
   bool directHit = false;
 
-  for (int y = -radius; y <= radius; ++y) {
-    for (int x = -radius*2; x <= radius*2; ++x) {
-      if (!IsValidHexColorPatternCoords(x, y, radius)) continue;
-      float ch, cs;
-      CalcHexHSByCoords(x*2, y*2, radius, &ch, &cs);
-      if (ch == h && cs == s) {
-        directHit = true;
-        bestX = x;
-        bestY = y;
-        hasBest = true;
-        break;
-      }
-      const float dist = (h-ch)*(h-ch)+(s-cs)*(s-cs);
-      if (!hasBest || dist < bestDist) {
-        hasBest = true;
-        bestX = x;
-        bestY = y;
-        bestDist = dist;
-      }
+  int cx, cy;
+  HexHive hive(radius);
+  hive.first(cx, cy);
+
+  do {
+    float ch, cs;
+    float cr, cg, cb;
+    CalcHexHSByCoords(cx, cy, hive.diameter, &ch, &cs);
+    M_HsvToRgb(ch, cs, 1.0f, cr, cg, cb);
+    float dist = (fr-cr)*(fr-cr)+(fg-cg)*(fg-cg)+(fb-cb)*(fb-cb);
+    if (bestDist < 0 || dist < bestDist) {
+      directHit = (dist == 0);
+      bestDist = dist;
+      bestX = hive.xToPublic(cx, cy);
+      bestY = hive.yToPublic(cx, cy);
+      if (directHit) break;
     }
-  }
+  } while (hive.next(cx, cy));
 
   if (hpx) *hpx = bestX;
   if (hpy) *hpy = bestY;
@@ -2259,6 +2403,14 @@ IMPLEMENT_FUNCTION(VWidget, ShadeHex) {
 }
 
 
+// native final bool IsPointInsideHex (float x, float y, float x0, float y0, float w, float h);
+IMPLEMENT_FUNCTION(VWidget, IsPointInsideHex) {
+  float x, y, x0, y0, w, h;
+  vobjGetParamSelf(x, y, x0, y0, w, h);
+  RET_BOOL(Self ? Self->IsPointInsideHex(x, y, x0, y0, w, h) : false);
+}
+
+
 // native final void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH);
 IMPLEMENT_FUNCTION(VWidget, DrawHexColorPattern) {
   float x0, y0;
@@ -2343,3 +2495,13 @@ IMPLEMENT_FUNCTION(VWidget, FindHexColorCoords) {
   vobjGetParamSelf(hpx, hpy, radius, h, s);
   RET_BOOL(Self ? Self->FindHexColorCoords(hpx, hpy, radius, h, s) : false);
 }
+
+// native final void MoveHexCoords (ref int hpx, ref int hpy, int dx, int dy, int radius);
+IMPLEMENT_FUNCTION(VWidget, MoveHexCoords) {
+  int *hpx;
+  int *hpy;
+  int dx, dy, radius;
+  vobjGetParamSelf(hpx, hpy, dx, dy, radius);
+  if (Self) Self->MoveHexCoords(*hpx, *hpy, dx, dy, radius);
+}
+

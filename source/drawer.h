@@ -581,6 +581,16 @@ public:
 
   static float CalcRealHexHeight (float h) noexcept;
   static void CalcHexVertices (float vx[6], float vy[6], float x0, float y0, float w, float h) noexcept;
+  static bool IsPointInsideHex (float x, float y, float x0, float y0, float w, float h) noexcept;
+
+  // polygon must be convex
+  // `stride` is in number of floats
+  static bool IsPointInside2DPolyInternal (const float x, const float y, int vcount, const float vx[], size_t xstride, const float vy[], size_t ystride) noexcept;
+  // polygon must be convex
+  static bool IsPointInside2DPoly (const float x, const float y, int vcount, const float vx[], const float vy[]) noexcept;
+  // polygon must be convex
+  // here `vxy` contains `x`,`y` pairs
+  static bool IsPointInside2DPoly (const float x, const float y, int vcount, const float vxy[]) noexcept;
 
   virtual void DrawHex (float x0, float y0, float w, float h, vuint32 color, float alpha=1.0f) = 0;
   virtual void FillHex (float x0, float y0, float w, float h, vuint32 color, float alpha=1.0f) = 0;
@@ -686,6 +696,9 @@ public:
   // scissor is set in screen coords, with (0,0) at the top left corner
   // returns `enabled` flag
   virtual bool GetScissor (int *x, int *y, int *w, int *h) = 0;
+  // this doesn't automatically enables scissor
+  // note that invalid scissor means "disabled"
+  // but zero scissor size is valid
   virtual void SetScissor (int x, int y, int w, int h) = 0;
 
   // call this if you modified scissor by direct calls

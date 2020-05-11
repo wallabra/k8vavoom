@@ -96,16 +96,6 @@ override void OnDraw () {
 
   SetFont('smallfont');
 
-  string caption = "boo";
-  /*
-  int idx = findValue(Value);
-  if (idx < 0) {
-    caption = (float(int(Value)) == Value ? va("i:%d", int(Value)) : va("f:%f", Value));
-  } else {
-    caption = vallist[idx].caption;
-  }
-  */
-
   int Col = (IsFocused ? TextColorFocus : TextColor);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
@@ -116,10 +106,6 @@ override void OnDraw () {
   }
 
   int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
-  /*
-  SetTextAlign(hleft, vtop);
-  DrawText(xx, 0, caption, (IsFocused ? ValueColorFocus : ValueColor));
-  */
   FillRect(xx+2, 1, 64, 6, ColorValue);
 }
 
@@ -159,13 +145,24 @@ override bool OnEvent (ref event_t evt) {
 
 //==========================================================================
 //
+//  SetNewColorPopup
+//
+//==========================================================================
+void SetNewColorPopup (int color, float h, float s, float v) {
+  SetNewColor(color);
+}
+
+
+//==========================================================================
+//
 //  OpenColorPopup
 //
 //==========================================================================
 void OpenColorPopup (optional int X, optional int Y) {
   cbox = GetRootWidget.NewChild(MenuColorPopup);
   if (!cbox) return;
-  cbox.choice = self;
+  cbox.SetNewColorCB = &SetNewColorPopup;
+  cbox.OnCloseCB = delegate void () { cbox = none; };
   if (!specified_X) {
     auto oldFont = GetFont();
     scope(exit) SetFont(oldFont);
@@ -175,7 +172,6 @@ void OpenColorPopup (optional int X, optional int Y) {
   }
   if (!specified_Y) Y = -2;
   LocalXYToRoot(out cbox.xbase, out cbox.ybase, X, Y);
-  //foreach (int c, const ref auto vv; vallist) cbox.addItem(vv.caption, (c == idx));
   cbox.SetColor(ColorValue);
   LocalSound('menu/change');
 }
@@ -216,7 +212,10 @@ class MenuColorPopup : Widget;
 int currColor;
 float h, s, v;
 int xbase, ybase;
-MenuChoiceColor choice;
+
+delegate void SetNewColorCB (int color, float h, float s, float v);
+delegate void ColorChangedCB (int color, float h, float s, float v);
+delegate void OnCloseCB ();
 
 int wheelX = 4;
 int wheelY = 4;
@@ -226,6 +225,7 @@ int wheelH;
 enum WheelRadius = 6;
 enum WheelW = 8;
 enum WheelH = 8;
+enum StripeMax = 11;
 
 float Time;
 
@@ -298,6 +298,33 @@ void SetColor (int color) {
 
 //==========================================================================
 //
+//  CalcCurrentStripe
+//
+//==========================================================================
+final int CalcCurrentStripe () {
+  return clamp(int(v*float(StripeMax)), 0, StripeMax);
+}
+
+
+//==========================================================================
+//
+//  SetCurrentStripe
+//
+//==========================================================================
+final void SetCurrentStripe (int dy) {
+  if (dy < 0) dy = 0;
+  if (dy > StripeMax) dy = StripeMax;
+  if (dy == CalcCurrentStripe()) return;
+  // change v
+  int oldclr = currColor;
+  v = 1.0f/float(StripeMax)*dy;
+  currColor = HSV2RGB(h, s, v);
+  if (ColorChangedCB && currColor != oldclr) ColorChangedCB(currColor, h, s, v);
+}
+
+
+//==========================================================================
+//
 //  OnDraw
 //
 //==========================================================================
@@ -321,31 +348,53 @@ override void OnDraw () {
 
     float hx, hy;
     CalcHexColorPatternHexCoordsAt(out hx, out hy, hpx, hpy, wheelX, wheelY, WheelRadius, WheelW, WheelH);
+    //printdebug("hx=%s; hy=%s (size=%sx%s)", hx, hy, Width, Height);
     ShadeHex(hx, hy, WheelW, WheelH, 0.6);
   }
 
   // draw vertical color stripes
-  foreach (int dy; 0..11) {
-    float vv = dy/10.0;
+  int sty = CalcCurrentStripe();
+  foreach (int dy; 0..StripeMax+1) {
+    float vv = dy/float(StripeMax);
     int nc = HSV2RGB(h, s, vv);
     FillRect(wheelX+wheelW+16, 8+dy*12, 64, 8, nc);
-    if (vv >= v && ((dy-1)/10.0) < v) {
-      DrawRect(wheelX+wheelW+14, 6+dy*12, 64+4, 8+4, RGB(255, 255, 255));
-    }
+    if (sty == dy) DrawRect(wheelX+wheelW+14, 6+dy*12, 64+4, 8+4, RGB(255, 255, 255));
   }
 
   int ty = wheelY+wheelH+8;
 
-  int clr = HSV2RGB(h, s, v);
+  int clr = currColor; //HSV2RGB(h, s, v);
 
   DrawText(4, ty, va("RED  :%3d  %02x", RGBGetR(clr), RGBGetR(clr)), CR_UNTRANSLATED); ty += FontHeight();
   DrawText(4, ty, va("GREEN:%3d  %02x", RGBGetG(clr), RGBGetG(clr)), CR_UNTRANSLATED); ty += FontHeight();
   DrawText(4, ty, va("BLUE :%3d  %02x", RGBGetB(clr), RGBGetB(clr)), CR_UNTRANSLATED); ty += FontHeight();
+
+  FillRect(8, ty+FontHeight()/2, TextWidth("GREEN:000  FF")-8, FontHeight(), clr);
+
   ty += FontHeight()*2;
 
   DrawText(4, ty, va("H:%s", h), CR_UNTRANSLATED); ty += FontHeight();
   DrawText(4, ty, va("S:%s", s), CR_UNTRANSLATED); ty += FontHeight();
   DrawText(4, ty, va("V:%s", v), CR_UNTRANSLATED); ty += FontHeight();
+}
+
+
+//==========================================================================
+//
+//  UpdateColorTo
+//
+//==========================================================================
+void UpdateColorTo (int hpx, int hpy) {
+  int color = GetHexColorPatternColorAt(hpx, hpy, WheelRadius);
+  if (!color) {
+    //printdebug("SHIT! hpx=%s; hpy=%s", hpx, hpy);
+    return;
+  }
+  int oldclr = currColor;
+  currColor = color;
+  float vv;
+  RGB2HSV(color, out h, out s, out vv);
+  if (ColorChangedCB && currColor != oldclr) ColorChangedCB(currColor, h, s, v);
 }
 
 
@@ -368,14 +417,6 @@ override bool OnEvent (ref event_t evt) {
   }
 
   if (evt.type == ev_click) {
-    /*
-    int idx = FindItemAt(evt.x, evt.y);
-    if (idx >= 0) {
-      currItem = idx;
-      if (choice) choice.SetComboChoice(currItem);
-      Destroy();
-    }
-    */
     return true;
   }
 
@@ -387,14 +428,40 @@ override bool OnEvent (ref event_t evt) {
         return true;
       }
     }
+    int dx = 0, dy = 0;
     switch (ConvertBoundKey(evt.keycode)) {
       case K_ESCAPE:
         Destroy();
         return true;
       case K_ENTER: case K_PADENTER:
-        //if (choice) choice.SetComboChoice(currItem);
+        if (SetNewColorCB) SetNewColorCB(currColor, h, s, v);
         Destroy();
         return true;
+      case K_LEFTARROW: dx = -1; break;
+      case K_RIGHTARROW: dx = 1; break;
+      case K_UPARROW:
+        if (evt.bCtrl || evt.bShift || evt.bAlt) {
+          SetCurrentStripe(CalcCurrentStripe()-1);
+        } else {
+          dy = -1;
+        }
+        break;
+      case K_DOWNARROW:
+        if (evt.bCtrl || evt.bShift || evt.bAlt) {
+          SetCurrentStripe(CalcCurrentStripe()+1);
+        } else {
+          dy = 1;
+        }
+        break;
+      case K_PAGEUP: SetCurrentStripe(CalcCurrentStripe()-1); return true;
+      case K_PAGEDOWN: SetCurrentStripe(CalcCurrentStripe()+1); return true;
+    }
+    if (dx || dy) {
+      int hpx, hpy;
+      FindHexColorCoords(out hpx, out hpy, WheelRadius, h, s);
+      MoveHexCoords(ref hpx, ref hpy, dx, dy, WheelRadius);
+      UpdateColorTo(hpx, hpy);
+      return true;
     }
   }
 
@@ -409,8 +476,7 @@ override bool OnEvent (ref event_t evt) {
 //
 //==========================================================================
 override void OnClose () {
-  //printdebug("%s: closing", UniqueId);
-  if (choice) choice.cbox = none;
+  if (OnCloseCB) OnCloseCB();
   ::OnClose();
 }
 
@@ -424,4 +490,5 @@ defaultproperties {
   CloseOnBlur = true;
   OnTop = true;
   bTickEnabled = true;
+  //UseScissor = true;
 }

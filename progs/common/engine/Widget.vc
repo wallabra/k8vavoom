@@ -283,6 +283,10 @@ native final void DrawHex (float x0, float y0, float w, float h, int color, opti
 native final void FillHex (float x0, float y0, float w, float h, int color, optional float alpha/*=1.0f*/);
 native final void ShadeHex (float x0, float y0, float w, float h, float darkening);
 
+native final bool IsPointInsideHex (float x, float y, float x0, float y0, float w, float h);
+// cannot move diagonally yet
+native final void MoveHexCoords (ref int hpx, ref int hpy, int dx, int dy, int radius);
+
 native final float CalcHexColorPatternWidth (int radius, float cellW, float cellH);
 native final float CalcHexColorPatternHeight (int radius, float cellW, float cellH);
 // returns `true` if the given "internal" hex pattern coordinates are valid

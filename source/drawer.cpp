@@ -166,6 +166,72 @@ void VDrawer::CalcHexVertices (float vx[6], float vy[6], float x0, float y0, flo
 }
 
 
+//==========================================================================
+//
+//  VDrawer::IsPointInsideHex
+//
+//==========================================================================
+bool VDrawer::IsPointInsideHex (float x, float y, float x0, float y0, float w, float h) noexcept {
+  if (w <= 0.0f || h <= 0.0f) return false;
+  float vx[6];
+  float vy[6];
+  CalcHexVertices(vx, vy, x0, y0, w, h);
+  return IsPointInside2DPoly(x, y, 6, vx, vy);
+}
+
+
+//==========================================================================
+//
+//  VDrawer::IsPointInside2DPolyInternal
+//
+//  polygon must be convex
+//
+//==========================================================================
+bool VDrawer::IsPointInside2DPolyInternal (const float x, const float y, int vcount, const float vx[], size_t xstride, const float vy[], size_t ystride) noexcept {
+  if (vcount < 2) return false;
+  // this whole thing can be optimised by using differentials, but meh...
+  float lastx = vx[(vcount-1)*xstride], lasty = vy[(vcount-1)*ystride];
+  while (vcount--) {
+    // calculates the area of the parallelogram of the three points
+    // this is actually the same as the area of the triangle defined by the three points, multiplied by 2
+    const float bx = vx[0];
+    const float by = vy[0];
+    const float area = (lastx-x)*(by-y)-(lasty-y)*(bx-x);
+    if (area < 0) return false; // wrong side
+    lastx = bx;
+    lasty = by;
+    vx += xstride;
+    vy += ystride;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VDrawer::IsPointInside2DPoly
+//
+//  polygon must be convex
+//
+//==========================================================================
+bool VDrawer::IsPointInside2DPoly (const float x, const float y, int vcount, const float vx[], const float vy[]) noexcept {
+  return IsPointInside2DPolyInternal(x, y, vcount, vx, 1, vy, 1);
+}
+
+
+//==========================================================================
+//
+//  VDrawer::IsPointInside2DPoly
+//
+//  polygon must be convex
+//  here `vxy` contains `x`,`y` pairs
+//
+//==========================================================================
+bool VDrawer::IsPointInside2DPoly (const float x, const float y, int vcount, const float vxy[]) noexcept {
+  return IsPointInside2DPolyInternal(x, y, vcount, vxy+0, 2, vxy+1, 2);
+}
+
+
 
 //**************************************************************************
 //

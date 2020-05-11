@@ -1972,6 +1972,10 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
 //==========================================================================
 static bool FixScissorCoords (int &x, int &y, int &w, int &h, const int ScrWdt, const int ScrHgt) {
   //TODO: proper overflow checks
+  if (w == 0 || h == 0) {
+    x = y = w = h = 0;
+    return true;
+  }
   if (w < 1 || h < 1 || x >= ScrWdt || y >= ScrHgt ||
       (x < 0 && x+w <= 0) ||
       (y < 0 && y+h <= 0) ||
@@ -1981,17 +1985,17 @@ static bool FixScissorCoords (int &x, int &y, int &w, int &h, const int ScrWdt, 
     return false;
   }
   if (x < 0) {
-    if ((w -= x) <= 0) { x = y = w = h = 0; return false; }
+    if ((w += x) < 0) { x = y = w = h = 0; return false; }
     x = 0;
   }
   if (y < 0) {
-    if ((h -= y) <= 0) { x = y = w = h = 0; return false; }
+    if ((h += y) < 0) { x = y = w = h = 0; return false; }
     y = 0;
   }
   if (w > ScrWdt) w = ScrWdt;
   if (h > ScrHgt) h = ScrHgt;
-  if (x+w > ScrWdt) { if ((w = ScrWdt-x) <= 0) { x = y = w = h = 0; return false; } }
-  if (y+h > ScrHgt) { if ((h = ScrHgt-y) <= 0) { x = y = w = h = 0; return false; } }
+  if (x+w > ScrWdt) { if ((w = ScrWdt-x) < 0) { x = y = w = h = 0; return false; } }
+  if (y+h > ScrHgt) { if ((h = ScrHgt-y) < 0) { x = y = w = h = 0; return false; } }
   return true;
 }
 
@@ -2009,12 +2013,9 @@ bool VOpenGLDrawer::UploadCurrentScissorRect () {
   int w = scissorW;
   int h = scissorH;
   if (!FixScissorCoords(x, y, w, h, ScrWdt, ScrHgt)) return false;
-  const int y0 = ScrHgt-y-1;
-  const int y1 = ScrHgt-(y+h);
-  const int hh = y1-y0+1;
-  //GCon->Logf(NAME_Debug, "scissor: (%d,%d)-(%d,%d)", x, y0, w, hh);
-  glScissor(x, y0, w, hh);
-  scissorNeedUpdate = false;
+  const int y0 = ScrHgt-(y+h-1);
+  //GCon->Logf(NAME_Debug, "scissor: (%d,%d)-(%d,%d)", x, y0, w, h);
+  glScissor(x, y0, w, h);
   return true;
 }
 
@@ -2027,8 +2028,6 @@ bool VOpenGLDrawer::UploadCurrentScissorRect () {
 void VOpenGLDrawer::ForceClearScissorState () {
   scissorEnabled = false;
   scissorX = scissorY = scissorW = scissorH = 0;
-  scissorActive = false;
-  scissorNeedUpdate = true; // just in case
 }
 
 
@@ -2039,14 +2038,11 @@ void VOpenGLDrawer::ForceClearScissorState () {
 //==========================================================================
 void VOpenGLDrawer::SetScissorEnabled (bool v) {
   if (v == scissorEnabled) return;
+  if (v) {
+    if (!UploadCurrentScissorRect()) return;
+  }
   scissorEnabled = v;
-  if (v && scissorNeedUpdate) {
-    if (!UploadCurrentScissorRect()) v = false;
-  }
-  if (scissorActive != v) {
-    scissorActive = v;
-    if (v) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
-  }
+  if (v) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
 }
 
 
@@ -2080,24 +2076,15 @@ bool VOpenGLDrawer::GetScissor (int *x, int *y, int *w, int *h) {
 //
 //==========================================================================
 void VOpenGLDrawer::SetScissor (int x, int y, int w, int h) {
-  FixScissorCoords(x, y, w, h, ScrWdt, ScrHgt);
   if (x != scissorX || y != scissorY || w != scissorW || h != scissorH) {
     scissorX = x;
     scissorY = y;
     scissorW = w;
     scissorH = h;
-    scissorNeedUpdate = true;
     if (scissorEnabled) {
       if (!UploadCurrentScissorRect()) {
-        if (scissorActive) {
-          scissorActive = false;
-          glDisable(GL_SCISSOR_TEST);
-        }
-      } else {
-        if (!scissorActive) {
-          scissorActive = true;
-          glEnable(GL_SCISSOR_TEST);
-        }
+        scissorEnabled = false;
+        glDisable(GL_SCISSOR_TEST);
       }
     }
   }

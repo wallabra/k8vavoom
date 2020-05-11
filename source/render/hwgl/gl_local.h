@@ -249,8 +249,6 @@ private:
 
   bool scissorEnabled;
   int scissorX, scissorY, scissorW, scissorH;
-  bool scissorActive;
-  bool scissorNeedUpdate;
 
   // returns `false` if scissor is empty
   bool UploadCurrentScissorRect ();

@@ -48,6 +48,16 @@ array!ClassInfo PClasses;
 
 //==========================================================================
 //
+//  GetItemContainerOfsY
+//
+//==========================================================================
+override int GetItemContainerOfsY () {
+  return ::GetItemContainerOfsY()+8;
+}
+
+
+//==========================================================================
+//
 //  CreateClasses
 //
 //==========================================================================
@@ -94,20 +104,12 @@ override void CreateChoices () {
 
   int Col = ParseColor(GetCvarS('color'));
 
-  ColorBox = GetItemContainer().NewChild(MenuChoiceColor);
-  ColorBox.SetInitialValue(Col);
-  ColorBox.SetText("Color");
-  ColorBox.SetOrigin(ChoicesStartX, GetCurrentY());
-  //currentY += ColorBox.Height;
-
-
   PlayerName = GetItemContainer().NewChild(MenuInputLine);
   PlayerName.SetOrigin(ChoicesStartX+10, GetCurrentY());
   PlayerName.CursorXOffs = -10;
   PlayerName.Text = "Name";
   PlayerName.Value = GetCvarS('Name');
   PlayerName.ValueChanged = &ChangeName;
-  //currentY += PlayerName.Height;
 
   if (PClasses.length > 1) {
     EPClass = GetItemContainer().NewChild(MenuChoiceEnum);
@@ -116,10 +118,24 @@ override void CreateChoices () {
     foreach (const ref auto pcl; PClasses) EPClass.AddItem(pcl.className);
     EPClass.SetInitialValue(GetCvar('class'));
     EPClass.ValueChanging = &ChangeClass;
-    //currentY += EPClass.Height;
   }
 
 
+  ColorBox = GetItemContainer().NewChild(MenuChoiceColor);
+  ColorBox.SetInitialValue(Col);
+  ColorBox.SetText("Color");
+  ColorBox.SetOrigin(ChoicesStartX, GetCurrentY());
+  ColorBox.ValueChanging = delegate bool (Object Sender, int NewValue) {
+    if (ColR) ColR.SetInitialValue(Byte2Float(RGBGetR(NewValue)));
+    if (ColG) ColG.SetInitialValue(Byte2Float(RGBGetG(NewValue)));
+    if (ColB) ColB.SetInitialValue(Byte2Float(RGBGetB(NewValue)));
+    if (Anim) Anim.Color = NewValue;
+    if (Mdl) Mdl.Color = NewValue;
+    SetCvarS('color', va("#%02x%02x%02x", RGBGetR(NewValue), RGBGetG(NewValue), RGBGetB(NewValue)));
+    return true;
+  };
+
+  /*
   ColR = GetItemContainer().NewChild(MenuChoiceSlider);
   ColR.Width = 420;
   ColR.SetOrigin(ChoicesStartX, GetCurrentY());
@@ -127,7 +143,6 @@ override void CreateChoices () {
   ColR.ValueDelta = 0.1;
   ColR.SetInitialValue(Byte2Float((Col>>16)&0xff));
   ColR.ValueChanging = &ChangeColor;
-  //currentY += ColR.Height;
 
   ColG = GetItemContainer().NewChild(MenuChoiceSlider);
   ColG.Width = 420;
@@ -136,7 +151,6 @@ override void CreateChoices () {
   ColG.ValueDelta = 0.1;
   ColG.SetInitialValue(Byte2Float((Col>>8)&0xff));
   ColG.ValueChanging = &ChangeColor;
-  //currentY += ColG.Height;
 
   ColB = GetItemContainer().NewChild(MenuChoiceSlider);
   ColB.Width = 420;
@@ -145,8 +159,7 @@ override void CreateChoices () {
   ColB.ValueDelta = 0.1;
   ColB.SetInitialValue(Byte2Float(Col&0xff));
   ColB.ValueChanging = &ChangeColor;
-  //currentY += ColB.Height;
-
+  */
 
   Anim = GetItemContainer().NewChild(MenuSpriteAnim);
   Anim.SetPos(220, 150);
@@ -202,9 +215,9 @@ bool ChangeColor (Object Sender, float newValue) {
   int Col = RGBA(int(r*255.0), int(g*255.0), int(b*255.0), 255);
 
   SetCvarS('color', va("#%02x%02x%02x", int(r*255.0), int(g*255.0), int(b*255.0)));
-  Anim.Color = Col;
+  if (Anim) Anim.Color = Col;
   if (Mdl) Mdl.Color = Col;
-  ColorBox.SetNewColor(Col);
+  if (ColorBox) ColorBox.SetNewColor(Col);
   return true;
 }
 
@@ -237,4 +250,5 @@ defaultproperties {
   ChoicesStartX = 64;
   SelectorType = MenuSelector_SmallRight;
   Title = "PLAYER SETUP";
+  CenterChoicesVert = false;
 }
