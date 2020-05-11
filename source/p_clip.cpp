@@ -98,7 +98,7 @@ VCvarB dbg_clip_dump_sub_checks("dbg_clip_dump_sub_checks", false, "Dump subsect
 //  CopyFloorPlaneIfValid
 //
 //==========================================================================
-static inline bool CopyFloorPlaneIfValid (TPlane *dest, const TPlane *source, const TPlane *opp) {
+static inline bool CopyFloorPlaneIfValid (TPlane *dest, const TPlane *source, const TPlane *opp) noexcept {
   bool copy = false;
 
   // if the planes do not have matching slopes, then always copy them
@@ -122,7 +122,7 @@ static inline bool CopyFloorPlaneIfValid (TPlane *dest, const TPlane *source, co
 //  CopyHeight
 //
 //==========================================================================
-static inline void CopyHeight (const sector_t *sec, TPlane *fplane, TPlane *cplane, int *fpic, int *cpic) {
+static inline void CopyHeight (const sector_t *sec, TPlane *fplane, TPlane *cplane, int *fpic, int *cpic) noexcept {
   *cpic = sec->ceiling.pic;
   *fpic = sec->floor.pic;
   *fplane = *(TPlane *)&sec->floor;
@@ -166,7 +166,7 @@ static inline void CopyHeight (const sector_t *sec, TPlane *fplane, TPlane *cpla
 //  CopyHeightServer
 //
 //==========================================================================
-static inline void CopyHeightServer (VLevel *level, rep_sector_t *repsecs, const sector_t *sec, TPlane *fplane, TPlane *cplane, int *fpic, int *cpic) {
+static inline void CopyHeightServer (VLevel *level, rep_sector_t *repsecs, const sector_t *sec, TPlane *fplane, TPlane *cplane, int *fpic, int *cpic) noexcept {
   *cpic = sec->ceiling.pic;
   *fpic = sec->floor.pic;
   *fplane = *(TPlane *)&sec->floor;
@@ -183,7 +183,7 @@ static inline void CopyHeightServer (VLevel *level, rep_sector_t *repsecs, const
 //  IsGoodSegForPoly
 //
 //==========================================================================
-static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg) {
+static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg) noexcept {
   const line_t *ldef = seg->linedef;
   if (!ldef) return true;
 
@@ -297,7 +297,7 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
 //  prerequisite: has front and back sectors, has linedef
 //
 //==========================================================================
-bool VViewClipper::IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *repsecs, const seg_t *seg) {
+bool VViewClipper::IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *repsecs, const seg_t *seg) noexcept {
   if (!clip_platforms) return false;
   if (!seg->backsector) return false;
 
@@ -357,7 +357,7 @@ bool VViewClipper::IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *rep
 //  prerequisite: has front and back sectors, has linedef
 //
 //==========================================================================
-bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *seg, const TVec *lorg, const float *lrad) {
+bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *seg, const TVec *lorg, const float *lrad) noexcept {
   if (!clip_platforms) return false;
   if (!seg->backsector) return false;
 
@@ -507,7 +507,7 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
 //  VViewClipper::VViewClipper
 //
 //==========================================================================
-VViewClipper::VViewClipper ()
+VViewClipper::VViewClipper () noexcept
   : FreeClipNodes(nullptr)
   , ClipHead(nullptr)
   , ClipTail(nullptr)
@@ -522,7 +522,7 @@ VViewClipper::VViewClipper ()
 //  VViewClipper::~VViewClipper
 //
 //==========================================================================
-VViewClipper::~VViewClipper () {
+VViewClipper::~VViewClipper () noexcept {
   ClearClipNodes(TVec(), nullptr);
   VClipNode *Node = FreeClipNodes;
   while (Node) {
@@ -538,7 +538,7 @@ VViewClipper::~VViewClipper () {
 //  VViewClipper::NewClipNode
 //
 //==========================================================================
-VViewClipper::VClipNode *VViewClipper::NewClipNode () {
+VViewClipper::VClipNode *VViewClipper::NewClipNode () noexcept {
   VClipNode *res = FreeClipNodes;
   if (res) FreeClipNodes = res->Next; else res = new VClipNode();
   return res;
@@ -550,7 +550,7 @@ VViewClipper::VClipNode *VViewClipper::NewClipNode () {
 //  VViewClipper::RemoveClipNode
 //
 //==========================================================================
-void VViewClipper::RemoveClipNode (VViewClipper::VClipNode *Node) {
+void VViewClipper::RemoveClipNode (VViewClipper::VClipNode *Node) noexcept {
   if (Node->Next) Node->Next->Prev = Node->Prev;
   if (Node->Prev) Node->Prev->Next = Node->Next;
   if (Node == ClipHead) ClipHead = Node->Next;
@@ -565,7 +565,7 @@ void VViewClipper::RemoveClipNode (VViewClipper::VClipNode *Node) {
 //  VViewClipper::ClearClipNodes
 //
 //==========================================================================
-void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel, float aradius) {
+void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel, float aradius) noexcept {
   if (ClipHead) {
     ClipTail->Next = FreeClipNodes;
     FreeClipNodes = ClipHead;
@@ -585,13 +585,13 @@ void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel, float ar
 //  VViewClipper::ClipResetFrustumPlanes
 //
 //==========================================================================
-void VViewClipper::ClipResetFrustumPlanes () {
+void VViewClipper::ClipResetFrustumPlanes () noexcept {
   Frustum.clear();
 }
 
 
 void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const TVec &viewforward, const TVec &viewright, const TVec &viewup,
-                                          const float fovx, const float fovy)
+                                          const float fovx, const float fovy) noexcept
 {
   if (clip_frustum && !viewright.z && isFiniteF(fovy) && fovy != 0 && isFiniteF(fovx) && fovx != 0) {
     // no view roll, create frustum
@@ -626,7 +626,7 @@ void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const TVec &v
 //  VViewClipper::ClipInitFrustumPlanes
 //
 //==========================================================================
-void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const float fovx, const float fovy) {
+void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const float fovx, const float fovy) noexcept {
   TVec f, r, u;
   AngleVectors(viewangles, f, r, u);
   ClipInitFrustumPlanes(viewangles, f, r, u, fovx, fovy);
@@ -640,7 +640,7 @@ void VViewClipper::ClipInitFrustumPlanes (const TAVec &viewangles, const float f
 //==========================================================================
 void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &viewforward,
                                          const TVec &viewright, const TVec &viewup,
-                                         const float fovx, const float fovy)
+                                         const float fovx, const float fovy) noexcept
 {
   vassert(ClipIsEmpty());
 
@@ -732,7 +732,7 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
 //  VViewClipper::ClipInitFrustumRange
 //
 //==========================================================================
-void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const float fovx, const float fovy) {
+void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const float fovx, const float fovy) noexcept {
   TVec f, r, u;
   AngleVectors(viewangles, f, r, u);
   ClipInitFrustumRange(viewangles, f, r, u, fovx, fovy);
@@ -744,7 +744,7 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const float fo
 //  VViewClipper::ClipToRanges
 //
 //==========================================================================
-void VViewClipper::ClipToRanges (const VViewClipper &Range) {
+void VViewClipper::ClipToRanges (const VViewClipper &Range) noexcept {
   if (&Range == this) return; // just in case
 
   if (!Range.ClipHead) {
@@ -797,7 +797,7 @@ void VViewClipper::ClipToRanges (const VViewClipper &Range) {
 //  VViewClipper::Dump
 //
 //==========================================================================
-void VViewClipper::Dump () const {
+void VViewClipper::Dump () const noexcept {
   GCon->Logf("=== CLIPPER: origin=(%f,%f,%f) ===", Origin.x, Origin.y, Origin.z);
 #ifdef VV_CLIPPER_FULL_CHECK
   GCon->Logf(" full: %d", (int)ClipIsFull());
@@ -818,7 +818,7 @@ void VViewClipper::Dump () const {
 //  VViewClipper::DoAddClipRange
 //
 //==========================================================================
-void VViewClipper::DoAddClipRange (FromTo From, FromTo To) {
+void VViewClipper::DoAddClipRange (FromTo From, FromTo To) noexcept {
   if (From < MIN_ANGLE) From = MIN_ANGLE; else if (From > MAX_ANGLE) From = MAX_ANGLE;
   if (To < MIN_ANGLE) To = MIN_ANGLE; else if (To > MAX_ANGLE) To = MAX_ANGLE;
 
@@ -916,7 +916,7 @@ void VViewClipper::DoAddClipRange (FromTo From, FromTo To) {
 //  VViewClipper::AddClipRange
 //
 //==========================================================================
-void VViewClipper::AddClipRangeAngle (const FromTo From, const FromTo To) {
+void VViewClipper::AddClipRangeAngle (const FromTo From, const FromTo To) noexcept {
   if (From > To) {
     DoAddClipRange(MIN_ANGLE, To);
     DoAddClipRange(From, MAX_ANGLE);
@@ -933,7 +933,7 @@ void VViewClipper::AddClipRangeAngle (const FromTo From, const FromTo To) {
 //  NOT TESTED!
 //
 //==========================================================================
-void VViewClipper::DoRemoveClipRange (FromTo From, FromTo To) {
+void VViewClipper::DoRemoveClipRange (FromTo From, FromTo To) noexcept {
   if (From < MIN_ANGLE) From = MIN_ANGLE; else if (From > MAX_ANGLE) From = MAX_ANGLE;
   if (To < MIN_ANGLE) To = MIN_ANGLE; else if (To > MAX_ANGLE) To = MAX_ANGLE;
 
@@ -981,7 +981,7 @@ void VViewClipper::DoRemoveClipRange (FromTo From, FromTo To) {
 //  VViewClipper::RemoveClipRange
 //
 //==========================================================================
-void VViewClipper::RemoveClipRangeAngle (const FromTo From, const FromTo To) {
+void VViewClipper::RemoveClipRangeAngle (const FromTo From, const FromTo To) noexcept {
   if (From > To) {
     DoRemoveClipRange(MIN_ANGLE, To);
     DoRemoveClipRange(From, MAX_ANGLE);
@@ -996,7 +996,7 @@ void VViewClipper::RemoveClipRangeAngle (const FromTo From, const FromTo To) {
 //  VViewClipper::DoIsRangeVisible
 //
 //==========================================================================
-bool VViewClipper::DoIsRangeVisible (const FromTo From, const FromTo To) const {
+bool VViewClipper::DoIsRangeVisible (const FromTo From, const FromTo To) const noexcept {
   for (const VClipNode *N = ClipHead; N; N = N->Next) {
     if (From >= N->From && To <= N->To) return false;
   }
@@ -1009,7 +1009,7 @@ bool VViewClipper::DoIsRangeVisible (const FromTo From, const FromTo To) const {
 //  VViewClipper::IsRangeVisible
 //
 //==========================================================================
-bool VViewClipper::IsRangeVisibleAngle (const FromTo From, const FromTo To) const {
+bool VViewClipper::IsRangeVisibleAngle (const FromTo From, const FromTo To) const noexcept {
   if (From > To) return (DoIsRangeVisible(MIN_ANGLE, To) || DoIsRangeVisible(From, MAX_ANGLE));
   return DoIsRangeVisible(From, To);
 }
@@ -1022,7 +1022,7 @@ bool VViewClipper::IsRangeVisibleAngle (const FromTo From, const FromTo To) cons
 //  returns `true` if no check required (origin in is a box)
 //
 //==========================================================================
-inline static bool CreateBBVerts (TVec &v1, TVec &v2, const float bbox[6], const TVec &origin) {
+inline static bool CreateBBVerts (TVec &v1, TVec &v2, const float bbox[6], const TVec &origin) noexcept {
   enum { MIN_X, MIN_Y, MIN_Z, MAX_X, MAX_Y, MAX_Z };
 
   if (bbox[0] <= origin.x && bbox[3] >= origin.x &&
@@ -1091,7 +1091,7 @@ inline static bool CreateBBVerts (TVec &v1, TVec &v2, const float bbox[6], const
 //  VViewClipper::CheckSubsectorFrustum
 //
 //==========================================================================
-int VViewClipper::CheckSubsectorFrustum (subsector_t *sub, const unsigned mask) const {
+int VViewClipper::CheckSubsectorFrustum (subsector_t *sub, const unsigned mask) const noexcept {
   if (!sub || !Frustum.isValid() || !mask) return 1;
   float bbox[6];
   Level->GetSubsectorBBox(sub, bbox);
@@ -1114,7 +1114,7 @@ int VViewClipper::CheckSubsectorFrustum (subsector_t *sub, const unsigned mask) 
 //  VViewClipper::CheckSegFrustum
 //
 //==========================================================================
-bool VViewClipper::CheckSegFrustum (const subsector_t *sub, const seg_t *seg, const unsigned mask) const {
+bool VViewClipper::CheckSegFrustum (const subsector_t *sub, const seg_t *seg, const unsigned mask) const noexcept {
   //const subsector_t *sub = seg->frontsub;
   if (!seg || !sub || !Frustum.isValid() || !mask) return true;
   const sector_t *sector = sub->sector;
@@ -1132,7 +1132,7 @@ bool VViewClipper::CheckSegFrustum (const subsector_t *sub, const seg_t *seg, co
 //  VViewClipper::ClipIsBBoxVisible
 //
 //==========================================================================
-bool VViewClipper::ClipIsBBoxVisible (const float bbox[6]) const {
+bool VViewClipper::ClipIsBBoxVisible (const float bbox[6]) const noexcept {
   if (!clip_enabled || !clip_bbox) return true;
   if (ClipIsEmpty()) return true; // no clip nodes yet
 #ifdef VV_CLIPPER_FULL_CHECK
@@ -1158,7 +1158,7 @@ bool VViewClipper::ClipIsBBoxVisible (const float bbox[6]) const {
 //  VViewClipper::ClipAddLine
 //
 //==========================================================================
-void VViewClipper::ClipAddLine (const TVec v1, const TVec v2) {
+void VViewClipper::ClipAddLine (const TVec v1, const TVec v2) noexcept {
   if (v1.x == v2.x && v1.y == v2.y) return;
   TPlane pl;
   pl.SetPointDirXY(v1, v2-v1); // for boxes, this doesn't even do sqrt
@@ -1174,7 +1174,7 @@ void VViewClipper::ClipAddLine (const TVec v1, const TVec v2) {
 //  VViewClipper::ClipAddBBox
 //
 //==========================================================================
-void VViewClipper::ClipAddBBox (const float bbox[6]) {
+void VViewClipper::ClipAddBBox (const float bbox[6]) noexcept {
   if (bbox[0] >= bbox[0+3] || bbox[1] >= bbox[1+3]) return;
   // if we are inside this bbox, don't add it
   if (bbox[0] <= Origin.x && bbox[0+3] >= Origin.x &&
@@ -1195,7 +1195,7 @@ void VViewClipper::ClipAddBBox (const float bbox[6]) {
 //  VViewClipper::ClipCheckRegion
 //
 //==========================================================================
-bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const {
+bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const noexcept {
   if (!clip_enabled || !clip_subregion) return true;
 #ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return false;
@@ -1218,7 +1218,7 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
 //  VViewClipper::ClipCheckSubsector
 //
 //==========================================================================
-bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) {
+bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) noexcept {
   if (!clip_enabled) return true;
 #ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) {
@@ -1266,7 +1266,7 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) {
 //  MirrorCheck
 //
 //==========================================================================
-static inline bool MirrorCheck (const TPlane *Mirror, const TVec &v1, const TVec &v2) {
+static inline bool MirrorCheck (const TPlane *Mirror, const TVec &v1, const TVec &v2) noexcept {
   if (Mirror) {
     // clip seg with mirror plane
     if (Mirror->PointOnSideThreshold(v1) && Mirror->PointOnSideThreshold(v2)) return false;
@@ -1288,7 +1288,7 @@ static inline bool MirrorCheck (const TPlane *Mirror, const TVec &v1, const TVec
 //  VViewClipper::CheckAddClipSeg
 //
 //==========================================================================
-void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool clipAll) {
+void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool clipAll) noexcept {
   const line_t *ldef = seg->linedef;
   if (!clipAll && !ldef) return; // miniseg
 
@@ -1348,7 +1348,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
 //  VViewClipper::ClipAddSubsectorSegs
 //
 //==========================================================================
-void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror, bool clipAll) {
+void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *Mirror, bool clipAll) noexcept {
   if (!clip_enabled) return;
 #ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return;
@@ -1385,7 +1385,7 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
 //  VViewClipper::CheckSubsectorLight
 //
 //==========================================================================
-int VViewClipper::CheckSubsectorLight (subsector_t *sub) const {
+int VViewClipper::CheckSubsectorLight (subsector_t *sub) const noexcept {
   if (!sub) return 0;
   float bbox[6];
   Level->GetSubsectorBBox(sub, bbox);
@@ -1424,7 +1424,7 @@ int VViewClipper::CheckSubsectorLight (subsector_t *sub) const {
 //  VViewClipper::ClipLightIsBBoxVisible
 //
 //==========================================================================
-bool VViewClipper::ClipLightIsBBoxVisible (const float bbox[6]) const {
+bool VViewClipper::ClipLightIsBBoxVisible (const float bbox[6]) const noexcept {
 #ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return false;
 #endif
@@ -1442,7 +1442,7 @@ bool VViewClipper::ClipLightIsBBoxVisible (const float bbox[6]) const {
 //  VViewClipper::ClipLightCheckRegion
 //
 //==========================================================================
-bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, subsector_t *sub, bool asShadow) const {
+bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, subsector_t *sub, bool asShadow) const noexcept {
 #ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return false;
 #endif
@@ -1480,7 +1480,7 @@ bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, subsector_t 
 //  `CalcLightVisCheckNode()`
 //
 //==========================================================================
-bool VViewClipper::ClipLightCheckSeg (const seg_t *seg, bool asShadow) const {
+bool VViewClipper::ClipLightCheckSeg (const seg_t *seg, bool asShadow) const noexcept {
   if (ClipIsEmpty()) return true; // no clip nodes yet
   if (!seg->SphereTouches(Origin, Radius)) return false;
   // we have to check even "invisible" segs here, 'cause we need them all
@@ -1504,7 +1504,7 @@ bool VViewClipper::ClipLightCheckSeg (const seg_t *seg, bool asShadow) const {
 //  VViewClipper::ClipLightCheckSubsector
 //
 //==========================================================================
-bool VViewClipper::ClipLightCheckSubsector (subsector_t *sub, bool asShadow) const {
+bool VViewClipper::ClipLightCheckSubsector (subsector_t *sub, bool asShadow) const noexcept {
 #ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return false;
 #endif
@@ -1539,7 +1539,7 @@ bool VViewClipper::ClipLightCheckSubsector (subsector_t *sub, bool asShadow) con
 //  VViewClipper::CheckLightAddClipSeg
 //
 //==========================================================================
-void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool asShadow) {
+void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool asShadow) noexcept {
   // no need to check light radius, it is already done
   const line_t *ldef = seg->linedef;
   if (!ldef) return; // miniseg should not clip
@@ -1591,7 +1591,7 @@ void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TPlane *Mirror,
 //  VViewClipper::ClipLightAddSubsectorSegs
 //
 //==========================================================================
-void VViewClipper::ClipLightAddSubsectorSegs (const subsector_t *sub, bool asShadow, const TPlane *Mirror) {
+void VViewClipper::ClipLightAddSubsectorSegs (const subsector_t *sub, bool asShadow, const TPlane *Mirror) noexcept {
 #ifdef VV_CLIPPER_FULL_CHECK
   if (ClipIsFull()) return;
 #endif
