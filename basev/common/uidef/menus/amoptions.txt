@@ -143,4 +143,115 @@ menudef AutomapOptions {
       "\cGWARNING! Technically this is cheating, but you"
       "\cGcan use this without turning on cheats.";
   }
+
+
+  header "Automap Colors";
+
+  option color {
+    title = "Wall";
+    cvar = am_color_wall;
+    help = "Normal wall color.";
+  }
+
+  option color {
+    title = "Two-sided Wall";
+    cvar = am_color_tswall;
+    help = "Same-height two-sided wall color";
+  }
+
+  option color {
+    title = "Floor Level Change";
+    cvar = am_color_fdwall;
+    help = "Floor level change line color.";
+  }
+
+  option color {
+    title = "Ceiling Level Change";
+    cvar = am_color_cdwall;
+    help = "Ceiling level change line color.";
+  }
+
+  option color {
+    title = "Walls With Extra Floors";
+    cvar = am_color_exwall;
+    help = "Walls with extra floors color.";
+  }
+
+  option color {
+    title = "Secret Wall";
+    cvar = am_color_secretwall;
+    help = "Secret wall color.";
+  }
+
+  option color {
+    title = "Scanner Revealed";
+    cvar = am_color_power;
+    help = "Walls revealed by the scanner color.";
+  }
+
+
+  header "Automap UI Colors";
+
+  option color {
+    title = "Grid Lines";
+    cvar = am_color_grid;
+    help = "Grid lines color.";
+  }
+
+  option color {
+    title = "Current Mark";
+    cvar = am_color_current_mark;
+    help = "Current mark color.";
+  }
+
+
+  header "More Automap Colors";
+
+  option color {
+    title = "Thing";
+    cvar = am_color_thing;
+    help = "Thing color.";
+  }
+
+  option color {
+    title = "Solid Thing";
+    cvar = am_color_solid;
+    help = "Solid thing color.";
+  }
+
+  option color {
+    title = "Monster";
+    cvar = am_color_monster;
+    help = "Monster color.";
+  }
+
+  option color {
+    title = "Missile";
+    cvar = am_color_missile;
+    help = "Missile color.";
+  }
+
+  option color {
+    title = "Corpse";
+    cvar = am_color_dead;
+    help = "Dead thing color.";
+  }
+
+  option color {
+    title = "Invisible";
+    cvar = am_color_invisible;
+    help = "Invisible thing color.";
+  }
+
+  option color {
+    title = "Player";
+    cvar = am_color_player;
+    help = "Player color.";
+  }
+
+  option color {
+    title = "Miniseg";
+    cvar = am_color_miniseg;
+    help = "Miniseg color.";
+  }
 }

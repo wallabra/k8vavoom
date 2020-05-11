@@ -28,9 +28,6 @@ class MenuScreenPlayerSetup : MenuScreen;
 //array!name SkinNames;
 
 MenuInputLine PlayerName;
-MenuChoiceSlider ColR;
-MenuChoiceSlider ColG;
-MenuChoiceSlider ColB;
 MenuSpriteAnim Anim;
 MenuModel Mdl;
 MenuChoiceEnum EPClass;
@@ -70,19 +67,6 @@ void CreateClasses () {
 
 //==========================================================================
 //
-//  Byte2Float
-//
-//==========================================================================
-final float Byte2Float (int b) {
-  if (b <= 0) return 0.0;
-  if (b >= 255) return 1.0;
-  int v = (b*10+5)/255;
-  return v/10.0;
-}
-
-
-//==========================================================================
-//
 //  CreateChoices
 //
 //==========================================================================
@@ -102,8 +86,6 @@ override void CreateChoices () {
   R_InstallSpriteComplete();
 
 
-  int Col = ParseColor(GetCvarS('color'));
-
   PlayerName = GetItemContainer().NewChild(MenuInputLine);
   PlayerName.SetOrigin(ChoicesStartX+10, GetCurrentY());
   PlayerName.CursorXOffs = -10;
@@ -122,44 +104,16 @@ override void CreateChoices () {
 
 
   ColorBox = GetItemContainer().NewChild(MenuChoiceColor);
-  ColorBox.SetInitialValue(Col);
+  //ColorBox.SetInitialValue(Col);
+  ColorBox.SetSessionColorCvar('color');
   ColorBox.SetText("Color");
   ColorBox.SetOrigin(ChoicesStartX, GetCurrentY());
   ColorBox.ValueChanging = delegate bool (Object Sender, int NewValue) {
-    if (ColR) ColR.SetInitialValue(Byte2Float(RGBGetR(NewValue)));
-    if (ColG) ColG.SetInitialValue(Byte2Float(RGBGetG(NewValue)));
-    if (ColB) ColB.SetInitialValue(Byte2Float(RGBGetB(NewValue)));
     if (Anim) Anim.Color = NewValue;
     if (Mdl) Mdl.Color = NewValue;
-    SetCvarS('color', va("#%02x%02x%02x", RGBGetR(NewValue), RGBGetG(NewValue), RGBGetB(NewValue)));
     return true;
   };
 
-  /*
-  ColR = GetItemContainer().NewChild(MenuChoiceSlider);
-  ColR.Width = 420;
-  ColR.SetOrigin(ChoicesStartX, GetCurrentY());
-  ColR.Text = "Red";
-  ColR.ValueDelta = 0.1;
-  ColR.SetInitialValue(Byte2Float((Col>>16)&0xff));
-  ColR.ValueChanging = &ChangeColor;
-
-  ColG = GetItemContainer().NewChild(MenuChoiceSlider);
-  ColG.Width = 420;
-  ColG.SetOrigin(ChoicesStartX, GetCurrentY());
-  ColG.Text = "Green";
-  ColG.ValueDelta = 0.1;
-  ColG.SetInitialValue(Byte2Float((Col>>8)&0xff));
-  ColG.ValueChanging = &ChangeColor;
-
-  ColB = GetItemContainer().NewChild(MenuChoiceSlider);
-  ColB.Width = 420;
-  ColB.SetOrigin(ChoicesStartX, GetCurrentY());
-  ColB.Text = "Blue";
-  ColB.ValueDelta = 0.1;
-  ColB.SetInitialValue(Byte2Float(Col&0xff));
-  ColB.ValueChanging = &ChangeColor;
-  */
 
   Anim = GetItemContainer().NewChild(MenuSpriteAnim);
   Anim.SetPos(220, 150);
@@ -168,7 +122,7 @@ override void CreateChoices () {
   Anim.NumFrames = 4;
   Anim.TranslStart = 112;
   Anim.TranslEnd = 127;
-  Anim.Color = Col;
+  Anim.Color = ColorBox.ColorValue;
 
   /* NOT YET
   auto model = InstallModel("models/players/doomguy/player.xml");
@@ -200,25 +154,6 @@ override void CreateChoices () {
 //==========================================================================
 void ChangeName (Object Sender) {
   SetCvarS('Name', PlayerName.Value);
-}
-
-
-//==========================================================================
-//
-//  ChangeColor
-//
-//==========================================================================
-bool ChangeColor (Object Sender, float newValue) {
-  float r = (Sender == ColR ? newValue : ColR.Value);
-  float g = (Sender == ColG ? newValue : ColG.Value);
-  float b = (Sender == ColB ? newValue : ColB.Value);
-  int Col = RGBA(int(r*255.0), int(g*255.0), int(b*255.0), 255);
-
-  SetCvarS('color', va("#%02x%02x%02x", int(r*255.0), int(g*255.0), int(b*255.0)));
-  if (Anim) Anim.Color = Col;
-  if (Mdl) Mdl.Color = Col;
-  if (ColorBox) ColorBox.SetNewColor(Col);
-  return true;
 }
 
 

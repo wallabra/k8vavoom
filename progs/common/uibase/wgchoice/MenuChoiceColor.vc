@@ -64,6 +64,21 @@ override void SetOrigin (int x, int y) {
 
 //==========================================================================
 //
+//  SetSessionColorCvar
+//
+//==========================================================================
+void SetSessionColorCvar (name Name) {
+  cvarSession = Name;
+  if (Name) {
+    int color = ParseColor(GetCvarS(Name));
+    if (color) ColorValue = color;
+  }
+  FixLatchedColor();
+}
+
+
+//==========================================================================
+//
 //  SetNewColor
 //
 //==========================================================================
@@ -72,6 +87,7 @@ bool SetNewColor (int v) {
     if (!ValueChanging(self, v)) return false;
   }
   ColorValue = v;
+  if (cvarSession) SetCvarS(cvarSession, va("#%02x%02x%02x", RGBGetR(v), RGBGetG(v), RGBGetB(v)));
   return true;
 }
 

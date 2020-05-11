@@ -446,6 +446,7 @@ final static MenuDefOptionBase parse (ScriptsParser par) {
   else if (par.Check("crosshair")) res = SpawnObject(MenuDefOptionCrosshair);
   else if (par.Check("bind")) res = SpawnObject(MenuDefOptionBind);
   else if (par.Check("render")) res = SpawnObject(MenuDefOptionRenderType);
+  else if (par.Check("color")) res = SpawnObject(MenuDefOptionColor);
   else par.ScriptError("invalid option type '%s'", par.String);
   // condition?
   if (par.Check("[")) {
@@ -1322,4 +1323,26 @@ override MenuChoiceBase CreateOption (MenuScreen menu) {
        if (strifeMode < 0) newCtl.Disabled = IsStrife;
   else if (strifeMode > 0) newCtl.Disabled = !IsStrife;
   return newCtl;
+}
+
+
+//**************************************************************************
+//
+// MenuDefOptionColor
+//
+//**************************************************************************
+class MenuDefOptionColor : MenuDefOptionBase;
+
+//==========================================================================
+//
+//  CreateOption
+//
+//==========================================================================
+override MenuChoiceBase CreateOption (MenuScreen menu) {
+  auto opt = menu.GetItemContainer().NewChild(MenuChoiceColor);
+  opt.SetText(title);
+  if (textColor != CR_UNDEFINED) opt.TextColor = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
+  if (cvar) opt.SetSessionColorCvar(cvar);
+  return opt;
 }
