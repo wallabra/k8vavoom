@@ -23,76 +23,90 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuScreenSkill : MenuScreenPicButtonsBase;
+// either text, or picture
+class MenuChoiceTextPicButton : MenuBigTextButton;
+
+int PicHandle;
+bool ignoreOffsets = true;
 
 
 //==========================================================================
 //
-//  CreateChoices
+//  SetText
 //
 //==========================================================================
-override void CreateChoices () {
-  foreach (auto i; 0..P_GetNumSkills()) {
-    MenuChoiceSkill Btn = GetItemContainer().NewChild(MenuChoiceSkill);
-    SkillDef *SDef = P_GetSkillDef(i);
-    Btn.SetPos(ChoicesStartX, GetCurrentY());
-    Btn.SetText(SDef->MenuName);
-    if (SDef->bMenuNameIsPic) Btn.SetPicture(R_RegisterPic(name(SDef->MenuName)));
-    foreach (auto j; 0..SDef->PlayerClassNames.length) {
-      if (SDef->PlayerClassNames[j].ClassName.strEquCI(ClGame.SkillClassName)) {
-        Btn.SetText(SDef->PlayerClassNames[j].MenuName);
-      }
-    }
-    if (SDef->TextColor) Btn.Text = "\c["~SDef->TextColor~"]"~Btn.Text;
-    FixButtonWidget(Btn); // this fixes height
-    // set other button fields
-    Btn.SkillIndex = i;
-    Btn.bMustConfirm = SDef->bMustConfirm;
-    Btn.ConfirmationText = SDef->ConfirmationText;
-    Btn.Activated = &ActivateSkill;
-  }
-  FixMenuWidth();
+override void SetText (string AText, optional bool disableTranslation) {
+  PicHandle = 0; // no picture
+  ::SetText(AText, disableTranslation!optional);
 }
 
 
 //==========================================================================
 //
-//  SetDefaultChoice
+//  SetPicture
 //
 //==========================================================================
-override void SetDefaultChoice () {
-  ::SetDefaultChoice();
-
-  int goodSkill = max(0, P_GetNumSkills()-2);
-  foreach (auto i; 0..P_GetNumSkills()) {
-    auto sdef = P_GetSkillDef(i);
-    if (sdef->bMustConfirm) {
-      goodSkill = i-1;
-      break;
-    }
-  }
-
-  foreach (auto i; 0..goodSkill) CycleNextChoice();
+void SetPicture (int handle) {
+  PicHandle = handle;
 }
 
 
 //==========================================================================
 //
-//  ActivateSkill
+//  CalcTextWidth
 //
 //==========================================================================
-void ActivateSkill (Object Sender) {
-  MenuChoiceSkill Btn = MenuChoiceSkill(Sender);
-  if (Btn.bMustConfirm) {
-    ClGame.SkillToConfirm = Btn.SkillIndex;
-    ClGame.MessageBoxShowSkillQuery(Btn.ConfirmationText);
+override int CalcTextWidth () {
+  if (PicHandle) {
+    picinfo_t pinf;
+    R_GetPicInfo(PicHandle, &pinf);
+    int wdt = pinf.width;
+    if (!ignoreOffsets) wdt -= pinf.xoffset;
+    return wdt;
   } else {
-    ClGame.NewGame(Btn.SkillIndex);
+    return ::CalcTextWidth();
+  }
+}
+
+
+//==========================================================================
+//
+//  CalcTextHeight
+//
+//==========================================================================
+override int CalcTextHeight () {
+  if (PicHandle) {
+    picinfo_t pinf;
+    R_GetPicInfo(PicHandle, &pinf);
+    int hgt = pinf.height;
+    if (!ignoreOffsets) hgt -= pinf.yoffset;
+    return hgt;
+  } else {
+    return ::CalcTextHeight();
+  }
+}
+
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
+  if (PicHandle > 0) {
+    int x = 0, y = 0;
+    if (ignoreOffsets) {
+      picinfo_t pinf;
+      R_GetPicInfo(PicHandle, &pinf);
+      x = pinf.xoffset;
+      y = pinf.yoffset;
+    }
+    DrawPic(x, y, PicHandle);
+  } else {
+    ::OnDraw();
   }
 }
 
 
 defaultproperties {
-  MenuName = 'Skill_Menu';
-  Title = "CHOOSE SKILL LEVEL:";
 }

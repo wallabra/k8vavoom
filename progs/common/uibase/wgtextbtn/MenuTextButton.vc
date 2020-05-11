@@ -81,8 +81,9 @@ void SetSubMenuName (string menuName) {
 //  SetText
 //
 //==========================================================================
-void SetText (string AText) {
-  Text = TranslateString(AText);
+void SetText (string AText, optional bool disableTranslation) {
+  if (!disableTranslation) AText = TranslateString(AText);
+  Text = AText;
 }
 
 
@@ -96,6 +97,19 @@ int CalcTextWidth () {
   scope(exit) SetFont(oldFont);
   SetFont(TextFont);
   return TextWidth(Text);
+}
+
+
+//==========================================================================
+//
+//  CalcTextHeight
+//
+//==========================================================================
+int CalcTextHeight () {
+  auto oldFont = GetFont();
+  scope(exit) SetFont(oldFont);
+  SetFont(TextFont);
+  return TextHeight(Text);
 }
 
 

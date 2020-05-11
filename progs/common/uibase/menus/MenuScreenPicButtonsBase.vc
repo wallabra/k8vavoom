@@ -23,62 +23,53 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuSmallTextButton : MenuTextButton;
+class MenuScreenPicButtonsBase : MenuScreen;
 
 
 //==========================================================================
 //
-//  SetOrigin
+//  FixButtonWidget
 //
 //==========================================================================
-override void SetOrigin (int x, int y) {
-  if (TextHAlign == hright) {
-    CursorXOffs = /*200*/CursorXOffsHR;
-    SetPos(x-CursorXOffs, y);
+void FixButtonWidget (MenuChoiceTextPicButton btn) {
+  if (!btn) return;
+  int hgt = btn.CalcTextHeight();
+  if (btn.Height < hgt) btn.Height = hgt;
+}
+
+
+//==========================================================================
+//
+//  FixMenuWidth
+//
+//==========================================================================
+void FixMenuWidth () {
+  // calculate maximum width
+  int maxwdt = 0;
+  foreach (auto it; Items) {
+    auto btn = MenuChoiceTextPicButton(it);
+    if (!btn) continue;
+    maxwdt = max(maxwdt, btn.CalcTextWidth());
+  }
+  // fix width
+  int maxButtonWidth = maxwdt;
+  if (maxwdt+ChoicesStartX+4 > Width) {
+    maxwdt = min(GetRootWidget().Width-16, maxwdt+ChoicesStartX+16);
   } else {
-    SetPos(x, y);
+    maxwdt = Width;
+  }
+  if (Width != maxwdt) Width = maxwdt;
+  foreach (auto it; Items) {
+    auto btn = MenuChoiceTextPicButton(it);
+    if (!btn) continue;
+    btn.Width = maxButtonWidth;
   }
 }
 
 
-//==========================================================================
-//
-//  SetText
-//
-//==========================================================================
-override void SetText (string AText, optional bool disableTranslation) {
-  ::SetText(AText, disableTranslation!optional);
-  FixMinimumHeight();
-}
-
-
-//==========================================================================
-//
-//  OnDraw
-//
-//==========================================================================
-override void OnDraw () {
-  CheckSubMenu();
-  DrawBackground();
-
-  int y = 0;
-       if (TextVAlign == vbottom) y += Height-1;
-  else if (TextVAlign == vcenter) y += Height/2;
-  //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
-  SetFont(TextFont);
-  SetTextAlign(TextHAlign, TextVAlign);
-
-  int clr = (IsFocused ? TextColorFocus : TextColor);
-  if (hasSubMenuChecked < 0) clr = CR_DARKGRAY;
-  DrawText(CursorXOffs, y, Text, clr);
-}
-
-
 defaultproperties {
-  TextFont = 'smallfont';
-  TextColor = CR_WHITE;
-  TextColorFocus = CR_YELLOW;
-  TextHAlign = hright;
-  TextVAlign = vtop;
-  Height = 10;
+  ChoicesStartX = 38;
+  SelectorType = MenuSelector_Big;
+  MenuScrollable = true;
+  AllowVerticalResize = true;
 }

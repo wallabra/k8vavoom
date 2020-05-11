@@ -54,6 +54,7 @@ import 'linespec';
 
 #include "wgtextbtn/MenuTextButton.vc"
 #include "wgtextbtn/MenuBigTextButton.vc"
+#include "wgtextbtn/MenuChoiceTextPicButton.vc"
 #include "wgtextbtn/MenuSmallTextButton.vc"
 #include "wgtextbtn/MenuChoiceBackButton.vc"
 #include "wgtextbtn/MenuChoicePClass.vc"
@@ -73,6 +74,7 @@ import 'linespec';
 #include "menus/MenuScreenMainBase.vc"
 #include "menus/MenuScreenSinglePlayer.vc"
 #include "menus/MenuScreenClass.vc"
+#include "menus/MenuScreenPicButtonsBase.vc"
 #include "menus/MenuScreenEpisode.vc"
 #include "menus/MenuScreenSkill.vc"
 #include "menus/MenuScreenLoadSaveGame.vc"

@@ -393,7 +393,7 @@ void VWidget::LinkToParentAfter (VWidget *w) noexcept {
 //
 //==========================================================================
 void VWidget::Lower () {
-  if (!ParentWidget) { GCon->Log(NAME_Error, "Can't lower root window"); return; }
+  if (!ParentWidget) { /*GCon->Log(NAME_Error, "Can't lower root window");*/ return; }
   LinkToParentBefore(IsOnTopFlag() ? ParentWidget->FindFirstOnTopChild() : nullptr);
 }
 
@@ -404,7 +404,7 @@ void VWidget::Lower () {
 //
 //==========================================================================
 void VWidget::Raise () {
-  if (!ParentWidget) { GCon->Log(NAME_Error, "Can't raise root window"); return; }
+  if (!ParentWidget) { /*GCon->Log(NAME_Error, "Can't raise root window");*/ return; }
   //GCon->Logf(NAME_Debug, "raising %u (ontop=%d)", GetUniqueId(), (int)IsOnTopFlag());
   LinkToParentAfter(IsOnTopFlag() ? nullptr : ParentWidget->FindLastNormalChild());
 }

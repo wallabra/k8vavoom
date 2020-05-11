@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuScreenEpisode : MenuScreen;
+class MenuScreenEpisode : MenuScreenPicButtonsBase;
 
 
 //==========================================================================
@@ -32,38 +32,29 @@ class MenuScreenEpisode : MenuScreen;
 //
 //==========================================================================
 override void CreateChoices () {
-  MenuChoiceEpisode Epi;
-  int currentY = GetChoicesStartY();
   int ecount = P_GetNumEpisodes();
   //if (ecount > 6) Height = 400;
-  int calcHeight = currentY;
   int maxwdt = -1;
   foreach (auto i; 0..ecount) {
     EpisodeDef *EDef = P_GetEpisodeDef(i);
     if (EDef->bOptional && !IsMapPresent(EDef->Name)) continue;
-    Epi = GetItemContainer().NewChild(MenuChoiceEpisode);
-    Epi.SetPos(ChoicesStartX, currentY);
-    int wdt = -1;
-    if (EDef->PicName) {
-      Epi.PicHandle = R_RegisterPic(EDef->PicName);
-      picinfo_t pinf;
-      R_GetPicInfo(Epi.PicHandle, &pinf);
-      wdt = pinf.width;
-      if (Epi.Height < pinf.height) Epi.Height = pinf.height+8;
-    } else if (EDef->bLookupText) {
-      if (EDef->Text.StrStartsWith("$")) Epi.Text = TranslateString(EDef->Text);
-      else Epi.Text = GetLangString(EDef->Text);
+    MenuChoiceEpisode Epi = GetItemContainer().NewChild(MenuChoiceEpisode);
+    Epi.SetPos(ChoicesStartX, GetCurrentY());
+    if (EDef->bLookupText) {
+      string t = EDef->Text;
+      if (t.strStartsWith("$")) t = TranslateString(t); else t = GetLangString(t);
+      Epi.SetText(t, disableTranslation:true);
     } else {
-      Epi.Text = EDef->Text;
+      Epi.SetText(EDef->Text, disableTranslation:true);
     }
-    if (wdt < 0) wdt = Epi.CalcTextWidth();
-    //print("i=%d; wdt=%d; curmax=%d; <%q> (%s)", i, wdt, maxwdt, Epi.Text, Epi.TextFont);
-    maxwdt = max(maxwdt, wdt);
+    if (EDef->PicName) Epi.SetPicture(R_RegisterPic(EDef->PicName));
+    FixButtonWidget(Epi); // this fixes height
+    // set other button fields
     Epi.EDef = EDef;
     Epi.Activated = &ActivateEpisode;
-    currentY += Epi.Height;
-    calcHeight += Epi.Height;
   }
+  FixMenuWidth();
+  /*
   foreach (auto it; Items) if (it.Width < maxwdt) it.Width = maxwdt;
   calcHeight = clamp(calcHeight, 200, 440);
   if (calcHeight > Height) {
@@ -73,6 +64,7 @@ override void CreateChoices () {
   }
   maxwdt += 60;
   if (Width < maxwdt) Width = maxwdt;
+  */
 }
 
 
@@ -93,8 +85,6 @@ void ActivateEpisode (Object Sender) {
 
 defaultproperties {
   MenuName = 'Episode_Menu';
-  ChoicesStartX = 48;
-  SelectorType = MenuSelector_Big;
+  //ChoicesStartX = 48;
   Title = "WHICH EPISODE?";
-  MenuScrollable = true;
 }

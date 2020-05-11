@@ -23,24 +23,9 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuChoiceEpisode : MenuBigTextButton;
+class MenuChoiceEpisode : MenuChoiceTextPicButton;
 
-int PicHandle;
 EpisodeDef *EDef;
-
-
-//==========================================================================
-//
-//  OnDraw
-//
-//==========================================================================
-override void OnDraw () {
-  if (PicHandle > 0) {
-    DrawPic(0, 0, PicHandle);
-  } else{
-    ::OnDraw();
-  }
-}
 
 
 defaultproperties {
