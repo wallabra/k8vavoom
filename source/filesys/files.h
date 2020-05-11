@@ -68,8 +68,17 @@ void FL_ProcessPreInits ();
 
 struct GameOptions {
   bool hexenGame;
+  // warnings
+  bool warnDeh;
+  bool warnPNames;
+  bool warnAnimated;
 
-  GameOptions () : hexenGame(false) {}
+  GameOptions ()
+    : hexenGame(false)
+    , warnDeh(true)
+    , warnPNames(true)
+    , warnAnimated(true)
+  {}
 };
 
 

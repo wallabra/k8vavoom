@@ -1608,7 +1608,9 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
       if (LNum < 0) {
         wpi.tx = nullptr;
         //patchtexlookup[i] = nullptr;
-        GCon->Logf(NAME_Warning, "PNAMES(%s): cannot find texture patch '%s' (%d/%d)", *W_FullLumpName(NamesLump), *PatchName, i, nummappatches-1);
+        if (game_options.warnPNames || !W_IsIWADLump(NamesLump)) {
+          GCon->Logf(NAME_Warning, "PNAMES(%s): cannot find texture patch '%s' (%d/%d)", *W_FullLumpName(NamesLump), *PatchName, i, nummappatches-1);
+        }
       } else {
         //patchtexlookup[i] = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
         //if (patchtexlookup[i]) AddTexture(patchtexlookup[i]);

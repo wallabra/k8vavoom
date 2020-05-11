@@ -1796,7 +1796,9 @@ void ProcessDehackedFiles () {
   for (auto &&dlump : dehlumps) {
     dehFileName = W_FullLumpName(dlump);
     GLog.Logf(NAME_Init, "Processing dehacked patch lump '%s'", *dehFileName);
-    dehWarningsEnabled = !W_IsIWADLump(dlump); // do not print warnings for IWADs
+    if (!game_options.warnDeh) {
+      dehWarningsEnabled = !W_IsIWADLump(dlump); // do not print warnings for IWADs
+    }
     LoadDehackedFile(W_CreateLumpReaderNum(dlump), dlump);
     dehWarningsEnabled = true;
   }

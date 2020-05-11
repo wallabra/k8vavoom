@@ -398,7 +398,9 @@ static void BuildTextureRange (int wadfile, VName nfirst, VName nlast, int txtyp
       // can absent both in doom1, and in doom2
       if (nfirst == "wfall1" && nlast == "wfall4") return;
     }
-    GCon->Logf(NAME_Warning, "ANIMATED: %ss animation sequence between '%s' and '%s' not found", atypestr, *nfirst, *nlast);
+    if (game_options.warnAnimated || !W_IsIWADFile(wadfile)) {
+      GCon->Logf(NAME_Warning, "ANIMATED: %ss animation sequence between '%s' and '%s' not found", atypestr, *nfirst, *nlast);
+    }
   }
 }
 

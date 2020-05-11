@@ -312,6 +312,11 @@ game "hacx" {
   base = "basev/doom";
   iwad = "hacx.wad";
   warp = "MAP##"; // template for "-warp"
+  warnings = {
+    dehacked = false; // for iwad
+    pnames = false; // for iwad
+    animated = false; // for iwad
+  }
   filter = {
     "hacx",
     "game-hacx",

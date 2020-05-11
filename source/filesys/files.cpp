@@ -94,7 +94,7 @@ struct MainWadFiles {
 };
 
 
-struct version_t {
+struct GameDefinition {
   VStr description; // game description (may be empty)
   VStr gamename; // cannot be empty
   TArray<MainWadFiles> mainWads; // list of wads (ony one is required)
@@ -1613,7 +1613,7 @@ static bool ParseBoolValue (VScriptParser *sc) {
 //  "{" already eaten
 //
 //==========================================================================
-static void ParseGameDef (VScriptParser *sc, version_t &game) {
+static void ParseGameDef (VScriptParser *sc, GameDefinition &game) {
   while (!sc->Check("}")) {
     // description
     if (sc->Check("description")) { game.description = ParseStringValue(sc); continue; }
@@ -1689,6 +1689,20 @@ static void ParseGameDef (VScriptParser *sc, version_t &game) {
       ParseStringValueOrList(sc, game.defines);
       continue;
     }
+    // warnings
+    if (sc->Check("warnings")) {
+      sc->Expect("=");
+      sc->Expect("{");
+      while (!sc->Check("}")) {
+        sc->ExpectString();
+        VStr wname = sc->String;
+        const bool val = ParseBoolValue(sc);
+             if (wname.strEquCI("dehacked")) game.options.warnDeh = val;
+        else if (wname.strEquCI("pnames")) game.options.warnPNames = val;
+        else if (wname.strEquCI("animated")) game.options.warnAnimated = val;
+      }
+      continue;
+    }
     // unknown shit
     if (!sc->GetString()) sc->Error("unexpected end of file");
     sc->Error(va("unknown command: '%s'", *sc->String));
@@ -1707,10 +1721,10 @@ static void ParseGameDef (VScriptParser *sc, version_t &game) {
 
 //==========================================================================
 //
-//  ParseGamesDefinition
+//  ParseGameDefinitions
 //
 //==========================================================================
-static void ParseGamesDefinition (VScriptParser *sc, TArray<version_t> &games) {
+static void ParseGameDefinitions (VScriptParser *sc, TArray<GameDefinition> &games) {
   sc->SetCMode(true);
   while (!sc->AtEnd()) {
     if (sc->Check(";")) continue;
@@ -1719,7 +1733,7 @@ static void ParseGamesDefinition (VScriptParser *sc, TArray<version_t> &games) {
       VStr gname = sc->String;
       if (gname.isEmpty()) sc->Error("game name is empty");
       sc->Expect("{");
-      version_t &game = games.Alloc();
+      GameDefinition &game = games.Alloc();
       game.FixVoices = false;
       game.gamename = gname;
       ParseGameDef(sc, game);
@@ -1736,8 +1750,8 @@ static void ParseGamesDefinition (VScriptParser *sc, TArray<version_t> &games) {
 //
 //==========================================================================
 static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
-  TArray<version_t> games;
-  version_t *selectedGame = nullptr;
+  TArray<GameDefinition> games;
+  GameDefinition *selectedGame = nullptr;
   VStr UseName;
 
        if (fl_savedir.IsNotEmpty() && Sys_FileExists(fl_savedir+"/"+name)) UseName = fl_savedir+"/"+name;
@@ -1746,7 +1760,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
 
   if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "Parsing game definition file \"%s\"", *UseName);
   VScriptParser *sc = new VScriptParser(UseName, FL_OpenSysFileRead(UseName));
-  ParseGamesDefinition(sc, games);
+  ParseGameDefinitions(sc, games);
   if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "Done parsing game definition file \"%s\"", *UseName);
   if (games.length() == 0) Sys_Error("No game definitions found!");
 
@@ -1857,7 +1871,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   game_name = *selectedGame->gamename;
 
   vassert(selectedGame);
-  version_t &game = *selectedGame;
+  GameDefinition &game = *selectedGame;
   game_options = game.options;
 
   for (auto &&ds : game.defines) {
