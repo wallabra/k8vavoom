@@ -213,6 +213,8 @@ int currColor;
 float h, s, v;
 int xbase, ybase;
 
+bool doneHovered;
+
 delegate void SetNewColorCB (int color, float h, float s, float v);
 delegate void ColorChangedCB (int color, float h, float s, float v);
 delegate void OnCloseCB ();
@@ -325,6 +327,35 @@ final void SetCurrentStripe (int dy) {
 
 //==========================================================================
 //
+//  CalcStripeFromY
+//
+//==========================================================================
+final int CalcStripeFromXY (int x, int y) {
+  if (x < wheelX+wheelW+16 || x >= wheelX+wheelW+16+64) return -1;
+  if (y < 8 || y >= 8+(StripeMax+1)*12) return -1;
+  return (y-8)/12;
+}
+
+
+//==========================================================================
+//
+//  CheckDoneHover
+//
+//==========================================================================
+final bool CheckDoneHover (int x, int y) {
+  string s = "[DONE]";
+  int doneW = TextWidth(s);
+  int doneH = TextHeight(s);
+  int doneX = Width-4-doneW;
+  int doneY = Height-doneH-2;
+  return
+    x >= doneX-2 && x < doneX-2+doneW+4 &&
+    y >= doneY-2 && y < doneY-2+doneH+4;
+}
+
+
+//==========================================================================
+//
 //  OnDraw
 //
 //==========================================================================
@@ -376,6 +407,14 @@ override void OnDraw () {
   DrawText(4, ty, va("H:%s", h), CR_UNTRANSLATED); ty += FontHeight();
   DrawText(4, ty, va("S:%s", s), CR_UNTRANSLATED); ty += FontHeight();
   DrawText(4, ty, va("V:%s", v), CR_UNTRANSLATED); ty += FontHeight();
+
+  string s = "[DONE]";
+  int doneW = TextWidth(s);
+  int doneH = TextHeight(s);
+  int doneX = Width-4-doneW;
+  int doneY = Height-doneH-2;
+  if (doneHovered) FillRect(doneX-2, doneY-2, doneW+4, doneH+4, RGB(64, 64, 64));
+  DrawText(doneX, doneY, s, CR_YELLOW);
 }
 
 
@@ -409,10 +448,11 @@ override bool OnEvent (ref event_t evt) {
   // any events are always processed by us (i.e. we intercept everything, because we are the popup)
 
   if (evt.type == ev_mouse) {
+    doneHovered = CheckDoneHover(evt.msx, evt.msy);
+    /*
     if (evt.msx >= 1 && evt.msy >= 4 && evt.msx < Width-1 && evt.msy < Height-4) {
-      //int idx = FindItemAt(evt.msx, evt.msy);
-      //if (idx >= 0) currItem = idx;
     }
+    */
     return true;
   }
 
@@ -425,6 +465,24 @@ override bool OnEvent (ref event_t evt) {
     if (evt.keycode >= K_MOUSE1 && evt.keycode <= K_MOUSE9) {
       if (evt.keycode != K_MOUSE1 || evt.x < 0 || evt.y < 0 || evt.x >= Width || evt.y >= Height) {
         Destroy();
+        return true;
+      }
+      // "done" button
+      if (CheckDoneHover(evt.x, evt.y)) {
+        if (SetNewColorCB) SetNewColorCB(currColor, h, s, v);
+        Destroy();
+        return true;
+      }
+      // color hive
+      int hpx, hpy;
+      if (CalcHexColorPatternCoords(out hpx, out hpy, evt.x, evt.y, wheelX, wheelY, WheelRadius, WheelW, WheelH)) {
+        UpdateColorTo(hpx, hpy);
+        return true;
+      }
+      // color bars
+      int stp = CalcStripeFromXY(evt.x, evt.y);
+      if (stp >= 0) {
+        SetCurrentStripe(stp);
         return true;
       }
     }
