@@ -44,6 +44,7 @@ override void CreateChoices () {
       R_GetPicInfo(Btn.PicHandle, &pinf);
       wdt = pinf.width;
       if (Btn.Height < pinf.height) Btn.Height = pinf.height+8;
+      //printdebug("i=%s; size=%sx%s; ofs=%s,%s; scale=%sx%s", i, pinf.width, pinf.height, pinf.xoffset, pinf.yoffset, pinf.xscale, pinf.yscale);
     } else {
       Btn.SetText(SDef->MenuName);
     }

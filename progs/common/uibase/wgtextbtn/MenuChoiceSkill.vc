@@ -29,6 +29,7 @@ int PicHandle;
 int SkillIndex;
 bool bMustConfirm;
 string ConfirmationText;
+bool ignoreOffsets = true;
 
 
 //==========================================================================
@@ -38,7 +39,14 @@ string ConfirmationText;
 //==========================================================================
 override void OnDraw () {
   if (PicHandle > 0) {
-    DrawPic(0, 0, PicHandle);
+    int x = 0, y = 0;
+    if (ignoreOffsets) {
+      picinfo_t pinf;
+      R_GetPicInfo(PicHandle, &pinf);
+      x = pinf.xoffset;
+      y = pinf.yoffset;
+    }
+    DrawPic(x, y, PicHandle);
   } else {
     ::OnDraw();
   }
