@@ -457,7 +457,8 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         //GCon->Logf(NAME_Debug, "SKYSIDE: %s", *GTextureManager[Tex]->Name);
         Flip = !!Level->Lines[Side->LineNum].arg3;
       }
-      if (GTextureManager[Tex]->Type != TEXTYPE_Null) {
+      VTexture *sk2tex = GTextureManager[Tex];
+      if (sk2tex && sk2tex->Type != TEXTYPE_Null) {
         for (int i = 0; i < SideSkies.Num(); ++i) {
           if (SideSkies[i]->SideTex == Tex && SideSkies[i]->SideFlip == Flip) {
             Sky = SideSkies[i];
