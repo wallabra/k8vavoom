@@ -177,7 +177,8 @@ final void SetFullScaledSize (int mywdt, int myhgt, optional bool proportional/*
     //float scale = fmin(scaleX, scaleY);
     //printdebug("*** before scales=(%s,%s)", scaleX, scaleY);
     // use vertical scale as base
-    scaleX *= 1.0/scaleY;
+    //scaleX *= 1.0/scaleY;
+    scaleX = scaleY/aspect;
     /*
     if (scaleX > scaleY) {
       // use vertical scale as base
