@@ -511,7 +511,7 @@ void IM_DrawSingleStats () {
 
   DrawText(SP_STATSX, SP_STATSY, "kills");
   DrawText(SP_STATSX, SP_STATSY+lh, "items");
-  DrawText(SP_STATSX, SP_STATSY+2*lh, "scrt");
+  DrawText(SP_STATSX, SP_STATSY+2*lh, "secrets");
 
   if (sp_state < 2 || ClGame.cl.Level.TotalKills > 0) {
     IM_DrawPercent(ConvertX(640-SP_STATSX), SP_STATSY, cnt_kills[0]);
@@ -652,8 +652,8 @@ void IM_DrawCooperativeStats () {
   // draw stat titles (top line)
   DrawText(ConvertX(NG_STATSX+NG_SPACINGX), NG_STATSY, "kills");
   DrawText(ConvertX(NG_STATSX+2*NG_SPACINGX), NG_STATSY, "items");
-  DrawText(ConvertX(NG_STATSX+3*NG_SPACINGX), NG_STATSY, "scrt");
-  DrawText(ConvertX(NG_STATSX+4*NG_SPACINGX), NG_STATSY, "frgs");
+  DrawText(ConvertX(NG_STATSX+3*NG_SPACINGX), NG_STATSY, "secrets");
+  DrawText(ConvertX(NG_STATSX+4*NG_SPACINGX), NG_STATSY, "frags");
 
   // draw stats
   y = NG_STATSY+TextHeight("kills");
