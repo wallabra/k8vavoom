@@ -249,4 +249,5 @@ override bool OnEvent (ref event_t evt) {
 
 defaultproperties {
   HighlightBackground = false;
+  TextHeightAdd = 0;
 }

@@ -91,7 +91,7 @@ override void CreateChoices () {
     MenuChoicePClass Btn = GetItemContainer().NewChild(MenuChoicePClass);
     Btn.SetSmallFont(useSmallFont);
     Btn.SetPos(ChoicesStartX, currentY);
-    Btn.Text = class!PlayerPawn(ClGame.Game.PlayerClasses[i]).default.DisplayName;
+    Btn.SetText(class!PlayerPawn(ClGame.Game.PlayerClasses[i]).default.DisplayName);
     Btn.FocusLost = &PClassItemFocusLost;
     Btn.FocusReceived = &PClassItemFocusReceived;
     Btn.Activated = &PClassItemActivate;

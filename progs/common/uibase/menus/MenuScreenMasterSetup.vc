@@ -46,7 +46,7 @@ override void CreateChoices () {
 
   auto edAddress = GetItemContainer().NewChild(MenuInputLine);
   edAddress.MakeOneLineControl();
-  edAddress.Text = "Master Address";
+  edAddress.SetText("Master Address");
   edAddress.Value = GetCvarS('master_address');
   edAddress.ValueChanged = delegate void (Object sender) {
     auto ed = MenuInputLine(sender);

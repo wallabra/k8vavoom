@@ -93,7 +93,9 @@ override void FixMinimumHeight () {
   auto oldFont = GetFont();
   scope(exit) SetFont(oldFont);
   SetFont('smallfont');
-  int height = clamp(FontHeight(), 10, 32);
+  int height = FontHeight()+TextHeightAdd;
+  // hack for default doom font
+  if (height == 10 && TextHeightAdd == 2) height = 11;
 
   SetFont('consolefont');
   height = max(height, FontHeight());
@@ -105,7 +107,7 @@ override void FixMinimumHeight () {
   SliderWidth = TextWidth(s);
   SliderKnobWidth = TextWidth("\x14");
   SliderHeight = FontHeight();
-  SliderSY = (SliderHeight > Height+1 ? (Height-SliderHeight)/2 : 0);
+  SliderSY = (SliderHeight < Height+1 ? (Height-SliderHeight)/2 : 0);
   //printdebug("SliderWidth=%s", SliderWidth);
   //printdebug("SliderKnobWidth=%s", SliderKnobWidth);
   //printdebug("SliderWidthN=%s", SliderWidth-SliderKnobWidth);

@@ -30,10 +30,10 @@ int yofs;
 
 //==========================================================================
 //
-//  SetYOfs
+//  CalcYOfs
 //
 //==========================================================================
-void SetYOfs (int hgt) {
+void CalcYOfs (int hgt) {
   yofs = 0;
 }
 
@@ -46,8 +46,11 @@ void SetYOfs (int hgt) {
 void SetOriginCentered (int OrgX, int OrgY, int hgt) {
   auto menu = FindParentWithClass(MenuScreen);
   if (menu) OrgY += menu.GetSelectorBaseY();
+  CalcYOfs(hgt);
+  int delta = (Height < hgt ? (hgt-Height)/2 : Height > hgt ? -(Height-hgt)/2 : 0);
+  //printdebug("%C: yofs=%s; Height=%s; hgt=%s; delta=%s", self, yofs, Height, hgt, delta);
+  OrgY += delta;
   SetOrigin(OrgX, OrgY);
-  SetYOfs(hgt);
 }
 
 

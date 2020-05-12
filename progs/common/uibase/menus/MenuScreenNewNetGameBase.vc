@@ -84,7 +84,7 @@ string GetMapName (int episode, int map) {
 override void CreateChoices () {
   MenuTextButton startGame = GetItemContainer().NewChild(MenuSmallTextButton);
   startGame.SetOrigin(ChoicesStartX, GetCurrentY());
-  startGame.Text = "Start Game";
+  startGame.SetText("Start Game");
   startGame.Activated = &ActivateStartNewGame;
   //currentY += startGame.Height;
 
@@ -93,7 +93,7 @@ override void CreateChoices () {
   Players.customHelpText =
     "Please note that most standard levels support only up to 4 players.\n"~
     "If you will try to spawn more players, the game will crash.";
-  Players.Text = "Max players";
+  Players.SetText("Max players");
   Players.AddItem("2");
   Players.AddItem("3");
   Players.AddItem("4");
@@ -107,13 +107,13 @@ override void CreateChoices () {
   Monsters = GetItemContainer().NewChild(MenuChoice_OnOff);
   Monsters.SetOrigin(ChoicesStartX, GetCurrentY());
   Monsters.customHelpText = "You will probably want to turn this 'ON' for coop.";
-  Monsters.Text = "Monsters";
+  Monsters.SetText("Monsters");
   Monsters.SetSessionCvar(CreateCvarName('allow_monsters'), 0);
   //currentY += Monsters.Height;
 
   DeathMatch = GetItemContainer().NewChild(MenuChoiceEnum);
   DeathMatch.SetOrigin(ChoicesStartX, GetCurrentY());
-  DeathMatch.Text = "Game type";
+  DeathMatch.SetText("Game type");
   DeathMatch.customHelpText = "Desired game type.";
   DeathMatch.AddItem("Cooperative");
   DeathMatch.AddItem("Classic Deathmatch");
@@ -123,7 +123,7 @@ override void CreateChoices () {
 
   Skill = GetItemContainer().NewChild(MenuChoiceEnum);
   Skill.SetOrigin(ChoicesStartX, GetCurrentY());
-  Skill.Text = "Skill";
+  Skill.SetText("Skill");
   Skill.customHelpText = "Skill level.";
   for (int i = 0; i < P_GetNumSkills(); ++i) Skill.AddItem(P_GetSkillDef(i)->Name);
   Skill.SetSessionCvar(CreateCvarName('skill'), 2);
@@ -131,7 +131,7 @@ override void CreateChoices () {
 
   TimeLimit = GetItemContainer().NewChild(MenuChoiceEnum);
   TimeLimit.SetOrigin(ChoicesStartX, GetCurrentY());
-  TimeLimit.Text = "Time limit";
+  TimeLimit.SetText("Time limit");
   TimeLimit.customHelpText = "Deathmatch time limit.";
   TimeLimit.AddItem("None");
   foreach (int f; 1..12) TimeLimit.AddItem(va("%d mins", f*5));
@@ -141,7 +141,7 @@ override void CreateChoices () {
 
   FragLimit = GetItemContainer().NewChild(MenuChoiceEnum);
   FragLimit.SetOrigin(ChoicesStartX, GetCurrentY());
-  FragLimit.Text = "Frag limit";
+  FragLimit.SetText("Frag limit");
   FragLimit.customHelpText = "Deathmatch frag limit.";
   FragLimit.AddItem("None");
   foreach (int f; 1..21) FragLimit.AddItem(va("%d frags", f*5));
@@ -153,7 +153,7 @@ override void CreateChoices () {
   if (epnames.length) {
     Episode = GetItemContainer().NewChild(MenuChoiceEnum);
     Episode.SetOrigin(ChoicesStartX, GetCurrentY());
-    Episode.Text = "Episode";
+    Episode.SetText("Episode");
     Episode.customHelpText = "Starting episode.";
     foreach (string ename; epnames) Episode.AddItem(ename);
     Episode.SetSessionCvar(CreateCvarName('episode'), 0);
@@ -165,7 +165,7 @@ override void CreateChoices () {
 
   Level = GetItemContainer().NewChild(MenuChoiceEnum);
   Level.SetOrigin(ChoicesStartX, GetCurrentY());
-  Level.Text = "Level";
+  Level.SetText("Level");
   Level.customHelpText = "Starting map.";
   Level.SetSessionCvar(CreateCvarName('mapindex'), 0);
   //currentY += Level.Height;
@@ -177,7 +177,7 @@ override void CreateChoices () {
   //pwd.SetPos(ChoicesStartX, GetCurrentY());
   pwd.CursorXOffs = ChoicesStartX;
   pwd.CursorXOffsHR = ChoicesStartX;
-  pwd.Text = "Server Password";
+  pwd.SetText("Server Password");
   pwd.Value = GetCvarS('net_server_key');
   pwd.ValueChanged = delegate void (Object sender) {
     auto ed = MenuInputLine(sender);

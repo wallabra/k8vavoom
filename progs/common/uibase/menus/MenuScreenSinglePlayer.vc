@@ -39,19 +39,19 @@ override void CreateChoices () {
 
   Btn = GetItemContainer().NewChild(MenuBigTextButton);
   Btn.SetPos(ChoicesStartX, GetCurrentY());
-  Btn.Text = "New Game";
+  Btn.SetText("New Game");
   Btn.Activated = &ActivateNewGame;
   //currentY += Btn.Height;
 
   Btn = GetItemContainer().NewChild(MenuBigTextButton);
   Btn.SetPos(ChoicesStartX, GetCurrentY());
-  Btn.Text = "Load Game";
+  Btn.SetText("Load Game");
   Btn.Activated = &ActivateLoad;
   //currentY += Btn.Height;
 
   Btn = GetItemContainer().NewChild(MenuBigTextButton);
   Btn.SetPos(ChoicesStartX, GetCurrentY());
-  Btn.Text = "Save Game";
+  Btn.SetText("Save Game");
   Btn.Activated = &ActivateSave;
   //currentY += Btn.Height;
   savegameBtn = Btn;
@@ -60,7 +60,7 @@ override void CreateChoices () {
 
   Btn = GetItemContainer().NewChild(MenuBigTextButton);
   Btn.SetPos(ChoicesStartX, GetCurrentY());
-  Btn.Text = "End Game";
+  Btn.SetText("End Game");
   Btn.Activated = &ActivateEndGame;
   //currentY += Btn.Height;
   endgameBtn = Btn;

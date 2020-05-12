@@ -43,7 +43,7 @@ override void CreateChoices () {
         Btn.SetText(SDef->PlayerClassNames[j].MenuName);
       }
     }
-    if (SDef->TextColor) Btn.Text = "\c["~SDef->TextColor~"]"~Btn.Text;
+    if (SDef->TextColor) Btn.SetText("\c["~SDef->TextColor~"]"~Btn.Text);
     FixButtonWidget(Btn); // this fixes height
     // set other button fields
     Btn.SkillIndex = i;

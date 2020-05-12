@@ -97,17 +97,18 @@ override void OnDraw () {
 
   SetFont('smallfont');
 
+  int ty = TextHeightAdd/2;
   int Col = (IsFocused ? TextColorFocus : TextColor);
 
   /*
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
-    DrawText(0, 0, Text, Col);
+    DrawText(0, ty, Text, Col);
   } else
   */
   {
     SetTextAlign(hright, vtop);
-    DrawText(CursorXOffs, 0, Text, Col);
+    DrawText(CursorXOffs, ty, Text, Col);
   }
 
   //int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
@@ -115,7 +116,7 @@ override void OnDraw () {
   int Col2 = (IsFocused ? ValueColorFocus : ValueColor);
   SetTextAlign(hleft, vtop);
   //k8: we have much better fp->str now, so there's no need to perform any string trickery here
-  DrawText(xx, 0, va("%f", Value), Col2);
+  DrawText(xx, ty, va("%f", Value), Col2);
 }
 
 

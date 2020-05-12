@@ -26,7 +26,6 @@
 class MenuChoiceBase : Widget;
 
 int CursorXOffs;
-int CursorYOffs;
 int CursorXOffsHR; // for right-aligned text
 name cvarSession; // if not empty, value will be saved in it, and read back on creation
 string customHelpText;
@@ -35,6 +34,7 @@ int TextColor = CR_RED;
 int TextColorFocus = CR_YELLOW;
 int ValueColor = CR_TAN;
 int ValueColorFocus = CR_YELLOW;
+int TextHeightAdd;
 
 bool HighlightBackground;
 
@@ -48,7 +48,9 @@ void FixMinimumHeight () {
   auto oldFont = GetFont();
   scope(exit) SetFont(oldFont);
   SetFont('smallfont');
-  int height = clamp(FontHeight(), 10, 32);
+  int height = FontHeight()+TextHeightAdd;
+  // hack for default doom font
+  if (height == 10 && TextHeightAdd == 2) height = 11;
   if (Height < height) Height = height;
 }
 
@@ -298,8 +300,9 @@ defaultproperties {
   Width = 320;
   //Height = 200;
   //Height = 24;
-  Height = 10;
+  Height = 1;
   cvarSession = '';
   CursorXOffsHR = 200;
   HighlightBackground = true;
+  TextHeightAdd = 2;
 }

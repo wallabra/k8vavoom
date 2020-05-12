@@ -217,7 +217,7 @@ void AddControl (string Text, string CommandOn, string CommandOff, string modNam
   newCtl.CursorXOffsHR = Width/2;
   newCtl.SetOrigin(/*ChoicesStartX*/Width/2, GetCurrentY());
   newCtl.Height = 10;
-  newCtl.Text = Text;
+  newCtl.SetText(Text);
   newCtl.CommandOn = CommandOn;
   newCtl.CommandOff = CommandOff;
   newCtl.ModSection = modName;
@@ -247,7 +247,7 @@ void AddHeader (string Text, bool firstHdr) {
   Btn.CursorXOffs = Width/2;
   Btn.CursorXOffsHR = Width/2;
   Btn.SetOrigin(/*ChoicesStartX*//*Width/2*/0, GetCurrentY()+(firstHdr ? 0 : 4));
-  Btn.Text = Text;
+  Btn.SetText(Text);
   Btn.Focusable = false;
   Btn.TextColor = CR_FIRE;
   Btn.TextColorFocus = CR_FIRE;

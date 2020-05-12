@@ -51,7 +51,7 @@ MenuChoiceNumeric UIMaxScale;
 override void CreateChoices () {
   Mode = GetItemContainer().NewChild(MenuChoiceEnum);
   SetChoiceInitialSizePos(Mode);
-  Mode.Text = "Resolution";
+  Mode.SetText("Resolution");
   foreach (ref auto mi; modes) Mode.AddItem(va("%dx%d", mi.width, mi.height));
   Mode.SetInitialValue(GetModeValue());
   Mode.ValueChanging = delegate bool (Object Sender, float NewValueF) {
@@ -67,7 +67,7 @@ override void CreateChoices () {
   //EdWidth.SetOrigin(ChoicesStartX+10, GetCurrentY());
   //EdWidth.CursorXOffs = -10;
   EdWidth.MakeOneLineControl();
-  EdWidth.Text = "Width";
+  EdWidth.SetText("Width");
   EdWidth.Value = GetCvarS('screen_width');
   EdWidth.DisableSlotRendering();
     SetLastHelp("Custom screen resolution.");
@@ -77,14 +77,14 @@ override void CreateChoices () {
   //EdHeight.SetOrigin(ChoicesStartX+10, GetCurrentY());
   //EdHeight.CursorXOffs = -10;
   EdHeight.MakeOneLineControl();
-  EdHeight.Text = "Height";
+  EdHeight.SetText("Height");
   EdHeight.Value = GetCvarS('screen_height');
   EdHeight.DisableSlotRendering();
     SetLastHelp("Custom screen resolution.");
 
   ScrScale = GetItemContainer().NewChild(MenuChoiceNumeric);//CreateFloatNumericCvar("Screen Scale", 'gl_scale', 1, 1, 64);
   SetChoiceInitialSizePos(ScrScale);
-  ScrScale.Text = "Screen Scale";
+  ScrScale.SetText("Screen Scale");
   //ScrScale.cvarSession = cvname;
   ScrScale.ValueDelta = 1;
   ScrScale.Value = GetCvarF('screen_scale');
@@ -98,7 +98,7 @@ override void CreateChoices () {
 
   UIMaxScale = GetItemContainer().NewChild(MenuChoiceNumeric);
   SetChoiceInitialSizePos(UIMaxScale);
-  UIMaxScale.Text = "Max UI Scale";
+  UIMaxScale.SetText("Max UI Scale");
   //UIMaxScale.cvarSession = cvname;
   UIMaxScale.ValueDelta = 1;
   UIMaxScale.Value = GetCvarI('ui_max_scale');
@@ -113,7 +113,7 @@ override void CreateChoices () {
 
   UIMinScale = GetItemContainer().NewChild(MenuChoiceNumeric);
   SetChoiceInitialSizePos(UIMinScale);
-  UIMinScale.Text = "Min UI Scale";
+  UIMinScale.SetText("Min UI Scale");
   //UIMinScale.cvarSession = cvname;
   UIMinScale.ValueDelta = 1;
   UIMinScale.Value = GetCvarI('ui_min_scale');
@@ -155,7 +155,7 @@ override void CreateChoices () {
   VSync = GetItemContainer().NewChild(MenuChoice_OnOff);
   SetChoiceInitialSizePos(VSync);
   //VSync.SetOrigin(ChoicesStartX, GetCurrentY());
-  VSync.Text = "VSync";
+  VSync.SetText("VSync");
   VSync.SetInitialValue(GetCvar('r_vsync'));
     SetLastHelp(
       "The engine will try to use adaptive vsync automatically.\n"~
@@ -173,7 +173,7 @@ override void CreateChoices () {
 
   auto itemRatio = GetItemContainer().NewChild(MenuChoiceEnum);
   SetChoiceInitialSizePos(itemRatio);
-  itemRatio.Text = "Aspect Ratio";
+  itemRatio.SetText("Aspect Ratio");
   // add all known aspect ratios
   foreach (int ridx; 0..R_GetAspectRatioCount()) {
     if (R_GetAspectRatioHoriz(ridx) == 1 && R_GetAspectRatioVert(ridx) == 1) {
@@ -190,7 +190,7 @@ override void CreateChoices () {
   //SetTextButtonInitialSizePos(Btn);
   SetChoiceInitialSizePos(Btn);
   //Btn.SetOrigin(ChoicesStartX, GetCurrentY());
-  Btn.Text = "Set Resolution";
+  Btn.SetText("Set Resolution");
   Btn.Activated = &ActivateSetMode;
 }
 

@@ -614,7 +614,7 @@ void SetTextButtonInitialSizePos (MenuTextButton cc) {
 MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
   auto onoff = GetItemContainer().NewChild(MenuChoice_OnOff);
   SetChoiceInitialSizePos(onoff);
-  onoff.Text = text;
+  onoff.SetText(text);
   onoff.SetSessionCvar(cvname);
   //currentY += onoff.Height;
   return onoff;
@@ -641,7 +641,7 @@ MenuChoiceEnum CreateEnumCvar (string text, name cvname,
 {
   auto en = GetItemContainer().NewChild(MenuChoiceEnum);
   SetChoiceInitialSizePos(en);
-  en.Text = text;
+  en.SetText(text);
   if (specified_item0) en.AddItem(item0);
   if (specified_item1) en.AddItem(item1);
   if (specified_item2) en.AddItem(item2);
@@ -691,7 +691,7 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
   */
   auto slider = GetItemContainer().NewChild(MenuChoiceSlider);
   SetChoiceInitialSizePos(slider);
-  slider.Text = text;
+  slider.SetText(text);
   slider.cvarSession = cvname;
   slider.ValueDelta = delta;
   if (specified_min) slider.MinValue = min;
@@ -712,7 +712,7 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
 MenuChoiceNumeric CreateFloatNumericCvar (string text, name cvname, float delta, optional float min, optional float max) {
   auto slider = GetItemContainer().NewChild(MenuChoiceNumeric);
   SetChoiceInitialSizePos(slider);
-  slider.Text = text;
+  slider.SetText(text);
   slider.cvarSession = cvname;
   slider.ValueDelta = delta;
   if (specified_min) slider.MinValue = min;
@@ -742,7 +742,7 @@ MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
   } else {
     btn.SetOrigin(ChoicesStartX, GetCurrentY());
   }
-  btn.Text = text;
+  btn.SetText(text);
   btn.Focusable = false;
   if (specified_color) {
     btn.TextColor = color;
@@ -766,7 +766,7 @@ MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
   auto btn = GetItemContainer().NewChild(MenuSmallTextButton);
   btn.SetOrigin(ChoicesStartX, GetCurrentY());
   if (Width > WidthThreshold) btn.Width = Width;
-  btn.Text = text;
+  btn.SetText(text);
   btn.SetSubMenuClass(asubmenuClass);
   //currentY += btn.Height;
   return btn;
@@ -782,7 +782,7 @@ MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass
   auto btn = GetItemContainer().NewChild(MenuBigTextButton);
   btn.SetOrigin(ChoicesStartX, GetCurrentY());
   if (Width > WidthThreshold) btn.Width = Width;
-  btn.Text = text;
+  btn.SetText(text);
   btn.SetSubMenuClass(asubmenuClass);
   //currentY += btn.Height;
   return btn;
@@ -798,7 +798,7 @@ MenuTextButton CreateSubMenuTextNamed (string text, name menuName) {
   auto btn = GetItemContainer().NewChild(MenuSmallTextButton);
   btn.SetOrigin(ChoicesStartX, GetCurrentY());
   if (Width > WidthThreshold) btn.Width = Width;
-  btn.Text = text;
+  btn.SetText(text);
   btn.SetSubMenuName(string(menuName));
   //currentY += btn.Height;
   return btn;
@@ -814,7 +814,7 @@ MenuTextButton CreateSubMenuBigTextNamed (string text, name menuName) {
   auto btn = GetItemContainer().NewChild(MenuBigTextButton);
   btn.SetOrigin(ChoicesStartX, GetCurrentY());
   if (Width > WidthThreshold) btn.Width = Width;
-  btn.Text = text;
+  btn.SetText(text);
   btn.SetSubMenuName(string(menuName));
   //currentY += btn.Height;
   return btn;
@@ -829,13 +829,6 @@ MenuTextButton CreateSubMenuBigTextNamed (string text, name menuName) {
 void CreateSelector () {
   if (!SelectorType || Selector) return;
   if (Items.length == 0) return;
-  /*
-  FixTopIndex();
-  if (CursorPos < 0 || CursorPos >= Items.length) return;
-  auto it = Items[CursorPos];
-  Selector = NewChild(SelectorType);
-  Selector.SetOriginCentered(it.X+it.CursorXOffs, it.Y+Items[CursorPos].CursorYOffs, it.Height);
-  */
   Selector = NewChild(SelectorType);
   CursorMoved(forced:true); // this fixes selector position
 }
@@ -955,7 +948,7 @@ void CursorMoved (optional bool forced) {
   if (!it.IsFocused()) it.SetFocus();
   if (Selector) {
     int xofs = (isControls && ClGame ? ClGame.ControlColumn*90 : 0);
-    Selector.SetOriginCentered(it.X+it.CursorXOffs+xofs, it.Y+it.CursorYOffs, it.Height);
+    Selector.SetOriginCentered(it.X+it.CursorXOffs+xofs, it.Y, it.Height);
   }
   CursorPrev = CursorPos;
   OfsYPrev = GetItemContainer().ChildrenOfsY;
@@ -1003,12 +996,6 @@ bool MakeItemSelected (MenuChoiceBase it) {
       CursorPrev = -1;
       CursorPos = idx;
       CursorMoved();
-      /*
-      if (Selector) {
-        Selector.SetOriginCentered(it.X+it.CursorXOffs, it.Y+it.CursorYOffs, it.Height);
-        Selector.Show();
-      }
-      */
       return true;
     }
   }

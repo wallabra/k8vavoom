@@ -39,7 +39,7 @@ override void CreateChoices() {
 
   Btn = GetItemContainer().NewChild(MenuSmallTextButton);
   Btn.SetPos(ChoicesStartX, GetCurrentY());
-  Btn.Text = "Search for internet games...";
+  Btn.SetText("Search for internet games...");
   Btn.TextHAlign = hleft;
   Btn.Activated = &ActivateMasterSearch;
   //currentY += Btn.Height;
@@ -48,7 +48,7 @@ override void CreateChoices() {
 
   Btn = GetItemContainer().NewChild(MenuSmallTextButton);
   Btn.SetPos(ChoicesStartX, GetCurrentY());
-  Btn.Text = "Search for LAN games...";
+  Btn.SetText("Search for LAN games...");
   Btn.TextHAlign = hleft;
   Btn.Activated = &ActivateSearch;
   //currentY += Btn.Height;
@@ -57,7 +57,7 @@ override void CreateChoices() {
 
   JoinAt = GetItemContainer().NewChild(MenuInputLine);
   JoinAt.SetPos(ChoicesStartX, GetCurrentY());
-  JoinAt.Text = "Join Game At";
+  JoinAt.SetText("Join Game At");
   JoinAt.Value = GetCvarS('net_ui_last_join_address');
   if (!JoinAt.Value) JoinAt.Value = "127.0.0.1";
   JoinAt.ValueChanged = &ChangedJoinAt;
@@ -68,7 +68,7 @@ override void CreateChoices() {
   auto pwd = GetItemContainer().NewChild(MenuInputLine);
   //pwd.MakeOneLineControl();
   pwd.SetPos(ChoicesStartX, GetCurrentY());
-  pwd.Text = "Server Password";
+  pwd.SetText("Server Password");
   pwd.Value = GetCvarS('net_server_key');
   pwd.ValueChanged = delegate void (Object sender) {
     auto ed = MenuInputLine(sender);

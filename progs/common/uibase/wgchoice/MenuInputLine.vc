@@ -46,6 +46,16 @@ override void OnCreate () {
 
 //==========================================================================
 //
+//  SetText
+//
+//==========================================================================
+void SetText (string AText) {
+  Text = TranslateString(AText);
+}
+
+
+//==========================================================================
+//
 //  DisableSlotRendering
 //
 //==========================================================================
@@ -56,7 +66,9 @@ void DisableSlotRendering () {
     auto oldFont = GetFont();
     scope(exit) SetFont(oldFont);
     SetFont('smallfont');
-    Height = FontHeight();
+    Height = FontHeight()+TextHeightAdd;
+    // hack for default doom font
+    if (Height == 10 && TextHeightAdd == 2) Height = 11;
   }
 }
 
@@ -109,16 +121,17 @@ override void OnDraw () {
     }
   } else {
     // editor without a slot
+    int ty = TextHeightAdd/2;
     SetTextAlign(hright, vtop);
-    DrawText(CursorXOffs, 0, Text, (IsFocused ? CR_YELLOW : CR_WHITE));
+    DrawText(CursorXOffs, ty, Text, (IsFocused ? CR_YELLOW : CR_WHITE));
     SetTextAlign(hleft, vtop);
     int xx = CursorXOffs+10;
     int inputWidth = Width-xx-3;
-    ShadeRect(xx-1, 0, inputWidth, Height, GetCvarF('menu_darkening'));
+    ShadeRect(xx-1, ty, inputWidth, FontHeight(), GetCvarF('menu_darkening'));
     string text = (bEnteringText ? EnterText : Value);
     if (bEnteringText) {
       while (text && TextWidth(text)+CursorWidth() > inputWidth+2) text = text[1..$];
-      DrawText(xx, 0, text);
+      DrawText(xx, ty, text);
       DrawCursor();
     } else {
       bool drawDot = false;
@@ -127,8 +140,8 @@ override void OnDraw () {
         if (text) text = text[0..$-1];
         drawDot = true;
       }
-      DrawText(xx, 0, text);
-      if (drawDot) DrawText(xx+TextWidth(text), 0, ".", CR_FIRE);
+      DrawText(xx, ty, text);
+      if (drawDot) DrawText(xx+TextWidth(text), ty, ".", CR_FIRE);
     }
   }
 }

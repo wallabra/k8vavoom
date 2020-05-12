@@ -138,7 +138,7 @@ override void CreateChoices () {
   //il.SetOrigin(ChoicesStartX+10, currentY);
   //il.CursorXOffs = -10;
   il.MakeOneLineControl();
-  il.Text = "Title";
+  il.SetText("Title");
   il.Value = filterTitle;
   il.DisableSlotRendering();
   il.ValueChanged = delegate void (Object sender) {
@@ -157,7 +157,7 @@ override void CreateChoices () {
   //il.SetOrigin(ChoicesStartX+10, currentY);
   //il.CursorXOffs = -10;
   il.MakeOneLineControl();
-  il.Text = "CVar";
+  il.SetText("CVar");
   il.Value = filterCVar;
   il.DisableSlotRendering();
   il.ValueChanged = delegate void (Object sender) {
@@ -176,7 +176,7 @@ override void CreateChoices () {
   //il.SetOrigin(ChoicesStartX+10, currentY);
   //il.CursorXOffs = -10;
   il.MakeOneLineControl();
-  il.Text = "Help";
+  il.SetText("Help");
   il.Value = filterHelp;
   il.DisableSlotRendering();
   il.ValueChanged = delegate void (Object sender) {

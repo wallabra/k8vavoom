@@ -74,8 +74,9 @@ override void OnDraw () {
   SetTextAlign(hright, vtop);
   //int ctpos = 160;
   int ctpos = CursorXOffs;
+  int ty = TextHeightAdd/2;
 
-  DrawText(ctpos, 0, Text, Col);
+  DrawText(ctpos, ty, Text, Col);
 
   int isActive = 3;
   IN_GetBindingKeys(CommandOn, &key1, &key2, strifeMode, ModSection, out isActive);
@@ -88,14 +89,14 @@ override void OnDraw () {
   //if (!Disabled && !isActive) Col = CR_RED;
 
   if (key1 >= 0) {
-    DrawText(ctpos+10, 0, KeyNameForNum(key1), (Disabled || (isActive&1) != 0 ? Col : CR_RED));
+    DrawText(ctpos+10, ty, KeyNameForNum(key1), (Disabled || (isActive&1) != 0 ? Col : CR_RED));
   } else {
-    DrawText(ctpos+10, 0, "---", /*Col*/CR_BLACK);
+    DrawText(ctpos+10, ty, "---", /*Col*/CR_BLACK);
   }
   if (key2 >= 0) {
-    DrawText(ctpos+100, 0, KeyNameForNum(key2), (Disabled || (isActive&2) != 0 ? Col : CR_RED));
+    DrawText(ctpos+100, ty, KeyNameForNum(key2), (Disabled || (isActive&2) != 0 ? Col : CR_RED));
   } else {
-    DrawText(ctpos+100, 0, "---", /*Col*/CR_BLACK);
+    DrawText(ctpos+100, ty, "---", /*Col*/CR_BLACK);
   }
 }
 

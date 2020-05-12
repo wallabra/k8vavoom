@@ -89,14 +89,14 @@ override void CreateChoices () {
   PlayerName = GetItemContainer().NewChild(MenuInputLine);
   PlayerName.SetOrigin(ChoicesStartX+10, GetCurrentY());
   PlayerName.CursorXOffs = -10;
-  PlayerName.Text = "Name";
+  PlayerName.SetText("Name");
   PlayerName.Value = GetCvarS('Name');
   PlayerName.ValueChanged = &ChangeName;
 
   if (PClasses.length > 1) {
     EPClass = GetItemContainer().NewChild(MenuChoiceEnum);
     EPClass.SetOrigin(ChoicesStartX, GetCurrentY());
-    EPClass.Text = "Class";
+    EPClass.SetText("Class");
     foreach (const ref auto pcl; PClasses) EPClass.AddItem(pcl.className);
     EPClass.SetInitialValue(GetCvar('class'));
     EPClass.ValueChanging = &ChangeClass;

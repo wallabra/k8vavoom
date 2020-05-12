@@ -152,17 +152,19 @@ override void OnDraw () {
   } else {
     caption = vallist[idx].caption;
   }
+
+  int ty = TextHeightAdd/2;
   int Col = (IsFocused ? TextColorFocus : TextColor);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
-    DrawText(0, 0, Text, Col);
+    DrawText(0, ty, Text, Col);
   } else {
     SetTextAlign(hright, vtop);
-    DrawText(CursorXOffs, 0, Text, Col);
+    DrawText(CursorXOffs, ty, Text, Col);
   }
   int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
   SetTextAlign(hleft, vtop);
-  DrawText(xx, 0, caption, (IsFocused ? ValueColorFocus : ValueColor));
+  DrawText(xx, ty, caption, (IsFocused ? ValueColorFocus : ValueColor));
 }
 
 

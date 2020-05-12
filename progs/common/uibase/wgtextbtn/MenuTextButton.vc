@@ -47,11 +47,11 @@ delegate void Activated (Object Sender);
 //
 //==========================================================================
 override void FixMinimumHeight () {
-  if (!Text || !TextFont) return;
+  if (!TextFont) return;
   auto oldFont = GetFont();
   scope(exit) SetFont(oldFont);
   SetFont(TextFont);
-  int height = clamp(TextHeight(Text), 10, 32);
+  int height = FontHeight()+TextHeightAdd;
   if (Height < height) Height = height;
 }
 
@@ -109,7 +109,8 @@ int CalcTextHeight () {
   auto oldFont = GetFont();
   scope(exit) SetFont(oldFont);
   SetFont(TextFont);
-  return TextHeight(Text);
+  //return TextHeight(Text);
+  return FontHeight();
 }
 
 
@@ -196,7 +197,7 @@ override void OnDraw () {
 
   SetFont(TextFont);
   SetTextAlign(TextHAlign, TextVAlign);
-  DrawText(CursorXOffs, 0, Text, clr);
+  DrawText(CursorXOffs, TextHeightAdd/2, Text, clr);
 }
 
 
@@ -205,4 +206,5 @@ defaultproperties {
   TextColor = CR_UNTRANSLATED;
   TextColorFocus = CR_UNTRANSLATED;
   submenuClass = none;
+  Height = 1;
 }

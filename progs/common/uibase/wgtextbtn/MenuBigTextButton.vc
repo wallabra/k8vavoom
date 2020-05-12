@@ -35,4 +35,5 @@ defaultproperties {
   //TextColorFocus = CR_CYAN;
   //TextColorFocus = CR_ICE;
   TextColorFocus = CR_FIRE;
+  TextHeightAdd = 0;
 }
