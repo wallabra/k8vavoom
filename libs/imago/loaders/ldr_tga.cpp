@@ -88,7 +88,7 @@ VImage *imagoLoadTGA (VStream *strm) {
 
   VImage::RGBA palette[256];
   VImage *res = nullptr;
-  memset(palette, 0, sizeof(palette));
+  memset((void *)palette, 0, sizeof(palette));
 
   strm->Seek(strm->Tell()+hdr.id_length);
 

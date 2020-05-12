@@ -634,7 +634,7 @@ VDelegateType::VDelegateType (VExpression *aexpr, const TLocation &aloc)
   , NumParams(0)
 {
   Expr = aexpr;
-  memset(Params, 0, sizeof(Params));
+  memset((void *)Params, 0, sizeof(Params));
   memset(ParamFlags, 0, sizeof(ParamFlags));
 }
 
@@ -650,7 +650,7 @@ VDelegateType::VDelegateType (VFieldType atype, const TLocation &aloc)
   , NumParams(0)
 {
   Expr = nullptr;
-  memset(Params, 0, sizeof(Params));
+  memset((void *)Params, 0, sizeof(Params));
   memset(ParamFlags, 0, sizeof(ParamFlags));
   //VCFatalError("VC: VDelegateType::VDelegateType: no `auto` delegates yet, use the full declaration");
 }

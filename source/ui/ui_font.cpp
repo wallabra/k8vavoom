@@ -1366,7 +1366,7 @@ VFon2Font::VFon2Font (VName AName, int LumpNum) {
   bool ColorsUsed[256];
   rgba_t Pal[256];
   memset(ColorsUsed, 0, sizeof(ColorsUsed));
-  memset(Pal, 0, sizeof(Pal));
+  memset((void *)Pal, 0, sizeof(Pal));
   for (int i = 0; i <= ActiveColors; ++i) {
     ColorsUsed[i] = true;
     Strm << Pal[i].r << Pal[i].g << Pal[i].b;

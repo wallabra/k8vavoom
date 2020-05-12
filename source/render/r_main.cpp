@@ -635,7 +635,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   lastDLightView = TVec(-1e9, -1e9, -1e9);
   lastDLightViewSub = nullptr;
 
-  memset(DLights, 0, sizeof(DLights));
+  memset((void *)DLights, 0, sizeof(DLights));
 
   CreatePortalPool();
 

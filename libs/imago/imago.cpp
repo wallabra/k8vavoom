@@ -89,7 +89,7 @@ VImage::VImage (ImageType atype, int awidth, int aheight) {
   } else {
     mPixels = nullptr;
   }
-  memset(mPalette, 0, sizeof(mPalette));
+  memset((void *)mPalette, 0, sizeof(mPalette));
   mPalUsed = 0;
 }
 
@@ -178,10 +178,10 @@ void VImage::checkerFill () {
 
 
 void VImage::setPalette (const RGBA *pal, int colnum) {
-  memset(mPalette, 0, sizeof(mPalette));
+  memset((void *)mPalette, 0, sizeof(mPalette));
   if (pal) {
     if (colnum > 256) colnum = 256;
-    if (colnum > 0 && pal) memcpy(mPalette, pal, sizeof(RGBA)*colnum);
+    if (colnum > 0 && pal) memcpy((void *)mPalette, pal, sizeof(RGBA)*colnum);
     mPalUsed = colnum;
   } else {
     mPalUsed = 0;

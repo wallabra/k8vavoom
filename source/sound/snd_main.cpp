@@ -269,7 +269,7 @@ VAudio::~VAudio () {
 //
 //==========================================================================
 void VAudio::ResetAllChannels () {
-  memset(Channel, 0, sizeof(Channel));
+  memset((void *)Channel, 0, sizeof(Channel));
   ChanUsed = 0;
   for (int f = 0; f < MAX_CHANNELS; ++f) Channel[f].handle = -1;
   memset(ChanBitmap, 0, sizeof(ChanBitmap));
