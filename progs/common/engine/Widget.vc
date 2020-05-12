@@ -161,6 +161,40 @@ final void SetScaleOneToOne () {
 }
 
 
+// sets size and scale of this widget so it will fill the whole parent
+// adjusts scale if necessary
+final void SetFullScaledSize (int mywdt, int myhgt, optional bool proportional/*=true*/, optional float aspect) {
+  auto par = ParentWidget;
+  if (!par) return;
+  if (mywdt < 1 || myhgt < 1) return;
+  if (!specified_aspect) aspect = 1.0f;
+  if (!specified_proportional) proportional = true;
+  if (!proportional) aspect = 1.0f;
+  //aspect = 1.0f;
+  float scaleX = float(par.Width)/float(mywdt);
+  float scaleY = float(par.Height)/float(myhgt);
+  if (proportional || !specified_proportional) {
+    //float scale = fmin(scaleX, scaleY);
+    //printdebug("*** before scales=(%s,%s)", scaleX, scaleY);
+    // use vertical scale as base
+    scaleX *= 1.0/scaleY;
+    /*
+    if (scaleX > scaleY) {
+      // use vertical scale as base
+      scaleX = scaleY/aspect;
+    } else {
+      // use horizontal scale as base
+      scaleY = scaleX*aspect;
+    }
+    */
+  }
+  int xofs = int((par.Width-mywdt*scaleX)/2);
+  int yofs = int((par.Height-myhgt*scaleY)/2);
+  //printdebug("setting full scaled size (%sx%s); par is (%sx%s); scales=(%s,%s); ofs=(%s,%s)", mywdt*scaleX, myhgt*scaleY, par.Width, par.Height, scaleX, scaleY, xofs, yofs);
+  SetConfiguration(xofs, yofs, mywdt, myhgt, scaleX, scaleY);
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 //delegate void FocusLost (Object Sender);
 //delegate void FocusReceived (Object Sender);
@@ -170,6 +204,7 @@ final void SetScaleOneToOne () {
 //  Creation and destruction of widgets.
 native final spawner Widget NewChild (class!Widget ChildClass);
 override native final void Destroy ();
+// do not call this! ;-)
 native final void DestroyAllChildren ();
 
 native final RootWidget GetRootWidget ();
@@ -186,12 +221,13 @@ native final void SetX (int NewX);
 native final void SetY (int NewY);
 native final void SetOfsX (int NewX);
 native final void SetOfsY (int NewY);
+native final void SetOffset (int NewX, int NewY);
 native final void SetSize (int NewWidth, int NewHeight);
 native final void SetWidth (int NewWidth);
 native final void SetHeight (int NewHeight);
 native final void SetScale (float NewScaleX, float NewScaleY);
-native final void SetConfiguration (int NewX, int NewY, int NewWidth,
-  int NewHeight, optional float NewScaleX, optional float NewScaleY);
+native final void SetConfiguration (int NewX, int NewY, int NewWidth, int NewHeight,
+                                    optional float NewScaleX, optional float NewScaleY);
 
 // visibility methods
 native final void SetVisibility (bool bNewVisibility);
@@ -267,6 +303,7 @@ native final int SplitText (string Text, out array!SplitLine Lines, int Maxwidth
 native final string SplitTextWithNewlines (string Text, int Maxwidth, optional bool trimRight);
 // draws text
 native final void DrawText (int X, int Y, string Text, optional int Color, optional int BoldColor, optional float Alpha);
+// get cursor width
 native final int CursorWidth ();
 // draws a cursor at the end of last drawn string
 native final void DrawCursor (optional int colorTrans/*=CR_UNTRANSLATED*/);
@@ -275,9 +312,11 @@ native final void DrawCursorAt (int cx, int cy, optional int colorTrans/*=CR_UNT
 native final void SetCursorPos (int cx, int cy);
 native final int CursorX { get; set; }
 native final int CursorY { get; set; }
+
 // returns color ID for specified name
 native static final int FindTextColor (string Name);
 
+// "hex hive" for color selector
 native final float CalcHexHeight (float h);
 native final void DrawHex (float x0, float y0, float w, float h, int color, optional float alpha/*=1.0f*/);
 native final void FillHex (float x0, float y0, float w, float h, int color, optional float alpha/*=1.0f*/);
@@ -302,11 +341,6 @@ native final int GetHexColorPatternColorAt (int hpx, int hpy, int radius);
 native final void DrawHexColorPattern (float x0, float y0, int radius, float cellW, float cellH);
 
 native final bool FindHexColorCoords (out int hpx, out int hpy, int radius, float h, float s);
-
-/*
-final int X2Virtual (float x) { return int(ClipRect.ScaleX*x+ClipRect.OriginX); }
-final int Y2Virtual (float y) { return int(ClipRect.ScaleY*y+ClipRect.OriginY); }
-*/
 
 native final void TranslateXY (ref float x, ref float y);
 

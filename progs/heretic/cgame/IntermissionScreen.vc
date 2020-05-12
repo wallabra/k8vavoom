@@ -679,6 +679,7 @@ void IM_DrawText () {
 //==========================================================================
 override void OnVisibilityChanged (bool bNewVisibility) {
   bTickEnabled = bNewVisibility;
+  if (bNewVisibility) SetFullScaledSize(Width, Height);
 }
 
 

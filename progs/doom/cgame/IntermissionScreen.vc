@@ -122,12 +122,8 @@ int im_nextmap;
 
 IntermissionBackground Background;
 
-int oldParentWidth = -1;
-int oldParentHeight = -1;
-float oldParentScaleX = -1;
-float oldParentScaleY = -1;
 
-
+// ////////////////////////////////////////////////////////////////////////// //
 final int ConvertX (int x) { return int(float(Width)*x/640.0); }
 final int ConvertY (int y) { return int(float(Height)*y/480.0); }
 
@@ -159,57 +155,10 @@ final bool checkForDoom2 () {
 
 //==========================================================================
 //
-//  FixWidgetSize
-//
-//==========================================================================
-void FixWidgetSize () {
-  auto par = Parent;
-
-  if (oldParentWidth == -1) {
-    oldParentWidth = par.Width;
-    oldParentHeight = par.Height;
-    oldParentScaleX = par.ScaleX;
-    oldParentScaleY = par.ScaleY;
-  }
-
-  if (par && (Width != par.Width || Height != par.Height)) {
-    SetSize(par.Width, par.Height);
-    //print("size=(%s,%s); scale=(%s,%s); scrsize=(%s,%s)", Width, Height, ScaleX, ScaleY, GetVirtualWidth(), GetVirtualHeight());
-    //print("  real=(%s,%s); rsc=(%s,%s)", GetRealScreenWidth(), GetRealScreenHeight(), float(GetRealScreenWidth())/float(GetVirtualWidth()), float(GetRealScreenHeight())/float(GetVirtualHeight()));
-  }
-}
-
-
-//==========================================================================
-//
-//  RestoreWidgetSize
-//
-//==========================================================================
-void RestoreWidgetSize () {
-  if (oldParentWidth != -1) {
-    auto par = Parent;
-
-    par.Width = oldParentWidth;
-    par.Height = oldParentHeight;
-    par.ScaleX = oldParentScaleX;
-    par.ScaleY = oldParentScaleY;
-
-    oldParentWidth = -1;
-    oldParentHeight = -1;
-    oldParentScaleX = -1;
-    oldParentScaleY = -1;
-  }
-}
-
-
-//==========================================================================
-//
 //  Start
 //
 //==========================================================================
 void Start () {
-  FixWidgetSize();
-
   StopAllSounds();
   ClGame.bSkipIntermission = false;
   cnt = 0.0;
@@ -300,7 +249,6 @@ void FindEpisodeAndMap (name Name, int *epi, int *map) {
 //
 //==========================================================================
 override void Tick (float DeltaTime) {
-  FixWidgetSize();
   if (ClGame.Game && ClGame.Game.isInWipe) return;
   // counter for general background animation
   btime += DeltaTime;
@@ -584,6 +532,8 @@ void IM_DrawSingleStats () {
   if (cnt_time >= 0 && ClGame.cl.Level.ParTime) {
     IM_DrawTime(ConvertX(SP_PARX), SP_PARY, ClGame.cl.Level.ParTime, "par: ", false);
   }
+
+  //ShadeRect(0, 0, Width, Height, 0.5);
 }
 
 
@@ -1272,7 +1222,7 @@ void IM_UpdateText (float DeltaTime) {
 override void OnVisibilityChanged (bool bNewVisibility) {
   bTickEnabled = bNewVisibility;
   if (Background) Background.bTickEnabled = bNewVisibility;
-  if (bNewVisibility) FixWidgetSize(); else RestoreWidgetSize();
+  if (bNewVisibility) SetFullScaledSize(Width, Height, proportional:true, aspect:1.2);
 }
 
 

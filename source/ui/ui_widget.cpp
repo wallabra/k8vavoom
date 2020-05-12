@@ -1974,6 +1974,12 @@ IMPLEMENT_FUNCTION(VWidget, SetOfsY) {
   if (Self) Self->SetOfsY(NewY);
 }
 
+IMPLEMENT_FUNCTION(VWidget, SetOffset) {
+  int NewX, NewY;
+  vobjGetParamSelf(NewX, NewY);
+  if (Self) Self->SetOffset(NewX, NewY);
+}
+
 IMPLEMENT_FUNCTION(VWidget, SetSize) {
   int NewWidth, NewHeight;
   vobjGetParamSelf(NewWidth, NewHeight);

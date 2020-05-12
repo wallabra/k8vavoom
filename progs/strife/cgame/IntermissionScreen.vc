@@ -196,6 +196,7 @@ void IM_DrawHubText()
 override void OnVisibilityChanged(bool bNewVisibility)
 {
   bTickEnabled = bNewVisibility;
+  if (bNewVisibility) SetFullScaledSize(Width, Height);
 }
 
 defaultproperties

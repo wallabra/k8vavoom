@@ -232,6 +232,7 @@ public:
   inline void SetY (int NewY) { SetPos(PosX, NewY); }
   inline void SetOfsX (int NewX) { if (OfsX != NewX) { OfsX = NewX; SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY); } }
   inline void SetOfsY (int NewY) { if (OfsY != NewY) { OfsY = NewY; SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY); } }
+  inline void SetOffset (int NewX, int NewY) { if (OfsX != NewX || OfsY != NewY) { OfsX = NewX; OfsY = NewY; SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY); } }
   inline void SetSize (int NewWidth, int NewHeight) { SetConfiguration(PosX, PosY, NewWidth, NewHeight, SizeScaleX, SizeScaleY); }
   inline void SetWidth (int NewWidth) { SetSize(NewWidth, SizeHeight); }
   inline void SetHeight (int NewHeight) { SetSize(SizeWidth, NewHeight); }
@@ -446,6 +447,7 @@ public:
   DECLARE_FUNCTION(SetY)
   DECLARE_FUNCTION(SetOfsX)
   DECLARE_FUNCTION(SetOfsY)
+  DECLARE_FUNCTION(SetOffset)
   DECLARE_FUNCTION(SetSize)
   DECLARE_FUNCTION(SetWidth)
   DECLARE_FUNCTION(SetHeight)
