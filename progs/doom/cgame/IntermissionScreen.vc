@@ -1222,7 +1222,7 @@ void IM_UpdateText (float DeltaTime) {
 override void OnVisibilityChanged (bool bNewVisibility) {
   bTickEnabled = bNewVisibility;
   if (Background) Background.bTickEnabled = bNewVisibility;
-  if (bNewVisibility) SetFullScaledSize(Width, Height, proportional:true, aspect:1.2);
+  if (bNewVisibility) SetFullScaledSize(Width, Height, proportional:true, aspect:1.0);
 }
 
 
