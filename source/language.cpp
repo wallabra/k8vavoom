@@ -90,16 +90,15 @@ void VLanguage::LoadStrings (const char *LangId) {
 
   FreeNonDehackedStrings();
 
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) == NAME_language) {
-      int j = 1;
-      if (VStr::Cmp(LangId, "**") != 0) {
-        ParseLanguageScript(Lump, "*", true, j++);
-        ParseLanguageScript(Lump, LangId, true, j++);
-        ParseLanguageScript(Lump, LangId, false, j++);
-      }
-      ParseLanguageScript(Lump, "**", true, j++);
+  for (auto &&it : WadNSNameIterator(NAME_language, WADNS_Global)) {
+    const int Lump = it.lump;
+    int j = 1;
+    if (VStr::Cmp(LangId, "**") != 0) {
+      ParseLanguageScript(Lump, "*", true, j++);
+      ParseLanguageScript(Lump, LangId, true, j++);
+      ParseLanguageScript(Lump, LangId, false, j++);
     }
+    ParseLanguageScript(Lump, "**", true, j++);
   }
 }
 

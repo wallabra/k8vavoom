@@ -301,38 +301,37 @@ void VCommand::ProcessKeyConf () {
   // enable special mode for console commands
   ParsingKeyConf = true;
 
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) == NAME_keyconf) {
-      // read it
-      VStream *Strm = W_CreateLumpReaderNum(Lump);
-      VStr buf;
-      buf.setLength(Strm->TotalSize(), 0);
-      Strm->Serialize(buf.getMutableCStr(), buf.length());
-      if (Strm->IsError()) buf.clear();
-      delete Strm;
+  for (auto &&it : WadNSNameIterator(NAME_keyconf, WADNS_Global)) {
+    const int Lump = it.lump;
+    // read it
+    VStream *Strm = W_CreateLumpReaderNum(Lump);
+    VStr buf;
+    buf.setLength(Strm->TotalSize(), 0);
+    Strm->Serialize(buf.getMutableCStr(), buf.length());
+    if (Strm->IsError()) buf.clear();
+    delete Strm;
 
-      // parse it
-      VCmdBuf CmdBuf;
-      TArray<VStr> lines;
-      TArray<VStr> args;
-      buf.split('\n', lines);
-      for (auto &&s : lines) {
-        s = s.xstrip();
-        if (s.length() == 0 || s[0] == '#' || s[0] == '/') continue;
-        args.reset();
-        s.tokenise(args);
-        if (args.length() == 0) continue;
-        /*
-        if (args[0].strEquCI("defaultbind")) {
-          GCon->Logf(NAME_Warning, "ignored keyconf command: %s", *s);
-        } else
-        */
-        {
-          CmdBuf << s << "\n";
-        }
+    // parse it
+    VCmdBuf CmdBuf;
+    TArray<VStr> lines;
+    TArray<VStr> args;
+    buf.split('\n', lines);
+    for (auto &&s : lines) {
+      s = s.xstrip();
+      if (s.length() == 0 || s[0] == '#' || s[0] == '/') continue;
+      args.reset();
+      s.tokenise(args);
+      if (args.length() == 0) continue;
+      /*
+      if (args[0].strEquCI("defaultbind")) {
+        GCon->Logf(NAME_Warning, "ignored keyconf command: %s", *s);
+      } else
+      */
+      {
+        CmdBuf << s << "\n";
       }
-      CmdBuf.Exec();
     }
+    CmdBuf.Exec();
   }
 
   // back to normal console command execution

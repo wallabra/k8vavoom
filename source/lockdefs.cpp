@@ -147,11 +147,10 @@ static void ParseLockDefs (VScriptParser *sc) {
 //
 //==========================================================================
 void InitLockDefs () {
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) == NAME_lockdefs) {
-      GCon->Logf(NAME_Init, "Parsing lockdefs from '%s'", *W_FullLumpName(Lump));
-      ParseLockDefs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
-    }
+  for (auto &&it : WadNSNameIterator(NAME_lockdefs, WADNS_Global)) {
+    const int Lump = it.lump;
+    GCon->Logf(NAME_Init, "Parsing lockdefs from '%s'", *W_FullLumpName(Lump));
+    ParseLockDefs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
   }
 }
 

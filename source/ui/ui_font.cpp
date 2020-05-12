@@ -246,8 +246,8 @@ void VFont::StaticShutdown () {
 void VFont::ParseTextColors () {
   TArray<VTextColorDef> TempDefs;
   TArray<VColTransMap> TempColors;
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) != NAME_textcolo) continue;
+  for (auto &&it : WadNSNameIterator(NAME_textcolo, WADNS_Global)) {
+    const int Lump = it.lump;
     VScriptParser sc(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump));
     while (!sc.AtEnd()) {
       VTextColorDef &Col = TempDefs.Alloc();
@@ -393,8 +393,8 @@ void VFont::ParseFontDefs () {
 #define CHECK_TYPE(Id) if (FontType == Id) \
   sc.Error(va("Invalid combination of properties in font '%s'", *FontName))
 
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) != NAME_fontdefs) continue;
+  for (auto &&it : WadNSNameIterator(NAME_fontdefs, WADNS_Global)) {
+    const int Lump = it.lump;
     VScriptParser sc(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump));
     GCon->Logf(NAME_Init, "parsing font definition '%s'", *W_FullLumpName(Lump));
     while (!sc.AtEnd()) {

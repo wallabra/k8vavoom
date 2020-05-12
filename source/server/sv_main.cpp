@@ -230,8 +230,8 @@ void G_LoadVCMods (VName modlistfile, const char *modtypestr) {
   if (!modtypestr && !modtypestr[0]) modtypestr = "common";
   VCVFSSaver saver;
   VMemberBase::dgOpenFile = &vcmodOpenFile;
-  for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
-    if (W_LumpName(ScLump) != modlistfile) continue;
+  for (auto &&it : WadNSNameIterator(modlistfile, WADNS_Global)) {
+    const int ScLump = it.lump;
     //vcmodCurrFile = W_LumpFile(ScLump);
     vcmodCurrFileLump = ScLump;
     VScriptParser *sc = new VScriptParser(W_FullLumpName(ScLump), W_CreateLumpReaderNum(ScLump));

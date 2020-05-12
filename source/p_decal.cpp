@@ -1074,12 +1074,10 @@ void ParseDecalDef (VScriptParser *sc) {
 void ProcessDecalDefs () {
   GCon->Logf(NAME_Init, "Parsing DECAL definitions");
 
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    //fprintf(stderr, "<%s>\n", *W_LumpName(Lump));
-    if (W_LumpName(Lump) == NAME_decaldef) {
-      GCon->Logf(NAME_Init, "Parsing decal definition script '%s'", *W_FullLumpName(Lump));
-      ParseDecalDef(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
-    }
+  for (auto &&it : WadNSNameIterator(NAME_decaldef, WADNS_Global)) {
+    const int Lump = it.lump;
+    GCon->Logf(NAME_Init, "Parsing decal definition script '%s'", *W_FullLumpName(Lump));
+    ParseDecalDef(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
   }
 
   for (auto it = VDecalGroup::listHead; it; it = it->next) it->fixup();

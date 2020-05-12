@@ -304,13 +304,11 @@ static MYTHREAD_RET_TYPE soundStreamThread (void *adevobj) {
 //
 //==========================================================================
 void VSoundManager::Init () {
-  int Lump;
-
   // sound 0 is empty sound
   AddSoundLump(NAME_None, -1);
 
   // add Strife voices
-  for (Lump = W_IterateNS(-1, WADNS_Voices); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Voices)) {
+  for (int Lump = W_IterateNS(-1, WADNS_Voices); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Voices)) {
     char SndName[256];
     snprintf(SndName, sizeof(SndName), "svox/%s", *W_LumpName(Lump));
     int id = AddSoundLump(SndName, Lump);
@@ -319,35 +317,32 @@ void VSoundManager::Init () {
   }
 
   // load SNDINFO script
-  for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) == NAME_sndinfo) {
-      GCon->Logf(NAME_Init, "loading SNDINFO from '%s'", *W_FullLumpName(Lump));
-      // reset current pitch change for each sndinfo file
-      // `-1` means "apply default pitch"
-      CurrentChangePitch = -1;
-      ParseSndinfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), W_LumpFile(Lump));
-      // and reset it afterwards
-      CurrentChangePitch = -1;
-    }
+  for (auto &&it : WadNSNameIterator(NAME_sndinfo, WADNS_Global)) {
+    const int Lump = it.lump;
+    GCon->Logf(NAME_Init, "loading SNDINFO from '%s'", *W_FullLumpName(Lump));
+    // reset current pitch change for each sndinfo file
+    // `-1` means "apply default pitch"
+    CurrentChangePitch = -1;
+    ParseSndinfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), W_LumpFile(Lump));
+    // and reset it afterwards
+    CurrentChangePitch = -1;
   }
 
   S_sfx.Condense();
 
   // load SNDSEQ script
   memset(SeqTrans, -1, sizeof(SeqTrans));
-  for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) == NAME_sndseq) {
-      ParseSequenceScript(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
-    }
+  for (auto &&it : WadNSNameIterator(NAME_sndseq, WADNS_Global)) {
+    const int Lump = it.lump;
+    ParseSequenceScript(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
   }
 
 #if defined(VAVOOM_REVERB)
   // load REVERBS script
   Environments = nullptr;
-  for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) == NAME_reverbs) {
-      ParseReverbs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
-    }
+  for (auto &&it : WadNSNameIterator(NAME_reverbs, WADNS_Global)) {
+    const int Lump = it.lump;
+    ParseReverbs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
   }
 #endif
 

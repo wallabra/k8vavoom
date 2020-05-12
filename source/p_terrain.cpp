@@ -399,10 +399,9 @@ void P_InitTerrainTypes () {
   DefaultTerrainName = DefT.Name;
   DefaultTerrainIndex = 0;
 
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) == NAME_terrain) {
-      ParseTerrainScript(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
-    }
+  for (auto &&it : WadNSNameIterator(NAME_terrain, WADNS_Global)) {
+    const int Lump = it.lump;
+    ParseTerrainScript(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
   }
   GCon->Logf(NAME_Init, "got %d terrain definition%s", TerrainInfos.length(), (TerrainInfos.length() != 1 ? "s" : ""));
 
