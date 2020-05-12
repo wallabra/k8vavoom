@@ -25,8 +25,7 @@
 //**************************************************************************
 class IntermissionScreen : Widget;
 
-enum
-{
+enum {
   IMS_Stats,
   IMS_Text,
   IMS_Done
@@ -34,18 +33,19 @@ enum
 
 ClientGameBase ClGame;
 
-const float TALLY_EFFECT_TIME = 0.625;
+const float TALLY_EFFECT_TIME   = 0.625;
 const float TALLY_FINAL_X_DELTA = 23.0;
 const float TALLY_FINAL_Y_DELTA = 13.0;
-const float TALLY_START_XPOS  = 338.0;
-const float TALLY_STOP_XPOS   = 250.0;
-const float TALLY_START_YPOS  = 272.0;
-const float TALLY_STOP_YPOS   = 223.0;
-const int TALLY_TOP_X     = 245;
-const int TALLY_TOP_Y     = 149;
-const int TALLY_LEFT_X      = 167;
-const int TALLY_LEFT_Y      = 211;
-const int TALLY_TOTALS_X    = 451;
+const float TALLY_START_XPOS    = 338.0;
+const float TALLY_STOP_XPOS     = 250.0;
+const float TALLY_START_YPOS    = 272.0;
+const float TALLY_STOP_YPOS     = 223.0;
+
+const int TALLY_TOP_X    = 245;
+const int TALLY_TOP_Y    = 149;
+const int TALLY_LEFT_X   = 167;
+const int TALLY_LEFT_Y   = 211;
+const int TALLY_TOTALS_X = 451;
 
 float TextSpeed;
 float TextWait;
@@ -56,7 +56,7 @@ int TextPic;
 int interstate;
 float intertime;
 
-// background (map of levels).
+// background (map of levels)
 int patchINTERPIC;
 
 float HubCount;
@@ -72,40 +72,33 @@ int tallylft;
 
 bool showTotals;
 
+
 //==========================================================================
 //
 //  Start
 //
 //==========================================================================
-
-void Start()
-{
+void Start () {
   StopAllSounds();
   IM_InitStats();
   IM_LoadPics();
-
-  if (!ClGame.deathmatch && !HubCount)
-  {
+  if (!ClGame.deathmatch && !HubCount) {
     interstate = IMS_Done;
     cnt = 0.3;
   }
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
-  if (interstate == IMS_Done)
-  {
-    if (cnt > 0.0)
-    {
+override void Tick (float DeltaTime) {
+  if (interstate == IMS_Done) {
+    if (cnt > 0.0) {
       cnt -= DeltaTime;
-      if (cnt <= 0.0)
-      {
+      if (cnt <= 0.0) {
         IM_UnloadPics();
         CmdBuf_AddText("TeleportNewMap\n");
       }
@@ -113,57 +106,45 @@ override void Tick(float DeltaTime)
     return;
   }
   intertime += DeltaTime;
-  if (ClGame.bSkipIntermission || (!ClGame.deathmatch && !HubCount))
-  {
+  if (ClGame.bSkipIntermission || (!ClGame.deathmatch && !HubCount)) {
     interstate = IMS_Done;
     cnt = 0.3;
     ClGame.bSkipIntermission = false;
   }
 }
 
+
 //==========================================================================
 //
 //  OnDraw
 //
 //==========================================================================
-
-override void OnDraw()
-{
-  if (interstate == IMS_Done)
-  {
-    return;
-  }
-
-  switch (interstate)
-  {
-  case IMS_Stats:
-    IM_DrawDeathTally();
-    break;
-
-  case IMS_Text:
-    IM_DrawHubText();
+override void OnDraw () {
+  if (interstate == IMS_Done) return;
+  switch (interstate) {
+    case IMS_Stats: IM_DrawDeathTally(); break;
+    case IMS_Text: IM_DrawHubText(); break;
   }
 }
+
 
 //========================================================================
 //
 //  IM_LoadPics
 //
 //========================================================================
-
-void IM_LoadPics()
-{
+void IM_LoadPics () {
 }
+
 
 //========================================================================
 //
 //  IM_UnloadPics
 //
 //========================================================================
-
-void IM_UnloadPics()
-{
+void IM_UnloadPics () {
 }
+
 
 //========================================================================
 //
@@ -172,9 +153,7 @@ void IM_UnloadPics()
 //  Initialises the stats for single player mode
 //
 //========================================================================
-
-void IM_InitStats()
-{
+void IM_InitStats () {
   int i;
   int j;
   int slaughterfrags;
@@ -186,16 +165,12 @@ void IM_InitStats()
 
   ClGame.bSkipIntermission = false;
   intertime = 0.0;
-  if (!ClGame.deathmatch)
-  {
-    if (!ClGame.cl.Level.bNoIntermission)
-    {
-      print("Single player stats are not implemented");
+  if (!ClGame.deathmatch) {
+    if (!ClGame.cl.Level.bNoIntermission) {
+      printwarn("Single player stats are not implemented");
     }
     IM_InitHubText();
-  }
-  else
-  {
+  } else {
     patchINTERPIC = R_RegisterPic('interpic');
     tallytop = R_RegisterPic('tallytop');
     tallylft = R_RegisterPic('tallylft');
@@ -206,30 +181,27 @@ void IM_InitStats()
     posnum = 0;
     playercount = 0;
     slaughtercount = 0;
-    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-    {
+    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       i = RepInfo.PlayerNum;
-      playercount++;
-      posnum++;
-      if (RepInfo.Frags > slaughterfrags)
-      {
-        slaughterboy = 1 << i;
+      ++playercount;
+      ++posnum;
+      if (RepInfo.Frags > slaughterfrags) {
+        slaughterboy = 1<<i;
         slaughterfrags = RepInfo.Frags;
         slaughtercount = 1;
-      }
-      else if (RepInfo.Frags == slaughterfrags)
-      {
-        slaughterboy |= 1 << i;
-        slaughtercount++;
+      } else if (RepInfo.Frags == slaughterfrags) {
+        slaughterboy |= 1<<i;
+        ++slaughtercount;
       }
     }
-    if (playercount == slaughtercount)
-    { // don't do the slaughter stuff if everyone is equal
+    if (playercount == slaughtercount) {
+      // don't do the slaughter stuff if everyone is equal
       slaughterboy = 0;
     }
     CmdBuf_AddText("music loop hub\n");
   }
 }
+
 
 //========================================================================
 //
@@ -238,9 +210,7 @@ void IM_InitStats()
 //  Initialises the stats for single player mode
 //
 //========================================================================
-
-void IM_InitHubText()
-{
+void IM_InitHubText () {
   IntermissionText *itext =
     ClGame.intermissionPhase == ClientGame::IM_Phase.Leave ? &ClGame.im.LeaveText :
     ClGame.intermissionPhase == ClientGame::IM_Phase.Enter ? &ClGame.im.EnterText :
@@ -254,35 +224,21 @@ void IM_InitHubText()
 
   interstate = IMS_Text;
   HubCount = 0.0;
-  if (itext && itext.Text)
-  {
-    if (itext.bTextIsLump)
-    {
-      HubText = LoadTextLump(name(itext.Text));
-    }
-    else
-    {
-      HubText = itext.Text;
-    }
-    HubCount = float(strlenutf8(HubText)) * TextSpeed + TextWait;
+  if (itext && itext.Text) {
+    HubText = (itext.bTextIsLump ? LoadTextLump(name(itext.Text)) : itext.Text);
+    HubCount = float(strlenutf8(HubText))*TextSpeed+TextWait;
 
     TextFlat = '';
     TextPic = 0;
-    if (itext.TextPic)
-    {
+    if (itext.TextPic) {
       TextPic = R_RegisterPic(itext.TextPic);
-    }
-    else if (itext.TextFlat)
-    {
+    } else if (itext.TextFlat) {
       TextFlat = itext.TextFlat;
     }
 
-    if (itext.TextMusic)
-    {
+    if (itext.TextMusic) {
       CmdBuf_AddText(va("music loop \"%q\"\n", itext.TextMusic));
-    }
-    else
-    {
+    } else {
       CmdBuf_AddText("music loop hub\n");
     }
   } else {
@@ -291,82 +247,66 @@ void IM_InitHubText()
   }
 }
 
+
 //===========================================================================
 //
 //  IM_DrawHubText
 //
 //===========================================================================
-
-void IM_DrawHubText()
-{
-  if (TextPic)
-  {
+void IM_DrawHubText () {
+  if (TextPic) {
     DrawFullScreenPic(TextPic);
-  }
-  else if (TextFlat)
-  {
+  } else if (TextFlat) {
     FillRectWithFlatRepeat(0, 0, 640, 480, TextFlat);
-  }
-  else
-  {
+  } else {
     R_FillRect(0, 0, 640, 480, 0);
   }
-  int count = int((intertime - 0.3) / TextSpeed);
+  int count = int((intertime-0.3)/TextSpeed);
   count = clamp(count, 0, strlenutf8(HubText));
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
   DrawText(170, 145, substrutf8(HubText, 0, count));
 }
 
+
 //==========================================================================
 //
 //  IM_DrawNumber
 //
 //==========================================================================
-
-void IM_DrawNumber(int val, int x, int y, int wrapThresh)
-{
+void IM_DrawNumber (int val, int x, int y, int wrapThresh) {
   SetFont('smallfont');
   SetTextAlign(hcenter, vtop);
-  if (!(val < -9 && wrapThresh < 1000))
-  {
-    DrawText(x, y, va("%d",
-        val >= wrapThresh ? val % wrapThresh : val));
-  }
-  else
-  {
+  if (!(val < -9 && wrapThresh < 1000)) {
+    DrawText(x, y, va("%d", (val >= wrapThresh ? val%wrapThresh : val)));
+  } else {
     DrawText(x, y, "XX");
   }
 }
+
 
 //==========================================================================
 //
 //  IM_DrawNumberBold
 //
 //==========================================================================
-
-void IM_DrawNumberBold(int val, int x, int y, int wrapThresh)
-{
+void IM_DrawNumberBold (int val, int x, int y, int wrapThresh) {
   SetFont('smallfont');
   SetTextAlign(hcenter, vtop);
-  if (!(val < -9 && wrapThresh < 1000))
-  {
-    DrawText(x, y, va("%d", val >= wrapThresh ? val % wrapThresh : val), CR_YELLOW);
-  }
-  else
-  {
+  if (!(val < -9 && wrapThresh < 1000)) {
+    DrawText(x, y, va("%d", (val >= wrapThresh ? val%wrapThresh : val)), CR_YELLOW);
+  } else {
     DrawText(x, y, "XX", CR_YELLOW);
   }
 }
+
 
 //========================================================================
 //
 //  IM_DrawDeathTally
 //
 //========================================================================
-
-void IM_DrawDeathTally()
-{
+void IM_DrawDeathTally () {
   int i, j;
   float xPos, yPos;
   float xDelta, yDelta;
@@ -377,47 +317,34 @@ void IM_DrawDeathTally()
   PlayerReplicationInfo Other;
 
   DrawFullScreenPic(patchINTERPIC);
-  if (intertime < TALLY_EFFECT_TIME)
-  {
+  if (intertime < TALLY_EFFECT_TIME) {
     showTotals = false;
-    scale = intertime / TALLY_EFFECT_TIME;
-    xDelta = scale * TALLY_FINAL_X_DELTA;
-    yDelta = scale * TALLY_FINAL_Y_DELTA;
-    xStart = TALLY_START_XPOS -
-      scale * (TALLY_START_XPOS - TALLY_STOP_XPOS);
-    yPos = TALLY_START_YPOS -
-      scale * (TALLY_START_YPOS - TALLY_STOP_YPOS);
-  }
-  else
-  {
+    scale = intertime/TALLY_EFFECT_TIME;
+    xDelta = scale*TALLY_FINAL_X_DELTA;
+    yDelta = scale*TALLY_FINAL_Y_DELTA;
+    xStart = TALLY_START_XPOS-scale*(TALLY_START_XPOS-TALLY_STOP_XPOS);
+    yPos = TALLY_START_YPOS-scale*(TALLY_START_YPOS-TALLY_STOP_YPOS);
+  } else {
     xDelta = TALLY_FINAL_X_DELTA;
     yDelta = TALLY_FINAL_Y_DELTA;
     xStart = TALLY_STOP_XPOS;
     yPos = TALLY_STOP_YPOS;
   }
-  if (intertime >= TALLY_EFFECT_TIME && showTotals == false)
-  {
+  if (intertime >= TALLY_EFFECT_TIME && !showTotals) {
     showTotals = true;
     LocalSound('PlatformStop');
   }
   y = int(yPos);
-  foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-  {
+  foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
     i = RepInfo.PlayerNum;
     xPos = xStart;
     SetFont('smallfont');
     SetTextAlign(hleft, vtop);
-    DrawText(int(xPos), y, RepInfo.PlayerName,
-      i == ClGame.cl.ClientNum ? CR_YELLOW : CR_WHITE);
-    if (showTotals && !((slaughterboy & (1 << i)) &&
-      !(int(32.0 * intertime) & 16)))
-    {
-      if (i == ClGame.cl.ClientNum)
-      {
+    DrawText(int(xPos), y, RepInfo.PlayerName, (i == ClGame.cl.ClientNum ? CR_YELLOW : CR_WHITE));
+    if (showTotals && !((slaughterboy&(1<<i)) && !(int(32.0*intertime)&16))) {
+      if (i == ClGame.cl.ClientNum) {
         IM_DrawNumberBold(RepInfo.Frags, TALLY_TOTALS_X, y, 1000);
-      }
-      else
-      {
+      } else {
         IM_DrawNumber(RepInfo.Frags, TALLY_TOTALS_X, y, 1000);
       }
     }
@@ -426,20 +353,19 @@ void IM_DrawDeathTally()
   }
 }
 
+
 //==========================================================================
 //
 //  OnVisibilityChanged
 //
 //==========================================================================
-
-override void OnVisibilityChanged(bool bNewVisibility)
-{
+override void OnVisibilityChanged (bool bNewVisibility) {
   bTickEnabled = bNewVisibility;
   if (bNewVisibility) SetFullScaledSize(Width, Height);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bTickEnabled = true;
   Focusable = true;
   Width = 640;
