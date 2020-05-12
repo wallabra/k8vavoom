@@ -39,6 +39,9 @@ menudef VideoOptions {
       "Gold",
       "Green",
       "Red",
+      "Berserk Red",
+      "Blue",
+      "Inverse",
     }
     help =
       "You can replace original 'inversed' colormap for invulnerability"
@@ -54,6 +57,9 @@ menudef VideoOptions {
       "Gold",
       "Green",
       "Red",
+      "Berserk Red",
+      "Blue",
+      "Inverse",
     }
     help =
       "You can replace LightAmp colormap with another one of your choice.";
@@ -69,6 +75,8 @@ menudef VideoOptions {
       "Green",
       "Red",
       "Berserk Red",
+      "Blue",
+      "Inverse",
     }
     help =
       "You can replace Berserk tint with a colormap of your choice."
@@ -85,6 +93,9 @@ menudef VideoOptions {
       "Gold",
       "Green",
       "Red",
+      "Berserk Red",
+      "Blue",
+      "Inverse",
     }
     help =
       "You can replace EnviroSuit tint with a colormap of your choice.";

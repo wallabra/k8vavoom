@@ -1876,14 +1876,17 @@ void VRenderLevelShared::SetupFrame () {
   }
 
   ExtraLight = (ViewEnt && ViewEnt->Player ? ViewEnt->Player->ExtraLight*8 : 0);
+  bool doInverseHack = true;
   if (cl->Camera == cl->MO) {
     ColorMap = CM_Default;
          if (cl->FixedColormap == INVERSECOLORMAP) { ColorMap = CM_Inverse; FixedLight = 255; }
+    else if (cl->FixedColormap == INVERSXCOLORMAP) { ColorMap = CM_Inverse; FixedLight = 255; doInverseHack = false; }
     else if (cl->FixedColormap == GOLDCOLORMAP) { ColorMap = CM_Gold; FixedLight = 255; }
     else if (cl->FixedColormap == REDCOLORMAP) { ColorMap = CM_Red; FixedLight = 255; }
     else if (cl->FixedColormap == GREENCOLORMAP) { ColorMap = CM_Green; FixedLight = 255; }
     else if (cl->FixedColormap == MONOCOLORMAP) { ColorMap = CM_Mono; FixedLight = 255; }
     else if (cl->FixedColormap == BEREDCOLORMAP) { ColorMap = CM_BeRed; FixedLight = 255; }
+    else if (cl->FixedColormap == BLUECOLORMAP) { ColorMap = CM_Blue; FixedLight = 255; }
     else if (cl->FixedColormap >= NUMCOLORMAPS) { FixedLight = 255; }
     else if (cl->FixedColormap) {
       // lightamp sets this to 1
@@ -1894,6 +1897,8 @@ void VRenderLevelShared::SetupFrame () {
           case 3: ColorMap = CM_Green; break;
           case 4: ColorMap = CM_Red; break;
           case 5: ColorMap = CM_BeRed; break;
+          case 6: ColorMap = CM_Blue; break;
+          case 7: ColorMap = CM_Inverse; doInverseHack = false; break;
         }
       }
       FixedLight = 255-(cl->FixedColormap<<3);
@@ -1903,6 +1908,7 @@ void VRenderLevelShared::SetupFrame () {
     FixedLight = 0;
     ColorMap = 0;
   }
+
   // inverse colormap flash effect
   if (cl->ExtraLight == 255) {
     ExtraLight = 0;
@@ -1911,13 +1917,15 @@ void VRenderLevelShared::SetupFrame () {
   }
 
   // inverse colormap hack
-  if (ColorMap == CM_Inverse) {
+  if (doInverseHack && ColorMap == CM_Inverse) {
     switch (k8ColormapInverse.asInt()) {
       case 1: ColorMap = CM_Mono; break;
       case 2: ColorMap = CM_Gold; break;
       case 3: ColorMap = CM_Green; break;
       case 4: ColorMap = CM_Red; break;
       case 5: ColorMap = CM_BeRed; break;
+      case 6: ColorMap = CM_Blue; break;
+      case 7: ColorMap = CM_Inverse; break;
     }
   }
 

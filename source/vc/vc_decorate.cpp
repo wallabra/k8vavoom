@@ -45,6 +45,18 @@ TMapNC<VName, bool> BlockedSpawnSet;
 TMapNC<VName, VClass *> ForceReplacements;
 
 
+//WARNING! keep this in sync with "Inventory.vc"
+enum {
+  INVERSECOLOR = 0x00123456,
+  GOLDCOLOR    = 0x00123457,
+  REDCOLOR     = 0x00123458,
+  GREENCOLOR   = 0x00123459,
+  MONOCOLOR    = 0x0012345A,
+  BEREDCOLOR   = 0x0012345B,
+  BLUECOLOR    = 0x0012345C,
+  INVERSXCOLOR = 0x0012345D,
+};
+
 /*
 static inline VVA_OKUNUSED vuint32 GetTypeHashCI (const VStr &s) { return fnvHashStrCI(*s); }
 static inline VVA_OKUNUSED vuint32 GetTypeHashCI (const char *s) { return fnvHashStrCI(s); }
@@ -2642,26 +2654,29 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             P.Field2->SetStr(DefObj, sc->String);
             break;
           case PROP_PowerupColor:
-                 if (sc->Check("InverseMap")) P.Field->SetInt(DefObj, 0x00123456);
-            else if (sc->Check("GoldMap")) P.Field->SetInt(DefObj, 0x00123457);
-            else if (sc->Check("RedMap")) P.Field->SetInt(DefObj, 0x00123458);
-            else if (sc->Check("GreenMap")) P.Field->SetInt(DefObj, 0x00123459);
-            else if (sc->Check("MonoMap")) P.Field->SetInt(DefObj, 0x0012345A);
-            else if (sc->Check("MonochromeMap")) P.Field->SetInt(DefObj, 0x0012345A);
+                 if (sc->Check("InverseMap")) P.Field->SetInt(DefObj, INVERSECOLOR);
+            else if (sc->Check("GoldMap")) P.Field->SetInt(DefObj, GOLDCOLOR);
+            else if (sc->Check("RedMap")) P.Field->SetInt(DefObj, REDCOLOR);
+            else if (sc->Check("BerserkRedMap")) P.Field->SetInt(DefObj, BEREDCOLOR);
+            else if (sc->Check("GreenMap")) P.Field->SetInt(DefObj, GREENCOLOR);
+            else if (sc->Check("MonoMap")) P.Field->SetInt(DefObj, MONOCOLOR);
+            else if (sc->Check("MonochromeMap")) P.Field->SetInt(DefObj, MONOCOLOR);
+            else if (sc->Check("BlueMap")) P.Field->SetInt(DefObj, BLUECOLOR);
             else {
               vuint32 Col = sc->ExpectColor();
               int r = (Col>>16)&255;
               int g = (Col>>8)&255;
               int b = Col&255;
-              int a;
+              int a = 88; // default alpha, around 0.(3)
               sc->Check(",");
               // alpha may be missing
               if (!sc->Crossed) {
                 sc->ExpectFloat();
-                a = clampToByte((int)(sc->Float*255));
+                     if (sc->Float <= 0) a = 1;
+                else if (sc->Float >= 1) a = 255;
+                else a = clampToByte((int)(sc->Float*255));
                 if (a > 250) a = 250;
-              } else {
-                a = 88; // default alpha, around 0.(3)
+                if (a < 1) a = 1;
               }
               P.Field->SetInt(DefObj, (r<<16)|(g<<8)|b|(a<<24));
             }

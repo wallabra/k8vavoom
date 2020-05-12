@@ -77,7 +77,9 @@ override int GetColormapOverride (out bool dontBlink) {
     case CMapOverride.Gold: dontBlink = true; return GOLDCOLOR;
     case CMapOverride.Green: dontBlink = true; return GREENCOLOR;
     case CMapOverride.Red: dontBlink = true; return REDCOLOR;
-    case CMapOverride.Inverse: dontBlink = true; return BEREDCOLOR;
+    case CMapOverride.BeRed: dontBlink = true; return BEREDCOLOR;
+    case CMapOverride.Blue: dontBlink = true; return BLUECOLOR;
+    case CMapOverride.Inverse: dontBlink = true; return INVERSXCOLOR;
   }
   return 0;
 }

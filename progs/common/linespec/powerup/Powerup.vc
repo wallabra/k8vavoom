@@ -35,6 +35,8 @@ enum CMapOverride {
   Gold,
   Green,
   Red,
+  BeRed,
+  Blue,
   Inverse,
   Max,
 }
@@ -206,6 +208,8 @@ ubyte TranslateColorToCMap (int clr) {
     case GREENCOLOR: return PlayerEx::GREENCOLORMAP;
     case MONOCOLOR: return PlayerEx::MONOCOLORMAP;
     case BEREDCOLOR: return PlayerEx::BEREDCOLORMAP;
+    case BLUECOLOR: return PlayerEx::BLUECOLORMAP;
+    case INVERSXCOLOR: return PlayerEx::INVERSXCOLORMAP;
   }
   return 0;
 }
