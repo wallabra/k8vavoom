@@ -3683,7 +3683,12 @@ void ProcessDecorateScripts () {
   if (afterIWadDecLumps.length()) {
     // find last iwad position
     int lastiwad = -1;
-    for (int f = 0; f < decoLumps.length(); ++f) if (W_IsIWADLump(decoLumps[f])) lastiwad = f+1;
+    for (int f = 0; f < decoLumps.length(); ++f) {
+      //GCon->Logf(NAME_Debug, "%d: <%s>; iwad=%d", f, *W_FullLumpName(decoLumps[f]), (int)W_IsIWADLump(decoLumps[f]));
+      if (W_IsIWADLump(decoLumps[f])) {
+        if (!W_FullPakNameForLump(decoLumps[f]).endsWithCI("/basepak.pk3")) lastiwad = f+1;
+      }
+    }
     // insert additional decorate lumps
     if (lastiwad < 0 || lastiwad >= decoLumps.length()) {
       // at the end
@@ -3691,7 +3696,9 @@ void ProcessDecorateScripts () {
       for (auto &&lmp : afterIWadDecLumps) decoLumps.append(lmp);
     } else {
       // at `lastiwad`
-      GLog.Logf(NAME_Init, "Adding \"after iwad\" decorates before '%s'", *W_FullLumpName(decoLumps[lastiwad]));
+      GLog.Log(NAME_Init, "Adding \"after iwad\" decorates between:");
+      GLog.Logf(NAME_Init, "   '%s', and", *W_FullLumpName(decoLumps[lastiwad-1]));
+      GLog.Logf(NAME_Init, "   '%s'", *W_FullLumpName(decoLumps[lastiwad]));
       for (auto &&lmp : afterIWadDecLumps) { decoLumps.insert(lastiwad, lmp); ++lastiwad; }
     }
     afterIWadDecLumps.clear();
