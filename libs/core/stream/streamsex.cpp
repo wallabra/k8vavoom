@@ -1020,12 +1020,6 @@ VStr VStdFileStreamBase::GetName () const {
 //==========================================================================
 void VStdFileStreamBase::Seek (int pos) {
   if (!mFl) { SetError(); return; }
-#ifdef __SWITCH__
-  // I don't know how or why this works, but unless you seek to 0 first,
-  // fseeking on the Switch seems to set the pointer to an incorrect
-  // position, but only sometimes
-  fseek(mFl, 0, SEEK_SET);
-#endif
   if (fseek(mFl, pos, SEEK_SET)) SetError();
 }
 
