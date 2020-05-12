@@ -3928,7 +3928,7 @@ void VAcs::TranslateSpecial (int &spec, int &arg1) {
 //
 //==========================================================================
 int VAcs::RunScript (float DeltaTime, bool immediate) {
-  VAcsObject *WaitObject;
+  VAcsObject *WaitObject = nullptr;
 
   //fprintf(stderr, "VAcs::RunScript:000: self name is '%s' (number is %d)\n", *info->Name, info->Number);
   //if (info->RunningScript) fprintf(stderr, "VAcs::RunScript:001: rs name is '%s' (number is %d)\n", *info->RunningScript->info->Name, info->RunningScript->info->Number);
@@ -3946,14 +3946,17 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
   if (State == ASTE_WaitingForTag && !Level->eventTagBusy(WaitValue)) State = ASTE_Running;
   if (State == ASTE_WaitingForPoly && !Level->eventPolyBusy(WaitValue)) State = ASTE_Running;
+
+  VAcsInfo *scpr = (State == ASTE_WaitingForScriptStart || State == ASTE_WaitingForScript ? XLevel->Acs->FindScript(WaitValue, WaitObject) : nullptr);
+
   if (State == ASTE_WaitingForScriptStart &&
-      XLevel->Acs->FindScript(WaitValue, WaitObject) &&
-      XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
+      /*XLevel->Acs->FindScript(WaitValue, WaitObject)*/scpr &&
+      /*XLevel->Acs->FindScript(WaitValue, WaitObject)*/scpr->RunningScript)
   {
     State = ASTE_WaitingForScript;
   }
 
-  if (State == ASTE_WaitingForScript && !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript) {
+  if (State == ASTE_WaitingForScript && scpr && !/*XLevel->Acs->FindScript(WaitValue, WaitObject)*/scpr->RunningScript) {
     State = ASTE_Running;
   }
 
@@ -4668,12 +4671,15 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_ScriptWait)
       WaitValue = sp[-1];
-      if (!XLevel->Acs->FindScript(WaitValue, WaitObject) ||
-          !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
       {
-        State = ASTE_WaitingForScriptStart;
-      } else {
-        State = ASTE_WaitingForScript;
+        VAcsInfo *scpt = XLevel->Acs->FindScript(WaitValue, WaitObject);
+        if (!/*XLevel->Acs->FindScript(WaitValue, WaitObject)*/scpt ||
+            !/*XLevel->Acs->FindScript(WaitValue, WaitObject)*/scpt->RunningScript)
+        {
+          State = ASTE_WaitingForScriptStart;
+        } else {
+          State = ASTE_WaitingForScript;
+        }
       }
       --sp;
       action = SCRIPT_Stop;
@@ -4685,12 +4691,15 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_ScriptWaitDirect)
       WaitValue = READ_INT32(ip);
-      if (!XLevel->Acs->FindScript(WaitValue, WaitObject) ||
-          !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
       {
-        State = ASTE_WaitingForScriptStart;
-      } else {
-        State = ASTE_WaitingForScript;
+        VAcsInfo *scpt = XLevel->Acs->FindScript(WaitValue, WaitObject);
+        if (!/*XLevel->Acs->FindScript(WaitValue, WaitObject)*/scpt ||
+            !/*XLevel->Acs->FindScript(WaitValue, WaitObject)*/scpt->RunningScript)
+        {
+          State = ASTE_WaitingForScriptStart;
+        } else {
+          State = ASTE_WaitingForScript;
+        }
       }
       ip += 4;
       action = SCRIPT_Stop;
@@ -4707,8 +4716,9 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         //GCon->Logf(NAME_Warning, "UNTESTED ACS OPCODE PCD_ScriptWaitNamed (script '%s')", *name);
         WaitValue = XLevel->Acs->FindScriptNumberByName(*name, WaitObject);
         if (WaitValue != -1 /*<= -SPECIAL_LOW_SCRIPT_NUMBER*/) {
-          if (!XLevel->Acs->FindScript(WaitValue, WaitObject) ||
-              !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
+          VAcsInfo *scpt = XLevel->Acs->FindScript(WaitValue, WaitObject);
+          if (!/*XLevel->Acs->FindScript(WaitValue, WaitObject)*/scpt ||
+              !/*XLevel->Acs->FindScript(WaitValue, WaitObject)*/scpt->RunningScript)
           {
             State = ASTE_WaitingForScriptStart;
           } else {
