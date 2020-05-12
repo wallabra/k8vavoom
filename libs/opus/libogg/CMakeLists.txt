@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8.12)
-project(libogg)
+#cmake_minimum_required(VERSION 2.8.12)
+project(ogglibrary LANGUAGES C)
 
 # Required modules
 include(GNUInstallDirs)
