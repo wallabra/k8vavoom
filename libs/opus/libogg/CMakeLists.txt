@@ -1,5 +1,5 @@
 #cmake_minimum_required(VERSION 2.8.12)
-project(ogglibrary LANGUAGES C)
+##project(ogglibrary LANGUAGES C)
 
 # Required modules
 include(GNUInstallDirs)
@@ -79,7 +79,7 @@ set(OGG_SOURCES
     src/crctable.h
 )
 
-add_library(ogg ${OGG_HEADERS} ${OGG_SOURCES})
+add_library(ogg STATIC ${OGG_HEADERS} ${OGG_SOURCES})
 target_include_directories(ogg PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>

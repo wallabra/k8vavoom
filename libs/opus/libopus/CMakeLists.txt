@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cpp")
 set(PACKAGE_VERSION "1.3.1")
 message(STATUS "Opus package version: ${PACKAGE_VERSION}")
 
-project(Opus LANGUAGES C)
+##project(Opus LANGUAGES C)
 include(opus_buildtype.cmake)
 
 set(OPUS_BUILD_SHARED_LIBRARY OFF)
@@ -155,9 +155,9 @@ if(OPUS_CPU_X86 OR OPUS_CPU_X64)
 endif()
 
 
-add_library(opus ${opus_sources} ${opus_sources_float})
+add_library(opus STATIC ${opus_sources} ${opus_sources_float})
 
-add_library(Opus::opus ALIAS opus)
+#add_library(Opus::opus ALIAS opus)
 
 set(Opus_PUBLIC_HEADER
     ${CMAKE_CURRENT_SOURCE_DIR}/include/opus.h

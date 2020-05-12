@@ -101,7 +101,7 @@ endif( APPLE )
 
 # note: by default this target creates a shared object (or dll). To build a
 # static library instead, set the option BUILD_SHARED_LIBS to FALSE.
-add_library ( libfluidsynth_lite
+add_library ( libfluidsynth_lite STATIC
     ${config_SOURCES}
     ${fluid_windows_SOURCES}
     ${libfluidsynth_lite_SOURCES}

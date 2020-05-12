@@ -19,8 +19,8 @@
 
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
-project ( FluidSynth C )
-cmake_minimum_required ( VERSION 2.6.3 )
+##project ( FluidSynth C )
+##cmake_minimum_required ( VERSION 2.6.3 )
 set ( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
