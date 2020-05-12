@@ -52,6 +52,8 @@ option(WITH_SSE42 "Use SSE4.2 instruction set (may not compile)" OFF)
 option(NO_SSE "Disable all SSE instructions" OFF)
 option(INSANE_AVX "Use AVX2 instruction set (don't do this, it won't give you any noticeable speedup and may be broken)" OFF)
 
+option(WITH_GCC_ANAL "Turn on gcc10 static analyzer" OFF)
+
 
 option(WITH_GLAD "Use supplied GLAD for GL bindings" OFF)
 option(NO_PTHREAD "Disable pthreads, use C11 threads instead" OFF)
@@ -240,6 +242,10 @@ endif(K8_UNFUCK_AS_SHITLANG)
 
 if(K8_UNFUCK_AS_GCC)
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-aggressive-loop-optimizations")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fcommon") # fuck you, shitcc10
+  if(WITH_GCC_ANAL)
+    set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fanalyzer")
+  endif(WITH_GCC_ANAL)
 endif(K8_UNFUCK_AS_GCC)
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-delete-null-pointer-checks")
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-strict-aliasing")
