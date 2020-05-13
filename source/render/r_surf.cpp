@@ -942,11 +942,6 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
 
     if (createSurf) {
       CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_TOP|hackflag);
-      /*
-      if (hackflag && sp->surfs) {
-        for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
-      }
-      */
     }
   }
 
@@ -1106,11 +1101,6 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
 
     if (createSurf) {
       CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_BOTTOM|hackflag);
-      /*
-      if (hackflag && sp->surfs) {
-        for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
-      }
-      */
     }
   }
 

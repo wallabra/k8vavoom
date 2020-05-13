@@ -240,6 +240,11 @@ void VRenderLevelShadowVolume::BuildLightMap (surface_t *surf) {
 //
 //  VRenderLevelShadowVolume::DrawShadowSurfaces
 //
+//  LightCanCross:
+//    -1: two-sided line, top or bottom
+//     0: one-sided line, or flat
+//     1: two-sided line, middle
+//
 //==========================================================================
 void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
                                                    VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross)
@@ -269,17 +274,11 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
 
-    // for two-sided walls, we want to leave only one surface, otherwise z-fighting will occur
-    // also, don't bother with it at all if texture has holes
-    if (LightCanCross < 0) {
-      // horizon
-      // k8: can horizon surfaces block light? i think they shouldn't
-      //if (!surf->IsVisibleFor(Drawer->vieworg)) return; // viewer is in back side or on plane
-      continue;
-    }
+    // check transdoor hacks
+    //if (surf->drawflags&surface_t::TF_TOPHACK) continue;
 
     // floor or ceiling? ignore masked
-    if (surf->GetNormalZ()) {
+    if (LightCanCross < 0 || surf->GetNormalZ()) {
       VTexture *tex = surf->texinfo->Tex;
       if (!tex || tex->Type == TEXTYPE_Null) continue;
       if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;
@@ -348,12 +347,12 @@ void VRenderLevelShadowVolume::RenderShadowLine (subsector_t *sub, sec_region_t 
   if (dseg->mid) DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0));
   if (seg->backsector) {
     // two sided line
-    if (dseg->top) DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, 0);
+    if (dseg->top) DrawShadowSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, (seg->backsector ? -1 : 0));
     //k8: horizon/sky cannot block light
     //if (dseg->topsky) DrawShadowSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, skybox, false, -1);
-    if (dseg->bot) DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, skybox, false, 0);
+    if (dseg->bot) DrawShadowSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, skybox, false, (seg->backsector ? -1 : 0));
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawShadowSurfaces(sp->surfs, &sp->texinfo, skybox, false, 0);
+      DrawShadowSurfaces(sp->surfs, &sp->texinfo, skybox, false, (seg->backsector ? -1 : 0));
     }
   }
 }
@@ -572,6 +571,11 @@ void VRenderLevelShadowVolume::RenderShadowBSPNode (int bspnum, const float *bbo
 //
 //  VRenderLevelShadowVolume::DrawLightSurfaces
 //
+//  LightCanCross:
+//    -1: two-sided line, top or bottom
+//     0: one-sided line, or flat
+//     1: two-sided line, middle
+//
 //==========================================================================
 void VRenderLevelShadowVolume::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
                                                   VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross)
@@ -594,6 +598,11 @@ void VRenderLevelShadowVolume::DrawLightSurfaces (surface_t *InSurfs, texinfo_t 
     if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
     const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
     if (dist <= 0.0f || dist >= CurrLightRadius) continue; // light is too far away, or surface is not lit
+    // ignore masked
+    VTexture *tex = surf->texinfo->Tex;
+    if (!tex || tex->Type == TEXTYPE_Null) continue;
+    if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;
+    if (tex->isTranslucent()) continue; // this is translucent texture
     Drawer->DrawSurfaceLight(surf);
   }
 }
@@ -622,12 +631,12 @@ void VRenderLevelShadowVolume::RenderLightLine (sec_region_t *secregion, drawseg
   if (dseg->mid) DrawLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0));
   if (seg->backsector) {
     // two sided line
-    if (dseg->top) DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, 0);
+    if (dseg->top) DrawLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, (seg->backsector ? -1 : 0));
     //k8: horizon/sky cannot block light
     //if (dseg->topsky) DrawLightSurfaces(dseg->topsky->surfs, &dseg->topsky->texinfo, skybox, false, -1);
-    if (dseg->bot) DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, skybox, false, 0);
+    if (dseg->bot) DrawLightSurfaces(dseg->bot->surfs, &dseg->bot->texinfo, skybox, false, (seg->backsector ? -1 : 0));
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
-      DrawLightSurfaces(sp->surfs, &sp->texinfo, skybox, false, 0);
+      DrawLightSurfaces(sp->surfs, &sp->texinfo, skybox, false, (seg->backsector ? -1 : 0));
     }
   }
 }
