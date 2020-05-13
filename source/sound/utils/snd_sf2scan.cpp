@@ -23,8 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "../../gamedefs.h"
+#include "../snd_local.h"
 
 
 VCvarB snd_sf2_autoload("snd_sf2_autoload", true, "Automatically load SF2 from a set of predefined directories?", CVAR_Archive|CVAR_PreInit);

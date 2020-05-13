@@ -23,8 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "../../gamedefs.h"
+#include "../snd_local.h"
 
 #define DR_MP3_IMPLEMENTATION
 #define DR_MP3_NO_STDIO
@@ -35,7 +35,7 @@
 #define DRMP3_REALLOC  Z_Realloc
 #define DRMP3_FREE     Z_Free
 
-#include "stbdr/dr_mp3.h"
+#include "../stbdr/dr_mp3.h"
 
 
 class VMP3AudioCodec : public VAudioCodec {

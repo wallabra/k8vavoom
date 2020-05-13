@@ -159,23 +159,26 @@ set(RENDERBASE_SOURCES
 #---------------------------------------
 set(SOUNDSYS_SOURCES
   sound/sound.h
-  sound/snd_data.cpp
   sound/snd_local.h
+  sound/snd_data.cpp
   sound/snd_main.cpp
-  sound/snd_al.cpp
-  sound/snd_qmus2mid.cpp
-  #k8:not used, 'cause there is no EAX/EFX support: sound/snd_reverbs.cpp
+
+  sound/drv/snd_al.cpp
+
+  sound/utils/snd_midisong.cpp
+  sound/utils/snd_qmus2mid.cpp
+  sound/utils/snd_sf2scan.cpp
+  #k8:not used, 'cause there is no EAX/EFX support: sound/utils/snd_reverbs.cpp
+
   sound/snd_streamplayer.cpp
-  sound/snd_midisong.cpp
-  sound/snd_sf2scan.cpp
-  sound/snd_timidity.cpp
-  sound/snd_wav.cpp
-  # xmplite is always here
-  sound/snd_xmplite.cpp
-  # NukedOPL too
+
   sound/nukedopl/opl3.c
   sound/nukedopl/musmid.cpp
-  sound/snd_nuked.cpp
+
+  sound/decoders/snd_timidity.cpp
+  sound/decoders/snd_wav.cpp
+  sound/decoders/snd_xmplite.cpp
+  sound/decoders/snd_nuked.cpp
 )
 
 
@@ -549,30 +552,30 @@ if(ENABLE_CLIENT)
   set(MAIN_COMPILE_FLAGS "")
 
   if(VORBIS_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_vorbis.cpp)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/decoders/snd_vorbis.cpp)
   else(VORBIS_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_vorbis_stb.cpp)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/decoders/snd_vorbis_stb.cpp)
   endif(VORBIS_FOUND)
 
   #k8: we have internal opus library
   if(OPUS_FOUND OR OPUS_USE_INTERNAL)
-    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_opus.cpp)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/decoders/snd_opus.cpp)
   endif(OPUS_FOUND OR OPUS_USE_INTERNAL)
 
   if(LIBMAD_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_mp3_mad.cpp)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/decoders/snd_mp3_mad.cpp)
   else(LIBMAD_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_mp3_dr.cpp)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/decoders/snd_mp3_dr.cpp)
   endif(LIBMAD_FOUND)
 
   if(FLAC_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_flac.cpp)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/decoders/snd_flac.cpp)
   else(FLAC_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_flac_dr.cpp)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/decoders/snd_flac_dr.cpp)
   endif(FLAC_FOUND)
 
   if(FLUID_FOUND)
-    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_fluid.cpp)
+    set(MAIN_SOURCES ${MAIN_SOURCES} sound/decoders/snd_fluid.cpp)
   endif(FLUID_FOUND)
 
 

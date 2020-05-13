@@ -23,8 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "../../gamedefs.h"
+#include "../snd_local.h"
 
 /*#define STB_VORBIS_NO_PUSHDATA_API*/
 #define STB_VORBIS_NO_PULLDATA_API
@@ -35,7 +35,7 @@
 #define stb_realloc  Z_Realloc
 #define stb_free     Z_Free
 
-#include "stbdr/stb_vorbis.c"
+#include "../stbdr/stb_vorbis.c"
 
 
 class VVorbisAudioCodec : public VAudioCodec {

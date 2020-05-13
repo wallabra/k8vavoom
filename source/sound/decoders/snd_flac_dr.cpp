@@ -23,8 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "../../gamedefs.h"
+#include "../snd_local.h"
 
 #define DR_FLAC_IMPLEMENTATION
 #define DR_FLAC_NO_STDIO
@@ -36,7 +36,7 @@
 #define DRFLAC_REALLOC  Z_Realloc
 #define DRFLAC_FREE     Z_Free
 
-#include "stbdr/dr_flac.h"
+#include "../stbdr/dr_flac.h"
 
 
 class VFlacAudioCodec : public VAudioCodec {

@@ -29,8 +29,8 @@
 # include <opus/opusfile.h>
 #endif
 
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "../../gamedefs.h"
+#include "../snd_local.h"
 
 
 class VOpusAudioCodec : public VAudioCodec {

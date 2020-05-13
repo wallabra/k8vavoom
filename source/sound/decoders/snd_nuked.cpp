@@ -23,10 +23,10 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "../../gamedefs.h"
+#include "../snd_local.h"
 
-#include "nukedopl/musmid.h"
+#include "../nukedopl/musmid.h"
 
 
 class VNukedOPLAudioCodec : public VAudioCodec {

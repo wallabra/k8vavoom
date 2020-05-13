@@ -25,8 +25,8 @@
 //**************************************************************************
 #include <FLAC/stream_decoder.h>
 
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "../../gamedefs.h"
+#include "../snd_local.h"
 
 
 class VFlacSampleLoader : public VSampleLoader {

@@ -23,8 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "../../gamedefs.h"
+#include "../snd_local.h"
 
 
 static VCvarB snd_midi_messages("snd_midi_messages", false, "Show messages from MIDI files?", CVAR_Archive);

@@ -25,8 +25,8 @@
 //**************************************************************************
 #include <vorbis/codec.h>
 
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "../../gamedefs.h"
+#include "../snd_local.h"
 
 
 class VVorbisAudioCodec : public VAudioCodec {

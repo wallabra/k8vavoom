@@ -25,8 +25,8 @@
 //**************************************************************************
 #include <mad.h>
 
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "../../gamedefs.h"
+#include "../snd_local.h"
 
 
 class VMp3AudioCodec : public VAudioCodec {

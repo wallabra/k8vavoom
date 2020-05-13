@@ -27,8 +27,8 @@
 //  Quick MUS->MID ! by S.Bacquet
 //
 //**************************************************************************
-#include "gamedefs.h"
-#include "snd_local.h"
+#include "../../gamedefs.h"
+#include "../snd_local.h"
 
 
 static VCvarB snd_mus_emulate_dmx_bugs("snd_mus_emulate_dmx_bugs", false, "Emulate some DMX bugs when converting MUS to MIDI?", CVAR_Archive);
