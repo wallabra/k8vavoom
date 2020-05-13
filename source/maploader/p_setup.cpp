@@ -4141,25 +4141,38 @@ void VLevel::FixDeepWaters () {
     if (sec.fakefloors || sec.linecount < 3 || (sec.SectorFlags&sector_t::SF_IsTransDoor) == 0) continue;
 
     // check if this is a door
-    if (!doorFlag) continue;
+    //if (!doorFlag) continue;
 
     // ignore sectors with skies (for now)
     if (sec.floor.pic == skyflatnum || sec.ceiling.pic == skyflatnum) continue;
 
     // ignore sector with invalid ceiling texture
-    if (GTextureManager.GetTextureType(sec.ceiling.pic) != VTextureManager::TCT_SOLID) continue;
+    //if (GTextureManager.GetTextureType(sec.ceiling.pic) != VTextureManager::TCT_SOLID) continue;
 
     // find lowest surrounding sector
-    const sector_t *lowsec = nullptr;
+    const sector_t *lowsec = nullptr; // lowest ceiling
+    const sector_t *highsec = nullptr; // highest floor
     for (int f = 0; f < sec.linecount; ++f) {
       const line_t *ldef = sec.lines[f];
       if (!(ldef->flags&ML_TWOSIDED)) continue; // one-sided wall always blocks everything
       const sector_t *ss = (ldef->frontsector == &sec ? ldef->backsector : ldef->frontsector);
       if (ss == &sec) continue;
-      if (ss->ceiling.minz <= sec.ceiling.minz) continue;
-      if (!lowsec || lowsec->ceiling.minz > ss->ceiling.minz) lowsec = ss;
+      if (doorFlag) {
+        if (ss->ceiling.minz > sec.ceiling.minz) {
+          if (!lowsec || lowsec->ceiling.minz > ss->ceiling.minz) lowsec = ss;
+        }
+      } else {
+        if (ss->floor.minz < sec.floor.minz) {
+          if (!highsec || highsec->floor.minz < ss->floor.minz) highsec = ss;
+        }
+      }
     }
-    if (!lowsec) continue;
+
+    if (doorFlag) {
+      if (!lowsec) continue;
+    } else {
+      if (!highsec) continue;
+    }
 
     // allocate fakefloor data (engine require it to complete setup)
     vassert(!sec.fakefloors);
@@ -4167,9 +4180,16 @@ void VLevel::FixDeepWaters () {
     fakefloor_t *ff = sec.fakefloors;
     memset((void *)ff, 0, sizeof(fakefloor_t));
     ff->floorplane = sec.floor;
-    ff->ceilplane = lowsec->ceiling;
-    ff->ceilplane.pic = sec.ceiling.pic;
-    ff->params = sec.params;
+    ff->ceilplane = sec.ceiling;
+    if (doorFlag) {
+      ff->floorplane = sec.floor;
+      ff->ceilplane = lowsec->ceiling;
+      ff->params = lowsec->params;
+    } else {
+      ff->floorplane = highsec->floor;
+      ff->ceilplane = sec.ceiling;
+      ff->params = highsec->params;
+    }
   }
 
 
