@@ -29,6 +29,7 @@ bool bEnteringText;
 string Text;
 string Value;
 string EnterText;
+int MaxTextLength;
 
 delegate void ValueChanged (Object Sender);
 
@@ -41,6 +42,17 @@ delegate void ValueChanged (Object Sender);
 override void OnCreate () {
   ::OnCreate();
   InitSlot();
+}
+
+
+//==========================================================================
+//
+//  OnFocusLost
+//
+//==========================================================================
+override void OnFocusLost () {
+  AbortEnteringText();
+  ::OnFocusLost();
 }
 
 
@@ -102,6 +114,45 @@ void OnValueChanged () {
 
 //==========================================================================
 //
+//  StartEnteringText
+//
+//==========================================================================
+void StartEnteringText (optional bool sound/*=false*/) {
+  if (!bEnteringText) {
+    bEnteringText = true;
+    EnterText = Value;
+    if (sound) LocalSound('menu/choose');
+  }
+}
+
+
+//==========================================================================
+//
+//  AbortEnteringText
+//
+//==========================================================================
+void AbortEnteringText () {
+  bEnteringText = false;
+  EnterText = Value;
+}
+
+
+//==========================================================================
+//
+//  FinishEnteringText
+//
+//==========================================================================
+void FinishEnteringText () {
+  if (bEnteringText) {
+    bEnteringText = false;
+    Value = EnterText;
+    OnValueChanged();
+  }
+}
+
+
+//==========================================================================
+//
 //  OnDraw
 //
 //==========================================================================
@@ -149,6 +200,19 @@ override void OnDraw () {
 
 //==========================================================================
 //
+//  IsAlphaDigit
+//
+//==========================================================================
+static final bool IsAlphaDigit (int ch) {
+  return
+    (ch >= 65 && ch <= 90) ||
+    (ch >= 97 && ch <= 122) ||
+    (ch >= 48 && ch <= 57);
+}
+
+
+//==========================================================================
+//
 //  OnEvent
 //
 //==========================================================================
@@ -157,25 +221,14 @@ override bool OnEvent (ref event_t evt) {
   if (evt.bubbling && evt.type == ev_click && evt.dest == self) {
     switch (evt.keycode) {
       case K_MOUSE1:
-        if (bEnteringText) {
-          /*
-          bEnteringText = false;
-          Value = EnterText;
-          OnValueChanged();
-          */
-        } else {
-          // we are going to be intercepting all chars
-          bEnteringText = true;
-          EnterText = Value;
-          LocalSound('menu/choose');
+        if (IsFocused) {
+          if (!bEnteringText) StartEnteringText(sound:true);
+          return true;
         }
-        return true;
+        break;
       case K_MOUSE2:
         if (IsFocused) {
-          if (bEnteringText) {
-            bEnteringText = false;
-            EnterText = Value;
-          }
+          if (bEnteringText) AbortEnteringText();
           return true;
         }
         break;
@@ -184,33 +237,40 @@ override bool OnEvent (ref event_t evt) {
 
   if (evt.bubbling && evt.type == ev_keydown) {
     if (bEnteringText) {
-      if (evt.bCtrl) {
-        switch (evt.keycode) {
-          case K_y: // ^Y
-          case K_DELETE: // ^DEL
-            EnterText = "";
-            return true;
-        }
-        return true;
-      }
       switch (evt.keycode) {
         case K_ESCAPE:
-        //case K_MOUSE2:
-          bEnteringText = false;
-          EnterText = Value;
+          AbortEnteringText();
           break;
         case K_ENTER:
         case K_PADENTER:
-        //case K_MOUSE1:
-          bEnteringText = false;
-          Value = EnterText;
-          OnValueChanged();
+          FinishEnteringText();
           break;
         case K_BACKSPACE:
-          if (EnterText) EnterText = EnterText[0..$-1];
+          if (EnterText) {
+            if (evt.bCtrl) {
+              if (EnterText[$-1] <= 32) {
+                while (EnterText && EnterText[$-1] <= 32) EnterText = EnterText[0..$-1];
+              } else {
+                bool wantAD = IsAlphaDigit(EnterText[$-1]);
+                while (EnterText && IsAlphaDigit(EnterText[$-1]) == wantAD) EnterText = EnterText[0..$-1];
+              }
+            } else {
+              EnterText = EnterText[0..$-1];
+            }
+          }
+          break;
+        case K_DELETE: // ^DEL
+          if (evt.bCtrl) {
+            EnterText = "";
+          }
           break;
         default:
-          if (EnterText.length < 30) {
+          // ^Y
+          if (evt.bCtrl && evt.keycode == K_y) {
+            EnterText = "";
+            break;
+          }
+          if (MaxTextLength <= 0 || EnterText.length < MaxTextLength) {
             string cc = TranslateKey(evt.keycode);
             if (cc && cc[0] >= 32 && cc[0] < 128) {
               EnterText ~= cc;
@@ -221,13 +281,12 @@ override bool OnEvent (ref event_t evt) {
       return true;
     } else {
       // not entering text
-      int key = ConvertBoundKey(evt.keycode);
-      if (key == K_ENTER || key == K_PADENTER || /*key == K_MOUSE1 ||*/ key == K_JOY1) {
-        // switch to text entering mode
-        bEnteringText = true;
-        EnterText = Value;
-        LocalSound('menu/choose');
-        return true;
+      if (IsFocused) {
+        int key = ConvertBoundKey(evt.keycode);
+        if (key == K_ENTER || key == K_PADENTER || key == K_JOY1) {
+          StartEnteringText(sound:true);
+          return true;
+        }
       }
     }
   }
@@ -237,4 +296,5 @@ override bool OnEvent (ref event_t evt) {
 
 defaultproperties {
   Height = 30;
+  MaxTextLength = 30;
 }
