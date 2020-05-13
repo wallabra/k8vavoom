@@ -4084,6 +4084,7 @@ void VLevel::FixDeepWaters () {
   // mark all sectors with transparent door hacks
   for (auto &&sec : allSectors()) {
     sec.SectorFlags &= ~sector_t::SF_IsTransDoor;
+    bool doorFlag = false;
     for (int f = 0; f < sec.linecount; ++f) {
       const line_t *ldef = sec.lines[f];
 
@@ -4125,6 +4126,7 @@ void VLevel::FixDeepWaters () {
         // to see a top texture, front sector ceiling must be higher than back sector ceiling
         if (secfrontcz1 > secbackcz1 || secfrontcz2 > secbackcz2) {
           // it can see a top texture, check if it is solid
+          doorFlag = true;
           if (GTextureManager.GetTextureType(Sides[ldef->sidenum[0]].TopTexture) != VTextureManager::TCT_SOLID) flag = true;
         }
       }
@@ -4134,6 +4136,40 @@ void VLevel::FixDeepWaters () {
       GCon->Logf(NAME_Debug, "sector #%d is transdoor", (int)(ptrdiff_t)(&sec-&Sectors[0]));
       break;
     }
+
+    // create fake ceilings for transparent doors
+    if (sec.fakefloors || sec.linecount < 3 || (sec.SectorFlags&sector_t::SF_IsTransDoor) == 0) continue;
+
+    // check if this is a door
+    if (!doorFlag) continue;
+
+    // ignore sectors with skies (for now)
+    if (sec.floor.pic == skyflatnum || sec.ceiling.pic == skyflatnum) continue;
+
+    // ignore sector with invalid ceiling texture
+    if (GTextureManager.GetTextureType(sec.ceiling.pic) != VTextureManager::TCT_SOLID) continue;
+
+    // find lowest surrounding sector
+    const sector_t *lowsec = nullptr;
+    for (int f = 0; f < sec.linecount; ++f) {
+      const line_t *ldef = sec.lines[f];
+      if (!(ldef->flags&ML_TWOSIDED)) continue; // one-sided wall always blocks everything
+      const sector_t *ss = (ldef->frontsector == &sec ? ldef->backsector : ldef->frontsector);
+      if (ss == &sec) continue;
+      if (ss->ceiling.minz <= sec.ceiling.minz) continue;
+      if (!lowsec || lowsec->ceiling.minz > ss->ceiling.minz) lowsec = ss;
+    }
+    if (!lowsec) continue;
+
+    // allocate fakefloor data (engine require it to complete setup)
+    vassert(!sec.fakefloors);
+    sec.fakefloors = new fakefloor_t;
+    fakefloor_t *ff = sec.fakefloors;
+    memset((void *)ff, 0, sizeof(fakefloor_t));
+    ff->floorplane = sec.floor;
+    ff->ceilplane = lowsec->ceiling;
+    ff->ceilplane.pic = sec.ceiling.pic;
+    ff->params = sec.params;
   }
 
 
