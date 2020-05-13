@@ -266,9 +266,10 @@ override void OnCreate () {
   wheelH = int(CalcHexColorPatternHeight(WheelRadius, WheelW, WheelH));
 
   int ey = wheelY+wheelH+8;
-  ey += 3*FontHeight();
-  ey += 2*FontHeight();
-  ey += 2*FontHeight();
+  ey += 3*FontHeight(); // rgb
+  ey += 2*FontHeight(); // gap
+  ey += 2*FontHeight(); // hsv
+  //ey += 3*FontHeight(); // help
   ey += wheelY;
 
   if (Height < ey) Height = ey;
@@ -425,6 +426,14 @@ override void OnDraw () {
   DrawText(4, ty, va("S:%s", s), CR_UNTRANSLATED); ty += FontHeight();
   DrawText(4, ty, va("V:%s", v), CR_UNTRANSLATED); ty += FontHeight();
 
+  DrawText(wheelX+wheelW+12, 8+(StripeMax+1)*12, "PGUP/PGDN", CR_RED);
+  /*
+  FillRect(8, ty+FontHeight()/2, Width-16, 1, RGB(255, 255, 255));
+  ty += FontHeight();
+  DrawText(4, ty, "USE PGUP AND PGDOWN", CR_UNTRANSLATED); ty += FontHeight();
+  DrawText(4, ty, "TO SELECT BRIGHTNESS", CR_UNTRANSLATED); ty += FontHeight();
+  */
+
   string s = "[DONE]";
   int doneW = TextWidth(s);
   int doneH = TextHeight(s);
@@ -504,7 +513,9 @@ override bool OnEvent (ref event_t evt) {
       }
     }
     int dx = 0, dy = 0;
-    switch (ConvertBoundKey(evt.keycode)) {
+    int kk = evt.keycode;
+    if (kk != K_PAGEUP && kk != K_PAGEDOWN) kk = ConvertBoundKey(kk);
+    switch (kk) {
       case K_ESCAPE:
         Destroy();
         return true;
