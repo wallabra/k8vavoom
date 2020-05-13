@@ -242,8 +242,34 @@ VStr Sys_FindFileCI (VStr path, bool lastIsDir) {
     #ifndef SFFCI_FULL_SCAN
     VStr newpath = realpath+ppart;
     //if (Sys_FileTime(newpath) != -1) { realpath = newpath; continue; } // i found her!
-    const bool okname = (wantDir ? Sys_DirExists(newpath) : Sys_FileExists(newpath));
+    bool okname = (wantDir ? Sys_DirExists(newpath) : Sys_FileExists(newpath));
     if (okname) { realpath = newpath; continue; } // i found her!
+    // check for all-upper
+    VStr npx = realpath+ppart.toUpperCase();
+    if (npx != newpath) {
+      okname = (wantDir ? Sys_DirExists(npx) : Sys_FileExists(npx));
+      if (okname) { realpath = npx; continue; } // i found her!
+    }
+    // check for all-lower
+    npx = realpath+ppart.toLowerCase();
+    if (npx != newpath) {
+      okname = (wantDir ? Sys_DirExists(npx) : Sys_FileExists(npx));
+      if (okname) { realpath = npx; continue; } // i found her!
+    }
+    // split to name and extension, and check for all upper/all lower separately
+    VStr ppExt = ppart.extractFileExtension();
+    if (!ppExt.isEmpty() && ppExt != ".") {
+      VStr ppBase = ppart.stripExtension();
+      for (int f = 0; f < 4; ++f) {
+        npx = realpath;
+        if (f&1) npx += ppBase.toUpperCase(); else npx += ppBase.toLowerCase();
+        if (f&2) npx += ppExt.toUpperCase(); else npx += ppExt.toLowerCase();
+        if (npx != newpath) {
+          okname = (wantDir ? Sys_DirExists(npx) : Sys_FileExists(npx));
+          if (okname) { realpath = npx; continue; } // i found her!
+        }
+      }
+    }
     #endif
     // scan directory
     void *dh = Sys_OpenDir((realpath.length() ? realpath : VStr(".")), wantDir);
