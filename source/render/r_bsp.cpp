@@ -286,7 +286,9 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf) {
-  if (SurfPrepareForRender(surf)) queue.append(surf);
+  if (SurfPrepareForRender(surf)) {
+    if (surf->IsPlVisible()) queue.append(surf);
+  }
   //GCon->Logf("frame %u: queued surface with texinfo %p", currQueueFrame, surf->texinfo);
 }
 
@@ -302,6 +304,7 @@ void VRenderLevelShared::QueueSimpleSurf (surface_t *surf) {
   // only alpha-blended and additive surfaces must be rendered in a separate pass.
   //const bool isCommon = (texinfo->Alpha >= 1.0f && !texinfo->Additive && !texinfo->Tex->isTranslucent());
   //if (!SurfPrepareForRender(surf)) return; // should be done by the caller
+  if (!surf->IsPlVisible()) return;
   if ((surf->drawflags&surface_t::DF_MASKED) == 0) {
     GetCurrentDLS().DrawSurfListSolid.append(surf);
   } else {

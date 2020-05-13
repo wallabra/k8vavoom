@@ -38,7 +38,7 @@
 //==========================================================================
 void VRenderLevelShadowVolume::QueueWorldSurface (surface_t *surf) {
   if (SurfPrepareForRender(surf)) {
-    QueueSimpleSurf(surf);
+    if (surf->IsPlVisible()) QueueSimpleSurf(surf);
   }
 }
 

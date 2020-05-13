@@ -37,6 +37,7 @@
 //==========================================================================
 void VRenderLevelLightmap::QueueWorldSurface (surface_t *surf) {
   if (!SurfPrepareForRender(surf)) return;
+  if (!surf->IsPlVisible()) return;
 
   bool lightmaped = (surf->lightmap != nullptr || surf->dlightframe == currDLightFrame);
 

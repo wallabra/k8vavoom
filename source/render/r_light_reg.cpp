@@ -1635,6 +1635,7 @@ void VRenderLevelLightmap::ProcessCachedSurfaces () {
 bool VRenderLevelLightmap::QueueLMapSurface (surface_t *surface) {
   // HACK: return `true` for invalid surfaces, so they won't be queued as normal ones
   //if (!SurfPrepareForRender(surface)) return true; // should be done by the caller
+  if (!surface->IsPlVisible()) return true;
   // remember this surface, it will be processed later
   LMSurfList.append(surface);
   return true;
