@@ -4179,6 +4179,7 @@ void VLevel::FixDeepWaters () {
     sec.fakefloors = new fakefloor_t;
     fakefloor_t *ff = sec.fakefloors;
     memset((void *)ff, 0, sizeof(fakefloor_t));
+    ff->flags |= fakefloor_t::FLAG_CreatedByLoader;
     ff->floorplane = sec.floor;
     ff->ceilplane = sec.ceiling;
     if (doorFlag) {
@@ -4231,6 +4232,7 @@ void VLevel::FixDeepWaters () {
       if (!sec->fakefloors) sec->fakefloors = new fakefloor_t;
       fakefloor_t *ff = sec->fakefloors;
       memset((void *)ff, 0, sizeof(fakefloor_t));
+      ff->flags |= fakefloor_t::FLAG_CreatedByLoader;
       ff->floorplane = (fsecFloor ? fsecFloor : sec)->floor;
       ff->ceilplane = (fsecCeiling ? fsecCeiling : sec)->ceiling;
       ff->params = sec->params;
@@ -4330,6 +4332,7 @@ void VLevel::FixDeepWaters () {
       sec->fakefloors = new fakefloor_t;
       fakefloor_t *ff = sec->fakefloors;
       memset((void *)ff, 0, sizeof(fakefloor_t));
+      ff->flags |= fakefloor_t::FLAG_CreatedByLoader;
       ff->floorplane = sursec->floor;
       // ceiling must be current sector's floor, flipped
       ff->ceilplane = sec->floor;

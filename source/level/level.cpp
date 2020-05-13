@@ -329,6 +329,14 @@ void VLevel::ClearReferences () {
 void VLevel::Destroy () {
   decanimlist = nullptr; // why not?
 
+  // free fake floor data
+  for (auto &&sector : allSectors()) {
+    if (sector.fakefloors) {
+      delete sector.fakefloors;
+      sector.fakefloors = nullptr;
+    }
+  }
+
   tagHashFree(lineTags);
   tagHashFree(sectorTags);
 
