@@ -391,6 +391,9 @@ bool VViewClipper::IsSegAClosedSomething (VLevel *level, const TFrustum *Frustum
   if (fsec == bsec) return false; // self-referenced sector
   if (!fsec || !bsec) return true; // one-sided
 
+  // skip clipping with transdoor sectors
+  if ((seg->frontsector->SectorFlags|seg->backsector->SectorFlags)&sector_t::SF_IsTransDoor) return false;
+
   auto topTexType = GTextureManager.GetTextureType(seg->sidedef->TopTexture);
   auto botTexType = GTextureManager.GetTextureType(seg->sidedef->BottomTexture);
   auto midTexType = GTextureManager.GetTextureType(seg->sidedef->MidTexture);
@@ -455,6 +458,7 @@ bool VViewClipper::IsSegAClosedSomething (VLevel *level, const TFrustum *Frustum
     CLIPPER_CHECK_CLOSED_SECTOR();
 
     if (clip_height &&
+        /*((seg->frontsector->SectorFlags|seg->backsector->SectorFlags)&sector_t::SF_IsTransDoor) == 0 &&*/ /* (checked above) don't do this for transdoors */
         (topTexType == VTextureManager::TCT_SOLID || botTexType == VTextureManager::TCT_SOLID) &&
         (bfpic != skyflatnum && ffpic != skyflatnum) && /* ignore skies */
         ((fsec->SectorFlags|bsec->SectorFlags)&sector_t::SF_HangingBridge) == 0 &&
@@ -469,46 +473,6 @@ bool VViewClipper::IsSegAClosedSomething (VLevel *level, const TFrustum *Frustum
       // we can add this seg to clipper.
       // this way, we can clip alot of things when camera looks at
       // floor/ceiling, and we can clip away too high/low windows.
-
-      const float secfrontcz1 = fsec->ceiling.GetPointZ(vv1);
-      const float secfrontcz2 = fsec->ceiling.GetPointZ(vv2);
-      const float secfrontfz1 = fsec->floor.GetPointZ(vv1);
-      const float secfrontfz2 = fsec->floor.GetPointZ(vv2);
-
-      const float secbackcz1 = bsec->ceiling.GetPointZ(vv1);
-      const float secbackcz2 = bsec->ceiling.GetPointZ(vv2);
-      const float secbackfz1 = bsec->floor.GetPointZ(vv1);
-      const float secbackfz2 = bsec->floor.GetPointZ(vv2);
-
-      // if front sector is not closed, check it
-      if (secfrontfz1 < secfrontcz1 || secfrontfz2 < secfrontcz2) {
-        // front sector is not closed, check if it can see top/bottom textures
-        // to see a bottom texture, front sector floor must be lower than back sector floor
-        if (secfrontfz1 < secbackfz1 || secfrontfz2 < secbackfz2) {
-          // it can see a bottom texture, check if it is solid
-          if (GTextureManager.GetTextureType(level->Sides[ldef->sidenum[0]].BottomTexture) != VTextureManager::TCT_SOLID) return false;
-        }
-        // to see a top texture, front sector ceiling must be higher than back sector ceiling
-        if (secfrontcz1 > secbackcz1 || secfrontcz2 > secbackcz2) {
-          // it can see a top texture, check if it is solid
-          if (GTextureManager.GetTextureType(level->Sides[ldef->sidenum[0]].TopTexture) != VTextureManager::TCT_SOLID) return false;
-        }
-      }
-
-      // if back sector is not closed, check it
-      if (secbackfz1 < secbackcz1 || secbackfz2 < secbackcz2) {
-        // back sector is not closed, check if it can see top/bottom textures
-        // to see a bottom texture, back sector floor must be lower than front sector floor
-        if (secbackfz1 < secfrontfz1 || secbackfz2 < secfrontfz2) {
-          // it can see a bottom texture, check if it is solid
-          if (GTextureManager.GetTextureType(level->Sides[ldef->sidenum[1]].BottomTexture) != VTextureManager::TCT_SOLID) return false;
-        }
-        // to see a top texture, back sector ceiling must be higher than front sector ceiling
-        if (secbackcz1 > secfrontcz1 || secbackcz2 > secfrontcz2) {
-          // it can see a top texture, check if it is solid
-          if (GTextureManager.GetTextureType(level->Sides[ldef->sidenum[1]].TopTexture) != VTextureManager::TCT_SOLID) return false;
-        }
-      }
 
       // midhole quad
       TVec verts[4];

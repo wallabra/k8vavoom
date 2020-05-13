@@ -712,21 +712,22 @@ struct sector_t {
 
   // flags
   enum {
-    SF_HasExtrafloors   = 0x0001u, // this sector has extrafloors
-    SF_ExtrafloorSource = 0x0002u, // this sector is a source of an extrafloor
-    SF_TransferSource   = 0x0004u, // source of an heightsec or transfer light
-    SF_FakeFloorOnly    = 0x0008u, // do not draw fake ceiling
-    SF_ClipFakePlanes   = 0x0010u, // as a heightsec, clip planes to target sector's planes
-    SF_NoFakeLight      = 0x0020u, // heightsec does not change lighting
-    SF_IgnoreHeightSec  = 0x0040u, // heightsec is only for triggering sector actions (i.e. don't draw them)
-    SF_UnderWater       = 0x0080u, // sector is underwater
-    SF_Silent           = 0x0100u, // actors don't make noise in this sector
-    SF_NoFallingDamage  = 0x0200u, // no falling damage in this sector
-    SF_FakeCeilingOnly  = 0x0400u, // when used as heightsec in R_FakeFlat, only copies ceiling
-    SF_HangingBridge    = 0x0800u, // fake hanging bridge
-    SF_Has3DMidTex      = 0x1000u, // has any 3dmidtex linedef?
+    SF_HasExtrafloors   = 1u<<0, // this sector has extrafloors
+    SF_ExtrafloorSource = 1u<<1, // this sector is a source of an extrafloor
+    SF_TransferSource   = 1u<<2, // source of an heightsec or transfer light
+    SF_FakeFloorOnly    = 1u<<3, // do not draw fake ceiling
+    SF_ClipFakePlanes   = 1u<<4, // as a heightsec, clip planes to target sector's planes
+    SF_NoFakeLight      = 1u<<5, // heightsec does not change lighting
+    SF_IgnoreHeightSec  = 1u<<6, // heightsec is only for triggering sector actions (i.e. don't draw them)
+    SF_UnderWater       = 1u<<7, // sector is underwater
+    SF_Silent           = 1u<<8, // actors don't make noise in this sector
+    SF_NoFallingDamage  = 1u<<9, // no falling damage in this sector
+    SF_FakeCeilingOnly  = 1u<<10, // when used as heightsec in R_FakeFlat, only copies ceiling
+    SF_HangingBridge    = 1u<<11, // fake hanging bridge
+    SF_Has3DMidTex      = 1u<<12, // has any 3dmidtex linedef?
     // mask with this to check if this is "arg1==0" Boom crap
     SF_FakeBoomMask     = SF_FakeFloorOnly|SF_ClipFakePlanes|/*SF_UnderWater|*/SF_IgnoreHeightSec/*|SF_NoFakeLight*/,
+    SF_IsTransDoor      = 1u<<13, // is this sector can be interpreted as "transparent door"?
   };
   vuint32 SectorFlags;
 

@@ -1380,6 +1380,7 @@ load_again:
 
   // do it here, so it won't touch sloped floors
   // it will set `othersec` for sectors too
+  // also, it will detect "transparent door" sectors
   FloodFixTime = -Sys_Time();
   FixDeepWaters();
   FloodFixTime += Sys_Time();
@@ -4079,6 +4080,62 @@ void VLevel::FixDeepWaters () {
     sec->othersecFloor = nullptr;
     sec->othersecCeiling = nullptr;
   }
+
+  // mark all sectors with transparent door hacks
+  for (auto &&sec : allSectors()) {
+    sec.SectorFlags &= ~sector_t::SF_IsTransDoor;
+    for (int f = 0; f < sec.linecount; ++f) {
+      const line_t *ldef = sec.lines[f];
+
+      // mark only back sectors (the usual door setup)
+      if (ldef->backsector != &sec) continue;
+
+      if ((ldef->flags&ML_ADDITIVE) != 0 || ldef->alpha < 1.0f) continue; // skip translucent walls
+      if (!(ldef->flags&ML_TWOSIDED)) continue; // one-sided wall always blocks everything
+      if (ldef->flags&ML_3DMIDTEX) continue; // 3dmidtex never blocks anything
+
+      const sector_t *fsec = ldef->frontsector;
+      const sector_t *bsec = ldef->backsector;
+
+      if (fsec == bsec) continue; // self-referenced sector
+      if (!fsec || !bsec) continue; // one-sided
+
+      const TVec vv1 = *ldef->v1;
+      const TVec vv2 = *ldef->v2;
+
+      const float secfrontcz1 = fsec->ceiling.GetPointZ(vv1);
+      const float secfrontcz2 = fsec->ceiling.GetPointZ(vv2);
+      const float secfrontfz1 = fsec->floor.GetPointZ(vv1);
+      const float secfrontfz2 = fsec->floor.GetPointZ(vv2);
+
+      const float secbackcz1 = bsec->ceiling.GetPointZ(vv1);
+      const float secbackcz2 = bsec->ceiling.GetPointZ(vv2);
+      const float secbackfz1 = bsec->floor.GetPointZ(vv1);
+      const float secbackfz2 = bsec->floor.GetPointZ(vv2);
+
+      bool flag = false;
+      // if front sector is not closed, check it
+      if (secfrontfz1 < secfrontcz1 || secfrontfz2 < secfrontcz2) {
+        // front sector is not closed, check if it can see top/bottom textures
+        // to see a bottom texture, front sector floor must be lower than back sector floor
+        if (secfrontfz1 < secbackfz1 || secfrontfz2 < secbackfz2) {
+          // it can see a bottom texture, check if it is solid
+          if (GTextureManager.GetTextureType(Sides[ldef->sidenum[0]].BottomTexture) != VTextureManager::TCT_SOLID) flag = true;
+        }
+        // to see a top texture, front sector ceiling must be higher than back sector ceiling
+        if (secfrontcz1 > secbackcz1 || secfrontcz2 > secbackcz2) {
+          // it can see a top texture, check if it is solid
+          if (GTextureManager.GetTextureType(Sides[ldef->sidenum[0]].TopTexture) != VTextureManager::TCT_SOLID) flag = true;
+        }
+      }
+      if (!flag) continue;
+
+      sec.SectorFlags |= sector_t::SF_IsTransDoor;
+      GCon->Logf(NAME_Debug, "sector #%d is transdoor", (int)(ptrdiff_t)(&sec-&Sectors[0]));
+      break;
+    }
+  }
+
 
   if (deepwater_hacks && !(LevelFlags&LF_ForceNoDeepwaterFix)) FixSelfRefDeepWater();
 
