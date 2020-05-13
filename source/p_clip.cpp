@@ -221,7 +221,6 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
 
 // sorry for this, but i want to avoid some copy-pasting
 
-
 #define CLIPPER_CHECK_CLOSED_SECTOR()  do { \
   /* now check for closed sectors */ \
   /* inspired by Zandronum code (actually, most sourceports has this, Zandronum was just a port i looked at) */ \
@@ -260,7 +259,15 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
     if (bfpic == skyflatnum && ffpic == skyflatnum) return false; \
     /* preserve a kind of transparent door/lift special effect */ \
     if (seg->frontsector == bsec) { \
-      /* we are inside a closed sector, oops */ \
+      /* we are inside a closed sector; check for a transparent door */ \
+      /* if any of partner top/down texture is visible, and it is non-solid, this is non-blocking seg */ \
+      /* see commented code above; it is wrong */ \
+      if (GTextureManager.GetTextureType(seg->partner->sidedef->TopTexture) != VTextureManager::TCT_SOLID) { \
+        if (backfz1 < frontcz1 || backfz2 < frontcz2) return false; \
+      } \
+      if (GTextureManager.GetTextureType(seg->partner->sidedef->BottomTexture) != VTextureManager::TCT_SOLID) { \
+        if (backcz1 > frontfz1 || backcz2 > frontfz2) return false; \
+      } \
       return true; \
     } \
     /* we are in front sector */ \
@@ -357,7 +364,7 @@ bool VViewClipper::IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *rep
 //  prerequisite: has front and back sectors, has linedef
 //
 //==========================================================================
-bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *seg, const TVec *lorg, const float *lrad) noexcept {
+bool VViewClipper::IsSegAClosedSomething (VLevel *level, const TFrustum *Frustum, const seg_t *seg, const TVec *lorg, const float *lrad) noexcept {
   if (!clip_platforms) return false;
   if (!seg->backsector) return false;
 
@@ -447,17 +454,61 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
 
     CLIPPER_CHECK_CLOSED_SECTOR();
 
-    if (clip_height && (topTexType || botTexType) &&
+    if (clip_height &&
+        (topTexType == VTextureManager::TCT_SOLID || botTexType == VTextureManager::TCT_SOLID) &&
+        (bfpic != skyflatnum && ffpic != skyflatnum) && /* ignore skies */
         ((fsec->SectorFlags|bsec->SectorFlags)&sector_t::SF_HangingBridge) == 0 &&
         (lorg || (Frustum && Frustum->isValid())) &&
         seg->partner && seg->partner != seg &&
-        seg->partner->frontsub && seg->partner->frontsub != seg->frontsub &&
-        (!midTexType || !GTextureManager.IsSeeThrough(seg->sidedef->MidTexture)))
+        seg->partner->frontsub && seg->partner->frontsub != seg->frontsub /*&&*/
+        /*(!midTexType || !GTextureManager.IsSeeThrough(seg->sidedef->MidTexture))*/
+        /*(midTexType == VTextureManager::TCT_EMPTY || midTexType == VTextureManager::TCT_SOLID)*/ //k8: why?
+        )
     {
       // here we can check if midtex is in frustum; if it doesn't,
       // we can add this seg to clipper.
       // this way, we can clip alot of things when camera looks at
       // floor/ceiling, and we can clip away too high/low windows.
+
+      const float secfrontcz1 = fsec->ceiling.GetPointZ(vv1);
+      const float secfrontcz2 = fsec->ceiling.GetPointZ(vv2);
+      const float secfrontfz1 = fsec->floor.GetPointZ(vv1);
+      const float secfrontfz2 = fsec->floor.GetPointZ(vv2);
+
+      const float secbackcz1 = bsec->ceiling.GetPointZ(vv1);
+      const float secbackcz2 = bsec->ceiling.GetPointZ(vv2);
+      const float secbackfz1 = bsec->floor.GetPointZ(vv1);
+      const float secbackfz2 = bsec->floor.GetPointZ(vv2);
+
+      // if front sector is not closed, check it
+      if (secfrontfz1 < secfrontcz1 || secfrontfz2 < secfrontcz2) {
+        // front sector is not closed, check if it can see top/bottom textures
+        // to see a bottom texture, front sector floor must be lower than back sector floor
+        if (secfrontfz1 < secbackfz1 || secfrontfz2 < secbackfz2) {
+          // it can see a bottom texture, check if it is solid
+          if (GTextureManager.GetTextureType(level->Sides[ldef->sidenum[0]].BottomTexture) != VTextureManager::TCT_SOLID) return false;
+        }
+        // to see a top texture, front sector ceiling must be higher than back sector ceiling
+        if (secfrontcz1 > secbackcz1 || secfrontcz2 > secbackcz2) {
+          // it can see a top texture, check if it is solid
+          if (GTextureManager.GetTextureType(level->Sides[ldef->sidenum[0]].TopTexture) != VTextureManager::TCT_SOLID) return false;
+        }
+      }
+
+      // if back sector is not closed, check it
+      if (secbackfz1 < secbackcz1 || secbackfz2 < secbackcz2) {
+        // back sector is not closed, check if it can see top/bottom textures
+        // to see a bottom texture, back sector floor must be lower than front sector floor
+        if (secbackfz1 < secfrontfz1 || secbackfz2 < secfrontfz2) {
+          // it can see a bottom texture, check if it is solid
+          if (GTextureManager.GetTextureType(level->Sides[ldef->sidenum[1]].BottomTexture) != VTextureManager::TCT_SOLID) return false;
+        }
+        // to see a top texture, back sector ceiling must be higher than front sector ceiling
+        if (secbackcz1 > secfrontcz1 || secbackcz2 > secfrontcz2) {
+          // it can see a top texture, check if it is solid
+          if (GTextureManager.GetTextureType(level->Sides[ldef->sidenum[1]].TopTexture) != VTextureManager::TCT_SOLID) return false;
+        }
+      }
 
       // midhole quad
       TVec verts[4];
@@ -471,6 +522,38 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
       if (Frustum && Frustum->isValid()) {
         // check (only top, bottom, and back)
         if (!Frustum->checkVerts(verts, 4/*, TFrustum::TopBit|TFrustum::BottomBit*/ /*|TFrustum::BackBit*/)) {
+          // check which texture is visible -- top or bottom
+          #if 0
+          bool checkFailed = false;
+
+          if (/*botTexType != VTextureManager::TCT_SOLID*/true) {
+            // create bottom pseudo-quad
+            verts[0] = TVec(vv1.x, vv1.y, max2(frontfz1, frontfz2));
+            verts[1] = TVec(vv1.x, vv1.y, -40000);
+            verts[2] = TVec(vv2.x, vv2.y, -40000);
+            verts[3] = TVec(vv2.x, vv2.y, max2(frontfz2, frontfz2));
+            if (Frustum->checkVerts(verts, 4)) {
+              // bottom is visible
+              GCon->Logf(NAME_Debug, "line #%d: BOTTOM IS VISIBLE (type=%d)", (int)(ptrdiff_t)(ldef-&level->Lines[0]), botTexType);
+              checkFailed = true;
+            }
+          }
+
+          if (/*!checkFailed && topTexType != VTextureManager::TCT_SOLID*/true) {
+            // create top pseudo-quad
+            verts[0] = TVec(vv1.x, vv1.y, min2(frontcz1, frontcz2));
+            verts[1] = TVec(vv1.x, vv1.y, 40000);
+            verts[2] = TVec(vv2.x, vv2.y, 40000);
+            verts[3] = TVec(vv2.x, vv2.y, min2(frontcz2, frontcz2));
+            if (Frustum->checkVerts(verts, 4)) {
+              // bottom is visible
+              GCon->Logf(NAME_Debug, "line #%d: TOP IS VISIBLE (type=%d)", (int)(ptrdiff_t)(ldef-&level->Lines[0]), topTexType);
+              checkFailed = true;
+            }
+          }
+
+          /*if (!checkFailed)*/
+          #endif
           return true;
         }
       }
@@ -1322,7 +1405,7 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
   // for 2-sided line, determine if it can be skipped
   if (!clipAll && seg->backsector && (ldef->flags&ML_TWOSIDED)) {
     if (!RepSectors) {
-      if (!IsSegAClosedSomething(&Frustum, seg)) return;
+      if (!IsSegAClosedSomething(Level, &Frustum, seg)) return;
     } else {
       if (!IsSegAClosedSomethingServer(Level, RepSectors, seg)) return;
     }
@@ -1579,7 +1662,7 @@ void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TPlane *Mirror,
 
   // for 2-sided line, determine if it can be skipped
   if (seg->backsector && (ldef->flags&ML_TWOSIDED)) {
-    if (!IsSegAClosedSomething(/*&Frustum*/nullptr, seg, &Origin, &Radius)) return;
+    if (!IsSegAClosedSomething(Level, /*&Frustum*/nullptr, seg, &Origin, &Radius)) return;
   }
 
   AddClipRange(*v2, *v1);

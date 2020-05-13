@@ -249,6 +249,6 @@ public:
 #endif
 
 public:
-  static bool IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *seg, const TVec *lorg=nullptr, const float *lrad=nullptr) noexcept;
+  static bool IsSegAClosedSomething (VLevel *level, const TFrustum *Frustum, const seg_t *seg, const TVec *lorg=nullptr, const float *lrad=nullptr) noexcept;
   static bool IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *repsecs, const seg_t *seg) noexcept;
 };

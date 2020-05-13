@@ -713,18 +713,23 @@ static inline void SetupTextureAxesOffsetEx (seg_t *seg, texinfo_t *texinfo, VTe
 //  midtex is "transparent door"
 //
 //==========================================================================
-static inline bool IsTransDoorHack (const seg_t *seg, bool fortop) {
+static bool IsTransDoorHack (const seg_t *seg, bool fortop) {
   const sector_t *secs[2] = { seg->frontsector, seg->backsector };
+  if (!secs[0] || !secs[1]) return false;
+  const side_t *sidedef = seg->sidedef;
+  if (!GTextureManager.IsEmptyTexture(fortop ? sidedef->TopTexture : sidedef->BottomTexture)) return false;
+  // if we have don't have a midtex, it is not a door hack
+  if (GTextureManager.IsEmptyTexture(sidedef->MidTexture)) return false;
   // check for slopes
   if (secs[0]->floor.normal.z != 1.0f || secs[0]->ceiling.normal.z != -1.0f) return false;
   if (secs[1]->floor.normal.z != 1.0f || secs[1]->ceiling.normal.z != -1.0f) return false;
   // check for door
-  //if (secs[0]->floor.minz != secs[1]->floor.minz) return false;
-  if (secs[0]->floor.minz >= secs[1]->ceiling.minz) return false; // show midtex
+  //!if (secs[0]->floor.minz >= secs[1]->ceiling.minz) return false;
   // check for middle texture
-  const side_t *sidedef = seg->sidedef;
   // if we have midtex, it is door hack
-  return !GTextureManager.IsEmptyTexture(sidedef->MidTexture);
+  //VTexture *tex = GTextureManager[sidedef->MidTexture];
+  //if (!tex || !tex->isTrasparent()) return false;
+  //!return !GTextureManager.IsEmptyTexture(sidedef->MidTexture);
   //if (!mt || mt->Type == TEXTYPE_Null || !mt->isTransparent()) return false;
   // ok, looks like it
   return true;
@@ -859,9 +864,9 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
 
   // HACK: sector with height of 1, and only middle masked texture is "transparent door"
   //       also, invert "upper unpegged" flag for this case
-  // actually, 2s "door" wall without top/bottom textures, amd with
   int peghack = 0;
   unsigned hackflag = 0;
+  //if (r_hack_transparent_doors && TTex->Type == TEXTYPE_Null) GCon->Logf(NAME_Debug, "line #%d, side #%d: transdoor check=%d", (int)(ptrdiff_t)(linedef-&Level->Lines[0]), (int)(ptrdiff_t)(sidedef-&Level->Sides[0]), IsTransDoorHackTop(seg));
   if (r_hack_transparent_doors && TTex->Type == TEXTYPE_Null && IsTransDoorHackTop(seg)) {
     TTex = GTextureManager(sidedef->MidTexture);
     //peghack = ML_DONTPEGTOP;
@@ -967,6 +972,17 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
   VTexture *BTex = GTextureManager(sidedef->BottomTexture);
   if (!BTex) BTex = GTextureManager[GTextureManager.DefaultTexture];
 
+  // HACK: sector with height of 1, and only middle masked texture is "transparent door"
+  //       also, invert "lower unpegged" flag for this case
+  int peghack = 0;
+  unsigned hackflag = 0;
+  //if (r_hack_transparent_doors && TTex->Type == TEXTYPE_Null) GCon->Logf(NAME_Debug, "line #%d, side #%d: transdoor check=%d", (int)(ptrdiff_t)(linedef-&Level->Lines[0]), (int)(ptrdiff_t)(sidedef-&Level->Sides[0]), IsTransDoorHackTop(seg));
+  if (r_hack_transparent_doors && BTex->Type == TEXTYPE_Null && IsTransDoorHackBot(seg)) {
+    BTex = GTextureManager(sidedef->MidTexture);
+    //peghack = ML_DONTPEGBOTTOM;
+    hackflag = surface_t::TF_TOPHACK;
+  }
+
   SetupTextureAxesOffset(seg, &sp->texinfo, BTex, &sidedef->Bot);
 
   if (BTex->Type != TEXTYPE_Null) {
@@ -1021,7 +1037,7 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
       top_TexZ = back_ceiling->TexZ;
     }
 
-    if (linedef->flags&ML_DONTPEGBOTTOM) {
+    if ((linedef->flags&ML_DONTPEGBOTTOM)^peghack) {
       // bottom of texture at bottom
       // top of texture at top
       sp->texinfo.toffs = top_TexZ;
@@ -1084,7 +1100,7 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     }
 
     if (createSurf) {
-      CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_BOTTOM);
+      CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_BOTTOM|hackflag);
     }
   }
 

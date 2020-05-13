@@ -1013,7 +1013,7 @@ bool VRenderLevelShared::CheckBSPFloodVisibilitySub (const TVec &org, const floa
         continue;
       }
       // don't go through closed doors and raised lifts
-      if (VViewClipper::IsSegAClosedSomething(nullptr/*no frustum*/, seg, &org, &radius)) continue;
+      if (VViewClipper::IsSegAClosedSomething(Level, nullptr/*no frustum*/, seg, &org, &radius)) continue;
     } // minisegs are portals
     // we should have partner seg
     if (!seg->partner || seg->partner == seg || seg->partner->frontsub == currsub) continue;
