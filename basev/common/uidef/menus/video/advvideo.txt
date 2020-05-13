@@ -174,16 +174,29 @@ menudef AdvVideoOptions {
   }
 
   option enum {
-    title = "Lightmap Tracing Mode";
+    title = "Static Lightmap Tracing Mode";
     cvar = r_lmap_bsp_trace_static;
     list {
       "Blockmap",
       "BSP",
     }
     help =
-      "Should lightmap tracer use blockmap, or BSP tree to cast rays?"
-      "Blockmap tracer is about 3.5 times faster, but produces more"
-      "light leaking artifacts.";
+      "Should static lightmap tracer use blockmap, or BSP tree",
+      "to cast rays? Blockmap tracer is about 3.5 times faster,",
+      "and usually gives better results.";
+  }
+
+  option enum {
+    title = "Dynamic Lightmap Tracing Mode";
+    cvar = r_lmap_bsp_trace_dynamic;
+    list {
+      "Blockmap",
+      "BSP",
+    }
+    help =
+      "Should static lightmap tracer use blockmap, or BSP tree",
+      "to cast rays? Blockmap tracer is about 3.5 times faster,",
+      "and usually gives better results.";
   }
 
   option slider {
@@ -327,6 +340,13 @@ menudef AdvVideoOptions {
     step = 1;
     min = 1;
     max = [gl_max_anisotropy];
+    help =
+      "Setting this to something greater than '1' will tell GPU to peform",
+      "some filtering on far-away textures, so they will less likely be turned",
+      "into pixel mess.",
+      "Please, note that this requires at least 'Nearest Mipmap' texture filtering.",
+      "If your GPU supports high values here, you can stop at '8'. Higher values",
+      "are slower, and usually won't improve the picture.";
   }
 
   option enum {
@@ -339,6 +359,7 @@ menudef AdvVideoOptions {
       "Bilinear",
       "Trilinear"
     }
+    help = "Wall/floor/ceiling texture filtering mode.";
   }
 
   option enum {
@@ -351,6 +372,7 @@ menudef AdvVideoOptions {
       "Bilinear",
       "Trilinear"
     }
+    help = "Sprite texture filtering mode.";
   }
 
   option enum {
@@ -363,6 +385,7 @@ menudef AdvVideoOptions {
       "Bilinear",
       "Trilinear"
     }
+    help = "3D models texture filtering mode.";
   }
 
 
@@ -371,11 +394,13 @@ menudef AdvVideoOptions {
   option bool {
     title = "Font filtering";
     cvar = gl_font_filtering;
+    help = "UI font texture filtering (smoothing).";
   }
 
   option bool {
     title = "Pictures filtering";
     cvar = gl_pic_filtering;
+    help = "Backdrop picture filtering (smoothing).";
   }
 
 
