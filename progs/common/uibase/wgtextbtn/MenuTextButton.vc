@@ -48,11 +48,15 @@ delegate void Activated (Object Sender);
 //==========================================================================
 override void FixMinimumHeight () {
   if (!TextFont) return;
-  auto oldFont = GetFont();
-  scope(exit) SetFont(oldFont);
-  SetFont(TextFont);
-  int height = FontHeight()+TextHeightAdd;
-  if (Height < height) Height = height;
+  if (TextFont == 'smallfont') {
+    ::FixMinimumHeight();
+  } else {
+    auto oldFont = GetFont();
+    scope(exit) SetFont(oldFont);
+    SetFont(TextFont);
+    int height = FontHeight()+TextHeightAdd;
+    if (Height < height) Height = height;
+  }
 }
 
 
@@ -202,6 +206,7 @@ override void OnDraw () {
 
 
 defaultproperties {
+  //TextFont = 'smallfont';
   ActivateSound = 'menu/choose';
   TextColor = CR_UNTRANSLATED;
   TextColorFocus = CR_UNTRANSLATED;
