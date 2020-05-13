@@ -403,6 +403,19 @@ static bool SightTraverse (SightTraceInfo &trace, const intercept_t *in) {
 
   if (line->flags&ML_TWOSIDED) {
     // crosses a two sided line
+    // zero blockmask means "tracing light ray"
+    // sadly, plane check will stop lighting anyway
+    // we need to keep and use surrounding sector height there, and it is too cumbersome (at least for now)
+    /*
+    if (!trace.LineBlockMask) {
+      // if this line is for "transparent door", don't check openings
+      if ((line->frontsector && (line->frontsector->SectorFlags&sector_t::SF_IsTransDoor)) ||
+          (line->backsector && (line->backsector->SectorFlags&sector_t::SF_IsTransDoor)))
+      {
+        return true; // go on
+      }
+    }
+    */
     opening_t *open = SV_LineOpenings(line, hitpoint, trace.PlaneNoBlockFlags&SPF_FLAG_MASK);
     while (open) {
       if (open->bottom <= hitpoint.z && open->top >= hitpoint.z) return true;
@@ -793,8 +806,12 @@ bool VLevel::CastLightRay (sector_t *Sector, const TVec &org, const TVec &dest, 
   trace.StartSector = Sector;
   trace.EndSector = OtherSector;
   //FIXME: ignore fake floors here?
+  /*
   trace.PlaneNoBlockFlags = SPF_NOBLOCKSIGHT;
   trace.LineBlockMask = ML_BLOCKSIGHT;
+  */
+  trace.PlaneNoBlockFlags = 0;
+  trace.LineBlockMask = 0;
 
   trace.Start = org;
   trace.End = dest;
