@@ -42,6 +42,27 @@ static VCvarB openal_show_extensions("openal_show_extensions", false, "Show avai
 
 //==========================================================================
 //
+//  alGetErrorString
+//
+//==========================================================================
+static const char *alGetErrorString (ALenum E) {
+  switch (E) {
+    case AL_NO_ERROR: return "<no error>";
+    case AL_INVALID_NAME: return "invalid name";
+    case AL_INVALID_ENUM: return "invalid enum";
+    case AL_INVALID_VALUE: return "invalid value";
+    case AL_INVALID_OPERATION: return "invalid operation";
+    case AL_OUT_OF_MEMORY: return "out of memory";
+    default: break;
+  }
+  static char buf[256];
+  snprintf(buf, sizeof(buf), "0x%04x", (unsigned)E);
+  return buf;
+}
+
+
+//==========================================================================
+//
 //  VOpenALDevice::VOpenALDevice
 //
 //==========================================================================
@@ -79,8 +100,8 @@ VOpenALDevice::~VOpenALDevice () {
 bool VOpenALDevice::IsError (const char *errmsg, bool errabort) {
   ALenum E = alGetError();
   if (E == AL_NO_ERROR) return false;
-  if (errabort) Sys_Error("OpenAL: %s (%s)", errmsg, alGetString(E));
-  GCon->Logf(NAME_Warning, "OpenAL: %s (%s)", errmsg, alGetString(E));
+  if (errabort) Sys_Error("OpenAL: %s (%s)", errmsg, alGetErrorString(E));
+  GCon->Logf(NAME_Warning, "OpenAL: %s (%s)", errmsg, alGetErrorString(E));
   return true;
 }
 
@@ -93,7 +114,7 @@ bool VOpenALDevice::IsError (const char *errmsg, bool errabort) {
 //
 //==========================================================================
 bool VOpenALDevice::Init () {
-  ALenum E;
+  //ALenum E;
 
   Device = nullptr;
   Context = nullptr;
@@ -114,29 +135,36 @@ bool VOpenALDevice::Init () {
               "Please, use OpenAL Soft implementation, and make sure that it is recent.");
   }
 
-  // create a context and make it current
-  /*static*/ const ALCint attrs[] = {
-    ALC_STEREO_SOURCES, 1, // get at least one stereo source for music
-    ALC_MONO_SOURCES, MAX_VOICES, // this should be audio channels in our game engine
-    //ALC_FREQUENCY, 48000, // desired frequency; we don't really need this, let OpenAL choose the best
-    0,
-  };
-  Context = alcCreateContext(Device, attrs);
-  if (!Context) {
-    E = alGetError();
-    if (E == AL_NO_ERROR) Sys_Error("Failed to create OpenAL context");
-    Sys_Error("OpenAL error: %s", alGetString(E));
+  RealMaxVoices = (vint32)MAX_VOICES;
+  Context = nullptr;
+
+  while (RealMaxVoices >= 64) {
+    // create a context and make it current
+    ALCint attrs[] = {
+      ALC_STEREO_SOURCES, 1, // get at least one stereo source for music
+      ALC_MONO_SOURCES, RealMaxVoices, // this should be audio channels in our game engine
+      //ALC_FREQUENCY, 48000, // desired frequency; we don't really need this, let OpenAL choose the best
+      0,
+    };
+
+    // the OpenAL code says that `alGetError()` can only be called with the context set
+    Context = alcCreateContext(Device, attrs);
+    if (Context) break;
+    --RealMaxVoices;
   }
 
+  if (!Context) Sys_Error("Failed to create OpenAL context");
+  GCon->Logf(NAME_Init, "OpenAL: created context with %d max voices", RealMaxVoices);
+
   alcSetThreadContext(Context);
-  E = alGetError();
-  if (E != AL_NO_ERROR) Sys_Error("OpenAL error: %s", alGetString(E));
+  //E = alGetError();
+  //if (E != AL_NO_ERROR) Sys_Error("OpenAL error (setting thread context): %s", alGetErrorString(E));
 
   alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
   alEnable(AL_SOURCE_DISTANCE_MODEL);
 
   // clear error code
-  alGetError();
+  (void)alGetError();
 
   // print some information
   if (openal_show_extensions) {
@@ -189,7 +217,7 @@ void VOpenALDevice::RemoveCurrentThread () {
 //
 //==========================================================================
 int VOpenALDevice::SetChannels (int InNumChannels) {
-  return clampval(InNumChannels, 1, (int)MAX_VOICES);
+  return clampval(InNumChannels, 1, (int)RealMaxVoices);
 }
 
 

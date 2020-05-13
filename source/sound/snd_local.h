@@ -181,6 +181,7 @@ private:
   ALCcontext *Context;
   ALuint *Buffers;
   vint32 BufferCount;
+  vint32 RealMaxVoices;
 
   ALuint StrmSampleRate;
   ALuint StrmFormat;
