@@ -467,6 +467,10 @@ public:
     dist = DotProduct(a, normal);
   }
 
+  inline bool isFloor () const noexcept { return (normal.z > 0.0f); }
+  inline bool isCeiling () const noexcept { return (normal.z < 0.0f); }
+  inline bool isSlope () const noexcept { return (fabsf(normal.z) != 1.0f); }
+
   // WARNING! do not call this repeatedly, or on normalized plane!
   //          due to floating math inexactness, you will accumulate errors.
   inline void Normalise () noexcept {
