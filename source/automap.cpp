@@ -143,6 +143,8 @@ struct mline_t {
 
 
 int automapactive = 0;
+bool automapUpdateSeen = true;
+
 static VCvarB am_active("am_active", false, "Is automap active?", 0);
 extern VCvarI screen_size;
 extern VCvarB ui_freemouse;
@@ -542,6 +544,7 @@ void AM_SetMarkXY (int index, float x, float y) {
 //
 //==========================================================================
 void AM_Init () {
+  automapUpdateSeen = true;
 }
 
 
@@ -563,6 +566,7 @@ void AM_ClearAutomap () {
   for (unsigned f = 0; f < (unsigned)GClLevel->NumSubsectors; ++f) {
     GClLevel->Subsectors[f].miscFlags &= ~subsector_t::SSMF_Rendered;
   }
+  automapUpdateSeen = true;
 }
 
 
@@ -824,6 +828,7 @@ static void AM_LevelInit () {
   start_scale_mtof = scale_mtof;
 
   lastmap = GClLevel->MapName;
+  automapUpdateSeen = true;
 }
 
 
@@ -1291,31 +1296,23 @@ static vuint32 AM_getLineColor (const line_t *line, bool *cheatOnly) {
 
 //==========================================================================
 //
-//  AM_drawWalls
-//
-//  Determines visible lines, draws them.
+//  AM_UpdateSeen
 //
 //==========================================================================
-static void AM_drawWalls () {
+static void AM_UpdateSeen () {
+  if (!automapUpdateSeen) return;
+  automapUpdateSeen = false;
+
   line_t *line = &GClLevel->Lines[0];
   for (unsigned i = GClLevel->NumLines; i--; ++line) {
-    // do not send the line to GPU if it is not visible
-    // simplified check with line bounding box
-    if (!AM_isBBox2DVisible(line->bbox2d)) continue;
-
-    if (!am_cheating) {
-      if (line->flags&ML_DONTDRAW) continue;
-      if (!(line->flags&ML_MAPPED) && !(line->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED))) {
-        if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) continue;
-      }
+    if (line->flags&ML_DONTDRAW) {
+      line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+      continue;
     }
-
-    bool cheatOnly = false;
-    vuint32 clr = AM_getLineColor(line, &cheatOnly);
-    if (cheatOnly && !am_cheating) continue; //FIXME: should we draw these lines if automap powerup is active?
 
     // check if we need to re-evaluate line visibility, and do it
     if (line->exFlags&ML_EX_CHECK_MAPPED) {
+      // mark subsector as renered only if we've seen at least one non-hidden single-sided line from it
       line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
       if (!(line->flags&ML_MAPPED)) {
         int unseenSides[2] = {0, 0};
@@ -1345,6 +1342,34 @@ static void AM_drawWalls () {
 
     // just in case
     if (line->flags&ML_MAPPED) line->exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+  }
+}
+
+
+//==========================================================================
+//
+//  AM_drawWalls
+//
+//  Determines visible lines, draws them.
+//
+//==========================================================================
+static void AM_drawWalls () {
+  line_t *line = &GClLevel->Lines[0];
+  for (unsigned i = GClLevel->NumLines; i--; ++line) {
+    // do not send the line to GPU if it is not visible
+    // simplified check with line bounding box
+    if (!AM_isBBox2DVisible(line->bbox2d)) continue;
+
+    if (!am_cheating) {
+      if (line->flags&ML_DONTDRAW) continue;
+      if (!(line->flags&ML_MAPPED) && !(line->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED))) {
+        if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) continue;
+      }
+    }
+
+    bool cheatOnly = false;
+    vuint32 clr = AM_getLineColor(line, &cheatOnly);
+    if (cheatOnly && !am_cheating) continue; //FIXME: should we draw these lines if automap powerup is active?
 
     // fully mapped or automap revealed?
     if (am_full_lines || am_cheating || (line->flags&ML_MAPPED) || (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) {
@@ -1397,26 +1422,35 @@ static void AM_mapxy2fbxy (float *destx, float *desty, float x, float y) {
 
 //==========================================================================
 //
-//  amFlatsCheckSubsector
+//  amIsHiddenSubsector
+//
+//  this is called to render "revealed" subsector bluish
 //
 //==========================================================================
-static bool amFlatsCheckSubsector (const subsector_t *sub) {
-  //if (!sub->sector->linecount) return; // skip sectors containing original polyobjs (done by the caller)
-  if (am_cheating < 1 && !(sub->miscFlags&subsector_t::SSMF_Rendered)) {
-    // check for "allmap" powerup
-    if (!(cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) return false;
-  }
-  return AM_isSubVisible(sub);
+static bool amIsHiddenSubsector (const subsector_t *sub) {
+  return ((sub->miscFlags&subsector_t::SSMF_Rendered) == 0);
 }
 
 
 //==========================================================================
 //
-//  amIsHiddenSubsector
+//  amShouldRenderTextured
+//
+//  this is called to decide if the subsector should be rendered at all
 //
 //==========================================================================
-static bool amIsHiddenSubsector (const subsector_t *sub) {
-  return (am_cheating < 1 && !(sub->miscFlags&subsector_t::SSMF_Rendered));
+static bool amShouldRenderTextured (const subsector_t *sub) {
+  // check bounding box
+  if (!AM_isSubVisible(sub)) return false;
+  // ignore "hidden" flag if we're cheating or "automap revealed" item is taken
+  // "revealed hidden" sectors may still be hidden, but meh
+  if (am_cheating >= 1 || (cl->PlayerFlags&VBasePlayer::PF_AutomapRevealed)) return true;
+  // check if it is visible at all
+  if ((sub->miscFlags&subsector_t::SSMF_Rendered) == 0) return false; // not seen
+  // check if parent sector is not hidden
+  if (sub->sector && (sub->sector->SectorFlags&sector_t::SF_Hidden)) return false;
+  // it is visible
+  return true;
 }
 
 
@@ -1430,7 +1464,7 @@ static void AM_drawFlats () {
   float alpha = (am_overlay ? clampval(am_texture_alpha.asFloat(), 0.0f, 1.0f) : 1.0f);
   if (alpha <= 0.0f) return;
   const bool amDoFloors = ((am_draw_type&3) == 1);
-  Drawer->RendLev->RenderTexturedAutomap(m_x, m_y, m_x2, m_y2, amDoFloors, alpha, &amFlatsCheckSubsector, &amIsHiddenSubsector, &AM_mapxy2fbxy);
+  Drawer->RendLev->RenderTexturedAutomap(m_x, m_y, m_x2, m_y2, amDoFloors, alpha, &amShouldRenderTextured, &amIsHiddenSubsector, &AM_mapxy2fbxy);
 }
 
 
@@ -2018,6 +2052,8 @@ void AM_Drawer () {
 
   AM_CheckVariables();
   AM_clearFB();
+
+  AM_UpdateSeen();
 
   Drawer->StartAutomap(am_overlay);
   if (am_draw_grid) AM_drawGrid(GridColor);

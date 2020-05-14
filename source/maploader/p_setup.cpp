@@ -1382,6 +1382,8 @@ load_again:
   // it will set `othersec` for sectors too
   // also, it will detect "transparent door" sectors
   FloodFixTime = -Sys_Time();
+  DetectHiddenSectors();
+  FixTransparentDoors();
   FixDeepWaters();
   FloodFixTime += Sys_Time();
 
@@ -4067,23 +4069,64 @@ sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
 
 //==========================================================================
 //
-// VLevel::FixDeepWaters
+//  VLevel::DetectHiddenSectors
 //
 //==========================================================================
-void VLevel::FixDeepWaters () {
-  if (NumSectors == 0) return;
-  //vassert(checkSkipLines.length() == 0);
+void VLevel::DetectHiddenSectors () {
+  /* detect hidden sectors
+     to do this, we have to check if all sector "not on automap" lines are one-sided.
+     this does't do a best job possible, but should be good enough for most cases, and it is cheap.
+   */
+  for (auto &&sec : allSectors()) {
+    if (sec.SectorFlags&sector_t::SF_Hidden) continue; // this may come from UDMF
+    if (sec.linecount < 1) continue;
 
-  for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
-    sector_t *sec = &Sectors[sidx];
-    sec->deepref = nullptr;
-    sec->othersecFloor = nullptr;
-    sec->othersecCeiling = nullptr;
+    if ((sec.SectorFlags&(sector_t::SF_HasExtrafloors|sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource|sector_t::SF_UnderWater))) {
+      if (!(sec.SectorFlags&sector_t::SF_IgnoreHeightSec)) continue; // this is special sector, skip it
+    }
+
+    bool seenBadLine = false;
+    int count2s = 0;
+    vuint32 seenHidden = 0;
+    line_t **lptr = sec.lines;
+    for (int cnt = sec.linecount; cnt--; ++lptr) {
+      const line_t *ldef = *lptr;
+      seenHidden |= ldef->flags;
+      if (ldef->flags&ML_TWOSIDED) {
+        ++count2s;
+        if (count2s > 1) { seenBadLine = true; break; } // if it has more than one 2s visible line, it doesn't look like a secret
+        continue; // we're not interested
+      }
+      // one-sided, and not hidden? this sector is not hidden
+      if ((ldef->flags&ML_DONTDRAW) == 0) { seenBadLine = true; break; }
+    }
+
+    if (!seenBadLine && (seenHidden&ML_DONTDRAW)) {
+      GCon->Logf("sector #%d is detected as hidden", (int)(ptrdiff_t)(&sec-&Sectors[0]));
+      sec.SectorFlags |= sector_t::SF_Hidden;
+    }
   }
+}
 
+
+//==========================================================================
+//
+//  VLevel::FixTransparentDoors
+//
+//  this tries to mark all sectors with "transparent door hack"
+//  it also creates fake floors and ceilings for them
+//
+//==========================================================================
+void VLevel::FixTransparentDoors () {
   // mark all sectors with transparent door hacks
   for (auto &&sec : allSectors()) {
     sec.SectorFlags &= ~sector_t::SF_IsTransDoor;
+    if (sec.linecount < 3) continue;
+
+    if ((sec.SectorFlags&(sector_t::SF_HasExtrafloors|sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource|sector_t::SF_UnderWater))) {
+      if (!(sec.SectorFlags&sector_t::SF_IgnoreHeightSec)) continue; // this is special sector, skip it
+    }
+
     bool doorFlag = false;
     for (int f = 0; f < sec.linecount; ++f) {
       const line_t *ldef = sec.lines[f];
@@ -4121,13 +4164,17 @@ void VLevel::FixDeepWaters () {
         // to see a bottom texture, front sector floor must be lower than back sector floor
         if (secfrontfz1 < secbackfz1 || secfrontfz2 < secbackfz2) {
           // it can see a bottom texture, check if it is solid
-          if (GTextureManager.GetTextureType(Sides[ldef->sidenum[0]].BottomTexture) != VTextureManager::TCT_SOLID) flag = true;
+          if (GTextureManager.GetTextureType(Sides[ldef->sidenum[0]].BottomTexture) != VTextureManager::TCT_SOLID) {
+            flag = true;
+          }
         }
         // to see a top texture, front sector ceiling must be higher than back sector ceiling
         if (secfrontcz1 > secbackcz1 || secfrontcz2 > secbackcz2) {
           // it can see a top texture, check if it is solid
           doorFlag = true;
-          if (GTextureManager.GetTextureType(Sides[ldef->sidenum[0]].TopTexture) != VTextureManager::TCT_SOLID) flag = true;
+          if (GTextureManager.GetTextureType(Sides[ldef->sidenum[0]].TopTexture) != VTextureManager::TCT_SOLID) {
+            flag = true;
+          }
         }
       }
       if (!flag) continue;
@@ -4138,7 +4185,7 @@ void VLevel::FixDeepWaters () {
     }
 
     // create fake ceilings for transparent doors
-    if (sec.fakefloors || sec.linecount < 3 || (sec.SectorFlags&sector_t::SF_IsTransDoor) == 0) continue;
+    if (sec.fakefloors || (sec.SectorFlags&sector_t::SF_IsTransDoor) == 0) continue;
 
     // check if this is a door
     //if (!doorFlag) continue;
@@ -4175,6 +4222,7 @@ void VLevel::FixDeepWaters () {
     }
 
     // allocate fakefloor data (engine require it to complete setup)
+    GCon->Logf(NAME_Debug, "sector #%d got transdoor flat fix", (int)(ptrdiff_t)(&sec-&Sectors[0]));
     vassert(!sec.fakefloors);
     sec.fakefloors = new fakefloor_t;
     fakefloor_t *ff = sec.fakefloors;
@@ -4192,8 +4240,25 @@ void VLevel::FixDeepWaters () {
       ff->params = highsec->params;
     }
   }
+}
 
 
+//==========================================================================
+//
+// VLevel::FixDeepWaters
+//
+//==========================================================================
+void VLevel::FixDeepWaters () {
+  if (NumSectors == 0) return;
+  //vassert(checkSkipLines.length() == 0);
+
+  for (auto &&sec : allSectors()) {
+    sec.deepref = nullptr;
+    sec.othersecFloor = nullptr;
+    sec.othersecCeiling = nullptr;
+  }
+
+  // process deepwater
   if (deepwater_hacks && !(LevelFlags&LF_ForceNoDeepwaterFix)) FixSelfRefDeepWater();
 
   bool oldFixFloor = deepwater_hacks_floor;

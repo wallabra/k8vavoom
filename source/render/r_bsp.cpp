@@ -769,15 +769,60 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
   seg_t *seg = dseg->seg;
   line_t *linedef = seg->linedef;
 
-  if (!linedef) return; // miniseg
+  if (!linedef) {
+    // miniseg
+    // for now
+    sub->miscFlags |= subsector_t::SSMF_Rendered;
+    seg->flags |= SF_MAPPED;
+    /*
+    // in automap, we may have subsectors consisting of only minisegs; check this here
+    // tbh, this should be done in automap code, but then we need to loop over all segs
+    // this is wasteful, and we don't have to do this for seen subsectors anyway
+    if ((seg->flags&SF_MAPPED) == 0) {
+      if ((sub->miscFlags&subsector_t::SSMF_Rendered) == 0) {
+        // check all subsector segs; if they're all minisegs, mark this subsector as rendered
+        //TODO: check if this subsector is a part of a bigger "not on automap" sector
+        // algo:
+        //  check all segs
+        //    miniseg:
+        //      remember "seen miniseg" flag
+        //    seg:
+        //      check line
+        bool seenBad = false;
+        bool hasSeenMiniSeg = false;
+        const seg_t *ss2 = &Level->Segs[sub->firstline];
+        for (int count = sub->numlines; count--; ++ss2) {
+          if (ss2->linedef) {
+            if (ss2->linedef->flags&ML_DONTDRAW) {
+              //seg->flags |= SF_MAPPED; //dunno
+              return;
+            }
+            if ((ss2->linedef->flags&ML_MAPPED)|(ss2->linedef->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED))) continue;
+            seenBad = true;
+          } else {
+            if (ss2->flags&SF_MAPPED) {
+              hasSeenMiniSeg = true;
+              break;
+            }
+          }
+        }
+        if (!seenBad || hasSeenMiniSeg) {
+          sub->miscFlags |= subsector_t::SSMF_Rendered;
+        }
+      }
+      seg->flags |= SF_MAPPED;
+    }
+    */
+    return;
+  }
 
   if (seg->PointOnSide(Drawer->vieworg)) {
     // viewer is in back side or on plane
     // gozzo 3d floors should be rendered regardless of orientation
     segpart_t *sp = dseg->extra;
     if (sp && sp->texinfo.Tex && (sp->texinfo.Alpha < 1.0f || sp->texinfo.Additive || sp->texinfo.Tex->isTranslucent())) {
-      // mark subsector as rendered
-      sub->miscFlags |= subsector_t::SSMF_Rendered;
+      // mark subsector as rendered (nope)
+      //sub->miscFlags |= subsector_t::SSMF_Rendered;
       side_t *sidedef = seg->sidedef;
       //GCon->Logf("00: extra for seg #%d (line #%d)", (int)(ptrdiff_t)(seg-Level->Segs), (int)(ptrdiff_t)(linedef-Level->Lines));
       for (; sp; sp = sp->next) {
@@ -832,15 +877,26 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
   // mark the segment as visible for auto map
 #if 0
   linedef->flags |= ML_MAPPED;
-#else
-  if (!(linedef->flags&ML_MAPPED)) {
-    // this line is at least partially mapped; let automap drawer do the rest
-    linedef->exFlags |= ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED;
-  }
-  seg->flags |= SF_MAPPED;
-#endif
   // mark subsector as rendered
-  sub->miscFlags |= subsector_t::SSMF_Rendered;
+  // mark subsector as rendered (but only if linedef is allowed to be seen on the automap)
+  if ((linedef->flags&ML_DONTDRAW) == 0) sub->miscFlags |= subsector_t::SSMF_Rendered;
+#else
+  // mark only autolines that allowed to be seen on the automap
+  if ((linedef->flags&ML_DONTDRAW) == 0) {
+    if ((linedef->flags&ML_MAPPED) == 0) {
+      // this line is at least partially mapped; let automap drawer do the rest
+      linedef->exFlags |= ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED;
+      automapUpdateSeen = true;
+    }
+    if ((seg->flags&SF_MAPPED) == 0) {
+      linedef->exFlags |= ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED;
+      seg->flags |= SF_MAPPED;
+      automapUpdateSeen = true;
+      // mark subsector as rendered (but only if linedef is allowed to be seen on the automap)
+      if ((linedef->flags&ML_DONTDRAW) == 0) sub->miscFlags |= subsector_t::SSMF_Rendered;
+    }
+  }
+#endif
 
   side_t *sidedef = seg->sidedef;
 
@@ -1029,6 +1085,12 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region)
   else {
     // if there is no polyobj here, we can skip rendering floors
     if (!sub || !sub->HasPObjs() || !r_draw_pobj) drawFloors = false;
+  }
+
+  // if this subsector has no segs, and not marked as rendered, mark it
+  if (sub->numlines == 0 && (sub->miscFlags&subsector_t::SSMF_Rendered) == 0) {
+    //TODO: check if this subsector is a part of a bigger "not on automap" sector
+    sub->miscFlags |= subsector_t::SSMF_Rendered;
   }
 
   if (drawFloors || r_dbg_always_draw_flats)
@@ -1231,6 +1293,9 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
     MirrorClipSegs = false;
     Drawer->viewfrustum.planes[TFrustum::Forward].clipflag = 0;
   }
+
+  // mark the leaf we're in as seen
+  if (r_viewleaf) r_viewleaf->miscFlags |= subsector_t::SSMF_Rendered;
 
   // head node is the last node output
   {

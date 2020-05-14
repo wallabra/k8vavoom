@@ -1026,6 +1026,8 @@ struct sector_t {
   bool bHangingBridge;    // fake hanging bridge
   bool bHas3DMidTex;      // has any 3dmidtex linedef?
   bool bIsTransDoor;      // is this sector can be interpreted as "transparent door"?
+  bool bHidden;           // this sector is not visible on the automap
+  bool bNoPlayerRespawn;  // ZDoom "player cannot respawn in this sector" flag (who may need it at all?)
 
   // 0 = untraversed, 1,2 = sndlines -1
   int soundtraversed;

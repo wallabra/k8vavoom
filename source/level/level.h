@@ -827,6 +827,12 @@ private:
   void PostLoadSegs ();
   void PostLoadSubsectors ();
 
+  // called by map loader, in postprocessing stage
+  // sector `deepref`, `othersecFloor`, and `othersecCeiling` fields
+  // are not set for the following two, and should not be read or written
+  void DetectHiddenSectors ();
+  void FixTransparentDoors ();
+
   void FixDeepWaters ();
   void FixSelfRefDeepWater (); // called from `FixDeepWaters`
 

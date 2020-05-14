@@ -50,3 +50,4 @@ void AM_ClearMarksIfMapChanged (VLevel *currmap);
 
 extern int automapactive; // In AutoMap mode? 0: no; 1: normal; -1: overlay
 extern VCvarB am_always_update;
+extern bool automapUpdateSeen;

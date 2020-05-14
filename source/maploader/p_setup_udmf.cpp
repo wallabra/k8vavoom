@@ -592,10 +592,8 @@ void VUdmfParser::ParseSector (VLevel *Level) {
 
       if (Key.strEquCI("waterzone")) { S.params.contents = (CheckBool() ? 1 : 0); continue; } // 1 is `CONTENTS_WATER`
 
-      //k8: i don't care if the author wants to hide it; no wai!
-      if (Key.strEquCI("hidden")) { (void)CheckBool(); continue; }
-      //k8: i don't know what the fuck is this
-      if (Key.strEquCI("norespawn")) { (void)CheckBool(); continue; }
+      if (Key.strEquCI("hidden")) { if (CheckBool()) S.SectorFlags |= sector_t::SF_Hidden; continue; }
+      if (Key.strEquCI("norespawn")) { if (CheckBool()) S.SectorFlags |= sector_t::SF_NoPlayerRespawn; continue; }
 
       // sector damage properties
       if (Key.strEquCI("damageamount")) { S.Damage = CheckInt(); continue; }

@@ -728,6 +728,8 @@ struct sector_t {
     // mask with this to check if this is "arg1==0" Boom crap
     SF_FakeBoomMask     = SF_FakeFloorOnly|SF_ClipFakePlanes|/*SF_UnderWater|*/SF_IgnoreHeightSec/*|SF_NoFakeLight*/,
     SF_IsTransDoor      = 1u<<13, // is this sector can be interpreted as "transparent door"?
+    SF_Hidden           = 1u<<14, // this sector is not visible on the automap
+    SF_NoPlayerRespawn  = 1u<<15, // ZDoom "player cannot respawn in this sector" flag (who may need it at all?)
   };
   vuint32 SectorFlags;
 
