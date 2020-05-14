@@ -211,6 +211,7 @@ private:
 
 private:
   static bool IsError (const char *errmsg, bool errabort=false);
+  static void ClearError (); // reset error flag
 
   bool AllocSource (ALuint *src);
 

@@ -94,7 +94,7 @@ VOpenALDevice::~VOpenALDevice () {
 
 //==========================================================================
 //
-//  VOpenALDevice::CheckError
+//  VOpenALDevice::IsError
 //
 //==========================================================================
 bool VOpenALDevice::IsError (const char *errmsg, bool errabort) {
@@ -103,6 +103,16 @@ bool VOpenALDevice::IsError (const char *errmsg, bool errabort) {
   if (errabort) Sys_Error("OpenAL: %s (%s)", errmsg, alGetErrorString(E));
   GCon->Logf(NAME_Warning, "OpenAL: %s (%s)", errmsg, alGetErrorString(E));
   return true;
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::ClearError
+//
+//==========================================================================
+void VOpenALDevice::ClearError () {
+  (void)alGetError(); // this does it
 }
 
 
@@ -172,7 +182,7 @@ bool VOpenALDevice::Init () {
   alEnable(AL_SOURCE_DISTANCE_MODEL);
 
   // clear error code
-  (void)alGetError();
+  ClearError();
 
   // print some information
   if (openal_show_extensions) {
@@ -294,7 +304,7 @@ void VOpenALDevice::Shutdown () {
 //==========================================================================
 bool VOpenALDevice::AllocSource (ALuint *src) {
   if (!src) return false;
-  alGetError(); // clear error code
+  ClearError();
   alGenSources(1, src);
   if (IsError("cannot generate source")) return false;
   activeSourceSet.put(*src, true);
@@ -378,8 +388,7 @@ int VOpenALDevice::LoadSound (int sound_id, ALuint *src) {
     return VSoundManager::LS_Pending;
   }
 
-  // clear error code
-  alGetError();
+  ClearError();
 
   // create buffer
   alGenBuffers(1, &Buffers[sound_id]);
@@ -436,7 +445,7 @@ int VOpenALDevice::PlaySound (int sound_id, float volume, float pitch, bool Loop
     alSourcei(src, AL_BUFFER, Buffers[sound_id]);
     alSourcePlay(src);
   }
-  alGetError(); // reset error flag
+  ClearError();
   return src;
 }
 
@@ -467,7 +476,7 @@ int VOpenALDevice::PlaySound3D (int sound_id, const TVec &origin, const TVec &ve
     alSourcei(src, AL_BUFFER, Buffers[sound_id]);
     alSourcePlay(src);
   }
-  alGetError(); // reset error flag
+  ClearError();
   return src;
 }
 
@@ -481,7 +490,7 @@ void VOpenALDevice::UpdateChannel3D (int Handle, const TVec &Org, const TVec &Ve
   if (Handle == -1) return;
   alSource3f(Handle, AL_POSITION, Org.x, Org.y, Org.z);
   alSource3f(Handle, AL_VELOCITY, Vel.x, Vel.y, Vel.z);
-  alGetError(); // reset error flag
+  ClearError();
 }
 
 
@@ -497,7 +506,7 @@ bool VOpenALDevice::IsChannelPlaying (int Handle) {
   if (srcErrorSet.has((ALuint)Handle)) return false;
   ALint State;
   alGetSourcei((ALuint)Handle, AL_SOURCE_STATE, &State);
-  alGetError(); // reset error flag
+  ClearError();
   return (State == AL_PLAYING);
 }
 
@@ -550,7 +559,7 @@ void VOpenALDevice::StopChannel (int Handle) {
   srcErrorSet.del(hh);
   activeSourceSet.del(hh);
   alDeleteSources(1, &hh);
-  alGetError(); // reset error flag
+  ClearError();
 }
 
 
@@ -575,7 +584,7 @@ void VOpenALDevice::UpdateListener (const TVec &org, const TVec &vel,
   alDopplerFactor(doppler_factor);
   alDopplerVelocity(doppler_velocity);
 
-  alGetError(); // reset error flag
+  ClearError();
 }
 
 
@@ -599,7 +608,7 @@ void VOpenALDevice::NotifySoundLoaded (int sound_id, bool success) {
       // play it
       //GCon->Logf("OpenAL: playing source #%u (sound #%d)", cur->src, sound_id);
       if (!Buffers[sound_id]) {
-        alGetError(); // clear error code
+        ClearError();
         // create buffer
         alGenBuffers(1, &Buffers[sound_id]);
         if (IsError("cannot generate buffer")) {
@@ -627,7 +636,7 @@ void VOpenALDevice::NotifySoundLoaded (int sound_id, bool success) {
         alSourcei(cur->src, AL_BUFFER, Buffers[sound_id]);
         alSourcePlay(cur->src);
       }
-      alGetError(); // reset error flag
+      ClearError();
     } else {
       // mark as invalid
       srcErrorSet.put(cur->src, true);
@@ -651,7 +660,7 @@ bool VOpenALDevice::OpenStream (int Rate, int Bits, int Channels) {
     Bits == 8 ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16 :
     Bits == 8 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
 
-  alGetError(); // clear error code
+  ClearError();
   alGenSources(1, &StrmSource);
   if (IsError("cannot generate source")) return false;
   activeSourceSet.put(StrmSource, true);
@@ -659,7 +668,7 @@ bool VOpenALDevice::OpenStream (int Rate, int Bits, int Channels) {
   alGenBuffers(NUM_STRM_BUFFERS, StrmBuffers);
   alSourceQueueBuffers(StrmSource, NUM_STRM_BUFFERS, StrmBuffers);
   alSourcePlay(StrmSource);
-  alGetError(); // reset error flag
+  ClearError();
   StrmNumAvailableBuffers = 0;
   return true;
 }
@@ -675,7 +684,7 @@ void VOpenALDevice::CloseStream () {
     alDeleteBuffers(NUM_STRM_BUFFERS, StrmBuffers);
     activeSourceSet.del(StrmSource);
     alDeleteSources(1, &StrmSource);
-    alGetError(); // reset error flag
+    ClearError();
     StrmSource = 0;
   }
 }
@@ -689,12 +698,12 @@ void VOpenALDevice::CloseStream () {
 int VOpenALDevice::GetStreamAvailable () {
   if (!StrmSource) return 0;
   ALint NumProc;
-  alGetError(); // reset error flag
+  ClearError();
   alGetSourcei(StrmSource, AL_BUFFERS_PROCESSED, &NumProc);
   if (IsError("cannot get stream source info")) NumProc = 0;
   if (NumProc > 0) {
     alSourceUnqueueBuffers(StrmSource, NumProc, StrmAvailableBuffers+StrmNumAvailableBuffers);
-    alGetError(); // reset error flag
+    ClearError();
     StrmNumAvailableBuffers += NumProc;
   }
   return (StrmNumAvailableBuffers > 0 ? STRM_BUFFER_SIZE : 0);
@@ -726,7 +735,7 @@ void VOpenALDevice::SetStreamData (vint16 *Data, int Len) {
   if (State != AL_PLAYING) {
     if (StrmSource) alSourcePlay(StrmSource);
   }
-  alGetError(); // reset error flag
+  ClearError();
 }
 
 
@@ -738,7 +747,7 @@ void VOpenALDevice::SetStreamData (vint16 *Data, int Len) {
 void VOpenALDevice::SetStreamVolume (float Vol) {
   if (StrmSource) {
     alSourcef(StrmSource, AL_GAIN, Vol);
-    alGetError(); // reset error flag
+    ClearError();
   }
 }
 
@@ -751,7 +760,7 @@ void VOpenALDevice::SetStreamVolume (float Vol) {
 void VOpenALDevice::SetStreamPitch (float pitch) {
   if (StrmSource) {
     alSourcef(StrmSource, AL_PITCH, pitch);
-    alGetError(); // reset error flag
+    ClearError();
   }
 }
 
@@ -764,7 +773,7 @@ void VOpenALDevice::SetStreamPitch (float pitch) {
 void VOpenALDevice::PauseStream () {
   if (StrmSource) {
     alSourcePause(StrmSource);
-    alGetError(); // reset error flag
+    ClearError();
   }
 }
 
@@ -777,6 +786,6 @@ void VOpenALDevice::PauseStream () {
 void VOpenALDevice::ResumeStream () {
   if (StrmSource) {
     alSourcePlay(StrmSource);
-    alGetError(); // reset error flag
+    ClearError();
   }
 }
