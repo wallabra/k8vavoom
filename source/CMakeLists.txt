@@ -280,6 +280,7 @@ set(MAPLOADER_SOURCES
   maploader/p_setup_nodes_aj.cpp
   maploader/p_setup_nodes_zd.cpp
   maploader/p_setup_pvs.cpp
+  maploader/p_setup_fixers.cpp
   maploader/p_setup_udmf.cpp
 )
 
