@@ -275,8 +275,11 @@ set(SV_SOURCES
 )
 
 set(MAPLOADER_SOURCES
-  maploader/p_setup_calc.cpp
   maploader/p_setup.cpp
+  maploader/p_setup_calc.cpp
+  maploader/p_setup_nodes_aj.cpp
+  maploader/p_setup_nodes_zd.cpp
+  maploader/p_setup_pvs.cpp
   maploader/p_setup_udmf.cpp
 )
 

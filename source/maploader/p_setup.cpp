@@ -87,8 +87,11 @@ static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", true, "Fo
 
 static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix invalid two-sided flags? (non-persistent)", CVAR_PreInit/*|CVAR_Archive*/);
 
+VCvarB ldr_fix_slope_cracks("ldr_fix_slope_cracks", true, "Try to fix empty cracks near sloped floors?", /*CVAR_Archive|*/CVAR_PreInit);
+
 
 extern VCvarI nodes_builder_type;
+extern VCvarB ldr_fix_slope_cracks;
 #ifdef CLIENT
 extern VCvarI r_max_portal_depth;
 extern VCvarI r_max_portal_depth_override;
@@ -4106,6 +4109,36 @@ void VLevel::DetectHiddenSectors () {
       sec.SectorFlags |= sector_t::SF_Hidden;
     }
   }
+
+
+  // fix missing top/bottom textures, so there won't be empty cracks
+  if (!ldr_fix_slope_cracks) return;
+
+  /*
+  for (auto &&sec : allSectors()) {
+    if (!sec.floor.isSlope() && !sec.ceiling.isSlope()) continue;
+    GCon->Logf(NAME_Debug, "FIXING SLOPED SECTOR #%d", (int)(ptrdiff_t)(&sec-&Sectors[0]));
+    // 474
+    // 475
+    line_t **lptr = sec.lines;
+    for (int cnt = sec.linecount; cnt--; ++lptr) {
+      const line_t *ldef = *lptr;
+      for (int snum = 0; snum < 2; ++snum) {
+        if (ldef->sidenum[snum] >= 0) {
+          side_t *sd = &Sides[ldef->sidenum[snum]];
+          // floor
+          if (sec.floor.isSlope() && sd->BottomTexture <= 0) {
+            sd->BottomTexture = sec.floor.pic;
+          }
+          // ceiling
+          if (sec.ceiling.isSlope() && sd->TopTexture <= 0) {
+            sd->TopTexture = sec.floor.pic;
+          }
+        }
+      }
+    }
+  }
+  */
 }
 
 

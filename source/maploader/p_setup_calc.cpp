@@ -28,53 +28,13 @@
 //**
 //**************************************************************************
 #include "../gamedefs.h"
-#include "../bsp/ajbsp/bsp.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VCvarB loader_build_pvs("pvs_build_on_loading", false, "Build simple PVS on node rebuilding?", CVAR_Archive);
-static VCvarB loader_build_pvs_force("__pvs_force", false, "Force PVS building for all nodebuilders?", CVAR_Archive);
-static VCvarI loader_pvs_builder_threads("pvs_threads", "0", "Number of threads to use in PVS builder (0: use number of CPU cores online).", CVAR_Archive);
-
-static VCvarB nodes_fast_mode("nodes_fast_mode", false, "Do faster rebuild, but generate worser BSP tree?", CVAR_Archive);
-static VCvarB nodes_show_warnings("nodes_show_warnings", true, "Show various node builder warnings?", CVAR_Archive);
-
 VCvarI nodes_builder_type("nodes_builder_type", "0", "Which internal node builder to use (0:auto; 1:ajbsp; 2:zdbsp)?", CVAR_Archive);
 // default nodes builder for UDMF is still AJBSP, because it seems that i fixed UDMF bugs
 static VCvarI nodes_builder_normal("nodes_builder_normal", "1", "Which internal node builder to use for non-UDMF maps (0:auto; 1:ajbsp; 2:zdbsp)?", CVAR_Archive);
 static VCvarI nodes_builder_udmf("nodes_builder_udmf", "1", "Which internal node builder to use for UDMF maps (0:auto; 1:ajbsp; 2:zdbsp)?", CVAR_Archive);
-
-
-//==========================================================================
-//
-//  ajRoundOffVertexI32
-//
-//  round vertex coordinates
-//
-//==========================================================================
-static inline vint32 ajRoundoffVertexI32 (const double v) {
-  return (vint32)(v*65536.0);
-  //return vxs_ToFix16_16(v);
-}
-
-
-//==========================================================================
-//
-//  ajRoundOffVertex
-//
-//  round vertex coordinates
-//
-//==========================================================================
-static inline float ajRoundoffVertex (const double v) {
-  vint32 iv = ajRoundoffVertexI32(v);
-  return (float)(((double)iv)/65536.0);
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-#include "p_setup_nodes_aj.cpp"
-#include "p_setup_nodes_zd.cpp"
-#include "p_setup_pvs.cpp"
 
 
 //==========================================================================

@@ -27,7 +27,7 @@
 //**    Build nodes using zdbsp.
 //**
 //**************************************************************************
-// directly included from "p_setup_calc.cpp"
+#include "../gamedefs.h"
 
 //#include "../bsp/zdbsp/xs_Float.h"
 #include "../bsp/zdbsp/nodebuild.h"

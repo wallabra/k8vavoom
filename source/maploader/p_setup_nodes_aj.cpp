@@ -27,9 +27,14 @@
 //**    Build nodes using ajbsp.
 //**
 //**************************************************************************
-// directly included from "p_setup_calc.cpp"
+#include "../gamedefs.h"
+#include "../bsp/ajbsp/bsp.h"
+
 
 static VCvarB ajbsp_roundoff_tree("__ajbsp_roundoff_tree", false, "Roundoff vertices in AJBSP?", CVAR_PreInit);
+
+static VCvarB nodes_show_warnings("nodes_show_warnings", true, "Show various node builder warnings?", CVAR_Archive);
+static VCvarB nodes_fast_mode("nodes_fast_mode", false, "Do faster rebuild, but generate worser BSP tree?", CVAR_Archive);
 
 
 namespace ajbsp {
@@ -46,6 +51,32 @@ namespace ajbsp {
   extern int num_segs;
   extern int num_subsecs;
   extern int num_nodes;
+}
+
+
+//==========================================================================
+//
+//  ajRoundOffVertexI32
+//
+//  round vertex coordinates
+//
+//==========================================================================
+static inline vint32 ajRoundoffVertexI32 (const double v) {
+  return (vint32)(v*65536.0);
+  //return vxs_ToFix16_16(v);
+}
+
+
+//==========================================================================
+//
+//  ajRoundOffVertex
+//
+//  round vertex coordinates
+//
+//==========================================================================
+static inline float ajRoundoffVertex (const double v) {
+  vint32 iv = ajRoundoffVertexI32(v);
+  return (float)(((double)iv)/65536.0);
 }
 
 

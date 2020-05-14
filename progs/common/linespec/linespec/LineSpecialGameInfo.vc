@@ -266,8 +266,6 @@ override void Init () {
 
   CreateCvarBool('hud_scale_messages', true, "Rescale HUD messages, so message font is less distorted?", CVAR_ARCHIVE);
 
-  CreateCvarBool('ldr_fix_slope_cracks', true, "Try to fix empty cracks near sloped floors?", CVAR_ARCHIVE);
-
   CreateCvarBool('k8HealthBar', false, "Allow healthbar?", CVAR_ARCHIVE);
   CreateCvarFloat('k8HealthBarAlpha', 0.6, "Healthbar opacity.", CVAR_ARCHIVE);
   CreateCvarBool('k8HealthBarOnlyMonsters', true, "Ignore non-monsters?", CVAR_ARCHIVE);

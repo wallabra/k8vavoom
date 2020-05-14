@@ -27,7 +27,13 @@
 //**    Build rough PVS
 //**
 //**************************************************************************
-// directly included from "p_setup_calc.cpp"
+#include "../gamedefs.h"
+
+
+static VCvarB loader_build_pvs("pvs_build_on_loading", false, "Build simple PVS on node rebuilding?", CVAR_Archive);
+static VCvarB loader_build_pvs_force("__pvs_force", false, "Force PVS building for all nodebuilders?", CVAR_Archive);
+static VCvarI loader_pvs_builder_threads("pvs_threads", "0", "Number of threads to use in PVS builder (0: use number of CPU cores online).", CVAR_Archive);
+
 
 static int numOfThreads = -1;
 
