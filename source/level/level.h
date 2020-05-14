@@ -841,6 +841,10 @@ private:
 
   void BuildDecalsVVList ();
 
+  // cache
+  static VStr getCacheDir ();
+  static void doCacheCleanup ();
+
   // map loading helpers
   int FindGLNodes (VName) const;
   int TexNumForName (const char *name, int Type, bool CMap=false) const;

@@ -323,6 +323,100 @@ void VLevel::ClearReferences () {
 
 //==========================================================================
 //
+//  VLevel::ClearCachedData
+//
+//  this is also used in dtor
+//
+//==========================================================================
+void VLevel::ClearAllMapData () {
+  if (Sectors) {
+    for (auto &&sec : allSectors()) {
+      sec.DeleteAllRegions();
+      sec.moreTags.clear();
+    }
+    // line buffer is shared, so this correctly deletes it
+    delete[] Sectors[0].lines;
+    Sectors[0].lines = nullptr;
+    delete[] Sectors[0].nbsecs;
+    Sectors[0].nbsecs = nullptr;
+  }
+
+  if (Segs) {
+    for (auto &&seg : allSegs()) {
+      while (seg.decalhead) {
+        decal_t *c = seg.decalhead;
+        seg.removeDecal(c);
+        delete c->animator;
+        delete c;
+      }
+    }
+  }
+
+  if (Lines) {
+    for (auto &&line : allLines()) {
+      delete[] line.v1lines;
+      delete[] line.v2lines;
+      line.moreTags.clear();
+    }
+  }
+
+  delete[] Vertexes;
+  Vertexes = nullptr;
+  NumVertexes = 0;
+
+  delete[] Sectors;
+  Sectors = nullptr;
+  NumSectors = 0;
+
+  delete[] Sides;
+  Sides = nullptr;
+  NumSides = 0;
+
+  delete[] Lines;
+  Lines = nullptr;
+  NumLines = 0;
+
+  delete[] Segs;
+  Segs = nullptr;
+  NumSegs = 0;
+
+  delete[] Subsectors;
+  Subsectors = nullptr;
+  NumSubsectors = 0;
+
+  delete[] Nodes;
+  Nodes = nullptr;
+  NumNodes = 0;
+
+  if (VisData) delete[] VisData; else delete[] NoVis;
+  VisData = nullptr;
+  NoVis = nullptr;
+
+  delete[] BlockMapLump;
+  BlockMapLump = nullptr;
+  BlockMapLumpSize = 0;
+
+  delete[] BlockLinks;
+  BlockLinks = nullptr;
+
+  delete[] RejectMatrix;
+  RejectMatrix = nullptr;
+  RejectMatrixSize = 0;
+
+  delete[] Things;
+  Things = nullptr;
+  NumThings = 0;
+
+  delete[] Zones;
+  Zones = nullptr;
+  NumZones = 0;
+
+  GTextureManager.ResetMapTextures();
+}
+
+
+//==========================================================================
+//
 //  VLevel::Destroy
 //
 //==========================================================================

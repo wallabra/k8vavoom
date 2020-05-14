@@ -276,6 +276,7 @@ set(SV_SOURCES
 
 set(MAPLOADER_SOURCES
   maploader/p_setup.cpp
+  maploader/p_setup_cacheio.cpp
   maploader/udmf/p_setup_udmf.cpp
   maploader/loader/p_setup_load_nodes.cpp
   maploader/loader/p_setup_load_lines.cpp
