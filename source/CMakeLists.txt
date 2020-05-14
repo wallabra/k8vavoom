@@ -276,12 +276,23 @@ set(SV_SOURCES
 
 set(MAPLOADER_SOURCES
   maploader/p_setup.cpp
+  maploader/udmf/p_setup_udmf.cpp
+  maploader/loader/p_setup_load_nodes.cpp
+  maploader/loader/p_setup_load_lines.cpp
+  maploader/loader/p_setup_load_sectors.cpp
+  maploader/loader/p_setup_load_verts.cpp
+  maploader/loader/p_setup_load_sides.cpp
+  maploader/loader/p_setup_load_segs.cpp
+  maploader/loader/p_setup_load_blockmap.cpp
+  maploader/loader/p_setup_load_reject.cpp
+  maploader/loader/p_setup_load_things.cpp
+  maploader/loader/p_setup_load_acs.cpp
   maploader/p_setup_calc.cpp
+  maploader/p_setup_decals.cpp
   maploader/p_setup_nodes_aj.cpp
   maploader/p_setup_nodes_zd.cpp
   maploader/p_setup_pvs.cpp
   maploader/p_setup_fixers.cpp
-  maploader/p_setup_udmf.cpp
 )
 
 set(ACS_SOURCES

@@ -712,3 +712,34 @@ bool VLevel::LeafFlow (int leafnum, void *pvsinfo) {
 
   return true;
 }
+
+
+//==========================================================================
+//
+//  VLevel::LoadPVS
+//
+//==========================================================================
+void VLevel::LoadPVS (int Lump) {
+  if (W_LumpName(Lump) != NAME_gl_pvs || W_LumpLength(Lump) == 0) {
+    GCon->Logf(NAME_Dev, "Empty or missing PVS lump");
+    if (NoVis == nullptr && VisData == nullptr) BuildPVS();
+    /*
+    VisData = nullptr;
+    NoVis = new vuint8[(NumSubsectors + 7) / 8];
+    memset(NoVis, 0xff, (NumSubsectors + 7) / 8);
+    */
+  } else {
+    //if (NoVis == nullptr && VisData == nullptr) BuildPVS();
+    vuint8 *VisDataNew = new vuint8[W_LumpLength(Lump)];
+    VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+    VCheckedStream Strm(lumpstream);
+    Strm.Serialise(VisDataNew, W_LumpLength(Lump));
+    if (Strm.IsError() || W_LumpLength(Lump) < ((NumSubsectors+7)>>3)*NumSubsectors) {
+      delete [] VisDataNew;
+    } else {
+      delete [] VisData;
+      delete [] NoVis;
+      VisData = VisDataNew;
+    }
+  }
+}

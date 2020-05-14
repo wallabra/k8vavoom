@@ -25,6 +25,8 @@
 //**************************************************************************
 #include "../gamedefs.h"
 
+#define DEBUG_DEEP_WATERS
+
 
 static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", CVAR_PreInit/*|CVAR_Archive*/);
 static VCvarB dbg_floodfill_fixer("dbg_floodfill_fixer", false, "Show debug messages from floodfill fixer?", CVAR_PreInit/*|CVAR_Archive*/);
