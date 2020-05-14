@@ -38,6 +38,9 @@
 
 //#define VRBSP_DISABLE_SKY_PORTALS
 
+// sadly, this doesn't work the way i want it to work... yet
+//#define VV_USE_CLIP_CHECK_AND_ADD
+
 
 VCvarB r_draw_pobj("r_draw_pobj", true, "Render polyobjects?", CVAR_PreInit);
 static VCvarI r_maxmirrors("r_maxmirrors", "1", "Maximum allowed mirrors.", CVAR_Archive);
@@ -51,7 +54,7 @@ static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable ren
 
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
-static VCvarB r_ordered_subregions("r_ordered_subregions", true, "Order subregions in renderer?", CVAR_Archive);
+static VCvarB r_ordered_subregions("r_ordered_subregions", false, "Order subregions in renderer?", CVAR_Archive);
 
 //static VCvarB dbg_dump_portal_list("dbg_dump_portal_list", false, "Dump portal list before rendering?", 0/*CVAR_Archive*/);
 
@@ -815,12 +818,16 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
   }
   */
 
+  #ifndef VV_USE_CLIP_CHECK_AND_ADD
   if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
+  #endif
 
   // k8: this drops some segs that may leak without proper frustum culling
   // k8: this seems to be unnecessary now
   // k8: reenabled, because why not?
+  #ifndef VV_USE_CLIP_CHECK_AND_ADD
   if (clip_frustum_bsp_segs && !ViewClip.CheckSegFrustum(sub, seg)) return;
+  #endif
 
   // mark the segment as visible for auto map
 #if 0
@@ -921,7 +928,7 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 //
 //  VRenderLevelShared::NeedToRenderNextSubFirst
 //
-//  k8: i don't know what Janis wanted to with this
+//  this orders subregions to avoid overdraw (partially)
 //
 //==========================================================================
 bool VRenderLevelShared::NeedToRenderNextSubFirst (const subregion_t *region) noexcept {
@@ -1002,20 +1009,31 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region)
   const bool nextFirst = NeedToRenderNextSubFirst(region);
   if (nextFirst) RenderSubRegion(sub, region->next);
 
+  #if 0
+  // this seems to be completely unnecessary
+  DO NOT FORGET TO ENABLE THE FOLLOWING CONDITIONAL TOO!
   bool drawFloors = true;
-  if (ViewClip.ClipCheckRegion(region, sub)) {
+  const bool okregion = ViewClip.ClipCheckRegion(region, sub);
+  #else
+  enum { okregion = true };
+  #endif
+  if (okregion) {
     int count = sub->numlines;
     drawseg_t *ds = region->lines;
     while (count--) {
       RenderLine(sub, secregion, region, ds);
       ++ds;
     }
-  } else {
+  }
+  #if 0
+  else {
     // if there is no polyobj here, we can skip rendering floors
     if (!sub || !sub->HasPObjs() || !r_draw_pobj) drawFloors = false;
   }
 
-  if (drawFloors || r_dbg_always_draw_flats) {
+  if (drawFloors || r_dbg_always_draw_flats)
+  #endif
+  {
     sec_surface_t *fsurf[4];
     GetFlatSetToRender(sub, region, fsurf);
 
@@ -1055,7 +1073,12 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
     }
 
     // is this subsector potentially visible?
-    if (ViewClip.ClipCheckSubsector(sub)) {
+    #ifndef VV_USE_CLIP_CHECK_AND_ADD
+    if (ViewClip.ClipCheckSubsector(sub))
+    #else
+    if (ViewClip.ClipCheckAddSubsector(sub, (MirrorClipSegs && Drawer->viewfrustum.planes[TFrustum::Forward].isValid() ? &Drawer->viewfrustum.planes[TFrustum::Forward] : nullptr)))
+    #endif
+    {
       if (sub->parent) sub->parent->visframe = currVisFrame; // check is here for one-sector degenerate maps
       sub->VisFrame = currVisFrame;
 
@@ -1085,6 +1108,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
 
       // render the polyobj in the subsector first, and add it to clipper
       // this blocks view with polydoors
+      //FIXME: (it is broken now, because we need to dynamically split pobj with BSP)
       RenderPolyObj(sub);
       AddPolyObjToClipper(ViewClip, sub);
       RenderSubRegion(sub, sub->regions);
@@ -1093,9 +1117,11 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
 
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
+  #ifndef VV_USE_CLIP_CHECK_AND_ADD
   if (clip_use_1d_clipper) {
     ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && Drawer->viewfrustum.planes[TFrustum::Forward].isValid() ? &Drawer->viewfrustum.planes[TFrustum::Forward] : nullptr));
   }
+  #endif
 }
 
 
@@ -1109,9 +1135,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
 //==========================================================================
 void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigned clipflags, bool onlyClip) {
  tailcall:
-#ifdef VV_CLIPPER_FULL_CHECK
   if (ViewClip.ClipIsFull()) return;
-#endif
 
   if (bspnum == -1) {
     RenderSubsector(0, onlyClip);

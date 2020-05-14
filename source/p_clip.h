@@ -92,6 +92,7 @@ private:
   float Radius; // for light clipper
   VLevel *Level;
   TFrustum Frustum; // why not?
+  TVec Forward; // we need this too
   bool ClearClipNodesCalled;
 
   VClipNode *NewClipNode () noexcept;
@@ -104,7 +105,7 @@ private:
 
   bool IsRangeVisibleAngle (const FromTo From, const FromTo To) const noexcept;
 
-  void AddClipRangeAngle (const FromTo From, const FromTo To) noexcept;
+  bool AddClipRangeAngle (const FromTo From, const FromTo To) noexcept;
 
   void DoRemoveClipRange (FromTo From, FromTo To) noexcept;
   void RemoveClipRangeAngle (const FromTo From, const FromTo To) noexcept;
@@ -198,11 +199,13 @@ public:
   void ClipInitFrustumRange (const TAVec &viewangles, const float fovx, const float fovy) noexcept;
 
 
-#ifdef VV_CLIPPER_FULL_CHECK
+  #ifdef VV_CLIPPER_FULL_CHECK
   inline bool ClipIsFull () const noexcept {
     return (ClipHead && ClipHead->From == (VFloat)0 && ClipHead->To == (VFloat)360);
   }
-#endif
+  #else
+  inline bool ClipIsFull () const noexcept { return false; }
+  #endif
 
   inline bool ClipIsEmpty () const noexcept {
     return !ClipHead;
@@ -214,13 +217,17 @@ public:
 
   void ClipToRanges (const VViewClipper &Range) noexcept;
 
-  inline void AddClipRange (const TVec &vfrom, const TVec &vto) noexcept {
-    AddClipRangeAngle(PointToClipAngle(vfrom), PointToClipAngle(vto));
+  inline bool AddClipRange (const TVec &vfrom, const TVec &vto) noexcept {
+    return AddClipRangeAngle(PointToClipAngle(vfrom), PointToClipAngle(vto));
   }
 
   bool ClipIsBBoxVisible (const float BBox[6]) const noexcept;
   bool ClipCheckRegion (const subregion_t *region, const subsector_t *sub) const noexcept;
+
   bool ClipCheckSubsector (const subsector_t *sub) noexcept;
+
+  // this returns `true` if clip was modified
+  bool ClipCheckAddSubsector (const subsector_t *sub, const TPlane *Mirror=nullptr) noexcept;
 
 #ifdef CLIENT
   bool ClipLightIsBBoxVisible (const float BBox[6]) const noexcept;
