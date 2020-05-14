@@ -285,6 +285,7 @@ static inline __attribute__((const)) float TextureSScale (const VTexture *pic) {
 static inline __attribute__((const)) float TextureTScale (const VTexture *pic) { return pic->TScale; }
 static inline __attribute__((const)) float TextureOffsetSScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->SScale : 1.0f); }
 static inline __attribute__((const)) float TextureOffsetTScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->TScale : 1.0f); }
+static inline __attribute__((const)) float DivByScale (float v, float scale) { return (scale > 0 ? v/scale : v); }
 
 
 //==========================================================================
@@ -305,6 +306,8 @@ static bool LightTraverse (LightTraceInfo &trace, const intercept_t *in) {
 
   if (line->flags&ML_TWOSIDED) {
     if (LightCanPassOpening(line, hitpoint, trace.Delta)) {
+      if (line->alpha < 1.0f || (line->flags&ML_ADDITIVE)) return true;
+
       if (!r_lmap_texture_check) return true;
 
       // check texture
@@ -315,27 +318,38 @@ static bool LightTraverse (LightTraceInfo &trace, const intercept_t *in) {
       VTexture *MTex = GTextureManager(sidedef->MidTexture);
       if (!MTex || MTex->Type == TEXTYPE_Null) return true;
 
-      const sector_t *sec = (sidenum ? line->backsector : line->frontsector);
+      //const sector_t *sec = (sidenum ? line->backsector : line->frontsector);
+
+      const bool wrapped = ((line->flags&ML_WRAP_MIDTEX)|(sidedef->Flags&SDF_WRAPMIDTEX));
+      if (wrapped && !MTex->isSeeThrough()) return true;
 
       const TVec taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*sidedef->Mid.ScaleY);
       float toffs;
 
+      float z_org; // texture top
       if (line->flags&ML_DONTPEGBOTTOM) {
         // bottom of texture at bottom
-        toffs = sec->floor.TexZ+(MTex->GetScaledHeight()*sidedef->Mid.ScaleY);
-      } else if (line->flags&ML_DONTPEGTOP) {
-        // top of texture at top of top region
-        toffs = sec->ceiling.TexZ;
+        const float texh = DivByScale(MTex->GetScaledHeight(), sidedef->Mid.ScaleY);
+        z_org = max2(line->frontsector->floor.TexZ, line->backsector->floor.TexZ)+texh;
       } else {
         // top of texture at top
-        toffs = sec->ceiling.TexZ;
+        z_org = min2(line->frontsector->ceiling.TexZ, line->backsector->ceiling.TexZ);
       }
-      toffs *= TextureTScale(MTex)*sidedef->Mid.ScaleY;
-      toffs += sidedef->Mid.RowOffset*TextureOffsetTScale(MTex);
+
+      if (wrapped) {
+        // it is wrapped, so just slide it
+        toffs = sidedef->Mid.RowOffset*TextureOffsetTScale(MTex);
+      } else {
+        // move origin up/down, as this texture is not wrapped
+        z_org += sidedef->Mid.RowOffset*DivByScale(TextureOffsetTScale(MTex), sidedef->Mid.ScaleY);
+        // offset is done by origin, so we don't need to offset texture
+        toffs = 0.0f;
+      }
+      toffs += z_org*(TextureTScale(MTex)*sidedef->Mid.ScaleY);
 
       const int texelT = (int)(DotProduct(hitpoint, taxis)+toffs); // /MTex->GetHeight();
       // check for wrapping
-      if (texelT < 0 || texelT >= MTex->GetHeight()) return true;
+      if (!wrapped && (texelT < 0 || texelT >= MTex->GetHeight())) return true;
       if (!MTex->isSeeThrough()) return true;
 
       const TVec saxis = line->ndir*(TextureSScale(MTex)*sidedef->Mid.ScaleX);
