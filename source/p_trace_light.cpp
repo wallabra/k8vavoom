@@ -227,10 +227,15 @@ static bool LightCheckPassPlanes (sector_t *sector, TVec linestart, TVec lineend
     bfloor.set(&hs->floor, false);
     bceil.set(&hs->ceiling, false);
     // check sector floor
-    UPDATE_PLANE_HIT(bfloor);
+    if (GTextureManager.IsSightBlocking(hs->floor.pic)) {
+      UPDATE_PLANE_HIT(bfloor);
+    }
     // check sector ceiling
-    UPDATE_PLANE_HIT(bceil);
+    if (GTextureManager.IsSightBlocking(hs->ceiling.pic)) {
+      UPDATE_PLANE_HIT(bceil);
+    }
   }
+
   bfloor.set(&sector->floor, false);
   bceil.set(&sector->ceiling, false);
   // check sector floor
@@ -241,10 +246,14 @@ static bool LightCheckPassPlanes (sector_t *sector, TVec linestart, TVec lineend
   for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&(sec_region_t::RF_BaseRegion|sec_region_t::RF_OnlyVisual|sec_region_t::RF_NonSolid)) continue;
     if ((reg->efloor.splane->flags&sec_region_t::RF_SkipFloorSurf) == 0) {
-      UPDATE_PLANE_HIT(reg->efloor);
+      if (GTextureManager.IsSightBlocking(reg->efloor.splane->pic)) {
+        UPDATE_PLANE_HIT(reg->efloor);
+      }
     }
     if ((reg->efloor.splane->flags&sec_region_t::RF_SkipCeilSurf) == 0) {
-      UPDATE_PLANE_HIT(reg->eceiling);
+      if (GTextureManager.IsSightBlocking(reg->eceiling.splane->pic)) {
+        UPDATE_PLANE_HIT(reg->eceiling);
+      }
     }
   }
 
