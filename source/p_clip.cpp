@@ -25,7 +25,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 
-//#define XXX_CLIPPER_MANY_DUMPS
+//#define XXX_CLIPPER_DUMP_ADDED_RANGES
 
 #ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
 # define MIN_ANGLE  ((VFloat)0)
@@ -41,6 +41,12 @@
 # ifdef VV_CLIPPER_FULL_CHECK
 #  error "oops"
 # endif
+#endif
+
+#ifdef XXX_CLIPPER_DUMP_ADDED_RANGES
+# define RNGLOG(...)  if (dbg_clip_dump_added_ranges) GCon->Logf(__VA_ARGS__)
+#else
+# define RNGLOG(...)  (void)0
 #endif
 
 
@@ -67,7 +73,7 @@ VCvarB clip_frustum_bsp_segs("clip_frustum_bsp_segs", true, "Clip segs in BSP re
 //VCvarI clip_frustum_check_mask("clip_frustum_check_mask", "19", "Which frustum planes we should check?", CVAR_PreInit);
 VCvarI clip_frustum_check_mask("clip_frustum_check_mask", "255", "Which frustum planes we should check?", CVAR_PreInit);
 
-static VCvarB clip_add_backface_segs("clip_add_backface_segs", true, "Add backfaced segs to 1D clipper (this prevents some clipping bugs, but makes \"noclip\" less usable)?", CVAR_PreInit);
+static VCvarB clip_add_backface_segs("clip_add_backface_segs", false, "Add backfaced segs to 1D clipper (this prevents some clipping bugs, but makes \"noclip\" less usable)?", CVAR_PreInit);
 
 static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?", CVAR_PreInit);
 
@@ -864,8 +870,10 @@ void VViewClipper::Dump () const noexcept {
 //
 //  VViewClipper::DoAddClipRange
 //
+//  returns `true` if clip range was modified
+//
 //==========================================================================
-void VViewClipper::DoAddClipRange (FromTo From, FromTo To) noexcept {
+bool VViewClipper::DoAddClipRange (FromTo From, FromTo To) noexcept {
   if (From < MIN_ANGLE) From = MIN_ANGLE; else if (From > MAX_ANGLE) From = MAX_ANGLE;
   if (To < MIN_ANGLE) To = MIN_ANGLE; else if (To > MAX_ANGLE) To = MAX_ANGLE;
 
@@ -876,17 +884,16 @@ void VViewClipper::DoAddClipRange (FromTo From, FromTo To) noexcept {
     ClipHead->To = To;
     ClipHead->Prev = nullptr;
     ClipHead->Next = nullptr;
-    return;
+    return true;
   }
 
+  bool res = false;
   for (VClipNode *Node = ClipHead; Node; Node = Node->Next) {
     if (Node->To < From) continue; // before this range
 
     if (To < Node->From) {
-      // insert a new clip range before current one
-#if defined(XXX_CLIPPER_MANY_DUMPS)
-    if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ inserting (%f : %f) before (%f : %f)", From, To, Node->From, Node->To);
-#endif
+      // insert a new clip range before the current one
+      RNGLOG(" +++ inserting (%f : %f) before (%f : %f)", From, To, Node->From, Node->To);
       VClipNode *N = NewClipNode();
       N->From = From;
       N->To = To;
@@ -896,57 +903,49 @@ void VViewClipper::DoAddClipRange (FromTo From, FromTo To) noexcept {
       if (Node->Prev) Node->Prev->Next = N; else ClipHead = N;
       Node->Prev = N;
 
-      return;
+      return true;
     }
 
     if (Node->From <= From && Node->To >= To) {
       // it contains this range
-#if defined(XXX_CLIPPER_MANY_DUMPS)
-      if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ hidden (%f : %f) with (%f : %f)", From, To, Node->From, Node->To);
-#endif
-      return;
+      RNGLOG(" +++ hidden (%f : %f) with (%f : %f)", From, To, Node->From, Node->To);
+      return res;
     }
 
     if (From < Node->From) {
       // extend start of the current range
-#if defined(XXX_CLIPPER_MANY_DUMPS)
-      if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ using (%f : %f) to extend head of (%f : %f)", From, To, Node->From, Node->To);
-#endif
+      RNGLOG(" +++ using (%f : %f) to extend head of (%f : %f)", From, To, Node->From, Node->To);
       Node->From = From;
+      res = true;
     }
 
     if (To <= Node->To) {
       // end is included, so we are done here
-#if defined(XXX_CLIPPER_MANY_DUMPS)
-      if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ hidden (end) (%f : %f) with (%f : %f)", From, To, Node->From, Node->To);
-#endif
-      return;
+      RNGLOG(" +++ hidden (end) (%f : %f) with (%f : %f)", From, To, Node->From, Node->To);
+      return res;
     }
 
     // merge with following nodes if needed
     while (Node->Next && Node->Next->From <= To) {
-#if defined(XXX_CLIPPER_MANY_DUMPS)
-      if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ merger (%f : %f) eat (%f : %f)", From, To, Node->From, Node->To);
-#endif
+      RNGLOG(" +++ merger (%f : %f) eat (%f : %f)", From, To, Node->From, Node->To);
       Node->To = Node->Next->To;
       RemoveClipNode(Node->Next);
+      res = true;
     }
 
     if (To > Node->To) {
       // extend end
-#if defined(XXX_CLIPPER_MANY_DUMPS)
-      if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ using (%f : %f) to extend end of (%f : %f)", From, To, Node->From, Node->To);
-#endif
+      RNGLOG(" +++ using (%f : %f) to extend end of (%f : %f)", From, To, Node->From, Node->To);
       Node->To = To;
+      res = true;
     }
 
     // we are done here
-    return;
+    return res;
   }
 
-#if defined(XXX_CLIPPER_MANY_DUMPS)
-  if (dbg_clip_dump_added_ranges) GCon->Logf(" +++ appending (%f : %f) to the end (%f : %f)", From, To, ClipTail->From, ClipTail->To);
-#endif
+  RNGLOG(" +++ appending (%f : %f) to the end (%f : %f)", From, To, ClipTail->From, ClipTail->To);
+
   // if we are here it means it's a new range at the end
   VClipNode *NewTail = NewClipNode();
   NewTail->From = From;
@@ -955,6 +954,7 @@ void VViewClipper::DoAddClipRange (FromTo From, FromTo To) noexcept {
   NewTail->Next = nullptr;
   ClipTail->Next = NewTail;
   ClipTail = NewTail;
+  return true;
 }
 
 
@@ -1376,16 +1376,12 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
   }
 
 
-#if defined(XXX_CLIPPER_MANY_DUMPS)
-  if (dbg_clip_dump_added_ranges) {
-    GCon->Logf("added seg #%d (line #%d); range=(%f : %f); vis=%d",
-      (int)(ptrdiff_t)(seg-Level->Segs),
-      (int)(ptrdiff_t)(ldef-Level->Lines),
-      PointToClipAngle(v2), PointToClipAngle(v1),
-      (int)IsRangeVisible(v2, v1));
-    //if (!IsRangeVisible(v2, v1)) return;
-  }
-#endif
+  RNGLOG("added seg #%d (line #%d); range=(%f : %f); vis=%d",
+    (int)(ptrdiff_t)(seg-Level->Segs),
+    (int)(ptrdiff_t)(ldef-Level->Lines),
+    PointToClipAngle(v2), PointToClipAngle(v1),
+    (int)IsRangeVisible(v2, v1));
+
   AddClipRange(v2, v1);
 }
 

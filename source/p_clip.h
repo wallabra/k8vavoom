@@ -96,7 +96,9 @@ private:
 
   VClipNode *NewClipNode () noexcept;
   void RemoveClipNode (VClipNode *Node) noexcept;
-  void DoAddClipRange (FromTo From, FromTo To) noexcept;
+
+  // returns `true` if clip range was modified
+  bool DoAddClipRange (FromTo From, FromTo To) noexcept;
 
   bool DoIsRangeVisible (const FromTo From, const FromTo To) const noexcept;
 
