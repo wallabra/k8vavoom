@@ -138,6 +138,14 @@ bool VOpenALDevice::Init () {
   RealMaxVoices = (vint32)MAX_VOICES;
   Context = nullptr;
 
+  // if you wonder why this code is here, this is because of shitdows.
+  // i got bugreports from poor shitdows users about OpenAL failing to
+  // create the context sometimes. and OpenAL code says that you cannot
+  // call `alGetError()` without an active context, so i don't even know
+  // what the fuck is wrong. i decided to remove all error checks, and
+  // put this loop in the hope that if first time context creation will
+  // fail, the next time it will succeed. ah, and punish the user with
+  // reduced total sound channels.
   while (RealMaxVoices >= 64) {
     // create a context and make it current
     ALCint attrs[] = {
