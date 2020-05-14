@@ -328,6 +328,7 @@ set(PSIM_SOURCES
   p_thinker.cpp
   p_thinker.h
   p_trace.cpp
+  p_trace_light.cpp
   p_world.cpp
   p_world.h
   p_worldinfo.cpp
