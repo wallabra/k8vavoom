@@ -27,6 +27,9 @@
 #include "server/sv_local.h"
 
 
+static VCvarB r_lmap_texture_check("r_lmap_texture_check", true, "Check textures of two-sided lines?", /*CVAR_Archive|*/CVAR_PreInit);
+
+
 //**************************************************************************
 //
 // blockmap light tracing
@@ -61,6 +64,7 @@ struct LightTraceInfo {
   TVec LineEnd;
   sector_t *StartSector;
   sector_t *EndSector;
+  VLevel *Level;
 };
 
 
@@ -277,6 +281,12 @@ static bool LightCheckPlanes (LightTraceInfo &trace, sector_t *sec) {
 }
 
 
+static inline __attribute__((const)) float TextureSScale (const VTexture *pic) { return pic->SScale; }
+static inline __attribute__((const)) float TextureTScale (const VTexture *pic) { return pic->TScale; }
+static inline __attribute__((const)) float TextureOffsetSScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->SScale : 1.0f); }
+static inline __attribute__((const)) float TextureOffsetTScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->TScale : 1.0f); }
+
+
 //==========================================================================
 //
 //  LightTraverse
@@ -294,7 +304,48 @@ static bool LightTraverse (LightTraceInfo &trace, const intercept_t *in) {
   trace.LineStart = trace.LineEnd;
 
   if (line->flags&ML_TWOSIDED) {
-    if (LightCanPassOpening(line, hitpoint, trace.Delta)) return true;
+    if (LightCanPassOpening(line, hitpoint, trace.Delta)) {
+      if (!r_lmap_texture_check) return true;
+
+      // check texture
+      int sidenum = line->PointOnSide2(trace.Start);
+      if (sidenum == 2) return true; // on a line
+
+      const side_t *sidedef = &trace.Level->Sides[line->sidenum[sidenum]];
+      VTexture *MTex = GTextureManager(sidedef->MidTexture);
+      if (!MTex || MTex->Type == TEXTYPE_Null) return true;
+
+      const sector_t *sec = (sidenum ? line->backsector : line->frontsector);
+
+      const TVec taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*sidedef->Mid.ScaleY);
+      float toffs;
+
+      if (line->flags&ML_DONTPEGBOTTOM) {
+        // bottom of texture at bottom
+        toffs = sec->floor.TexZ+(MTex->GetScaledHeight()*sidedef->Mid.ScaleY);
+      } else if (line->flags&ML_DONTPEGTOP) {
+        // top of texture at top of top region
+        toffs = sec->ceiling.TexZ;
+      } else {
+        // top of texture at top
+        toffs = sec->ceiling.TexZ;
+      }
+      toffs *= TextureTScale(MTex)*sidedef->Mid.ScaleY;
+      toffs += sidedef->Mid.RowOffset*TextureOffsetTScale(MTex);
+
+      const int texelT = (int)(DotProduct(hitpoint, taxis)+toffs); // /MTex->GetHeight();
+      // check for wrapping
+      if (texelT < 0 || texelT >= MTex->GetHeight()) return true;
+      if (!MTex->isSeeThrough()) return true;
+
+      const TVec saxis = line->ndir*(TextureSScale(MTex)*sidedef->Mid.ScaleX);
+      const float soffs = -DotProduct(*line->v1, saxis)+sidedef->Mid.TextureOffset*TextureOffsetSScale(MTex);
+
+      const float texelS = (int)(DotProduct(hitpoint, saxis)+soffs)%MTex->GetWidth();
+
+      auto pix = MTex->getPixel(texelS, texelT);
+      return (pix.a < 128);
+    }
   }
 
   return false; // stop
@@ -544,5 +595,6 @@ bool VLevel::CastLightRay (sector_t *Sector, const TVec &org, const TVec &dest, 
   trace.EndSector = OtherSector;
   trace.Start = org;
   trace.End = dest;
+  trace.Level = this;
   return LightPathTraverse(trace, this);
 }
