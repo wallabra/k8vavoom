@@ -74,9 +74,7 @@ override void OnMapSpawn (mthing_t *mthing) {
 
   // adjust Z position (why not?)
   // people loves to put lights into the floor/ceiling, and our tracer is not happy with those
-  if (mthing && Sector) {
-    Origin.z = FixLightFlatPosition(Sector, Origin.z, mthing-&XLevel.Things[0]);
-  }
+  if (mthing && Sector) FixLightPosition(Sector, ref Origin, mthing-&XLevel.Things[0]);
 
   //if (LightType&DLTYPE_Spot) printdebug("%C: Angles=%s; [1]=%s; [2]=%s", self, Angles, Args[1], Args[2]);
 

@@ -29,7 +29,7 @@ class BaseStaticLightSource : Actor;
 TVec GetAdjustedPosition (mthing_t *mthing) {
   TVec pos = vector(mthing->x, mthing->y, mthing->height);
   sector_t *sec = XLevel.PointInSector(pos);
-  if (sec) pos.z = FixLightFlatPosition(sec, pos.z, mthing-&XLevel.Things[0]);
+  if (sec) FixLightPosition(sec, ref pos, mthing-&XLevel.Things[0]);
   return pos;
 }
 

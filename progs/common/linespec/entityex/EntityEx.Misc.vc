@@ -46,41 +46,57 @@ override void Destroyed () {
 
 //==========================================================================
 //
-//  FixLightFlatPosition
+//  FixLightPosition
 //
 //  adjusts z, so it won't be too near to floor or ceiling
-//  returns new z
+//  adjusts light xy, so it won't be inside a wall
 //
 //==========================================================================
-float FixLightFlatPosition (sector_t *sector, float z, optional int thingidx) {
+void FixLightPosition (sector_t *sector, ref TVec org, optional int thingidx) {
   // people loves to put lights into the floor/ceiling, and our tracer is not happy with those
-  if (sector) {
-    //float gaph = CeilingZ-FloorZ;
-    float fz = GetPlanePointZ(ref sector.floor, Origin);
-    float cz = GetPlanePointZ(ref sector.ceiling, Origin);
-    // closed sector?
-    if (fz >= cz) {
-      // for closed sectors, rise the light a little for the rare case the sector will be opened later
-      if (z <= fz) {
-        printdebug("fixed z floor position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, fz+2, fz);
-        return fz+2;
-      }
-    } else {
-      // opened sector, move away from floor/ceiling
-      //printdebug("light thing #%s: fz=%s; cz=%s; z=%s; fdist=%s, cdist=%s", thingidx, fz, cz, Origin.z, Origin.z-fz, cz-Origin.z);
-      if (z <= fz+4) {
-        float res = (cz-fz <= 8 ? (cz+fz)/2 : fz+4);
-        if (specified_thingidx) printdebug("fixed z floor position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, res, fz);
-        return res;
-      }
-      if (z >= cz-4) {
-        float res = (cz-fz <= 8 ? (cz+fz)/2 : cz-4);
-        if (specified_thingidx) printdebug("fixed z ceiling position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, res, cz);
-        return res;
-      }
+  /*if (!sector)*/ sector = XLevel.PointInSectorRender(org);
+  //float gaph = CeilingZ-FloorZ;
+  float z = org.z;
+  float fz = GetPlanePointZ(ref sector.floor, org);
+  float cz = GetPlanePointZ(ref sector.ceiling, org);
+  // closed sector?
+  if (fz >= cz) {
+    // for closed sectors, rise the light a little for the rare case the sector will be opened later
+    if (z <= fz) {
+      printdebug("fixed z floor position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, fz+2, fz);
+      org.z = fz+2;
+    }
+  } else {
+    // opened sector, move away from floor/ceiling
+    //printdebug("light thing #%s: fz=%s; cz=%s; z=%s; fdist=%s, cdist=%s", thingidx, fz, cz, Origin.z, Origin.z-fz, cz-Origin.z);
+    if (z <= fz+4) {
+      float res = (cz-fz <= 8 ? (cz+fz)/2 : fz+4);
+      if (specified_thingidx) printdebug("fixed z floor position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, res, fz);
+      org.z = res;
+    } else if (z >= cz-4) {
+      float res = (cz-fz <= 8 ? (cz+fz)/2 : cz-4);
+      if (specified_thingidx) printdebug("fixed z ceiling position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, res, cz);
+      org.z = res;
     }
   }
-  return z;
+
+  // check if we're inside a wall
+  foreach (int tries; 0..3) {
+    bool again = false;
+    foreach (line_t *ldef; sector.lines) {
+      // ignore two-sided lines
+      if (ldef->flags&ML_TWOSIDED) continue;
+      if (PointOnPlaneSide2(org, *ldef) == 2) {
+        printdebug("sector #%d: line #%d: light in the wall!", sector-&XLevel.Sectors[0], ldef-&XLevel.Lines[0]);
+        again = true;
+        foreach (int mtry; 0..16) {
+          org += ldef.ndir;
+          if (PointOnPlaneSide2(org, *ldef) != 2) break;
+        }
+      }
+    }
+    if (!again) break;
+  }
 }
 
 
