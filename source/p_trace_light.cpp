@@ -239,9 +239,7 @@ static bool LightCanPassOpening (const line_t *linedef, const TVec point) {
   if (point.z <= pfz || point.z >= pcz) return false;
 
   // fast algo for two sectors without 3d floors
-  if (!linedef->frontsector->Has3DFloors() &&
-      !linedef->backsector->Has3DFloors())
-  {
+  if (!fsec->Has3DFloors() && !bsec->Has3DFloors()) {
     // no 3d regions, we're ok
     return true;
   }
@@ -260,79 +258,87 @@ static bool LightCanPassOpening (const line_t *linedef, const TVec point) {
 
 //==========================================================================
 //
-//  LightCheckLineHit
+//  LightCheck2SLinePass
+//
+//==========================================================================
+static bool LightCheck2SLinePass (LightTraceInfo &trace, const line_t *line, const TVec hitpoint) {
+  vassert(line->flags&ML_TWOSIDED);
+
+  //TVec hitpoint = trace.Start+frac*trace.Delta;
+
+  if (!LightCanPassOpening(line, hitpoint)) return false;
+
+  if (line->alpha < 1.0f || (line->flags&ML_ADDITIVE)) return true;
+  if (!r_lmap_texture_check) return true;
+
+  // check texture
+  int sidenum = line->PointOnSide2(trace.Start);
+  if (sidenum == 2) return true; // on a line
+
+  const side_t *sidedef = &trace.Level->Sides[line->sidenum[sidenum]];
+  VTexture *MTex = GTextureManager(sidedef->MidTexture);
+  if (!MTex || MTex->Type == TEXTYPE_Null) return true;
+
+  const bool wrapped = ((line->flags&ML_WRAP_MIDTEX)|(sidedef->Flags&SDF_WRAPMIDTEX));
+  if (wrapped && !MTex->isSeeThrough()) return true;
+
+  const TVec taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*sidedef->Mid.ScaleY);
+  float toffs;
+
+  float z_org; // texture top
+  if (line->flags&ML_DONTPEGBOTTOM) {
+    // bottom of texture at bottom
+    const float texh = DivByScale(MTex->GetScaledHeight(), sidedef->Mid.ScaleY);
+    z_org = max2(line->frontsector->floor.TexZ, line->backsector->floor.TexZ)+texh;
+  } else {
+    // top of texture at top
+    z_org = min2(line->frontsector->ceiling.TexZ, line->backsector->ceiling.TexZ);
+  }
+
+  if (wrapped) {
+    // it is wrapped, so just slide it
+    toffs = sidedef->Mid.RowOffset*TextureOffsetTScale(MTex);
+  } else {
+    // move origin up/down, as this texture is not wrapped
+    z_org += sidedef->Mid.RowOffset*DivByScale(TextureOffsetTScale(MTex), sidedef->Mid.ScaleY);
+    // offset is done by origin, so we don't need to offset texture
+    toffs = 0.0f;
+  }
+  toffs += z_org*(TextureTScale(MTex)*sidedef->Mid.ScaleY);
+
+  const int texelT = (int)(DotProduct(hitpoint, taxis)+toffs); // /MTex->GetHeight();
+  // check for wrapping
+  if (!wrapped && (texelT < 0 || texelT >= MTex->GetHeight())) return true;
+  if (!MTex->isSeeThrough()) return true;
+
+  const TVec saxis = line->ndir*(TextureSScale(MTex)*sidedef->Mid.ScaleX);
+  const float soffs = -DotProduct(*line->v1, saxis)+sidedef->Mid.TextureOffset*TextureOffsetSScale(MTex);
+
+  const float texelS = (int)(DotProduct(hitpoint, saxis)+soffs)%MTex->GetWidth();
+
+  auto pix = MTex->getPixel(texelS, texelT);
+  return (pix.a < 128);
+}
+
+
+//==========================================================================
+//
+//  LightCheckSectorPlanesPass
 //
 //  returns `false` if blocked
 //
 //==========================================================================
-static bool LightCheckLineHit (LightTraceInfo &trace, const line_t *line, const float frac) {
+static bool LightCheckSectorPlanesPass (LightTraceInfo &trace, const line_t *line, const float frac) {
   const int s1 = line->PointOnSide2(trace.Start);
-  sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
   TVec hitpoint = trace.Start+frac*trace.Delta;
+  sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
   trace.LineEnd = hitpoint;
   if (!LightCheckPlanes(trace, front)) return false;
-
   trace.LineStart = trace.LineEnd;
-  if (line->flags&ML_TWOSIDED) {
-    // crosses a two sided line
-    if (LightCanPassOpening(line, hitpoint)) {
-      if (line->alpha < 1.0f || (line->flags&ML_ADDITIVE)) return true;
 
-      if (!r_lmap_texture_check) return true;
+  if ((line->flags&ML_TWOSIDED) == 0) return false; // stop
 
-      // check texture
-      int sidenum = line->PointOnSide2(trace.Start);
-      if (sidenum == 2) return true; // on a line
-
-      const side_t *sidedef = &trace.Level->Sides[line->sidenum[sidenum]];
-      VTexture *MTex = GTextureManager(sidedef->MidTexture);
-      if (!MTex || MTex->Type == TEXTYPE_Null) return true;
-
-      //const sector_t *sec = (sidenum ? line->backsector : line->frontsector);
-
-      const bool wrapped = ((line->flags&ML_WRAP_MIDTEX)|(sidedef->Flags&SDF_WRAPMIDTEX));
-      if (wrapped && !MTex->isSeeThrough()) return true;
-
-      const TVec taxis = TVec(0, 0, -1)*(TextureTScale(MTex)*sidedef->Mid.ScaleY);
-      float toffs;
-
-      float z_org; // texture top
-      if (line->flags&ML_DONTPEGBOTTOM) {
-        // bottom of texture at bottom
-        const float texh = DivByScale(MTex->GetScaledHeight(), sidedef->Mid.ScaleY);
-        z_org = max2(line->frontsector->floor.TexZ, line->backsector->floor.TexZ)+texh;
-      } else {
-        // top of texture at top
-        z_org = min2(line->frontsector->ceiling.TexZ, line->backsector->ceiling.TexZ);
-      }
-
-      if (wrapped) {
-        // it is wrapped, so just slide it
-        toffs = sidedef->Mid.RowOffset*TextureOffsetTScale(MTex);
-      } else {
-        // move origin up/down, as this texture is not wrapped
-        z_org += sidedef->Mid.RowOffset*DivByScale(TextureOffsetTScale(MTex), sidedef->Mid.ScaleY);
-        // offset is done by origin, so we don't need to offset texture
-        toffs = 0.0f;
-      }
-      toffs += z_org*(TextureTScale(MTex)*sidedef->Mid.ScaleY);
-
-      const int texelT = (int)(DotProduct(hitpoint, taxis)+toffs); // /MTex->GetHeight();
-      // check for wrapping
-      if (!wrapped && (texelT < 0 || texelT >= MTex->GetHeight())) return true;
-      if (!MTex->isSeeThrough()) return true;
-
-      const TVec saxis = line->ndir*(TextureSScale(MTex)*sidedef->Mid.ScaleX);
-      const float soffs = -DotProduct(*line->v1, saxis)+sidedef->Mid.TextureOffset*TextureOffsetSScale(MTex);
-
-      const float texelS = (int)(DotProduct(hitpoint, saxis)+soffs)%MTex->GetWidth();
-
-      auto pix = MTex->getPixel(texelS, texelT);
-      return (pix.a < 128);
-    }
-  }
-
-  return false; // stop
+  return LightCheck2SLinePass(trace, line, hitpoint);
 }
 
 
@@ -380,7 +386,14 @@ static bool LightCheckLine (LightTraceInfo &trace, line_t *ld) {
   const float num = ld->dist-DotProduct(trace.Start, ld->normal);
   const float frac = num/den;
 
-  // store the line for later intersection testing
+  // check opening here, so we can stop tracing if the ray cannot pass
+  /*
+  if (!LightCheck2SLinePass(trace, ld, frac)) {
+    return false; // stop checking
+  }
+  */
+
+  // store the line for later flat plane intersection testing
   intercept_t *icept;
 
   EnsureFreeIntercept();
@@ -457,7 +470,7 @@ static bool LightTraverseIntercepts (LightTraceInfo &trace) {
     // go through in order
     intercept_t *scan = intercepts;
     for (int i = count; i--; ++scan) {
-      if (!LightCheckLineHit(trace, scan->line, scan->frac)) return false; // don't bother going further
+      if (!LightCheckSectorPlanesPass(trace, scan->line, scan->frac)) return false; // don't bother going further
     }
   }
 
