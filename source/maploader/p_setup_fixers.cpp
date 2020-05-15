@@ -145,6 +145,9 @@ void VLevel::FixTransparentDoors () {
       if (!(sec.SectorFlags&sector_t::SF_IgnoreHeightSec)) continue; // this is special sector, skip it
     }
 
+    // never do this for slopes
+    if (sec.floor.isSlope() || sec.ceiling.isSlope()) continue;
+
     bool doorFlag = false;
     for (int f = 0; f < sec.linecount; ++f) {
       const line_t *ldef = sec.lines[f];
@@ -222,12 +225,14 @@ void VLevel::FixTransparentDoors () {
       if (!(ldef->flags&ML_TWOSIDED)) continue; // one-sided wall always blocks everything
       const sector_t *ss = (ldef->frontsector == &sec ? ldef->backsector : ldef->frontsector);
       if (ss == &sec) continue;
+      // ignore sloped sectors
+      //if (ss->floor.isSlope() || ss->ceiling.isSlope()) continue;
       if (doorFlag) {
-        if (ss->ceiling.minz > sec.ceiling.minz) {
+        if (ss->ceiling.minz > sec.ceiling.minz && !ss->ceiling.isSlope()) {
           if (!lowsec || lowsec->ceiling.minz > ss->ceiling.minz) lowsec = ss;
         }
       } else {
-        if (ss->floor.minz < sec.floor.minz) {
+        if (ss->floor.minz < sec.floor.minz && !ss->floor.isSlope()) {
           if (!highsec || highsec->floor.minz < ss->floor.minz) highsec = ss;
         }
       }
