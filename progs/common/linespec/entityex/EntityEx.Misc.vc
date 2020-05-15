@@ -68,7 +68,7 @@ void FixLightPosition (sector_t *sector, ref TVec org, optional int thingidx) {
     }
   } else {
     // opened sector, move away from floor/ceiling
-    //printdebug("light thing #%s: fz=%s; cz=%s; z=%s; fdist=%s, cdist=%s", thingidx, fz, cz, Origin.z, Origin.z-fz, cz-Origin.z);
+    //printdebug("light thing #%s: fz=%s; cz=%s; z=%s; fdist=%s, cdist=%s", thingidx, fz, cz, org.z, org.z-fz, cz-org.z);
     if (z <= fz+4) {
       float res = (cz-fz <= 8 ? (cz+fz)/2 : fz+4);
       if (specified_thingidx) printdebug("fixed z floor position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, res, fz);
@@ -81,21 +81,20 @@ void FixLightPosition (sector_t *sector, ref TVec org, optional int thingidx) {
   }
 
   // check if we're inside a wall
-  foreach (int tries; 0..3) {
-    bool again = false;
-    foreach (line_t *ldef; sector.lines) {
-      // ignore two-sided lines
-      if (ldef->flags&ML_TWOSIDED) continue;
-      if (PointOnPlaneSide2(org, *ldef) == 2) {
-        printdebug("sector #%d: line #%d: light in the wall!", sector-&XLevel.Sectors[0], ldef-&XLevel.Lines[0]);
-        again = true;
-        foreach (int mtry; 0..16) {
-          org += ldef.ndir;
-          if (PointOnPlaneSide2(org, *ldef) != 2) break;
-        }
-      }
-    }
-    if (!again) break;
+  TVec mdir = vector(0, 0, 0);
+  foreach (line_t *ldef; sector.lines) {
+    // ignore two-sided walls
+    if (ldef->backsector && (ldef->flags&ML_TWOSIDED)) continue;
+    // check distance
+    //if (PointOnPlaneSide2(org, *ldef) != 2) continue;
+    float pdist = DotProduct(org, ldef.normal)-ldef.dist;
+    if (fabs(pdist) >= 1.0f) continue;
+    mdir = (mdir+ldef.normal)/2;
+    if (specified_thingidx) printdebug("sector #%d: line #%d: light #%d in the wall!", sector-&XLevel.Sectors[0], ldef-&XLevel.Lines[0], thingidx);
+  }
+  if (mdir) {
+    if (specified_thingidx) printdebug("sector #%d: move light #%d out of the walls with %s!", sector-&XLevel.Sectors[0], thingidx, mdir);
+    org += mdir*4;
   }
 }
 
