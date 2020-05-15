@@ -327,7 +327,8 @@ set(PSIM_SOURCES
   p_terrain.cpp
   p_thinker.cpp
   p_thinker.h
-  p_trace.cpp
+  p_trace_bsp.cpp
+  p_trace_sight.cpp
   p_trace_light.cpp
   p_world.cpp
   p_world.h
