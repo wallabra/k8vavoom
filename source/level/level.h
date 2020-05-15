@@ -567,6 +567,10 @@ public:
   // bugfixed algo
   subsector_t *PointInSubsector (const TVec &point) const noexcept;
 
+  bool IsPointInSubsector2D (const subsector_t *sub, TVec in) const noexcept;
+  // checks all subsectors
+  bool IsPointInSector2D (const sector_t *sec, TVec in) const noexcept;
+
   inline bool HasPVS () const noexcept { return !!VisData; }
 
   //const vuint8 *LeafPVS (const subsector_t *ss) const;

@@ -273,7 +273,7 @@ void VLevel::GroupLines () {
     if (SecLineCount[it.index()] != sector->linecount) Sys_Error("GroupLines: miscounted");
 
     float bbox2d[4];
-    int block;
+    //int block;
 
     ClearBox2D(bbox2d);
     for (int j = 0; j < sector->linecount; ++j) {
@@ -286,6 +286,7 @@ void VLevel::GroupLines () {
     sector->soundorg = TVec((bbox2d[BOX2D_RIGHT]+bbox2d[BOX2D_LEFT])/2.0f, (bbox2d[BOX2D_TOP]+bbox2d[BOX2D_BOTTOM])/2.0f, 0);
 
     // adjust bounding box to map blocks
+    /*
     block = clampval(MapBlock(bbox2d[BOX2D_TOP]-BlockMapOrgY+MAXRADIUS), 0, BlockMapHeight-1);
     sector->blockbox[BOX2D_TOP] = block;
 
@@ -297,6 +298,7 @@ void VLevel::GroupLines () {
 
     block = clampval(MapBlock(bbox2d[BOX2D_LEFT]-BlockMapOrgX-MAXRADIUS), 0, BlockMapWidth-1);
     sector->blockbox[BOX2D_LEFT] = block;
+    */
   }
 
   // collect neighbouring sectors

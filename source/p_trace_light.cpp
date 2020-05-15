@@ -43,6 +43,30 @@ static inline __attribute__((const)) float DivByScale (float v, float scale) { r
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct LightTraceInfo {
+  // the following should be set
+  TVec Start;
+  TVec End;
+  sector_t *StartSector;
+  sector_t *EndSector;
+  VLevel *Level;
+  // the following are working vars, and should not be set
+  TVec Delta; // (End-Start)
+  TPlane Plane;
+  TVec LineStart;
+  TVec LineEnd;
+
+  inline void setup (VLevel *alevel, const TVec &org, const TVec &dest, sector_t *sstart, sector_t *send) {
+    Level = alevel;
+    Start = org;
+    End = dest;
+    StartSector = (sstart ?: alevel->PointInSubsector(org)->sector);
+    EndSector = (send ?: alevel->PointInSubsector(dest)->sector);
+  }
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct PlaneHitInfo {
   TVec linestart;
   TVec lineend;
@@ -92,98 +116,6 @@ struct PlaneHitInfo {
 };
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-struct LightTraceInfo {
-  // the following should be set
-  TVec Start;
-  TVec End;
-  sector_t *StartSector;
-  sector_t *EndSector;
-  VLevel *Level;
-  // the following are working vars, and should not be set
-  TVec Delta; // (End-Start)
-  TPlane Plane;
-  TVec LineStart;
-  TVec LineEnd;
-
-  inline void setup (VLevel *alevel, const TVec &org, const TVec &dest, sector_t *sstart, sector_t *send) {
-    Level = alevel;
-    Start = org;
-    End = dest;
-    StartSector = (sstart ?: alevel->PointInSubsector(org)->sector);
-    EndSector = (send ?: alevel->PointInSubsector(dest)->sector);
-  }
-};
-
-
-//==========================================================================
-//
-//  LightCheckRegions
-//
-//==========================================================================
-static bool LightCheckRegions (const sector_t *sec, const TVec point) {
-  for (sec_region_t *reg = sec->eregions->next; reg; reg = reg->next) {
-    if (reg->regflags&(sec_region_t::RF_BaseRegion|sec_region_t::RF_OnlyVisual|sec_region_t::RF_NonSolid)) continue;
-    // get opening points
-    const float fz = reg->efloor.GetPointZClamped(point);
-    const float cz = reg->eceiling.GetPointZClamped(point);
-    if (fz >= cz) continue; // ignore paper-thin regions
-    // if we are inside it, we cannot pass
-    if (point.z >= fz && point.z <= cz) return false;
-  }
-  return true;
-}
-
-
-//==========================================================================
-//
-//  LightCanPassOpening
-//
-//  ignore 3d midtex here (for now)
-//
-//==========================================================================
-static bool LightCanPassOpening (const line_t *linedef, const TVec point) {
-  if (linedef->sidenum[1] == -1 || !linedef->backsector) return false; // single sided line
-
-  const sector_t *fsec = linedef->frontsector;
-  const sector_t *bsec = linedef->backsector;
-
-  if (!fsec || !bsec) return false;
-
-  // check base region first
-  const float ffz = fsec->floor.GetPointZClamped(point);
-  const float fcz = fsec->ceiling.GetPointZClamped(point);
-  const float bfz = bsec->floor.GetPointZClamped(point);
-  const float bcz = bsec->ceiling.GetPointZClamped(point);
-
-  const float pfz = max2(ffz, bfz);
-  const float pcz = max2(fcz, bcz);
-
-  // TODO: check for transparent doors here
-  if (pfz >= pcz) return false;
-
-  if (point.z <= pfz || point.z >= pcz) return false;
-
-  // fast algo for two sectors without 3d floors
-  if (!linedef->frontsector->Has3DFloors() &&
-      !linedef->backsector->Has3DFloors())
-  {
-    // no 3d regions, we're ok
-    return true;
-  }
-
-  // has 3d floors at least on one side, do full-featured search
-
-  // front sector
-  if (!LightCheckRegions(fsec, point)) return false;
-  // back sector
-  if (!LightCheckRegions(bsec, point)) return false;
-
-  // done
-  return true;
-}
-
-
 //==========================================================================
 //
 //  LightCheckPlanes
@@ -226,20 +158,90 @@ static bool LightCheckPlanes (LightTraceInfo &trace, sector_t *sector) {
 
 //==========================================================================
 //
-//  LightTraverse
+//  LightCheckRegions
+//
+//==========================================================================
+static bool LightCheckRegions (const sector_t *sec, const TVec point) {
+  for (sec_region_t *reg = sec->eregions->next; reg; reg = reg->next) {
+    if (reg->regflags&(sec_region_t::RF_BaseRegion|sec_region_t::RF_OnlyVisual|sec_region_t::RF_NonSolid)) continue;
+    // get opening points
+    const float fz = reg->efloor.GetPointZClamped(point);
+    const float cz = reg->eceiling.GetPointZClamped(point);
+    if (fz >= cz) continue; // ignore paper-thin regions
+    // if we are inside it, we cannot pass
+    if (point.z >= fz && point.z <= cz) return false;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  LightCanPassOpening
+//
+//  ignore 3d midtex here (for now)
+//
+//==========================================================================
+static bool LightCanPassOpening (const line_t *linedef, const TVec point) {
+  if (linedef->sidenum[1] == -1 || !linedef->backsector) return false; // single sided line
+
+  const sector_t *fsec = linedef->frontsector;
+  const sector_t *bsec = linedef->backsector;
+
+  if (!fsec || !bsec) return false;
+
+  // check base region first
+  const float ffz = fsec->floor.GetPointZClamped(point);
+  const float fcz = fsec->ceiling.GetPointZClamped(point);
+  const float bfz = bsec->floor.GetPointZClamped(point);
+  const float bcz = bsec->ceiling.GetPointZClamped(point);
+
+  const float pfz = max2(ffz, bfz); // highest floor
+  const float pcz = min2(fcz, bcz); // lowest ceiling
+
+  // closed sector?
+  // TODO: check for transparent doors here
+  if (pfz >= pcz) return false;
+
+  if (point.z <= pfz || point.z >= pcz) return false;
+
+  // fast algo for two sectors without 3d floors
+  if (!linedef->frontsector->Has3DFloors() &&
+      !linedef->backsector->Has3DFloors())
+  {
+    // no 3d regions, we're ok
+    return true;
+  }
+
+  // has 3d floors at least on one side, do full-featured search
+
+  // front sector
+  if (!LightCheckRegions(fsec, point)) return false;
+  // back sector
+  if (!LightCheckRegions(bsec, point)) return false;
+
+  // done
+  return true;
+}
+
+
+//==========================================================================
+//
+//  LightCheckLineHit
 //
 //  returns `false` if blocked
 //
 //==========================================================================
-static bool LightTraverse (LightTraceInfo &trace, const line_t *line, const float frac) {
+static bool LightCheckLineHit (LightTraceInfo &trace, const line_t *line, const float frac) {
   const int s1 = line->PointOnSide2(trace.Start);
   sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
   TVec hitpoint = trace.Start+frac*trace.Delta;
   trace.LineEnd = hitpoint;
   if (!LightCheckPlanes(trace, front)) return false;
-  trace.LineStart = trace.LineEnd;
 
+  trace.LineStart = trace.LineEnd;
   if (line->flags&ML_TWOSIDED) {
+    // crosses a two sided line
     if (LightCanPassOpening(line, hitpoint)) {
       if (line->alpha < 1.0f || (line->flags&ML_ADDITIVE)) return true;
 
@@ -347,7 +349,7 @@ static bool LightCheckLine (LightTraceInfo &trace, line_t *ld) {
   const float frac = num/den;
 
   // we don't care if our hits are in order, so don't bother collecting them
-  return LightTraverse(trace, ld, frac);
+  return LightCheckLineHit(trace, ld, frac);
 }
 
 
@@ -423,6 +425,28 @@ static bool LightPathTraverse (LightTraceInfo &trace) {
   // out of map, see nothing
   return false;
 }
+
+  #if 0
+  // check the line here, we can get out fast if we hit a one-sided line
+  if ((ld->flags&ML_TWOSIDED) == 0) {
+    /*
+    if (!LightTraverse(trace, ld, frac)) {
+      vassert(trace.Hit1S);
+      return false;
+    }
+    */
+    //const int s1 = ld->PointOnSide2(trace.Start);
+    const int s1 = (dot1 < -0.1f ? 1 : dot1 > 0.1f ? 0 : 2);
+    sector_t *front = (s1 == 0 || s1 == 2 ? ld->frontsector : ld->backsector);
+    TVec hitpoint = trace.Start+frac*trace.Delta;
+    trace.LineEnd = hitpoint;
+    if (!SightCheckPlanes(trace, front, (front == trace.StartSector))) return false;
+
+    trace.LineStart = trace.LineEnd;
+    trace.Hit1S = true;
+    return false; // stop
+  }
+  #endif
 
 
 //==========================================================================

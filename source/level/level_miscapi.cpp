@@ -200,3 +200,41 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
 
   return true;
 }
+
+
+//==========================================================================
+//
+//  VLevel::IsPointInSubsector2D
+//
+//==========================================================================
+bool VLevel::IsPointInSubsector2D (const subsector_t *sub, TVec in) const noexcept {
+  if (!sub || sub->numlines < 3) return false;
+  // check bounding box first
+  if (in.x < sub->bbox2d[BOX2D_MINX] || in.y < sub->bbox2d[BOX2D_MINY] ||
+      in.x > sub->bbox2d[BOX2D_MAXX] || in.y > sub->bbox2d[BOX2D_MAXY])
+  {
+    return false;
+  }
+  // the point should not be on a back side of any seg
+  const seg_t *seg = &Segs[sub->firstline];
+  for (int count = sub->numlines; count--; ++seg) {
+    if (seg->PointOnSide2(in) == 1) return false;
+  }
+  // it is inside
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VLevel::IsPointInSector
+//
+//==========================================================================
+bool VLevel::IsPointInSector2D (const sector_t *sec, TVec in) const noexcept {
+  if (!sec) return false;
+  for (const subsector_t *sub = sec->subsectors; sub; sub = sub->seclink) {
+    if (IsPointInSubsector2D(sub, in)) return true;
+  }
+  // it is outside
+  return false;
+}

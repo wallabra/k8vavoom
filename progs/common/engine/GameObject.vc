@@ -984,8 +984,8 @@ struct sector_t {
   // stone, metal, heavy, etc...
   int seqType;
 
-  // mapblock bounding box for height changes
-  int[4] blockbox;
+  // mapblock bounding box for height changes (not used anymore)
+  //int[4] blockbox;
 
   // origin for any sounds played by the sector
   TVec soundorg;
