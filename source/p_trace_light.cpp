@@ -369,6 +369,11 @@ static bool LightCheckLine (LightTraceInfo &trace, line_t *ld) {
   dot1 = ld->PointDistance(trace.Start);
   dot2 = ld->PointDistance(trace.End);
 
+  // if starting point is on a line, ignore this line
+  if (fabs(dot1) <= 0.1f) return true;
+  // if ending point is on a line, ignore this line
+  if (fabs(dot2) <= 0.1f) return true;
+
   // do not use multiplication to check: zero speedup, lost accuracy
   //if (dot1*dot2 >= 0) return true; // line isn't crossed
   if (dot1 < 0.0f && dot2 < 0.0f) return true; // didn't reached back side
