@@ -42,6 +42,37 @@ static inline __attribute__((const)) float TextureOffsetTScale (const VTexture *
 static inline __attribute__((const)) float DivByScale (float v, float scale) { return (scale > 0 ? v/scale : v); }
 
 
+// sadly, we have to collect lines, because sector plane checks depends on this
+static intercept_t *intercepts = nullptr;
+static unsigned interAllocated = 0;
+static unsigned interUsed = 0;
+
+
+//==========================================================================
+//
+//  ResetIntercepts
+//
+//==========================================================================
+static void ResetIntercepts () {
+  interUsed = 0;
+}
+
+
+//==========================================================================
+//
+//  EnsureFreeIntercept
+//
+//==========================================================================
+static inline void EnsureFreeIntercept () {
+  if (interAllocated <= interUsed) {
+    unsigned oldAlloc = interAllocated;
+    interAllocated = ((interUsed+4)|0xfffu)+1;
+    intercepts = (intercept_t *)Z_Realloc(intercepts, interAllocated*sizeof(intercept_t));
+    if (oldAlloc) GCon->Logf(NAME_Debug, "more interceptions allocated; interUsed=%u; allocated=%u (old=%u)", interUsed, interAllocated, oldAlloc);
+  }
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 struct LightTraceInfo {
   // the following should be set
@@ -101,6 +132,8 @@ struct PlaneHitInfo {
     // d2/(d2-d1) -- from end
 
     const float time = d1/(d1-d2);
+    if (time < 0.0f || time > 1.0f) return; // hit time is invalid
+
     if (!wasHit || time < besthtime) {
       bestIsSky = (plane.splane->pic == skyflatnum);
       besthtime = time;
@@ -341,15 +374,40 @@ static bool LightCheckLine (LightTraceInfo &trace, line_t *ld) {
     return false; // stop checking
   }
 
-  // store the line for later intersection testing
   // signed distance
   const float den = DotProduct(ld->normal, trace.Delta);
   if (fabsf(den) < 0.00001f) return true; // wtf?!
   const float num = ld->dist-DotProduct(trace.Start, ld->normal);
   const float frac = num/den;
 
-  // we don't care if our hits are in order, so don't bother collecting them
-  return LightCheckLineHit(trace, ld, frac);
+  // store the line for later intersection testing
+  intercept_t *icept;
+
+  EnsureFreeIntercept();
+  // find place to put our new record
+  // this is usually faster than sorting records, as we are traversing blockmap
+  // more-or-less in order
+  if (interUsed > 0) {
+    unsigned ipos = interUsed;
+    while (ipos > 0 && frac < intercepts[ipos-1].frac) --ipos;
+    // here we should insert at `ipos` position
+    if (ipos == interUsed) {
+      // as last
+      icept = &intercepts[interUsed++];
+    } else {
+      // make room
+      memmove(intercepts+ipos+1, intercepts+ipos, (interUsed-ipos)*sizeof(intercepts[0]));
+      ++interUsed;
+      icept = &intercepts[ipos];
+    }
+  } else {
+    icept = &intercepts[interUsed++];
+  }
+
+  icept->line = ld;
+  icept->frac = frac;
+
+  return true; // continue scanning
 }
 
 
@@ -387,6 +445,29 @@ static bool LightBlockLinesIterator (LightTraceInfo &trace, int x, int y) {
 
 //==========================================================================
 //
+//  LightTraverseIntercepts
+//
+//  Returns true if the traverser function returns true for all lines
+//
+//==========================================================================
+static bool LightTraverseIntercepts (LightTraceInfo &trace) {
+  int count = (int)interUsed;
+
+  if (count > 0) {
+    // go through in order
+    intercept_t *scan = intercepts;
+    for (int i = count; i--; ++scan) {
+      if (!LightCheckLineHit(trace, scan->line, scan->frac)) return false; // don't bother going further
+    }
+  }
+
+  trace.LineEnd = trace.End;
+  return LightCheckPlanes(trace, trace.EndSector);
+}
+
+
+//==========================================================================
+//
 //  LightPathTraverse
 //
 //  traces a light ray from `trace.Start` to `trace.End`
@@ -398,6 +479,8 @@ static bool LightBlockLinesIterator (LightTraceInfo &trace, int x, int y) {
 //==========================================================================
 static bool LightPathTraverse (LightTraceInfo &trace) {
   VBlockMapWalker walker;
+
+  ResetIntercepts();
 
   trace.LineStart = trace.Start;
   trace.Delta = trace.End-trace.Start;
@@ -417,36 +500,13 @@ static bool LightPathTraverse (LightTraceInfo &trace) {
     while (walker.next(mapx, mapy)) {
       if (!LightBlockLinesIterator(trace, mapx, mapy)) return false; // hit found
     }
-    // check ending sector planes
-    trace.LineEnd = trace.End;
-    return LightCheckPlanes(trace, trace.EndSector);
+    // couldn't early out, so go through the sorted list
+    return LightTraverseIntercepts(trace);
   }
 
   // out of map, see nothing
   return false;
 }
-
-  #if 0
-  // check the line here, we can get out fast if we hit a one-sided line
-  if ((ld->flags&ML_TWOSIDED) == 0) {
-    /*
-    if (!LightTraverse(trace, ld, frac)) {
-      vassert(trace.Hit1S);
-      return false;
-    }
-    */
-    //const int s1 = ld->PointOnSide2(trace.Start);
-    const int s1 = (dot1 < -0.1f ? 1 : dot1 > 0.1f ? 0 : 2);
-    sector_t *front = (s1 == 0 || s1 == 2 ? ld->frontsector : ld->backsector);
-    TVec hitpoint = trace.Start+frac*trace.Delta;
-    trace.LineEnd = hitpoint;
-    if (!SightCheckPlanes(trace, front, (front == trace.StartSector))) return false;
-
-    trace.LineStart = trace.LineEnd;
-    trace.Hit1S = true;
-    return false; // stop
-  }
-  #endif
 
 
 //==========================================================================

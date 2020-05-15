@@ -125,6 +125,8 @@ struct PlaneHitInfo {
     // d2/(d2-d1) -- from end
 
     const float time = d1/(d1-d2);
+    if (time < 0.0f || time > 1.0f) return; // hit time is invalid
+
     if (!wasHit || time < besthtime) {
       bestIsSky = (plane.splane->pic == skyflatnum);
       besthtime = time;
@@ -314,18 +316,18 @@ static bool SightCheckLine (SightTraceInfo &trace, line_t *ld) {
   // if the trace is parallel to the line plane, ignore it
   if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
 
-  // signed distance
-  const float den = DotProduct(ld->normal, trace.Delta);
-  if (fabsf(den) < 0.00001f) return true; // wtf?!
-  const float num = ld->dist-DotProduct(trace.Start, ld->normal);
-  const float frac = num/den;
-
   // if we hit an "early exit" line, don't bother doing anything more, the sight is blocked
   if (!ld->backsector || !(ld->flags&ML_TWOSIDED) || (ld->flags&trace.LineBlockMask)) {
     // note that we hit 1s line
     trace.Hit1S = true;
     return false;
   }
+
+  // signed distance
+  const float den = DotProduct(ld->normal, trace.Delta);
+  if (fabsf(den) < 0.00001f) return true; // wtf?!
+  const float num = ld->dist-DotProduct(trace.Start, ld->normal);
+  const float frac = num/den;
 
   // store the line for later intersection testing
   intercept_t *icept;
