@@ -216,6 +216,65 @@ menudef AdvVideoOptions {
   }
 
 
+  header "Lightmap Light Tracing";
+
+  option bool {
+    title = "Check textures in static trace";
+    cvar = r_lmap_texture_check_static;
+    help =
+      "Should static light tracer check textures to allow static light",
+      "shine through texture holes?";
+  }
+
+  option bool {
+    title = "Check textures in dynamic trace";
+    cvar = r_lmap_texture_check_dynamic;
+    help =
+      "Should static light tracer check textures to allow dynamic light",
+      "shine through texture holes?";
+  }
+
+  option numeric {
+    title = "Minimum texcheck dynamic radius";
+    cvar = r_lmap_texture_check_radius_dynamic;
+    step = 10;
+    min = 0;
+    max = 1000;
+    help =
+      "Do not check textures if dynamic light is smaller than this radius.";
+  }
+
+
+  header "Thing Light Tracing";
+
+  option bool {
+    title = "Check textures in static trace";
+    cvar = r_spr_texture_check_static;
+    help =
+      "Should static light tracer check textures to allow static light",
+      "shine through texture holes when checking thing lighting?";
+  }
+
+  option bool {
+    title = "Check textures in dynamic trace";
+    cvar = r_spr_texture_check_dynamic;
+    help =
+      "Should static light tracer check textures to allow dynamic light",
+      "shine through texture holes when checking thing lighting?";
+  }
+
+  option numeric {
+    title = "Minimum texcheck dynamic radius";
+    cvar = r_spr_texture_check_radius_dynamic;
+    step = 10;
+    min = 0;
+    max = 1000;
+    help =
+      "Do not check textures if dynamic light is smaller than this radius",
+      " when checking thing lighting.";
+  }
+
+
   /*
   header "Translucency";
 
@@ -248,11 +307,6 @@ menudef AdvVideoOptions {
   option bool {
     title = "Clip Dynamic Lights";
     cvar = r_dynamic_clip;
-  }
-
-  option bool {
-    title = "Properly Clip DynLights";
-    cvar = r_dynamic_clip_more;
     help =
       "Trace dynamic light sources to produce proper shadows, and"
       "to prevent bonuses shining through secret walls."
