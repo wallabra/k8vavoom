@@ -297,18 +297,21 @@ static bool SightCheckLine (SightTraceInfo &trace, line_t *ld) {
   ld->validcount = validcount;
 
   // signed distances from the line points to the trace line plane
-  float dot1 = trace.Plane.PointDistance(*ld->v1);
-  float dot2 = trace.Plane.PointDistance(*ld->v2);
+  const float ldot1 = trace.Plane.PointDistance(*ld->v1);
+  const float ldot2 = trace.Plane.PointDistance(*ld->v2);
 
   // do not use multiplication to check: zero speedup, lost accuracy
   //if (dot1*dot2 >= 0) return true; // line isn't crossed
-  if (dot1 < 0.0f && dot2 < 0.0f) return true; // didn't reached back side
+  if (ldot1 < 0.0f && ldot2 < 0.0f) return true; // didn't reached back side
   // if the line is parallel to the trace plane, ignore it
-  if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
+  if (ldot1 >= 0.0f && ldot2 >= 0.0f) return true; // didn't reached front side
 
   // signed distances from the trace points to the line plane
-  dot1 = ld->PointDistance(trace.Start);
-  dot2 = ld->PointDistance(trace.End);
+  const float dot1 = ld->PointDistance(trace.Start);
+  const float dot2 = ld->PointDistance(trace.End);
+
+  // if starting point is on a line, ignore this line
+  if (fabs(dot1) <= 0.1f) return true;
 
   // do not use multiplication to check: zero speedup, lost accuracy
   //if (dot1*dot2 >= 0) return true; // line isn't crossed
