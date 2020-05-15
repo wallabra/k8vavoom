@@ -35,31 +35,11 @@ static VCvarB r_lmap_texture_check("r_lmap_texture_check", true, "Check textures
 // blockmap light tracing
 //
 //**************************************************************************
-static intercept_t *intercepts = nullptr;
-static unsigned interAllocated = 0;
-static unsigned interUsed = 0;
-
-
 static inline __attribute__((const)) float TextureSScale (const VTexture *pic) { return pic->SScale; }
 static inline __attribute__((const)) float TextureTScale (const VTexture *pic) { return pic->TScale; }
 static inline __attribute__((const)) float TextureOffsetSScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->SScale : 1.0f); }
 static inline __attribute__((const)) float TextureOffsetTScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->TScale : 1.0f); }
 static inline __attribute__((const)) float DivByScale (float v, float scale) { return (scale > 0 ? v/scale : v); }
-
-
-//==========================================================================
-//
-//  EnsureFreeIntercept
-//
-//==========================================================================
-static inline void EnsureFreeIntercept () {
-  if (interAllocated <= interUsed) {
-    unsigned oldAlloc = interAllocated;
-    interAllocated = ((interUsed+4)|0xfffu)+1;
-    intercepts = (intercept_t *)Z_Realloc(intercepts, interAllocated*sizeof(intercept_t));
-    if (oldAlloc) GCon->Logf(NAME_Debug, "more interceptions allocated; interUsed=%u; allocated=%u (old=%u)", interUsed, interAllocated, oldAlloc);
-  }
-}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -241,11 +221,10 @@ static bool LightCheckPlanes (LightTraceInfo &trace, sector_t *sector) {
 //  returns `false` if blocked
 //
 //==========================================================================
-static bool LightTraverse (LightTraceInfo &trace, const intercept_t *in) {
-  line_t *line = in->line;
+static bool LightTraverse (LightTraceInfo &trace, const line_t *line, const float frac) {
   const int s1 = line->PointOnSide2(trace.Start);
   sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
-  TVec hitpoint = trace.Start+in->frac*trace.Delta;
+  TVec hitpoint = trace.Start+frac*trace.Delta;
   trace.LineEnd = hitpoint;
   if (!LightCheckPlanes(trace, front)) return false;
   trace.LineStart = trace.LineEnd;
@@ -314,29 +293,6 @@ static bool LightTraverse (LightTraceInfo &trace, const intercept_t *in) {
 
 //==========================================================================
 //
-//  LightTraverseIntercepts
-//
-//  returns `true` if the traverser function returns true for all lines
-//
-//==========================================================================
-static bool LightTraverseIntercepts (LightTraceInfo &trace) {
-  int count = (int)interUsed;
-
-  if (count > 0) {
-    // go through in order
-    intercept_t *scan = intercepts;
-    for (int i = count; i--; ++scan) {
-      if (!LightTraverse(trace, scan)) return false; // don't bother going further
-    }
-  }
-
-  trace.LineEnd = trace.End;
-  return LightCheckPlanes(trace, trace.EndSector);
-}
-
-
-//==========================================================================
-//
 //  LightCheckLine
 //
 //  return `true` if line is not crossed or put into intercept list
@@ -380,32 +336,8 @@ static bool LightCheckLine (LightTraceInfo &trace, line_t *ld) {
   const float num = ld->dist-DotProduct(trace.Start, ld->normal);
   const float frac = num/den;
 
-  // find place to put our new record
-  // this is usually faster than sorting records, as we are traversing blockmap
-  // more-or-less in order
-  EnsureFreeIntercept();
-  intercept_t *icept;
-  if (interUsed > 0) {
-    unsigned ipos = interUsed;
-    while (ipos > 0 && frac < intercepts[ipos-1].frac) --ipos;
-    // here we should insert at `ipos` position
-    if (ipos == interUsed) {
-      // as last
-      icept = &intercepts[interUsed++];
-    } else {
-      // make room
-      memmove(intercepts+ipos+1, intercepts+ipos, (interUsed-ipos)*sizeof(intercepts[0]));
-      ++interUsed;
-      icept = &intercepts[ipos];
-    }
-  } else {
-    icept = &intercepts[interUsed++];
-  }
-
-  icept->line = ld;
-  icept->frac = frac;
-
-  return true;
+  // we don't care if our hits are in order, so don't bother collecting them
+  return LightTraverse(trace, ld, frac);
 }
 
 
@@ -452,7 +384,6 @@ static bool LightBlockLinesIterator (LightTraceInfo &trace, const VLevel *level,
 static bool LightPathTraverse (LightTraceInfo &trace, VLevel *level) {
   VBlockMapWalker walker;
 
-  interUsed = 0;
   trace.LineStart = trace.Start;
   trace.Delta = trace.End-trace.Start;
 
@@ -480,8 +411,9 @@ static bool LightPathTraverse (LightTraceInfo &trace, VLevel *level) {
       }
       //if (--guard == 0) Sys_Error("DDA walker fuckup!");
     }
-    // couldn't early out, so go through the sorted list
-    return LightTraverseIntercepts(trace);
+    // check ending sector planes
+    trace.LineEnd = trace.End;
+    return LightCheckPlanes(trace, trace.EndSector);
   }
 
   // out of map, see nothing
