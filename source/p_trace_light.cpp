@@ -94,15 +94,25 @@ struct PlaneHitInfo {
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct LightTraceInfo {
+  // the following should be set
   TVec Start;
   TVec End;
-  TVec Delta;
-  TPlane Plane;
-  TVec LineStart;
-  TVec LineEnd;
   sector_t *StartSector;
   sector_t *EndSector;
   VLevel *Level;
+  // the following are working vars, and should not be set
+  TVec Delta; // (End-Start)
+  TPlane Plane;
+  TVec LineStart;
+  TVec LineEnd;
+
+  inline void setup (VLevel *alevel, const TVec &org, const TVec &dest, sector_t *sstart, sector_t *send) {
+    Level = alevel;
+    Start = org;
+    End = dest;
+    StartSector = (sstart ?: alevel->PointInSubsector(org)->sector);
+    EndSector = (send ?: alevel->PointInSubsector(dest)->sector);
+  }
 };
 
 
@@ -346,9 +356,9 @@ static bool LightCheckLine (LightTraceInfo &trace, line_t *ld) {
 //  LightBlockLinesIterator
 //
 //==========================================================================
-static bool LightBlockLinesIterator (LightTraceInfo &trace, const VLevel *level, int x, int y) {
-  int offset = y*level->BlockMapWidth+x;
-  polyblock_t *polyLink = level->PolyBlockMap[offset];
+static bool LightBlockLinesIterator (LightTraceInfo &trace, int x, int y) {
+  int offset = y*trace.Level->BlockMapWidth+x;
+  polyblock_t *polyLink = trace.Level->PolyBlockMap[offset];
   while (polyLink) {
     if (polyLink->polyobj) {
       // only check non-empty links
@@ -363,10 +373,10 @@ static bool LightBlockLinesIterator (LightTraceInfo &trace, const VLevel *level,
     polyLink = polyLink->next;
   }
 
-  offset = *(level->BlockMap+offset);
+  offset = *(trace.Level->BlockMap+offset);
 
-  for (const vint32 *list = level->BlockMapLump+offset+1; *list != -1; ++list) {
-    if (!LightCheckLine(trace, &level->Lines[*list])) return false;
+  for (const vint32 *list = trace.Level->BlockMapLump+offset+1; *list != -1; ++list) {
+    if (!LightCheckLine(trace, &trace.Level->Lines[*list])) return false;
   }
 
   return true; // everything was checked
@@ -377,39 +387,33 @@ static bool LightBlockLinesIterator (LightTraceInfo &trace, const VLevel *level,
 //
 //  LightPathTraverse
 //
-//  Traces a line from x1,y1 to x2,y2, calling the traverser function for
-//  each. Returns true if the traverser function returns true for all lines
+//  traces a light ray from `trace.Start` to `trace.End`
+//  `trace.StartSector` and `trace.EndSector` must be set
+//
+//  returns `true` if no obstacle was hit
+//  sets `trace.LineEnd` if something was hit
 //
 //==========================================================================
-static bool LightPathTraverse (LightTraceInfo &trace, VLevel *level) {
+static bool LightPathTraverse (LightTraceInfo &trace) {
   VBlockMapWalker walker;
 
   trace.LineStart = trace.Start;
   trace.Delta = trace.End-trace.Start;
 
-  if (fabs(trace.Delta.x) <= 0.0001f && fabs(trace.Delta.y) <= 0.0001f) {
+  if (fabs(trace.Delta.x) <= 1.0f && fabs(trace.Delta.y) <= 1.0f) {
     // vertical trace; check starting sector planes and get out
-    trace.Delta.x = trace.Delta.y = 0; // to simplify further checks
     trace.LineEnd = trace.End;
     // point cannot hit anything!
-    if (fabsf(trace.Delta.z) <= 0.0001f) {
-      trace.Delta.z = 0;
-      return false;
-    }
+    if (fabsf(trace.Delta.z) <= 1.0f) return false;
     return LightCheckPlanes(trace, trace.StartSector);
   }
 
-  if (walker.start(level, trace.Start.x, trace.Start.y, trace.End.x, trace.End.y)) {
+  if (walker.start(trace.Level, trace.Start.x, trace.Start.y, trace.End.x, trace.End.y)) {
     trace.Plane.SetPointDirXY(trace.Start, trace.Delta);
-    //++validcount;
-    level->IncrementValidCount();
+    trace.Level->IncrementValidCount();
     int mapx, mapy;
-    //int guard = 1000;
     while (walker.next(mapx, mapy)) {
-      if (!LightBlockLinesIterator(trace, level, mapx, mapy)) {
-        return false; // early out
-      }
-      //if (--guard == 0) Sys_Error("DDA walker fuckup!");
+      if (!LightBlockLinesIterator(trace, mapx, mapy)) return false; // hit found
     }
     // check ending sector planes
     trace.LineEnd = trace.End;
@@ -447,46 +451,15 @@ static VVA_CHECKRESULT inline bool isNotInsideBM (const TVec &pos, const VLevel 
 //  doesn't check pvs or reject
 //
 //==========================================================================
-bool VLevel::CastLightRay (sector_t *Sector, const TVec &org, const TVec &dest, sector_t *DestSector) {
+bool VLevel::CastLightRay (sector_t *startSector, const TVec &org, const TVec &dest, sector_t *endSector) {
   // if starting or ending point is out of blockmap bounds, don't bother tracing
   // we can get away with this, because nothing can see anything beyound the map extents
   if (isNotInsideBM(org, this)) return false;
   if (isNotInsideBM(dest, this)) return false;
 
-  if (lengthSquared(org-dest) <= 1) return true;
-
-  // do not use buggy vanilla algo here!
-
-  if (!Sector) Sector = PointInSubsector(org)->sector;
-
-  // killough 4/19/98: make fake floors and ceilings block view
-  if (Sector->heightsec) {
-    const sector_t *hs = Sector->heightsec;
-    if ((org.z <= hs->floor.GetPointZClamped(org) && dest.z >= hs->floor.GetPointZClamped(dest)) ||
-        (org.z >= hs->ceiling.GetPointZClamped(org) && dest.z <= hs->ceiling.GetPointZClamped(dest)))
-    {
-      return false;
-    }
-  }
-
-  sector_t *OtherSector = DestSector;
-  if (!OtherSector) OtherSector = PointInSubsector(dest)->sector;
-
-  if (OtherSector->heightsec) {
-    const sector_t *hs = OtherSector->heightsec;
-    if ((dest.z <= hs->floor.GetPointZClamped(dest) && org.z >= hs->floor.GetPointZClamped(org)) ||
-        (dest.z >= hs->ceiling.GetPointZClamped(dest) && org.z <= hs->ceiling.GetPointZClamped(org)))
-    {
-      return false;
-    }
-  }
+  if (lengthSquared(org-dest) <= 2.0f) return true;
 
   LightTraceInfo trace;
-
-  trace.StartSector = Sector;
-  trace.EndSector = OtherSector;
-  trace.Start = org;
-  trace.End = dest;
-  trace.Level = this;
-  return LightPathTraverse(trace, this);
+  trace.setup(this, org, dest, startSector, endSector);
+  return LightPathTraverse(trace);
 }
