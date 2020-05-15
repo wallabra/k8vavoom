@@ -651,7 +651,7 @@ public:
                    const TVec &dest, float radius, float height, bool skipBaseRegion=false, sector_t *DestSector=nullptr,
                    bool allowBetterSight=false, bool ignoreBlockAll=false, bool ignoreFakeFloors=false);
   // this is used to trace light rays (via blockmap)
-  bool CastLightRay (sector_t *Sector, const TVec &org, const TVec &dest, sector_t *DestSector=nullptr);
+  bool CastLightRay (bool textureCheck, sector_t *Sector, const TVec &org, const TVec &dest, sector_t *DestSector=nullptr);
 
   void SetCameraToTexture (VEntity *, VName, int);
 

@@ -35,7 +35,6 @@ VCvarB r_allow_ambient("r_allow_ambient", true, "Allow ambient lights?", CVAR_Ar
 VCvarB r_dynamic_lights("r_dynamic_lights", true, "Allow dynamic lights?", CVAR_Archive);
 VCvarB r_dynamic_clip("r_dynamic_clip", true, "Clip dynamic lights?", CVAR_Archive);
 VCvarB r_dynamic_clip_pvs("r_dynamic_clip_pvs", false, "Clip dynamic lights with PVS?", CVAR_Archive);
-VCvarB r_dynamic_clip_more("r_dynamic_clip_more", true, "Do some extra checks when clipping dynamic lights?", CVAR_Archive);
 VCvarB r_static_lights("r_static_lights", true, "Allow static lights?", CVAR_Archive);
 VCvarB r_light_opt_shadow("r_light_opt_shadow", false, "Check if light can potentially cast a shadow.", CVAR_Archive);
 VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How close dynamic lights should be to be filtered out?\n(0.2-0.4 is usually ok).", CVAR_Archive);
@@ -45,6 +44,10 @@ static VCvarB r_dynamic_light_better_vis_check("r_dynamic_light_better_vis_check
 
 extern VCvarB r_glow_flat;
 extern VCvarB r_lmap_recalc_moved_static;
+
+static VCvarB r_spr_texture_check_static("r_spr_texture_check_static", true, "Check textures of two-sided lines?", CVAR_Archive);
+static VCvarB r_spr_texture_check_dynamic("r_spr_texture_check_dynamic", true, "Check textures of two-sided lines?", CVAR_Archive);
+static VCvarI r_spr_texture_check_radius_dynamic("r_spr_texture_check_radius_dynamic", "300", "Disable texture check for dynamic lights with radius lower than this.", CVAR_Archive);
 
 
 #define RL_CLEAR_DLIGHT(_dl)  do { \
@@ -264,7 +267,7 @@ void VRenderLevelShared::PushDlights () {
       if (ownpp) l->origin += (*ownpp)->GetDrawDelta();
     }
     if (dlinfo[i].leafnum < 0) dlinfo[i].leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(l->origin)-Level->Subsectors);
-    //dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
+    //dlinfo[i].needTrace = (r_dynamic_clip && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
     //MarkLights(l, 1U<<i, Level->NumNodes-1, dlinfo[i].leafnum);
     //FIXME: this has one frame latency; meh for now
     LitCalcBBox = false; // we don't need any lists
@@ -887,6 +890,8 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     static_assert(sizeof(unsigned) >= sizeof(vuint32), "`unsigned` should be at least of `vuint32` size");
     const unsigned dlbits = (unsigned)sub->dlightbits;
+    const bool texCheck = r_spr_texture_check_dynamic.asBool();
+    const float texCheckRadus = r_spr_texture_check_radius_dynamic.asInt(); // float, to avoid conversions
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       // check visibility
       if (!(dlbits&(1U<<i))) continue;
@@ -895,8 +900,8 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
       const dlight_t &dl = DLights[i];
       if (lowner && lowner->ServerUId == dl.ownerUId) continue;
       // check potential visibility
+      const int leafnum = dlinfo[i].leafnum;
       if (dyn_facevis) {
-        const int leafnum = dlinfo[i].leafnum;
         //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
         if (leafnum < 0) continue;
         if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
@@ -917,7 +922,7 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
         }
         // trace light that needs shadows
         if (dynclip && !(dl.flags&dlight_t::NoShadow) && dlinfo[i].leafnum != snum && dlinfo[i].isNeedTrace()) {
-          if (!RadiusCastRay(sub->sector, p, dl.origin, radius, false/*r_dynamic_clip_more*/)) continue;
+          if (!RadiusCastRay((texCheck && dl.radius > texCheckRadus), sub->sector, p, (leafnum >= 0 ? Level->Subsectors[leafnum].sector : nullptr), dl.origin, radius)) continue;
         }
         //!if (dl.type&DLTYPE_Subtractive) add = -add;
         l += add;
@@ -943,7 +948,7 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
     if (!staticLightsFiltered) RefilterStaticLights();
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     const bool dynclip = true; //r_dynamic_clip.asBool();
-
+    const bool texCheck = r_spr_texture_check_static.asBool();
     // we know for sure what static light may affect the subsector, so there is no need to check 'em all
     const int snum = (int)(ptrdiff_t)(sub-&Level->Subsectors[0]);
     SubStaticLigtInfo *subslinfo = &SubStaticLights[snum];
@@ -966,7 +971,7 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
           if (add <= 1.0f) continue;
         }
         if (dynclip && stl->leafnum != snum) {
-          if (!RadiusCastRay(sub->sector, p, stl->origin, radius, false/*r_dynamic_clip_more*/)) continue;
+          if (!RadiusCastRay(texCheck, sub->sector, p, (stl->leafnum >= 0 ? Level->Subsectors[stl->leafnum].sector : nullptr), stl->origin, radius)) continue;
         }
         l += add;
         lr += add*((stl->color>>16)&255)/255.0f;
@@ -996,7 +1001,7 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
           if (add <= 1.0f) continue;
         }
         if (!isowned && r_dynamic_clip) {
-          if (!RadiusCastRay(sub->sector, p, stl->origin, radius, false/ *r_dynamic_clip_more* /)) continue;
+          if (!RadiusCastRay(sub->sector, p, stl->origin, radius)) continue;
         }
         l += add;
         lr += add*((stl->color>>16)&255)/255.0f;

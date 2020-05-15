@@ -27,9 +27,6 @@
 #include "server/sv_local.h"
 
 
-static VCvarB r_lmap_texture_check("r_lmap_texture_check", true, "Check textures of two-sided lines?", /*CVAR_Archive|*/CVAR_PreInit);
-
-
 //**************************************************************************
 //
 // blockmap light tracing
@@ -81,6 +78,7 @@ struct LightTraceInfo {
   sector_t *StartSector;
   sector_t *EndSector;
   VLevel *Level;
+  bool textureCheck;
   // the following are working vars, and should not be set
   TVec Delta; // (End-Start)
   TPlane Plane;
@@ -269,7 +267,7 @@ static bool LightCheck2SLinePass (LightTraceInfo &trace, const line_t *line, con
   if (!LightCanPassOpening(line, hitpoint)) return false;
 
   if (line->alpha < 1.0f || (line->flags&ML_ADDITIVE)) return true;
-  if (!r_lmap_texture_check) return true;
+  if (!trace.textureCheck) return true;
 
   // check texture
   int sidenum = line->PointOnSide2(trace.Start);
@@ -553,7 +551,7 @@ static VVA_CHECKRESULT inline bool isNotInsideBM (const TVec &pos, const VLevel 
 //  doesn't check pvs or reject
 //
 //==========================================================================
-bool VLevel::CastLightRay (sector_t *startSector, const TVec &org, const TVec &dest, sector_t *endSector) {
+bool VLevel::CastLightRay (bool textureCheck, sector_t *startSector, const TVec &org, const TVec &dest, sector_t *endSector) {
   // if starting or ending point is out of blockmap bounds, don't bother tracing
   // we can get away with this, because nothing can see anything beyound the map extents
   if (isNotInsideBM(org, this)) return false;
@@ -563,5 +561,6 @@ bool VLevel::CastLightRay (sector_t *startSector, const TVec &org, const TVec &d
 
   LightTraceInfo trace;
   trace.setup(this, org, dest, startSector, endSector);
+  trace.textureCheck = textureCheck;
   return LightPathTraverse(trace);
 }

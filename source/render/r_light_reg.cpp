@@ -38,6 +38,10 @@
 static VCvarB r_lmap_stfix_enabled("r_lmap_stfix_enabled", true, "Enable lightmap \"inside wall\" fixing?", CVAR_Archive);
 static VCvarF r_lmap_stfix_step("r_lmap_stfix_step", "2", "Lightmap \"inside wall\" texel step", CVAR_Archive);
 
+static VCvarB r_lmap_texture_check_static("r_lmap_texture_check_static", true, "Check textures of two-sided lines?", CVAR_Archive);
+static VCvarB r_lmap_texture_check_dynamic("r_lmap_texture_check_dynamic", true, "Check textures of two-sided lines?", CVAR_Archive);
+static VCvarI r_lmap_texture_check_radius_dynamic("r_lmap_texture_check_radius_dynamic", "300", "Disable texture check for dynamic lights with radius lower than this.", CVAR_Archive);
+
 VCvarI r_lmap_recalc_timeout("r_lmap_recalc_timeout", "20", "Do not use more than this number of milliseconds for static lightmap updates (0 means 'no limit').", CVAR_Archive);
 VCvarB r_lmap_recalc_static("r_lmap_recalc_static", true, "Recalc static lightmaps when map geometry changed?", CVAR_Archive);
 VCvarB r_lmap_recalc_moved_static("r_lmap_recalc_moved_static", true, "Recalc static lightmaps when static light source moved?", CVAR_Archive);
@@ -48,7 +52,6 @@ extern VCvarI r_ambient_min;
 extern VCvarB r_allow_ambient;
 extern VCvarB r_dynamic_clip;
 extern VCvarB r_dynamic_clip_pvs;
-extern VCvarB r_dynamic_clip_more;
 extern VCvarB r_glow_flat;
 
 vuint32 gf_dynlights_processed = 0;
@@ -216,7 +219,7 @@ bool VRenderLevelLightmap::CastStaticRay (float *dist, sector_t *srcsector, cons
   }
 
   if (!r_lmap_bsp_trace_static) {
-    if (!Level->CastLightRay(srcsector, p1, p2)) {
+    if (!Level->CastLightRay(r_lmap_texture_check_static, srcsector, p1, p2)) {
       // ray was blocked
       if (dist) *dist = 0.0f;
       return false;
@@ -974,8 +977,10 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
   */
 
   const bool hasPVS = Level->HasPVS();
-  const bool doCheckTrace = (r_dynamic_clip && r_dynamic_clip_more && r_allow_shadows);
+  const bool doCheckTrace = (r_dynamic_clip && r_allow_shadows);
   const bool useBSPTrace = r_lmap_bsp_trace_dynamic.asBool();
+  const bool texCheck = r_lmap_texture_check_dynamic.asBool();
+  const float texCheckMinRadius = r_lmap_texture_check_radius_dynamic.asInt(); // float, to avoid converions later
   linetrace_t Trace;
 
   for (unsigned lnum = 0; lnum < MAX_DLIGHTS; ++lnum) {
@@ -1076,7 +1081,7 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
               const TVec &p2 = *spt;
               //const TVec p2 = (*spt)+surfOffs;
               if (!useBSPTrace) {
-                if (!Level->CastLightRay(Level->Subsectors[dlinfo[lnum].leafnum].sector, dorg, p2, surfsector)) {
+                if (!Level->CastLightRay((texCheck && dl.radius > texCheckMinRadius), Level->Subsectors[dlinfo[lnum].leafnum].sector, dorg, p2, surfsector)) {
                   #ifdef VV_DEBUG_BMAP_TRACER
                   if (!Level->TraceLine(Trace, dorg, p2, SPF_NOBLOCKSIGHT)) continue;
                   GCon->Logf(NAME_Debug, "TRACEvsTRACE: org=(%g,%g,%g); dest=(%g,%g,%g); bmap=BLOCK; bsp=NON-BLOCK", dorg.x, dorg.y, dorg.z, p2.x, p2.y, p2.z);

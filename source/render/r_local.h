@@ -777,8 +777,8 @@ protected:
   // used in things rendering to calculate lighting in `ri`
   void SetupRIThingLighting (VEntity *ent, RenderStyleInfo &ri, bool asAmbient, bool allowBM);
 
-  // used in light checking
-  bool RadiusCastRay (sector_t *sector, const TVec &org, const TVec &dest, float radius, bool advanced);
+  // used in sprite lighting checks
+  bool RadiusCastRay (bool textureCheck, sector_t *sector, const TVec &org, sector_t *destsector, const TVec &dest, float radius);
 
 protected:
   virtual void RefilterStaticLights ();
