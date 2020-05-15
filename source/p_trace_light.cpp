@@ -40,6 +40,13 @@ static unsigned interAllocated = 0;
 static unsigned interUsed = 0;
 
 
+static inline __attribute__((const)) float TextureSScale (const VTexture *pic) { return pic->SScale; }
+static inline __attribute__((const)) float TextureTScale (const VTexture *pic) { return pic->TScale; }
+static inline __attribute__((const)) float TextureOffsetSScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->SScale : 1.0f); }
+static inline __attribute__((const)) float TextureOffsetTScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->TScale : 1.0f); }
+static inline __attribute__((const)) float DivByScale (float v, float scale) { return (scale > 0 ? v/scale : v); }
+
+
 //==========================================================================
 //
 //  EnsureFreeIntercept
@@ -55,6 +62,57 @@ static inline void EnsureFreeIntercept () {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct PlaneHitInfo {
+  TVec linestart;
+  TVec lineend;
+  bool bestIsSky;
+  bool wasHit;
+  float besthtime;
+
+  inline PlaneHitInfo (const TVec &alinestart, const TVec &alineend) noexcept
+    : linestart(alinestart)
+    , lineend(alineend)
+    , bestIsSky(false)
+    , wasHit(false)
+    , besthtime(9999.0f)
+  {}
+
+  inline TVec getPointAtTime (const float time) const noexcept __attribute__((always_inline)) {
+    return linestart+(lineend-linestart)*time;
+  }
+
+  inline TVec getHitPoint () const noexcept __attribute__((always_inline)) {
+    return linestart+(lineend-linestart)*(wasHit ? besthtime : 0.0f);
+  }
+
+  inline void update (const TSecPlaneRef &plane) noexcept {
+    const float d1 = plane.DotPointDist(linestart);
+    if (d1 < 0.0f) return; // don't shoot back side
+
+    const float d2 = plane.DotPointDist(lineend);
+    if (d2 >= 0.0f) return; // didn't hit plane
+
+    // d1/(d1-d2) -- from start
+    // d2/(d2-d1) -- from end
+
+    const float time = d1/(d1-d2);
+    if (!wasHit || time < besthtime) {
+      bestIsSky = (plane.splane->pic == skyflatnum);
+      besthtime = time;
+    }
+
+    wasHit = true;
+  }
+
+  inline void update (sec_plane_t &plane, bool flip=false) noexcept __attribute__((always_inline)) {
+    TSecPlaneRef pp(&plane, flip);
+    update(pp);
+  }
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct LightTraceInfo {
   TVec Start;
   TVec End;
@@ -94,7 +152,7 @@ static bool LightCheckRegions (const sector_t *sec, const TVec point) {
 //  ignore 3d midtex here (for now)
 //
 //==========================================================================
-static bool LightCanPassOpening (const line_t *linedef, const TVec point, const TVec dir) {
+static bool LightCanPassOpening (const line_t *linedef, const TVec point) {
   if (linedef->sidenum[1] == -1 || !linedef->backsector) return false; // single sided line
 
   const sector_t *fsec = linedef->frontsector;
@@ -136,156 +194,44 @@ static bool LightCanPassOpening (const line_t *linedef, const TVec point, const 
 }
 
 
-#define UPDATE_PLANE_HIT(plane_)  do { \
-  if (!LightCheckPlanePass((plane_), linestart, lineend, currhit, isSky)) { \
-    const float dist = (currhit-linestart).lengthSquared(); \
-    if (!wasHit || dist < besthdist) { \
-      besthit = currhit; \
-      bestIsSky = isSky; \
-      besthdist = dist; \
-    } \
-    wasHit = true; \
-  } \
-} while (0)
-
-
 //==========================================================================
 //
-//  LightCheckPlanePass
-//
-//  WARNING: `currhit` should not be the same as `lineend`!
-//
-//  returns `true` if plane wasn't hit
-//
-//==========================================================================
-static bool LightCheckPlanePass (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky) {
-  const float d1 = plane.DotPointDist(linestart);
-  if (d1 < 0.0f) return true; // don't shoot back side
-
-  const float d2 = plane.DotPointDist(lineend);
-  if (d2 >= 0.0f) return true; // didn't hit plane
-
-  //if (d2 > 0.0f) return true; // didn't hit plane (was >=)
-  //if (fabsf(d2-d1) < 0.0001f) return true; // too close to zero
-
-  //frac = d1/(d1-d2); // [0..1], from start
-
-  currhit = lineend;
-  // sky?
-  if (plane.splane->pic == skyflatnum) {
-    // don't shoot the sky!
-    isSky = true;
-  } else {
-    isSky = false;
-    currhit -= (lineend-linestart)*d2/(d2-d1);
-  }
-
-  // don't go any farther
-  return false;
-}
-//==========================================================================
-//
-//  LightCheckPassPlanes
-//
-//  checks all sector regions, returns `false` if any region plane was hit
-//  sets `outXXX` arguments on hit (and only on hit!)
-//  if `checkSectorBounds` is false, skip checking sector bounds
-//  (and the first sector region)
-//
-//  any `outXXX` can be `nullptr`
+//  LightCheckPlanes
 //
 //  returns `true` if no hit was detected
+//  sets `trace.LineEnd` if hit was detected
 //
 //==========================================================================
-static bool LightCheckPassPlanes (sector_t *sector, TVec linestart, TVec lineend,
-                                  TVec *outHitPoint=nullptr, bool *outIsSky=nullptr)
-{
-  if (!sector) return true;
-
-  TVec besthit = lineend;
-  bool bestIsSky = false;
-  TVec currhit(0.0f, 0.0f, 0.0f);
-  bool wasHit = false;
-  #ifdef INFINITY
-  float besthdist = INFINITY;
-  #else
-  float besthdist = 9999999.0f;
-  #endif
-  bool isSky = false;
-  TPlane bestHitPlane;
+static bool LightCheckPlanes (LightTraceInfo &trace, sector_t *sector) {
+  PlaneHitInfo phi(trace.LineStart, trace.LineEnd);
 
   // make fake floors and ceilings block view
-  TSecPlaneRef bfloor, bceil;
-  /*
-  sector_t *hs = sector->heightsec;
-  if (!hs) hs = sector;
-  bfloor.set(&hs->floor, false);
-  bceil.set(&hs->ceiling, false);
-  // check sector floor
-  UPDATE_PLANE_HIT(bfloor);
-  // check sector ceiling
-  UPDATE_PLANE_HIT(bceil);
-  */
   sector_t *hs = sector->heightsec;
   if (hs) {
-    bfloor.set(&hs->floor, false);
-    bceil.set(&hs->ceiling, false);
-    // check sector floor
-    if (GTextureManager.IsSightBlocking(hs->floor.pic)) {
-      UPDATE_PLANE_HIT(bfloor);
-    }
-    // check sector ceiling
-    if (GTextureManager.IsSightBlocking(hs->ceiling.pic)) {
-      UPDATE_PLANE_HIT(bceil);
-    }
+    if (GTextureManager.IsSightBlocking(hs->floor.pic)) phi.update(hs->floor);
+    if (GTextureManager.IsSightBlocking(hs->ceiling.pic)) phi.update(hs->ceiling);
   }
 
-  bfloor.set(&sector->floor, false);
-  bceil.set(&sector->ceiling, false);
-  // check sector floor
-  UPDATE_PLANE_HIT(bfloor);
-  // check sector ceiling
-  UPDATE_PLANE_HIT(bceil);
+  phi.update(sector->floor);
+  phi.update(sector->ceiling);
 
   for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&(sec_region_t::RF_BaseRegion|sec_region_t::RF_OnlyVisual|sec_region_t::RF_NonSolid)) continue;
     if ((reg->efloor.splane->flags&sec_region_t::RF_SkipFloorSurf) == 0) {
       if (GTextureManager.IsSightBlocking(reg->efloor.splane->pic)) {
-        UPDATE_PLANE_HIT(reg->efloor);
+        phi.update(reg->efloor);
       }
     }
     if ((reg->efloor.splane->flags&sec_region_t::RF_SkipCeilSurf) == 0) {
       if (GTextureManager.IsSightBlocking(reg->eceiling.splane->pic)) {
-        UPDATE_PLANE_HIT(reg->eceiling);
+        phi.update(reg->eceiling);
       }
     }
   }
 
-  if (!wasHit) return true;
-
-  // hit floor or ceiling
-  if (outHitPoint) *outHitPoint = besthit;
-  if (outIsSky) *outIsSky = bestIsSky;
-  return false;
+  if (phi.wasHit) trace.LineEnd = phi.getHitPoint();
+  return !phi.wasHit;
 }
-
-
-//==========================================================================
-//
-//  LightCheckPlanes
-//
-//==========================================================================
-static bool LightCheckPlanes (LightTraceInfo &trace, sector_t *sec) {
-  //k8: for some reason, real sight checks ignores base sector region
-  return LightCheckPassPlanes(sec, trace.LineStart, trace.LineEnd, &trace.LineEnd);
-}
-
-
-static inline __attribute__((const)) float TextureSScale (const VTexture *pic) { return pic->SScale; }
-static inline __attribute__((const)) float TextureTScale (const VTexture *pic) { return pic->TScale; }
-static inline __attribute__((const)) float TextureOffsetSScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->SScale : 1.0f); }
-static inline __attribute__((const)) float TextureOffsetTScale (const VTexture *pic) { return (pic->bWorldPanning ? pic->TScale : 1.0f); }
-static inline __attribute__((const)) float DivByScale (float v, float scale) { return (scale > 0 ? v/scale : v); }
 
 
 //==========================================================================
@@ -305,7 +251,7 @@ static bool LightTraverse (LightTraceInfo &trace, const intercept_t *in) {
   trace.LineStart = trace.LineEnd;
 
   if (line->flags&ML_TWOSIDED) {
-    if (LightCanPassOpening(line, hitpoint, trace.Delta)) {
+    if (LightCanPassOpening(line, hitpoint)) {
       if (line->alpha < 1.0f || (line->flags&ML_ADDITIVE)) return true;
 
       if (!r_lmap_texture_check) return true;
