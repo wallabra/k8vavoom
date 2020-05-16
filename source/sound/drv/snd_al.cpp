@@ -656,13 +656,15 @@ void VOpenALDevice::NotifySoundLoaded (int sound_id, bool success) {
 //==========================================================================
 bool VOpenALDevice::OpenStream (int Rate, int Bits, int Channels) {
   StrmSampleRate = Rate;
-  StrmFormat = Channels == 2 ?
-    Bits == 8 ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16 :
-    Bits == 8 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
+  StrmFormat =
+    Channels == 2 ?
+      (Bits == 8 ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16) :
+      (Bits == 8 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16);
 
+  CloseStream(); // just in case
   ClearError();
   alGenSources(1, &StrmSource);
-  if (IsError("cannot generate source")) return false;
+  if (IsError("cannot generate source")) { StrmSource = 0; return false; }
   activeSourceSet.put(StrmSource, true);
   alSourcei(StrmSource, AL_SOURCE_RELATIVE, AL_TRUE);
   alGenBuffers(NUM_STRM_BUFFERS, StrmBuffers);
