@@ -89,15 +89,15 @@ IMPLEMENT_FUNCTION(VGameInfo, get_isInWipe) {
 //==========================================================================
 bool VGameInfo::IsPaused (bool ignoreOpenConsole) {
   if (NetMode <= NM_TitleMap) return false;
-#ifdef CLIENT
-  // in single player pause game if in menu or console
+  // should we totally ignore pause flag in server mode?
   return
-    (Flags&GIF_Paused) ||
-    IsInWipe() ||
-    (NetMode == NM_Standalone && (MN_Active() || (!ignoreOpenConsole && C_Active())));
-#else
-  return !!(Flags&GIF_Paused);
+    !!(Flags&GIF_Paused)
+#ifdef CLIENT
+    // in single player pause game if in menu or console
+    || IsInWipe() ||
+    (NetMode == NM_Standalone && (MN_Active() || (!ignoreOpenConsole && C_Active())))
 #endif
+  ;
 }
 
 
