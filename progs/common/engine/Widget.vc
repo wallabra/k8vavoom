@@ -204,7 +204,7 @@ final void SetFullScaledSize (int mywdt, int myhgt, optional bool proportional/*
 // ////////////////////////////////////////////////////////////////////////// //
 //  Creation and destruction of widgets.
 native final spawner Widget NewChild (class!Widget ChildClass);
-override native final void Destroy ();
+override native /*final*/ void Destroy ();
 // do not call this! ;-)
 native final void DestroyAllChildren ();
 
