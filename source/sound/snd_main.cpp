@@ -477,9 +477,7 @@ void VAudio::PlaySound (int InSoundId, const TVec &origin, const TVec &velocity,
   int chan = GetChannel(sound_id, origin_id, channel, priority);
   if (chan == -1) return; // no free channels
 
-  if (developer) {
-    if (cli_DebugSound > 0) GCon->Logf(NAME_Dev, "PlaySound: sound(%d)='%s'; origin_id=%d; channel=%d; chan=%d", sound_id, *GSoundManager->S_sfx[sound_id].TagName, origin_id, channel, chan);
-  }
+  if (cli_DebugSound > 0) GCon->Logf(NAME_Debug, "PlaySound: sound(%d)='%s'; origin_id=%d; channel=%d; chan=%d; loop=%d", sound_id, *GSoundManager->S_sfx[sound_id].TagName, origin_id, channel, chan, (int)Loop);
 
   float pitch = 1.0f;
   if (snd_random_pitch_enabled) {
@@ -800,6 +798,10 @@ void VAudio::UpdateSfx () {
 
     // still playing?
     if (!SoundDevice->IsChannelPlaying(Channel[i].handle)) {
+      if (cli_DebugSound > 0 && Channel[i].sound_id >= 0) {
+        GCon->Logf(NAME_Debug, "UpdateSfx: finished sound(%d)='%s'; origin_id=%d; channel=%d; chan=%d; loop=%d",
+          Channel[i].sound_id, *GSoundManager->S_sfx[Channel[i].sound_id].TagName, Channel[i].origin_id, Channel[i].channel, i, (int)Channel[i].Loop);
+      }
       StopChannel(i);
       DeallocChannel(i);
       continue;
