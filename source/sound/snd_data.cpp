@@ -28,7 +28,11 @@
 
 #define VV_ALLOW_SFX_TRUNCATION
 
+#ifdef CLIENT
 extern int cli_DebugSound;
+#else
+enum { cli_DebugSound = 0 };
+#endif
 
 
 static VCvarB snd_verbose_truncate("snd_verbose_truncate", false, "Show silence-truncated sounds?", CVAR_Archive);
