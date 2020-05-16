@@ -201,6 +201,37 @@ protected:
   // ignores cancel/consume, will prevent event modification
   void BroadcastEvent (event_t *evt);
 
+public: // iterators
+  // the iterators will survive widget deletion in called method
+  struct WidgetIterator {
+  public:
+    VWidget *curr;
+    VWidget *next;
+    bool fwd;
+
+    WidgetIterator () = delete;
+
+    inline WidgetIterator (const WidgetIterator &w) noexcept { curr = w.curr; next = w.next; fwd = w.fwd; }
+
+    inline WidgetIterator (VWidget *first, bool afwd) noexcept
+      : curr(first)
+      , next(first ? (afwd ? first->NextWidget : first->PrevWidget) : nullptr)
+      , fwd(afwd)
+    {}
+
+    inline WidgetIterator &operator = (const WidgetIterator &w) noexcept { curr = w.curr; next = w.next; fwd = w.fwd; return *this; }
+
+    inline WidgetIterator begin () noexcept { return WidgetIterator(*this); }
+    inline WidgetIterator end () noexcept { return WidgetIterator(nullptr, fwd); }
+    inline bool operator == (const WidgetIterator &b) const noexcept { return (curr == b.curr && fwd == b.fwd); }
+    inline bool operator != (const WidgetIterator &b) const noexcept { return (curr != b.curr || fwd != b.fwd); }
+    inline VWidget *operator * () const noexcept { return curr; } /* required for iterator */
+    inline void operator ++ () noexcept { curr = next; next = (curr ? (fwd ? curr->NextWidget : curr->PrevWidget) : nullptr); } /* this is enough for iterator */
+  };
+
+  WidgetIterator fromFirstChild () const noexcept { return WidgetIterator(FirstChildWidget, true); }
+  WidgetIterator fromLastChild () const noexcept { return WidgetIterator(LastChildWidget, false); }
+
 public:
   virtual void PostCtor () override; // this is called after defaults were blit
 
@@ -252,7 +283,7 @@ public:
     if (IsGoingToDie()) return false;
     if (IsWantMouse()) return true;
     if (bRecurse) {
-      for (const VWidget *w = LastChildWidget; w; w = w->PrevWidget) {
+      for (auto &&w : fromLastChild()) {
         if (w->IsWantMouseInput(true)) return true;
       }
     }

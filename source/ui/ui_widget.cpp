@@ -131,7 +131,7 @@ void VWidget::CleanupWidgets () {
 //
 //==========================================================================
 void VWidget::MarkChildrenDead () {
-  for (VWidget *w = FirstChildWidget; w; w = w->NextWidget) w->MarkDead();
+  for (auto &&w : fromFirstChild()) w->MarkDead();
 }
 
 
@@ -289,7 +289,7 @@ VRootWidget *VWidget::GetRootWidget () noexcept {
 //==========================================================================
 VWidget *VWidget::FindFirstOnTopChild () noexcept {
   // start from the last widget, because it is likely to be on top
-  for (VWidget *w = LastChildWidget; w; w = w->PrevWidget) {
+  for (auto &&w : fromLastChild()) {
     if (!w->IsOnTopFlag()) return w->NextWidget;
   }
   return nullptr;
@@ -303,7 +303,7 @@ VWidget *VWidget::FindFirstOnTopChild () noexcept {
 //==========================================================================
 VWidget *VWidget::FindLastNormalChild () noexcept {
   // start from the last widget, because it is likely to be on top
-  for (VWidget *w = LastChildWidget; w; w = w->PrevWidget) {
+  for (auto &&w : fromLastChild()) {
     if (!w->IsOnTopFlag()) return w;
   }
   return nullptr;
@@ -337,6 +337,8 @@ void VWidget::LinkToParentBefore (VWidget *w) noexcept {
     if (ParentWidget->FirstChildWidget == this) return; // already there
     // unlink from current location
     UnlinkFromParent();
+    vassert(!PrevWidget);
+    vassert(!NextWidget);
     // link to bottom (i.e. as first child)
     PrevWidget = nullptr;
     NextWidget = ParentWidget->FirstChildWidget;
@@ -346,6 +348,8 @@ void VWidget::LinkToParentBefore (VWidget *w) noexcept {
     if (w->PrevWidget == this) return; // already there
     // unlink from current location
     UnlinkFromParent();
+    vassert(!PrevWidget);
+    vassert(!NextWidget);
     // link before `w`
     PrevWidget = w->PrevWidget;
     NextWidget = w;
@@ -369,6 +373,8 @@ void VWidget::LinkToParentAfter (VWidget *w) noexcept {
     if (ParentWidget->LastChildWidget == this) return; // already there
     // unlink from current location
     UnlinkFromParent();
+    vassert(!PrevWidget);
+    vassert(!NextWidget);
     // link to top (i.e. as last child)
     PrevWidget = ParentWidget->LastChildWidget;
     NextWidget = nullptr;
@@ -378,6 +384,8 @@ void VWidget::LinkToParentAfter (VWidget *w) noexcept {
     if (w->NextWidget == this) return; // already there
     // unlink from current location
     UnlinkFromParent();
+    vassert(!PrevWidget);
+    vassert(!NextWidget);
     // link after `w`
     PrevWidget = w;
     NextWidget = w->NextWidget;
@@ -523,7 +531,7 @@ void VWidget::ClipTree () noexcept {
   }
 
   // set up clipping rectangles in child widgets
-  for (VWidget *W = FirstChildWidget; W; W = W->NextWidget) W->ClipTree();
+  for (auto &&W : fromFirstChild()) W->ClipTree();
 }
 
 
@@ -662,21 +670,21 @@ void VWidget::SetCurrentFocusChild (VWidget *NewFocus) {
 //==========================================================================
 void VWidget::FindNewFocus () {
   if (CurrentFocusChild) {
-    for (VWidget *W = CurrentFocusChild->NextWidget; W; W = W->NextWidget) {
+    for (auto &&W : WidgetIterator(CurrentFocusChild->NextWidget, true)) {
       if (W->CanBeFocused()) {
         SetCurrentFocusChild(W);
         return;
       }
     }
 
-    for (VWidget *W = CurrentFocusChild->PrevWidget; W; W = W->PrevWidget) {
+    for (auto &&W : WidgetIterator(CurrentFocusChild->PrevWidget, false)) {
       if (W->CanBeFocused()) {
         SetCurrentFocusChild(W);
         return;
       }
     }
   } else {
-    for (VWidget *W = FirstChildWidget; W; W = W->NextWidget) {
+    for (auto &&W : fromFirstChild()) {
       if (W->CanBeFocused()) {
         SetCurrentFocusChild(W);
         return;
@@ -695,7 +703,7 @@ void VWidget::FindNewFocus () {
 //==========================================================================
 VWidget *VWidget::GetWidgetAt (float X, float Y, bool allowDisabled) noexcept {
   if (!allowDisabled && !IsEnabled(false)) return nullptr; // don't perform recursive check
-  for (VWidget *W = LastChildWidget; W; W = W->PrevWidget) {
+  for (auto &&W : fromLastChild()) {
     if (!IsVisibleFlag()) continue;
     if (W->IsGoingToDie()) continue;
     if (X >= W->ClipRect.ClipX1 && X < W->ClipRect.ClipX2 &&
@@ -743,7 +751,7 @@ void VWidget::DrawTree () {
   OnDraw();
 
   // draw chid widgets
-  for (VWidget *c = FirstChildWidget; c; c = c->NextWidget) {
+  for (auto &&c : fromFirstChild()) {
     if (c->IsGoingToDie()) continue;
     if (SetupScissor()) scissorSet = true;
     c->DrawTree();
@@ -766,7 +774,7 @@ void VWidget::DrawTree () {
 void VWidget::TickTree (float DeltaTime) {
   if (IsGoingToDie()) return;
   if (IsTickEnabledFlag()) Tick(DeltaTime);
-  for (VWidget *c = FirstChildWidget; c; c = c->NextWidget) {
+  for (auto &&c : fromFirstChild()) {
     if (c->IsGoingToDie()) continue;
     c->TickTree(DeltaTime);
   }
@@ -1449,7 +1457,7 @@ void VWidget::BroadcastEvent (event_t *evt) {
   event_t evsaved = *evt;
   OnEvent(evt);
   *evt = evsaved;
-  for (VWidget *w = LastChildWidget; w; w = w->PrevWidget) {
+  for (auto &&w : fromLastChild()) {
     if (w->IsGoingToDie()) continue;
     w->BroadcastEvent(evt);
     *evt = evsaved;
