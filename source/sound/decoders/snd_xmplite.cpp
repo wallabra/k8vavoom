@@ -69,6 +69,7 @@ private:
 class VXMPSampleLoader : public VSampleLoader {
 public:
   virtual void Load (sfxinfo_t &, VStream &) override;
+  virtual const char *GetName () const noexcept override;
 };
 
 IMPLEMENT_AUDIO_CODEC(VXMPAudioCodec, "XMP", false); // without signature (oh, well...)
@@ -295,4 +296,14 @@ void VXMPSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
     LoadFromAudioCodec(Sfx, Codec);
   }
   delete Codec;
+}
+
+
+//==========================================================================
+//
+//  VXMPSampleLoader::GetName
+//
+//==========================================================================
+const char *VXMPSampleLoader::GetName () const noexcept {
+  return "xmp";
 }

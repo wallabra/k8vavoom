@@ -69,6 +69,7 @@ protected:
 class VFlacSampleLoader : public VSampleLoader {
 public:
   virtual void Load (sfxinfo_t &, VStream &) override;
+  virtual const char *GetName () const noexcept override;
 };
 
 
@@ -295,4 +296,14 @@ void VFlacSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
     LoadFromAudioCodec(Sfx, Codec);
   }
   delete Codec;
+}
+
+
+//==========================================================================
+//
+//  VFlacSampleLoader::GetName
+//
+//==========================================================================
+const char *VFlacSampleLoader::GetName () const noexcept {
+  return "flac/dr";
 }

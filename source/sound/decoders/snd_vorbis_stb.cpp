@@ -78,6 +78,7 @@ protected:
 class VVorbisSampleLoader : public VSampleLoader {
 public:
   virtual void Load (sfxinfo_t &, VStream &) override;
+  virtual const char *GetName () const noexcept override;
 };
 
 IMPLEMENT_AUDIO_CODEC(VVorbisAudioCodec, "Vorbis(stb)", true); // with signature
@@ -395,7 +396,7 @@ VAudioCodec *VVorbisAudioCodec::Create (VStream *InStrm, const vuint8 sign[], in
 
 //==========================================================================
 //
-//  VVorbisAudioCodec::Create
+//  VVorbisSampleLoader::Create
 //
 //==========================================================================
 void VVorbisSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
@@ -407,4 +408,14 @@ void VVorbisSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
     LoadFromAudioCodec(Sfx, Codec);
   }
   delete Codec;
+}
+
+
+//==========================================================================
+//
+//  VVorbisSampleLoader::GetName
+//
+//==========================================================================
+const char *VVorbisSampleLoader::GetName () const noexcept {
+  return "vorbis/stb";
 }

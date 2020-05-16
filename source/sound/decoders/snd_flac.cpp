@@ -59,6 +59,7 @@ public:
   };
 
   virtual void Load (sfxinfo_t &, VStream &) override;
+  virtual const char *GetName () const noexcept override;
 };
 
 
@@ -307,6 +308,16 @@ void VFlacSampleLoader::FStream::metadata_callback (const FLAC__StreamDecoder *d
 //
 //==========================================================================
 void VFlacSampleLoader::FStream::error_callback (const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderErrorStatus status, void *client_data) {
+}
+
+
+//==========================================================================
+//
+//  VFlacSampleLoader::GetName
+//
+//==========================================================================
+const char *VFlacSampleLoader::GetName () const noexcept {
+  return "flac";
 }
 
 

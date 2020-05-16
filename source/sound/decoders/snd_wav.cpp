@@ -47,6 +47,7 @@ static_assert(sizeof(FWavFormatDesc) == 2+2+4+4+2+2, "invalid size of FWavFormat
 class VWaveSampleLoader : public VSampleLoader {
 public:
   virtual void Load (sfxinfo_t &, VStream &) override;
+  virtual const char *GetName () const noexcept override;
 };
 
 
@@ -96,6 +97,16 @@ static int FindRiffChunk (VStream &Strm, const char *ID) {
     if (Strm.IsError()) return -1;
   }
   return -1;
+}
+
+
+//==========================================================================
+//
+//  VWaveSampleLoader::GetName
+//
+//==========================================================================
+const char *VWaveSampleLoader::GetName () const noexcept {
+  return "wav";
 }
 
 

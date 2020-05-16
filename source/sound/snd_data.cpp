@@ -28,6 +28,9 @@
 
 #define VV_ALLOW_SFX_TRUNCATION
 
+extern int cli_DebugSound;
+
+
 static VCvarB snd_verbose_truncate("snd_verbose_truncate", false, "Show silence-truncated sounds?", CVAR_Archive);
 
 //k8: it seems to be weirdly unstable (at least under windoze). sigh.
@@ -38,7 +41,9 @@ static VCvarB snd_bgloading_sfx("snd_bgloading_sfx", false, "Load sounds in back
 class VRawSampleLoader : public VSampleLoader {
 public:
   virtual void Load (sfxinfo_t &, VStream &) override;
+  virtual const char *GetName () const noexcept override;
 };
+const char *VRawSampleLoader::GetName () const noexcept { return "raw"; }
 #endif
 
 
@@ -1139,7 +1144,7 @@ bool VSoundManager::LoadSoundInternal (int sound_id) {
     Ldr->Load(*sfx, *Strm);
     if (sfx->Data) {
       //GCon->Logf("sound '%s' is %s", *W_FullLumpName(Lump), typeid(*Ldr).name());
-      //if (sndThreadDebug) fprintf(stderr, "STRD: loaded sound #%d (uc=%d) (%s : %s) format is '%s'\n", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(Lump), typeid(*Ldr).name());
+      if (cli_DebugSound) GCon->Logf(NAME_Debug, "STRD: loaded sound #%d (uc=%d) (%s : %s) format is '%s'", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(Lump), Ldr->GetName());
       break;
     }
   }
@@ -1148,7 +1153,7 @@ bool VSoundManager::LoadSoundInternal (int sound_id) {
 
   if (!sfx->Data) {
     //soundsWarned.put(*S_sfx[sound_id].TagName);
-    //GCon->Logf(NAME_Warning, "Failed to load sound '%s' (%s)", *S_sfx[sound_id].TagName, *W_FullLumpName(Lump));
+    if (cli_DebugSound) GCon->Logf(NAME_Debug, "Failed to load sound '%s' (%s)", *S_sfx[sound_id].TagName, *W_FullLumpName(Lump));
     MyThreadLocker lock(&loaderLock);
     sfx->LumpNum = Lump;
     sfx->loadedState = sfxinfo_t::ST_Invalid;

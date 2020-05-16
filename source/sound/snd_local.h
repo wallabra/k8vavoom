@@ -274,6 +274,7 @@ public:
 public:
   VSampleLoader () { Next = List; List = this; }
   virtual void Load (sfxinfo_t &Sfx, VStream &Strm) = 0;
+  virtual const char *GetName () const noexcept = 0;
 
   // codec must be initialized, and it will not be owned
   void LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec);

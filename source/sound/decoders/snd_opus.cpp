@@ -59,6 +59,7 @@ public:
 class VOpusSampleLoader : public VSampleLoader {
 public:
   virtual void Load (sfxinfo_t &, VStream &) override;
+  virtual const char *GetName () const noexcept override;
 };
 
 #ifdef VV_BUILTIN_OPUS
@@ -276,4 +277,14 @@ void VOpusSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
     LoadFromAudioCodec(Sfx, Codec);
   }
   delete Codec;
+}
+
+
+//==========================================================================
+//
+//  VOpusAudioCodec::GetName
+//
+//==========================================================================
+const char *VOpusSampleLoader::GetName () const noexcept {
+  return "opus";
 }

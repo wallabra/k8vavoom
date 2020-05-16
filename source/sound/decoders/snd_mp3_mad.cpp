@@ -67,6 +67,7 @@ public:
 class VMp3SampleLoader : public VSampleLoader {
 public:
   virtual void Load (sfxinfo_t &Sfx, VStream &Stream) override;
+  virtual const char *GetName () const noexcept override;
 };
 
 
@@ -314,4 +315,14 @@ void VMp3SampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
     LoadFromAudioCodec(Sfx, Codec);
   }
   delete Codec;
+}
+
+
+//==========================================================================
+//
+//  VMp3SampleLoader::GetName
+//
+//==========================================================================
+const char *VMp3SampleLoader::GetName () const noexcept {
+  return "mp3/mad";
 }
