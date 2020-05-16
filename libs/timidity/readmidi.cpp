@@ -131,11 +131,11 @@ static int dumpstring(MidiSong* song, int32 len, const char* label)
    be linked to the event list */
 static MidiEventList* read_midi_event(MidiSong* song)
 {
-	static uint8 laststatus, lastchan;
-	static uint8 nrpn=0, rpn_msb[16], rpn_lsb[16]; /* one per channel */
-	uint8 me, type, a,b,c;
-	int32 len;
-	MidiEventList *new_ev;
+	static uint8 laststatus = 0, lastchan = 0;
+	static uint8 nrpn=0, rpn_msb[16]={0}, rpn_lsb[16]={0}; /* one per channel */
+	uint8 me = 0, type = 0, a = 0, b = 0, c = 0;
+	int32 len = 0;
+	MidiEventList *new_ev = NULL;
 
 	for (;;)
 	{
