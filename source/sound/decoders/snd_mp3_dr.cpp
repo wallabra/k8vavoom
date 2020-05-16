@@ -68,6 +68,7 @@ protected:
 
 class VMP3SampleLoader : public VSampleLoader {
 public:
+  VMP3SampleLoader () : VSampleLoader(false) {} // without signature
   virtual void Load (sfxinfo_t &, VStream &) override;
   virtual const char *GetName () const noexcept override;
 };

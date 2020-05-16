@@ -58,6 +58,7 @@ public:
 
 class VOpusSampleLoader : public VSampleLoader {
 public:
+  VOpusSampleLoader () : VSampleLoader(true) {} // with signature
   virtual void Load (sfxinfo_t &, VStream &) override;
   virtual const char *GetName () const noexcept override;
 };

@@ -269,10 +269,12 @@ class VSampleLoader : public VInterface {
 public:
   VSampleLoader *Next;
 
-  static VSampleLoader *List;
+  static VSampleLoader *ListSign;
+  static VSampleLoader *ListNoSign;
 
 public:
-  VSampleLoader () { Next = List; List = this; }
+  VSampleLoader () = delete;
+  VSampleLoader (bool withSignature) { if (withSignature) { Next = ListSign; ListSign = this; } else { Next = ListNoSign; ListNoSign = this; } }
   virtual void Load (sfxinfo_t &Sfx, VStream &Strm) = 0;
   virtual const char *GetName () const noexcept = 0;
 

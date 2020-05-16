@@ -46,6 +46,7 @@ static_assert(sizeof(FWavFormatDesc) == 2+2+4+4+2+2, "invalid size of FWavFormat
 
 class VWaveSampleLoader : public VSampleLoader {
 public:
+  VWaveSampleLoader () : VSampleLoader(true) {} // with signature
   virtual void Load (sfxinfo_t &, VStream &) override;
   virtual const char *GetName () const noexcept override;
 };
