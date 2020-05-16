@@ -436,7 +436,7 @@ override void Tick (float DeltaTime) {
         return;
       }
     } else {
-      //print("TIME=%s; HoldTime=%s; tfrm=%s; htfrm=%s; <%q>", Time, HoldTime, Time/35.0, HoldTime/35.0, (MsgLines.length ? MsgLines[0].Text : "<>"));
+      //print("  %C(%s): TIME=%s; HoldTime=%s; tfrm=%s; htfrm=%s; <%q>", self, UniqueId, Time, HoldTime, Time/35.0, HoldTime/35.0, (MsgLines.length ? MsgLines[0].Text : "<>"));
       Destroy();
       return;
     }

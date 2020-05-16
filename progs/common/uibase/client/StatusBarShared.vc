@@ -389,7 +389,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
     print("\ci<------------------------------->");
     Type &= ~HUDMSG_LOG;
   }
-  //print("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>", Id, Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message);
+  //printdebug("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>", Id, Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message);
 
   // handle colors specified by name
   if (Type&HUDMSG_COLORSTRING) Color = FindTextColor(ColorName);
@@ -424,6 +424,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
   }
 
 #ifdef HUD_ALLOW_REUSE
+  //printdebug("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>; reuse=%C", Id, Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message, hudReuse);
   if (hudReuse) {
     Msg = hudReuse;
     Msg.Reset();
@@ -432,6 +433,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
   {
     Msg = HudMsgWin.NewChild(hudClass);
   }
+  //printdebug("id=%s; obj=%C(%s)", Id, Msg, Msg.UniqueId);
 
   Msg.ClGame = ClGame;
 
@@ -447,6 +449,18 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
     if (Probe) Msg.MoveBefore(Probe);
   }
   //Msg.dumpClipRect("MSG02");
+
+  /*
+  printdebug("==============");
+  for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next) {
+    if (HUDMessage(Probe)) {
+      HUDMessage m = HUDMessage(Probe);
+      printdebug("  %C:%s: Id=%s; Time=%s; HoldTime=%s; bTickEnabled=%B", m, m.UniqueId, m.Id, m.Time, m.HoldTime, m.bTickEnabled);
+    } else {
+      printdebug("  %C:%s", Probe, Probe.UniqueId);
+    }
+  }
+  */
 
   /*
   int count = 0;
