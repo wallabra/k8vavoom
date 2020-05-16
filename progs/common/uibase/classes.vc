@@ -95,6 +95,7 @@ import 'linespec';
 #include "menus/MenuScreenSearchFilter.vc"
 
 #include "client/ClientGameShared.vc"
+#include "client/HUDMessageContainer.vc"
 #include "client/StatusBarShared.vc"
 #include "client/IntermissionBackground.vc"
 

@@ -160,7 +160,7 @@ override void OnDraw () {
   }
 
   if (bNeedGold) {
-    Inventory Item = EntityEx(StatusBarShared(ClGame.GSBar).ClGame.cl.MO).FindInventory(Coin);
+    Inventory Item = EntityEx(StatusBarShared(ClGame.GSBar).GetClGame().cl.MO).FindInventory(Coin);
     //int ypos = 510-NumChoices*22;
     int ypos = Height+30-NumChoices*22;
     int xpos = Width-110;

@@ -50,7 +50,7 @@ override void RootWindowCreated () {
   GImission = GRoot.NewChild(IntermissionScreen);
   GFinale = GRoot.NewChild(FinaleScreen);
   GTitle.ClGame = self;
-  GSBar.ClGame = self;
+  GSBar.SetClGame(self);
   GSBar.Hide();
   GImission.ClGame = self;
   GImission.Hide();

@@ -1,0 +1,189 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2020 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, version 3 of the License ONLY.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+#define HUD_ALLOW_REUSE
+
+class HUDMessageContainer : Widget;
+
+ClientGameBase ClGame;
+
+
+//==========================================================================
+//
+//  OnCreate
+//
+//==========================================================================
+override void OnCreate () {
+  ::OnCreate();
+  Width = GetVirtualWidth();
+  Height = GetVirtualHeight();
+}
+
+
+//==========================================================================
+//
+//  Tick
+//
+//==========================================================================
+override void Tick (float DeltaTime) {
+  if (Width != Parent.Width || Height != Parent.Height) {
+    SetSize(Parent.Width, Parent.Height);
+  }
+}
+
+
+//==========================================================================
+//
+//  ClearHudMessages
+//
+//==========================================================================
+void ClearHudMessages () {
+  DestroyAllChildren();
+}
+
+
+//==========================================================================
+//
+//  AddHudMessage
+//
+//==========================================================================
+void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
+  string ColorName, float x, float y, int HudWidth, int HudHeight,
+  float HoldTime, float Time1, float Time2)
+{
+  Widget Probe;
+  HUDMessage Msg;
+  bool isHealthBar = false;
+
+  class!HUDMessage hudClass = none;
+
+  if (Font == 'HEALTHBAR') {
+    if (!Id || Id == 0xffffffff) return; // orphaned
+    hudClass = HUDMessage;
+    isHealthBar = true;
+    Type = HUDMSG_PLAIN; // just in case
+  } else {
+    switch (Type&0xff) {
+      default: case HUDMSG_PLAIN: hudClass = HUDMessage; break;
+      case HUDMSG_FADEOUT: hudClass = HUDMessageFadeOut; break;
+      case HUDMSG_TYPEON: hudClass = HUDMessageTypeOnFadeOut; break;
+      case HUDMSG_FADEINOUT: hudClass = HUDMessageFadeInOut; break;
+    }
+  }
+
+  // log to console if needed.
+  if (Type&HUDMSG_LOG) {
+    print("\ci<------------------------------->");
+    print("%s%s", TextColorString(Color), Message);
+    print("\ci<------------------------------->");
+    Type &= ~HUDMSG_LOG;
+  }
+  //printdebug("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>", Id, Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message);
+
+  // handle colors specified by name
+  if (Type&HUDMSG_COLORSTRING) Color = FindTextColor(ColorName);
+
+  #ifdef HUD_ALLOW_REUSE
+  HUDMessage hudReuse = none;
+  #endif
+
+  // reuse previous message with the same ID, if possible
+  if (Id && Id != 0xffffffff) {
+    for (Probe = FirstChild; Probe; Probe = Probe.Next) {
+      if (HUDMessage(Probe).Id == Id) {
+        //print("*** found and destroyed old HUD message with id %d", Id);
+        #ifdef HUD_ALLOW_REUSE
+        if (Probe.Class == hudClass) {
+          hudReuse = HUDMessage(Probe);
+        } else
+        #endif
+        {
+          delete Probe;
+        }
+        break;
+      }
+    }
+    //print("*** new HUD message with id %d", Id);
+  } else {
+    // is this orphaned message with infinite hold time?
+    if (HoldTime <= 0 && (Type&0xffff) == HUDMSG_PLAIN) {
+      // yes, don't allow it, or we may get HUD message spam
+      HoldTime = 0.5;
+    }
+  }
+
+  #ifdef HUD_ALLOW_REUSE
+  //printdebug("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>; reuse=%C", Id, Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message, hudReuse);
+  if (hudReuse) {
+    Msg = hudReuse;
+    Msg.Reset();
+  } else
+  #endif
+  {
+    Msg = NewChild(hudClass);
+  }
+  //printdebug("id=%s; obj=%C(%s)", Id, Msg, Msg.UniqueId);
+
+  Msg.ClGame = ClGame;
+
+  Msg.Init(Message, Font, Type, Id, Color, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+
+  // insert in the list in the proper location
+  #ifdef HUD_ALLOW_REUSE
+  if (!hudReuse)
+  #endif
+  {
+    Probe = FirstChild;
+    while (Probe && (Probe == Msg || HUDMessage(Probe).Id > Id)) Probe = Probe.Next;
+    if (Probe) Msg.MoveBefore(Probe);
+  }
+  //Msg.dumpClipRect("MSG02");
+
+  /*
+  printdebug("==============");
+  for (Probe = FirstChild; Probe; Probe = Probe.Next) {
+    if (HUDMessage(Probe)) {
+      HUDMessage m = HUDMessage(Probe);
+      printdebug("  %C:%s: Id=%s; Time=%s; HoldTime=%s; bTickEnabled=%B", m, m.UniqueId, m.Id, m.Time, m.HoldTime, m.bTickEnabled);
+    } else {
+      printdebug("  %C:%s", Probe, Probe.UniqueId);
+    }
+  }
+  */
+
+  /*
+  int count = 0;
+  for (Probe = FirstChild; Probe; Probe = Probe.Next) ++count;
+  if (count) {
+    print("=== HUD MESSAGES: %d", count);
+    for (Probe = FirstChild; Probe; Probe = Probe.Next) print("  %C (%d)", Probe, HUDMessage(Probe).Id);
+  }
+  */
+}
+
+
+defaultproperties {
+  bTickEnabled = true;
+}

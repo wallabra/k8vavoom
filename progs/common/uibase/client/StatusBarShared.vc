@@ -25,9 +25,7 @@
 //**************************************************************************
 class StatusBarShared : Widget;
 
-#define HUD_ALLOW_REUSE
-
-ClientGameBase ClGame;
+protected ClientGameBase ClGame;
 
 enum NUM_NOTIFY_LINES = 8;
 enum NUM_CHAT_LINES = 16;
@@ -50,7 +48,7 @@ array!SplitLine CenterMessageLines;
 int CenterMessageHeight;
 float CenterTime;
 
-Widget HudMsgWin;
+HUDMessageContainer HudMsgWin;
 
 bool lastWasFullscreen;
 
@@ -62,16 +60,38 @@ bool lastWasFullscreen;
 //==========================================================================
 override void OnCreate () {
   ::OnCreate();
-  HudMsgWin = NewChild(Widget);
+  HudMsgWin = NewChild(HUDMessageContainer);
+  HudMsgWin.ClGame = ClGame;
   Width = GetVirtualWidth();
   Height = GetVirtualHeight();
-  HudMsgWin.Width = Width;
-  HudMsgWin.Height = Height;
+  //HudMsgWin.Width = Width;
+  //HudMsgWin.Height = Height;
   lastWasFullscreen = false;
   // load healthbar graphics
   R_RegisterPicPath('graphics/healthbar/healthbar_bottom.png');
   R_RegisterPicPath('graphics/healthbar/healthbar_top.png');
   R_RegisterPicPath('graphics/healthbar/healthbar_border.png');
+}
+
+
+//==========================================================================
+//
+//  SetClGame
+//
+//==========================================================================
+void SetClGame (ClientGameBase aclgame) {
+  ClGame = aclgame;
+  HudMsgWin.ClGame = ClGame;
+}
+
+
+//==========================================================================
+//
+//  SetClGame
+//
+//==========================================================================
+ClientGameBase GetClGame () {
+  return ClGame;
 }
 
 
@@ -111,9 +131,6 @@ override void Tick (float DeltaTime) {
   //print("SBTICK: root=%C; sz=(%d,%d)", root, root.Width, root.Height);
   if (root && (Width != root.Width || Height != root.Height)) {
     SetSize(root.Width, root.Height);
-  }
-  if (HudMsgWin && (HudMsgWin.Width != Width || HudMsgWin.Height != Height)) {
-    HudMsgWin.SetSize(root.Width, root.Height);
   }
   UpdateNotify(DeltaTime);
   UpdateChat(DeltaTime);
@@ -349,7 +366,7 @@ void UpdateCenterMessage (float DeltaTime) {
 //
 //==========================================================================
 void ClearHudMessages () {
-  HudMsgWin.DestroyAllChildren();
+  if (HudMsgWin) HudMsgWin.ClearHudMessages();
 }
 
 
@@ -362,114 +379,8 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
   string ColorName, float x, float y, int HudWidth, int HudHeight,
   float HoldTime, float Time1, float Time2)
 {
-  Widget Probe;
-  HUDMessage Msg;
-  bool isHealthBar = false;
-
-  class!HUDMessage hudClass = none;
-
-  if (Font == 'HEALTHBAR') {
-    if (!Id || Id == 0xffffffff) return; // orphaned
-    hudClass = HUDMessage;
-    isHealthBar = true;
-    Type = HUDMSG_PLAIN; // just in case
-  } else {
-    switch (Type&0xff) {
-      default: case HUDMSG_PLAIN: hudClass = HUDMessage; break;
-      case HUDMSG_FADEOUT: hudClass = HUDMessageFadeOut; break;
-      case HUDMSG_TYPEON: hudClass = HUDMessageTypeOnFadeOut; break;
-      case HUDMSG_FADEINOUT: hudClass = HUDMessageFadeInOut; break;
-    }
-  }
-
-  // log to console if needed.
-  if (Type&HUDMSG_LOG) {
-    print("\ci<------------------------------->");
-    print("%s%s", TextColorString(Color), Message);
-    print("\ci<------------------------------->");
-    Type &= ~HUDMSG_LOG;
-  }
-  //printdebug("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>", Id, Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message);
-
-  // handle colors specified by name
-  if (Type&HUDMSG_COLORSTRING) Color = FindTextColor(ColorName);
-
-#ifdef HUD_ALLOW_REUSE
-  HUDMessage hudReuse = none;
-#endif
-
-  // reuse previous message with the same ID, if possible
-  if (Id && Id != 0xffffffff) {
-    for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next) {
-      if (HUDMessage(Probe).Id == Id) {
-        //print("*** found and destroyed old HUD message with id %d", Id);
-#ifdef HUD_ALLOW_REUSE
-        if (Probe.Class == hudClass) {
-          hudReuse = HUDMessage(Probe);
-        } else
-#endif
-        {
-          delete Probe;
-        }
-        break;
-      }
-    }
-    //print("*** new HUD message with id %d", Id);
-  } else {
-    // is this orphaned message with infinite hold time?
-    if (HoldTime <= 0 && (Type&0xffff) == HUDMSG_PLAIN) {
-      // yes, don't allow it, or we may get HUD message spam
-      HoldTime = 0.5;
-    }
-  }
-
-#ifdef HUD_ALLOW_REUSE
-  //printdebug("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>; reuse=%C", Id, Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message, hudReuse);
-  if (hudReuse) {
-    Msg = hudReuse;
-    Msg.Reset();
-  } else
-#endif
-  {
-    Msg = HudMsgWin.NewChild(hudClass);
-  }
-  //printdebug("id=%s; obj=%C(%s)", Id, Msg, Msg.UniqueId);
-
-  Msg.ClGame = ClGame;
-
-  Msg.Init(Message, Font, Type, Id, Color, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
-
-  // insert in the list in the proper location
-#ifdef HUD_ALLOW_REUSE
-  if (!hudReuse)
-#endif
-  {
-    Probe = HudMsgWin.FirstChild;
-    while (Probe && (Probe == Msg || HUDMessage(Probe).Id > Id)) Probe = Probe.Next;
-    if (Probe) Msg.MoveBefore(Probe);
-  }
-  //Msg.dumpClipRect("MSG02");
-
-  /*
-  printdebug("==============");
-  for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next) {
-    if (HUDMessage(Probe)) {
-      HUDMessage m = HUDMessage(Probe);
-      printdebug("  %C:%s: Id=%s; Time=%s; HoldTime=%s; bTickEnabled=%B", m, m.UniqueId, m.Id, m.Time, m.HoldTime, m.bTickEnabled);
-    } else {
-      printdebug("  %C:%s", Probe, Probe.UniqueId);
-    }
-  }
-  */
-
-  /*
-  int count = 0;
-  for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next) ++count;
-  if (count) {
-    print("=== HUD MESSAGES: %d", count);
-    for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next) print("  %C (%d)", Probe, HUDMessage(Probe).Id);
-  }
-  */
+  if (!HudMsgWin) return;
+  HudMsgWin.AddHudMessage(Message, Font, Type, Id, Color, ColorName, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 }
 
 
