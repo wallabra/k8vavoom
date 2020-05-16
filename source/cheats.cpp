@@ -365,3 +365,57 @@ COMMAND(vm_profile_dump) {
 COMMAND(vm_profile_clear) {
   VObject::ClearProfiles();
 }
+
+
+struct CInfo {
+  VClass *cls;
+  int count;
+};
+
+
+static int CInfoCmp (const void *aa, const void *bb, void *) {
+  if (aa == bb) return 0;
+  const CInfo *a = (const CInfo *)aa;
+  const CInfo *b = (const CInfo *)bb;
+  const int diff = b->count-a->count;
+  if (diff) return diff;
+  return VStr::Cmp(a->cls->GetName(), b->cls->GetName());
+}
+
+
+//==========================================================================
+//
+//  vc_count_all_objects
+//
+//==========================================================================
+COMMAND(vc_count_all_objects) {
+  TMap<VClass *, int> clist;
+  int realCount = 0;
+  const int count = VObject::GetObjectsCount();
+  for (int f = 0; f < count; ++f) {
+    VObject *obj = VObject::GetIndexObject(f);
+    if (!obj) continue;
+    VClass *c = obj->GetClass();
+    auto cp = clist.find(c);
+    if (cp) {
+      clist.put(c, cp[0]+1);
+    } else {
+      clist.put(c, 1);
+    }
+    ++realCount;
+  }
+  GCon->Logf(NAME_Debug, "=== total objects: %d ===", realCount);
+  if (realCount == 0) return;
+
+  TArray<CInfo> list;
+  for (auto it : clist.first()) {
+    CInfo &nfo = list.alloc();
+    nfo.cls = it.getKey();
+    nfo.count = it.getValue();
+  }
+  timsort_r(list.ptr(), list.length(), sizeof(CInfo), &CInfoCmp, nullptr);
+
+  for (auto &&it : list) {
+    GCon->Logf(NAME_Debug, "  %5d: %s", it.count, it.cls->GetName());
+  }
+}
