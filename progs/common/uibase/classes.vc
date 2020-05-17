@@ -99,10 +99,10 @@ import 'linespec';
 #include "client/StatusBarShared.vc"
 #include "client/IntermissionBackground.vc"
 
-#include "hud/HUDMessage.vc"
-#include "hud/HUDMessageFadeOut.vc"
-#include "hud/HUDMessageTypeOnFadeOut.vc"
-#include "hud/HUDMessageFadeInOut.vc"
+#include "client/hudmsg/HUDMessage.vc"
+#include "client/hudmsg/HUDMessageFadeOut.vc"
+#include "client/hudmsg/HUDMessageTypeOnFadeOut.vc"
+#include "client/hudmsg/HUDMessageFadeInOut.vc"
 
 #include "finale/FinaleScreen.vc"
 #include "finale/FinaleBackground.vc"

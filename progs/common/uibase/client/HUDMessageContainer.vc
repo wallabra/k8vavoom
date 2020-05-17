@@ -37,8 +37,22 @@ ClientGameBase ClGame;
 //==========================================================================
 override void OnCreate () {
   ::OnCreate();
+  /*
   Width = GetVirtualWidth();
   Height = GetVirtualHeight();
+  */
+  FixWidgetSize();
+}
+
+
+//==========================================================================
+//
+//  Tick
+//
+//==========================================================================
+void FixWidgetSize () {
+  SetFullScaledSize(640, 400, proportional:true, aspect:1.0);
+  //SetSize(Parent.Width, Parent.Height);
 }
 
 
@@ -48,9 +62,7 @@ override void OnCreate () {
 //
 //==========================================================================
 override void Tick (float DeltaTime) {
-  if (Width != Parent.Width || Height != Parent.Height) {
-    SetSize(Parent.Width, Parent.Height);
-  }
+  FixWidgetSize();
 }
 
 
@@ -186,4 +198,6 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
 
 defaultproperties {
   bTickEnabled = true;
+  Width = 640;
+  Height = 400;
 }

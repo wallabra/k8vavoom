@@ -163,10 +163,11 @@ final void SetScaleOneToOne () {
 
 // sets size and scale of this widget so it will fill the whole parent
 // adjusts scale if necessary
-final void SetFullScaledSize (int mywdt, int myhgt, optional bool proportional/*=true*/, optional float aspect) {
+// returns `true` if something was changed
+final bool SetFullScaledSize (int mywdt, int myhgt, optional bool proportional/*=true*/, optional float aspect) {
   auto par = ParentWidget;
-  if (!par) return;
-  if (mywdt < 1 || myhgt < 1) return;
+  if (!par) return false;
+  if (mywdt < 1 || myhgt < 1) return false;
   if (!specified_aspect) aspect = 1.0f;
   if (!specified_proportional) proportional = true;
   if (!proportional) aspect = 1.0f;
@@ -191,8 +192,9 @@ final void SetFullScaledSize (int mywdt, int myhgt, optional bool proportional/*
   }
   int xofs = int((par.Width-mywdt*scaleX)/2);
   int yofs = int((par.Height-myhgt*scaleY)/2);
-  //printdebug("setting full scaled size (%sx%s); par is (%sx%s); scales=(%s,%s); ofs=(%s,%s)", mywdt*scaleX, myhgt*scaleY, par.Width, par.Height, scaleX, scaleY, xofs, yofs);
-  SetConfiguration(xofs, yofs, mywdt, myhgt, scaleX, scaleY);
+  bool res = SetConfiguration(xofs, yofs, mywdt, myhgt, scaleX, scaleY);
+  //if (res) printdebug("*** setting full scaled size (%sx%s); par is (%sx%s); scales=(%s,%s); ofs=(%s,%s); sz=(%sx%s)", mywdt*scaleX, myhgt*scaleY, par.Width, par.Height, scaleX, scaleY, xofs, yofs, mywdt, myhgt);
+  return res;
 }
 
 

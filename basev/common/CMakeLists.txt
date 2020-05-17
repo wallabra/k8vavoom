@@ -63,9 +63,9 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
 
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/client/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/uibase/client/hudmsg/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/condlg/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/finale/*.vc
-    ${CMAKE_SOURCE_DIR}/progs/common/uibase/hud/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/menus/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/wgchoice/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/wgselector/*.vc

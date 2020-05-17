@@ -173,6 +173,7 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
       (nameicmp(AFont, 'bigfont') == 0);
   }
   if (isHealthBar) isTextFont = false;
+  isTextFont = false;
 
   // check for spaces
   /*
@@ -185,7 +186,7 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
   }
   */
 
-  auto root = GetRootWidget();
+  auto root = Parent;
   if (Width != root.Width || Height != root.Height) {
     //SetSize(GetVirtualWidth(), GetVirtualHeight());
     SetSize(root.Width, root.Height);
@@ -197,13 +198,6 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
   MsgX = AMsgX;
   MsgY = AMsgY;
   if (AHudWidth == 0 || AHudHeight == 0) {
-    /*
-    writeln("HUD0: ", AHudWidth, "x", AHudHeight, "; msgx=", AMsgX, "; msgy=", AMsgY);
-    SetSize(GetVirtualWidth(), GetVirtualHeight());
-    Width = GetVirtualWidth();
-    Height = GetVirtualHeight();
-    writeln("  size: ", Width, "x", Height);
-    */
     if (fabs(MsgX) > 2.0) {
       bCenterX = true;
       MsgX = 0.5;
@@ -228,7 +222,7 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
     wrapWidth = abs(HudWidth);
 
     /*
-    auto root = GetRootWidget();
+    auto root = Parent;
     if (root) {
       if (Width != root.Width || Height != root.Height) {
         //SetSize(GetVirtualWidth(), GetVirtualHeight());
@@ -302,7 +296,7 @@ override void OnDraw () {
 
   SetFont(MsgFont);
 
-  auto root = GetRootWidget();
+  auto root = Parent;
   /*
   if (Width != root.Width || Height != root.Height) {
     //SetSize(GetVirtualWidth(), GetVirtualHeight());
