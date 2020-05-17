@@ -51,8 +51,19 @@ override void OnCreate () {
 //
 //==========================================================================
 void FixWidgetSize () {
-  SetFullScaledSize(640, 400, proportional:true, aspect:1.0);
   //SetSize(Parent.Width, Parent.Height);
+  //SetFullScaledSize(640, 400, proportional:true, aspect:1.0);
+  int div = 1;
+  int wdt = Parent.Width, hgt = Parent.Height;
+  while (wdt/div >= 640 && hgt/div >= 400) ++div;
+  if (div > 1) --div;
+  int mywdt = Parent.Width/div;
+  int myhgt = Parent.Height/div;
+  float scaleX = float(Parent.Width)/float(mywdt);
+  float scaleY = float(Parent.Height)/float(myhgt);
+  int xofs = int((Parent.Width-mywdt*scaleX)/2);
+  int yofs = int((Parent.Height-myhgt*scaleY)/2);
+  SetConfiguration(xofs, yofs, mywdt, myhgt, scaleX, scaleY);
 }
 
 
