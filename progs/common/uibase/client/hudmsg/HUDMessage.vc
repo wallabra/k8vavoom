@@ -391,7 +391,7 @@ override void OnDraw () {
       R_DrawPicPart(picX, y, fclamp(hbarCurr/hbarMax, 0, 1), 1, hbarPicFill);
       */
       float used = fclamp(hbarCurr/hbarMax, 0, 1);
-      used = 0.3;
+      //used = 0.3;
       DrawPic(picX, y, hbarPicBorder, MsgAlpha);
       if (used > 0) DrawPicPart(picX, y, used, 1, hbarPicFill, MsgAlpha);
       if (used < 1) DrawPicPartEx(picX, y, used, 0, 1, 1, hbarPicBack, MsgAlpha);
