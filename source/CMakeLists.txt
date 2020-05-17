@@ -150,6 +150,10 @@ set(RENDERBASE_SOURCES
   render/r_psprites.cpp
   render/r_things.cpp
   render/r_things_adv.cpp
+  render/r_update.cpp
+  render/r_vis_flood.cpp
+  render/r_vis_bsp.cpp
+  render/r_vis_light.cpp
 )
 
 #---------------------------------------

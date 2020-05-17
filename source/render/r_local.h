@@ -536,6 +536,7 @@ public:
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) override;
 
   virtual void PrecacheLevel () override;
+  virtual void UncacheLevel () override;
 
   // lightmap chain iterator (used in renderer)
   // block number+1 or 0
@@ -637,7 +638,6 @@ protected:
   bool UpdateCameraTexture (VEntity *Camera, int TexNum, int FOV); // returns `true` if camera texture was updated
   vuint32 GetFade (sec_region_t *reg, bool isFloorCeiling=false);
   int CollectSpriteTextures (TArray<bool> &texturepresent); // this is actually private, but meh... returns number of new textures
-  void UncacheLevel ();
   VTextureTranslation *GetTranslation (int);
   void BuildPlayerTranslations ();
 

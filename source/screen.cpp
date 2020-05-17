@@ -54,8 +54,6 @@ float fScaleY;
 
 int usegamma = 0;
 
-bool graphics_started = false;
-
 // Table of RGB values in current gamma corection level
 static const vuint8 gammatable[5][256] = {
   {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
@@ -428,6 +426,7 @@ static void ChangeResolution (int InWidth, int InHeight) {
   //bool win = false;
   //if (screen_fsmode > 0) win = true;
 
+  if (Drawer->RendLev) Drawer->RendLev->UncacheLevel();
   Drawer->DeinitResolution();
 
   // changing resolution
@@ -479,6 +478,7 @@ static void ChangeResolution (int InWidth, int InHeight) {
 
   // don't forget to call `GRoot->RefreshScale()`!
   //GCon->Logf("***SCALE0: %g, %g; scr:%dx%d; vscr:%dx%d", fScaleX, fScaleY, ScreenWidth, ScreenHeight, VirtualWidth, VirtualHeight);
+  // level precaching will be called by the caller
 }
 
 
@@ -527,7 +527,6 @@ static void CheckResolutionChange () {
     if (Drawer->RendLev) R_ForceViewSizeUpdate();
     //GCon->Logf(NAME_Debug, "RES: real=(%dx%d); scr=(%dx%d)", RealScreenWidth, RealScreenHeight, ScreenWidth, ScreenHeight);
   }
-  graphics_started = true;
 }
 
 

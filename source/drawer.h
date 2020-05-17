@@ -276,6 +276,7 @@ public:
   virtual bool IsSubsectorRendered (const subsector_t *sub) const noexcept = 0;
 
   virtual void PrecacheLevel () = 0;
+  virtual void UncacheLevel () = 0;
 
 public: // automap
   typedef bool (*AMCheckSubsectorCB) (const subsector_t *sub);
