@@ -146,9 +146,14 @@ menudef SpriteVideoOptions {
 
   header "Fake Shadows";
 
-  option bool {
+  option enum {
     title = "Fake Sprite Shadows";
     cvar = r_fake_sprite_shadows;
+    list {
+      "None",
+      "2D",
+      "Pseudo-3D",
+    }
     help =
       "This globally enables/disables fake sprite shadows."
       "This is the effect you've prolly seen in Duke Nukem 3D, for example."

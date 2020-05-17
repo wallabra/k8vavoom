@@ -66,7 +66,7 @@ static VCvarB r_thing_missile_use_camera_plane("r_thing_missile_use_camera_plane
 static VCvarB r_thing_other_use_camera_plane("r_thing_other_use_camera_plane", true, "Use angle to camera plane to select non-monster rotation?", CVAR_Archive);
 
 VCvarB r_fake_shadows_alias_models("r_fake_shadows_alias_models", false, "Render shadows from alias models (based on sprite frame)?", CVAR_Archive);
-static VCvarB r_fake_sprite_shadows("r_fake_sprite_shadows", true, "Render fake sprite shadows?", CVAR_Archive);
+static VCvarI r_fake_sprite_shadows("r_fake_sprite_shadows", "1", "Render fake sprite shadows (0:no; 1:2d; 2:pseudo-3d)?", CVAR_Archive);
 static VCvarF r_fake_shadow_translucency("r_fake_shadow_translucency", "0.5", "Fake sprite shadows translucency multiplier.", CVAR_Archive);
 static VCvarF r_fake_shadow_scale("r_fake_shadow_scale", "0.1", "Fake sprite shadows height multiplier.", CVAR_Archive);
 static VCvarB r_fake_shadow_ignore_offset_fix("r_fake_shadow_ignore_offset_fix", false, "Should fake sprite shadows ignore sprite offset fix?", CVAR_Archive);
@@ -80,6 +80,8 @@ static VCvarB r_fake_shadows_players("r_fake_shadows_players", true, "Render fak
 
 static VCvarB r_fake_shadows_additive_missiles("r_fake_shadows_additive_missiles", false, "Render shadows from additive projectiles?", CVAR_Archive);
 static VCvarB r_fake_shadows_additive_monsters("r_fake_shadows_additive_monsters", false, "Render shadows from additive monsters?", CVAR_Archive);
+
+static VCvarF r_fake_3dshadow_scale("r_fake_shadow_scale", "0.4", "Fake sprite shadows height multiplier for pseudo-3d mode.", CVAR_Archive);
 
 static VCvarB dbg_disable_sprite_sorting("dbg_disable_sprite_sorting", false, "Disable sprite sorting (this WILL glitch renderer)?", /*CVAR_Archive|*/CVAR_PreInit);
 
@@ -240,7 +242,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   bool renderShadow =
     sprtype == SPR_VP_PARALLEL_UPRIGHT &&
     !ri.isShadow() && !ri.isShaded() /*yep*/ && !ri.isFuzzy() &&
-    r_fake_sprite_shadows.asBool() &&
+    r_fake_sprite_shadows.asInt() &&
     r_sort_sprites.asBool() &&
     (r_fake_shadow_scale.asFloat() > 0.0f);
 
@@ -615,7 +617,8 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
       float Alpha = ri.alpha*r_fake_shadow_translucency.asFloat();
       if (Alpha >= 0.012f) {
         // check origin (+12 for "floatbob")
-        /*if (sprorigin.z+12 >= thing->FloorZ)*/ {
+        /*if (sprorigin.z+12 >= thing->FloorZ)*/
+        if (r_fake_sprite_shadows.asInt() == 1) {
           sprorigin.z = thing->FloorZ;
 
           Alpha = min2(1.0f, Alpha);
@@ -639,6 +642,46 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
           ri.flags = RenderStyleInfo::FlagShadow|RenderStyleInfo::FlagNoDepthWrite;
           ri.stencilColor = 0xff000000u; // shadows are black-stenciled
           ri.translucency = RenderStyleInfo::Translucent;
+          QueueSpritePoly(sv, lump, ri, /*translation*/0,
+            -sprforward, DotProduct(sprorigin, -sprforward),
+            (flip ? -sprright : sprright)/scaleX, -sprup/scaleY,
+            (flip ? sv[2] : sv[1]), priority, thing->Origin, thing->ServerUId);
+        } else if (r_fake_sprite_shadows.asInt() == 2) {
+          sprorigin.z = thing->FloorZ+0.2f;
+
+          Alpha = min2(1.0f, Alpha);
+          scaleY *= r_fake_3dshadow_scale.asFloat();
+
+          TAVec angs = thing->GetSpriteDrawAngles();
+          angs.yaw = 0;
+          // this is what makes the sprite looks like in GZDoom
+          angs.pitch = -90; //AngleMod(angs.pitch-90.0f);
+          //angs.pitch = AngleMod(Drawer->viewangles.pitch-90.0f);
+          // roll is meaningfull too
+          //angs.roll = AngleMod(angs.roll+180.0f);
+          angs.roll = AngleMod(Drawer->viewangles.yaw+180.0f);
+          // generate the sprite's axes, according to the sprite's world orientation
+          AngleVectors(angs, sprforward, sprright, sprup);
+
+          //TexTOffset = origTOffset;
+
+          start = -TexSOffset*sprright*scaleX;
+          end = (TexWidth-TexSOffset)*sprright*scaleX;
+
+          topdelta = TexTOffset*sprup*scaleY;
+          botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
+
+          sv[0] = sprorigin+start+botdelta;
+          sv[1] = sprorigin+start+topdelta;
+          sv[2] = sprorigin+end+topdelta;
+          sv[3] = sprorigin+end+botdelta;
+
+          ri.alpha = Alpha;
+          ri.flags = RenderStyleInfo::FlagShadow|RenderStyleInfo::FlagNoDepthWrite;
+          ri.flags |= RenderStyleInfo::FlagFlat|RenderStyleInfo::FlagOffset|RenderStyleInfo::FlagNoCull;
+          ri.stencilColor = 0xff000000u; // shadows are black-stenciled
+          ri.translucency = RenderStyleInfo::Translucent;
+          flip = !flip;
           QueueSpritePoly(sv, lump, ri, /*translation*/0,
             -sprforward, DotProduct(sprorigin, -sprforward),
             (flip ? -sprright : sprright)/scaleX, -sprup/scaleY,
