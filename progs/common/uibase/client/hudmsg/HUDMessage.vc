@@ -27,11 +27,7 @@ class HUDMessage : Widget;
 
 /*ClientGameShared*/ClientGameBase ClGame;
 
-// ID, used as a priority or to replace a previous message.
-int Id;
-
-string oldtext;
-name oldfont;
+int Id; // ID, used as a priority or to replace a previous message
 
 array!SplitLine MsgLines;
 name MsgFont;
@@ -49,7 +45,7 @@ float MsgY;
 
 int HudWidth;
 int HudHeight;
-bool isTextFont;
+//bool isTextFont;
 
 bool bCenterX; // true if text lines should be centered
 int DrawMsgX, DrawMsgY;
@@ -114,10 +110,6 @@ bool FullscreenScaleSize (int mywdt, int myhgt, optional bool proportional) {
 //
 //==========================================================================
 bool FullscreenScale () {
-  //SetSize(Parent.Width, Parent.Height);
-  int mywdt = 640;
-  int myhgt = (Parent.Height >= 1024 ? 512 : 400);
-  //FullscreenScaleSize(mywdt, myhgt);
   return FullscreenScaleSize(640, 480);
 }
 
@@ -208,7 +200,7 @@ void CalcMsgCoords () {
     DrawMsgY = int(MsgY);
     int FracPart;
 
-    FracPart = int(fabs(MsgX-DrawMsgX)*10.0+0.5);
+    FracPart = int(fabs(MsgX-DrawMsgX)*10.0+0.5)%10;
     // fractional part specifies alignment:
     //   0 - center
     //   1 - left
@@ -219,6 +211,7 @@ void CalcMsgCoords () {
     }
     bCenterX = !!(FracPart&4);
 
+    FracPart = int(fabs(MsgY-DrawMsgY)*10.0+0.5)%10;
     // fractional part specifies alignment:
     //   0 - center
     //   1 - top
@@ -248,8 +241,6 @@ override void OnConfigurationChanged () {
 //
 //==========================================================================
 void Reset () {
-  oldtext = default.oldtext;
-  oldfont = default.oldfont;
   MsgLines.reset();
   MsgFont = default.MsgFont;
   MsgColor = default.MsgColor;
@@ -260,7 +251,7 @@ void Reset () {
   MsgY = default.MsgY;
   HudWidth = default.HudWidth;
   HudHeight = default.HudHeight;
-  isTextFont = default.isTextFont;
+  //isTextFont = default.isTextFont;
   bCenterX = default.bCenterX;
   DrawMsgX = default.DrawMsgX;
   DrawMsgY = default.DrawMsgY;
@@ -343,129 +334,34 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
     isHealthBar = false;
   }
 
+  /*
+  isTextFont =
+    (nameicmp(AFont, 'confont') == 0) ||
+    (nameicmp(AFont, 'smallfont') == 0) ||
+    (nameicmp(AFont, 'smallfont2') == 0) ||
+    (nameicmp(AFont, 'bigfont') == 0);
+  */
+  /*
   if (GetCvarB('hud_scale_messages')) {
-    isTextFont =
-      (nameicmp(AFont, 'confont') == 0) ||
-      (nameicmp(AFont, 'smallfont') == 0) ||
-      (nameicmp(AFont, 'smallfont2') == 0) ||
-      (nameicmp(AFont, 'bigfont') == 0);
-  }
-  if (isHealthBar) isTextFont = false;
-  isTextFont = false;
-
-  // check for spaces
-  /*
-  if (isTextFont) {
-    bool allSpaces = true;
-    foreach (auto f; 0..Message.length) if (Message[f] > 32) { allSpaces = false; break; }
-    if (!allSpaces) {
-      print("HUDMSG: font=<%s>; pos=(%f,%f); size=(%d,%d); msg=<%q>", AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message);
-    }
   }
   */
+  //if (isHealthBar) isTextFont = false;
 
-  /*
-  auto root = Parent;
-  if (Width != root.Width || Height != root.Height) {
-    //SetSize(GetVirtualWidth(), GetVirtualHeight());
-    SetSize(root.Width, root.Height);
-  }
-  */
   FixSize();
-
-  //int wrapWidth = GetVirtualWidth()-32;
-
-  // position of the message
   CalcMsgCoords();
+}
 
-  #if 0
-  if (AHudWidth == 0 || AHudHeight == 0) {
-    if (fabs(MsgX) > 2.0) {
-      bCenterX = true;
-      MsgX = 0.5;
-    } else {
-      if (fabs(MsgX) > 1.0) bCenterX = true;
-      MsgX = (MsgX > 1.0 ? MsgX-1.0 : MsgX < -1.0 ? MsgX+1.0 : MsgX);
-    }
-    if (fabs(MsgY-0.5) <= 0.1) {
-      if (MsgY <= 0.5) MsgY -= 0.1; else MsgY += 0.1;
-    }
 
-    int wx = GetVirtualWidth()-int(GetVirtualWidth()*(fabs(MsgX)*2))-32;
-    if (wx < 32) {
-      wrapWidth = 640-32;
-    } else {
-      wrapWidth = max(320, min(wrapWidth, wx));
-    }
-  } else {
-    //writeln("HUD1: ", AHudWidth, "x", AHudHeight);
-    HudWidth = AHudWidth;
-    HudHeight = AHudHeight;
-    wrapWidth = abs(HudWidth);
-
-    /*
-    auto root = Parent;
-    if (root) {
-      if (Width != root.Width || Height != root.Height) {
-        //SetSize(GetVirtualWidth(), GetVirtualHeight());
-        SetSize(root.Width, root.Height);
-      }
-    }
-    */
-
-    /*
-    SetFont(MsgFont);
-    int tw = TextHeight(va("%q", Message));
-    if (tw > TextHeight("AW")+4) {
-      // this must be a picture
-      isTextFont = false;
-    }
-    print("%n:<%q>", AFont, Message);
-    */
-
-    int IntPart = int(MsgX);
-    int FracPart = int(fabs(MsgX-float(IntPart))*10.0+0.5);
-    if (FracPart&4) bCenterX = true;
-    if (MsgX > 0.0) {
-      MsgX = float(IntPart)+float(FracPart&3)/10.0;
-    } else {
-      MsgX = float(IntPart)-float(FracPart&3)/10.0;
-    }
-
-    if (!isTextFont) {
-      float sx = float(root.Width)/float(abs(HudWidth));
-      float sy = float(root.Height)/float(abs(HudHeight));
-      ScaleX = sx;
-      ScaleY = sy;
-      //print("  scale:(%f,%f); scaled size:(%s, %s); vsize=(%s,%s); rsize=(%s,%s)", sx, sy, roundi(root.Width/sx), roundi(root.Height/sy), GetVirtualWidth(), GetVirtualHeight(), root.Width, root.Height);
-      SetSize(roundi(root.Width/sx), roundi(root.Height/sy));
-      //root.dumpClipRect();
-      //print("============"); for (Widget ww = self; ww; ww = ww.Parent) { print("ww=%C", ww); ww.dumpClipRect(); }
-    } else {
-      float sx = float(root.Width)/float(abs(HudWidth));
-      int wx = GetVirtualWidth()-roundi(MsgX*sx)*2-32;
-      //print("*** wx=%d", wx);
-      if (wx < 32) {
-        wrapWidth = GetVirtualWidth()-32;
-      } else {
-        wrapWidth = max(320, min(wrapWidth, wx));
-      }
-    }
-  }
-
-  // calculate width and height of the text
-  if (Message != oldtext || AFont != oldfont) {
-    MsgLines.length = 0;
-    SetFont(MsgFont);
-    MsgHeight = SplitText(Message, MsgLines, /*Width*/wrapWidth);
-    //print("========= <%q> (%s:%s) =========", Message, MsgLines.length, wrapWidth);
-    MsgWidth = 0;
-    foreach (auto i; 0..MsgLines.length) {
-      //print("  #%d: <%q>", i, MsgLines[i].Text);
-      if (MsgLines[i].Width > MsgWidth) MsgWidth = MsgLines[i].Width;
-    }
-  }
-  #endif
+//==========================================================================
+//
+//  DrawTextLine
+//
+//  this will be overriden in inherited classes
+//
+//==========================================================================
+void DrawTextLine (int LineIdx, int x, int y, string Text) {
+  //float alpha = (isTextFont ? MsgAlpha : (MsgAlpha >= 1 ? 0.99 : MsgAlpha));
+  DrawText(x, y, Text, MsgColor, CR_YELLOW, fclamp(MsgAlpha, 0.0f, 1.0f));
 }
 
 
@@ -478,9 +374,8 @@ override void OnDraw () {
   float alpha = fclamp(MsgAlpha, 0.0f, 1.0f);// : (MsgAlpha >= 1 ? 0.99 : MsgAlpha));
   if (alpha == 0) return;
 
-  //if (!HudWidth || !HudHeight) return;
-
   SetFont(MsgFont);
+  SetTextAlign(hleft, vtop);
 
   int y;
   if (isHealthBar) {
@@ -507,119 +402,12 @@ override void OnDraw () {
   } else {
     y = DrawMsgY;
   }
-  SetTextAlign(hleft, vtop);
-  //DrawMsgX = -200;
-  //bCenterX = false;
-  foreach (auto ref line; MsgLines) {
+
+  foreach (int idx, auto ref line; MsgLines) {
     int x = DrawMsgX+(bCenterX ? (MsgWidth-line.Width)/2 : 0);
-    DrawText(x, y, line.Text, MsgColor, CR_YELLOW, alpha);
+    DrawTextLine(idx, x, y, line.Text);
     y += FontHeight();
   }
-
-  #if 0
-  int x, y;
-  auto root = Parent;
-  if (!HudWidth || !HudHeight) {
-    if (MsgX > 0.0) {
-      x = int(float(Width-MsgWidth)*MsgX);
-    } else {
-      x = int(float(Width)*(-MsgX));
-    }
-    if (MsgY > 0.0) {
-      y = int(float(Height-MsgHeight)*MsgY);
-    } else {
-      y = int(float(Height)*(-MsgY));
-    }
-  } else {
-    int msgwdt = MsgWidth;
-    int msghgt = MsgHeight;
-    x = int(MsgX);
-    y = int(MsgY);
-
-    //float sx = float(GetVirtualWidth())/float(abs(HudWidth));
-    //float sy = float(GetVirtualHeight())/float(abs(HudHeight));
-    if (isTextFont) {
-      //FIXME: make big scales work as expected
-      float sx = float(root.Width)/float(abs(HudWidth));
-      float sy = float(root.Height)/float(abs(HudHeight));
-      /*
-      print("HUDMSG: msg=<%q>; pos=(%d,%d); fixedpos=(%d,%d); scale=(%f,%f); size=(%d,%d); hudsize=(%d,%d)", MsgLines[0].Text, x, y, roundi(x*sx), roundi(y*sy), sx, sy, Width, Height, HudWidth, HudHeight);
-      dumpClipRect("self");
-      root.dumpClipRect("root");
-      */
-      x = roundi(x*sx);
-      y = roundi(y*sy);
-      // scale this, so center will work properly
-      //msgwdt = roundi(msgwdt*sx);
-      //msghgt = roundi(msghgt*sx);
-      //ScaleX = 1;
-      //ScaleY = 1;
-    }
-
-    //print("msg=<%q>", MsgLines[0].Text);
-    int IntPart = int(MsgX);
-    int FracPart = int(fabs(MsgX-float(IntPart))*10.0+0.5);
-    //print("  x=%d; frac=%d", x, FracPart);
-    // fractional part specifies alignment:
-    //   0 - center
-    //   1 - left
-    //   2 - right
-    switch (FracPart&3) {
-      case 0: x -= MsgWidth/2; break;
-      case 2: x -= MsgWidth; break;
-    }
-
-    IntPart = int(MsgY);
-    FracPart = int(fabs(MsgY-float(IntPart))*10.0+0.5);
-    //print("  y=%d; frac=%d", y, FracPart);
-    // fractional part specifies alignment:
-    //   0 - center
-    //   1 - top
-    //   2 - bottom
-    switch (FracPart&3) {
-      case 0: y -= MsgHeight/2; break;
-      case 2: y -= MsgHeight; break;
-    }
-  }
-
-  if (isHealthBar && hbarPicBack > 0) {
-    // hbarPicBorder: 320x16
-    // hbarPicBack: 316x10
-    // hbarPicFill: 316x10
-    int picX = (root.Width-320)/2;
-    /*
-    R_DrawPic(picX, y, hbarPicBorder);
-    R_DrawPic(picX, y, hbarPicBack);
-    R_DrawPicPart(picX, y, fclamp(hbarCurr/hbarMax, 0, 1), 1, hbarPicFill);
-    */
-    float used = fclamp(hbarCurr/hbarMax, 0, 1);
-    //used = 0.3;
-    R_DrawPic(picX, y, hbarPicBorder, MsgAlpha);
-    if (used > 0) R_DrawPicPart(picX, y, used, 1, hbarPicFill, MsgAlpha);
-    if (used < 1) R_DrawPicPartEx(picX, y, used, 0, 1, 1, hbarPicBack, MsgAlpha);
-    y += 16;
-  }
-
-  foreach (auto i; 0..MsgLines.length) {
-    if (bCenterX) {
-      DrawTextLine(i, x+(MsgWidth-MsgLines[i].Width)/2, y, MsgLines[i].Text);
-    } else {
-      DrawTextLine(i, x, y, MsgLines[i].Text);
-    }
-    y += MsgHeight/MsgLines.length;
-  }
-  #endif
-}
-
-
-//==========================================================================
-//
-//  DrawTextLine
-//
-//==========================================================================
-void DrawTextLine (int LineIdx, int x, int y, string Text) {
-  float alpha = (isTextFont ? MsgAlpha : (MsgAlpha >= 1 ? 0.99 : MsgAlpha));
-  DrawText(x, y, Text, MsgColor, CR_YELLOW, alpha);
 }
 
 
@@ -630,6 +418,7 @@ void DrawTextLine (int LineIdx, int x, int y, string Text) {
 //==========================================================================
 override void Tick (float DeltaTime) {
   if (!IsActive) return; // do not tick when game is paused
+  if (FixSize()) CalcMsgCoords();
   if (HoldTime && Time > HoldTime) {
     if (isHealthBar) {
       while (MsgAlpha > 0 && Time > HoldTime) {

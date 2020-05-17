@@ -16,10 +16,12 @@ menudef HUDOptions {
 
   header "HUD Messages";
 
+  /*
   option bool {
     title = "Scale HUD messages";
     cvar = hud_scale_messages;
   }
+  */
 
   option bool {
     title = "Console echo";
