@@ -306,6 +306,11 @@ public:
     vobjPutParamSelf(Activator, tid, intensity, duration, damrad, tremrad, sound);
     VMT_RET_VOID(method);
   }
+  void eventAcsWarp (VEntity *Activator, int tid, float xofs, float yofs, float zofs, float angle, int flags, VName succState, bool exact, float heightoffset, float radiusoffset, float pitch) {
+    static VMethodProxy method("AcsWarp");
+    vobjPutParamSelf(Activator, tid, xofs, yofs, zofs, angle, flags, succState, exact, heightoffset, radiusoffset, pitch);
+    VMT_RET_VOID(method);
+  }
 
   void eventAfterSetMapInfo () { static VMethodProxy method("AfterSetMapInfo"); vobjPutParamSelf(GLevel); VMT_RET_VOID(method); }
 

@@ -3661,6 +3661,24 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       }
       return 0;
 
+    // bool Warp (int tid, fixed xofs, fixed yofs, fixed zofs, fixed angle, int flags [, str success_state [, bool exact [, fixed heightoffset [, fixed radiusoffset [, fixed pitch]]]]])
+    case ACSF_Warp:
+      if (argCount >= 6) {
+        const int tid = args[0];
+        const float xofs = args[1]/float(0x10000);
+        const float yofs = args[2]/float(0x10000);
+        const float zofs = args[3]/float(0x10000);
+        const float angle = args[4]/float(0x10000);
+        const int flags = args[5];
+        VName succState = (argCount > 6 ? GetNameLowerCase(args[6]) : NAME_None);
+        const bool exact = (argCount > 7 ? !!args[7] : false);
+        const float hofs = (argCount > 8 ? args[8]/float(0x10000) : 0.0f);
+        const float rofs = (argCount > 9 ? args[9]/float(0x10000) : 0.0f);
+        const float pitch = (argCount > 10 ? args[10]/float(0x10000) : 0.0f);
+        Level->eventAcsWarp(Activator, tid, xofs, yofs, zofs, angle, flags, succState, exact, hofs, rofs, pitch);
+      }
+      return 0;
+
     case ACSF_SetHUDClipRect:
       GCon->Logf(NAME_Error, "unimplemented ACSF function '%s' (%d args)", "SetHUDClipRect", argCount);
       return 0;

@@ -1261,6 +1261,17 @@ void AcsRadiusQuake2 (Entity Activator, int tid, int intensity, int duration, in
 }
 
 
+//==========================================================================
+//
+//  AcsWarp
+//
+//==========================================================================
+void AcsWarp (Entity Activator, int tid, float xofs, float yofs, float zofs, float angle, int flags,
+              name succState, bool exact, float heightoffset, float radiusoffset, float pitch)
+{
+}
+
+
 defaultproperties {
   bAlwaysRelevant = true;
   AirControl = 1.0/256.0;

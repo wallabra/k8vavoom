@@ -5860,6 +5860,30 @@ override void AcsRadiusQuake2 (Entity Activator, int tid, int intensity, int dur
 
 //==========================================================================
 //
+//  AcsWarp
+//
+//==========================================================================
+override void AcsWarp (Entity Activator, int tid, float xofs, float yofs, float zofs, float angle, int flags,
+                       name succState, bool exact, float heightoffset, float radiusoffset, float pitch)
+{
+  Actor act = Actor(Activator);
+  if (!act) {
+    if (Activator) {
+      printwarn("ACS: Warp without activator! (%C)");
+      for (class c = Activator.Class; c; c = GetClassParent(c)) print("  %C", c);
+    } else {
+      printwarn("ACS: Warp without activator!");
+    }
+    return;
+  }
+  //printdebug("ACS: warping %C", act);
+  flags |= Actor::WARPF_USETID;
+  act.A_Warp(tid, xofs, yofs, zofs, angle, flags, (succState ? act.FindState(succState) : none), heightoffset, radiusoffset, pitch);
+}
+
+
+//==========================================================================
+//
 //  ForceLightning
 //
 //==========================================================================
