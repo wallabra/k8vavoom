@@ -227,7 +227,8 @@ native final void SetSize (int NewWidth, int NewHeight);
 native final void SetWidth (int NewWidth);
 native final void SetHeight (int NewHeight);
 native final void SetScale (float NewScaleX, float NewScaleY);
-native final void SetConfiguration (int NewX, int NewY, int NewWidth, int NewHeight,
+// returns `true` if something was changed
+native final bool SetConfiguration (int NewX, int NewY, int NewWidth, int NewHeight,
                                     optional float NewScaleX, optional float NewScaleY);
 
 // visibility methods

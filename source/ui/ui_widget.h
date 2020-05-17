@@ -268,7 +268,8 @@ public:
   inline void SetWidth (int NewWidth) { SetSize(NewWidth, SizeHeight); }
   inline void SetHeight (int NewHeight) { SetSize(SizeWidth, NewHeight); }
   inline void SetScale (float NewScaleX, float NewScaleY) { SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, NewScaleX, NewScaleY); }
-  void SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight, float NewScaleX=1.0f, float NewScaleY=1.0f);
+  // returns `true` if something was changed
+  bool SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight, float NewScaleX=1.0f, float NewScaleY=1.0f);
 
   inline float GetScaleX () const noexcept { return SizeScaleX; }
   inline float GetScaleY () const noexcept { return SizeScaleY; }

@@ -539,8 +539,16 @@ void VWidget::ClipTree () noexcept {
 //
 //  VWidget::SetConfiguration
 //
+//  returns `true` if something was changed
+//
 //==========================================================================
-void VWidget::SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight, float NewScaleX, float NewScaleY) {
+bool VWidget::SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight, float NewScaleX, float NewScaleY) {
+  if (PosX == NewX && PosY == NewY &&
+      SizeWidth == NewWidth && SizeHeight == HewHeight &&
+      SizeScaleX == NewScaleX && SizeScaleY == NewScaleY)
+  {
+    return false;
+  }
   PosX = NewX;
   PosY = NewY;
   //OfsX = OfsY = 0;
@@ -550,6 +558,7 @@ void VWidget::SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight,
   SizeScaleY = NewScaleY;
   ClipTree();
   OnConfigurationChanged();
+  return true;
 }
 
 
@@ -2017,7 +2026,7 @@ IMPLEMENT_FUNCTION(VWidget, SetConfiguration) {
   VOptParamFloat NewScaleX(1.0f);
   VOptParamFloat NewScaleY(1.0f);
   vobjGetParamSelf(NewX, NewY, NewWidth, NewHeight, NewScaleX, NewScaleY);
-  if (Self) Self->SetConfiguration(NewX, NewY, NewWidth, NewHeight, NewScaleX, NewScaleY);
+  RET_BOOL(Self ? Self->SetConfiguration(NewX, NewY, NewWidth, NewHeight, NewScaleX, NewScaleY) : false);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetVisibility) {
