@@ -24,7 +24,12 @@
 //**
 //**************************************************************************
 struct server_t {
-  int intermission;
+  enum {
+    IM_No,
+    IM_EndLevel,
+    IM_Finale,
+  };
+  int intermission; // IM_xxx
   float intertime;
 };
 

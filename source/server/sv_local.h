@@ -451,6 +451,10 @@ void G_WorldDone ();
 //void G_PlayerReborn (int player);
 void G_StartNewInit ();
 
+bool G_CheckWantExitText ();
+bool G_CheckFinale ();
+bool G_StartClientFinale ();
+
 
 extern VBasePlayer *GPlayersBase[MAXPLAYERS]; // Bookkeeping on players state
 

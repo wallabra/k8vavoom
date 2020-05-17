@@ -1024,7 +1024,10 @@ void IM_InitText () {
     ClGame.intermissionPhase == ClientGame::IM_Phase.Enter ? &ClGame.im.EnterText :
     nullptr;
 
-  if (ClGame.cl.Level.bNoIntermission) itext = nullptr; //k8: i think so
+  // do not skip exit text
+  if (ClGame.intermissionPhase == ClientGame::IM_Phase.Enter) {
+    if (ClGame.cl.Level.bNoIntermission) itext = nullptr; //k8: i think so
+  }
 
   // if we have no leave text, try enter text
   if (itext && !itext.Text && ClGame.intermissionPhase == ClientGame::IM_Phase.Leave) {

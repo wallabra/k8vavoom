@@ -652,7 +652,7 @@ static void CheckForSkip () {
           break;
         }
       }
-      //sv.intermission = 0;
+      //sv.intermission = server_t::IM_No;
       if (!mapteleport_executed) {
         mapteleport_executed = true;
         GCon->Logf(NAME_Debug, "*** teleporting to the new map '%s'", *GLevelInfo->NextMap);
@@ -951,6 +951,50 @@ static VName CheckRedirects (VName Map) {
 
 //==========================================================================
 //
+//  G_CheckWantExitText
+//
+//==========================================================================
+bool G_CheckWantExitText () {
+  if (svs.deathmatch) return false;
+  if (!GLevel) return false; // just in case
+  const VMapInfo &old_info = P_GetMapInfo(GLevel->MapName);
+  const VClusterDef *ClusterD = P_GetClusterDef(old_info.Cluster);
+  if (!ClusterD) return false;
+  GCon->Logf(NAME_Debug, "MAP: %s; cluster #%d; flags=0x%04x; etext=\"%s\"; xtext=\"%s\"; flat=<%s>; mus=<%s>", *GLevel->MapName,
+             ClusterD->Cluster, ClusterD->Flags, *ClusterD->EnterText.quote(), *ClusterD->ExitText.quote(), *ClusterD->Flat, *ClusterD->Music);
+  return (ClusterD && !ClusterD->ExitText.xstrip().isEmpty());
+}
+
+
+//==========================================================================
+//
+//  G_CheckFinale
+//
+//==========================================================================
+bool G_CheckFinale () {
+  if (!GLevelInfo) return false;
+  return VStr(GLevelInfo->NextMap).startsWithCI("EndGame");
+}
+
+
+//==========================================================================
+//
+//  G_StartClientFinale
+//
+//==========================================================================
+bool G_StartClientFinale () {
+  if (!GLevelInfo) return false;
+  //if (!VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) return false;
+  for (int i = 0; i < svs.max_clients; ++i) {
+    if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventClientFinale(VStr(GLevelInfo->NextMap).StartsWithCI("EndGame") ? *GLevelInfo->NextMap : "");
+  }
+  sv.intermission = server_t::IM_Finale;
+  return true;
+}
+
+
+//==========================================================================
+//
 //  G_DoCompleted
 //
 //==========================================================================
@@ -978,7 +1022,7 @@ static void G_DoCompleted (bool ignoreNoExit) {
   SCR_SignalWipeStart();
 #endif
 
-  sv.intermission = 1;
+  sv.intermission = server_t::IM_EndLevel;
   sv.intertime = 0;
   GLevelInfo->CompletitionTime = GLevel->Time;
 
@@ -991,10 +1035,19 @@ static void G_DoCompleted (bool ignoreNoExit) {
   const VClusterDef *ClusterD = P_GetClusterDef(old_info.Cluster);
   bool HubChange = (!old_info.Cluster || !(ClusterD->Flags&CLUSTERF_Hub) || old_info.Cluster != new_info.Cluster);
 
+  if (G_CheckFinale()) {
+    HubChange = true; // no more maps
+    if (!G_CheckWantExitText()) {
+      G_StartClientFinale();
+      return;
+    }
+  }
+
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (GGameInfo->Players[i]) {
       GGameInfo->Players[i]->eventPlayerExitMap(HubChange);
       if (svs.deathmatch || HubChange) {
+        GCon->Logf(NAME_Debug, "PLR#%d: HubChange=%d; next=<%s>", i, (int)HubChange, *GLevelInfo->NextMap);
         GGameInfo->Players[i]->eventClientIntermission(GLevelInfo->NextMap);
       }
     }
@@ -1046,7 +1099,7 @@ COMMAND_WITH_AC(TestFinale) {
         GGameInfo->Players[i]->eventClientFinale(fname);
       }
     }
-    sv.intermission = 2;
+    sv.intermission = server_t::IM_Finale;
   }
 
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
@@ -1089,20 +1142,16 @@ COMMAND_WITH_AC(TeleportNewMap) {
   if (Args.Num() == 3) {
     GLevelInfo->NextMap = VName(*Args[1], VName::AddLower8);
     LeavePosition = VStr::atoi(*Args[2]);
-  } else if (sv.intermission != 1) {
+  } else if (sv.intermission != server_t::IM_EndLevel) { //k8: why check for `IM_EndLevel` here?
     if (Args.length() != 2 || !Args[1].startsWithCI("**forced**")) return;
     flags = CHANGELEVEL_REMOVEKEYS;
     if (Args[1].startsWithCI("**forced**")) mapteleport_executed = true; // block it again
   }
+  //GCon->Logf(NAME_Debug, "TELEPORTMAP: map=<%s>; nextmap=<%s>", (GLevel ? *GLevel->MapName : "none"), *GLevelInfo->NextMap);
 
-  if (!svs.deathmatch) {
-    if (VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) {
-      for (int i = 0; i < svs.max_clients; ++i) {
-        if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
-      }
-      sv.intermission = 2;
-      return;
-    }
+  if (!svs.deathmatch && G_CheckFinale()) {
+    G_StartClientFinale();
+    return;
   }
 
 #ifdef CLIENT
@@ -1192,15 +1241,11 @@ COMMAND(ACS_TeleportNewMap) {
     mname = VName(*Args[1]);
   }
   GLevelInfo->NextMap = mname;
+  //GCon->Logf(NAME_Debug, "TELEPORTMAP: map=<%s>; nextmap=<%s>", (GLevel ? *GLevel->MapName : "none"), *GLevelInfo->NextMap);
 
-  if (!svs.deathmatch) {
-    if (VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) {
-      for (int i = 0; i < svs.max_clients; ++i) {
-        if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
-      }
-      sv.intermission = 2;
-      return;
-    }
+  if (!svs.deathmatch && G_CheckFinale()) {
+    G_StartClientFinale();
+    return;
   }
 
 #ifdef CLIENT
@@ -1287,7 +1332,7 @@ COMMAND_WITH_AC(TeleportNewMapEx) {
       for (int i = 0; i < svs.max_clients; ++i) {
         if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
       }
-      sv.intermission = 2;
+      sv.intermission = server_t::IM_Finale;
       return;
     }
   }
@@ -1456,6 +1501,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
 
   GCon->Log("===============================================");
   GCon->Logf("Spawning %sserver with map \"%s\"%s", (titlemap ? "titlemap " : ""), mapname, (spawn_thinkers ? "" : " (without thinkers)"));
+  //if (VStr::startsWithCI(mapname, "EndGame")) abort();
 
   GGameInfo->Flags &= ~VGameInfo::GIF_Paused;
   mapteleport_executed = false; // just in case
@@ -2178,7 +2224,9 @@ void ServerFrame (int realtics) {
     }
   }
 
-  if (mapteleport_issued) SV_MapTeleport(GLevelInfo->NextMap, mapteleport_flags, mapteleport_skill);
+  if (mapteleport_issued) {
+    SV_MapTeleport(GLevelInfo->NextMap, mapteleport_flags, mapteleport_skill);
+  }
 
   SV_SendClientMessages(); // full
   SV_UpdateMaster();

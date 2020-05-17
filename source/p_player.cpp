@@ -584,6 +584,7 @@ static void SetupClusterText (int cttype, IntermissionText &im, const VClusterDe
 
   if (dotrans) text = GLanguage[*text];
   im.Text = text;
+  //GCon->Logf(NAME_Debug, "cttype=%d; text=\"%s\"", cttype, *text.quote());
   if (islump) im.Flags |= IntermissionText::IMF_TextIsLump;
 
   if (CDef->Flags&CLUSTERF_FinalePic) {
@@ -635,7 +636,7 @@ void VBasePlayer::DoClientIntermission (VName NextMap) {
   GAudio->StopAllSequences();
 #endif
 
-  if (linfo.Cluster != einfo.Cluster) {
+  if (linfo.Cluster != einfo.Cluster || G_CheckFinale()) {
     // cluster leaving text
     if (linfo.Cluster) SetupClusterText(ClusterText_Exit, im.LeaveText, P_GetClusterDef(linfo.Cluster));
     // cluster entering text

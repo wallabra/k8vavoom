@@ -242,19 +242,13 @@ void VLevelInfo::Completed (int InMap, int InPosition, int SaveAngle) {
   int Position = InPosition;
   if (Map == -1 && Position == -1) {
     if (!svs.deathmatch) {
-      // if we have cluster exit text, process with the normal intermission sequence
-      const VMapInfo &old_info = P_GetMapInfo(GLevel->MapName);
-      const VClusterDef *ClusterD = P_GetClusterDef(old_info.Cluster);
-      if (ClusterD && !ClusterD->ExitText.xstrip().isEmpty()) {
+      if (G_CheckWantExitText()) {
         LeavePosition = Position; // just in case
         completed = true;
         return;
       }
       // otherwise, jump straight into intermission
-      for (int i = 0; i < svs.max_clients; ++i) {
-        if (Game->Players[i]) Game->Players[i]->eventClientFinale(VStr(NextMap).StartsWithCI("EndGame") ? *NextMap : "");
-      }
-      sv.intermission = 2;
+      G_StartClientFinale();
       return;
     }
     Map = 1;
