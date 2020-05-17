@@ -42,11 +42,23 @@ final int value {
 
 //==========================================================================
 //
+//  FixMinimumHeight
+//
+//==========================================================================
+override void FixMinimumHeight () {
+  ::FixMinimumHeight();
+  //if (Height < height) Height = height;
+}
+
+
+//==========================================================================
+//
 //  SetText
 //
 //==========================================================================
 void SetText (string AText) {
   Text = TranslateString(AText);
+  FixMinimumHeight();
 }
 
 
