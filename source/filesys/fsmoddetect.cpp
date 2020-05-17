@@ -443,7 +443,7 @@ static int detectFromList (FSysModDetectorHelper &hlp, int seenZScriptLump) {
     // "detected", don't stop
     res = -1;
     // set options
-    flACSType = dc->acsType;
+    if (dc->acsType != FL_ACS_Default) flACSType = dc->acsType;
     if (!dc->addmod.isEmpty()) mdetect_AddMod(dc->addmod);
     if (!dc->gamename.isEmpty()) mdetect_SetGameName(dc->gamename);
     if (dc->nakedbase) mdetect_ClearAndBlockCustomModes();
