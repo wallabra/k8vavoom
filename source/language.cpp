@@ -207,6 +207,7 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
           while (!sc->Check(";")) sc->ExpectString();
           continue;
         }
+        sc->ExpectString();
       }
 
       VName Key(*sc->String, VName::AddLower);

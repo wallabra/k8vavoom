@@ -960,8 +960,10 @@ bool G_CheckWantExitText () {
   const VMapInfo &old_info = P_GetMapInfo(GLevel->MapName);
   const VClusterDef *ClusterD = P_GetClusterDef(old_info.Cluster);
   if (!ClusterD) return false;
+  /*
   GCon->Logf(NAME_Debug, "MAP: %s; cluster #%d; flags=0x%04x; etext=\"%s\"; xtext=\"%s\"; flat=<%s>; mus=<%s>", *GLevel->MapName,
              ClusterD->Cluster, ClusterD->Flags, *ClusterD->EnterText.quote(), *ClusterD->ExitText.quote(), *ClusterD->Flat, *ClusterD->Music);
+  */
   return (ClusterD && !ClusterD->ExitText.xstrip().isEmpty());
 }
 
@@ -1047,7 +1049,7 @@ static void G_DoCompleted (bool ignoreNoExit) {
     if (GGameInfo->Players[i]) {
       GGameInfo->Players[i]->eventPlayerExitMap(HubChange);
       if (svs.deathmatch || HubChange) {
-        GCon->Logf(NAME_Debug, "PLR#%d: HubChange=%d; next=<%s>", i, (int)HubChange, *GLevelInfo->NextMap);
+        //GCon->Logf(NAME_Debug, "PLR#%d: HubChange=%d; next=<%s>", i, (int)HubChange, *GLevelInfo->NextMap);
         GGameInfo->Players[i]->eventClientIntermission(GLevelInfo->NextMap);
       }
     }

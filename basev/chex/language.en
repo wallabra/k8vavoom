@@ -1,0 +1,38 @@
+[en default]
+
+// Chex Quest Strings
+CHUSTR_E1M1 = "E1M1: Landing Zone";
+CHUSTR_E1M2 = "E1M2: Storage Facility";
+CHUSTR_E1M3 = "E1M3: Experimental Lab";
+CHUSTR_E1M4 = "E1M4: Arboretum";
+CHUSTR_E1M5 = "E1M5: Caverns of Bazoik";
+
+CE1TEXT =
+  "Mission accomplished.\n"
+  "\n"
+  "Are you prepared for the next mission?\n"
+  "\n"
+  "\n"
+  "\n"
+  "\n"
+  "\n"
+  "\n"
+  "Press the escape key to continue...";
+
+CE2TEXT = "You've done it!";
+CE3TEXT = "Wonderful Job!";
+CE4TEXT = "Fantastic";
+
+CLOADNET = "you can't do load while in a net quest!\n\npress a key.";
+$ifgame(chex) QSPROMPT = "quicksave over your quest named\n\n'%s'?\n\npress y or n.";
+$ifgame(chex) QLOADNET = "you can't quickload during a netquest!\n\npress a key.";
+$ifgame(chex) QLPROMPT = "do you want to quickload the quest named\n\n'%s'?\n\npress y or n.";
+CNEWGAME = "you can't start a new quest\nwhile in a network quest.\n\npress a key.";
+
+CNIGHTMARE = "Careful, this will be tough.\nDo you wish to continue?\n\npress y or n.";
+
+CSWSTRING = "this is Chex(R) Quest. look for\n\nfuture levels at www.chexquest.com.\n\npress a key.";
+
+$ifgame(chex) NETEND = "you can't end a netquest!\n\npress a key.";
+$ifgame(chex) ENDGAME = "are you sure you want to end the quest?\n\npress y or n.";
+
