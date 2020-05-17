@@ -901,7 +901,6 @@ void VWidget::DrawPicScaled (int X, int Y, VTexture *Tex, float scaleX, float sc
   float S2 = Tex->GetWidth();
   float T2 = Tex->GetHeight();
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    //fprintf(stderr, "X=%d; Y=%d; X1=%f; Y1=%f; X2=%f; Y2=%f; w1=%f; tw=%d; S1=%f; T1=%f; S2=%f; T2=%f\n", X, Y, X1, Y1, X2, Y2, X2-X1, Tex->GetWidth(), S1, T1, S2, T2);
     Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, R_GetCachedTranslation(Trans, nullptr), Alpha);
   }
 }
@@ -926,7 +925,6 @@ void VWidget::DrawPicScaledIgnoreOffset (int X, int Y, int Handle, float scaleX,
   float S2 = Tex->GetWidth();
   float T2 = Tex->GetHeight();
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    //fprintf(stderr, "X=%d; Y=%d; X1=%f; Y1=%f; X2=%f; Y2=%f; w1=%f; tw=%d; S1=%f; T1=%f; S2=%f; T2=%f\n", X, Y, X1, Y1, X2, Y2, X2-X1, Tex->GetWidth(), S1, T1, S2, T2);
     Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, R_GetCachedTranslation(Trans, nullptr), Alpha);
   }
 }
@@ -951,8 +949,57 @@ void VWidget::DrawPic (int X, int Y, VTexture *Tex, float Alpha, int Trans) {
   float S2 = Tex->GetWidth();
   float T2 = Tex->GetHeight();
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    //fprintf(stderr, "X=%d; Y=%d; X1=%f; Y1=%f; X2=%f; Y2=%f; w1=%f; tw=%d; S1=%f; T1=%f; S2=%f; T2=%f\n", X, Y, X1, Y1, X2, Y2, X2-X1, Tex->GetWidth(), S1, T1, S2, T2);
     Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, R_GetCachedTranslation(Trans, nullptr), Alpha);
+  }
+}
+
+
+//==========================================================================
+//
+//  VWidget::DrawPicPart
+//
+//==========================================================================
+void VWidget::DrawPicPart (float x, float y, float pwdt, float phgt, int handle, float alpha) {
+  if (handle < 0 || alpha <= 0 || pwdt <= 0 || phgt <= 0 || !isFiniteF(pwdt) || !isFiniteF(phgt)) return;
+  VTexture *Tex = GTextureManager(handle);
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
+  x -= Tex->GetScaledSOffset();
+  y -= Tex->GetScaledTOffset();
+  float X1 = x;
+  float Y1 = y;
+  float X2 = x+Tex->GetScaledWidth()*pwdt;
+  float Y2 = y+Tex->GetScaledHeight()*phgt;
+  float S1 = 0;
+  float T1 = 0;
+  float S2 = Tex->GetWidth()*pwdt;
+  float T2 = Tex->GetHeight()*phgt;
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, nullptr, alpha);
+  }
+}
+
+
+//==========================================================================
+//
+//  VWidget::DrawPicPartEx
+//
+//==========================================================================
+void VWidget::DrawPicPartEx (float x, float y, float tx0, float ty0, float tx1, float ty1, int handle, float alpha) {
+  if (handle < 0 || alpha <= 0 || tx1 <= tx0 || ty1 <= ty0) return;
+  VTexture *Tex = GTextureManager(handle);
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
+  x -= Tex->GetScaledSOffset();
+  y -= Tex->GetScaledTOffset();
+  float X1 = x+Tex->GetScaledWidth()*tx0;
+  float Y1 = y+Tex->GetScaledHeight()*ty0;
+  float X2 = x+Tex->GetScaledWidth()*tx1;
+  float Y2 = y+Tex->GetScaledHeight()*ty1;
+  float S1 = Tex->GetWidth()*tx0;
+  float T1 = Tex->GetHeight()*ty0;
+  float S2 = Tex->GetWidth()*tx1;
+  float T2 = Tex->GetHeight()*ty1;
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, nullptr, alpha);
   }
 }
 
@@ -965,7 +1012,7 @@ void VWidget::DrawPic (int X, int Y, VTexture *Tex, float Alpha, int Trans) {
 void VWidget::DrawCharPic (int X, int Y, VTexture *Tex, float Alpha, bool shadowed) {
   if (!Tex || Alpha <= 0.0f || Tex->Type == TEXTYPE_Null) return;
 
-  //GCon->Logf(NAME_Debug, "%s: pos=(%d,%d); size=(%d,%d); scale=(%g,%g); ssize=(%d,%d)", *Tex->Name, X, Y, Tex->GetWidth(), Tex->GetHeight(), Tex->SScale, Tex->TScale, Tex->GetScaledWidth(), Tex->GetScaledHeight());
+  //GCon->Logf(NAME_Debug, "%s: pos=(%d,%d); size=(%d,%d); scale=(%g,%g); ssize=(%d,%d); ofs=(%d,%d)", *Tex->Name, X, Y, Tex->GetWidth(), Tex->GetHeight(), Tex->SScale, Tex->TScale, Tex->GetScaledWidth(), Tex->GetScaledHeight(), Tex->GetScaledSOffset(), Tex->GetScaledTOffset());
 
   X -= Tex->GetScaledSOffset();
   Y -= Tex->GetScaledTOffset();
@@ -977,8 +1024,13 @@ void VWidget::DrawCharPic (int X, int Y, VTexture *Tex, float Alpha, bool shadow
   float T1 = 0;
   float S2 = Tex->GetWidth();
   float T2 = Tex->GetHeight();
+  /*
+  GCon->Logf(NAME_Debug,"%s:  000: x1=%g; y1=%g; x2=%g; y2=%g; s1=%g; t1=%g; s2=%g; t3=%g", *Tex->Name, X1, Y1, X2, Y2, S1, T1, S2, T2);
+  GCon->Logf(NAME_Debug, "   clip: scale=(%g,%g); org=(%g,%g); clip=(%g,%g)-(%g,%g)", ClipRect.ScaleX, ClipRect.ScaleY, ClipRect.OriginX, ClipRect.OriginY,
+    ClipRect.ClipX1, ClipRect.ClipY1, ClipRect.ClipX2, ClipRect.ClipY2);
+  */
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    //fprintf(stderr, "X=%d; Y=%d; X1=%f; Y1=%f; X2=%f; Y2=%f; w1=%f; tw=%d; S1=%f; T1=%f; S2=%f; T2=%f\n", X, Y, X1, Y1, X2, Y2, X2-X1, Tex->GetWidth(), S1, T1, S2, T2);
+    //GCon->Logf(NAME_Debug,"%s:  001: x1=%g; y1=%g; x2=%g; y2=%g; s1=%g; t1=%g; s2=%g; t3=%g", *Tex->Name, X1, Y1, X2, Y2, S1, T1, S2, T2);
     if (shadowed) Drawer->DrawPicShadow(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, 0.625f*Alpha);
     Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, nullptr, Alpha);
   }
@@ -1287,7 +1339,7 @@ void VWidget::DrawString (int x, int y, VStr String, int NormalColor, int BoldCo
   for (const char *SPtr = *String; *SPtr; ) {
     int c = VStr::Utf8GetChar(SPtr);
 
-    // check for color escape.
+    // check for color escape
     if (c == TEXT_COLOR_ESCAPE) {
       Color = VFont::ParseColorEscape(SPtr, NormalColor, BoldColor);
       continue;
@@ -1351,7 +1403,6 @@ void VWidget::TextBounds (int x, int y, VStr String, int *x0, int *y0, int *widt
 //
 //==========================================================================
 void VWidget::DrawText (int x, int y, VStr String, int NormalColor, int BoldColor, float Alpha) {
-  int start = 0;
   int cx = x;
   int cy = y;
 
@@ -1362,6 +1413,21 @@ void VWidget::DrawText (int x, int y, VStr String, int NormalColor, int BoldColo
   LastX = cx;
   LastY = cy;
 
+  const int len = String.length();
+  int start = 0;
+  while (start < len) {
+    int end = start;
+    while (end < len && String[end] != '\n') ++end;
+    if (start < end) {
+      VStr cs(String, start, end-start);
+      DrawString(cx, cy, cs, NormalColor, BoldColor, Alpha);
+      cy += Font->GetHeight();
+    }
+    start = end+1;
+  }
+
+  /*
+  int start = 0;
   for (int i = 0; i < String.length(); ++i) {
     if (String[i] == '\n') {
       VStr cs(String, start, i-start);
@@ -1373,6 +1439,7 @@ void VWidget::DrawText (int x, int y, VStr String, int NormalColor, int BoldColo
       DrawString(cx, cy, VStr(String, start, String.Length()-start), NormalColor, BoldColor, Alpha);
     }
   }
+  */
 }
 
 
@@ -2134,6 +2201,24 @@ IMPLEMENT_FUNCTION(VWidget, SetFocus) {
   if (Self) Self->SetFocus(onlyInParent);
 }
 
+
+// native final void DrawPicPart (float x, float y, float pwdt, float phgt, int handle, optional float alpha);
+IMPLEMENT_FUNCTION(VWidget, DrawPicPart) {
+  float x, y, pwdt, phgt;
+  int handle;
+  VOptParamFloat alpha(1.0f);
+  vobjGetParamSelf(x, y, pwdt, phgt, handle, alpha);
+  if (Self) Self->DrawPicPart(x, y, pwdt, phgt, handle, alpha);
+}
+
+// native final void DrawPicPartEx (float x, float y, float tx0, float ty0, float tx1, float ty1, int handle, optional float alpha);
+IMPLEMENT_FUNCTION(VWidget, DrawPicPartEx) {
+  float x, y, tx0, ty0, tx1, ty1;
+  int handle;
+  VOptParamFloat alpha(1.0f);
+  vobjGetParamSelf(x, y, tx0, ty0, tx1, ty1, handle, alpha);
+  if (Self) Self->DrawPicPartEx(x, y, tx0, ty0, tx1, ty1, handle, alpha);
+}
 
 IMPLEMENT_FUNCTION(VWidget, DrawPicScaledIgnoreOffset) {
   int X, Y, Handle;

@@ -25,15 +25,17 @@
 //**************************************************************************
 class HUDMessage : Widget;
 
+/*ClientGameShared*/ClientGameBase ClGame;
+
 // ID, used as a priority or to replace a previous message.
 int Id;
-int ticStart; // do not start message before this tic
 
 string oldtext;
 name oldfont;
 
 array!SplitLine MsgLines;
 name MsgFont;
+string MsgText;
 int MsgColor;
 float MsgAlpha;
 
@@ -49,14 +51,13 @@ int HudWidth;
 int HudHeight;
 bool isTextFont;
 
-// true if text lines should be centered
-bool bCenterX;
+bool bCenterX; // true if text lines should be centered
+int DrawMsgX, DrawMsgY;
+
 bool isHealthBar;
 
 float HoldTime;
 float Time;
-
-/*ClientGameShared*/ClientGameBase ClGame;
 
 float hbarCurr, hbarMax; // health
 
@@ -67,11 +68,186 @@ int hbarPicBorder = -1;
 
 //==========================================================================
 //
+//  IntegralScale
+//
+//==========================================================================
+bool IntegralScale () {
+  int div = 1;
+  int wdt = Parent.Width, hgt = Parent.Height;
+  while (wdt/div >= 640 && hgt/div >= 400) ++div;
+  if (div > 1) --div;
+  int mywdt = Parent.Width/div;
+  int myhgt = Parent.Height/div;
+  float scaleX = float(Parent.Width)/float(mywdt);
+  float scaleY = float(Parent.Height)/float(myhgt);
+  int xofs = int((Parent.Width-mywdt*scaleX)/2);
+  int yofs = int((Parent.Height-myhgt*scaleY)/2);
+  return SetConfiguration(xofs, yofs, mywdt, myhgt, scaleX, scaleY);
+}
+
+
+//==========================================================================
+//
+//  FullscreenScaleSize
+//
+//==========================================================================
+bool FullscreenScaleSize (int mywdt, int myhgt, optional bool proportional) {
+  //SetSize(Parent.Width, Parent.Height);
+  float scaleX = float(Parent.Width)/float(mywdt);
+  float scaleY = float(Parent.Height)/float(myhgt);
+  if (proportional) {
+    float scale = fmin(scaleX, scaleY);
+    int xofs = int((Parent.Width-mywdt*scale)/2);
+    int yofs = int((Parent.Height-myhgt*scale)/2);
+    return SetConfiguration(xofs, yofs, mywdt, myhgt, scale, scale);
+  } else {
+    int xofs = int((Parent.Width-mywdt*scaleX)/2);
+    int yofs = int((Parent.Height-myhgt*scaleY)/2);
+    return SetConfiguration(xofs, yofs, mywdt, myhgt, scaleX, scaleY);
+  }
+}
+
+
+//==========================================================================
+//
+//  FullscreenScale
+//
+//==========================================================================
+bool FullscreenScale () {
+  //SetSize(Parent.Width, Parent.Height);
+  int mywdt = 640;
+  int myhgt = (Parent.Height >= 1024 ? 512 : 400);
+  //FullscreenScaleSize(mywdt, myhgt);
+  return FullscreenScaleSize(640, 480);
+}
+
+
+//==========================================================================
+//
+//  FixSize
+//
+//==========================================================================
+bool FixSize () {
+  if (!HudWidth || !HudHeight) {
+    //return IntegralScale();
+    return FullscreenScale();
+  } else {
+    //FIXME: negative HUD height means "ignore statusbar"
+    return FullscreenScaleSize(HudWidth, abs(HudHeight), proportional:false);
+  }
+}
+
+
+//==========================================================================
+//
+//  CalcMsgCoords
+//
+//==========================================================================
+void CalcMsgCoords () {
+  // split message, and calculate message size
+  MsgLines.length = 0;
+  SetFont(MsgFont);
+  MsgHeight = SplitText(MsgText, MsgLines, Width);
+  MsgWidth = 0;
+  MsgHeight = 0;
+  foreach (auto ref line; MsgLines) {
+    MsgWidth = max(MsgWidth, line.Width);
+    MsgHeight += FontHeight();
+  }
+  if (MsgWidth < 1) MsgWidth = 1;
+  if (MsgHeight < 1) MsgHeight = 1;
+
+  //printdebug("id=%s: pos=(%s,%s); size=(%sx%s), hud=(%sx%s); font=<%s>; text=\"%q\"", Id, MsgX, MsgY, Width, Height, HudWidth, HudHeight, MsgFont, MsgText);
+  //printdebug("  linecount=%s; msgsize=(%sx%s)", MsgLines.length, MsgWidth, MsgHeight);
+
+  if (!HudWidth || !HudHeight) {
+    // default size
+
+    // x coord
+    // [-2.0, -1.0): Same as [-1.0,0.0), but center each line inside box
+    // [-1.0, 0.0): Position between left and right edge of screen
+    // [0.0, 1.0]: Position between left and right edge valid box locations
+    // (1.0, 2.0]: Same as [0.0,1.0], but center each line inside box
+    if (MsgX < 0) {
+      // screen coords
+      bCenterX = (MsgX < -1.0f);
+      float nx;
+      if (bCenterX) {
+        nx = fclamp(MsgX+2, 0.0f, 1.0f);
+      } else {
+        nx = fclamp(MsgX+1, 0.0f, 1.0f);
+      }
+      DrawMsgX = int(nx*Width);
+    } else {
+      // box coords
+      bCenterX = (MsgX > 1.0f);
+      float nx;
+      if (bCenterX) {
+        nx = fclamp(MsgX-1, 0.0f, 1.0f);
+      } else {
+        nx = fclamp(MsgX, 0.0f, 1.0f);
+      }
+      DrawMsgX = int(nx*(Width-MsgWidth));
+    }
+
+    // y coord
+    // [-1.0, 0.0): Position between top and bottom edge of screen
+    // [ 0.0, 1.0]: Position between top and bottom of valid box locations
+    if (MsgY < 0) {
+      // screen coords
+      float ny = fclamp(MsgY+1, 0.0f, 1.0f);
+      DrawMsgY = int(ny*Height);
+    } else {
+      // box coords
+      float ny = fclamp(MsgY, 0.0f, 1.0f);
+      DrawMsgY = int(ny*(Height-MsgHeight));
+    }
+  } else {
+    //wrapWidth
+    DrawMsgX = int(MsgX);
+    DrawMsgY = int(MsgY);
+    int FracPart;
+
+    FracPart = int(fabs(MsgX-DrawMsgX)*10.0+0.5);
+    // fractional part specifies alignment:
+    //   0 - center
+    //   1 - left
+    //   2 - right
+    switch (FracPart&3) {
+      case 0: DrawMsgX -= MsgWidth/2; break;
+      case 2: DrawMsgX -= MsgWidth; break;
+    }
+    bCenterX = !!(FracPart&4);
+
+    // fractional part specifies alignment:
+    //   0 - center
+    //   1 - top
+    //   2 - bottom
+    switch (FracPart&3) {
+      case 0: DrawMsgY -= MsgHeight/2; break;
+      case 2: DrawMsgY -= MsgHeight; break;
+    }
+  }
+  //printdebug("  drawpos=(%s,%s)", DrawMsgX, DrawMsgY);
+}
+
+
+//==========================================================================
+//
+//  OnConfigurationChanged
+//
+//==========================================================================
+override void OnConfigurationChanged () {
+  if (FixSize()) CalcMsgCoords();
+}
+
+
+//==========================================================================
+//
 //  Reset
 //
 //==========================================================================
 void Reset () {
-  ticStart = default.ticStart;
   oldtext = default.oldtext;
   oldfont = default.oldfont;
   MsgLines.reset();
@@ -86,6 +262,8 @@ void Reset () {
   HudHeight = default.HudHeight;
   isTextFont = default.isTextFont;
   bCenterX = default.bCenterX;
+  DrawMsgX = default.DrawMsgX;
+  DrawMsgY = default.DrawMsgY;
   isHealthBar = default.isHealthBar;
   HoldTime = default.HoldTime;
   Time = default.Time;
@@ -120,9 +298,6 @@ void HBarLoadGfx () {
 final bool IsActive () {
   if (!ClGame || !ClGame.Game) return true; // just in case
   if (ClGame.Game.isPaused) return false; // paused
-  // check scheduled tic
-  if (!ClGame.GLevel) return true; // just in case
-  if (ClGame.GLevel.TicTime < ticStart) return false; // not active yet
   return true; // active
 }
 
@@ -141,15 +316,18 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
   // health bar: Time1 is current health, Time2 is max health, Message is name
 
   //print("HUDMSG(%d): font=[%s]; pos=(%f,%f); size=(%d,%d); msg=<%q>; HoldTime=%s; times=(%s,%s)", AId, AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message, AHoldTime, Time1, Time2);
-  //ticStart = (ClGame && ClGame.GLevel ? ClGame.GLevel.TicTime+1 : 0); // schedule to next tic (k8: no more)
-  ticStart = 0;
 
   Id = AId;
   MsgFont = AFont;
   if (!MsgFont) { MsgFont = 'smallfont'; AFont = MsgFont; }
   MsgColor = Color;
+  MsgText = Message;
   HoldTime = AHoldTime;
   HoldTime = fclamp(HoldTime, 0, 100000); // 0 MEANS ALOT HERE!
+  HudWidth = AHudWidth;
+  HudHeight = AHudHeight;
+  MsgX = AMsgX;
+  MsgY = AMsgY;
   //if (HoldTime > 0) HoldTime += 0.5/35.0;
 
   if (AFont == 'HEALTHBAR') {
@@ -186,17 +364,21 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
   }
   */
 
+  /*
   auto root = Parent;
   if (Width != root.Width || Height != root.Height) {
     //SetSize(GetVirtualWidth(), GetVirtualHeight());
     SetSize(root.Width, root.Height);
   }
+  */
+  FixSize();
 
-  int wrapWidth = GetVirtualWidth()-32;
+  //int wrapWidth = GetVirtualWidth()-32;
 
   // position of the message
-  MsgX = AMsgX;
-  MsgY = AMsgY;
+  CalcMsgCoords();
+
+  #if 0
   if (AHudWidth == 0 || AHudHeight == 0) {
     if (fabs(MsgX) > 2.0) {
       bCenterX = true;
@@ -283,6 +465,7 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
       if (MsgLines[i].Width > MsgWidth) MsgWidth = MsgLines[i].Width;
     }
   }
+  #endif
 }
 
 
@@ -292,23 +475,51 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
 //
 //==========================================================================
 override void OnDraw () {
-  int x, y;
+  float alpha = fclamp(MsgAlpha, 0.0f, 1.0f);// : (MsgAlpha >= 1 ? 0.99 : MsgAlpha));
+  if (alpha == 0) return;
+
+  //if (!HudWidth || !HudHeight) return;
 
   SetFont(MsgFont);
 
-  auto root = Parent;
-  /*
-  if (Width != root.Width || Height != root.Height) {
-    //SetSize(GetVirtualWidth(), GetVirtualHeight());
-    SetSize(root.Width, root.Height);
+  int y;
+  if (isHealthBar) {
+    y = int(Height*0.1);
+    if (hbarPicBack > 0) {
+      // hbarPicBorder: 320x16
+      // hbarPicBack: 316x10
+      // hbarPicFill: 316x10
+      int picX = (Width-320)/2;
+      /* not
+      R_DrawPic(picX, y, hbarPicBorder);
+      R_DrawPic(picX, y, hbarPicBack);
+      R_DrawPicPart(picX, y, fclamp(hbarCurr/hbarMax, 0, 1), 1, hbarPicFill);
+      */
+      float used = fclamp(hbarCurr/hbarMax, 0, 1);
+      used = 0.3;
+      DrawPic(picX, y, hbarPicBorder, MsgAlpha);
+      if (used > 0) DrawPicPart(picX, y, used, 1, hbarPicFill, MsgAlpha);
+      if (used < 1) DrawPicPartEx(picX, y, used, 0, 1, 1, hbarPicBack, MsgAlpha);
+      y += 16;
+    }
+    bCenterX = true;
+    DrawMsgX = (Width-MsgWidth)/2;
+  } else {
+    y = DrawMsgY;
   }
-  */
-  //print("rhgt=%d; hgt=%d; vhgt=%d", root.Height, Height, GetVirtualHeight());
+  SetTextAlign(hleft, vtop);
+  //DrawMsgX = -200;
+  //bCenterX = false;
+  foreach (auto ref line; MsgLines) {
+    int x = DrawMsgX+(bCenterX ? (MsgWidth-line.Width)/2 : 0);
+    DrawText(x, y, line.Text, MsgColor, CR_YELLOW, alpha);
+    y += FontHeight();
+  }
 
-  if (HudWidth == 0) {
-    //writeln("HUD0: ", HudWidth, "x", HudHeight, "; msgx=", MsgX, "; msgy=", MsgY);
-    //writeln("  size: ", Width, "x", Height);
-
+  #if 0
+  int x, y;
+  auto root = Parent;
+  if (!HudWidth || !HudHeight) {
     if (MsgX > 0.0) {
       x = int(float(Width-MsgWidth)*MsgX);
     } else {
@@ -369,7 +580,6 @@ override void OnDraw () {
       case 0: y -= MsgHeight/2; break;
       case 2: y -= MsgHeight; break;
     }
-
   }
 
   if (isHealthBar && hbarPicBack > 0) {
@@ -398,6 +608,7 @@ override void OnDraw () {
     }
     y += MsgHeight/MsgLines.length;
   }
+  #endif
 }
 
 

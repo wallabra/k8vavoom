@@ -2598,9 +2598,9 @@ VVA_OKUNUSED static const PCD_Info PCD_List[] = {
 //==========================================================================
 static inline float NormHudTime (float t, float DelayTime) {
   if (t <= 0.0f) return 0.0f;
-  int tics = (int)(t*35.0f);
-  if (tics < 1) return 1.0f/35.0f;
-  return tics/35.0f+(DelayTime > 0.0f ? DelayTime : 0.0f);
+  int tics = (int)(t*35.0f+0.5f);
+  if (tics < 1) return 1.0f/35.0f+(0.9f/35.0f);
+  return tics/35.0f+(DelayTime > 0.0f ? DelayTime : 0.0f)+(0.9f/35.0f);
   //return t;
 }
 
@@ -6022,9 +6022,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       sp[-1] = GetStr(sp[-1]).Utf8Length();
       ACSVM_BREAK;
 
+    // void SetHudSize (int width, int height, bool statusbar);
     ACSVM_CASE(PCD_SetHudSize)
-      HudWidth = abs(sp[-3]);
-      HudHeight = abs(sp[-2]);
+      HudWidth = (sp[-3] > 0 ? sp[-3] : 0);
+      HudHeight = (sp[-2] > 0 ? sp[-2] : 0);
       //GCon->Logf("ACS: SetHudSize: (%d,%d)", HudWidth, HudHeight);
       if (sp[-1]) HudHeight = -HudHeight;
       sp -= 3;

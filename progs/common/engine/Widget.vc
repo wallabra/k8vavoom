@@ -268,17 +268,25 @@ native final void SetFocus (optional bool onlyInParent/*=false*/);
 
 native final void DrawPicScaledIgnoreOffset (int X, int Y, int Handle, optional float scaleX/*=1.0f*/, optional float scaleY/*=1.0f*/, optional float Alpha/*=1.0f*/, optional int Trans/*=0*/);
 
+// draws a pic
+// pwdt and phgt are in [0..1]
+native final void DrawPicPart (float x, float y, float pwdt, float phgt, int handle, optional float alpha);
+native final void DrawPicPartEx (float x, float y, float tx0, float ty0, float tx1, float ty1, int handle, optional float alpha);
+
 native final void DrawPic (int X, int Y, int Handle, optional float Alpha, optional int Translation);
 native final void DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, optional float Alpha, optional int Translation);
 native final void DrawShadowedPic (int X, int Y, int Handle);
+
 native final void FillRectWithFlat (int x, int y, int width, int height, name Name);
 native final void FillRectWithFlatHandle (int x, int y, int width, int height, int handle);
 native final void FillRectWithFlatRepeat (int x, int y, int width, int height, name Name);
 native final void FillRectWithFlatRepeatHandle (int x, int y, int width, int height, int handle);
 native final void FillRect (int x, int y, int width, int height, int color, optional float alpha/*=1.0*/);
+
 // the last point will not be drawn
 native final void DrawLine (int x0, int y0, int x1, int y1, int color, optional float alpha/*=1.0*/);
 native final void DrawRect (int x, int y, int width, int height, int color, optional float alpha/*=1.0*/);
+
 // darkens a screen region
 native final void ShadeRect (int x, int y, int w, int h, float shade);
 

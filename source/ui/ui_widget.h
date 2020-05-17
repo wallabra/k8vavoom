@@ -379,8 +379,13 @@ public:
   void DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, float Alpha=1.0f, int Trans=0);
   void DrawPicScaled (int X, int Y, VTexture *Tex, float scaleX, float scaleY, float Alpha=1.0f, int Trans=0);
   void DrawPic (int, int, VTexture *, float = 1.0f, int = 0);
+
+  void DrawPicPart (float x, float y, float pwdt, float phgt, int handle, float alpha);
+  void DrawPicPartEx (float x, float y, float tx0, float ty0, float tx1, float ty1, int handle, float alpha);
+
   void DrawShadowedPic (int, int, int);
   void DrawShadowedPic (int, int, VTexture *);
+
   void FillRectWithFlat (int, int, int, int, VName);
   void FillRectWithFlatHandle (int, int, int, int, int);
   void FillRectWithFlatRepeat (int, int, int, int, VName);
@@ -516,11 +521,16 @@ public:
   DECLARE_FUNCTION(DrawPic)
   DECLARE_FUNCTION(DrawPicScaled)
   DECLARE_FUNCTION(DrawShadowedPic)
+
+  DECLARE_FUNCTION(DrawPicPart)
+  DECLARE_FUNCTION(DrawPicPartEx)
+
   DECLARE_FUNCTION(FillRectWithFlat)
   DECLARE_FUNCTION(FillRectWithFlatHandle)
   DECLARE_FUNCTION(FillRectWithFlatRepeat)
   DECLARE_FUNCTION(FillRectWithFlatRepeatHandle)
   DECLARE_FUNCTION(FillRect)
+
   DECLARE_FUNCTION(DrawRect)
   DECLARE_FUNCTION(ShadeRect)
   DECLARE_FUNCTION(DrawLine)
