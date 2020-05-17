@@ -127,6 +127,14 @@ extern int cli_GoreMod; // !=0: enabled
 
 extern VStr flWarningMessage;
 
+enum {
+  FL_ACS_Default = 0,
+  FL_ACS_Zandronum = 1,
+  FL_ACS_ZDoom = 2,
+};
+extern int flACSType;
+
+
 int FL_GetNetWadsCount ();
 vuint32 FL_GetNetWadsHash ();
 // will clear the list

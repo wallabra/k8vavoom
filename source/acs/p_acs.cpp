@@ -84,6 +84,13 @@ extern VCvarF m_yaw;
 extern VCvarF m_pitch;
 
 
+static inline bool isZandroACS () noexcept {
+       if (flACSType == FL_ACS_Zandronum) return true;
+  else if (flACSType == FL_ACS_ZDoom) return false;
+  else return acs_emulate_zandronum_acsf.asBool();
+}
+
+
 static bool acsReportedBadOpcodesInited = false;
 static bool acsReportedBadOpcodes[65536];
 
@@ -3210,7 +3217,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     //FIXME: disconnect?
     case ACSF_ConsolePlayerNumber_Zandro:
       //GCon->Logf(NAME_Warning, "ERROR: unimplemented ACSF function #%d'", 102);
-      //if (!acs_emulate_zandronum_acsf) return 0;
+      //if (!isZandroACS()) return 0;
       #ifdef CLIENT
       if (GGameInfo->NetMode == NM_Standalone ||
           GGameInfo->NetMode == NM_Client ||
@@ -3226,7 +3233,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 
     // int RequestScriptPuke (int script[, int arg0[, int arg1[, int arg2[, int arg3]]]])
     case ACSF_RequestScriptPuke_Zandro:
-      //if (!acs_emulate_zandronum_acsf) return 0;
+      //if (!isZandroACS()) return 0;
       {
         #ifdef CLIENT
         if (argCount < 1) return 0;
@@ -3263,7 +3270,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 
     // int NamedRequestScriptPuke (str script[, int arg0[, int arg1[, int arg2[, int arg3]]]])
     case ACSF_NamedRequestScriptPuke_Zandro:
-      //if (!acs_emulate_zandronum_acsf) return 0;
+      //if (!isZandroACS()) return 0;
       {
         #ifdef CLIENT
         if (argCount < 1) return 0;
@@ -3538,7 +3545,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       return 0; // player is never logged in
     //case ACSF_GetPlayerAccountName_Zandro: return 0; // `0` means "not implemented" //ActiveObject->Level->PutNewString(""); // always unnamed
     case ACSF_GetPlayerAccountName_Zandro:
-      if (!acs_emulate_zandronum_acsf) return 0;
+      if (!isZandroACS()) return 0;
       return ActiveObject->Level->PutNewString(""); // always unnamed
 
     // bool SetPointer(int assign_slot, int tid[, int pointer_selector[, int flags]])

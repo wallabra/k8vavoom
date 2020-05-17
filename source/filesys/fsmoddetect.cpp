@@ -35,6 +35,7 @@ enum {
 */
 
 VStr flWarningMessage;
+int flACSType = FL_ACS_Default;
 
 
 struct VDetectorInfo {
@@ -66,6 +67,7 @@ public:
   bool iwad;
   bool sprofslump;
   bool ignorePlayerSpeed;
+  int acsType;
 
 public:
   inline VDetectorInfo () noexcept
@@ -88,6 +90,7 @@ public:
     , iwad(true)
     , sprofslump(true)
     , ignorePlayerSpeed(false)
+    , acsType(FL_ACS_Default)
   {}
 
   // "{" just eaten
@@ -121,6 +124,7 @@ private:
   static int parseBool (VScriptParser *sc, const char *third=nullptr);
   static VStr parseString (VScriptParser *sc);
   static int parseInt (VScriptParser *sc);
+  static int parseACSType (VScriptParser *sc);
 
   void parseFileLump (VScriptParser *sc, bool asLump);
 };
@@ -236,6 +240,23 @@ void VDetectorInfo::parsePre (VScriptParser *sc) {
 
 //==========================================================================
 //
+//  VDetectorInfo::parseACSType
+//
+//==========================================================================
+int VDetectorInfo::parseACSType (VScriptParser *sc) {
+  int res = FL_ACS_Default;
+  sc->Expect("=");
+       if (sc->Check("default")) res = FL_ACS_Default;
+  else if (sc->Check("zandronum") || sc->Check("zandro")) res = FL_ACS_Zandronum;
+  else if (sc->Check("zdoom")) res = FL_ACS_ZDoom;
+  else sc->Error(va("unknown asc type '%s'", *sc->String));
+  sc->Expect(";");
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VDetectorInfo::parseOpts
 //
 //==========================================================================
@@ -253,6 +274,7 @@ void VDetectorInfo::parseOpts (VScriptParser *sc) {
     else if (sc->Check("iwad")) { iwad = parseBool(sc); if (!iwad) sprofslump = false; }
     else if (sc->Check("sprofslump")) sprofslump = parseBool(sc);
     else if (sc->Check("ignorePlayerSpeed")) ignorePlayerSpeed = parseBool(sc);
+    else if (sc->Check("acstype")) acsType = parseACSType(sc);
     else sc->Error(va("unknown options command '%s'", *sc->String));
   }
 }
@@ -421,6 +443,7 @@ static int detectFromList (FSysModDetectorHelper &hlp, int seenZScriptLump) {
     // "detected", don't stop
     res = -1;
     // set options
+    flACSType = dc->acsType;
     if (!dc->addmod.isEmpty()) mdetect_AddMod(dc->addmod);
     if (!dc->gamename.isEmpty()) mdetect_SetGameName(dc->gamename);
     if (dc->nakedbase) mdetect_ClearAndBlockCustomModes();

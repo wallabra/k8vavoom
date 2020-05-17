@@ -30,6 +30,7 @@
       modblood = <true|false|nogore>; // enable mod blood replacement? (default: true); "nogore" means "enable only if there's no gore mod"
       iwad = <true|false>; // for some TCs game iwads should be disabled (default: true)
       sprofslump = <true|false>; // disable basepak sprofs lumps (required for some TCs); forced to "true" by "iwad = false;" (and should be reset explicitly)
+      acstype = <default|zandronum|zdoom>;
     }
   }
 */
@@ -161,5 +162,20 @@ detector "CzechBox/v07e" {
 
   preconditions {
     lump { name = "credit"; size = 68168; md5 = "1f5be046b3014c074e5e74b47d4ecb9a"; }
+  }
+}
+
+
+detector "HDoom" {
+  info {
+    type = "pwad";
+  }
+
+  preconditions {
+    file { name = "readme.txt"; size = 1201; md5 = "b805dec5773675725e03edbf35f21792"; }
+  }
+
+  options {
+    acstype = zandronum;
   }
 }
