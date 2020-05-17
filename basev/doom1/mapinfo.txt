@@ -8,7 +8,7 @@ key k
 episode e2m1
 picname m_epi2
 name "The Shores of Hell"
-key t
+key s
 
 episode e3m1
 picname m_epi3
@@ -18,7 +18,7 @@ key i
 episode e4m1
 picname m_epi4
 name "Thy Flesh Consumed"
-key t
+key f
 optional
 
 ;------------------------------------------------------

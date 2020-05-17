@@ -54,17 +54,6 @@ override void CreateChoices () {
     Epi.Activated = &ActivateEpisode;
   }
   FixMenuWidth();
-  /*
-  foreach (auto it; Items) if (it.Width < maxwdt) it.Width = maxwdt;
-  calcHeight = clamp(calcHeight, 200, 440);
-  if (calcHeight > Height) {
-    Height = calcHeight;
-    Y = (GetVirtualHeight()-calcHeight)/2;
-    Width = 370; // for "the plutonia experiment"
-  }
-  maxwdt += 60;
-  if (Width < maxwdt) Width = maxwdt;
-  */
 }
 
 
@@ -80,6 +69,34 @@ void ActivateEpisode (Object Sender) {
     return;
   }
   ClGame.SetEpisode(Epi.EDef);
+}
+
+
+//==========================================================================
+//
+//  OnEvent
+//
+//==========================================================================
+override bool OnEvent (ref event_t evt) {
+  //if (!EDef || EDef.Key.length != 1) return ::OnEvent(evt);
+
+  // "on click"
+  if (evt.bubbling && evt.type == ev_keydown && evt.keycode >= "a" && evt.keycode <= "z") {
+    foreach (auto it; Items) {
+      MenuChoiceEpisode ep = MenuChoiceEpisode(it);
+      if (!ep) continue;
+      EpisodeDef *EDef = ep.EDef;
+      if (!EDef || EDef.Key.length != 1) continue;
+      int ch = EDef.Key[0];
+      if (ch >= 'A' && ch <= 'Z') ch += 32;
+      if (ch >= 'a' && ch <= 'z' && evt.keycode == ch) {
+        ActivateEpisode(ep);
+        return true;
+      }
+    }
+  }
+
+  return ::OnEvent(evt);
 }
 
 
