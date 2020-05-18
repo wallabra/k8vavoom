@@ -201,7 +201,10 @@ void R_DrawPicFloatPart (float x, float y, float pwdt, float phgt, int handle, f
 void R_DrawPicPartEx (int x, int y, float tx0, float ty0, float tx1, float ty1, int handle, float Alpha=1.0f);
 void R_DrawPicFloatPartEx (float x, float y, float tx0, float ty0, float tx1, float ty1, int handle, float Alpha=1.0f);
 
+// calculated with regards to screen size
 float R_GetAspectRatio ();
+// calculated without regards to screen size (i.e. 4.0/3.0, for example)
+float R_GetAspectRatioValue ();
 
 // known aspect ratios list
 int R_GetAspectRatioCount () noexcept;

@@ -89,12 +89,17 @@ bool IntegralScale () {
 //==========================================================================
 bool FullscreenScaleSize (int mywdt, int myhgt, optional bool proportional) {
   //SetSize(Parent.Width, Parent.Height);
-  float scaleX = float(Parent.Width)/float(mywdt);
+  float ratio = R_GetAspectRatioValue()*(3.0/4.0);
+  if (!ratio) ratio = 1.0;
+  float pwdt = (proportional || true ? float(Parent.Width)/ratio : float(Parent.Width));
+  //printdebug("ratio=%s", R_GetAspectRatio());
+  float scaleX = float(pwdt)/float(mywdt);
   float scaleY = float(Parent.Height)/float(myhgt);
   if (proportional) {
     float scale = fmin(scaleX, scaleY);
     int xofs = int((Parent.Width-mywdt*scale)/2);
     int yofs = int((Parent.Height-myhgt*scale)/2);
+    //printdebug("ratio=%s (%s); xofs=%s; yofs=%s; scale=%s (%s:%s)", R_GetAspectRatio(), R_GetAspectRatioValue(), xofs, yofs, scale, scaleX, scaleY);
     return SetConfiguration(xofs, yofs, mywdt, myhgt, scale, scale);
   } else {
     int xofs = int((Parent.Width-mywdt*scaleX)/2);
@@ -110,7 +115,7 @@ bool FullscreenScaleSize (int mywdt, int myhgt, optional bool proportional) {
 //
 //==========================================================================
 bool FullscreenScale () {
-  return FullscreenScaleSize(640, 480);
+  return FullscreenScaleSize(640, 480, proportional:true);
 }
 
 
@@ -136,6 +141,8 @@ bool FixSize () {
 //
 //==========================================================================
 void CalcMsgCoords () {
+  //printdebug("ratio=%s", R_GetAspectRatio());
+
   // split message, and calculate message size
   MsgLines.length = 0;
   SetFont(MsgFont);

@@ -85,6 +85,7 @@
   DECLARE_FUNCTION(R_DrawModelFrame)
   DECLARE_FUNCTION(R_FillRect)
   DECLARE_FUNCTION(R_GetAspectRatio)
+  DECLARE_FUNCTION(R_GetAspectRatioValue)
   DECLARE_FUNCTION(R_SupportsShadowVolumeRendering)
 
   // client side sound

@@ -531,8 +531,10 @@ native static final void R_ShadeRect (float x, float y, float w, float h, float 
 native static final void R_DrawLine (float x0, float y0, float x1, float y1, int color, optional float alpha/*=1.0*/);
 native static final void R_DrawRect (float x, float y, float w, float h, int color, optional float alpha/*=1.0*/);
 
-// returns current aspect ratio
-native static final float R_GetAspectRatio ();
+// calculated with regards to screen size
+native static float R_GetAspectRatio ();
+// calculated without regards to screen size (i.e. 4.0/3.0, for example)
+native static float R_GetAspectRatioValue ();
 
 // known aspect ratios list
 native static final int R_GetAspectRatioCount ();

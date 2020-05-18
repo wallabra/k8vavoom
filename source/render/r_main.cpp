@@ -281,11 +281,23 @@ static VVA_OKUNUSED int GetAspectMultiplier (float baseAspect) {
 
 //==========================================================================
 //
-//  GetAspectRatio
+//  R_GetAspectRatio
 //
 //==========================================================================
 float R_GetAspectRatio () {
   return CalcAspect(r_aspect_ratio, ScreenWidth, ScreenHeight);
+}
+
+
+//==========================================================================
+//
+//  R_GetAspectRatioValue
+//
+//==========================================================================
+float R_GetAspectRatioValue () {
+  int aspectRatio = r_aspect_ratio.asInt();
+  if (aspectRatio < 0 || aspectRatio >= (int)ASPECT_COUNT) aspectRatio = 0;
+  return (float)AspectList[aspectRatio].horiz/(float)AspectList[aspectRatio].vert;
 }
 
 

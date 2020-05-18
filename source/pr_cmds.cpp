@@ -566,7 +566,15 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatio) {
   #ifdef CLIENT
   RET_FLOAT(R_GetAspectRatio());
   #else
-  RET_FLOAT(1.0f);
+  RET_FLOAT(1.2f);
+  #endif
+}
+
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatioValue) {
+  #ifdef CLIENT
+  RET_FLOAT(R_GetAspectRatioValue());
+  #else
+  RET_FLOAT(1.2f);
   #endif
 }
 
