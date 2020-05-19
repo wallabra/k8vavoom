@@ -1,0 +1,17 @@
+class Main : Object;
+
+
+struct A {
+  int n;
+
+  void ctor (int an) {
+    print("A::ctor: an=%s (n=%s)", an, n);
+    n = an;
+  }
+}
+
+
+void main () {
+  A st(42);
+  print("st.n=%s", st.n);
+}

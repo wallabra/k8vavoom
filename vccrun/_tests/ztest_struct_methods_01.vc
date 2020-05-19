@@ -1,0 +1,22 @@
+class Main : Object;
+
+
+struct A {
+  int n;
+
+  static int zoo () {
+    //print("A::zoo:");
+    return 42;
+  }
+}
+
+
+void main () {
+  A st;
+  st.n = 666;
+
+  print("zoo=%s", st.zoo());
+  print("zoo=%s", st.zoo);
+  print("zoo=%s", A.zoo());
+  print("zoo=%s", A.zoo);
+}

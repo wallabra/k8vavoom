@@ -1,0 +1,24 @@
+class Main : Object;
+
+
+struct A {
+  int n;
+
+  int goo () {
+    return n;
+  }
+
+  void boo () {
+    print("A::boo: n=%s (%s)", goo, goo());
+    ++n;
+  }
+}
+
+
+void main () {
+  A st;
+  st.n = 42;
+
+  st.boo();
+  print("after: n=%s", st.n);
+}

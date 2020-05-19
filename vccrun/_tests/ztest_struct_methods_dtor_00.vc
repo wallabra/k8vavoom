@@ -1,0 +1,27 @@
+class Main : Object;
+
+
+struct A {
+  int n;
+
+  void ctor (int an) {
+    print("A::ctor: an=%s (n=%s)", an, n);
+    n = an;
+  }
+
+  void dtor () {
+    print("A::dtor");
+  }
+}
+
+
+void main () {
+  print("start...");
+  string s = "boo";
+  foreach (int i; 0..2) {
+    A st(42);
+    string s2 = "foo";
+    print("st.n=%s (%s)", st.n, s2);
+  }
+  print("done! (%s)", s);
+}

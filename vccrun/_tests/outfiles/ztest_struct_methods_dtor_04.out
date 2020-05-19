@@ -1,0 +1,12 @@
+start...
+B::ctor: an=42 (n=0; s=)
+A::ctor: an=42 (n=0)
+  s=goo
+st.n=42 (foo)
+A::dtor (n=42)
+B::ctor: an=42 (n=0; s=)
+A::ctor: an=42 (n=0)
+  s=goo
+st.n=42 (foo)
+A::dtor (n=42)
+done! (boo)

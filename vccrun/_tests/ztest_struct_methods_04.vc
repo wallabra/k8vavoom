@@ -1,0 +1,42 @@
+class Main : Object;
+
+
+struct A {
+  int n;
+
+  int goo (int v) {
+    return n+v;
+  }
+
+  static int zoo0 () {
+    return 69;
+  }
+}
+
+struct B : A {
+  void boo (int t) {
+    print("A::boo: n=%s; t=%s", goo(1000), t);
+    ++n;
+  }
+
+  static int zoo1 () {
+    return 666;
+  }
+}
+
+
+void main () {
+  B st;
+  st.n = 42;
+
+  st.boo(2000);
+  print("after: n=%s", st.n);
+
+  print("zoo0: %s", st.zoo0);
+  print("zoo1: %s", st.zoo1);
+
+  print("zoo0: %s", B.zoo0);
+  print("zoo1: %s", B.zoo1);
+
+  print("zoo0: %s", A.zoo0);
+}

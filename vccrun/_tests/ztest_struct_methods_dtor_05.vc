@@ -1,0 +1,38 @@
+class Main : Object;
+
+
+struct A {
+  int n;
+  string s;
+
+  void ctor (int an) {
+    print("A::ctor: an=%s (n=%s; s=%s)", an, n, s);
+    n = an;
+    s = "goo";
+    print("  s=%s", s);
+  }
+
+  void dtor () {
+    print("A::dtor (n=%s)", n);
+  }
+}
+
+
+struct B : A {
+  void ctor (int an) {
+    print("B::ctor: an=%s (n=%s)", an, n);
+    ::ctor(an);
+  }
+}
+
+
+void main () {
+  print("start...");
+  string s = "boo";
+  foreach (int i; 0..2) {
+    B st(42);
+    string s2 = "foo";
+    print("st.n=%s (%s)", st.n, s2);
+  }
+  print("done! (%s)", s);
+}
