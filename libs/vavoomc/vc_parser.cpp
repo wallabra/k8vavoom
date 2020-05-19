@@ -440,6 +440,16 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt, VExpres
         if (lt == LocalForeach) ParseError(Lex.Location, "Foreach variable cannot be initialized");
         Lex.NextToken();
         e.Value = ParseTernaryExpression();
+      } else if (Lex.Token == TK_LParen) {
+        //GLog.Logf(NAME_Debug, "::: <%s>", *e.Name);
+        // struct ctor
+        if (TypeExpr->Type.Type == TYPE_Automatic) ParseError(Lex.Location, "Automatic struct cannot be constructed");
+        VExpression *Args[VMethod::MAX_PARAMS+1];
+        auto lc = Lex.Location;
+        Lex.Expect(TK_LParen); // eat left paren
+        int NumArgs = ParseArgList(Lex.Location, Args);
+        e.Value = new VDotInvocation(new VSingleName(e.Name, lc), "ctor", lc, NumArgs, Args);
+        e.ctorInit = true;
       } else {
         // automatic type cannot be declared without initializer if it is outside `foreach`
         if (lt != LocalForeach && TypeExpr->Type.Type == TYPE_Automatic) {

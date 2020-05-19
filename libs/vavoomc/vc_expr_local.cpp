@@ -169,59 +169,68 @@ void VLocalDecl::Declare (VEmitContext &ec) {
 
     // resolve initialisation
     if (e.Value) {
-      L.Visible = false; // hide from initializer expression
-      VExpression *op1 = new VLocalVar(L.ldindex, e.Loc);
-      e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc);
-      e.Value = e.Value->Resolve(ec);
-      L.Visible = true; // and make it visible again
-      e.emitClear = false;
-      // if clear is not necessary, and we are assigning default value, drop assign
-      if (!L.reused && !ec.IsInLoop() && e.Value && e.Value->IsAssignExpr() &&
-          ((VAssignment *)e.Value)->Oper == VAssignment::Assign &&
-          ((VAssignment *)e.Value)->op2)
-      {
-        VExpression *val = ((VAssignment *)e.Value)->op2;
-        bool killInit = false;
-        switch (val->Type.Type) {
-          case TYPE_Int:
-          case TYPE_Byte:
-          case TYPE_Bool:
-            killInit = (val->IsIntConst() && val->GetIntConst() == 0);
-            break;
-          case TYPE_Float:
-            killInit = (val->IsFloatConst() && val->GetFloatConst() == 0);
-            break;
-          case TYPE_Name:
-            killInit = (val->IsNameConst() && val->GetNameConst() == NAME_None);
-            break;
-          case TYPE_String:
-            killInit = (val->IsStrConst() && val->GetStrConst(ec.Package).length() == 0);
-            break;
-          case TYPE_Pointer:
-            killInit = val->IsNullLiteral();
-            break;
-          case TYPE_Reference:
-          case TYPE_Class:
-          case TYPE_State:
-            killInit = val->IsNoneLiteral();
-            break;
-          case TYPE_Delegate:
-            killInit = (val->IsNoneDelegateLiteral() || val->IsNoneLiteral() || val->IsNullLiteral());
-            break;
-          case TYPE_Vector:
-            if (val->IsConstVectorCtor()) {
-              VVectorExpr *vc = (VVectorExpr *)val;
-              TVec vec = vc->GetConstValue();
-              killInit = (vec.x == 0 && vec.y == 0 && vec.z == 0);
-            }
-            break;
+      // invocation means "constructor call"
+      if (e.ctorInit) {
+        if (Type.Type != TYPE_Struct) {
+          ParseError(e.Value->Loc, "cannot construct something that is not a struct");
+        } else {
+          e.Value = e.Value->Resolve(ec);
         }
-        if (killInit) {
-          //ParseWarning(Loc, "initializer for `%s` removed", *e.Name);
-          //fprintf(stderr, "!!!%s (%s)\n", *e.Name, *val->Type.GetName());
-          //fprintf(stderr, "initializer for `%s` removed\n", *e.Name);
-          delete e.Value;
-          e.Value = nullptr;
+      } else {
+        L.Visible = false; // hide from initializer expression
+        VExpression *op1 = new VLocalVar(L.ldindex, e.Loc);
+        e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc);
+        e.Value = e.Value->Resolve(ec);
+        L.Visible = true; // and make it visible again
+        e.emitClear = false;
+        // if clear is not necessary, and we are assigning default value, drop assign
+        if (!L.reused && !ec.IsInLoop() && e.Value && e.Value->IsAssignExpr() &&
+            ((VAssignment *)e.Value)->Oper == VAssignment::Assign &&
+            ((VAssignment *)e.Value)->op2)
+        {
+          VExpression *val = ((VAssignment *)e.Value)->op2;
+          bool killInit = false;
+          switch (val->Type.Type) {
+            case TYPE_Int:
+            case TYPE_Byte:
+            case TYPE_Bool:
+              killInit = (val->IsIntConst() && val->GetIntConst() == 0);
+              break;
+            case TYPE_Float:
+              killInit = (val->IsFloatConst() && val->GetFloatConst() == 0);
+              break;
+            case TYPE_Name:
+              killInit = (val->IsNameConst() && val->GetNameConst() == NAME_None);
+              break;
+            case TYPE_String:
+              killInit = (val->IsStrConst() && val->GetStrConst(ec.Package).length() == 0);
+              break;
+            case TYPE_Pointer:
+              killInit = val->IsNullLiteral();
+              break;
+            case TYPE_Reference:
+            case TYPE_Class:
+            case TYPE_State:
+              killInit = val->IsNoneLiteral();
+              break;
+            case TYPE_Delegate:
+              killInit = (val->IsNoneDelegateLiteral() || val->IsNoneLiteral() || val->IsNullLiteral());
+              break;
+            case TYPE_Vector:
+              if (val->IsConstVectorCtor()) {
+                VVectorExpr *vc = (VVectorExpr *)val;
+                TVec vec = vc->GetConstValue();
+                killInit = (vec.x == 0 && vec.y == 0 && vec.z == 0);
+              }
+              break;
+          }
+          if (killInit) {
+            //ParseWarning(Loc, "initializer for `%s` removed", *e.Name);
+            //fprintf(stderr, "!!!%s (%s)\n", *e.Name, *val->Type.GetName());
+            //fprintf(stderr, "initializer for `%s` removed\n", *e.Name);
+            delete e.Value;
+            e.Value = nullptr;
+          }
         }
       }
     } else {

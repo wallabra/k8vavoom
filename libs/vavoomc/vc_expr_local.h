@@ -41,8 +41,9 @@ public:
   int toeIterArgN; // >=0: `TypeOfExpr` is iterator call, take nth arg
   bool emitClear;
   int locIdx;
+  bool ctorInit; // `true` if `Value` is constructor call
 
-  VLocalEntry () : TypeExpr(nullptr), Name(NAME_None), Value(nullptr), TypeOfExpr(nullptr), isRef(false), isConst(false), toeIterArgN(-1), emitClear(false), locIdx(-1) {}
+  VLocalEntry () : TypeExpr(nullptr), Name(NAME_None), Value(nullptr), TypeOfExpr(nullptr), isRef(false), isConst(false), toeIterArgN(-1), emitClear(false), locIdx(-1), ctorInit(false) {}
 };
 
 
