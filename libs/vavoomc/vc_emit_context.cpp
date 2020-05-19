@@ -468,10 +468,8 @@ void VEmitContext::ClearLocalDefs () {
 VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, const TLocation &aloc) {
   const int ssz = atype.GetStackSize()/4;
 
-  #if 0
   // try to find reusable local
   int besthit = 0x7fffffff, bestidx = -1;
-  k8: i turned off locals reusing, because why, there is no reason to do this
   if (!atype.IsReusingDisabled()) {
     for (int f = 0; f < LocalDefs.length(); ++f) {
       //break;
@@ -517,9 +515,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     ll.compIndex = compIndex;
     ll.reused = true;
     return ll;
-  } else
-  #endif
-  {
+  } else {
     // introduce new local
     VLocalVarDef &loc = LocalDefs.Alloc();
     loc.Loc = aloc;
@@ -600,9 +596,8 @@ void VEmitContext::ExitCompound (TArray<VCompExit> &elist, int cidx, const TLoca
 void VEmitContext::EmitExitCompound (TArray<VCompExit> &elist) {
   for (auto &&it : elist) {
     // clear it before `reusable` is set (it is important!)
-    LocalDefs[it.lidx].Reusable = false; // force clearing
-    EmitOneLocalDtor(it.lidx, it.loc, it.inLoop); // zero it, if it is in a loop
-    LocalDefs[it.lidx].Reusable = true;
+    //EmitOneLocalDtor(it.lidx, it.loc, it.inLoop); // zero it, if it is in a loop
+    EmitOneLocalDtor(it.lidx, it.loc, false, true); // don't zero, forced destruction
   }
 }
 
@@ -1016,8 +1011,8 @@ void VEmitContext::EmitLocalPtrValue (int lcidx, const TLocation &aloc, int xofs
 //  VEmitContext::EmitLocalDtors
 //
 //==========================================================================
-void VEmitContext::EmitLocalDtors (int Start, int End, const TLocation &aloc, bool zeroIt) {
-  for (int i = Start; i < End; ++i) EmitOneLocalDtor(i, aloc, zeroIt);
+void VEmitContext::EmitLocalDtors (int Start, int End, const TLocation &aloc, bool zeroIt, bool force) {
+  for (int i = Start; i < End; ++i) EmitOneLocalDtor(i, aloc, zeroIt, force);
 }
 
 
@@ -1026,10 +1021,10 @@ void VEmitContext::EmitLocalDtors (int Start, int End, const TLocation &aloc, bo
 //  VEmitContext::EmitOneLocalDtor
 //
 //==========================================================================
-void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt) {
+void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt, bool force) {
   const VLocalVarDef &loc = LocalDefs[locidx];
   // do not process "reusable" locals, they were cleared by scope exit
-  if (loc.Reusable) return;
+  if (!force && loc.Reusable) return;
 
   // don't touch out/ref parameters
   if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) return;

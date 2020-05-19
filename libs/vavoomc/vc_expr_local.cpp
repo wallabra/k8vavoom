@@ -255,7 +255,7 @@ void VLocalDecl::EmitInitialisations (VEmitContext &ec) {
       Vars[i].Value->Emit(ec);
     } else if (Vars[i].emitClear) {
       if (Vars[i].locIdx < 0) VCFatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
-      ec.EmitOneLocalDtor(Vars[i].locIdx, Loc, true); // zero it
+      ec.EmitOneLocalDtor(Vars[i].locIdx, Loc, true, true); // zero it, and forced
     }
   }
 }

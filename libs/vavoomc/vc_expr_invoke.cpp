@@ -2508,7 +2508,7 @@ void VInvocation::Emit (VEmitContext &ec) {
         if (Func->ParamTypes[i].Type == TYPE_Struct) {
           Func->ParamTypes[i].Struct->PostLoad();
         }
-        if (reused[i]) ec.EmitOneLocalDtor(lcidx[i], Loc, true);
+        if (reused[i]) ec.EmitOneLocalDtor(lcidx[i], Loc, true, true); // zero it, and forced
         const VLocalVarDef &loc = ec.GetLocalByIndex(lcidx[i]);
         ec.EmitLocalAddress(loc.Offset, Loc);
         //ec.AddStatement(OPC_ZeroByPtrNoDrop, Func->ParamTypes[i].GetSize(), Loc);
