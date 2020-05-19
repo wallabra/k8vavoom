@@ -168,6 +168,10 @@ void VLocalDecl::Declare (VEmitContext &ec) {
     //if (e.isRef) fprintf(stderr, "*** <%s:%d> is REF\n", *e.Name, L.ldindex);
     e.locIdx = L.ldindex;
 
+    // always clear reused/loop locals
+    // this flag will be adjusted later
+    e.emitClear = L.reused || ec.IsInLoop();
+
     // resolve initialisation
     if (e.Value) {
       // invocation means "constructor call"
@@ -183,7 +187,6 @@ void VLocalDecl::Declare (VEmitContext &ec) {
         e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc);
         e.Value = e.Value->Resolve(ec);
         L.Visible = true; // and make it visible again
-        e.emitClear = false;
         // if clear is not necessary, and we are assigning default value, drop assign
         if (!L.reused && !ec.IsInLoop() && e.Value && e.Value->IsAssignExpr() &&
             ((VAssignment *)e.Value)->Oper == VAssignment::Assign &&
@@ -233,12 +236,9 @@ void VLocalDecl::Declare (VEmitContext &ec) {
             e.Value = nullptr;
           }
         }
+        // no need to clear it, and structs will not end up here
+        if (e.Value) e.emitClear = false;
       }
-    } else {
-      //e.emitClear = L.reused;
-      //TODO: only set this for locals in loop blocks
-      //e.emitClear = true; // always clear, so locals in loop won't retain old values, for example
-      e.emitClear = L.reused || ec.IsInLoop();
     }
   }
 }
@@ -251,12 +251,11 @@ void VLocalDecl::Declare (VEmitContext &ec) {
 //==========================================================================
 void VLocalDecl::EmitInitialisations (VEmitContext &ec) {
   for (int i = 0; i < Vars.length(); ++i) {
-    if (Vars[i].Value) {
-      Vars[i].Value->Emit(ec);
-    } else if (Vars[i].emitClear) {
+    if (Vars[i].emitClear) {
       if (Vars[i].locIdx < 0) VCFatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
-      ec.EmitOneLocalDtor(Vars[i].locIdx, Loc, true, true); // zero it, and forced
+      ec.EmitOneLocalDtor(Vars[i].locIdx, Loc, true, true, false); // zero it, and forced, and no dtors
     }
+    if (Vars[i].Value) Vars[i].Value->Emit(ec);
   }
 }
 

@@ -25,6 +25,13 @@
 //**************************************************************************
 #include "vc_local.h"
 
+enum {
+  DTF_Unknown = -1,
+  DTF_None = 0,
+  DTF_Fields = 1,
+  DTF_Dtor = 2,
+};
+
 
 //==========================================================================
 //
@@ -46,7 +53,7 @@ VStruct::VStruct (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , DestructorFields(nullptr)
   , AliasList()
   , AliasFrameNum(0)
-  , cacheNeedDTor(-1)
+  , cacheNeedDTor(DTF_Unknown)
   , cacheNeedCleanup(-1)
 {
 }
@@ -127,7 +134,7 @@ void VStruct::Serialise (VStream &Strm) {
     << Methods;
 
   if (Strm.IsLoading()) {
-    cacheNeedDTor = -1;
+    cacheNeedDTor = DTF_Unknown;
     cacheNeedCleanup = -1;
   }
 }
@@ -240,7 +247,7 @@ void VStruct::AddField (VField *f) {
   if (Prev) Prev->Next = f; else Fields = f;
   f->Next = nullptr;
 
-  cacheNeedDTor = -1;
+  cacheNeedDTor = DTF_Unknown;
   cacheNeedCleanup = -1;
 }
 
@@ -261,17 +268,55 @@ VField *VStruct::FindField (VName FieldName) {
 
 //==========================================================================
 //
+//  VStruct::UpdateDTorCache
+//
+//==========================================================================
+void VStruct::UpdateDTorCache () {
+  cacheNeedDTor = DTF_None;
+  if (FindDtor()) cacheNeedDTor |= DTF_Dtor;
+  for (VField *F = Fields; F; F = F->Next) {
+    if (F->NeedsDestructor()) {
+      cacheNeedDTor |= DTF_Fields;
+      break;
+    }
+  }
+  if (ParentStruct) {
+    (void)ParentStruct->NeedsDestructor();
+    cacheNeedDTor |= ParentStruct->cacheNeedDTor;
+  }
+}
+
+
+//==========================================================================
+//
 //  VStruct::NeedsDestructor
 //
 //==========================================================================
 bool VStruct::NeedsDestructor () {
-  if (cacheNeedDTor >= 0) return (cacheNeedDTor != 0);
-  cacheNeedDTor = 1;
-  if (FindDtor()) return true;
-  for (VField *F = Fields; F; F = F->Next) if (F->NeedsDestructor()) return true;
-  if (ParentStruct && ParentStruct->NeedsDestructor()) return true;
-  cacheNeedDTor = 0;
-  return false;
+  if (cacheNeedDTor == DTF_Unknown) UpdateDTorCache();
+  return (cacheNeedDTor != DTF_None);
+}
+
+
+//==========================================================================
+//
+//  VStruct::NeedsFieldsDestruction
+//
+//==========================================================================
+bool VStruct::NeedsFieldsDestruction () {
+  if (cacheNeedDTor == DTF_Unknown) UpdateDTorCache();
+  return !!(cacheNeedDTor&DTF_Fields);
+}
+
+
+//==========================================================================
+//
+//  VStruct::NeedsMethodDestruction
+//
+//==========================================================================
+bool VStruct::NeedsMethodDestruction () {
+  if (cacheNeedDTor == DTF_Unknown) UpdateDTorCache();
+  return !!(cacheNeedDTor&DTF_Dtor);
 }
 
 
@@ -403,6 +448,7 @@ bool VStruct::DefineMembers () {
     }
   }
 
+  //GLog.Logf(NAME_Debug, "VStruct::DefineMembers:<%s>; size=%d", *Name, Size);
   return Ret;
 }
 
@@ -477,6 +523,7 @@ void VStruct::CalcFieldOffsets () {
     }
     PrevField = fi;
   }
+  if (!Alignment) Alignment = 1;
   Size = (size+Alignment-1)&~(Alignment-1);
 }
 
@@ -488,7 +535,7 @@ void VStruct::CalcFieldOffsets () {
 //==========================================================================
 void VStruct::InitReferences () {
   // invalidate caches (just in case)
-  cacheNeedDTor = -1;
+  cacheNeedDTor = DTF_Unknown;
   cacheNeedCleanup = -1;
   ReferenceFields = nullptr;
   if (ParentStruct) ReferenceFields = ParentStruct->ReferenceFields;
@@ -544,7 +591,6 @@ void VStruct::InitReferences () {
         break;
     }
   }
-  if (cacheNeedDTor <= 0 && FindDtor()) cacheNeedDTor = 1;
 }
 
 
@@ -555,7 +601,7 @@ void VStruct::InitReferences () {
 //==========================================================================
 void VStruct::InitDestructorFields () {
   // invalidate caches (just in case)
-  cacheNeedDTor = -1;
+  cacheNeedDTor = DTF_Unknown;
   cacheNeedCleanup = -1;
   DestructorFields = nullptr;
   if (ParentStruct) DestructorFields = ParentStruct->DestructorFields;
@@ -566,27 +612,27 @@ void VStruct::InitDestructorFields () {
         cacheNeedCleanup = 1;
         break;
       case TYPE_String:
-        cacheNeedDTor = 1; // anyway
+        cacheNeedDTor |= DTF_Fields; // anyway
         F->DestructorLink = DestructorFields;
         DestructorFields = F;
         break;
       case TYPE_Struct:
         F->Type.Struct->PostLoad();
         if (F->Type.Struct->DestructorFields) {
-          cacheNeedDTor = 1; // anyway
+          cacheNeedDTor |= DTF_Fields; // anyway
           F->DestructorLink = DestructorFields;
           DestructorFields = F;
         }
         break;
       case TYPE_Array:
         if (F->Type.ArrayInnerType == TYPE_String) {
-          cacheNeedDTor = 1; // anyway
+          cacheNeedDTor |= DTF_Fields; // anyway
           F->DestructorLink = DestructorFields;
           DestructorFields = F;
         } else if (F->Type.ArrayInnerType == TYPE_Struct) {
           F->Type.Struct->PostLoad();
           if (F->Type.Struct->DestructorFields) {
-            cacheNeedDTor = 1; // anyway
+            cacheNeedDTor |= DTF_Fields; // anyway
             F->DestructorLink = DestructorFields;
             DestructorFields = F;
           }
@@ -594,13 +640,13 @@ void VStruct::InitDestructorFields () {
         break;
       case TYPE_DynamicArray:
       case TYPE_Dictionary:
-        cacheNeedDTor = 1; // anyway
+        cacheNeedDTor |= DTF_Fields; // anyway
         F->DestructorLink = DestructorFields;
         DestructorFields = F;
         break;
     }
   }
-  if (cacheNeedDTor <= 0 && FindDtor()) cacheNeedDTor = 1;
+  if (FindDtor()) cacheNeedDTor = DTF_Dtor;
 }
 
 
@@ -759,7 +805,11 @@ void VStruct::DestructObject (vuint8 *Data) {
 //
 //==========================================================================
 void VStruct::ZeroObject (vuint8 *Data) {
-  for (VField *F = Fields; F; F = F->Next) VField::DestructField(Data+F->Ofs, F->Type, true);
+  //for (VField *F = Fields; F; F = F->Next) VField::DestructField(Data+F->Ofs, F->Type, true);
+  // destruct all fields that need to be destructed, and memset the struct
+  for (VField *F = DestructorFields; F; F = F->DestructorLink) VField::DestructField(Data+F->Ofs, F->Type);
+  //GLog.Logf(NAME_Debug, "memsetting struct <%s> (%d bytes)", *Name, Size);
+  memset(Data, 0, Size);
 }
 
 

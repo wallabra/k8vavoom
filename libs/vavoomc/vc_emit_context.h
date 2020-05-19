@@ -271,7 +271,7 @@ public:
   void EmitPushPointedCode (VFieldType type, const TLocation &aloc);
 
   void EmitLocalDtors (int Start, int End, const TLocation &aloc, bool zeroIt=false, bool force=false);
-  void EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt=false, bool force=false);
+  void EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt=false, bool force=false, bool emitDtors=true);
 
   void EmitGotoTo (VName lblname, const TLocation &aloc);
   void EmitGotoLabel (VName lblname, const TLocation &aloc);

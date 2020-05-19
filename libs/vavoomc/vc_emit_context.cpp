@@ -1021,7 +1021,7 @@ void VEmitContext::EmitLocalDtors (int Start, int End, const TLocation &aloc, bo
 //  VEmitContext::EmitOneLocalDtor
 //
 //==========================================================================
-void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt, bool force) {
+void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt, bool force, bool emitDtors) {
   const VLocalVarDef &loc = LocalDefs[locidx];
   // do not process "reusable" locals, they were cleared by scope exit
   if (!force && loc.Reusable) return;
@@ -1051,23 +1051,28 @@ void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zer
 
   if (loc.Type.Type == TYPE_Struct) {
     // call struct dtors
-    for (VStruct *st = loc.Type.Struct; st; st = st->ParentStruct) {
-      VMethod *mt = st->FindDtor(false); // non-recursive
-      if (mt) {
-        vassert(mt->NumParams == 0);
-        // emit `self`
-        if (!mt->IsStatic()) EmitLocalAddress(loc.Offset, aloc);
-        // emit call
-        AddStatement(OPC_Call, mt, 1/*SelfOffset*/, aloc);
+    if (emitDtors && loc.Type.Struct->NeedsMethodDestruction()) {
+      for (VStruct *st = loc.Type.Struct; st; st = st->ParentStruct) {
+        VMethod *mt = st->FindDtor(false); // non-recursive
+        if (mt) {
+          vassert(mt->NumParams == 0);
+          // emit `self`
+          if (!mt->IsStatic()) EmitLocalAddress(loc.Offset, aloc);
+          // emit call
+          AddStatement(OPC_Call, mt, 1/*SelfOffset*/, aloc);
+        }
       }
     }
     // zero/clear
-    if (loc.Type.Struct->NeedsDestructor()) {
+    if (loc.Type.Struct->NeedsFieldsDestruction()) {
       EmitLocalAddress(loc.Offset, aloc);
       AddStatement((!zeroIt ? OPC_ClearPointedStruct : OPC_ZeroPointedStruct), loc.Type.Struct, aloc);
     } else if (zeroIt) {
       EmitLocalAddress(loc.Offset, aloc);
-      AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
+      //GLog.Logf(NAME_Debug, "ZEROSTRUCT<%s>: size=%d (%s:%d)", *loc.Type.Struct->Name, loc.Type.GetSize(), *loc.Type.GetName(), loc.Type.Type);
+      // we cannot use `OPC_ZeroByPtr` here, because struct size is not calculated yet
+      //AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
+      AddStatement(OPC_ZeroPointedStruct, loc.Type.Struct, aloc);
     }
     return;
   }
@@ -1082,24 +1087,26 @@ void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zer
       }
     } else if (loc.Type.ArrayInnerType == TYPE_Struct) {
       // call struct dtors
-      for (VStruct *st = loc.Type.Struct; st; st = st->ParentStruct) {
-        VMethod *mt = st->FindDtor(false); // non-recursive
-        if (mt) {
-          vassert(mt->NumParams == 0);
-          for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
-            // emit `self`
-            if (!mt->IsStatic()) {
-              EmitLocalAddress(loc.Offset, aloc);
-              EmitPushNumber(j, aloc);
-              AddStatement(OPC_ArrayElement, loc.Type.GetArrayInnerType(), aloc);
+      if (emitDtors && loc.Type.Struct->NeedsMethodDestruction()) {
+        for (VStruct *st = loc.Type.Struct; st; st = st->ParentStruct) {
+          VMethod *mt = st->FindDtor(false); // non-recursive
+          if (mt) {
+            vassert(mt->NumParams == 0);
+            for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
+              // emit `self`
+              if (!mt->IsStatic()) {
+                EmitLocalAddress(loc.Offset, aloc);
+                EmitPushNumber(j, aloc);
+                AddStatement(OPC_ArrayElement, loc.Type.GetArrayInnerType(), aloc);
+              }
+              // emit call
+              AddStatement(OPC_Call, mt, 1/*SelfOffset*/, aloc);
             }
-            // emit call
-            AddStatement(OPC_Call, mt, 1/*SelfOffset*/, aloc);
           }
         }
       }
       // zero/clear
-      if (loc.Type.Struct->NeedsDestructor()) {
+      if (loc.Type.Struct->NeedsFieldsDestruction()) {
         for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
           EmitLocalAddress(loc.Offset, aloc);
           EmitPushNumber(j, aloc);
@@ -1109,7 +1116,9 @@ void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zer
       } else if (zeroIt) {
         // just zero it
         EmitLocalAddress(loc.Offset, aloc);
-        AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
+        // we cannot use `OPC_ZeroByPtr` here, because struct size is not calculated yet
+        //AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
+        AddStatement(OPC_ZeroPointedStruct, loc.Type.Struct, aloc);
       }
     }
     return;

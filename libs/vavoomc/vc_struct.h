@@ -72,9 +72,11 @@ public:
   VName ResolveAlias (VName aname); // returns `aname` for unknown alias, or `NAME_None` for alias loop
 
 private:
-  // cache various requests (<0: not cached; 0: false; 1: true)
-  int cacheNeedDTor;
+  // cache various requests (<0: not cached; 0: false; !0: true)
+  int cacheNeedDTor; // >0: bit0: has fields to destruct; bit1: has dtor method
   int cacheNeedCleanup;
+
+  void UpdateDTorCache ();
 
 public:
   VStruct (VName, VMemberBase *, TLocation);
@@ -91,7 +93,9 @@ public:
   void AddField (VField *f);
   VField *FindField (VName);
 
-  bool NeedsDestructor ();
+  bool NeedsDestructor (); // any
+  bool NeedsFieldsDestruction ();
+  bool NeedsMethodDestruction ();
 
   // resolves parent struct
   bool Define ();
