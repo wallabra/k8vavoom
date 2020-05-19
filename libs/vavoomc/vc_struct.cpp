@@ -339,7 +339,7 @@ bool VStruct::DefineMembers () {
 
   // check methods
   for (auto &&mt : Methods) {
-    if (mt->Name == NAME_None) continue; // just in case, anonymous fields
+    if (mt->Name == NAME_None || VStr::strEqu(*mt->Name, "ctor") || VStr::strEqu(*mt->Name, "dtor")) continue; // just in case, anonymous fields
     auto np = fmMap.find(mt->Name);
     if (np) {
       ParseError(mt->Loc, "Field/method name conflict (%s)", *mt->Name);

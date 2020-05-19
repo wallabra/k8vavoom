@@ -430,6 +430,18 @@ void VSuperInvocation::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VSuperInvocation::DoResolve (VEmitContext &ec) {
+  // struct
+  if (ec.SelfStruct && ec.SelfStruct->ParentStruct) {
+    VMethod *Func = ec.SelfStruct->ParentStruct->FindAccessibleMethod(Name, ec.SelfStruct, &Loc);
+    if (Func) {
+      VInvocation *e = new VInvocation(nullptr, Func, nullptr, false, true, Loc, NumArgs, Args);
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
+  }
+
+  // class
   if (ec.SelfClass && ec.SelfClass->ParentClass) {
     VMethod *Func = ec.SelfClass->ParentClass->FindAccessibleMethod(Name, ec.SelfClass, &Loc);
     if (Func) {
@@ -2481,7 +2493,7 @@ void VInvocation::Emit (VEmitContext &ec) {
       // it is allowed to call static methods with `var.name()`
       //if (HaveSelf) ParseError(Loc, "Invalid static function call");
     } else if (!HaveSelf) {
-      if (ec.CurrentFunc->IsStatic()) ParseError(Loc, "An object is required to call non-static methods");
+      if (ec.CurrentFunc->IsStatic()) ParseError(Loc, "Cannot call non-static method `%s` from static method `%s`", *Func->Name, *ec.CurrentFunc->Name);
       ec.AddStatement(OPC_LocalValue0, Loc);
     }
   }
