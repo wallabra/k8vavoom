@@ -83,6 +83,10 @@ public:
   virtual void Serialise (VStream &) override;
   virtual void PostLoad () override;
 
+  void AddMethod (VMethod *m);
+  VMethod *FindMethod (VName Name, bool bRecursive=true);
+  VMethod *FindAccessibleMethod (VName Name, VStruct *self=nullptr, const TLocation *loc=nullptr);
+
   void AddField (VField *f);
   VField *FindField (VName);
   bool NeedsDestructor ();
@@ -93,6 +97,9 @@ public:
   // calls `Define()` for fields, inits some other internal fields
   // must be called after `Define()`
   bool DefineMembers ();
+
+  // calls `Emit()` for methods
+  void Emit ();
 
   bool IsA (const VStruct *s) const;
 

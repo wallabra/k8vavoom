@@ -14,6 +14,7 @@ to get executable VM code, the compiler basically does this (see `VPackage::Load
       2.0.6. calls `DefineMembers()` for all package structs.
       2.0.7. calls `DefineMembers()` for all package classes.
       2.0.8. calls `Emit()` for all package classes.
+      2.0.9.   each package class calls `Emit()` for all package structs.
     2.1. calls `PostLoad()` for all package members, in arbirary order.
 
 

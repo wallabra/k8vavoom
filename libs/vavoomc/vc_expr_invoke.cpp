@@ -1100,6 +1100,29 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     return e->Resolve(ec);
   }
 
+  if (SelfExpr->Type.IsNormalOrPointerType(TYPE_Struct)) {
+    VMethod *M = SelfExpr->Type.Struct->FindAccessibleMethod(MethodName, SelfExpr->Type.Struct, &Loc);
+    //if (!M) ParseError(Loc, "struct method `%s::%s` not found", *SelfExpr->Type.Struct->Name, *MethodName);
+    // do not fail here, this could be a delegate invocation
+    if (M) {
+      //if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
+      if (SelfExpr->Type.Type != TYPE_Pointer) SelfExpr = new VUnary(VUnary::TakeAddress, SelfExpr, SelfExpr->Loc);
+      SelfExpr = SelfExpr->Resolve(ec);
+      if (!SelfExpr) { delete this; return nullptr; }
+      if (M->Flags&FUNC_Iterator) {
+        ParseError(Loc, "Iterator methods can only be used in foreach statements");
+        delete this;
+        return nullptr;
+      }
+      //GLog.Logf(NAME_Debug, "compiling call to struct method `%s::%s`", *SelfExpr->Type.Struct->Name, *MethodName);
+      VExpression *e = new VInvocation(SelfExpr, M, nullptr, true, false, Loc, NumArgs, Args);
+      SelfExpr = nullptr;
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
+  }
+
   if (!SelfExpr->Type.IsNormalOrPointerType(TYPE_Reference)) {
     // translate method name for some built-in types
     if (SelfExpr->Type.IsNormalOrPointerType(TYPE_String)) {
@@ -1333,6 +1356,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         }
       }
     }
+    //GLog.Logf(NAME_Debug, "SelfExpr(%s)=%s (%d)", *SelfExpr->Type.GetName(), *SelfExpr->toString(), SelfExpr->Type.Type);
     ParseError(Loc, "Object reference expected at the left side of `.` (0)");
     delete selfCopy;
     delete this;

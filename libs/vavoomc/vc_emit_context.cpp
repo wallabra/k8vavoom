@@ -364,7 +364,7 @@ VEmitContext::VEmitContext (VMemberBase *Member)
       }
       if (SM) {
         GLog.Logf(NAME_Debug, "compiling struct method `%s`", *Member->GetFullName());
-        SelfClass = nullptr;
+        //SelfClass = nullptr; // we still need outer class
         SelfStruct = (VStruct *)SM;
       }
     }

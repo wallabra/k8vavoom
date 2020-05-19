@@ -257,6 +257,8 @@ public:
   inline bool IsVirtual () const noexcept { return (VTableIndex >= 0); }
   inline bool IsNonVirtual () const noexcept { return (VTableIndex < 0); }
 
+  inline bool IsStructMethod () const noexcept { return !!(Flags&FUNC_StructMethod); }
+
   inline bool IsPostLoaded () const noexcept { return (VTableIndex >= -1); }
 
   // is this method suitable for various "normal" calls?

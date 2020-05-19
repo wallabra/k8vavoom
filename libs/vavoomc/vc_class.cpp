@@ -1858,6 +1858,9 @@ void VClass::Emit () {
   for (auto &&ri : RepInfos) ri.Cond->Emit();
 
   DefaultProperties->Emit();
+
+  // call `Emit()` for all structs
+  for (auto &&st : Structs) st->Emit();
 }
 
 

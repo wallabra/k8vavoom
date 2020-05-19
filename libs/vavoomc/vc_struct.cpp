@@ -135,17 +135,80 @@ void VStruct::Serialise (VStream &Strm) {
 
 //==========================================================================
 //
+//  VStruct::AddMethod
+//
+//==========================================================================
+void VStruct::AddMethod (VMethod *m) {
+  if (!m) return; // just in case
+  vassert(m->Outer == this);
+  Methods.append(m);
+}
+
+
+//==========================================================================
+//
+//  VStruct::FindMethod
+//
+//==========================================================================
+VMethod *VStruct::FindMethod (VName Name, bool bRecursive) {
+  if (Name == NAME_None) return nullptr;
+  Name = ResolveAlias(Name);
+  VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
+  if (M) return M;
+  if (!bRecursive || !ParentStruct) return nullptr;
+  return ParentStruct->FindMethod(Name, true);
+}
+
+
+//==========================================================================
+//
+//  VStruct::FindAccessibleMethod
+//
+//==========================================================================
+VMethod *VStruct::FindAccessibleMethod (VName Name, VStruct *self, const TLocation *loc) {
+  if (Name == NAME_None) return nullptr;
+  Name = ResolveAlias(Name);
+  VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
+  if (M) {
+    //fprintf(stderr, "FAM: <%s>; self=%s; this=%s; child=%d; loc=%p\n", *Name, (self ? *self->Name : "<none>"), *this->Name, (int)(self ? self->IsChildOf(this) : false), loc);
+    if (loc) {
+      //fprintf(stderr, "  FAM: <%s>; self=%s; this=%s; child=%d; flags=0x%04x\n", *Name, (self ? *self->Name : "<none>"), *this->Name, (int)(self ? self->IsChildOf(this) : false), M->Flags);
+      if ((M->Flags&FUNC_Private) && this != self) ParseError(*loc, "Method `%s::%s` is private", *Name, *M->Name);
+      if ((M->Flags&FUNC_Protected) && (!self || !self->IsA(this))) ParseError(*loc, "Method `%s::%s` is protected", *Name, *M->Name);
+      return M;
+    } else {
+      if (!self) {
+        if ((M->Flags&(FUNC_Private|FUNC_Protected)) == 0) return M;
+      } else {
+        if (M->Flags&FUNC_Private) {
+          if (self == this) return M;
+        } else if (M->Flags&FUNC_Protected) {
+          if (self->IsA(this)) return M;
+        } else {
+          return M;
+        }
+      }
+    }
+  }
+  return (ParentStruct ? ParentStruct->FindAccessibleMethod(Name, self, loc) : nullptr);
+}
+
+
+//==========================================================================
+//
 //  VStruct::AddField
 //
 //==========================================================================
 void VStruct::AddField (VField *f) {
-  for (VField *Check = Fields; Check; Check = Check->Next) {
+  VField *Prev = nullptr;
+  for (VField *Check = Fields; Check; Prev = Check, Check = Check->Next) {
     if (f->Name == Check->Name) {
       ParseError(f->Loc, "Redeclared field");
       ParseError(Check->Loc, "Previous declaration here");
     }
   }
 
+  /*
   if (!Fields) {
     Fields = f;
   } else {
@@ -153,6 +216,8 @@ void VStruct::AddField (VField *f) {
     while (Prev->Next) Prev = Prev->Next;
     Prev->Next = f;
   }
+  */
+  if (Prev) Prev->Next = f; else Fields = f;
   f->Next = nullptr;
 
   cacheNeedDTor = -1;
@@ -185,6 +250,20 @@ bool VStruct::NeedsDestructor () {
   for (VField *F = Fields; F; F = F->Next) if (F->NeedsDestructor()) return true;
   if (ParentStruct && ParentStruct->NeedsDestructor()) return true;
   cacheNeedDTor = 0;
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VStruct::IsA
+//
+//==========================================================================
+bool VStruct::IsA (const VStruct *s) const {
+  if (!s) return false;
+  for (const VStruct *me = this; me; me = me->ParentStruct) {
+    if (s == me) return true;
+  }
   return false;
 }
 
@@ -253,21 +332,22 @@ bool VStruct::DefineMembers () {
   }
 
   StackSize = (size+3)/4;
+
+  // define methods
+  for (auto &&mt : Methods) if (!mt->Define()) Ret = false;
+
   return Ret;
 }
 
 
 //==========================================================================
 //
-//  VStruct::IsA
+//  VStruct::Emit
 //
 //==========================================================================
-bool VStruct::IsA (const VStruct *s) const {
-  if (!s) return false;
-  for (const VStruct *me = this; me; me = me->ParentStruct) {
-    if (s == me) return true;
-  }
-  return false;
+void VStruct::Emit () {
+  // emit method code
+  for (auto &&mt : Methods) mt->Emit();
 }
 
 

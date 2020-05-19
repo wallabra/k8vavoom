@@ -636,9 +636,12 @@ void VMethod::PostLoad () {
   // check if owning class correctly postloaded
   // but don't do this for anonymous methods -- they're prolly created for delegates (FIXME: change this!)
   if (VTableIndex < -1) {
-    if (Name != NAME_None) {
+    if (Name != NAME_None && !IsStructMethod()) {
       VMemberBase *origClass = Outer;
       while (origClass) {
+        if (origClass->MemberType == MEMBER_Struct) {
+          // this is struct method
+        }
         if (origClass->isClassMember()) {
           // check for a valid class
           Sys_Error("owning class `%s` for `%s` wasn't correctly postloaded", origClass->GetName(), *GetFullName());
@@ -655,7 +658,7 @@ void VMethod::PostLoad () {
         VTableIndex = -1; // dunno, something strange here
       }
     } else {
-      // delegate dummy method (never called anyway)
+      // delegate dummy method (never called anyway), or struct method
       VTableIndex = -1; // dunno, something strange here
     }
   }

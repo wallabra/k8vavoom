@@ -265,6 +265,16 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
     return e->Resolve(ec);
   }
 
+  // resolve struct field
+  if (ec.SelfStruct) {
+    VField *field = ec.SelfStruct->FindField(Name);
+    if (field) {
+      VExpression *e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
+      delete this;
+      return e->Resolve(ec);
+    }
+  }
+
   // class field/property/etc
   if (ec.SelfClass) {
     VConstant *Const = ec.SelfClass->FindConstant(Name);

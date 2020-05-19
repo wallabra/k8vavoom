@@ -77,7 +77,8 @@ private:
   VExpression *ParseType (bool allowDelegates=false, int *constref=nullptr); // this won't parse `type*`
   VExpression *ParseTypePtrs (VExpression *type); // call this after `ParseType` to parse asterisks
   VExpression *ParseTypeWithPtrs (bool allowDelegates=false); // convenient wrapper
-  void ParseMethodDef (VExpression *, VName, const TLocation &, VClass *, vint32, bool);
+  void ParseMethodDef (VExpression *RetType, VName MName, const TLocation &MethodLoc,
+                       VClass *InClass, vint32 Modifiers, bool Iterator, VStruct *InStruct);
   void ParseDelegate (VExpression *RetType, VField *Delegate);
   VExpression *ParseLambda ();
   void ParseDefaultProperties (VClass *InClass, bool doparse, int defcount, VStatement **stats);

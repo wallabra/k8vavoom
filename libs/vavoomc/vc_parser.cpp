@@ -1761,15 +1761,38 @@ VExpression *VParser::ParseTypeWithPtrs (bool allowDelegates) {
 //
 //==========================================================================
 void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation &MethodLoc,
-                              VClass *InClass, vint32 Modifiers, bool Iterator)
+                              VClass *InClass, vint32 Modifiers, bool Iterator, VStruct *InStruct)
 {
-  if (InClass->FindMethod(MName, false)) ParseError(MethodLoc, "Redeclared method `%s.%s`", *InClass->Name, *MName);
+  if (InStruct) {
+    if (InStruct->FindMethod(MName, false)) ParseError(MethodLoc, "Redeclared method `%s::%s`", *InStruct->Name, *MName);
+  } else {
+    if (InClass->FindMethod(MName, false)) ParseError(MethodLoc, "Redeclared method `%s.%s`", *InClass->Name, *MName);
+  }
 
-  VMethod *Func = new VMethod(MName, InClass, MethodLoc);
+  // struct must be defined in the same class (yet)
+  if (InStruct) {
+    vassert(InClass);
+    VMemberBase *SM = InStruct;
+    while (SM && SM->MemberType != MEMBER_Class) {
+      if (SM == InClass) break;
+      SM = SM->Outer;
+    }
+    if (!SM) ParseError(MethodLoc, "cannot define struct method `%s::%s` because struct is not a member of class `%s`", InStruct->GetName(), *MName, InClass->GetName());
+  }
+
+  VMethod *Func = new VMethod(MName, (InStruct ? (VMemberBase *)InStruct : (VMemberBase *)InClass), MethodLoc);
   Func->Flags = TModifiers::MethodAttr(TModifiers::Check(Modifiers, TModifiers::MethodSet, MethodLoc));
   Func->ReturnTypeExpr = RetType;
-  if (Iterator) Func->Flags |= FUNC_Iterator;
-  InClass->AddMethod(Func);
+  if (Iterator) {
+    if (InStruct) ParseError(MethodLoc, "cannot define struct iterator `%s::%s` (struct iterators are forbidden)", InStruct->GetName(), *MName);
+    Func->Flags |= FUNC_Iterator;
+  }
+  if (InStruct) {
+    Func->Flags |= FUNC_StructMethod|FUNC_Final;
+    InStruct->AddMethod(Func);
+  } else {
+    InClass->AddMethod(Func);
+  }
 
   // parse params
   do {
@@ -1830,6 +1853,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
           Lex.NextToken();
         }
       } else if (Lex.Name == "builtin") {
+        if (InStruct) ParseError(MethodLoc, "cannot define builtins (%s::%s) in struct", InStruct->GetName(), *MName);
         // pseudomethod
         if ((Func->Flags&~FUNC_ProtectionFlags) != (FUNC_Native|FUNC_Static|FUNC_Final)) {
           ParseError(Func->Loc, "Builtin should be `native static final`");
@@ -2115,6 +2139,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
     }
 
     bool firstField = true;
+    bool gotMethod = false;
     do {
       VExpression *FieldType = Type->SyntaxCopy();
       FieldType = ParseTypePtrs(FieldType);
@@ -2154,8 +2179,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
         break;
       }
 
-      firstField = false;
-
+      // parse field name
       VName FieldName(NAME_None);
       TLocation FieldLoc = Lex.Location;
       if (Lex.Token != TK_Identifier) {
@@ -2164,6 +2188,18 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
         FieldName = Lex.Name;
       }
       Lex.NextToken();
+
+      // method?
+      if (Lex.Check(TK_LParen)) {
+        if (!firstField) ParseError(Lex.Location, "Invalid method declaration");
+        if (Type->IsDelegateType()) ParseError(Lex.Location, "Invalid delegate declaration");
+        ParseMethodDef(FieldType, FieldName, FieldLoc, InClass, Modifiers, false, Struct);
+        gotMethod = true;
+        break;
+      }
+
+      firstField = false;
+
       // array?
       if (Lex.Check(TK_LBracket)) {
         TLocation SLoc = Lex.Location;
@@ -2171,6 +2207,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
         Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
         FieldType = new VFixedArrayType(FieldType, e, nullptr, SLoc);
       }
+
       // create field
       VField *fi = new VField(FieldName, Struct, FieldLoc);
       fi->TypeExpr = FieldType;
@@ -2185,11 +2222,12 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
       }
       Struct->AddField(fi);
     } while (Lex.Check(TK_Comma));
+
     delete Type;
     Type = nullptr;
-    Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-  } while (Lex.Check(TK_Semicolon)) {}
-  //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+
+    if (!gotMethod) Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+  } while (Lex.Check(TK_Semicolon));
 
   if (InClass) {
     InClass->Structs.Append(Struct);
@@ -4177,7 +4215,7 @@ void VParser::ParseClass () {
       TLocation FieldLoc = Lex.Location;
       Lex.NextToken();
       Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
-      ParseMethodDef(VTypeExpr::NewTypeExpr(VFieldType(TYPE_Void).MakePointerType(), Lex.Location), FieldName, FieldLoc, Class, Modifiers, true);
+      ParseMethodDef(VTypeExpr::NewTypeExpr(VFieldType(TYPE_Void).MakePointerType(), Lex.Location), FieldName, FieldLoc, Class, Modifiers, true, nullptr);
       continue;
     }
 
@@ -4189,7 +4227,7 @@ void VParser::ParseClass () {
       continue;
     }
 
-    bool need_semicolon = true;
+    bool needSemicolon = true;
     bool firstField = true;
     do {
       VExpression *FieldType = Type->SyntaxCopy();
@@ -4232,7 +4270,7 @@ void VParser::ParseClass () {
         fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers, TModifiers::ClassFieldSet, FieldLoc));
         Class->AddField(fi);
         //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-        need_semicolon = true;
+        needSemicolon = true;
         break;
       }
 
@@ -4371,15 +4409,15 @@ void VParser::ParseClass () {
           }
         } while (!Lex.Check(TK_RBrace));
         Class->AddProperty(Prop);
-        need_semicolon = false;
+        needSemicolon = false;
         break;
       }
 
       // method?
       if (Lex.Check(TK_LParen)) {
         if (Type->IsDelegateType()) ParseError(Lex.Location, "Invalid delegate declaration");
-        ParseMethodDef(FieldType, FieldName, FieldLoc, Class, Modifiers, false);
-        need_semicolon = false;
+        ParseMethodDef(FieldType, FieldName, FieldLoc, Class, Modifiers, false, nullptr);
+        needSemicolon = false;
         break;
       }
 
@@ -4431,7 +4469,7 @@ void VParser::ParseClass () {
 
     delete Type;
     Type = nullptr;
-    if (need_semicolon) {
+    if (needSemicolon) {
       Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
       while (Lex.Check(TK_Semicolon)) {}
     }
