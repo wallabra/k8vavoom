@@ -590,6 +590,29 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
     return e->Resolve(ec);
   }
 
+  // find struct method
+  if (ec.SelfStruct) {
+    // method
+    VMethod *M = ec.SelfStruct->FindAccessibleMethod(Name, ec.SelfStruct, &Loc);
+    if (M) {
+      if (M->IsIterator()) {
+        ParseError(Loc, "Iterator methods can only be used in foreach statements");
+        delete this;
+        return nullptr;
+      }
+      // rewrite as invoke
+      VExpression *e;
+      if (M->IsStatic()) {
+        e = new VInvocation(nullptr, M, nullptr, false, false, Loc, NumArgs, Args);
+      } else {
+        e = new VDotInvocation(new VSelf(Loc), Name, Loc, NumArgs, Args);
+      }
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
+  }
+
   VClass *Class = VMemberBase::StaticFindClass(Name);
   if (Class) {
     if (NumArgs != 1 || !Args[0] || Args[0]->IsDefaultArg()) {
