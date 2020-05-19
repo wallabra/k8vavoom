@@ -1126,10 +1126,8 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
 
   if (SelfExpr->Type.IsNormalOrPointerType(TYPE_Struct)) {
     VMethod *M = SelfExpr->Type.Struct->FindAccessibleMethod(MethodName, SelfExpr->Type.Struct, &Loc);
-    //if (!M) ParseError(Loc, "struct method `%s::%s` not found", *SelfExpr->Type.Struct->Name, *MethodName);
     // do not fail here, this could be a delegate invocation
     if (M) {
-      //if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
       if (SelfExpr->Type.Type != TYPE_Pointer) {
         if (SelfExpr->IsTypeExpr()) {
           if (!M->IsStatic()) ParseError(Loc, "cannot call non-static method `%s::%s` as static", *SelfExpr->Type.Struct->Name, *MethodName);

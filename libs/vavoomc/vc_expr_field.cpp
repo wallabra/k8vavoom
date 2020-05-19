@@ -549,23 +549,25 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       // bad swizzle or field access, process with normal resolution
     }
     // method
-    VMethod *M = type.Struct->FindAccessibleMethod(FieldName, type.Struct, &Loc);
-    if (M) {
-      if (M->IsIterator()) {
-        ParseError(Loc, "Iterator methods can only be used in foreach statements");
+    if (op->Type.Type == TYPE_Struct) {
+      VMethod *M = type.Struct->FindAccessibleMethod(FieldName, type.Struct, &Loc);
+      if (M) {
+        if (M->IsIterator()) {
+          ParseError(Loc, "Iterator methods can only be used in foreach statements");
+          delete this;
+          return nullptr;
+        }
+        // rewrite as invoke
+        VExpression *e;
+        if (M->IsStatic()) {
+          e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
+        } else {
+          //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
+          e = new VDotInvocation(new VSelf(Loc), FieldName, Loc, 0, nullptr);
+        }
         delete this;
-        return nullptr;
+        return e->Resolve(ec);
       }
-      // rewrite as invoke
-      VExpression *e;
-      if (M->IsStatic()) {
-        e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
-      } else {
-        //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
-        e = new VDotInvocation(new VSelf(Loc), FieldName, Loc, 0, nullptr);
-      }
-      delete this;
-      return e->Resolve(ec);
     }
     // field
     VField *field = (type.Struct ? type.Struct->FindField(FieldName) : nullptr);

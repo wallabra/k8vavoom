@@ -141,6 +141,14 @@ void VStruct::Serialise (VStream &Strm) {
 void VStruct::AddMethod (VMethod *m) {
   if (!m) return; // just in case
   vassert(m->Outer == this);
+  if (m->Name != NAME_None) {
+    for (auto &&M : Methods) {
+      if (M->Name == m->Name) {
+        ParseError(m->Loc, "Redeclared method `%s`", *m->Name);
+        ParseError(M->Loc, "Previous declaration here");
+      }
+    }
+  }
   Methods.append(m);
 }
 
@@ -202,21 +210,12 @@ VMethod *VStruct::FindAccessibleMethod (VName Name, VStruct *self, const TLocati
 void VStruct::AddField (VField *f) {
   VField *Prev = nullptr;
   for (VField *Check = Fields; Check; Prev = Check, Check = Check->Next) {
-    if (f->Name == Check->Name) {
-      ParseError(f->Loc, "Redeclared field");
+    if (f->Name != NAME_None && f->Name == Check->Name) {
+      ParseError(f->Loc, "Redeclared field `%s`", *f->Name);
       ParseError(Check->Loc, "Previous declaration here");
     }
   }
 
-  /*
-  if (!Fields) {
-    Fields = f;
-  } else {
-    VField *Prev = Fields;
-    while (Prev->Next) Prev = Prev->Next;
-    Prev->Next = f;
-  }
-  */
   if (Prev) Prev->Next = f; else Fields = f;
   f->Next = nullptr;
 
@@ -284,7 +283,7 @@ bool VStruct::Define () {
   }
 
   if (ParentStruct && !ParentStruct->Defined) {
-    ParseError(ParentStructLoc, "Parent struct must be declared before");
+    ParseError(ParentStructLoc, "Parent struct must be declared before `%s`", *Name);
     return false;
   }
 
@@ -300,6 +299,41 @@ bool VStruct::Define () {
 //==========================================================================
 bool VStruct::DefineMembers () {
   bool Ret = true;
+
+  // check for duplicate names
+  TMapNC<VName, VMemberBase *> fmMap;
+
+  // check (and remember) fields
+  for (VStruct *st = this; st; st = st->ParentStruct) {
+    for (VField *fi = Fields; fi; fi = fi->Next) {
+      if (fi->Name == NAME_None) continue; // just in case, anonymous fields
+      auto np = fmMap.find(fi->Name);
+      if (np) {
+        ParseError((*np)->Loc, "Redeclared field");
+        ParseError(fi->Loc, "Previous declaration here");
+      }
+    }
+  }
+
+  // check methods
+  for (auto &&mt : Methods) {
+    if (mt->Name == NAME_None) continue; // just in case, anonymous fields
+    auto np = fmMap.find(mt->Name);
+    if (np) {
+      ParseError(mt->Loc, "Field/method name conflict (%s)", *mt->Name);
+      ParseError((*np)->Loc, "Field declaration here");
+    }
+    if (ParentStruct) {
+      VMethod *M = ParentStruct->FindMethod(mt->Name);
+      if (M) {
+        ParseError(mt->Loc, "Redeclared method `%s`", *mt->Name);
+        ParseError(M->Loc, "Field declaration here");
+      }
+    }
+  }
+
+  // free memory, why not
+  fmMap.clear();
 
   // define fields
   vint32 size = 0;
