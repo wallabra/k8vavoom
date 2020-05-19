@@ -481,7 +481,7 @@ bool VWhile::Resolve (VEmitContext &ec) {
   {
     auto cidx = ec.EnterCompound(true);
     if (!Statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(cidx);
+    ec.ExitCompound(elist, cidx, Loc);
   }
   return Ret;
 }
@@ -503,6 +503,7 @@ void VWhile::DoEmit (VEmitContext &ec) {
   // generate loop body
   ec.MarkLabel(Loop);
   Statement->Emit(ec);
+  ec.EmitExitCompound(elist);
   // generate loop start
   loopStart.Mark();
   Expr->EmitBranchable(ec, Loop, true);
@@ -630,7 +631,7 @@ bool VDo::Resolve (VEmitContext &ec) {
   {
     auto cidx = ec.EnterCompound(true);
     if (!Statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(cidx);
+    ec.ExitCompound(elist, cidx, Loc);
   }
   return Ret;
 }
@@ -650,6 +651,7 @@ void VDo::DoEmit (VEmitContext &ec) {
   // generate loop body
   ec.MarkLabel(Loop);
   Statement->Emit(ec);
+  ec.EmitExitCompound(elist);
   // mark loop start (continue)
   loopStart.Mark();
   // emit condition
@@ -805,7 +807,7 @@ bool VFor::Resolve (VEmitContext &ec) {
   {
     auto cidx = ec.EnterCompound(true);
     if (!Statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(cidx);
+    ec.ExitCompound(elist, cidx, Loc);
   }
 
   return Ret;
@@ -834,6 +836,7 @@ void VFor::DoEmit (VEmitContext &ec) {
   // emit embeded statement
   ec.MarkLabel(Loop);
   Statement->Emit(ec);
+  ec.EmitExitCompound(elist);
 
   // emit per-loop expression statements
   loopStart.Mark();
@@ -982,7 +985,7 @@ bool VForeach::Resolve (VEmitContext &ec) {
   {
     auto cidx = ec.EnterCompound(true);
     if (!Statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(cidx);
+    ec.ExitCompound(elist, cidx, Loc);
   }
   return Ret;
 }
@@ -1007,6 +1010,7 @@ void VForeach::DoEmit (VEmitContext &ec) {
     auto fin = ec.RegisterLoopFinalizer(this);
     ec.MarkLabel(Loop);
     Statement->Emit(ec);
+    ec.EmitExitCompound(elist);
     loopStart.Mark();
     ec.AddStatement(OPC_IteratorNext, Loc);
     ec.AddStatement(OPC_IfGoto, Loop, Loc);
@@ -1273,7 +1277,7 @@ bool VForeachIota::Resolve (VEmitContext &ec) {
   {
     auto cidx = ec.EnterCompound(true);
     if (!statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(cidx);
+    ec.ExitCompound(elist, cidx, Loc);
   }
   return Ret;
 }
@@ -1301,6 +1305,7 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
   // emit embeded statement
   ec.MarkLabel(Loop);
   statement->Emit(ec);
+  ec.EmitExitCompound(elist);
 
   // loop next and test
   loopStart.Mark(); // continue will jump here
@@ -1644,7 +1649,7 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   {
     auto cidx = ec.EnterCompound(true);
     if (!statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(cidx);
+    ec.ExitCompound(elist, cidx, Loc);
   }
   return Ret;
 }
@@ -1677,6 +1682,7 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
   if (isRef) ec.AddStatement(OPC_AssignPtrDrop, Loc);
   // and emit loop body
   statement->Emit(ec);
+  ec.EmitExitCompound(elist);
 
   // loop next and test
   loopStart.Mark(); // continue will jump here
@@ -2003,7 +2009,7 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
   {
     auto cidx = ec.EnterCompound(true);
     if (!statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(cidx);
+    ec.ExitCompound(elist, cidx, Loc);
   }
   return Ret;
 }
@@ -2040,6 +2046,7 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
     ivNext->EmitBranchable(ec, loopEnd.GetLabelNoFinalizers(), false);
     // emit loop body
     statement->Emit(ec);
+    ec.EmitExitCompound(elist);
     // again
     ec.AddStatement(OPC_Goto, loopStart.GetLabelNoFinalizers(), Loc);
 
@@ -3219,7 +3226,7 @@ void VCompound::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //==========================================================================
 bool VCompound::Resolve (VEmitContext &ec) {
   bool Ret = true;
-  auto cidx = ec.EnterCompound(false);
+  auto cidx = ec.EnterCompound(false); // not a loop
   //fprintf(stderr, "ENTERING COMPOUND %d (%s:%d)\n", cidx, *Loc.GetSource(), Loc.GetLine());
   for (int i = 0; i < Statements.length(); ++i) {
     if (!Statements[i]->Resolve(ec)) {
@@ -3229,7 +3236,7 @@ bool VCompound::Resolve (VEmitContext &ec) {
     }
   }
   //fprintf(stderr, "EXITING COMPOUND %d (%s:%d)\n", cidx, *Loc.GetSource(), Loc.GetLine());
-  ec.ExitCompound(cidx);
+  ec.ExitCompound(elist, cidx, Loc);
   return Ret;
 }
 
@@ -3241,6 +3248,7 @@ bool VCompound::Resolve (VEmitContext &ec) {
 //==========================================================================
 void VCompound::DoEmit (VEmitContext &ec) {
   for (int i = 0; i < Statements.length(); ++i) Statements[i]->Emit(ec);
+  ec.EmitExitCompound(elist);
 }
 
 

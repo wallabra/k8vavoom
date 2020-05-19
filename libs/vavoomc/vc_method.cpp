@@ -289,7 +289,7 @@ bool VMethod::Define () {
     }
     if (!SuperMethod->ReturnType.Equals(ReturnType)) {
       if (Ret) {
-        GLog.Logf(NAME_Debug, "::: %s", *SuperMethod->Loc.toString());
+        //GLog.Logf(NAME_Debug, "::: %s", *SuperMethod->Loc.toString());
         ParseError(Loc, "Method `%s` redefined with different return type (wants '%s', got '%s')", *GetFullName(), *SuperMethod->ReturnType.GetName(), *ReturnType.GetName());
         abort();
       }

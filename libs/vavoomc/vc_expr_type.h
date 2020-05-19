@@ -31,8 +31,10 @@
 //==========================================================================
 class VTypeExpr : public VExpression {
 public:
-  VExpression *Expr; // key type for dictionaries
+  // also, key type for dictionaries
+  VExpression *Expr;
   VName MetaClassName;
+  bool bResolved;
 
   VTypeExpr (VFieldType atype, const TLocation &aloc);
   virtual ~VTypeExpr () override;

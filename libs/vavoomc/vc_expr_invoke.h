@@ -267,6 +267,8 @@ public:
   bool BaseCall;
   VState *CallerState;
   VExpression *DgPtrExpr; // for calling struct's delegate field, for example
+  // filled in resolver
+  TArray<VEmitContext::VCompExit> elist;
 
   VInvocation (VExpression *ASelfExpr, VMethod *AFunc, VField *ADelegateField,
                bool AHaveSelf, bool ABaseCall, const TLocation &ALoc, int ANumArgs,

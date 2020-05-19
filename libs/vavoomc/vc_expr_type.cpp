@@ -35,6 +35,7 @@ VTypeExpr::VTypeExpr (VFieldType atype, const TLocation &aloc)
   : VExpression(aloc)
   , Expr(nullptr)
   , MetaClassName(NAME_None)
+  , bResolved(false)
 {
   Type = atype;
 }
@@ -143,6 +144,7 @@ void VTypeExpr::DoSyntaxCopyTo (VExpression *e) {
   auto res = (VTypeExpr *)e;
   res->MetaClassName = MetaClassName;
   res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
+  res->bResolved = bResolved;
 }
 
 
@@ -172,7 +174,7 @@ void VTypeExpr::Emit (VEmitContext &) {
 //
 //==========================================================================
 VStr VTypeExpr::GetName () const {
-  return Type.GetName();
+  return (bResolved ? Type.GetName() : Expr ? Expr->toString() : "<fuckedtype>");
 }
 
 
@@ -205,6 +207,7 @@ VStr VTypeExpr::toString () const {
 VTypeExprSimple::VTypeExprSimple (EType atype, const TLocation &aloc)
   : VTypeExpr(VFieldType(atype), aloc)
 {
+  bResolved = true;
 }
 
 
@@ -216,6 +219,7 @@ VTypeExprSimple::VTypeExprSimple (EType atype, const TLocation &aloc)
 VTypeExprSimple::VTypeExprSimple (VFieldType atype, const TLocation &aloc)
   : VTypeExpr(atype, aloc)
 {
+  bResolved = true;
 }
 
 
@@ -280,6 +284,7 @@ VTypeExprClass::VTypeExprClass (VName AMetaClassName, const TLocation &aloc)
   : VTypeExpr(TYPE_Class, aloc)
 {
   MetaClassName = AMetaClassName;
+  bResolved = (MetaClassName == NAME_None);
 }
 
 
@@ -301,12 +306,15 @@ VExpression *VTypeExprClass::SyntaxCopy () {
 //
 //==========================================================================
 VTypeExpr *VTypeExprClass::ResolveAsType (VEmitContext &) {
-  if (MetaClassName != NAME_None) {
-    Type.Class = VMemberBase::StaticFindClass(MetaClassName);
-    if (!Type.Class) {
-      ParseError(Loc, "No such class `%s`", *MetaClassName);
-      delete this;
-      return nullptr;
+  if (!bResolved) {
+    bResolved = true;
+    if (MetaClassName != NAME_None) {
+      Type.Class = VMemberBase::StaticFindClass(MetaClassName);
+      if (!Type.Class) {
+        ParseError(Loc, "No such class `%s`", *MetaClassName);
+        delete this;
+        return nullptr;
+      }
     }
   }
 
@@ -334,6 +342,7 @@ VPointerType::VPointerType (VExpression *AExpr, const TLocation &ALoc)
   : VTypeExpr(TYPE_Unknown, ALoc)
 {
   Expr = AExpr;
+  bResolved = false;
 }
 
 
@@ -355,9 +364,12 @@ VExpression *VPointerType::SyntaxCopy () {
 //
 //==========================================================================
 VTypeExpr *VPointerType::ResolveAsType (VEmitContext &ec) {
-  if (Expr) Expr = Expr->ResolveAsType(ec);
-  if (!Expr) { delete this; return nullptr; }
-  Type = Expr->Type.MakePointerType();
+  if (!bResolved) {
+    bResolved = true;
+    if (Expr) Expr = Expr->ResolveAsType(ec);
+    if (!Expr) { delete this; return nullptr; }
+    Type = Expr->Type.MakePointerType();
+  }
   return this;
 }
 
@@ -385,6 +397,7 @@ VFixedArrayType::VFixedArrayType (VExpression *AExpr, VExpression *ASizeExpr, VE
 {
   Expr = AExpr;
   if (!SizeExpr) ParseError(Loc, "Array size expected");
+  bResolved = false;
 }
 
 
@@ -430,44 +443,46 @@ void VFixedArrayType::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VTypeExpr *VFixedArrayType::ResolveAsType (VEmitContext &ec) {
-  if (Expr) Expr = Expr->ResolveAsType(ec);
-  if (SizeExpr) SizeExpr = SizeExpr->Resolve(ec);
-  if (SizeExpr2) {
-    SizeExpr2 = SizeExpr2->Resolve(ec);
-    if (!SizeExpr2) { delete this; return nullptr; }
-  }
-  if (!Expr || !SizeExpr) { delete this; return nullptr; }
+  if (!bResolved) {
+    bResolved = true;
+    if (Expr) Expr = Expr->ResolveAsType(ec);
+    if (SizeExpr) SizeExpr = SizeExpr->Resolve(ec);
+    if (SizeExpr2) {
+      SizeExpr2 = SizeExpr2->Resolve(ec);
+      if (!SizeExpr2) { delete this; return nullptr; }
+    }
+    if (!Expr || !SizeExpr) { delete this; return nullptr; }
 
-  if (Expr->IsAnyArrayType()) {
-    ParseError(Expr->Loc, "Arrays of arrays are not allowed (yet)");
-    delete this;
-    return nullptr;
-  }
-
-  if (!SizeExpr->IsIntConst() || (SizeExpr2 && !SizeExpr2->IsIntConst())) {
-    ParseError(SizeExpr->Loc, "Integer constant expected");
-    delete this;
-    return nullptr;
-  }
-
-  vint32 Size = SizeExpr->GetIntConst();
-  if (Size < 0) {
-    ParseError(SizeExpr->Loc, "Static array cannot be of negative size");
-    delete this;
-    return nullptr;
-  }
-
-  if (SizeExpr2) {
-    if (Size < 1 || SizeExpr2->GetIntConst() < 1) {
-      ParseError(SizeExpr2->Loc, "Static 2d array cannot be of negative or empty size");
+    if (Expr->IsAnyArrayType()) {
+      ParseError(Expr->Loc, "Arrays of arrays are not allowed (yet)");
       delete this;
       return nullptr;
     }
-    Type = Expr->Type.MakeArray2DType(Size, SizeExpr2->GetIntConst(), Loc);
-  } else {
-    Type = Expr->Type.MakeArrayType(Size, Loc);
-  }
 
+    if (!SizeExpr->IsIntConst() || (SizeExpr2 && !SizeExpr2->IsIntConst())) {
+      ParseError(SizeExpr->Loc, "Integer constant expected");
+      delete this;
+      return nullptr;
+    }
+
+    vint32 Size = SizeExpr->GetIntConst();
+    if (Size < 0) {
+      ParseError(SizeExpr->Loc, "Static array cannot be of negative size");
+      delete this;
+      return nullptr;
+    }
+
+    if (SizeExpr2) {
+      if (Size < 1 || SizeExpr2->GetIntConst() < 1) {
+        ParseError(SizeExpr2->Loc, "Static 2d array cannot be of negative or empty size");
+        delete this;
+        return nullptr;
+      }
+      Type = Expr->Type.MakeArray2DType(Size, SizeExpr2->GetIntConst(), Loc);
+    } else {
+      Type = Expr->Type.MakeArrayType(Size, Loc);
+    }
+  }
   return this;
 }
 
@@ -502,6 +517,7 @@ VDynamicArrayType::VDynamicArrayType (VExpression *AExpr, const TLocation &ALoc)
   : VTypeExpr(TYPE_Unknown, ALoc)
 {
   Expr = AExpr;
+  bResolved = false;
 }
 
 
@@ -523,16 +539,19 @@ VExpression *VDynamicArrayType::SyntaxCopy () {
 //
 //==========================================================================
 VTypeExpr *VDynamicArrayType::ResolveAsType (VEmitContext &ec) {
-  if (Expr) Expr = Expr->ResolveAsType(ec);
-  if (!Expr) { delete this; return nullptr; }
+  if (!bResolved) {
+    bResolved = true;
+    if (Expr) Expr = Expr->ResolveAsType(ec);
+    if (!Expr) { delete this; return nullptr; }
 
-  if (Expr->IsAnyArrayType()) {
-    ParseError(Expr->Loc, "Arrays of arrays are not allowed (yet)");
-    delete this;
-    return nullptr;
+    if (Expr->IsAnyArrayType()) {
+      ParseError(Expr->Loc, "Arrays of arrays are not allowed (yet)");
+      delete this;
+      return nullptr;
+    }
+
+    Type = Expr->Type.MakeDynamicArrayType(Loc);
   }
-
-  Type = Expr->Type.MakeDynamicArrayType(Loc);
   return this;
 }
 
@@ -567,6 +586,7 @@ VSliceType::VSliceType (VExpression *AExpr, const TLocation &ALoc)
   : VTypeExpr(TYPE_Unknown, ALoc)
 {
   Expr = AExpr;
+  bResolved = false;
 }
 
 
@@ -588,16 +608,19 @@ VExpression *VSliceType::SyntaxCopy () {
 //
 //==========================================================================
 VTypeExpr *VSliceType::ResolveAsType (VEmitContext &ec) {
-  if (Expr) Expr = Expr->ResolveAsType(ec);
-  if (!Expr) { delete this; return nullptr; }
+  if (!bResolved) {
+    bResolved = true;
+    if (Expr) Expr = Expr->ResolveAsType(ec);
+    if (!Expr) { delete this; return nullptr; }
 
-  if (Expr->IsAnyArrayType()) {
-    ParseError(Expr->Loc, "Arrays of arrays are not allowed (yet)");
-    delete this;
-    return nullptr;
+    if (Expr->IsAnyArrayType()) {
+      ParseError(Expr->Loc, "Arrays of arrays are not allowed (yet)");
+      delete this;
+      return nullptr;
+    }
+
+    Type = Expr->Type.MakeSliceType(Loc);
   }
-
-  Type = Expr->Type.MakeSliceType(Loc);
   return this;
 }
 
@@ -634,6 +657,7 @@ VDelegateType::VDelegateType (VExpression *aexpr, const TLocation &aloc)
   , NumParams(0)
 {
   Expr = aexpr;
+  bResolved = false;
   memset((void *)Params, 0, sizeof(Params));
   memset(ParamFlags, 0, sizeof(ParamFlags));
 }
@@ -650,6 +674,7 @@ VDelegateType::VDelegateType (VFieldType atype, const TLocation &aloc)
   , NumParams(0)
 {
   Expr = nullptr;
+  bResolved = false;
   memset((void *)Params, 0, sizeof(Params));
   memset(ParamFlags, 0, sizeof(ParamFlags));
   //VCFatalError("VC: VDelegateType::VDelegateType: no `auto` delegates yet, use the full declaration");
@@ -707,15 +732,18 @@ void VDelegateType::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VTypeExpr *VDelegateType::ResolveAsType (VEmitContext &ec) {
-  if (!Expr) {
-    ParseError(Loc, "VC: VDelegateType::VDelegateType: no `auto` delegates yet, use the full declaration");
-    delete this;
-    return nullptr;
+  if (!bResolved) {
+    bResolved = true;
+    if (!Expr) {
+      ParseError(Loc, "VC: VDelegateType::VDelegateType: no `auto` delegates yet, use full declaration");
+      delete this;
+      return nullptr;
+    }
+    VMethod *Func = CreateDelegateMethod(ec.CurrentFunc);
+    Func->Define();
+    Type = VFieldType(TYPE_Delegate);
+    Type.Function = Func;
   }
-  VMethod *Func = CreateDelegateMethod(ec.CurrentFunc);
-  Func->Define();
-  Type = VFieldType(TYPE_Delegate);
-  Type.Function = Func;
   return this;
 }
 
@@ -757,6 +785,7 @@ VDictType::VDictType (VExpression *AKExpr, VExpression *AVExpr, const TLocation 
 {
   Expr = AKExpr;
   VExpr = AVExpr;
+  bResolved = false;
 }
 
 

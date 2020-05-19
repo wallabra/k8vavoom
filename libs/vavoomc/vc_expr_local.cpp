@@ -122,6 +122,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
     if (e.TypeExpr->Type.Type == TYPE_Automatic) {
       VExpression *te = (e.Value ? e.Value : e.TypeOfExpr);
       if (!te) Sys_Error("VC INTERNAL COMPILER ERROR: automatic type without initializer!");
+      if (e.ctorInit) ParseError(e.Loc, "cannot determine type from ctor for local `%s`", *e.Name);
       // resolve type
       if (e.toeIterArgN >= 0) {
         // special resolving for iterator
@@ -154,10 +155,10 @@ void VLocalDecl::Declare (VEmitContext &ec) {
       }
     }
 
+    //GLog.Logf(NAME_Debug, "LOC:000: <%s>; type: <%s>\n", *e.Name, *e.TypeExpr->toString());
     e.TypeExpr = e.TypeExpr->ResolveAsType(ec);
     if (!e.TypeExpr) continue;
-
-    //fprintf(stderr, "LOC: <%s>; type: <%s>\n", *e.Name, *e.TypeExpr->Type.GetName());
+    //GLog.Logf(NAME_Debug, "LOC:001: <%s>; type: <%s>\n", *e.Name, *e.TypeExpr->Type.GetName());
 
     VFieldType Type = e.TypeExpr->Type;
     if (Type.Type == TYPE_Void || Type.Type == TYPE_Automatic) ParseError(e.TypeExpr->Loc, "Bad variable type for variable `%s`", *e.Name);

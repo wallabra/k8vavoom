@@ -86,9 +86,11 @@ public:
   void AddMethod (VMethod *m);
   VMethod *FindMethod (VName Name, bool bRecursive=true);
   VMethod *FindAccessibleMethod (VName Name, VStruct *self=nullptr, const TLocation *loc=nullptr);
+  VMethod *FindDtor (bool bRecursive=true);
 
   void AddField (VField *f);
   VField *FindField (VName);
+
   bool NeedsDestructor ();
 
   // resolves parent struct

@@ -158,13 +158,34 @@ void VStruct::AddMethod (VMethod *m) {
 //  VStruct::FindMethod
 //
 //==========================================================================
-VMethod *VStruct::FindMethod (VName Name, bool bRecursive) {
-  if (Name == NAME_None) return nullptr;
-  Name = ResolveAlias(Name);
-  VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
+VMethod *VStruct::FindMethod (VName AName, bool bRecursive) {
+  if (AName == NAME_None) return nullptr;
+  AName = ResolveAlias(AName);
+  VMethod *M = (VMethod *)StaticFindMember(AName, this, MEMBER_Method);
   if (M) return M;
   if (!bRecursive || !ParentStruct) return nullptr;
-  return ParentStruct->FindMethod(Name, true);
+  return ParentStruct->FindMethod(AName, true);
+}
+
+
+//==========================================================================
+//
+//  VStruct::FindDtor
+//
+//==========================================================================
+VMethod *VStruct::FindDtor (bool bRecursive) {
+  VName dName = ResolveAlias("dtor");
+  VMethod *M = (VMethod *)StaticFindMember(dName, this, MEMBER_Method);
+  if (M) return M;
+  if (bRecursive) {
+    if (ParentStruct) return ParentStruct->FindDtor(true);
+    // for non-defined structs
+    if (ParentStructName != NAME_None) {
+      VFieldType type = StaticFindType((Outer->MemberType == MEMBER_Class ? (VClass *)Outer : nullptr), ParentStructName);
+      if (type.Type == TYPE_Struct) return type.Struct->FindDtor(true);
+    }
+  }
+  return nullptr;
 }
 
 
@@ -173,16 +194,16 @@ VMethod *VStruct::FindMethod (VName Name, bool bRecursive) {
 //  VStruct::FindAccessibleMethod
 //
 //==========================================================================
-VMethod *VStruct::FindAccessibleMethod (VName Name, VStruct *self, const TLocation *loc) {
-  if (Name == NAME_None) return nullptr;
-  Name = ResolveAlias(Name);
-  VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
+VMethod *VStruct::FindAccessibleMethod (VName AName, VStruct *self, const TLocation *loc) {
+  if (AName == NAME_None) return nullptr;
+  AName = ResolveAlias(AName);
+  VMethod *M = (VMethod *)StaticFindMember(AName, this, MEMBER_Method);
   if (M) {
-    //fprintf(stderr, "FAM: <%s>; self=%s; this=%s; child=%d; loc=%p\n", *Name, (self ? *self->Name : "<none>"), *this->Name, (int)(self ? self->IsChildOf(this) : false), loc);
+    //fprintf(stderr, "FAM: <%s>; self=%s; this=%s; child=%d; loc=%p\n", *AName, (self ? *self->AName : "<none>"), *this->AName, (int)(self ? self->IsChildOf(this) : false), loc);
     if (loc) {
-      //fprintf(stderr, "  FAM: <%s>; self=%s; this=%s; child=%d; flags=0x%04x\n", *Name, (self ? *self->Name : "<none>"), *this->Name, (int)(self ? self->IsChildOf(this) : false), M->Flags);
-      if ((M->Flags&FUNC_Private) && this != self) ParseError(*loc, "Method `%s::%s` is private", *Name, *M->Name);
-      if ((M->Flags&FUNC_Protected) && (!self || !self->IsA(this))) ParseError(*loc, "Method `%s::%s` is protected", *Name, *M->Name);
+      //fprintf(stderr, "  FAM: <%s>; self=%s; this=%s; child=%d; flags=0x%04x\n", *AName, (self ? *self->AName : "<none>"), *this->AName, (int)(self ? self->IsChildOf(this) : false), M->Flags);
+      if ((M->Flags&FUNC_Private) && this != self) ParseError(*loc, "Method `%s::%s` is private", *AName, *M->Name);
+      if ((M->Flags&FUNC_Protected) && (!self || !self->IsA(this))) ParseError(*loc, "Method `%s::%s` is protected", *AName, *M->Name);
       return M;
     } else {
       if (!self) {
@@ -198,7 +219,7 @@ VMethod *VStruct::FindAccessibleMethod (VName Name, VStruct *self, const TLocati
       }
     }
   }
-  return (ParentStruct ? ParentStruct->FindAccessibleMethod(Name, self, loc) : nullptr);
+  return (ParentStruct ? ParentStruct->FindAccessibleMethod(AName, self, loc) : nullptr);
 }
 
 
@@ -246,6 +267,7 @@ VField *VStruct::FindField (VName FieldName) {
 bool VStruct::NeedsDestructor () {
   if (cacheNeedDTor >= 0) return (cacheNeedDTor != 0);
   cacheNeedDTor = 1;
+  if (FindDtor()) return true;
   for (VField *F = Fields; F; F = F->Next) if (F->NeedsDestructor()) return true;
   if (ParentStruct && ParentStruct->NeedsDestructor()) return true;
   cacheNeedDTor = 0;
@@ -369,6 +391,17 @@ bool VStruct::DefineMembers () {
 
   // define methods
   for (auto &&mt : Methods) if (!mt->Define()) Ret = false;
+
+  // check if destructor is valid
+  VMethod *dtor = FindDtor();
+  if (dtor) {
+    if (!dtor->IsStructMethod() || dtor->IsIterator() || dtor->IsVarArgs() ||
+        dtor->NumParams != 0 || dtor->ReturnType.Type != TYPE_Void)
+    {
+      ParseError(dtor->Loc, "Invalid destructor signature for struct `%s`", *Name);
+      Ret = false;
+    }
+  }
 
   return Ret;
 }
@@ -511,6 +544,7 @@ void VStruct::InitReferences () {
         break;
     }
   }
+  if (cacheNeedDTor <= 0 && FindDtor()) cacheNeedDTor = 1;
 }
 
 
@@ -566,6 +600,7 @@ void VStruct::InitDestructorFields () {
         break;
     }
   }
+  if (cacheNeedDTor <= 0 && FindDtor()) cacheNeedDTor = 1;
 }
 
 

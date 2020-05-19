@@ -466,10 +466,12 @@ void VEmitContext::ClearLocalDefs () {
 //==========================================================================
 // allocates new local, sets offset
 VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, const TLocation &aloc) {
-  int ssz = atype.GetStackSize()/4;
+  const int ssz = atype.GetStackSize()/4;
 
+  #if 0
   // try to find reusable local
   int besthit = 0x7fffffff, bestidx = -1;
+  k8: i turned off locals reusing, because why, there is no reason to do this
   if (!atype.IsReusingDisabled()) {
     for (int f = 0; f < LocalDefs.length(); ++f) {
       //break;
@@ -515,7 +517,9 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     ll.compIndex = compIndex;
     ll.reused = true;
     return ll;
-  } else {
+  } else
+  #endif
+  {
     // introduce new local
     VLocalVarDef &loc = LocalDefs.Alloc();
     loc.Loc = aloc;
@@ -567,13 +571,17 @@ int VEmitContext::EnterCompound (bool asLoop) {
 //  VEmitContext::ExitCompound
 //
 //==========================================================================
-void VEmitContext::ExitCompound (int cidx) {
+void VEmitContext::ExitCompound (TArray<VCompExit> &elist, int cidx, const TLocation &aloc) {
   if (cidx != compIndex) Sys_Error("VC COMPILER INTERNAL ERROR: unbalanced compounds");
   if (cidx < 1) Sys_Error("VC COMPILER INTERNAL ERROR: invalid compound index");
-  for (int f = 0; f < LocalDefs.length(); ++f) {
+  for (int f = LocalDefs.length()-1; f >= 0; --f) {
     VLocalVarDef &loc = LocalDefs[f];
     if (loc.compIndex == cidx) {
-      //fprintf(stderr, "method '%s': compound #%d; freeing '%s' (%d; %s)\n", CurrentFunc->GetName(), cidx, *loc.Name, f, *loc.Type.GetName());
+      //GLog.Logf(NAME_Debug, "method '%s': compound #%d; freeing '%s' (%d; %s)\n", CurrentFunc->GetName(), cidx, *loc.Name, f, *loc.Type.GetName());
+      VCompExit &erec = elist.alloc();
+      erec.lidx = f;
+      erec.loc = aloc;
+      erec.inLoop = IsInLoop();
       loc.Visible = false;
       loc.Reusable = true;
       loc.compIndex = -1;
@@ -581,6 +589,21 @@ void VEmitContext::ExitCompound (int cidx) {
   }
   if (firstLoopCompIndex == compIndex) firstLoopCompIndex = -1;
   --compIndex;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::EmitExitCompound
+//
+//==========================================================================
+void VEmitContext::EmitExitCompound (TArray<VCompExit> &elist) {
+  for (auto &&it : elist) {
+    // clear it before `reusable` is set (it is important!)
+    LocalDefs[it.lidx].Reusable = false; // force clearing
+    EmitOneLocalDtor(it.lidx, it.loc, it.inLoop); // zero it, if it is in a loop
+    LocalDefs[it.lidx].Reusable = true;
+  }
 }
 
 
@@ -1000,72 +1023,106 @@ void VEmitContext::EmitLocalDtors (int Start, int End, const TLocation &aloc, bo
 
 //==========================================================================
 //
-//  VEmitContext::EmitLocalDtors
+//  VEmitContext::EmitOneLocalDtor
 //
 //==========================================================================
 void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt) {
-  // don't touch out/ref parameters
-  if (LocalDefs[locidx].ParamFlags&(FPARM_Out|FPARM_Ref)) return;
+  const VLocalVarDef &loc = LocalDefs[locidx];
+  // do not process "reusable" locals, they were cleared by scope exit
+  if (loc.Reusable) return;
 
-  if (LocalDefs[locidx].Type.Type == TYPE_String) {
-    EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
+  // don't touch out/ref parameters
+  if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) return;
+
+  if (loc.Type.Type == TYPE_String) {
+    EmitLocalAddress(loc.Offset, aloc);
     AddStatement(OPC_ClearPointedStr, aloc);
     return;
   }
 
-  if (LocalDefs[locidx].Type.Type == TYPE_Dictionary) {
-    EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
-    AddStatement(OPC_DictDispatch, LocalDefs[locidx].Type.GetDictKeyType(), LocalDefs[locidx].Type.GetDictValueType(), OPC_DictDispatch_ClearPointed, aloc);
+  if (loc.Type.Type == TYPE_Dictionary) {
+    EmitLocalAddress(loc.Offset, aloc);
+    AddStatement(OPC_DictDispatch, loc.Type.GetDictKeyType(), loc.Type.GetDictValueType(), OPC_DictDispatch_ClearPointed, aloc);
     return;
   }
 
-  if (LocalDefs[locidx].Type.Type == TYPE_DynamicArray) {
-    EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
+  if (loc.Type.Type == TYPE_DynamicArray) {
+    EmitLocalAddress(loc.Offset, aloc);
     AddStatement(OPC_PushNumber0, aloc);
-    //AddStatement(OPC_DynArraySetNum, LocalDefs[locidx].Type.GetArrayInnerType(), aloc);
-    AddStatement(OPC_DynArrayDispatch, LocalDefs[locidx].Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArraySetNum, aloc);
+    //AddStatement(OPC_DynArraySetNum, loc.Type.GetArrayInnerType(), aloc);
+    AddStatement(OPC_DynArrayDispatch, loc.Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArraySetNum, aloc);
     return;
   }
 
-  if (LocalDefs[locidx].Type.Type == TYPE_Struct) {
-    if (LocalDefs[locidx].Type.Struct->NeedsDestructor()) {
-      EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
-      AddStatement((!zeroIt ? OPC_ClearPointedStruct : OPC_ZeroPointedStruct), LocalDefs[locidx].Type.Struct, aloc);
+  if (loc.Type.Type == TYPE_Struct) {
+    // call struct dtors
+    for (VStruct *st = loc.Type.Struct; st; st = st->ParentStruct) {
+      VMethod *mt = st->FindDtor(false); // non-recursive
+      if (mt) {
+        vassert(mt->NumParams == 0);
+        // emit `self`
+        if (!mt->IsStatic()) EmitLocalAddress(loc.Offset, aloc);
+        // emit call
+        AddStatement(OPC_Call, mt, 1/*SelfOffset*/, aloc);
+      }
+    }
+    // zero/clear
+    if (loc.Type.Struct->NeedsDestructor()) {
+      EmitLocalAddress(loc.Offset, aloc);
+      AddStatement((!zeroIt ? OPC_ClearPointedStruct : OPC_ZeroPointedStruct), loc.Type.Struct, aloc);
     } else if (zeroIt) {
-      EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
-      AddStatement(OPC_ZeroByPtr, LocalDefs[locidx].Type.GetSize(), aloc);
+      EmitLocalAddress(loc.Offset, aloc);
+      AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
     }
     return;
   }
 
-  if (LocalDefs[locidx].Type.Type == TYPE_Array) {
-    if (LocalDefs[locidx].Type.ArrayInnerType == TYPE_String) {
-      for (int j = 0; j < LocalDefs[locidx].Type.GetArrayDim(); ++j) {
-        EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
+  if (loc.Type.Type == TYPE_Array) {
+    if (loc.Type.ArrayInnerType == TYPE_String) {
+      for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
+        EmitLocalAddress(loc.Offset, aloc);
         EmitPushNumber(j, aloc);
-        AddStatement(OPC_ArrayElement, LocalDefs[locidx].Type.GetArrayInnerType(), aloc);
+        AddStatement(OPC_ArrayElement, loc.Type.GetArrayInnerType(), aloc);
         AddStatement(OPC_ClearPointedStr, aloc);
       }
-    } else if (LocalDefs[locidx].Type.ArrayInnerType == TYPE_Struct) {
-      if (LocalDefs[locidx].Type.Struct->NeedsDestructor()) {
-        for (int j = 0; j < LocalDefs[locidx].Type.GetArrayDim(); ++j) {
-          EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
-          EmitPushNumber(j, aloc);
-          AddStatement(OPC_ArrayElement, LocalDefs[locidx].Type.GetArrayInnerType(), aloc);
-          AddStatement((!zeroIt ? OPC_ClearPointedStruct : OPC_ZeroPointedStruct), LocalDefs[locidx].Type.Struct, aloc);
+    } else if (loc.Type.ArrayInnerType == TYPE_Struct) {
+      // call struct dtors
+      for (VStruct *st = loc.Type.Struct; st; st = st->ParentStruct) {
+        VMethod *mt = st->FindDtor(false); // non-recursive
+        if (mt) {
+          vassert(mt->NumParams == 0);
+          for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
+            // emit `self`
+            if (!mt->IsStatic()) {
+              EmitLocalAddress(loc.Offset, aloc);
+              EmitPushNumber(j, aloc);
+              AddStatement(OPC_ArrayElement, loc.Type.GetArrayInnerType(), aloc);
+            }
+            // emit call
+            AddStatement(OPC_Call, mt, 1/*SelfOffset*/, aloc);
+          }
         }
-      } else {
+      }
+      // zero/clear
+      if (loc.Type.Struct->NeedsDestructor()) {
+        for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
+          EmitLocalAddress(loc.Offset, aloc);
+          EmitPushNumber(j, aloc);
+          AddStatement(OPC_ArrayElement, loc.Type.GetArrayInnerType(), aloc);
+          AddStatement((!zeroIt ? OPC_ClearPointedStruct : OPC_ZeroPointedStruct), loc.Type.Struct, aloc);
+        }
+      } else if (zeroIt) {
         // just zero it
-        EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
-        AddStatement(OPC_ZeroByPtr, LocalDefs[locidx].Type.GetSize(), aloc);
+        EmitLocalAddress(loc.Offset, aloc);
+        AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
       }
     }
     return;
   }
 
   if (zeroIt) {
-    EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
-    AddStatement(OPC_ZeroByPtr, LocalDefs[locidx].Type.GetSize(), aloc);
+    EmitLocalAddress(loc.Offset, aloc);
+    AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
   }
 }
 
@@ -1081,12 +1138,6 @@ VArrayElement *VEmitContext::SetIndexArray (VArrayElement *el) {
   return res;
 }
 
-
-  struct VGotoList {
-    VLabel jlbl;
-    VName name;
-  };
-  TArray<VGotoList> GotoLabels;
 
 //==========================================================================
 //

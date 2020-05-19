@@ -143,6 +143,13 @@ private:
   VBreakCont *lastBC;
 
 public:
+  struct VCompExit {
+    int lidx; // local index
+    TLocation loc;
+    bool inLoop;
+  };
+
+public:
   class VAutoFin {
     friend class VEmitContext;
 
@@ -228,7 +235,10 @@ public:
 
   // compound statement will call these functions; exiting will mark all allocated vars for reusing
   int EnterCompound (bool asLoop); // returns compound index
-  void ExitCompound (int cidx); // pass result of `EnterCompound()` to this
+  // this clears the array
+  void ExitCompound (TArray<VCompExit> &elist, int cidx, const TLocation &aloc); // pass result of `EnterCompound()` to this
+  // this doesn't clear the array
+  void EmitExitCompound (TArray<VCompExit> &elist);
 
   inline int GetCurrCompIndex () const { return compIndex; } // for debugging
 
@@ -261,7 +271,6 @@ public:
   void EmitPushPointedCode (VFieldType type, const TLocation &aloc);
   void EmitLocalDtors (int Start, int End, const TLocation &aloc, bool zeroIt=false);
 
-  // returns `true` if dtor was emited
   void EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt=false);
 
   void EmitGotoTo (VName lblname, const TLocation &aloc);

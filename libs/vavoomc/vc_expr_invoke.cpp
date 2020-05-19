@@ -2078,7 +2078,7 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
     }
   }
 
-  ec.ExitCompound(compIdx);
+  ec.ExitCompound(elist, compIdx, Loc);
 
   // some special functions will be converted to builtins, try to const-optimize 'em
   if (Func->builtinOpc >= 0) return OptimizeBuiltin(ec);
@@ -2618,10 +2618,7 @@ void VInvocation::Emit (VEmitContext &ec) {
   // some special functions will be converted to builtins
   if (Func->builtinOpc >= 0) {
     ec.AddBuiltin(Func->builtinOpc, Loc);
-    return;
-  }
-
-  if (DirectCall) {
+  } else if (DirectCall) {
     ec.AddStatement(OPC_Call, Func, SelfOffset, Loc);
   } else if (DelegateField) {
     ec.AddStatement(OPC_DelegateCall, DelegateField, SelfOffset, Loc);
@@ -2638,6 +2635,8 @@ void VInvocation::Emit (VEmitContext &ec) {
   } else {
     ec.AddStatement(OPC_VCall, Func, SelfOffset, Loc);
   }
+
+  ec.EmitExitCompound(elist);
 }
 
 

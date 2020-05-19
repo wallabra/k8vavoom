@@ -698,7 +698,7 @@ VStr VFieldType::GetName () const {
     case TYPE_Reference: return (Class ? *Class->Name : "none");
     case TYPE_Class:
       Ret = "class";
-      if (Class) { Ret += "!"; Ret += *Class->Name; }
+      if (Class) { Ret += "!"; Ret += *Class->Name; } else Ret += "!?";
       return Ret;
     case TYPE_State: return "state";
     case TYPE_Struct: return *Struct->Name;
@@ -724,7 +724,7 @@ VStr VFieldType::GetName () const {
 
 //==========================================================================
 //
-//  VFieldType::CanBeReplaced
+//  VFieldType::IsReusingDisabled
 //
 //==========================================================================
 bool VFieldType::IsReusingDisabled () const {

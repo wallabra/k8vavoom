@@ -452,9 +452,9 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
     return e->Resolve(ec);
   }
 
-  return ResolveAsType(ec);
+  if (assType == AssType::Normal) return ResolveAsType(ec);
 
-  //ParseError(Loc, "Illegal expression identifier `%s`", *Name);
+  ParseError(Loc, "Illegal expression identifier `%s`", *Name);
   delete this;
   return nullptr;
 }

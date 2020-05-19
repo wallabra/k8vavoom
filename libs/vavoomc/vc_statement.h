@@ -151,6 +151,8 @@ class VWhile : public VStatement {
 public:
   VExpression *Expr;
   VStatement *Statement;
+  // filled in resolver
+  TArray<VEmitContext::VCompExit> elist;
 
   VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
   virtual ~VWhile () override;
@@ -178,6 +180,8 @@ class VDo : public VStatement {
 public:
   VExpression *Expr;
   VStatement *Statement;
+  // filled in resolver
+  TArray<VEmitContext::VCompExit> elist;
 
   VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
   virtual ~VDo () override;
@@ -207,6 +211,8 @@ public:
   TArray<VExpression *> CondExpr;
   TArray<VExpression *> LoopExpr;
   VStatement *Statement;
+  // filled in resolver
+  TArray<VEmitContext::VCompExit> elist;
 
   VFor (const TLocation &ALoc);
   virtual ~VFor () override;
@@ -235,6 +241,8 @@ class VForeach : public VStatement {
 public:
   VExpression *Expr;
   VStatement *Statement;
+  // filled in resolver
+  TArray<VEmitContext::VCompExit> elist;
 
   VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
   virtual ~VForeach () override;
@@ -273,6 +281,8 @@ public:
   VExpression *hi; // high bound
   VStatement *statement;
   bool reversed;
+  // filled in resolver
+  TArray<VEmitContext::VCompExit> elist;
 
   VForeachIota (const TLocation &ALoc);
   virtual ~VForeachIota () override;
@@ -317,6 +327,8 @@ public:
   bool reversed;
   bool isRef; // if `var` a reference?
   bool isConst; // if `var` a const?
+  // filled in resolver
+  TArray<VEmitContext::VCompExit> elist;
 
   VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, bool aVarConst, const TLocation &aloc);
   virtual ~VForeachArray () override;
@@ -364,6 +376,8 @@ public:
   int fevarCount;
   VStatement *statement;
   bool reversed;
+  // filled in resolver
+  TArray<VEmitContext::VCompExit> elist;
 
   VForeachScripted (VExpression *aarr, int afeCount, Var *afevars, const TLocation &aloc);
   virtual ~VForeachScripted () override;
@@ -586,6 +600,8 @@ protected:
 class VCompound : public VStatement {
 public:
   TArray<VStatement *> Statements;
+  // filled in resolver
+  TArray<VEmitContext::VCompExit> elist;
 
   VCompound (const TLocation &ALoc);
   virtual ~VCompound () override;
