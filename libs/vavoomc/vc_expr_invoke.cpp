@@ -821,6 +821,7 @@ bool VDotInvocation::DoReResolvePtr (VEmitContext &ec, VExpression *&selfCopy) {
 //
 //==========================================================================
 VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
+  //if (SelfExpr) GLog.Logf(NAME_Debug, "VDotInvocation::DoResolve: self=%s", *SelfExpr->toString());
   VExpression *selfCopy = (SelfExpr ? SelfExpr->SyntaxCopy() : nullptr);
 
   if (SelfExpr) SelfExpr = SelfExpr->Resolve(ec);
@@ -1106,7 +1107,13 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     // do not fail here, this could be a delegate invocation
     if (M) {
       //if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
-      if (SelfExpr->Type.Type != TYPE_Pointer) SelfExpr = new VUnary(VUnary::TakeAddress, SelfExpr, SelfExpr->Loc);
+      if (SelfExpr->Type.Type != TYPE_Pointer) {
+        if (SelfExpr->IsTypeExpr()) {
+          if (!M->IsStatic()) ParseError(Loc, "cannot call non-static method `%s::%s` as static", *SelfExpr->Type.Struct->Name, *MethodName);
+        } else {
+          SelfExpr = new VUnary(VUnary::TakeAddress, SelfExpr, SelfExpr->Loc);
+        }
+      }
       SelfExpr = SelfExpr->Resolve(ec);
       if (!SelfExpr) { delete this; return nullptr; }
       if (M->Flags&FUNC_Iterator) {
@@ -2439,7 +2446,9 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
 //
 //==========================================================================
 void VInvocation::Emit (VEmitContext &ec) {
-  if (SelfExpr) SelfExpr->Emit(ec);
+  if (SelfExpr) {
+    if (!Func->IsStatic()) SelfExpr->Emit(ec);
+  }
 
   bool DirectCall = (BaseCall || (Func->Flags&FUNC_Final) != 0);
 
@@ -2447,13 +2456,12 @@ void VInvocation::Emit (VEmitContext &ec) {
     //ec.EmitPushNumber(0, Loc); // `self`, will be replaced by executor
     ec.AddStatement(OPC_PushNull, Loc); // `self`, will be replaced by executor
   } else {
-    if (Func->Flags&FUNC_Static) {
-      if (HaveSelf) ParseError(Loc, "Invalid static function call");
-    } else {
-      if (!HaveSelf) {
-        if (ec.CurrentFunc->Flags&FUNC_Static) ParseError(Loc, "An object is required to call non-static methods");
-        ec.AddStatement(OPC_LocalValue0, Loc);
-      }
+    if (Func->IsStatic()) {
+      // it is allowed to call static methods with `var.name()`
+      //if (HaveSelf) ParseError(Loc, "Invalid static function call");
+    } else if (!HaveSelf) {
+      if (ec.CurrentFunc->IsStatic()) ParseError(Loc, "An object is required to call non-static methods");
+      ec.AddStatement(OPC_LocalValue0, Loc);
     }
   }
 

@@ -250,21 +250,29 @@ public:
 
   inline bool IsDefined () const noexcept { return (defineResult >= 0); }
 
+  // flag checks
+  inline bool IsNative () const noexcept { return !!(Flags&FUNC_Native); }
   inline bool IsStatic () const noexcept { return !!(Flags&FUNC_Static); }
+  inline bool IsVarArgs () const noexcept { return !!(Flags&FUNC_VarArgs); }
+  inline bool IsFinal () const noexcept { return !!(Flags&FUNC_Final); }
+  inline bool IsSpawnder () const noexcept { return !!(Flags&FUNC_Spawner); }
+  inline bool IsNet () const noexcept { return !!(Flags&FUNC_Net); }
+  inline bool IsNetReliable () const noexcept { return !!(Flags&FUNC_NetReliable); }
+  inline bool IsIterator () const noexcept { return !!(Flags&FUNC_Iterator); }
+  inline bool IsDecorate () const noexcept { return !!(Flags&FUNC_Decorate); }
+  inline bool IsStructMethod () const noexcept { return !!(Flags&FUNC_StructMethod); }
+
   // valid only after codegen phase
   //inline bool IsVirtual () const { return !(Flags&FUNC_NonVirtual); } // you can use `VTableIndex >= 0` too
   // valid only after `PostLoad()` call
   inline bool IsVirtual () const noexcept { return (VTableIndex >= 0); }
   inline bool IsNonVirtual () const noexcept { return (VTableIndex < 0); }
 
-  inline bool IsStructMethod () const noexcept { return !!(Flags&FUNC_StructMethod); }
-
   inline bool IsPostLoaded () const noexcept { return (VTableIndex >= -1); }
 
   // is this method suitable for various "normal" calls?
   inline bool IsNormal () const noexcept { return ((Flags&(FUNC_VarArgs|FUNC_Spawner|FUNC_Iterator)) == 0); }
   inline bool IsNetwork () const noexcept { return ((Flags&(FUNC_Net|FUNC_NetReliable)) != 0); }
-  inline bool IsDecorate () const noexcept { return ((Flags&FUNC_Decorate) != 0); }
 
   // called from decorate parser, mostly
   // if we're calling a "good" method, there is no need to create a wrapper

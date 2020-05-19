@@ -265,8 +265,28 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
     return e->Resolve(ec);
   }
 
-  // resolve struct field
+  // resolve struct field or method
   if (ec.SelfStruct) {
+    // method
+    VMethod *M = ec.SelfStruct->FindAccessibleMethod(Name, ec.SelfStruct, &Loc);
+    if (M) {
+      if (M->IsIterator()) {
+        ParseError(Loc, "Iterator methods can only be used in foreach statements");
+        delete this;
+        return nullptr;
+      }
+      // rewrite as invoke
+      VExpression *e;
+      if (M->IsStatic()) {
+        e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
+      } else {
+        //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
+        e = new VDotInvocation(new VSelf(Loc), Name, Loc, 0, nullptr);
+      }
+      delete this;
+      return e->Resolve(ec);
+    }
+    // field
     VField *field = ec.SelfStruct->FindField(Name);
     if (field) {
       VExpression *e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
@@ -432,7 +452,9 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
     return e->Resolve(ec);
   }
 
-  ParseError(Loc, "Illegal expression identifier `%s`", *Name);
+  return ResolveAsType(ec);
+
+  //ParseError(Loc, "Illegal expression identifier `%s`", *Name);
   delete this;
   return nullptr;
 }
