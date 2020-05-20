@@ -150,7 +150,11 @@ void VLocalDecl::EmitZeroing (VEmitContext &ec, bool forced) {
 //
 //==========================================================================
 void VLocalDecl::Allocate (VEmitContext &ec) {
-  for (auto &&loc : Vars) ec.AllocateLocalSlot(loc.locIdx);
+  for (auto &&loc : Vars) {
+    ec.AllocateLocalSlot(loc.locIdx);
+    VLocalVarDef &ldef = ec.GetLocalByIndex(loc.locIdx);
+    GLog.Logf(NAME_Debug, "VLocalDecl::Allocate: name=`%s`; idx=%d; ofs=%d; reused=%d; %s", *ldef.Name, loc.locIdx, ldef.Offset, (int)ldef.reused, *ldef.Loc.toStringNoCol());
+  }
 }
 
 
@@ -160,7 +164,11 @@ void VLocalDecl::Allocate (VEmitContext &ec) {
 //
 //==========================================================================
 void VLocalDecl::Release (VEmitContext &ec) {
-  for (auto &&loc : Vars) ec.ReleaseLocalSlot(loc.locIdx);
+  for (auto &&loc : Vars) {
+    ec.ReleaseLocalSlot(loc.locIdx);
+    VLocalVarDef &ldef = ec.GetLocalByIndex(loc.locIdx);
+    GLog.Logf(NAME_Debug, "VLocalDecl::Release: name=`%s`; idx=%d; ofs=%d; reused=%d; %s", *ldef.Name, loc.locIdx, ldef.Offset, (int)ldef.reused, *ldef.Loc.toStringNoCol());
+  }
 }
 
 
@@ -323,6 +331,10 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
           if (defaultInit) e.emitClear = false;
         }
       }
+    }
+    {
+      VLocalVarDef &ldef = ec.GetLocalByIndex(e.locIdx);
+      GLog.Logf(NAME_Debug, "VLocalDecl::Declare(%d): name=`%s`; idx=%d; ofs=%d; reused=%d; %s", i, *ldef.Name, e.locIdx, ldef.Offset, (int)ldef.reused, *ldef.Loc.toStringNoCol());
     }
   }
   return retres;

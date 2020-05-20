@@ -59,6 +59,8 @@ public:
 
   VExpression *GetOpSyntaxCopy ();
 
+  virtual VStr toString () const override;
+
 protected:
   VArrayElement () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -85,6 +87,8 @@ public:
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &ec) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VSliceOp () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -106,6 +110,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VDynArrayGetNum () {}
@@ -133,6 +139,8 @@ public:
   virtual void Emit (VEmitContext &) override;
   virtual bool IsDynArraySetNum () const override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VDynArraySetNum () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -155,6 +163,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VDynArrayInsert () {}
@@ -179,6 +189,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VDynArrayRemove () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -199,6 +211,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VDynArrayClear () {}
@@ -221,6 +235,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VDynArraySort () {}
@@ -248,6 +264,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VDynArraySwap1D () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -270,6 +288,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VDynArrayCopyFrom () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -290,6 +310,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VDynArrayAllocElement () {}
@@ -313,6 +335,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VStringGetLength () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -334,6 +358,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VSliceGetLength () {}
@@ -357,6 +383,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VSliceGetPtr () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -379,6 +407,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VDictGetLength () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -400,6 +430,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VDictGetCapacity () {}
@@ -424,6 +456,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VDictClearOrReset () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -446,6 +480,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VDictRehash () {}
@@ -470,6 +506,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VDictFind () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -492,6 +530,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VDictDelete () {}
@@ -517,6 +557,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VDictPut () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -538,6 +580,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VDictFirstIndex () {}
@@ -561,6 +605,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VDictIsValidIndex () {}
@@ -586,6 +632,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VDictNextIndex () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -608,6 +656,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VDictKeyAtIndex () {}
@@ -632,6 +682,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  //virtual VStr toString () const override;
+
 protected:
   VDictValueAtIndex () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
@@ -653,6 +705,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  //virtual VStr toString () const override;
 
 protected:
   VStructZero () {}

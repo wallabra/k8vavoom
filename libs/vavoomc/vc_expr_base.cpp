@@ -29,7 +29,7 @@
 #include "vc_local.h"
 
 
-#ifdef VCC_DEBUG_COMPILER_LEAKS
+#if defined(VCC_DEBUG_COMPILER_LEAKS) || 1
 #include <string>
 #include <cstdlib>
 #include <cxxabi.h>
@@ -58,8 +58,10 @@ template<class T> VStr shitppTypeNameObj (const T &o) {
   }
   return tpn;
 }
+#endif
 
 
+#if defined(VCC_DEBUG_COMPILER_LEAKS)
 struct MemInfo {
   void *ptr;
   size_t size;
@@ -588,7 +590,7 @@ bool VExpression::IsComma () const { return false; }
 bool VExpression::IsCommaRetOp0 () const { return false; }
 bool VExpression::IsDropResult () const { return false; }
 
-#if 0
+#if 1
 VStr VExpression::toString () const { return VStr("<VExpression::")+shitppTypeNameObj(*this)+":no-toString>"; }
 #else
 VStr VExpression::toString () const { return VStr("<VExpression:no-toString>"); }

@@ -434,6 +434,9 @@ void VMethod::Emit () {
     return;
   }
 
+  GLog.Logf(NAME_Debug, "*** METHOD: %s ***", *GetFullName());
+  GLog.Logf(NAME_Debug, "%s", *Statement->toString());
+
   Statement->Emit(ec, nullptr);
 
   if (ReturnType.Type == TYPE_Void) {

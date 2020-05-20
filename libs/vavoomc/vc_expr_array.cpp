@@ -607,6 +607,20 @@ VExpression *VArrayElement::GetOpSyntaxCopy () {
 }
 
 
+//==========================================================================
+//
+//  VArrayElement::toString
+//
+//==========================================================================
+VStr VArrayElement::toString () const {
+  return
+    VExpression::e2s(op)+"["+VExpression::e2s(ind)+
+    (ind2 ? "," : "")+
+    (ind2 ? VExpression::e2s(ind2) : VStr(""))+
+    "]";
+}
+
+
 
 //==========================================================================
 //

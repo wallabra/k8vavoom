@@ -141,10 +141,13 @@ void VStatement::CreateLocalVarScope (TArray<VStatement *> &src) {
       VLocalVarStatement *vst = (VLocalVarStatement *)src[idx];
       vassert(vst->Statements.length() == 0);
       const int newlen = idx+1; // skip decl
+      // move tail to `vst`
       vst->Statements.resize(src.length()-newlen);
       for (idx = newlen; idx < src.length(); ++idx) vst->Statements.append(src[idx]);
       // shrink source list
       src.setLength(newlen);
+      // recurse, why not?
+      //vst->CreateLocalVarScope(vst->Statements);
       // done
       return;
     }
@@ -206,6 +209,16 @@ void VEmptyStatement::DoEmit (VEmitContext &) {
 //==========================================================================
 bool VEmptyStatement::IsEmptyStatement () const noexcept {
   return true;
+}
+
+
+//==========================================================================
+//
+//  VEmptyStatement::toString
+//
+//==========================================================================
+VStr VEmptyStatement::toString () {
+  return VStr("/*")+Loc.toStringNoCol()+"*/;";
 }
 
 
@@ -336,6 +349,21 @@ void VAssertStatement::DoEmit (VEmitContext &ec) {
 }
 
 
+//==========================================================================
+//
+//  VAssertStatement::toString
+//
+//==========================================================================
+VStr VAssertStatement::toString () {
+  return VStr("/*")+Loc.toStringNoCol()+"*/assert("+VExpression::e2s(Expr)+");";
+}
+
+
+//**************************************************************************
+//
+// VIf
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -529,6 +557,25 @@ bool VIf::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
 }
 
 
+//==========================================================================
+//
+//  VIf::toString
+//
+//==========================================================================
+VStr VIf::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+"*/if ("+VExpression::e2s(Expr)+")\n"+
+    (TrueStatement ? TrueStatement->toString() : VStr("<none>"))+"\nelse\n"+
+    (FalseStatement ? FalseStatement->toString() : VStr("<none>"));
+}
+
+
+
+//**************************************************************************
+//
+// VWhile
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -700,6 +747,24 @@ bool VWhile::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
 }
 
 
+//==========================================================================
+//
+//  VWhile::toString
+//
+//==========================================================================
+VStr VWhile::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+"*/while ("+VExpression::e2s(Expr)+")\n"+
+    (Statement ? Statement->toString() : VStr("<none>"));
+}
+
+
+
+//**************************************************************************
+//
+// VDo
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -877,6 +942,24 @@ bool VDo::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
 }
 
 
+//==========================================================================
+//
+//  VDo::toString
+//
+//==========================================================================
+VStr VDo::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+"*/do\n"+
+    (Statement ? Statement->toString() : VStr("<none>"))+"\nwhile ("+VExpression::e2s(Expr)+");";
+}
+
+
+
+//**************************************************************************
+//
+// VFor
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -1112,6 +1195,30 @@ bool VFor::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
 }
 
 
+//==========================================================================
+//
+//  VFor::toString
+//
+//==========================================================================
+VStr VFor::toString () {
+  VStr res = VStr("/*")+Loc.toStringNoCol()+"*/for (";
+  for (auto &&e : InitExpr) { res += VExpression::e2s(e); res += ","; }
+  res += "; ";
+  for (auto &&e : CondExpr) { res += VExpression::e2s(e); res += ","; }
+  res += "; ";
+  for (auto &&e : LoopExpr) { res += VExpression::e2s(e); res += ","; }
+  res += ")\n";
+  res += (Statement ? Statement->toString() : VStr("<none>"));
+  return res;
+}
+
+
+
+//**************************************************************************
+//
+// VForeach
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -1318,6 +1425,24 @@ bool VForeach::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) 
 }
 
 
+//==========================================================================
+//
+//  VForeach::toString
+//
+//==========================================================================
+VStr VForeach::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+"*/foreach "+VExpression::e2s(Expr)+"\n"+
+    (Statement ? Statement->toString() : VStr("<none>"));
+}
+
+
+
+//**************************************************************************
+//
+// VForeachIota
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -1332,7 +1457,7 @@ VForeachIota::VForeachIota (const TLocation &ALoc)
   , var(nullptr)
   , lo(nullptr)
   , hi(nullptr)
-  , statement(nullptr)
+  , Statement(nullptr)
   , reversed(false)
 {
 }
@@ -1351,7 +1476,7 @@ VForeachIota::~VForeachIota () {
   delete var; var = nullptr;
   delete lo; lo = nullptr;
   delete hi; hi = nullptr;
-  delete statement; statement = nullptr;
+  delete Statement; Statement = nullptr;
 }
 
 
@@ -1379,7 +1504,7 @@ void VForeachIota::DoSyntaxCopyTo (VStatement *e) {
   res->var = (var ? var->SyntaxCopy() : nullptr);
   res->lo = (lo ? lo->SyntaxCopy() : nullptr);
   res->hi = (hi ? hi->SyntaxCopy() : nullptr);
-  res->statement = (statement ? statement->SyntaxCopy() : nullptr);
+  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
   res->reversed = reversed;
   // no need to copy private data here, as `SyntaxCopy()` should be called only on unresolved things
 }
@@ -1391,7 +1516,7 @@ void VForeachIota::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 void VForeachIota::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  if (statement) statement->DoFixSwitch(aold, anew);
+  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -1402,13 +1527,13 @@ void VForeachIota::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //==========================================================================
 bool VForeachIota::DoResolve (VEmitContext &ec) {
   // indent check
-  if (statement && !CheckCondIndent(Loc, statement)) return false;
+  if (Statement && !CheckCondIndent(Loc, Statement)) return false;
 
   // we will rewrite 'em later
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
   auto loR = (lo ? lo->SyntaxCopy()->Resolve(ec) : nullptr);
   auto hiR = (hi ? hi->SyntaxCopy()->Resolve(ec) : nullptr);
-  if (!statement || !varR || !loR || !hiR) {
+  if (!Statement || !varR || !loR || !hiR) {
     delete varR;
     delete loR;
     delete hiR;
@@ -1500,7 +1625,7 @@ bool VForeachIota::DoResolve (VEmitContext &ec) {
 
   // finally, resolve statement (last, so local reusing will work as expected)
   bool res = true;
-  if (!statement->Resolve(ec, this)) res = false;
+  if (!Statement->Resolve(ec, this)) res = false;
   return res;
 }
 
@@ -1531,7 +1656,7 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
   ec.MarkLabel(loopLbl);
 
   // emit loop body
-  statement->Emit(ec, this);
+  Statement->Emit(ec, this);
 
   // emit dtors
   EmitDtorAndBlock(ec);
@@ -1586,7 +1711,7 @@ bool VForeachIota::IsContinueScope () const noexcept {
 //==========================================================================
 bool VForeachIota::IsEndsWithReturn () const noexcept {
   //TODO: endless fors should have at least one return instead
-  return (statement && statement->IsEndsWithReturn());
+  return (Statement && Statement->IsEndsWithReturn());
 }
 
 
@@ -1596,7 +1721,7 @@ bool VForeachIota::IsEndsWithReturn () const noexcept {
 //
 //==========================================================================
 bool VForeachIota::IsProperCaseEnd (bool skipBreak) const noexcept {
-  return (statement && statement->IsProperCaseEnd(true));
+  return (Statement && Statement->IsProperCaseEnd(true));
 }
 
 
@@ -1606,7 +1731,7 @@ bool VForeachIota::IsProperCaseEnd (bool skipBreak) const noexcept {
 //
 //==========================================================================
 VLabelStmt *VForeachIota::FindLabel (VName aname) noexcept {
-  return (statement ? statement->FindLabel(aname) : nullptr);
+  return (Statement ? Statement->FindLabel(aname) : nullptr);
 }
 
 
@@ -1628,12 +1753,33 @@ bool VForeachIota::IsGotoInAllowed () const noexcept {
 bool VForeachIota::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
   if (dest == this) { path.append(this); return true; }
   path.append(this);
-  if (statement && statement->BuildPathTo(dest, path)) return true;
+  if (Statement && Statement->BuildPathTo(dest, path)) return true;
   path.removeAt(path.length()-1);
   return false;
 }
 
 
+//==========================================================================
+//
+//  VForeachIota::toString
+//
+//==========================================================================
+VStr VForeachIota::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+"*/foreach ("+
+    VExpression::e2s(var)+"; "+
+    VExpression::e2s(lo)+" .. "+
+    VExpression::e2s(hi)+(reversed ? "; reversed)\n" : ")\n")+
+    (Statement ? Statement->toString() : VStr("<none>"));
+}
+
+
+
+//**************************************************************************
+//
+// VForeachArray
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -1651,7 +1797,7 @@ VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression 
   , idxvar(aidx)
   , var(avar)
   , arr(aarr)
-  , statement(nullptr)
+  , Statement(nullptr)
   , reversed(false)
   , isRef(aVarRef)
   , isConst(aVarConst)
@@ -1675,7 +1821,7 @@ VForeachArray::~VForeachArray () {
   delete idxvar; idxvar = nullptr;
   delete var; var = nullptr;
   delete arr; arr = nullptr;
-  delete statement; statement = nullptr;
+  delete Statement; Statement = nullptr;
 }
 
 
@@ -1703,7 +1849,7 @@ void VForeachArray::DoSyntaxCopyTo (VStatement *e) {
   res->idxvar = (idxvar ? idxvar->SyntaxCopy() : nullptr);
   res->var = (var ? var->SyntaxCopy() : nullptr);
   res->arr = (arr ? arr->SyntaxCopy() : nullptr);
-  res->statement = (statement ? statement->SyntaxCopy() : nullptr);
+  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
   res->reversed = reversed;
   res->isRef = isRef;
   res->isConst = isConst;
@@ -1717,7 +1863,7 @@ void VForeachArray::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 void VForeachArray::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  if (statement) statement->DoFixSwitch(aold, anew);
+  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -1728,7 +1874,7 @@ void VForeachArray::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //==========================================================================
 bool VForeachArray::DoResolve (VEmitContext &ec) {
   // indent check
-  if (statement && !CheckCondIndent(Loc, statement)) return false;
+  if (Statement && !CheckCondIndent(Loc, Statement)) return false;
 
   if (arr && arr->IsAnyInvocation()) VCFatalError("VC: Internal compiler error (VForeachArray::Resolve)");
 
@@ -1738,7 +1884,7 @@ bool VForeachArray::DoResolve (VEmitContext &ec) {
   auto arrR = (arr ? arr->SyntaxCopy()->Resolve(ec) : nullptr);
 
   bool wasError = false;
-  if (!statement || !varR || !arrR || (idxvar && !ivarR)) wasError = true;
+  if (!Statement || !varR || !arrR || (idxvar && !ivarR)) wasError = true;
 
   if (!wasError && ivarR && ivarR->Type.Type != TYPE_Int) {
     ParseError(var->Loc, "Loop variable should be integer (got `%s`)", *ivarR->Type.GetName());
@@ -1910,7 +2056,7 @@ bool VForeachArray::DoResolve (VEmitContext &ec) {
 
   // finally, resolve statement (last, so local reusing will work as expected)
   bool res = true;
-  if (!statement->Resolve(ec, this)) res = false;
+  if (!Statement->Resolve(ec, this)) res = false;
   return res;
 }
 
@@ -1952,7 +2098,7 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
   if (isRef) ec.AddStatement(OPC_AssignPtrDrop, Loc);
 
   // emit loop body
-  statement->Emit(ec, this);
+  Statement->Emit(ec, this);
 
   // emit dtors
   EmitDtorAndBlock(ec);
@@ -2007,7 +2153,7 @@ bool VForeachArray::IsContinueScope () const noexcept {
 //==========================================================================
 bool VForeachArray::IsEndsWithReturn () const noexcept {
   //TODO: endless fors should have at least one return instead
-  return (statement && statement->IsEndsWithReturn());
+  return (Statement && Statement->IsEndsWithReturn());
 }
 
 
@@ -2017,7 +2163,7 @@ bool VForeachArray::IsEndsWithReturn () const noexcept {
 //
 //==========================================================================
 bool VForeachArray::IsProperCaseEnd (bool skipBreak) const noexcept {
-  return (statement && statement->IsProperCaseEnd(true));
+  return (Statement && Statement->IsProperCaseEnd(true));
 }
 
 
@@ -2027,7 +2173,7 @@ bool VForeachArray::IsProperCaseEnd (bool skipBreak) const noexcept {
 //
 //==========================================================================
 VLabelStmt *VForeachArray::FindLabel (VName aname) noexcept {
-  return (statement ? statement->FindLabel(aname) : nullptr);
+  return (Statement ? Statement->FindLabel(aname) : nullptr);
 }
 
 
@@ -2043,18 +2189,41 @@ bool VForeachArray::IsGotoInAllowed () const noexcept {
 
 //==========================================================================
 //
-//  VForeachIota::BuildPathTo
+//  VForeachArray::BuildPathTo
 //
 //==========================================================================
 bool VForeachArray::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
   if (dest == this) { path.append(this); return true; }
   path.append(this);
-  if (statement && statement->BuildPathTo(dest, path)) return true;
+  if (Statement && Statement->BuildPathTo(dest, path)) return true;
   path.removeAt(path.length()-1);
   return false;
 }
 
 
+//==========================================================================
+//
+//  VForeachArray::toString
+//
+//==========================================================================
+VStr VForeachArray::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+"*/foreach ("+
+    (isConst ? "const " : "")+
+    (isRef ? "ref " : "")+
+    VExpression::e2s(idxvar)+", "+
+    VExpression::e2s(var)+"; "+
+    VExpression::e2s(arr)+(reversed ? "; reversed)\n" : ")\n")+
+    (Statement ? Statement->toString() : VStr("<none>"));
+}
+
+
+
+//**************************************************************************
+//
+// VForeachScripted
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -2069,7 +2238,7 @@ VForeachScripted::VForeachScripted (VExpression *aarr, int afeCount, Var *afevar
   , ivDone(nullptr)
   , arr(aarr)
   , fevarCount(afeCount)
-  , statement(nullptr)
+  , Statement(nullptr)
   , reversed(false)
 {
   if (afeCount < 0 || afeCount > VMethod::MAX_PARAMS) VCFatalError("VC: internal compiler error (VForeachScripted::VForeachScripted)");
@@ -2093,7 +2262,7 @@ VForeachScripted::~VForeachScripted () {
     delete fevars[f].decl;
   }
   fevarCount = 0;
-  delete statement; statement = nullptr;
+  delete Statement; Statement = nullptr;
 }
 
 
@@ -2125,7 +2294,7 @@ void VForeachScripted::DoSyntaxCopyTo (VStatement *e) {
     if (fevars[f].decl) res->fevars[f].decl = (VLocalDecl *)fevars[f].decl->SyntaxCopy();
   }
   res->fevarCount = fevarCount;
-  res->statement = (statement ? statement->SyntaxCopy() : nullptr);
+  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
   res->reversed = reversed;
   // no need to copy private data here, as `SyntaxCopy()` should be called only on unresolved things
 }
@@ -2137,7 +2306,7 @@ void VForeachScripted::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 void VForeachScripted::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  if (statement) statement->DoFixSwitch(aold, anew);
+  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -2148,7 +2317,7 @@ void VForeachScripted::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //==========================================================================
 bool VForeachScripted::DoResolve (VEmitContext &ec) {
   // indent check
-  if (statement && !CheckCondIndent(Loc, statement)) return false;
+  if (Statement && !CheckCondIndent(Loc, Statement)) return false;
 
   /* if iterator is invocation, rewrite it to:
    *   {
@@ -2314,7 +2483,7 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
 
   // finally, resolve statement (last, so local reusing will work as expected)
   bool res = true;
-  if (!statement->Resolve(ec, this)) res = false;
+  if (!Statement->Resolve(ec, this)) res = false;
   return res;
 }
 
@@ -2356,7 +2525,7 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
   ivNext->EmitBranchable(ec, breakLabel, false);
 
   // emit loop body
-  statement->Emit(ec, this);
+  Statement->Emit(ec, this);
 
   // emit dtors
   EmitDtorAndBlock(ec);
@@ -2424,7 +2593,7 @@ void VForeachScripted::EmitFinalizer (VEmitContext &ec) {
 //==========================================================================
 bool VForeachScripted::IsEndsWithReturn () const noexcept {
   //TODO: endless fors should have at least one return instead
-  return (statement && statement->IsEndsWithReturn());
+  return (Statement && Statement->IsEndsWithReturn());
 }
 
 
@@ -2434,7 +2603,7 @@ bool VForeachScripted::IsEndsWithReturn () const noexcept {
 //
 //==========================================================================
 bool VForeachScripted::IsProperCaseEnd (bool skipBreak) const noexcept {
-  return (statement && statement->IsProperCaseEnd(true));
+  return (Statement && Statement->IsProperCaseEnd(true));
 }
 
 
@@ -2444,7 +2613,7 @@ bool VForeachScripted::IsProperCaseEnd (bool skipBreak) const noexcept {
 //
 //==========================================================================
 VLabelStmt *VForeachScripted::FindLabel (VName aname) noexcept {
-  return (statement ? statement->FindLabel(aname) : nullptr);
+  return (Statement ? Statement->FindLabel(aname) : nullptr);
 }
 
 
@@ -2476,12 +2645,39 @@ bool VForeachScripted::IsGotoOutAllowed () const noexcept {
 bool VForeachScripted::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
   if (dest == this) { path.append(this); return true; }
   path.append(this);
-  if (statement && statement->BuildPathTo(dest, path)) return true;
+  if (Statement && Statement->BuildPathTo(dest, path)) return true;
   path.removeAt(path.length()-1);
   return false;
 }
 
 
+//==========================================================================
+//
+//  VForeachScripted::toString
+//
+//==========================================================================
+VStr VForeachScripted::toString () {
+  VStr res = VStr("/*")+Loc.toStringNoCol()+"*/foreachS (";
+  res += VExpression::e2s(arr)+"(";
+  for (int f = 0; f < fevarCount; ++f) {
+    if (fevars[f].isConst) res += "const ";
+    if (fevars[f].isRef) res += "ref ";
+    res += VExpression::e2s(fevars[f].var);
+    res += ",";
+  }
+  res +=
+    VExpression::e2s(arr)+(reversed ? "); reversed)\n" : "))\n")+
+    (Statement ? Statement->toString() : VStr("<none>"));
+  return res;
+}
+
+
+
+//**************************************************************************
+//
+// VSwitch
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -2825,6 +3021,29 @@ void VSwitch::PostProcessGotoCase () {
 */
 
 
+//==========================================================================
+//
+//  VSwitch::toString
+//
+//==========================================================================
+VStr VSwitch::toString () {
+  VStr res = VStr("/*")+Loc.toStringNoCol()+"*/switch (";
+  res += VExpression::e2s(Expr)+") {\n";
+  for (auto &&st : Statements) {
+    res += st->toString();
+    res += "\n";
+  }
+  res += "}";
+  return res;
+}
+
+
+
+//**************************************************************************
+//
+// VSwitchCase
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -2953,6 +3172,24 @@ bool VSwitchCase::IsSwitchCase () const noexcept {
 }
 
 
+//==========================================================================
+//
+//  VSwitchCase::toString
+//
+//==========================================================================
+VStr VSwitchCase::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+"*/case "+
+    VExpression::e2s(Expr)+":";
+}
+
+
+
+//**************************************************************************
+//
+// VSwitchDefault
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -3035,6 +3272,22 @@ bool VSwitchDefault::IsSwitchDefault () const noexcept {
 }
 
 
+//==========================================================================
+//
+//  VSwitchDefault::toString
+//
+//==========================================================================
+VStr VSwitchDefault::toString () {
+  return VStr("/*")+Loc.toStringNoCol()+"*/default:";
+}
+
+
+
+//**************************************************************************
+//
+// VBreak
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -3109,6 +3362,22 @@ bool VBreak::IsBreak () const noexcept {
 }
 
 
+//==========================================================================
+//
+//  VBreak::toString
+//
+//==========================================================================
+VStr VBreak::toString () {
+  return VStr("/*")+Loc.toStringNoCol()+"*/break;";
+}
+
+
+
+//**************************************************************************
+//
+// VContinue
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -3183,6 +3452,22 @@ bool VContinue::IsContinue () const noexcept {
 }
 
 
+//==========================================================================
+//
+//  VContinue::toString
+//
+//==========================================================================
+VStr VContinue::toString () {
+  return VStr("/*")+Loc.toStringNoCol()+"*/continue;";
+}
+
+
+
+//**************************************************************************
+//
+// VReturn
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -3270,33 +3555,6 @@ bool VReturn::DoResolve (VEmitContext &ec) {
   }
 
   return res;
-
-  /*
-  NumLocalsToClear = ec.GetLocalDefCount();
-  bool res = true;
-  if (Expr) {
-    Expr = (ec.FuncRetType.Type == TYPE_Float ? Expr->ResolveFloat(ec) : Expr->Resolve(ec));
-    if (ec.FuncRetType.Type == TYPE_Void) {
-      ParseError(Loc, "void function cannot return a value");
-      res = false;
-    } else if (Expr) {
-      if (Expr->Type.GetStackSize() == 4 || Expr->Type.Type == TYPE_Vector) {
-        res = Expr->Type.CheckMatch(false, Expr->Loc, ec.FuncRetType);
-      } else {
-        ParseError(Loc, "Bad return type");
-        res = false;
-      }
-    } else {
-      res = false;
-    }
-  } else {
-    if (ec.FuncRetType.Type != TYPE_Void) {
-      ParseError(Loc, "Return value expected");
-      res = false;
-    }
-  }
-  return res;
-  */
 }
 
 
@@ -3321,30 +3579,6 @@ void VReturn::DoEmit (VEmitContext &ec) {
   } else {
     ec.AddStatement(OPC_Return, Loc);
   }
-
-  /*
-  if (!ec.IsReturnAllowed()) {
-    ParseError(Loc, "`return` is not allowed here");
-    return;
-  }
-  if (Expr) {
-    Expr->Emit(ec);
-    ec.EmitDtors();
-    ec.EmitLocalDtors(0, NumLocalsToClear, Loc);
-    if (Expr->Type.GetStackSize() == 4) {
-      ec.AddStatement(OPC_ReturnL, Loc);
-    } else if (Expr->Type.Type == TYPE_Vector) {
-      ec.AddStatement(OPC_ReturnV, Loc);
-    } else {
-      ParseError(Loc, "Bad return type");
-    }
-  } else {
-    ec.EmitDtors();
-    ec.EmitFinalizers();
-    ec.EmitLocalDtors(0, NumLocalsToClear, Loc);
-    ec.AddStatement(OPC_Return, Loc);
-  }
-  */
 }
 
 
@@ -3358,6 +3592,26 @@ bool VReturn::IsReturn () const noexcept {
 }
 
 
+//==========================================================================
+//
+//  VReturn::toString
+//
+//==========================================================================
+VStr VReturn::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+"*/return"+
+    (Expr ? " (" : "")+
+    (Expr ? VExpression::e2s(Expr) : VStr(""))+
+    (Expr ? ")" : "")+";";
+}
+
+
+
+//**************************************************************************
+//
+// VExpressionStatement
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -3428,6 +3682,22 @@ void VExpressionStatement::DoEmit (VEmitContext &ec) {
 }
 
 
+//==========================================================================
+//
+//  VExpressionStatement::toString
+//
+//==========================================================================
+VStr VExpressionStatement::toString () {
+  return VStr("/*")+Loc.toStringNoCol()+"*/ "+VExpression::e2s(Expr)+";";
+}
+
+
+
+//**************************************************************************
+//
+// VDeleteStatement
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -3531,6 +3801,22 @@ void VDeleteStatement::DoEmit (VEmitContext &ec) {
 }
 
 
+//==========================================================================
+//
+//  VDeleteStatement::toString
+//
+//==========================================================================
+VStr VDeleteStatement::toString () {
+  return VStr("/*")+Loc.toStringNoCol()+"*/delete "+VExpression::e2s(var)+";";
+}
+
+
+
+//**************************************************************************
+//
+// VBaseCompoundStatement
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -3657,6 +3943,29 @@ void VBaseCompoundStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 }
 
 
+//==========================================================================
+//
+//  VBaseCompoundStatement::toString
+//
+//==========================================================================
+VStr VBaseCompoundStatement::toString () {
+  VStr res = VStr("/*")+Loc.toStringNoCol()+"*/{";
+  for (auto &&st : Statements) {
+    if (!st) continue;
+    res += "\n";
+    res += st->toString();
+  }
+  res += "\n}";
+  return res;
+}
+
+
+
+//**************************************************************************
+//
+// VLocalVarStatement
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -3710,12 +4019,24 @@ void VLocalVarStatement::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 bool VLocalVarStatement::DoResolve (VEmitContext &ec) {
+  GLog.Logf(NAME_Debug, "%p:000: =====", this);
+  GLog.Logf(NAME_Debug, "%s", *toString());
+  GLog.Logf(NAME_Debug, "%p:000: =====", this);
   bool res = true;
+  //GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:000: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   CreateLocalVarScope(Statements);
+  GLog.Logf(NAME_Debug, "%p:001: =====", this);
+  GLog.Logf(NAME_Debug, "%s", *toString());
+  GLog.Logf(NAME_Debug, "%p:001: =====", this);
+  //GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:001: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   if (!Decl->Declare(ec)) res = false;
+  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:002: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   for (auto &&st : Statements) {
+    GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:003:   stlen=%d (%p) %s", this, *Loc.toStringNoCol(), Statements.length(), st, *st->Loc.toStringNoCol());
     if (!st->Resolve(ec, this)) res = false;
+    GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:004:   stlen=%d (%p) %s", this, *Loc.toStringNoCol(), Statements.length(), st, *st->Loc.toStringNoCol());
   }
+  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:005: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   Decl->Hide(ec);
   return res;
 }
@@ -3727,10 +4048,21 @@ bool VLocalVarStatement::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VLocalVarStatement::DoEmit (VEmitContext &ec) {
+  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:000: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   Decl->Allocate(ec);
+  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:001: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   Decl->EmitInitialisations(ec);
-  for (auto &&st : Statements) st->Emit(ec, this);
+  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:002: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
+  for (auto &&st : Statements) {
+    GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMTI:003:   stlen=%d (%p) %s", this, *Loc.toStringNoCol(), Statements.length(), st, *st->Loc.toStringNoCol());
+    st->Emit(ec, this);
+    GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMTI:004:   stlen=%d (%p) %s", this, *Loc.toStringNoCol(), Statements.length(), st, *st->Loc.toStringNoCol());
+  }
+  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:005: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
+  EmitDtorAndBlock(ec);
+  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:006: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   Decl->Release(ec);
+  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:007: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
 }
 
 
@@ -3754,6 +4086,34 @@ bool VLocalVarStatement::IsVarDecl () const noexcept {
 }
 
 
+//==========================================================================
+//
+//  VLocalVarStatement::toString
+//
+//==========================================================================
+VStr VLocalVarStatement::toString () {
+  VStr res = VStr("/*")+Loc.toStringNoCol()+"*/<LOCDECL>\n";
+  if (Decl) {
+    for (auto &&v : Decl->Vars) {
+      res += VStr("/*")+v.Loc.toStringNoCol()+"*/ ";
+      res += VExpression::e2s(v.TypeExpr);
+      res += " ";
+      res += *v.Name;
+      res += ";";
+      res += "\n";
+    }
+  }
+  res += VBaseCompoundStatement::toString();
+  return res;
+}
+
+
+
+//**************************************************************************
+//
+// VCompound
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -3821,6 +4181,12 @@ void VCompound::DoEmit (VEmitContext &ec) {
 }
 
 
+
+//**************************************************************************
+//
+// VCompoundScopeExit
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -3907,6 +4273,27 @@ void VCompoundScopeExit::EmitFinalizer (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VCompoundScopeExit::toString
+//
+//==========================================================================
+VStr VCompoundScopeExit::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+"*/{ scope(exit)\n"+
+    (Body ? Body->toString() : VStr("<none>"))+"\n"+
+    VBaseCompoundStatement::toString()+
+    "\n}";
+}
+
+
+
+//**************************************************************************
+//
+// VLabelStmt
+//
+//**************************************************************************
+
+//==========================================================================
+//
 //  VLabelStmt::VLabelStmt
 //
 //==========================================================================
@@ -3981,6 +4368,22 @@ VName VLabelStmt::GetLabelName () const noexcept {
 }
 
 
+//==========================================================================
+//
+//  VLabelStmt::toString
+//
+//==========================================================================
+VStr VLabelStmt::toString () {
+  return VStr("/*")+Loc.toStringNoCol()+"*/"+(*Name)+":";
+}
+
+
+
+//**************************************************************************
+//
+// VGotoStmt
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -4346,4 +4749,14 @@ bool VGotoStmt::IsGotoDefault () const noexcept {
 //==========================================================================
 VName VGotoStmt::GetLabelName () const noexcept {
   return Name;
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::toString
+//
+//==========================================================================
+VStr VGotoStmt::toString () {
+  return VStr("/*")+Loc.toStringNoCol()+"*/<GOTO>";
 }

@@ -1081,7 +1081,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
     fei->reversed = ParseForeachOptions();
     Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
     // body
-    fei->statement = ParseStatement();
+    fei->Statement = ParseStatement();
     // done
     res = fei;
   } else {
@@ -1095,7 +1095,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       fes->reversed = ParseForeachOptions();
       Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
       // body
-      fes->statement = ParseStatement();
+      fes->Statement = ParseStatement();
       // done
       res = fes;
       // setup types for `auto`
@@ -1144,7 +1144,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       fer->reversed = ParseForeachOptions();
       Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
       // body
-      fer->statement = ParseStatement();
+      fer->Statement = ParseStatement();
       // done
       res = fer;
     }

@@ -135,6 +135,8 @@ public:
   // this checks for `if (...)\nstat;`
   bool CheckCondIndent (const TLocation &condLoc, VStatement *body);
 
+  virtual VStr toString () = 0;
+
 protected:
   VStatement () {}
   virtual void DoSyntaxCopyTo (VStatement *e);
@@ -154,6 +156,8 @@ public:
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsEmptyStatement () const noexcept override;
+
+  virtual VStr toString () override;
 
 protected:
   VEmptyStatement () {}
@@ -175,6 +179,8 @@ public:
 
   virtual bool DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
+
+  virtual VStr toString () override;
 
 protected:
   VAssertStatement () {}
@@ -206,9 +212,12 @@ public:
 
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
+  virtual VStr toString () override;
+
 protected:
   VIf () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
+
 public:
   virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
@@ -236,6 +245,8 @@ public:
   virtual VLabelStmt *FindLabel (VName aname) noexcept override;
 
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
+
+  virtual VStr toString () override;
 
 protected:
   VWhile () {}
@@ -268,6 +279,8 @@ public:
   virtual VLabelStmt *FindLabel (VName aname) noexcept override;
 
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
+
+  virtual VStr toString () override;
 
 protected:
   VDo () {}
@@ -303,6 +316,8 @@ public:
   virtual bool IsGotoInAllowed () const noexcept override;
 
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
+
+  virtual VStr toString () override;
 
 protected:
   VFor () {}
@@ -340,6 +355,8 @@ public:
 
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
+  virtual VStr toString () override;
+
 protected:
   VForeach () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
@@ -362,7 +379,7 @@ public:
   VExpression *var; // loop variable (resolved to first-check expression)
   VExpression *lo; // low bound
   VExpression *hi; // high bound
-  VStatement *statement;
+  VStatement *Statement;
   bool reversed;
 
   VForeachIota (const TLocation &ALoc);
@@ -384,6 +401,8 @@ public:
   virtual bool IsGotoInAllowed () const noexcept override;
 
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
+
+  virtual VStr toString () override;
 
 protected:
   VForeachIota () {}
@@ -413,7 +432,7 @@ public:
   VExpression *idxvar; // index variable (can be null if hidden)
   VExpression *var; // value variable
   VExpression *arr; // array
-  VStatement *statement;
+  VStatement *Statement;
   bool reversed;
   bool isRef; // if `var` a reference?
   bool isConst; // if `var` a const?
@@ -437,6 +456,8 @@ public:
   virtual bool IsGotoInAllowed () const noexcept override;
 
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
+
+  virtual VStr toString () override;
 
 protected:
   VForeachArray () {}
@@ -471,7 +492,7 @@ public:
   VExpression *arr; // array
   Var fevars[VMethod::MAX_PARAMS];
   int fevarCount;
-  VStatement *statement;
+  VStatement *Statement;
   bool reversed;
 
   VForeachScripted (VExpression *aarr, int afeCount, Var *afevars, const TLocation &aloc);
@@ -495,6 +516,8 @@ public:
   virtual bool IsGotoOutAllowed () const noexcept override;
 
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
+
+  virtual VStr toString () override;
 
 protected:
   VForeachScripted () {}
@@ -539,6 +562,8 @@ public:
 
   //void PostProcessGotoCase ();
 
+  virtual VStr toString () override;
+
 protected:
   VSwitch () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
@@ -569,6 +594,8 @@ public:
 
   virtual bool IsSwitchCase () const noexcept override;
 
+  virtual VStr toString () override;
+
 protected:
   VSwitchCase () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
@@ -591,6 +618,8 @@ public:
 
   virtual bool IsSwitchDefault () const noexcept override;
 
+  virtual VStr toString () override;
+
 protected:
   VSwitchDefault () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
@@ -611,6 +640,8 @@ public:
 
   virtual bool IsBreak () const noexcept override;
 
+  virtual VStr toString () override;
+
 protected:
   VBreak () {}
 };
@@ -626,6 +657,8 @@ public:
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsContinue () const noexcept override;
+
+  virtual VStr toString () override;
 
 protected:
   VContinue () {}
@@ -647,6 +680,8 @@ public:
 
   virtual bool IsReturn () const noexcept override;
 
+  virtual VStr toString () override;
+
 protected:
   VReturn () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
@@ -664,6 +699,8 @@ public:
 
   virtual bool DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
+
+  virtual VStr toString () override;
 
 protected:
   VExpressionStatement () {}
@@ -689,6 +726,8 @@ public:
   virtual bool DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
+  virtual VStr toString () override;
+
 protected:
   VDeleteStatement () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
@@ -713,6 +752,8 @@ public:
   virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
   virtual bool IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const noexcept override;
+
+  virtual VStr toString () override;
 
 protected:
   VBaseCompoundStatement () {}
@@ -740,6 +781,8 @@ public:
   virtual void EmitDtor (VEmitContext &ec) override;
 
   virtual bool IsVarDecl () const noexcept override;
+
+  virtual VStr toString () override;
 
 protected:
   VLocalVarStatement () {}
@@ -779,6 +822,8 @@ public:
 
   virtual void EmitFinalizer (VEmitContext &ec) override;
 
+  virtual VStr toString () override;
+
 protected:
   VCompoundScopeExit () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
@@ -798,6 +843,8 @@ public:
 
   virtual bool IsLabel () const noexcept override;
   virtual VName GetLabelName () const noexcept override;
+
+  virtual VStr toString () override;
 
 protected:
   VLabelStmt () {}
@@ -833,6 +880,8 @@ public:
   virtual bool HasGotoCaseExpr () const noexcept override;
   virtual bool IsGotoDefault () const noexcept override;
   virtual VName GetLabelName () const noexcept override;
+
+  virtual VStr toString () override;
 
 protected:
   VGotoStmt () {}

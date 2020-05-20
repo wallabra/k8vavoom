@@ -410,85 +410,6 @@ VLocalVarDef &VEmitContext::NewLocal (VName aname, const VFieldType &atype, cons
   loc.invalid = false;
 
   return loc;
-
-  /*
-    localsofs += ssz;
-    if (localsofs > 1024) {
-      ParseError(aloc, "Local vars > 1k");
-      VCFatalError("VC: too many locals");
-    }
-    return loc;
-  */
-/*
-  // try to find reusable local
-  int besthit = 0x7fffffff, bestidx = -1;
-  if (!atype.IsReusingDisabled()) {
-    for (int f = 0; f < LocalDefs.length(); ++f) {
-      //break;
-      const VLocalVarDef &ll = LocalDefs[f];
-      // don't rewrite type info
-      if (ll.Reusable && !ll.Visible && !ll.Type.IsReusingDisabled() && ll.Type.IsReplacableWith(atype)) {
-        if (ll.stackSize >= ssz) {
-          // i found her!
-          if (ll.stackSize == ssz) {
-            bestidx = f;
-            break;
-          }
-          // if this is better match, use it
-          int points = ll.stackSize-ssz;
-          if (points < besthit) {
-            besthit = points;
-            bestidx = f;
-          }
-        }
-      }
-    }
-  } else if (atype.Type == TYPE_String) {
-    // string can be safely replaced with another string, they both require dtor
-    for (int f = 0; f < LocalDefs.length(); ++f) {
-      const VLocalVarDef &ll = LocalDefs[f];
-      if (ll.Reusable && !ll.Visible && ll.Type.Type == TYPE_String) {
-        // i found her!
-        bestidx = f;
-        break;
-      }
-    }
-  }
-
-  if (bestidx >= 0) {
-    VLocalVarDef &ll = LocalDefs[bestidx];
-    //fprintf(stderr, "method '%s': found reusable local '%s' at index %d (new local is '%s'); type is '%s'; new type is '%s'; oloc:%s:%d; nloc:%s:%d\n", CurrentFunc->GetName(), *ll.Name, bestidx, *aname, *ll.Type.GetName(), *atype.GetName(), *ll.Loc.GetSource(), ll.Loc.GetLine(), *aloc.GetSource(), aloc.GetLine());
-    ll.Loc = aloc;
-    ll.Reusable = false;
-    ll.Visible = true;
-    ll.Name = aname;
-    ll.Type = atype;
-    ll.ParamFlags = 0;
-    //ll.compIndex = compIndex;
-    ll.reused = true;
-    return ll;
-  } else {
-    // introduce new local
-    VLocalVarDef &loc = LocalDefs.Alloc();
-    loc.Loc = aloc;
-    loc.Name = aname;
-    loc.Type = atype;
-    loc.Offset = localsofs;
-    loc.Reusable = false;
-    loc.Visible = true;
-    loc.ParamFlags = 0;
-    loc.ldindex = LocalDefs.length()-1;
-    //loc.compIndex = compIndex;
-    loc.stackSize = ssz;
-    loc.reused = false;
-    localsofs += ssz;
-    if (localsofs > 1024) {
-      ParseError(aloc, "Local vars > 1k");
-      VCFatalError("VC: too many locals");
-    }
-    return loc;
-  }
-*/
 }
 
 
@@ -860,10 +781,10 @@ void VEmitContext::EmitPushPointedCode (VFieldType type, const TLocation &aloc) 
 //
 //==========================================================================
 void VEmitContext::EmitLocalValue (int lcidx, const TLocation &aloc, int xofs) {
-  if (lcidx < 0 || lcidx >= LocalDefs.length()) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
+  if (lcidx < 0 || lcidx >= LocalDefs.length()) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalValue): lcidx=%d; max=%d", lcidx, LocalDefs.length());
   const VLocalVarDef &loc = LocalDefs[lcidx];
   int Ofs = loc.Offset+xofs;
-  if (Ofs < 0 || Ofs > 1024*1024*32) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
+  if (Ofs < 0 || Ofs > 1024*1024*32) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalValue): ofs=%d (lcidx=%d; name=`%s`; %s)", Ofs, lcidx, *loc.Name, *loc.Loc.toStringNoCol());
   if (Ofs < 256 && loc.Type.Type != TYPE_Delegate) {
     switch (loc.Type.Type) {
       case TYPE_Vector:
@@ -893,10 +814,10 @@ void VEmitContext::EmitLocalValue (int lcidx, const TLocation &aloc, int xofs) {
 //
 //==========================================================================
 void VEmitContext::EmitLocalPtrValue (int lcidx, const TLocation &aloc, int xofs) {
-  if (lcidx < 0 || lcidx >= LocalDefs.length()) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
+  if (lcidx < 0 || lcidx >= LocalDefs.length()) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalPtrValue): lcidx=%d; max=%d", lcidx, LocalDefs.length());
   const VLocalVarDef &loc = LocalDefs[lcidx];
   int Ofs = loc.Offset+xofs;
-  if (Ofs < 0 || Ofs > 1024*1024*32) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalPtrValue)");
+  if (Ofs < 0 || Ofs > 1024*1024*32) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalPtrValue): ofs=%d (lcidx=%d; name=`%s`; %s)", Ofs, lcidx, *loc.Name, *loc.Loc.toStringNoCol());
   if (Ofs < 256) {
     if (Ofs >= 0 && Ofs <= 7) AddStatement(OPC_LocalValue0+Ofs, aloc);
     else AddStatement(OPC_LocalValueB, Ofs, aloc);
