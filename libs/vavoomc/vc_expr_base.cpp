@@ -29,7 +29,7 @@
 #include "vc_local.h"
 
 
-#if defined(VCC_DEBUG_COMPILER_LEAKS) || 1
+#if defined(VCC_DEBUG_COMPILER_LEAKS) || 0
 #include <string>
 #include <cstdlib>
 #include <cxxabi.h>
@@ -58,6 +58,9 @@ template<class T> VStr shitppTypeNameObj (const T &o) {
   }
   return tpn;
 }
+# define GET_MY_TYPE()  (VStr("{")+shitppTypeNameObj(*this)+"}")
+#else
+# define GET_MY_TYPE()  VStr()
 #endif
 
 
@@ -589,12 +592,8 @@ bool VExpression::IsConstVectorCtor () const { return false; }
 bool VExpression::IsComma () const { return false; }
 bool VExpression::IsCommaRetOp0 () const { return false; }
 bool VExpression::IsDropResult () const { return false; }
-
-#if 1
-VStr VExpression::toString () const { return VStr("<VExpression::")+shitppTypeNameObj(*this)+":no-toString>"; }
-#else
-VStr VExpression::toString () const { return VStr("<VExpression:no-toString>"); }
-#endif
+VStr VExpression::toString () const { return VStr("<VExpression:")+GET_MY_TYPE()+":no-toString>"; }
+VStr VExpression::GetMyTypeName () const { return GET_MY_TYPE(); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

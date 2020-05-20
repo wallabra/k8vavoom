@@ -180,6 +180,9 @@ public:
 
   virtual VStr toString () const;
 
+  // this may return empty string, or "{type}"
+  VStr GetMyTypeName () const;
+
   static inline VStr e2s (const VExpression *e) { return (e ? e->toString() : "<{null}>"); }
 
   // this will try to coerce some decorate argument to something sensible

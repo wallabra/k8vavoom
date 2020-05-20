@@ -73,7 +73,7 @@ public:
   virtual ~VStatement ();
   virtual VStatement *SyntaxCopy () = 0;
 
-  virtual bool DoResolve (VEmitContext &ec) = 0;
+  virtual VStatement *DoResolve (VEmitContext &ec) = 0;
   virtual void DoEmit (VEmitContext &ec) = 0;
 
   // dtors should be resolved before scope exit (i.e. call this manually in
@@ -93,7 +93,7 @@ public:
   inline void EmitFinalizerAndBlock (VEmitContext &ec) { EmitFinalizer(ec); skipFinalizerOnLeave = true; }
 
   // those will manage `UpScope`, and will call dtor/finalizer emiters
-  bool Resolve (VEmitContext &ec, VStatement *aUpScope);
+  VStatement *Resolve (VEmitContext &ec, VStatement *aUpScope);
   void Emit (VEmitContext &ec, VStatement *aUpScope);
 
   // called by various compounds
@@ -108,6 +108,7 @@ public:
 
   virtual bool IsCompound () const noexcept;
   virtual bool IsEmptyStatement () const noexcept;
+  virtual bool IsInvalidStatement () const noexcept;
   virtual bool IsLabel () const noexcept;
   virtual VName GetLabelName () const noexcept;
   virtual bool IsGoto () const noexcept; // any, including `goto case` and `goto default`
@@ -137,6 +138,11 @@ public:
 
   virtual VStr toString () = 0;
 
+  inline bool IsValid () const noexcept { return !IsInvalidStatement(); }
+
+  // this will do `delete this`
+  VStatement *CreateInvalid ();
+
 protected:
   VStatement () {}
   virtual void DoSyntaxCopyTo (VStatement *e);
@@ -147,12 +153,30 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VInvalidStatement : public VStatement {
+public:
+  VInvalidStatement (const TLocation &);
+  virtual VStatement *SyntaxCopy () override;
+
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
+  virtual void DoEmit (VEmitContext &ec) override;
+
+  virtual bool IsInvalidStatement () const noexcept override;
+
+  virtual VStr toString () override;
+
+protected:
+  VInvalidStatement () {}
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VEmptyStatement : public VStatement {
 public:
   VEmptyStatement (const TLocation &);
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsEmptyStatement () const noexcept override;
@@ -177,7 +201,7 @@ public:
   virtual ~VAssertStatement () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual VStr toString () override;
@@ -202,7 +226,7 @@ public:
   virtual ~VIf () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsEndsWithReturn () const noexcept override;
@@ -233,7 +257,7 @@ public:
   virtual ~VWhile () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsBreakScope () const noexcept override;
@@ -267,7 +291,7 @@ public:
   virtual ~VDo () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsBreakScope () const noexcept override;
@@ -303,7 +327,7 @@ public:
   virtual ~VFor () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsBreakScope () const noexcept override;
@@ -338,7 +362,7 @@ public:
   virtual ~VForeach () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsBreakScope () const noexcept override;
@@ -386,7 +410,7 @@ public:
   virtual ~VForeachIota () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual void EmitDtor (VEmitContext &ec) override;
@@ -426,7 +450,7 @@ private:
   TArray<int> tempLocals;
 
 private:
-  bool DoResolveScriptIter (VEmitContext &ec);
+  VStatement *DoResolveScriptIter (VEmitContext &ec);
 
 public:
   VExpression *idxvar; // index variable (can be null if hidden)
@@ -441,7 +465,7 @@ public:
   virtual ~VForeachArray () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual void EmitDtor (VEmitContext &ec) override;
@@ -499,7 +523,7 @@ public:
   virtual ~VForeachScripted () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsBreakScope () const noexcept override;
@@ -546,7 +570,7 @@ public:
   virtual ~VSwitch () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsBreakScope () const noexcept override;
@@ -589,7 +613,7 @@ public:
   virtual ~VSwitchCase () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsSwitchCase () const noexcept override;
@@ -613,7 +637,7 @@ public:
   VSwitchDefault (VSwitch *ASwitch, const TLocation &ALoc);
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsSwitchDefault () const noexcept override;
@@ -635,7 +659,7 @@ public:
   VBreak (const TLocation &ALoc);
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsBreak () const noexcept override;
@@ -653,7 +677,7 @@ public:
   VContinue (const TLocation &ALoc);
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsContinue () const noexcept override;
@@ -675,7 +699,7 @@ public:
   virtual ~VReturn () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsReturn () const noexcept override;
@@ -697,7 +721,7 @@ public:
   virtual ~VExpressionStatement () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual VStr toString () override;
@@ -723,7 +747,7 @@ public:
   virtual ~VDeleteStatement () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual VStr toString () override;
@@ -770,12 +794,13 @@ class VLocalVarStatement : public VBaseCompoundStatement {
 public:
   VLocalDecl *Decl;
   // `Statements` is filled by compound
+  bool declResolved;
 
   VLocalVarStatement (VLocalDecl *ADecl);
   virtual ~VLocalVarStatement () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual void EmitDtor (VEmitContext &ec) override;
@@ -796,7 +821,7 @@ public:
   VCompound (const TLocation &ALoc);
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsCompound () const noexcept override;
@@ -816,7 +841,7 @@ public:
   virtual ~VCompoundScopeExit () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
 
   virtual bool IsReturnAllowed () const noexcept override;
 
@@ -838,7 +863,7 @@ public:
   VLabelStmt (VName aname, const TLocation &ALoc);
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsLabel () const noexcept override;
@@ -872,7 +897,7 @@ public:
   VGotoStmt (VSwitch *ASwitch, VExpression *ACaseValue, int ASwitchStNum, bool toDefault, const TLocation &ALoc);
   virtual VStatement *SyntaxCopy () override;
 
-  virtual bool DoResolve (VEmitContext &ec) override;
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsGoto () const noexcept override;

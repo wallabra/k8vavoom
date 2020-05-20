@@ -428,14 +428,18 @@ void VMethod::Emit () {
     }
   }
 
-  if (!Statement->Resolve(ec, nullptr)) {
+  //GLog.Logf(NAME_Debug, "*** METHOD(before): %s ***", *GetFullName());
+  //GLog.Logf(NAME_Debug, "%s", *Statement->toString());
+
+  Statement = Statement->Resolve(ec, nullptr);
+  if (!Statement || !Statement->IsValid()) {
     //ParseError(Loc, "Cannot resolve statements in `%s`", *GetFullName());
     //fprintf(stderr, "===\n%s\n===\n", /*Statement->toString()*/*shitppTypeNameObj(*Statement));
     return;
   }
 
-  GLog.Logf(NAME_Debug, "*** METHOD: %s ***", *GetFullName());
-  GLog.Logf(NAME_Debug, "%s", *Statement->toString());
+  //GLog.Logf(NAME_Debug, "*** METHOD(after): %s ***", *GetFullName());
+  //GLog.Logf(NAME_Debug, "%s", *Statement->toString());
 
   Statement->Emit(ec, nullptr);
 

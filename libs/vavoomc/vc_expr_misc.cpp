@@ -1285,7 +1285,7 @@ bool VDropResult::IsDropResult () const {
 //
 //==========================================================================
 VStr VDropResult::toString () const {
-  return VStr("void(")+e2s(op)+")";
+  return VStr("void(")+(op ? op->GetMyTypeName() : VStr())+e2s(op)+")";
 }
 
 

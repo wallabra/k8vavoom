@@ -26,6 +26,44 @@
 #include "vc_local.h"
 
 
+#if 0
+#include <string>
+#include <cstdlib>
+#include <cxxabi.h>
+
+template<typename T> VStr shitppTypeName () {
+  VStr tpn(typeid(T).name());
+  char *dmn = abi::__cxa_demangle(*tpn, nullptr, nullptr, nullptr);
+  if (dmn) {
+    tpn = VStr(dmn);
+    //Z_Free(dmn);
+    // use `free()` here, because it is not allocated via zone allocator
+    free(dmn);
+  }
+  return tpn;
+}
+
+
+template<class T> VStr shitppTypeNameObj (const T &o) {
+  VStr tpn(typeid(o).name());
+  char *dmn = abi::__cxa_demangle(*tpn, nullptr, nullptr, nullptr);
+  if (dmn) {
+    tpn = VStr(dmn);
+    //Z_Free(dmn);
+    // use `free()` here, because it is not allocated via zone allocator
+    free(dmn);
+  }
+  return tpn;
+}
+
+# define GET_MY_TYPE()  (VStr(":")+shitppTypeNameObj(*this))
+# define GET_OBJ_TYPE(o_)  ((o_) ? VStr("{")+shitppTypeNameObj(*(o_))+"}" : VStr("{null}"))
+#else
+# define GET_MY_TYPE()     VStr()
+# define GET_OBJ_TYPE(o_)  VStr()
+#endif
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // VStatement
 VStatement::VStatement (const TLocation &ALoc) : Loc(ALoc), UpScope(nullptr), skipDtorOnLeave(false), skipFinalizerOnLeave(false) {}
@@ -40,6 +78,7 @@ void VStatement::EmitFinalizer (VEmitContext &ec) {}
 
 bool VStatement::IsCompound () const noexcept { return false; }
 bool VStatement::IsEmptyStatement () const noexcept { return false; }
+bool VStatement::IsInvalidStatement () const noexcept { return false; }
 bool VStatement::IsLabel () const noexcept { return false; }
 VName VStatement::GetLabelName () const noexcept { return NAME_None; }
 bool VStatement::IsGoto () const noexcept { return false; }
@@ -67,6 +106,20 @@ bool VStatement::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) 
 bool VStatement::IsReturnAllowed () const noexcept { return true; }
 bool VStatement::IsBreakScope () const noexcept { return false; }
 bool VStatement::IsContinueScope () const noexcept { return false; }
+
+
+//==========================================================================
+//
+//  VStatement::CreateInvalid
+//
+//  this will do `delete this`
+//
+//==========================================================================
+VStatement *VStatement::CreateInvalid () {
+  VStatement *res = new VInvalidStatement(Loc);
+  delete this;
+  return res;
+}
 
 
 //==========================================================================
@@ -107,11 +160,13 @@ bool VStatement::CheckCondIndent (const TLocation &condLoc, VStatement *body) {
 //  VStatement::Resolve
 //
 //==========================================================================
-bool VStatement::Resolve (VEmitContext &ec, VStatement *aUpScope) {
+VStatement *VStatement::Resolve (VEmitContext &ec, VStatement *aUpScope) {
   UpScopeGuard upguard(this, aUpScope);
-  bool res = DoResolve(ec);
-  if (!ResolveDtor(ec)) res = false;
-  if (!ResolveFinalizer(ec)) res = false;
+  VStatement *res = DoResolve(ec);
+  if (res->IsValid()) {
+    if (!ResolveDtor(ec)) return CreateInvalid();
+    if (!ResolveFinalizer(ec)) return CreateInvalid();
+  }
   return res;
 }
 
@@ -158,6 +213,73 @@ void VStatement::CreateLocalVarScope (TArray<VStatement *> &src) {
 
 //**************************************************************************
 //
+// VInvalidStatement
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VInvalidStatement::VInvalidStatement
+//
+//==========================================================================
+VInvalidStatement::VInvalidStatement (const TLocation &ALoc) : VStatement(ALoc) {
+}
+
+
+//==========================================================================
+//
+//  VInvalidStatement::SyntaxCopy
+//
+//==========================================================================
+VStatement *VInvalidStatement::SyntaxCopy () {
+  auto res = new VInvalidStatement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VInvalidStatement::DoResolve
+//
+//==========================================================================
+VStatement *VInvalidStatement::DoResolve (VEmitContext &) {
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VInvalidStatement::DoEmit
+//
+//==========================================================================
+void VInvalidStatement::DoEmit (VEmitContext &) {
+}
+
+
+//==========================================================================
+//
+//  VInvalidStatement::IsInvalidStatement
+//
+//==========================================================================
+bool VInvalidStatement::IsInvalidStatement () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VInvalidStatement::toString
+//
+//==========================================================================
+VStr VInvalidStatement::toString () {
+  return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/<INVALID>;";
+}
+
+
+
+//**************************************************************************
+//
 // VEmptyStatement
 //
 //**************************************************************************
@@ -188,8 +310,8 @@ VStatement *VEmptyStatement::SyntaxCopy () {
 //  VEmptyStatement::DoResolve
 //
 //==========================================================================
-bool VEmptyStatement::DoResolve (VEmitContext &) {
-  return true;
+VStatement *VEmptyStatement::DoResolve (VEmitContext &) {
+  return this;
 }
 
 
@@ -218,7 +340,7 @@ bool VEmptyStatement::IsEmptyStatement () const noexcept {
 //
 //==========================================================================
 VStr VEmptyStatement::toString () {
-  return VStr("/*")+Loc.toStringNoCol()+"*/;";
+  return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/;";
 }
 
 
@@ -286,7 +408,7 @@ void VAssertStatement::DoSyntaxCopyTo (VStatement *e) {
 //  VAssertStatement::DoResolve
 //
 //==========================================================================
-bool VAssertStatement::DoResolve (VEmitContext &ec) {
+VStatement *VAssertStatement::DoResolve (VEmitContext &ec) {
   vassert(!FatalInvoke);
 
   // create message if necessary
@@ -300,19 +422,19 @@ bool VAssertStatement::DoResolve (VEmitContext &ec) {
   VMethod *M = ec.SelfClass->FindAccessibleMethod("AssertError", ec.SelfClass, &Loc);
   if (!M) {
     ParseError(Loc, "`AssertError()` method not found");
-    return false;
+    return CreateInvalid();
   }
 
   // check method type: it should be static and final
   if ((M->Flags&(FUNC_Static|FUNC_VarArgs|FUNC_Final)) != (FUNC_Static|FUNC_Final)) {
     ParseError(Loc, "`AssertError()` method should be `static`");
-    return false;
+    return CreateInvalid();
   }
 
   // check method signature: it should return `void`, and have only one string argument
   if (M->ReturnType.Type != TYPE_Void || M->NumParams != 1 || M->ParamTypes[0].Type != TYPE_String) {
     ParseError(Loc, "`AssertError()` method has invalid signature");
-    return false;
+    return CreateInvalid();
   }
 
   // rewrite as invoke
@@ -322,12 +444,12 @@ bool VAssertStatement::DoResolve (VEmitContext &ec) {
   Message = nullptr; // it is owned by invoke now
 
   if (Expr) Expr = Expr->ResolveBoolean(ec);
-  if (!Expr) return false;
+  if (!Expr) return CreateInvalid();
 
   if (FatalInvoke) FatalInvoke = FatalInvoke->Resolve(ec);
-  if (!FatalInvoke) return false;
+  if (!FatalInvoke) return CreateInvalid();
 
-  return true;
+  return this;
 }
 
 
@@ -355,7 +477,7 @@ void VAssertStatement::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VAssertStatement::toString () {
-  return VStr("/*")+Loc.toStringNoCol()+"*/assert("+VExpression::e2s(Expr)+");";
+  return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/assert("+VExpression::e2s(Expr)+");";
 }
 
 
@@ -454,20 +576,19 @@ void VIf::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VIf::DoResolve
 //
 //==========================================================================
-bool VIf::DoResolve (VEmitContext &ec) {
+VStatement *VIf::DoResolve (VEmitContext &ec) {
   if (doIndentCheck) {
     // indent check
-    if (Expr && TrueStatement && !CheckCondIndent(Expr->Loc, TrueStatement)) return false;
-    if (Expr && FalseStatement && !CheckCondIndent(ElseLoc, FalseStatement)) return false;
+    if (Expr && TrueStatement && !CheckCondIndent(Expr->Loc, TrueStatement)) return CreateInvalid();
+    if (Expr && FalseStatement && !CheckCondIndent(ElseLoc, FalseStatement)) return CreateInvalid();
   }
 
-  bool res = true;
   // resolve
   if (Expr) Expr = Expr->ResolveBoolean(ec);
-  if (!Expr) res = false;
-  if (!TrueStatement->Resolve(ec, this)) res = false;
-  if (FalseStatement && !FalseStatement->Resolve(ec, this)) res = false;
-  return res;
+  if (!Expr) return CreateInvalid();
+  if (!TrueStatement->Resolve(ec, this)) return CreateInvalid();
+  if (FalseStatement && !FalseStatement->Resolve(ec, this)) return CreateInvalid();
+  return this;
 }
 
 
@@ -564,7 +685,7 @@ bool VIf::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
 //==========================================================================
 VStr VIf::toString () {
   return
-    VStr("/*")+Loc.toStringNoCol()+"*/if ("+VExpression::e2s(Expr)+")\n"+
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/if ("+VExpression::e2s(Expr)+")\n"+
     (TrueStatement ? TrueStatement->toString() : VStr("<none>"))+"\nelse\n"+
     (FalseStatement ? FalseStatement->toString() : VStr("<none>"));
 }
@@ -641,15 +762,15 @@ void VWhile::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VWhile::Resolve
 //
 //==========================================================================
-bool VWhile::DoResolve (VEmitContext &ec) {
+VStatement *VWhile::DoResolve (VEmitContext &ec) {
   // indent check
-  if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) return false;
+  if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) return CreateInvalid();
 
-  bool res = true;
   if (Expr) Expr = Expr->ResolveBoolean(ec);
-  if (!Expr) res = false;
-  if (!Statement->Resolve(ec, this)) res = false;
-  return res;
+  if (!Expr) return CreateInvalid();
+  Statement = Statement->Resolve(ec, this);
+  if (!Statement->IsValid()) return CreateInvalid();
+  return this;
 }
 
 
@@ -754,7 +875,7 @@ bool VWhile::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
 //==========================================================================
 VStr VWhile::toString () {
   return
-    VStr("/*")+Loc.toStringNoCol()+"*/while ("+VExpression::e2s(Expr)+")\n"+
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/while ("+VExpression::e2s(Expr)+")\n"+
     (Statement ? Statement->toString() : VStr("<none>"));
 }
 
@@ -830,15 +951,15 @@ void VDo::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VDo::DoResolve
 //
 //==========================================================================
-bool VDo::DoResolve (VEmitContext &ec) {
+VStatement *VDo::DoResolve (VEmitContext &ec) {
   // indent check
-  if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) return false;
+  if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) return CreateInvalid();
 
-  bool res = true;
   if (Expr) Expr = Expr->ResolveBoolean(ec);
-  if (!Expr) res = false;
-  if (!Statement->Resolve(ec, this)) res = false;
-  return res;
+  if (!Expr) return CreateInvalid();
+  Statement = Statement->Resolve(ec, this);
+  if (!Statement->IsValid()) return CreateInvalid();
+  return this;
 }
 
 
@@ -949,7 +1070,7 @@ bool VDo::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
 //==========================================================================
 VStr VDo::toString () {
   return
-    VStr("/*")+Loc.toStringNoCol()+"*/do\n"+
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/do\n"+
     (Statement ? Statement->toString() : VStr("<none>"))+"\nwhile ("+VExpression::e2s(Expr)+");";
 }
 
@@ -1034,15 +1155,13 @@ void VFor::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VFor::DoResolve
 //
 //==========================================================================
-bool VFor::DoResolve (VEmitContext &ec) {
+VStatement *VFor::DoResolve (VEmitContext &ec) {
   // indent check
-  if (Statement && !CheckCondIndent(Loc, Statement)) return false;
-
-  bool res = true;
+  if (Statement && !CheckCondIndent(Loc, Statement)) return CreateInvalid();
 
   for (auto &&e : InitExpr) {
     e = e->Resolve(ec);
-    if (!e) res = false;
+    if (!e) return CreateInvalid();
   }
 
   for (int i = 0; i < CondExpr.length(); ++i) {
@@ -1052,18 +1171,19 @@ bool VFor::DoResolve (VEmitContext &ec) {
     } else {
       ce = ce->ResolveBoolean(ec);
     }
-    if (!ce) res = false;
+    if (!ce) return CreateInvalid();
     CondExpr[i] = ce;
   }
 
   for (auto &&e : LoopExpr) {
     e = e->Resolve(ec);
-    if (!e) res = false;
+    if (!e) return CreateInvalid();
   }
 
-  if (!Statement->Resolve(ec, this)) res = false;
+  Statement = Statement->Resolve(ec, this);
+  if (!Statement->IsValid()) return CreateInvalid();
 
-  return res;
+  return this;
 }
 
 
@@ -1201,7 +1321,7 @@ bool VFor::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
 //
 //==========================================================================
 VStr VFor::toString () {
-  VStr res = VStr("/*")+Loc.toStringNoCol()+"*/for (";
+  VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/for (";
   for (auto &&e : InitExpr) { res += VExpression::e2s(e); res += ","; }
   res += "; ";
   for (auto &&e : CondExpr) { res += VExpression::e2s(e); res += ","; }
@@ -1283,15 +1403,15 @@ void VForeach::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VForeach::DoResolve
 //
 //==========================================================================
-bool VForeach::DoResolve (VEmitContext &ec) {
+VStatement *VForeach::DoResolve (VEmitContext &ec) {
   // indent check
-  if (Statement && !CheckCondIndent(Loc, Statement)) return false;
+  if (Statement && !CheckCondIndent(Loc, Statement)) return CreateInvalid();
 
-  bool res = true;
   if (Expr) Expr = Expr->ResolveIterator(ec);
-  if (!Expr) res = false;
-  if (!Statement->Resolve(ec, this)) res = false;
-  return res;
+  if (!Expr) return CreateInvalid();
+  Statement = Statement->Resolve(ec, this);
+  if (!Statement->IsValid()) return CreateInvalid();
+  return this;
 }
 
 
@@ -1432,7 +1552,7 @@ bool VForeach::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) 
 //==========================================================================
 VStr VForeach::toString () {
   return
-    VStr("/*")+Loc.toStringNoCol()+"*/foreach "+VExpression::e2s(Expr)+"\n"+
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/foreach "+VExpression::e2s(Expr)+"\n"+
     (Statement ? Statement->toString() : VStr("<none>"));
 }
 
@@ -1525,9 +1645,9 @@ void VForeachIota::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VForeachIota::DoResolve
 //
 //==========================================================================
-bool VForeachIota::DoResolve (VEmitContext &ec) {
+VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
   // indent check
-  if (Statement && !CheckCondIndent(Loc, Statement)) return false;
+  if (Statement && !CheckCondIndent(Loc, Statement)) return CreateInvalid();
 
   // we will rewrite 'em later
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
@@ -1537,7 +1657,7 @@ bool VForeachIota::DoResolve (VEmitContext &ec) {
     delete varR;
     delete loR;
     delete hiR;
-    return false;
+    return CreateInvalid();
   }
 
   if (varR->Type.Type != TYPE_Int) {
@@ -1545,7 +1665,7 @@ bool VForeachIota::DoResolve (VEmitContext &ec) {
     delete varR;
     delete loR;
     delete hiR;
-    return false;
+    return CreateInvalid();
   }
 
   if (loR->Type.Type != TYPE_Int) {
@@ -1553,7 +1673,7 @@ bool VForeachIota::DoResolve (VEmitContext &ec) {
     delete varR;
     delete loR;
     delete hiR;
-    return false;
+    return CreateInvalid();
   }
 
   if (hiR->Type.Type != TYPE_Int) {
@@ -1561,7 +1681,7 @@ bool VForeachIota::DoResolve (VEmitContext &ec) {
     delete varR;
     delete loR;
     delete hiR;
-    return false;
+    return CreateInvalid();
   }
 
   // create hidden local for higher bound (if necessary)
@@ -1584,7 +1704,7 @@ bool VForeachIota::DoResolve (VEmitContext &ec) {
 
   if (hiinit) {
     hiinit = hiinit->Resolve(ec);
-    if (!hiinit) { delete limit; return false; }
+    if (!hiinit) { delete limit; return CreateInvalid(); }
   }
 
   if (!reversed) {
@@ -1615,18 +1735,18 @@ bool VForeachIota::DoResolve (VEmitContext &ec) {
   delete limit;
 
   varinit = varinit->Resolve(ec);
-  if (!varinit) return false;
+  if (!varinit) return CreateInvalid();
 
   varnext = varnext->ResolveBoolean(ec);
-  if (!varnext) return false;
+  if (!varnext) return CreateInvalid();
 
   var = var->ResolveBoolean(ec);
-  if (!var) return false;
+  if (!var) return CreateInvalid();
 
   // finally, resolve statement (last, so local reusing will work as expected)
-  bool res = true;
-  if (!Statement->Resolve(ec, this)) res = false;
-  return res;
+  Statement = Statement->Resolve(ec, this);
+  if (!Statement->IsValid()) return CreateInvalid();
+  return this;
 }
 
 
@@ -1680,6 +1800,11 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachIota::EmitDtor (VEmitContext &ec) {
+  GLog.Logf(NAME_Debug, "============000 (%d)", tempLocals.length());
+  for (auto &&lv : tempLocals) GLog.Logf(NAME_Debug, "  %d", lv);
+  GLog.Logf(NAME_Debug, "============001 (%d)", tempLocals.length());
+  for (auto &&lv : tempLocals.reverse()) GLog.Logf(NAME_Debug, "  %d", lv);
+
   for (auto &&lv : tempLocals.reverse()) ec.EmitLocalDtor(lv, Loc);
 }
 
@@ -1766,7 +1891,7 @@ bool VForeachIota::BuildPathTo (const VStatement *dest, TArray<VStatement *> &pa
 //==========================================================================
 VStr VForeachIota::toString () {
   return
-    VStr("/*")+Loc.toStringNoCol()+"*/foreach ("+
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/foreach ("+
     VExpression::e2s(var)+"; "+
     VExpression::e2s(lo)+" .. "+
     VExpression::e2s(hi)+(reversed ? "; reversed)\n" : ")\n")+
@@ -1872,9 +1997,9 @@ void VForeachArray::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VForeachArray::DoResolve
 //
 //==========================================================================
-bool VForeachArray::DoResolve (VEmitContext &ec) {
+VStatement *VForeachArray::DoResolve (VEmitContext &ec) {
   // indent check
-  if (Statement && !CheckCondIndent(Loc, Statement)) return false;
+  if (Statement && !CheckCondIndent(Loc, Statement)) return CreateInvalid();
 
   if (arr && arr->IsAnyInvocation()) VCFatalError("VC: Internal compiler error (VForeachArray::Resolve)");
 
@@ -1923,7 +2048,7 @@ bool VForeachArray::DoResolve (VEmitContext &ec) {
   delete ivarR;
   delete varR;
   delete arrR;
-  if (wasError) return false;
+  if (wasError) return CreateInvalid();
 
   /* this will compile to:
    *   ivar = 0;
@@ -2039,25 +2164,25 @@ bool VForeachArray::DoResolve (VEmitContext &ec) {
   delete index;
 
   idxinit = idxinit->Resolve(ec);
-  if (!idxinit) return false;
+  if (!idxinit) return CreateInvalid();
 
   if (hiinit) {
     hiinit = hiinit->Resolve(ec);
-    if (!hiinit) return false;
+    if (!hiinit) return CreateInvalid();
   }
 
   loopPreCheck = loopPreCheck->ResolveBoolean(ec);
-  if (!loopPreCheck) return false;
+  if (!loopPreCheck) return CreateInvalid();
 
   loopNext = loopNext->ResolveBoolean(ec);
-  if (!loopNext) return false;
+  if (!loopNext) return CreateInvalid();
 
-  if (!loopLoad) return false;
+  if (!loopLoad) return CreateInvalid();
 
   // finally, resolve statement (last, so local reusing will work as expected)
-  bool res = true;
-  if (!Statement->Resolve(ec, this)) res = false;
-  return res;
+  Statement = Statement->Resolve(ec, this);
+  if (!Statement->IsValid()) return CreateInvalid();
+  return this;
 }
 
 
@@ -2208,7 +2333,7 @@ bool VForeachArray::BuildPathTo (const VStatement *dest, TArray<VStatement *> &p
 //==========================================================================
 VStr VForeachArray::toString () {
   return
-    VStr("/*")+Loc.toStringNoCol()+"*/foreach ("+
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/foreach ("+
     (isConst ? "const " : "")+
     (isRef ? "ref " : "")+
     VExpression::e2s(idxvar)+", "+
@@ -2315,9 +2440,9 @@ void VForeachScripted::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VForeachScripted::DoResolve
 //
 //==========================================================================
-bool VForeachScripted::DoResolve (VEmitContext &ec) {
+VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
   // indent check
-  if (Statement && !CheckCondIndent(Loc, Statement)) return false;
+  if (Statement && !CheckCondIndent(Loc, Statement)) return CreateInvalid();
 
   /* if iterator is invocation, rewrite it to:
    *   {
@@ -2339,7 +2464,7 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
   VInvocationBase *ib = (VInvocationBase *)arr;
   if (!ib->IsMethodNameChangeable()) {
     ParseError(Loc, "Invalid VC iterator");
-    return false;
+    return CreateInvalid();
   }
 
   int itlocidx = -1;
@@ -2354,13 +2479,13 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
       //fprintf(stderr, "arr type: `%s` : `%s` (%s)\n", *shitppTypeNameObj(*arr), *shitppTypeNameObj(*einit), *einit->GetMethodName());
       delete einit;
       ParseError(Loc, "Invalid VC iterator (opInit method not found)");
-      return false;
+      return CreateInvalid();
     }
 
     if (einit->NumArgs >= VMethod::MAX_PARAMS) {
       delete einit;
       ParseError(Loc, "Too many arguments to VC iterator opInit method");
-      return false;
+      return CreateInvalid();
     }
 
     // check first arg, and get internal var type
@@ -2371,7 +2496,7 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
     {
       delete einit;
       ParseError(Loc, "VC iterator opInit should have at least one arg, and it should be `ref`/`out`");
-      return false;
+      return CreateInvalid();
     }
 
     switch (minit->ReturnType.Type) {
@@ -2380,7 +2505,7 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
       default:
         delete einit;
         ParseError(Loc, "VC iterator opInit should return `bool` or be `void`");
-        return false;
+        return CreateInvalid();
     }
 
     // create hidden local for `it`
@@ -2397,7 +2522,7 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
     ++einit->NumArgs;
     // and resolve the call
     ivInit = (isBoolInit ? einit->ResolveBoolean(ec) : einit->Resolve(ec));
-    if (!ivInit) return false;
+    if (!ivInit) return CreateInvalid();
   }
 
   {
@@ -2409,7 +2534,7 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
     if (!mnext) {
       delete enext;
       ParseError(Loc, "Invalid VC iterator (opNext method not found)");
-      return false;
+      return CreateInvalid();
     }
 
     // all "next" args should be `ref`/`out`
@@ -2419,7 +2544,7 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
       {
         delete enext;
         ParseError(Loc, "VC iterator opNext argument %d is not `ref`/`out`", f+1);
-        return false;
+        return CreateInvalid();
       }
     }
 
@@ -2429,7 +2554,7 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
       default:
         delete enext;
         ParseError(Loc, "VC iterator opNext should return `bool`");
-        return false;
+        return CreateInvalid();
     }
 
     // remove all `enext` args, and insert foreach args instead
@@ -2439,7 +2564,7 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
     for (int f = 0; f < fevarCount; ++f) enext->Args[f+1] = fevars[f].var->SyntaxCopy();
 
     ivNext = enext->ResolveBoolean(ec);
-    if (!ivNext) return false;
+    if (!ivNext) return CreateInvalid();
   }
 
   {
@@ -2459,13 +2584,13 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
       {
         delete edone;
         ParseError(Loc, "VC iterator opDone should have one arg, and it should be `ref`/`out`");
-        return false;
+        return CreateInvalid();
       }
 
       if (mdone->ReturnType.Type != TYPE_Void) {
         delete edone;
         ParseError(Loc, "VC iterator opDone should be `void`");
-        return false;
+        return CreateInvalid();
       }
 
       // replace "done" args with hidden `it`
@@ -2474,7 +2599,7 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
       edone->Args[0] = new VLocalVar(itlocidx, Loc);
 
       ivDone = edone->Resolve(ec);
-      if (!ivDone) return false;
+      if (!ivDone) return CreateInvalid();
     } else {
       delete edone;
       ivDone = nullptr;
@@ -2482,9 +2607,9 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
   }
 
   // finally, resolve statement (last, so local reusing will work as expected)
-  bool res = true;
-  if (!Statement->Resolve(ec, this)) res = false;
-  return res;
+  Statement = Statement->Resolve(ec, this);
+  if (!Statement->IsValid()) return CreateInvalid();
+  return this;
 }
 
 
@@ -2657,7 +2782,7 @@ bool VForeachScripted::BuildPathTo (const VStatement *dest, TArray<VStatement *>
 //
 //==========================================================================
 VStr VForeachScripted::toString () {
-  VStr res = VStr("/*")+Loc.toStringNoCol()+"*/foreachS (";
+  VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/foreachS (";
   res += VExpression::e2s(arr)+"(";
   for (int f = 0; f < fevarCount; ++f) {
     if (fevars[f].isConst) res += "const ";
@@ -2751,9 +2876,7 @@ void VSwitch::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VSwitch::DoResolve
 //
 //==========================================================================
-bool VSwitch::DoResolve (VEmitContext &ec) {
-  bool res = true;
-
+VStatement *VSwitch::DoResolve (VEmitContext &ec) {
   if (Expr) Expr = Expr->Resolve(ec);
 
   if (!Expr ||
@@ -2763,32 +2886,30 @@ bool VSwitch::DoResolve (VEmitContext &ec) {
     if (Expr) {
       ParseError(Loc, "Invalid switch expression type (%s)", *Expr->Type.GetName());
     }
-    res = false;
+    return CreateInvalid();
   }
 
   // first resolve all cases and default
   for (auto &&st : Statements) {
     if (st->IsVarDecl()) {
       ParseError(st->Loc, "Declaring locals inside switch and without an explicit scope is forbidden");
-      res = false;
+      return CreateInvalid();
     }
     if (st->IsSwitchCase() || st->IsSwitchDefault()) {
-      if (!st->Resolve(ec, this)) return false;
+      if (!st->Resolve(ec, this)) return CreateInvalid();
     }
   }
 
   // now resolve other statements
   for (auto &&st : Statements) {
     if (!st->IsSwitchCase() && !st->IsSwitchDefault()) {
-      if (!st->Resolve(ec, this)) res = false;
+      if (!st->Resolve(ec, this)) return CreateInvalid();
     }
   }
 
-  if (res) {
-    if (!checkProperCaseEnd(true)) res = false;
-  }
+  if (!checkProperCaseEnd(true)) return CreateInvalid();
 
-  return res;
+  return this;
 }
 
 
@@ -3027,7 +3148,7 @@ void VSwitch::PostProcessGotoCase () {
 //
 //==========================================================================
 VStr VSwitch::toString () {
-  VStr res = VStr("/*")+Loc.toStringNoCol()+"*/switch (";
+  VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/switch (";
   res += VExpression::e2s(Expr)+") {\n";
   for (auto &&st : Statements) {
     res += st->toString();
@@ -3114,32 +3235,29 @@ void VSwitchCase::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VSwitchCase::DoResolve
 //
 //==========================================================================
-bool VSwitchCase::DoResolve (VEmitContext &ec) {
+VStatement *VSwitchCase::DoResolve (VEmitContext &ec) {
   if (Switch && Expr && Switch->Expr && Switch->Expr->Type.Type == TYPE_Name) {
     Expr = Expr->Resolve(ec);
-    if (!Expr) return false;
+    if (!Expr) return CreateInvalid();
     if (!Expr->IsNameConst()) {
       ParseError(Loc, "case condition should be a name literal");
-      return false;
+      return CreateInvalid();
     }
     Value = Expr->GetNameConst().GetIndex();
   } else {
     if (Expr) Expr = Expr->ResolveToIntLiteralEx(ec);
-    if (!Expr) return false;
+    if (!Expr) return CreateInvalid();
     if (!Expr->IsIntConst()) {
       ParseError(Loc, "case condition should be an integer literal");
-      return false;
+      return CreateInvalid();
     }
     Value = Expr->GetIntConst();
   }
 
-  bool res = true;
-
   for (auto &&ci : Switch->CaseInfo) {
     if (ci.Value == Value) {
       ParseError(Loc, "Duplicate case value");
-      res = false;
-      break;
+      return CreateInvalid();
     }
   }
 
@@ -3147,7 +3265,7 @@ bool VSwitchCase::DoResolve (VEmitContext &ec) {
   VSwitch::VCaseInfo &C = Switch->CaseInfo.Alloc();
   C.Value = Value;
 
-  return res;
+  return this;
 }
 
 
@@ -3179,7 +3297,7 @@ bool VSwitchCase::IsSwitchCase () const noexcept {
 //==========================================================================
 VStr VSwitchCase::toString () {
   return
-    VStr("/*")+Loc.toStringNoCol()+"*/case "+
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/case "+
     VExpression::e2s(Expr)+":";
 }
 
@@ -3242,13 +3360,13 @@ void VSwitchDefault::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VSwitchDefault::DoResolve
 //
 //==========================================================================
-bool VSwitchDefault::DoResolve (VEmitContext &) {
+VStatement *VSwitchDefault::DoResolve (VEmitContext &) {
   if (Switch->HaveDefault) {
     ParseError(Loc, "Only one `default` per switch allowed");
-    return false;
+    return CreateInvalid();
   }
   Switch->HaveDefault = true;
-  return true;
+  return this;
 }
 
 
@@ -3278,7 +3396,7 @@ bool VSwitchDefault::IsSwitchDefault () const noexcept {
 //
 //==========================================================================
 VStr VSwitchDefault::toString () {
-  return VStr("/*")+Loc.toStringNoCol()+"*/default:";
+  return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/default:";
 }
 
 
@@ -3316,17 +3434,17 @@ VStatement *VBreak::SyntaxCopy () {
 //  VBreak::DoResolve
 //
 //==========================================================================
-bool VBreak::DoResolve (VEmitContext &ec) {
+VStatement *VBreak::DoResolve (VEmitContext &ec) {
   // check if we have a good break scope
   for (VStatement *st = UpScope; st; st = st->UpScope) {
-    if (st->IsBreakScope()) return true;
+    if (st->IsBreakScope()) return this;
     if (!st->IsReturnAllowed()) {
       ParseError(Loc, "`break` outside of a restricted scope");
-      return false;
+      return CreateInvalid();
     }
   }
   ParseError(Loc, "`break` without loop or switch");
-  return false;
+  return CreateInvalid();
 }
 
 
@@ -3368,7 +3486,7 @@ bool VBreak::IsBreak () const noexcept {
 //
 //==========================================================================
 VStr VBreak::toString () {
-  return VStr("/*")+Loc.toStringNoCol()+"*/break;";
+  return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/break;";
 }
 
 
@@ -3406,17 +3524,17 @@ VStatement *VContinue::SyntaxCopy () {
 //  VContinue::DoResolve
 //
 //==========================================================================
-bool VContinue::DoResolve (VEmitContext &) {
+VStatement *VContinue::DoResolve (VEmitContext &) {
   // check if we have a good continue scope
   for (VStatement *st = UpScope; st; st = st->UpScope) {
-    if (st->IsContinueScope()) return true;
+    if (st->IsContinueScope()) return this;
     if (!st->IsReturnAllowed()) {
       ParseError(Loc, "`continue` outside of a restricted scope");
-      return false;
+      return CreateInvalid();
     }
   }
   ParseError(Loc, "`continue` without loop or switch");
-  return false;
+  return CreateInvalid();
 }
 
 
@@ -3458,7 +3576,7 @@ bool VContinue::IsContinue () const noexcept {
 //
 //==========================================================================
 VStr VContinue::toString () {
-  return VStr("/*")+Loc.toStringNoCol()+"*/continue;";
+  return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/continue;";
 }
 
 
@@ -3521,16 +3639,21 @@ void VReturn::DoSyntaxCopyTo (VStatement *e) {
 //  VReturn::DoResolve
 //
 //==========================================================================
-bool VReturn::DoResolve (VEmitContext &ec) {
-  bool res = true;
+VStatement *VReturn::DoResolve (VEmitContext &ec) {
   // check if we can return from here
   for (VStatement *st = UpScope; st; st = st->UpScope) {
     if (!st->IsReturnAllowed()) {
       ParseError(Loc, "`return` outside of a restricted scope");
-      res = false;
-      break;
+      return CreateInvalid();
     }
   }
+
+  if (Expr) {
+    Expr = Expr->Resolve(ec);
+    if (!Expr) return CreateInvalid();
+  }
+
+  bool res = true;
 
   if (Expr) {
     Expr = (ec.FuncRetType.Type == TYPE_Float ? Expr->ResolveFloat(ec) : Expr->Resolve(ec));
@@ -3554,7 +3677,8 @@ bool VReturn::DoResolve (VEmitContext &ec) {
     }
   }
 
-  return res;
+  if (!res) return CreateInvalid();
+  return this;
 }
 
 
@@ -3599,7 +3723,7 @@ bool VReturn::IsReturn () const noexcept {
 //==========================================================================
 VStr VReturn::toString () {
   return
-    VStr("/*")+Loc.toStringNoCol()+"*/return"+
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/return"+
     (Expr ? " (" : "")+
     (Expr ? VExpression::e2s(Expr) : VStr(""))+
     (Expr ? ")" : "")+";";
@@ -3664,11 +3788,17 @@ void VExpressionStatement::DoSyntaxCopyTo (VStatement *e) {
 //  VExpressionStatement::DoResolve
 //
 //==========================================================================
-bool VExpressionStatement::DoResolve (VEmitContext &ec) {
-  bool res = true;
+VStatement *VExpressionStatement::DoResolve (VEmitContext &ec) {
   if (Expr) Expr = Expr->Resolve(ec);
-  if (!Expr) res = false;
-  return res;
+  if (!Expr) return CreateInvalid();
+  // convert local var declaration to proper statement (we'll need this later)
+  if (Expr->IsLocalVarDecl()) {
+    VLocalVarStatement *ld = new VLocalVarStatement((VLocalDecl *)Expr);
+    ld->declResolved = true;
+    Expr = nullptr;
+    return ld->DoResolve(ec);
+  }
+  return this;
 }
 
 
@@ -3688,7 +3818,10 @@ void VExpressionStatement::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VExpressionStatement::toString () {
-  return VStr("/*")+Loc.toStringNoCol()+"*/ "+VExpression::e2s(Expr)+";";
+  return
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/ "+
+    GET_OBJ_TYPE(Expr)+
+    VExpression::e2s(Expr)+";";
 }
 
 
@@ -3757,26 +3890,26 @@ void VDeleteStatement::DoSyntaxCopyTo (VStatement *e) {
 //  VDeleteStatement::DoResolve
 //
 //==========================================================================
-bool VDeleteStatement::DoResolve (VEmitContext &ec) {
-  if (!var) return false;
+VStatement *VDeleteStatement::DoResolve (VEmitContext &ec) {
+  if (!var) return CreateInvalid();
 
   // build check expression
   checkexpr = var->SyntaxCopy()->ResolveBoolean(ec);
-  if (!checkexpr) return false;
+  if (!checkexpr) return CreateInvalid();
 
   // build delete expression
   delexpr = new VDotInvocation(var->SyntaxCopy(), VName("Destroy"), var->Loc, 0, nullptr);
   delexpr = new VDropResult(delexpr);
   delexpr = delexpr->Resolve(ec);
-  if (!delexpr) return false;
+  if (!delexpr) return CreateInvalid();
 
   // build clear expression
   assexpr = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), new VNoneLiteral(var->Loc), var->Loc);
   assexpr = new VDropResult(assexpr);
   assexpr = assexpr->Resolve(ec);
-  if (!assexpr) return false;
+  if (!assexpr) return CreateInvalid();
 
-  return true;
+  return this;
 }
 
 
@@ -3807,7 +3940,7 @@ void VDeleteStatement::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 VStr VDeleteStatement::toString () {
-  return VStr("/*")+Loc.toStringNoCol()+"*/delete "+VExpression::e2s(var)+";";
+  return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/delete "+VExpression::e2s(var)+";";
 }
 
 
@@ -3949,7 +4082,7 @@ void VBaseCompoundStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 VStr VBaseCompoundStatement::toString () {
-  VStr res = VStr("/*")+Loc.toStringNoCol()+"*/{";
+  VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/{";
   for (auto &&st : Statements) {
     if (!st) continue;
     res += "\n";
@@ -3975,6 +4108,7 @@ VStr VBaseCompoundStatement::toString () {
 VLocalVarStatement::VLocalVarStatement (VLocalDecl *ADecl)
   : VBaseCompoundStatement(ADecl->Loc)
   , Decl(ADecl)
+  , declResolved(false)
 {
 }
 
@@ -4018,27 +4152,15 @@ void VLocalVarStatement::DoSyntaxCopyTo (VStatement *e) {
 //  VLocalVarStatement::DoResolve
 //
 //==========================================================================
-bool VLocalVarStatement::DoResolve (VEmitContext &ec) {
-  GLog.Logf(NAME_Debug, "%p:000: =====", this);
-  GLog.Logf(NAME_Debug, "%s", *toString());
-  GLog.Logf(NAME_Debug, "%p:000: =====", this);
-  bool res = true;
-  //GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:000: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
+VStatement *VLocalVarStatement::DoResolve (VEmitContext &ec) {
   CreateLocalVarScope(Statements);
-  GLog.Logf(NAME_Debug, "%p:001: =====", this);
-  GLog.Logf(NAME_Debug, "%s", *toString());
-  GLog.Logf(NAME_Debug, "%p:001: =====", this);
-  //GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:001: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
-  if (!Decl->Declare(ec)) res = false;
-  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:002: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
+  if (!declResolved && !Decl->Declare(ec)) return CreateInvalid();
   for (auto &&st : Statements) {
-    GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:003:   stlen=%d (%p) %s", this, *Loc.toStringNoCol(), Statements.length(), st, *st->Loc.toStringNoCol());
-    if (!st->Resolve(ec, this)) res = false;
-    GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:004:   stlen=%d (%p) %s", this, *Loc.toStringNoCol(), Statements.length(), st, *st->Loc.toStringNoCol());
+    st = st->Resolve(ec, this);
+    if (!st->IsValid()) return CreateInvalid();
   }
-  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:005: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   Decl->Hide(ec);
-  return res;
+  return this;
 }
 
 
@@ -4048,21 +4170,13 @@ bool VLocalVarStatement::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VLocalVarStatement::DoEmit (VEmitContext &ec) {
-  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:000: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   Decl->Allocate(ec);
-  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:001: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   Decl->EmitInitialisations(ec);
-  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:002: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   for (auto &&st : Statements) {
-    GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMTI:003:   stlen=%d (%p) %s", this, *Loc.toStringNoCol(), Statements.length(), st, *st->Loc.toStringNoCol());
     st->Emit(ec, this);
-    GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMTI:004:   stlen=%d (%p) %s", this, *Loc.toStringNoCol(), Statements.length(), st, *st->Loc.toStringNoCol());
   }
-  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:005: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   EmitDtorAndBlock(ec);
-  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:006: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
   Decl->Release(ec);
-  GLog.Logf(NAME_Debug, "%p: %s: VLocalVarStatement:EMIT:007: stlen=%d", this, *Loc.toStringNoCol(), Statements.length());
 }
 
 
@@ -4092,7 +4206,7 @@ bool VLocalVarStatement::IsVarDecl () const noexcept {
 //
 //==========================================================================
 VStr VLocalVarStatement::toString () {
-  VStr res = VStr("/*")+Loc.toStringNoCol()+"*/<LOCDECL>\n";
+  VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/<LOCDECL>\n";
   if (Decl) {
     for (auto &&v : Decl->Vars) {
       res += VStr("/*")+v.Loc.toStringNoCol()+"*/ ";
@@ -4161,13 +4275,13 @@ void VCompound::DoSyntaxCopyTo (VStatement *e) {
 //  VCompound::DoResolve
 //
 //==========================================================================
-bool VCompound::DoResolve (VEmitContext &ec) {
-  bool res = true;
+VStatement *VCompound::DoResolve (VEmitContext &ec) {
   CreateLocalVarScope(Statements);
   for (auto &&st : Statements) {
-    if (!st->Resolve(ec, this)) res = false;
+    st = st->Resolve(ec, this);
+    if (!st->IsValid()) return CreateInvalid();
   }
-  return res;
+  return this;
 }
 
 
@@ -4239,12 +4353,13 @@ void VCompoundScopeExit::DoSyntaxCopyTo (VStatement *e) {
 //  VCompoundScopeExit::DoResolve
 //
 //==========================================================================
-bool VCompoundScopeExit::DoResolve (VEmitContext &ec) {
+VStatement *VCompoundScopeExit::DoResolve (VEmitContext &ec) {
   // indent check
-  if (Body && !CheckCondIndent(Loc, Body)) return false;
+  if (Body && !CheckCondIndent(Loc, Body)) return CreateInvalid();
 
   if (Body) {
-    if (!Body->Resolve(ec, this)) return false;
+    Body = Body->Resolve(ec, this);
+    if (!Body->IsValid()) return CreateInvalid();
   }
 
   return VCompound::DoResolve(ec);
@@ -4278,7 +4393,7 @@ void VCompoundScopeExit::EmitFinalizer (VEmitContext &ec) {
 //==========================================================================
 VStr VCompoundScopeExit::toString () {
   return
-    VStr("/*")+Loc.toStringNoCol()+"*/{ scope(exit)\n"+
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/{ scope(exit)\n"+
     (Body ? Body->toString() : VStr("<none>"))+"\n"+
     VBaseCompoundStatement::toString()+
     "\n}";
@@ -4333,8 +4448,8 @@ void VLabelStmt::DoSyntaxCopyTo (VStatement *e) {
 //  VLabelStmt::DoResolve
 //
 //==========================================================================
-bool VLabelStmt::DoResolve (VEmitContext &ec) {
-  return true;
+VStatement *VLabelStmt::DoResolve (VEmitContext &ec) {
+  return this;
 }
 
 
@@ -4374,7 +4489,7 @@ VName VLabelStmt::GetLabelName () const noexcept {
 //
 //==========================================================================
 VStr VLabelStmt::toString () {
-  return VStr("/*")+Loc.toStringNoCol()+"*/"+(*Name)+":";
+  return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/"+(*Name)+":";
 }
 
 
@@ -4454,7 +4569,6 @@ void VGotoStmt::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 bool VGotoStmt::ResolveGoto (VEmitContext &ec, VStatement *dest) {
-#if 0
   if (!dest) return false;
 
   // build path to self
@@ -4519,7 +4633,6 @@ bool VGotoStmt::ResolveGoto (VEmitContext &ec, VStatement *dest) {
     ParseError(Loc, "Cannot jump to label `%s`", *Name);
     return false;
   }
-#endif
 
   // ok, it is legal
   return true;
@@ -4581,8 +4694,7 @@ void VGotoStmt::EmitCleanups (VEmitContext &ec, VStatement *dest) {
 //  VGotoStmt::DoResolve
 //
 //==========================================================================
-bool VGotoStmt::DoResolve (VEmitContext &ec) {
-#if 0
+VStatement *VGotoStmt::DoResolve (VEmitContext &ec) {
   if (Switch) {
     // goto case/default
     if (GotoType == Normal) VCFatalError("VC: internal compiler error (VGotoStmt::Resolve) (0)");
@@ -4596,7 +4708,7 @@ bool VGotoStmt::DoResolve (VEmitContext &ec) {
           break;
         }
       }
-      if (!st) { ParseError(Loc, "`goto default;` whithout `default`"); return false; }
+      if (!st) { ParseError(Loc, "`goto default;` whithout `default`"); return CreateInvalid(); }
     } else {
       // find the case
       if (CaseValue) {
@@ -4604,18 +4716,18 @@ bool VGotoStmt::DoResolve (VEmitContext &ec) {
         int val;
         if (Switch && Switch->Expr && Switch->Expr->Type.Type == TYPE_Name) {
           CaseValue = CaseValue->Resolve(ec);
-          if (!CaseValue) return false; // oops
+          if (!CaseValue) return CreateInvalid(); // oops
           if (!CaseValue->IsNameConst()) {
             ParseError(Loc, "`goto case` expects a name literal");
-            return false;
+            return CreateInvalid();
           }
           val = CaseValue->GetNameConst().GetIndex();
         } else {
           CaseValue = CaseValue->ResolveToIntLiteralEx(ec);
-          if (!CaseValue) return false; // oops
+          if (!CaseValue) return CreateInvalid(); // oops
           if (!CaseValue->IsIntConst()) {
             ParseError(Loc, "`goto case` expects an integer literal");
-            return false;
+            return CreateInvalid();
           }
           val = CaseValue->GetIntConst();
         }
@@ -4628,7 +4740,7 @@ bool VGotoStmt::DoResolve (VEmitContext &ec) {
             }
           }
         }
-        if (!st) { ParseError(Loc, "case `%d` not found", val); return false; }
+        if (!st) { ParseError(Loc, "case `%d` not found", val); return CreateInvalid(); }
       } else {
         // `goto case` without args: find next one
         for (int f = SwitchStNum; f < Switch->Statements.length(); ++f) {
@@ -4637,7 +4749,7 @@ bool VGotoStmt::DoResolve (VEmitContext &ec) {
             break;
           }
         }
-        if (!st) { ParseError(Loc, "case for `goto case;` not found"); return false; }
+        if (!st) { ParseError(Loc, "case for `goto case;` not found"); return CreateInvalid(); }
       }
       if (st) {
         VSwitchCase *cc = (VSwitchCase *)st;
@@ -4645,7 +4757,10 @@ bool VGotoStmt::DoResolve (VEmitContext &ec) {
       }
     }
     casedef = st;
-    return (st ? ResolveGoto(ec, st) : true);
+    //return (st ? ResolveGoto(ec, st) : true);
+    if (!st) return this;
+    if (ResolveGoto(ec, st)) return this;
+    return CreateInvalid();
   } else {
     // normal goto
     if (GotoType != Normal) VCFatalError("VC: internal compiler error (VGotoStmt::Resolve) (1)");
@@ -4654,13 +4769,12 @@ bool VGotoStmt::DoResolve (VEmitContext &ec) {
     VLabelStmt *lbl = ec.CurrentFunc->Statement->FindLabel(Name);
     if (!lbl) {
       ParseError(Loc, "Destination label `%s` not found", *Name);
-      return false;
+      return CreateInvalid();
     }
     gotolbl = lbl;
-    return ResolveGoto(ec, lbl);
+    if (ResolveGoto(ec, lbl)) return this;
+    return CreateInvalid();
   }
-#endif
-  return false;
 }
 
 
@@ -4670,7 +4784,6 @@ bool VGotoStmt::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VGotoStmt::DoEmit (VEmitContext &ec) {
-#if 0
   if (GotoType == Normal) {
     VLabelStmt *lbl = gotolbl; //ec.CurrentFunc->Statement->FindLabel(Name);
     if (!lbl) {
@@ -4698,7 +4811,6 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
   } else {
     VCFatalError("VC: internal compiler error (VGotoStmt::DoEmit)");
   }
-#endif
 }
 
 
@@ -4758,5 +4870,5 @@ VName VGotoStmt::GetLabelName () const noexcept {
 //
 //==========================================================================
 VStr VGotoStmt::toString () {
-  return VStr("/*")+Loc.toStringNoCol()+"*/<GOTO>";
+  return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/<GOTO>";
 }
