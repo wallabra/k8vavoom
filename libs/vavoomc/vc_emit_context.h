@@ -25,6 +25,7 @@
 //**************************************************************************
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VEmitContext;
 class VArrayElement;
 class VStatement;
 
@@ -54,6 +55,9 @@ public:
   VFieldType Type;
   bool Visible;
   bool Reusable; // if this is `true`, and `Visible` is false, local can be reused
+  bool Unused; // "releasing" local sets this
+  bool WasRead; // reading from local will set this
+  bool WasWrite; // writing to local will set this
   vuint8 ParamFlags;
   // internal index; DO NOT CHANGE!
   int ldindex;
@@ -74,49 +78,17 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VEmitContext {
+  friend class VScopeGuard;
   friend class VAutoFin;
 
+public:
+  struct VCompExit {
+    int lidx; // local index
+    TLocation loc;
+    bool inLoop;
+  };
+
 private:
-  struct VBreakCont;
-
-  struct VFinalizer {
-    int rc;
-    VEmitContext *ec;
-    VFinalizer *prev;
-    VStatement *st;
-    VBreakCont *bc;
-
-    VFinalizer () : rc(0), ec(nullptr), prev(nullptr), st(nullptr), bc(nullptr) {}
-
-    inline void incRef () { ++rc; }
-    inline void decRef () { if (--rc == 0) die(); }
-
-    void die ();
-    void emit ();
-  };
-
-  enum BCType {
-    Break,
-    Continue,
-    Block,
-  };
-
-  struct VBreakCont {
-    int rc;
-    VEmitContext *ec;
-    VBreakCont *prev;
-    VLabel lbl;
-    BCType type;
-
-    VBreakCont () : rc(0), ec(nullptr), prev(nullptr), lbl(), type(BCType::Break) {}
-
-    inline void incRef () { ++rc; }
-    inline void decRef () { if (--rc == 0) die(); }
-
-    void die ();
-    void emitFinalizers (); // not including ours
-  };
-
   struct VLabelFixup {
     int Pos;
     int LabelIdx;
@@ -127,9 +99,6 @@ private:
   TArray<VLabelFixup> Fixups;
   TArray<VLocalVarDef> LocalDefs;
 
-  int compIndex;
-  int firstLoopCompIndex;
-
   struct VGotoListItem {
     VLabel jlbl;
     VName name;
@@ -138,67 +107,6 @@ private:
   };
 
   TArray<VGotoListItem> GotoLabels;
-
-  VFinalizer *lastFin;
-  VBreakCont *lastBC;
-
-public:
-  struct VCompExit {
-    int lidx; // local index
-    TLocation loc;
-    bool inLoop;
-  };
-
-public:
-  class VAutoFin {
-    friend class VEmitContext;
-
-  private:
-    VFinalizer *fin;
-
-  private:
-    VAutoFin (VFinalizer *afin);
-
-  public:
-    VAutoFin () : fin(nullptr) {}
-    VAutoFin (const VAutoFin &);
-    void operator = (const VAutoFin &);
-
-    ~VAutoFin ();
-  };
-
-  class VAutoBreakCont {
-    friend class VEmitContext;
-
-  private:
-    VBreakCont *bc;
-
-  private:
-    VAutoBreakCont (VBreakCont *abc);
-
-    void emitOurFins ();
-    void emitFins (); // without ours
-
-  public:
-    VAutoBreakCont () : bc(nullptr) {}
-    VAutoBreakCont (const VAutoBreakCont &);
-    void operator = (const VAutoBreakCont &);
-
-    ~VAutoBreakCont ();
-
-    // calls `MarkLabel()`
-    void Mark ();
-
-    // returns label, doesn't generate finalizing code
-    VLabel GetLabelNoFinalizers ();
-
-    // emit finalizers, so you can safely jump to the returned label
-    // note that finalizers, registered with this object, will *NOT* be emited!
-    VLabel GetLabel ();
-  };
-
-private:
-  VAutoBreakCont DefineBreakCont (BCType atype);
 
 public:
   VMethod *CurrentFunc;
@@ -214,12 +122,10 @@ public:
 
   int localsofs;
 
-  //VLabel LoopStart;
-  //VLabel LoopEnd;
-
   bool InDefaultProperties;
   bool VCallsDisabled;
 
+public:
   VEmitContext (VMemberBase *Member);
   void EndCode ();
 
@@ -228,28 +134,20 @@ public:
 
   // allocates new local, sets offset
   VLocalVarDef &AllocLocal (VName aname, const VFieldType &atype, const TLocation &aloc);
+  // mark this local as unused (and optionally mark it as "reusable")
+  void ReleaseLocal (int idx, bool allowReuse=true);
 
   VLocalVarDef &GetLocalByIndex (int idx);
 
-  inline int GetLocalDefCount () const { return LocalDefs.length(); }
-
-  // compound statement will call these functions; exiting will mark all allocated vars for reusing
-  int EnterCompound (bool asLoop); // returns compound index
-  // this clears the array
-  void ExitCompound (TArray<VCompExit> &elist, int cidx, const TLocation &aloc); // pass result of `EnterCompound()` to this
-  // this doesn't clear the array
-  void EmitExitCompound (TArray<VCompExit> &elist);
-
-  inline int GetCurrCompIndex () const { return compIndex; } // for debugging
-
-  // returns `true` if current codegen is in loop compound (of any depth)
-  inline bool IsInLoop () const { return (firstLoopCompIndex >= 0 && compIndex >= firstLoopCompIndex); }
+  inline int GetLocalDefCount () const noexcept { return LocalDefs.length(); }
 
   // returns index in `LocalDefs`
   int CheckForLocalVar (VName Name);
   VFieldType GetLocalVarType (int idx);
 
+  // this creates new label (without a destination yet)
   VLabel DefineLabel ();
+  // this sets label destination
   void MarkLabel (VLabel l);
 
   void AddStatement (int statement, const TLocation &aloc);
@@ -264,52 +162,24 @@ public:
   void AddStatement (int statement, VLabel Lbl, const TLocation &aloc);
   void AddStatement (int statement, int p, VLabel Lbl, const TLocation &aloc);
   void AddBuiltin (int b, const TLocation &aloc);
+
   void EmitPushNumber (int Val, const TLocation &aloc);
   void EmitLocalAddress (int Ofs, const TLocation &aloc);
   void EmitLocalValue (int lcidx, const TLocation &aloc, int xofs=0);
   void EmitLocalPtrValue (int lcidx, const TLocation &aloc, int xofs=0);
   void EmitPushPointedCode (VFieldType type, const TLocation &aloc);
 
-  void EmitLocalDtors (int Start, int End, const TLocation &aloc, bool zeroIt=false, bool force=false);
-  void EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt=false, bool force=false, bool emitDtors=true);
+  // this assumes that dtor is called on the local
+  // if `forced` is not specified, it will avoid zeroing something that should be zeroed by a dtor
+  void EmitLocalZero (int locidx, const TLocation &aloc, bool forced=false);
+
+  // this won't zero local
+  void EmitLocalDtor (int locidx, const TLocation &aloc, bool zeroIt=false);
 
   void EmitGotoTo (VName lblname, const TLocation &aloc);
   void EmitGotoLabel (VName lblname, const TLocation &aloc);
 
   VArrayElement *SetIndexArray (VArrayElement *el); // returns previous
-
-  // use this to register block finalizer that will be called on `return`, or
-  // when `VAutoFin` object is destroyed
-  VAutoFin RegisterFinalizer (VStatement *st);
-
-  VAutoFin RegisterLoopFinalizer (VStatement *st);
-
-  // emit all currently registered finalizers, from last to first; used in `return`
-  void EmitFinalizers ();
-
-  // the flow is like that:
-  //   each registered finalizer is marked with the current break/cont label
-  //   emiting `break` will emit all finalizers NOT including finalizers
-  //   registered for the given label.
-  //   i.e. each loop block should call `MarkXXX()` *BEFORE* autodestruction of `VAutoFin`
-  //   that is:
-  //     {
-  //       auto brk = ec.DefineBreak();
-  //       brk.RegisterLoopFinalizer(this);
-  //       <generate some code>
-  //       brk.MarkBreak();
-  //     } // here, `brk` will be destroyed, and "break finalizer" code will be generated
-
-  // autodestructible
-  VAutoBreakCont DefineBreak ();
-  VAutoBreakCont DefineContinue ();
-
-  VAutoBreakCont BlockBreakContReturn ();
-
-  // returns success flag
-  bool EmitBreak (const TLocation &loc);
-  // returns success flag
-  bool EmitContinue (const TLocation &loc);
 
   bool IsReturnAllowed ();
 };

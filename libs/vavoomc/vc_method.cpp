@@ -433,17 +433,16 @@ void VMethod::Emit () {
     }
   }
 
-  if (!Statement->Resolve(ec)) {
+  if (!Statement->Resolve(ec, nullptr)) {
     //ParseError(Loc, "Cannot resolve statements in `%s`", *GetFullName());
     //fprintf(stderr, "===\n%s\n===\n", /*Statement->toString()*/*shitppTypeNameObj(*Statement));
     return;
   }
 
-  Statement->Emit(ec);
+  Statement->Emit(ec, nullptr);
 
   if (ReturnType.Type == TYPE_Void) {
-    ec.EmitFinalizers(); // just in case we have function-global finalizers
-    ec.EmitLocalDtors(0, ec.GetLocalDefCount(), Loc);
+    //ec.EmitAllScopeFinalizers(); // just in case we have function-global finalizers
     ec.AddStatement(OPC_Return, Loc);
   }
   NumLocals = ec.localsofs;

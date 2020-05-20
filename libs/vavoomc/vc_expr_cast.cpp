@@ -303,7 +303,7 @@ VExpression *VFloatToBool::DoResolve (VEmitContext &ec) {
   }
   if (op->IsFloatConst()) {
     // do it inplace
-    VExpression *e = new VIntLiteral((op->GetFloatConst() == 0 ? 0 : 1), Loc);
+    VExpression *e = new VIntLiteral((isZeroInfNaN(op->GetFloatConst()) ? 0 : 1), Loc); // so inf/nan yields `false`
     delete this;
     return e->Resolve(ec);
   }
@@ -374,7 +374,7 @@ VExpression *VVectorToBool::DoResolve (VEmitContext &ec) {
   if (op->IsConstVectorCtor()) {
     // do it inplace
     TVec v = ((VVectorExpr *)op)->GetConstValue();
-    VExpression *e = new VIntLiteral((v.x == 0 && v.y == 0 && v.z == 0 ? 0 : 1), Loc);
+    VExpression *e = new VIntLiteral((isZeroInfNaN(v.x) || isZeroInfNaN(v.y) || isZeroInfNaN(v.z) ? 0 : 1), Loc); // so inf/nan yields `false`
     delete this;
     return e->Resolve(ec);
   }

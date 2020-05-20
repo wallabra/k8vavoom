@@ -59,6 +59,16 @@ static VVA_OKUNUSED inline void killInfNaNF (float &f) {
 }
 
 
+// this turns all nan/inf values into positive zero
+static VVA_OKUNUSED inline bool isZeroInfNaN (const float f) {
+  const vint32 fi = *(const vint32 *)&f;
+  const vuint8 exp = (vuint8)((fi>>23)&0xffu);
+  return
+    exp == 0xffu ||
+    (exp == 0x00u && (fi&0x7fffffu) == 0);
+}
+
+
 // `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
 // results are undefined if edge0 ™ edge1
 static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT

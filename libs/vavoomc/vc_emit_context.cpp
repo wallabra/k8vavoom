@@ -60,280 +60,13 @@ VStatementBuiltinInfo StatementDynArrayDispatchInfo[] = {
 #include "vc_progdefs.h"
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// VEmitContext::VAutoFin
-// ////////////////////////////////////////////////////////////////////////// //
-
-//==========================================================================
-//
-//  VEmitContext::VAutoFin::VAutoFin
-//
-//==========================================================================
-VEmitContext::VAutoFin::VAutoFin (VEmitContext::VFinalizer *afin) : fin(afin) {
-  if (afin) afin->incRef();
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VAutoFin::~VAutoFin
-//
-//==========================================================================
-VEmitContext::VAutoFin::~VAutoFin () {
-  if (fin) { fin->decRef(); fin = nullptr; }
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VAutoFin::VAutoFin
-//
-//==========================================================================
-VEmitContext::VAutoFin::VAutoFin (const VAutoFin &src) {
-  if (src.fin) src.fin->incRef();
-  fin = src.fin;
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VAutoFin::operator =
-//
-//==========================================================================
-void VEmitContext::VAutoFin::operator = (const VAutoFin &src) {
-  if (&src != this) {
-    if (src.fin) src.fin->incRef();
-    if (fin) fin->decRef();
-    fin = src.fin;
-  }
-}
-
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// VEmitContext::VAutoBreakCont
-// ////////////////////////////////////////////////////////////////////////// //
-
-//==========================================================================
-//
-//  VEmitContext::VAutoBreakCont::VAutoBreakCont
-//
-//==========================================================================
-VEmitContext::VAutoBreakCont::VAutoBreakCont (VBreakCont *abc) : bc(abc) {
-  if (abc) abc->incRef();
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VAutoBreakCont::~VAutoBreakCont
-//
-//==========================================================================
-VEmitContext::VAutoBreakCont::~VAutoBreakCont () {
-  if (bc) { bc->decRef(); bc = nullptr; }
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VAutoBreakCont::VAutoBreakCont
-//
-//==========================================================================
-VEmitContext::VAutoBreakCont::VAutoBreakCont (const VAutoBreakCont &src) {
-  if (src.bc) src.bc->incRef();
-  bc = src.bc;
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VAutoBreakCont::operator =
-//
-//==========================================================================
-void VEmitContext::VAutoBreakCont::operator = (const VAutoBreakCont &src) {
-  if (&src != this) {
-    if (src.bc) src.bc->incRef();
-    if (bc) bc->decRef();
-    bc = src.bc;
-  }
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VAutoBreakCont::Mark
-//
-//  calls `MarkLabel()`
-//
-//==========================================================================
-void VEmitContext::VAutoBreakCont::Mark () {
-  if (bc) bc->ec->MarkLabel(bc->lbl);
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VAutoBreakCont::GetLabelNoFinalizers
-//
-//  returns label, doesn't generate finalizing code
-//
-//==========================================================================
-VLabel VEmitContext::VAutoBreakCont::GetLabelNoFinalizers () {
-  return (bc ? bc->lbl : VLabel());
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VAutoBreakCont::emitOurFins
-//
-//==========================================================================
-void VEmitContext::VAutoBreakCont::emitOurFins () {
-  if (bc) {
-    VFinalizer *lastFin = nullptr;
-    for (VFinalizer *fin = bc->ec->lastFin; fin; fin = fin->prev) {
-      if (fin->bc == bc) lastFin = fin;
-    }
-    if (!lastFin) return;
-    for (VFinalizer *fin = bc->ec->lastFin; fin; fin = fin->prev) {
-      fin->emit();
-      if (fin == lastFin) break;
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VAutoBreakCont::emitFins
-//
-//  without ours
-//
-//==========================================================================
-void VEmitContext::VAutoBreakCont::emitFins () {
-  if (bc) {
-    VFinalizer *lastFin = nullptr;
-    for (VFinalizer *fin = bc->ec->lastFin; fin; fin = fin->prev) {
-      if (fin->bc == bc) { lastFin = fin; break; }
-    }
-    if (!lastFin) return;
-    for (VFinalizer *fin = bc->ec->lastFin; fin != lastFin; fin = fin->prev) {
-      fin->emit();
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VAutoBreakCont::GetLabel
-//
-//  emit finalizers, so you can safely jump to the returned label
-//  note that finalizers, registered with this object, will *NOT* be emited!
-//
-//==========================================================================
-VLabel VEmitContext::VAutoBreakCont::GetLabel () {
-  if (!bc) return VLabel();
-  emitFins();
-  return bc->lbl;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// VEmitContext::VFinalizer
-// ////////////////////////////////////////////////////////////////////////// //
-
-//==========================================================================
-//
-//  VEmitContext::VFinalizer::die
-//
-//==========================================================================
-void VEmitContext::VFinalizer::die () {
-  emit();
-  ec->lastFin = prev;
-  delete this;
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VFinalizer::emit
-//
-//==========================================================================
-void VEmitContext::VFinalizer::emit () {
-  if (st) st->EmitFinalizer(*ec);
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// VEmitContext::VBreakCont
-// ////////////////////////////////////////////////////////////////////////// //
-
-//==========================================================================
-//
-//  VEmitContext::VBreakCont::die
-//
-//==========================================================================
-void VEmitContext::VBreakCont::die () {
-  // find last our finalizer
-  VFinalizer *lastFin = nullptr;
-  for (VFinalizer *fin = ec->lastFin; fin; fin = fin->prev) {
-    if (fin->bc == this) lastFin = fin;
-  }
-  if (lastFin) {
-    // emit code for all finalizers up to, and including ours
-    for (VFinalizer *fin = ec->lastFin; fin; fin = fin->prev) {
-      fin->emit();
-      if (fin->bc == this) {
-        // mark our finalizers as dead, autodtors will remove 'em
-        fin->st = nullptr;
-        fin->bc = nullptr;
-      }
-      if (fin == lastFin) break;
-    }
-  }
-  ec->lastBC = prev;
-  delete this;
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::VBreakCont::emit
-//
-//==========================================================================
-void VEmitContext::VBreakCont::emitFinalizers () {
-  if (!ec) return;
-  // find last our finalizer
-  VFinalizer *lastFin = nullptr;
-  for (VFinalizer *fin = ec->lastFin; fin; fin = fin->prev) {
-    if (fin->bc == this) { lastFin = fin; break; }
-  }
-  if (lastFin) {
-    // emit code for all finalizers up to ours
-    for (VFinalizer *fin = ec->lastFin; fin != lastFin; fin = fin->prev) {
-      fin->emit();
-    }
-  }
-}
-
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// VEmitContext
-// ////////////////////////////////////////////////////////////////////////// //
-
 //==========================================================================
 //
 //  VEmitContext::VEmitContext
 //
 //==========================================================================
 VEmitContext::VEmitContext (VMemberBase *Member)
-  : compIndex(0)
-  , firstLoopCompIndex(-1)
-  , lastFin(nullptr)
-  , lastBC(nullptr)
-  , CurrentFunc(nullptr)
+  : CurrentFunc(nullptr)
   , SelfClass(nullptr)
   , SelfStruct(nullptr)
   , Package(nullptr)
@@ -420,8 +153,9 @@ VEmitContext::VEmitContext (VMemberBase *Member)
 //
 //==========================================================================
 void VEmitContext::EndCode () {
-  if (lastFin) VCFatalError("Internal compiler error: unbalanced finalizers");
-  if (lastBC) VCFatalError("Internal compiler error: unbalanced break/cont");
+  //if (lastFin) VCFatalError("Internal compiler error: unbalanced finalizers");
+  //if (lastBC) VCFatalError("Internal compiler error: unbalanced break/cont");
+  //if (scopeList.length() != 0) VCFatalError("Internal compiler error: unbalanced scopes");
 
   // fix-up labels.
   for (int i = 0; i < Fixups.Num(); ++i) {
@@ -512,7 +246,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     ll.Name = aname;
     ll.Type = atype;
     ll.ParamFlags = 0;
-    ll.compIndex = compIndex;
+    //ll.compIndex = compIndex;
     ll.reused = true;
     return ll;
   } else {
@@ -526,7 +260,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     loc.Visible = true;
     loc.ParamFlags = 0;
     loc.ldindex = LocalDefs.length()-1;
-    loc.compIndex = compIndex;
+    //loc.compIndex = compIndex;
     loc.stackSize = ssz;
     loc.reused = false;
     localsofs += ssz;
@@ -547,58 +281,6 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
 VLocalVarDef &VEmitContext::GetLocalByIndex (int idx) {
   if (idx < 0 || idx >= LocalDefs.length()) Sys_Error("VC INTERNAL COMPILER ERROR IN `VEmitContext::GetLocalByIndex()`");
   return LocalDefs[idx];
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::EnterCompound
-//
-//==========================================================================
-int VEmitContext::EnterCompound (bool asLoop) {
-  ++compIndex;
-  if (asLoop && firstLoopCompIndex < 0) firstLoopCompIndex = compIndex;
-  return compIndex;
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::ExitCompound
-//
-//==========================================================================
-void VEmitContext::ExitCompound (TArray<VCompExit> &elist, int cidx, const TLocation &aloc) {
-  if (cidx != compIndex) Sys_Error("VC COMPILER INTERNAL ERROR: unbalanced compounds");
-  if (cidx < 1) Sys_Error("VC COMPILER INTERNAL ERROR: invalid compound index");
-  for (int f = LocalDefs.length()-1; f >= 0; --f) {
-    VLocalVarDef &loc = LocalDefs[f];
-    if (loc.compIndex == cidx) {
-      //GLog.Logf(NAME_Debug, "method '%s': compound #%d; freeing '%s' (%d; %s)\n", CurrentFunc->GetName(), cidx, *loc.Name, f, *loc.Type.GetName());
-      VCompExit &erec = elist.alloc();
-      erec.lidx = f;
-      erec.loc = aloc;
-      erec.inLoop = IsInLoop();
-      loc.Visible = false;
-      loc.Reusable = true;
-      loc.compIndex = -1;
-    }
-  }
-  if (firstLoopCompIndex == compIndex) firstLoopCompIndex = -1;
-  --compIndex;
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::EmitExitCompound
-//
-//==========================================================================
-void VEmitContext::EmitExitCompound (TArray<VCompExit> &elist) {
-  for (auto &&it : elist) {
-    // clear it before `reusable` is set (it is important!)
-    //EmitOneLocalDtor(it.lidx, it.loc, it.inLoop); // zero it, if it is in a loop
-    EmitOneLocalDtor(it.lidx, it.loc, false, true); // don't zero, forced destruction
-  }
 }
 
 
@@ -1008,23 +690,85 @@ void VEmitContext::EmitLocalPtrValue (int lcidx, const TLocation &aloc, int xofs
 
 //==========================================================================
 //
-//  VEmitContext::EmitLocalDtors
+//  VEmitContext::EmitLocalZero
 //
 //==========================================================================
-void VEmitContext::EmitLocalDtors (int Start, int End, const TLocation &aloc, bool zeroIt, bool force) {
-  for (int i = Start; i < End; ++i) EmitOneLocalDtor(i, aloc, zeroIt, force);
+void VEmitContext::EmitLocalZero (int locidx, const TLocation &aloc, bool forced) {
+  const VLocalVarDef &loc = LocalDefs[locidx];
+
+  // don't touch out/ref parameters
+  if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) return;
+
+  if (loc.Type.Type == TYPE_String) {
+    if (forced) {
+      EmitLocalAddress(loc.Offset, aloc);
+      AddStatement(OPC_ClearPointedStr, aloc);
+    }
+    return;
+  }
+
+  if (loc.Type.Type == TYPE_Dictionary) {
+    if (forced) {
+      EmitLocalAddress(loc.Offset, aloc);
+      AddStatement(OPC_DictDispatch, loc.Type.GetDictKeyType(), loc.Type.GetDictValueType(), OPC_DictDispatch_ClearPointed, aloc);
+    }
+    return;
+  }
+
+  if (loc.Type.Type == TYPE_DynamicArray) {
+    if (forced) {
+      EmitLocalAddress(loc.Offset, aloc);
+      AddStatement(OPC_PushNumber0, aloc);
+      AddStatement(OPC_DynArrayDispatch, loc.Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArraySetNum, aloc);
+    }
+    return;
+  }
+
+  if (loc.Type.Type == TYPE_Struct) {
+    EmitLocalAddress(loc.Offset, aloc);
+    //GLog.Logf(NAME_Debug, "ZEROSTRUCT<%s>: size=%d (%s:%d)", *loc.Type.Struct->Name, loc.Type.GetSize(), *loc.Type.GetName(), loc.Type.Type);
+    // we cannot use `OPC_ZeroByPtr` here, because struct size is not calculated yet
+    //AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
+    AddStatement(OPC_ZeroPointedStruct, loc.Type.Struct, aloc);
+    return;
+  }
+
+  if (loc.Type.Type == TYPE_Array) {
+    if (loc.Type.ArrayInnerType == TYPE_String) {
+      if (!forced) {
+        for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
+          EmitLocalAddress(loc.Offset, aloc);
+          EmitPushNumber(j, aloc);
+          AddStatement(OPC_ArrayElement, loc.Type.GetArrayInnerType(), aloc);
+          AddStatement(OPC_ClearPointedStr, aloc);
+        }
+      }
+    } else if (loc.Type.ArrayInnerType == TYPE_Struct) {
+      // zero/clear
+      for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
+        EmitLocalAddress(loc.Offset, aloc);
+        EmitPushNumber(j, aloc);
+        AddStatement(OPC_ArrayElement, loc.Type.GetArrayInnerType(), aloc);
+        AddStatement(OPC_ZeroPointedStruct, loc.Type.Struct, aloc);
+      }
+    }
+    return;
+  }
+
+  if (forced) {
+    EmitLocalAddress(loc.Offset, aloc);
+    AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
+  }
 }
 
 
 //==========================================================================
 //
-//  VEmitContext::EmitOneLocalDtor
+//  VEmitContext::EmitLocalDtor
 //
 //==========================================================================
-void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zeroIt, bool force, bool emitDtors) {
+void VEmitContext::EmitLocalDtor (int locidx, const TLocation &aloc, bool zeroIt) {
   const VLocalVarDef &loc = LocalDefs[locidx];
-  // do not process "reusable" locals, they were cleared by scope exit
-  if (!force && loc.Reusable) return;
 
   // don't touch out/ref parameters
   if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) return;
@@ -1044,14 +788,13 @@ void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zer
   if (loc.Type.Type == TYPE_DynamicArray) {
     EmitLocalAddress(loc.Offset, aloc);
     AddStatement(OPC_PushNumber0, aloc);
-    //AddStatement(OPC_DynArraySetNum, loc.Type.GetArrayInnerType(), aloc);
     AddStatement(OPC_DynArrayDispatch, loc.Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArraySetNum, aloc);
     return;
   }
 
   if (loc.Type.Type == TYPE_Struct) {
     // call struct dtors
-    if (emitDtors && loc.Type.Struct->NeedsMethodDestruction()) {
+    if (loc.Type.Struct->NeedsMethodDestruction()) {
       for (VStruct *st = loc.Type.Struct; st; st = st->ParentStruct) {
         VMethod *mt = st->FindDtor(false); // non-recursive
         if (mt) {
@@ -1063,16 +806,10 @@ void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zer
         }
       }
     }
-    // zero/clear
+    // clear fields
     if (loc.Type.Struct->NeedsFieldsDestruction()) {
       EmitLocalAddress(loc.Offset, aloc);
-      AddStatement((!zeroIt ? OPC_ClearPointedStruct : OPC_ZeroPointedStruct), loc.Type.Struct, aloc);
-    } else if (zeroIt) {
-      EmitLocalAddress(loc.Offset, aloc);
-      //GLog.Logf(NAME_Debug, "ZEROSTRUCT<%s>: size=%d (%s:%d)", *loc.Type.Struct->Name, loc.Type.GetSize(), *loc.Type.GetName(), loc.Type.Type);
-      // we cannot use `OPC_ZeroByPtr` here, because struct size is not calculated yet
-      //AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
-      AddStatement(OPC_ZeroPointedStruct, loc.Type.Struct, aloc);
+      AddStatement(OPC_ClearPointedStruct, loc.Type.Struct, aloc);
     }
     return;
   }
@@ -1087,7 +824,7 @@ void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zer
       }
     } else if (loc.Type.ArrayInnerType == TYPE_Struct) {
       // call struct dtors
-      if (emitDtors && loc.Type.Struct->NeedsMethodDestruction()) {
+      if (loc.Type.Struct->NeedsMethodDestruction()) {
         for (VStruct *st = loc.Type.Struct; st; st = st->ParentStruct) {
           VMethod *mt = st->FindDtor(false); // non-recursive
           if (mt) {
@@ -1105,28 +842,17 @@ void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zer
           }
         }
       }
-      // zero/clear
+      // clear
       if (loc.Type.Struct->NeedsFieldsDestruction()) {
         for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
           EmitLocalAddress(loc.Offset, aloc);
           EmitPushNumber(j, aloc);
           AddStatement(OPC_ArrayElement, loc.Type.GetArrayInnerType(), aloc);
-          AddStatement((!zeroIt ? OPC_ClearPointedStruct : OPC_ZeroPointedStruct), loc.Type.Struct, aloc);
+          AddStatement(OPC_ClearPointedStruct, loc.Type.Struct, aloc);
         }
-      } else if (zeroIt) {
-        // just zero it
-        EmitLocalAddress(loc.Offset, aloc);
-        // we cannot use `OPC_ZeroByPtr` here, because struct size is not calculated yet
-        //AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
-        AddStatement(OPC_ZeroPointedStruct, loc.Type.Struct, aloc);
       }
     }
     return;
-  }
-
-  if (zeroIt) {
-    EmitLocalAddress(loc.Offset, aloc);
-    AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
   }
 }
 
@@ -1192,163 +918,4 @@ void VEmitContext::EmitGotoLabel (VName lblname, const TLocation &aloc) {
   it.defined = true;
   MarkLabel(it.jlbl);
   GotoLabels.append(it);
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::RegisterFinalizer
-//
-//  use this to register finalizer that will be called in `return`, or
-//  when `VAutoFin` object is destroyed
-//
-//==========================================================================
-VEmitContext::VAutoFin VEmitContext::RegisterFinalizer (VStatement *st) {
-  if (!st) return VAutoFin(); // this is noop anyway
-  VFinalizer *fin = new VFinalizer();
-  fin->rc = 0; // will be incremented in `VAutoFin()` constructor
-  fin->ec = this;
-  fin->prev = lastFin;
-  fin->st = st;
-  fin->bc = nullptr;
-  lastFin = fin;
-  return VAutoFin(fin); // this increments `rc`
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::RegisterLoopFinalizer
-//
-//==========================================================================
-VEmitContext::VAutoFin VEmitContext::RegisterLoopFinalizer (VStatement *st) {
-  if (!st) return VAutoFin(); // this is noop anyway
-  VFinalizer *fin = new VFinalizer();
-  fin->rc = 0; // will be incremented in `VAutoFin()` constructor
-  fin->ec = this;
-  fin->prev = lastFin;
-  fin->st = st;
-  fin->bc = lastBC;
-  lastFin = fin;
-  return VAutoFin(fin); // this increments `rc`
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::EmitFinalizers
-//
-//  emit all currently registered finalizers, from last to first
-//
-//==========================================================================
-void VEmitContext::EmitFinalizers () {
-  for (VFinalizer *fin = lastFin; fin; fin = fin->prev) fin->emit();
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::DefineBreakCont
-//
-//==========================================================================
-VEmitContext::VAutoBreakCont VEmitContext::DefineBreakCont (VEmitContext::BCType atype) {
-  VBreakCont *bc = new VBreakCont();
-  bc->rc = 0; // will be incremented in `VAutoBreakCont()` constructor
-  bc->ec = this;
-  bc->prev = lastBC;
-  bc->lbl = DefineLabel();
-  bc->type = atype;
-  lastBC = bc;
-  return VAutoBreakCont(bc); // this increments `rc`
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::DefineBreak
-//
-//==========================================================================
-VEmitContext::VAutoBreakCont VEmitContext::DefineBreak () {
-  return DefineBreakCont(BCType::Break);
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::DefineContinue
-//
-//==========================================================================
-VEmitContext::VAutoBreakCont VEmitContext::DefineContinue () {
-  return DefineBreakCont(BCType::Continue);
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::BlockBreakContReturn
-//
-//==========================================================================
-VEmitContext::VAutoBreakCont VEmitContext::BlockBreakContReturn () {
-  return DefineBreakCont(BCType::Block);
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::EmitBreak
-//
-//  returns success flag
-//
-//==========================================================================
-bool VEmitContext::EmitBreak (const TLocation &loc) {
-  for (VBreakCont *bc = lastBC; bc; bc = bc->prev) {
-    switch (bc->type) {
-      case BCType::Break:
-        bc->emitFinalizers();
-        AddStatement(OPC_Goto, bc->lbl, loc);
-        return true; // done, no need to emit finalizers
-      case BCType::Continue:
-        break;
-      case BCType::Block:
-        return false;
-    }
-  }
-  return false; // oops
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::EmitContinue
-//
-//  returns success flag
-//
-//==========================================================================
-bool VEmitContext::EmitContinue (const TLocation &loc) {
-  for (VBreakCont *bc = lastBC; bc; bc = bc->prev) {
-    switch (bc->type) {
-      case BCType::Break:
-        break;
-      case BCType::Continue:
-        bc->emitFinalizers();
-        AddStatement(OPC_Goto, bc->lbl, loc);
-        return true; // done, no need to emit finalizers
-      case BCType::Block:
-        return false;
-    }
-  }
-  return false; // oops
-}
-
-
-//==========================================================================
-//
-//  VEmitContext::IsReturnAllowed
-//
-//==========================================================================
-bool VEmitContext::IsReturnAllowed () {
-  for (VBreakCont *bc = lastBC; bc; bc = bc->prev) {
-    if (bc->type == BCType::Block) return false;
-  }
-  return true;
 }

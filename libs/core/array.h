@@ -288,6 +288,35 @@ public:
   inline const T *end () const noexcept { return (length1D() > 0 ? ArrData+length1D() : nullptr); }
 
   #define VARR_DEFINE_ITEMS_ITERATOR(xconst_)  \
+    class xconst_##RevIterator { \
+    public: \
+      xconst_ T *stvalue; \
+      xconst_ T *currvalue; \
+    public: \
+      xconst_##RevIterator (xconst_ TArray<T> *arr) noexcept { \
+        if (arr->length1D() > 0) { \
+          stvalue = arr->ArrData; \
+          currvalue = arr->ArrData+arr->length1D()-1; \
+        } else { \
+          stvalue = currvalue = nullptr; \
+        } \
+      } \
+      xconst_##RevIterator (const xconst_##RevIterator &it) noexcept : currvalue(it.currvalue) {} \
+      xconst_##RevIterator (const xconst_##RevIterator &it, bool asEnd) noexcept : currvalue(nullptr) {} \
+      inline xconst_##RevIterator begin () noexcept { return xconst_##RevIterator(*this); } \
+      inline xconst_##RevIterator end () noexcept { return xconst_##RevIterator(*this, true); } \
+      inline bool operator == (const xconst_##RevIterator &b) const noexcept { return (currvalue == b.currvalue); } \
+      inline bool operator != (const xconst_##RevIterator &b) const noexcept { return (currvalue != b.currvalue); } \
+      inline xconst_ T &operator * () const noexcept { return *currvalue; } /* required for iterator */ \
+      inline void operator ++ () noexcept { if (currvalue && currvalue != stvalue) --currvalue; else currvalue = stvalue = nullptr; } /* this is enough for iterator */ \
+    }; \
+    inline xconst_##RevIterator reverse () xconst_ noexcept { return xconst_##RevIterator(this); }
+
+  VARR_DEFINE_ITEMS_ITERATOR()
+  VARR_DEFINE_ITEMS_ITERATOR(const)
+  #undef VARR_DEFINE_ITEMS_ITERATOR
+
+  #define VARR_DEFINE_ITEMS_ITERATOR(xconst_)  \
     class xconst_##IndexIterator { \
     public: \
       xconst_ T *currvalue; \

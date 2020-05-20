@@ -102,6 +102,8 @@ public:
   VExpression *CoerceToBool (VEmitContext &ec); // expression *MUST* be already resolved
   VExpression *ResolveFloat (VEmitContext &ec); // actually, *TO* float
   VExpression *CoerceToFloat (VEmitContext &ec); // expression *MUST* be already resolved
+  // returns -1 if cannot determine, or 0/1
+  int IsBoolLiteral (VEmitContext &ec) const;
   virtual VTypeExpr *ResolveAsType (VEmitContext &ec);
   virtual VExpression *ResolveAssignmentTarget (VEmitContext &ec);
   virtual VExpression *ResolveAssignmentValue (VEmitContext &ec);

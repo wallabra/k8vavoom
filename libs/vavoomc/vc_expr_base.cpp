@@ -235,6 +235,29 @@ VExpression *VExpression::CoerceToBool (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VExpression::IsBoolLiteral
+//
+//  returns -1 if cannot determine, or 0/1
+//
+//==========================================================================
+int VExpression::IsBoolLiteral (VEmitContext &ec) const {
+  if (IsIntConst()) return (GetIntConst() != 0);
+  if (IsFloatConst()) return !isZeroInfNaN(GetFloatConst()); // so inf/nan will yield `false`
+  if (IsNameConst()) return (GetNameConst() != NAME_None);
+  if (IsStrConst()) return !GetStrConst(ec.Package).isEmpty();
+  if (IsNoneLiteral()) return 0;
+  if (IsNoneDelegateLiteral()) return 0;
+  if (IsNullLiteral()) return 0;
+  if (IsConstVectorCtor()) {
+    const TVec v = ((const VVectorExpr *)this)->GetConstValue();
+    return (isZeroInfNaN(v.x) || isZeroInfNaN(v.y) || isZeroInfNaN(v.z) ? 0 : 1); // so inf/nan yields `false`
+  }
+  return -1;
+}
+
+
+//==========================================================================
+//
 //  VExpression::ResolveFloat
 //
 //==========================================================================

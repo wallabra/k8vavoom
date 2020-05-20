@@ -2068,29 +2068,27 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   if (Func->Flags&FUNC_Spawner) Type.Class = Args[0]->Type.Class;
 
   // we may create new locals, so activate local reuse mechanics
-  int compIdx = ec.EnterCompound(false);
+  {
+    for (int f = 0; f < VMethod::MAX_PARAMS; ++f) {
+      lcidx[f] = -1;
+      reused[f] = false;
+    }
 
-  for (int f = 0; f < VMethod::MAX_PARAMS; ++f) {
-    lcidx[f] = -1;
-    reused[f] = false;
-  }
-
-  // for ommited "optional ref", create temporary locals
-  for (int i = 0; i < NumArgs; ++i) {
-    if (!Args[i] && i < VMethod::MAX_PARAMS) {
-      if ((Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
-        // create temporary
-        VLocalVarDef &L = ec.AllocLocal(NAME_None, Func->ParamTypes[i], Loc);
-        L.Visible = false; // it is unnamed, and hidden ;-)
-        L.ParamFlags = 0;
-        //index = new VLocalVar(L.ldindex, L.Loc);
-        lcidx[i] = L.ldindex;
-        reused[i] = L.reused;
+    // for ommited "optional ref", create temporary locals
+    for (int i = 0; i < NumArgs; ++i) {
+      if (!Args[i] && i < VMethod::MAX_PARAMS) {
+        if ((Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
+          // create temporary
+          VLocalVarDef &L = ec.AllocLocal(NAME_None, Func->ParamTypes[i], Loc);
+          L.Visible = false; // it is unnamed, and hidden ;-)
+          L.ParamFlags = 0;
+          //index = new VLocalVar(L.ldindex, L.Loc);
+          lcidx[i] = L.ldindex;
+          reused[i] = L.reused;
+        }
       }
     }
-  }
-
-  ec.ExitCompound(elist, compIdx, Loc);
+  } // this exits scope
 
   // some special functions will be converted to builtins, try to const-optimize 'em
   if (Func->builtinOpc >= 0) return OptimizeBuiltin(ec);
@@ -2498,6 +2496,9 @@ void VInvocation::Emit (VEmitContext &ec) {
     }
   }
 
+  // we may create new locals, so activate local reuse mechanics
+  //auto guard = ec.EnterScopeEmit();
+
   vint32 SelfOffset = 1;
   for (int i = 0; i < NumArgs; ++i) {
     if (!Args[i]) {
@@ -2508,7 +2509,8 @@ void VInvocation::Emit (VEmitContext &ec) {
         if (Func->ParamTypes[i].Type == TYPE_Struct) {
           Func->ParamTypes[i].Struct->PostLoad();
         }
-        if (reused[i]) ec.EmitOneLocalDtor(lcidx[i], Loc, true, true); // zero it, and forced
+        //TODO: add finalizer here
+        if (reused[i]) ec.EmitLocalDtor(lcidx[i], Loc); // zero it, and forced
         const VLocalVarDef &loc = ec.GetLocalByIndex(lcidx[i]);
         ec.EmitLocalAddress(loc.Offset, Loc);
         //ec.AddStatement(OPC_ZeroByPtrNoDrop, Func->ParamTypes[i].GetSize(), Loc);
@@ -2647,8 +2649,6 @@ void VInvocation::Emit (VEmitContext &ec) {
   } else {
     ec.AddStatement(OPC_VCall, Func, SelfOffset, Loc);
   }
-
-  ec.EmitExitCompound(elist);
 }
 
 

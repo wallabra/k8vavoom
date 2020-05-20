@@ -28,33 +28,45 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 // VStatement
-VStatement::VStatement (const TLocation &ALoc) : Loc(ALoc) {}
+VStatement::VStatement (const TLocation &ALoc) : Loc(ALoc), UpScope(nullptr), skipDtorOnLeave(false), skipFinalizerOnLeave(false) {}
+
 VStatement::~VStatement () {}
-void VStatement::Emit (VEmitContext &ec) { DoEmit(ec); }
+
+bool VStatement::ResolveDtor (VEmitContext &) { return true; }
+bool VStatement::ResolveFinalizer (VEmitContext &) { return true; }
+
+void VStatement::EmitDtor (VEmitContext &ec) {}
 void VStatement::EmitFinalizer (VEmitContext &ec) {}
-bool VStatement::IsCompound () const { return false; }
-bool VStatement::IsEmptyStatement () const { return false; }
-bool VStatement::IsLabel () const { return false; }
-VName VStatement::GetLabelName () const { return NAME_None; }
-bool VStatement::IsGoto () const { return false; }
-bool VStatement::IsGotoCase () const { return false; }
-bool VStatement::HasGotoCaseExpr () const { return false; }
-bool VStatement::IsGotoDefault () const { return false; }
-bool VStatement::IsBreak () const { return false; }
-bool VStatement::IsContinue () const { return false; }
-bool VStatement::IsFlowStop () const { return (IsBreak() || IsContinue() || IsGoto()); }
-bool VStatement::IsReturn () const { return false; }
-bool VStatement::IsSwitchCase () const { return false; }
-bool VStatement::IsSwitchDefault () const { return false; }
-bool VStatement::IsVarDecl () const { return false; }
-bool VStatement::IsEndsWithReturn () const { return IsReturn(); }
-bool VStatement::IsProperCaseEnd (bool skipBreak) const { if (IsReturn() || IsGotoCase() || IsGotoDefault()) return true; if (!skipBreak && (IsBreak() || IsContinue())) return true; return false; }
+
+bool VStatement::IsCompound () const noexcept { return false; }
+bool VStatement::IsEmptyStatement () const noexcept { return false; }
+bool VStatement::IsLabel () const noexcept { return false; }
+VName VStatement::GetLabelName () const noexcept { return NAME_None; }
+bool VStatement::IsGoto () const noexcept { return false; }
+bool VStatement::IsGotoCase () const noexcept { return false; }
+bool VStatement::HasGotoCaseExpr () const noexcept { return false; }
+bool VStatement::IsGotoDefault () const noexcept { return false; }
+bool VStatement::IsBreak () const noexcept { return false; }
+bool VStatement::IsContinue () const noexcept { return false; }
+bool VStatement::IsFlowStop () const noexcept { return (IsBreak() || IsContinue() || IsGoto()); }
+bool VStatement::IsReturn () const noexcept { return false; }
+bool VStatement::IsSwitchCase () const noexcept { return false; }
+bool VStatement::IsSwitchDefault () const noexcept { return false; }
+bool VStatement::IsVarDecl () const noexcept { return false; }
+bool VStatement::IsEndsWithReturn () const noexcept { return IsReturn(); }
+bool VStatement::IsProperCaseEnd (bool skipBreak) const noexcept { if (IsReturn() || IsGotoCase() || IsGotoDefault()) return true; if (!skipBreak && (IsBreak() || IsContinue())) return true; return false; }
 void VStatement::DoSyntaxCopyTo (VStatement *e) { e->Loc = Loc; }
 void VStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {}
-VLabelStmt *VStatement::FindLabel (VName aname) { return (IsLabel() && GetLabelName() == aname ? (VLabelStmt *)this : nullptr); }
-bool VStatement::IsGotoInAllowed () const { return true; }
-bool VStatement::IsGotoOutAllowed () const { return true; }
-bool VStatement::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const { return true; }
+
+VLabelStmt *VStatement::FindLabel (VName aname) noexcept { return (IsLabel() && GetLabelName() == aname ? (VLabelStmt *)this : nullptr); }
+
+bool VStatement::IsGotoInAllowed () const noexcept { return true; }
+bool VStatement::IsGotoOutAllowed () const noexcept { return true; }
+bool VStatement::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const noexcept { return true; }
+
+bool VStatement::IsReturnAllowed () const noexcept { return true; }
+bool VStatement::IsBreakScope () const noexcept { return false; }
+bool VStatement::IsContinueScope () const noexcept { return false; }
 
 
 //==========================================================================
@@ -90,16 +102,119 @@ bool VStatement::CheckCondIndent (const TLocation &condLoc, VStatement *body) {
 }
 
 
+//==========================================================================
+//
+//  VStatement::Resolve
+//
+//==========================================================================
+bool VStatement::Resolve (VEmitContext &ec, VStatement *aUpScope) {
+  UpScopeGuard upguard(this, aUpScope);
+  bool res = DoResolve(ec);
+  if (!ResolveDtor(ec)) res = false;
+  if (!ResolveFinalizer(ec)) res = false;
+  return res;
+}
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//==========================================================================
+//
+//  VStatement::Emit
+//
+//==========================================================================
+void VStatement::Emit (VEmitContext &ec, VStatement *aUpScope) {
+  UpScopeGuard upguard(this, aUpScope);
+  DoEmit(ec);
+  if (!skipDtorOnLeave) EmitDtor(ec);
+  if (!skipFinalizerOnLeave) EmitFinalizer(ec);
+}
+
+
+//==========================================================================
+//
+//  VStatement::CreateLocalVarScope
+//
+//==========================================================================
+void VStatement::CreateLocalVarScope (TArray<VStatement *> &src) {
+  for (int idx = 0; idx < src.length()-1; ++idx) {
+    if (src[idx]->IsVarDecl()) {
+      // i found her!
+      VLocalVarStatement *vst = (VLocalVarStatement *)src[idx];
+      vassert(vst->Statements.length() == 0);
+      ++idx; // skip decl
+      vst->Statements.resize(src.length()-idx);
+      for (; idx < src.length(); ++idx) vst->Statements.append(src[idx]);
+      // shrink source list
+      src.setLength(idx);
+      // done
+      return;
+    }
+  }
+}
+
+
+
+//**************************************************************************
+//
 // VEmptyStatement
-VEmptyStatement::VEmptyStatement (const TLocation &ALoc) : VStatement(ALoc) {}
-VStatement *VEmptyStatement::SyntaxCopy () { auto res = new VEmptyStatement(); DoSyntaxCopyTo(res); return res; }
-bool VEmptyStatement::Resolve (VEmitContext &) { return true; }
-void VEmptyStatement::DoEmit (VEmitContext &) {}
-bool VEmptyStatement::IsEmptyStatement () const { return true; }
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VEmptyStatement::VEmptyStatement
+//
+//==========================================================================
+VEmptyStatement::VEmptyStatement (const TLocation &ALoc) : VStatement(ALoc) {
+}
 
 
+//==========================================================================
+//
+//  VEmptyStatement::SyntaxCopy
+//
+//==========================================================================
+VStatement *VEmptyStatement::SyntaxCopy () {
+  auto res = new VEmptyStatement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VEmptyStatement::DoResolve
+//
+//==========================================================================
+bool VEmptyStatement::DoResolve (VEmitContext &) {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VEmptyStatement::DoEmit
+//
+//==========================================================================
+void VEmptyStatement::DoEmit (VEmitContext &) {
+}
+
+
+//==========================================================================
+//
+//  VEmptyStatement::IsEmptyStatement
+//
+//==========================================================================
+bool VEmptyStatement::IsEmptyStatement () const noexcept {
+  return true;
+}
+
+
+
+//**************************************************************************
+//
+// VAssertStatement
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -155,10 +270,10 @@ void VAssertStatement::DoSyntaxCopyTo (VStatement *e) {
 
 //==========================================================================
 //
-//  VAssertStatement::Resolve
+//  VAssertStatement::DoResolve
 //
 //==========================================================================
-bool VAssertStatement::Resolve (VEmitContext &ec) {
+bool VAssertStatement::DoResolve (VEmitContext &ec) {
   vassert(!FatalInvoke);
 
   // create message if necessary
@@ -181,7 +296,7 @@ bool VAssertStatement::Resolve (VEmitContext &ec) {
     return false;
   }
 
-  // check method signature: it should return `void`, and has only one string argument
+  // check method signature: it should return `void`, and have only one string argument
   if (M->ReturnType.Type != TYPE_Void || M->NumParams != 1 || M->ParamTypes[0].Type != TYPE_String) {
     ParseError(Loc, "`AssertError()` method has invalid signature");
     return false;
@@ -192,10 +307,10 @@ bool VAssertStatement::Resolve (VEmitContext &ec) {
   args[0] = Message;
   FatalInvoke = new VInvocation(nullptr, M, nullptr, false/*no self*/, false/*not a base*/, Loc, 1, args);
   Message = nullptr; // it is owned by invoke now
-  //GLog.Logf("*** (%s) ***", *FatalInvoke->toString());
 
   if (Expr) Expr = Expr->ResolveBoolean(ec);
   if (!Expr) return false;
+
   if (FatalInvoke) FatalInvoke = FatalInvoke->Resolve(ec);
   if (!FatalInvoke) return false;
 
@@ -205,20 +320,17 @@ bool VAssertStatement::Resolve (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VAssertStatement::DoEmit
+//  VAssertStatement::DoDoEmit
 //
 //==========================================================================
 void VAssertStatement::DoEmit (VEmitContext &ec) {
   if (!Expr || !FatalInvoke) return; // just in case
 
   VLabel skipError = ec.DefineLabel();
-
   // expression
   Expr->EmitBranchable(ec, skipError, true); // jump if true
-
   // check failed
   FatalInvoke->Emit(ec);
-
   // done
   ec.MarkLabel(skipError);
 }
@@ -311,23 +423,23 @@ void VIf::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 
 //==========================================================================
 //
-//  VIf::Resolve
+//  VIf::DoResolve
 //
 //==========================================================================
-bool VIf::Resolve (VEmitContext &ec) {
+bool VIf::DoResolve (VEmitContext &ec) {
   if (doIndentCheck) {
     // indent check
     if (Expr && TrueStatement && !CheckCondIndent(Expr->Loc, TrueStatement)) return false;
     if (Expr && FalseStatement && !CheckCondIndent(ElseLoc, FalseStatement)) return false;
   }
 
-  bool Ret = true;
+  bool res = true;
   // resolve
   if (Expr) Expr = Expr->ResolveBoolean(ec);
-  if (!Expr) Ret = false;
-  if (!TrueStatement->Resolve(ec)) Ret = false;
-  if (FalseStatement && !FalseStatement->Resolve(ec)) Ret = false;
-  return Ret;
+  if (!Expr) res = false;
+  if (!TrueStatement->Resolve(ec, this)) res = false;
+  if (FalseStatement && !FalseStatement->Resolve(ec, this)) res = false;
+  return res;
 }
 
 
@@ -337,22 +449,33 @@ bool VIf::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VIf::DoEmit (VEmitContext &ec) {
-  VLabel FalseTarget = ec.DefineLabel();
-
-  // expression
-  Expr->EmitBranchable(ec, FalseTarget, false);
-
-  // true statement
-  TrueStatement->Emit(ec);
-  if (FalseStatement) {
-    // false statement
-    VLabel End = ec.DefineLabel();
-    ec.AddStatement(OPC_Goto, End, Loc);
-    ec.MarkLabel(FalseTarget);
-    FalseStatement->Emit(ec);
-    ec.MarkLabel(End);
+  if (!Expr) return; // just in case
+  const int bval = Expr->IsBoolLiteral(ec);
+  if (bval >= 0) {
+    // known
+    if (bval) {
+      // only true branch
+      TrueStatement->Emit(ec, this);
+    } else if (FalseStatement) {
+      // only false branch
+      FalseStatement->Emit(ec, this);
+    }
   } else {
-    ec.MarkLabel(FalseTarget);
+    VLabel FalseTarget = ec.DefineLabel();
+    // expression
+    Expr->EmitBranchable(ec, FalseTarget, false);
+    // true statement
+    TrueStatement->Emit(ec, this);
+    if (FalseStatement) {
+      // false statement
+      VLabel End = ec.DefineLabel();
+      ec.AddStatement(OPC_Goto, End, Loc);
+      ec.MarkLabel(FalseTarget);
+      FalseStatement->Emit(ec, this);
+      ec.MarkLabel(End);
+    } else {
+      ec.MarkLabel(FalseTarget);
+    }
   }
 }
 
@@ -362,9 +485,9 @@ void VIf::DoEmit (VEmitContext &ec) {
 //  VIf::IsEndsWithReturn
 //
 //==========================================================================
-bool VIf::IsEndsWithReturn () const {
-  if (TrueStatement && FalseStatement) return (TrueStatement->IsEndsWithReturn() && FalseStatement->IsEndsWithReturn());
-  return false;
+bool VIf::IsEndsWithReturn () const noexcept {
+  if (!TrueStatement || !FalseStatement) return false;
+  return (TrueStatement->IsEndsWithReturn() && FalseStatement->IsEndsWithReturn());
 }
 
 
@@ -373,9 +496,9 @@ bool VIf::IsEndsWithReturn () const {
 //  VIf::IsProperCaseEnd
 //
 //==========================================================================
-bool VIf::IsProperCaseEnd (bool skipBreak) const {
-  if (TrueStatement && FalseStatement) return (TrueStatement->IsProperCaseEnd(skipBreak) && FalseStatement->IsProperCaseEnd(skipBreak));
-  return false;
+bool VIf::IsProperCaseEnd (bool skipBreak) const noexcept {
+  if (!TrueStatement || !FalseStatement) return false;
+  return (TrueStatement->IsProperCaseEnd(skipBreak) && FalseStatement->IsProperCaseEnd(skipBreak));
 }
 
 
@@ -384,7 +507,7 @@ bool VIf::IsProperCaseEnd (bool skipBreak) const {
 //  VIf::FindLabel
 //
 //==========================================================================
-VLabelStmt *VIf::FindLabel (VName aname) {
+VLabelStmt *VIf::FindLabel (VName aname) noexcept {
   VLabelStmt *lbl = (TrueStatement ? TrueStatement->FindLabel(aname) : nullptr);
   if (!lbl && FalseStatement) lbl = (FalseStatement->FindLabel(aname));
   return lbl;
@@ -471,19 +594,15 @@ void VWhile::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //  VWhile::Resolve
 //
 //==========================================================================
-bool VWhile::Resolve (VEmitContext &ec) {
+bool VWhile::DoResolve (VEmitContext &ec) {
   // indent check
   if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) return false;
 
-  bool Ret = true;
+  bool res = true;
   if (Expr) Expr = Expr->ResolveBoolean(ec);
-  if (!Expr) Ret = false;
-  {
-    auto cidx = ec.EnterCompound(true);
-    if (!Statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(elist, cidx, Loc);
-  }
-  return Ret;
+  if (!Expr) res = false;
+  if (!Statement->Resolve(ec, this)) res = false;
+  return res;
 }
 
 
@@ -493,22 +612,47 @@ bool VWhile::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VWhile::DoEmit (VEmitContext &ec) {
-  auto loopStart = ec.DefineContinue();
-  auto loopEnd = ec.DefineBreak();
-
-  VLabel Loop = ec.DefineLabel();
-
-  // jump over the loop body
-  ec.AddStatement(OPC_Goto, loopStart.GetLabelNoFinalizers(), Loc);
+  if (!Expr) return; // just in case
+  const int bval = Expr->IsBoolLiteral(ec);
+  if (bval == 0) return; // loop is not taken
+  // allocate labels
+  breakLabel = ec.DefineLabel();
+  contLabel = ec.DefineLabel();
+  // continue point is here (because `continue` emits all necessary dtors)
+  ec.MarkLabel(contLabel);
+  // do not emit loop condition check if it is known `true`
+  if (bval != 1) {
+    // loop condition check
+    Expr->EmitBranchable(ec, breakLabel, false);
+  }
   // generate loop body
-  ec.MarkLabel(Loop);
-  Statement->Emit(ec);
-  ec.EmitExitCompound(elist);
-  // generate loop start
-  loopStart.Mark();
-  Expr->EmitBranchable(ec, Loop, true);
-  // mark loop end
-  loopEnd.Mark();
+  Statement->Emit(ec, this);
+  // emit dtors
+  EmitDtorAndBlock(ec);
+  // jump to loop start
+  ec.AddStatement(OPC_Goto, contLabel, Loc);
+  // loop breaks here
+  ec.MarkLabel(breakLabel);
+}
+
+
+//==========================================================================
+//
+//  VWhile::IsBreakScope
+//
+//==========================================================================
+bool VWhile::IsBreakScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VWhile::IsContinueScope
+//
+//==========================================================================
+bool VWhile::IsContinueScope () const noexcept {
+  return true;
 }
 
 
@@ -517,7 +661,7 @@ void VWhile::DoEmit (VEmitContext &ec) {
 //  VWhile::IsEndsWithReturn
 //
 //==========================================================================
-bool VWhile::IsEndsWithReturn () const {
+bool VWhile::IsEndsWithReturn () const noexcept {
   return (Statement && Statement->IsEndsWithReturn());
 }
 
@@ -527,7 +671,7 @@ bool VWhile::IsEndsWithReturn () const {
 //  VWhile::IsProperCaseEnd
 //
 //==========================================================================
-bool VWhile::IsProperCaseEnd (bool skipBreak) const {
+bool VWhile::IsProperCaseEnd (bool skipBreak) const noexcept {
   return (Statement && Statement->IsProperCaseEnd(true));
 }
 
@@ -537,7 +681,7 @@ bool VWhile::IsProperCaseEnd (bool skipBreak) const {
 //  VWhile::FindLabel
 //
 //==========================================================================
-VLabelStmt *VWhile::FindLabel (VName aname) {
+VLabelStmt *VWhile::FindLabel (VName aname) noexcept {
   return (Statement ? Statement->FindLabel(aname) : nullptr);
 }
 
@@ -618,22 +762,18 @@ void VDo::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 
 //==========================================================================
 //
-//  VDo::Resolve
+//  VDo::DoResolve
 //
 //==========================================================================
-bool VDo::Resolve (VEmitContext &ec) {
+bool VDo::DoResolve (VEmitContext &ec) {
   // indent check
   if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) return false;
 
-  bool Ret = true;
+  bool res = true;
   if (Expr) Expr = Expr->ResolveBoolean(ec);
-  if (!Expr) Ret = false;
-  {
-    auto cidx = ec.EnterCompound(true);
-    if (!Statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(elist, cidx, Loc);
-  }
-  return Ret;
+  if (!Expr) res = false;
+  if (!Statement->Resolve(ec, this)) res = false;
+  return res;
 }
 
 
@@ -643,21 +783,53 @@ bool VDo::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VDo::DoEmit (VEmitContext &ec) {
-  auto loopStart = ec.DefineContinue();
-  auto loopEnd = ec.DefineBreak();
-
-  VLabel Loop = ec.DefineLabel();
-
+  if (!Expr) return; // just in case
+  const int bval = Expr->IsBoolLiteral(ec);
+  if (bval == 0) return; // loop is not taken
+  // allocate labels
+  breakLabel = ec.DefineLabel();
+  contLabel = ec.DefineLabel();
   // generate loop body
-  ec.MarkLabel(Loop);
-  Statement->Emit(ec);
-  ec.EmitExitCompound(elist);
-  // mark loop start (continue)
-  loopStart.Mark();
-  // emit condition
-  Expr->EmitBranchable(ec, Loop, true);
-  // mark loop end
-  loopEnd.Mark();
+  VLabel loopStart = ec.DefineLabel();
+  ec.MarkLabel(loopStart);
+  // if loop is endless, generate continue point here
+  if (bval == 1) ec.MarkLabel(contLabel);
+  // emit loop body
+  Statement->Emit(ec, this);
+  // emit dtors
+  EmitDtorAndBlock(ec);
+  // continue point is here (because `continue` emits all necessary dtors)
+  // but only if loop is not endless
+  if (bval != 1) ec.MarkLabel(contLabel);
+  if (bval < 0) {
+    // emit loop condition branch
+    Expr->EmitBranchable(ec, loopStart, true);
+  } else if (bval == 1) {
+    // emit unconditional jump
+    ec.AddStatement(OPC_Goto, loopStart, Loc);
+  }
+  // loop breaks here
+  ec.MarkLabel(breakLabel);
+}
+
+
+//==========================================================================
+//
+//  VDo::IsBreakScope
+//
+//==========================================================================
+bool VDo::IsBreakScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VDo::IsContinueScope
+//
+//==========================================================================
+bool VDo::IsContinueScope () const noexcept {
+  return true;
 }
 
 
@@ -666,7 +838,7 @@ void VDo::DoEmit (VEmitContext &ec) {
 //  VDo::IsEndsWithReturn
 //
 //==========================================================================
-bool VDo::IsEndsWithReturn () const {
+bool VDo::IsEndsWithReturn () const noexcept {
   return (Statement && Statement->IsEndsWithReturn());
 }
 
@@ -676,7 +848,7 @@ bool VDo::IsEndsWithReturn () const {
 //  VDo::IsProperCaseEnd
 //
 //==========================================================================
-bool VDo::IsProperCaseEnd (bool skipBreak) const {
+bool VDo::IsProperCaseEnd (bool skipBreak) const noexcept {
   return (Statement && Statement->IsProperCaseEnd(true));
 }
 
@@ -686,7 +858,7 @@ bool VDo::IsProperCaseEnd (bool skipBreak) const {
 //  VDo::FindLabel
 //
 //==========================================================================
-VLabelStmt *VDo::FindLabel (VName aname) {
+VLabelStmt *VDo::FindLabel (VName aname) noexcept {
   return (Statement ? Statement->FindLabel(aname) : nullptr);
 }
 
@@ -754,11 +926,11 @@ VStatement *VFor::SyntaxCopy () {
 void VFor::DoSyntaxCopyTo (VStatement *e) {
   VStatement::DoSyntaxCopyTo(e);
   auto res = (VFor *)e;
-  res->InitExpr.SetNum(InitExpr.length());
+  res->InitExpr.setLength(InitExpr.length());
   for (int f = 0; f < InitExpr.length(); ++f) res->InitExpr[f] = (InitExpr[f] ? InitExpr[f]->SyntaxCopy() : nullptr);
-  res->CondExpr.SetNum(CondExpr.length());
+  res->CondExpr.setLength(CondExpr.length());
   for (int f = 0; f < CondExpr.length(); ++f) res->CondExpr[f] = (CondExpr[f] ? CondExpr[f]->SyntaxCopy() : nullptr);
-  res->LoopExpr.SetNum(LoopExpr.length());
+  res->LoopExpr.setLength(LoopExpr.length());
   for (int f = 0; f < LoopExpr.length(); ++f) res->LoopExpr[f] = (LoopExpr[f] ? LoopExpr[f]->SyntaxCopy() : nullptr);
   res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
 }
@@ -776,41 +948,39 @@ void VFor::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 
 //==========================================================================
 //
-//  VFor::Resolve
+//  VFor::DoResolve
 //
 //==========================================================================
-bool VFor::Resolve (VEmitContext &ec) {
+bool VFor::DoResolve (VEmitContext &ec) {
   // indent check
   if (Statement && !CheckCondIndent(Loc, Statement)) return false;
 
-  bool Ret = true;
+  bool res = true;
 
-  for (int i = 0; i < InitExpr.length(); ++i) {
-    InitExpr[i] = InitExpr[i]->Resolve(ec);
-    if (!InitExpr[i]) Ret = false;
+  for (auto &&e : InitExpr) {
+    e = e->Resolve(ec);
+    if (!e) res = false;
   }
 
   for (int i = 0; i < CondExpr.length(); ++i) {
+    VExpression *ce = CondExpr[i];
     if (i != CondExpr.length()-1) {
-      CondExpr[i] = CondExpr[i]->Resolve(ec);
+      ce = ce->Resolve(ec);
     } else {
-      CondExpr[i] = CondExpr[i]->ResolveBoolean(ec);
+      ce = ce->ResolveBoolean(ec);
     }
-    if (!CondExpr[i]) Ret = false;
+    if (!ce) res = false;
+    CondExpr[i] = ce;
   }
 
-  for (int i = 0; i < LoopExpr.length(); ++i) {
-    LoopExpr[i] = LoopExpr[i]->Resolve(ec);
-    if (!LoopExpr[i]) Ret = false;
+  for (auto &&e : LoopExpr) {
+    e = e->Resolve(ec);
+    if (!e) res = false;
   }
 
-  {
-    auto cidx = ec.EnterCompound(true);
-    if (!Statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(elist, cidx, Loc);
-  }
+  if (!Statement->Resolve(ec, this)) res = false;
 
-  return Ret;
+  return res;
 }
 
 
@@ -820,39 +990,70 @@ bool VFor::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VFor::DoEmit (VEmitContext &ec) {
-  // define labels
-  auto loopStart = ec.DefineContinue();
-  auto loopEnd = ec.DefineBreak();
-
-  VLabel Test = ec.DefineLabel();
-  VLabel Loop = ec.DefineLabel();
-
-  // emit initialisation expressions
-  for (int i = 0; i < InitExpr.length(); ++i) InitExpr[i]->Emit(ec);
-
-  // jump to test if it's present
-  if (CondExpr.length()) ec.AddStatement(OPC_Goto, Test, Loc);
-
-  // emit embeded statement
-  ec.MarkLabel(Loop);
-  Statement->Emit(ec);
-  ec.EmitExitCompound(elist);
-
-  // emit per-loop expression statements
-  loopStart.Mark();
-  for (int i = 0; i < LoopExpr.length(); ++i) LoopExpr[i]->Emit(ec);
-
-  // loop test
-  ec.MarkLabel(Test);
+  int bval;
+  bool hasCondExprs;
   if (CondExpr.length() == 0) {
-    ec.AddStatement(OPC_Goto, Loop, Loc);
+    bval = 1;
+    hasCondExprs = false;
   } else {
-    for (int i = 0; i < CondExpr.length()-1; ++i) CondExpr[i]->Emit(ec);
-    CondExpr[CondExpr.length()-1]->EmitBranchable(ec, Loop, true);
+    bval = CondExpr[CondExpr.length()-1]->IsBoolLiteral(ec);
+    hasCondExprs = (bval < 0 || CondExpr.length() > 1);
   }
 
-  // end of loop
-  loopEnd.Mark();
+  // allocate labels
+  breakLabel = ec.DefineLabel();
+  contLabel = ec.DefineLabel();
+
+  // emit initialisation expressions
+  for (auto &&e : InitExpr) e->Emit(ec);
+
+  VLabel testLbl = ec.DefineLabel();
+  VLabel loopLbl = ec.DefineLabel();
+
+  // jump to test if it is present
+  if (hasCondExprs) ec.AddStatement(OPC_Goto, testLbl, Loc);
+
+  // emit embeded statement
+  ec.MarkLabel(loopLbl);
+  Statement->Emit(ec, this);
+
+  // emit dtors
+  EmitDtorAndBlock(ec);
+
+  // put continue point here
+  ec.MarkLabel(contLabel);
+
+  // emit per-loop expression statements
+  for (auto &&e : LoopExpr) e->Emit(ec);
+
+  // loop test
+  ec.MarkLabel(testLbl);
+  for (int i = 0; i < CondExpr.length()-1; ++i) CondExpr[i]->Emit(ec);
+       if (bval < 0) CondExpr[CondExpr.length()-1]->EmitBranchable(ec, loopLbl, true);
+  else if (bval == 1) ec.AddStatement(OPC_Goto, loopLbl, Loc);
+
+  // loop breaks here
+  ec.MarkLabel(breakLabel);
+}
+
+
+//==========================================================================
+//
+//  VFor::IsBreakScope
+//
+//==========================================================================
+bool VFor::IsBreakScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VFor::IsContinueScope
+//
+//==========================================================================
+bool VFor::IsContinueScope () const noexcept {
+  return true;
 }
 
 
@@ -861,7 +1062,7 @@ void VFor::DoEmit (VEmitContext &ec) {
 //  VFor::IsEndsWithReturn
 //
 //==========================================================================
-bool VFor::IsEndsWithReturn () const {
+bool VFor::IsEndsWithReturn () const noexcept {
   //TODO: endless fors should have at least one return instead
   return (Statement && Statement->IsEndsWithReturn());
 }
@@ -872,7 +1073,7 @@ bool VFor::IsEndsWithReturn () const {
 //  VFor::IsProperCaseEnd
 //
 //==========================================================================
-bool VFor::IsProperCaseEnd (bool skipBreak) const {
+bool VFor::IsProperCaseEnd (bool skipBreak) const noexcept {
   return (Statement && Statement->IsProperCaseEnd(true));
 }
 
@@ -882,7 +1083,7 @@ bool VFor::IsProperCaseEnd (bool skipBreak) const {
 //  VFor::FindLabel
 //
 //==========================================================================
-VLabelStmt *VFor::FindLabel (VName aname) {
+VLabelStmt *VFor::FindLabel (VName aname) noexcept {
   return (Statement ? Statement->FindLabel(aname) : nullptr);
 }
 
@@ -892,7 +1093,7 @@ VLabelStmt *VFor::FindLabel (VName aname) {
 //  VFor::IsGotoInAllowed
 //
 //==========================================================================
-bool VFor::IsGotoInAllowed () const {
+bool VFor::IsGotoInAllowed () const noexcept {
   return false;
 }
 
@@ -972,22 +1173,18 @@ void VForeach::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 
 //==========================================================================
 //
-//  VForeach::Resolve
+//  VForeach::DoResolve
 //
 //==========================================================================
-bool VForeach::Resolve (VEmitContext &ec) {
+bool VForeach::DoResolve (VEmitContext &ec) {
   // indent check
   if (Statement && !CheckCondIndent(Loc, Statement)) return false;
 
-  bool Ret = true;
+  bool res = true;
   if (Expr) Expr = Expr->ResolveIterator(ec);
-  if (!Expr) Ret = false;
-  {
-    auto cidx = ec.EnterCompound(true);
-    if (!Statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(elist, cidx, Loc);
-  }
-  return Ret;
+  if (!Expr) res = false;
+  if (!Statement->Resolve(ec, this)) res = false;
+  return res;
 }
 
 
@@ -1000,22 +1197,50 @@ void VForeach::DoEmit (VEmitContext &ec) {
   Expr->Emit(ec);
   ec.AddStatement(OPC_IteratorInit, Loc);
 
-  auto loopStart = ec.DefineContinue();
-  auto loopEnd = ec.DefineBreak();
+  // allocate labels
+  breakLabel = ec.DefineLabel();
+  contLabel = ec.DefineLabel();
 
-  VLabel Loop = ec.DefineLabel();
+  VLabel loopLbl = ec.DefineLabel();
 
-  ec.AddStatement(OPC_Goto, loopStart.GetLabelNoFinalizers(), Loc);
-  {
-    auto fin = ec.RegisterLoopFinalizer(this);
-    ec.MarkLabel(Loop);
-    Statement->Emit(ec);
-    ec.EmitExitCompound(elist);
-    loopStart.Mark();
-    ec.AddStatement(OPC_IteratorNext, Loc);
-    ec.AddStatement(OPC_IfGoto, Loop, Loc);
-    loopEnd.Mark();
-  }
+  // jump to "next"
+  ec.AddStatement(OPC_Goto, contLabel, Loc);
+
+  // loop body
+  ec.MarkLabel(loopLbl);
+  Statement->Emit(ec, this);
+
+  // emit dtors
+  EmitDtorAndBlock(ec);
+
+  // put continue point here
+  ec.MarkLabel(contLabel);
+
+  ec.AddStatement(OPC_IteratorNext, Loc);
+  ec.AddStatement(OPC_IfGoto, loopLbl, Loc);
+
+  // loop breaks here
+  ec.MarkLabel(breakLabel);
+}
+
+
+//==========================================================================
+//
+//  VForeach::IsBreakScope
+//
+//==========================================================================
+bool VForeach::IsBreakScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VForeach::IsContinueScope
+//
+//==========================================================================
+bool VForeach::IsContinueScope () const noexcept {
+  return true;
 }
 
 
@@ -1034,7 +1259,7 @@ void VForeach::EmitFinalizer (VEmitContext &ec) {
 //  VForeach::IsEndsWithReturn
 //
 //==========================================================================
-bool VForeach::IsEndsWithReturn () const {
+bool VForeach::IsEndsWithReturn () const noexcept {
   return (Statement && Statement->IsEndsWithReturn());
 }
 
@@ -1044,7 +1269,7 @@ bool VForeach::IsEndsWithReturn () const {
 //  VForeach::IsProperCaseEnd
 //
 //==========================================================================
-bool VForeach::IsProperCaseEnd (bool skipBreak) const {
+bool VForeach::IsProperCaseEnd (bool skipBreak) const noexcept {
   return (Statement && Statement->IsProperCaseEnd(true));
 }
 
@@ -1054,7 +1279,7 @@ bool VForeach::IsProperCaseEnd (bool skipBreak) const {
 //  VForeach::FindLabel
 //
 //==========================================================================
-VLabelStmt *VForeach::FindLabel (VName aname) {
+VLabelStmt *VForeach::FindLabel (VName aname) noexcept {
   return (Statement ? Statement->FindLabel(aname) : nullptr);
 }
 
@@ -1064,7 +1289,7 @@ VLabelStmt *VForeach::FindLabel (VName aname) {
 //  VForeach::IsGotoInAllowed
 //
 //==========================================================================
-bool VForeach::IsGotoInAllowed () const {
+bool VForeach::IsGotoInAllowed () const noexcept {
   return false;
 }
 
@@ -1074,7 +1299,7 @@ bool VForeach::IsGotoInAllowed () const {
 //  VForeach::IsGotoOutAllowed
 //
 //==========================================================================
-bool VForeach::IsGotoOutAllowed () const {
+bool VForeach::IsGotoOutAllowed () const noexcept {
   return true;
 }
 
@@ -1171,10 +1396,10 @@ void VForeachIota::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 
 //==========================================================================
 //
-//  VForeachIota::Resolve
+//  VForeachIota::DoResolve
 //
 //==========================================================================
-bool VForeachIota::Resolve (VEmitContext &ec) {
+bool VForeachIota::DoResolve (VEmitContext &ec) {
   // indent check
   if (statement && !CheckCondIndent(Loc, statement)) return false;
 
@@ -1273,13 +1498,9 @@ bool VForeachIota::Resolve (VEmitContext &ec) {
   if (!var) return false;
 
   // finally, resolve statement (last, so local reusing will work as expected)
-  bool Ret = true;
-  {
-    auto cidx = ec.EnterCompound(true);
-    if (!statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(elist, cidx, Loc);
-  }
-  return Ret;
+  bool res = true;
+  if (!statement->Resolve(ec, this)) res = false;
+  return res;
 }
 
 
@@ -1289,30 +1510,56 @@ bool VForeachIota::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachIota::DoEmit (VEmitContext &ec) {
-  // define labels
-  auto loopStart = ec.DefineContinue();
-  auto loopEnd = ec.DefineBreak();
+  // allocate labels
+  breakLabel = ec.DefineLabel();
+  contLabel = ec.DefineLabel();
 
-  VLabel Loop = ec.DefineLabel();
+  VLabel loopLbl = ec.DefineLabel();
 
   // emit initialisation expressions
   if (hiinit) hiinit->Emit(ec); // may be absent for iota with literals
   varinit->Emit(ec);
 
   // do first check
-  var->EmitBranchable(ec, loopEnd.GetLabelNoFinalizers(), false);
+  var->EmitBranchable(ec, breakLabel, false);
 
   // emit embeded statement
-  ec.MarkLabel(Loop);
-  statement->Emit(ec);
-  ec.EmitExitCompound(elist);
+  ec.MarkLabel(loopLbl);
+
+  // emit loop body
+  statement->Emit(ec, this);
+
+  // emit dtors
+  EmitDtorAndBlock(ec);
+
+  // put continue point here
+  ec.MarkLabel(contLabel);
 
   // loop next and test
-  loopStart.Mark(); // continue will jump here
-  varnext->EmitBranchable(ec, Loop, true);
+  varnext->EmitBranchable(ec, loopLbl, true);
 
-  // end of loop
-  loopEnd.Mark();
+  // loop breaks here
+  ec.MarkLabel(breakLabel);
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::IsBreakScope
+//
+//==========================================================================
+bool VForeachIota::IsBreakScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::IsContinueScope
+//
+//==========================================================================
+bool VForeachIota::IsContinueScope () const noexcept {
+  return true;
 }
 
 
@@ -1321,7 +1568,7 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
 //  VForeachIota::IsEndsWithReturn
 //
 //==========================================================================
-bool VForeachIota::IsEndsWithReturn () const {
+bool VForeachIota::IsEndsWithReturn () const noexcept {
   //TODO: endless fors should have at least one return instead
   return (statement && statement->IsEndsWithReturn());
 }
@@ -1332,7 +1579,7 @@ bool VForeachIota::IsEndsWithReturn () const {
 //  VForeachIota::IsProperCaseEnd
 //
 //==========================================================================
-bool VForeachIota::IsProperCaseEnd (bool skipBreak) const {
+bool VForeachIota::IsProperCaseEnd (bool skipBreak) const noexcept {
   return (statement && statement->IsProperCaseEnd(true));
 }
 
@@ -1342,7 +1589,7 @@ bool VForeachIota::IsProperCaseEnd (bool skipBreak) const {
 //  VForeachIota::FindLabel
 //
 //==========================================================================
-VLabelStmt *VForeachIota::FindLabel (VName aname) {
+VLabelStmt *VForeachIota::FindLabel (VName aname) noexcept {
   return (statement ? statement->FindLabel(aname) : nullptr);
 }
 
@@ -1352,7 +1599,7 @@ VLabelStmt *VForeachIota::FindLabel (VName aname) {
 //  VForeachIota::IsGotoInAllowed
 //
 //==========================================================================
-bool VForeachIota::IsGotoInAllowed () const {
+bool VForeachIota::IsGotoInAllowed () const noexcept {
   return false;
 }
 
@@ -1459,10 +1706,10 @@ void VForeachArray::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 
 //==========================================================================
 //
-//  VForeachArray::Resolve
+//  VForeachArray::DoResolve
 //
 //==========================================================================
-bool VForeachArray::Resolve (VEmitContext &ec) {
+bool VForeachArray::DoResolve (VEmitContext &ec) {
   // indent check
   if (statement && !CheckCondIndent(Loc, statement)) return false;
 
@@ -1645,13 +1892,9 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   if (!loopLoad) return false;
 
   // finally, resolve statement (last, so local reusing will work as expected)
-  bool Ret = true;
-  {
-    auto cidx = ec.EnterCompound(true);
-    if (!statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(elist, cidx, Loc);
-  }
-  return Ret;
+  bool res = true;
+  if (!statement->Resolve(ec, this)) res = false;
+  return res;
 }
 
 
@@ -1661,35 +1904,61 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachArray::DoEmit (VEmitContext &ec) {
-  // define labels
-  auto loopStart = ec.DefineContinue();
-  auto loopEnd = ec.DefineBreak();
+  // allocate labels
+  breakLabel = ec.DefineLabel();
+  contLabel = ec.DefineLabel();
 
-  VLabel Loop = ec.DefineLabel();
+  VLabel loopLbl = ec.DefineLabel();
 
   // emit initialisation expressions
   if (hiinit) hiinit->Emit(ec); // may be absent for reverse loops
   idxinit->Emit(ec);
 
   // do first check
-  loopPreCheck->EmitBranchable(ec, loopEnd.GetLabelNoFinalizers(), false);
+  loopPreCheck->EmitBranchable(ec, breakLabel, false);
 
   // actual loop
-  ec.MarkLabel(Loop);
+  ec.MarkLabel(loopLbl);
+
   // load value
   if (isRef) varaddr->Emit(ec);
   loopLoad->Emit(ec);
   if (isRef) ec.AddStatement(OPC_AssignPtrDrop, Loc);
-  // and emit loop body
-  statement->Emit(ec);
-  ec.EmitExitCompound(elist);
+
+  // emit loop body
+  statement->Emit(ec, this);
+
+  // emit dtors
+  EmitDtorAndBlock(ec);
+
+  // put continue point here
+  ec.MarkLabel(contLabel);
 
   // loop next and test
-  loopStart.Mark(); // continue will jump here
-  loopNext->EmitBranchable(ec, Loop, true);
+  loopNext->EmitBranchable(ec, loopLbl, true);
 
-  // end of loop
-  loopEnd.Mark();
+  // loop breaks here
+  ec.MarkLabel(breakLabel);
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::IsBreakScope
+//
+//==========================================================================
+bool VForeachArray::IsBreakScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::IsContinueScope
+//
+//==========================================================================
+bool VForeachArray::IsContinueScope () const noexcept {
+  return true;
 }
 
 
@@ -1698,7 +1967,7 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
 //  VForeachArray::IsEndsWithReturn
 //
 //==========================================================================
-bool VForeachArray::IsEndsWithReturn () const {
+bool VForeachArray::IsEndsWithReturn () const noexcept {
   //TODO: endless fors should have at least one return instead
   return (statement && statement->IsEndsWithReturn());
 }
@@ -1709,7 +1978,7 @@ bool VForeachArray::IsEndsWithReturn () const {
 //  VForeachArray::IsProperCaseEnd
 //
 //==========================================================================
-bool VForeachArray::IsProperCaseEnd (bool skipBreak) const {
+bool VForeachArray::IsProperCaseEnd (bool skipBreak) const noexcept {
   return (statement && statement->IsProperCaseEnd(true));
 }
 
@@ -1719,7 +1988,7 @@ bool VForeachArray::IsProperCaseEnd (bool skipBreak) const {
 //  VForeachArray::FindLabel
 //
 //==========================================================================
-VLabelStmt *VForeachArray::FindLabel (VName aname) {
+VLabelStmt *VForeachArray::FindLabel (VName aname) noexcept {
   return (statement ? statement->FindLabel(aname) : nullptr);
 }
 
@@ -1729,7 +1998,7 @@ VLabelStmt *VForeachArray::FindLabel (VName aname) {
 //  VForeachArray::IsGotoInAllowed
 //
 //==========================================================================
-bool VForeachArray::IsGotoInAllowed () const {
+bool VForeachArray::IsGotoInAllowed () const noexcept {
   return false;
 }
 
@@ -1835,10 +2104,10 @@ void VForeachScripted::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 
 //==========================================================================
 //
-//  VForeachScripted::Resolve
+//  VForeachScripted::DoResolve
 //
 //==========================================================================
-bool VForeachScripted::Resolve (VEmitContext &ec) {
+bool VForeachScripted::DoResolve (VEmitContext &ec) {
   // indent check
   if (statement && !CheckCondIndent(Loc, statement)) return false;
 
@@ -2005,13 +2274,9 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
   }
 
   // finally, resolve statement (last, so local reusing will work as expected)
-  bool Ret = true;
-  {
-    auto cidx = ec.EnterCompound(true);
-    if (!statement->Resolve(ec)) Ret = false;
-    ec.ExitCompound(elist, cidx, Loc);
-  }
-  return Ret;
+  bool res = true;
+  if (!statement->Resolve(ec, this)) res = false;
+  return res;
 }
 
 
@@ -2030,38 +2295,55 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
     ivInit->Emit(ec);
   }
 
-  // push iterator
-  //ec.AddStatement(OPC_IteratorDtorAt, loopEnd.GetLabelNoFinalizers(), Loc);
-
-  // define labels
-  auto loopStart = ec.DefineContinue();
-  auto loopEnd = ec.DefineBreak();
+  // allocate labels
+  breakLabel = ec.DefineLabel();
+  contLabel = ec.DefineLabel();
 
   // actual loop
-  {
-    // register finalizer, and mark loop start
-    auto fin = ec.RegisterLoopFinalizer(this);
-    loopStart.Mark();
-    // call next
-    ivNext->EmitBranchable(ec, loopEnd.GetLabelNoFinalizers(), false);
-    // emit loop body
-    statement->Emit(ec);
-    ec.EmitExitCompound(elist);
-    // again
-    ec.AddStatement(OPC_Goto, loopStart.GetLabelNoFinalizers(), Loc);
 
-    // end of loop
-    loopEnd.Mark();
-  }
-  // finalizer is emited
+  // put continue point here
+  ec.MarkLabel(contLabel);
 
-  // dtor
-  //if (ivDone) ivDone->Emit(ec);
+  // call next
+  ivNext->EmitBranchable(ec, breakLabel, false);
 
-  // pop iterator
-  //ec.AddStatement(OPC_IteratorFinish, Loc);
+  // emit loop body
+  statement->Emit(ec, this);
 
+  // emit dtors
+  EmitDtorAndBlock(ec);
+
+  // again
+  ec.AddStatement(OPC_Goto, contLabel, Loc);
+
+  // loop breaks here
+  ec.MarkLabel(breakLabel);
+
+  // emit finalizer
+  EmitFinalizerAndBlock(ec);
+
+  // jump point for "loop not taken"
   ec.MarkLabel(LoopExitSkipDtor);
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::IsBreakScope
+//
+//==========================================================================
+bool VForeachScripted::IsBreakScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::IsContinueScope
+//
+//==========================================================================
+bool VForeachScripted::IsContinueScope () const noexcept {
+  return true;
 }
 
 
@@ -2080,7 +2362,7 @@ void VForeachScripted::EmitFinalizer (VEmitContext &ec) {
 //  VForeachScripted::IsEndsWithReturn
 //
 //==========================================================================
-bool VForeachScripted::IsEndsWithReturn () const {
+bool VForeachScripted::IsEndsWithReturn () const noexcept {
   //TODO: endless fors should have at least one return instead
   return (statement && statement->IsEndsWithReturn());
 }
@@ -2091,7 +2373,7 @@ bool VForeachScripted::IsEndsWithReturn () const {
 //  VForeachScripted::IsProperCaseEnd
 //
 //==========================================================================
-bool VForeachScripted::IsProperCaseEnd (bool skipBreak) const {
+bool VForeachScripted::IsProperCaseEnd (bool skipBreak) const noexcept {
   return (statement && statement->IsProperCaseEnd(true));
 }
 
@@ -2101,7 +2383,7 @@ bool VForeachScripted::IsProperCaseEnd (bool skipBreak) const {
 //  VForeachScripted::FindLabel
 //
 //==========================================================================
-VLabelStmt *VForeachScripted::FindLabel (VName aname) {
+VLabelStmt *VForeachScripted::FindLabel (VName aname) noexcept {
   return (statement ? statement->FindLabel(aname) : nullptr);
 }
 
@@ -2111,7 +2393,7 @@ VLabelStmt *VForeachScripted::FindLabel (VName aname) {
 //  VForeachScripted::IsGotoInAllowed
 //
 //==========================================================================
-bool VForeachScripted::IsGotoInAllowed () const {
+bool VForeachScripted::IsGotoInAllowed () const noexcept {
   return false;
 }
 
@@ -2121,7 +2403,7 @@ bool VForeachScripted::IsGotoInAllowed () const {
 //  VForeachScripted::IsGotoOutAllowed
 //
 //==========================================================================
-bool VForeachScripted::IsGotoOutAllowed () const {
+bool VForeachScripted::IsGotoOutAllowed () const noexcept {
   return true;
 }
 
@@ -2188,10 +2470,10 @@ void VSwitch::DoSyntaxCopyTo (VStatement *e) {
   VStatement::DoSyntaxCopyTo(e);
   auto res = (VSwitch *)e;
   res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
-  res->CaseInfo.SetNum(CaseInfo.length());
+  res->CaseInfo.setLength(CaseInfo.length());
   for (int f = 0; f < CaseInfo.length(); ++f) res->CaseInfo[f] = CaseInfo[f];
   res->DefaultAddress = DefaultAddress;
-  res->Statements.SetNum(Statements.length());
+  res->Statements.setLength(Statements.length());
   for (int f = 0; f < Statements.length(); ++f) res->Statements[f] = (Statements[f] ? Statements[f]->SyntaxCopy() : nullptr);
   res->HaveDefault = HaveDefault;
   res->DoFixSwitch(this, res);
@@ -2210,11 +2492,11 @@ void VSwitch::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 
 //==========================================================================
 //
-//  VSwitch::Resolve
+//  VSwitch::DoResolve
 //
 //==========================================================================
-bool VSwitch::Resolve (VEmitContext &ec) {
-  bool Ret = true;
+bool VSwitch::DoResolve (VEmitContext &ec) {
+  bool res = true;
 
   if (Expr) Expr = Expr->Resolve(ec);
 
@@ -2225,30 +2507,32 @@ bool VSwitch::Resolve (VEmitContext &ec) {
     if (Expr) {
       ParseError(Loc, "Invalid switch expression type (%s)", *Expr->Type.GetName());
     }
-    Ret = false;
+    res = false;
   }
 
   // first resolve all cases and default
-  for (int i = 0; i < Statements.length(); ++i) {
-    VStatement *st = Statements[i];
+  for (auto &&st : Statements) {
+    if (st->IsVarDecl()) {
+      ParseError(st->Loc, "Declaring locals inside switch and without an explicit scope is forbidden");
+      res = false;
+    }
     if (st->IsSwitchCase() || st->IsSwitchDefault()) {
-      if (!st->Resolve(ec)) return false;
+      if (!st->Resolve(ec, this)) return false;
     }
   }
 
   // now resolve other statements
-  for (int i = 0; i < Statements.length(); ++i) {
-    VStatement *st = Statements[i];
+  for (auto &&st : Statements) {
     if (!st->IsSwitchCase() && !st->IsSwitchDefault()) {
-      if (!st->Resolve(ec)) Ret = false;
+      if (!st->Resolve(ec, this)) res = false;
     }
   }
 
-  if (Ret) {
-    if (!checkProperCaseEnd(true)) Ret = false;
+  if (res) {
+    if (!checkProperCaseEnd(true)) res = false;
   }
 
-  return Ret;
+  return res;
 }
 
 
@@ -2260,23 +2544,26 @@ bool VSwitch::Resolve (VEmitContext &ec) {
 void VSwitch::DoEmit (VEmitContext &ec) {
   Expr->Emit(ec);
 
-  auto loopEnd = ec.DefineBreak();
-  bool isName = (Expr->Type.Type == TYPE_Name);
+  // allocate labels
+  breakLabel = ec.DefineLabel();
+  //auto loopEnd = ec.DefineBreak(nullptr);
+
+  const bool isName = (Expr->Type.Type == TYPE_Name);
 
   // case table
-  for (int i = 0; i < CaseInfo.length(); ++i) {
-    CaseInfo[i].Address = ec.DefineLabel();
+  for (auto &&ci : CaseInfo) {
+    ci.Address = ec.DefineLabel();
     if (!isName) {
       // int/byte
-      if (CaseInfo[i].Value >= 0 && CaseInfo[i].Value < 256) {
-        ec.AddStatement(OPC_CaseGotoB, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
-      } else if (CaseInfo[i].Value >= MIN_VINT16 && CaseInfo[i].Value < MAX_VINT16) {
-        ec.AddStatement(OPC_CaseGotoS, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
+      if (ci.Value >= 0 && ci.Value < 256) {
+        ec.AddStatement(OPC_CaseGotoB, ci.Value, ci.Address, Loc);
+      } else if (ci.Value >= MIN_VINT16 && ci.Value < MAX_VINT16) {
+        ec.AddStatement(OPC_CaseGotoS, ci.Value, ci.Address, Loc);
       } else {
-        ec.AddStatement(OPC_CaseGoto, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
+        ec.AddStatement(OPC_CaseGoto, ci.Value, ci.Address, Loc);
       }
     } else {
-      ec.AddStatement(OPC_CaseGotoN, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
+      ec.AddStatement(OPC_CaseGotoN, ci.Value, ci.Address, Loc);
     }
   }
   ec.AddStatement(OPC_Drop, Loc);
@@ -2286,13 +2573,27 @@ void VSwitch::DoEmit (VEmitContext &ec) {
     DefaultAddress = ec.DefineLabel();
     ec.AddStatement(OPC_Goto, DefaultAddress, Loc);
   } else {
-    ec.AddStatement(OPC_Goto, loopEnd.GetLabelNoFinalizers(), Loc);
+    ec.AddStatement(OPC_Goto, breakLabel, Loc);
   }
 
   // switch statements
-  for (int i = 0; i < Statements.length(); ++i) Statements[i]->Emit(ec);
+  for (auto &&st : Statements) st->Emit(ec, this);
 
-  loopEnd.Mark();
+  // emit dtors
+  //EmitDtorAndBlock(ec);
+
+  // loop breaks here
+  ec.MarkLabel(breakLabel);
+}
+
+
+//==========================================================================
+//
+//  VSwitch::IsBreakScope
+//
+//==========================================================================
+bool VSwitch::IsBreakScope () const noexcept {
+  return true;
 }
 
 
@@ -2301,7 +2602,7 @@ void VSwitch::DoEmit (VEmitContext &ec) {
 //  VSwitch::IsEndsWithReturn
 //
 //==========================================================================
-bool VSwitch::IsEndsWithReturn () const {
+bool VSwitch::IsEndsWithReturn () const noexcept {
   //FIXME: `goto case` and `goto default`
   if (Statements.length() == 0) return false;
   bool defautSeen = false;
@@ -2338,10 +2639,10 @@ bool VSwitch::IsEndsWithReturn () const {
 
 //==========================================================================
 //
-//  VSwitch::checkProperCaseEnd
+//  VSwitch::IsProperCaseEnd
 //
 //==========================================================================
-bool VSwitch::IsProperCaseEnd (bool skipBreak) const {
+bool VSwitch::IsProperCaseEnd (bool skipBreak) const noexcept {
   return IsEndsWithReturn();
 }
 
@@ -2351,7 +2652,7 @@ bool VSwitch::IsProperCaseEnd (bool skipBreak) const {
 //  VSwitch::checkProperCaseEnd
 //
 //==========================================================================
-bool VSwitch::checkProperCaseEnd (bool reportSwitchCase) const {
+bool VSwitch::checkProperCaseEnd (bool reportSwitchCase) const noexcept {
   if (Statements.length() == 0) return true;
   bool statementSeen = false;
   bool isEndSeen = false;
@@ -2397,7 +2698,7 @@ bool VSwitch::checkProperCaseEnd (bool reportSwitchCase) const {
 //  VSwitch::FindLabel
 //
 //==========================================================================
-VLabelStmt *VSwitch::FindLabel (VName aname) {
+VLabelStmt *VSwitch::FindLabel (VName aname) noexcept {
   for (int f = 0; f < Statements.length(); ++f) {
     VLabelStmt *lbl = (Statements[f] ? Statements[f]->FindLabel(aname) : nullptr);
     if (lbl) return lbl;
@@ -2427,7 +2728,7 @@ bool VSwitch::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
 //  VSwitch::IsJumpOverAllowed
 //
 //==========================================================================
-bool VSwitch::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const {
+bool VSwitch::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const noexcept {
   if (s0 == s1) return true;
   if (!s0 || !s1) return false;
   int idx0 = -1, idx1 = -1;
@@ -2531,10 +2832,10 @@ void VSwitchCase::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 
 //==========================================================================
 //
-//  VSwitchCase::Resolve
+//  VSwitchCase::DoResolve
 //
 //==========================================================================
-bool VSwitchCase::Resolve (VEmitContext &ec) {
+bool VSwitchCase::DoResolve (VEmitContext &ec) {
   if (Switch && Expr && Switch->Expr && Switch->Expr->Type.Type == TYPE_Name) {
     Expr = Expr->Resolve(ec);
     if (!Expr) return false;
@@ -2555,8 +2856,8 @@ bool VSwitchCase::Resolve (VEmitContext &ec) {
 
   bool res = true;
 
-  for (int i = 0; i < Switch->CaseInfo.length(); ++i) {
-    if (Switch->CaseInfo[i].Value == Value) {
+  for (auto &&ci : Switch->CaseInfo) {
+    if (ci.Value == Value) {
       ParseError(Loc, "Duplicate case value");
       res = false;
       break;
@@ -2587,7 +2888,7 @@ void VSwitchCase::DoEmit (VEmitContext &ec) {
 //  VSwitchCase::IsCase
 //
 //==========================================================================
-bool VSwitchCase::IsSwitchCase () const {
+bool VSwitchCase::IsSwitchCase () const noexcept {
   return true;
 }
 
@@ -2641,10 +2942,10 @@ void VSwitchDefault::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 
 //==========================================================================
 //
-//  VSwitchDefault::Resolve
+//  VSwitchDefault::DoResolve
 //
 //==========================================================================
-bool VSwitchDefault::Resolve (VEmitContext &) {
+bool VSwitchDefault::DoResolve (VEmitContext &) {
   if (Switch->HaveDefault) {
     ParseError(Loc, "Only one `default` per switch allowed");
     return false;
@@ -2669,7 +2970,7 @@ void VSwitchDefault::DoEmit (VEmitContext &ec) {
 //  VSwitchDefault::IsSwitchDefault
 //
 //==========================================================================
-bool VSwitchDefault::IsSwitchDefault () const {
+bool VSwitchDefault::IsSwitchDefault () const noexcept {
   return true;
 }
 
@@ -2699,11 +3000,20 @@ VStatement *VBreak::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VBreak::Resolve
+//  VBreak::DoResolve
 //
 //==========================================================================
-bool VBreak::Resolve (VEmitContext &) {
-  return true;
+bool VBreak::DoResolve (VEmitContext &ec) {
+  // check if we have a good break scope
+  for (VStatement *st = UpScope; st; st = st->UpScope) {
+    if (st->IsBreakScope()) return true;
+    if (!st->IsReturnAllowed()) {
+      ParseError(Loc, "`break` outside of a restricted scope");
+      return false;
+    }
+  }
+  ParseError(Loc, "`break` without loop or switch");
+  return false;
 }
 
 
@@ -2713,7 +3023,19 @@ bool VBreak::Resolve (VEmitContext &) {
 //
 //==========================================================================
 void VBreak::DoEmit (VEmitContext &ec) {
-  if (!ec.EmitBreak(Loc)) ParseError(Loc, "Misplaced `break` statement");
+  // emit dtors for all scopes
+  // emit finalizers for all scopes except the destination one
+  for (VStatement *st = this; st; st = st->UpScope) {
+    st->EmitDtor(ec);
+    if (!st->IsBreakScope()) {
+      st->EmitFinalizer(ec);
+    } else {
+      // jump to break destination
+      ec.AddStatement(OPC_Goto, st->breakLabel, Loc);
+      return;
+    }
+  }
+  VCFatalError("internal compiler error (break)");
 }
 
 
@@ -2722,7 +3044,7 @@ void VBreak::DoEmit (VEmitContext &ec) {
 //  VBreak::IsBreak
 //
 //==========================================================================
-bool VBreak::IsBreak () const {
+bool VBreak::IsBreak () const noexcept {
   return true;
 }
 
@@ -2752,11 +3074,20 @@ VStatement *VContinue::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VContinue::Resolve
+//  VContinue::DoResolve
 //
 //==========================================================================
-bool VContinue::Resolve (VEmitContext &) {
-  return true;
+bool VContinue::DoResolve (VEmitContext &) {
+  // check if we have a good continue scope
+  for (VStatement *st = UpScope; st; st = st->UpScope) {
+    if (st->IsContinueScope()) return true;
+    if (!st->IsReturnAllowed()) {
+      ParseError(Loc, "`continue` outside of a restricted scope");
+      return false;
+    }
+  }
+  ParseError(Loc, "`continue` without loop or switch");
+  return false;
 }
 
 
@@ -2766,7 +3097,19 @@ bool VContinue::Resolve (VEmitContext &) {
 //
 //==========================================================================
 void VContinue::DoEmit (VEmitContext &ec) {
-  if (!ec.EmitContinue(Loc)) ParseError(Loc, "Misplaced `continue` statement");
+  // emit dtors for all scopes
+  // emit finalizers for all scopes except the destination one
+  for (VStatement *st = this; st; st = st->UpScope) {
+    st->EmitDtor(ec);
+    if (!st->IsContinueScope()) {
+      st->EmitFinalizer(ec);
+    } else {
+      // jump to break destination
+      ec.AddStatement(OPC_Goto, st->breakLabel, Loc);
+      return;
+    }
+  }
+  VCFatalError("internal compiler error (break)");
 }
 
 
@@ -2775,7 +3118,7 @@ void VContinue::DoEmit (VEmitContext &ec) {
 //  VContinue::IsContinue
 //
 //==========================================================================
-bool VContinue::IsContinue () const {
+bool VContinue::IsContinue () const noexcept {
   return true;
 }
 
@@ -2830,34 +3173,70 @@ void VReturn::DoSyntaxCopyTo (VStatement *e) {
 
 //==========================================================================
 //
-//  VReturn::Resolve
+//  VReturn::DoResolve
 //
 //==========================================================================
-bool VReturn::Resolve (VEmitContext &ec) {
-  NumLocalsToClear = ec.GetLocalDefCount();
-  bool Ret = true;
+bool VReturn::DoResolve (VEmitContext &ec) {
+  bool res = true;
+  // check if we can return from here
+  for (VStatement *st = UpScope; st; st = st->UpScope) {
+    if (!st->IsReturnAllowed()) {
+      ParseError(Loc, "`return` outside of a restricted scope");
+      res = false;
+      break;
+    }
+  }
+
   if (Expr) {
     Expr = (ec.FuncRetType.Type == TYPE_Float ? Expr->ResolveFloat(ec) : Expr->Resolve(ec));
     if (ec.FuncRetType.Type == TYPE_Void) {
       ParseError(Loc, "void function cannot return a value");
-      Ret = false;
+      res = false;
     } else if (Expr) {
       if (Expr->Type.GetStackSize() == 4 || Expr->Type.Type == TYPE_Vector) {
-        Ret = Expr->Type.CheckMatch(false, Expr->Loc, ec.FuncRetType);
+        res = Expr->Type.CheckMatch(false, Expr->Loc, ec.FuncRetType);
       } else {
         ParseError(Loc, "Bad return type");
-        Ret = false;
+        res = false;
       }
     } else {
-      Ret = false;
+      res = false;
     }
   } else {
     if (ec.FuncRetType.Type != TYPE_Void) {
       ParseError(Loc, "Return value expected");
-      Ret = false;
+      res = false;
     }
   }
-  return Ret;
+
+  return res;
+
+  /*
+  NumLocalsToClear = ec.GetLocalDefCount();
+  bool res = true;
+  if (Expr) {
+    Expr = (ec.FuncRetType.Type == TYPE_Float ? Expr->ResolveFloat(ec) : Expr->Resolve(ec));
+    if (ec.FuncRetType.Type == TYPE_Void) {
+      ParseError(Loc, "void function cannot return a value");
+      res = false;
+    } else if (Expr) {
+      if (Expr->Type.GetStackSize() == 4 || Expr->Type.Type == TYPE_Vector) {
+        res = Expr->Type.CheckMatch(false, Expr->Loc, ec.FuncRetType);
+      } else {
+        ParseError(Loc, "Bad return type");
+        res = false;
+      }
+    } else {
+      res = false;
+    }
+  } else {
+    if (ec.FuncRetType.Type != TYPE_Void) {
+      ParseError(Loc, "Return value expected");
+      res = false;
+    }
+  }
+  return res;
+  */
 }
 
 
@@ -2867,13 +3246,30 @@ bool VReturn::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VReturn::DoEmit (VEmitContext &ec) {
+  if (Expr) Expr->Emit(ec);
+
+  // emit dtors and finalizers for all scopes
+  for (VStatement *st = this; st; st = st->UpScope) {
+    st->EmitDtor(ec);
+    st->EmitFinalizer(ec);
+  }
+
+  if (Expr) {
+         if (Expr->Type.GetStackSize() == 4) ec.AddStatement(OPC_ReturnL, Loc);
+    else if (Expr->Type.Type == TYPE_Vector) ec.AddStatement(OPC_ReturnV, Loc);
+    else ParseError(Loc, "Bad return type `%s`", *Expr->Type.GetName());
+  } else {
+    ec.AddStatement(OPC_Return, Loc);
+  }
+
+  /*
   if (!ec.IsReturnAllowed()) {
     ParseError(Loc, "`return` is not allowed here");
     return;
   }
   if (Expr) {
     Expr->Emit(ec);
-    ec.EmitFinalizers();
+    ec.EmitDtors();
     ec.EmitLocalDtors(0, NumLocalsToClear, Loc);
     if (Expr->Type.GetStackSize() == 4) {
       ec.AddStatement(OPC_ReturnL, Loc);
@@ -2883,10 +3279,12 @@ void VReturn::DoEmit (VEmitContext &ec) {
       ParseError(Loc, "Bad return type");
     }
   } else {
+    ec.EmitDtors();
     ec.EmitFinalizers();
     ec.EmitLocalDtors(0, NumLocalsToClear, Loc);
     ec.AddStatement(OPC_Return, Loc);
   }
+  */
 }
 
 
@@ -2895,7 +3293,7 @@ void VReturn::DoEmit (VEmitContext &ec) {
 //  VReturn::IsReturn
 //
 //==========================================================================
-bool VReturn::IsReturn () const {
+bool VReturn::IsReturn () const noexcept {
   return true;
 }
 
@@ -2949,14 +3347,14 @@ void VExpressionStatement::DoSyntaxCopyTo (VStatement *e) {
 
 //==========================================================================
 //
-//  VExpressionStatement::Resolve
+//  VExpressionStatement::DoResolve
 //
 //==========================================================================
-bool VExpressionStatement::Resolve (VEmitContext &ec) {
-  bool Ret = true;
+bool VExpressionStatement::DoResolve (VEmitContext &ec) {
+  bool res = true;
   if (Expr) Expr = Expr->Resolve(ec);
-  if (!Expr) Ret = false;
-  return Ret;
+  if (!Expr) res = false;
+  return res;
 }
 
 
@@ -2967,85 +3365,6 @@ bool VExpressionStatement::Resolve (VEmitContext &ec) {
 //==========================================================================
 void VExpressionStatement::DoEmit (VEmitContext &ec) {
   Expr->Emit(ec);
-}
-
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::VLocalVarStatement
-//
-//==========================================================================
-VLocalVarStatement::VLocalVarStatement (VLocalDecl *ADecl)
-  : VStatement(ADecl->Loc)
-  , Decl(ADecl)
-{
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::~VLocalVarStatement
-//
-//==========================================================================
-VLocalVarStatement::~VLocalVarStatement () {
-  delete Decl; Decl = nullptr;
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::SyntaxCopy
-//
-//==========================================================================
-VStatement *VLocalVarStatement::SyntaxCopy () {
-  auto res = new VLocalVarStatement();
-  DoSyntaxCopyTo(res);
-  return res;
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::DoSyntaxCopyTo
-//
-//==========================================================================
-void VLocalVarStatement::DoSyntaxCopyTo (VStatement *e) {
-  VStatement::DoSyntaxCopyTo(e);
-  auto res = (VLocalVarStatement *)e;
-  res->Decl = (VLocalDecl *)(Decl ? Decl->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::Resolve
-//
-//==========================================================================
-bool VLocalVarStatement::Resolve (VEmitContext &ec) {
-  bool Ret = true;
-  Decl->Declare(ec);
-  return Ret;
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::DoEmit
-//
-//==========================================================================
-void VLocalVarStatement::DoEmit (VEmitContext &ec) {
-  Decl->EmitInitialisations(ec);
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::IsVarDecl
-//
-//==========================================================================
-bool VLocalVarStatement::IsVarDecl () const {
-  return true;
 }
 
 
@@ -3105,10 +3424,10 @@ void VDeleteStatement::DoSyntaxCopyTo (VStatement *e) {
 
 //==========================================================================
 //
-//  VDeleteStatement::Resolve
+//  VDeleteStatement::DoResolve
 //
 //==========================================================================
-bool VDeleteStatement::Resolve (VEmitContext &ec) {
+bool VDeleteStatement::DoResolve (VEmitContext &ec) {
   if (!var) return false;
 
   // build check expression
@@ -3155,22 +3474,229 @@ void VDeleteStatement::DoEmit (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VCompound::VCompound
+//  VBaseCompoundStatement::VBaseCompoundStatement
 //
 //==========================================================================
-VCompound::VCompound (const TLocation &ALoc) : VStatement(ALoc) {
+VBaseCompoundStatement::VBaseCompoundStatement (const TLocation &aloc) : VStatement(aloc) {
 }
 
 
 //==========================================================================
 //
-//  VCompound::~VCompound
+//  VBaseCompoundStatement::~VBaseCompoundStatement
 //
 //==========================================================================
-VCompound::~VCompound () {
-  for (int i = 0; i < Statements.length(); ++i) {
-    delete Statements[i]; Statements[i] = nullptr;
+VBaseCompoundStatement::~VBaseCompoundStatement () {
+  for (auto &&st : Statements) delete st;
+  Statements.clear();
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::DoSyntaxCopyTo
+//
+//==========================================================================
+void VBaseCompoundStatement::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VBaseCompoundStatement *)e;
+  res->Statements.setLength(Statements.length());
+  for (int f = 0; f < Statements.length(); ++f) res->Statements[f] = (Statements[f] ? Statements[f]->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::IsEndsWithReturn
+//
+//==========================================================================
+bool VBaseCompoundStatement::IsEndsWithReturn () const noexcept {
+  for (auto &&st : Statements) {
+    if (!st) continue;
+    if (st->IsEndsWithReturn()) return true;
+    if (st->IsFlowStop()) break;
   }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::IsProperCaseEnd
+//
+//==========================================================================
+bool VBaseCompoundStatement::IsProperCaseEnd (bool skipBreak) const noexcept {
+  for (auto &&st : Statements) {
+    if (!st) continue;
+    if (st->IsProperCaseEnd(skipBreak)) return true;
+    if (st->IsFlowStop()) break;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::FindLabel
+//
+//==========================================================================
+VLabelStmt *VBaseCompoundStatement::FindLabel (VName aname) noexcept {
+  for (auto &&st : Statements) {
+    VLabelStmt *lbl = (st ? st->FindLabel(aname) : nullptr);
+    if (lbl) return lbl;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::BuildPathTo
+//
+//==========================================================================
+bool VBaseCompoundStatement::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
+  if (dest == this) { path.append(this); return true; }
+  path.append(this);
+  for (auto &&st : Statements) {
+    if (st && st->BuildPathTo(dest, path)) return true;
+  }
+  path.removeAt(path.length()-1);
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::IsJumpOverAllowed
+//
+//==========================================================================
+bool VBaseCompoundStatement::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const noexcept {
+  if (s0 == s1) return true;
+  if (!s0 || !s1) return false;
+  int idx0 = -1, idx1 = -1;
+  for (int f = Statements.length()-1; f >= 0; --f) {
+         if (Statements[f] == s0) idx0 = f;
+    else if (Statements[f] == s1) idx1 = f;
+  }
+  if (idx0 < 0 || idx1 < 0) return false; // the thing that should not be
+  if (idx0 > idx1) { int tmp = idx0; idx0 = idx1; idx1 = tmp; }
+  for (int f = idx0; f <= idx1; ++f) {
+    if (Statements[f] && Statements[f]->IsVarDecl()) return false;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::DoFixSwitch
+//
+//==========================================================================
+void VBaseCompoundStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  for (auto &&st : Statements) if (st) st->DoFixSwitch(aold, anew);
+}
+
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::VLocalVarStatement
+//
+//==========================================================================
+VLocalVarStatement::VLocalVarStatement (VLocalDecl *ADecl)
+  : VBaseCompoundStatement(ADecl->Loc)
+  , Decl(ADecl)
+{
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::~VLocalVarStatement
+//
+//==========================================================================
+VLocalVarStatement::~VLocalVarStatement () {
+  delete Decl; Decl = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::SyntaxCopy
+//
+//==========================================================================
+VStatement *VLocalVarStatement::SyntaxCopy () {
+  auto res = new VLocalVarStatement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::DoSyntaxCopyTo
+//
+//==========================================================================
+void VLocalVarStatement::DoSyntaxCopyTo (VStatement *e) {
+  VBaseCompoundStatement::DoSyntaxCopyTo(e);
+  auto res = (VLocalVarStatement *)e;
+  res->Decl = (VLocalDecl *)(Decl ? Decl->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::DoResolve
+//
+//==========================================================================
+bool VLocalVarStatement::DoResolve (VEmitContext &ec) {
+  bool res = true;
+  Decl->Declare(ec);
+  CreateLocalVarScope(Statements);
+  for (auto &&st : Statements) {
+    if (!st->Resolve(ec, this)) res = false;
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::DoEmit
+//
+//==========================================================================
+void VLocalVarStatement::DoEmit (VEmitContext &ec) {
+  Decl->EmitInitialisations(ec);
+  for (auto &&st : Statements) st->Emit(ec, this);
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::EmitDtor
+//
+//==========================================================================
+void VLocalVarStatement::EmitDtor (VEmitContext &ec) {
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::IsVarDecl
+//
+//==========================================================================
+bool VLocalVarStatement::IsVarDecl () const noexcept {
+  return true;
+}
+
+
+
+//==========================================================================
+//
+//  VCompound::VCompound
+//
+//==========================================================================
+VCompound::VCompound (const TLocation &ALoc) : VBaseCompoundStatement(ALoc) {
 }
 
 
@@ -3179,7 +3705,7 @@ VCompound::~VCompound () {
 //  VCompound::IsCompound
 //
 //==========================================================================
-bool VCompound::IsCompound () const {
+bool VCompound::IsCompound () const noexcept {
   return true;
 }
 
@@ -3202,42 +3728,22 @@ VStatement *VCompound::SyntaxCopy () {
 //
 //==========================================================================
 void VCompound::DoSyntaxCopyTo (VStatement *e) {
-  VStatement::DoSyntaxCopyTo(e);
-  auto res = (VCompound *)e;
-  res->Statements.SetNum(Statements.length());
-  for (int f = 0; f < Statements.length(); ++f) res->Statements[f] = (Statements[f] ? Statements[f]->SyntaxCopy() : nullptr);
+  VBaseCompoundStatement::DoSyntaxCopyTo(e);
 }
 
 
 //==========================================================================
 //
-//  VCompound::DoFixSwitch
+//  VCompound::DoResolve
 //
 //==========================================================================
-void VCompound::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  for (int f = 0; f < Statements.length(); ++f) if (Statements[f]) Statements[f]->DoFixSwitch(aold, anew);
-}
-
-
-//==========================================================================
-//
-//  VCompound::Resolve
-//
-//==========================================================================
-bool VCompound::Resolve (VEmitContext &ec) {
-  bool Ret = true;
-  auto cidx = ec.EnterCompound(false); // not a loop
-  //fprintf(stderr, "ENTERING COMPOUND %d (%s:%d)\n", cidx, *Loc.GetSource(), Loc.GetLine());
-  for (int i = 0; i < Statements.length(); ++i) {
-    if (!Statements[i]->Resolve(ec)) {
-      //fprintf(stderr, "=== %s ===\n", *shitppTypeNameObj(*Statements[i]));
-      //ParseError(Statements[i]->Loc, "error resolving statement");
-      Ret = false;
-    }
+bool VCompound::DoResolve (VEmitContext &ec) {
+  bool res = true;
+  CreateLocalVarScope(Statements);
+  for (auto &&st : Statements) {
+    if (!st->Resolve(ec, this)) res = false;
   }
-  //fprintf(stderr, "EXITING COMPOUND %d (%s:%d)\n", cidx, *Loc.GetSource(), Loc.GetLine());
-  ec.ExitCompound(elist, cidx, Loc);
-  return Ret;
+  return res;
 }
 
 
@@ -3247,90 +3753,7 @@ bool VCompound::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VCompound::DoEmit (VEmitContext &ec) {
-  for (int i = 0; i < Statements.length(); ++i) Statements[i]->Emit(ec);
-  ec.EmitExitCompound(elist);
-}
-
-
-//==========================================================================
-//
-//  VCompound::IsEndsWithReturn
-//
-//==========================================================================
-bool VCompound::IsEndsWithReturn () const {
-  for (int n = 0; n < Statements.length(); ++n) {
-    if (!Statements[n]) continue;
-    if (Statements[n]->IsEndsWithReturn()) return true;
-    if (Statements[n]->IsFlowStop()) break;
-  }
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VCompound::IsProperCaseEnd
-//
-//==========================================================================
-bool VCompound::IsProperCaseEnd (bool skipBreak) const {
-  for (int n = 0; n < Statements.length(); ++n) {
-    if (!Statements[n]) continue;
-    if (Statements[n]->IsProperCaseEnd(skipBreak)) return true;
-    if (Statements[n]->IsFlowStop()) break;
-  }
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VCompound::FindLabel
-//
-//==========================================================================
-VLabelStmt *VCompound::FindLabel (VName aname) {
-  for (int f = 0; f < Statements.length(); ++f) {
-    VLabelStmt *lbl = (Statements[f] ? Statements[f]->FindLabel(aname) : nullptr);
-    if (lbl) return lbl;
-  }
-  return nullptr;
-}
-
-
-//==========================================================================
-//
-//  VCompound::BuildPathTo
-//
-//==========================================================================
-bool VCompound::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
-  if (dest == this) { path.append(this); return true; }
-  path.append(this);
-  for (int f = 0; f < Statements.length(); ++f) {
-    if (Statements[f] && Statements[f]->BuildPathTo(dest, path)) return true;
-  }
-  path.removeAt(path.length()-1);
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VCompound::IsJumpOverAllowed
-//
-//==========================================================================
-bool VCompound::IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const {
-  if (s0 == s1) return true;
-  if (!s0 || !s1) return false;
-  int idx0 = -1, idx1 = -1;
-  for (int f = Statements.length()-1; f >= 0; --f) {
-         if (Statements[f] == s0) idx0 = f;
-    else if (Statements[f] == s1) idx1 = f;
-  }
-  if (idx0 < 0 || idx1 < 0) return false; // the thing that should not be
-  if (idx0 > idx1) { int tmp = idx0; idx0 = idx1; idx1 = tmp; }
-  for (int f = idx0; f <= idx1; ++f) {
-    if (Statements[f] && Statements[f]->IsVarDecl()) return false;
-  }
-  return true;
+  for (auto &&st : Statements) if (st) st->Emit(ec, this);
 }
 
 
@@ -3383,28 +3806,28 @@ void VCompoundScopeExit::DoSyntaxCopyTo (VStatement *e) {
 
 //==========================================================================
 //
-//  VCompoundScopeExit::Resolve
+//  VCompoundScopeExit::DoResolve
 //
 //==========================================================================
-bool VCompoundScopeExit::Resolve (VEmitContext &ec) {
+bool VCompoundScopeExit::DoResolve (VEmitContext &ec) {
   // indent check
   if (Body && !CheckCondIndent(Loc, Body)) return false;
 
   if (Body) {
-    if (!Body->Resolve(ec)) return false;
+    if (!Body->Resolve(ec, this)) return false;
   }
-  return VCompound::Resolve(ec);
+
+  return VCompound::DoResolve(ec);
 }
 
 
 //==========================================================================
 //
-//  VCompoundScopeExit::DoEmit
+//  VCompoundScopeExit::IsReturnAllowed
 //
 //==========================================================================
-void VCompoundScopeExit::DoEmit (VEmitContext &ec) {
-  auto fin = ec.RegisterFinalizer(this);
-  VCompound::DoEmit(ec);
+bool VCompoundScopeExit::IsReturnAllowed () const noexcept {
+  return false;
 }
 
 
@@ -3414,10 +3837,7 @@ void VCompoundScopeExit::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 void VCompoundScopeExit::EmitFinalizer (VEmitContext &ec) {
-  if (Body) {
-    auto block = ec.BlockBreakContReturn();
-    Body->Emit(ec);
-  }
+  if (Body) Body->Emit(ec, this);
 }
 
 
@@ -3459,10 +3879,10 @@ void VLabelStmt::DoSyntaxCopyTo (VStatement *e) {
 
 //==========================================================================
 //
-//  VLabelStmt::Resolve
+//  VLabelStmt::DoResolve
 //
 //==========================================================================
-bool VLabelStmt::Resolve (VEmitContext &ec) {
+bool VLabelStmt::DoResolve (VEmitContext &ec) {
   return true;
 }
 
@@ -3482,7 +3902,7 @@ void VLabelStmt::DoEmit (VEmitContext &ec) {
 //  VLabelStmt::IsLabel
 //
 //==========================================================================
-bool VLabelStmt::IsLabel () const {
+bool VLabelStmt::IsLabel () const noexcept {
   return true;
 }
 
@@ -3492,7 +3912,7 @@ bool VLabelStmt::IsLabel () const {
 //  VLabelStmt::GetLabelName
 //
 //==========================================================================
-VName VLabelStmt::GetLabelName () const {
+VName VLabelStmt::GetLabelName () const noexcept {
   return Name;
 }
 
@@ -3567,6 +3987,7 @@ void VGotoStmt::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 bool VGotoStmt::ResolveGoto (VEmitContext &ec, VStatement *dest) {
+#if 0
   if (!dest) return false;
 
   // build path to self
@@ -3631,6 +4052,7 @@ bool VGotoStmt::ResolveGoto (VEmitContext &ec, VStatement *dest) {
     ParseError(Loc, "Cannot jump to label `%s`", *Name);
     return false;
   }
+#endif
 
   // ok, it is legal
   return true;
@@ -3639,10 +4061,11 @@ bool VGotoStmt::ResolveGoto (VEmitContext &ec, VStatement *dest) {
 
 //==========================================================================
 //
-//  VGotoStmt::Resolve
+//  VGotoStmt::EmitCleanups
 //
 //==========================================================================
 void VGotoStmt::EmitCleanups (VEmitContext &ec, VStatement *dest) {
+#if 0
   // build path to self
   TArray<VStatement *> toself;
   if (!ec.CurrentFunc->Statement->BuildPathTo(this, toself)) {
@@ -3682,15 +4105,17 @@ void VGotoStmt::EmitCleanups (VEmitContext &ec, VStatement *dest) {
     if (toself[f] == cpar) break;
     toself[f]->EmitFinalizer(ec);
   }
+#endif
 }
 
 
 //==========================================================================
 //
-//  VGotoStmt::Resolve
+//  VGotoStmt::DoResolve
 //
 //==========================================================================
-bool VGotoStmt::Resolve (VEmitContext &ec) {
+bool VGotoStmt::DoResolve (VEmitContext &ec) {
+#if 0
   if (Switch) {
     // goto case/default
     if (GotoType == Normal) VCFatalError("VC: internal compiler error (VGotoStmt::Resolve) (0)");
@@ -3767,6 +4192,8 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
     gotolbl = lbl;
     return ResolveGoto(ec, lbl);
   }
+#endif
+  return false;
 }
 
 
@@ -3776,6 +4203,7 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VGotoStmt::DoEmit (VEmitContext &ec) {
+#if 0
   if (GotoType == Normal) {
     VLabelStmt *lbl = gotolbl; //ec.CurrentFunc->Statement->FindLabel(Name);
     if (!lbl) {
@@ -3803,6 +4231,7 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
   } else {
     VCFatalError("VC: internal compiler error (VGotoStmt::DoEmit)");
   }
+#endif
 }
 
 
@@ -3811,7 +4240,7 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
 //  VGotoStmt::IsGoto
 //
 //==========================================================================
-bool VGotoStmt::IsGoto () const {
+bool VGotoStmt::IsGoto () const noexcept {
   return true;
 }
 
@@ -3821,7 +4250,7 @@ bool VGotoStmt::IsGoto () const {
 //  VGotoStmt::IsGotoCase
 //
 //==========================================================================
-bool VGotoStmt::IsGotoCase () const {
+bool VGotoStmt::IsGotoCase () const noexcept {
   return (GotoType == Case);
 }
 
@@ -3831,7 +4260,7 @@ bool VGotoStmt::IsGotoCase () const {
 //  VGotoStmt::HasGotoCaseExpr
 //
 //==========================================================================
-bool VGotoStmt::HasGotoCaseExpr () const {
+bool VGotoStmt::HasGotoCaseExpr () const noexcept {
   return (GotoType == Case && !!CaseValue);
 }
 
@@ -3841,7 +4270,7 @@ bool VGotoStmt::HasGotoCaseExpr () const {
 //  VGotoStmt::IsGotoDefault
 //
 //==========================================================================
-bool VGotoStmt::IsGotoDefault () const {
+bool VGotoStmt::IsGotoDefault () const noexcept {
   return (GotoType == Default);
 }
 
@@ -3851,6 +4280,6 @@ bool VGotoStmt::IsGotoDefault () const {
 //  VGotoStmt::GetLabelName
 //
 //==========================================================================
-VName VGotoStmt::GetLabelName () const {
+VName VGotoStmt::GetLabelName () const noexcept {
   return Name;
 }

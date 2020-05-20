@@ -170,7 +170,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
 
     // always clear reused/loop locals
     // this flag will be adjusted later
-    e.emitClear = L.reused || ec.IsInLoop();
+    e.emitClear = true; //!L.reused || ec.IsInLoop();
 
     // resolve initialisation
     if (e.Value) {
@@ -188,6 +188,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
         e.Value = e.Value->Resolve(ec);
         L.Visible = true; // and make it visible again
         // if clear is not necessary, and we are assigning default value, drop assign
+        /*
         if (!L.reused && !ec.IsInLoop() && e.Value && e.Value->IsAssignExpr() &&
             ((VAssignment *)e.Value)->Oper == VAssignment::Assign &&
             ((VAssignment *)e.Value)->op2)
@@ -236,6 +237,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
             e.Value = nullptr;
           }
         }
+        */
         // no need to clear it, and structs will not end up here
         if (e.Value) e.emitClear = false;
       }
@@ -253,7 +255,8 @@ void VLocalDecl::EmitInitialisations (VEmitContext &ec) {
   for (int i = 0; i < Vars.length(); ++i) {
     if (Vars[i].emitClear) {
       if (Vars[i].locIdx < 0) VCFatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
-      ec.EmitOneLocalDtor(Vars[i].locIdx, Loc, true, true, false); // zero it, and forced, and no dtors
+      //ec.EmitLocalDtor(Vars[i].locIdx, Loc, true, true, false); // zero it, and forced, and no dtors
+      ec.EmitLocalZero(Vars[i].locIdx, Loc, true); // forced
     }
     if (Vars[i].Value) Vars[i].Value->Emit(ec);
   }
