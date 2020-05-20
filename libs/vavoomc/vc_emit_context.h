@@ -54,23 +54,21 @@ public:
   int Offset;
   VFieldType Type;
   bool Visible;
-  bool Reusable; // if this is `true`, and `Visible` is false, local can be reused
-  bool Unused; // "releasing" local sets this
   bool WasRead; // reading from local will set this
   bool WasWrite; // writing to local will set this
-  vuint8 ParamFlags;
+  vuint32 ParamFlags;
   // internal index; DO NOT CHANGE!
   int ldindex;
   bool reused;
 
 private:
-  int compIndex; // for enter/exit compound
   int stackSize; // for reusing
+  bool invalid; // can be set by allocator
 
 public:
   VLocalVarDef () {}
 
-  inline int GetCompIndex () const { return compIndex; } // for debugging
+  inline int GetIndex () const noexcept { return ldindex; }
 
   friend class VEmitContext; // it needs access to `compIndex`
 };
@@ -120,10 +118,26 @@ public:
 
   VFieldType FuncRetType;
 
-  int localsofs;
+  //int localsofs;
+  //FIXME: rewrite this!
+  enum { MaxStackSlots = 1024 };
+  enum {
+    SlotUnused = 0u,
+    SlotUsed = 1u,
+    SlotFree = 2u,
+  };
+  unsigned char slotInfo[MaxStackSlots];
 
   bool InDefaultProperties;
   bool VCallsDisabled;
+
+private:
+  // called in ctor, and to reset locals
+  void stackInit ();
+
+  // size in stack slots; returns -1 on error
+  int stackAlloc (int size, bool *reused);
+  void stackFree (int pos, int size);
 
 public:
   VEmitContext (VMemberBase *Member);
@@ -132,10 +146,25 @@ public:
   // this doesn't modify `localsofs`
   void ClearLocalDefs ();
 
+  // allocates new local, don't set offset yet
+  VLocalVarDef &NewLocal (VName aname, const VFieldType &atype, const TLocation &aloc, vuint32 pflags=0);
+
+  // allocate stack slot for this local, and set local offset
+  // sets `reused` flag in local
+  void AllocateLocalSlot (int idx);
+  // release stack slot for this local, and reset local offset
+  void ReleaseLocalSlot (int idx);
+
+  // reserve stack slots; used to setup function arguments
+  int ReserveStack (int size);
+
+  // reserve slot for this local; used to setup function arguments
+  void ReserveLocalSlot (int idx);
+
+  int CalcUsedStackSize () const noexcept;
+
   // allocates new local, sets offset
-  VLocalVarDef &AllocLocal (VName aname, const VFieldType &atype, const TLocation &aloc);
-  // mark this local as unused (and optionally mark it as "reusable")
-  void ReleaseLocal (int idx, bool allowReuse=true);
+  //VLocalVarDef &AllocLocal (VName aname, const VFieldType &atype, const TLocation &aloc);
 
   VLocalVarDef &GetLocalByIndex (int idx);
 

@@ -140,11 +140,11 @@ void VStatement::CreateLocalVarScope (TArray<VStatement *> &src) {
       // i found her!
       VLocalVarStatement *vst = (VLocalVarStatement *)src[idx];
       vassert(vst->Statements.length() == 0);
-      ++idx; // skip decl
-      vst->Statements.resize(src.length()-idx);
-      for (; idx < src.length(); ++idx) vst->Statements.append(src[idx]);
+      const int newlen = idx+1; // skip decl
+      vst->Statements.resize(src.length()-newlen);
+      for (idx = newlen; idx < src.length(); ++idx) vst->Statements.append(src[idx]);
       // shrink source list
-      src.setLength(idx);
+      src.setLength(newlen);
       // done
       return;
     }
@@ -1344,6 +1344,7 @@ VForeachIota::VForeachIota (const TLocation &ALoc)
 //
 //==========================================================================
 VForeachIota::~VForeachIota () {
+  tempLocals.clear();
   delete varinit; varinit = nullptr;
   delete varnext; varnext = nullptr;
   delete hiinit; hiinit = nullptr;
@@ -1443,10 +1444,10 @@ bool VForeachIota::DoResolve (VEmitContext &ec) {
   if ((reversed ? loR : hiR)->IsIntConst()) {
     limit = new VIntLiteral((reversed ? loR : hiR)->GetIntConst(), (reversed ? lo : hi)->Loc);
   } else {
-    VLocalVarDef &L = ec.AllocLocal(NAME_None, VFieldType(TYPE_Int), (reversed ? lo : hi)->Loc);
+    VLocalVarDef &L = ec.NewLocal(NAME_None, VFieldType(TYPE_Int), (reversed ? lo : hi)->Loc);
     L.Visible = false; // it is unnamed, and hidden ;-)
-    L.ParamFlags = 0;
-    limit = new VLocalVar(L.ldindex, L.Loc);
+    tempLocals.append(L.GetIndex());
+    limit = new VLocalVar(L.GetIndex(), L.Loc);
     // initialize hidden local with higher/lower bound
     hiinit = new VAssignment(VAssignment::Assign, limit->SyntaxCopy(), (reversed ? lo : hi)->SyntaxCopy(), L.Loc);
   }
@@ -1516,6 +1517,9 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
 
   VLabel loopLbl = ec.DefineLabel();
 
+  // no need to clear them, the loop will take care of it
+  for (auto &&lv : tempLocals) ec.AllocateLocalSlot(lv);
+
   // emit initialisation expressions
   if (hiinit) hiinit->Emit(ec); // may be absent for iota with literals
   varinit->Emit(ec);
@@ -1540,6 +1544,18 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
+
+  for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::EmitDtor
+//
+//==========================================================================
+void VForeachIota::EmitDtor (VEmitContext &ec) {
+  for (auto &&lv : tempLocals.reverse()) ec.EmitLocalDtor(lv, Loc);
 }
 
 
@@ -1649,6 +1665,7 @@ VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression 
 //
 //==========================================================================
 VForeachArray::~VForeachArray () {
+  tempLocals.clear();
   delete idxinit; idxinit = nullptr;
   delete hiinit; hiinit = nullptr;
   delete loopPreCheck; loopPreCheck = nullptr;
@@ -1777,10 +1794,10 @@ bool VForeachArray::DoResolve (VEmitContext &ec) {
   if (idxvar) {
     index = idxvar->SyntaxCopy();
   } else {
-    VLocalVarDef &L = ec.AllocLocal(NAME_None, VFieldType(TYPE_Int), Loc);
+    VLocalVarDef &L = ec.NewLocal(NAME_None, VFieldType(TYPE_Int), Loc);
     L.Visible = false; // it is unnamed, and hidden ;-)
-    L.ParamFlags = 0;
-    index = new VLocalVar(L.ldindex, L.Loc);
+    tempLocals.append(L.GetIndex());
+    index = new VLocalVar(L.GetIndex(), L.Loc);
   }
   // initialize index
   if (!reversed) {
@@ -1806,10 +1823,10 @@ bool VForeachArray::DoResolve (VEmitContext &ec) {
       // for static arrays we know the limit for sure
       limit = new VIntLiteral(staticLen, arr->Loc);
     } else {
-      VLocalVarDef &L = ec.AllocLocal(NAME_None, VFieldType(TYPE_Int), arr->Loc);
+      VLocalVarDef &L = ec.NewLocal(NAME_None, VFieldType(TYPE_Int), arr->Loc);
       L.Visible = false; // it is unnamed, and hidden ;-)
-      L.ParamFlags = 0;
-      limit = new VLocalVar(L.ldindex, L.Loc);
+      tempLocals.append(L.GetIndex());
+      limit = new VLocalVar(L.GetIndex(), L.Loc);
       // initialize hidden local with array length
       VExpression *len = new VDotField(arr->SyntaxCopy(), VName("length"), arr->Loc);
       hiinit = new VAssignment(VAssignment::Assign, limit->SyntaxCopy(), len, len->Loc);
@@ -1910,6 +1927,15 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
 
   VLabel loopLbl = ec.DefineLabel();
 
+  // no need to clear them, the loop will take care of it (except for structs with dtors)
+  for (auto &&lv : tempLocals) {
+    ec.AllocateLocalSlot(lv);
+    VLocalVarDef &loc = ec.GetLocalByIndex(lv);
+    if (loc.Type.Type == TYPE_Struct && loc.Type.Struct && loc.Type.Struct->FindDtor()) {
+      ec.EmitLocalZero(lv, Loc, true); // forced zero
+    }
+  }
+
   // emit initialisation expressions
   if (hiinit) hiinit->Emit(ec); // may be absent for reverse loops
   idxinit->Emit(ec);
@@ -1939,6 +1965,18 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
+
+  for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::EmitDtor
+//
+//==========================================================================
+void VForeachArray::EmitDtor (VEmitContext &ec) {
+  for (auto &&lv : tempLocals.reverse()) ec.EmitLocalDtor(lv, Loc);
 }
 
 
@@ -2045,6 +2083,7 @@ VForeachScripted::VForeachScripted (VExpression *aarr, int afeCount, Var *afevar
 //
 //==========================================================================
 VForeachScripted::~VForeachScripted () {
+  tempLocals.clear();
   delete ivInit; ivInit = nullptr;
   delete ivNext; ivNext = nullptr;
   delete ivDone; ivDone = nullptr;
@@ -2177,10 +2216,10 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
 
     // create hidden local for `it`
     {
-      VLocalVarDef &L = ec.AllocLocal(NAME_None, minit->ParamTypes[0], Loc);
+      VLocalVarDef &L = ec.NewLocal(NAME_None, minit->ParamTypes[0], Loc);
       L.Visible = false; // it is unnamed, and hidden ;-)
-      L.ParamFlags = 0;
-      itlocidx = L.ldindex;
+      tempLocals.append(L.GetIndex());
+      itlocidx = L.GetIndex();
     }
 
     // insert hidden local as first init arg
@@ -2288,6 +2327,15 @@ bool VForeachScripted::DoResolve (VEmitContext &ec) {
 void VForeachScripted::DoEmit (VEmitContext &ec) {
   VLabel LoopExitSkipDtor = ec.DefineLabel();
 
+  // no need to clear them, the loop will take care of it (except for structs with dtors)
+  for (auto &&lv : tempLocals) {
+    ec.AllocateLocalSlot(lv);
+    VLocalVarDef &loc = ec.GetLocalByIndex(lv);
+    if (loc.Type.Type == TYPE_Struct && loc.Type.Struct && loc.Type.Struct->FindDtor()) {
+      ec.EmitLocalZero(lv, Loc, true); // forced zero
+    }
+  }
+
   // emit initialisation expression
   if (isBoolInit) {
     ivInit->EmitBranchable(ec, LoopExitSkipDtor, false);
@@ -2324,6 +2372,8 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
 
   // jump point for "loop not taken"
   ec.MarkLabel(LoopExitSkipDtor);
+
+  for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
 }
 
 
@@ -2344,6 +2394,16 @@ bool VForeachScripted::IsBreakScope () const noexcept {
 //==========================================================================
 bool VForeachScripted::IsContinueScope () const noexcept {
   return true;
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::EmitDtor
+//
+//==========================================================================
+void VForeachScripted::EmitDtor (VEmitContext &ec) {
+  for (auto &&lv : tempLocals.reverse()) ec.EmitLocalDtor(lv, Loc);
 }
 
 
@@ -3651,11 +3711,12 @@ void VLocalVarStatement::DoSyntaxCopyTo (VStatement *e) {
 //==========================================================================
 bool VLocalVarStatement::DoResolve (VEmitContext &ec) {
   bool res = true;
-  Decl->Declare(ec);
   CreateLocalVarScope(Statements);
+  if (!Decl->Declare(ec)) res = false;
   for (auto &&st : Statements) {
     if (!st->Resolve(ec, this)) res = false;
   }
+  Decl->Hide(ec);
   return res;
 }
 
@@ -3666,8 +3727,10 @@ bool VLocalVarStatement::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VLocalVarStatement::DoEmit (VEmitContext &ec) {
+  Decl->Allocate(ec);
   Decl->EmitInitialisations(ec);
   for (auto &&st : Statements) st->Emit(ec, this);
+  Decl->Release(ec);
 }
 
 
@@ -3677,6 +3740,7 @@ void VLocalVarStatement::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 void VLocalVarStatement::EmitDtor (VEmitContext &ec) {
+  Decl->EmitDtors(ec);
 }
 
 

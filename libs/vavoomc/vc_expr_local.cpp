@@ -102,27 +102,108 @@ void VLocalDecl::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VLocalDecl::EmitInitialisations
+//
+//  this either inits, or zeroes (unless `dozero` is `false`)
+//
+//==========================================================================
+void VLocalDecl::EmitInitialisations (VEmitContext &ec, bool dozero) {
+  for (auto &&loc : Vars) {
+    bool didzero = false;
+    const VLocalVarDef &ldef = ec.GetLocalByIndex(loc.locIdx);
+    if (loc.emitClear || (ldef.reused && !loc.Value)) {
+      if (loc.locIdx < 0) VCFatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
+      ec.EmitLocalZero(loc.locIdx, Loc, true); // forced
+      didzero = true;
+    }
+         if (loc.Value) loc.Value->Emit(ec);
+    else if (!didzero) ec.EmitLocalZero(loc.locIdx, Loc, true); // forced
+  }
+}
+
+
+//==========================================================================
+//
+//  VLocalDecl::EmitDtors
+//
+//==========================================================================
+void VLocalDecl::EmitDtors (VEmitContext &ec, bool dozero) {
+  for (auto &&loc : Vars) ec.EmitLocalDtor(loc.locIdx, Loc, dozero);
+}
+
+
+//==========================================================================
+//
+//  VLocalDecl::EmitZeroing
+//
+//==========================================================================
+/*
+void VLocalDecl::EmitZeroing (VEmitContext &ec, bool forced) {
+  for (auto &&loc : Vars) ec.EmitLocalZero(loc.locIdx, Loc, forced);
+}
+*/
+
+
+//==========================================================================
+//
+//  VLocalDecl::Allocate
+//
+//==========================================================================
+void VLocalDecl::Allocate (VEmitContext &ec) {
+  for (auto &&loc : Vars) ec.AllocateLocalSlot(loc.locIdx);
+}
+
+
+//==========================================================================
+//
+//  VLocalDecl::Release
+//
+//==========================================================================
+void VLocalDecl::Release (VEmitContext &ec) {
+  for (auto &&loc : Vars) ec.ReleaseLocalSlot(loc.locIdx);
+}
+
+
+//==========================================================================
+//
+//  VLocalDecl::Declare
+//
+//  hide all declared locals
+//
+//==========================================================================
+void VLocalDecl::Hide (VEmitContext &ec) {
+  for (auto &&e : Vars) {
+    if (e.locIdx >= 0) {
+      VLocalVarDef &loc = ec.GetLocalByIndex(e.locIdx);
+      loc.Visible = false;
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VLocalDecl::Declare
 //
 //==========================================================================
-//#include <typeinfo>
-void VLocalDecl::Declare (VEmitContext &ec) {
+bool VLocalDecl::Declare (VEmitContext &ec) {
+  bool retres = true;
   for (int i = 0; i < Vars.length(); ++i) {
     VLocalEntry &e = Vars[i];
 
     if (ec.CheckForLocalVar(e.Name) != -1) {
-      //const VLocalVarDef &loc = ec.GetLocalByIndex(ec.CheckForLocalVar(e.Name));
-      //fprintf(stderr, "duplicate '%s'(%d) (old(%d) is at %s:%d)\n", *e.Name, ec.GetCurrCompIndex(), loc.GetCompIndex(), *loc.Loc.GetSource(), loc.Loc.GetLine());
+      retres = false;
       ParseError(e.Loc, "Redefined identifier `%s`", *e.Name);
-    } else {
-      //fprintf(stderr, "NEW '%s'(%d) (%s:%d)\n", *e.Name, ec.GetCurrCompIndex(), *e.Loc.GetSource(), e.Loc.GetLine());
     }
 
     // resolve automatic type
     if (e.TypeExpr->Type.Type == TYPE_Automatic) {
       VExpression *te = (e.Value ? e.Value : e.TypeOfExpr);
       if (!te) Sys_Error("VC INTERNAL COMPILER ERROR: automatic type without initializer!");
-      if (e.ctorInit) ParseError(e.Loc, "cannot determine type from ctor for local `%s`", *e.Name);
+      if (e.ctorInit) {
+        retres = false;
+        ParseError(e.Loc, "cannot determine type from ctor for local `%s`", *e.Name);
+      }
       // resolve type
       if (e.toeIterArgN >= 0) {
         // special resolving for iterator
@@ -136,6 +217,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
           }
         }
         if (e.TypeExpr->Type.Type == TYPE_Automatic) {
+          retres = false;
           ParseError(e.TypeExpr->Loc, "Cannot infer type for variable `%s`", *e.Name);
           delete e.TypeExpr; // delete old `automatic` type
           e.TypeExpr = VTypeExpr::NewTypeExprFromAuto(VFieldType(TYPE_Int), te->Loc);
@@ -143,6 +225,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
       } else {
         auto res = te->SyntaxCopy()->Resolve(ec);
         if (!res) {
+          retres = false;
           ParseError(e.Loc, "Cannot resolve type for identifier `%s`", *e.Name);
           delete e.TypeExpr; // delete old `automatic` type
           e.TypeExpr = new VTypeExprSimple(TYPE_Void, te->Loc);
@@ -157,13 +240,20 @@ void VLocalDecl::Declare (VEmitContext &ec) {
 
     //GLog.Logf(NAME_Debug, "LOC:000: <%s>; type: <%s>\n", *e.Name, *e.TypeExpr->toString());
     e.TypeExpr = e.TypeExpr->ResolveAsType(ec);
-    if (!e.TypeExpr) continue;
+    if (!e.TypeExpr) {
+      retres = false;
+      continue;
+    }
     //GLog.Logf(NAME_Debug, "LOC:001: <%s>; type: <%s>\n", *e.Name, *e.TypeExpr->Type.GetName());
 
     VFieldType Type = e.TypeExpr->Type;
-    if (Type.Type == TYPE_Void || Type.Type == TYPE_Automatic) ParseError(e.TypeExpr->Loc, "Bad variable type for variable `%s`", *e.Name);
+    if (Type.Type == TYPE_Void || Type.Type == TYPE_Automatic) {
+      retres = false;
+      ParseError(e.TypeExpr->Loc, "Bad variable type for variable `%s`", *e.Name);
+    }
 
-    VLocalVarDef &L = ec.AllocLocal(e.Name, Type, e.Loc);
+    //VLocalVarDef &L = ec.AllocLocal(e.Name, Type, e.Loc);
+    VLocalVarDef &L = ec.NewLocal(e.Name, Type, e.Loc);
     L.ParamFlags = (e.isRef ? FPARM_Ref : 0)|(e.isConst ? FPARM_Const : 0);
     //if (e.isRef) fprintf(stderr, "*** <%s:%d> is REF\n", *e.Name, L.ldindex);
     e.locIdx = L.ldindex;
@@ -180,86 +270,62 @@ void VLocalDecl::Declare (VEmitContext &ec) {
           ParseError(e.Value->Loc, "cannot construct something that is not a struct");
         } else {
           e.Value = e.Value->Resolve(ec);
+          if (!e.Value) retres = false;
         }
       } else {
         L.Visible = false; // hide from initializer expression
         VExpression *op1 = new VLocalVar(L.ldindex, e.Loc);
         e.Value = new VAssignment(VAssignment::Assign, op1, e.Value, e.Loc);
         e.Value = e.Value->Resolve(ec);
+        if (!e.Value) retres = false;
         L.Visible = true; // and make it visible again
-        // if clear is not necessary, and we are assigning default value, drop assign
-        /*
-        if (!L.reused && !ec.IsInLoop() && e.Value && e.Value->IsAssignExpr() &&
+        // if we are assigning default value, drop assign
+        if (e.Value && e.Value->IsAssignExpr() &&
             ((VAssignment *)e.Value)->Oper == VAssignment::Assign &&
             ((VAssignment *)e.Value)->op2)
         {
           VExpression *val = ((VAssignment *)e.Value)->op2;
-          bool killInit = false;
+          bool defaultInit = false;
           switch (val->Type.Type) {
             case TYPE_Int:
             case TYPE_Byte:
             case TYPE_Bool:
-              killInit = (val->IsIntConst() && val->GetIntConst() == 0);
+              defaultInit = (val->IsIntConst() && val->GetIntConst() == 0);
               break;
             case TYPE_Float:
-              killInit = (val->IsFloatConst() && val->GetFloatConst() == 0);
+              defaultInit = (val->IsFloatConst() && val->GetFloatConst() == 0);
               break;
             case TYPE_Name:
-              killInit = (val->IsNameConst() && val->GetNameConst() == NAME_None);
+              defaultInit = (val->IsNameConst() && val->GetNameConst() == NAME_None);
               break;
             case TYPE_String:
-              killInit = (val->IsStrConst() && val->GetStrConst(ec.Package).length() == 0);
+              defaultInit = (val->IsStrConst() && val->GetStrConst(ec.Package).length() == 0);
               break;
             case TYPE_Pointer:
-              killInit = val->IsNullLiteral();
+              defaultInit = val->IsNullLiteral();
               break;
             case TYPE_Reference:
             case TYPE_Class:
             case TYPE_State:
-              killInit = val->IsNoneLiteral();
+              defaultInit = val->IsNoneLiteral();
               break;
             case TYPE_Delegate:
-              killInit = (val->IsNoneDelegateLiteral() || val->IsNoneLiteral() || val->IsNullLiteral());
+              defaultInit = (val->IsNoneDelegateLiteral() || val->IsNoneLiteral() || val->IsNullLiteral());
               break;
             case TYPE_Vector:
               if (val->IsConstVectorCtor()) {
                 VVectorExpr *vc = (VVectorExpr *)val;
                 TVec vec = vc->GetConstValue();
-                killInit = (vec.x == 0 && vec.y == 0 && vec.z == 0);
+                defaultInit = (vec.x == 0 && vec.y == 0 && vec.z == 0);
               }
               break;
           }
-          if (killInit) {
-            //ParseWarning(Loc, "initializer for `%s` removed", *e.Name);
-            //fprintf(stderr, "!!!%s (%s)\n", *e.Name, *val->Type.GetName());
-            //fprintf(stderr, "initializer for `%s` removed\n", *e.Name);
-            delete e.Value;
-            e.Value = nullptr;
-          }
+          if (defaultInit) e.emitClear = false;
         }
-        */
-        // no need to clear it, and structs will not end up here
-        if (e.Value) e.emitClear = false;
       }
     }
   }
-}
-
-
-//==========================================================================
-//
-//  VLocalDecl::EmitInitialisations
-//
-//==========================================================================
-void VLocalDecl::EmitInitialisations (VEmitContext &ec) {
-  for (int i = 0; i < Vars.length(); ++i) {
-    if (Vars[i].emitClear) {
-      if (Vars[i].locIdx < 0) VCFatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
-      //ec.EmitLocalDtor(Vars[i].locIdx, Loc, true, true, false); // zero it, and forced, and no dtors
-      ec.EmitLocalZero(Vars[i].locIdx, Loc, true); // forced
-    }
-    if (Vars[i].Value) Vars[i].Value->Emit(ec);
-  }
+  return retres;
 }
 
 

@@ -2068,27 +2068,19 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   if (Func->Flags&FUNC_Spawner) Type.Class = Args[0]->Type.Class;
 
   // we may create new locals, so activate local reuse mechanics
-  {
-    for (int f = 0; f < VMethod::MAX_PARAMS; ++f) {
-      lcidx[f] = -1;
-      reused[f] = false;
-    }
+  for (int f = 0; f < VMethod::MAX_PARAMS; ++f) lcidx[f] = -1;
 
-    // for ommited "optional ref", create temporary locals
-    for (int i = 0; i < NumArgs; ++i) {
-      if (!Args[i] && i < VMethod::MAX_PARAMS) {
-        if ((Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
-          // create temporary
-          VLocalVarDef &L = ec.AllocLocal(NAME_None, Func->ParamTypes[i], Loc);
-          L.Visible = false; // it is unnamed, and hidden ;-)
-          L.ParamFlags = 0;
-          //index = new VLocalVar(L.ldindex, L.Loc);
-          lcidx[i] = L.ldindex;
-          reused[i] = L.reused;
-        }
+  // for ommited "optional ref", create temporary locals
+  for (int i = 0; i < NumArgs; ++i) {
+    if (!Args[i] && i < VMethod::MAX_PARAMS) {
+      if ((Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
+        // create temporary
+        VLocalVarDef &L = ec.NewLocal(NAME_None, Func->ParamTypes[i], Loc);
+        L.Visible = false; // it is unnamed, and hidden ;-)
+        lcidx[i] = L.GetIndex();
       }
     }
-  } // this exits scope
+  }
 
   // some special functions will be converted to builtins, try to const-optimize 'em
   if (Func->builtinOpc >= 0) return OptimizeBuiltin(ec);
@@ -2509,12 +2501,11 @@ void VInvocation::Emit (VEmitContext &ec) {
         if (Func->ParamTypes[i].Type == TYPE_Struct) {
           Func->ParamTypes[i].Struct->PostLoad();
         }
-        //TODO: add finalizer here
-        if (reused[i]) ec.EmitLocalDtor(lcidx[i], Loc); // zero it, and forced
+        //if (reused[i]) ec.EmitLocalDtor(lcidx[i], Loc); // zero it, and forced
+        ec.AllocateLocalSlot(lcidx[i]);
         const VLocalVarDef &loc = ec.GetLocalByIndex(lcidx[i]);
+        if (loc.reused) ec.EmitLocalZero(lcidx[i], Loc, true); // forced zero if reused
         ec.EmitLocalAddress(loc.Offset, Loc);
-        //ec.AddStatement(OPC_ZeroByPtrNoDrop, Func->ParamTypes[i].GetSize(), Loc);
-        //ec.EmitLocalAddress(loc.Offset, Loc);
         ++SelfOffset; // pointer
       } else {
         // nonref
@@ -2648,6 +2639,14 @@ void VInvocation::Emit (VEmitContext &ec) {
     ec.AddStatement(OPC_DelegateCallPtr, tp, SelfOffset, Loc);
   } else {
     ec.AddStatement(OPC_VCall, Func, SelfOffset, Loc);
+  }
+
+  // destruct all anonymous locals
+  for (int f = VMethod::MAX_PARAMS-1; f >= 0; --f) {
+    if (lcidx[f] != -1) {
+      ec.EmitLocalDtor(lcidx[f], Loc);
+      ec.ReleaseLocalSlot(lcidx[f]);
+    }
   }
 }
 

@@ -295,6 +295,7 @@ bitenum ModMask {
   ShiftRight,
 }
 
+#ifndef VC_COMPILER_TEST
 static final ModMask eventBuildModMask (const ref event_t evt) {
   ModMask res = ModMask.Empty;
   if (evt.bCtrl) res |= ModMask.Ctrl;
@@ -312,6 +313,7 @@ static final ModMask eventBuildModMask (const ref event_t evt) {
   if (evt.bShiftRight) res |= ModMask.ShiftRight;
   return res;
 }
+#endif
 
 native static final string GetInputKeyStrName (int kcode);
 native static final int GetInputKeyCode (string kname);
@@ -504,6 +506,7 @@ native static final bool IsVerticalPlane (const ref TPlane plane);
 native static final TVec RayLineIntersection2D (const TVec rayO, const TVec rayE, const TVec vv1, const TVec vv2);
 native static final TVec RayLineIntersection2DDir (const TVec rayO, const TVec rayDir, const TVec vv1, const TVec vv2);
 
+#ifndef VC_COMPILER_TEST
 //TODO: move to native code?
 static final bool CalcLinesIntersection (TVec lav1, TVec lav2, TVec lbv1, TVec lbv2, optional out TVec crosspt) {
   float x11 = lav1.x, y11 = lav1.y;
@@ -561,6 +564,7 @@ static final float AngleClamp360Signed (float angle) {
   */
   return fclamp(angle, -360.0, 360.0);
 }
+#endif
 
 // ////////////////////////////////////////////////////////////////////////// //
 // plane functions
@@ -646,6 +650,7 @@ struct CD_LinePlanes {
   TVec lineA, lineB; // we'll need this later
 }
 
+#ifndef VC_COMPILER_TEST
 static final void CD_BuildLinePlanes (out CD_LinePlanes lpl, TVec a, TVec b) {
   a.z = 0;
   b.z = 0;
@@ -701,6 +706,7 @@ static final void CD_BuildLinePlanes (out CD_LinePlanes lpl, TVec a, TVec b) {
   lpl.planes[5].normal = vector( 0,  1); lpl.planes[5].dist = fmax(a.y, b.y); // bottom
   lpl.count = 6; // six planes created
 }
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -721,6 +727,7 @@ enum CD_HitType {
 }
 
 
+#ifndef VC_COMPILER_TEST
 static final float CD_SweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec vend, TVec bmin, TVec bmax,
                                      optional out TPlane hitPlane, optional out TVec contactPoint, optional out CD_HitType hitType)
 {
@@ -830,6 +837,7 @@ static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec
 
   return 1.0;
 }
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //

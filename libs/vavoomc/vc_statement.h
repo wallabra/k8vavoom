@@ -356,6 +356,8 @@ private:
   VExpression *varnext; // loop/check expression (++var < hi)
   VExpression *hiinit; // hivar initializer
 
+  TArray<int> tempLocals;
+
 public:
   VExpression *var; // loop variable (resolved to first-check expression)
   VExpression *lo; // low bound
@@ -369,6 +371,8 @@ public:
 
   virtual bool DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
+
+  virtual void EmitDtor (VEmitContext &ec) override;
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
@@ -400,6 +404,8 @@ private:
   VExpression *loopLoad;
   VExpression *varaddr;
 
+  TArray<int> tempLocals;
+
 private:
   bool DoResolveScriptIter (VEmitContext &ec);
 
@@ -418,6 +424,8 @@ public:
 
   virtual bool DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
+
+  virtual void EmitDtor (VEmitContext &ec) override;
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
@@ -457,6 +465,8 @@ private:
   VExpression *ivNext; // invocation, next
   VExpression *ivDone; // invocation, done, can be null
 
+  TArray<int> tempLocals;
+
 public:
   VExpression *arr; // array
   Var fevars[VMethod::MAX_PARAMS];
@@ -474,6 +484,7 @@ public:
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
 
+  virtual void EmitDtor (VEmitContext &ec) override;
   virtual void EmitFinalizer (VEmitContext &ec) override;
 
   virtual bool IsEndsWithReturn () const noexcept override;

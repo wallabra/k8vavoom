@@ -60,10 +60,28 @@ public:
   virtual ~VLocalDecl () override;
 
   virtual VExpression *SyntaxCopy () override;
-  virtual VExpression *DoResolve (VEmitContext &) override;
-  virtual void Emit (VEmitContext &) override;
-  void Declare (VEmitContext &);
-  void EmitInitialisations (VEmitContext &);
+  virtual VExpression *DoResolve (VEmitContext &ec) override;
+
+  // this emits initialisations (always zeroes)
+  virtual void Emit (VEmitContext &ec) override;
+
+  // this registers new local, but doesn't allocate stack space yet
+  // used in code resolver
+  bool Declare (VEmitContext &ec);
+
+  // hide all declared locals
+  void Hide (VEmitContext &ec);
+
+  // doesn't zero, used in code emiter
+  void Allocate (VEmitContext &ec);
+  // doesn't zero, doesn't call dtors, used in code emiter
+  void Release (VEmitContext &ec);
+
+  // this either inits, or zeroes (unless `dozero` is `false`)
+  void EmitInitialisations (VEmitContext &ec, bool dozero=false);
+  void EmitDtors (VEmitContext &ec, bool dozero=false);
+  //void EmitZeroing (VEmitContext &ec, bool forced=false);
+
   virtual bool IsLocalVarDecl () const override;
 
   virtual VStr toString () const override;

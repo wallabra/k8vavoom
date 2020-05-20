@@ -392,37 +392,32 @@ void VMethod::Emit () {
   if (Flags&FUNC_NoVCalls) ec.VCallsDisabled = true;
 
   ec.ClearLocalDefs();
-  ec.localsofs = (Flags&FUNC_Static ? 0 : 1); // first is `self`
+  if ((Flags&FUNC_Static) == 0) ec.ReserveStack(1); // first is `self`
   if (Outer->MemberType == MEMBER_Class && this == ((VClass *)Outer)->DefaultProperties) {
     ec.InDefaultProperties = true;
   }
 
+  // allocate method arguments
   for (int i = 0; i < NumParams; ++i) {
     VMethodParam &P = Params[i];
+    // allocate argument
     if (P.Name != NAME_None) {
-      auto oldlofs = ec.localsofs;
       if (ec.CheckForLocalVar(P.Name) != -1) ParseError(P.Loc, "Redefined argument `%s`", *P.Name);
-      VLocalVarDef &L = ec.AllocLocal(P.Name, ParamTypes[i], P.Loc);
-      ec.localsofs = oldlofs;
-      L.Offset = ec.localsofs;
+      VLocalVarDef &L = ec.NewLocal(P.Name, ParamTypes[i], P.Loc, ParamFlags[i]);
       L.Visible = true;
-      L.ParamFlags = ParamFlags[i];
-    }
-    if (ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
-      ++ec.localsofs;
-    } else {
-      ec.localsofs += ParamTypes[i].GetStackSize()/4;
-    }
-    if (ParamFlags[i]&FPARM_Optional) {
-      if (P.Name != NAME_None) {
-        auto oldlofs = ec.localsofs;
-        VLocalVarDef &L = ec.AllocLocal(va("specified_%s", *P.Name), TYPE_Int, P.Loc);
-        ec.localsofs = oldlofs;
-        L.Offset = ec.localsofs;
-        L.Visible = true;
-        L.ParamFlags = 0;
+      ec.ReserveLocalSlot(L.GetIndex());
+      // create optional
+      if (ParamFlags[i]&FPARM_Optional) {
+        VName specName(va("specified_%s", *P.Name));
+        if (ec.CheckForLocalVar(specName) != -1) ParseError(P.Loc, "Redefined argument `%s`", *specName);
+        VLocalVarDef &SL = ec.NewLocal(specName, TYPE_Int, P.Loc);
+        SL.Visible = true;
+        ec.ReserveLocalSlot(SL.GetIndex());
       }
-      ++ec.localsofs;
+    } else {
+      // skip unnamed
+      ec.ReserveStack(ParamFlags[i]&(FPARM_Out|FPARM_Ref) ? 1 : ParamTypes[i].GetStackSize()/4);
+      if (ParamFlags[i]&FPARM_Optional) ec.ReserveStack(1);
     }
   }
 
@@ -445,7 +440,7 @@ void VMethod::Emit () {
     //ec.EmitAllScopeFinalizers(); // just in case we have function-global finalizers
     ec.AddStatement(OPC_Return, Loc);
   }
-  NumLocals = ec.localsofs;
+  NumLocals = ec.CalcUsedStackSize();
   ec.EndCode();
 
        if (VMemberBase::doAsmDump) DumpAsm();

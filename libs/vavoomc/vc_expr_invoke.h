@@ -255,7 +255,6 @@ protected:
 class VInvocation : public VInvocationBase {
 private:
   int lcidx[VMethod::MAX_PARAMS];
-  bool reused[VMethod::MAX_PARAMS];
   bool optmarshall[VMethod::MAX_PARAMS];
 
 public:

@@ -73,7 +73,7 @@ VEmitContext::VEmitContext (VMemberBase *Member)
   , IndArray(nullptr)
   , OuterClass(nullptr)
   , FuncRetType(TYPE_Unknown)
-  , localsofs(0)
+  //, localsofs(0)
   , InDefaultProperties(false)
   , VCallsDisabled(false)
 {
@@ -144,6 +144,8 @@ VEmitContext::VEmitContext (VMemberBase *Member)
       }
     }
   }
+
+  stackInit();
 }
 
 
@@ -158,7 +160,7 @@ void VEmitContext::EndCode () {
   //if (scopeList.length() != 0) VCFatalError("Internal compiler error: unbalanced scopes");
 
   // fix-up labels.
-  for (int i = 0; i < Fixups.Num(); ++i) {
+  for (int i = 0; i < Fixups.length(); ++i) {
     if (Labels[Fixups[i].LabelIdx] < 0) VCFatalError("Label was not marked");
     if (Fixups[i].Arg == 1) {
       CurrentFunc->Instructions[Fixups[i].Pos].Arg1 = Labels[Fixups[i].LabelIdx];
@@ -168,7 +170,7 @@ void VEmitContext::EndCode () {
   }
 
 #ifdef OPCODE_STATS
-  for (int i = 0; i < CurrentFunc->Instructions.Num(); ++i) {
+  for (int i = 0; i < CurrentFunc->Instructions.length(); ++i) {
     ++StatementInfo[CurrentFunc->Instructions[i].Opcode].usecount;
   }
 #endif
@@ -190,18 +192,234 @@ void VEmitContext::EndCode () {
 //==========================================================================
 void VEmitContext::ClearLocalDefs () {
   LocalDefs.Clear();
+  stackInit();
 }
 
 
 //==========================================================================
 //
-//  VEmitContext::AllocLocal
+//  VEmitContext::stackInit
 //
 //==========================================================================
-// allocates new local, sets offset
-VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, const TLocation &aloc) {
-  const int ssz = atype.GetStackSize()/4;
+void VEmitContext::stackInit () {
+  memset(slotInfo, 0, sizeof(slotInfo));
+}
 
+
+//==========================================================================
+//
+//  VEmitContext::stackAlloc
+//
+//  size in stack slots; returns -1 on error
+//
+//==========================================================================
+int VEmitContext::stackAlloc (int size, bool *reused) {
+  if (size < 0 || size > MaxStackSlots) return -1;
+
+  if (size == 0) {
+    int seenFree = -1;
+    for (int f = 0; f < MaxStackSlots; ++f) {
+      if (slotInfo[f] == SlotUnused) {
+        if (reused) *reused = false;
+        return f;
+      }
+      if (seenFree < 0 && slotInfo[f] == SlotFree) seenFree = f;
+    }
+    if (reused) *reused = true;
+    return seenFree;
+  }
+
+  int spos = 0;
+  while (spos < MaxStackSlots) {
+    unsigned char csl = slotInfo[spos];
+    if (csl != SlotUsed) {
+      int send = spos+1;
+      while (send < MaxStackSlots) {
+        const unsigned char ssl = slotInfo[send];
+        if (ssl == SlotUsed) break;
+        csl |= ssl;
+        ++send;
+      }
+      // does it fit?
+      if (send-spos >= size) {
+        // mark used
+        memset(slotInfo+spos, SlotUsed, size);
+        if (reused) *reused = !!csl;
+        return spos;
+      }
+    } else {
+      ++spos;
+    }
+  }
+
+  // no such free slot
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::stackFree
+//
+//==========================================================================
+void VEmitContext::stackFree (int pos, int size) {
+  vassert(pos >= 0);
+  vassert(size >= 0);
+  vassert(pos < MaxStackSlots);
+  vassert(size <= MaxStackSlots);
+  vassert(pos+size <= MaxStackSlots);
+  if (size == 0) return;
+
+  for (int f = pos; f < pos+size; ++f) {
+    vassert(slotInfo[f] == SlotUsed);
+    slotInfo[f] = SlotFree;
+  }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::AllocateLocalSlot
+//
+//  allocate stack slot for this local
+//  returns `true` if we got a second-hand stack slot
+//
+//==========================================================================
+void VEmitContext::AllocateLocalSlot (int idx) {
+  vassert(idx >= 0 && idx < LocalDefs.length());
+  VLocalVarDef &loc = LocalDefs[idx];
+  if (loc.invalid) return; // already dead
+  vassert(loc.Offset == -666);
+  vassert(loc.stackSize >= 0);
+  bool realloced = true; // just in case
+  const int ofs = stackAlloc(loc.stackSize, &realloced);
+  if (ofs < 0) {
+    ParseError(loc.Loc, "too many local vars");
+    loc.Offset = 1;
+    loc.invalid = true;
+    loc.reused = false; // it doesn't matter
+  } else {
+    loc.Offset = ofs;
+    loc.reused = realloced;
+  }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::ReleaseLocalSlot
+//
+//==========================================================================
+void VEmitContext::ReleaseLocalSlot (int idx) {
+  vassert(idx >= 0 && idx < LocalDefs.length());
+  VLocalVarDef &loc = LocalDefs[idx];
+  if (loc.invalid) return; // already dead
+  vassert(loc.Offset >= 0);
+  vassert(loc.stackSize >= 0);
+  stackFree(loc.Offset, loc.stackSize);
+  loc.Offset = -666;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::ReserveStack
+//
+//  reserve stack slots; used to setup function arguments
+//
+//==========================================================================
+int VEmitContext::ReserveStack (int size) {
+  vassert(size >= 0 && size <= MaxStackSlots);
+  int pos = 0;
+  while (pos < MaxStackSlots) {
+    const unsigned char csl = slotInfo[pos];
+    if (csl == SlotUnused) break;
+    if (csl == SlotFree) VCFatalError("cannot reserve stack after any local allocation");
+    ++pos;
+  }
+  if (pos+size > MaxStackSlots) return -1; // oops
+  // check stack integrity
+  for (int f = pos; f < pos+size; ++f) {
+    const unsigned char csl = slotInfo[pos];
+    if (csl != SlotUnused) VCFatalError("cannot reserve stack after any local allocation");
+  }
+  if (size > 0) memset(slotInfo+pos, SlotUsed, size);
+  return pos;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::ReserveLocalSlot
+//
+//  reserve slot for this local; used to setup function arguments
+//
+//==========================================================================
+void VEmitContext::ReserveLocalSlot (int idx) {
+  vassert(idx >= 0 && idx < LocalDefs.length());
+  VLocalVarDef &loc = LocalDefs[idx];
+  vassert(!loc.invalid);
+  vassert(!loc.reused);
+  vassert(loc.Offset == -666);
+  vassert(loc.stackSize >= 0);
+  //int size = (loc.ParamFlags&(FPARM_Out|FPARM_Ref) ? 1 : loc.stackSize);
+  const int ofs = ReserveStack(loc.stackSize);
+  if (ofs < 0) {
+    ParseError(loc.Loc, "too many local vars");
+    loc.Offset = 1;
+    loc.invalid = true;
+  } else {
+    loc.Offset = ofs;
+  }
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::CalcUsedStackSize
+//
+//==========================================================================
+int VEmitContext::CalcUsedStackSize () const noexcept {
+  for (int res = MaxStackSlots-1; res >= 0; --res) {
+    if (slotInfo[res] != SlotUnused) return res+1;
+  }
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::NewLocal
+//
+//==========================================================================
+VLocalVarDef &VEmitContext::NewLocal (VName aname, const VFieldType &atype, const TLocation &aloc, vuint32 pflags) {
+  const int ssz = (pflags&(FPARM_Out|FPARM_Ref) ? 1 : atype.GetStackSize()/4);
+
+  VLocalVarDef &loc = LocalDefs.Alloc();
+  loc.Name = aname;
+  loc.Loc = aloc;
+  loc.Offset = -666;
+  loc.Type = atype;
+  loc.Visible = true;
+  loc.WasRead = false;
+  loc.WasWrite = false;
+  loc.ParamFlags = pflags;
+  loc.ldindex = LocalDefs.length()-1;
+  loc.reused = false;
+  loc.stackSize = ssz;
+  loc.invalid = false;
+
+  return loc;
+
+  /*
+    localsofs += ssz;
+    if (localsofs > 1024) {
+      ParseError(aloc, "Local vars > 1k");
+      VCFatalError("VC: too many locals");
+    }
+    return loc;
+  */
+/*
   // try to find reusable local
   int besthit = 0x7fffffff, bestidx = -1;
   if (!atype.IsReusingDisabled()) {
@@ -270,6 +488,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     }
     return loc;
   }
+*/
 }
 
 
@@ -318,7 +537,7 @@ VFieldType VEmitContext::GetLocalVarType (int idx) {
 //==========================================================================
 VLabel VEmitContext::DefineLabel () {
   Labels.Append(-1);
-  return VLabel(Labels.Num()-1);
+  return VLabel(Labels.length()-1);
 }
 
 
@@ -328,9 +547,9 @@ VLabel VEmitContext::DefineLabel () {
 //
 //==========================================================================
 void VEmitContext::MarkLabel (VLabel l) {
-  if (l.Index < 0 || l.Index >= Labels.Num()) VCFatalError("Bad label index %d", l.Index);
+  if (l.Index < 0 || l.Index >= Labels.length()) VCFatalError("Bad label index %d", l.Index);
   if (Labels[l.Index] >= 0) VCFatalError("Label has already been marked");
-  Labels[l.Index] = CurrentFunc->Instructions.Num();
+  Labels[l.Index] = CurrentFunc->Instructions.length();
 }
 
 
@@ -508,7 +727,7 @@ void VEmitContext::AddStatement (int statement, VLabel Lbl, const TLocation &alo
   I.Arg2 = 0;
 
   VLabelFixup &Fix = Fixups.Alloc();
-  Fix.Pos = CurrentFunc->Instructions.Num()-1;
+  Fix.Pos = CurrentFunc->Instructions.length()-1;
   Fix.Arg = 1;
   Fix.LabelIdx = Lbl.Index;
   I.loc = aloc;
@@ -534,7 +753,7 @@ void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl, const TLo
   I.Arg2 = 0;
 
   VLabelFixup &Fix = Fixups.Alloc();
-  Fix.Pos = CurrentFunc->Instructions.Num()-1;
+  Fix.Pos = CurrentFunc->Instructions.length()-1;
   Fix.Arg = 2;
   Fix.LabelIdx = Lbl.Index;
   I.loc = aloc;
