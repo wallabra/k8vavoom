@@ -822,19 +822,27 @@ static VStatement *ParseStatementFor (VScriptParser *sc, VClass *Class, VState *
 
   sc->Expect("(");
 
-  VFor *forstmt = new VFor(stloc);
+  // `for` will always be put into compound, because why not?
+  // init expressions will be put first, and then `for` node
+  // TODO: lazy compound creation?
+  VCompound *Comp = new VCompound(stloc);
 
   // parse init expr(s)
   if (!sc->Check(";")) {
     for (;;) {
       VExpression *expr = ParseExpression(sc, Class);
       if (!expr) break;
-      forstmt->InitExpr.append(ParseCreateDropResult(expr));
+      //forstmt->InitExpr.append(ParseCreateDropResult(expr));
+      if (!expr->IsDropResult()) expr = new VDropResult(expr);
+      Comp->Statements.Append(new VExpressionStatement(expr));
       // here should be a comma or a semicolon
       if (!sc->Check(",")) break;
     }
     sc->Expect(";");
   }
+
+  VFor *forstmt = new VFor(stloc);
+  Comp->Statements.Append(forstmt);
 
   // parse cond expr(s)
   VExpression *lastCondExpr = nullptr;
@@ -863,9 +871,9 @@ static VStatement *ParseStatementFor (VScriptParser *sc, VClass *Class, VState *
     sc->Expect(")");
   }
 
-  VStatement *body = ParseActionStatement(sc, Class, State);
-  forstmt->Statement = body;
-  return forstmt;
+  forstmt->Statement = ParseActionStatement(sc, Class, State);
+
+  return Comp;
 }
 
 
