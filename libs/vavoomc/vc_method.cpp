@@ -229,7 +229,7 @@ bool VMethod::Define () {
       ++ParamsSize;
     } else {
       if (!type.CheckPassable(P.TypeExpr->Loc, false)) ParseError(P.TypeExpr->Loc, "Invalid parameter #%d type '%s' in method '%s'", i+1, *type.GetName(), *GetFullName());
-      ParamsSize += type.GetStackSize()/4;
+      ParamsSize += type.GetStackSlotCount();
     }
     if (ParamFlags[i]&FPARM_Optional) ++ParamsSize;
   }
@@ -416,7 +416,7 @@ void VMethod::Emit () {
       }
     } else {
       // skip unnamed
-      ec.ReserveStack(ParamFlags[i]&(FPARM_Out|FPARM_Ref) ? 1 : ParamTypes[i].GetStackSize()/4);
+      ec.ReserveStack(ParamFlags[i]&(FPARM_Out|FPARM_Ref) ? 1 : ParamTypes[i].GetStackSlotCount());
       if (ParamFlags[i]&FPARM_Optional) ec.ReserveStack(1);
     }
   }

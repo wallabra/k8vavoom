@@ -436,7 +436,7 @@ VFieldType VFieldType::GetDictValueType () const {
 //  VFieldType::GetStackSize
 //
 //==========================================================================
-int VFieldType::GetStackSize () const {
+int VFieldType::GetStackSize () const noexcept {
   switch (Type) {
     case TYPE_Int: return 4;
     case TYPE_Byte: return 4;
@@ -465,7 +465,7 @@ int VFieldType::GetStackSize () const {
 //  VFieldType::GetSize
 //
 //==========================================================================
-int VFieldType::GetSize () const {
+int VFieldType::GetSize () const noexcept {
   switch (Type) {
     case TYPE_Int: return sizeof(vint32);
     case TYPE_Byte: return sizeof(vuint8);
@@ -494,7 +494,7 @@ int VFieldType::GetSize () const {
 //  VFieldType::GetAlignment
 //
 //==========================================================================
-int VFieldType::GetAlignment () const {
+int VFieldType::GetAlignment () const noexcept {
   switch (Type) {
     case TYPE_Int: return sizeof(vint32);
     case TYPE_Byte: return sizeof(vuint8);
@@ -546,7 +546,7 @@ bool VFieldType::CheckPassable (const TLocation &l, bool raiseError) const {
 //
 //==========================================================================
 bool VFieldType::CheckReturnable (const TLocation &l, bool raiseError) const {
-  if (GetStackSize() != 4 && Type != TYPE_Vector) {
+  if (GetStackSlotCount() != 1 && Type != TYPE_Vector) {
     if (raiseError) ParseError(l, "Type `%s` is not returnable", *GetName());
     return false;
   }

@@ -3842,7 +3842,7 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
         ParseError(Loc, "void function cannot return a value");
         return CreateInvalid();
       }
-    } else if (Expr->Type.GetStackSize() == 4 || Expr->Type.Type == TYPE_Vector) {
+    } else if (Expr->Type.GetStackSlotCount() == 1 || Expr->Type.Type == TYPE_Vector) {
       const bool res = Expr->Type.CheckMatch(false, Expr->Loc, ec.FuncRetType);
       if (!res) return CreateInvalid();
     } else {
@@ -3873,7 +3873,7 @@ void VReturn::DoEmit (VEmitContext &ec) {
   }
 
   if (Expr) {
-         if (Expr->Type.GetStackSize() == 4) ec.AddStatement(OPC_ReturnL, Loc);
+         if (Expr->Type.GetStackSlotCount() == 1) ec.AddStatement(OPC_ReturnL, Loc);
     else if (Expr->Type.Type == TYPE_Vector) ec.AddStatement(OPC_ReturnV, Loc);
     else ParseError(Loc, "Bad return type `%s`", *Expr->Type.GetName());
   } else {

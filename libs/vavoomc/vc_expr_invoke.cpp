@@ -2494,15 +2494,20 @@ void VInvocation::Emit (VEmitContext &ec) {
   vint32 SelfOffset = 1;
   for (int i = 0; i < NumArgs; ++i) {
     if (!Args[i]) {
-      if (i < Func->NumParams && (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
+      if (i >= Func->NumParams) VCFatalError("VC: Internal compiler error (VInvocation::Emit): too many params");
+      if (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
         // get local address
         if (lcidx[i] < 0) VCFatalError("VC: Internal compiler error (VInvocation::Emit)");
         // make sure struct / class field offsets have been calculated
+        /*
         if (Func->ParamTypes[i].Type == TYPE_Struct) {
           Func->ParamTypes[i].Struct->PostLoad();
         }
-        ec.AllocateLocalSlot(lcidx[i]);
+        */
         const VLocalVarDef &loc = ec.GetLocalByIndex(lcidx[i]);
+        //GLog.Logf(NAME_Debug, "%s:000: invoke: arg #%d: lofs=%d", *Loc.toStringNoCol(), i, loc.Offset);
+        ec.AllocateLocalSlot(lcidx[i]);
+        //GLog.Logf(NAME_Debug, "%s:001: invoke: arg #%d: lofs=%d; reused=%d", *Loc.toStringNoCol(), i, loc.Offset, (int)loc.reused);
         if (loc.reused) ec.EmitLocalZero(lcidx[i], Loc); // forced zero if reused
         ec.EmitLocalAddress(loc.Offset, Loc);
         ++SelfOffset; // pointer
@@ -2543,7 +2548,7 @@ void VInvocation::Emit (VEmitContext &ec) {
         }
       }
       // omited ref args can be non-optional
-      if ((Func->ParamFlags[i]&FPARM_Optional) != 0) {
+      if (Func->ParamFlags[i]&FPARM_Optional) {
         ec.EmitPushNumber(0, Loc);
         ++SelfOffset;
       }
@@ -2563,11 +2568,11 @@ void VInvocation::Emit (VEmitContext &ec) {
               SelfOffset += 1;
               break;
             default:
-              SelfOffset += Args[i]->Type.GetStackSize()/4;
+              SelfOffset += Args[i]->Type.GetStackSlotCount();
               break;
           }
         } else {
-          SelfOffset += Args[i]->Type.GetStackSize()/4;
+          SelfOffset += Args[i]->Type.GetStackSlotCount();
         }
         Args[i]->Emit(ec);
       }

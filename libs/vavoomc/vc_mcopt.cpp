@@ -394,7 +394,7 @@ struct Instr {
       case OPC_VCall:
       case OPC_VCallB:
         spdelta = -(Arg2-0); // pop arguments
-        spdelta += ((VMethod *)Member)->ReturnType.GetStackSize()/4;
+        spdelta += ((VMethod *)Member)->ReturnType.GetStackSlotCount();
         //if (((VMethod *)Member)->Flags&FUNC_VarArgs) spdelta += 1;
         if (((VMethod *)Member)->Flags&FUNC_Static) spdelta += 1;
         return;
@@ -405,11 +405,11 @@ struct Instr {
       case OPC_DelegateCall:
       case OPC_DelegateCallS:
         spdelta = -Arg2;
-        spdelta += ((VField *)Member)->Type.Function->ReturnType.GetStackSize()/4;
+        spdelta += ((VField *)Member)->Type.Function->ReturnType.GetStackSlotCount();
         return;
       case OPC_DelegateCallPtr:
         spdelta = -Arg2-1; // delegate pointer
-        spdelta += TypeArg.Function->ReturnType.GetStackSize()/4;
+        spdelta += TypeArg.Function->ReturnType.GetStackSlotCount();
         return;
       case OPC_Return:
         return;
@@ -882,7 +882,7 @@ struct Instr {
             spdelta = -1; // ptr
             break;
           default:
-            spdelta = -(TypeArg.GetStackSize()/4);
+            spdelta = -TypeArg.GetStackSlotCount();
             break;
         }
         return;

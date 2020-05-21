@@ -393,7 +393,7 @@ int VEmitContext::CalcUsedStackSize () const noexcept {
 //
 //==========================================================================
 VLocalVarDef &VEmitContext::NewLocal (VName aname, const VFieldType &atype, const TLocation &aloc, vuint32 pflags) {
-  const int ssz = (pflags&(FPARM_Out|FPARM_Ref) ? 1 : atype.GetStackSize()/4);
+  const int ssz = (pflags&(FPARM_Out|FPARM_Ref) ? 1 : atype.GetStackSlotCount());
 
   VLocalVarDef &loc = LocalDefs.Alloc();
   loc.Name = aname;
@@ -834,10 +834,14 @@ void VEmitContext::EmitLocalPtrValue (int lcidx, const TLocation &aloc, int xofs
 //
 //==========================================================================
 void VEmitContext::EmitLocalZero (int locidx, const TLocation &aloc) {
+  vassert(locidx >= 0 && locidx < LocalDefs.length());
+
   const VLocalVarDef &loc = LocalDefs[locidx];
 
   // don't touch out/ref parameters
   if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) return;
+
+  vassert(loc.Offset >= 0);
 
   if (loc.Type.Type == TYPE_Struct) {
     EmitLocalAddress(loc.Offset, aloc);
@@ -870,7 +874,7 @@ void VEmitContext::EmitLocalZero (int locidx, const TLocation &aloc) {
       loc.Type.Type == TYPE_DynamicArray)
   {
     EmitLocalAddress(loc.Offset, aloc);
-    AddStatement(OPC_ZeroSlotsByPtr, loc.Type.GetStackSize(), aloc);
+    AddStatement(OPC_ZeroSlotsByPtr, loc.Type.GetStackSlotCount(), aloc);
     return;
   }
 
@@ -885,10 +889,14 @@ void VEmitContext::EmitLocalZero (int locidx, const TLocation &aloc) {
 //
 //==========================================================================
 void VEmitContext::EmitLocalDtor (int locidx, const TLocation &aloc) {
+  vassert(locidx >= 0 && locidx < LocalDefs.length());
+
   const VLocalVarDef &loc = LocalDefs[locidx];
 
   // don't touch out/ref parameters
   if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) return;
+
+  vassert(loc.Offset >= 0);
 
   if (loc.Type.Type == TYPE_String) {
     EmitLocalAddress(loc.Offset, aloc);

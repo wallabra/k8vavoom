@@ -118,12 +118,16 @@ public:
   // get second dimension (or 1 for 1d array)
   inline vint32 GetSecondDim () const noexcept { return (ArrayDimInternal >= 0 ? 1 : (ArrayDimInternal>>16)&0x7fff); }
 
-  int GetStackSize () const;
-  int GetSize () const;
-  int GetAlignment () const;
+  int GetStackSize () const noexcept; // in 4-byte slots (this is wrong for x86_64, but the code is used to that)
+  inline int GetStackSlotCount () const noexcept { return GetStackSize()>>2; }
+
+  int GetSize () const noexcept;
+  int GetAlignment () const noexcept;
+
   bool CheckPassable (const TLocation &, bool raiseError=true) const;
   bool CheckReturnable (const TLocation &, bool raiseError=true) const;
   bool CheckMatch (bool asRef, const TLocation &loc, const VFieldType &, bool raiseError=true) const;
+
   VStr GetName () const;
 
   inline bool IsAnyArray () const noexcept { return (Type == TYPE_Array || Type == TYPE_DynamicArray || Type == TYPE_SliceArray || Type == TYPE_Dictionary); }
