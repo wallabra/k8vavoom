@@ -195,8 +195,9 @@ public:
   inline const char *GetName () const { return *Name; }
   inline const VName GetVName () const { return Name; }
   VStr GetFullName () const; // full name includes package, and class
-  VPackage *GetPackage () const;
-  bool IsIn (VMemberBase *) const;
+  VPackage *GetPackage () const noexcept;
+  VPackage *GetPackageRelaxed () const noexcept;
+  bool IsIn (VMemberBase *) const noexcept;
 
   virtual void Serialise (VStream &);
   // this performs the final tasks for various object types (see the respective source for more info)

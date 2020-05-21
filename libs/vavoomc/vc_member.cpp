@@ -245,9 +245,20 @@ VStr VMemberBase::GetFullName () const {
 //  VMemberBase::GetPackage
 //
 //==========================================================================
-VPackage *VMemberBase::GetPackage () const {
+VPackage *VMemberBase::GetPackage () const noexcept {
   for (const VMemberBase *p = this; p; p = p->Outer) if (p->MemberType == MEMBER_Package) return (VPackage *)p;
   Sys_Error("Member object %s not in a package", *GetFullName());
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::GetPackageRelaxed
+//
+//==========================================================================
+VPackage *VMemberBase::GetPackageRelaxed () const noexcept {
+  for (const VMemberBase *p = this; p; p = p->Outer) if (p->MemberType == MEMBER_Package) return (VPackage *)p;
   return nullptr;
 }
 
@@ -257,7 +268,7 @@ VPackage *VMemberBase::GetPackage () const {
 //  VMemberBase::IsIn
 //
 //==========================================================================
-bool VMemberBase::IsIn (VMemberBase *SomeOuter) const {
+bool VMemberBase::IsIn (VMemberBase *SomeOuter) const noexcept {
   for (const VMemberBase *Tst = Outer; Tst; Tst = Tst->Outer) if (Tst == SomeOuter) return true;
   return !SomeOuter;
 }

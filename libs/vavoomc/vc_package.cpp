@@ -402,6 +402,61 @@ void VPackage::Emit () {
 }
 
 
+struct PLMember {
+  VMemberBase *m;
+  PLMember *next;
+
+  inline PLMember () noexcept : m(nullptr), next(nullptr) {}
+};
+
+
+struct PLMemberList {
+  PLMember *head;
+  PLMember *tail;
+
+  inline PLMemberList () noexcept : head(nullptr), tail(nullptr) {}
+  inline ~PLMemberList () noexcept { clear(); }
+
+  void clear () noexcept {
+    while (head) {
+      PLMember *c = head;
+      head = head->next;
+      delete c;
+    }
+    head = tail = nullptr;
+  }
+
+  void append (PLMember *m) noexcept {
+    if (!m) return; // just in case
+    vassert(!m->next);
+    if (tail) tail->next = m; else { vassert(!head); head = m; }
+    tail = m;
+  }
+
+  void append (VMemberBase *m) noexcept {
+    if (!m) return;
+    PLMember *n = new PLMember();
+    n->m = m;
+    append(n);
+  }
+};
+
+
+struct PLPkgInfo {
+  VPackage *pkg;
+  PLMemberList structs;
+  PLMemberList others;
+
+  inline PLPkgInfo () noexcept : pkg(nullptr), structs(), others() {}
+  inline ~PLPkgInfo () noexcept { clear(); }
+
+  void clear () noexcept {
+    structs.clear();
+    others.clear();
+  }
+};
+
+
 //==========================================================================
 //
 //  VPackage::StaticEmitPackages
@@ -410,7 +465,59 @@ void VPackage::Emit () {
 //
 //==========================================================================
 void VPackage::StaticEmitPackages () {
-  for (auto &pkg : PackagesToEmit) {
+  if (PackagesToEmit.length() == 0) return;
+
+  bool wasEngine = false;
+
+  // create two postload lists: structs and others
+  // we want to postload structs before emiting code, so struct sizes will be known
+
+  TArray<PLPkgInfo> pinfo;
+  pinfo.setLength(PackagesToEmit.length());
+
+  // for faster loopkups: key is package, value is package index
+  TMapNC<VPackage *, int> pidMap;
+  for (auto &&it : PackagesToEmit.itemsIdx()) {
+    wasEngine = wasEngine || (it.value()->Name == NAME_engine);
+    vassert(it.value());
+    pidMap.put(it.value(), it.index());
+    pinfo[it.index()].pkg = it.value();
+  }
+
+  // create lists
+  for (auto &&mm : GMembers) {
+    VPackage *pkg = mm->GetPackageRelaxed();
+    if (!pkg) continue;
+    auto pp = pidMap.find(pkg);
+    if (pp) {
+      const int pidx = *pp;
+      vassert(pinfo[pidx].pkg == pkg);
+      if (mm->isStructMember()) {
+        pinfo[pidx].structs.append(mm);
+      } else {
+        pinfo[pidx].others.append(mm);
+      }
+    }
+  }
+
+  // we don't need the map anymore
+  pidMap.clear();
+
+  // postload structs
+  for (auto &&pi : pinfo) {
+    vassert(pi.pkg);
+    //GLog.Logf(NAME_Debug, "postloading structs for package `%s`", *pi.pkg->Name);
+    for (PLMember *pm = pi.structs.head; pm; pm = pm->next) {
+      //GLog.Logf(NAME_Debug, "  struct `%s`", *pm->m->Name);
+      pm->m->PostLoad();
+    }
+    // we can free struct list now
+    pi.structs.clear();
+    if (vcErrorCount) BailOut();
+  }
+
+  // emit classes
+  for (auto &&pkg : PackagesToEmit) {
     if (pkg->ParsedClasses.length() > 0) {
       vdlogf("Emiting %d class%s for '%s'", pkg->ParsedClasses.length(), (pkg->ParsedClasses.length() != 1 ? "es" : ""), *pkg->Name);
       for (auto &&cls : pkg->ParsedClasses) {
@@ -421,11 +528,10 @@ void VPackage::StaticEmitPackages () {
     }
   }
 
+  // postload everything except structs
   if (!VObject::compilerDisablePostloading) {
-    bool wasEngine = false;
-
-    for (auto &pkg : PackagesToEmit) {
-      wasEngine = wasEngine || (pkg->Name == NAME_engine);
+    /*
+    for (auto &&pkg : PackagesToEmit) {
       if (VObject::cliShowPackageLoading) GLog.Logf(NAME_Init, "VavoomC: generating code for package '%s'", *pkg->Name);
       for (auto &&mm : GMembers) {
         if (mm->IsIn(pkg)) {
@@ -435,8 +541,21 @@ void VPackage::StaticEmitPackages () {
       }
       if (vcErrorCount) BailOut();
     }
+    */
+    for (auto &&pi : pinfo) {
+      vassert(pi.pkg);
+      if (VObject::cliShowPackageLoading) GLog.Logf(NAME_Init, "VavoomC: generating code for package '%s'", *pi.pkg->Name);
+      for (PLMember *pm = pi.others.head; pm; pm = pm->next) {
+        //GLog.Logf(NAME_Debug, "  `%s`", *pm->m->Name);
+        pm->m->PostLoad();
+      }
+      // we can free others list now
+      pi.others.clear();
+      if (vcErrorCount) BailOut();
+    }
 
-    for (auto &pkg : PackagesToEmit) {
+    // create defaultproperties for all classes
+    for (auto &&pkg : PackagesToEmit) {
       // create default objects
       for (auto &&cls : pkg->ParsedClasses) {
         cls->CreateDefaults();
