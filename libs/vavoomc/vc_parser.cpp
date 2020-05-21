@@ -1255,8 +1255,41 @@ VStatement *VParser::ParseForeach () {
 //
 //==========================================================================
 VStatement *VParser::ParseStatement () {
+  // check for label
+  VName StLabel = NAME_None;
+  if (Lex.Token == TK_Identifier && Lex.peekTokenType(1) == TK_Colon) {
+    StLabel = Lex.Name;
+    Lex.NextToken();
+    Lex.NextToken();
+  }
+  // parse statement
+  VStatement *st = ParseStatementNoLabel();
+  // attach label
+  if (st) {
+    //FIXME: this is HACK! rewrite it properly!
+    if (st->IsCompound()) {
+      VCompound *cp = (VCompound *)st;
+      if (cp->Statements.length() == 1 && cp->Statements[0]->IsFor()) {
+        cp->Statements[0]->Label = StLabel;
+        StLabel = NAME_None;
+      }
+    }
+    st->Label = StLabel;
+  }
+  return st;
+}
+
+
+//==========================================================================
+//
+//  VParser::ParseStatementNoLabel
+//
+//==========================================================================
+VStatement *VParser::ParseStatementNoLabel () {
   TLocation l = Lex.Location;
-  switch(Lex.Token) {
+  VName LoopLabel = NAME_None;
+
+  switch (Lex.Token) {
     case TK_EOF:
       ParseError(Lex.Location, ERR_UNEXPECTED_EOF);
       if (!vcGagErrors) Sys_Error("Cannot continue");
@@ -1360,12 +1393,16 @@ VStatement *VParser::ParseStatement () {
       return ParseForeach();
     case TK_Break:
       Lex.NextToken();
+      // check for label
+      if (Lex.Token == TK_Identifier) { LoopLabel = Lex.Name; Lex.NextToken(); }
       Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-      return new VBreak(l);
+      return new VBreak(l, LoopLabel);
     case TK_Continue:
       Lex.NextToken();
+      // check for label
+      if (Lex.Token == TK_Identifier) { LoopLabel = Lex.Name; Lex.NextToken(); }
       Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-      return new VContinue(l);
+      return new VContinue(l, LoopLabel);
     case TK_Return:
       {
         Lex.NextToken();
@@ -1470,15 +1507,6 @@ VStatement *VParser::ParseStatement () {
         return new VLocalVarStatement(Decl);
       }
     default:
-      // label?
-      /*
-      if (Lex.Token == TK_Identifier && Lex.peekTokenType(1) == TK_Colon) {
-        VName ln = Lex.Name;
-        Lex.NextToken();
-        Lex.NextToken();
-        return new VLabelStmt(ln, l);
-      }
-      */
       // expression
       CheckForLocal = true;
       VExpression *Expr = ParseAssignExpression();

@@ -70,7 +70,8 @@ private:
   inline VStatement *CreateExpressionStatementNoDrop (VExpression *expr) { return CreateExpressionStatement(expr, false); }
   VStatement *ParseForeachRange (const TLocation &l); // array or iota
   VStatement *ParseForeach ();
-  VStatement *ParseStatement ();
+  VStatement *ParseStatementNoLabel (); // without label
+  VStatement *ParseStatement (); // and this attaches label to statement
   /*VCompound*/VStatement *ParseCompoundStatement (const TLocation &l);
   enum { TCRF_Const=0x01, TCRF_Ref=0x02 };
   void ParseOptionalConstRef (int *constref);

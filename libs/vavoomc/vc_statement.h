@@ -41,6 +41,8 @@ public:
   // break and continue labels, used in break and continue statements
   VLabel breakLabel;
   VLabel contLabel;
+  // any statement can have attached label (but it is used only for loops for now)
+  VName Label;
 
 protected:
   struct UpScopeGuard {
@@ -97,12 +99,15 @@ public:
   // this is used to find the scope to `continue` from
   virtual bool IsContinueScope () const noexcept;
 
+  // this returns label attached to loops, to implement labeled break/cont
+  virtual VName GetBCScopeLabel () const noexcept;
+
   virtual bool IsCompound () const noexcept;
   virtual bool IsEmptyStatement () const noexcept;
   virtual bool IsInvalidStatement () const noexcept;
-  virtual bool IsLabel () const noexcept;
   virtual VName GetLabelName () const noexcept;
   virtual bool IsGoto () const noexcept; // any, including `goto case` and `goto default`
+  virtual bool IsFor () const noexcept;
   virtual bool IsGotoCase () const noexcept;
   virtual bool HasGotoCaseExpr () const noexcept;
   virtual bool IsGotoDefault () const noexcept;
@@ -346,6 +351,8 @@ public:
 
   virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
+
+  virtual bool IsFor () const noexcept override;
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
@@ -638,7 +645,9 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VBreak : public VStatement {
 public:
-  VBreak (const TLocation &ALoc);
+  VName LoopLabel; // can be empty
+
+  VBreak (const TLocation &ALoc, VName aLoopLabel=NAME_None);
   virtual VStatement *SyntaxCopy () override;
 
   virtual VStatement *DoResolve (VEmitContext &ec) override;
@@ -650,13 +659,16 @@ public:
 
 protected:
   VBreak () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VContinue : public VStatement {
 public:
-  VContinue (const TLocation &ALoc);
+  VName LoopLabel; // can be empty
+
+  VContinue (const TLocation &ALoc, VName aLoopLabel=NAME_None);
   virtual VStatement *SyntaxCopy () override;
 
   virtual VStatement *DoResolve (VEmitContext &ec) override;
@@ -668,6 +680,7 @@ public:
 
 protected:
   VContinue () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
 };
 
 

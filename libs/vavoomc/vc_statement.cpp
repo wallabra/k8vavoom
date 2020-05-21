@@ -66,7 +66,14 @@ template<class T> VStr shitppTypeNameObj (const T &o) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // VStatement
-VStatement::VStatement (const TLocation &ALoc) : Loc(ALoc), UpScope(nullptr), skipDtorOnLeave(false), skipFinalizerOnLeave(false) {}
+VStatement::VStatement (const TLocation &ALoc)
+  : Loc(ALoc)
+  , UpScope(nullptr)
+  , skipDtorOnLeave(false)
+  , skipFinalizerOnLeave(false)
+  , Label(NAME_None)
+{
+}
 
 VStatement::~VStatement () {}
 
@@ -76,7 +83,7 @@ void VStatement::EmitFinalizer (VEmitContext &ec) {}
 bool VStatement::IsCompound () const noexcept { return false; }
 bool VStatement::IsEmptyStatement () const noexcept { return false; }
 bool VStatement::IsInvalidStatement () const noexcept { return false; }
-bool VStatement::IsLabel () const noexcept { return false; }
+bool VStatement::IsFor () const noexcept { return false; }
 VName VStatement::GetLabelName () const noexcept { return NAME_None; }
 bool VStatement::IsGoto () const noexcept { return false; }
 bool VStatement::IsGotoCase () const noexcept { return false; }
@@ -91,12 +98,13 @@ bool VStatement::IsSwitchDefault () const noexcept { return false; }
 bool VStatement::IsVarDecl () const noexcept { return false; }
 bool VStatement::IsEndsWithReturn () const noexcept { return IsReturn(); }
 bool VStatement::IsProperCaseEnd (bool skipBreak) const noexcept { if (IsReturn() || IsGotoCase() || IsGotoDefault()) return true; if (!skipBreak && (IsBreak() || IsContinue())) return true; return false; }
-void VStatement::DoSyntaxCopyTo (VStatement *e) { e->Loc = Loc; }
+void VStatement::DoSyntaxCopyTo (VStatement *e) { e->Loc = Loc; e->Label = Label; }
 void VStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {}
 
 bool VStatement::IsReturnAllowed () const noexcept { return true; }
 bool VStatement::IsBreakScope () const noexcept { return false; }
 bool VStatement::IsContinueScope () const noexcept { return false; }
+VName VStatement::GetBCScopeLabel () const noexcept { return Label; }
 
 
 //==========================================================================
@@ -1321,6 +1329,16 @@ void VFor::DoEmit (VEmitContext &ec) {
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
+}
+
+
+//==========================================================================
+//
+//  VFor::IsFor
+//
+//==========================================================================
+bool VFor::IsFor () const noexcept {
+  return true;
 }
 
 
@@ -2951,7 +2969,6 @@ bool VSwitch::checkProperCaseEnd (bool reportSwitchCase) const noexcept {
     }
     if (isEndSeen) continue;
     //fprintf(stderr, "  n=%d; type=%s\n", n, *shitppTypeNameObj(*Statements[n]));
-    if (Statements[n]->IsLabel()) continue; // nobody cares
     statementSeen = true;
     // proper end?
     if (Statements[n]->IsProperCaseEnd(false)) {
@@ -3239,7 +3256,9 @@ VStr VSwitchDefault::toString () {
 //  VBreak::VBreak
 //
 //==========================================================================
-VBreak::VBreak (const TLocation &ALoc) : VStatement(ALoc)
+VBreak::VBreak (const TLocation &ALoc, VName aLoopLabel)
+  : VStatement(ALoc)
+  , LoopLabel(aLoopLabel)
 {
 }
 
@@ -3258,19 +3277,37 @@ VStatement *VBreak::SyntaxCopy () {
 
 //==========================================================================
 //
+//  VBreak::DoSyntaxCopyTo
+//
+//==========================================================================
+void VBreak::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VBreak *)e;
+  res->LoopLabel = LoopLabel;
+}
+
+
+//==========================================================================
+//
 //  VBreak::DoResolve
 //
 //==========================================================================
 VStatement *VBreak::DoResolve (VEmitContext &ec) {
   // check if we have a good break scope
   for (VStatement *st = UpScope; st; st = st->UpScope) {
-    if (st->IsBreakScope()) return this;
+    if (st->IsBreakScope()) {
+      if (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()) return this;
+    }
     if (!st->IsReturnAllowed()) {
       ParseError(Loc, "`break` jumps outside of a restricted scope");
       return CreateInvalid();
     }
   }
-  ParseError(Loc, "`break` without loop or switch");
+  if (LoopLabel != NAME_None) {
+    ParseError(Loc, "`break` label `%s` not found", *LoopLabel);
+  } else {
+    ParseError(Loc, "`break` without loop or switch");
+  }
   return CreateInvalid();
 }
 
@@ -3285,13 +3322,13 @@ void VBreak::DoEmit (VEmitContext &ec) {
   // emit finalizers for all scopes except the destination one
   for (VStatement *st = this; st; st = st->UpScope) {
     st->EmitDtor(ec);
-    if (!st->IsBreakScope()) {
-      st->EmitFinalizer(ec);
-    } else {
+    const bool destReached = (st->IsBreakScope() && (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()));
+    if (destReached) {
       // jump to break destination
       ec.AddStatement(OPC_Goto, st->breakLabel, Loc);
       return;
     }
+    st->EmitFinalizer(ec);
   }
   VCFatalError("internal compiler error (break)");
 }
@@ -3329,7 +3366,9 @@ VStr VBreak::toString () {
 //  VContinue::VContinue
 //
 //==========================================================================
-VContinue::VContinue (const TLocation &ALoc) : VStatement(ALoc)
+VContinue::VContinue (const TLocation &ALoc, VName aLoopLabel)
+  : VStatement(ALoc)
+  , LoopLabel(aLoopLabel)
 {
 }
 
@@ -3348,19 +3387,37 @@ VStatement *VContinue::SyntaxCopy () {
 
 //==========================================================================
 //
+//  VContinue::DoSyntaxCopyTo
+//
+//==========================================================================
+void VContinue::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VContinue *)e;
+  res->LoopLabel = LoopLabel;
+}
+
+
+//==========================================================================
+//
 //  VContinue::DoResolve
 //
 //==========================================================================
 VStatement *VContinue::DoResolve (VEmitContext &) {
   // check if we have a good continue scope
   for (VStatement *st = UpScope; st; st = st->UpScope) {
-    if (st->IsContinueScope()) return this;
+    if (st->IsContinueScope()) {
+      if (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()) return this;
+    }
     if (!st->IsReturnAllowed()) {
       ParseError(Loc, "`continue` jumps outside of a restricted scope");
       return CreateInvalid();
     }
   }
-  ParseError(Loc, "`continue` without loop or switch");
+  if (LoopLabel != NAME_None) {
+    ParseError(Loc, "`continue` label `%s` not found", *LoopLabel);
+  } else {
+    ParseError(Loc, "`continue` without loop or switch");
+  }
   return CreateInvalid();
 }
 
@@ -3375,13 +3432,13 @@ void VContinue::DoEmit (VEmitContext &ec) {
   // emit finalizers for all scopes except the destination one
   for (VStatement *st = this; st; st = st->UpScope) {
     st->EmitDtor(ec);
-    if (!st->IsContinueScope()) {
-      st->EmitFinalizer(ec);
-    } else {
+    const bool destReached = (st->IsContinueScope() && (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()));
+    if (destReached) {
       // jump to conitnue destination
       ec.AddStatement(OPC_Goto, st->contLabel, Loc);
       return;
     }
+    st->EmitFinalizer(ec);
   }
   VCFatalError("internal compiler error (break)");
 }

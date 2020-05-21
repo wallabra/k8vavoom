@@ -131,6 +131,10 @@ some interesting methods:
     are not needed (i.e. user wrote something like `var++;`).
 
 
+  WARNING! emitters should not change/destroy any node internal state, because
+           the compiler may call them alot of times (when generating finalizing
+           code for breaks/returns, for example)!
+
   virtual void Emit (VEmitContext &ec) = 0;
     generate IR code for a node.
 
