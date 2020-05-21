@@ -1233,7 +1233,7 @@ VExpression *VFieldAccess::DoResolve (VEmitContext &) {
 //
 //==========================================================================
 void VFieldAccess::RequestAddressOf () {
-  if (AddressRequested) ParseError(Loc, "Multiple address of");
+  if (AddressRequested) ParseError(Loc, "Multiple address of field (%s)", *toString());
   AddressRequested = true;
 }
 

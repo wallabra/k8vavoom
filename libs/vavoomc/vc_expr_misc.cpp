@@ -885,7 +885,7 @@ void VPushPointed::RequestAddressOf () {
     ParseError(Loc, "Bad address operation");
     return;
   }
-  if (AddressRequested) ParseError(Loc, "Multiple address of");
+  if (AddressRequested) ParseError(Loc, "Multiple address of pushpointed (%s)", *toString());
   AddressRequested = true;
 }
 

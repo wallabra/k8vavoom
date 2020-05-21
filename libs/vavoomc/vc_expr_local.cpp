@@ -25,6 +25,8 @@
 //**************************************************************************
 #include "vc_local.h"
 
+//#define VV_DEBUG_ALLOC_RELEASE
+
 
 //==========================================================================
 //
@@ -154,8 +156,10 @@ void VLocalDecl::EmitZeroing (VEmitContext &ec, bool forced) {
 void VLocalDecl::Allocate (VEmitContext &ec) {
   for (auto &&loc : Vars) {
     ec.AllocateLocalSlot(loc.locIdx);
+    #ifdef VV_DEBUG_ALLOC_RELEASE
     VLocalVarDef &ldef = ec.GetLocalByIndex(loc.locIdx);
     GLog.Logf(NAME_Debug, "VLocalDecl::Allocate: name=`%s`; idx=%d; ofs=%d; reused=%d; %s", *ldef.Name, loc.locIdx, ldef.Offset, (int)ldef.reused, *ldef.Loc.toStringNoCol());
+    #endif
   }
 }
 
@@ -168,8 +172,10 @@ void VLocalDecl::Allocate (VEmitContext &ec) {
 void VLocalDecl::Release (VEmitContext &ec) {
   for (auto &&loc : Vars) {
     ec.ReleaseLocalSlot(loc.locIdx);
+    #ifdef VV_DEBUG_ALLOC_RELEASE
     VLocalVarDef &ldef = ec.GetLocalByIndex(loc.locIdx);
     GLog.Logf(NAME_Debug, "VLocalDecl::Release: name=`%s`; idx=%d; ofs=%d; reused=%d; %s", *ldef.Name, loc.locIdx, ldef.Offset, (int)ldef.reused, *ldef.Loc.toStringNoCol());
+    #endif
   }
 }
 
@@ -334,10 +340,12 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
         }
       }
     }
+    #ifdef VV_DEBUG_ALLOC_RELEASE
     {
       VLocalVarDef &ldef = ec.GetLocalByIndex(e.locIdx);
       GLog.Logf(NAME_Debug, "VLocalDecl::Declare(%d): name=`%s`; idx=%d; ofs=%d; reused=%d; %s", i, *ldef.Name, e.locIdx, ldef.Offset, (int)ldef.reused, *ldef.Loc.toStringNoCol());
     }
+    #endif
   }
   return retres;
 }
@@ -442,7 +450,10 @@ void VLocalVar::RequestAddressOf () {
     PushOutParam = false;
     return;
   }
-  if (AddressRequested) ParseError(Loc, "Multiple address of");
+  if (AddressRequested) {
+    ParseError(Loc, "Multiple address of local (%s)", *toString());
+    //VCFatalError("oops");
+  }
   AddressRequested = true;
 }
 

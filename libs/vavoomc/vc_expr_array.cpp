@@ -544,7 +544,7 @@ VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression
 //==========================================================================
 void VArrayElement::RequestAddressOf () {
   if (op->Type.Type == TYPE_String) ParseError(Loc, "Cannot get string element address");
-  if (AddressRequested) ParseError(Loc, "Multiple address of");
+  if (AddressRequested) ParseError(Loc, "Multiple address of array element (%s)", *toString());
   AddressRequested = true;
 }
 

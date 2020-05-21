@@ -3828,35 +3828,26 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
   }
 
   if (Expr) {
-    Expr = Expr->Resolve(ec);
-    if (!Expr) return CreateInvalid();
-  }
-
-  bool res = true;
-
-  if (Expr) {
     Expr = (ec.FuncRetType.Type == TYPE_Float ? Expr->ResolveFloat(ec) : Expr->Resolve(ec));
+    if (!Expr) return CreateInvalid();
     if (ec.FuncRetType.Type == TYPE_Void) {
-      ParseError(Loc, "void function cannot return a value");
-      res = false;
-    } else if (Expr) {
-      if (Expr->Type.GetStackSize() == 4 || Expr->Type.Type == TYPE_Vector) {
-        res = Expr->Type.CheckMatch(false, Expr->Loc, ec.FuncRetType);
-      } else {
-        ParseError(Loc, "Bad return type");
-        res = false;
+      // allow `return func();` in voids if `func()` is void too
+      if (Expr->Type.Type != TYPE_Void) {
+        ParseError(Loc, "void function cannot return a value");
+        return CreateInvalid();
       }
+    } else if (Expr->Type.GetStackSize() == 4 || Expr->Type.Type == TYPE_Vector) {
+      const bool res = Expr->Type.CheckMatch(false, Expr->Loc, ec.FuncRetType);
+      if (!res) return CreateInvalid();
     } else {
-      res = false;
+      ParseError(Loc, "Bad return type");
+      return CreateInvalid();
     }
-  } else {
-    if (ec.FuncRetType.Type != TYPE_Void) {
-      ParseError(Loc, "Return value expected");
-      res = false;
-    }
+  } else if (ec.FuncRetType.Type != TYPE_Void) {
+    ParseError(Loc, "Return value expected");
+    return CreateInvalid();
   }
 
-  if (!res) return CreateInvalid();
   return this;
 }
 

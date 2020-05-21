@@ -2750,6 +2750,7 @@ bool VInvocation::IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VE
 //
 //==========================================================================
 void VInvocation::CheckParams (VEmitContext &ec) {
+  //GLog.Logf(NAME_Debug, "%s: VInvocation::CheckParams: %s", *Loc.toStringNoCol(), *Func->GetFullName());
   // determine parameter count
   int argsize = 0;
   int requiredParams = Func->NumParams;
@@ -2801,6 +2802,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
               break;
           }
         }
+        //GLog.Logf(NAME_Debug, "%s: checking arg #%d (func: out=%d; ref=%d); argtype=%s", *Args[i]->Loc.toStringNoCol(), i, (Func->ParamFlags[i]&FPARM_Out ? 1 : 0), (Func->ParamFlags[i]&FPARM_Ref ? 1 : 0), *Args[i]->Type.GetName());
         // ref/out args: no int->float conversion allowed
         if (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
           if (!Args[i]->Type.Equals(Func->ParamTypes[i])) {
