@@ -25,6 +25,8 @@
 //**************************************************************************
 #include "vc_local.h"
 
+#define VV_EMIT_DISABLE_LOCAL_REUSE
+
 
 VStatementInfo StatementInfo[NUM_OPCODES] = {
 #define DECLARE_OPC(name, args)   { #name, OPCARGS_##args, 0}
@@ -202,7 +204,7 @@ void VEmitContext::ClearLocalDefs () {
 //
 //==========================================================================
 void VEmitContext::stackInit () {
-  memset(slotInfo, 0, sizeof(slotInfo));
+  memset(slotInfo, SlotUnused, sizeof(slotInfo));
 }
 
 
@@ -270,10 +272,12 @@ void VEmitContext::stackFree (int pos, int size) {
   vassert(pos+size <= MaxStackSlots);
   if (size == 0) return;
 
+  #ifndef VV_EMIT_DISABLE_LOCAL_REUSE
   for (int f = pos; f < pos+size; ++f) {
     vassert(slotInfo[f] == SlotUsed);
     slotInfo[f] = SlotFree;
   }
+  #endif
 }
 
 

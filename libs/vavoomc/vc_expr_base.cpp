@@ -246,9 +246,9 @@ VExpression *VExpression::CoerceToBool (VEmitContext &ec) {
 //
 //==========================================================================
 int VExpression::IsBoolLiteral (VEmitContext &ec) const {
-  if (IsIntConst()) return (GetIntConst() != 0);
+  if (IsIntConst()) return (GetIntConst() ? 1 : 0);
   if (IsFloatConst()) return (isZeroInfNaN(GetFloatConst()) ? 0 : 1); // so inf/nan will yield `false`
-  if (IsNameConst()) return (GetNameConst() != NAME_None);
+  if (IsNameConst()) return (GetNameConst() != NAME_None ? 1 : 0);
   if (IsStrConst()) return (GetStrConst(ec.Package).isEmpty() ? 0 : 1);
   if (IsNoneLiteral()) return 0;
   if (IsNoneDelegateLiteral()) return 0;
