@@ -123,6 +123,13 @@ public:
   inline VVA_CHECKRESULT bool isZero () const noexcept { return (x == 0.0f && y == 0.0f && z == 0.0f); }
   inline VVA_CHECKRESULT bool isZero2D () const noexcept { return (x == 0.0f && y == 0.0f); }
 
+  // this is what VavoomC wants: false is either zero, or invalid vector
+  inline VVA_CHECKRESULT bool toBool () const noexcept {
+    return
+      isFiniteF(x) && isFiniteF(y) && isFiniteF(z) &&
+      (x != 0.0f || y != 0.0f || z != 0.0f);
+  }
+
   inline TVec &operator += (const TVec &v) noexcept { x += v.x; y += v.y; z += v.z; return *this; }
   inline TVec &operator -= (const TVec &v) noexcept { x -= v.x; y -= v.y; z -= v.z; return *this; }
   inline TVec &operator *= (float scale) noexcept { x *= scale; y *= scale; z *= scale; return *this; }

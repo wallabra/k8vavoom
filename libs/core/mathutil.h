@@ -59,9 +59,8 @@ static VVA_OKUNUSED inline void killInfNaNF (float &f) {
 }
 
 
-// this turns all nan/inf values into positive zero
 static VVA_OKUNUSED inline bool isZeroInfNaN (const float f) {
-  const vint32 fi = *(const vint32 *)&f;
+  const vuint32 fi = *(const vuint32 *)&f;
   const vuint8 exp = (vuint8)((fi>>23)&0xffu);
   return
     exp == 0xffu ||
