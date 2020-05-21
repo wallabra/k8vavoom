@@ -122,7 +122,7 @@ TestResult runTest (string name) {
         if (s != output[idx]) {
           import std.format : format;
           result.passed = false;
-          result.errormsg = format("test output is not match!");
+          result.errormsg = format("test output doesn't match!");
           break;
         }
       }
@@ -203,6 +203,14 @@ void runAllTests (string[] tests) {
       foreach (string s; res.outerr) writeln(s);
     }
     writeln;
+  }
+
+  // and show all failed tests again
+  if (failed.length) {
+    writeln();
+    writefln("%s tests passed, %s tests failed", tests.length-failed.length, failed.length);
+    writeln("==== FAILED TESTS (brief) ====");
+    foreach (const ref TestResult res; failed) writeln(res.name);
   }
 }
 
