@@ -198,12 +198,12 @@ public:
   void EmitLocalPtrValue (int lcidx, const TLocation &aloc, int xofs=0);
   void EmitPushPointedCode (VFieldType type, const TLocation &aloc);
 
-  // this assumes that dtor is called on the local
+  // this assumes that dtor is called on the local (i.e. no need to do any finalization)
   // if `forced` is not specified, it will avoid zeroing something that should be zeroed by a dtor
-  void EmitLocalZero (int locidx, const TLocation &aloc, bool forced=false);
+  void EmitLocalZero (int locidx, const TLocation &aloc);
 
   // this won't zero local
-  void EmitLocalDtor (int locidx, const TLocation &aloc, bool zeroIt=false);
+  void EmitLocalDtor (int locidx, const TLocation &aloc);
 
   void EmitGotoTo (VName lblname, const TLocation &aloc);
   void EmitGotoLabel (VName lblname, const TLocation &aloc);

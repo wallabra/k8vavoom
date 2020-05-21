@@ -833,36 +833,11 @@ void VEmitContext::EmitLocalPtrValue (int lcidx, const TLocation &aloc, int xofs
 //  VEmitContext::EmitLocalZero
 //
 //==========================================================================
-void VEmitContext::EmitLocalZero (int locidx, const TLocation &aloc, bool forced) {
+void VEmitContext::EmitLocalZero (int locidx, const TLocation &aloc) {
   const VLocalVarDef &loc = LocalDefs[locidx];
 
   // don't touch out/ref parameters
   if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) return;
-
-  if (loc.Type.Type == TYPE_String) {
-    if (forced) {
-      EmitLocalAddress(loc.Offset, aloc);
-      AddStatement(OPC_ClearPointedStr, aloc);
-    }
-    return;
-  }
-
-  if (loc.Type.Type == TYPE_Dictionary) {
-    if (forced) {
-      EmitLocalAddress(loc.Offset, aloc);
-      AddStatement(OPC_DictDispatch, loc.Type.GetDictKeyType(), loc.Type.GetDictValueType(), OPC_DictDispatch_ClearPointed, aloc);
-    }
-    return;
-  }
-
-  if (loc.Type.Type == TYPE_DynamicArray) {
-    if (forced) {
-      EmitLocalAddress(loc.Offset, aloc);
-      AddStatement(OPC_PushNumber0, aloc);
-      AddStatement(OPC_DynArrayDispatch, loc.Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArraySetNum, aloc);
-    }
-    return;
-  }
 
   if (loc.Type.Type == TYPE_Struct) {
     EmitLocalAddress(loc.Offset, aloc);
@@ -874,31 +849,33 @@ void VEmitContext::EmitLocalZero (int locidx, const TLocation &aloc, bool forced
   }
 
   if (loc.Type.Type == TYPE_Array) {
-    if (loc.Type.ArrayInnerType == TYPE_String) {
-      if (!forced) {
-        for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
-          EmitLocalAddress(loc.Offset, aloc);
-          EmitPushNumber(j, aloc);
-          AddStatement(OPC_ArrayElement, loc.Type.GetArrayInnerType(), aloc);
-          AddStatement(OPC_ClearPointedStr, aloc);
-        }
-      }
-    } else if (loc.Type.ArrayInnerType == TYPE_Struct) {
-      // zero/clear
-      for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
-        EmitLocalAddress(loc.Offset, aloc);
-        EmitPushNumber(j, aloc);
-        AddStatement(OPC_ArrayElement, loc.Type.GetArrayInnerType(), aloc);
+    //k8: can we use size caluclation here?
+    // i don't think so, because struct size is not calculated yet (it is done in postload [why, btw?])
+    // so until i fix that, clear each array element separately
+    for (int j = 0; j < loc.Type.GetArrayDim(); ++j) {
+      EmitLocalAddress(loc.Offset, aloc);
+      EmitPushNumber(j, aloc);
+      AddStatement(OPC_ArrayElement, loc.Type.GetArrayInnerType(), aloc);
+      if (loc.Type.ArrayInnerType == TYPE_Struct) {
         AddStatement(OPC_ZeroPointedStruct, loc.Type.Struct, aloc);
+      } else {
+        AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
       }
     }
     return;
   }
 
-  if (forced) {
+  if (loc.Type.Type == TYPE_String ||
+      loc.Type.Type == TYPE_Dictionary ||
+      loc.Type.Type == TYPE_DynamicArray)
+  {
     EmitLocalAddress(loc.Offset, aloc);
-    AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
+    AddStatement(OPC_ZeroSlotsByPtr, loc.Type.GetStackSize(), aloc);
+    return;
   }
+
+  EmitLocalAddress(loc.Offset, aloc);
+  AddStatement(OPC_ZeroByPtr, loc.Type.GetSize(), aloc);
 }
 
 
@@ -907,7 +884,7 @@ void VEmitContext::EmitLocalZero (int locidx, const TLocation &aloc, bool forced
 //  VEmitContext::EmitLocalDtor
 //
 //==========================================================================
-void VEmitContext::EmitLocalDtor (int locidx, const TLocation &aloc, bool zeroIt) {
+void VEmitContext::EmitLocalDtor (int locidx, const TLocation &aloc) {
   const VLocalVarDef &loc = LocalDefs[locidx];
 
   // don't touch out/ref parameters

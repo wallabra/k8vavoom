@@ -771,6 +771,7 @@ struct Instr {
       // cleanup of local variables
       case OPC_ClearPointedStr:
       case OPC_ClearPointedStruct:
+      case OPC_CZPointedStruct:
       case OPC_ZeroPointedStruct:
         spdelta = -1;
         return;
@@ -895,6 +896,7 @@ struct Instr {
 
       // fill [-1] pointer with zeroes; int is length
       case OPC_ZeroByPtr:
+      case OPC_ZeroSlotsByPtr:
         spdelta = -1;
         return;
 
@@ -909,6 +911,7 @@ struct Instr {
         spdelta = -1;
         return;
 
+      /*
       case OPC_DupPOD:
         spdelta += 1;
         return;
@@ -917,6 +920,7 @@ struct Instr {
       case OPC_DropPOD:
         spdelta -= 1;
         return;
+      */
 
       // builtins (k8: i'm short of opcodes, so...)
       case OPC_Builtin:

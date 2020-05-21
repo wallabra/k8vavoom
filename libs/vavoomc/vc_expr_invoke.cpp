@@ -2501,10 +2501,9 @@ void VInvocation::Emit (VEmitContext &ec) {
         if (Func->ParamTypes[i].Type == TYPE_Struct) {
           Func->ParamTypes[i].Struct->PostLoad();
         }
-        //if (reused[i]) ec.EmitLocalDtor(lcidx[i], Loc); // zero it, and forced
         ec.AllocateLocalSlot(lcidx[i]);
         const VLocalVarDef &loc = ec.GetLocalByIndex(lcidx[i]);
-        if (loc.reused) ec.EmitLocalZero(lcidx[i], Loc, true); // forced zero if reused
+        if (loc.reused) ec.EmitLocalZero(lcidx[i], Loc); // forced zero if reused
         ec.EmitLocalAddress(loc.Offset, Loc);
         ++SelfOffset; // pointer
       } else {

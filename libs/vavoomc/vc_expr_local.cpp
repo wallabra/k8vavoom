@@ -111,17 +111,24 @@ void VLocalDecl::Emit (VEmitContext &ec) {
 //  this either inits, or zeroes (unless `dozero` is `false`)
 //
 //==========================================================================
-void VLocalDecl::EmitInitialisations (VEmitContext &ec, bool dozero) {
+void VLocalDecl::EmitInitialisations (VEmitContext &ec) {
   for (auto &&loc : Vars) {
-    bool didzero = false;
-    const VLocalVarDef &ldef = ec.GetLocalByIndex(loc.locIdx);
-    if (loc.emitClear || (ldef.reused && !loc.Value)) {
-      if (loc.locIdx < 0) VCFatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
-      ec.EmitLocalZero(loc.locIdx, Loc, true); // forced
-      didzero = true;
+    // do we need to zero variable memory?
+    // the variable was properly destructed beforehand (this is invariant)
+    bool dozero = loc.emitClear;
+    if (!dozero) {
+      const VLocalVarDef &ldef = ec.GetLocalByIndex(loc.locIdx);
+      // unconditionally zero complex things like dicts and structs
+      dozero = (ldef.reused && !loc.Value);
+      // still zero some complex data types
+      if (!dozero && ldef.Type.NeedZeroingOnSlotReuse()) dozero = true;
     }
-         if (loc.Value) loc.Value->Emit(ec);
-    else if (!didzero) ec.EmitLocalZero(loc.locIdx, Loc, true); // forced
+    // zero it if necessary
+    if (dozero) {
+      if (loc.locIdx < 0) VCFatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
+      ec.EmitLocalZero(loc.locIdx, Loc);
+    }
+    if (loc.Value) loc.Value->Emit(ec);
   }
 }
 
@@ -131,21 +138,9 @@ void VLocalDecl::EmitInitialisations (VEmitContext &ec, bool dozero) {
 //  VLocalDecl::EmitDtors
 //
 //==========================================================================
-void VLocalDecl::EmitDtors (VEmitContext &ec, bool dozero) {
-  for (auto &&loc : Vars) ec.EmitLocalDtor(loc.locIdx, Loc, dozero);
+void VLocalDecl::EmitDtors (VEmitContext &ec) {
+  for (auto &&loc : Vars) ec.EmitLocalDtor(loc.locIdx, Loc);
 }
-
-
-//==========================================================================
-//
-//  VLocalDecl::EmitZeroing
-//
-//==========================================================================
-/*
-void VLocalDecl::EmitZeroing (VEmitContext &ec, bool forced) {
-  for (auto &&loc : Vars) ec.EmitLocalZero(loc.locIdx, Loc, forced);
-}
-*/
 
 
 //==========================================================================

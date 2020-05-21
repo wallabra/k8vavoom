@@ -724,63 +724,22 @@ VStr VFieldType::GetName () const {
 
 //==========================================================================
 //
-//  VFieldType::IsReusingDisabled
+//  VFieldType::NeedZeroingOnSlotReuse
 //
 //==========================================================================
-bool VFieldType::IsReusingDisabled () const {
+bool VFieldType::NeedZeroingOnSlotReuse () const noexcept {
   if (PtrLevel > 0) return false; // pointers are ok
   switch (Type) {
-    // simple types
-    case TYPE_Void:
-    case TYPE_Bool: // don't replace boolean vars
-      return true;
-    case TYPE_Int:
-    case TYPE_Byte:
-    case TYPE_Float:
-    case TYPE_Name:
-    case TYPE_Pointer:
-    case TYPE_State:
-    case TYPE_Vector:
-    case TYPE_Class: // classes has no dtors
-    case TYPE_Reference: // reference is something like a pointer
-    case TYPE_SliceArray: // slices require no dtors as of yet
-      return false;
-    case TYPE_Delegate: // delegates need no dtor (yet)
-      return true;
-    case TYPE_Struct: // struct members can require dtors
-      //!if (!Struct) return true; // let's play safe
-      //!return Struct->NeedsDestructor();
-      return true;
-    case TYPE_String: // strings require dtors
-      return true;
-    case TYPE_Array: // it depends of inner type, so check it
-      if (ArrayInnerType == TYPE_Struct) {
-        //!if (!Struct) return true; // let's play safe
-        //!return Struct->NeedsDestructor();
-        return true;
-      }
-      //return (ArrayInnerType == TYPE_String || ArrayInnerType == TYPE_Array || ArrayInnerType == TYPE_DynamicArray);
-      return !(ArrayInnerType == TYPE_Int || ArrayInnerType == TYPE_Float || ArrayInnerType == TYPE_Name);
-    case TYPE_DynamicArray: // dynamic arrays should be cleared with dtors
-    case TYPE_Dictionary: // dictionaries should be cleared with dtors
-    case TYPE_Automatic: // this is something that should not be, so let's play safe
+    case TYPE_Struct: // structs should be zeroed before calling ctor in any case
+    case TYPE_String: // strings should be zeroed too
+    case TYPE_Array: // arrays can't have initialisers yet, therefore they should be zeroed
+    case TYPE_DynamicArray: // dynamic arrays should be zeroed
+    case TYPE_Dictionary: // dictionaries should be zeroed
       return true;
     default:
       break;
   }
-  return true; // just in case i forgot something
-}
-
-
-//==========================================================================
-//
-//  VFieldType::IsReplacableWith
-//
-//==========================================================================
-bool VFieldType::IsReplacableWith (const VFieldType &atype) const {
-  // same types are always replaceable
-  if (Equals(atype) && !IsReusingDisabled()) return true;
-  // don't change types
+  // no other type needs strict zeroing before use
   return false;
 }
 
@@ -790,7 +749,7 @@ bool VFieldType::IsReplacableWith (const VFieldType &atype) const {
 //  VFieldType::NeedWrapStruct
 //
 //==========================================================================
-bool VFieldType::NeedWrapStruct () const {
+bool VFieldType::NeedWrapStruct () const noexcept {
   switch (Type) {
     case TYPE_Array:
     case TYPE_DynamicArray:
@@ -807,7 +766,7 @@ bool VFieldType::NeedWrapStruct () const {
 //  VFieldType::IsWrapStruct
 //
 //==========================================================================
-bool VFieldType::IsWrapStruct () const {
+bool VFieldType::IsWrapStruct () const noexcept {
   // it should be anonymous struct with exactly one field named '__'
   return (Type == TYPE_Struct && Struct && Struct->Name == NAME_None && !Struct->ParentStruct &&
           Struct->Fields && !Struct->Fields->Next);

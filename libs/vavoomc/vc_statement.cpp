@@ -2386,9 +2386,7 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
   for (auto &&lv : tempLocals) {
     ec.AllocateLocalSlot(lv);
     VLocalVarDef &loc = ec.GetLocalByIndex(lv);
-    if (loc.Type.Type == TYPE_Struct && loc.Type.Struct && loc.Type.Struct->FindDtor()) {
-      ec.EmitLocalZero(lv, Loc, true); // forced zero
-    }
+    if (loc.reused && loc.Type.NeedZeroingOnSlotReuse()) ec.EmitLocalZero(lv, Loc);
   }
 
   // emit initialisation expressions
@@ -2812,9 +2810,7 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
   for (auto &&lv : tempLocals) {
     ec.AllocateLocalSlot(lv);
     VLocalVarDef &loc = ec.GetLocalByIndex(lv);
-    if (loc.Type.Type == TYPE_Struct && loc.Type.Struct && loc.Type.Struct->FindDtor()) {
-      ec.EmitLocalZero(lv, Loc, true); // forced zero
-    }
+    if (loc.reused && loc.Type.NeedZeroingOnSlotReuse()) ec.EmitLocalZero(lv, Loc);
   }
 
   // emit initialisation expression

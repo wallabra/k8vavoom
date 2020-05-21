@@ -2305,8 +2305,14 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_CZPointedStruct)
+        ((VStruct *)ReadPtr(ip+1))->ZeroObject((vuint8 *)sp[-1].p, true); // call dtors on zeroing
+        ip += 1+sizeof(void *);
+        --sp;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_ZeroPointedStruct)
-        ((VStruct *)ReadPtr(ip+1))->ZeroObject((vuint8 *)sp[-1].p);
+        ((VStruct *)ReadPtr(ip+1))->ZeroObject((vuint8 *)sp[-1].p, false); // don't call dtors on zeroing
         ip += 1+sizeof(void *);
         --sp;
         PR_VM_BREAK;
@@ -2764,6 +2770,15 @@ func_loop:
         ip += 1+4;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_ZeroSlotsByPtr)
+        if (sp[-1].p) {
+          int bcount = ReadInt32(ip+1);
+          if (bcount > 0) memset(sp[-1].p, 0, bcount*sizeof(VStack));
+        }
+        --sp;
+        ip += 1+4;
+        PR_VM_BREAK;
+
       // [-1]: obj
       PR_VM_CASE(OPC_GetObjClassPtr)
         if (sp[-1].p) sp[-1].p = ((VObject *)sp[-1].p)->GetClass();
@@ -3082,6 +3097,7 @@ func_loop:
         }
         PR_VM_BREAK;
 
+      /*
       PR_VM_CASE(OPC_DupPOD)
         //{ fprintf(stderr, "OPC_DupPOD at %6u in FUNCTION `%s`; sp=%d\n", (unsigned)(ip-func->Statements.Ptr()), *func->GetFullName(), (int)(sp-pr_stack)); cstDump(ip); }
         ++ip;
@@ -3102,6 +3118,7 @@ func_loop:
         ++ip;
         --sp;
         PR_VM_BREAK;
+      */
 
       PR_VM_CASE(OPC_GetIsDestroyed)
         {

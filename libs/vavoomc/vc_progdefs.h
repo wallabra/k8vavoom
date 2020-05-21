@@ -449,7 +449,11 @@ enum {
 
   // cleanup of local variables
   DECLARE_OPC(ClearPointedStr, None),
+  // this won't call struct dtor, but will call field dtors
   DECLARE_OPC(ClearPointedStruct, Member),
+  // this won't call struct dtor, but will call field dtors, and zero the struct
+  DECLARE_OPC(CZPointedStruct, Member),
+  // this won't call any dtors, neither field, nor struct dtor
   DECLARE_OPC(ZeroPointedStruct, Member),
 
   // struct deep copy
@@ -516,8 +520,10 @@ enum {
   // for printf-like varargs
   DECLARE_OPC(DoPushTypePtr, Type),
 
-  // fill [-1] pointer with zeroes; int is length
+  // fill [-1] pointer with zeroes; int is byte length
   DECLARE_OPC(ZeroByPtr, Int),
+  // fill [-1] pointer with zeroes; int is stack slot length
+  DECLARE_OPC(ZeroSlotsByPtr, Int),
 
   // get class pointer from pushed object
   DECLARE_OPC(GetObjClassPtr, None),
@@ -535,9 +541,12 @@ enum {
   DECLARE_OPC(DictDispatch, TypeDD), // type followed by OPC_DictDispatch_XXX
 
   // valid only for cells without destructors
+  // not used by codegen anyway
+  /*
   DECLARE_OPC(DupPOD, None),
   DECLARE_OPC(SwapPOD, None),
   DECLARE_OPC(DropPOD, None),
+  */
 
   DECLARE_OPC(GetIsDestroyed, None),
 

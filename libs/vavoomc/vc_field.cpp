@@ -695,7 +695,7 @@ void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
       ((VStr *)Data)->Clean();
       break;
     case TYPE_Struct:
-      if (!zeroIt) Type.Struct->DestructObject(Data); else Type.Struct->ZeroObject(Data);
+      if (!zeroIt) Type.Struct->DestructObject(Data); else Type.Struct->ZeroObject(Data, true); // still need to call dtors on zeroing
       break;
     case TYPE_Array:
       IntType = Type;

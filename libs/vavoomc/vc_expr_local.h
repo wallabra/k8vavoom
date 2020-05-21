@@ -78,9 +78,8 @@ public:
   void Release (VEmitContext &ec);
 
   // this either inits, or zeroes (unless `dozero` is `false`)
-  void EmitInitialisations (VEmitContext &ec, bool dozero=false);
-  void EmitDtors (VEmitContext &ec, bool dozero=false);
-  //void EmitZeroing (VEmitContext &ec, bool forced=false);
+  void EmitInitialisations (VEmitContext &ec);
+  void EmitDtors (VEmitContext &ec);
 
   virtual bool IsLocalVarDecl () const override;
 

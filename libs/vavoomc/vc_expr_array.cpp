@@ -3079,10 +3079,13 @@ VExpression *VStructZero::DoResolve (VEmitContext &ec) {
 void VStructZero::Emit (VEmitContext &ec) {
   sexpr->Emit(ec);
   if (sexpr->Type.Type == TYPE_Struct && sexpr->Type.Struct) {
-    if (sexpr->Type.Struct->NeedsDestructor()) {
-      ec.AddStatement(OPC_ZeroPointedStruct, sexpr->Type.Struct, Loc);
+    // destruct fields (but don't call struct dtor)
+    if (sexpr->Type.Struct->/*NeedsDestructor*/NeedsFieldsDestruction()) {
+      // destroy and zero it
+      ec.AddStatement(OPC_CZPointedStruct, sexpr->Type.Struct, Loc);
     } else {
-      ec.AddStatement(OPC_ZeroByPtr, sexpr->Type.GetSize(), Loc);
+      // just zero it
+      ec.AddStatement(OPC_ZeroPointedStruct, sexpr->Type.Struct, Loc);
     }
   } else {
     // default vector

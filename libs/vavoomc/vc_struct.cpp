@@ -804,12 +804,14 @@ void VStruct::DestructObject (vuint8 *Data) {
 //  VStruct::ZeroObject
 //
 //==========================================================================
-void VStruct::ZeroObject (vuint8 *Data) {
+void VStruct::ZeroObject (vuint8 *Data, bool calldtors) {
   //for (VField *F = Fields; F; F = F->Next) VField::DestructField(Data+F->Ofs, F->Type, true);
   // destruct all fields that need to be destructed, and memset the struct
-  for (VField *F = DestructorFields; F; F = F->DestructorLink) VField::DestructField(Data+F->Ofs, F->Type);
+  if (calldtors) {
+    for (VField *F = DestructorFields; F; F = F->DestructorLink) VField::DestructField(Data+F->Ofs, F->Type);
+  }
   //GLog.Logf(NAME_Debug, "memsetting struct <%s> (%d bytes)", *Name, Size);
-  memset(Data, 0, Size);
+  if (Size > 0) memset(Data, 0, Size);
 }
 
 

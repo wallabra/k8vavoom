@@ -109,14 +109,14 @@ public:
   VFieldType GetDictKeyType () const;
   VFieldType GetDictValueType () const;
 
-  inline bool IsArray1D () const { return (ArrayDimInternal >= 0); }
-  inline bool IsArray2D () const { return (ArrayDimInternal < 0); }
+  inline bool IsArray1D () const noexcept { return (ArrayDimInternal >= 0); }
+  inline bool IsArray2D () const noexcept { return (ArrayDimInternal < 0); }
   // get 1d array dim (for 2d arrays this will be correctly calculated)
-  inline vint32 GetArrayDim () const { return (ArrayDimInternal >= 0 ? ArrayDimInternal : GetFirstDim()*GetSecondDim()); }
+  inline vint32 GetArrayDim () const noexcept { return (ArrayDimInternal >= 0 ? ArrayDimInternal : GetFirstDim()*GetSecondDim()); }
   // get first dimension (or the only one for 1d array)
-  inline vint32 GetFirstDim () const { return (ArrayDimInternal >= 0 ? ArrayDimInternal : ArrayDimInternal&0x7fff); }
+  inline vint32 GetFirstDim () const noexcept { return (ArrayDimInternal >= 0 ? ArrayDimInternal : ArrayDimInternal&0x7fff); }
   // get second dimension (or 1 for 1d array)
-  inline vint32 GetSecondDim () const { return (ArrayDimInternal >= 0 ? 1 : (ArrayDimInternal>>16)&0x7fff); }
+  inline vint32 GetSecondDim () const noexcept { return (ArrayDimInternal >= 0 ? 1 : (ArrayDimInternal>>16)&0x7fff); }
 
   int GetStackSize () const;
   int GetSize () const;
@@ -132,19 +132,21 @@ public:
   inline bool IsAnyArrayOrStruct () const noexcept { return (IsAnyArray() || IsStruct()); }
   inline bool IsPointer () const noexcept { return (Type == TYPE_Pointer); } // useless, but nice
   inline bool IsVoidPointer () const noexcept { return (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == TYPE_Void); }
-  inline bool IsPointerType (EType tp) const { return (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == tp); }
-  inline bool IsNormalOrPointerType (EType tp) const { return (Type == tp || (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == tp)); }
+  inline bool IsPointerType (EType tp) const noexcept { return (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == tp); }
+  inline bool IsNormalOrPointerType (EType tp) const noexcept { return (Type == tp || (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == tp)); }
 
-  bool IsReusingDisabled () const;
-  bool IsReplacableWith (const VFieldType &atype) const;
+  // this is used to force-zero some types even if they were properly destructed
+  // this can be the case when we got a reused slot for something like dictionary or dynarray
+  // while dtor frees their memory, we should still play safe and zero 'em
+  bool NeedZeroingOnSlotReuse () const noexcept;
 
   // returns `true` if this type requires a wrapping struct
   // for example, it is impossible to hold `array!(array!int)` directly, so
   // compiler should create an anonymous wrapping struct for it
-  bool NeedWrapStruct () const;
+  bool NeedWrapStruct () const noexcept;
 
   // is this "wrapper struct" type?
-  bool IsWrapStruct () const;
+  bool IsWrapStruct () const noexcept;
 
   VFieldType WrapStructType () const;
 };
