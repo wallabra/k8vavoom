@@ -1,51 +1,55 @@
 Brief introduction to VaVoom C for C (and C++) people
 =====================================================
 
-Initially, VC was designed to look like Unreal Script, and in the same time
-to be familiar for C and C++ developers. So some Unreal tutorials will apply
-(sans class hierarchy, of course), especially some tutorials on things like
-default properties or replication (to some extent).
+Initially, VC was designed to look similar (more-or-less) to Unreal
+Script, and in the same time to be familiar for C and C++ developers. So
+some Unreal tutorials will apply (sans class hierarchy, of course),
+especially some tutorials on things like default properties or
+replication (to some extent).
 
-But you are here not to read "fuck off, your tutorial is in another castle",
-aren't you? Ok, ok, I'll describe some things you have to know. Most of the
-time your C background will apply, tho.
+But you are here not to read "fuck off, your tutorial is in another
+castle", aren't you? Ok, ok, I'll describe some things you have to know.
+Most of the time your C background will apply, tho.
 
 
 
 Class declarations
 ==================
 
-Classes are started with the usual `class Foo : Boo;` thingy. But we have one
-thing to remember here: class declaration marks all the following code as
-belonging to a newly declared class. I.e. there is no need to use `{}` (and
-you actually can't; class declaration should end with `;`).
+Classes are started with the usual `class Foo : Boo;` thingy. But we have
+one thing to remember here: class declaration marks all the following
+code as belonging to a newly declared class. I.e. there is no need to use
+`{}` (and you actually can't; class declaration should end with `;`).
 
-Also note that you cannot globally change protection for inherited things, i.e.
-`class Foo : protected Boo;` is not supported.
+Also note that you cannot globally change protection for inherited
+things, i.e. `class Foo : protected Boo;` is not supported.
 
-Just like in Unreal Script, `defaultproperties` part is supported, but it is
-optional. Yet if it is present, it must be the last thing declared, and it must
-be immediately followed by a new class declaration (or end of source code -- not
-just source file).
+Just like in Unreal Script, `defaultproperties` part is supported, but it
+is optional. Yet if it is present, it must be the last thing declared,
+and it must be immediately followed by a new class declaration (or end of
+source code -- not just source file).
 
 
 
 Replacement class declaration
 =============================
 
-When you are writing mods, it is often necessary to transparently replace one class
-with another. This can be done with replacement declaration syntax:
+When you are writing mods, it is often necessary to transparently replace
+one class with another. This can be done with replacement declaration
+syntax:
 
   class Foo : replaces(Boo);
 
-This will not only inherit class `Foo` from `Boo`, but most `SpawnObject(Boo)` calls
-will spawn `Foo` instead.
+This will not only inherit class `Foo` from `Boo`, but most
+`SpawnObject(Boo)` calls will spawn `Foo` instead. You prolly know this
+concept from DECORATE already.
 
 
-There can be the case when you don't know the exact name of the class you want to
-replace, you just want to replace one of the subclasses of it. This may sound strange,
-but imagine some mod that wants to replace `LineSpecialLevelInfo` class, for example,
-which (LineSpecialLevelInfo) is subclasses in each game. To do this, you can use:
+There can be the case when you don't know the exact name of the class you
+want to replace, you just want to replace one of the subclasses of it.
+This may sound strange, but imagine some mod that wants to replace
+`LineSpecialLevelInfo` class, for example, and `LineSpecialLevelInfo` is
+subclassed in each game, and named differently. To do this, you can use:
 
   class Foo : replaces(lastchild of Boo);
 
@@ -54,8 +58,8 @@ which (LineSpecialLevelInfo) is subclasses in each game. To do this, you can use
 Default field values
 ====================
 
-By default, all fields are initialized to 0/false/none/nullptr. But you can
-use `defaultproperties` part to change default values:
+By default, all fields are initialized to 0/false/none/nullptr. But you
+can use `defaultproperties` part to change default values:
 
   defaultproperties {
     myfield = 666;
@@ -66,24 +70,25 @@ Or, you can simply assign default value in field declaration:
   int myfield = 666;
 
 Note that while it is technically the same now, and you can use complex
-expressions with "inline" form, support for this (complex expressions) will
-be dropped in the future. I.e. don't do this:
+expressions with "inline" form, support for this (complex expressions)
+will be dropped in the future. I.e. don't do this:
 
   int flda = 666;
   int fldb = 42;
-  bool fldc = (flda > fldb);
+  bool fldc = (flda > fldb); // <-- THIS! DON'T!
 
-Initializing `fldc` *will* break without further notice. You've been warned.
+Initializing `fldc` *will* break without further notice. You've been
+warned.
 
 Redeclaring field in subclass is forbidden, and compiler will complain.
 
 Of course, you *can* use complex expressions in `defaultproperties` part,
-it is allowed. Yes, contrary to Unreal Script, `defaultproperties` doesn't
+it is allowed. Yes, contrary to Unreal Script, `defaultproperties` aren't
 meant to be easily machine-parsable, and can contain arbitrary VC code.
-Just note that it is NOT a constructor, it is executed only once by the
-complier, and not all classes might be properly defined at that time. So
-don't use very complex code there: restrict yourself to calculating some
-tables and such.
+Just note that it is NOT a constructor, it is executed only *once* by the
+complier (not each time you creating come object), and not all classes
+might be properly defined at that time. So don't use very complex code
+there: restrict yourself to calculating some tables and such.
 
 You can access default values with `default.name` syntax. Most of the
 time things like `ClassName.default.field` and `obj.default.field` are
@@ -99,41 +104,41 @@ protection, just use the corresponding modifier keyword, like this:
 
   protected int myfield;
 
-You can also mark fields as `readonly`. It is not really useful for
-VC code (as you cannot do anything with such fields, not even assign
-default values to them).
+You can also mark fields as `readonly`. It is not really useful for VC
+code (as you cannot do anything with such fields, not even assign default
+values to them).
 
-Changing field protection is not supported.
+Changing field protection in subclasses is not supported.
 
 
 
 Method kinds
 ============
 
-VC has several kinds of methods. There are `final static` methods, `final`
-methods, and "normal" (aka "virtual") methods.
+VC has several kinds of methods. There are `final static` methods,
+`final` methods, and "normal" (aka "virtual") methods.
 
-`final static` is your usual `static` method from C++. Note that it *must*
-be `final` for now.
+`final static` is your usual `static` method from C++. Note that it
+*must* be `final` for now.
 
 `final` method locks you from overriding it in subclasses. Note that you
-can "seal" a method at any point in the class hierarchy, but doing this on
-introduction will "devirtualize" such method, and the code will be slightly
-faster.
+can "seal" a method at any point in the class hierarchy, but doing this
+on introduction will "devirtualize" such method, and the code will be
+slightly faster.
 
-If neither `final`, nor `static` keywords are specified, you will get a good
-old virtual method, which you can override in subclasses. Note that you *must*
-use `override` keyword for overriden methods.
+If neither `final`, nor `static` keywords are specified, you will get a
+good old virtual method, which you can override in subclasses. Note that
+you *must* use `override` keyword for overriden methods.
 
-Changing method protection is not supported.
+Changing method protection in subclasses is not supported.
 
-There are also special `spawner` methods: their declared return type should be
-`Object` or `class`, and actual return type will be equal to the type of the
-first argument. This is useful for various spawn functions (hence the name), to
-avoid verbose casting.
+There are also special `spawner` methods: their declared return type
+should be `Object` or `class`, and actual return type will be equal to
+the type of the first argument. This is useful for various spawn
+functions (hence the name), to avoid verbose casting.
 
-Note that there are no checks if your returned value is valid, so you can return
-incompatible class/object, and everything *WILL* break then.
+Note that there are no checks if your returned value is valid, so you can
+return incompatible class/object, and everything *WILL* break.
 
 
 
@@ -156,14 +161,15 @@ To call a method with optional arguments, use this syntax:
 
   mymethod(42, default, "boo");
 
-Note the `default` keyword. It is required.
+Note the `default` keyword. It is required if your optional argument is
+not the last one.
 
 It is possible to "marshall" optional flag:
 
   othermethod(n, f!optional, s);
 
-This call will "marshall" optional flag for argument `f`, if it is present,
-and if it is necessary.
+This call will "marshall" optional flag for argument `f`, if it is
+present, and if it is necessary.
 
 
 
@@ -178,8 +184,8 @@ You can use argument names in method calls:
   // or
   foo(arg2:"boo", 'somename', arg1:666)
 
-Using named argument moves "current position" (as you can see in the second
-example).
+Using named argument moves "current position" (as you can see in the
+second example).
 
 
 
@@ -198,6 +204,14 @@ such field:
 Note the `&`.
 
 
+There is alternative syntax to declare delegates:
+
+  delegate int myDelegateField (float n);
+
+It looks more like your usual method declaration, but otherwise is fully
+equal to the previous form.
+
+
 
 Inline delegates
 ================
@@ -206,16 +220,17 @@ You can assign inline delegates to delegate fields:
 
   myDelegateField = delegate int (float n) { return int(n*666); };
 
-Note that inline delegates neither closures, nor nested functions,
-so you cannot access outer function locals from inline delegate.
+Note that inline delegates neither closures, nor nested functions, so you
+cannot access outer function locals from inline delegate.
 
 
 
 Class properties
 ================
 
-You can define class properties, which will look and work almost like ordinary
-fields, but will use getter/setter methods instead. The syntax is:
+You can define class properties, which will look and work almost like
+ordinary fields, but will use getter/setter methods instead. The syntax
+is:
 
   type propname {
     get { return v; }
@@ -223,16 +238,18 @@ fields, but will use getter/setter methods instead. The syntax is:
   }
 
 You can "redirect" setter or getter to any class field:
+WARNING! This feature is experimental, and may be gone in the future.
 
   type propname {
     get fldname;
     set fldname;
   }
 
-Redirection is free -- that is, it is as effective as direct field access.
-You can create public read-only fields by specifying only getter.
+Redirection is free -- that is, it is as effective as direct field
+access. You can create public read-only fields by specifying only getter.
 
-Also, default argument name for setter is `value`, but it can be changed with:
+Also, default argument name for setter is `value`, but it can be changed
+with:
 
   type propname {
     set(v) { internalfld = v; }
@@ -251,7 +268,7 @@ You can define "static properties" with `final static`:
 UFCS and paren-less calls
 =========================
 
-VC supports limited forms of UFCS and paren-less calls.
+VC supports limited form of UFCS, and paren-less method calls.
 
 For paren-less calls, "assign form" is not supported. I.e. you can do:
 
@@ -275,10 +292,10 @@ object, even if it isn't. Still confused? Just look at the example:
 
   float time = 10.msecs;
 
-I.e. if the compiler will not find a property/method specified, it will try
-to rewrite your code as a function call. In the example, as integer doesn't
-have `.msecs` property, but there is `msecs` method that accepts integers,
-compiler will rewrite your code to: `msecs(10)`.
+I.e. if the compiler will not find a property/method specified, it will
+try to rewrite your code as a function call. In the example, as integer
+doesn't have `.msecs` property, but there is `msecs` method that accepts
+integers, compiler will rewrite your code to: `msecs(10)`.
 
 Of course, it works for more complex cases too:
 
@@ -290,80 +307,91 @@ Calling superclass methods, and referring to self
 =================================================
 
 To call superclass' method from an overriden one, use `::name()` syntax.
-To refer to self, use `self` keyword (and not `this`).
+To refer to self, use `self` keyword (not `this`, as you may expect from
+C++!).
 
 
 
 Names and strings
 =================
 
-VC has `name` type, which is a... well, name. Internally it is just a number,
-so comparing names are much faster than comparing strings. Use names for various
-long-lived identifiers. To create a name, use single quotes.
+VC has `name` type, which is a... well, name. Internally it is just a
+number, so comparing names are much faster than comparing strings. Use
+names for various long-lived identifiers. To create a name, use single
+quotes.
+
+Note that names are case-sensitive, i.e. `Boo` and `boo` are two
+different names.
 
 Strings in VC are... strings.
 
-You can use string in conditionals: any non-empty string will be treated as `true`.
+You can use string in conditionals: any non-empty string will be treated
+as `true`.
 
 String has built-in `.length` property.
 
-You can get substring by slicing: `s[lo..hi]` will return substring from `lo` up to
-(but not including) `hi` character. Note that VC doesn't care about encoding, so be
-careful with multibyte encodings.
+You can get substring by slicing: `s[lo..hi]` will return substring from
+`lo` up to (but not including) `hi` character. Note that VC doesn't care
+about encoding, so be careful with multibyte encodings.
 
 You can concatenate strings with `~` operator: `newstr = s0~s1;`.
 
 You can use `$` as substiture for `.length` in string indexing.
 
-You can replace substring with `s[lo..hi] = "newstr";`, which is the same as:
+You can replace substring with `s[lo..hi] = "newstr";`, which is the same
+as:
   s = s[0..lo]~"newstr"~s[hi..$];
 
 Getting string character with `s[n]` will return integer.
 
-Setting string character with `s[n]` accepts integers, one-char strings, and
-one-char names.
+Setting string character with `s[n]` accepts integers, one-char strings,
+and one-char names.
 
-To make your life slightly easier, `==` and `!=` can compare integers with one-char
-strings, and one-char names. I.e. you can write `if (s[n] == "a")` and it will work.
+To make your life slightly easier, `==` and `!=` can compare integers
+with one-char strings, and one-char names. I.e. you can write
+`if (s[n] == "a")` and it will work.
 
 
 
 Dynamic arrays
 ==============
 
-VC supports dynamic arrays. To declare a dynamic array, use `array!type` syntax.
+VC supports dynamic arrays. To declare a dynamic array, use `array!type`
+syntax.
 
 Dynamic arrays has built-in `.length` property.
 
 You can use `$` as substiture for `.length` in indexing.
 
-Assigning to non-existing index will grow an array. I.e. to append element to an
-array, you can use `arr[$] = value;`.
+Assigning to non-existing index will grow an array. I.e. to append
+element to an array, you can use `arr[$] = value;`.
 
 To make room in an array, use `.insert(idx[, count])` built-in method.
 
-To remove items from an array, use `.remove(idx[, count])` built-in method.
+To remove items from an array, use `.remove(idx[, count])` built-in
+method.
 
 You can swap two array elements with built-in `.swap(idx0, idx1)` method.
 
-You can "reset" array (set it's length to zero without deallocating the undelying
-storage) with `.reset()` method. This may be useful if you want to reuse your
-dynamic array without triggering alot of allocations.
+You can "reset" array (set it's length to zero without deallocating the
+undelying storage) with `.reset()` method. This may be useful if you want
+to reuse your dynamic array without triggering alot of allocations.
 
-You can sort array with built-in `.sort()` method. This methods accepts one arument,
-which should be compare delegate:
+You can sort array with built-in `.sort()` method. This methods accepts
+one arument, which should be compare delegate:
 
-  int delegate ([ref] type a, [ref] type b);
+  delegate int ([ref] type a, [ref] type b);
 
 This delegate should return negative number if "a < b", positive number
-if "a > b", and zero if "a == b". It is important to return consistent results,
-because sorting algorithm is stable (timsort).
+if "a > b", and zero if "a == b". It is important to return consistent
+results, because sorting algorithm is stable (timsort).
 
-You can allocate new array member and return pointer to it with `.alloc()` method.
-Be very careful, though, as returned pointer can be invalidated by any array length
-mutation!
+You can allocate new array member and return pointer to it with
+`.alloc()` method. Be very careful, though, as returned pointer can be
+invalidated by any array length mutation!
 
-You can change dynamic array size by manipulating `.length` property, like this:
+You can change dynamic array size by manipulating `.length` property,
+like this:
 
   arr.length += 2;
 
@@ -371,24 +399,27 @@ or:
 
   arr.length -= 1;
 
-Note that decrementing length with `-=` won't trigger reallocation, while setting
-length directly will reallocate the underlying storage. I.e. to remove last array
-element without triggering allocation, use `arr.length -= 1;` syntax.
+Note that decrementing length with `-=` won't trigger reallocation, while
+setting length directly will reallocate the underlying storage. I.e. to
+remove last array element without triggering allocation, use
+`arr.length -= 1;` syntax.
 
 
 
 Dictionaries
 ============
 
-VC supports dictionaries (aka "hash tables"). You can declare dictionary like this:
+VC supports dictionaries (aka "hash tables"). You can declare dictionary
+like this:
 
   dictionary!(keytype, valuetype) dict;
 
-Key type cannot be array or delegate. Value can be of any type except static array.
+Key type cannot be array or delegate. Value can be of any type except
+static array.
 
-WARNING! If key type is object, you should *NEVER* `delete` this object while it is
-         used as dictionary key. I.e. first remove dictionary entry, and only then
-         delete an object.
+WARNING! If key type is object, you should *NEVER* `delete` this object
+         while it is used as dictionary key. I.e. first remove dictionary
+         entry, and only then delete an object.
 
 Built-in dictionary properties:
 
@@ -412,11 +443,11 @@ Iteration:
   .keyAtIndex(idx) -- returns pointer to current key
   .valueAtIndex(idx) -- returns pointer to current value
 
-Note that iteration order is unspecified, and you should *NEVER* modify dictionary
-while iterating (except by calling `.removeAndNextIndex()`).
+Note that iteration order is unspecified, and you should *NEVER* modify
+dictionary while iterating (except by calling `.removeAndNextIndex()`).
 
-WARNING! Returned pointers can be invalidated by any dictionary mutation, so don't
-         store them anywhere.
+WARNING! Returned pointers can be invalidated by any dictionary mutation,
+         so don't store them anywhere.
 
 Iteration example:
 
@@ -433,16 +464,18 @@ Iteration example:
 `.` and `->`
 ============
 
-VC supports pointers to structs and `->` operation, but it will happily accept `.` too.
-Actually, `->` will be deprecated in the future, so you'd better forget that it exists.
+VC supports pointers to structs and `->` operation, but it will happily
+accept `.` too. Actually, `->` will be deprecated in the future, so you'd
+better forget that it exists.
 
 
 
 `auto` keyword
 ==============
 
-VC supports limited form of type inference. You can use `auto` as a type placeholder for
-local variable declaraion, if that declaraion includes initializer expression. I.e.:
+VC supports limited form of type inference. You can use `auto` as a type
+placeholder for local variable declaraion, if that declaraion includes
+initializer expression. I.e.:
 
   auto a = 42; // int
   auto b = 6.9; // float
@@ -454,36 +487,39 @@ local variable declaraion, if that declaraion includes initializer expression. I
 Field/method aliases
 ====================
 
-VC doesn't support unions or method overloading, but it has a (limited) way to assign
-several names to one field/method: aliases. Alias is exactly what you may think: a
-name substitute.
+VC doesn't support unions or method overloading, but it has a (limited)
+way to assign several names to one field/method: aliases. Alias is
+exactly what you may think: a name substitute.
 
   int blood;
   alias gore = blood;
 
 Here, both `blood` and `gore` will refer to `blood` field.
 
-Alias can be aliased by another alias, therefore creating a "chain" of aliases. Aliases
-are inheritable. Alias resolving is done as a first step of name resolving.
+Alias can be aliased by another alias, therefore creating a "chain" of
+aliases. Aliases are inheritable. Alias resolving is done as a first step
+of name resolving.
 
 
 
 Slices and pointers
 ===================
 
-VaVoom C supports pointers, and pointer indexing. This is absolutely unsafe, of course,
-and at least pointer indexing can be disabled via compiler variable. Yet native classes
-may require it, so I introduced so-called "slices". This is just a pointer/length pair,
-so VM can do bounds checking on pointer indexing. You cannot create slices in VaVoom C
-code, so as long as native code does its job ok, VC code can use slices instead of
-pointers and still be considered safe. Of course, you can pass slices to functions.
-Slice declaraion is: `type[]` -- i.e. it looks like an array, but without dimensions.
-You can "slice a slice", to create a smaller view onto slice contents.
+VaVoom C supports pointers, and pointer indexing. This is absolutely
+unsafe, of course, and at least pointer indexing can be disabled via
+compiler variable. Yet native classes may require it, so I introduced
+so-called "slices". This is just a pointer/length pair, so VM can do
+bounds checking on pointer indexing. You cannot create slices in VaVoom C
+code, so as long as native code does its job ok, VC code can use slices
+instead of pointers and still be considered safe. Of course, you can pass
+slices to functions. Slice declaraion is: `type[]` -- i.e. it looks like
+an array, but without dimensions. You can "slice a slice", to create a
+smaller view onto slice contents.
 
-TL;DR: Some fields of native objects looks like dynamic arrays, and should be used like
-       dynamic arrays. Currently you cannot declare slice in VC code, so if you didn't
-       understood a word in the previous paragraph, don't bother trying, it doesn't
-       worth it. ;-)
+TL;DR: Some fields of native objects looks like dynamic arrays, and
+       should be used like dynamic arrays. Currently you cannot declare
+       slice in VC code, so if you didn't understood a word in the
+       previous paragraph, don't bother trying, it doesn't worth it. ;-)
 
 
 
@@ -494,8 +530,9 @@ VC has "native" iterators (defined in native code):
 
   foreach IterFunc(<args>) { ... }
 
-Look at the respective VC script sources to find available iterators. They are marked
-with `iterator` keyword, and usually contains one or more `out` parameters.
+Look at the respective VC script sources to find available iterators.
+They are marked with `iterator` keyword, and usually contains one or more
+`out` parameters.
 
 
 
@@ -510,12 +547,12 @@ This is *almost* the same as (note the `<`):
 
   for (auto var = 0; var < 8; ++var) { ... }
 
-The main difference is that high loop limit is evaluated only once, so any in-loop
-changes of it will go unnoticed. The second difference is that this form is slightly
-faster.
+The main difference is that high loop limit is evaluated only once, so
+any in-loop changes of it will go unnoticed. The second difference is
+that this form is slightly faster.
 
-Note that mutating the loop variable inside a loop body is working as expected now,
-but it is just an accident. Consider such code UB.
+Note that mutating the loop variable inside a loop body is working as
+expected now, but it is just an accident. Consider such code UB.
 
 You can do backward iteration too:
 
@@ -532,70 +569,77 @@ To iterate over array or slice elements, you can use "range iterators":
   foreach ([ref] auto var; arr) { ... }
   foreach (auto idx, [ref] auto var; arr) { ... }
 
-It is slightly more effective than the usual `for` loop, but be aware that
-changes to dynarray length will not affect the loop (as the length will be
-read only once at loop initialisation).
+It is slightly more effective than the usual `for` loop, but be aware
+that changes to dynarray length will not affect the loop (as the length
+will be read only once at loop initialisation).
 
 
 
 Foreach statement (script form)
 ===============================
 
-Finally, you can define your own iterators in VC code. Using them is almost the
-same as using ranged iterators:
+Finally, you can define your own iterators in VC code. Using them is
+almost the same as using ranged iterators:
 
   foreach (<vardefs>; name(<args>)) { ... }
 
-I.e. iterator simply should be a function call. Let's see how we can define iterator
-(this will also explain what <vardefs> and <args> are):
+I.e. iterator simply should be a function call. Let's see how we can
+define iterator (this will also explain what <vardefs> and <args> are):
 
   <bool|void> iter_opIterInit (ref type arg[, <args>]) { ... }
   void iter_opIterDone (ref type arg) { ... }
   bool iter_opIterNext (ref type arg[, <loopargs>]) { ... }
 
-Here, iterator name is `iter` (i.e. use `iter` as name part in `foreach`).
+Here, iterator name is `iter` (i.e. use `iter` as name part in
+`foreach`).
 
-VM will call `_opIterInit` first, and its first argument is the hidden loop
-indexing variable (you cannot access it from `foreach` body, but it will be
-passed to each iterator `opXXX`). `_opIterInit` can be `void`, or it can return `bool`.
-In the later case, you can return `false` to skip *BOTH* loop body, and iterator
-finalizer. Also, <args> from `foreach` will be passed to initializer.
+VM will call `_opIterInit` first, and its first argument is the hidden
+loop indexing variable (you cannot access it from `foreach` body, but it
+will be passed to each iterator `opXXX`). `_opIterInit` can be `void`, or
+it can return `bool`. In the later case, you can return `false` to skip
+*BOTH* loop body, and iterator finalizer. Also, <args> from `foreach`
+will be passed to initializer.
 
-If initializer succeeds, at each loop start (even at the first iteration), VM will
-call `_opIterNext`, passing hidden indexing variable as the first arg, and <vardefs> as
-the other args (and all `_opIterNext` parameters should be `ref`). Return `false` from
-`_opIterNext` to stoop iterating, and jump to the finalizer.
+If initializer succeeds, at each loop start (even at the first
+iteration), VM will call `_opIterNext`, passing hidden indexing variable
+as the first arg, and <vardefs> as the other args (and all `_opIterNext`
+parameters should be `ref`). Return `false` from `_opIterNext` to stop
+iterating, and jump to the finalizer.
 
-And finally, VM will call iterator finalizer -- `_opIterDone`. Finalizer should be `void`,
-and should have exactly one arg -- for hidden indexing variable. Note that finalizer is
-optional -- you can do all your finalizing work in `_opIterNext` before returning `false`,
-and don't define finalizer at all. But note that `return` and `break` will not cleanup
-iterators without finalizers.
+And finally, VM will call iterator finalizer -- `_opIterDone`. Finalizer
+should be `void`, and should have exactly one arg -- for hidden indexing
+variable. Note that finalizer is optional -- you can do all your
+finalizing work in `_opIterNext` before returning `false`, and don't
+define finalizer at all. But note that `return` and `break` will not
+cleanup iterators without finalizers.
 
-Usually, hidden indexing variable will be some kind of struct, where you'll keep all the
-data required to do the actual iteration.
+Usually, hidden indexing variable will be some kind of struct, where
+you'll keep all the data required to do the actual iteration.
 
 
 
 Index operator overloading
 ==========================
 
-You can overload array index operator for classes. To do that, define one or several
-`opIndex` methods, like this:
+You can overload array index operator for classes. To do that, define one
+or several `opIndex` methods, like this:
 
   int opIndex (string idx) { return ... }
   void opIndexAssign (string idx, int val) { ... }
 
-You can define type-specialized methods too, using pattern `opIndex<indtype>`, and
-`opIndex[<indtype>]Assign[<valtype>]`. Some examples:
+You can define type-specialized methods too, using pattern
+`opIndex<indtype>`, and `opIndex[<indtype>]Assign[<valtype>]`. Some
+examples:
 
   int opIndexFloat (float v)
   int opIndexName (name n)
   void opIndexAssignString (int idx, string val)
   void opIndexNameAssignString (name n, string val)
 
-For indexing, VC fill fallback to `opIndex`, if no specialized method was found.
-For assignin, VC will try methods in this order:
+For indexing, VC fill fallback to `opIndex`, if no specialized method was
+found.
+
+For assigning, VC will try methods in this order:
   opIndex<indtype>Assign<valtype>
   opIndex<indtype>Assign
   opIndexAssign<valtype>
@@ -606,8 +650,11 @@ For assignin, VC will try methods in this order:
 Optional ref/out arguments
 ==========================
 
-It is possible. And even if it is not optional, you can use `nullptr` if you don't
-want to pass anything there.
+It is possible. And even if it is not optional, you can use `nullptr` if
+you don't want to pass anything there. The compiler will create a
+temporary anonymous local in this case (so you can omit checks in your
+code, it is guaranteed that `ref`/`out` argument is always valid and
+accessible.
 
 
 
@@ -621,20 +668,17 @@ Recommended syntax for static arrays is:
 insted of C-like `int name[42];`.
 Note that C-like syntax may be dropped in the future.
 
-*WARNING*: Such declarations doesn't work for locals yet, so use C-like form for
-           locals. This will be eventually fixed.
-
 
 
 Switch cases without breaks
 ===========================
 
-If you want to omit `break` in switch case, you should use `goto case;` statement
-instead. VC compiler checks if you have a proper case termination statement, and
-will abort with error if you haven't.
+If you want to omit `break` in switch case, you should use `goto case;`
+statement instead. VC compiler checks if you have a proper case
+termination statement, and will abort with error if you haven't.
 
-You can use `goto case;` anywhere inside a branch. There is also support for both
-`goto case <value>;` and `goto default`.
+You can use `goto case;` anywhere inside a branch. There is also support
+for both `goto case <value>;` and `goto default`.
 
 Note that last case/default branch can omit proper termination.
 
@@ -643,8 +687,8 @@ Note that last case/default branch can omit proper termination.
 Limited automatic cleanup
 =========================
 
-If you want to do some cleanup on leaving scope, you can use `scope(exit)` operator.
-Let me explain it with the sample code:
+If you want to do some cleanup on leaving scope, you can use
+`scope(exit)` operator. Let me explain it with the sample code:
 
   void foo () {
     auto reshandle = AquireSomeResource();
@@ -653,11 +697,12 @@ Let me explain it with the sample code:
     DoSomethingElseWith(reshandle);
   }
 
-Here, `FreeResource(reshandle);` will be automatically called before leaving the
-function, so you don't have to manually insert such calls before each `return`
-statement.
+Here, `FreeResource(reshandle);` will be automatically called before
+leaving the function, so you don't have to manually insert such calls
+before each `return` statement.
 
-Note that cleanup code is called before leaving the *scope*. I.e. the code
+Note that cleanup code is called before leaving the *scope*. I.e. the
+code
 
   foreach (auto i; 0..3) {
     scope(exit) writeln(i);
@@ -672,9 +717,9 @@ Also note that cleanup handlers won't be called on system/host errors.
 Struct assignment
 =================
 
-While you cannot pass structs by value, you can assign structs. Note that this
-does "deep copy", i.e. if your struct contains dynamic arrays or dictionaries,
-they will be cloned, not simply referenced.
+While you cannot pass structs by value, you can assign structs. Note that
+this does "deep copy", i.e. if your struct contains dynamic arrays or
+dictionaries, they will be cloned, not simply referenced.
 
 
 
@@ -689,7 +734,7 @@ VC supports vector swizzling. Let me show you some examples (again):
   TVec v3 = v0._mx_y_mz; // v3 is `vector(-1, 2, -3)
   TVec v4 = v0._1_m1_0; // cryptic way to write `vector(1, -1, 0)`
 
-I.e. you can create new vectors by arbitrary combination of old vector elements.
-Underscore can delimit element names, and it is ignored by the compiler.
-You can prefix element name with `m` to negate it. You can use literals
-`0` and `1` (but not other digits).
+I.e. you can create new vectors by arbitrary combination of old vector
+elements. Underscore can delimit element names, and it is ignored by the
+compiler. You can prefix element name with `m` to negate it. You can use
+literals `0` and `1` (but not other digits).
