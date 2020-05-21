@@ -1,0 +1,17 @@
+start...
+A::ctor: an=69 (n=0)
+A::ctor: an=666 (n=0)
+A::ctor: an=42 (n=0)
+i=0; st.n=42 (foo)
+zoo
+A::dtor (n=42)
+A::ctor: an=42 (n=0)
+i=1; st.n=42 (foo)
+zoo
+A::dtor (n=42)
+A::ctor: an=42 (n=0)
+i=2; st.n=42 (foo)
+A::dtor (n=42)
+A::dtor (n=666)
+done! (boo)
+A::dtor (n=69)
