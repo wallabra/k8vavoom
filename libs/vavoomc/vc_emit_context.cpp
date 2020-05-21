@@ -520,7 +520,7 @@ void VEmitContext::AddStatement (int statement, int parm1, const TLocation &aloc
 //
 //==========================================================================
 void VEmitContext::AddStatement (int statement, float FloatArg, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_Int) VCFatalError("Opcode does't take float argument");
+  if (StatementInfo[statement].Args != OPCARGS_Int) VCFatalError("Opcode doesn't take float argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.Arg1 = *(vint32 *)&FloatArg;
@@ -535,7 +535,7 @@ void VEmitContext::AddStatement (int statement, float FloatArg, const TLocation 
 //
 //==========================================================================
 void VEmitContext::AddStatement (int statement, VName NameArg, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_Name) VCFatalError("Opcode does't take name argument");
+  if (StatementInfo[statement].Args != OPCARGS_Name) VCFatalError("Opcode doesn't take name argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.NameArg = NameArg;
@@ -553,7 +553,7 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member, const TLoca
       StatementInfo[statement].Args != OPCARGS_FieldOffset &&
       StatementInfo[statement].Args != OPCARGS_VTableIndex)
   {
-    VCFatalError("Opcode does't take member as argument");
+    VCFatalError("Opcode doesn't take member as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -572,7 +572,7 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member, int Arg, co
       StatementInfo[statement].Args != OPCARGS_FieldOffset_Byte &&
       StatementInfo[statement].Args != OPCARGS_Member_Int)
   {
-    VCFatalError("Opcode does't take member and byte as argument");
+    VCFatalError("Opcode doesn't take member and byte as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -645,7 +645,7 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const
 //
 //==========================================================================
 void VEmitContext::AddStatement (int statement, VLabel Lbl, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_BranchTarget) VCFatalError("Opcode does't take label as argument");
+  if (StatementInfo[statement].Args != OPCARGS_BranchTarget) VCFatalError("Opcode doesn't take label as argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.Arg1 = 0;
@@ -670,7 +670,7 @@ void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl, const TLo
       StatementInfo[statement].Args != OPCARGS_IntBranchTarget &&
       StatementInfo[statement].Args != OPCARGS_NameBranchTarget)
   {
-    VCFatalError("Opcode does't take 2 params");
+    VCFatalError("Opcode doesn't take 2 params");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -691,7 +691,7 @@ void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl, const TLo
 //
 //==========================================================================
 void VEmitContext::AddBuiltin (int b, const TLocation &aloc) {
-  //if (StatementInfo[statement].Args != OPCARGS_Builtin) VCFatalError("Opcode does't take builtin");
+  //if (StatementInfo[statement].Args != OPCARGS_Builtin) VCFatalError("Opcode doesn't take builtin");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = OPC_Builtin;
   I.Arg1 = b;
