@@ -66,7 +66,7 @@ static VCvarB r_thing_missile_use_camera_plane("r_thing_missile_use_camera_plane
 static VCvarB r_thing_other_use_camera_plane("r_thing_other_use_camera_plane", true, "Use angle to camera plane to select non-monster rotation?", CVAR_Archive);
 
 VCvarB r_fake_shadows_alias_models("r_fake_shadows_alias_models", false, "Render shadows from alias models (based on sprite frame)?", CVAR_Archive);
-static VCvarI r_fake_sprite_shadows("r_fake_sprite_shadows", "1", "Render fake sprite shadows (0:no; 1:2d; 2:pseudo-3d)?", CVAR_Archive);
+static VCvarI r_fake_sprite_shadows("r_fake_sprite_shadows", "2", "Render fake sprite shadows (0:no; 1:2d; 2:pseudo-3d)?", CVAR_Archive);
 static VCvarF r_fake_shadow_translucency("r_fake_shadow_translucency", "0.5", "Fake sprite shadows translucency multiplier.", CVAR_Archive);
 static VCvarF r_fake_shadow_scale("r_fake_shadow_scale", "0.1", "Fake sprite shadows height multiplier.", CVAR_Archive);
 static VCvarB r_fake_shadow_ignore_offset_fix("r_fake_shadow_ignore_offset_fix", false, "Should fake sprite shadows ignore sprite offset fix?", CVAR_Archive);
