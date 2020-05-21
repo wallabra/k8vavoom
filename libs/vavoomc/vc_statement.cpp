@@ -378,6 +378,8 @@ void VAssertStatement::DoSyntaxCopyTo (VStatement *e) {
 VStatement *VAssertStatement::DoResolve (VEmitContext &ec) {
   vassert(!FatalInvoke);
 
+  bool wasError = false;
+
   // create message if necessary
   if (!Message) {
     VStr s = (Expr ? Expr->toString() : VStr("wtf"));
@@ -395,13 +397,13 @@ VStatement *VAssertStatement::DoResolve (VEmitContext &ec) {
   // check method type: it should be static and final
   if ((M->Flags&(FUNC_Static|FUNC_VarArgs|FUNC_Final)) != (FUNC_Static|FUNC_Final)) {
     ParseError(Loc, "`AssertError()` method should be `static`");
-    return CreateInvalid();
+    wasError = true;
   }
 
   // check method signature: it should return `void`, and have only one string argument
   if (M->ReturnType.Type != TYPE_Void || M->NumParams != 1 || M->ParamTypes[0].Type != TYPE_String) {
     ParseError(Loc, "`AssertError()` method has invalid signature");
-    return CreateInvalid();
+    wasError = true;
   }
 
   // rewrite as invoke
@@ -411,12 +413,12 @@ VStatement *VAssertStatement::DoResolve (VEmitContext &ec) {
   Message = nullptr; // it is owned by invoke now
 
   if (Expr) Expr = Expr->ResolveBoolean(ec);
-  if (!Expr) return CreateInvalid();
+  if (!Expr) wasError = true;
 
   if (FatalInvoke) FatalInvoke = FatalInvoke->Resolve(ec);
-  if (!FatalInvoke) return CreateInvalid();
+  if (!FatalInvoke) wasError = true;
 
-  return this;
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -627,8 +629,7 @@ void VExpressionStatement::DoSyntaxCopyTo (VStatement *e) {
 //==========================================================================
 VStatement *VExpressionStatement::DoResolve (VEmitContext &ec) {
   if (Expr) Expr = Expr->Resolve(ec);
-  if (!Expr) return CreateInvalid();
-  return this;
+  return (Expr ? this : CreateInvalid());
 }
 
 
@@ -752,25 +753,27 @@ void VIf::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 VStatement *VIf::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
+
   if (doIndentCheck) {
     // indent check
-    if (Expr && TrueStatement && !CheckCondIndent(Expr->Loc, TrueStatement)) return CreateInvalid();
-    if (Expr && FalseStatement && !CheckCondIndent(ElseLoc, FalseStatement)) return CreateInvalid();
+    if (Expr && TrueStatement && !CheckCondIndent(Expr->Loc, TrueStatement)) wasError = true;
+    if (Expr && FalseStatement && !CheckCondIndent(ElseLoc, FalseStatement)) wasError = true;
   }
 
   // resolve
   if (Expr) Expr = Expr->ResolveBoolean(ec);
-  if (!Expr) return CreateInvalid();
+  if (!Expr) wasError = true;
 
   TrueStatement = TrueStatement->Resolve(ec, this);
-  if (!TrueStatement->IsValid()) return CreateInvalid();
+  if (!TrueStatement->IsValid()) wasError = true;
 
   if (FalseStatement) {
     FalseStatement = FalseStatement->Resolve(ec, this);
-    if (!FalseStatement->IsValid()) return CreateInvalid();
+    if (!FalseStatement->IsValid()) wasError = true;
   }
 
-  return this;
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -945,14 +948,17 @@ void VWhile::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 VStatement *VWhile::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
+
   // indent check
-  if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) return CreateInvalid();
+  if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) wasError = true;
 
   if (Expr) Expr = Expr->ResolveBoolean(ec);
-  if (!Expr) return CreateInvalid();
+  if (!Expr) wasError = true;
   Statement = Statement->Resolve(ec, this);
-  if (!Statement->IsValid()) return CreateInvalid();
-  return this;
+  if (!Statement->IsValid()) wasError = true;
+
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -1134,14 +1140,17 @@ void VDo::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 VStatement *VDo::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
+
   // indent check
-  if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) return CreateInvalid();
+  if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) wasError = true;
 
   if (Expr) Expr = Expr->ResolveBoolean(ec);
-  if (!Expr) return CreateInvalid();
+  if (!Expr) wasError = true;
   Statement = Statement->Resolve(ec, this);
-  if (!Statement->IsValid()) return CreateInvalid();
-  return this;
+  if (!Statement->IsValid()) wasError = true;
+
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -1338,15 +1347,10 @@ void VFor::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 VStatement *VFor::DoResolve (VEmitContext &ec) {
-  // indent check
-  if (Statement && !CheckCondIndent(Loc, Statement)) return CreateInvalid();
+  bool wasError = false;
 
-  /*
-  for (auto &&e : InitExpr) {
-    e = e->Resolve(ec);
-    if (!e) return CreateInvalid();
-  }
-  */
+  // indent check
+  if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
 
   for (int i = 0; i < CondExpr.length(); ++i) {
     VExpression *ce = CondExpr[i];
@@ -1356,18 +1360,18 @@ VStatement *VFor::DoResolve (VEmitContext &ec) {
       ce = ce->ResolveBoolean(ec);
     }
     CondExpr[i] = ce;
-    if (!ce) return CreateInvalid();
+    if (!ce) wasError = true;
   }
 
   for (auto &&e : LoopExpr) {
     e = e->Resolve(ec);
-    if (!e) return CreateInvalid();
+    if (!e) wasError = true;
   }
 
   Statement = Statement->Resolve(ec, this);
-  if (!Statement->IsValid()) return CreateInvalid();
+  if (!Statement->IsValid()) wasError = true;
 
-  return this;
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -1580,14 +1584,17 @@ void VForeach::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 VStatement *VForeach::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
+
   // indent check
-  if (Statement && !CheckCondIndent(Loc, Statement)) return CreateInvalid();
+  if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
 
   if (Expr) Expr = Expr->ResolveIterator(ec);
-  if (!Expr) return CreateInvalid();
+  if (!Expr) wasError = true;
   Statement = Statement->Resolve(ec, this);
-  if (!Statement->IsValid()) return CreateInvalid();
-  return this;
+  if (!Statement->IsValid()) wasError = true;
+
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -1822,38 +1829,35 @@ void VForeachIota::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
+
   // indent check
-  if (Statement && !CheckCondIndent(Loc, Statement)) return CreateInvalid();
+  if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
 
   // we will rewrite 'em later
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
   auto loR = (lo ? lo->SyntaxCopy()->Resolve(ec) : nullptr);
   auto hiR = (hi ? hi->SyntaxCopy()->Resolve(ec) : nullptr);
   if (!Statement || !varR || !loR || !hiR) {
-    delete varR;
-    delete loR;
-    delete hiR;
-    return CreateInvalid();
+    wasError = true;
+  } else {
+    if (varR->Type.Type != TYPE_Int) {
+      ParseError(var->Loc, "Loop variable should be integer (got `%s`)", *varR->Type.GetName());
+      wasError = true;
+    }
+
+    if (loR->Type.Type != TYPE_Int) {
+      ParseError(lo->Loc, "Loop lower bound should be integer (got `%s`)", *loR->Type.GetName());
+      wasError = true;
+    }
+
+    if (hiR->Type.Type != TYPE_Int) {
+      ParseError(hi->Loc, "Loop higher bound should be integer (got `%s`)", *hiR->Type.GetName());
+      wasError = true;
+    }
   }
 
-  if (varR->Type.Type != TYPE_Int) {
-    ParseError(var->Loc, "Loop variable should be integer (got `%s`)", *varR->Type.GetName());
-    delete varR;
-    delete loR;
-    delete hiR;
-    return CreateInvalid();
-  }
-
-  if (loR->Type.Type != TYPE_Int) {
-    ParseError(lo->Loc, "Loop lower bound should be integer (got `%s`)", *loR->Type.GetName());
-    delete varR;
-    delete loR;
-    delete hiR;
-    return CreateInvalid();
-  }
-
-  if (hiR->Type.Type != TYPE_Int) {
-    ParseError(hi->Loc, "Loop higher bound should be integer (got `%s`)", *hiR->Type.GetName());
+  if (wasError) {
     delete varR;
     delete loR;
     delete hiR;
@@ -1911,18 +1915,19 @@ VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
   delete limit;
 
   varinit = varinit->Resolve(ec);
-  if (!varinit) return CreateInvalid();
+  if (!varinit) wasError = true;
 
   varnext = varnext->ResolveBoolean(ec);
-  if (!varnext) return CreateInvalid();
+  if (!varnext) wasError = true;
 
   var = var->ResolveBoolean(ec);
-  if (!var) return CreateInvalid();
+  if (!var) wasError = true;
 
   // finally, resolve statement (last, so local reusing will work as expected)
   Statement = Statement->Resolve(ec, this);
-  if (!Statement->IsValid()) return CreateInvalid();
-  return this;
+  if (!Statement->IsValid()) wasError = true;
+
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -2175,8 +2180,10 @@ void VForeachArray::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 VStatement *VForeachArray::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
+
   // indent check
-  if (Statement && !CheckCondIndent(Loc, Statement)) return CreateInvalid();
+  if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
 
   if (arr && arr->IsAnyInvocation()) VCFatalError("VC: Internal compiler error (VForeachArray::Resolve)");
 
@@ -2185,15 +2192,14 @@ VStatement *VForeachArray::DoResolve (VEmitContext &ec) {
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
   auto arrR = (arr ? arr->SyntaxCopy()->Resolve(ec) : nullptr);
 
-  bool wasError = false;
   if (!Statement || !varR || !arrR || (idxvar && !ivarR)) wasError = true;
 
-  if (!wasError && ivarR && ivarR->Type.Type != TYPE_Int) {
+  if (ivarR && ivarR->Type.Type != TYPE_Int) {
     ParseError(var->Loc, "Loop variable should be integer (got `%s`)", *ivarR->Type.GetName());
     wasError = true;
   }
 
-  if (!wasError && !arrR->Type.IsAnyIndexableArray()) {
+  if (arrR && !arrR->Type.IsAnyIndexableArray()) {
     ParseError(var->Loc, "Array variable should be integer (got `%s`)", *varR->Type.GetName());
     wasError = true;
   }
@@ -2341,25 +2347,26 @@ VStatement *VForeachArray::DoResolve (VEmitContext &ec) {
   delete index;
 
   idxinit = idxinit->Resolve(ec);
-  if (!idxinit) return CreateInvalid();
+  if (!idxinit) wasError = true;
 
   if (hiinit) {
     hiinit = hiinit->Resolve(ec);
-    if (!hiinit) return CreateInvalid();
+    if (!hiinit) wasError = true;
   }
 
   loopPreCheck = loopPreCheck->ResolveBoolean(ec);
-  if (!loopPreCheck) return CreateInvalid();
+  if (!loopPreCheck) wasError = true;
 
   loopNext = loopNext->ResolveBoolean(ec);
-  if (!loopNext) return CreateInvalid();
+  if (!loopNext) wasError = true;
 
-  if (!loopLoad) return CreateInvalid();
+  if (!loopLoad) wasError = true;
 
   // finally, resolve statement (last, so local reusing will work as expected)
   Statement = Statement->Resolve(ec, this);
-  if (!Statement->IsValid()) return CreateInvalid();
-  return this;
+  if (!Statement->IsValid()) wasError = true;
+
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -2618,8 +2625,10 @@ void VForeachScripted::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
+
   // indent check
-  if (Statement && !CheckCondIndent(Loc, Statement)) return CreateInvalid();
+  if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
 
   /* if iterator is invocation, rewrite it to:
    *   {
@@ -2654,15 +2663,13 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
     VMethod *minit = einit->GetVMethod(ec);
     if (!minit) {
       //fprintf(stderr, "arr type: `%s` : `%s` (%s)\n", *shitppTypeNameObj(*arr), *shitppTypeNameObj(*einit), *einit->GetMethodName());
-      delete einit;
       ParseError(Loc, "Invalid VC iterator (opInit method not found)");
-      return CreateInvalid();
+      wasError = true;
     }
 
     if (einit->NumArgs >= VMethod::MAX_PARAMS) {
-      delete einit;
       ParseError(Loc, "Too many arguments to VC iterator opInit method");
-      return CreateInvalid();
+      wasError = true;
     }
 
     // check first arg, and get internal var type
@@ -2671,18 +2678,21 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
         (minit->ParamFlags[0]&~(FPARM_Out|FPARM_Ref)) != 0 ||
         (minit->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) == 0)
     {
-      delete einit;
       ParseError(Loc, "VC iterator opInit should have at least one arg, and it should be `ref`/`out`");
-      return CreateInvalid();
+      wasError = true;
     }
 
     switch (minit->ReturnType.Type) {
       case TYPE_Void: isBoolInit = false; break;
       case TYPE_Bool: case TYPE_Int: isBoolInit = true; break;
       default:
-        delete einit;
         ParseError(Loc, "VC iterator opInit should return `bool` or be `void`");
-        return CreateInvalid();
+        wasError = true;
+    }
+
+    if (wasError) {
+      delete einit;
+      return CreateInvalid();
     }
 
     // create hidden local for `it`
@@ -3054,27 +3064,27 @@ void VSwitch::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //
 //==========================================================================
 VStatement *VSwitch::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
+
   if (Expr) Expr = Expr->Resolve(ec);
 
   if (!Expr ||
       (Expr->Type.Type != TYPE_Byte && Expr->Type.Type != TYPE_Int &&
        Expr->Type.Type != TYPE_Name))
   {
-    if (Expr) {
-      ParseError(Loc, "Invalid switch expression type (%s)", *Expr->Type.GetName());
-    }
-    return CreateInvalid();
+    if (Expr) ParseError(Loc, "Invalid switch expression type (%s)", *Expr->Type.GetName());
+    wasError = true;
   }
 
   // first resolve all cases and default
   for (auto &&st : Statements) {
     if (st->IsVarDecl()) {
       ParseError(st->Loc, "Declaring locals inside switch and without an explicit scope is forbidden");
-      return CreateInvalid();
+      wasError = true;
     }
     if (st->IsSwitchCase() || st->IsSwitchDefault()) {
       st = st->Resolve(ec, this);
-      if (!st->IsValid()) return CreateInvalid();
+      if (!st->IsValid()) wasError = true;
     }
   }
 
@@ -3082,13 +3092,13 @@ VStatement *VSwitch::DoResolve (VEmitContext &ec) {
   for (auto &&st : Statements) {
     if (!st->IsSwitchCase() && !st->IsSwitchDefault()) {
       st = st->Resolve(ec, this);
-      if (!st->IsValid()) return CreateInvalid();
+      if (!st->IsValid()) wasError = true;
     }
   }
 
-  if (!checkProperCaseEnd(true)) return CreateInvalid();
+  if (!checkProperCaseEnd(true)) wasError = true;
 
-  return this;
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -3618,7 +3628,7 @@ VStatement *VBreak::DoResolve (VEmitContext &ec) {
   for (VStatement *st = UpScope; st; st = st->UpScope) {
     if (st->IsBreakScope()) return this;
     if (!st->IsReturnAllowed()) {
-      ParseError(Loc, "`break` outside of a restricted scope");
+      ParseError(Loc, "`break` jumps outside of a restricted scope");
       return CreateInvalid();
     }
   }
@@ -3708,7 +3718,7 @@ VStatement *VContinue::DoResolve (VEmitContext &) {
   for (VStatement *st = UpScope; st; st = st->UpScope) {
     if (st->IsContinueScope()) return this;
     if (!st->IsReturnAllowed()) {
-      ParseError(Loc, "`continue` outside of a restricted scope");
+      ParseError(Loc, "`continue` jumps outside of a restricted scope");
       return CreateInvalid();
     }
   }
@@ -3822,7 +3832,7 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
   // check if we can return from here
   for (VStatement *st = UpScope; st; st = st->UpScope) {
     if (!st->IsReturnAllowed()) {
-      ParseError(Loc, "`return` outside of a restricted scope");
+      ParseError(Loc, "`return` jumps outside of a restricted scope");
       return CreateInvalid();
     }
   }
@@ -4140,14 +4150,15 @@ void VLocalVarStatement::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 VStatement *VLocalVarStatement::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
   ProcessVarDecls();
-  if (!Decl->Declare(ec)) return CreateInvalid();
+  if (!Decl->Declare(ec)) wasError = true;
   for (auto &&st : Statements) {
     st = st->Resolve(ec, this);
-    if (!st->IsValid()) return CreateInvalid();
+    if (!st->IsValid()) wasError = true;
   }
   Decl->Hide(ec);
-  return this;
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -4268,12 +4279,13 @@ void VCompound::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 VStatement *VCompound::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
   ProcessVarDecls();
   for (auto &&st : Statements) {
     st = st->Resolve(ec, this);
-    if (!st->IsValid()) return CreateInvalid();
+    if (!st->IsValid()) wasError = true;
   }
-  return this;
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -4346,15 +4358,18 @@ void VCompoundScopeExit::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 VStatement *VCompoundScopeExit::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
+
   // indent check
-  if (Body && !CheckCondIndent(Loc, Body)) return CreateInvalid();
+  if (Body && !CheckCondIndent(Loc, Body)) wasError = true;
 
   if (Body) {
     Body = Body->Resolve(ec, this);
-    if (!Body->IsValid()) return CreateInvalid();
+    if (!Body->IsValid()) wasError = true;
   }
 
-  return VCompound::DoResolve(ec);
+  VStatement *res = VCompound::DoResolve(ec);
+  return (wasError && !res->IsValid() ? CreateInvalid() : res);
 }
 
 

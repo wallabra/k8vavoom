@@ -258,6 +258,10 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
     e.TypeExpr = e.TypeExpr->ResolveAsType(ec);
     if (!e.TypeExpr) {
       retres = false;
+      // create dummy local
+      VLocalVarDef &L = ec.NewLocal(e.Name, VFieldType(TYPE_Void), e.Loc);
+      L.ParamFlags = (e.isRef ? FPARM_Ref : 0)|(e.isConst ? FPARM_Const : 0);
+      e.locIdx = L.ldindex;
       continue;
     }
     //GLog.Logf(NAME_Debug, "LOC:001: <%s>; type: <%s>\n", *e.Name, *e.TypeExpr->Type.GetName());
