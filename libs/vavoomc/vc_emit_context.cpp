@@ -25,7 +25,8 @@
 //**************************************************************************
 #include "vc_local.h"
 
-#define VV_EMIT_DISABLE_LOCAL_REUSE
+//#define VV_EMIT_DISABLE_LOCAL_REUSE
+//#define VV_EMIT_DUMP_SLOT_ALLOC
 
 
 VStatementInfo StatementInfo[NUM_OPCODES] = {
@@ -216,6 +217,7 @@ void VEmitContext::stackInit () {
 //
 //==========================================================================
 int VEmitContext::stackAlloc (int size, bool *reused) {
+  if (reused) *reused = true; // just in case
   if (size < 0 || size > MaxStackSlots) return -1;
 
   if (size == 0) {
@@ -242,13 +244,16 @@ int VEmitContext::stackAlloc (int size, bool *reused) {
         csl |= ssl;
         ++send;
       }
+      vassert(send == MaxStackSlots || slotInfo[send] == SlotUsed);
       // does it fit?
       if (send-spos >= size) {
         // mark used
         memset(slotInfo+spos, SlotUsed, size);
-        if (reused) *reused = !!csl;
+        if (reused) *reused = (csl != SlotUnused);
         return spos;
       }
+      // skip this gap (send points to used slot, so skip it too)
+      spos = send+1;
     } else {
       ++spos;
     }
@@ -286,7 +291,6 @@ void VEmitContext::stackFree (int pos, int size) {
 //  VEmitContext::AllocateLocalSlot
 //
 //  allocate stack slot for this local
-//  returns `true` if we got a second-hand stack slot
 //
 //==========================================================================
 void VEmitContext::AllocateLocalSlot (int idx) {
@@ -303,6 +307,9 @@ void VEmitContext::AllocateLocalSlot (int idx) {
     loc.invalid = true;
     loc.reused = false; // it doesn't matter
   } else {
+    #ifdef VV_EMIT_DUMP_SLOT_ALLOC
+    GLog.Logf(NAME_Debug, "%s: allocated local `%s` (idx=%d; ofs=%d; size=%d; realloced=%d)", *loc.Loc.toStringNoCol(), *loc.Name, idx, ofs, loc.stackSize, (int)realloced);
+    #endif
     loc.Offset = ofs;
     loc.reused = realloced;
   }
@@ -320,6 +327,9 @@ void VEmitContext::ReleaseLocalSlot (int idx) {
   if (loc.invalid) return; // already dead
   vassert(loc.Offset >= 0);
   vassert(loc.stackSize >= 0);
+  #ifdef VV_EMIT_DUMP_SLOT_ALLOC
+  GLog.Logf(NAME_Debug, "%s: freeing local `%s` (idx=%d; ofs=%d; size=%d; realloced=%d)", *loc.Loc.toStringNoCol(), *loc.Name, idx, loc.Offset, loc.stackSize, (int)loc.reused);
+  #endif
   stackFree(loc.Offset, loc.stackSize);
   loc.Offset = -666;
 }
@@ -877,6 +887,13 @@ void VEmitContext::EmitLocalZero (int locidx, const TLocation &aloc) {
       loc.Type.Type == TYPE_Dictionary ||
       loc.Type.Type == TYPE_DynamicArray)
   {
+    EmitLocalAddress(loc.Offset, aloc);
+    AddStatement(OPC_ZeroSlotsByPtr, loc.Type.GetStackSlotCount(), aloc);
+    return;
+  }
+
+  // clear whole slot for boolean, just to be sure
+  if (loc.Type.Type == TYPE_Bool) {
     EmitLocalAddress(loc.Offset, aloc);
     AddStatement(OPC_ZeroSlotsByPtr, loc.Type.GetStackSlotCount(), aloc);
     return;

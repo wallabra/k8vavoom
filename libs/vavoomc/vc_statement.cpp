@@ -1788,7 +1788,11 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
   VLabel loopLbl = ec.DefineLabel();
 
   // no need to clear them, the loop will take care of it
-  for (auto &&lv : tempLocals) ec.AllocateLocalSlot(lv);
+  for (auto &&lv : tempLocals) {
+    ec.AllocateLocalSlot(lv);
+    VLocalVarDef &loc = ec.GetLocalByIndex(lv);
+    if (loc.reused && loc.Type.NeedZeroingOnSlotReuse()) ec.EmitLocalZero(lv, Loc);
+  }
 
   // emit initialisation expressions
   if (hiinit) hiinit->Emit(ec); // may be absent for iota with literals

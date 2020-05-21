@@ -730,6 +730,7 @@ VStr VFieldType::GetName () const {
 bool VFieldType::NeedZeroingOnSlotReuse () const noexcept {
   if (PtrLevel > 0) return false; // pointers are ok
   switch (Type) {
+    case TYPE_Bool: // yeah, `bool` vars are operated by bits, but checked as ints, lol
     case TYPE_Struct: // structs should be zeroed before calling ctor in any case
     case TYPE_String: // strings should be zeroed too
     case TYPE_Array: // arrays can't have initialisers yet, therefore they should be zeroed
