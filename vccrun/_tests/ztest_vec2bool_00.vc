@@ -1,0 +1,34 @@
+class Main : Object;
+
+
+void main () {
+  auto v = vector(0, 1, 2);
+  if (v) print("OK00"); else print("FUCK00");
+
+  v = vector(1, 0, 2);
+  if (v) print("OK01"); else print("FUCK01");
+
+  v = vector(1, 2, 0);
+  if (v) print("OK02"); else print("FUCK02");
+
+  v = vector(0, 0, 0);
+  if (!v) print("OK03"); else print("FUCK03");
+
+  v = vector(float.inf, 1, 2);
+  if (!v) print("OK04"); else print("FUCK04");
+
+  v = vector(float.nan, 1, 2);
+  if (!v) print("OK05"); else print("FUCK05");
+
+  v = vector(1, float.inf, 2);
+  if (!v) print("OK06"); else print("FUCK06");
+
+  v = vector(1, float.nan, 2);
+  if (!v) print("OK07"); else print("FUCK07");
+
+  v = vector(1, 2, float.inf);
+  if (!v) print("OK08"); else print("FUCK08");
+
+  v = vector(1, 2, float.nan);
+  if (!v) print("OK09"); else print("FUCK09");
+}

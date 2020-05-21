@@ -1,0 +1,19 @@
+class Main : Object;
+
+
+void main () {
+  float f = 1;
+  if (f) print("OK00"); else print("FUCK00");
+
+  f = -1;
+  if (f) print("OK01"); else print("FUCK01");
+
+  f = 0;
+  if (!f) print("OK02"); else print("FUCK02");
+
+  f = float.inf;
+  if (!f) print("OK03"); else print("FUCK03");
+
+  f = float.nan;
+  if (!f) print("OK04"); else print("FUCK04");
+}
