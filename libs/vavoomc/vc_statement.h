@@ -76,11 +76,6 @@ public:
   virtual VStatement *DoResolve (VEmitContext &ec) = 0;
   virtual void DoEmit (VEmitContext &ec) = 0;
 
-  // dtors should be resolved before scope exit (i.e. call this manually in
-  virtual bool ResolveDtor (VEmitContext &ec);
-  // finalizers will be emited after scope exit
-  virtual bool ResolveFinalizer (VEmitContext &ec);
-
   // dtors will be emited before scope exit
   virtual void EmitDtor (VEmitContext &ec);
   // finalizers will be emited after scope exit
@@ -95,9 +90,6 @@ public:
   // those will manage `UpScope`, and will call dtor/finalizer emiters
   VStatement *Resolve (VEmitContext &ec, VStatement *aUpScope);
   void Emit (VEmitContext &ec, VStatement *aUpScope);
-
-  // called by various compounds
-  void CreateLocalVarScope (TArray<VStatement *> &src);
 
   // this is used in `scope(exit)` to block `return`
   virtual bool IsReturnAllowed () const noexcept;
@@ -213,6 +205,52 @@ protected:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VDeleteStatement : public VStatement {
+private:
+  // resolved expressions
+  VExpression *delexpr; // var.Destroy()
+  VExpression *assexpr; // var = none;
+  VExpression *checkexpr; // bool(var)
+
+public:
+  VExpression *var;
+
+  VDeleteStatement (VExpression *avar, const TLocation &aloc);
+  virtual ~VDeleteStatement () override;
+  virtual VStatement *SyntaxCopy () override;
+
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
+  virtual void DoEmit (VEmitContext &ec) override;
+
+  virtual VStr toString () override;
+
+protected:
+  VDeleteStatement () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VExpressionStatement : public VStatement {
+public:
+  VExpression *Expr;
+
+  VExpressionStatement (VExpression *AExpr);
+  virtual ~VExpressionStatement () override;
+  virtual VStatement *SyntaxCopy () override;
+
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
+  virtual void DoEmit (VEmitContext &ec) override;
+
+  virtual VStr toString () override;
+
+protected:
+  VExpressionStatement () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VIf : public VStatement {
 public:
   VExpression *Expr;
@@ -318,7 +356,7 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VFor : public VStatement {
 public:
-  TArray<VExpression *> InitExpr;
+  //TArray<VExpression *> InitExpr; // moved to outer scope
   TArray<VExpression *> CondExpr;
   TArray<VExpression *> LoopExpr;
   VStatement *Statement;
@@ -713,52 +751,6 @@ protected:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VExpressionStatement : public VStatement {
-public:
-  VExpression *Expr;
-
-  VExpressionStatement (VExpression *AExpr);
-  virtual ~VExpressionStatement () override;
-  virtual VStatement *SyntaxCopy () override;
-
-  virtual VStatement *DoResolve (VEmitContext &ec) override;
-  virtual void DoEmit (VEmitContext &ec) override;
-
-  virtual VStr toString () override;
-
-protected:
-  VExpressionStatement () {}
-  virtual void DoSyntaxCopyTo (VStatement *e) override;
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-class VDeleteStatement : public VStatement {
-private:
-  // resolved expressions
-  VExpression *delexpr; // var.Destroy()
-  VExpression *assexpr; // var = none;
-  VExpression *checkexpr; // bool(var)
-
-public:
-  VExpression *var;
-
-  VDeleteStatement (VExpression *avar, const TLocation &aloc);
-  virtual ~VDeleteStatement () override;
-  virtual VStatement *SyntaxCopy () override;
-
-  virtual VStatement *DoResolve (VEmitContext &ec) override;
-  virtual void DoEmit (VEmitContext &ec) override;
-
-  virtual VStr toString () override;
-
-protected:
-  VDeleteStatement () {}
-  virtual void DoSyntaxCopyTo (VStatement *e) override;
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 // after compound resolving, this will get a scope
 class VBaseCompoundStatement : public VStatement {
 public:
@@ -783,6 +775,11 @@ protected:
   VBaseCompoundStatement () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
 
+  // recursively moves everything after local var decl into its own statement list.
+  // WARNING! this is gum solution, i should invent a better way to do this!
+  // currently this thing should be manually called before resolving statements.
+  void ProcessVarDecls ();
+
 public:
   virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
@@ -794,7 +791,6 @@ class VLocalVarStatement : public VBaseCompoundStatement {
 public:
   VLocalDecl *Decl;
   // `Statements` is filled by compound
-  bool declResolved;
 
   VLocalVarStatement (VLocalDecl *ADecl);
   virtual ~VLocalVarStatement () override;

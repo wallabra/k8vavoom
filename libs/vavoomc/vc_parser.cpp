@@ -223,6 +223,62 @@ void VParser::ErrorFieldTypeExpected () {
 
 //==========================================================================
 //
+//  GetDropResultOp
+//
+//==========================================================================
+static VExpression *GetDropResultOp (VExpression *expr) {
+  while (expr && expr->IsDropResult()) {
+    expr = ((VDropResult *)expr)->op;
+  }
+  return expr;
+}
+
+
+//==========================================================================
+//
+//  ExtractDropResultOp
+//
+//  this deletes all dropresults, and returns resulting op
+//  can return `nullptr` if dropresult is empty
+//
+//==========================================================================
+static VExpression *ExtractDropResultOp (VExpression *expr) {
+  while (expr && expr->IsDropResult()) {
+    VDropResult *dr = (VDropResult *)expr;
+    expr = dr->op;
+    dr->op = nullptr;
+    delete dr;
+  }
+  return expr;
+}
+
+
+//==========================================================================
+//
+//  VParser::ParseArgList
+//
+//  this may create vardecl or other things
+//
+//==========================================================================
+VStatement *VParser::CreateExpressionStatement (VExpression *expr, bool needDropResult) {
+  // create invalid statement on error, why not
+  //if (!expr) return new VInvalidStatement(TLocation());
+  if (!expr) return nullptr;
+  // check for local var declaration
+  if (GetDropResultOp(expr)->IsLocalVarDecl()) {
+    // create local var decl node instead of expression statement
+    VLocalDecl *ld = (VLocalDecl *)ExtractDropResultOp(expr); // guaranteed
+    return new VLocalVarStatement(ld);
+  }
+  // not a local var decl, add dropresult if necessary
+  if (needDropResult && !expr->IsDropResult()) expr = new VDropResult(expr);
+  // create expression statement
+  return new VExpressionStatement(expr);
+}
+
+
+//==========================================================================
+//
 //  VParser::ParseArgList
 //
 //  `(` already eaten
@@ -350,6 +406,8 @@ VLocalDecl *VParser::CreateUnnamedLocal (VFieldType type, const TLocation &loc) 
 //==========================================================================
 //
 //  VParser::ParseLocalVar
+//
+//  returns `VLocalDecl`
 //
 //==========================================================================
 VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt, VExpression *size0, VExpression *size1) {
@@ -1243,30 +1301,37 @@ VStatement *VParser::ParseStatement () {
       }
     case TK_For:
       {
-        // to hide inline `for` variable declarations, we need to wrap `for` into compound statement
-        bool needCompound = false;
+        // `for` will always be put into compound, because why not?
+        // init expressions will be put first, and then `for` node
+        // TODO: lazy compound creation?
+        VCompound *Comp = new VCompound(l);
 
         Lex.NextToken();
-        VFor *For = new VFor(l);
         Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
 
         // parse init expr(s)
         while (Lex.Token != TK_Semicolon) {
           auto vtype = ParseOptionalTypeDecl(TK_Assign, nullptr); // no `const` or `ref` allowed here
           if (vtype) {
-            needCompound = true; // wrap it
+            //needCompound = true; // wrap it
             VLocalDecl *decl = ParseLocalVar(vtype, LocalFor);
             if (!decl) break;
-            For->InitExpr.append(new VDropResult(decl));
+            //For->InitExpr.append(new VDropResult(decl));
+            Comp->Statements.Append(new VLocalVarStatement(decl));
           } else {
             VExpression *expr = ParseExpression(true);
             if (!expr) break;
-            For->InitExpr.append(new VDropResult(expr));
+            //For->InitExpr.append(new VDropResult(expr));
+            Comp->Statements.Append(CreateExpressionStatement(expr));
           }
           // here should be a comma or a semicolon
           if (!Lex.Check(TK_Comma)) break;
         }
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+
+        // now create for itselt
+        VFor *For = new VFor(l);
+        Comp->Statements.Append(For);
 
         // parse cond expr(s)
         VExpression *lastCondExpr = nullptr;
@@ -1291,6 +1356,8 @@ VStatement *VParser::ParseStatement () {
 
         VStatement *Statement = ParseStatement();
         For->Statement = Statement;
+        return Comp;
+        /*
         // wrap statement if necessary
         if (needCompound) {
           VCompound *Comp = new VCompound(For->Loc);
@@ -1299,6 +1366,7 @@ VStatement *VParser::ParseStatement () {
         } else {
           return For;
         }
+        */
       }
     case TK_Foreach:
       return ParseForeach();
@@ -1446,7 +1514,7 @@ VStatement *VParser::ParseStatement () {
       } else {
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
         //fprintf(stderr, "*<%s>\n", *Expr->toString());
-        return new VExpressionStatement(new VDropResult(Expr));
+        return CreateExpressionStatement(Expr);
       }
   }
 }
@@ -2636,7 +2704,7 @@ void VParser::ParseStates (VClass *InClass) {
           int NumArgs = (fcall ? ParseArgList(Lex.Location, Args) : 0);
           VExpression *e = new VCastOrInvocation(funcName, stloc, NumArgs, Args);
           auto cst = new VCompound(stloc);
-          cst->Statements.Append(new VExpressionStatement(new VDropResult(e)));
+          cst->Statements.Append(CreateExpressionStatement(e));
           // create function
           //State->Function = new VMethod(NAME_None, InClass, State->Loc);
           State->Function = new VMethod(NAME_None, State, State->Loc);
@@ -3165,7 +3233,7 @@ void VParser::ParseStatesNewStyleUnused (VClass *inClass) {
           if (NumArgs > 0) {
             VExpression *e = new VCastOrInvocation(s->FunctionName, stloc, NumArgs, Args);
             auto cst = new VCompound(stloc);
-            cst->Statements.Append(new VExpressionStatement(e));
+            cst->Statements.Append(CreateExpressionStatement(e));
             // create function
             s->Function = new VMethod(NAME_None, s, s->Loc);
             s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
@@ -3676,7 +3744,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
           if (NumArgs > 0) {
             VExpression *e = new VCastOrInvocation(s->FunctionName, stloc, NumArgs, Args);
             auto cst = new VCompound(stloc);
-            cst->Statements.Append(new VExpressionStatement(e));
+            cst->Statements.Append(CreateExpressionStatement(e));
             // create function
             s->Function = new VMethod(NAME_None, s, s->Loc);
             s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
@@ -4466,7 +4534,7 @@ void VParser::ParseClass () {
         // convert to `field = value`
         initr = new VAssignment(VAssignment::Assign, new VSingleName(FieldName, initr->Loc), initr, initr->Loc);
         // convert to statement
-        VStatement *st = new VExpressionStatement(initr);
+        VStatement *st = CreateExpressionStatement(initr);
         // append it to the list
         if (defallot == defcount) {
           defallot += 1024;

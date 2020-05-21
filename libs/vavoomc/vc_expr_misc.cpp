@@ -1237,7 +1237,7 @@ VExpression *VDropResult::DoResolve (VEmitContext &ec) {
   if (op->Type.Type != TYPE_String && op->Type.GetStackSize() != 4 &&
       op->Type.Type != TYPE_Vector && op->Type.Type != TYPE_Void)
   {
-    ParseError(Loc, "Expression's result type (%s) cannot be dropped", *op->Type.GetName());
+    ParseError(Loc, "Expression result type (%s) cannot be dropped", *op->Type.GetName());
     delete this;
     return nullptr;
   }

@@ -70,9 +70,6 @@ VStatement::VStatement (const TLocation &ALoc) : Loc(ALoc), UpScope(nullptr), sk
 
 VStatement::~VStatement () {}
 
-bool VStatement::ResolveDtor (VEmitContext &) { return true; }
-bool VStatement::ResolveFinalizer (VEmitContext &) { return true; }
-
 void VStatement::EmitDtor (VEmitContext &ec) {}
 void VStatement::EmitFinalizer (VEmitContext &ec) {}
 
@@ -162,12 +159,7 @@ bool VStatement::CheckCondIndent (const TLocation &condLoc, VStatement *body) {
 //==========================================================================
 VStatement *VStatement::Resolve (VEmitContext &ec, VStatement *aUpScope) {
   UpScopeGuard upguard(this, aUpScope);
-  VStatement *res = DoResolve(ec);
-  if (res->IsValid()) {
-    if (!ResolveDtor(ec)) return CreateInvalid();
-    if (!ResolveFinalizer(ec)) return CreateInvalid();
-  }
-  return res;
+  return DoResolve(ec);
 }
 
 
@@ -181,32 +173,6 @@ void VStatement::Emit (VEmitContext &ec, VStatement *aUpScope) {
   DoEmit(ec);
   if (!skipDtorOnLeave) EmitDtor(ec);
   if (!skipFinalizerOnLeave) EmitFinalizer(ec);
-}
-
-
-//==========================================================================
-//
-//  VStatement::CreateLocalVarScope
-//
-//==========================================================================
-void VStatement::CreateLocalVarScope (TArray<VStatement *> &src) {
-  for (int idx = 0; idx < src.length()-1; ++idx) {
-    if (src[idx]->IsVarDecl()) {
-      // i found her!
-      VLocalVarStatement *vst = (VLocalVarStatement *)src[idx];
-      vassert(vst->Statements.length() == 0);
-      const int newlen = idx+1; // skip decl
-      // move tail to `vst`
-      vst->Statements.resize(src.length()-newlen);
-      for (idx = newlen; idx < src.length(); ++idx) vst->Statements.append(src[idx]);
-      // shrink source list
-      src.setLength(newlen);
-      // recurse, why not?
-      //vst->CreateLocalVarScope(vst->Statements);
-      // done
-      return;
-    }
-  }
 }
 
 
@@ -244,6 +210,7 @@ VStatement *VInvalidStatement::SyntaxCopy () {
 //
 //==========================================================================
 VStatement *VInvalidStatement::DoResolve (VEmitContext &) {
+  VCFatalError("internal compiler error occured (tried to resolve invalid statement)");
   return this;
 }
 
@@ -481,6 +448,214 @@ VStr VAssertStatement::toString () {
 }
 
 
+
+//**************************************************************************
+//
+// VDeleteStatement
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VDeleteStatement::VDeleteStatement
+//
+//==========================================================================
+VDeleteStatement::VDeleteStatement (VExpression *avar, const TLocation &aloc)
+  : VStatement(aloc)
+  , delexpr(nullptr)
+  , assexpr(nullptr)
+  , checkexpr(nullptr)
+  , var(avar)
+{
+}
+
+
+//==========================================================================
+//
+//  VDeleteStatement::~VDeleteStatement
+//
+//==========================================================================
+VDeleteStatement::~VDeleteStatement () {
+  delete delexpr; delexpr = nullptr;
+  delete assexpr; assexpr = nullptr;
+  delete checkexpr; checkexpr = nullptr;
+  delete var; var = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VDeleteStatement::SyntaxCopy
+//
+//==========================================================================
+VStatement *VDeleteStatement::SyntaxCopy () {
+  auto res = new VDeleteStatement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDeleteStatement::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDeleteStatement::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VDeleteStatement *)e;
+  res->var = (var ? var->SyntaxCopy() : nullptr);
+  // no need to copy private fields
+}
+
+
+//==========================================================================
+//
+//  VDeleteStatement::DoResolve
+//
+//==========================================================================
+VStatement *VDeleteStatement::DoResolve (VEmitContext &ec) {
+  if (!var) return CreateInvalid();
+
+  // build check expression
+  checkexpr = var->SyntaxCopy()->ResolveBoolean(ec);
+  if (!checkexpr) return CreateInvalid();
+
+  // build delete expression
+  delexpr = new VDotInvocation(var->SyntaxCopy(), VName("Destroy"), var->Loc, 0, nullptr);
+  delexpr = new VDropResult(delexpr);
+  delexpr = delexpr->Resolve(ec);
+  if (!delexpr) return CreateInvalid();
+
+  // build clear expression
+  assexpr = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), new VNoneLiteral(var->Loc), var->Loc);
+  assexpr = new VDropResult(assexpr);
+  assexpr = assexpr->Resolve(ec);
+  if (!assexpr) return CreateInvalid();
+
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDeleteStatement::DoEmit
+//
+//==========================================================================
+void VDeleteStatement::DoEmit (VEmitContext &ec) {
+  if (!checkexpr || !delexpr || !assexpr) return;
+
+  // emit check
+  VLabel skipLabel = ec.DefineLabel();
+  checkexpr->EmitBranchable(ec, skipLabel, false);
+
+  // emit delete and clear
+  delexpr->Emit(ec);
+  assexpr->Emit(ec);
+
+  // done
+  ec.MarkLabel(skipLabel);
+}
+
+
+//==========================================================================
+//
+//  VDeleteStatement::toString
+//
+//==========================================================================
+VStr VDeleteStatement::toString () {
+  return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/delete "+VExpression::e2s(var)+";";
+}
+
+
+
+//**************************************************************************
+//
+// VExpressionStatement
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VExpressionStatement::VExpressionStatement
+//
+//==========================================================================
+VExpressionStatement::VExpressionStatement (VExpression *AExpr)
+  : VStatement(AExpr->Loc)
+  , Expr(AExpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VExpressionStatement::~VExpressionStatement
+//
+//==========================================================================
+VExpressionStatement::~VExpressionStatement () {
+  delete Expr; Expr = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VExpressionStatement::SyntaxCopy
+//
+//==========================================================================
+VStatement *VExpressionStatement::SyntaxCopy () {
+  auto res = new VExpressionStatement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VExpressionStatement::DoSyntaxCopyTo
+//
+//==========================================================================
+void VExpressionStatement::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VExpressionStatement *)e;
+  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VExpressionStatement::DoResolve
+//
+//==========================================================================
+VStatement *VExpressionStatement::DoResolve (VEmitContext &ec) {
+  if (Expr) Expr = Expr->Resolve(ec);
+  if (!Expr) return CreateInvalid();
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VExpressionStatement::DoEmit
+//
+//==========================================================================
+void VExpressionStatement::DoEmit (VEmitContext &ec) {
+  Expr->Emit(ec);
+}
+
+
+//==========================================================================
+//
+//  VExpressionStatement::toString
+//
+//==========================================================================
+VStr VExpressionStatement::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/ "+
+    GET_OBJ_TYPE(Expr)+
+    VExpression::e2s(Expr)+";";
+}
+
+
+
 //**************************************************************************
 //
 // VIf
@@ -586,8 +761,15 @@ VStatement *VIf::DoResolve (VEmitContext &ec) {
   // resolve
   if (Expr) Expr = Expr->ResolveBoolean(ec);
   if (!Expr) return CreateInvalid();
-  if (!TrueStatement->Resolve(ec, this)) return CreateInvalid();
-  if (FalseStatement && !FalseStatement->Resolve(ec, this)) return CreateInvalid();
+
+  TrueStatement = TrueStatement->Resolve(ec, this);
+  if (!TrueStatement->IsValid()) return CreateInvalid();
+
+  if (FalseStatement) {
+    FalseStatement = FalseStatement->Resolve(ec, this);
+    if (!FalseStatement->IsValid()) return CreateInvalid();
+  }
+
   return this;
 }
 
@@ -686,8 +868,8 @@ bool VIf::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
 VStr VIf::toString () {
   return
     VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/if ("+VExpression::e2s(Expr)+")\n"+
-    (TrueStatement ? TrueStatement->toString() : VStr("<none>"))+"\nelse\n"+
-    (FalseStatement ? FalseStatement->toString() : VStr("<none>"));
+    (TrueStatement ? TrueStatement->toString() : VStr("<none>;"))+
+    (FalseStatement ? VStr("\nelse\n")+FalseStatement->toString() : VStr());
 }
 
 
@@ -1089,7 +1271,7 @@ VStr VDo::toString () {
 //==========================================================================
 VFor::VFor (const TLocation &ALoc)
   : VStatement(ALoc)
-  , InitExpr()
+  //, InitExpr()
   , CondExpr()
   , LoopExpr()
   , Statement(nullptr)
@@ -1103,7 +1285,7 @@ VFor::VFor (const TLocation &ALoc)
 //
 //==========================================================================
 VFor::~VFor () {
-  for (int i = 0; i < InitExpr.length(); ++i) { delete InitExpr[i]; InitExpr[i] = nullptr; }
+  //for (int i = 0; i < InitExpr.length(); ++i) { delete InitExpr[i]; InitExpr[i] = nullptr; }
   for (int i = 0; i < CondExpr.length(); ++i) { delete CondExpr[i]; CondExpr[i] = nullptr; }
   for (int i = 0; i < LoopExpr.length(); ++i) { delete LoopExpr[i]; LoopExpr[i] = nullptr; }
   delete Statement; Statement = nullptr;
@@ -1130,8 +1312,8 @@ VStatement *VFor::SyntaxCopy () {
 void VFor::DoSyntaxCopyTo (VStatement *e) {
   VStatement::DoSyntaxCopyTo(e);
   auto res = (VFor *)e;
-  res->InitExpr.setLength(InitExpr.length());
-  for (int f = 0; f < InitExpr.length(); ++f) res->InitExpr[f] = (InitExpr[f] ? InitExpr[f]->SyntaxCopy() : nullptr);
+  //res->InitExpr.setLength(InitExpr.length());
+  //for (int f = 0; f < InitExpr.length(); ++f) res->InitExpr[f] = (InitExpr[f] ? InitExpr[f]->SyntaxCopy() : nullptr);
   res->CondExpr.setLength(CondExpr.length());
   for (int f = 0; f < CondExpr.length(); ++f) res->CondExpr[f] = (CondExpr[f] ? CondExpr[f]->SyntaxCopy() : nullptr);
   res->LoopExpr.setLength(LoopExpr.length());
@@ -1159,10 +1341,12 @@ VStatement *VFor::DoResolve (VEmitContext &ec) {
   // indent check
   if (Statement && !CheckCondIndent(Loc, Statement)) return CreateInvalid();
 
+  /*
   for (auto &&e : InitExpr) {
     e = e->Resolve(ec);
     if (!e) return CreateInvalid();
   }
+  */
 
   for (int i = 0; i < CondExpr.length(); ++i) {
     VExpression *ce = CondExpr[i];
@@ -1171,8 +1355,8 @@ VStatement *VFor::DoResolve (VEmitContext &ec) {
     } else {
       ce = ce->ResolveBoolean(ec);
     }
-    if (!ce) return CreateInvalid();
     CondExpr[i] = ce;
+    if (!ce) return CreateInvalid();
   }
 
   for (auto &&e : LoopExpr) {
@@ -1193,31 +1377,26 @@ VStatement *VFor::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VFor::DoEmit (VEmitContext &ec) {
-  int bval;
-  bool hasCondExprs;
-  if (CondExpr.length() == 0) {
-    bval = 1;
-    hasCondExprs = false;
-  } else {
-    bval = CondExpr[CondExpr.length()-1]->IsBoolLiteral(ec);
-    hasCondExprs = (bval < 0 || CondExpr.length() > 1);
-  }
+  const int bval = (CondExpr.length() == 0 ? 1 : CondExpr[CondExpr.length()-1]->IsBoolLiteral(ec));
 
   // allocate labels
   breakLabel = ec.DefineLabel();
   contLabel = ec.DefineLabel();
 
   // emit initialisation expressions
-  for (auto &&e : InitExpr) e->Emit(ec);
+  //for (auto &&e : InitExpr) e->Emit(ec);
 
   VLabel testLbl = ec.DefineLabel();
-  VLabel loopLbl = ec.DefineLabel();
 
-  // jump to test if it is present
-  if (hasCondExprs) ec.AddStatement(OPC_Goto, testLbl, Loc);
+  // emit loop test (this is also where it jumps after loop expressions
+  ec.MarkLabel(testLbl);
+
+  // loop test expressions
+  for (int i = 0; i < CondExpr.length()-1; ++i) CondExpr[i]->Emit(ec);
+       if (bval < 0) CondExpr[CondExpr.length()-1]->EmitBranchable(ec, breakLabel, false);
+  else if (bval == 0) ec.AddStatement(OPC_Goto, breakLabel, Loc);
 
   // emit embeded statement
-  ec.MarkLabel(loopLbl);
   Statement->Emit(ec, this);
 
   // emit dtors
@@ -1229,11 +1408,8 @@ void VFor::DoEmit (VEmitContext &ec) {
   // emit per-loop expression statements
   for (auto &&e : LoopExpr) e->Emit(ec);
 
-  // loop test
-  ec.MarkLabel(testLbl);
-  for (int i = 0; i < CondExpr.length()-1; ++i) CondExpr[i]->Emit(ec);
-       if (bval < 0) CondExpr[CondExpr.length()-1]->EmitBranchable(ec, loopLbl, true);
-  else if (bval == 1) ec.AddStatement(OPC_Goto, loopLbl, Loc);
+  // jump to loop test
+  ec.AddStatement(OPC_Goto, testLbl, Loc);
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
@@ -1321,9 +1497,9 @@ bool VFor::BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) {
 //
 //==========================================================================
 VStr VFor::toString () {
-  VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/for (";
-  for (auto &&e : InitExpr) { res += VExpression::e2s(e); res += ","; }
-  res += "; ";
+  VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/for (;";
+  //for (auto &&e : InitExpr) { res += VExpression::e2s(e); res += ","; }
+  //res += "; ";
   for (auto &&e : CondExpr) { res += VExpression::e2s(e); res += ","; }
   res += "; ";
   for (auto &&e : LoopExpr) { res += VExpression::e2s(e); res += ","; }
@@ -1800,11 +1976,12 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachIota::EmitDtor (VEmitContext &ec) {
+  /*
   GLog.Logf(NAME_Debug, "============000 (%d)", tempLocals.length());
   for (auto &&lv : tempLocals) GLog.Logf(NAME_Debug, "  %d", lv);
   GLog.Logf(NAME_Debug, "============001 (%d)", tempLocals.length());
   for (auto &&lv : tempLocals.reverse()) GLog.Logf(NAME_Debug, "  %d", lv);
-
+  */
   for (auto &&lv : tempLocals.reverse()) ec.EmitLocalDtor(lv, Loc);
 }
 
@@ -2154,7 +2331,7 @@ VStatement *VForeachArray::DoResolve (VEmitContext &ec) {
     loopLoad = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), loopLoad, loopLoad->Loc);
     if (loopLoad) {
       loopLoad = new VDropResult(loopLoad);
-      loopLoad = loopLoad->Resolve(ec);
+      loopLoad = loopLoad->Resolve(ec); // should not fail (i hope)
     }
     if (var) var->Flags = oldvflags;
   }
@@ -2896,14 +3073,16 @@ VStatement *VSwitch::DoResolve (VEmitContext &ec) {
       return CreateInvalid();
     }
     if (st->IsSwitchCase() || st->IsSwitchDefault()) {
-      if (!st->Resolve(ec, this)) return CreateInvalid();
+      st = st->Resolve(ec, this);
+      if (!st->IsValid()) return CreateInvalid();
     }
   }
 
   // now resolve other statements
   for (auto &&st : Statements) {
     if (!st->IsSwitchCase() && !st->IsSwitchDefault()) {
-      if (!st->Resolve(ec, this)) return CreateInvalid();
+      st = st->Resolve(ec, this);
+      if (!st->IsValid()) return CreateInvalid();
     }
   }
 
@@ -3733,220 +3912,6 @@ VStr VReturn::toString () {
 
 //**************************************************************************
 //
-// VExpressionStatement
-//
-//**************************************************************************
-
-//==========================================================================
-//
-//  VExpressionStatement::VExpressionStatement
-//
-//==========================================================================
-VExpressionStatement::VExpressionStatement (VExpression *AExpr)
-  : VStatement(AExpr->Loc)
-  , Expr(AExpr)
-{
-}
-
-
-//==========================================================================
-//
-//  VExpressionStatement::~VExpressionStatement
-//
-//==========================================================================
-VExpressionStatement::~VExpressionStatement () {
-  delete Expr; Expr = nullptr;
-}
-
-
-//==========================================================================
-//
-//  VExpressionStatement::SyntaxCopy
-//
-//==========================================================================
-VStatement *VExpressionStatement::SyntaxCopy () {
-  auto res = new VExpressionStatement();
-  DoSyntaxCopyTo(res);
-  return res;
-}
-
-
-//==========================================================================
-//
-//  VExpressionStatement::DoSyntaxCopyTo
-//
-//==========================================================================
-void VExpressionStatement::DoSyntaxCopyTo (VStatement *e) {
-  VStatement::DoSyntaxCopyTo(e);
-  auto res = (VExpressionStatement *)e;
-  res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
-//  VExpressionStatement::DoResolve
-//
-//==========================================================================
-VStatement *VExpressionStatement::DoResolve (VEmitContext &ec) {
-  if (Expr) Expr = Expr->Resolve(ec);
-  if (!Expr) return CreateInvalid();
-  // convert local var declaration to proper statement (we'll need this later)
-  if (Expr->IsLocalVarDecl()) {
-    VLocalVarStatement *ld = new VLocalVarStatement((VLocalDecl *)Expr);
-    ld->declResolved = true;
-    Expr = nullptr;
-    return ld->DoResolve(ec);
-  }
-  return this;
-}
-
-
-//==========================================================================
-//
-//  VExpressionStatement::DoEmit
-//
-//==========================================================================
-void VExpressionStatement::DoEmit (VEmitContext &ec) {
-  Expr->Emit(ec);
-}
-
-
-//==========================================================================
-//
-//  VExpressionStatement::toString
-//
-//==========================================================================
-VStr VExpressionStatement::toString () {
-  return
-    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/ "+
-    GET_OBJ_TYPE(Expr)+
-    VExpression::e2s(Expr)+";";
-}
-
-
-
-//**************************************************************************
-//
-// VDeleteStatement
-//
-//**************************************************************************
-
-//==========================================================================
-//
-//  VDeleteStatement::VDeleteStatement
-//
-//==========================================================================
-VDeleteStatement::VDeleteStatement (VExpression *avar, const TLocation &aloc)
-  : VStatement(aloc)
-  , delexpr(nullptr)
-  , assexpr(nullptr)
-  , checkexpr(nullptr)
-  , var(avar)
-{
-}
-
-
-//==========================================================================
-//
-//  VDeleteStatement::~VDeleteStatement
-//
-//==========================================================================
-VDeleteStatement::~VDeleteStatement () {
-  delete delexpr; delexpr = nullptr;
-  delete assexpr; assexpr = nullptr;
-  delete checkexpr; checkexpr = nullptr;
-  delete var; var = nullptr;
-}
-
-
-//==========================================================================
-//
-//  VDeleteStatement::SyntaxCopy
-//
-//==========================================================================
-VStatement *VDeleteStatement::SyntaxCopy () {
-  auto res = new VDeleteStatement();
-  DoSyntaxCopyTo(res);
-  return res;
-}
-
-
-//==========================================================================
-//
-//  VDeleteStatement::DoSyntaxCopyTo
-//
-//==========================================================================
-void VDeleteStatement::DoSyntaxCopyTo (VStatement *e) {
-  VStatement::DoSyntaxCopyTo(e);
-  auto res = (VDeleteStatement *)e;
-  res->var = (var ? var->SyntaxCopy() : nullptr);
-  // no need to copy private fields
-}
-
-
-//==========================================================================
-//
-//  VDeleteStatement::DoResolve
-//
-//==========================================================================
-VStatement *VDeleteStatement::DoResolve (VEmitContext &ec) {
-  if (!var) return CreateInvalid();
-
-  // build check expression
-  checkexpr = var->SyntaxCopy()->ResolveBoolean(ec);
-  if (!checkexpr) return CreateInvalid();
-
-  // build delete expression
-  delexpr = new VDotInvocation(var->SyntaxCopy(), VName("Destroy"), var->Loc, 0, nullptr);
-  delexpr = new VDropResult(delexpr);
-  delexpr = delexpr->Resolve(ec);
-  if (!delexpr) return CreateInvalid();
-
-  // build clear expression
-  assexpr = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), new VNoneLiteral(var->Loc), var->Loc);
-  assexpr = new VDropResult(assexpr);
-  assexpr = assexpr->Resolve(ec);
-  if (!assexpr) return CreateInvalid();
-
-  return this;
-}
-
-
-//==========================================================================
-//
-//  VDeleteStatement::DoEmit
-//
-//==========================================================================
-void VDeleteStatement::DoEmit (VEmitContext &ec) {
-  if (!checkexpr || !delexpr || !assexpr) return;
-
-  // emit check
-  VLabel skipLabel = ec.DefineLabel();
-  checkexpr->EmitBranchable(ec, skipLabel, false);
-
-  // emit delete and clear
-  delexpr->Emit(ec);
-  assexpr->Emit(ec);
-
-  // done
-  ec.MarkLabel(skipLabel);
-}
-
-
-//==========================================================================
-//
-//  VDeleteStatement::toString
-//
-//==========================================================================
-VStr VDeleteStatement::toString () {
-  return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/delete "+VExpression::e2s(var)+";";
-}
-
-
-
-//**************************************************************************
-//
 // VBaseCompoundStatement
 //
 //**************************************************************************
@@ -3981,6 +3946,34 @@ void VBaseCompoundStatement::DoSyntaxCopyTo (VStatement *e) {
   auto res = (VBaseCompoundStatement *)e;
   res->Statements.setLength(Statements.length());
   for (int f = 0; f < Statements.length(); ++f) res->Statements[f] = (Statements[f] ? Statements[f]->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::ProcessVarDecls
+//
+//==========================================================================
+void VBaseCompoundStatement::ProcessVarDecls () {
+  for (int idx = 0; idx < Statements.length()-1; ++idx) {
+    if (Statements[idx]->IsVarDecl()) {
+      // i found her!
+      VLocalVarStatement *vst = (VLocalVarStatement *)Statements[idx];
+      vassert(vst->Statements.length() == 0);
+      const int newlen = idx+1; // skip `vst` (i.e. leave it in this compound)
+      // move compound tail to `vst`
+      vst->Statements.resize(Statements.length()-newlen);
+      for (idx = newlen; idx < Statements.length(); ++idx) vst->Statements.append(Statements[idx]);
+      // shrink compound list
+      Statements.setLength(newlen);
+      // recursively process `vst`
+      //return vst->ProcessVarDecls();
+      // there is no need to recursively process `vst`, because its resolver
+      // will call `ProcessVarDecls()` by itself, so we'll be doing excess
+      // work for nothing here
+      return;
+    }
+  }
 }
 
 
@@ -4083,12 +4076,16 @@ void VBaseCompoundStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //==========================================================================
 VStr VBaseCompoundStatement::toString () {
   VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/{";
-  for (auto &&st : Statements) {
-    if (!st) continue;
-    res += "\n";
-    res += st->toString();
+  if (Statements.length()) {
+    for (auto &&st : Statements) {
+      if (!st) continue;
+      res += "\n";
+      res += st->toString();
+    }
+    res += "\n}";
+  } else {
+    res += "}";
   }
-  res += "\n}";
   return res;
 }
 
@@ -4108,7 +4105,6 @@ VStr VBaseCompoundStatement::toString () {
 VLocalVarStatement::VLocalVarStatement (VLocalDecl *ADecl)
   : VBaseCompoundStatement(ADecl->Loc)
   , Decl(ADecl)
-  , declResolved(false)
 {
 }
 
@@ -4153,8 +4149,8 @@ void VLocalVarStatement::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 VStatement *VLocalVarStatement::DoResolve (VEmitContext &ec) {
-  CreateLocalVarScope(Statements);
-  if (!declResolved && !Decl->Declare(ec)) return CreateInvalid();
+  ProcessVarDecls();
+  if (!Decl->Declare(ec)) return CreateInvalid();
   for (auto &&st : Statements) {
     st = st->Resolve(ec, this);
     if (!st->IsValid()) return CreateInvalid();
@@ -4213,6 +4209,11 @@ VStr VLocalVarStatement::toString () {
       res += VExpression::e2s(v.TypeExpr);
       res += " ";
       res += *v.Name;
+      if (v.Value) {
+        res += "<init:";
+        res += VExpression::e2s(v.Value);
+        res += ">";
+      }
       res += ";";
       res += "\n";
     }
@@ -4276,7 +4277,7 @@ void VCompound::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 VStatement *VCompound::DoResolve (VEmitContext &ec) {
-  CreateLocalVarScope(Statements);
+  ProcessVarDecls();
   for (auto &&st : Statements) {
     st = st->Resolve(ec, this);
     if (!st->IsValid()) return CreateInvalid();

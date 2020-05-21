@@ -85,6 +85,7 @@ void VLocalDecl::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VLocalDecl::DoResolve (VEmitContext &ec) {
+  VCFatalError("internal compiler error: VLocalDecl::DoResolve should not be called directly");
   Declare(ec);
   return this;
 }
@@ -96,6 +97,7 @@ VExpression *VLocalDecl::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VLocalDecl::Emit (VEmitContext &ec) {
+  VCFatalError("internal compiler error: VLocalDecl::Emit should not be called directly");
   EmitInitialisations(ec);
 }
 

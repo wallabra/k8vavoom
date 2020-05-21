@@ -66,6 +66,8 @@ private:
   VLocalDecl *CreateUnnamedLocal (VFieldType type, const TLocation &loc);
   VStatement *ParseForeachIterator (const TLocation &l);
   bool ParseForeachOptions (); // returns `true` if `reversed` was found
+  VStatement *CreateExpressionStatement (VExpression *expr, bool needDropResult=true);
+  inline VStatement *CreateExpressionStatementNoDrop (VExpression *expr) { return CreateExpressionStatement(expr, false); }
   VStatement *ParseForeachRange (const TLocation &l); // array or iota
   VStatement *ParseForeach ();
   VStatement *ParseStatement ();
