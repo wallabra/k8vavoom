@@ -47,7 +47,7 @@ static VCvarB ldr_fix_slope_cracks("ldr_fix_slope_cracks", true, "Try to fix emp
 void VLevel::DetectHiddenSectors () {
   /* detect hidden sectors
      to do this, we have to check if all sector "not on automap" lines are one-sided.
-     this does't do a best job possible, but should be good enough for most cases, and it is cheap.
+     this doesn't do a best job possible, but should be good enough for most cases, and it is cheap.
    */
   for (auto &&sec : allSectors()) {
     if (sec.SectorFlags&sector_t::SF_Hidden) continue; // this may come from UDMF
