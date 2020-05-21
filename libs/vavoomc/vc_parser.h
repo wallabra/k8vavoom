@@ -64,14 +64,13 @@ private:
   VExpression *ParseAssignExpression (); // this automatically allows assign
   VExpression *ParseExpression (bool allowAssign=false);
   VLocalDecl *CreateUnnamedLocal (VFieldType type, const TLocation &loc);
-  VStatement *ParseForeachIterator (const TLocation &l);
+  VStatement *ParseForeachIterator (const TLocation &l, VName aLabel);
   bool ParseForeachOptions (); // returns `true` if `reversed` was found
   VStatement *CreateExpressionStatement (VExpression *expr, bool needDropResult=true);
   inline VStatement *CreateExpressionStatementNoDrop (VExpression *expr) { return CreateExpressionStatement(expr, false); }
-  VStatement *ParseForeachRange (const TLocation &l); // array or iota
-  VStatement *ParseForeach ();
-  VStatement *ParseStatementNoLabel (); // without label
-  VStatement *ParseStatement (); // and this attaches label to statement
+  VStatement *ParseForeachRange (const TLocation &l, VName aLabel); // array or iota
+  VStatement *ParseForeach (VName aLabel);
+  VStatement *ParseStatement (); // and this attaches label to the parsed statement
   /*VCompound*/VStatement *ParseCompoundStatement (const TLocation &l);
   enum { TCRF_Const=0x01, TCRF_Ref=0x02 };
   void ParseOptionalConstRef (int *constref);

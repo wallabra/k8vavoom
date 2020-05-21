@@ -1004,18 +1004,18 @@ VExpression *VParser::ParseOptionalTypeDecl (EToken tkend, int *constref) {
 //  `l` is `foreach` location
 //
 //==========================================================================
-VStatement *VParser::ParseForeachIterator (const TLocation &l) {
+VStatement *VParser::ParseForeachIterator (const TLocation &l, VName aLabel) {
   // `foreach expr statement`
   VExpression *expr = ParseExpression();
   if (!expr) ParseError(Lex.Location, "Iterator expression expected");
   VStatement *st = ParseStatement();
-  return new VForeach(expr, st, l);
+  return new VForeach(expr, st, l, aLabel);
 }
 
 
 //==========================================================================
 //
-//  VParser::ParseForeachIterator
+//  VParser::ParseForeachOptions
 //
 //  returns `true` if `reversed` was found
 //  lexer should be at semicolon on rparen
@@ -1045,13 +1045,13 @@ bool VParser::ParseForeachOptions () {
 
 //==========================================================================
 //
-//  VParser::ParseForeachIterator
+//  VParser::ParseForeachRange
 //
 //  `foreach` and lparen are just eaten
 //  `l` is `foreach` location
 //
 //==========================================================================
-VStatement *VParser::ParseForeachRange (const TLocation &l) {
+VStatement *VParser::ParseForeachRange (const TLocation &l, VName aLabel) {
   bool killDecls = true;
 
   // parse loop vars
@@ -1130,7 +1130,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       vex[0].decl->Vars[0].TypeOfExpr = new VIntLiteral(0, vex[0].decl->Vars[0].Loc);
     }
     // iota
-    VForeachIota *fei = new VForeachIota(l);
+    VForeachIota *fei = new VForeachIota(l, aLabel);
     fei->var = vex[0].var;
     fei->lo = loarr;
     // parse limit
@@ -1148,7 +1148,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       // scripted
       killDecls = false;
       // create statement
-      VForeachScripted *fes = new VForeachScripted(loarr, vexcount, vex, l);
+      VForeachScripted *fes = new VForeachScripted(loarr, vexcount, vex, l, aLabel);
       // check for `reversed`
       fes->reversed = ParseForeachOptions();
       Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
@@ -1195,9 +1195,9 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       // array
       VForeachArray *fer;
       if (vexcount == 1) {
-        fer = new VForeachArray(loarr, nullptr, vex[0].var, vex[0].isRef, vex[0].isConst, l);
+        fer = new VForeachArray(loarr, nullptr, vex[0].var, vex[0].isRef, vex[0].isConst, l, aLabel);
       } else {
-        fer = new VForeachArray(loarr, vex[0].var, vex[1].var, vex[1].isRef, vex[1].isConst, l);
+        fer = new VForeachArray(loarr, vex[0].var, vex[1].var, vex[1].isRef, vex[1].isConst, l, aLabel);
       }
       fer->reversed = ParseForeachOptions();
       Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
@@ -1211,7 +1211,7 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
   if (!res) killDecls = true;
 
   // create compound anyway
-  if (res) {
+  if (res && vexcount) {
     // rewrite code a little:
     //   { decl var; foreach (var; ..) }
     VCompound *body = new VCompound(res->Loc);
@@ -1240,12 +1240,12 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
 //  `foreach` is NOT eaten
 //
 //==========================================================================
-VStatement *VParser::ParseForeach () {
+VStatement *VParser::ParseForeach (VName aLabel) {
   auto l = Lex.Location;
   Lex.NextToken();
   // `foreach (var; lo..hi)` or `foreach ([ref] var; arr)`?
-  if (Lex.Check(TK_LParen)) return ParseForeachRange(l);
-  return ParseForeachIterator(l);
+  if (Lex.Check(TK_LParen)) return ParseForeachRange(l, aLabel);
+  return ParseForeachIterator(l, aLabel);
 }
 
 
@@ -1255,39 +1255,17 @@ VStatement *VParser::ParseForeach () {
 //
 //==========================================================================
 VStatement *VParser::ParseStatement () {
+  TLocation l = Lex.Location;
+  VName LoopLabel = NAME_None;
+
   // check for label
   VName StLabel = NAME_None;
   if (Lex.Token == TK_Identifier && Lex.peekTokenType(1) == TK_Colon) {
     StLabel = Lex.Name;
     Lex.NextToken();
     Lex.NextToken();
+    l = Lex.Location;
   }
-  // parse statement
-  VStatement *st = ParseStatementNoLabel();
-  // attach label
-  if (st) {
-    //FIXME: this is HACK! rewrite it properly!
-    if (st->IsCompound()) {
-      VCompound *cp = (VCompound *)st;
-      if (cp->Statements.length() == 1 && cp->Statements[0]->IsFor()) {
-        cp->Statements[0]->Label = StLabel;
-        StLabel = NAME_None;
-      }
-    }
-    st->Label = StLabel;
-  }
-  return st;
-}
-
-
-//==========================================================================
-//
-//  VParser::ParseStatementNoLabel
-//
-//==========================================================================
-VStatement *VParser::ParseStatementNoLabel () {
-  TLocation l = Lex.Location;
-  VName LoopLabel = NAME_None;
 
   switch (Lex.Token) {
     case TK_EOF:
@@ -1318,7 +1296,7 @@ VStatement *VParser::ParseStatementNoLabel () {
         if (!Expr) ParseError(Lex.Location, "`while` loop expression expected");
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         VStatement *Statement = ParseStatement();
-        return new VWhile(Expr, Statement, l);
+        return new VWhile(Expr, Statement, l, StLabel);
       }
     case TK_Do:
       {
@@ -1330,7 +1308,7 @@ VStatement *VParser::ParseStatementNoLabel () {
         if (!Expr) ParseError(Lex.Location, "`do` loop expression expected");
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-        return new VDo(Expr, Statement, l);
+        return new VDo(Expr, Statement, l, StLabel);
       }
     case TK_For:
       {
@@ -1362,7 +1340,7 @@ VStatement *VParser::ParseStatementNoLabel () {
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
 
         // now create for itselt
-        VFor *For = new VFor(l);
+        VFor *For = new VFor(l, StLabel);
         Comp->Statements.Append(For);
 
         // parse cond expr(s)
@@ -1390,7 +1368,7 @@ VStatement *VParser::ParseStatementNoLabel () {
         return Comp;
       }
     case TK_Foreach:
-      return ParseForeach();
+      return ParseForeach(StLabel);
     case TK_Break:
       Lex.NextToken();
       // check for label
@@ -1413,7 +1391,7 @@ VStatement *VParser::ParseStatementNoLabel () {
     case TK_Switch:
       {
         Lex.NextToken();
-        VSwitch *Switch = new VSwitch(l);
+        VSwitch *Switch = new VSwitch(l, StLabel);
         Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
         Switch->Expr = ParseExpression();
         if (!Switch->Expr) ParseError(Lex.Location, "Switch expression expected");

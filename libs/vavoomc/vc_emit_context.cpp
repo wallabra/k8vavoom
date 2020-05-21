@@ -857,6 +857,12 @@ void VEmitContext::EmitLocalZero (int locidx, const TLocation &aloc) {
 
   vassert(loc.Offset >= 0);
 
+  if (loc.Type.Type == TYPE_Vector) {
+    EmitLocalAddress(loc.Offset, aloc);
+    AddStatement(OPC_ZeroSlotsByPtr, loc.Type.GetStackSlotCount(), aloc);
+    return;
+  }
+
   if (loc.Type.Type == TYPE_Struct) {
     EmitLocalAddress(loc.Offset, aloc);
     //GLog.Logf(NAME_Debug, "ZEROSTRUCT<%s>: size=%d (%s:%d)", *loc.Type.Struct->Name, loc.Type.GetSize(), *loc.Type.GetName(), loc.Type.Type);

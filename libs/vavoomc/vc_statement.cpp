@@ -848,11 +848,12 @@ VStr VIf::toString () {
 //  VWhile::VWhile
 //
 //==========================================================================
-VWhile::VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc)
+VWhile::VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel)
   : VStatement(ALoc)
   , Expr(AExpr)
   , Statement(AStatement)
 {
+  Label = aLabel;
 }
 
 
@@ -1016,11 +1017,12 @@ VStr VWhile::toString () {
 //  VDo::VDo
 //
 //==========================================================================
-VDo::VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc)
+VDo::VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel)
   : VStatement(ALoc)
   , Expr(AExpr)
   , Statement(AStatement)
 {
+  Label = aLabel;
 }
 
 
@@ -1190,13 +1192,14 @@ VStr VDo::toString () {
 //  VFor::VFor
 //
 //==========================================================================
-VFor::VFor (const TLocation &ALoc)
+VFor::VFor (const TLocation &ALoc, VName aLabel)
   : VStatement(ALoc)
   //, InitExpr()
   , CondExpr()
   , LoopExpr()
   , Statement(nullptr)
 {
+  Label = aLabel;
 }
 
 
@@ -1413,12 +1416,14 @@ VStr VFor::toString () {
 //  VForeach::VForeach
 //
 //==========================================================================
-VForeach::VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc)
+VForeach::VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel)
   : VStatement(ALoc)
   , Expr(AExpr)
   , Statement(AStatement)
 {
+  Label = aLabel;
 }
+
 
 //==========================================================================
 //
@@ -1596,7 +1601,7 @@ VStr VForeach::toString () {
 //  VForeachIota::VForeachIota
 //
 //==========================================================================
-VForeachIota::VForeachIota (const TLocation &ALoc)
+VForeachIota::VForeachIota (const TLocation &ALoc, VName aLabel)
   : VStatement(ALoc)
   , varinit(nullptr)
   , varnext(nullptr)
@@ -1607,6 +1612,7 @@ VForeachIota::VForeachIota (const TLocation &ALoc)
   , Statement(nullptr)
   , reversed(false)
 {
+  Label = aLabel;
 }
 
 
@@ -1729,6 +1735,7 @@ VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
   if (hiinit) {
     hiinit = hiinit->Resolve(ec);
     if (!hiinit) { delete limit; return CreateInvalid(); }
+    //GLog.Logf(NAME_Debug, "%s: hiinit=%s; tempLocals.length=%d", *Loc.toStringNoCol(), *hiinit->toString(), tempLocals.length());
   }
 
   if (!reversed) {
@@ -1767,7 +1774,7 @@ VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
   var = var->ResolveBoolean(ec);
   if (!var) wasError = true;
 
-  // finally, resolve statement (last, so local reusing will work as expected)
+  // finally, resolve statement
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
 
@@ -1829,13 +1836,10 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachIota::EmitDtor (VEmitContext &ec) {
-  /*
-  GLog.Logf(NAME_Debug, "============000 (%d)", tempLocals.length());
-  for (auto &&lv : tempLocals) GLog.Logf(NAME_Debug, "  %d", lv);
-  GLog.Logf(NAME_Debug, "============001 (%d)", tempLocals.length());
-  for (auto &&lv : tempLocals.reverse()) GLog.Logf(NAME_Debug, "  %d", lv);
-  */
-  for (auto &&lv : tempLocals.reverse()) ec.EmitLocalDtor(lv, Loc);
+  for (auto &&lv : tempLocals.reverse()) {
+    //GLog.Logf(NAME_Debug, "*** VForeachIota::EmitDtor: tempLocals.length=%d", tempLocals.length());
+    ec.EmitLocalDtor(lv, Loc);
+  }
 }
 
 
@@ -1907,7 +1911,7 @@ VStr VForeachIota::toString () {
 //  VForeachArray::VForeachArray
 //
 //==========================================================================
-VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, bool aVarConst, const TLocation &aloc)
+VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, bool aVarConst, const TLocation &aloc, VName aLabel)
   : VStatement(aloc)
   , idxinit(nullptr)
   , hiinit(nullptr)
@@ -1923,6 +1927,7 @@ VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression 
   , isRef(aVarRef)
   , isConst(aVarConst)
 {
+  Label = aLabel;
 }
 
 
@@ -2317,7 +2322,7 @@ VStr VForeachArray::toString () {
 //  VForeachScripted::VForeachScripted
 //
 //==========================================================================
-VForeachScripted::VForeachScripted (VExpression *aarr, int afeCount, Var *afevars, const TLocation &aloc)
+VForeachScripted::VForeachScripted (VExpression *aarr, int afeCount, Var *afevars, const TLocation &aloc, VName aLabel)
   : VStatement(aloc)
   , isBoolInit(false)
   , ivInit(nullptr)
@@ -2328,6 +2333,7 @@ VForeachScripted::VForeachScripted (VExpression *aarr, int afeCount, Var *afevar
   , Statement(nullptr)
   , reversed(false)
 {
+  Label = aLabel;
   if (afeCount < 0 || afeCount > VMethod::MAX_PARAMS) VCFatalError("VC: internal compiler error (VForeachScripted::VForeachScripted)");
   for (int f = 0; f < afeCount; ++f) fevars[f] = afevars[f];
 }
@@ -2728,11 +2734,12 @@ VStr VForeachScripted::toString () {
 //  VSwitch::VSwitch
 //
 //==========================================================================
-VSwitch::VSwitch (const TLocation &ALoc)
+VSwitch::VSwitch (const TLocation &ALoc, VName aLabel)
   : VStatement(ALoc)
   , Expr(nullptr)
   , HaveDefault(false)
 {
+  Label = aLabel;
 }
 
 
@@ -2786,7 +2793,7 @@ void VSwitch::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 void VSwitch::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  for (int f = 0; f < Statements.length(); ++f) if (Statements[f]) Statements[f]->DoFixSwitch(aold, anew);
+  for (auto &&st : Statements) if (st) st->DoFixSwitch(aold, anew);
 }
 
 
@@ -3815,8 +3822,18 @@ VStatement *VLocalVarStatement::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VLocalVarStatement::DoEmit (VEmitContext &ec) {
+  //GLog.Logf(NAME_Debug, "%s: VLocalVarStatement::DoEmit: %s", *Loc.toStringNoCol(), *toString());
   Decl->Allocate(ec);
-  Decl->EmitInitialisations(ec);
+  // check if we are in some loop
+  // we are in loop if we have "continue" point
+  bool inloop = false;
+  for (VStatement *st = this; st; st = st->UpScope) {
+    if (st->IsContinueScope()) {
+      inloop = true;
+      break;
+    }
+  }
+  Decl->EmitInitialisations(ec, inloop);
   for (auto &&st : Statements) {
     st->Emit(ec, this);
   }
@@ -3858,9 +3875,17 @@ VStr VLocalVarStatement::toString () {
       res += VExpression::e2s(v.TypeExpr);
       res += " ";
       res += *v.Name;
+      if (v.locIdx) {
+        res += VStr("{")+VStr(v.locIdx)+"}";
+      }
       if (v.Value) {
         res += "<init:";
         res += VExpression::e2s(v.Value);
+        res += ">";
+      }
+      if (v.TypeOfExpr) {
+        res += "<typeof:";
+        res += VExpression::e2s(v.TypeOfExpr);
         res += ">";
       }
       res += ";";
@@ -4259,6 +4284,16 @@ bool VGotoStmt::HasGotoCaseExpr () const noexcept {
 //==========================================================================
 bool VGotoStmt::IsGotoDefault () const noexcept {
   return (GotoType == Default);
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::DoFixSwitch
+//
+//==========================================================================
+void VGotoStmt::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (Switch == aold) Switch = anew;
 }
 
 

@@ -136,6 +136,7 @@ protected:
   virtual void DoSyntaxCopyTo (VStatement *e);
 
 public:
+  // this is used when `VSwitch` is syntax-copied, to fix links
   virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew);
 };
 
@@ -283,7 +284,7 @@ public:
   VExpression *Expr;
   VStatement *Statement;
 
-  VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
+  VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel=NAME_None);
   virtual ~VWhile () override;
   virtual VStatement *SyntaxCopy () override;
 
@@ -313,7 +314,7 @@ public:
   VExpression *Expr;
   VStatement *Statement;
 
-  VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
+  VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel=NAME_None);
   virtual ~VDo () override;
   virtual VStatement *SyntaxCopy () override;
 
@@ -345,7 +346,7 @@ public:
   TArray<VExpression *> LoopExpr;
   VStatement *Statement;
 
-  VFor (const TLocation &ALoc);
+  VFor (const TLocation &ALoc, VName aLabel=NAME_None);
   virtual ~VFor () override;
   virtual VStatement *SyntaxCopy () override;
 
@@ -377,7 +378,7 @@ public:
   VExpression *Expr;
   VStatement *Statement;
 
-  VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
+  VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel=NAME_None);
   virtual ~VForeach () override;
   virtual VStatement *SyntaxCopy () override;
 
@@ -419,7 +420,7 @@ public:
   VStatement *Statement;
   bool reversed;
 
-  VForeachIota (const TLocation &ALoc);
+  VForeachIota (const TLocation &ALoc, VName aLabel=NAME_None);
   virtual ~VForeachIota () override;
   virtual VStatement *SyntaxCopy () override;
 
@@ -469,7 +470,7 @@ public:
   bool isRef; // if `var` a reference?
   bool isConst; // if `var` a const?
 
-  VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, bool aVarConst, const TLocation &aloc);
+  VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, bool aVarConst, const TLocation &aloc, VName aLabel=NAME_None);
   virtual ~VForeachArray () override;
   virtual VStatement *SyntaxCopy () override;
 
@@ -522,7 +523,7 @@ public:
   VStatement *Statement;
   bool reversed;
 
-  VForeachScripted (VExpression *aarr, int afeCount, Var *afevars, const TLocation &aloc);
+  VForeachScripted (VExpression *aarr, int afeCount, Var *afevars, const TLocation &aloc, VName aLabel=NAME_None);
   virtual ~VForeachScripted () override;
   virtual VStatement *SyntaxCopy () override;
 
@@ -563,7 +564,7 @@ public:
   TArray<VStatement *> Statements;
   bool HaveDefault;
 
-  VSwitch (const TLocation &ALoc);
+  VSwitch (const TLocation &ALoc, VName aLabel=NAME_None);
   virtual ~VSwitch () override;
   virtual VStatement *SyntaxCopy () override;
 
@@ -836,4 +837,7 @@ public:
 protected:
   VGotoStmt () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };

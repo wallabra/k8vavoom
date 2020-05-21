@@ -39,11 +39,11 @@ public:
   bool isRef; // for range foreach
   bool isConst; // for range foreach
   int toeIterArgN; // >=0: `TypeOfExpr` is iterator call, take nth arg
-  bool emitClear;
+  //bool emitClear;
   int locIdx;
   bool ctorInit; // `true` if `Value` is constructor call
 
-  VLocalEntry () : TypeExpr(nullptr), Name(NAME_None), Value(nullptr), TypeOfExpr(nullptr), isRef(false), isConst(false), toeIterArgN(-1), emitClear(false), locIdx(-1), ctorInit(false) {}
+  VLocalEntry () : TypeExpr(nullptr), Name(NAME_None), Value(nullptr), TypeOfExpr(nullptr), isRef(false), isConst(false), toeIterArgN(-1), /*emitClear(false),*/ locIdx(-1), ctorInit(false) {}
 };
 
 
@@ -77,8 +77,10 @@ public:
   // doesn't zero, doesn't call dtors, used in code emiter
   void Release (VEmitContext &ec);
 
-  // this either inits, or zeroes (unless `dozero` is `false`)
-  void EmitInitialisations (VEmitContext &ec);
+  // this emits all init expressions
+  // it also zeroes vars without initialisers if `inloop` is `true`
+  // if we are in some loop, we need to zero loop vars on each iteration
+  void EmitInitialisations (VEmitContext &ec, bool inloop);
   void EmitDtors (VEmitContext &ec);
 
   virtual bool IsLocalVarDecl () const override;

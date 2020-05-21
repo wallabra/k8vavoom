@@ -100,7 +100,7 @@ VExpression *VLocalDecl::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VLocalDecl::Emit (VEmitContext &ec) {
   VCFatalError("internal compiler error: VLocalDecl::Emit should not be called directly");
-  EmitInitialisations(ec);
+  //EmitInitialisations(ec);
 }
 
 
@@ -108,17 +108,25 @@ void VLocalDecl::Emit (VEmitContext &ec) {
 //
 //  VLocalDecl::EmitInitialisations
 //
-//  this either inits, or zeroes (unless `dozero` is `false`)
-//
 //==========================================================================
-void VLocalDecl::EmitInitialisations (VEmitContext &ec) {
+void VLocalDecl::EmitInitialisations (VEmitContext &ec, bool inloop) {
   for (auto &&loc : Vars) {
+    if (loc.locIdx < 0) VCFatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
     // do we need to zero variable memory?
     // the variable was properly destructed beforehand (this is invariant)
-    bool dozero = loc.emitClear;
+    bool needZero = false;
+    // zero comples reused locals without initializer
+    const VLocalVarDef &ldef = ec.GetLocalByIndex(loc.locIdx);
+    #ifdef VV_DEBUG_ALLOC_RELEASE
+    GLog.Logf(NAME_Debug, "VLocalDecl::EmitInitialisations: name=`%s`; idx=%d; ofs=%d; reused=%d; %s", *ldef.Name, loc.locIdx, ldef.Offset, (int)ldef.reused, *ldef.Loc.toStringNoCol());
+    #endif
+    if ((inloop || ldef.reused) && ldef.Type.NeedZeroingOnSlotReuse()) needZero = true;
+    if (needZero) ec.EmitLocalZero(loc.locIdx, Loc);
+    /*
+    bool dozero = inloop || loc.emitClear;
     if (!dozero) {
       const VLocalVarDef &ldef = ec.GetLocalByIndex(loc.locIdx);
-      // unconditionally zero complex things like dicts and structs
+      // unconditionally zero complex things like dicts and structs, and reused vars
       dozero = (ldef.reused && !loc.Value);
       // still zero some complex data types
       if (!dozero && ldef.Type.NeedZeroingOnSlotReuse()) dozero = true;
@@ -128,7 +136,9 @@ void VLocalDecl::EmitInitialisations (VEmitContext &ec) {
       if (loc.locIdx < 0) VCFatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
       ec.EmitLocalZero(loc.locIdx, Loc);
     }
-    if (loc.Value) loc.Value->Emit(ec);
+    */
+         if (loc.Value) loc.Value->Emit(ec);
+    else if (!needZero && (inloop || ldef.reused)) ec.EmitLocalZero(loc.locIdx, Loc); // zero if it is in loop
   }
 }
 
@@ -275,7 +285,7 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
 
     // always clear reused/loop locals
     // this flag will be adjusted later
-    e.emitClear = true; //!L.reused || ec.IsInLoop();
+    //e.emitClear = false;
 
     // resolve initialisation
     if (e.Value) {
@@ -335,7 +345,12 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
               }
               break;
           }
-          if (defaultInit) e.emitClear = false;
+          // drop default init, and replace it with `clear var` flag
+          if (defaultInit) {
+            delete e.Value;
+            e.Value = nullptr;
+            //e.emitClear = true;
+          }
         }
       }
     }
