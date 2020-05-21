@@ -26,7 +26,6 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VSwitch;
-class VLabelStmt;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -116,14 +115,6 @@ public:
   virtual bool IsVarDecl () const noexcept;
   virtual bool IsEndsWithReturn () const noexcept;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept; // ends with `return`, `break`, `continue`, `goto case` or `goto default`
-
-  virtual VLabelStmt *FindLabel (VName aname) noexcept;
-  virtual bool IsGotoInAllowed () const noexcept;
-  virtual bool IsGotoOutAllowed () const noexcept;
-  virtual bool IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const noexcept;
-
-  // returns `false` if statement not found (and `path` is not modified)
-  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path);
 
   // this checks for `if (...)\nstat;`
   bool CheckCondIndent (const TLocation &condLoc, VStatement *body);
@@ -270,10 +261,6 @@ public:
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
 
-  virtual VLabelStmt *FindLabel (VName aname) noexcept override;
-
-  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
-
   virtual VStr toString () override;
 
 protected:
@@ -304,10 +291,6 @@ public:
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
 
-  virtual VLabelStmt *FindLabel (VName aname) noexcept override;
-
-  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
-
   virtual VStr toString () override;
 
 protected:
@@ -337,10 +320,6 @@ public:
 
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
-  virtual VLabelStmt *FindLabel (VName aname) noexcept override;
-
-  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
   virtual VStr toString () override;
 
@@ -374,11 +353,6 @@ public:
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
 
-  virtual VLabelStmt *FindLabel (VName aname) noexcept override;
-  virtual bool IsGotoInAllowed () const noexcept override;
-
-  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
-
   virtual VStr toString () override;
 
 protected:
@@ -410,12 +384,6 @@ public:
 
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
-  virtual VLabelStmt *FindLabel (VName aname) noexcept override;
-  virtual bool IsGotoInAllowed () const noexcept override;
-  virtual bool IsGotoOutAllowed () const noexcept override;
-
-  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
   virtual VStr toString () override;
 
@@ -458,11 +426,6 @@ public:
 
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
-  virtual VLabelStmt *FindLabel (VName aname) noexcept override;
-  virtual bool IsGotoInAllowed () const noexcept override;
-
-  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
   virtual VStr toString () override;
 
@@ -513,11 +476,6 @@ public:
 
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
-  virtual VLabelStmt *FindLabel (VName aname) noexcept override;
-  virtual bool IsGotoInAllowed () const noexcept override;
-
-  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
 
   virtual VStr toString () override;
 
@@ -573,12 +531,6 @@ public:
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
 
-  virtual VLabelStmt *FindLabel (VName aname) noexcept override;
-  virtual bool IsGotoInAllowed () const noexcept override;
-  virtual bool IsGotoOutAllowed () const noexcept override;
-
-  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
-
   virtual VStr toString () override;
 
 protected:
@@ -615,14 +567,6 @@ public:
 
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
-  virtual VLabelStmt *FindLabel (VName aname) noexcept override;
-
-  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
-
-  virtual bool IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const noexcept override;
-
-  //void PostProcessGotoCase ();
 
   virtual VStr toString () override;
 
@@ -763,12 +707,6 @@ public:
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
 
-  virtual VLabelStmt *FindLabel (VName aname) noexcept override;
-
-  virtual bool BuildPathTo (const VStatement *dest, TArray<VStatement *> &path) override;
-
-  virtual bool IsJumpOverAllowed (const VStatement *s0, const VStatement *s1) const noexcept override;
-
   virtual VStr toString () override;
 
 protected:
@@ -856,44 +794,19 @@ protected:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VLabelStmt : public VStatement {
-public:
-  VName Name;
-
-  VLabelStmt (VName aname, const TLocation &ALoc);
-  virtual VStatement *SyntaxCopy () override;
-
-  virtual VStatement *DoResolve (VEmitContext &ec) override;
-  virtual void DoEmit (VEmitContext &ec) override;
-
-  virtual bool IsLabel () const noexcept override;
-  virtual VName GetLabelName () const noexcept override;
-
-  virtual VStr toString () override;
-
-protected:
-  VLabelStmt () {}
-  virtual void DoSyntaxCopyTo (VStatement *e) override;
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 class VGotoStmt : public VStatement {
 private:
   VStatement *casedef;
-  VLabelStmt *gotolbl;
 
 public:
-  enum { Normal, Case, Default };
+  enum { Case, Default };
 
 public:
-  VName Name; // destination (NAME_None for `goto case;`)
   VSwitch *Switch; // for `goto case;`
   VExpression *CaseValue; // for `goto case n;`
   int GotoType;
   int SwitchStNum;
 
-  VGotoStmt (VName aname, const TLocation &ALoc);
   VGotoStmt (VSwitch *ASwitch, VExpression *ACaseValue, int ASwitchStNum, bool toDefault, const TLocation &ALoc);
   virtual VStatement *SyntaxCopy () override;
 
@@ -904,14 +817,10 @@ public:
   virtual bool IsGotoCase () const noexcept override;
   virtual bool HasGotoCaseExpr () const noexcept override;
   virtual bool IsGotoDefault () const noexcept override;
-  virtual VName GetLabelName () const noexcept override;
 
   virtual VStr toString () override;
 
 protected:
   VGotoStmt () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
-
-  bool ResolveGoto (VEmitContext &ec, VStatement *dest);
-  void EmitCleanups (VEmitContext &ec, VStatement *dest);
 };

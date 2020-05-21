@@ -1429,15 +1429,12 @@ VStatement *VParser::ParseStatement () {
         if (!toDef && Lex.Token != TK_Semicolon) caseValue = ParseExpression();
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
         return new VGotoStmt(currSwitch, caseValue, currSwitch->Statements.length(), toDef, l);
-      }
-      if (Lex.Token == TK_Identifier) {
-        VName ln = Lex.Name;
-        Lex.NextToken();
+      } else {
+        ParseError(Lex.Location, "`goto` is not supported");
+        if (Lex.Token == TK_Identifier) Lex.NextToken();
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
-        return new VGotoStmt(ln, l);
+        return new VInvalidStatement(l);
       }
-      ParseError(Lex.Location, "Identifier expected");
-      return new VGotoStmt(VName("undefined"), l);
     case TK_Assert:
       {
         Lex.NextToken();
@@ -1474,12 +1471,14 @@ VStatement *VParser::ParseStatement () {
       }
     default:
       // label?
+      /*
       if (Lex.Token == TK_Identifier && Lex.peekTokenType(1) == TK_Colon) {
         VName ln = Lex.Name;
         Lex.NextToken();
         Lex.NextToken();
         return new VLabelStmt(ln, l);
       }
+      */
       // expression
       CheckForLocal = true;
       VExpression *Expr = ParseAssignExpression();
