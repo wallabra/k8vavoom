@@ -2037,13 +2037,14 @@ func_loop:
 
       PR_VM_CASE(OPC_FloatToBool)
         // so inf/nan yields `false`
-        sp[-1].i = !isZeroInfNaN(sp[-1].f);
+        sp[-1].i = (isZeroInfNaN(sp[-1].f) ? 0 : 1);
         ++ip;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VectorToBool)
-        // so inf/nan yields `false`
-        sp[-3].i = (isZeroInfNaN(sp[-1].f) || isZeroInfNaN(sp[-2].f) || isZeroInfNaN(sp[-3].f) ? 0 : 1);
+        // `false` is either zero, or invalid vector
+        sp[-3].i = isFiniteF(sp[-1].f) && isFiniteF(sp[-2].f) && isFiniteF(sp[-3].f) &&
+                   (sp[-1].f != 0.0f || sp[-2].f != 0.0f || sp[-3].f != 0.0f);
         sp -= 2;
         ++ip;
         PR_VM_BREAK;

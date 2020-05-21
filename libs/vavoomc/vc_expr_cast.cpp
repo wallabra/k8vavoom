@@ -374,7 +374,7 @@ VExpression *VVectorToBool::DoResolve (VEmitContext &ec) {
   if (op->IsConstVectorCtor()) {
     // do it inplace
     TVec v = ((VVectorExpr *)op)->GetConstValue();
-    VExpression *e = new VIntLiteral((isZeroInfNaN(v.x) || isZeroInfNaN(v.y) || isZeroInfNaN(v.z) ? 0 : 1), Loc); // so inf/nan yields `false`
+    VExpression *e = new VIntLiteral((v.toBool() ? 1 : 0), Loc); // so inf/nan yields `false`
     delete this;
     return e->Resolve(ec);
   }
