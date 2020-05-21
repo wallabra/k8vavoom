@@ -4770,6 +4770,7 @@ VStatement *VGotoStmt::DoResolve (VEmitContext &ec) {
     return CreateInvalid();
   } else {
     // normal goto
+    VCFatalError("%s: `gotos` are not allowed!", *Loc.toStringNoCol());
     if (GotoType != Normal) VCFatalError("VC: internal compiler error (VGotoStmt::Resolve) (1)");
     if (Switch) VCFatalError("VC: internal compiler error (VGotoStmt::Resolve) (2)");
     // find label

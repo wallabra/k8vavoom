@@ -541,11 +541,12 @@ enum {
   DECLARE_OPC(DictDispatch, TypeDD), // type followed by OPC_DictDispatch_XXX
 
   // valid only for cells without destructors
+  // used in decorate codegen
+  DECLARE_OPC(DupPOD, None),
+  DECLARE_OPC(DropPOD, None),
   // not used by codegen anyway
   /*
-  DECLARE_OPC(DupPOD, None),
   DECLARE_OPC(SwapPOD, None),
-  DECLARE_OPC(DropPOD, None),
   */
 
   DECLARE_OPC(GetIsDestroyed, None),

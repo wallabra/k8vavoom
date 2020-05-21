@@ -911,14 +911,14 @@ struct Instr {
         spdelta = -1;
         return;
 
-      /*
       case OPC_DupPOD:
         spdelta += 1;
         return;
-      case OPC_SwapPOD:
-        return;
       case OPC_DropPOD:
         spdelta -= 1;
+        return;
+      /*
+      case OPC_SwapPOD:
         return;
       */
 

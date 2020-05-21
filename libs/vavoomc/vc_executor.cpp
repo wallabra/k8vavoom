@@ -3097,7 +3097,6 @@ func_loop:
         }
         PR_VM_BREAK;
 
-      /*
       PR_VM_CASE(OPC_DupPOD)
         //{ fprintf(stderr, "OPC_DupPOD at %6u in FUNCTION `%s`; sp=%d\n", (unsigned)(ip-func->Statements.Ptr()), *func->GetFullName(), (int)(sp-pr_stack)); cstDump(ip); }
         ++ip;
@@ -3105,6 +3104,12 @@ func_loop:
         ++sp;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_DropPOD)
+        ++ip;
+        --sp;
+        PR_VM_BREAK;
+
+      /*
       PR_VM_CASE(OPC_SwapPOD)
         ++ip;
         {
@@ -3112,11 +3117,6 @@ func_loop:
           sp[-1].p = sp[-2].p;
           sp[-2].p = tmp;
         }
-        PR_VM_BREAK;
-
-      PR_VM_CASE(OPC_DropPOD)
-        ++ip;
-        --sp;
         PR_VM_BREAK;
       */
 
