@@ -3736,8 +3736,8 @@ void VContinue::DoEmit (VEmitContext &ec) {
     if (!st->IsContinueScope()) {
       st->EmitFinalizer(ec);
     } else {
-      // jump to break destination
-      ec.AddStatement(OPC_Goto, st->breakLabel, Loc);
+      // jump to conitnue destination
+      ec.AddStatement(OPC_Goto, st->contLabel, Loc);
       return;
     }
   }
