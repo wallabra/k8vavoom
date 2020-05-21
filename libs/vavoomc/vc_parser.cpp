@@ -1321,7 +1321,6 @@ VStatement *VParser::ParseStatement () {
           } else {
             VExpression *expr = ParseExpression(true);
             if (!expr) break;
-            //For->InitExpr.append(new VDropResult(expr));
             Comp->Statements.Append(CreateExpressionStatement(expr));
           }
           // here should be a comma or a semicolon
@@ -1354,19 +1353,8 @@ VStatement *VParser::ParseStatement () {
         } while (Lex.Check(TK_Comma));
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
 
-        VStatement *Statement = ParseStatement();
-        For->Statement = Statement;
+        For->Statement = ParseStatement();
         return Comp;
-        /*
-        // wrap statement if necessary
-        if (needCompound) {
-          VCompound *Comp = new VCompound(For->Loc);
-          Comp->Statements.Append(For);
-          return Comp;
-        } else {
-          return For;
-        }
-        */
       }
     case TK_Foreach:
       return ParseForeach();
