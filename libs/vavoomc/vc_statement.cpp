@@ -4653,7 +4653,6 @@ bool VGotoStmt::ResolveGoto (VEmitContext &ec, VStatement *dest) {
 //
 //==========================================================================
 void VGotoStmt::EmitCleanups (VEmitContext &ec, VStatement *dest) {
-#if 0
   // build path to self
   TArray<VStatement *> toself;
   if (!ec.CurrentFunc->Statement->BuildPathTo(this, toself)) {
@@ -4691,9 +4690,9 @@ void VGotoStmt::EmitCleanups (VEmitContext &ec, VStatement *dest) {
   // now go up to parent and down to label, checking if gotos are allowed
   for (int f = toself.length()-1; f >= 0; --f) {
     if (toself[f] == cpar) break;
+    toself[f]->EmitDtor(ec);
     toself[f]->EmitFinalizer(ec);
   }
-#endif
 }
 
 
