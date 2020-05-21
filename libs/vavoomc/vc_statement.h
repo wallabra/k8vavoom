@@ -830,6 +830,10 @@ protected:
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VCompoundScopeExit : public VCompound {
+private:
+  // i am too lazy to create proper AST nodes, so let's use this small hack instead
+  bool mReturnAllowed;
+
 public:
   VStatement *Body;
 

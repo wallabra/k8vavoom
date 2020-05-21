@@ -4313,6 +4313,7 @@ void VCompound::DoEmit (VEmitContext &ec) {
 //==========================================================================
 VCompoundScopeExit::VCompoundScopeExit (VStatement *ABody, const TLocation &ALoc)
   : VCompound(ALoc)
+  , mReturnAllowed(true)
   , Body(ABody)
 {
 }
@@ -4349,6 +4350,7 @@ void VCompoundScopeExit::DoSyntaxCopyTo (VStatement *e) {
   VCompound::DoSyntaxCopyTo(e);
   auto res = (VCompoundScopeExit *)e;
   res->Body = (Body ? Body->SyntaxCopy() : nullptr);
+  // there's no need to copy `mReturnAllowed`
 }
 
 
@@ -4364,9 +4366,12 @@ VStatement *VCompoundScopeExit::DoResolve (VEmitContext &ec) {
   if (Body && !CheckCondIndent(Loc, Body)) wasError = true;
 
   if (Body) {
+    // disable returns in scope body
+    mReturnAllowed = false;
     Body = Body->Resolve(ec, this);
     if (!Body->IsValid()) wasError = true;
   }
+  mReturnAllowed = true;
 
   VStatement *res = VCompound::DoResolve(ec);
   return (wasError && !res->IsValid() ? CreateInvalid() : res);
@@ -4379,7 +4384,7 @@ VStatement *VCompoundScopeExit::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 bool VCompoundScopeExit::IsReturnAllowed () const noexcept {
-  return false;
+  return mReturnAllowed;
 }
 
 
