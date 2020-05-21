@@ -2133,11 +2133,13 @@ final void DoStateEffects (float DeltaTime) {
           //printdebug("%C: pulse light; interval=%s; rad=(%s,%s)", self, L->Interval, L->Radius, L->Radius2);
           dl->decay = /*XLevel.Time+*/150.0;
           // avoid division by 0
-          float PulseCycle = (L->Interval > 0 ? L->Interval/35.0 : 1.0/35.0);
-          LightTime += DeltaTime;
-          if (LightTime >= PulseCycle) LightTime = 0.0;
-          float Frac = (1.0+sin(360.0*LightTime/PulseCycle))*0.5;
-          dl->radius = L->Radius+Frac*(L->Radius2-L->Radius);
+          {
+            float PulseCycle = (L->Interval > 0 ? L->Interval/35.0 : 1.0/35.0);
+            LightTime += DeltaTime;
+            if (LightTime >= PulseCycle) LightTime = 0.0;
+            float Frac = (1.0+sin(360.0*LightTime/PulseCycle))*0.5;
+            dl->radius = L->Radius+Frac*(L->Radius2-L->Radius);
+          }
           //dl->radius *= 2.5;
           //dl->decay = 0;
           //L->Color = 0xff00ff00;
