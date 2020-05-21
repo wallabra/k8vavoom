@@ -48,13 +48,15 @@ extern VStr fsys_warp_cmd;
 
 static int cli_SetDeveloper = -1;
 static int cli_SetDeveloperDefine = -1;
+static int cli_AsmDump = -1;
 int cli_ShowEndText = 0;
 
 /*static*/ bool cliRegister_host_args =
   VParsedArgs::RegisterFlagSet("-developer", "!do not use if you don't know what it is (and you certainly don't know)", &cli_SetDeveloper) &&
   VParsedArgs::RegisterFlagReset("-vc-no-k8-developer", "!", &cli_SetDeveloperDefine) &&
   VParsedArgs::RegisterFlagSet("-vc-k8-developer", "!", &cli_SetDeveloperDefine) &&
-  VParsedArgs::RegisterFlagSet("-endtext", "!enable end text (disabled by default)", &cli_ShowEndText);
+  VParsedArgs::RegisterFlagSet("-endtext", "!enable end text (disabled by default)", &cli_ShowEndText) &&
+  VParsedArgs::RegisterFlagSet("-vc-dump-asm", "!dump generated IR code", &cli_AsmDump);
 
 const char *cli_LogFileName = nullptr;
 
@@ -236,6 +238,8 @@ void Host_Init () {
     cli_SetDeveloperDefine = 0;
     #endif
   }
+
+  if (cli_AsmDump > 0) VMemberBase::doAsmDump = true;
 
   if (cli_SetDeveloperDefine > 0) VMemberBase::StaticAddDefine("K8_DEVELOPER");
 
