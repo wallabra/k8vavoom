@@ -81,6 +81,8 @@ void VStatement::EmitDtor (VEmitContext &ec) {}
 void VStatement::EmitFinalizer (VEmitContext &ec) {}
 
 bool VStatement::IsCompound () const noexcept { return false; }
+bool VStatement::IsAnyCompound () const noexcept { return false; }
+bool VStatement::IsTryFinally () const noexcept { return false; }
 bool VStatement::IsEmptyStatement () const noexcept { return false; }
 bool VStatement::IsInvalidStatement () const noexcept { return false; }
 bool VStatement::IsFor () const noexcept { return false; }
@@ -3619,474 +3621,6 @@ VStr VReturn::toString () {
 
 //**************************************************************************
 //
-// VBaseCompoundStatement
-//
-//**************************************************************************
-
-//==========================================================================
-//
-//  VBaseCompoundStatement::VBaseCompoundStatement
-//
-//==========================================================================
-VBaseCompoundStatement::VBaseCompoundStatement (const TLocation &aloc) : VStatement(aloc) {
-}
-
-
-//==========================================================================
-//
-//  VBaseCompoundStatement::~VBaseCompoundStatement
-//
-//==========================================================================
-VBaseCompoundStatement::~VBaseCompoundStatement () {
-  for (auto &&st : Statements) delete st;
-  Statements.clear();
-}
-
-
-//==========================================================================
-//
-//  VBaseCompoundStatement::DoSyntaxCopyTo
-//
-//==========================================================================
-void VBaseCompoundStatement::DoSyntaxCopyTo (VStatement *e) {
-  VStatement::DoSyntaxCopyTo(e);
-  auto res = (VBaseCompoundStatement *)e;
-  res->Statements.setLength(Statements.length());
-  for (int f = 0; f < Statements.length(); ++f) res->Statements[f] = (Statements[f] ? Statements[f]->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
-//  VBaseCompoundStatement::ProcessVarDecls
-//
-//==========================================================================
-void VBaseCompoundStatement::ProcessVarDecls () {
-  for (int idx = 0; idx < Statements.length()-1; ++idx) {
-    if (Statements[idx]->IsVarDecl()) {
-      // i found her!
-      VLocalVarStatement *vst = (VLocalVarStatement *)Statements[idx];
-      vassert(vst->Statements.length() == 0);
-      const int newlen = idx+1; // skip `vst` (i.e. leave it in this compound)
-      // move compound tail to `vst`
-      vst->Statements.resize(Statements.length()-newlen);
-      for (idx = newlen; idx < Statements.length(); ++idx) vst->Statements.append(Statements[idx]);
-      // shrink compound list
-      Statements.setLength(newlen);
-      // recursively process `vst`
-      //return vst->ProcessVarDecls();
-      // there is no need to recursively process `vst`, because its resolver
-      // will call `ProcessVarDecls()` by itself, so we'll be doing excess
-      // work for nothing here
-      return;
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  VBaseCompoundStatement::IsEndsWithReturn
-//
-//==========================================================================
-bool VBaseCompoundStatement::IsEndsWithReturn () const noexcept {
-  for (auto &&st : Statements) {
-    if (!st) continue;
-    if (st->IsEndsWithReturn()) return true;
-    if (st->IsFlowStop()) break;
-  }
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VBaseCompoundStatement::IsProperCaseEnd
-//
-//==========================================================================
-bool VBaseCompoundStatement::IsProperCaseEnd (bool skipBreak) const noexcept {
-  for (auto &&st : Statements) {
-    if (!st) continue;
-    if (st->IsProperCaseEnd(skipBreak)) return true;
-    if (st->IsFlowStop()) break;
-  }
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VBaseCompoundStatement::DoFixSwitch
-//
-//==========================================================================
-void VBaseCompoundStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  for (auto &&st : Statements) if (st) st->DoFixSwitch(aold, anew);
-}
-
-
-//==========================================================================
-//
-//  VBaseCompoundStatement::toString
-//
-//==========================================================================
-VStr VBaseCompoundStatement::toString () {
-  VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/{";
-  if (Statements.length()) {
-    for (auto &&st : Statements) {
-      if (!st) continue;
-      res += "\n";
-      res += st->toString();
-    }
-    res += "\n}";
-  } else {
-    res += "}";
-  }
-  return res;
-}
-
-
-
-//**************************************************************************
-//
-// VLocalVarStatement
-//
-//**************************************************************************
-
-//==========================================================================
-//
-//  VLocalVarStatement::VLocalVarStatement
-//
-//==========================================================================
-VLocalVarStatement::VLocalVarStatement (VLocalDecl *ADecl)
-  : VBaseCompoundStatement(ADecl->Loc)
-  , Decl(ADecl)
-{
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::~VLocalVarStatement
-//
-//==========================================================================
-VLocalVarStatement::~VLocalVarStatement () {
-  delete Decl; Decl = nullptr;
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::SyntaxCopy
-//
-//==========================================================================
-VStatement *VLocalVarStatement::SyntaxCopy () {
-  auto res = new VLocalVarStatement();
-  DoSyntaxCopyTo(res);
-  return res;
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::DoSyntaxCopyTo
-//
-//==========================================================================
-void VLocalVarStatement::DoSyntaxCopyTo (VStatement *e) {
-  VBaseCompoundStatement::DoSyntaxCopyTo(e);
-  auto res = (VLocalVarStatement *)e;
-  res->Decl = (VLocalDecl *)(Decl ? Decl->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::DoResolve
-//
-//==========================================================================
-VStatement *VLocalVarStatement::DoResolve (VEmitContext &ec) {
-  bool wasError = false;
-  ProcessVarDecls();
-  if (!Decl->Declare(ec)) wasError = true;
-  for (auto &&st : Statements) {
-    st = st->Resolve(ec, this);
-    if (!st->IsValid()) wasError = true;
-  }
-  Decl->Hide(ec);
-  return (wasError ? CreateInvalid() : this);
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::DoEmit
-//
-//==========================================================================
-void VLocalVarStatement::DoEmit (VEmitContext &ec) {
-  //GLog.Logf(NAME_Debug, "%s: VLocalVarStatement::DoEmit: %s", *Loc.toStringNoCol(), *toString());
-  Decl->Allocate(ec);
-  // check if we are in some loop
-  // we are in loop if we have "continue" point
-  bool inloop = false;
-  for (VStatement *st = this; st; st = st->UpScope) {
-    if (st->IsContinueScope()) {
-      inloop = true;
-      break;
-    }
-  }
-  Decl->EmitInitialisations(ec, inloop);
-  for (auto &&st : Statements) {
-    st->Emit(ec, this);
-  }
-  EmitDtorAndBlock(ec);
-  Decl->Release(ec);
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::EmitDtor
-//
-//==========================================================================
-void VLocalVarStatement::EmitDtor (VEmitContext &ec) {
-  Decl->EmitDtors(ec);
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::IsVarDecl
-//
-//==========================================================================
-bool VLocalVarStatement::IsVarDecl () const noexcept {
-  return true;
-}
-
-
-//==========================================================================
-//
-//  VLocalVarStatement::toString
-//
-//==========================================================================
-VStr VLocalVarStatement::toString () {
-  VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/<LOCDECL>\n";
-  if (Decl) {
-    for (auto &&v : Decl->Vars) {
-      res += VStr("/*")+v.Loc.toStringNoCol()+"*/ ";
-      res += VExpression::e2s(v.TypeExpr);
-      res += " ";
-      res += *v.Name;
-      if (v.locIdx) {
-        res += VStr("{")+VStr(v.locIdx)+"}";
-      }
-      if (v.Value) {
-        res += "<init:";
-        res += VExpression::e2s(v.Value);
-        res += ">";
-      }
-      if (v.TypeOfExpr) {
-        res += "<typeof:";
-        res += VExpression::e2s(v.TypeOfExpr);
-        res += ">";
-      }
-      res += ";";
-      res += "\n";
-    }
-  }
-  res += VBaseCompoundStatement::toString();
-  return res;
-}
-
-
-
-//**************************************************************************
-//
-// VCompound
-//
-//**************************************************************************
-
-//==========================================================================
-//
-//  VCompound::VCompound
-//
-//==========================================================================
-VCompound::VCompound (const TLocation &ALoc) : VBaseCompoundStatement(ALoc) {
-}
-
-
-//==========================================================================
-//
-//  VCompound::IsCompound
-//
-//==========================================================================
-bool VCompound::IsCompound () const noexcept {
-  return true;
-}
-
-
-//==========================================================================
-//
-//  VCompound::SyntaxCopy
-//
-//==========================================================================
-VStatement *VCompound::SyntaxCopy () {
-  auto res = new VCompound();
-  DoSyntaxCopyTo(res);
-  return res;
-}
-
-
-//==========================================================================
-//
-//  VCompound::DoSyntaxCopyTo
-//
-//==========================================================================
-void VCompound::DoSyntaxCopyTo (VStatement *e) {
-  VBaseCompoundStatement::DoSyntaxCopyTo(e);
-}
-
-
-//==========================================================================
-//
-//  VCompound::DoResolve
-//
-//==========================================================================
-VStatement *VCompound::DoResolve (VEmitContext &ec) {
-  bool wasError = false;
-  ProcessVarDecls();
-  for (auto &&st : Statements) {
-    st = st->Resolve(ec, this);
-    if (!st->IsValid()) wasError = true;
-  }
-  return (wasError ? CreateInvalid() : this);
-}
-
-
-//==========================================================================
-//
-//  VCompound::DoEmit
-//
-//==========================================================================
-void VCompound::DoEmit (VEmitContext &ec) {
-  for (auto &&st : Statements) if (st) st->Emit(ec, this);
-}
-
-
-
-//**************************************************************************
-//
-// VCompoundScopeExit
-//
-//**************************************************************************
-
-//==========================================================================
-//
-//  VCompoundScopeExit::VCompoundScopeExit
-//
-//==========================================================================
-VCompoundScopeExit::VCompoundScopeExit (VStatement *ABody, const TLocation &ALoc)
-  : VCompound(ALoc)
-  , mReturnAllowed(true)
-  , Body(ABody)
-{
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::~VCompoundScopeExit
-//
-//==========================================================================
-VCompoundScopeExit::~VCompoundScopeExit () {
-  delete Body; Body = nullptr;
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::SyntaxCopy
-//
-//==========================================================================
-VStatement *VCompoundScopeExit::SyntaxCopy () {
-  auto res = new VCompoundScopeExit();
-  DoSyntaxCopyTo(res);
-  return res;
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::DoSyntaxCopyTo
-//
-//==========================================================================
-void VCompoundScopeExit::DoSyntaxCopyTo (VStatement *e) {
-  VCompound::DoSyntaxCopyTo(e);
-  auto res = (VCompoundScopeExit *)e;
-  res->Body = (Body ? Body->SyntaxCopy() : nullptr);
-  // there's no need to copy `mReturnAllowed`
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::DoResolve
-//
-//==========================================================================
-VStatement *VCompoundScopeExit::DoResolve (VEmitContext &ec) {
-  bool wasError = false;
-
-  // indent check
-  if (Body && !CheckCondIndent(Loc, Body)) wasError = true;
-
-  if (Body) {
-    // disable returns in scope body
-    mReturnAllowed = false;
-    Body = Body->Resolve(ec, this);
-    if (!Body->IsValid()) wasError = true;
-  }
-  mReturnAllowed = true;
-
-  VStatement *res = VCompound::DoResolve(ec);
-  return (wasError && !res->IsValid() ? CreateInvalid() : res);
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::IsReturnAllowed
-//
-//==========================================================================
-bool VCompoundScopeExit::IsReturnAllowed () const noexcept {
-  return mReturnAllowed;
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::EmitFinalizer
-//
-//==========================================================================
-void VCompoundScopeExit::EmitFinalizer (VEmitContext &ec) {
-  if (Body) Body->Emit(ec, this);
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::toString
-//
-//==========================================================================
-VStr VCompoundScopeExit::toString () {
-  return
-    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/{ scope(exit)\n"+
-    (Body ? Body->toString() : VStr("<none>"))+"\n"+
-    VBaseCompoundStatement::toString()+
-    "\n}";
-}
-
-
-
-//**************************************************************************
-//
 // VGotoStmt
 //
 //**************************************************************************
@@ -4306,4 +3840,650 @@ VStr VGotoStmt::toString () {
   return VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/goto "+
   (GotoType == Default ? VStr("default") :
    (CaseValue ? VStr("case ")+CaseValue->toString() : VStr("case")))+";";
+}
+
+
+
+//**************************************************************************
+//
+// VBaseCompoundStatement
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::VBaseCompoundStatement
+//
+//==========================================================================
+VBaseCompoundStatement::VBaseCompoundStatement (const TLocation &aloc) : VStatement(aloc) {
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::~VBaseCompoundStatement
+//
+//==========================================================================
+VBaseCompoundStatement::~VBaseCompoundStatement () {
+  for (auto &&st : Statements) delete st;
+  Statements.clear();
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::DoSyntaxCopyTo
+//
+//==========================================================================
+void VBaseCompoundStatement::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VBaseCompoundStatement *)e;
+  res->Statements.setLength(Statements.length());
+  for (int f = 0; f < Statements.length(); ++f) res->Statements[f] = (Statements[f] ? Statements[f]->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::ProcessVarDecls
+//
+//==========================================================================
+void VBaseCompoundStatement::ProcessVarDecls () {
+  for (int idx = 0; idx < Statements.length()-1; ++idx) {
+    if (Statements[idx]->IsVarDecl()) {
+      // i found her!
+      VLocalVarStatement *vst = (VLocalVarStatement *)Statements[idx];
+      vassert(vst->Statements.length() == 0);
+      const int newlen = idx+1; // skip `vst` (i.e. leave it in this compound)
+      // move compound tail to `vst`
+      vst->Statements.resize(Statements.length()-newlen);
+      for (idx = newlen; idx < Statements.length(); ++idx) vst->Statements.append(Statements[idx]);
+      // shrink compound list
+      Statements.setLength(newlen);
+      // recursively process `vst`
+      //return vst->ProcessVarDecls();
+      // there is no need to recursively process `vst`, because its resolver
+      // will call `ProcessVarDecls()` by itself, so we'll be doing excess
+      // work for nothing here
+      return;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::BeforeProcessVarDecls
+//
+//==========================================================================
+bool VBaseCompoundStatement::BeforeProcessVarDecls (VEmitContext &ec) {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::BeforeResolveStatements
+//
+//==========================================================================
+bool VBaseCompoundStatement::BeforeResolveStatements (VEmitContext &ec) {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::AfterResolveStatements
+//
+//==========================================================================
+bool VBaseCompoundStatement::AfterResolveStatements (VEmitContext &ec) {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::DoResolve
+//
+//==========================================================================
+VStatement *VBaseCompoundStatement::DoResolve (VEmitContext &ec) {
+  bool wasError = false;
+  if (!BeforeProcessVarDecls(ec)) wasError = true;
+  ProcessVarDecls();
+  if (!BeforeResolveStatements(ec)) wasError = true;
+  for (auto &&st : Statements) {
+    st = st->Resolve(ec, this);
+    if (!st->IsValid()) wasError = true;
+  }
+  if (!AfterResolveStatements(ec)) wasError = true;
+  return (wasError ? CreateInvalid() : this);
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::BeforeEmitStatements
+//
+//==========================================================================
+bool VBaseCompoundStatement::BeforeEmitStatements (VEmitContext &ec) {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::AfterEmitStatements
+//
+//==========================================================================
+bool VBaseCompoundStatement::AfterEmitStatements (VEmitContext &ec) {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::DoEmit
+//
+//==========================================================================
+void VBaseCompoundStatement::DoEmit (VEmitContext &ec) {
+  if (!BeforeEmitStatements(ec)) return;
+  for (auto &&st : Statements) if (st) st->Emit(ec, this);
+  if (!AfterResolveStatements(ec)) return;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::IsAnyCompound
+//
+//==========================================================================
+bool VBaseCompoundStatement::IsAnyCompound () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::IsEndsWithReturn
+//
+//==========================================================================
+bool VBaseCompoundStatement::IsEndsWithReturn () const noexcept {
+  for (auto &&st : Statements) {
+    if (!st) continue;
+    if (st->IsEndsWithReturn()) return true;
+    if (st->IsFlowStop()) break;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::IsProperCaseEnd
+//
+//==========================================================================
+bool VBaseCompoundStatement::IsProperCaseEnd (bool skipBreak) const noexcept {
+  for (auto &&st : Statements) {
+    if (!st) continue;
+    if (st->IsProperCaseEnd(skipBreak)) return true;
+    if (st->IsFlowStop()) break;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::DoFixSwitch
+//
+//==========================================================================
+void VBaseCompoundStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  for (auto &&st : Statements) if (st) st->DoFixSwitch(aold, anew);
+}
+
+
+//==========================================================================
+//
+//  VBaseCompoundStatement::toString
+//
+//==========================================================================
+VStr VBaseCompoundStatement::toString () {
+  VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/{";
+  if (Statements.length()) {
+    for (auto &&st : Statements) {
+      if (!st) continue;
+      res += "\n";
+      res += st->toString();
+    }
+    res += "\n}";
+  } else {
+    res += "}";
+  }
+  return res;
+}
+
+
+
+//**************************************************************************
+//
+// VTryFinallyCompound
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VTryFinallyCompound::VTryFinallyCompound
+//
+//==========================================================================
+VTryFinallyCompound::VTryFinallyCompound (VStatement *aFinally, const TLocation &ALoc)
+  : VBaseCompoundStatement(ALoc)
+  , Finally(aFinally)
+{
+}
+
+
+//==========================================================================
+//
+//  VTryFinallyCompound::~VTryFinallyCompound
+//
+//==========================================================================
+VTryFinallyCompound::~VTryFinallyCompound () {
+  delete Finally; Finally = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VTryFinallyCompound::SyntaxCopy
+//
+//==========================================================================
+VStatement *VTryFinallyCompound::SyntaxCopy () {
+  auto res = new VTryFinallyCompound();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VTryFinallyCompound::DoSyntaxCopyTo
+//
+//==========================================================================
+void VTryFinallyCompound::DoSyntaxCopyTo (VStatement *e) {
+  VBaseCompoundStatement::DoSyntaxCopyTo(e);
+  auto res = (VTryFinallyCompound *)e;
+  res->Finally = (Finally ? Finally->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VTryFinallyCompound::BeforeResolveStatements
+//
+//==========================================================================
+bool VTryFinallyCompound::BeforeResolveStatements (VEmitContext &ec) {
+  bool wasError = false;
+
+  if (Finally) {
+    Finally = Finally->Resolve(ec, this);
+    if (!Finally->IsValid()) wasError = true;
+  }
+
+  return !wasError;
+}
+
+
+//==========================================================================
+//
+//  VTryFinallyCompound::IsTryFinally
+//
+//==========================================================================
+bool VTryFinallyCompound::IsTryFinally () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VTryFinallyCompound::EmitDtor
+//
+//==========================================================================
+void VTryFinallyCompound::EmitDtor (VEmitContext &ec) {
+  if (Finally) Finally->Emit(ec, this);
+}
+
+
+//==========================================================================
+//
+//  VTryFinallyCompound::toString
+//
+//==========================================================================
+VStr VTryFinallyCompound::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/try\n"+
+    VBaseCompoundStatement::toString()+
+    (Finally ? VStr("/*finally*/")+Finally->toString() : VStr());
+}
+
+
+
+//**************************************************************************
+//
+// VLocalVarStatement
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VLocalVarStatement::VLocalVarStatement
+//
+//==========================================================================
+VLocalVarStatement::VLocalVarStatement (VLocalDecl *ADecl)
+  : VBaseCompoundStatement(ADecl->Loc)
+  , Decl(ADecl)
+{
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::~VLocalVarStatement
+//
+//==========================================================================
+VLocalVarStatement::~VLocalVarStatement () {
+  delete Decl; Decl = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::SyntaxCopy
+//
+//==========================================================================
+VStatement *VLocalVarStatement::SyntaxCopy () {
+  auto res = new VLocalVarStatement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::DoSyntaxCopyTo
+//
+//==========================================================================
+void VLocalVarStatement::DoSyntaxCopyTo (VStatement *e) {
+  VBaseCompoundStatement::DoSyntaxCopyTo(e);
+  auto res = (VLocalVarStatement *)e;
+  res->Decl = (VLocalDecl *)(Decl ? Decl->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::BeforeResolveStatements
+//
+//==========================================================================
+bool VLocalVarStatement::BeforeResolveStatements (VEmitContext &ec) {
+  return Decl->Declare(ec);
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::AfterResolveStatements
+//
+//==========================================================================
+bool VLocalVarStatement::AfterResolveStatements (VEmitContext &ec) {
+  Decl->Hide(ec);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::BeforeEmitStatements
+//
+//==========================================================================
+bool VLocalVarStatement::BeforeEmitStatements (VEmitContext &ec) {
+  //GLog.Logf(NAME_Debug, "%s: VLocalVarStatement::DoEmit: %s", *Loc.toStringNoCol(), *toString());
+  Decl->Allocate(ec);
+  // check if we are in some loop
+  // we are in loop if we have "continue" point
+  bool inloop = false;
+  for (VStatement *st = this; st; st = st->UpScope) {
+    if (st->IsContinueScope()) {
+      inloop = true;
+      break;
+    }
+  }
+  Decl->EmitInitialisations(ec, inloop);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::AfterEmitStatements
+//
+//==========================================================================
+bool VLocalVarStatement::AfterEmitStatements (VEmitContext &ec) {
+  EmitDtorAndBlock(ec);
+  Decl->Release(ec);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::EmitDtor
+//
+//==========================================================================
+void VLocalVarStatement::EmitDtor (VEmitContext &ec) {
+  Decl->EmitDtors(ec);
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::IsVarDecl
+//
+//==========================================================================
+bool VLocalVarStatement::IsVarDecl () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VLocalVarStatement::toString
+//
+//==========================================================================
+VStr VLocalVarStatement::toString () {
+  VStr res = VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/<LOCDECL>\n";
+  if (Decl) {
+    for (auto &&v : Decl->Vars) {
+      res += VStr("/*")+v.Loc.toStringNoCol()+"*/ ";
+      res += VExpression::e2s(v.TypeExpr);
+      res += " ";
+      res += *v.Name;
+      if (v.locIdx) {
+        res += VStr("{")+VStr(v.locIdx)+"}";
+      }
+      if (v.Value) {
+        res += "<init:";
+        res += VExpression::e2s(v.Value);
+        res += ">";
+      }
+      if (v.TypeOfExpr) {
+        res += "<typeof:";
+        res += VExpression::e2s(v.TypeOfExpr);
+        res += ">";
+      }
+      res += ";";
+      res += "\n";
+    }
+  }
+  res += VBaseCompoundStatement::toString();
+  return res;
+}
+
+
+
+//**************************************************************************
+//
+// VCompound
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VCompound::VCompound
+//
+//==========================================================================
+VCompound::VCompound (const TLocation &ALoc) : VBaseCompoundStatement(ALoc) {
+}
+
+
+//==========================================================================
+//
+//  VCompound::IsCompound
+//
+//==========================================================================
+bool VCompound::IsCompound () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VCompound::SyntaxCopy
+//
+//==========================================================================
+VStatement *VCompound::SyntaxCopy () {
+  auto res = new VCompound();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VCompound::DoSyntaxCopyTo
+//
+//==========================================================================
+void VCompound::DoSyntaxCopyTo (VStatement *e) {
+  VBaseCompoundStatement::DoSyntaxCopyTo(e);
+}
+
+
+
+//**************************************************************************
+//
+// VCompoundScopeExit
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VCompoundScopeExit::VCompoundScopeExit
+//
+//==========================================================================
+VCompoundScopeExit::VCompoundScopeExit (VStatement *ABody, const TLocation &ALoc)
+  : VCompound(ALoc)
+  , mReturnAllowed(true)
+  , Body(ABody)
+{
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::~VCompoundScopeExit
+//
+//==========================================================================
+VCompoundScopeExit::~VCompoundScopeExit () {
+  delete Body; Body = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::SyntaxCopy
+//
+//==========================================================================
+VStatement *VCompoundScopeExit::SyntaxCopy () {
+  auto res = new VCompoundScopeExit();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::DoSyntaxCopyTo
+//
+//==========================================================================
+void VCompoundScopeExit::DoSyntaxCopyTo (VStatement *e) {
+  VCompound::DoSyntaxCopyTo(e);
+  auto res = (VCompoundScopeExit *)e;
+  res->Body = (Body ? Body->SyntaxCopy() : nullptr);
+  // there's no need to copy `mReturnAllowed`
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::BeforeResolveStatements
+//
+//==========================================================================
+bool VCompoundScopeExit::BeforeResolveStatements (VEmitContext &ec) {
+  bool wasError = false;
+
+  // indent check
+  if (Body && !CheckCondIndent(Loc, Body)) wasError = true;
+
+  if (Body) {
+    // disable returns in scope body
+    mReturnAllowed = false;
+    Body = Body->Resolve(ec, this);
+    if (!Body->IsValid()) wasError = true;
+  }
+  mReturnAllowed = true;
+
+  return !wasError;
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::IsReturnAllowed
+//
+//==========================================================================
+bool VCompoundScopeExit::IsReturnAllowed () const noexcept {
+  return mReturnAllowed;
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::EmitFinalizer
+//
+//==========================================================================
+void VCompoundScopeExit::EmitFinalizer (VEmitContext &ec) {
+  if (Body) Body->Emit(ec, this);
+}
+
+
+//==========================================================================
+//
+//  VCompoundScopeExit::toString
+//
+//==========================================================================
+VStr VCompoundScopeExit::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/{ scope(exit)\n"+
+    (Body ? Body->toString() : VStr("<none>"))+"\n"+
+    VBaseCompoundStatement::toString()+
+    "\n}";
 }

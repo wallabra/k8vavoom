@@ -102,7 +102,9 @@ public:
   // this returns label attached to loops, to implement labeled break/cont
   virtual VName GetBCScopeLabel () const noexcept;
 
+  virtual bool IsAnyCompound () const noexcept;
   virtual bool IsCompound () const noexcept;
+  virtual bool IsTryFinally () const noexcept;
   virtual bool IsEmptyStatement () const noexcept;
   virtual bool IsInvalidStatement () const noexcept;
   virtual VName GetLabelName () const noexcept;
@@ -709,105 +711,6 @@ protected:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// after compound resolving, this will get a scope
-class VBaseCompoundStatement : public VStatement {
-public:
-  TArray<VStatement *> Statements;
-
-  VBaseCompoundStatement (const TLocation &aloc);
-  virtual ~VBaseCompoundStatement () override;
-
-  // required for compounds
-  virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
-  virtual VStr toString () override;
-
-protected:
-  VBaseCompoundStatement () {}
-  virtual void DoSyntaxCopyTo (VStatement *e) override;
-
-  // recursively moves everything after local var decl into its own statement list.
-  // WARNING! this is gum solution, i should invent a better way to do this!
-  // currently this thing should be manually called before resolving statements.
-  void ProcessVarDecls ();
-
-public:
-  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// after compound resolving, this will get a scope
-class VLocalVarStatement : public VBaseCompoundStatement {
-public:
-  VLocalDecl *Decl;
-  // `Statements` is filled by compound
-
-  VLocalVarStatement (VLocalDecl *ADecl);
-  virtual ~VLocalVarStatement () override;
-  virtual VStatement *SyntaxCopy () override;
-
-  virtual VStatement *DoResolve (VEmitContext &ec) override;
-  virtual void DoEmit (VEmitContext &ec) override;
-
-  virtual void EmitDtor (VEmitContext &ec) override;
-
-  virtual bool IsVarDecl () const noexcept override;
-
-  virtual VStr toString () override;
-
-protected:
-  VLocalVarStatement () {}
-  virtual void DoSyntaxCopyTo (VStatement *e) override;
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-class VCompound : public VBaseCompoundStatement {
-public:
-  VCompound (const TLocation &ALoc);
-  virtual VStatement *SyntaxCopy () override;
-
-  virtual VStatement *DoResolve (VEmitContext &ec) override;
-  virtual void DoEmit (VEmitContext &ec) override;
-
-  virtual bool IsCompound () const noexcept override;
-
-protected:
-  VCompound () {}
-  virtual void DoSyntaxCopyTo (VStatement *e) override;
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-class VCompoundScopeExit : public VCompound {
-private:
-  // i am too lazy to create proper AST nodes, so let's use this small hack instead
-  bool mReturnAllowed;
-
-public:
-  VStatement *Body;
-
-  VCompoundScopeExit (VStatement *ABody, const TLocation &ALoc);
-  virtual ~VCompoundScopeExit () override;
-  virtual VStatement *SyntaxCopy () override;
-
-  virtual VStatement *DoResolve (VEmitContext &ec) override;
-
-  virtual bool IsReturnAllowed () const noexcept override;
-
-  virtual void EmitFinalizer (VEmitContext &ec) override;
-
-  virtual VStr toString () override;
-
-protected:
-  VCompoundScopeExit () {}
-  virtual void DoSyntaxCopyTo (VStatement *e) override;
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 class VGotoStmt : public VStatement {
 private:
   VStatement *casedef;
@@ -840,4 +743,141 @@ protected:
 
 public:
   virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// after compound resolving, this will get a scope
+class VBaseCompoundStatement : public VStatement {
+public:
+  TArray<VStatement *> Statements;
+
+  VBaseCompoundStatement (const TLocation &aloc);
+  virtual ~VBaseCompoundStatement () override;
+
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
+  virtual void DoEmit (VEmitContext &ec) override;
+
+  virtual bool IsAnyCompound () const noexcept override;
+
+  // required for compounds
+  virtual bool IsEndsWithReturn () const noexcept override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
+
+  virtual VStr toString () override;
+
+protected:
+  VBaseCompoundStatement () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+  // recursively moves everything after local var decl into its own statement list.
+  // WARNING! this is gum solution, i should invent a better way to do this!
+  // currently this thing should be manually called before resolving statements.
+  void ProcessVarDecls ();
+
+  // return `false` to indicate error
+  virtual bool BeforeProcessVarDecls (VEmitContext &ec);
+  virtual bool BeforeResolveStatements (VEmitContext &ec);
+  virtual bool AfterResolveStatements (VEmitContext &ec);
+
+  virtual bool BeforeEmitStatements (VEmitContext &ec);
+  virtual bool AfterEmitStatements (VEmitContext &ec);
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// this is used for `scope(exit)`, and internally in the compiler
+class VTryFinallyCompound : public VBaseCompoundStatement {
+public:
+  VStatement *Finally;
+
+  VTryFinallyCompound (VStatement *aFinally, const TLocation &ALoc);
+  virtual ~VTryFinallyCompound () override;
+  virtual VStatement *SyntaxCopy () override;
+
+  virtual bool IsTryFinally () const noexcept override;
+
+  virtual void EmitDtor (VEmitContext &ec) override;
+
+  virtual VStr toString () override;
+
+protected:
+  VTryFinallyCompound () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+  virtual bool BeforeResolveStatements (VEmitContext &ec) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// after compound resolving, this will get a scope
+class VLocalVarStatement : public VBaseCompoundStatement {
+public:
+  VLocalDecl *Decl;
+  // `Statements` is filled by compound
+
+  VLocalVarStatement (VLocalDecl *ADecl);
+  virtual ~VLocalVarStatement () override;
+  virtual VStatement *SyntaxCopy () override;
+
+  virtual void EmitDtor (VEmitContext &ec) override;
+
+  virtual bool IsVarDecl () const noexcept override;
+
+  virtual VStr toString () override;
+
+protected:
+  VLocalVarStatement () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+  // return `false` to indicate error
+  virtual bool BeforeResolveStatements (VEmitContext &ec) override;
+  virtual bool AfterResolveStatements (VEmitContext &ec) override;
+
+  virtual bool BeforeEmitStatements (VEmitContext &ec) override;
+  virtual bool AfterEmitStatements (VEmitContext &ec) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VCompound : public VBaseCompoundStatement {
+public:
+  VCompound (const TLocation &ALoc);
+  virtual VStatement *SyntaxCopy () override;
+
+  virtual bool IsCompound () const noexcept override;
+
+protected:
+  VCompound () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VCompoundScopeExit : public VCompound {
+private:
+  // i am too lazy to create proper AST nodes, so let's use this small hack instead
+  bool mReturnAllowed;
+
+public:
+  VStatement *Body;
+
+  VCompoundScopeExit (VStatement *ABody, const TLocation &ALoc);
+  virtual ~VCompoundScopeExit () override;
+  virtual VStatement *SyntaxCopy () override;
+
+  virtual bool IsReturnAllowed () const noexcept override;
+
+  virtual void EmitFinalizer (VEmitContext &ec) override;
+
+  virtual VStr toString () override;
+
+protected:
+  VCompoundScopeExit () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+  virtual bool BeforeResolveStatements (VEmitContext &ec) override;
 };
