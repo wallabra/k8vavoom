@@ -745,12 +745,12 @@ void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
 
 //==========================================================================
 //
-//  VStruct::CopyObject
+//  VStruct::DeepCopyObject
 //
 //==========================================================================
-void VStruct::CopyObject (const vuint8 *Src, vuint8 *Dst) {
+void VStruct::DeepCopyObject (vuint8 *Dst, const vuint8 *Src) {
   // copy parent struct's fields
-  if (ParentStruct) ParentStruct->CopyObject(Src, Dst);
+  if (ParentStruct) ParentStruct->DeepCopyObject(Dst, Src);
   // copy fields
   for (VField *F = Fields; F; F = F->Next) {
     if (F->Flags&FIELD_Internal) continue;

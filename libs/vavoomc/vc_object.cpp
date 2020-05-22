@@ -445,7 +445,7 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
     // copy values from the default object
     vassert(AClass->Defaults);
     //GLog.Logf(NAME_Debug, "000: INITIALIZING fields of `%s`", AClass->GetName());
-    AClass->CopyObject(AClass->Defaults, (vuint8 *)Obj);
+    AClass->DeepCopyObject((vuint8 *)Obj, AClass->Defaults);
     //GLog.Logf(NAME_Debug, "001: DONE INITIALIZING fields of `%s`", AClass->GetName());
 
     // set up object fields

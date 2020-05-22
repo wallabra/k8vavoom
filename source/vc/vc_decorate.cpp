@@ -2627,7 +2627,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               TArray<VDamageFactor> DamageFactors = GetClassDamageFactors(Class);
               TArray<VPainChanceInfo> PainChances = GetClassPainChances(Class);
               // copy default properties
-              ActorClass->CopyObject(ActorClass->Defaults, Class->Defaults);
+              ActorClass->DeepCopyObject(Class->Defaults, ActorClass->Defaults);
               // copy state labels
               Class->StateLabels = ActorClass->StateLabels;
               Class->ClassFlags |= CLASS_SkipSuperStateLabels;

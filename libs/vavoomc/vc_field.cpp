@@ -199,7 +199,7 @@ void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &T
     case TYPE_Class: *(VClass **)Dst = *(VClass * const *)Src; break;
     case TYPE_State: *(VState **)Dst = *(VState * const *)Src; break;
     case TYPE_Delegate: *(VObjectDelegate *)Dst = *(const VObjectDelegate *)Src; break;
-    case TYPE_Struct: Type.Struct->CopyObject(Src, Dst); break;
+    case TYPE_Struct: Type.Struct->DeepCopyObject(Dst, Src); break;
     case TYPE_Array:
       {
         VFieldType IntType = Type;

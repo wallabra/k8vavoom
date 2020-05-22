@@ -2485,7 +2485,7 @@ void VClass::CreateDefaults () {
   // copy default properties from the parent class
   if (ParentClass) {
     //fprintf(stderr, "COPYING `%s` to `%s`\n", ParentClass->GetName(), GetName());
-    ParentClass->CopyObject(ParentClass->Defaults, Defaults);
+    ParentClass->DeepCopyObject(Defaults, ParentClass->Defaults);
   }
 
   /*
@@ -2514,14 +2514,14 @@ void VClass::CreateDefaults () {
 
 //==========================================================================
 //
-//  VClass::CopyObject
+//  VClass::DeepCopyObject
 //
 //==========================================================================
-void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
+void VClass::DeepCopyObject (vuint8 *Dst, const vuint8 *Src) {
   // copy parent class fields
   if (GetSuperClass()) {
     //GLog.Logf(NAME_Dev, "COPYING SUPER fields of `%s` (super is '%s')", GetName(), GetSuperClass()->GetName());
-    GetSuperClass()->CopyObject(Src, Dst);
+    GetSuperClass()->DeepCopyObject(Dst, Src);
   }
   // copy fields
   //GLog.Logf(NAME_Dev, "COPYING fields of `%s`", GetName());

@@ -509,10 +509,10 @@ public:
   // accessors
   inline VClass *GetSuperClass () const noexcept { return ParentClass; }
 
-  void CopyObject (const vuint8 *, vuint8 *);
-  //void SerialiseObject (VStream &, VObject *); // moved to VObject
+  void DeepCopyObject (vuint8 *Dst, const vuint8 *Src);
   void CleanObject (VObject *);
   void DestructObject (VObject *);
+
   VClass *CreateDerivedClass (VName, VMemberBase *, TArray<VDecorateUserVarDef> &, const TLocation &);
   VClass *GetReplacement ();
   VClass *GetReplacee ();
