@@ -87,7 +87,7 @@ static VStr buildConfigName (const VStr &optfile) {
 # include <windows.h>
 #endif
 
-__attribute__((noreturn, format(printf, 1, 2))) void Host_Error (const char *error, ...) {
+static __attribute__((noreturn, format(printf, 1, 2))) void InternalHostError (const char *error, ...) {
 #if defined(VCC_STANDALONE_EXECUTOR) && defined(WIN32)
   static char workString[1024];
   va_list argPtr;
@@ -106,6 +106,17 @@ __attribute__((noreturn, format(printf, 1, 2))) void Host_Error (const char *err
   if (!isGDB) exit(1);
   abort();
 }
+
+
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::HostErrorBuiltin (VStr msg) { InternalHostError("%s", *msg); }
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::SysErrorBuiltin (VStr msg) { Sys_Error("%s", *msg); }
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::AssertErrorBuiltin (VStr msg) { Sys_Error("Assertion failure: %s", *msg); }
+
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::ExecutorAbort (const char *msg) { InternalHostError("%s", msg); }
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::IOError (const char *msg) { InternalHostError("I/O Error: %s", msg); }
+
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::CompilerFatalError (const char *msg) { Sys_Error("%s", msg); }
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::InternalFatalError (const char *msg) { Sys_Error("%s", msg); }
 
 
 static void OnSysError (const char *msg) {

@@ -27,11 +27,7 @@
 #include "../libs/vavoomc/vc_local.h"
 
 
-// for VCC; implement as "aborters" in other code
-void VPackage::WriteObject (VStr) { Sys_Error("VPackage::WriteObject should not be ever called"); }
-void VPackage::LoadBinaryObject (VStream *Strm, VStr filename, TLocation l) { Sys_Error("VPackage::LoadBinaryObject should not be ever called"); }
-
-VStream *vc_OpenFile (VStr fname) { return fsysOpenFileSimple(fname); }
+VStream *VPackage::OpenFileStreamRO (VStr fname) { return fsysOpenFileSimple(fname); }
 
 
 //==========================================================================
@@ -48,7 +44,7 @@ void VPackage::LoadObject (TLocation l) {
       if (!pif) break;
       VStr mainVC = GPackagePath[i]+"/"+Name+"/"+pif;
       //vdlogf("  <%s>", *mainVC);
-      VStream *Strm = vc_OpenFile(mainVC);
+      VStream *Strm = VPackage::OpenFileStreamRO(mainVC);
       if (Strm) { /*vdlogf("  '%s'", *mainVC);*/ LoadSourceObject(Strm, mainVC, l); return; }
     }
   }
@@ -59,7 +55,7 @@ void VPackage::LoadObject (TLocation l) {
       const char *pif = GetPkgImportFile(pidx);
       if (!pif) break;
       VStr mainVC = VStr("packages/")+Name+"/"+pif;
-      VStream *Strm = vc_OpenFile(mainVC);
+      VStream *Strm = VPackage::OpenFileStreamRO(mainVC);
       if (Strm) { /*vdlogf("  '%s'", *mainVC);*/ LoadSourceObject(Strm, mainVC, l); return; }
     }
   }
