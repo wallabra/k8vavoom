@@ -220,7 +220,7 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
     // resolve automatic type
     if (e.TypeExpr->Type.Type == TYPE_Automatic) {
       VExpression *te = (e.Value ? e.Value : e.TypeOfExpr);
-      if (!te) Sys_Error("VC INTERNAL COMPILER ERROR: automatic type without initializer!");
+      if (!te) VCFatalError("VC INTERNAL COMPILER ERROR: automatic type without initializer!");
       if (e.ctorInit) {
         retres = false;
         ParseError(e.Loc, "cannot determine type from ctor for local `%s`", *e.Name);

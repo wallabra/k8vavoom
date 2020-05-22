@@ -82,7 +82,7 @@ __attribute__((noreturn)) void BailOut () {
     for (auto &&s : vcParseErrors) GLog.Logf(NAME_Error, "%s", *s);
     GLog.Logf(NAME_Error, "%s", "=============================");
   }
-  Sys_Error("Confused by previous errors, bailing out");
+  VPackage::InternalFatalError("Confused by previous errors, bailing out");
 }
 
 
@@ -184,5 +184,5 @@ __attribute__((noreturn, format(printf, 1, 2))) void VCFatalError (const char *t
   const char *buf = vavarg(text, argPtr);
   va_end(argPtr);
 
-  Sys_Error("%s", buf);
+  VPackage::CompilerFatalError(buf);
 }

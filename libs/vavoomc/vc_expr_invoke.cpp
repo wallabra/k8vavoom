@@ -231,7 +231,7 @@ void VArgMarshall::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 void VArgMarshall::Emit (VEmitContext &ec) {
-  Sys_Error("The thing that should not be (VArgMarshall::Emit)");
+  VCFatalError("The thing that should not be (VArgMarshall::Emit)");
 }
 
 

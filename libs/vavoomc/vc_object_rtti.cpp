@@ -42,8 +42,8 @@ IMPLEMENT_FUNCTION(VObject, GetIntFieldByName) {
   if (!Self || name == NAME_None) { RET_INT(0); return; }
   //VField *fld = Self->Class->FindFieldChecked(name);
   VField *fld = Self->Class->FindField(name);
-  if (!fld) Sys_Error("field '%s' not found in class '%s'", *name, Self->Class->GetName());
-  if (fld->Type.Type != TYPE_Int) Sys_Error("field '%s' is not int (it is `%s`)", *name, *fld->Type.GetName());
+  if (!fld) VPackage::InternalFatalError(va("field '%s' not found in class '%s'", *name, Self->Class->GetName()));
+  if (fld->Type.Type != TYPE_Int) VPackage::InternalFatalError(va("field '%s' is not int (it is `%s`)", *name, *fld->Type.GetName()));
   RET_INT(*(const vint32 *)((defval ? Self->Class->Defaults : (const vuint8 *)Self)+fld->Ofs));
 }
 */

@@ -604,7 +604,7 @@ bool VExpression::InCompilerCleanup = false;
 
 void *VExpression::operator new (size_t size) {
   size_t *res = (size_t *)AllocMem(size+sizeof(size_t));
-  if (!res) Sys_Error("OUT OF MEMORY!");
+  if (!res) VCFatalError("OUT OF MEMORY!");
   *res = size;
   ++res;
   if (size) memset(res, 0, size);
@@ -625,7 +625,7 @@ void *VExpression::operator new (size_t size) {
 
 void *VExpression::operator new[] (size_t size) {
   size_t *res = (size_t *)AllocMem(size+sizeof(size_t));
-  if (!res) Sys_Error("OUT OF MEMORY!");
+  if (!res) VCFatalError("OUT OF MEMORY!");
   *res = size;
   ++res;
   if (size) memset(res, 0, size);
@@ -710,7 +710,7 @@ int VExpression::IsNumericLiteralExpr (VExpression *e) {
         return ExprNotNum;
       default: break;
     }
-    Sys_Error("ketmar forgot to process some unary operator in `VExpression::IsNumericLiteralExpr()`");
+    VCFatalError("ketmar forgot to process some unary operator in `VExpression::IsNumericLiteralExpr()`");
   }
   // binary math
   if (e->IsBinaryMath()) {
@@ -757,7 +757,7 @@ int VExpression::IsNumericLiteralExpr (VExpression *e) {
         return ExprNotNum;
       default: break;
     }
-    Sys_Error("ketmar forgot to process some binary operator in `VExpression::IsNumericLiteralExpr()`");
+    VCFatalError("ketmar forgot to process some binary operator in `VExpression::IsNumericLiteralExpr()`");
   }
   return ExprNotNum;
 }
@@ -815,7 +815,7 @@ static LEVal calcLE (VExpression *e) {
         return LEVal::Invalid();
       default: break;
     }
-    Sys_Error("ketmar forgot to process some unary operator in `VExpression::calcLE()`");
+    VCFatalError("ketmar forgot to process some unary operator in `VExpression::calcLE()`");
   }
   // binary math
   if (e->IsBinaryMath()) {
@@ -893,7 +893,7 @@ static LEVal calcLE (VExpression *e) {
         return LEVal::Invalid();
       default: break;
     }
-    Sys_Error("ketmar forgot to process some binary operator in `VExpression::calcLE()`");
+    VCFatalError("ketmar forgot to process some binary operator in `VExpression::calcLE()`");
   }
   return LEVal::Invalid();
 }

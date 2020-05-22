@@ -138,7 +138,7 @@ VEmitContext::VEmitContext (VMemberBase *Member)
             //else GLog.Logf(NAME_Debug, "%s: forced class `%s` for class `%s` (method `%s`)", *CurrentFunc->Loc.toStringNoCol(), *CurrentFunc->SelfTypeName, SelfClass->GetName(), *CurrentFunc->GetFullName());
             if (!cc->Defined) ParseError(CurrentFunc->Loc, "Forced self class `%s` is not defined for method `%s`", *CurrentFunc->SelfTypeName, *CurrentFunc->GetFullName());
             SelfClass = cc;
-            if (CurrentFunc->SelfTypeClass && CurrentFunc->SelfTypeClass != cc) Sys_Error("internal compiler error (SelfTypeName)");
+            if (CurrentFunc->SelfTypeClass && CurrentFunc->SelfTypeClass != cc) VCFatalError("internal compiler error (SelfTypeName)");
             CurrentFunc->SelfTypeClass = cc;
           } else {
             ParseError(CurrentFunc->Loc, "Forced self `%s` for nothing (wtf?!) (method `%s`)", *CurrentFunc->SelfTypeName, *CurrentFunc->GetFullName());
@@ -433,7 +433,7 @@ VLocalVarDef &VEmitContext::NewLocal (VName aname, const VFieldType &atype, cons
 //
 //==========================================================================
 VLocalVarDef &VEmitContext::GetLocalByIndex (int idx) {
-  if (idx < 0 || idx >= LocalDefs.length()) Sys_Error("VC INTERNAL COMPILER ERROR IN `VEmitContext::GetLocalByIndex()`");
+  if (idx < 0 || idx >= LocalDefs.length()) VCFatalError("VC INTERNAL COMPILER ERROR IN `VEmitContext::GetLocalByIndex()`");
   return LocalDefs[idx];
 }
 

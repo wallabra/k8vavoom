@@ -155,7 +155,7 @@ VStream *VLexer::doOpenFile (VStr filename) {
   fname = fname.fixSlashes();
 #endif
   if (dgOpenFile) return dgOpenFile(this, fname);
-  return vc_OpenFile(fname);
+  return VPackage::OpenFileStreamRO(fname);
 }
 
 

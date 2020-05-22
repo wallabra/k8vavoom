@@ -80,7 +80,7 @@ VMemberBase::VMemberBase (vuint8 AMemberType, VName AName, VMemberBase *AOuter, 
   , HashNextPropLC(nullptr)
   , HashNextConstLC(nullptr)
 {
-  if (lastUsedMemberId == 0xffffffffu) Sys_Error("too many VC members");
+  if (lastUsedMemberId == 0xffffffffu) VPackage::InternalFatalError("too many VC members");
   mMemberId = ++lastUsedMemberId;
   vassert(mMemberId != 0);
   if (GObjInitialised) {
@@ -247,7 +247,7 @@ VStr VMemberBase::GetFullName () const {
 //==========================================================================
 VPackage *VMemberBase::GetPackage () const noexcept {
   for (const VMemberBase *p = this; p; p = p->Outer) if (p->MemberType == MEMBER_Package) return (VPackage *)p;
-  Sys_Error("Member object %s not in a package", *GetFullName());
+  VPackage::InternalFatalError(va("Member object %s not in a package", *GetFullName()));
   return nullptr;
 }
 
@@ -271,16 +271,6 @@ VPackage *VMemberBase::GetPackageRelaxed () const noexcept {
 bool VMemberBase::IsIn (VMemberBase *SomeOuter) const noexcept {
   for (const VMemberBase *Tst = Outer; Tst; Tst = Tst->Outer) if (Tst == SomeOuter) return true;
   return !SomeOuter;
-}
-
-
-//==========================================================================
-//
-//  VMemberBase::Serialise
-//
-//==========================================================================
-void VMemberBase::Serialise (VStream &Strm) {
-  Strm << Outer;
 }
 
 
@@ -667,7 +657,7 @@ void VMemberBase::StaticAddDefine (const char *s) {
 //==========================================================================
 static VStream *pkgOpenFileDG (VLexer *self, VStr filename) {
   if (VMemberBase::dgOpenFile) return VMemberBase::dgOpenFile(filename, VMemberBase::userdata);
-  return vc_OpenFile(filename);
+  return VPackage::OpenFileStreamRO(filename);
 }
 
 

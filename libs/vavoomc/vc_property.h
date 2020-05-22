@@ -61,8 +61,7 @@ public:
   virtual ~VProperty () override;
   virtual void CompilerShutdown () override;
 
-  virtual void Serialise (VStream &) override;
-  bool Define();
+  bool Define ();
 
   friend inline VStream &operator << (VStream &Strm, VProperty *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };

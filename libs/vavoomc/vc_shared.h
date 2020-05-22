@@ -39,11 +39,6 @@ class VStruct;
 class VClass;
 
 
-// the following API should be implemented by library importer
-extern void __attribute__((noreturn, format(printf, 1, 2))) __declspec(noreturn) Host_Error (const char *error, ...);
-extern VStream *vc_OpenFile (VStr Name);
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 union VStack {
   vint32 i;

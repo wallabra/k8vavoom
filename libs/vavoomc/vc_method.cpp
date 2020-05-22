@@ -133,38 +133,11 @@ void VMethod::CompilerShutdown () {
 
 //==========================================================================
 //
-//  VMethod::Serialise
-//
-//==========================================================================
-void VMethod::Serialise (VStream &Strm) {
-  VMemberBase::Serialise(Strm);
-  vuint8 xver = 0; // current version is 0
-  Strm << xver;
-  Strm << SuperMethod
-    << STRM_INDEX(NumLocals)
-    << STRM_INDEX(Flags)
-    << ReturnType
-    << STRM_INDEX(NumParams)
-    << STRM_INDEX(ParamsSize)
-    << STRM_INDEX(lmbCount)
-    << STRM_INDEX(printfFmtArgIdx)
-    << STRM_INDEX(builtinOpc)
-  ;
-  for (int i = 0; i < NumParams; ++i) {
-    // save param names too
-    Strm << ParamTypes[i] << ParamFlags[i] << Params[i].Name;
-  }
-  Strm << ReplCond << Instructions;
-}
-
-
-//==========================================================================
-//
 //  VMethod::Define
 //
 //==========================================================================
 bool VMethod::Define () {
-  if (emitCalled) Sys_Error("`Define()` after `Emit()` for %s", *GetFullName());
+  if (emitCalled) VCFatalError("`Define()` after `Emit()` for %s", *GetFullName());
   if (defineResult >= 0) {
     if (defineResult != 666) GLog.Logf(NAME_Debug, "`Define()` for `%s` already called!", *GetFullName());
     return (defineResult > 0);
@@ -360,7 +333,7 @@ bool VMethod::Define () {
 //
 //==========================================================================
 void VMethod::Emit () {
-  if (defineResult < 0) Sys_Error("`Emit()` before `Define()` for %s", *GetFullName());
+  if (defineResult < 0) VCFatalError("`Emit()` before `Define()` for %s", *GetFullName());
   if (emitCalled) {
     GLog.Logf(NAME_Debug, "`Emit()` for `%s` already called!", *GetFullName());
     return;
@@ -625,11 +598,11 @@ void VMethod::PostLoad () {
     return;
   }
 
-  if (defineResult < 0) Sys_Error("`Define()` not called for `%s`", *GetFullName());
+  if (defineResult < 0) VCFatalError("`Define()` not called for `%s`", *GetFullName());
   if (!emitCalled) {
     // delegate declarations creates methods without a code, and without a name; tolerate those!
     if (Name != NAME_None || Instructions.length() != 0) {
-      Sys_Error("`Emit()` not called before `PostLoad()` for `%s`", *GetFullName());
+      VCFatalError("`Emit()` not called before `PostLoad()` for `%s`", *GetFullName());
     }
     emitCalled = true; // why not?
   }
@@ -645,17 +618,17 @@ void VMethod::PostLoad () {
         }
         if (origClass->isClassMember()) {
           // check for a valid class
-          Sys_Error("owning class `%s` for `%s` wasn't correctly postloaded", origClass->GetName(), *GetFullName());
+          VCFatalError("owning class `%s` for `%s` wasn't correctly postloaded", origClass->GetName(), *GetFullName());
         } else if (origClass->isStateMember()) {
           // it belongs to a state, so it is a wrapper
-          if ((Flags&FUNC_Final) == 0) Sys_Error("state method `%s` is not final", *GetFullName());
+          if ((Flags&FUNC_Final) == 0) VCFatalError("state method `%s` is not final", *GetFullName());
           VTableIndex = -1;
           break;
         }
         origClass = origClass->Outer;
       }
       if (!origClass) {
-        if ((Flags&FUNC_Final) == 0) Sys_Error("owner-less method `%s` is not final", *GetFullName());
+        if ((Flags&FUNC_Final) == 0) VCFatalError("owner-less method `%s` is not final", *GetFullName());
         VTableIndex = -1; // dunno, something strange here
       }
     } else {
@@ -666,14 +639,14 @@ void VMethod::PostLoad () {
 
   //GLog.Logf(NAME_Debug, "*** %s: %s", *Loc.toString(), *GetFullName());
   // set up builtins
-  if (NumParams > VMethod::MAX_PARAMS) Sys_Error("Function has more than %i params", VMethod::MAX_PARAMS);
+  if (NumParams > VMethod::MAX_PARAMS) VCFatalError("Function has more than %i params", VMethod::MAX_PARAMS);
   for (FBuiltinInfo *B = FBuiltinInfo::Builtins; B; B = B->Next) {
     if (Outer == B->OuterClass && !VStr::Cmp(*Name, B->Name)) {
       if ((Flags&FUNC_Native) != 0 && builtinOpc < 0) {
         NativeFunc = B->Func;
         break;
       } else {
-        Sys_Error("PR_LoadProgs: Builtin %s redefined", B->Name);
+        VCFatalError("Builtin %s redefined", B->Name);
       }
     }
   }
@@ -686,7 +659,7 @@ void VMethod::PostLoad () {
       if (VObject::cliShowUndefinedBuiltins) GLog.Logf(NAME_Error, "Builtin `%s` not found!", *GetFullName());
     } else {
       // k8: actually, abort. define all builtins.
-      Sys_Error("Builtin `%s` not implemented!", *GetFullName());
+      VCFatalError("Builtin `%s` not implemented!", *GetFullName());
     }
     /*
     for (FBuiltinInfo *B = FBuiltinInfo::Builtins; B; B = B->Next) {
@@ -949,7 +922,7 @@ void VMethod::CleanupParams () const {
         Param += 3;
         break;
       default:
-        Sys_Error("Bad method argument type `%s`", *ParamTypes[i].GetName());
+        VPackage::InternalFatalError(va("Bad method argument type `%s`", *ParamTypes[i].GetName()));
     }
     if (ParamFlags[i]&FPARM_Optional) ++Param;
   }
@@ -983,7 +956,7 @@ void VMethod::CleanupParams () const {
       VObject::PR_Pushf(0);
       break;
     default:
-      Sys_Error("Bad return value type `%s`", *ReturnType.GetName());
+      VPackage::InternalFatalError(va("Bad return value type `%s`", *ReturnType.GetName()));
   }
 }
 

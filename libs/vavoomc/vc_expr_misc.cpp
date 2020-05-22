@@ -505,7 +505,7 @@ VTypeExpr *VSingleName::ResolveAsType (VEmitContext &ec) {
     return nullptr;
   }
 
-  if (Type.Type == TYPE_Automatic) Sys_Error("VC INTERNAL COMPILER ERROR: unresolved automatic type (1)!");
+  if (Type.Type == TYPE_Automatic) VCFatalError("VC INTERNAL COMPILER ERROR: unresolved automatic type (1)!");
 
   auto e = VTypeExpr::NewTypeExpr(Type, Loc);
   delete this;
@@ -635,7 +635,7 @@ VTypeExpr *VDoubleName::ResolveAsType (VEmitContext &ec) {
     return nullptr;
   }
 
-  if (Type.Type == TYPE_Automatic) Sys_Error("VC INTERNAL COMPILER ERROR: unresolved automatic type (2)!");
+  if (Type.Type == TYPE_Automatic) VCFatalError("VC INTERNAL COMPILER ERROR: unresolved automatic type (2)!");
 
   auto e = VTypeExpr::NewTypeExpr(Type, Loc);
   delete this;

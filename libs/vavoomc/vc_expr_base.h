@@ -56,7 +56,7 @@ public:
         delete e;
         e = (ae ? ae->SyntaxCopy() : nullptr);
       } else {
-        Sys_Error("VC: internal compiler error (AutoCopy::assignSyntaxCopy)");
+        VCFatalError("VC: internal compiler error (AutoCopy::assignSyntaxCopy)");
       }
     }
     // delete current `e`, and remember `ae` (without syntax-copying)
@@ -66,7 +66,7 @@ public:
         delete e;
         e = ae;
       } else {
-        Sys_Error("VC: internal compiler error (AutoCopy::assignNoCopy)");
+        VCFatalError("VC: internal compiler error (AutoCopy::assignNoCopy)");
       }
     }
   };

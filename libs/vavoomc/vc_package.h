@@ -76,8 +76,6 @@ public:
   virtual ~VPackage () override;
   virtual void CompilerShutdown () override;
 
-  virtual void Serialise (VStream &) override;
-
   int FindString (const char *);
   int FindString (VStr str);
   VConstant *FindConstant (VName Name, VName EnumName=NAME_None);
@@ -90,20 +88,48 @@ public:
   VClass *FindDecorateImportClass (VName) const;
 
   void Emit ();
-  void LoadObject (TLocation); // should be defined by library importer
+  // should be implemented by the host
+  void LoadObject (TLocation l);
 
   // will delete `Strm`
   void LoadSourceObject (VStream *Strm, VStr filename, TLocation l);
-
-  // for VCC; implement as "aborters" in other code
-  void WriteObject (VStr);
-  void LoadBinaryObject (VStream *Strm, VStr filename, TLocation l); // will delete `Strm`
 
   // this emits code for all `PackagesToEmit()`
   // this *MUST* be called after `StaticLoadPackage()!`
   static void StaticEmitPackages ();
 
   friend inline VStream &operator << (VStream &Strm, VPackage *&Obj) { return Strm << *(VMemberBase **)&Obj; }
+
+  // should be implemented by the host
+  static VStream *OpenFileStreamRO (VStr Name);
+
+  // should be implemented by the host; used in `Object.Error()`
+  // it should abort, hence `noreturn`
+  static void HostErrorBuiltin (VStr msg) __attribute__((noreturn)) __declspec(noreturn);
+
+  // should be implemented by the host; used in `Object.Error()`
+  // it should abort, hence `noreturn`
+  static void SysErrorBuiltin (VStr msg) __attribute__((noreturn)) __declspec(noreturn);
+
+  // should be implemented by the host
+  // it should abort, hence `noreturn`
+  static void AssertErrorBuiltin (VStr msg) __attribute__((noreturn)) __declspec(noreturn);
+
+  // should be implemented by the host
+  // it should abort, hence `noreturn`
+  static void ExecutorAbort (const char *msg) __attribute__((noreturn)) __declspec(noreturn);
+
+  // should be implemented by the host
+  // it should abort, hence `noreturn`
+  static void IOError (const char *msg) __attribute__((noreturn)) __declspec(noreturn);
+
+  // should be implemented by the host
+  // it should abort, hence `noreturn`
+  static void CompilerFatalError (const char *msg) __attribute__((noreturn)) __declspec(noreturn);
+
+  // should be implemented by the host
+  // it should abort, hence `noreturn`
+  static void InternalFatalError (const char *msg) __attribute__((noreturn)) __declspec(noreturn);
 
 public:
   // returns `nullptr` on list end; starts with 0

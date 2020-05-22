@@ -109,7 +109,6 @@ public:
   VState (VName AName, VMemberBase *AOuter, TLocation ALoc);
   virtual ~VState () override;
 
-  virtual void Serialise (VStream &) override;
   virtual void PostLoad () override;
 
   bool Define ();

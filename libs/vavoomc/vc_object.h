@@ -442,7 +442,6 @@ public:
   static int cliShowUndefinedBuiltins; // default is true
 
   static int cliShowPackageLoading; // default is false
-  static int compilerDisablePostloading; // default is false; used for VCC
   static int engineAllowNotImplementedBuiltins; // default is false (and hidden classes)
 
   static int standaloneExecutor; // default is false
@@ -802,7 +801,7 @@ public: // this API was in global namespace
 // dynamically cast an object type-safely
 template<class T> T *Cast (VObject *Src) { return (Src && Src->IsA(T::StaticClass()) ? (T *)Src : nullptr); }
 template<class T, class U> T *CastChecked (U *Src) {
-  if (!Src || !Src->IsA(T::StaticClass())) Sys_Error("Cast `%s` to `%s` failed", (Src ? Src->GetClass()->GetName() : "none"), T::StaticClass()->GetName());
+  if (!Src || !Src->IsA(T::StaticClass())) VPackage::InternalFatalError(va("Cast `%s` to `%s` failed", (Src ? Src->GetClass()->GetName() : "none"), T::StaticClass()->GetName()));
   return (T *)Src;
 }
 
@@ -896,7 +895,7 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 #define VMT_RET_NAME(v)    return (v).Execute(this).getName()
 #define VMT_RET_STR(v)     return (v).Execute(this).getStr()
 #define VMT_RET_VEC(v)     return (v).Execute(this).getVector()
-//#define VMT_RET_AVEC(v)    Sys_Error("Not implemented") /*(v).ExecuteFunction(this)*/
+//#define VMT_RET_AVEC(v)    VPackage::InternalFatalError("Not implemented") /*(v).ExecuteFunction(this)*/
 #define VMT_RET_REF(t, v)  return (t *)(v).Execute(this).getObject()
 #define VMT_RET_PTR(t, v)  return (t *)(v).Execute(this).getClass()
 

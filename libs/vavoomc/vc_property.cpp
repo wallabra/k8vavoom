@@ -71,19 +71,6 @@ void VProperty::CompilerShutdown () {
 
 //==========================================================================
 //
-//  VProperty::Serialise
-//
-//==========================================================================
-void VProperty::Serialise (VStream &Strm) {
-  VMemberBase::Serialise(Strm);
-  vuint8 xver = 0; // current version is 0
-  Strm << xver;
-  Strm << Type << GetFunc << SetFunc << DefaultField << ReadField << WriteField << Flags;
-}
-
-
-//==========================================================================
-//
 //  VProperty::Define
 //
 //==========================================================================

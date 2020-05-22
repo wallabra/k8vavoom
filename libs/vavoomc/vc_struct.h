@@ -82,7 +82,6 @@ public:
   VStruct (VName, VMemberBase *, TLocation);
   virtual void CompilerShutdown () override;
 
-  virtual void Serialise (VStream &) override;
   virtual void PostLoad () override;
 
   void AddMethod (VMethod *m);

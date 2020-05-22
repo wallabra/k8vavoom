@@ -32,6 +32,102 @@
 TArray<VPackage *> VPackage::PackagesToEmit;
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct Lists {
+  //TArray<VClass *> &oldList;
+  TMapNC<VName, VClass *> nameMap; // because classes aren't defined yet
+  TMapNC<VClass *, int> oldIndex;
+  TArray<VClass *> newList;
+  TMapNC<VClass *, int> newIndex;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct PLMember {
+  VMemberBase *m;
+  PLMember *next;
+
+  inline PLMember () noexcept : m(nullptr), next(nullptr) {}
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct PLMemberList {
+  PLMember *head;
+  PLMember *tail;
+
+  inline PLMemberList () noexcept : head(nullptr), tail(nullptr) {}
+  inline ~PLMemberList () noexcept { clear(); }
+
+  void clear () noexcept {
+    while (head) {
+      PLMember *c = head;
+      head = head->next;
+      delete c;
+    }
+    head = tail = nullptr;
+  }
+
+  void append (PLMember *m) noexcept {
+    if (!m) return; // just in case
+    vassert(!m->next);
+    if (tail) tail->next = m; else { vassert(!head); head = m; }
+    tail = m;
+  }
+
+  void append (VMemberBase *m) noexcept {
+    if (!m) return;
+    PLMember *n = new PLMember();
+    n->m = m;
+    append(n);
+  }
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct PLPkgInfo {
+  VPackage *pkg;
+  PLMemberList structs;
+  PLMemberList others;
+
+  inline PLPkgInfo () noexcept : pkg(nullptr), structs(), others() {}
+  inline ~PLPkgInfo () noexcept { clear(); }
+
+  void clear () noexcept {
+    structs.clear();
+    others.clear();
+  }
+};
+
+
+//==========================================================================
+//
+//  PutClassToList
+//
+//==========================================================================
+static void PutClassToList (Lists &l, VClass *cls) {
+  if (!cls) return;
+  if (!l.oldIndex.has(cls)) return; // not our class
+  if (l.newIndex.has(cls)) return; // already processed
+  // put parent first
+  auto pcp = l.nameMap.find(cls->ParentClassName);
+  VClass *parent = (pcp ? *pcp : nullptr);
+  //GLog.Logf(NAME_Debug, "CLASS '%s': parent is '%s' (%s)", *cls->GetFullName(), *cls->ParentClassName, (parent ? *parent->GetFullName() : "<none>"));
+  vassert(parent != cls);
+  if (parent && l.oldIndex.has(parent)) {
+    if (!l.newIndex.has(parent)) {
+      ParseWarning(cls->Loc, "class `%s` is defined before class `%s` (at %s)", cls->GetName(), parent->GetName(), *parent->Loc.toStringNoCol());
+      PutClassToList(l, parent);
+    }
+  }
+  // now put us
+  //GLog.Logf(NAME_Debug, "PutClassToList: %s : %s", *cls->GetFullName(), (cls->GetSuperClass() ? *cls->GetSuperClass()->GetFullName() : "FUCK!"));
+  //GLog.Logf(NAME_Debug, "PutClassToList: %s : %s", *cls->GetFullName(), (parent ? *parent->GetFullName() : "<none>"));
+  l.newIndex.put(cls, l.newList.length());
+  l.newList.append(cls);
+}
+
+
 //==========================================================================
 //
 //  VPackage::GetPkgImportFile
@@ -116,34 +212,6 @@ void VPackage::CompilerShutdown () {
   ParsedStructs.clear();
   ParsedClasses.clear();
   ParsedDecorateImportClasses.clear();
-}
-
-
-//==========================================================================
-//
-//  VPackage::Serialise
-//
-//==========================================================================
-void VPackage::Serialise (VStream &Strm) {
-  VMemberBase::Serialise(Strm);
-  vuint8 xver = 0; // current version is 0
-  Strm << xver;
-  // enums
-  vint32 acount = (vint32)KnownEnums.count();
-  Strm << STRM_INDEX(acount);
-  if (Strm.IsLoading()) {
-    KnownEnums.clear();
-    while (acount-- > 0) {
-      VName ename;
-      Strm << ename;
-      KnownEnums.put(ename, true);
-    }
-  } else {
-    for (auto it = KnownEnums.first(); it; ++it) {
-      VName ename = it.getKey();
-      Strm << ename;
-    }
-  }
 }
 
 
@@ -261,43 +329,6 @@ VClass *VPackage::FindDecorateImportClass (VName AName) const {
 }
 
 
-struct Lists {
-  //TArray<VClass *> &oldList;
-  TMapNC<VName, VClass *> nameMap; // because classes aren't defined yet
-  TMapNC<VClass *, int> oldIndex;
-  TArray<VClass *> newList;
-  TMapNC<VClass *, int> newIndex;
-};
-
-
-//==========================================================================
-//
-//  PutClassToList
-//
-//==========================================================================
-static void PutClassToList (Lists &l, VClass *cls) {
-  if (!cls) return;
-  if (!l.oldIndex.has(cls)) return; // not our class
-  if (l.newIndex.has(cls)) return; // already processed
-  // put parent first
-  auto pcp = l.nameMap.find(cls->ParentClassName);
-  VClass *parent = (pcp ? *pcp : nullptr);
-  //GLog.Logf(NAME_Debug, "CLASS '%s': parent is '%s' (%s)", *cls->GetFullName(), *cls->ParentClassName, (parent ? *parent->GetFullName() : "<none>"));
-  vassert(parent != cls);
-  if (parent && l.oldIndex.has(parent)) {
-    if (!l.newIndex.has(parent)) {
-      ParseWarning(cls->Loc, "class `%s` is defined before class `%s` (at %s)", cls->GetName(), parent->GetName(), *parent->Loc.toStringNoCol());
-      PutClassToList(l, parent);
-    }
-  }
-  // now put us
-  //GLog.Logf(NAME_Debug, "PutClassToList: %s : %s", *cls->GetFullName(), (cls->GetSuperClass() ? *cls->GetSuperClass()->GetFullName() : "FUCK!"));
-  //GLog.Logf(NAME_Debug, "PutClassToList: %s : %s", *cls->GetFullName(), (parent ? *parent->GetFullName() : "<none>"));
-  l.newIndex.put(cls, l.newList.length());
-  l.newList.append(cls);
-}
-
-
 //==========================================================================
 //
 //  VPackage::SortParsedClasses
@@ -402,61 +433,6 @@ void VPackage::Emit () {
 }
 
 
-struct PLMember {
-  VMemberBase *m;
-  PLMember *next;
-
-  inline PLMember () noexcept : m(nullptr), next(nullptr) {}
-};
-
-
-struct PLMemberList {
-  PLMember *head;
-  PLMember *tail;
-
-  inline PLMemberList () noexcept : head(nullptr), tail(nullptr) {}
-  inline ~PLMemberList () noexcept { clear(); }
-
-  void clear () noexcept {
-    while (head) {
-      PLMember *c = head;
-      head = head->next;
-      delete c;
-    }
-    head = tail = nullptr;
-  }
-
-  void append (PLMember *m) noexcept {
-    if (!m) return; // just in case
-    vassert(!m->next);
-    if (tail) tail->next = m; else { vassert(!head); head = m; }
-    tail = m;
-  }
-
-  void append (VMemberBase *m) noexcept {
-    if (!m) return;
-    PLMember *n = new PLMember();
-    n->m = m;
-    append(n);
-  }
-};
-
-
-struct PLPkgInfo {
-  VPackage *pkg;
-  PLMemberList structs;
-  PLMemberList others;
-
-  inline PLPkgInfo () noexcept : pkg(nullptr), structs(), others() {}
-  inline ~PLPkgInfo () noexcept { clear(); }
-
-  void clear () noexcept {
-    structs.clear();
-    others.clear();
-  }
-};
-
-
 //==========================================================================
 //
 //  VPackage::StaticEmitPackages
@@ -529,7 +505,8 @@ void VPackage::StaticEmitPackages () {
   }
 
   // postload everything except structs
-  if (!VObject::compilerDisablePostloading) {
+  //if (!VObject::compilerDisablePostloading)
+  {
     /*
     for (auto &&pkg : PackagesToEmit) {
       if (VObject::cliShowPackageLoading) GLog.Logf(NAME_Init, "VavoomC: generating code for package '%s'", *pkg->Name);
@@ -567,7 +544,7 @@ void VPackage::StaticEmitPackages () {
     if (wasEngine && !VObject::engineAllowNotImplementedBuiltins) {
       for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
         if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
-          Sys_Error("package `engine` has hidden class `%s`", *Cls->Name);
+          VCFatalError("package `engine` has hidden class `%s`", *Cls->Name);
         }
       }
     }

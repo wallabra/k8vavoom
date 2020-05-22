@@ -76,42 +76,6 @@ VState::~VState () {
 
 //==========================================================================
 //
-//  VState::Serialise
-//
-//==========================================================================
-void VState::Serialise (VStream &Strm) {
-  VMemberBase::Serialise(Strm);
-  vuint8 xver = 0; // current version is 0
-  Strm << xver;
-  //if (!Strm.IsLoading()) ver = 0; // just in case
-  Strm
-    << STRM_INDEX(Type)
-    << STRM_INDEX(TicType)
-    << SpriteName
-    << STRM_INDEX(Frame)
-    << Time
-    << STRM_INDEX(Misc1)
-    << STRM_INDEX(Misc2)
-    << STRM_INDEX(Arg1)
-    << STRM_INDEX(Arg2)
-    << STRM_INDEX(frameWidth)
-    << STRM_INDEX(frameHeight)
-    << STRM_INDEX(frameOfsX)
-    << STRM_INDEX(frameOfsY)
-    << STRM_INDEX(frameAction)
-    << LightName
-    << NextState
-    << Function
-    << Next;
-  if (Strm.IsLoading()) {
-    LightInited = false;
-    LightDef = nullptr;
-  }
-}
-
-
-//==========================================================================
-//
 //  VState::PostLoad
 //
 //==========================================================================

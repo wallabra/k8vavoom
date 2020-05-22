@@ -199,7 +199,6 @@ public:
   VPackage *GetPackageRelaxed () const noexcept;
   bool IsIn (VMemberBase *) const noexcept;
 
-  virtual void Serialise (VStream &);
   // this performs the final tasks for various object types (see the respective source for more info)
   virtual void PostLoad ();
   virtual void Shutdown ();

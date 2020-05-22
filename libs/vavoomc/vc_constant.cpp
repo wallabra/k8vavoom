@@ -85,25 +85,6 @@ void VConstant::CompilerShutdown () {
 
 //==========================================================================
 //
-//  VConstant::Serialise
-//
-//==========================================================================
-void VConstant::Serialise (VStream &Strm) {
-  VMemberBase::Serialise(Strm);
-  vuint8 xver = 1; // current version is 1
-  Strm << xver;
-  Strm << Type;
-  Strm << Flags;
-  switch (Type) {
-    case TYPE_Float: Strm << FloatValue; break;
-    case TYPE_Name: Strm << *(VName *)&Value; break;
-    default: Strm << STRM_INDEX(Value); break;
-  }
-}
-
-
-//==========================================================================
-//
 //  VConstant::Define
 //
 //==========================================================================

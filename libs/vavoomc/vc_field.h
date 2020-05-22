@@ -71,7 +71,6 @@ public:
   virtual ~VField () override;
   virtual void CompilerShutdown () override;
 
-  virtual void Serialise (VStream &) override;
   bool NeedsDestructor () const;
   bool Define ();
 

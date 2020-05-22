@@ -150,22 +150,22 @@ IMPLEMENT_FUNCTION(VObject, GC_CollectGarbage) {
 IMPLEMENT_FUNCTION(VObject, Error) {
   VObject::VMDumpCallStack();
   if (VObject::cliAllErrorsAreFatal) {
-    Sys_Error("%s", *PF_FormatString());
+    VPackage::SysErrorBuiltin(PF_FormatString());
   } else {
-    Host_Error("%s", *PF_FormatString());
+    VPackage::HostErrorBuiltin(PF_FormatString());
   }
 }
 
 IMPLEMENT_FUNCTION(VObject, FatalError) {
   VObject::VMDumpCallStack();
-  Sys_Error("%s", *PF_FormatString());
+  VPackage::SysErrorBuiltin(PF_FormatString());
 }
 
 IMPLEMENT_FUNCTION(VObject, AssertError) {
   VStr msg;
   vobjGetParam(msg);
   VObject::VMDumpCallStack();
-  Sys_Error("Assertion failed: %s", *msg);
+  VPackage::AssertErrorBuiltin(msg);
 }
 
 
@@ -177,14 +177,14 @@ IMPLEMENT_FUNCTION(VObject, AssertError) {
 IMPLEMENT_FUNCTION(VObject, AngleMod360) {
   float an;
   vobjGetParam(an);
-  if (!isFiniteF(an)) { VObject::VMDumpCallStack(); if (isNaNF(an)) Sys_Error("got NAN"); Sys_Error("got INF"); }
+  if (!isFiniteF(an)) { VObject::VMDumpCallStack(); if (isNaNF(an)) VPackage::InternalFatalError("got NAN"); else VPackage::InternalFatalError("got INF"); }
   RET_FLOAT(AngleMod(an));
 }
 
 IMPLEMENT_FUNCTION(VObject, AngleMod180) {
   float an;
   vobjGetParam(an);
-  if (!isFiniteF(an)) { VObject::VMDumpCallStack(); if (isNaNF(an)) Sys_Error("got NAN"); Sys_Error("got INF"); }
+  if (!isFiniteF(an)) { VObject::VMDumpCallStack(); if (isNaNF(an)) VPackage::InternalFatalError("got NAN"); else VPackage::InternalFatalError("got INF"); }
   RET_FLOAT(AngleMod180(an));
 }
 
@@ -248,7 +248,7 @@ IMPLEMENT_FUNCTION(VObject, GetPlanePointZ) {
   TVec point;
   vobjGetParam(plane, point);
   const float res = plane->GetPointZ(point);
-  if (!isFiniteF(res)) { VObject::VMDumpCallStack(); Sys_Error("invalid call to `GetPlanePointZ()` (probably called with vertical plane)"); }
+  if (!isFiniteF(res)) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("invalid call to `GetPlanePointZ()` (probably called with vertical plane)"); }
   RET_FLOAT(res);
 }
 
@@ -258,7 +258,7 @@ IMPLEMENT_FUNCTION(VObject, GetPlanePointZRev) {
   TVec point;
   vobjGetParam(plane, point);
   const float res = plane->GetPointZRev(point);
-  if (!isFiniteF(res)) { VObject::VMDumpCallStack(); Sys_Error("invalid call to `GetPlanePointZ()` (probably called with vertical plane)"); }
+  if (!isFiniteF(res)) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("invalid call to `GetPlanePointZ()` (probably called with vertical plane)"); }
   RET_FLOAT(res);
 }
 
@@ -1589,11 +1589,11 @@ IMPLEMENT_FUNCTION(VObject, SpawnObject) {
   VClass *Class;
   VOptParamBool skipReplacement(false); //FIXME: `true` for k8vavoom?
   vobjGetParam(Class, skipReplacement);
-  if (!Class) { VMDumpCallStack(); Sys_Error("Cannot spawn `none`"); }
+  if (!Class) { VMDumpCallStack(); VPackage::InternalFatalError("Cannot spawn `none`"); }
   if (skipReplacement) {
-    if (Class->ClassFlags&CLASS_Abstract) { VMDumpCallStack(); Sys_Error("Cannot spawn abstract object"); }
+    if (Class->ClassFlags&CLASS_Abstract) { VMDumpCallStack(); VPackage::InternalFatalError("Cannot spawn abstract object"); }
   } else {
-    if (Class->GetReplacement()->ClassFlags&CLASS_Abstract) { VMDumpCallStack(); Sys_Error("Cannot spawn abstract object"); }
+    if (Class->GetReplacement()->ClassFlags&CLASS_Abstract) { VMDumpCallStack(); VPackage::InternalFatalError("Cannot spawn abstract object"); }
   }
   RET_REF(VObject::StaticSpawnObject(Class, skipReplacement));
 }

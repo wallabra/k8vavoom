@@ -25,9 +25,6 @@
 //**************************************************************************
 #include "vc_public.h"
 
-#define VC_IO_ERROR  Host_Error
-
-
 #define VC_GARBAGE_COLLECTOR_CHECKS
 //#define VC_GARBAGE_COLLECTOR_LOGS_BASE
 //#define VC_GARBAGE_COLLECTOR_LOGS_MORE
@@ -45,7 +42,6 @@ int VObject::cliAllErrorsAreFatal = 0;
 int VObject::cliVirtualiseDecorateMethods = 0;
 int VObject::cliShowPackageLoading = 0;
 int VObject::cliShowUndefinedBuiltins = 1;
-int VObject::compilerDisablePostloading = 0;
 int VObject::engineAllowNotImplementedBuiltins = 0;
 int VObject::standaloneExecutor = 0;
 TMap<VStrCI, bool> VObject::cliAsmDumpMethods;
@@ -196,7 +192,7 @@ bool VMethodProxy::Resolve (VObject *Self) {
 //
 //==========================================================================
 void VMethodProxy::ResolveChecked (VObject *Self) {
-  if (!Resolve(Self)) Sys_Error("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
+  if (!Resolve(Self)) VPackage::InternalFatalError(va("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>")));
 }
 
 
@@ -206,15 +202,15 @@ void VMethodProxy::ResolveChecked (VObject *Self) {
 //
 //==========================================================================
 VFuncRes VMethodProxy::Execute (VObject *Self) {
-  if (!Resolve(Self)) Sys_Error("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
+  if (!Resolve(Self)) VPackage::InternalFatalError(va("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>")));
   if (!(Method->Flags&FUNC_Static)) {
     vassert(Self);
     if (!Self->IsA(Class)) {
       //VObject::VMDumpCallStack();
-      Sys_Error("object of class `%s` is not a subclass of `%s` for method `%s`", Self->GetClass()->GetName(), Class->GetName(), MethodName);
+      VPackage::InternalFatalError(va("object of class `%s` is not a subclass of `%s` for method `%s`", Self->GetClass()->GetName(), Class->GetName(), MethodName));
     }
   }
-  if (Method->VTableIndex < -1) Sys_Error("method `%s` in class `%s` wasn't postloaded", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
+  if (Method->VTableIndex < -1) VPackage::InternalFatalError(va("method `%s` in class `%s` wasn't postloaded", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>")));
   if (Method->VTableIndex != -1) {
     return VObject::ExecuteFunction(Self->vtable[Method->VTableIndex]);
   } else {
@@ -231,8 +227,8 @@ VFuncRes VMethodProxy::Execute (VObject *Self) {
 //
 //==========================================================================
 VFuncRes VMethodProxy::ExecuteNoCheck (VObject *Self) {
-  if (!Resolve(Self)) Sys_Error("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
-  if (Method->VTableIndex < -1) Sys_Error("method `%s` in class `%s` wasn't postloaded", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
+  if (!Resolve(Self)) VPackage::InternalFatalError(va("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>")));
+  if (Method->VTableIndex < -1) VPackage::InternalFatalError(va("method `%s` in class `%s` wasn't postloaded", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>")));
   if (Method->VTableIndex != -1) {
     vassert(Self);
     return VObject::ExecuteFunction(Self->vtable[Method->VTableIndex]);
@@ -303,7 +299,7 @@ VObject::~VObject () {
 //
 //==========================================================================
 void *VObject::operator new (size_t) {
-  //Sys_Error("do not use `new` on `VObject`");
+  //VPackage::InternalFatalError("do not use `new` on `VObject`");
   vassert(GNewObject);
   return GNewObject;
 }
@@ -315,7 +311,7 @@ void *VObject::operator new (size_t) {
 //
 //==========================================================================
 void *VObject::operator new (size_t, const char *, int) {
-  //Sys_Error("do not use `new` on `VObject`");
+  //VPackage::InternalFatalError("do not use `new` on `VObject`");
   vassert(GNewObject);
   return GNewObject;
 }
@@ -467,7 +463,7 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
     // postinit
     Obj->PostCtor();
   } catch (...) {
-    Sys_Error("PostCtor for class `%s` aborted", AClass->GetName());
+    VPackage::InternalFatalError(va("PostCtor for class `%s` aborted", AClass->GetName()));
   }
 
   // we're done
@@ -806,7 +802,7 @@ void VObject::SerialiseFields (VStream &Strm) {
     // read field count
     vint32 fldcount = -1;
     Strm << STRM_INDEX(fldcount);
-    if (fldcount < 0) VC_IO_ERROR("invalid number of saved fields in class `%s` (%d)", GetClass()->GetName(), fldcount);
+    if (fldcount < 0) VPackage::IOError(va("invalid number of saved fields in class `%s` (%d)", GetClass()->GetName(), fldcount));
     if (fldcount == 0) return; // nothing to do
     // build field list to speedup loading
     TMapNC<VName, VField *> fldmap;
@@ -816,7 +812,7 @@ void VObject::SerialiseFields (VStream &Strm) {
         if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
         if (fld->Name == NAME_None) continue;
         if (fldmap.has(fld->Name)) {
-          //VC_IO_ERROR("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+          //VPackage::IOError(va("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName()));
           VClass *prevfld = nullptr;
           for (VClass *xcls = GetClass(); xcls && xcls != cls && !prevfld; xcls = xcls->GetSuperClass()) {
             for (VField *xfld = xcls->Fields; xfld; xfld = xfld->Next) {
@@ -932,8 +928,8 @@ void VObject::Serialise (VStream &strm) {
     // reading
     VName clsname = NAME_None;
     strm << clsname;
-    if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", GetClass()->GetName());
-    if (clsname == NAME_None) VC_IO_ERROR("cannot load object of `none` class");
+    if (strm.IsError()) VPackage::IOError(va("error reading object of class `%s`", GetClass()->GetName()));
+    if (clsname == NAME_None) VPackage::IOError(va("cannot load object of `none` class"));
     VClass *cls = VClass::FindClass(*clsname);
     if (!cls) {
       // can we skip it?
@@ -944,40 +940,40 @@ void VObject::Serialise (VStream &strm) {
         GLog.Logf(NAME_Warning, "I/O: skipping '%s' in '%s' (this may, or may not work)", *clsname, GetClass()->GetName());
         vint32 size;
         strm << size;
-        if (size < 1) VC_IO_ERROR("error reading object of class `%s` (invalid size: %d)", *clsname, size);
+        if (size < 1) VPackage::IOError(va("error reading object of class `%s` (invalid size: %d)", *clsname, size));
         auto endpos = strm.Tell()+size;
         strm.Seek(endpos);
         return;
       }
-      VC_IO_ERROR("cannot load object of unknown `%s` class (%s)", *clsname, GetClass()->GetName());
+      VPackage::IOError(va("cannot load object of unknown `%s` class (%s)", *clsname, GetClass()->GetName()));
     }
-    //if (!IsA(cls)) VC_IO_ERROR("cannot load object of class `%s` class (not a subclass of `%s`)", GetClass()->GetName(), *clsname);
-    if (GetClass() != cls) VC_IO_ERROR("cannot load object of class `%s` (expected class `%s`)", GetClass()->GetName(), *clsname);
+    //if (!IsA(cls)) VPackage::IOError(va("cannot load object of class `%s` class (not a subclass of `%s`)", GetClass()->GetName(), *clsname));
+    if (GetClass() != cls) VPackage::IOError(va("cannot load object of class `%s` (expected class `%s`)", GetClass()->GetName(), *clsname));
     // skip data size
     vint32 size;
     strm << size;
-    if (size < 1) VC_IO_ERROR("error reading object of class `%s` (invalid size: %d)", *clsname, size);
+    if (size < 1) VPackage::IOError(va("error reading object of class `%s` (invalid size: %d)", *clsname, size));
     auto endpos = strm.Tell()+size;
     // read flags
     vint32 flg;
     strm << STRM_INDEX(flg);
-    if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", *clsname);
+    if (strm.IsError()) VPackage::IOError(va("error reading object of class `%s`", *clsname));
     if (flg) SetFlags(flg);
     if (ObjectFlags&VObjFlag_Destroyed) {
       // no need to read anything, just skip it all
-      if (strm.Tell() > endpos) VC_IO_ERROR("error reading object of class `%s` (invalid data size)", *clsname);
+      if (strm.Tell() > endpos) VPackage::IOError(va("error reading object of class `%s` (invalid data size)", *clsname));
       strm.Seek(endpos);
-      if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", *clsname);
+      if (strm.IsError()) VPackage::IOError(va("error reading object of class `%s`", *clsname));
       return;
     }
     // read fields
     SerialiseFields(strm);
-    if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", *clsname);
+    if (strm.IsError()) VPackage::IOError(va("error reading object of class `%s`", *clsname));
     // read other data
     SerialiseOther(strm);
-    if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", *clsname);
+    if (strm.IsError()) VPackage::IOError(va("error reading object of class `%s`", *clsname));
     // check if all data was read
-    if (strm.Tell() != endpos) VC_IO_ERROR("error reading object of class `%s` (not all data read)", *clsname);
+    if (strm.Tell() != endpos) VPackage::IOError(va("error reading object of class `%s` (not all data read)", *clsname));
   } else {
     // writing
     VName clsname = GetClass()->Name;

@@ -1578,7 +1578,7 @@ void VScriptDictElem::streamSkip (VStream &strm) {
 //  VScriptDictElem::Serialise
 //
 //==========================================================================
-void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullname*/) {
+void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp) {
   if (strm.IsLoading()) {
     // reading
     clear();
@@ -1613,7 +1613,7 @@ void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp/*, VStr fu
 //  VScriptDictElem::Serialise
 //
 //==========================================================================
-void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullname*/) const {
+void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp) const {
   vassert(!strm.IsLoading());
   // writing
   vuint8 *ptr;
@@ -1747,7 +1747,7 @@ bool VScriptDict::cleanRefs () {
       VObject *obj = *(VObject **)it.getKey().value;
       if (obj && obj->IsRefToCleanup()) {
         //VObject::VMDumpCallStack();
-        //Sys_Error("dictionary key cleanup is not supported (yet)");
+        //VPackage::InternalFatalError("dictionary key cleanup is not supported (yet)");
         res = true;
         it.removeCurrent();
       } else {
@@ -1769,7 +1769,7 @@ bool VScriptDict::cleanRefs () {
     if (!ktsimple) {
       if (VField::CleanField((vuint8 *)it.getKey().value, kt)) {
         VObject::VMDumpCallStack();
-        Sys_Error("dictionary key cleanup is not supported (yet)");
+        VPackage::InternalFatalError("dictionary key cleanup is not supported (yet)");
         res = true;
         it.removeCurrent();
         continue;
@@ -1820,7 +1820,7 @@ void VScriptDict::streamSkip (VStream &strm) {
   strm << tp;
   vuint32 count = 0;
   strm << STRM_INDEX(count);
-  if (count < 0 || count > 0x1fffffff) Sys_Error("I/O Error: invalid dictionary size");
+  if (count < 0 || count > 0x1fffffff) VPackage::IOError("invalid dictionary size");
   if (count == 0) return;
   while (count--) {
     VScriptDictElem::streamSkip(strm); // key
@@ -1834,16 +1834,16 @@ void VScriptDict::streamSkip (VStream &strm) {
 //  VScriptDict::Serialise
 //
 //==========================================================================
-void VScriptDict::Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullname*/) {
+void VScriptDict::Serialise (VStream &strm, const VFieldType &dtp) {
   VFieldType tp;
   if (strm.IsLoading()) {
     // reading
     strm << tp;
-    if (!tp.Equals(dtp)) Sys_Error("I/O Error: invalid dictionary type");
+    if (!tp.Equals(dtp)) VPackage::IOError("invalid dictionary type");
     vint32 count = 0;
     strm << STRM_INDEX(count);
     clear();
-    if (count < 0 || count > 0x1fffffff) Sys_Error("I/O Error: invalid dictionary size");
+    if (count < 0 || count > 0x1fffffff) VPackage::IOError("invalid dictionary size");
     while (count--) {
       // key and value
       VScriptDictElem ke, ve;

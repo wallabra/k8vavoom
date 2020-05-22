@@ -412,7 +412,6 @@ public:
   static void StaticDumpMObjInfo ();
   static void StaticDumpScriptIds ();
 
-  virtual void Serialise (VStream &) override;
   // calculates field offsets, creates VTable, and fills other such info
   // must be called after `Define()` and `Emit()`
   virtual void PostLoad () override;

@@ -100,48 +100,6 @@ VName VStruct::ResolveAlias (VName aname) {
 
 //==========================================================================
 //
-//  VStruct::Serialise
-//
-//==========================================================================
-void VStruct::Serialise (VStream &Strm) {
-  VMemberBase::Serialise(Strm);
-  vuint8 xver = 0; // current version is 0
-  Strm << xver;
-  vuint32 acount = AliasList.count();
-  Strm << acount;
-  if (Strm.IsLoading()) {
-    AliasFrameNum = 0;
-    AliasList.clear();
-    while (acount-- > 0) {
-      VName key;
-      AliasInfo ai;
-      Strm << key << ai.aliasName << ai.origName;
-      ai.aframe = 0;
-      AliasList.put(key, ai);
-    }
-  } else {
-    for (auto it = AliasList.first(); it; ++it) {
-      VName key = it.getKey();
-      Strm << key;
-      auto ai = it.getValue();
-      Strm << ai.aliasName << ai.origName;
-    }
-  }
-  Strm << ParentStruct
-    << IsVector
-    << STRM_INDEX(StackSize)
-    << Fields
-    << Methods;
-
-  if (Strm.IsLoading()) {
-    cacheNeedDTor = DTF_Unknown;
-    cacheNeedCleanup = -1;
-  }
-}
-
-
-//==========================================================================
-//
 //  VStruct::AddMethod
 //
 //==========================================================================
@@ -503,7 +461,7 @@ void VStruct::CalcFieldOffsets () {
         PrevField->Type.BitMask != 0x80000000)
     {
       vuint32 bit_mask = PrevField->Type.BitMask << 1;
-      if (fi->Type.BitMask != bit_mask) Sys_Error("Wrong bit mask");
+      if (fi->Type.BitMask != bit_mask) VPackage::InternalFatalError("Wrong bit mask");
       fi->Type.BitMask = bit_mask;
       fi->Ofs = PrevField->Ofs;
     } else {
@@ -681,7 +639,7 @@ void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
     // read field count
     vint32 fldcount = -1;
     Strm << STRM_INDEX(fldcount);
-    if (fldcount < 0) Host_Error("invalid number of saved fields in struct `%s` (%d)", *Name, fldcount);
+    if (fldcount < 0) VPackage::IOError(va("invalid number of saved fields in struct `%s` (%d)", *Name, fldcount));
     if (fldcount == 0) return; // nothing to do
     // build field list to speedup loading
     TMapNC<VName, VField *> fldmap;
@@ -690,7 +648,7 @@ void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
       for (VField *fld = st->Fields; fld; fld = fld->Next) {
         if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
         if (fld->Name == NAME_None) continue;
-        if (fldmap.put(fld->Name, fld)) Host_Error("duplicate field `%s` in struct `%s`", *fld->Name, *Name);
+        if (fldmap.put(fld->Name, fld)) VPackage::IOError(va("duplicate field `%s` in struct `%s`", *fld->Name, *Name));
       }
     }
     // now load fields
@@ -727,7 +685,7 @@ void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
       for (VField *fld = st->Fields; fld; fld = fld->Next) {
         if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
         if (fld->Name == NAME_None) continue;
-        if (fldseen.put(fld->Name, true)) Host_Error("duplicate field `%s` in struct `%s`", *fld->Name, *Name);
+        if (fldseen.put(fld->Name, true)) VPackage::IOError(va("duplicate field `%s` in struct `%s`", *fld->Name, *Name));
         fldlist.append(fld);
       }
     }

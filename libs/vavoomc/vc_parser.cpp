@@ -140,7 +140,7 @@ static int GetMaxPriority () {
   if (!MaxPriority) {
     // find max priority, init priority starts
     for (int f = 0; operList[f].prio < 666; ++f) {
-      if (operList[f].prio < MaxPriority) Sys_Error("internal compiler error (priorities)");
+      if (operList[f].prio < MaxPriority) VCFatalError("internal compiler error (priorities)");
       if (operList[f].prio != MaxPriority) {
         MaxPriority = operList[f].prio;
         while (prioStart.length() <= MaxPriority) prioStart.append(-1);
@@ -849,7 +849,7 @@ VExpression *VParser::ParseExpressionInternal (int prio, bool allowAssign) {
           case OperInfo::Unary: return new VUnary((VUnary::EUnaryOp)oinf->oper, op, l);
           case OperInfo::UnaryAsterisk: return new VPushPointed(op, l);
           case OperInfo::PrefixIncDec: return new VUnaryMutator((VUnaryMutator::EIncDec)oinf->oper, op, l);
-          default: Sys_Error("internal compiler error in unary expression parser");
+          default: VCFatalError("internal compiler error in unary expression parser");
         }
       }
     }
@@ -902,7 +902,7 @@ VExpression *VParser::ParseExpressionInternal (int prio, bool allowAssign) {
       case OperInfo::Assign:
         op1 = new VAssignment((VAssignment::EAssignOper)oinf->oper, op1, op2, l);
         return op1; // return here, as assignment has no result
-      default: Sys_Error("internal compiler error in binary expression parser");
+      default: VCFatalError("internal compiler error in binary expression parser");
     }
   }
 
@@ -1270,7 +1270,7 @@ VStatement *VParser::ParseStatement () {
   switch (Lex.Token) {
     case TK_EOF:
       ParseError(Lex.Location, ERR_UNEXPECTED_EOF);
-      if (!vcGagErrors) Sys_Error("Cannot continue");
+      if (!vcGagErrors) VPackage::InternalFatalError("Cannot continue");
       return nullptr;
     case TK_If:
       {
@@ -3930,7 +3930,7 @@ void VParser::ParseClass () {
             case VClass::ReplaceType::Replace_Parents_LatestChild:
               doesReplacement = VClass::ReplaceType::Replace_Parents_LatestChild;
               break;
-            default :Sys_Error("internal error in vc compiler (replacement type)");
+            default: VCFatalError("internal error in vc compiler (replacement type)");
           }
           continue;
         }
@@ -3948,7 +3948,7 @@ void VParser::ParseClass () {
             case VClass::ReplaceType::Replace_Parents_LatestChild:
               doesReplacement = VClass::ReplaceType::Replace_LatestChild;
               break;
-            default :Sys_Error("internal error in vc compiler (replacement type)");
+            default: VCFatalError("internal error in vc compiler (replacement type)");
           }
           continue;
         }
@@ -4532,7 +4532,7 @@ void VParser::ParseClass () {
         if (defallot == defcount) {
           defallot += 1024;
           defstats = (VStatement **)Z_Realloc(defstats, defallot*sizeof(VStatement *));
-          if (!defstats) Sys_Error("VC: out of memory!");
+          if (!defstats) VCFatalError("VC: out of memory!");
         }
         defstats[defcount++] = st;
       }

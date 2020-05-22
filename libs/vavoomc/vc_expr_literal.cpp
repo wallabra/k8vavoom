@@ -355,7 +355,7 @@ VExpression *VClassNameLiteral::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VClassNameLiteral::Emit (VEmitContext &ec) {
-  Sys_Error("VClassNameLiteral::Emit: the thing that should not be!");
+  VCFatalError("VClassNameLiteral::Emit: the thing that should not be!");
 }
 
 

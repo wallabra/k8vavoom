@@ -94,9 +94,9 @@ struct VCSlice {
 //
 //==========================================================================
 VStack *VObject::VMCheckStack (int size) noexcept {
-  if (size < 0 || size > MAX_PROG_STACK) { VMDumpCallStack(); Sys_Error("requested invald VM stack slot count (%d)", size); }
+  if (size < 0 || size > MAX_PROG_STACK) { VMDumpCallStack(); VPackage::InternalFatalError(va("requested invald VM stack slot count (%d)", size)); }
   int used = (int)(ptrdiff_t)(pr_stackPtr-&pr_stack[0]);
-  if (used < 1 || used > MAX_PROG_STACK || MAX_PROG_STACK-size < used) { VMDumpCallStack(); Sys_Error("out of VM stack"); }
+  if (used < 1 || used > MAX_PROG_STACK || MAX_PROG_STACK-size < used) { VMDumpCallStack(); VPackage::InternalFatalError("out of VM stack"); }
   return pr_stackPtr;
 }
 
@@ -245,7 +245,7 @@ void VObject::PR_OnAbort () {
 
 #define VM_CHECK_SIGABORT  do { \
   if ((breakCheckCount--) == 0) { \
-    if (VObject::vmAbortBySignal) { cstDump(ip); Host_Error("VC VM execution aborted"); } \
+    if (VObject::vmAbortBySignal) { cstDump(ip); VPackage::ExecutorAbort("VC VM execution aborted"); } \
     breakCheckCount = BreakCheckLimit; \
   } \
 } while (0)
@@ -272,8 +272,8 @@ static void pushOldIterator (VScriptIterator *iter) {
     // grow
     iterStackSize = ((iterStackSize+1)|0x3ff)+1;
     iterStack = (VScriptIterator **)Z_Realloc(iterStack, iterStackSize*sizeof(iterStack[0]));
-    if (!iterStack) { cstDump(nullptr); Sys_Error("popOldIterator: out of memory for iterator stack"); }
-    if (iterStackUsed >= iterStackSize) { cstDump(nullptr); Sys_Error("popOldIterator: WTF?!"); }
+    if (!iterStack) { cstDump(nullptr); VPackage::InternalFatalError("popOldIterator: out of memory for iterator stack"); }
+    if (iterStackUsed >= iterStackSize) { cstDump(nullptr); VPackage::InternalFatalError("popOldIterator: WTF?!"); }
   }
   iterStack[iterStackUsed++] = iter;
 }
@@ -285,7 +285,7 @@ static void pushOldIterator (VScriptIterator *iter) {
 //
 //==========================================================================
 static void popOldIterator () {
-  if (iterStackUsed == 0) { cstDump(nullptr); Sys_Error("popOldIterator: iterator stack underflow"); }
+  if (iterStackUsed == 0) { cstDump(nullptr); VPackage::InternalFatalError("popOldIterator: iterator stack underflow"); }
   VScriptIterator *it = iterStack[--iterStackUsed];
   if (it) it->Finished();
 }
@@ -304,7 +304,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: VScriptDict
     case OPC_DictDispatch_Clear:
       ht = (VScriptDict *)sp[-1].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       ht->clear();
       --sp;
       return;
@@ -312,7 +312,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: VScriptDict
     case OPC_DictDispatch_Reset:
       ht = (VScriptDict *)sp[-1].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       ht->reset();
       --sp;
       return;
@@ -320,14 +320,14 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: VScriptDict
     case OPC_DictDispatch_Length:
       ht = (VScriptDict *)sp[-1].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       sp[-1].i = ht->length();
       return;
     // capacity
     // [-1]: VScriptDict
     case OPC_DictDispatch_Capacity:
       ht = (VScriptDict *)sp[-1].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       sp[-1].i = ht->capacity();
       return;
     // find
@@ -335,7 +335,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: keyptr
     case OPC_DictDispatch_Find:
       ht = (VScriptDict *)sp[-2].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType, true); // calc hash
       r = ht->find(e);
       if (r) {
@@ -356,7 +356,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     case OPC_DictDispatch_Put:
       // strings are increfed by loading opcode, so it is ok
       ht = (VScriptDict *)sp[-3].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       VScriptDictElem::CreateFromPtr(e, sp[-2].p, KType, true); // calc hash
       VScriptDictElem::CreateFromPtr(v, sp[-1].p, VType, false); // no hash
       sp[-3].i = (ht->put(e, v) ? 1 : 0);
@@ -367,7 +367,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: keyptr
     case OPC_DictDispatch_Delete:
       ht = (VScriptDict *)sp[-2].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType, true); // calc hash
       sp[-2].i = (ht->del(e) ? 1 : 0);
       --sp;
@@ -376,7 +376,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: VScriptDict*
     case OPC_DictDispatch_ClearPointed:
       ht = (VScriptDict *)sp[-1].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       ht->clear();
       --sp;
       return;
@@ -384,7 +384,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: VScriptDict*
     case OPC_DictDispatch_FirstIndex:
       ht = (VScriptDict *)sp[-1].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       sp[-1].i = (ht->map ? ht->map->getFirstIIdx() : -1);
       return;
     // is valid index?
@@ -392,7 +392,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: index
     case OPC_DictDispatch_IsValidIndex:
       ht = (VScriptDict *)sp[-2].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       sp[-2].i = ((ht->map ? ht->map->isValidIIdx(sp[-1].i) : false) ? 1 : 0);
       --sp;
       return;
@@ -401,7 +401,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: index
     case OPC_DictDispatch_NextIndex:
       ht = (VScriptDict *)sp[-2].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       sp[-2].i = (ht->map ? ht->map->getNextIIdx(sp[-1].i) : -1);
       --sp;
       return;
@@ -410,7 +410,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: index
     case OPC_DictDispatch_DelAndNextIndex:
       ht = (VScriptDict *)sp[-2].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       sp[-2].i = (ht->map ? ht->map->removeCurrAndGetNextIIdx(sp[-1].i) : -1);
       --sp;
       return;
@@ -419,7 +419,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: index
     case OPC_DictDispatch_GetKeyAtIndex:
       ht = (VScriptDict *)sp[-2].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       {
         const VScriptDictElem *ep = (ht->map ? ht->map->getKeyIIdx(sp[-1].i) : nullptr);
         if (ep) {
@@ -440,7 +440,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: index
     case OPC_DictDispatch_GetValueAtIndex:
       ht = (VScriptDict *)sp[-2].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       {
         VScriptDictElem *ep = (ht->map ? ht->map->getValueIIdx(sp[-1].i) : nullptr);
         if (ep) {
@@ -459,7 +459,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: VScriptDict
     case OPC_DictDispatch_Compact:
       ht = (VScriptDict *)sp[-1].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       if (ht->map) ht->map->compact();
       --sp;
       return;
@@ -467,7 +467,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     // [-1]: VScriptDict
     case OPC_DictDispatch_Rehash:
       ht = (VScriptDict *)sp[-1].p;
-      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (!ht) { cstDump(origip); VPackage::InternalFatalError("uninitialized dictionary"); }
       if (ht->map) ht->map->rehash();
       --sp;
       return;
@@ -478,7 +478,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       return;
   }
   cstDump(origip);
-  Sys_Error("Dictionary opcode %d is not implemented", dcopcode);
+  VPackage::InternalFatalError(va("Dictionary opcode %d is not implemented", dcopcode));
 }
 
 
@@ -537,7 +537,7 @@ static void RunFunction (VMethod *func) {
 
   //current_func = func;
 
-  if (!func) { cstDump(nullptr); Sys_Error("Trying to execute null function"); }
+  if (!func) { cstDump(nullptr); VPackage::InternalFatalError("Trying to execute null function"); }
 
   const bool profEnabled = !!VObject::ProfilerEnabled;
   const bool profOnlyFunc = (VObject::ProfilerEnabled > 0);
@@ -567,7 +567,7 @@ static void RunFunction (VMethod *func) {
 
   // setup local vars
   //fprintf(stderr, "FUNC: <%s> (%s) ParamsSize=%d; NumLocals=%d; NumParams=%d\n", *func->GetFullName(), *func->Loc.toStringNoCol(), func->ParamsSize, func->NumLocals, func->NumParams);
-  if (func->NumLocals < func->ParamsSize) { cstDump(nullptr); Sys_Error("Miscompiled function (locals=%d, params=%d)", func->NumLocals, func->ParamsSize); }
+  if (func->NumLocals < func->ParamsSize) { cstDump(nullptr); VPackage::InternalFatalError(va("Miscompiled function (locals=%d, params=%d)", func->NumLocals, func->ParamsSize)); }
   local_vars = sp-func->ParamsSize;
   if (func->NumLocals-func->ParamsSize != 0) memset(sp, 0, (func->NumLocals-func->ParamsSize)*sizeof(VStack));
   sp += func->NumLocals-func->ParamsSize;
@@ -599,7 +599,7 @@ func_loop:
     PR_VM_SWITCH(*ip) {
       PR_VM_CASE(OPC_Done)
         cstDump(ip);
-        Sys_Error("Empty function or invalid opcode");
+        VPackage::InternalFatalError("Empty function or invalid opcode");
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Call)
@@ -607,7 +607,7 @@ func_loop:
         #ifdef CHECK_STACK_OVERFLOW_RT
         if (sp >= &pr_stack[MAX_PROG_STACK-4]) {
           cstDump(ip);
-          Sys_Error("ExecuteFunction: Stack overflow in `%s`", *func->GetFullName());
+          VPackage::InternalFatalError(va("ExecuteFunction: Stack overflow in `%s`", *func->GetFullName()));
         }
         #endif
         VObject::pr_stackPtr = sp;
@@ -643,7 +643,7 @@ func_loop:
 
       PR_VM_CASE(OPC_VCall)
         VObject::pr_stackPtr = sp;
-        if (!sp[-ip[3]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-ip[3]].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         cstFixTopIPSP(ip);
         if (profOnlyFunc) mprof.timer.stop();
         RunFunction(((VObject *)sp[-ip[3]].p)->GetVFunctionIdx(ReadInt16(ip+1)));
@@ -655,7 +655,7 @@ func_loop:
 
       PR_VM_CASE(OPC_VCallB)
         VObject::pr_stackPtr = sp;
-        if (!sp[-ip[2]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-ip[2]].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         cstFixTopIPSP(ip);
         if (profOnlyFunc) mprof.timer.stop();
         RunFunction(((VObject *)sp[-ip[2]].p)->GetVFunctionIdx(ip[1]));
@@ -670,9 +670,9 @@ func_loop:
           // get pointer to the delegate
           void **pDelegate = (void **)((vuint8 *)sp[-ip[5]].p+ReadInt32(ip+1));
           // push proper self object
-          if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
-          if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
-          if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
+          if (!pDelegate[0]) { cstDump(ip); VPackage::InternalFatalError("Delegate is not initialised"); }
+          if (!pDelegate[1]) { cstDump(ip); VPackage::InternalFatalError("Delegate is not initialised (empty method)"); }
+          if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); VPackage::InternalFatalError("Delegate is completely fucked"); }
           sp[-ip[5]].p = pDelegate[0];
           VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
@@ -690,9 +690,9 @@ func_loop:
           // get pointer to the delegate
           void **pDelegate = (void **)((vuint8 *)sp[-ip[3]].p+ReadInt16(ip+1));
           // push proper self object
-          if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
-          if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
-          if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
+          if (!pDelegate[0]) { cstDump(ip); VPackage::InternalFatalError("Delegate is not initialised"); }
+          if (!pDelegate[1]) { cstDump(ip); VPackage::InternalFatalError("Delegate is not initialised (empty method)"); }
+          if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); VPackage::InternalFatalError("Delegate is completely fucked"); }
           sp[-ip[3]].p = pDelegate[0];
           VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
@@ -716,9 +716,9 @@ func_loop:
           // drop delegate argument
           sp -= 1;
           // push proper self object
-          if (!pDelegate[0]) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
-          if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
-          if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
+          if (!pDelegate[0]) { cstDump(ip); VPackage::InternalFatalError("Delegate is not initialised"); }
+          if (!pDelegate[1]) { cstDump(ip); VPackage::InternalFatalError("Delegate is not initialised (empty method)"); }
+          if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); VPackage::InternalFatalError("Delegate is completely fucked"); }
           sp[-sofs].p = pDelegate[0];
           VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
@@ -732,7 +732,7 @@ func_loop:
 
       PR_VM_CASE(OPC_Return)
         //vensure(sp == local_vars+func->NumLocals);
-        if (sp != local_vars+func->NumLocals) { cstDump(ip); Sys_Error("assertion failed: `sp == local_vars+func->NumLocals`: ip=%d; diff=%d; func->NumLocals=%d", (int)(ptrdiff_t)(ip-func->Statements.Ptr()), (int)(ptrdiff_t)(sp-(local_vars+func->NumLocals)), func->NumLocals); }
+        if (sp != local_vars+func->NumLocals) { cstDump(ip); VPackage::InternalFatalError(va("assertion failed: `sp == local_vars+func->NumLocals`: ip=%d; diff=%d; func->NumLocals=%d", (int)(ptrdiff_t)(ip-func->Statements.Ptr()), (int)(ptrdiff_t)(sp-(local_vars+func->NumLocals)), func->NumLocals)); }
 #ifdef VMEXEC_RUNDUMP
         printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
@@ -756,7 +756,7 @@ func_loop:
         printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
 #ifdef CHECK_FOR_NANS_INFS_RETURN
-        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("returning NAN/INF vector"); }
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("returning NAN/INF vector"); }
 #endif
         ((VStack *)local_vars)[0] = sp[-3];
         ((VStack *)local_vars)[1] = sp[-2];
@@ -1066,7 +1066,7 @@ func_loop:
         sp[1].f = ((TVec *)&local_vars[ip[1]])->y;
         sp[2].f = ((TVec *)&local_vars[ip[1]])->z;
 #ifdef CHECK_FOR_NANS_INFS
-        if (!isFiniteF(sp[0].f) || !isFiniteF(sp[1].f) || !isFiniteF(sp[2].f)) { cstDump(ip); Sys_Error("creating NAN/INF vector"); }
+        if (!isFiniteF(sp[0].f) || !isFiniteF(sp[1].f) || !isFiniteF(sp[2].f)) { cstDump(ip); VPackage::InternalFatalError("creating NAN/INF vector"); }
 #endif
         ip += 2;
         sp += 3;
@@ -1080,38 +1080,38 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Offset)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].p = (vuint8 *)sp[-1].p+ReadInt32(ip+1);
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_OffsetS)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].p = (vuint8 *)sp[-1].p+ReadInt16(ip+1);
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FieldValue)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = *(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FieldValueS)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = *(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VFieldValue)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         {
           TVec *vp = (TVec *)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
           sp[1].f = vp->z;
           sp[0].f = vp->y;
           sp[-1].f = vp->x;
 #ifdef CHECK_FOR_NANS_INFS
-          if (!isFiniteF(sp[1].f) || !isFiniteF(sp[0].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("loading NAN/INF vector"); }
+          if (!isFiniteF(sp[1].f) || !isFiniteF(sp[0].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("loading NAN/INF vector"); }
 #endif
         }
         sp += 2;
@@ -1119,7 +1119,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VFieldValueS)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         {
           TVec *vp = (TVec *)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
           sp[1].f = vp->z;
@@ -1131,19 +1131,19 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PtrFieldValue)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].p = *(void **)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PtrFieldValueS)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].p = *(void **)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_StrFieldValue)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         {
           VStr *Ptr = (VStr *)((vuint8 *)sp[-1].p+ReadInt32(ip+1));
           sp[-1].p = nullptr;
@@ -1153,7 +1153,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_StrFieldValueS)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         {
           VStr *Ptr = (VStr *)((vuint8 *)sp[-1].p+ReadInt16(ip+1));
           sp[-1].p = nullptr;
@@ -1171,67 +1171,67 @@ func_loop:
           sp[0].i = vs.length;
           ++sp;
         } else {
-          cstDump(ip); Sys_Error("Reference not set to an instance of an object");
+          cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object");
         }
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteFieldValue)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = *((vuint8 *)sp[-1].p+ReadInt32(ip+1));
         ip += 5;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteFieldValueS)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = *((vuint8 *)sp[-1].p+ReadInt16(ip+1));
         ip += 3;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool0FieldValue)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&ip[5]);
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool0FieldValueS)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&ip[3]);
         ip += 4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool1FieldValue)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<8));
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool1FieldValueS)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<8));
         ip += 4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool2FieldValue)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<16));
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool2FieldValueS)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<16));
         ip += 4;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool3FieldValue)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt32(ip+1))&(ip[5]<<24));
         ip += 6;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Bool3FieldValueS)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].i = !!(*(vint32 *)((vuint8 *)sp[-1].p+ReadInt16(ip+1))&(ip[3]<<24));
         ip += 4;
         PR_VM_BREAK;
@@ -1242,7 +1242,7 @@ func_loop:
       PR_VM_CASE(OPC_CheckArrayBounds)
         if (sp[-1].i < 0 || sp[-1].i >= ReadInt32(ip+1)) {
           cstDump(ip);
-          Sys_Error("Array index %d is out of bounds (%d)", sp[-1].i, ReadInt32(ip+1));
+          VPackage::InternalFatalError(va("Array index %d is out of bounds (%d)", sp[-1].i, ReadInt32(ip+1)));
         }
         ip += 5;
         PR_VM_BREAK;
@@ -1252,8 +1252,8 @@ func_loop:
       // [-2]: idx
       // [-1]: idx2
       PR_VM_CASE(OPC_CheckArrayBounds2D)
-        if (sp[-2].i < 0 || sp[-2].i >= ReadInt16(ip+1)) { cstDump(ip); Sys_Error("First array index %d is out of bounds (%d)", sp[-2].i, ReadInt16(ip+1)); }
-        if (sp[-1].i < 0 || sp[-1].i >= ReadInt16(ip+1+2)) { cstDump(ip); Sys_Error("Second array index %d is out of bounds (%d)", sp[-1].i, ReadInt16(ip+1+2)); }
+        if (sp[-2].i < 0 || sp[-2].i >= ReadInt16(ip+1)) { cstDump(ip); VPackage::InternalFatalError(va("First array index %d is out of bounds (%d)", sp[-2].i, ReadInt16(ip+1))); }
+        if (sp[-1].i < 0 || sp[-1].i >= ReadInt16(ip+1+2)) { cstDump(ip); VPackage::InternalFatalError(va("Second array index %d is out of bounds (%d)", sp[-1].i, ReadInt16(ip+1+2))); }
         ip += 1+2+2+4;
         PR_VM_BREAK;
 
@@ -1295,11 +1295,11 @@ func_loop:
           int idx = sp[-1].i;
           VCSlice vs = *(VCSlice *)sp[-2].p;
           if (!vs.ptr) vs.length = 0; else if (vs.length < 0) vs.length = 0; // just in case
-          if (idx < 0 || idx >= vs.length) { cstDump(ip); Sys_Error("Slice index %d is out of range (%d)", idx, vs.length); }
+          if (idx < 0 || idx >= vs.length) { cstDump(ip); VPackage::InternalFatalError(va("Slice index %d is out of range (%d)", idx, vs.length)); }
           sp[-2].p = vs.ptr+idx*ReadInt32(ip+1);
         } else {
           cstDump(ip);
-          Sys_Error("Slice index %d is out of range (0)", sp[-1].i);
+          VPackage::InternalFatalError(va("Slice index %d is out of range (0)", sp[-1].i));
         }
         ip += 5;
         --sp;
@@ -1317,7 +1317,7 @@ func_loop:
 
       /*
       PR_VM_CASE(OPC_OffsetPtr)
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Cannot offset null pointer"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Cannot offset null pointer"); }
         sp[-1].p = (vuint8 *)sp[-1].p+ReadInt32(ip+1);
         ip += 5;
         PR_VM_BREAK;
@@ -1361,7 +1361,7 @@ func_loop:
         sp[0].f = ((TVec *)sp[-1].p)->y;
         sp[-1].f = ((TVec *)sp[-1].p)->x;
 #ifdef CHECK_FOR_NANS_INFS
-        if (!isFiniteF(sp[1].f) || !isFiniteF(sp[0].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("pushing NAN/INF vector"); }
+        if (!isFiniteF(sp[1].f) || !isFiniteF(sp[0].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("pushing NAN/INF vector"); }
 #endif
         sp += 2;
         PR_VM_BREAK;
@@ -1426,10 +1426,10 @@ func_loop:
 
 #ifdef CHECK_FOR_NANS_INFS
     #define BINOP(mem, op) \
-      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); Sys_Error("op '%s' first arg is NAN/INF", #op); } \
-      if (!isFiniteF(sp[-1].mem)) { cstDump(ip); Sys_Error("op '%s' second arg is NAN/INF", #op); } \
+      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); VPackage::InternalFatalError(va("op '%s' first arg is NAN/INF", #op)); } \
+      if (!isFiniteF(sp[-1].mem)) { cstDump(ip); VPackage::InternalFatalError(va("op '%s' second arg is NAN/INF", #op)); } \
       sp[-2].mem = sp[-2].mem op sp[-1].mem; \
-      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); Sys_Error("op '%s' result is NAN/INF", #op); } \
+      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); VPackage::InternalFatalError(va("op '%s' result is NAN/INF", #op)); } \
       --sp; \
       ++ip;
 #else
@@ -1440,10 +1440,10 @@ func_loop:
 #endif
 #ifdef CHECK_FOR_NANS_INFS
     #define BINOP_Q(mem, op) \
-      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); Sys_Error("op '%s' first arg is NAN/INF", #op); } \
-      if (!isFiniteF(sp[-1].mem)) { cstDump(ip); Sys_Error("op '%s' second arg is NAN/INF", #op); } \
+      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); VPackage::InternalFatalError(va("op '%s' first arg is NAN/INF", #op)); } \
+      if (!isFiniteF(sp[-1].mem)) { cstDump(ip); VPackage::InternalFatalError(va("op '%s' second arg is NAN/INF", #op)); } \
       sp[-2].mem op sp[-1].mem; \
-      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); Sys_Error("op '%s' result is NAN/INF", #op); } \
+      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); VPackage::InternalFatalError(va("op '%s' result is NAN/INF", #op)); } \
       --sp; \
       ++ip;
 #else
@@ -1466,12 +1466,12 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Divide)
-        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); VPackage::InternalFatalError("Division by 0"); }
         BINOP_Q(i, /=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Modulus)
-        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); VPackage::InternalFatalError("Division by 0"); }
         BINOP_Q(i, %=);
         PR_VM_BREAK;
 
@@ -1595,10 +1595,10 @@ func_loop:
 
 #ifdef CHECK_FOR_NANS_INFS
     #define ASSIGNOP(type, mem, op) \
-      if (!isFiniteF(*(type *)sp[-2].p)) { cstDump(ip); Sys_Error("assign '%s' with NAN/INF (0)", #op); } \
-      if (!isFiniteF(sp[-1].mem)) { cstDump(ip); Sys_Error("assign '%s' with NAN/INF (1)", #op); } \
+      if (!isFiniteF(*(type *)sp[-2].p)) { cstDump(ip); VPackage::InternalFatalError(va("assign '%s' with NAN/INF (0)", #op)); } \
+      if (!isFiniteF(sp[-1].mem)) { cstDump(ip); VPackage::InternalFatalError(va("assign '%s' with NAN/INF (1)", #op)); } \
       *(type *)sp[-2].p op sp[-1].mem; \
-      if (!isFiniteF(*(type *)sp[-2].p)) { cstDump(ip); Sys_Error("assign '%s' with NAN/INF (3)", #op); } \
+      if (!isFiniteF(*(type *)sp[-2].p)) { cstDump(ip); VPackage::InternalFatalError(va("assign '%s' with NAN/INF (3)", #op)); } \
       sp -= 2; \
       ++ip;
 #else
@@ -1629,12 +1629,12 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DivVarDrop)
-        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); VPackage::InternalFatalError("Division by 0"); }
         ASSIGNOP(vint32, i, /=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ModVarDrop)
-        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); VPackage::InternalFatalError("Division by 0"); }
         ASSIGNOP(vint32, i, %=);
         PR_VM_BREAK;
 
@@ -1727,12 +1727,12 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteDivVarDrop)
-        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); VPackage::InternalFatalError("Division by 0"); }
         ASSIGNOP(vuint8, i, /=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ByteModVarDrop)
-        if (!sp[-1].i) { cstDump(ip); Sys_Error("Division by 0"); }
+        if (!sp[-1].i) { cstDump(ip); VPackage::InternalFatalError("Division by 0"); }
         ASSIGNOP(vuint8, i, %=);
         PR_VM_BREAK;
 
@@ -1778,9 +1778,9 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FDivide)
-        if (!sp[-1].f) { cstDump(ip); Sys_Error("Division by 0"); }
+        if (!sp[-1].f) { cstDump(ip); VPackage::InternalFatalError("Division by 0"); }
 #ifdef CHECK_FOR_INF_NAN_DIV
-        if (!isFiniteF(sp[-1].f)) { cstDump(ip); if (isNaNF(sp[-1].f)) Sys_Error("Division by NAN"); Sys_Error("Division by INF"); }
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); if (isNaNF(sp[-1].f)) VPackage::InternalFatalError("Division by NAN"); else VPackage::InternalFatalError("Division by INF"); }
 #endif
         BINOP_Q(f, /=);
         PR_VM_BREAK;
@@ -1812,7 +1812,7 @@ func_loop:
       PR_VM_CASE(OPC_FUnaryMinus)
         ++ip;
 #ifdef CHECK_FOR_NANS_INFS
-        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("unary with NAN/INF"); }
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("unary with NAN/INF"); }
 #endif
         sp[-1].f = -sp[-1].f;
         PR_VM_BREAK;
@@ -1830,17 +1830,17 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FDivVarDrop)
-        if (!sp[-1].f) { cstDump(ip); Sys_Error("Division by 0"); }
+        if (!sp[-1].f) { cstDump(ip); VPackage::InternalFatalError("Division by 0"); }
 #ifdef CHECK_FOR_INF_NAN_DIV
-        if (!isFiniteF(sp[-1].f)) { cstDump(ip); if (isNaNF(sp[-1].f)) Sys_Error("Division by NAN"); Sys_Error("Division by INF"); }
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); if (isNaNF(sp[-1].f)) VPackage::InternalFatalError("Division by NAN"); else VPackage::InternalFatalError("Division by INF"); }
 #endif
         ASSIGNOP(float, f, /=);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VAdd)
 #ifdef CHECK_FOR_NANS_INFS
-        if (!isFiniteF(sp[-6].f) || !isFiniteF(sp[-5].f) || !isFiniteF(sp[-4].f)) { cstDump(ip); Sys_Error("vec+ op0 is NAN/INF"); }
-        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vec+ op1 is NAN/INF"); }
+        if (!isFiniteF(sp[-6].f) || !isFiniteF(sp[-5].f) || !isFiniteF(sp[-4].f)) { cstDump(ip); VPackage::InternalFatalError("vec+ op0 is NAN/INF"); }
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("vec+ op1 is NAN/INF"); }
 #endif
         sp[-6].f += sp[-3].f;
         sp[-5].f += sp[-2].f;
@@ -1851,8 +1851,8 @@ func_loop:
 
       PR_VM_CASE(OPC_VSubtract)
 #ifdef CHECK_FOR_NANS_INFS
-        if (!isFiniteF(sp[-6].f) || !isFiniteF(sp[-5].f) || !isFiniteF(sp[-4].f)) { cstDump(ip); Sys_Error("vec- op0 is NAN/INF"); }
-        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vec- op1 is NAN/INF"); }
+        if (!isFiniteF(sp[-6].f) || !isFiniteF(sp[-5].f) || !isFiniteF(sp[-4].f)) { cstDump(ip); VPackage::InternalFatalError("vec- op0 is NAN/INF"); }
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("vec- op1 is NAN/INF"); }
 #endif
         sp[-6].f -= sp[-3].f;
         sp[-5].f -= sp[-2].f;
@@ -1865,10 +1865,10 @@ func_loop:
         {
           float scale = sp[-4].f;
 #ifdef CHECK_FOR_INF_NAN_DIV
-          if (!isFiniteF(scale)) { cstDump(ip); Sys_Error("vecprescale scale is NAN/INF"); }
+          if (!isFiniteF(scale)) { cstDump(ip); VPackage::InternalFatalError("vecprescale scale is NAN/INF"); }
 #endif
 #ifdef CHECK_FOR_NANS_INFS
-          if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("vecprescale vec is NAN/INF"); }
+          if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); VPackage::InternalFatalError("vecprescale vec is NAN/INF"); }
 #endif
           sp[-4].f = scale*sp[-3].f;
           sp[-3].f = scale*sp[-2].f;
@@ -1880,33 +1880,33 @@ func_loop:
 
       PR_VM_CASE(OPC_VPostScale)
 #ifdef CHECK_FOR_INF_NAN_DIV
-        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vecscale scale is NAN/INF"); }
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("vecscale scale is NAN/INF"); }
 #endif
 #ifdef CHECK_FOR_NANS_INFS
-        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("vecscale vec is NAN/INF"); }
+        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); VPackage::InternalFatalError("vecscale vec is NAN/INF"); }
 #endif
         sp[-4].f *= sp[-1].f;
         sp[-3].f *= sp[-1].f;
         sp[-2].f *= sp[-1].f;
 #ifdef CHECK_FOR_NANS_INFS
-        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vecscale scale is NAN/INF (exit)"); }
-        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("vecscale vec is NAN/INF (exit)"); }
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("vecscale scale is NAN/INF (exit)"); }
+        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); VPackage::InternalFatalError("vecscale vec is NAN/INF (exit)"); }
 #endif
         --sp;
         ++ip;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VIScale)
-        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("veciscale scale is NAN/INF"); }
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("veciscale scale is NAN/INF"); }
 #ifdef CHECK_FOR_NANS_INFS
-        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("veciscale vec is NAN/INF"); }
+        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); VPackage::InternalFatalError("veciscale vec is NAN/INF"); }
 #endif
         sp[-4].f /= sp[-1].f;
         sp[-3].f /= sp[-1].f;
         sp[-2].f /= sp[-1].f;
 #ifdef CHECK_FOR_NANS_INFS
-        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("veciscale scale is NAN/INF (exit)"); }
-        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("veciscale vec is NAN/INF (exit)"); }
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("veciscale scale is NAN/INF (exit)"); }
+        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); VPackage::InternalFatalError("veciscale vec is NAN/INF (exit)"); }
 #endif
         --sp;
         ++ip;
@@ -1926,7 +1926,7 @@ func_loop:
 
       PR_VM_CASE(OPC_VUnaryMinus)
 #ifdef CHECK_FOR_NANS_INFS
-        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vecunary vec is NAN/INF"); }
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("vecunary vec is NAN/INF"); }
 #endif
         sp[-3].f = -sp[-3].f;
         sp[-2].f = -sp[-2].f;
@@ -1948,13 +1948,13 @@ func_loop:
     #define VASSIGNOP(op) \
       { \
         TVec *ptr = (TVec *)sp[-4].p; \
-        if (!isFiniteF(ptr->x) || !isFiniteF(ptr->y) || !isFiniteF(ptr->z)) { cstDump(ip); Sys_Error("vassign op '%s' op0 is NAN/INF", #op); } \
-        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vassign op '%s' op1 is NAN/INF", #op); } \
+        if (!isFiniteF(ptr->x) || !isFiniteF(ptr->y) || !isFiniteF(ptr->z)) { cstDump(ip); VPackage::InternalFatalError(va("vassign op '%s' op0 is NAN/INF", #op)); } \
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError(va("vassign op '%s' op1 is NAN/INF", #op)); } \
         ptr->x op sp[-3].f; \
         ptr->y op sp[-2].f; \
         ptr->z op sp[-1].f; \
-        if (!isFiniteF(ptr->x) || !isFiniteF(ptr->y) || !isFiniteF(ptr->z)) { cstDump(ip); Sys_Error("vassign op '%s' op0 is NAN/INF (exit)", #op); } \
-        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vassign op '%s' op1 is NAN/INF (exit)", #op); } \
+        if (!isFiniteF(ptr->x) || !isFiniteF(ptr->y) || !isFiniteF(ptr->z)) { cstDump(ip); VPackage::InternalFatalError(va("vassign op '%s' op0 is NAN/INF (exit)", #op)); } \
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError(va("vassign op '%s' op1 is NAN/INF (exit)", #op)); } \
         sp -= 4; \
         ++ip; \
       }
@@ -1984,7 +1984,7 @@ func_loop:
 
       PR_VM_CASE(OPC_VScaleVarDrop)
 #ifdef CHECK_FOR_INF_NAN_DIV
-        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vecscaledrop scale is NAN/INF"); }
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("vecscaledrop scale is NAN/INF"); }
 #endif
         ++ip;
         *(TVec *)sp[-2].p *= sp[-1].f;
@@ -1992,9 +1992,9 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VIScaleVarDrop)
-        if (!sp[-1].f) { cstDump(ip); Sys_Error("Vector division by 0"); }
+        if (!sp[-1].f) { cstDump(ip); VPackage::InternalFatalError("Vector division by 0"); }
 #ifdef CHECK_FOR_INF_NAN_DIV
-        if (!isFiniteF(sp[-1].f)) { cstDump(ip); if (isNaNF(sp[-1].f)) Sys_Error("Vector division by NAN"); Sys_Error("Vector division by INF"); }
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); if (isNaNF(sp[-1].f)) VPackage::InternalFatalError("Vector division by NAN"); else VPackage::InternalFatalError("Vector division by INF"); }
 #endif
         ++ip;
         *(TVec *)sp[-2].p /= sp[-1].f;
@@ -2006,7 +2006,7 @@ func_loop:
           case 0: break;
           case 1: sp[-3].f = sp[-2].f; break;
           case 2: sp[-3].f = sp[-1].f; break;
-          default: { cstDump(ip); Sys_Error("Invalid direct vector access index %u", (unsigned)ip[1]); }
+          default: { cstDump(ip); VPackage::InternalFatalError(va("Invalid direct vector access index %u", (unsigned)ip[1])); }
         }
         ip += 2;
         sp -= 2;
@@ -2024,7 +2024,7 @@ func_loop:
               case VCVSE_X: sp[-3+spidx].f = v.x; break;
               case VCVSE_Y: sp[-3+spidx].f = v.y; break;
               case VCVSE_Z: sp[-3+spidx].f = v.z; break;
-              default: { cstDump(ip); Sys_Error("Invalid direct vector access mask 0x%02x (0x%01x)", ip[1], sw&VCVSE_Mask); }
+              default: { cstDump(ip); VPackage::InternalFatalError(va("Invalid direct vector access mask 0x%02x (0x%01x)", ip[1], sw&VCVSE_Mask)); }
             }
             if (sw&VCVSE_Negate) sp[-3+spidx].f = -sp[-3+spidx].f;
             //GLog.Logf("SWD(1): spidx=%d (%g); el=0x%02x; neg=%d", spidx, sp[-3+spidx].f, (sw&VCVSE_ElementMask), (sw&VCVSE_Negate));
@@ -2215,7 +2215,7 @@ func_loop:
           if (!vs.ptr) vs.length = 0; else if (vs.length < 0) vs.length = 0; // just in case
           if (lo < 0 || hi < lo || lo > vs.length || hi > vs.length) {
             cstDump(ip);
-            Sys_Error("Slice [%d..%d] is out of range (%d)", lo, hi, vs.length);
+            VPackage::InternalFatalError(va("Slice [%d..%d] is out of range (%d)", lo, hi, vs.length));
           } else {
             sp -= 1; // drop one unused limit
             // push slice
@@ -2223,7 +2223,7 @@ func_loop:
             sp[-1].i = hi-lo;
           }
         } else {
-          cstDump(ip); Sys_Error("Cannot operate on none-slice");
+          cstDump(ip); VPackage::InternalFatalError("Cannot operate on none-slice");
         }
         ip += 5;
         PR_VM_BREAK;
@@ -2250,12 +2250,12 @@ func_loop:
 
       PR_VM_CASE(OPC_PtrSubtract)
         {
-          if (!sp[-2].p) { cstDump(ip); Sys_Error("Invalid pointer math (first operand is `nullptr`)"); }
-          if (!sp[-1].p) { cstDump(ip); Sys_Error("Invalid pointer math (second operand is `nullptr`)"); }
-          //if ((uintptr_t)sp[-2].p < (uintptr_t)sp[-1].p) { cstDump(ip); Sys_Error("Invalid pointer math (first operand is out of range)"); }
+          if (!sp[-2].p) { cstDump(ip); VPackage::InternalFatalError("Invalid pointer math (first operand is `nullptr`)"); }
+          if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Invalid pointer math (second operand is `nullptr`)"); }
+          //if ((uintptr_t)sp[-2].p < (uintptr_t)sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Invalid pointer math (first operand is out of range)"); }
           int tsize = ReadInt32(ip+1);
           ptrdiff_t diff = ((intptr_t)sp[-2].p-(intptr_t)sp[-1].p)/tsize;
-          if (diff < -0x7fffffff || diff > 0x7fffffff) { cstDump(ip); Sys_Error("Invalid pointer math (difference is too big)"); }
+          if (diff < -0x7fffffff || diff > 0x7fffffff) { cstDump(ip); VPackage::InternalFatalError("Invalid pointer math (difference is too big)"); }
           sp -= 1;
           sp[-1].i = (int)diff;
         }
@@ -2265,13 +2265,13 @@ func_loop:
       PR_VM_CASE(OPC_IntToFloat)
         ++ip;
         ftemp = (float)sp[-1].i;
-        if (!isFiniteF(ftemp)) { cstDump(ip); Sys_Error("Invalid int->float conversion"); }
+        if (!isFiniteF(ftemp)) { cstDump(ip); VPackage::InternalFatalError("Invalid int->float conversion"); }
         sp[-1].f = ftemp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FloatToInt)
         ++ip;
-        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("Invalid float->int conversion"); }
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("Invalid float->int conversion"); }
         itemp = (vint32)sp[-1].f;
         sp[-1].i = itemp;
         PR_VM_BREAK;
@@ -2327,8 +2327,8 @@ func_loop:
           if (!sp[-2].p && !sp[-1].p) {
             sp -= 2;
           } else {
-            if (!sp[-2].p) { cstDump(origip); Sys_Error("destination is nullptr"); }
-            if (!sp[-1].p) { cstDump(origip); Sys_Error("source is nullptr"); }
+            if (!sp[-2].p) { cstDump(origip); VPackage::InternalFatalError("destination is nullptr"); }
+            if (!sp[-1].p) { cstDump(origip); VPackage::InternalFatalError("source is nullptr"); }
             VField::CopyFieldValue((const vuint8 *)sp[-1].p, (vuint8 *)sp[-2].p, stp);
             sp -= 2;
           }
@@ -2420,7 +2420,7 @@ func_loop:
       PR_VM_CASE(OPC_DynArrayElement)
         if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) {
           cstDump(ip);
-          Sys_Error("Index %d outside the bounds of an array (%d)", sp[-1].i, ((VScriptArray *)sp[-2].p)->Num());
+          VPackage::InternalFatalError(va("Index %d outside the bounds of an array (%d)", sp[-1].i, ((VScriptArray *)sp[-2].p)->Num()));
         }
         sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ReadInt32(ip+1);
         ip += 5;
@@ -2432,7 +2432,7 @@ func_loop:
       PR_VM_CASE(OPC_DynArrayElementB)
         if (sp[-1].i < 0 || sp[-1].i >= ((VScriptArray *)sp[-2].p)->Num()) {
           cstDump(ip);
-          Sys_Error("Index %d outside the bounds of an array (%d)", sp[-1].i, ((VScriptArray *)sp[-2].p)->Num());
+          VPackage::InternalFatalError(va("Index %d outside the bounds of an array (%d)", sp[-1].i, ((VScriptArray *)sp[-2].p)->Num()));
         }
         sp[-2].p = ((VScriptArray *)sp[-2].p)->Ptr()+sp[-1].i*ip[1];
         ip += 2;
@@ -2448,10 +2448,10 @@ func_loop:
           VFieldType Type = VFieldType::ReadTypeMem(ip);
           VScriptArray &A = *(VScriptArray *)sp[-2].p;
           int idx = sp[-1].i;
-          if (idx < 0) { cstDump(ip); Sys_Error("Array index %d is negative", idx); }
+          if (idx < 0) { cstDump(ip); VPackage::InternalFatalError(va("Array index %d is negative", idx)); }
           if (idx >= A.Num()) {
-            if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot grow 2D array"); }
-            if (idx >= MaxDynArrayLength) { cstDump(ip); Sys_Error("Array index %d is too big", idx); }
+            if (A.Is2D()) { cstDump(ip); VPackage::InternalFatalError("Cannot grow 2D array"); }
+            if (idx >= MaxDynArrayLength) { cstDump(ip); VPackage::InternalFatalError(va("Array index %d is too big", idx)); }
             A.SetNum(idx+1, Type);
           }
           sp[-2].p = A.Ptr()+idx*Type.GetSize();
@@ -2490,9 +2490,9 @@ func_loop:
                 VScriptArray &A = *(VScriptArray *)sp[-2].p;
                 int newsize = sp[-1].i;
                 // allow clearing for 2d arrays
-                if (A.Is2D() && newsize != 0) { cstDump(origip); Sys_Error("Cannot resize 2D array"); }
-                if (newsize < 0) { cstDump(origip); Sys_Error("Array index %d is negative", newsize); }
-                if (newsize > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array index %d is too big", newsize); }
+                if (A.Is2D() && newsize != 0) { cstDump(origip); VPackage::InternalFatalError("Cannot resize 2D array"); }
+                if (newsize < 0) { cstDump(origip); VPackage::InternalFatalError(va("Array index %d is negative", newsize)); }
+                if (newsize > MaxDynArrayLength) { cstDump(origip); VPackage::InternalFatalError(va("Array index %d is too big", newsize)); }
                 A.SetNum(newsize, Type);
                 sp -= 2;
               }
@@ -2504,10 +2504,10 @@ func_loop:
                 VScriptArray &A = *(VScriptArray *)sp[-2].p;
                 int newsize = sp[-1].i;
                 // allow clearing for 2d arrays
-                if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(origip); Sys_Error("Cannot resize 2D array"); }
-                if (newsize < 0) { cstDump(origip); Sys_Error("Array shrink delta %d is negative", newsize); }
-                if (newsize > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array shrink delta %d is too big", newsize); }
-                if (A.length() < newsize) { cstDump(origip); Sys_Error("Array shrink delta %d is too big (%d)", newsize, A.length()); }
+                if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(origip); VPackage::InternalFatalError("Cannot resize 2D array"); }
+                if (newsize < 0) { cstDump(origip); VPackage::InternalFatalError(va("Array shrink delta %d is negative", newsize)); }
+                if (newsize > MaxDynArrayLength) { cstDump(origip); VPackage::InternalFatalError(va("Array shrink delta %d is too big", newsize)); }
+                if (A.length() < newsize) { cstDump(origip); VPackage::InternalFatalError(va("Array shrink delta %d is too big (%d)", newsize, A.length())); }
                 if (newsize > 0) A.SetNumMinus(newsize, Type);
                 sp -= 2;
               }
@@ -2519,10 +2519,10 @@ func_loop:
                 VScriptArray &A = *(VScriptArray *)sp[-2].p;
                 int newsize = sp[-1].i;
                 // allow clearing for 2d arrays
-                if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(origip); Sys_Error("Cannot resize 2D array"); }
-                if (newsize < 0) { cstDump(origip); Sys_Error("Array grow delta %d is negative", newsize); }
-                if (newsize > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array grow delta %d is too big", newsize); }
-                if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < newsize) { cstDump(origip); Sys_Error("Array grow delta %d is too big (%d)", newsize, A.length()); }
+                if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(origip); VPackage::InternalFatalError("Cannot resize 2D array"); }
+                if (newsize < 0) { cstDump(origip); VPackage::InternalFatalError(va("Array grow delta %d is negative", newsize)); }
+                if (newsize > MaxDynArrayLength) { cstDump(origip); VPackage::InternalFatalError(va("Array grow delta %d is too big", newsize)); }
+                if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < newsize) { cstDump(origip); VPackage::InternalFatalError(va("Array grow delta %d is too big (%d)", newsize, A.length())); }
                 if (newsize > 0) A.SetNumPlus(newsize, Type);
                 sp -= 2;
               }
@@ -2533,13 +2533,13 @@ func_loop:
             case OPC_DynArrDispatch_DynArrayInsert:
               {
                 VScriptArray &A = *(VScriptArray *)sp[-3].p;
-                if (A.Is2D()) { cstDump(origip); Sys_Error("Cannot insert into 2D array"); }
+                if (A.Is2D()) { cstDump(origip); VPackage::InternalFatalError("Cannot insert into 2D array"); }
                 int index = sp[-2].i;
                 int count = sp[-1].i;
-                if (count < 0) { cstDump(origip); Sys_Error("Array count %d is negative", count); }
-                if (index < 0) { cstDump(origip); Sys_Error("Array index %d is negative", index); }
-                if (index > A.length()) { cstDump(origip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
-                if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < count) { cstDump(origip); Sys_Error("Out of memory for dynarray"); }
+                if (count < 0) { cstDump(origip); VPackage::InternalFatalError(va("Array count %d is negative", count)); }
+                if (index < 0) { cstDump(origip); VPackage::InternalFatalError(va("Array index %d is negative", index)); }
+                if (index > A.length()) { cstDump(origip); VPackage::InternalFatalError(va("Index %d outside the bounds of an array (%d)", index, A.length())); }
+                if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < count) { cstDump(origip); VPackage::InternalFatalError("Out of memory for dynarray"); }
                 if (count > 0) A.Insert(index, count, Type);
                 sp -= 3;
               }
@@ -2550,13 +2550,13 @@ func_loop:
             case OPC_DynArrDispatch_DynArrayRemove:
               {
                 VScriptArray &A = *(VScriptArray *)sp[-3].p;
-                if (A.Is2D()) { cstDump(origip); Sys_Error("Cannot insert into 2D array"); }
+                if (A.Is2D()) { cstDump(origip); VPackage::InternalFatalError("Cannot insert into 2D array"); }
                 int index = sp[-2].i;
                 int count = sp[-1].i;
-                if (count < 0) { cstDump(origip); Sys_Error("Array count %d is negative", count); }
-                if (index < 0) { cstDump(origip); Sys_Error("Array index %d is negative", index); }
-                if (index > A.length()) { cstDump(origip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
-                if (count > A.length()-index) { cstDump(origip); Sys_Error("Array count %d is too big at %d (%d)", count, index, A.length()); }
+                if (count < 0) { cstDump(origip); VPackage::InternalFatalError(va("Array count %d is negative", count)); }
+                if (index < 0) { cstDump(origip); VPackage::InternalFatalError(va("Array index %d is negative", index)); }
+                if (index > A.length()) { cstDump(origip); VPackage::InternalFatalError(va("Index %d outside the bounds of an array (%d)", index, A.length())); }
+                if (count > A.length()-index) { cstDump(origip); VPackage::InternalFatalError(va("Array count %d is too big at %d (%d)", count, index, A.length())); }
                 if (count > 0) A.Remove(index, count, Type);
                 sp -= 3;
               }
@@ -2577,19 +2577,19 @@ func_loop:
               //fprintf(stderr, "sp=%p\n", sp);
               {
                 VScriptArray &A = *(VScriptArray *)sp[-3].p;
-                if (A.Is2D()) { cstDump(origip); Sys_Error("Cannot sort non-flat arrays"); }
+                if (A.Is2D()) { cstDump(origip); VPackage::InternalFatalError("Cannot sort non-flat arrays"); }
                 // get self
                 VObject *dgself = (VObject *)sp[-2].p;
                 // get pointer to the delegate
                 VMethod *dgfunc = (VMethod *)sp[-1].p;
                 if (!dgself) {
-                  if (!dgfunc || (dgfunc->Flags&FUNC_Static) == 0) { cstDump(origip); Sys_Error("Delegate is not initialised"); }
+                  if (!dgfunc || (dgfunc->Flags&FUNC_Static) == 0) { cstDump(origip); VPackage::InternalFatalError("Delegate is not initialised"); }
                 }
-                if (!dgfunc) { cstDump(origip); Sys_Error("Delegate is not initialised (empty method)"); }
+                if (!dgfunc) { cstDump(origip); VPackage::InternalFatalError("Delegate is not initialised (empty method)"); }
                 // fix stack, so we can call a delegate properly
                 VObject::pr_stackPtr = sp;
                 cstFixTopIPSP(ip);
-                if (!A.Sort(Type, dgself, dgfunc)) { cstDump(origip); Sys_Error("Internal error in array sorter"); }
+                if (!A.Sort(Type, dgself, dgfunc)) { cstDump(origip); VPackage::InternalFatalError("Internal error in array sorter"); }
               }
               //current_func = func;
               sp = VObject::pr_stackPtr;
@@ -2602,11 +2602,11 @@ func_loop:
             case OPC_DynArrDispatch_DynArraySwap1D:
               {
                 VScriptArray &A = *(VScriptArray *)sp[-3].p;
-                if (A.Is2D()) { cstDump(origip); Sys_Error("Cannot swap items of non-flat arrays"); }
+                if (A.Is2D()) { cstDump(origip); VPackage::InternalFatalError("Cannot swap items of non-flat arrays"); }
                 int idx0 = sp[-2].i;
                 int idx1 = sp[-1].i;
-                if (idx0 < 0 || idx0 >= A.length()) { cstDump(origip); Sys_Error("Index %d outside the bounds of an array (%d)", idx0, A.length()); }
-                if (idx1 < 0 || idx1 >= A.length()) { cstDump(origip); Sys_Error("Index %d outside the bounds of an array (%d)", idx1, A.length()); }
+                if (idx0 < 0 || idx0 >= A.length()) { cstDump(origip); VPackage::InternalFatalError(va("Index %d outside the bounds of an array (%d)", idx0, A.length())); }
+                if (idx1 < 0 || idx1 >= A.length()) { cstDump(origip); VPackage::InternalFatalError(va("Index %d outside the bounds of an array (%d)", idx1, A.length())); }
                 A.SwapElements(idx0, idx1, Type);
                 sp -= 3;
               }
@@ -2617,8 +2617,8 @@ func_loop:
               {
                 VScriptArray &A = *(VScriptArray *)sp[-2].p;
                 int newsize = sp[-1].i;
-                if (newsize < 0) { cstDump(origip); Sys_Error("Array size %d is negative", newsize); }
-                if (newsize > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array size %d is too big", newsize); }
+                if (newsize < 0) { cstDump(origip); VPackage::InternalFatalError(va("Array size %d is negative", newsize)); }
+                if (newsize > MaxDynArrayLength) { cstDump(origip); VPackage::InternalFatalError(va("Array size %d is too big", newsize)); }
                 A.SetNum(newsize, Type); // this will flatten it
                 sp -= 2;
               }
@@ -2631,10 +2631,10 @@ func_loop:
                 VScriptArray &A = *(VScriptArray *)sp[-3].p;
                 int newsize1 = sp[-2].i;
                 int newsize2 = sp[-1].i;
-                if (newsize1 < 1) { cstDump(origip); Sys_Error("Array size %d is too small", newsize1); }
-                if (newsize1 > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array size %d is too big", newsize1); }
-                if (newsize2 < 1) { cstDump(origip); Sys_Error("Array size %d is too small", newsize2); }
-                if (newsize2 > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array size %d is too big", newsize2); }
+                if (newsize1 < 1) { cstDump(origip); VPackage::InternalFatalError(va("Array size %d is too small", newsize1)); }
+                if (newsize1 > MaxDynArrayLength) { cstDump(origip); VPackage::InternalFatalError(va("Array size %d is too big", newsize1)); }
+                if (newsize2 < 1) { cstDump(origip); VPackage::InternalFatalError(va("Array size %d is too small", newsize2)); }
+                if (newsize2 > MaxDynArrayLength) { cstDump(origip); VPackage::InternalFatalError(va("Array size %d is too big", newsize2)); }
                 A.SetSize2D(newsize1, newsize2, Type);
                 sp -= 3;
               }
@@ -2655,7 +2655,7 @@ func_loop:
               break;
             default:
               cstDump(origip);
-              Sys_Error("Dictionary opcode %d is not implemented", ip[-1]);
+              VPackage::InternalFatalError(va("Dictionary opcode %d is not implemented", ip[-1]));
           }
         }
         PR_VM_BREAK;
@@ -2670,11 +2670,11 @@ func_loop:
           int idx1 = sp[-2].i;
           int idx2 = sp[-1].i;
           // 1d arrays can be accessed as 2d if second index is 0
-          if (idx2 != 0 && !A.Is2D()) { cstDump(ip); Sys_Error("Cannot index 1D array as 2D"); }
-          if (idx1 < 0) { cstDump(ip); Sys_Error("Array index %d is too small", idx1); }
-          if (idx1 >= A.length1()) { cstDump(ip); Sys_Error("Array index %d is too big (%d)", idx1, A.length1()); }
-          if (idx2 < 0) { cstDump(ip); Sys_Error("Array size %d is too small", idx2); }
-          if (idx2 >= A.length2()) { cstDump(ip); Sys_Error("Array size %d is too big (%d)", idx2, A.length2()); }
+          if (idx2 != 0 && !A.Is2D()) { cstDump(ip); VPackage::InternalFatalError("Cannot index 1D array as 2D"); }
+          if (idx1 < 0) { cstDump(ip); VPackage::InternalFatalError(va("Array index %d is too small", idx1)); }
+          if (idx1 >= A.length1()) { cstDump(ip); VPackage::InternalFatalError(va("Array index %d is too big (%d)", idx1, A.length1())); }
+          if (idx2 < 0) { cstDump(ip); VPackage::InternalFatalError(va("Array size %d is too small", idx2)); }
+          if (idx2 >= A.length2()) { cstDump(ip); VPackage::InternalFatalError(va("Array size %d is too big (%d)", idx2, A.length2())); }
           sp[-3].p = A.Ptr()+(idx2*A.length1()+idx1)*ReadInt32(ip+1);
           ip += 5;
           sp -= 2;
@@ -2709,13 +2709,13 @@ func_loop:
 
       PR_VM_CASE(OPC_GetDefaultObj)
         ++ip;
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].p = ((VObject *)sp[-1].p)->GetClass()->Defaults;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_GetClassDefaultObj)
         ++ip;
-        if (!sp[-1].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
+        if (!sp[-1].p) { cstDump(ip); VPackage::InternalFatalError("Reference not set to an instance of an object"); }
         sp[-1].p = ((VClass *)sp[-1].p)->Defaults;
         PR_VM_BREAK;
 
@@ -2726,14 +2726,14 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_IteratorNext)
-        if (iterStackUsed == 0) { cstDump(ip); Sys_Error("VM: No active iterators (but we should have one)"); }
+        if (iterStackUsed == 0) { cstDump(ip); VPackage::InternalFatalError("No active iterators (but we should have one)"); }
         ++ip;
         sp->i = iterStack[iterStackUsed-1]->GetNext();
         ++sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_IteratorPop)
-        if (iterStackUsed == 0) { cstDump(ip); Sys_Error("VM: No active iterators (but we should have one)"); }
+        if (iterStackUsed == 0) { cstDump(ip); VPackage::InternalFatalError("No active iterators (but we should have one)"); }
         popOldIterator();
         ++ip;
         PR_VM_BREAK;
@@ -2744,7 +2744,7 @@ func_loop:
           VFieldType Type = VFieldType::ReadTypeMem(ip);
           VObject::pr_stackPtr = sp;
           VObject::PR_WriteOne(Type); // this will pop everything
-          if (VObject::pr_stackPtr < pr_stack) { VObject::pr_stackPtr = pr_stack; cstDump(ip); Sys_Error("Stack underflow in `write`"); }
+          if (VObject::pr_stackPtr < pr_stack) { VObject::pr_stackPtr = pr_stack; cstDump(ip); VPackage::InternalFatalError("Stack underflow in `write`"); }
           sp = VObject::pr_stackPtr;
         }
         PR_VM_BREAK;
@@ -2867,28 +2867,28 @@ func_loop:
           case OPC_Builtin_ATan2: sp[-2].f = matan(sp[-2].f, sp[-1].f); --sp; break;
           case OPC_Builtin_SinCos: msincos(sp[-3].f, (float *)sp[-2].p, (float *)sp[-1].p); sp -= 3; break;
           case OPC_Builtin_VecLength:
-            if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("vector is INF/NAN"); }
+            if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); VPackage::InternalFatalError("vector is INF/NAN"); }
             sp[-3].f = sqrtf(VSUM3(sp[-1].f*sp[-1].f, sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f));
             sp -= 2;
-            if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vector length is INF/NAN"); }
+            if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("vector length is INF/NAN"); }
             break;
           case OPC_Builtin_VecLengthSquared:
-            if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("vector is INF/NAN"); }
+            if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); VPackage::InternalFatalError("vector is INF/NAN"); }
             sp[-3].f = VSUM3(sp[-1].f*sp[-1].f, sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f);
             sp -= 2;
-            if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vector length is INF/NAN"); }
+            if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("vector length is INF/NAN"); }
             break;
           case OPC_Builtin_VecLength2D:
-            if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("vector is INF/NAN"); }
+            if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); VPackage::InternalFatalError("vector is INF/NAN"); }
             sp[-3].f = sqrtf(VSUM2(sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f));
             sp -= 2;
-            if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vector length2D is INF/NAN"); }
+            if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("vector length2D is INF/NAN"); }
             break;
           case OPC_Builtin_VecLength2DSquared:
-            if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("vector is INF/NAN"); }
+            if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); VPackage::InternalFatalError("vector is INF/NAN"); }
             sp[-3].f = VSUM2(sp[-2].f*sp[-2].f, sp[-3].f*sp[-3].f);
             sp -= 2;
-            if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vector length2D is INF/NAN"); }
+            if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("vector length2D is INF/NAN"); }
             break;
           case OPC_Builtin_VecNormalize:
             {
@@ -2927,7 +2927,7 @@ func_loop:
               TVec v1(sp[-3].f, sp[-2].f, sp[-1].f);
               sp -= 2;
               sp[-1].f = DotProduct(v1, v2);
-              if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("dotproduct result is INF/NAN"); }
+              if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("dotproduct result is INF/NAN"); }
               break;
             }
           case OPC_Builtin_VecDot2D:
@@ -2937,7 +2937,7 @@ func_loop:
               TVec v1(sp[-3].f, sp[-2].f, sp[-1].f);
               sp -= 2;
               sp[-1].f = DotProduct2D(v1, v2);
-              if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("dotproduct2d result is INF/NAN"); }
+              if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("dotproduct2d result is INF/NAN"); }
               break;
             }
           case OPC_Builtin_VecCross:
@@ -2949,7 +2949,7 @@ func_loop:
               sp[-1].f = v1.z;
               sp[-2].f = v1.y;
               sp[-3].f = v1.x;
-              if (!v1.isValid()) { cstDump(ip); Sys_Error("crossproduct result is INF/NAN"); }
+              if (!v1.isValid()) { cstDump(ip); VPackage::InternalFatalError("crossproduct result is INF/NAN"); }
               break;
             }
           case OPC_Builtin_VecCross2D:
@@ -2959,7 +2959,7 @@ func_loop:
               TVec v1(sp[-3].f, sp[-2].f, sp[-1].f);
               sp -= 2;
               sp[-1].f = CrossProduct2D(v1, v2);
-              if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("crossproduct2d result is INF/NAN"); }
+              if (!isFiniteF(sp[-1].f)) { cstDump(ip); VPackage::InternalFatalError("crossproduct2d result is INF/NAN"); }
               break;
             }
           case OPC_Builtin_RoundF2I: sp[-1].i = (int)(roundf(sp[-1].f)); break;
@@ -3082,7 +3082,7 @@ func_loop:
               }
               break;
             }
-          default: cstDump(ip); Sys_Error("Unknown builtin");
+          default: cstDump(ip); VPackage::InternalFatalError("Unknown builtin");
         }
         ip += 2;
         PR_VM_BREAK;
@@ -3131,7 +3131,7 @@ func_loop:
 
       PR_VM_DEFAULT
         cstDump(ip);
-        Sys_Error("Invalid opcode %d", *ip);
+        VPackage::InternalFatalError(va("Invalid opcode %d", *ip));
     }
   }
   goto func_loop;
@@ -3210,7 +3210,7 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
   // after executing base function stack must be empty
   if (!current_func && pr_stackPtr != pr_stack+1) {
     cstDump(nullptr);
-    Sys_Error("ExecuteFunction: Stack is not empty after executing function:\n%s\nstack=%p, oldsp=%p, diff=%d", *func->Name, pr_stack, pr_stackPtr, (int)(ptrdiff_t)(pr_stack-pr_stackPtr));
+    VPackage::InternalFatalError(va("ExecuteFunction: Stack is not empty after executing function:\n%s\nstack=%p, oldsp=%p, diff=%d", *func->Name, pr_stack, pr_stackPtr, (int)(ptrdiff_t)(pr_stack-pr_stackPtr)));
     #ifdef VMEXEC_RUNDUMP
     abort();
     #endif
@@ -3221,7 +3221,7 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
   // check if stack wasn't underflowed
   if (pr_stack[0].i != STACK_ID) {
     cstDump(nullptr);
-    Sys_Error("ExecuteFunction: Stack underflow in %s", *func->Name);
+    VPackage::InternalFatalError(va("ExecuteFunction: Stack underflow in %s", *func->Name));
     #ifdef VMEXEC_RUNDUMP
     abort();
     #endif
@@ -3232,7 +3232,7 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
   // check if stack wasn't overflowed
   if (pr_stack[MAX_PROG_STACK-1].i != STACK_ID) {
     cstDump(nullptr);
-    Sys_Error("ExecuteFunction: Stack overflow in `%s`", *func->Name);
+    VPackage::InternalFatalError(va("ExecuteFunction: Stack overflow in `%s`", *func->Name));
     #ifdef VMEXEC_RUNDUMP
     abort();
     #endif
@@ -3263,7 +3263,7 @@ public:
   }
 
   inline VStr *alloc () noexcept {
-    if (used == VMethod::MAX_PARAMS) Sys_Error("out of strings in `VStrPool`");
+    if (used == VMethod::MAX_PARAMS) VPackage::InternalFatalError("out of strings in `VStrPool`");
     // this is valid initialisation for VStr
     VStr *res = (VStr *)(&pool[used++]);
     memset((void *)res, 0, sizeof(VStr));
@@ -3288,7 +3288,7 @@ public:
   inline void clear () noexcept { used = 0; }
 
   inline T *alloc () noexcept {
-    if (used == VMethod::MAX_PARAMS*3) Sys_Error("out of room in `VSimpleTypePool`");
+    if (used == VMethod::MAX_PARAMS*3) VPackage::InternalFatalError("out of room in `VSimpleTypePool`");
     // this is valid initialisation
     T *res = &pool[used++];
     memset((void *)res, 0, sizeof(T));
@@ -3298,7 +3298,7 @@ public:
   // for vectors/delegates
   inline T *nalloc (unsigned count) noexcept {
     vassert(count > 0 && count < VMethod::MAX_PARAMS);
-    if (used+count > VMethod::MAX_PARAMS*3) Sys_Error("out of room in `VSimpleTypePool`");
+    if (used+count > VMethod::MAX_PARAMS*3) VPackage::InternalFatalError("out of room in `VSimpleTypePool`");
     // this is valid initialisation
     T *res = &pool[used];
     memset((void *)res, 0, sizeof(T)*count);
@@ -3314,18 +3314,18 @@ public:
 //
 //==========================================================================
 VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allowVMTLookups) {
-  if (!func) Sys_Error("ExecuteFunctionNoArgs: null func!");
-  if (func->VTableIndex < -1) Sys_Error("method `%s` in class `%s` wasn't postloaded (%d)", *func->GetFullName(), (Self ? Self->GetClass()->GetName() : "<unknown>"), func->VTableIndex);
+  if (!func) VPackage::InternalFatalError("ExecuteFunctionNoArgs: null func!");
+  if (func->VTableIndex < -1) VPackage::InternalFatalError(va("method `%s` in class `%s` wasn't postloaded (%d)", *func->GetFullName(), (Self ? Self->GetClass()->GetName() : "<unknown>"), func->VTableIndex));
 
   if (!(func->Flags&FUNC_Static)) {
-    if (!Self) Sys_Error("trying to call method `%s` without an object", *func->GetFullName());
+    if (!Self) VPackage::InternalFatalError(va("trying to call method `%s` without an object", *func->GetFullName()));
     // for virtual functions, check for correct class
     VClass *origClass = func->GetSelfClass();
     // for state wrapper, the class can be absent
     if (origClass) {
       // check for a valid class
       if (!Self->IsA(origClass)) {
-        Sys_Error("object of class `%s` is not a subclass of `%s` for method `%s`", Self->GetClass()->GetName(), origClass->GetName(), *func->GetFullName());
+        VPackage::InternalFatalError(va("object of class `%s` is not a subclass of `%s` for method `%s`", Self->GetClass()->GetName(), origClass->GetName(), *func->GetFullName()));
       }
     }
     /*
@@ -3341,7 +3341,7 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allo
         origClass = origClass->Outer;
       }
       #endif
-      Sys_Error("trying to call method `%s` which doesn't belong to a class, or to a state (self is `%s`)", *func->GetFullName(), (Self ? Self->GetClass()->GetName() : "<none>"));
+      VPackage::InternalFatalError(va("trying to call method `%s` which doesn't belong to a class, or to a state (self is `%s`)", *func->GetFullName(), (Self ? Self->GetClass()->GetName() : "<none>")));
     }
     */
     // push `self`
@@ -3356,11 +3356,11 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allo
     if (allowVMTLookups) {
       func = Self->vtable[func->VTableIndex];
     } else {
-      Sys_Error("trying to call virtual function `%s` in class `%s`, but VMT lookups are disabled", *func->GetFullName(), *Self->GetClass()->GetFullName());
+      VPackage::InternalFatalError(va("trying to call virtual function `%s` in class `%s`, but VMT lookups are disabled", *func->GetFullName(), *Self->GetClass()->GetFullName()));
     }
   }
 
-  if (func->NumParams > VMethod::MAX_PARAMS) Sys_Error("ExecuteFunctionNoArgs: function `%s` has too many parameters (%d)", *func->GetFullName(), func->NumParams); // sanity check
+  if (func->NumParams > VMethod::MAX_PARAMS) VPackage::InternalFatalError(va("ExecuteFunctionNoArgs: function `%s` has too many parameters (%d)", *func->GetFullName(), func->NumParams)); // sanity check
 
   // placeholders for "ref" args
   VSimpleTypePool<int32_t> rints;
@@ -3373,7 +3373,7 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allo
   for (int f = 0; f < func->NumParams; ++f) {
     // out/ref arg
     if ((func->ParamFlags[f]&(FPARM_Out|FPARM_Ref)) != 0) {
-      if (func->ParamTypes[f].IsAnyArrayOrStruct()) Sys_Error("ExecuteFunctionNoArgs: function `%s`, argument #%d is ref/out array/struct, this is not supported yet", *func->GetFullName(), f+1);
+      if (func->ParamTypes[f].IsAnyArrayOrStruct()) VPackage::InternalFatalError(va("ExecuteFunctionNoArgs: function `%s`, argument #%d is ref/out array/struct, this is not supported yet", *func->GetFullName(), f+1));
       switch (func->ParamTypes[f].Type) {
         case TYPE_Int:
         case TYPE_Byte:
@@ -3402,12 +3402,12 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allo
           P_PASS_PTR(rptrs.nalloc(2));
           break;
         default:
-          Sys_Error("%s", va("ExecuteFunctionNoArgs: function `%s`, argument #%d is of bad type `%s`", *func->GetFullName(), f+1, *func->ParamTypes[f].GetName()));
+          VPackage::InternalFatalError(va("ExecuteFunctionNoArgs: function `%s`, argument #%d is of bad type `%s`", *func->GetFullName(), f+1, *func->ParamTypes[f].GetName()));
           break;
       }
       if ((func->ParamFlags[f]&FPARM_Optional) != 0) P_PASS_BOOL(false); // "specified" flag
     } else {
-      if ((func->ParamFlags[f]&FPARM_Optional) == 0) Sys_Error("ExecuteFunctionNoArgs: function `%s`, argument #%d is not optional!", *func->GetFullName(), f+1);
+      if ((func->ParamFlags[f]&FPARM_Optional) == 0) VPackage::InternalFatalError(va("ExecuteFunctionNoArgs: function `%s`, argument #%d is not optional!", *func->GetFullName(), f+1));
       // push empty values
       switch (func->ParamTypes[f].Type) {
         case TYPE_Int:
@@ -3438,7 +3438,7 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allo
           P_PASS_PTR(nullptr);
           break;
         default:
-          Sys_Error("%s", va("ExecuteFunctionNoArgs: function `%s`, argument #%d is of bad type `%s`", *func->GetFullName(), f+1, *func->ParamTypes[f].GetName()));
+          VPackage::InternalFatalError(va("ExecuteFunctionNoArgs: function `%s`, argument #%d is of bad type `%s`", *func->GetFullName(), f+1, *func->ParamTypes[f].GetName()));
           break;
       }
       P_PASS_BOOL(false); // "specified" flag

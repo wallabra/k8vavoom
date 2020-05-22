@@ -124,23 +124,6 @@ void VField::CompilerShutdown () {
 
 //==========================================================================
 //
-//  VField::Serialise
-//
-//==========================================================================
-void VField::Serialise (VStream &Strm) {
-  VMemberBase::Serialise(Strm);
-  vuint8 xver = 0; // current version is 0
-  Strm << xver;
-  Strm << Next
-    << Type
-    << Func
-    << STRM_INDEX(Flags)
-    << ReplCond;
-}
-
-
-//==========================================================================
-//
 //  VField::NeedsDestructor
 //
 //==========================================================================
@@ -259,7 +242,7 @@ void VField::SkipSerialisedType (VStream &Strm) {
     case TYPE_Pointer: // WARNING! keep in sync with sv_save.cpp!
       Strm << tp; // inner type
       if (tp != TYPE_Struct) {
-        //Host_Error("I/O Error: don't know how to skip non-struct pointer type");
+        //VPackage::IOError("don't know how to skip non-struct pointer type");
       } else {
         Strm << STRM_INDEX(tmpi32);
       }
@@ -274,7 +257,7 @@ void VField::SkipSerialisedType (VStream &Strm) {
       Strm << tp; // inner type
       Strm << STRM_INDEX(n);
       Strm << STRM_INDEX(InnerSize);
-      if (n < 0 || InnerSize < 0) Host_Error("I/O Error: invalid array size");
+      if (n < 0 || InnerSize < 0) VPackage::IOError("invalid array size");
       while (n--) SkipSerialisedType(Strm);
       break;
     case TYPE_SliceArray:
@@ -288,7 +271,7 @@ void VField::SkipSerialisedType (VStream &Strm) {
       }
       break;
     default:
-      Host_Error("I/O Error: unknown data type");
+      VPackage::IOError("unknown data type");
   }
 }
 
@@ -390,8 +373,8 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
             break;
           }
       }
-      //Sys_Error("I/O Error: field '%s' should be of type '%s', but it is of type '%s'", *fullname, *Type.GetName(), *VFieldType(EType(tp)).GetName());
-      Host_Error("stored data should be of type `%s`, but it is of type `%s`", *Type.GetName(), *VFieldType(EType(tp)).GetName());
+      //VPackage::IOError(va("field '%s' should be of type '%s', but it is of type '%s'", *fullname, *Type.GetName(), *VFieldType(EType(tp)).GetName()));
+      VPackage::IOError(va("stored data should be of type `%s`, but it is of type `%s`", *Type.GetName(), *VFieldType(EType(tp)).GetName()));
     }
   }
   VFieldType IntType;
@@ -461,7 +444,6 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
           *(VState **)Data = VClass::FindClass(*CName)->FindState(SName);
           if (*(VState **)Data == nullptr) {
             GLog.WriteLine(NAME_Warning, "I/O: state '%s' not found", *SName);
-            //Sys_Error("I/O WARNING: state '%s' not found in '%s'", *SName, *fullname);
           }
         } else {
           *(VState **)Data = nullptr;
@@ -493,7 +475,7 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
         // check struct name
         VName stname = NAME_None;
         Strm << stname;
-        if (Type.Struct->Name != stname) Host_Error("I/O Error: expected struct `%s`, but got struct '%s'", *Type.Struct->Name, *stname);
+        if (Type.Struct->Name != stname) VPackage::IOError(va("expected struct `%s`, but got struct '%s'", *Type.Struct->Name, *stname));
       } else {
         // save struct name
         VName stname = Type.Struct->Name;
@@ -513,7 +495,7 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
         // check inner size
         vint32 isz = -1;
         Strm << STRM_INDEX(isz);
-        if (tp != IntType.Type) Host_Error("I/O Error: invalid array element type, expected '%s', got '%s'", *IntType.GetName(), *VFieldType(EType(tp)).GetName());
+        if (tp != IntType.Type) VPackage::IOError(va("invalid array element type, expected '%s', got '%s'", *IntType.GetName(), *VFieldType(EType(tp)).GetName()));
         // meh, type serialiser will take care of this
         if (isz != /*InnerSize*/IntType.GetStackSize()) {
           GLog.WriteLine("I/O: invalid array element size, expected %d, got %d (this is mostly harmless)", /*InnerSize*/IntType.GetStackSize(), isz);
@@ -545,7 +527,7 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
           // check inner size
           vint32 isz = -1;
           Strm << STRM_INDEX(isz);
-          if (tp != IntType.Type) Host_Error("I/O Error: invalid dynarray element type, expected '%s', got '%s'", *IntType.GetName(), *VFieldType(EType(tp)).GetName());
+          if (tp != IntType.Type) VPackage::IOError(va("invalid dynarray element type, expected '%s', got '%s'", *IntType.GetName(), *VFieldType(EType(tp)).GetName()));
           // meh, type serialiser will take care of this
           if (isz != /*InnerSize*/IntType.GetStackSize()) {
             GLog.WriteLine("I/O: invalid array element size, expected %d, got %d (this is mostly harmless)", /*InnerSize*/IntType.GetStackSize(), isz);
@@ -568,13 +550,13 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
         VFieldType t = Type;
         Strm << t;
         if (Strm.IsLoading()) {
-          if (!t.Equals(Type)) Host_Error("I/O Error: expected dictionary of type `%s`, but got `%s`", *Type.GetName(), *t.GetName());
+          if (!t.Equals(Type)) VPackage::IOError(va("expected dictionary of type `%s`, but got `%s`", *Type.GetName(), *t.GetName()));
         }
         dc->Serialise(Strm, Type);
       }
       break;
     default:
-      Host_Error("I/O Error: unknown data type");
+      VPackage::IOError("unknown data type");
   }
 }
 
@@ -801,7 +783,7 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
       }
       break;
   }
-  Sys_Error("Bad field type");
+  VPackage::InternalFatalError("Bad field type");
   return false;
 }
 
@@ -932,7 +914,7 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *
       break;
     //TODO: dynarrays, slices?
     default:
-      Sys_Error("Replication of field type %d is not supported", Type.Type);
+      VPackage::InternalFatalError(va("Replication of field type %d is not supported", Type.Type));
   }
   return Ret;
 }

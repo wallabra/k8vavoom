@@ -57,7 +57,6 @@ public:
   virtual ~VConstant () override;
   virtual void CompilerShutdown () override;
 
-  virtual void Serialise (VStream &) override;
   bool Define ();
 
   virtual VStr toString () const;

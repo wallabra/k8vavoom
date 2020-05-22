@@ -129,9 +129,9 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PushAdjacentCost) {
   VMiAStarNodeBase *state;
   float cost;
   vobjGetParamSelf(state, cost);
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PushAdjacentCost"); }
-  if (!Self->adjarray) { VObject::VMDumpCallStack(); Sys_Error("trying to push cost outside of cost calculator in MiAStarGraphBase::PushAdjacentCost"); }
-  if (!isFiniteF(cost)) { VObject::VMDumpCallStack(); Sys_Error("invalid cost value in MiAStarGraphBase::PushAdjacentCost"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::PushAdjacentCost"); }
+  if (!Self->adjarray) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("trying to push cost outside of cost calculator in MiAStarGraphBase::PushAdjacentCost"); }
+  if (!isFiniteF(cost)) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("invalid cost value in MiAStarGraphBase::PushAdjacentCost"); }
   micropather::StateCost cst;
   cst.state = (void *)state;
   cst.cost = cost;
@@ -147,7 +147,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, LeastCostEstimate) {
   (void)start;
   (void)Self;
   VObject::VMDumpCallStack();
-  Sys_Error("unimplemented cost function MiAStarGraphBase::LeastCostEstimate");
+  VPackage::InternalFatalError("unimplemented cost function MiAStarGraphBase::LeastCostEstimate");
 }
 
 
@@ -158,14 +158,14 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, AdjacentCost) {
   (void)state;
   (void)Self;
   VObject::VMDumpCallStack();
-  Sys_Error("unimplemented cost function MiAStarGraphBase::AdjacentCost");
+  VPackage::InternalFatalError("unimplemented cost function MiAStarGraphBase::AdjacentCost");
 }
 
 
 // final void PathArrayClear ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayClear) {
   vobjGetParamSelf();
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayClear"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::PathArrayClear"); }
   if (Self->intr) {
     Self->intr->path.clear();
   }
@@ -174,7 +174,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayClear) {
 // final int PathArrayLength ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayLength) {
   vobjGetParamSelf();
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayLength"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::PathArrayLength"); }
   if (Self->intr) {
     RET_INT((int)Self->intr->path.size());
   } else {
@@ -186,13 +186,13 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayLength) {
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayNode) {
   int index;
   vobjGetParamSelf(index);
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayNode"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::PathArrayNode"); }
   if (Self->intr) {
-    if (index < 0 || index >= (int)Self->intr->path.size()) { VObject::VMDumpCallStack(); Sys_Error("invalid index %d in MiAStarGraphBase::PathArrayNode, length is %d", index, (int)Self->intr->path.size()); }
+    if (index < 0 || index >= (int)Self->intr->path.size()) { VObject::VMDumpCallStack(); VPackage::InternalFatalError(va("invalid index %d in MiAStarGraphBase::PathArrayNode, length is %d", index, (int)Self->intr->path.size())); }
     RET_PTR(Self->intr->path[(unsigned)index]);
   } else {
     VObject::VMDumpCallStack();
-    Sys_Error("invalid index %d in MiAStarGraphBase::PathArrayNode, length is 0", index);
+    VPackage::InternalFatalError(va("invalid index %d in MiAStarGraphBase::PathArrayNode, length is 0", index));
     RET_PTR(nullptr);
   }
 }
@@ -201,7 +201,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayNode) {
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayPushNode) {
   VMiAStarNodeBase *node;
   vobjGetParamSelf(node);
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayNode"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::PathArrayNode"); }
   Self->EnsureInterfaces();
   vassert(Self->intr);
   vassert(Self->pather);
@@ -212,7 +212,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayPushNode) {
 // final void NearArrayClear ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayClear) {
   vobjGetParamSelf();
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayClear"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::NearArrayClear"); }
   if (Self->intr) {
     Self->intr->mNear.clear();
   }
@@ -221,7 +221,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayClear) {
 // final int NearArrayLength ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayLength) {
   vobjGetParamSelf();
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayLength"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::NearArrayLength"); }
   if (Self->intr) {
     RET_INT((int)Self->intr->mNear.size());
   } else {
@@ -233,13 +233,13 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayLength) {
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayNode) {
   int index;
   vobjGetParamSelf(index);
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayNode"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::NearArrayNode"); }
   if (Self->intr) {
-    if (index < 0 || index >= (int)Self->intr->mNear.size()) { VObject::VMDumpCallStack(); Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNode, max is %d", index, (int)Self->intr->mNear.size()); }
+    if (index < 0 || index >= (int)Self->intr->mNear.size()) { VObject::VMDumpCallStack(); VPackage::InternalFatalError(va("invalid index %d in MiAStarGraphBase::NearArrayNode, max is %d", index, (int)Self->intr->mNear.size())); }
     RET_PTR(Self->intr->mNear[(unsigned)index].state);
   } else {
     VObject::VMDumpCallStack();
-    Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNode, length is 0", index);
+    VPackage::InternalFatalError(va("invalid index %d in MiAStarGraphBase::NearArrayNode, length is 0", index));
     RET_PTR(nullptr);
   }
 }
@@ -249,14 +249,14 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayNodeAndCost) {
   int index;
   float *pcost;
   vobjGetParamSelf(index, pcost);
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayNodeAndCost"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::NearArrayNodeAndCost"); }
   if (Self->intr) {
-    if (index < 0 || index >= (int)Self->intr->mNear.size()) { VObject::VMDumpCallStack(); Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNodeAndCost, max is %d", index, (int)Self->intr->mNear.size()); }
+    if (index < 0 || index >= (int)Self->intr->mNear.size()) { VObject::VMDumpCallStack(); VPackage::InternalFatalError(va("invalid index %d in MiAStarGraphBase::NearArrayNodeAndCost, max is %d", index, (int)Self->intr->mNear.size())); }
     if (pcost) *pcost = Self->intr->mNear[(unsigned)index].cost;
     RET_PTR(Self->intr->mNear[(unsigned)index].state);
   } else {
     VObject::VMDumpCallStack();
-    Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNodeAndCost, length is 0", index);
+    VPackage::InternalFatalError(va("invalid index %d in MiAStarGraphBase::NearArrayNodeAndCost, length is 0", index));
     RET_PTR(nullptr);
   }
 }
@@ -266,7 +266,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayPushNode) {
   VMiAStarNodeBase *node;
   float cost;
   vobjGetParamSelf(node, cost);
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayNode"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::PathArrayNode"); }
   Self->EnsureInterfaces();
   vassert(Self->intr);
   vassert(Self->pather);
@@ -281,7 +281,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayPushNode) {
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, Solve) {
   VMiAStarNodeBase *startState, *endState;
   vobjGetParamSelf(startState, endState);
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::Solve"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::Solve"); }
   if (!startState || !endState) {
     if (Self->intr) Self->intr->path.clear();
     RET_BOOL(false);
@@ -312,7 +312,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, Solve) {
     return;
   }
   VObject::VMDumpCallStack();
-  Sys_Error("Micropather returned something very strange!");
+  VPackage::InternalFatalError("Micropather returned something very strange!");
 }
 
 // int SolveForNearStates (MiAStarNodeBase startState, float maxCost);
@@ -320,7 +320,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, SolveForNearStates) {
   VMiAStarNodeBase *startState;
   float maxCost;
   vobjGetParamSelf(startState, maxCost);
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::SolveForNearStates"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::SolveForNearStates"); }
   if (!startState) {
     if (Self->intr) Self->intr->mNear.clear();
     RET_BOOL(false);
@@ -342,13 +342,13 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, SolveForNearStates) {
     return;
   }
   VObject::VMDumpCallStack();
-  Sys_Error("Micropather returned something very strange!");
+  VPackage::InternalFatalError("Micropather returned something very strange!");
 }
 
 // final void Reset ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, Reset) {
   vobjGetParamSelf();
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::Reset"); }
+  if (!Self) { VObject::VMDumpCallStack(); VPackage::InternalFatalError("null self in MiAStarGraphBase::Reset"); }
   if (Self->intr) {
     vassert(Self->pather);
     Self->pather->Reset();

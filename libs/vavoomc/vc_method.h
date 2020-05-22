@@ -215,8 +215,6 @@ public:
   virtual ~VMethod () override;
   virtual void CompilerShutdown () override;
 
-  virtual void Serialise (VStream &) override;
-
   // this resolves return type, parameter types, sets `SuperMethod`, and fixes flags
   // must be called before `Emit()`
   bool Define ();

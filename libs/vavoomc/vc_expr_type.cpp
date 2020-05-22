@@ -87,11 +87,11 @@ VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
       return new VDictType(NewTypeExpr(atype.GetDictKeyType(), aloc), NewTypeExpr(atype.GetDictValueType(), aloc), aloc);
     case TYPE_Unknown:
     case TYPE_Automatic: // this is valid only for variable declarations, and will be resolved to actual type
-      Sys_Error("VC: VTypeExpr::NewTypeExpr: internal compiler error");
+      VCFatalError("VC: VTypeExpr::NewTypeExpr: internal compiler error");
       break;
     default: break;
   }
-  Sys_Error("VC: VTypeExpr::NewTypeExpr: internal compiler error");
+  VCFatalError("VC: VTypeExpr::NewTypeExpr: internal compiler error");
   return nullptr;
 };
 
@@ -247,8 +247,8 @@ VTypeExpr *VTypeExprSimple::ResolveAsType (VEmitContext &) {
     return nullptr;
   }
 
-  if (Type.Type == TYPE_Automatic) Sys_Error("VC INTERNAL COMPILER ERROR: unresolved automatic type (0)!");
-  if (Type.Type == TYPE_Class) Sys_Error("VC INTERNAL COMPILER ERROR: 19463!");
+  if (Type.Type == TYPE_Automatic) VCFatalError("VC INTERNAL COMPILER ERROR: unresolved automatic type (0)!");
+  if (Type.Type == TYPE_Class) VCFatalError("VC INTERNAL COMPILER ERROR: 19463!");
 
   return this;
 }

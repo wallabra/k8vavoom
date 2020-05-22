@@ -438,7 +438,7 @@ int VClass::FindSprite (VName Name, bool Append) {
     return (ip ? *ip : -1);
   } else {
     if (Name == NAME_None) {
-      //Sys_Error("cannot append nameless sprite");
+      //VPackage::InternalFatalError("cannot append nameless sprite");
       return 0; //k8: "tnt1"; maybe "----"?
     }
     VName loname = VName(*Name, VName::AddLower);
@@ -505,119 +505,6 @@ void VClass::StaticReinitStatesLookup () {
   for (VClass *C = GClasses; C; C = C->LinkNext) C->StatesLookup.Clear();
   // now init states lookup tables again
   for (VClass *C = GClasses; C; C = C->LinkNext) C->InitStatesLookup();
-}
-
-
-//==========================================================================
-//
-//  SerialiseVStrVStrMap
-//
-//==========================================================================
-static void SerialiseVStrVStrMap (VStream &Strm, TMap<VStr, VStr> &map) {
-  vint32 count = (vint32)map.count();
-  Strm << STRM_INDEX(count);
-  if (Strm.IsLoading()) {
-    map.clear();
-    while (count-- > 0) {
-      VStr k, v;
-      Strm << k << v;
-      map.put(k, v);
-    }
-  } else {
-    for (auto it = map.first(); it; ++it) {
-      VStr k = it.getKey();
-      VStr v = it.getValue();
-      Strm << k << v;
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  VClass::Serialise
-//
-//==========================================================================
-void VClass::Serialise (VStream &Strm) {
-  VMemberBase::Serialise(Strm);
-  vuint8 xver = 0; // current version is 0
-  Strm << xver;
-  // other data
-  Strm << ParentClass
-    << Fields
-    << States
-    << Methods
-    << DefaultProperties
-    << RepInfos
-    << StateLabels
-    << ClassGameObjName;
-
-  // aliases
-  vint32 acount = (vint32)AliasList.count();
-  Strm << STRM_INDEX(acount);
-  if (Strm.IsLoading()) {
-    AliasFrameNum = 0;
-    AliasList.clear();
-    while (acount-- > 0) {
-      VName key;
-      AliasInfo ai;
-      Strm << key << ai.aliasName << ai.origName;
-      ai.aframe = 0;
-      AliasList.put(key, ai);
-    }
-  } else {
-    for (auto it = AliasList.first(); it; ++it) {
-      VName key = it.getKey();
-      Strm << key;
-      auto ai = it.getValue();
-      Strm << ai.aliasName << ai.origName;
-    }
-  }
-
-  // enums
-  acount = (vint32)KnownEnums.count();
-  Strm << STRM_INDEX(acount);
-  if (Strm.IsLoading()) {
-    KnownEnums.clear();
-    while (acount-- > 0) {
-      VName ename;
-      Strm << ename;
-      KnownEnums.put(ename, true);
-    }
-  } else {
-    for (auto it = KnownEnums.first(); it; ++it) {
-      VName ename = it.getKey();
-      Strm << ename;
-    }
-  }
-
-  // dfstate thingy
-  Strm << STRM_INDEX(dfStateTexDirSet) << dfStateTexDir;
-  acount = (vint32)dfStateTexList.count();
-  Strm << STRM_INDEX(acount);
-  if (Strm.IsLoading()) {
-    dfStateTexList.clear();
-    while (acount-- > 0) {
-      VStr tname;
-      TextureInfo ti;
-      Strm << tname;
-      Strm << ti.texImage << ti.frameWidth << ti.frameHeight << ti.frameOfsX << ti.frameOfsY;
-      dfStateTexList.put(tname, ti);
-    }
-  } else {
-    for (auto it = dfStateTexList.first(); it; ++it) {
-      VStr tname = it.getKey();
-      Strm << tname;
-      TextureInfo &ti = it.getValue();
-      Strm << ti.texImage << ti.frameWidth << ti.frameHeight << ti.frameOfsX << ti.frameOfsY;
-    }
-  }
-
-  // property renames for various types
-  SerialiseVStrVStrMap(Strm, StringProps);
-  SerialiseVStrVStrMap(Strm, NameProps);
-
-  // done
 }
 
 
@@ -795,7 +682,7 @@ VField *VClass::FindField (VName Name, const TLocation &l, VClass *SelfClass) {
 //==========================================================================
 VField *VClass::FindFieldChecked (VName AName) {
   VField *F = FindField(AName);
-  if (!F) Sys_Error("Field `%s` not found in class `%s`", *AName, GetName());
+  if (!F) VPackage::InternalFatalError(va("Field `%s` not found in class `%s`", *AName, GetName()));
   return F;
 }
 
@@ -974,7 +861,7 @@ VMethod *VClass::FindAccessibleMethod (VName Name, VClass *self, const TLocation
 //==========================================================================
 VMethod *VClass::FindMethodChecked (VName AName) {
   VMethod *func = FindMethod(AName);
-  if (!func) Sys_Error("Function `%s` not found in class `%s`", *AName, GetName());
+  if (!func) VPackage::InternalFatalError(va("Function `%s` not found in class `%s`", *AName, GetName()));
   return func;
 }
 
@@ -1022,7 +909,7 @@ VState *VClass::FindStateChecked (VName AName) {
   if (!s) {
     //HACK!
     if (VStr::ICmp(*AName, "none") == 0 || VStr::ICmp(*AName, "null") == 0 || VStr::ICmp(*AName, "nil") == 0) return nullptr;
-    Sys_Error("State `%s` not found in class `%s`", *AName, GetName());
+    VPackage::InternalFatalError(va("State `%s` not found in class `%s`", *AName, GetName()));
   }
   return s;
 }
@@ -1121,7 +1008,7 @@ VStateLabel *VClass::FindStateLabelChecked (VName AName, VName SubLabel, bool Ex
       FullName += ".";
       FullName += *SubLabel;
     }
-    Sys_Error("State %s not found", *FullName);
+    VPackage::InternalFatalError("State %s not found", *FullName);
   }
   return Lbl;
 }
@@ -1142,7 +1029,7 @@ VStateLabel *VClass::FindStateLabelChecked (TArray<VName> &Names, bool Exact) {
       FullName += ".";
       FullName += *Names[i];
     }
-    Sys_Error("State %s not found", *FullName);
+    VPackage::InternalFatalError("State %s not found", *FullName);
   }
   return Lbl;
 }
@@ -1357,9 +1244,9 @@ bool VClass::Define () {
     }
   }
   if ((ObjectFlags&CLASSOF_Native) && ParentClass != PrevParent) {
-    Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",
+    VPackage::InternalFatalError(va("Bad parent class, class %s, C++ %s, VavoomC %s)",
       GetName(), PrevParent ? PrevParent->GetName() : "(none)",
-      ParentClass ? ParentClass->GetName() : "(none)");
+      ParentClass ? ParentClass->GetName() : "(none)"));
   }
 
   // process constants, so if other class will try to use constant it its declaration, that will succeed
@@ -2163,7 +2050,7 @@ void VClass::CalcFieldOffsets () {
         PrevField->Type.BitMask != 0x80000000)
     {
       vuint32 bit_mask = PrevField->Type.BitMask<<1;
-      if (fi->Type.BitMask != bit_mask) Sys_Error("Wrong bit mask");
+      if (fi->Type.BitMask != bit_mask) VPackage::InternalFatalError("Wrong bit mask");
       fi->Type.BitMask = bit_mask;
       fi->Ofs = PrevField->Ofs;
     } else {
@@ -2187,7 +2074,7 @@ void VClass::CalcFieldOffsets () {
   ClassSize = size;
   ClassNumMethods = numMethods;
   if ((ObjectFlags&CLASSOF_Native) != 0 && ClassSize != PrevSize) {
-    Sys_Error("Bad class size for class `%s`: C++: %d, VavoomC: %d", GetName(), PrevSize, ClassSize);
+    VPackage::InternalFatalError(va("Bad class size for class `%s`: C++: %d, VavoomC: %d", GetName(), PrevSize, ClassSize));
   }
 }
 
@@ -2577,8 +2464,8 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
       NewClass->Loc = ALoc;
       // make sure parent class is correct
       VClass *Check = FindClass(*NewClass->ParentClassName);
-      if (!Check) Sys_Error("No such class `%s`", *NewClass->ParentClassName);
-      if (!IsChildOf(Check)) Sys_Error("`%s` must be a child of `%s`", *AName, *Check->Name);
+      if (!Check) VPackage::InternalFatalError(va("No such class `%s`", *NewClass->ParentClassName));
+      if (!IsChildOf(Check)) VPackage::InternalFatalError(va("`%s` must be a child of `%s`", *AName, *Check->Name));
       GDecorateClassImports.RemoveIndex(i);
       break;
     }
@@ -2651,7 +2538,7 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
       NewClass->AddField(fi);
       NewClass->DecorateStateFieldTrans.put(uvlist[f].name, uvlist[f].name); // so field name will be case-insensitive
       // process boolean field
-      if (!fi->Define()) Sys_Error("cannot define field '%s' in class '%s'", *uvlist[f].name, *AName);
+      if (!fi->Define()) VPackage::InternalFatalError(va("cannot define field '%s' in class '%s'", *uvlist[f].name, *AName));
       //fprintf(stderr, "FI: <%s> (%s)\n", *fi->GetFullName(), *fi->Type.GetName());
       if (fi->Type.Type == TYPE_Bool && PrevBool && PrevBool->Type.BitMask != 0x80000000) {
         fi->Type.BitMask = PrevBool->Type.BitMask<<1;
@@ -2660,7 +2547,7 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
     }
   }
 
-  if (!NewClass->DefineRepInfos()) Sys_Error("cannot post-process replication info for class '%s'", *AName);
+  if (!NewClass->DefineRepInfos()) VPackage::InternalFatalError(va("cannot post-process replication info for class '%s'", *AName));
 
   NewClass->PostLoad();
   NewClass->CreateDefaults();
