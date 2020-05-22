@@ -30,11 +30,7 @@
 //  procedures, such as B_CheckStuff and B_SetEnemy.
 //
 //**************************************************************************
-#ifdef IN_VCC
-# include "../../common/botai/BotPlayer_base.vc"
-#else
-# include "progs/botai/BotPlayer_base.vc"
-#endif
+#include "progs/botai/BotPlayer_base.vc"
 
 // Main bot class
 class BotPlayer : BotPlayerBase;
