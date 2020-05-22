@@ -86,7 +86,7 @@ void AddFrame (name Name) {
   Frames[Frames.length-1] = Handle;
   if (bAutoSize) {
     R_GetPicInfo(Handle, &Info);
-    //printdebug("%s: size=(%d,%d); scale=(%s,%s); ofs=(%s,%s)", Name, Info.width, Info.height, Info.xscale, Info.yscale, Info.xoffset, Info.yoffset);
+    //printdebug("%s: size=(%d,%d); ns=(%s,%s); scale=(%s,%s); ofs=(%s,%s)", Name, Info.width, Info.height, Info.widthNonScaled, Info.heightNonScaled, Info.xscale, Info.yscale, Info.xoffset, Info.yoffset);
     if (Frames.length == 1) {
       // set up offsets and size for initial frame
       OffsetX = Info.xoffset;
