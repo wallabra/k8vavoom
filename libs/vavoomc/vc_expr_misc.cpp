@@ -1614,4 +1614,11 @@ void VObjectPropGetIsDestroyed::Emit (VEmitContext &ec) {
 }
 
 
-
+//==========================================================================
+//
+//  VObjectPropGetIsDestroyed::toString
+//
+//==========================================================================
+VStr VObjectPropGetIsDestroyed::toString () const {
+  return VExpression::e2s(ObjExpr)+".IsDestroyed";
+}

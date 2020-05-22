@@ -178,7 +178,7 @@ public:
   virtual bool IsCommaRetOp0 () const;
   virtual bool IsDropResult () const;
 
-  virtual VStr toString () const;
+  virtual VStr toString () const = 0;
 
   // this may return empty string, or "{type}"
   VStr GetMyTypeName () const;

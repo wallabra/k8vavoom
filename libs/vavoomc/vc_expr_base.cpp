@@ -589,7 +589,7 @@ bool VExpression::IsConstVectorCtor () const { return false; }
 bool VExpression::IsComma () const { return false; }
 bool VExpression::IsCommaRetOp0 () const { return false; }
 bool VExpression::IsDropResult () const { return false; }
-VStr VExpression::toString () const { return VStr("<VExpression:")+GET_MY_TYPE()+":no-toString>"; }
+//VStr VExpression::toString () const { return VStr("<VExpression:")+GET_MY_TYPE()+":no-toString>"; }
 VStr VExpression::GetMyTypeName () const { return GET_MY_TYPE(); }
 
 

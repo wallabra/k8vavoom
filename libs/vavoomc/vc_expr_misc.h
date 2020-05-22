@@ -353,6 +353,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
+  virtual VStr toString () const override;
+
 protected:
   VObjectPropGetIsDestroyed () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;

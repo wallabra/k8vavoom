@@ -87,7 +87,7 @@ public:
   virtual void RequestAddressOf () override;
   virtual void Emit (VEmitContext &ec) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VSliceOp () {}
@@ -111,7 +111,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDynArrayGetNum () {}
@@ -139,7 +139,7 @@ public:
   virtual void Emit (VEmitContext &) override;
   virtual bool IsDynArraySetNum () const override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDynArraySetNum () {}
@@ -164,7 +164,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDynArrayInsert () {}
@@ -189,7 +189,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDynArrayRemove () {}
@@ -212,7 +212,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDynArrayClear () {}
@@ -236,7 +236,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDynArraySort () {}
@@ -264,7 +264,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDynArraySwap1D () {}
@@ -288,7 +288,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDynArrayCopyFrom () {}
@@ -311,7 +311,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDynArrayAllocElement () {}
@@ -335,7 +335,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VStringGetLength () {}
@@ -359,7 +359,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VSliceGetLength () {}
@@ -383,7 +383,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VSliceGetPtr () {}
@@ -407,7 +407,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictGetLength () {}
@@ -431,7 +431,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictGetCapacity () {}
@@ -456,7 +456,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictClearOrReset () {}
@@ -481,7 +481,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictRehash () {}
@@ -506,7 +506,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictFind () {}
@@ -531,7 +531,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictDelete () {}
@@ -557,7 +557,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictPut () {}
@@ -581,7 +581,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictFirstIndex () {}
@@ -606,7 +606,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictIsValidIndex () {}
@@ -632,7 +632,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictNextIndex () {}
@@ -657,7 +657,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictKeyAtIndex () {}
@@ -682,7 +682,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VDictValueAtIndex () {}
@@ -706,7 +706,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual VStr toString () const override;
+  virtual VStr toString () const override;
 
 protected:
   VStructZero () {}
