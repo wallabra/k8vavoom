@@ -81,7 +81,8 @@ static VCvarB r_fake_shadows_players("r_fake_shadows_players", true, "Render fak
 static VCvarB r_fake_shadows_additive_missiles("r_fake_shadows_additive_missiles", false, "Render shadows from additive projectiles?", CVAR_Archive);
 static VCvarB r_fake_shadows_additive_monsters("r_fake_shadows_additive_monsters", false, "Render shadows from additive monsters?", CVAR_Archive);
 
-static VCvarF r_fake_3dshadow_scale("r_fake_shadow_scale", "0.4", "Fake sprite shadows height multiplier for pseudo-3d mode.", CVAR_Archive);
+static VCvarF r_fake_3dshadow_scale("r_fake_3dshadow_scale", "0.4", "Fake sprite shadows height multiplier for pseudo-3d mode.", CVAR_Archive);
+static VCvarI r_fake_3dshadow_mode("r_fake_3dshadow_mode", "0", "Fake pseudo-3d shadow mode (0:direction to the thing; 1:camera yaw).", CVAR_Archive);
 
 static VCvarB dbg_disable_sprite_sorting("dbg_disable_sprite_sorting", false, "Disable sprite sorting (this WILL glitch renderer)?", /*CVAR_Archive|*/CVAR_PreInit);
 
@@ -654,13 +655,18 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
 
           TAVec angs = thing->GetSpriteDrawAngles();
           angs.yaw = 0;
-          // this is what makes the sprite looks like in GZDoom
-          angs.pitch = -90; //AngleMod(angs.pitch-90.0f);
-          //angs.pitch = AngleMod(Drawer->viewangles.pitch-90.0f);
-          // roll is meaningfull too
-          //angs.roll = AngleMod(angs.roll+180.0f);
-          angs.roll = AngleMod(Drawer->viewangles.yaw+180.0f);
-          // generate the sprite's axes, according to the sprite's world orientation
+          // lay it on the floor
+          angs.pitch = -90;
+          if (r_fake_3dshadow_mode.asInt() == 0) {
+            // direction to the thing
+            TVec spdir = TVec(sprorigin.x-Drawer->vieworg.x, sprorigin.y-Drawer->vieworg.y).normalised();
+            const float ato = VectorAngleYaw(spdir);
+            angs.roll = AngleMod(ato+180.0f);
+          } else {
+            // camera yaw
+            angs.roll = AngleMod(Drawer->viewangles.yaw+180.0f);
+          }
+          // generate the shadow's axes
           AngleVectors(angs, sprforward, sprright, sprup);
 
           //TexTOffset = origTOffset;
