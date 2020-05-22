@@ -200,6 +200,36 @@ menudef SpriteVideoOptions {
   }
 
 
+  header "Pseudo-3D Fake Shadows";
+
+  option enum {
+    title = "Pseudo-3D Shadow Mode";
+    cvar = r_fake_3dshadow_mode;
+    list {
+      "Thing Direction",
+      "Camera Yaw",
+    }
+    help =
+      "Pseudo-3D shadow is fake, so it will inevitably rotate.",
+      "This chooses the desired 'general direction', either in",
+      "camera looking angle, or according to the angle between",
+      "the thing and the camera."
+      "Try both options to find out what you like best.",
+      "\cGWARNING! Fake sprite shadows should be set to 'Pseudo-3D'",
+      "\cGfor this to have any effect.";
+  }
+
+  option slider {
+    title = "Pseudo-3D Shadow Scale";
+    cvar = r_fake_3dshadow_scale;
+    step = 0.05;
+    min = 0;
+    max = 1;
+    help =
+      "Sprite height multiplier for fake pseudo-3d shadows.";
+  }
+
+
   header "Fake Shadow Casters";
 
   option bool {
