@@ -3988,7 +3988,7 @@ bool VBaseCompoundStatement::AfterEmitStatements (VEmitContext &ec) {
 void VBaseCompoundStatement::DoEmit (VEmitContext &ec) {
   if (!BeforeEmitStatements(ec)) return;
   for (auto &&st : Statements) if (st) st->Emit(ec, this);
-  if (!AfterResolveStatements(ec)) return;
+  if (!AfterEmitStatements(ec)) return;
 }
 
 
@@ -4390,7 +4390,7 @@ void VCompound::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 VCompoundScopeExit::VCompoundScopeExit (VStatement *ABody, const TLocation &ALoc)
-  : VCompound(ALoc)
+  : VBaseCompoundStatement(ALoc)
   , mReturnAllowed(true)
   , Body(ABody)
 {
@@ -4425,7 +4425,7 @@ VStatement *VCompoundScopeExit::SyntaxCopy () {
 //
 //==========================================================================
 void VCompoundScopeExit::DoSyntaxCopyTo (VStatement *e) {
-  VCompound::DoSyntaxCopyTo(e);
+  VBaseCompoundStatement::DoSyntaxCopyTo(e);
   auto res = (VCompoundScopeExit *)e;
   res->Body = (Body ? Body->SyntaxCopy() : nullptr);
   // there's no need to copy `mReturnAllowed`
@@ -4470,7 +4470,7 @@ bool VCompoundScopeExit::IsReturnAllowed () const noexcept {
 //  VCompoundScopeExit::EmitFinalizer
 //
 //==========================================================================
-void VCompoundScopeExit::EmitFinalizer (VEmitContext &ec) {
+void VCompoundScopeExit::EmitDtor (VEmitContext &ec) {
   if (Body) Body->Emit(ec, this);
 }
 

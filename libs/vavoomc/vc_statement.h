@@ -857,7 +857,7 @@ protected:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VCompoundScopeExit : public VCompound {
+class VCompoundScopeExit : public VBaseCompoundStatement {
 private:
   // i am too lazy to create proper AST nodes, so let's use this small hack instead
   bool mReturnAllowed;
@@ -871,7 +871,7 @@ public:
 
   virtual bool IsReturnAllowed () const noexcept override;
 
-  virtual void EmitFinalizer (VEmitContext &ec) override;
+  virtual void EmitDtor (VEmitContext &ec) override;
 
   virtual VStr toString () override;
 
