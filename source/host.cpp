@@ -214,7 +214,6 @@ void Host_Init () {
   VCommand::Init();
 
   VObject::cliShowPackageLoading = true;
-  VObject::compilerDisablePostloading = false; // just in case
 
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
   GCon->Log(NAME_Init, "k8vavoom Game Engine, (c) 1999-2020 Vavoom and k8vavoom devs");

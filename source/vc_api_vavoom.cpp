@@ -29,12 +29,17 @@
 #endif
 
 
-// for VCC; implement as "aborters" in other code
-void VPackage::WriteObject (VStr) { Sys_Error("VPackage::WriteObject should not be ever called"); }
-void VPackage::LoadBinaryObject (VStream *Strm, VStr filename, TLocation l) { Sys_Error("VPackage::LoadBinaryObject should not be ever called"); }
+VStream *VPackage::OpenFileStreamRO (VStr fname) { return FL_OpenFileRead(fname); }
 
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::HostErrorBuiltin (VStr msg) { Host_Error("%s", *msg); }
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::SysErrorBuiltin (VStr msg) { Sys_Error("%s", *msg); }
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::AssertErrorBuiltin (VStr msg) { Sys_Error("Assertion failure: %s", *msg); }
 
-VStream *vc_OpenFile (VStr fname) { return FL_OpenFileRead(fname); }
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::ExecutorAbort (const char *msg) { Host_Error("%s", msg); }
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::IOError (const char *msg) { Host_Error("I/O Error: %s", msg); }
+
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::CompilerFatalError (const char *msg) { Sys_Error("%s", msg); }
+void __attribute__((noreturn)) __declspec(noreturn) VPackage::InternalFatalError (const char *msg) { Sys_Error("%s", msg); }
 
 
 //==========================================================================
@@ -51,7 +56,7 @@ void VPackage::LoadObject (TLocation l) {
     if (FL_FileExists(*mainVC)) {
       // compile package
       //fprintf(stderr, "Loading package '%s' (%s)\n", *Name, *mainVC);
-      VStream *Strm = vc_OpenFile(*mainVC);
+      VStream *Strm = VPackage::OpenFileStreamRO(*mainVC);
       LoadSourceObject(Strm, mainVC, l);
       return;
     }
