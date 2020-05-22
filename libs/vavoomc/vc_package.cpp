@@ -428,7 +428,7 @@ void VPackage::Emit () {
   vdlogf("Emiting package '%s' complete!", *Name);
   */
   bool found = false;
-  for (auto &pkg : PackagesToEmit) if (pkg == this) { found = true; break; }
+  for (auto &&pkg : PackagesToEmit) if (pkg == this) { found = true; break; }
   if (!found) PackagesToEmit.append(this);
 }
 

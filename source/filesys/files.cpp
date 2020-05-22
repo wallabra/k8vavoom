@@ -467,7 +467,7 @@ struct CustomModeInfo {
   bool isMyAlias (VStr s) const {
     s = s.xstrip();
     if (s.isEmpty()) return false;
-    for (auto &a : aliases) if (a.strEquCI(s)) return true;
+    for (auto &&a : aliases) if (a.strEquCI(s)) return true;
     return false;
   }
 
@@ -482,7 +482,7 @@ struct CustomModeInfo {
     if (basedirglob.length() == 0) return true;
     dirname = stripBaseDirShit(dirname);
     if (dirname.isEmpty()) return true;
-    for (auto &g : basedirglob) if (dirname.globMatchCI(g)) return true;
+    for (auto &&g : basedirglob) if (dirname.globMatchCI(g)) return true;
     return false;
   }
 
