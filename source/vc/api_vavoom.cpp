@@ -23,9 +23,9 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #ifdef CLIENT
-# include "drawer.h"
+# include "../drawer.h"
 #endif
 
 

@@ -347,12 +347,13 @@ set(PSIM_SOURCES
 #
 #---------------------------------------
 set(VCCLIB_SOURCES
-  vc/vc_decorate.h
-  vc/vc_decorate.cpp
-  vc/vc_dehacked.h
-  vc/vc_dehacked.cpp
-  vc_api_vavoom.h
-  vc_api_vavoom.cpp
+  decorate/vc_decorate.h
+  decorate/vc_decorate.cpp
+  decorate/vc_dehacked.h
+  decorate/vc_dehacked.cpp
+  vc/api_vavoom.h
+  vc/api_vavoom.cpp
+  vc/pr_cmds.cpp
 )
 
 
@@ -411,8 +412,6 @@ set(CS_SHARED_SOURCES
   qs_data.cpp
   ntvalueioex.h
   ntvalueioex.cpp
-
-  pr_cmds.cpp
 
   scripts.h
   scripts.cpp

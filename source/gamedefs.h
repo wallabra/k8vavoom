@@ -51,7 +51,7 @@
 #include "system.h"   //  System specific routines
 #include "filesys/files.h"    //  File I/O routines
 #include "../libs/vavoomc/vc_public.h"
-#include "vc/vc_dehacked.h"//  DeHackEd support
+#include "decorate/vc_dehacked.h"//  DeHackEd support
 #include "scripts.h"  //  Script parsing
 #include "input.h"    //  Input from keyboard, mouse and joystick
 #include "video.h"    //  Graphics
@@ -83,7 +83,7 @@
 #include "psim/p_thinker.h"
 #include "psim/p_levelinfo.h"
 #include "psim/p_entity.h"
-#include "vc/vc_decorate.h"//  Decorate scripts
+#include "decorate/vc_decorate.h"//  Decorate scripts
 #include "psim/p_playerreplicationinfo.h"
 #include "psim/p_player.h"
 #include "psim/p_gameinfo.h"

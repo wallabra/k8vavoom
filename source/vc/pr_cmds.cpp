@@ -28,17 +28,17 @@
 //**
 //**************************************************************************
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-# include "gamedefs.h"
-# include "net/network.h" /* for server list */
-# include "server/sv_local.h"
-# include "client/cl_local.h"
-# include "drawer.h"
+# include "../gamedefs.h"
+# include "../net/network.h" /* for server list */
+# include "../server/sv_local.h"
+# include "../client/cl_local.h"
+# include "../drawer.h"
 #else
 # if defined(IN_VCC)
-#  include "../utils/vcc/vcc.h"
+#  include "../../utils/vcc/vcc.h"
 # elif defined(VCC_STANDALONE_EXECUTOR)
-#  include "../vccrun/vcc_run_vc.h"
-#  include "vc/vc_public.h"
+#  include "../../vccrun/vcc_run_vc.h"
+#  include "../../libs/vavoomc/vc_public.h"
 # endif
 #endif
 
