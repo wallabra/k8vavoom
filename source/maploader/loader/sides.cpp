@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "../gamedefs.h"
+#include "../../gamedefs.h"
 
 
 static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix invalid two-sided flags? (non-persistent)", CVAR_PreInit/*|CVAR_Archive*/);

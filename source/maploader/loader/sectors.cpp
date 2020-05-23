@@ -23,8 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "../gamedefs.h"
-#include "p_setup_load_common.h"
+#include "../../gamedefs.h"
+#include "loader_common.h"
 
 
 //==========================================================================

@@ -279,25 +279,25 @@ set(SV_SOURCES
 )
 
 set(MAPLOADER_SOURCES
-  maploader/p_setup.cpp
-  maploader/p_setup_cacheio.cpp
-  maploader/udmf/p_setup_udmf.cpp
-  maploader/loader/p_setup_load_nodes.cpp
-  maploader/loader/p_setup_load_lines.cpp
-  maploader/loader/p_setup_load_sectors.cpp
-  maploader/loader/p_setup_load_verts.cpp
-  maploader/loader/p_setup_load_sides.cpp
-  maploader/loader/p_setup_load_segs.cpp
-  maploader/loader/p_setup_load_blockmap.cpp
-  maploader/loader/p_setup_load_reject.cpp
-  maploader/loader/p_setup_load_things.cpp
-  maploader/loader/p_setup_load_acs.cpp
-  maploader/p_setup_calc.cpp
-  maploader/p_setup_decals.cpp
-  maploader/p_setup_nodes_aj.cpp
-  maploader/p_setup_nodes_zd.cpp
-  maploader/p_setup_pvs.cpp
-  maploader/p_setup_fixers.cpp
+  maploader/mapload.cpp
+  maploader/mapload_cacheio.cpp
+  maploader/mapload_udmf.cpp
+  maploader/loader/nodes.cpp
+  maploader/loader/lines.cpp
+  maploader/loader/sectors.cpp
+  maploader/loader/verts.cpp
+  maploader/loader/sides.cpp
+  maploader/loader/segs.cpp
+  maploader/loader/blockmap.cpp
+  maploader/loader/reject.cpp
+  maploader/loader/things.cpp
+  maploader/loader/acs.cpp
+  maploader/mapload_calc.cpp
+  maploader/mapload_decals.cpp
+  maploader/mapload_nodes_aj.cpp
+  maploader/mapload_nodes_zd.cpp
+  maploader/mapload_pvs.cpp
+  maploader/mapload_fixers.cpp
 )
 
 set(ACS_SOURCES

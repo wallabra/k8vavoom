@@ -715,7 +715,7 @@ void Host_Frame () {
     // reset progs virtual machine
     VObject::PR_OnAbort();
     // make sure, that we use primary wad files
-    //k8: no need to, we'll do this in p_setup
+    //k8: no need to, we'll do this in "mapload"
     //W_CloseAuxiliary();
 
     #ifdef CLIENT
@@ -737,7 +737,7 @@ void Host_Frame () {
     // reset progs virtual machine
     VObject::PR_OnAbort();
     // make sure, that we use primary wad files
-    //k8: no need to, we'll do this in p_setup
+    //k8: no need to, we'll do this in "mapload"
     //W_CloseAuxiliary();
 
     #ifdef CLIENT
