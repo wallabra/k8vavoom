@@ -57,7 +57,7 @@
 #include "video.h"    //  Graphics
 #include "screen.h"
 #include "automap.h"
-#include "p_gameobject.h"
+#include "psim/p_gameobject.h"
 #include "textures/r_tex_id.h"
 #include "ntvalueioex.h"
 #include "level/level.h"    //  Level data
@@ -77,17 +77,17 @@
 #include "server/server.h"
 #include "server/sv_save.h"
 #include "qs_data.h"
-#include "p_clip.h"
-#include "p_decal.h"
-#include "p_worldinfo.h"
-#include "p_thinker.h"
-#include "p_levelinfo.h"
-#include "p_entity.h"
+#include "psim/p_clip.h"
+#include "psim/p_decal.h"
+#include "psim/p_worldinfo.h"
+#include "psim/p_thinker.h"
+#include "psim/p_levelinfo.h"
+#include "psim/p_entity.h"
 #include "vc/vc_decorate.h"//  Decorate scripts
-#include "p_playerreplicationinfo.h"
-#include "p_player.h"
-#include "p_gameinfo.h"
-#include "p_world.h"
+#include "psim/p_playerreplicationinfo.h"
+#include "psim/p_player.h"
+#include "psim/p_gameinfo.h"
+#include "psim/p_world.h"
 #include "client/client.h"
 
 #endif

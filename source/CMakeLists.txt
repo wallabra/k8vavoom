@@ -307,37 +307,37 @@ set(ACS_SOURCES
 )
 
 set(PSIM_SOURCES
-  p_clip.cpp
-  p_clip.h
-  p_decal.cpp
-  p_decal.h
-  p_entity.cpp
-  p_entity.h
-  p_entity_sight.cpp
-  p_entity_world.cpp
-  p_gameinfo.cpp
-  p_gameinfo.h
-  p_gameobject.cpp
-  p_gameobject.h
-  p_levelinfo.cpp
-  p_levelinfo.h
-  p_player.cpp
-  p_player.h
-  p_player_input.cpp
-  p_playerreplicationinfo.cpp
-  p_playerreplicationinfo.h
-  p_polyobj.cpp
-  p_switch.cpp
-  p_terrain.cpp
-  p_thinker.cpp
-  p_thinker.h
-  p_trace_bsp.cpp
-  p_trace_sight.cpp
-  p_trace_light.cpp
-  p_world.cpp
-  p_world.h
-  p_worldinfo.cpp
-  p_worldinfo.h
+  psim/p_clip.cpp
+  psim/p_clip.h
+  psim/p_decal.cpp
+  psim/p_decal.h
+  psim/p_entity.cpp
+  psim/p_entity.h
+  psim/p_entity_sight.cpp
+  psim/p_entity_world.cpp
+  psim/p_gameinfo.cpp
+  psim/p_gameinfo.h
+  psim/p_gameobject.cpp
+  psim/p_gameobject.h
+  psim/p_levelinfo.cpp
+  psim/p_levelinfo.h
+  psim/p_player.cpp
+  psim/p_player.h
+  psim/p_player_input.cpp
+  psim/p_playerreplicationinfo.cpp
+  psim/p_playerreplicationinfo.h
+  psim/p_polyobj.cpp
+  psim/p_switch.cpp
+  psim/p_terrain.cpp
+  psim/p_thinker.cpp
+  psim/p_thinker.h
+  psim/p_trace_bsp.cpp
+  psim/p_trace_sight.cpp
+  psim/p_trace_light.cpp
+  psim/p_world.cpp
+  psim/p_world.h
+  psim/p_worldinfo.cpp
+  psim/p_worldinfo.h
 )
 
 
