@@ -4,8 +4,8 @@
 
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,0,1,666
- PRODUCTVERSION 666,0,0,0
+ FILEVERSION 2,0,0,666
+ PRODUCTVERSION 2,0,0,666
  FILEFLAGSMASK 0x3fL
  FILEFLAGS 0x2L
  FILEOS 0x40004L
@@ -18,13 +18,13 @@ BEGIN
         BEGIN
             VALUE "Comments", "Thanks to id Software for creating DOOM and releasing it's source, and to Jānis Legzdiņš. for creating Vavoom. REMEMBER: BY USING FOSS SOFTWARE, YOU ARE SUPPORTING COMMUNISM!"
             VALUE "FileDescription", "k8vavoom Game Engine"
-            VALUE "FileVersion", "0,0,1,666"
+            VALUE "FileVersion", "2,0,0,666"
             VALUE "InternalName", "k8vavoom"
             VALUE "LegalCopyright", "Copyright © 1993-1996 id Software, 1999-2017 Jānis Legzdiņš., 2018-2020 Ketmar Dark, id0."
             VALUE "LegalTrademarks", "Doom® is a Registered Trademark of id Software, Inc."
             VALUE "OriginalFilename", "k8vavoom.exe"
             VALUE "ProductName", "k8vavoom: The Most^2 Advanced Doom Source Port."
-            VALUE "ProductVersion", "666,0,0,0"
+            VALUE "ProductVersion", "2,0,0,666"
             VALUE "CompanyName", "Invisible Vector"
         END
     END

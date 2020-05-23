@@ -24,10 +24,10 @@
 //**
 //**************************************************************************
 
-#define VERSION_MAJOR    1
-#define VERSION_MINOR    48
-#define VERSION_RELEASE  2
-#define VERSION_TEXT     "1.48.2"
+#define VERSION_MAJOR    2
+#define VERSION_MINOR    0
+#define VERSION_RELEASE  0
+#define VERSION_TEXT     "2.0.0"
 
 // The version as seen in the Windows resource
 #define RC_FILEVERSION VERSION_MAJOR,VERSION_MINOR,VERSION_RELEASE,666
