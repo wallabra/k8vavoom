@@ -19,7 +19,7 @@
 //------------------------------------------------------------------------
 
 #include "main.h"
-#include "../../libs/core/timsort.h"
+#include "../../../libs/core/timsort.h"
 
 namespace ajbsp
 {

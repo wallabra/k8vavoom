@@ -349,11 +349,10 @@ set(PSIM_SOURCES
 set(VCCLIB_SOURCES
   decorate/vc_decorate.h
   decorate/vc_decorate.cpp
-  decorate/vc_dehacked.h
-  decorate/vc_dehacked.cpp
-  vc/api_vavoom.h
-  vc/api_vavoom.cpp
-  vc/pr_cmds.cpp
+  dehacked/vc_dehacked.h
+  dehacked/vc_dehacked.cpp
+  vcapi/api_vavoom.cpp
+  vcapi/pr_cmds.cpp
 )
 
 

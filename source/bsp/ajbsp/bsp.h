@@ -21,7 +21,7 @@
 #ifndef __AJBSP_BSP_H__
 #define __AJBSP_BSP_H__
 
-#include "../../libs/core/core.h"
+#include "../../../libs/core/core.h"
 
 
 // Node Build Information Structure

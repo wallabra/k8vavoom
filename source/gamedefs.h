@@ -51,7 +51,7 @@
 #include "system.h"   //  System specific routines
 #include "filesys/files.h"    //  File I/O routines
 #include "../libs/vavoomc/vc_public.h"
-#include "decorate/vc_dehacked.h"//  DeHackEd support
+#include "dehacked/vc_dehacked.h"//  DeHackEd support
 #include "scripts.h"  //  Script parsing
 #include "input.h"    //  Input from keyboard, mouse and joystick
 #include "video.h"    //  Graphics

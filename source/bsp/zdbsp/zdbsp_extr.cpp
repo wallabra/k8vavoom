@@ -1,6 +1,5 @@
 #include "zdbsp_extr.h"
-//#include "../console.h"
-#include "../misc.h"
+#include "../../misc.h"
 extern FOutputDevice *GCon;
 
 
