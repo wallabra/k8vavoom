@@ -32,7 +32,7 @@
 //**  grabbed wrong, so I changed it...
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "r_local.h"
 #include "../server/sv_local.h"
 

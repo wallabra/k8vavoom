@@ -31,7 +31,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "ui/ui.h"
+#include "widgets/ui.h"
 
 
 static VCvarB allow_vanilla_cheats("allow_vanilla_cheats", true, "Allow vanilla keyboard cheat codes?", CVAR_Archive);

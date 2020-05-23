@@ -29,7 +29,7 @@
 //**  columns and repeats 4 times on a 320 screen
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "r_local.h"
 
 #define RADIUS  (128.0f)

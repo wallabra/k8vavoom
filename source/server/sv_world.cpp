@@ -29,7 +29,7 @@
 //**  for iteration.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "sv_local.h"
 
 

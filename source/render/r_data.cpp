@@ -27,7 +27,7 @@
 //**  Preparation of data for rendering, generation of lookups.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "r_local.h"
 
 

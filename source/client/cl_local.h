@@ -26,7 +26,7 @@
 #ifndef CL_LOCAL_HEADER
 #define CL_LOCAL_HEADER
 
-#include "iline.h"    //  Input line widget
+#include "../iline.h"    //  Input line widget
 
 
 class VRootWidget;

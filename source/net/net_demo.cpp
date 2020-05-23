@@ -32,7 +32,7 @@
 // Whenever cl->time gets past the last received message, another message
 // is read from the demo file.
 //
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "network.h"
 
 static VCvarB demo_flush_each_packet("demo_flush_each_packet", false, "Flush file after each written demo packet?", CVAR_PreInit|CVAR_Archive);

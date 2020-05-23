@@ -25,7 +25,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "client/cl_local.h"
-#include "ui/ui.h"
+#include "widgets/ui.h"
 #ifdef CLIENT
 # include "drawer.h"
 # include "net/network.h" /* sorry */

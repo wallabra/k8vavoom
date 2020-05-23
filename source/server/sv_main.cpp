@@ -23,12 +23,12 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "net/network.h"
+#include "../gamedefs.h"
+#include "../net/network.h"
 #include "sv_local.h"
 #include "../client/cl_local.h"
 #ifdef CLIENT
-# include "drawer.h"
+# include "../drawer.h"
 #endif
 
 #ifndef CLIENT

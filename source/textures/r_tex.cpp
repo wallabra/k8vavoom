@@ -60,7 +60,7 @@
 //**  columns with multiple patches will have new column_ts generated.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "r_tex.h"
 
 

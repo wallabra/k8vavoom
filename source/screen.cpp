@@ -25,7 +25,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "drawer.h"
-#include "ui/ui.h"
+#include "widgets/ui.h"
 
 
 extern int screenblocks;

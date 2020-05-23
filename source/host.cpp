@@ -28,7 +28,7 @@
 #include "net/network.h"
 #ifdef CLIENT
 # include "client/cl_local.h"
-# include "ui/ui.h"
+# include "widgets/ui.h"
 #endif
 #include <time.h>
 #ifndef WIN32

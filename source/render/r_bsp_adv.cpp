@@ -27,7 +27,7 @@
 //**  BSP traversal, handling of LineSegs for rendering.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "r_local.h"
 
 

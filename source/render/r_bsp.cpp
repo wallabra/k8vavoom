@@ -30,7 +30,7 @@
 #include <limits.h>
 #include <float.h>
 
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "r_local.h"
 #include "../server/sv_local.h"
 

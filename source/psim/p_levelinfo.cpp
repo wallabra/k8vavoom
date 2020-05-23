@@ -23,8 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "server/sv_local.h"
+#include "../gamedefs.h"
+#include "../server/sv_local.h"
 
 
 VCvarB compat_shorttex("compat_shorttex", false, "Compatibility: shorttex", 0);

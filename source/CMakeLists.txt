@@ -445,14 +445,14 @@ set(COMBINED_SOURCES
   client/cl_local.h
   client/cl_main.cpp
 
-  ui/ui.h
-  ui/ui_actor.cpp
-  ui/ui_font.cpp
-  ui/ui_font.h
-  ui/ui_root.cpp
-  ui/ui_root.h
-  ui/ui_widget.cpp
-  ui/ui_widget.h
+  widgets/ui.h
+  widgets/ui_actor.cpp
+  widgets/ui_font.cpp
+  widgets/ui_font.h
+  widgets/ui_root.cpp
+  widgets/ui_root.h
+  widgets/ui_widget.cpp
+  widgets/ui_widget.h
 
   automap.h
   automap.cpp

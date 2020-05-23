@@ -27,7 +27,7 @@
 //**  visibility by BSP
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "r_local.h"
 
 

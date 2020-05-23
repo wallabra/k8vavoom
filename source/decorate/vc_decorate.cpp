@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "../libs/vavoomc/vc_local.h"
+#include "../../libs/vavoomc/vc_local.h"
 #include "../gamedefs.h"
 
 // WARNING! dehacked parser requires this!

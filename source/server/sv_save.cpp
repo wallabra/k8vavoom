@@ -27,7 +27,7 @@
 //**  Archiving: SaveGame I/O.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "sv_local.h"
 
 #include <time.h>

@@ -28,7 +28,7 @@
 //**  used by play and refresh
 //**
 //**************************************************************************
-#include "textures/r_tex_id.h"
+#include "../textures/r_tex_id.h"
 
 class VRenderLevelPublic;
 class VTextureTranslation;

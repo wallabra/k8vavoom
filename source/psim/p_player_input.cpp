@@ -40,9 +40,9 @@
 //**  state bit 2 is edge triggered on the down to up transition
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #ifdef CLIENT
-# include "client/cl_local.h"
+# include "../client/cl_local.h"
 #endif
 
 

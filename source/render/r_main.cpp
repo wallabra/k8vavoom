@@ -26,7 +26,7 @@
 #include <limits.h>
 #include <float.h>
 
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "r_local.h"
 
 //#define VAVOOM_DEBUG_PORTAL_POOL

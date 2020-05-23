@@ -100,7 +100,7 @@
 //      asciiz strings with loaded archive names, terminated with empty string
 //
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "net_local.h"
 
 

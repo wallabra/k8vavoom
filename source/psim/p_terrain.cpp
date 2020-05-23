@@ -27,7 +27,7 @@
 //  Terrain types
 //
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 
 
 struct VSplashInfo {

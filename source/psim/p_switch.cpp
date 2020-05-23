@@ -27,7 +27,7 @@
 //**  Switches, buttons. Two-state animation. Exits.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 
 
 #define BUTTONTIME  (1.0f) /* 1 second */

@@ -26,7 +26,7 @@
 #ifndef VAVOOM_GL_LOCAL_HEADER
 #define VAVOOM_GL_LOCAL_HEADER
 
-#include "gamedefs.h"
+#include "../../gamedefs.h"
 #include "../r_shared.h"
 
 #ifdef GL4ES_NO_CONSTRUCTOR

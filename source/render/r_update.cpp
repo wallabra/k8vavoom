@@ -27,7 +27,7 @@
 //**  update bboxes and fake floors
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "r_local.h"
 
 

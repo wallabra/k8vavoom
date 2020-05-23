@@ -23,9 +23,9 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "../client/cl_local.h"
-#include "drawer.h"
+#include "../drawer.h"
 #include "ui.h"
 
 extern VCvarB gl_pic_filtering;

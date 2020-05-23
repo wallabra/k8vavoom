@@ -27,8 +27,8 @@
 //**  VEntity collision, physics and related methods.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "server/sv_local.h"
+#include "../gamedefs.h"
+#include "../server/sv_local.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //

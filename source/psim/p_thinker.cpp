@@ -31,9 +31,9 @@
 //**  element must be VThinker.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "net/network.h"
-#include "client/cl_local.h" // for dlight_t
+#include "../gamedefs.h"
+#include "../net/network.h"
+#include "../client/cl_local.h" // for dlight_t
 
 
 IMPLEMENT_CLASS(V, Thinker)

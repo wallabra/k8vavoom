@@ -24,7 +24,7 @@
 //**
 //**************************************************************************
 #include "r_tex_id.h"
-#include "gamedefs.h"
+#include "../gamedefs.h"
 
 //#define VV_DEBUG_VTEXTUREID_IO
 

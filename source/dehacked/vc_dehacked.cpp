@@ -27,7 +27,7 @@
 //**  Dehacked patch parsing
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 
 static VCvarB dbg_dehacked_codepointers("dbg_dehacked_codepointers", false, "Show DEHACKED replaced code pointers?", CVAR_PreInit);
 static VCvarB dbg_dehacked_thing_replaces("dbg_dehacked_thing_replaces", false, "Show DEHACKED thing replaces?", CVAR_PreInit);

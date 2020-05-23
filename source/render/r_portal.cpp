@@ -27,7 +27,7 @@
 //**  Portals.
 //**
 //**************************************************************************
-#include "gamedefs.h"
+#include "../gamedefs.h"
 #include "r_local.h"
 
 extern VCvarB gl_dbg_wireframe;

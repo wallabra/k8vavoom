@@ -30,7 +30,7 @@
 #ifndef VAVOOM_RENDER_SHARED_H
 #define VAVOOM_RENDER_SHARED_H
 
-#include "drawer.h"
+#include "../drawer.h"
 
 //#define VV_DEBUG_LMAP_ALLOCATOR
 
