@@ -149,7 +149,6 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           delete this;
           return enew;
         }
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
         // `A_SpawnParticle()` color
         if (argnum == 1 && VStr::strEqu(funcName, "A_SpawnParticle")) {
           vuint32 clr = M_ParseColor(*str, /*retZeroIfInvalid*/true);
@@ -160,7 +159,6 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           delete this;
           return enew;
         }
-#endif
         // ok, try to convert the string to a number... please, Invisible Pink Unicorn, why did you created so many morons?!
         if (destType.Type == TYPE_Float) {
           float resf = 0.0f;
@@ -187,7 +185,6 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           }
         }
       }
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
       // `A_SpawnParticle()` color
       if (argnum == 1 && IsDecorateSingleName() && VStr::strEqu(funcName, "A_SpawnParticle")) {
         VDecorateSingleName *e = (VDecorateSingleName *)this;
@@ -199,7 +196,6 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         delete this;
         return enew;
       }
-#endif
       // none as literal?
       if (IsNoneLiteral()) {
         ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d should be a number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);

@@ -27,26 +27,16 @@
 //**  Builtins.
 //**
 //**************************************************************************
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-# include "../gamedefs.h"
-# include "../net/network.h" /* for server list */
-# include "../server/sv_local.h"
-# include "../client/cl_local.h"
-# include "../drawer.h"
-#else
-# if defined(IN_VCC)
-#  include "../../utils/vcc/vcc.h"
-# elif defined(VCC_STANDALONE_EXECUTOR)
-#  include "../../vccrun/vcc_run_vc.h"
-#  include "../../libs/vavoomc/vc_public.h"
-# endif
-#endif
+#include "../gamedefs.h"
+#include "../net/network.h" /* for server list */
+#include "../server/sv_local.h"
+#include "../client/cl_local.h"
+#include "../drawer.h"
+
 
 VClass *SV_FindClassFromEditorId (int Id, int GameFilter);
 VClass *SV_FindClassFromScriptId (int Id, int GameFilter);
 
-
-#ifndef VCC_STANDALONE_EXECUTOR
 
 #ifdef SERVER
 
@@ -763,5 +753,3 @@ IMPLEMENT_FREE_FUNCTION(VObject, IsSectorTagEqual) {
   if (!sector) { RET_BOOL(false); return; }
   RET_BOOL(sector->IsTagEqual(tag));
 }
-
-#endif // !VCC_STANDALONE_EXECUTOR

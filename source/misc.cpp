@@ -23,11 +23,11 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#if defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
+# include "gamedefs.h"
+#else
 # include "../libs/core/core.h"
 # include "misc.h"
-#else
-# include "gamedefs.h"
 #endif
 
 

@@ -23,19 +23,15 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
 # include "gamedefs.h"
-#else
-# if defined(IN_VCC)
-#  include "../utils/vcc/vcc.h"
-# elif defined(VCC_STANDALONE_EXECUTOR)
-#  include "../vccrun/vcc_run_vc.h"
-#  include "../libs/vavoomc/vc_public.h"
-#  include "scripts.h"
-# endif
+#elif defined(VCC_STANDALONE_EXECUTOR)
+# include "../vccrun/vcc_run_vc.h"
+# include "../libs/vavoomc/vc_public.h"
+# include "scripts.h"
 #endif
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
 static VCvarB dbg_show_name_remap("dbg_show_name_remap", false, "Show hacky name remapping", CVAR_PreInit);
 #endif
 
@@ -759,7 +755,7 @@ void VScriptParser::ExpectLoneChar () {
 //
 //==========================================================================
 static VName ConvertStrToName8 (VScriptParser *sc, VStr str, bool onlyWarn=true, VName *defval=nullptr) {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
   // translate "$name" strings
   if (str.length() > 1 && str[0] == '$') {
     VStr qs = str.mid(1, str.length()-1).toLowerCase();
@@ -772,7 +768,7 @@ static VName ConvertStrToName8 (VScriptParser *sc, VStr str, bool onlyWarn=true,
 #endif
 
   if (str.Length() > 8) {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
     VStr oldstr = str;
 #endif
          if (str.endsWithCI(".png")) str.chopRight(4);
@@ -781,7 +777,7 @@ static VName ConvertStrToName8 (VScriptParser *sc, VStr str, bool onlyWarn=true,
     else if (str.endsWithCI(".pcx")) str.chopRight(4);
     else if (str.endsWithCI(".lmp")) str.chopRight(4);
     else if (str.endsWithCI(".jpeg")) str.chopRight(5);
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
     if (oldstr != str) {
       GCon->Logf(NAME_Warning, "%s: Name '%s' converted to '%s'", *sc->GetLoc().toStringNoCol(), *oldstr, *str);
     }
@@ -789,7 +785,7 @@ static VName ConvertStrToName8 (VScriptParser *sc, VStr str, bool onlyWarn=true,
   }
 
   if (str.Length() > 8) {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
     GCon->Logf(NAME_Warning, "%s: Name '%s' is too long", *sc->GetLoc().toStringNoCol(), *str);
 #endif
     if (!onlyWarn) sc->Error(va("Name '%s' is too long", *str));
@@ -1282,7 +1278,7 @@ void VScriptParser::SkipBracketed (bool bracketEaten) {
 //==========================================================================
 void VScriptParser::Message (const char *message) {
   const char *Msg = (message ? message : "Bad syntax.");
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
   GCon->Logf(NAME_Warning, "%s:%d: %s", *ScriptName, TokLine, Msg);
 #else
   GLog.WriteLine(NAME_Warning, "%s:%d: %s", *ScriptName, TokLine, Msg);
@@ -1297,7 +1293,7 @@ void VScriptParser::Message (const char *message) {
 //==========================================================================
 void VScriptParser::MessageErr (const char *message) {
   const char *Msg = (message ? message : "Bad syntax.");
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
   GCon->Logf(NAME_Error, "%s:%d: %s", *ScriptName, TokLine, Msg);
 #else
   GLog.WriteLine(NAME_Error, "%s:%d: %s", *ScriptName, TokLine, Msg);
@@ -1321,7 +1317,7 @@ void VScriptParser::Error (const char *message) {
 //  VScriptParser::HostError
 //
 //==========================================================================
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
 void VScriptParser::HostError (const char *message) {
   const char *Msg = (message ? message : "Bad syntax.");
   Host_Error("Script error at %s:%d: %s", *ScriptName, TokLine, Msg);
@@ -1380,33 +1376,29 @@ void VScriptsParser::CheckInterface () {
 IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpName) {
   VName Name;
   vobjGetParamSelf(Name);
-#if !defined(IN_VCC)
   if (Self->Int) {
     delete Self->Int;
     Self->Int = nullptr;
   }
   Self->Int = new VScriptParser(*Name, W_CreateLumpReaderName(Name));
-#endif
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpIndex) {
   int lump;
   vobjGetParamSelf(lump);
-#if !defined(IN_VCC)
   if (Self->Int) {
     delete Self->Int;
     Self->Int = nullptr;
   }
   if (lump < 0) Sys_Error("cannot open non-existing lump");
   Self->Int = new VScriptParser(W_FullLumpName(lump), W_CreateLumpReaderNum(lump));
-#endif
 }
 #endif
 
 IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpFullName) {
   VStr Name;
   vobjGetParamSelf(Name);
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
   if (Self->Int) {
     delete Self->Int;
     Self->Int = nullptr;
