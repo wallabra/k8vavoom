@@ -132,6 +132,8 @@ struct RenderStyleInfo {
     FlagWall     = 1u<<9, // wall sprite
     FlagOriented = 1u<<10, // oriented sprite
     FlagShadow   = 1u<<11, // shadow sprite
+    // used in sorter/renderer
+    FlagMirror   = 1u<<12, // mirror surface; put here to avoid checking if something is a surface or a sprite
   };
 
   vuint32 seclight; // not used by hw renderer, but used by high-level renderer
@@ -533,7 +535,7 @@ public:
   virtual void DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *Texture1,
                                float offs1, VTexture *Texture2, float offs2, int CMap) = 0;
 
-  virtual void DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) = 0;
+  virtual void DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive, bool DepthWrite=true) = 0;
 
   virtual void BeginTranslucentPolygonDecals () = 0;
   virtual void DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) = 0;

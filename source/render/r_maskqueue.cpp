@@ -169,6 +169,8 @@ void VRenderLevelShared::QueueTranslucentSurface (surface_t *surf, const RenderS
   spr.type = 0/*(isSprite ? 1 : 0)*/;
   //spr.origin = sprOrigin;
   spr.rstyle = ri;
+  // used in sorter
+  if (spr.surf->drawflags&surface_t::DF_MIRROR) spr.rstyle.flags |= RenderStyleInfo::FlagMirror;
 }
 
 
@@ -718,6 +720,16 @@ extern "C" {
     const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
     const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
 
+    // mirrors come first
+    /* not everything has surfaces
+    if ((ta->surf->drawflags^tb->surf->drawflags)&surface_t::DF_MIRROR) {
+      return (ta->surf->drawflags&surface_t::DF_MIRROR ? -1 : 1);
+    }
+    */
+    if ((ta->rstyle.flags^tb->rstyle.flags)&RenderStyleInfo::FlagMirror) {
+      return (ta->rstyle.flags&RenderStyleInfo::FlagMirror ? -1 : 1);
+    }
+
     // shadows come first
     // oriented comes next
     const unsigned taspec = ta->rstyle.flags&(RenderStyleInfo::FlagShadow|RenderStyleInfo::FlagOriented);
@@ -855,7 +867,12 @@ void VRenderLevelShared::DrawTranslucentPolys () {
         // non-translucent and non-additive polys should not end up here
         vassert(spr.surf);
         if (pofsEnabled) { Drawer->GLDisableOffset(); pofsEnabled = false; }
-        if (allowTransPolys) Drawer->DrawMaskedPolygon(spr.surf, spr.rstyle.alpha, spr.rstyle.isAdditive());
+        if (allowTransPolys) {
+          //if (spr.surf->drawflags&surface_t::DF_MIRROR)
+          {
+            Drawer->DrawMaskedPolygon(spr.surf, spr.rstyle.alpha, spr.rstyle.isAdditive(), !(spr.rstyle.flags&RenderStyleInfo::FlagNoDepthWrite));
+          }
+        }
       }
     }
 #undef MAX_POFS

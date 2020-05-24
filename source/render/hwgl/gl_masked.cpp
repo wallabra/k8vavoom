@@ -31,7 +31,7 @@
 //  VOpenGLDrawer::DrawMaskedPolygon
 //
 //==========================================================================
-void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) {
+void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive, bool DepthWrite) {
   if (!surf->IsPlVisible()) return; // viewer is in back side or on plane
   if (surf->count < 3 || Alpha < 0.004f) return;
 
@@ -48,7 +48,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   const bool isAlphaTrans = (Alpha < 1.0f || tex->Tex->isTranslucent());
   //k8: non-translucent walls should not end here, so there is no need to recalc/check lightmaps
   const float lightLevel = getSurfLightLevel(surf);
-  const bool zbufferWriteDisabled = (Additive || Alpha < 1.0f); // translucent things should not modify z-buffer
+  const bool zbufferWriteDisabled = (!DepthWrite || Additive || Alpha < 1.0f); // translucent things should not modify z-buffer
 
   bool doDecals = (tex->Tex && !tex->noDecals && surf->seg && surf->seg->decalhead && r_decals_enabled);
   if (doDecals) {
