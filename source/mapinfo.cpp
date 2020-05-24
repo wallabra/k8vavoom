@@ -96,6 +96,12 @@ static MapInfoCommand *mclist = nullptr;
 static TMap<VStr, MapInfoCommand *> mcmap; // key is lowercase name
 static bool hasCustomDamageFactors = false;
 
+enum {
+  WSK_WAS_SKY1 = 1u<<0,
+  WSK_WAS_SKY2 = 1u<<1,
+};
+static unsigned wasSky1Sky2 = 0u; // bit0: was sky1; bit1: was sky2
+
 
 #define MAPINFOCMD(name_)  \
 class MapInfoCommandImpl##name_ { \
@@ -783,6 +789,7 @@ MAPINFOCMD(secretnext) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 MAPINFOCMD(sky1) {
+  wasSky1Sky2 |= WSK_WAS_SKY1;
   auto loc = sc->GetLoc();
   if (newFormat) sc->Expect("=");
   sc->ExpectName();
@@ -827,6 +834,7 @@ MAPINFOCMD(sky1) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 MAPINFOCMD(sky2) {
+  wasSky1Sky2 |= WSK_WAS_SKY2;
   if (newFormat) sc->Expect("=");
   sc->ExpectName8();
   //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, false);
@@ -1197,6 +1205,13 @@ static void FixOneSkyTextureHack (VScriptParser *sc, VMapInfo *info, int skynum,
 static void FixSkyTexturesHack (VScriptParser *sc, VMapInfo *info) {
   FixOneSkyTextureHack(sc, info, 1, info->Sky1Texture);
   //FixOneSkyTextureHack(sc, info, 2, info->Sky2Texture);
+
+  // if we have "lightning", but no "sky2", make "sky2" equal to "sky1" (otherwise the sky may flicker)
+  if ((info->Flags&VLevelInfo::LIF_Lightning) != 0 && (wasSky1Sky2&WSK_WAS_SKY2) == 0) {
+    // has lighting, but no second sky; force second sky to be the same as the first one
+    info->Sky2Texture = info->Sky1Texture;
+    info->Sky2ScrollDelta = info->Sky1ScrollDelta;
+  }
 }
 
 
@@ -1215,7 +1230,10 @@ static void ParseMapCommon (VScriptParser *sc, VMapInfo *info, bool &HexenMode) 
     }
   }
 
-  bool newFormat = sc->Check("{");
+  // if we have "lightning", but no "sky2", make "sky2" equal to "sky1" (otherwise the sky may flicker)
+  wasSky1Sky2 = 0u; // clear "was skyN" flag
+
+  const bool newFormat = sc->Check("{");
   //if (newFormat) sc->SetCMode(true);
   // process optional tokens
   for (;;) {
@@ -1264,8 +1282,9 @@ static void ParseMapCommon (VScriptParser *sc, VMapInfo *info, bool &HexenMode) 
   }
   //if (newFormat) sc->SetCMode(false);
 
-  // second sky defaults to first sky
   FixSkyTexturesHack(sc, info);
+
+  // second sky defaults to first sky
   if (info->Sky2Texture == GTextureManager.DefaultTexture) info->Sky2Texture = info->Sky1Texture;
   if (info->Flags&VLevelInfo::LIF_DoubleSky) GTextureManager.SetFrontSkyLayer(info->Sky1Texture);
 }
