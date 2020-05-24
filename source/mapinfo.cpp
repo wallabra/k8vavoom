@@ -1207,10 +1207,14 @@ static void FixSkyTexturesHack (VScriptParser *sc, VMapInfo *info) {
   //FixOneSkyTextureHack(sc, info, 2, info->Sky2Texture);
 
   // if we have "lightning", but no "sky2", make "sky2" equal to "sky1" (otherwise the sky may flicker)
-  if ((info->Flags&VLevelInfo::LIF_Lightning) != 0 && (wasSky1Sky2&WSK_WAS_SKY2) == 0) {
+  // actually, always do this, because why not?
+  if (/*(info->Flags&VLevelInfo::LIF_Lightning) != 0 &&*/ (wasSky1Sky2&WSK_WAS_SKY2) == 0) {
     // has lighting, but no second sky; force second sky to be the same as the first one
-    info->Sky2Texture = info->Sky1Texture;
-    info->Sky2ScrollDelta = info->Sky1ScrollDelta;
+    // (but only if the first one is not a skybox)
+    if (info->SkyBox == NAME_None) {
+      info->Sky2Texture = info->Sky1Texture;
+      info->Sky2ScrollDelta = info->Sky1ScrollDelta;
+    }
   }
 }
 
