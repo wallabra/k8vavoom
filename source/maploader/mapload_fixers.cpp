@@ -37,6 +37,7 @@ static VCvarB deepwater_hacks_ceiling("deepwater_hacks_ceiling", true, "Apply de
 static VCvarB deepwater_hacks_bridges("deepwater_hacks_bridges", true, "Apply hack for \"handing bridges\"?", CVAR_Archive);
 
 static VCvarB ldr_fix_slope_cracks("ldr_fix_slope_cracks", true, "Try to fix empty cracks near sloped floors?", /*CVAR_Archive|*/CVAR_PreInit);
+static VCvarB ldr_fix_transparent_doors("ldr_fix_transparent_doors", true, "Try to fix transparent doors?", CVAR_Archive);
 
 
 //==========================================================================
@@ -136,6 +137,8 @@ void VLevel::DetectHiddenSectors () {
 //
 //==========================================================================
 void VLevel::FixTransparentDoors () {
+  if (!ldr_fix_transparent_doors) return;
+
   // mark all sectors with transparent door hacks
   for (auto &&sec : allSectors()) {
     sec.SectorFlags &= ~sector_t::SF_IsTransDoor;

@@ -119,6 +119,23 @@ static inline int GetMaxPortalDepth () {
 
 //==========================================================================
 //
+//  IsStackedSectorPlane
+//
+//==========================================================================
+/*
+static inline bool IsStackedSectorPlane (const sec_plane_t &plane) {
+  VEntity *SkyBox = plane.SkyBox;
+  if (!SkyBox) return;
+  // prevent recursion
+  //if (SkyBox && SkyBox->IsPortalDirty()) SkyBox = nullptr;
+
+  return (SkyBox && SkyBox->GetSkyBoxAlways());
+}
+*/
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::PrepareWorldRender
 //
 //==========================================================================
@@ -552,7 +569,8 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       float alpha = 0.0f;
       if (doRenderSurf) {
         alpha = SkyBox->GetSkyBoxPlaneAlpha();
-        if (alpha <= 0.0f) doRenderSurf = false;
+        if (alpha <= 0.0f || alpha >= 1.0f) doRenderSurf = false;
+        //if (!plane.splane->pic) return;
       }
       //GCon->Logf(NAME_Debug, "PORTAL(%d): IsStack=%d; doRenderSurf=%d", Portals.length(), (int)IsStack, (int)doRenderSurf);
       for (; surfs; surfs = surfs->next) {
@@ -613,6 +631,8 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
 
   for (; surfs; surfs = surfs->next) {
     //if (!surfs->IsVisibleFor(Drawer->vieworg)) continue;
+
+    //if (surfs->plane.isCeiling()) GCon->Logf(NAME_Debug, "SFCT: %s", *texinfo->Tex->Name);
 
     surfs->Light = sflight;
     surfs->Fade = Fade;
@@ -910,6 +930,7 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
   // check if the surface is visible, to avoid doing excessive work
   // for some yet unknown (for me) reason this culls out alot of mirror planes. wtf?!
   if (plane.splane->MirrorAlpha < 1.0f /*&& ssurf->surfs && ssurf->surfs->IsVisibleFor(Drawer->vieworg)*/) {
+    // mirror
     if (r_allow_mirrors && r_allow_floor_mirrors && MirrorLevel < r_maxmiror_depth) {
       VPortal *Portal = nullptr;
       for (auto &&pp : Portals) {
@@ -952,6 +973,7 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
   }
 
   if (!plane.splane->pic) return;
+  //if (plane.splane->isCeiling()) GCon->Logf(NAME_Debug, "SFCTID: %d (sector #%d)", (int)plane.splane->pic, (int)(ptrdiff_t)(sub->sector-&Level->Sectors[0]));
   DrawSurfaces(sub, secregion, nullptr, ssurf->surfs, &ssurf->texinfo, SkyBox, plane.splane->LightSourceSector, 0, false, true);
 }
 
