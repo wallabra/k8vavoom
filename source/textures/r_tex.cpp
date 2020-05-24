@@ -2092,6 +2092,22 @@ void R_DumpTextures () {
 
 //==========================================================================
 //
+//  LoadIcon
+//
+//==========================================================================
+static void LoadIcon (VName icnName, VStr icnPath) {
+  if (W_CheckNumForName(icnName) >= 0) {
+    GTextureManager.AddPatch(icnName, TEXTYPE_Pic, true);
+    return;
+  }
+  if (icnPath.length()) {
+    GTextureManager.AddFileTextureChecked(*icnPath, TEXTYPE_Pic, icnName);
+  }
+}
+
+
+//==========================================================================
+//
 //  R_InitTexture
 //
 //==========================================================================
@@ -2100,9 +2116,14 @@ void R_InitTexture () {
   R_InitFTAnims(); // init flat and texture animations
   GTextureManager.WipeWallPatches();
   vassert(GTextureManager.MapTextures.length() == 0);
+  /*
   if (W_CheckNumForName(NAME_teleicon) >= 0) GTextureManager.AddPatch(NAME_teleicon, TEXTYPE_Pic, true);
   if (W_CheckNumForName(NAME_saveicon) >= 0) GTextureManager.AddPatch(NAME_saveicon, TEXTYPE_Pic, true);
   if (W_CheckNumForName(NAME_loadicon) >= 0) GTextureManager.AddPatch(NAME_loadicon, TEXTYPE_Pic, true);
+  */
+  LoadIcon(NAME_teleicon, VStr());
+  LoadIcon(NAME_saveicon, "graphics/k8vavoom_special/k8vavoom_save.png");
+  LoadIcon(NAME_loadicon, "graphics/k8vavoom_special/k8vavoom_load.png");
   if (developer) GTextureManager.DumpHashStats(NAME_Dev);
   if (cli_DumpTextures > 0) {
     R_DumpTextures();

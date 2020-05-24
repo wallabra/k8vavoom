@@ -726,11 +726,28 @@ static void DrawSomeIcon (VName icname) {
   picinfo_t info;
   GTextureManager.GetTextureInfo(pt, &info);
   if (info.width < 1 || info.height < 1) return;
+  #if 0
   int xpos = (int)((float)ScreenWidth*260.0f/320.0f);
   int ypos = (int)((float)ScreenHeight*68.0f/200.0f);
   Drawer->StartUpdate();
   R_DrawPic(xpos, ypos, pt);
   Drawer->Update();
+  #else
+  const int oldVW = VirtualWidth;
+  const int oldVH = VirtualHeight;
+  VirtualWidth = ScreenWidth;
+  VirtualHeight = ScreenHeight;
+  fScaleX = fScaleY = 1.0f;
+  if (GRoot) GRoot->RefreshScale();
+  Drawer->StartUpdate();
+  R_DrawPic(VirtualWidth-info.width, VirtualHeight-info.height, pt, 0.4f);
+  Drawer->Update();
+  VirtualWidth = oldVW;
+  VirtualHeight = oldVH;
+  fScaleX = (float)ScreenWidth/(float)VirtualWidth;
+  fScaleY = (float)ScreenHeight/(float)VirtualHeight;
+  if (GRoot) GRoot->RefreshScale();
+  #endif
 }
 
 
