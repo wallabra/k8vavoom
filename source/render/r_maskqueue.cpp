@@ -86,6 +86,8 @@ static VCvarI r_fake_3dshadow_mode("r_fake_3dshadow_mode", "0", "Fake pseudo-3d 
 
 static VCvarB dbg_disable_sprite_sorting("dbg_disable_sprite_sorting", false, "Disable sprite sorting (this WILL glitch renderer)?", /*CVAR_Archive|*/CVAR_PreInit);
 
+static VCvarB dbg_disable_translucent_polys("dbg_disable_translucent_polys", false, "Disable rendering of translucent polygons?", CVAR_PreInit);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
@@ -796,6 +798,8 @@ extern "C" {
 void VRenderLevelShared::DrawTranslucentPolys () {
   VRenderLevelDrawer::DrawLists &dls = GetCurrentDLS();
 
+  const bool allowTransPolys = !dbg_disable_translucent_polys.asBool();
+
   //FIXME: we should use proper sort order instead, because with separate lists additive sprites
   //       are broken by translucent surfaces (additive sprite rendered first even if it is nearer
   //       than the surface)
@@ -851,7 +855,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
         // non-translucent and non-additive polys should not end up here
         vassert(spr.surf);
         if (pofsEnabled) { Drawer->GLDisableOffset(); pofsEnabled = false; }
-        Drawer->DrawMaskedPolygon(spr.surf, spr.rstyle.alpha, spr.rstyle.isAdditive());
+        if (allowTransPolys) Drawer->DrawMaskedPolygon(spr.surf, spr.rstyle.alpha, spr.rstyle.isAdditive());
       }
     }
 #undef MAX_POFS
@@ -859,23 +863,17 @@ void VRenderLevelShared::DrawTranslucentPolys () {
     if (pofsEnabled) { Drawer->GLDisableOffset(); }
   }
 
+  // this is code for separate lists
+
   //GCon->Logf(NAME_Debug, "add=%d; alp=%d", DrawSurfListAdditive.length(), DrawSurfListAlpha.length());
   // additive (order doesn't matter, so sort by texture)
-  if (GetCurrentDLS().DrawSurfListAdditive.length() != 0) {
-    //timsort_r(DrawSurfListAdditive.ptr(), DrawSurfListAdditive.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
-    // back-to-front
-    for (int f = GetCurrentDLS().DrawSurfListAdditive.length()-1; f >= 0; --f) {
-      surface_t *sfc = GetCurrentDLS().DrawSurfListAdditive[f];
-      Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/true);
-    }
+  // usually back-to-front
+  for (auto &&sfc : GetCurrentDLS().DrawSurfListAdditive) {
+    Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/true);
   }
 
-  // translucent (order does matter, no sorting)
-  if (GetCurrentDLS().DrawSurfListAlpha.length() != 0) {
-    // back-to-front
-    for (int f = GetCurrentDLS().DrawSurfListAlpha.length()-1; f >= 0; --f) {
-      surface_t *sfc = GetCurrentDLS().DrawSurfListAlpha[f];
-      Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/false);
-    }
+  // usually back-to-front
+  for (auto &&sfc : GetCurrentDLS().DrawSurfListAlpha) {
+    Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/false);
   }
 }

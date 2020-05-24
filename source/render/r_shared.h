@@ -153,6 +153,7 @@ struct surface_t {
     DF_FIX_CRACKS   = 1u<<2, // this surface must be processed with t-junction fixer (not implemented yet)
     DF_CALC_LMAP    = 1u<<3, // calculate static lightmap
     DF_NO_FACE_CULL = 1u<<4, // ignore face culling
+    DF_MIRROR       = 1u<<5, // this is floor/ceiling mirror surface (set in renderer)
     // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
     DF_PL_VISIBLE   = 1u<<31,
   };
@@ -213,7 +214,8 @@ struct surface_t {
 
   // to use in renderer
   inline bool IsVisibleFor (const TVec &point) const noexcept {
-    return (!(drawflags&DF_NO_FACE_CULL) ? !plane.PointOnSide(point) : (plane.PointOnSide2(point) != 2));
+    //k8: mirror surfaces should be rendered too, but i don't yet know why
+    return (!(drawflags&(DF_NO_FACE_CULL|DF_MIRROR)) ? !plane.PointOnSide(point) : (plane.PointOnSide2(point) != 2));
   }
 
   inline int PointOnSide (const TVec &point) const noexcept {

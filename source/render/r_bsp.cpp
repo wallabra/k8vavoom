@@ -281,7 +281,11 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
   }
 
   //if (surf->drawflags&surface_t::DF_NO_FACE_CULL) surf->SetPlVisible(true);
-  if (surf->drawflags&surface_t::DF_NO_FACE_CULL) surf->drawflags |= surface_t::DF_PL_VISIBLE;
+  // this is done in `IsVisibleFor()`
+  //if (surf->drawflags&surface_t::DF_NO_FACE_CULL) surf->drawflags |= surface_t::DF_PL_VISIBLE;
+
+  // this is done in `IsVisibleFor()`
+  //if (surf->drawflags&surface_t::DF_MIRROR) surf->drawflags |= surface_t::DF_PL_VISIBLE;
 
   return true;
 }
@@ -900,13 +904,12 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
   if (!ssurf) return;
   TSecPlaneRef plane(ssurf->esecplane);
 
-  if (!plane.splane->pic) return;
+  //if (!plane.splane->pic) return;
 
-  //k8: this seems to be unnecessary
-  //if (plane.PointOnSide(Drawer->vieworg)) return; // viewer is in back side or on plane
-
-  // floor/ceiling mirrors are nor properly working for now, so i disabled them
-  if (plane.splane->MirrorAlpha < 1.0f) {
+  // floor/ceiling mirrors
+  // check if the surface is visible, to avoid doing excessive work
+  // for some yet unknown (for me) reason this culls out alot of mirror planes. wtf?!
+  if (plane.splane->MirrorAlpha < 1.0f /*&& ssurf->surfs && ssurf->surfs->IsVisibleFor(Drawer->vieworg)*/) {
     if (r_allow_mirrors && r_allow_floor_mirrors && MirrorLevel < r_maxmiror_depth) {
       VPortal *Portal = nullptr;
       for (auto &&pp : Portals) {
@@ -920,17 +923,21 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
         Portals.Append(Portal);
       }
 
-      for (surface_t *surfs = ssurf->surfs; surfs; surfs = surfs->next) Portal->Surfs.Append(surfs);
+      //FIXME: this flag should be reset if `MirrorAlpha` was changed!
+      for (surface_t *surfs = ssurf->surfs; surfs; surfs = surfs->next) {
+        //surfs->drawflags |= surface_t::DF_NO_FACE_CULL;
+        surfs->drawflags |= surface_t::DF_MIRROR;
+        Portal->Surfs.Append(surfs);
+      }
 
       if (plane.splane->MirrorAlpha <= 0.0f) return;
-      // k8: is this right?
-      ssurf->texinfo.Alpha = clampval(plane.splane->MirrorAlpha, 0.0f, 1.0f);
+      ssurf->texinfo.Alpha = min2(plane.splane->MirrorAlpha, 1.0f);
     } else {
       // this is NOT right!
-      //ssurf->texinfo.Alpha = 1.0f;
-      if (ssurf->texinfo.Alpha >= 1.0f) {
+      ssurf->texinfo.Alpha = 1.0f;
+      if (plane.splane->pic) {
         //GCon->Logf("MALPHA=%f", plane.splane->MirrorAlpha);
-        // darken it a little to simulate mirror
+        // darken it a little to simulate a mirror
         sec_params_t *oldRegionLightParams = secregion->params;
         sec_params_t newLight = (plane.splane->LightSourceSector >= 0 ? Level->Sectors[plane.splane->LightSourceSector].params : *oldRegionLightParams);
         newLight.lightlevel = (int)((float)newLight.lightlevel*plane.splane->MirrorAlpha);
@@ -944,6 +951,7 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
     }
   }
 
+  if (!plane.splane->pic) return;
   DrawSurfaces(sub, secregion, nullptr, ssurf->surfs, &ssurf->texinfo, SkyBox, plane.splane->LightSourceSector, 0, false, true);
 }
 
