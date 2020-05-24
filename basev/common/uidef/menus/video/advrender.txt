@@ -37,7 +37,17 @@ menudef AdvRenderOptions {
     cvar = r_allow_mirrors;
     help =
       "Allow rendering mirror portals?"
-      "Note that portal rendering in k8vavoom is somewhat slow."
+      "Note that portal rendering in k8vavoom is somewhat slow and buggy."
+      "\cGPlease note that you have to restart/reload the map after changing this,"
+      "\cGor visual glitches will occur.";
+  }
+
+  option bool {
+    title = "Allow floor/ceiling mirrors";
+    cvar = r_allow_floor_mirrors;
+    help =
+      "Allow rendering floor/ceiling mirror portals?"
+      "Note that portal rendering in k8vavoom is somewhat slow and buggy."
       "\cGPlease note that you have to restart/reload the map after changing this,"
       "\cGor visual glitches will occur.";
   }
@@ -53,13 +63,13 @@ menudef AdvRenderOptions {
   }
 
   option numeric {
-    title = "Maximum mirror count";
+    title = "Maximum mirror depth";
     cvar = r_maxmiror_depth;
     step = 1;
     min = 0;
     max = 6;
     help =
-      "Maximum allowed mirrors per frame."
+      "Maximum allowed mirror depth per frame."
       "Usually has little effect.";
   }
 

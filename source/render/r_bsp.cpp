@@ -46,6 +46,7 @@ VCvarI r_max_portal_depth("r_max_portal_depth", "1", "Maximum allowed portal dep
 VCvarI r_max_portal_depth_override("r_max_portal_depth_override", "-1", "Maximum allowed portal depth override for map fixer (-1: not active)", 0);
 static VCvarB r_allow_horizons("r_allow_horizons", true, "Allow horizon portal rendering?", CVAR_Archive);
 static VCvarB r_allow_mirrors("r_allow_mirrors", true, "Allow mirror portal rendering?", CVAR_Archive);
+static VCvarB r_allow_floor_mirrors("r_allow_floor_mirrors", false, "Allow floor/ceiling mirror portal rendering?", CVAR_Archive);
 static VCvarB r_allow_stacked_sectors("r_allow_stacked_sectors", true, "Allow non-mirror portal rendering (SLOW)?", CVAR_Archive);
 
 static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable rendering of sky portals.", 0/*CVAR_Archive*/);
@@ -951,32 +952,28 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
   //if (plane.PointOnSide(Drawer->vieworg)) return; // viewer is in back side or on plane
 
   // floor/ceiling mirrors are nor properly working for now, so i disabled them
-  if (/*r_allow_mirrors && MirrorLevel < r_maxmiror_depth && plane.splane->MirrorAlpha < 1.0f*/false) {
-    VPortal *Portal = nullptr;
-    for (auto &&pp : Portals) {
-      if (pp && pp->MatchMirror(plane.splane)) {
-        Portal = pp;
-        break;
+  if (plane.splane->MirrorAlpha < 1.0f) {
+    if (r_allow_mirrors && r_allow_floor_mirrors && MirrorLevel < r_maxmiror_depth) {
+      VPortal *Portal = nullptr;
+      for (auto &&pp : Portals) {
+        if (pp && pp->MatchMirror(plane.splane)) {
+          Portal = pp;
+          break;
+        }
       }
-    }
-    if (!Portal) {
-      Portal = new VMirrorPortal(this, plane.splane);
-      Portals.Append(Portal);
-    }
+      if (!Portal) {
+        Portal = new VMirrorPortal(this, plane.splane);
+        Portals.Append(Portal);
+      }
 
-    for (surface_t *surfs = ssurf->surfs; surfs; surfs = surfs->next) Portal->Surfs.Append(surfs);
+      for (surface_t *surfs = ssurf->surfs; surfs; surfs = surfs->next) Portal->Surfs.Append(surfs);
 
-    if (plane.splane->MirrorAlpha <= 0.0f) return;
-    // k8: is this right?
-    if (plane.splane->MirrorAlpha >= 1.0f) {
-      ssurf->texinfo.Alpha = 1.0f;
-    } else {
+      if (plane.splane->MirrorAlpha <= 0.0f) return;
+      // k8: is this right?
       ssurf->texinfo.Alpha = clampval(plane.splane->MirrorAlpha, 0.0f, 1.0f);
-    }
-  } else {
-    // this is NOT right!
-    //ssurf->texinfo.Alpha = 1.0f;
-    if (plane.splane->MirrorAlpha < 1.0f) {
+    } else {
+      // this is NOT right!
+      //ssurf->texinfo.Alpha = 1.0f;
       if (ssurf->texinfo.Alpha >= 1.0f) {
         //GCon->Logf("MALPHA=%f", plane.splane->MirrorAlpha);
         // darken it a little to simulate mirror
@@ -1287,7 +1284,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     // if we have a skybox there, turn off advanced clipping, or stacked sector may glitch
     const sector_t *sec = Level->Subsectors[BSPIDX_LEAF_SUBSECTOR(bspnum)].sector;
     if (!sec->linecount) return; // skip sectors containing original polyobjs
-    if (sec->floor.SkyBox || sec->ceiling.SkyBox) {
+    if (sec->floor.SkyBox || sec->ceiling.SkyBox || MirrorLevel || PortalLevel) {
       const bool old_clip_height = clip_height.asBool();
       const bool old_clip_midsolid = clip_midsolid.asBool();
       /* doesn't help much :-(

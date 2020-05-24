@@ -490,8 +490,8 @@ public:
   // lightmapped renderer
   virtual void DrawLightmapWorld () = 0;
 
-  // call this
   virtual void DisableClipPlanes () = 0;
+  virtual void SetupClipPlanes () = 0;
 
   virtual void SetMainFBO (bool forced=false) = 0;
 

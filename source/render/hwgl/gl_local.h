@@ -304,6 +304,7 @@ public:
   virtual void EndView (bool ignoreColorTint=false) override;
 
   virtual void DisableClipPlanes () override;
+  virtual void SetupClipPlanes () override;
 
   // texture stuff
   virtual void PrecacheTexture (VTexture *) override;

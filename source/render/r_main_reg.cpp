@@ -383,12 +383,18 @@ void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *
 
   DrawParticles();
 
+  RenderPortals();
+  Drawer->SetupClipPlanes();
+
   MiniStopTimer profDrawTransSpr("DrawTranslucentPolys", prof_r_bsp_world_render.asBool());
   DrawTranslucentPolys();
   profDrawTransSpr.stopAndReport();
+  Drawer->DisableClipPlanes();
 
+  /*
   Drawer->DisableClipPlanes();
   RenderPortals();
+  */
 
   profRenderScene.stopAndReport();
   if (profRenderScene.isEnabled()) GCon->Log(NAME_Debug, "===:::=== RenderScene ===:::===");

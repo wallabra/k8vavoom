@@ -587,6 +587,9 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       if (Key.strEquCI("floorglowcolor")) { S.params.glowFloor = CheckColor(0u, 0xff000000u); continue; }
       if (Key.strEquCI("ceilingglowcolor")) { S.params.glowCeiling = CheckColor(0u, 0xff000000u); continue; }
 
+      if (Key.strEquCI("floor_reflect")) { S.floor.MirrorAlpha = 1.0f-clampval(CheckFloat(), 0.0f, 1.0f); continue; }
+      if (Key.strEquCI("ceiling_reflect")) { S.ceiling.MirrorAlpha = 1.0f-clampval(CheckFloat(), 0.0f, 1.0f); continue; }
+
       if (Key.strEquCI("floorglowheight")) { S.params.glowFloorHeight = CheckFloat(); continue; }
       if (Key.strEquCI("ceilingglowheight")) { S.params.glowCeilingHeight = CheckFloat(); continue; }
 
