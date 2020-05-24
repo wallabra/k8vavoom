@@ -66,9 +66,11 @@ VCvarB r_separate_translucent_lists("r_separate_translucent_lists", false, "Use 
 extern VCvarB r_decals_enabled;
 extern VCvarB clip_frustum;
 extern VCvarB clip_frustum_bsp;
+#ifndef VV_USE_CLIP_CHECK_AND_ADD
+extern VCvarB clip_frustum_bsp_segs;
+#endif
 extern VCvarB clip_frustum_mirror;
 extern VCvarB clip_use_1d_clipper;
-extern VCvarB clip_frustum_bsp_segs;
 // for portals
 extern VCvarB clip_height;
 extern VCvarB clip_midsolid;
@@ -1277,7 +1279,34 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     bbox = bsp->bbox[side];
     goto tailcall;
   } else {
-    return RenderSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum), onlyClip);
+    // if we have a skybox there, turn off advanced clipping, or stacked sector may glitch
+    const sector_t *sec = Level->Subsectors[BSPIDX_LEAF_SUBSECTOR(bspnum)].sector;
+    if (!sec->linecount) return; // skip sectors containing original polyobjs
+    if (sec->floor.SkyBox || sec->ceiling.SkyBox) {
+      const bool old_clip_height = clip_height.asBool();
+      const bool old_clip_midsolid = clip_midsolid.asBool();
+      /* doesn't help much :-(
+      const bool old_clip_frustum_bsp = clip_frustum_bsp.asBool();
+      #ifndef VV_USE_CLIP_CHECK_AND_ADD
+      const bool old_clip_frustum_bsp_segs = clip_frustum_bsp_segs.asBool();
+      #endif
+      */
+      clip_height = false;
+      clip_midsolid = false;
+      clip_frustum_bsp = false;
+      clip_frustum_bsp_segs = false;
+      RenderSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum), onlyClip);
+      clip_height = old_clip_height;
+      clip_midsolid = old_clip_midsolid;
+      /*
+      clip_frustum_bsp = old_clip_frustum_bsp;
+      #ifndef VV_USE_CLIP_CHECK_AND_ADD
+      clip_frustum_bsp_segs = old_clip_frustum_bsp_segs;
+      #endif
+      */
+    } else {
+      return RenderSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum), onlyClip);
+    }
   }
 }
 
@@ -1359,9 +1388,6 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
 //
 //==========================================================================
 void VRenderLevelShared::RenderPortals () {
-  const bool old_clip_height = clip_height.asBool();
-  const bool old_clip_midsolid = clip_midsolid.asBool();
-
   if (PortalLevel == 0) {
     /*
     if (oldMaxMirrors != r_maxmirrors || oldPortalDepth != GetMaxPortalDepth() ||
@@ -1383,10 +1409,6 @@ void VRenderLevelShared::RenderPortals () {
       return;
     }
     */
-  } else {
-    // without this, some portals may glitch
-    clip_height = false;
-    clip_midsolid = false;
   }
 
   ++PortalLevel;
@@ -1428,7 +1450,4 @@ void VRenderLevelShared::RenderPortals () {
 
   --PortalLevel;
   if (PortalLevel == 0) Portals.reset();
-
-  clip_height = old_clip_height;
-  clip_midsolid = old_clip_midsolid;
 }
