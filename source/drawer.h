@@ -134,6 +134,8 @@ struct RenderStyleInfo {
     FlagShadow   = 1u<<11, // shadow sprite
     // used in sorter/renderer
     FlagMirror   = 1u<<12, // mirror surface; put here to avoid checking if something is a surface or a sprite
+    FlagCeiling  = 1u<<13, // this is ceiling surface (used in sorter)
+    FlagFloor    = 1u<<13, // this is floor surface (used in sorter)
   };
 
   vuint32 seclight; // not used by hw renderer, but used by high-level renderer

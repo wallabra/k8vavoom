@@ -170,7 +170,16 @@ void VRenderLevelShared::QueueTranslucentSurface (surface_t *surf, const RenderS
   //spr.origin = sprOrigin;
   spr.rstyle = ri;
   // used in sorter
-  if (spr.surf->drawflags&surface_t::DF_MIRROR) spr.rstyle.flags |= RenderStyleInfo::FlagMirror;
+  if (spr.surf->drawflags&surface_t::DF_MIRROR) {
+    // disable depth write too, just in case
+    spr.rstyle.flags |= RenderStyleInfo::FlagMirror/*|RenderStyleInfo::FlagNoDepthWrite*/;
+  }
+  // set ceiling/floor flags
+  const float ssz = spr.surf->plane.normal.z;
+  if (ssz != 0.0f) {
+    // disable depth write too, just in case
+    spr.rstyle.flags |= (ssz < 0.0f ? RenderStyleInfo::FlagCeiling : RenderStyleInfo::FlagFloor)|RenderStyleInfo::FlagNoDepthWrite;
+  }
 }
 
 
@@ -720,14 +729,12 @@ extern "C" {
     const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
     const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
 
-    // mirrors come first
-    /* not everything has surfaces
-    if ((ta->surf->drawflags^tb->surf->drawflags)&surface_t::DF_MIRROR) {
-      return (ta->surf->drawflags&surface_t::DF_MIRROR ? -1 : 1);
-    }
-    */
-    if ((ta->rstyle.flags^tb->rstyle.flags)&RenderStyleInfo::FlagMirror) {
-      return (ta->rstyle.flags&RenderStyleInfo::FlagMirror ? -1 : 1);
+    // mirrors come first, then comes floor/ceiling surfaces
+    if ((ta->rstyle.flags^tb->rstyle.flags)&(RenderStyleInfo::FlagCeiling|RenderStyleInfo::FlagFloor|RenderStyleInfo::FlagMirror)) {
+      if ((ta->rstyle.flags^tb->rstyle.flags)&RenderStyleInfo::FlagMirror) {
+        return (ta->rstyle.flags&RenderStyleInfo::FlagMirror ? -1 : 1);
+      }
+      return (ta->rstyle.flags&(RenderStyleInfo::FlagCeiling|RenderStyleInfo::FlagFloor) ? -1 : 1);
     }
 
     // shadows come first
