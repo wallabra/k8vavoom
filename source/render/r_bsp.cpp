@@ -740,9 +740,9 @@ void VRenderLevelShared::RenderMirror (subsector_t *sub, sec_region_t *secregion
     if (!dseg->mid) return;
 
     VPortal *Portal = nullptr;
-    for (int i = 0; i < Portals.length(); ++i) {
-      if (Portals[i] && Portals[i]->MatchMirror(seg)) {
-        Portal = Portals[i];
+    for (auto &&pp : Portals) {
+      if (pp && pp->MatchMirror(seg)) {
+        Portal = pp;
         break;
       }
     }
@@ -944,9 +944,9 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 
   if (r_allow_mirrors && MirrorLevel < r_maxmirrors && plane.splane->MirrorAlpha < 1.0f) {
     VPortal *Portal = nullptr;
-    for (int i = 0; i < Portals.length(); ++i) {
-      if (Portals[i] && Portals[i]->MatchMirror(plane.splane)) {
-        Portal = Portals[i];
+    for (auto &&pp : Portals) {
+      if (pp && pp->MatchMirror(plane.splane)) {
+        Portal = pp;
         break;
       }
     }
@@ -1309,16 +1309,20 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
     RenderBSPNode(Level->NumNodes-1, dummy_bbox, clipflags /*(Drawer->MirrorClip ? 0x3f : 0x1f)*/);
   }
 
+  // draw the most complex sky portal behind the scene first, without the need to use stencil buffer
+  // most of the time this is the only sky portal, so we can get away without rendering portals at all
   if (PortalLevel == 0) {
-    // draw the most complex sky portal behind the scene first, without the need to use stencil buffer
     VPortal *BestSky = nullptr;
     int BestSkyIndex = -1;
-    for (int i = 0; i < Portals.length(); ++i) {
-      if (Portals[i] && Portals[i]->IsSky() && (!BestSky || BestSky->Surfs.Num() < Portals[i]->Surfs.Num())) {
-        BestSky = Portals[i];
-        BestSkyIndex = i;
+    for (auto &&it : Portals.itemsIdx()) {
+      VPortal *pp = it.value();
+      if (pp && pp->IsSky() && (!BestSky || BestSky->Surfs.length() < pp->Surfs.length())) {
+        BestSky = pp;
+        BestSkyIndex = it.index();
       }
     }
+
+    // if we found a sky, render it, and remove it from portal list
     if (BestSky) {
       PortalLevel = 1;
       BestSky->Draw(false);
@@ -1328,13 +1332,14 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
       PortalLevel = 0;
     }
 
-    world_surf_t *wsurf = WorldSurfs.ptr();
-    for (int i = WorldSurfs.length(); i--; ++wsurf) {
-      switch (wsurf->Type) {
-        case SFCType::SFCT_World: QueueWorldSurface(wsurf->Surf); break;
-        case SFCType::SFCT_Sky: QueueSkyPortal(wsurf->Surf); break;
-        case SFCType::SFCT_Horizon: QueueHorizonPortal(wsurf->Surf); break;
-        default: Sys_Error("invalid queued 0-level world surface type %d", (int)wsurf->Type);
+    // queue all collected world surfaces
+    // k8: tell me again, why we couldn't do that in-place?
+    for (auto &&wsurf : WorldSurfs) {
+      switch (wsurf.Type) {
+        case SFCType::SFCT_World: QueueWorldSurface(wsurf.Surf); break;
+        case SFCType::SFCT_Sky: QueueSkyPortal(wsurf.Surf); break;
+        case SFCType::SFCT_Horizon: QueueHorizonPortal(wsurf.Surf); break;
+        default: Sys_Error("invalid queued 0-level world surface type %d", (int)wsurf.Type);
       }
     }
     WorldSurfs.resetNoDtor();
@@ -1353,10 +1358,10 @@ void VRenderLevelShared::RenderPortals () {
         oldHorizons != r_allow_horizons || oldMirrors != r_allow_mirrors)
     {
       //GCon->Logf("portal settings changed, resetting portal info");
-      for (int i = 0; i < Portals.length(); ++i) {
-        if (Portals[i]) {
-          delete Portals[i];
-          Portals[i] = nullptr;
+      for (auto &&pp : Portals) {
+        if (pp) {
+          delete pp;
+          pp = nullptr;
         }
       }
       Portals.reset();
@@ -1371,35 +1376,27 @@ void VRenderLevelShared::RenderPortals () {
 
   ++PortalLevel;
 
-#if 0
-  if (/*dbg_dump_portal_list &&*/ PortalLevel == 1) {
-    for (int f = 0; f < Portals.length(); ++f) {
-      if (Portals[f]) GCon->Logf(NAME_Debug, "PORTAL #%d: %s", f, *shitppTypeNameObj(*Portals[f]));
-    }
-  }
-#endif
-
   const int maxpdepth = GetMaxPortalDepth();
   if (maxpdepth < 0 || PortalLevel <= maxpdepth) {
     //FIXME: disable decals for portals
     //       i should rewrite decal rendering, so we can skip stencil buffer
     //       (or emulate stencil buffer with texture and shaders)
-    bool oldDecalsEnabled = r_decals_enabled;
+    const bool oldDecalsEnabled = r_decals_enabled;
     r_decals_enabled = false;
     //bool oldShadows = r_allow_shadows;
     //if (/*Portal->stackedSector &&*/ IsShadowVolumeRenderer()) r_allow_shadows = false;
     //bool firstPortal = true;
-    for (int i = 0; i < Portals.length(); ++i) {
-      if (Portals[i] && Portals[i]->Level == PortalLevel) {
-        if (r_allow_other_portals || Portals[i]->IsMirror()) {
+    for (auto &&pp : Portals) {
+      if (pp && pp->Level == PortalLevel) {
+        if (r_allow_other_portals || pp->IsMirror()) {
           /*
           if (firstPortal && IsShadowVolumeRenderer()) {
             firstPortal = false;
             Drawer->ForceClearStencilBuffer();
           }
           */
-          if (Portals[i]->stackedSector && IsShadowVolumeRenderer()) continue;
-          Portals[i]->Draw(true);
+          if (pp->stackedSector && IsShadowVolumeRenderer()) continue;
+          pp->Draw(true);
         }
       }
     }
@@ -1410,10 +1407,10 @@ void VRenderLevelShared::RenderPortals () {
     if (dbg_max_portal_depth_warning) GCon->Logf(NAME_Warning, "portal level too deep (%d)", PortalLevel);
   }
 
-  for (int i = 0; i < Portals.length(); ++i) {
-    if (Portals[i] && Portals[i]->Level == PortalLevel) {
-      delete Portals[i];
-      Portals[i] = nullptr;
+  for (auto &&pp : Portals) {
+    if (pp && pp->Level == PortalLevel) {
+      delete pp;
+      pp = nullptr;
     }
   }
 
