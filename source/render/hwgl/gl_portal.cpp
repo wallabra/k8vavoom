@@ -28,13 +28,33 @@
 
 //==========================================================================
 //
+//  VOpenGLDrawer::DrawPortalArea
+//
+//==========================================================================
+void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
+  for (auto &&surf : Portal->Surfs) {
+    //const surface_t *surf = Portal->Surfs[i];
+    if (surf->count < 3) continue;
+    currentActiveShader->UploadChangedUniforms();
+    glBegin(GL_POLYGON);
+    for (unsigned j = 0; j < (unsigned)surf->count; ++j) glVertex(surf->verts[j].vec());
+    glEnd();
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::StartPortal
 //
 //==========================================================================
 bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
   if (UseStencil) {
-    ClearStencilBuffer();
-    NoteStencilBufferDirty();
+    // we need clean stencil buffer on the first portal
+    if (RendLev->/*PortalDepth*/PortalUsingStencil == 0) {
+      ClearStencilBuffer();
+      NoteStencilBufferDirty();
+    }
 
     /*
     if (Portal->IsStack()) {
@@ -53,9 +73,22 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
     GLDisableBlend();
 
     // set up stencil test
-    if (!RendLev->PortalDepth) glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_ALWAYS, RendLev->PortalDepth+1, ~0);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    /*
+    if (RendLev->PortalDepth == 0) {
+      // first portal
+      glEnable(GL_STENCIL_TEST);
+      glStencilFunc(GL_ALWAYS, RendLev->PortalDepth+1, ~0);
+      glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    } else {
+      // other portals
+      glEnable(GL_STENCIL_TEST);
+      glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
+      glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+    }
+    */
 
     // mark the portal area
     DrawPortalArea(Portal);
@@ -83,6 +116,8 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
     GLEnableBlend();
 
     glEnable(GL_TEXTURE_2D);
+
+    ++RendLev->PortalUsingStencil;
     ++RendLev->PortalDepth;
   } else {
     if (!Portal->NeedsDepthBuffer()) {
@@ -91,23 +126,6 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
     }
   }
   return true;
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::DrawPortalArea
-//
-//==========================================================================
-void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
-  for (auto &&surf : Portal->Surfs) {
-    //const surface_t *surf = Portal->Surfs[i];
-    if (surf->count < 3) continue;
-    currentActiveShader->UploadChangedUniforms();
-    glBegin(GL_POLYGON);
-    for (unsigned j = 0; j < (unsigned)surf->count; ++j) glVertex(surf->verts[j].vec());
-    glEnd();
-  }
 }
 
 
@@ -153,18 +171,22 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
       glEnable(GL_DEPTH_TEST);
     }
 
-    glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+    //k8: do not bother clearing stencil buffer
+    // but not disable stencil writing, because portal may be partially obscured
+    //glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); // this is marginally faster, and we don't care
 
-    // draw proper z-buffer for the portal area
+    // set proper z-buffer values for the portal area
     glDepthFunc(GL_ALWAYS);
     DrawPortalArea(Portal);
-    //glDepthFunc(GL_LEQUAL);
+
     RestoreDepthFunc();
 
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
     NoteStencilBufferDirty(); // just in case
 
+    --RendLev->PortalUsingStencil;
     --RendLev->PortalDepth;
     if (RendLev->PortalDepth == 0) glDisable(GL_STENCIL_TEST);
   } else {

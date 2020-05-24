@@ -33,7 +33,7 @@
 //==========================================================================
 void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
   if (!r_decals_enabled) return;
-  if (RendLev->PortalDepth) return; //FIXME: not yet
+  if (RendLev->/*PortalDepth*/PortalUsingStencil) return; //FIXME: not yet
 
   if (!surf->seg || !surf->seg->decalhead) return; // nothing to do
 
@@ -64,6 +64,7 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
 //==========================================================================
 bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, surfcache_t *cache, int cmap) {
   if (!r_decals_enabled) return false;
+  if (RendLev->/*PortalDepth*/PortalUsingStencil) return false; //FIXME: not yet
 
   if (!surf->seg || !surf->seg->decalhead) return false; // nothing to do
 

@@ -99,7 +99,8 @@ VCvarF r_fade_mult_regular("r_fade_mult_regular", "1", "Light fade multiplier fo
 VCvarF r_fade_mult_advanced("r_fade_mult_advanced", "0.8", "Light fade multiplier for advanced renderer.", CVAR_Archive);
 VCvarF r_sky_bright_factor("r_sky_bright_factor", "1", "Skybright actor factor.", CVAR_Archive);
 
-VCvarF r_lights_radius("r_lights_radius", "3072", "Lights out of this radius (from camera) will be dropped.", CVAR_Archive);
+// was 3072
+VCvarF r_lights_radius("r_lights_radius", "6192", "Lights out of this radius (from camera) will be dropped.", CVAR_Archive);
 //static VCvarB r_lights_cast_many_rays("r_lights_cast_many_rays", false, "Cast more rays to better check light visibility (usually doesn't make visuals any better)?", CVAR_Archive);
 //static VCvarB r_light_opt_separate_vis("r_light_opt_separate_vis", false, "Calculate light and render vis intersection as separate steps?", CVAR_Archive|CVAR_PreInit);
 
@@ -622,6 +623,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   currVisFrame = 0;
 
   PortalDepth = 0;
+  PortalUsingStencil = 0;
   //VPortal::ResetFrame();
 
   VisSize = (Level->NumSubsectors+7)>>3;
@@ -1293,6 +1295,8 @@ void VRenderLevelShared::SetupFrame () {
   Drawer->SetupView(this, &refdef);
   //advanceCacheFrame();
   PortalDepth = 0;
+  PortalUsingStencil = 0;
+  PortalLevel = 0;
 }
 
 
@@ -1327,6 +1331,8 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
   Drawer->SetupView(this, rd);
   //advanceCacheFrame();
   PortalDepth = 0;
+  PortalUsingStencil = 0;
+  PortalLevel = 0;
   set_resolution_needed = true;
 }
 

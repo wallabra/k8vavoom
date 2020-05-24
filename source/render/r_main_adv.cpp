@@ -197,8 +197,8 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
   unsigned visstatlightCount = 0;
 
   //GCon->Log("***************** RenderScene *****************");
-  //FIXME: mirrors can use stencils, and advlight too...
-  if (!MirrorLevel) {
+  //FIXME: portals can use stencils, and advlight too...
+  if (/*PortalDepth*/PortalUsingStencil == 0) {
     MiniStopTimer profDrawSVol("ShadowVolumes", prof_r_bsp_world_render.asBool());
     Drawer->BeginShadowVolumesPass();
 
@@ -211,7 +211,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     AllShadowsNumber = 0;
 
     // do not render lights further than `gl_maxdist`
-    const float maxLightDist = GetLightMaxDistDef(2048);
+    const float maxLightDist = GetLightMaxDistDef();
     const float rlightraduisSq = maxLightDist*maxLightDist;
     //const bool hasPVS = Level->HasPVS();
 

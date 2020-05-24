@@ -219,6 +219,7 @@ public:
   TArray<DrawLists> DrawListStack;
 
   int PortalDepth;
+  int PortalUsingStencil;
   vuint32 currDLightFrame;
   vuint32 currQueueFrame;
 
@@ -342,7 +343,7 @@ public:
     return fmax(0.0f, (gl_maxdist > 0 ? fmin(gl_maxdist.asFloat(), r_lights_radius.asFloat()) : r_lights_radius.asFloat()));
   }
 
-  static inline float GetLightMaxDistDef (const float defval) noexcept {
+  static inline float GetLightMaxDistDef (const float defval=4096) noexcept {
     const float maxLightDist = (gl_maxdist > 0 ? fmin(gl_maxdist.asFloat(), r_lights_radius.asFloat()) : r_lights_radius.asFloat());
     return (maxLightDist < 1 ? defval : maxLightDist);
   }

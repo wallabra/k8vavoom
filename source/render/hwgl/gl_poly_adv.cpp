@@ -718,20 +718,24 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 //==========================================================================
 void VOpenGLDrawer::DrawWorldTexturesPass () {
   if (gl_dbg_wireframe) return;
-  // stop stenciling now
-  glDisable(GL_STENCIL_TEST);
+
+  if (r_decals_enabled && RendLev->/*PortalDepth*/PortalUsingStencil == 0) {
+    // stop stenciling now
+    glDisable(GL_STENCIL_TEST);
+    glDepthMask(GL_FALSE); // no z-buffer writes
+    glEnable(GL_TEXTURE_2D);
+    //p_glBlendEquation(GL_FUNC_ADD);
+
+    // copy ambient light texture to FBO, so we can use it to light decals
+    auto mfbo = GetMainFBO();
+    mfbo->blitTo(&ambLightFBO, 0, 0, mfbo->getWidth(), mfbo->getHeight(), 0, 0, ambLightFBO.getWidth(), ambLightFBO.getHeight(), GL_NEAREST);
+    mfbo->activate();
+  }
+
   glDepthMask(GL_FALSE); // no z-buffer writes
   glEnable(GL_TEXTURE_2D);
-  //p_glBlendEquation(GL_FUNC_ADD);
-
-  // copy ambient light texture to FBO, so we can use it to light decals
-  auto mfbo = GetMainFBO();
-  mfbo->blitTo(&ambLightFBO, 0, 0, mfbo->getWidth(), mfbo->getHeight(), 0, 0, ambLightFBO.getWidth(), ambLightFBO.getHeight(), GL_NEAREST);
-  mfbo->activate();
-
-  glDepthMask(GL_FALSE); // no z-buffer writes
-  glEnable(GL_TEXTURE_2D);
-  glDisable(GL_STENCIL_TEST);
+  // turn off scissoring only if we aren't rendering portal contents
+  if (RendLev->/*PortalDepth*/PortalUsingStencil == 0) glDisable(GL_STENCIL_TEST);
   glDisable(GL_SCISSOR_TEST);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   GLDisableOffset();

@@ -321,7 +321,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       static TFrustumParam fp;
       if (fp.needUpdate(cl->ViewOrg, cl->ViewAngles)) {
         fp.setup(cl->ViewOrg, cl->ViewAngles);
-        frustum.setup(clip_base, fp, true, GetLightMaxDistDef(1024));
+        frustum.setup(clip_base, fp, true, GetLightMaxDistDef());
       }
       if (!frustum.checkSphere(lorg, (radius > 0 ? radius : 64))) {
         //GCon->Logf("  DROPPED; radius=%f; dist=%f", radius, sqrtf(bestdist));
@@ -516,7 +516,7 @@ void VRenderLevelShared::DecayLights (float timeDelta) {
       if (frustumState == 0) {
         TClipBase cb(refdef.fovx, refdef.fovy);
         if (cb.isValid()) {
-          frustum.setup(cb, TFrustumParam(cl->ViewOrg, cl->ViewAngles), true, GetLightMaxDistDef(1024));
+          frustum.setup(cb, TFrustumParam(cl->ViewOrg, cl->ViewAngles), true, GetLightMaxDistDef());
           frustumState = (frustum.isValid() ? 1 : -1);
         } else {
           frustumState = -1;

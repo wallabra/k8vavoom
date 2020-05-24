@@ -84,7 +84,7 @@ IMPLEMENT_FREE_FUNCTION(VObject, GetLightMaxDist) {
 // native static final float GetDynLightMaxDist ();
 IMPLEMENT_FREE_FUNCTION(VObject, GetDynLightMaxDist) {
   #ifdef CLIENT
-  RET_FLOAT(VRenderLevelDrawer::GetLightMaxDistDef(1024));
+  RET_FLOAT(VRenderLevelDrawer::GetLightMaxDistDef());
   #else
   RET_FLOAT(1024); // arbitrary
   #endif
