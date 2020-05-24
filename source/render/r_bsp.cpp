@@ -787,45 +787,6 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     // for now
     sub->miscFlags |= subsector_t::SSMF_Rendered;
     seg->flags |= SF_MAPPED;
-    /*
-    // in automap, we may have subsectors consisting of only minisegs; check this here
-    // tbh, this should be done in automap code, but then we need to loop over all segs
-    // this is wasteful, and we don't have to do this for seen subsectors anyway
-    if ((seg->flags&SF_MAPPED) == 0) {
-      if ((sub->miscFlags&subsector_t::SSMF_Rendered) == 0) {
-        // check all subsector segs; if they're all minisegs, mark this subsector as rendered
-        //TODO: check if this subsector is a part of a bigger "not on automap" sector
-        // algo:
-        //  check all segs
-        //    miniseg:
-        //      remember "seen miniseg" flag
-        //    seg:
-        //      check line
-        bool seenBad = false;
-        bool hasSeenMiniSeg = false;
-        const seg_t *ss2 = &Level->Segs[sub->firstline];
-        for (int count = sub->numlines; count--; ++ss2) {
-          if (ss2->linedef) {
-            if (ss2->linedef->flags&ML_DONTDRAW) {
-              //seg->flags |= SF_MAPPED; //dunno
-              return;
-            }
-            if ((ss2->linedef->flags&ML_MAPPED)|(ss2->linedef->exFlags&(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED))) continue;
-            seenBad = true;
-          } else {
-            if (ss2->flags&SF_MAPPED) {
-              hasSeenMiniSeg = true;
-              break;
-            }
-          }
-        }
-        if (!seenBad || hasSeenMiniSeg) {
-          sub->miscFlags |= subsector_t::SSMF_Rendered;
-        }
-      }
-      seg->flags |= SF_MAPPED;
-    }
-    */
     return;
   }
 
@@ -887,13 +848,7 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
   if (clip_frustum_bsp_segs && !ViewClip.CheckSegFrustum(sub, seg)) return;
   #endif
 
-  // mark the segment as visible for auto map
-#if 0
-  linedef->flags |= ML_MAPPED;
-  // mark subsector as rendered
-  // mark subsector as rendered (but only if linedef is allowed to be seen on the automap)
-  if ((linedef->flags&ML_DONTDRAW) == 0) sub->miscFlags |= subsector_t::SSMF_Rendered;
-#else
+  // automap
   // mark only autolines that allowed to be seen on the automap
   if ((linedef->flags&ML_DONTDRAW) == 0) {
     if ((linedef->flags&ML_MAPPED) == 0) {
@@ -909,7 +864,6 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
       if ((linedef->flags&ML_DONTDRAW) == 0) sub->miscFlags |= subsector_t::SSMF_Rendered;
     }
   }
-#endif
 
   side_t *sidedef = seg->sidedef;
 
