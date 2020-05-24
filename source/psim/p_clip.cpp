@@ -77,8 +77,9 @@ static VCvarB clip_add_backface_segs("clip_add_backface_segs", false, "Add backf
 
 static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?", CVAR_PreInit);
 
-static VCvarB clip_height("clip_height", true, "Clip with top and bottom frustum?", CVAR_PreInit);
-static VCvarB clip_midsolid("clip_midsolid", true, "Clip with solid midtex?", CVAR_PreInit);
+// need to be public for portal rendering
+VCvarB clip_height("clip_height", true, "Clip with top and bottom frustum?", CVAR_PreInit);
+VCvarB clip_midsolid("clip_midsolid", true, "Clip with solid midtex?", CVAR_PreInit);
 
 static VCvarB clip_use_transfers("clip_use_transfers", true, "Use transfer sectors to clip?", CVAR_PreInit);
 

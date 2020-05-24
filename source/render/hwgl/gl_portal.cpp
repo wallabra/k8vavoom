@@ -36,49 +36,51 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
     ClearStencilBuffer();
     NoteStencilBufferDirty();
 
-    if (Portal->stackedSector) {
+    /*
+    if (Portal->IsStack()) {
       // doesn't work for now
       // k8: why? because this glitches in kdizd z1m1, for example
       //     stacked sector rendering should be rewritten
-      //if (Portal->stackedSector && RendLev->IsShadowVolumeRenderer()) return false;
+      if (RendLev->IsShadowVolumeRenderer()) return false;
+    }
+    */
 
-      // disable drawing
-      SurfZBuf.Activate();
-      glDisable(GL_TEXTURE_2D);
-      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-      glDepthMask(GL_FALSE); // no z-buffer writes
+    // disable drawing
+    SurfZBuf.Activate();
+    glDisable(GL_TEXTURE_2D);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glDepthMask(GL_FALSE); // no z-buffer writes
+    GLDisableBlend();
 
-      // set up stencil test
-      /*if (!RendLev->PortalDepth)*/ glEnable(GL_STENCIL_TEST);
-      glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
-      glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+    // set up stencil test
+    if (!RendLev->PortalDepth) glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
 
-      // mark the portal area
+    // mark the portal area
+    DrawPortalArea(Portal);
+
+    // set up stencil test for portal
+    glStencilFunc(GL_EQUAL, RendLev->PortalDepth+1, ~0);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+    if (Portal->NeedsDepthBuffer()) {
+      glDepthMask(GL_TRUE); // allow z-buffer writes
+      // clear depth buffer
+      if (CanUseRevZ()) glDepthRange(0, 0); else glDepthRange(1, 1);
+      glDepthFunc(GL_ALWAYS);
       DrawPortalArea(Portal);
-
-      // set up stencil test for portal
-      glStencilFunc(GL_EQUAL, RendLev->PortalDepth+1, ~0);
-      glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-      if (Portal->NeedsDepthBuffer()) {
-        glDepthMask(GL_TRUE); // allow z-buffer writes
-        // clear depth buffer
-        if (CanUseRevZ()) glDepthRange(0, 0); else glDepthRange(1, 1);
-        glDepthFunc(GL_ALWAYS);
-        DrawPortalArea(Portal);
-        //glDepthFunc(GL_LEQUAL);
-        RestoreDepthFunc();
-        glDepthRange(0, 1);
-      } else {
-        glDepthMask(GL_FALSE); // no z-buffer writes
-        glDisable(GL_DEPTH_TEST);
-      }
+      //glDepthFunc(GL_LEQUAL);
+      RestoreDepthFunc();
+      glDepthRange(0, 1);
     } else {
-      glDisable(GL_STENCIL_TEST);
+      glDepthMask(GL_FALSE); // no z-buffer writes
+      glDisable(GL_DEPTH_TEST);
     }
 
     // enable drawing
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    GLEnableBlend();
 
     glEnable(GL_TEXTURE_2D);
     ++RendLev->PortalDepth;
@@ -118,53 +120,50 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
   SurfZBuf.Activate();
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   glDisable(GL_TEXTURE_2D);
+  GLDisableBlend();
 
   if (UseStencil) {
-    if (!Portal->stackedSector) {
-      GLDisableBlend();
-      if (gl_dbg_render_stack_portal_bounds && Portal->stackedSector) {
-        p_glUseProgramObjectARB(0);
-        currentActiveShader = nullptr;
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glDepthFunc(GL_ALWAYS);
-        glDepthMask(GL_FALSE); // no z-buffer writes
-        glColor3f(1, 0, 0);
-        //GLDisableBlend();
-        glDisable(GL_STENCIL_TEST);
-        DrawPortalArea(Portal);
+    if (gl_dbg_render_stack_portal_bounds && Portal->IsStack()) {
+      p_glUseProgramObjectARB(0);
+      currentActiveShader = nullptr;
+      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+      glDepthFunc(GL_ALWAYS);
+      glDepthMask(GL_FALSE); // no z-buffer writes
+      glColor3f(1, 0, 0);
+      //GLDisableBlend();
+      glDisable(GL_STENCIL_TEST);
+      DrawPortalArea(Portal);
 
-        glEnable(GL_STENCIL_TEST);
-        SurfZBuf.Activate();
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        glDepthMask(GL_TRUE); // allow z-buffer writes
-      }
+      glEnable(GL_STENCIL_TEST);
+      SurfZBuf.Activate();
+      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+      glDepthMask(GL_TRUE); // allow z-buffer writes
+    }
 
-      if (Portal->NeedsDepthBuffer()) {
-        // clear depth buffer
-        if (CanUseRevZ()) glDepthRange(0, 0); else glDepthRange(1, 1);
-        glDepthFunc(GL_ALWAYS);
-        DrawPortalArea(Portal);
-        //glDepthFunc(GL_LEQUAL);
-        RestoreDepthFunc();
-        glDepthRange(0, 1);
-      } else {
-        glDepthMask(GL_TRUE); // allow z-buffer writes
-        glEnable(GL_DEPTH_TEST);
-      }
-
-      glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-
-      // draw proper z-buffer for the portal area
+    if (Portal->NeedsDepthBuffer()) {
+      // clear depth buffer
+      if (CanUseRevZ()) glDepthRange(0, 0); else glDepthRange(1, 1);
       glDepthFunc(GL_ALWAYS);
       DrawPortalArea(Portal);
       //glDepthFunc(GL_LEQUAL);
       RestoreDepthFunc();
-
-      glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-      glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
-      NoteStencilBufferDirty(); // just in case
-      GLEnableBlend();
+      glDepthRange(0, 1);
+    } else {
+      glDepthMask(GL_TRUE); // allow z-buffer writes
+      glEnable(GL_DEPTH_TEST);
     }
+
+    glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+
+    // draw proper z-buffer for the portal area
+    glDepthFunc(GL_ALWAYS);
+    DrawPortalArea(Portal);
+    //glDepthFunc(GL_LEQUAL);
+    RestoreDepthFunc();
+
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
+    NoteStencilBufferDirty(); // just in case
 
     --RendLev->PortalDepth;
     if (RendLev->PortalDepth == 0) glDisable(GL_STENCIL_TEST);
@@ -178,11 +177,10 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
     }
 
     // draw proper z-buffer for the portal area
-    GLDisableBlend();
     DrawPortalArea(Portal);
-    GLEnableBlend();
   }
 
   glEnable(GL_TEXTURE_2D);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  GLEnableBlend();
 }

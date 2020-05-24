@@ -716,7 +716,6 @@ public:
   VRenderLevelShared *RLev;
   TArray<surface_t *> Surfs;
   int Level;
-  bool stackedSector;
 
   VPortal (VRenderLevelShared *ARLev);
   virtual ~VPortal ();
@@ -729,7 +728,7 @@ public:
   virtual bool MatchMirror (TPlane *) const;
 
   // most portals will override `DrawContents()`, but for sky we could skip all the heavy mechanics
-  virtual void Draw (bool UseStencil);
+  void Draw (bool UseStencil);
   virtual void DrawContents () = 0;
 
 protected:

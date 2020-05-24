@@ -186,12 +186,10 @@ class VSkyPortal : public VPortal {
 public:
   VSky *Sky;
 
-  VSkyPortal (VRenderLevelShared *ARLev, VSky *ASky) : VPortal(ARLev), Sky(ASky) { stackedSector = false; }
+  inline VSkyPortal (VRenderLevelShared *ARLev, VSky *ASky) : VPortal(ARLev), Sky(ASky) {}
   virtual bool NeedsDepthBuffer () const override;
   virtual bool IsSky () const override;
   virtual bool MatchSky (VSky *) const override;
-  // for sky portals, `Draw()` does absolutely nothing most of the time
-  virtual void Draw (bool UseStencil) override;
   virtual void DrawContents () override;
 };
 
@@ -201,7 +199,7 @@ class VSkyBoxPortal : public VPortal {
 public:
   VEntity *Viewport;
 
-  VSkyBoxPortal (VRenderLevelShared *ARLev, VEntity *AViewport) : VPortal(ARLev), Viewport(AViewport) { stackedSector = false; }
+  inline VSkyBoxPortal (VRenderLevelShared *ARLev, VEntity *AViewport) : VPortal(ARLev), Viewport(AViewport) {}
   virtual bool IsSky () const override;
   virtual bool MatchSkyBox (VEntity *) const override;
   virtual void DrawContents () override;
@@ -213,7 +211,7 @@ class VSectorStackPortal : public VPortal {
 public:
   VEntity *Viewport;
 
-  VSectorStackPortal (VRenderLevelShared *ARLev, VEntity *AViewport) : VPortal(ARLev), Viewport(AViewport) { stackedSector = true; }
+  inline VSectorStackPortal (VRenderLevelShared *ARLev, VEntity *AViewport) : VPortal(ARLev), Viewport(AViewport) {}
   virtual bool IsStack () const override;
   virtual bool MatchSkyBox (VEntity *) const override;
   virtual void DrawContents () override;
@@ -225,7 +223,7 @@ class VMirrorPortal : public VPortal {
 public:
   TPlane *Plane;
 
-  VMirrorPortal (VRenderLevelShared *ARLev, TPlane *APlane) : VPortal(ARLev), Plane(APlane) { stackedSector = false; }
+  inline VMirrorPortal (VRenderLevelShared *ARLev, TPlane *APlane) : VPortal(ARLev), Plane(APlane) {}
   virtual bool IsMirror () const override;
   virtual bool MatchMirror (TPlane *) const override;
   virtual void DrawContents () override;
@@ -254,6 +252,7 @@ protected:
   friend class VSkyBoxPortal;
   friend class VSectorStackPortal;
   friend class VMirrorPortal;
+  friend struct AutoSavedView;
 
   struct BSPVisInfo {
     //enum { UNKNOWN = -1, INVISIBLE = 0, VISIBLE = 1, };

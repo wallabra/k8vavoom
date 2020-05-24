@@ -42,29 +42,28 @@ menudef AdvRenderOptions {
       "\cGor visual glitches will occur.";
   }
 
-  option bool [__k8vavoom_developer_version > 0] {
-    title = "Allow other portals";
-    cvar = r_allow_other_portals;
+  option bool /*[__k8vavoom_developer_version > 0]*/ {
+    title = "Allow stacked sectors";
+    cvar = r_allow_stacked_sectors;
     help =
-      "Allow rendering non-mirror portals?"
-      "This is mostly for stacked sectors and other such things."
+      "Allow rendering stacked sectors via portals?"
       "Currently this is *VERY* glitchy, so you'd better don't turn this on."
       "\cGPlease note that you have to restart/reload map after changing this,"
       "\cGor visual glitches will occur.";
   }
 
   option numeric {
-    title = "Maximum mirror depth";
+    title = "Maximum mirror count";
     cvar = r_maxmirrors;
     step = 1;
     min = 0;
     max = 6;
     help =
-      "Maximum allowed mirror depth."
+      "Maximum allowed mirrors per frame."
       "Usually has little effect.";
   }
 
-  option numeric {
+  option numeric [__k8vavoom_developer_version > 0] {
     title = "Maximum portal depth";
     cvar = r_max_portal_depth;
     step = 1;

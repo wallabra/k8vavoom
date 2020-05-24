@@ -46,7 +46,7 @@ VCvarI r_max_portal_depth("r_max_portal_depth", "1", "Maximum allowed portal dep
 VCvarI r_max_portal_depth_override("r_max_portal_depth_override", "-1", "Maximum allowed portal depth override for map fixer (-1: not active)", 0);
 static VCvarB r_allow_horizons("r_allow_horizons", true, "Allow horizon portal rendering?", CVAR_Archive);
 static VCvarB r_allow_mirrors("r_allow_mirrors", false, "Allow mirror portal rendering?", CVAR_Archive);
-static VCvarB r_allow_other_portals("r_allow_other_portals", false, "Allow non-mirror portal rendering (SLOW)?", CVAR_Archive);
+static VCvarB r_allow_stacked_sectors("r_allow_stacked_sectors", true, "Allow non-mirror portal rendering (SLOW)?", CVAR_Archive);
 
 static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable rendering of sky portals.", 0/*CVAR_Archive*/);
 
@@ -69,12 +69,17 @@ extern VCvarB clip_frustum_bsp;
 extern VCvarB clip_frustum_mirror;
 extern VCvarB clip_use_1d_clipper;
 extern VCvarB clip_frustum_bsp_segs;
+// for portals
+extern VCvarB clip_height;
+extern VCvarB clip_midsolid;
 
 // to clear portals
+/*
 static bool oldMirrors = true;
 static bool oldHorizons = true;
 static int oldMaxMirrors = -666;
 static int oldPortalDepth = -666;
+*/
 
 double dbgCheckVisTime = 0;
 
@@ -501,7 +506,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         // no, no such portal yet, create a new one
         if (IsStack) {
           // advrender cannot into stacked sectors yet
-          if (r_allow_other_portals && !IsShadowVolumeRenderer()) {
+          if (r_allow_stacked_sectors) {
             Portal = new VSectorStackPortal(this, SkyBox);
             Portals.Append(Portal);
           }
@@ -542,6 +547,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         alpha = SkyBox->GetSkyBoxPlaneAlpha();
         if (alpha <= 0.0f) doRenderSurf = false;
       }
+      //GCon->Logf(NAME_Debug, "PORTAL(%d): IsStack=%d; doRenderSurf=%d", Portals.length(), (int)IsStack, (int)doRenderSurf);
       for (; surfs; surfs = surfs->next) {
         Portal->Surfs.Append(surfs);
         if (doRenderSurf && surfs->queueframe != currQueueFrame) {
@@ -907,8 +913,8 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
   VEntity *SkyBox = secregion->eceiling.splane->SkyBox;
   if (!seg->backsector) {
     // single sided line
-    if (seg->linedef->special == LNSPEC_LineHorizon && r_allow_horizons) {
-      RenderHorizon(sub, secregion, subregion, dseg);
+    if (seg->linedef->special == LNSPEC_LineHorizon) {
+      if (r_allow_horizons) RenderHorizon(sub, secregion, subregion, dseg);
     } else if (seg->linedef->special == LNSPEC_LineMirror) {
       RenderMirror(sub, secregion, dseg);
     } else {
@@ -1353,7 +1359,11 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
 //
 //==========================================================================
 void VRenderLevelShared::RenderPortals () {
+  const bool old_clip_height = clip_height.asBool();
+  const bool old_clip_midsolid = clip_midsolid.asBool();
+
   if (PortalLevel == 0) {
+    /*
     if (oldMaxMirrors != r_maxmirrors || oldPortalDepth != GetMaxPortalDepth() ||
         oldHorizons != r_allow_horizons || oldMirrors != r_allow_mirrors)
     {
@@ -1372,6 +1382,11 @@ void VRenderLevelShared::RenderPortals () {
       oldMirrors = r_allow_mirrors;
       return;
     }
+    */
+  } else {
+    // without this, some portals may glitch
+    clip_height = false;
+    clip_midsolid = false;
   }
 
   ++PortalLevel;
@@ -1388,19 +1403,16 @@ void VRenderLevelShared::RenderPortals () {
     //bool firstPortal = true;
     for (auto &&pp : Portals) {
       if (pp && pp->Level == PortalLevel) {
-        if (r_allow_other_portals || pp->IsMirror()) {
-          /*
-          if (firstPortal && IsShadowVolumeRenderer()) {
-            firstPortal = false;
-            Drawer->ForceClearStencilBuffer();
-          }
-          */
-          if (pp->stackedSector && IsShadowVolumeRenderer()) continue;
+        if (pp->IsMirror()) {
+          if (r_allow_mirrors) pp->Draw(true);
+        } else if (pp->IsStack()) {
+          //!if (pp->stackedSector && IsShadowVolumeRenderer()) continue;
+          if (r_allow_stacked_sectors) pp->Draw(true);
+        } else {
           pp->Draw(true);
         }
       }
     }
-    //if (!firstPortal) Drawer->ForceMarkStencilBufferDirty();
     r_decals_enabled = oldDecalsEnabled;
     //r_allow_shadows = oldShadows;
   } else {
@@ -1416,4 +1428,7 @@ void VRenderLevelShared::RenderPortals () {
 
   --PortalLevel;
   if (PortalLevel == 0) Portals.reset();
+
+  clip_height = old_clip_height;
+  clip_midsolid = old_clip_midsolid;
 }
