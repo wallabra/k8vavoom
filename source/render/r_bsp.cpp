@@ -46,7 +46,7 @@ VCvarI r_max_portal_depth("r_max_portal_depth", "1", "Maximum allowed portal dep
 VCvarI r_max_portal_depth_override("r_max_portal_depth_override", "-1", "Maximum allowed portal depth override for map fixer (-1: not active)", 0);
 static VCvarB r_allow_horizons("r_allow_horizons", true, "Allow horizon portal rendering?", CVAR_Archive);
 static VCvarB r_allow_mirrors("r_allow_mirrors", true, "Allow mirror portal rendering?", CVAR_Archive);
-static VCvarB r_allow_floor_mirrors("r_allow_floor_mirrors", false, "Allow floor/ceiling mirror portal rendering?", CVAR_Archive);
+static VCvarB r_allow_floor_mirrors("r_allow_floor_mirrors", true, "Allow floor/ceiling mirror portal rendering?", CVAR_Archive);
 static VCvarB r_allow_stacked_sectors("r_allow_stacked_sectors", true, "Allow non-mirror portal rendering (SLOW)?", CVAR_Archive);
 
 static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable rendering of sky portals.", 0/*CVAR_Archive*/);
