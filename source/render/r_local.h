@@ -190,6 +190,8 @@ public:
   virtual bool NeedsDepthBuffer () const override;
   virtual bool IsSky () const override;
   virtual bool MatchSky (VSky *) const override;
+  // for sky portals, `Draw()` does absolutely nothing most of the time
+  virtual void Draw (bool UseStencil) override;
   virtual void DrawContents () override;
 };
 
@@ -567,6 +569,9 @@ public:
         (r_models_strict ? mobj->GetClass()->Name : mobj->State->Outer->Name) :
         NAME_None;
   }
+
+  // fuckery to avoid having friends, because i am asocial
+  inline void CallTransformFrustum () { TransformFrustum(); }
 
 protected:
   VRenderLevelShared (VLevel *ALevel);

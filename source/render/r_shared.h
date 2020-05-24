@@ -727,7 +727,9 @@ public:
   virtual bool MatchSky (class VSky *) const;
   virtual bool MatchSkyBox (VEntity *) const;
   virtual bool MatchMirror (TPlane *) const;
-  void Draw (bool);
+
+  // most portals will override `DrawContents()`, but for sky we could skip all the heavy mechanics
+  virtual void Draw (bool UseStencil);
   virtual void DrawContents () = 0;
 
 protected:

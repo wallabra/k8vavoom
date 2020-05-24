@@ -33,6 +33,59 @@
 extern VCvarB gl_dbg_wireframe;
 
 
+// "autosave" struct to avoid some pasta
+struct AutoSavedView {
+  VRenderLevelShared *RLev;
+  TVec SavedViewOrg;
+  TAVec SavedViewAngles;
+  TVec SavedViewForward;
+  TVec SavedViewRight;
+  TVec SavedViewUp;
+
+  TClipPlane SavedClip;
+  unsigned planeCount;
+  bool SavedMirrorClip;
+
+  AutoSavedView () = delete;
+  AutoSavedView (const AutoSavedView &) = delete;
+  AutoSavedView &operator = (const AutoSavedView &) = delete;
+
+  inline AutoSavedView (VRenderLevelShared *ARLev) noexcept {
+    vassert(ARLev);
+    vassert(Drawer);
+    RLev = ARLev;
+
+    SavedViewOrg = Drawer->vieworg;
+    SavedViewAngles = Drawer->viewangles;
+    SavedViewForward = Drawer->viewforward;
+    SavedViewRight = Drawer->viewright;
+    SavedViewUp = Drawer->viewup;
+    SavedMirrorClip = Drawer->MirrorClip;
+
+    SavedClip = Drawer->viewfrustum.planes[TFrustum::Forward]; // save far/mirror plane
+    planeCount = Drawer->viewfrustum.planeCount;
+  }
+
+  inline ~AutoSavedView () noexcept {
+    // restore render settings
+    Drawer->vieworg = SavedViewOrg;
+    Drawer->viewangles = SavedViewAngles;
+    Drawer->viewforward = SavedViewForward;
+    Drawer->viewright = SavedViewRight;
+    Drawer->viewup = SavedViewUp;
+    Drawer->MirrorClip = SavedMirrorClip;
+
+    // restore original frustum
+    RLev->CallTransformFrustum();
+    Drawer->viewfrustum.planes[TFrustum::Forward] = SavedClip; // restore far/mirror plane
+    Drawer->viewfrustum.planeCount = planeCount;
+
+    // resetup view origin
+    Drawer->SetupViewOrg();
+  }
+};
+
+
 //==========================================================================
 //
 //  VPortal::VPortal
@@ -140,78 +193,63 @@ void VPortal::Draw (bool UseStencil) {
   }
   //GCon->Logf("doing portal (stencil:%d)", (int)UseStencil);
 
-  // save renderer settings
-  TVec SavedViewOrg = Drawer->vieworg;
-  TAVec SavedViewAngles = Drawer->viewangles;
-  TVec SavedViewForward = Drawer->viewforward;
-  TVec SavedViewRight = Drawer->viewright;
-  TVec SavedViewUp = Drawer->viewup;
-  VEntity *SavedViewEnt = RLev->ViewEnt;
-  int SavedExtraLight = RLev->ExtraLight;
-  int SavedFixedLight = RLev->FixedLight;
-  vuint8 *SavedBspVis = RLev->BspVis;
-  vuint8 *SavedBspVisSector = RLev->BspVisSector;
-  bool SavedMirrorClip = Drawer->MirrorClip;
-  const TClipPlane SavedClip = Drawer->viewfrustum.planes[TFrustum::Forward]; // save far/mirror plane
-  const unsigned planeCount = Drawer->viewfrustum.planeCount;
-
-  VRenderLevelShared::PPMark pmark;
-  VRenderLevelShared::MarkPortalPool(&pmark);
-
-  bool restoreVis = false;
   {
-    VRenderLevelDrawer::DrawListStackMark dlsmark(RLev);
-    vassert(dlsmark.level > 0);
-    RLev->PushDrawLists();
+    // save renderer settings
+    AutoSavedView guard(RLev);
 
-    if (NeedsDepthBuffer()) {
-      // set up BSP visibility table and translated sprites
-      // this has to be done only for portals that do rendering of view
+    VEntity *SavedViewEnt = RLev->ViewEnt;
+    const int SavedExtraLight = RLev->ExtraLight;
+    const int SavedFixedLight = RLev->FixedLight;
+    vuint8 *SavedBspVis = RLev->BspVis;
+    vuint8 *SavedBspVisSector = RLev->BspVisSector;
 
-      // notify allocator about minimal node size
-      VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize+RLev->SecVisSize+128);
-      // allocate new bsp vis
-      RLev->BspVis = VRenderLevelShared::AllocPortalPool(RLev->VisSize+RLev->SecVisSize+128);
-      RLev->BspVisSector = RLev->BspVis+RLev->VisSize;
-      if (RLev->VisSize) {
-        memset(RLev->BspVis, 0, RLev->VisSize);
+    VRenderLevelShared::PPMark pmark;
+    VRenderLevelShared::MarkPortalPool(&pmark);
+
+    bool restoreVis = false;
+    {
+      VRenderLevelDrawer::DrawListStackMark dlsmark(RLev);
+      vassert(dlsmark.level > 0);
+      RLev->PushDrawLists();
+
+      if (NeedsDepthBuffer()) {
+        // set up BSP visibility table and translated sprites
+        // this has to be done only for portals that do rendering of view
+
+        // notify allocator about minimal node size
+        VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize+RLev->SecVisSize+128);
+        // allocate new bsp vis
+        RLev->BspVis = VRenderLevelShared::AllocPortalPool(RLev->VisSize+RLev->SecVisSize+128);
+        RLev->BspVisSector = RLev->BspVis+RLev->VisSize;
+        if (RLev->VisSize) {
+          memset(RLev->BspVis, 0, RLev->VisSize);
+        }
+        if (RLev->SecVisSize) {
+          memset(RLev->BspVisSector, 0, RLev->SecVisSize);
+        }
+        //fprintf(stderr, "BSPVIS: size=%d\n", RLev->VisSize);
+
+        // allocate new transsprites list
+        restoreVis = true;
       }
-      if (RLev->SecVisSize) {
-        memset(RLev->BspVisSector, 0, RLev->SecVisSize);
-      }
-      //fprintf(stderr, "BSPVIS: size=%d\n", RLev->VisSize);
 
-      // allocate new transsprites list
-      restoreVis = true;
+      DrawContents();
     }
 
-    DrawContents();
-  }
+    // restore render settings
+    RLev->ViewEnt = SavedViewEnt;
+    RLev->ExtraLight = SavedExtraLight;
+    RLev->FixedLight = SavedFixedLight;
+    if (restoreVis) {
+      RLev->BspVis = SavedBspVis;
+      RLev->BspVisSector = SavedBspVisSector;
+    }
 
-  // restore render settings
-  Drawer->vieworg = SavedViewOrg;
-  Drawer->viewangles = SavedViewAngles;
-  Drawer->viewforward = SavedViewForward;
-  Drawer->viewright = SavedViewRight;
-  Drawer->viewup = SavedViewUp;
-  RLev->ViewEnt = SavedViewEnt;
-  RLev->ExtraLight = SavedExtraLight;
-  RLev->FixedLight = SavedFixedLight;
-  if (restoreVis) {
-    RLev->BspVis = SavedBspVis;
-    RLev->BspVisSector = SavedBspVisSector;
+    // restore ppol
+    VRenderLevelShared::RestorePortalPool(&pmark);
   }
-  Drawer->MirrorClip = SavedMirrorClip;
-  // restore original frustum
-  RLev->TransformFrustum();
-  Drawer->viewfrustum.planes[TFrustum::Forward] = SavedClip; // restore far/mirror plane
-  Drawer->viewfrustum.planeCount = planeCount;
-  Drawer->SetupViewOrg();
 
   Drawer->EndPortal(this, UseStencil);
-
-  // restore ppol
-  VRenderLevelShared::RestorePortalPool(&pmark);
 }
 
 
@@ -296,6 +334,30 @@ bool VSkyPortal::MatchSky (VSky *ASky) const {
 
 //==========================================================================
 //
+//  VSkyPortal::Draw
+//
+//==========================================================================
+void VSkyPortal::Draw (bool UseStencil) {
+  vassert(!UseStencil);
+
+  if (!Drawer->StartPortal(this, UseStencil)) {
+    // all portal polygons are clipped away
+    //GCon->Logf("portal is clipped away (stencil:%d)", (int)UseStencil);
+    return;
+  }
+
+  // there is no need to mess with BSP here, we will never touch it
+  {
+    AutoSavedView guard(RLev);
+    DrawContents();
+  }
+
+  Drawer->EndPortal(this, UseStencil);
+}
+
+
+//==========================================================================
+//
 //  VSkyPortal::DrawContents
 //
 //==========================================================================
@@ -306,8 +368,10 @@ void VSkyPortal::DrawContents () {
 
   Sky->Draw(RLev->ColorMap);
 
-  Drawer->DrawLightmapWorld();
+  // this should not be the case (render lists should be empty)
+  //Drawer->DrawLightmapWorld();
 }
+
 
 
 //==========================================================================
