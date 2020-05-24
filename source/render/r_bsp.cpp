@@ -41,11 +41,11 @@
 
 
 VCvarB r_draw_pobj("r_draw_pobj", true, "Render polyobjects?", CVAR_PreInit);
-static VCvarI r_maxmirrors("r_maxmirrors", "1", "Maximum allowed mirrors.", CVAR_Archive);
+static VCvarI r_maxmiror_depth("r_maxmiror_depth", "1", "Maximum allowed mirrors.", CVAR_Archive);
 VCvarI r_max_portal_depth("r_max_portal_depth", "1", "Maximum allowed portal depth (-1: infinite)", CVAR_Archive);
 VCvarI r_max_portal_depth_override("r_max_portal_depth_override", "-1", "Maximum allowed portal depth override for map fixer (-1: not active)", 0);
 static VCvarB r_allow_horizons("r_allow_horizons", true, "Allow horizon portal rendering?", CVAR_Archive);
-static VCvarB r_allow_mirrors("r_allow_mirrors", false, "Allow mirror portal rendering?", CVAR_Archive);
+static VCvarB r_allow_mirrors("r_allow_mirrors", true, "Allow mirror portal rendering?", CVAR_Archive);
 static VCvarB r_allow_stacked_sectors("r_allow_stacked_sectors", true, "Allow non-mirror portal rendering (SLOW)?", CVAR_Archive);
 
 static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable rendering of sky portals.", 0/*CVAR_Archive*/);
@@ -744,7 +744,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
 //==========================================================================
 void VRenderLevelShared::RenderMirror (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg) {
   seg_t *seg = dseg->seg;
-  if (MirrorLevel < r_maxmirrors && r_allow_mirrors) {
+  if (MirrorLevel < r_maxmiror_depth && r_allow_mirrors) {
     if (!dseg->mid) return;
 
     VPortal *Portal = nullptr;
@@ -950,7 +950,8 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
   //k8: this seems to be unnecessary
   //if (plane.PointOnSide(Drawer->vieworg)) return; // viewer is in back side or on plane
 
-  if (r_allow_mirrors && MirrorLevel < r_maxmirrors && plane.splane->MirrorAlpha < 1.0f) {
+  // floor/ceiling mirrors are nor properly working for now, so i disabled them
+  if (/*r_allow_mirrors && MirrorLevel < r_maxmiror_depth && plane.splane->MirrorAlpha < 1.0f*/false) {
     VPortal *Portal = nullptr;
     for (auto &&pp : Portals) {
       if (pp && pp->MatchMirror(plane.splane)) {
@@ -967,7 +968,11 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 
     if (plane.splane->MirrorAlpha <= 0.0f) return;
     // k8: is this right?
-    ssurf->texinfo.Alpha = plane.splane->MirrorAlpha;
+    if (plane.splane->MirrorAlpha >= 1.0f) {
+      ssurf->texinfo.Alpha = 1.0f;
+    } else {
+      ssurf->texinfo.Alpha = clampval(plane.splane->MirrorAlpha, 0.0f, 1.0f);
+    }
   } else {
     // this is NOT right!
     //ssurf->texinfo.Alpha = 1.0f;
@@ -1390,7 +1395,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
 void VRenderLevelShared::RenderPortals () {
   if (PortalLevel == 0) {
     /*
-    if (oldMaxMirrors != r_maxmirrors || oldPortalDepth != GetMaxPortalDepth() ||
+    if (oldMaxMirrors != r_maxmiror_depth || oldPortalDepth != GetMaxPortalDepth() ||
         oldHorizons != r_allow_horizons || oldMirrors != r_allow_mirrors)
     {
       //GCon->Logf("portal settings changed, resetting portal info");
@@ -1402,7 +1407,7 @@ void VRenderLevelShared::RenderPortals () {
       }
       Portals.reset();
       // save cvars
-      oldMaxMirrors = r_maxmirrors;
+      oldMaxMirrors = r_maxmiror_depth;
       oldPortalDepth = GetMaxPortalDepth();
       oldHorizons = r_allow_horizons;
       oldMirrors = r_allow_mirrors;

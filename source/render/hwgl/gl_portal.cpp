@@ -37,7 +37,7 @@ void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
     if (surf->count < 3) continue;
     currentActiveShader->UploadChangedUniforms();
     glBegin(GL_POLYGON);
-    for (unsigned j = 0; j < (unsigned)surf->count; ++j) glVertex(surf->verts[j].vec());
+    for (unsigned j = 0; j < (unsigned)surf->count; ++j) glVertex(surf->verts[j].vec()/*-surf->plane.normal*0.5f*/);
     glEnd();
   }
 }

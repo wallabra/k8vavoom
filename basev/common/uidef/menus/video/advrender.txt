@@ -54,7 +54,7 @@ menudef AdvRenderOptions {
 
   option numeric {
     title = "Maximum mirror count";
-    cvar = r_maxmirrors;
+    cvar = r_maxmiror_depth;
     step = 1;
     min = 0;
     max = 6;
