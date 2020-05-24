@@ -30,6 +30,9 @@
 #include "../gamedefs.h"
 #include "r_local.h"
 
+//#define VV_OLD_SKYPORTAL_CODE
+
+
 extern VCvarB gl_dbg_wireframe;
 
 
@@ -338,6 +341,9 @@ bool VSkyPortal::MatchSky (VSky *ASky) const {
 //
 //==========================================================================
 void VSkyPortal::Draw (bool UseStencil) {
+  #ifdef VV_OLD_SKYPORTAL_CODE
+  VPortal::Draw(UseStencil);
+  #else
   vassert(!UseStencil);
 
   if (!Drawer->StartPortal(this, UseStencil)) {
@@ -353,6 +359,7 @@ void VSkyPortal::Draw (bool UseStencil) {
   }
 
   Drawer->EndPortal(this, UseStencil);
+  #endif
 }
 
 
@@ -369,7 +376,9 @@ void VSkyPortal::DrawContents () {
   Sky->Draw(RLev->ColorMap);
 
   // this should not be the case (render lists should be empty)
-  //Drawer->DrawLightmapWorld();
+  #ifdef VV_OLD_SKYPORTAL_CODE
+  Drawer->DrawLightmapWorld();
+  #endif
 }
 
 
