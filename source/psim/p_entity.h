@@ -277,6 +277,12 @@ class VEntity : public VThinker {
     EF_Bright                 = 1u<<29u, // always render full bright
     EF_CanJump                = 1u<<30u, // this entity can jump to high places
     EF_StepMissile            = 1u<<31u, // missile can "walk" up steps
+
+    // portal entities (skyboxes, etc.) don't have "fixed model", so
+    // reuse this flag to prevent infinite portal recursion.
+    // the renderer will set this flag before calling `RenderScene()`, and
+    // will reset it afterwards
+    EF_PortalDirty = EF_FixedModel,
   };
   vuint32 EntityFlags;
 
@@ -426,6 +432,34 @@ public:
 
   VVA_CHECKRESULT inline float GetRenderRadius () const noexcept { return max2(Height, (RenderRadius > 0.0f ? RenderRadius : Radius)); }
 
+  VVA_CHECKRESULT inline bool IsPortalDirty () const noexcept { return (EntityFlags&EF_PortalDirty); }
+  inline void SetPortalDirty (bool v) noexcept { if (v) EntityFlags |= EF_PortalDirty; else EntityFlags &= ~EF_PortalDirty; }
+
+public:
+  // i am so happy that crap-plus-plus doesn't have try/finally. thanks for nothing, you useless shit.
+  struct AutoPortalDirty {
+    VEntity *e;
+
+    AutoPortalDirty () = delete;
+    AutoPortalDirty (const AutoPortalDirty &) = delete;
+    AutoPortalDirty &operator = (const AutoPortalDirty &) = delete;
+
+    inline AutoPortalDirty (VEntity *ae) noexcept : e(ae) {
+      if (e) {
+        vassert(!e->IsPortalDirty());
+        e->SetPortalDirty(true);
+      }
+    }
+
+    inline ~AutoPortalDirty () noexcept {
+      if (e) {
+        vassert(e->IsPortalDirty());
+        e->SetPortalDirty(false);
+      }
+    }
+  };
+
+public:
   // VObject interface
   virtual void Destroy () override;
   virtual void SerialiseOther (VStream &) override;

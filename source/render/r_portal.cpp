@@ -348,13 +348,10 @@ void VSkyBoxPortal::DrawContents () {
   RLev->ExtraLight = 0;
   if (RLev->ColorMap == CM_Default) RLev->FixedLight = 0;
 
-  // reuse FixedModel flag to prevent recursion
-  Viewport->EntityFlags |= VEntity::EF_FixedModel;
-
+  // prevent recursion
+  VEntity::AutoPortalDirty guard(Viewport);
   refdef_t rd = RLev->refdef;
   RLev->RenderScene(&rd, nullptr);
-
-  Viewport->EntityFlags &= ~VEntity::EF_FixedModel;
 }
 
 
@@ -399,17 +396,9 @@ void VSectorStackPortal::DrawContents () {
 
   //VPortal::SetupRanges(Range, false, true); //k8: after moving viewport?
 
-  // reuse FixedModel flag to prevent recursion
-  Viewport->EntityFlags |= VEntity::EF_FixedModel;
-
-  //glClear(GL_COLOR_BUFFER_BIT);
-  //glClearDepth(0.0f);
-  //glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
-  //glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-
+  // prevent recursion
+  VEntity::AutoPortalDirty guard(Viewport);
   RLev->RenderScene(&rd, &Range);
-
-  Viewport->EntityFlags &= ~VEntity::EF_FixedModel;
 }
 
 

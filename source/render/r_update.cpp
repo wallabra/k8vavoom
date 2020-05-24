@@ -46,7 +46,7 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], surface_t *surfs, 
   if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
   if (texinfo->Alpha < 1.0f) return;
 
-  if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
+  if (SkyBox && SkyBox->IsPortalDirty()) SkyBox = nullptr;
 
   if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
       (CheckSkyBoxAlways && SkyBox && SkyBox->GetSkyBoxAlways()))

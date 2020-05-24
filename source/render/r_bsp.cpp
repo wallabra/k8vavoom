@@ -36,8 +36,6 @@
 
 #define HORIZON_SURF_SIZE  (sizeof(surface_t)+sizeof(SurfVertex)*3)
 
-//#define VRBSP_DISABLE_SKY_PORTALS
-
 // sadly, this doesn't work the way i want it to work... yet
 //#define VV_USE_CLIP_CHECK_AND_ADD
 
@@ -444,9 +442,13 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   }
   */
 
-  if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
+  // sky/skybox/stacked sector rendering
 
-  bool IsStack = (SkyBox && SkyBox->GetSkyBoxAlways());
+  // prevent recursion
+  if (SkyBox && SkyBox->IsPortalDirty()) SkyBox = nullptr;
+
+  const bool IsStack = (SkyBox && SkyBox->GetSkyBoxAlways());
+
   //k8: i hope that the parens are right here
   if (texinfo->Tex == GTextureManager[skyflatnum] || (IsStack && CheckSkyBoxAlways)) {
     VSky *Sky = nullptr;
@@ -463,11 +465,12 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         //GCon->Logf(NAME_Debug, "SKYSIDE: %s", *GTextureManager[Tex]->Name);
         Flip = !!Level->Lines[Side->LineNum].arg3;
       }
+
       VTexture *sk2tex = GTextureManager[Tex];
       if (sk2tex && sk2tex->Type != TEXTYPE_Null) {
-        for (int i = 0; i < SideSkies.Num(); ++i) {
-          if (SideSkies[i]->SideTex == Tex && SideSkies[i]->SideFlip == Flip) {
-            Sky = SideSkies[i];
+        for (auto &&sks : SideSkies) {
+          if (sks->SideTex == Tex && sks->SideFlip == Flip) {
+            Sky = sks;
             break;
           }
         }
@@ -486,13 +489,16 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
 
     VPortal *Portal = nullptr;
     if (SkyBox) {
-      for (int i = 0; i < Portals.length(); ++i) {
-        if (Portals[i] && Portals[i]->MatchSkyBox(SkyBox)) {
-          Portal = Portals[i];
+      // check if we already have any portal with this skybox/stacked sector
+      for (auto &&pp: Portals) {
+        if (pp && pp->MatchSkyBox(SkyBox)) {
+          Portal = pp;
           break;
         }
       }
+      // nope?
       if (!Portal) {
+        // no, no such portal yet, create a new one
         if (IsStack) {
           // advrender cannot into stacked sectors yet
           if (r_allow_other_portals && !IsShadowVolumeRenderer()) {
@@ -500,31 +506,36 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
             Portals.Append(Portal);
           }
         } else {
-#if !defined(VRBSP_DISABLE_SKY_PORTALS)
           if (!r_disable_sky_portals) {
             Portal = new VSkyBoxPortal(this, SkyBox);
             Portals.Append(Portal);
           }
-#endif
         }
       }
-    } else {
-      for (int i = 0; i < Portals.length(); ++i) {
-        if (Portals[i] && Portals[i]->MatchSky(Sky)) {
-          Portal = Portals[i];
+    } else if (!r_disable_sky_portals) {
+      // check if we already have any portal with this sky
+      for (auto &&pp : Portals) {
+        if (pp && pp->MatchSky(Sky)) {
+          Portal = pp;
           break;
         }
       }
-#if !defined(VRBSP_DISABLE_SKY_PORTALS)
-      if (!Portal && !r_disable_sky_portals) {
+      // nope?
+      if (!Portal) {
+        // no, no such portal yet, create a new one
         Portal = new VSkyPortal(this, Sky);
         Portals.Append(Portal);
       }
-#endif
     }
+
+    // if we have a portal to add, put its surfaces into render/portal surfaces list
     if (Portal) {
       //GCon->Log("----");
       //const bool doRenderSurf = (surfs ? IsStack && CheckSkyBoxAlways && SkyBox->GetSkyBoxPlaneAlpha() : false);
+      // stacked sectors are queued for rendering immediately
+      // k8: this can cause "double surface queue" error (if stacked sector is used more than once)
+      //     also, for some reason surfaces are added both to portal, and to renderer; wtf?!
+      //     it seems that this is done for things like mirrors or such; dunno yet
       bool doRenderSurf = (surfs ? IsStack && CheckSkyBoxAlways : false);
       float alpha = 0.0f;
       if (doRenderSurf) {
@@ -532,13 +543,6 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         if (alpha <= 0.0f) doRenderSurf = false;
       }
       for (; surfs; surfs = surfs->next) {
-        /*k8: ?
-        if (!surfs->IsVisibleFor(Drawer->vieworg)) {
-          // viewer is in back side or on plane
-          //GCon->Logf("  SURF SKIP!");
-          continue;
-        }
-        */
         Portal->Surfs.Append(surfs);
         if (doRenderSurf && surfs->queueframe != currQueueFrame) {
           //GCon->Logf("  SURF!");

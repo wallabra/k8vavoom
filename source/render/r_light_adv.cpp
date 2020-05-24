@@ -255,7 +255,7 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
   if (texinfo->Alpha < 1.0f || texinfo->Additive) return;
   if (LightCanCross > 0 && texinfo->Tex->isSeeThrough()) return; // has holes, don't bother
 
-  if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
+  if (SkyBox && SkyBox->IsPortalDirty()) SkyBox = nullptr;
 
   if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
       (CheckSkyBoxAlways && (SkyBox && SkyBox->GetSkyBoxAlways())))
@@ -585,7 +585,7 @@ void VRenderLevelShadowVolume::DrawLightSurfaces (surface_t *InSurfs, texinfo_t 
   if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
   if (texinfo->Alpha < 1.0f || texinfo->Additive) return;
 
-  if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
+  if (SkyBox && SkyBox->IsPortalDirty()) SkyBox = nullptr;
 
   if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
       (CheckSkyBoxAlways && (SkyBox && SkyBox->GetSkyBoxAlways())))
