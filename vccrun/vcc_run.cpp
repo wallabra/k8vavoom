@@ -347,6 +347,11 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
         case 'I': VMemberBase::StaticAddIncludePath(text); break;
         case 'D': VMemberBase::StaticAddDefine(text); break;
         case 'P': VMemberBase::StaticAddPackagePath(text); break;
+        case 'W':
+               if (strcmp(text, "all") == 0) VMemberBase::WarningUnusedLocals = true;
+          else if (strcmp(text, "no") == 0) VMemberBase::WarningUnusedLocals = false;
+          else Sys_Error("invalid '-W' option");
+          break;
         case 'h': case 'v': DisplayUsage(); break;
         default:
           --text;

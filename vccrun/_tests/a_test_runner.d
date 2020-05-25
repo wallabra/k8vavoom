@@ -12,6 +12,7 @@ __gshared string vccrunPath = "/home/ketmar/back/vavoom_dev/_build_vccrun/vccrun
 __gshared string[] vccrunArgs = [
   "-stderr-backtrace",
   "-nocol",
+  "-Wno", // for now
   "-DVCCRUN_PACKAGE_CONSTANT_TEST",
   "-pakdir",
   "!packages", //"../packages"
