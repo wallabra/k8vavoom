@@ -380,7 +380,7 @@ override void SB_DrawMainBar(bool inAutomap)
   int sb_mana2;
   int sb_manaVial1;
   int sb_manaVial2;
-  int readyweapon;
+  //int readyweapon;
 
   if (!cl || !cl.MO)
   {
@@ -614,7 +614,7 @@ private final int yfix (int y) { return (y == 480/2 ? GetVirtualHeight()/2 : y <
 override void SB_DrawFullscreenStats () {
   int sb_mana1;
   int sb_mana2;
-  int readyweapon;
+  //int readyweapon;
 
   if (!cl || !cl.MO) return;
 

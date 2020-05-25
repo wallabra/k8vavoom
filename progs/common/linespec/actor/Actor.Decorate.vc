@@ -1505,7 +1505,7 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 
   if (!(flags&FMDF_NOPITCH)) {
     float current = tgt.Angles.pitch;
-    auto vel = tgt.Velocity.xy;
+    //auto vel = tgt.Velocity.xy;
     float pitch = -atan2(tgt.Velocity.z, tgt.Velocity.Length2D);
     if (pitchlimit > 0) {
       float pdelta = AngleMod180(pitch-current);
@@ -1656,7 +1656,7 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
     if (!Targ || Targ != Target) return none;
   } else {
     // this is prolly called from weapon code, so target is what we have in player's crosshair
-    TVec Dir;
+    //TVec Dir;
     //Targ = Aim(Dir, distmax/*16.0*64.0*/); // old code
     bool noAAim = !PlayerEx(Player).bAutoAim, noAAVert = false;
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;

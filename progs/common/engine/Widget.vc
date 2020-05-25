@@ -586,8 +586,8 @@ static final void SetDefaultVirtualScreenSize () {
 static final void DrawEmptyScreen () {
   //SetVirtualScreen(320, 200);
   //R_FillRect(0, 0, 320, 200, 0xff_303030);
-  auto ovw = GetVirtualWidth();
-  auto ovh = GetVirtualHeight();
+  //auto ovw = GetVirtualWidth();
+  //auto ovh = GetVirtualHeight();
   R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_202020);
 }
 
@@ -797,7 +797,7 @@ static final void DrawPicFS320HScroll2 (float fracofs, int Handle1, int Handle2,
     //R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
     int rw = GetRealScreenWidth();
     int rh = GetRealScreenHeight();
-    float scaleX = float(rw)/float(pinf.width);
+    //float scaleX = float(rw)/float(pinf.width);
     float scaleY = float(rh/R_GetAspectRatio())/float(pinf.height);
     float scale = scaleY;
     SetVirtualScreen(int(rw/scale), int((rh/R_GetAspectRatio())/scale));
@@ -836,7 +836,7 @@ static final void DrawPicFS200VScroll2 (float fracofs, int Handle1, int Handle2,
     int rw = GetRealScreenWidth();
     int rh = GetRealScreenHeight();
     float scaleX = float(rw)/float(pinf.width);
-    float scaleY = float(rh/R_GetAspectRatio())/float(pinf.height);
+    //float scaleY = float(rh/R_GetAspectRatio())/float(pinf.height);
     float scale = scaleX;
     SetVirtualScreen(int(rw/scale), int((rh/R_GetAspectRatio())/scale));
     float xofs = (GetVirtualWidth()-pinf.width)/2;

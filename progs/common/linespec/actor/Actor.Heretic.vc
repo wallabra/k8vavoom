@@ -256,7 +256,7 @@
 
   float x = Origin.x;
   float y = Origin.y;
-  float z = Origin.z;
+  //float z = Origin.z;
 
   EntityEx A = Spawn(Pod, vector(x, y, ONFLOORZ));
   if (!A) return;
@@ -595,7 +595,7 @@
 //===========================================================================
 [decorate] final void A_GauntletAttack (int power) self(Actor) {
   int damage;
-  float slope;
+  //float slope;
   int randVal;
   float dist;
   TAVec angles;

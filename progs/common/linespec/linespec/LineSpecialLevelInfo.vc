@@ -4644,7 +4644,7 @@ final bool EV_ThingRaise (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, Enti
   foreach (EntityEx Ent; eachTID(Arg1, A)) {
     if (Ent.DoThingRaise()) Ret = true;
   }
-  return true;
+  return Ret;
 }
 
 
@@ -6636,7 +6636,7 @@ final void ConChoiceImpulse(int ChoiceNum)
 {
   FRogueConSpeech *Speech;
   FRogueConChoice *Choice;
-  int SpeechNum;
+  //int SpeechNum;
   int Item1;
   int Item2;
   int Item3;

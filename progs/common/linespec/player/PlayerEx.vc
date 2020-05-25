@@ -812,7 +812,7 @@ void MovePlayer (float deltaTime) {
   float fly;
 
   // yeah, we can start crouching mid-air
-  auto ohgt = MO.Height;
+  //auto ohgt = MO.Height;
   CrouchMove(IsCrouchButtonCrouch() ? -1 : 1);
   //print("HEIGHT: %s  %s  crf=%s; vh=%s; dvh=%s", ohgt, MO.Height, EntityEx(MO).crouchfactor, ViewHeight, PlayerPawn(MO).default.ViewHeight);
 
@@ -919,7 +919,7 @@ void CheckWaterJump (optional bool asStep) {
   if (EntityEx(MO).bWaterJump && EntityEx(MO).ReactionTime > 0) return;
 
   AngleVectors(MO.Angles, out vforward, out vright, out vup);
-  TVec fwdvel = vforward.xy;
+  //TVec fwdvel = vforward.xy;
   vforward = (vforward*ForwardMove+vright*SideMove).Normalise;
 
   start = MO.Origin;
@@ -3311,7 +3311,7 @@ override void RemoveKeysVerbose (optional bool verbose) {
   if (!PP) return;
   if (!specified_verbose) verbose = true;
 
-  bool again = true;
+  //bool again = true;
   int count = 0;
   class!Inventory Cls;
   foreach AllClasses(Key, Cls) {
@@ -3320,7 +3320,7 @@ override void RemoveKeysVerbose (optional bool verbose) {
     if (!EntityEx.IsSpawnableClass(Cls)) continue;
     auto inv = PP.FindInventory(Cls, disableReplacement:true);
     if (inv) {
-      again = true;
+      //again = true;
       if (verbose) print("removed key '%C'", inv);
       PP.RemoveInventory(inv);
       delete inv;
@@ -4404,7 +4404,7 @@ override void PlayerTick (float deltaTime) {
     // do not reset accumulator when player is dead
     if (PlayerState == PST_LIVE) {
       int accMax = GetCvarI('k8HealthAccum_Max');
-      int accAmount = 0;
+      //int accAmount = 0;
       if (accMax > 0) {
         //k8HealthAccum_LastRegenTime = 0;
         //k8HealthAccum_LastBoostTime = 0;
@@ -5592,7 +5592,7 @@ void CheatHelper_AllKeys () {
     EntityEx(MO).GiveInventoryType(Cls, disableReplace:true);
     gotit = true;
   }
-  cprint("You got keys!");
+  if (gotit) cprint("You got keys!");
 }
 
 

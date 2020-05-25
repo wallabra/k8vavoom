@@ -1085,7 +1085,7 @@ void StaticInit (Level InLevel, line_t *line) {
 //==========================================================================
 override void SpawnWorld (Level InLevel) {
   int length;
-  int SecNum;
+  //int SecNum;
   float alpha;
 
   // set up tagged lines

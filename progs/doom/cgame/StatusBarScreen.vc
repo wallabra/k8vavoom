@@ -819,7 +819,7 @@ override void SB_DrawFullscreenStats () {
         SetTextAlign(hcenter, vtop);
         int xpos = ovw/2-(alist.length*30)/2;
         int ypos = ovh-10-20;
-        picinfo_t pi;
+        //picinfo_t pi;
         foreach (const ref AmmoInfo ai; alist) {
           //SB_DrawTallNum(xpos, ypos, cl.ReadyWeapon.Ammo1.Amount, fsalpha, false);
           //DrawPic(ST_TDAMMOX-60, ST_TDAMMOY+15, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), fsalpha);

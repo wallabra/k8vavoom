@@ -543,7 +543,6 @@ override void SB_Drawer(int sb_view) {
 
 override void SB_UpdateWidgets()
 {
-  int i;
   int delta;
   int curHealth;
 

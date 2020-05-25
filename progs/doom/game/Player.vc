@@ -259,7 +259,7 @@ const int
 
 void Cheat_Gimme () {
   int gimmeFlags = 0;
-  class!Inventory Cls;
+  //class!Inventory Cls;
 
   if (Cmd_CheckParm("ElvenGifts")) {
     GiveElvenGifts(forced:true);

@@ -480,7 +480,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
       // if we will left victim with very small health, kill it instead
       bool instakill = false;
       if (Health-dodmg <= smallHealth) dodmg = Health;
-      int xdmg = dodmg;
+      //int xdmg = dodmg;
       if (Health <= dodmg) {
         // instakill, gore (fe, 'cause +1)
         instakill = true;

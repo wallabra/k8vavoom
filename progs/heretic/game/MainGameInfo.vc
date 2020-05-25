@@ -341,11 +341,11 @@ void TranslateLine(line_t *line)
 {
   int     OldSpec;
   int     OldTag;
-  int     OldFlags;
+  //int     OldFlags;
 
   OldSpec = line->special;
   OldTag = line->arg1;
-  OldFlags = line->flags;
+  //OldFlags = line->flags;
   if (!line->special)
   {
     return;

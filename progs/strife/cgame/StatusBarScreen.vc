@@ -399,8 +399,8 @@ override void SB_DrawFullscreenStats () {
     return;
   }
 
-  auto ovw = GetVirtualWidth();
-  auto ovh = GetVirtualHeight();
+  //auto ovw = GetVirtualWidth();
+  //auto ovh = GetVirtualHeight();
 
   /*
   int ST_450 = ovh-30;

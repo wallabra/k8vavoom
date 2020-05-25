@@ -699,7 +699,7 @@ void IM_DrawCooperativeStats () {
 //
 //==========================================================================
 void IM_UpdateCooperativeStats (float DeltaTime) {
-  int fsum;
+  //int fsum;
   PlayerReplicationInfo RepInfo;
 
   bool stillticking;
@@ -1182,7 +1182,7 @@ void IM_DrawText () {
     } else {
       // fadein effect
       int currchar = int(float(HubTotalChars)*fclamp(intertime/HubTotalTime, 0.0f, 1.0f));
-      float cwdt = 0;
+      //float cwdt = 0;
       int typedChars = 0;
       foreach (string s; cookedHubText) {
         int cx = tx;

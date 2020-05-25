@@ -42,14 +42,14 @@ bool gaveWeapon;
 //==========================================================================
 override bool TryPickup (EntityEx Toucher) {
   int GaveAmmo;
-  Inventory Inv;
+  //Inventory Inv;
 
-  bool checkAssembled = true;
+  //bool checkAssembled = true;
   gaveWeapon = false;
   if (!ClassIsChildOf(Toucher.Class, GetClassReplacement(PieceClass))) {
     // wrong class, but try to pick up for mana
     if (ShouldStay()) return false; // can't pick up wrong-class weapons in coop netplay
-    checkAssembled = false;
+    //checkAssembled = false;
     GaveAmmo = PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType1,
       WeaponType.default.AmmoGive1)|PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
       WeaponType.default.AmmoGive2);

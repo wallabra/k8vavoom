@@ -119,7 +119,7 @@ bool StartClosing () {
 //
 //==========================================================================
 override void Tick (float deltaTime) {
-  int res;
+  //int res;
 
   int texTop = XLevel.Sides[Line1->sidenum[0]].TopTexture;
   VAnimDoorDef *Def = FindAnimDoor(texTop);

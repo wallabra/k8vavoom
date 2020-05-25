@@ -318,7 +318,7 @@ final void refreshNodeExit (BotPathNode node, int exitnum) {
   // if reached, record this path
   if (reached) {
     //if (dumpReachable && tr.dist < 0) { if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "  can reach sub #%d from sub #%d", tr.subnum, node.index); }
-    bool wasValid = (tr.dist >= 0);
+    //bool wasValid = (tr.dist >= 0);
     tr.dist = pi.maxdist;
     tr.needJump = pi.needJump;
     tr.needUse = pi.needUse;

@@ -415,7 +415,7 @@
   bool randDamage = true;
   bool randSpread = true;
   bool noAimPitch = false;
-  bool doFlash = false; // not implemented yet
+  //!bool doFlash = false; // not implemented yet
   bool doRandPuffZ = false; // not implemented yet
 
   if (!PuffType || !specified_PuffType) PuffType = BulletPuff;
@@ -436,7 +436,7 @@
     randDamage = !(Flags&FBF_NORANDOM);
     randSpread = !(Flags&FBF_EXPLICITANGLE);
     noAimPitch = !!(Flags&FBF_NOPITCH);
-    doFlash = !(Flags&FBF_NOFLASH);
+    //!doFlash = !(Flags&FBF_NOFLASH);
     doRandPuffZ = !(Flags&FBF_NORANDOMPUFFZ);
   }
 

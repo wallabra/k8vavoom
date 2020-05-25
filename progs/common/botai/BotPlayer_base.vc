@@ -1684,7 +1684,7 @@ void RoamRandom (out TVec dest) {
     auto tmp = pip[swap0]; pip[swap0] = pip[swap1]; pip[swap1] = tmp;
   }
 
-  int idx = P_Random()%pip.length;
+  //int idx = P_Random()%pip.length;
   foreach (auto n; 0..pip.length) {
     EntityEx::PathInfo *pi = pip[n];
     n = (n+1)%pip.length;
@@ -2795,7 +2795,7 @@ void OnSpawn () {
 #endif
 
   ITarget = none;
-  Actor item = none;
+  //Actor item = none;
   itemFirstSeenTime = 0;
   bItemIsWeapon = false;
   bItemIsPowerup = false;

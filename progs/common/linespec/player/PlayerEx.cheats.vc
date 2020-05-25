@@ -572,9 +572,9 @@ void Cheat_Summon () {
   }
   //writeln("summon 1: ", GetClassName(moClass));
 
-  bool doRandomSpawner = false;
+  //bool doRandomSpawner = false;
   if (class!RandomSpawner(moClass)) {
-    doRandomSpawner = true;
+    //doRandomSpawner = true;
     //printdebug("RANDOMSPAWNER: `%C`", moClass);
   } else {
     auto spwspate = FindClassState(moClass, 'Spawn');
@@ -803,7 +803,7 @@ void Cheat_CountAllEntities () {
   auto plr = PlayerEx(MO.Player);
   if (!plr) return;
 
-  name wantname = name(Cmd_GetArgV(1));
+  //name wantname = name(Cmd_GetArgV(1));
 
   dictionary!(name, int) ctr;
 
@@ -1276,7 +1276,7 @@ void Cheat_VScriptCommand () {
     float hgt = MO.Height/2;
     TVec Offs = ofs*vector(cos(MO.Angles.yaw), sin(MO.Angles.yaw), 0.0);
     MO.Origin += Offs;
-    EntityEx A = Actor(MO).SpawnMissileAngles(mt, MO.Angles.yaw, MO.Angles.pitch, hgt);
+    /*EntityEx A =*/ Actor(MO).SpawnMissileAngles(mt, MO.Angles.yaw, MO.Angles.pitch, hgt);
     MO.Origin -= Offs;
     return;
   }

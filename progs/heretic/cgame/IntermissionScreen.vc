@@ -274,7 +274,7 @@ void IM_UnloadPics () {
 //========================================================================
 void IM_InitStats () {
   PlayerReplicationInfo RepInfo;
-  PlayerReplicationInfo Other;
+  //PlayerReplicationInfo Other;
 
   if (ClGame.maxclients == 1) {
     if (ClGame.cl.Level.bNoIntermission) {
@@ -492,7 +492,7 @@ void IM_DrawCoopStats () {
 void IM_DrawDMStats () {
   PlayerReplicationInfo RepInfo;
 
-  int xpos = 250;
+  //int xpos = 250;
   int ypos = 195;
 
   SetTextShadow(true);
@@ -545,7 +545,7 @@ void IM_DrawDMStats () {
       DrawText(523, ypos+10, va("%d", RepInfo.Deaths));
     }
     ypos += 36;
-    xpos += 43;
+    //xpos += 43;
   }
   SetTextShadow(false);
 }

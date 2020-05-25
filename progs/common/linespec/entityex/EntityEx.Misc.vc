@@ -131,7 +131,7 @@ final void SetOrigin2 (TVec origin, optional int properFloorCheck, optional floa
   float floorz = tmtrace.FloorZ;
   float ceilz = tmtrace.CeilingZ;
 
-  auto oldz = Origin.z;
+  //auto oldz = Origin.z;
 
        if (origin.z == ONFLOORZ) Origin.z = floorz+moreHeight;
   else if (origin.z == ONCEILINGZ) Origin.z = ceilz-Height-moreHeight;
@@ -391,7 +391,7 @@ final bool TeleportMove (TVec org, optional bool ForceTelestomp, optional bool F
 //==========================================================================
 final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepDir, optional bool ForceTelestomp) {
   float fogDelta;
-  EntityEx fog;
+  //EntityEx fog;
   bool ResetPitch = false;
 
   TVec oldOrg = Origin;
@@ -599,7 +599,7 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
 
   //if (bIsPlayer) printdebug("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", EFloor.splane, ECeiling.splane, FloorZ, CeilingZ);
 
-  bool isok = CheckRelPosition(out tmtrace, Origin);//, debugDump:bIsPlayer);
+  /*bool isok =*/ CheckRelPosition(out tmtrace, Origin);//, debugDump:bIsPlayer);
   // what about stranding a monster partially off an edge?
 
   EFloor = tmtrace.EFloor;
@@ -2990,7 +2990,7 @@ final void AutoUseHealth (int saveHealth) {
 //==========================================================================
 final void AutoUseStrifeHealth (int saveHealth) {
   array!Inventory Items;
-  int itemshealth;
+  //int itemshealth;
 
   for (Inventory inv = Inventory; inv; inv = inv.Inventory) {
     if (inv && inv.Amount > 0 && ClassIsChildOf(inv.Class, HealthPickup)) {
@@ -3001,7 +3001,7 @@ final void AutoUseStrifeHealth (int saveHealth) {
     }
   }
 
-  foreach (auto i; 0..Items.length) itemshealth += Items[i].Amount*Items[i].Health;
+  //foreach (auto i; 0..Items.length) itemshealth += Items[i].Amount*Items[i].Health;
 
   while (Items.length > 0) {
     int maxhealth = 0;
@@ -4032,7 +4032,7 @@ final bool checkIfTargetInLOS (optional float Fov, optional int flags, optional 
     else if (flags&JLOSF_PROJECTILE) Targ = (bSeekerMissile ? Tracer : none);
   } else {
     // this is prolly called from weapon code, so target is what we have in player's crosshair
-    TVec Dir;
+    //TVec Dir;
     //Targ = Aim(Dir, distmax/*16.0*64.0*/); // old code
     //k8: emulate autoaim in any case
     /*

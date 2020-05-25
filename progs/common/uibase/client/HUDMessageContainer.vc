@@ -115,14 +115,14 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
 {
   Widget Probe;
   HUDMessage Msg;
-  bool isHealthBar = false;
+  //bool isHealthBar = false;
 
   class!HUDMessage hudClass = none;
 
   if (Font == 'HEALTHBAR') {
     if (!Id || Id == 0xffffffff) return; // orphaned
     hudClass = HUDMessage;
-    isHealthBar = true;
+    //isHealthBar = true;
     Type = HUDMSG_PLAIN; // just in case
   } else {
     switch (Type&0xff) {

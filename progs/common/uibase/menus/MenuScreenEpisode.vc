@@ -34,7 +34,6 @@ class MenuScreenEpisode : MenuScreenPicButtonsBase;
 override void CreateChoices () {
   int ecount = P_GetNumEpisodes();
   //if (ecount > 6) Height = 400;
-  int maxwdt = -1;
   foreach (auto i; 0..ecount) {
     EpisodeDef *EDef = P_GetEpisodeDef(i);
     if (EDef->bOptional && !IsMapPresent(EDef->Name)) continue;

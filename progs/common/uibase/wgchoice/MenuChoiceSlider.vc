@@ -243,7 +243,7 @@ override bool OnEvent (ref event_t evt) {
 //
 //==========================================================================
 override void OnDraw () {
-  int xx, xt;
+  int xt;
 
   DrawBackground();
 
@@ -259,6 +259,7 @@ override void OnDraw () {
   DrawText(CursorXOffs, ty, Text, (IsFocused ? TextColorFocus : TextColor));
 
   #ifdef UI_USE_LUMP_SLIDER
+  int xx;
   bool oldflt = GetCvarB('gl_pic_filtering');
   scope(exit) SetCvar('gl_pic_filtering', oldflt ? 1 : 0);
   SetCvar('gl_pic_filtering', GetCvarB('gl_font_filtering') ? 1 : 0);

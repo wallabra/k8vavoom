@@ -432,7 +432,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
   }
 
   //k8: sorry, this should be one var, but meh
-  bool isHighDamage = false;
+  //bool isHighDamage = false;
   bool isSmallDamage = false;
 
   name bclasssplat = GetBloodSplatDecalName();
@@ -468,7 +468,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
       bloodType = bclasssmear;
       count = 2+P_Random()%3+2;
       noise = 45.0/256.0;
-      isHighDamage = true;
+      //isHighDamage = true;
     } else {
       count = 6+P_Random()%4+3;
       noise = 45.0/256.0;

@@ -48,7 +48,7 @@ delegate bool ValueChanging (Object Sender, float NewValue);
 //==========================================================================
 void SetText (string AText) {
   Text = TranslateString(AText);
-  int ohgt = Height;
+  //int ohgt = Height;
   FixMinimumHeight();
 }
 

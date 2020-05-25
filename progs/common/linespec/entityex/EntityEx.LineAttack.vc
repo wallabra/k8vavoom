@@ -151,7 +151,7 @@ override Entity PickActor (optional TVec org, TVec dir, float distance, optional
   TVec lineStart = shootOrigin;
 
   foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
-    TVec hit_point, real_hit_point;
+    TVec hit_point;
     line_t *li;
     EntityEx th;
 
@@ -374,7 +374,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
 
   lineStart = shootOrigin;
   foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES|(allowEntities ? PT_ADDTHINGS : 0)/*|PT_EARLYOUT*/) {
-    TVec hit_point, real_hit_point;
+    TVec hit_point;
     line_t *li;
 
     if (in->bIsALine) {

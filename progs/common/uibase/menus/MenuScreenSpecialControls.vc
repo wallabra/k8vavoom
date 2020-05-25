@@ -113,7 +113,7 @@ void ParseKeyConfLump (int lump) {
   scope(exit) delete kc;
   kc.OpenLumpIndex(lump);
   string secid = ""; //FindOrAddKeySection("", ""); // default section
-  int scnum = 0;
+  //int scnum = 0;
   while (!kc.AtEnd()) {
     // We are only interested in a couple of commands, like
     // 'addkeysection', 'bind', 'defaultbind' and 'addmenukey'

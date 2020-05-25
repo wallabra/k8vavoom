@@ -759,7 +759,7 @@ final void VerifyMasterChain () {
 //
 //===========================================================================
 override bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {
-  int count = 0;
+  //int count = 0;
   EntityEx tgt = none;
   foreach (EntityEx e; Level.eachTID(tid, self)) {
     e = EntityEx(e.DecorDoAAPtr('eventSetPointerForACS', aptr));

@@ -45,7 +45,7 @@ override bool Touch (Entity InOther) {
 [decorate] final void A_Spectre2Attack () {
   if (!Target) return;
   A_FaceTarget();
-  EntityEx A = SpawnMissile(Target, SpectralLightningH2);
+  /*EntityEx A =*/ SpawnMissile(Target, SpectralLightningH2);
 }
 
 
@@ -89,7 +89,7 @@ override bool Touch (Entity InOther) {
 [decorate] final void A_Spectre4Attack () {
   if (!Target) return;
   A_FaceTarget();
-  EntityEx A = SpawnMissile(Target, SpectralLightningBigV2);
+  /*EntityEx A =*/ SpawnMissile(Target, SpectralLightningBigV2);
 }
 
 
@@ -101,7 +101,7 @@ override bool Touch (Entity InOther) {
 [decorate] final void A_Spectre5Attack () {
   if (!Target) return;
   A_FaceTarget();
-  EntityEx A = SpawnMissile(Target, SpectralLightningBigBall2);
+  /*EntityEx A =*/ SpawnMissile(Target, SpectralLightningBigBall2);
 }
 
 

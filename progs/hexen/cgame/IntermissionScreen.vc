@@ -155,13 +155,12 @@ void IM_UnloadPics () {
 //========================================================================
 void IM_InitStats () {
   int i;
-  int j;
   int slaughterfrags;
   int posnum;
   int slaughtercount;
   int playercount;
   PlayerReplicationInfo RepInfo;
-  PlayerReplicationInfo Other;
+  //PlayerReplicationInfo Other;
 
   ClGame.bSkipIntermission = false;
   intertime = 0.0;
@@ -307,25 +306,25 @@ void IM_DrawNumberBold (int val, int x, int y, int wrapThresh) {
 //
 //========================================================================
 void IM_DrawDeathTally () {
-  int i, j;
+  int i;
   float xPos, yPos;
-  float xDelta, yDelta;
+  float /*xDelta,*/ yDelta;
   float xStart, scale;
-  int x, y;
-  bool bold;
+  int /*x,*/ y;
+  //bool bold;
   PlayerReplicationInfo RepInfo;
-  PlayerReplicationInfo Other;
+  //PlayerReplicationInfo Other;
 
   DrawFullScreenPic(patchINTERPIC);
   if (intertime < TALLY_EFFECT_TIME) {
     showTotals = false;
     scale = intertime/TALLY_EFFECT_TIME;
-    xDelta = scale*TALLY_FINAL_X_DELTA;
+    //xDelta = scale*TALLY_FINAL_X_DELTA;
     yDelta = scale*TALLY_FINAL_Y_DELTA;
     xStart = TALLY_START_XPOS-scale*(TALLY_START_XPOS-TALLY_STOP_XPOS);
     yPos = TALLY_START_YPOS-scale*(TALLY_START_YPOS-TALLY_STOP_YPOS);
   } else {
-    xDelta = TALLY_FINAL_X_DELTA;
+    //xDelta = TALLY_FINAL_X_DELTA;
     yDelta = TALLY_FINAL_Y_DELTA;
     xStart = TALLY_STOP_XPOS;
     yPos = TALLY_STOP_YPOS;

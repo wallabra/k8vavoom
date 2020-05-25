@@ -307,7 +307,7 @@ void CreateMenuItemsFromList (ref array!MenuDefOptionBase options, optional int 
       CreateMenuItemsFromList(smm.options);
       continue;
     }
-    auto xlen = Items.length;
+    //auto xlen = Items.length;
     auto mc = opt.CreateOption(self);
     if (mc) {
       if (opt.help) mc.customHelpText = opt.help;
@@ -919,7 +919,7 @@ final void FixTopIndex () {
   }
   if (isFirstItem) { if (helpText) helpText.atTop = false; GetItemContainer().ChildrenOfsY = 0; return; }
   // make sure that cursor is visible
-  int th = CalcTotalHeight();
+  //int th = CalcTotalHeight();
   int ys = GetItemYS(CursorPos);
   int ye = GetItemYE(CursorPos);
   //print("Menu <%C>; ofs=%d; ys=%d; ye=%d; th=%d; height=%d; hh=%d; bs=%d; OriginY=%s", Class, GetItemContainer().ChildrenOfsY, ys, ye, th, Height, helpText.Height, GetVirtualHeight()-helpText.Height-4, Y2Virtual(ye));

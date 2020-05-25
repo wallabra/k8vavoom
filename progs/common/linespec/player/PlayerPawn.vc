@@ -515,7 +515,7 @@ void InitializeWeaponSlots () {
             }
           } else {
             // skip known  weapons
-            name cname = GetClassName(wcls);
+            //name cname = GetClassName(wcls);
             bool doreport = GetCvarB('dbg_report_orphan_weapons');
             /*
             if (doreport) {
