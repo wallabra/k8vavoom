@@ -394,8 +394,10 @@ void VMethod::Emit () {
     }
   }
 
+  // also, mark arguments as "read" to avoid useless warnings
   for (int i = 0; i < ec.GetLocalDefCount(); ++i) {
-    const VLocalVarDef &loc = ec.GetLocalByIndex(i);
+    VLocalVarDef &loc = ec.GetLocalByIndex(i);
+    loc.WasRead = true;
     if (loc.Type.Type == TYPE_Vector && (ParamFlags[i]&(FPARM_Out|FPARM_Ref)) == 0) {
       ec.AddStatement(OPC_VFixParam, loc.Offset, Loc);
     }
@@ -416,11 +418,30 @@ void VMethod::Emit () {
 
   Statement->Emit(ec, nullptr);
 
+  // just in case; also, we should not have any alive finalizers here, but just in case...
   if (ReturnType.Type == TYPE_Void) {
-    //ec.EmitAllScopeFinalizers(); // just in case we have function-global finalizers
+    Statement->EmitDtor(ec);
     ec.AddStatement(OPC_Return, Loc);
   }
+
   NumLocals = ec.CalcUsedStackSize();
+
+  // dump unused locals
+  if (WarningUnusedLocals) {
+    for (int f = 0; f < ec.GetLocalDefCount(); ++f) {
+      const VLocalVarDef &loc = ec.GetLocalByIndex(f);
+      if (loc.Name == NAME_None) continue;
+      // ignore some special names
+      const char *nn = *loc.Name;
+      if (nn[0] == '_' || VStr::startsWith(nn, "user_")) continue;
+      if (!loc.WasRead && !loc.WasWrite) {
+        GLog.Logf(NAME_Warning, "%s: unused local `%s` in method `%s`", *loc.Loc.toStringNoCol(), nn, *GetFullName());
+      } else if (!loc.WasRead && loc.WasWrite) {
+        GLog.Logf(NAME_Warning, "%s: unused write-only local `%s` in method `%s`", *loc.Loc.toStringNoCol(), nn, *GetFullName());
+      }
+    }
+  }
+
   ec.EndCode();
 
        if (VMemberBase::doAsmDump) DumpAsm();

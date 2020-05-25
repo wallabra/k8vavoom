@@ -235,6 +235,8 @@ public:
   // this will free some AST leftovers and other intermediate compiler data
   static void StaticCompilerShutdown ();
 
+public:
+  static bool WarningUnusedLocals;
   static bool doAsmDump;
 
 public:

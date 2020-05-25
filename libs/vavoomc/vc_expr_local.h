@@ -104,11 +104,14 @@ public:
   bool AddressRequested;
   bool PushOutParam;
   vuint32 locSavedFlags; // local reusing can replace 'em
+  bool requestedAddr;
+  bool requestedAssAddr;
 
   VLocalVar (int ANum, const TLocation &ALoc);
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void RequestAddressOf () override;
+  virtual void RequestAddressOfForAssign () override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsLocalVarExpr () const override;
 
@@ -118,5 +121,5 @@ protected:
   VLocalVar () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 
-  //void genLocalValue (VEmitContext &ec, const VLocalVarDef &loc, int xofs=0);
+  void InternalRequestAddressOf ();
 };

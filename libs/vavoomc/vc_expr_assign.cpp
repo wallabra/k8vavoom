@@ -160,7 +160,7 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
   // struct assignment
   if (Oper == Assign && op1->Type.Type == TYPE_Struct && op2->Type.Type == TYPE_Struct) {
     op2->Type.CheckMatch(true/*asref*/, Loc, op1->Type);
-    op1->RequestAddressOf();
+    op1->RequestAddressOfForAssign();
     op2->RequestAddressOf();
   } else {
     if (op1->Type.Type == TYPE_Vector && (Oper == AddAssign || Oper == MinusAssign || Oper == MultiplyAssign || Oper == DivideAssign)) {
@@ -190,7 +190,7 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
         return nullptr;
       }
     }
-    op1->RequestAddressOf();
+    op1->RequestAddressOfForAssign();
   }
 
   return this;

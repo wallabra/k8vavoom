@@ -407,6 +407,8 @@ VLocalVar::VLocalVar (int ANum, const TLocation &ALoc)
   , AddressRequested(false)
   , PushOutParam(false)
   , locSavedFlags(0)
+  , requestedAddr(false)
+  , requestedAssAddr(false)
 {
 }
 
@@ -456,10 +458,10 @@ VExpression *VLocalVar::DoResolve (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VLocalVar::RequestAddressOf
+//  VLocalVar::InternalRequestAddressOf
 //
 //==========================================================================
-void VLocalVar::RequestAddressOf () {
+void VLocalVar::InternalRequestAddressOf () {
   if (PushOutParam) {
     PushOutParam = false;
     return;
@@ -474,19 +476,39 @@ void VLocalVar::RequestAddressOf () {
 
 //==========================================================================
 //
+//  VLocalVar::RequestAddressOf
+//
+//==========================================================================
+void VLocalVar::RequestAddressOf () {
+  requestedAddr = true;
+  InternalRequestAddressOf();
+}
+
+
+//==========================================================================
+//
+//  VLocalVar::RequestAddressOfForAssign
+//
+//==========================================================================
+void VLocalVar::RequestAddressOfForAssign () {
+  requestedAssAddr = true;
+  InternalRequestAddressOf();
+}
+
+
+//==========================================================================
+//
 //  VLocalVar::Emit
 //
 //==========================================================================
 void VLocalVar::Emit (VEmitContext &ec) {
+  VLocalVarDef &loc = ec.GetLocalByIndex(num);
+  if (requestedAssAddr) loc.WasWrite = true; else loc.WasRead = true;
   if (AddressRequested) {
-    const VLocalVarDef &loc = ec.GetLocalByIndex(num);
     ec.EmitLocalAddress(loc.Offset, Loc);
   } else if (locSavedFlags&(FPARM_Out|FPARM_Ref)) {
     ec.EmitLocalPtrValue(num, Loc);
-    if (PushOutParam) {
-      const VLocalVarDef &loc = ec.GetLocalByIndex(num);
-      EmitPushPointedCode(loc.Type, ec);
-    }
+    if (PushOutParam) EmitPushPointedCode(loc.Type, ec);
   } else {
     ec.EmitLocalValue(num, Loc);
   }

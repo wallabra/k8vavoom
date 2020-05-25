@@ -53,6 +53,7 @@ VClass *VMemberBase::GClasses;
 TArray<VStr> VMemberBase::incpathlist;
 TArray<VStr> VMemberBase::definelist;
 
+bool VMemberBase::WarningUnusedLocals = true;
 bool VMemberBase::doAsmDump = false;
 
 int VMemberBase::unsafeCodeAllowed = 1;
