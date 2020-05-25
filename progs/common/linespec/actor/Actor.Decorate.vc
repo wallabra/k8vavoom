@@ -1815,6 +1815,18 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 
 //==========================================================================
 //
+//  A_SetSpecies
+//
+//==========================================================================
+[decorate] final void A_SetSpecies (string spname, optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetSpecies', aptr!optional));
+  if (!tgt) return;
+  tgt.Species = spname;
+}
+
+
+//==========================================================================
+//
 //  A_k8MoveBy
 //
 //==========================================================================
