@@ -168,6 +168,10 @@ public:
 
   VLocalVarDef &GetLocalByIndex (int idx);
 
+  void MarkLocalReadByIdx (int idx);
+  void MarkLocalWrittenByIdx (int idx);
+  void MarkLocalUsedByIdx (int idx);
+
   inline int GetLocalDefCount () const noexcept { return LocalDefs.length(); }
 
   // returns index in `LocalDefs`

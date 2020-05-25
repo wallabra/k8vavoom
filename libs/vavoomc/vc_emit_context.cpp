@@ -440,6 +440,36 @@ VLocalVarDef &VEmitContext::GetLocalByIndex (int idx) {
 
 //==========================================================================
 //
+//  VEmitContext::MarkLocalReadByIdx
+//
+//==========================================================================
+void VEmitContext::MarkLocalReadByIdx (int idx) {
+  if (idx >= 0 && idx < LocalDefs.length()) LocalDefs[idx].WasRead = true;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::MarkLocalWrittenByIdx
+//
+//==========================================================================
+void VEmitContext::MarkLocalWrittenByIdx (int idx) {
+  if (idx >= 0 && idx < LocalDefs.length()) LocalDefs[idx].WasWrite = true;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::MarkLocalUsedByIdx
+//
+//==========================================================================
+void VEmitContext::MarkLocalUsedByIdx (int idx) {
+  if (idx >= 0 && idx < LocalDefs.length()) LocalDefs[idx].WasRead = LocalDefs[idx].WasWrite = true;
+}
+
+
+//==========================================================================
+//
 //  VEmitContext::CheckForLocalVar
 //
 //==========================================================================

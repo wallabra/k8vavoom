@@ -394,10 +394,10 @@ void VMethod::Emit () {
     }
   }
 
-  // also, mark arguments as "read" to avoid useless warnings
+  // also, mark arguments as "used" to avoid useless warnings
   for (int i = 0; i < ec.GetLocalDefCount(); ++i) {
+    ec.MarkLocalUsedByIdx(i);
     VLocalVarDef &loc = ec.GetLocalByIndex(i);
-    loc.WasRead = true;
     if (loc.Type.Type == TYPE_Vector && (ParamFlags[i]&(FPARM_Out|FPARM_Ref)) == 0) {
       ec.AddStatement(OPC_VFixParam, loc.Offset, Loc);
     }

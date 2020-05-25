@@ -502,13 +502,28 @@ void VLocalVar::RequestAddressOfForAssign () {
 //
 //==========================================================================
 void VLocalVar::Emit (VEmitContext &ec) {
-  VLocalVarDef &loc = ec.GetLocalByIndex(num);
-  if (requestedAssAddr) loc.WasWrite = true; else loc.WasRead = true;
+  if (requestedAssAddr) ec.MarkLocalWrittenByIdx(num); else ec.MarkLocalReadByIdx(num);
+
+  //FIXME: mark complex types as used
+  switch (Type.Type) {
+    case TYPE_Struct:
+    case TYPE_Array:
+    case TYPE_DynamicArray:
+    case TYPE_SliceArray:
+    case TYPE_Dictionary:
+      ec.MarkLocalUsedByIdx(num);
+      break;
+  }
+
   if (AddressRequested) {
+    const VLocalVarDef &loc = ec.GetLocalByIndex(num);
     ec.EmitLocalAddress(loc.Offset, Loc);
   } else if (locSavedFlags&(FPARM_Out|FPARM_Ref)) {
     ec.EmitLocalPtrValue(num, Loc);
-    if (PushOutParam) EmitPushPointedCode(loc.Type, ec);
+    if (PushOutParam) {
+      const VLocalVarDef &loc = ec.GetLocalByIndex(num);
+      EmitPushPointedCode(loc.Type, ec);
+    }
   } else {
     ec.EmitLocalValue(num, Loc);
   }
