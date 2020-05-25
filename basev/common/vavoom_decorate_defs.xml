@@ -542,6 +542,8 @@
     <prop_name_lower name="Player.SpawnClass" property="SpawnClass" />
     <prop_start_item name="Player.StartItem" />
     <prop_float name="Player.ViewHeight" property="ViewHeight" />
+    <prop_float name="Player.UseRange" property="UseRange" />
+    <prop_float name="Player.UseThingRange" property="UseThingRange" />
     <prop_class name="Player.MorphWeapon" property="MorphWeapon" />
     <prop_pawn_weapon_slot name="Player.WeaponSlot" />
   </class>

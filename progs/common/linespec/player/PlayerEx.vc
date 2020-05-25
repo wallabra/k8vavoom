@@ -42,9 +42,6 @@ bitenum {
 
 enum FlashlightLightId = 3_669_666;
 
-const float USERANGE      = 64.0;
-const float USETHINGRANGE = 64.0; //128.0; //k8:why so far?
-
 const float BLINKTHRESHOLD = 4.0;
 
 // 16 pixels of bob
@@ -278,6 +275,23 @@ replication {
   // from client to server
   reliable if (bIsClient)
     bAutoAim;
+}
+
+
+//==========================================================================
+//
+//  GetUseRanges
+//
+//==========================================================================
+void GetUseRanges (out float ur, out float utr) {
+  PlayerPawn pwn = PlayerPawn(MO);
+  if (pwn) {
+    ur = fmax(1.0f, pwn.UseRange);
+    utr = fmax(1.0f, pwn.UseThingRange);
+  } else {
+    ur = PlayerPawn::USERANGE;
+    utr = PlayerPawn::USETHINGRANGE;
+  }
 }
 
 
@@ -2058,11 +2072,14 @@ bool UsePuzzleItem (int PuzzleItemType) {
   TVec PuzzleUseDir;
   intercept_t* in;
 
+  float ur, utr;
+  GetUseRanges(out ur, out utr);
+
   AngleVector(MO.Angles, out PuzzleUseDir);
   float x1 = MO.Origin.x;
   float y1 = MO.Origin.y;
-  float x2 = x1+USERANGE*PuzzleUseDir.x;
-  float y2 = y1+USERANGE*PuzzleUseDir.y;
+  float x2 = x1+/*USERANGE*/ur*PuzzleUseDir.x;
+  float y2 = y1+/*USERANGE*/ur*PuzzleUseDir.y;
   foreach MO.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     EntityEx mobj;
     TVec hit_point;
@@ -2070,7 +2087,7 @@ bool UsePuzzleItem (int PuzzleItemType) {
 
     if (in->bIsALine) {
       // check line
-      hit_point = MO.Origin+(USERANGE*in->frac)*PuzzleUseDir;
+      hit_point = MO.Origin+(/*USERANGE*/ur*in->frac)*PuzzleUseDir;
       if (in->line->special != LNSPEC_UsePuzzleItem) {
         if (in->line->flags&(ML_BLOCKEVERYTHING|ML_BLOCKUSE)) {
           // gozzo does this
@@ -4508,7 +4525,9 @@ override void PlayerTick (float deltaTime) {
   // check for use
   if (Buttons&BT_USE) {
     if (!bUseDown) {
-      EntityEx(MO).UseLines(USERANGE, USETHINGRANGE, '*usefail');
+      float ur, utr;
+      GetUseRanges(out ur, out utr);
+      EntityEx(MO).UseLines(/*USERANGE*/ur, /*USETHINGRANGE*/utr, '*usefail');
       bUseDown = true;
     }
   } else {

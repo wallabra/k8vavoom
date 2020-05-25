@@ -380,7 +380,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
       line_t *ld = in->line; // this linedef
       TVec hit_point = srcOrigin+(bottracerange*in->frac)*bottracedir;
 
-      if (currDist <= PlayerEx::USERANGE && (in->line->SpacFlags&(SPAC_UseThrough|SPAC_Use))) {
+      if (currDist <= PlayerPawn::USERANGE && (in->line->SpacFlags&(SPAC_UseThrough|SPAC_Use))) {
         pi.needUse = true;
       }
 

@@ -1199,7 +1199,9 @@ void PerformLastCheckActions (const ref EntityEx::PathInfo pi) {
 #endif
   if (pi.needUse) {
     //EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
-    EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '', // don't produce any sound on fail
+    float ur, utr;
+    player.GetUseRanges(out ur, out utr);
+    EntityEx(player.MO).UseLines(/*Player::USERANGE*/ur, /*Player::USETHINGRANGE*/utr, '', // don't produce any sound on fail
       &checkLineUse, &onLineUsed, &checkThingUse, &onThingUsed);
   }
 }
