@@ -1268,8 +1268,14 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
   else if (sc->Check("sprite")) ttype = TEXTYPE_Sprite;
   else if (sc->Check("texture")) ttype = TEXTYPE_Wall;
   else sc->Error("unknown brightmap type");
-  sc->ExpectName8Warn();
-  VName img = sc->Name8;
+  VName img;
+  bool imgIsPath = false;
+  if (sc->ExpectName8WarnOrFilePath()) {
+    img = sc->Name8;
+  } else {
+    imgIsPath = true;
+    img = VName(*sc->String, VName::AddLower);
+  }
   VStr bmap;
   bool iwad = false;
   bool thiswad = false;
@@ -1299,7 +1305,15 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
     const bool doWarn = (cli_WAll > 0 || cli_WarnBrightmaps > 0);
     const bool doLoadDump = (cli_DumpBrightmaps > 0);
 
-    VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img), ttype);
+    VTexture *basetex = nullptr;
+    if (!imgIsPath) {
+      basetex = GTextureManager.GetExistingTextureByName(VStr(img), ttype);
+    } else {
+      int tnum = GTextureManager.AddFileTexture(img, TEXTYPE_Skin);
+      if (tnum > 0) basetex = GTextureManager[tnum];
+      //if (basetex) GCon->Logf(NAME_Debug, "loaded skin texture '%s' (%s)", *img, *W_FullLumpName(basetex->SourceLump));
+    }
+
     if (!basetex) {
       if (doWarn) GCon->Logf(NAME_Warning, "texture '%s' not found, cannot attach brightmap", *img);
       return;

@@ -820,6 +820,25 @@ void VScriptParser::ExpectName8Warn () {
 
 //==========================================================================
 //
+//  VScriptParser::ExpectName8Warn
+//
+//==========================================================================
+bool VScriptParser::ExpectName8WarnOrFilePath () {
+  ExpectString();
+  String = String.fixSlashes();
+  if (String.indexOf('/') >= 0) {
+    Name = NAME_None;
+    Name8 = NAME_None;
+    return false;
+  } else {
+    Name8 = ConvertStrToName8(this, String); // no error
+    return true;
+  }
+}
+
+
+//==========================================================================
+//
 //  VScriptParser::ExpectName8Def
 //
 //==========================================================================

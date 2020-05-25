@@ -131,6 +131,10 @@ public:
   void ExpectLoneChar (); // in `String`
   void ExpectName8 ();
   void ExpectName8Warn (); // this sets both `Name` and `Name8`, with warning
+  // this sets both `Name` and `Name8`, with warning if the string doesn't contain slashes
+  // returns `true` if we got a simple name
+  // it also fixes slashes
+  bool ExpectName8WarnOrFilePath ();
   void ExpectName8Def (VName def);
   void ExpectName ();
   void ExpectIdentifier ();
