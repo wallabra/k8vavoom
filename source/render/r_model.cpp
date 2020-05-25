@@ -667,6 +667,7 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
         VStream *md3strm = FL_OpenFileRead(Md2.Model->Name);
         // allow missing models
         if (md3strm) {
+          int fsidx = SMdl.SubModels.length()-1;
           char sign[4] = {0};
           md3strm->Serialise(sign, 4);
           if (memcmp(sign, "IDP3", 4) == 0) {
@@ -691,6 +692,38 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
             }
           }
           delete md3strm;
+          // load subskins
+          TArray<VMeshModel::SkinInfo> SubSkins;
+          for (VXmlNode *SkN = SN->FindChild("subskin"); SkN; SkN = SkN->FindNext()) {
+            int subidx = ParseIntWithDefault(SkN, "submodel_index", -1);
+            VStr sfl = SkN->GetAttribute("file").ToLower().FixFileSlashes();
+            if (sfl.length() && subidx >= 0 && subidx < 1024) {
+              if (sfl.indexOf('/') < 0) sfl = Md2.Model->Name.ExtractFilePath()+sfl;
+              if (mdl_verbose_loading > 2) GCon->Logf("model '%s': skin file '%s'", *SMdl.Name, *sfl);
+              while (SubSkins.length() <= subidx) SubSkins.alloc();
+              VMeshModel::SkinInfo &si = SubSkins[subidx];
+              si.fileName = *sfl;
+              si.textureId = -1;
+              si.shade = -1;
+              if (SkN->HasAttribute("shade")) {
+                sfl = SkN->GetAttribute("shade");
+                si.shade = parseHexRGB(sfl);
+              }
+            }
+          }
+          //if (SubSkins.length() != 0) Sys_Error("found subskins for model '%s'", *SMdl.Name);
+          // process subskins
+          if (SubSkins.length()) {
+            for (int f = fsidx; f < SMdl.SubModels.length(); ++f) {
+              int skidx = f-fsidx;
+              if (skidx >= 0 && skidx < SubSkins.length() && SubSkins[skidx].fileName != NAME_None) {
+                VScriptSubModel &smdl = SMdl.SubModels[f];
+                smdl.Skins.append(SubSkins[skidx]);
+                for (auto &&frm : smdl.Frames) frm.SkinIndex = smdl.Skins.length()-1;
+              }
+            }
+            //GCon->Logf(NAME_Init, "processed %d subskins for model '%s'", SubSkins.length(), *SMdl.Name);
+          }
         }
       }
     }
@@ -1293,6 +1326,7 @@ static void LoadModelSkins (VModel *mdl) {
       if (SubMdl.Skins.length()) {
         for (auto &&si : SubMdl.Skins) {
           if (si.textureId >= 0) continue;
+          //GCon->Logf(NAME_Log, "loading model '%s' (submodel %d) subskin '%s'", *ScMdl.Name, (int)(ptrdiff_t)(&SubMdl-&ScMdl.SubModels[0]), *si.fileName);
           if (si.fileName == NAME_None) {
             si.textureId = GTextureManager.DefaultTexture;
           } else {
@@ -1308,6 +1342,7 @@ static void LoadModelSkins (VModel *mdl) {
         // load base model skins
         for (auto &&si : SubMdl.Model->Skins) {
           if (si.textureId >= 0) continue;
+          //GCon->Logf(NAME_Log, "loading model '%s' (submodel %d) base skin '%s'", *ScMdl.Name, (int)(ptrdiff_t)(&SubMdl-&ScMdl.SubModels[0]), *si.fileName);
           if (si.fileName == NAME_None) {
             si.textureId = GTextureManager.DefaultTexture;
           } else {

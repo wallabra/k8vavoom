@@ -79,6 +79,7 @@ public:
   struct MSDef {
     VStr modelFile; // with path
     VStr skinFile; // with path
+    TArray<VStr> subskinFiles; // with path
     // set in `checkModelSanity()`
     TArray<MdlFrameInfo> frameMap;
     // used in sanity checks
@@ -343,10 +344,26 @@ void GZModelDef::parse (VScriptParser *sc) {
     // "SurfaceSkin"
     if (sc->Check("SurfaceSkin")) {
       // SurfaceSkin model-index surface-index skin-file
+      /*
       sc->Message(va("modeldef command '%s' is not supported yet in model '%s'", *sc->String, *className));
       sc->ExpectNumber();
       sc->ExpectNumber();
       sc->ExpectString();
+      */
+      // model index
+      sc->ExpectNumber();
+      int skidx = sc->Number;
+      if (skidx < 0 || skidx > 1024) sc->Error(va("invalid skin number (%d) in model '%s'", skidx, *className));
+      // submodel index
+      sc->ExpectNumber();
+      int smidx = sc->Number;
+      if (skidx < 0 || skidx > 1024) sc->Error(va("invalid skin submodel number (%d) in model '%s'", smidx, *className));
+      // skin file name
+      sc->ExpectString();
+      while (models.length() <= skidx) models.alloc();
+      VStr xpath = (!sc->String.isEmpty() ? path+sc->String.toLowerCase() : VStr::EmptyString);
+      while (models[skidx].subskinFiles.length() <= smidx) models[skidx].subskinFiles.append(VStr::EmptyString);
+      models[skidx].subskinFiles[smidx] = xpath;
       continue;
     }
     // "model"
@@ -753,6 +770,7 @@ void GZModelDef::checkModelSanity () {
     if (mdl.frameMap.length() == 0) {
       mdl.modelFile.clear();
       mdl.skinFile.clear();
+      mdl.subskinFiles.clear();
     }
   }
 }
@@ -781,12 +799,24 @@ void GZModelDef::merge (GZModelDef &other) {
     // ok, we have a frame, try to find a model for it
     VStr omdf = other.models[ofrm.mdindex].modelFile;
     VStr osdf = other.models[ofrm.mdindex].skinFile;
+    TArray<VStr> subosdf = other.models[ofrm.mdindex].subskinFiles;
     int mdlEmpty = -1; // first empty model in model array, to avoid looping twice
     int mdlindex = -1;
     for (auto &&mdlit : models.itemsIdx()) {
       if (omdf.strEquCI(mdlit.value().modelFile) && osdf.strEquCI(mdlit.value().skinFile)) {
-        mdlindex = mdlit.index();
-        break;
+        bool equal = (subosdf.length() == mdlit.value().subskinFiles.length());
+        if (equal) {
+          for (int f = 0; f < subosdf.length(); ++f) {
+            if (!subosdf[f].strEquCI(mdlit.value().subskinFiles[f])) {
+              equal = false;
+              break;
+            }
+          }
+        }
+        if (equal) {
+          mdlindex = mdlit.index();
+          break;
+        }
       }
       if (mdlEmpty < 0 && mdlit.value().frameMap.length() == 0) mdlEmpty = mdlit.index();
     }
@@ -803,6 +833,7 @@ void GZModelDef::merge (GZModelDef &other) {
       MSDef &nmdl = models[mdlindex];
       nmdl.modelFile = omdf;
       nmdl.skinFile = osdf;
+      nmdl.subskinFiles = subosdf;
       //GCon->Logf(NAME_Debug, "  new model: <%s> <%s>", *omdf, *osdf);
     }
 
@@ -984,8 +1015,13 @@ VStr GZModelDef::createXml () {
     if (offset.z != 0) res += va(" offset_z=\"%g\"", offset.z);
     if (zoffset != 0) res += va(" shift_z=\"%g\"", zoffset);
     res += ">\n";
-    if (!mdl.skinFile.isEmpty()) {
-      res += va("      <skin file=\"%s\" />\n", *mdl.skinFile.xmlEscape());
+    if (!mdl.skinFile.isEmpty()) res += va("      <skin file=\"%s\" />\n", *mdl.skinFile.xmlEscape());
+    if (mdl.subskinFiles.length() != 0) {
+      for (int f = 0; f < mdl.subskinFiles.length(); ++f) {
+        VStr sf = mdl.subskinFiles[f];
+        if (sf.isEmpty()) continue;
+        res += va("      <subskin submodel_index=\"%d\" file=\"%s\" />\n", f, *sf.xmlEscape());
+      }
     }
     // write frame list
     for (auto &&fit : mdl.frameMap.itemsIdx()) {
