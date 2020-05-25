@@ -432,7 +432,7 @@ VLocalVarDef &VEmitContext::NewLocal (VName aname, const VFieldType &atype, cons
 //  VEmitContext::GetLocalByIndex
 //
 //==========================================================================
-VLocalVarDef &VEmitContext::GetLocalByIndex (int idx) {
+VLocalVarDef &VEmitContext::GetLocalByIndex (int idx) noexcept {
   if (idx < 0 || idx >= LocalDefs.length()) VCFatalError("VC INTERNAL COMPILER ERROR IN `VEmitContext::GetLocalByIndex()`");
   return LocalDefs[idx];
 }
@@ -443,7 +443,7 @@ VLocalVarDef &VEmitContext::GetLocalByIndex (int idx) {
 //  VEmitContext::MarkLocalReadByIdx
 //
 //==========================================================================
-void VEmitContext::MarkLocalReadByIdx (int idx) {
+void VEmitContext::MarkLocalReadByIdx (int idx) noexcept {
   if (idx >= 0 && idx < LocalDefs.length()) LocalDefs[idx].WasRead = true;
 }
 
@@ -453,7 +453,7 @@ void VEmitContext::MarkLocalReadByIdx (int idx) {
 //  VEmitContext::MarkLocalWrittenByIdx
 //
 //==========================================================================
-void VEmitContext::MarkLocalWrittenByIdx (int idx) {
+void VEmitContext::MarkLocalWrittenByIdx (int idx) noexcept {
   if (idx >= 0 && idx < LocalDefs.length()) LocalDefs[idx].WasWrite = true;
 }
 
@@ -463,8 +463,38 @@ void VEmitContext::MarkLocalWrittenByIdx (int idx) {
 //  VEmitContext::MarkLocalUsedByIdx
 //
 //==========================================================================
-void VEmitContext::MarkLocalUsedByIdx (int idx) {
+void VEmitContext::MarkLocalUsedByIdx (int idx) noexcept {
   if (idx >= 0 && idx < LocalDefs.length()) LocalDefs[idx].WasRead = LocalDefs[idx].WasWrite = true;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::IsLocalReadByIdx
+//
+//==========================================================================
+bool VEmitContext::IsLocalReadByIdx (int idx) const noexcept {
+  return (idx >= 0 && idx < LocalDefs.length() ? LocalDefs[idx].WasRead : false);
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::IsLocalWrittenByIdx
+//
+//==========================================================================
+bool VEmitContext::IsLocalWrittenByIdx (int idx) const noexcept {
+  return (idx >= 0 && idx < LocalDefs.length() ? LocalDefs[idx].WasWrite : false);
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::IsLocalUsedByIdx
+//
+//==========================================================================
+bool VEmitContext::IsLocalUsedByIdx (int idx) const noexcept {
+  return (idx >= 0 && idx < LocalDefs.length() ? LocalDefs[idx].WasRead && LocalDefs[idx].WasWrite : false);
 }
 
 

@@ -166,11 +166,15 @@ public:
   // allocates new local, sets offset
   //VLocalVarDef &AllocLocal (VName aname, const VFieldType &atype, const TLocation &aloc);
 
-  VLocalVarDef &GetLocalByIndex (int idx);
+  VLocalVarDef &GetLocalByIndex (int idx) noexcept;
 
-  void MarkLocalReadByIdx (int idx);
-  void MarkLocalWrittenByIdx (int idx);
-  void MarkLocalUsedByIdx (int idx);
+  void MarkLocalReadByIdx (int idx) noexcept;
+  void MarkLocalWrittenByIdx (int idx) noexcept;
+  void MarkLocalUsedByIdx (int idx) noexcept;
+
+  bool IsLocalReadByIdx (int idx) const noexcept;
+  bool IsLocalWrittenByIdx (int idx) const noexcept;
+  bool IsLocalUsedByIdx (int idx) const noexcept;
 
   inline int GetLocalDefCount () const noexcept { return LocalDefs.length(); }
 

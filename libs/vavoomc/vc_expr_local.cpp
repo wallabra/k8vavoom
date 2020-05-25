@@ -502,7 +502,21 @@ void VLocalVar::RequestAddressOfForAssign () {
 //
 //==========================================================================
 void VLocalVar::Emit (VEmitContext &ec) {
-  if (requestedAssAddr) ec.MarkLocalWrittenByIdx(num); else ec.MarkLocalReadByIdx(num);
+  if (requestedAssAddr) {
+    /* this gives alot of false positives
+    if (VMemberBase::WarningUnusedLocals) {
+      if (ec.IsLocalWrittenByIdx(num) && !ec.IsLocalReadByIdx(num)) {
+        const VLocalVarDef &loc = ec.GetLocalByIndex(num);
+        if (loc.Name != NAME_None) {
+          ParseWarning(Loc, "local `%s` is overwritten without reading", *loc.Name);
+        }
+      }
+    }
+    */
+    ec.MarkLocalWrittenByIdx(num);
+  } else {
+    ec.MarkLocalReadByIdx(num);
+  }
 
   //FIXME: mark complex types as used
   switch (Type.Type) {
