@@ -2554,6 +2554,18 @@ void VInvocation::Emit (VEmitContext &ec) {
       }
     } else {
       if (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
+        // consider ref/out as read/written
+        if (Args[i]->IsLocalVarExpr()) {
+          VLocalVar *lv = (VLocalVar *)Args[i];
+          VLocalVarDef &loc = ec.GetLocalByIndex(lv->num);
+          loc.WasRead = true;
+          loc.WasWrite = true;
+          /*
+          GLog.Logf(NAME_Debug, "MARKLOCAL(%d): `%s`", lv->num, *loc.Name);
+          lv->requestedAddr = true;
+          lv->requestedAssAddr = true;
+          */
+        }
         Args[i]->Emit(ec);
         SelfOffset += 1;
       } else {
