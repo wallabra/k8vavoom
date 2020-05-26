@@ -793,6 +793,7 @@ public:
 class VTryFinallyCompound : public VBaseCompoundStatement {
 public:
   VStatement *Finally;
+  bool retScope;
 
   VTryFinallyCompound (VStatement *aFinally, const TLocation &ALoc);
   virtual ~VTryFinallyCompound () override;
@@ -853,31 +854,4 @@ public:
 protected:
   VCompound () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-class VCompoundScopeExit : public VBaseCompoundStatement {
-private:
-  // i am too lazy to create proper AST nodes, so let's use this small hack instead
-  bool mReturnAllowed;
-
-public:
-  VStatement *Body;
-
-  VCompoundScopeExit (VStatement *ABody, const TLocation &ALoc);
-  virtual ~VCompoundScopeExit () override;
-  virtual VStatement *SyntaxCopy () override;
-
-  virtual bool IsReturnAllowed () const noexcept override;
-
-  virtual void EmitDtor (VEmitContext &ec) override;
-
-  virtual VStr toString () override;
-
-protected:
-  VCompoundScopeExit () {}
-  virtual void DoSyntaxCopyTo (VStatement *e) override;
-
-  virtual bool BeforeResolveStatements (VEmitContext &ec) override;
 };

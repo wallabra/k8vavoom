@@ -3545,28 +3545,32 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
     }
   }
 
+  ec.InReturn = true;
+  bool wasError = false;
+
   if (Expr) {
     Expr = (ec.FuncRetType.Type == TYPE_Float ? Expr->ResolveFloat(ec) : Expr->Resolve(ec));
-    if (!Expr) return CreateInvalid();
-    if (ec.FuncRetType.Type == TYPE_Void) {
+    if (!Expr) wasError = true;
+    if (!wasError && ec.FuncRetType.Type == TYPE_Void) {
       // allow `return func();` in voids if `func()` is void too
       if (Expr->Type.Type != TYPE_Void) {
         ParseError(Loc, "void function cannot return a value");
-        return CreateInvalid();
+        wasError = true;
       }
     } else if (Expr->Type.GetStackSlotCount() == 1 || Expr->Type.Type == TYPE_Vector) {
       const bool res = Expr->Type.CheckMatch(false, Expr->Loc, ec.FuncRetType);
-      if (!res) return CreateInvalid();
+      if (!res) wasError = true;
     } else {
       ParseError(Loc, "Bad return type");
-      return CreateInvalid();
+      wasError = true;
     }
   } else if (ec.FuncRetType.Type != TYPE_Void) {
     ParseError(Loc, "Return value expected");
-    return CreateInvalid();
+    wasError = true;
   }
 
-  return this;
+  ec.InReturn = false;
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -3576,6 +3580,8 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VReturn::DoEmit (VEmitContext &ec) {
+  ec.InReturn = true;
+
   if (Expr) Expr->Emit(ec);
 
   // emit dtors and finalizers for all scopes
@@ -3591,6 +3597,8 @@ void VReturn::DoEmit (VEmitContext &ec) {
   } else {
     ec.AddStatement(OPC_Return, Loc);
   }
+
+  ec.InReturn = false;
 }
 
 
@@ -4078,6 +4086,7 @@ VStr VBaseCompoundStatement::toString () {
 VTryFinallyCompound::VTryFinallyCompound (VStatement *aFinally, const TLocation &ALoc)
   : VBaseCompoundStatement(ALoc)
   , Finally(aFinally)
+  , retScope(false)
 {
 }
 
@@ -4113,6 +4122,7 @@ void VTryFinallyCompound::DoSyntaxCopyTo (VStatement *e) {
   VBaseCompoundStatement::DoSyntaxCopyTo(e);
   auto res = (VTryFinallyCompound *)e;
   res->Finally = (Finally ? Finally->SyntaxCopy() : nullptr);
+  res->retScope = retScope;
 }
 
 
@@ -4149,6 +4159,8 @@ bool VTryFinallyCompound::IsTryFinally () const noexcept {
 //
 //==========================================================================
 void VTryFinallyCompound::EmitDtor (VEmitContext &ec) {
+  // `scope(exit)` should be called even on `return`
+  if (retScope && !ec.InReturn) return;
   if (Finally) Finally->Emit(ec, this);
 }
 
@@ -4160,7 +4172,7 @@ void VTryFinallyCompound::EmitDtor (VEmitContext &ec) {
 //==========================================================================
 VStr VTryFinallyCompound::toString () {
   return
-    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/try\n"+
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/try"+(retScope ? "(return)" : "")+"\n"+
     VBaseCompoundStatement::toString()+
     (Finally ? VStr("/*finally*/")+Finally->toString() : VStr());
 }
@@ -4374,116 +4386,4 @@ VStatement *VCompound::SyntaxCopy () {
 //==========================================================================
 void VCompound::DoSyntaxCopyTo (VStatement *e) {
   VBaseCompoundStatement::DoSyntaxCopyTo(e);
-}
-
-
-
-//**************************************************************************
-//
-// VCompoundScopeExit
-//
-//**************************************************************************
-
-//==========================================================================
-//
-//  VCompoundScopeExit::VCompoundScopeExit
-//
-//==========================================================================
-VCompoundScopeExit::VCompoundScopeExit (VStatement *ABody, const TLocation &ALoc)
-  : VBaseCompoundStatement(ALoc)
-  , mReturnAllowed(true)
-  , Body(ABody)
-{
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::~VCompoundScopeExit
-//
-//==========================================================================
-VCompoundScopeExit::~VCompoundScopeExit () {
-  delete Body; Body = nullptr;
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::SyntaxCopy
-//
-//==========================================================================
-VStatement *VCompoundScopeExit::SyntaxCopy () {
-  auto res = new VCompoundScopeExit();
-  DoSyntaxCopyTo(res);
-  return res;
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::DoSyntaxCopyTo
-//
-//==========================================================================
-void VCompoundScopeExit::DoSyntaxCopyTo (VStatement *e) {
-  VBaseCompoundStatement::DoSyntaxCopyTo(e);
-  auto res = (VCompoundScopeExit *)e;
-  res->Body = (Body ? Body->SyntaxCopy() : nullptr);
-  // there's no need to copy `mReturnAllowed`
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::BeforeResolveStatements
-//
-//==========================================================================
-bool VCompoundScopeExit::BeforeResolveStatements (VEmitContext &ec) {
-  bool wasError = false;
-
-  // indent check
-  if (Body && !CheckCondIndent(Loc, Body)) wasError = true;
-
-  if (Body) {
-    // disable returns in scope body
-    mReturnAllowed = false;
-    Body = Body->Resolve(ec, this);
-    if (!Body->IsValid()) wasError = true;
-  }
-  mReturnAllowed = true;
-
-  return !wasError;
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::IsReturnAllowed
-//
-//==========================================================================
-bool VCompoundScopeExit::IsReturnAllowed () const noexcept {
-  return mReturnAllowed;
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::EmitFinalizer
-//
-//==========================================================================
-void VCompoundScopeExit::EmitDtor (VEmitContext &ec) {
-  if (Body) Body->Emit(ec, this);
-}
-
-
-//==========================================================================
-//
-//  VCompoundScopeExit::toString
-//
-//==========================================================================
-VStr VCompoundScopeExit::toString () {
-  return
-    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/{ scope(exit)\n"+
-    (Body ? Body->toString() : VStr("<none>"))+"\n"+
-    VBaseCompoundStatement::toString()+
-    "\n}";
 }
