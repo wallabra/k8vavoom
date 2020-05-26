@@ -132,7 +132,7 @@ public:
   bool VCallsDisabled;
 
   // set by `VReturn`, to process `scope(return)`
-  bool InReturn;
+  int InReturn;
 
 private:
   // called in ctor, and to reset locals

@@ -121,6 +121,8 @@ private:
   // range is inclusive
   void killRange (int idx0, int idx1);
 
+  void traceReachable (int pc=0);
+
 public:
   VMCOptimizer (VMethod *afunc, TArray<FInstruction> &aorig);
   ~VMCOptimizer ();
@@ -191,6 +193,8 @@ struct Instr {
   bool meJumpTarget; // `true` if this instr is a jump target
   // used for return checking
   int retflag; // 0: not visited; -1: processing it right now; 2: determined to return
+  // we should ignore unreachable instructions
+  bool reachable;
 
   vint32 tempValue; // used to temporary store various info; can be overwritten in any moment
 
@@ -215,6 +219,7 @@ struct Instr {
     , origIdx(-1)
     , meJumpTarget(false)
     , retflag(0)
+    , reachable(false)
     , tempValue(0)
   {
   }
@@ -1212,7 +1217,8 @@ struct Instr {
         fprintf(stderr, " %s (%d)", *TypeArg.GetName(), Arg2);
         break;
     }
-    if (spcur >= 0) fprintf(stderr, " (sp:%d; delta:%d)", spcur, spdelta);
+         if (!reachable) fprintf(stderr, " <UNREACHABLE>");
+    else if (spcur >= 0) fprintf(stderr, " (sp:%d; delta:%d)", spcur, spdelta);
     fprintf(stderr, "\n");
   }
 };
@@ -1271,6 +1277,7 @@ void VMCOptimizer::setupFrom (VMethod *afunc, TArray<FInstruction> *aorig) {
     if (i->isAnyBranch()) appendToJPList(i);
   }
   fixJumpTargetCache();
+  traceReachable();
 }
 
 
@@ -1518,6 +1525,7 @@ bool VMCOptimizer::isPathEndsWithReturn (int iidx) {
   while (iidx >= 0 && iidx < instrCount) {
     Instr *it = getInstrAt(iidx);
     if (!it) return false; // oops
+    vassert(it->reachable);
     if (it->idx != iidx) VCFatalError("VCOPT: internal inconsisitency (VMCOptimizer::isPathEndsWithReturn)");
     if (it->retflag) return true; // anyway
     // mark it as visited
@@ -1558,6 +1566,7 @@ void VMCOptimizer::checkReturns () {
 // ////////////////////////////////////////////////////////////////////////// //
 void VMCOptimizer::shortenInstructions () {
   calcStackDepth();
+  //disasmAll();
   // two required steps
   optimizeLoads();
   optimizeJumps();
@@ -2139,6 +2148,7 @@ void VMCOptimizer::calcStackDepth () {
   int cursp = 0;
   for (int f = 0; f < instrCount; ++f) {
     Instr *it = getInstrAt(f);
+    if (!it->reachable) continue; // ignore unreachables
     if (it->spcur >= 0) cursp = it->spcur; // possibly set by branch
     it->setStackOffsets(cursp);
     cursp += it->spdelta;
@@ -2161,4 +2171,32 @@ void VMCOptimizer::calcStackDepth () {
     }
   }
   //fprintf(stderr, "==== %s ====\n", *func->GetFullName()); disasmAll();
+}
+
+
+//==========================================================================
+//
+//  VMCOptimizer::traceReachable
+//
+//==========================================================================
+void VMCOptimizer::traceReachable (int pc) {
+  vassert(pc >= 0);
+  while (pc < instrCount) {
+    Instr *it = getInstrAt(pc);
+    if (it->reachable) break; // already seen
+    it->reachable = true;
+    if (it->isReturn()) break;
+    // follow branches
+    if (it->isAnyBranch()) {
+      // for goto, follow it unconditionally
+      if (it->isGoto()) {
+        pc = it->getBranchDest();
+        continue;
+      }
+      // for other branches, recurse on destination, then follow
+      traceReachable(it->getBranchDest());
+    }
+    // go on
+    ++pc;
+  }
 }

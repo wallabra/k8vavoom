@@ -104,6 +104,7 @@ void VStatement::DoSyntaxCopyTo (VStatement *e) { e->Loc = Loc; e->Label = Label
 void VStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {}
 
 bool VStatement::IsReturnAllowed () const noexcept { return true; }
+bool VStatement::IsContBreakAllowed () const noexcept { return true; }
 bool VStatement::IsBreakScope () const noexcept { return false; }
 bool VStatement::IsContinueScope () const noexcept { return false; }
 VName VStatement::GetBCScopeLabel () const noexcept { return Label; }
@@ -3308,6 +3309,10 @@ void VBreak::DoSyntaxCopyTo (VStatement *e) {
 VStatement *VBreak::DoResolve (VEmitContext &ec) {
   // check if we have a good break scope
   for (VStatement *st = UpScope; st; st = st->UpScope) {
+    if (!st->IsContBreakAllowed()) {
+      ParseError(Loc, "`break` jumps outside of a restricted scope");
+      return CreateInvalid();
+    }
     if (st->IsBreakScope()) {
       if (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()) return this;
     }
@@ -3418,6 +3423,10 @@ void VContinue::DoSyntaxCopyTo (VStatement *e) {
 VStatement *VContinue::DoResolve (VEmitContext &) {
   // check if we have a good continue scope
   for (VStatement *st = UpScope; st; st = st->UpScope) {
+    if (!st->IsContBreakAllowed()) {
+      ParseError(Loc, "`continue` jumps outside of a restricted scope");
+      return CreateInvalid();
+    }
     if (st->IsContinueScope()) {
       if (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()) return this;
     }
@@ -3537,6 +3546,9 @@ void VReturn::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 VStatement *VReturn::DoResolve (VEmitContext &ec) {
+  // check if we are already in `return`
+  //vassert(!ec.InReturn);
+
   // check if we can return from here
   for (VStatement *st = UpScope; st; st = st->UpScope) {
     if (!st->IsReturnAllowed()) {
@@ -3545,7 +3557,7 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
     }
   }
 
-  ec.InReturn = true;
+  ++ec.InReturn;
   bool wasError = false;
 
   if (Expr) {
@@ -3569,7 +3581,7 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
     wasError = true;
   }
 
-  ec.InReturn = false;
+  --ec.InReturn;
   return (wasError ? CreateInvalid() : this);
 }
 
@@ -3580,9 +3592,24 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VReturn::DoEmit (VEmitContext &ec) {
-  ec.InReturn = true;
+  //vassert(!ec.InReturn);
 
-  if (Expr) Expr->Emit(ec);
+  //GLog.Logf(NAME_Debug, "%s: return:ENTER; (%d)", *Loc.toStringNoCol(), ec.InReturn);
+  ++ec.InReturn;
+
+  if (Expr) {
+    // balance stack by dropping old return value
+    if (ec.InReturn > 1) {
+      //GLog.Logf(NAME_Debug, "%s: return; (%d)", *Loc.toStringNoCol(), ec.InReturn);
+      ec.AddStatement(OPC_DropPOD, Loc);
+      if (Expr->Type.Type == TYPE_Vector) {
+        ec.AddStatement(OPC_DropPOD, Loc);
+        ec.AddStatement(OPC_DropPOD, Loc);
+      }
+    }
+    // emit new return value
+    Expr->Emit(ec);
+  }
 
   // emit dtors and finalizers for all scopes
   for (VStatement *st = this; st; st = st->UpScope) {
@@ -3598,7 +3625,8 @@ void VReturn::DoEmit (VEmitContext &ec) {
     ec.AddStatement(OPC_Return, Loc);
   }
 
-  ec.InReturn = false;
+  --ec.InReturn;
+  //GLog.Logf(NAME_Debug, "%s: return:EXIT; (%d)", *Loc.toStringNoCol(), ec.InReturn);
 }
 
 
@@ -4087,6 +4115,8 @@ VTryFinallyCompound::VTryFinallyCompound (VStatement *aFinally, const TLocation 
   : VBaseCompoundStatement(ALoc)
   , Finally(aFinally)
   , retScope(false)
+  , returnAllowed(true)
+  , breakAllowed(true)
 {
 }
 
@@ -4123,6 +4153,7 @@ void VTryFinallyCompound::DoSyntaxCopyTo (VStatement *e) {
   auto res = (VTryFinallyCompound *)e;
   res->Finally = (Finally ? Finally->SyntaxCopy() : nullptr);
   res->retScope = retScope;
+  // no need to copy `return allowed`
 }
 
 
@@ -4135,8 +4166,13 @@ bool VTryFinallyCompound::BeforeResolveStatements (VEmitContext &ec) {
   bool wasError = false;
 
   if (Finally) {
+    //returnAllowed = false;
+    // we cannot break loop from `return` scope
+    if (retScope) breakAllowed = false;
     Finally = Finally->Resolve(ec, this);
     if (!Finally->IsValid()) wasError = true;
+    if (retScope) breakAllowed = true;
+    //returnAllowed = true;
   }
 
   return !wasError;
@@ -4155,13 +4191,33 @@ bool VTryFinallyCompound::IsTryFinally () const noexcept {
 
 //==========================================================================
 //
+//  VTryFinallyCompound::IsReturnAllowed
+//
+//==========================================================================
+bool VTryFinallyCompound::IsReturnAllowed () const noexcept {
+  return returnAllowed;
+}
+
+
+//==========================================================================
+//
+//  VTryFinallyCompound::IsContBreakAllowed
+//
+//==========================================================================
+bool VTryFinallyCompound::IsContBreakAllowed () const noexcept {
+  return breakAllowed;
+}
+
+
+//==========================================================================
+//
 //  VTryFinallyCompound::EmitDtor
 //
 //==========================================================================
 void VTryFinallyCompound::EmitDtor (VEmitContext &ec) {
   // `scope(exit)` should be called even on `return`
   if (retScope && !ec.InReturn) return;
-  if (Finally) Finally->Emit(ec, this);
+  if (Finally) Finally->Emit(ec, this->UpScope); // avoid double return
 }
 
 

@@ -92,8 +92,10 @@ public:
   VStatement *Resolve (VEmitContext &ec, VStatement *aUpScope);
   void Emit (VEmitContext &ec, VStatement *aUpScope);
 
-  // this is used in `scope(exit)` to block `return`
+  // this is used in `scope(*)` to block `return`
   virtual bool IsReturnAllowed () const noexcept;
+  // this is used in `scope(return)` to block `break`/`continue`
+  virtual bool IsContBreakAllowed () const noexcept;
   // this is used to find the scope to `break` from
   virtual bool IsBreakScope () const noexcept;
   // this is used to find the scope to `continue` from
@@ -794,6 +796,8 @@ class VTryFinallyCompound : public VBaseCompoundStatement {
 public:
   VStatement *Finally;
   bool retScope;
+  bool returnAllowed;
+  bool breakAllowed;
 
   VTryFinallyCompound (VStatement *aFinally, const TLocation &ALoc);
   virtual ~VTryFinallyCompound () override;
@@ -802,6 +806,9 @@ public:
   virtual bool IsTryFinally () const noexcept override;
 
   virtual void EmitDtor (VEmitContext &ec) override;
+
+  virtual bool IsReturnAllowed () const noexcept override;
+  virtual bool IsContBreakAllowed () const noexcept override;
 
   virtual VStr toString () override;
 

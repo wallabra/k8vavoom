@@ -79,7 +79,7 @@ VEmitContext::VEmitContext (VMemberBase *Member)
   //, localsofs(0)
   , InDefaultProperties(false)
   , VCallsDisabled(false)
-  , InReturn(false)
+  , InReturn(0)
 {
   // find the class
   VMemberBase *CM = Member;
