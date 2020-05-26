@@ -3338,7 +3338,7 @@ VStatement *VBreak::DoResolve (VEmitContext &ec) {
 void VBreak::DoEmit (VEmitContext &ec) {
   // emit dtors for all scopes
   // emit finalizers for all scopes except the destination one
-  for (VStatement *st = this; st; st = st->UpScope) {
+  for (VStatement *st = this->UpScope; st; st = st->UpScope) {
     st->EmitDtor(ec);
     const bool destReached = (st->IsBreakScope() && (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()));
     if (destReached) {
@@ -3452,7 +3452,7 @@ VStatement *VContinue::DoResolve (VEmitContext &) {
 void VContinue::DoEmit (VEmitContext &ec) {
   // emit dtors for all scopes
   // emit finalizers for all scopes except the destination one
-  for (VStatement *st = this; st; st = st->UpScope) {
+  for (VStatement *st = this->UpScope; st; st = st->UpScope) {
     st->EmitDtor(ec);
     const bool destReached = (st->IsContinueScope() && (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()));
     if (destReached) {
@@ -3612,7 +3612,7 @@ void VReturn::DoEmit (VEmitContext &ec) {
   }
 
   // emit dtors and finalizers for all scopes
-  for (VStatement *st = this; st; st = st->UpScope) {
+  for (VStatement *st = this->UpScope; st; st = st->UpScope) {
     st->EmitDtor(ec);
     st->EmitFinalizer(ec);
   }
@@ -3792,7 +3792,7 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
   if (!Switch || !casedef) return; // just in case
 
   // emit cleanups (it is guaranteed to be in the switch)
-  for (VStatement *scp = this; scp != Switch; scp = scp->UpScope) {
+  for (VStatement *scp = this->UpScope; scp != Switch; scp = scp->UpScope) {
     scp->EmitDtor(ec);
     scp->EmitFinalizer(ec);
   }
@@ -4319,7 +4319,7 @@ bool VLocalVarStatement::BeforeEmitStatements (VEmitContext &ec) {
   // check if we are in some loop
   // we are in loop if we have "continue" point
   bool inloop = false;
-  for (VStatement *st = this; st; st = st->UpScope) {
+  for (VStatement *st = this->UpScope; st; st = st->UpScope) {
     if (st->IsContinueScope()) {
       inloop = true;
       break;
