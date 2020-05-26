@@ -1,0 +1,62 @@
+class Main : Object;
+
+struct IterInfo {
+  int cur;
+}
+
+
+void testIter_opIterInit (out IterInfo it, int initval) {
+  it.cur = initval;
+  writeln("iterator initialized");
+}
+
+void testIter_opIterDone (ref IterInfo it) {
+  writeln("iterator deinitialized, cur=", it.cur);
+}
+
+bool testIter_opIterNext (ref IterInfo it, ref int v) {
+  if (it.cur > 6) return false;
+  v = it.cur;
+  ++it.cur;
+  return true;
+}
+
+
+int doIter () {
+  foreach (int n; testIter(2)) {
+    scope(return) writeln("SCOPE:RETURN; n=", n);
+    writeln("n=", n);
+    if (n == 4) return 42;
+  }
+  return 0;
+}
+
+
+int doIter2 () {
+  foreach (int n; testIter(2)) {
+    scope(return) writeln("SCOPE:RETURN; n=", n);
+    writeln("n=", n);
+    if (n == 42) return 42;
+  }
+  return 0;
+}
+
+
+int doIter3 () {
+  foreach (int n; testIter(2)) {
+    scope(return) writeln("SCOPE:RETURN; n=", n);
+    writeln("n=", n);
+    if (n == 2) break;
+  }
+  return 666;
+}
+
+
+void main () {
+  int n = doIter();
+  writeln(n);
+  n = doIter2();
+  writeln(n);
+  n = doIter3();
+  writeln(n);
+}
