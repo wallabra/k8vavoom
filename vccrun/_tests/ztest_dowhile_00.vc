@@ -1,0 +1,19 @@
+class Main : Object;
+
+
+void main () {
+  do {
+    writeln("hi0!");
+  } while (0);
+
+  do {
+    writeln("hi1!");
+    break;
+  } while (1);
+
+  int n = 2;
+  do {
+    writeln("hi2! n=", n);
+  } while (--n);
+  writeln("end n is ", n);
+}
