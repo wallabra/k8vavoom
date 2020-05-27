@@ -735,6 +735,7 @@ bool VFieldType::NeedZeroingOnSlotReuse () const noexcept {
     case TYPE_String: // strings should be zeroed too
     case TYPE_Array: // arrays can't have initialisers yet, therefore they should be zeroed
     case TYPE_DynamicArray: // dynamic arrays should be zeroed
+    case TYPE_SliceArray: // zero it too, why not
     case TYPE_Dictionary: // dictionaries should be zeroed
       return true;
     default:

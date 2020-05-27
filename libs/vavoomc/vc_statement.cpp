@@ -917,10 +917,14 @@ VStatement *VWhile::DoResolve (VEmitContext &ec) {
   // indent check
   if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) wasError = true;
 
+  ++ec.InLoop;
+
   if (Expr) Expr = Expr->ResolveBoolean(ec);
   if (!Expr) wasError = true;
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
+
+  --ec.InLoop;
 
   return (wasError ? CreateInvalid() : this);
 }
@@ -935,6 +939,7 @@ void VWhile::DoEmit (VEmitContext &ec) {
   if (!Expr) return; // just in case
   const int bval = Expr->IsBoolLiteral(ec);
   if (bval == 0) return; // loop is not taken
+  ++ec.InLoop;
   // allocate labels
   breakLabel = ec.DefineLabel();
   contLabel = ec.DefineLabel();
@@ -953,6 +958,7 @@ void VWhile::DoEmit (VEmitContext &ec) {
   ec.AddStatement(OPC_Goto, contLabel, Loc);
   // loop breaks here
   ec.MarkLabel(breakLabel);
+  --ec.InLoop;
 }
 
 
@@ -1086,10 +1092,14 @@ VStatement *VDo::DoResolve (VEmitContext &ec) {
   // indent check
   if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) wasError = true;
 
+  ++ec.InLoop;
+
   if (Expr) Expr = Expr->ResolveBoolean(ec);
   if (!Expr) wasError = true;
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
+
+  --ec.InLoop;
 
   return (wasError ? CreateInvalid() : this);
 }
@@ -1103,7 +1113,7 @@ VStatement *VDo::DoResolve (VEmitContext &ec) {
 void VDo::DoEmit (VEmitContext &ec) {
   if (!Expr) return; // just in case
   const int bval = Expr->IsBoolLiteral(ec);
-  if (bval == 0) return; // loop is not taken
+  ++ec.InLoop;
   // allocate labels
   breakLabel = ec.DefineLabel();
   contLabel = ec.DefineLabel();
@@ -1125,9 +1135,13 @@ void VDo::DoEmit (VEmitContext &ec) {
   } else if (bval == 1) {
     // emit unconditional jump
     ec.AddStatement(OPC_Goto, loopStart, Loc);
+  } else {
+    vassert(bval == 0);
+    // loop condition is false, no need to emit any branch here
   }
   // loop breaks here
   ec.MarkLabel(breakLabel);
+  --ec.InLoop;
 }
 
 
@@ -1270,6 +1284,8 @@ VStatement *VFor::DoResolve (VEmitContext &ec) {
   // indent check
   if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
 
+  ++ec.InLoop;
+
   for (int i = 0; i < CondExpr.length(); ++i) {
     VExpression *ce = CondExpr[i];
     if (i != CondExpr.length()-1) {
@@ -1289,6 +1305,8 @@ VStatement *VFor::DoResolve (VEmitContext &ec) {
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
 
+  --ec.InLoop;
+
   return (wasError ? CreateInvalid() : this);
 }
 
@@ -1300,6 +1318,8 @@ VStatement *VFor::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VFor::DoEmit (VEmitContext &ec) {
   const int bval = (CondExpr.length() == 0 ? 1 : CondExpr[CondExpr.length()-1]->IsBoolLiteral(ec));
+
+  ++ec.InLoop;
 
   // allocate labels
   breakLabel = ec.DefineLabel();
@@ -1335,6 +1355,8 @@ void VFor::DoEmit (VEmitContext &ec) {
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
+
+  --ec.InLoop;
 }
 
 
@@ -1485,10 +1507,14 @@ VStatement *VForeach::DoResolve (VEmitContext &ec) {
   // indent check
   if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
 
+  ++ec.InLoop;
+
   if (Expr) Expr = Expr->ResolveIterator(ec);
   if (!Expr) wasError = true;
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
+
+  --ec.InLoop;
 
   return (wasError ? CreateInvalid() : this);
 }
@@ -1500,6 +1526,8 @@ VStatement *VForeach::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeach::DoEmit (VEmitContext &ec) {
+  ++ec.InLoop;
+
   Expr->Emit(ec);
   ec.AddStatement(OPC_IteratorInit, Loc);
 
@@ -1527,6 +1555,8 @@ void VForeach::DoEmit (VEmitContext &ec) {
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
+
+  --ec.InLoop;
 }
 
 
@@ -1687,6 +1717,8 @@ VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
   // indent check
   if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
 
+  ++ec.InLoop;
+
   // we will rewrite 'em later
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
   auto loR = (lo ? lo->SyntaxCopy()->Resolve(ec) : nullptr);
@@ -1714,6 +1746,7 @@ VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
     delete varR;
     delete loR;
     delete hiR;
+    --ec.InLoop;
     return CreateInvalid();
   }
 
@@ -1737,7 +1770,11 @@ VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
 
   if (hiinit) {
     hiinit = hiinit->Resolve(ec);
-    if (!hiinit) { delete limit; return CreateInvalid(); }
+    if (!hiinit) {
+      delete limit;
+      --ec.InLoop;
+      return CreateInvalid();
+    }
     //GLog.Logf(NAME_Debug, "%s: hiinit=%s; tempLocals.length=%d", *Loc.toStringNoCol(), *hiinit->toString(), tempLocals.length());
   }
 
@@ -1781,6 +1818,8 @@ VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
 
+  --ec.InLoop;
+
   return (wasError ? CreateInvalid() : this);
 }
 
@@ -1803,6 +1842,8 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
     VLocalVarDef &loc = ec.GetLocalByIndex(lv);
     if (loc.reused && loc.Type.NeedZeroingOnSlotReuse()) ec.EmitLocalZero(lv, Loc);
   }
+
+  ++ec.InLoop;
 
   // emit initialisation expressions
   if (hiinit) hiinit->Emit(ec); // may be absent for iota with literals
@@ -1829,6 +1870,7 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
   // loop breaks here
   ec.MarkLabel(breakLabel);
 
+  --ec.InLoop;
   for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
 }
 
@@ -2009,6 +2051,8 @@ VStatement *VForeachArray::DoResolve (VEmitContext &ec) {
 
   if (arr && arr->IsAnyInvocation()) VCFatalError("VC: Internal compiler error (VForeachArray::Resolve)");
 
+  ++ec.InLoop;
+
   // we will rewrite 'em later
   auto ivarR = (idxvar ? idxvar->SyntaxCopy()->Resolve(ec) : nullptr);
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
@@ -2053,7 +2097,10 @@ VStatement *VForeachArray::DoResolve (VEmitContext &ec) {
   delete ivarR;
   delete varR;
   delete arrR;
-  if (wasError) return CreateInvalid();
+  if (wasError) {
+    --ec.InLoop;
+    return CreateInvalid();
+  }
 
   /* this will compile to:
    *   ivar = 0;
@@ -2188,6 +2235,8 @@ VStatement *VForeachArray::DoResolve (VEmitContext &ec) {
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
 
+  --ec.InLoop;
+
   return (wasError ? CreateInvalid() : this);
 }
 
@@ -2210,6 +2259,8 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
     VLocalVarDef &loc = ec.GetLocalByIndex(lv);
     if (loc.reused && loc.Type.NeedZeroingOnSlotReuse()) ec.EmitLocalZero(lv, Loc);
   }
+
+  ++ec.InLoop;
 
   // emit initialisation expressions
   if (hiinit) hiinit->Emit(ec); // may be absent for reverse loops
@@ -2241,6 +2292,7 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
   // loop breaks here
   ec.MarkLabel(breakLabel);
 
+  --ec.InLoop;
   for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
 }
 
@@ -2440,6 +2492,8 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
     return CreateInvalid();
   }
 
+  ++ec.InLoop;
+
   int itlocidx = -1;
   {
     // create initializer expression
@@ -2479,6 +2533,7 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
 
     if (wasError) {
       delete einit;
+      --ec.InLoop;
       return CreateInvalid();
     }
 
@@ -2496,7 +2551,10 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
     ++einit->NumArgs;
     // and resolve the call
     ivInit = (isBoolInit ? einit->ResolveBoolean(ec) : einit->Resolve(ec));
-    if (!ivInit) return CreateInvalid();
+    if (!ivInit) {
+      --ec.InLoop;
+      return CreateInvalid();
+    }
   }
 
   {
@@ -2508,6 +2566,7 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
     if (!mnext) {
       delete enext;
       ParseError(Loc, "Invalid VC iterator (opNext method not found)");
+      --ec.InLoop;
       return CreateInvalid();
     }
 
@@ -2518,6 +2577,7 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
       {
         delete enext;
         ParseError(Loc, "VC iterator opNext argument %d is not `ref`/`out`", f+1);
+        --ec.InLoop;
         return CreateInvalid();
       }
     }
@@ -2528,6 +2588,7 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
       default:
         delete enext;
         ParseError(Loc, "VC iterator opNext should return `bool`");
+        --ec.InLoop;
         return CreateInvalid();
     }
 
@@ -2538,7 +2599,10 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
     for (int f = 0; f < fevarCount; ++f) enext->Args[f+1] = fevars[f].var->SyntaxCopy();
 
     ivNext = enext->ResolveBoolean(ec);
-    if (!ivNext) return CreateInvalid();
+    if (!ivNext) {
+      --ec.InLoop;
+      return CreateInvalid();
+    }
   }
 
   {
@@ -2558,12 +2622,14 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
       {
         delete edone;
         ParseError(Loc, "VC iterator opDone should have one arg, and it should be `ref`/`out`");
+        --ec.InLoop;
         return CreateInvalid();
       }
 
       if (mdone->ReturnType.Type != TYPE_Void) {
         delete edone;
         ParseError(Loc, "VC iterator opDone should be `void`");
+        --ec.InLoop;
         return CreateInvalid();
       }
 
@@ -2573,7 +2639,10 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
       edone->Args[0] = new VLocalVar(itlocidx, Loc);
 
       ivDone = edone->Resolve(ec);
-      if (!ivDone) return CreateInvalid();
+      if (!ivDone) {
+        --ec.InLoop;
+        return CreateInvalid();
+      }
     } else {
       delete edone;
       ivDone = nullptr;
@@ -2582,8 +2651,11 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
 
   // finally, resolve statement (last, so local reusing will work as expected)
   Statement = Statement->Resolve(ec, this);
-  if (!Statement->IsValid()) return CreateInvalid();
-  return this;
+  if (!Statement->IsValid()) wasError = true;
+
+  --ec.InLoop;
+
+  return (wasError ? CreateInvalid() : this);
 }
 
 
@@ -4325,6 +4397,7 @@ bool VLocalVarStatement::BeforeEmitStatements (VEmitContext &ec) {
       break;
     }
   }
+  if (inloop && !ec.InLoop) VCFatalError("VLocalVarStatement::BeforeEmitStatements: ubbalanced loops");
   Decl->EmitInitialisations(ec, inloop);
   return true;
 }

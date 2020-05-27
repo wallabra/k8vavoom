@@ -80,6 +80,7 @@ VEmitContext::VEmitContext (VMemberBase *Member)
   , InDefaultProperties(false)
   , VCallsDisabled(false)
   , InReturn(0)
+  , InLoop(0)
 {
   // find the class
   VMemberBase *CM = Member;
@@ -239,13 +240,12 @@ int VEmitContext::stackAlloc (int size, bool *reused) {
     unsigned char csl = slotInfo[spos];
     if (csl != SlotUsed) {
       int send = spos+1;
-      while (send < MaxStackSlots) {
+      while (send < MaxStackSlots && (send-spos < size)) {
         const unsigned char ssl = slotInfo[send];
         if (ssl == SlotUsed) break;
         csl |= ssl;
         ++send;
       }
-      vassert(send == MaxStackSlots || slotInfo[send] == SlotUsed);
       // does it fit?
       if (send-spos >= size) {
         // mark used
@@ -253,7 +253,7 @@ int VEmitContext::stackAlloc (int size, bool *reused) {
         if (reused) *reused = (csl != SlotUnused);
         return spos;
       }
-      // skip this gap (send points to used slot, so skip it too)
+      // skip this gap (`send` points to used slot, so skip it too)
       spos = send+1;
     } else {
       ++spos;
@@ -312,7 +312,8 @@ void VEmitContext::AllocateLocalSlot (int idx) {
     GLog.Logf(NAME_Debug, "%s: allocated local `%s` (idx=%d; ofs=%d; size=%d; realloced=%d)", *loc.Loc.toStringNoCol(), *loc.Name, idx, ofs, loc.stackSize, (int)realloced);
     #endif
     loc.Offset = ofs;
-    loc.reused = realloced;
+    // if we are in a loop, always clear it
+    loc.reused = (realloced || InLoop > 0);
   }
 }
 

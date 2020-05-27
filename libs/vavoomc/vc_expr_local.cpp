@@ -114,31 +114,22 @@ void VLocalDecl::EmitInitialisations (VEmitContext &ec, bool inloop) {
     if (loc.locIdx < 0) VCFatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
     // do we need to zero variable memory?
     // the variable was properly destructed beforehand (this is invariant)
-    bool needZero = false;
-    // zero comples reused locals without initializer
     const VLocalVarDef &ldef = ec.GetLocalByIndex(loc.locIdx);
     #ifdef VV_DEBUG_ALLOC_RELEASE
     GLog.Logf(NAME_Debug, "VLocalDecl::EmitInitialisations: name=`%s`; idx=%d; ofs=%d; reused=%d; %s", *ldef.Name, loc.locIdx, ldef.Offset, (int)ldef.reused, *ldef.Loc.toStringNoCol());
     #endif
-    if ((inloop || ldef.reused) && ldef.Type.NeedZeroingOnSlotReuse()) needZero = true;
+    // zero if reused, and need to be zeroed before initialisation
+    const bool needZero = ((inloop || ldef.reused) && ldef.Type.NeedZeroingOnSlotReuse());
     if (needZero) ec.EmitLocalZero(loc.locIdx, Loc);
-    /*
-    bool dozero = inloop || loc.emitClear;
-    if (!dozero) {
-      const VLocalVarDef &ldef = ec.GetLocalByIndex(loc.locIdx);
-      // unconditionally zero complex things like dicts and structs, and reused vars
-      dozero = (ldef.reused && !loc.Value);
-      // still zero some complex data types
-      if (!dozero && ldef.Type.NeedZeroingOnSlotReuse()) dozero = true;
-    }
-    // zero it if necessary
-    if (dozero) {
-      if (loc.locIdx < 0) VCFatalError("VC: internal compiler error (VLocalDecl::EmitInitialisations)");
+    // initialise
+    if (loc.Value) {
+      // emit init assign
+      loc.Value->Emit(ec);
+    } else if (!needZero && (inloop || ldef.reused)) {
+      // if it has no init, and it is reused or in loop, zero it too
+      // this is required, so locals will have known default values
       ec.EmitLocalZero(loc.locIdx, Loc);
     }
-    */
-         if (loc.Value) loc.Value->Emit(ec);
-    else if (!needZero && (inloop || ldef.reused)) ec.EmitLocalZero(loc.locIdx, Loc); // zero if it is in loop
   }
 }
 
@@ -283,10 +274,6 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
     //if (e.isRef) fprintf(stderr, "*** <%s:%d> is REF\n", *e.Name, L.ldindex);
     e.locIdx = L.ldindex;
 
-    // always clear reused/loop locals
-    // this flag will be adjusted later
-    //e.emitClear = false;
-
     // resolve initialisation
     if (e.Value) {
       // invocation means "constructor call"
@@ -340,16 +327,15 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
             case TYPE_Vector:
               if (val->IsConstVectorCtor()) {
                 VVectorExpr *vc = (VVectorExpr *)val;
-                TVec vec = vc->GetConstValue();
+                const TVec vec = vc->GetConstValue();
                 defaultInit = (vec.x == 0 && vec.y == 0 && vec.z == 0);
               }
               break;
           }
-          // drop default init, and replace it with `clear var` flag
+          // drop default init if it is equal to default value
           if (defaultInit) {
             delete e.Value;
             e.Value = nullptr;
-            //e.emitClear = true;
           }
         }
       }

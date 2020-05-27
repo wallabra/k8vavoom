@@ -134,6 +134,9 @@ public:
   // set by `VReturn`, to process `scope(return)`
   int InReturn;
 
+  // maintained by loop statements; if in loop, always sets `reused` for new locals
+  int InLoop;
+
 private:
   // called in ctor, and to reset locals
   void stackInit ();
