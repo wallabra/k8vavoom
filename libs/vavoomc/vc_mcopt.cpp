@@ -25,6 +25,8 @@
 //**************************************************************************
 // OPTIMIZER
 //**************************************************************************
+#include "vc_mcopt.h"
+
 
 //#define VCMCOPT_DISASM_FINAL_RESULT_ANYWAY
 
@@ -53,12 +55,6 @@
 #define VCMCOPT_DEBUG_SIMPLIFY_JUMP_JUMP
 #define VCMCOPT_NOTIFY_SIMPLIFY_JUMP_JUMP
 
-#define VCMCOPT_DEBUG_DEADIF_SIMPLIFIER
-#define VCMCOPT_NOTIFY_DEADIF_SIMPLIFIER
-
-#define VCMCOPT_DEBUG_DEADWHILE_SIMPLIFIER
-#define VCMCOPT_NOTIFY_DEADWHILE_SIMPLIFIER
-
 #define VCMCOPT_NOTIFY_OPTIMISING_STEP
 
 #endif
@@ -73,93 +69,6 @@
 
 #define DYNARRDISPATCH_OPCODE_INFO
 #include "vc_progdefs.h"
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-struct Instr;
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// main optimizer class (k8: well, `MC` stands for `machine code`, lol)
-class VMCOptimizer {
-friend struct Instr;
-
-public:
-  VMethod *func;
-  TArray<FInstruction> *origInstrList;
-  // instructions list
-  Instr *ilistHead, *ilistTail;
-  // all known jump instructions
-  Instr *jplistHead, *jplistTail;
-  int instrCount;
-  // support list to ease indexed access
-  TArray<Instr *> instrList;
-
-private:
-  Instr *getInstrAtSlow (int idx) const;
-
-  Instr *getInstrAt (int idx) const;
-
-  void disasmAll () const;
-
-  void recalcJumpTargetCacheFor (Instr *it);
-
-  void fixJumpTargetCache ();
-
-  void appendToList (Instr *i);
-  void appendToJPList (Instr *i);
-
-  void removeInstr (Instr *it);
-  void killInstr (Instr *it);
-
-  //WARNING: copies contents of `src` to `dest`, but does no list reordering!
-  void replaceInstr (Instr *dest, Instr *src);
-
-  // range is inclusive
-  bool canRemoveRange (int idx0, int idx1, Instr *ignoreThis=nullptr, Instr *ignoreThis1=nullptr);
-
-  // range is inclusive
-  void killRange (int idx0, int idx1);
-
-  void traceReachable (int pc=0);
-
-public:
-  VMCOptimizer (VMethod *afunc, TArray<FInstruction> &aorig);
-  ~VMCOptimizer ();
-
-  void clear ();
-
-  void setupFrom (VMethod *afunc, TArray<FInstruction> *aorig);
-
-  // this will copy result back to `aorig`, and will clear everything
-  void finish ();
-
-  // this does flood-fill search to see if all execution pathes are finished with `return`
-  void checkReturns ();
-
-  void optimizeAll ();
-  void shortenInstructions ();
-
-  inline int countInstrs () const { return instrCount; }
-
-protected:
-  // returns `true` if this path (and all its possible branches) reached `return` instruction
-  // basically, it just marks all reachable instructions, and fails if it reached end-of-function
-  // note that we don't try to catch endless loops, but simple endless loops are considered ok
-  // (due to an accident)
-  bool isPathEndsWithReturn (int iidx);
-
-  void optimizeLoads ();
-  void optimizeJumps ();
-
-  bool removeDeadBranches ();
-
-  bool removeRedunantJumps ();
-  bool simplifyIfJumpJump ();
-  bool simplifyIfJumps ();
-
-  void calcStackDepth ();
-};
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1214,14 +1123,24 @@ struct Instr {
         fprintf(stderr, " %s (%d)", *TypeArg.GetName(), Arg2);
         break;
     }
-         if (!reachable) fprintf(stderr, " <UNREACHABLE>");
-    else if (spcur >= 0) fprintf(stderr, " (sp:%d; delta:%d)", spcur, spdelta);
+         /*if (!reachable) fprintf(stderr, " <UNREACHABLE>");
+    else */if (spcur >= 0) fprintf(stderr, " (sp:%d; delta:%d)", spcur, spdelta);
     fprintf(stderr, "\n");
   }
 };
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//**************************************************************************
+//
+// VMCOptimizer
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VMCOptimizer::VMCOptimizer
+//
+//==========================================================================
 VMCOptimizer::VMCOptimizer (VMethod *afunc, TArray<FInstruction> &aorig)
   : func(nullptr)
   , origInstrList(nullptr)
@@ -1234,11 +1153,21 @@ VMCOptimizer::VMCOptimizer (VMethod *afunc, TArray<FInstruction> &aorig)
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::~VMCOptimizer
+//
+//==========================================================================
 VMCOptimizer::~VMCOptimizer () {
   clear();
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::clear
+//
+//==========================================================================
 void VMCOptimizer::clear () {
   func = nullptr;
   origInstrList = nullptr;
@@ -1255,6 +1184,11 @@ void VMCOptimizer::clear () {
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::setupFrom
+//
+//==========================================================================
 void VMCOptimizer::setupFrom (VMethod *afunc, TArray<FInstruction> *aorig) {
   clear();
   func = afunc;
@@ -1274,10 +1208,15 @@ void VMCOptimizer::setupFrom (VMethod *afunc, TArray<FInstruction> *aorig) {
     if (i->isAnyBranch()) appendToJPList(i);
   }
   fixJumpTargetCache();
-  traceReachable();
+  //traceReachable(); // required only in stack depth checker, so moved there
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::finish
+//
+//==========================================================================
 void VMCOptimizer::finish () {
   TArray<FInstruction> &olist = *origInstrList;
   olist.setLength(countInstrs()+1); // one for `Done`
@@ -1306,8 +1245,13 @@ void VMCOptimizer::finish () {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-//FIXME: optimize!
+//==========================================================================
+//
+//  VMCOptimizer::getInstrAtSlow
+//
+//  FIXME: optimize!
+//
+//==========================================================================
 Instr *VMCOptimizer::getInstrAtSlow (int idx) const {
   if (idx < 0 || idx >= instrCount) return nullptr;
   for (Instr *it = ilistHead; it; it = it->next) if (idx-- == 0) return it;
@@ -1315,35 +1259,35 @@ Instr *VMCOptimizer::getInstrAtSlow (int idx) const {
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::getInstrAt
+//
+//==========================================================================
 Instr *VMCOptimizer::getInstrAt (int idx) const {
-  /*
-  int num = instrCount;
-  if (idx < 0 || idx >= num) return nullptr;
-  if (idx <= num/2) {
-    for (Instr *it = ilistHead; it; it = it->next) if (idx-- == 0) return it;
-  } else {
-    --num;
-    for (Instr *it = ilistTail; it; it = it->prev, --num) {
-      if (idx == num) {
-        //!for (Instr *i2 = ilistHead; i2; i2 = i2->next) if (idx-- == 0) { if (i2 != it) abort(); break; }
-        return it;
-      }
-    }
-  }
-  return nullptr;
-  */
   if (idx < 0 || idx >= instrCount) return nullptr;
   //!if (instrList[idx] != getInstrAtSlow(idx)) abort();
   return instrList[idx];
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::disasmAll
+//
+//==========================================================================
 void VMCOptimizer::disasmAll () const {
   for (const Instr *it = ilistHead; it; it = it->next) it->disasm();
 }
 
 
-//FIXME: optimize this!
+//==========================================================================
+//
+//  VMCOptimizer::recalcJumpTargetCacheFor
+//
+//  FIXME: optimize this!
+//
+//==========================================================================
 void VMCOptimizer::recalcJumpTargetCacheFor (Instr *it) {
   if (!it) return;
   it->meJumpTarget = false;
@@ -1356,12 +1300,23 @@ void VMCOptimizer::recalcJumpTargetCacheFor (Instr *it) {
 }
 
 
-//FIXME: optimize this!
+//==========================================================================
+//
+//  VMCOptimizer::fixJumpTargetCache
+//
+//  FIXME: optimize this!
+//
+//==========================================================================
 void VMCOptimizer::fixJumpTargetCache () {
   for (Instr *it = ilistHead; it; it = it->next) recalcJumpTargetCacheFor(it);
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::appendToList
+//
+//==========================================================================
 void VMCOptimizer::appendToList (Instr *i) {
   if (!i) return; // jist in case
   i->idx = instrCount++;
@@ -1374,6 +1329,11 @@ void VMCOptimizer::appendToList (Instr *i) {
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::appendToJPList
+//
+//==========================================================================
 void VMCOptimizer::appendToJPList (Instr *i) {
   if (!i) return; // jist in case
   i->jpnext = nullptr;
@@ -1383,6 +1343,11 @@ void VMCOptimizer::appendToJPList (Instr *i) {
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::removeInstr
+//
+//==========================================================================
 void VMCOptimizer::removeInstr (Instr *it) {
   if (!it) return; // just in case
   // fix jump indicies
@@ -1413,6 +1378,11 @@ void VMCOptimizer::removeInstr (Instr *it) {
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::killInstr
+//
+//==========================================================================
 void VMCOptimizer::killInstr (Instr *it) {
   if (!it) return; // just in case
   removeInstr(it);
@@ -1420,7 +1390,13 @@ void VMCOptimizer::killInstr (Instr *it) {
 }
 
 
-// range is inclusive
+//==========================================================================
+//
+//  VMCOptimizer::killRange
+//
+//  range is inclusive
+//
+//==========================================================================
 void VMCOptimizer::killRange (int idx0, int idx1) {
   //fprintf(stderr, "  KILLING: (%d:%d)\n", idx0, idx1);
   while (idx0 <= idx1) {
@@ -1430,6 +1406,11 @@ void VMCOptimizer::killRange (int idx0, int idx1) {
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::replaceInstr
+//
+//==========================================================================
 void VMCOptimizer::replaceInstr (Instr *dest, Instr *src) {
   if (!dest || !src || dest == src) return; // sanity checks
   bool isDestJmp = dest->isAnyBranch();
@@ -1478,9 +1459,14 @@ void VMCOptimizer::replaceInstr (Instr *dest, Instr *src) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// range can be removed if there are no jumps *into* it
-// range is inclusive
+//==========================================================================
+//
+//  VMCOptimizer::canRemoveRange
+//
+//  range can be removed if there are no jumps *into* it
+//  range is inclusive
+//
+//==========================================================================
 bool VMCOptimizer::canRemoveRange (int idx0, int idx1, Instr *ignoreThis, Instr *ignoreThis1) {
   if (idx0 < 0 || idx1 < 0 || idx0 > idx1 || idx0 >= instrCount || idx1 >= instrCount) return false;
   for (int f = idx0; f <= idx1; ++f) {
@@ -1502,27 +1488,26 @@ bool VMCOptimizer::canRemoveRange (int idx0, int idx1, Instr *ignoreThis, Instr 
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-/*
-struct Exiter {
-  VStr msg;
-
-  Exiter (VStr amsg) { msg = amsg; }
-  ~Exiter () { fprintf(stderr, "%s", *msg); }
-};
-*/
-
-
-// returns `true` if this path (and all its possible branches) reached `return` instruction
-// basically, it just marks all reachable instructions, and fails if it reached end-of-function
-// note that we don't try to catch endless loops, but simple endless loops are considered ok
-// (due to an accident)
-// note that arriving at already marked instructions means "success"
+//==========================================================================
+//
+//  VMCOptimizer::isPathEndsWithReturn
+//
+//  returns `true` if this path (and all its possible branches)
+//  reached `return` instruction.
+//
+//  basically, it just marks all reachable instructions, and fails if
+//  it reached end-of-function.
+//  note that we don't try to catch endless loops, but simple endless
+//  loops are considered ok (due to an accident).
+//
+//  note that arriving at already marked instructions means "success".
+//
+//==========================================================================
 bool VMCOptimizer::isPathEndsWithReturn (int iidx) {
   while (iidx >= 0 && iidx < instrCount) {
     Instr *it = getInstrAt(iidx);
     if (!it) return false; // oops
-    vassert(it->reachable);
+    //vassert(it->reachable);
     if (it->idx != iidx) VCFatalError("VCOPT: internal inconsisitency (VMCOptimizer::isPathEndsWithReturn)");
     if (it->retflag) return true; // anyway
     // mark it as visited
@@ -1547,7 +1532,14 @@ bool VMCOptimizer::isPathEndsWithReturn (int iidx) {
 }
 
 
-// this does flood-fill search to see if all execution pathes are finished with `return`
+//==========================================================================
+//
+//  VMCOptimizer::checkReturns
+//
+//  this does flood-fill search to see if all execution
+//  pathes are finished with `return`
+//
+//==========================================================================
 void VMCOptimizer::checkReturns () {
   // reset `visited` flag on each instruction
   for (int f = 0; f < instrCount; ++f) getInstrAt(f)->retflag = false;
@@ -1560,8 +1552,13 @@ void VMCOptimizer::checkReturns () {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  VMCOptimizer::shortenInstructions
+//
+//==========================================================================
 void VMCOptimizer::shortenInstructions () {
+  traceReachable(); // required by stack depth checker
   calcStackDepth();
   //disasmAll();
   // two required steps
@@ -1570,6 +1567,11 @@ void VMCOptimizer::shortenInstructions () {
 }
 
 
+//==========================================================================
+//
+//  VMCOptimizer::optimizeAll
+//
+//==========================================================================
 void VMCOptimizer::optimizeAll () {
 #ifdef VCMOPT_DISABLE_OPTIMIZER
   return;
@@ -1640,8 +1642,13 @@ void VMCOptimizer::optimizeAll () {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// optimize various load/call instructions
+//==========================================================================
+//
+//  VMCOptimizer::optimizeLoads
+//
+//  optimize various load/call instructions
+//
+//==========================================================================
 void VMCOptimizer::optimizeLoads () {
   for (Instr *it = ilistHead; it; it = it->next) {
     Instr &insn = *it;
@@ -1698,8 +1705,13 @@ void VMCOptimizer::optimizeLoads () {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// optimize various branch instructions (convert to a short form, if we can)
+//==========================================================================
+//
+//  VMCOptimizer::optimizeJumps
+//
+//  convert various branch instructions to a short form, if we can
+//
+//==========================================================================
 void VMCOptimizer::optimizeJumps () {
   // calculate approximate addresses for jump instructions
   int addr = 0;
@@ -1731,9 +1743,14 @@ void VMCOptimizer::optimizeJumps () {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// remove unreachable branches (those after ret/goto, and not a jump target)
-// codegen can generate those, and optimizer can left those
+//==========================================================================
+//
+//  VMCOptimizer::removeDeadBranches
+//
+//  remove unreachable branches (those after ret/goto, and not a jump target)
+//  codegen can generate those, and optimizer can left those
+//
+//==========================================================================
 bool VMCOptimizer::removeDeadBranches () {
 #ifdef VCMCOPT_NOTIFY_OPTIMISING_STEP
   fprintf(stderr, "VMCOptimizer::removeDeadBranches\n");
@@ -1765,8 +1782,13 @@ bool VMCOptimizer::removeDeadBranches () {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// remove `goto $+1;`
+//==========================================================================
+//
+//  VMCOptimizer::removeRedunantJumps
+//
+//  remove `goto $+1;`
+//
+//==========================================================================
 bool VMCOptimizer::removeRedunantJumps () {
 #ifdef VCMCOPT_NOTIFY_OPTIMISING_STEP
   fprintf(stderr, "VMCOptimizer::removeRedunantJumps\n");
@@ -1812,8 +1834,13 @@ bool VMCOptimizer::removeRedunantJumps () {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// replace `brn op1; op1: goto op2;` with `brn op2;`
+//==========================================================================
+//
+//  VMCOptimizer::simplifyIfJumps
+//
+//  replace `brn op1; op1: goto op2;` with `brn op2;`
+//
+//==========================================================================
 bool VMCOptimizer::simplifyIfJumps () {
 #ifdef VCMCOPT_NOTIFY_OPTIMISING_STEP
   fprintf(stderr, "VMCOptimizer::simplifyIfJumps\n");
@@ -1888,8 +1915,13 @@ bool VMCOptimizer::simplifyIfJumps () {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// replace `If[Not]Goto $+2; Goto m;` to `If[!Not]Goto m;`, and remove `Goto m;`
+//==========================================================================
+//
+//  VMCOptimizer::simplifyIfJumpJump
+//
+//  replace `If[Not]Goto $+2; Goto m;` to `If[!Not]Goto m;`, and remove `Goto m;`
+//
+//==========================================================================
 bool VMCOptimizer::simplifyIfJumpJump () {
 #ifdef VCMCOPT_NOTIFY_OPTIMISING_STEP
   fprintf(stderr, "VMCOptimizer::simplifyIfJumpJump\n");
@@ -1946,7 +1978,11 @@ bool VMCOptimizer::simplifyIfJumpJump () {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  VMCOptimizer::calcStackDepth
+//
+//==========================================================================
 void VMCOptimizer::calcStackDepth () {
   // reset
   for (Instr *it = ilistHead; it; it = it->next) { it->spcur = -1; it->spdelta = 0; }

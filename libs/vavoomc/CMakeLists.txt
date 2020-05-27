@@ -25,6 +25,8 @@ add_library(vavoomc STATIC
   vc_field.cpp
   vc_method.h
   vc_method.cpp
+  vc_mcopt.h
+  vc_mcopt.cpp
   vc_struct.h
   vc_struct.cpp
   vc_class.h
