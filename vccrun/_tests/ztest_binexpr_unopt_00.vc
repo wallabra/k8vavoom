@@ -1,0 +1,18 @@
+class Main : Object;
+
+
+void main () {
+  float f = 49;
+  float t = 0-f;
+  writeln(t);
+  t = f*(-1);
+  writeln(t);
+  t = -1*f;
+  writeln(t);
+  t = f/(-2);
+  writeln(t);
+  t = f/2;
+  writeln(t);
+  t = 2/f;
+  writeln(t);
+}
