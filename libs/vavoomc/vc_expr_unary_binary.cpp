@@ -74,7 +74,7 @@ void VExprParens::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
-//  VExpression
+//  VExprParens::DoResolve
 //
 //==========================================================================
 VExpression *VExprParens::DoResolve (VEmitContext &ec) {
@@ -120,10 +120,11 @@ VStr VExprParens::toString () const {
 //  VUnary::VUnary
 //
 //==========================================================================
-VUnary::VUnary (VUnary::EUnaryOp AOper, VExpression *AOp, const TLocation &ALoc)
+VUnary::VUnary (VUnary::EUnaryOp AOper, VExpression *AOp, const TLocation &ALoc, bool aopresolved)
   : VExpression(ALoc)
   , Oper(AOper)
   , op(AOp)
+  , opresolved(aopresolved)
 {
   if (!op) ParseError(Loc, "Expression expected");
 }
@@ -171,6 +172,7 @@ void VUnary::DoSyntaxCopyTo (VExpression *e) {
   auto res = (VUnary *)e;
   res->Oper = Oper;
   res->op = (op ? op->SyntaxCopy() : nullptr);
+  res->opresolved = opresolved;
 }
 
 
@@ -181,6 +183,7 @@ void VUnary::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VUnary::DoResolve (VEmitContext &ec) {
   if (Oper == TakeAddress && op && ec.SelfClass) {
+    vassert(!opresolved);
     if (op->IsSingleName()) {
       VMethod *M = ec.SelfClass->FindAccessibleMethod(((VSingleName *)op)->Name, ec.SelfClass, &Loc);
       if (M && (M->Flags&FUNC_Iterator) == 0) {
@@ -213,8 +216,9 @@ VExpression *VUnary::DoResolve (VEmitContext &ec) {
     }
   }
 
-  if (op) {
+  if (op && !opresolved) {
     if (Oper == Not) op = op->ResolveBoolean(ec); else op = op->Resolve(ec);
+    opresolved = true;
   }
   if (!op) { delete this; return nullptr; }
 
@@ -286,7 +290,7 @@ VExpression *VUnary::DoResolve (VEmitContext &ec) {
     VExpression *e = nullptr;
     switch (Oper) {
       case Minus: e = new VFloatLiteral(-Value, Loc); break;
-      case Not: e = new VIntLiteral(Value == 0.0f, Loc); break;
+      case Not: e = new VIntLiteral((isZeroInfNaN(Value) ? 1 : 0), Loc); break;
       default: break;
     }
     if (e) {
@@ -333,6 +337,7 @@ void VUnary::Emit (VEmitContext &ec) {
 //
 //==========================================================================
 void VUnary::EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue) {
+  //WARNING! do not optimise here, external optimiser will do the work (so we can avoid emiting drops)
   if (Oper == Not) {
     op->EmitBranchable(ec, Lbl, !OnTrue);
   } else {
@@ -697,6 +702,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   // convert decorate crap
   if (Oper == LShiftFloat || Oper == RShiftFloat || Oper == URShiftFloat) {
     if (op1->Type.Type == TYPE_Float) {
+      // zero is allowed, because it is used to perform float->int conversion in decorate
       if (!op2->IsIntConst() || op2->GetIntConst() != 0) {
         ParseWarning(Loc, "shifting float value is something you should not do!");
       }
@@ -769,20 +775,6 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   // coerce both types if it is possible
   VExpression::CoerceTypes(ec, op1, op2, false); // don't coerce "none delegate"
   if (!op1 || !op2) { delete this; return nullptr; }
-
-  // decorate coercion to float
-  // k8: no need to do it, as Vavoom C now does such coercion for all code
-  /*
-  if (ec.Package->Name == NAME_decorate) {
-    if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Float) {
-      op1 = (new VScalarToFloat(op1, true))->Resolve(ec);
-      if (!op1) { delete this; return nullptr; } // oops
-    } else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Int) {
-      op2 = (new VScalarToFloat(op2, true))->Resolve(ec);
-      if (!op2) { delete this; return nullptr; } // oops
-    }
-  }
-  */
 
   // determine resulting type (and check operand types)
   switch (Oper) {
@@ -917,7 +909,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
     default: VCFatalError("VBinary::DoResolve: forgot to handle oper %d in typecheck", (int)Oper);
   }
 
-  // optimise shifts
+  // optimise shifts; note that constant folding will be done later
   if (op2->IsIntConst()) {
     vint32 Value2 = op2->GetIntConst();
     VExpression *e = nullptr;
@@ -1003,7 +995,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
           delete this;
           return nullptr;
         }
-        e = new VIntLiteral((vint32)((vuint32)Value1>>Value2), Loc);
+        e = new VIntLiteral((vint32)((vuint32)Value1>>((vuint32)Value2&0x1fu)), Loc);
         break;
       case Less: e = new VIntLiteral(Value1 < Value2, Loc); break;
       case LessEquals: e = new VIntLiteral(Value1 <= Value2, Loc); break;
@@ -1016,7 +1008,10 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       case Or: e = new VIntLiteral(Value1|Value2, Loc); break;
       default: break;
     }
-    if (e) { delete this; return e; }
+    if (e) {
+      delete this;
+      return e;
+    }
   }
 
   // optimize float constants
@@ -1046,45 +1041,55 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
     if (e) { delete this; return e; }
   }
 
-  bool isOp1Zero = ((op1->IsIntConst() && op1->GetIntConst() == 0) || (op1->IsFloatConst() && op1->GetFloatConst() == 0));
-  bool isOp2Zero = ((op2->IsIntConst() && op2->GetIntConst() == 0) || (op2->IsFloatConst() && op2->GetFloatConst() == 0));
-
-  bool isOp1One = ((op1->IsIntConst() && op1->GetIntConst() == 1) || (op1->IsFloatConst() && op1->GetFloatConst() == 1));
-  bool isOp2One = ((op2->IsIntConst() && op2->GetIntConst() == 1) || (op2->IsFloatConst() && op2->GetFloatConst() == 1));
-
   // division by zero check
-  if (isOp2Zero && (Oper == Divide || Oper == Modulus)) {
+  if ((Oper == Divide || Oper == Modulus) && IsOpZero(op2)) {
     ParseError(Loc, "Division by 0");
     delete this;
     return nullptr;
   }
 
-  // optimize 0+n
-  if (Oper == Add && isOp1Zero) { VExpression *e = op2; op2 = nullptr; delete this; return e; }
-  // optimize n+0
-  if (Oper == Add && isOp2Zero) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
-
-  // optimize n-0
-  if (Oper == Subtract && isOp2Zero) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
-
-  // optimize 0*n
-  if (Oper == Multiply && isOp1Zero) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
-  // optimize n*0
-  if (Oper == Multiply && isOp2Zero) { VExpression *e = op2; op2 = nullptr; delete this; return e; }
-  // optimize 1*n
-  if (Oper == Multiply && isOp1One) { VExpression *e = op2; op2 = nullptr; delete this; return e; }
-  // optimize n*1
-  if (Oper == Multiply && isOp2One) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
-
-  // optimize n/1
-  if (Oper == Divide && isOp2One) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
-
-  // optimize n/2.0
-  if (Oper == Divide && op2->IsFloatConst() && op2->GetFloatConst() == 2.0f) {
-    Oper = Multiply;
-    VExpression *ef = new VFloatLiteral(0.5f, op2->Loc);
-    delete op2;
-    op2 = ef;
+  // simplify/optimise some expressions with a known result
+  switch (Oper) {
+    case Add:
+      // optimize 0+n
+      if (IsOpZero(op1)) { VExpression *e = op2; op2 = nullptr; delete this; return e; }
+      // optimize n+0
+      if (IsOpZero(op2)) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
+      break;
+    case Subtract:
+      // optimize 0-n
+      if (IsOpZero(op1)) { VExpression *e = new VUnary(VUnary::Minus, op2, Loc, true/*opresolved*/); op2 = nullptr; delete this; return e->Resolve(ec); }
+      // optimize n-0
+      if (IsOpZero(op2)) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
+      break;
+    case Multiply:
+      // optimize 0*n
+      if (IsOpZero(op1)) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
+      // optimize n*0
+      if (IsOpZero(op2)) { VExpression *e = op2; op2 = nullptr; delete this; return e; }
+      // optimize 1*n
+      if (IsOpOne(op1)) { VExpression *e = op2; op2 = nullptr; delete this; return e; }
+      // optimize n*1
+      if (IsOpOne(op2)) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
+      // optimize -1*n
+      if (IsOpMinusOne(op1)) { VExpression *e = new VUnary(VUnary::Minus, op2, Loc, true/*opresolved*/); op2 = nullptr; delete this; return e->Resolve(ec); }
+      // optimize n*(-1)
+      if (IsOpMinusOne(op2)) { VExpression *e = new VUnary(VUnary::Minus, op1, Loc, true/*opresolved*/); op1 = nullptr; delete this; return e->Resolve(ec); }
+      break;
+    case Divide:
+      // optimize n/1
+      if (IsOpOne(op2)) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
+      /*
+      // optimize n/2.0 and n/(-2.0)
+      if (op2 && op2->IsFloatConst() && (op2->GetFloatConst() == 2.0f || op2->GetFloatConst() == -2.0f)) {
+        Oper = Multiply;
+        VExpression *ef = new VFloatLiteral((op2->GetFloatConst() == 2.0f ? 0.5f : -0.5f), op2->Loc);
+        delete op2;
+        op2 = ef;
+      }
+      */
+      break;
+    default: break;
   }
 
   return this;
@@ -1433,8 +1438,8 @@ VExpression *VBinaryLogical::DoResolve (VEmitContext &ec) {
     vint32 Value2 = op2->GetIntConst();
     VExpression *e = nullptr;
     switch (Oper) {
-      case And: e = new VIntLiteral(Value1 && Value2, Loc); break;
-      case Or: e = new VIntLiteral(Value1 || Value2, Loc); break;
+      case And: e = new VIntLiteral((Value1 && Value2 ? 1 : 0), Loc); break;
+      case Or: e = new VIntLiteral((Value1 || Value2 ? 1 : 0), Loc); break;
     }
     if (e) {
       delete this;

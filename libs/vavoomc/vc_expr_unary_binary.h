@@ -67,8 +67,9 @@ public:
 public:
   EUnaryOp Oper;
   VExpression *op;
+  bool opresolved;
 
-  VUnary (EUnaryOp, VExpression *, const TLocation &);
+  VUnary (EUnaryOp, VExpression *, const TLocation &, bool aopresolved=false);
   virtual ~VUnary () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
@@ -185,6 +186,10 @@ protected:
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 
   static int calcPrio (EBinOp op);
+
+  static inline bool IsOpZero (VExpression *e) { return (e ? (e->IsIntConst() ? (e->GetIntConst() == 0) : e->IsFloatConst() ? (e->GetFloatConst() == 0.0f) : false) : false); }
+  static inline bool IsOpOne (VExpression *e) { return (e ? (e->IsIntConst() ? (e->GetIntConst() == 1) : e->IsFloatConst() ? (e->GetFloatConst() == 1.0f) : false) : false); }
+  static inline bool IsOpMinusOne (VExpression *e) { return (e ? (e->IsIntConst() ? (e->GetIntConst() == -1) : e->IsFloatConst() ? (e->GetFloatConst() == -1.0f) : false) : false); }
 };
 
 
