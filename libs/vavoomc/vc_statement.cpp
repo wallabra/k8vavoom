@@ -66,15 +66,16 @@ template<class T> VStr shitppTypeNameObj (const T &o) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // VStatement
-VStatement::VStatement (const TLocation &ALoc)
+VStatement::VStatement (const TLocation &ALoc, VName aLabel)
   : Loc(ALoc)
   , UpScope(nullptr)
-  , Label(NAME_None)
+  , Label(aLabel)
 {
 }
 
 VStatement::~VStatement () {}
 
+void VStatement::EmitCtor (VEmitContext &ec) {}
 void VStatement::EmitDtor (VEmitContext &ec, bool properLeave) {}
 void VStatement::EmitFinalizer (VEmitContext &ec, bool properLeave) {}
 
@@ -158,6 +159,7 @@ VStatement *VStatement::Resolve (VEmitContext &ec, VStatement *aUpScope) {
 //==========================================================================
 void VStatement::Emit (VEmitContext &ec, VStatement *aUpScope) {
   UpScopeGuard upguard(this, aUpScope);
+  EmitCtor(ec);
   DoEmit(ec);
   EmitDtor(ec, true); // proper leaving
   EmitFinalizer(ec, true); // proper leaving
@@ -176,7 +178,9 @@ void VStatement::Emit (VEmitContext &ec, VStatement *aUpScope) {
 //  VInvalidStatement::VInvalidStatement
 //
 //==========================================================================
-VInvalidStatement::VInvalidStatement (const TLocation &ALoc) : VStatement(ALoc) {
+VInvalidStatement::VInvalidStatement (const TLocation &ALoc)
+   : VStatement(ALoc)
+{
 }
 
 
@@ -244,7 +248,9 @@ VStr VInvalidStatement::toString () {
 //  VEmptyStatement::VEmptyStatement
 //
 //==========================================================================
-VEmptyStatement::VEmptyStatement (const TLocation &ALoc) : VStatement(ALoc) {
+VEmptyStatement::VEmptyStatement (const TLocation &ALoc)
+  : VStatement(ALoc)
+{
 }
 
 
@@ -850,11 +856,10 @@ VStr VIf::toString () {
 //
 //==========================================================================
 VWhile::VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel)
-  : VStatement(ALoc)
+  : VStatement(ALoc, aLabel)
   , Expr(AExpr)
   , Statement(AStatement)
 {
-  Label = aLabel;
 }
 
 
@@ -1023,11 +1028,10 @@ VStr VWhile::toString () {
 //
 //==========================================================================
 VDo::VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel)
-  : VStatement(ALoc)
+  : VStatement(ALoc, aLabel)
   , Expr(AExpr)
   , Statement(AStatement)
 {
-  Label = aLabel;
 }
 
 
@@ -1204,13 +1208,11 @@ VStr VDo::toString () {
 //
 //==========================================================================
 VFor::VFor (const TLocation &ALoc, VName aLabel)
-  : VStatement(ALoc)
-  //, InitExpr()
+  : VStatement(ALoc, aLabel)
   , CondExpr()
   , LoopExpr()
   , Statement(nullptr)
 {
-  Label = aLabel;
 }
 
 
@@ -1433,11 +1435,10 @@ VStr VFor::toString () {
 //
 //==========================================================================
 VForeach::VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel)
-  : VStatement(ALoc)
+  : VStatement(ALoc, aLabel)
   , Expr(AExpr)
   , Statement(AStatement)
 {
-  Label = aLabel;
 }
 
 
@@ -1613,6 +1614,66 @@ VStr VForeach::toString () {
 
 //**************************************************************************
 //
+// VLoopStatementWithTempLocals
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VLoopStatementWithTempLocals::VLoopStatementWithTempLocals
+//
+//==========================================================================
+VLoopStatementWithTempLocals::VLoopStatementWithTempLocals (const TLocation &aloc, VName aLabel)
+  : VStatement(aloc, aLabel)
+  , tempLocals()
+{
+}
+
+
+//==========================================================================
+//
+//  VLoopStatementWithTempLocals::~VLoopStatementWithTempLocals
+//
+//==========================================================================
+VLoopStatementWithTempLocals::~VLoopStatementWithTempLocals () {
+  tempLocals.clear();
+}
+
+
+//==========================================================================
+//
+//  VLoopStatementWithTempLocals::EmitCtor
+//
+//==========================================================================
+void VLoopStatementWithTempLocals::EmitCtor (VEmitContext &ec) {
+  // no need to clear uninited vars, the loop will take care of it
+  for (auto &&lv : tempLocals) {
+    ec.AllocateLocalSlot(lv);
+    VLocalVarDef &loc = ec.GetLocalByIndex(lv);
+    if (loc.reused && loc.Type.NeedZeroingOnSlotReuse()) ec.EmitLocalZero(lv, Loc);
+  }
+}
+
+
+//==========================================================================
+//
+//  VLoopStatementWithTempLocals::EmitDtor
+//
+//==========================================================================
+void VLoopStatementWithTempLocals::EmitDtor (VEmitContext &ec, bool properLeave) {
+  for (auto &&lv : tempLocals.reverse()) {
+    ec.EmitLocalDtor(lv, Loc);
+  }
+  // if leaving properly, release locals
+  if (properLeave) {
+    for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
+  }
+}
+
+
+
+//**************************************************************************
+//
 // VForeachIota
 //
 //**************************************************************************
@@ -1623,7 +1684,7 @@ VStr VForeach::toString () {
 //
 //==========================================================================
 VForeachIota::VForeachIota (const TLocation &ALoc, VName aLabel)
-  : VStatement(ALoc)
+  : VLoopStatementWithTempLocals(ALoc, aLabel)
   , varinit(nullptr)
   , varnext(nullptr)
   , hiinit(nullptr)
@@ -1633,7 +1694,6 @@ VForeachIota::VForeachIota (const TLocation &ALoc, VName aLabel)
   , Statement(nullptr)
   , reversed(false)
 {
-  Label = aLabel;
 }
 
 
@@ -1824,13 +1884,6 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
 
   VLabel loopLbl = ec.DefineLabel();
 
-  // no need to clear them, the loop will take care of it
-  for (auto &&lv : tempLocals) {
-    ec.AllocateLocalSlot(lv);
-    VLocalVarDef &loc = ec.GetLocalByIndex(lv);
-    if (loc.reused && loc.Type.NeedZeroingOnSlotReuse()) ec.EmitLocalZero(lv, Loc);
-  }
-
   ++ec.InLoop;
 
   // emit initialisation expressions
@@ -1856,23 +1909,6 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
   ec.MarkLabel(breakLabel);
 
   --ec.InLoop;
-}
-
-
-//==========================================================================
-//
-//  VForeachIota::EmitDtor
-//
-//==========================================================================
-void VForeachIota::EmitDtor (VEmitContext &ec, bool properLeave) {
-  for (auto &&lv : tempLocals.reverse()) {
-    //GLog.Logf(NAME_Debug, "*** VForeachIota::EmitDtor: tempLocals.length=%d", tempLocals.length());
-    ec.EmitLocalDtor(lv, Loc);
-  }
-  // if leaving properly, release locals
-  if (properLeave) {
-    for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
-  }
 }
 
 
@@ -1945,7 +1981,7 @@ VStr VForeachIota::toString () {
 //
 //==========================================================================
 VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression *avar, bool aVarRef, bool aVarConst, const TLocation &aloc, VName aLabel)
-  : VStatement(aloc)
+  : VLoopStatementWithTempLocals(aloc, aLabel)
   , idxinit(nullptr)
   , hiinit(nullptr)
   , loopPreCheck(nullptr)
@@ -1960,7 +1996,6 @@ VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression 
   , isRef(aVarRef)
   , isConst(aVarConst)
 {
-  Label = aLabel;
 }
 
 
@@ -2241,13 +2276,6 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
 
   VLabel loopLbl = ec.DefineLabel();
 
-  // no need to clear them, the loop will take care of it (except for structs with dtors)
-  for (auto &&lv : tempLocals) {
-    ec.AllocateLocalSlot(lv);
-    VLocalVarDef &loc = ec.GetLocalByIndex(lv);
-    if (loc.reused && loc.Type.NeedZeroingOnSlotReuse()) ec.EmitLocalZero(lv, Loc);
-  }
-
   ++ec.InLoop;
 
   // emit initialisation expressions
@@ -2278,20 +2306,6 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
   ec.MarkLabel(breakLabel);
 
   --ec.InLoop;
-}
-
-
-//==========================================================================
-//
-//  VForeachArray::EmitDtor
-//
-//==========================================================================
-void VForeachArray::EmitDtor (VEmitContext &ec, bool properLeave) {
-  for (auto &&lv : tempLocals.reverse()) ec.EmitLocalDtor(lv, Loc);
-  // if leaving properly, release locals
-  if (properLeave) {
-    for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
-  }
 }
 
 
@@ -2366,15 +2380,15 @@ VStr VForeachArray::toString () {
 //
 //==========================================================================
 VForeachScriptedOuter::VForeachScriptedOuter (bool aisBoolInit, VExpression *aivInit, int ainitLocIdx, VStatement *aBody, const TLocation &aloc, VName aLabel)
-  : VStatement(aloc)
+  : VStatement(aloc, aLabel)
   , isBoolInit(aisBoolInit)
   , ivInit(aivInit)
   , initLocIdx(ainitLocIdx)
   , Statement(aBody)
 {
-  Label = aLabel;
   vassert(aBody);
 }
+
 
 //==========================================================================
 //
@@ -2516,7 +2530,7 @@ VStr VForeachScriptedOuter::toString () {
 //
 //==========================================================================
 VForeachScripted::VForeachScripted (VExpression *aarr, int afeCount, Var *afevars, const TLocation &aloc, VName aLabel)
-  : VStatement(aloc)
+  : VLoopStatementWithTempLocals(aloc, aLabel)
   , isBoolInit(false)
   , ivInit(nullptr)
   , ivNext(nullptr)
@@ -2526,7 +2540,6 @@ VForeachScripted::VForeachScripted (VExpression *aarr, int afeCount, Var *afevar
   , Statement(nullptr)
   , reversed(false)
 {
-  Label = aLabel;
   if (afeCount < 0 || afeCount > VMethod::MAX_PARAMS) VCFatalError("VC: internal compiler error (VForeachScripted::VForeachScripted)");
   for (int f = 0; f < afeCount; ++f) fevars[f] = afevars[f];
 }
@@ -2810,13 +2823,6 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachScripted::DoEmit (VEmitContext &ec) {
-  // no need to clear them, the loop will take care of it (except for structs with dtors)
-  for (auto &&lv : tempLocals) {
-    ec.AllocateLocalSlot(lv);
-    VLocalVarDef &loc = ec.GetLocalByIndex(lv);
-    if (loc.reused && loc.Type.NeedZeroingOnSlotReuse()) ec.EmitLocalZero(lv, Loc);
-  }
-
   ++ec.InLoop;
 
   // allocate labels
@@ -2861,20 +2867,6 @@ bool VForeachScripted::IsBreakScope () const noexcept {
 //==========================================================================
 bool VForeachScripted::IsContinueScope () const noexcept {
   return true;
-}
-
-
-//==========================================================================
-//
-//  VForeachScripted::EmitDtor
-//
-//==========================================================================
-void VForeachScripted::EmitDtor (VEmitContext &ec, bool properLeave) {
-  for (auto &&lv : tempLocals.reverse()) ec.EmitLocalDtor(lv, Loc);
-  // if leaving properly, release locals
-  if (properLeave) {
-    for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
-  }
 }
 
 
@@ -2943,11 +2935,10 @@ VStr VForeachScripted::toString () {
 //
 //==========================================================================
 VSwitch::VSwitch (const TLocation &ALoc, VName aLabel)
-  : VStatement(ALoc)
+  : VStatement(ALoc, aLabel)
   , Expr(nullptr)
   , HaveDefault(false)
 {
-  Label = aLabel;
 }
 
 
@@ -4093,7 +4084,9 @@ VStr VGotoStmt::toString () {
 //  VBaseCompoundStatement::VBaseCompoundStatement
 //
 //==========================================================================
-VBaseCompoundStatement::VBaseCompoundStatement (const TLocation &aloc) : VStatement(aloc) {
+VBaseCompoundStatement::VBaseCompoundStatement (const TLocation &aloc)
+  : VStatement(aloc)
+{
 }
 
 

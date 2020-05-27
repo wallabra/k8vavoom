@@ -66,7 +66,7 @@ protected:
   };
 
 public:
-  VStatement (const TLocation &ALoc);
+  VStatement (const TLocation &ALoc, VName aLavel=NAME_None);
   virtual ~VStatement ();
   virtual VStatement *SyntaxCopy () = 0;
 
@@ -75,6 +75,9 @@ public:
 
   // `properLeave` set if we're leaving the scope by normal code flow
   // i.e. not by break/continue/goto/return
+
+  // for loops with temp locals, called before `DoEmit()`
+  virtual void EmitCtor (VEmitContext &ec);
 
   // dtors will be emited before scope exit
   virtual void EmitDtor (VEmitContext &ec, bool properLeave);
@@ -402,13 +405,28 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VForeachIota : public VStatement {
+// base for statement with temp locals
+class VLoopStatementWithTempLocals : public VStatement {
+public:
+  TArray<int> tempLocals;
+
+  VLoopStatementWithTempLocals (const TLocation &aloc, VName aLabel);
+  virtual ~VLoopStatementWithTempLocals () override;
+
+  virtual void EmitCtor (VEmitContext &ec) override;
+  virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
+
+protected:
+  VLoopStatementWithTempLocals () {}
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VForeachIota : public VLoopStatementWithTempLocals {
 private:
   VExpression *varinit; // var initializer expression
   VExpression *varnext; // loop/check expression (++var < hi)
   VExpression *hiinit; // hivar initializer
-
-  TArray<int> tempLocals;
 
 public:
   VExpression *var; // loop variable (resolved to first-check expression)
@@ -423,8 +441,6 @@ public:
 
   virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
-
-  virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
@@ -444,7 +460,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VForeachArray : public VStatement {
+class VForeachArray : public VLoopStatementWithTempLocals {
 private:
   VExpression *idxinit;
   VExpression *hiinit;
@@ -452,8 +468,6 @@ private:
   VExpression *loopNext;
   VExpression *loopLoad;
   VExpression *varaddr;
-
-  TArray<int> tempLocals;
 
 private:
   VStatement *DoResolveScriptIter (VEmitContext &ec);
@@ -473,8 +487,6 @@ public:
 
   virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
-
-  virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
@@ -526,7 +538,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VForeachScripted : public VStatement {
+class VForeachScripted : public VLoopStatementWithTempLocals {
 public:
   struct Var {
     VExpression *var;
@@ -542,8 +554,6 @@ private:
   VExpression *ivInit; // invocation, init
   VExpression *ivNext; // invocation, next
   VExpression *ivDone; // invocation, done, can be null
-
-  TArray<int> tempLocals;
 
 public:
   VExpression *arr; // array
@@ -562,7 +572,6 @@ public:
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
 
-  virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
   virtual void EmitFinalizer (VEmitContext &ec, bool properLeave) override;
 
   virtual bool IsEndsWithReturn () const noexcept override;
