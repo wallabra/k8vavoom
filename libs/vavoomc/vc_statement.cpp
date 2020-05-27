@@ -69,16 +69,14 @@ template<class T> VStr shitppTypeNameObj (const T &o) {
 VStatement::VStatement (const TLocation &ALoc)
   : Loc(ALoc)
   , UpScope(nullptr)
-  , skipDtorOnLeave(false)
-  , skipFinalizerOnLeave(false)
   , Label(NAME_None)
 {
 }
 
 VStatement::~VStatement () {}
 
-void VStatement::EmitDtor (VEmitContext &ec) {}
-void VStatement::EmitFinalizer (VEmitContext &ec) {}
+void VStatement::EmitDtor (VEmitContext &ec, bool properLeave) {}
+void VStatement::EmitFinalizer (VEmitContext &ec, bool properLeave) {}
 
 bool VStatement::IsCompound () const noexcept { return false; }
 bool VStatement::IsAnyCompound () const noexcept { return false; }
@@ -161,8 +159,8 @@ VStatement *VStatement::Resolve (VEmitContext &ec, VStatement *aUpScope) {
 void VStatement::Emit (VEmitContext &ec, VStatement *aUpScope) {
   UpScopeGuard upguard(this, aUpScope);
   DoEmit(ec);
-  if (!skipDtorOnLeave) EmitDtor(ec);
-  if (!skipFinalizerOnLeave) EmitFinalizer(ec);
+  EmitDtor(ec, true); // proper leaving
+  EmitFinalizer(ec, true); // proper leaving
 }
 
 
@@ -908,7 +906,7 @@ void VWhile::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 
 //==========================================================================
 //
-//  VWhile::Resolve
+//  VWhile::DoResolve
 //
 //==========================================================================
 VStatement *VWhile::DoResolve (VEmitContext &ec) {
@@ -952,8 +950,6 @@ void VWhile::DoEmit (VEmitContext &ec) {
   }
   // generate loop body
   Statement->Emit(ec, this);
-  // emit dtors
-  EmitDtorAndBlock(ec);
   // jump to loop start
   ec.AddStatement(OPC_Goto, contLabel, Loc);
   // loop breaks here
@@ -1124,8 +1120,6 @@ void VDo::DoEmit (VEmitContext &ec) {
   if (bval == 1) ec.MarkLabel(contLabel);
   // emit loop body
   Statement->Emit(ec, this);
-  // emit dtors
-  EmitDtorAndBlock(ec);
   // continue point is here (because `continue` emits all necessary dtors)
   // but only if loop is not endless
   if (bval != 1) ec.MarkLabel(contLabel);
@@ -1341,9 +1335,6 @@ void VFor::DoEmit (VEmitContext &ec) {
   // emit embeded statement
   Statement->Emit(ec, this);
 
-  // emit dtors
-  EmitDtorAndBlock(ec);
-
   // put continue point here
   ec.MarkLabel(contLabel);
 
@@ -1544,9 +1535,6 @@ void VForeach::DoEmit (VEmitContext &ec) {
   ec.MarkLabel(loopLbl);
   Statement->Emit(ec, this);
 
-  // emit dtors
-  EmitDtorAndBlock(ec);
-
   // put continue point here
   ec.MarkLabel(contLabel);
 
@@ -1585,7 +1573,7 @@ bool VForeach::IsContinueScope () const noexcept {
 //  VForeach::EmitFinalizer
 //
 //==========================================================================
-void VForeach::EmitFinalizer (VEmitContext &ec) {
+void VForeach::EmitFinalizer (VEmitContext &ec, bool properLeave) {
   ec.AddStatement(OPC_IteratorPop, Loc);
 }
 
@@ -1858,9 +1846,6 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
   // emit loop body
   Statement->Emit(ec, this);
 
-  // emit dtors
-  EmitDtorAndBlock(ec);
-
   // put continue point here
   ec.MarkLabel(contLabel);
 
@@ -1871,7 +1856,6 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
   ec.MarkLabel(breakLabel);
 
   --ec.InLoop;
-  for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
 }
 
 
@@ -1880,10 +1864,14 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
 //  VForeachIota::EmitDtor
 //
 //==========================================================================
-void VForeachIota::EmitDtor (VEmitContext &ec) {
+void VForeachIota::EmitDtor (VEmitContext &ec, bool properLeave) {
   for (auto &&lv : tempLocals.reverse()) {
     //GLog.Logf(NAME_Debug, "*** VForeachIota::EmitDtor: tempLocals.length=%d", tempLocals.length());
     ec.EmitLocalDtor(lv, Loc);
+  }
+  // if leaving properly, release locals
+  if (properLeave) {
+    for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
   }
 }
 
@@ -2280,9 +2268,6 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
   // emit loop body
   Statement->Emit(ec, this);
 
-  // emit dtors
-  EmitDtorAndBlock(ec);
-
   // put continue point here
   ec.MarkLabel(contLabel);
 
@@ -2293,7 +2278,6 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
   ec.MarkLabel(breakLabel);
 
   --ec.InLoop;
-  for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
 }
 
 
@@ -2302,8 +2286,12 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
 //  VForeachArray::EmitDtor
 //
 //==========================================================================
-void VForeachArray::EmitDtor (VEmitContext &ec) {
+void VForeachArray::EmitDtor (VEmitContext &ec, bool properLeave) {
   for (auto &&lv : tempLocals.reverse()) ec.EmitLocalDtor(lv, Loc);
+  // if leaving properly, release locals
+  if (properLeave) {
+    for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
+  }
 }
 
 
@@ -2361,6 +2349,156 @@ VStr VForeachArray::toString () {
     VExpression::e2s(idxvar)+", "+
     VExpression::e2s(var)+"; "+
     VExpression::e2s(arr)+(reversed ? "; reversed)\n" : ")\n")+
+    (Statement ? Statement->toString() : VStr("<none>"));
+}
+
+
+
+//**************************************************************************
+//
+// VForeachScriptedOuter
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VForeachScriptedOuter::VForeachScriptedOuter
+//
+//==========================================================================
+VForeachScriptedOuter::VForeachScriptedOuter (bool aisBoolInit, VExpression *aivInit, int ainitLocIdx, VStatement *aBody, const TLocation &aloc, VName aLabel)
+  : VStatement(aloc)
+  , isBoolInit(aisBoolInit)
+  , ivInit(aivInit)
+  , initLocIdx(ainitLocIdx)
+  , Statement(aBody)
+{
+  Label = aLabel;
+  vassert(aBody);
+}
+
+//==========================================================================
+//
+//  VForeachScriptedOuter::~VForeachScriptedOuter
+//
+//==========================================================================
+VForeachScriptedOuter::~VForeachScriptedOuter () {
+  delete ivInit; ivInit = nullptr;
+  delete Statement; Statement = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VForeachScriptedOuter::SyntaxCopy
+//
+//==========================================================================
+VStatement *VForeachScriptedOuter::SyntaxCopy () {
+  auto res = new VForeachScriptedOuter();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VForeachScriptedOuter::DoSyntaxCopyTo
+//
+//==========================================================================
+void VForeachScriptedOuter::DoSyntaxCopyTo (VStatement *e) {
+  VStatement::DoSyntaxCopyTo(e);
+  auto res = (VForeachScriptedOuter *)e;
+  res->isBoolInit = isBoolInit;
+  res->ivInit = (ivInit ? ivInit->SyntaxCopy() : nullptr);
+  res->initLocIdx = initLocIdx;
+  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VForeachScriptedOuter::DoFixSwitch
+//
+//==========================================================================
+void VForeachScriptedOuter::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (Statement) Statement->DoFixSwitch(aold, anew);
+}
+
+
+//==========================================================================
+//
+//  VForeachScriptedOuter::DoResolve
+//
+//==========================================================================
+VStatement *VForeachScriptedOuter::DoResolve (VEmitContext &ec) {
+  VCFatalError("VForeachScriptedOuter::DoResolve: it should never be called!");
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VForeachScriptedOuter::DoEmit
+//
+//==========================================================================
+void VForeachScriptedOuter::DoEmit (VEmitContext &ec) {
+  // emit initialisation expression
+  if (isBoolInit) {
+    VLabel LoopExitSkipDtor = ec.DefineLabel();
+    ivInit->EmitBranchable(ec, LoopExitSkipDtor, false);
+    if (Statement) Statement->Emit(ec, this);
+    // jump point for "loop not taken"
+    ec.MarkLabel(LoopExitSkipDtor);
+  } else {
+    ivInit->Emit(ec);
+    if (Statement) Statement->Emit(ec, this);
+  }
+}
+
+
+//==========================================================================
+//
+//  VForeachScriptedOuter::EmitDtor
+//
+//==========================================================================
+void VForeachScriptedOuter::EmitDtor (VEmitContext &ec, bool properLeave) {
+  if (initLocIdx >= 0) {
+    ec.EmitLocalDtor(initLocIdx, Loc);
+    // if leaving properly, release locals
+    if (properLeave) ec.ReleaseLocalSlot(initLocIdx);
+  }
+}
+
+
+//==========================================================================
+//
+//  VForeachScriptedOuter::IsEndsWithReturn
+//
+//==========================================================================
+bool VForeachScriptedOuter::IsEndsWithReturn () const noexcept {
+  //TODO: endless fors should have at least one return instead
+  return (Statement && Statement->IsEndsWithReturn());
+}
+
+
+//==========================================================================
+//
+//  VForeachScriptedOuter::IsProperCaseEnd
+//
+//==========================================================================
+bool VForeachScriptedOuter::IsProperCaseEnd (bool skipBreak) const noexcept {
+  return (Statement && Statement->IsProperCaseEnd(true));
+}
+
+
+//==========================================================================
+//
+//  VForeachScriptedOuter::toString
+//
+//==========================================================================
+VStr VForeachScriptedOuter::toString () {
+  return
+    VStr("/*")+Loc.toStringNoCol()+GET_MY_TYPE()+"*/foreachSInit ("+
+    VExpression::e2s(ivInit)+")\n"+
     (Statement ? Statement->toString() : VStr("<none>"));
 }
 
@@ -2465,6 +2603,7 @@ void VForeachScripted::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //==========================================================================
 VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
   bool wasError = false;
+  int initLocIdx = -1;
 
   // indent check
   if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
@@ -2541,7 +2680,8 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
     {
       VLocalVarDef &L = ec.NewLocal(NAME_None, minit->ParamTypes[0], Loc);
       L.Visible = false; // it is unnamed, and hidden ;-)
-      tempLocals.append(L.GetIndex());
+      //tempLocals.append(L.GetIndex());
+      initLocIdx = itlocidx;
       itlocidx = L.GetIndex();
     }
 
@@ -2655,7 +2795,12 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
 
   --ec.InLoop;
 
-  return (wasError ? CreateInvalid() : this);
+  if (wasError) return CreateInvalid();
+
+  // create outer statement
+  VStatement *res = new VForeachScriptedOuter(isBoolInit, ivInit, initLocIdx, this, Loc);
+  ivInit = nullptr;
+  return res;
 }
 
 
@@ -2665,8 +2810,6 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachScripted::DoEmit (VEmitContext &ec) {
-  VLabel LoopExitSkipDtor = ec.DefineLabel();
-
   // no need to clear them, the loop will take care of it (except for structs with dtors)
   for (auto &&lv : tempLocals) {
     ec.AllocateLocalSlot(lv);
@@ -2674,12 +2817,7 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
     if (loc.reused && loc.Type.NeedZeroingOnSlotReuse()) ec.EmitLocalZero(lv, Loc);
   }
 
-  // emit initialisation expression
-  if (isBoolInit) {
-    ivInit->EmitBranchable(ec, LoopExitSkipDtor, false);
-  } else {
-    ivInit->Emit(ec);
-  }
+  ++ec.InLoop;
 
   // allocate labels
   breakLabel = ec.DefineLabel();
@@ -2696,22 +2834,13 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
   // emit loop body
   Statement->Emit(ec, this);
 
-  // emit dtors
-  EmitDtorAndBlock(ec);
-
   // again
   ec.AddStatement(OPC_Goto, contLabel, Loc);
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
 
-  // emit finalizer
-  EmitFinalizerAndBlock(ec);
-
-  // jump point for "loop not taken"
-  ec.MarkLabel(LoopExitSkipDtor);
-
-  for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
+  --ec.InLoop;
 }
 
 
@@ -2740,8 +2869,12 @@ bool VForeachScripted::IsContinueScope () const noexcept {
 //  VForeachScripted::EmitDtor
 //
 //==========================================================================
-void VForeachScripted::EmitDtor (VEmitContext &ec) {
+void VForeachScripted::EmitDtor (VEmitContext &ec, bool properLeave) {
   for (auto &&lv : tempLocals.reverse()) ec.EmitLocalDtor(lv, Loc);
+  // if leaving properly, release locals
+  if (properLeave) {
+    for (auto &&lv : tempLocals) ec.ReleaseLocalSlot(lv);
+  }
 }
 
 
@@ -2750,7 +2883,7 @@ void VForeachScripted::EmitDtor (VEmitContext &ec) {
 //  VForeachScripted::EmitFinalizer
 //
 //==========================================================================
-void VForeachScripted::EmitFinalizer (VEmitContext &ec) {
+void VForeachScripted::EmitFinalizer (VEmitContext &ec, bool properLeave) {
   if (ivDone) ivDone->Emit(ec);
 }
 
@@ -2958,9 +3091,6 @@ void VSwitch::DoEmit (VEmitContext &ec) {
 
   // switch statements
   for (auto &&st : Statements) st->Emit(ec, this);
-
-  // emit dtors
-  //EmitDtorAndBlock(ec);
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
@@ -3411,14 +3541,14 @@ void VBreak::DoEmit (VEmitContext &ec) {
   // emit dtors for all scopes
   // emit finalizers for all scopes except the destination one
   for (VStatement *st = this->UpScope; st; st = st->UpScope) {
-    st->EmitDtor(ec);
+    st->EmitDtor(ec, false); // abnormal leave
     const bool destReached = (st->IsBreakScope() && (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()));
     if (destReached) {
       // jump to break destination
       ec.AddStatement(OPC_Goto, st->breakLabel, Loc);
       return;
     }
-    st->EmitFinalizer(ec);
+    st->EmitFinalizer(ec, false); // abnormal leave
   }
   VCFatalError("internal compiler error (break)");
 }
@@ -3525,14 +3655,14 @@ void VContinue::DoEmit (VEmitContext &ec) {
   // emit dtors for all scopes
   // emit finalizers for all scopes except the destination one
   for (VStatement *st = this->UpScope; st; st = st->UpScope) {
-    st->EmitDtor(ec);
+    st->EmitDtor(ec, false); // abnormal leave
     const bool destReached = (st->IsContinueScope() && (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()));
     if (destReached) {
       // jump to conitnue destination
       ec.AddStatement(OPC_Goto, st->contLabel, Loc);
       return;
     }
-    st->EmitFinalizer(ec);
+    st->EmitFinalizer(ec, false); // abnormal leave
   }
   VCFatalError("internal compiler error (break)");
 }
@@ -3685,8 +3815,8 @@ void VReturn::DoEmit (VEmitContext &ec) {
 
   // emit dtors and finalizers for all scopes
   for (VStatement *st = this->UpScope; st; st = st->UpScope) {
-    st->EmitDtor(ec);
-    st->EmitFinalizer(ec);
+    st->EmitDtor(ec, false); // abnormal leave
+    st->EmitFinalizer(ec, false); // abnormal leave
   }
 
   if (Expr) {
@@ -3865,8 +3995,8 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
 
   // emit cleanups (it is guaranteed to be in the switch)
   for (VStatement *scp = this->UpScope; scp != Switch; scp = scp->UpScope) {
-    scp->EmitDtor(ec);
-    scp->EmitFinalizer(ec);
+    scp->EmitDtor(ec, false); // abnormal leave
+    scp->EmitFinalizer(ec, false); // abnormal leave
   }
 
   if (GotoType == Case) {
@@ -4286,7 +4416,7 @@ bool VTryFinallyCompound::IsContBreakAllowed () const noexcept {
 //  VTryFinallyCompound::EmitDtor
 //
 //==========================================================================
-void VTryFinallyCompound::EmitDtor (VEmitContext &ec) {
+void VTryFinallyCompound::EmitDtor (VEmitContext &ec, bool properLeave) {
   // `scope(exit)` should be called even on `return`
   if (retScope && !ec.InReturn) return;
   if (Finally) Finally->Emit(ec, this->UpScope); // avoid double return
@@ -4405,23 +4535,13 @@ bool VLocalVarStatement::BeforeEmitStatements (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VLocalVarStatement::AfterEmitStatements
-//
-//==========================================================================
-bool VLocalVarStatement::AfterEmitStatements (VEmitContext &ec) {
-  EmitDtorAndBlock(ec);
-  Decl->Release(ec);
-  return true;
-}
-
-
-//==========================================================================
-//
 //  VLocalVarStatement::EmitDtor
 //
 //==========================================================================
-void VLocalVarStatement::EmitDtor (VEmitContext &ec) {
+void VLocalVarStatement::EmitDtor (VEmitContext &ec, bool properLeave) {
   Decl->EmitDtors(ec);
+  // if leaving properly, release locals
+  if (properLeave) Decl->Release(ec);
 }
 
 

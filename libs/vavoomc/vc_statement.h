@@ -34,10 +34,6 @@ public:
   TLocation Loc;
   // linked list of "parent" statements
   VStatement *UpScope;
-  // set to `true` to skip calling `EmitDtor()`
-  bool skipDtorOnLeave;
-  // set to `true` to skip calling `EmitFinalizer()`
-  bool skipFinalizerOnLeave;
   // break and continue labels, used in break and continue statements
   VLabel breakLabel;
   VLabel contLabel;
@@ -77,16 +73,13 @@ public:
   virtual VStatement *DoResolve (VEmitContext &ec) = 0;
   virtual void DoEmit (VEmitContext &ec) = 0;
 
+  // `properLeave` set if we're leaving the scope by normal code flow
+  // i.e. not by break/continue/goto/return
+
   // dtors will be emited before scope exit
-  virtual void EmitDtor (VEmitContext &ec);
+  virtual void EmitDtor (VEmitContext &ec, bool properLeave);
   // finalizers will be emited after scope exit
-  virtual void EmitFinalizer (VEmitContext &ec);
-
-  // emit dtor, and block automating dtor emiting
-  inline void EmitDtorAndBlock (VEmitContext &ec) { EmitDtor(ec); skipDtorOnLeave = true; }
-
-  // emit dtor, and block automating dtor emiting
-  inline void EmitFinalizerAndBlock (VEmitContext &ec) { EmitFinalizer(ec); skipFinalizerOnLeave = true; }
+  virtual void EmitFinalizer (VEmitContext &ec, bool properLeave);
 
   // those will manage `UpScope`, and will call dtor/finalizer emiters
   VStatement *Resolve (VEmitContext &ec, VStatement *aUpScope);
@@ -392,7 +385,7 @@ public:
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
 
-  virtual void EmitFinalizer (VEmitContext &ec) override;
+  virtual void EmitFinalizer (VEmitContext &ec, bool properLeave) override;
 
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
@@ -431,7 +424,7 @@ public:
   virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
-  virtual void EmitDtor (VEmitContext &ec) override;
+  virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
@@ -481,7 +474,7 @@ public:
   virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
-  virtual void EmitDtor (VEmitContext &ec) override;
+  virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
@@ -493,6 +486,38 @@ public:
 
 protected:
   VForeachArray () {}
+  virtual void DoSyntaxCopyTo (VStatement *e) override;
+
+public:
+  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// this is used in "foreach scripted" to skip the whole loop without initialisation
+class VForeachScriptedOuter : public VStatement {
+public:
+  bool isBoolInit;
+  VExpression *ivInit; // invocation, init
+  int initLocIdx; // <0: no need to clear it
+  VStatement *Statement; // body
+
+  VForeachScriptedOuter (bool aisBoolInit, VExpression *aivInit, int ainitLocIdx, VStatement *aBody, const TLocation &aloc, VName aLabel=NAME_None);
+  virtual ~VForeachScriptedOuter () override;
+  virtual VStatement *SyntaxCopy () override;
+
+  virtual VStatement *DoResolve (VEmitContext &ec) override;
+  virtual void DoEmit (VEmitContext &ec) override;
+
+  virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
+
+  virtual bool IsEndsWithReturn () const noexcept override;
+  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
+
+  virtual VStr toString () override;
+
+protected:
+  VForeachScriptedOuter () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
 
 public:
@@ -537,8 +562,8 @@ public:
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
 
-  virtual void EmitDtor (VEmitContext &ec) override;
-  virtual void EmitFinalizer (VEmitContext &ec) override;
+  virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
+  virtual void EmitFinalizer (VEmitContext &ec, bool properLeave) override;
 
   virtual bool IsEndsWithReturn () const noexcept override;
   virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
@@ -805,7 +830,7 @@ public:
 
   virtual bool IsTryFinally () const noexcept override;
 
-  virtual void EmitDtor (VEmitContext &ec) override;
+  virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
 
   virtual bool IsReturnAllowed () const noexcept override;
   virtual bool IsContBreakAllowed () const noexcept override;
@@ -831,7 +856,7 @@ public:
   virtual ~VLocalVarStatement () override;
   virtual VStatement *SyntaxCopy () override;
 
-  virtual void EmitDtor (VEmitContext &ec) override;
+  virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
 
   virtual bool IsVarDecl () const noexcept override;
 
@@ -846,7 +871,6 @@ protected:
   virtual bool AfterResolveStatements (VEmitContext &ec) override;
 
   virtual bool BeforeEmitStatements (VEmitContext &ec) override;
-  virtual bool AfterEmitStatements (VEmitContext &ec) override;
 };
 
 

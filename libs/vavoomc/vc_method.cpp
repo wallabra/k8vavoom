@@ -420,7 +420,7 @@ void VMethod::Emit () {
 
   // just in case; also, we should not have any alive finalizers here, but just in case...
   if (ReturnType.Type == TYPE_Void) {
-    Statement->EmitDtor(ec);
+    Statement->EmitDtor(ec, true); // proper leaving
     ec.AddStatement(OPC_Return, Loc);
   }
 
