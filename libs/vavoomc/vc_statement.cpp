@@ -117,6 +117,8 @@ bool VStatement::IsReturn () const noexcept { return false; }
 bool VStatement::IsSwitchCase () const noexcept { return false; }
 bool VStatement::IsSwitchDefault () const noexcept { return false; }
 bool VStatement::IsVarDecl () const noexcept { return false; }
+bool VStatement::IsInLoop () const noexcept { return false; }
+bool VStatement::IsInReturn () const noexcept { return false; }
 
 // ////////////////////////////////////////////////////////////////////////// //
 bool VStatement::IsReturnAllowed () const noexcept { return true; }
@@ -206,7 +208,16 @@ bool VStatement::CheckCondIndent (const TLocation &condLoc, VStatement *body) {
 //==========================================================================
 VStatement *VStatement::Resolve (VEmitContext &ec, VStatement *aUpScope) {
   UpScopeGuard upguard(this, aUpScope);
-  return DoResolve(ec);
+  const int inloopInc = (IsInLoop() ? 1 : 0);
+  const int inretInc = (IsInReturn() ? 1 : 0);
+  ec.InLoop += inloopInc;
+  ec.InReturn += inretInc;
+  VStatement *res = DoResolve(ec);
+  ec.InLoop -= inloopInc;
+  ec.InReturn -= inretInc;
+  // just in case
+  vassert(res);
+  return res;
 }
 
 
@@ -218,7 +229,13 @@ VStatement *VStatement::Resolve (VEmitContext &ec, VStatement *aUpScope) {
 void VStatement::Emit (VEmitContext &ec, VStatement *aUpScope) {
   UpScopeGuard upguard(this, aUpScope);
   EmitCtor(ec);
+  const int inloopInc = (IsInLoop() ? 1 : 0);
+  const int inretInc = (IsInReturn() ? 1 : 0);
+  ec.InLoop += inloopInc;
+  ec.InReturn += inretInc;
   DoEmit(ec);
+  ec.InLoop -= inloopInc;
+  ec.InReturn -= inretInc;
   EmitDtor(ec, true); // proper leaving
   EmitFinalizer(ec, true); // proper leaving
 }
@@ -966,14 +983,10 @@ VStatement *VWhile::DoResolve (VEmitContext &ec) {
   // indent check
   if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) wasError = true;
 
-  ++ec.InLoop;
-
   if (Expr) Expr = Expr->ResolveBoolean(ec);
   if (!Expr) wasError = true;
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
-
-  --ec.InLoop;
 
   return (wasError ? CreateInvalid() : this);
 }
@@ -1025,6 +1038,16 @@ bool VWhile::IsBreakScope () const noexcept {
 //
 //==========================================================================
 bool VWhile::IsContinueScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VWhile::IsInLoop
+//
+//==========================================================================
+bool VWhile::IsInLoop () const noexcept {
   return true;
 }
 
@@ -1106,14 +1129,10 @@ VStatement *VDo::DoResolve (VEmitContext &ec) {
   // indent check
   if (Expr && Statement && !CheckCondIndent(Expr->Loc, Statement)) wasError = true;
 
-  ++ec.InLoop;
-
   if (Expr) Expr = Expr->ResolveBoolean(ec);
   if (!Expr) wasError = true;
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
-
-  --ec.InLoop;
 
   return (wasError ? CreateInvalid() : this);
 }
@@ -1173,6 +1192,16 @@ bool VDo::IsBreakScope () const noexcept {
 //
 //==========================================================================
 bool VDo::IsContinueScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VDo::IsInLoop
+//
+//==========================================================================
+bool VDo::IsInLoop () const noexcept {
   return true;
 }
 
@@ -1262,8 +1291,6 @@ VStatement *VFor::DoResolve (VEmitContext &ec) {
   // indent check
   if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
 
-  ++ec.InLoop;
-
   for (int i = 0; i < CondExpr.length(); ++i) {
     VExpression *ce = CondExpr[i];
     if (i != CondExpr.length()-1) {
@@ -1283,8 +1310,6 @@ VStatement *VFor::DoResolve (VEmitContext &ec) {
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
 
-  --ec.InLoop;
-
   return (wasError ? CreateInvalid() : this);
 }
 
@@ -1296,8 +1321,6 @@ VStatement *VFor::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VFor::DoEmit (VEmitContext &ec) {
   const int bval = (CondExpr.length() == 0 ? 1 : CondExpr[CondExpr.length()-1]->IsBoolLiteral(ec));
-
-  ++ec.InLoop;
 
   // allocate labels
   breakLabel = ec.DefineLabel();
@@ -1330,8 +1353,6 @@ void VFor::DoEmit (VEmitContext &ec) {
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
-
-  --ec.InLoop;
 }
 
 
@@ -1361,6 +1382,16 @@ bool VFor::IsBreakScope () const noexcept {
 //
 //==========================================================================
 bool VFor::IsContinueScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VFor::IsInLoop
+//
+//==========================================================================
+bool VFor::IsInLoop () const noexcept {
   return true;
 }
 
@@ -1448,14 +1479,10 @@ VStatement *VForeach::DoResolve (VEmitContext &ec) {
   // indent check
   if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
 
-  ++ec.InLoop;
-
   if (Expr) Expr = Expr->ResolveIterator(ec);
   if (!Expr) wasError = true;
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
-
-  --ec.InLoop;
 
   return (wasError ? CreateInvalid() : this);
 }
@@ -1467,8 +1494,6 @@ VStatement *VForeach::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeach::DoEmit (VEmitContext &ec) {
-  ++ec.InLoop;
-
   Expr->Emit(ec);
   ec.AddStatement(OPC_IteratorInit, Loc);
 
@@ -1493,8 +1518,6 @@ void VForeach::DoEmit (VEmitContext &ec) {
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
-
-  --ec.InLoop;
 }
 
 
@@ -1514,6 +1537,16 @@ bool VForeach::IsBreakScope () const noexcept {
 //
 //==========================================================================
 bool VForeach::IsContinueScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VForeach::IsInLoop
+//
+//==========================================================================
+bool VForeach::IsInLoop () const noexcept {
   return true;
 }
 
@@ -1682,8 +1715,6 @@ VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
   // indent check
   if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
 
-  ++ec.InLoop;
-
   // we will rewrite 'em later
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
   auto loR = (lo ? lo->SyntaxCopy()->Resolve(ec) : nullptr);
@@ -1711,7 +1742,6 @@ VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
     delete varR;
     delete loR;
     delete hiR;
-    --ec.InLoop;
     return CreateInvalid();
   }
 
@@ -1737,7 +1767,6 @@ VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
     hiinit = hiinit->Resolve(ec);
     if (!hiinit) {
       delete limit;
-      --ec.InLoop;
       return CreateInvalid();
     }
     //GLog.Logf(NAME_Debug, "%s: hiinit=%s; tempLocals.length=%d", *Loc.toStringNoCol(), *hiinit->toString(), tempLocals.length());
@@ -1783,8 +1812,6 @@ VStatement *VForeachIota::DoResolve (VEmitContext &ec) {
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
 
-  --ec.InLoop;
-
   return (wasError ? CreateInvalid() : this);
 }
 
@@ -1800,8 +1827,6 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
   contLabel = ec.DefineLabel();
 
   VLabel loopLbl = ec.DefineLabel();
-
-  ++ec.InLoop;
 
   // emit initialisation expressions
   if (hiinit) hiinit->Emit(ec); // may be absent for iota with literals
@@ -1824,8 +1849,6 @@ void VForeachIota::DoEmit (VEmitContext &ec) {
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
-
-  --ec.InLoop;
 }
 
 
@@ -1845,6 +1868,16 @@ bool VForeachIota::IsBreakScope () const noexcept {
 //
 //==========================================================================
 bool VForeachIota::IsContinueScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VForeachIota::IsInLoop
+//
+//==========================================================================
+bool VForeachIota::IsInLoop () const noexcept {
   return true;
 }
 
@@ -1958,8 +1991,6 @@ VStatement *VForeachArray::DoResolve (VEmitContext &ec) {
 
   if (arr && arr->IsAnyInvocation()) VCFatalError("VC: Internal compiler error (VForeachArray::Resolve)");
 
-  ++ec.InLoop;
-
   // we will rewrite 'em later
   auto ivarR = (idxvar ? idxvar->SyntaxCopy()->Resolve(ec) : nullptr);
   auto varR = (var ? var->SyntaxCopy()->Resolve(ec) : nullptr);
@@ -2004,10 +2035,7 @@ VStatement *VForeachArray::DoResolve (VEmitContext &ec) {
   delete ivarR;
   delete varR;
   delete arrR;
-  if (wasError) {
-    --ec.InLoop;
-    return CreateInvalid();
-  }
+  if (wasError) return CreateInvalid();
 
   /* this will compile to:
    *   ivar = 0;
@@ -2142,8 +2170,6 @@ VStatement *VForeachArray::DoResolve (VEmitContext &ec) {
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
 
-  --ec.InLoop;
-
   return (wasError ? CreateInvalid() : this);
 }
 
@@ -2159,8 +2185,6 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
   contLabel = ec.DefineLabel();
 
   VLabel loopLbl = ec.DefineLabel();
-
-  ++ec.InLoop;
 
   // emit initialisation expressions
   if (hiinit) hiinit->Emit(ec); // may be absent for reverse loops
@@ -2188,8 +2212,6 @@ void VForeachArray::DoEmit (VEmitContext &ec) {
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
-
-  --ec.InLoop;
 }
 
 
@@ -2209,6 +2231,16 @@ bool VForeachArray::IsBreakScope () const noexcept {
 //
 //==========================================================================
 bool VForeachArray::IsContinueScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VForeachArray::IsInLoop
+//
+//==========================================================================
+bool VForeachArray::IsInLoop () const noexcept {
   return true;
 }
 
@@ -2462,8 +2494,6 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
     return CreateInvalid();
   }
 
-  ++ec.InLoop;
-
   int itlocidx = -1;
   {
     // create initializer expression
@@ -2503,7 +2533,6 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
 
     if (wasError) {
       delete einit;
-      --ec.InLoop;
       return CreateInvalid();
     }
 
@@ -2522,10 +2551,7 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
     ++einit->NumArgs;
     // and resolve the call
     ivInit = (isBoolInit ? einit->ResolveBoolean(ec) : einit->Resolve(ec));
-    if (!ivInit) {
-      --ec.InLoop;
-      return CreateInvalid();
-    }
+    if (!ivInit) return CreateInvalid();
   }
 
   {
@@ -2537,7 +2563,6 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
     if (!mnext) {
       delete enext;
       ParseError(Loc, "Invalid VC iterator (opNext method not found)");
-      --ec.InLoop;
       return CreateInvalid();
     }
 
@@ -2548,7 +2573,6 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
       {
         delete enext;
         ParseError(Loc, "VC iterator opNext argument %d is not `ref`/`out`", f+1);
-        --ec.InLoop;
         return CreateInvalid();
       }
     }
@@ -2559,7 +2583,6 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
       default:
         delete enext;
         ParseError(Loc, "VC iterator opNext should return `bool`");
-        --ec.InLoop;
         return CreateInvalid();
     }
 
@@ -2570,10 +2593,7 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
     for (int f = 0; f < fevarCount; ++f) enext->Args[f+1] = fevars[f].var->SyntaxCopy();
 
     ivNext = enext->ResolveBoolean(ec);
-    if (!ivNext) {
-      --ec.InLoop;
-      return CreateInvalid();
-    }
+    if (!ivNext) return CreateInvalid();
   }
 
   {
@@ -2593,14 +2613,12 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
       {
         delete edone;
         ParseError(Loc, "VC iterator opDone should have one arg, and it should be `ref`/`out`");
-        --ec.InLoop;
         return CreateInvalid();
       }
 
       if (mdone->ReturnType.Type != TYPE_Void) {
         delete edone;
         ParseError(Loc, "VC iterator opDone should be `void`");
-        --ec.InLoop;
         return CreateInvalid();
       }
 
@@ -2610,10 +2628,7 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
       edone->Args[0] = new VLocalVar(itlocidx, Loc);
 
       ivDone = edone->Resolve(ec);
-      if (!ivDone) {
-        --ec.InLoop;
-        return CreateInvalid();
-      }
+      if (!ivDone) return CreateInvalid();
     } else {
       delete edone;
       ivDone = nullptr;
@@ -2623,8 +2638,6 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
   // finally, resolve statement (last, so local reusing will work as expected)
   Statement = Statement->Resolve(ec, this);
   if (!Statement->IsValid()) wasError = true;
-
-  --ec.InLoop;
 
   if (wasError) return CreateInvalid();
 
@@ -2641,8 +2654,6 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VForeachScripted::DoEmit (VEmitContext &ec) {
-  ++ec.InLoop;
-
   // allocate labels
   breakLabel = ec.DefineLabel();
   contLabel = ec.DefineLabel();
@@ -2663,8 +2674,6 @@ void VForeachScripted::DoEmit (VEmitContext &ec) {
 
   // loop breaks here
   ec.MarkLabel(breakLabel);
-
-  --ec.InLoop;
 }
 
 
@@ -2684,6 +2693,16 @@ bool VForeachScripted::IsBreakScope () const noexcept {
 //
 //==========================================================================
 bool VForeachScripted::IsContinueScope () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VForeachScripted::IsInLoop
+//
+//==========================================================================
+bool VForeachScripted::IsInLoop () const noexcept {
   return true;
 }
 
@@ -3596,9 +3615,6 @@ void VReturn::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 VStatement *VReturn::DoResolve (VEmitContext &ec) {
-  // check if we are already in `return`
-  //vassert(!ec.InReturn);
-
   // check if we can return from here
   for (VStatement *st = UpScope; st; st = st->UpScope) {
     if (!st->IsReturnAllowed()) {
@@ -3607,7 +3623,6 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
     }
   }
 
-  ++ec.InReturn;
   bool wasError = false;
 
   if (Expr) {
@@ -3631,7 +3646,6 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
     wasError = true;
   }
 
-  --ec.InReturn;
   return (wasError ? CreateInvalid() : this);
 }
 
@@ -3642,11 +3656,6 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VReturn::DoEmit (VEmitContext &ec) {
-  //vassert(!ec.InReturn);
-
-  //GLog.Logf(NAME_Debug, "%s: return:ENTER; (%d)", *Loc.toStringNoCol(), ec.InReturn);
-  ++ec.InReturn;
-
   if (Expr) {
     // balance stack by dropping old return value
     if (ec.InReturn > 1) {
@@ -3674,9 +3683,6 @@ void VReturn::DoEmit (VEmitContext &ec) {
   } else {
     ec.AddStatement(OPC_Return, Loc);
   }
-
-  --ec.InReturn;
-  //GLog.Logf(NAME_Debug, "%s: return:EXIT; (%d)", *Loc.toStringNoCol(), ec.InReturn);
 }
 
 
@@ -3716,6 +3722,16 @@ bool VReturn::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
 //
 //==========================================================================
 bool VReturn::IsEndsWithReturn () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VReturn::IsInReturn
+//
+//==========================================================================
+bool VReturn::IsInReturn () const noexcept {
   return true;
 }
 
@@ -4409,15 +4425,14 @@ bool VLocalVarStatement::BeforeEmitStatements (VEmitContext &ec) {
   //GLog.Logf(NAME_Debug, "%s: VLocalVarStatement::DoEmit: %s", *Loc.toStringNoCol(), *toString());
   Decl->Allocate(ec);
   // check if we are in some loop
-  // we are in loop if we have "continue" point
   bool inloop = false;
   for (VStatement *st = this->UpScope; st; st = st->UpScope) {
-    if (st->IsContinueScope()) {
+    if (st->IsInLoop()) {
       inloop = true;
       break;
     }
   }
-  if (inloop && !ec.InLoop) VCFatalError("VLocalVarStatement::BeforeEmitStatements: ubbalanced loops");
+  if (inloop && !ec.InLoop) VCFatalError("VLocalVarStatement::BeforeEmitStatements: unbalanced loops");
   Decl->EmitInitialisations(ec, inloop);
   return true;
 }

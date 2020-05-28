@@ -127,6 +127,13 @@ public:
   virtual bool IsSwitchDefault () const noexcept;
   virtual bool IsVarDecl () const noexcept;
 
+  // note that inloop/inreturn flags only changed for `DoEmit()`, but not for ctor/dtor emiters
+
+  // called by main resolve/emit to check if it should change `ec.InLoop`
+  virtual bool IsInLoop () const noexcept;
+  // called by main resolve/emit to check if it should change `ec.InReturn`
+  virtual bool IsInReturn () const noexcept;
+
   // logic checkers
   virtual bool IsEndsWithReturn () const noexcept;
   // does end with `return`, `break`, `continue`, `goto case` or `goto default`?
@@ -304,6 +311,7 @@ public:
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
+  virtual bool IsInLoop () const noexcept override;
 
   virtual VStr toString () override;
 
@@ -327,6 +335,7 @@ public:
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
+  virtual bool IsInLoop () const noexcept override;
 
   virtual VStr toString () override;
 
@@ -354,6 +363,7 @@ public:
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
+  virtual bool IsInLoop () const noexcept override;
 
   virtual VStr toString () override;
 
@@ -377,6 +387,7 @@ public:
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
+  virtual bool IsInLoop () const noexcept override;
 
   virtual void EmitFinalizer (VEmitContext &ec, bool properLeave) override;
 
@@ -427,6 +438,7 @@ public:
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
+  virtual bool IsInLoop () const noexcept override;
 
   virtual VStr toString () override;
 
@@ -466,6 +478,7 @@ public:
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
+  virtual bool IsInLoop () const noexcept override;
 
   virtual VStr toString () override;
 
@@ -533,6 +546,7 @@ public:
 
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
+  virtual bool IsInLoop () const noexcept override;
 
   virtual void EmitFinalizer (VEmitContext &ec, bool properLeave) override;
 
@@ -700,6 +714,8 @@ public:
   virtual bool IsFlowStop () const noexcept override;
   virtual bool IsProperCaseEnd (const VStatement *ASwitch) const noexcept override;
   virtual bool IsEndsWithReturn () const noexcept override;
+
+  virtual bool IsInReturn () const noexcept override;
 
   virtual VStr toString () override;
 
