@@ -826,14 +826,15 @@ void VScriptParser::ExpectName8Warn () {
 bool VScriptParser::ExpectName8WarnOrFilePath () {
   ExpectString();
   String = String.fixSlashes();
-  if (String.indexOf('/') >= 0) {
-    Name = NAME_None;
-    Name8 = NAME_None;
-    return false;
-  } else {
+  // hack for "vile/1", etc.
+  const int slpos = String.indexOf('/');
+  if (slpos < 0 || (String.length() <= 8 && slpos >= String.length()-2)) {
     Name8 = ConvertStrToName8(this, String); // no error
     return true;
   }
+  Name = NAME_None;
+  Name8 = NAME_None;
+  return false;
 }
 
 
