@@ -222,41 +222,59 @@ int VEmitContext::stackAlloc (int size, bool *reused) {
   if (reused) *reused = true; // just in case
   if (size < 0 || size > MaxStackSlots) return -1;
 
+  // for zero-size locals (just in case), try to get an unused slot
   if (size == 0) {
     int seenFree = -1;
-    for (int f = 0; f < MaxStackSlots; ++f) {
-      if (slotInfo[f] == SlotUnused) {
+    for (int pos = 0; pos < MaxStackSlots; ++pos) {
+      if (slotInfo[pos] == SlotUnused) {
         if (reused) *reused = false;
-        return f;
+        return pos;
       }
-      if (seenFree < 0 && slotInfo[f] == SlotFree) seenFree = f;
+      if (seenFree < 0 && slotInfo[pos] == SlotFree) seenFree = pos;
     }
     if (reused) *reused = true;
     return seenFree;
   }
 
-  int spos = 0;
-  while (spos < MaxStackSlots) {
-    unsigned char csl = slotInfo[spos];
-    if (csl != SlotUsed) {
-      int send = spos+1;
-      while (send < MaxStackSlots && (send-spos < size)) {
-        const unsigned char ssl = slotInfo[send];
+  // if we are not inside a loop, try to allocate a fresh stack slot, to avoid useless zeroing
+  if (!InLoop) {
+    for (int pos = 0; pos < MaxStackSlots; ++pos) {
+      if (slotInfo[pos] == SlotUnused) {
+        int end = pos+1;
+        while (end < MaxStackSlots && end-pos < size && slotInfo[end] == SlotUnused) ++end;
+        // does it fit?
+        if (end-pos >= size) {
+          // mark used
+          memset(slotInfo+pos, SlotUsed, size);
+          if (reused) *reused = false;
+          return pos;
+        }
+        // skip this gap (loop increment will skip end non-empty slot automatically)
+        pos = end;
+      }
+    }
+  }
+
+  // no free room (or in a loop), try first good slot
+  for (int pos = 0; pos < MaxStackSlots; ++pos) {
+    unsigned char slotflags = slotInfo[pos];
+    if (slotflags != SlotUsed) {
+      int end = pos+1;
+      while (end < MaxStackSlots && end-pos < size) {
+        const unsigned char ssl = slotInfo[end];
         if (ssl == SlotUsed) break;
-        csl |= ssl;
-        ++send;
+        slotflags |= ssl;
+        ++end;
       }
       // does it fit?
-      if (send-spos >= size) {
+      if (end-pos >= size) {
         // mark used
-        memset(slotInfo+spos, SlotUsed, size);
-        if (reused) *reused = (csl != SlotUnused);
-        return spos;
+        memset(slotInfo+pos, SlotUsed, size);
+        if (reused) *reused = (slotflags != SlotUnused);
+        return pos;
       }
-      // skip this gap (`send` points to used slot, so skip it too)
-      spos = send+1;
-    } else {
-      ++spos;
+      // skip this gap (loop increment will skip end used slot automatically)
+      pos = end;
     }
   }
 
@@ -279,7 +297,8 @@ void VEmitContext::stackFree (int pos, int size) {
   if (size == 0) return;
 
   #ifndef VV_EMIT_DISABLE_LOCAL_REUSE
-  for (int f = pos; f < pos+size; ++f) {
+  const int end = pos+size;
+  for (int f = pos; f < end; ++f) {
     vassert(slotInfo[f] == SlotUsed);
     slotInfo[f] = SlotFree;
   }
@@ -348,16 +367,15 @@ int VEmitContext::ReserveStack (int size) {
   vassert(size >= 0 && size <= MaxStackSlots);
   int pos = 0;
   while (pos < MaxStackSlots) {
-    const unsigned char csl = slotInfo[pos];
-    if (csl == SlotUnused) break;
-    if (csl == SlotFree) VCFatalError("cannot reserve stack after any local allocation");
+    const unsigned char currslot = slotInfo[pos];
+    if (currslot == SlotUnused) break;
+    if (currslot == SlotFree) VCFatalError("cannot reserve stack after any local allocation");
     ++pos;
   }
   if (pos+size > MaxStackSlots) return -1; // oops
-  // check stack integrity
+  // check stack integrity (why not?)
   for (int f = pos; f < pos+size; ++f) {
-    const unsigned char csl = slotInfo[pos];
-    if (csl != SlotUnused) VCFatalError("cannot reserve stack after any local allocation");
+    if (slotInfo[pos] != SlotUnused) VCFatalError("cannot reserve stack after any local allocation");
   }
   if (size > 0) memset(slotInfo+pos, SlotUsed, size);
   return pos;
@@ -396,10 +414,13 @@ void VEmitContext::ReserveLocalSlot (int idx) {
 //
 //==========================================================================
 int VEmitContext::CalcUsedStackSize () const noexcept {
-  for (int res = MaxStackSlots-1; res >= 0; --res) {
-    if (slotInfo[res] != SlotUnused) return res+1;
+  // perform a forward scan, it is slightly better for cache
+  // (it doesn't matter much, because this is called only once, but still...)
+  int res = 1; // always reserve at least one, we will rarely have a pure function that does nothing at all
+  for (int pos = 1; pos < MaxStackSlots; ++pos) {
+    if (slotInfo[pos] != SlotUnused) res = pos+1;
   }
-  return 0;
+  return res;
 }
 
 

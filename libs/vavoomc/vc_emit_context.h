@@ -123,8 +123,9 @@ public:
   enum { MaxStackSlots = 1024 };
   enum {
     SlotUnused = 0u,
-    SlotUsed = 1u,
-    SlotFree = 2u,
+    // following values are used as bitmasks too
+    SlotUsed = 1u<<0,
+    SlotFree = 1u<<1,
   };
   unsigned char slotInfo[MaxStackSlots];
 
