@@ -50,9 +50,9 @@ void SignalSlotDeletion () {
 //  CreateLoadSaveChoices
 //
 //==========================================================================
-void CreateLoadSaveChoices (class!MenuSaveSlot destClass) {
+void CreateLoadSaveChoices (class!ChoiceSaveLoadSlotBase destClass) {
   foreach (auto i; 0..10) {
-    MenuSaveSlot newChoice = GetItemContainer().NewChild(destClass);
+    ChoiceSaveLoadSlotBase newChoice = GetItemContainer().NewChild(destClass);
     newChoice.SetOrigin(ChoicesStartX, GetChoicesStartY()+i*18);
     newChoice.SlotNum = (autosaves ? -1-i : i);
     newChoice.Status = SV_GetSaveString(newChoice.SlotNum, out newChoice.Text);
@@ -73,7 +73,7 @@ override void OnDraw () {
   if (lastSelectedIndex != CursorPos) {
     lastSelectedIndex = CursorPos;
     if (CursorPos >= 0 && CursorPos < Items.length) {
-      MenuSaveSlot ss = MenuSaveSlot(Items[CursorPos]);
+      ChoiceSaveLoadSlotBase ss = ChoiceSaveLoadSlotBase(Items[CursorPos]);
       if (ss) {
         SV_GetSaveDateString(ss.SlotNum, out datestr);
         if (datestr && datestr != "UNKNOWN") datestr = va("DATE: %s", datestr); else datestr = "";
@@ -113,13 +113,13 @@ void RefreshLoadSaveChoices () {
   lastSelectedIndex = default.lastSelectedIndex;
   foreach (auto i; 0..10) {
     if (i >= Items.length) break;
-    MenuSaveSlot ss = MenuSaveSlot(Items[i]);
+    ChoiceSaveLoadSlotBase ss = ChoiceSaveLoadSlotBase(Items[i]);
     if (!ss) continue;
     ss.SlotNum = (autosaves ? -1-i : i);
     ss.Status = SV_GetSaveString(ss.SlotNum, out ss.Text);
   }
   if (autosaves && Items.length > 9) {
-    MenuSaveSlot ss = MenuSaveSlot(Items[$-1]);
+    ChoiceSaveLoadSlotBase ss = ChoiceSaveLoadSlotBase(Items[$-1]);
     assert(ss);
     ss.SlotNum = QUICKSAVE_SLOT;
     ss.Status = SV_GetSaveString(ss.SlotNum, out ss.Text);

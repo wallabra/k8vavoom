@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuChoice_LoadSlot : MenuSaveSlot;
+class MenuChoice_SaveSlot : ChoiceSaveLoadSlotBase;
 
 
 //==========================================================================
@@ -32,9 +32,10 @@ class MenuChoice_LoadSlot : MenuSaveSlot;
 //
 //==========================================================================
 override void ActivateSlot () {
-  if (!Status) return; // don't try to load from an empty slot
-  CmdBuf_AddText("Load %d\n", SlotNum);
-  GetClGame().ForceMenuOff();
+  // we are going to be intercepting all chars
+  bEnteringText = true;
+  EnterText = "";
+  if (Status) EnterText = Text;
   LocalSound('menu/choose');
 }
 
