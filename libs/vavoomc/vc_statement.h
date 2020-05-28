@@ -39,6 +39,10 @@ public:
   VLabel contLabel;
   // any statement can have attached label (but it is used only for loops for now)
   VName Label;
+  // many statements contains a "body" statement, so let's just put it here
+  // note that no semantic or emiting will be done for it here
+  // but it will be properly checked by checkers like `IsEndsWithReturn()`, and processed with `DoFixSwitch()`
+  VStatement *Statement;
 
 protected:
   struct UpScopeGuard {
@@ -92,40 +96,46 @@ public:
   virtual bool IsReturnAllowed () const noexcept;
   // this is used in `scope(return)` to block `break`/`continue`
   virtual bool IsContBreakAllowed () const noexcept;
+
   // this is used to find the scope to `break` from
   virtual bool IsBreakScope () const noexcept;
   // this is used to find the scope to `continue` from
   virtual bool IsContinueScope () const noexcept;
 
-  // this returns label attached to loops, to implement labeled break/cont
-  virtual VName GetBCScopeLabel () const noexcept;
-
+  // statement type checkers
   virtual bool IsAnyCompound () const noexcept;
   virtual bool IsCompound () const noexcept;
   virtual bool IsTryFinally () const noexcept;
+
   virtual bool IsEmptyStatement () const noexcept;
   virtual bool IsInvalidStatement () const noexcept;
-  virtual VName GetLabelName () const noexcept;
-  virtual bool IsGoto () const noexcept; // any, including `goto case` and `goto default`
   virtual bool IsFor () const noexcept;
+
+  virtual bool IsGoto () const noexcept; // any, including `goto case` and `goto default`
   virtual bool IsGotoCase () const noexcept;
-  virtual bool HasGotoCaseExpr () const noexcept;
   virtual bool IsGotoDefault () const noexcept;
+
   virtual bool IsBreak () const noexcept;
   virtual bool IsContinue () const noexcept;
   virtual bool IsFlowStop () const noexcept; // break, continue, goto...
   virtual bool IsReturn () const noexcept;
+
   virtual bool IsSwitchCase () const noexcept;
   virtual bool IsSwitchDefault () const noexcept;
   virtual bool IsVarDecl () const noexcept;
+
+  // logic checkers
   virtual bool IsEndsWithReturn () const noexcept;
-  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept; // ends with `return`, `break`, `continue`, `goto case` or `goto default`
+  // does end with `return`, `break`, `continue`, `goto case` or `goto default`?
+  // WARNING: this will call `Statement->IsProperCaseEnd(true)`!
+  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept;
 
   // this checks for `if (...)\nstat;`
   bool CheckCondIndent (const TLocation &condLoc, VStatement *body);
 
   virtual VStr toString () = 0;
 
+public:
   inline bool IsValid () const noexcept { return !IsInvalidStatement(); }
 
   // this will do `delete this`
@@ -135,7 +145,7 @@ protected:
   VStatement () {}
   virtual void DoSyntaxCopyTo (VStatement *e);
 
-public:
+public: // shitplusplus is idiotic, hence the `public` here
   // this is used when `VSwitch` is syntax-copied, to fix links
   virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew);
 };
@@ -282,7 +292,6 @@ public:
 class VWhile : public VStatement {
 public:
   VExpression *Expr;
-  VStatement *Statement;
 
   VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel=NAME_None);
   virtual ~VWhile () override;
@@ -294,17 +303,11 @@ public:
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
 
-  virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
   virtual VStr toString () override;
 
 protected:
   VWhile () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
-
-public:
-  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -312,7 +315,6 @@ public:
 class VDo : public VStatement {
 public:
   VExpression *Expr;
-  VStatement *Statement;
 
   VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel=NAME_None);
   virtual ~VDo () override;
@@ -324,17 +326,11 @@ public:
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
 
-  virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
   virtual VStr toString () override;
 
 protected:
   VDo () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
-
-public:
-  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -344,7 +340,6 @@ public:
   //TArray<VExpression *> InitExpr; // moved to outer scope
   TArray<VExpression *> CondExpr;
   TArray<VExpression *> LoopExpr;
-  VStatement *Statement;
 
   VFor (const TLocation &ALoc, VName aLabel=NAME_None);
   virtual ~VFor () override;
@@ -358,17 +353,11 @@ public:
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
 
-  virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
   virtual VStr toString () override;
 
 protected:
   VFor () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
-
-public:
-  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -376,7 +365,6 @@ public:
 class VForeach : public VStatement {
 public:
   VExpression *Expr;
-  VStatement *Statement;
 
   VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel=NAME_None);
   virtual ~VForeach () override;
@@ -390,17 +378,11 @@ public:
 
   virtual void EmitFinalizer (VEmitContext &ec, bool properLeave) override;
 
-  virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
   virtual VStr toString () override;
 
 protected:
   VForeach () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
-
-public:
-  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -432,7 +414,6 @@ public:
   VExpression *var; // loop variable (resolved to first-check expression)
   VExpression *lo; // low bound
   VExpression *hi; // high bound
-  VStatement *Statement;
   bool reversed;
 
   VForeachIota (const TLocation &ALoc, VName aLabel=NAME_None);
@@ -445,17 +426,11 @@ public:
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
 
-  virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
   virtual VStr toString () override;
 
 protected:
   VForeachIota () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
-
-public:
-  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -476,7 +451,6 @@ public:
   VExpression *idxvar; // index variable (can be null if hidden)
   VExpression *var; // value variable
   VExpression *arr; // array
-  VStatement *Statement;
   bool reversed;
   bool isRef; // if `var` a reference?
   bool isConst; // if `var` a const?
@@ -491,17 +465,11 @@ public:
   virtual bool IsBreakScope () const noexcept override;
   virtual bool IsContinueScope () const noexcept override;
 
-  virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
   virtual VStr toString () override;
 
 protected:
   VForeachArray () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
-
-public:
-  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -512,7 +480,6 @@ public:
   bool isBoolInit;
   VExpression *ivInit; // invocation, init
   int initLocIdx; // <0: no need to clear it
-  VStatement *Statement; // body
 
   VForeachScriptedOuter (bool aisBoolInit, VExpression *aivInit, int ainitLocIdx, VStatement *aBody, const TLocation &aloc, VName aLabel=NAME_None);
   virtual ~VForeachScriptedOuter () override;
@@ -523,17 +490,11 @@ public:
 
   virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
 
-  virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
   virtual VStr toString () override;
 
 protected:
   VForeachScriptedOuter () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
-
-public:
-  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -559,7 +520,6 @@ public:
   VExpression *arr; // array
   Var fevars[VMethod::MAX_PARAMS];
   int fevarCount;
-  VStatement *Statement;
   bool reversed;
 
   VForeachScripted (VExpression *aarr, int afeCount, Var *afevars, const TLocation &aloc, VName aLabel=NAME_None);
@@ -574,17 +534,11 @@ public:
 
   virtual void EmitFinalizer (VEmitContext &ec, bool properLeave) override;
 
-  virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (bool skipBreak) const noexcept override;
-
   virtual VStr toString () override;
 
 protected:
   VForeachScripted () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
-
-public:
-  virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
 };
 
 
@@ -768,7 +722,6 @@ public:
 
   virtual bool IsGoto () const noexcept override;
   virtual bool IsGotoCase () const noexcept override;
-  virtual bool HasGotoCaseExpr () const noexcept override;
   virtual bool IsGotoDefault () const noexcept override;
 
   virtual VStr toString () override;
@@ -893,5 +846,4 @@ public:
 
 protected:
   VCompound () {}
-  virtual void DoSyntaxCopyTo (VStatement *e) override;
 };

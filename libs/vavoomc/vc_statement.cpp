@@ -64,31 +64,51 @@ template<class T> VStr shitppTypeNameObj (const T &o) {
 #endif
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
 // VStatement
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VStatement::VStatement
+//
+//==========================================================================
 VStatement::VStatement (const TLocation &ALoc, VName aLabel)
   : Loc(ALoc)
   , UpScope(nullptr)
   , Label(aLabel)
+  , Statement(nullptr)
 {
 }
 
-VStatement::~VStatement () {}
 
+//==========================================================================
+//
+//  VStatement::~VStatement
+//
+//==========================================================================
+VStatement::~VStatement () {
+  delete Statement; Statement = nullptr;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void VStatement::EmitCtor (VEmitContext &ec) {}
 void VStatement::EmitDtor (VEmitContext &ec, bool properLeave) {}
 void VStatement::EmitFinalizer (VEmitContext &ec, bool properLeave) {}
 
+// ////////////////////////////////////////////////////////////////////////// //
 bool VStatement::IsCompound () const noexcept { return false; }
 bool VStatement::IsAnyCompound () const noexcept { return false; }
 bool VStatement::IsTryFinally () const noexcept { return false; }
 bool VStatement::IsEmptyStatement () const noexcept { return false; }
 bool VStatement::IsInvalidStatement () const noexcept { return false; }
 bool VStatement::IsFor () const noexcept { return false; }
-VName VStatement::GetLabelName () const noexcept { return NAME_None; }
 bool VStatement::IsGoto () const noexcept { return false; }
 bool VStatement::IsGotoCase () const noexcept { return false; }
-bool VStatement::HasGotoCaseExpr () const noexcept { return false; }
 bool VStatement::IsGotoDefault () const noexcept { return false; }
 bool VStatement::IsBreak () const noexcept { return false; }
 bool VStatement::IsContinue () const noexcept { return false; }
@@ -97,16 +117,56 @@ bool VStatement::IsReturn () const noexcept { return false; }
 bool VStatement::IsSwitchCase () const noexcept { return false; }
 bool VStatement::IsSwitchDefault () const noexcept { return false; }
 bool VStatement::IsVarDecl () const noexcept { return false; }
-bool VStatement::IsEndsWithReturn () const noexcept { return IsReturn(); }
-bool VStatement::IsProperCaseEnd (bool skipBreak) const noexcept { if (IsReturn() || IsGotoCase() || IsGotoDefault()) return true; if (!skipBreak && (IsBreak() || IsContinue())) return true; return false; }
-void VStatement::DoSyntaxCopyTo (VStatement *e) { e->Loc = Loc; e->Label = Label; }
-void VStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {}
 
+// ////////////////////////////////////////////////////////////////////////// //
 bool VStatement::IsReturnAllowed () const noexcept { return true; }
 bool VStatement::IsContBreakAllowed () const noexcept { return true; }
 bool VStatement::IsBreakScope () const noexcept { return false; }
 bool VStatement::IsContinueScope () const noexcept { return false; }
-VName VStatement::GetBCScopeLabel () const noexcept { return Label; }
+
+
+//==========================================================================
+//
+//  VStatement::DoSyntaxCopyTo
+//
+//==========================================================================
+void VStatement::DoSyntaxCopyTo (VStatement *e) {
+  e->Loc = Loc;
+  e->Label = Label;
+  e->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VStatement::IsEndsWithReturn
+//
+//==========================================================================
+bool VStatement::IsEndsWithReturn () const noexcept {
+  return (IsReturn() || (Statement && Statement->IsEndsWithReturn()));
+}
+
+
+//==========================================================================
+//
+//  VStatement::IsProperCaseEnd
+//
+//==========================================================================
+bool VStatement::IsProperCaseEnd (bool skipBreak) const noexcept {
+  if (IsReturn() || IsGotoCase() || IsGotoDefault()) return true;
+  if (!skipBreak && (IsBreak() || IsContinue())) return true;
+  return (Statement && Statement->IsProperCaseEnd(true));
+}
+
+
+//==========================================================================
+//
+//  VStatement::DoFixSwitch
+//
+//==========================================================================
+void VStatement::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
+  if (Statement) Statement->DoFixSwitch(aold, anew);
+}
 
 
 //==========================================================================
@@ -858,8 +918,8 @@ VStr VIf::toString () {
 VWhile::VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel)
   : VStatement(ALoc, aLabel)
   , Expr(AExpr)
-  , Statement(AStatement)
 {
+  Statement = AStatement;
 }
 
 
@@ -870,7 +930,6 @@ VWhile::VWhile (VExpression *AExpr, VStatement *AStatement, const TLocation &ALo
 //==========================================================================
 VWhile::~VWhile () {
   delete Expr; Expr = nullptr;
-  delete Statement; Statement = nullptr;
 }
 
 
@@ -895,17 +954,6 @@ void VWhile::DoSyntaxCopyTo (VStatement *e) {
   VStatement::DoSyntaxCopyTo(e);
   auto res = (VWhile *)e;
   res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
-  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
-//  VWhile::DoFixSwitch
-//
-//==========================================================================
-void VWhile::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -985,26 +1033,6 @@ bool VWhile::IsContinueScope () const noexcept {
 
 //==========================================================================
 //
-//  VWhile::IsEndsWithReturn
-//
-//==========================================================================
-bool VWhile::IsEndsWithReturn () const noexcept {
-  return (Statement && Statement->IsEndsWithReturn());
-}
-
-
-//==========================================================================
-//
-//  VWhile::IsProperCaseEnd
-//
-//==========================================================================
-bool VWhile::IsProperCaseEnd (bool skipBreak) const noexcept {
-  return (Statement && Statement->IsProperCaseEnd(true));
-}
-
-
-//==========================================================================
-//
 //  VWhile::toString
 //
 //==========================================================================
@@ -1030,8 +1058,8 @@ VStr VWhile::toString () {
 VDo::VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel)
   : VStatement(ALoc, aLabel)
   , Expr(AExpr)
-  , Statement(AStatement)
 {
+  Statement = AStatement;
 }
 
 
@@ -1042,7 +1070,6 @@ VDo::VDo (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VNa
 //==========================================================================
 VDo::~VDo () {
   delete Expr; Expr = nullptr;
-  delete Statement; Statement = nullptr;
 }
 
 
@@ -1067,17 +1094,6 @@ void VDo::DoSyntaxCopyTo (VStatement *e) {
   VStatement::DoSyntaxCopyTo(e);
   auto res = (VDo *)e;
   res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
-  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
-//  VDo::DoFixSwitch
-//
-//==========================================================================
-void VDo::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -1165,26 +1181,6 @@ bool VDo::IsContinueScope () const noexcept {
 
 //==========================================================================
 //
-//  VDo::IsEndsWithReturn
-//
-//==========================================================================
-bool VDo::IsEndsWithReturn () const noexcept {
-  return (Statement && Statement->IsEndsWithReturn());
-}
-
-
-//==========================================================================
-//
-//  VDo::IsProperCaseEnd
-//
-//==========================================================================
-bool VDo::IsProperCaseEnd (bool skipBreak) const noexcept {
-  return (Statement && Statement->IsProperCaseEnd(true));
-}
-
-
-//==========================================================================
-//
 //  VDo::toString
 //
 //==========================================================================
@@ -1211,8 +1207,8 @@ VFor::VFor (const TLocation &ALoc, VName aLabel)
   : VStatement(ALoc, aLabel)
   , CondExpr()
   , LoopExpr()
-  , Statement(nullptr)
 {
+  Statement = nullptr;
 }
 
 
@@ -1225,7 +1221,6 @@ VFor::~VFor () {
   //for (int i = 0; i < InitExpr.length(); ++i) { delete InitExpr[i]; InitExpr[i] = nullptr; }
   for (int i = 0; i < CondExpr.length(); ++i) { delete CondExpr[i]; CondExpr[i] = nullptr; }
   for (int i = 0; i < LoopExpr.length(); ++i) { delete LoopExpr[i]; LoopExpr[i] = nullptr; }
-  delete Statement; Statement = nullptr;
 }
 
 
@@ -1255,17 +1250,6 @@ void VFor::DoSyntaxCopyTo (VStatement *e) {
   for (int f = 0; f < CondExpr.length(); ++f) res->CondExpr[f] = (CondExpr[f] ? CondExpr[f]->SyntaxCopy() : nullptr);
   res->LoopExpr.setLength(LoopExpr.length());
   for (int f = 0; f < LoopExpr.length(); ++f) res->LoopExpr[f] = (LoopExpr[f] ? LoopExpr[f]->SyntaxCopy() : nullptr);
-  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
-//  VFor::DoFixSwitch
-//
-//==========================================================================
-void VFor::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -1385,27 +1369,6 @@ bool VFor::IsContinueScope () const noexcept {
 
 //==========================================================================
 //
-//  VFor::IsEndsWithReturn
-//
-//==========================================================================
-bool VFor::IsEndsWithReturn () const noexcept {
-  //TODO: endless fors should have at least one return instead
-  return (Statement && Statement->IsEndsWithReturn());
-}
-
-
-//==========================================================================
-//
-//  VFor::IsProperCaseEnd
-//
-//==========================================================================
-bool VFor::IsProperCaseEnd (bool skipBreak) const noexcept {
-  return (Statement && Statement->IsProperCaseEnd(true));
-}
-
-
-//==========================================================================
-//
 //  VFor::toString
 //
 //==========================================================================
@@ -1437,8 +1400,8 @@ VStr VFor::toString () {
 VForeach::VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc, VName aLabel)
   : VStatement(ALoc, aLabel)
   , Expr(AExpr)
-  , Statement(AStatement)
 {
+  Statement = AStatement;
 }
 
 
@@ -1449,7 +1412,6 @@ VForeach::VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation 
 //==========================================================================
 VForeach::~VForeach () {
   delete Expr; Expr = nullptr;
-  delete Statement; Statement = nullptr;
 }
 
 
@@ -1474,17 +1436,6 @@ void VForeach::DoSyntaxCopyTo (VStatement *e) {
   VStatement::DoSyntaxCopyTo(e);
   auto res = (VForeach *)e;
   res->Expr = (Expr ? Expr->SyntaxCopy() : nullptr);
-  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
-//  VForeach::DoFixSwitch
-//
-//==========================================================================
-void VForeach::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -1581,26 +1532,6 @@ void VForeach::EmitFinalizer (VEmitContext &ec, bool properLeave) {
 
 //==========================================================================
 //
-//  VForeach::IsEndsWithReturn
-//
-//==========================================================================
-bool VForeach::IsEndsWithReturn () const noexcept {
-  return (Statement && Statement->IsEndsWithReturn());
-}
-
-
-//==========================================================================
-//
-//  VForeach::IsProperCaseEnd
-//
-//==========================================================================
-bool VForeach::IsProperCaseEnd (bool skipBreak) const noexcept {
-  return (Statement && Statement->IsProperCaseEnd(true));
-}
-
-
-//==========================================================================
-//
 //  VForeach::toString
 //
 //==========================================================================
@@ -1691,9 +1622,9 @@ VForeachIota::VForeachIota (const TLocation &ALoc, VName aLabel)
   , var(nullptr)
   , lo(nullptr)
   , hi(nullptr)
-  , Statement(nullptr)
   , reversed(false)
 {
+  Statement = nullptr;
 }
 
 
@@ -1710,7 +1641,6 @@ VForeachIota::~VForeachIota () {
   delete var; var = nullptr;
   delete lo; lo = nullptr;
   delete hi; hi = nullptr;
-  delete Statement; Statement = nullptr;
 }
 
 
@@ -1733,24 +1663,13 @@ VStatement *VForeachIota::SyntaxCopy () {
 //
 //==========================================================================
 void VForeachIota::DoSyntaxCopyTo (VStatement *e) {
-  VStatement::DoSyntaxCopyTo(e);
+  VLoopStatementWithTempLocals::DoSyntaxCopyTo(e);
   auto res = (VForeachIota *)e;
   res->var = (var ? var->SyntaxCopy() : nullptr);
   res->lo = (lo ? lo->SyntaxCopy() : nullptr);
   res->hi = (hi ? hi->SyntaxCopy() : nullptr);
-  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
   res->reversed = reversed;
   // no need to copy private data here, as `SyntaxCopy()` should be called only on unresolved things
-}
-
-
-//==========================================================================
-//
-//  VForeachIota::DoFixSwitch
-//
-//==========================================================================
-void VForeachIota::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -1934,27 +1853,6 @@ bool VForeachIota::IsContinueScope () const noexcept {
 
 //==========================================================================
 //
-//  VForeachIota::IsEndsWithReturn
-//
-//==========================================================================
-bool VForeachIota::IsEndsWithReturn () const noexcept {
-  //TODO: endless fors should have at least one return instead
-  return (Statement && Statement->IsEndsWithReturn());
-}
-
-
-//==========================================================================
-//
-//  VForeachIota::IsProperCaseEnd
-//
-//==========================================================================
-bool VForeachIota::IsProperCaseEnd (bool skipBreak) const noexcept {
-  return (Statement && Statement->IsProperCaseEnd(true));
-}
-
-
-//==========================================================================
-//
 //  VForeachIota::toString
 //
 //==========================================================================
@@ -1991,11 +1889,11 @@ VForeachArray::VForeachArray (VExpression *aarr, VExpression *aidx, VExpression 
   , idxvar(aidx)
   , var(avar)
   , arr(aarr)
-  , Statement(nullptr)
   , reversed(false)
   , isRef(aVarRef)
   , isConst(aVarConst)
 {
+  Statement = nullptr;
 }
 
 
@@ -2015,7 +1913,6 @@ VForeachArray::~VForeachArray () {
   delete idxvar; idxvar = nullptr;
   delete var; var = nullptr;
   delete arr; arr = nullptr;
-  delete Statement; Statement = nullptr;
 }
 
 
@@ -2038,26 +1935,15 @@ VStatement *VForeachArray::SyntaxCopy () {
 //
 //==========================================================================
 void VForeachArray::DoSyntaxCopyTo (VStatement *e) {
-  VStatement::DoSyntaxCopyTo(e);
+  VLoopStatementWithTempLocals::DoSyntaxCopyTo(e);
   auto res = (VForeachArray *)e;
   res->idxvar = (idxvar ? idxvar->SyntaxCopy() : nullptr);
   res->var = (var ? var->SyntaxCopy() : nullptr);
   res->arr = (arr ? arr->SyntaxCopy() : nullptr);
-  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
   res->reversed = reversed;
   res->isRef = isRef;
   res->isConst = isConst;
   // no need to copy private data here, as `SyntaxCopy()` should be called only on unresolved things
-}
-
-
-//==========================================================================
-//
-//  VForeachArray::DoFixSwitch
-//
-//==========================================================================
-void VForeachArray::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -2331,27 +2217,6 @@ bool VForeachArray::IsContinueScope () const noexcept {
 
 //==========================================================================
 //
-//  VForeachArray::IsEndsWithReturn
-//
-//==========================================================================
-bool VForeachArray::IsEndsWithReturn () const noexcept {
-  //TODO: endless fors should have at least one return instead
-  return (Statement && Statement->IsEndsWithReturn());
-}
-
-
-//==========================================================================
-//
-//  VForeachArray::IsProperCaseEnd
-//
-//==========================================================================
-bool VForeachArray::IsProperCaseEnd (bool skipBreak) const noexcept {
-  return (Statement && Statement->IsProperCaseEnd(true));
-}
-
-
-//==========================================================================
-//
 //  VForeachArray::toString
 //
 //==========================================================================
@@ -2384,9 +2249,9 @@ VForeachScriptedOuter::VForeachScriptedOuter (bool aisBoolInit, VExpression *aiv
   , isBoolInit(aisBoolInit)
   , ivInit(aivInit)
   , initLocIdx(ainitLocIdx)
-  , Statement(aBody)
 {
   vassert(aBody);
+  Statement = aBody;
 }
 
 
@@ -2397,7 +2262,6 @@ VForeachScriptedOuter::VForeachScriptedOuter (bool aisBoolInit, VExpression *aiv
 //==========================================================================
 VForeachScriptedOuter::~VForeachScriptedOuter () {
   delete ivInit; ivInit = nullptr;
-  delete Statement; Statement = nullptr;
 }
 
 
@@ -2424,17 +2288,6 @@ void VForeachScriptedOuter::DoSyntaxCopyTo (VStatement *e) {
   res->isBoolInit = isBoolInit;
   res->ivInit = (ivInit ? ivInit->SyntaxCopy() : nullptr);
   res->initLocIdx = initLocIdx;
-  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
-}
-
-
-//==========================================================================
-//
-//  VForeachScriptedOuter::DoFixSwitch
-//
-//==========================================================================
-void VForeachScriptedOuter::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -2485,27 +2338,6 @@ void VForeachScriptedOuter::EmitDtor (VEmitContext &ec, bool properLeave) {
 
 //==========================================================================
 //
-//  VForeachScriptedOuter::IsEndsWithReturn
-//
-//==========================================================================
-bool VForeachScriptedOuter::IsEndsWithReturn () const noexcept {
-  //TODO: endless fors should have at least one return instead
-  return (Statement && Statement->IsEndsWithReturn());
-}
-
-
-//==========================================================================
-//
-//  VForeachScriptedOuter::IsProperCaseEnd
-//
-//==========================================================================
-bool VForeachScriptedOuter::IsProperCaseEnd (bool skipBreak) const noexcept {
-  return (Statement && Statement->IsProperCaseEnd(true));
-}
-
-
-//==========================================================================
-//
 //  VForeachScriptedOuter::toString
 //
 //==========================================================================
@@ -2537,11 +2369,11 @@ VForeachScripted::VForeachScripted (VExpression *aarr, int afeCount, Var *afevar
   , ivDone(nullptr)
   , arr(aarr)
   , fevarCount(afeCount)
-  , Statement(nullptr)
   , reversed(false)
 {
   if (afeCount < 0 || afeCount > VMethod::MAX_PARAMS) VCFatalError("VC: internal compiler error (VForeachScripted::VForeachScripted)");
   for (int f = 0; f < afeCount; ++f) fevars[f] = afevars[f];
+  Statement = nullptr;
 }
 
 
@@ -2561,7 +2393,6 @@ VForeachScripted::~VForeachScripted () {
     delete fevars[f].decl;
   }
   fevarCount = 0;
-  delete Statement; Statement = nullptr;
 }
 
 
@@ -2584,7 +2415,7 @@ VStatement *VForeachScripted::SyntaxCopy () {
 //
 //==========================================================================
 void VForeachScripted::DoSyntaxCopyTo (VStatement *e) {
-  VStatement::DoSyntaxCopyTo(e);
+  VLoopStatementWithTempLocals::DoSyntaxCopyTo(e);
   auto res = (VForeachScripted *)e;
   res->arr = (arr ? arr->SyntaxCopy() : nullptr);
   for (int f = 0; f < fevarCount; ++f) {
@@ -2593,19 +2424,8 @@ void VForeachScripted::DoSyntaxCopyTo (VStatement *e) {
     if (fevars[f].decl) res->fevars[f].decl = (VLocalDecl *)fevars[f].decl->SyntaxCopy();
   }
   res->fevarCount = fevarCount;
-  res->Statement = (Statement ? Statement->SyntaxCopy() : nullptr);
   res->reversed = reversed;
   // no need to copy private data here, as `SyntaxCopy()` should be called only on unresolved things
-}
-
-
-//==========================================================================
-//
-//  VForeachScripted::DoFixSwitch
-//
-//==========================================================================
-void VForeachScripted::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
-  if (Statement) Statement->DoFixSwitch(aold, anew);
 }
 
 
@@ -2877,27 +2697,6 @@ bool VForeachScripted::IsContinueScope () const noexcept {
 //==========================================================================
 void VForeachScripted::EmitFinalizer (VEmitContext &ec, bool properLeave) {
   if (ivDone) ivDone->Emit(ec);
-}
-
-
-//==========================================================================
-//
-//  VForeachScripted::IsEndsWithReturn
-//
-//==========================================================================
-bool VForeachScripted::IsEndsWithReturn () const noexcept {
-  //TODO: endless fors should have at least one return instead
-  return (Statement && Statement->IsEndsWithReturn());
-}
-
-
-//==========================================================================
-//
-//  VForeachScripted::IsProperCaseEnd
-//
-//==========================================================================
-bool VForeachScripted::IsProperCaseEnd (bool skipBreak) const noexcept {
-  return (Statement && Statement->IsProperCaseEnd(true));
 }
 
 
@@ -3507,7 +3306,7 @@ VStatement *VBreak::DoResolve (VEmitContext &ec) {
       return CreateInvalid();
     }
     if (st->IsBreakScope()) {
-      if (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()) return this;
+      if (LoopLabel == NAME_None || LoopLabel == st->Label) return this;
     }
     if (!st->IsReturnAllowed()) {
       ParseError(Loc, "`break` jumps outside of a restricted scope");
@@ -3533,7 +3332,7 @@ void VBreak::DoEmit (VEmitContext &ec) {
   // emit finalizers for all scopes except the destination one
   for (VStatement *st = this->UpScope; st; st = st->UpScope) {
     st->EmitDtor(ec, false); // abnormal leave
-    const bool destReached = (st->IsBreakScope() && (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()));
+    const bool destReached = (st->IsBreakScope() && (LoopLabel == NAME_None || LoopLabel == st->Label));
     if (destReached) {
       // jump to break destination
       ec.AddStatement(OPC_Goto, st->breakLabel, Loc);
@@ -3621,7 +3420,7 @@ VStatement *VContinue::DoResolve (VEmitContext &) {
       return CreateInvalid();
     }
     if (st->IsContinueScope()) {
-      if (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()) return this;
+      if (LoopLabel == NAME_None || LoopLabel == st->Label) return this;
     }
     if (!st->IsReturnAllowed()) {
       ParseError(Loc, "`continue` jumps outside of a restricted scope");
@@ -3647,7 +3446,7 @@ void VContinue::DoEmit (VEmitContext &ec) {
   // emit finalizers for all scopes except the destination one
   for (VStatement *st = this->UpScope; st; st = st->UpScope) {
     st->EmitDtor(ec, false); // abnormal leave
-    const bool destReached = (st->IsContinueScope() && (LoopLabel == NAME_None || LoopLabel == st->GetBCScopeLabel()));
+    const bool destReached = (st->IsContinueScope() && (LoopLabel == NAME_None || LoopLabel == st->Label));
     if (destReached) {
       // jump to conitnue destination
       ec.AddStatement(OPC_Goto, st->contLabel, Loc);
@@ -4027,16 +3826,6 @@ bool VGotoStmt::IsGoto () const noexcept {
 //==========================================================================
 bool VGotoStmt::IsGotoCase () const noexcept {
   return (GotoType == Case);
-}
-
-
-//==========================================================================
-//
-//  VGotoStmt::HasGotoCaseExpr
-//
-//==========================================================================
-bool VGotoStmt::HasGotoCaseExpr () const noexcept {
-  return (GotoType == Case && !!CaseValue);
 }
 
 
@@ -4618,14 +4407,4 @@ VStatement *VCompound::SyntaxCopy () {
   auto res = new VCompound();
   DoSyntaxCopyTo(res);
   return res;
-}
-
-
-//==========================================================================
-//
-//  VCompound::DoSyntaxCopyTo
-//
-//==========================================================================
-void VCompound::DoSyntaxCopyTo (VStatement *e) {
-  VBaseCompoundStatement::DoSyntaxCopyTo(e);
 }
