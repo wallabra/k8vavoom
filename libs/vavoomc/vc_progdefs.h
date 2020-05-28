@@ -398,7 +398,10 @@ enum {
   DECLARE_OPC(VEquals, None),
   DECLARE_OPC(VNotEquals, None),
   DECLARE_OPC(VUnaryMinus, None),
-  DECLARE_OPC(VFixParam, Byte),
+
+  // this is used to collect 3 stack slots into one vector
+  // emited by function prologue for each non-ref TVec
+  DECLARE_OPC(VFixVecParam, Byte),
 
   // vector assignment operators
   DECLARE_OPC(VAssignDrop, None),

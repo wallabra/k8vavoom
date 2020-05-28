@@ -1934,7 +1934,7 @@ func_loop:
         ++ip;
         PR_VM_BREAK;
 
-      PR_VM_CASE(OPC_VFixParam)
+      PR_VM_CASE(OPC_VFixVecParam)
         {
           vint32 Idx = ip[1];
           ip += 2;

@@ -301,7 +301,6 @@ public:
   VFieldType getValueType () const;
 
   static void streamSkip (VStream &strm);
-  //friend VStream &operator << (VStream &strm, VScriptDict &dc);
   void Serialise (VStream &strm, const VFieldType &dtp);
 };
 
@@ -309,6 +308,7 @@ public:
 static_assert(sizeof(VScriptDict) == sizeof(void *), "oops");
 
 VStream &operator << (VStream &strm, VScriptDict &dc);
+VStream &operator << (VStream &, VFieldType &);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

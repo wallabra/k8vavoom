@@ -595,7 +595,7 @@ struct Instr {
         spdelta = -5;
         return;
       case OPC_VUnaryMinus:
-      case OPC_VFixParam:
+      case OPC_VFixVecParam:
         return;
 
       // vector assignment operators

@@ -397,9 +397,10 @@ void VMethod::Emit () {
   // also, mark arguments as "used" to avoid useless warnings
   for (int i = 0; i < ec.GetLocalDefCount(); ++i) {
     ec.MarkLocalUsedByIdx(i);
+    // emit "fix" for each non-ref TVec
     VLocalVarDef &loc = ec.GetLocalByIndex(i);
     if (loc.Type.Type == TYPE_Vector && (ParamFlags[i]&(FPARM_Out|FPARM_Ref)) == 0) {
-      ec.AddStatement(OPC_VFixParam, loc.Offset, Loc);
+      ec.AddStatement(OPC_VFixVecParam, loc.Offset, Loc);
     }
   }
 
