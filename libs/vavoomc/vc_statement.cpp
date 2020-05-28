@@ -112,7 +112,7 @@ bool VStatement::IsGotoCase () const noexcept { return false; }
 bool VStatement::IsGotoDefault () const noexcept { return false; }
 bool VStatement::IsBreak () const noexcept { return false; }
 bool VStatement::IsContinue () const noexcept { return false; }
-bool VStatement::IsFlowStop () const noexcept { return (IsBreak() || IsContinue() || IsGoto()); }
+bool VStatement::IsFlowStop () const noexcept { return false; }
 bool VStatement::IsReturn () const noexcept { return false; }
 bool VStatement::IsSwitchCase () const noexcept { return false; }
 bool VStatement::IsSwitchDefault () const noexcept { return false; }
@@ -143,7 +143,7 @@ void VStatement::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 bool VStatement::IsEndsWithReturn () const noexcept {
-  return (IsReturn() || (Statement && Statement->IsEndsWithReturn()));
+  return (Statement && Statement->IsEndsWithReturn());
 }
 
 
@@ -152,10 +152,8 @@ bool VStatement::IsEndsWithReturn () const noexcept {
 //  VStatement::IsProperCaseEnd
 //
 //==========================================================================
-bool VStatement::IsProperCaseEnd (bool skipBreak) const noexcept {
-  if (IsReturn() || IsGotoCase() || IsGotoDefault()) return true;
-  if (!skipBreak && (IsBreak() || IsContinue())) return true;
-  return (Statement && Statement->IsProperCaseEnd(true));
+bool VStatement::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+  return (Statement && Statement->IsProperCaseEnd(ASwitch));
 }
 
 
@@ -884,9 +882,9 @@ bool VIf::IsEndsWithReturn () const noexcept {
 //  VIf::IsProperCaseEnd
 //
 //==========================================================================
-bool VIf::IsProperCaseEnd (bool skipBreak) const noexcept {
+bool VIf::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
   if (!TrueStatement || !FalseStatement) return false;
-  return (TrueStatement->IsProperCaseEnd(skipBreak) && FalseStatement->IsProperCaseEnd(skipBreak));
+  return (TrueStatement->IsProperCaseEnd(ASwitch) && FalseStatement->IsProperCaseEnd(ASwitch));
 }
 
 
@@ -2909,12 +2907,12 @@ bool VSwitch::IsEndsWithReturn () const noexcept {
   bool returnSeen = false;
   bool breakSeen = false;
   bool statementSeen = false;
-  for (int n = 0; n < Statements.length(); ++n) {
-    if (!Statements[n]) return false; //k8: orly?
+  for (auto &&st : Statements) {
+    if (!st) return false; //k8: orly?
     // `case` or `default`?
-    if (Statements[n]->IsSwitchCase() || Statements[n]->IsSwitchDefault()) {
+    if (st->IsSwitchCase() || st->IsSwitchDefault()) {
       if (!returnSeen && statementSeen) return false; // oops
-      if (Statements[n]->IsSwitchDefault()) defautSeen = true;
+      if (st->IsSwitchDefault()) defautSeen = true;
       breakSeen = false;
       statementSeen = true;
       returnSeen = false;
@@ -2922,13 +2920,13 @@ bool VSwitch::IsEndsWithReturn () const noexcept {
     }
     if (breakSeen) continue;
     statementSeen = true;
-    if (Statements[n]->IsFlowStop()) {
-      // `break`/`continue`
+    // always check for returns
+    if (!returnSeen) returnSeen = st->IsEndsWithReturn();
+    // check for flow break
+    if (st->IsFlowStop()) {
+      // `break`/`continue`/`return`/etc.
       if (!returnSeen) return false;
       breakSeen = true;
-    } else {
-      // normal statement
-      if (!returnSeen) returnSeen = Statements[n]->IsEndsWithReturn();
     }
   }
   if (!statementSeen) return false; // just in case
@@ -2942,7 +2940,7 @@ bool VSwitch::IsEndsWithReturn () const noexcept {
 //  VSwitch::IsProperCaseEnd
 //
 //==========================================================================
-bool VSwitch::IsProperCaseEnd (bool skipBreak) const noexcept {
+bool VSwitch::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
   return IsEndsWithReturn();
 }
 
@@ -2958,17 +2956,20 @@ bool VSwitch::checkProperCaseEnd (bool reportSwitchCase) const noexcept {
   bool isEndSeen = false;
   int lastCaseIdx = -1;
   //ParseWarning(Loc, "=========================");
-  for (int n = 0; n < Statements.length(); ++n) {
-    if (!Statements[n]) return false; //k8: orly?
+  int stindex = -1;
+  for (auto &&st : Statements) {
+    ++stindex;
+    if (!st) return false; //k8: orly?
     // `case` or `default`?
-    if (Statements[n]->IsSwitchCase() || Statements[n]->IsSwitchDefault()) {
+    if (st->IsSwitchCase() || st->IsSwitchDefault()) {
       if (lastCaseIdx >= 0 && !isEndSeen && statementSeen) {
         //fprintf(stderr, "pidx=%d; n=%d; es=%d; ss=%d\n", lastCaseIdx, n, (int)isEndSeen, (int)statementSeen);
         // oops
         if (reportSwitchCase) ParseError(Statements[lastCaseIdx]->Loc, "`switch` branch doesn't end with `break` or `goto case`");
         return false;
       }
-      lastCaseIdx = n;
+      //lastCaseIdx = n;
+      lastCaseIdx = stindex;
       isEndSeen = false;
       statementSeen = false;
       continue;
@@ -2977,14 +2978,15 @@ bool VSwitch::checkProperCaseEnd (bool reportSwitchCase) const noexcept {
     //fprintf(stderr, "  n=%d; type=%s\n", n, *shitppTypeNameObj(*Statements[n]));
     statementSeen = true;
     // proper end?
-    if (Statements[n]->IsProperCaseEnd(false)) {
+    if (st->IsProperCaseEnd(this)) {
       isEndSeen = true;
       continue;
     }
     // flow break?
-    if (Statements[n]->IsFlowStop()) {
-      // `break`/`continue`
+    if (st->IsFlowStop()) {
+      // `break`/`continue`/`return`/etc.
       isEndSeen = true;
+      continue;
     }
   }
   // last one can omit proper end
@@ -3356,6 +3358,34 @@ bool VBreak::IsBreak () const noexcept {
 
 //==========================================================================
 //
+//  VBreak::IsFlowStop
+//
+//==========================================================================
+bool VBreak::IsFlowStop () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VBreak::IsProperCaseEnd
+//
+//==========================================================================
+bool VBreak::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+  // check break scopes
+  bool res = false;
+  for (VStatement *st = UpScope; st; st = st->UpScope) {
+    if (st == ASwitch) res = true;
+    if (!st->IsContBreakAllowed()) break;
+    if (st->IsBreakScope() && (LoopLabel == NAME_None || LoopLabel == st->Label)) break;
+    if (!st->IsReturnAllowed()) break;
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VBreak::toString
 //
 //==========================================================================
@@ -3465,6 +3495,34 @@ void VContinue::DoEmit (VEmitContext &ec) {
 //==========================================================================
 bool VContinue::IsContinue () const noexcept {
   return true;
+}
+
+
+//==========================================================================
+//
+//  VContinue::IsFlowStop
+//
+//==========================================================================
+bool VContinue::IsFlowStop () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VContinue::IsProperCaseEnd
+//
+//==========================================================================
+bool VContinue::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+  // check continue scopes
+  bool res = false;
+  for (VStatement *st = UpScope; st; st = st->UpScope) {
+    if (st == ASwitch) res = true;
+    if (!st->IsContBreakAllowed()) break;
+    if (st->IsContinueScope() && (LoopLabel == NAME_None || LoopLabel == st->Label)) break;
+    if (!st->IsReturnAllowed()) break;
+  }
+  return res;
 }
 
 
@@ -3628,6 +3686,36 @@ void VReturn::DoEmit (VEmitContext &ec) {
 //
 //==========================================================================
 bool VReturn::IsReturn () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VReturn::IsFlowStop
+//
+//==========================================================================
+bool VReturn::IsFlowStop () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VReturn::IsProperCaseEnd
+//
+//==========================================================================
+bool VReturn::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+  return true; // always
+}
+
+
+//==========================================================================
+//
+//  VReturn::IsEndsWithReturn
+//
+//==========================================================================
+bool VReturn::IsEndsWithReturn () const noexcept {
   return true;
 }
 
@@ -3841,6 +3929,26 @@ bool VGotoStmt::IsGotoDefault () const noexcept {
 
 //==========================================================================
 //
+//  VGotoStmt::IsFlowStop
+//
+//==========================================================================
+bool VGotoStmt::IsFlowStop () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VGotoStmt::IsProperCaseEnd
+//
+//==========================================================================
+bool VGotoStmt::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+  return (Switch == ASwitch);
+}
+
+
+//==========================================================================
+//
 //  VGotoStmt::DoFixSwitch
 //
 //==========================================================================
@@ -4042,10 +4150,10 @@ bool VBaseCompoundStatement::IsEndsWithReturn () const noexcept {
 //  VBaseCompoundStatement::IsProperCaseEnd
 //
 //==========================================================================
-bool VBaseCompoundStatement::IsProperCaseEnd (bool skipBreak) const noexcept {
+bool VBaseCompoundStatement::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
   for (auto &&st : Statements) {
     if (!st) continue;
-    if (st->IsProperCaseEnd(skipBreak)) return true;
+    if (st->IsProperCaseEnd(ASwitch)) return true;
     if (st->IsFlowStop()) break;
   }
   return false;
