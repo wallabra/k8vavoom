@@ -2269,7 +2269,7 @@ VVA_CHECKRESULT bool VStr::isSafeDiskFileName () const noexcept {
 
 //==========================================================================
 //
-//  VStr::StringApproxMatch
+//  VStr::ApproxMatch
 //
 //  this is the actual string matching algorithm.
 //  it returns a value from zero to one indicating an approximate
@@ -2280,7 +2280,7 @@ VVA_CHECKRESULT bool VStr::isSafeDiskFileName () const noexcept {
 //  based on the code from Game Programmings Gem Vol.6, by James Boer
 //
 //==========================================================================
-float VStr::StringApproxMatch (const char *left, int leftlen, const char *right, int rightlen) noexcept {
+float VStr::ApproxMatch (const char *left, int leftlen, const char *right, int rightlen) noexcept {
   const float CAP_MISMATCH_VAL = 0.9f;
   if (!left) left = "";
   if (!right) right = "";

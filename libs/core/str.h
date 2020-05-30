@@ -630,13 +630,13 @@ public:
   // pass `-1` as any length to use `strlen()`
   // case difference matters too
   // this algo is not a speed demon, but it does the work
-  static float StringApproxMatch (const char *left, int leftlen, const char *right, int rightlen) noexcept;
+  static float ApproxMatch (const char *left, int leftlen, const char *right, int rightlen) noexcept;
 
-  float inline StringApproxMatch (const char *right, int rightlen=-1) noexcept { return StringApproxMatch(getData(), length(), right, rightlen); }
-  float inline StringApproxMatch (VStr right) noexcept { return StringApproxMatch(getData(), length(), right.getData(), right.length()); }
+  float inline ApproxMatch (const char *right, int rightlen=-1) noexcept { return ApproxMatch(getData(), length(), right, rightlen); }
+  float inline ApproxMatch (VStr right) noexcept { return ApproxMatch(getData(), length(), right.getData(), right.length()); }
 
-  float inline stringApproxMatch (const char *right, int rightlen=-1) noexcept { return StringApproxMatch(getData(), length(), right, rightlen); }
-  float inline stringApproxMatch (VStr right) noexcept { return StringApproxMatch(getData(), length(), right.getData(), right.length()); }
+  float inline approxMatch (const char *right, int rightlen=-1) noexcept { return ApproxMatch(getData(), length(), right, rightlen); }
+  float inline approxMatch (VStr right) noexcept { return ApproxMatch(getData(), length(), right.getData(), right.length()); }
 
 public:
   static VVA_CHECKRESULT inline char wchar2win (vuint32 wc) noexcept { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
