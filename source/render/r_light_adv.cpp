@@ -56,10 +56,14 @@ static VCvarF r_shadowvol_pofs("r_shadowvol_pofs", "20", "DEBUG");
 static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 
 static VCvarB r_shadowvol_optimise_flats("r_shadowvol_optimise_flats", true, "Drop some floors/ceilings that can't possibly cast shadow?");
+#ifdef VV_CHECK_1S_CAST_SHADOW
+static VCvarB r_shadowvol_optimise_lines_1s("r_shadowvol_optimise_lines_1s", true, "Drop some 1s walls that can't possibly cast shadow? (glitchy)");
+#endif
 
 
 /*
-  possible shadow volume optimisation:
+  possible shadow volume optimisations:
+
   for things like pillars (i.e. sectors that has solid walls facing outwards),
   we can construct a shadow silhouette. that is, all connected light-facing
   walls can be replaced with one. this will render much less sides.
@@ -79,7 +83,7 @@ static VCvarB r_shadowvol_optimise_flats("r_shadowvol_optimise_flats", true, "Dr
   actually, we can solve this in another way. note that we need to extrude
   only silhouette edges. so we can collect surfaces from connected subsectors
   into "shape", and run silhouette extraction on it. this way we can extrude
-  onyl a silhouette. and we can avoid rendering caps if our camera is not
+  only a silhouette. and we can avoid rendering caps if our camera is not
   lie inside any shadow volume (and volume is not clipped by near plane).
 
   we can easily determine if the camera is inside a volume by checking if
@@ -304,6 +308,64 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
 }
 
 
+#ifdef VV_CHECK_1S_CAST_SHADOW
+//==========================================================================
+//
+//  VRenderLevelShadowVolume::CheckCan1SCastShadow
+//
+//==========================================================================
+bool VRenderLevelShadowVolume::CheckCan1SCastShadow (line_t *line) {
+  if (!r_shadowvol_optimise_lines_1s) return true;
+  const int lidx = (int)(ptrdiff_t)(line-&Level->Lines[0]);
+  Line1SShadowInfo &nfo = flineCheck[lidx];
+  if (nfo.frametag != fsecCounter) {
+    nfo.frametag = fsecCounter; // mark as processed
+    // check if all adjacent walls to this one are in front of it
+    // as this is one-sided wall, we can assume that if everything is in front,
+    // there is no passage that we can cast shadow into
+
+    // check lines at v1
+    line_t **llist = line->v1lines;
+    for (int f = line->v1linesCount; f--; ++llist) {
+      line_t *l2 = *llist;
+      if ((l2->flags&ML_TWOSIDED) != 0) return (nfo.canShadow = true); // has two-sided line as a neighbour, oops
+      TVec v = (*l2->v1 == *line->v1 ? *l2->v2 : *l2->v1);
+      const int side = line->PointOnSide2(v);
+      if (side == 1) return (nfo.canShadow = true); // this point is behind, can cast a shadow
+      // perform recursive check for coplanar lines
+      if (side == 2) {
+        // check if the light can touch it
+        if (fabsf(l2->PointDistance(CurrLightPos)) < CurrLightRadius) {
+          if (CheckCan1SCastShadow(l2)) return (nfo.canShadow = true); // there is a turn, oops
+        }
+      }
+    }
+
+    // check lines at v2
+    llist = line->v2lines;
+    for (int f = line->v2linesCount; f--; ++llist) {
+      line_t *l2 = *llist;
+      if ((l2->flags&ML_TWOSIDED) != 0) return (nfo.canShadow = true); // has two-sided line as a neighbour, oops
+      TVec v = (*l2->v1 == *line->v2 ? *l2->v2 : *l2->v1);
+      const int side = line->PointOnSide2(v);
+      if (side == 1) return (nfo.canShadow = true); // this point is behind, can cast a shadow
+      // perform recursive check for coplanar lines
+      if (side == 2) {
+        // check if the light can touch it
+        if (fabsf(l2->PointDistance(CurrLightPos)) < CurrLightRadius) {
+          if (CheckCan1SCastShadow(l2)) return (nfo.canShadow = true); // there is a turn, oops
+        }
+      }
+    }
+
+    // no vertices are on the back side, shadow casting is impossible
+    nfo.canShadow = false;
+  }
+  return nfo.canShadow;
+}
+#endif
+
+
 //==========================================================================
 //
 //  VRenderLevelShadowVolume::RenderShadowLine
@@ -337,6 +399,12 @@ void VRenderLevelShadowVolume::RenderShadowLine (subsector_t *sub, sec_region_t 
   }
 
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
+
+  #ifdef VV_CHECK_1S_CAST_SHADOW
+  if (!seg->backsector && !CheckCan1SCastShadow(seg->linedef)) {
+    return;
+  }
+  #endif
 
 #if 1
   // k8: this drops some segs that may leak without proper frustum culling
@@ -446,8 +514,14 @@ unsigned VRenderLevelShadowVolume::CheckShadowingFlats (subsector_t *sub) {
     // yeah, calculate it
     nfo.frametag = fsecCounter; // mark as updated
     unsigned allowed = 0u; // set bits means "allowed"
+    /*
     if (CurrLightPos.z > sector->floor.minz && CurrLightPos.z-CurrLightRadius < sector->floor.maxz) allowed |= FlatSectorShadowInfo::NoFloor; // too high or too low
     if (CurrLightPos.z < sector->ceiling.maxz && CurrLightPos.z+CurrLightRadius > sector->ceiling.minz) allowed |= FlatSectorShadowInfo::NoCeiling; // too high or too low
+    */
+    float dist = sector->floor.PointDistance(CurrLightPos);
+    if (dist > 0.0f && dist < CurrLightRadius) allowed |= FlatSectorShadowInfo::NoFloor; // light can touch
+    dist = sector->ceiling.PointDistance(CurrLightPos);
+    if (dist > 0.0f && dist < CurrLightRadius) allowed |= FlatSectorShadowInfo::NoCeiling; // light can touch
     //allowed = (FlatSectorShadowInfo::NoFloor|FlatSectorShadowInfo::NoCeiling);
     if (!r_shadowvol_optimise_flats) {
       // no checks, return inverted `allowed`
@@ -504,8 +578,7 @@ unsigned VRenderLevelShadowVolume::CheckShadowingFlats (subsector_t *sub) {
           const int othersecidx = (int)(ptrdiff_t)(other-&Level->Sectors[0]);
           if (fsecSeenSectors[othersecidx] == secSeenTag) continue; // already checked
           // ignore lines that cannot be lit
-          const float dist = DotProduct(CurrLightPos, l->normal)-l->dist;
-          if (fabsf(dist) >= CurrLightRadius) continue;
+          if (fabsf(l->PointDistance(CurrLightPos)) >= CurrLightRadius) continue;
           // mark as checked
           fsecSeenSectors[othersecidx] = secSeenTag;
           // check other sector floor
@@ -558,6 +631,8 @@ void VRenderLevelShadowVolume::RenderShadowSubRegion (subsector_t *sub, subregio
     or:
       drop floor if all neighbour floors are higher or equal (we cannot cast any shadow to them),
       drop ceiling if all neighbour ceilings are lower or equal (we cannot cast any shadow to them)
+
+    this is done by `CheckShadowingFlats()`
    */
 
   for (; region; region = region->next) {
@@ -568,7 +643,6 @@ void VRenderLevelShadowVolume::RenderShadowSubRegion (subsector_t *sub, subregio
       for (int count = sub->numlines; count--; ++ds) RenderShadowLine(sub, secregion, ds);
     }
 
-    // peform the optimisation i described above
     {
       sec_surface_t *fsurf[4];
       GetFlatSetToRender(sub, region, fsurf);

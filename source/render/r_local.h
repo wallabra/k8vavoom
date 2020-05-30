@@ -30,6 +30,9 @@
 #include "r_shared.h"
 #include "fmd2defs.h"
 
+// this doesn't help much (not even 1 FPS usually), and it is still glitchy
+//#define VV_CHECK_1S_CAST_SHADOW
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 //#define MAX_SPRITE_MODELS  (10*1024)
@@ -1133,17 +1136,34 @@ private:
       NoCeiling = 1u<<1,
     };
     unsigned renderFlag;
-    //sec_surface_t *surf[4]; // two floors and two ceilings; set to `nullptr` if we don't need to render
     unsigned frametag;
   };
 
   TArray<FlatSectorShadowInfo> fsecCheck;
+
+  #ifdef VV_CHECK_1S_CAST_SHADOW
+  struct Line1SShadowInfo {
+    int canShadow;
+    unsigned frametag;
+  };
+
+  TArray<Line1SShadowInfo> flineCheck;
+  #endif
+
   unsigned fsecCounter;
 
   inline unsigned fsecCounterGen () noexcept {
-    if ((++fsecCounter) == 0 || fsecCheck.length() != Level->NumSectors) {
+    if ((++fsecCounter) == 0 || fsecCheck.length() != Level->NumSectors
+        #ifdef VV_CHECK_1S_CAST_SHADOW
+        || flineCheck.length() != Level->NumLines
+        #endif
+       ) {
       if (fsecCheck.length() != Level->NumSectors) fsecCheck.setLength(Level->NumSectors);
       for (auto &&it : fsecCheck) it.frametag = 0;
+      #ifdef VV_CHECK_1S_CAST_SHADOW
+      if (flineCheck.length() != Level->NumLines) flineCheck.setLength(Level->NumLines);
+      for (auto &&it : flineCheck) it.frametag = 0;
+      #endif
       fsecCounter = 1;
     }
     return fsecCounter;
@@ -1165,6 +1185,10 @@ private:
 
   // returns `renderFlag`
   unsigned CheckShadowingFlats (subsector_t *sub);
+
+  #ifdef VV_CHECK_1S_CAST_SHADOW
+  bool CheckCan1SCastShadow (line_t *line);
+  #endif
 
 protected:
   virtual void RefilterStaticLights () override;
