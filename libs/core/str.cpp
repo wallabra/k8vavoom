@@ -2267,6 +2267,87 @@ VVA_CHECKRESULT bool VStr::isSafeDiskFileName () const noexcept {
 }
 
 
+//==========================================================================
+//
+//  VStr::StringApproxMatch
+//
+//  this is the actual string matching algorithm.
+//  it returns a value from zero to one indicating an approximate
+//  percentage of how closely two strings match.
+//
+//  pass `-1` as any length to use `strlen()`.
+//
+//  based on the code from Game Programmings Gem Vol.6, by James Boer
+//
+//==========================================================================
+float VStr::StringApproxMatch (const char *left, int leftlen, const char *right, int rightlen) noexcept {
+  const float CAP_MISMATCH_VAL = 0.9f;
+  if (!left) left = "";
+  if (!right) right = "";
+  // get the length of the left, right, and longest string
+  // (to use as a basis for comparison in value calculateions)
+  const size_t leftSize = (leftlen < 0 ? strlen(left) : (size_t)leftlen);
+  const size_t rightSize = (rightlen < 0 ? strlen(right) : (size_t)rightlen);
+  const size_t largerSize = (leftSize > rightSize ? leftSize : rightSize);
+  const char *leftPtr = left;
+  const char *rightPtr = right;
+  float matchVal = 0.0f;
+  // iterate through the left string until we run out of room
+  while (leftPtr != left+leftSize && rightPtr != right+rightSize) {
+    // first, check for a simple left/right match
+    if (*leftPtr == *rightPtr) {
+      // if it matches, add a proportional character's value to the match total
+      matchVal += 1.0f/largerSize;
+      // advance both pointers
+      ++leftPtr;
+      ++rightPtr;
+    }
+    // if the simple match fails, try a match ignoring capitalization
+    else if (locase1251(*leftPtr) == locase1251(*rightPtr)) {
+      // we'll consider a capitalization mismatch worth 90% of a normal match
+      matchVal += CAP_MISMATCH_VAL/largerSize;
+      // advance both pointers
+      ++leftPtr;
+      ++rightPtr;
+    } else {
+      const char *lpbest = left+leftSize;
+      const char *rpbest = right+rightSize;
+      int totalCount = 0;
+      int bestCount = INT_MAX;
+      int leftCount = 0;
+      int rightCount = 0;
+      // here we loop through the left word in an outer loop,
+      // but we also check for an early out by ensuring we
+      // don't exceed our best current count
+      for (const char *lp = leftPtr; lp != left+leftSize && leftCount+rightCount < bestCount; ++lp) {
+        // inner loop counting
+        for (const char *rp = rightPtr; rp != right+rightSize && leftCount+rightCount < bestCount; ++rp) {
+          // at this point, we don't care about case
+          if (locase1251(*lp) == locase1251(*rp)) {
+            // this is the fitness measurement
+            totalCount = leftCount+rightCount;
+            if (totalCount < bestCount) {
+              bestCount = totalCount;
+              lpbest = lp;
+              rpbest = rp;
+            }
+          }
+          ++rightCount;
+        }
+        ++leftCount;
+        rightCount = 0;
+      }
+      leftPtr = lpbest;
+      rightPtr = rpbest;
+    }
+  }
+  // clamp the value in case of floating-point error
+       if (matchVal > 0.99f) matchVal = 1.0f;
+  else if (matchVal < 0.01f) matchVal = 0.0f;
+  return matchVal;
+}
+
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 enum { VA_BUFFER_COUNT = 32 };

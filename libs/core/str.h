@@ -625,6 +625,19 @@ public:
   // skips all leading spaces by default (i.e. result can be >0 even if there are no ';')
   int findNextCommand (int stpos=0, bool skipLeadingSpaces=true) const noexcept;
 
+  // returns a value from zero to one indicating an approximate
+  // percentage of how closely two strings match
+  // pass `-1` as any length to use `strlen()`
+  // case difference matters too
+  // this algo is not a speed demon, but it does the work
+  static float StringApproxMatch (const char *left, int leftlen, const char *right, int rightlen) noexcept;
+
+  float inline StringApproxMatch (const char *right, int rightlen=-1) noexcept { return StringApproxMatch(getData(), length(), right, rightlen); }
+  float inline StringApproxMatch (VStr right) noexcept { return StringApproxMatch(getData(), length(), right.getData(), right.length()); }
+
+  float inline stringApproxMatch (const char *right, int rightlen=-1) noexcept { return StringApproxMatch(getData(), length(), right, rightlen); }
+  float inline stringApproxMatch (VStr right) noexcept { return StringApproxMatch(getData(), length(), right.getData(), right.length()); }
+
 public:
   static VVA_CHECKRESULT inline char wchar2win (vuint32 wc) noexcept { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
   static VVA_CHECKRESULT inline char wchar2koi (vuint32 wc) noexcept { return (wc < 65536 ? wc2koimap[wc] : '?'); }
