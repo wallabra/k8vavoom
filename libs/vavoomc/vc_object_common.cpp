@@ -631,6 +631,13 @@ IMPLEMENT_FUNCTION(VObject, globmatch) {
   RET_BOOL(VStr::globmatch(*str, *pat, caseSens));
 }
 
+//native static final float strApproxMatch (string stra, string strb);
+IMPLEMENT_FUNCTION(VObject, strApproxMatch) {
+  VStr stra, strb;
+  vobjGetParam(stra, strb);
+  RET_FLOAT(stra.approxMatch(strb));
+}
+
 // native static final string va (string format, ...) [printf,1];
 IMPLEMENT_FUNCTION(VObject, va) {
   RET_STR(PF_FormatString());

@@ -109,6 +109,7 @@
   DECLARE_FUNCTION(StrEndsWithCI)
   DECLARE_FUNCTION(StrReplace)
   DECLARE_FUNCTION(globmatch)
+  DECLARE_FUNCTION(strApproxMatch)
   DECLARE_FUNCTION(strIndexOf)
   DECLARE_FUNCTION(strLastIndexOf)
   DECLARE_FUNCTION(findExistingName)

@@ -979,6 +979,11 @@ native static final string strFromFloat (float v);
 // do glob matching (knows '*' and '?')
 // (not utf8-aware)
 native static final bool globmatch (const string str, const string pat, optional bool caseSensitive/*=true*/);
+// returns a value from zero to one indicating an approximate
+// percentage of how closely two strings match
+// case difference matters too
+// this algo is not a speed demon, but it does the work
+native static final float strApproxMatch (const string stra, const string strb) [property(string) approxMatch];
 // returns 0-based index or -1
 // negative startpos means offset from string end; startpos doesn't affect result
 // (not utf8-aware)
