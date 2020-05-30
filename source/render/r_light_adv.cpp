@@ -55,6 +55,8 @@ static VCvarB r_shadowvol_use_pofs("r_shadowvol_use_pofs", true, "Use PolygonOff
 static VCvarF r_shadowvol_pofs("r_shadowvol_pofs", "20", "DEBUG");
 static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 
+static VCvarB r_shadowvol_optimise_flats("r_shadowvol_optimise_flats", true, "Drop some floors/ceilings that can't possibly cast shadow?");
+
 
 /*
   possible shadow volume optimisation:
@@ -431,6 +433,112 @@ void VRenderLevelShadowVolume::RenderShadowPolyObj (subsector_t *sub) {
 
 //==========================================================================
 //
+//  VRenderLevelShadowVolume::CheckShadowingFlats
+//
+//==========================================================================
+unsigned VRenderLevelShadowVolume::CheckShadowingFlats (subsector_t *sub) {
+  //if (floorz > ceilingz) return 0;
+  sector_t *sector = sub->sector; // our main sector
+  int sidx = (int)(ptrdiff_t)(sector-&Level->Sectors[0]);
+  FlatSectorShadowInfo &nfo = fsecCheck[sidx];
+  // check if we need to calculate info
+  if (nfo.frametag != fsecCounter) {
+    // yeah, calculate it
+    nfo.frametag = fsecCounter; // mark as updated
+    unsigned allowed = 0u; // set bits means "allowed"
+    if (CurrLightPos.z > sector->floor.minz && CurrLightPos.z-CurrLightRadius < sector->floor.maxz) allowed |= FlatSectorShadowInfo::NoFloor; // too high or too low
+    if (CurrLightPos.z < sector->ceiling.maxz && CurrLightPos.z+CurrLightRadius > sector->ceiling.minz) allowed |= FlatSectorShadowInfo::NoCeiling; // too high or too low
+    //allowed = (FlatSectorShadowInfo::NoFloor|FlatSectorShadowInfo::NoCeiling);
+    if (!r_shadowvol_optimise_flats) {
+      // no checks, return inverted `allowed`
+      return (nfo.renderFlag = allowed^(FlatSectorShadowInfo::NoFloor|FlatSectorShadowInfo::NoCeiling));
+    }
+    if (!allowed) {
+      // nothing is allowed, oops
+      return (nfo.renderFlag = (FlatSectorShadowInfo::NoFloor|FlatSectorShadowInfo::NoCeiling));
+    }
+    // check all 2s walls of this sector
+    // note that polyobjects are not interested, because they're always as high as their sector
+    // TODO: optimise this by checking walls only once?
+    // calculate blockmap coordinates
+    bool checkFloor = (allowed&FlatSectorShadowInfo::NoFloor);
+    bool checkCeiling = (allowed&FlatSectorShadowInfo::NoCeiling);
+    bool renderFloor = false;
+    bool renderCeiling = false;
+    // check blockmap
+    const int lpx = (int)CurrLightPos.x;
+    const int lpy = (int)CurrLightPos.y;
+    const int lrad = (int)CurrLightRadius;
+    const int bmapx0 = (int)Level->BlockMapOrgX;
+    const int bmapy0 = (int)Level->BlockMapOrgY;
+    const int bmapw = (int)Level->BlockMapWidth;
+    const int bmaph = (int)Level->BlockMapHeight;
+    int bmx0 = (lpx-lrad-bmapx0)/MAPBLOCKUNITS;
+    int bmy0 = (lpy-lrad-bmapy0)/MAPBLOCKUNITS;
+    int bmx1 = (lpx+lrad-bmapx0)/MAPBLOCKUNITS;
+    int bmy1 = (lpy+lrad-bmapy0)/MAPBLOCKUNITS;
+    // check if we're inside a blockmap
+    if (bmx1 < 0 || bmy1 < 0 || bmx0 >= bmapw || bmy0 >= bmaph) {
+      // nothing is allowed, oops
+      return (nfo.renderFlag = (FlatSectorShadowInfo::NoFloor|FlatSectorShadowInfo::NoCeiling));
+    }
+    // at least partially inside, perform checks
+    if (bmx0 < 0) bmx0 = 0;
+    if (bmy0 < 0) bmy0 = 0;
+    if (bmx1 >= bmapw) bmx1 = bmapw-1;
+    if (bmy1 >= bmaph) bmy1 = bmaph-1;
+    const unsigned secSeenTag = fsecSeenSectorsGen();
+    for (int by = bmy0; by <= bmy1; ++by) {
+      for (int bx = bmx0; bx <= bmx1; ++bx) {
+        int offset = by*bmapw+bx;
+        offset = *(Level->BlockMap+offset);
+        for (const vint32 *list = Level->BlockMapLump+offset+1; *list != -1; ++list) {
+          line_t *l = &Level->Lines[*list];
+          // ignore one-sided lines
+          if ((l->flags&ML_TWOSIDED) == 0) continue;
+          // ignore lines that don't touch our sector
+          if (l->frontsector != sector && l->backsector != sector) continue;
+          // get other sector
+          sector_t *other = (l->frontsector == sector ? l->backsector : l->frontsector);
+          if (!other) continue; // just in case
+          const int othersecidx = (int)(ptrdiff_t)(other-&Level->Sectors[0]);
+          if (fsecSeenSectors[othersecidx] == secSeenTag) continue; // already checked
+          // ignore lines that cannot be lit
+          const float dist = DotProduct(CurrLightPos, l->normal)-l->dist;
+          if (fabsf(dist) >= CurrLightRadius) continue;
+          // mark as checked
+          fsecSeenSectors[othersecidx] = secSeenTag;
+          // check other sector floor
+          if (checkFloor && other->floor.minz < sector->floor.maxz) {
+            // other sector floor is lower, cannot drop our
+            renderFloor = true;
+            if (renderCeiling || !checkCeiling) goto lhackdone; // no need to perform any more checks
+            checkFloor = false;
+          }
+          // check other sector ceiling
+          if (checkCeiling && other->ceiling.maxz > sector->ceiling.minz) {
+            // other sector ceiling is higher, cannot drop our
+            renderCeiling = true;
+            if (renderFloor || !checkFloor) goto lhackdone; // no need to perform any more checks
+            checkCeiling = false;
+          }
+        }
+      }
+    }
+    lhackdone:
+    // set flag
+    if ((allowed&FlatSectorShadowInfo::NoFloor) == 0) renderFloor = false;
+    if ((allowed&FlatSectorShadowInfo::NoCeiling) == 0) renderCeiling = false;
+    nfo.renderFlag =
+      (renderFloor ? 0u : FlatSectorShadowInfo::NoFloor)|
+      (renderCeiling ? 0u : FlatSectorShadowInfo::NoCeiling);
+  }
+  return nfo.renderFlag;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShadowVolume::RenderShadowSubRegion
 //
 //  Determine floor/ceiling planes.
@@ -438,28 +546,55 @@ void VRenderLevelShadowVolume::RenderShadowPolyObj (subsector_t *sub) {
 //
 //==========================================================================
 void VRenderLevelShadowVolume::RenderShadowSubRegion (subsector_t *sub, subregion_t *region) {
-  const bool nextFirst = NeedToRenderNextSubFirst(region);
-  if (nextFirst) RenderShadowSubRegion(sub, region->next);
+  // no reason to sort flats here
+  //const bool nextFirst = NeedToRenderNextSubFirst(region);
+  //if (nextFirst) RenderShadowSubRegion(sub, region->next);
 
-  sec_region_t *secregion = region->secregion;
+  /*
+    note that we can throw away main floors and ceilings (i.e. for the base region),
+    but only if this subsector either doesn't have any lines (i.e. consists purely of minisegs),
+    nope: not any such subregion; just avoid checking neighbouring sectors if shared line
+          cannot be touched by the light
+    or:
+      drop floor if all neighbour floors are higher or equal (we cannot cast any shadow to them),
+      drop ceiling if all neighbour ceilings are lower or equal (we cannot cast any shadow to them)
+   */
 
-  if (!clip_adv_regions_shadow || LightClip.ClipLightCheckRegion(region, sub, true)) {
-    drawseg_t *ds = region->lines;
-    for (int count = sub->numlines; count--; ++ds) RenderShadowLine(sub, secregion, ds);
+  for (; region; region = region->next) {
+    sec_region_t *secregion = region->secregion;
+
+    if (!clip_adv_regions_shadow || LightClip.ClipLightCheckRegion(region, sub, true)) {
+      drawseg_t *ds = region->lines;
+      for (int count = sub->numlines; count--; ++ds) RenderShadowLine(sub, secregion, ds);
+    }
+
+    // peform the optimisation i described above
+    {
+      sec_surface_t *fsurf[4];
+      GetFlatSetToRender(sub, region, fsurf);
+
+      // skip sectors with height transfer for now
+      if ((region->secregion->regflags&sec_region_t::RF_BaseRegion) && !sub->sector->heightsec) {
+        unsigned disableflag = CheckShadowingFlats(sub);
+        if (disableflag&FlatSectorShadowInfo::NoFloor) {
+          //GCon->Logf(NAME_Debug, "dropping floor for sector #%d", (int)(ptrdiff_t)(sub->sector-&Level->Sectors[0]));
+          fsurf[0] = fsurf[1] = nullptr;
+        }
+        if (disableflag&FlatSectorShadowInfo::NoCeiling) {
+          //GCon->Logf(NAME_Debug, "dropping ceiling for sector #%d", (int)(ptrdiff_t)(sub->sector-&Level->Sectors[0]));
+          fsurf[2] = fsurf[3] = nullptr;
+        }
+      }
+
+      if (fsurf[0]) RenderShadowSecSurface(fsurf[0], secregion->efloor.splane->SkyBox);
+      if (fsurf[1]) RenderShadowSecSurface(fsurf[1], secregion->efloor.splane->SkyBox);
+
+      if (fsurf[2]) RenderShadowSecSurface(fsurf[2], secregion->/*efloor*/eceiling.splane->SkyBox);
+      if (fsurf[3]) RenderShadowSecSurface(fsurf[3], secregion->eceiling.splane->SkyBox);
+    }
   }
 
-  {
-    sec_surface_t *fsurf[4];
-    GetFlatSetToRender(sub, region, fsurf);
-
-    if (fsurf[0]) RenderShadowSecSurface(fsurf[0], secregion->efloor.splane->SkyBox);
-    if (fsurf[1]) RenderShadowSecSurface(fsurf[1], secregion->efloor.splane->SkyBox);
-
-    if (fsurf[2]) RenderShadowSecSurface(fsurf[2], secregion->efloor.splane->SkyBox);
-    if (fsurf[3]) RenderShadowSecSurface(fsurf[3], secregion->eceiling.splane->SkyBox);
-  }
-
-  if (!nextFirst && region->next) return RenderShadowSubRegion(sub, region->next);
+  //if (!nextFirst && region->next) return RenderShadowSubRegion(sub, region->next);
 }
 
 
@@ -1002,6 +1137,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord, coneDir, coneAngle);
   LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
   if (allowShadows) {
+    (void)fsecCounterGen(); // for checker
     if (r_shadowvol_use_pofs) {
       // pull forward
       Drawer->GLPolygonOffsetEx(r_shadowvol_pslope, -r_shadowvol_pofs);

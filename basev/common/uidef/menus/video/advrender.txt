@@ -203,6 +203,19 @@ menudef AdvRenderOptions {
       "This can skip some GPU clear calls, but I'm not sure if it worth it.";
   }
 
+  option bool {
+    title = "Optimise Shadow Flats";
+    cvar = r_shadowvol_optimise_flats;
+    help =
+      "Some walls and ceilings cannot cast any shadow, but still rendered as occluders.",
+      "This option allows to optimise some such cases.",
+      "If you're interested, imagine the lowest floor of a pit. It obviously cannot",
+      "shadow anything, but it is still rendered to stencil buffer, wasting bandwidth.",
+      "This option should not produce false positives, and can win 1-3 FPS on maps with",
+      "alot of huge light sources, like outdoor maps, for example.";
+  }
+
+
 
   header "Shadow Casting Optimisations";
 

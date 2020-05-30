@@ -86,6 +86,10 @@ extern "C" {
 //==========================================================================
 VRenderLevelShadowVolume::VRenderLevelShadowVolume (VLevel *ALevel)
   : VRenderLevelShared(ALevel)
+  , LightsRendered(0)
+  , DynLightsRendered(0)
+  , DynamicLights(false)
+  , fsecCounter(0)
 {
   mIsShadowVolumeRenderer = true;
   float mt = clampval(r_fade_mult_advanced.asFloat(), 0.0f, 16.0f);

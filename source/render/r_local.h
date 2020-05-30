@@ -1126,6 +1126,46 @@ private:
   // set this to true before calling `RenderLightShadows()` to indicate dynamic light
   bool DynamicLights;
 
+  // used to avoid double-checking
+  struct FlatSectorShadowInfo {
+    enum {
+      NoFloor   = 1u<<0,
+      NoCeiling = 1u<<1,
+    };
+    unsigned renderFlag;
+    //sec_surface_t *surf[4]; // two floors and two ceilings; set to `nullptr` if we don't need to render
+    unsigned frametag;
+  };
+
+  TArray<FlatSectorShadowInfo> fsecCheck;
+  unsigned fsecCounter;
+
+  inline unsigned fsecCounterGen () noexcept {
+    if ((++fsecCounter) == 0 || fsecCheck.length() != Level->NumSectors) {
+      if (fsecCheck.length() != Level->NumSectors) fsecCheck.setLength(Level->NumSectors);
+      for (auto &&it : fsecCheck) it.frametag = 0;
+      fsecCounter = 1;
+    }
+    return fsecCounter;
+  }
+
+  // to avoid checking sectors twice in `CheckShadowingFlats`
+  TArray<unsigned> fsecSeenSectors;
+  unsigned fsecSeenSectorsCounter;
+
+  inline unsigned fsecSeenSectorsGen () noexcept {
+    if ((++fsecSeenSectorsCounter) == 0 || fsecSeenSectors.length() != Level->NumSectors) {
+      if (fsecSeenSectors.length() != Level->NumSectors) fsecSeenSectors.setLength(Level->NumSectors);
+      for (auto &&it : fsecSeenSectors) it = 0;
+      fsecSeenSectorsCounter = 1;
+    }
+    return fsecSeenSectorsCounter;
+  }
+
+
+  // returns `renderFlag`
+  unsigned CheckShadowingFlats (subsector_t *sub);
+
 protected:
   virtual void RefilterStaticLights () override;
 
