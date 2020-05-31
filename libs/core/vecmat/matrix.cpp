@@ -111,7 +111,13 @@ static inline VVA_OKUNUSED float glhProjectfZ (const TVec &point, const float zo
 */
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//**************************************************************************
+//
+// VMatrix4
+//
+//**************************************************************************
+
 //==========================================================================
 //
 //  VMatrix4::VMatrix4
@@ -138,166 +144,6 @@ VMatrix4::VMatrix4 (float m00, float m01, float m02, float m03,
   m[3][1] = m31;
   m[3][2] = m32;
   m[3][3] = m33;
-}
-
-
-/*
-//==========================================================================
-//
-//  VMatrix4::getRow
-//
-//==========================================================================
-TVec VMatrix4::getRow (int idx) const noexcept {
-  if (idx < 0 || idx > 3) return TVec(0, 0, 0);
-  return TVec(m[0][idx], m[1][idx], m[2][idx]);
-}
-
-
-//==========================================================================
-//
-//  VMatrix4::getCol
-//
-//==========================================================================
-TVec VMatrix4::getCol (int idx) const noexcept {
-  if (idx < 0 || idx > 3) return TVec(0, 0, 0);
-  return TVec(m[idx][0], m[idx][1], m[idx][2]);
-}
-*/
-
-
-//==========================================================================
-//
-//  operator VMatrix4 * VMatrix4
-//
-//==========================================================================
-/*
-VMatrix4 VMatrix4::operator * (const VMatrix4 &in2) const noexcept {
-  VMatrix4 out;
-  for (unsigned i = 0; i < 4; ++i) {
-    for (unsigned j = 0; j < 4; ++j) {
-      out[i][j] = VSUM4(m[i][0]*in2.m[0][j], m[i][1]*in2.m[1][j], m[i][2]*in2.m[2][j], m[i][3]*in2.m[3][j]);
-    }
-  }
-  return out;
-}
-*/
-
-
-//==========================================================================
-//
-//  MINOR
-//
-//==========================================================================
-inline static float MINOR (const VMatrix4 &m,
-  const size_t r0, const size_t r1, const size_t r2,
-  const size_t c0, const size_t c1, const size_t c2)
-noexcept {
-  return
-    VSUM3(
-        m[r0][c0]*VSUM2(m[r1][c1]*m[r2][c2], -(m[r2][c1]*m[r1][c2])),
-      -(m[r0][c1]*VSUM2(m[r1][c0]*m[r2][c2], -(m[r2][c0]*m[r1][c2]))),
-        m[r0][c2]*VSUM2(m[r1][c0]*m[r2][c1], -(m[r2][c0]*m[r1][c1])));
-  ;
-}
-
-
-//==========================================================================
-//
-//  VMatrix4::Determinant
-//
-//==========================================================================
-float VMatrix4::Determinant () const noexcept {
-  return
-    VSUM4(
-      m[0][0]*MINOR(*this, 1, 2, 3, 1, 2, 3),
-    -(m[0][1]*MINOR(*this, 1, 2, 3, 0, 2, 3)),
-      m[0][2]*MINOR(*this, 1, 2, 3, 0, 1, 3),
-    -(m[0][3]*MINOR(*this, 1, 2, 3, 0, 1, 2)))
-  ;
-}
-
-
-//==========================================================================
-//
-//  VMatrix4::Inverse
-//
-//==========================================================================
-VMatrix4 VMatrix4::Inverse () const noexcept {
-  const float m00 = m[0][0], m01 = m[0][1], m02 = m[0][2], m03 = m[0][3];
-  const float m10 = m[1][0], m11 = m[1][1], m12 = m[1][2], m13 = m[1][3];
-  const float m20 = m[2][0], m21 = m[2][1], m22 = m[2][2], m23 = m[2][3];
-  const float m30 = m[3][0], m31 = m[3][1], m32 = m[3][2], m33 = m[3][3];
-
-  float v0 = VSUM2(m20*m31, -(m21*m30));
-  float v1 = VSUM2(m20*m32, -(m22*m30));
-  float v2 = VSUM2(m20*m33, -(m23*m30));
-  float v3 = VSUM2(m21*m32, -(m22*m31));
-  float v4 = VSUM2(m21*m33, -(m23*m31));
-  float v5 = VSUM2(m22*m33, -(m23*m32));
-
-  const float t00 = +VSUM3(v5*m11, -(v4*m12), v3*m13);
-  const float t10 = -VSUM3(v5*m10, -(v2*m12), v1*m13);
-  const float t20 = +VSUM3(v4*m10, -(v2*m11), v0*m13);
-  const float t30 = -VSUM3(v3*m10, -(v1*m11), v0*m12);
-
-  float invDet = 1.0f/VSUM4(t00*m00, t10*m01, t20*m02, t30*m03);
-  if (!isFiniteF(invDet)) invDet = 0.0f;
-
-  const float d00 = t00*invDet;
-  const float d10 = t10*invDet;
-  const float d20 = t20*invDet;
-  const float d30 = t30*invDet;
-
-  const float d01 = -VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
-  const float d11 = +VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
-  const float d21 = -VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
-  const float d31 = +VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
-
-  v0 = VSUM2(m10*m31, -(m11*m30));
-  v1 = VSUM2(m10*m32, -(m12*m30));
-  v2 = VSUM2(m10*m33, -(m13*m30));
-  v3 = VSUM2(m11*m32, -(m12*m31));
-  v4 = VSUM2(m11*m33, -(m13*m31));
-  v5 = VSUM2(m12*m33, -(m13*m32));
-
-  const float d02 = +VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
-  const float d12 = -VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
-  const float d22 = +VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
-  const float d32 = -VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
-
-  v0 = VSUM2(m21*m10, -(m20*m11));
-  v1 = VSUM2(m22*m10, -(m20*m12));
-  v2 = VSUM2(m23*m10, -(m20*m13));
-  v3 = VSUM2(m22*m11, -(m21*m12));
-  v4 = VSUM2(m23*m11, -(m21*m13));
-  v5 = VSUM2(m23*m12, -(m22*m13));
-
-  const float d03 = -VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
-  const float d13 = +VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
-  const float d23 = -VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
-  const float d33 = +VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
-
-  return VMatrix4(
-    d00, d01, d02, d03,
-    d10, d11, d12, d13,
-    d20, d21, d22, d23,
-    d30, d31, d32, d33);
-}
-
-
-//==========================================================================
-//
-//  VMatrix4::Transpose
-//
-//==========================================================================
-VMatrix4 VMatrix4::Transpose () const noexcept {
-  VMatrix4 Out;
-  for (unsigned i = 0; i < 4; ++i) {
-    for (unsigned j = 0; j < 4; ++j) {
-      Out[j][i] = m[i][j];
-    }
-  }
-  return Out;
 }
 
 
@@ -458,7 +304,11 @@ void VMatrix4::ExtractFrustumNear (TPlane &plane) const noexcept {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  VMatrix4::RotateX
+//
+//==========================================================================
 VMatrix4 VMatrix4::RotateX (float angle) noexcept {
   float s, c;
   msincos(angle, &s, &c);
@@ -473,6 +323,12 @@ VMatrix4 VMatrix4::RotateX (float angle) noexcept {
   return res;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::RotateY
+//
+//==========================================================================
 VMatrix4 VMatrix4::RotateY (float angle) noexcept {
   float s, c;
   msincos(angle, &s, &c);
@@ -487,6 +343,12 @@ VMatrix4 VMatrix4::RotateY (float angle) noexcept {
   return res;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::RotateZ
+//
+//==========================================================================
 VMatrix4 VMatrix4::RotateZ (float angle) noexcept {
   float s, c;
   msincos(angle, &s, &c);
@@ -501,6 +363,12 @@ VMatrix4 VMatrix4::RotateZ (float angle) noexcept {
   return res;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::Translate
+//
+//==========================================================================
 VMatrix4 VMatrix4::Translate (const TVec &v) noexcept {
   VMatrix4 res;
   res.SetIdentity();
@@ -512,6 +380,12 @@ VMatrix4 VMatrix4::Translate (const TVec &v) noexcept {
   return res;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::TranslateNeg
+//
+//==========================================================================
 VMatrix4 VMatrix4::TranslateNeg (const TVec &v) noexcept {
   VMatrix4 res;
   res.SetIdentity();
@@ -523,6 +397,12 @@ VMatrix4 VMatrix4::TranslateNeg (const TVec &v) noexcept {
   return res;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::Scale
+//
+//==========================================================================
 VMatrix4 VMatrix4::Scale (const TVec &v) noexcept {
   VMatrix4 res;
   res.SetIdentity();
@@ -533,6 +413,12 @@ VMatrix4 VMatrix4::Scale (const TVec &v) noexcept {
   return res;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::Rotate
+//
+//==========================================================================
 VMatrix4 VMatrix4::Rotate (const TVec &v) noexcept {
   auto mx = VMatrix4::RotateX(v.x);
   auto my = VMatrix4::RotateY(v.y);
@@ -540,7 +426,14 @@ VMatrix4 VMatrix4::Rotate (const TVec &v) noexcept {
   return mz*my*mx;
 }
 
-// for camera; x is pitch (up/down); y is yaw (left/right); z is roll (tilt)
+
+//==========================================================================
+//
+//  VMatrix4::RotateZXY
+//
+//  for camera; x is pitch (up/down); y is yaw (left/right); z is roll (tilt)
+//
+//==========================================================================
 VMatrix4 VMatrix4::RotateZXY (const TVec &v) noexcept {
   auto mx = VMatrix4::RotateX(v.x);
   auto my = VMatrix4::RotateY(v.y);
@@ -548,7 +441,14 @@ VMatrix4 VMatrix4::RotateZXY (const TVec &v) noexcept {
   return mz*mx*my;
 }
 
-// for camera; x is pitch (up/down); y is yaw (left/right); z is roll (tilt)
+
+//==========================================================================
+//
+//  VMatrix4::RotateZXY
+//
+//  for camera; x is pitch (up/down); y is yaw (left/right); z is roll (tilt)
+//
+//==========================================================================
 VMatrix4 VMatrix4::RotateZXY (const TAVec &v) noexcept {
   auto mx = VMatrix4::RotateX(v.pitch);
   auto my = VMatrix4::RotateY(v.yaw);
@@ -556,7 +456,14 @@ VMatrix4 VMatrix4::RotateZXY (const TAVec &v) noexcept {
   return mz*mx*my;
 }
 
-// same as `glFrustum()`
+
+//==========================================================================
+//
+//  VMatrix4::Frustum
+//
+//  same as `glFrustum()`
+//
+//==========================================================================
 VMatrix4 VMatrix4::Frustum (float left, float right, float bottom, float top, float nearVal, float farVal) noexcept {
   VMatrix4 res;
   res.SetZero();
@@ -571,7 +478,14 @@ VMatrix4 VMatrix4::Frustum (float left, float right, float bottom, float top, fl
   return res;
 }
 
-// same as `glOrtho()`
+
+//==========================================================================
+//
+//  VMatrix4::Ortho
+//
+//  same as `glOrtho()`
+//
+//==========================================================================
 VMatrix4 VMatrix4::Ortho (float left, float right, float bottom, float top, float nearVal, float farVal) noexcept {
   VMatrix4 res;
   res.SetZero();
@@ -584,18 +498,31 @@ VMatrix4 VMatrix4::Ortho (float left, float right, float bottom, float top, floa
   return res;
 }
 
-// same as `gluPerspective()`
-// sets the frustum to perspective mode
-// fovY   - Field of vision in degrees in the y direction
-// aspect - Aspect ratio of the viewport
-// zNear  - The near clipping distance
-// zFar   - The far clipping distance
+
+//==========================================================================
+//
+//  VMatrix4::Perspective
+//
+//  same as `gluPerspective()`
+//  sets the frustum to perspective mode
+//  fovY   - Field of vision in degrees in the y direction
+//  aspect - Aspect ratio of the viewport
+//  zNear  - The near clipping distance
+//  zFar   - The far clipping distance
+//
+//==========================================================================
 VMatrix4 VMatrix4::Perspective (float fovY, float aspect, float zNear, float zFar) noexcept {
   const float fH = tanf(fovY/360.0f*M_PI)*zNear;
   const float fW = fH*aspect;
   return Frustum(-fW, fW, -fH, fH, zNear, zFar);
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::LookAtFucked
+//
+//==========================================================================
 VMatrix4 VMatrix4::LookAtFucked (const TVec &eye, const TVec &center, const TVec &up) noexcept {
   // compute vector `N = EP-VRP` and normalize `N`
   TVec n = eye-center;
@@ -645,7 +572,14 @@ VMatrix4 VMatrix4::LookAtFucked (const TVec &eye, const TVec &center, const TVec
   return m;
 }
 
-// does `gluLookAt()`
+
+//==========================================================================
+//
+//  VMatrix4::lookAt
+//
+//  does `gluLookAt()`
+//
+//==========================================================================
 VMatrix4 VMatrix4::lookAt (const TVec &eye, const TVec &center, const TVec &up) const noexcept {
   VMatrix4 m ;
   float x[3];
@@ -769,9 +703,16 @@ VMatrix4 VMatrix4::lookAt (const TVec &eye, const TVec &center, const TVec &up) 
   return (*this)*m*Translate(-eye);
 }
 
-// rotate matrix to face along the target direction
-// this function will clear the previous rotation and scale, but it will keep the previous translation
-// it is for rotating object to look at the target, NOT for camera
+
+//==========================================================================
+//
+//  VMatrix4::lookingAt
+//
+//  rotate matrix to face along the target direction
+//  this function will clear the previous rotation and scale, but it will keep the previous translation
+//  it is for rotating object to look at the target, NOT for camera
+//
+//==========================================================================
 VMatrix4 &VMatrix4::lookingAt (const TVec &target) noexcept {
   TVec position(m[3][0], m[3][1], m[3][2]);
   TVec forward = (target-position).normalised();
@@ -795,6 +736,12 @@ VMatrix4 &VMatrix4::lookingAt (const TVec &target) noexcept {
   return *this;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::lookingAt
+//
+//==========================================================================
 VMatrix4 &VMatrix4::lookingAt (const TVec &target, const TVec &upVec) noexcept {
   TVec position = TVec(m[3][0], m[3][1], m[3][2]);
   TVec forward = (target-position).normalised();
@@ -812,6 +759,12 @@ VMatrix4 &VMatrix4::lookingAt (const TVec &target, const TVec &upVec) noexcept {
   return *this;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::rotate
+//
+//==========================================================================
 VMatrix4 &VMatrix4::rotate (float angle, const TVec &axis) noexcept {
   float s, c;
   msincos(angle, &s, &c);
@@ -848,6 +801,12 @@ VMatrix4 &VMatrix4::rotate (float angle, const TVec &axis) noexcept {
   return *this;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::rotateX
+//
+//==========================================================================
 VMatrix4 &VMatrix4::rotateX (float angle) noexcept {
   float s, c;
   msincos(angle, &s, &c);
@@ -868,6 +827,12 @@ VMatrix4 &VMatrix4::rotateX (float angle) noexcept {
   return *this;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::rotateY
+//
+//==========================================================================
 VMatrix4 &VMatrix4::rotateY (float angle) noexcept {
   float s, c;
   msincos(angle, &s, &c);
@@ -888,6 +853,12 @@ VMatrix4 &VMatrix4::rotateY (float angle) noexcept {
   return *this;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::rotateZ
+//
+//==========================================================================
 VMatrix4 &VMatrix4::rotateZ (float angle) noexcept {
   float s, c;
   msincos(angle, &s, &c);
@@ -908,59 +879,17 @@ VMatrix4 &VMatrix4::rotateZ (float angle) noexcept {
   return *this;
 }
 
-/*
-//k8: wtf is this?!
-VMatrix4 &VMatrix4::translate() (const TVec &v) noexcept {
-  m[0][0] += m[0][3]*v.x; m[1][0] += m[1][3]*v.x; m[2][0] += m[2][3]*v.x; m[3][0] += m[3][3]*v.x;
-  m[0][1] += m[0][3]*v.y; m[1][1] += m[1][3]*v.y; m[2][1] += m[2][3]*v.y; m[3][1] += m[3][3]*v.y;
-  m[0][2] += m[0][3]*v.z; m[1][2] += m[1][3]*v.z; m[2][2] += m[2][3]*v.z; m[3][2] += m[3][3]*v.z;
-  return *this;
-}
 
-VMatrix4 &VMatrix4::translateNeg() (const TVec &v) noexcept {
-  m[0][0] -= m[0][3]*v.x; m[1][0] -= m[1][3]*v.x; m[2][0] -= m[2][3]*v.x; m[3][0] -= m[3][3]*v.x;
-  m[0][1] -= m[0][3]*v.y; m[1][1] -= m[1][3]*v.y; m[2][1] -= m[2][3]*v.y; m[3][1] -= m[3][3]*v.y;
-  m[0][2] -= m[0][3]*v.z; m[1][2] -= m[1][3]*v.z; m[2][2] -= m[2][3]*v.z; m[3][2] -= m[3][3]*v.z;
-  return *this;
-}
-*/
-
-/*
-ref mat4 translate() (in auto ref vec3 v) noexcept {
-  mt.ptr[12] += v.x;
-  mt.ptr[13] += v.y;
-  mt.ptr[14] += v.z;
-  return this;
-}
-
-ref mat4 translateNeg() (in auto ref vec3 v) noexcept {
-  mt.ptr[12] -= v.x;
-  mt.ptr[13] -= v.y;
-  mt.ptr[14] -= v.z;
-  return this;
-}
-*/
-
-/*
-//k8: wtf is this?!
-ref VMatrix4 scale() (const TVec &v) noexcept {
-  m[0][0] *= v.x; m[1][0] *= v.x; m[2][0] *= v.x; m[3][0] *= v.x;
-  m[0][1] *= v.y; m[1][1] *= v.y; m[2][1] *= v.y; m[3][1] *= v.y;
-  m[0][2] *= v.z; m[1][2] *= v.z; m[2][2] *= v.z; m[3][2] *= v.z;
-  return this;
-}
-*/
-
-/*
-  inline VMatrix4 translated (const TVec &v) const noexcept { pragma(inline, true); auto res = VMatrix4(this); return res.translate(v); }
-  inline VMatrix4 translatedNeg (const TVec &v) const noexcept { pragma(inline, true); auto res = VMatrix4(this); return res.translateNeg(v); }
-  inline VMatrix4 scaled (const TVec &v) const noexcept { pragma(inline, true); auto res = VMatrix4(this); return res.scale(v); }
-*/
-
-// retrieve angles in degree from rotation matrix, M = Rx*Ry*Rz, in degrees
-// Rx: rotation about X-axis, pitch
-// Ry: rotation about Y-axis, yaw (heading)
-// Rz: rotation about Z-axis, roll
+//==========================================================================
+//
+//  VMatrix4::getAngles
+//
+//  retrieve angles in degree from rotation matrix, M = Rx*Ry*Rz, in degrees
+//  Rx: rotation about X-axis, pitch
+//  Ry: rotation about Y-axis, yaw (heading)
+//  Rz: rotation about Z-axis, roll
+//
+//==========================================================================
 TAVec VMatrix4::getAngles () const noexcept {
   float pitch, roll;
   float yaw = RAD2DEGF(asinf(m[2][0]));
@@ -977,8 +906,15 @@ TAVec VMatrix4::getAngles () const noexcept {
   return TAVec(pitch, yaw, roll);
 }
 
-// blends two matrices together, at a given percentage (range is [0..1]), blend==0: m2 is ignored
-// WARNING! it won't sanitize `blend`
+
+//==========================================================================
+//
+//  VMatrix4::blended
+//
+//  blends two matrices together, at a given percentage (range is [0..1]), blend==0: m2 is ignored
+//  WARNING! it won't sanitize `blend`
+//
+//==========================================================================
 VMatrix4 VMatrix4::blended (const VMatrix4 &m2, float blend) const noexcept {
   const float ib = 1.0f-blend;
   VMatrix4 res;
@@ -1002,36 +938,178 @@ VMatrix4 VMatrix4::blended (const VMatrix4 &m2, float blend) const noexcept {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// compute cofactor of 3x3 minor matrix without sign
-// input params are 9 elements of the minor matrix
-// NOTE: The caller must know its sign
-static inline float getCofactor (float m0, float m1, float m2, float m3, float m4, float m5, float m6, float m7, float m8) noexcept {
-  return m0*(m4*m8-m5*m7)-m1*(m3*m8-m5*m6)+m2*(m3*m7-m4*m6);
+//**************************************************************************
+//
+// inversions
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VMatrix4::Inverse
+//
+//==========================================================================
+VMatrix4 VMatrix4::Inverse () const noexcept {
+  const float m00 = m[0][0], m01 = m[0][1], m02 = m[0][2], m03 = m[0][3];
+  const float m10 = m[1][0], m11 = m[1][1], m12 = m[1][2], m13 = m[1][3];
+  const float m20 = m[2][0], m21 = m[2][1], m22 = m[2][2], m23 = m[2][3];
+  const float m30 = m[3][0], m31 = m[3][1], m32 = m[3][2], m33 = m[3][3];
+
+  float v0 = VSUM2(m20*m31, -(m21*m30));
+  float v1 = VSUM2(m20*m32, -(m22*m30));
+  float v2 = VSUM2(m20*m33, -(m23*m30));
+  float v3 = VSUM2(m21*m32, -(m22*m31));
+  float v4 = VSUM2(m21*m33, -(m23*m31));
+  float v5 = VSUM2(m22*m33, -(m23*m32));
+
+  const float t00 = +VSUM3(v5*m11, -(v4*m12), v3*m13);
+  const float t10 = -VSUM3(v5*m10, -(v2*m12), v1*m13);
+  const float t20 = +VSUM3(v4*m10, -(v2*m11), v0*m13);
+  const float t30 = -VSUM3(v3*m10, -(v1*m11), v0*m12);
+
+  float invDet = 1.0f/VSUM4(t00*m00, t10*m01, t20*m02, t30*m03);
+  if (!isFiniteF(invDet)) invDet = 0.0f;
+
+  const float d00 = t00*invDet;
+  const float d10 = t10*invDet;
+  const float d20 = t20*invDet;
+  const float d30 = t30*invDet;
+
+  const float d01 = -VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
+  const float d11 = +VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
+  const float d21 = -VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
+  const float d31 = +VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
+
+  v0 = VSUM2(m10*m31, -(m11*m30));
+  v1 = VSUM2(m10*m32, -(m12*m30));
+  v2 = VSUM2(m10*m33, -(m13*m30));
+  v3 = VSUM2(m11*m32, -(m12*m31));
+  v4 = VSUM2(m11*m33, -(m13*m31));
+  v5 = VSUM2(m12*m33, -(m13*m32));
+
+  const float d02 = +VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
+  const float d12 = -VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
+  const float d22 = +VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
+  const float d32 = -VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
+
+  v0 = VSUM2(m21*m10, -(m20*m11));
+  v1 = VSUM2(m22*m10, -(m20*m12));
+  v2 = VSUM2(m23*m10, -(m20*m13));
+  v3 = VSUM2(m22*m11, -(m21*m12));
+  v4 = VSUM2(m23*m11, -(m21*m13));
+  v5 = VSUM2(m23*m12, -(m22*m13));
+
+  const float d03 = -VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
+  const float d13 = +VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
+  const float d23 = -VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
+  const float d33 = +VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
+
+  return VMatrix4(
+    d00, d01, d02, d03,
+    d10, d11, d12, d13,
+    d20, d21, d22, d23,
+    d30, d31, d32, d33);
 }
 
-/*
-static inline float determinant (const float m[4][4]) {
-  return m[0][0]*getCofactor(m[1][1], m[1][2], m[1][3], m[2][1], m[2][2], m[2][3], m[3][1], m[3][2], m[3][3])-
-         m[0][1]*getCofactor(m[1][0], m[1][2], m[1][3], m[2][0], m[2][2], m[2][3], m[3][0], m[3][2], m[3][3])+
-         m[0][2]*getCofactor(m[1][0], m[1][1], m[1][3], m[2][0], m[2][1], m[2][3], m[3][0], m[3][1], m[3][3])-
-         m[0][3]*getCofactor(m[1][0], m[1][1], m[1][2], m[2][0], m[2][1], m[2][2], m[3][0], m[3][1], m[3][2]);
+
+//==========================================================================
+//
+//  VMatrix4::InverseInPlace
+//
+//  fuckin' pasta!
+//
+//==========================================================================
+VMatrix4 &VMatrix4::InverseInPlace () noexcept {
+  const float m00 = m[0][0], m01 = m[0][1], m02 = m[0][2], m03 = m[0][3];
+  const float m10 = m[1][0], m11 = m[1][1], m12 = m[1][2], m13 = m[1][3];
+  const float m20 = m[2][0], m21 = m[2][1], m22 = m[2][2], m23 = m[2][3];
+  const float m30 = m[3][0], m31 = m[3][1], m32 = m[3][2], m33 = m[3][3];
+
+  float v0 = VSUM2(m20*m31, -(m21*m30));
+  float v1 = VSUM2(m20*m32, -(m22*m30));
+  float v2 = VSUM2(m20*m33, -(m23*m30));
+  float v3 = VSUM2(m21*m32, -(m22*m31));
+  float v4 = VSUM2(m21*m33, -(m23*m31));
+  float v5 = VSUM2(m22*m33, -(m23*m32));
+
+  const float t00 = +VSUM3(v5*m11, -(v4*m12), v3*m13);
+  const float t10 = -VSUM3(v5*m10, -(v2*m12), v1*m13);
+  const float t20 = +VSUM3(v4*m10, -(v2*m11), v0*m13);
+  const float t30 = -VSUM3(v3*m10, -(v1*m11), v0*m12);
+
+  float invDet = 1.0f/VSUM4(t00*m00, t10*m01, t20*m02, t30*m03);
+  if (!isFiniteF(invDet)) invDet = 0.0f;
+
+  const float d00 = t00*invDet;
+  const float d10 = t10*invDet;
+  const float d20 = t20*invDet;
+  const float d30 = t30*invDet;
+
+  const float d01 = -VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
+  const float d11 = +VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
+  const float d21 = -VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
+  const float d31 = +VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
+
+  v0 = VSUM2(m10*m31, -(m11*m30));
+  v1 = VSUM2(m10*m32, -(m12*m30));
+  v2 = VSUM2(m10*m33, -(m13*m30));
+  v3 = VSUM2(m11*m32, -(m12*m31));
+  v4 = VSUM2(m11*m33, -(m13*m31));
+  v5 = VSUM2(m12*m33, -(m13*m32));
+
+  const float d02 = +VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
+  const float d12 = -VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
+  const float d22 = +VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
+  const float d32 = -VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
+
+  v0 = VSUM2(m21*m10, -(m20*m11));
+  v1 = VSUM2(m22*m10, -(m20*m12));
+  v2 = VSUM2(m23*m10, -(m20*m13));
+  v3 = VSUM2(m22*m11, -(m21*m12));
+  v4 = VSUM2(m23*m11, -(m21*m13));
+  v5 = VSUM2(m23*m12, -(m22*m13));
+
+  const float d03 = -VSUM3(v5*m01, -(v4*m02), v3*m03)*invDet;
+  const float d13 = +VSUM3(v5*m00, -(v2*m02), v1*m03)*invDet;
+  const float d23 = -VSUM3(v4*m00, -(v2*m01), v0*m03)*invDet;
+  const float d33 = +VSUM3(v3*m00, -(v1*m01), v0*m02)*invDet;
+
+  m[0][0] = d00;
+  m[0][1] = d01;
+  m[0][2] = d02;
+  m[0][3] = d03;
+  m[1][0] = d10;
+  m[1][1] = d11;
+  m[1][2] = d12;
+  m[1][3] = d13;
+  m[2][0] = d20;
+  m[2][1] = d21;
+  m[2][2] = d22;
+  m[2][3] = d23;
+  m[3][0] = d30;
+  m[3][1] = d31;
+  m[3][2] = d32;
+  m[3][3] = d33;
+
+  return *this;
 }
-*/
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-//WARNING: this must be tested for row/col
-// partially ;-) taken from DarkPlaces
-// this assumes uniform scaling
-VMatrix4 VMatrix4::invertedSimple () const noexcept {
+//==========================================================================
+//
+//  VMatrix4::invertedFast
+//
+//  partially ;-) taken from DarkPlaces
+//  this assumes uniform scaling
+//
+//==========================================================================
+VMatrix4 VMatrix4::invertedFast () const noexcept {
   // we only support uniform scaling, so assume the first row is enough
   // (note the lack of sqrt here, because we're trying to undo the scaling,
   // this means multiplying by the inverse scale twice - squaring it, which
   // makes the sqrt a waste of time)
-#if 1
   const float scale = 1.0f/VSUM3(m[0][0]*m[0][0], m[1][0]*m[1][0], m[2][0]*m[2][0]);
-#else
+  /*
   mixin(ImportCoreMath!(float, "sqrt"));
   float scale = 3.0f/sqrt(
     m[0][0]*m[0][0]+m[1][0]*m[1][0]+m[2][0]*m[2][0]+
@@ -1039,17 +1117,19 @@ VMatrix4 VMatrix4::invertedSimple () const noexcept {
     m[0][2]*m[0][2]+m[1][2]*m[1][2]+m[2][2]*m[2][2]
   );
   scale *= scale;
-#endif
+  */
 
   VMatrix4 res;
 
-  // invert the rotation by transposing and multiplying by the squared recipricol of the input matrix scale as described above
+  // invert the rotation by transposing and multiplying by the squared reciprical of the input matrix scale as described above
   res.m[0][0] = m[0][0]*scale;
   res.m[1][0] = m[0][1]*scale;
   res.m[2][0] = m[0][2]*scale;
+
   res.m[0][1] = m[1][0]*scale;
   res.m[1][1] = m[1][1]*scale;
   res.m[2][1] = m[1][2]*scale;
+
   res.m[0][2] = m[2][0]*scale;
   res.m[1][2] = m[2][1]*scale;
   res.m[2][2] = m[2][2]*scale;
@@ -1068,15 +1148,21 @@ VMatrix4 VMatrix4::invertedSimple () const noexcept {
   return res;
 }
 
-// ////////////////////////////////////////////////////////////////////////////
-// compute the inverse of 4x4 Euclidean transformation matrix
+
+//==========================================================================
 //
-// Euclidean transformation is translation, rotation, and reflection.
-// With Euclidean transform, only the position and orientation of the object
-// will be changed. Euclidean transform does not change the shape of an object
-// (no scaling). Length and angle are prereserved.
+//  VMatrix4::invertEuclidean
 //
-// Use inverseAffine() if the matrix has scale and shear transformation.
+//  compute the inverse of 4x4 Euclidean transformation matrix
+//
+//  Euclidean transformation is translation, rotation, and reflection.
+//  With Euclidean transform, only the position and orientation of the object
+//  will be changed. Euclidean transform does not change the shape of an object
+//  (no scaling). Length and angle are prereserved.
+//
+//  Use inverseAffine() if the matrix has scale and shear transformation.
+//
+//==========================================================================
 VMatrix4 &VMatrix4::invertEuclidean () noexcept {
   float tmp;
   tmp = m[0][1]; m[0][1] = m[1][0]; m[1][0] = tmp;
@@ -1091,11 +1177,18 @@ VMatrix4 &VMatrix4::invertEuclidean () noexcept {
   return *this;
 }
 
-// compute the inverse of a 4x4 affine transformation matrix
+
+//==========================================================================
 //
-// Affine transformations are generalizations of Euclidean transformations.
-// Affine transformation includes translation, rotation, reflection, scaling,
-// and shearing. Length and angle are NOT preserved.
+//  VMatrix4::invertAffine
+//
+//  compute the inverse of a 4x4 affine transformation matrix
+//
+//  Affine transformations are generalizations of Euclidean transformations.
+//  Affine transformation includes translation, rotation, reflection, scaling,
+//  and shearing. Length and angle are NOT preserved.
+//
+//==========================================================================
 VMatrix4 &VMatrix4::invertAffine () noexcept {
   // R^-1
   // inverse 3x3 matrix
@@ -1160,6 +1253,12 @@ VMatrix4 &VMatrix4::invertAffine () noexcept {
   return *this;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::invert
+//
+//==========================================================================
 VMatrix4 &VMatrix4::invert () noexcept {
   // if the 4th row is [0,0,0,1] then it is affine matrix and
   // it has no projective transformation
@@ -1170,9 +1269,29 @@ VMatrix4 &VMatrix4::invert () noexcept {
   }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// compute the inverse of a general 4x4 matrix using Cramer's Rule
-// if cannot find inverse, return indentity matrix
+
+//==========================================================================
+//
+//  getCofactor
+//
+//  compute cofactor of 3x3 minor matrix without sign
+//  input params are 9 elements of the minor matrix
+//  NOTE: The caller must know its sign
+//
+//==========================================================================
+static inline float getCofactor (float m0, float m1, float m2, float m3, float m4, float m5, float m6, float m7, float m8) noexcept {
+  return m0*(m4*m8-m5*m7)-m1*(m3*m8-m5*m6)+m2*(m3*m7-m4*m6);
+}
+
+
+//==========================================================================
+//
+//  VMatrix4::invertGeneral
+//
+//  compute the inverse of a general 4x4 matrix using Cramer's Rule
+//  if cannot find inverse, return indentity matrix
+//
+//==========================================================================
 VMatrix4 &VMatrix4::invertGeneral () noexcept {
   const float cofactor0 = getCofactor(m[1][1], m[1][2], m[1][3], m[2][1], m[2][2], m[2][3], m[3][1], m[3][2], m[3][3]);
   const float cofactor1 = getCofactor(m[1][0], m[1][2], m[1][3], m[2][0], m[2][2], m[2][3], m[3][0], m[3][2], m[3][3]);
@@ -1221,6 +1340,12 @@ VMatrix4 &VMatrix4::invertGeneral () noexcept {
   return *this;
 }
 
+
+//==========================================================================
+//
+//  VMatrix4::toQuaternion
+//
+//==========================================================================
 void VMatrix4::toQuaternion (float quat[4]) const noexcept {
   const float tr = m[0][0]+m[1][1]+m[2][2];
   // check the diagonal

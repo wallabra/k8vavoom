@@ -29,6 +29,18 @@ class VMatrix4 {
 public:
   float m[4][4];
 
+private:
+  inline float calcMinor (const size_t r0, const size_t r1, const size_t r2,
+                          const size_t c0, const size_t c1, const size_t c2) const noexcept
+  {
+    return
+      VSUM3(
+          m[r0][c0]*VSUM2(m[r1][c1]*m[r2][c2], -(m[r2][c1]*m[r1][c2])),
+        -(m[r0][c1]*VSUM2(m[r1][c0]*m[r2][c2], -(m[r2][c0]*m[r1][c2]))),
+          m[r0][c2]*VSUM2(m[r1][c0]*m[r2][c1], -(m[r2][c0]*m[r1][c1])));
+  }
+
+public:
   static const VMatrix4 Identity;
 
   inline VMatrix4 () noexcept {}
@@ -49,27 +61,153 @@ public:
   inline void SetIdentity () noexcept { memcpy((void *)m, (const void *)Identity.m, sizeof(m)); }
   inline void SetZero () noexcept { memset((void *)m, 0, sizeof(m)); }
 
-  inline const TVec &GetRow (int idx) const noexcept { return *(const TVec *)(m[idx]); }
-  //inline TVec GetRow (int idx) const noexcept { return *(TVec *)(m[idx]); }
-  inline TVec GetCol (int idx) const noexcept { return TVec(m[0][idx], m[1][idx], m[2][idx]); }
+  inline VMatrix4 &operator = (const VMatrix4 &m2) noexcept { if (&m2 != this) memcpy(m, m2.m, sizeof(m)); return *this; }
+
+  inline float *operator [] (int i) noexcept { return m[i]; }
+  inline const float *operator [] (int i) const noexcept { return m[i]; }
+
+  VVA_CHECKRESULT inline const TVec &GetRow (int idx) const noexcept { return *(const TVec *)(m[idx]); }
+  //VVA_CHECKRESULT inline TVec GetRow (int idx) const noexcept { return *(TVec *)(m[idx]); }
+  VVA_CHECKRESULT inline TVec GetCol (int idx) const noexcept { return TVec(m[0][idx], m[1][idx], m[2][idx]); }
+
+  VVA_CHECKRESULT VMatrix4 operator * (const VMatrix4 &mt) const noexcept {
+    return VMatrix4(
+      VSUM4(m[0][0]*mt.m[0][0],m[1][0]*mt.m[0][1],m[2][0]*mt.m[0][2],m[3][0]*mt.m[0][3]),VSUM4(m[0][1]*mt.m[0][0],m[1][1]*mt.m[0][1],m[2][1]*mt.m[0][2],m[3][1]*mt.m[0][3]),VSUM4(m[0][2]*mt.m[0][0],m[1][2]*mt.m[0][1],m[2][2]*mt.m[0][2],m[3][2]*mt.m[0][3]),VSUM4(m[0][3]*mt.m[0][0],m[1][3]*mt.m[0][1],m[2][3]*mt.m[0][2],m[3][3]*mt.m[0][3]),
+      VSUM4(m[0][0]*mt.m[1][0],m[1][0]*mt.m[1][1],m[2][0]*mt.m[1][2],m[3][0]*mt.m[1][3]),VSUM4(m[0][1]*mt.m[1][0],m[1][1]*mt.m[1][1],m[2][1]*mt.m[1][2],m[3][1]*mt.m[1][3]),VSUM4(m[0][2]*mt.m[1][0],m[1][2]*mt.m[1][1],m[2][2]*mt.m[1][2],m[3][2]*mt.m[1][3]),VSUM4(m[0][3]*mt.m[1][0],m[1][3]*mt.m[1][1],m[2][3]*mt.m[1][2],m[3][3]*mt.m[1][3]),
+      VSUM4(m[0][0]*mt.m[2][0],m[1][0]*mt.m[2][1],m[2][0]*mt.m[2][2],m[3][0]*mt.m[2][3]),VSUM4(m[0][1]*mt.m[2][0],m[1][1]*mt.m[2][1],m[2][1]*mt.m[2][2],m[3][1]*mt.m[2][3]),VSUM4(m[0][2]*mt.m[2][0],m[1][2]*mt.m[2][1],m[2][2]*mt.m[2][2],m[3][2]*mt.m[2][3]),VSUM4(m[0][3]*mt.m[2][0],m[1][3]*mt.m[2][1],m[2][3]*mt.m[2][2],m[3][3]*mt.m[2][3]),
+      VSUM4(m[0][0]*mt.m[3][0],m[1][0]*mt.m[3][1],m[2][0]*mt.m[3][2],m[3][0]*mt.m[3][3]),VSUM4(m[0][1]*mt.m[3][0],m[1][1]*mt.m[3][1],m[2][1]*mt.m[3][2],m[3][1]*mt.m[3][3]),VSUM4(m[0][2]*mt.m[3][0],m[1][2]*mt.m[3][1],m[2][2]*mt.m[3][2],m[3][2]*mt.m[3][3]),VSUM4(m[0][3]*mt.m[3][0],m[1][3]*mt.m[3][1],m[2][3]*mt.m[3][2],m[3][3]*mt.m[3][3])
+    );
+  }
+
+  VMatrix4 &operator *= (const VMatrix4 &mt) noexcept {
+    const VMatrix4 res(
+      VSUM4(m[0][0]*mt.m[0][0],m[1][0]*mt.m[0][1],m[2][0]*mt.m[0][2],m[3][0]*mt.m[0][3]),VSUM4(m[0][1]*mt.m[0][0],m[1][1]*mt.m[0][1],m[2][1]*mt.m[0][2],m[3][1]*mt.m[0][3]),VSUM4(m[0][2]*mt.m[0][0],m[1][2]*mt.m[0][1],m[2][2]*mt.m[0][2],m[3][2]*mt.m[0][3]),VSUM4(m[0][3]*mt.m[0][0],m[1][3]*mt.m[0][1],m[2][3]*mt.m[0][2],m[3][3]*mt.m[0][3]),
+      VSUM4(m[0][0]*mt.m[1][0],m[1][0]*mt.m[1][1],m[2][0]*mt.m[1][2],m[3][0]*mt.m[1][3]),VSUM4(m[0][1]*mt.m[1][0],m[1][1]*mt.m[1][1],m[2][1]*mt.m[1][2],m[3][1]*mt.m[1][3]),VSUM4(m[0][2]*mt.m[1][0],m[1][2]*mt.m[1][1],m[2][2]*mt.m[1][2],m[3][2]*mt.m[1][3]),VSUM4(m[0][3]*mt.m[1][0],m[1][3]*mt.m[1][1],m[2][3]*mt.m[1][2],m[3][3]*mt.m[1][3]),
+      VSUM4(m[0][0]*mt.m[2][0],m[1][0]*mt.m[2][1],m[2][0]*mt.m[2][2],m[3][0]*mt.m[2][3]),VSUM4(m[0][1]*mt.m[2][0],m[1][1]*mt.m[2][1],m[2][1]*mt.m[2][2],m[3][1]*mt.m[2][3]),VSUM4(m[0][2]*mt.m[2][0],m[1][2]*mt.m[2][1],m[2][2]*mt.m[2][2],m[3][2]*mt.m[2][3]),VSUM4(m[0][3]*mt.m[2][0],m[1][3]*mt.m[2][1],m[2][3]*mt.m[2][2],m[3][3]*mt.m[2][3]),
+      VSUM4(m[0][0]*mt.m[3][0],m[1][0]*mt.m[3][1],m[2][0]*mt.m[3][2],m[3][0]*mt.m[3][3]),VSUM4(m[0][1]*mt.m[3][0],m[1][1]*mt.m[3][1],m[2][1]*mt.m[3][2],m[3][1]*mt.m[3][3]),VSUM4(m[0][2]*mt.m[3][0],m[1][2]*mt.m[3][1],m[2][2]*mt.m[3][2],m[3][2]*mt.m[3][3]),VSUM4(m[0][3]*mt.m[3][0],m[1][3]*mt.m[3][1],m[2][3]*mt.m[3][2],m[3][3]*mt.m[3][3])
+    );
+    memcpy(m, res.m, sizeof(m));
+    return *this;
+  }
+
+  // unary minus
+  VVA_CHECKRESULT inline VMatrix4 operator - (void) const noexcept {
+    return VMatrix4(
+      -m[0][0], -m[0][1], -m[0][2], -m[0][3],
+      -m[1][0], -m[1][1], -m[1][2], -m[1][3],
+      -m[2][0], -m[2][1], -m[2][2], -m[2][3],
+      -m[3][0], -m[3][1], -m[3][2], -m[3][3]
+    );
+  }
+
+  // unary plus (does nothing)
+  VVA_CHECKRESULT inline VMatrix4 operator + (void) const noexcept { return VMatrix4(*this); }
+
 
   // this is for camera matrices
-  inline TVec getUpVector () const noexcept { return TVec(m[0][1], m[1][1], m[2][1]); }
-  inline TVec getRightVector () const noexcept { return TVec(m[0][0], m[1][0], m[2][0]); }
-  inline TVec getForwardVector () const noexcept { return TVec(m[0][2], m[1][2], m[2][2]); }
+  VVA_CHECKRESULT inline TVec getUpVector () const noexcept { return TVec(m[0][1], m[1][1], m[2][1]); }
+  VVA_CHECKRESULT inline TVec getRightVector () const noexcept { return TVec(m[0][0], m[1][0], m[2][0]); }
+  VVA_CHECKRESULT inline TVec getForwardVector () const noexcept { return TVec(m[0][2], m[1][2], m[2][2]); }
 
-  float Determinant () const noexcept;
-  VMatrix4 Inverse () const noexcept;
-  VMatrix4 Transpose () const noexcept;
 
-  inline TVec Transform (const TVec &V) const noexcept {
+  VVA_CHECKRESULT inline float Determinant () const noexcept {
+    return
+      VSUM4(
+        m[0][0]*calcMinor(1, 2, 3, 1, 2, 3),
+      -(m[0][1]*calcMinor(1, 2, 3, 0, 2, 3)),
+        m[0][2]*calcMinor(1, 2, 3, 0, 1, 3),
+      -(m[0][3]*calcMinor(1, 2, 3, 0, 1, 2)));
+  }
+
+
+  VVA_CHECKRESULT inline VMatrix4 Transpose () const noexcept {
+    VMatrix4 res;
+    for (unsigned i = 0; i < 4; ++i) {
+      for (unsigned j = 0; j < 4; ++j) {
+        res.m[j][i] = m[i][j];
+      }
+    }
+    return res;
+  }
+
+  // more matrix operations (not used in k8vavoom, but nice to have)
+  // this is for OpenGL coordinate system
+  static VVA_CHECKRESULT VMatrix4 RotateX (float angle) noexcept;
+  static VVA_CHECKRESULT VMatrix4 RotateY (float angle) noexcept;
+  static VVA_CHECKRESULT VMatrix4 RotateZ (float angle) noexcept;
+
+  static VVA_CHECKRESULT VMatrix4 Translate (const TVec &v) noexcept;
+  static VVA_CHECKRESULT VMatrix4 TranslateNeg (const TVec &v) noexcept;
+
+  static VVA_CHECKRESULT VMatrix4 Scale (const TVec &v) noexcept;
+  static VVA_CHECKRESULT VMatrix4 Rotate (const TVec &v) noexcept; // x, y and z are angles; does x, then y, then z
+
+  // for camera; x is pitch (up/down); y is yaw (left/right); z is roll (tilt)
+  static VVA_CHECKRESULT VMatrix4 RotateZXY (const TVec &v) noexcept;
+  static VVA_CHECKRESULT VMatrix4 RotateZXY (const TAVec &v) noexcept;
+
+
+  // ignore translation column
+  VVA_CHECKRESULT inline TVec RotateVector (const TVec &V) const noexcept {
+    return TVec(
+      VSUM3(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z),
+      VSUM3(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z),
+      VSUM3(m[0][2]*V.x, m[1][2]*V.y, m[2][2]*V.z));
+  }
+
+  // ignore rotation part
+  VVA_CHECKRESULT inline TVec TranslateVector (const TVec &V) const noexcept { return TVec(VSUM2(V.x, m[3][0]), VSUM2(V.y, m[3][1]), VSUM2(V.z, m[3][2])); }
+
+
+  // inversions
+  // general inversion
+  VVA_CHECKRESULT VMatrix4 Inverse () const noexcept;
+  VMatrix4 &InverseInPlace () noexcept;
+
+  // WARNING: this assumes uniform scaling
+  inline VVA_CHECKRESULT VMatrix4 InverseFast () const noexcept { return invertedFast(); }
+
+  // partially ;-) taken from DarkPlaces
+  // WARNING: this assumes uniform scaling
+  VVA_CHECKRESULT VMatrix4 invertedFast () const noexcept;
+  VMatrix4 &invertFast () noexcept;
+
+  // compute the inverse of 4x4 Euclidean transformation matrix
+  //
+  // Euclidean transformation is translation, rotation, and reflection.
+  // With Euclidean transform, only the position and orientation of the object
+  // will be changed. Euclidean transform does not change the shape of an object
+  // (no scaling). Length and angle are prereserved.
+  //
+  // Use inverseAffine() if the matrix has scale and shear transformation.
+  VMatrix4 &invertEuclidean () noexcept;
+
+  // compute the inverse of a 4x4 affine transformation matrix
+  //
+  // Affine transformations are generalizations of Euclidean transformations.
+  // Affine transformation includes translation, rotation, reflection, scaling,
+  // and shearing. Length and angle are NOT preserved.
+  VMatrix4 &invertAffine () noexcept;
+
+  // compute the inverse of a general 4x4 matrix using Cramer's Rule
+  // if cannot find inverse, it returns indentity matrix
+  VMatrix4 &invertGeneral () noexcept;
+
+  // general matrix inversion
+  VMatrix4 &invert () noexcept;
+
+  VVA_CHECKRESULT inline VMatrix4 inverted () const noexcept { VMatrix4 res(*this); res.invert(); return res; }
+
+
+  // vector transformations
+  VVA_CHECKRESULT inline TVec Transform (const TVec &V) const noexcept {
     return TVec(
       VSUM4(m[0][0]*V.x, m[0][1]*V.y, m[0][2]*V.z, m[0][3]),
       VSUM4(m[1][0]*V.x, m[1][1]*V.y, m[1][2]*V.z, m[1][3]),
       VSUM4(m[2][0]*V.x, m[2][1]*V.y, m[2][2]*V.z, m[2][3]));
   }
 
-  inline TVec Transform (const TVec &V, const float w) const noexcept {
+  VVA_CHECKRESULT inline TVec Transform (const TVec &V, const float w) const noexcept {
     return TVec(
       VSUM4(m[0][0]*V.x, m[0][1]*V.y, m[0][2]*V.z, m[0][3]*w),
       VSUM4(m[1][0]*V.x, m[1][1]*V.y, m[1][2]*V.z, m[1][3]*w),
@@ -77,7 +215,7 @@ public:
   }
 
   // this can be used to transform with OpenGL model/projection matrices
-  inline TVec Transform2 (const TVec &V) const noexcept {
+  VVA_CHECKRESULT inline TVec Transform2 (const TVec &V) const noexcept {
     return TVec(
       VSUM4(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z, m[3][0]),
       VSUM4(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z, m[3][1]),
@@ -85,7 +223,7 @@ public:
   }
 
   // this can be used to transform with OpenGL model/projection matrices
-  inline TVec Transform2OnlyXY (const TVec &V) const noexcept {
+  VVA_CHECKRESULT inline TVec Transform2OnlyXY (const TVec &V) const noexcept {
     return TVec(
       VSUM4(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z, m[3][0]),
       VSUM4(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z, m[3][1]),
@@ -93,12 +231,12 @@ public:
   }
 
   // this can be used to transform with OpenGL model/projection matrices
-  inline float Transform2OnlyZ (const TVec &V) const noexcept {
+  VVA_CHECKRESULT inline float Transform2OnlyZ (const TVec &V) const noexcept {
     return VSUM4(m[0][2]*V.x, m[1][2]*V.y, m[2][2]*V.z, m[3][2]);
   }
 
   // this can be used to transform with OpenGL model/projection matrices
-  inline TVec Transform2 (const TVec &V, const float w) const noexcept {
+  VVA_CHECKRESULT inline TVec Transform2 (const TVec &V, const float w) const noexcept {
     return TVec(
       VSUM4(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z, m[3][0]*w),
       VSUM4(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z, m[3][1]*w),
@@ -155,67 +293,14 @@ public:
     return neww;
   }
 
-  // ignore translation column
-  inline TVec RotateVector (const TVec &V) const noexcept {
-    return TVec(
-      VSUM3(m[0][0]*V.x, m[1][0]*V.y, m[2][0]*V.z),
-      VSUM3(m[0][1]*V.x, m[1][1]*V.y, m[2][1]*V.z),
-      VSUM3(m[0][2]*V.x, m[1][2]*V.y, m[2][2]*V.z));
-  }
-
-  // ignore rotation part
-  inline TVec TranslateVector (const TVec &V) const noexcept { return TVec(VSUM2(V.x, m[3][0]), VSUM2(V.y, m[3][1]), VSUM2(V.z, m[3][2])); }
-
-  inline VMatrix4 &operator = (const VMatrix4 &m2) noexcept { if (&m2 != this) memcpy(m, m2.m, sizeof(m)); return *this; }
-
-  inline float *operator [] (int i) noexcept { return m[i]; }
-  inline const float *operator [] (int i) const noexcept { return m[i]; }
-
-  VMatrix4 operator * (const VMatrix4 &mt) const noexcept {
-    return VMatrix4(
-      VSUM4(m[0][0]*mt.m[0][0],m[1][0]*mt.m[0][1],m[2][0]*mt.m[0][2],m[3][0]*mt.m[0][3]),VSUM4(m[0][1]*mt.m[0][0],m[1][1]*mt.m[0][1],m[2][1]*mt.m[0][2],m[3][1]*mt.m[0][3]),VSUM4(m[0][2]*mt.m[0][0],m[1][2]*mt.m[0][1],m[2][2]*mt.m[0][2],m[3][2]*mt.m[0][3]),VSUM4(m[0][3]*mt.m[0][0],m[1][3]*mt.m[0][1],m[2][3]*mt.m[0][2],m[3][3]*mt.m[0][3]),
-      VSUM4(m[0][0]*mt.m[1][0],m[1][0]*mt.m[1][1],m[2][0]*mt.m[1][2],m[3][0]*mt.m[1][3]),VSUM4(m[0][1]*mt.m[1][0],m[1][1]*mt.m[1][1],m[2][1]*mt.m[1][2],m[3][1]*mt.m[1][3]),VSUM4(m[0][2]*mt.m[1][0],m[1][2]*mt.m[1][1],m[2][2]*mt.m[1][2],m[3][2]*mt.m[1][3]),VSUM4(m[0][3]*mt.m[1][0],m[1][3]*mt.m[1][1],m[2][3]*mt.m[1][2],m[3][3]*mt.m[1][3]),
-      VSUM4(m[0][0]*mt.m[2][0],m[1][0]*mt.m[2][1],m[2][0]*mt.m[2][2],m[3][0]*mt.m[2][3]),VSUM4(m[0][1]*mt.m[2][0],m[1][1]*mt.m[2][1],m[2][1]*mt.m[2][2],m[3][1]*mt.m[2][3]),VSUM4(m[0][2]*mt.m[2][0],m[1][2]*mt.m[2][1],m[2][2]*mt.m[2][2],m[3][2]*mt.m[2][3]),VSUM4(m[0][3]*mt.m[2][0],m[1][3]*mt.m[2][1],m[2][3]*mt.m[2][2],m[3][3]*mt.m[2][3]),
-      VSUM4(m[0][0]*mt.m[3][0],m[1][0]*mt.m[3][1],m[2][0]*mt.m[3][2],m[3][0]*mt.m[3][3]),VSUM4(m[0][1]*mt.m[3][0],m[1][1]*mt.m[3][1],m[2][1]*mt.m[3][2],m[3][1]*mt.m[3][3]),VSUM4(m[0][2]*mt.m[3][0],m[1][2]*mt.m[3][1],m[2][2]*mt.m[3][2],m[3][2]*mt.m[3][3]),VSUM4(m[0][3]*mt.m[3][0],m[1][3]*mt.m[3][1],m[2][3]*mt.m[3][2],m[3][3]*mt.m[3][3])
-    );
-  }
-
-  VMatrix4 &operator *= (const VMatrix4 &mt) noexcept {
-    const VMatrix4 res(
-      VSUM4(m[0][0]*mt.m[0][0],m[1][0]*mt.m[0][1],m[2][0]*mt.m[0][2],m[3][0]*mt.m[0][3]),VSUM4(m[0][1]*mt.m[0][0],m[1][1]*mt.m[0][1],m[2][1]*mt.m[0][2],m[3][1]*mt.m[0][3]),VSUM4(m[0][2]*mt.m[0][0],m[1][2]*mt.m[0][1],m[2][2]*mt.m[0][2],m[3][2]*mt.m[0][3]),VSUM4(m[0][3]*mt.m[0][0],m[1][3]*mt.m[0][1],m[2][3]*mt.m[0][2],m[3][3]*mt.m[0][3]),
-      VSUM4(m[0][0]*mt.m[1][0],m[1][0]*mt.m[1][1],m[2][0]*mt.m[1][2],m[3][0]*mt.m[1][3]),VSUM4(m[0][1]*mt.m[1][0],m[1][1]*mt.m[1][1],m[2][1]*mt.m[1][2],m[3][1]*mt.m[1][3]),VSUM4(m[0][2]*mt.m[1][0],m[1][2]*mt.m[1][1],m[2][2]*mt.m[1][2],m[3][2]*mt.m[1][3]),VSUM4(m[0][3]*mt.m[1][0],m[1][3]*mt.m[1][1],m[2][3]*mt.m[1][2],m[3][3]*mt.m[1][3]),
-      VSUM4(m[0][0]*mt.m[2][0],m[1][0]*mt.m[2][1],m[2][0]*mt.m[2][2],m[3][0]*mt.m[2][3]),VSUM4(m[0][1]*mt.m[2][0],m[1][1]*mt.m[2][1],m[2][1]*mt.m[2][2],m[3][1]*mt.m[2][3]),VSUM4(m[0][2]*mt.m[2][0],m[1][2]*mt.m[2][1],m[2][2]*mt.m[2][2],m[3][2]*mt.m[2][3]),VSUM4(m[0][3]*mt.m[2][0],m[1][3]*mt.m[2][1],m[2][3]*mt.m[2][2],m[3][3]*mt.m[2][3]),
-      VSUM4(m[0][0]*mt.m[3][0],m[1][0]*mt.m[3][1],m[2][0]*mt.m[3][2],m[3][0]*mt.m[3][3]),VSUM4(m[0][1]*mt.m[3][0],m[1][1]*mt.m[3][1],m[2][1]*mt.m[3][2],m[3][1]*mt.m[3][3]),VSUM4(m[0][2]*mt.m[3][0],m[1][2]*mt.m[3][1],m[2][2]*mt.m[3][2],m[3][2]*mt.m[3][3]),VSUM4(m[0][3]*mt.m[3][0],m[1][3]*mt.m[3][1],m[2][3]*mt.m[3][2],m[3][3]*mt.m[3][3])
-    );
-    memcpy(m, res.m, sizeof(m));
-    return *this;
-  }
-
-  inline VMatrix4 operator - (void) const noexcept {
-    /*
-    VMatrix4 res = VMatrix4(*this);
-    for (unsigned i = 0; i < 4; ++i) {
-      for (unsigned j = 0; j < 4; ++j) {
-        res.mt[i][j] = -res.mt[i][j];
-      }
-    }
-    return res;
-    */
-    return VMatrix4(
-      -m[0][0], -m[0][1], -m[0][2], -m[0][3],
-      -m[1][0], -m[1][1], -m[1][2], -m[1][3],
-      -m[2][0], -m[2][1], -m[2][2], -m[2][3],
-      -m[3][0], -m[3][1], -m[3][2], -m[3][3]
-    );
-  }
-
-  inline VMatrix4 operator + (void) const noexcept { return VMatrix4(*this); }
-
-  static void CombineAndExtractFrustum (const VMatrix4 &model, const VMatrix4 &proj, TPlane planes[6]) noexcept;
 
   // combine the two matrices (multiply projection by modelview)
   // destroys (ignores) current matrix
   void ModelProjectCombine (const VMatrix4 &model, const VMatrix4 &proj) noexcept;
+
+
+  // frustum operations
+  static void CombineAndExtractFrustum (const VMatrix4 &model, const VMatrix4 &proj, TPlane planes[6]) noexcept;
 
   // this expects result of `ModelProjectCombine()`
   void ExtractFrustum (TPlane planes[6]) const noexcept;
@@ -228,22 +313,6 @@ public:
   void ExtractFrustumFar (TPlane &plane) const noexcept;
   void ExtractFrustumNear (TPlane &plane) const noexcept;
 
-  // more matrix operations (not used in k8vavoom, but nice to have)
-  // this is for OpenGL coordinate system
-  static VMatrix4 RotateX (float angle) noexcept;
-  static VMatrix4 RotateY (float angle) noexcept;
-  static VMatrix4 RotateZ (float angle) noexcept;
-
-  static VMatrix4 Translate (const TVec &v) noexcept;
-  static VMatrix4 TranslateNeg (const TVec &v) noexcept;
-
-  static VMatrix4 Scale (const TVec &v) noexcept;
-  static VMatrix4 Rotate (const TVec &v) noexcept; // x, y and z are angles; does x, then y, then z
-
-  // for camera; x is pitch (up/down); y is yaw (left/right); z is roll (tilt)
-  static VMatrix4 RotateZXY (const TVec &v) noexcept;
-  static VMatrix4 RotateZXY (const TAVec &v) noexcept;
-
   // same as `glFrustum()`
   static VMatrix4 Frustum (float left, float right, float bottom, float top, float nearVal, float farVal) noexcept;
   // same as `glOrtho()`
@@ -254,12 +323,12 @@ public:
   // aspect - Aspect ratio of the viewport
   // zNear  - The near clipping distance
   // zFar   - The far clipping distance
-  static VMatrix4 Perspective (float fovY, float aspect, float zNear, float zFar) noexcept;
+  static VVA_CHECKRESULT VMatrix4 Perspective (float fovY, float aspect, float zNear, float zFar) noexcept;
 
-  static VMatrix4 LookAtFucked (const TVec &eye, const TVec &center, const TVec &up) noexcept;
+  static VVA_CHECKRESULT VMatrix4 LookAtFucked (const TVec &eye, const TVec &center, const TVec &up) noexcept;
 
   // does `gluLookAt()`
-  VMatrix4 lookAt (const TVec &eye, const TVec &center, const TVec &up) const noexcept;
+  VVA_CHECKRESULT VMatrix4 lookAt (const TVec &eye, const TVec &center, const TVec &up) const noexcept;
 
   // rotate matrix to face along the target direction
   // this function will clear the previous rotation and scale, but it will keep the previous translation
@@ -267,26 +336,26 @@ public:
   VMatrix4 &lookingAt (const TVec &target) noexcept;
   VMatrix4 &lookingAt (const TVec &target, const TVec &upVec) noexcept;
 
-  inline VMatrix4 lookAt (const TVec &target) const noexcept { auto res = VMatrix4(*this); return res.lookingAt(target); }
-  inline VMatrix4 lookAt (const TVec &target, const TVec &upVec) const noexcept { auto res = VMatrix4(*this); return res.lookingAt(target, upVec); }
+  VVA_CHECKRESULT inline VMatrix4 lookAt (const TVec &target) const noexcept { auto res = VMatrix4(*this); return res.lookingAt(target); }
+  VVA_CHECKRESULT inline VMatrix4 lookAt (const TVec &target, const TVec &upVec) const noexcept { auto res = VMatrix4(*this); return res.lookingAt(target, upVec); }
 
   VMatrix4 &rotate (float angle, const TVec &axis) noexcept;
   VMatrix4 &rotateX (float angle) noexcept;
   VMatrix4 &rotateY (float angle) noexcept;
   VMatrix4 &rotateZ (float angle) noexcept;
 
-  inline VMatrix4 rotated (float angle, const TVec &axis) const noexcept { auto res = VMatrix4(*this); return res.rotate(angle, axis); }
-  inline VMatrix4 rotatedX (float angle) const noexcept { auto res = VMatrix4(*this); return res.rotateX(angle); }
-  inline VMatrix4 rotatedY (float angle) const noexcept { auto res = VMatrix4(*this); return res.rotateY(angle); }
-  inline VMatrix4 rotatedZ (float angle) const noexcept { auto res = VMatrix4(*this); return res.rotateZ(angle); }
+  VVA_CHECKRESULT inline VMatrix4 rotated (float angle, const TVec &axis) const noexcept { auto res = VMatrix4(*this); return res.rotate(angle, axis); }
+  VVA_CHECKRESULT inline VMatrix4 rotatedX (float angle) const noexcept { auto res = VMatrix4(*this); return res.rotateX(angle); }
+  VVA_CHECKRESULT inline VMatrix4 rotatedY (float angle) const noexcept { auto res = VMatrix4(*this); return res.rotateY(angle); }
+  VVA_CHECKRESULT inline VMatrix4 rotatedZ (float angle) const noexcept { auto res = VMatrix4(*this); return res.rotateZ(angle); }
 
   // retrieve angles in degree from rotation matrix, M = Rx*Ry*Rz, in degrees
   // Rx: rotation about X-axis, pitch
   // Ry: rotation about Y-axis, yaw (heading)
   // Rz: rotation about Z-axis, roll
-  TAVec getAngles () const noexcept;
+  VVA_CHECKRESULT TAVec getAngles () const noexcept;
 
-  inline VMatrix4 transposed () const noexcept {
+  VVA_CHECKRESULT inline VMatrix4 transposed () const noexcept {
     return VMatrix4(
       m[0][0], m[1][0], m[2][0], m[3][0],
       m[0][1], m[1][1], m[2][1], m[3][1],
@@ -297,50 +366,23 @@ public:
 
   // blends two matrices together, at a given percentage (range is [0..1]), blend==0: m2 is ignored
   // WARNING! it won't sanitize `blend`
-  VMatrix4 blended (const VMatrix4 &m2, float blend) const noexcept;
-
-  //WARNING: this must be tested for row/col
-  // partially ;-) taken from DarkPlaces
-  // this assumes uniform scaling
-  VMatrix4 invertedSimple () const noexcept;
-  //FIXME: make this fast pasta!
-  inline VMatrix4 &invertSimple () noexcept { VMatrix4 i = invertedSimple(); memcpy(m, i.m, sizeof(m)); return *this; }
-
-  // compute the inverse of 4x4 Euclidean transformation matrix
-  //
-  // Euclidean transformation is translation, rotation, and reflection.
-  // With Euclidean transform, only the position and orientation of the object
-  // will be changed. Euclidean transform does not change the shape of an object
-  // (no scaling). Length and angle are prereserved.
-  //
-  // Use inverseAffine() if the matrix has scale and shear transformation.
-  VMatrix4 &invertEuclidean () noexcept;
-
-  // compute the inverse of a 4x4 affine transformation matrix
-  //
-  // Affine transformations are generalizations of Euclidean transformations.
-  // Affine transformation includes translation, rotation, reflection, scaling,
-  // and shearing. Length and angle are NOT preserved.
-  VMatrix4 &invertAffine () noexcept;
-
-  // compute the inverse of a general 4x4 matrix using Cramer's Rule
-  // if cannot find inverse, return indentity matrix
-  VMatrix4 &invertGeneral () noexcept;
-
-  // general matrix inversion
-  VMatrix4 &invert () noexcept;
+  VVA_CHECKRESULT VMatrix4 blended (const VMatrix4 &m2, float blend) const noexcept;
 
   void toQuaternion (float quat[4]) const noexcept;
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// use this to get vector transformed by matrix
+// i.e. you should multiply matrix by vector to apply matrix transformations
+// WARNING: multiplying vector by matrix gives something completely different
 static inline VVA_OKUNUSED TVec operator * (const VMatrix4 &mt, const TVec &v) noexcept {
   return TVec(
     VSUM4(mt.m[0][0]*v.x, mt.m[1][0]*v.y, mt.m[2][0]*v.z, mt.m[3][0]),
     VSUM4(mt.m[0][1]*v.x, mt.m[1][1]*v.y, mt.m[2][1]*v.z, mt.m[3][1]),
     VSUM4(mt.m[0][2]*v.x, mt.m[1][2]*v.y, mt.m[2][2]*v.z, mt.m[3][2]));
 }
+
 
 static inline VVA_OKUNUSED TVec operator * (const TVec &v, const VMatrix4 &mt) noexcept {
   return TVec(
