@@ -490,9 +490,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         return e->Resolve(ec);
       }
 
-      // we never ever need opcopy here
-      //opcopy.release();
-
       VProperty *Prop = op->Type.Class->FindProperty(FieldName);
       if (Prop) return DoPropertyResolve(ec, Prop, assType);
     }
@@ -562,8 +559,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         if (M->IsStatic()) {
           e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
         } else {
-          //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
-          e = new VDotInvocation(new VSelf(Loc), FieldName, Loc, 0, nullptr);
+          e = new VDotInvocation(opcopy.extract(), FieldName, Loc, 0, nullptr);
         }
         delete this;
         return e->Resolve(ec);
@@ -605,8 +601,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         return nullptr;
       }
     }
-    //delete opcopy; // we never ever need opcopy here
-    //opcopy = nullptr; // just in case
     int opflags = op->Flags;
     //!!!if (assType != AssType::AssTarget) op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
@@ -622,8 +616,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length ||
        FieldName == "length1" || FieldName == "length2"))
   {
-    //delete opcopy; // we never ever need opcopy here
-    //opcopy = nullptr; // just in case
     //VFieldType type = op->Type;
     if (assType == AssType::AssTarget) {
       if (FieldName == "length1" || FieldName == "length2") {
@@ -657,8 +649,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length ||
        FieldName == "length1" || FieldName == "length2"))
   {
-    //delete opcopy; // we never ever need opcopy here
-    //opcopy = nullptr; // just in case
     if (assType == AssType::AssTarget) {
       ParseError(Loc, "Cannot change length of static array");
       delete this;
@@ -675,8 +665,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   // string properties
   if (op->Type.Type == TYPE_String) {
     if (FieldName == NAME_Num || FieldName == NAME_Length || FieldName == NAME_length) {
-      //delete opcopy; // we never ever need opcopy here
-      //opcopy = nullptr; // just in case
       if (assType == AssType::AssTarget) {
         ParseError(Loc, "Cannot change string length via assign yet");
         delete this;
@@ -728,7 +716,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     else if (FieldName == "isinf" || FieldName == "isInf") builtin = OPC_Builtin_FloatIsInf;
     else if (FieldName == "isfinite" || FieldName == "isFinite") builtin = OPC_Builtin_FloatIsFinite;
     if (builtin >= 0) {
-      //delete opcopy; // we never ever need opcopy here
       if (assType == AssType::AssTarget) {
         ParseError(Loc, "Cannot assign to read-only property");
         delete this;
@@ -818,8 +805,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   if (assType != AssType::AssTarget) {
     // Class.Method -- for static methods
     if (op->Type.Type == TYPE_Class) {
-      //delete opcopy; // we never ever need opcopy here
-      //opcopy = nullptr; // just in case
       if (!op->Type.Class) {
         ParseError(Loc, "Class name expected at the left side of `.`");
         delete this;
@@ -862,8 +847,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     }
   } else if (assType == AssType::AssTarget) {
     if (op->Type.Type == TYPE_Class) {
-      //delete opcopy; // we never ever need opcopy here
-      //opcopy = nullptr; // just in case
       if (!op->Type.Class) {
         ParseError(Loc, "Class name expected at the left side of `.`");
         delete this;
@@ -875,7 +858,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     }
   }
 
-  //delete opcopy; // we never ever need opcopy here
   ParseError(Loc, "Reference, struct or vector expected on left side of `.` (got `%s`)", *op->Type.GetName());
   delete this;
   return nullptr;

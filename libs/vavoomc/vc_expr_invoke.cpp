@@ -856,7 +856,7 @@ bool VDotInvocation::DoReResolvePtr (VEmitContext &ec, VExpression *&selfCopy) {
 //
 //==========================================================================
 VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
-  //if (SelfExpr) GLog.Logf(NAME_Debug, "VDotInvocation::DoResolve: self=%s", *SelfExpr->toString());
+  //if (SelfExpr) GLog.Logf(NAME_Debug, "VDotInvocation::DoResolve: self=%s; mtn=<%s>", *SelfExpr->toString(), *MethodName);
   VExpression *selfCopy = (SelfExpr ? SelfExpr->SyntaxCopy() : nullptr);
 
   if (SelfExpr) SelfExpr = SelfExpr->Resolve(ec);
