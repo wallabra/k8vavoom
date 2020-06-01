@@ -1,0 +1,39 @@
+class Main : Object;
+
+int ifunc () { return 42; }
+string sfunc () { return "boo"; }
+TVec vfunc () { return vector(1, 2, 3); }
+void nfunc () { return; }
+
+void test0 () {
+  return cast(void)ifunc();
+}
+
+void test1 () {
+  return cast(void)sfunc();
+}
+
+void test2 () {
+  return cast(void)vfunc();
+}
+
+void test3 () {
+  return cast(void)nfunc();
+}
+
+void test4 () {
+  return nfunc();
+}
+
+void test5 () {
+  return void(vfunc());
+}
+
+void main () {
+  test0();
+  test1();
+  test2();
+  test3();
+  test4();
+  test5();
+}
