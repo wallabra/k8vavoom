@@ -1136,8 +1136,9 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     return e->Resolve(ec);
   }
 
+  // struct methods
   if (SelfExpr->Type.IsNormalOrPointerType(TYPE_Struct)) {
-    VMethod *M = SelfExpr->Type.Struct->FindAccessibleMethod(MethodName, SelfExpr->Type.Struct, &Loc);
+    VMethod *M = SelfExpr->Type.Struct->FindAccessibleMethod(MethodName, /*SelfExpr->Type.Struct*/ec.SelfStruct, &Loc);
     // do not fail here, this could be a delegate invocation
     if (M) {
       if (SelfExpr->Type.Type != TYPE_Pointer) {
@@ -2677,6 +2678,10 @@ bool VInvocation::IsLLInvocation () const {
 //==========================================================================
 VMethod *VInvocation::FindMethodWithSignature (VEmitContext &ec, VName name, int argc, VExpression **argv, const TLocation *loc) {
   if (argc < 0 || argc > VMethod::MAX_PARAMS) return nullptr;
+  if (ec.SelfStruct) {
+    VMethod *m = ec.SelfStruct->FindAccessibleMethod(name, ec.SelfStruct, loc);
+    if (m && IsGoodMethodParams(ec, m, argc, argv)) return m;
+  }
   if (!ec.SelfClass) return nullptr;
   VMethod *m = ec.SelfClass->FindAccessibleMethod(name, ec.SelfClass, loc);
   if (!m) return nullptr;

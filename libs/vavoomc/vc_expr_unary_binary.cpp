@@ -185,7 +185,9 @@ VExpression *VUnary::DoResolve (VEmitContext &ec) {
   if (Oper == TakeAddress && op && ec.SelfClass) {
     vassert(!opresolved);
     if (op->IsSingleName()) {
-      VMethod *M = ec.SelfClass->FindAccessibleMethod(((VSingleName *)op)->Name, ec.SelfClass, &Loc);
+      VMethod *M = nullptr;
+      if (ec.SelfStruct) M = ec.SelfStruct->FindAccessibleMethod(((VSingleName *)op)->Name, ec.SelfStruct, &Loc);
+      if (!M) M = ec.SelfClass->FindAccessibleMethod(((VSingleName *)op)->Name, ec.SelfClass, &Loc);
       if (M && (M->Flags&FUNC_Iterator) == 0) {
         //fprintf(stderr, "SINGLE NAME GETADDR! <%s>\n", *((VSingleName *)op)->Name);
         VExpression *e = new VDelegateVal((new VSelf(Loc))->Resolve(ec), M, Loc);

@@ -103,6 +103,17 @@ VExpression *VPointerField::TryUFCS (VEmitContext &ec, AutoCopy &opcopy, const c
   VExpression *pp = opcopy.extract();
   if (ec.SelfClass) {
     pp = new VPushPointed(pp, pp->Loc);
+    //HACK! for structs
+    if (mb->MemberType == MEMBER_Struct) {
+      // class
+      VStruct *st = (VStruct *)mb;
+      VMethod *mt = st->FindAccessibleMethod(FieldName, ec.SelfStruct);
+      if (mt) {
+        VExpression *dotinv = new VDotInvocation(pp, FieldName, Loc, 0, nullptr);
+        delete this;
+        return dotinv->Resolve(ec);
+      }
+    }
     //HACK! for classes
     if (mb->MemberType == MEMBER_Class) {
       // class
@@ -545,9 +556,9 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       }
       // bad swizzle or field access, process with normal resolution
     }
-    // method
+    // struct method
     if (op->Type.Type == TYPE_Struct) {
-      VMethod *M = type.Struct->FindAccessibleMethod(FieldName, type.Struct, &Loc);
+      VMethod *M = type.Struct->FindAccessibleMethod(FieldName, /*type.Struct*/ec.SelfStruct, &Loc);
       if (M) {
         if (M->IsIterator()) {
           ParseError(Loc, "Iterator methods can only be used in foreach statements");
