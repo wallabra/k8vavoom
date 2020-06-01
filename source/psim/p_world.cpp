@@ -294,22 +294,6 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
     }
   }
 
-  /*
-  else {
-    const float bx1 = InX1-Self->XLevel->BlockMapOrgX;
-    const float by1 = InY1-Self->XLevel->BlockMapOrgY;
-    const int xt1 = MapBlock(bx1);
-    const int yt1 = MapBlock(by1);
-
-    const float bx2 = x2-Self->XLevel->BlockMapOrgX;
-    const float by2 = y2-Self->XLevel->BlockMapOrgY;
-    const int xt2 = MapBlock(bx2);
-    const int yt2 = MapBlock(by2);
-
-    GCon->Logf(NAME_Debug, "002: %s:  b=(%g,%g); e=(%g,%g); mb=(%d,%d); me=(%d,%d); bsize=(%d,%d)", Self->GetClass()->GetName(), bx1, by1, bx2, by2, xt1, yt1, xt2, yt2, Self->XLevel->BlockMapWidth, Self->XLevel->BlockMapHeight);
-  }
-  */
-
   Count = Intercepts.Num();
   In = Intercepts.Ptr();
 

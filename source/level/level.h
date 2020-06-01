@@ -1058,263 +1058,56 @@ extern VLevel *GClLevel; // level for client-only games
 #define MAPBLOCKUNITS  (128)
 
 
-//#define VV_ZDOOM_BMAP_WALKER
-
 struct VBlockMapWalker {
-private:
-  #ifdef VV_ZDOOM_BMAP_WALKER
-  typedef int fixed_t;
-
-  enum {
-    FRACBITS = 16,
-    FRACUNIT = 1<<FRACBITS,
-
-    MAPBLOCKSIZE = MAPBLOCKUNITS*FRACUNIT,
-    MAPBLOCKSHIFT = FRACBITS+7,
-    MAPBTOFRAC = MAPBLOCKSHIFT-FRACBITS,
-  };
-
-  static VVA_CHECKRESULT inline float FL (const fixed_t x) noexcept { return ((float)(x)/(float)FRACUNIT); }
-  static VVA_CHECKRESULT inline fixed_t FX (const float x) noexcept { return (fixed_t)((x)*FRACUNIT); }
-  #endif
-
 public:
-  #ifdef VV_ZDOOM_BMAP_WALKER
-  int mapx, mapy;
-  float xstep, ystep;
-  float partialx, partialy;
-  float xintercept, yintercept;
-  int mapxstep, mapystep;
-  int count;
-  int xt1, yt1;
-  int xt2, yt2;
-  int cornerHit;
-  int cornermapx, cornermapy;
-  int cornermapxstep, cornermapystep;
-  #else
   DDALineWalker<MAPBLOCKUNITS, MAPBLOCKUNITS> dda;
-  #endif
+  int maxTileX, maxTileY;
 
 public:
   inline VBlockMapWalker () noexcept {}
-  inline VBlockMapWalker (const VLevel *level, float ax0, float ay0, float ax1, float ay1) noexcept { start(level, ax0, ay0, ax1, ay1); }
 
   // returns `false` if coords are out of bounds
-  //TODO: clip to blockmap extents
+  // note that if this method returned `false`, calling `next()` method is UB
   inline bool start (const VLevel *level, float x1, float y1, float x2, float y2) noexcept {
-    //GLog.Logf(NAME_Debug, "SightPathTraverse: start=(%g,%g); end=(%g,%g); bmorg=(%g,%g)", x1, y1, x2, y2, level->BlockMapOrgX, level->BlockMapOrgY);
-    //GLog.Logf(NAME_Debug, "SightPathTraverse: bstart=(%g,%g); bend=(%g,%g)", x1-level->BlockMapOrgX, y1-level->BlockMapOrgY, x2-level->BlockMapOrgX, y2-level->BlockMapOrgY);
+    maxTileX = level->BlockMapWidth;
+    maxTileY = level->BlockMapHeight;
+    if (maxTileX < 1 || maxTileY < 1) return false; // oops
 
-    #ifdef VV_ZDOOM_BMAP_WALKER
-      if (((FX(x1-level->BlockMapOrgX))&(MAPBLOCKSIZE-1)) == 0) x1 += (x1 <= x2 ? -1.0f : 1.0f); // don't side exactly on a line
-      if (((FX(y1-level->BlockMapOrgY))&(MAPBLOCKSIZE-1)) == 0) y1 += (y1 <= y2 ? -1.0f : 1.0f); // don't side exactly on a line
+    x1 -= level->BlockMapOrgX;
+    y1 -= level->BlockMapOrgY;
+    x2 -= level->BlockMapOrgX;
+    y2 -= level->BlockMapOrgY;
 
-      //k8: check if `Length()` and `SetPointDirXY()` are happy
-      if (x1 == x2 && y1 == y2) { x2 += 0.02f; y2 += 0.02f; }
+    const int bmWidth = maxTileX*MAPBLOCKUNITS;
+    const int bmHeight = maxTileY*MAPBLOCKUNITS;
 
-      cornerHit = 0;
-      count = 0;
+    // clip to blockmap rectanle
+    //GLog.Logf("WKLINE000: x1=%g; y1=%g; x2=%g; y2=%g; w=%d; h=%d", x1, y1, x2, y2, level->BlockMapWidth*MAPBLOCKUNITS, level->BlockMapHeight*MAPBLOCKUNITS);
+    if (!ClipLineToRect0(&x1, &y1, &x2, &y2, bmWidth, bmHeight)) {
+      // fully clipped away, so don't do anything here
+      //GLog.Logf(NAME_Debug, "***CLIPPED!");
+      return false;
+    }
+    //GLog.Logf("WKLINE001: x1=%g; y1=%g; x2=%g; y2=%g; w=%d; h=%d", x1, y1, x2, y2, level->BlockMapWidth*MAPBLOCKUNITS, level->BlockMapHeight*MAPBLOCKUNITS);
 
-      x1 -= level->BlockMapOrgX;
-      y1 -= level->BlockMapOrgY;
-      x2 -= level->BlockMapOrgX;
-      y2 -= level->BlockMapOrgY;
+    // values should be valid here, but hey, why don't double-ensure it?
+    const int ix1 = clampval((int)x1, 0, bmWidth-1);
+    const int iy1 = clampval((int)y1, 0, bmHeight-1);
+    const int ix2 = clampval((int)x2, 0, bmWidth-1);
+    const int iy2 = clampval((int)y2, 0, bmHeight-1);
 
-      if (!ClipLineToRect0(&x1, &y1, &x2, &y2, level->BlockMapWidth*MAPBLOCKUNITS, level->BlockMapHeight*MAPBLOCKUNITS)) {
-        //GLog.Logf(NAME_Debug, "***CLIPPED!");
-        return false;
-      }
-
-      xt1 = MapBlock(x1);
-      yt1 = MapBlock(y1);
-      xt2 = MapBlock(x2);
-      yt2 = MapBlock(y2);
-
-      // points should never be out of bounds, but check once instead of each block
-      // FIXME:TODO: k8: allow traces outside of blockmap (do line clipping)
-      if (xt1 < 0 || yt1 < 0 || xt1 >= level->BlockMapWidth || yt1 >= level->BlockMapHeight ||
-          xt2 < 0 || yt2 < 0 || xt2 >= level->BlockMapWidth || yt2 >= level->BlockMapHeight)
-      {
-        return false;
-      }
-
-      if (xt2 > xt1) {
-        mapxstep = 1;
-        partialx = 1.0f-FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
-        ystep = (y2-y1)/fabsf(x2-x1);
-      } else if (xt2 < xt1) {
-        mapxstep = -1;
-        partialx = FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
-        ystep = (y2-y1)/fabsf(x2-x1);
-      } else {
-        mapxstep = 0;
-        partialx = 1.0f;
-        ystep = 256.0f;
-      }
-      yintercept = FL(FX(y1)>>MAPBTOFRAC)+partialx*ystep;
-
-      if (yt2 > yt1) {
-        mapystep = 1;
-        partialy = 1.0f-FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
-        xstep = (x2-x1)/fabsf(y2-y1);
-      } else if (yt2 < yt1) {
-        mapystep = -1;
-        partialy = FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
-        xstep = (x2-x1)/fabsf(y2-y1);
-      } else {
-        mapystep = 0;
-        partialy = 1.0f;
-        xstep = 256.0f;
-      }
-      xintercept = FL(FX(x1)>>MAPBTOFRAC)+partialy*xstep;
-
-      //GLog.Logf(NAME_Debug, "000: xt1=%d; yt1=%d; xt2=%d; yt2=%d; mxstep=%d; mystep=%d; xstep=%g; ystep=%g; partialx=%g; partialy=%g; xitc=%g; yitc=%g", xt1, yt1, xt2, yt2, mapxstep, mapystep, xstep, ystep, partialx, partialy, xintercept, yintercept);
-
-      // [RH] fix for traces that pass only through blockmap corners. in that case,
-      // xintercept and yintercept can both be set ahead of mapx and mapy, so the
-      // for loop would never advance anywhere.
-      if (fabsf(xstep) == 1.0f && fabsf(ystep) == 1.0f) {
-        if (ystep < 0.0f) partialx = 1.0f-partialx;
-        if (xstep < 0.0f) partialy = 1.0f-partialy;
-        if (partialx == partialy) { xintercept = xt1; yintercept = yt1; }
-      }
-
-      //GLog.Logf(NAME_Debug, "001: xt1=%d; yt1=%d; xt2=%d; yt2=%d; mxstep=%d; mystep=%d; xstep=%g; ystep=%g; partialx=%g; partialy=%g; xitc=%g; yitc=%g", xt1, yt1, xt2, yt2, mapxstep, mapystep, xstep, ystep, partialx, partialy, xintercept, yintercept);
-
-      // step through map blocks
-      // count is present to prevent a round off error from skipping the break
-      mapx = xt1;
-      mapy = yt1;
-
-    #else
-      x1 -= level->BlockMapOrgX;
-      y1 -= level->BlockMapOrgY;
-      x2 -= level->BlockMapOrgX;
-      y2 -= level->BlockMapOrgY;
-
-      //GLog.Logf("WKLINE000: x1=%g; y1=%g; x2=%g; y2=%g; w=%d; h=%d", x1, y1, x2, y2, level->BlockMapWidth*MAPBLOCKUNITS, level->BlockMapHeight*MAPBLOCKUNITS);
-      if (!ClipLineToRect0(&x1, &y1, &x2, &y2, level->BlockMapWidth*MAPBLOCKUNITS, level->BlockMapHeight*MAPBLOCKUNITS)) {
-        //GLog.Logf(NAME_Debug, "***CLIPPED!");
-        return false;
-      }
-      //GLog.Logf("WKLINE001: x1=%g; y1=%g; x2=%g; y2=%g; w=%d; h=%d", x1, y1, x2, y2, level->BlockMapWidth*MAPBLOCKUNITS, level->BlockMapHeight*MAPBLOCKUNITS);
-
-      //k8: this shouldn't be the case after clipping, but check it anyway
-      #if 0
-      const int xt1 = MapBlock(x1);
-      const int yt1 = MapBlock(y1);
-      const int xt2 = MapBlock(x2);
-      const int yt2 = MapBlock(y2);
-
-      //GLog.Logf(NAME_Debug, "SightPathTraverse: t1=(%d,%d); t2=(%d,%d); bsize=(%d,%d)", xt1, yt1, xt2, yt2, level->BlockMapWidth, level->BlockMapHeight);
-
-      // points should never be out of bounds, but check once instead of each block
-      // FIXME:TODO: k8: allow traces outside of blockmap (do line clipping)
-      if (xt1 < 0 || yt1 < 0 || xt1 >= level->BlockMapWidth || yt1 >= level->BlockMapHeight ||
-          xt2 < 0 || yt2 < 0 || xt2 >= level->BlockMapWidth || yt2 >= level->BlockMapHeight)
-      {
-        return false;
-      }
-      #endif
-
-      //dda.start((int)(floorf(x1)), (int)(floorf(y1)), (int)(floorf(x2)), (int)(floorf(y2)));
-      dda.start((int)x1, (int)y1, (int)x2, (int)y2, level->BlockMapWidth, level->BlockMapHeight);
-    #endif
+    dda.start(ix1, iy1, ix2, iy2);
 
     return true;
   }
 
-  // returns `false` if we should stop (and map coords are undefined)
+  // returns `false` if we should stop (and map coords are undefined in this case)
   inline bool next (int &tileX, int &tileY) noexcept {
-    #ifdef VV_ZDOOM_BMAP_WALKER
-      if (cornerHit) {
-        switch (cornerHit++) {
-          case 1:
-            tileX = cornermapx+cornermapxstep;
-            tileY = cornermapy;
-            return true;
-          case 2:
-            tileX = cornermapx;
-            tileY = cornermapy+cornermapystep;
-            return true;
-          case 3:
-            cornerHit = 0;
-            break;
-          default: // 4 means "aborted"
-            return false;
-        }
-      }
-
-      tileX = mapx;
-      tileY = mapy;
-
-      /*
-      if (mapx == xt2 && mapy == yt2) {
-        cornerHit = 4;
-        return true;
-      }
-      */
-
-      if ((mapxstep|mapystep) == 0) {
-        // arrived at a destination, abort on the next step
-        cornerHit = 4;
-        return true;
-      }
-
-      if (++count >= 1000) return false;
-
-      // [RH] Handle corner cases properly instead of pretending they don't exist
-      const int cind = (((int)((int)yintercept == mapy))<<1)|((int)((int)xintercept == mapx));
-      switch (cind) {
-        case 0: // neither xintercept nor yintercept match
-          //GLog.Logf(NAME_Debug, "*** SCREWED! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
-          // stop traversing, because somebody screwed up
-          cornerHit = 4; // aborted
-          break;
-          //return false;
-        case 1: // xintercept matches
-          //GLog.Logf(NAME_Debug, "*** cind=%d! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", cind, mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
-          xintercept += xstep;
-          mapy += mapystep;
-          if (mapy == yt2) mapystep = 0;
-          break;
-        case 2: // yintercept matches
-          //GLog.Logf(NAME_Debug, "*** cind=%d! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", cind, mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
-          yintercept += ystep;
-          mapx += mapxstep;
-          if (mapx == xt2) mapxstep = 0;
-          break;
-        case 3:
-          //GLog.Logf(NAME_Debug, "*** cind=%d! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", cind, mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
-          // the trace is exiting a block through its corner. not only does the block
-          // being entered need to be checked (which will happen when this loop
-          // continues), but the other two blocks adjacent to the corner also need to
-          // be checked.
-          // note that vanilla didn't do this, so it may be worth fixing with compat flag
-          cornermapx = mapx;
-          cornermapy = mapy;
-          cornermapxstep = mapxstep;
-          cornermapystep = mapystep;
-          cornerHit = 1;
-          xintercept += xstep;
-          yintercept += ystep;
-          mapx += mapxstep;
-          mapy += mapystep;
-          if (mapx == xt2) mapxstep = 0;
-          if (mapy == yt2) mapystep = 0;
-          break;
-      }
-      //GLog.Logf(NAME_Debug, "*** EXIT: map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
-      return true;
-
-    #else
-      //int guard = 1000;
-      while (dda.next(tileX, tileY)) {
-        if (tileX >= 0 && tileX < dda.maxTileX && tileY >= 0 && tileY < dda.maxTileY) return true;
-        //if (--guard == 0) Sys_Error("DDA walker fuckup! (1)");
-      }
-      return false;
-    #endif
+    while (dda.next(tileX, tileY)) {
+      if (tileX >= 0 && tileX < maxTileX && tileY >= 0 && tileY < maxTileY) return true;
+    }
+    tileX = tileY = 0; // just to make sure that we won't leave uninitialised values there
+    return false;
   }
 };
 

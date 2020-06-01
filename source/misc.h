@@ -228,6 +228,17 @@ static VVA_OKUNUSED inline bool ClipLineToRect0 (float *ax, float *ay, float *bx
 #undef CLTR_BOTTOM
 
 
+// this is blockmap walker
+// note that due to using floating point numbers, exact corner hits may be missed.
+// this is usually not a problem with Doom, because the line is registered in all
+// blockmap cells it touches, so you will hardly get a geometry where missing one
+// of the adjacent cells while moving through the corner will also miss some lines.
+// but if you'll want to use this code in some other context, you'd better be
+// aware of this fact.
+// also note that this code may not work right with negative coordinates.
+// higher-level blockmap walking code will make sure to never pass negatives here.
+// but please note that `next()` may still return negative tile coords sometimes.
+// this is not a bug, and you'd better filter bad coords in the caller.
 template<unsigned tileWidth, unsigned tileHeight> struct DDALineWalker {
 public:
   // worker variables
@@ -237,17 +248,14 @@ public:
   double deltaDistX, deltaDistY; // length of ray from one x or y-side to next x or y-side
   double sideDistX, sideDistY; // length of ray from current position to next x-side
   int stepX, stepY; // what direction to step in x/y (either +1 or -1)
-  int cornerHit; // 0: no; 1: return horiz cell; 2: return vert cell; 3: do step on both dirs; 4: abort
-  int maxTileX, maxTileY;
+  int cornerHit; // 0: no; 1: return horiz cell; 2: return vert cell; 3: do step on both dirs; 4: abort (i.e. we're done)
 
 public:
   inline DDALineWalker () noexcept {}
-  inline DDALineWalker (int x0, int y0, int x1, int y1, int amaxtx, int amaxty) noexcept { start(x0, y0, x1, y1, amaxtx, amaxty); }
+  inline DDALineWalker (int x0, int y0, int x1, int y1) noexcept { start(x0, y0, x1, y1); }
 
-  void start (int x0, int y0, int x1, int y1, int amaxtx, int amaxty) noexcept {
+  void start (int x0, int y0, int x1, int y1) noexcept {
     cornerHit = 0;
-    maxTileX = amaxtx;
-    maxTileY = amaxty;
 
     #if 0
     // this seems to be better for negative coords, but negatives should not arrive here
@@ -265,29 +273,22 @@ public:
     currTileX = tileSX;
     currTileY = tileSY;
 
-    //GLog.Logf(NAME_Debug, "*** start=(%d,%d)", tileSX, tileSY);
-    //GLog.Logf(NAME_Debug, "*** end  =(%d,%d)", endTileX, endTileY);
-
     // it is ok to waste some time here
     if (tileSX == endTileX || tileSY == endTileY) {
       if (tileSX == endTileX && tileSY == endTileY) {
         // nowhere to go (but still return the starting tile)
-        //GLog.Logf(NAME_Debug, "  POINT!");
-        stepX = stepY = 0; // this can be used as a "stop signal"
+        stepX = stepY = 0; // this will be used as a "stop signal"
       } else if (tileSX == endTileX) {
         // vertical
         vassert(tileSY != endTileY);
         stepX = 0;
         stepY = (y0 < y1 ? 1 : -1);
-        //GLog.Logf(NAME_Debug, "  VERTICAL!");
       } else {
         // horizontal
         vassert(tileSY == endTileY);
         stepX = (x0 < x1 ? 1 : -1);
         stepY = 0;
-        //GLog.Logf(NAME_Debug, "  HORIZONTAL!");
       }
-      //GLog.Logf(NAME_Debug, "  step=(%d,%d)!", stepX, stepY);
       // init variables to shut up the compiler
       deltaDistX = deltaDistY = sideDistX = sideDistY = 0;
       return;
@@ -318,27 +319,26 @@ public:
   }
 
   // returns `false` if we're done (and the coords are undefined)
+  // i.e. you can use `while (w.next(...))` loop
   inline bool next (int &tilex, int &tiley) noexcept {
     // check for a special condition
     if (cornerHit) {
-      //GLog.Logf(NAME_Debug, "CORNER: %d", cornerHit);
       switch (cornerHit++) {
         case 1: // check adjacent horizontal tile
           if (!stepX) { ++cornerHit; goto doadjy; } // this shouldn't happen, but better play safe
           tilex = currTileX+stepX;
           tiley = currTileY;
-          if (tilex < 0 || tilex >= maxTileX) { ++cornerHit; goto doadjy; }
           return true;
         case 2: // check adjacent vertical tile
          doadjy:
           if (!stepY) goto donextc;
           tilex = currTileX;
           tiley = currTileY+stepY;
-          if (tiley < 0 || tiley >= maxTileY) goto donextc; // this shouldn't happen, but better play safe
           return true;
         case 3: // move to the next tile
          donextc:
-          // corner case check (this shouldn't happen, but better play safe)
+          // overshoot check (see the note below)
+          // this should not happen, but let's play safe
           if (currTileX == endTileX) stepX = 0;
           if (currTileY == endTileY) stepY = 0;
           // move through the corner
@@ -348,6 +348,10 @@ public:
           currTileY += stepY;
           // resume normal processing
           cornerHit = 0;
+          // another overshoot check (see the note below)
+          // this should not happen, but let's play safe
+          if (currTileX == endTileX) stepX = 0;
+          if (currTileY == endTileY) stepY = 0;
           break;
         default:
           return false; // no more
@@ -358,13 +362,18 @@ public:
     tilex = currTileX;
     tiley = currTileY;
 
-    //GLog.Logf(NAME_Debug, "  000: res=(%d,%d); step=(%d,%d); sideDist=(%g,%g); delta=(%g,%g)", tilex, tiley, stepX, stepY, sideDistX, sideDistY, deltaDistX, deltaDistY);
+    // note: we need to stop one of the orthogonal cell movements when we'll
+    // arive at the destination horizontal or vercital cell. this is because
+    // we may go past the end of the original line. it has little to do with
+    // floating point inexactness, because integer-based tracer has the same
+    // problem. this is not a bug in the code, but the consequence of our
+    // "edge sticking" movement.
+
     // check if we're done (sorry for this bitop mess); checks step vars just to be sure
     if (!((currTileX^endTileX)|(currTileY^endTileY)) || !(stepX|stepY)) {
       cornerHit = 4; // no more
     } else if (stepX && stepY) {
-      // jump to next map square, either in x-direction, or in y-direction
-      //print("  sdxy=(%s,%s); dxy=(%s,%s); stxy=(%s,%s)", sideDistX, sideDistY, deltaDistX, deltaDistY, stepX, stepY);
+      // jump to the next map square, either in x-direction, or in y-direction
       if (sideDistX == sideDistY) {
         // this will jump through a corner, so we have to process adjacent cells first (see the code above)
         cornerHit = 1;
@@ -372,21 +381,20 @@ public:
         // horizontal step
         sideDistX += deltaDistX;
         currTileX += stepX;
-        // don't overshoot (sadly, this may happen with long traces)
+        // don't overshoot (see the note above)
         if (currTileX == endTileX) stepX = 0;
       } else {
         // vertical step
         sideDistY += deltaDistY;
         currTileY += stepY;
-        // don't overshoot (sadly, this may happen with long traces)
+        // don't overshoot (see the note above)
         if (currTileY == endTileY) stepY = 0;
       }
     } else {
-      // horizontal or vertical
+      // strictly orthogonal movement; don't bother with distances here
       currTileX += stepX;
       currTileY += stepY;
     }
-    //GLog.Logf(NAME_Debug, "  001: res=(%d,%d); step=(%d,%d); sideDist=(%g,%g); delta=(%g,%g); cc=%d", tilex, tiley, stepX, stepY, sideDistX, sideDistY, deltaDistX, deltaDistY, cornerHit);
 
     return true;
   }
