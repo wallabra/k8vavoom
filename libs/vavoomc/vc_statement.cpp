@@ -3629,7 +3629,7 @@ VStatement *VReturn::DoResolve (VEmitContext &ec) {
     Expr = (ec.FuncRetType.Type == TYPE_Float ? Expr->ResolveFloat(ec) : Expr->Resolve(ec));
     if (!Expr) wasError = true;
     if (!wasError && ec.FuncRetType.Type == TYPE_Void) {
-      // allow `return func();` in voids if `func()` is void too
+      // allow `return func();` in voids
       if (Expr->Type.Type != TYPE_Void) {
         ParseError(Loc, "void function cannot return a value");
         wasError = true;
@@ -3679,7 +3679,8 @@ void VReturn::DoEmit (VEmitContext &ec) {
   if (Expr) {
          if (Expr->Type.GetStackSlotCount() == 1) ec.AddStatement(OPC_ReturnL, Loc);
     else if (Expr->Type.Type == TYPE_Vector) ec.AddStatement(OPC_ReturnV, Loc);
-    else ParseError(Loc, "Bad return type `%s`", *Expr->Type.GetName());
+    else ec.AddStatement(OPC_Return, Loc);
+    //else ParseError(Loc, "Bad return type `%s`", *Expr->Type.GetName());
   } else {
     ec.AddStatement(OPC_Return, Loc);
   }

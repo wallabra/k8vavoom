@@ -712,10 +712,45 @@ VExpression *VParser::ParseExpressionPriority0 () {
         }
       }
       break;
+    case TK_Void:
+      // void(val) --> drop expression result
+      {
+        Lex.NextToken();
+        Lex.Expect(TK_LParen);
+        VExpression *op = ParseTernaryExpression();
+        if (!op) ParseError(l, "Expression expected");
+        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+        return new VDropResult(op);
+      }
     case TK_Cast:
       {
         Lex.NextToken();
         Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
+        // allow casts to primitive types
+        switch (Lex.Token) {
+          case TK_Int:
+          case TK_Float:
+          case TK_String:
+          case TK_Name:
+          case TK_Void:
+            {
+              auto tk = Lex.Token;
+              Lex.NextToken();
+              Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+              VExpression *op = ParseExpressionPriority1();
+              if (!op) ParseError(l, "Expression expected");
+              switch (tk) {
+                case TK_Int: return new VScalarToInt(op, false);
+                case TK_Float: return new VScalarToFloat(op, false);
+                case TK_String: return new VCastToString(op, false);
+                case TK_Name: return new VCastToName(op, false);
+                case TK_Void: return new VDropResult(op);
+                default: VCFatalError("VC: Ketmar forgot to handle some type in `VParser::ParseExpressionPriority0()`");
+              }
+            }
+            break;
+          default: break;
+        }
         VExpression *t = ParseTypeWithPtrs(false); // no delegates
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         VExpression *e = ParseExpressionPriority1();
