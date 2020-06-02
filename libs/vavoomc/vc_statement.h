@@ -503,6 +503,7 @@ public:
   virtual VStatement *DoResolve (VEmitContext &ec) override;
   virtual void DoEmit (VEmitContext &ec) override;
 
+  virtual void EmitCtor (VEmitContext &ec) override;
   virtual void EmitDtor (VEmitContext &ec, bool properLeave) override;
 
   virtual VStr toString () override;

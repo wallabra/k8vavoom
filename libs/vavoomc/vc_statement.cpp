@@ -2354,6 +2354,20 @@ void VForeachScriptedOuter::DoEmit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VForeachScriptedOuter::EmitCtor
+//
+//==========================================================================
+void VForeachScriptedOuter::EmitCtor (VEmitContext &ec) {
+  if (initLocIdx >= 0) {
+    ec.AllocateLocalSlot(initLocIdx);
+    VLocalVarDef &loc = ec.GetLocalByIndex(initLocIdx);
+    if (loc.reused && loc.Type.NeedZeroingOnSlotReuse()) ec.EmitLocalZero(initLocIdx, Loc);
+  }
+}
+
+
+//==========================================================================
+//
 //  VForeachScriptedOuter::EmitDtor
 //
 //==========================================================================
@@ -2466,7 +2480,6 @@ void VForeachScripted::DoSyntaxCopyTo (VStatement *e) {
 //==========================================================================
 VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
   bool wasError = false;
-  int initLocIdx = -1;
 
   // indent check
   if (Statement && !CheckCondIndent(Loc, Statement)) wasError = true;
@@ -2541,7 +2554,7 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
       VLocalVarDef &L = ec.NewLocal(NAME_None, minit->ParamTypes[0], Loc);
       L.Visible = false; // it is unnamed, and hidden ;-)
       //tempLocals.append(L.GetIndex());
-      initLocIdx = itlocidx;
+      //initLocIdx = itlocidx;
       itlocidx = L.GetIndex();
     }
 
@@ -2642,7 +2655,7 @@ VStatement *VForeachScripted::DoResolve (VEmitContext &ec) {
   if (wasError) return CreateInvalid();
 
   // create outer statement
-  VStatement *res = new VForeachScriptedOuter(isBoolInit, ivInit, initLocIdx, this, Loc);
+  VStatement *res = new VForeachScriptedOuter(isBoolInit, ivInit, itlocidx, this, Loc);
   ivInit = nullptr;
   return res;
 }
