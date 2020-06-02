@@ -2510,6 +2510,11 @@ void VInvocation::Emit (VEmitContext &ec) {
         ec.AllocateLocalSlot(lcidx[i]);
         //GLog.Logf(NAME_Debug, "%s:001: invoke: arg #%d: lofs=%d; reused=%d", *Loc.toStringNoCol(), i, loc.Offset, (int)loc.reused);
         if (loc.reused) ec.EmitLocalZero(lcidx[i], Loc); // forced zero if reused
+        // check if we won't forgont to allocate the local
+        if (loc.Offset == -666) {
+          // this means that the local was not properly allocated
+          VCFatalError("%s: local #%d (%s) was not properly allocated (internal compiler error)", *Loc.toStringNoCol(), lcidx[i], (loc.Name != NAME_None ? *loc.Name : "<hidden>"));
+        }
         ec.EmitLocalAddress(loc.Offset, Loc);
         ++SelfOffset; // pointer
       } else {
@@ -2640,6 +2645,11 @@ void VInvocation::Emit (VEmitContext &ec) {
   } else if (DelegateLocal >= 0) {
     // get address of local
     const VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
+    // check if we won't forgont to allocate the local
+    if (loc.Offset == -666) {
+      // this means that the local was not properly allocated
+      VCFatalError("%s: local #%d (%s) was not properly allocated (internal compiler error)", *Loc.toStringNoCol(), DelegateLocal, (loc.Name != NAME_None ? *loc.Name : "<hidden>"));
+    }
     ec.EmitLocalAddress(loc.Offset, Loc);
     ec.AddStatement(OPC_DelegateCallPtr, loc.Type, SelfOffset, Loc);
   } else if (DgPtrExpr) {

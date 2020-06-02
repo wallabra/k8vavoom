@@ -488,6 +488,14 @@ void VLocalVar::RequestAddressOfForAssign () {
 //
 //==========================================================================
 void VLocalVar::Emit (VEmitContext &ec) {
+  const VLocalVarDef &loc = ec.GetLocalByIndex(num);
+
+  // check if we won't forgont to allocate the local
+  if (loc.Offset == -666) {
+    // this means that the local was not properly allocated
+    VCFatalError("%s: local #%d (%s) was not properly allocated (internal compiler error)", *Loc.toStringNoCol(), num, (loc.Name != NAME_None ? *loc.Name : "<hidden>"));
+  }
+
   if (requestedAssAddr) {
     /* this gives alot of false positives
     if (VMemberBase::WarningUnusedLocals) {
@@ -516,12 +524,10 @@ void VLocalVar::Emit (VEmitContext &ec) {
   }
 
   if (AddressRequested) {
-    const VLocalVarDef &loc = ec.GetLocalByIndex(num);
     ec.EmitLocalAddress(loc.Offset, Loc);
   } else if (locSavedFlags&(FPARM_Out|FPARM_Ref)) {
     ec.EmitLocalPtrValue(num, Loc);
     if (PushOutParam) {
-      const VLocalVarDef &loc = ec.GetLocalByIndex(num);
       EmitPushPointedCode(loc.Type, ec);
     }
   } else {
