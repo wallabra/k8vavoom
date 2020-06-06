@@ -315,13 +315,18 @@ if(NOT DEBUG_FPU_CHECKS AND NOT SWITCH_LIBNX)
     set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-math-errno")
   endif()
 endif(NOT DEBUG_FPU_CHECKS AND NOT SWITCH_LIBNX)
-set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-unsafe-math-optimizations")
-set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-associative-math")
-set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-reciprocal-math")
-set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-finite-math-only")
-set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fsigned-zeros")
-set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fsignaling-nans") # do not touch my NaNs!
-set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -frounding-math") # get lost!
+
+# actually, we don't need strict floating point math compliance, so let's use "-ffast-math"
+#set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-unsafe-math-optimizations")
+#set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-associative-math")
+#set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-reciprocal-math")
+#set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-finite-math-only")
+#set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fsigned-zeros")
+#set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fsignaling-nans") # do not touch my NaNs!
+#set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -frounding-math") # get lost!
+# we don't need strict standards compliance
+# note that this may modify NaNs, so if we'll use NaN-boxing, we should put "-fsignaling-nans" after fastmath
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -ffast-math")
 
 # force gcc to unroll some loops
 set(K8_OPT_GCC_FLAGS "${K8_OPT_GCC_FLAGS} -funroll-loops")
