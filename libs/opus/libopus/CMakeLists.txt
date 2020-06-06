@@ -26,7 +26,7 @@ option(OPUS_ENABLE_FLOAT_API
        ON)
 option(OPUS_FLOAT_APPROX
        "Enable floating point approximations (Ensure your platform supports IEEE 754 before enabling)"
-       OFF)
+       ON)
 option(OPUS_INSTALL_PKG_CONFIG_MODULE "Install PkgConfig module" OFF)
 option(OPUS_INSTALL_CMAKE_CONFIG_MODULE "Install CMake package config module"
        OFF)
