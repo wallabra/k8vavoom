@@ -381,7 +381,7 @@ VAudioPublic::VAudioPublic()
   , NumChannels(0)
   , SndCount(0)
 {
-  memset(Channel, 0, sizeof(Channel));
+  memset((void *)Channel, 0, sizeof(Channel));
   ListenerForward = TVec(0, 0, -1);
   ListenerUp = TVec(0, 1, 0);
   ListenerOrigin = TVec(0, 0, 0);
@@ -434,7 +434,7 @@ void VAudioPublic::Init () {
   MaxSoundDist = VAudioPublic::snd_max_distance;
 
   // free all channels for use
-  memset(Channel, 0, sizeof(Channel));
+  memset((void *)Channel, 0, sizeof(Channel));
   NumChannels = (SoundDevice ? SoundDevice->SetChannels(snd_channels) : 0);
   for (int f = 0; f < MAX_CHANNELS; ++f) Channel[f].handle = -1;
 
