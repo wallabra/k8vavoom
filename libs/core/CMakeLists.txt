@@ -34,6 +34,9 @@ add_library(core STATIC
   name.h
   names.h
   name.cpp
+  ryu.h
+  ryu_d2s.c
+  ryu_f2s.c
   str.h
   vstrci.h
   str.cpp

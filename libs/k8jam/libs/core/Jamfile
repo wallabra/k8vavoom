@@ -13,8 +13,8 @@ Library libcore.a :
   src/minipng.cpp
   src/name.cpp
   src/prngs.cpp
-  #src/ryu_d2s.c
-  #src/ryu_f2s.c
+  src/ryu_d2s.c
+  src/ryu_f2s.c
   src/str.cpp
   src/strtod_plan9.c
   src/syslow.cpp

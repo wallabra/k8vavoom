@@ -28,9 +28,7 @@
 //
 //**************************************************************************
 #include "core.h"
-#include "ryu_f2s.c"
-#define RYU_OMIT_COMMON_INCLUDE
-#include "ryu_d2s.c"
+#include "ryu.h"
 
 #if !defined _WIN32 && !defined DJGPP
 #undef stricmp  //  Allegro defines them
