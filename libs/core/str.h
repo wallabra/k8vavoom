@@ -138,10 +138,12 @@ public:
 
   static int atoi (const char *s) noexcept { int res = 0; convertInt(s, &res, true); return res; }
 
-  enum { FloatBufSize = 16 };
+  enum { FloatBufSize = 32 }; /* 16 is enough, but let's play safe */
+  /* returns string length without trailing zero */
   static int float2str (char *buf, float v) noexcept; // 0-terminated
 
-  enum { DoubleBufSize = 26 };
+  enum { DoubleBufSize = 64 }; /* 25 is enough, but let's play safe */
+  /* returns string length without trailing zero */
   static int double2str (char *buf, double v) noexcept; // 0-terminated
 
 public:
