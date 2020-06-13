@@ -19,8 +19,10 @@ option(WITH_SYS_FLAC "Enable FLAC support via libflac (if off, dr_flac will be u
 option(WITH_FLUID "Enable FluidSynth support" ON)
 if(WIN32)
 option(WITH_SYS_FLUID "Use system FluidSynth library" OFF)
+option(WITH_XRANDR    "Enable XRandR support for DPI detection" OFF)
 else(WIN32)
 option(WITH_SYS_FLUID "Use system FluidSynth library" ON)
+option(WITH_XRANDR    "Enable XRandR support for DPI detection" ON)
 endif(WIN32)
 
 if(WITH_OPENGL)
@@ -939,6 +941,26 @@ else(SWITCH_LIBNX)
     endif(GNUTLS_FOUND)
   endif(ENABLE_VCCRUN)
 endif(SWITCH_LIBNX)
+
+
+##
+## XRandR
+##
+if(WITH_XRANDR)
+  PKG_CHECK_MODULES(XRANDR xrandr)
+  PKG_CHECK_MODULES(X11 x11)
+  if(XRANDR_FOUND AND X11_FOUND)
+    message(STATUS "Found XRandR: ${XRANDR_LIBRARIES}")
+    include_directories(${XRANDR_INCLUDE_DIRS})
+    include_directories(${X11_INCLUDE_DIRS})
+    set(MAIN_LIBS ${X11_LIBRARIES} ${XRANDR_LIBRARIES} ${MAIN_LIBS})
+    add_definitions(-DUSE_XRANDR=1)
+  else(XRANDR_FOUND AND X11_FOUND)
+    message(STATUS "Could NOT find XRandR")
+  endif(XRANDR_FOUND AND X11_FOUND)
+  #add_definitions(-DUSE_XRANDR=1)
+  #set(MAIN_LIBS xrandr X11 Xrandr ${MAIN_LIBS})
+endif(WITH_XRANDR)
 
 
 if(NO_SSE)

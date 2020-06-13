@@ -28,6 +28,10 @@
 #else
 # include <SDL.h>
 #endif
+#if !defined(SDL_MAJOR_VERSION) || SDL_MAJOR_VERSION != 2
+# error "SDL2 required!"
+#endif
+
 #include "gl_local.h"
 #include "../../icondata/k8vavomicondata.c"
 #include "splashlogo.inc"
@@ -140,6 +144,9 @@ public:
 
   virtual void GetRealWindowSize (int *rw, int *rh) override;
 
+  /* should be called after creating the main window; returns vertical aspect multiplier */
+  float GetMainWindowAspect ();
+
 private:
   void SetVSync (bool firstTime);
 
@@ -154,6 +161,11 @@ private:
 IMPLEMENT_DRAWER(VSdlOpenGLDrawer, DRAWER_OpenGL, "OpenGL", "SDL OpenGL rasteriser device", "-opengl");
 
 VCvarI gl_current_screen_fsmode("gl_current_screen_fsmode", "0", "Video mode: windowed(0), fullscreen scaled(1), fullscreen real(2)", CVAR_Rom);
+VCvarB gl_allow_xrandr_aspect("gl_allow_xrandr_aspect", true, "Allow XRandR aspect ratio query?", CVAR_Archive);
+
+
+extern float OS_SDL_GetMainWindowAspect (SDL_Window *win);
+bool OS_SDL_IsXRandRAspectAllowed () { return gl_allow_xrandr_aspect.asBool(); }
 
 
 //==========================================================================
@@ -176,6 +188,17 @@ VSdlOpenGLDrawer::VSdlOpenGLDrawer ()
   , hw_glctx(nullptr)
 {
   memset(imgtext, 0, sizeof(imgtext));
+}
+
+
+//==========================================================================
+//
+//  VSdlOpenGLDrawer::GetMainWindowAspect
+//
+//==========================================================================
+float VSdlOpenGLDrawer::GetMainWindowAspect () {
+  if (!hw_window) return 1.0f;
+  return OS_SDL_GetMainWindowAspect(hw_window);
 }
 
 
@@ -431,6 +454,8 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   }
   ScreenWidth = calcWidth;
   ScreenHeight = calcHeight;
+
+  mWindowAspect = GetMainWindowAspect();
 
   //SDL_DisableScreenSaver();
 

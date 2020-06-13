@@ -201,8 +201,8 @@ static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt, int *aspHoriz=
   if (aspectRatio < 0 || aspectRatio >= (int)ASPECT_COUNT) aspectRatio = 0;
   if (aspHoriz) *aspHoriz = AspectList[aspectRatio].horiz;
   if (aspVert) *aspVert = AspectList[aspectRatio].vert;
-  if (aspectRatio == 0) return 1.2f;
-  return ((float)scrhgt*(float)AspectList[aspectRatio].horiz)/((float)scrwdt*(float)AspectList[aspectRatio].vert)*1.2f;
+  if (aspectRatio == 0) return 1.2f*VDrawer::GetWindowAspect();
+  return ((float)scrhgt*(float)AspectList[aspectRatio].horiz)/((float)scrwdt*(float)AspectList[aspectRatio].vert)*1.2f*VDrawer::GetWindowAspect();
 }
 
 
@@ -212,7 +212,6 @@ static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt, int *aspHoriz=
 //
 //==========================================================================
 static float CalcBaseAspectRatio (int aspectRatio) {
-  // multiply with 1.2, because this is vanilla graphics scale
   if (aspectRatio < 0 || aspectRatio >= (int)ASPECT_COUNT) aspectRatio = 0;
   return (float)AspectList[aspectRatio].horiz/(float)AspectList[aspectRatio].vert;
 }

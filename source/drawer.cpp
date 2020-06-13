@@ -37,6 +37,7 @@ VCvarF gl_maxdist("gl_maxdist", "8192", "Max view distance (too big values will 
 TArray<void (*) (int phase)> VDrawer::cbInitDeinit;
 
 float VDrawer::LightFadeMult = 1.0f;
+float VDrawer::mWindowAspect = 1.0f;
 
 
 //**************************************************************************
@@ -68,6 +69,7 @@ VDrawer::VDrawer () noexcept
   ScrHgt = 200;
   #endif
   LightFadeMult = 1.0f;
+  mWindowAspect = 1.0f;
 
   vieworg = TVec(0.0f, 0.0f, 0.0f);
   viewangles = TAVec(0.0f, 0.0f, 0.0f);

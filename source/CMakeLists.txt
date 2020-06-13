@@ -619,9 +619,9 @@ if(ENABLE_CLIENT)
       set(MAIN_LIBS gdi32 ole32 winmm imm32 version ${MAIN_LIBS})
     endif(WIN32)
     set(MAIN_SOURCES ${MAIN_SOURCES} in_sdl.cpp sys_sdl.cpp)
-    set(MAIN_SOURCES ${MAIN_SOURCES} render/hwgl/gl_sdl.cpp)
-    set(VAVOOM_MAIN_DEPS ${VAVOOM_MAIN_DEPS} imago)
-    set(MAIN_LIBS imago ${MAIN_LIBS})
+    set(MAIN_SOURCES ${MAIN_SOURCES} render/hwgl/gl_sdl.cpp render/hwgl/gl_dpi.cpp)
+    ###set(VAVOOM_MAIN_DEPS ${VAVOOM_MAIN_DEPS} imago)
+    ###set(MAIN_LIBS imago ${MAIN_LIBS})
   endif(SDL2_FOUND)
 
 

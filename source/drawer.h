@@ -399,6 +399,9 @@ protected:
   // moved here, so we can fix them with FBO change
   int ScrWdt, ScrHgt;
 
+  /* set after creating the main window */
+  static float mWindowAspect;
+
   static TArray<void (*) (int phase)> cbInitDeinit;
 
   static void callICB (int phase);
@@ -432,6 +435,8 @@ public:
 public:
   VDrawer () noexcept;
   virtual ~VDrawer ();
+
+  static inline float GetWindowAspect () noexcept { return mWindowAspect; }
 
   inline bool CanUseRevZ () const noexcept { return useReverseZ; }
   inline bool IsShittyGPU () const noexcept { return isShittyGPU; }
