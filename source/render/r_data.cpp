@@ -1269,11 +1269,15 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
   else if (sc->Check("texture")) ttype = TEXTYPE_Wall;
   else sc->Error("unknown brightmap type");
   VName img;
+#ifdef CLIENT
   bool imgIsPath = false;
+#endif
   if (sc->ExpectName8WarnOrFilePath()) {
     img = sc->Name8;
   } else {
+#ifdef CLIENT
     imgIsPath = true;
+#endif
     img = VName(*sc->String, VName::AddLower);
   }
   VStr bmap;
