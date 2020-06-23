@@ -25,6 +25,10 @@
 //#include "rawtty.h"
 #include "core.h"
 
+#if defined(WIN32) && !defined(NO_RAWTTY)
+# define NO_RAWTTY
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
