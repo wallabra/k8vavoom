@@ -227,7 +227,7 @@ int mainXX (int argc, char **argv) {
 //==========================================================================
 static void checkEnableGoButton (HWND hwnd) {
   bool enabled = false;
-  if (wadlist.length() != 0) {
+  /*if (wadlist.length() != 0)*/ {
     static char fname[4096];
     GetDlgItemText(hwnd, IDM_DB_EDIT, fname, sizeof(fname));
     if (fname[0]) {
