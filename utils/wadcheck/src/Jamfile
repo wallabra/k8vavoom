@@ -2,6 +2,7 @@ SubDir TOP src ;
 
 Main wadcheck :
   main_wadcheck.cpp
+  wdb.cpp
 ;
 LinkLibraries wadcheck :
   libcore.a
