@@ -44,6 +44,7 @@ static HINSTANCE myHInst = NULL;
 static bool longReport = false;
 
 
+#if 0
 //==========================================================================
 //
 //  usage
@@ -73,6 +74,7 @@ static void showDBWadList () {
   GLog.Log("registered database wads:");
   for (auto &&wad : wadnames) GLog.Logf("  %s", *wad);
 }
+#endif
 
 
 static VStr dbname;
@@ -135,6 +137,7 @@ static void parseCmdLine (int argc, char **argv) {
 //  mainXX
 //
 //==========================================================================
+#if 0
 int mainXX (int argc, char **argv) {
   GLog.Logf("WADCHECK build date: %s  %s", __DATE__, __TIME__);
 
@@ -214,6 +217,7 @@ int mainXX (int argc, char **argv) {
   Z_ShuttingDown();
   return 0;
 }
+#endif
 
 
 //==========================================================================
@@ -247,7 +251,10 @@ static void checkEnableGoButton (HWND hwnd) {
 //==========================================================================
 static void ShowDBInfo (HWND hwnd) {
   SetDlgItemText(hwnd, IDM_DB_EDIT, *dbname);
-  VStr snfo = va("using database:\n%s\n", *dbname);
+  VStr snfo;
+  snfo += va("WADCHECK build date: %s  %s\n", __DATE__, __TIME__);
+  snfo += va("using database:\n%s\n", *dbname);
+  snfo += "WADs in database:\n";
   for (auto &&wn : wadnames) snfo += va("  %s\n", *wn);
   SetDlgItemText(hwnd, IDM_ED_RESULTS, *snfo);
   EnableWindow(GetDlgItem(hwnd, IDM_BT_SAVE), 0);
