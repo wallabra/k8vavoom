@@ -1,9 +1,18 @@
 SubDir TOP src ;
 
-Main wadcheck :
-  main_wadcheck.cpp
-  wdb.cpp
-;
+if ! $(WINDOZE) {
+  Main wadcheck :
+    wadcheck_posix.cpp
+    wdb.cpp
+  ;
+} else {
+  Main wadcheck :
+    wadcheck_doze.cpp
+    wdb.cpp
+  ;
+}
+
+
 LinkLibraries wadcheck :
   libcore.a
   #$(STATIC_LZMA_LIB)

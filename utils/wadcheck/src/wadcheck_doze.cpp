@@ -87,11 +87,7 @@ int main (int argc, char **argv) {
       bool found = false;
       for (int c = 0; c < flist.length(); ++c) {
         int cres;
-        #ifdef _WIN32
-        cres = arg.ICmp(flist[c]);
-        #else
         cres = arg.Cmp(flist[c]);
-        #endif
         if (cres == 0) { found = true; break; }
       }
       if (!found) flist.append(arg);

@@ -1,5 +1,7 @@
 softinclude $(TOP)/Jamrules.configure ;
+WINSUBSYS = console ;
 
+check-setup-windoze ;
 set-profile ;
 set-target-locations ;
 
