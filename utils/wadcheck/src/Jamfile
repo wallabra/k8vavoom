@@ -9,6 +9,7 @@ if ! $(WINDOZE) {
   Main wadcheck :
     wadcheck_doze.cpp
     wdb.cpp
+    resource.rc
   ;
 }
 

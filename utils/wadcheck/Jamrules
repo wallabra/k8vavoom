@@ -10,6 +10,10 @@ CFLAGS.all += -Wno-ignored-attributes ;
 
 DEFINES += IN_WADCHECK ;
 
+if $(WINDOZE) {
+  LINKLIBS.all += -lcomctl32 -lcomdlg32 ;
+}
+
 
 softinclude $(TOP)/Jamrules.local ;
 softinclude $(TOP)/Jamrules.libs ;
