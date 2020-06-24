@@ -899,7 +899,7 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
       L->Offset.z = sc->Float;
     } else if (sc->Check("coneangle")) {
       sc->ExpectFloat();
-      L->ConeAngle = clampval(sc->Float, 0.0, 360.0);
+      L->ConeAngle = clampval(sc->Float, 0.0f, 360.0f);
     } else if (sc->Check("conedir")) {
       sc->ExpectFloat();
       L->ConeDir.x = sc->Float;

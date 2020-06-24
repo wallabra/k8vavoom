@@ -73,7 +73,7 @@ public:
   VName Name8;
   VName Name;
   int Number;
-  double Float;
+  /*double*/float Float;
 
 private:
   VStr ScriptName;
