@@ -546,7 +546,7 @@ set(SERVER_COMMON_SOURCES
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(NOT WIN32)
-  set(K8VAVOOMDEV )
+  set(K8VAVOOMDEV OFF)
   if("$ENV{K8VAVOOMDEV}" STREQUAL "tan")
     set(K8VAVOOMDEV ON)
   endif()
