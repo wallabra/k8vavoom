@@ -67,4 +67,4 @@ public:
   friend bool operator >= (const VStrCI &S1, const VStrCI &S2) { return (S1.getData() == S2.getData() ? true : (ICmp(*S1, *S2) >= 0)); }
 };
 
-static inline VVA_OKUNUSED vuint32 GetTypeHash (const VStrCI &s) { return fnvHashStrCI(*s); }
+inline vuint32 GetTypeHash (const VStrCI &s) noexcept { return fnvHashStrCI(*s); }

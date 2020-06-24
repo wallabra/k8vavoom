@@ -28,7 +28,7 @@
 #include "../common.h"
 
 
-static VVA_OKUNUSED inline int digitInBase (char ch, int base=10) {
+static VVA_OKUNUSED inline int digitInBase (char ch, int base=10) noexcept {
   if (base < 1 || base > 36 || ch < '0') return -1;
   if (base <= 10) return (ch < 48+base ? ch-48 : -1);
   if (ch >= '0' && ch <= '9') return ch-48;
@@ -38,7 +38,7 @@ static VVA_OKUNUSED inline int digitInBase (char ch, int base=10) {
 }
 
 
-static VVA_OKUNUSED inline char upcase1251 (char ch) {
+static VVA_OKUNUSED inline char upcase1251 (char ch) noexcept {
   if ((vuint8)ch < 128) return ch-(ch >= 'a' && ch <= 'z' ? 32 : 0);
   if ((vuint8)ch >= 224 && (vuint8)ch <= 255) return (vuint8)ch-32;
   if ((vuint8)ch == 184 || (vuint8)ch == 186 || (vuint8)ch == 191) return (vuint8)ch-16;
@@ -47,7 +47,7 @@ static VVA_OKUNUSED inline char upcase1251 (char ch) {
 }
 
 
-static VVA_OKUNUSED inline char locase1251 (char ch) {
+static VVA_OKUNUSED inline char locase1251 (char ch) noexcept {
   if ((vuint8)ch < 128) return ch+(ch >= 'A' && ch <= 'Z' ? 32 : 0);
   if ((vuint8)ch >= 192 && (vuint8)ch <= 223) return (vuint8)ch+32;
   if ((vuint8)ch == 168 || (vuint8)ch == 170 || (vuint8)ch == 175) return (vuint8)ch+16;
@@ -56,7 +56,7 @@ static VVA_OKUNUSED inline char locase1251 (char ch) {
 }
 
 
-static VVA_OKUNUSED inline vuint32 nextPOTU32 (vuint32 x) {
+static VVA_OKUNUSED inline vuint32 nextPOTU32 (vuint32 x) noexcept {
   vuint32 res = x;
   res |= (res>>1);
   res |= (res>>2);
@@ -69,7 +69,7 @@ static VVA_OKUNUSED inline vuint32 nextPOTU32 (vuint32 x) {
 }
 
 
-static VVA_OKUNUSED inline vuint32 hashU32 (vuint32 a) {
+static VVA_OKUNUSED inline vuint32 hashU32 (vuint32 a) noexcept {
   vuint32 res = (vuint32)a;
   res -= (res<<6);
   res = res^(res>>17);
@@ -83,7 +83,7 @@ static VVA_OKUNUSED inline vuint32 hashU32 (vuint32 a) {
 
 
 // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
-static VVA_OKUNUSED inline vuint32 fnvHashBufCI (const void *buf, size_t len) {
+static VVA_OKUNUSED inline vuint32 fnvHashBufCI (const void *buf, size_t len) noexcept {
   vuint32 hash = 2166136261U; // fnv offset basis
   const vuint8 *s = (const vuint8 *)buf;
   while (len--) {
@@ -95,7 +95,7 @@ static VVA_OKUNUSED inline vuint32 fnvHashBufCI (const void *buf, size_t len) {
 
 
 // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
-static VVA_OKUNUSED inline vuint32 fnvHashBuf (const void *buf, size_t len) {
+static VVA_OKUNUSED inline vuint32 fnvHashBuf (const void *buf, size_t len) noexcept {
   vuint32 hash = 2166136261U; // fnv offset basis
   if (len) {
     const vuint8 *s = (const vuint8 *)buf;
@@ -109,7 +109,7 @@ static VVA_OKUNUSED inline vuint32 fnvHashBuf (const void *buf, size_t len) {
 
 
 // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
-static VVA_OKUNUSED inline vuint32 fnvHashStr (const void *buf) {
+static VVA_OKUNUSED inline vuint32 fnvHashStr (const void *buf) noexcept {
   vuint32 hash = 2166136261U; // fnv offset basis
   if (buf) {
     const vuint8 *s = (const vuint8 *)buf;
@@ -123,7 +123,7 @@ static VVA_OKUNUSED inline vuint32 fnvHashStr (const void *buf) {
 
 
 // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
-static VVA_OKUNUSED inline vuint32 fnvHashStrCI (const void *buf) {
+static VVA_OKUNUSED inline vuint32 fnvHashStrCI (const void *buf) noexcept {
   vuint32 hash = 2166136261U; // fnv offset basis
   if (buf) {
     const vuint8 *s = (const vuint8 *)buf;
@@ -137,7 +137,7 @@ static VVA_OKUNUSED inline vuint32 fnvHashStrCI (const void *buf) {
 
 
 // djb
-static VVA_OKUNUSED inline vuint32 djbHashBufCI (const void *buf, size_t len) {
+static VVA_OKUNUSED inline vuint32 djbHashBufCI (const void *buf, size_t len) noexcept {
   vuint32 hash = 5381;
   const vuint8 *s = (const vuint8 *)buf;
   while (len--) hash = ((hash<<5)+hash)+(vuint8)locase1251(*s++);
@@ -146,7 +146,7 @@ static VVA_OKUNUSED inline vuint32 djbHashBufCI (const void *buf, size_t len) {
 
 
 // djb
-static VVA_OKUNUSED inline vuint32 djbHashBuf (const void *buf, size_t len) {
+static VVA_OKUNUSED inline vuint32 djbHashBuf (const void *buf, size_t len) noexcept {
   vuint32 hash = 5381;
   const vuint8 *s = (const vuint8 *)buf;
   while (len-- > 0) hash = ((hash<<5)+hash)+(*s++);
@@ -154,7 +154,7 @@ static VVA_OKUNUSED inline vuint32 djbHashBuf (const void *buf, size_t len) {
 }
 
 
-static VVA_OKUNUSED inline vuint32 joaatHashBuf (const void *buf, size_t len, vuint32 seed=0) {
+static VVA_OKUNUSED inline vuint32 joaatHashBuf (const void *buf, size_t len, vuint32 seed=0) noexcept {
   vuint32 hash = seed;
   const vuint8 *s = (const vuint8 *)buf;
   while (len--) {
@@ -170,7 +170,7 @@ static VVA_OKUNUSED inline vuint32 joaatHashBuf (const void *buf, size_t len, vu
 }
 
 
-static VVA_OKUNUSED inline vuint32 joaatHashBufCI (const void *buf, size_t len, vuint32 seed=0) {
+static VVA_OKUNUSED inline vuint32 joaatHashBufCI (const void *buf, size_t len, vuint32 seed=0) noexcept {
   vuint32 hash = seed;
   const vuint8 *s = (const vuint8 *)buf;
   while (len--) {
@@ -186,9 +186,9 @@ static VVA_OKUNUSED inline vuint32 joaatHashBufCI (const void *buf, size_t len, 
 }
 
 
-static VVA_OKUNUSED inline vuint32 GetTypeHash (int n) { return hashU32((vuint32)n); }
-static VVA_OKUNUSED inline vuint32 GetTypeHash (vuint32 n) { return hashU32(n); }
-static VVA_OKUNUSED inline vuint32 GetTypeHash (vuint64 n) { return hashU32((vuint32)n)^hashU32((vuint32)(n>>32)); }
-static VVA_OKUNUSED inline vuint32 GetTypeHash (const void *n) { return GetTypeHash((uintptr_t)n); }
+inline vuint32 GetTypeHash (int n) noexcept { return hashU32((vuint32)n); }
+inline vuint32 GetTypeHash (vuint32 n) noexcept { return hashU32(n); }
+inline vuint32 GetTypeHash (vuint64 n) noexcept { return hashU32((vuint32)n)^hashU32((vuint32)(n>>32)); }
+inline vuint32 GetTypeHash (const void *n) noexcept { return GetTypeHash((uintptr_t)n); }
 
 #endif

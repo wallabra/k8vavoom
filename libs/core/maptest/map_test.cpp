@@ -39,7 +39,7 @@ typedef unsigned int vuint32;
 #define vassert(cond_)  if (!(cond_)) abort()
 
 
-static vuint32 GetTypeHash (int a) {
+static vuint32 GetTypeHash (int a) noexcept {
   vuint32 res = (vuint32)a;
   res -= (res<<6);
   res = res^(res>>17);

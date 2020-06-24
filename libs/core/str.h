@@ -774,8 +774,8 @@ public:
 //inline vuint32 GetTypeHash (const VStr &s) { return (s.length() ? fnvHashBuf(*s, s.length()) : 1); }
 
 // results MUST be equal
-static inline VVA_OKUNUSED vuint32 GetTypeHash (const char *s) noexcept { return fnvHashStr(s); }
-static inline VVA_OKUNUSED vuint32 GetTypeHash (const VStr &s) noexcept { return fnvHashStr(*s); }
+inline vuint32 GetTypeHash (const char *s) noexcept { return fnvHashStr(s); }
+inline vuint32 GetTypeHash (const VStr &s) noexcept { return fnvHashStr(*s); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

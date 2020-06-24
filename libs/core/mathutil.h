@@ -120,16 +120,13 @@ inline float fastInvSqrtf (const float n) {
 #define max2(x, y)   ((x) >= (y) ? (x) : (y))
 #define midval(min, val, max)  max2(min, min2(val, max))
 */
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T min2 (const T a, const T b) { return (a <= b ? a : b); }
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T max2 (const T a, const T b) { return (a >= b ? a : b); }
-//template <class T> constexpr inline T midval (const T min, const T val, const T max) { return max2(min, min2(val, max)); }
-//template <class T> constexpr VVA_CONST inline T midval (const T min, const T val, const T max) { return (val < min ? min : val > max ? max : val); }
-//template <class T> constexpr VVA_CONST inline T clampval (const T val, const T min, const T max) { return (val < min ? min : val > max ? max : val); }
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T midval (const T min, const T val, const T max) { return max2(min, min2(val, max)); }
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T clampval (const T val, const T min, const T max) { return max2(min, min2(val, max)); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T min2 (const T a, const T b) { return (a <= b ? a : b); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T max2 (const T a, const T b) { return (a >= b ? a : b); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T midval (const T min, const T val, const T max) { return max2(min, min2(val, max)); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T clampval (const T val, const T min, const T max) { return max2(min, min2(val, max)); }
 
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T min3 (const T a, const T b, const T c) { return min2(min2(a, b), c); }
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T max3 (const T a, const T b, const T c) { return max2(max2(a, b), c); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T min3 (const T a, const T b, const T c) { return min2(min2(a, b), c); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T max3 (const T a, const T b, const T c) { return max2(max2(a, b), c); }
 
 
 //==========================================================================

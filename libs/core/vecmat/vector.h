@@ -93,7 +93,7 @@ static_assert(__builtin_offsetof(TAVec, yaw) == __builtin_offsetof(TAVec, pitch)
 static_assert(__builtin_offsetof(TAVec, roll) == __builtin_offsetof(TAVec, yaw)+sizeof(float), "TAVec layout fail (1)");
 static_assert(sizeof(TAVec) == sizeof(float)*3, "TAVec layout fail (2)");
 
-static inline VVA_OKUNUSED vuint32 GetTypeHash (const TAVec &v) noexcept { return joaatHashBuf(&v, 3*sizeof(float)); }
+inline vuint32 GetTypeHash (const TAVec &v) noexcept { return joaatHashBuf(&v, 3*sizeof(float)); }
 
 static VVA_OKUNUSED inline bool operator == (const TAVec &v1, const TAVec &v2) noexcept { return (v1.pitch == v2.pitch && v1.yaw == v2.yaw && v1.roll == v2.roll); }
 static VVA_OKUNUSED inline bool operator != (const TAVec &v1, const TAVec &v2) noexcept { return (v1.pitch != v2.pitch || v1.yaw != v2.yaw || v1.roll != v2.roll); }
@@ -258,7 +258,7 @@ static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(
 static_assert(__builtin_offsetof(TVec, z) == __builtin_offsetof(TVec, y)+sizeof(float), "TVec layout fail (1)");
 static_assert(sizeof(TVec) == sizeof(float)*3, "TVec layout fail (2)");
 
-static inline VVA_OKUNUSED vuint32 GetTypeHash (const TVec &v) noexcept { return joaatHashBuf(&v, 3*sizeof(float)); }
+inline vuint32 GetTypeHash (const TVec &v) noexcept { return joaatHashBuf(&v, 3*sizeof(float)); }
 
 
 static VVA_OKUNUSED inline TVec operator + (const TVec &v1, const TVec &v2) noexcept { return TVec(VSUM2(v1.x, v2.x), VSUM2(v1.y, v2.y), VSUM2(v1.z, v2.z)); }
@@ -355,6 +355,48 @@ static inline VVA_OKUNUSED float VectorAnglePitch (const TVec &vec) noexcept {
   const float len2d = VSUM2(fx*fx, fy*fy);
   return (len2d < 0.0001f ? (vec.z > 0.0f ? 90 : 270) : -matan(vec.z, sqrtf(len2d)));
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// this is useful for vertex hashtables
+struct __attribute__((packed)) Vertex2DInfo {
+private:
+  vfloat xy[2]; // k8vavoom works with floats
+  int index; // vertex index in various structures
+
+public:
+  inline Vertex2DInfo () noexcept { memset(xy, 0, sizeof(xy)); index = 0; }
+  inline Vertex2DInfo (ENoInit) noexcept {}
+  inline Vertex2DInfo (const TVec &v, const int aindex) noexcept {
+    xy[0] = v.x;
+    xy[1] = v.y;
+    index = aindex;
+    // this is to remove sign from zeroes, so any zero will hash to the same value
+    if (xy[0] == 0) memset(&xy[0], 0, sizeof(xy[0]));
+    if (xy[1] == 0) memset(&xy[1], 0, sizeof(xy[1]));
+  }
+  inline Vertex2DInfo (const float vx, const float vy, const int aindex) noexcept {
+    xy[0] = vx;
+    xy[1] = vy;
+    index = aindex;
+    // this is to remove sign from zeroes, so any zero will hash to the same value
+    if (xy[0] == 0) memset(&xy[0], 0, sizeof(xy[0]));
+    if (xy[1] == 0) memset(&xy[1], 0, sizeof(xy[1]));
+  }
+
+  inline bool operator == (const Vertex2DInfo &vi) const noexcept { return (memcmp(&xy[0], &vi.xy[0], sizeof(xy)) == 0); }
+  inline bool operator != (const Vertex2DInfo &vi) const noexcept { return (memcmp(&xy[0], &vi.xy[0], sizeof(xy)) != 0); }
+
+  inline int getIndex () const noexcept { return index; }
+  inline float getX () const noexcept { return xy[0]; }
+  inline float getY () const noexcept { return xy[1]; }
+
+  inline const void *getHashData () const noexcept { return (const void *)(&xy[0]); }
+  inline size_t getHashDataSize () const noexcept { return sizeof(xy); }
+};
+static_assert(sizeof(Vertex2DInfo) == sizeof(float)*2+sizeof(int), "oops");
+
+inline vuint32 GetTypeHash (const Vertex2DInfo &vi) noexcept { return joaatHashBuf(vi.getHashData(), vi.getHashDataSize()); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -780,7 +822,7 @@ public:
 static_assert(__builtin_offsetof(TPlane, dist) == __builtin_offsetof(TPlane, normal.z)+sizeof(float), "TPlane layout fail (0)");
 static_assert(sizeof(TPlane) == sizeof(float)*4, "TPlane layout fail (1)");
 
-static inline VVA_OKUNUSED vuint32 GetTypeHash (const TPlane &v) noexcept { return joaatHashBuf(&v, 4*sizeof(float)); }
+inline vuint32 GetTypeHash (const TPlane &v) noexcept { return joaatHashBuf(&v, 4*sizeof(float)); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

@@ -43,6 +43,19 @@
 #ifndef VVA_CONST
 # define VVA_CONST        __attribute__((const))
 #endif
+#ifndef VVA_ALWAYS_INLINE
+# define VVA_ALWAYS_INLINE  inline __attribute__((always_inline))
+#endif
+
+
+//==========================================================================
+//
+//  Standard macros
+//
+//==========================================================================
+
+// number of elements in an array
+#define ARRAY_COUNT(array)  (sizeof(array)/sizeof((array)[0]))
 
 
 //==========================================================================
@@ -63,12 +76,7 @@
 #define MAX_VUINT16 ((vuint16)0xffff)
 #define MAX_VUINT32 ((vuint32)0xffffffff)
 
-//typedef unsigned char  byte;
-
-//#define HAVE_INTTYPES_H
-
 #include <inttypes.h>
-//typedef uint8_t   __attribute__((__may_alias__)) ubyte;
 typedef int8_t    __attribute__((__may_alias__)) vint8;
 typedef uint8_t   __attribute__((__may_alias__)) vuint8;
 typedef int16_t   __attribute__((__may_alias__)) vint16;
@@ -77,6 +85,8 @@ typedef int32_t   __attribute__((__may_alias__)) vint32;
 typedef uint32_t  __attribute__((__may_alias__)) vuint32;
 typedef int64_t   __attribute__((__may_alias__)) vint64;
 typedef uint64_t  __attribute__((__may_alias__)) vuint64;
+typedef float     __attribute__((__may_alias__)) vfloat;
+typedef double    __attribute__((__may_alias__)) vdouble;
 
 
 #ifdef __cplusplus
@@ -89,6 +99,8 @@ static_assert(sizeof(vint32) == 4, "invalid vint32");
 static_assert(sizeof(vuint32) == 4, "invalid vuint32");
 static_assert(sizeof(vint64) == 8, "invalid vint64");
 static_assert(sizeof(vuint64) == 8, "invalid vuint64");
+static_assert(sizeof(vfloat) == 4, "invalid vfloat");
+static_assert(sizeof(vdouble) == 8, "invalid vdouble");
 
 
 enum ENoInit { E_NoInit };
@@ -96,12 +108,9 @@ enum ENoInit { E_NoInit };
 
 //==========================================================================
 //
-//  Standard macros
+//  Standard C++ macros
 //
 //==========================================================================
-
-// number of elements in an array
-#define ARRAY_COUNT(array)  (sizeof(array)/sizeof((array)[0]))
 
 // disable copying for a class/struct
 #define VV_DISABLE_COPY(cname_) \
@@ -127,9 +136,11 @@ public:
 //  Basic templates
 //
 //==========================================================================
-template<class T> T Min(T val1, T val2) { return val1 < val2 ? val1 : val2; }
-template<class T> T Max(T val1, T val2) { return val1 > val2 ? val1 : val2; }
-template<class T> T Clamp(T val, T low, T high) { return val < low ? low : val > high ? high : val; }
+/* defined in "mathutil.h", as `min2`, `max2`, and `clampval`
+template<class T> T Min(T val1, T val2) { return (val1 < val2 ? val1 : val20; }
+template<class T> T Max(T val1, T val2) { return (val1 > val2 ? val1 : val2); }
+template<class T> T Clamp(T val, T low, T high) { return (val < low ? low : val > high ? high : val); }
+*/
 
 
 //==========================================================================
@@ -138,6 +149,7 @@ template<class T> T Clamp(T val, T low, T high) { return val < low ? low : val >
 //
 //==========================================================================
 class VName;
+// VavoomC
 class VMemberBase;
 class VStruct;
 class VObject;
