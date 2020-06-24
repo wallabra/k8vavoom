@@ -30,6 +30,8 @@
 #include "../gamedefs.h"
 #include "../bsp/ajbsp/bsp.h"
 
+//#define VV_AJBSP_USE_VERTEX_ROUNDOFF
+
 
 static VCvarB ajbsp_roundoff_tree("__ajbsp_roundoff_tree", false, "Roundoff vertices in AJBSP?", CVAR_PreInit);
 
@@ -58,26 +60,28 @@ namespace ajbsp {
 //
 //  ajRoundOffVertexI32
 //
-//  round vertex coordinates
+//  round vertex coordinates to 16.16 fixed point
+//  used in all modes to create fixed point BSP info (see below)
 //
 //==========================================================================
 static inline vint32 ajRoundoffVertexI32 (const double v) {
   return (vint32)(v*65536.0);
-  //return vxs_ToFix16_16(v);
 }
 
 
+#ifdef VV_AJBSP_USE_VERTEX_ROUNDOFF
 //==========================================================================
 //
 //  ajRoundOffVertex
 //
-//  round vertex coordinates
+//  round vertex coordinates using 16.16 fixed point as base value
 //
 //==========================================================================
 static inline float ajRoundoffVertex (const double v) {
   vint32 iv = ajRoundoffVertexI32(v);
   return (float)(((double)iv)/65536.0);
 }
+#endif
 
 
 //==========================================================================
@@ -234,37 +238,40 @@ static void UploadSidedefs (VLevel *Level) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-struct __attribute__((packed)) VertexInfo {
+#ifdef VV_AJBSP_USE_VERTEX_ROUNDOFF
+struct __attribute__((packed)) VertexInfoRounded {
 private:
-  //float xy[2];
   vint32 xy[2];
   int index; // vertex index in AJBSP
 
 public:
-  VertexInfo () {}
-  VertexInfo (const TVec &v, int aindex) { xy[0] = ajRoundoffVertexI32(v.x); xy[1] = ajRoundoffVertexI32(v.y); index = aindex; }
+  inline VertexInfo () noexcept {}
+  inline VertexInfo (const TVec &v, int aindex) noexcept { xy[0] = ajRoundoffVertexI32(v.x); xy[1] = ajRoundoffVertexI32(v.y); index = aindex; }
 
-  inline bool operator == (const VertexInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) == 0); }
-  inline bool operator != (const VertexInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) != 0); }
+  inline bool operator == (const VertexInfo &vi) const noexcept { return (memcmp(&xy[0], &vi.xy[0], sizeof(xy)) == 0); }
+  inline bool operator != (const VertexInfo &vi) const noexcept { return (memcmp(&xy[0], &vi.xy[0], sizeof(xy)) != 0); }
 
-  inline int getIndex () const { return index; }
-  inline float getX () const { return (float)(((double)xy[0])/65536.0); }
-  inline float getY () const { return (float)(((double)xy[1])/65536.0); }
-  inline const void *getHashData () const { return (const void *)(&xy[0]); }
-  inline size_t getHashDataSize () const { return sizeof(xy); }
+  inline int getIndex () const noexcept { return index; }
+  inline float getX () const noexcept { return (float)(((double)xy[0])/65536.0); }
+  inline float getY () const noexcept { return (float)(((double)xy[1])/65536.0); }
+  inline const void *getHashData () const noexcept { return (const void *)(&xy[0]); }
+  inline size_t getHashDataSize () const noexcept { return sizeof(xy); }
 };
-static_assert(sizeof(VertexInfo) == sizeof(/*float*/vint32)*2+sizeof(int), "oops");
-
-static inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.getHashData(), vi.getHashDataSize()); }
+static_assert(sizeof(VertexInfo) == sizeof(vint32)*2+sizeof(int), "oops");
+inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.getHashData(), vi.getHashDataSize()); }
+#define Vertex2DInfo  VertexInfoRounded
+#endif
 
 
 //==========================================================================
 //
 //  ajUploadVertex
 //
+//  this deals with duplicate vertices
+//
 //==========================================================================
-static int ajUploadVertex (TMap<VertexInfo, int> &vmap, VLevel *Level, const TVec *v) {
-  VertexInfo vi(*v, ajbsp::num_vertices);
+static int ajUploadVertex (TMap<Vertex2DInfo, int> &vmap, VLevel *Level, const TVec *v) {
+  Vertex2DInfo vi(*v, ajbsp::num_vertices);
   auto pp = vmap.find(vi);
   if (pp) return *pp;
   vassert(vi.getIndex() == ajbsp::num_vertices);
@@ -284,11 +291,11 @@ static int ajUploadVertex (TMap<VertexInfo, int> &vmap, VLevel *Level, const TVe
 //
 //  UploadLinedefs
 //
-//  ..and vertices
+//  ...and vertices
 //
 //==========================================================================
 static void UploadLinedefs (VLevel *Level) {
-  TMap<VertexInfo, int> vmap;
+  TMap<Vertex2DInfo, int> vmap;
   const line_t *pSrc = Level->Lines;
   for (int i = 0; i < Level->NumLines; ++i, ++pSrc) {
     ajbsp::linedef_t *line = ajbsp::NewLinedef();
@@ -378,7 +385,11 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
     ajbsp::vertex_t *vert = ajbsp::LookupVertex(i);
     nfo.ajvidx.put(vert, i); // for `AJVertexIndex()`
     TVec *pDst = &Level->Vertexes[i];
+    #ifdef VV_AJBSP_USE_VERTEX_ROUNDOFF
     *pDst = TVec(ajRoundoffVertex(vert->x), ajRoundoffVertex(vert->y), 0);
+    #else
+    *pDst = TVec(vert->x, vert->y, 0);
+    #endif
   }
 
   // fix lines
@@ -500,6 +511,8 @@ static void CopyNode (VLevel *Level, int &NodeIndex, ajbsp::node_t *SrcNode, nod
   }
   Node->SetPointDirXY(org, dir);
 
+  // those things are used to emulate buggy vanilla "point in subsector" code
+  // it is not used for anything else, so precision loss doesn't really matter
   Node->sx = ajRoundoffVertexI32(SrcNode->xs);
   Node->sy = ajRoundoffVertexI32(SrcNode->ys);
   if (!SrcNode->too_long) {

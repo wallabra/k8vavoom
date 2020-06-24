@@ -28,19 +28,6 @@
 //#include "../../libs/core/hashfunc.h"
 #include "../../libs/core/core.h"
 
-struct VertexInfo {
-  float xy[2];
-  int idx;
-
-  VertexInfo (const float ax, const float ay, int aidx) { xy[0] = ax; xy[1] = ay; idx = aidx; }
-  //inline bool operator == (const VertexInfo &vi) const { return (xy[0] == vi.xy[0] && xy[1] == vi.xy[1]); }
-  //inline bool operator != (const VertexInfo &vi) const { return (xy[0] != vi.xy[0] || xy[1] != vi.xy[1]); }
-  inline bool operator == (const VertexInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) == 0); }
-  inline bool operator != (const VertexInfo &vi) const { return (memcmp(xy, &vi.xy, sizeof(xy)) != 0); }
-};
-
-inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
-
 
 static int cli_WarnUnknownKeys = 1;
 
@@ -264,7 +251,7 @@ void VUdmfParser::ParseKey () {
       Val = VStr(ValInt);
     } else if (sc.CheckFloat()) {
       ValType = TK_Float;
-      ValFloat = -sc.Float;
+      ValFloat = (sc.Float != 0 ? -sc.Float : 0);
       Val = VStr(ValFloat);
     } else {
       sc.HostError(va("Numeric constant expected (%s)", *Key));
@@ -1076,11 +1063,11 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
   }
 
   // check for duplicate vertices
-  TMapNC<VertexInfo, int> vmap; // value: in parsed array
+  TMapNC<Vertex2DInfo, int> vmap; // value: in parsed array
   TMapNC<int, int> vremap; // key: original vertex index; value: new vertex index
 
   for (int f = 0; f < NumVertexes; ++f) {
-    VertexInfo vi = VertexInfo(Vertexes[f].x, Vertexes[f].y, f);
+    Vertex2DInfo vi = Vertex2DInfo(Vertexes[f].x, Vertexes[f].y, f);
     auto ip = vmap.find(vi);
     if (ip) {
       vremap.put(f, *ip);
