@@ -30,13 +30,6 @@
 #include "core.h"
 #include "ryu.h"
 
-#if !defined _WIN32 && !defined DJGPP
-#undef stricmp  //  Allegro defines them
-#undef strnicmp
-#define stricmp   strcasecmp
-#define strnicmp  strncasecmp
-#endif
-
 /*
 #if defined(VCORE_ALLOW_STRTODEX)
 # if defined(__x86_64__) || defined(__aarch64__) || defined(_WIN32) || defined(__i386__)
@@ -46,11 +39,15 @@
 # endif
 #endif
 */
+
+/*
 #if defined(VCORE_ALLOW_STRTODEX)
 # ifndef VCORE_USE_STRTODEX
 #  define VCORE_USE_STRTODEX
 # endif
 #endif
+*/
+#define VCORE_USE_STRTODEX
 
 #ifdef VCORE_USE_STRTODEX
 # include "strtod_plan9.h"
@@ -71,6 +68,8 @@ static bool strtofEx (float *resptr, const char *s) noexcept {
   char *end;
   float res = fmtstrtof(s, &end, nullptr);
   if (!isFiniteF(res) || *end) return false;
+  // remove sign from zero
+  if (res == 0) memset(&res, 0, sizeof(res));
   if (resptr) *resptr = res;
   return true;
 }
@@ -175,13 +174,13 @@ VStr::VStr (unsigned v) noexcept : dataptr(nullptr) {
 }
 
 VStr::VStr (float v) noexcept : dataptr(nullptr) {
-  char buf[32];
+  char buf[FloatBufSize];
   int len = f2s_buffered(v, buf);
   setContent(buf, len);
 }
 
 VStr::VStr (double v) noexcept : dataptr(nullptr) {
-  char buf[32];
+  char buf[DoubleBufSize];
   int len = d2s_buffered(v, buf);
   setContent(buf, len);
 }
@@ -244,8 +243,8 @@ VStream &VStr::Serialise (VStream &Strm) const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VStr &VStr::operator += (float v) noexcept { char buf[32]; (void)f2s_buffered(v, buf); return operator+=(buf); }
-VStr &VStr::operator += (double v) noexcept { char buf[32]; (void)d2s_buffered(v, buf); return operator+=(buf); }
+VStr &VStr::operator += (float v) noexcept { char buf[FloatBufSize]; (void)f2s_buffered(v, buf); return operator+=(buf); }
+VStr &VStr::operator += (double v) noexcept { char buf[DoubleBufSize]; (void)d2s_buffered(v, buf); return operator+=(buf); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
