@@ -613,7 +613,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     GCon->Logf("#%d: light=%d; ls=%d; sl=%d; asl=%d; lp->llev=%d; fixed=%d; extra=%d; remap=%d; fade=0x%08x; lc=0x%08x; sflight=0x%08x; ta=%g",
       (int)(ptrdiff_t)(sub->sector-Level->Sectors),
       lLev, LightSourceSector, SideLight, (int)AbsSideLight,
-      LightParams->lightlevel, (int)FixedLight, ExtraLight, light_remap[Clamp(LightParams->lightlevel, 0, 255)], Fade, (unsigned)lightColor, sflight, texinfo->Alpha);
+      LightParams->lightlevel, (int)FixedLight, ExtraLight, light_remap[clampval(LightParams->lightlevel, 0, 255)], Fade, (unsigned)lightColor, sflight, texinfo->Alpha);
     //lLev = 250;
     //Fade = 0xffffffff;
     /*
