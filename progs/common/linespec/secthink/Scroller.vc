@@ -78,7 +78,8 @@ void InitWall (line_t *Line, int XDir, int YDir) {
   Affectee = Line->sidenum[0];
   XSpeed = float(XDir*Line->arg1)*35.0/64.0;
   YSpeed = float(YDir*Line->arg1)*35.0/64.0;
-  SideParts = 7;
+  /* arg2 is flags; if not specified, assume "scroll all textures" */
+  SideParts = (Line.arg2 > 0 ? Line.arg2&0x07 : 0x07);
 }
 
 
