@@ -29,11 +29,30 @@
 
 //==========================================================================
 //
+//  isFuckedHereticLump
+//
+//==========================================================================
+static bool isFuckedHereticLump (int LumpNum) {
+  if (LumpNum <= 0) return false;
+  int lmpsize = W_LumpLength(LumpNum);
+  if (lmpsize != 4160) return false;
+  static const char *fuckedHeretic[7] = {"fltflww1","fltflww2","fltflww3","fltlava1","fltlava2","fltlava3","fltlava4"};
+  const char *lname = *W_LumpName(LumpNum);
+  for (unsigned f = 0; f <= 7; ++f) {
+    if (VStr::strEquCI(lname, fuckedHeretic[f])) return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VFlatTexture::Create
 //
 //==========================================================================
 VTexture *VFlatTexture::Create (VStream &, int LumpNum) {
-  int lmpsize = W_LumpLength(LumpNum);
+  if (isFuckedHereticLump(LumpNum)) return new VFlatTexture(LumpNum); // fucked Heretic flat
+  const int lmpsize = W_LumpLength(LumpNum);
   if (lmpsize == 8192) return new VFlatTexture(LumpNum); // 64x128 (some idiots does this)
   for (int Width = 8; Width <= 256; Width <<= 1) {
     if (lmpsize < Width*Width) return nullptr;
@@ -57,18 +76,22 @@ VFlatTexture::VFlatTexture (int InLumpNum)
   Name = W_LumpName(SourceLump);
   Width = 64;
   // check for larger flats
-  //while (W_LumpLength(SourceLump) >= Width*Width*4) Width *= 2;
-  int lmpsize = W_LumpLength(SourceLump);
-  if (lmpsize == 8192) {
-    // 64x128 (some idiots does this)
-    Width = 64;
-    Height = 128;
+  if (isFuckedHereticLump(SourceLump)) {
+    Height = 64;
   } else {
-    for (int Width = 8; Width <= 256; Width <<= 1) {
-      if (lmpsize < Width*Width) Sys_Error("invalid doom flat texture '%s' (curWidth=%d; lmpsize=%d; reqsize=%d)", *W_FullLumpName(SourceLump), Width, lmpsize, Width*Width);
-      if (lmpsize == Width*Width) break;
+    //while (W_LumpLength(SourceLump) >= Width*Width*4) Width *= 2;
+    int lmpsize = W_LumpLength(SourceLump);
+    if (lmpsize == 8192) {
+      // 64x128 (some idiots does this)
+      Width = 64;
+      Height = 128;
+    } else {
+      for (int Width = 8; Width <= 256; Width <<= 1) {
+        if (lmpsize < Width*Width) Sys_Error("invalid doom flat texture '%s' (curWidth=%d; lmpsize=%d; reqsize=%d)", *W_FullLumpName(SourceLump), Width, lmpsize, Width*Width);
+        if (lmpsize == Width*Width) break;
+      }
+      Height = Width;
     }
-    Height = Width;
   }
   // scale large flats to 64x64
   if (Width > 64) {
