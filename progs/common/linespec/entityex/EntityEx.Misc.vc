@@ -778,6 +778,7 @@ bool CheckDoBumpSpecial (EntityEx Other) {
   // check for bBumpSpecial
   if (!bBumpSpecial) return false;
   // also, leave the bumper enough time to go away
+  //print("%C: CheckDoBumpSpecial: 000: Other=%C", self, Other);
   //FIXME: broken with hubs!
   if (XLevel.Time <= NextBumpTime) return false;
   // by default, only players can activate things by bumping into them
@@ -3386,6 +3387,8 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
   float x1 = Origin.x;
   float y1 = Origin.y;
 
+  //printdebug("%C: UseLines! range=%s", self, UseThingRange);
+
   // check things
   float x2 = x1+UseThingRange*useDir.x;
   float y2 = y1+UseThingRange*useDir.y;
@@ -3437,6 +3440,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
   int useType, useSide;
   foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES) {
     line_t *line = in->line;
+    assert(line);
 
     if (!line->special || (!(line->SpacFlags&(SPAC_Use|SPAC_UseThrough|SPAC_UseBack)))) {
       TVec hitPoint = Origin+(UseRange*in->frac)*useDir;
@@ -3550,6 +3554,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound,
 //
 //==========================================================================
 bool UseThing (EntityEx Other) {
+  //print("%C: UseThing: 000: Other=%C; bNoInteraction=%B", self, Other, Other.bNoInteraction);
   if (Other.bNoInteraction) return false; //k8: just in case
   if (!Level.Game.IsAuthority) return false;
 

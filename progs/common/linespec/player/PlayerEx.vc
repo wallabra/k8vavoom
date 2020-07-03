@@ -286,6 +286,7 @@ replication {
 void GetUseRanges (out float ur, out float utr) {
   PlayerPawn pwn = PlayerPawn(MO);
   if (pwn) {
+    //printdebug("%C: GetUseRanges: ur=%s; utr=%s", self, pwn.UseRange, pwn.UseThingRange);
     ur = fmax(1.0f, pwn.UseRange);
     utr = fmax(1.0f, pwn.UseThingRange);
   } else {

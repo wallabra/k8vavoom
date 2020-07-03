@@ -70,6 +70,7 @@ int ActivationType /*= THINGSPEC_Default*/;
 //
 //==========================================================================
 final bool checkActivatorValidity (EntityEx Activator) {
+  //printdebug("%C: checkActivatorValidity: Activator=%C; ActivationType=%s", self, Activator, ActivationType);
   if (ActivationType) {
     //if (ActivationType&AF_ThingActs) Activator = self; //k8:not sure; done in caller
     if (Activator) {
@@ -127,7 +128,7 @@ final bool performAction (EntityEx Activator, EntityEx origAct, bool isActivate)
 //
 //==========================================================================
 override bool Activate (EntityEx Activator) {
-  //print("****:%C: Activate!");
+  //print("****:%C: Activate!", self);
   auto origAct = Activator;
   if (ActivationType&AF_ThingActs) Activator = self; //k8:not sure
   if (!checkActivatorValidity(Activator)) return false;
