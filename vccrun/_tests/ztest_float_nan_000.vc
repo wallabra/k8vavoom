@@ -1,0 +1,16 @@
+class Main : Object;
+
+
+void test0 () {
+  float f = float.nan;
+  writeln("f=", f);
+  print("f=%s", f);
+  string s = va("%s", f);
+  assert(s == "NaN");
+  assert(f != 0);
+}
+
+
+void main () {
+  test0();
+}
