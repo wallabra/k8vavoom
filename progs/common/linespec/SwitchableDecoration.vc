@@ -29,6 +29,9 @@
 //**************************************************************************
 class SwitchableDecoration : Actor abstract;
 
+//k8: nope, this doesn't work (and not needed)
+//#define SWITCHABLE_DECORATION_USE_NEW_METHOD
+
 // activation flags
 enum /*EActivationFlags*/ {
   /*
@@ -60,6 +63,13 @@ enum /*EActivationFlags*/ {
   AF_Deactivate = 1<<9, // the thing is deactivated when triggered
   AF_Switch = 1<<10, // the thing is alternatively activated and deactivated when triggered
 };
+
+#ifdef SWITCHABLE_DECORATION_USE_NEW_METHOD
+enum {
+  // internal k8vavoom flag
+  AF_Activated_Internal = 1<<30,
+};
+#endif
 
 int ActivationType /*= THINGSPEC_Default*/;
 
@@ -94,15 +104,31 @@ final bool checkActivatorValidity (EntityEx Activator) {
 //
 //==========================================================================
 final bool performAction (EntityEx Activator, EntityEx origAct, bool isActivate) {
+  #ifdef SWITCHABLE_DECORATION_USE_NEW_METHOD
+  if (ActivationType&AF_Switch) {
+    printdebug("%C: 000: isActivate=%B, activated_internal=%B", self, isActivate, !!(ActivationType&AF_Activated_Internal));
+    if (isActivate == !!(ActivationType&AF_Activated_Internal)) {
+      printdebug("%C: 000: isActivate=%B, will be flipped", self, isActivate);
+      isActivate = !isActivate;
+    }
+  }
+  #endif
+
   name newStateName = (isActivate ? 'Active' : 'Inactive');
+  //printdebug("%C: 000: newStateName=%s; isActivate=%B", self, newStateName, isActivate);
 
   // check current state for switch
   if (ActivationType&AF_Switch) {
+    #ifdef SWITCHABLE_DECORATION_USE_NEW_METHOD
+    /* nothing to do here */
+    #else
     auto actstate = FindState(newStateName);
     if (actstate && StateIsInSequence(State, actstate)) {
       // we're active now
       newStateName = (isActivate ? 'Inactive' : 'Active');
+      //printdebug("%C: 001: newStateName=%s; isActivate=%B", self, newStateName, isActivate);
     }
+    #endif
   } else if (ActivationType&AF_Activate) {
     newStateName = 'Active';
   } else if (ActivationType&AF_Deactivate) {
@@ -111,6 +137,12 @@ final bool performAction (EntityEx Activator, EntityEx origAct, bool isActivate)
 
   auto newstate = FindState(newStateName);
   if (!newstate) return false;
+
+  #ifdef SWITCHABLE_DECORATION_USE_NEW_METHOD
+  if (ActivationType&AF_Switch) {
+    if (isActivate) ActivationType |= AF_Activated_Internal; else ActivationType &= ~AF_Activated_Internal;
+  }
+  #endif
 
   if (ActivationType&AF_ThingTargets) Target = origAct;
   if (origAct && (ActivationType&AF_TriggerTargets)) origAct.Target = self;
