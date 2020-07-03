@@ -274,6 +274,8 @@ void VRenderLevelShared::DrawPlayerSprites () {
         auto ownpp = suid2ent.find(dl->ownerUId);
         if (!ownpp) continue;
         e = *ownpp;
+      } else {
+        continue;
       }
       if (!e->IsPlayer()) continue;
       if (e != cl->MO) continue;
