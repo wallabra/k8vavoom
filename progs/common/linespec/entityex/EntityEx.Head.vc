@@ -1063,26 +1063,11 @@ final bool FindDamageFactorInternal (name DmgType, out DamageFactor dfres) {
   float dmgNormal = float.nan;
   bool normalNoArmor = false;
   bool normalReplace = false;
+  //printdebug("%C: FindDamageFactorInternal: %s: factor=%s; replace=%s; noarmor=%B (nan=%s)", self, DmgType, dmgNormal, normalReplace, normalNoArmor, float.nan);
+
   // search in entity damage factors
   foreach (const ref auto df; DamageFactors) {
-    //printdebug("  %C: dtype=%s; factor=%s", self, df.DamageType, df.Factor);
-    if (nameicmp(df.DamageType, DmgType) == 0 ||
-        (!DmgType && nameicmp(df.DamageType, 'None') == 0) ||
-        (!df.DamageType && nameicmp(DmgType, 'None') == 0))
-    {
-      dfres = df;
-      return true;
-    }
-    if (dmgNormal.isnan && nameicmp(df.DamageType, 'None') == 0) {
-      dmgNormal = df.Factor;
-      if (dmgNormal < 0) dmgNormal = 1; // this is what GZDoom does
-      normalReplace = df.replaceFactor;
-      normalNoArmor = df.skipArmor;
-    }
-  }
-  // search in custom damage types
-  foreach (const ref auto df; Level.Game.CustomDamageFactors) {
-    //printdebug("  %C: dtype=%s; factor=%s; replace=%B; noarmor=%B", self, df.DamageType, df.Factor, df.replaceFactor, df.skipArmor);
+    //printdebug("  %C: dtype=%s; factor=%s (entity)", self, df.DamageType, df.Factor);
     if (nameicmp(df.DamageType, DmgType) == 0 ||
         (!DmgType && nameicmp(df.DamageType, 'None') == 0) ||
         (!df.DamageType && nameicmp(DmgType, 'None') == 0))
@@ -1098,6 +1083,25 @@ final bool FindDamageFactorInternal (name DmgType, out DamageFactor dfres) {
     }
   }
 
+  // search in custom damage types
+  foreach (const ref auto df; Level.Game.CustomDamageFactors) {
+    //printdebug("  %C: dtype=%s; factor=%s; replace=%B; noarmor=%B (level)", self, df.DamageType, df.Factor, df.replaceFactor, df.skipArmor);
+    if (nameicmp(df.DamageType, DmgType) == 0 ||
+        (!DmgType && nameicmp(df.DamageType, 'None') == 0) ||
+        (!df.DamageType && nameicmp(DmgType, 'None') == 0))
+    {
+      dfres = df;
+      return true;
+    }
+    if (dmgNormal.isnan && nameicmp(df.DamageType, 'None') == 0) {
+      dmgNormal = df.Factor;
+      if (dmgNormal < 0) dmgNormal = 1; // this is what GZDoom does
+      normalReplace = df.replaceFactor;
+      normalNoArmor = df.skipArmor;
+    }
+  }
+
+  //printdebug("%C: FindDamageFactorInternal: %s: factor=%s; replace=%s; noarmor=%B", self, DmgType, dmgNormal, normalReplace, normalNoArmor);
   dfres.Factor = dmgNormal;
   dfres.replaceFactor = normalReplace;
   dfres.skipArmor = normalNoArmor;

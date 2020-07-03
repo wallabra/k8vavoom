@@ -692,9 +692,9 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
       if (!dfactor.isnan) {
         if (!replacefact) realdmgfactor *= dfactor; else realdmgfactor = dfactor;
         if (skiparmor) NoArmor = true;
+        //printdebug("%C: damage type %s reduction factor is %s", self, DmgType, dfactor);
       }
     }
-    //printdebug("%C: damage type %s reduction factor is %s", self, DmgType, dfactor);
     damage = int(float(damage)*realdmgfactor);
   }
   if (damage <= 0) return;

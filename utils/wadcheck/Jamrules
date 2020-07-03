@@ -1,3 +1,5 @@
+if ! $(THIS_IS_K8JAM) { Exit "You need k8jam to build this. Download it here: http://repo.or.cz/w/k8jam.git" ; }
+
 softinclude $(TOP)/Jamrules.configure ;
 WINSUBSYS = console ;
 

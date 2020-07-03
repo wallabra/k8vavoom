@@ -2417,7 +2417,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                 DF->DamageType = DamageType;
               }
               DF->Factor = sc->Float;
-              //GCon->Logf(NAME_Warning, "*** class '%s': damage factor '%s', value is %g", Class->GetName(), *DamageType, sc->Float);
+              /*
+              GCon->Logf(NAME_Warning, "*** class '%s': damage factor '%s', value is %g", Class->GetName(), *DamageType, sc->Float);
+              for (i = 0; i < DamageFactors.length(); ++i) GCon->Logf(NAME_Debug, "Actor '%s': damage factor #%d: name=<%s>; factor=%g", Class->GetName(), i, *DamageFactors[i].DamageType, DamageFactors[i].Factor);
+              */
             }
             break;
           case PROP_MissileDamage:

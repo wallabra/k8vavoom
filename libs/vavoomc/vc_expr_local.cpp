@@ -305,7 +305,9 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
               defaultInit = (val->IsIntConst() && val->GetIntConst() == 0);
               break;
             case TYPE_Float:
+              //if (val->IsFloatConst()) GLog.Logf(NAME_Debug, "var: name=<%s>; idx=<%d>; init=%s; valconst=%g", *e.Name, e.locIdx, *e.Value->toString(), val->GetFloatConst());
               defaultInit = (val->IsFloatConst() && val->GetFloatConst() == 0);
+              //if (val->IsFloatConst()) GLog.Logf(NAME_Debug, "var: name=<%s>; idx=<%d>; init=%s; valconst=%g; def=%d (%d)", *e.Name, e.locIdx, *e.Value->toString(), val->GetFloatConst(), (int)(defaultInit), (int)(val->GetFloatConst() == 0));
               break;
             case TYPE_Name:
               defaultInit = (val->IsNameConst() && val->GetNameConst() == NAME_None);
