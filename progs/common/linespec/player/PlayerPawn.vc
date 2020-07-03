@@ -893,7 +893,7 @@ defaultproperties {
   AttackZOffset = 8.0;
   DamageScreenColor = 0xffff0000;
   UseRange = USERANGE;
-  UseRange = USETHINGRANGE;
+  UseThingRange = USETHINGRANGE;
   bSolid = true;
   bShootable = true;
   bDropOff = true;
