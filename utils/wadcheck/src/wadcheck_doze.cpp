@@ -41,46 +41,7 @@ static HINSTANCE myHInst = NULL;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static bool longReport = false;
-
-
-#if 0
-//==========================================================================
-//
-//  usage
-//
-//==========================================================================
-static __attribute__((noreturn)) void usage () {
-  GLog.Write("%s",
-    "USAGE:\n"
-    "  wadcheck [--db dbfilename] --register wad/pk3\n"
-    "  wadcheck [--db dbfilename] wad/pk3\n"
-    "  wadcheck [--db dbfilename] --info\n"
-    "use `--long` option to show matches on separate lines\n"
-    "");
-  Z_Exit(1);
-}
-
-
-//==========================================================================
-//
-//  showDBWadList
-//
-//  show list of wads in database
-//
-//==========================================================================
-static void showDBWadList () {
-  //GLog.Logf("database file: %s", *dbname);
-  GLog.Log("registered database wads:");
-  for (auto &&wad : wadnames) GLog.Logf("  %s", *wad);
-}
-#endif
-
-
 static VStr dbname;
-static bool doneOptions = false;
-static bool doRegisterWads = false;
-static bool wantInfo = false;
 static TArray<VStr> flist;
 
 
@@ -93,131 +54,29 @@ static void parseCmdLine (int argc, char **argv) {
   for (int f = 1; f < argc; ++f) {
     VStr arg = VStr(argv[f]);
     if (arg.isEmpty()) continue;
-    if (doneOptions || arg[0] != '-') {
-      bool found = false;
-      for (int c = 0; c < flist.length(); ++c) {
-        int cres;
-        cres = arg.Cmp(flist[c]);
-        if (cres == 0) { found = true; break; }
-      }
-      if (!found) flist.append(arg);
-      continue;
-    }
-    if (arg == "--") { doneOptions = true; continue; }
-    // "--register"
-    if (arg.strEquCI("-r") || arg.strEquCI("-register") || arg.strEquCI("--register")) {
-      if (flist.length() != 0) Sys_Error("cannot both register and check files, do that sequentially, please!");
-      doRegisterWads = true;
-      continue;
-    }
-    // "--db"
-    if (arg.strEquCI("-db") || arg.strEquCI("--db")) {
-      if (f >= argc) Sys_Error("missing database name");
-      if (!dbname.isEmpty()) Sys_Error("duplicate database name");
-      dbname = VStr(argv[++f]);
-      dbname = dbname.DefaultExtension(".wdb");
-      continue;
-    }
-    if (arg.strEquCI("-long") || arg.strEquCI("--long")) {
-      longReport = true;
-      continue;
-    }
-    if (arg.strEquCI("-info") || arg.strEquCI("--info")) {
-      wantInfo = true;
-      continue;
-    }
-    MessageBoxA(/*hwndDlg*/0, va("unknown option '%s'", *arg), "WADCheck ERROR", MB_OK|/*MB_ICONINFORMATION|*/MB_ICONERROR|MB_APPLMODAL);
-    ExitProcess(1);
-  }
-}
-
-
-//==========================================================================
-//
-//  mainXX
-//
-//==========================================================================
-#if 0
-int mainXX (int argc, char **argv) {
-  GLog.Logf("WADCHECK build date: %s  %s", __DATE__, __TIME__);
-
-  if (flist.length() == 0 && !wantInfo) usage();
-
-  if (dbname.isEmpty()) dbname = ".wadhash.wdb";
-  // prepend binary path to db name
-  if (!dbname.IsAbsolutePath()) {
-    dbname = VStr(VArgs::GetBinaryDir())+"/"+dbname;
-  }
-  GLog.Logf("using database file '%s'", *dbname);
-
-  // load database
-  {
-    VStream *fi = FL_OpenSysFileRead(dbname);
-    if (fi) {
-      wdbRead(fi);
-      delete fi;
-    }
-  }
-
-  if (doRegisterWads) {
-    // registering new wads
-    for (int f = 0; f < flist.length(); ++f) W_AddDiskFile(flist[f]);
-    GLog.Logf("calculating hashes...");
-    for (int lump = W_IterateNS(-1, WADNS_Any); lump >= 0; lump = W_IterateNS(lump, WADNS_Any)) {
-      if (W_LumpLength(lump) < 8) continue;
-      TArray<vuint8> data;
-      W_LoadLumpIntoArrayIdx(lump, data);
-      XXH64_hash_t hash = XXH64(data.ptr(), data.length(), 0x29a);
-      //GLog.Logf("calculated hash for '%s': 0x%16llx", *W_FullLumpName(lump), hash);
-      wdbAppend(hash, W_FullLumpName(lump), W_LumpLength(lump));
-    }
-
-    {
-      VStream *fo = FL_OpenSysFileWrite(dbname);
-      if (!fo) Sys_Error("cannot create output database '%s'", *dbname);
-      wdbWrite(fo);
-      delete fo;
-    }
-
-    if (wantInfo) showDBWadList();
-  } else {
-    // check for duplicates
-    if (wadlist.length() == 0) Sys_Error("database file '%s' not found or empty", *dbname);
-
-    if (wantInfo) showDBWadList();
-
-    if (flist.length()) {
-      for (int f = 0; f < flist.length(); ++f) W_AddDiskFile(flist[f]);
-
-      wdbClearResults();
-      for (int lump = W_IterateNS(-1, WADNS_Any); lump >= 0; lump = W_IterateNS(lump, WADNS_Any)) {
-        if (W_LumpLength(lump) < 8) continue;
-        TArray<vuint8> data;
-        W_LoadLumpIntoArrayIdx(lump, data);
-        XXH64_hash_t hash = XXH64(data.ptr(), data.length(), 0x29a);
-        wdbFind(hash, W_FullLumpName(lump), W_LumpLength(lump));
-      }
-
-      if (wdbFindResults.length()) {
-        wdbSortResults();
-        if (longReport) {
-          for (auto &&hit : wdbFindResults) {
-            fprintf(stderr, "LUMP HIT FOR '%s'\n", *hit.origName);
-            fprintf(stderr, "  %s\n", *hit.dbName);
+    VStream *fi = FL_OpenSysFileRead(arg);
+    if (!fi) continue;
+    if (wdbIsValid(fi)) {
+      dbname = arg;
+    } else if (flist.length() == 0) {
+      char sign[4];
+      fi->Seek(0);
+      if (!fi->IsError()) {
+        fi->Serialise(sign, 4);
+        if (!fi->IsError()) {
+          if (memcmp(sign, "PWAD", 4) == 0 || memcmp(sign, "IWAD", 4) == 0) {
+            flist.append(arg);
           }
-        } else {
-          for (auto &&hit : wdbFindResults) fprintf(stderr, "LUMP HIT FOR '%s': %s\n", *hit.origName, *hit.dbName);
         }
       }
     }
+    fi->Close();
+    delete fi;
+    //dbname = dbname.DefaultExtension(".wdb");
+    //MessageBoxA(/*hwndDlg*/0, va("unknown option '%s'", *arg), "WADCheck ERROR", MB_OK|/*MB_ICONINFORMATION|*/MB_ICONERROR|MB_APPLMODAL);
+    //ExitProcess(1);
   }
-
-  //W_AddFile("/home/ketmar/DooMz/wads/doom2.wad");
-
-  Z_ShuttingDown();
-  return 0;
 }
-#endif
 
 
 //==========================================================================
@@ -249,15 +108,41 @@ static void checkEnableGoButton (HWND hwnd) {
 //  ShowDBInfo
 //
 //==========================================================================
-static void ShowDBInfo (HWND hwnd) {
+static void ShowDBInfo (HWND hwnd, const char *moretext=nullptr) {
   SetDlgItemText(hwnd, IDM_DB_EDIT, *dbname);
   VStr snfo;
   snfo += va("WADCHECK build date: %s  %s\n", __DATE__, __TIME__);
   snfo += va("using database:\n%s\n", *dbname);
   snfo += "WADs in database:\n";
   for (auto &&wn : wadnames) snfo += va("  %s\n", *wn);
+  if (moretext && moretext[0]) snfo += moretext;
   SetDlgItemText(hwnd, IDM_ED_RESULTS, *snfo);
   EnableWindow(GetDlgItem(hwnd, IDM_BT_SAVE), 0);
+}
+
+
+//==========================================================================
+//
+//  CreateTooltipFor
+//
+//==========================================================================
+static void CreateTooltipFor (HWND hwnd, int dlgid, const char *text) {
+  HWND ch = GetDlgItem(hwnd, dlgid);
+  if (!ch) return;
+  HWND tip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+                            WS_POPUP|TTS_NOPREFIX|TTS_ALWAYSTIP,
+                            CW_USEDEFAULT, CW_USEDEFAULT,
+                            CW_USEDEFAULT, CW_USEDEFAULT,
+                            ch, NULL, 0, NULL);
+  TTTOOLINFO ti = {0};
+  ti.cbSize = sizeof(TTTOOLINFO);
+  ti.uFlags = TTF_SUBCLASS;
+  ti.hwnd = ch;
+  ti.lpszText = strdup(text);
+  GetClientRect(ch, &ti.rect);
+
+  SendMessage(tip, TTM_ADDTOOL, 0, (LPARAM)&ti);
+  SendMessage(tip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 0x6fff);
 }
 
 
@@ -471,6 +356,10 @@ INT_PTR CALLBACK MainDialogProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             SetDlgItemText(hwnd, IDM_ED_RESULTS, *res);
             EnableWindow(GetDlgItem(hwnd, IDM_ED_RESULTS), 1);
             EnableWindow(GetDlgItem(hwnd, IDM_BT_SAVE), 1);
+          } else {
+            //SetDlgItemText(hwnd, IDM_ED_RESULTS, "No duplicate lumps found.");
+            ShowDBInfo(hwnd, "\nNo duplicate lumps found.");
+            MessageBoxA(hwnd, "No duplicate lumps found.\nYour wad seems to be safe.", "Everything is OK", MB_OK|MB_ICONINFORMATION|MB_APPLMODAL);
           }
 
           EnableWindow(GetDlgItem(hwnd, IDM_BT_GO), 1);
@@ -489,6 +378,17 @@ INT_PTR CALLBACK MainDialogProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     case WM_INITDIALOG:
       //GLog.Logf("using database file '%s'", *dbname);
       ShowDBInfo(hwnd);
+      CreateTooltipFor(hwnd, 101, "Path to database file.\nUse button to select.");
+      CreateTooltipFor(hwnd, 102, "Press this button to select database file.");
+      CreateTooltipFor(hwnd, 104, "Path to WAD file you want to check.\nUse button to select.");
+      CreateTooltipFor(hwnd, 105, "Press this button to select WAD file you want to check.");
+      CreateTooltipFor(hwnd, 106, "Press this button to check your WAD.");
+      CreateTooltipFor(hwnd, 107, "Press this button to save the report to a text file.");
+      CreateTooltipFor(hwnd, 109, "Press this button to rebuild/update the current database.");
+      if (flist.length()) {
+        SetDlgItemText(hwnd, IDM_WAD_EDIT, *flist[0]);
+        checkEnableGoButton(hwnd);
+      }
       return (INT_PTR)TRUE;
   }
   return (INT_PTR)FALSE;

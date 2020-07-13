@@ -82,5 +82,7 @@ void wdbWrite (VStream *fo);
 // load database
 void wdbRead (VStream *fo);
 
+bool wdbIsValid (VStream *fl);
+
 
 #endif

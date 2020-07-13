@@ -281,6 +281,23 @@ void wdbWrite (VStream *fo) {
 
 //==========================================================================
 //
+//  wdbIsValid
+//
+//==========================================================================
+bool wdbIsValid (VStream *fl) {
+  if (!fl) return false;
+  if (!fl->IsLoading()) return false;
+  fl->Seek(0);
+  if (fl->IsError()) return false;
+  char sign[8];
+  fl->Serialise(sign, 8);
+  if (fl->IsError()) return false;
+  return (memcmp(sign, DBSignature, 8) == 0);
+}
+
+
+//==========================================================================
+//
 //  wdbRead
 //
 //==========================================================================
