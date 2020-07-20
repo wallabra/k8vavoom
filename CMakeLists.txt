@@ -17,6 +17,7 @@ option(WITH_SYS_VORBIS "Enable Vorbis support via libvorbis (if off, stb_vorbis 
 option(WITH_LIBMAD     "Enable MP3 support via libmad (if off, dr_mp3 will be used)" OFF)
 option(WITH_SYS_FLAC   "Enable FLAC support via libflac (if off, dr_flac will be used)" OFF)
 option(WITH_FLUID      "Enable FluidSynth support" ON)
+option(WITH_LIBJIT     "Enable LibJIT support in VavoomC compiler" ON)
 option(WITH_XRANDR     "Enable XRandR support for DPI detection" OFF)
 if(WIN32)
 option(WITH_SYS_FLUID  "Use system FluidSynth library" OFF)
@@ -185,6 +186,7 @@ if(ENABLE_UTILS_ONLY)
   set(ENABLE_SERVER OFF)
   set(ENABLE_VCCRUN OFF)
   set(ENABLE_VCCRUN_ONLY OFF)
+  set(WITH_LIBJIT OFF)
 elseif(ENABLE_VCCRUN_ONLY)
   #set(WITH_SYS_VORBIS OFF)
   #set(WITH_LIBMAD OFF)
@@ -753,6 +755,29 @@ else(WITH_SYS_FLAC)
   set(FLAC_FOUND OFF)
   message(STATUS "using dr_flac for FLAC decoding")
 endif(WITH_SYS_FLAC)
+
+
+#
+#  **** Check for LibJIT ****
+#
+if(WITH_LIBJIT)
+  PKG_CHECK_MODULES(LIBJIT libjit)
+  if(LIBJIT_FOUND)
+    message(STATUS "Found LibJIT: ${LIBJIT_LIBRARIES}")
+    include_directories(${LIBJIT_INCLUDE_DIRS})
+    set(MAIN_LIBS ${LIBJIT_LIBRARIES} ${MAIN_LIBS})
+  else(LIBJIT_FOUND)
+    message(STATUS "Could not find LibJIT library (this is OK)")
+    set(LIBJIT_FOUND OFF)
+  endif(LIBJIT_FOUND)
+else(WITH_LIBJIT)
+  set(LIBJIT_FOUND OFF)
+  message(STATUS "LibJIT disabled by user")
+endif(WITH_LIBJIT)
+
+if(LIBJIT_FOUND)
+  add_definitions(-DUSE_LIBJIT)
+endif(LIBJIT_FOUND)
 
 
 #
