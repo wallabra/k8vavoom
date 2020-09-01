@@ -38,7 +38,7 @@ static bool isFuckedHereticLump (int LumpNum) {
   if (lmpsize != 4160) return false;
   static const char *fuckedHeretic[7] = {"fltflww1","fltflww2","fltflww3","fltlava1","fltlava2","fltlava3","fltlava4"};
   const char *lname = *W_LumpName(LumpNum);
-  for (unsigned f = 0; f <= 7; ++f) {
+  for (unsigned f = 0; f < 7; ++f) {
     if (VStr::strEquCI(lname, fuckedHeretic[f])) return true;
   }
   return false;
