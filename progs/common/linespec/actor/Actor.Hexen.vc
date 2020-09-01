@@ -838,7 +838,7 @@ final void CHolyTailRemove () {
   if (Random() > 0.25) {
     if (!Velocity.x && !Velocity.y) {
       if (!Target) {
-        printwarn("A_LeafCheck: %C has no Target set! (the thing that should not be, still)");
+        printwarn("A_LeafCheck: %C has no Target set! (the thing that should not be, still)", self);
       } else {
         Thrust(Target.Angles.yaw, Random()*2.0+1.0);
       }
@@ -847,7 +847,7 @@ final void CHolyTailRemove () {
     SetState(GetStatePlus(IdleState, 7));
     Velocity.z = (Random()*2.0+1.0)*35.0;
     if (!Target) {
-      printwarn("A_LeafCheck: %C has no Target set! (the thing that should not be, upwind)");
+      printwarn("A_LeafCheck: %C has no Target set! (the thing that should not be, upwind)", self);
     } else {
       Thrust(Target.Angles.yaw, Random()*2.0+2.0);
     }
