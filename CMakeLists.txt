@@ -85,6 +85,7 @@ endif(SWITCH_LIBNX)
 
 
 # perform some platform and compiler checks
+set(VV_STACK_REALIGN OFF)
 if(CMAKE_CROSSCOMPILING AND WIN32)
   # cross-compiling to shitdoze
   message(STATUS "Cross-compiling to shitdoze...")
@@ -100,6 +101,7 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i[0-9]86|x86|X86|amd64|AMD64|x86_64)")
   #else()
   #  set(OPUS_CPU_X86 1)
   #endif()
+  set(VV_STACK_REALIGN ON)
 #elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(arm|aarch64)")
 #  set(OPUS_CPU_ARM 1)
 else()
@@ -276,6 +278,11 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 6.0)
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-ignored-attributes")
 endif()
 
+if(VV_STACK_REALIGN)
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -mstackrealign")
+  message(STATUS "enabled stack realign")
+endif(VV_STACK_REALIGN)
+
 if(WITH_STRTODEX)
   add_definitions(-DVCORE_ALLOW_STRTODEX=1)
 endif(WITH_STRTODEX)
@@ -329,6 +336,7 @@ set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-finite-math-only")
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fsigned-zeros")
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fsignaling-nans") # do not touch my NaNs!
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -frounding-math") # get lost!
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -ffp-contract=off") # do not use fused fmadd, even if it is available
 # we don't need strict standards compliance
 # note that this may modify NaNs, so if we'll use NaN-boxing, we should put "-fsignaling-nans" after fastmath
 #set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -ffast-math")
