@@ -216,7 +216,7 @@ static MidiEventList* read_midi_event(MidiSong* song)
 				case 3: /* Control change */
 					midi_read(song, &b, 1);
 					// Clamp parameters to 127
-					b = MIN(b, 0x7F);
+					b = TI_MIN(b, 0x7F);
 
 					b &= 0x7F;
 					{
