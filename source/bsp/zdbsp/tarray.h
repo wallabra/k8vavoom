@@ -36,9 +36,6 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#ifndef __APPLE__
-#include <malloc.h>
-#endif
 #include <new>
 
 namespace ZDBSP {

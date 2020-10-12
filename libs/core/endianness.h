@@ -23,6 +23,17 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#ifdef __unix__
+#include <sys/param.h>
+#endif
+
+#if defined(BSD)
+#include <sys/types.h>
+#define __BYTE_ORDER _BYTE_ORDER
+#define __BIG_ENDIAN _BIG_ENDIAN
+#define __LITTLE_ENDIAN _LITTLE_ENDIAN
+#endif
+
 #if defined(__SWITCH__)
 // we know this for sure
 # define VAVOOM_LITTLE_ENDIAN
