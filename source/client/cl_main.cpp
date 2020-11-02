@@ -625,8 +625,9 @@ void CL_ReadFromServerInfo () {
     if (VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "sv_disable_mlook"))) GGameInfo->clientFlags |= VGameInfo::CLF_MLOOK_DISABLED;
     //GCon->Logf(NAME_Debug, "*** client: deathmatch mode is %u", GGameInfo->deathmatch);
   } else {
+    // do nothing here, because the proper DM mode is set `SV_SpawnServer()`
     //GCon->Logf(NAME_Debug, "*** other: deathmatch mode is %u (%u)", GGameInfo->deathmatch, svs.deathmatch);
-    GGameInfo->deathmatch = svs.deathmatch;
+    //GGameInfo->deathmatch = svs.deathmatch;
   }
 }
 
