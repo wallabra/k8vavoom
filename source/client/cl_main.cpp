@@ -623,9 +623,10 @@ void CL_ReadFromServerInfo () {
     if (VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "sv_disable_crouch"))) GGameInfo->clientFlags |= VGameInfo::CLF_CROUCH_DISABLED;
     if (VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "sv_disable_jump"))) GGameInfo->clientFlags |= VGameInfo::CLF_JUMP_DISABLED;
     if (VStr::atoi(*Info_ValueForKey(GClGame->serverinfo, "sv_disable_mlook"))) GGameInfo->clientFlags |= VGameInfo::CLF_MLOOK_DISABLED;
-    //GCon->Logf(NAME_Debug, "deathmatch mode is %u", GGameInfo->deathmatch);
+    //GCon->Logf(NAME_Debug, "*** client: deathmatch mode is %u", GGameInfo->deathmatch);
   } else {
-    GGameInfo->deathmatch = 0;
+    //GCon->Logf(NAME_Debug, "*** other: deathmatch mode is %u (%u)", GGameInfo->deathmatch, svs.deathmatch);
+    GGameInfo->deathmatch = svs.deathmatch;
   }
 }
 
