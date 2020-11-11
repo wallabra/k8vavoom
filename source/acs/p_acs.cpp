@@ -2517,6 +2517,9 @@ static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int i
     } \
     scountLeft = ACS_GUARD_INSTRUCTION_COUNT; \
   } \
+  /* check stack */ \
+  if ((uintptr_t)sp < (uintptr_t)mystack) Host_Error("ACS: stack underflow"); \
+  if ((ptrdiff_t)(sp-mystack) >= ACS_STACK_DEPTH) Host_Error("ACS: stack overflow"); \
   if (fmt == ACS_LittleEnhanced) { \
     cmd = *ip; \
     if (cmd >= 240) { \
@@ -4066,6 +4069,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 #include "p_acs.h"
     0 };
 #endif
+
+    // check stack
+    if ((uintptr_t)sp < (uintptr_t)mystack) Host_Error("ACS: stack underflow");
+    if ((ptrdiff_t)(sp-mystack) >= ACS_STACK_DEPTH) Host_Error("ACS: stack overflow");
 
     if (fmt == ACS_LittleEnhanced) {
       cmd = *ip;
