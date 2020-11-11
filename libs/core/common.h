@@ -26,7 +26,7 @@
 #ifndef VAVOOM_CORE_LIB_COMMON
 #define VAVOOM_CORE_LIB_COMMON
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__CYGWIN__)
 # define __declspec(whatever)
 #endif
 

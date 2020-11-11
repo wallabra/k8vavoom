@@ -83,6 +83,9 @@ if(SWITCH_LIBNX)
   set(WITH_MIMALLOC OFF)
 endif(SWITCH_LIBNX)
 
+if(CYGWIN)
+  set(WITH_MIMALLOC OFF)
+endif()
 
 # perform some platform and compiler checks
 set(VV_STACK_REALIGN OFF)
@@ -925,6 +928,10 @@ if(WITH_GLAD)
     set(VAVOOM_MAIN_DEPS ${VAVOOM_MAIN_DEPS} glad)
   endif(GLAD_INCLUDE_DIR AND GLAD_LIBRARY)
 endif(WITH_GLAD)
+
+if(CYGWIN)
+  set(NO_SINCOS ON)
+endif()
 
 if(SWITCH_LIBNX)
   message(STATUS "Building for Switch")

@@ -344,7 +344,7 @@ VStr Sys_FindFileCI (VStr path, bool lastIsDir) {
 #include <dirent.h>
 #include <pwd.h>
 #include <sys/stat.h>
-#ifndef __SWITCH__
+#if !defined(__SWITCH__) && !defined(__CYGWIN__)
 # include <sys/syscall.h>   /* For SYS_xxx definitions */
 #endif
 #include <sys/time.h>

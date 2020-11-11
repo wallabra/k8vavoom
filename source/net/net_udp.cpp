@@ -555,14 +555,14 @@ int VUdpDriver::Read (int socket, vuint8 *buf, int len, sockaddr_t *addr) {
 //
 //==========================================================================
 int VUdpDriver::Write (int socket, const vuint8 *buf, int len, sockaddr_t *addr) {
-  #if !defined(WIN32) && !defined(__SWITCH__)
+  #if !defined(WIN32) && !defined(__SWITCH__) && !defined(__CYGWIN__)
   if (net_dbg_dump_udp_outbuffer) {
     int value = 0;
     if (ioctl(socket, TIOCOUTQ, &value) == 0) GCon->Logf(NAME_DevNet, "VUdpDriver::Write:000: TIOCOUTQ=%d", value);
   }
   #endif
   int ret = sendto(socket, (const char *)buf, len, 0, (sockaddr *)addr, sizeof(sockaddr));
-  #if !defined(WIN32) && !defined(__SWITCH__)
+  #if !defined(WIN32) && !defined(__SWITCH__) && !defined(__CYGWIN__)
   if (net_dbg_dump_udp_outbuffer) {
     int value = 0;
     if (ioctl(socket, TIOCOUTQ, &value) == 0) GCon->Logf(NAME_DevNet, "VUdpDriver::Write:001: TIOCOUTQ=%d (res=%d)", value, ret);
