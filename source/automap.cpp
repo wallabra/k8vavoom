@@ -1971,23 +1971,38 @@ static void AM_DrawLevelStats () {
   char kill[80];
   char secret[80];
   char item[80];
+  char lnamebuf[128];
 
   T_SetFont(SmallFont);
   T_SetAlign(hleft, vbottom);
 
   int currY = VirtualHeight-sb_height-7;
 
-  T_DrawText(20, currY, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
-  currY -= 10;
+  VStr lname = GClLevel->LevelInfo->GetLevelName().xstrip();
+  if (lname.length()) {
+    size_t lbpos = 0;
+    for (int f = 0; f < lname.length(); ++f) {
+      char ch = lname[f];
+      if (ch < ' ') continue;
+      if (ch == 127) ch = '_';
+      if (lbpos == 124) break;
+      lnamebuf[lbpos++] = ch;
+    }
+    lnamebuf[lbpos] = 0;
+    T_DrawText(20, currY, lnamebuf, CR_UNTRANSLATED);
+    currY -= T_FontHeight();
+  }
 
   if (am_show_map_name) {
-    T_DrawText(20, currY, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
-    currY -= 10;
+    lname = VStr(GClLevel->MapName);
+    lname = lname.xstrip();
+    T_DrawText(20, currY, va("%s (n%d:c%d)", *lname, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
+    currY -= T_FontHeight();
   }
 
   if (am_show_stats) {
     currY -= 4;
-    currY -= 3*10;
+    currY -= 3*T_FontHeight();
     kills = cl->KillCount;
     items = cl->ItemCount;
     secrets = cl->SecretCount;
@@ -2000,9 +2015,9 @@ static void AM_DrawLevelStats () {
     snprintf(kill, sizeof(kill), "Kills: %.2d / %.2d", kills, totalkills);
     T_DrawText(8, currY, kill, CR_RED);
     snprintf(item, sizeof(item), "Items: %.2d / %.2d", items, totalitems);
-    T_DrawText(8, currY+10, item, CR_GREEN);
+    T_DrawText(8, currY+T_FontHeight(), item, CR_GREEN);
     snprintf(secret, sizeof(secret), "Secrets: %.2d / %.2d", secrets, totalsecrets);
-    T_DrawText(8, currY+20, secret, CR_GOLD);
+    T_DrawText(8, currY+2*T_FontHeight(), secret, CR_GOLD);
   }
 }
 
