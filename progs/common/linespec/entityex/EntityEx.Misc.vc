@@ -1308,9 +1308,9 @@ override void OnDetachedFromServer () {
 void DetectStaticLightSpawn () {
   if (bStaticLight || TID || !State || !Sector) return;
   if (State.GetStateDuration != -1) return;
+  if (bIsPlayer || /*bMonster ||*/ bInvisible /*|| bMissile*/) return;
 
 #if 0
-  if (bIsPlayer || bMonster || bInvisible) return;
   if (/*bNoBlockmap || bNoInteraction ||*/ Radius <= 0 || Height <= 0 || (ScaleX == 0 && ScaleY == 0)) {
     // cannot interact with
     //if (!bNoGravity && !bNoBlockmap && !bNoInteraction) return;
@@ -1505,7 +1505,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     bFloatBob = wasFloatBob;
   }
 
-  DetectStaticLightSpawn();
+  if (mthing) DetectStaticLightSpawn();
 
   if (bStaticLight && mthing && !TID && !bStaticLightSpawned) {
     // fix for dehacked overrides that spawns the light inside the ceiling (for HacX)
