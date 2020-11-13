@@ -1298,6 +1298,70 @@ override void OnDetachedFromServer () {
 
 //==========================================================================
 //
+//  DetectStaticLightSpawn
+//
+//  things with one spawn frame, and one light will be converted
+//  to static light sources.
+//  this is what ObAddon does, for example.
+//
+//==========================================================================
+void DetectStaticLightSpawn () {
+  if (bStaticLight || TID || !State || !Sector) return;
+  if (State.GetStateDuration != -1) return;
+
+#if 0
+  if (bIsPlayer || bMonster || bInvisible) return;
+  if (/*bNoBlockmap || bNoInteraction ||*/ Radius <= 0 || Height <= 0 || (ScaleX == 0 && ScaleY == 0)) {
+    // cannot interact with
+    //if (!bNoGravity && !bNoBlockmap && !bNoInteraction) return;
+  } else {
+    name spn = State.GetStateSpriteName;
+    if (spn && spn != 'tnt1') return;
+  }
+#endif
+
+  GetStateEffects(FXLights, FXParticles);
+  if (FXLights.length != 1 || FXParticles.length) return;
+  auto lt = FXLights[0];
+  if (lt.Radius <= 4) return;
+  if ((lt.Type&DynamicLight::DLTYPE_TypeMask) != DynamicLight::DLTYPE_Point) return;
+  // we need API to add "no shadow" static lights
+  if (lt.bNoShadow) return;
+  if (lt.ConeAngle < 0) return;
+
+  printdebug("%C: possible static light; scale=%s:%s; ltradius=%s; color=0x%08x; spr=<%s>; ofs=%s; conedir=%s; coneangle=%s", self, ScaleX, ScaleY, lt.Radius, lt.Color, State.GetStateSpriteName, lt.Offset, lt.ConeDir, lt.ConeAngle);
+
+  bStaticLight = true;
+  bStaticLightSpawned = true;
+
+  LightOffset = lt.Offset;
+  LightColor = lt.Color;
+  LightRadius = lt.Radius;
+  LightConeDir = lt.ConeDir;
+  LightConeAngle = lt.ConeAngle;
+
+  TVec lorg = Origin+lt.Offset;
+
+  Entity ltowner = self;
+  if (bNoInteraction || bNoBlockmap) {
+    if (!bMoveWithSector && !bStickToFloor && !bStickToCeiling) {
+      printdebug("%C:    removing object -- this is immovable static light");
+      ltowner = none;
+    }
+  }
+
+  if (!lt.ConeAngle || lt.ConeAngle >= 360 || !lt.ConeDir) {
+    Level.AddStaticLightRGB(ltowner, lorg, lt.Radius, lt.Color);
+  } else {
+    Level.AddStaticLightRGB(ltowner, lorg, lt.Radius, lt.Color, lt.ConeDir, lt.ConeAngle);
+  }
+
+  if (!ltowner) Destroy();
+}
+
+
+//==========================================================================
+//
 //  OnMapSpawn
 //
 //==========================================================================
@@ -1441,7 +1505,9 @@ override void OnMapSpawn (mthing_t *mthing) {
     bFloatBob = wasFloatBob;
   }
 
-  if (bStaticLight && mthing && !TID) {
+  DetectStaticLightSpawn();
+
+  if (bStaticLight && mthing && !TID && !bStaticLightSpawned) {
     // fix for dehacked overrides that spawns the light inside the ceiling (for HacX)
     TVec lorg = Origin+LightOffset;
     if (bSpawnCeiling) {
@@ -2049,9 +2115,6 @@ override void ClientTick (float DeltaTime) {
 //
 //==========================================================================
 final void DoStateEffects (float DeltaTime) {
-  //array!(LightEffectDef *) FXLights;
-  //array!(ParticleEffectDef *) FXParticles;
-
   GetStateEffects(FXLights, FXParticles);
 
   // if we have a static light, check if there are no light effects for the current state
