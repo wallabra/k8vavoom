@@ -2390,11 +2390,11 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               // Check if we only have a number instead of a string, since
               // there are some custom WAD files that don't specify a DamageType,
               // but specify a DamageFactor
-              if (!sc->CheckFloat()) {
+              if (!sc->CheckFloatWithSign()) {
                 sc->ExpectString();
                 DamageType = (sc->String.ICmp("Normal") == 0 ? /*NAME_None*/VName("None") : VName(*sc->String));
                 sc->Expect(",");
-                sc->ExpectFloat();
+                sc->ExpectFloatWithSign();
               }
 
               // check damage factors array for replacements
