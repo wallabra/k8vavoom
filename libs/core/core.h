@@ -153,9 +153,20 @@
 #include "stream/streamsbit.h" // bitstreams
 #include "stream/streamsex.h" // extended streams
 #include "stream/streamszip.h" // packed streams
+
 #include "mathutil.h"
-#include "vecmat/vector.h" // vector math
-#include "vecmat/matrix.h" // matrices
+
+// vector math
+#include "vecmat/vector_avec.h"
+#include "vecmat/vector_3d.h"
+#include "vecmat/vertex2d.h"
+#include "vecmat/plane_3d.h"
+#include "vecmat/frustum.h"
+// matrices
+#include "vecmat/matrix4.h"
+#include "vecmat/matrixrot.h"
+#include "vecmat/matrixvp.h"
+
 #include "colorutil.h"
 #include "xml.h" // xml file parsing
 #include "stream/ntvalue.h"

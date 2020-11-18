@@ -50,10 +50,20 @@ add_library(core STATIC
   stream/streamszip.cpp
   stream/ntvalue.cpp
   mathutil.h
-  vecmat/vector.h
-  vecmat/vector.cpp
-  vecmat/matrix.h
-  vecmat/matrix.cpp
+  vecmat/vector_avec.h
+  vecmat/vector_3d.h
+  vecmat/vector_3d.cpp
+  vecmat/vertex2d.h
+  vecmat/plane_3d.h
+  vecmat/plane_3d.cpp
+  vecmat/frustum.h
+  vecmat/frustum.cpp
+  #vecmat/vector.h
+  #vecmat/vector.cpp
+  vecmat/matrix4.h
+  vecmat/matrixrot.h
+  vecmat/matrixvp.h
+  vecmat/matrix4.cpp
   wlist.h
   xml.h
   xml.cpp
