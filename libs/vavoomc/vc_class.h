@@ -174,6 +174,54 @@ struct VLightEffectDef {
 
   inline bool IsNoShadow () const noexcept { return !!(Flags&Flag_NoShadow); }
   inline void SetNoShadow (bool v) noexcept { if (v) Flags |= Flag_NoShadow; else Flags &= ~Flag_NoShadow; }
+
+  // doesn't touch `Name`
+  inline void setDefaultValues (int LightType) noexcept {
+    Type = LightType;
+    Color = 0xffffffff;
+    Radius = 0.0f;
+    Radius2 = 0.0f;
+    MinLight = 0.0f;
+    Offset = TVec(0, 0, 0);
+    Chance = 0.0f;
+    Interval = 0.0f;
+    Scale = 0.0f;
+    Flags = 0;
+    ConeAngle = 0.0f;
+    ConeDir = TVec(0, 0, 0);
+  }
+
+  inline void copyFrom (const VLightEffectDef &lt) noexcept {
+    Name = lt.Name;
+    Type = lt.Type;
+    Color = lt.Color;
+    Radius = lt.Radius;
+    Radius2 = lt.Radius2;
+    MinLight = lt.MinLight;
+    Offset = lt.Offset;
+    Chance = lt.Chance;
+    Interval = lt.Interval;
+    Scale = lt.Scale;
+    ConeAngle = lt.ConeAngle;
+    ConeDir = lt.ConeDir;
+  }
+
+  // convert GZDoom light size to k8vavoom light radius
+  // the engine is using `LevelInfo::GZSizeToRadius()` instead, tho
+  /*
+  static inline float GZSizeToRadius (float Val, bool attenuated) {
+    if (attenuated) {
+      //k8: 1.04f is just because i feel
+      return Val*1.04f; // size in map units
+    } else {
+      if (Val <= 20.0f) return Val*4.5f;
+      if (Val <= 30.0f) return Val*3.6f;
+      if (Val <= 40.0f) return Val*3.3f;
+      if (Val <= 60.0f) return Val*2.8f;
+      return Val*2.5f;
+    }
+  }
+  */
 };
 
 
