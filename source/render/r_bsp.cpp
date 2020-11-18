@@ -1440,15 +1440,15 @@ void VRenderLevelShared::RenderPortals () {
     //r_allow_shadows = oldShadows;
   } else {
     // if we are in sky portal, render nested sky portals
-    if (CurrPortal && CurrPortal->IsSkyBox()) {
+    // actually, always render sky portals
+    if (true /*CurrPortal && CurrPortal->IsSkyBox()*/) {
       for (auto &&pp : Portals) {
         if (pp && pp->Level == PortalLevel && pp->IsSky() && !pp->IsSkyBox()) {
           pp->Draw(true);
         }
       }
-    } else {
-      if (dbg_max_portal_depth_warning) GCon->Logf(NAME_Warning, "portal level too deep (%d)", PortalLevel);
     }
+    if (dbg_max_portal_depth_warning) GCon->Logf(NAME_Warning, "portal level too deep (%d)", PortalLevel);
   }
 
   for (auto &&pp : Portals) {
