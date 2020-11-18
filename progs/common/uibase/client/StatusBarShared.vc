@@ -30,6 +30,8 @@ protected ClientGameBase ClGame;
 enum NUM_NOTIFY_LINES = 8;
 enum NUM_CHAT_LINES = 16;
 
+const float CenterMessageFadeoutTime = 0.3;
+
 struct NotifyMessage {
   string text;
   string nick; // for chat
@@ -320,7 +322,7 @@ void ClearCenterMessage () {
 void AddCenterMessage (string Msg) {
   SetFont('smallfont');
   CenterMessageHeight = SplitText(Msg, CenterMessageLines, 600);
-  CenterTime = GetCvarF('hud_center_message_time');
+  CenterTime = fmax(0.5, GetCvarF('hud_center_message_time'));
 }
 
 
@@ -330,7 +332,7 @@ void AddCenterMessage (string Msg) {
 //
 //==========================================================================
 void DrawCenterMessage () {
-  if (CenterTime && CenterMessageLines.length) {
+  if (CenterTime && CenterMessageLines) {
     auto ovw = GetVirtualWidth();
     auto ovh = GetVirtualHeight();
     int LineH = CenterMessageHeight/CenterMessageLines.length;
@@ -338,8 +340,9 @@ void DrawCenterMessage () {
     SetTextAlign(hleft, vtop);
     int tx = ovw/2;
     int ty = (ovh-CenterMessageLines.length*LineH)/2-32;
+    float alpha = (CenterTime < 0 ? (CenterMessageFadeoutTime+CenterTime)/CenterMessageFadeoutTime : 1);
     foreach (auto i; 0..CenterMessageLines.length) {
-      DrawText(tx-CenterMessageLines[i].Width/2, ty+i*LineH, CenterMessageLines[i].Text, GetCvar('hud_font_color_centered'), CR_YELLOW);
+      DrawText(tx-CenterMessageLines[i].Width/2, ty+i*LineH, CenterMessageLines[i].Text, GetCvar('hud_font_color_centered'), CR_YELLOW, alpha);
     }
   }
 }
@@ -351,9 +354,12 @@ void DrawCenterMessage () {
 //
 //==========================================================================
 void UpdateCenterMessage (float DeltaTime) {
-  CenterTime -= DeltaTime;
-  if (CenterTime < 0.0) CenterTime = 0.0;
+  if (CenterTime) {
+    CenterTime -= DeltaTime;
+    if (CenterTime < -CenterMessageFadeoutTime) CenterTime = 0.0;
+  }
 }
+
 
 
 //**************************************************************************
