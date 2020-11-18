@@ -93,6 +93,9 @@ static const char *spritename;
 static TArray<VLightEffectDef> GLightEffectDefs;
 static TArray<VParticleEffectDef> GParticleEffectDefs;
 
+static TMap<VStrCI, int> GLightEffectDefsMap;
+static TMap<VStrCI, int> GParticleEffectDefsMap;
+
 static VCvarB spr_report_missing_rotations("spr_report_missing_rotations", false, "Report missing sprite rotations?");
 static VCvarB spr_report_missing_patches("spr_report_missing_patches", false, "Report missing sprite patches?");
 
@@ -739,7 +742,9 @@ void R_ShutdownData () {
   FreeSpriteData();
 
   GLightEffectDefs.Clear();
+  GLightEffectDefsMap.clear();
   GParticleEffectDefs.Clear();
+  GParticleEffectDefsMap.clear();
 }
 
 
@@ -833,10 +838,95 @@ int R_GetBloodTranslation (int Col) {
 //
 //==========================================================================
 VLightEffectDef *R_FindLightEffect (VStr Name) {
-  for (int i = 0; i < GLightEffectDefs.Num(); ++i) {
-    if (Name.ICmp(*GLightEffectDefs[i].Name) == 0) return &GLightEffectDefs[i];
+  if (Name.length()) {
+    /*
+    for (int i = 0; i < GLightEffectDefs.Num(); ++i) {
+      if (Name.ICmp(*GLightEffectDefs[i].Name) == 0) return &GLightEffectDefs[i];
+    }
+    */
+    auto ldip = GLightEffectDefsMap.find(Name);
+    if (ldip) return &GLightEffectDefs[*ldip];
   }
   return nullptr;
+}
+
+
+//==========================================================================
+//
+//  FindParticleEffect
+//
+//==========================================================================
+static VParticleEffectDef *FindParticleEffect (VStr Name) {
+  if (Name.length()) {
+    /*
+    for (int i = 0; i < GParticleEffectDefs.Num(); ++i) {
+      if (Name.ICmp(*GParticleEffectDefs[i].Name) == 0) return &GParticleEffectDefs[i];
+    }
+    */
+    auto pdip = GParticleEffectDefsMap.find(Name);
+    if (pdip) return &GParticleEffectDefs[*pdip];
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  NewLightEffect
+//
+//==========================================================================
+static VLightEffectDef *NewLightEffect (VStr Name, int LightType) {
+  VLightEffectDef *L = R_FindLightEffect(Name);
+  if (!L) {
+    L = &GLightEffectDefs.Alloc();
+    L->Name = VName(*Name, VName::AddLower);
+    GLightEffectDefsMap.put(Name, GLightEffectDefs.length()-1);
+    L->setDefaultValues(LightType);
+  }
+  return L;
+}
+
+
+//==========================================================================
+//
+//  NewLightAlias
+//
+//==========================================================================
+static void NewLightAlias (const VLightEffectDef *lt, VStr newname) {
+  if (!lt || newname.length() == 0) return;
+  auto ldip = GLightEffectDefsMap.find(*lt->Name);
+  vassert(ldip);
+  GLightEffectDefsMap.put(newname, *ldip);
+}
+
+
+//==========================================================================
+//
+//  NewParticleEffect
+//
+//==========================================================================
+static VParticleEffectDef *NewParticleEffect (VStr Name) {
+  VParticleEffectDef *P = FindParticleEffect(Name);
+  if (!P) {
+    P = &GParticleEffectDefs.Alloc();
+    P->Name = VName(*Name, VName::AddLower);
+    GParticleEffectDefsMap.put(Name, GParticleEffectDefs.length()-1);
+    P->setDefaultValues();
+  }
+  return P;
+}
+
+
+//==========================================================================
+//
+//  NewParticleAlias
+//
+//==========================================================================
+static void NewParticleAlias (const VParticleEffectDef *pt, VStr newname) {
+  if (!pt || newname.length() == 0) return;
+  auto pdip = GParticleEffectDefsMap.find(*pt->Name);
+  vassert(pdip);
+  GParticleEffectDefsMap.put(newname, *pdip);
 }
 
 
@@ -846,17 +936,11 @@ VLightEffectDef *R_FindLightEffect (VStr Name) {
 //
 //==========================================================================
 static void ParseLightDef (VScriptParser *sc, int LightType) {
-  // get name, find it in the list or add it if it's not there yet
+  const bool extend = sc->Check("extend");
   sc->ExpectString();
-  VLightEffectDef *L = R_FindLightEffect(sc->String);
-  if (!L) L = &GLightEffectDefs.Alloc();
-
-  TArray<VStr> aliases;
-
-  // set default values
-  L->setDefaultValues(LightType);
-  L->Name = *sc->String.ToLower();
-
+  if (extend && !R_FindLightEffect(sc->String)) sc->Error(va("Cannot extend unknown light '%s'", *sc->String));
+  VLightEffectDef *L = NewLightEffect(sc->String, LightType);
+  if (!extend) L->setDefaultValues(LightType);
   // parse light def
   sc->Expect("{");
   while (!sc->Check("}")) {
@@ -902,11 +986,7 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
       if (!L->ConeDir.isValid()) L->ConeDir = TVec(0, 0, 0);
     } else if (sc->Check("alias")) {
       sc->ExpectString();
-      if (sc->String.length()) {
-        bool found = false;
-        for (auto &&it : aliases) if (it.strEquCI(sc->String)) { found = true; break; }
-        if (!found) aliases.append(sc->String);
-      }
+      NewLightAlias(L, sc->String);
     } else {
       sc->Error(va("Bad point light parameter (%s)", *sc->String));
     }
@@ -918,14 +998,6 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
       L->Type &= ~DLTYPE_Spot;
     }
   }
-
-  // create aliases
-  for (auto &&it : aliases) {
-    VLightEffectDef *L2 = R_FindLightEffect(it);
-    if (!L2) L2 = &GLightEffectDefs.Alloc();
-    L2->copyFrom(*L);
-    L2->Name = *it.ToLower();
-  }
 }
 
 
@@ -935,18 +1007,11 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
 //
 //==========================================================================
 static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefactor) {
-  // get name, find it in the list or add it if it's not there yet
   sc->ExpectString();
-  VLightEffectDef *L = R_FindLightEffect(sc->String);
-  if (!L) L = &GLightEffectDefs.Alloc();
-
-  // set default values
+  VLightEffectDef *L = NewLightEffect(sc->String, LightType);
   L->setDefaultValues(LightType);
-  L->Name = *sc->String.ToLower();
   L->SetNoSelfShadow(true); // by default
-
   bool attenuated = false;
-
   // parse light def
   sc->Expect("{");
   while (!sc->Check("}")) {
@@ -1011,6 +1076,10 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
     } else if (sc->Check("noshadow")) {
       // k8vavoom extension
       L->SetNoShadow(true);
+    } else if (sc->Check("alias")) {
+      // k8vavoom extension
+      sc->ExpectString();
+      NewLightAlias(L, sc->String);
     } else {
       sc->Error(va("Bad gz light ('%s') parameter (%s)", *L->Name, *sc->String));
     }
@@ -1051,44 +1120,16 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
 
 //==========================================================================
 //
-//  FindParticleEffect
-//
-//==========================================================================
-static VParticleEffectDef *FindParticleEffect (VStr Name) {
-  for (int i = 0; i < GParticleEffectDefs.Num(); ++i) {
-    if (Name.ICmp(*GParticleEffectDefs[i].Name) == 0) return &GParticleEffectDefs[i];
-  }
-  return nullptr;
-}
-
-
-//==========================================================================
-//
 //  ParseParticleEffect
 //
 //==========================================================================
 static void ParseParticleEffect (VScriptParser *sc) {
-  // get name, find it in the list or add it if it's not there yet
+  const bool extend = sc->Check("extend");
   sc->ExpectString();
-  VParticleEffectDef *P = FindParticleEffect(sc->String);
-  if (!P) P = &GParticleEffectDefs.Alloc();
-
-  // set default values
-  P->Name = *sc->String.ToLower();
-  P->Type = 0;
-  P->Type2 = 0;
-  P->Color = 0xffffffff;
-  P->Offset = TVec(0, 0, 0);
-  P->Count = 0;
-  P->OrgRnd = 0;
-  P->Velocity = TVec(0, 0, 0);
-  P->VelRnd = 0;
-  P->Accel = 0;
-  P->Grav = 0;
-  P->Duration = 0;
-  P->Ramp = 0;
-
-  // parse light def
+  if (extend && !FindParticleEffect(sc->String)) sc->Error(va("Cannot extend unknown particle effect '%s'", *sc->String));
+  VParticleEffectDef *P = NewParticleEffect(sc->String);
+  if (!extend) P->setDefaultValues();
+  // parse particle def
   sc->Expect("{");
   while (!sc->Check("}")) {
     if (sc->Check("type")) {
@@ -1144,6 +1185,9 @@ static void ParseParticleEffect (VScriptParser *sc) {
     } else if (sc->Check("ramp")) {
       sc->ExpectFloat();
       P->Ramp = sc->Float;
+    } else if (sc->Check("alias")) {
+      sc->ExpectString();
+      NewParticleAlias(P, sc->String);
     } else {
       sc->Error(va("Bad particle effect parameter (%s)", *sc->String));
     }
