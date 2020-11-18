@@ -55,6 +55,8 @@ static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false
 
 static VCvarB r_ordered_subregions("r_ordered_subregions", false, "Order subregions in renderer?", CVAR_Archive);
 
+static VCvarB r_draw_queue_warnings("r_draw_queue_warnings", false, "Show 'queued twice' and other warnings?", CVAR_PreInit);
+
 //static VCvarB dbg_dump_portal_list("dbg_dump_portal_list", false, "Dump portal list before rendering?", 0/*CVAR_Archive*/);
 
 VCvarB r_disable_world_update("r_disable_world_update", false, "Disable world updates.", 0/*CVAR_Archive*/);
@@ -266,14 +268,18 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
   if (!tex || tex->Type == TEXTYPE_Null) return false;
 
   if (surf->queueframe == currQueueFrame) {
-    if (surf->seg) {
-      //abort();
-      GCon->Logf(NAME_Warning, "subsector %d, seg %d surface queued for rendering twice",
-        (int)(ptrdiff_t)(surf->subsector-Level->Subsectors),
-        (int)(ptrdiff_t)(surf->seg-Level->Segs));
-    } else {
-      GCon->Logf(NAME_Warning, "subsector %d surface queued for rendering twice",
-        (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
+    if (r_draw_queue_warnings) {
+      if (surf->seg) {
+        //abort();
+        GCon->Logf(NAME_Warning, "sector %d, subsector %d, seg %d surface queued for rendering twice",
+          (int)(ptrdiff_t)(surf->subsector->sector-Level->Sectors),
+          (int)(ptrdiff_t)(surf->subsector-Level->Subsectors),
+          (int)(ptrdiff_t)(surf->seg-Level->Segs));
+      } else {
+        GCon->Logf(NAME_Warning, "sector %d, subsector %d surface queued for rendering twice",
+          (int)(ptrdiff_t)(surf->subsector->sector-Level->Sectors),
+          (int)(ptrdiff_t)(surf->subsector-Level->Subsectors));
+      }
     }
     return false;
   }
