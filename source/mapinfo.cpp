@@ -133,7 +133,11 @@ void MapInfoCommandImpl##name_::Handler (VScriptParser *sc, bool newFormat, VMap
 //==========================================================================
 static bool checkEndBracket (VScriptParser *sc) {
   if (sc->Check("}")) return true;
-  return sc->AtEnd();
+  if (sc->AtEnd()) {
+    sc->Message("Some mapper cannot into proper mapinfo (missing '}')");
+    return true;
+  }
+  return false;
 }
 
 
@@ -2318,6 +2322,8 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
           sc->Error(va("Invalid command '%s'", *sc->String));
           error = true;
           break;
+        } else {
+          sc->Message(va("Some mapper cannot into proper mapinfo (stray '%s')", *sc->String));
         }
       }
     }
