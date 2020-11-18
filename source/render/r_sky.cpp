@@ -516,8 +516,10 @@ void VRenderLevelShared::InitSky () {
   CurrentLightning = !!(Level->LevelInfo->LevelInfoFlags&VLevelInfo::LIF_Lightning);
 
   if (Level->LevelInfo->SkyBox != NAME_None) {
+    //GCon->Logf(NAME_Debug, "InitSky:skybox");
     BaseSky.InitSkyBox(Level->LevelInfo->SkyBox, NAME_None);
   } else {
+    //GCon->Logf(NAME_Debug, "InitSky:normsky; skt=(%d:%d) <%s>", CurrentSky1Texture, CurrentSky2Texture, *GTextureManager[CurrentSky1Texture]->Name);
     BaseSky.Init(CurrentSky1Texture, CurrentSky2Texture,
                  Level->LevelInfo->Sky1ScrollDelta,
                  Level->LevelInfo->Sky2ScrollDelta, CurrentDoubleSky,

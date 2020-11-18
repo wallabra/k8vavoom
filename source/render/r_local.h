@@ -204,6 +204,7 @@ public:
 
   inline VSkyBoxPortal (VRenderLevelShared *ARLev, VEntity *AViewport) : VPortal(ARLev), Viewport(AViewport) {}
   virtual bool IsSky () const override;
+  virtual bool IsSkyBox () const override;
   virtual bool MatchSkyBox (VEntity *) const override;
   virtual void DrawContents () override;
 };
@@ -305,8 +306,8 @@ protected:
 
 protected:
   VLevel *Level;
-
   VEntity *ViewEnt;
+  VPortal *CurrPortal;
 
   //unsigned FrustumIndexes[5][6];
   int MirrorLevel;

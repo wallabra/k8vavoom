@@ -480,7 +480,9 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   // sky/skybox/stacked sector rendering
 
   // prevent recursion
-  if (SkyBox && SkyBox->IsPortalDirty()) SkyBox = nullptr;
+  if (SkyBox) {
+    if (SkyBox->IsPortalDirty() || (CurrPortal && CurrPortal->IsSky())) SkyBox = nullptr;
+  }
 
   const bool IsStack = (SkyBox && SkyBox->GetSkyBoxAlways());
 
@@ -518,6 +520,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     }
 
     if (!Sky && !SkyBox) {
+      //if (CurrPortal && CurrPortal->IsSky()) GCon->Logf(NAME_Debug, "NEW IN SKYPORTAL");
       InitSky();
       Sky = &BaseSky;
     }
@@ -558,6 +561,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       // nope?
       if (!Portal) {
         // no, no such portal yet, create a new one
+        //if (CurrPortal && CurrPortal->IsSky()) GCon->Logf(NAME_Debug, "NEW NORMAL SKY IN SKY PORTAL");
         Portal = new VSkyPortal(this, Sky);
         Portals.Append(Portal);
       }
@@ -1380,6 +1384,11 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
 //
 //==========================================================================
 void VRenderLevelShared::RenderPortals () {
+  /*
+  GCon->Logf(NAME_Debug, "VRenderLevelShared::RenderPortals: PortalLevel=%d; CurrPortal=%s; pcount=%d",
+    PortalLevel, (CurrPortal ? (CurrPortal->IsSky() ? "sky" : "non-sky") : "none"), Portals.length());
+  */
+
   if (PortalLevel == 0) {
     /*
     if (oldMaxMirrors != r_maxmiror_depth || oldPortalDepth != GetMaxPortalDepth() ||
@@ -1430,7 +1439,16 @@ void VRenderLevelShared::RenderPortals () {
     r_decals_enabled = oldDecalsEnabled;
     //r_allow_shadows = oldShadows;
   } else {
-    if (dbg_max_portal_depth_warning) GCon->Logf(NAME_Warning, "portal level too deep (%d)", PortalLevel);
+    // if we are in sky portal, render nested sky portals
+    if (CurrPortal && CurrPortal->IsSkyBox()) {
+      for (auto &&pp : Portals) {
+        if (pp && pp->Level == PortalLevel && pp->IsSky() && !pp->IsSkyBox()) {
+          pp->Draw(true);
+        }
+      }
+    } else {
+      if (dbg_max_portal_depth_warning) GCon->Logf(NAME_Warning, "portal level too deep (%d)", PortalLevel);
+    }
   }
 
   for (auto &&pp : Portals) {

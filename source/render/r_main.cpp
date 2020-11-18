@@ -585,6 +585,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   : VRenderLevelDrawer()
   , Level(ALevel)
   , ViewEnt(nullptr)
+  , CurrPortal(nullptr)
   , MirrorLevel(0)
   , PortalLevel(0)
   , VisSize(0)
@@ -1174,6 +1175,7 @@ void VRenderLevelShared::SetupFrame () {
   }
 
   ViewEnt = cl->Camera;
+  CurrPortal = nullptr;
   Drawer->viewangles = cl->ViewAngles;
   if (r_chasecam && r_chase_front) {
     // this is used to see how weapon looks in player's hands
@@ -1329,6 +1331,7 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
 
   Drawer->SetupView(this, rd);
   //advanceCacheFrame();
+  CurrPortal = nullptr;
   PortalDepth = 0;
   PortalUsingStencil = 0;
   PortalLevel = 0;

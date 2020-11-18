@@ -47,6 +47,7 @@ struct AutoSavedView {
   TVec SavedViewRight;
   TVec SavedViewUp;
   VEntity *SavedViewEnt;
+  VPortal *SavedPortal;
   int SavedExtraLight;
   int SavedFixedLight;
 
@@ -76,6 +77,7 @@ struct AutoSavedView {
     SavedViewUp = Drawer->viewup;
     SavedMirrorClip = Drawer->MirrorClip;
     SavedViewEnt = RLev->ViewEnt;
+    SavedPortal = RLev->CurrPortal;
     SavedExtraLight = RLev->ExtraLight;
     SavedFixedLight = RLev->FixedLight;
 
@@ -122,6 +124,7 @@ struct AutoSavedView {
 
     // restore original frustum
     RLev->ViewEnt = SavedViewEnt;
+    RLev->CurrPortal = SavedPortal;
     RLev->CallTransformFrustum();
     RLev->ExtraLight = SavedExtraLight;
     RLev->FixedLight = SavedFixedLight;
@@ -171,6 +174,16 @@ bool VPortal::NeedsDepthBuffer () const {
 //
 //==========================================================================
 bool VPortal::IsSky () const {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VPortal::IsSkyBox
+//
+//==========================================================================
+bool VPortal::IsSkyBox () const {
   return false;
 }
 
@@ -243,6 +256,7 @@ void VPortal::Draw (bool UseStencil) {
   {
     // save renderer settings
     AutoSavedView guard(RLev, NeedsDepthBuffer());
+    RLev->CurrPortal = this;
     DrawContents();
   }
 
@@ -335,6 +349,7 @@ bool VSkyPortal::MatchSky (VSky *ASky) const {
 //
 //==========================================================================
 void VSkyPortal::DrawContents () {
+  //GCon->Logf(NAME_Debug, "VSkyPortal::DrawContents!");
   Drawer->vieworg = TVec(0, 0, 0);
   RLev->TransformFrustum();
   Drawer->SetupViewOrg();
@@ -355,6 +370,16 @@ void VSkyPortal::DrawContents () {
 //
 //==========================================================================
 bool VSkyBoxPortal::IsSky () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VSkyBoxPortal::IsSkyBox
+//
+//==========================================================================
+bool VSkyBoxPortal::IsSkyBox () const {
   return true;
 }
 
@@ -390,6 +415,7 @@ void VSkyBoxPortal::DrawContents () {
   // prevent recursion
   VEntity::AutoPortalDirty guard(Viewport);
   refdef_t rd = RLev->refdef;
+  RLev->CurrPortal = this;
   RLev->RenderScene(&rd, nullptr);
 }
 
@@ -437,6 +463,7 @@ void VSectorStackPortal::DrawContents () {
 
   // prevent recursion
   VEntity::AutoPortalDirty guard(Viewport);
+  RLev->CurrPortal = this;
   RLev->RenderScene(&rd, &Range);
 }
 
