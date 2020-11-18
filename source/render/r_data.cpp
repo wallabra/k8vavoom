@@ -851,20 +851,11 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
   VLightEffectDef *L = R_FindLightEffect(sc->String);
   if (!L) L = &GLightEffectDefs.Alloc();
 
+  TArray<VStr> aliases;
+
   // set default values
+  L->setDefaultValues(LightType);
   L->Name = *sc->String.ToLower();
-  L->Type = LightType;
-  L->Color = 0xffffffff;
-  L->Radius = 0.0f;
-  L->Radius2 = 0.0f;
-  L->MinLight = 0.0f;
-  L->Offset = TVec(0, 0, 0);
-  L->Chance = 0.0f;
-  L->Interval = 0.0f;
-  L->Scale = 0.0f;
-  L->Flags = 0;
-  L->ConeAngle = 0;
-  L->ConeDir = TVec(0, 0, 0);
 
   // parse light def
   sc->Expect("{");
@@ -909,6 +900,13 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
       L->ConeDir.z = sc->Float;
       L->ConeDir = L->ConeDir.Normalised();
       if (!L->ConeDir.isValid()) L->ConeDir = TVec(0, 0, 0);
+    } else if (sc->Check("alias")) {
+      sc->ExpectString();
+      if (sc->String.length()) {
+        bool found = false;
+        for (auto &&it : aliases) if (it.strEquCI(sc->String)) { found = true; break; }
+        if (!found) aliases.append(sc->String);
+      }
     } else {
       sc->Error(va("Bad point light parameter (%s)", *sc->String));
     }
@@ -920,24 +918,13 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
       L->Type &= ~DLTYPE_Spot;
     }
   }
-}
 
-
-//==========================================================================
-//
-//  GZSizeToRadius
-//
-//==========================================================================
-static inline float GZSizeToRadius (float Val, bool attenuated) {
-  if (attenuated) {
-    //k8: 1.04f is just because i feel
-    return Val*1.04f; // size in map units
-  } else {
-    if (Val <= 20.0f) return Val*4.5f;
-    if (Val <= 30.0f) return Val*3.6f;
-    if (Val <= 40.0f) return Val*3.3f;
-    if (Val <= 60.0f) return Val*2.8f;
-    return Val*2.5f;
+  // create aliases
+  for (auto &&it : aliases) {
+    VLightEffectDef *L2 = R_FindLightEffect(it);
+    if (!L2) L2 = &GLightEffectDefs.Alloc();
+    L2->copyFrom(*L);
+    L2->Name = *it.ToLower();
   }
 }
 
@@ -954,19 +941,8 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
   if (!L) L = &GLightEffectDefs.Alloc();
 
   // set default values
+  L->setDefaultValues(LightType);
   L->Name = *sc->String.ToLower();
-  L->Type = LightType;
-  L->Color = 0xffffffff;
-  L->Radius = 0.0f;
-  L->Radius2 = 0.0f;
-  L->MinLight = 0.0f;
-  L->Offset = TVec(0, 0, 0);
-  L->Chance = 0.0f;
-  L->Interval = 0.0f;
-  L->Scale = 0.0f;
-  L->Flags = 0;
-  L->ConeAngle = 0;
-  L->ConeDir = TVec(0, 0, 0);
   L->SetNoSelfShadow(true); // by default
 
   bool attenuated = false;
@@ -1068,8 +1044,8 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
     L->Color = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
   }
 
-  L->Radius = GZSizeToRadius(L->Radius, attenuated);
-  L->Radius2 = GZSizeToRadius(L->Radius2, attenuated);
+  L->Radius = VLevelInfo::GZSizeToRadius(L->Radius, attenuated);
+  L->Radius2 = VLevelInfo::GZSizeToRadius(L->Radius2, attenuated);
 }
 
 
