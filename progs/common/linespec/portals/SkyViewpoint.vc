@@ -45,7 +45,7 @@ replication {
 //
 //==========================================================================
 override void BeginPlay () {
-  //print("SkyViewpoint (%C; Arg1=%d; TID=%d)", Class, Args[0], TID);
+  //printdebug("SkyViewpoint (%C; Arg1=%d; TID=%d; bAlways=%s; Mate=%s; alpha=%s)", Class, Args[0], TID, bAlways, Mate, PlaneAlpha);
   ::BeginPlay();
   InitSkyBox();
 }
