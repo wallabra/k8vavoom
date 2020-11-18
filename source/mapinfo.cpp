@@ -734,6 +734,7 @@ static void skipUnimplementedCommand (VScriptParser *sc, bool wantArg) {
     sc->ExpectString();
     while (sc->Check(",")) {
       if (sc->Check("}")) { sc->UnGet(); break; }
+      if (sc->AtEnd()) break;
       sc->ExpectString();
     }
   } else if (wantArg) {
@@ -1339,10 +1340,12 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
       if (newStyle) {
         while (!sc->AtEnd()) {
           if (!sc->Check(",")) break;
+          if (sc->AtEnd()) break;
           sc->ExpectString();
           while (!sc->QuotedString) {
             if (sc->String == "}") { sc->UnGet(); break; } // stray comma
             if (sc->String != ",") { sc->UnGet(); sc->Error("comma expected"); break; }
+            if (sc->AtEnd()) break;
             sc->ExpectString();
           }
           *name += "\n";
@@ -1354,6 +1357,7 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
           if (sc->Crossed) { sc->UnGet(); break; }
           while (!sc->QuotedString) {
             if (sc->String != ",") { sc->UnGet(); sc->Error("comma expected"); break; }
+            if (sc->AtEnd()) break;
             sc->ExpectString();
           }
           *name += "\n";
@@ -1549,7 +1553,7 @@ static void ParseClusterDef (VScriptParser *sc) {
   //GCon->Logf("=== NEW CLUSTER %d ===", CDef->Cluster);
   bool newFormat = sc->Check("{");
   //if (newFormat) sc->SetCMode(true);
-  for (;;) {
+  while (!sc->AtEnd()) {
     //if (sc->GetString()) { GCon->Logf(":%s: CLUSTER(%d): <%s>", *sc->GetLoc().toStringNoCol(), (newFormat ? 1 : 0), *sc->String); sc->UnGet(); }
     if (sc->Check("hub")) {
       CDef->Flags |= CLUSTERF_Hub;
@@ -1605,7 +1609,7 @@ static void ParseClusterDef (VScriptParser *sc) {
           //fprintf(stderr, "!!!!!!\n");
           if (sc->Check("=")) {
             //fprintf(stderr, "******\n");
-            for (;;) {
+            while (!sc->AtEnd()) {
               sc->ExpectString();
               if (!sc->Check(",")) break;
             }
@@ -1673,7 +1677,7 @@ static void ParseEpisodeDef (VScriptParser *sc, int milumpnum) {
 
   bool newFormat = sc->Check("{");
   //if (newFormat) sc->SetCMode(true);
-  for (;;) {
+  while (!sc->AtEnd()) {
     if (sc->Check("name")) {
       if (newFormat) sc->Expect("=");
       ParseNameOrLookup(sc, EPISODEF_LookupText, &EDef->Text, &EDef->Flags, newFormat);
@@ -1690,7 +1694,7 @@ static void ParseEpisodeDef (VScriptParser *sc, int milumpnum) {
     } else if (sc->Check("optional")) {
       EDef->Flags |= EPISODEF_Optional;
     } else {
-      if (newFormat) sc->Expect("}");
+      if (newFormat && !sc->AtEnd()) sc->Expect("}");
       break;
     }
   }
@@ -1704,7 +1708,7 @@ static void ParseEpisodeDef (VScriptParser *sc, int milumpnum) {
 //
 //==========================================================================
 static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
-  for (;;) {
+  while (!sc->AtEnd()) {
     if (sc->Check("AmmoFactor")) {
       sc->ExpectFloat();
       sdef->AmmoFactor = sc->Float;
@@ -1998,7 +2002,7 @@ static void ParseSkillDef (VScriptParser *sc) {
     } else if (sc->Check("ReplaceActor")) {
       GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'ReplaceActor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
-      for (;;) {
+      while (!sc->AtEnd()) {
         sc->ExpectString();
         if (!sc->Check(",")) break;
       }
@@ -2032,7 +2036,7 @@ static void ParseGameInfo (VScriptParser *sc) {
     if (sc->Check("PlayerClasses")) {
       MapInfoPlayerClasses.clear();
       sc->Expect("=");
-      for (;;) {
+      while (!sc->AtEnd()) {
         sc->ExpectString();
         if (sc->String.length()) MapInfoPlayerClasses.append(VName(*sc->String));
         if (!sc->Check(",")) break;
