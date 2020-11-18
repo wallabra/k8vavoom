@@ -49,7 +49,7 @@ static VCvarB r_allow_mirrors("r_allow_mirrors", true, "Allow mirror portal rend
 static VCvarB r_allow_floor_mirrors("r_allow_floor_mirrors", true, "Allow floor/ceiling mirror portal rendering?", CVAR_Archive);
 static VCvarB r_allow_stacked_sectors("r_allow_stacked_sectors", true, "Allow non-mirror portal rendering (SLOW)?", CVAR_Archive);
 
-static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable rendering of sky portals.", 0/*CVAR_Archive*/);
+static VCvarB r_enable_sky_portals("r_enable_sky_portals", true, "Enable rendering of sky portals.", 0/*CVAR_Archive*/);
 
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
@@ -541,13 +541,13 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
             Portals.Append(Portal);
           }
         } else {
-          if (!r_disable_sky_portals) {
+          if (r_enable_sky_portals) {
             Portal = new VSkyBoxPortal(this, SkyBox);
             Portals.Append(Portal);
           }
         }
       }
-    } else if (!r_disable_sky_portals) {
+    } else if (r_enable_sky_portals) {
       // check if we already have any portal with this sky
       for (auto &&pp : Portals) {
         if (pp && pp->MatchSky(Sky)) {
