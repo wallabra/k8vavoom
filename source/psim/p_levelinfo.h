@@ -216,6 +216,12 @@ public:
   DECLARE_FUNCTION (get_CompatInvisibility)
 
 
+  static float GZSizeToRadius (float Val, bool attenuated, float attmult=1.04f) {
+     static VMethodProxy method("GZSizeToRadius");
+     vobjPutParam(Val, attenuated, VOptPutParamFloat(attmult, true));
+     VSTATIC_RET_FLOAT(method);
+  }
+
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   // final bool CheckLock (Entity user, int lock, bool door)
   bool eventCheckLock (VEntity *user, int lock, bool door) { static VMethodProxy method("CheckLock"); vobjPutParamSelf(user, lock, door); VMT_RET_BOOL(method); }

@@ -272,6 +272,33 @@ native final void ChangeSky (string skytex1, optional string skytex2/*=skytex1*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/* old version
+static float StaticIntensityToRadius (float Val) {
+  if (Val <= 20.0) return Val*3.5;
+  if (Val <= 30.0) return Val*3.0;
+  if (Val <= 40.0) return Val*2.8;
+  if (Val <= 60.0) return Val*2.4;
+  return Val*2.0;
+}
+*/
+
+static float GZSizeToRadius (float Val, bool attenuated, optional float attmult/*=1.04*/) {
+  //printdebug("GZSizeToRadius: Val=%s; attenuated=%s; attmult=%s:%s", Val, attenuated, specified_attmult, attmult);
+  if (attenuated) {
+    if (!specified_attmult) attmult = 1.04; // size in map units; k8: 1.04f is just because i feel it
+    return fmax(0, Val*attmult);
+  } else {
+    Val = fmax(0, Val);
+    if (Val <= 20.0) return Val*4.5;
+    if (Val <= 30.0) return Val*3.6;
+    if (Val <= 40.0) return Val*3.3;
+    if (Val <= 60.0) return Val*2.8;
+    return Val*2.5;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct MobjByTIDIteratorInfo {
   Entity prev;
   int tid; // 0: use activator (it is in prev)
