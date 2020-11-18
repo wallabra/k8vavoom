@@ -24,6 +24,14 @@ menudef AdvRenderOptions {
   }
 
   option bool {
+    title = "Allow sky portals";
+    cvar = r_enable_sky_portals;
+    help =
+      "Allow rendering sky portals?"
+      "Sky portals are used for 'skybox sectors'.";
+  }
+
+  option bool {
     title = "Allow horizons";
     cvar = r_allow_horizons;
     help =
