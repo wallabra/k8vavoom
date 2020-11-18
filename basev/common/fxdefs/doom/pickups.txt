@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 pointlight HealthBonus
 {
+  alias HealthPotion
   color 0 0 0.9
   radius 86
   offset 0 0 1
