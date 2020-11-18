@@ -128,6 +128,17 @@ void MapInfoCommandImpl##name_::Handler (VScriptParser *sc, bool newFormat, VMap
 
 //==========================================================================
 //
+//  checkEndBracket
+//
+//==========================================================================
+static bool checkEndBracket (VScriptParser *sc) {
+  if (sc->Check("}")) return true;
+  return sc->AtEnd();
+}
+
+
+//==========================================================================
+//
 //  ExpectBool
 //
 //==========================================================================
@@ -1819,7 +1830,7 @@ static void ParseSkillDef (VScriptParser *sc) {
   if (!sc->Check("{")) { ParseSkillDefOld(sc, sdef); return; }
   SCParseModeSaver msave(sc);
 
-  while (!sc->Check("}")) {
+  while (!checkEndBracket(sc)) {
     if (sc->Check("AmmoFactor")) {
       sc->Expect("=");
       sc->ExpectFloat();
@@ -2012,7 +2023,7 @@ static void ParseGameInfo (VScriptParser *sc) {
   sc->Expect("{");
   //sc->SkipBracketed(true);
   for (;;) {
-    if (sc->AtEnd()) { sc->Error("'}' not found"); break; }
+    if (sc->AtEnd()) { sc->Message("'}' not found"); break; }
     if (sc->Check("}")) break;
     if (sc->Check("PlayerClasses")) {
       MapInfoPlayerClasses.clear();
@@ -2080,7 +2091,7 @@ static void ParseDamageType (VScriptParser *sc) {
   float factor = 1.0f;
   bool noarmor = false;
   bool replace = false;
-  while (!sc->Check("}")) {
+  while (!checkEndBracket(sc)) {
     if (sc->Check("NoArmor")) {
       noarmor = true;
       continue;
@@ -2231,7 +2242,7 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
         //sc->SetCMode(true);
         sc->Expect("{");
         for (;;) {
-          if (sc->Check("}")) break;
+          if (checkEndBracket(sc)) break;
           sc->ExpectNumber();
           int num = sc->Number;
           sc->Expect("=");
@@ -2287,7 +2298,7 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
         //sc->SetCMode(true);
         sc->Expect("{");
         for (;;) {
-          if (sc->Check("}")) break;
+          if (checkEndBracket(sc)) break;
           sc->ExpectNumber();
           int num = sc->Number;
           sc->Expect("=");
@@ -2303,7 +2314,7 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
         if (sc->Check("{")) {
           GCon->Logf(NAME_Warning, "Unimplemented MAPINFO command '%s'", *cmdname);
           sc->SkipBracketed(true); // bracket eaten
-        } else {
+        } else if (!sc->String.strEquCI("}")) { // some mappers cannot into mapinfo
           sc->Error(va("Invalid command '%s'", *sc->String));
           error = true;
           break;
