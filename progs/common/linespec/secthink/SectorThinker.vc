@@ -31,6 +31,20 @@ SectorThinker NextAffector;
 
 //==========================================================================
 //
+//  InvalidateScrollerThings
+//
+//  call this in scroller if necessary
+//  this is required due to sector scroller caching, etc.
+//
+//==========================================================================
+void InvalidateScrollerThings () {
+  // invalidate all touching things, so physics will recheck scrollers
+  foreach (EntityEx ent; Level.allTouchingThings(Sector)) ent.lastScrollCheckOrigin.z = -float.inf;
+}
+
+
+//==========================================================================
+//
 //  GetNextAffector
 //
 //  used by the engine to iterate sector affectors
@@ -47,6 +61,7 @@ override Thinker GetNextAffector () {
 //
 //==========================================================================
 void AddAffector () {
+  InvalidateScrollerThings();
   if (!Sector->AffectorData) {
     Sector->AffectorData = self;
   } else {
@@ -64,6 +79,7 @@ void AddAffector () {
 //
 //==========================================================================
 void RemoveAffector () {
+  InvalidateScrollerThings();
   if (Sector->AffectorData == self) {
     Sector->AffectorData = NextAffector;
   } else {

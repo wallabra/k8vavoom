@@ -170,7 +170,7 @@ bool Physics (float DeltaTime) {
     #else
     // new code
     if (GetClassInstanceCountWithSub(Scroller) && bColideWithWorld && !bNoSector && Origin != lastScrollCheckOrigin) {
-      //printdebug("%C(%s): SCROLLER CHECK!", self, UniqueId);
+      //if (self isa 'ExplosiveBarrel') printdebug("%C(%s): SCROLLER CHECK!", self, UniqueId);
       lastScrollCheckOrigin = Origin;
       // killough 3/7/98: Carry things on floor
       // killough 3/20/98: use new sector list which reflects true members
@@ -185,6 +185,7 @@ bool Physics (float DeltaTime) {
       bool resetCheck = false;
       for (msecnode_t *mnode = TouchingSectorList; mnode; mnode = mnode.TNext) {
         sector_t *sec = mnode.Sector;
+        //if (self isa 'ExplosiveBarrel') printdebug("%C(%s):   SCROLLER CHECK at sector %s (%s)", self, UniqueId, sec-&XLevel.Sectors[0], sec->AffectorData);
         if (!sec->AffectorData) continue;
         // move objects only if on floor or underwater, non-floating, and clipped
         for (SectorThinker SecThink = SectorThinker(sec->AffectorData); SecThink; SecThink = SecThink.NextAffector) {

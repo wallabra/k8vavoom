@@ -4974,7 +4974,7 @@ final bool EV_TeleportSector(int tag, int source_tid, int dest_tid, bool fog,
   for (int hidx = XLevel.FindSectorFromTag(out sec, tag); hidx >= 0;
        hidx = XLevel.FindSectorFromTag(out sec, tag, hidx))
   {
-    msecnode_t*Node = sec->TouchingThingList;
+    msecnode_t* Node = sec->TouchingThingList;
     while (Node)
     {
       A = EntityEx(Node->Thing);

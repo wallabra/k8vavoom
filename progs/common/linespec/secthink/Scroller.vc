@@ -303,6 +303,7 @@ void SetSpeed (int Arg2, int Arg3) {
   XSpeed = float(Arg2)*32.0*35.0;
   YSpeed = float(Arg3)*32.0*35.0;
   if (Type != SCROLLEV_Carry) XSpeed = -XSpeed;
+  InvalidateScrollerThings(); // just in case
 }
 
 
