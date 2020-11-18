@@ -1096,6 +1096,36 @@ final float FindLowestCeilingPoint (sector_t *sec, TVec *v) {
 }
 
 
+struct AllTouchingThingsIter {
+  Level xlevel;
+  sector_t *sec;
+  msecnode_t *currnode;
+}
+
+
+//==========================================================================
+//
+//  allTouchingThings
+//
+//==========================================================================
+final bool allTouchingThings_opIterInit (out AllTouchingThingsIter it, sector_t *sec) {
+  it.xlevel = XLevel;
+  it.sec = sec;
+  it.currnode = (sec ? sec->TouchingThingList : nullptr);
+  return !!it.currnode;
+}
+
+
+static final bool allTouchingThings_opIterNext (out AllTouchingThingsIter it, out EntityEx ent) {
+  while (it.currnode) {
+    ent = EntityEx(it.currnode->Thing);
+    it.currnode = it.currnode->SNext;
+    if (ent) return true;
+  }
+  return false;
+}
+
+
 //==========================================================================
 //
 //  SpawnMapThing
