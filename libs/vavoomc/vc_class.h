@@ -191,21 +191,6 @@ struct VLightEffectDef {
     ConeDir = TVec(0, 0, 0);
   }
 
-  inline void copyFrom (const VLightEffectDef &lt) noexcept {
-    Name = lt.Name;
-    Type = lt.Type;
-    Color = lt.Color;
-    Radius = lt.Radius;
-    Radius2 = lt.Radius2;
-    MinLight = lt.MinLight;
-    Offset = lt.Offset;
-    Chance = lt.Chance;
-    Interval = lt.Interval;
-    Scale = lt.Scale;
-    ConeAngle = lt.ConeAngle;
-    ConeDir = lt.ConeDir;
-  }
-
   // convert GZDoom light size to k8vavoom light radius
   // the engine is using `LevelInfo::GZSizeToRadius()` instead, tho
   /*
@@ -244,6 +229,22 @@ struct VParticleEffectDef {
   float Grav;
   float Duration;
   float Ramp;
+
+  // doesn't touch `Name`
+  inline void setDefaultValues () noexcept {
+    Type = 0;
+    Type2 = 0;
+    Color = 0xffffffff;
+    Offset = TVec(0, 0, 0);
+    Count = 0;
+    OrgRnd = 0;
+    Velocity = TVec(0, 0, 0);
+    VelRnd = 0;
+    Accel = 0;
+    Grav = 0;
+    Duration = 0;
+    Ramp = 0;
+  }
 };
 
 
