@@ -822,12 +822,18 @@ public:
   VMethodProxy (const char *AMethod);
 
   // returns `false` if method not found
+  bool ResolveStatic (VClass *aClass);
+  void ResolveStaticChecked (VClass *aClass);
+
+  // returns `false` if method not found
   bool Resolve (VObject *Self);
   void ResolveChecked (VObject *Self);
 
   VFuncRes Execute (VObject *Self);
   // this doesn't check is `Self` isa `Class`
   VFuncRes ExecuteNoCheck (VObject *Self);
+
+  VFuncRes ExecuteStatic (VClass *aClass);
 };
 
 
@@ -896,8 +902,20 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 #define VMT_RET_STR(v)     return (v).Execute(this).getStr()
 #define VMT_RET_VEC(v)     return (v).Execute(this).getVector()
 //#define VMT_RET_AVEC(v)    VPackage::InternalFatalError("Not implemented") /*(v).ExecuteFunction(this)*/
-#define VMT_RET_REF(t, v)  return (t *)(v).Execute(this).getObject()
-#define VMT_RET_PTR(t, v)  return (t *)(v).Execute(this).getClass()
+#define VMT_RET_REF(t,v)   return (t *)(v).Execute(this).getObject()
+#define VMT_RET_PTR(t,v)   return (t *)(v).Execute(this).getClass()
+
+#define VSTATIC_RET_VOID(v)    (void)(v).ExecuteStatic(StaticClass())
+#define VSTATIC_RET_INT(v)     return (v).ExecuteStatic(StaticClass()).getInt()
+#define VSTATIC_RET_BYTE(v)    return (v).ExecuteStatic(StaticClass()).getInt()
+#define VSTATIC_RET_FLOAT(v)   return (v).ExecuteStatic(StaticClass()).getFloat()
+#define VSTATIC_RET_BOOL(v)    return !!(v).ExecuteStatic(StaticClass()).getInt()
+#define VSTATIC_RET_NAME(v)    return (v).ExecuteStatic(StaticClass()).getName()
+#define VSTATIC_RET_STR(v)     return (v).ExecuteStatic(StaticClass()).getStr()
+#define VSTATIC_RET_VEC(v)     return (v).ExecuteStatic(StaticClass()).getVector()
+//#define VMT_RET_AVEC(v)    VPackage::InternalFatalError("Not implemented") /*(v).ExecuteFunction(StaticClass())*/
+#define VSTATIC_RET_REF(t,v)   return (t *)(v).ExecuteStatic(StaticClass()).getObject()
+#define VSTATIC_RET_PTR(t,v)   return (t *)(v).ExecuteStatic(StaticClass()).getClass()
 
 // parameter get macros; parameters must be retrieved in backwards order
 #define P_GET_INT(v)     vint32 v = VObject::PR_Pop()
@@ -908,24 +926,24 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 #define P_GET_STR(v)     VStr v = VObject::PR_PopStr()
 #define P_GET_VEC(v)     TVec v = VObject::PR_Popv()
 #define P_GET_AVEC(v)    TAVec v = VObject::PR_Popav()
-#define P_GET_REF(c, v)  c *v = (c *)VObject::PR_PopPtr()
-#define P_GET_PTR(t, v)  t *v = (t *)VObject::PR_PopPtr()
+#define P_GET_REF(c,v)   c *v = (c *)VObject::PR_PopPtr()
+#define P_GET_PTR(t,v)   t *v = (t *)VObject::PR_PopPtr()
 #define P_GET_SELF       ThisClass *Self = (ThisClass *)VObject::PR_PopPtr()
 
-#define P_GET_INT_OPT(v, d)     bool specified_##v = !!VObject::PR_Pop(); vint32 v = VObject::PR_Pop(); if (!specified_##v) v = d
-#define P_GET_BYTE_OPT(v, d)    bool specified_##v = !!VObject::PR_Pop(); vuint8 v = VObject::PR_Pop(); if (!specified_##v) v = d
-#define P_GET_FLOAT_OPT(v, d)   bool specified_##v = !!VObject::PR_Pop(); float v = VObject::PR_Popf(); if (!specified_##v) v = d
-#define P_GET_BOOL_OPT(v, d)    bool specified_##v = !!VObject::PR_Pop(); bool v = !!VObject::PR_Pop(); if (!specified_##v) v = d
-#define P_GET_NAME_OPT(v, d)    bool specified_##v = !!VObject::PR_Pop(); VName v = VObject::PR_PopName(); if (!specified_##v) v = d
-#define P_GET_STR_OPT(v, d)     bool specified_##v = !!VObject::PR_Pop(); VStr v = VObject::PR_PopStr(); if (!specified_##v) v = d
-#define P_GET_VEC_OPT(v, d)     bool specified_##v = !!VObject::PR_Pop(); TVec v = VObject::PR_Popv(); if (!specified_##v) v = d
-#define P_GET_AVEC_OPT(v, d)    bool specified_##v = !!VObject::PR_Pop(); TAVec v = VObject::PR_Popav(); if (!specified_##v) v = d
-#define P_GET_REF_OPT(c, v, d)  bool specified_##v = !!VObject::PR_Pop(); c *v = (c *)VObject::PR_PopPtr(); if (!specified_##v) v = d
-#define P_GET_PTR_OPT(t, v, d)  bool specified_##v = !!VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr(); if (!specified_##v) v = d
-#define P_GET_OUT_OPT(t, v)     bool specified_##v = !!VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr()
+#define P_GET_INT_OPT(v,d)     bool specified_##v = !!VObject::PR_Pop(); vint32 v = VObject::PR_Pop(); if (!specified_##v) v = d
+#define P_GET_BYTE_OPT(v,d)    bool specified_##v = !!VObject::PR_Pop(); vuint8 v = VObject::PR_Pop(); if (!specified_##v) v = d
+#define P_GET_FLOAT_OPT(v,d)   bool specified_##v = !!VObject::PR_Pop(); float v = VObject::PR_Popf(); if (!specified_##v) v = d
+#define P_GET_BOOL_OPT(v,d)    bool specified_##v = !!VObject::PR_Pop(); bool v = !!VObject::PR_Pop(); if (!specified_##v) v = d
+#define P_GET_NAME_OPT(v,d)    bool specified_##v = !!VObject::PR_Pop(); VName v = VObject::PR_PopName(); if (!specified_##v) v = d
+#define P_GET_STR_OPT(v,d)     bool specified_##v = !!VObject::PR_Pop(); VStr v = VObject::PR_PopStr(); if (!specified_##v) v = d
+#define P_GET_VEC_OPT(v,d)     bool specified_##v = !!VObject::PR_Pop(); TVec v = VObject::PR_Popv(); if (!specified_##v) v = d
+#define P_GET_AVEC_OPT(v,d)    bool specified_##v = !!VObject::PR_Pop(); TAVec v = VObject::PR_Popav(); if (!specified_##v) v = d
+#define P_GET_REF_OPT(c,v,d)  bool specified_##v = !!VObject::PR_Pop(); c *v = (c *)VObject::PR_PopPtr(); if (!specified_##v) v = d
+#define P_GET_PTR_OPT(t,v,d)  bool specified_##v = !!VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr(); if (!specified_##v) v = d
+#define P_GET_OUT_OPT(t,v)     bool specified_##v = !!VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr()
 
-#define P_GET_PTR_OPT_NOSP(t, v)  VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr()
-#define P_GET_OUT_OPT_NOSP(t, v)  VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr()
+#define P_GET_PTR_OPT_NOSP(t,v)  VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr()
+#define P_GET_OUT_OPT_NOSP(t,v)  VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr()
 
 // method return macros
 #define RET_INT(v)    VObject::PR_Push(v)

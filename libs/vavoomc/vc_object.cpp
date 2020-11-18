@@ -151,6 +151,44 @@ VMethodProxy::VMethodProxy (const char *AMethod)
 
 //==========================================================================
 //
+//  VMethodProxy::ResolveStatic
+//
+//  returns `false` if static method not found
+//
+//==========================================================================
+bool VMethodProxy::ResolveStatic (VClass *aClass) {
+  if (Method) return true;
+  if (!aClass || !MethodName || !MethodName[0]) return false;
+  // if there is no such name, there is no such method
+  VName n = VName(MethodName, VName::Find);
+  if (n == NAME_None) return false;
+  Class = aClass;
+  Method = Class->FindAccessibleMethod(n);
+  if (!Method) return false;
+  // find outer class
+  for (VMemberBase *o = Method->Outer; o; o = o->Outer) {
+    if (o->MemberType == MEMBER_Class || o->MemberType == MEMBER_DecorateClass) {
+      VClass *cls = (VClass *)o;
+      // now look into parent classes
+      while (cls) {
+        if (!cls->FindAccessibleMethod(n)) {
+          //GLog.Logf("BOO! '%s' (%s)", *n, cls->GetName());
+          break;
+        }
+        Class = cls;
+        cls = cls->ParentClass;
+      }
+      //GLog.Logf("MT `%s`: class is `%s`, real class is `%s`", MethodName, Self->GetClass()->GetName(), Class->GetName());
+    }
+  }
+  //GLog.Logf("MT.Outer: `%s`", (Method->Outer ? Method->Outer->GetName() : "<null>"));
+  if (Method && !Method->IsStatic()) Method = nullptr;
+  return !!Method;
+}
+
+
+//==========================================================================
+//
 //  VMethodProxy::Resolve
 //
 //  returns `false` if method not found
@@ -198,11 +236,21 @@ void VMethodProxy::ResolveChecked (VObject *Self) {
 
 //==========================================================================
 //
+//  VMethodProxy::ResolveStaticChecked
+//
+//==========================================================================
+void VMethodProxy::ResolveStaticChecked (VClass *aClass) {
+  if (!ResolveStatic(aClass)) VPackage::InternalFatalError(va("cannot find static method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (aClass ? aClass->GetName() : "<unnamed>")));
+}
+
+
+//==========================================================================
+//
 //  VMethodProxy::Execute
 //
 //==========================================================================
 VFuncRes VMethodProxy::Execute (VObject *Self) {
-  if (!Resolve(Self)) VPackage::InternalFatalError(va("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>")));
+  ResolveChecked(Self);
   if (!(Method->Flags&FUNC_Static)) {
     vassert(Self);
     if (!Self->IsA(Class)) {
@@ -227,7 +275,7 @@ VFuncRes VMethodProxy::Execute (VObject *Self) {
 //
 //==========================================================================
 VFuncRes VMethodProxy::ExecuteNoCheck (VObject *Self) {
-  if (!Resolve(Self)) VPackage::InternalFatalError(va("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>")));
+  ResolveChecked(Self);
   if (Method->VTableIndex < -1) VPackage::InternalFatalError(va("method `%s` in class `%s` wasn't postloaded", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>")));
   if (Method->VTableIndex != -1) {
     vassert(Self);
@@ -235,6 +283,19 @@ VFuncRes VMethodProxy::ExecuteNoCheck (VObject *Self) {
   } else {
     return VObject::ExecuteFunction(Method);
   }
+}
+
+
+//==========================================================================
+//
+//  VMethodProxy::ExecuteStatic
+//
+//==========================================================================
+VFuncRes VMethodProxy::ExecuteStatic (VClass *aClass) {
+  ResolveStaticChecked(aClass);
+  vassert(Method->Flags&FUNC_Static);
+  if (Method->VTableIndex < -1) VPackage::InternalFatalError(va("method `%s` in class `%s` wasn't postloaded", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>")));
+  return VObject::ExecuteFunction(Method);
 }
 
 
