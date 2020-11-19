@@ -922,10 +922,12 @@ final void FixTopIndex () {
   //int th = CalcTotalHeight();
   int ys = GetItemYS(CursorPos);
   int ye = GetItemYE(CursorPos);
-  //print("Menu <%C>; ofs=%d; ys=%d; ye=%d; th=%d; height=%d; hh=%d; bs=%d; OriginY=%s", Class, GetItemContainer().ChildrenOfsY, ys, ye, th, Height, helpText.Height, GetVirtualHeight()-helpText.Height-4, Y2Virtual(ye));
+  //printdebug("000: Menu <%C>; ofs=%d; ys=%d; ye=%d; height=%d; hh=%d; bs=%d; OriginY=%s", Class, GetItemContainer().ChildrenOfsY, ys, ye, Height, helpText.Height, GetVirtualHeight()-helpText.Height-4, Y2Virtual(ye));
   int csy = GetChoicesStartY();
        if (ys+GetItemContainer().ChildrenOfsY < csy) GetItemContainer().ChildrenOfsY = -ys+csy;
   else if (ye+GetItemContainer().ChildrenOfsY > GetItemContainer().Height) GetItemContainer().ChildrenOfsY = -(ye-GetItemContainer().Height);
+  //printdebug("001: Menu <%C>; ofs=%d; ys=%d; ye=%d; height=%d; hh=%d; bs=%d; OriginY=%s", Class, GetItemContainer().ChildrenOfsY, ys, ye, Height, helpText.Height, GetVirtualHeight()-helpText.Height-4, Y2Virtual(ye));
+  //printdebug("002: Menu <%C:%s>; itc=<%C:%s>", self, UniqueId, GetItemContainer(), GetItemContainer().UniqueId);
   // make sure that help is visible
   if (helpText && helpText.Height > 0) {
     helpText.atTop = (GetItemContainer().Y2Virtual(ye)+GetItemContainer().ChildrenOfsY >= GetVirtualHeight()-helpText.Height-4);

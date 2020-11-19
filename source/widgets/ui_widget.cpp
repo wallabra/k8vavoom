@@ -542,8 +542,8 @@ void VWidget::ClipTree () noexcept {
 //  returns `true` if something was changed
 //
 //==========================================================================
-bool VWidget::SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight, float NewScaleX, float NewScaleY) {
-  if (PosX == NewX && PosY == NewY &&
+bool VWidget::SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight, float NewScaleX, float NewScaleY, bool Forced) {
+  if (!Forced && PosX == NewX && PosY == NewY &&
       SizeWidth == NewWidth && SizeHeight == HewHeight &&
       SizeScaleX == NewScaleX && SizeScaleY == NewScaleY)
   {

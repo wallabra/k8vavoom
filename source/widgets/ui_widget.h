@@ -261,15 +261,15 @@ public:
   inline void SetPos (int NewX, int NewY) { SetConfiguration(NewX, NewY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY); }
   inline void SetX (int NewX) { SetPos(NewX, PosY); }
   inline void SetY (int NewY) { SetPos(PosX, NewY); }
-  inline void SetOfsX (int NewX) { if (OfsX != NewX) { OfsX = NewX; SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY); } }
-  inline void SetOfsY (int NewY) { if (OfsY != NewY) { OfsY = NewY; SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY); } }
-  inline void SetOffset (int NewX, int NewY) { if (OfsX != NewX || OfsY != NewY) { OfsX = NewX; OfsY = NewY; SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY); } }
+  inline void SetOfsX (int NewX) { if (OfsX != NewX) { OfsX = NewX; SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY, true); } }
+  inline void SetOfsY (int NewY) { if (OfsY != NewY) { OfsY = NewY; SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY, true); } }
+  inline void SetOffset (int NewX, int NewY) { if (OfsX != NewX || OfsY != NewY) { OfsX = NewX; OfsY = NewY; SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, SizeScaleX, SizeScaleY, true); } }
   inline void SetSize (int NewWidth, int NewHeight) { SetConfiguration(PosX, PosY, NewWidth, NewHeight, SizeScaleX, SizeScaleY); }
   inline void SetWidth (int NewWidth) { SetSize(NewWidth, SizeHeight); }
   inline void SetHeight (int NewHeight) { SetSize(SizeWidth, NewHeight); }
   inline void SetScale (float NewScaleX, float NewScaleY) { SetConfiguration(PosX, PosY, SizeWidth, SizeHeight, NewScaleX, NewScaleY); }
   // returns `true` if something was changed
-  bool SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight, float NewScaleX=1.0f, float NewScaleY=1.0f);
+  bool SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight, float NewScaleX=1.0f, float NewScaleY=1.0f, bool Forced=false);
 
   inline float GetScaleX () const noexcept { return SizeScaleX; }
   inline float GetScaleY () const noexcept { return SizeScaleY; }
