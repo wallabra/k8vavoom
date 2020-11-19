@@ -158,8 +158,7 @@ final bool LookForMonsters () {
   Entity ee;
   //EntityEx mo;
   //foreach AllThinkers(EntityEx, mo)
-  foreach RadiusThings(out ee, Origin, MONS_LOOK_RANGE+8)
-  {
+  foreach RadiusThings(out ee, Origin, MONS_LOOK_RANGE+8) {
     EntityEx mo = EntityEx(ee);
     if (!mo) continue;
     if (!mo.bMonster || mo == self || mo.Health <= 0) continue; // not a valid monster
@@ -171,6 +170,40 @@ final bool LookForMonsters () {
     if (IsNotAttackingMaster(mo)) continue;
     // found a target monster
     Target = mo;
+    return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  LookForMonstersPH
+//
+//==========================================================================
+final bool LookForMonstersPH () {
+  //!LastPlayerSeenPosValid = false;
+  //k8: this is used only in "perfect hatred" mode
+  if (!(Level.PerfectHatredMode&LevelInfo::PHM_HUNT_MONSTERS)) return false;
+  if (LookForMonsters()) return true; // just in case
+  float currDist = float.inf;
+  Actor bestDist = none;
+  Actor mo;
+  foreach AllThinkers(Actor, out mo) {
+    if (!mo) continue;
+    if (!mo.bMonster || mo == self || mo.Health <= 0) continue; // not a valid monster
+    if (mo.bReallyNeverTarget) continue;
+    float dist = DistTo(mo);
+    if (dist > currDist) continue;
+    if (P_Random() < 16) continue; // skip
+    //if (!CanSee(mo)) continue; // out of sight
+    if (IsNotAttackingMaster(mo)) continue;
+    currDist = dist;
+    bestDist = mo;
+  }
+  if (bestDist) {
+    // found a target monster
+    Target = bestDist;
     return true;
   }
   return false;

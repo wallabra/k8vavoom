@@ -608,7 +608,19 @@ void Cheat_Summon () {
     return;
   }
 
+  printdebug("%C(%s): spawned", it, it.UniqueId);
+
   if (it.Sector) it.Origin.z = fclamp(it.Origin.z, it.FloorZ, it.CeilingZ);
+
+  if (Level.PerfectHatredMode&LevelInfo::PHM_WANDER) {
+    Actor act = Actor(it);
+    if (act) {
+      act.ReactionCount = 0;
+      if (act.SeeState) act.SetState(act.SeeState);
+      act.A_Wander();
+    }
+    //if (act) act.SetSeeOrWanderState();
+  }
 }
 
 

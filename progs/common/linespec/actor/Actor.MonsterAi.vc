@@ -367,11 +367,26 @@ final void SetSeeOrWanderState () {
 //==========================================================================
 [decorate] final void decorate_A_Wander (optional int flags) {
   bInCombat = false;
-  if (bStanding) return;
+  if (bStanding) {
+    if (!(Level.PerfectHatredMode&LevelInfo::PHM_WANDER)) return;
+  }
 
-  if (ReactionCount != 0) {
+  if (ReactionCount) {
     --ReactionCount;
     return;
+  }
+
+  if (Level.PerfectHatredMode&LevelInfo::PHM_WANDER) {
+    // in perfect hatred mode, try to find an enemy sometimes
+    if (P_Random() >= 180) {
+      printdebug("%C(%s): trying to find an enemy", self, UniqueId);
+      if (LookForMonstersPH()) {
+        if (Target) {
+          printdebug("%C(%s):   found enemy: %C(%s)", self, UniqueId, Target, Target.UniqueId);
+          return;
+        }
+      }
+    }
   }
 
   if (!(flags&CHF_NODIRECTIONTURN)) {
