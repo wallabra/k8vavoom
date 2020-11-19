@@ -3916,8 +3916,13 @@ final bool DoThingRaise (optional bool skipCheckPosition) {
 //
 //  GetInfighting
 //
+//  <0: none (except very special cases)
+//   0: normal
+//  >0: total infighting
+//
 //==========================================================================
 final int GetInfighting () {
+  if (Level.PerfectHatredMode&LevelInfo::PHM_INFIGHTING) return 1;
   if (bNoInfighting) return -1;
   if (Level.Infighting) return Level.Infighting;
   return GetCvar('infighting');

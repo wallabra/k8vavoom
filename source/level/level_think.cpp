@@ -343,6 +343,7 @@ void VLevel::TickWorld (float DeltaTime) {
 
   double stimet = 0;
 
+  eventUpdateCachedCVars();
   eventBeforeWorldTick(DeltaTime);
 
   if (dbg_world_think_vm_time) stimet = -Sys_Time();

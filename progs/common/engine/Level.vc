@@ -337,6 +337,13 @@ final int calcSecIdx (sector_t *sec) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// called by the engine before each world tick
+void UpdateCachedCVars () {
+  LevelInfo.PerfectHatredMode = GetCvarI('dbg_perfect_hatred');
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // called after level was loaded (no entities spawned yet)
 void AfterLevelLoaded () {}
 

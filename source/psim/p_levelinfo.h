@@ -140,6 +140,8 @@ class VLevelInfo : public VThinker {
   vint32 Infighting;
   TArray<VMapSpecialAction> SpecialActions;
 
+  vint32 PerfectHatredMode;
+
 public:
   //VLevelInfo ();
   virtual void PostCtor () override;

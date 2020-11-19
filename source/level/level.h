@@ -932,6 +932,12 @@ private:
     VMT_RET_VOID(method);
   }
 
+  void eventUpdateCachedCVars () {
+    static VMethodProxy method("UpdateCachedCVars");
+    vobjPutParamSelf();
+    VMT_RET_VOID(method);
+  }
+
   void eventBeforeWorldTick (float deltaTime) {
     if (deltaTime <= 0.0f) return;
     static VMethodProxy method("BeforeWorldTick");

@@ -28,6 +28,26 @@
 
 //==========================================================================
 //
+//  SetSeeOrWanderState
+//
+//  factored out common code
+//  let the actor wander around aimlessly looking for a fight
+//
+//==========================================================================
+final void SetSeeOrWanderState () {
+  if (SeeState) {
+    // if we are in `A_Chase()`, don't do anything, becase `A_Chase()` will take care of it
+    if (!bInChase) {
+      if (Level.PerfectHatredMode&LevelInfo::PHM_WANDER) A_Wander(); else SetState(SeeState);
+    }
+  } else {
+    A_Wander();
+  }
+}
+
+
+//==========================================================================
+//
 //  A_Look
 //
 //  Stay in state until a player is sighted or has a goal.
@@ -63,7 +83,10 @@
       // if it's dead, don't chase it
       if (targ && targ.Health <= 0) targ = none;
       if (targ && targ.bIsPlayer) {
-        if (PlayerEx(targ.Player).bNoTarget) return;
+        if (PlayerEx(targ.Player).bNoTarget) {
+          if (Level.PerfectHatredMode&LevelInfo::PHM_HUNT_MONSTERS) LookForPlayers(fov);
+          return;
+        }
         /*!!!
         // if it is player, and we cannot see it, run to the place we last seen it
         if (LastPlayerSeenPosValid && !CanSee(targ)) {
@@ -95,14 +118,7 @@
     if (bFriendly && targ.bFriendly) {
       // if we find a valid target here, the wandering logic should *not* be activated!
       // if would cause the seestate to be set twice
-      if (!LookForPlayers(fov)) {
-        // let the actor wander around aimlessly looking for a fight
-        if (SeeState) {
-          if (!bInChase) SetState(SeeState);
-        } else {
-          A_Wander();
-        }
-      }
+      if (!LookForPlayers(fov)) SetSeeOrWanderState();
     } else {
       Target = targ;
       if (bAmbush) {
@@ -148,22 +164,12 @@
       Target = targ;
       if (!bStandMustSeeTarget || CanSee(targ)) {
         Threshold = 10;
-        // let the actor wander around aimlessly looking for a fight
-        if (SeeState) {
-          if (!bInChase) SetState(SeeState);
-        } else {
-          A_Wander();
-        }
+        SetSeeOrWanderState();
         return;
       }
     } else {
       if (LookForPlayers(fov)) {
-        // let the actor wander around aimlessly looking for a fight
-        if (SeeState) {
-          if (!bInChase) SetState(SeeState);
-        } else {
-          A_Wander();
-        }
+        SetSeeOrWanderState();
         bInCombat = true;
         return;
       }
@@ -237,7 +243,10 @@
     if (targ && maxheardist && DistTo2(targ) > maxheardist) targ = none;
     hearTarget = targ;
 
-    if (targ && targ.bIsPlayer && PlayerEx(targ.Player).bNoTarget) return;
+    if (targ && targ.bIsPlayer && PlayerEx(targ.Player).bNoTarget) {
+      if (Level.PerfectHatredMode&LevelInfo::PHM_HUNT_MONSTERS) LookForPlayers(fov);
+      return;
+    }
   }
 
   // Andy Baker's stealth monsters
@@ -422,6 +431,7 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
 
   if (bInChase) return;
   bInChase = true;
+  scope(exit) bInChase = false;
 
   // Andy Baker's stealth monsters
   if (bStealth) VisDir = -1;
@@ -477,23 +487,21 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
 
   if (!Target || !Target.bShootable) {
     // look for a new target
-    if (LookForPlayers(360) && Target != Goal) {
-      // got a new target
-      bInChase = false;
-      return;
-    }
+    if (LookForPlayers(360) && Target != Goal) return; // got a new target
     if (!Target) {
       if (bFriendly) {
         A_Look();
         if (!Target) {
           if (!DontMove) A_Wander();
-          bInChase = false;
           return;
         }
       } else {
-        SetState(IdleState);
-        bInCombat = false;
-        bInChase = false;
+        if (Level.PerfectHatredMode&LevelInfo::PHM_WANDER) {
+          A_Wander();
+        } else {
+          SetState(IdleState);
+          bInCombat = false;
+        }
         return;
       }
     }
@@ -503,7 +511,6 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
   if (bJustAttacked) {
     bJustAttacked = false;
     if (!IsFast() && !DontMove) NewChaseDir();
-    bInChase = false;
     return;
   }
 
@@ -549,7 +556,6 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
         SetState(IdleState);
       }
       Goal = NewGoal;
-      bInChase = false;
       return;
     }
   }
@@ -583,7 +589,6 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
       if (AMeleeState && CheckMeleeRange()) {
         if (AttackSound) PlaySound(AttackSound, CHAN_WEAPON);
         SetState(AMeleeState);
-        bInChase = false;
         return;
       }
 
@@ -593,7 +598,6 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
           if (CheckMissileRange()) {
             SetState(AMissileState);
             bJustAttacked = true;
-            bInChase = false;
             return;
           }
         }
@@ -608,11 +612,7 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
       bNoSightCheck = false;
       bool GotNew = LookForPlayers(360);
       bNoSightCheck = PrevNoSightCheck;
-      if (GotNew) {
-        // got a new target
-        bInChase = false;
-        return;
-      }
+      if (GotNew) return; // got a new target
     }
   }
 
@@ -638,8 +638,6 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
 
   // make active sound
   if (PlayActive && P_Random() < 3) PlayActiveSound();
-
-  bInChase = false;
 }
 
 

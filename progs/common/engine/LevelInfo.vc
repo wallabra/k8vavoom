@@ -202,6 +202,20 @@ float AirControl;
 int Infighting;
 array!VMapSpecialAction SpecialActions;
 
+// 0: no
+// bit 0: hunt monsters
+// bit 1: hunt players (monster is a priority target, tho)
+// bit 2: wander instead of idle
+// bit 3: total infighting
+// set to 0x0d (13) for pure fun ;-)
+transient int PerfectHatredMode;
+
+bitenum {
+  PHM_HUNT_MONSTERS,
+  PHM_HUNT_PLAYERS,
+  PHM_WANDER,
+  PHM_INFIGHTING,
+}
 
 replication {
   reliable if (Role == ROLE_Authority)
