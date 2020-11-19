@@ -41,6 +41,16 @@ final bool atTop {
 
 //==========================================================================
 //
+//  positionIt
+//
+//==========================================================================
+void positionIt () {
+  SetOrigin((GetVirtualWidth()-Width)/2, (mAtTop ? 2+16 : GetVirtualHeight()-Height-3));
+}
+
+
+//==========================================================================
+//
 //  setText
 //
 //==========================================================================
@@ -50,8 +60,8 @@ void setText (string text) {
 
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
-  SetSize(TextWidth(mText)+8, TextHeight(mText)+8);
-  SetOrigin((GetVirtualWidth()-Width)/2, (mAtTop ? 2+16 : GetVirtualHeight()-Height-2));
+  SetSize(TextWidth(mText)+8, TextHeight(mText)+7);
+  positionIt();
 }
 
 
@@ -63,7 +73,7 @@ void setText (string text) {
 void setAtTop (bool v) {
   if (v == mAtTop) return;
   mAtTop = v;
-  SetOrigin((GetVirtualWidth()-Width)/2, (mAtTop ? 2+16 : GetVirtualHeight()-Height-2));
+  positionIt();
 }
 
 
