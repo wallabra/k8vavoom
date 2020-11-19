@@ -1421,25 +1421,10 @@ void VWidget::DrawText (int x, int y, VStr String, int NormalColor, int BoldColo
     if (start < end) {
       VStr cs(String, start, end-start);
       DrawString(cx, cy, cs, NormalColor, BoldColor, Alpha);
-      cy += Font->GetHeight();
     }
+    cy += Font->GetHeight();
     start = end+1;
   }
-
-  /*
-  int start = 0;
-  for (int i = 0; i < String.length(); ++i) {
-    if (String[i] == '\n') {
-      VStr cs(String, start, i-start);
-      DrawString(cx, cy, cs, NormalColor, BoldColor, Alpha);
-      cy += Font->GetHeight();
-      start = i+1;
-    }
-    if (i == String.length()-1) {
-      DrawString(cx, cy, VStr(String, start, String.Length()-start), NormalColor, BoldColor, Alpha);
-    }
-  }
-  */
 }
 
 
