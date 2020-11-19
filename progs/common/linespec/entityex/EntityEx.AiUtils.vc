@@ -148,11 +148,13 @@ final bool CheckMissileRange () {
 //  LookForMonsters
 //
 //==========================================================================
-final bool LookForMonsters () {
+final bool LookForMonsters (optional bool deadInfight) {
   //!LastPlayerSeenPosValid = false;
   //k8: this is used only when player is dead, or we are in "perfect hatred" mode
   if (!(Level.PerfectHatredMode&LevelInfo::PHM_HUNT_MONSTERS)) {
-    if (!Level.Game.Players[0].MO.CanSee(self)) return false; // player can't see monster
+    if (!deadInfight || !Level.Game.Players[0].MO.CanSee(self)) return false; // player can't see monster
+  } else {
+    if (!(Level.PerfectHatredMode&LevelInfo::PHM_WANDER) && !Level.Game.Players[0].MO.CanSee(self)) return false; // player can't see monster
   }
   int count = 0;
   Entity ee;
@@ -234,8 +236,7 @@ final bool LookForMonsters2 (float fov, float minseedist, float maxseedist) {
     //EntityEx mo;
     //foreach AllThinkers(EntityEx, mo)
     Entity ee;
-    foreach RadiusThings(out ee, Origin, maxseedist)
-    {
+    foreach RadiusThings(out ee, Origin, maxseedist) {
       EntityEx mo = EntityEx(ee);
       if (!mo) continue;
       if (mo.Health <= 0) continue; // dead
@@ -316,7 +317,8 @@ final bool LookForPlayers (float fov, optional float minseedist, optional float 
   {
     // single player game and player is dead, look for monsters
     //!LastPlayerSeenPosValid = false;
-    if (GetCvarB('gm_death_infighting') || (dph&LevelInfo::PHM_HUNT_MONSTERS)) return LookForMonsters();
+    if (GetCvarB('gm_death_infighting')) return LookForMonsters(true);
+    if (dph&LevelInfo::PHM_HUNT_MONSTERS) return LookForMonsters();
     Target = none;
     return false;
   }

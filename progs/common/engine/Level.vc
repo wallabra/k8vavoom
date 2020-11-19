@@ -339,7 +339,27 @@ final int calcSecIdx (sector_t *sec) {
 // ////////////////////////////////////////////////////////////////////////// //
 // called by the engine before each world tick
 void UpdateCachedCVars () {
-  LevelInfo.PerfectHatredMode = GetCvarI('dbg_perfect_hatred');
+  int dh = GetCvarI('dbg_perfect_hatred');
+  if (dh != LevelInfo.PerfectHatredMode) {
+    LevelInfo.PerfectHatredMode = dh;
+    if (!dh) {
+      printdebug("Perfect Hatred Mode: disabled");
+    } else {
+      string s;
+      if (LevelInfo.PerfectHatredMode&LevelInfo::PHM_HUNT_MONSTERS) s ~= "monsters,";
+      if (LevelInfo.PerfectHatredMode&LevelInfo::PHM_HUNT_PLAYERS) s ~= "players,";
+      if (LevelInfo.PerfectHatredMode&LevelInfo::PHM_WANDER) s ~= "wander,";
+      if (LevelInfo.PerfectHatredMode&LevelInfo::PHM_INFIGHTING) s ~= "infighting,";
+      if (!s) {
+        SetCvarI('dbg_perfect_hatred', 0);
+        printdebug("Perfect Hatred Mode: disabled");
+        LevelInfo.PerfectHatredMode = 0;
+      } else {
+        s = s[0..$-1];
+        printdebug("Perfect Hatred Mode: %s", s);
+      }
+    }
+  }
 }
 
 
