@@ -494,9 +494,9 @@ void Cheat_Summon_AC (const ref array!string args, bool newArg, out array!string
   if (args.length == 1) {
     if (!newArg) return;
   } else if (args.length == 2) {
-    if (newArg) { aclist[$] = "noreplace"; return; }
+    if (newArg) { aclist[$] = "-noreplace"; aclist[$] = "-friendly"; return; }
   } else {
-    if (args.length == 3 && !newArg) aclist[$] = "noreplace";
+    if (args.length == 3 && !newArg) { aclist[$] = "-noreplace"; aclist[$] = "-friendly"; }
     return;
   }
 
@@ -540,12 +540,32 @@ void Cheat_Summon () {
   auto plr = PlayerEx(MO.Player);
   if (!plr) return;
 
-  if (Cmd_GetArgC() < 2 || Cmd_GetArgC() > 3) {
+  bool optFriendly = false;
+  bool optNoReplace = false;
+  string clsName;
+
+  for (int cn = 1; cn < Cmd_GetArgC(); ++cn) {
+    string s = Cmd_GetArgV(cn);
+    if (!s) continue;
+    if (s[0] == "-") {
+      if (s == "-friend" || s == "-friendly") { optFriendly = true; continue; }
+      if (s == "-noreplace") { optNoReplace = true; continue; }
+      cprint("Summon: invalid option: '%s'", s);
+      return;
+    }
+    if (clsName) {
+      cprint("Summon: too many classes");
+      return;
+    }
+    clsName = s;
+  }
+
+  if (!clsName) {
     cprint("Summon: class name expected (use '!class' to disable replacement)");
     return;
   }
 
-  string clsName = Cmd_GetArgV(1);
+  //string clsName = Cmd_GetArgV(1);
   if (!clsName || clsName == "!") {
     cprint("Summon: class name expected");
     return;
@@ -555,7 +575,12 @@ void Cheat_Summon () {
   if (clsName[0] == "!") {
     noreplace = true;
     clsName = clsName[1..$];
+    if (!clsName) {
+      cprint("Summon: class name expected (use '!class' to disable replacement)");
+      return;
+    }
   }
+  if (optNoReplace) noreplace = true;
 
   // find which type to spawn
   auto moClass = class!EntityEx(FindClassNoCaseStr(clsName));
@@ -565,12 +590,10 @@ void Cheat_Summon () {
     return;
   }
 
-  //writeln("summon 0: ", GetClassName(moClass));
-  if (!noreplace && (Cmd_GetArgC() == 2 || stricmp(Cmd_GetArgV(2), "noreplace") != 0)) {
+  if (!noreplace) {
     auto moRepl = class!EntityEx(GetClassReplacement(moClass));
     if (moRepl) moClass = moRepl;
   }
-  //writeln("summon 1: ", GetClassName(moClass));
 
   //bool doRandomSpawner = false;
   if (class!RandomSpawner(moClass)) {
@@ -581,13 +604,13 @@ void Cheat_Summon () {
 
     // if actor has no spawn state, we cannot summon it
     if (!spwspate) {
-      print("Summon: class '%s' has no spawn state", Cmd_GetArgV(1));
+      print("Summon: class '%s' has no spawn state", clsName);
       return;
     }
 
     // if actor has no spawn sprites, we cannot summon it
     if (!AreStateSpritesPresent(spwspate)) {
-      print("Summon: class '%s' has no frames", Cmd_GetArgV(1));
+      print("Summon: class '%s' has no frames", clsName);
       return;
     }
 
@@ -611,6 +634,14 @@ void Cheat_Summon () {
   printdebug("%C(%s): spawned", it, it.UniqueId);
 
   if (it.Sector) it.Origin.z = fclamp(it.Origin.z, it.FloorZ, it.CeilingZ);
+
+  auto ent = EntityEx(it);
+  if (ent) {
+    if (optFriendly) {
+      printdebug("%C(%s): marked as friendly", it, it.UniqueId);
+      ent.bFriendly = true;
+    }
+  }
 
   if (Level.PerfectHatredMode&LevelInfo::PHM_WANDER) {
     Actor act = Actor(it);
