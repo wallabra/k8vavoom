@@ -75,9 +75,7 @@ final void SetSeeOrWanderState () {
 
   if (TIDToHate) {
     targ = Target;
-    //!LastPlayerSeenPosValid = false;
   } else {
-    //!if (Target && !Target.bIsPlayer) LastPlayerSeenPosValid = false;
     targ = (Level.CompatSoundTarget || bNoSector ? EntityEx(Sector->SoundTarget) : LastHeard);
     if (targ) {
       // if it's dead, don't chase it
@@ -87,28 +85,8 @@ final void SetSeeOrWanderState () {
           if (Level.PerfectHatredMode&LevelInfo::PHM_HUNT_MONSTERS) LookForPlayers(fov);
           return;
         }
-        /*!!!
-        // if it is player, and we cannot see it, run to the place we last seen it
-        if (LastPlayerSeenPosValid && !CanSee(targ)) {
-          print("%C: running to last place where i've seen the player: %s", self, LastPlayerSeenPos);
-          A_Wander();
-          return;
-        }
-        LastPlayerSeenPosValid = true;
-        LastPlayerSeenPos = targ.Origin;
-        */
       }
     }
-    /*!!!
-    else {
-      // no last heard target
-      if (LastPlayerSeenPosValid) {
-        print("%C: running to last place where i've seen the player: %s", self, LastPlayerSeenPos);
-        A_Wander();
-        return;
-      }
-    }
-    */
   }
 
   // Andy Baker's stealth monsters
@@ -134,7 +112,6 @@ final void SetSeeOrWanderState () {
   // go into chase state
   // don't start chasing after a goal if it isn't time yet
   if (Target == Goal) {
-    //!LastPlayerSeenPosValid = false;
     if (ReactionTime > XLevel.Time) Target = none;
   } else if (SightSound) {
     if (bBoss) {
@@ -399,16 +376,6 @@ final void SetSeeOrWanderState () {
     }
   }
 
-  /*!!!
-  if (LastPlayerSeenPosValid && (bNoFear || !bFrightened)) {
-    if (!StepMove()) {
-      print("%C: setting chase dir to last place where i've seen the player: %s", self, LastPlayerSeenPos);
-      NewChaseDirTo(LastPlayerSeenPos);
-      if (StepMove()) return;
-    }
-  }
-  */
-
   if (flags&CHF_NORANDOMTURN) {
     if (--MoveCount < 0) MoveCount += 5;
     if (!StepMove()) {
@@ -484,21 +451,6 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
 
   // if the target is dead and not a goal, stop chasing it
   if (Target && Target != Goal && Target.Health <= 0) Target = none;
-
-  /*!!!
-  // if we lost a target, try to run to the last poing we've seen it
-  if (!Target && LastPlayerSeenPosValid && (bNoFear || !bFrightened)) {
-    print("%C: 000: !!!!", self);
-    A_Wander();
-    return;
-  }
-
-  if (LastPlayerSeenPosValid && Target && Target.bIsPlayer && Target.Health > 0 && !CanSee(Target)) {
-    print("%C: lost player!", self);
-    A_Wander();
-    return;
-  }
-  */
 
   if (!Target || !Target.bShootable) {
     // look for a new target

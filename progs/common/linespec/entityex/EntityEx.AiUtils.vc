@@ -149,7 +149,6 @@ final bool CheckMissileRange () {
 //
 //==========================================================================
 final bool LookForMonsters (optional bool deadInfight) {
-  //!LastPlayerSeenPosValid = false;
   //k8: this is used only when player is dead, or we are in "perfect hatred" mode
   if (!(Level.PerfectHatredMode&LevelInfo::PHM_HUNT_MONSTERS)) {
     if (!deadInfight || !Level.Game.Players[0].MO.CanSee(self)) return false; // player can't see monster
@@ -184,7 +183,6 @@ final bool LookForMonsters (optional bool deadInfight) {
 //
 //==========================================================================
 final bool LookForMonstersPH () {
-  //!LastPlayerSeenPosValid = false;
   //k8: this is used only in "perfect hatred" mode
   if (!(Level.PerfectHatredMode&LevelInfo::PHM_HUNT_MONSTERS)) return false;
   if (LookForMonsters()) return true; // just in case
@@ -232,9 +230,6 @@ final bool LookForMonsters2 (float fov, float minseedist, float maxseedist) {
     if (!fov) fov = 180;
     bool allaround = (fabs(fov) >= 360);
 
-    //!LastPlayerSeenPosValid = false;
-    //EntityEx mo;
-    //foreach AllThinkers(EntityEx, mo)
     Entity ee;
     foreach RadiusThings(out ee, Origin, maxseedist) {
       EntityEx mo = EntityEx(ee);
@@ -316,7 +311,6 @@ final bool LookForPlayers (float fov, optional float minseedist, optional float 
       Level.Game.Players[0].bSpawned && Level.Game.Players[0].Health <= 0)
   {
     // single player game and player is dead, look for monsters
-    //!LastPlayerSeenPosValid = false;
     if (GetCvarB('gm_death_infighting')) return LookForMonsters(true);
     if (dph&LevelInfo::PHM_HUNT_MONSTERS) return LookForMonsters();
     Target = none;
@@ -351,23 +345,11 @@ final bool LookForPlayers (float fov, optional float minseedist, optional float 
       if (!Target) {
         // use goal as target
         if (Goal) {
-          //!LastPlayerSeenPosValid = false;
           Target = Goal;
           return true;
         }
         // use last known enemy if no players sighted -- killough 2/15/98:
         if (LastEnemy && LastEnemy.Health > 0) {
-          /*!!
-          // small chance to forget about last player position
-          if (LastPlayerSeenPosValid) {
-            if (FRandomFull() > 0.1) {
-              Target = none;
-              return false;
-            }
-            print("%C: forgot player position", self);
-          }
-          LastPlayerSeenPosValid = false;
-          */
           Target = LastEnemy;
           LastEnemy = none;
           return true;
@@ -425,19 +407,6 @@ final bool LookForPlayers (float fov, optional float minseedist, optional float 
     if (Goal && Target == Goal) ReactionTime = 0.0;
 
     Target = EntityEx(P.MO);
-    /*!!
-    if (Target.bIsPlayer) {
-      if ((PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING) || bFrightened) {
-        LastPlayerSeenPosValid = false;
-      } else {
-        print("%C: spotted player at %s", self, Target.Origin);
-        LastPlayerSeenPosValid = true;
-        LastPlayerSeenPos = Target.Origin;
-      }
-    } else {
-      !LastPlayerSeenPosValid = false;
-    }
-    */
     return true;
   }
 
@@ -965,17 +934,6 @@ final void NewChaseDirTo (TVec destination, optional EntityEx Target) {
 //
 //==========================================================================
 final void RandomChaseDir () {
-  /*!!
-  if (LastPlayerSeenPosValid) {
-    if (bNoFear || !bFrightened) {
-      //if (Target.bIsPlayer && (PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING) || bFrightened)
-      print("%C: setting chase dir to last place where i've seen the player: %s", self, LastPlayerSeenPos);
-      NewChaseDirTo(LastPlayerSeenPos);
-      return;
-    }
-  }
-  */
-
   int olddir = MoveDir;
   int turnaround = LineSpecialGameInfo(Level.Game).opposite[olddir];
 
