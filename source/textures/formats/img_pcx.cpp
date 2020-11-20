@@ -174,10 +174,7 @@ vuint8 *VPcxTexture::GetPixels () {
 
   //GLog.Logf(NAME_Debug, "*** TRYING PCX TEXTURE '%s'", *W_FullLumpName(SourceLump));
 
-  // open stream
-  VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
-  VCheckedStream Strm(lumpstream, true); // load to memory
-
+  VCheckedStream Strm(SourceLump);
   int strmSize = Strm.TotalSize();
 
   // read header

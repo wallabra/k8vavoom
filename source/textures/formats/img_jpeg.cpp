@@ -258,9 +258,7 @@ vuint8 *VJpegTexture::GetPixels () {
   jpeg_error_mgr jerr;
   VJpegClientData cdata;
 
-  // open stream
-  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
-  if (!Strm) Sys_Error("cannot load jpeg texture from '%s'", *W_FullLumpName(SourceLump));
+  VCheckedStream Strm(SourceLump);
 
   try {
     // set up the JPEG error routines
@@ -270,7 +268,7 @@ vuint8 *VJpegTexture::GetPixels () {
 
     // set client data pointer
     cinfo.client_data = &cdata;
-    cdata.Strm = Strm;
+    cdata.Strm = &Strm;
 
     // initialise the JPEG decompression object
     jpeg_create_decompress(&cinfo);
@@ -354,7 +352,7 @@ vuint8 *VJpegTexture::GetPixels () {
   //TODO: check for errors
 
   // free memory
-  delete Strm;
+  //delete Strm;
 
   ConvertPixelsToShaded();
   return Pixels;
@@ -414,27 +412,26 @@ vuint8 *VJpegTexture::GetPixels () {
   memset(Pixels, 0, Width*Height*4);
 
   // open stream
-  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
-  if (!Strm) Sys_Error("cannot load jpeg texture from '%s'", *W_FullLumpName(SourceLump));
+  VCheckedStream Strm(SourceLump);
 
   CBReadInfo nfo;
-  nfo.strm = Strm;
+  nfo.strm = &Strm;
   nfo.strmStart = 0;
-  nfo.strmSize = Strm->TotalSize();
+  nfo.strmSize = Strm.TotalSize();
   nfo.strmPos = 0;
-  if (Strm->IsError()) {
-    delete Strm;
+  if (Strm.IsError()) {
+    //delete Strm;
     Sys_Error("error reading jpeg texture from '%s'", *W_FullLumpName(SourceLump));
   }
 
   int imgwidth = 0, imgheight = 0, imgchans = 0;
   vuint8 *data = (vuint8 *)stbi_load_from_callbacks(&stbcbacks, (void *)&nfo, &imgwidth, &imgheight, &imgchans, 4); // request RGBA
-  if (Strm->IsError()) {
+  if (Strm.IsError()) {
     if (data) stbi_image_free(data);
-    delete Strm;
+    //delete Strm;
     Sys_Error("error reading jpeg texture from '%s'", *W_FullLumpName(SourceLump));
   }
-  delete Strm;
+  //delete Strm;
 
   if (!data) Sys_Error("cannot load jpeg texture from '%s'", *W_FullLumpName(SourceLump));
 

@@ -294,7 +294,7 @@ void VNTValueIOEx::io (VName vname, vuint8 &v) {
 //  VCheckedStream::VCheckedStream
 //
 //==========================================================================
-VCheckedStream::VCheckedStream (VStream *ASrcStream) : srcStream(ASrcStream) {
+VCheckedStream::VCheckedStream (VStream *ASrcStream) : srcStream(ASrcStream), useSysError(false) {
   if (!ASrcStream) Host_Error("source stream is null");
   bLoading = ASrcStream->IsLoading();
   bError = ASrcStream->IsError();
@@ -304,32 +304,61 @@ VCheckedStream::VCheckedStream (VStream *ASrcStream) : srcStream(ASrcStream) {
 
 //==========================================================================
 //
-//  VCheckedStream::VCheckedStream
+//  VCheckedStream::openStreamAndCopy
 //
 //==========================================================================
-VCheckedStream::VCheckedStream (VStream *ASrcStream, bool doCopy) {
-  if (!ASrcStream) Host_Error("source stream is null");
-  if (!ASrcStream->IsLoading()) Host_Error("source stream must be for reading");
-  const int ssize = ASrcStream->TotalSize();
+void VCheckedStream::openStreamAndCopy (VStream *st, bool doCopy) {
+  if (!st) { if (useSysError) Sys_Error("source stream is null"); else Host_Error("source stream is null"); }
+  if (!st->IsLoading()) { st->Close(); delete st; if (useSysError) Sys_Error("source stream must be for reading"); else Host_Error("source stream must be for reading"); }
+  const int ssize = st->TotalSize();
   if (!doCopy || ssize <= 0 || ssize > 1024*1024*64) {
     // direct
-    srcStream = ASrcStream;
-    bError = ASrcStream->IsError();
+    srcStream = st;
+    bError = st->IsError();
   } else {
     // load to memory stream
-    VMemoryStream *ms = new VMemoryStream(ASrcStream->GetName());
+    VMemoryStream *ms = new VMemoryStream(st->GetName());
     TArray<vuint8> &arr = ms->GetArray();
     arr.setLength(ssize);
-    ASrcStream->Serialise(arr.ptr(), ssize);
-    const bool err = ASrcStream->IsError();
-    ASrcStream->Close();
-    delete ASrcStream;
+    st->Serialise(arr.ptr(), ssize);
+    const bool err = st->IsError();
+    st->Close();
+    delete st;
     srcStream = ms;
     ms->BeginRead();
     bError = err;
   }
   bLoading = true;
   checkError();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::VCheckedStream
+//
+//==========================================================================
+VCheckedStream::VCheckedStream (VStream *ASrcStream, bool doCopy) : srcStream(nullptr), useSysError(false) {
+  openStreamAndCopy(ASrcStream, doCopy);
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::VCheckedStream
+//
+//==========================================================================
+VCheckedStream::VCheckedStream (int LumpNum, bool aUseSysError) : srcStream(nullptr), useSysError(aUseSysError) {
+  if (LumpNum < 0) {
+    if (useSysError) Sys_Error("invalid lump number (%d) in VCheckedStream::VCheckedStream", LumpNum);
+    else Host_Error("invalid lump number (%d) in VCheckedStream::VCheckedStream", LumpNum);
+  }
+  VStream *lst = W_CreateLumpReaderNum(LumpNum);
+  if (!lst) {
+    if (useSysError) Sys_Error("cannot read lump (%d) in VCheckedStream::VCheckedStream", LumpNum);
+    Host_Error("cannot read lump (%d) in VCheckedStream::VCheckedStream", LumpNum);
+  }
+  openStreamAndCopy(lst, true);
 }
 
 
@@ -345,19 +374,12 @@ VCheckedStream::~VCheckedStream () {
 
 //==========================================================================
 //
-//  VCheckedStream::SetStream
+//  VCheckedStream::SetSysErrorMode
 //
 //==========================================================================
-/*
-void VCheckedStream::SetStream (VStream *ASrcStream) {
-  Close();
-  bError = false; // just in case
-  if (!ASrcStream) Host_Error("source stream is null");
-  srcStream = ASrcStream;
-  bLoading = ASrcStream->IsLoading();
-  checkError();
+void VCheckedStream::SetSysErrorMode () {
+  useSysError = true;
 }
-*/
 
 
 //==========================================================================
@@ -372,9 +394,11 @@ void VCheckedStream::checkError () const {
       srcStream->Close();
       delete srcStream;
       srcStream = nullptr;
-      Host_Error("error %s '%s'", (bLoading ? "loading from" : "writing to"), *name);
+      if (useSysError) Sys_Error("error %s '%s'", (bLoading ? "loading from" : "writing to"), *name);
+      else Host_Error("error %s '%s'", (bLoading ? "loading from" : "writing to"), *name);
     } else {
-      Host_Error("error %s", (bLoading ? "loading" : "writing"));
+      if (useSysError) Sys_Error("error %s", (bLoading ? "loading" : "writing"));
+      else Host_Error("error %s", (bLoading ? "loading" : "writing"));
     }
   }
 }

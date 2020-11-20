@@ -1184,8 +1184,7 @@ void R_InitFTAnims () {
 void P_InitSwitchList () {
   int lump = W_CheckNumForName(NAME_switches);
   if (lump != -1) {
-    VStream *lumpstream = W_CreateLumpReaderNum(lump);
-    VCheckedStream Strm(lumpstream);
+    VCheckedStream Strm(lump, true); // use Sys_Error
     while (Strm.TotalSize()-Strm.Tell() >= 20) {
       char TmpName1[9];
       char TmpName2[9];

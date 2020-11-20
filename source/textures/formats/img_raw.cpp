@@ -126,8 +126,7 @@ vuint8 *VRawPicTexture::GetPixels () {
   } else {
     // load palette and find black color for remaping
     Palette = new rgba_t[256];
-    VStream *lumpstream = W_CreateLumpReaderNum(PalLumpNum);
-    VCheckedStream PStrm(lumpstream, true); // load to memory
+    VCheckedStream PStrm(PalLumpNum);
     int best_dist = 0x10000;
     black = 0;
     for (int i = 0; i < 256; ++i) {
@@ -146,8 +145,7 @@ vuint8 *VRawPicTexture::GetPixels () {
   }
 
   // read data
-  VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
-  VCheckedStream Strm(lumpstream, true); // load to memory
+  VCheckedStream Strm(SourceLump);
   vuint8 *dst = Pixels;
   for (int i = 0; i < 64000; ++i, ++dst) {
     Strm << *dst;

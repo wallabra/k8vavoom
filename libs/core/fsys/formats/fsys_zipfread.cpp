@@ -48,6 +48,8 @@
 //**************************************************************************
 // directly included from "fsys_zip.cpp"
 
+//#define VAVOOM_AGGRESIVE_LZMA_CACHING
+
 #ifndef VAVOOM_USE_LIBLZMA
 static const ISzAlloc fsysLzmaAlloc = {
   .Alloc = [](ISzAllocPtr p, size_t size) -> void * { return Z_Malloc((int)size); },
@@ -57,6 +59,12 @@ static const ISzAlloc fsysLzmaAlloc = {
 
 #define MAX_WBITS 15
 #define MAX_MEM_LEVEL 9
+
+#ifdef VAVOOM_AGGRESIVE_LZMA_CACHING
+# define VV_IS_LZMA  || (Info.compression == Z_LZMA)
+#else
+# define VV_IS_LZMA  false
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -796,20 +804,11 @@ void VZipFileReader::Serialise (void *V, int length) {
     if (!FileStream) { SetError(); return; }
     //!GLog.Logf(NAME_Debug, "  ***READING (DIRECT) '%s' (currpos=%d; length=%u; realpos=%d; size=%u; rru=%u)", *fname, currpos, length, totalOut(), Info.filesize, rest_read_uncompressed);
     if (length > (int)Info.filesize || (int)Info.filesize-currpos < length) { SetError(); return; }
-    // cache file if it is LZMA (LZMA is quite slow, and texture detection seeks alot)
-    /*
-    if (Info.compression == Z_LZMA) {
-      cacheAllData();
-      if (bError) return;
-      Serialise(V, length);
-      return;
-    }
-    */
     // cache file if we're seeking near the end
     if (totalOut() < 32768 && currpos >= (vint32)(Info.filesize-Info.filesize/3)) {
       ++wholeSize;
       // cache file if it is LZMA (LZMA is quite slow, and texture detection seeks alot)
-      if (wholeSize >= 0 || Info.compression == Z_LZMA) {
+      if (wholeSize >= 0 || VV_IS_LZMA) {
         //!GLog.Logf(NAME_Debug, "*** (0)CACHING '%s' (cpos=%d; newpos=%d; size=%u)", *fname, totalOut(), currpos, Info.filesize);
         cacheAllData();
         if (bError) return;
@@ -821,9 +820,9 @@ void VZipFileReader::Serialise (void *V, int length) {
     if (currpos < totalOut()) {
       // check if we have to cache data
       // cache file if it is LZMA (LZMA is quite slow, and texture detection seeks alot)
-      if (totalOut() > 8192 || Info.compression == Z_LZMA) {
+      if (totalOut() > 8192 || VV_IS_LZMA) {
         ++wholeSize;
-        if (wholeSize >= 0 || Info.compression == Z_LZMA) {
+        if (wholeSize >= 0 || VV_IS_LZMA) {
           //!GLog.Logf(NAME_Debug, "*** (1)CACHING '%s' (cpos=%d; newpos=%d; size=%u)", *fname, totalOut(), currpos, Info.filesize);
           cacheAllData();
           if (bError) return;

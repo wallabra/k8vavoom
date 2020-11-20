@@ -60,7 +60,7 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
 
   if (LumpNum < 0) return nullptr;
   VStream *lumpstream = W_CreateLumpReaderNum(LumpNum);
-  if (lumpstream->TotalSize() < 1) return nullptr; // just in ase
+  if (lumpstream->TotalSize() < 1) return nullptr; // just in case
   VCheckedStream Strm(lumpstream, true); // load to memory
   bool doSeek = false;
 

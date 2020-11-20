@@ -134,8 +134,7 @@ vuint8 *VFlatTexture::GetPixels () {
     checkerFill8(Pixels, Width, Height);
   } else {
     // read data
-    VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
-    VCheckedStream Strm(lumpstream, true); // load to memory
+    VCheckedStream Strm(SourceLump);
     for (int i = 0; i < Width*Height; ++i) {
       Strm << Pixels[i];
       if (!Pixels[i]) Pixels[i] = r_black_color;

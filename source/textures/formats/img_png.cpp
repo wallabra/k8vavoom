@@ -145,11 +145,9 @@ vuint8 *VPngTexture::GetPixels () {
   transparent = false;
   translucent = false;
 
-  // open stream
-  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
-  if (!Strm) Sys_Error("Can't open PNG file '%s'", *Name);
+  VCheckedStream Strm(SourceLump);
 
-  PNGHandle *png = M_VerifyPNG(Strm);
+  PNGHandle *png = M_VerifyPNG(&Strm);
   if (!png) Sys_Error("'%s' is not a valid PNG file", *Name);
 
   if (!png->loadIDAT()) Sys_Error("Error reading PNG file '%s'", *Name);
@@ -181,10 +179,10 @@ vuint8 *VPngTexture::GetPixels () {
 
   delete png;
 
-  if (Strm->IsError()) { delete Strm; Sys_Error("Can't open PNG file '%s'", *Name); }
+  //if (Strm->IsError()) { delete Strm; Sys_Error("Can't open PNG file '%s'", *Name); }
 
   // free memory
-  delete Strm;
+  //delete Strm;
 
   ConvertPixelsToShaded();
   return Pixels;

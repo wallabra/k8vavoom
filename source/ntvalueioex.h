@@ -68,11 +68,14 @@ public:
 class VCheckedStream : public VStream {
 private:
   mutable VStream *srcStream;
+  bool useSysError; // default is false
 
 private:
   void checkError () const;
   void checkValidityCond (bool mustBeTrue);
   inline void checkValidity () { checkValidityCond(true); }
+
+  void openStreamAndCopy (VStream *st, bool doCopy);
 
 public:
   VV_DISABLE_COPY(VCheckedStream)
@@ -80,7 +83,10 @@ public:
   VCheckedStream (VStream *ASrcStream); // this should not be used with `new`
   // this seeks to 0
   VCheckedStream (VStream *ASrcStream, bool doCopy); // this should not be used with `new`
+  VCheckedStream (int LumpNum, bool aUseSysError=false); // this should not be used with `new`; copies into memory
   virtual ~VCheckedStream () override;
+
+  void SetSysErrorMode (); // use Sys_Error
 
   //void SetStream (VStream *ASrcStream);
 

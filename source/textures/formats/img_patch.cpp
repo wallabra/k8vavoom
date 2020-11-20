@@ -107,10 +107,7 @@ vuint8 *VPatchTexture::GetPixels () {
   transparent = false;
   translucent = false;
 
-  // open stream
-  VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
-  VCheckedStream Strm(lumpstream, true); // load to memory
-
+  VCheckedStream Strm(SourceLump);
   const int stsize = Strm.TotalSize();
 
   // make sure header is present

@@ -1533,8 +1533,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
       GCon->Logf(NAME_Warning, "duplicate file \"PNAMES\" in archive \"%s\".", *W_FullPakNameForLump(NamesLump));
       GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3/WAD FILES!");
     }
-    VStream *lumpstream = W_CreateLumpReaderNum(NamesLump);
-    VCheckedStream Strm(lumpstream, true); // load to memory
+    VCheckedStream Strm(NamesLump, true); // use Sys_Error
     if (developer) GCon->Logf(NAME_Dev, "READING '%s' 0x%08x (%d)", *W_FullLumpName(NamesLump), NamesLump, Strm.TotalSize());
     vint32 nummappatches = Streamer<vint32>(Strm);
     if (nummappatches < 0 || nummappatches > 1024*1024) Sys_Error("%s: invalid number of patches in pnames (%d)", *W_FullLumpName(NamesLump), nummappatches);
@@ -1701,8 +1700,7 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
 
     // load the map texture definitions from textures.lmp
     // the data is contained in one or two lumps, TEXTURE1 for shareware, plus TEXTURE2 for commercial
-    VStream *lumpstream = W_CreateLumpReaderNum(TexLump);
-    VCheckedStream Strm(lumpstream, true); // load to memory
+    VCheckedStream Strm(TexLump, true); // use Sys_Error
     vint32 NumTex = Streamer<vint32>(Strm);
 
     GCon->Logf(NAME_Init, "loading TEXTURES from '%s' (%d textures)", *W_FullLumpName(TexLump), NumTex);

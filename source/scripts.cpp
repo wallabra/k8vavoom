@@ -228,11 +228,27 @@ VScriptParser::VScriptParser (VStr name, VStream *Strm)
   , Escape(true)
   , AllowNumSign(false)
 {
-  ScriptSize = Strm->TotalSize();
-  ScriptBuffer = new char[ScriptSize+1];
-  Strm->Serialise(ScriptBuffer, ScriptSize);
-  ScriptBuffer[ScriptSize] = 0;
-  delete Strm;
+  if (!Strm) {
+    ScriptSize = 1;
+    ScriptBuffer = new char[ScriptSize+1];
+    ScriptBuffer[0] = '\n';
+    ScriptBuffer[1] = 0;
+  } else {
+    try {
+      if (Strm->IsError()) Host_Error("cannot read definition file '%s:%s'", *name, *Strm->GetName());
+      ScriptSize = Strm->TotalSize();
+      if (Strm->IsError()) Host_Error("cannot read definition file '%s:%s'", *name, *Strm->GetName());
+      ScriptBuffer = new char[ScriptSize+1];
+      Strm->Serialise(ScriptBuffer, ScriptSize);
+      ScriptBuffer[ScriptSize] = 0;
+      if (Strm->IsError()) { delete ScriptBuffer; Host_Error("cannot read definition file '%s:%s'", *name, *Strm->GetName()); }
+    } catch (...) {
+      Strm->Close();
+      delete Strm;
+      throw;
+    }
+    delete Strm;
+  }
 
   ScriptPtr = ScriptBuffer;
   ScriptEndPtr = ScriptPtr+ScriptSize;
