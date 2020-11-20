@@ -284,14 +284,57 @@ COMMAND(ScreenShot) {
 //  DrawFPS
 //
 //==========================================================================
+#ifdef CLIENT
+static RunningAverageExp vmAverage;
+static RunningAverageExp decalAverage;
+
+static void DrawDebugTimesStripe () {
+  const float stripeAlpha = 0.666f;
+  T_SetFont(ConFont);
+  int sXPos = VirtualWidth;
+  int sYPos = T_FontHeight();
+  GRoot->ToDrawerCoords(sXPos, sYPos);
+  Drawer->ShadeRect(0, 0, sXPos, sYPos, stripeAlpha);
+}
+#endif
+
+
 static void DrawFPS () {
-  const float FilterFadeoff = 0.1f; // 10%
-  static float curFilterValue = 0;
+  #ifdef CLIENT
+  const bool isClient = (GGameInfo->NetMode == NM_Client && cl && cl->Net);
+
+       if (worldThinkTimeVM < 0) vmAverage.setValue(0);
+  else if (worldThinkTimeVM >= 0) vmAverage.update(worldThinkTimeVM);
+
+       if (worldThinkTimeDecal < 0) decalAverage.setValue(0);
+  else if (worldThinkTimeDecal >= 0) decalAverage.update(worldThinkTimeDecal);
 
   int ypos = 0;
+  bool stripeRendered = false;
 
+  // VM/Decal times
+  if (!isClient) {
+    if ((dbg_world_think_vm_time && worldThinkTimeVM >= 0) || (dbg_world_think_decal_time && worldThinkTimeDecal >= 0)) {
+      DrawDebugTimesStripe(); stripeRendered = true;
+      T_SetFont(ConFont);
+      T_SetAlign(hleft, vtop);
+      int xpos = VirtualWidth/2;
+      xpos += xpos/2;
+      //ypos = GRoot->GetHeight()-64;
+
+      if (dbg_world_think_decal_time && dbg_world_think_vm_time) {
+        T_DrawText(xpos, ypos, va("VM:%d | DECALS:%d", (int)(vmAverage.getValue()*1000+0.5), (int)(decalAverage.getValue()*1000+0.5)), CR_DARKBROWN);
+      } else {
+        if (dbg_world_think_decal_time) T_DrawText(xpos, ypos, va("DECALS:%d", (int)(decalAverage.getValue()*1000+0.5)), CR_DARKBROWN);
+        if (dbg_world_think_vm_time) T_DrawText(xpos, ypos, va("VM:%d", (int)(vmAverage.getValue()*1000+0.5)), CR_DARKBROWN);
+      }
+    }
+  }
+
+  // GC stats
   if (draw_gc_stats > 0) {
     const VObject::GCStats &stats = VObject::GetGCStats();
+    if (!stripeRendered) DrawDebugTimesStripe();
     T_SetFont(ConFont);
     int xpos;
     if (draw_gc_stats_posx < 0) {
@@ -307,7 +350,7 @@ static void DrawFPS () {
     if (Sys_Time()-stats.lastCollectTime > 1) VObject::ResetGCStatsLastCollected();
 
     if (draw_gc_stats == 1) {
-      T_DrawText(xpos, ypos, va("[\034U%d\034-/\034U%d\034-/\034U%d\034-]",
+      T_DrawText(xpos, ypos, va("[\034U%3d\034-/\034U%4d\034-/\034U%3d\034-]",
         stats.lastCollected, stats.alive, (int)(stats.lastCollectDuration*1000+0.5)), CR_DARKBROWN);
     } else {
       T_DrawText(xpos, ypos, va("OBJ:[\034U%3d\034-/\034U%3d\034-]  ARRAY:[\034U%5d\034-/\034U%5d\034-/\034U%d\034-]; \034U%2d\034- MSEC GC",
@@ -317,6 +360,7 @@ static void DrawFPS () {
     ypos += T_FontHeight();
   }
 
+  // FPS
   if (draw_fps) {
     double time = Sys_Time();
     ++fps_frames;
@@ -350,16 +394,7 @@ static void DrawFPS () {
     ypos += 9;
   }
 
-  if (worldThinkTimeVM < 0) curFilterValue = 0;
-  if (worldThinkTimeVM >= 0) curFilterValue = FilterFadeoff*worldThinkTimeVM+(1.0f-FilterFadeoff)*curFilterValue;
-
-  #ifdef CLIENT
-  const bool isClient = (GGameInfo->NetMode == NM_Client && cl && cl->Net);
-  #else
-  enum { isClient = false };
-  #endif
-
-  #ifdef CLIENT
+  // network lag
   if (isClient && draw_lag) {
     T_SetFont(ConFont);
     T_SetAlign(hright, vtop);
@@ -391,21 +426,6 @@ static void DrawFPS () {
     Drawer->EndAutomap();
   }
   #endif
-
-  if (!isClient) {
-    if ((dbg_world_think_vm_time && worldThinkTimeVM >= 0) || (dbg_world_think_decal_time && worldThinkTimeDecal >= 0)) {
-      T_SetFont(ConFont);
-      T_SetAlign(hleft, vtop);
-      int xpos = 4;
-      ypos = GRoot->GetHeight()-64;
-
-      if (dbg_world_think_vm_time && worldThinkTimeVM < 0) worldThinkTimeVM = 0;
-      if (dbg_world_think_decal_time && worldThinkTimeDecal < 0) worldThinkTimeDecal = 0;
-
-      if (dbg_world_think_decal_time) { T_DrawText(xpos, ypos, va("DECALS:%d", (int)(worldThinkTimeDecal*1000+0.5)), CR_DARKBROWN); ypos -= T_FontHeight(); }
-      if (dbg_world_think_vm_time) { T_DrawText(xpos, ypos, va("VM:%d", (int)(curFilterValue*1000+0.5)), CR_DARKBROWN); ypos -= T_FontHeight(); }
-    }
-  }
 }
 
 
