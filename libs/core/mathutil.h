@@ -34,32 +34,32 @@
 # define isInfF     isinf
 #else
 static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
-inline bool isFiniteF (const float v) {
+inline bool isFiniteF (const float v) noexcept {
   const union { float f; vuint32 x; } u = {v};
   return ((u.x&0x7f800000u) != 0x7f800000u);
 }
 
 static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
-inline bool isNaNF (const float v) {
+inline bool isNaNF (const float v) noexcept {
   const union { float f; vuint32 x; } u = {v};
   return ((u.x<<1) > 0xff000000u);
 }
 
 static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
-inline bool isInfF (const float v) {
+inline bool isInfF (const float v) noexcept {
   const union { float f; vuint32 x; } u = {v};
   return ((u.x<<1) == 0xff000000u);
 }
 #endif
 
 // this turns all nan/inf values into positive zero
-static VVA_OKUNUSED inline void killInfNaNF (float &f) {
+static VVA_OKUNUSED inline void killInfNaNF (float &f) noexcept {
   vint32 fi = *(vint32 *)&f;
   fi &= (((fi>>23)&0xff)-0xff)>>31;
 }
 
 
-static VVA_OKUNUSED inline bool isZeroInfNaN (const float f) {
+static VVA_OKUNUSED inline bool isZeroInfNaN (const float f) noexcept {
   const vuint32 fi = *(const vuint32 *)&f;
   const vuint8 exp = (vuint8)((fi>>23)&0xffu);
   return
@@ -71,7 +71,7 @@ static VVA_OKUNUSED inline bool isZeroInfNaN (const float f) {
 // `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
 // results are undefined if edge0 ™ edge1
 static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
-inline float smoothstep (const float edge0, const float edge1, float x) {
+inline float smoothstep (const float edge0, const float edge1, float x) noexcept {
   // scale, bias and saturate x to 0..1 range
   x = (x-edge0)/(edge1-edge0);
   if (!isFiniteF(x)) return 1;
@@ -84,7 +84,7 @@ inline float smoothstep (const float edge0, const float edge1, float x) {
 // `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
 // results are undefined if edge0 ™ edge1
 static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
-inline float smoothstepPerlin (const float edge0, const float edge1, float x) {
+inline float smoothstepPerlin (const float edge0, const float edge1, float x) noexcept {
   // scale, bias and saturate x to 0..1 range
   x = (x-edge0)/(edge1-edge0);
   if (!isFiniteF(x)) return 1;
@@ -120,13 +120,13 @@ inline float fastInvSqrtf (const float n) {
 #define max2(x, y)   ((x) >= (y) ? (x) : (y))
 #define midval(min, val, max)  max2(min, min2(val, max))
 */
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T min2 (const T a, const T b) { return (a <= b ? a : b); }
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T max2 (const T a, const T b) { return (a >= b ? a : b); }
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T midval (const T min, const T val, const T max) { return max2(min, min2(val, max)); }
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T clampval (const T val, const T min, const T max) { return max2(min, min2(val, max)); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T min2 (const T a, const T b) noexcept { return (a <= b ? a : b); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T max2 (const T a, const T b) noexcept { return (a >= b ? a : b); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T midval (const T min, const T val, const T max) noexcept { return max2(min, min2(val, max)); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T clampval (const T val, const T min, const T max) noexcept { return max2(min, min2(val, max)); }
 
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T min3 (const T a, const T b, const T c) { return min2(min2(a, b), c); }
-template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T max3 (const T a, const T b, const T c) { return max2(max2(a, b), c); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T min3 (const T a, const T b, const T c) noexcept { return min2(min2(a, b), c); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T max3 (const T a, const T b, const T c) noexcept { return max2(max2(a, b), c); }
 
 
 //==========================================================================
@@ -158,10 +158,10 @@ template <class T> constexpr VVA_CONST VVA_CHECKRESULT VVA_ALWAYS_INLINE T max3 
 
 //int mlog2 (int val);
 //int mround (float);
-static VVA_OKUNUSED VVA_CHECKRESULT inline int mround (const float Val) { return (int)floorf(Val+0.5f); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline int mround (const float Val) noexcept { return (int)floorf(Val+0.5f); }
 
 static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
-inline int ToPowerOf2 (int val) {
+inline int ToPowerOf2 (int val) noexcept {
   /*
   int answer = 1;
   while (answer < val) answer <<= 1;
@@ -183,7 +183,7 @@ inline int ToPowerOf2 (int val) {
 
 // returns angle normalized to the range [0 <= angle < 360]
 static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
-inline float AngleMod (float angle) {
+inline float AngleMod (float angle) noexcept {
 #if 1
   angle = fmodf(angle, 360.0f);
   while (angle < 0.0f) angle += 360.0f;
@@ -196,7 +196,7 @@ inline float AngleMod (float angle) {
 
 // returns angle normalized to the range [-180 < angle <= 180]
 static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
-inline float AngleMod180 (float angle) {
+inline float AngleMod180 (float angle) noexcept {
 #if 1
   angle = AngleMod(angle);
 #else
@@ -208,7 +208,7 @@ inline float AngleMod180 (float angle) {
 
 
 static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
-inline double AngleModD (double angle) {
+inline double AngleModD (double angle) noexcept {
 #if 1
   angle = fmod(angle, 360.0);
   while (angle < 0.0) angle += 360.0;
@@ -220,7 +220,7 @@ inline double AngleModD (double angle) {
 }
 
 static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
-inline double AngleMod180D (double angle) {
+inline double AngleMod180D (double angle) noexcept {
 #if 1
   angle = fmod(angle, 360.0);
   while (angle < -180.0) angle += 360.0;
@@ -234,17 +234,17 @@ inline double AngleMod180D (double angle) {
 }
 
 static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
-inline float AngleDiff (float afrom, float ato) { return AngleMod(ato-afrom+180.0f)-180.0f; }
+inline float AngleDiff (float afrom, float ato) noexcept { return AngleMod(ato-afrom+180.0f)-180.0f; }
 
 #ifdef NO_SINCOS
 
 // TODO: NEON-based impl?
-static VVA_OKUNUSED inline void sincosf_dumb (float x, float *vsin, float *vcos) {
+static VVA_OKUNUSED inline void sincosf_dumb (float x, float *vsin, float *vcos) noexcept {
   *vsin = sinf(x);
   *vcos = cosf(x);
 }
 
-static VVA_OKUNUSED inline void sincosd_dumb (double x, double *vsin, double *vcos) {
+static VVA_OKUNUSED inline void sincosd_dumb (double x, double *vsin, double *vcos) noexcept {
   *vsin = sin(x);
   *vcos = cos(x);
 }
@@ -258,49 +258,45 @@ static VVA_OKUNUSED inline void sincosd_dumb (double x, double *vsin, double *vc
 
 #endif
 
-static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float msin (const float angle) { return sinf(DEG2RADF(angle)); }
-static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float mcos (const float angle) { return cosf(DEG2RADF(angle)); }
-static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float mtan (const float angle) { return tanf(DEG2RADF(angle)); }
-static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float masin (const float x) { return RAD2DEGF(asinf(x)); }
-static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float macos (const float x) { return RAD2DEGF(acosf(x)); }
-static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float matan (const float y, const float x) { return RAD2DEGF(atan2f(y, x)); }
-static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline double matand (const double y, const double x) { return RAD2DEGD(atan2(y, x)); }
-static VVA_OKUNUSED inline void msincos (const float angle, float *vsin, float *vcos) { return sincosf(DEG2RADF(angle), vsin, vcos); }
-static VVA_OKUNUSED inline void msincosd (const double angle, double *vsin, double *vcos) { return sincosd(DEG2RADD(angle), vsin, vcos); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float msin (const float angle) noexcept { return sinf(DEG2RADF(angle)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float mcos (const float angle) noexcept { return cosf(DEG2RADF(angle)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float mtan (const float angle) noexcept { return tanf(DEG2RADF(angle)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float masin (const float x) noexcept { return RAD2DEGF(asinf(x)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float macos (const float x) noexcept { return RAD2DEGF(acosf(x)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float matan (const float y, const float x) noexcept { return RAD2DEGF(atan2f(y, x)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline double matand (const double y, const double x) noexcept { return RAD2DEGD(atan2(y, x)); }
+static VVA_OKUNUSED inline void msincos (const float angle, float *vsin, float *vcos) noexcept { return sincosf(DEG2RADF(angle), vsin, vcos); }
+static VVA_OKUNUSED inline void msincosd (const double angle, double *vsin, double *vcos) noexcept { return sincosd(DEG2RADD(angle), vsin, vcos); }
 
 
-static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT inline float ByteToAngle (vuint8 angle) { return (float)(angle*360.0f/256.0f); }
-static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline vuint8 AngleToByte (const float angle) { return (vuint8)(AngleMod(angle)*256.0f/360.0f); }
+static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT inline float ByteToAngle (vuint8 angle) noexcept { return (float)(angle*360.0f/256.0f); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline vuint8 AngleToByte (const float angle) noexcept { return (vuint8)(AngleMod(angle)*256.0f/360.0f); }
 
 
 static inline VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
-vint32 scaleInt (vint32 a, vint32 b, vint32 c) {
-  return (vint32)(((vint64)a*b)/c);
-}
+vint32 scaleInt (vint32 a, vint32 b, vint32 c) noexcept { return (vint32)(((vint64)a*b)/c); }
 
 static inline VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
-vuint32 scaleUInt (vuint32 a, vuint32 b, vuint32 c) {
-  return (vuint32)(((vuint64)a*b)/c);
-}
+vuint32 scaleUInt (vuint32 a, vuint32 b, vuint32 c) noexcept { return (vuint32)(((vuint64)a*b)/c); }
 
 
 // this is actually branch-less for ints on x86, and even for longs on x86_64
 static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
-inline vuint8 clampToByte (vint32 n) {
+inline vuint8 clampToByte (vint32 n) noexcept {
   n &= -(vint32)(n >= 0);
   return (vuint8)(n|((255-(vint32)n)>>31));
   //return (n < 0 ? 0 : n > 255 ? 255 : n);
 }
 
 static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
-inline vuint8 clampToByteU (vuint32 n) {
+inline vuint8 clampToByteU (vuint32 n) noexcept {
   return (vuint8)((n&0xff)|(255-((-(vint32)(n < 256))>>24)));
 }
 
 
 // Neumaier-Kahan algorithm
 static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
-inline float neumsum2 (float v0, const float v1) {
+inline float neumsum2 (float v0, const float v1) noexcept {
   // one iteration
   const float t = v0+v1;
   return t+(fabsf(v0) >= fabsf(v1) ? (v0-t)+v1 : (v1-t)+v0);
@@ -308,7 +304,7 @@ inline float neumsum2 (float v0, const float v1) {
 
 // Neumaier-Kahan algorithm
 static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
-inline float neumsum3 (float v0, const float v1, const float v2) {
+inline float neumsum3 (float v0, const float v1, const float v2) noexcept {
   // first iteration
   const float t = v0+v1;
   const float c = (fabsf(v0) >= fabsf(v1) ? (v0-t)+v1 : (v1-t)+v0);
@@ -319,7 +315,7 @@ inline float neumsum3 (float v0, const float v1, const float v2) {
 
 // Neumaier-Kahan algorithm
 static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
-inline float neumsum4 (float v0, const float v1, const float v2, const float v3) {
+inline float neumsum4 (float v0, const float v1, const float v2, const float v3) noexcept {
   // first iteration
   float t = v0+v1;
   float c = (fabsf(v0) >= fabsf(v1) ? (v0-t)+v1 : (v1-t)+v0);
@@ -337,7 +333,7 @@ inline float neumsum4 (float v0, const float v1, const float v2, const float v3)
 
 // Neumaier-Kahan algorithm
 static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
-inline double neumsum2D (double v0, const double v1) {
+inline double neumsum2D (double v0, const double v1) noexcept {
   // one iteration
   const double t = v0+v1;
   return t+(fabs(v0) >= fabs(v1) ? (v0-t)+v1 : (v1-t)+v0);
@@ -345,7 +341,7 @@ inline double neumsum2D (double v0, const double v1) {
 
 // Neumaier-Kahan algorithm
 static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
-inline double neumsum3D (double v0, const double v1, const double v2) {
+inline double neumsum3D (double v0, const double v1, const double v2) noexcept {
   // first iteration
   const double t = v0+v1;
   const double c = (fabs(v0) >= fabs(v1) ? (v0-t)+v1 : (v1-t)+v0);
@@ -362,18 +358,18 @@ protected:
   float currValue; // = 0;
 
 public:
-  RunningAverageExp () : fadeoff(0.1f), currValue(0.0f) {}
-  RunningAverageExp (float aFadeoff) : fadeoff(aFadeoff), currValue(0.0f) {}
+  RunningAverageExp () noexcept : fadeoff(0.1f), currValue(0.0f) {}
+  RunningAverageExp (float aFadeoff) noexcept : fadeoff(aFadeoff), currValue(0.0f) {}
 
-  inline void reset () { currValue = 0.0f; }
+  inline void reset () noexcept { currValue = 0.0f; }
 
-  VVA_CHECKRESULT inline float getFadeoff () const { return fadeoff; }
-  inline void setFadeoff (float aFadeoff) { fadeoff = aFadeoff; }
+  VVA_CHECKRESULT inline float getFadeoff () const noexcept { return fadeoff; }
+  inline void setFadeoff (float aFadeoff) noexcept { fadeoff = aFadeoff; }
 
-  inline void update (float newValue) { currValue = fadeoff*newValue+(1.0f-fadeoff)*currValue; }
+  inline void update (float newValue) noexcept { currValue = fadeoff*newValue+(1.0f-fadeoff)*currValue; }
 
-  VVA_CHECKRESULT inline float getValue () const { return currValue; }
-  inline void setValue (float aValue) { currValue = aValue; }
+  VVA_CHECKRESULT inline float getValue () const noexcept { return currValue; }
+  inline void setValue (float aValue) noexcept { currValue = aValue; }
 };
 
 
@@ -384,7 +380,7 @@ public:
 //         http://www.stereopsis.com/sree/fpu2006.html
 //
 // xs_CRoundToInt:  Round toward nearest, but ties round toward even (just like FISTP)
-static VVA_OKUNUSED VVA_CHECKRESULT inline vint32 vxs_CRoundToInt (const double val, const double dmr) {
+static VVA_OKUNUSED VVA_CHECKRESULT inline vint32 vxs_CRoundToInt (const double val, const double dmr) noexcept {
   union vxs_doubleints_ {
     double val;
     vuint32 ival[2];
@@ -399,22 +395,9 @@ static VVA_OKUNUSED VVA_CHECKRESULT inline vint32 vxs_CRoundToInt (const double 
 }
 
 
-static inline VVA_OKUNUSED VVA_CHECKRESULT vint32 vxs_ToFix16_16 (const double val) {
+static inline VVA_OKUNUSED VVA_CHECKRESULT vint32 vxs_ToFix16_16 (const double val) noexcept {
   /*static*/ const double vxs_doublemagic_ = double(6755399441055744.0); //2^52*1.5, uses limited precisicion to floor
   return vxs_CRoundToInt(val, vxs_doublemagic_/(1<<16));
-}
-
-
-//==========================================================================
-//
-//  Are3DBBoxesOverlapIn2D
-//
-//==========================================================================
-static VVA_OKUNUSED VVA_CHECKRESULT inline bool Are3DBBoxesOverlapIn2D (const float bbox0[6], const float bbox1[6]) {
-  return !(
-    bbox1[3+0] < bbox0[0+0] || bbox1[3+1] < bbox0[0+1] ||
-    bbox1[0+0] > bbox0[3+0] || bbox1[0+1] > bbox0[3+1]
-  );
 }
 
 

@@ -24,51 +24,6 @@
 //**
 //**************************************************************************
 
-#define CONST_BBoxVertexIndex  \
-  const unsigned BBoxVertexIndex[8][3] = { \
-    {0+0, 0+1, 0+2}, \
-    {3+0, 0+1, 0+2}, \
-    {0+0, 3+1, 0+2}, \
-    {3+0, 3+1, 0+2}, \
-    {0+0, 0+1, 3+2}, \
-    {3+0, 0+1, 3+2}, \
-    {0+0, 3+1, 3+2}, \
-    {3+0, 3+1, 3+2}, \
-  }
-
-// this is for 2d line/node bboxes
-// bounding box
-enum {
-  BOX2D_TOP, // the top is greater than the bottom
-  BOX2D_BOTTOM, // the bottom is lesser than the top
-  BOX2D_LEFT,
-  BOX2D_RIGHT,
-  // or this
-  BOX2D_MAXY = 0,
-  BOX2D_MINY = 1,
-  BOX2D_MINX = 2,
-  BOX2D_MAXX = 3,
-};
-
-// this is for 3d bboxes
-// bounding box
-enum {
-  BOX3D_MINX = 0,
-  BOX3D_MINY = 1,
-  BOX3D_MINZ = 2,
-  BOX3D_MAXX = 3,
-  BOX3D_MAXY = 4,
-  BOX3D_MAXZ = 5,
-  // various constants
-  BOX3D_MINIDX = 0,
-  BOX3D_MAXIDX = 3,
-  // add those to MINIDX/MAXIDX to get the corresponding element
-  BOX3D_X = 0,
-  BOX3D_Y = 1,
-  BOX3D_Z = 2,
-};
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 // Ax+By+Cz=D (ABC is normal, D is distance)
 // this the same as in Quake engine, so i can... borrow code from it ;-)

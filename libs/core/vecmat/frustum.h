@@ -277,3 +277,10 @@ VVA_CHECKRESULT bool CheckSphereVs2dAABB (const float bbox[4], const TVec &lorg,
 VVA_CHECKRESULT int BoxOnLineSide2D (const float tmbox[4], TVec v1, TVec v2) noexcept;
 
 VVA_CHECKRESULT bool IsCircleTouchBox2D (const float cx, const float cy, float radius, const float bbox2d[4]) noexcept;
+
+static VVA_OKUNUSED VVA_CHECKRESULT inline bool Are3DBBoxesOverlapIn2D (const float bbox0[6], const float bbox1[6]) noexcept {
+  return !(
+    bbox1[BOX3D_MAXX] < bbox0[BOX3D_MINX] || bbox1[BOX3D_MAXY] < bbox0[BOX3D_MINY] ||
+    bbox1[BOX3D_MINX] > bbox0[BOX3D_MAXX] || bbox1[BOX3D_MINY] > bbox0[BOX3D_MAXY]
+  );
+}
