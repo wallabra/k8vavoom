@@ -53,6 +53,7 @@ extern VCvarB r_allow_ambient;
 extern VCvarB r_dynamic_clip;
 extern VCvarB r_dynamic_clip_pvs;
 extern VCvarB r_glow_flat;
+extern VCvarB r_draw_queue_warnings;
 
 vuint32 gf_dynlights_processed = 0;
 vuint32 gf_dynlights_traced = 0;
@@ -1497,7 +1498,7 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
 
   if (cache) {
     if (cache->lastframe == lmcache.cacheframecount) {
-      GCon->Log(NAME_Warning, "duplicate surface caching");
+      if (r_draw_queue_warnings) GCon->Log(NAME_Warning, "duplicate surface caching (for lighting)");
       return true;
     }
     if (!(surface->drawflags&surface_t::DF_CALC_LMAP) || IsStaticLightmapTimeLimitExpired()) {

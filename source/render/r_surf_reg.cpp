@@ -888,8 +888,7 @@ static bool LoadLightSurfaces (VLevel *Level, VStream *strm, surface_t *s, unsig
     SurfaceInfoBlock *sp = nullptr;
     for (auto &&sb : sibs) {
       if (sb.isValid() && sb.equalTo(s)) {
-             if (sp) { GCon->Log(NAME_Warning, "invalid lightmap cache surface: duplicate info!"); }
-        else sp = &sb;
+        if (sp) { GCon->Log(NAME_Warning, "invalid lightmap cache surface: duplicate info!"); } else sp = &sb;
       } else {
         #ifdef VV_DUMP_LMAP_CACHE_COMPARISONS
         GCon->Logf(NAME_Debug, "::: compare ::: count=%d; typeFlags=%d; tm0=%d; tm1=%d; ext0=%d; ext1=%d; sub=%d; seg=%d; pnorm=%d; pdist=%d; vert=%d",
