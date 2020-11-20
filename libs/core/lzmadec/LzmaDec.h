@@ -5,6 +5,8 @@
 #define __LZMA_DEC_H
 
 //#include "7zTypes.h"
+#include <stddef.h>
+#include <stdint.h>
 
 //EXTERN_C_BEGIN
 #ifdef __cplusplus
@@ -55,9 +57,9 @@ struct ISzAlloc
 
 typedef
 #ifdef _LZMA_PROB32
-  vuint32
+  uint32_t
 #else
-  vuint16
+  uint16_t
 #endif
   CLzmaProb;
 
@@ -68,11 +70,11 @@ typedef
 
 typedef struct _CLzmaProps
 {
-  vuint8 lc;
-  vuint8 lp;
-  vuint8 pb;
-  vuint8 _pad_;
-  vuint32 dicSize;
+  uint8_t lc;
+  uint8_t lp;
+  uint8_t pb;
+  uint8_t _pad_;
+  uint32_t dicSize;
 } CLzmaProps;
 
 /* LzmaProps_Decode - decodes properties
@@ -81,7 +83,7 @@ Returns:
   SZ_ERROR_UNSUPPORTED - Unsupported properties
 */
 
-LZMA_SRes LzmaProps_Decode(CLzmaProps *p, const vuint8 *data, unsigned size);
+LZMA_SRes LzmaProps_Decode(CLzmaProps *p, const uint8_t *data, unsigned size);
 
 
 /* ---------- LZMA Decoder state ---------- */
@@ -97,21 +99,21 @@ typedef struct
   CLzmaProps prop;
   CLzmaProb *probs;
   CLzmaProb *probs_1664;
-  vuint8 *dic;
+  uint8_t *dic;
   size_t dicBufSize;
   size_t dicPos;
-  const vuint8 *buf;
-  vuint32 range;
-  vuint32 code;
-  vuint32 processedPos;
-  vuint32 checkDicSize;
-  vuint32 reps[4];
-  vuint32 state;
-  vuint32 remainLen;
+  const uint8_t *buf;
+  uint32_t range;
+  uint32_t code;
+  uint32_t processedPos;
+  uint32_t checkDicSize;
+  uint32_t reps[4];
+  uint32_t state;
+  uint32_t remainLen;
 
-  vuint32 numProbs;
+  uint32_t numProbs;
   unsigned tempBufSize;
-  vuint8 tempBuf[LZMA_REQUIRED_INPUT_MAX];
+  uint8_t tempBuf[LZMA_REQUIRED_INPUT_MAX];
 } CLzmaDec;
 
 #define LzmaDec_Construct(p) { (p)->dic = NULL; (p)->probs = NULL; }
@@ -177,10 +179,10 @@ LzmaDec_Allocate* can return:
   SZ_ERROR_UNSUPPORTED - Unsupported properties
 */
 
-LZMA_SRes LzmaDec_AllocateProbs(CLzmaDec *p, const vuint8 *props, unsigned propsSize, ISzAllocPtr alloc);
+LZMA_SRes LzmaDec_AllocateProbs(CLzmaDec *p, const uint8_t *props, unsigned propsSize, ISzAllocPtr alloc);
 void LzmaDec_FreeProbs(CLzmaDec *p, ISzAllocPtr alloc);
 
-LZMA_SRes LzmaDec_Allocate(CLzmaDec *p, const vuint8 *props, unsigned propsSize, ISzAllocPtr alloc);
+LZMA_SRes LzmaDec_Allocate(CLzmaDec *p, const uint8_t *props, unsigned propsSize, ISzAllocPtr alloc);
 void LzmaDec_Free(CLzmaDec *p, ISzAllocPtr alloc);
 
 /* ---------- Dictionary Interface ---------- */
@@ -225,7 +227,7 @@ Returns:
 */
 
 LZMA_SRes LzmaDec_DecodeToDic(CLzmaDec *p, size_t dicLimit,
-    const vuint8 *src, size_t *srcLen, ELzmaFinishMode finishMode, ELzmaStatus *status);
+    const uint8_t *src, size_t *srcLen, ELzmaFinishMode finishMode, ELzmaStatus *status);
 
 
 /* ---------- Buffer Interface ---------- */
@@ -241,8 +243,8 @@ finishMode:
   LZMA_FINISH_END - Stream must be finished after (*destLen).
 */
 
-LZMA_SRes LzmaDec_DecodeToBuf(CLzmaDec *p, vuint8 *dest, size_t *destLen,
-    const vuint8 *src, size_t *srcLen, ELzmaFinishMode finishMode, ELzmaStatus *status);
+LZMA_SRes LzmaDec_DecodeToBuf(CLzmaDec *p, uint8_t *dest, size_t *destLen,
+    const uint8_t *src, size_t *srcLen, ELzmaFinishMode finishMode, ELzmaStatus *status);
 
 
 /* ---------- One Call Interface ---------- */
@@ -266,8 +268,8 @@ Returns:
   SZ_ERROR_INPUT_EOF - It needs more bytes in input buffer (src).
 */
 
-LZMA_SRes LzmaDecode(vuint8 *dest, size_t *destLen, const vuint8 *src, size_t *srcLen,
-    const vuint8 *propData, unsigned propSize, ELzmaFinishMode finishMode,
+LZMA_SRes LzmaDecode(uint8_t *dest, size_t *destLen, const uint8_t *src, size_t *srcLen,
+    const uint8_t *propData, unsigned propSize, ELzmaFinishMode finishMode,
     ELzmaStatus *status, ISzAllocPtr alloc);
 
 //EXTERN_C_END
