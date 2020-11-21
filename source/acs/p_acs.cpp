@@ -78,6 +78,8 @@ static VCvarB acs_show_stopped_scripts("acs_show_stopped_scripts", false, "DEBUG
 static VCvarB acs_abort_on_unknown_acsf("acs_abort_on_unknown_acsf", true, "Abort on unknown ACSF function? (WARNING: setting this 'off' may break some maps)", CVAR_Archive);
 static VCvarB acs_emulate_zandronum_acsf("acs_emulate_zandronum_acsf", false, "Emulate some Zandronum ACSF functions? (WARNING: setting this 'off' may break some maps)", CVAR_Archive);
 
+static VCvarB dbg_acs_allow_unimplemented_opcodes("dbg_acs_allow_unimplemented_opcodes", false, "Override 'acs_halt_on_unimplemented_opcode', non-persistent", CVAR_PreInit);
+
 extern VCvarF mouse_x_sensitivity;
 extern VCvarF mouse_y_sensitivity;
 extern VCvarF m_yaw;
@@ -7258,7 +7260,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         const PCD_Info *pi;
         for (pi = PCD_List; pi->name; ++pi) if (pi->index == cmd) break;
         const char *opcname = (pi->name ? pi->name : "UNKNOWN");
-        if (acs_halt_on_unimplemented_opcode) Host_Error("ACS: Unsupported p-code %s (%d), script %d terminated", opcname, cmd, info->Number);
+        if (!dbg_acs_allow_unimplemented_opcodes && acs_halt_on_unimplemented_opcode) Host_Error("ACS: Unsupported p-code %s (%d), script %d terminated", opcname, cmd, info->Number);
         if (!acsReportedBadOpcodesInited) {
           acsReportedBadOpcodesInited = true;
           memset(acsReportedBadOpcodes, 0, sizeof(acsReportedBadOpcodes));
