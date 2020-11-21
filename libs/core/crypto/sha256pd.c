@@ -13,8 +13,10 @@
 #  include <sys/time.h>
 #  if defined(__SWITCH__)
 #   include <switch/kernel/random.h> // for randomGet()
-#  elif defined(__linux__)
+/*
+# elif defined(__linux__) && !defined(ANDROID)
 #   include <sys/random.h>
+*/
 #  endif
 # endif
 #endif
@@ -192,6 +194,40 @@ static void RtlGenRandomX (PVOID RandomBuffer, ULONG RandomBufferLength) {
 }
 #endif
 
+#if defined(__linux__) && !defined(ANDROID)
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+/*#include <stdio.h>*/
+
+#ifdef SYS_getrandom
+static unsigned int skip_getrandom = 0; // 0:nope
+#endif
+
+static ssize_t why_glibc_is_so_fucked_get_random (void *buf, size_t bufsize) {
+  #ifdef SYS_getrandom
+  # ifndef GRND_NONBLOCK
+  #  define GRND_NONBLOCK (1)
+  # endif
+  if (!skip_getrandom) {
+    for (;;) {
+      ssize_t ret = syscall(SYS_getrandom, buf, bufsize, GRND_NONBLOCK);
+      if (ret >= 0) {
+        /*fprintf(stderr, "*** SYS_getrandom is here! read %u bytes out of %u\n", (unsigned)ret, (unsigned)bufsize);*/
+        return ret;
+      }
+      if (ret != -EINTR) break;
+    }
+    skip_getrandom = 1; // fall back to /dev/urandom
+  }
+  #endif
+  return -1;
+}
+#endif
+
 
 //==========================================================================
 //
@@ -210,18 +246,23 @@ static void sha256pd_randombytes_init (isaacp_state *rng) {
   RtlGenRandomX(xstate, sizeof(xstate));
   #else
   size_t pos = 0;
-  #if defined(__linux__)
+  #if defined(__linux__) && !defined(ANDROID)
   /* try to use kernel syscall first */
   while (pos < sizeof(xstate)) {
     /* reads up to 256 bytes should not be interrupted by signals */
     size_t len = sizeof(xstate)-pos;
     if (len > 256) len = 256;
+    /*
     ssize_t rd = getrandom(((uint8_t *)xstate)+pos, len, 0);
     if (rd < 0) {
       if (errno != EINTR) break;
     } else {
       pos += (size_t)rd;
     }
+    */
+    ssize_t rd = why_glibc_is_so_fucked_get_random(((uint8_t *)xstate)+pos, len);
+    if (rd < 0) break;
+    pos += (size_t)rd;
   }
   /* do not mix additional sources if we got all random bytes from kernel */
   const unsigned mixother = (pos != sizeof(xstate));
@@ -230,7 +271,7 @@ static void sha256pd_randombytes_init (isaacp_state *rng) {
   #endif
   /* fill up what is left with "/dev/urandom" */
   if (pos < sizeof(xstate)) {
-    int fd = open("/dev/urandom", O_RDONLY|O_CLOEXEC);
+    int fd = open("/dev/urandom", O_RDONLY/*|O_CLOEXEC*/);
     if (fd >= 0) {
       while (pos < sizeof(xstate)) {
         size_t len = sizeof(xstate)-pos;
