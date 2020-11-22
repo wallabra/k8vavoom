@@ -5976,19 +5976,13 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetActorProperty)
-      if (!sp[-3])
-      {
-        if (Activator)
-        {
+      if (!sp[-3]) {
+        if (Activator) {
           Activator->eventSetActorProperty(sp[-2], sp[-1], GetStr(sp[-1]));
           //if (developer) GCon->Logf(NAME_Dev, "SetActorProperty: ent=<%s>, propid=%d", Activator->GetClass()->GetName(), sp[-2]);
         }
-      }
-      else
-      {
-        for (VEntity *Ent = Level->FindMobjFromTID(sp[-3], nullptr);
-          Ent; Ent = Level->FindMobjFromTID(sp[-3], Ent))
-        {
+      } else {
+        for (VEntity *Ent = Level->FindMobjFromTID(sp[-3], nullptr); Ent; Ent = Level->FindMobjFromTID(sp[-3], Ent)) {
           Ent->eventSetActorProperty(sp[-2], sp[-1], GetStr(sp[-1]));
           //if (developer) GCon->Logf(NAME_Dev, "SetActorProperty: ent=<%s>, propid=%d", Ent->GetClass()->GetName(), sp[-2]);
         }
