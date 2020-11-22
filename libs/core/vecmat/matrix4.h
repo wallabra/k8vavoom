@@ -326,6 +326,13 @@ public:
 
   static VVA_CHECKRESULT VMatrix4 LookAtFucked (const TVec &eye, const TVec &center, const TVec &up) noexcept;
 
+  // for [-1..1]
+  static VVA_CHECKRESULT VMatrix4 ProjectionNegOne (float fovY, float aspect, float zNear, float zFar) noexcept;
+  // for [0..1]
+  static VVA_CHECKRESULT VMatrix4 ProjectionZeroOne (float fovY, float aspect, float zNear, float zFar) noexcept;
+
+  static VVA_CHECKRESULT VMatrix4 LookAtGLM (const TVec &eye, const TVec &center, const TVec &up) noexcept;
+
   // does `gluLookAt()`
   VVA_CHECKRESULT VMatrix4 lookAt (const TVec &eye, const TVec &center, const TVec &up) const noexcept;
 

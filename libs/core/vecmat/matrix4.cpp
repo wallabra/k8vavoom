@@ -520,6 +520,83 @@ VMatrix4 VMatrix4::Perspective (float fovY, float aspect, float zNear, float zFa
 
 //==========================================================================
 //
+//  VMatrix4::ProjectionNegOne
+//
+//  creates projection matrix for [-1..1] depth
+//  fovY   - Field of vision in degrees in the y direction
+//  aspect - Aspect ratio of the viewport
+//  zNear  - The near clipping distance
+//  zFar   - The far clipping distance
+//
+//==========================================================================
+VVA_CHECKRESULT VMatrix4 VMatrix4::ProjectionNegOne (float fovY, float aspect, float zNear, float zFar) noexcept {
+  const float thfovy = tanf(DEG2RADF(fovY)/2.0f);
+  VMatrix4 res;
+  res.SetZero();
+  res[0][0] = 1.0f/(aspect*thfovy);
+  res[1][1] = 1.0f/thfovy;
+  res[2][2] = -(zFar+zNear)/(zFar-zNear);
+  res[2][3] = -1.0f;
+  res[3][2] = -(2.0f*zFar*zNear)/(zFar-zNear);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VMatrix4::ProjectionZeroOne
+//
+//  creates projection matrix for [0..1] depth
+//  fovY   - Field of vision in degrees in the y direction
+//  aspect - Aspect ratio of the viewport
+//  zNear  - The near clipping distance
+//  zFar   - The far clipping distance
+//
+//==========================================================================
+VVA_CHECKRESULT VMatrix4 VMatrix4::ProjectionZeroOne (float fovY, float aspect, float zNear, float zFar) noexcept {
+  const float thfovy = tanf(DEG2RADF(fovY)/2.0f);
+  VMatrix4 res;
+  res.SetZero();
+  res[0][0] = 1.0f/(aspect*thfovy);
+  res[1][1] = 1.0f/thfovy;
+  res[2][2] = zFar/(zNear-zFar);
+  res[2][3] = -1.0f;
+  res[3][2] = -(zFar*zNear)/(zFar-zNear);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VMatrix4::LookAtGLM
+//
+//==========================================================================
+VVA_CHECKRESULT VMatrix4 VMatrix4::LookAtGLM (const TVec &eye, const TVec &center, const TVec &up) noexcept {
+  TVec f = (center-eye);
+  f.normaliseInPlace();
+  TVec s = f.cross(up);
+  s.normaliseInPlace();
+  TVec u = s.cross(f);
+  VMatrix4 res;
+  res.SetIdentity();
+  res[0][0] = s.x;
+  res[1][0] = s.y;
+  res[2][0] = s.z;
+  res[0][1] = u.x;
+  res[1][1] = u.y;
+  res[2][1] = u.z;
+  res[0][2] =-f.x;
+  res[1][2] =-f.y;
+  res[2][2] =-f.z;
+  res[3][0] =-s.dot(eye);
+  res[3][1] =-u.dot(eye);
+  res[3][2] = f.dot(eye);
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VMatrix4::LookAtFucked
 //
 //==========================================================================
