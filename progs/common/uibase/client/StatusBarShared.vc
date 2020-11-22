@@ -189,14 +189,14 @@ void AddNotifyMessage (string Str) {
 //  AddChatMessage
 //
 //==========================================================================
-void AddChatMessage (string nick, string Text) {
+void AddChatMessage (string nick, string aText) {
   array!SplitLine Lines;
   nick = nick.removeColors.xstrip;
   if (!nick) nick = "<dumb>";
   nick ~= ":";
 
   SetFont('smallfont');
-  SplitText(Text, Lines, GetVirtualWidth()-32);
+  SplitText(aText, Lines, GetVirtualWidth()-32);
 
   foreach (auto i; 0..Lines.length) {
     string text = Lines[i].Text.removeColors.xstrip;

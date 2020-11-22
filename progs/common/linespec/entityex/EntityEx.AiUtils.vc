@@ -663,21 +663,21 @@ final bool StepMove () {
       if (tmtrace.FloorZ-Origin.z <= 48.0 && Target &&
           tmtrace.FloorZ-Target.Origin.z <= 48.0)
       {
-        float DeltaX;
-        float DeltaY;
+        float drDeltaX;
+        float drDeltaY;
         TAVec ang;
 
-        CheckDropOff(DeltaX, DeltaY);
+        CheckDropOff(drDeltaX, drDeltaY);
         TVec dir = Target.Origin-Origin;
         VectorAngles(dir, out ang);
 
-        if (DeltaX > 0.0) {
+        if (drDeltaX > 0.0) {
           Velocity.x += 0.6*35.0*cos(ang.yaw);
         } else {
           Velocity.x += 0.6*35.0*cos(-ang.yaw);
         }
 
-        if (DeltaY > 0.0) {
+        if (drDeltaY > 0.0) {
           Velocity.y += 0.6*35.0*sin(ang.yaw);
         } else {
           Velocity.y += 0.6*35.0*sin(-ang.yaw);

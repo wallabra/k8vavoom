@@ -1119,9 +1119,9 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
         //print("LNSPEC_LineSetBlocking: (%d, 0x%04x, 0x%04x)", Arg1, Arg2, Arg3);
         int setFlags = ConvertLineBlockingFlags(Arg2), clearFlags = ~ConvertLineBlockingFlags(Arg3);
         int searcher = -1;
-        for (line_t *line = XLevel.FindLine(Arg1, &searcher); line; line = XLevel.FindLine(Arg1, &searcher)) {
-          line->flags |= setFlags;
-          line->flags &= clearFlags;
+        for (line_t *ldef = XLevel.FindLine(Arg1, &searcher); ldef; ldef = XLevel.FindLine(Arg1, &searcher)) {
+          ldef->flags |= setFlags;
+          ldef->flags &= clearFlags;
         }
         buttonSuccess = true;
       }
@@ -3934,9 +3934,9 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
         float Dist = Length(Delta);
         float TargSpeed = Length(TargVel)/35.0;
         float YDotX = DotProduct(-Delta, TargVel)/35.0;
-        float a = acos(FClamp(YDotX/TargSpeed/Dist, -1.0, 1.0));
+        float arccos = acos(FClamp(YDotX/TargSpeed/Dist, -1.0, 1.0));
         float Multiplier = (Random()-Random())*0.1+1.1;
-        float SinB = FClamp(TargSpeed*Multiplier*sin(a)/speed, -1.0, 1.0);
+        float SinB = FClamp(TargSpeed*Multiplier*sin(arccos)/speed, -1.0, 1.0);
 
         // use the cross product of two of the triangle's sides to get a rotation vector
         TVec rv = CrossProduct(TargVel, Delta);
@@ -6413,13 +6413,13 @@ override void SpawnMapThing (mthing_t *mthing) {
 //  CheckLock
 //
 //==========================================================================
-/*final*/ bool CheckLock (Entity user, int lock, bool door) {
+/*final*/ bool CheckLock (Entity user, int lockidx, bool door) {
   if (!user) return false;
   if (!user.bIsPlayer) return false;
-  if (!lock) return true;
-  LockDef *Lock = GetLockDef(lock);
+  if (!lockidx) return true;
+  LockDef *Lock = GetLockDef(lockidx);
   if (!Lock) {
-    if (lock == 103) {
+    if (lockidx == 103) {
       user.Player.centerprint("%s", Lock103Message);
     } else {
       user.Player.centerprint("That doesn't seem to work");
