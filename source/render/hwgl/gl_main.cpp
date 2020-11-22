@@ -725,6 +725,7 @@ void VOpenGLDrawer::InitResolution () {
   hasBoundsTest = CheckExtension("GL_EXT_depth_bounds_test");
 
   useReverseZ = false;
+  DepthZeroOne = false;
   p_glClipControl = nullptr;
   if ((major > 4 || (major == 4 && minor >= 5)) || CheckExtension("GL_ARB_clip_control")) {
     p_glClipControl = glClipControl_t(GetExtFuncPtr("glClipControl"));
@@ -905,6 +906,7 @@ void VOpenGLDrawer::InitResolution () {
 
   if (hasBoundsTest) GCon->Logf(NAME_Init, "Found GL_EXT_depth_bounds_test");
 
+  DepthZeroOne = !!p_glClipControl;
 
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_PACK_ROW_LENGTH, 0);

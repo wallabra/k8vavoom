@@ -57,6 +57,7 @@ VDrawer::VDrawer () noexcept
   , shittyGPUCheckDone(false)
   , useReverseZ(false)
   , HaveDepthClamp(false)
+  , DepthZeroOne(false)
   , updateFrame(0)
   , RendLev(nullptr)
 {
@@ -251,19 +252,27 @@ void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev,
     // normal
     //glClearDepth(1.0f);
     //glDepthFunc(GL_LEQUAL);
-    ProjMat.SetIdentity();
+    // const tanHalfFovy = tan(fovy/2.0f);
+    // rd->fovx = aspect*tanHalfFovy;
+    // rd->fovy = tanHalfFovy;
+    ProjMat.SetZero();
     ProjMat[0][0] = 1.0f/rd->fovx;
     ProjMat[1][1] = 1.0f/rd->fovy;
     ProjMat[2][3] = -1.0f;
-    ProjMat[3][3] = 0.0f;
+    //ProjMat[3][3] = 0.0f;
     if (!HaveDepthClamp && rlev && rlev->IsShadowVolumeRenderer()) {
       ProjMat[2][2] = -1.0f;
       ProjMat[3][2] = -2.0f;
     } else {
       float maxdist = gl_maxdist.asFloat();
       if (maxdist < 1.0f || !isFiniteF(maxdist)) maxdist = 32767.0f;
-      ProjMat[2][2] = -(maxdist+1.0f)/(maxdist-1.0f);
-      ProjMat[3][2] = -2.0f*maxdist/(maxdist-1.0f);
+      if (DepthZeroOne) {
+        ProjMat[2][2] = maxdist/(1.0f-maxdist); // zFar/(zNear-zFar);
+        ProjMat[3][2] = -maxdist/(maxdist-1.0f); // -(zFar*zNear)/(zFar-zNear);
+      } else {
+        ProjMat[2][2] = -(maxdist+1.0f)/(maxdist-1.0f); // -(zFar+zNear)/(zFar-zNear);
+        ProjMat[3][2] = -2.0f*maxdist/(maxdist-1.0f); // -(2.0f*zFar*zNear)/(zFar-zNear);
+      }
     }
   } else {
     // reversed

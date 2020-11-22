@@ -393,6 +393,7 @@ protected:
   bool shittyGPUCheckDone;
   bool useReverseZ;
   bool HaveDepthClamp;
+  bool DepthZeroOne; // use [0..1] depth instead of [-1..1]? (only matters for "normal z", "reverse z" always does this)
 
   vuint32 updateFrame; // counter
 
@@ -442,6 +443,7 @@ public:
   inline bool IsShittyGPU () const noexcept { return isShittyGPU; }
   inline bool IsInited () const noexcept { return mInitialized; }
   inline bool CanUseDepthClamp () const noexcept { return HaveDepthClamp; }
+  inline bool IsDepthZeroOne () const noexcept { return DepthZeroOne; }
 
   inline int getWidth () const noexcept { return ScrWdt; }
   inline int getHeight () const noexcept { return ScrHgt; }
