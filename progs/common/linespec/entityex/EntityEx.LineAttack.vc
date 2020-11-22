@@ -781,9 +781,13 @@ final bool ShootCheckPlanes (sector_t *sec, optional line_t *line,
 //  eventLineAttackACS
 //
 //==========================================================================
-override void eventLineAttackACS (TVec dir, float distance, int LADamage, name pufftype, name damagetype, int flags, int pufftid) {
+override void eventLineAttackACS (TVec dir, float distance, int LADamage, name aPuffType, name damagetype, int flags, int pufftid) {
+  /*k8: old code
   class!EntityEx PuffType = none;
   if (damagetype) PuffType = class!EntityEx(FindClassNoCase(damagetype));
+  */
+  class!EntityEx PuffType = (aPuffType ? class!EntityEx(FindClassNoCase(aPuffType)) : none);
+  //printdebug("%C: eventLineAttackACS: dir=%s; dist=%s; LADamage=%s; aPuffType=%s(%C); damagetype=%s; flags=%s; pufftid=%s", self, dir, distance, LADamage, aPuffType, PuffType, damagetype, flags, pufftid);
   if (flags&FHF_NOIMPACTDECAL) {
     LineAttack(dir, distance, LADamage, PuffType, NoAttackGhosts:true, DmgType:damagetype, decalType:'', pufftid:pufftid, !!(flags&FHF_NORANDOMPUFFZ));
   } else {
