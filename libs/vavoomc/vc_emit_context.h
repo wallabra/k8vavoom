@@ -189,6 +189,8 @@ public:
   int CheckForLocalVar (VName Name);
   VFieldType GetLocalVarType (int idx);
 
+  int CheckForLocalVarCI (VName Name);
+
   // this creates new label (without a destination yet)
   VLabel DefineLabel ();
   // this sets label destination

@@ -528,10 +528,26 @@ bool VEmitContext::IsLocalUsedByIdx (int idx) const noexcept {
 //==========================================================================
 int VEmitContext::CheckForLocalVar (VName Name) {
   if (Name == NAME_None) return -1;
-  for (int i = LocalDefs.length()-1; i >= 0; --i) {
-    const VLocalVarDef &loc = LocalDefs[i];
+  for (auto &&it : LocalDefs.itemsIdx()) {
+    const VLocalVarDef &loc = it.value();
     if (!loc.Visible) continue;
-    if (loc.Name == Name) return i;
+    if (loc.Name == Name) return it.index();
+  }
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::CheckForLocalVarCI
+//
+//==========================================================================
+int VEmitContext::CheckForLocalVarCI (VName Name) {
+  if (Name == NAME_None) return -1;
+  for (auto &&it : LocalDefs.itemsIdx()) {
+    const VLocalVarDef &loc = it.value();
+    if (!loc.Visible) continue;
+    if (VStr::strEquCI(*loc.Name, *Name)) return it.index();
   }
   return -1;
 }

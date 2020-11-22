@@ -178,7 +178,7 @@ void VLocalDecl::Release (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VLocalDecl::Declare
+//  VLocalDecl::Hide
 //
 //  hide all declared locals
 //
@@ -206,6 +206,11 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
     if (ec.CheckForLocalVar(e.Name) != -1) {
       retres = false;
       ParseError(e.Loc, "Redefined identifier `%s`", *e.Name);
+    }
+
+    auto ccloc = ec.CheckForLocalVarCI(e.Name);
+    if (ccloc != -1) {
+      ParseWarning(e.Loc, "Identifier `%s` is case-equal to `%s` at %s", *e.Name, *ec.GetLocalByIndex(ccloc).Name, *ec.GetLocalByIndex(ccloc).Loc.toStringNoCol());
     }
 
     // resolve automatic type
