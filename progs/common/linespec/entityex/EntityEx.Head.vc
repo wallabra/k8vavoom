@@ -100,8 +100,8 @@ enum {
   // only getters (nope, some of them are setters too)
   APROP_Dropped       = 18, // implemented
   APROP_Notarget      = 19, // partially implemented (read-only)
-  APROP_Species       = 20, // getter only, implemented in C++ code
-  APROP_NameTag       = 21, // getter only, implemented in C++ code
+  APROP_Species       = 20, // getter partially implemented in C++ code (string conversion)
+  APROP_NameTag       = 21, // getter partially implemented in C++ code (string conversion)
   APROP_Score         = 22, // implemented
   APROP_Notrigger     = 23, // implemented
   APROP_DamageFactor  = 24, // implemented

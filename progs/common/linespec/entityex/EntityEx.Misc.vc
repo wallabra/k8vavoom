@@ -2679,8 +2679,6 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     case APROP_ActiveSound: ActiveSound = name(StrVal); break;
     case APROP_SpawnHealth: if (PlayerPawn(self)) PlayerPawn(self).MaxHealth = IntVal; break;
     case APROP_Dropped: bDropped = !!IntVal; break;
-    //case APROP_Species: return NameToIIndex(GetSpecies()); //HACK! keep in sync with C++ code!
-    //case APROP_NameTag: return NameToIIndex(GetClassName(Class)); //HACK! keep in sync with C++ code!
     case APROP_MasterTID: if (IntVal <= 0) { Master = none; break; } Master = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Master == self) Master = none; break; //k8: allow self?
     case APROP_TargetTID: if (IntVal <= 0) { Target = none; break; } Target = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Target == self) Target = none; break; //k8: allow self?
     case APROP_TracerTID: if (IntVal <= 0) { Tracer = none; break; } Tracer = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Tracer == self) Tracer = none; break; //k8: allow self?
@@ -2717,6 +2715,8 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
       break;
     case APROP_ReactionTime: ReactionCount = IntVal; break;
     case APROP_StencilColor: StencilColor = IntVal|0xff000000; break;
+    case APROP_Species: /*printdebug("%C: SPECIE=%s", self, StrVal);*/ Species = StrVal; break;
+    case APROP_NameTag: /*printdebug("%C: NAMETAG=%s", self, StrVal);*/ StrifeName = StrVal; break;
     default: dprint("%C: SetActorProperty: unknown property %d", self, Prop);
   }
 }
