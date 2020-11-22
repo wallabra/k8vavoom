@@ -25,6 +25,7 @@
 //**************************************************************************
 
 class VTypeExpr;
+class VInvocation;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -189,7 +190,9 @@ public:
   // this will try to coerce some decorate argument to something sensible
   // used inly in the k8vavoom engine; define as fatal error for other users
   // `CallerState` can be `nullptr`
-  VExpression *MassageDecorateArg (VEmitContext &ec, VState *CallerState, const char *funcName,
+  // `argnum` is 1-based!
+  // `invokation` can be `nullptr` for custom calls (and `CallerState` too)
+  VExpression *MassageDecorateArg (VEmitContext &ec, VInvocation *invokation, VState *CallerState, const char *funcName,
                                    int argnum, const VFieldType &destType, bool isOptional, const TLocation *aloc=nullptr,
                                    bool *massaged=nullptr);
 

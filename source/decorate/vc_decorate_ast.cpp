@@ -102,7 +102,7 @@ static bool tryStringAsFloat2Int (int &resi, const char *str, const VFieldType &
 //  `argnum` starts with `1`
 //
 //==========================================================================
-VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerState, const char *funcName,
+VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VInvocation *invokation, VState *CallerState, const char *funcName,
                                               int argnum, const VFieldType &destType, bool isOptional,
                                               const TLocation *aloc, bool *massaged)
 {
@@ -117,7 +117,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         //fprintf(stderr, "SIMPLIFIED! <%s> -> <%s>\n", *un->toString(), *etmp->toString());
         un->op = nullptr;
         delete this;
-        return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, isOptional, aloc, massaged);
+        return enew->MassageDecorateArg(ec, invokation, CallerState, funcName, argnum, destType, isOptional, aloc, massaged);
       }
     }
   }
@@ -270,9 +270,15 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         delete this;
         return enew;
       }
-      if (argnum == 4 && IsIntConst() && GetIntConst() == 1 && VStr::strEqu(funcName, "A_CustomMeleeAttack")) {
-        ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d should be a string (replaced `1` with empty string); MOD AUTHOR IS A MO...DDER!", funcName, argnum);
+      // idiotic call (forgotten "damagetype")
+      if (invokation && argnum == invokation->NumArgs && argnum < 16 && IsIntConst() && (GetIntConst() == 1 || GetIntConst() == 0) &&
+          (VStr::strEqu(funcName, "A_CustomMeleeAttack") || VStr::strEqu(funcName, "A_CustomComboAttack")))
+      {
+        ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d should be a DamageType (inserted default value); MOD AUTHOR IS A MO...DDER!", funcName, argnum);
         VExpression *enew = new VNameLiteral(NAME_None, Loc);
+        // append "bleed"
+        invokation->Args[invokation->NumArgs] = new VIntLiteral(GetIntConst(), Loc);
+        ++invokation->NumArgs;
         delete this;
         return enew;
       }
@@ -314,7 +320,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         VDecorateSingleName *e = (VDecorateSingleName *)this;
         VExpression *enew = new VStringLiteral(VStr(e->Name), ec.Package->FindString(*e->Name), Loc);
         delete this;
-        return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, isOptional, aloc, massaged);
+        return enew->MassageDecorateArg(ec, invokation, CallerState, funcName, argnum, destType, isOptional, aloc, massaged);
       }
       // string?
       if (IsStrConst()) {
@@ -433,7 +439,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
             ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d should be number %d instead of string \"%s\"; PLEASE, FIX THE CODE!", funcName, argnum, lbl, *str.quote());
             VExpression *enew = new VIntLiteral(lbl, Loc);
             delete this;
-            return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, isOptional, aloc, massaged);
+            return enew->MassageDecorateArg(ec, invokation, CallerState, funcName, argnum, destType, isOptional, aloc, massaged);
           }
         }
       }
@@ -1376,7 +1382,7 @@ VExpression *VDecorateAJump::DoResolve (VEmitContext &ec) {
     }
 
     bool massaged = false;
-    lbl = lbl->MassageDecorateArg(ec, CallerState, "A_Jump", lbidx+2, VFieldType(TYPE_State), false/*not optional*/, nullptr, &massaged);
+    lbl = lbl->MassageDecorateArg(ec, nullptr, CallerState, "A_Jump", lbidx+2, VFieldType(TYPE_State), false/*not optional*/, nullptr, &massaged);
     if (!lbl) { delete this; return nullptr; } // some error
 
     lbl = new VCastOrInvocation("DoJump", Loc, 1, &lbl);
@@ -1660,7 +1666,7 @@ VExpression *VDecorateRndPick::DoResolve (VEmitContext &ec) {
     }
 
     bool massaged = false;
-    lbl = lbl->MassageDecorateArg(ec, /*CallerState*/nullptr, (asFloat ? "frandompick" : "randompick"), lbidx+1, (asFloat ? VFieldType(TYPE_Float) : VFieldType(TYPE_Int)), false/*not optional*/, nullptr, &massaged);
+    lbl = lbl->MassageDecorateArg(ec, nullptr/*invokation*/, /*CallerState*/nullptr, (asFloat ? "frandompick" : "randompick"), lbidx+1, (asFloat ? VFieldType(TYPE_Float) : VFieldType(TYPE_Int)), false/*not optional*/, nullptr, &massaged);
     if (!lbl) { delete this; return nullptr; } // some error
 
     numbers[lbidx] = lbl->Resolve(ec);

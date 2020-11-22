@@ -2912,7 +2912,9 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
 
   if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments to `%s`, need %d, got %d", Func->GetName(), maxParams, NumArgs);
 
+  //int oldNA = NumArgs;
   for (int i = 0; i < NumArgs; ++i) {
+    //if (NumArgs != oldNA) GLog.Logf(NAME_Debug, "**** NumArgs changed from %d to %d; i=%d", oldNA, NumArgs, i);
     if (i >= requiredParams) continue;
     if (!Args[i]) continue;
 
@@ -2967,7 +2969,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
       ParseError(Args[i]->Loc, "invalid argument #%d flag `[%s]`", i+1, *FlagName);
     }
 
-    Args[i] = Args[i]->MassageDecorateArg(ec, CallerState, Func->GetName(), i+1, Func->ParamTypes[i], !!(Func->ParamFlags[i]&FPARM_Optional));
+    Args[i] = Args[i]->MassageDecorateArg(ec, this, CallerState, Func->GetName(), i+1, Func->ParamTypes[i], !!(Func->ParamFlags[i]&FPARM_Optional));
   }
 
   // some warnings
