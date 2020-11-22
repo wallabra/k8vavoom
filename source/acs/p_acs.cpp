@@ -3218,6 +3218,10 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     case ACSF_PlayerIsSpectator_Zandro:
       return 0;
 
+    case ACSF_GetPlayerLivesLeft_Zandro:
+    case ACSF_SetPlayerLivesLeft_Zandro:
+      return 0;
+
     // https://zdoom.org/wiki/ConsolePlayerNumber
     //FIXME: disconnect?
     case ACSF_ConsolePlayerNumber_Zandro:

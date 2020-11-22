@@ -133,11 +133,11 @@
   */
 
   ACS_EXTFUNC_NUM(ResetMap_Zandro, 100)
-  ACS_EXTFUNC(PlayerIsSpectator_Zandro) // implemented
+  ACS_EXTFUNC(PlayerIsSpectator_Zandro) // ignored
   ACS_EXTFUNC(ConsolePlayerNumber_Zandro) // implemented
   ACS_EXTFUNC(GetTeamProperty_Zandro) // [Dusk]
-  ACS_EXTFUNC(GetPlayerLivesLeft_Zandro)
-  ACS_EXTFUNC(SetPlayerLivesLeft_Zandro)
+  ACS_EXTFUNC(GetPlayerLivesLeft_Zandro) // ignored
+  ACS_EXTFUNC(SetPlayerLivesLeft_Zandro) // ignored
   ACS_EXTFUNC(ForceToSpectate_Zandro)
   ACS_EXTFUNC(GetGamemodeState_Zandro)
   ACS_EXTFUNC(SetDBEntry_Zandro)
