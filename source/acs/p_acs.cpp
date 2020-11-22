@@ -6859,9 +6859,14 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         VEntity *Ent = EntityFromTID(sp[-2], Activator);
         if (Ent) {
-          //int Tex = GTextureManager.CheckNumForName(GetName8(sp[-1]), TEXTYPE_Wall, true);
-          int Tex = GTextureManager.FindFullyNamedTexture(GetStr(sp[-1]), nullptr, TEXTYPE_Flat, /*overload*/true);
-          sp[-2] = (Ent->Sector->ceiling.pic == Tex ? 1 : 0);
+          if (Ent->Sector) {
+            //int Tex = GTextureManager.CheckNumForName(GetName8(sp[-1]), TEXTYPE_Wall, true);
+            int Tex = GTextureManager.FindFullyNamedTexture(GetStr(sp[-1]), nullptr, TEXTYPE_Flat, /*overload*/true);
+            sp[-2] = (Ent->Sector->ceiling.pic == Tex ? 1 : 0);
+          } else {
+            GCon->Logf(NAME_Warning, "ACS: CheckActorCeilingTexture for actor %s(%u) without a sector (flags:0x%08u; flagsEx:0x%08x) (txname=<%s>)", Ent->GetClass()->GetName(), Ent->GetUniqueId(), Ent->EntityFlags, Ent->FlagsEx, *GetStr(sp[-1]));
+            sp[-2] = 0;
+          }
         } else {
           sp[-2] = 0;
         }
@@ -6873,9 +6878,14 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         VEntity *Ent = EntityFromTID(sp[-2], Activator);
         if (Ent) {
-          //int Tex = GTextureManager.CheckNumForName(GetName8(sp[-1]), TEXTYPE_Wall, true);
-          int Tex = GTextureManager.FindFullyNamedTexture(GetStr(sp[-1]), nullptr, TEXTYPE_Flat, /*overload*/true);
-          sp[-2] = (Ent->Sector->floor.pic == Tex ? 1 : 0);
+          if (Ent->Sector) {
+            //int Tex = GTextureManager.CheckNumForName(GetName8(sp[-1]), TEXTYPE_Wall, true);
+            int Tex = GTextureManager.FindFullyNamedTexture(GetStr(sp[-1]), nullptr, TEXTYPE_Flat, /*overload*/true);
+            sp[-2] = (Ent->Sector->floor.pic == Tex ? 1 : 0);
+          } else {
+            GCon->Logf(NAME_Warning, "ACS: CheckActorFloorTexture for actor %s(%u) without a sector (flags:0x%08u; flagsEx:0x%08x) (txname=<%s>)", Ent->GetClass()->GetName(), Ent->GetUniqueId(), Ent->EntityFlags, Ent->FlagsEx, *GetStr(sp[-1]));
+            sp[-2] = 0;
+          }
         } else {
           sp[-2] = 0;
         }
