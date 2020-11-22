@@ -954,13 +954,16 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
     if ((PuffType && PuffType.default.bPuffOnActors) || th.bNoBlood || th.bInvulnerable || th.bDormant) {
       puffEntity = SpawnPuff(hit_point, distance, PuffType, true, pufftid:pufftid!optional, disableRandomZ:disableRandomZ!optional);
     }
-    if (!UseBloodSplatter && !th.bNoBlood && !th.bInvulnerable && !th.bDormant) {
-      th.SpawnBlood(hit_point, LADamage, shootOrigin);
-    }
-    if (LADamage && UseBloodSplatter) {
-      if (!th.bNoBlood && !th.bInvulnerable && !th.bDormant) {
-        if (UseAxeBlood) th.SpawnBloodSplatter2(hit_point, shootOrigin);
-        if (P_Random() < 192) th.SpawnBloodSplatter(hit_point, LADamage, shootOrigin);
+
+    if (!PuffType || !PuffType.default.bBloodlessImpact) {
+      if (!UseBloodSplatter && !th.bNoBlood && !th.bInvulnerable && !th.bDormant) {
+        th.SpawnBlood(hit_point, LADamage, shootOrigin);
+      }
+      if (LADamage && UseBloodSplatter) {
+        if (!th.bNoBlood && !th.bInvulnerable && !th.bDormant) {
+          if (UseAxeBlood) th.SpawnBloodSplatter2(hit_point, shootOrigin);
+          if (P_Random() < 192) th.SpawnBloodSplatter(hit_point, LADamage, shootOrigin);
+        }
       }
     }
 
@@ -1155,7 +1158,7 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
     if (th.bNoBlood || th.bInvulnerable || th.bDormant) {
       if (PuffType) SpawnPuff(hit_point, distance, PuffType, true);
     } else {
-      th.SpawnBlood(hit_point, RailDamage, shootOrigin);
+      if (!PuffType || !PuffType.default.bBloodlessImpact) th.SpawnBlood(hit_point, RailDamage, shootOrigin);
     }
 
     th.Damage(self, self, RailDamage, DmgType);
