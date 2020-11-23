@@ -186,12 +186,26 @@ override void CreateChoices () {
       "Screen aspect ratio."/*~
       "\n'Vanilla' is for square pixels, regardless of screen resolution.\n"*/);
 
+  CreateChoiceSubHeader(" ");
+
   MenuTextButton Btn = GetItemContainer().NewChild(MenuSmallTextButton);
+  //SetTextButtonInitialSizePos(Btn);
+  SetChoiceInitialSizePos(Btn);
+  //Btn.SetOrigin(ChoicesStartX, GetCurrentY());
+  Btn.SetText("Restart Renderer");
+  Btn.Activated = delegate void (Object Sender) { CmdBuf_AddText("VidRendererRestart\n"); };
+    SetLastHelp(
+      "Use this to restart renderer when you changed lighting type.\n"~
+      "This won't change resoultion.\n\n"~
+      "Console command for this is \c[WHITE]VidRendererRestart");
+
+  Btn = GetItemContainer().NewChild(MenuSmallTextButton);
   //SetTextButtonInitialSizePos(Btn);
   SetChoiceInitialSizePos(Btn);
   //Btn.SetOrigin(ChoicesStartX, GetCurrentY());
   Btn.SetText("Set Resolution");
   Btn.Activated = &ActivateSetMode;
+    SetLastHelp("Use this to set new resolution.");
 }
 
 
