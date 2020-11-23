@@ -3867,6 +3867,15 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       }
       return ActiveObject->Level->PutNewString(SV_GetDefaultTerrain()->OrigName);
 
+    case ACSF_GetActorFloorTexture:
+      if (argCount >= 1) {
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (Ent && Ent->Sector) {
+          return ActiveObject->Level->PutNewString(VStr(GTextureManager.GetTextureName(Ent->EFloor.splane->pic)));
+        }
+      }
+      return ActiveObject->Level->PutNewString("");
+
     case ACSF_SetFogDensity:
       GCon->Logf(NAME_Warning, "ignored ACSF `SetFogDensity`");
       return 0;
