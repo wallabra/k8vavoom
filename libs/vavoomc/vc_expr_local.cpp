@@ -203,14 +203,16 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
   for (int i = 0; i < Vars.length(); ++i) {
     VLocalEntry &e = Vars[i];
 
-    if (ec.CheckForLocalVar(e.Name) != -1) {
-      retres = false;
-      ParseError(e.Loc, "Redefined identifier `%s`", *e.Name);
-    }
-
-    auto ccloc = ec.CheckForLocalVarCI(e.Name);
+    auto ccloc = ec.CheckForLocalVar(e.Name);
     if (ccloc != -1) {
-      ParseWarning(e.Loc, "Identifier `%s` is case-equal to `%s` at %s", *e.Name, *ec.GetLocalByIndex(ccloc).Name, *ec.GetLocalByIndex(ccloc).Loc.toStringNoCol());
+      retres = false;
+      //ParseError(e.Loc, "Redefined identifier `%s`", *e.Name);
+      ParseError(e.Loc, "Redeclared local `%s` (previous declaration is at %s)", *e.Name, *ec.GetLocalByIndex(ccloc).Loc.toStringNoCol());
+    } else {
+      ccloc = ec.CheckForLocalVarCI(e.Name);
+      if (ccloc != -1) {
+        ParseWarning(e.Loc, "Identifier `%s` is case-equal to `%s` at %s", *e.Name, *ec.GetLocalByIndex(ccloc).Name, *ec.GetLocalByIndex(ccloc).Loc.toStringNoCol());
+      }
     }
 
     // resolve automatic type
