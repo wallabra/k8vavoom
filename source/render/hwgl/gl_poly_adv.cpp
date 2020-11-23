@@ -31,10 +31,13 @@ extern VCvarB gl_dbg_advlight_debug;
 extern VCvarI gl_dbg_advlight_color;
 
 static VCvarB gl_smart_dirty_rects("gl_smart_dirty_rects", true, "Use dirty rectangles list to check for stencil buffer dirtyness?", CVAR_Archive);
-static VCvarB gl_smart_reject_shadow_surfaces("gl_smart_reject_shadow_surfaces", false, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
 
-static VCvarB gl_smart_reject_shadow_segs("gl_smart_reject_shadow_segs", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
-static VCvarB gl_smart_reject_shadow_flats("gl_smart_reject_shadow_flats", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
+//TODO: re-check and reimplement smart rejects
+//      also, "r_shadowvol_optimise_flats" seems to do the same as "gl_smart_reject_svol_flats"
+static VCvarB gl_smart_reject_shadows("gl_smart_reject_shadows", false, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
+
+static VCvarB gl_smart_reject_svol_segs("gl_smart_reject_svol_segs", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
+static VCvarB gl_smart_reject_svol_flats("gl_smart_reject_svol_flats", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
 
 static VCvarB gl_dbg_vbo_adv_ambient("gl_dbg_vbo_adv_ambient", false, "dump some VBO statistics for advrender abmient pass VBO utilisation?", CVAR_PreInit);
 
@@ -1148,7 +1151,7 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
 //
 //==========================================================================
 static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos, float Radius) {
-  if (!gl_smart_reject_shadow_segs) return true;
+  if (!gl_smart_reject_svol_segs) return true;
 
   // solid segs that has no non-solid neighbours cannot cast any shadow
   const seg_t *seg = surf->seg;
@@ -1253,7 +1256,7 @@ static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos,
 //
 //==========================================================================
 static bool CanSurfaceFlatCastShadow (const surface_t *surf, const TVec LightPos, float Radius) {
-  if (!gl_smart_reject_shadow_flats) return true;
+  if (!gl_smart_reject_svol_flats) return true;
 
   // flat surfaces in subsectors whose neighbours doesn't change height can't cast any shadow
   const subsector_t *sub = surf->subsector;
@@ -1368,7 +1371,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   if (gl_dbg_wireframe) return;
   if (surf->count < 3) return; // just in case
 
-  if (gl_smart_reject_shadow_surfaces && !CanSurfaceCastShadow(surf, LightPos, Radius)) return;
+  if (gl_smart_reject_shadows && !CanSurfaceCastShadow(surf, LightPos, Radius)) return;
 
   const unsigned vcount = (unsigned)surf->count;
   const SurfVertex *sverts = surf->verts;

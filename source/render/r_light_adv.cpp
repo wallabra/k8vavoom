@@ -55,7 +55,7 @@ static VCvarB r_shadowvol_use_pofs("r_shadowvol_use_pofs", true, "Use PolygonOff
 static VCvarF r_shadowvol_pofs("r_shadowvol_pofs", "20", "DEBUG");
 static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 
-static VCvarB r_shadowvol_optimise_flats("r_shadowvol_optimise_flats", true, "Drop some floors/ceilings that can't possibly cast shadow?");
+static VCvarB r_shadowvol_optimise_flats("r_shadowvol_optimise_flats", true, "Drop some floors/ceilings that can't possibly cast shadow?", CVAR_Archive);
 #ifdef VV_CHECK_1S_CAST_SHADOW
 static VCvarB r_shadowvol_optimise_lines_1s("r_shadowvol_optimise_lines_1s", true, "Drop some 1s walls that can't possibly cast shadow? (glitchy)");
 #endif
