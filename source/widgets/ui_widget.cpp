@@ -2078,6 +2078,10 @@ IMPLEMENT_FUNCTION(VWidget, SetConfiguration) {
   VOptParamFloat NewScaleX(1.0f);
   VOptParamFloat NewScaleY(1.0f);
   vobjGetParamSelf(NewX, NewY, NewWidth, NewHeight, NewScaleX, NewScaleY);
+  if (Self) {
+    if (!NewScaleX.specified) NewScaleX = Self->SizeScaleX;
+    if (!NewScaleY.specified) NewScaleY = Self->SizeScaleY;
+  }
   RET_BOOL(Self ? Self->SetConfiguration(NewX, NewY, NewWidth, NewHeight, NewScaleX, NewScaleY) : false);
 }
 

@@ -524,12 +524,16 @@ native static final void *InstallModel (string Name);
 native static final void R_DrawModelFrame (TVec origin, float angle,
   void *model, int frame, int nextframe, string skin, int TranslStart,
   int TranslEnd, int Color);
+
 // draws a colored rectangle
 native static final void R_FillRect (float x, float y, float w, float h, int color, optional float alpha/*=1.0*/);
 native static final void R_ShadeRect (float x, float y, float w, float h, float shade);
 // the last point will not be drawn
 native static final void R_DrawLine (float x0, float y0, float x1, float y1, int color, optional float alpha/*=1.0*/);
 native static final void R_DrawRect (float x, float y, float w, float h, int color, optional float alpha/*=1.0*/);
+
+native static void R_FillRectWithFlat (float x, float y, float width, float height, name Name);
+native static void R_FillRectWithFlatRepeat (float x, float y, float width, float height, name Name);
 
 // calculated with regards to screen size
 native static float R_GetAspectRatio ();

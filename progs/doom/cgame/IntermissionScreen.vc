@@ -1149,10 +1149,13 @@ final bool IM_IsHubTextDone () {
 //
 //==========================================================================
 void IM_DrawText () {
-  SetSize(GetVirtualWidth(), GetVirtualHeight());
+  //SetSize(GetVirtualWidth(), GetVirtualHeight());
+  //SetConfiguration(0, 0, GetVirtualWidth(), GetVirtualHeight());
+  //printdebug("pos=(%s,%s); ofs=(%s,%s)", X, Y, ChildrenOfsX, ChildrenOfsY);
+
   // erase the entire screen to a tiled background
        if (TextPic) DrawFullScreenPic(TextPic);
-  else if (TextFlat) FillRectWithFlatRepeat(0, 0, GetVirtualWidth(), GetVirtualHeight(), TextFlat);
+  else if (TextFlat) R_FillRectWithFlatRepeat(0, 0, GetVirtualWidth(), GetVirtualHeight(), TextFlat);
   else R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0);
 
   SetFont('smallfont');
@@ -1170,8 +1173,8 @@ void IM_DrawText () {
   }
 
   if (cookedHubText.length || HubTotalTime <= 0.0f) {
-    int tx = (GetVirtualWidth()-hubTextWidth)/2;
-    int ty = (GetVirtualHeight()-hubTextHeight)/2;
+    int tx = (Width-hubTextWidth)/2;
+    int ty = (Height-hubTextHeight)/2;
     int fh = FontHeight();
     if (hubTextTypingComplete) {
       // draw whole text

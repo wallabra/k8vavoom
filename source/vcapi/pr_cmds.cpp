@@ -552,6 +552,46 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawLine) {
 }
 
 
+IMPLEMENT_FREE_FUNCTION(VObject, R_FillRectWithFlat) {
+  float x, y, width, height;
+  VName name;
+  vobjGetParam(x, y, width, height, name);
+  #ifdef CLIENT
+  if (Drawer) {
+    VTexture *tex;
+    if (VStr::strEquCI(*name, "ScreenBackPic")) {
+      if (screenBackTexNum < 1) return;
+      tex = GTextureManager.getIgnoreAnim(screenBackTexNum);
+    } else {
+      tex = GTextureManager.getIgnoreAnim(GTextureManager.NumForName(name, TEXTYPE_Flat, true));
+    }
+    if (!tex || tex->Type == TEXTYPE_Null) return;
+    Drawer->FillRectWithFlat(x*fScaleX, y*fScaleY, (x+width)*fScaleX, (y+height)*fScaleY, 0.0f, 0.0f, width*fScaleX, height*fScaleY, tex);
+  }
+  #endif
+}
+
+
+IMPLEMENT_FREE_FUNCTION(VObject, R_FillRectWithFlatRepeat) {
+  float x, y, width, height;
+  VName name;
+  vobjGetParam(x, y, width, height, name);
+  #ifdef CLIENT
+  if (Drawer) {
+    VTexture *tex;
+    if (VStr::strEquCI(*name, "ScreenBackPic")) {
+      if (screenBackTexNum < 1) return;
+      tex = GTextureManager.getIgnoreAnim(screenBackTexNum);
+    } else {
+      tex = GTextureManager.getIgnoreAnim(GTextureManager.NumForName(name, TEXTYPE_Flat, true));
+    }
+    if (!tex || tex->Type == TEXTYPE_Null) return;
+    Drawer->FillRectWithFlatRepeat(x*fScaleX, y*fScaleY, (x+width)*fScaleX, (y+height)*fScaleY, 0.0f, 0.0f, width*fScaleX, height*fScaleY, tex);
+  }
+  #endif
+}
+
+
 IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatio) {
   #ifdef CLIENT
   RET_FLOAT(R_GetAspectRatio());
