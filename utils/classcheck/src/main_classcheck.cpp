@@ -437,6 +437,8 @@ void scanSources (TArray<VStr> &list, VStr path, const VStr &mask1, const VStr &
       scanSources(list, path+name, mask1, mask2);
     } else {
       if (name.startsWith("stb_")) continue;
+      //if (name == "r_portal.cpp") continue;
+      //if (name == "vc_statement.h") continue;
            if (!mask1.isEmpty() && name.globMatch(mask1)) appendFile(list, path+name);
       else if (!mask2.isEmpty() && name.globMatch(mask2)) appendFile(list, path+name);
     }
@@ -619,8 +621,16 @@ Type *parseShitppType (SemParser *par, VStr tpname) {
   Type *tp = new Type();
   tp->shitpp = true;
   tp->srcfile = par->srcfile;
-  tp->name = VName(*tpname, VName::Add);
   tp->loc = par->getTokenLoc();
+  if (tpname == "unsigned") {
+    if (par->eat("char")) tpname = "vuint8";
+    if (par->eat("int")) tpname = "vuint32";
+  } else if (par->eat("::")) {
+    VStr pt2 = par->expectId();
+    tpname += "::";
+    tpname += pt2;
+  }
+  tp->name = VName(*tpname, VName::Add);
   //GLog.Logf(NAME_Debug, "%s:%d: '%s'", *par->srcfile, tp->loc.line, *tp->name);
   // check for template
   if (par->eat("<")) {
@@ -1377,6 +1387,7 @@ void checkVCType (Type *tp) {
   Type *spt = findShitppType(tp);
   if (!spt) {
     if (tp->name == "MobjByTIDIteratorInfo") return;
+    if (tp->name == "AllTouchingThingsIter") return;
     if (tp->name == "CD_LinePlanes") return;
     if (tp->name == "MiAStarGraphBase") return; //FIXME: cannot parse this yet!
     if (tp->name == "event_t") return; //FIXME: cannot parse this yet!
@@ -1489,8 +1500,11 @@ int main (int argc, char **argv) {
   TArray<VStr> shitpplist;
   shitpplist.append("../../libs/core/prngs.h");
   shitpplist.append("../../libs/core/crypto/chachaprng_c.h");
-  shitpplist.append("../../libs/core/vecmat/vector.h");
-  shitpplist.append("../../libs/core/vecmat/matrix.h");
+  shitpplist.append("../../libs/core/vecmat/vector_avec.h");
+  shitpplist.append("../../libs/core/vecmat/vector_3d.h");
+  shitpplist.append("../../libs/core/vecmat/matrix4.h");
+  //shitpplist.append("../../libs/core/vecmat/vector.h");
+  //shitpplist.append("../../libs/core/vecmat/matrix.h");
   scanPrepare();
   scanSources(shitpplist, "../../source", "*.h", "*.cpp");
   scanSources(shitpplist, "../../libs/vavoomc", "*.h", "*.cpp");

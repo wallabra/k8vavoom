@@ -405,6 +405,16 @@ int SemParser::expectInt () {
     if (token == "ISAAC_RAND_SIZE") return 256;
     if (token == "MaxDepthMaskStack") return 16;
 
+    if (token == "MaxStackSlots") return 1024;
+
+    if (token == "VMethod") {
+      skipToken();
+      if (token == "::") {
+        skipToken();
+        if (token == "MAX_PARAMS") return 32;
+      }
+    }
+
     restorePos(pos);
     Sys_Error("%s:%d: integer expected", *srcfile, getCurrLine());
   }
