@@ -115,7 +115,7 @@
   ACS_EXTFUNC(GetActorRoll) // implemented
   ACS_EXTFUNC(QuakeEx) // routed to `Radius_Quake`
   ACS_EXTFUNC(Warp) // 92 implemented
-  ACS_EXTFUNC(GetMaxInventory)
+  ACS_EXTFUNC(GetMaxInventory) // ignored, as does Zandronum 3.0
   ACS_EXTFUNC(SetSectorDamage) // implemented
   ACS_EXTFUNC(SetSectorTerrain) // ignored
   ACS_EXTFUNC(SpawnParticle) // ignored
@@ -169,10 +169,10 @@
   ACS_EXTFUNC_NUM(CheckClass, 200) // implemented
   ACS_EXTFUNC(DamageActor) // [arookas]
   ACS_EXTFUNC(SetActorFlag) // implemented
-  ACS_EXTFUNC(SetTranslation)
+  ACS_EXTFUNC(SetTranslation) // implemented
   ACS_EXTFUNC(GetActorFloorTexture) // implemented
   ACS_EXTFUNC(GetActorFloorTerrain) // implemented
-  ACS_EXTFUNC(StrArg)
+  ACS_EXTFUNC(StrArg) // implemented
   ACS_EXTFUNC(Floor) // implemented
   ACS_EXTFUNC(Round) // implemented
   ACS_EXTFUNC(Ceil) // implemented

@@ -3586,6 +3586,13 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     case ACSF_Round:
       return (argCount > 0 ? (args[0]+32768)&~0xffff : 0);
 
+    case ACSF_StrArg:
+      if (argCount > 0) {
+        VStr s = GetStr(args[0]);
+        return ActiveObject->Level->PutNewString(s);
+      }
+      return ActiveObject->Level->PutNewString("");
+
     case ACSF_CheckSight: //untested!
       if (argCount >= 2) {
         unsigned flags = VEntity::CSE_CheckBaseRegion;
@@ -3899,6 +3906,10 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         VEntity *ent = EntityFromTID((argCount > 0 ? args[1] : 0), Activator);
         if (ent) return (ent->eventCanRaise() ? 1 : 0);
       }
+      return 0;
+
+    case ACSF_GetMaxInventory:
+      GCon->Logf(NAME_Warning, "ACSF `GetMaxInventory` is not implemented");
       return 0;
   }
 
