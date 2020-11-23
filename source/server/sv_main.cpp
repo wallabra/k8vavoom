@@ -43,6 +43,8 @@ VCvarB r_models("r_models", true, "Allow 3d models?", 0/*CVAR_Archive*/);
 bool sv_skipOneTitlemap = false;
 int serverStartRenderFramesTic = -1;
 
+static bool triedToSkipIntermission = false;
+
 /*
 static double FrameTime = 1.0f/35.0f;
 // round a little bit up to prevent "slow motion"
@@ -573,17 +575,16 @@ static void SV_SendClientMessages (bool full=true) {
 
 //========================================================================
 //
-//  CheckForSkip
+//  CheckForIntermissionSkip
 //
 //  Check to see if any player hit a key
 //
 //========================================================================
-static void CheckForSkip () {
+static void CheckForIntermissionSkip () {
   VBasePlayer *player;
-  static bool triedToSkip = false;
   bool skip = false;
 
-  //GCon->Log(NAME_Debug, "CheckForSkip!");
+  //GCon->Logf(NAME_Debug, "CheckForIntermissionSkip! dm=%d; itime=%g; tsi=%d", svs.deathmatch, sv.intertime, (int)triedToSkipIntermission);
 
   // if we don't have alive players, skip it forcefully
   bool hasAlivePlayer = false;
@@ -592,20 +593,31 @@ static void CheckForSkip () {
     if (player) {
       if (!(player->PlayerFlags&VBasePlayer::PF_IsBot)) {
         if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
-          if (!player->Net) continue; // bot
+          if (!player->Net) {
+            // local player?
+            if (!(GGameInfo->NetMode == NM_ListenServer && player == cl)) continue;
+          }
         }
         if (player->PlayerFlags&VBasePlayer::PF_Spawned) {
           hasAlivePlayer = true; // alive
         }
       }
       if (player->Buttons&BT_ATTACK) {
-        if (!(player->PlayerFlags&VBasePlayer::PF_AttackDown)) skip = true;
+        //GCon->Logf(NAME_Debug, "  plr#%d: attack down", i);
+        if (!(player->PlayerFlags&VBasePlayer::PF_AttackDown)) {
+          //GCon->Logf(NAME_Debug, "  plr#%d: attack SKIP", i);
+          skip = true;
+        }
         player->PlayerFlags |= VBasePlayer::PF_AttackDown;
       } else {
         player->PlayerFlags &= ~VBasePlayer::PF_AttackDown;
       }
       if (player->Buttons&BT_USE) {
-        if (!(player->PlayerFlags&VBasePlayer::PF_UseDown)) skip = true;
+        //GCon->Logf(NAME_Debug, "  plr#%d: use down", i);
+        if (!(player->PlayerFlags&VBasePlayer::PF_UseDown)) {
+          //GCon->Logf(NAME_Debug, "  plr#%d: use SKIP", i);
+          skip = true;
+        }
         player->PlayerFlags |= VBasePlayer::PF_UseDown;
       } else {
         player->PlayerFlags &= ~VBasePlayer::PF_UseDown;
@@ -616,21 +628,23 @@ static void CheckForSkip () {
   if (svs.deathmatch && sv.intertime < 4) {
     // wait for 4 seconds before allowing a skip
     if (skip) {
-      triedToSkip = true;
+      //GCon->Logf(NAME_Debug, "  delayed intermission skip");
+      triedToSkipIntermission = true;
       skip = false;
     }
-  } else if (triedToSkip) {
+  } else if (triedToSkipIntermission) {
     skip = true;
-    triedToSkip = false;
+    triedToSkipIntermission = false;
   }
 
   // no alive players, and network game? skip intermission
-  if (!hasAlivePlayer && (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer)) {
+  if (!hasAlivePlayer && (GGameInfo->NetMode == NM_DedicatedServer /*|| GGameInfo->NetMode == NM_ListenServer*/)) {
     skip = true;
-    GCon->Log(NAME_Debug, "Forced Skip!");
+    GCon->Log(NAME_Debug, "forced intermisstion skip!");
   }
 
   if (skip) {
+    //GCon->Logf(NAME_Debug, "  sending intermission skip event... (hasAlivePlayer=%d)", (int)hasAlivePlayer);
     for (int i = 0; i < svs.max_clients; ++i) {
       player = GGameInfo->Players[i];
       if (!player) continue;
@@ -638,6 +652,7 @@ static void CheckForSkip () {
     }
     // if no alive players, simply go to the next map
     if (!hasAlivePlayer) {
+      //GCon->Logf(NAME_Debug, "  teleporting to the next map");
       if (VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) {
         for (int ep = 0; ep < P_GetNumEpisodes(); ++ep) {
           VEpisodeDef *edef = P_GetEpisodeDef(ep);
@@ -763,8 +778,10 @@ static void SV_RunClients (bool skipFrame=false) {
 
   //GCon->Logf(NAME_Debug, "*** IMS: %d (demo=%p : %d)", (int)sv.intermission, GDemoRecordingContext, (int)cls.demorecording);
   if (sv.intermission) {
-    CheckForSkip();
+    CheckForIntermissionSkip();
     sv.intertime += host_frametime;
+  } else {
+    triedToSkipIntermission = false;
   }
 }
 
