@@ -754,6 +754,18 @@ sector_t *VEntity::GetTouchedFloorSectorEx (sector_t **swimmable) {
 
 //==========================================================================
 //
+//  VEntity::GetActorTerrain
+//
+//  cannot return `nullptr`
+//
+//==========================================================================
+VTerrainInfo *VEntity::GetActorTerrain () {
+  return SV_TerrainType(Sector ? EFloor.splane->pic.id : -1);
+}
+
+
+//==========================================================================
+//
 //  Script natives
 //
 //==========================================================================

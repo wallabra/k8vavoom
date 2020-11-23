@@ -110,6 +110,61 @@ enum {
 
 //==========================================================================
 //
+//  VSplashInfo
+//
+//==========================================================================
+struct VSplashInfo {
+  VName Name; // always lowercased
+  VStr OrigName; // as comes from the definition
+
+  VClass *SmallClass;
+  float SmallClip;
+  VName SmallSound;
+
+  VClass *BaseClass;
+  VClass *ChunkClass;
+  float ChunkXVelMul;
+  float ChunkYVelMul;
+  float ChunkZVelMul;
+  float ChunkBaseZVel;
+  VName Sound;
+  enum {
+    F_NoAlert = 0x00000001,
+  };
+  vuint32 Flags;
+};
+
+
+//==========================================================================
+//
+//  VTerrainInfo
+//
+//==========================================================================
+struct VTerrainInfo {
+  VName Name; // always lowercased
+  VStr OrigName; // as comes from the definition
+  VName Splash;
+  enum {
+    F_Liquid          = 0x00000001,
+    F_AllowProtection = 0x00000002,
+  };
+  vuint32 Flags;
+  float FootClip;
+  vint32 DamageTimeMask;
+  vint32 DamageAmount;
+  VName DamageType;
+  float Friction;
+  float MoveFactor;
+  float StepVolume;
+  float WalkingStepTime;
+  float RunningStepTime;
+  VName LeftStepSounds;
+  VName RightStepSounds;
+};
+
+
+//==========================================================================
+//
 //  DrawSeg
 //
 //  TODO: document this!

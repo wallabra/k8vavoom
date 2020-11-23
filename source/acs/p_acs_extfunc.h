@@ -171,7 +171,7 @@
   ACS_EXTFUNC(SetActorFlag) // implemented
   ACS_EXTFUNC(SetTranslation)
   ACS_EXTFUNC(GetActorFloorTexture)
-  ACS_EXTFUNC(GetActorFloorTerrain)
+  ACS_EXTFUNC(GetActorFloorTerrain) // implemented
   ACS_EXTFUNC(StrArg)
   ACS_EXTFUNC(Floor) // implemented
   ACS_EXTFUNC(Round) // implemented

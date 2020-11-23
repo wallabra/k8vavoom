@@ -30,49 +30,6 @@
 #include "../gamedefs.h"
 
 
-struct VSplashInfo {
-  VName Name; // always lowercased
-
-  VClass *SmallClass;
-  float SmallClip;
-  VName SmallSound;
-
-  VClass *BaseClass;
-  VClass *ChunkClass;
-  float ChunkXVelMul;
-  float ChunkYVelMul;
-  float ChunkZVelMul;
-  float ChunkBaseZVel;
-  VName Sound;
-  enum {
-    F_NoAlert = 0x00000001,
-  };
-  vuint32 Flags;
-};
-
-
-struct VTerrainInfo {
-  VName Name; // always lowercased
-  VName Splash;
-  enum {
-    F_Liquid          = 0x00000001,
-    F_AllowProtection = 0x00000002,
-  };
-  vuint32 Flags;
-  float FootClip;
-  vint32 DamageTimeMask;
-  vint32 DamageAmount;
-  VName DamageType;
-  float Friction;
-  float MoveFactor;
-  float StepVolume;
-  float WalkingStepTime;
-  float RunningStepTime;
-  VName LeftStepSounds;
-  VName RightStepSounds;
-};
-
-
 struct VTerrainType {
   int Pic;
   VName TypeName;

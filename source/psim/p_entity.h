@@ -509,6 +509,9 @@ public:
 
   sector_t *GetTouchedFloorSectorEx (sector_t **swimmable);
 
+  // cannot return `nullptr`
+  VTerrainInfo *GetActorTerrain ();
+
   /*
   bool eventSkyBoxGetAlways () { static VMethodProxy method("SkyBoxGetAlways"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
   VEntity *eventSkyBoxGetMate () { static VMethodProxy method("SkyBoxGetMate"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }

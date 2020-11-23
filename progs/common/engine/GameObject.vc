@@ -1334,6 +1334,7 @@ struct VAnimDoorDef {
 
 struct VSplashInfo {
   name Name;
+  string OrigName;
 
   class SmallClass;
   float SmallClip;
@@ -1352,6 +1353,7 @@ struct VSplashInfo {
 
 struct VTerrainInfo {
   name Name;
+  string OrigName;
   name Splash;
   bool bLiquid;
   bool bAllowProtection;

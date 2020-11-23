@@ -3857,6 +3857,16 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       GCon->Logf(NAME_Warning, "ACSF `SetSectorTerrain` is not implemented yet");
       return 0;
 
+    case ACSF_GetActorFloorTerrain:
+      if (argCount >= 1) {
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (Ent) {
+          auto tt = Ent->GetActorTerrain();
+          if (tt) return ActiveObject->Level->PutNewString(tt->OrigName);
+        }
+      }
+      return ActiveObject->Level->PutNewString("Default");
+
     case ACSF_SetFogDensity:
       GCon->Logf(NAME_Warning, "ignored ACSF `SetFogDensity`");
       return 0;
