@@ -3865,7 +3865,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
           if (tt) return ActiveObject->Level->PutNewString(tt->OrigName);
         }
       }
-      return ActiveObject->Level->PutNewString("Default");
+      return ActiveObject->Level->PutNewString(SV_GetDefaultTerrain()->OrigName);
 
     case ACSF_SetFogDensity:
       GCon->Logf(NAME_Warning, "ignored ACSF `SetFogDensity`");
