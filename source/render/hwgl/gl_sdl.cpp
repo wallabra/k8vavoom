@@ -23,10 +23,10 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#ifdef VAVOOM_ARCH_LINUX_SPECIAL_SDL
-# include <SDL2/SDL.h>
-#else
+#ifdef VAVOOM_CUSTOM_SPECIAL_SDL
 # include <SDL.h>
+#else
+# include <SDL2/SDL.h>
 #endif
 #if !defined(SDL_MAJOR_VERSION) || SDL_MAJOR_VERSION != 2
 # error "SDL2 required!"

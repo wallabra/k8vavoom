@@ -25,13 +25,13 @@
 //**************************************************************************
 #include "../../../libs/core/core.h"
 
-#ifdef VAVOOM_ARCH_LINUX_SPECIAL_SDL
-# include <SDL2/SDL.h>
+#ifdef VAVOOM_CUSTOM_SPECIAL_SDL
+# include <SDL.h>
 # if defined(USE_XRANDR) && USE_XRANDR == 1
 #  include <SDL2/SDL_syswm.h>
 # endif
 #else
-# include <SDL.h>
+# include <SDL2/SDL.h>
 # if defined(USE_XRANDR) && USE_XRANDR == 1
 #  include <SDL2/SDL_syswm.h>
 # endif

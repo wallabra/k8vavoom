@@ -30,10 +30,10 @@
 #include <unistd.h>
 #include <signal.h>
 #include <dirent.h>
-#ifdef VAVOOM_ARCH_LINUX_SPECIAL_SDL
-# include <SDL2/SDL.h>
-#else
+#ifdef VAVOOM_CUSTOM_SPECIAL_SDL
 # include <SDL.h>
+#else
+# include <SDL2/SDL.h>
 #endif
 #if !defined(_WIN32) && !defined(__SWITCH__)
 //# include <execinfo.h>

@@ -6,6 +6,7 @@ endif(COMMAND cmake_policy)
 
 
 project(k8vavoom)
+include(CheckIncludeFile)
 
 
 option(WITH_SDL2       "Use SDL2 library" ON)
@@ -67,7 +68,11 @@ option(WITH_STRTODEX "Use internal strtod implementation to parse floats" ON)
 option(DEBUG_FPU_CHECKS "Use FPU and turn on some checks (GNU/Linux only)" OFF)
 option(UNSTABLE_OPTIMISATIONS "Use -O3 (WARNING! DON'T DO THAT! NEVER!)" OFF)
 
-option(ARCH_LINUX_SPECIAL "Arch GNU/Linux specific changes (do not turn on if you don't know what it is)" OFF)
+if(CMAKE_CROSSCOMPILING AND WIN32)
+  option(SDL2_OVERRIDE "Some specific changes for custom-built SDL2 (do not turn on if you don't know what it is)" ON)
+else(CMAKE_CROSSCOMPILING AND WIN32)
+  option(SDL2_OVERRIDE "Some specific changes for custom-built SDL2 (do not turn on if you don't know what it is)" OFF)
+endif(CMAKE_CROSSCOMPILING AND WIN32)
 
 if(CMAKE_CROSSCOMPILING AND WIN32)
   #if(MINGW)
@@ -230,12 +235,16 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
 
-if(ARCH_LINUX_SPECIAL)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -lSDL2main -lSDL2")
-else(ARCH_LINUX_SPECIAL)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
-endif(ARCH_LINUX_SPECIAL)
+if(NOT SDL2_OVERRIDE)
+  check_include_file(SDL2/SDL.h HAVE_SDL2_SUBDIR)
+  if(HAVE_SDL2_SUBDIR)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lSDL2main -lSDL2")
+    add_definitions(-DVAVOOM_ARCH_LINUX_SPECIAL_SDL=1)
+  endif(HAVE_SDL2_SUBDIR)
+endif(NOT SDL2_OVERRIDE)
+
 
 set(UNFUCK_GCC_FLAGS "")
 set(UNFUCK_GXX_FLAGS "")
@@ -292,10 +301,6 @@ endif(WITH_STRTODEX)
 
 # for mi-malloc
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-invalid-memory-model")
-
-if(ARCH_LINUX_SPECIAL)
-  add_definitions(-DVAVOOM_ARCH_LINUX_SPECIAL_SDL=1)
-endif(ARCH_LINUX_SPECIAL)
 
 
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.9)
@@ -1063,9 +1068,14 @@ if(ENABLE_VCCRUN)
     message(STATUS "  GNUTLS       : ON")
   endif(GNUTLS_FOUND)
 endif(ENABLE_VCCRUN)
-if(ARCH_LINUX_SPECIAL)
-  message(STATUS "Arch Sepcific Build Mode")
-endif(ARCH_LINUX_SPECIAL)
+if(SDL2_OVERRIDE)
+  message(STATUS "SDL2 override mode")
+else(SDL2_OVERRIDE)
+  if(NOT HAVE_SDL2_SUBDIR)
+    message(STATUS "SDL2 non-subdir mode")
+  endif(NOT HAVE_SDL2_SUBDIR)
+endif(SDL2_OVERRIDE)
+
 
 add_subdirectory(libs)
 
