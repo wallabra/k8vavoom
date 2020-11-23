@@ -121,7 +121,7 @@
   ACS_EXTFUNC(SpawnParticle) // ignored
   ACS_EXTFUNC(SetMusicVolume) // ignored
   ACS_EXTFUNC(CheckProximity) // implemented
-  ACS_EXTFUNC(CheckActorState) // 99
+  ACS_EXTFUNC(CheckActorState) // implemented 99
   /* Zandronum's - these must be skipped when we reach 99!
   -100:ResetMap(0)
   -101 : PlayerIsSpectator(1)

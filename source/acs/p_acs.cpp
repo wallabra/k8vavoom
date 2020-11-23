@@ -3658,6 +3658,19 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       }
       return 0;
 
+    case ACSF_CheckActorState:
+      if (argCount >= 2) {
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (Ent) {
+          VStr stname = GetStr(args[1]);
+          if (stname.isEmpty() || stname.strEquCI("none") || stname.strEquCI("null")) return 1;
+          bool exact = (argCount > 2 ? !!args[2] : false);
+          TArray<VName> Names;
+          VMemberBase::StaticSplitStateLabel(stname, Names);
+          return !!Ent->GetClass()->FindStateLabel(Names, exact);
+        }
+      }
+      return 0;
 
     // void Radius_Quake2 (int tid, int intensity, int duration, int damrad, int tremrad, str sound)
     case ACSF_Radius_Quake2:
