@@ -39,8 +39,10 @@ bool VCvar::Cheating = false;
 static bool hostInitComplete = false;
 
 
-#define CVAR_HASH_SIZE  (512)
+#define CVAR_HASH_SIZE  (256)
 static VCvar *cvhBuckets[CVAR_HASH_SIZE] = {nullptr};
+
+#define CHH(v_)  (foldHash32to8(v_)&(CVAR_HASH_SIZE-1))
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -211,21 +213,21 @@ VCvar *VCvar::insertIntoHash () {
   vuint32 nhash = cvnamehash(this->Name);
   this->lnhash = nhash;
   VCvar *prev = nullptr;
-  for (VCvar *cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; prev = cvar, cvar = cvar->nextInBucket) {
+  for (VCvar *cvar = cvhBuckets[CHH(nhash)]; cvar; prev = cvar, cvar = cvar->nextInBucket) {
     if (cvar->lnhash == nhash && !VStr::ICmp(this->Name, cvar->Name)) {
       // replace it
       if (prev) {
         prev->nextInBucket = this;
       } else {
-        cvhBuckets[nhash%CVAR_HASH_SIZE] = this;
+        cvhBuckets[CHH(nhash)] = this;
       }
       this->nextInBucket = cvar->nextInBucket;
       return cvar;
     }
   }
   // new one
-  this->nextInBucket = cvhBuckets[nhash%CVAR_HASH_SIZE];
-  cvhBuckets[nhash%CVAR_HASH_SIZE] = this;
+  this->nextInBucket = cvhBuckets[CHH(nhash)];
+  cvhBuckets[CHH(nhash)] = this;
   return nullptr;
 }
 
@@ -554,7 +556,7 @@ void VCvar::SendAllServerInfos () {
 
 //==========================================================================
 //
-//  VCvar::dumpHashStats
+//  VCvar::AddAllVarsToAutocomplete
 //
 //==========================================================================
 void VCvar::AddAllVarsToAutocomplete (void (*addfn) (const char *name)) {
@@ -574,20 +576,23 @@ void VCvar::AddAllVarsToAutocomplete (void (*addfn) (const char *name)) {
 
 //==========================================================================
 //
-//  VCvar::dumpHashStats
+//  VCvar::DumpHashStats
 //
 //==========================================================================
-void VCvar::dumpHashStats () {
-  vuint32 bkused = 0, maxchain = 0;
-  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
-    VCvar *cvar = cvhBuckets[bkn];
-    if (!cvar) continue;
-    ++bkused;
-    vuint32 chlen = 0;
-    for (; cvar; cvar = cvar->nextInBucket) ++chlen;
-    if (chlen > maxchain) maxchain = chlen;
+void VCvar::DumpHashStats () {
+  if (Initialised) {
+    vuint32 bkused = 0, maxchain = 0, vcount = 0;
+    for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+      VCvar *cvar = cvhBuckets[bkn];
+      if (!cvar) continue;
+      ++bkused;
+      vuint32 chlen = 0;
+      for (; cvar; cvar = cvar->nextInBucket) ++chlen;
+      if (chlen > maxchain) maxchain = chlen;
+      vcount += chlen;
+    }
+    GLog.Logf("CVAR statistics: %u cvars, %u buckets used, %u items in longest chain, %u items average", vcount, bkused, maxchain, (bkused ? vcount/bkused+(vcount%bkused >= bkused/2) : 0));
   }
-  GLog.Logf("CVAR statistics: %u buckets used, %u items in longest chain", bkused, maxchain);
 }
 
 
@@ -601,7 +606,7 @@ void VCvar::dumpHashStats () {
 //==========================================================================
 void VCvar::Shutdown () {
   if (Initialised) {
-    dumpHashStats();
+    DumpHashStats();
     for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
       for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
         // free default value
@@ -772,7 +777,7 @@ bool VCvar::CanBeModified (const char *var_name, bool modonly, bool noserver) {
 VCvar *VCvar::FindVariable (const char *name) {
   if (!name || name[0] == 0) return nullptr;
   vuint32 nhash = cvnamehash(name);
-  for (VCvar *cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; cvar = cvar->nextInBucket) {
+  for (VCvar *cvar = cvhBuckets[CHH(nhash)]; cvar; cvar = cvar->nextInBucket) {
     if (cvar->lnhash == nhash && !VStr::ICmp(name, cvar->Name)) return cvar;
   }
   return nullptr;
@@ -1048,6 +1053,40 @@ void VCvar::WriteVariablesToStream (VStream *st, bool saveDefaultValues) {
         st->writef("%s \"%s\"\n", cvar->Name, *cvar->StringValue.quote());
       }
       if (st->IsError()) break;
+    }
+  }
+  delete[] list;
+}
+
+
+//==========================================================================
+//
+//  VCvar::DumpAllVars
+//
+//==========================================================================
+void VCvar::DumpAllVars () {
+  vuint32 count = countCVars();
+  VCvar **list = getSortedList();
+  for (vuint32 n = 0; n < count; ++n) {
+    VCvar *cvar = list[n];
+    {
+      const char *def = (cvar->StringValue.Cmp(cvar->DefaultString) == 0 ? "  (default)" : "");
+      const char *arc = (cvar->Flags&(CVAR_Archive|CVAR_AlwaysArchive) ? "  (archive)" : "");
+      if (cvar->Flags&CVAR_FromMod) {
+        VStr stmp("cvarinfovar");
+        if (cvar->Flags&CVAR_ServerInfo) stmp += " server"; else stmp += " user";
+        if (cvar->Flags&CVAR_Cheat) stmp += " cheat";
+        if (cvar->Flags&CVAR_Latch) stmp += " latch";
+        switch (cvar->GetType()) {
+          case String: stmp += " string"; break;
+          case Int: stmp += " int"; break;
+          case Float: stmp += " float"; break;
+          case Bool: stmp += " bool"; break;
+        }
+        GLog.Logf("%s %s \"%s\"%s%s", *stmp, cvar->Name, *cvar->StringValue.quote(), def, arc);
+      } else {
+        GLog.Logf("%s \"%s\"%s%s", cvar->Name, *cvar->StringValue.quote(), def, arc);
+      }
     }
   }
   delete[] list;

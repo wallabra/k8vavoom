@@ -170,11 +170,12 @@ public:
   static vuint32 countCVars ();
   static VCvar **getSortedList (); // contains `countCVars()` elements, must be `delete[]`d
 
+  static void DumpHashStats ();
+  static void DumpAllVars ();
+
 private:
   VCvar (const VCvar &);
   void operator = (const VCvar &);
-
-  static void dumpHashStats ();
 
   void insertIntoList ();
   VCvar *insertIntoHash ();

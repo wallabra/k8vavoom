@@ -106,6 +106,10 @@ static_assert(sizeof(vdouble) == 8, "invalid vdouble");
 enum ENoInit { E_NoInit };
 
 
+static inline vuint16 foldHash32to16 (vuint32 h) noexcept { return (vuint16)(h+(h>>16)); }
+static inline vuint8 foldHash32to8 (vuint32 h) noexcept { h = foldHash32to16(h); return (vuint8)(h+(h>>8)); }
+
+
 //==========================================================================
 //
 //  Standard C++ macros

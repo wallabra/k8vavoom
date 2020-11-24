@@ -27,7 +27,7 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-enum { HASH_SIZE = 32768 }; // ~6/4 per bucket
+enum { HASH_SIZE = 65536 }; // ~6/4 per bucket
 
 VName::VNameEntry **VName::Names = nullptr;
 size_t VName::NamesAlloced = 0;
@@ -171,7 +171,7 @@ VName::VName (const char *Name, ENameFindType FindType) noexcept {
   }
 
   // search in cache
-  vuint32 HashIndex = GetTypeHash(NameBuf)&(HASH_SIZE-1);
+  vuint32 HashIndex = foldHash32to16(GetTypeHash(NameBuf))&(HASH_SIZE-1);
   VNameEntry *TempHash = HashTable[HashIndex];
   while (TempHash) {
     if (nlen == (unsigned)TempHash->length && VStr::Cmp(NameBuf, TempHash->Name) == 0) {
@@ -282,7 +282,7 @@ void VName::StaticInit () noexcept {
       vassert((i == 0 && e.length == 0) || (i != 0 && e.length > 0));
       AppendNameEntry(&AutoNames[i]);
       if (i) {
-        vuint32 HashIndex = GetTypeHash(e.Name)&(HASH_SIZE-1);
+        vuint32 HashIndex = foldHash32to16(GetTypeHash(e.Name))&(HASH_SIZE-1);
         e.HashNext = HashTable[HashIndex];
         HashTable[HashIndex] = &AutoNames[i];
       } else {
