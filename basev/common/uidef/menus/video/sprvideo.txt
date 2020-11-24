@@ -98,6 +98,13 @@ menudef SpriteVideoOptions {
 
   header "Translucency";
 
+  option bool {
+    title = "Additive Explosions";
+    cvar = r_addrocketexplosion;
+    help =
+      "Use additive render style for missile explosions?";
+  }
+
   option slider {
     title = "Lost Souls Translucency";
     cvar = r_transsouls;

@@ -158,7 +158,7 @@ override void Init () {
   CreateCvarBool('menu_quit_prompt', true, "Show quit prompt on menu quit?", CVAR_ARCHIVE);
 
   CreateCvarBool('monster_backing', false, "Should monsters back away from melee attacker?", CVAR_ARCHIVE);
-  CreateCvarBool('addrocketexplosion', false, "Use additive visuals for explosions?", CVAR_ARCHIVE);
+  CreateCvarBool('r_addrocketexplosion', false, "Use additive visuals for explosions?", CVAR_ARCHIVE);
   CreateCvarBool('plr_allow_damage_thrust', true, "Can the player be knocked back when damaged?", CVAR_ARCHIVE); // prevrel was 0
   CreateCvarBool('autoaim', true, "Should weapons autoaim?", CVAR_ARCHIVE);
   CreateCvarBool('k8HitscanAutoAim', false, "Enable autoaim for hitscan weapon?", CVAR_ARCHIVE); // prevrel was 1

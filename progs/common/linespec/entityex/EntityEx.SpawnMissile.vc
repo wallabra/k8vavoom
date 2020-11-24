@@ -183,7 +183,7 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
   if (bDehExplosion) {
     if (LineSpecialGameInfo(Level.Game).DehExplosionStyle == 255) {
       // explosion style is controlled by a cvar
-      if (GetCvar('addrocketexplosion')) {
+      if (GetCvar('r_addrocketexplosion')) {
         RenderStyle = STYLE_Add;
         Alpha = 1.0;
       } else {
