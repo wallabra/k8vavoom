@@ -49,6 +49,7 @@ extern VStr fsys_warp_cmd;
 static int cli_SetDeveloper = -1;
 static int cli_SetDeveloperDefine = -1;
 static int cli_AsmDump = -1;
+static int cli_DumpAllVars = -1;
 int cli_ShowEndText = 0;
 
 /*static*/ bool cliRegister_host_args =
@@ -56,7 +57,8 @@ int cli_ShowEndText = 0;
   VParsedArgs::RegisterFlagReset("-vc-no-k8-developer", "!", &cli_SetDeveloperDefine) &&
   VParsedArgs::RegisterFlagSet("-vc-k8-developer", "!", &cli_SetDeveloperDefine) &&
   VParsedArgs::RegisterFlagSet("-endtext", "!enable end text (disabled by default)", &cli_ShowEndText) &&
-  VParsedArgs::RegisterFlagSet("-vc-dump-asm", "!dump generated IR code", &cli_AsmDump);
+  VParsedArgs::RegisterFlagSet("-vc-dump-asm", "!dump generated IR code", &cli_AsmDump) &&
+  VParsedArgs::RegisterFlagSet("-con-dump-all-vars", "!dump all console variables", &cli_DumpAllVars);
 
 const char *cli_LogFileName = nullptr;
 
@@ -1007,6 +1009,8 @@ void Host_Shutdown () {
   }
 
   VMemberBase::DumpNameMaps();
+  VCvar::DumpHashStats();
+  if (cli_DumpAllVars > 0) VCvar::DumpAllVars();
   //k8:no need to do this:SAFE_SHUTDOWN(R_ShutdownTexture, ()) // texture manager
   //k8:no need to do this:SAFE_SHUTDOWN(R_ShutdownData, ()) // various game tables
   //k8:no need to do this:SAFE_SHUTDOWN(VCommand::Shutdown, ())
