@@ -625,6 +625,10 @@ bool Sys_DirExists (VStr path) {
 }
 
 
+int Sys_TimeMinPeriodMS () { return 0; }
+int Sys_TimeMaxPeriodMS () { return 0; }
+
+
 //==========================================================================
 //
 //  Sys_Time
@@ -663,7 +667,7 @@ double Sys_Time () {
 
 //==========================================================================
 //
-//  Sys_Time
+//  Sys_GetTimeNano
 //
 // get time (start point is arbitrary) in nanoseconds
 //
@@ -1029,10 +1033,36 @@ bool Sys_DirExists (VStr path) {
 static bool shitdozeTimerInited = false;
 static vuint32 shitdozeLastTime = 0;
 static vuint64 shitdozeCurrTime = 0;
+static vuint32 shitdozePeriodMin = 0;
+static vuint32 shitdozePeriodMax = 0;
+static vuint32 shitdozePeriodSet = 0;
+
+
+int Sys_TimeMinPeriodMS () { return (shitdozePeriodMin > 0x7fffffffU ? 0x7fffffff : (int)shitdozePeriodMin); }
+int Sys_TimeMaxPeriodMS () { return (shitdozePeriodMax > 0x7fffffffU ? 0x7fffffff : (int)shitdozePeriodMax); }
+
 
 struct ShitdozeTimerInit {
-  ShitdozeTimerInit () { timeBeginPeriod(1); shitdozeTimerInited = true; shitdozeLastTime = (vuint32)timeGetTime(); }
-  ~ShitdozeTimerInit () { timeEndPeriod(1); shitdozeTimerInited = false; }
+  ShitdozeTimerInit () {
+    shitdozePeriodMin = 0;
+    shitdozePeriodMax = 0;
+    TIMECAPS tc;
+    if (timeGetDevCaps(&tc, sizeof(tc)) == MMSYSERR_NOERROR) {
+      shitdozePeriodMin = tc.wPeriodMin;
+      shitdozePeriodMax = tc.wPeriodMax;
+      shitdozePeriodSet = (tc.wPeriodMin < 2 ? 1 : tc.wPeriodMin);
+    } else {
+      shitdozePeriodSet = 1;
+    }
+    timeBeginPeriod(shitdozePeriodSet);
+    shitdozeTimerInited = true;
+    shitdozeLastTime = (vuint32)timeGetTime();
+  }
+
+  ~ShitdozeTimerInit () {
+    timeEndPeriod(shitdozePeriodSet);
+    shitdozeTimerInited = false;
+  }
 };
 
 ShitdozeTimerInit thisIsFuckinShitdozeTimerInitializer;
@@ -1075,6 +1105,9 @@ vuint64 Sys_GetTimeNano () {
 //  Sys_Time
 //
 //==========================================================================
+int Sys_TimeMinPeriodMS () { return 0; }
+int Sys_TimeMaxPeriodMS () { return 0; }
+
 double Sys_Time () {
   static double pfreq;
   static double curtime = 0.0;

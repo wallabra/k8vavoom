@@ -55,6 +55,10 @@ double Sys_Time_CPU (); // this tries to return CPU time used by the process; ne
 double Sys_Time (); // never returns 0
 void Sys_Yield ();
 
+// has any meaning only for shitdoze, returns 0 otherwise
+int Sys_TimeMinPeriodMS ();
+int Sys_TimeMaxPeriodMS ();
+
 int Sys_GetCPUCount ();
 
 // get time (start point is arbitrary) in nanoseconds
