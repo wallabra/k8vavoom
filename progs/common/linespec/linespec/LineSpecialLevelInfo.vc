@@ -1877,46 +1877,34 @@ final int EV_StopPlat(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 //  EV_BuildPillar
 //
 //==========================================================================
-
-final int EV_BuildPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  bool Crush)
-{
+final int EV_BuildPillar (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, bool Crush) {
   sector_t *Sec;
-  Pillar    pillar;
-  int     Rtn;
-
-  Rtn = false;
-  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
-       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
-  {
+  Pillar pillarObj;
+  bool Rtn = false;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx)) {
     if (Sec->FloorData || Sec->CeilingData) continue; // already moving
     Rtn = true;
-    pillar = SpawnThinker(Pillar);
-    pillar.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Crush);
+    pillarObj = SpawnThinker(Pillar);
+    pillarObj.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Crush);
   }
   return Rtn;
 }
+
 
 //==========================================================================
 //
 //  EV_OpenPillar
 //
 //==========================================================================
-
-final int EV_OpenPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
-{
+final int EV_OpenPillar (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5) {
   sector_t *Sec;
-  Pillar    pillar;
-  int     Rtn;
-
-  Rtn = false;
-  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
-       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
-  {
+  Pillar pillarObj;
+  bool Rtn = false;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx)) {
     if (Sec->FloorData || Sec->CeilingData) continue; // already moving
     Rtn = true;
-    pillar = SpawnThinker(Pillar);
-    pillar.InitOpen(Sec, Arg1, Arg2, Arg3, Arg4, Arg5);
+    pillarObj = SpawnThinker(Pillar);
+    pillarObj.InitOpen(Sec, Arg1, Arg2, Arg3, Arg4, Arg5);
   }
   return Rtn;
 }
