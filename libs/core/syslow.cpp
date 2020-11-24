@@ -638,6 +638,7 @@ int Sys_TimeMaxPeriodMS () { return 0; }
 //==========================================================================
 double Sys_Time () {
   static bool initialized = false;
+  const double timeOffset = 4294967296.0; // this will give us a constant time precision
 #ifdef __linux__
   static time_t secbase = 0;
   struct timespec ts;
@@ -650,7 +651,7 @@ double Sys_Time () {
     initialized = true;
     secbase = ts.tv_sec;
   }
-  return (ts.tv_sec-secbase)+ts.tv_nsec/1000000000.0+1.0;
+  return (ts.tv_sec-secbase)+(timeOffset+ts.tv_nsec)/1000000000.0;
 #else
   struct timeval tp;
   struct timezone tzp;
@@ -660,7 +661,7 @@ double Sys_Time () {
     initialized = true;
     secbase = tp.tv_sec;
   }
-  return (tp.tv_sec-secbase)+tp.tv_usec/1000000.0+1.0;
+  return (tp.tv_sec-secbase)+(timeOffset+tp.tv_usec)/1000000.0;
 #endif
 }
 
@@ -1069,15 +1070,13 @@ ShitdozeTimerInit thisIsFuckinShitdozeTimerInitializer;
 
 
 double Sys_Time () {
+  const double timeOffset = 4294967296.0; // this will give us a constant time precision
   if (!shitdozeTimerInited) Sys_Error("shitdoze shits itself");
-  vuint32 currtime = (vuint32)timeGetTime();
-  if (currtime > shitdozeLastTime) {
-    shitdozeCurrTime += currtime-shitdozeLastTime;
-  } else {
-    // meh; do nothing on wraparound, this should only happen once
-  }
+  const vuint32 currtime = (vuint32)timeGetTime();
+  // this properly deals with wraparounds
+  shitdozeCurrTime += currtime-shitdozeLastTime;
   shitdozeLastTime = currtime;
-  return shitdozeCurrTime/1000.0+1.0;
+  return (timeOffset+shitdozeCurrTime)/1000.0;
 }
 
 
