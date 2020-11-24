@@ -595,7 +595,9 @@ static void CheckForIntermissionSkip () {
         if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
           if (!player->Net) {
             // local player?
+            #ifdef CLIENT
             if (!(GGameInfo->NetMode == NM_ListenServer && player == cl)) continue;
+            #endif
           }
         }
         if (player->PlayerFlags&VBasePlayer::PF_Spawned) {
