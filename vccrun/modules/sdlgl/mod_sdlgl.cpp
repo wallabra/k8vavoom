@@ -34,10 +34,10 @@
 
 #include <sys/time.h>
 
-#ifdef VAVOOM_ARCH_LINUX_SPECIAL_SDL
-# include <SDL2/SDL.h>
-#else
+#ifdef VAVOOM_CUSTOM_SPECIAL_SDL
 # include <SDL.h>
+#else
+# include <SDL2/SDL.h>
 #endif
 #include <GL/gl.h>
 #include <GL/glext.h>

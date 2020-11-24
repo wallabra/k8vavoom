@@ -72,7 +72,7 @@ void VPackage::LoadObject (TLocation l) {
 //  this will try to coerce some decorate argument to something sensible
 //
 //==========================================================================
-VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerState, const char *funcName,
+VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VInvocation *invokation, VState *CallerState, const char *funcName,
                                               int argnum, const VFieldType &destType, bool isOptional,
                                               const TLocation *aloc, bool *massaged)
 {

@@ -30,10 +30,10 @@
 #include "../../vcc_run.h"
 
 #if defined (VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)
-#ifdef VAVOOM_ARCH_LINUX_SPECIAL_SDL
-# include <SDL2/SDL.h>
-#else
+#ifdef VAVOOM_CUSTOM_SPECIAL_SDL
 # include <SDL.h>
+#else
+# include <SDL2/SDL.h>
 #endif
 #ifdef USE_GLAD
 # include "glad.h"

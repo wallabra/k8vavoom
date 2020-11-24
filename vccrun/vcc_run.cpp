@@ -152,6 +152,19 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+__attribute__((noreturn, format(printf, 1, 2))) void Host_Error (const char *error, ...) {
+  va_list argptr;
+  static char buf[16384]; //WARNING! not thread-safe!
+
+  va_start(argptr,error);
+  vsnprintf(buf, sizeof(buf), error, argptr);
+  va_end(argptr);
+
+  Sys_Error("%s", buf);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 static VStr SourceFileName;
 static TArray<VStr> scriptArgs;
 
