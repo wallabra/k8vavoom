@@ -3122,11 +3122,11 @@ final bool EV_SectorSetColor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 final bool EV_SectorSetFade(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 {
   sector_t *Sec;
-  int Fade = RGBA(Arg2, Arg3, Arg4, 255);
+  int clrFade = RGBA(Arg2, Arg3, Arg4, 255);
   for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
        hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Sec.params.Fade = Fade;
+    Sec.params.Fade = clrFade;
   }
   return true;
 }
@@ -4966,14 +4966,14 @@ final bool EV_TeleportSector(int tag, int source_tid, int dest_tid, bool fog,
     while (Node)
     {
       A = EntityEx(Node->Thing);
-      msecnode_t*Next = Node->SNext;
+      msecnode_t *ndNext = Node->SNext;
       // possibly limit actors by group
       if (A.Sector == sec && (group_tid == 0 || A.TID == group_tid))
       {
         didSomething |= DoGroupForOne(A, sourceOrigin, destOrigin,
           floorz, fog);
       }
-      Node = Next;
+      Node = ndNext;
     }
   }
   return didSomething;
@@ -6180,11 +6180,11 @@ override void SectorDamage(int Tag, int Amount, name DamageType,
   for (int hidx = XLevel.FindSectorFromTag(out Sec, Tag); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Tag, hidx)) {
     //sector_t *Sec = &XLevel.Sectors[SecNum];
     Entity Ent;
-    Entity Next;
+    Entity entNext;
 
-    for (Ent = Sec->ThingList; Ent; Ent = Next)
+    for (Ent = Sec->ThingList; Ent; Ent = entNext)
     {
-      Next = Ent.SNext;
+      entNext = Ent.SNext;
 
       if (!EntityEx(Ent).bShootable)
       {

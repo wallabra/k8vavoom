@@ -75,24 +75,24 @@ override bool Use (bool Pickup) {
 
   // once the rebels start teleporting in, you can't pick up the beacon anymore
   bRebelSpawned = true;
-  EntityEx Owner = self.Target;
+  EntityEx entOwner = self.Target;
 
   // set up the new rebel
-  if (Owner) {
-    A.CopyTranslations(Owner);
-    A.FriendPlayer = Owner.bIsPlayer ? Owner.Player.GetPlayerNum()+1 : 0;
+  if (entOwner) {
+    A.CopyTranslations(entOwner);
+    A.FriendPlayer = entOwner.bIsPlayer ? entOwner.Player.GetPlayerNum()+1 : 0;
   }
   A.Threshold = 100;
   A.bFriendly = true;
   A.bInCombat = true;
-  A.LastHeard = Owner; // make sure rebels look for targets
+  A.LastHeard = entOwner; // make sure rebels look for targets
   if (Level.Game.deathmatch) A.Health *= 2;
-  if (Owner) {
+  if (entOwner) {
     // rebels are the same color as their owner
-    A.CopyTranslations(Owner);
+    A.CopyTranslations(entOwner);
     // set the rebel's target to whatever last hurt the player, so long as it's not
     // one of the player's other rebels
-    if (Owner.Target && !A.IsFriend(Owner.Target)) A.Target = Owner.Target;
+    if (entOwner.Target && !A.IsFriend(entOwner.Target)) A.Target = entOwner.Target;
   }
   A.SetState(A.SeeState);
   A.Angles = Angles;

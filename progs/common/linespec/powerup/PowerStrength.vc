@@ -59,9 +59,9 @@ override void Tick (float DeltaTime) {
 //
 //==========================================================================
 override bool IsColomapOverrideActive () {
-  int Amount = 4-int(EffectTime/2.0);
-  //printdebug("ET=%s; A=%s", EffectTime, Amount);
-  return (Amount > 0);
+  int pwAmount = 4-int(EffectTime/2.0);
+  //printdebug("ET=%s; A=%s", EffectTime, pwAmount);
+  return (pwAmount > 0);
 }
 
 
@@ -102,10 +102,10 @@ override int GetBlend () {
     }
     if (BlendColor) {
       // slowly fade the berzerk out
-      int Amount = 12-int(EffectTime/2.0);
-      if (Amount > 0) {
-        Amount = (Amount+7)>>3;
-        int a = (Amount+1)*28;
+      int blAmount = 12-int(EffectTime/2.0);
+      if (blAmount > 0) {
+        blAmount = (blAmount+7)>>3;
+        int a = (blAmount+1)*28;
         return (BlendColor&0x00ffffff)|(a<<24);
       }
     }

@@ -794,14 +794,14 @@ private final float clampPitch (float newpitch) {
   int Flags = AimMode&~3;
   AimMode &= 3;
 
-  class!EntityEx MissileType = class!EntityEx(FindClassNoCase(MissileTypeName));
-  if (!MissileType) return;
-  MissileType = class!EntityEx(GetClassReplacement(MissileType));
-  if (!MissileType) return;
-  //if (Level.Game.nomonsters && MissileType.default.bMonster) return;
+  class!EntityEx clsMissileType = class!EntityEx(FindClassNoCase(MissileTypeName));
+  if (!clsMissileType) return;
+  clsMissileType = class!EntityEx(GetClassReplacement(clsMissileType));
+  if (!clsMissileType) return;
+  //if (Level.Game.nomonsters && clsMissileType.default.bMonster) return;
 
   if (tgt.Target || AimMode == 2) {
-    if (MissileType) {
+    if (clsMissileType) {
       if (!specified_SpawnHeight) SpawnHeight = 32.0;
       if (!specified_SpawnXYOffset) SpawnXYOffset = 0; // was 1, why?
       TVec Offs = float(SpawnXYOffset)*vector(cos(tgt.Angles.yaw-90.0), sin(tgt.Angles.yaw-90.0), 0.0);
@@ -810,16 +810,16 @@ private final float clampPitch (float newpitch) {
       switch (AimMode) {
         default:
           tgt.Origin += Offs;
-          A = tgt.SpawnMissile(tgt.Target, MissileType, SpawnHeight);
+          A = tgt.SpawnMissile(tgt.Target, clsMissileType, SpawnHeight);
           tgt.Origin -= Offs;
           break;
         case 1:
           Offs.z = SpawnHeight;
-          A = tgt.SpawnMissileXYZ(tgt.Origin+Offs, tgt.Target, MissileType);
+          A = tgt.SpawnMissileXYZ(tgt.Origin+Offs, tgt.Target, clsMissileType);
           break;
         case 2:
           tgt.Origin += Offs;
-          A = tgt.SpawnMissileAngles(MissileType, tgt.Angles.yaw, Pitch, SpawnHeight);
+          A = tgt.SpawnMissileAngles(clsMissileType, tgt.Angles.yaw, Pitch, SpawnHeight);
           tgt.Origin -= Offs;
           break;
       }

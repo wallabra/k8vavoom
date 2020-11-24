@@ -361,9 +361,9 @@ final int CalcStripeFromXY (int x, int y) {
 //
 //==========================================================================
 final bool CheckDoneHover (int x, int y) {
-  string s = "[DONE]";
-  int doneW = TextWidth(s);
-  int doneH = TextHeight(s);
+  string txts = "[DONE]";
+  int doneW = TextWidth(txts);
+  int doneH = TextHeight(txts);
   int doneX = Width-4-doneW;
   int doneY = Height-doneH-2;
   return
@@ -435,13 +435,13 @@ override void OnDraw () {
   */
 
   if (GetRootWidget.bMouseEnabled || GetRootWidget.bMouseForced) {
-    string s = "[DONE]";
-    int doneW = TextWidth(s);
-    int doneH = TextHeight(s);
+    string txts = "[DONE]";
+    int doneW = TextWidth(txts);
+    int doneH = TextHeight(txts);
     int doneX = Width-4-doneW;
     int doneY = Height-doneH-2;
     if (doneHovered) FillRect(doneX-2, doneY-2, doneW+4, doneH+4, RGB(64, 64, 64));
-    DrawText(doneX, doneY, s, CR_YELLOW);
+    DrawText(doneX, doneY, txts, CR_YELLOW);
   }
 }
 

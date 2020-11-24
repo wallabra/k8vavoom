@@ -910,16 +910,16 @@
   if (Target) return; // already done
 
   // link all mace spots
-  EntityEx Prev = none;
+  EntityEx invPrev = none;
   EntityEx First = none;
   int SpotCount = 0;
   EntityEx Spot;
   foreach AllThinkers(MaceSpawner, Spot) {
-    if (Prev) Prev.Target = Spot; else First = Spot;
-    Prev = Spot;
+    if (invPrev) invPrev.Target = Spot; else First = Spot;
+    invPrev = Spot;
     ++SpotCount;
   }
-  Prev.Target = First;
+  invPrev.Target = First;
 
   if (!SpotCount) return; // no maces placed
   if (!Level.Game.deathmatch && P_Random() < 64) return; // sometimes doesn't show up if not in deathmatch

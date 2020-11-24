@@ -38,27 +38,27 @@ BossSpot  FirstBossSpot;
 
 override void BeginPlay()
 {
-  BossSpot    Prev;
-  BossSpot    Spot;
+  BossSpot    spotPrev;
+  BossSpot    spotSpot;
 
   ::BeginPlay();
 
   BossSpotCount = 0;
   FirstBossSpot = none;
-  Prev = none;
-  foreach AllThinkers(BossSpot, Spot)
+  spotPrev = none;
+  foreach AllThinkers(BossSpot, spotSpot)
   {
     if (FirstBossSpot)
     {
-      Prev.NextSpot = Spot;
+      spotPrev.NextSpot = spotSpot;
       BossSpotCount++;
     }
     else
     {
-      FirstBossSpot = Spot;
+      FirstBossSpot = spotSpot;
       BossSpotCount++;
     }
-    Prev = Spot;
+    spotPrev = spotSpot;
   }
 }
 
@@ -95,7 +95,7 @@ final void DSparilTeleport()
   int     i;
   TVec    PrevOrg;
   TVec    dir;
-  BossSpot  Spot;
+  BossSpot  spotSpot;
   BossSpot  Initial;
 
   if (!BossSpotCount)
@@ -104,39 +104,39 @@ final void DSparilTeleport()
     return;
   }
   i = P_Random() % BossSpotCount;
-  for (Spot = FirstBossSpot; i > 0; i--)
+  for (spotSpot = FirstBossSpot; i > 0; i--)
   {
-    Spot = Spot.NextSpot;
+    spotSpot = spotSpot.NextSpot;
   }
 
-  dir = Spot.Origin - Origin;
+  dir = spotSpot.Origin - Origin;
   dir.z = 0.0;
-  Initial = Spot;
+  Initial = spotSpot;
   while (Length2D(dir) < 128.0)
   {
-    Spot = Spot.NextSpot;
-    if (!Spot)
+    spotSpot = spotSpot.NextSpot;
+    if (!spotSpot)
     {
-      Spot = FirstBossSpot;
+      spotSpot = FirstBossSpot;
     }
-    if (Spot == Initial)
+    if (spotSpot == Initial)
     {
       //  Avoid infinite loop if all spots are too close.
       return;
     }
-    dir = Spot.Origin - Origin;
+    dir = spotSpot.Origin - Origin;
     dir.z = 0.0;
   }
 
   PrevOrg = Origin;
-  if (TeleportMove(Spot.Origin))
+  if (TeleportMove(spotSpot.Origin))
   {
     EntityEx fog = Spawn(Sorcerer2Telefade, PrevOrg);
     if (fog) fog.PlaySound('misc/teleport', CHAN_VOICE);
     SetState(FindState('Teleport'));
     PlaySound('misc/teleport', CHAN_VOICE);
     Origin.z = FloorZ;
-    Angles.yaw = Spot.Angles.yaw;
+    Angles.yaw = spotSpot.Angles.yaw;
     Velocity = vector(0.0, 0.0, 0.0);
   }
 }

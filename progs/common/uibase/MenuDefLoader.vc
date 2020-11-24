@@ -306,7 +306,7 @@ void parse (ScriptsParser par) {
       } else {
         par.ExpectString();
         //printdebug("HDR: title=<%s>", par.String);
-        string title = par.String;
+        string stitle = par.String;
         // condition?
         if (!hdr.cond && par.Check("[")) {
           //printdebug("HDR: condition (1)!");
@@ -314,7 +314,7 @@ void parse (ScriptsParser par) {
           hdr.cond.parse(par);
         }
         par.Expect(";");
-        hdr.title = title;
+        hdr.title = stitle;
       }
       options[$] = hdr;
       continue;
@@ -488,14 +488,14 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGa
   if (par.Check("Submenu")) {
     // title
     par.ExpectString();
-    string title = par.String;
+    string stitle = par.String;
     par.Expect(",");
     // submenu name
     par.ExpectString();
     string subname = par.String;
     //if (stricmp(subname, "OptionsMenu") == 0) subname = "Options";
     auto opt = SpawnObject(MenuDefOptionSubMenu);
-    opt.title = title;
+    opt.title = stitle;
     opt.subname = subname;
     return opt;
   }
@@ -504,32 +504,32 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGa
   if (par.Check("option")) {
     // title
     par.ExpectString();
-    string title = par.String;
+    string stitle = par.String;
     par.Expect(",");
     // cvar
     par.ExpectString();
-    name cvar = name(par.String);
+    name scvar = name(par.String);
     par.Expect(",");
     // type
     if (par.Check("onoff") || par.Check("yesno")) {
       auto opt = SpawnObject(MenuDefOptionBool);
-      opt.title = title;
-      opt.cvar = cvar;
+      opt.title = stitle;
+      opt.cvar = scvar;
       return opt;
     }
     // fuck
     if (par.Check("offon") || par.Check("noyes")) {
       auto opt = SpawnObject(MenuDefOptionBool);
-      opt.title = title;
-      opt.cvar = cvar;
+      opt.title = stitle;
+      opt.cvar = scvar;
       opt.inverted = true;
       return opt;
     }
     // this should be "OptionValue"
     par.ExpectString();
     auto opt = SpawnObject(MenuDefOptionEnum);
-    opt.title = title;
-    opt.cvar = cvar;
+    opt.title = stitle;
+    opt.cvar = scvar;
     opt.gzOptValName = par.String;
     if (par.Check(",")) par.ExpectString(); // cvar-enable
     if (par.Check(",")) par.ExpectString(); // center
@@ -541,8 +541,8 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGa
         if (par.Check(",")) par.ExpectString(); // cvar-enable
         if (par.Check(",")) par.ExpectString(); // center
         auto opt = SpawnObject(MenuDefOptionEnum);
-        opt.title = title;
-        opt.cvar = cvar;
+        opt.title = stitle;
+        opt.cvar = scvar;
         foreach (ref auto v; oval.list) {
           opt.list.length += 1;
           opt.list[$-1].caption = v.caption;
@@ -561,11 +561,11 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGa
   if (par.Check("Slider")) {
     // title
     par.ExpectString();
-    string title = par.String;
+    string stitle = par.String;
     par.Expect(",");
     // cvar
     par.ExpectString();
-    name cvar = name(par.String);
+    name scvar = name(par.String);
     par.Expect(",");
     // min, max, step
     par.ExpectFloat(withSign:true);
@@ -579,11 +579,11 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGa
     // skip decimals
     if (par.Check(",")) par.ExpectNumber();
     auto res = SpawnObject(MenuDefOptionSlider);
-    res.title = title;
+    res.title = stitle;
     res.step = step;
     res.minv = minv;
     res.maxv = maxv;
-    res.cvar = cvar;
+    res.cvar = scvar;
     return res;
   }
 
@@ -591,11 +591,11 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGa
   if (par.Check("NumberField")) {
     // title
     par.ExpectString();
-    string title = par.String;
+    string stitle = par.String;
     par.Expect(",");
     // cvar
     par.ExpectString();
-    name cvar = name(par.String);
+    name scvar = name(par.String);
     float minv = 0;
     float maxv = 100;
     float step = 1;
@@ -614,11 +614,11 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGa
       }
     }
     auto res = SpawnObject(MenuDefOptionNumeric);
-    res.title = title;
+    res.title = stitle;
     res.step = step;
     res.minv = minv;
     res.maxv = maxv;
-    res.cvar = cvar;
+    res.cvar = scvar;
     return res;
   }
 

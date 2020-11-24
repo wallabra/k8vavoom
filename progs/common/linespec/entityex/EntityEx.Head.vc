@@ -690,30 +690,30 @@ final void VerifyTargetChain (optional bool preciseMissileCheck) {
   if (!specified_preciseMissileCheck) preciseMissileCheck = true;
   if (IsMissile(preciseMissileCheck)) return;
 
-  EntityEx origin = self;
-  EntityEx next = origin.Target;
+  EntityEx eeorigin = self;
+  EntityEx eenext = eeorigin.Target;
 
-  // origin: the most recent actor that has been verified as appearing only once
-  // next: the next actor to be verified; will be "origin" in the next iteration
+  // eeorigin: the most recent actor that has been verified as appearing only once
+  // eenext: the next actor to be verified; will be "eeorigin" in the next iteration
 
   // we only care when there are missiles involved
-  while (next && next.IsMissile(preciseMissileCheck)) {
+  while (eenext && eenext.IsMissile(preciseMissileCheck)) {
     EntityEx compare = self;
     // every new actor must prove not to be the first actor in the chain, or any subsequent actor
-    // any actor up to and including "origin" has only appeared once
+    // any actor up to and including "eeorigin" has only appeared once
     for (;;) {
-      if (compare == next) {
+      if (compare == eenext) {
         // if any of the actors from self to (inclusive) origin match the next actor,
         // self has reached/created a loop
         self.Target = none;
         return;
       }
-      if (compare == origin) break; // when "compare" = origin, we know that the next actor is, and should be "next"
+      if (compare == eeorigin) break; // when "compare" = eeorigin, we know that the next actor is, and should be "eenext"
       compare = compare.Target;
     }
 
-    origin = next;
-    next = next.Target;
+    eeorigin = eenext;
+    eenext = eenext.Target;
   }
 }
 
@@ -726,22 +726,22 @@ final void VerifyTargetChain (optional bool preciseMissileCheck) {
 //
 //===========================================================================
 final void VerifyMasterChain () {
-  EntityEx origin = self;
-  EntityEx next = origin.Master;
+  EntityEx eeorigin = self;
+  EntityEx eenext = eeorigin.Master;
   // We always care (See "VerifyTargetChain")
-  while (next) {
+  while (eenext) {
     EntityEx compare = self;
     for (;;) {
-      if (compare == next) {
+      if (compare == eenext) {
         self.Master = none;
         return;
       }
-      if (compare == origin) break;
+      if (compare == eeorigin) break;
       compare = compare.Master;
     }
 
-    origin = next;
-    next = next.Master;
+    eeorigin = eenext;
+    eenext = eenext.Master;
   }
 }
 

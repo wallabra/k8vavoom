@@ -50,9 +50,9 @@ override void Destroyed () {
   if (Sector->ActionList == self) {
     Sector->ActionList = Tracer;
   } else {
-    EntityEx Prev = EntityEx(Sector->ActionList);
-    while (Prev && Prev.Tracer != self) Prev = Prev.Tracer;
-    if (Prev) Prev.Tracer = Tracer;
+    EntityEx entPrev = EntityEx(Sector->ActionList);
+    while (entPrev && entPrev.Tracer != self) entPrev = entPrev.Tracer;
+    if (entPrev) entPrev.Tracer = Tracer;
   }
   ::Destroyed();
 }

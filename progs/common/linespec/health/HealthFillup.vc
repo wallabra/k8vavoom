@@ -32,23 +32,23 @@ class HealthFillup : DummyStrifeItem;
 //
 //==========================================================================
 override bool TryPickup (EntityEx Toucher) {
-  int Amount;
+  int hlAmount;
 
   switch (Level.World.GameSkill) {
     case 0:
     case 4:
-      Amount = 100;
+      hlAmount = 100;
       break;
     case 1:
-      Amount = 75;
+      hlAmount = 75;
       break;
     case 2:
     case 3:
     default:
-      Amount = 50;
+      hlAmount = 50;
       break;
   }
-  if (!Toucher.GiveBody(-Amount)) return false;
+  if (!Toucher.GiveBody(-hlAmount)) return false;
   if (bTransferInventory) TransferInventoryTo(Toucher);
   GoAwayAndDie();
   return true;

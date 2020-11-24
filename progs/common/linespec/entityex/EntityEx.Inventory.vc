@@ -210,14 +210,14 @@ void RemoveInventory (Inventory Item) {
   }
 
   // find previous item or owner itself, if it's the first item
-  EntityEx Prev = self;
-  while (Prev) {
-    EntityEx n = Prev.Inventory;
+  EntityEx invPrev = self;
+  while (invPrev) {
+    EntityEx n = invPrev.Inventory;
     if (n == Item) break;
-    Prev = n;
+    invPrev = n;
   }
 
-  if (!Prev) {
+  if (!invPrev) {
     if (Item.Owner) {
       if (Item.Owner != self) {
         printwarn("%C:%s: Cannot remove '%C:%s' from inventory of '%C': it is not there!", self, UniqueId, Item, Item.UniqueId, self);
@@ -238,7 +238,7 @@ void RemoveInventory (Inventory Item) {
   } else {
     // unlink and remove owner
     //printdebug("%C:%s: removed '%C:%s' from my inventory", self, UniqueId, Item, Item.UniqueId);
-    Prev.Inventory = Item.Inventory;
+    invPrev.Inventory = Item.Inventory;
     Item.Inventory = none;
     Item.DetachedFromOwner();
     Item.Owner = none;
@@ -587,7 +587,7 @@ void ObtainInventory (EntityEx Other) {
 override void ClearInventory () {
   Inventory Item = Inventory;
   while (Item) {
-    Inventory Next = Item.Inventory;
+    Inventory invNext = Item.Inventory;
     if (!Item.bUndroppable) {
       // IMHO any item that should be kept should not be dropped, not just ammo
       if (Item.bKeepDepleted) {
@@ -602,7 +602,7 @@ override void ClearInventory () {
       A.Slots[2] = 0.0;
       A.Slots[3] = 0.0;
     }
-    Item = Next;
+    Item = invNext;
   }
 
   if (bIsPlayer) {
@@ -985,13 +985,13 @@ override float FindActivePowerupTime (name className) {
   class!Powerup ptyperepl = class!Powerup(GetClassReplacement(ptype));
 
   for (auto Item = self.Inventory; Item; ) {
-    Inventory Next = Item.Inventory;
+    Inventory invNext = Item.Inventory;
     Powerup pup = Powerup(Item);
     if (pup) {
       if (ptyperepl && pup.Class == ptyperepl) return fmax(0, pup.EffectTime);
       if (pup.Class == ptype) return fmax(0, pup.EffectTime);
     }
-    Item = Next;
+    Item = invNext;
   }
 
   return 0;

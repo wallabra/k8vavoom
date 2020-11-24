@@ -85,17 +85,18 @@ const int
   ST_MAXAMMO2X = ST_BGX+314,
   ST_MAXAMMO2Y = ST_BGY+23,
   ST_MAXAMMO3X = ST_BGX+314,
-  ST_MAXAMMO3Y = ST_BGY+17,
+  ST_MAXAMMO3Y = ST_BGY+17;
 
   // fullscreen widgets
-  ST_TDHEALTHX = 120,
-  ST_TDHEALTHY = 460,
+//const int
+  //ST_TDHEALTHX = 120,
+  //ST_TDHEALTHY = 460,
 
-  ST_TDARMORX = 280,
-  ST_TDARMORY = 460,
+  //ST_TDARMORX = 280,
+  //ST_TDARMORY = 460,
 
-  ST_TDAMMOX = 620,
-  ST_TDAMMOY = 460;
+  //ST_TDAMMOX = 620,
+  //ST_TDAMMOY = 460;
 
 
 // face widget macros

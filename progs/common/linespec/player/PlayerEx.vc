@@ -710,17 +710,17 @@ override void PostfixViewHeight () {
 //
 //==========================================================================
 void CalcHeight (float deltaTime) {
-  float bob = GetCvarF('movebob');
+  float mvbobbob = GetCvarF('movebob');
 
-  if (bob > 0) {
+  if (mvbobbob > 0) {
     // regular movement bobbing
     // (needs to be calculated for gun swing even if not on ground)
     if (MO.bFly && !onground) {
       Bob = 0.5;
     } else {
-      if (bob > 1) bob = 1;
+      if (mvbobbob > 1) mvbobbob = 1;
       Bob = MO.Velocity.x*MO.Velocity.x+MO.Velocity.y*MO.Velocity.y;
-      Bob /= (1.0/bob)*35.0*35.0;
+      Bob /= (1.0/mvbobbob)*35.0*35.0;
       if (Bob > MAXBOB) Bob = MAXBOB;
     }
   }
@@ -732,7 +732,7 @@ void CalcHeight (float deltaTime) {
   }
 
   float angle = 180.0*35.0/10.0*Level.XLevel.Time;
-  bob = Bob/2.0*sin(angle);
+  mvbobbob = Bob/2.0*sin(angle);
 
   // move viewheight
   if (PlayerState == PST_LIVE) {
@@ -755,7 +755,7 @@ void CalcHeight (float deltaTime) {
       if (!DeltaViewHeight) DeltaViewHeight = 0.00001;
     }
   }
-  ViewOrg.z = MO.Origin.z+ViewHeight+bob;
+  ViewOrg.z = MO.Origin.z+ViewHeight+mvbobbob;
   SaveViewOrgFixInfo();
 
   SanitizeViewOrgZ();
@@ -1691,8 +1691,8 @@ void MovePsprites (float deltaTime) {
 
   if (MO && wpn && !wpn.bDontBob && !wpn.bBobDisabled) {
     // bob the weapon based on movement speed
-    float bob = fmin(GetCvarF('weaponbob'), 1.0);
-    if (bob > 0) {
+    float mvbobbob = fmin(GetCvarF('weaponbob'), 1.0);
+    if (mvbobbob > 0) {
       // regular movement bobbing (and don't allow too big bobbing too)
       float wbob = fclamp(MO.Velocity.x*MO.Velocity.x+MO.Velocity.y*MO.Velocity.y, -370492.0/2.5, +370492.0/2.5);
       //if (wbob) printdebug("wbob=%s", wbob);
@@ -1711,7 +1711,7 @@ void MovePsprites (float deltaTime) {
       } else
       */
       {
-        wbob /= (3.0/bob)*35.0*35.0;
+        wbob /= (3.0/mvbobbob)*35.0*35.0;
         if (wbob > MAXBOB) wbob = MAXBOB;
         float angle = AngleMod360(180.0*MO.XLevel.Time);
         //ViewStates[PS_WEAPON].SX = 1.0+wbob*cos(angle);

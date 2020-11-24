@@ -311,10 +311,10 @@ final void DumpNodes () {
   EntityEx mo = EntityEx(player.MO);
   if (!mo || !pather) return;
   printmsg(PMSG.BotDev, "=== NODES FOR '%s' ===", player.PlayerName);
-  foreach (int nidx, BotPathNode node; pather.nodes) {
-    if (!node) continue;
-    printmsg(PMSG.BotDev, " node #%s (%s) has #%d transitions (passable=%B; door=%B)", nidx, node.index, node.exits.length, node.passable, node.door);
-    foreach (int tridx, const ref auto tr; node.exits) {
+  foreach (int nidx, BotPathNode ptnode; pather.nodes) {
+    if (!ptnode) continue;
+    printmsg(PMSG.BotDev, " node #%s (%s) has #%d transitions (passable=%B; door=%B)", nidx, ptnode.index, ptnode.exits.length, ptnode.passable, ptnode.door);
+    foreach (int tridx, const ref auto tr; ptnode.exits) {
       printmsg(PMSG.BotDev, "  transition #%d: dest=%s; dist=%s; cost=%s; jump=%B; use=%B", tridx, tr.subnum, tr.dist, tr.moveCost, tr.needJump, tr.needUse);
     }
   }
@@ -346,8 +346,8 @@ final void UseCurrentPath () {
   ResetCurrPath();
   if (!pather) return;
   foreach (auto pidx; 0..pather.PathArrayLength) {
-    auto node = BotPathNode(pather.PathArrayNode(pidx));
-    currPath[$] = node.index;
+    auto ptnode = BotPathNode(pather.PathArrayNode(pidx));
+    currPath[$] = ptnode.index;
   }
   if (currPath.length) {
     if (bot_developer_messages_planpath) {
@@ -1759,27 +1759,27 @@ final bool FollowPath () {
 
       if (bot_run_to_subsector_center) {
 #ifdef BOT_PATHER_OLD
-        BotPathNode node = ssnodes[currPath[currDestNodeIdx+1]];
+        BotPathNode ptnode = ssnodes[currPath[currDestNodeIdx+1]];
 #else
-        BotPathNode node = pather.nodes[currPath[currDestNodeIdx+1]];
+        BotPathNode ptnode = pather.nodes[currPath[currDestNodeIdx+1]];
 #endif
 
-        float dist = (botmo.Origin-node.Origin).length2D;
+        float dist = (botmo.Origin-ptnode.Origin).length2D;
         bool canReach = botmo.TracePath(pangle, dist, out pi, allowJump:true, allowDrop:true, ignoreMonsters:true);
         if (!canReach && pi.maxdist >= dist*0.5) canReach = true;
 
         if (!canReach) {
           // cannot reach, try to get to current subsector center
 #ifdef BOT_PATHER_OLD
-          node = ssnodes[currPath[currDestNodeIdx]];
+          ptnode = ssnodes[currPath[currDestNodeIdx]];
 #else
-          node = pather.nodes[currPath[currDestNodeIdx]];
+          ptnode = pather.nodes[currPath[currDestNodeIdx]];
 #endif
-          dist = (botmo.Origin-node.Origin).length2D;
+          dist = (botmo.Origin-ptnode.Origin).length2D;
           if (dist > botmo.Radius*6) {
             if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "bot '%s' is going to center of subsector #%d for #%s (%s left)", player.PlayerName, ssnum, currTime-lastSSChangeTime, dist-botmo.Radius*6);
-            float angle = AngleTo(node.Origin);
-            if (fabs(AngleDiff(GetAngle(), angle)) > 25) SetAngle(angle);
+            float ptangle = AngleTo(ptnode.Origin);
+            if (fabs(AngleDiff(GetAngle(), ptangle)) > 25) SetAngle(ptangle);
                  if (dist <= 64+32) forwardmove = 32;
             else if (dist <= 128) forwardmove = FORWARDWALK;
             else forwardmove = FORWARDRUN;
@@ -1794,16 +1794,16 @@ final bool FollowPath () {
       ++currDestNodeIdx;
     } else {
 #ifdef BOT_PATHER_OLD
-      BotPathNode node = ssnodes[currPath[currDestNodeIdx]];
+      BotPathNode ptnode = ssnodes[currPath[currDestNodeIdx]];
 #else
-      BotPathNode node = pather.nodes[currPath[currDestNodeIdx]];
+      BotPathNode ptnode = pather.nodes[currPath[currDestNodeIdx]];
 #endif
       // bot is not in a current node, setup timer
       if (currAlienNodeTime) {
         // more than 3 seconds away from our destination node?
         if (currTime-currAlienNodeTime > 3) {
           // yes, replan path
-          if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "bot '%s' is staying away from its destination ss #%s (at #%s) for #%s, replanning", player.PlayerName, node.index, ssnum, currTime-currAlienNodeTime);
+          if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "bot '%s' is staying away from its destination ss #%s (at #%s) for #%s, replanning", player.PlayerName, ptnode.index, ssnum, currTime-currAlienNodeTime);
           if (!HavePathToSS(&botmo.XLevel.Subsectors[currPath[$-1]])) {
             // alas, no path
             if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "bot '%s' cannot replan its path to #%d from #%s", player.PlayerName, currPath[$-1], ssnum);
@@ -1819,10 +1819,10 @@ final bool FollowPath () {
         currAlienNodeTime = currTime;
       }
 
-      if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "bot '%s' is going to subsector #%d (from #%d)", player.PlayerName, node.index, ssnum);
-      float angle = AngleTo(node.Origin);
-      if (fabs(AngleDiff(GetAngle(), angle)) > 25) SetAngle(angle);
-      float dist = (botmo.Origin-node.Origin).length2D;
+      if (bot_developer_messages_path) printmsg(PMSG.BotDevPath, "bot '%s' is going to subsector #%d (from #%d)", player.PlayerName, ptnode.index, ssnum);
+      float ptangle = AngleTo(ptnode.Origin);
+      if (fabs(AngleDiff(GetAngle(), ptangle)) > 25) SetAngle(ptangle);
+      float dist = (botmo.Origin-ptnode.Origin).length2D;
            if (dist <= 64+32) forwardmove = FORWARDWALK;
       else forwardmove = FORWARDRUN;
       botmo.TracePath(pangle, dist, out pi, allowJump:true, allowDrop:true);

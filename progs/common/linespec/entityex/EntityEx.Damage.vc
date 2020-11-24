@@ -1023,9 +1023,9 @@ void Died (EntityEx source, EntityEx inflictor) {
 
   // notify actor's items
   for (Item = Inventory; Item; ) {
-    Inventory Next = Item.Inventory;
+    Inventory invNext = Item.Inventory;
     Item.OwnerDied();
-    Item = Next;
+    Item = invNext;
   }
 
   if (source) {
