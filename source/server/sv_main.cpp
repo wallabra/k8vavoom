@@ -36,6 +36,8 @@
 VCvarB r_models("r_models", true, "Allow 3d models?", 0/*CVAR_Archive*/);
 #endif
 
+extern VCvarI sv_use_timefrac;
+
 
 // arbitrary number
 #define INITIAL_TICK_DELAY  (2)
@@ -819,10 +821,14 @@ static void SV_Ticker () {
 
   //saved_frametime = host_frametime;
 
-  if (host_frametime < max_fps_cap_double) {
-    host_framefrac += host_frametime;
-    host_frametime = 0;
-    return;
+  const int acctype = sv_use_timefrac.asInt();
+
+  if (acctype > 0 && acctype <= 2) {
+    if (host_frametime < max_fps_cap_double) {
+      host_framefrac += host_frametime;
+      host_frametime = 0;
+      return;
+    }
   }
 
   int scap = host_max_skip_frames;
@@ -864,7 +870,12 @@ static void SV_Ticker () {
     // do main actions
     double frametimeleft = host_frametime;
     int lastTick = GLevel->TicTime;
-    while (!sv.intermission && !completed && frametimeleft >= max_fps_cap_double) {
+    while (!sv.intermission && !completed) {
+      if (acctype > 0 && acctype <= 2) {
+        if (frametimeleft < max_fps_cap_double) break;
+      } else {
+        if (frametimeleft <= 0.0) break;
+      }
       if (GLevel->TicTime != lastTick) {
         lastTick = GLevel->TicTime;
         VObject::CollectGarbage();
@@ -937,9 +948,15 @@ static void SV_Ticker () {
     // remember fractional frame time
     host_frametime = saved_frametime;
     if (!wasPaused) {
-      if (!sv.intermission && !completed && frametimeleft > 0 && frametimeleft < max_fps_cap_double) {
-        host_framefrac += frametimeleft;
-        host_frametime -= frametimeleft;
+      if (acctype > 0 && acctype <= 2) {
+        if (!sv.intermission && !completed && frametimeleft > 0 && frametimeleft < max_fps_cap_double) {
+          if (acctype == 1) {
+            host_framefrac += frametimeleft;
+          } else {
+            host_framefrac = frametimeleft;
+          }
+          host_frametime -= frametimeleft;
+        }
       }
     }
   }

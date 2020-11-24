@@ -128,7 +128,7 @@ VCvarI host_max_skip_frames("dbg_host_max_skip_frames", "12", "Process no more t
 static VCvarB host_show_skip_limit("dbg_host_show_skip_limit", false, "Show skipframe limit hits? (DEBUG CVAR, DON'T USE!)", CVAR_PreInit);
 static VCvarB host_show_skip_frames("dbg_host_show_skip_frames", false, "Show skipframe hits? (DEBUG CVAR, DON'T USE!)", CVAR_PreInit);
 
-static double last_time; // last time `FilterTime()` was returned `true`
+static double last_time = 0.0; // last time `FilterTime()` was returned `true`
 
 static VCvarB randomclass("RandomClass", false, "Random player class?"); // checkparm of -randclass
 VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?", 0/*CVAR_PreInit*/); // checkparm of -respawn
@@ -153,6 +153,8 @@ static VCvarS Language("language", "en", "Game language.", /*CVAR_Archive|CVAR_P
 static VCvarB cap_framerate("cl_cap_framerate", true, "Cap framerate for non-networking games?", CVAR_Archive);
 static VCvarI cl_framerate("cl_framerate", "0", "Framerate cap for client rendering.", CVAR_Archive);
 static VCvarI sv_framerate("sv_framerate", "70", "Framerate cap for dedicated server.", CVAR_Archive);
+
+VCvarI sv_use_timefrac("sv_use_timefrac", "0", "Accumulate unused frame times? This *may* give slightly stable capped framerates, but it usually don't. (0:none;1:full;2:oneframe)", CVAR_Archive);
 
 // this is hack for my GPU
 #ifdef CLIENT
@@ -511,6 +513,7 @@ static bool FilterTime () {
   last_time = curr_time;
   //if (host_framefrac >= max_fps_cap_double*0.5) GCon->Logf("FRAC=%g", host_framefrac);
 
+  //GCon->Logf(NAME_Debug, "host_framefrac=%g; timeDelta=%g", host_framefrac, timeDelta);
   host_frametime = timeDelta;
   host_framefrac = 0;
 

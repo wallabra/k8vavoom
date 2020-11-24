@@ -389,8 +389,8 @@ void VBasePlayer::AdvanceViewStates (float deltaTime) {
   int dfchecked = -1;
   for (unsigned i = 0; i < NUMPSPRITES; ++i) {
     VViewState &St = ViewStates[i];
-    // a null state means not active
-    // a -1 tic count never changes
+    // null state means not active
+    // -1 tic count never changes
     if (!St.State) continue;
     if (St.StateTime < 0.0f) { St.StateTime = -1.0f; continue; } // force `-1` here just in case
     if (dfchecked < 0) dfchecked = (eventCheckDoubleFiringSpeed() ? 1 : 0); // call VM only once
