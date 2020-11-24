@@ -238,6 +238,9 @@ void Host_Init () {
     #endif
   }
 
+  if (Sys_TimeMinPeriodMS()) GCon->Logf(NAME_Init, "timeBeginPeriod minimum: %d", Sys_TimeMinPeriodMS());
+  if (Sys_TimeMaxPeriodMS()) GCon->Logf(NAME_Init, "timeBeginPeriod maximum: %d", Sys_TimeMaxPeriodMS());
+
   if (cli_AsmDump > 0) VMemberBase::doAsmDump = true;
 
   if (cli_SetDeveloperDefine > 0) VMemberBase::StaticAddDefine("K8_DEVELOPER");
