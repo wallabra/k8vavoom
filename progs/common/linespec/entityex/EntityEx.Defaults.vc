@@ -41,7 +41,7 @@ defaultproperties {
   BounceFactor = 0.7;
   WallBounceFactor = 0.75;
   RDFactor = 1.0;
-  MeleeRange = 44.0;  //  MELEERANGE(64.0) - 20.0
+  MeleeRange = 44.0;  //  DEFAULT_MELEERANGE(64.0) - 20.0
   MissileHeight = 32.0;
   WoundHealth = 6;
   JumpVelZ = 9.5;

@@ -225,8 +225,8 @@ final void SetSprite (class!EntityEx SrcClass) {
   A_FaceTarget();
   TAVec aimAngles = Angles;
   aimAngles.yaw = AngleMod360(aimAngles.yaw+(Random()-Random())*45.0/8.0);
-  EntityEx AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
-  LineAttack(dir, MELEERANGE, damage, BulletPuff, DmgType:'Fist');
+  EntityEx AimTarget = AimLineAttack(dir, aimAngles, DEFAULT_MELEERANGE);
+  LineAttack(dir, DEFAULT_MELEERANGE, damage, BulletPuff, DmgType:'Fist');
 
   // turn to face target
   if (AimTarget) {
@@ -253,8 +253,8 @@ final void SetSprite (class!EntityEx SrcClass) {
   A_FaceTarget();
   TAVec aimAngles = Angles;
   aimAngles.yaw = AngleMod360(aimAngles.yaw+(Random()-Random())*45.0/8.0);
-  EntityEx AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
-  LineAttack(dir, MELEERANGE, damage, BulletPuff, DmgType:'BerserkFist');
+  EntityEx AimTarget = AimLineAttack(dir, aimAngles, DEFAULT_MELEERANGE);
+  LineAttack(dir, DEFAULT_MELEERANGE, damage, BulletPuff, DmgType:'BerserkFist');
 
   // turn to face target
   if (AimTarget) {

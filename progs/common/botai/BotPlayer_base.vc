@@ -55,7 +55,7 @@ const float DARK_DIST         (256*FRACUNIT)  //Distance that bot can see enemie
 const float WHATS_DARK          64        //light value thats classed as dark.
 const float MAX_MONSTER_TARGET_DIST   (1024*FRACUNIT) //Too high can slow down the performance, see P_mobj.c*/
 const float ENEMY_SCAN_FOV = 120.0;
-/*const float MAXMOVEHEIGHT       (32*FRACUNIT) //MAXSTEPMOVE but with jumping counted in.
+/*const float DEFAULT_MAXMOVEHEIGHT       (32*FRACUNIT) //MAXSTEPMOVE but with jumping counted in.
 const float GETINCOMBAT         (512*FRACUNIT)  //Max distance to item. if it's due to be icked up in a combat situation.*/
 const float SHOOTFOV = 60.0;
 /*const float MAXROAM           (5*TICRATE)   //When this time is elapsed the bot will roam after something else.*/
@@ -1198,10 +1198,10 @@ void PerformLastCheckActions (const ref EntityEx::PathInfo pi) {
   if (pi.needJump && !bot_no_jump && player.IsJumpEnabled()) player.Buttons |= BT_JUMP;
 #endif
   if (pi.needUse) {
-    //EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
+    //EntityEx(player.MO).UseLines(Player::DEFAULT_USERANGE, Player::DEFAULT_USETHINGRANGE, '*usefail');
     float ur, utr;
     player.GetUseRanges(out ur, out utr);
-    EntityEx(player.MO).UseLines(/*Player::USERANGE*/ur, /*Player::USETHINGRANGE*/utr, '', // don't produce any sound on fail
+    EntityEx(player.MO).UseLines(/*Player::DEFAULT_USERANGE*/ur, /*Player::DEFAULT_USETHINGRANGE*/utr, '', // don't produce any sound on fail
       &checkLineUse, &onLineUsed, &checkThingUse, &onThingUsed);
   }
 }
@@ -1399,7 +1399,7 @@ void BotAimProjectile (float dist, bool right, float an) {
 //==========================================================================
 void BotAimInstant (float dist, bool right, float an) {
   // [CW]
-  if (info.accuracy > bsk_verypoor && info.accuracy <= bsk_high && dist <= EntityEx::MELEERANGE*2.0) {
+  if (info.accuracy > bsk_verypoor && info.accuracy <= bsk_high && dist <= EntityEx::DEFAULT_MELEERANGE*2.0) {
     SetAngle(an);
     return;
   }

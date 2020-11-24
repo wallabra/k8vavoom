@@ -241,9 +241,9 @@ int wheelY = 4;
 int wheelW;
 int wheelH;
 
-enum WheelRadius = 6;
-enum WheelW = 8;
-enum WheelH = 8;
+enum DefWheelRadius = 6;
+enum DefWheelW = 8;
+enum DefWheelH = 8;
 enum StripeMax = 11;
 
 float Time;
@@ -262,8 +262,8 @@ override void OnCreate () {
 
   SetFont('consolefont');
 
-  wheelW = int(CalcHexColorPatternWidth(WheelRadius, WheelW, WheelH));
-  wheelH = int(CalcHexColorPatternHeight(WheelRadius, WheelW, WheelH));
+  wheelW = int(CalcHexColorPatternWidth(DefWheelRadius, DefWheelW, DefWheelH));
+  wheelH = int(CalcHexColorPatternHeight(DefWheelRadius, DefWheelW, DefWheelH));
 
   int ey = wheelY+wheelH+8;
   ey += 3*FontHeight(); // rgb
@@ -387,18 +387,18 @@ override void OnDraw () {
   ShadeRect(0, 0, Width, Height, /*GetCvarF('menu_darkening')*/0.8);
   DrawRect(0, 0, Width, Height, RGB(255, 255, 255));
 
-  DrawHexColorPattern(wheelX, wheelY, WheelRadius, WheelW, WheelH);
+  DrawHexColorPattern(wheelX, wheelY, DefWheelRadius, DefWheelW, DefWheelH);
 
   int phase = int(Time*1000/400)%2;
   if (phase) {
     int hpx, hpy;
-    FindHexColorCoords(out hpx, out hpy, WheelRadius, h, s);
+    FindHexColorCoords(out hpx, out hpy, DefWheelRadius, h, s);
     //printdebug("hpx=%s; hpy=%s", hpx, hpy);
 
     float hx, hy;
-    CalcHexColorPatternHexCoordsAt(out hx, out hy, hpx, hpy, wheelX, wheelY, WheelRadius, WheelW, WheelH);
+    CalcHexColorPatternHexCoordsAt(out hx, out hy, hpx, hpy, wheelX, wheelY, DefWheelRadius, DefWheelW, DefWheelH);
     //printdebug("hx=%s; hy=%s (size=%sx%s)", hx, hy, Width, Height);
-    ShadeHex(hx, hy, WheelW, WheelH, 0.6);
+    ShadeHex(hx, hy, DefWheelW, DefWheelH, 0.6);
   }
 
   // draw vertical color stripes
@@ -452,7 +452,7 @@ override void OnDraw () {
 //
 //==========================================================================
 void UpdateColorTo (int hpx, int hpy) {
-  int color = GetHexColorPatternColorAt(hpx, hpy, WheelRadius);
+  int color = GetHexColorPatternColorAt(hpx, hpy, DefWheelRadius);
   if (!color) {
     //printdebug("SHIT! hpx=%s; hpy=%s", hpx, hpy);
     return;
@@ -503,7 +503,7 @@ override bool OnEvent (ref event_t evt) {
       }
       // color hive
       int hpx, hpy;
-      if (CalcHexColorPatternCoords(out hpx, out hpy, evt.x, evt.y, wheelX, wheelY, WheelRadius, WheelW, WheelH)) {
+      if (CalcHexColorPatternCoords(out hpx, out hpy, evt.x, evt.y, wheelX, wheelY, DefWheelRadius, DefWheelW, DefWheelH)) {
         UpdateColorTo(hpx, hpy);
         return true;
       }
@@ -546,8 +546,8 @@ override bool OnEvent (ref event_t evt) {
     }
     if (dx || dy) {
       int hpx, hpy;
-      FindHexColorCoords(out hpx, out hpy, WheelRadius, h, s);
-      MoveHexCoords(ref hpx, ref hpy, dx, dy, WheelRadius);
+      FindHexColorCoords(out hpx, out hpy, DefWheelRadius, h, s);
+      MoveHexCoords(ref hpx, ref hpy, dx, dy, DefWheelRadius);
       UpdateColorTo(hpx, hpy);
       return true;
     }

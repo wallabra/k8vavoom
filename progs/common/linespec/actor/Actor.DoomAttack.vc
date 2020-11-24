@@ -971,8 +971,8 @@ final void BrainishExplosion (TVec org) {
     aimAng.yaw = AngleMod360(aimAng.yaw+(Random()-Random())*45.0/8.0);
 
     // use meleerange + 1 se the puff doesn't skip the flash
-    EntityEx AimTarget = AimLineAttack(out dir, aimAng, MELEERANGE+0.00001);
-    LineAttack(dir, MELEERANGE+0.00001, damage, pufftype, DmgType:'Chainsaw');
+    EntityEx AimTarget = AimLineAttack(out dir, aimAng, DEFAULT_MELEERANGE+0.00001);
+    LineAttack(dir, DEFAULT_MELEERANGE+0.00001, damage, pufftype, DmgType:'Chainsaw');
 
     if (!AimTarget) {
       PlaySound(fullsound, CHAN_WEAPON);

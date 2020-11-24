@@ -25,10 +25,10 @@
 //**************************************************************************
 //#define DEBUG_TRACE_PATH_FAKEOPEN
 
-const float MAXSTEPHEIGHT = 24.0;
-const float MAXJUMPHEIGHT = 56.0;
-const float MAXMOVEHEIGHT = MAXJUMPHEIGHT;
-const float MAXDROPHEIGHT = 384.0;
+const float DEFAULT_MAXSTEPHEIGHT = 24.0;
+const float DEFAULT_MAXJUMPHEIGHT = 56.0;
+const float DEFAULT_MAXMOVEHEIGHT = DEFAULT_MAXJUMPHEIGHT;
+const float DEFAULT_MAXDROPHEIGHT = 384.0;
 const float TRACE_MAX_JUMP_DISTANCE = 64.0;
 
 
@@ -380,7 +380,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
       line_t *ld = in->line; // this linedef
       TVec hit_point = srcOrigin+(bottracerange*in->frac)*bottracedir;
 
-      if (currDist <= PlayerPawn::USERANGE && (in->line->SpacFlags&(SPAC_UseThrough|SPAC_Use))) {
+      if (currDist <= PlayerPawn::DEFAULT_USERANGE && (in->line->SpacFlags&(SPAC_UseThrough|SPAC_Use))) {
         pi.needUse = true;
       }
 
@@ -440,8 +440,8 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
 
       // no cliff jumping unless we're going after something
       if (!distEnt && !allowDrop) {
-        if (open->lowfloor-open->bottom >= MAXMOVEHEIGHT &&
-            open->lowfloor-open->bottom <= MAXDROPHEIGHT)
+        if (open->lowfloor-open->bottom >= DEFAULT_MAXMOVEHEIGHT &&
+            open->lowfloor-open->bottom <= DEFAULT_MAXDROPHEIGHT)
         {
           CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, currDist, ignoreMonsters);
           return false;
@@ -452,7 +452,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
       float diffheight = open->bottom-open->lowfloor;
 
       if (diffheight > 0.0) {
-        if (diffheight >= MAXSTEPHEIGHT && diffheight <= MAXJUMPHEIGHT) {
+        if (diffheight >= DEFAULT_MAXSTEPHEIGHT && diffheight <= DEFAULT_MAXJUMPHEIGHT) {
           if (allowJump) {
             if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
             pi.maxdist = currDist;
@@ -461,7 +461,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
           CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius, ignoreMonsters);
           return false;
         }
-        if (diffheight >= MAXJUMPHEIGHT) {
+        if (diffheight >= DEFAULT_MAXJUMPHEIGHT) {
           CalcBestDistBack(srcOrigin, bottracedir, ref pi.maxdist, currDist-Radius, ignoreMonsters);
           return false;
         }
@@ -481,7 +481,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
 
       if (th == distEnt) {
         // jump to reach something
-        if (dheight >= MAXSTEPHEIGHT && dheight <= MAXJUMPHEIGHT) {
+        if (dheight >= DEFAULT_MAXSTEPHEIGHT && dheight <= DEFAULT_MAXJUMPHEIGHT) {
           if (allowJump) {
             if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
           }
@@ -498,7 +498,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
         }
         if (!doIgnore) {
           // [FB] Jump to avoid something
-          if (dheight >= MAXSTEPHEIGHT && dheight <= MAXJUMPHEIGHT) {
+          if (dheight >= DEFAULT_MAXSTEPHEIGHT && dheight <= DEFAULT_MAXJUMPHEIGHT) {
             if (allowJump) {
               if (currDist <= TRACE_MAX_JUMP_DISTANCE) pi.needJump = true;
               pi.maxdist = currDist;

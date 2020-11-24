@@ -84,7 +84,7 @@ final bool CheckMeleeRange2 () {
   if (!Target) return false;
 
   float dist = DistTo(Target);
-  if (dist >= MELEERANGE*2.0 || dist < MELEERANGE) return false;
+  if (dist >= DEFAULT_MELEERANGE*2.0 || dist < DEFAULT_MELEERANGE) return false;
 
   // enemy is higher than the attacker?
   if (Target.Origin.z > Origin.z+Height) return false;
@@ -254,13 +254,13 @@ final bool LookForMonsters2 (float fov, float minseedist, float maxseedist) {
         if (an > 90.0 && an < 270.0) {
           float dist = DistTo(mo);
           // if real close, react anyway
-          if (dist > MELEERANGE) continue; // behind back
+          if (dist > DEFAULT_MELEERANGE) continue; // behind back
         }
         */
         if (!CheckFovTo(mo, fov)) {
           //float dist = DistTo(mo);
           // if real close, react anyway
-          if (distSq > MELEERANGE*MELEERANGE) continue; // behind back
+          if (distSq > DEFAULT_MELEERANGE*DEFAULT_MELEERANGE) continue; // behind back
         }
       }
       Target = mo;
@@ -376,19 +376,19 @@ final bool LookForPlayers (float fov, optional float minseedist, optional float 
       if (an > 90.0 && an < 270.0) {
         float dist = DistTo(P.MO);
         // if real close, react anyway
-        if (dist > MELEERANGE) continue; // behind back
+        if (dist > DEFAULT_MELEERANGE) continue; // behind back
       }
       */
       if (!CheckFovTo(P.MO, fov)) {
         //float dist = DistTo(P.MO);
         // if real close, react anyway
-        if (distSq > MELEERANGE*MELEERANGE) continue; // behind back
+        if (distSq > DEFAULT_MELEERANGE*DEFAULT_MELEERANGE) continue; // behind back
       }
     }
 
     if ((EntityEx(P.MO).bShadow && !Level.CompatInvisibility) || EntityEx(P.MO).bGhost) {
       // player is invisible
-      if (DistTo(P.MO) > 2.0*MELEERANGE && Length(P.MO.Velocity) < 5.0*35.0) {
+      if (DistTo(P.MO) > 2.0*DEFAULT_MELEERANGE && Length(P.MO.Velocity) < 5.0*35.0) {
         // player is sneaking - can't detect
         //return false;
         continue;
@@ -515,13 +515,13 @@ final bool LookForTID (float fov, float minseedist, float maxseedist) {
         if (an > 90.0 && an < 270.0) {
           float dist = DistTo(Other);
           // if real close, react anyway
-          if (dist > MELEERANGE) continue; // behind back
+          if (dist > DEFAULT_MELEERANGE) continue; // behind back
         }
         */
         if (!CheckFovTo(Other, fov)) {
           //float dist = DistTo(Other);
           // if real close, react anyway
-          if (distSq > MELEERANGE*MELEERANGE) continue; // behind back
+          if (distSq > DEFAULT_MELEERANGE*DEFAULT_MELEERANGE) continue; // behind back
         }
       }
     }
@@ -909,9 +909,9 @@ final void NewChaseDirTo (TVec destination, optional EntityEx Target) {
       // Enemy target is alive
       if ((bAvoidMelee || GetCvar('monster_backing')) && MissileState &&
           /*actor->type != MT_SKULL &&*/
-          ((!Target.MissileState && dist < MELEERANGE*2.0) ||
+          ((!Target.MissileState && dist < DEFAULT_MELEERANGE*2.0) ||
            (Target.Player && PlayerEx(Target.Player).ReadyWeapon && PlayerEx(Target.Player).ReadyWeapon.bBotMelee &&
-            dist < MELEERANGE*3.0)))
+            dist < DEFAULT_MELEERANGE*3.0)))
       {
         // Back away from melee attacker
         strafecount = P_Random()&15;

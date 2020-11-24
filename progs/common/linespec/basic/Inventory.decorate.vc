@@ -351,7 +351,7 @@
 
   if (!bIsPlayer) return;
   if (Range < 0) return; //k8: sanity check
-  if (!Range) Range = MELEERANGE; //SAWRANGE; // use saw range instead of melee range here, for puffs
+  if (!Range) Range = DEFAULT_MELEERANGE; //SAWRANGE; // use saw range instead of melee range here, for puffs
 
   bool UseAmmo = (specified_Flags ? !!(Flags&CPF_USEAMMO) : false);
   if (!PuffType) PuffType = BulletPuff;

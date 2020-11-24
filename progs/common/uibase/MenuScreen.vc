@@ -104,7 +104,7 @@ name ClearMenusSound;
 
 //int currentY;
 
-HelpText helpText;
+HelpText sHelpText;
 
 int WidthThreshold = 380;
 
@@ -135,8 +135,8 @@ final static bool IsMultiplayerEnabled () {
 //==========================================================================
 override void OnDestroy () {
   //printdebug("%C: OnDestroy", self);
-  //if (helpText) printdebug("%C: destroying helpText(%s)", self, helpText.UniqueId);
-  delete helpText;
+  //if (sHelpText) printdebug("%C: destroying sHelpText(%s)", self, sHelpText.UniqueId);
+  delete sHelpText;
   ::OnDestroy();
 }
 
@@ -160,13 +160,13 @@ override void OnCreate () {
 //
 //==========================================================================
 override void OnVisibilityChanged (bool bNewVisibility) {
-  if (helpText) {
+  if (sHelpText) {
     if (bNewVisibility) {
-      //printdebug("raising help text (%s)", helpText.UniqueId);
-      helpText.Show();
-      //helpText.Raise();
+      //printdebug("raising help text (%s)", sHelpText.UniqueId);
+      sHelpText.Show();
+      //sHelpText.Raise();
     } else {
-      helpText.Hide();
+      sHelpText.Hide();
     }
   }
   ::OnVisibilityChanged(bNewVisibility);
@@ -228,10 +228,10 @@ void ShowAndActivate () {
   Show();
   Raise();
   SetFocus();
-  if (helpText) {
-    //printdebug("showing help text (%s)", helpText.UniqueId);
-    helpText.Show();
-    //helpText.Raise();
+  if (sHelpText) {
+    //printdebug("showing help text (%s)", sHelpText.UniqueId);
+    sHelpText.Show();
+    //sHelpText.Raise();
   }
 }
 
@@ -352,9 +352,9 @@ void CreateMenuFromDef (MenuDefinition mdef) {
     if (cc) SelectorType = cc;
   }
 
-  if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
-  helpText.OnTop = true;
-  helpText.text = "";
+  if (!sHelpText) sHelpText = GetRootWidget().NewChild(HelpText);
+  sHelpText.OnTop = true;
+  sHelpText.text = "";
   CreateTitle();
   CreateBackButton();
 
@@ -370,15 +370,15 @@ void CreateMenuFromDef (MenuDefinition mdef) {
 //==========================================================================
 void CreateMenu () {
   if (!defFileName || defFileName == " <custom> ") {
-    if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
+    if (!sHelpText) sHelpText = GetRootWidget().NewChild(HelpText);
     if (defFileName == " <custom> ") {
       Width = 520;
       Height = 260;
       ChoicesStartX = 200;
       SelectorType = MenuSelector_SmallRight;
     }
-    helpText.OnTop = true;
-    helpText.text = "";
+    sHelpText.OnTop = true;
+    sHelpText.text = "";
     CreateTitle();
     CreateBackButton();
     CreateChoices();
@@ -903,12 +903,12 @@ final int GetItemYH (int idx) {
 final void FixTopIndex () {
   if (Items.length == 0) return;
   if (CursorPos < 0) CursorPos = Items.length-1; else if (CursorPos >= Items.length) CursorPos = 0;
-  if (helpText) {
-    helpText.text = Items[CursorPos].getHelp();
-    helpText.Raise();
+  if (sHelpText) {
+    sHelpText.text = Items[CursorPos].getHelp();
+    sHelpText.Raise();
   }
-  if (Items.length == 1) { if (helpText) helpText.atTop = false; CursorPos = 0; GetItemContainer().ChildrenOfsY = 0; return; }
-  if (!MenuScrollable) { if (helpText) helpText.atTop = false; GetItemContainer().ChildrenOfsY = 0; return; }
+  if (Items.length == 1) { if (sHelpText) sHelpText.atTop = false; CursorPos = 0; GetItemContainer().ChildrenOfsY = 0; return; }
+  if (!MenuScrollable) { if (sHelpText) sHelpText.atTop = false; GetItemContainer().ChildrenOfsY = 0; return; }
   // check if this is first selectable item
   bool isFirstItem = true;
   foreach (auto index, auto item; Items) {
@@ -917,20 +917,20 @@ final void FixTopIndex () {
     isFirstItem = index == CursorPos;
     break;
   }
-  if (isFirstItem) { if (helpText) helpText.atTop = false; GetItemContainer().ChildrenOfsY = 0; return; }
+  if (isFirstItem) { if (sHelpText) sHelpText.atTop = false; GetItemContainer().ChildrenOfsY = 0; return; }
   // make sure that cursor is visible
   //int th = CalcTotalHeight();
   int ys = GetItemYS(CursorPos);
   int ye = GetItemYE(CursorPos);
-  //printdebug("000: Menu <%C>; ofs=%d; ys=%d; ye=%d; height=%d; hh=%d; bs=%d; OriginY=%s", Class, GetItemContainer().ChildrenOfsY, ys, ye, Height, helpText.Height, GetVirtualHeight()-helpText.Height-4, Y2Virtual(ye));
+  //printdebug("000: Menu <%C>; ofs=%d; ys=%d; ye=%d; height=%d; hh=%d; bs=%d; OriginY=%s", Class, GetItemContainer().ChildrenOfsY, ys, ye, Height, sHelpText.Height, GetVirtualHeight()-sHelpText.Height-4, Y2Virtual(ye));
   int csy = GetChoicesStartY();
        if (ys+GetItemContainer().ChildrenOfsY < csy) GetItemContainer().ChildrenOfsY = -ys+csy;
   else if (ye+GetItemContainer().ChildrenOfsY > GetItemContainer().Height) GetItemContainer().ChildrenOfsY = -(ye-GetItemContainer().Height);
-  //printdebug("001: Menu <%C>; ofs=%d; ys=%d; ye=%d; height=%d; hh=%d; bs=%d; OriginY=%s", Class, GetItemContainer().ChildrenOfsY, ys, ye, Height, helpText.Height, GetVirtualHeight()-helpText.Height-4, Y2Virtual(ye));
+  //printdebug("001: Menu <%C>; ofs=%d; ys=%d; ye=%d; height=%d; hh=%d; bs=%d; OriginY=%s", Class, GetItemContainer().ChildrenOfsY, ys, ye, Height, sHelpText.Height, GetVirtualHeight()-sHelpText.Height-4, Y2Virtual(ye));
   //printdebug("002: Menu <%C:%s>; itc=<%C:%s>", self, UniqueId, GetItemContainer(), GetItemContainer().UniqueId);
   // make sure that help is visible
-  if (helpText && helpText.Height > 0) {
-    helpText.atTop = (GetItemContainer().Y2Virtual(ye)+GetItemContainer().ChildrenOfsY >= GetVirtualHeight()-helpText.Height-4);
+  if (sHelpText && sHelpText.Height > 0) {
+    sHelpText.atTop = (GetItemContainer().Y2Virtual(ye)+GetItemContainer().ChildrenOfsY >= GetVirtualHeight()-sHelpText.Height-4);
   }
 }
 

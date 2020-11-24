@@ -290,8 +290,8 @@ void GetUseRanges (out float ur, out float utr) {
     ur = fmax(1.0f, pwn.UseRange);
     utr = fmax(1.0f, pwn.UseThingRange);
   } else {
-    ur = PlayerPawn::USERANGE;
-    utr = PlayerPawn::USETHINGRANGE;
+    ur = PlayerPawn::DEFAULT_USERANGE;
+    utr = PlayerPawn::DEFAULT_USETHINGRANGE;
   }
 }
 
@@ -2079,8 +2079,8 @@ bool UsePuzzleItem (int PuzzleItemType) {
   AngleVector(MO.Angles, out PuzzleUseDir);
   float x1 = MO.Origin.x;
   float y1 = MO.Origin.y;
-  float x2 = x1+/*USERANGE*/ur*PuzzleUseDir.x;
-  float y2 = y1+/*USERANGE*/ur*PuzzleUseDir.y;
+  float x2 = x1+/*DEFAULT_USERANGE*/ur*PuzzleUseDir.x;
+  float y2 = y1+/*DEFAULT_USERANGE*/ur*PuzzleUseDir.y;
   foreach MO.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     EntityEx mobj;
     TVec hit_point;
@@ -2088,7 +2088,7 @@ bool UsePuzzleItem (int PuzzleItemType) {
 
     if (in->bIsALine) {
       // check line
-      hit_point = MO.Origin+(/*USERANGE*/ur*in->frac)*PuzzleUseDir;
+      hit_point = MO.Origin+(/*DEFAULT_USERANGE*/ur*in->frac)*PuzzleUseDir;
       if (in->line->special != LNSPEC_UsePuzzleItem) {
         if (in->line->flags&(ML_BLOCKEVERYTHING|ML_BLOCKUSE)) {
           // gozzo does this
@@ -4528,7 +4528,7 @@ override void PlayerTick (float deltaTime) {
     if (!bUseDown) {
       float ur, utr;
       GetUseRanges(out ur, out utr);
-      EntityEx(MO).UseLines(/*USERANGE*/ur, /*USETHINGRANGE*/utr, '*usefail');
+      EntityEx(MO).UseLines(/*DEFAULT_USERANGE*/ur, /*DEFAULT_USETHINGRANGE*/utr, '*usefail');
       bUseDown = true;
     }
   } else {

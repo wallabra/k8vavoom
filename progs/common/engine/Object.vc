@@ -384,6 +384,19 @@ native static final float flerp (float a, float b, float delta) [builtin FloatLe
 // this will round the result
 native static final int lerp (int a, int b, float delta) [builtin IntLerp];
 
+// interpolate between p2 and p3 along a Catmull-Rom spline; `delta` should be in [0..1]
+// http://research.microsoft.com/~hollasch/cgindex/curves/catmull-rom.html
+final static float slerp (float p1, float p2, float p3, float p4, float delta) {
+  float t = delta;
+  float res = 2.0*p2;
+  res += (p3-p1)*delta;
+  t *= delta;
+  res += (2.0*p1-5.0*p2+4.0*p3-p4)*t;
+  t *= delta;
+  res += (3.0*p2-3.0*p3+p4-p1)*t;
+  return 0.5*res;
+}
+
 // `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
 // results are undefined if edge0 >= edge1
 native static final float smoothstep (float edge0, float edge1, float x) [builtin FloatSmoothStep];
@@ -397,17 +410,19 @@ native static final int abs (int val) [builtin IntAbs]; // absolute value
 native static final float fabs (float val) [builtin FloatAbs]; // absolute value
 native static final int sign (int val) [builtin IntSign]; // sign (-1, 0, 1)
 native static final float fsign (float val) [builtin FloatSign]; // sign (-1, 0, 1)
+#if option(csfields)
 native static final int Min (int v1, int v2) [builtin IntMin]; // minimal value
-native static final int min (int v1, int v2) [builtin IntMin]; // minimal value
 native static final float FMin (float v1, float v2) [builtin FloatMin]; // minimal value
-native static final float fmin (float v1, float v2) [builtin FloatMin]; // minimal value
 native static final int Max (int v1, int v2) [builtin IntMax]; // maximal value
-native static final int max (int v1, int v2) [builtin IntMax]; // maximal value
 native static final float FMax (float v1, float v2) [builtin FloatMax]; // maximal value
-native static final float fmax (float v1, float v2) [builtin FloatMax]; // maximal value
 native static final int Clamp (int Val, int Min, int Max) [builtin IntClamp]; // clamped value
-native static final int clamp (int Val, int Min, int Max) [builtin IntClamp]; // clamped value
 native static final float FClamp (float Val, float Min, float Max) [builtin FloatClamp]; // clamped value
+#endif
+native static final int min (int v1, int v2) [builtin IntMin]; // minimal value
+native static final float fmin (float v1, float v2) [builtin FloatMin]; // minimal value
+native static final int max (int v1, int v2) [builtin IntMax]; // maximal value
+native static final float fmax (float v1, float v2) [builtin FloatMax]; // maximal value
+native static final int clamp (int Val, int Min, int Max) [builtin IntClamp]; // clamped value
 native static final float fclamp (float Val, float Min, float Max) [builtin FloatClamp]; // clamped value
 native static final TVec vfmin (const TVec v1, const float v) [builtin VectorMinF];
 native static final TVec vfmax (const TVec v1, const float v) [builtin VectorMaxF];

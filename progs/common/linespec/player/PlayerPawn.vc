@@ -28,8 +28,8 @@ class PlayerPawn : Actor abstract;
 const float WALKING_SPEED = 1000;
 const float RUNNING_SPEED = 2000;
 
-const float USERANGE      = 64.0;
-const float USETHINGRANGE = 64.0; //128.0; //k8:why so far?
+const float DEFAULT_USERANGE      = 64.0;
+const float DEFAULT_USETHINGRANGE = 64.0; //128.0; //k8:why so far?
 
 enum {
   NUM_WEAPON_SLOTS = 10,
@@ -892,8 +892,8 @@ defaultproperties {
   JumpVelZ = 8.0*35.0;
   AttackZOffset = 8.0;
   DamageScreenColor = 0xffff0000;
-  UseRange = USERANGE;
-  UseThingRange = USETHINGRANGE;
+  UseRange = DEFAULT_USERANGE;
+  UseThingRange = DEFAULT_USETHINGRANGE;
   bSolid = true;
   bShootable = true;
   bDropOff = true;

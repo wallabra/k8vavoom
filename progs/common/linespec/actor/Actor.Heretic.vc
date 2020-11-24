@@ -579,9 +579,9 @@
 
   TAVec angles = Angles;
   angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/8.0);
-  EntityEx AimTarget = AimLineAttack(out dir, angles, MELEERANGE);
+  EntityEx AimTarget = AimLineAttack(out dir, angles, DEFAULT_MELEERANGE);
   //FIXME: damage type?
-  LineAttack(dir, MELEERANGE, damage, /*StaffPuff*/PuffType, NoAttackGhosts:true);
+  LineAttack(dir, DEFAULT_MELEERANGE, damage, /*StaffPuff*/PuffType, NoAttackGhosts:true);
   if (AimTarget) {
     // turn to face target
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
@@ -614,12 +614,12 @@
   angles = Angles;
   if (power) {
     damage = HITDICE(2);
-    dist = 4.0*MELEERANGE;
+    dist = 4.0*DEFAULT_MELEERANGE;
     angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/16.0);
     PuffType = GauntletPuff2;
   } else {
     damage = HITDICE(2);
-    dist = MELEERANGE+0.00001;
+    dist = DEFAULT_MELEERANGE+0.00001;
     angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/8.0);
     PuffType = GauntletPuff1;
   }
@@ -964,9 +964,9 @@
   if (!Wpn) return;
 
   int damage = 1+(P_Random()&3);
-  EntityEx AimTarget = AimLineAttack(out dir, Angles, MELEERANGE);
+  EntityEx AimTarget = AimLineAttack(out dir, Angles, DEFAULT_MELEERANGE);
   //FIXME: damage type?
-  LineAttack(dir, MELEERANGE, damage, BeakPuff);
+  LineAttack(dir, DEFAULT_MELEERANGE, damage, BeakPuff);
   if (AimTarget) {
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
     Player.bFixAngle = true;
@@ -991,9 +991,9 @@
   if (!Wpn) return;
 
   int damage = HITDICE(4);
-  EntityEx AimTarget = AimLineAttack(out dir, (Owner ? Owner.Angles : Angles), MELEERANGE); //k8: why it may have no owner???
+  EntityEx AimTarget = AimLineAttack(out dir, (Owner ? Owner.Angles : Angles), DEFAULT_MELEERANGE); //k8: why it may have no owner???
   //FIXME: damage type?
-  LineAttack(dir, MELEERANGE, damage, BeakPuff);
+  LineAttack(dir, DEFAULT_MELEERANGE, damage, BeakPuff);
   if (AimTarget) {
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
     Player.bFixAngle = true;

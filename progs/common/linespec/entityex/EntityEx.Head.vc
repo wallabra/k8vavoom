@@ -55,9 +55,9 @@ const float BOUNCE_VAL  = 1.5;
 // follow a player exlusively for 3 seconds
 const int BASETHRESHOLD = 100;
 
-const float MELEERANGE   = 64.0;
+const float DEFAULT_MELEERANGE   = 64.0;
 // use meleerange+1 so the puff doesn't skip the flash
-const float SAWRANGE     = MELEERANGE+0.00001;
+const float SAWRANGE     = DEFAULT_MELEERANGE+0.00001;
 const float MISSILERANGE = 32.0*64.0;
 
 const float MONS_LOOK_RANGE = 20.0*64.0;

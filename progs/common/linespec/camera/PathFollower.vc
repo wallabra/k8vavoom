@@ -85,6 +85,7 @@ float HoldTime;
 //  http://research.microsoft.com/~hollasch/cgindex/curves/catmull-rom.html
 //
 //==========================================================================
+/*
 final float SLerp (float p1, float p2, float p3, float p4) {
   float t = Time;
   float res = 2.0*p2;
@@ -95,6 +96,7 @@ final float SLerp (float p1, float p2, float p3, float p4) {
   res += (3.0*p2-3.0*p3+p4-p1)*t;
   return 0.5*res;
 }
+*/
 
 
 //==========================================================================
@@ -104,9 +106,11 @@ final float SLerp (float p1, float p2, float p3, float p4) {
 //  Linearly interpolate between p1 and p2.
 //
 //==========================================================================
+/*
 final float Lerp (float p1, float p2) {
   return p2*Time+p1*(1.0-Time);
 }
+*/
 
 
 //==========================================================================
@@ -279,14 +283,14 @@ bool Interpolate () {
   bIntrJustMoved = true; // enable movement interpolation
   if (Args[2]&1) {
     // linear
-    Origin.x = Lerp(CurrNode.Origin.x, CurrNode.NextPoint.Origin.x);
-    Origin.y = Lerp(CurrNode.Origin.y, CurrNode.NextPoint.Origin.y);
-    Origin.z = Lerp(CurrNode.Origin.z, CurrNode.NextPoint.Origin.z);
+    Origin.x = flerp(CurrNode.Origin.x, CurrNode.NextPoint.Origin.x, Time);
+    Origin.y = flerp(CurrNode.Origin.y, CurrNode.NextPoint.Origin.y, Time);
+    Origin.z = flerp(CurrNode.Origin.z, CurrNode.NextPoint.Origin.z, Time);
   } else {
     // spline
-    Origin.x = SLerp(PrevNode.Origin.x, CurrNode.Origin.x, CurrNode.NextPoint.Origin.x, CurrNode.NextPoint.NextPoint.Origin.x);
-    Origin.y = SLerp(PrevNode.Origin.y, CurrNode.Origin.y, CurrNode.NextPoint.Origin.y, CurrNode.NextPoint.NextPoint.Origin.y);
-    Origin.z = SLerp(PrevNode.Origin.z, CurrNode.Origin.z, CurrNode.NextPoint.Origin.z, CurrNode.NextPoint.NextPoint.Origin.z);
+    Origin.x = slerp(PrevNode.Origin.x, CurrNode.Origin.x, CurrNode.NextPoint.Origin.x, CurrNode.NextPoint.NextPoint.Origin.x, Time);
+    Origin.y = slerp(PrevNode.Origin.y, CurrNode.Origin.y, CurrNode.NextPoint.Origin.y, CurrNode.NextPoint.NextPoint.Origin.y, Time);
+    Origin.z = slerp(PrevNode.Origin.z, CurrNode.Origin.z, CurrNode.NextPoint.Origin.z, CurrNode.NextPoint.NextPoint.Origin.z, Time);
   }
   LinkToWorld();
 
@@ -324,32 +328,32 @@ bool Interpolate () {
         float angle1 = CurrNode.Angles.yaw;
         float angle2 = CurrNode.NextPoint.Angles.yaw;
         if (angle2-angle1 <= -180.0) {
-          float lerped = Lerp(angle1, angle2+360.0);
+          float lerped = flerp(angle1, angle2+360.0, Time);
           if (lerped >= 360.0) {
             Angles.yaw = lerped-360.0;
           } else {
             Angles.yaw = lerped;
           }
         } else if (angle2-angle1 >= 180.0) {
-          float lerped = Lerp(angle1, angle2-360.0);
+          float lerped = flerp(angle1, angle2-360.0, Time);
           if (lerped < 0.0) {
             Angles.yaw = lerped+360.0;
           } else {
             Angles.yaw = lerped;
           }
         } else {
-          Angles.yaw = Lerp(angle1, angle2);
+          Angles.yaw = flerp(angle1, angle2, Time);
         }
       }
       if (Args[2]&4) {
         // interpolate pitch
         if (Args[2]&1) {
           // linear
-          Angles.pitch = Lerp(CurrNode.Angles.pitch, CurrNode.NextPoint.Angles.pitch);
+          Angles.pitch = flerp(CurrNode.Angles.pitch, CurrNode.NextPoint.Angles.pitch, Time);
         } else {
           // spline
-          Angles.pitch = SLerp(PrevNode.Angles.pitch, CurrNode.Angles.pitch,
-            CurrNode.NextPoint.Angles.pitch, CurrNode.NextPoint.NextPoint.Angles.pitch);
+          Angles.pitch = slerp(PrevNode.Angles.pitch, CurrNode.Angles.pitch,
+            CurrNode.NextPoint.Angles.pitch, CurrNode.NextPoint.NextPoint.Angles.pitch, Time);
         }
       }
     }
