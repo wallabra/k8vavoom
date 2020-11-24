@@ -393,6 +393,7 @@ VPackage *VMemberBase::StaticLoadPackage (VName AName, const TLocation &l) {
 //
 //==========================================================================
 VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName) {
+  if (!VObject::cliCaseSensitiveFields) return StaticFindMemberNoCase(VStr(AName), AOuter, AType, EnumName);
   //VName realName = AName;
   if (AType == MEMBER_Const && EnumName != NAME_None) {
     // rewrite name

@@ -209,10 +209,27 @@ bool VLocalDecl::Declare (VEmitContext &ec) {
       //ParseError(e.Loc, "Redefined identifier `%s`", *e.Name);
       ParseError(e.Loc, "Redeclared local `%s` (previous declaration is at %s)", *e.Name, *ec.GetLocalByIndex(ccloc).Loc.toStringNoCol());
     } else {
-      ccloc = ec.CheckForLocalVarCI(e.Name);
-      if (ccloc != -1) {
-        ParseWarning(e.Loc, "Identifier `%s` is case-equal to `%s` at %s", *e.Name, *ec.GetLocalByIndex(ccloc).Name, *ec.GetLocalByIndex(ccloc).Loc.toStringNoCol());
-      }
+      if (VObject::cliCaseSensitiveLocals) {
+        ccloc = ec.CheckForLocalVarCI(e.Name);
+        if (ccloc != -1) {
+          ParseWarning(e.Loc, "Local `%s` is case-equal to `%s` at %s", *e.Name, *ec.GetLocalByIndex(ccloc).Name, *ec.GetLocalByIndex(ccloc).Loc.toStringNoCol());
+        }
+      } else if (ec.SelfClass) {
+        {
+          const int oldCSF = VObject::cliCaseSensitiveFields;
+          VObject::cliCaseSensitiveFields = 0;
+          VConstant *oldConst = ec.SelfClass->FindConstant(e.Name);
+          VObject::cliCaseSensitiveFields = oldCSF;
+          if (oldConst) ParseError(e.Loc, "Local `%s` conflicts with constant at %s", *e.Name, *oldConst->Loc.toStringNoCol());
+        }
+        {
+          const int oldCSF = VObject::cliCaseSensitiveFields;
+          VObject::cliCaseSensitiveFields = 0;
+          VField *oldField = ec.SelfClass->FindField(e.Name);
+          VObject::cliCaseSensitiveFields = oldCSF;
+          if (oldField) ParseError(e.Loc, "Local `%s` conflicts with field at %s", *e.Name, *oldField->Loc.toStringNoCol());
+        }
+      }// else GLog.Logf(NAME_Debug, "WTF?!");
     }
 
     // resolve automatic type

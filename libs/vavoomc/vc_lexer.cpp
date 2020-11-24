@@ -773,6 +773,39 @@ int VLexer::ProcessIfTerm () {
     NextChr();
     return res;
   }
+  // `option`?
+  if (currCh == 'o') {
+    ProcessLetterToken(false);
+    if (!VStr::strEqu(tokenStringBuffer, "option")) {
+      ParseError(Location, "`#if`: `option` expected");
+      return -1;
+    }
+    SkipWhitespaceAndComments();
+    if (src->NewLine || currCh != '(') {
+      ParseError(Location, "`#if`: `(` expected");
+      return -1;
+    }
+    NextChr();
+    SkipWhitespaceAndComments();
+    if (src->NewLine || ASCIIToChrCode[(vuint8)currCh] != CHR_Letter) {
+      ParseError(Location, "`#if`: identifier expected");
+      return -1;
+    }
+    ProcessLetterToken(false);
+    int res = 0;
+         if (VStr::strEquCI(tokenStringBuffer, "cilocals")) res = !VObject::cliCaseSensitiveLocals;
+    else if (VStr::strEquCI(tokenStringBuffer, "cslocals")) res = VObject::cliCaseSensitiveLocals;
+    else if (VStr::strEquCI(tokenStringBuffer, "cifields")) res = !VObject::cliCaseSensitiveFields;
+    else if (VStr::strEquCI(tokenStringBuffer, "csfields")) res = VObject::cliCaseSensitiveFields;
+    else ParseError(Location, "`#if`: unknown option `%s`", tokenStringBuffer);
+    SkipWhitespaceAndComments();
+    if (src->NewLine || currCh != ')') {
+      ParseError(Location, "`#if`: `)` expected");
+      return -1;
+    }
+    NextChr();
+    return res;
+  }
   // other
   ParseError(Location, "`#if`: unexpected token");
   return -1;

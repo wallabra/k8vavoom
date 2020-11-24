@@ -580,26 +580,30 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
   if (num != -1) {
     VFieldType tp = ec.GetLocalVarType(num);
     if (tp.Type != TYPE_Class && tp.Type != TYPE_Delegate) {
-      ParseError(Loc, "Cannot call non-delegate");
+      // allow further checks
+      /*
+      ParseError(Loc, "Cannot call non-delegate local `%s`", *Name);
       delete this;
       return nullptr;
-    }
-    if (tp.Type == TYPE_Delegate) {
-      VInvocation *e = new VInvocation(tp.Function, num, Loc, NumArgs, Args);
+      */
+    } else {
+      if (tp.Type == TYPE_Delegate) {
+        VInvocation *e = new VInvocation(tp.Function, num, Loc, NumArgs, Args);
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      }
+      // cast to class variable
+      if (NumArgs != 1 || !Args[0] || Args[0]->IsDefaultArg()) {
+        ParseError(Loc, "Dynamic cast of `%s` requires one argument", *Name);
+        delete this;
+        return nullptr;
+      }
+      VExpression *e = new VDynCastWithVar(Args[0], new VLocalVar(num, Loc), Loc);
       NumArgs = 0;
       delete this;
       return e->Resolve(ec);
     }
-    // cast to class variable
-    if (NumArgs != 1 || !Args[0] || Args[0]->IsDefaultArg()) {
-      ParseError(Loc, "Dynamic cast requires one argument");
-      delete this;
-      return nullptr;
-    }
-    VExpression *e = new VDynCastWithVar(Args[0], new VLocalVar(num, Loc), Loc);
-    NumArgs = 0;
-    delete this;
-    return e->Resolve(ec);
   }
 
   // find struct method
@@ -628,7 +632,7 @@ VExpression *VCastOrInvocation::DoResolve (VEmitContext &ec) {
   VClass *Class = VMemberBase::StaticFindClass(Name);
   if (Class) {
     if (NumArgs != 1 || !Args[0] || Args[0]->IsDefaultArg()) {
-      ParseError(Loc, "Dynamic cast requires 1 argument");
+      ParseError(Loc, "Dynamic cast of `%s` requires 1 argument", *Name);
       delete this;
       return nullptr;
     }

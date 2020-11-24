@@ -75,6 +75,17 @@ extern "C" {
 
 //==========================================================================
 //
+//  compareNames
+//
+//==========================================================================
+static inline bool compareNames (VName name0, VName name1) {
+  if (name0 == name1) return true;
+  return (VObject::cliCaseSensitiveFields ? false : VStr::strEquCI(*name0, *name1));
+}
+
+
+//==========================================================================
+//
 //  operator VStream << mobjinfo_t
 //
 //==========================================================================
@@ -289,6 +300,7 @@ VStr VClass::FindInPropMap (EType type, VStr prname) noexcept {
 //==========================================================================
 VName VClass::ResolveAlias (VName aname, bool nocase) {
   if (aname == NAME_None) return NAME_None;
+  if (!VObject::cliCaseSensitiveFields) nocase = true;
   if (++AliasFrameNum == 0x7fffffff) {
     for (auto it = AliasList.first(); it; ++it) it.getValue().aframe = 0;
     AliasFrameNum = 1;
@@ -296,11 +308,13 @@ VName VClass::ResolveAlias (VName aname, bool nocase) {
   VName res = aname;
   for (;;) {
     if (nocase) {
+      //GLog.Logf(NAME_Debug, "%s: ResolveAlias: try `%s` (current is `%s`)", GetName(), *aname, *res);
       bool found = false;
       for (auto it = AliasList.first(); it; ++it) {
         if (VStr::ICmp(*it.getKey(), *aname) == 0) {
-          if (it.getValue().aframe == AliasFrameNum) return NAME_None; // loop
+          if (it.getValue().aframe == AliasFrameNum) return res; //NAME_None; // loop
           res = it.getValue().origName;
+          //GLog.Logf(NAME_Debug, "%s: ResolveAlias: %s -> %s", GetName(), *aname, *res);
           it.getValue().aframe = AliasFrameNum;
           aname = res;
           found = true;
@@ -650,7 +664,10 @@ VConstant *VClass::FindPackageConstant (VMemberBase *pkg, VName Name, VName Enum
 VField *VClass::FindField (VName Name, bool bRecursive) {
   if (Name == NAME_None) return nullptr;
   Name = ResolveAlias(Name);
-  for (VField *F = Fields; F; F = F->Next) if (Name == F->Name) return F;
+  for (VField *F = Fields; F; F = F->Next) {
+    //if (Name == F->Name) return F;
+    if (compareNames(Name, F->Name)) return F;
+  }
   if (bRecursive && ParentClass) return ParentClass->FindField(Name, bRecursive);
   return nullptr;
 }
@@ -827,9 +844,12 @@ VMethod *VClass::FindMethodNonPostLoaded (VName Name, bool bRecursive) {
 VMethod *VClass::FindAccessibleMethod (VName Name, VClass *self, const TLocation *loc) {
   if (Name == NAME_None) return nullptr;
   //if (self && !loc && self->Name == "Test1") abort();
+  //GLog.Logf(NAME_Debug, "000: %s: <%s>", (loc ? *loc->toStringNoCol() : ""), *Name);
   Name = ResolveAlias(Name);
+  //GLog.Logf(NAME_Debug, "001: %s: <%s>", (loc ? *loc->toStringNoCol() : ""), *Name);
   VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
   if (M) {
+    //GLog.Logf(NAME_Debug, "002: %s: <%s>", (loc ? *loc->toStringNoCol() : ""), *Name);
     //fprintf(stderr, "FAM: <%s>; self=%s; this=%s; child=%d; loc=%p\n", *Name, (self ? *self->Name : "<none>"), *this->Name, (int)(self ? self->IsChildOf(this) : false), loc);
     if (loc) {
       //fprintf(stderr, "  FAM: <%s>; self=%s; this=%s; child=%d; flags=0x%04x\n", *Name, (self ? *self->Name : "<none>"), *this->Name, (int)(self ? self->IsChildOf(this) : false), M->Flags);
@@ -1130,8 +1150,8 @@ VClass *VClass::FindBestLatestChild (VName ignoreThis) {
       // check inheritance chain
       int chainLen = 0;
       while (c) {
-        if (c->Name == ignoreThis) { c = nullptr; break; } // bad chain
-        if (c->Name == Name) break;
+        if (compareNames(c->Name, ignoreThis)) { c = nullptr; break; } // bad chain
+        if (compareNames(c->Name, Name)) break;
         if (c->ParentClassName == NAME_None) { c = nullptr; break; } // wtf?!
         ++chainLen;
         c = StaticFindClass(c->ParentClassName);
@@ -1271,7 +1291,7 @@ bool VClass::Define () {
       // check constants
       for (int f = 0; f < Constants.length(); ++f) {
         for (int ff = 0; ff < c->Constants.length(); ++ff) {
-          if (c->Constants[ff]->Name == Constants[f]->Name) {
+          if (compareNames(c->Constants[ff]->Name, Constants[f]->Name)) {
             ParseError(Constants[f]->Loc, "Constant `%s` already defined in parent class `%s`", *Constants[f]->Name, *pn);
           }
         }
@@ -1298,7 +1318,7 @@ bool VClass::DefineRepInfos () {
     for (int i = 0; i < RepFields.Num(); ++i) {
       VField *RepField = nullptr;
       for (VField *F = Fields; F; F = F->Next) {
-        if (F->Name == RepFields[i].Name) {
+        if (compareNames(F->Name, RepFields[i].Name)) {
           RepField = F;
           break;
         }
@@ -1316,7 +1336,7 @@ bool VClass::DefineRepInfos () {
 
       VMethod *RepMethod = nullptr;
       for (int mi = 0; mi < Methods.Num(); ++mi) {
-        if (Methods[mi]->Name == RepFields[i].Name) {
+        if (compareNames(Methods[mi]->Name, RepFields[i].Name)) {
           RepMethod = Methods[mi];
           break;
         }
@@ -2456,7 +2476,7 @@ void VClass::DestructObject (VObject *Obj) {
 VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDecorateUserVarDef> &uvlist, const TLocation &ALoc) {
   VClass *NewClass = nullptr;
   for (int i = 0; i < GDecorateClassImports.Num(); ++i) {
-    if (GDecorateClassImports[i]->Name == AName) {
+    if (compareNames(GDecorateClassImports[i]->Name, AName)) {
       // this class implements a decorate import class
       NewClass = GDecorateClassImports[i];
       NewClass->MemberType = MEMBER_Class;

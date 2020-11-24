@@ -186,6 +186,7 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
       }
     } else {
       if (!op2->Type.CheckMatch(false, Loc, op1->RealType)) {
+        //GLog.Logf(NAME_Debug, "VAssignment::DoResolve:000: op1=%s; op2=%s", *op1->toString(), *op2->toString());
         delete this;
         return nullptr;
       }

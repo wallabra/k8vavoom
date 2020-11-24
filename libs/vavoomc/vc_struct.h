@@ -69,7 +69,7 @@ public:
   TMap<VName, AliasInfo> AliasList; // key: alias
   int AliasFrameNum;
 
-  VName ResolveAlias (VName aname); // returns `aname` for unknown alias, or `NAME_None` for alias loop
+  VName ResolveAlias (VName aname, bool nocase=false); // returns `aname` for unknown alias, or `NAME_None` for alias loop
 
 private:
   // cache various requests (<0: not cached; 0: false; !0: true)

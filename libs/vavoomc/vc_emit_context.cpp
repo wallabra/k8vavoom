@@ -531,7 +531,11 @@ int VEmitContext::CheckForLocalVar (VName Name) {
   for (auto &&it : LocalDefs.itemsIdx()) {
     const VLocalVarDef &loc = it.value();
     if (!loc.Visible) continue;
-    if (loc.Name == Name) return it.index();
+    if (VObject::cliCaseSensitiveLocals) {
+      if (loc.Name == Name) return it.index();
+    } else {
+      if (VStr::strEquCI(*loc.Name, *Name)) return it.index();
+    }
   }
   return -1;
 }

@@ -1869,9 +1869,16 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
                               VClass *InClass, vint32 Modifiers, bool Iterator, VStruct *InStruct)
 {
   if (InStruct) {
-    if (InStruct->FindMethod(MName, false)) ParseError(MethodLoc, "Redeclared method `%s::%s`", *InStruct->Name, *MName);
+    VMethod *pm = InStruct->FindMethod(MName, false);
+    if (pm) {
+      ParseError(MethodLoc, "Redeclared method `%s::%s` (previous it at %s)", *InStruct->Name, *MName, *pm->Loc.toStringNoCol());
+    }
   } else {
-    if (InClass->FindMethod(MName, false)) ParseError(MethodLoc, "Redeclared method `%s.%s`", *InClass->Name, *MName);
+    VMethod *pm = InClass->FindMethod(MName, false);
+    if (pm) {
+      ParseError(MethodLoc, "Redeclared method `%s.%s` (previous it at %s)", *InClass->Name, *MName, *pm->Loc.toStringNoCol());
+    }
+    CheckFieldRedefitinion(InClass, MName);
   }
 
   // struct must be defined in the same class (yet)
@@ -3878,6 +3885,43 @@ void VParser::ParseReplication (VClass *Class) {
 
 //==========================================================================
 //
+//  VParser::CheckFieldRedefitinion
+//
+//==========================================================================
+bool VParser::CheckFieldRedefitinion (VClass *Class, VName aname) {
+  /*
+  if (Package) {
+    VConstant *oldConst = Package->FindConstant(aname);
+    if (oldConst) { ParseError(Lex.Location, "Redefined package constant `%s` (prev at %s)", *aname, *oldConst->Loc.toStringNoCol()); return true; }
+  }
+  */
+  {
+    VConstant *oldConst = Class->FindConstant(aname);
+    if (oldConst) { ParseError(Lex.Location, "Redefined constant `%s` (prev at %s)", *aname, *oldConst->Loc.toStringNoCol()); return true; }
+  }
+  {
+    VField *oldField = Class->FindField(aname);
+    if (oldField) { ParseError(Lex.Location, "Redefined field `%s` (prev at %s)", *aname, *oldField->Loc.toStringNoCol()); return true; }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VParser::CheckConstRedefitinion
+//
+//==========================================================================
+bool VParser::CheckConstRedefitinion (VClass *Class, VName aname) {
+  if (CheckFieldRedefitinion(Class, aname)) return true;
+  VMethod *oldMethod = Class->FindMethod(aname);
+  if (oldMethod) { ParseError(Lex.Location, "Redefined method `%s` (prev at %s)", *aname, *oldMethod->Loc.toStringNoCol()); return true; }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VParser::ParseClass
 //
 //==========================================================================
@@ -4161,8 +4205,9 @@ void VParser::ParseClass () {
         delete Type;
         continue;
       }
+      //if (Class->FindField(Lex.Name) || Class->FindMethod(Lex.Name)) ParseError(Lex.Location, "Redeclared field `%s`", *Lex.Name);
+      CheckConstRedefitinion(Class, Lex.Name);
       VField *fi = new VField(Lex.Name, Class, Lex.Location);
-      if (Class->FindField(Lex.Name) || Class->FindMethod(Lex.Name)) ParseError(Lex.Location, "Redeclared field `%s`", *Lex.Name);
       Lex.NextToken();
       Class->AddField(fi);
       ParseDelegate(Type, fi);
@@ -4185,8 +4230,7 @@ void VParser::ParseClass () {
       VConstant *PrevValue = nullptr;
       // check for `enum const = val;`
       if (Lex.Token == TK_Identifier && Lex.peekTokenType(1) == TK_Assign) {
-        VConstant *oldConst = Class->FindConstant(Lex.Name);
-        if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s` (prev at %s)", *Lex.Name, *oldConst->Loc.toStringNoCol());
+        CheckConstRedefitinion(Class, Lex.Name);
         VConstant *cDef = new VConstant(Lex.Name, Class, Lex.Location);
         cDef->Type = TYPE_Int;
         cDef->bitconstant = bitconst;
@@ -4206,8 +4250,7 @@ void VParser::ParseClass () {
           ename = Lex.Name;
           if (flags&CONST_Decorate) ParseError(Lex.Location, "Named enums (`%s`) cannot be exported to decorate code (yet)", *ename);
           if (Class->AddKnownEnum(ename)) ParseError(Lex.Location, "Duplicate enum name `%s`", *ename);
-          VConstant *oldConst = Class->FindConstant(ename);
-          if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s` (prev at %s)", *ename, *oldConst->Loc.toStringNoCol());
+          CheckConstRedefitinion(Class, ename);
           Lex.NextToken();
         }
         Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
@@ -4219,8 +4262,7 @@ void VParser::ParseClass () {
           VConstant *cDef;
           if (ename == NAME_None) {
             // unnamed enum
-            VConstant *oldConst = Class->FindConstant(Lex.Name);
-            if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s` (prev at %s)", *Lex.Name, *oldConst->Loc.toStringNoCol());
+            CheckConstRedefitinion(Class, Lex.Name);
             cDef = new VConstant(Lex.Name, Class, Lex.Location);
           } else {
             // named enum
@@ -4264,8 +4306,7 @@ void VParser::ParseClass () {
           Lex.NextToken();
           continue;
         }
-        VConstant *oldConst = Class->FindConstant(Lex.Name);
-        if (oldConst) ParseError(Lex.Location, "Redefined identifier %s (prev at %s)", *Lex.Name, *oldConst->Loc.toStringNoCol());
+        CheckConstRedefitinion(Class, Lex.Name);
         VConstant *cDef = new VConstant(Lex.Name, Class, Lex.Location);
         cDef->Type = Type;
         cDef->Flags = flags;
@@ -4356,17 +4397,18 @@ void VParser::ParseClass () {
           continue;
         }
 
-        VName FieldName = Lex.Name;
-        TLocation FieldLoc = Lex.Location;
-        Lex.NextToken();
-
-        if (Class->FindField(FieldName)) {
+        if (/*Class->FindField(FieldName)*/CheckFieldRedefitinion(Class, Lex.Name)) {
           delete e;
           delete SE2;
           delete FieldType;
-          ParseError(Lex.Location, "Redeclared field `%s`", *FieldName);
+          //ParseError(Lex.Location, "Redeclared field `%s`", *Lex.Name);
+          Lex.NextToken();
           continue;
         }
+
+        VName FieldName = Lex.Name;
+        TLocation FieldLoc = Lex.Location;
+        Lex.NextToken();
 
         FieldType = new VFixedArrayType(FieldType, e, SE2, SLoc);
 
@@ -4385,17 +4427,21 @@ void VParser::ParseClass () {
         ParseError(Lex.Location, "Field name expected");
         continue;
       }
+
+      if (/*Class->FindField(Lex.Name) || Class->FindConstant(Lex.Name)*/CheckFieldRedefitinion(Class, Lex.Name)) {
+        ParseError(Lex.Location, "Redeclared field `%s`", *Lex.Name);
+        Lex.NextToken();
+        continue;
+      }
+
       VName FieldName = Lex.Name;
       TLocation FieldLoc = Lex.Location;
       Lex.NextToken();
 
-      if (Class->FindField(FieldName)) {
-        ParseError(Lex.Location, "Redeclared field `%s`", *FieldName);
-        continue;
-      }
-
       // property?
       if (Lex.Check(TK_LBrace)) {
+        VProperty *oldProp = Class->FindProperty(FieldName);
+        if (oldProp) ParseError(Lex.Location, "Redefined property `%s` (prev at %s)", *FieldName, *oldProp->Loc.toStringNoCol());
         Modifiers = TModifiers::Check(Modifiers, TModifiers::PropertySet, FieldLoc);
         VProperty *Prop = new VProperty(FieldName, Class, FieldLoc);
         Prop->TypeExpr = FieldType;
@@ -4542,6 +4588,8 @@ void VParser::ParseClass () {
         initr = ParseExpression();
       }
 
+      //GLog.Logf("001: %s: %s", *FieldLoc.toStringNoCol(), *FieldName);
+      CheckConstRedefitinion(Class, FieldName);
       VField *fi = new VField(FieldName, Class, FieldLoc);
       fi->TypeExpr = FieldType;
       fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers, TModifiers::ClassFieldSet, FieldLoc));

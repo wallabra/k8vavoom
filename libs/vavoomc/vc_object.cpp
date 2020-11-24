@@ -42,6 +42,8 @@ int VObject::cliAllErrorsAreFatal = 0;
 int VObject::cliVirtualiseDecorateMethods = 0;
 int VObject::cliShowPackageLoading = 0;
 int VObject::cliShowUndefinedBuiltins = 1;
+int VObject::cliCaseSensitiveLocals = 1;
+int VObject::cliCaseSensitiveFields = 1;
 int VObject::engineAllowNotImplementedBuiltins = 0;
 int VObject::standaloneExecutor = 0;
 TMap<VStrCI, bool> VObject::cliAsmDumpMethods;
@@ -440,6 +442,12 @@ void VObject::StaticInitOptions (VParsedArgs &pargs) {
 
   pargs.RegisterFlagSet("-vc-show-undefined-builtins", "!show undefined builtins", &cliShowUndefinedBuiltins);
   pargs.RegisterFlagReset("-vc-no-show-undefined-builtins", "!do not show undefined builtins", &cliShowUndefinedBuiltins);
+
+  pargs.RegisterFlagSet("-vc-case-sensitive-locals", "!case-sensitive locals", &cliCaseSensitiveLocals);
+  pargs.RegisterFlagReset("-vc-case-insensitive-locals", "!case-insensitive locals", &cliCaseSensitiveLocals);
+
+  pargs.RegisterFlagSet("-vc-case-sensitive-fields", "!case-sensitive locals", &cliCaseSensitiveFields);
+  pargs.RegisterFlagReset("-vc-case-insensitive-fields", "!case-insensitive locals", &cliCaseSensitiveFields);
 
   pargs.RegisterFlagSet("-vc-lax-override", "!allow omiting `override` keyword for methods", &VMemberBase::optDeprecatedLaxOverride);
   pargs.RegisterFlagSet("-vc-lax-states", "!missing actor state is not an error", &VMemberBase::optDeprecatedLaxStates);

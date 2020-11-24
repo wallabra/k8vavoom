@@ -92,6 +92,9 @@ private:
   void ParseReplication (VClass *InClass);
   void ParseClass ();
 
+  bool CheckConstRedefitinion (VClass *Class, VName aname);
+  bool CheckFieldRedefitinion (VClass *Class, VName aname);
+
 public:
   VParser (VLexer &ALex, VPackage *APackage);
   void Parse ();

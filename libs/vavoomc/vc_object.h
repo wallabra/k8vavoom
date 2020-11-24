@@ -441,6 +441,9 @@ public:
   static int cliVirtualiseDecorateMethods; // default is false
   static int cliShowUndefinedBuiltins; // default is true
 
+  static int cliCaseSensitiveLocals; // default is true
+  static int cliCaseSensitiveFields; // default is true
+
   static int cliShowPackageLoading; // default is false
   static int engineAllowNotImplementedBuiltins; // default is false (and hidden classes)
 

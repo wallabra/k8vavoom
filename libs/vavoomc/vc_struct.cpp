@@ -77,23 +77,42 @@ void VStruct::CompilerShutdown () {
 //  returns `aname` for unknown alias, or `NAME_None` for alias loop
 //
 //==========================================================================
-VName VStruct::ResolveAlias (VName aname) {
+VName VStruct::ResolveAlias (VName aname, bool nocase) {
   if (aname == NAME_None) return NAME_None;
+  if (!VObject::cliCaseSensitiveFields) nocase = true;
   if (++AliasFrameNum == 0x7fffffff) {
     for (auto it = AliasList.first(); it; ++it) it.getValue().aframe = 0;
     AliasFrameNum = 1;
   }
   VName res = aname;
   for (;;) {
-    auto ai = AliasList.get(aname);
-    if (!ai) {
-      if (!ParentStruct) return res;
-      return ParentStruct->ResolveAlias(res);
+    if (nocase) {
+      bool found = false;
+      for (auto it = AliasList.first(); it; ++it) {
+        if (VStr::ICmp(*it.getKey(), *aname) == 0) {
+          if (it.getValue().aframe == AliasFrameNum) return res; //NAME_None; // loop
+          res = it.getValue().origName;
+          it.getValue().aframe = AliasFrameNum;
+          aname = res;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        if (!ParentStruct) return res;
+        return ParentStruct->ResolveAlias(res, nocase);
+      }
+    } else {
+      auto ai = AliasList.get(aname);
+      if (!ai) {
+        if (!ParentStruct) return res;
+        return ParentStruct->ResolveAlias(res);
+      }
+      if (ai->aframe == AliasFrameNum) return NAME_None; // loop
+      res = ai->origName;
+      ai->aframe = AliasFrameNum;
+      aname = res;
     }
-    if (ai->aframe == AliasFrameNum) return NAME_None; // loop
-    res = ai->origName;
-    ai->aframe = AliasFrameNum;
-    aname = res;
   }
 }
 
@@ -345,14 +364,12 @@ bool VStruct::DefineMembers () {
     if (mt->Name == NAME_None || VStr::strEqu(*mt->Name, "ctor") || VStr::strEqu(*mt->Name, "dtor")) continue; // just in case, anonymous fields
     auto np = fmMap.find(mt->Name);
     if (np) {
-      ParseError(mt->Loc, "Field/method name conflict (%s)", *mt->Name);
-      ParseError((*np)->Loc, "Field declaration here");
+      ParseError(mt->Loc, "Field/method name conflict (%s) (previous it at %s)", *mt->Name, *(*np)->Loc.toStringNoCol());
     }
     if (ParentStruct) {
       VMethod *M = ParentStruct->FindMethod(mt->Name);
       if (M) {
-        ParseError(mt->Loc, "Redeclared method `%s`", *mt->Name);
-        ParseError(M->Loc, "Field declaration here");
+        ParseError(mt->Loc, "Redeclared method `%s` (previous it at %s)", *mt->Name, *M->Loc.toStringNoCol());
       }
     }
   }
