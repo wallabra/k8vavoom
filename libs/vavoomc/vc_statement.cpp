@@ -154,8 +154,9 @@ bool VStatement::IsEndsWithReturn () const noexcept {
 //  VStatement::IsProperCaseEnd
 //
 //==========================================================================
-bool VStatement::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
-  return (Statement && Statement->IsProperCaseEnd(ASwitch));
+bool VStatement::IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept {
+  UpScopeGuard upguard(this, aUpScope);
+  return (Statement && Statement->IsProperCaseEnd(ASwitch, this));
 }
 
 
@@ -899,9 +900,10 @@ bool VIf::IsEndsWithReturn () const noexcept {
 //  VIf::IsProperCaseEnd
 //
 //==========================================================================
-bool VIf::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+bool VIf::IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept {
   if (!TrueStatement || !FalseStatement) return false;
-  return (TrueStatement->IsProperCaseEnd(ASwitch) && FalseStatement->IsProperCaseEnd(ASwitch));
+  UpScopeGuard upguard(this, aUpScope);
+  return (TrueStatement->IsProperCaseEnd(ASwitch, this) && FalseStatement->IsProperCaseEnd(ASwitch, this));
 }
 
 
@@ -2972,7 +2974,8 @@ bool VSwitch::IsEndsWithReturn () const noexcept {
 //  VSwitch::IsProperCaseEnd
 //
 //==========================================================================
-bool VSwitch::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+bool VSwitch::IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept {
+  UpScopeGuard upguard(this, aUpScope);
   return IsEndsWithReturn();
 }
 
@@ -2982,7 +2985,7 @@ bool VSwitch::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
 //  VSwitch::checkProperCaseEnd
 //
 //==========================================================================
-bool VSwitch::checkProperCaseEnd (bool reportSwitchCase) const noexcept {
+bool VSwitch::checkProperCaseEnd (bool reportSwitchCase) noexcept {
   if (Statements.length() == 0) return true;
   bool statementSeen = false;
   bool isEndSeen = false;
@@ -2995,7 +2998,7 @@ bool VSwitch::checkProperCaseEnd (bool reportSwitchCase) const noexcept {
     // `case` or `default`?
     if (st->IsSwitchCase() || st->IsSwitchDefault()) {
       if (lastCaseIdx >= 0 && !isEndSeen && statementSeen) {
-        //fprintf(stderr, "pidx=%d; n=%d; es=%d; ss=%d\n", lastCaseIdx, n, (int)isEndSeen, (int)statementSeen);
+        //GLog.Logf("pidx=%d; n=%d; es=%d; ss=%d", lastCaseIdx, stindex, (int)isEndSeen, (int)statementSeen);
         // oops
         if (reportSwitchCase) ParseError(Statements[lastCaseIdx]->Loc, "`switch` branch doesn't end with `break` or `goto case`");
         return false;
@@ -3007,10 +3010,11 @@ bool VSwitch::checkProperCaseEnd (bool reportSwitchCase) const noexcept {
       continue;
     }
     if (isEndSeen) continue;
-    //fprintf(stderr, "  n=%d; type=%s\n", n, *shitppTypeNameObj(*Statements[n]));
+    //GLog.Logf("  n=%d; type=%s", stindex, *shitppTypeNameObj(*st));
+    //GLog.Logf("  n=%d; <%s>", stindex, *st->toString());
     statementSeen = true;
     // proper end?
-    if (st->IsProperCaseEnd(this)) {
+    if (st->IsProperCaseEnd(this, this)) {
       isEndSeen = true;
       continue;
     }
@@ -3364,7 +3368,7 @@ VStatement *VBreak::DoResolve (VEmitContext &ec) {
 void VBreak::DoEmit (VEmitContext &ec) {
   // emit dtors for all scopes
   // emit finalizers for all scopes except the destination one
-  for (VStatement *st = this->UpScope; st; st = st->UpScope) {
+  for (VStatement *st = UpScope; st; st = st->UpScope) {
     st->EmitDtor(ec, false); // abnormal leave
     const bool destReached = (st->IsBreakScope() && (LoopLabel == NAME_None || LoopLabel == st->Label));
     if (destReached) {
@@ -3403,7 +3407,8 @@ bool VBreak::IsFlowStop () const noexcept {
 //  VBreak::IsProperCaseEnd
 //
 //==========================================================================
-bool VBreak::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+bool VBreak::IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept {
+  UpScopeGuard upguard(this, aUpScope);
   // check break scopes
   bool res = false;
   for (VStatement *st = UpScope; st; st = st->UpScope) {
@@ -3506,7 +3511,7 @@ VStatement *VContinue::DoResolve (VEmitContext &) {
 void VContinue::DoEmit (VEmitContext &ec) {
   // emit dtors for all scopes
   // emit finalizers for all scopes except the destination one
-  for (VStatement *st = this->UpScope; st; st = st->UpScope) {
+  for (VStatement *st = UpScope; st; st = st->UpScope) {
     st->EmitDtor(ec, false); // abnormal leave
     const bool destReached = (st->IsContinueScope() && (LoopLabel == NAME_None || LoopLabel == st->Label));
     if (destReached) {
@@ -3545,7 +3550,8 @@ bool VContinue::IsFlowStop () const noexcept {
 //  VContinue::IsProperCaseEnd
 //
 //==========================================================================
-bool VContinue::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+bool VContinue::IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept {
+  UpScopeGuard upguard(this, aUpScope);
   // check continue scopes
   bool res = false;
   for (VStatement *st = UpScope; st; st = st->UpScope) {
@@ -3684,7 +3690,7 @@ void VReturn::DoEmit (VEmitContext &ec) {
   }
 
   // emit dtors and finalizers for all scopes
-  for (VStatement *st = this->UpScope; st; st = st->UpScope) {
+  for (VStatement *st = UpScope; st; st = st->UpScope) {
     st->EmitDtor(ec, false); // abnormal leave
     st->EmitFinalizer(ec, false); // abnormal leave
   }
@@ -3725,7 +3731,7 @@ bool VReturn::IsFlowStop () const noexcept {
 //  VReturn::IsProperCaseEnd
 //
 //==========================================================================
-bool VReturn::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+bool VReturn::IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept {
   return true; // always
 }
 
@@ -3902,7 +3908,7 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
   if (!Switch || !casedef) return; // just in case
 
   // emit cleanups (it is guaranteed to be in the switch)
-  for (VStatement *scp = this->UpScope; scp != Switch; scp = scp->UpScope) {
+  for (VStatement *scp = UpScope; scp != Switch; scp = scp->UpScope) {
     scp->EmitDtor(ec, false); // abnormal leave
     scp->EmitFinalizer(ec, false); // abnormal leave
   }
@@ -3972,7 +3978,7 @@ bool VGotoStmt::IsFlowStop () const noexcept {
 //  VGotoStmt::IsProperCaseEnd
 //
 //==========================================================================
-bool VGotoStmt::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+bool VGotoStmt::IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept {
   return (Switch == ASwitch);
 }
 
@@ -4180,10 +4186,11 @@ bool VBaseCompoundStatement::IsEndsWithReturn () const noexcept {
 //  VBaseCompoundStatement::IsProperCaseEnd
 //
 //==========================================================================
-bool VBaseCompoundStatement::IsProperCaseEnd (const VStatement *ASwitch) const noexcept {
+bool VBaseCompoundStatement::IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept {
+  UpScopeGuard upguard(this, aUpScope);
   for (auto &&st : Statements) {
     if (!st) continue;
-    if (st->IsProperCaseEnd(ASwitch)) return true;
+    if (st->IsProperCaseEnd(ASwitch, this)) return true;
     if (st->IsFlowStop()) break;
   }
   return false;
@@ -4339,7 +4346,7 @@ bool VTryFinallyCompound::IsContBreakAllowed () const noexcept {
 void VTryFinallyCompound::EmitDtor (VEmitContext &ec, bool properLeave) {
   // `scope(exit)` should be called even on `return`
   if (retScope && !ec.InReturn) return;
-  if (Finally) Finally->Emit(ec, this->UpScope); // avoid double return
+  if (Finally) Finally->Emit(ec, UpScope); // avoid double return
 }
 
 
@@ -4440,7 +4447,7 @@ bool VLocalVarStatement::BeforeEmitStatements (VEmitContext &ec) {
   Decl->Allocate(ec);
   // check if we are in some loop
   bool inloop = false;
-  for (VStatement *st = this->UpScope; st; st = st->UpScope) {
+  for (VStatement *st = UpScope; st; st = st->UpScope) {
     if (st->IsInLoop()) {
       inloop = true;
       break;

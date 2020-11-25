@@ -137,7 +137,7 @@ public:
   // logic checkers
   virtual bool IsEndsWithReturn () const noexcept;
   // does end with `return`, `break`, `continue`, `goto case` or `goto default`?
-  virtual bool IsProperCaseEnd (const VStatement *ASwitch) const noexcept;
+  virtual bool IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept;
 
   // this checks for `if (...)\nstat;`
   bool CheckCondIndent (const TLocation &condLoc, VStatement *body);
@@ -284,7 +284,7 @@ public:
   virtual void DoEmit (VEmitContext &ec) override;
 
   virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (const VStatement *ASwitch) const noexcept override;
+  virtual bool IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept override;
 
   virtual VStr toString () override;
 
@@ -583,7 +583,7 @@ public:
   virtual bool IsBreakScope () const noexcept override;
 
   virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (const VStatement *ASwitch) const noexcept override;
+  virtual bool IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept override;
 
   virtual VStr toString () override;
 
@@ -591,7 +591,7 @@ protected:
   VSwitch () {}
   virtual void DoSyntaxCopyTo (VStatement *e) override;
 
-  bool checkProperCaseEnd (bool reportSwitchCase) const noexcept;
+  bool checkProperCaseEnd (bool reportSwitchCase) noexcept;
 
 public:
   virtual void DoFixSwitch (VSwitch *aold, VSwitch *anew) override;
@@ -665,7 +665,7 @@ public:
 
   virtual bool IsBreak () const noexcept override;
   virtual bool IsFlowStop () const noexcept override;
-  virtual bool IsProperCaseEnd (const VStatement *ASwitch) const noexcept override;
+  virtual bool IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept override;
 
   virtual VStr toString () override;
 
@@ -688,7 +688,7 @@ public:
 
   virtual bool IsContinue () const noexcept override;
   virtual bool IsFlowStop () const noexcept override;
-  virtual bool IsProperCaseEnd (const VStatement *ASwitch) const noexcept override;
+  virtual bool IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept override;
 
   virtual VStr toString () override;
 
@@ -713,7 +713,7 @@ public:
 
   virtual bool IsReturn () const noexcept override;
   virtual bool IsFlowStop () const noexcept override;
-  virtual bool IsProperCaseEnd (const VStatement *ASwitch) const noexcept override;
+  virtual bool IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept override;
   virtual bool IsEndsWithReturn () const noexcept override;
 
   virtual bool IsInReturn () const noexcept override;
@@ -750,7 +750,7 @@ public:
   virtual bool IsGotoCase () const noexcept override;
   virtual bool IsGotoDefault () const noexcept override;
   virtual bool IsFlowStop () const noexcept override;
-  virtual bool IsProperCaseEnd (const VStatement *ASwitch) const noexcept override;
+  virtual bool IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept override;
 
   virtual VStr toString () override;
 
@@ -779,7 +779,7 @@ public:
 
   // required for compounds
   virtual bool IsEndsWithReturn () const noexcept override;
-  virtual bool IsProperCaseEnd (const VStatement *ASwitch) const noexcept override;
+  virtual bool IsProperCaseEnd (const VStatement *ASwitch, VStatement *aUpScope) noexcept override;
 
   virtual VStr toString () override;
 
