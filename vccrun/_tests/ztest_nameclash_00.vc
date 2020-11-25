@@ -1,3 +1,4 @@
+// FAIL
 class Main : Object;
 
 int max = 42;
