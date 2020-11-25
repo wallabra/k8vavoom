@@ -432,8 +432,8 @@ final void TestFindPathTo (TVec dest) {
 //  put item into ignore list
 //
 //==========================================================================
-final void PutItemToIgnoreList (Actor item, optional float timeoutMult) {
-  if (!item || !item.IsDestroyed) return;
+final void PutItemToIgnoreList (Actor aitem, optional float timeoutMult) {
+  if (!aitem || !aitem.IsDestroyed) return;
   if (!specified_timeoutMult) timeoutMult = 1;
   float currTime = botmo.XLevel.Time;
   float timeout = ITEM_IGNORE_TIME+(FRandomFull()-0.5)*(ITEM_IGNORE_TIME_DEVIATION*2);
@@ -443,8 +443,8 @@ final void PutItemToIgnoreList (Actor item, optional float timeoutMult) {
   }
   timeout *= timeoutMult;
   timeout += currTime;
-  if (bot_developer_messages_items) printmsg(PMSG.BotDevAI, "bot '%s' gives up on %C for %s", player.PlayerName, item.Class, timeout-currTime);
-  itemIgnoreTimeout.put(item, timeout);
+  if (bot_developer_messages_items) printmsg(PMSG.BotDevAI, "bot '%s' gives up on %C for %s", player.PlayerName, aitem.Class, timeout-currTime);
+  itemIgnoreTimeout.put(aitem, timeout);
 }
 
 
@@ -819,7 +819,7 @@ bool CheckWeaponItem (Weapon Wpn, out bool res) {
 //  otherwise `res` has no meaning
 //
 //==========================================================================
-bool CheckSpecialItem (Actor item, out bool res) {
+bool CheckSpecialItem (Actor aitem, out bool res) {
   return false;
 }
 
@@ -850,15 +850,15 @@ bool CheckAmmoItem (Ammo ammo, out bool res) {
 //  otherwise `res` has no meaning
 //
 //==========================================================================
-bool CheckOtherItem (Actor item, out bool res) {
-  if (Health(item) && botmo.Health >= Player::MAXHEALTH) { res = false; return true; }
-  //if ((item.Class == Soulsphere || item.Class == Megasphere) && botmo.Health >= 2*Player::MAXHEALTH) return false;
+bool CheckOtherItem (Actor aitem, out bool res) {
+  if (Health(aitem) && botmo.Health >= Player::MAXHEALTH) { res = false; return true; }
+  //if ((aitem.Class == Soulsphere || aitem.Class == Megasphere) && botmo.Health >= 2*Player::MAXHEALTH) return false;
 
   BasicArmor Armor = BasicArmor(botmo.FindInventory(BasicArmor, disableReplacement:true));
   if (!Armor) return false;
 
-  if (BasicArmorPickup(item) && (Armor.Amount >= BasicArmorPickup(item).SaveAmount)) { res = false; return true; }
-  //if (item.Class == Megasphere && Armor.Amount >= 200) return false;
+  if (BasicArmorPickup(aitem) && (Armor.Amount >= BasicArmorPickup(aitem).SaveAmount)) { res = false; return true; }
+  //if (aitem.Class == Megasphere && Armor.Amount >= 200) return false;
 
   return false;
 }
@@ -871,27 +871,27 @@ bool CheckOtherItem (Actor item, out bool res) {
 //  Determines if we should bother picking up an item or not
 //
 //==========================================================================
-bool CheckItem (Actor item) {
+bool CheckItem (Actor aitem) {
   bool res;
 
   bNewItemIsWeapon = false;
   bNewItemIsPowerup = false;
 
-  if (!item) return false;
-  if (!item.bSpecial || item.bInvisible) return false;
+  if (!aitem) return false;
+  if (!aitem.bSpecial || aitem.bInvisible) return false;
 
-  Weapon Wpn = Weapon(item);
+  Weapon Wpn = Weapon(aitem);
   if (Wpn) {
     bNewItemIsWeapon = true;
     if (CheckWeaponItem(Wpn, out res)) return res;
   }
 
-  if (CheckSpecialItem(item, out res)) return res;
+  if (CheckSpecialItem(aitem, out res)) return res;
 
-  Ammo ammo = Ammo(item);
+  Ammo ammo = Ammo(aitem);
   if (ammo && CheckAmmoItem(ammo, out res)) return res;
 
-  if (CheckOtherItem(item, out res)) return res;
+  if (CheckOtherItem(aitem, out res)) return res;
 
   // guess we're okay
   return true;

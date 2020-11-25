@@ -43,9 +43,9 @@ class BotPlayer : BotPlayerBase;
 //  Returns a weapon type from an actor
 //
 //==========================================================================
-private int WeapPieceFromItem (Actor item) {
-  if (FourthWeaponPiece(item) && ClassIsChildOf(botmo.Class, GetClassReplacement(FourthWeaponPiece(item).PieceClass))) {
-    return FourthWeaponPiece(item).PieceValue;
+private int WeapPieceFromItem (Actor aitem) {
+  if (FourthWeaponPiece(aitem) && ClassIsChildOf(botmo.Class, GetClassReplacement(FourthWeaponPiece(aitem).PieceClass))) {
+    return FourthWeaponPiece(aitem).PieceValue;
   }
   return -1;
 }
@@ -98,8 +98,8 @@ override bool CheckAmmoItem (Ammo ammo, out bool res) {
 //  CheckSpecialItem
 //
 //==========================================================================
-override bool CheckSpecialItem (Actor item, out bool res) {
-  int piece = WeapPieceFromItem(item);
+override bool CheckSpecialItem (Actor aitem, out bool res) {
+  int piece = WeapPieceFromItem(aitem);
 
   if (piece != -1) {
     bNewItemIsWeapon = true;

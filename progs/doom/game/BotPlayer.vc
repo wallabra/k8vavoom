@@ -41,10 +41,10 @@ class BotPlayer : BotPlayerBase;
 //  CheckOtherItem
 //
 //==========================================================================
-override bool CheckOtherItem (Actor item, out bool res) {
-  if (::CheckOtherItem(item, out res)) return true;
+override bool CheckOtherItem (Actor aitem, out bool res) {
+  if (::CheckOtherItem(aitem, out res)) return true;
 
-  if ((item.Class == Soulsphere || item.Class == Megasphere) && botmo.Health >= 2*Player::MAXHEALTH) {
+  if ((aitem.Class == Soulsphere || aitem.Class == Megasphere) && botmo.Health >= 2*Player::MAXHEALTH) {
     res = false;
     return true;
   }
@@ -52,7 +52,7 @@ override bool CheckOtherItem (Actor item, out bool res) {
   BasicArmor Armor = BasicArmor(botmo.FindInventory(BasicArmor, disableReplacement:true));
   if (!Armor) return false;
 
-  if (item.Class == Megasphere && Armor.Amount >= 200) {
+  if (aitem.Class == Megasphere && Armor.Amount >= 200) {
     res = false;
     return true;
   }
