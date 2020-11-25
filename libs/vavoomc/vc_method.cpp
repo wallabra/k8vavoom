@@ -375,7 +375,8 @@ void VMethod::Emit () {
     VMethodParam &P = Params[i];
     // allocate argument
     if (P.Name != NAME_None) {
-      if (ec.CheckForLocalVar(P.Name) != -1) ParseError(P.Loc, "Redefined argument `%s`", *P.Name);
+      //if (ec.CheckForLocalVar(P.Name) != -1) ParseError(P.Loc, "Redefined argument `%s`", *P.Name);
+      ec.CheckLocalDecl(P.Name, P.Loc);
       VLocalVarDef &L = ec.NewLocal(P.Name, ParamTypes[i], P.Loc, ParamFlags[i]);
       L.Visible = true;
       ec.ReserveLocalSlot(L.GetIndex());

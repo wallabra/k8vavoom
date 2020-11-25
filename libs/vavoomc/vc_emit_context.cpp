@@ -559,6 +559,50 @@ int VEmitContext::CheckForLocalVarCI (VName Name) {
 
 //==========================================================================
 //
+//  VEmitContext::CheckLocalDecl
+//
+//  returns `true` if there were no errors
+//
+//==========================================================================
+bool VEmitContext::CheckLocalDecl (VName locname, const TLocation &locloc) {
+  if (locname == NAME_None) return true; // just in case
+  bool res = true;
+  auto ccloc = CheckForLocalVar(locname);
+  if (ccloc != -1) {
+    //ParseError(locloc, "Redefined identifier `%s`", *locname);
+    ParseError(locloc, "Redeclared local `%s` (previous declaration is at %s)", *locname, *GetLocalByIndex(ccloc).Loc.toStringNoCol());
+    res = false;
+  }
+  if (VObject::cliCaseSensitiveLocals) {
+    ccloc = CheckForLocalVarCI(locname);
+    if (ccloc != -1) {
+      ParseWarning(locloc, "Local `%s` is case-equal to `%s` at %s", *locname, *GetLocalByIndex(ccloc).Name, *GetLocalByIndex(ccloc).Loc.toStringNoCol());
+      res = false;
+    }
+  } else {
+    if (SelfClass) {
+      {
+        const int oldCSF = VObject::cliCaseSensitiveFields;
+        VObject::cliCaseSensitiveFields = 0;
+        VConstant *oldConst = SelfClass->FindConstant(locname);
+        VObject::cliCaseSensitiveFields = oldCSF;
+        if (oldConst) { ParseError(locloc, "Local `%s` conflicts with constant at %s", *locname, *oldConst->Loc.toStringNoCol()); res = false; }
+      }
+      {
+        const int oldCSF = VObject::cliCaseSensitiveFields;
+        VObject::cliCaseSensitiveFields = 0;
+        VField *oldField = SelfClass->FindField(locname);
+        VObject::cliCaseSensitiveFields = oldCSF;
+        if (oldField) { ParseError(locloc, "Local `%s` conflicts with field at %s", *locname, *oldField->Loc.toStringNoCol()); res = false; }
+      }
+    }// else GLog.Logf(NAME_Debug, "WTF?!");
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VEmitContext::GetLocalVarType
 //
 //==========================================================================

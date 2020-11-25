@@ -191,6 +191,11 @@ public:
 
   int CheckForLocalVarCI (VName Name);
 
+  // returns `true` if there were no errors
+  // may call `ParseError()`
+  // sorry, but there is no better place for this (i need it both in expressions, and in method declaration)
+  bool CheckLocalDecl (VName locname, const TLocation &locloc);
+
   // this creates new label (without a destination yet)
   VLabel DefineLabel ();
   // this sets label destination
