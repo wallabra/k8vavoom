@@ -1408,6 +1408,18 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
+  VField *field = SelfExpr->Type.Class->FindField(MethodName, Loc, ec.SelfClass);
+  if (field && field->Type.Type == TYPE_Delegate) {
+    // don't need it anymore
+    //delete selfCopy;
+    if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
+    VExpression *e = new VInvocation(SelfExpr, field->Func, field, true, false, Loc, NumArgs, Args);
+    SelfExpr = nullptr;
+    NumArgs = 0;
+    delete this;
+    return e->Resolve(ec);
+  }
+
   VMethod *M = SelfExpr->Type.Class->FindAccessibleMethod(MethodName, ec.SelfClass, &Loc);
   if (M) {
     /*
@@ -1426,18 +1438,6 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       return nullptr;
     }
     VExpression *e = new VInvocation(SelfExpr, M, nullptr, true, false, Loc, NumArgs, Args);
-    SelfExpr = nullptr;
-    NumArgs = 0;
-    delete this;
-    return e->Resolve(ec);
-  }
-
-  VField *field = SelfExpr->Type.Class->FindField(MethodName, Loc, ec.SelfClass);
-  if (field && field->Type.Type == TYPE_Delegate) {
-    // don't need it anymore
-    //delete selfCopy;
-    if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
-    VExpression *e = new VInvocation(SelfExpr, field->Func, field, true, false, Loc, NumArgs, Args);
     SelfExpr = nullptr;
     NumArgs = 0;
     delete this;
