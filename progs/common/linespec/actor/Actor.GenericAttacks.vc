@@ -64,7 +64,7 @@ final EntityEx helperSpawnShotSupplementalMissile (class!Actor missile, TVec hit
 //  A_CustomMissile
 //
 //==========================================================================
-[decorate] final void A_CustomMissile (class!Actor MissileType, optional float SpawnHeight,
+[decorate] final void A_CustomMissile (class!Actor aMissileType, optional float SpawnHeight,
                             optional int SpawnXYOffset, optional float Angle, optional int Flags/*AimMode*/,
                             optional float Pitch, optional int aptr)
 {
@@ -85,7 +85,7 @@ final EntityEx helperSpawnShotSupplementalMissile (class!Actor missile, TVec hit
       if (tgt.Health <= 0 || tgt.bCorpse) return;
     }
 
-    if (MissileType) {
+    if (aMissileType) {
       Angle = AngleMod360(Angle);
 
       if (!specified_SpawnHeight) SpawnHeight = 32.0;
@@ -96,22 +96,22 @@ final EntityEx helperSpawnShotSupplementalMissile (class!Actor missile, TVec hit
       switch (AimMode) {
         default:
           Origin += Offs;
-          A = SpawnMissile(tgt, MissileType, SpawnHeight);
+          A = SpawnMissile(tgt, aMissileType, SpawnHeight);
           Origin -= Offs;
           break;
         case CMF_AIMOFFSET:
           Offs.z = SpawnHeight;
-          A = SpawnMissileXYZ(Origin+Offs, tgt, MissileType);
+          A = SpawnMissileXYZ(Origin+Offs, tgt, aMissileType);
           break;
         case CMF_AIMDIRECTION:
           Origin += Offs;
           //k8: why `Angles.yaw?' but gozzo does this too
           //    but seems that gozzo overrides this later
-          //A = SpawnMissileAngles(MissileType, Angles.yaw, Pitch, SpawnHeight);
+          //A = SpawnMissileAngles(aMissileType, Angles.yaw, Pitch, SpawnHeight);
           // will be turned later
-          A = SpawnMissileAngles(MissileType, (Flags&CMF_ABSOLUTEANGLE ? Angle : Angles.yaw), Pitch, SpawnHeight);
+          A = SpawnMissileAngles(aMissileType, (Flags&CMF_ABSOLUTEANGLE ? Angle : Angles.yaw), Pitch, SpawnHeight);
           //if (A) A.Angles.yaw = Angle; // yet store it
-          //if (A) print("%C: A_CustomMissile of '%C': Angle=%s; Pitch=%s; angles=%s; vel=%s", self, MissileType, Angle, Pitch, A.Angles, A.Velocity);
+          //if (A) print("%C: A_CustomMissile of '%C': Angle=%s; Pitch=%s; angles=%s; vel=%s", self, aMissileType, Angle, Pitch, A.Angles, A.Velocity);
           Origin -= Offs;
           break;
       }
@@ -312,16 +312,16 @@ final void FireSuperBullet () {
 //  A_CustomMeleeAttack
 //
 //==========================================================================
-[decorate] final void A_CustomMeleeAttack (int MeleeDamage, optional name MeleeSound,
-                                optional name MissSound, optional name DamageType, optional bool Bleed)
+[decorate] final void A_CustomMeleeAttack (int aMeleeDamage, optional name aMeleeSound,
+                                optional name MissSound, optional name aDamageType, optional bool Bleed)
 {
   if (!Target) return;
 
   A_FaceTarget();
   if (CheckMeleeRange()) {
-    if (!DamageType) DamageType = 'Melee';
-    if (MeleeSound) PlaySound(MeleeSound, CHAN_WEAPON);
-    Target.Damage(self, self, MeleeDamage, DamageType, spawnBlood:true);
+    if (!aDamageType) aDamageType = 'Melee';
+    if (aMeleeSound) PlaySound(aMeleeSound, CHAN_WEAPON);
+    Target.Damage(self, self, aMeleeDamage, aDamageType, spawnBlood:true);
   } else {
     if (MissSound) PlaySound(MissSound, CHAN_WEAPON);
   }
@@ -333,22 +333,22 @@ final void FireSuperBullet () {
 //  A_CustomComboAttack
 //
 //==========================================================================
-[decorate] final void A_CustomComboAttack (class!Actor MissileType, float MissileHeight,
-                                int MeleeDamage, optional name MeleeSound, optional name DamageType,
+[decorate] final void A_CustomComboAttack (class!Actor aMissileType, float aMissileHeight,
+                                int aMeleeDamage, optional name aMeleeSound, optional name aDamageType,
                                 optional bool Bleed)
 {
   if (!Target) return;
 
   A_FaceTarget();
   if (CheckMeleeRange()) {
-    if (!DamageType) DamageType = 'Melee';
-    if (MeleeSound) PlaySound(MeleeSound, CHAN_WEAPON);
-    Target.Damage(self, self, MeleeDamage, DamageType, spawnBlood:true);
+    if (!aDamageType) aDamageType = 'Melee';
+    if (aMeleeSound) PlaySound(aMeleeSound, CHAN_WEAPON);
+    Target.Damage(self, self, aMeleeDamage, aDamageType, spawnBlood:true);
     return;
   }
 
-  if (MissileType) {
-    EntityEx A = SpawnMissile(Target, MissileType, MissileHeight);
+  if (aMissileType) {
+    EntityEx A = SpawnMissile(Target, aMissileType, aMissileHeight);
     if (A) {
       if (A.bSeekerMissile) A.Tracer = Target;
     }
@@ -361,21 +361,21 @@ final void FireSuperBullet () {
 //  DoAttack
 //
 //==========================================================================
-final void DoAttack (bool DoMelee, bool DoMissile, int MeleeDamage,
-                     name MeleeSound, class!Actor MissileType, float MissileHeight)
+final void DoAttack (bool DoMelee, bool DoMissile, int aMeleeDamage,
+                     name aMeleeSound, class!Actor aMissileType, float aMissileHeight)
 {
   if (!Target) return;
 
   A_FaceTarget();
-  if (DoMelee && MeleeDamage > 0 && CheckMeleeRange()) {
-    if (MeleeSound) PlaySound(MeleeSound, CHAN_WEAPON);
-    int damage = (P_Random()%8+1)*MeleeDamage;
+  if (DoMelee && aMeleeDamage > 0 && CheckMeleeRange()) {
+    if (aMeleeSound) PlaySound(aMeleeSound, CHAN_WEAPON);
+    int damage = (P_Random()%8+1)*aMeleeDamage;
     Target.Damage(self, self, damage, 'Melee', spawnBlood:true);
     return;
   }
 
-  if (DoMissile && MissileType) {
-    EntityEx A = SpawnMissile(Target, MissileType, MissileHeight);
+  if (DoMissile && aMissileType) {
+    EntityEx A = SpawnMissile(Target, aMissileType, aMissileHeight);
     if (A) {
       if (A.bSeekerMissile) A.Tracer = Target;
     }
@@ -539,11 +539,11 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
 //  Handles a bunch of exploding things.
 //
 //==========================================================================
-final void do_simple_A_Explode (optional int damage, optional float radius, optional int flags) {
+final void do_simple_A_Explode (optional int damage, optional float aradius, optional int flags) {
   ubyte damageSelf;
 
   if (!specified_damage) damage = 128;
-  if (!specified_radius) radius = 128;
+  if (!specified_aradius) aradius = 128;
 
   if (specified_flags) {
     damageSelf = (flags&XF_HURTSOURCE ? 1 : 0);
@@ -551,7 +551,7 @@ final void do_simple_A_Explode (optional int damage, optional float radius, opti
     damageSelf = 1;
   }
 
-  float distance = radius;
+  float distance = aradius;
 
   PreExplode();
   GetExplodeParms(damage, distance, damageSelf);
@@ -814,7 +814,7 @@ final void do_simple_A_Explode (optional int damage, optional float radius, opti
 //  BlastActor
 //
 //==========================================================================
-final void BlastActor (Actor victim, Actor source, float speed, class!Actor BlastEffect) {
+final void BlastActor (Actor victim, Actor source, float aspeed, class!Actor BlastEffect) {
   float angle; //???
   //k8: angle was always zero, wtf?!
   angle = AngleMod360(FRandomFull()*360.0);
@@ -837,8 +837,8 @@ final void BlastActor (Actor victim, Actor source, float speed, class!Actor Blas
     }
   }
 
-  victim.Velocity.x = speed*cos(angle)*35.0;
-  victim.Velocity.y = speed*sin(angle)*35.0;
+  victim.Velocity.x = aspeed*cos(angle)*35.0;
+  victim.Velocity.y = aspeed*sin(angle)*35.0;
 
   // spawn blast puff
   float ang = atan2(source.Origin.y-victim.Origin.y, source.Origin.x-victim.Origin.x);
@@ -884,7 +884,7 @@ final void BlastActor (Actor victim, Actor source, float speed, class!Actor Blas
 //
 //==========================================================================
 [decorate] final void A_Blast (optional int BlastFlags, optional float Strength/*ignored*/,
-                    optional float Radius, optional float Speed,
+                    optional float aRadius, optional float aSpeed,
                     optional class!Actor BlastEffect, optional name BlastSound)
 {
   //const int BF_USEAMMO      = 1;
@@ -892,8 +892,8 @@ final void BlastActor (Actor victim, Actor source, float speed, class!Actor Blas
   //const int BF_AFFECTBOSSES = 4;
   //const int BF_NOIMPACTDAMAGE = 8;
 
-  if (!Radius) Radius = 255; // default radius
-  if (!Speed) Speed = 20; // default speed
+  if (!aRadius) aRadius = 255; // default radius
+  if (!aSpeed) aSpeed = 20; // default speed
   if (!specified_BlastEffect) BlastEffect = class!Actor(FindClassNoCase('BlastEffect'));
   if (!specified_BlastSound) BlastSound = 'BlastRadius';
 
@@ -922,8 +922,8 @@ final void BlastActor (Actor victim, Actor source, float speed, class!Actor Blas
     if (mo.bDormant) continue; // no dormant creatures
     if (mo.bDontBlast) continue;
     float dist = self.DistTo(mo);
-    if (dist > Radius) continue; // out of range
-    BlastActor(mo, self, Speed, BlastEffect);
+    if (dist > aRadius) continue; // out of range
+    BlastActor(mo, self, aSpeed, BlastEffect);
   }
 }
 
