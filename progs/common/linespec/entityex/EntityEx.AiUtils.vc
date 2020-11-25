@@ -854,13 +854,13 @@ final void NewChaseDir () {
 //  killough 9/8/98: Split into two functions
 //
 //=============================================================================
-final void NewChaseDirTo (TVec destination, optional EntityEx Target) {
+final void NewChaseDirTo (TVec destination, optional EntityEx aTarget) {
   float deltax = destination.x-Origin.x;
   float deltay = destination.y-Origin.y;
 
-  if (Target) {
+  if (aTarget) {
     if (!bNoFear) {
-      if ((Target.bIsPlayer && (PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING)) || bFrightened) {
+      if ((aTarget.bIsPlayer && (PlayerEx(aTarget.Player).Cheats&PlayerEx::CF_FRIGHTENING)) || bFrightened) {
         deltax = -deltax;
         deltay = -deltay;
       }
@@ -905,12 +905,12 @@ final void NewChaseDirTo (TVec destination, optional EntityEx Target) {
   } else {
     float dist = Length2D(destination-GetCenter());
 
-    if (Target && Target.Health > 0) {
+    if (aTarget && aTarget.Health > 0) {
       // Enemy target is alive
       if ((bAvoidMelee || GetCvar('monster_backing')) && MissileState &&
           /*actor->type != MT_SKULL &&*/
-          ((!Target.MissileState && dist < DEFAULT_MELEERANGE*2.0) ||
-           (Target.Player && PlayerEx(Target.Player).ReadyWeapon && PlayerEx(Target.Player).ReadyWeapon.bBotMelee &&
+          ((!aTarget.MissileState && dist < DEFAULT_MELEERANGE*2.0) ||
+           (aTarget.Player && PlayerEx(aTarget.Player).ReadyWeapon && PlayerEx(aTarget.Player).ReadyWeapon.bBotMelee &&
             dist < DEFAULT_MELEERANGE*3.0)))
       {
         // Back away from melee attacker

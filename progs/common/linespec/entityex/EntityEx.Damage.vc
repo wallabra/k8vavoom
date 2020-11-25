@@ -33,11 +33,11 @@
 //  virtual, so mods can override this
 //
 //==========================================================================
-bool K8HS_IsGoodDamageType (EntityEx inflictor, name damageType) {
-  if (!damageType) return true; // normal damage
-  if (nameEquCI(damageType, 'Chainsaw')) return false; // never
-  if (!IsNormalLikeDamage(damageType)) {
-    if (GetCvarB('k8HSDebug_ShowFailedDamageType')) printdebug("DMGTYPE: %s", damageType);
+bool K8HS_IsGoodDamageType (EntityEx inflictor, name adamageType) {
+  if (!adamageType) return true; // normal damage
+  if (nameEquCI(adamageType, 'Chainsaw')) return false; // never
+  if (!IsNormalLikeDamage(adamageType)) {
+    if (GetCvarB('k8HSDebug_ShowFailedDamageType')) printdebug("DMGTYPE: %s", adamageType);
     // shitsara
     if (inflictor && inflictor.bIsPlayer) {
       class!Inventory shitsaraPlr = class!Inventory(FindClass('IsSamsaraClass'));
@@ -152,7 +152,7 @@ int K8HS_HeadshotFastKillHook (int dodmg) {
 //  virtual, so mods can override this
 //
 //==========================================================================
-bool K8HS_CheckHeadshot (EntityEx inflictor, TVec hitpos, int damage, name damageType, bool secondary) {
+bool K8HS_CheckHeadshot (EntityEx inflictor, TVec hitpos, int damage, name adamageType, bool secondary) {
   bool headshot = false;
   float hithgt = hitpos.z; //-Pos.z;
   float fromtop = Height-hithgt;
@@ -194,13 +194,13 @@ bool K8HS_CheckHeadshot (EntityEx inflictor, TVec hitpos, int damage, name damag
 //  "awake" it.
 //
 //==========================================================================
-int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name damageType, bool secondary) {
+int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageType, bool secondary) {
   // is it from player?
   if (!inflictor) return damage;
   if (!inflictor.bIsPlayer) return damage;
   if (!GetCvarB('k8HSEnabled')) return damage;
 
-  if (!K8HS_IsGoodDamageType(inflictor, damageType)) return damage;
+  if (!K8HS_IsGoodDamageType(inflictor, adamageType)) return damage;
   if (!K8HS_IsHSAllowed()) return damage;
 
   bool debugme = GetCvarB('k8HSDebug');
@@ -211,7 +211,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
 
   PlayerPawn plr = PlayerPawn(inflictor);
 
-  //if (k8CheckBoolCVar('k8HSShowKnownDamage', debugme)) printdebug("K8HS: damage type '%s', damage=%s", damageType, damage);
+  //if (k8CheckBoolCVar('k8HSShowKnownDamage', debugme)) printdebug("K8HS: damage type '%s', damage=%s", adamageType, damage);
 
   bool fastkills = GetCvarB('k8HSFastKillAnnoyingMonsters');
 
@@ -265,7 +265,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
     printdebug("  hithgt=%s; fromtop=%s", hithgt, fromtop);
   }
 
-  bool headshot = K8HS_CheckHeadshot(inflictor, hitpos, damage, damageType, secondary);
+  bool headshot = K8HS_CheckHeadshot(inflictor, hitpos, damage, adamageType, secondary);
   /*
   float hithgt = hitpos.z; //-Pos.z;
   float fromtop = Height-hithgt;

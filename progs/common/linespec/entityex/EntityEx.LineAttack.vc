@@ -510,7 +510,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
 //  Sets linetaget and aim_slope when a target is aimed at.
 //
 //==========================================================================
-final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
+final EntityEx AimLineAttack (out TVec OutDir, TAVec aangles, float distance,
                               optional bool noVertAutoAim, optional class!EntityEx rocketType)
 {
   float x2, y2;
@@ -529,15 +529,15 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
   float aim_bottomslope; // slopes to top and bottom of target
   float aim_range2d;
 
-  AngleVector(angles, out aim_dir);
+  AngleVector(aangles, out aim_dir);
   x2 = Origin.x+distance*aim_dir.x;
   y2 = Origin.y+distance*aim_dir.y;
   aim_z = Origin.z+(rocketType ? CalculateMissileAttackZOfs(rocketType) : CalculateLineAttackZOfs());
   aim_range2d = Length2D(vector(distance*aim_dir.x, distance*aim_dir.y));
 
   // can't shoot outside view angles
-  topangle = AngleMod180(-angles.pitch+30.0);
-  botangle = AngleMod180(-angles.pitch-30.0);
+  topangle = AngleMod180(-aangles.pitch+30.0);
+  botangle = AngleMod180(-aangles.pitch-30.0);
   if (topangle > 89.0) topangle = 89.0;
   if (botangle < -89.0) botangle = -89.0;
   aim_topslope = tan(topangle);
@@ -630,8 +630,8 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
     break; // don't go any farther
   }
 
-  if (linetarget && !noVertAutoAim) angles.pitch = -atan(aim_slope);
-  AngleVector(angles, out dir);
+  if (linetarget && !noVertAutoAim) aangles.pitch = -atan(aim_slope);
+  AngleVector(aangles, out dir);
   OutDir = dir;
   return linetarget;
 }
@@ -781,17 +781,17 @@ final bool ShootCheckPlanes (sector_t *sec, optional line_t *line,
 //  eventLineAttackACS
 //
 //==========================================================================
-override void eventLineAttackACS (TVec dir, float distance, int LADamage, name aPuffType, name damagetype, int flags, int pufftid) {
+override void eventLineAttackACS (TVec dir, float distance, int LADamage, name aPuffType, name adamagetype, int flags, int pufftid) {
   /*k8: old code
   class!EntityEx PuffType = none;
-  if (damagetype) PuffType = class!EntityEx(FindClassNoCase(damagetype));
+  if (adamagetype) PuffType = class!EntityEx(FindClassNoCase(adamagetype));
   */
   class!EntityEx PuffType = (aPuffType ? class!EntityEx(FindClassNoCase(aPuffType)) : none);
-  //printdebug("%C: eventLineAttackACS: dir=%s; dist=%s; LADamage=%s; aPuffType=%s(%C); damagetype=%s; flags=%s; pufftid=%s", self, dir, distance, LADamage, aPuffType, PuffType, damagetype, flags, pufftid);
+  //printdebug("%C: eventLineAttackACS: dir=%s; dist=%s; LADamage=%s; aPuffType=%s(%C); adamagetype=%s; flags=%s; pufftid=%s", self, dir, distance, LADamage, aPuffType, PuffType, adamagetype, flags, pufftid);
   if (flags&FHF_NOIMPACTDECAL) {
-    LineAttack(dir, distance, LADamage, PuffType, NoAttackGhosts:true, DmgType:damagetype, decalType:'', pufftid:pufftid, !!(flags&FHF_NORANDOMPUFFZ));
+    LineAttack(dir, distance, LADamage, PuffType, NoAttackGhosts:true, DmgType:adamagetype, decalType:'', pufftid:pufftid, !!(flags&FHF_NORANDOMPUFFZ));
   } else {
-    LineAttack(dir, distance, LADamage, PuffType, NoAttackGhosts:true, DmgType:damagetype, pufftid:pufftid, !!(flags&FHF_NORANDOMPUFFZ));
+    LineAttack(dir, distance, LADamage, PuffType, NoAttackGhosts:true, DmgType:adamagetype, pufftid:pufftid, !!(flags&FHF_NORANDOMPUFFZ));
   }
 }
 
