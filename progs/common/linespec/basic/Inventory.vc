@@ -776,9 +776,9 @@ void AbsorbDamage (EntityEx inflictor, int damage, name DmgType, ref int NewDama
 //  amplify damage dealt
 //
 //==========================================================================
-void AmplifyDamage (EntityEx target, int damage, name DmgType, ref int NewDamage) {
+void AmplifyDamage (EntityEx atarget, int damage, name DmgType, ref int NewDamage) {
   if (Inventory) {
-    Inventory.AmplifyDamage(target, damage, DmgType, NewDamage);
+    Inventory.AmplifyDamage(atarget, damage, DmgType, NewDamage);
   }
 }
 

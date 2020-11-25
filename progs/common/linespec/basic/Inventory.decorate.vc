@@ -343,7 +343,7 @@
   optional int Flags, optional class!Actor PuffType,
   optional float Range, optional float LifeSteal,
   optional float lifestealmax, optional class!BasicArmorBonus armorbonustype,
-  optional name meleesound, optional name misssound) self(Actor)
+  optional name aMeleeSound, optional name misssound) self(Actor)
 {
   TAVec aimAngles;
   TVec dir;
@@ -384,7 +384,7 @@
         }
       }
     }
-    if (Wpn) PlaySound((meleesound ? meleesound : Wpn.AttackSound), CHAN_WEAPON);
+    if (Wpn) PlaySound((aMeleeSound ? aMeleeSound : Wpn.AttackSound), CHAN_WEAPON);
     if (!(Flags&CPF_NOTURN)) {
       Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
       if (bIsPlayer) Player.bFixAngle = true;
@@ -519,12 +519,12 @@
 //  A_FireCustomMissile
 //
 //===========================================================================
-[decorate] final void A_FireCustomMissile (class!Actor MissileType, optional float Angle,
+[decorate] final void A_FireCustomMissile (class!Actor aMissileType, optional float Angle,
   optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
   optional int Flags, optional float Pitch) self(Actor)
 {
   Pitch = -Pitch; // this does it this way
-  doFireMissileProjectile(MissileType, Angle!optional, UseAmmo!optional, SpawnXY!optional, SpawnZ!optional, Flags!optional, Pitch!optional);
+  doFireMissileProjectile(aMissileType, Angle!optional, UseAmmo!optional, SpawnXY!optional, SpawnZ!optional, Flags!optional, Pitch!optional);
 }
 
 
@@ -533,12 +533,12 @@
 //  A_FireCustomMissileEx
 //
 //===========================================================================
-[decorate] final void A_FireCustomMissileEx (class!Actor MissileType, optional float Angle,
+[decorate] final void A_FireCustomMissileEx (class!Actor aMissileType, optional float Angle,
   optional bool UseAmmo, optional int SpawnLeft, optional float SpawnFwd, optional float SpawnUp,
   optional int Flags, optional float Pitch) self(Actor)
 {
   Pitch = -Pitch; // this does it this way
-  doFireMissileProjectile(MissileType, Angle!optional, UseAmmo!optional, SpawnLeft!optional, SpawnUp!optional, Flags!optional, Pitch!optional, SpawnFwd!optional);
+  doFireMissileProjectile(aMissileType, Angle!optional, UseAmmo!optional, SpawnLeft!optional, SpawnUp!optional, Flags!optional, Pitch!optional, SpawnFwd!optional);
 }
 
 
@@ -565,11 +565,11 @@
 //  A_FireProjectile
 //
 //===========================================================================
-[decorate] final void A_FireProjectile (class!Actor MissileType, optional float Angle,
+[decorate] final void A_FireProjectile (class!Actor aMissileType, optional float Angle,
                                         optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
                                         optional int Flags, optional float Pitch) self(Actor)
 {
-  doFireMissileProjectile(MissileType, Angle!optional, UseAmmo!optional, SpawnXY!optional, SpawnZ!optional, Flags!optional, Pitch!optional);
+  doFireMissileProjectile(aMissileType, Angle!optional, UseAmmo!optional, SpawnXY!optional, SpawnZ!optional, Flags!optional, Pitch!optional);
 }
 
 

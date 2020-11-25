@@ -245,8 +245,8 @@ override Inventory CreateCopy (EntityEx Toucher) {
 //  CreateTossable
 //
 //==========================================================================
-override Inventory CreateTossable (optional int DropAmount) {
-  Inventory Copy = ::CreateTossable(DropAmount!optional);
+override Inventory CreateTossable (optional int aDropAmount) {
+  Inventory Copy = ::CreateTossable(aDropAmount!optional);
   if (Copy) Copy.bIgnoreSkill = true; // avoid cheating on certain skill levels
   return Copy;
 }
