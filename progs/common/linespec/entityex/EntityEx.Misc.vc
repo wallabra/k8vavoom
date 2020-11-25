@@ -52,13 +52,13 @@ override void Destroyed () {
 //  adjusts light xy, so it won't be inside a wall
 //
 //==========================================================================
-void FixLightPosition (sector_t *sector, ref TVec org, optional int thingidx) {
+void FixLightPosition (sector_t *asector, ref TVec org, optional int thingidx) {
   // people loves to put lights into the floor/ceiling, and our tracer is not happy with those
-  /*if (!sector)*/ sector = XLevel.PointInSectorRender(org);
+  /*if (!asector)*/ asector = XLevel.PointInSectorRender(org);
   //float gaph = CeilingZ-FloorZ;
   float z = org.z;
-  float fz = GetPlanePointZ(ref sector.floor, org);
-  float cz = GetPlanePointZ(ref sector.ceiling, org);
+  float fz = GetPlanePointZ(ref asector.floor, org);
+  float cz = GetPlanePointZ(ref asector.ceiling, org);
   // closed sector?
   if (fz >= cz) {
     // for closed sectors, rise the light a little for the rare case the sector will be opened later
@@ -82,7 +82,7 @@ void FixLightPosition (sector_t *sector, ref TVec org, optional int thingidx) {
 
   // check if we're inside a wall
   TVec mdir = vector(0, 0, 0);
-  foreach (line_t *ldef; sector.lines) {
+  foreach (line_t *ldef; asector.lines) {
     // ignore two-sided walls
     if (ldef->backsector && (ldef->flags&ML_TWOSIDED)) continue;
     // check distance
@@ -90,10 +90,10 @@ void FixLightPosition (sector_t *sector, ref TVec org, optional int thingidx) {
     float pdist = DotProduct(org, ldef.normal)-ldef.dist;
     if (fabs(pdist) >= 1.0f) continue;
     mdir = (mdir+ldef.normal)/2;
-    if (specified_thingidx) printdebug("sector #%d: line #%d: light #%d in the wall!", sector-&XLevel.Sectors[0], ldef-&XLevel.Lines[0], thingidx);
+    if (specified_thingidx) printdebug("sector #%d: line #%d: light #%d in the wall!", asector-&XLevel.Sectors[0], ldef-&XLevel.Lines[0], thingidx);
   }
   if (mdir) {
-    if (specified_thingidx) printdebug("sector #%d: move light #%d out of the walls with %s!", sector-&XLevel.Sectors[0], thingidx, mdir);
+    if (specified_thingidx) printdebug("sector #%d: move light #%d out of the walls with %s!", asector-&XLevel.Sectors[0], thingidx, mdir);
     org += mdir*4;
   }
 }
@@ -107,18 +107,18 @@ void FixLightPosition (sector_t *sector, ref TVec org, optional int thingidx) {
 //  pass -666 to force proper check (sorry for this hack)
 //
 //==========================================================================
-final void SetOrigin2 (TVec origin, optional int properFloorCheck, optional float moreHeight) {
+final void SetOrigin2 (TVec aorigin, optional int properFloorCheck, optional float moreHeight) {
   UnlinkFromWorld();
   bIntrJustMoved = false; // disable movement interpolation
 
-  Origin = origin;
+  Origin = aorigin;
 
   if (properFloorCheck != -666) {
          if (bIsPlayer) properFloorCheck = true;
     else if (!specified_properFloorCheck && bMonster) properFloorCheck = true;
 
     if (properFloorCheck) {
-      if (origin.z == ONFLOORZ || origin.z == ONCEILINGZ) {
+      if (aorigin.z == ONFLOORZ || aorigin.z == ONCEILINGZ) {
         properFloorCheck = false;
       }
     }
@@ -127,15 +127,15 @@ final void SetOrigin2 (TVec origin, optional int properFloorCheck, optional floa
   // set subsector and/or block links
   // use `CheckRelPosition()` here, we don't need to relink ourselves
   tmtrace_t tmtrace;
-  GetFloorAndCeilingEx(out tmtrace, origin, collideWorld:false);
+  GetFloorAndCeilingEx(out tmtrace, aorigin, collideWorld:false);
   float flrz = tmtrace.FloorZ;
   float ceilz = tmtrace.CeilingZ;
 
   //auto oldz = Origin.z;
 
-       if (origin.z == ONFLOORZ) Origin.z = flrz+moreHeight;
-  else if (origin.z == ONCEILINGZ) Origin.z = ceilz-Height-moreHeight;
-  else if (origin.z == FLOATRANDZ) {
+       if (aorigin.z == ONFLOORZ) Origin.z = flrz+moreHeight;
+  else if (aorigin.z == ONCEILINGZ) Origin.z = ceilz-Height-moreHeight;
+  else if (aorigin.z == FLOATRANDZ) {
     float space = ceilz-Height-flrz;
     if (space > 48.0) {
       space -= 40.0;
@@ -522,9 +522,9 @@ final void Thrust (float angle, float move) {
 // needs to turn.
 //
 //==========================================================================
-int FaceActor (EntityEx target, out float delta) {
+int FaceActor (EntityEx atarget, out float delta) {
   float angle1 = Angles.yaw;
-  float angle2 = atan2(target.Origin.y-Origin.y, target.Origin.x-Origin.x);
+  float angle2 = atan2(atarget.Origin.y-Origin.y, atarget.Origin.x-Origin.x);
   if (angle2 > angle1) {
     float diff = AngleMod360(angle2-angle1);
     if (diff > 180.0) {
@@ -3139,15 +3139,15 @@ final int HITDICE (int a) {
 //  Dirt stuff
 //
 //==========================================================================
-final void SpawnDirt (float radius) {
+final void SpawnDirt (float aradius) {
   TVec org;
   class!EntityEx dtype;
 
   float angle = 360.0*Random();
   float sina, cosa;
   sincos(angle, out sina, out cosa);
-  org.x = Origin.x+radius*cosa;
-  org.y = Origin.y+radius*sina;
+  org.x = Origin.x+aradius*cosa;
+  org.y = Origin.y+aradius*sina;
   org.z = Origin.z+Random()*2.0+1.0;
   switch (P_Random()%6) {
     case 0: dtype = Dirt1; break;
@@ -3167,7 +3167,7 @@ final void SpawnDirt (float radius) {
 //  GunShot
 //
 //===========================================================================
-final void GunShot (bool accurate, TVec dir, name DmgType, bool secondary, optional name DecalName,
+final void GunShot (bool accurate, TVec dir, name DmgType, bool secondary, optional name aDecalName,
                     optional float range, optional float spreadYaw, optional float spreadPitch)
 {
   if (!Level.Game.IsAuthority) return;
@@ -3187,7 +3187,7 @@ final void GunShot (bool accurate, TVec dir, name DmgType, bool secondary, optio
   }
 
   int damage = 5*(P_Random()%3+1);
-  LineAttack(dir, range, damage, BulletPuff, DmgType:DmgType, secondary:secondary, decalType:DecalName!optional);
+  LineAttack(dir, range, damage, BulletPuff, DmgType:DmgType, secondary:secondary, decalType:aDecalName!optional);
 }
 
 
@@ -3320,22 +3320,22 @@ final state FindJumpStateOfs (int offset) {
 //  mostly called from decorate actions
 //
 //===========================================================================
-final void DoJump (state State, optional bool affectStateCallResult) {
+final void DoJump (state aState, optional bool affectStateCallResult) {
   if (XLevel.StateCall) {
-    XLevel.StateCall->State = State;
+    XLevel.StateCall->State = aState;
     // shoult state jump affect state chain results?
     if (!affectStateCallResult) XLevel.StateCall->Result = 0;
   } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) {
     PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
-    Player.SetViewState(PS_WEAPON, State);
+    Player.SetViewState(PS_WEAPON, aState);
   } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_FLASH].State) {
     PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
-    Player.SetViewState(PS_FLASH, State);
+    Player.SetViewState(PS_FLASH, aState);
   } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) {
     PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
-    Player.SetViewState(PS_WEAPON_OVL, State);
+    Player.SetViewState(PS_WEAPON_OVL, aState);
   } else {
-    SetState(State);
+    SetState(aState);
   }
   // state jumps should not affect state chain results
   //if (!keepChainRes && XLevel.StateCall) XLevel.StateCall->Result = false;
