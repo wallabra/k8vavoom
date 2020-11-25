@@ -2190,10 +2190,10 @@ void UpdateRevealedMap () {
 //==========================================================================
 void ParticleEffect (int count, int type1, int type2, TVec origin, float ornd,
                      TVec velocity, float vrnd, float acceleration, float grav,
-                     int color, float duration, float ramp)
+                     int clr, float duration, float ramp)
 {
   Level.ParticleEffect(count, type1, type2, origin, ornd, velocity, vrnd, acceleration,
-        grav, color, duration, ramp);
+        grav, clr, duration, ramp);
 }
 
 
@@ -2215,12 +2215,12 @@ void DecalEffect (TVec org, name dectype, int side, /*line_t *li*/int lineidx, i
 //  ClientExplosion
 //
 //==========================================================================
-void ClientExplosion (int color, float rad, TVec org) {
+void ClientExplosion (int clr, float rad, TVec org) {
   dlight_t *dl = Level.AllocDlight(none, org, rad+150.0);
   if (dl) {
     //dl->origin = org;
     //dl->radius = rad+150.0;
-    dl->color = color;
+    dl->color = clr;
     dl->die = Level.XLevel.Time+0.5;
     dl->decay = 300.0;
   }
@@ -2232,7 +2232,7 @@ void ClientExplosion (int color, float rad, TVec org) {
 //  ClientParticleExplosion
 //
 //==========================================================================
-void ClientParticleExplosion (int color, float rad, TVec org) {
+void ClientParticleExplosion (int clr, float rad, TVec org) {
   TVec porg;
   foreach (auto i; 0..512/*1024*/) {
     porg.x = org.x+((Random()*32.0)-16.0);
@@ -2260,7 +2260,7 @@ void ClientParticleExplosion (int color, float rad, TVec org) {
   if (dl) {
     //dl->origin = org;
     //dl->radius = rad + 150.0;
-    dl->color = color;
+    dl->color = clr;
     dl->die = Level.XLevel.Time+0.5;
     dl->decay = 300.0;
   }
@@ -4739,7 +4739,7 @@ override void SetViewPos () {
 //  DebugPutRotatingSpotlight
 //
 //==========================================================================
-final void DebugPutRotatingSpotlight (TVec florg, float speed, float flradius, int color, int id) {
+final void DebugPutRotatingSpotlight (TVec florg, float speed, float flradius, int clr, int id) {
   TAVec ag;
   ag.yaw = AngleMod360(MO.XLevel.Time*speed);
   TVec dir;
@@ -4748,7 +4748,7 @@ final void DebugPutRotatingSpotlight (TVec florg, float speed, float flradius, i
   if (!fl) return;
   fl.coneDirection = dir;
   fl.coneAngle = 42.0f;
-  fl.color = color|0xff_00_00_00;
+  fl.color = clr|0xff_00_00_00;
   fl.die = MO.XLevel.Time+(2.0/35.0);
   fl.type = DynamicLight::DLTYPE_Spot;
   //fl.minlight = 64;
@@ -4762,7 +4762,7 @@ final void DebugPutRotatingSpotlight (TVec florg, float speed, float flradius, i
 //  DebugPutRotatingSpotlightHead
 //
 //==========================================================================
-final void DebugPutRotatingSpotlightHead (TVec florg, float speed, float flradius, int color, int id) {
+final void DebugPutRotatingSpotlightHead (TVec florg, float speed, float flradius, int clr, int id) {
   TAVec ag;
   ag.yaw = AngleMod360(MO.XLevel.Time*speed+id*120);
   TVec dir;
@@ -4772,7 +4772,7 @@ final void DebugPutRotatingSpotlightHead (TVec florg, float speed, float flradiu
   if (!fl) return;
   fl.coneDirection = dir;
   fl.coneAngle = 42.0f;
-  fl.color = color|0xff_00_00_00;
+  fl.color = clr|0xff_00_00_00;
   fl.die = MO.XLevel.Time+(2.0/35.0);
   fl.type = DynamicLight::DLTYPE_Spot;
   //fl.minlight = 64;

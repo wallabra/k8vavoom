@@ -149,9 +149,9 @@ void InitOpen (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int A
 //==========================================================================
 override void Tick (float deltaTime) {
   // first, raise the floor
-  int res1 = MovePlane(sector:Sector, amount:FloorSpeed*deltaTime, dest:FloorDest, crush:Crush, floorOrCeiling:MOVE_PLANE_FLOOR, direction:Direction, stopOnCrush:true);
+  int res1 = MovePlane(sec:Sector, amount:FloorSpeed*deltaTime, dest:FloorDest, crush:Crush, floorOrCeiling:MOVE_PLANE_FLOOR, direction:Direction, stopOnCrush:true);
   // then, lower the ceiling
-  int res2 = MovePlane(sector:Sector, amount:CeilingSpeed*deltaTime, dest:CeilingDest, crush:Crush, floorOrCeiling:MOVE_PLANE_CEILING, direction:-Direction, stopOnCrush:true);
+  int res2 = MovePlane(sec:Sector, amount:CeilingSpeed*deltaTime, dest:CeilingDest, crush:Crush, floorOrCeiling:MOVE_PLANE_CEILING, direction:-Direction, stopOnCrush:true);
   if (res1 == RES_PASTDEST && res2 == RES_PASTDEST) {
     SectorStopSequence(Sector);
     Finished();

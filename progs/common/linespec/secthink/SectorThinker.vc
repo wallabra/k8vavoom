@@ -96,8 +96,8 @@ void RemoveAffector () {
 //  SectorStartSequence
 //
 //==========================================================================
-final void SectorStartSequence (sector_t *sector, name sequence, int ModeNum) {
-  Level.SectorStartSequence(sector, sequence, ModeNum);
+final void SectorStartSequence (sector_t *sec, name sequence, int ModeNum) {
+  Level.SectorStartSequence(sec, sequence, ModeNum);
 }
 
 
@@ -106,8 +106,8 @@ final void SectorStartSequence (sector_t *sector, name sequence, int ModeNum) {
 //  SectorStopSequence
 //
 //==========================================================================
-final void SectorStopSequence (sector_t *sector) {
-  Level.SectorStopSequence(sector);
+final void SectorStopSequence (sector_t *sec) {
+  Level.SectorStopSequence(sec);
 }
 
 

@@ -239,7 +239,7 @@ override void Tick (float deltaTime) {
   }
 
   // don't block lowering floor with stuck monster
-  int res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:FloorDestDist, crush:Crush, floorOrCeiling:MOVE_PLANE_FLOOR, direction:Direction, stopOnCrush:true, smartCrush:true);
+  int res = MovePlane(sec:Sector, amount:Speed*deltaTime, dest:FloorDestDist, crush:Crush, floorOrCeiling:MOVE_PLANE_FLOOR, direction:Direction, stopOnCrush:true, smartCrush:true);
 
   if ((Direction == 1 && Sector->floor.dist >= StairsDelayDist) ||
       (Direction == -1 && Sector->floor.dist <= StairsDelayDist))

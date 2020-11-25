@@ -1114,7 +1114,7 @@ float FindActivePowerupTime (name className) {
 //  PickActor
 //
 //===========================================================================
-Entity PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
+Entity PickActor (optional TVec org, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   return none;
 }
 
@@ -1145,7 +1145,7 @@ Entity eventFindTargetForACS () {
 //  eventSetPointerForACS
 //
 //===========================================================================
-bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {
+bool eventSetPointerForACS (int assign_slot, int atid, int aptr, int flags) {
   return 0;
 }
 

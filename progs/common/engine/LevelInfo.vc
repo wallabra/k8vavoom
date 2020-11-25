@@ -362,72 +362,72 @@ final bool eachTID_opIterNext (out MobjByTIDIteratorInfo it, out EntityEx ent) {
 //  AfterSetMapInfo
 //
 //==========================================================================
-void AfterSetMapInfo (Level level) {
-  if (!level) return;
+void AfterSetMapInfo (Level lvl) {
+  if (!lvl) return;
   // shorttex (taken from GZDoom)
-  if (level.MapHashMD5 == "0eecbf37b328c9caaf20ded4949a4157") {
+  if (lvl.MapHashMD5 == "0eecbf37b328c9caaf20ded4949a4157") {
     // Sudtic e2m6
     printwarn("MAPFIX: Sudtic E2M6 ShortTex fix applied");
     bCompatShortTex = true;
-  } else if (level.MapHashMD5 == "4ace0644883bda0cba254fa02c9acf83") {
+  } else if (lvl.MapHashMD5 == "4ace0644883bda0cba254fa02c9acf83") {
     // Teutic e3m4
     printwarn("MAPFIX: Teutic E3M4 ShortTex fix applied");
     bCompatShortTex = true;
-  } else if (level.MapHashMD5 == "9f2be080a33f775294bd78822456924e") {
+  } else if (lvl.MapHashMD5 == "9f2be080a33f775294bd78822456924e") {
     // Nukemine e1m4
     printwarn("MAPFIX: Nukemine E1M4 ShortTex fix applied");
     bCompatShortTex = true;
-  } else if (level.MapHashMD5 == "cd31793d3a4b00231b124c0c23649644") {
+  } else if (lvl.MapHashMD5 == "cd31793d3a4b00231b124c0c23649644") {
     // Strain map02
     printwarn("MAPFIX: Strain MAP02 ShortTex fix applied");
     bCompatShortTex = true;
-  } else if (level.MapHashMD5 == "19094aeb53d12efc8e0568424f659f11") {
+  } else if (lvl.MapHashMD5 == "19094aeb53d12efc8e0568424f659f11") {
     // Strain map31
     printwarn("MAPFIX: Strain MAP31 ShortTex fix applied");
     bCompatShortTex = true;
-  } else if (level.MapHashMD5 == "60733bdd1aa3f4b2262adc79b2e1b5ab") {
+  } else if (lvl.MapHashMD5 == "60733bdd1aa3f4b2262adc79b2e1b5ab") {
     // Memento Mori map29
     printwarn("MAPFIX: Memento Mori MAP29 ShortTex fix applied");
     bCompatShortTex = true;
-  } else if (level.MapHashMD5 == "f84ab4557464a383e93f37cd3a82ac48") {
+  } else if (lvl.MapHashMD5 == "f84ab4557464a383e93f37cd3a82ac48") {
     // MM2 map03
     printwarn("MAPFIX: Memento Mori 2 MAP03 ShortTex fix applied");
     bCompatShortTex = true;
-  } else if (level.MapHashMD5 == "1497894956b3c8ebe8a240b7fdd99c6a") {
+  } else if (lvl.MapHashMD5 == "1497894956b3c8ebe8a240b7fdd99c6a") {
     // MM2 map25
     printwarn("MAPFIX: Memento Mori 2 MAP25 ShortTex fix applied");
     bCompatShortTex = true;
-  } else if (level.MapHashMD5 == "941e4cb56ee4184e0b1ed43486ab0bbf") {
+  } else if (lvl.MapHashMD5 == "941e4cb56ee4184e0b1ed43486ab0bbf") {
     // AV map07
     printwarn("MAPFIX: Alien Vendetta MAP07 ShortTex fix applied");
     bCompatShortTex = true;
-  } else if (level.MapHashMD5 == "6d4156ee0d12b77ad143a37c4d3dcf98") {
+  } else if (lvl.MapHashMD5 == "6d4156ee0d12b77ad143a37c4d3dcf98") {
     // dmonfear.wad map22
     printwarn("MAPFIX: DemonFear MAP22 ShortTex fix applied");
     bCompatShortTex = true;
-  } else if (level.MapHashMD5 == "6da6fcba8089161bdec6a1d3f6c8d60f") {
+  } else if (lvl.MapHashMD5 == "6da6fcba8089161bdec6a1d3f6c8d60f") {
     printwarn("MAPFIX: Eternal Doom MAP25");
     bCompatStairs = true;
-  } else if (level.MapHashMD5 == "10e1e2b36302d31ac4ae68c84b5dc457") {
+  } else if (lvl.MapHashMD5 == "10e1e2b36302d31ac4ae68c84b5dc457") {
     printwarn("MAPFIX: Eternal Doom MAP28");
     bCompatTrace = true;
     bCompatUseBlocking = true;
-  } else if (level.MapHashMD5 == "2fe901f659a16e58d7bcd7c30021c238") {
+  } else if (lvl.MapHashMD5 == "2fe901f659a16e58d7bcd7c30021c238") {
     printwarn("MAPFIX: Alien Vendetta MAP15");
     bCompatTrace = true;
-  } else if (level.MapHashMD5 == "74af92e96fe10d039d31c1f6526d7d7c") {
+  } else if (lvl.MapHashMD5 == "74af92e96fe10d039d31c1f6526d7d7c") {
     printwarn("MAPFIX: Real World MAP11");
     bCompatTrace = true;
-  } else if (level.MapHashMD5 == "71c2e6d9cfa3d8750c6a9599fb2453bd") {
+  } else if (lvl.MapHashMD5 == "71c2e6d9cfa3d8750c6a9599fb2453bd") {
     printwarn("MAPFIX: Hacx MAP03");
     bCompatUseBlocking = true;
-  } else if (level.MapHashMD5 == "96368eb950e33af62ea6423434e3cef7") {
+  } else if (lvl.MapHashMD5 == "96368eb950e33af62ea6423434e3cef7") {
     printwarn("MAPFIX: Hacx MAP17");
     bCompatUseBlocking = true;
-  } else if (level.MapHashMD5 == "ba530202af0ba0c6cbae6a0c7076fb72") {
+  } else if (lvl.MapHashMD5 == "ba530202af0ba0c6cbae6a0c7076fb72") {
     printwarn("MAPFIX: Requiem MAP04");
     bCompatUseBlocking = true;
-  } else if (level.MapHashMD5 == "811a0c97777a198bc9b2bb558cb46e6a") {
+  } else if (lvl.MapHashMD5 == "811a0c97777a198bc9b2bb558cb46e6a") {
     printwarn("MAPFIX: Hell Revealed MAP19");
     bCompatLimitPain = true;
   }
@@ -548,7 +548,7 @@ int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
 //
 //==========================================================================
 bool EV_ThingProjectile (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-                         int gravity, int newtid, name TypeName, Entity Activator)
+                         int grav, int newtid, name TypeName, Entity Activator)
 {
   return false;
 }

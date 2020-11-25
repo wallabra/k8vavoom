@@ -373,7 +373,7 @@ override void Tick (float deltaTime) {
         stoc = false;
       }
       //if (crf >= 0) print("%s: TopDist=%s; dist=%s; Crush=%s; bStopOnCrush=%B; stoc=%B", Sector-&XLevel.Sectors[0], TopDist, Sector.ceiling.dist, Crush, bStopOnCrush, stoc);
-      res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:TopDist, crush:crf, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:stoc);
+      res = MovePlane(sec:Sector, amount:Speed*deltaTime, dest:TopDist, crush:crf, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:stoc);
       if (res == RES_PASTDEST) {
         SectorStopSequence(Sector);
         switch (Type) {
@@ -403,7 +403,7 @@ override void Tick (float deltaTime) {
       }
       break;
     case -1: // down
-      res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:BottomDist, crush:Crush, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:bStopOnCrush);
+      res = MovePlane(sec:Sector, amount:Speed*deltaTime, dest:BottomDist, crush:Crush, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:bStopOnCrush);
       if (res == RES_PASTDEST) {
         SectorStopSequence(Sector);
         switch (Type) {

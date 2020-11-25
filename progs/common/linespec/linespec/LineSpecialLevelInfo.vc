@@ -3810,11 +3810,11 @@ final void ClampSecPlaneOffsets(sec_plane_t *Plane)
 //==========================================================================
 
 override bool EV_ThingProjectile(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, int gravity, int newtid, name TypeName, Entity Activator)
+  int Arg5, int agravity, int newtid, name TypeName, Entity Activator)
 {
   return DoThingProjectile(
     tid:Arg1, TypeID:Arg2, AAngle:Arg3, ASpeed:Arg4, AVSpeed:Arg5,
-    gravity, newtid, TypeName, Activator, DestTID:0, ForceDest:none, Intercept:false);
+    agravity, newtid, TypeName, Activator, DestTID:0, ForceDest:none, Intercept:false);
 }
 
 //==========================================================================
@@ -3827,7 +3827,7 @@ final bool EV_ThingProjectileAimed(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, Entity Activator)
 {
   return DoThingProjectile(tid:Arg1, TypeID:Arg2, AAngle:0, ASpeed:Arg3, AVSpeed:0,
-    gravity:0, newtid:Arg5, TypeName:'', Activator, DestTID:Arg4,
+    agravity:0, newtid:Arg5, TypeName:'', Activator, DestTID:Arg4,
     ForceDest:Activator, Intercept:false);
 }
 
@@ -3841,7 +3841,7 @@ final bool EV_ThingProjectileIntercept(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, Entity Activator)
 {
   return DoThingProjectile(tid:Arg1, TypeID:Arg2, AAngle:0, ASpeed:Arg3, AVSpeed:0,
-    gravity:0, newtid:Arg5, TypeName:'', Activator, DestTID:Arg4,
+    agravity:0, newtid:Arg5, TypeName:'', Activator, DestTID:Arg4,
     ForceDest:Activator, Intercept:true);
 }
 
@@ -3852,7 +3852,7 @@ final bool EV_ThingProjectileIntercept(int Arg1, int Arg2, int Arg3, int Arg4,
 //==========================================================================
 
 final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
-  int AVSpeed, int gravity, int newtid, name TypeName, Entity Activator,
+  int AVSpeed, int agravity, int newtid, name TypeName, Entity Activator,
   int DestTID, Entity ForceDest, bool Intercept)
 {
   float   angle;
@@ -3897,7 +3897,7 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
     newA = Spawn(moType, A.Origin);
     if (!newA) break;
     //print("proj %C: org=%s; A=%C", newA, A.Origin, A);
-    //print("%C: *** special:%B; gravity:%B, nogravity:%B; grav=%f", newA, newA.bSpecial, gravity, newA.bNoGravity, newA.Gravity);
+    //print("%C: *** special:%B; agravity:%B, nogravity:%B; grav=%f", newA, newA.bSpecial, agravity, newA.bNoGravity, newA.Gravity);
     if (newA.SightSound) newA.PlaySound(newA.SightSound, CHAN_VOICE);
 
     newA.Target = A;  // Originator
@@ -3949,10 +3949,10 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
     }
 
     if (newA.bSpecial) newA.bDropped = true; // Don't respawn
-    if (gravity) {
+    if (agravity) {
       newA.bNoGravity = false;
-      //if (!(mobj->flags3 & MF3_ISMONSTER) && gravity == 1) // gozzo checks this, VaVoom did no checks
-      if (gravity == 1 && !newA.bMonster) newA.Gravity = 0.125; // 1.0/8.0
+      //if (!(mobj->flags3 & MF3_ISMONSTER) && agravity == 1) // gozzo checks this, VaVoom did no checks
+      if (agravity == 1 && !newA.bMonster) newA.Gravity = 0.125; // 1.0/8.0
     } else {
       newA.bNoGravity = true;
     }

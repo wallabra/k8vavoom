@@ -31,7 +31,7 @@ class PowerDamage : Powerup;
 //  AmplifyDamage
 //
 //==========================================================================
-override void AmplifyDamage (EntityEx target, int damage, name DmgType, ref int NewDamage) {
+override void AmplifyDamage (EntityEx atarget, int damage, name DmgType, ref int NewDamage) {
   if (damage > 0) {
     bool dummy0, dummy1;
     float dmgFactor = 2.0; // default is twice
@@ -45,7 +45,7 @@ override void AmplifyDamage (EntityEx target, int damage, name DmgType, ref int 
     }
   }
 
-  ::AmplifyDamage(target, damage, DmgType, NewDamage);
+  ::AmplifyDamage(atarget, damage, DmgType, NewDamage);
 }
 
 

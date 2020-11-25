@@ -96,8 +96,8 @@ Pusher AdjustLink;
 //  Add a push thinker to the thinker list
 //
 //==========================================================================
-void Init (int InType, line_t *l, int magnitude, int angle, EntityEx source, int affectee) {
-  Source = source;
+void Init (int InType, line_t *l, int amagnitude, int angle, EntityEx asource, int aaffectee) {
+  Source = asource;
   Type = InType;
   if (l) {
     Xmag = int(l->v2->x-l->v1->x);
@@ -105,15 +105,15 @@ void Init (int InType, line_t *l, int magnitude, int angle, EntityEx source, int
     Magnitude = int(Length2D(vector(float(Xmag), float(Ymag))));
   } else {
     // [RH] allow setting magnitude and angle with parameters
-    ChangeValues(magnitude, angle);
+    ChangeValues(amagnitude, angle);
   }
-  if (source) {
+  if (asource) {
     // point source exist?
     Radius = float(Magnitude*2); // where force goes to zero
     X = Source.Origin.x;
     Y = Source.Origin.y;
   }
-  Affectee = affectee;
+  Affectee = aaffectee;
 }
 
 
@@ -122,8 +122,8 @@ void Init (int InType, line_t *l, int magnitude, int angle, EntityEx source, int
 //  CheckForSectorMatch
 //
 //==========================================================================
-int CheckForSectorMatch (int type, int tag) {
-  if (Type == type && IsSectorTagEqual(&XLevel.Sectors[Affectee], tag)) return Affectee;
+int CheckForSectorMatch (int atype, int tag) {
+  if (Type == atype && IsSectorTagEqual(&XLevel.Sectors[Affectee], tag)) return Affectee;
   return -1;
 }
 
@@ -133,13 +133,13 @@ int CheckForSectorMatch (int type, int tag) {
 //  ChangeValues
 //
 //==========================================================================
-void ChangeValues (int magnitude, int angle) {
+void ChangeValues (int amagnitude, int angle) {
   float ang = float(angle)*360.0/256.0;
   float s, c;
   sincos(ang, out s, out c);
-  Xmag = int(float(magnitude)*c);
-  Ymag = int(float(magnitude)*s);
-  Magnitude = magnitude;
+  Xmag = int(float(amagnitude)*c);
+  Ymag = int(float(amagnitude)*s);
+  Magnitude = amagnitude;
 }
 
 
