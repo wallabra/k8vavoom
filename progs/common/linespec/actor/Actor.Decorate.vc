@@ -88,11 +88,11 @@ protected final void DoFireRailgun (float Offset) {
 //  they both will use this code
 //
 //===========================================================================
-protected final void doFireMissileProjectile (class!Actor MissileType, optional float Angle,
+protected final void doFireMissileProjectile (class!Actor aMissileType, optional float Angle,
   optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
   optional int Flags, optional float Pitch, optional float SpawnFwd)
 {
-  if (!MissileType || !bIsPlayer) return;
+  if (!aMissileType || !bIsPlayer) return;
 
   if (!specified_UseAmmo) UseAmmo = true;
 
@@ -126,7 +126,7 @@ protected final void doFireMissileProjectile (class!Actor MissileType, optional 
   if (Flags&FPF_NOAUTOAIM) Angles.pitch += Pitch; // `A_FireCustomMissile()` does this another way
 
   EntityEx AimTarget;
-  EntityEx A = SpawnPlayerMissileEx(MissileType, false, AimTarget, ShootAngle, ShootOrg, decal, noAutoAim:!!(Flags&FPF_NOAUTOAIM));
+  EntityEx A = SpawnPlayerMissileEx(aMissileType, false, AimTarget, ShootAngle, ShootOrg, decal, noAutoAim:!!(Flags&FPF_NOAUTOAIM));
   Angles.pitch = SavedPitch;
 
   if (A) {
@@ -377,13 +377,13 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
 //  A_RetDoJump
 //
 //==========================================================================
-[decorate] final void decorate_A_RetDoJump (state State) {
+[decorate] final void decorate_A_RetDoJump (state aState) {
   KeepChainResult(); //k8: this is prolly wrong, because `return` in GZDoom can return `fail` condition too
-       if (XLevel.StateCall) XLevel.StateCall->State = State;
-  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) Player.SetViewState(PS_WEAPON, State);
-  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_FLASH].State) Player.SetViewState(PS_FLASH, State);
-  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) Player.SetViewState(PS_WEAPON_OVL, State);
-  else SetState(State);
+       if (XLevel.StateCall) XLevel.StateCall->State = aState;
+  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) Player.SetViewState(PS_WEAPON, aState);
+  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_FLASH].State) Player.SetViewState(PS_FLASH, aState);
+  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) Player.SetViewState(PS_WEAPON_OVL, aState);
+  else SetState(aState);
 }
 
 
@@ -442,11 +442,11 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
 //  A_SetSpeed
 //
 //==========================================================================
-[decorate] final void A_SetSpeed (float speed, optional int aptr) {
+[decorate] final void A_SetSpeed (float aspeed, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetSpeed', aptr!optional));
   if (!tgt) return;
-  if (!speed.isfinite) speed = 0;
-  tgt.Speed = fmax(0, speed)*35.0;
+  if (!aspeed.isfinite) aspeed = 0;
+  tgt.Speed = fmax(0, aspeed)*35.0;
 }
 
 
@@ -455,11 +455,11 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
 //  A_SetFloatSpeed
 //
 //==========================================================================
-[decorate] final void A_SetFloatSpeed (float speed, optional int aptr) {
+[decorate] final void A_SetFloatSpeed (float aspeed, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetFloatSpeed', aptr!optional));
   if (!tgt) return;
-  if (!speed.isfinite) speed = 0;
-  tgt.FloatSpeed = fmax(0, speed)*35.0;
+  if (!aspeed.isfinite) aspeed = 0;
+  tgt.FloatSpeed = fmax(0, aspeed)*35.0;
 }
 
 
@@ -468,10 +468,10 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
 //  A_SetPainThreshold
 //
 //==========================================================================
-[decorate] final void A_SetPainThreshold (int threshold, optional int aptr) {
+[decorate] final void A_SetPainThreshold (int athreshold, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetPainThreshold', aptr!optional));
   if (!tgt) return;
-  tgt.PainThreshold = threshold;
+  tgt.PainThreshold = athreshold;
 }
 
 
@@ -480,8 +480,8 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
 //  A_SetRenderStyle
 //
 //==========================================================================
-[decorate] final void A_SetRenderStyle (float alpha, int style) {
-  Alpha = fclamp(alpha, 0.0, 1.0);
+[decorate] final void A_SetRenderStyle (float aalpha, int style) {
+  Alpha = fclamp(aalpha, 0.0, 1.0);
   RenderStyle = style;
 }
 
@@ -946,21 +946,21 @@ private final float clampPitch (float newpitch) {
 //  common code for `A_DamageXXX()`
 //
 //==========================================================================
-final void doDamageSomething (EntityEx dest, int amount, name damagetype, int flags, optional name filter, optional name species,
+final void doDamageSomething (EntityEx dest, int amount, name adamagetype, int flags, optional name filter, optional name aspecies,
                               optional int src, optional int inflict)
 {
   if (!dest) return;
 
   if (amount == 0 && !(flags&DMSS_KILL)) return;
 
-  if (!dest.DecorFilterCheck(invertFilter:!!(flags&DMSS_EXFILTER), invertSpecies:!!(flags&DMSS_EXSPECIES), either:!!(flags&DMSS_EITHER), filter:filter!optional, aspecies:species!optional)) return;
+  if (!dest.DecorFilterCheck(invertFilter:!!(flags&DMSS_EXFILTER), invertSpecies:!!(flags&DMSS_EXSPECIES), either:!!(flags&DMSS_EITHER), filter:filter!optional, aspecies:aspecies!optional)) return;
 
   // get source and inflictor
   EntityEx source = EntityEx(DecorDoAAPtr('doDamageSomething', src!optional));
   EntityEx inflictor = EntityEx(DecorDoAAPtr('doDamageSomething', inflict!optional));
 
   // fix damage type
-  if (inflictor && (flags&DMSS_INFLICTORDMGTYPE)) damagetype = inflictor.DamageType;
+  if (inflictor && (flags&DMSS_INFLICTORDMGTYPE)) adamagetype = inflictor.DamageType;
 
   if ((flags&DMSS_KILL) && amount < dest.Health) amount = dest.Health;
   if (amount == 0) return; // just in case
@@ -970,7 +970,7 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
     // heal
     dest.GiveBody(-amount);
   } else {
-    dest.Damage(inflictor:inflictor, source:source, amount, DmgType:damagetype,
+    dest.Damage(inflictor:inflictor, source:source, amount, DmgType:adamagetype,
       NoArmor:!(flags&DMSS_AFFECTARMOR),
       forced:!!(flags&DMSS_FOILINVUL),
       ignoreDamageFactors:!!(flags&DMSS_NOFACTOR),
@@ -985,11 +985,11 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageSelf
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageSelf (int amount, optional name damagetype, optional int flags,
-                                             optional name filter, optional name species, optional int src,
+[decorate] final void decorate_A_DamageSelf (int amount, optional name adamagetype, optional int flags,
+                                             optional name filter, optional name aspecies, optional int src,
                                              optional int inflict)
 {
-  doDamageSomething(self, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+  doDamageSomething(self, amount, adamagetype, flags, filter!optional, aspecies!optional, src!optional, inflict!optional);
 }
 
 
@@ -998,11 +998,11 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageTarget
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageTarget (int amount, optional name damagetype, optional int flags,
-                                               optional name filter, optional name species, optional int src,
+[decorate] final void decorate_A_DamageTarget (int amount, optional name adamagetype, optional int flags,
+                                               optional name filter, optional name aspecies, optional int src,
                                                optional int inflict)
 {
-  doDamageSomething(Target, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+  doDamageSomething(Target, amount, adamagetype, flags, filter!optional, aspecies!optional, src!optional, inflict!optional);
 }
 
 
@@ -1011,11 +1011,11 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageMaster
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageMaster (int amount, optional name damagetype, optional int flags,
-                                               optional name filter, optional name species, optional int src,
+[decorate] final void decorate_A_DamageMaster (int amount, optional name adamagetype, optional int flags,
+                                               optional name filter, optional name aspecies, optional int src,
                                                optional int inflict)
 {
-  doDamageSomething(Master, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+  doDamageSomething(Master, amount, adamagetype, flags, filter!optional, aspecies!optional, src!optional, inflict!optional);
 }
 
 
@@ -1024,11 +1024,11 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageTracer
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageTracer (int amount, optional name damagetype, optional int flags,
-                                               optional name filter, optional name species, optional int src,
+[decorate] final void decorate_A_DamageTracer (int amount, optional name adamagetype, optional int flags,
+                                               optional name filter, optional name aspecies, optional int src,
                                                optional int inflict)
 {
-  doDamageSomething(Tracer, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+  doDamageSomething(Tracer, amount, adamagetype, flags, filter!optional, aspecies!optional, src!optional, inflict!optional);
 }
 
 
@@ -1037,14 +1037,14 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageChildren
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageChildren (int amount, optional name damagetype, optional int flags,
-                                                 optional name filter, optional name species, optional int src,
+[decorate] final void decorate_A_DamageChildren (int amount, optional name adamagetype, optional int flags,
+                                                 optional name filter, optional name aspecies, optional int src,
                                                  optional int inflict)
 {
   Actor A;
   foreach AllThinkers(Actor, A) {
     if (A.Master != self) continue;
-    doDamageSomething(A, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+    doDamageSomething(A, amount, adamagetype, flags, filter!optional, aspecies!optional, src!optional, inflict!optional);
   }
 }
 
@@ -1054,8 +1054,8 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageSiblings
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageSiblings (int amount, optional name damagetype, optional int flags,
-                                                 optional name filter, optional name species, optional int src,
+[decorate] final void decorate_A_DamageSiblings (int amount, optional name adamagetype, optional int flags,
+                                                 optional name filter, optional name aspecies, optional int src,
                                                  optional int inflict)
 {
   EntityEx mainMaster = Master;
@@ -1063,7 +1063,7 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
   Actor A;
   foreach AllThinkers(Actor, A) {
     if (A.Master == mainMaster && A != self) {
-      doDamageSomething(A, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+      doDamageSomething(A, amount, adamagetype, flags, filter!optional, aspecies!optional, src!optional, inflict!optional);
     }
   }
 }
@@ -1133,10 +1133,10 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  common code for `A_RemoveXXX()`
 //
 //==========================================================================
-final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filter, optional name species) {
+final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filter, optional name aspecies) {
   if (!dest) return false;
 
-  if (!dest.DecorFilterCheck(invertFilter:!!(flags&RMVF_EXFILTER), invertSpecies:!!(flags&RMVF_EXSPECIES), either:!!(flags&RMVF_EITHER), filter:filter!optional, aspecies:species!optional)) return false;
+  if (!dest.DecorFilterCheck(invertFilter:!!(flags&RMVF_EXFILTER), invertSpecies:!!(flags&RMVF_EXSPECIES), either:!!(flags&RMVF_EITHER), filter:filter!optional, aspecies:aspecies!optional)) return false;
 
   // check other flags
   if (!(flags&RMVF_EVERYTHING)) {
@@ -1159,10 +1159,10 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //  A_Remove
 //
 //==========================================================================
-[decorate] final void A_Remove (int aptr, optional int flags, optional name filter, optional name species) {
+[decorate] final void A_Remove (int aptr, optional int flags, optional name filter, optional name aspecies) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_Remove', aptr));
   if (!tgt) return;
-  if (doRemoveSomethingCheck(tgt, flags, filter!optional, species!optional)) delete tgt;
+  if (doRemoveSomethingCheck(tgt, flags, filter!optional, aspecies!optional)) delete tgt;
 }
 
 
@@ -1171,8 +1171,8 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //  A_RemoveMaster
 //
 //==========================================================================
-[decorate] final void A_RemoveMaster (optional int flags, optional name filter, optional name species) {
-  if (doRemoveSomethingCheck(Master, flags, filter!optional, species!optional)) delete Master;
+[decorate] final void A_RemoveMaster (optional int flags, optional name filter, optional name aspecies) {
+  if (doRemoveSomethingCheck(Master, flags, filter!optional, aspecies!optional)) delete Master;
 }
 
 
@@ -1181,8 +1181,8 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //  A_RemoveTarget
 //
 //==========================================================================
-[decorate] final void A_RemoveTarget (optional int flags, optional name filter, optional name species) {
-  if (doRemoveSomethingCheck(Target, flags, filter!optional, species!optional)) delete Target;
+[decorate] final void A_RemoveTarget (optional int flags, optional name filter, optional name aspecies) {
+  if (doRemoveSomethingCheck(Target, flags, filter!optional, aspecies!optional)) delete Target;
 }
 
 
@@ -1191,8 +1191,8 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //  A_RemoveTracer
 //
 //==========================================================================
-[decorate] final void A_RemoveTracer (optional int flags, optional name filter, optional name species) {
-  if (doRemoveSomethingCheck(Tracer, flags, filter!optional, species!optional)) delete Tracer;
+[decorate] final void A_RemoveTracer (optional int flags, optional name filter, optional name aspecies) {
+  if (doRemoveSomethingCheck(Tracer, flags, filter!optional, aspecies!optional)) delete Tracer;
 }
 
 
@@ -1201,12 +1201,12 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //  A_RemoveChildren
 //
 //==========================================================================
-[decorate] final void A_RemoveChildren (optional bool all, optional int flags, optional name filter, optional name species) {
+[decorate] final void A_RemoveChildren (optional bool all, optional int flags, optional name filter, optional name aspecies) {
   Actor A;
   foreach AllThinkers(Actor, A) {
     if (A.Master != self) continue;
     if (!all && A.Health > 0) continue;
-    if (!doRemoveSomethingCheck(A, flags, filter!optional, species!optional)) continue;
+    if (!doRemoveSomethingCheck(A, flags, filter!optional, aspecies!optional)) continue;
     A.Destroy();
   }
 }
@@ -1217,14 +1217,14 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //  A_RemoveSiblings
 //
 //==========================================================================
-[decorate] final void A_RemoveSiblings (optional bool all, optional int flags, optional name filter, optional name species) {
+[decorate] final void A_RemoveSiblings (optional bool all, optional int flags, optional name filter, optional name aspecies) {
   EntityEx mainMaster = Master;
   if (!mainMaster) return;
   Actor A;
   foreach AllThinkers(Actor, A) {
     if (A.Master == mainMaster && A != self) {
       if (!all && A.Health > 0) continue;
-      if (!doRemoveSomethingCheck(A, flags, filter!optional, species!optional)) continue;
+      if (!doRemoveSomethingCheck(A, flags, filter!optional, aspecies!optional)) continue;
       A.Destroy();
     }
   }
@@ -1237,7 +1237,7 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //
 //==========================================================================
 [decorate] final int A_RadiusGive (name itemname, float distance, int flags, optional int amount,
-                                   optional name filter, optional name species, optional float mindist,
+                                   optional name filter, optional name aspecies, optional float mindist,
                                    optional int limit)
 {
   if (!specified_limit) limit = int.max;
@@ -1275,7 +1275,7 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
         if (fabs(Origin.x-ent.Origin.x) > distance || fabs(Origin.y-ent.Origin.y) > distance) continue;
       }
 
-      if (!ent.DecorFilterCheck(invertFilter:!!(flags&RGF_EXFILTER), invertSpecies:!!(flags&RGF_EXSPECIES), either:!!(flags&RGF_EITHER), filter:filter!optional, aspecies:species!optional)) continue;
+      if (!ent.DecorFilterCheck(invertFilter:!!(flags&RGF_EXFILTER), invertSpecies:!!(flags&RGF_EXSPECIES), either:!!(flags&RGF_EITHER), filter:filter!optional, aspecies:aspecies!optional)) continue;
 
       if (ent.bCorpse && (flags&RGF_CORPSES)) {
         // do nothing, really
@@ -1367,16 +1367,16 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //  don't include self
 //
 //==========================================================================
-[decorate] final void A_JumpIfRadiusAmountGreater (float radius, int amount, class!Actor checkClass, state label, optional bool exact) {
+[decorate] final void A_JumpIfRadiusAmountGreater (float aradius, int amount, class!Actor checkClass, state label, optional bool exact) {
   KeepChainResult();
 
-  if (radius < 0) return;
+  if (aradius < 0) return;
   if (!checkClass) return;
   if (amount < 1) { DoJump(label); return; }
 
   Entity e;
   if (exact) {
-    foreach RadiusThings(e, Origin, radius) {
+    foreach RadiusThings(e, Origin, aradius) {
       if (e.Class == checkClass) {
         if (e != self) {
           if (!(--amount)) { DoJump(label); return; }
@@ -1385,12 +1385,12 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
     }
   } else {
     //print("=============");
-    foreach RadiusThings(e, Origin, radius) {
+    foreach RadiusThings(e, Origin, aradius) {
       //print("   %C", e);
       if (e isa checkClass) {
         if (e != self) {
           if (!(--amount)) {
-            //print("%C: radius %s; check %C; hit it!", self, radius, checkClass);
+            //print("%C: aradius %s; check %C; hit it!", self, aradius, checkClass);
             DoJump(label);
             return;
           }
@@ -1398,7 +1398,7 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
       }
     }
   }
-  //print("%C: check %C with raduis %s, at %s, %s left", self, checkClass, radius, Origin, amount);
+  //print("%C: check %C with raduis %s, at %s, %s left", self, checkClass, aradius, Origin, amount);
 }
 
 

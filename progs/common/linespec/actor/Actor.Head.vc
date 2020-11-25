@@ -412,8 +412,8 @@ override void Destroyed () {
 //  A_ExecActionSpecial
 //
 //==========================================================================
-[decorate] final int A_ExecActionSpecial (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Special) {
-  return Level.ExecuteActionSpecial(Special, Arg1, Arg2, Arg3, Arg4, Arg5, nullptr, 0, self);
+[decorate] final int A_ExecActionSpecial (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int aSpecial) {
+  return Level.ExecuteActionSpecial(aSpecial, Arg1, Arg2, Arg3, Arg4, Arg5, nullptr, 0, self);
 }
 
 
@@ -491,11 +491,11 @@ override void Destroyed () {
 //           passed to scaleX, otherwise if it is true, the value of scaleY
 //           is used, instead. Default is false.
 //==========================================================================
-[decorate] final void A_SetScale (float scaleX, optional float scaleY, optional int aptr, optional bool usezero) {
+[decorate] final void A_SetScale (float ascaleX, optional float ascaleY, optional int aptr, optional bool usezero) {
   Entity tgt = DecorDoAAPtr('A_SetScale', aptr!optional);
   if (!tgt) return;
-  tgt.ScaleX = scaleX;
-  tgt.ScaleY = (usezero || scaleY != 0 ? scaleY : scaleX);
+  tgt.ScaleX = ascaleX;
+  tgt.ScaleY = (usezero || ascaleY != 0 ? ascaleY : ascaleX);
 }
 
 
