@@ -46,6 +46,8 @@
 */
 #include <new>
 
+const double timeOffset = 4294967296.0; // this will give us a constant time precision
+
 #if 0
 moved to zone
 void *operator new [] (std::size_t s) noexcept(false) /*throw(std::bad_alloc)*/ {
@@ -629,6 +631,24 @@ int Sys_TimeMinPeriodMS () { return 0; }
 int Sys_TimeMaxPeriodMS () { return 0; }
 
 
+static bool systimeInited = false;
+#ifdef __linux__
+static time_t systimeSecBase = 0;
+
+#define SYSTIME_CHECK_INIT()  do { \
+  if (!systimeInited) { systimeInited = true; systimeSecBase = ts.tv_sec; } \
+} while (0)
+
+#else
+static int systimeSecBase = 0;
+
+#define SYSTIME_CHECK_INIT()  do { \
+  if (!systimeInited) { systimeInited = true; systimeSecBase = tp.tv_sec; } \
+} while (0)
+
+#endif
+
+
 //==========================================================================
 //
 //  Sys_Time
@@ -637,31 +657,24 @@ int Sys_TimeMaxPeriodMS () { return 0; }
 //
 //==========================================================================
 double Sys_Time () {
-  static bool initialized = false;
-  const double timeOffset = 4294967296.0; // this will give us a constant time precision
 #ifdef __linux__
-  static time_t secbase = 0;
   struct timespec ts;
 #ifdef ANDROID // CrystaX 10.3.2 supports only this
   if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) Sys_Error("clock_gettime failed");
 #else
   if (clock_gettime(/*CLOCK_MONOTONIC*/CLOCK_MONOTONIC_RAW, &ts) != 0) Sys_Error("clock_gettime failed");
 #endif
-  if (!initialized) {
-    initialized = true;
-    secbase = ts.tv_sec;
-  }
-  return (ts.tv_sec-secbase)+(timeOffset+ts.tv_nsec)/1000000000.0;
+  SYSTIME_CHECK_INIT();
+  //return (ts.tv_sec-systimeSecBase)+(timeOffset+ts.tv_nsec)/1000000000.0;
+  // we don't actually need nanosecond precision here
+  return (ts.tv_sec-systimeSecBase)+(timeOffset+(ts.tv_nsec/1000))/1000000.0;
+  //return (ts.tv_sec-systimeSecBase)+(timeOffset+(ts.tv_nsec/1000000))/1000.0;
 #else
   struct timeval tp;
   struct timezone tzp;
-  static int secbase = 0;
   gettimeofday(&tp, &tzp);
-  if (!initialized) {
-    initialized = true;
-    secbase = tp.tv_sec;
-  }
-  return (tp.tv_sec-secbase)+(timeOffset+tp.tv_usec)/1000000.0;
+  SYSTIME_CHECK_INIT();
+  return (tp.tv_sec-systimeSecBase)+(timeOffset+tp.tv_usec)/1000000.0;
 #endif
 }
 
@@ -675,23 +688,24 @@ double Sys_Time () {
 //==========================================================================
 vuint64 Sys_GetTimeNano () {
 #ifdef __linux__
-  static bool initialized = false;
-  static time_t secbase = 0;
   struct timespec ts;
 #ifdef ANDROID // CrystaX 10.3.2 supports only this
-  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) Sys_Error("clock_gettime failed");
+  if (clock_gettime(CLOCK_MONOTONIC, &systimeNanoTS) != 0) Sys_Error("clock_gettime failed");
 #else
   if (clock_gettime(/*CLOCK_MONOTONIC*/CLOCK_MONOTONIC_RAW, &ts) != 0) Sys_Error("clock_gettime failed");
 #endif
-  if (!initialized) {
-    initialized = true;
-    secbase = ts.tv_sec;
-  }
-  return (ts.tv_sec-secbase+1)*1000000000ULL+ts.tv_nsec;
+  SYSTIME_CHECK_INIT();
+  return (ts.tv_sec-systimeSecBase+1)*1000000000ULL+ts.tv_nsec;
 #else
   return (vuint64)(Sys_Time()*1000000000.0);
 #endif
 }
+
+
+#ifdef __linux__
+static bool systimeCPUInited = false;
+static time_t systimeCPUSecBase = 0;
+#endif
 
 
 //==========================================================================
@@ -703,19 +717,20 @@ vuint64 Sys_GetTimeNano () {
 //==========================================================================
 double Sys_Time_CPU () {
 #ifdef __linux__
-  static bool initialized = false;
-  static time_t secbase = 0;
   struct timespec ts;
   if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts) != 0) Sys_Error("clock_gettime failed");
-  if (!initialized) {
-    initialized = true;
-    secbase = ts.tv_sec;
-  }
-  return (ts.tv_sec-secbase)+ts.tv_nsec/1000000000.0+1.0;
+  if (!systimeCPUInited) { systimeCPUInited = true; systimeCPUSecBase = ts.tv_sec; }
+  return (ts.tv_sec-systimeCPUSecBase)+ts.tv_nsec/1000000000.0+1.0;
 #else
   return Sys_Time();
 #endif
 }
+
+
+#ifdef __linux__
+static bool systimeCPUNanoInited = false;
+static time_t systimeCPUNanoSecBase = 0;
+#endif
 
 
 //==========================================================================
@@ -725,15 +740,10 @@ double Sys_Time_CPU () {
 //==========================================================================
 vuint64 Sys_GetTimeCPUNano () {
 #ifdef __linux__
-  static bool initialized = false;
-  static time_t secbase = 0;
   struct timespec ts;
   if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts) != 0) Sys_Error("clock_gettime failed");
-  if (!initialized) {
-    initialized = true;
-    secbase = ts.tv_sec;
-  }
-  return (ts.tv_sec-secbase+1)*1000000000ULL+ts.tv_nsec;
+  if (!systimeCPUNanoInited) { systimeCPUNanoInited = true; systimeCPUNanoSecBase = ts.tv_sec; }
+  return (ts.tv_sec-systimeCPUNanoSecBase+1)*1000000000ULL+ts.tv_nsec;
 #else
   return Sys_GetTimeNano();
 #endif
@@ -1070,7 +1080,6 @@ ShitdozeTimerInit thisIsFuckinShitdozeTimerInitializer;
 
 
 double Sys_Time () {
-  const double timeOffset = 4294967296.0; // this will give us a constant time precision
   if (!shitdozeTimerInited) Sys_Error("shitdoze shits itself");
   const vuint32 currtime = (vuint32)timeGetTime();
   // this properly deals with wraparounds
@@ -1099,23 +1108,25 @@ vuint64 Sys_GetTimeNano () {
 
 
 #else
+int Sys_TimeMinPeriodMS () { return 0; }
+int Sys_TimeMaxPeriodMS () { return 0; }
+
+static bool systimeInited = false;
+
+
 //==========================================================================
 //
 //  Sys_Time
 //
 //==========================================================================
-int Sys_TimeMinPeriodMS () { return 0; }
-int Sys_TimeMaxPeriodMS () { return 0; }
-
 double Sys_Time () {
   static double pfreq;
   static double curtime = 0.0;
   static double lastcurtime = 0.0;
   static vuint32 oldtime;
   static int lowshift;
-  static bool initialized = false;
 
-  if (!initialized) {
+  if (!systimeInited) {
     LARGE_INTEGER PerformanceFreq;
     LARGE_INTEGER PerformanceCount;
     vuint32 lowpart, highpart;
@@ -1151,7 +1162,7 @@ double Sys_Time () {
     */
     curtime = 0.0;
     lastcurtime = curtime;
-    initialized = true;
+    systimeInited = true;
   }
 
   static int sametimecount;
