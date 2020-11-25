@@ -482,6 +482,9 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         return e->Resolve(ec);
       }
 
+      VProperty *Prop = op->Type.Class->FindProperty(FieldName);
+      if (Prop) return DoPropertyResolve(ec, Prop, assType);
+
       //!if (op->Type.Class && op->Type.Class != ec.SelfClass && !op->Type.Class->Defined) op->Type.Class->Define();
       VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass, &Loc);
       if (M) {
@@ -501,8 +504,10 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         return e->Resolve(ec);
       }
 
+      /*
       VProperty *Prop = op->Type.Class->FindProperty(FieldName);
       if (Prop) return DoPropertyResolve(ec, Prop, assType);
+      */
     }
 
     // convert to method, 'cause why not?

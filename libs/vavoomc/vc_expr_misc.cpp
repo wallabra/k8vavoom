@@ -267,6 +267,13 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
 
   // resolve struct field or method
   if (ec.SelfStruct) {
+    // field
+    VField *field = ec.SelfStruct->FindField(Name);
+    if (field) {
+      VExpression *e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
+      delete this;
+      return e->Resolve(ec);
+    }
     // method
     VMethod *M = ec.SelfStruct->FindAccessibleMethod(Name, ec.SelfStruct, &Loc);
     if (M) {
@@ -283,13 +290,6 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
         //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
         e = new VDotInvocation(new VSelf(Loc), Name, Loc, 0, nullptr);
       }
-      delete this;
-      return e->Resolve(ec);
-    }
-    // field
-    VField *field = ec.SelfStruct->FindField(Name);
-    if (field) {
-      VExpression *e = new VFieldAccess((new VSelf(Loc))->Resolve(ec), field, Loc, 0);
       delete this;
       return e->Resolve(ec);
     }
@@ -322,25 +322,6 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
     // built-in object properties
     if (assType == Normal && (Name == "isDestroyed" || Name == "IsDestroyed")) {
       VExpression *e = new VObjectPropGetIsDestroyed(new VSelf(Loc), Loc);
-      delete this;
-      return e->Resolve(ec);
-    }
-
-    VMethod *M = ec.SelfClass->FindAccessibleMethod(Name, ec.SelfClass, &Loc);
-    if (M) {
-      if (M->Flags&FUNC_Iterator) {
-        ParseError(Loc, "Iterator methods can only be used in foreach statements");
-        delete this;
-        return nullptr;
-      }
-      // rewrite as invoke
-      VExpression *e;
-      if ((M->Flags&FUNC_Static) != 0) {
-        e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
-      } else {
-        //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
-        e = new VDotInvocation(new VSelf(Loc), Name, Loc, 0, nullptr);
-      }
       delete this;
       return e->Resolve(ec);
     }
@@ -415,6 +396,25 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
           return nullptr;
         }
       }
+    }
+
+    VMethod *M = ec.SelfClass->FindAccessibleMethod(Name, ec.SelfClass, &Loc);
+    if (M) {
+      if (M->Flags&FUNC_Iterator) {
+        ParseError(Loc, "Iterator methods can only be used in foreach statements");
+        delete this;
+        return nullptr;
+      }
+      // rewrite as invoke
+      VExpression *e;
+      if ((M->Flags&FUNC_Static) != 0) {
+        e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 0, nullptr);
+      } else {
+        //e = new VInvocation(new VSelf(Loc), M, nullptr, true, false, Loc, 0, nullptr);
+        e = new VDotInvocation(new VSelf(Loc), Name, Loc, 0, nullptr);
+      }
+      delete this;
+      return e->Resolve(ec);
     }
   }
 
