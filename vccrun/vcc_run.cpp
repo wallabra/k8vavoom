@@ -352,6 +352,8 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
         VGLTexture::savingAllowed = true;
         continue;
       }
+      if (strcmp(text, "vc-case-insensitive-locals") == 0) { VObject::cliCaseSensitiveLocals = 0; continue; }
+      if (strcmp(text, "vc-case-insensitive-fields") == 0) { VObject::cliCaseSensitiveFields = 0; continue; }
       const char option = *text++;
       switch (option) {
         case 'd': DebugMode = true; if (*text) OpenDebugFile(text); break;
