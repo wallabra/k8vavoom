@@ -157,13 +157,13 @@ override int GetRebornHealth()
 //
 //==========================================================================
 override void PlayerImpulse () {
-  int impulse = Impulse;
+  int imp = Impulse;
   //Impulse = 0;
 
   // Hexen artifact hot keys
   Inventory Arti = none;
 
-  switch (impulse) {
+  switch (imp) {
     case 5:
       if (!EntityEx(MO).FindInventory(PowerInvulnerable)) Arti = EntityEx(MO).FindInventory(ArtiInvulnerability);
       Impulse = 0;
@@ -380,76 +380,55 @@ void Cheat_Morph()
   cprint("SQUEAL!!");
 }
 
+
 //==========================================================================
 //
 //  Cheat_Class
 //
 //==========================================================================
-
-void Cheat_Class()
-{
-  int i;
-  int pclass;
+void Cheat_Class () {
+  int plrclassid;
   Inventory Item;
 
-  if (MorphTime)
-  {
+  if (MorphTime) {
     // don't change class if the player is morphed
     cprint("CAN'T CHANGE CLASS WHILE MORPHED");
     return;
   }
-  if (Cmd_CheckParm("fighter"))
-  {
-    pclass = HexenDefs::PCLASS_FIGHTER;
-  }
-  else if (Cmd_CheckParm("cleric"))
-  {
-    pclass = HexenDefs::PCLASS_CLERIC;
-  }
-  else if (Cmd_CheckParm("mage"))
-  {
-    pclass = HexenDefs::PCLASS_MAGE;
-  }
-  else
-  {
-    cprint("INVALID PLAYER CLASS");
-    return;
-  }
-  //FIXME it doesn't work like this.
-  PClass = pclass;
+
+       if (Cmd_CheckParm("fighter")) plrclassid = HexenDefs::PCLASS_FIGHTER;
+  else if (Cmd_CheckParm("cleric")) plrclassid = HexenDefs::PCLASS_CLERIC;
+  else if (Cmd_CheckParm("mage")) plrclassid = HexenDefs::PCLASS_MAGE;
+  else { cprint("INVALID PLAYER CLASS"); return; }
+
+  //FIXME: it doesn't work like this
+  PClass = plrclassid;
   HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory(HexenArmor, disableReplacement:true));
-  for (i = 0; i < 4; i++)
-  {
-    HArmor.Slots[i] = 0.0;
+  foreach (int i; 0..4) HArmor.Slots[i] = 0.0;
+
+  // remove all weapons
+  for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
+    if (Weapon(Item) || FourthWeaponHolder(Item)) Item.Destroy();
   }
 
-  // Remove all weapons
-  for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory)
-  {
-    if (Weapon(Item) || FourthWeaponHolder(Item))
-    {
-      Item.Destroy();
-    }
-  }
-  BaseClass = pclass;
-//  PostMorphWeapon(HexenDefs::WP_FIRST);
-  Actor(MO).MorphPlayer(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), 0.0,
-    PorkFX.default.MorphStyle, none, none, Actor(MO));
-  SetCvar('class', pclass);
+  BaseClass = plrclassid;
+  //PostMorphWeapon(HexenDefs::WP_FIRST);
+  Actor(MO).MorphPlayer(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), 0.0, PorkFX.default.MorphStyle, none, none, Actor(MO));
+  SetCvar('class', plrclassid);
   SB_Start();
 }
+
 
 //==========================================================================
 //
 //  IsWeaponAlwaysExtremeDeath
 //
 //==========================================================================
-
-override bool IsWeaponAlwaysExtremeDeath()
-{
+override bool IsWeaponAlwaysExtremeDeath () {
   // Always extreme death from fourth weapon
   return (ReadyWeapon ? ReadyWeapon.bExtremeDeath : false);
 }
+
 
 //==========================================================================
 //

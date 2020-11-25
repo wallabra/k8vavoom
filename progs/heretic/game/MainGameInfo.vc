@@ -25,12 +25,12 @@
 //**************************************************************************
 class MainGameInfo : LineSpecialGameInfo;
 
-const int NUM_SPECIALS    = 108;
+const int NUM_SPECIALS = 108;
 
-const int NUMTOTALBOTS    = 8;
-const int NUMBOTTYPES   = 8;
+const int NUMTOTALBOTS = 8;
+const int NUMBOTTYPES  = 8;
 
-const float TELEFOGHEIGHT   = 32.0;
+const float DEFAULT_TELEFOGHEIGHT = 32.0;
 
 struct spec_trans_t
 {
@@ -531,7 +531,7 @@ defaultproperties
   bUseHexenPolyobjTypes = true;
   bNightmareFastChase = true;
   bRavenStylePickupRespawn = true;
-  TeleFogHeight = TELEFOGHEIGHT;
+  TeleFogHeight = DEFAULT_TELEFOGHEIGHT;
   TeleportFogState = 'Raven';
   DefaultKickBack = 150.0;
   InvDefaultMaxAmount = 16;
