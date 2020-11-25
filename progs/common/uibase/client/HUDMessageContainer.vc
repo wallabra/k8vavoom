@@ -109,7 +109,7 @@ void ClearHudMessages () {
 //  AddHudMessage
 //
 //==========================================================================
-void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
+void AddHudMessage (string Message, name aFont, int Type, int Id, int Color,
   string ColorName, float x, float y, int HudWidth, int HudHeight,
   float HoldTime, float Time1, float Time2)
 {
@@ -119,7 +119,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
 
   class!HUDMessage hudClass = none;
 
-  if (Font == 'HEALTHBAR') {
+  if (aFont == 'HEALTHBAR') {
     if (!Id || Id == 0xffffffff) return; // orphaned
     hudClass = HUDMessage;
     //isHealthBar = true;
@@ -140,7 +140,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
     print("\ci<------------------------------->");
     Type &= ~HUDMSG_LOG;
   }
-  //printdebug("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>", Id, Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message);
+  //printdebug("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>", Id, aFont, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message);
 
   // handle colors specified by name
   if (Type&HUDMSG_COLORSTRING) Color = FindTextColor(ColorName);
@@ -175,7 +175,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
   }
 
   #ifdef HUD_ALLOW_REUSE
-  //printdebug("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>; reuse=%C", Id, Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message, hudReuse);
+  //printdebug("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>; reuse=%C", Id, aFont, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message, hudReuse);
   if (hudReuse) {
     Msg = hudReuse;
     Msg.Reset();
@@ -188,7 +188,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
 
   Msg.ClGame = ClGame;
 
-  Msg.Init(Message, Font, Type, Id, Color, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+  Msg.Init(Message, aFont, Type, Id, Color, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 
   // insert in the list in the proper location
   #ifdef HUD_ALLOW_REUSE

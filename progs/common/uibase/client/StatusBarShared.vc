@@ -381,12 +381,12 @@ void ClearHudMessages () {
 //  AddHudMessage
 //
 //==========================================================================
-void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
+void AddHudMessage (string Message, name aFont, int Type, int Id, int Color,
   string ColorName, float x, float y, int HudWidth, int HudHeight,
   float HoldTime, float Time1, float Time2)
 {
   if (!HudMsgWin) return;
-  HudMsgWin.AddHudMessage(Message, Font, Type, Id, Color, ColorName, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+  HudMsgWin.AddHudMessage(Message, aFont, Type, Id, Color, ColorName, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 }
 
 
