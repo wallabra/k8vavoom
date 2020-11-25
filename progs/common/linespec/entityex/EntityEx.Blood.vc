@@ -26,12 +26,12 @@
 //  BLOOD UTILITIES
 //**************************************************************************
 
-final bool BloodCanSplat (class!Actor BloodType) {
-  if (!BloodType) return true;
-  BloodType = class!Actor(GetClassReplacement(BloodType));
-  if (!BloodType) return true;
-  //print("cansplat for %s: %B", BloodType, !BloodType.default.bBloodDisableSplats);
-  return !BloodType.default.bBloodDisableSplats;
+final bool BloodCanSplat (class!Actor aBloodType) {
+  if (!aBloodType) return true;
+  aBloodType = class!Actor(GetClassReplacement(aBloodType));
+  if (!aBloodType) return true;
+  //print("cansplat for %s: %B", aBloodType, !aBloodType.default.bBloodDisableSplats);
+  return !aBloodType.default.bBloodDisableSplats;
 }
 
 
@@ -123,9 +123,9 @@ final static name k8GetBloodClassName (name newblood, name oldblood) {
 //  Args[0]: damage (can be 0)
 //
 //==========================================================================
-final void SetBloodArgs (EntityEx master, optional int damage) {
-  self.Tracer = master;
-  self.Target = master;
+final void SetBloodArgs (EntityEx amaster, optional int damage) {
+  self.Tracer = amaster;
+  self.Target = amaster;
   self.Args[0] = damage;
 }
 
@@ -138,22 +138,22 @@ final void SetBloodArgs (EntityEx master, optional int damage) {
 //  delta will be clamped to [0..)
 //
 //==========================================================================
-final void BloodAddZClamped (ref TVec spos, float delta, float height) {
+final void BloodAddZClamped (ref TVec spos, float delta, float aheight) {
   if (!delta) return;
   auto sec = XLevel.PointInSector(spos);
-  height = fmax(0, height);
+  aheight = fmax(0, aheight);
   float fz, cz;
   GetSectorGapCoords(sec, spos, out fz, out cz);
-  if (cz-fz <= height) return;
+  if (cz-fz <= aheight) return;
   spos.z += delta;
-  spos.z = fclamp(fz, spos.z, cz-height);
+  spos.z = fclamp(fz, spos.z, cz-aheight);
   /*
   opening_t *open = BuildSectorOpeningsAt(sec, spos, SPF_NOBLOCKSHOOT); // each sector has at least one
-  open = FindOpening(open, spos.z, spos.z+fmax(0, height));
+  open = FindOpening(open, spos.z, spos.z+fmax(0, aheight));
   if (open) {
     if (delta > 0) {
       // positive delta (up)
-      spos.z = fmin(spos.z+delta, open.eceiling.splane.minz-1-fmax(0, height));
+      spos.z = fmin(spos.z+delta, open.eceiling.splane.minz-1-fmax(0, aheight));
     } else {
       // negative delta (down)
       spos.z = fmax(spos.z+delta, open.efloor.splane.maxz+1);
@@ -281,7 +281,7 @@ bool IsGood2SLineForBloodSplat (const line_t *li) {
 //
 //==========================================================================
 final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *tr, optional float zofs,
-                       optional name DecalName, optional bool pass2S, optional bool only2S, optional int translation)
+                       optional name aDecalName, optional bool pass2S, optional bool only2S, optional int atranslation)
 {
   TVec outHitPoint;
   trsplat_t temptr;
@@ -335,8 +335,8 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
       lineStart = lineEnd;
 
       if (Level.CompatTrace && li->frontsector == li->backsector) {
-        if (DecalName && (pass2S || only2S) && IsGood2SLineForBloodSplat(li)) {
-          SpawnDecal(hit_point, DecalName, side, li, translation!optional);
+        if (aDecalName && (pass2S || only2S) && IsGood2SLineForBloodSplat(li)) {
+          SpawnDecal(hit_point, aDecalName, side, li, atranslation!optional);
         }
         continue;
       }
@@ -359,8 +359,8 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
           // found good opening?
           if (open) {
             // alpha check for various special fx (additive lines are mostly used for fx too)
-            if (DecalName && (pass2S || only2S) && IsGood2SLineForBloodSplat(li)) {
-              SpawnDecal(hit_point, DecalName, side, li, translation!optional);
+            if (aDecalName && (pass2S || only2S) && IsGood2SLineForBloodSplat(li)) {
+              SpawnDecal(hit_point, aDecalName, side, li, atranslation!optional);
             }
             continue;
           }
@@ -396,7 +396,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
       tr->side = side;
       tr->didhit = true;
 
-      if (DecalName && !only2S) SpawnDecal(hit_point, DecalName, side, li, translation!optional);
+      if (aDecalName && !only2S) SpawnDecal(hit_point, aDecalName, side, li, atranslation!optional);
 
       // don't go any farther if not two-sided
       if (!(li->flags&ML_TWOSIDED)) return true;
@@ -511,7 +511,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
     if (isSmallDamage && !radiusDamage) continue;
 
     //print("TraceBleed: %s", bloodTypeName);
-    TraceSplat(pos, vdir, 172.0, &tr, 0, bloodTypeName, pass2S:true, only2S:false, translation:btrans);
+    TraceSplat(pos, vdir, 172.0, &tr, 0, bloodTypeName, pass2S:true, only2S:false, atranslation:btrans);
   }
 }
 

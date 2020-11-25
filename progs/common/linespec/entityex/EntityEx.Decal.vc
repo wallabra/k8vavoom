@@ -29,7 +29,7 @@
 //  SpawnDecal
 //
 //==========================================================================
-final void SpawnDecal (TVec org, name dectype, int side, line_t *li, optional int translation) {
+final void SpawnDecal (TVec org, name dectype, int side, line_t *li, optional int atranslation) {
   //writeln("DECAL: ", dectype);
   if (!dectype || !li || !XLevel) return; // just in case
   if (!GetCvarB('r_decals_enabled')) return;
@@ -39,7 +39,7 @@ final void SpawnDecal (TVec org, name dectype, int side, line_t *li, optional in
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (!Level.Game.Players[i]) continue;
     if (!Level.Game.Players[i].bSpawned) continue;
-    PlayerEx(Level.Game.Players[i]).DecalEffect(org, dectype, side, lidx, translation);
+    PlayerEx(Level.Game.Players[i]).DecalEffect(org, dectype, side, lidx, atranslation);
   }
 }
 

@@ -384,8 +384,8 @@ bool Physics (float DeltaTime) {
 //  PerformSectorWindThrust
 //
 //==========================================================================
-final bool PerformSectorWindThrust (float DeltaTime, sector_t *sector) {
-  int secspec = sector->special&SECSPEC_BASE_MASK;
+final bool PerformSectorWindThrust (float DeltaTime, sector_t *asector) {
+  int secspec = asector->special&SECSPEC_BASE_MASK;
   switch (secspec) {
     case SECSPEC_WindEastSlow:
     case SECSPEC_WindEastMedium:
@@ -534,7 +534,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
         if (Role == ROLE_Authority) {
           TVec spdir = Velocity.normalise();
           float spdist = length(Origin-oldOrigin);
-          TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, pass2S:bDecals2SPass, only2S:bDecalsOnly2S, translation:(bCopyBloodTranslation ? Translation : 0));
+          TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, aDecalName:DecalName, pass2S:bDecals2SPass, only2S:bDecalsOnly2S, atranslation:(bCopyBloodTranslation ? Translation : 0));
         }
       }
       //if ((self isa 'DoomImpBall') && !Level.Game.IsAuthority) printdebug("%C:101: org=%s; vel=%s", self, Origin, Velocity);
@@ -603,7 +603,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
     if (Role == ROLE_Authority) {
       TVec spdir = Velocity.normalise();
       float spdist = length(Origin-oldOrigin);
-      TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, pass2S:bDecals2SPass, only2S:bDecalsOnly2S, translation:(bCopyBloodTranslation ? Translation : 0));
+      TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, aDecalName:DecalName, pass2S:bDecals2SPass, only2S:bDecalsOnly2S, atranslation:(bCopyBloodTranslation ? Translation : 0));
     }
   }
 
