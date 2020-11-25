@@ -475,6 +475,7 @@ public:
   bool IsKnownEnum (VName EnumName);
   bool AddKnownEnum (VName EnumName); // returns `true` if enum was redefined
 
+  VConstant *FindSimpleConstant (VName Name, bool recursive=true);
   VConstant *FindConstant (VName Name, VName EnumName=NAME_None);
   VConstant *FindPackageConstant (VMemberBase *pkg, VName Name, VName EnumName=NAME_None);
 
@@ -652,6 +653,8 @@ private:
   void CreateMethodMap (); // called from `CreateVTable()`
   void InitStatesLookup ();
   void CreateDefaults ();
+
+  void CheckDuplicateNames ();
 
 public:
   friend inline VStream &operator << (VStream &Strm, VClass *&Obj) { return Strm << *(VMemberBase **)&Obj; }

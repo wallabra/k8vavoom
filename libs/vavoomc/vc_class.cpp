@@ -620,6 +620,21 @@ void VClass::AddMethod (VMethod *m) {
 
 //==========================================================================
 //
+//  VClass::FindSimpleConstant
+//
+//==========================================================================
+VConstant *VClass::FindSimpleConstant (VName Name, bool recursive) {
+  if (Name == NAME_None) return nullptr;
+  Name = ResolveAlias(Name);
+  VMemberBase *m = StaticFindMember(Name, this, MEMBER_Const, /*EnumName*/NAME_None);
+  if (m) return (VConstant *)m;
+  if (recursive && ParentClass) return ParentClass->FindSimpleConstant(Name, recursive);
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VClass::FindConstant
 //
 //==========================================================================
@@ -1277,6 +1292,7 @@ bool VClass::Define () {
 
   // check for duplicate field definitions, and for duplicate constants
   // this can not be postloaded yet, so...
+  /*
   {
     VName pn = ParentClassName;
     while (pn != NAME_None) {
@@ -1284,21 +1300,17 @@ bool VClass::Define () {
       if (!c) break;
       // check fields
       for (VField *F = Fields; F; F = F->Next) {
-        if (c->FindField(F->Name)) {
-          ParseError(F->Loc, "Field `%s` already defined in parent class `%s`", *F->Name, *pn);
-        }
+        if (c->FindField(F->Name, false)) ParseError(F->Loc, "Field `%s` already defined in parent class `%s`", *F->Name, *pn);
       }
       // check constants
-      for (int f = 0; f < Constants.length(); ++f) {
-        for (int ff = 0; ff < c->Constants.length(); ++ff) {
-          if (compareNames(c->Constants[ff]->Name, Constants[f]->Name)) {
-            ParseError(Constants[f]->Loc, "Constant `%s` already defined in parent class `%s`", *Constants[f]->Name, *pn);
-          }
-        }
+      for (auto &&ccdef : Constants) {
+        if (c->FindSimpleConstant(ccdef->Name, false)) ParseError(ccdef->Loc, "Constant `%s` conflicts with constant in parent class `%s`", *ccdef->Name, *pn);
       }
       pn = c->ParentClassName;
     }
   }
+  */
+  CheckDuplicateNames();
 
   return true;
 }
@@ -1930,6 +1942,43 @@ void VClass::SetStateLabel (const TArray<VName> &Names, VState *State) {
 
 //==========================================================================
 //
+//  VClass::CheckDuplicateNames
+//
+//==========================================================================
+void VClass::CheckDuplicateNames () {
+  VName pn = ParentClassName;
+  while (pn != NAME_None) {
+    VClass *c = StaticFindClass(pn);
+    if (!c) break;
+    VField *oldF;
+    VConstant *oldC;
+    VMethod *oldM;
+    // check fields
+    for (VField *F = Fields; F; F = F->Next) {
+      if ((oldF = c->FindField(F->Name, false))) ParseError(F->Loc, "Field `%s` already defined in parent class `%s` at %s", *F->Name, *pn, *oldF->Loc.toStringNoCol());
+      if ((oldM = c->FindMethod(F->Name, false))) ParseError(F->Loc, "Field `%s` conflicts with method in parent class `%s` at %s", *F->Name, *pn, *oldM->Loc.toStringNoCol());
+      if ((oldC = c->FindSimpleConstant(F->Name, false))) ParseError(F->Loc, "Field `%s` conflicts with constant in parent class `%s` at %s", *F->Name, *pn, *oldC->Loc.toStringNoCol());
+    }
+    // check constants
+    for (auto &&ccdef : Constants) {
+      if ((oldF = c->FindField(ccdef->Name, false))) ParseError(ccdef->Loc, "Constant `%s` conflict with field in parent class `%s` at %s", *ccdef->Name, *pn, *oldF->Loc.toStringNoCol());
+      if ((oldM = c->FindMethod(ccdef->Name, false))) ParseError(ccdef->Loc, "Constant `%s` already defined in parent class `%s` at %s", *ccdef->Name, *pn, *oldM->Loc.toStringNoCol());
+      if ((oldC = c->FindSimpleConstant(ccdef->Name, false))) ParseError(ccdef->Loc, "Constant `%s` conflicts with constant in parent class `%s` at %s", *ccdef->Name, *pn, *oldC->Loc.toStringNoCol());
+    }
+    // check methods
+    for (auto &&mtdef : Methods) {
+      if ((oldF = c->FindField(mtdef->Name, false))) ParseError(mtdef->Loc, "Method `%s` already defined in parent class `%s` at %s", *mtdef->Name, *pn, *oldF->Loc.toStringNoCol());
+      //if ((oldM = c->FindMethod(mtdef->Name, false))) ParseError(mtdef->Loc, "Method `%s` conflicts with method in parent class `%s` at %s", *mtdef->Name, *pn, *oldM->Loc.toStringNoCol());
+      if ((oldC = c->FindSimpleConstant(mtdef->Name, false))) ParseError(mtdef->Loc, "Method `%s` conflicts with constant in parent class `%s` at %s", *mtdef->Name, *pn, *oldC->Loc.toStringNoCol());
+    }
+    // check next parent
+    pn = c->ParentClassName;
+  }
+}
+
+
+//==========================================================================
+//
 //  VClass::PostLoad
 //
 //==========================================================================
@@ -1938,6 +1987,8 @@ void VClass::PostLoad () {
 
   // make sure parent class has been set up
   if (GetSuperClass()) GetSuperClass()->PostLoad();
+
+  //CheckDuplicateNames(); // done in `Define()`
 
   NetStates = States;
 

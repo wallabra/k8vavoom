@@ -4321,7 +4321,7 @@ void VParser::ParseClass () {
 
     // alias
     if (Lex.Check(TK_Alias)) {
-      if (!currClass) ParseError(Lex.Location, "cannot create aliases outside of class");
+      if (!Class) ParseError(Lex.Location, "cannot create aliases outside of class");
       for (;;) {
         if (Lex.Token != TK_Identifier) { ParseError(Lex.Location, "Identifier name expected"); break; }
         VName aliasName = Lex.Name;
@@ -4331,7 +4331,7 @@ void VParser::ParseClass () {
         if (Lex.Token != TK_Identifier) { ParseError(Lex.Location, "Identifier name expected"); break; }
         VName origName = Lex.Name;
         Lex.NextToken();
-        auto ainfo = currClass->AliasList.get(aliasName);
+        auto ainfo = Class->AliasList.get(aliasName);
         if (ainfo) {
           ParseError(Lex.Location, "alias '%s' redeclaration; previous declaration at %s:%d", *aliasName, *ainfo->loc.GetSource(), ainfo->loc.GetLine());
         } else if (aliasName == origName) {
@@ -4341,8 +4341,8 @@ void VParser::ParseClass () {
           ai.aliasName = aliasName;
           ai.origName = origName;
           ai.loc = aliasLoc;
-          ai.aframe = currClass->AliasFrameNum;
-          currClass->AliasList.put(aliasName, ai);
+          ai.aframe = Class->AliasFrameNum;
+          Class->AliasList.put(aliasName, ai);
         }
         if (Lex.Check(TK_Semicolon)) break;
         Lex.Expect(TK_Comma, ERR_MISSING_SEMICOLON);
