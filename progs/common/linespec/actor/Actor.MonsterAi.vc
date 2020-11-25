@@ -875,11 +875,11 @@ final void common_A_FaceSomething (EntityEx Tgt, optional float max_turn, option
 //  A_Die
 //
 //==========================================================================
-[decorate] final void A_Die (optional name DamageType) {
-  if (!specified_DamageType) {
+[decorate] final void A_Die (optional name adamagetype) {
+  if (!specified_adamagetype) {
     Damage(none, none, Health, forced:true);
   } else {
-    Damage(none, none, Health, DamageType, forced:true);
+    Damage(none, none, Health, adamagetype, forced:true);
   }
 }
 
@@ -954,12 +954,12 @@ final void common_A_FaceSomething (EntityEx Tgt, optional float max_turn, option
 //  worker for A_KillXXX
 //
 //==========================================================================
-final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name filter,
-                      optional name species, optional int src, optional int inflict)
+final void doKillXXX (EntityEx dest, name adamagetype, int flags, optional name filter,
+                      optional name aspecies, optional int src, optional int inflict)
 {
   if (!dest) return;
 
-  if (!dest.DecorFilterCheck(invertFilter:!!(flags&KILS_EXFILTER), invertSpecies:!!(flags&KILS_EXSPECIES), either:!!(flags&KILS_EITHER), filter:filter!optional, species:species!optional)) return;
+  if (!dest.DecorFilterCheck(invertFilter:!!(flags&KILS_EXFILTER), invertSpecies:!!(flags&KILS_EXSPECIES), either:!!(flags&KILS_EITHER), filter:filter!optional, aspecies:aspecies!optional)) return;
 
   if (!(flags&KILS_KILLMISSILES)) {
     if (dest.IsMissile(false)) return;
@@ -973,9 +973,9 @@ final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name f
   EntityEx inflictor = EntityEx(DecorDoAAPtr('doKillXXX', inflict!optional));
 
   // fix damage type
-  if (inflictor && (flags&DMSS_INFLICTORDMGTYPE)) damagetype = inflictor.DamageType;
+  if (inflictor && (flags&DMSS_INFLICTORDMGTYPE)) adamagetype = inflictor.DamageType;
 
-  dest.Damage(inflictor, source, dest.Health, damagetype, NoArmor:true, forced:!!(flags&KILS_FOILINVUL), ignoreDamageFactors:true, ignorePowerups:true);
+  dest.Damage(inflictor, source, dest.Health, adamagetype, NoArmor:true, forced:!!(flags&KILS_FOILINVUL), ignoreDamageFactors:true, ignorePowerups:true);
 }
 
 
@@ -984,12 +984,12 @@ final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name f
 //  A_KillMaster
 //
 //==========================================================================
-[decorate] final void A_KillMaster (optional name damagetype, optional int flags,
-                         optional name filter, optional name species,
+[decorate] final void A_KillMaster (optional name adamagetype, optional int flags,
+                         optional name filter, optional name aspecies,
                          optional int src, optional int inflict)
 {
   //if (Master) Master.Damage(self, self, Master.Health, default, true);
-  doKillXXX(Master, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+  doKillXXX(Master, adamagetype, flags, filter!optional, aspecies!optional, src!optional, inflict!optional);
 }
 
 
@@ -998,11 +998,11 @@ final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name f
 //  A_KillTarget
 //
 //==========================================================================
-[decorate] final void A_KillTarget (optional name damagetype, optional int flags,
-                         optional name filter, optional name species,
+[decorate] final void A_KillTarget (optional name adamagetype, optional int flags,
+                         optional name filter, optional name aspecies,
                          optional int src, optional int inflict)
 {
-  doKillXXX(Target, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+  doKillXXX(Target, adamagetype, flags, filter!optional, aspecies!optional, src!optional, inflict!optional);
 }
 
 
@@ -1011,11 +1011,11 @@ final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name f
 //  A_KillTracer
 //
 //==========================================================================
-[decorate] final void A_KillTracer (optional name damagetype, optional int flags,
-                         optional name filter, optional name species,
+[decorate] final void A_KillTracer (optional name adamagetype, optional int flags,
+                         optional name filter, optional name aspecies,
                          optional int src, optional int inflict)
 {
-  doKillXXX(Tracer, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+  doKillXXX(Tracer, adamagetype, flags, filter!optional, aspecies!optional, src!optional, inflict!optional);
 }
 
 
@@ -1024,14 +1024,14 @@ final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name f
 //  A_KillChildren
 //
 //==========================================================================
-[decorate] final void A_KillChildren (optional name damagetype, optional int flags,
-                           optional name filter, optional name species,
+[decorate] final void A_KillChildren (optional name adamagetype, optional int flags,
+                           optional name filter, optional name aspecies,
                            optional int src, optional int inflict)
 {
   Actor A;
   foreach AllThinkers(Actor, A) {
     if (A.Master != self) continue;
-    doKillXXX(A, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+    doKillXXX(A, adamagetype, flags, filter!optional, aspecies!optional, src!optional, inflict!optional);
   }
 }
 
@@ -1041,8 +1041,8 @@ final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name f
 //  A_KillSiblings
 //
 //==========================================================================
-[decorate] final void A_KillSiblings (optional name damagetype, optional int flags,
-                           optional name filter, optional name species,
+[decorate] final void A_KillSiblings (optional name adamagetype, optional int flags,
+                           optional name filter, optional name aspecies,
                            optional int src, optional int inflict)
 {
   EntityEx mainMaster = Master;
@@ -1050,7 +1050,7 @@ final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name f
   Actor A;
   foreach AllThinkers(Actor, A) {
     if (A.Master == mainMaster && A != self) {
-      doKillXXX(A, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+      doKillXXX(A, adamagetype, flags, filter!optional, aspecies!optional, src!optional, inflict!optional);
     }
   }
 }

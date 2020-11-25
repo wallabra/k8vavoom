@@ -937,16 +937,16 @@ final Entity DecorDoAAPtr (name methodname, optional int ptr) {
 //
 //==========================================================================
 final bool DecorFilterCheck (bool invertFilter, bool invertSpecies, bool either,
-                             optional name filter, optional name species)
+                             optional name filter, optional name aspecies)
 {
-  if (!specified_filter && !specified_species) return true;
+  if (!specified_filter && !specified_aspecies) return true;
 
   // 0: unknown (considered true, lol); -1: filter didn't hit; 1: filter hit
   int flt = 0, spc = 0;
 
   // check filters
   if (specified_filter /*&& filter*/) flt = (nameicmp(GetClassName(Class), filter) != 0 ? 1 : -1); //k8: should we check replacements or inheritance chain?
-  if (specified_species /*&& species*/) spc = (nameicmp(GetSpecies(), species) != 0 ? 1 : -1);
+  if (specified_aspecies /*&& aspecies*/) spc = (nameicmp(GetSpecies(), aspecies) != 0 ? 1 : -1);
 
   // invert filters, if necessary
   if (invertFilter) flt = -flt;
