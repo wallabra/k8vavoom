@@ -577,9 +577,9 @@
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) return;
 
-  TAVec angles = Angles;
-  angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/8.0);
-  EntityEx AimTarget = AimLineAttack(out dir, angles, DEFAULT_MELEERANGE);
+  TAVec aangs = Angles;
+  aangs.yaw = AngleMod360(aangs.yaw+(Random()-Random())*45.0/8.0);
+  EntityEx AimTarget = AimLineAttack(out dir, aangs, DEFAULT_MELEERANGE);
   //FIXME: damage type?
   LineAttack(dir, DEFAULT_MELEERANGE, damage, /*StaffPuff*/PuffType, NoAttackGhosts:true);
   if (AimTarget) {
@@ -600,7 +600,7 @@
   //float slope;
   int randVal;
   float dist;
-  TAVec angles;
+  TAVec aangs;
   TVec dir;
   class!Actor PuffType;
 
@@ -611,20 +611,20 @@
 
   Player.ViewStates[PS_WEAPON].SX = Random()*4.0-2.0;
   Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+Random()*4.0;
-  angles = Angles;
+  aangs = Angles;
   if (power) {
     damage = HITDICE(2);
     dist = 4.0*DEFAULT_MELEERANGE;
-    angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/16.0);
+    aangs.yaw = AngleMod360(aangs.yaw+(Random()-Random())*45.0/16.0);
     PuffType = GauntletPuff2;
   } else {
     damage = HITDICE(2);
     dist = DEFAULT_MELEERANGE+0.00001;
-    angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/8.0);
+    aangs.yaw = AngleMod360(aangs.yaw+(Random()-Random())*45.0/8.0);
     PuffType = GauntletPuff1;
   }
 
-  EntityEx AimTarget = AimLineAttack(dir, angles, dist);
+  EntityEx AimTarget = AimLineAttack(dir, aangs, dist);
   //FIXME: damage type?
   LineAttack(dir, dist, damage, PuffType);
   if (!AimTarget) {
@@ -693,7 +693,7 @@
 //
 //===========================================================================
 [decorate] final void A_FireGoldWandPL2 () self(Actor) {
-  TAVec angles;
+  TAVec aangs;
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -703,9 +703,9 @@
 
   Wpn.DepleteAmmo(Wpn.FireMode);
   Aim(out dir, 16.0*64.0);
-  VectorAngles(dir, out angles);
-  SpawnMissileAngles(GoldWandFX2, AngleMod360(angles.yaw-(45.0/8.0)), angles.pitch);
-  SpawnMissileAngles(GoldWandFX2, AngleMod360(angles.yaw+(45.0/8.0)), angles.pitch);
+  VectorAngles(dir, out aangs);
+  SpawnMissileAngles(GoldWandFX2, AngleMod360(aangs.yaw-(45.0/8.0)), aangs.pitch);
+  SpawnMissileAngles(GoldWandFX2, AngleMod360(aangs.yaw+(45.0/8.0)), aangs.pitch);
   VectorRotateAroundZ(ref dir, -45.0/8.0);
   foreach (auto i; 0..5) {
     int damage = 1+(P_Random()&7);

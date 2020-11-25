@@ -829,9 +829,9 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     }
     if (source && source.IsServant()) {
       // minotaur's kills go to his master
-      EntityEx master = source.Tracer;
+      EntityEx masta = source.Tracer;
       // make sure still alive and not a pointer to fighter head
-      if (master && master.bIsPlayer && master.Player.MO == master) source = master;
+      if (masta && masta.bIsPlayer && masta.Player.MO == masta) source = masta;
     }
     Died(source, inflictor);
     return;

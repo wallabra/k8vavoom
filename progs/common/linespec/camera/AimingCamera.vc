@@ -96,13 +96,13 @@ override void BeginPlay () {
 //==========================================================================
 override void TickCamera (float DeltaTime) {
   if (Target) {
-    float delta;
-    int dir = FaceActor(Target, delta);
-    if (delta > Range*DeltaTime) delta = Range*DeltaTime;
+    float angdelta;
+    int dir = FaceActor(Target, out angdelta);
+    if (angdelta > Range*DeltaTime) angdelta = Range*DeltaTime;
     if (dir) {
-      Angles.yaw += delta;
+      Angles.yaw += angdelta;
     } else {
-      Angles.yaw -= delta;
+      Angles.yaw -= angdelta;
     }
     if (MaxPitchChange) {
       // aim camera's pitch

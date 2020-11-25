@@ -980,13 +980,13 @@ void WaterMove (float deltaTime) {
   TVec vup;
   TVec wishvel;
 
-  auto lastwaterlevel = LastWaterLevel;
+  auto lastwtlevel = LastWaterLevel;
   LastWaterLevel = MO.WaterLevel;
 
   // if we just fell into water, and we have too big vertical velocity, clamp it
-  if (lastwaterlevel != MO.WaterLevel) {
+  if (lastwtlevel != MO.WaterLevel) {
     //print("***WATER: prev=%s; curr=%s; velz=%s", LastWaterLevel, MO.WaterLevel, MO.Velocity.z);
-    if (!lastwaterlevel && MO.Velocity.z < -20) {
+    if (!lastwtlevel && MO.Velocity.z < -20) {
       MO.Velocity.z = fmax(MO.Velocity.z, MO.Velocity.z+(MO.WaterLevel < 3 ? 100 : 100));
       if (MO.Velocity.z >= -20) LastWaterLevel = 0; // repeat it
     }
@@ -3810,10 +3810,10 @@ void DoClearPlayer () {
 override void PlayerBeforeExitMap () {
   ClearSubSeenInfo();
   if (GetCvarB('k8HealthAccum_NewMapHeal')) {
-    int maxhealth = GetMaxHealth();
+    int healthmax = GetMaxHealth();
     int oldhealth = Health;
-    if (maxhealth > 0 && oldhealth < maxhealth && k8HealthAccum_Amount > 0) {
-      Health = min(oldhealth+k8HealthAccum_Amount, maxhealth);
+    if (healthmax > 0 && oldhealth < healthmax && k8HealthAccum_Amount > 0) {
+      Health = min(oldhealth+k8HealthAccum_Amount, healthmax);
       if (Health > oldhealth) {
         if (MO) MO.Health = Health;
         k8HealthAccum_Amount -= Health-oldhealth; // just in case
@@ -4195,15 +4195,15 @@ bool checkDoHealthAccumRegen () {
   int regenPoints = GetCvarI('k8HealthAccum_RegenPoints');
   if (regenPoints < 1) return false;
   // hit regen limit?
-  int maxhealth = GetMaxHealth();
-  if (Health >= maxhealth) return false;
+  int healthmax = GetMaxHealth();
+  if (Health >= healthmax) return false;
   int regenLow = GetCvarI('k8HealthAccum_RegenLow');
   if (regenLow > 0 && Health >= regenLow) return false; // player is not hurt enough
   // regen cooldowned?
   float regenRateTime = fmax(0, GetCvarF('k8HealthAccum_RegenRate'));
   /*
   print("k8HealthAccum_Amount=%s; Health=%s; rp=%s; max=%s; rate=%s; last=%s; time=%s",
-    k8HealthAccum_Amount, Health, regenPoints, maxhealth, regenRateTime, k8HealthAccum_LastRegenTime, MO.XLevel.Time);
+    k8HealthAccum_Amount, Health, regenPoints, healthmax, regenRateTime, k8HealthAccum_LastRegenTime, MO.XLevel.Time);
   */
   if (k8HealthAccum_LastRegenTime+regenRateTime > MO.XLevel.Time) return false;
   // check for boost cooldown too
@@ -4250,7 +4250,7 @@ bool doHealthAccumHealthPickup (Health item, EntityEx toucher) {
   }
   // normal health pickup
   int plrmaxhealth = GetMaxHealth();
-  //print("Health=%s; maxhealth=%s; amount=%s; accum=%s; acclimit=%s; accumon=%s", Health, plrmaxhealth, amount, k8HealthAccum_Amount, GetCvarI('k8HealthAccum_Max'), GetCvarB('k8HealthAccum_Enabled'));
+  //print("Health=%s; healthmax=%s; amount=%s; accum=%s; acclimit=%s; accumon=%s", Health, plrmaxhealth, amount, k8HealthAccum_Amount, GetCvarI('k8HealthAccum_Max'), GetCvarB('k8HealthAccum_Enabled'));
   // too healthy?
   if (Health >= plrmaxhealth) {
     // accumulate everything

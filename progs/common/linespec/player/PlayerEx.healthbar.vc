@@ -55,10 +55,10 @@ void HealthBarDeinit () {
 void HealthBarProcessor () {
   if (/*hbarPicBack < 0 ||*/ !MO) return;
 
-  EntityEx mo = EntityEx(MO);
-  if (!mo) return;
+  EntityEx ent = EntityEx(MO);
+  if (!ent) return;
 
-  int ttime = mo.XLevel.TicTime;
+  int ttime = ent.XLevel.TicTime;
   int diff = nextTicTimeCheck-ttime;
   if (diff > 0 && diff < 8) return;
   nextTicTimeCheck = ttime+6;
@@ -68,9 +68,9 @@ void HealthBarProcessor () {
 
   // find actor
   TVec dir;
-  AngleVector(mo.Angles, out dir);
+  AngleVector(ent.Angles, out dir);
   int actorMask = (GetCvarB('k8HealthBarShowAll') ? -1 : MF_SHOOTABLE);
-  EntityEx ee = EntityEx(mo.PickActor(org:default, dir:dir, distance:8192, actorMask:actorMask, wallMask:ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN));
+  EntityEx ee = EntityEx(ent.PickActor(org:default, dir:dir, distance:8192, actorMask:actorMask, wallMask:ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN));
   if (!ee) return;
 
   if (actorMask != -1 && !ee.bMonster && GetCvarB('k8HealthBarOnlyMonsters')) return;
@@ -101,20 +101,20 @@ void HealthBarProcessor () {
     else ename = va("\cU%s", ename); // decorations are dark-gray
   }
 
-  int maxHealth = max(1, int(PlayerPawn(ee) ? PlayerPawn(ee).MaxHealth : ee.InitialHealth));
-  int health = max(0, int(ee.Health));
-  int prc = 100*health/maxHealth;
-  string msg = va("%d%% (%d/%d)\n%s", prc, health, maxHealth, ename);
+  int hltmax = max(1, int(PlayerPawn(ee) ? PlayerPawn(ee).MaxHealth : ee.InitialHealth));
+  int hlt = max(0, int(ee.Health));
+  int prc = 100*hlt/hltmax;
+  string msg = va("%d%% (%d/%d)\n%s", prc, hlt, hltmax, ename);
 
-  int color = CR_WHITE;
-       if (prc < 30) color = CR_RED;
-  else if (prc < 50) color = CR_YELLOW;
-  else if (prc < 80) color = CR_GOLD;
-  else if (prc < 100) color = CR_GREEN;
-  else color = CR_WHITE;
+  int clr = CR_WHITE;
+       if (prc < 30) clr = CR_RED;
+  else if (prc < 50) clr = CR_YELLOW;
+  else if (prc < 80) clr = CR_GOLD;
+  else if (prc < 100) clr = CR_GREEN;
+  else clr = CR_WHITE;
 
-  ClientHudMessage(msg, 'HEALTHBAR', Type:-1, Id:0xfffffffe, Color:color, ColorName:"", x:/*320.0*/0, y:/*32.0*/0,
+  ClientHudMessage(msg, 'HEALTHBAR', Type:-1, Id:0xfffffffe, Color:clr, ColorName:"", x:/*320.0*/0, y:/*32.0*/0,
     HudWidth:/*640*/0, HudHeight:/*512*/0,
     HoldTime:7.0/35.0,
-    Time1:health, Time2:maxHealth);
+    Time1:hlt, Time2:hltmax);
 }

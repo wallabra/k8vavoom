@@ -443,7 +443,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
     if (HasDecal(GetBloodSmearRadiusDecalName())) bclasssmear = GetBloodSmearRadiusDecalName();
   }
 
-  name bloodType = bclasssplat;
+  name bloodTypeName = bclasssplat;
 
   int count;
   float noise;
@@ -465,7 +465,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
   } else {
     // for high damages, there is a chance to spray just one big glob of blood
     if (P_Random() < 24) {
-      bloodType = bclasssmear;
+      bloodTypeName = bclasssmear;
       count = 2+P_Random()%3+2;
       noise = 45.0/256.0;
       //isHighDamage = true;
@@ -475,8 +475,8 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
     }
   }
 
-  if (!HasDecal(bloodType)) {
-    //print("*** NO BLOOD DECAL '%s'", bloodType);
+  if (!HasDecal(bloodTypeName)) {
+    //print("*** NO BLOOD DECAL '%s'", bloodTypeName);
     return;
   }
 
@@ -510,8 +510,8 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
 
     if (isSmallDamage && !radiusDamage) continue;
 
-    //print("TraceBleed: %s", bloodType);
-    TraceSplat(pos, vdir, 172.0, &tr, 0, bloodType, pass2S:true, only2S:false, translation:btrans);
+    //print("TraceBleed: %s", bloodTypeName);
+    TraceSplat(pos, vdir, 172.0, &tr, 0, bloodTypeName, pass2S:true, only2S:false, translation:btrans);
   }
 }
 

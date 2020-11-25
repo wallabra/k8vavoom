@@ -185,10 +185,10 @@
       Damage(none, none, (Health > 0 ? Health+1 : 999), 'InstantDeath', spawnBlood:true);
     } else if (spc == SECSPEC_ScrollCurrent) {
       int anglespeed = Sector->sectorTag-100;
-      float speed = float(anglespeed%10)/16.0*35.0;
+      float terspeed = float(anglespeed%10)/16.0*35.0;
       float finean = float(anglespeed/10)*45.0;
-      Velocity.x += speed*cos(finean);
-      Velocity.y += speed*sin(finean);
+      Velocity.x += terspeed*cos(finean);
+      Velocity.y += terspeed*sin(finean);
     }
   }
 }

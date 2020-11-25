@@ -179,20 +179,20 @@ override void OnDraw () {
     int xx = CursorXOffs+10;
     int inputWidth = Width-xx-3;
     ShadeRect(xx-1, ty, inputWidth, FontHeight(), GetCvarF('menu_darkening'));
-    string text = (bEnteringText ? EnterText : Value);
+    string txt = (bEnteringText ? EnterText : Value);
     if (bEnteringText) {
-      while (text && TextWidth(text)+CursorWidth() > inputWidth+2) text = text[1..$];
-      DrawText(xx, ty, text);
+      while (txt && TextWidth(txt)+CursorWidth() > inputWidth+2) txt = txt[1..$];
+      DrawText(xx, ty, txt);
       DrawCursor();
     } else {
       bool drawDot = false;
-      if (TextWidth(text) > inputWidth) {
-        while (text && TextWidth(text) > inputWidth) text = text[0..$-1];
-        if (text) text = text[0..$-1];
+      if (TextWidth(txt) > inputWidth) {
+        while (txt && TextWidth(txt) > inputWidth) txt = txt[0..$-1];
+        if (txt) txt = txt[0..$-1];
         drawDot = true;
       }
-      DrawText(xx, ty, text);
-      if (drawDot) DrawText(xx+TextWidth(text), ty, ".", CR_FIRE);
+      DrawText(xx, ty, txt);
+      if (drawDot) DrawText(xx+TextWidth(txt), ty, ".", CR_FIRE);
     }
   }
 }

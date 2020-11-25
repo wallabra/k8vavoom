@@ -104,16 +104,16 @@ final GameObject::sector_t *isDoorSector (GameObject::sector_t *sec, optional bo
   // if we can fit here, don't bother
   if (!ignoreHeight && sec.ceiling.minz-sec.floor.maxz >= Height) return nullptr;
   // check if this sector has door activation lines
-  float height = float.max;
+  float hgt = float.max;
   GameObject::sector_t *res = nullptr;
   GameObject::line_t *ld;
   bool seenDoorLD = false;
   foreach (ld; sec.lines) {
     if (ld.flags&GameObject::ML_TWOSIDED) {
       GameObject::sector_t *other = (ld.frontsector == sec ? ld.backsector : ld.frontsector);
-      if (other && other != sec && other.ceiling.minz < height) {
+      if (other && other != sec && other.ceiling.minz < hgt) {
         res = other;
-        height = other.ceiling.minz;
+        hgt = other.ceiling.minz;
       }
     }
     if (!seenDoorLD && isGoodDoorLinedef(sec, ld)) seenDoorLD = true;
@@ -130,15 +130,15 @@ final GameObject::sector_t *isDoorSector (GameObject::sector_t *sec, optional bo
 //
 //==========================================================================
 static final GameObject::sector_t *findLowestCeilingSurrounding (GameObject::sector_t *sec) {
-  float height = float.max;
+  float hgt = float.max;
   GameObject::sector_t *res = nullptr;
   GameObject::line_t *line;
   foreach (line; sec.lines) {
     if (line.flags&GameObject::ML_TWOSIDED) {
       GameObject::sector_t *other = (line.frontsector == sec ? line.backsector : line.frontsector);
-      if (other && other != sec && other.ceiling.minz < height) {
+      if (other && other != sec && other.ceiling.minz < hgt) {
         res = other;
-        height = other.ceiling.minz;
+        hgt = other.ceiling.minz;
       }
     }
   }

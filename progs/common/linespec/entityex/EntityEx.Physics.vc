@@ -196,11 +196,11 @@ bool Physics (float DeltaTime) {
           float scrolly = sth.CarryScrollY;
           if (!scrollx && !scrolly) continue;
           if (bNoGravity && (!sec->heightsec || sec->heightsec->bIgnoreHeightSec)) continue;
-          float height = GetPointZClamped(ref sec->floor, Origin);
-          if (Origin.z > height) {
+          float hgt = GetPointZClamped(ref sec->floor, Origin);
+          if (Origin.z > hgt) {
             if (!sec->heightsec || sec->heightsec->bIgnoreHeightSec) continue;
             float waterheight = GetPointZClamped(ref sec->heightsec->floor, Origin);
-            if (waterheight > height && Origin.z >= waterheight) continue;
+            if (waterheight > hgt && Origin.z >= waterheight) continue;
           }
           // don't process sectors twice (eh, it is guaranteed by the list builder)
           //if (!vismark) vismark = XLevel.GetNextVisitedCount();
@@ -385,31 +385,31 @@ bool Physics (float DeltaTime) {
 //
 //==========================================================================
 final bool PerformSectorWindThrust (float DeltaTime, sector_t *sector) {
-  int special = sector->special&SECSPEC_BASE_MASK;
-  switch (special) {
+  int secspec = sector->special&SECSPEC_BASE_MASK;
+  switch (secspec) {
     case SECSPEC_WindEastSlow:
     case SECSPEC_WindEastMedium:
     case SECSPEC_WindEastFast:
       //printdebug("    EAST");
-      Thrust(0.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindEastSlow]*DeltaTime*35.0);
+      Thrust(0.0, LineSpecialGameInfo(Level.Game).windTab[secspec-SECSPEC_WindEastSlow]*DeltaTime*35.0);
       return true;
     case SECSPEC_WindNorthSlow:
     case SECSPEC_WindNorthMedium:
     case SECSPEC_WindNorthFast:
       //printdebug("    NORTH");
-      Thrust(90.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindNorthSlow]*DeltaTime*35.0);
+      Thrust(90.0, LineSpecialGameInfo(Level.Game).windTab[secspec-SECSPEC_WindNorthSlow]*DeltaTime*35.0);
       return true;
     case SECSPEC_WindSouthSlow:
     case SECSPEC_WindSouthMedium:
     case SECSPEC_WindSouthFast:
       //printdebug("    SOUTH");
-      Thrust(270.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindSouthSlow]*DeltaTime*35.0);
+      Thrust(270.0, LineSpecialGameInfo(Level.Game).windTab[secspec-SECSPEC_WindSouthSlow]*DeltaTime*35.0);
       return true;
     case SECSPEC_WindWestSlow:
     case SECSPEC_WindWestMedium:
     case SECSPEC_WindWestFast:
       //printdebug("    WEST");
-      Thrust(180.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindWestSlow]*DeltaTime*35.0);
+      Thrust(180.0, LineSpecialGameInfo(Level.Game).windTab[secspec-SECSPEC_WindWestSlow]*DeltaTime*35.0);
       return true;
   }
   return false;
@@ -466,12 +466,12 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
     // cancelled, and it won't accumulate to the desired speed.
     if (!GetCvarB('sv_transporters_absolute')) {
       absoluteSlide = false;
-      float CarryStopSpeed = CARRYSTOPSPEED*DeltaTime;
-      if (fabs(ScrollX) > CarryStopSpeed) {
+      float crStopSpeed = CARRYSTOPSPEED*DeltaTime;
+      if (fabs(ScrollX) > crStopSpeed) {
         ScrollX *= CARRYFACTOR*DeltaTime;
         Velocity.x += ScrollX/DeltaTime;
       }
-      if (fabs(ScrollY) > CarryStopSpeed) {
+      if (fabs(ScrollY) > crStopSpeed) {
         ScrollY *= CARRYFACTOR*DeltaTime;
         Velocity.y += ScrollY/DeltaTime;
       }
@@ -907,7 +907,7 @@ final void HitLine (ref tmtrace_t tmtrace, float StepVelScale, bool forceSlide) 
 //==========================================================================
 final void HitMobj (Entity Other, float ptryx, float ptryy) {
   float angle;
-  float speed;
+  float bncspeed;
   float sina, cosa;
 
   if (bMissile) {
@@ -933,11 +933,11 @@ final void HitMobj (Entity Other, float ptryx, float ptryy) {
         //printwarn("%C: BOUNCE! actb=%B; allactb=%B; other=%C; refl=%B, sent=%B", self, bBounceOnActors, bBounceOnAllActors, otherEnt, otherEnt.bReflective, otherEnt.IsSentient());
         //printwarn("    ooball=%B", otherEnt.bBounceOnAllActors);
         angle = AngleMod360(atan2(Origin.y-Other.Origin.y, Origin.x-Other.Origin.x)+(Random()*16.0-8.0));
-        speed = Length(Velocity)*WallBounceFactor;
+        bncspeed = Length(Velocity)*WallBounceFactor;
         Angles.yaw = angle;
         sincos(angle, out sina, out cosa);
-        Velocity.x = speed*cosa;
-        Velocity.y = speed*sina;
+        Velocity.x = bncspeed*cosa;
+        Velocity.y = bncspeed*sina;
         if (!bNoBounceSound && (BounceSound || SightSound)) {
           PlaySound(BounceSound ? BounceSound : SightSound, CHAN_VOICE);
         }
@@ -1200,7 +1200,7 @@ void FloorBounceMissile () {
 
   if (bMBFBounce) {
     if (Velocity.z < (fmax(1, Mass)*Gravity)/64.0) {
-      // Bring it to rest below a certain speed
+      // bring it to rest below a certain speed
       Velocity.z = 0.0;
     }
   }

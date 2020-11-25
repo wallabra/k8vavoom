@@ -917,25 +917,25 @@ final void BrainishExplosion (TVec org) {
 
   // now launch mushroom cloud
   // we need something to aim at
-  EntityEx target = Spawn(MapSpot, default, default, default/*, false*/);
-  target.Height = Height;
+  EntityEx tgt = Spawn(MapSpot, default, default, default/*, false*/);
+  tgt.Height = Height;
   for (int i = -Amount; i <= Amount; i += 8) {
     for (int j = -Amount; j <= Amount; j += 8) {
       // aim in many directions from source
-      target.UnlinkFromWorld();
-      target.Origin.x = Origin.x+float(i);
-      target.Origin.y = Origin.y+float(j);
-      target.bIntrJustMoved = false; // disable movement interpolation
-      target.LinkToWorld();
+      tgt.UnlinkFromWorld();
+      tgt.Origin.x = Origin.x+float(i);
+      tgt.Origin.y = Origin.y+float(j);
+      tgt.bIntrJustMoved = false; // disable movement interpolation
+      tgt.LinkToWorld();
       // aim up fairly high
-      target.Origin.z = Origin.z+Length(vector(float(i), float(j), 0.0))*(vrange ? vrange : 4.0);
+      tgt.Origin.z = Origin.z+Length(vector(float(i), float(j), 0.0))*(vrange ? vrange : 4.0);
       EntityEx mo;
       // launch fireball
       if (Flags&1) {
         TVec org = vector(Origin.x, Origin.y, Origin.z+32.0);
-        mo = SpawnMissileXYZ(org, target, SpawnType);
+        mo = SpawnMissileXYZ(org, tgt, SpawnType);
       } else {
-        mo = SpawnMissile(target, SpawnType);
+        mo = SpawnMissile(tgt, SpawnType);
       }
       if (mo) {
         // slow it down a bit
@@ -945,7 +945,7 @@ final void BrainishExplosion (TVec org) {
       }
     }
   }
-  target.Destroy();
+  tgt.Destroy();
 }
 
 

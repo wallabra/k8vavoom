@@ -752,9 +752,9 @@ final bool InquisitorCheckDistance () {
   int power = Stamina/10;
   int damage = (P_Random()%(power+8))*(power+2);
 
-  TAVec angles = Angles;
-  angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/8.0);
-  EntityEx AimTarget = AimLineAttack(dir, angles, PUNCH_DAGGER_RANGE);
+  TAVec aang = Angles;
+  aang.yaw = AngleMod360(aang.yaw+(Random()-Random())*45.0/8.0);
+  EntityEx AimTarget = AimLineAttack(dir, aang, PUNCH_DAGGER_RANGE);
   //FIXME: damage type?
   LineAttack(dir, PUNCH_DAGGER_RANGE, damage, StrifeSpark);
 

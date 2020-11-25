@@ -587,18 +587,18 @@ final bool StepMove () {
   float tryy = origy+deltay;
 
   // like P_XYMovement this should do multiple moves if the step size is too large
-  float maxmove = Radius;
+  float maxmvdist = Radius;
   int steps = 1;
 
   float xspeed;
   float yspeed;
-  if (maxmove > 0.0) {
+  if (maxmvdist > 0.0) {
     xspeed = fabs(deltax);
     yspeed = fabs(deltay);
     if (xspeed > yspeed) {
-      if (xspeed > maxmove) steps = 1+int(xspeed/maxmove);
+      if (xspeed > maxmvdist) steps = 1+int(xspeed/maxmvdist);
     } else {
-      if (yspeed > maxmove) steps = 1+int(yspeed/maxmove);
+      if (yspeed > maxmvdist) steps = 1+int(yspeed/maxmvdist);
     }
   }
 

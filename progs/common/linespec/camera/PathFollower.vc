@@ -121,7 +121,7 @@ final float Lerp (float p1, float p2) {
 override void BeginPlay () {
   InterpolationPoint A;
   InterpolationPoint node;
-  InterpolationPoint prevnode;
+  InterpolationPoint pnode;
 
   ::BeginPlay();
 
@@ -160,12 +160,12 @@ override void BeginPlay () {
     }
     // if the first node is in a loop, we can start there
     // otherwise, we need to start at the second node in the path
-    prevnode = node.ScanForLoop();
-    if (prevnode == none || prevnode.NextPoint != node) {
+    pnode = node.ScanForLoop();
+    if (pnode == none || pnode.NextPoint != node) {
       StartPrevNode = node;
       StartCurrNode = node.NextPoint;
     } else {
-      StartPrevNode = prevnode;
+      StartPrevNode = pnode;
     }
   }
 }

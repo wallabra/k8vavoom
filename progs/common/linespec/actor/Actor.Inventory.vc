@@ -334,10 +334,10 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
     Aim(dir, 16.0*64.0, noAutoaim:noAAim);
 
     if (PlayerEx(Player).Refire) {
-      TAVec angles;
-      VectorAngles(dir, out angles);
-      angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/2.0/float(1<<(Accuracy*5/100)));
-      AngleVector(angles, out dir);
+      TAVec aangs;
+      VectorAngles(dir, out aangs);
+      aangs.yaw = AngleMod360(aangs.yaw+(Random()-Random())*45.0/2.0/float(1<<(Accuracy*5/100)));
+      AngleVector(aangs, out dir);
     }
   } else {
     Aim(dir, 16.0*64.0);

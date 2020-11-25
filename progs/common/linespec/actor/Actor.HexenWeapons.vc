@@ -34,7 +34,7 @@ const float HammerRange = DEFAULT_MELEERANGE+DEFAULT_MELEERANGE/2.0;
 //==========================================================================
 [decorate] final void A_FPunchAttack () self(Actor) {
   TVec vforward;
-  TAVec angles;
+  TAVec aangs;
 
   if (!bIsPlayer) return;
 
@@ -46,7 +46,7 @@ const float HammerRange = DEFAULT_MELEERANGE+DEFAULT_MELEERANGE/2.0;
   class!Actor PuffType = PunchPuff;
   EntityEx AimTarget = AimEx(out vforward, 2.0*DEFAULT_MELEERANGE, 45.0/16.0, 16, DEFAULT_MELEERANGE);
   if (AimTarget) {
-    VectorAngles(vforward, out angles);
+    VectorAngles(vforward, out aangs);
     ++Special1;
     if (Special1 == 3) {
       damage <<= 1;
@@ -55,7 +55,7 @@ const float HammerRange = DEFAULT_MELEERANGE+DEFAULT_MELEERANGE/2.0;
     }
     //FIXME: damage type?
     if (LineAttack(vforward, 2.0*DEFAULT_MELEERANGE, damage, PuffType)) PlaySound(PuffType.default.ActiveSound, CHAN_WEAPON);
-    if (AimTarget.bMonster || AimTarget.bIsPlayer) AimTarget.Thrust(angles.yaw, power);
+    if (AimTarget.bMonster || AimTarget.bIsPlayer) AimTarget.Thrust(aangs.yaw, power);
     PlayerEx(Player).AdjustPlayerAngle(AimTarget);
   } else {
     // didn't find any creatures, so try to strike any walls
@@ -80,7 +80,7 @@ const float HammerRange = DEFAULT_MELEERANGE+DEFAULT_MELEERANGE/2.0;
 //==========================================================================
 [decorate] final void A_FAxeAttack () self(Actor) {
   int useMana;
-  TAVec angles;
+  TAVec aangs;
   TVec vforward;
   class!Actor PuffType;
 
@@ -103,10 +103,10 @@ const float HammerRange = DEFAULT_MELEERANGE+DEFAULT_MELEERANGE/2.0;
 
   EntityEx AimTarget = AimEx(out vforward, AxeRange, 45.0/16.0, 16, DEFAULT_MELEERANGE);
   if (AimTarget) {
-    VectorAngles(vforward, out angles);
+    VectorAngles(vforward, out aangs);
     //FIXME: damage type?
     if (LineAttack(vforward, AxeRange, damage, PuffType)) PlaySound(PuffType.default.ActiveSound, CHAN_WEAPON);
-    if (AimTarget.bMonster || AimTarget.bIsPlayer) AimTarget.Thrust(angles.yaw, power);
+    if (AimTarget.bMonster || AimTarget.bIsPlayer) AimTarget.Thrust(aangs.yaw, power);
     PlayerEx(Player).AdjustPlayerAngle(AimTarget);
     ++useMana;
   } else {
@@ -131,7 +131,7 @@ const float HammerRange = DEFAULT_MELEERANGE+DEFAULT_MELEERANGE/2.0;
 //
 //============================================================================
 [decorate] final void A_FHammerAttack () self(Actor) {
-  TAVec angles;
+  TAVec aangs;
   TVec vforward;
 
   if (!bIsPlayer) return;
@@ -143,11 +143,11 @@ const float HammerRange = DEFAULT_MELEERANGE+DEFAULT_MELEERANGE/2.0;
   float power = 10.0;
   EntityEx AimTarget = AimEx(out vforward, HammerRange, 45.0/32.0, 16, HammerRange);
   if (AimTarget) {
-    VectorAngles(vforward, out angles);
+    VectorAngles(vforward, out aangs);
     //FIXME: damage type?
     if (LineAttack(vforward, HammerRange, damage, HammerPuff)) PlaySound('FighterHammerMiss', CHAN_WEAPON);
     PlayerEx(Player).AdjustPlayerAngle(AimTarget);
-    if (AimTarget.bMonster || AimTarget.bIsPlayer) AimTarget.Thrust(angles.yaw, power);
+    if (AimTarget.bMonster || AimTarget.bIsPlayer) AimTarget.Thrust(aangs.yaw, power);
     Special1 = false; // don't throw a hammer
   } else {
     // didn't find any targets in meleerange, so set to throw out a hammer
@@ -271,7 +271,7 @@ const float HammerRange = DEFAULT_MELEERANGE+DEFAULT_MELEERANGE/2.0;
 //
 //==========================================================================
 [decorate] final void A_CStaffCheck () self(Actor) {
-  TAVec angles;
+  TAVec aangs;
   TVec vforward;
 
   if (!bIsPlayer) return;
@@ -282,7 +282,7 @@ const float HammerRange = DEFAULT_MELEERANGE+DEFAULT_MELEERANGE/2.0;
   int damage = 20+(P_Random()&15);
   EntityEx AimTarget = AimEx(out vforward, 3.0*DEFAULT_MELEERANGE/2.0, 45.0/16.0, 3);
   if (AimTarget) {
-    VectorAngles(vforward, out angles);
+    VectorAngles(vforward, out aangs);
     //FIXME: damage type?
     LineAttack(vforward, 1.5*DEFAULT_MELEERANGE, damage, CStaffPuff);
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y,
@@ -505,8 +505,8 @@ final void MStaffSpawn (float angle) {
   if (!Wpn) return;
 
   int damage = 3+(P_Random()&3);
-  TAVec angles = Angles;
-  EntityEx AimTarget = AimLineAttack(out vforward, angles, DEFAULT_MELEERANGE);
+  TAVec aangs = Angles;
+  EntityEx AimTarget = AimLineAttack(out vforward, aangs, DEFAULT_MELEERANGE);
   LineSpecialLevelInfo(Level).bPuffSpawned = false;
   //FIXME: damage type?
   LineAttack(vforward, DEFAULT_MELEERANGE, damage, SnoutPuff);

@@ -34,18 +34,18 @@ override void OnDraw () {
        if (TextVAlign == vbottom) y += Height-1;
   else if (TextVAlign == vcenter) y += Height/2;
 
-  string text = Text;
+  string txt = Text;
   if (Price) {
     if (IsFocused) {
-      text = va("%s \cDfor \cJ%d\cD gold", text, Price);
+      txt = va("%s \cDfor \cJ%d\cD gold", txt, Price);
     } else {
-      text = va("%s \cQfor \cX%d\cQ gold", text, Price);
+      txt = va("%s \cQfor \cX%d\cQ gold", txt, Price);
     }
   }
 
   SetFont(TextFont);
   SetTextAlign(TextHAlign, TextVAlign);
-  DrawText(CursorXOffs, y, text, (IsFocused ? TextColorFocus : TextColor));
+  DrawText(CursorXOffs, y, txt, (IsFocused ? TextColorFocus : TextColor));
 }
 
 

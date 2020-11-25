@@ -110,19 +110,19 @@ override void BeginPlay () {
   name slot = GetSeqSlot(SName);
   if (slot) {
     // this is a slotted sound, so add it to the master for that slot
-    SoundSequenceSlot master;
+    SoundSequenceSlot sndmaster;
 
-    foreach AllThinkers(SoundSequenceSlot, master) {
-      if (master.SeqName == slot) break;
+    foreach AllThinkers(SoundSequenceSlot, sndmaster) {
+      if (sndmaster.SeqName == slot) break;
     }
-    if (!master) {
-      master = SpawnEntityChecked(class!SoundSequenceSlot, SoundSequenceSlot, vector(0.0, 0.0, 0.0), default, default/*, false*/);
-      if (master) {
-        master.SeqName = slot;
-        master.StartSoundSequence(slot, 0);
+    if (!sndmaster) {
+      sndmaster = SpawnEntityChecked(class!SoundSequenceSlot, SoundSequenceSlot, vector(0.0, 0.0, 0.0), default, default/*, false*/);
+      if (sndmaster) {
+        sndmaster.SeqName = slot;
+        sndmaster.StartSoundSequence(slot, 0);
       }
     }
-    if (master) master.AddSoundSequenceChoice(SName);
+    if (sndmaster) sndmaster.AddSoundSequenceChoice(SName);
     Destroy();
   }
 }

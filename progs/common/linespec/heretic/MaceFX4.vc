@@ -91,7 +91,7 @@ final bool AutoUseChaosDevice(EntityEx Victim)
   int     i;
   float   angle;
   int     newAngle;
-  TAVec   angles;
+  TAVec   angs;
   TVec    Dir;
   EntityEx  AimTarget;
 
@@ -123,12 +123,12 @@ final bool AutoUseChaosDevice(EntityEx Victim)
     else
     {
       // Find new target
-      angles.pitch = 0.0;
-      angles.yaw = 0.0;
-      angles.roll = 0.0;
+      angs.pitch = 0.0;
+      angs.yaw = 0.0;
+      angs.roll = 0.0;
       for (i = 0; i < 16; i++)
       {
-        AimTarget = AimLineAttack(Dir, angles, 10.0 * 64.0);
+        AimTarget = AimLineAttack(Dir, angs, 10.0 * 64.0);
         if (AimTarget && Target != AimTarget)
         {
           Tracer = AimTarget;
@@ -137,7 +137,7 @@ final bool AutoUseChaosDevice(EntityEx Victim)
           newAngle = true;
           break;
         }
-        angles.yaw = AngleMod360(angles.yaw + 45.0 / 2.0);
+        angs.yaw = AngleMod360(angs.yaw + 45.0 / 2.0);
       }
     }
     if (newAngle)

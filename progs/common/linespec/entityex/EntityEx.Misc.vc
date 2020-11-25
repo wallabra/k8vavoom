@@ -128,23 +128,23 @@ final void SetOrigin2 (TVec origin, optional int properFloorCheck, optional floa
   // use `CheckRelPosition()` here, we don't need to relink ourselves
   tmtrace_t tmtrace;
   GetFloorAndCeilingEx(out tmtrace, origin, collideWorld:false);
-  float floorz = tmtrace.FloorZ;
+  float flrz = tmtrace.FloorZ;
   float ceilz = tmtrace.CeilingZ;
 
   //auto oldz = Origin.z;
 
-       if (origin.z == ONFLOORZ) Origin.z = floorz+moreHeight;
+       if (origin.z == ONFLOORZ) Origin.z = flrz+moreHeight;
   else if (origin.z == ONCEILINGZ) Origin.z = ceilz-Height-moreHeight;
   else if (origin.z == FLOATRANDZ) {
-    float space = ceilz-Height-floorz;
+    float space = ceilz-Height-flrz;
     if (space > 48.0) {
       space -= 40.0;
-      Origin.z = space*Random()+floorz+40.0;
+      Origin.z = space*Random()+flrz+40.0;
     } else {
-      Origin.z = floorz;
+      Origin.z = flrz;
     }
   } else if (bFloatBob) {
-    Origin.z = floorz+Origin.z; // artifact z passed in as height
+    Origin.z = flrz+Origin.z; // artifact z passed in as height
   }
 
   LinkToWorld(properFloorCheck:properFloorCheck);
@@ -166,7 +166,7 @@ final void SetOrigin2 (TVec origin, optional int properFloorCheck, optional floa
         #ifdef K8_DEVELOPER
         // `moreHeight` specified only for map things
         if (specified_moreHeight) {
-          print("FIXED z for `%C`: z=%s; floorz=%s; FloorZ=%s; newFloorZ=%s; Radius=%s", self, Origin.z, floorz, FloorZ, tmtrace.FloorZ, Radius);
+          print("FIXED z for `%C`: z=%s; flrz=%s; FloorZ=%s; newFloorZ=%s; Radius=%s", self, Origin.z, flrz, FloorZ, tmtrace.FloorZ, Radius);
         }
         #endif
         EFloor = tmtrace.EFloor;
@@ -1521,17 +1521,17 @@ override void OnMapSpawn (mthing_t *mthing) {
       }
       lorg = Origin+LightOffset;
     }
-    float radius = (mthing && mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius);
+    float rad = (mthing && mthing->args[0] ? float(mthing->args[0])*8.0 : LightRadius);
     if (LightConeDir && LightConeAngle > 0) {
-       Level.AddStaticLightRGB(self, lorg, radius, LightColor, LightConeDir, LightConeAngle);
+       Level.AddStaticLightRGB(self, lorg, rad, LightColor, LightConeDir, LightConeAngle);
     } else {
-       Level.AddStaticLightRGB(self, lorg, radius, LightColor);
+       Level.AddStaticLightRGB(self, lorg, rad, LightColor);
     }
     /*
     if (LightColor == 0xffffffff) {
-      Level.AddStaticLight(self, lorg, radius);
+      Level.AddStaticLight(self, lorg, rad);
     } else {
-      Level.AddStaticLightRGB(self, lorg, radius, LightColor);
+      Level.AddStaticLightRGB(self, lorg, rad, LightColor);
     }
     */
     //printdebug("%C: spawned static light! org=%s (ofs=%s); ceiling=%s", self, lorg, LightOffset, Sector.ceiling.minz);
@@ -3175,15 +3175,15 @@ final void GunShot (bool accurate, TVec dir, name DmgType, bool secondary, optio
 
   // make a copy of angles because inacurate shoot will modify them
   if (!accurate) {
-    TAVec angles;
-    VectorAngles(dir, out angles);
+    TAVec aimangles;
+    VectorAngles(dir, out aimangles);
     if (!specified_spreadYaw) {
-      angles.yaw = AngleMod360(angles.yaw+(FRandomFull()-FRandomFull())*45.0/8.0);
+      aimangles.yaw = AngleMod360(aimangles.yaw+(FRandomFull()-FRandomFull())*45.0/8.0);
     } else {
-      if (spreadYaw) angles.yaw = AngleMod360(angles.yaw+(FRandomFull()-FRandomFull())*spreadYaw);
+      if (spreadYaw) aimangles.yaw = AngleMod360(aimangles.yaw+(FRandomFull()-FRandomFull())*spreadYaw);
     }
-    if (spreadPitch) angles.pitch = AngleMod360(angles.pitch+(FRandomFull()-FRandomFull())*spreadPitch);
-    AngleVector(angles, out dir);
+    if (spreadPitch) aimangles.pitch = AngleMod360(aimangles.pitch+(FRandomFull()-FRandomFull())*spreadPitch);
+    AngleVector(aimangles, out dir);
   }
 
   int damage = 5*(P_Random()%3+1);

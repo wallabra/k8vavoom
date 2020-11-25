@@ -39,9 +39,9 @@
 
   float an = Random()*360.0;
   gib.Angles.yaw = an;
-  float speed = Random()*16.0*35.0;
-  gib.Velocity.x = speed*cos(an);
-  gib.Velocity.y = speed*sin(an);
+  float tossspeed = Random()*16.0*35.0;
+  gib.Velocity.x = tossspeed*cos(an);
+  gib.Velocity.y = tossspeed*sin(an);
   gib.Velocity.z = Random()*16.0*35.0;
   gib.CarryBloodTranslations(self);
 }

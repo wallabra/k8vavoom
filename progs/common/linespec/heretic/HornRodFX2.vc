@@ -63,47 +63,45 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 
 [decorate] final void A_AddPlayerRain()
 {
-  PlayerEx player;
-
-  player = PlayerEx(Target.Player);
-  if (!player || !player.bActive)
+  PlayerEx plr = PlayerEx(Target.Player);
+  if (!plr || !plr.bActive)
   {
     // Player left the game
     return;
   }
-  if (player.Health <= 0)
+  if (plr.Health <= 0)
   {
     // Player is dead
     return;
   }
-  if (player.Rain1 && player.Rain2)
+  if (plr.Rain1 && plr.Rain2)
   {
     // Terminate an active rain
-    if (player.Rain1.Health < player.Rain2.Health)
+    if (plr.Rain1.Health < plr.Rain2.Health)
     {
-      if (player.Rain1.Health > 16)
+      if (plr.Rain1.Health > 16)
       {
-        player.Rain1.Health = 16;
+        plr.Rain1.Health = 16;
       }
-      player.Rain1 = none;
+      plr.Rain1 = none;
     }
     else
     {
-      if (player.Rain2.Health > 16)
+      if (plr.Rain2.Health > 16)
       {
-        player.Rain2.Health = 16;
+        plr.Rain2.Health = 16;
       }
-      player.Rain2 = none;
+      plr.Rain2 = none;
     }
   }
   // Add rain mobj to list
-  if (player.Rain1)
+  if (plr.Rain1)
   {
-    player.Rain2 = self;
+    plr.Rain2 = self;
   }
   else
   {
-    player.Rain1 = self;
+    plr.Rain1 = self;
   }
 }
 
@@ -124,23 +122,23 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 //  A_SkullRodStorm
 //
 //===========================================================================
-[decorate] final void A_SkullRodStorm() {
-  PlayerEx player;
+[decorate] final void A_SkullRodStorm () {
+  PlayerEx plr;
   class!Actor rain_type;
 
   if (Health-- == 0) {
     SetState(none);
-    player = PlayerEx(Target.Player);
-    if (!player || !player.bActive) return; // player left the game
-    if (player.Health <= 0) return; // player is dead
-         if (player.Rain1 == self) player.Rain1 = none;
-    else if (player.Rain2 == self) player.Rain2 = none;
+    plr = PlayerEx(Target.Player);
+    if (!plr || !plr.bActive) return; // player left the game
+    if (plr.Health <= 0) return; // player is dead
+         if (plr.Rain1 == self) plr.Rain1 = none;
+    else if (plr.Rain2 == self) plr.Rain2 = none;
     return;
   }
   if (Random() < 0.1) return; // fudge rain frequency
 
-  float x = Origin.x + Random() * 128.0 - 64.0;
-  float y = Origin.y + Random() * 128.0 - 64.0;
+  float x = Origin.x+Random()*128.0-64.0;
+  float y = Origin.y+Random()*128.0-64.0;
   switch (RainColor) {
     case 0: rain_type = RainPillar; break;
     case 1: rain_type = RainPlayer2; break;
@@ -150,18 +148,18 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 
   Actor A = SpawnEntityChecked(class!Actor, rain_type, vector(x, y, ONCEILINGZ));
   if (A) {
-    if (Sector->bHasExtrafloors && Origin.z <= CeilingZ) A.Origin.z = CeilingZ - A.Height;
+    if (Sector->bHasExtrafloors && Origin.z <= CeilingZ) A.Origin.z = CeilingZ-A.Height;
     A.Target = Target;
-    A.Velocity.x = 0.00001; // Force collision detection
+    A.Velocity.x = 0.00001; // force collision detection
     A.Velocity.z = -A.Speed;
     A.CheckMissileSpawn();
   }
-  if (!(Special1 & 31)) PlaySound('weapons/hornrodpowrain', CHAN_VOICE);
-  Special1++;
+  if (!(Special1&31)) PlaySound('weapons/hornrodpowrain', CHAN_VOICE);
+  ++Special1;
 }
 
-states
-{
+
+states {
 Spawn:
   FX00 C 3 Bright
   FX00 D 3 Bright A_SkullRodPL2Seek

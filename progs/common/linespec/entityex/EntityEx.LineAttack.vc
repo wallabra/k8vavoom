@@ -706,28 +706,28 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw,
 //==========================================================================
 final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps,
                       optional float FinalRange, optional class!EntityEx rocketType) {
-  TAVec angles;
+  TAVec aimangles;
   //TVec vforward;
   EntityEx LineTarget;
 
   foreach (auto i; 0..NumSteps) {
     // try to the left
-    angles = Angles;
-    angles.yaw = AngleMod360(angles.yaw+float(i)*AngleInc);
-    LineTarget = AimLineAttack(out OutDir, angles, Range, rocketType:rocketType!optional);
+    aimangles = Angles;
+    aimangles.yaw = AngleMod360(aimangles.yaw+float(i)*AngleInc);
+    LineTarget = AimLineAttack(out OutDir, aimangles, Range, rocketType:rocketType!optional);
     if (LineTarget) return LineTarget;
 
     // try to the right
-    angles = Angles;
-    angles.yaw = AngleMod360(angles.yaw-float(i)*AngleInc);
-    LineTarget = AimLineAttack(out OutDir, angles, Range, rocketType:rocketType!optional);
+    aimangles = Angles;
+    aimangles.yaw = AngleMod360(aimangles.yaw-float(i)*AngleInc);
+    LineTarget = AimLineAttack(out OutDir, aimangles, Range, rocketType:rocketType!optional);
     if (LineTarget) return LineTarget;
   }
 
   if (FinalRange) {
     // didn't find any creatures, so try to strike any walls
-    angles = Angles;
-    LineTarget = AimLineAttack(out OutDir, angles, FinalRange, rocketType:rocketType!optional);
+    aimangles = Angles;
+    LineTarget = AimLineAttack(out OutDir, aimangles, FinalRange, rocketType:rocketType!optional);
   } else {
     //AngleVector(Angles, out vforward);
     //OutDir = vforward;

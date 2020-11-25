@@ -155,10 +155,10 @@ override void DetachedFromOwner () {
     if (!ammo) continue; // not an ammo
     // this is for ammo king mode
     int maxam = ammo.k8GetAmmoKingMax();
-    int amount = ammo.Amount;
-    if (amount > maxam) {
-      amount = maxam;
-      ammo.Amount = amount;
+    int amnt = ammo.Amount;
+    if (amnt > maxam) {
+      amnt = maxam;
+      ammo.Amount = amnt;
     }
     if (ammo.MaxAmount != Ammo(ammo).BackpackMaxAmount) {
       // maximal amount doesn't match what backpack should give
@@ -166,7 +166,7 @@ override void DetachedFromOwner () {
     }
     ammo.MaxAmount = ammo.default.MaxAmount;
     maxam = ammo.k8GetAmmoKingMax();
-    if (amount > maxam) ammo.Amount = maxam;
+    if (amnt > maxam) ammo.Amount = maxam;
   }
   // just in case
   ::DetachedFromOwner();
