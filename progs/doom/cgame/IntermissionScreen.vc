@@ -445,10 +445,10 @@ void IM_DrawEL () {
 //  IM_DrawPercent
 //
 //==========================================================================
-void IM_DrawPercent (int x, int y, int p) {
-  if (p < 0) return;
+void IM_DrawPercent (int x, int y, int prc) {
+  if (prc < 0) return;
   SetTextAlign(hright, vtop);
-  DrawText(x, y, va("%d%%", p));
+  DrawText(x, y, va("%d%%", prc));
 }
 
 

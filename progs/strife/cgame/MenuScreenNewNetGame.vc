@@ -51,7 +51,7 @@ override void CreateEpisodeList (out array!string epnames) {
 //  CreateMapList
 //
 //==========================================================================
-override void CreateMapList (int episode, out array!string mapnames) {
+override void CreateMapList (int aepisode, out array!string mapnames) {
 #ifdef FIXME
   foreach (auto i; 1..100) {
     int map = P_TranslateMap(i);
@@ -68,6 +68,6 @@ override void CreateMapList (int episode, out array!string mapnames) {
 //  GetMapName
 //
 //==========================================================================
-override string GetMapName (int episode, int map) {
+override string GetMapName (int aepisode, int map) {
   return va("map%02d", map+1);
 }

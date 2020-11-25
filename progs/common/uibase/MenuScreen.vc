@@ -283,9 +283,9 @@ void FinishCreatingMenu () {
 //  LoadMenu
 //
 //==========================================================================
-final static MenuDefinition LoadMenu (string defFileName) {
-  if (!defFileName) FatalError("undefined menudef");
-  auto par = MenuDefinition.openParser(defFileName);
+final static MenuDefinition LoadMenu (string adefFileName) {
+  if (!adefFileName) FatalError("undefined menudef");
+  auto par = MenuDefinition.openParser(adefFileName);
   scope(exit) delete par;
   par.Expect("menudef");
   auto mdef = SpawnObject(MenuDefinition);
@@ -794,12 +794,12 @@ MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass
 //  CreateSubMenuTextNamed
 //
 //==========================================================================
-MenuTextButton CreateSubMenuTextNamed (string text, name menuName) {
+MenuTextButton CreateSubMenuTextNamed (string text, name amenuName) {
   auto btn = GetItemContainer().NewChild(MenuSmallTextButton);
   btn.SetOrigin(ChoicesStartX, GetCurrentY());
   if (Width > WidthThreshold) btn.Width = Width;
   btn.SetText(text);
-  btn.SetSubMenuName(string(menuName));
+  btn.SetSubMenuName(string(amenuName));
   //currentY += btn.Height;
   return btn;
 }
@@ -810,12 +810,12 @@ MenuTextButton CreateSubMenuTextNamed (string text, name menuName) {
 //  CreateSubMenuBigTextNamed
 //
 //==========================================================================
-MenuTextButton CreateSubMenuBigTextNamed (string text, name menuName) {
+MenuTextButton CreateSubMenuBigTextNamed (string text, name amenuName) {
   auto btn = GetItemContainer().NewChild(MenuBigTextButton);
   btn.SetOrigin(ChoicesStartX, GetCurrentY());
   if (Width > WidthThreshold) btn.Width = Width;
   btn.SetText(text);
-  btn.SetSubMenuName(string(menuName));
+  btn.SetSubMenuName(string(amenuName));
   //currentY += btn.Height;
   return btn;
 }

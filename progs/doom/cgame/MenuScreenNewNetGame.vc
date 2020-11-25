@@ -47,7 +47,7 @@ override void CreateEpisodeList (out array!string epnames) {
 //  CreateMapList
 //
 //==========================================================================
-override void CreateMapList (int episode, out array!string mapnames) {
+override void CreateMapList (int aepisode, out array!string mapnames) {
   /*
   print("=== MAP COUNT: %d ===", P_GetNumMaps());
   for (int i = 0; i < P_GetNumMaps(); ++i) {
@@ -65,7 +65,7 @@ override void CreateMapList (int episode, out array!string mapnames) {
   // build episode list and map list
   if (!IsAnyDoom2) {
     // doom1
-    foreach (int i; 0..9) mapnames[$] = P_GetMapName(episode*9+i);
+    foreach (int i; 0..9) mapnames[$] = P_GetMapName(aepisode*9+i);
   } else {
     // doom2
 #ifdef FIXME
@@ -91,12 +91,12 @@ override void CreateMapList (int episode, out array!string mapnames) {
 //  GetMapName
 //
 //==========================================================================
-override string GetMapName (int episode, int map) {
+override string GetMapName (int aepisode, int map) {
   if (IsAnyDoom2) {
     MapInfo *mi = P_GetMapInfo(map);
     if (!mi) return "";
     return string(mi->LumpName);
   } else {
-    return va("e%dm%d", episode+1, map+1);
+    return va("e%dm%d", aepisode+1, map+1);
   }
 }

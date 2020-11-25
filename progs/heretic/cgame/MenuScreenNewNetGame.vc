@@ -49,10 +49,10 @@ override void CreateEpisodeList (out array!string epnames) {
 //  CreateMapList
 //
 //==========================================================================
-override void CreateMapList (int episode, out array!string mapnames) {
+override void CreateMapList (int aepisode, out array!string mapnames) {
   foreach (auto i; 0..9) {
     //Level.EnumNames[i] = P_GetMapName(epi * 9 + i);
-    mapnames[$] = P_GetMapName(episode*9+i);
+    mapnames[$] = P_GetMapName(aepisode*9+i);
   }
 }
 
@@ -62,6 +62,6 @@ override void CreateMapList (int episode, out array!string mapnames) {
 //  GetMapName
 //
 //==========================================================================
-override string GetMapName (int episode, int map) {
-  return va("e%dm%d", episode+1, map+1);
+override string GetMapName (int aepisode, int map) {
+  return va("e%dm%d", aepisode+1, map+1);
 }

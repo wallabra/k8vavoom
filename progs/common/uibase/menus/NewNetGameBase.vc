@@ -62,7 +62,7 @@ void CreateEpisodeList (out array!string epnames) {
 //  CreateMapList
 //
 //==========================================================================
-void CreateMapList (int episode, out array!string mapnames) {
+void CreateMapList (int aepisode, out array!string mapnames) {
 }
 
 
@@ -71,7 +71,7 @@ void CreateMapList (int episode, out array!string mapnames) {
 //  GetMapName
 //
 //==========================================================================
-string GetMapName (int episode, int map) {
+string GetMapName (int aepisode, int map) {
   return "";
 }
 

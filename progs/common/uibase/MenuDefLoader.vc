@@ -189,11 +189,11 @@ MenuDefOptionModSubMenus findModSubMenuOption () {
 //  fix GZDoom-style menudefs
 //
 //==========================================================================
-private final static void fixGZList (ref array!MenuDefOptionBase options, ref array!(ClientGameShared::OptionValue) ovals,
+private final static void fixGZList (ref array!MenuDefOptionBase aoptions, ref array!(ClientGameShared::OptionValue) ovals,
                                      bool delegate (string subname) gzCheckSub)
 {
-  for (int f = 0; f < options.length; ++f) {
-    MenuDefOptionBase opt = options[f];
+  for (int f = 0; f < aoptions.length; ++f) {
+    MenuDefOptionBase opt = aoptions[f];
     if (opt isa MenuDefOptionModSubMenus) {
       fixGZList(MenuDefOptionModSubMenus(opt).options, ovals, gzCheckSub);
     } else if (opt isa MenuDefOptionEnum) {
@@ -217,8 +217,8 @@ private final static void fixGZList (ref array!MenuDefOptionBase options, ref ar
       if (!sub || !sub.gzPostFilter) continue;
       if (gzCheckSub(sub.subname)) continue;
       print("removing unknown GZ-defined option in options menu: '%s'", sub.subname);
-      delete options[f];
-      options.remove(f);
+      delete aoptions[f];
+      aoptions.remove(f);
       --f;
     }
   }
@@ -240,13 +240,13 @@ void fixGZOptionValues (ref array!(ClientGameShared::OptionValue) ovals, bool de
 //  filterOptionList
 //
 //==========================================================================
-static final void filterOptionList (ref array!MenuDefOptionBase options, optional int stidx) {
+static final void filterOptionList (ref array!MenuDefOptionBase aoptions, optional int stidx) {
   if (stidx < 0) stidx = 0;
-  while (stidx < options.length) {
-    if (options[stidx] !isa MenuDefOptionSubHeader) { ++stidx; continue; }
-    if (stidx > 0 && options[stidx-1] isa MenuDefOptionSubHeader && !options[stidx-1].title) {
-      delete options[stidx-1];
-      options.remove(stidx-1);
+  while (stidx < aoptions.length) {
+    if (aoptions[stidx] !isa MenuDefOptionSubHeader) { ++stidx; continue; }
+    if (stidx > 0 && aoptions[stidx-1] isa MenuDefOptionSubHeader && !aoptions[stidx-1].title) {
+      delete aoptions[stidx-1];
+      aoptions.remove(stidx-1);
       --stidx;
     } else {
       ++stidx;
