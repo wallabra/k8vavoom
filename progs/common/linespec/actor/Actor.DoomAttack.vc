@@ -283,14 +283,14 @@ final void DoSPosAttack () {
 //  A_SkullAttack
 //
 //==========================================================================
-[decorate] final void decorate_A_SkullAttack (optional float SkullSpeed) {
+[decorate] final void decorate_A_SkullAttack (optional float aSkullSpeed) {
   if (!Target) return;
-  if (!specified_SkullSpeed) SkullSpeed = SKULLSPEED; else SkullSpeed *= 35.0;
+  if (!specified_aSkullSpeed) aSkullSpeed = SKULLSPEED; else aSkullSpeed *= 35.0;
 
   bSkullFly = true;
   PlaySound(AttackSound, CHAN_VOICE);
   A_FaceTarget();
-  Velocity = Normalise(Target.GetCenter()-Origin)*SkullSpeed;
+  Velocity = Normalise(Target.GetCenter()-Origin)*aSkullSpeed;
 }
 
 
@@ -626,7 +626,7 @@ final void DoSPosAttack () {
 //==========================================================================
 [decorate] final void decorate_A_VileAttack (optional string sound, optional int initialdamage,
                          optional int blastdamage, optional int blastradius,
-                         optional float thrustfactor, optional name damagetype,
+                         optional float thrustfactor, optional name adamagetype,
                          optional int flags)
 {
   if (!Target) return;
@@ -635,8 +635,8 @@ final void DoSPosAttack () {
 
   if (!CanSee(Target)) return;
 
-  if (!specified_damagetype) damagetype = 'Fire';
-  if (!damagetype) damagetype = 'None';
+  if (!specified_adamagetype) adamagetype = 'Fire';
+  if (!adamagetype) adamagetype = 'None';
 
   if (specified_sound) {
     if (sound.length > 0) {
@@ -647,7 +647,7 @@ final void DoSPosAttack () {
   }
   if (!specified_initialdamage) initialdamage = 20;
   if (initialdamage < 0) initialdamage = 0;
-  Target.Damage(self, self, /*20*/initialdamage, (flags&1 ? damagetype : 'None'), spawnBlood:true);
+  Target.Damage(self, self, /*20*/initialdamage, (flags&1 ? adamagetype : 'None'), spawnBlood:true);
 
   EntityEx fire = Tracer;
   if (!fire) return;
@@ -665,7 +665,7 @@ final void DoSPosAttack () {
   if (!specified_blastradius) blastradius = 70;
   if (blastradius < 0) blastradius = 0;
   if (blastradius > 0) {
-    fire.RadiusAttack(self, blastdamage, float(blastradius), true, damagetype);
+    fire.RadiusAttack(self, blastdamage, float(blastradius), true, adamagetype);
   }
 
   // change velocity Z component before doing RadiusAttack

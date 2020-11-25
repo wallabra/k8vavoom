@@ -411,25 +411,25 @@
 //  A_FadeTo
 //
 //==========================================================================
-[decorate] final void A_FadeTo (float target, optional float amount, optional int flags) {
+[decorate] final void A_FadeTo (float atarget, optional float amount, optional int flags) {
   if (!amount) amount = 0.1;
   amount = fabs(amount);
   if (RenderStyle == STYLE_Normal) RenderStyle = STYLE_Translucent;
   if (flags&FTF_CLAMP) {
     Alpha = fclamp(Alpha, 0, 1);
-    target = fclamp(target, 0, 1);
+    atarget = fclamp(atarget, 0, 1);
   }
-  if (Alpha < target) {
+  if (Alpha < atarget) {
     Alpha += amount;
-    if (Alpha >= target) {
+    if (Alpha >= atarget) {
       if (flags&FTF_REMOVE) { Destroy(); return; }
-      Alpha = target;
+      Alpha = atarget;
     }
-  } else if (Alpha > target) {
+  } else if (Alpha > atarget) {
     Alpha -= amount;
-    if (Alpha <= target) {
+    if (Alpha <= atarget) {
       if (flags&FTF_REMOVE) { Destroy(); return; }
-      Alpha = target;
+      Alpha = atarget;
     }
   } else {
     // reached

@@ -708,7 +708,7 @@ final bool InquisitorCheckDistance () {
 //  A_AttackAlert
 //
 //==========================================================================
-[decorate] final void A_AttackAlert (EntityEx target, EntityEx emitter) self(Actor) {
+[decorate] final void A_AttackAlert (EntityEx atarget, EntityEx emitter) self(Actor) {
   Entity looker;
 
   if (emitter.LastHeard) return;
@@ -717,17 +717,17 @@ final bool InquisitorCheckDistance () {
   if (emitter.bInCombat) return;
   emitter.bInCombat = true;
 
-  emitter.Target = target;
+  emitter.Target = atarget;
   if (emitter.FindState('Pain')) emitter.SetState(emitter.FindState('Pain'));
 
   for (looker = Sector->ThingList; looker; looker = looker.SNext) {
-    if (looker == emitter || looker == target) continue;
+    if (looker == emitter || looker == atarget) continue;
     if (looker.Health <= 0) continue;
     if (!EntityEx(looker).bSeesDaggers) continue;
     if (!EntityEx(looker).bInCombat) {
-      if (!looker.CanSee(target) && !looker.CanSee(emitter)) continue;
+      if (!looker.CanSee(atarget) && !looker.CanSee(emitter)) continue;
       if (EntityEx(looker).SeeState) {
-        EntityEx(looker).Target = target;
+        EntityEx(looker).Target = atarget;
         looker.PlaySound(SightSound, CHAN_VOICE);
         looker.SetState(EntityEx(looker).SeeState);
         EntityEx(looker).bInCombat = true;
