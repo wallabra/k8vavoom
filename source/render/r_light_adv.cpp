@@ -1053,6 +1053,9 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   bool allowShadows = doShadows;
 
   // if we want model shadows, always do full rendering
+  //FIXME: we shoud check if we have any model that can cast shadow instead
+  //FIXME: also, models can be enabled, but we may not have any models loaded
+  //FIXME: for now, `doShadows` only set to false for very small lights (radius<8), so it doesn't matter
   if (!allowShadows && r_draw_mobjs && r_models && r_model_shadows) allowShadows = true;
 
   if (dlflags&dlight_t::NoShadow) allowShadows = false;
