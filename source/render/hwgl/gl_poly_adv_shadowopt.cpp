@@ -237,5 +237,3 @@ static bool CanSurfaceCastShadow (const surface_t *surf, const TVec &LightPos, f
   // just in case
   return true;
 }
-
-
