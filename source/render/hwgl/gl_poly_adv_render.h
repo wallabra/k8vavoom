@@ -23,8 +23,74 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-// directly included from "gl_poly_adv.cpp"
-//**************************************************************************
+#ifndef VAVOOM_GL_ADVRENDER_H
+#define VAVOOM_GL_ADVRENDER_H
+
+extern VCvarB gl_enable_depth_bounds;
+extern VCvarB gl_dbg_advlight_debug;
+extern VCvarI gl_dbg_advlight_color;
+
+extern VCvarB gl_dbg_vbo_adv_ambient;
+
+extern VCvarB gl_smart_reject_shadows;
+extern VCvarB gl_smart_reject_svol_segs;
+extern VCvarB gl_smart_reject_svol_flats;
+
+
+enum {
+  SFST_Normal,
+  SFST_NormalGlow,
+  SFST_BMap,
+  SFST_BMapGlow,
+  SFST_MAX,
+};
+
+
+//==========================================================================
+//
+//  ClassifySurfaceShader
+//
+//  do not call on invisible or texture-less surfaces
+//
+//==========================================================================
+static VVA_OKUNUSED inline int ClassifySurfaceShader (const surface_t *surf) {
+  if (r_brightmaps && surf->texinfo->Tex->Brightmap) return (surf->gp.isActive() ? SFST_BMapGlow : SFST_BMap);
+  return (surf->gp.isActive() ? SFST_NormalGlow : SFST_Normal);
+}
+
+
+//==========================================================================
+//
+//  CheckListSortValidity
+//
+//==========================================================================
+#if 0
+static void CheckListSortValidity (TArray<surface_t *> &list, const char *listname) {
+  const int len = list.length();
+  const surface_t *const *sptr = list.ptr();
+  // find first valid surface
+  int idx;
+  for (idx = 0; idx < len; ++idx, ++sptr) {
+    const surface_t *surf = *sptr;
+    if (surf->IsPlVisible()) break;
+  }
+  if (idx >= len) return; // nothing to do
+  int phase = list[idx]->shaderClass;
+  int previdx = idx;
+  // check surfaces
+  for (; idx < len; ++idx, ++sptr) {
+    const surface_t *surf = *sptr;
+    if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
+    vassert(surf->texinfo->Tex);
+    const int newphase = surf->shaderClass;
+    if (newphase < phase) {
+      Sys_Error("CheckListSortValidity (%s): shader order check failed at %d of %d; previdx is %d; prevphase is %d; phase is %d", listname, idx, len, previdx, phase, newphase);
+    }
+    previdx = idx;
+    phase = newphase;
+  }
+}
+#endif
 
 
 //WARNING! don't forget to flush VBO on each shader uniform change! this includes glow changes (glow values aren't cached yet)
@@ -73,3 +139,16 @@
       (shader_).SetTex(currTexinfo); \
     } \
   } while (0)
+
+
+// this also sorts by fade, so we can avoid resorting in fog pass
+int glAdvRenderDrawListItemCmpByTextureAndFade (const void *a, const void *b, void * /*udata*/);
+
+// full shader and texture sorting
+int glAdvRenderDrawListItemCmpByShaderTexture (const void *a, const void *b, void * /*udata*/);
+
+// only shaders and brightmap textures will be sorted
+int glAdvRenderDrawListItemCmpByShaderBMTexture (const void *a, const void *b, void * /*udata*/);
+
+
+#endif

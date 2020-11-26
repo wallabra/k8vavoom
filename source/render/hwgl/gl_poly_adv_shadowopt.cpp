@@ -23,17 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-// directly included from "gl_poly_adv.cpp"
-//**************************************************************************
-
-#define VVGL_SMART_SHADOW_REJECT
-
-//TODO: re-check and reimplement smart rejects
-//      also, "r_shadowvol_optimise_flats" seems to do the same as "gl_smart_reject_svol_flats"
-static VCvarB gl_smart_reject_shadows("gl_smart_reject_shadows", false, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
-
-static VCvarB gl_smart_reject_svol_segs("gl_smart_reject_svol_segs", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
-static VCvarB gl_smart_reject_svol_flats("gl_smart_reject_svol_flats", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
+#include "gl_local.h"
+#include "gl_poly_adv_render.h"
 
 
 //==========================================================================
@@ -225,10 +216,10 @@ static bool CanSurfaceFlatCastShadow (const surface_t *surf, const TVec LightPos
 
 //==========================================================================
 //
-//  CanSurfaceCastShadow
+//  VOpenGLDrawer::AdvRenderCanSurfaceCastShadow
 //
 //==========================================================================
-static bool CanSurfaceCastShadow (const surface_t *surf, const TVec &LightPos, float Radius) {
+bool VOpenGLDrawer::AdvRenderCanSurfaceCastShadow (const surface_t *surf, const TVec &LightPos, float Radius) {
   if (surf->seg) {
     return CanSurfaceSegCastShadow(surf, LightPos, Radius);
   } else if (surf->subsector) {

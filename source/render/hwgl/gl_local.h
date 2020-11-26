@@ -323,6 +323,8 @@ public:
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) override;
   void RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, const TVec &LightPos, float Radius);
 
+  bool AdvRenderCanSurfaceCastShadow (const surface_t *surf, const TVec &LightPos, float Radius);
+
   virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) override;
   virtual void DrawSurfaceLight (surface_t *surf) override;
 

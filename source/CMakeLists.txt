@@ -488,7 +488,18 @@ set(MAIN_OPENGL_SOURCES
   render/hwgl/gl_model.cpp
   render/hwgl/gl_particle.cpp
   render/hwgl/gl_poly.cpp
+  # advanced redenrer
+  render/hwgl/gl_poly_adv_render.h
   render/hwgl/gl_poly_adv.cpp
+  render/hwgl/gl_poly_adv_render_ambient.cpp
+  render/hwgl/gl_poly_adv_render_fog.cpp
+  render/hwgl/gl_poly_adv_render_light.cpp
+  render/hwgl/gl_poly_adv_render_pre.cpp
+  render/hwgl/gl_poly_adv_render_svol.cpp
+  render/hwgl/gl_poly_adv_render_textures.cpp
+  render/hwgl/gl_poly_adv_shadowopt.cpp
+  render/hwgl/gl_poly_adv_zpass.cpp
+  # end of advanced renderer
   render/hwgl/gl_portal.cpp
   render/hwgl/gl_tex.cpp
   render/hwgl/gl_shaddef.sxx
