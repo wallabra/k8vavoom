@@ -45,7 +45,8 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-  glDisable(GL_CULL_FACE);
+  //glDisable(GL_CULL_FACE);
+  glEnable(GL_CULL_FACE);
 
   SurfShadowMap.Activate();
 }
@@ -93,6 +94,11 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
   //uniforms->get_uniform("mvp") = light_projection * active_face * light_view * state.model;
   //program->merge_uniforms(*uniforms);
   //SurfShadowMap.SetLightPos(LightPos);
+  GLDRW_RESET_ERROR();
+  p_glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO);
+  GLDRW_CHECK_ERROR("set cube FBO");
+  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X+facenum, cubeTexId, 0);
+  GLDRW_CHECK_ERROR("set cube FBO face");
   SurfShadowMap.SetLightMPV(mvp);
   SurfShadowMap.UploadChangedUniforms();
 }

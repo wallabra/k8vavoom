@@ -158,6 +158,9 @@ public:
     static inline bool notEqual_mat3 (const float *v1, const float *v2) { return (memcmp(v1, v2, sizeof(float)*9) != 0); }
     static inline bool notEqual_mat4 (const VMatrix4 &v1, const VMatrix4 &v2) { return (memcmp(&v1.m[0][0], &v2.m[0][0], sizeof(float)*16) != 0); }
     static inline bool notEqual_sampler2D (const vuint32 v1, const vuint32 v2) { return (v1 != v2); }
+    static inline bool notEqual_sampler2DShadow (const vuint32 v1, const vuint32 v2) { return (v1 != v2); }
+    static inline bool notEqual_samplerCube (const vuint32 v1, const vuint32 v2) { return (v1 != v2); }
+    static inline bool notEqual_samplerCubeShadow (const vuint32 v1, const vuint32 v2) { return (v1 != v2); }
 
     static inline void copyValue_float (float &dest, const float &src) { dest = src; }
     static inline void copyValue_bool (bool &dest, const bool &src) { dest = src; }
@@ -167,6 +170,9 @@ public:
     static inline void copyValue_vec2 (float *dest, const float *src) { memcpy(dest, src, sizeof(float)*2); }
     static inline void copyValue_mat3 (float *dest, const float *src) { memcpy(dest, src, sizeof(float)*9); }
     static inline void copyValue_sampler2D (vuint32 &dest, const vuint32 &src) { dest = src; }
+    static inline void copyValue_sampler2DShadow (vuint32 &dest, const vuint32 &src) { dest = src; }
+    static inline void copyValue_samplerCube (vuint32 &dest, const vuint32 &src) { dest = src; }
+    static inline void copyValue_samplerCubeShadow (vuint32 &dest, const vuint32 &src) { dest = src; }
   };
 
   friend class VGLShader;

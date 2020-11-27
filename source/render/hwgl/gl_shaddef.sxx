@@ -283,6 +283,7 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader [advanced] ShadowsLightSpotDbg both="shadowvol/surf/shadows_surf_light" { defines { "VV_DEBUG_LIGHT", "VV_SPOTLIGHT" } }
 
   Shader [advanced] ShadowsLightSMap both="shadowvol/surf/shadows_surf_light_smap";
+  Shader [advanced] DbgShadowMap both="draw/draw_smap_dbg";
 
   Shader SurfModel both="lightmap/surf_model";
   Shader SurfModelStencil both="lightmap/surf_model" { define "VV_STENCIL"; }

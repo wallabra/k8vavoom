@@ -1811,6 +1811,26 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
     //GLDisableBlend();
     glEnable(GL_TEXTURE_2D);
   }
+
+  GLDisableBlend();
+  for (unsigned int face = 0; face < 6; ++face) {
+    float xofs = (face%3)*(shadowmapSize+4);
+    float yofs = ((face/3)%3)*(shadowmapSize+4);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
+    DbgShadowMap.Activate();
+    DbgShadowMap.SetTexture(0);
+    DbgShadowMap.SetCubeZ(1.0f);
+    DbgShadowMap.UploadChangedUniforms();
+    glBegin(GL_QUADS);
+      glTexCoord2f(0, 0); glVertex2f(xofs+            0, yofs+0);
+      glTexCoord2f(1, 0); glVertex2f(xofs+shadowmapSize, yofs+0);
+      glTexCoord2f(1, 1); glVertex2f(xofs+shadowmapSize, yofs+shadowmapSize);
+      glTexCoord2f(0, 1); glVertex2f(xofs+            0, yofs+shadowmapSize);
+    glEnd();
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+  }
+  GLEnableBlend();
 }
 
 
