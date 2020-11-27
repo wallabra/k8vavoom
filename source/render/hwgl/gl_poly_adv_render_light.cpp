@@ -26,6 +26,8 @@
 #include "gl_local.h"
 #include "gl_poly_adv_render.h"
 
+extern VCvarB r_shadowmaps;
+
 
 #define SETUP_LIGHT_SHADER(shad_)  do { \
   (shad_).Activate(); \
@@ -57,25 +59,6 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-  // do not use stencil test if we rendered no shadow surfaces
-  if (doShadow && IsStencilBufferDirty()/*wasRenderedShadowSurface*/) {
-    if (gl_dbg_use_zpass > 1) {
-      glStencilFunc(GL_EQUAL, 0x1, 0xff);
-    } else {
-      glStencilFunc(GL_EQUAL, 0x0, 0xff);
-    }
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glEnable(GL_STENCIL_TEST);
-  } else {
-    glDisable(GL_STENCIL_TEST);
-  }
-
-  /*
-  if (doShadow && !wasRenderedShadowSurface) {
-    Color = 0xffff0000u;
-  }
-  */
-
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   GLEnableBlend();
   //glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
@@ -83,21 +66,45 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 
   glDepthFunc(GL_EQUAL);
 
-  if (spotLight) {
-    if (!gl_dbg_advlight_debug) {
-      SETUP_LIGHT_SHADER(ShadowsLightSpot);
-      ShadowsLightSpot.SetConeDirection(coneDir);
-      ShadowsLightSpot.SetConeAngle(coneAngle);
-    } else {
-      SETUP_LIGHT_SHADER(ShadowsLightSpotDbg);
-      ShadowsLightSpotDbg.SetConeDirection(coneDir);
-      ShadowsLightSpotDbg.SetConeAngle(coneAngle);
-    }
+  if (r_shadowmaps) {
+    SETUP_LIGHT_SHADER(ShadowsLightSMap);
+    glDisable(GL_STENCIL_TEST);
   } else {
-    if (!gl_dbg_advlight_debug) {
-      SETUP_LIGHT_SHADER(ShadowsLight);
+    // do not use stencil test if we rendered no shadow surfaces
+    if (doShadow && IsStencilBufferDirty()/*wasRenderedShadowSurface*/) {
+      if (gl_dbg_use_zpass > 1) {
+        glStencilFunc(GL_EQUAL, 0x1, 0xff);
+      } else {
+        glStencilFunc(GL_EQUAL, 0x0, 0xff);
+      }
+      glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+      glEnable(GL_STENCIL_TEST);
     } else {
-      SETUP_LIGHT_SHADER(ShadowsLightDbg);
+      glDisable(GL_STENCIL_TEST);
+    }
+
+    /*
+    if (doShadow && !wasRenderedShadowSurface) {
+      Color = 0xffff0000u;
+    }
+    */
+
+    if (spotLight) {
+      if (!gl_dbg_advlight_debug) {
+        SETUP_LIGHT_SHADER(ShadowsLightSpot);
+        ShadowsLightSpot.SetConeDirection(coneDir);
+        ShadowsLightSpot.SetConeAngle(coneAngle);
+      } else {
+        SETUP_LIGHT_SHADER(ShadowsLightSpotDbg);
+        ShadowsLightSpotDbg.SetConeDirection(coneDir);
+        ShadowsLightSpotDbg.SetConeAngle(coneAngle);
+      }
+    } else {
+      if (!gl_dbg_advlight_debug) {
+        SETUP_LIGHT_SHADER(ShadowsLight);
+      } else {
+        SETUP_LIGHT_SHADER(ShadowsLightDbg);
+      }
     }
   }
 }
@@ -127,25 +134,31 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   const texinfo_t *tex = surf->texinfo;
   SetTexture(tex->Tex, tex->ColorMap);
 
-  if (spotLight) {
-    if (!gl_dbg_advlight_debug) {
-      ShadowsLightSpot.SetTex(tex);
-      ShadowsLightSpot.SetSurfNormal(surf->GetNormal());
-      ShadowsLightSpot.SetSurfDist(surf->GetDist());
-    } else {
-      ShadowsLightSpotDbg.SetTex(tex);
-      ShadowsLightSpotDbg.SetSurfNormal(surf->GetNormal());
-      ShadowsLightSpotDbg.SetSurfDist(surf->GetDist());
-    }
+  if (r_shadowmaps) {
+    ShadowsLightSMap.SetTex(tex);
+    ShadowsLightSMap.SetSurfNormal(surf->GetNormal());
+    ShadowsLightSMap.SetSurfDist(surf->GetDist());
   } else {
-    if (!gl_dbg_advlight_debug) {
-      ShadowsLight.SetTex(tex);
-      ShadowsLight.SetSurfNormal(surf->GetNormal());
-      ShadowsLight.SetSurfDist(surf->GetDist());
+    if (spotLight) {
+      if (!gl_dbg_advlight_debug) {
+        ShadowsLightSpot.SetTex(tex);
+        ShadowsLightSpot.SetSurfNormal(surf->GetNormal());
+        ShadowsLightSpot.SetSurfDist(surf->GetDist());
+      } else {
+        ShadowsLightSpotDbg.SetTex(tex);
+        ShadowsLightSpotDbg.SetSurfNormal(surf->GetNormal());
+        ShadowsLightSpotDbg.SetSurfDist(surf->GetDist());
+      }
     } else {
-      ShadowsLightDbg.SetTex(tex);
-      ShadowsLightDbg.SetSurfNormal(surf->GetNormal());
-      ShadowsLightDbg.SetSurfDist(surf->GetDist());
+      if (!gl_dbg_advlight_debug) {
+        ShadowsLight.SetTex(tex);
+        ShadowsLight.SetSurfNormal(surf->GetNormal());
+        ShadowsLight.SetSurfDist(surf->GetDist());
+      } else {
+        ShadowsLightDbg.SetTex(tex);
+        ShadowsLightDbg.SetSurfNormal(surf->GetNormal());
+        ShadowsLightDbg.SetSurfDist(surf->GetDist());
+      }
     }
   }
 

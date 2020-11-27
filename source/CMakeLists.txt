@@ -495,6 +495,7 @@ set(MAIN_OPENGL_SOURCES
   render/hwgl/gl_poly_adv_render_fog.cpp
   render/hwgl/gl_poly_adv_render_light.cpp
   render/hwgl/gl_poly_adv_render_pre.cpp
+  render/hwgl/gl_poly_adv_render_smap.cpp
   render/hwgl/gl_poly_adv_render_svol.cpp
   render/hwgl/gl_poly_adv_render_textures.cpp
   render/hwgl/gl_poly_adv_shadowopt.cpp
