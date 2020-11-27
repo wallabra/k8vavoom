@@ -964,7 +964,7 @@ int skipConditionalToElse (Parser *par) {
 int parseGLSL (Parser *par, ShaderInfo *si) {
   prExpect(par, "#");
   prExpect(par, "version");
-  prExpect(par, "120");
+  if (!prCheck(par, "130")) prExpect(par, "120");
 
   DefineTable savedtbl;
   initTblDefineFrom(&savedtbl, &si->defines);
@@ -1097,6 +1097,9 @@ const char *getShitppType (const char *glslType) {
   if (strEqu(glslType, "mat3")) return "float *";
   // samplers
   if (strEqu(glslType, "sampler2D")) return "vuint32";
+  if (strEqu(glslType, "sampler2DShadow")) return "vuint32";
+  if (strEqu(glslType, "samplerCube")) return "vuint32";
+  if (strEqu(glslType, "samplerCubeShadow")) return "vuint32";
   fprintf(stderr, "FATAL: unknown GLSL type `%s`!\n", glslType);
   abort();
 }
@@ -1113,6 +1116,9 @@ const char *getShitppStoreType (const char *glslType) {
   if (strEqu(glslType, "mat3")) return "glsl_float9";
   // samplers
   if (strEqu(glslType, "sampler2D")) return "vuint32";
+  if (strEqu(glslType, "sampler2DShadow")) return "vuint32";
+  if (strEqu(glslType, "samplerCube")) return "vuint32";
+  if (strEqu(glslType, "samplerCubeShadow")) return "vuint32";
   fprintf(stderr, "FATAL: unknown GLSL type `%s`!\n", glslType);
   abort();
 }
@@ -1140,7 +1146,11 @@ void writeInitValueNoChecks (FILE *fo, const LocInfo *loc) {
     } else {
       fprintf(fo, "last_%s = curr_%s = false;", loc->name, loc->name);
     }
-  } else if (strEqu(loc->glslType, "sampler2D")) {
+  } else if (strEqu(loc->glslType, "sampler2D") ||
+             strEqu(loc->glslType, "sampler2DShadow") ||
+             strEqu(loc->glslType, "samplerCube") ||
+             strEqu(loc->glslType, "samplerCubeShadow"))
+  {
     if (loc->isAttr) {
       fprintf(fo, "curr_%s = 0;", loc->name);
     } else {
@@ -1173,6 +1183,9 @@ void writeUploadNoChecks (FILE *fo, const LocInfo *loc) {
        if (strEqu(loc->glslType, "float")) fprintf(fo, "1fARB(loc_%s, curr_%s);", loc->name, loc->name);
   else if (strEqu(loc->glslType, "bool")) fprintf(fo, "1iARB(loc_%s, (curr_%s ? GL_TRUE : GL_FALSE));", loc->name, loc->name);
   else if (strEqu(loc->glslType, "sampler2D")) fprintf(fo, "1iARB(loc_%s, (GLint)curr_%s);", loc->name, loc->name);
+  else if (strEqu(loc->glslType, "sampler2DShadow")) fprintf(fo, "1iARB(loc_%s, (GLint)curr_%s);", loc->name, loc->name);
+  else if (strEqu(loc->glslType, "samplerCube")) fprintf(fo, "1iARB(loc_%s, (GLint)curr_%s);", loc->name, loc->name);
+  else if (strEqu(loc->glslType, "samplerCubeShadow")) fprintf(fo, "1iARB(loc_%s, (GLint)curr_%s);", loc->name, loc->name);
   else {
     const char *onestr = (loc->isAttr ? "" : "1,");
     if (strEqu(loc->glslType, "vec3")) fprintf(fo, "3fvARB(loc_%s, %s &curr_%s.x);", loc->name, onestr, loc->name);
@@ -1347,6 +1360,9 @@ int main (int argc, char **argv) {
            if (strEqu(loc->glslType, "float")) fprintf(foh, "curr_%s = v; ", loc->name);
       else if (strEqu(loc->glslType, "bool")) fprintf(foh, "curr_%s = (v ? GL_TRUE : GL_FALSE);", loc->name);
       else if (strEqu(loc->glslType, "sampler2D")) fprintf(foh, "curr_%s = (GLint)v;", loc->name);
+      else if (strEqu(loc->glslType, "sampler2DShadow")) fprintf(foh, "curr_%s = (GLint)v;", loc->name);
+      else if (strEqu(loc->glslType, "samplerCube")) fprintf(foh, "curr_%s = (GLint)v;", loc->name);
+      else if (strEqu(loc->glslType, "samplerCubeShadow")) fprintf(foh, "curr_%s = (GLint)v;", loc->name);
       else if (strEqu(loc->glslType, "vec2")) fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*2);", loc->name);
       else if (strEqu(loc->glslType, "vec3")) fprintf(foh, "curr_%s = v;", loc->name);
       else if (strEqu(loc->glslType, "vec4")) fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*4);", loc->name);
