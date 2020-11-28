@@ -285,8 +285,10 @@ public:
 
 public:
   GLuint cubeTexId;
+  GLuint cubeDepthTexId;
   GLuint cubeFBO;
   GLint shadowmapSize;
+  GLint savedSMVPort[4];
 
 public:
   // VDrawer interface

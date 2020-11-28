@@ -976,10 +976,34 @@ void VOpenGLDrawer::InitResolution () {
   // create cubemap for shadowmapping
   p_glGenFramebuffers(1, &cubeFBO);
   GLDRW_CHECK_ERROR("create shadowmap FBO");
+  vassert(cubeFBO);
   p_glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO);
   GLDRW_CHECK_ERROR("bind shadowmap FBO");
 
+  glGenTextures(1, &cubeDepthTexId);
+  GLDRW_CHECK_ERROR("create shadowmap depth texture");
+  vassert(cubeDepthTexId);
+  glBindTexture(GL_TEXTURE_2D, cubeDepthTexId);
+  GLDRW_CHECK_ERROR("bind shadowmap depth texture");
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowmapSize, shadowmapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  GLDRW_CHECK_ERROR("initialize shadowmap depth texture");
+  /*
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  GLDRW_CHECK_ERROR("set shadowmap depth texture min filter");
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  GLDRW_CHECK_ERROR("set shadowmap depth texture mag filter");
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  GLDRW_CHECK_ERROR("set shadowmap depth texture s");
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  GLDRW_CHECK_ERROR("set shadowmap depth texture t");
+  */
+  glBindTexture(GL_TEXTURE_2D, 0);
+  GLDRW_CHECK_ERROR("unbind shadowmap depth texture");
+  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId, 0);
+  GLDRW_CHECK_ERROR("set framebuffer depth texture");
+
   glGenTextures(1, &cubeTexId);
+  vassert(cubeTexId);
   GLDRW_CHECK_ERROR("create shadowmap cubemap");
   glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
   GLDRW_CHECK_ERROR("bind shadowmap cubemap");
@@ -999,16 +1023,41 @@ void VOpenGLDrawer::InitResolution () {
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
   GLDRW_CHECK_ERROR("set shadowmap compare mode");
 
-  for (unsigned i = 0; i < 6; ++i) {
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_DEPTH_COMPONENT/*GL_R32F*/, shadowmapSize, shadowmapSize, 0, GL_DEPTH_COMPONENT/*GL_RED*/, GL_FLOAT, 0);
+  for (unsigned int i = 0; i < 6; ++i) {
+    //glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_DEPTH_COMPONENT, shadowmapSize, shadowmapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    //glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_R16F, shadowmapSize, shadowmapSize, 0, GL_RED, GL_FLOAT, 0);
+    //!glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_RGBA, shadowmapSize, shadowmapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    VTexture *tx = nullptr;
+    switch (i) {
+      case 0: tx = GTextureManager[gtxRight]; break;
+      case 1: tx = GTextureManager[gtxLeft]; break;
+      case 2: tx = GTextureManager[gtxTop]; break;
+      case 3: tx = GTextureManager[gtxBottom]; break;
+      case 4: tx = GTextureManager[gtxBack]; break;
+      case 5: tx = GTextureManager[gtxFront]; break;
+    }
+    GCon->Logf(NAME_Init, "i=%u; tx=%p", i, tx);
+    /*
+    switch (i) {
+      case 0: GTextureManager[GTextureManager.CheckNumForName("right", TEXTYPE_Pic)]; break;
+      case 1: GTextureManager[GTextureManager.CheckNumForName("left", TEXTYPE_Pic)]; break;
+      case 2: GTextureManager[GTextureManager.CheckNumForName("top", TEXTYPE_Pic)]; break;
+      case 3: GTextureManager[GTextureManager.CheckNumForName("bottom", TEXTYPE_Pic)]; break;
+      case 4: GTextureManager[GTextureManager.CheckNumForName("back", TEXTYPE_Pic)]; break;
+      case 5: GTextureManager[GTextureManager.CheckNumForName("front", TEXTYPE_Pic)]; break;
+    }
+    */
+    vassert(tx);
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_RGBA, shadowmapSize, shadowmapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, tx->GetPixels());
     GLDRW_CHECK_ERROR("init cubemap texture");
-    p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, cubeTexId, 0);
+    //!p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, cubeTexId, 0);
     GLDRW_CHECK_ERROR("set framebuffer cubemap texture");
-    glDrawBuffer(GL_NONE);
+    //glDrawBuffer(GL_NONE);
     GLDRW_CHECK_ERROR("set framebuffer draw buffer");
-    glReadBuffer(GL_NONE);
+    //glReadBuffer(GL_NONE);
     GLDRW_CHECK_ERROR("set framebuffer read buffer");
   }
+
   if (p_glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: cannot initialise shadowmap FBO");
   p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -1812,25 +1861,38 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
     glEnable(GL_TEXTURE_2D);
   }
 
-  GLDisableBlend();
-  for (unsigned int face = 0; face < 6; ++face) {
-    float xofs = (face%3)*(shadowmapSize+4);
-    float yofs = ((face/3)%3)*(shadowmapSize+4);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
-    DbgShadowMap.Activate();
-    DbgShadowMap.SetTexture(0);
-    DbgShadowMap.SetCubeZ(1.0f);
-    DbgShadowMap.UploadChangedUniforms();
-    glBegin(GL_QUADS);
-      glTexCoord2f(0, 0); glVertex2f(xofs+            0, yofs+0);
-      glTexCoord2f(1, 0); glVertex2f(xofs+shadowmapSize, yofs+0);
-      glTexCoord2f(1, 1); glVertex2f(xofs+shadowmapSize, yofs+shadowmapSize);
-      glTexCoord2f(0, 1); glVertex2f(xofs+            0, yofs+shadowmapSize);
-    glEnd();
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+  if (r_shadowmaps) {
+    // right
+    // left
+    // top
+    // bottom
+    // back
+    // front
+    //   front, back, left, right, top, bottom
+    GLDisableBlend();
+    for (unsigned int face = 0; face < 6; ++face) {
+      float xofs = (face%3)*(shadowmapSize+4);
+      float yofs = ((face/3)%3)*(shadowmapSize+4);
+      glDisable(GL_TEXTURE_2D);
+      glEnable(GL_TEXTURE_2D);
+      glEnable(GL_TEXTURE_CUBE_MAP);
+      glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
+      DbgShadowMap.Activate();
+      DbgShadowMap.SetTexture(0);
+      DbgShadowMap.SetCubeFace(face+0.5f);
+      DbgShadowMap.UploadChangedUniforms();
+      glBegin(GL_QUADS);
+        glTexCoord2f(0, 0); glVertex2f(xofs+            0, yofs+0);
+        glTexCoord2f(1, 0); glVertex2f(xofs+shadowmapSize, yofs+0);
+        glTexCoord2f(1, 1); glVertex2f(xofs+shadowmapSize, yofs+shadowmapSize);
+        glTexCoord2f(0, 1); glVertex2f(xofs+            0, yofs+shadowmapSize);
+      glEnd();
+      glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+      glDisable(GL_TEXTURE_CUBE_MAP);
+      glEnable(GL_TEXTURE_2D);
+    }
+    GLEnableBlend();
   }
-  GLEnableBlend();
 }
 
 

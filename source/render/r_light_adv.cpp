@@ -526,6 +526,7 @@ void VRenderLevelShadowVolume::RenderShadowPolyObj (subsector_t *sub) {
 //
 //==========================================================================
 unsigned VRenderLevelShadowVolume::CheckShadowingFlats (subsector_t *sub) {
+  if (r_shadowmaps) return 0;
   //if (floorz > ceilingz) return 0;
   sector_t *sector = sub->sector; // our main sector
   int sidx = (int)(ptrdiff_t)(sector-&Level->Sectors[0]);
@@ -1232,7 +1233,6 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   }
 
   // do shadow volumes
-  LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
   if (r_shadowmaps) {
     Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle);
     if (allowShadows) {
@@ -1242,6 +1242,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
         //Drawer->GetProjectionMatrix(oldPrj);
         for (unsigned fc = 0; fc < 6; ++fc) {
           Drawer->SetupLightShadowMap(CurrLightPos, CurrLightRadius, coneDir, coneAngle, fc);
+          LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
           dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
           dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
           RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
@@ -1251,6 +1252,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     }
     Drawer->EndLightShadowMaps();
   } else {
+    LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
     Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord, coneDir, coneAngle);
     if (allowShadows) {
       (void)fsecCounterGen(); // for checker

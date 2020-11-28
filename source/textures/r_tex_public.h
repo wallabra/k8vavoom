@@ -704,3 +704,11 @@ extern int screenBackTexNum;
 
 // switches
 extern TArray<TSwitch *> Switches;
+
+
+extern int gtxRight;
+extern int gtxLeft;
+extern int gtxTop;
+extern int gtxBottom;
+extern int gtxFront;
+extern int gtxBack;
