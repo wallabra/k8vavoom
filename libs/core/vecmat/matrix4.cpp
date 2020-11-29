@@ -658,7 +658,7 @@ VMatrix4 VMatrix4::LookAtFucked (const TVec &eye, const TVec &center, const TVec
 //
 //==========================================================================
 VMatrix4 VMatrix4::lookAt (const TVec &eye, const TVec &center, const TVec &up) const noexcept {
-  VMatrix4 m ;
+  VMatrix4 m;
   float x[3];
   float y[3];
   float z[3];
