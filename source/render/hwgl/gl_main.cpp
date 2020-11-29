@@ -1027,6 +1027,9 @@ void VOpenGLDrawer::InitResolution () {
     //glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_DEPTH_COMPONENT, shadowmapSize, shadowmapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     //glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_R16F, shadowmapSize, shadowmapSize, 0, GL_RED, GL_FLOAT, 0);
     //!glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_RGBA, shadowmapSize, shadowmapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    #if 0
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_R32F, shadowmapSize, shadowmapSize, 0, GL_RED, GL_FLOAT, 0);
+    #else
     VTexture *tx = nullptr;
     switch (i) {
       case 0: tx = GTextureManager[gtxRight]; break;
@@ -1037,18 +1040,9 @@ void VOpenGLDrawer::InitResolution () {
       case 5: tx = GTextureManager[gtxFront]; break;
     }
     GCon->Logf(NAME_Init, "i=%u; tx=%p", i, tx);
-    /*
-    switch (i) {
-      case 0: GTextureManager[GTextureManager.CheckNumForName("right", TEXTYPE_Pic)]; break;
-      case 1: GTextureManager[GTextureManager.CheckNumForName("left", TEXTYPE_Pic)]; break;
-      case 2: GTextureManager[GTextureManager.CheckNumForName("top", TEXTYPE_Pic)]; break;
-      case 3: GTextureManager[GTextureManager.CheckNumForName("bottom", TEXTYPE_Pic)]; break;
-      case 4: GTextureManager[GTextureManager.CheckNumForName("back", TEXTYPE_Pic)]; break;
-      case 5: GTextureManager[GTextureManager.CheckNumForName("front", TEXTYPE_Pic)]; break;
-    }
-    */
     vassert(tx);
     glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_RGBA, shadowmapSize, shadowmapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, tx->GetPixels());
+    #endif
     GLDRW_CHECK_ERROR("init cubemap texture");
     //!p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, cubeTexId, 0);
     GLDRW_CHECK_ERROR("set framebuffer cubemap texture");
