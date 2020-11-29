@@ -94,6 +94,9 @@ extern VCvarI gl_letterbox_filter;
 extern VCvarS gl_letterbox_color;
 extern VCvarF gl_letterbox_scale;
 
+extern VCvarB gl_enable_depth_bounds;
+extern VCvarB gl_enable_clip_control;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static inline const char *VGetGLErrorStr (const GLenum glerr) {
