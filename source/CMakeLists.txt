@@ -484,6 +484,7 @@ set(MAIN_OPENGL_SOURCES
   render/hwgl/gl_decal.cpp
   render/hwgl/gl_draw.cpp
   render/hwgl/gl_main.cpp
+  render/hwgl/gl_main_fbo.cpp
   render/hwgl/gl_masked.cpp
   render/hwgl/gl_model.cpp
   render/hwgl/gl_particle.cpp

@@ -88,6 +88,12 @@ extern VCvarB gl_regular_disable_overbright;
 
 extern VCvarI gl_release_ram_textures_mode;
 
+extern VCvarB gl_dbg_fbo_blit_with_texture;
+extern VCvarB gl_letterbox;
+extern VCvarI gl_letterbox_filter;
+extern VCvarS gl_letterbox_color;
+extern VCvarF gl_letterbox_scale;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static inline const char *VGetGLErrorStr (const GLenum glerr) {
