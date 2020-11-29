@@ -1100,6 +1100,8 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   CurrLightRadius = Radius; // we need full radius, not modified
   CurrLightColor = Color;
 
+  const bool optimiseScissor = r_advlight_opt_scissor.asBool();
+
   //  0 if scissor is empty
   // -1 if scissor has no sense (should not be used)
   //  1 if scissor is set
@@ -1110,23 +1112,27 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   //GCon->Logf("LBB:(%f,%f,%f)-(%f,%f,%f)", LitBBox[0], LitBBox[1], LitBBox[2], LitBBox[3], LitBBox[4], LitBBox[5]);
 
-  // setup light scissor rectangle
-  if (r_advlight_opt_scissor) {
-    hasScissor = Drawer->SetupLightScissor(Pos, Radius-LightMin, scoord, (r_advlight_opt_optimise_scissor ? LitBBox : nullptr));
-    if (hasScissor <= 0) {
-      // something is VERY wrong (-1), or scissor is empty (0)
-      Drawer->ResetScissor();
-      if (!hasScissor && r_advlight_opt_optimise_scissor && !r_models) return; // empty scissor
-      checkModels = r_advlight_opt_optimise_scissor;
-      hasScissor = 0;
-      scoord[0] = scoord[1] = 0;
-      scoord[2] = Drawer->getWidth();
-      scoord[3] = Drawer->getHeight();
-    } else {
-      if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == Drawer->getWidth() && scoord[3] == Drawer->getHeight()) {
+  if (!r_shadowmaps) {
+    // setup light scissor rectangle
+    if (optimiseScissor) {
+      hasScissor = Drawer->SetupLightScissor(Pos, Radius-LightMin, scoord, (r_advlight_opt_optimise_scissor ? LitBBox : nullptr));
+      if (hasScissor <= 0) {
+        // something is VERY wrong (-1), or scissor is empty (0)
+        Drawer->ResetScissor();
+        if (!hasScissor && r_advlight_opt_optimise_scissor && !r_models) return; // empty scissor
+        checkModels = r_advlight_opt_optimise_scissor;
         hasScissor = 0;
+        scoord[0] = scoord[1] = 0;
+        scoord[2] = Drawer->getWidth();
+        scoord[3] = Drawer->getHeight();
+      } else {
+        if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == Drawer->getWidth() && scoord[3] == Drawer->getHeight()) {
+          hasScissor = 0;
+        }
       }
     }
+  } else {
+    Drawer->ResetScissor();
   }
 
   // if there are no lit surfaces oriented away from camera, it cannot possibly be in shadow volume
@@ -1152,7 +1158,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   // still, we may miss some lighting on models from flying lights that cannot touch
   // any geometry at all. to somewhat ease this case, rebuild light box when the light
   // didn't touched anything.
-  if (allowShadows && checkModels) {
+  if (optimiseScissor && allowShadows && checkModels && !r_shadowmaps) {
     if (mobjsInCurrLight.length() == 0) return; // nothing to do, as it is guaranteed that light cannot touch map geometry
     float xbbox[6] = {0};
     /*
@@ -1238,8 +1244,6 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     if (allowShadows) {
       (void)fsecCounterGen(); // for checker
       if (r_max_shadow_segs_all) {
-        //VMatrix4 oldPrj;
-        //Drawer->GetProjectionMatrix(oldPrj);
         for (unsigned fc = 0; fc < 6; ++fc) {
           Drawer->SetupLightShadowMap(CurrLightPos, CurrLightRadius, coneDir, coneAngle, fc);
           LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
@@ -1247,7 +1251,6 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
           dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
           RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
         }
-        //Drawer->SetProjectionMatrix(oldPrj);
       }
     }
     Drawer->EndLightShadowMaps();

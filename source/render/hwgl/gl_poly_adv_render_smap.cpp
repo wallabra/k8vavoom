@@ -36,10 +36,13 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   glDepthMask(GL_TRUE); // due to shadow volumes pass settings
   p_glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO);
 
-  glClearDepth(0.0f);
-  if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
+  glClearDepth(1.0f);
+  if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // restore "normal" depth control
   glDepthRange(0.0f, 1.0f);
   glDepthFunc(GL_LESS);
+
+  //glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
+  glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
 
   //glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -76,12 +79,12 @@ void VOpenGLDrawer::EndLightShadowMaps () {
   mainFBO.activate();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   RestoreDepthFunc();
+  if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
   glViewport(savedSMVPort[0], savedSMVPort[1], savedSMVPort[2], savedSMVPort[3]);
   glEnable(GL_CULL_FACE);
-  glDepthMask(GL_FALSE); // due to shadow volumes pass settings
+  glDepthMask(GL_FALSE);
   glEnable(GL_DEPTH_TEST);
-  glClearDepth(0.0f);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
 }
 
@@ -119,13 +122,16 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
     TVec( 0,  0, -1),
   };
   const TVec viewsUp[6] = {
-    TVec(0, 1,  0), // or -1
-    TVec(0, 1,  0), // or -1
-    TVec(0, 0, -1), // or 1
-    TVec(0, 0,  1), // or -1
-    TVec(0, 1,  0), // or -1
-    TVec(0, 1,  0), // or -1
+    TVec(0, -1,  0), // or -1
+    TVec(0, -1,  0), // or -1
+    TVec(0,  0, -1), // or 1
+    TVec(0,  0,  1), // or -1
+    TVec(0, -1,  0), // or -1
+    TVec(0, -1,  0), // or -1
   };
+
+  //glDisable(GL_SCISSOR_TEST);
+
   //VMatrix4 newPrj = VMatrix4::ProjectionZeroOne(90.0f, 1.0f, 2.0f, Radius);
   //VMatrix4 newPrj = VMatrix4::ProjectionNegOne(90.0f, 1.0f, 2.0f, Radius);
   VMatrix4 newPrj = VMatrix4::Perspective(90.0f, 1.0f, 2.0f, Radius);
@@ -136,7 +142,8 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
   VMatrix4 aface = VMatrix4::LookAtGLM(TVec(0, 0, 0), viewsCenter[facenum], viewsUp[facenum]);
   VMatrix4 mvp = newPrj*aface*lview; // *mview
   */
-  VMatrix4 lview = VMatrix4::LookAtGLM(LightPos, viewsCenter[facenum], viewsUp[facenum]);
+  //VMatrix4 lview = VMatrix4::LookAtGLM(LightPos, viewsCenter[facenum], viewsUp[facenum]);
+  VMatrix4 lview = VMatrix4::LookAt(LightPos, viewsCenter[facenum], viewsUp[facenum]);
   //VMatrix4 lview = VMatrix4::LookAtGLM(TVec(0, 0, 0), viewsCenter[facenum], viewsUp[facenum]);
   VMatrix4 mvp = newPrj*lview; //*mview
   //SurfShadowMap.SetLightPos(LightPos);
@@ -156,8 +163,6 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
   glReadBuffer(GL_NONE);
   GLDRW_CHECK_ERROR("set cube FBO read buffer");
 
-  //glClearColor(0.0f, 1.0f, 0.0f, 0.0f); // black background
-  glClearDepth(1.0f);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   GLDRW_CHECK_ERROR("clear cube FBO");
 
