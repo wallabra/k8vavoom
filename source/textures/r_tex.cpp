@@ -212,7 +212,7 @@ VTextureManager::VTextureManager ()
   , DefaultTexture(-1)
   , Time(0)
 {
-  for (int i = 0; i < HASH_SIZE; ++i) TextureHash[i] = -1;
+  for (unsigned i = 0; i < HASH_SIZE; ++i) TextureHash[i] = -1;
   SkyFlatName = NAME_None;
 }
 
@@ -296,7 +296,7 @@ void VTextureManager::Shutdown () {
 void VTextureManager::DumpHashStats (EName logName) {
   int maxBucketLen = 0;
   int usedBuckets = 0;
-  for (int bidx = 0; bidx < HASH_SIZE; ++bidx) {
+  for (unsigned bidx = 0; bidx < HASH_SIZE; ++bidx) {
     if (TextureHash[bidx] < 0) continue;
     ++usedBuckets;
     int blen = 0;
@@ -313,7 +313,7 @@ void VTextureManager::DumpHashStats (EName logName) {
 //
 //==========================================================================
 void VTextureManager::rehashTextures () {
-  for (int i = 0; i < HASH_SIZE; ++i) TextureHash[i] = -1;
+  for (unsigned i = 0; i < HASH_SIZE; ++i) TextureHash[i] = -1;
   txFullNameHash.reset();
   if (Textures.length()) {
     vassert(Textures[0]->Name == NAME_None);
@@ -512,7 +512,7 @@ void VTextureManager::AddToHash (int Index) {
   if (addShortName) {
     VName tname = tx->Name.GetLower();
     tx->Name = tname; // force lower-cased name for texture
-    int HashIndex = GetTypeHash(tname)&(HASH_SIZE-1);
+    const unsigned HashIndex = TextureBucket(GetTypeHash(tname));
     if (Index < FirstMapTextureIndex) {
       Textures[Index]->HashNext = TextureHash[HashIndex];
     } else {
@@ -1329,7 +1329,7 @@ int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverlo
       tidx = CheckNumForName(Name, Type, bOverload);
       if (developer && tidx <= 0) {
         GCon->Logf(NAME_Dev, "CheckNumForNameAndForce: OOPS for '%s'; type=%d; overload=%d", *Name, Type, (int)bOverload);
-        int HashIndex = GetTypeHash(Name)&(HASH_SIZE-1);
+        const unsigned HashIndex = TextureBucket(GetTypeHash(Name));
         for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
           VTexture *tx = getTxByIndex(i);
           if (!tx) abort();
@@ -2077,12 +2077,12 @@ void R_DumpTextures () {
   }
 
   GCon->Log("=========================");
-  for (int hb = 0; hb < VTextureManager::HASH_SIZE; ++hb) {
-    GCon->Logf(" hash bucket %05d", hb);
+  for (unsigned hb = 0; hb < VTextureManager::HASH_SIZE; ++hb) {
+    GCon->Logf(" hash bucket %05u", hb);
     for (int i = GTextureManager.TextureHash[hb]; i >= 0; i = GTextureManager.getTxByIndex(i)->HashNext) {
       VTexture *tx = GTextureManager.getTxByIndex(i);
       if (!tx) abort();
-      GCon->Logf(NAME_Dev, "  %05d:%d: name='%s'; type=%d", hb, i, *tx->Name, tx->Type);
+      GCon->Logf(NAME_Dev, "  %05d:%u: name='%s'; type=%d", hb, i, *tx->Name, tx->Type);
     }
   }
 }
@@ -2138,9 +2138,7 @@ void R_InitTexture () {
   GCon->Logf(NAME_Debug, "back=%d", (gtxBack = GTextureManager.AddFileTextureChecked("textures/back.png", TEXTYPE_Pic)));
   GCon->Logf(NAME_Debug, "front=%d", (gtxFront = GTextureManager.AddFileTextureChecked("textures/front.png", TEXTYPE_Pic)));
 
-  if (cli_DumpTextures > 0) {
-    R_DumpTextures();
-  }
+  if (cli_DumpTextures > 0) R_DumpTextures();
 }
 
 

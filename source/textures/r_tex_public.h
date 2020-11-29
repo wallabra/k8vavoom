@@ -429,6 +429,8 @@ private:
 
   int inMapTextures; // >0: loading map textures
 
+  static inline VVA_CHECKRESULT uint16_t TextureBucket (uint32_t hash) noexcept { return (uint16_t)(foldHash32to16(hash)&(HASH_SIZE-1)); }
+
 public:
   struct MTLock {
   friend class VTextureManager;
@@ -489,7 +491,7 @@ public:
       VName loname = name.GetLowerNoCreate();
       if (loname == NAME_None) { idx = -1; return false; }
       name = loname;
-      int cidx = tman->TextureHash[GetTypeHash(name)&(HASH_SIZE-1)];
+      int cidx = tman->TextureHash[TextureBucket(GetTypeHash(name))];
       while (cidx >= 0) {
         VTexture *ctex = tman->getTxByIndex(cidx);
         if (ctex->Name == name) { idx = cidx; return true; }
