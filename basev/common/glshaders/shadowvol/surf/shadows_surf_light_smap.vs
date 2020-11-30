@@ -14,16 +14,15 @@ varying float Dist;
 varying float VDist;
 
 //uniform mat4 LightMPV;
+//uniform mat4 LightView;
+//varying vec4 VertLightDir;
+varying vec3 VertWorldPos;
 uniform mat4 LightView;
-varying vec4 VertLightDir;
 
 
 void main () {
   // transforming the vertex
   gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
-  //VertLightPos = (LightMPV*vec4(gl_Vertex.xyz, 1)).xyz;
-  //VertLightDir = gl_Vertex.xyz-LightPos;
-  //VertLightDir = LightPos-gl_Vertex.xyz;
 
   $include "common/texture_calc.vs"
 
@@ -36,5 +35,8 @@ void main () {
 
   VertToLight = LightPos-gl_Vertex.xyz;
 
-  VertLightDir = LightView*gl_Vertex;
+  //VertLightDir = LightView*gl_Vertex;
+  //VertWorldPos = (gl_ModelViewMatrix*gl_Vertex).xyz;
+  //VertWorldPos = gl_Vertex.xyz;
+  VertWorldPos = (LightView*gl_Vertex).xyz;
 }

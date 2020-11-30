@@ -67,7 +67,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   glDisable(GL_TEXTURE_2D);
   GLDRW_RESET_ERROR();
 
-  glEnable(GL_CULL_FACE);
+  //glEnable(GL_CULL_FACE);
 }
 
 
@@ -221,9 +221,16 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
   //glDepthFunc(GL_GREATER);
   SurfShadowMap.Activate();
   //SurfShadowMap.SetLightMPV(mvp);
-  SurfShadowMap.SetLightProj(newPrj);
-  SurfShadowMap.SetLightView(lview);
-  //SurfShadowMap.SetLightPos(LightPos);
+  //SurfShadowMap.SetLightProj(newPrj);
+  //SurfShadowMap.SetLightView(lview);
+
+  VMatrix4 lview2;
+  Drawer->CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
+  SurfShadowMap.SetLightView(lview2);
+
+  VMatrix4 lmpv = newPrj*lview;
+  SurfShadowMap.SetLightMPV(lmpv);
+  SurfShadowMap.SetLightPos(LightPos);
   SurfShadowMap.SetLightRadius(Radius);
   SurfShadowMap.UploadChangedUniforms();
   GLDRW_CHECK_ERROR("update cube FBO shader");
