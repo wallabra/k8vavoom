@@ -90,7 +90,7 @@ char *loadWholeFile (const char *fname) {
   FILE *fi = fopen(fname, "rb");
   if (!fi) { fprintf(stderr, "FATAL: cannot open file '%s'\n", fname); abort(); }
   fseek(fi, 0, SEEK_END);
-  if (ftell(fi) > 0x3ffff) { fprintf(stderr, "FATAL: file '%s' too big\n", fname); abort(); }
+  if (ftell(fi) > 0x3fffff) { fprintf(stderr, "FATAL: file '%s' too big (%d)\n", fname, (int)ftell(fi)); abort(); }
   size_t size = (size_t)ftell(fi);
   char *text = xalloc(size+16); // we need some space
   fseek(fi, 0, SEEK_SET);
@@ -116,6 +116,56 @@ char *createFileName (const char *outdir, const char *infname, const char *ext) 
     --e;
   }
   strcat(res, ext);
+  return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static void copyFile (const char *fnameDest, const char *fnameSrc) {
+  fprintf(stderr, "copying '%s' to '%s'...\n", fnameSrc, fnameDest);
+
+  FILE *fsrc = fopen(fnameSrc, "rb");
+  if (!fsrc) { fprintf(stderr, "FATAL: cannot open file '%s'\n", fnameSrc); abort(); }
+  fseek(fsrc, 0, SEEK_END);
+  int size = ftell(fsrc);
+  if (size < 0 || size > 0x03ffffff) { fprintf(stderr, "FATAL: file '%s' is too big (%d)\n", fnameSrc, size); abort(); }
+  char *data = malloc(size+1);
+  if (!data) { fprintf(stderr, "FATAL: cannot allocate memory for file '%s'\n", fnameSrc); abort(); }
+  if (size > 0) {
+    fseek(fsrc, 0, SEEK_SET);
+    if (fread(data, size, 1, fsrc) != 1) { fprintf(stderr, "FATAL: cannot read file '%s'\n", fnameSrc); abort(); }
+  }
+  fclose(fsrc);
+
+  FILE *fdst = fopen(fnameDest, "wb");
+  if (!fdst) { fprintf(stderr, "FATAL: cannot create file '%s'\n", fnameDest); abort(); }
+  if (size > 0) {
+    if (fwrite(data, size, 1, fdst) != 1) { fprintf(stderr, "FATAL: cannot write file '%s'\n", fnameSrc); abort(); }
+  }
+  fclose(fdst);
+}
+
+
+static int compareFiles (const char *fname0, const char *fname1) {
+  FILE *f0 = fopen(fname0, "rb");
+  if (!f0) return 0;
+  FILE *f1 = fopen(fname1, "rb");
+  if (!f1) { fclose(f0); return 0; }
+  fseek(f0, 0, SEEK_END);
+  fseek(f1, 0, SEEK_END);
+  if (ftell(f0) != ftell(f1)) { fclose(f0); fclose(f1); return 0; }
+  if (ftell(f0) > 0x3fffff) { fclose(f0); fclose(f1); return 0; }
+  int size = (int)ftell(f0);
+  fclose(f0);
+  fclose(f1);
+
+  if (size == 0) return 1;
+
+  char *t0 = loadWholeFile(fname0);
+  char *t1 = loadWholeFile(fname1);
+  int res = (memcmp(t0, t1, size) == 0 ? 1 : 0);
+  xfree(t0);
+  xfree(t1);
   return res;
 }
 
@@ -1252,8 +1302,12 @@ int main (int argc, char **argv) {
 
   if (verbose) printf("[parsing '%s'...]\n", infname);
 
-  char *outhname = createFileName(outdir, infname, ".hi");
-  char *outcname = createFileName(outdir, infname, ".ci");
+  //char *outhname = createFileName(outdir, infname, ".hi");
+  //char *outcname = createFileName(outdir, infname, ".ci");
+  char *outhname = createFileName(outdir, infname, ".hi1");
+  char *outcname = createFileName(outdir, infname, ".ci1");
+  char *outhnameReal = createFileName(outdir, infname, ".hi");
+  char *outcnameReal = createFileName(outdir, infname, ".ci");
   if (verbose) printf("[ generating '%s'...]\n", outhname);
   if (verbose) printf("[ generating '%s'...]\n", outcname);
 
@@ -1516,6 +1570,10 @@ int main (int argc, char **argv) {
   if (!toStdout) {
     fclose(foh);
     fclose(foc);
+    if (!compareFiles(outhname, outhnameReal) || !compareFiles(outcname, outcnameReal)) {
+      copyFile(outhnameReal, outhname);
+      copyFile(outcnameReal, outcname);
+    }
   }
 
   clearSetList(&setlist);
