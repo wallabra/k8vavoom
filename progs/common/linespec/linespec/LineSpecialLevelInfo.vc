@@ -4078,6 +4078,8 @@ override int AcsSpawnThing (name Name, TVec Org, int Tid, float Angle, bool forc
   auto repl = class!EntityEx(GetClassReplacement(EntClass));
   if (repl) EntClass = repl;
 
+  if (Level.Game.nomonsters && EntClass.default.bMonster) return false;
+
   EntityEx NewAct = Spawn(EntClass, Org);
   bool PrevPassMobj = NewAct.bPassMobj;
   NewAct.bPassMobj = true;
