@@ -67,6 +67,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   glDisable(GL_TEXTURE_2D);
   GLDRW_RESET_ERROR();
 
+  glEnable(GL_TEXTURE_2D);
   glEnable(GL_CULL_FACE);
 }
 
@@ -88,6 +89,7 @@ void VOpenGLDrawer::EndLightShadowMaps () {
   glDepthMask(GL_FALSE);
   glEnable(GL_DEPTH_TEST);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
+  glDisable(GL_TEXTURE_2D);
 }
 
 
@@ -264,6 +266,7 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
   SurfShadowMap.SetLightMPV(lmpv);
   SurfShadowMap.SetLightPos(lpp);
   SurfShadowMap.SetLightRadius(Radius);
+  SurfShadowMap.SetTexture(0);
   SurfShadowMap.UploadChangedUniforms();
   GLDRW_CHECK_ERROR("update cube FBO shader");
 
@@ -276,6 +279,7 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
   } else {
     spotLight = false;
   }
+
 }
 
 
@@ -287,7 +291,10 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
 void VOpenGLDrawer::RenderSurfaceShadowMap (const surface_t *surf, const TVec &LightPos, float Radius) {
   if (gl_dbg_wireframe) return;
   if (surf->count < 3) return; // just in case
-  //return;
+
+  const texinfo_t *tex = surf->texinfo;
+  SetTexture(tex->Tex, tex->ColorMap);
+  SurfShadowMap.SetTex(tex);
 
   //if (gl_smart_reject_shadows && !AdvRenderCanSurfaceCastShadow(surf, LightPos, Radius)) return;
 
