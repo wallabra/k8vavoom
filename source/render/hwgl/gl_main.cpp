@@ -224,7 +224,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
 
   cubeTexId = 0;
   cubeFBO = 0;
-  shadowmapSize = 256;
+  shadowmapSize = 128;
 }
 
 

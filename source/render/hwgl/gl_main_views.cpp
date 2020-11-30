@@ -235,18 +235,20 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
     glEnable(GL_TEXTURE_2D);
   }
 
-  if (r_shadowmaps) {
+  if (r_shadowmaps && 1) {
     // right
     // left
     // top
     // bottom
     // back
     // front
-    //   front, back, left, right, top, bottom
+    //   front, back
+    //   left, right
+    //   top, bottom
     GLDisableBlend();
     for (unsigned int face = 0; face < 6; ++face) {
-      float xofs = (face%3)*(shadowmapSize+4);
-      float yofs = ((face/3)%3)*(shadowmapSize+4);
+      float xofs = (face%2)*(shadowmapSize+4);
+      float yofs = ((face/2)%3)*(shadowmapSize+4);
       glDisable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_CUBE_MAP);

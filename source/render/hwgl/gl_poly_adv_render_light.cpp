@@ -28,6 +28,8 @@
 
 extern VCvarB r_shadowmaps;
 
+static bool lpassDoShadowMap;
+
 
 #define SETUP_LIGHT_SHADER(shad_)  do { \
   (shad_).Activate(); \
@@ -66,10 +68,28 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 
   glDepthFunc(GL_EQUAL);
 
-  if (r_shadowmaps) {
+  if (doShadow && r_shadowmaps) {
     SETUP_LIGHT_SHADER(ShadowsLightSMap);
+    //VMatrix4 lview = VMatrix4::TranslateNeg(LightPos);
+    //ShadowsLightSMap.SetLightMPV(lview);
     glDisable(GL_STENCIL_TEST);
+    //glEnable(GL_TEXTURE_CUBE_MAP);
+    SelectTexture(1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
+    ShadowsLightSMap.SetShadowTexture(1);
+    SelectTexture(0);
+    VMatrix4 lview;
+    Drawer->CalcModelMatrix(lview, LightPos, TAVec(0.0f, 0.0f, 0.0f), false);
+    ShadowsLightSMap.SetLightView(lview);
+    lpassDoShadowMap = true;
   } else {
+    lpassDoShadowMap = false;
+    //glDisable(GL_TEXTURE_CUBE_MAP);
+    SelectTexture(1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    SelectTexture(0);
+
     // do not use stencil test if we rendered no shadow surfaces
     if (doShadow && IsStencilBufferDirty()/*wasRenderedShadowSurface*/) {
       if (gl_dbg_use_zpass > 1) {
@@ -112,6 +132,21 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 
 //==========================================================================
 //
+//  VOpenGLDrawer::EndLightPass
+//
+//==========================================================================
+void VOpenGLDrawer::EndLightPass () {
+  if (lpassDoShadowMap) {
+    //glDisable(GL_TEXTURE_CUBE_MAP);
+    SelectTexture(1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    SelectTexture(0);
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::DrawSurfaceLight
 //
 //  this blends surfaces from light sources to ambient map.
@@ -134,7 +169,7 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   const texinfo_t *tex = surf->texinfo;
   SetTexture(tex->Tex, tex->ColorMap);
 
-  if (r_shadowmaps) {
+  if (lpassDoShadowMap) {
     ShadowsLightSMap.SetTex(tex);
     ShadowsLightSMap.SetSurfNormal(surf->GetNormal());
     ShadowsLightSMap.SetSurfDist(surf->GetDist());

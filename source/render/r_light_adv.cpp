@@ -1292,6 +1292,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
   dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
   RenderLightBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+  Drawer->EndLightPass();
 
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, coneDir, coneAngle);
   RenderMobjsLight(ent);

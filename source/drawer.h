@@ -632,6 +632,7 @@ public:
   virtual void RenderSurfaceShadowMap (const surface_t *surf, const TVec &LightPos, float Radius) = 0;
 
   virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) = 0;
+  virtual void EndLightPass () = 0;
   virtual void DrawSurfaceLight (surface_t *Surf) = 0;
 
   virtual void DrawWorldTexturesPass () = 0;

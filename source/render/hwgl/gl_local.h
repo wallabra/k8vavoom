@@ -353,6 +353,7 @@ public:
   virtual void RenderSurfaceShadowMap (const surface_t *surf, const TVec &LightPos, float Radius) override;
 
   virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) override;
+  virtual void EndLightPass () override;
   virtual void DrawSurfaceLight (surface_t *surf) override;
 
   virtual void DrawWorldTexturesPass () override;

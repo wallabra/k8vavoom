@@ -66,6 +66,8 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
 
   glDisable(GL_TEXTURE_2D);
   GLDRW_RESET_ERROR();
+
+  glEnable(GL_CULL_FACE);
 }
 
 
@@ -132,9 +134,16 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
 
   //glDisable(GL_SCISSOR_TEST);
 
-  //VMatrix4 newPrj = VMatrix4::ProjectionZeroOne(90.0f, 1.0f, 2.0f, Radius);
-  //VMatrix4 newPrj = VMatrix4::ProjectionNegOne(90.0f, 1.0f, 2.0f, Radius);
-  VMatrix4 newPrj = VMatrix4::Perspective(90.0f, 1.0f, 2.0f, Radius);
+    // right
+    // left
+    // top
+    // bottom
+    // back
+    // front
+
+  //VMatrix4 newPrj = VMatrix4::ProjectionZeroOne(90.0f, 1.0f, 1.0f, Radius);
+  VMatrix4 newPrj = VMatrix4::ProjectionNegOne(90.0f, 1.0f, 1.0f, Radius);
+  //VMatrix4 newPrj = VMatrix4::Perspective(90.0f, 1.0f, 1.0f, Radius);
   //matDump(newPrj);
   //matDump(newPrj1);
   /*
@@ -143,9 +152,33 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
   VMatrix4 mvp = newPrj*aface*lview; // *mview
   */
   //VMatrix4 lview = VMatrix4::LookAtGLM(LightPos, viewsCenter[facenum], viewsUp[facenum]);
-  VMatrix4 lview = VMatrix4::LookAt(LightPos, viewsCenter[facenum], viewsUp[facenum]);
+  //VMatrix4 lview = VMatrix4::LookAt(LightPos, viewsCenter[facenum], viewsUp[facenum]);
   //VMatrix4 lview = VMatrix4::LookAtGLM(TVec(0, 0, 0), viewsCenter[facenum], viewsUp[facenum]);
-  VMatrix4 mvp = newPrj*lview; //*mview
+
+  //VMatrix4 mvp = newPrj*lview; //*mview
+
+  /*
+  ModelMat.SetIdentity();
+  ModelMat *= VMatrix4::RotateX(-90); //glRotatef(-90, 1, 0, 0);
+  ModelMat *= VMatrix4::RotateZ(90); //glRotatef(90, 0, 0, 1);
+  if (MirrorFlip) ModelMat *= VMatrix4::Scale(TVec(1, -1, 1)); //glScalef(1, -1, 1);
+  ModelMat *= VMatrix4::RotateX(-angles.roll); //glRotatef(-viewangles.roll, 1, 0, 0);
+  ModelMat *= VMatrix4::RotateY(-angles.pitch); //glRotatef(-viewangles.pitch, 0, 1, 0);
+  ModelMat *= VMatrix4::RotateZ(-angles.yaw); //glRotatef(-viewangles.yaw, 0, 0, 1);
+  ModelMat *= VMatrix4::Translate(-origin); //glTranslatef(-vieworg.x, -vieworg.y, -vieworg.z);
+  */
+
+  const TAVec viewAngles[6] = {
+    //    pitch    yaw   roll
+    TAVec(  0.0f,  90.0f,   0.0f), // right
+    TAVec(  0.0f, -90.0f,   0.0f), // left
+    TAVec(-90.0f,   0.0f,   0.0f), // top
+    TAVec( 90.0f,   0.0f,   0.0f), // bottom
+    TAVec(  0.0f, 180.0f,   0.0f), // back
+    TAVec(  0.0f,   0.0f,   0.0f), // front
+  };
+  VMatrix4 lview;
+  Drawer->CalcModelMatrix(lview, LightPos, viewAngles[facenum], false);
   //SurfShadowMap.SetLightPos(LightPos);
 
   p_glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO);
@@ -187,9 +220,23 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
   glDepthFunc(GL_LESS);
   //glDepthFunc(GL_GREATER);
   SurfShadowMap.Activate();
-  SurfShadowMap.SetLightMPV(mvp);
+  //SurfShadowMap.SetLightMPV(mvp);
+  SurfShadowMap.SetLightProj(newPrj);
+  SurfShadowMap.SetLightView(lview);
+  //SurfShadowMap.SetLightPos(LightPos);
+  SurfShadowMap.SetLightRadius(Radius);
   SurfShadowMap.UploadChangedUniforms();
   GLDRW_CHECK_ERROR("update cube FBO shader");
+
+  coneDir = aconeDir;
+  coneAngle = (aconeAngle <= 0.0f || aconeAngle >= 360.0f ? 0.0f : aconeAngle);
+
+  if (coneAngle && aconeDir.isValid() && !aconeDir.isZero()) {
+    spotLight = true;
+    coneDir.normaliseInPlace();
+  } else {
+    spotLight = false;
+  }
 }
 
 
