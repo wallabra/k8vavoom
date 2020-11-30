@@ -347,9 +347,9 @@ public:
 
   bool AdvRenderCanSurfaceCastShadow (const surface_t *surf, const TVec &LightPos, float Radius);
 
-  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) override;
+  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) override;
   virtual void EndLightShadowMaps () override;
-  virtual void SetupLightShadowMap (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, unsigned int facenum) override;
+  virtual void SetupLightShadowMap (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, unsigned int facenum, int swidth, int sheight) override;
   virtual void RenderSurfaceShadowMap (const surface_t *surf, const TVec &LightPos, float Radius) override;
 
   virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) override;

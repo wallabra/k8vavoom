@@ -82,10 +82,11 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
     //VMatrix4 lview;
     //Drawer->CalcModelMatrix(lview, LightPos, TAVec(0.0f, 0.0f, 0.0f), false);
     //ShadowsLightSMap.SetLightView(lview);
-    ShadowsLightSMap.SetLightPos2(LightPos);
     VMatrix4 lview2;
     Drawer->CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
     ShadowsLightSMap.SetLightView(lview2);
+    TVec lpp = lview2*LightPos;
+    ShadowsLightSMap.SetLightPos2(lpp);
     lpassDoShadowMap = true;
   } else {
     lpassDoShadowMap = false;

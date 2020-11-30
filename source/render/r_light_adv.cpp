@@ -1240,12 +1240,12 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   // do shadow volumes
   if (r_shadowmaps) {
-    Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle);
+    Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle, refdef.width, refdef.height);
     if (allowShadows) {
       (void)fsecCounterGen(); // for checker
       if (r_max_shadow_segs_all) {
         for (unsigned fc = 0; fc < 6; ++fc) {
-          Drawer->SetupLightShadowMap(CurrLightPos, CurrLightRadius, coneDir, coneAngle, fc);
+          Drawer->SetupLightShadowMap(CurrLightPos, CurrLightRadius, coneDir, coneAngle, fc, refdef.width, refdef.height);
           LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
           dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
           dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;

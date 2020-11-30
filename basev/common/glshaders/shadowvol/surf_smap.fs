@@ -15,7 +15,7 @@ void main () {
   //vec4 fc = vec4(length(VertLightDir), 0.0, 0.0, 1.0);
   //if (VertLightDir.z < 0) fc.g = 1.0;
   //if (VertLightDir.y > 0) fc.g = 1.0;
-  float dist = distance(LightPos, VertWorldPos);
+  float dist = distance(LightPos, VertWorldPos)+2;
   vec4 fc = vec4(0.0, 0.0, 0.0, 1.0);
   if (dist >= LightRadius) {
     fc.r = 99999.0;

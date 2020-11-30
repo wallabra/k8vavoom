@@ -626,9 +626,9 @@ public:
   virtual void EndLightShadowVolumes () = 0;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) = 0;
 
-  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) = 0;
+  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) = 0;
   virtual void EndLightShadowMaps () = 0;
-  virtual void SetupLightShadowMap (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, unsigned int facenum) = 0;
+  virtual void SetupLightShadowMap (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, unsigned int facenum, int swidth, int sheight) = 0;
   virtual void RenderSurfaceShadowMap (const surface_t *surf, const TVec &LightPos, float Radius) = 0;
 
   virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) = 0;

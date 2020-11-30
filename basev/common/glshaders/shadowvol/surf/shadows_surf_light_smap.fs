@@ -77,13 +77,14 @@ void main () {
   // normalized distance to the point light source
   float distanceToLight = length(fromLightToFragment);
   // normalized direction from light source for sampling
+  // (k8: there is no need to do that: this is just a direction, and hardware doesn't require it to be normalized)
   fromLightToFragment = normalize(fromLightToFragment);
   // sample shadow cube map
   //float referenceDistanceToLight = texture(ShadowTexture, -fromLightToFragment).r;
   vec3 ltfdir;
-  ltfdir.x = fromLightToFragment.x;
-  ltfdir.y = fromLightToFragment.y;
-  ltfdir.z = fromLightToFragment.z;
+  ltfdir.x =  fromLightToFragment.x;
+  ltfdir.y =  fromLightToFragment.y;
+  ltfdir.z = -fromLightToFragment.z;
   float referenceDistanceToLight = texture(ShadowTexture, ltfdir).r;
   /*
   float currentDistanceToLight = (distanceToLight-u_nearFarPlane.x)/(u_nearFarPlane.y-u_nearFarPlane.x);
@@ -91,7 +92,7 @@ void main () {
   */
   float currentDistanceToLight = distanceToLight/LightRadius;
   // compare distances to determine whether the fragment is in shadow
-  if (currentDistanceToLight > referenceDistanceToLight+0.005) discard;
+  if (currentDistanceToLight > referenceDistanceToLight) discard;
   /*
   if (currentDistanceToLight < referenceDistanceToLight+0.005) {
     FinalColor = vec4(0.0, referenceDistanceToLight-currentDistanceToLight, 0.0, 1.0);
