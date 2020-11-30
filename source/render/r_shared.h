@@ -92,9 +92,13 @@ struct texinfo_t {
     return
       Tex != other.Tex ||
       ColorMap != other.ColorMap ||
-      FASI(saxis) != FASI(other.saxis) ||
+      FASI(saxis.x) != FASI(other.saxis.x) ||
+      FASI(saxis.y) != FASI(other.saxis.y) ||
+      FASI(saxis.z) != FASI(other.saxis.z) ||
       FASI(soffs) != FASI(other.soffs) ||
-      FASI(taxis) != FASI(other.taxis) ||
+      FASI(taxis.x) != FASI(other.taxis.x) ||
+      FASI(taxis.y) != FASI(other.taxis.y) ||
+      FASI(taxis.z) != FASI(other.taxis.z) ||
       FASI(toffs) != FASI(other.toffs) ||
       (Tex && Tex->lastUpdateFrame != upframe);
   }
