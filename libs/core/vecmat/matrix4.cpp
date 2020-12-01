@@ -512,7 +512,7 @@ VMatrix4 VMatrix4::Ortho (float left, float right, float bottom, float top, floa
 //
 //==========================================================================
 VMatrix4 VMatrix4::Perspective (float fovY, float aspect, float zNear, float zFar) noexcept {
-  const float fH = tanf(fovY/360.0f*M_PI)*zNear;
+  const float fH = tanf(RAD2DEGF(fovY))*zNear;
   const float fW = fH*aspect;
   return Frustum(-fW, fW, -fH, fH, zNear, zFar);
 }
@@ -530,7 +530,7 @@ VMatrix4 VMatrix4::Perspective (float fovY, float aspect, float zNear, float zFa
 //
 //==========================================================================
 VVA_CHECKRESULT VMatrix4 VMatrix4::ProjectionNegOne (float fovY, float aspect, float zNear, float zFar) noexcept {
-  const float thfovy = tanf(DEG2RADF(fovY)/2.0f);
+  const float thfovy = tanf(RAD2DEGF(fovY)/2.0f);
   VMatrix4 res;
   res.SetZero();
   res[0][0] = 1.0f/(aspect*thfovy);
@@ -554,7 +554,7 @@ VVA_CHECKRESULT VMatrix4 VMatrix4::ProjectionNegOne (float fovY, float aspect, f
 //
 //==========================================================================
 VVA_CHECKRESULT VMatrix4 VMatrix4::ProjectionZeroOne (float fovY, float aspect, float zNear, float zFar) noexcept {
-  const float thfovy = tanf(DEG2RADF(fovY)/2.0f);
+  const float thfovy = tanf(RAD2DEGF(fovY)/2.0f);
   VMatrix4 res;
   res.SetZero();
   res[0][0] = 1.0f/(aspect*thfovy);
@@ -658,7 +658,7 @@ VMatrix4 VMatrix4::LookAtFucked (const TVec &eye, const TVec &center, const TVec
 //
 //==========================================================================
 VMatrix4 VMatrix4::lookAt (const TVec &eye, const TVec &center, const TVec &up) const noexcept {
-  VMatrix4 m ;
+  VMatrix4 m;
   float x[3];
   float y[3];
   float z[3];

@@ -26,6 +26,10 @@
 #include "gl_local.h"
 #include "gl_poly_adv_render.h"
 
+extern VCvarB r_shadowmaps;
+
+static bool lpassDoShadowMap;
+
 
 #define SETUP_LIGHT_SHADER(shad_)  do { \
   (shad_).Activate(); \
@@ -57,25 +61,6 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-  // do not use stencil test if we rendered no shadow surfaces
-  if (doShadow && IsStencilBufferDirty()/*wasRenderedShadowSurface*/) {
-    if (gl_dbg_use_zpass > 1) {
-      glStencilFunc(GL_EQUAL, 0x1, 0xff);
-    } else {
-      glStencilFunc(GL_EQUAL, 0x0, 0xff);
-    }
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glEnable(GL_STENCIL_TEST);
-  } else {
-    glDisable(GL_STENCIL_TEST);
-  }
-
-  /*
-  if (doShadow && !wasRenderedShadowSurface) {
-    Color = 0xffff0000u;
-  }
-  */
-
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   GLEnableBlend();
   //glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
@@ -83,22 +68,84 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 
   glDepthFunc(GL_EQUAL);
 
-  if (spotLight) {
-    if (!gl_dbg_advlight_debug) {
-      SETUP_LIGHT_SHADER(ShadowsLightSpot);
-      ShadowsLightSpot.SetConeDirection(coneDir);
-      ShadowsLightSpot.SetConeAngle(coneAngle);
-    } else {
-      SETUP_LIGHT_SHADER(ShadowsLightSpotDbg);
-      ShadowsLightSpotDbg.SetConeDirection(coneDir);
-      ShadowsLightSpotDbg.SetConeAngle(coneAngle);
-    }
+  if (doShadow && r_shadowmaps.asBool() && CanRenderShadowMaps()) {
+    SETUP_LIGHT_SHADER(ShadowsLightSMap);
+    //VMatrix4 lview = VMatrix4::TranslateNeg(LightPos);
+    //ShadowsLightSMap.SetLightMPV(lview);
+    glDisable(GL_STENCIL_TEST);
+    //glEnable(GL_TEXTURE_CUBE_MAP);
+    SelectTexture(1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
+    ShadowsLightSMap.SetShadowTexture(1);
+    SelectTexture(0);
+    //VMatrix4 lview;
+    //Drawer->CalcModelMatrix(lview, LightPos, TAVec(0.0f, 0.0f, 0.0f), false);
+    //ShadowsLightSMap.SetLightView(lview);
+    VMatrix4 lview2;
+    Drawer->CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
+    ShadowsLightSMap.SetLightView(lview2);
+    TVec lpp = lview2*LightPos;
+    ShadowsLightSMap.SetLightPos2(lpp);
+    lpassDoShadowMap = true;
   } else {
-    if (!gl_dbg_advlight_debug) {
-      SETUP_LIGHT_SHADER(ShadowsLight);
+    lpassDoShadowMap = false;
+    //glDisable(GL_TEXTURE_CUBE_MAP);
+    SelectTexture(1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    SelectTexture(0);
+
+    // do not use stencil test if we rendered no shadow surfaces
+    if (doShadow && IsStencilBufferDirty()/*wasRenderedShadowSurface*/) {
+      if (gl_dbg_use_zpass > 1) {
+        glStencilFunc(GL_EQUAL, 0x1, 0xff);
+      } else {
+        glStencilFunc(GL_EQUAL, 0x0, 0xff);
+      }
+      glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+      glEnable(GL_STENCIL_TEST);
     } else {
-      SETUP_LIGHT_SHADER(ShadowsLightDbg);
+      glDisable(GL_STENCIL_TEST);
     }
+
+    /*
+    if (doShadow && !wasRenderedShadowSurface) {
+      Color = 0xffff0000u;
+    }
+    */
+
+    if (spotLight) {
+      if (!gl_dbg_advlight_debug) {
+        SETUP_LIGHT_SHADER(ShadowsLightSpot);
+        ShadowsLightSpot.SetConeDirection(coneDir);
+        ShadowsLightSpot.SetConeAngle(coneAngle);
+      } else {
+        SETUP_LIGHT_SHADER(ShadowsLightSpotDbg);
+        ShadowsLightSpotDbg.SetConeDirection(coneDir);
+        ShadowsLightSpotDbg.SetConeAngle(coneAngle);
+      }
+    } else {
+      if (!gl_dbg_advlight_debug) {
+        SETUP_LIGHT_SHADER(ShadowsLight);
+      } else {
+        SETUP_LIGHT_SHADER(ShadowsLightDbg);
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::EndLightPass
+//
+//==========================================================================
+void VOpenGLDrawer::EndLightPass () {
+  if (lpassDoShadowMap) {
+    //glDisable(GL_TEXTURE_CUBE_MAP);
+    SelectTexture(1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    SelectTexture(0);
   }
 }
 
@@ -127,25 +174,31 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   const texinfo_t *tex = surf->texinfo;
   SetTexture(tex->Tex, tex->ColorMap);
 
-  if (spotLight) {
-    if (!gl_dbg_advlight_debug) {
-      ShadowsLightSpot.SetTex(tex);
-      ShadowsLightSpot.SetSurfNormal(surf->GetNormal());
-      ShadowsLightSpot.SetSurfDist(surf->GetDist());
-    } else {
-      ShadowsLightSpotDbg.SetTex(tex);
-      ShadowsLightSpotDbg.SetSurfNormal(surf->GetNormal());
-      ShadowsLightSpotDbg.SetSurfDist(surf->GetDist());
-    }
+  if (lpassDoShadowMap) {
+    ShadowsLightSMap.SetTex(tex);
+    ShadowsLightSMap.SetSurfNormal(surf->GetNormal());
+    ShadowsLightSMap.SetSurfDist(surf->GetDist());
   } else {
-    if (!gl_dbg_advlight_debug) {
-      ShadowsLight.SetTex(tex);
-      ShadowsLight.SetSurfNormal(surf->GetNormal());
-      ShadowsLight.SetSurfDist(surf->GetDist());
+    if (spotLight) {
+      if (!gl_dbg_advlight_debug) {
+        ShadowsLightSpot.SetTex(tex);
+        ShadowsLightSpot.SetSurfNormal(surf->GetNormal());
+        ShadowsLightSpot.SetSurfDist(surf->GetDist());
+      } else {
+        ShadowsLightSpotDbg.SetTex(tex);
+        ShadowsLightSpotDbg.SetSurfNormal(surf->GetNormal());
+        ShadowsLightSpotDbg.SetSurfDist(surf->GetDist());
+      }
     } else {
-      ShadowsLightDbg.SetTex(tex);
-      ShadowsLightDbg.SetSurfNormal(surf->GetNormal());
-      ShadowsLightDbg.SetSurfDist(surf->GetDist());
+      if (!gl_dbg_advlight_debug) {
+        ShadowsLight.SetTex(tex);
+        ShadowsLight.SetSurfNormal(surf->GetNormal());
+        ShadowsLight.SetSurfDist(surf->GetDist());
+      } else {
+        ShadowsLightDbg.SetTex(tex);
+        ShadowsLightDbg.SetSurfNormal(surf->GetNormal());
+        ShadowsLightDbg.SetSurfDist(surf->GetDist());
+      }
     }
   }
 

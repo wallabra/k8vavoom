@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,7 +91,7 @@ char *loadWholeFile (const char *fname) {
   FILE *fi = fopen(fname, "rb");
   if (!fi) { fprintf(stderr, "FATAL: cannot open file '%s'\n", fname); abort(); }
   fseek(fi, 0, SEEK_END);
-  if (ftell(fi) > 0x3ffff) { fprintf(stderr, "FATAL: file '%s' too big\n", fname); abort(); }
+  if (ftell(fi) > 0x3fffff) { fprintf(stderr, "FATAL: file '%s' too big (%d)\n", fname, (int)ftell(fi)); abort(); }
   size_t size = (size_t)ftell(fi);
   char *text = xalloc(size+16); // we need some space
   fseek(fi, 0, SEEK_SET);
@@ -116,6 +117,56 @@ char *createFileName (const char *outdir, const char *infname, const char *ext) 
     --e;
   }
   strcat(res, ext);
+  return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static void copyFile (const char *fnameDest, const char *fnameSrc) {
+  fprintf(stderr, "copying '%s' to '%s'...\n", fnameSrc, fnameDest);
+
+  FILE *fsrc = fopen(fnameSrc, "rb");
+  if (!fsrc) { fprintf(stderr, "FATAL: cannot open file '%s'\n", fnameSrc); abort(); }
+  fseek(fsrc, 0, SEEK_END);
+  int size = ftell(fsrc);
+  if (size < 0 || size > 0x03ffffff) { fprintf(stderr, "FATAL: file '%s' is too big (%d)\n", fnameSrc, size); abort(); }
+  char *data = malloc(size+1);
+  if (!data) { fprintf(stderr, "FATAL: cannot allocate memory for file '%s'\n", fnameSrc); abort(); }
+  if (size > 0) {
+    fseek(fsrc, 0, SEEK_SET);
+    if (fread(data, size, 1, fsrc) != 1) { fprintf(stderr, "FATAL: cannot read file '%s'\n", fnameSrc); abort(); }
+  }
+  fclose(fsrc);
+
+  FILE *fdst = fopen(fnameDest, "wb");
+  if (!fdst) { fprintf(stderr, "FATAL: cannot create file '%s'\n", fnameDest); abort(); }
+  if (size > 0) {
+    if (fwrite(data, size, 1, fdst) != 1) { fprintf(stderr, "FATAL: cannot write file '%s'\n", fnameSrc); abort(); }
+  }
+  fclose(fdst);
+}
+
+
+static int compareFiles (const char *fname0, const char *fname1) {
+  FILE *f0 = fopen(fname0, "rb");
+  if (!f0) return 0;
+  FILE *f1 = fopen(fname1, "rb");
+  if (!f1) { fclose(f0); return 0; }
+  fseek(f0, 0, SEEK_END);
+  fseek(f1, 0, SEEK_END);
+  if (ftell(f0) != ftell(f1)) { fclose(f0); fclose(f1); return 0; }
+  if (ftell(f0) > 0x3fffff) { fclose(f0); fclose(f1); return 0; }
+  int size = (int)ftell(f0);
+  fclose(f0);
+  fclose(f1);
+
+  if (size == 0) return 1;
+
+  char *t0 = loadWholeFile(fname0);
+  char *t1 = loadWholeFile(fname1);
+  int res = (memcmp(t0, t1, size) == 0 ? 1 : 0);
+  xfree(t0);
+  xfree(t1);
   return res;
 }
 
@@ -419,6 +470,11 @@ char *prGetToken (Parser *par) {
     tokbuf[tkbpos++] = ch;
          if (ch == '[' && prPeekChar(par) == '[') tokbuf[tkbpos++] = prGetChar(par);
     else if (ch == ']' && prPeekChar(par) == ']') tokbuf[tkbpos++] = prGetChar(par);
+    else if (ch == '<' && prPeekChar(par) == '=') tokbuf[tkbpos++] = prGetChar(par);
+    else if (ch == '>' && prPeekChar(par) == '=') tokbuf[tkbpos++] = prGetChar(par);
+    else if (ch == '!' && prPeekChar(par) == '=') tokbuf[tkbpos++] = prGetChar(par);
+    else if (ch == '&' && prPeekChar(par) == '&') tokbuf[tkbpos++] = prGetChar(par);
+    else if (ch == '|' && prPeekChar(par) == '|') tokbuf[tkbpos++] = prGetChar(par);
   }
 
   tokbuf[tkbpos++] = 0;
@@ -789,6 +845,29 @@ static int hasTblDefine (DefineTable *tbl, const char *defstr) {
 
 typedef struct ShaderInfo ShaderInfo;
 
+typedef enum {
+  CondLess,
+  CondLessEqu,
+  CondEqu,
+  CondGreater,
+  CondGreaterEqu,
+  CondNotEqu,
+} CondCode;
+
+
+static const char *getCondName (CondCode cc) {
+  switch (cc) {
+    case CondLess: return "CondLess";
+    case CondLessEqu: return "CondLessEqu";
+    case CondEqu: return "CondEqu";
+    case CondGreater: return "CondGreater";
+    case CondGreaterEqu: return "CondGreaterEqu";
+    case CondNotEqu: return "CondNotEqu";
+  }
+  return "WTF";
+}
+
+
 struct ShaderInfo {
   char *name; // variable name
   LocInfo *locs;
@@ -801,6 +880,9 @@ struct ShaderInfo {
   char *incdir;
   // defines (nullptr, or array of chars, each define terminates with '\0')
   DefineTable defines;
+  // opengl version
+  CondCode oglVersionCond;
+  int oglVersion;  // high*100+low
   ShaderInfo *next;
 };
 
@@ -837,6 +919,37 @@ int hasDefine (ShaderInfo *si, const char *defstr) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+int parseDigit (Parser *par) {
+  //Parser *state = prSimpleSavePos(par);
+  const char *tk = prGetToken(par);
+  if (tk && !par->isString && !tk[1] && isdigit(tk[0])) {
+    int dig = tk[0]-'0';
+    //prSimpleFreePos(&state);
+    return dig;
+  }
+  //prSimpleRestoreAndFreePos(par, &state);
+  static char errmsg[1024];
+  snprintf(errmsg, sizeof(errmsg), "expected digit, but got '%s'", (tk ? tk : "<EOF>"));
+  prError(par, errmsg);
+  return 0;
+}
+
+
+CondCode parseCondCode (Parser *par) {
+  if (prCheck(par, "<")) return CondLess;
+  if (prCheck(par, "<=")) return CondLessEqu;
+  if (prCheck(par, ">")) return CondGreater;
+  if (prCheck(par, ">=")) return CondGreaterEqu;
+  if (prCheck(par, "!=")) return CondNotEqu;
+  if (prCheck(par, "=")) return CondEqu;
+  const char *tk = prGetToken(par);
+  static char errmsg[1024];
+  snprintf(errmsg, sizeof(errmsg), "expected comparison, but got '%s'", (tk ? tk : "<EOF>"));
+  prError(par, errmsg);
+  return CondEqu;
+}
+
+
 // `ShaderList` eaten
 void parseShaderList (Parser *par, const char *basebase) {
   char *basedir = nullptr;
@@ -854,12 +967,26 @@ void parseShaderList (Parser *par, const char *basebase) {
   while (!prCheck(par, "}")) {
     if (prCheck(par, ";")) continue;
     prExpect(par, "Shader");
+    CondCode oglVersionCond = CondGreaterEqu;
+    int oglVersion = 0;  // high*100+low
     // attributes (unused for now)
-    if (prCheck(par, "[")) {
-      prExpect(par, "advanced");
+    while (prCheck(par, "[")) {
+      if (prCheck(par, "advanced")) {
+        // do nothing
+      } else if (prCheck(par, "OpenGL")) {
+        oglVersionCond = parseCondCode(par);
+        int hi = parseDigit(par);
+        prExpect(par, ".");
+        int lo = parseDigit(par);
+        oglVersion = hi*100+lo;
+      } else {
+        prError(par, "shader attribute expected");
+      }
       prExpect(par, "]");
     }
     ShaderInfo *si = xalloc(sizeof(ShaderInfo));
+    si->oglVersionCond = oglVersionCond;
+    si->oglVersion = oglVersion;
     // name
     si->name = xstrdup(prExpectId(par));
     if (verbose) printf("[  found shader info '%s']\n", si->name);
@@ -964,7 +1091,7 @@ int skipConditionalToElse (Parser *par) {
 int parseGLSL (Parser *par, ShaderInfo *si) {
   prExpect(par, "#");
   prExpect(par, "version");
-  prExpect(par, "120");
+  if (!prCheck(par, "130")) prExpect(par, "120");
 
   DefineTable savedtbl;
   initTblDefineFrom(&savedtbl, &si->defines);
@@ -1097,6 +1224,9 @@ const char *getShitppType (const char *glslType) {
   if (strEqu(glslType, "mat3")) return "float *";
   // samplers
   if (strEqu(glslType, "sampler2D")) return "vuint32";
+  if (strEqu(glslType, "sampler2DShadow")) return "vuint32";
+  if (strEqu(glslType, "samplerCube")) return "vuint32";
+  if (strEqu(glslType, "samplerCubeShadow")) return "vuint32";
   fprintf(stderr, "FATAL: unknown GLSL type `%s`!\n", glslType);
   abort();
 }
@@ -1113,6 +1243,9 @@ const char *getShitppStoreType (const char *glslType) {
   if (strEqu(glslType, "mat3")) return "glsl_float9";
   // samplers
   if (strEqu(glslType, "sampler2D")) return "vuint32";
+  if (strEqu(glslType, "sampler2DShadow")) return "vuint32";
+  if (strEqu(glslType, "samplerCube")) return "vuint32";
+  if (strEqu(glslType, "samplerCubeShadow")) return "vuint32";
   fprintf(stderr, "FATAL: unknown GLSL type `%s`!\n", glslType);
   abort();
 }
@@ -1140,7 +1273,11 @@ void writeInitValueNoChecks (FILE *fo, const LocInfo *loc) {
     } else {
       fprintf(fo, "last_%s = curr_%s = false;", loc->name, loc->name);
     }
-  } else if (strEqu(loc->glslType, "sampler2D")) {
+  } else if (strEqu(loc->glslType, "sampler2D") ||
+             strEqu(loc->glslType, "sampler2DShadow") ||
+             strEqu(loc->glslType, "samplerCube") ||
+             strEqu(loc->glslType, "samplerCubeShadow"))
+  {
     if (loc->isAttr) {
       fprintf(fo, "curr_%s = 0;", loc->name);
     } else {
@@ -1173,6 +1310,9 @@ void writeUploadNoChecks (FILE *fo, const LocInfo *loc) {
        if (strEqu(loc->glslType, "float")) fprintf(fo, "1fARB(loc_%s, curr_%s);", loc->name, loc->name);
   else if (strEqu(loc->glslType, "bool")) fprintf(fo, "1iARB(loc_%s, (curr_%s ? GL_TRUE : GL_FALSE));", loc->name, loc->name);
   else if (strEqu(loc->glslType, "sampler2D")) fprintf(fo, "1iARB(loc_%s, (GLint)curr_%s);", loc->name, loc->name);
+  else if (strEqu(loc->glslType, "sampler2DShadow")) fprintf(fo, "1iARB(loc_%s, (GLint)curr_%s);", loc->name, loc->name);
+  else if (strEqu(loc->glslType, "samplerCube")) fprintf(fo, "1iARB(loc_%s, (GLint)curr_%s);", loc->name, loc->name);
+  else if (strEqu(loc->glslType, "samplerCubeShadow")) fprintf(fo, "1iARB(loc_%s, (GLint)curr_%s);", loc->name, loc->name);
   else {
     const char *onestr = (loc->isAttr ? "" : "1,");
     if (strEqu(loc->glslType, "vec3")) fprintf(fo, "3fvARB(loc_%s, %s &curr_%s.x);", loc->name, onestr, loc->name);
@@ -1239,8 +1379,12 @@ int main (int argc, char **argv) {
 
   if (verbose) printf("[parsing '%s'...]\n", infname);
 
-  char *outhname = createFileName(outdir, infname, ".hi");
-  char *outcname = createFileName(outdir, infname, ".ci");
+  //char *outhname = createFileName(outdir, infname, ".hi");
+  //char *outcname = createFileName(outdir, infname, ".ci");
+  char *outhname = createFileName(outdir, infname, ".hi1");
+  char *outcname = createFileName(outdir, infname, ".ci1");
+  char *outhnameReal = createFileName(outdir, infname, ".hi");
+  char *outcnameReal = createFileName(outdir, infname, ".ci");
   if (verbose) printf("[ generating '%s'...]\n", outhname);
   if (verbose) printf("[ generating '%s'...]\n", outcname);
 
@@ -1319,6 +1463,7 @@ int main (int argc, char **argv) {
         shloc->inset = 1; // do not generate setter for this var
       }
     }
+
     // generate header info
     fprintf(foh, "  class VShaderDef_%s : public VGLShader {\n", si->name);
     fprintf(foh, "  public:\n");
@@ -1347,6 +1492,9 @@ int main (int argc, char **argv) {
            if (strEqu(loc->glslType, "float")) fprintf(foh, "curr_%s = v; ", loc->name);
       else if (strEqu(loc->glslType, "bool")) fprintf(foh, "curr_%s = (v ? GL_TRUE : GL_FALSE);", loc->name);
       else if (strEqu(loc->glslType, "sampler2D")) fprintf(foh, "curr_%s = (GLint)v;", loc->name);
+      else if (strEqu(loc->glslType, "sampler2DShadow")) fprintf(foh, "curr_%s = (GLint)v;", loc->name);
+      else if (strEqu(loc->glslType, "samplerCube")) fprintf(foh, "curr_%s = (GLint)v;", loc->name);
+      else if (strEqu(loc->glslType, "samplerCubeShadow")) fprintf(foh, "curr_%s = (GLint)v;", loc->name);
       else if (strEqu(loc->glslType, "vec2")) fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*2);", loc->name);
       else if (strEqu(loc->glslType, "vec3")) fprintf(foh, "curr_%s = v;", loc->name);
       else if (strEqu(loc->glslType, "vec4")) fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*4);", loc->name);
@@ -1411,6 +1559,9 @@ int main (int argc, char **argv) {
       if (!loc->isAttr) fprintf(foc, "  , changed_%s(false)\n", loc->name);
     }
     fprintf(foc, "{\n");
+    if (!(si->oglVersion == 0 && si->oglVersionCond == CondGreaterEqu)) {
+      fprintf(foc, "  SetOpenGLVersion(%s, %d);\n", getCondName(si->oglVersionCond), (int)si->oglVersion);
+    }
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
       fprintf(foc, "  ");
       writeInitValueNoChecks(foc, loc);
@@ -1500,6 +1651,10 @@ int main (int argc, char **argv) {
   if (!toStdout) {
     fclose(foh);
     fclose(foc);
+    if (!compareFiles(outhname, outhnameReal) || !compareFiles(outcname, outcnameReal)) {
+      copyFile(outhnameReal, outhname);
+      copyFile(outcnameReal, outcname);
+    }
   }
 
   clearSetList(&setlist);

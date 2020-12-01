@@ -964,6 +964,10 @@ void Host_Shutdown () {
   }
   shutting_down = true;
 
+  VMemberBase::DumpNameMaps();
+  GTextureManager.DumpHashStats(NAME_Log);
+  VCvar::DumpHashStats();
+
 #define SAFE_SHUTDOWN(name, args) \
   try { /*GLog.Log("Doing "#name);*/ name args; } catch (...) { GLog.Log(#name" failed"); }
 
@@ -1008,8 +1012,6 @@ void Host_Shutdown () {
     GSoundManager = nullptr;
   }
 
-  VMemberBase::DumpNameMaps();
-  VCvar::DumpHashStats();
   if (cli_DumpAllVars > 0) VCvar::DumpAllVars();
   //k8:no need to do this:SAFE_SHUTDOWN(R_ShutdownTexture, ()) // texture manager
   //k8:no need to do this:SAFE_SHUTDOWN(R_ShutdownData, ()) // various game tables

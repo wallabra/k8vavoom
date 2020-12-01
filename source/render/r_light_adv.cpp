@@ -259,7 +259,9 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
 
   if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
   if (texinfo->Alpha < 1.0f || texinfo->Additive) return;
-  if (LightCanCross > 0 && texinfo->Tex->isSeeThrough()) return; // has holes, don't bother
+  if (!r_shadowmaps.asBool() || !Drawer->CanRenderShadowMaps()) {
+    if (LightCanCross > 0 && texinfo->Tex->isSeeThrough()) return; // has holes, don't bother
+  }
 
   if (SkyBox && SkyBox->IsPortalDirty()) SkyBox = nullptr;
 
@@ -274,36 +276,57 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
   // but do this only if the light is in front of a camera
   //const bool checkFrustum = (r_advlight_opt_frustum_back && Drawer->viewfrustum.checkSphere(CurrLightPos, CurrLightRadius, TFrustum::NearBit));
 
-  // TODO: if light is behind a camera, we can move back frustum plane, so it will
-  //       contain light origin, and clip everything behind it. the same can be done
-  //       for all other frustum planes.
-  for (surface_t *surf = InSurfs; surf; surf = surf->next) {
-    if (surf->count < 3) continue; // just in case
+  if (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps()) {
+    for (surface_t *surf = InSurfs; surf; surf = surf->next) {
+      if (surf->count < 3) continue; // just in case
 
-    // check transdoor hacks
-    //if (surf->drawflags&surface_t::TF_TOPHACK) continue;
+      // floor or ceiling? ignore translucent
+      if (LightCanCross < 0 || surf->GetNormalZ()) {
+        VTexture *tex = surf->texinfo->Tex;
+        if (!tex || tex->Type == TEXTYPE_Null) continue;
+        if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;
+      }
 
-    // floor or ceiling? ignore masked
-    if (LightCanCross < 0 || surf->GetNormalZ()) {
-      VTexture *tex = surf->texinfo->Tex;
-      if (!tex || tex->Type == TEXTYPE_Null) continue;
-      if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;
-      if (tex->isSeeThrough()) continue; // this is masked texture
+      // leave only surface that light can see (it shouldn't matter for texturing which one we'll use)
+      const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
+      // k8: use `<=` and `>=` for radius checks, 'cause why not?
+      //     light completely fades away at that distance
+      if (dist <= 0.0f || dist >= CurrLightRadius) return; // light is too far away
+
+      Drawer->RenderSurfaceShadowMap(surf, CurrLightPos, CurrLightRadius);
     }
+  } else {
+    // TODO: if light is behind a camera, we can move back frustum plane, so it will
+    //       contain light origin, and clip everything behind it. the same can be done
+    //       for all other frustum planes.
+    for (surface_t *surf = InSurfs; surf; surf = surf->next) {
+      if (surf->count < 3) continue; // just in case
 
-    // leave only surface that light can see (it shouldn't matter for texturing which one we'll use)
-    const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
-    // k8: use `<=` and `>=` for radius checks, 'cause why not?
-    //     light completely fades away at that distance
-    if (dist <= 0.0f || dist >= CurrLightRadius) return; // light is too far away
+      // check transdoor hacks
+      //if (surf->drawflags&surface_t::TF_TOPHACK) continue;
 
-    /*
-    if (checkFrustum) {
-      if (!Drawer->viewfrustum.checkVerts(surf->verts, (unsigned)surf->count, TFrustum::NearBit)) continue;
+      // floor or ceiling? ignore masked
+      if (LightCanCross < 0 || surf->GetNormalZ()) {
+        VTexture *tex = surf->texinfo->Tex;
+        if (!tex || tex->Type == TEXTYPE_Null) continue;
+        if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;
+        if (tex->isSeeThrough()) continue; // this is masked texture
+      }
+
+      // leave only surface that light can see (it shouldn't matter for texturing which one we'll use)
+      const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
+      // k8: use `<=` and `>=` for radius checks, 'cause why not?
+      //     light completely fades away at that distance
+      if (dist <= 0.0f || dist >= CurrLightRadius) return; // light is too far away
+
+      /*
+      if (checkFrustum) {
+        if (!Drawer->viewfrustum.checkVerts(surf->verts, (unsigned)surf->count, TFrustum::NearBit)) continue;
+      }
+      */
+
+      Drawer->RenderSurfaceShadowVolume(surf, CurrLightPos, CurrLightRadius);
     }
-    */
-
-    Drawer->RenderSurfaceShadowVolume(surf, CurrLightPos, CurrLightRadius);
   }
 }
 
@@ -505,6 +528,7 @@ void VRenderLevelShadowVolume::RenderShadowPolyObj (subsector_t *sub) {
 //
 //==========================================================================
 unsigned VRenderLevelShadowVolume::CheckShadowingFlats (subsector_t *sub) {
+  if (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps()) return 0;
   //if (floorz > ceilingz) return 0;
   sector_t *sector = sub->sector; // our main sector
   int sidx = (int)(ptrdiff_t)(sector-&Level->Sectors[0]);
@@ -1078,6 +1102,8 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   CurrLightRadius = Radius; // we need full radius, not modified
   CurrLightColor = Color;
 
+  const bool optimiseScissor = r_advlight_opt_scissor.asBool();
+
   //  0 if scissor is empty
   // -1 if scissor has no sense (should not be used)
   //  1 if scissor is set
@@ -1088,23 +1114,29 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   //GCon->Logf("LBB:(%f,%f,%f)-(%f,%f,%f)", LitBBox[0], LitBBox[1], LitBBox[2], LitBBox[3], LitBBox[4], LitBBox[5]);
 
-  // setup light scissor rectangle
-  if (r_advlight_opt_scissor) {
-    hasScissor = Drawer->SetupLightScissor(Pos, Radius-LightMin, scoord, (r_advlight_opt_optimise_scissor ? LitBBox : nullptr));
-    if (hasScissor <= 0) {
-      // something is VERY wrong (-1), or scissor is empty (0)
-      Drawer->ResetScissor();
-      if (!hasScissor && r_advlight_opt_optimise_scissor && !r_models) return; // empty scissor
-      checkModels = r_advlight_opt_optimise_scissor;
-      hasScissor = 0;
-      scoord[0] = scoord[1] = 0;
-      scoord[2] = Drawer->getWidth();
-      scoord[3] = Drawer->getHeight();
-    } else {
-      if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == Drawer->getWidth() && scoord[3] == Drawer->getHeight()) {
+  const bool useShadowMaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
+
+  if (!useShadowMaps) {
+    // setup light scissor rectangle
+    if (optimiseScissor) {
+      hasScissor = Drawer->SetupLightScissor(Pos, Radius-LightMin, scoord, (r_advlight_opt_optimise_scissor ? LitBBox : nullptr));
+      if (hasScissor <= 0) {
+        // something is VERY wrong (-1), or scissor is empty (0)
+        Drawer->ResetScissor();
+        if (!hasScissor && r_advlight_opt_optimise_scissor && !r_models) return; // empty scissor
+        checkModels = r_advlight_opt_optimise_scissor;
         hasScissor = 0;
+        scoord[0] = scoord[1] = 0;
+        scoord[2] = Drawer->getWidth();
+        scoord[3] = Drawer->getHeight();
+      } else {
+        if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == Drawer->getWidth() && scoord[3] == Drawer->getHeight()) {
+          hasScissor = 0;
+        }
       }
     }
+  } else {
+    Drawer->ResetScissor();
   }
 
   // if there are no lit surfaces oriented away from camera, it cannot possibly be in shadow volume
@@ -1130,7 +1162,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   // still, we may miss some lighting on models from flying lights that cannot touch
   // any geometry at all. to somewhat ease this case, rebuild light box when the light
   // didn't touched anything.
-  if (allowShadows && checkModels) {
+  if (optimiseScissor && allowShadows && checkModels && !useShadowMaps) {
     if (mobjsInCurrLight.length() == 0) return; // nothing to do, as it is guaranteed that light cannot touch map geometry
     float xbbox[6] = {0};
     /*
@@ -1211,27 +1243,44 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   }
 
   // do shadow volumes
-  Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord, coneDir, coneAngle);
-  LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
-  if (allowShadows) {
-    (void)fsecCounterGen(); // for checker
-    if (r_shadowvol_use_pofs) {
-      // pull forward
-      Drawer->GLPolygonOffsetEx(r_shadowvol_pslope, -r_shadowvol_pofs);
+  if (useShadowMaps) {
+    Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle, refdef.width, refdef.height);
+    if (allowShadows) {
+      (void)fsecCounterGen(); // for checker
+      if (r_max_shadow_segs_all) {
+        for (unsigned fc = 0; fc < 6; ++fc) {
+          Drawer->SetupLightShadowMap(CurrLightPos, CurrLightRadius, coneDir, coneAngle, fc, refdef.width, refdef.height);
+          LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
+          dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
+          dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
+          RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+        }
+      }
     }
-    if (r_max_shadow_segs_all) {
-      dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
-      dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
-      RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+    Drawer->EndLightShadowMaps();
+  } else {
+    LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
+    Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord, coneDir, coneAngle);
+    if (allowShadows) {
+      (void)fsecCounterGen(); // for checker
+      if (r_shadowvol_use_pofs) {
+        // pull forward
+        Drawer->GLPolygonOffsetEx(r_shadowvol_pslope, -r_shadowvol_pofs);
+      }
+      if (r_max_shadow_segs_all) {
+        dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
+        dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
+        RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+      }
+      Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
+      RenderMobjsShadow(ent, dlflags);
+      if (r_shadowvol_use_pofs) {
+        Drawer->GLDisableOffset();
+      }
+      Drawer->EndModelsShadowsPass();
     }
-    Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
-    RenderMobjsShadow(ent, dlflags);
-    if (r_shadowvol_use_pofs) {
-      Drawer->GLDisableOffset();
-    }
-    Drawer->EndModelsShadowsPass();
+    Drawer->EndLightShadowVolumes();
   }
-  Drawer->EndLightShadowVolumes();
 
   // k8: the question is: why we are rendering surfaces instead
   //     of simply render a light circle? shadow volumes should
@@ -1247,6 +1296,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
   dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
   RenderLightBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+  Drawer->EndLightPass();
 
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, coneDir, coneAngle);
   RenderMobjsLight(ent);

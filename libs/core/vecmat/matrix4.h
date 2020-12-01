@@ -336,6 +336,9 @@ public:
   // does `gluLookAt()`
   VVA_CHECKRESULT VMatrix4 lookAt (const TVec &eye, const TVec &center, const TVec &up) const noexcept;
 
+  // does `gluLookAt()`
+  static inline VVA_CHECKRESULT VMatrix4 LookAt (const TVec &eye, const TVec &center, const TVec &up) noexcept { VMatrix4 m; m.SetIdentity(); return m.lookAt(eye, center, up); }
+
   // rotate matrix to face along the target direction
   // this function will clear the previous rotation and scale, but it will keep the previous translation
   // it is for rotating object to look at the target, NOT for camera

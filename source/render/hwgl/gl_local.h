@@ -88,6 +88,15 @@ extern VCvarB gl_regular_disable_overbright;
 
 extern VCvarI gl_release_ram_textures_mode;
 
+extern VCvarB gl_dbg_fbo_blit_with_texture;
+extern VCvarB gl_letterbox;
+extern VCvarI gl_letterbox_filter;
+extern VCvarS gl_letterbox_color;
+extern VCvarF gl_letterbox_scale;
+
+extern VCvarB gl_enable_depth_bounds;
+extern VCvarB gl_enable_clip_control;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static inline const char *VGetGLErrorStr (const GLenum glerr) {
@@ -119,6 +128,15 @@ class VOpenGLDrawer : public VDrawer {
 public:
   class VGLShader {
   public:
+    enum {
+      CondLess,
+      CondLessEqu,
+      CondEqu,
+      CondGreater,
+      CondGreaterEqu,
+      CondNotEqu,
+    };
+  public:
     VGLShader *next;
     VOpenGLDrawer *owner;
     const char *progname;
@@ -127,6 +145,8 @@ public:
     const char *fssrcfile;
     // compiled vertex program
     GLhandleARB prog;
+    int oglVersionCond;
+    int oglVersion;  // high*100+low
     TArray<VStr> defines;
 
     typedef float glsl_float2[2];
@@ -135,7 +155,13 @@ public:
     typedef float glsl_float9[9];
 
   public:
-    VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1) {}
+    VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1), oglVersionCond(CondGreaterEqu), oglVersion(0) {}
+
+    inline void SetOpenGLVersion (int cond, int ver) noexcept { oglVersionCond = cond; oglVersion = ver; }
+
+    inline bool IsLoaded () const noexcept { return (prog != 0); }
+
+    bool CheckOpenGLVersion (int major, int minor) noexcept;
 
     void MainSetup (VOpenGLDrawer *aowner, const char *aprogname, const char *aincdir, const char *avssrcfile, const char *afssrcfile);
 
@@ -158,6 +184,9 @@ public:
     static inline bool notEqual_mat3 (const float *v1, const float *v2) { return (memcmp(v1, v2, sizeof(float)*9) != 0); }
     static inline bool notEqual_mat4 (const VMatrix4 &v1, const VMatrix4 &v2) { return (memcmp(&v1.m[0][0], &v2.m[0][0], sizeof(float)*16) != 0); }
     static inline bool notEqual_sampler2D (const vuint32 v1, const vuint32 v2) { return (v1 != v2); }
+    static inline bool notEqual_sampler2DShadow (const vuint32 v1, const vuint32 v2) { return (v1 != v2); }
+    static inline bool notEqual_samplerCube (const vuint32 v1, const vuint32 v2) { return (v1 != v2); }
+    static inline bool notEqual_samplerCubeShadow (const vuint32 v1, const vuint32 v2) { return (v1 != v2); }
 
     static inline void copyValue_float (float &dest, const float &src) { dest = src; }
     static inline void copyValue_bool (bool &dest, const bool &src) { dest = src; }
@@ -167,6 +196,9 @@ public:
     static inline void copyValue_vec2 (float *dest, const float *src) { memcpy(dest, src, sizeof(float)*2); }
     static inline void copyValue_mat3 (float *dest, const float *src) { memcpy(dest, src, sizeof(float)*9); }
     static inline void copyValue_sampler2D (vuint32 &dest, const vuint32 &src) { dest = src; }
+    static inline void copyValue_sampler2DShadow (vuint32 &dest, const vuint32 &src) { dest = src; }
+    static inline void copyValue_samplerCube (vuint32 &dest, const vuint32 &src) { dest = src; }
+    static inline void copyValue_samplerCubeShadow (vuint32 &dest, const vuint32 &src) { dest = src; }
   };
 
   friend class VGLShader;
@@ -257,7 +289,7 @@ protected:
   VGLShader *shaderHead;
 
   void registerShader (VGLShader *shader);
-  void CompileShaders ();
+  void CompileShaders (int glmajor, int glminor);
   void DestroyShaders ();
 
 protected:
@@ -276,6 +308,13 @@ public:
     SCS_MAXX,
     SCS_MAXY,
   };
+
+public:
+  GLuint cubeTexId;
+  GLuint cubeDepthTexId;
+  GLuint cubeFBO;
+  GLint shadowmapSize;
+  GLint savedSMVPort[4];
 
 public:
   // VDrawer interface
@@ -325,7 +364,13 @@ public:
 
   bool AdvRenderCanSurfaceCastShadow (const surface_t *surf, const TVec &LightPos, float Radius);
 
+  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) override;
+  virtual void EndLightShadowMaps () override;
+  virtual void SetupLightShadowMap (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, unsigned int facenum, int swidth, int sheight) override;
+  virtual void RenderSurfaceShadowMap (const surface_t *surf, const TVec &LightPos, float Radius) override;
+
   virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) override;
+  virtual void EndLightPass () override;
   virtual void DrawSurfaceLight (surface_t *surf) override;
 
   virtual void DrawWorldTexturesPass () override;
