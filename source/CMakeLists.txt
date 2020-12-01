@@ -136,6 +136,10 @@ set(RENDERBASE_SOURCES
   render/r_light.cpp
   render/r_light_reg.cpp
   render/r_light_adv.cpp
+  render/r_light_adv_cvars.cpp
+  render/r_light_adv_fltopt.cpp
+  render/r_light_adv_light.cpp
+  render/r_light_adv_shadow.cpp
   render/r_main.cpp
   render/r_main_reg.cpp
   render/r_main_adv.cpp

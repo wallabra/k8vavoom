@@ -23,8 +23,18 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-// directly included from "r_light_adv.cpp"
-//**************************************************************************
+#include "r_light_adv.h"
+
+
+static VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.2", "How close static lights should be to be filtered out?\n(0.1-0.3 is usually ok).", CVAR_Archive);
+static VCvarB r_allow_static_light_filter("r_allow_static_light_filter", true, "Allow filtering of static lights?", CVAR_Archive);
+static VCvarI r_static_light_filter_mode("r_static_light_filter_mode", "0", "Filter only decorations(0), or all lights(1)?", CVAR_Archive);
+
+static VCvarB r_shadowvol_optimise_flats("r_shadowvol_optimise_flats", true, "Drop some floors/ceilings that can't possibly cast shadow?", CVAR_Archive);
+#ifdef VV_CHECK_1S_CAST_SHADOW
+static VCvarB r_shadowvol_optimise_lines_1s("r_shadowvol_optimise_lines_1s", true, "Drop some 1s walls that can't possibly cast shadow? (glitchy)");
+#endif
+
 
 //==========================================================================
 //

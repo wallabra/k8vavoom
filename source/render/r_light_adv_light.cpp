@@ -23,8 +23,11 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-// directly included from "r_light_adv.cpp"
-//**************************************************************************
+#include "r_light_adv.h"
+
+
+static VCvarB clip_adv_regions_light("clip_adv_regions_light", false, "Clip (1D) light regions?", CVAR_PreInit);
+
 
 //==========================================================================
 //

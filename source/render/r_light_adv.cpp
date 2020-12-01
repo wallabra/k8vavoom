@@ -23,62 +23,20 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include <limits.h>
-#include <float.h>
-
-#include "../gamedefs.h"
-#include "r_local.h"
-
-// with this defined, it glitches
-// you can see it on map01, for example, by firing imp fireball
-//#define VV_LADV_CLIPCHECK_REGIONS_LIGHT
-//#define VV_LADV_CLIPCHECK_REGIONS_SHADOW
-
-#define VV_LADV_STRANGE_REGION_SORTING
+#include "r_light_adv.h"
 
 
-/*
-  possible shadow volume optimisations:
+static VCvarI r_dynlight_minimum("r_dynlight_minimum", "6", "Render at least this number of dynamic lights, regardless of total limit.", CVAR_Archive);
 
-  for things like pillars (i.e. sectors that has solid walls facing outwards),
-  we can construct a shadow silhouette. that is, all connected light-facing
-  walls can be replaced with one. this will render much less sides.
-  that is, we can effectively turn our pillar into cube.
+// this is wrong for now
+static VCvarB r_advlight_opt_frustum_full("r_advlight_opt_frustum_full", false, "Optimise 'light is in frustum' case.", CVAR_Archive);
+static VCvarB r_advlight_opt_frustum_back("r_advlight_opt_frustum_back", false, "Optimise 'light is in frustum' case.", CVAR_Archive);
 
-  we can prolly use sector lines to render this (not segs). i think that it
-  will be better to use sector lines to render shadow volumes in any case,
-  'cause we don't really need to render one line in several segments.
-  that is, one line split by BSP gives us two surfaces, which adds two
-  unnecessary polygons to shadow volume. by using linedefs instead, we can
-  avoid this. there is no need to create texture coordinates and surfaces
-  at all: we can easily calculate all required vertices.
+static VCvarB r_advlight_opt_scissor("r_advlight_opt_scissor", true, "Use scissor rectangle to limit light overdraws.", CVAR_Archive);
 
-  note that we cannot do the same with floors and ceilings: they can have
-  arbitrary shape.
-
-  actually, we can solve this in another way. note that we need to extrude
-  only silhouette edges. so we can collect surfaces from connected subsectors
-  into "shape", and run silhouette extraction on it. this way we can extrude
-  only a silhouette. and we can avoid rendering caps if our camera is not
-  lie inside any shadow volume (and volume is not clipped by near plane).
-
-  we can easily determine if the camera is inside a volume by checking if
-  it lies inside any extruded subsector. as subsectors are convex, this is a
-  simple set of point-vs-plane checks. first check if light and camera are
-  on a different sides of a surface, and do costly checks only if they are.
-
-  if the camera is outside of shadow volume, we can use faster z-pass method.
-
-  if a light is behind a camera, we can move back frustum plane, so it will
-  contain light origin, and clip everything behind it. the same can be done
-  for all other frustum planes. or we can build full light-vs-frustum clip.
-*/
-
-
-#include "r_light_adv_cvars.cpp"
-#include "r_light_adv_fltopt.cpp"
-#include "r_light_adv_shadow.cpp"
-#include "r_light_adv_light.cpp"
+static VCvarB r_shadowvol_use_pofs("r_shadowvol_use_pofs", true, "Use PolygonOffset for shadow volumes to reduce some flickering (WARNING: BUGGY!)?", CVAR_Archive);
+static VCvarF r_shadowvol_pofs("r_shadowvol_pofs", "20", "DEBUG");
+static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 
 
 //==========================================================================

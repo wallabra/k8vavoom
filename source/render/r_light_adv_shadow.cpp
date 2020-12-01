@@ -23,8 +23,13 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-// directly included from "r_light_adv.cpp"
-//**************************************************************************
+#include "r_light_adv.h"
+
+
+static VCvarB clip_adv_regions_shadow("clip_adv_regions_shadow", false, "Clip (1D) shadow regions?", CVAR_PreInit);
+
+static VCvarI r_max_shadow_segs_one("r_max_shadow_segs_one", "-1", "Maximum shadow segments for one light.", CVAR_Archive);
+
 
 //==========================================================================
 //
