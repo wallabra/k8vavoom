@@ -48,6 +48,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
 
   smapLightPos = LightPos;
   smapLightRadius = Radius;
+  smapLastTexinfo.initLastUsed();
 
   glDepthMask(GL_TRUE); // due to shadow volumes pass settings
   glEnable(GL_DEPTH_TEST);
@@ -86,11 +87,17 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
   TVec lpp = lview2*LightPos;
 
-  SurfShadowMap.Activate();
+  //SurfShadowMap.Activate();
   SurfShadowMap.SetLightView(lview2);
   SurfShadowMap.SetLightPos(lpp);
   SurfShadowMap.SetLightRadius(Radius);
-  SurfShadowMap.SetTexture(0);
+  //SurfShadowMap.SetTexture(0);
+
+  //SurfShadowMapTex.Activate();
+  SurfShadowMapTex.SetLightView(lview2);
+  SurfShadowMapTex.SetLightPos(lpp);
+  SurfShadowMapTex.SetLightRadius(Radius);
+  SurfShadowMapTex.SetTexture(0);
 
   GLDRW_CHECK_ERROR("finish cube FBO setup");
 }
@@ -147,6 +154,7 @@ void VOpenGLDrawer::SetupLightShadowMap (unsigned int facenum) {
   CalcModelMatrix(lview, smapLightPos, viewAngles[facenum], false);
   VMatrix4 lmpv = smapProj*lview;
   SurfShadowMap.SetLightMPV(lmpv);
+  SurfShadowMapTex.SetLightMPV(lmpv);
 
   //SurfShadowMap.UploadChangedUniforms();
   GLDRW_CHECK_ERROR("update cube FBO shader");
@@ -162,9 +170,27 @@ void VOpenGLDrawer::RenderSurfaceShadowMap (const surface_t *surf) {
   if (gl_dbg_wireframe) return;
   if (surf->count < 3) return; // just in case
 
-  const texinfo_t *tex = surf->texinfo;
-  SetTexture(tex->Tex, tex->ColorMap);
-  SurfShadowMap.SetTex(tex);
+  const texinfo_t *currTexinfo = surf->texinfo;
+  #if 1
+  if (currTexinfo->Tex->isTransparent()) {
+    SurfShadowMapTex.Activate();
+    const bool textureChanged = smapLastTexinfo.needChange(*currTexinfo, updateFrame);
+    if (textureChanged) {
+      smapLastTexinfo.updateLastUsed(*currTexinfo);
+      SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+      SurfShadowMapTex.SetTex(currTexinfo);
+    }
+  } else {
+    SurfShadowMap.Activate();
+  }
+  #else
+  SurfShadowMapTex.Activate();
+  const bool textureChanged = smapLastTexinfo.needChange(*currTexinfo, updateFrame);
+  if (textureChanged) {
+    SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+    SurfShadowMapTex.SetTex(currTexinfo);
+  }
+  #endif
 
   //if (gl_smart_reject_shadows && !AdvRenderCanSurfaceCastShadow(surf, LightPos, Radius)) return;
 

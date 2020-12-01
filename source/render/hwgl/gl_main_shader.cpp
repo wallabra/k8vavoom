@@ -172,8 +172,10 @@ void VOpenGLDrawer::VGLShader::MainSetup (VOpenGLDrawer *aowner, const char *apr
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Activate () {
   vassert(prog);
-  owner->p_glUseProgramObjectARB(prog);
-  owner->currentActiveShader = this;
+  if (owner->currentActiveShader != this) {
+    owner->p_glUseProgramObjectARB(prog);
+    owner->currentActiveShader = this;
+  }
 }
 
 
@@ -185,6 +187,16 @@ void VOpenGLDrawer::VGLShader::Activate () {
 void VOpenGLDrawer::VGLShader::Deactivate () {
   owner->p_glUseProgramObjectARB(0);
   owner->currentActiveShader = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::VGLShader::IsActive
+//
+//==========================================================================
+bool VOpenGLDrawer::VGLShader::IsActive () const noexcept {
+  return (owner && owner->currentActiveShader == this);
 }
 
 

@@ -41,6 +41,61 @@ static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 
 //==========================================================================
 //
+//  advCompareSurfaces
+//
+//==========================================================================
+static inline int advCompareSurfaces (const void *saa, const void *sbb, void *) {
+  if (saa == sbb) return 0;
+  const surface_t *sa = *(const surface_t **)saa;
+  const surface_t *sb = *(const surface_t **)sbb;
+  if (sa == sb) return 0;
+  const texinfo_t *ta = sa->texinfo;
+  const texinfo_t *tb = sb->texinfo;
+
+  // surfaces without textures should float up
+  if (!ta->Tex) {
+    return (!tb->Tex ? 0 : -1);
+  } else if (!tb->Tex) {
+    return 1;
+  }
+
+  // transparent textures comes last
+  if (ta->Tex->isTransparent()) {
+    return (tb->Tex->isTransparent() ? 0 : 1);
+  } else if (tb->Tex->isTransparent()) {
+    return -1;
+  }
+
+  // sort by texture id (just use texture pointer)
+  if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
+  if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+
+  // sort by offsets and axes
+  if (ta->soffs < tb->soffs) return -1;
+  if (ta->soffs > tb->soffs) return 1;
+  if (ta->toffs < tb->toffs) return -1;
+  if (ta->toffs > tb->toffs) return 1;
+
+  if (ta->saxis.x < tb->saxis.x) return -1;
+  if (ta->saxis.x > tb->saxis.x) return 1;
+  if (ta->saxis.y < tb->saxis.y) return -1;
+  if (ta->saxis.y > tb->saxis.y) return 1;
+  if (ta->saxis.z < tb->saxis.z) return -1;
+  if (ta->saxis.z > tb->saxis.z) return 1;
+
+  if (ta->taxis.x < tb->taxis.x) return -1;
+  if (ta->taxis.x > tb->taxis.x) return 1;
+  if (ta->taxis.y < tb->taxis.y) return -1;
+  if (ta->taxis.y > tb->taxis.y) return 1;
+  if (ta->taxis.z < tb->taxis.z) return -1;
+  if (ta->taxis.z > tb->taxis.z) return 1;
+
+  return 0;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShadowVolume::RenderLightShadows
 //
 //==========================================================================
@@ -262,6 +317,8 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle, refdef.width, refdef.height);
     if (allowShadows) {
       if (!useCollector) (void)fsecCounterGen(); // for checker
+      // sort shadow surfaces by textures
+      timsort_r(shadowSurfaces.ptr(), shadowSurfaces.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
       if (r_max_shadow_segs_all) {
         if (useCollector) {
           for (unsigned fc = 0; fc < 6; ++fc) {

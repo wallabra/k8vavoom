@@ -175,6 +175,7 @@ public:
 
     void Activate ();
     void Deactivate ();
+    bool IsActive () const noexcept;
 
     static inline bool notEqual_float (const float &v1, const float &v2) { return (FASI(v1) != FASI(v2)); }
     static inline bool notEqual_bool (const bool v1, const bool v2) { return (v1 != v2); }
@@ -319,6 +320,7 @@ public:
   VMatrix4 smapProj;
   TVec smapLightPos;
   float smapLightRadius;
+  texinfo_t smapLastTexinfo;
 
 public:
   // VDrawer interface
