@@ -1132,6 +1132,8 @@ private:
   int DynLightsRendered;
   // set this to true before calling `RenderLightShadows()` to indicate dynamic light
   bool DynamicLights;
+  // keep 'em here, so we don't have to traverse BSP six times
+  TArray<surface_t *> smapSurfaces;
 
   // used to avoid double-checking
   struct FlatSectorShadowInfo {

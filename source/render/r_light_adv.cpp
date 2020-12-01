@@ -276,56 +276,41 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
   // but do this only if the light is in front of a camera
   //const bool checkFrustum = (r_advlight_opt_frustum_back && Drawer->viewfrustum.checkSphere(CurrLightPos, CurrLightRadius, TFrustum::NearBit));
 
-  if (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps()) {
-    for (surface_t *surf = InSurfs; surf; surf = surf->next) {
-      if (surf->count < 3) continue; // just in case
+  const bool smaps = r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps();
 
-      // floor or ceiling? ignore translucent
-      if (LightCanCross < 0 || surf->GetNormalZ()) {
-        VTexture *tex = surf->texinfo->Tex;
-        if (!tex || tex->Type == TEXTYPE_Null) continue;
-        if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;
-      }
+  // TODO: if light is behind a camera, we can move back frustum plane, so it will
+  //       contain light origin, and clip everything behind it. the same can be done
+  //       for all other frustum planes.
+  for (surface_t *surf = InSurfs; surf; surf = surf->next) {
+    if (surf->count < 3) continue; // just in case
 
-      // leave only surface that light can see (it shouldn't matter for texturing which one we'll use)
-      const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
-      // k8: use `<=` and `>=` for radius checks, 'cause why not?
-      //     light completely fades away at that distance
-      if (dist <= 0.0f || dist >= CurrLightRadius) return; // light is too far away
+    // check transdoor hacks
+    //if (surf->drawflags&surface_t::TF_TOPHACK) continue;
 
-      Drawer->RenderSurfaceShadowMap(surf, CurrLightPos, CurrLightRadius);
+    // floor or ceiling? ignore translucent/masked
+    if (LightCanCross < 0 || surf->GetNormalZ()) {
+      VTexture *tex = surf->texinfo->Tex;
+      if (!tex || tex->Type == TEXTYPE_Null) continue;
+      if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;
+      if (!smaps && tex->isSeeThrough()) continue; // this is masked texture, shadow volumes cannot process it
     }
-  } else {
-    // TODO: if light is behind a camera, we can move back frustum plane, so it will
-    //       contain light origin, and clip everything behind it. the same can be done
-    //       for all other frustum planes.
-    for (surface_t *surf = InSurfs; surf; surf = surf->next) {
-      if (surf->count < 3) continue; // just in case
 
-      // check transdoor hacks
-      //if (surf->drawflags&surface_t::TF_TOPHACK) continue;
+    // leave only surface that light can see (it shouldn't matter for texturing which one we'll use)
+    const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
+    // k8: use `<=` and `>=` for radius checks, 'cause why not?
+    //     light completely fades away at that distance
+    if (dist <= 0.0f || dist >= CurrLightRadius) return; // light is too far away
 
-      // floor or ceiling? ignore masked
-      if (LightCanCross < 0 || surf->GetNormalZ()) {
-        VTexture *tex = surf->texinfo->Tex;
-        if (!tex || tex->Type == TEXTYPE_Null) continue;
-        if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;
-        if (tex->isSeeThrough()) continue; // this is masked texture
-      }
+    /*
+    if (checkFrustum) {
+      if (!Drawer->viewfrustum.checkVerts(surf->verts, (unsigned)surf->count, TFrustum::NearBit)) continue;
+    }
+    */
 
-      // leave only surface that light can see (it shouldn't matter for texturing which one we'll use)
-      const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
-      // k8: use `<=` and `>=` for radius checks, 'cause why not?
-      //     light completely fades away at that distance
-      if (dist <= 0.0f || dist >= CurrLightRadius) return; // light is too far away
-
-      /*
-      if (checkFrustum) {
-        if (!Drawer->viewfrustum.checkVerts(surf->verts, (unsigned)surf->count, TFrustum::NearBit)) continue;
-      }
-      */
-
+    if (!smaps) {
       Drawer->RenderSurfaceShadowVolume(surf, CurrLightPos, CurrLightRadius);
+    } else {
+      smapSurfaces.append(surf);
     }
   }
 }
@@ -1248,12 +1233,14 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     if (allowShadows) {
       (void)fsecCounterGen(); // for checker
       if (r_max_shadow_segs_all) {
+        smapSurfaces.reset();
+        LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
+        dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
+        dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
+        RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
         for (unsigned fc = 0; fc < 6; ++fc) {
-          Drawer->SetupLightShadowMap(CurrLightPos, CurrLightRadius, coneDir, coneAngle, fc, refdef.width, refdef.height);
-          LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
-          dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
-          dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
-          RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+          Drawer->SetupLightShadowMap(fc);
+          for (auto &&surf : smapSurfaces) Drawer->RenderSurfaceShadowMap(surf);
         }
       }
     }

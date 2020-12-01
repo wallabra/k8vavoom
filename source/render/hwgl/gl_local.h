@@ -316,6 +316,10 @@ public:
   GLint shadowmapSize;
   GLint savedSMVPort[4];
 
+  VMatrix4 smapProj;
+  TVec smapLightPos;
+  float smapLightRadius;
+
 public:
   // VDrawer interface
   VOpenGLDrawer ();
@@ -366,8 +370,8 @@ public:
 
   virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) override;
   virtual void EndLightShadowMaps () override;
-  virtual void SetupLightShadowMap (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, unsigned int facenum, int swidth, int sheight) override;
-  virtual void RenderSurfaceShadowMap (const surface_t *surf, const TVec &LightPos, float Radius) override;
+  virtual void SetupLightShadowMap (unsigned int facenum) override;
+  virtual void RenderSurfaceShadowMap (const surface_t *surf) override;
 
   virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) override;
   virtual void EndLightPass () override;
