@@ -41,6 +41,7 @@ VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How 
 VCvarB r_allow_dynamic_light_filter("r_allow_dynamic_light_filter", true, "Allow filtering of dynamic lights?", CVAR_Archive);
 
 VCvarB r_shadowmaps("r_shadowmaps", true, "Use shadowmaps instead of shadow volumes?", CVAR_PreInit);
+VCvarI dbg_shadowmaps("dbg_shadowmaps", "1", "Show shadowmap cubemap?", CVAR_PreInit);
 
 
 static VCvarB r_dynamic_light_better_vis_check("r_dynamic_light_better_vis_check", true, "Do better (but slower) dynlight visibility checking on spawn?", CVAR_Archive);

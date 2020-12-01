@@ -235,7 +235,7 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
     glEnable(GL_TEXTURE_2D);
   }
 
-  if (r_shadowmaps && 1) {
+  if (r_shadowmaps && (dbg_shadowmaps.asInt()&0x01) != 0) {
     // right
     // left
     // top
