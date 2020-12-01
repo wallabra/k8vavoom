@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -469,6 +470,11 @@ char *prGetToken (Parser *par) {
     tokbuf[tkbpos++] = ch;
          if (ch == '[' && prPeekChar(par) == '[') tokbuf[tkbpos++] = prGetChar(par);
     else if (ch == ']' && prPeekChar(par) == ']') tokbuf[tkbpos++] = prGetChar(par);
+    else if (ch == '<' && prPeekChar(par) == '=') tokbuf[tkbpos++] = prGetChar(par);
+    else if (ch == '>' && prPeekChar(par) == '=') tokbuf[tkbpos++] = prGetChar(par);
+    else if (ch == '!' && prPeekChar(par) == '=') tokbuf[tkbpos++] = prGetChar(par);
+    else if (ch == '&' && prPeekChar(par) == '&') tokbuf[tkbpos++] = prGetChar(par);
+    else if (ch == '|' && prPeekChar(par) == '|') tokbuf[tkbpos++] = prGetChar(par);
   }
 
   tokbuf[tkbpos++] = 0;
@@ -839,6 +845,29 @@ static int hasTblDefine (DefineTable *tbl, const char *defstr) {
 
 typedef struct ShaderInfo ShaderInfo;
 
+typedef enum {
+  CondLess,
+  CondLessEqu,
+  CondEqu,
+  CondGreater,
+  CondGreaterEqu,
+  CondNotEqu,
+} CondCode;
+
+
+static const char *getCondName (CondCode cc) {
+  switch (cc) {
+    case CondLess: return "CondLess";
+    case CondLessEqu: return "CondLessEqu";
+    case CondEqu: return "CondEqu";
+    case CondGreater: return "CondGreater";
+    case CondGreaterEqu: return "CondGreaterEqu";
+    case CondNotEqu: return "CondNotEqu";
+  }
+  return "WTF";
+}
+
+
 struct ShaderInfo {
   char *name; // variable name
   LocInfo *locs;
@@ -851,6 +880,9 @@ struct ShaderInfo {
   char *incdir;
   // defines (nullptr, or array of chars, each define terminates with '\0')
   DefineTable defines;
+  // opengl version
+  CondCode oglVersionCond;
+  int oglVersion;  // high*100+low
   ShaderInfo *next;
 };
 
@@ -887,6 +919,37 @@ int hasDefine (ShaderInfo *si, const char *defstr) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+int parseDigit (Parser *par) {
+  //Parser *state = prSimpleSavePos(par);
+  const char *tk = prGetToken(par);
+  if (tk && !par->isString && !tk[1] && isdigit(tk[0])) {
+    int dig = tk[0]-'0';
+    //prSimpleFreePos(&state);
+    return dig;
+  }
+  //prSimpleRestoreAndFreePos(par, &state);
+  static char errmsg[1024];
+  snprintf(errmsg, sizeof(errmsg), "expected digit, but got '%s'", (tk ? tk : "<EOF>"));
+  prError(par, errmsg);
+  return 0;
+}
+
+
+CondCode parseCondCode (Parser *par) {
+  if (prCheck(par, "<")) return CondLess;
+  if (prCheck(par, "<=")) return CondLessEqu;
+  if (prCheck(par, ">")) return CondGreater;
+  if (prCheck(par, ">=")) return CondGreaterEqu;
+  if (prCheck(par, "!=")) return CondNotEqu;
+  if (prCheck(par, "=")) return CondEqu;
+  const char *tk = prGetToken(par);
+  static char errmsg[1024];
+  snprintf(errmsg, sizeof(errmsg), "expected comparison, but got '%s'", (tk ? tk : "<EOF>"));
+  prError(par, errmsg);
+  return CondEqu;
+}
+
+
 // `ShaderList` eaten
 void parseShaderList (Parser *par, const char *basebase) {
   char *basedir = nullptr;
@@ -904,12 +967,26 @@ void parseShaderList (Parser *par, const char *basebase) {
   while (!prCheck(par, "}")) {
     if (prCheck(par, ";")) continue;
     prExpect(par, "Shader");
+    CondCode oglVersionCond = CondGreaterEqu;
+    int oglVersion = 0;  // high*100+low
     // attributes (unused for now)
-    if (prCheck(par, "[")) {
-      prExpect(par, "advanced");
+    while (prCheck(par, "[")) {
+      if (prCheck(par, "advanced")) {
+        // do nothing
+      } else if (prCheck(par, "OpenGL")) {
+        oglVersionCond = parseCondCode(par);
+        int hi = parseDigit(par);
+        prExpect(par, ".");
+        int lo = parseDigit(par);
+        oglVersion = hi*100+lo;
+      } else {
+        prError(par, "shader attribute expected");
+      }
       prExpect(par, "]");
     }
     ShaderInfo *si = xalloc(sizeof(ShaderInfo));
+    si->oglVersionCond = oglVersionCond;
+    si->oglVersion = oglVersion;
     // name
     si->name = xstrdup(prExpectId(par));
     if (verbose) printf("[  found shader info '%s']\n", si->name);
@@ -1386,6 +1463,7 @@ int main (int argc, char **argv) {
         shloc->inset = 1; // do not generate setter for this var
       }
     }
+
     // generate header info
     fprintf(foh, "  class VShaderDef_%s : public VGLShader {\n", si->name);
     fprintf(foh, "  public:\n");
@@ -1481,6 +1559,9 @@ int main (int argc, char **argv) {
       if (!loc->isAttr) fprintf(foc, "  , changed_%s(false)\n", loc->name);
     }
     fprintf(foc, "{\n");
+    if (!(si->oglVersion == 0 && si->oglVersionCond == CondGreaterEqu)) {
+      fprintf(foc, "  SetOpenGLVersion(%s, %d);\n", getCondName(si->oglVersionCond), (int)si->oglVersion);
+    }
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
       fprintf(foc, "  ");
       writeInitValueNoChecks(foc, loc);
