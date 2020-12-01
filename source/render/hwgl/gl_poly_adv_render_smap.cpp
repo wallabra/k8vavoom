@@ -202,8 +202,8 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
 
   const TAVec viewAngles[6] = {
     //    pitch    yaw   roll
-    TAVec(  0.0f,  90.0f,   0.0f), // right
-    TAVec(  0.0f, -90.0f,   0.0f), // left
+    TAVec(  0.0f, -90.0f,   0.0f), // right
+    TAVec(  0.0f,  90.0f,   0.0f), // left
     TAVec( 90.0f,   0.0f,   0.0f), // top
     TAVec(-90.0f,   0.0f,   0.0f), // bottom
     TAVec(  0.0f,   0.0f,   0.0f), // back

@@ -45,7 +45,7 @@ void main () {
   // sample shadow cube map
   //float referenceDistanceToLight = texture(ShadowTexture, -fromLightToFragment).r;
   vec3 ltfdir;
-  ltfdir.x =  fromLightToFragment.x;
+  ltfdir.x = -fromLightToFragment.x;
   ltfdir.y =  fromLightToFragment.y;
   ltfdir.z =  fromLightToFragment.z;
   float referenceDistanceToLight = texture(ShadowTexture, ltfdir).r;
