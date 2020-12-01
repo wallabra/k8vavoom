@@ -245,37 +245,58 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     }
   }
 
+  const bool useCollector = r_adv_use_collector.asBool();
+
+  LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
+  if (useCollector) {
+    shadowSurfaces.reset();
+    lightSurfaces.reset();
+    (void)fsecCounterGen();
+    dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
+    dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
+    CollectAdvLightBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+  }
+
   // do shadow volumes
   if (useShadowMaps) {
     Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle, refdef.width, refdef.height);
     if (allowShadows) {
-      (void)fsecCounterGen(); // for checker
+      if (!useCollector) (void)fsecCounterGen(); // for checker
       if (r_max_shadow_segs_all) {
-        smapSurfaces.reset();
-        LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
-        dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
-        dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
-        RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
-        for (unsigned fc = 0; fc < 6; ++fc) {
-          Drawer->SetupLightShadowMap(fc);
-          for (auto &&surf : smapSurfaces) Drawer->RenderSurfaceShadowMap(surf);
+        if (useCollector) {
+          for (unsigned fc = 0; fc < 6; ++fc) {
+            Drawer->SetupLightShadowMap(fc);
+            for (auto &&surf : shadowSurfaces) Drawer->RenderSurfaceShadowMap(surf);
+          }
+        } else {
+          smapSurfaces.reset();
+          dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
+          dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
+          RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+          for (unsigned fc = 0; fc < 6; ++fc) {
+            Drawer->SetupLightShadowMap(fc);
+            for (auto &&surf : smapSurfaces) Drawer->RenderSurfaceShadowMap(surf);
+          }
         }
       }
     }
     Drawer->EndLightShadowMaps();
   } else {
-    LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
     Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord, coneDir, coneAngle);
     if (allowShadows) {
-      (void)fsecCounterGen(); // for checker
+      if (!useCollector) (void)fsecCounterGen(); // for checker
       if (r_shadowvol_use_pofs) {
         // pull forward
         Drawer->GLPolygonOffsetEx(r_shadowvol_pslope, -r_shadowvol_pofs);
       }
       if (r_max_shadow_segs_all) {
-        dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
-        dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
-        RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+        if (useCollector) {
+          RenderShadowSurfaceList();
+        } else {
+          dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
+          dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
+          RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+        }
       }
       Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
       RenderMobjsShadow(ent, dlflags);
@@ -297,10 +318,14 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   // draw light
   Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, allowShadows);
-  LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
-  dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
-  dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
-  RenderLightBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+  if (useCollector) {
+    RenderLightSurfaceList();
+  } else {
+    LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
+    dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
+    dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
+    RenderLightBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+  }
   Drawer->EndLightPass();
 
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, coneDir, coneAngle);

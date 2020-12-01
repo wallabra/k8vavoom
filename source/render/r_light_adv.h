@@ -96,3 +96,6 @@ extern VCvarB dbg_adv_light_notrace_mark;
 extern VCvarB gl_dbg_wireframe;
 
 extern VCvarB dbg_adv_light_notrace_mark;
+
+
+extern VCvarB r_adv_use_collector;

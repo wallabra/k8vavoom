@@ -1132,10 +1132,14 @@ private:
   int DynLightsRendered;
   // set this to true before calling `RenderLightShadows()` to indicate dynamic light
   bool DynamicLights;
-  // keep 'em here, so we don't have to traverse BSP six times
+
+  // keep 'em here, so we don't have to traverse BSP several times
   TArray<surface_t *> smapSurfaces;
 
-  // used to avoid double-checking
+  TArray<surface_t *> shadowSurfaces;
+  TArray<surface_t *> lightSurfaces;
+
+  // used to avoid double-checking; sized by NumSectors
   struct FlatSectorShadowInfo {
     enum {
       NoFloor   = 1u<<0,
@@ -1215,6 +1219,21 @@ protected:
   void RenderCollectSurfaces (const refdef_t *rd, const VViewClipper *Range);
 
   void AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow);
+
+  // we can collect surfaces for lighting and shadowing in one pass
+  // don't forget to reset `shadowSurfaces` and `lightSurfaces`
+  void CollectAdvLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
+                                VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross,
+                                unsigned int ssflag);
+  void CollectAdvLightLine (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg, unsigned int ssflag);
+  void CollectAdvLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox, unsigned int ssflag);
+  void CollectAdvLightPolyObj (subsector_t *sub, unsigned int ssflag);
+  void CollectAdvLightSubRegion (subsector_t *sub, subregion_t *region, unsigned int ssflag);
+  void CollectAdvLightSubsector (int num);
+  void CollectAdvLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
+
+  void RenderShadowSurfaceList ();
+  void RenderLightSurfaceList ();
 
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
   void RenderShadowLine (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg);

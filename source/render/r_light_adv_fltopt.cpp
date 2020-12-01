@@ -233,8 +233,18 @@ bool VRenderLevelShadowVolume::CheckCan1SCastShadow (line_t *line) {
 //
 //  VRenderLevelShadowVolume::CheckShadowingFlats
 //
+//  THIS IS OUDATED!
+//  note that we can throw away main floors and ceilings (i.e. for the base region),
+//  but only if this subsector either doesn't have any lines (i.e. consists purely of minisegs),
+//  nope: not any such subregion; just avoid checking neighbouring sectors if shared line
+//        cannot be touched by the light
+//  or:
+//    drop floor if all neighbour floors are higher or equal (we cannot cast any shadow to them),
+//    drop ceiling if all neighbour ceilings are lower or equal (we cannot cast any shadow to them)
+//
 //==========================================================================
 unsigned VRenderLevelShadowVolume::CheckShadowingFlats (subsector_t *sub) {
+  if (!sub || !sub->sector) return (FlatSectorShadowInfo::NoFloor|FlatSectorShadowInfo::NoCeiling);
   if (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps()) return 0;
   //if (floorz > ceilingz) return 0;
   sector_t *sector = sub->sector; // our main sector

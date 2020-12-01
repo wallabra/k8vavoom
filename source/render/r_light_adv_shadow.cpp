@@ -226,18 +226,6 @@ void VRenderLevelShadowVolume::RenderShadowSubRegion (subsector_t *sub, subregio
   //const bool nextFirst = NeedToRenderNextSubFirst(region);
   //if (nextFirst) RenderShadowSubRegion(sub, region->next);
 
-  /*
-    note that we can throw away main floors and ceilings (i.e. for the base region),
-    but only if this subsector either doesn't have any lines (i.e. consists purely of minisegs),
-    nope: not any such subregion; just avoid checking neighbouring sectors if shared line
-          cannot be touched by the light
-    or:
-      drop floor if all neighbour floors are higher or equal (we cannot cast any shadow to them),
-      drop ceiling if all neighbour ceilings are lower or equal (we cannot cast any shadow to them)
-
-    this is done by `CheckShadowingFlats()`
-   */
-
   for (; region; region = region->next) {
     sec_region_t *secregion = region->secregion;
 
