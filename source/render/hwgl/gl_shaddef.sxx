@@ -267,8 +267,8 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader SurfPartSm vertex="particle/particle" fragment="particle/particle_sm";
 
   Shader [advanced] SurfShadowVolume both="shadowvol/surf_svol";
-  Shader [advanced] SurfShadowMap both="shadowvol/surf_smap";
-  //Shader [advanced] SurfShadowMapClear both="shadowvol/surf_smap" { define "VV_SMAP_CLEAR"; }
+  Shader [advanced] [OpenGL >= 3.0] SurfShadowMap both="shadowvol/surf_smap";
+  //Shader [advanced] [OpenGL >= 3.0] SurfShadowMapClear both="shadowvol/surf_smap" { define "VV_SMAP_CLEAR"; }
 
   Shader [advanced] ShadowsAmbient both="shadowvol/surf/shadows_surf_ambient";
   Shader [advanced] ShadowsAmbientMasked both="shadowvol/surf/shadows_surf_ambient" { define "VV_AMBIENT_MASKED_WALL"; }
@@ -283,8 +283,8 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader [advanced] ShadowsLightDbg both="shadowvol/surf/shadows_surf_light" { define "VV_DEBUG_LIGHT"; }
   Shader [advanced] ShadowsLightSpotDbg both="shadowvol/surf/shadows_surf_light" { defines { "VV_DEBUG_LIGHT", "VV_SPOTLIGHT" } }
 
-  Shader [advanced] ShadowsLightSMap both="shadowvol/surf/shadows_surf_light_smap";
-  Shader [advanced] DbgShadowMap both="draw/draw_smap_dbg";
+  Shader [advanced] [OpenGL >= 3.0] ShadowsLightSMap both="shadowvol/surf/shadows_surf_light_smap";
+  Shader [advanced] [OpenGL >= 3.0] DbgShadowMap both="draw/draw_smap_dbg";
 
   Shader SurfModel both="lightmap/surf_model";
   Shader SurfModelStencil both="lightmap/surf_model" { define "VV_STENCIL"; }

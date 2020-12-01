@@ -259,7 +259,9 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
 
   if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
   if (texinfo->Alpha < 1.0f || texinfo->Additive) return;
-  if (LightCanCross > 0 && (!r_shadowmaps.asBool() && texinfo->Tex->isSeeThrough())) return; // has holes, don't bother
+  if (!r_shadowmaps.asBool() || !Drawer->CanRenderShadowMaps()) {
+    if (LightCanCross > 0 && texinfo->Tex->isSeeThrough()) return; // has holes, don't bother
+  }
 
   if (SkyBox && SkyBox->IsPortalDirty()) SkyBox = nullptr;
 
@@ -274,11 +276,11 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
   // but do this only if the light is in front of a camera
   //const bool checkFrustum = (r_advlight_opt_frustum_back && Drawer->viewfrustum.checkSphere(CurrLightPos, CurrLightRadius, TFrustum::NearBit));
 
-  if (r_shadowmaps) {
+  if (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps()) {
     for (surface_t *surf = InSurfs; surf; surf = surf->next) {
       if (surf->count < 3) continue; // just in case
 
-      // floor or ceiling? ignore masked
+      // floor or ceiling? ignore translucent
       if (LightCanCross < 0 || surf->GetNormalZ()) {
         VTexture *tex = surf->texinfo->Tex;
         if (!tex || tex->Type == TEXTYPE_Null) continue;
@@ -526,7 +528,7 @@ void VRenderLevelShadowVolume::RenderShadowPolyObj (subsector_t *sub) {
 //
 //==========================================================================
 unsigned VRenderLevelShadowVolume::CheckShadowingFlats (subsector_t *sub) {
-  if (r_shadowmaps) return 0;
+  if (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps()) return 0;
   //if (floorz > ceilingz) return 0;
   sector_t *sector = sub->sector; // our main sector
   int sidx = (int)(ptrdiff_t)(sector-&Level->Sectors[0]);
@@ -1112,7 +1114,9 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   //GCon->Logf("LBB:(%f,%f,%f)-(%f,%f,%f)", LitBBox[0], LitBBox[1], LitBBox[2], LitBBox[3], LitBBox[4], LitBBox[5]);
 
-  if (!r_shadowmaps) {
+  const bool useShadowMaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
+
+  if (!useShadowMaps) {
     // setup light scissor rectangle
     if (optimiseScissor) {
       hasScissor = Drawer->SetupLightScissor(Pos, Radius-LightMin, scoord, (r_advlight_opt_optimise_scissor ? LitBBox : nullptr));
@@ -1158,7 +1162,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   // still, we may miss some lighting on models from flying lights that cannot touch
   // any geometry at all. to somewhat ease this case, rebuild light box when the light
   // didn't touched anything.
-  if (optimiseScissor && allowShadows && checkModels && !r_shadowmaps) {
+  if (optimiseScissor && allowShadows && checkModels && !useShadowMaps) {
     if (mobjsInCurrLight.length() == 0) return; // nothing to do, as it is guaranteed that light cannot touch map geometry
     float xbbox[6] = {0};
     /*
@@ -1239,7 +1243,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   }
 
   // do shadow volumes
-  if (r_shadowmaps) {
+  if (useShadowMaps) {
     Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle, refdef.width, refdef.height);
     if (allowShadows) {
       (void)fsecCounterGen(); // for checker

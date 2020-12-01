@@ -2131,12 +2131,14 @@ void R_InitTexture () {
   LoadIcon(NAME_loadicon, "graphics/k8vavoom_special/k8vavoom_load.png");
   if (developer) GTextureManager.DumpHashStats(NAME_Dev);
 
+  /*
   GCon->Logf(NAME_Debug, "right=%d", (gtxLeft = GTextureManager.AddFileTextureChecked("textures/right.png", TEXTYPE_Pic)));
   GCon->Logf(NAME_Debug, "left=%d", (gtxRight = GTextureManager.AddFileTextureChecked("textures/left.png", TEXTYPE_Pic)));
   GCon->Logf(NAME_Debug, "top=%d", (gtxTop = GTextureManager.AddFileTextureChecked("textures/top.png", TEXTYPE_Pic)));
   GCon->Logf(NAME_Debug, "bottom=%d", (gtxBottom = GTextureManager.AddFileTextureChecked("textures/bottom.png", TEXTYPE_Pic)));
   GCon->Logf(NAME_Debug, "back=%d", (gtxBack = GTextureManager.AddFileTextureChecked("textures/back.png", TEXTYPE_Pic)));
   GCon->Logf(NAME_Debug, "front=%d", (gtxFront = GTextureManager.AddFileTextureChecked("textures/front.png", TEXTYPE_Pic)));
+  */
 
   if (cli_DumpTextures > 0) R_DumpTextures();
 }

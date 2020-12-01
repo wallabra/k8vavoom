@@ -95,124 +95,10 @@ void VOpenGLDrawer::EndLightShadowMaps () {
 
 //==========================================================================
 //
-//  matDump
-//
-//==========================================================================
-static VVA_OKUNUSED void matDump (const VMatrix4 &mat) {
-  GCon->Logf(NAME_Debug, "=======");
-  for (int y = 0; y < 4; ++y) {
-    VStr s;
-    for (int x = 0; x < 4; ++x) {
-      s += va(" %g", mat.m[y][x]);
-    }
-    GCon->Logf(NAME_Debug, "%s", *s);
-  }
-}
-
-
-//==========================================================================
-//
 //  VOpenGLDrawer::SetupLightShadowMap
 //
 //==========================================================================
 void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, unsigned int facenum, int swidth, int sheight) {
-  //GCon->Logf(NAME_Debug, "--- facenum=%u ---", facenum);
-  const TVec viewsCenter[6] = {
-    TVec( 1,  0,  0),
-    TVec(-1,  0,  0),
-    TVec( 0,  1,  0),
-    TVec( 0, -1,  0),
-    TVec( 0,  0,  1),
-    TVec( 0,  0, -1),
-  };
-  const TVec viewsUp[6] = {
-    TVec(0, -1,  0), // or -1
-    TVec(0, -1,  0), // or -1
-    TVec(0,  0, -1), // or 1
-    TVec(0,  0,  1), // or -1
-    TVec(0, -1,  0), // or -1
-    TVec(0, -1,  0), // or -1
-  };
-
-  //glDisable(GL_SCISSOR_TEST);
-
-    // right
-    // left
-    // top
-    // bottom
-    // back
-    // front
-
-  //VMatrix4 newPrj = VMatrix4::ProjectionZeroOne(90.0f, 1.0f, 1.0f, Radius);
-  VMatrix4 newPrj = VMatrix4::ProjectionNegOne(90.0f, 1.0, 1.0f, Radius);
-  //VMatrix4 newPrj = VMatrix4::Perspective(90.0f, 1.0f, 1.0f, Radius);
-  //matDump(newPrj);
-  //matDump(newPrj1);
-  /*
-  VMatrix4 lview = VMatrix4::TranslateNeg(LightPos);
-  VMatrix4 aface = VMatrix4::LookAtGLM(TVec(0, 0, 0), viewsCenter[facenum], viewsUp[facenum]);
-  VMatrix4 mvp = newPrj*aface*lview; // *mview
-  */
-  //VMatrix4 lview = VMatrix4::LookAtGLM(LightPos, viewsCenter[facenum], viewsUp[facenum]);
-  //VMatrix4 lview = VMatrix4::LookAt(LightPos, viewsCenter[facenum], viewsUp[facenum]);
-  //VMatrix4 lview = VMatrix4::LookAtGLM(TVec(0, 0, 0), viewsCenter[facenum], viewsUp[facenum]);
-
-  //VMatrix4 mvp = newPrj*lview; //*mview
-
-  VMatrix4 ProjMat;
-  const float fov = 90.0f;
-  const float fovx = tanf(DEG2RADF(fov)/2.0f);
-  const float fovy = fovx;//*sheight/swidth/PixelAspect;
-
-  /*
-  clip_base.setupViewport(refdef->width, refdef->height, fov, PixelAspect);
-  static inline void CalcFovXY (float *outfovx, float *outfovy, const int width, const int height, const float fov, const float pixelAspect=1.0f) noexcept {
-    const float fovx = tanf(DEG2RADF(fov)/2.0f);
-    if (outfovx) *outfovx = fovx;
-    if (outfovy) *outfovy = fovx*height/width/pixelAspect;
-  */
-
-  ProjMat.SetZero();
-  ProjMat[0][0] = 1.0f/fovx;
-  ProjMat[1][1] = 1.0f/fovy;
-  ProjMat[2][3] = -1.0f;
-  //ProjMat[3][3] = 0.0f;
-  float maxdist = Radius;
-  if (maxdist < 1.0f || !isFiniteF(maxdist)) maxdist = 32767.0f;
-  if (/*DepthZeroOne*/false) {
-    ProjMat[2][2] = maxdist/(1.0f-maxdist); // zFar/(zNear-zFar);
-    ProjMat[3][2] = -maxdist/(maxdist-1.0f); // -(zFar*zNear)/(zFar-zNear);
-  } else {
-    ProjMat[2][2] = -(maxdist+1.0f)/(maxdist-1.0f); // -(zFar+zNear)/(zFar-zNear);
-    ProjMat[3][2] = -2.0f*maxdist/(maxdist-1.0f); // -(2.0f*zFar*zNear)/(zFar-zNear);
-  }
-
-  newPrj = ProjMat;
-
-  /*
-  ModelMat.SetIdentity();
-  ModelMat *= VMatrix4::RotateX(-90); //glRotatef(-90, 1, 0, 0);
-  ModelMat *= VMatrix4::RotateZ(90); //glRotatef(90, 0, 0, 1);
-  if (MirrorFlip) ModelMat *= VMatrix4::Scale(TVec(1, -1, 1)); //glScalef(1, -1, 1);
-  ModelMat *= VMatrix4::RotateX(-angles.roll); //glRotatef(-viewangles.roll, 1, 0, 0);
-  ModelMat *= VMatrix4::RotateY(-angles.pitch); //glRotatef(-viewangles.pitch, 0, 1, 0);
-  ModelMat *= VMatrix4::RotateZ(-angles.yaw); //glRotatef(-viewangles.yaw, 0, 0, 1);
-  ModelMat *= VMatrix4::Translate(-origin); //glTranslatef(-vieworg.x, -vieworg.y, -vieworg.z);
-  */
-
-  const TAVec viewAngles[6] = {
-    //    pitch    yaw   roll
-    TAVec(  0.0f, -90.0f,   0.0f), // right
-    TAVec(  0.0f,  90.0f,   0.0f), // left
-    TAVec( 90.0f,   0.0f,   0.0f), // top
-    TAVec(-90.0f,   0.0f,   0.0f), // bottom
-    TAVec(  0.0f,   0.0f,   0.0f), // back
-    TAVec(  0.0f, 180.0f,   0.0f), // front
-  };
-  VMatrix4 lview;
-  Drawer->CalcModelMatrix(lview, LightPos, viewAngles[facenum], false);
-  //SurfShadowMap.SetLightPos(LightPos);
-
   p_glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO);
   GLDRW_CHECK_ERROR("set cube FBO");
 
@@ -231,40 +117,36 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   GLDRW_CHECK_ERROR("clear cube FBO");
 
-#if 0
-  VMatrix4 prjOrtho = VMatrix4::Ortho(0, shadowmapSize, 0, shadowmapSize, -666.0f, 666.0f);
-  SurfShadowMapClear.Activate();
-  SurfShadowMapClear.SetLightMPV(prjOrtho);
-  SurfShadowMapClear.UploadChangedUniforms();
-
-  glDepthMask(GL_TRUE);
-  glDisable(GL_DEPTH_TEST);
-  glBegin(GL_QUADS);
-    glVertex2f(-shadowmapSize,  shadowmapSize);
-    glVertex2f( shadowmapSize,  shadowmapSize);
-    glVertex2f( shadowmapSize, -shadowmapSize);
-    glVertex2f(-shadowmapSize, -shadowmapSize);
-  glEnd();
-#endif
-
   glEnable(GL_DEPTH_TEST);
   //glDisable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
   //glDepthFunc(GL_GREATER);
+
   SurfShadowMap.Activate();
-  //SurfShadowMap.SetLightMPV(mvp);
-  //SurfShadowMap.SetLightProj(newPrj);
-  //SurfShadowMap.SetLightView(lview);
 
-  VMatrix4 lview2;
-  Drawer->CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
-  SurfShadowMap.SetLightView(lview2);
+  VMatrix4 newPrj;
+  CalcShadowMapProjectionMatrix(newPrj, Radius, swidth, sheight, PixelAspect);
 
-  TVec lpp = lview2*LightPos;
-
+  const TAVec viewAngles[6] = {
+    //    pitch    yaw   roll
+    TAVec(  0.0f, -90.0f,   0.0f), // right
+    TAVec(  0.0f,  90.0f,   0.0f), // left
+    TAVec( 90.0f,   0.0f,   0.0f), // top
+    TAVec(-90.0f,   0.0f,   0.0f), // bottom
+    TAVec(  0.0f,   0.0f,   0.0f), // back
+    TAVec(  0.0f, 180.0f,   0.0f), // front
+  };
+  VMatrix4 lview;
+  CalcModelMatrix(lview, LightPos, viewAngles[facenum], false);
   VMatrix4 lmpv = newPrj*lview;
   SurfShadowMap.SetLightMPV(lmpv);
+
+  VMatrix4 lview2;
+  CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
+  SurfShadowMap.SetLightView(lview2);
+  TVec lpp = lview2*LightPos;
   SurfShadowMap.SetLightPos(lpp);
+
   SurfShadowMap.SetLightRadius(Radius);
   SurfShadowMap.SetTexture(0);
   SurfShadowMap.UploadChangedUniforms();
@@ -279,7 +161,6 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
   } else {
     spotLight = false;
   }
-
 }
 
 
@@ -289,7 +170,7 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
 //
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowMap (const surface_t *surf, const TVec &LightPos, float Radius) {
-  if (gl_dbg_wireframe) return;
+  //if (gl_dbg_wireframe) return;
   if (surf->count < 3) return; // just in case
 
   const texinfo_t *tex = surf->texinfo;
@@ -305,56 +186,8 @@ void VOpenGLDrawer::RenderSurfaceShadowMap (const surface_t *surf, const TVec &L
   currentActiveShader->UploadChangedUniforms();
   //currentActiveShader->UploadChangedAttrs();
 
-  //GCon->Logf(NAME_Debug, "  sfc: 0x%08x", (unsigned)(uintptr_t)surf);
-
-  #if 1
   //glBegin(GL_POLYGON);
   glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < vcount; ++i, ++v) glVertex(v->vec());
   glEnd();
-  #else
-  const float size = 68.0f;
-  // top
-  glBegin(GL_QUADS);
-    glVertex3f(-size, -size, -size);
-    glVertex3f( size, -size, -size);
-    glVertex3f( size,  size, -size);
-    glVertex3f(-size,  size, -size);
-  glEnd();
-  // bottom
-  glBegin(GL_QUADS);
-    glVertex3f(-size, -size, size);
-    glVertex3f( size, -size, size);
-    glVertex3f( size,  size, size);
-    glVertex3f(-size,  size, size);
-  glEnd();
-  // left
-  glBegin(GL_QUADS);
-    glVertex3f(-size, -size, -size);
-    glVertex3f(-size,  size, -size);
-    glVertex3f(-size,  size,  size);
-    glVertex3f(-size, -size,  size);
-  glEnd();
-  // right
-  glBegin(GL_QUADS);
-    glVertex3f(size, -size, -size);
-    glVertex3f(size,  size, -size);
-    glVertex3f(size,  size,  size);
-    glVertex3f(size, -size,  size);
-  glEnd();
-  // rear
-  glBegin(GL_QUADS);
-    glVertex3f(-size, -size, -size);
-    glVertex3f( size, -size, -size);
-    glVertex3f( size, -size,  size);
-    glVertex3f(-size, -size,  size);
-  glEnd();
-  // front
-  glBegin(GL_QUADS);
-    glVertex3f(-size, size, -size);
-    glVertex3f( size, size, -size);
-    glVertex3f( size, size,  size);
-    glVertex3f(-size, size,  size);
-  glEnd();
-  #endif
 }

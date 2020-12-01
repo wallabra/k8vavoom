@@ -394,6 +394,7 @@ protected:
   bool useReverseZ;
   bool HaveDepthClamp;
   bool DepthZeroOne; // use [0..1] depth instead of [-1..1]? (only matters for "normal z", "reverse z" always does this)
+  bool canRenderShadowmaps;
 
   vuint32 updateFrame; // counter
 
@@ -444,6 +445,8 @@ public:
   inline bool IsInited () const noexcept { return mInitialized; }
   inline bool CanUseDepthClamp () const noexcept { return HaveDepthClamp; }
   inline bool IsDepthZeroOne () const noexcept { return DepthZeroOne; }
+
+  inline bool CanRenderShadowMaps () const noexcept { return canRenderShadowmaps; }
 
   inline int getWidth () const noexcept { return ScrWdt; }
   inline int getHeight () const noexcept { return ScrHgt; }
@@ -691,6 +694,8 @@ public:
   void CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *ARLev, const refdef_t *rd);
   void CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAVec &angles, bool MirrorFlip=false);
   void CalcOrthoMatrix (VMatrix4 &OrthoMat, const float left, const float right, const float bottom, const float top);
+
+  void CalcShadowMapProjectionMatrix (VMatrix4 &ProjMat, float Radius, int awidth, int aheight, float aspect=1.0f);
 
   void SetOrthoProjection (const float left, const float right, const float bottom, const float top);
 

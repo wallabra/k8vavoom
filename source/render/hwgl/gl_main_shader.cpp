@@ -53,8 +53,14 @@ void VOpenGLDrawer::registerShader (VGLShader *shader) {
 //  VOpenGLDrawer::CompileShaders
 //
 //==========================================================================
-void VOpenGLDrawer::CompileShaders () {
-  for (VGLShader *shad = shaderHead; shad; shad = shad->next) shad->Compile();
+void VOpenGLDrawer::CompileShaders (int glmajor, int glminor) {
+  for (VGLShader *shad = shaderHead; shad; shad = shad->next) {
+    if (shad->CheckOpenGLVersion(glmajor, glminor)) {
+      shad->Compile();
+    } else {
+      GCon->Logf(NAME_Init, "skipped shader '%s' due to OpenGL version constraint", shad->progname);
+    }
+  }
 }
 
 
@@ -125,6 +131,25 @@ GLint VOpenGLDrawer::glGetAttrLoc (const char *prog, GLhandleARB pid, const char
 
 //==========================================================================
 //
+//  VOpenGLDrawer::VGLShader::CheckOpenGLVersion
+//
+//==========================================================================
+bool VOpenGLDrawer::VGLShader::CheckOpenGLVersion (int major, int minor) noexcept {
+  const int ver = major*100+minor;
+  switch (oglVersionCond) {
+    case CondLess: return (ver < oglVersion);
+    case CondLessEqu: return (ver <= oglVersion);
+    case CondEqu: return (ver == oglVersion);
+    case CondGreater: return (ver > oglVersion);
+    case CondGreaterEqu: return (ver >= oglVersion);
+    case CondNotEqu: return (ver != oglVersion);
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::VGLShader::Setup
 //
 //==========================================================================
@@ -146,6 +171,7 @@ void VOpenGLDrawer::VGLShader::MainSetup (VOpenGLDrawer *aowner, const char *apr
 //
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Activate () {
+  vassert(prog);
   owner->p_glUseProgramObjectARB(prog);
   owner->currentActiveShader = this;
 }
@@ -182,11 +208,13 @@ void VOpenGLDrawer::VGLShader::Compile () {
 //
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Unload () {
-  if (developer) GCon->Logf(NAME_Dev, "unloading shader '%s'", progname);
-  // actual program object will be destroyed elsewhere
-  prog = 0;
-  UnloadUniforms();
-  if (owner && owner->currentActiveShader == this) owner->currentActiveShader = nullptr;
+  if (prog) {
+    if (developer) GCon->Logf(NAME_Dev, "unloading shader '%s'", progname);
+    // actual program object will be destroyed elsewhere
+    prog = 0;
+    UnloadUniforms();
+    if (owner && owner->currentActiveShader == this) owner->currentActiveShader = nullptr;
+  }
 }
 
 

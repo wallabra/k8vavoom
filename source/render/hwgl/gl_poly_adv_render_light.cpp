@@ -68,7 +68,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 
   glDepthFunc(GL_EQUAL);
 
-  if (doShadow && r_shadowmaps) {
+  if (doShadow && r_shadowmaps.asBool() && CanRenderShadowMaps()) {
     SETUP_LIGHT_SHADER(ShadowsLightSMap);
     //VMatrix4 lview = VMatrix4::TranslateNeg(LightPos);
     //ShadowsLightSMap.SetLightMPV(lview);

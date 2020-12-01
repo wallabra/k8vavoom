@@ -128,6 +128,15 @@ class VOpenGLDrawer : public VDrawer {
 public:
   class VGLShader {
   public:
+    enum {
+      CondLess,
+      CondLessEqu,
+      CondEqu,
+      CondGreater,
+      CondGreaterEqu,
+      CondNotEqu,
+    };
+  public:
     VGLShader *next;
     VOpenGLDrawer *owner;
     const char *progname;
@@ -136,6 +145,8 @@ public:
     const char *fssrcfile;
     // compiled vertex program
     GLhandleARB prog;
+    int oglVersionCond;
+    int oglVersion;  // high*100+low
     TArray<VStr> defines;
 
     typedef float glsl_float2[2];
@@ -144,7 +155,13 @@ public:
     typedef float glsl_float9[9];
 
   public:
-    VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1) {}
+    VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1), oglVersionCond(CondGreaterEqu), oglVersion(0) {}
+
+    inline void SetOpenGLVersion (int cond, int ver) noexcept { oglVersionCond = cond; oglVersion = ver; }
+
+    inline bool IsLoaded () const noexcept { return (prog != 0); }
+
+    bool CheckOpenGLVersion (int major, int minor) noexcept;
 
     void MainSetup (VOpenGLDrawer *aowner, const char *aprogname, const char *aincdir, const char *avssrcfile, const char *afssrcfile);
 
@@ -272,7 +289,7 @@ protected:
   VGLShader *shaderHead;
 
   void registerShader (VGLShader *shader);
-  void CompileShaders ();
+  void CompileShaders (int glmajor, int glminor);
   void DestroyShaders ();
 
 protected:
