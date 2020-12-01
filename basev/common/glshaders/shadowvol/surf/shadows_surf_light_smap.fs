@@ -23,22 +23,6 @@ varying vec3 VertWorldPos;
 $include "common/texture_vars.fs"
 
 
-/*
-float shadowMult () {
-  #if 0
-  float lightDist = texture(ShadowTexture, VertLightDir.xyz).r;
-  float myDist = length(VertLightDir.xyz);
-  //if (myDist < lightDist+1.0) return 1.0; else return 0.0;
-  if (lightDist > 8192.0) return 1.0; else return 0.0;
-  #else
-  float lightDist = texture(ShadowTexture, VertLightDir.xyz).r;
-  float myDist = length(VertLightDir.xyz)/LightRadius;
-  if (myDist < lightDist+0.0005) return 1.0; else return 0.0;
-  #endif
-}
-*/
-
-
 void main () {
   if (VDist <= 0.0 || Dist <= 0.0) discard;
 
@@ -49,28 +33,7 @@ void main () {
   float DistToLight = max(1.0, dot(VertToLight, VertToLight));
   if (DistToLight >= LightRadius*LightRadius) discard;
 
-  /*
-  //float lightDist = texture(ShadowTexture, VertLightDir.xyz).r;
-  float myDist = length(VertLightDir.xyz)/LightRadius;
-
-  vec4 FinalColor = vec4(myDist, 0.0, 0.0, 1.0);
-  //if (VertLightDir.x > 0) FinalColor.g = 1.0;
-  if (VertLightDir.z > 0) FinalColor.b = 1.0;
-  */
-
-  //vec4 FinalColor = vec4(shadowMult(), 0.0, 0.0, 1.0);
-  //float ld = texture(ShadowTexture, VertLightDir.xyz/VertLightDir.w).r;
-  //float ld = texture(ShadowTexture, vec3(0, 0, 1)).r;
   vec4 FinalColor;
-  /*
-  float ld = texture(ShadowTexture, VertLightDir.xyz).r;
-  float md = length(VertLightDir.xyz)/LightRadius;
-  if (md < ld) {
-    FinalColor = vec4(0.0, ld-md, 0.0, 1.0);
-  } else {
-    FinalColor = vec4(md-ld, 0.0, 0.0, 1.0);
-  }
-  */
 
   // difference between position of the light source and position of the fragment
   vec3 fromLightToFragment = LightPos2-VertWorldPos;
@@ -84,22 +47,24 @@ void main () {
   vec3 ltfdir;
   ltfdir.x =  fromLightToFragment.x;
   ltfdir.y =  fromLightToFragment.y;
-  ltfdir.z = -fromLightToFragment.z;
+  ltfdir.z =  fromLightToFragment.z;
   float referenceDistanceToLight = texture(ShadowTexture, ltfdir).r;
   /*
   float currentDistanceToLight = (distanceToLight-u_nearFarPlane.x)/(u_nearFarPlane.y-u_nearFarPlane.x);
   currentDistanceToLight = clamp(currentDistanceToLight, 0, 1);
   */
   float currentDistanceToLight = distanceToLight/LightRadius;
+
+  // dunno which one is better (or even which one is right, lol)
+  #if 0
+  float cosTheta = clamp(dot(Normal, normalize(VertToLight)), 0.0, 1.0);
+  float bias = clamp(0.0065*tan(acos(cosTheta)), 0.0, 0.026); // cosTheta is dot( n,l ), clamped between 0 and 1
+  #else
+  float biasMod = 1.0-clamp(dot(Normal, normalize(VertToLight)), 0, 1);
+  float bias = 0.001+0.026*biasMod;
+  #endif
   // compare distances to determine whether the fragment is in shadow
-  if (currentDistanceToLight > referenceDistanceToLight) discard;
-  /*
-  if (currentDistanceToLight < referenceDistanceToLight+0.005) {
-    FinalColor = vec4(0.0, referenceDistanceToLight-currentDistanceToLight, 0.0, 1.0);
-  } else {
-    FinalColor = vec4(currentDistanceToLight-referenceDistanceToLight, 0.0, 0.0, 1.0);
-  }
-  */
+  if (currentDistanceToLight > referenceDistanceToLight+bias) discard;
 
 #if 1
   DistToLight = sqrt(DistToLight);

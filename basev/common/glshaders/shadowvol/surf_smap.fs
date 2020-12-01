@@ -26,7 +26,7 @@ void main () {
     //fc.r = 99999.0;
     //fc.g = 1.0;
   } else {
-    float dist = distance(LightPos, VertWorldPos)+2;
+    float dist = distance(LightPos, VertWorldPos);
     if (dist >= LightRadius) {
       fc.r = 99999.0;
       fc.b = 1.0;

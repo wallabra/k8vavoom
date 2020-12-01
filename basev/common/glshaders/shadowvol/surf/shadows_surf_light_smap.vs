@@ -26,6 +26,7 @@ void main () {
 
   $include "common/texture_calc.vs"
 
+  //Normal = normalize(vec4(SurfNormal, 1)*gl_ModelViewMatrix).xyz;
   Normal = SurfNormal;
 
   float LightDist = dot(LightPos, SurfNormal);

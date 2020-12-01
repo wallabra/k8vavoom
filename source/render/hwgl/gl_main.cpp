@@ -644,8 +644,10 @@ void VOpenGLDrawer::InitResolution () {
   glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
   GLDRW_CHECK_ERROR("bind shadowmap cubemap");
 
+  /*
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
   GLDRW_CHECK_ERROR("set shadowmap compare func");
+  */
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   GLDRW_CHECK_ERROR("set shadowmap mag filter");
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -656,8 +658,10 @@ void VOpenGLDrawer::InitResolution () {
   GLDRW_CHECK_ERROR("set shadowmap wrap s");
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   GLDRW_CHECK_ERROR("set shadowmap wrap t");
+  /*
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
   GLDRW_CHECK_ERROR("set shadowmap compare mode");
+  */
 
   for (unsigned int i = 0; i < 6; ++i) {
     //glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_DEPTH_COMPONENT, shadowmapSize, shadowmapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);

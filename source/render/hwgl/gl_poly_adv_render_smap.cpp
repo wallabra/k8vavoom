@@ -204,10 +204,10 @@ void VOpenGLDrawer::SetupLightShadowMap (const TVec &LightPos, const float Radiu
     //    pitch    yaw   roll
     TAVec(  0.0f,  90.0f,   0.0f), // right
     TAVec(  0.0f, -90.0f,   0.0f), // left
-    TAVec(-90.0f,   0.0f,   0.0f), // top
-    TAVec( 90.0f,   0.0f,   0.0f), // bottom
-    TAVec(  0.0f, 180.0f,   0.0f), // back
-    TAVec(  0.0f,   0.0f,   0.0f), // front
+    TAVec( 90.0f,   0.0f,   0.0f), // top
+    TAVec(-90.0f,   0.0f,   0.0f), // bottom
+    TAVec(  0.0f,   0.0f,   0.0f), // back
+    TAVec(  0.0f, 180.0f,   0.0f), // front
   };
   VMatrix4 lview;
   Drawer->CalcModelMatrix(lview, LightPos, viewAngles[facenum], false);
