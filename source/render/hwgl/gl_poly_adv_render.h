@@ -26,8 +26,8 @@
 #ifndef VAVOOM_GL_ADVRENDER_H
 #define VAVOOM_GL_ADVRENDER_H
 
-extern VCvarB gl_dbg_advlight_debug;
-extern VCvarI gl_dbg_advlight_color;
+//extern VCvarB gl_dbg_advlight_debug;
+//extern VCvarI gl_dbg_advlight_color;
 
 extern VCvarB gl_dbg_vbo_adv_ambient;
 

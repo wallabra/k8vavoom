@@ -13,6 +13,12 @@ varying vec3 VertToLight;
 varying float Dist;
 varying float VDist;
 
+//uniform mat4 LightMPV;
+//uniform mat4 LightView;
+//varying vec4 VertLightDir;
+varying vec3 VertWorldPos;
+uniform mat4 LightView;
+
 
 void main () {
   // transforming the vertex
@@ -20,6 +26,7 @@ void main () {
 
   $include "common/texture_calc.vs"
 
+  //Normal = normalize(vec4(SurfNormal, 1)*gl_ModelViewMatrix).xyz;
   Normal = SurfNormal;
 
   float LightDist = dot(LightPos, SurfNormal);
@@ -28,4 +35,9 @@ void main () {
   VDist = ViewDist-SurfDist;
 
   VertToLight = LightPos-gl_Vertex.xyz;
+
+  //VertLightDir = LightView*gl_Vertex;
+  //VertWorldPos = (gl_ModelViewMatrix*gl_Vertex).xyz;
+  //VertWorldPos = gl_Vertex.xyz;
+  VertWorldPos = (LightView*gl_Vertex).xyz;
 }
