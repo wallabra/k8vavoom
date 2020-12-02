@@ -381,6 +381,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   // draw light
   Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, allowShadows);
   if (useCollector) {
+    timsort_r(lightSurfaces.ptr(), lightSurfaces.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
     RenderLightSurfaceList();
   } else {
     LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
