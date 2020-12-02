@@ -31,7 +31,7 @@ extern VCvarB r_shadowmaps;
 // this is for 128x128 shadowmaps
 // divide max to (shadowmapPOT+1)
 static VCvarF gl_shadowmap_bias_mul("gl_shadowmap_bias_mul", "0.0065", "Shadowmap bias multiplier.", CVAR_PreInit/*|CVAR_Archive*/);
-static VCvarF gl_shadowmap_bias_min("gl_shadowmap_bias_min", "0.0005", "Shadowmap bias minimum.", CVAR_PreInit/*|CVAR_Archive*/);
+static VCvarF gl_shadowmap_bias_min("gl_shadowmap_bias_min", "0.0015", "Shadowmap bias minimum.", CVAR_PreInit/*|CVAR_Archive*/);
 static VCvarF gl_shadowmap_bias_max("gl_shadowmap_bias_max", "0.04", "Shadowmap bias maximum.", CVAR_PreInit/*|CVAR_Archive*/);
 static VCvarB gl_shadowmap_bias_adjust("gl_shadowmap_bias_adjust", true, "Adjust shadowmap bias according to shadowmap size?", CVAR_PreInit/*|CVAR_Archive*/);
 
