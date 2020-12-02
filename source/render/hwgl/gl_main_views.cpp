@@ -35,6 +35,9 @@
 #include "../r_local.h" /* for VRenderLevelShared */
 
 
+VCvarI dbg_shadowmaps("dbg_shadowmaps", "0", "Show shadowmap cubemap?", CVAR_PreInit);
+
+
 //==========================================================================
 //
 //  VOpenGLDrawer::Setup2D

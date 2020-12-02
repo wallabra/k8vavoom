@@ -56,7 +56,6 @@ extern VCvarB prof_r_bsp_world_render;
 extern VCvarB prof_r_bsp_mobj_render;
 
 extern VCvarB r_shadowmaps;
-extern VCvarI dbg_shadowmaps;
 
 
 static VVA_OKUNUSED inline bool IsAnyProfRActive () noexcept {
