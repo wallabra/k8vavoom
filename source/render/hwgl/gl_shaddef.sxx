@@ -297,7 +297,7 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader [advanced] ShadowsModelAmbient both="shadowvol/model/shadows_model_ambient";
   Shader [advanced] ShadowsModelTextures both="shadowvol/model/shadows_model_textures";
   Shader [advanced] ShadowsModelTexturesStencil both="shadowvol/model/shadows_model_textures" { define "VV_STENCIL"; }
-  Shader [advanced] ShadowsModelShadow both="shadowvol/model/shadows_model_shadow";
+  Shader [advanced] ShadowsModelShadow both="shadowvol/model/shadows_model_svol";
   Shader [advanced] ShadowsModelFog both="shadowvol/model/shadows_model_fog";
 
   Shader [advanced] ShadowsModelLight both="shadowvol/model/shadows_model_light_svol";
