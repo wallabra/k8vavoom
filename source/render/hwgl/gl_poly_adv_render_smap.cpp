@@ -26,6 +26,8 @@
 #include "gl_local.h"
 #include "gl_poly_adv_render.h"
 
+#define VV_SMAP_PRECLEAR
+
 
 //==========================================================================
 //
@@ -38,8 +40,6 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   GLDRW_CHECK_ERROR("set cube FBO");
   //p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId, 0);
   //GLDRW_CHECK_ERROR("set framebuffer depth texture");
-  glDrawBuffer(GL_COLOR_ATTACHMENT0);
-  GLDRW_CHECK_ERROR("set cube FBO draw buffer");
   glReadBuffer(GL_NONE);
   GLDRW_CHECK_ERROR("set cube FBO read buffer");
 
@@ -49,6 +49,11 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   smapLightPos = LightPos;
   smapLightRadius = Radius;
   smapLastTexinfo.initLastUsed();
+
+  // temp (it should be already disabled)
+  glDisable(GL_STENCIL_TEST);
+  glDisable(GL_SCISSOR_TEST);
+  GLDisableOffset();
 
   glDepthMask(GL_TRUE); // due to shadow volumes pass settings
   glEnable(GL_DEPTH_TEST);
@@ -70,6 +75,19 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
 
   glGetIntegerv(GL_VIEWPORT, savedSMVPort);
   glViewport(0, 0, shadowmapSize, shadowmapSize);
+
+  #ifdef VV_SMAP_PRECLEAR
+  for (unsigned int fc = 0; fc < 6; ++fc) {
+    p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[fc], 0);
+    GLDRW_CHECK_ERROR("set framebuffer depth texture");
+    p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, cubeTexId, 0);
+    GLDRW_CHECK_ERROR("set cube FBO face");
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    GLDRW_CHECK_ERROR("set cube FBO draw buffer");
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    GLDRW_CHECK_ERROR("clear cube FBO");
+  }
+  #endif
 
   coneDir = aconeDir;
   coneAngle = (aconeAngle <= 0.0f || aconeAngle >= 360.0f ? 0.0f : aconeAngle);
@@ -99,6 +117,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   SurfShadowMapTex.SetLightRadius(Radius);
   SurfShadowMapTex.SetTexture(0);
 
+  //glDisable(GL_CULL_FACE);
   GLDRW_CHECK_ERROR("finish cube FBO setup");
 }
 
@@ -111,6 +130,11 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
 void VOpenGLDrawer::EndLightShadowMaps () {
   //currentActiveFBO = nullptr;
   //mainFBO.activate();
+  //for (unsigned int fc = 0; fc < 6; ++fc)
+  {
+    p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+  }
+  GLDRW_CHECK_ERROR("reset cube FBO");
   ReactivateCurrentFBO();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   RestoreDepthFunc();
@@ -131,14 +155,21 @@ void VOpenGLDrawer::EndLightShadowMaps () {
 //
 //==========================================================================
 void VOpenGLDrawer::SetupLightShadowMap (unsigned int facenum) {
+  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[facenum], 0);
+  GLDRW_CHECK_ERROR("set framebuffer depth texture");
+
   //!p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X+facenum, cubeTexId, 0);
   //!GLDRW_CHECK_ERROR("set cube FBO face");
 
   p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+facenum, cubeTexId, 0);
   GLDRW_CHECK_ERROR("set cube FBO face");
+  //glDrawBuffer(GL_COLOR_ATTACHMENT0);
+  //GLDRW_CHECK_ERROR("set cube FBO draw buffer");
 
+  #ifndef VV_SMAP_PRECLEAR
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   GLDRW_CHECK_ERROR("clear cube FBO");
+  #endif
 
   const TAVec viewAngles[6] = {
     //    pitch    yaw   roll
@@ -157,7 +188,7 @@ void VOpenGLDrawer::SetupLightShadowMap (unsigned int facenum) {
   SurfShadowMapTex.SetLightMPV(lmpv);
 
   //SurfShadowMap.UploadChangedUniforms();
-  GLDRW_CHECK_ERROR("update cube FBO shader");
+  //GLDRW_CHECK_ERROR("update cube FBO shader");
 }
 
 

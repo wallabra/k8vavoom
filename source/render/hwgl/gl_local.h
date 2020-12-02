@@ -312,7 +312,7 @@ public:
 
 public:
   GLuint cubeTexId;
-  GLuint cubeDepthTexId;
+  GLuint cubeDepthTexId[6];
   GLuint cubeFBO;
   GLint shadowmapSize;
   GLint savedSMVPort[4];
