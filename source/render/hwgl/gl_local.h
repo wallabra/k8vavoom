@@ -314,8 +314,9 @@ public:
   GLuint cubeTexId;
   GLuint cubeDepthTexId[6];
   GLuint cubeFBO;
-  GLint shadowmapSize;
   GLint savedSMVPort[4];
+  GLint shadowmapSize;
+  unsigned int shadowmapPOT; // 128<<shadowmapPOT is shadowmap size
 
   VMatrix4 smapProj;
   TVec smapLightPos;

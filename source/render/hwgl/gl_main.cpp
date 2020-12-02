@@ -116,31 +116,23 @@ VCvarB gl_lmap_allow_partial_updates("gl_lmap_allow_partial_updates", true, "All
 
 VCvarI gl_release_ram_textures_mode("gl_release_ram_textures_mode", "0", "When the engine should release RAM (non-GPU) texture storage (0:never; 1:after map unload; 2:immediately)?", CVAR_Archive);
 
-// 0: 64
-// 1: 128
-// 2: 256
-// 3: 512
-// 4: 1024
-static VCvarI gl_shadowmap_size("gl_shadowmap_size", "1", "Shadowmap size (0:64; 1:128; 2:256; 3:512; 4:1024)", CVAR_PreInit);
+// 0: 128
+// 1: 256
+// 2: 512
+// 3: 1024
+static VCvarI gl_shadowmap_size("gl_shadowmap_size", "1", "Shadowmap size (0:128; 1:256; 2:512; 3:1024)", CVAR_PreInit);
+static VCvarI gl_shadowmap_precision("gl_shadowmap_precision", "0", "Shadowmap precision (0:16; 1:32;)", CVAR_PreInit);
 
 
 //==========================================================================
 //
-//  getShadowmapSize
+//  getShadowmapPOT
 //
 //==========================================================================
-static short getShadowmapSize () noexcept {
+static unsigned int getShadowmapPOT () noexcept {
   int ss = gl_shadowmap_size.asInt();
-  if (ss < 0) ss = 0; else if (ss > 4) ss = 4;
-  // yeah, i can use bit shift here, i know
-  switch (ss) {
-    case 0: return 64;
-    case 1: return 128;
-    case 2: return 256;
-    case 3: return 512;
-    case 4: return 1024;
-  }
-  abort();
+  if (ss < 0) ss = 0; else if (ss > 3) ss = 3;
+  return (unsigned int)ss;
 }
 
 
@@ -252,7 +244,8 @@ VOpenGLDrawer::VOpenGLDrawer ()
   cubeTexId = 0;
   cubeFBO = 0;
   memset(&cubeDepthTexId[0], 0, sizeof(cubeDepthTexId));
-  shadowmapSize = getShadowmapSize();
+  shadowmapPOT = getShadowmapPOT();
+  shadowmapSize = 128<<shadowmapPOT;
 }
 
 
@@ -378,7 +371,8 @@ void VOpenGLDrawer::InitResolution () {
     GCon->Logf(NAME_Init, "OpenGL v%d.%d found", major, minor);
   }
 #endif
-  shadowmapSize = getShadowmapSize();
+  shadowmapPOT = getShadowmapPOT();
+  shadowmapSize = 128<<shadowmapPOT;
 
   if (!shittyGPUCheckDone) {
     shittyGPUCheckDone = true;
@@ -709,7 +703,11 @@ void VOpenGLDrawer::InitResolution () {
       #if 1
       //glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, 0, GL_R32F, shadowmapSize, shadowmapSize, 0, GL_RED, GL_FLOAT, 0);
       //glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, 0, GL_RGB16F, shadowmapSize, shadowmapSize, 0, GL_RGB, GL_FLOAT, 0);
-      glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, 0, GL_R16F, shadowmapSize, shadowmapSize, 0, GL_RED, GL_FLOAT, 0);
+      if (gl_shadowmap_precision.asInt() > 0) {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, 0, GL_R32F, shadowmapSize, shadowmapSize, 0, GL_RED, GL_FLOAT, 0);
+      } else {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, 0, GL_R16F, shadowmapSize, shadowmapSize, 0, GL_RED, GL_FLOAT, 0);
+      }
       #else
       VTexture *tx = nullptr;
       switch (fc) {

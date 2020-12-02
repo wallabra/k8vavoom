@@ -20,6 +20,9 @@ $include "common/texture_vars.fs"
 uniform samplerCube ShadowTexture;
 varying vec3 VertWorldPos;
 uniform vec3 LightPos2;
+uniform float BiasMul;
+uniform float BiasMax;
+uniform float BiasMin;
 #endif
 
 
@@ -58,12 +61,16 @@ void main () {
   float currentDistanceToLight = distanceToLight/LightRadius;
 
   // dunno which one is better (or even which one is right, lol)
-  #if 0
+  #if 1
+  // 0.026
+  // 0.039
   float cosTheta = clamp(dot(Normal, normV2L), 0.0, 1.0);
-  float bias = clamp(0.0065*tan(acos(cosTheta)), 0.0, 0.026); // cosTheta is dot( n,l ), clamped between 0 and 1
+  //float bias = clamp(0.0065*tan(acos(cosTheta)), 0.0, 0.026); // cosTheta is dot( n,l ), clamped between 0 and 1
+  float bias = clamp(BiasMul*tan(acos(cosTheta)), BiasMin, BiasMax); // cosTheta is dot( n,l ), clamped between 0 and 1
   #else
-  float biasMod = 1.0-clamp(dot(Normal, normV2L), 0, 1);
-  float bias = 0.001+0.026*biasMod;
+  float biasMod = 1.0-clamp(dot(Normal, normV2L), 0.0, 1.0);
+  //float bias = 0.001+0.039*biasMod;
+  float bias = clamp(BiasMin+BiasMul*biasMod, 0.0, BiasMax); // cosTheta is dot( n,l ), clamped between 0 and 1
   #endif
   // compare distances to determine whether the fragment is in shadow
   if (currentDistanceToLight > referenceDistanceToLight+bias) discard;

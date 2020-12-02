@@ -245,10 +245,12 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
     //   front, back
     //   left, right
     //   top, bottom
+    //const float ssize = shadowmapSize;
+    const float ssize = 128.0f;
     GLDisableBlend();
     for (unsigned int face = 0; face < 6; ++face) {
-      float xofs = (face%2)*(shadowmapSize+4);
-      float yofs = ((face/2)%3)*(shadowmapSize+4);
+      float xofs = (face%2)*(ssize+4);
+      float yofs = ((face/2)%3)*(ssize+4);
       glDisable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_CUBE_MAP);
@@ -258,10 +260,10 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
       DbgShadowMap.SetCubeFace(face+0.5f);
       DbgShadowMap.UploadChangedUniforms();
       glBegin(GL_QUADS);
-        glTexCoord2f(0, 0); glVertex2f(xofs+            0, yofs+0);
-        glTexCoord2f(1, 0); glVertex2f(xofs+shadowmapSize, yofs+0);
-        glTexCoord2f(1, 1); glVertex2f(xofs+shadowmapSize, yofs+shadowmapSize);
-        glTexCoord2f(0, 1); glVertex2f(xofs+            0, yofs+shadowmapSize);
+        glTexCoord2f(0, 0); glVertex2f(xofs+0    , yofs+0);
+        glTexCoord2f(1, 0); glVertex2f(xofs+ssize, yofs+0);
+        glTexCoord2f(1, 1); glVertex2f(xofs+ssize, yofs+ssize);
+        glTexCoord2f(0, 1); glVertex2f(xofs+0    , yofs+ssize);
       glEnd();
       glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
       glDisable(GL_TEXTURE_CUBE_MAP);
