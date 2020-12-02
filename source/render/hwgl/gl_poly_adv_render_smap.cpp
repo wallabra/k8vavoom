@@ -54,6 +54,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_SCISSOR_TEST);
   GLDisableOffset();
+  GLDisableBlend();
 
   glDepthMask(GL_TRUE); // due to shadow volumes pass settings
   glEnable(GL_DEPTH_TEST);
