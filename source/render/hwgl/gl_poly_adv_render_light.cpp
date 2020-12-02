@@ -30,10 +30,42 @@ extern VCvarB r_shadowmaps;
 
 // this is for 128x128 shadowmaps
 // divide max to (shadowmapPOT+1)
-static VCvarF gl_shadowmap_bias_mul("gl_shadowmap_bias_mul", "0.0065", "Shadowmap bias multiplier.", CVAR_PreInit/*|CVAR_Archive*/);
-static VCvarF gl_shadowmap_bias_min("gl_shadowmap_bias_min", "0.0015", "Shadowmap bias minimum.", CVAR_PreInit/*|CVAR_Archive*/);
-static VCvarF gl_shadowmap_bias_max("gl_shadowmap_bias_max", "0.04", "Shadowmap bias maximum.", CVAR_PreInit/*|CVAR_Archive*/);
+static VCvarF gl_shadowmap_bias_mul("gl_shadowmap_bias_mul", "0", "Shadowmap bias multiplier.", CVAR_PreInit/*|CVAR_Archive*/);
+static VCvarF gl_shadowmap_bias_min("gl_shadowmap_bias_min", "0", "Shadowmap bias minimum (0: use default).", CVAR_PreInit/*|CVAR_Archive*/);
+static VCvarF gl_shadowmap_bias_max("gl_shadowmap_bias_max", "0", "Shadowmap bias maximum.", CVAR_PreInit/*|CVAR_Archive*/);
 static VCvarB gl_shadowmap_bias_adjust("gl_shadowmap_bias_adjust", true, "Adjust shadowmap bias according to shadowmap size?", CVAR_PreInit/*|CVAR_Archive*/);
+
+
+//  128: 0.044
+//  256: 0.036
+//  512: 0.02
+// 1024: 0.001
+static float getMaxBias (const unsigned int shadowmapPOT) noexcept {
+  float f = gl_shadowmap_bias_max.asFloat();
+  if (f > 0.0f) {
+    if (gl_shadowmap_bias_adjust) f /= (float)(shadowmapPOT+1);
+    return f;
+  }
+  switch (shadowmapPOT) {
+    case 0: return 0.044f;
+    case 1: return 0.036f/2.0f;
+    case 2: return 0.02f/3.0f;
+    case 3:
+    default: return 0.001f/4.0f;
+  }
+}
+
+static float getMinBias () noexcept {
+  float f = gl_shadowmap_bias_min.asFloat();
+  if (f <= 0.0f) f = 0.0015f;
+  return f;
+}
+
+static float getMulBias () noexcept {
+  float f = gl_shadowmap_bias_mul.asFloat();
+  if (f <= 0.0f) f = 0.0065f;
+  return f;
+}
 
 static bool lpassDoShadowMap;
 
@@ -49,13 +81,9 @@ static bool lpassDoShadowMap;
   (shad_).SetLightView(lview2); \
   (shad_).SetLightPos2(lpp); \
   (shad_).SetShadowTexture(1); \
-  (shad_).SetBiasMul(gl_shadowmap_bias_mul.asFloat()); \
-  (shad_).SetBiasMin(gl_shadowmap_bias_min.asFloat()); \
-  if (gl_shadowmap_bias_adjust) { \
-    (shad_).SetBiasMax(gl_shadowmap_bias_max.asFloat()/(float)(shadowmapPOT+1)); \
-  } else { \
-    (shad_).SetBiasMax(gl_shadowmap_bias_max.asFloat()); \
-  }
+  (shad_).SetBiasMul(getMulBias()); \
+  (shad_).SetBiasMin(getMinBias()); \
+  (shad_).SetBiasMax(getMaxBias(shadowmapPOT));
 
 #define SETUP_LIGHT_SHADER_SPOT_ONLY(shad_)  do { \
   (shad_).SetConeDirection(coneDir); \
