@@ -240,6 +240,34 @@ void VRenderLevelShadowVolume::RenderMobjsShadow (VEntity *owner, vuint32 dlflag
 
 //==========================================================================
 //
+//  VRenderLevelShadowVolume::RenderMobjsShadowMap
+//
+//==========================================================================
+void VRenderLevelShadowVolume::RenderMobjsShadowMap (VEntity *owner, vuint32 dlflags) {
+  if (!r_draw_mobjs || !r_models || !r_model_shadows) return;
+  if (!r_dbg_advthing_draw_shadow) return;
+  float TimeFrac;
+  RenderStyleInfo ri;
+  for (auto &&ent : mobjsInCurrLight) {
+    if (ent == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
+    if (ent->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
+    if (!IsShadowAllowedFor(ent)) continue;
+    //RenderThingShadow(ent);
+    if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
+      //GCon->Logf("THING SHADOW! (%s)", *ent->GetClass()->GetFullName());
+      if (ri.isTranslucent()) continue;
+      ri.light = 0xffffffffu;
+      ri.fade = 0;
+      DrawEntityModel(ent, ri, TimeFrac, RPASS_ShadowMaps);
+      //DrawEntityModel(ent, 0xffffffff, 0, ri, TimeFrac, RPASS_ShadowVolumes);
+    }
+    ++ent->NumRenderedShadows;
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShadowVolume::RenderMobjsLight
 //
 //==========================================================================

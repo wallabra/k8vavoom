@@ -628,12 +628,172 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
 
 //==========================================================================
 //
+//  VOpenGLDrawer::BeginModelShadowMaps
+//
+//  this MUST be called after map shadowmap setup
+//
+//==========================================================================
+void VOpenGLDrawer::BeginModelShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) {
+  /*
+  coneDir = aconeDir;
+  coneAngle = (aconeAngle <= 0.0f || aconeAngle >= 360.0f ? 0.0f : aconeAngle);
+
+  if (coneAngle && aconeDir.isValid() && !aconeDir.isZero()) {
+    spotLight = true;
+    coneDir.normaliseInPlace();
+  } else {
+    spotLight = false;
+  }
+  */
+
+  CalcShadowMapProjectionMatrix(smapProj, Radius, swidth, sheight, PixelAspect);
+
+  VMatrix4 lview2;
+  CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
+  TVec lpp = lview2*LightPos;
+
+  ShadowsModelShadowMap.Activate();
+  ShadowsModelShadowMap.SetTexture(0);
+  ShadowsModelShadowMap.SetLightView(lview2);
+  ShadowsModelShadowMap.SetLightPos(lpp);
+  ShadowsModelShadowMap.SetLightRadius(Radius);
+
+  //glDisable(GL_CULL_FACE);
+  //GLDRW_CHECK_ERROR("finish cube FBO setup");
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::EndModelShadowMaps
+//
+//==========================================================================
+void VOpenGLDrawer::EndModelShadowMaps () {
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SetupModelShadowMap
+//
+//==========================================================================
+void VOpenGLDrawer::SetupModelShadowMap (unsigned int facenum) {
+  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[facenum], 0);
+  //GLDRW_CHECK_ERROR("set framebuffer depth texture (model)");
+
+  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+facenum, cubeTexId, 0);
+
+  const TAVec viewAngles[6] = {
+    //    pitch    yaw   roll
+    TAVec(  0.0f, -90.0f,   0.0f), // right
+    TAVec(  0.0f,  90.0f,   0.0f), // left
+    TAVec( 90.0f,   0.0f,   0.0f), // top
+    TAVec(-90.0f,   0.0f,   0.0f), // bottom
+    TAVec(  0.0f,   0.0f,   0.0f), // back
+    TAVec(  0.0f, 180.0f,   0.0f), // front
+  };
+
+  VMatrix4 lview;
+  CalcModelMatrix(lview, smapLightPos, viewAngles[facenum], false);
+  VMatrix4 lmpv = smapProj*lview;
+  ShadowsModelShadowMap.SetLightMPV(lmpv);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DrawAliasModelShadowMap
+//
+//==========================================================================
+void VOpenGLDrawer::DrawAliasModelShadowMap (const TVec &origin, const TAVec &angles,
+                              const AliasModelTrans &Transform,
+                              VMeshModel *Mdl, int frame, int nextframe,
+                              VTexture *Skin, float Alpha, float Inter,
+                              bool Interpolate, bool AllowTransparency)
+{
+  if (!Skin || Skin->Type == TEXTYPE_Null) return; // do not render models without textures
+
+  VMeshFrame *FrameDesc = &Mdl->Frames[frame];
+  VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
+
+  VMatrix4 RotationMatrix;
+  AliasSetupTransform(origin, angles, Transform, RotationMatrix);
+
+  SetPicModel(Skin, nullptr, CM_Default);
+
+  if (!gl_dbg_adv_render_shadow_models) return;
+
+  UploadModel(Mdl);
+  //GLDRW_CHECK_ERROR("model shadowmap: UploadModel");
+
+  ShadowsModelShadowMap.SetInter(Inter);
+  ShadowsModelShadowMap.SetModelToWorldMat(RotationMatrix);
+  //ShadowsModelShadowMap.SetNormalToWorldMat(NormalMat[0]);
+
+  //ShadowsModelShadowMap.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
+  //ShadowsModelShadowMap.SetAllowTransparency(AllowTransparency);
+  /*ShadowsModelShadowMap.SetViewOrigin(vieworg);*/
+  //ShadowsModelShadowMap.UploadChangedUniforms();
+  //GLDRW_CHECK_ERROR("model shadowmap: upload uniforms");
+
+  p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
+  //GLDRW_CHECK_ERROR("model shadowmap: bind array buffer");
+
+  p_glVertexAttribPointerARB(ShadowsModelShadowMap.loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
+  //GLDRW_CHECK_ERROR("model shadowmap: set position attribute pointer");
+  p_glEnableVertexAttribArrayARB(ShadowsModelShadowMap.loc_Position);
+  //GLDRW_CHECK_ERROR("model shadowmap: enable position attribute");
+
+  //p_glVertexAttribPointerARB(ShadowsModelShadowMap.loc_VertNormal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset);
+  //p_glEnableVertexAttribArrayARB(ShadowsModelShadowMap.loc_VertNormal);
+
+  p_glVertexAttribPointerARB(ShadowsModelShadowMap.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
+  //GLDRW_CHECK_ERROR("model shadowmap: set vert2 attribute pointer");
+  p_glEnableVertexAttribArrayARB(ShadowsModelShadowMap.loc_Vert2);
+  //GLDRW_CHECK_ERROR("model shadowmap: enable vert2 attribute");
+
+  //p_glVertexAttribPointerARB(ShadowsModelShadowMap.loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset);
+  //p_glEnableVertexAttribArrayARB(ShadowsModelShadowMap.loc_Vert2Normal);
+
+  p_glVertexAttribPointerARB(ShadowsModelShadowMap.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  //GLDRW_CHECK_ERROR("model shadowmap: set texcoord attribute pointer");
+  p_glEnableVertexAttribArrayARB(ShadowsModelShadowMap.loc_TexCoord);
+  //GLDRW_CHECK_ERROR("model shadowmap: enable texcoord attribute");
+
+  p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
+  //GLDRW_CHECK_ERROR("model shadowmap: bind element array buffer");
+
+  for (unsigned int fc = 0; fc < 6; ++fc) {
+    SetupModelShadowMap(fc);
+    ShadowsModelShadowMap.UploadChangedUniforms();
+    p_glDrawRangeElements(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0);
+    //GLDRW_CHECK_ERROR("model shadowmap: draw");
+  }
+
+  p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+  //GLDRW_CHECK_ERROR("model shadowmap: unbind element array buffer");
+
+  p_glDisableVertexAttribArrayARB(ShadowsModelShadowMap.loc_Position);
+  //GLDRW_CHECK_ERROR("model shadowmap: unbind position attribute");
+  //p_glDisableVertexAttribArrayARB(ShadowsModelShadowMap.loc_VertNormal);
+  p_glDisableVertexAttribArrayARB(ShadowsModelShadowMap.loc_Vert2);
+  //GLDRW_CHECK_ERROR("model shadowmap: unbind vert2 attribute");
+  //p_glDisableVertexAttribArrayARB(ShadowsModelShadowMap.loc_Vert2Normal);
+  p_glDisableVertexAttribArrayARB(ShadowsModelShadowMap.loc_TexCoord);
+  //GLDRW_CHECK_ERROR("model shadowmap: unbind texcoord attribute");
+  p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+  //GLDRW_CHECK_ERROR("model shadowmap: unbind array buffer");
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::BeginModelsShadowsPass
 //
 //==========================================================================
 void VOpenGLDrawer::BeginModelsShadowsPass (TVec &LightPos, float LightRadius) {
-  ShadowsModelShadow.Activate();
-  ShadowsModelShadow.SetLightPos(LightPos);
+  ShadowsModelShadowVol.Activate();
+  ShadowsModelShadowVol.SetLightPos(LightPos);
 }
 
 
@@ -647,7 +807,7 @@ void VOpenGLDrawer::EndModelsShadowsPass () {
 
 
 #define outv(idx, offs) do { \
-  ShadowsModelShadow.SetOffsetAttr(offs); \
+  ShadowsModelShadowVol.SetOffsetAttr(offs); \
   glArrayElement(index ## idx); \
 } while (0)
 
@@ -703,15 +863,15 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
     return;
   }
 
-  ShadowsModelShadow.SetInter(Inter);
-  ShadowsModelShadow.SetModelToWorldMat(RotationMatrix);
-  ShadowsModelShadow.UploadChangedUniforms();
+  ShadowsModelShadowVol.SetInter(Inter);
+  ShadowsModelShadowVol.SetModelToWorldMat(RotationMatrix);
+  ShadowsModelShadowVol.UploadChangedUniforms();
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
-  p_glVertexAttribPointerARB(ShadowsModelShadow.loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
-  p_glEnableVertexAttribArrayARB(ShadowsModelShadow.loc_Position);
-  p_glVertexAttribPointerARB(ShadowsModelShadow.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
-  p_glEnableVertexAttribArrayARB(ShadowsModelShadow.loc_Vert2);
+  p_glVertexAttribPointerARB(ShadowsModelShadowVol.loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
+  p_glEnableVertexAttribArrayARB(ShadowsModelShadowVol.loc_Position);
+  p_glVertexAttribPointerARB(ShadowsModelShadowVol.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
+  p_glEnableVertexAttribArrayARB(ShadowsModelShadowVol.loc_Vert2);
 
   // caps
   if (!usingZPass && !gl_dbg_use_zpass) {
@@ -719,22 +879,22 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
     glBegin(GL_TRIANGLES);
     for (int i = 0; i < Mdl->Tris.length(); ++i) {
       if (PlaneSides[i]) {
-        ShadowsModelShadow.SetOffsetAttr(1.0f);
+        ShadowsModelShadowVol.SetOffsetAttr(1.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[0]);
-        ShadowsModelShadow.SetOffsetAttr(1.0f);
+        ShadowsModelShadowVol.SetOffsetAttr(1.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[1]);
-        ShadowsModelShadow.SetOffsetAttr(1.0f);
+        ShadowsModelShadowVol.SetOffsetAttr(1.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[2]);
       }
     }
 
     for (int i = 0; i < Mdl->Tris.length(); ++i) {
       if (PlaneSides[i]) {
-        ShadowsModelShadow.SetOffsetAttr(0.0f);
+        ShadowsModelShadowVol.SetOffsetAttr(0.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[2]);
-        ShadowsModelShadow.SetOffsetAttr(0.0f);
+        ShadowsModelShadowVol.SetOffsetAttr(0.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[1]);
-        ShadowsModelShadow.SetOffsetAttr(0.0f);
+        ShadowsModelShadowVol.SetOffsetAttr(0.0f);
         glArrayElement(Mdl->Tris[i].VertIndex[0]);
       }
     }
@@ -767,8 +927,8 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
     }
   }
 
-  p_glDisableVertexAttribArrayARB(ShadowsModelShadow.loc_Position);
-  p_glDisableVertexAttribArrayARB(ShadowsModelShadow.loc_Vert2);
+  p_glDisableVertexAttribArrayARB(ShadowsModelShadowVol.loc_Position);
+  p_glDisableVertexAttribArrayARB(ShadowsModelShadowVol.loc_Vert2);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 }
 

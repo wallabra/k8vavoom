@@ -247,6 +247,7 @@ enum ERenderPass {
   RPASS_Textures, // render model textures on top of ambient lighting
   RPASS_Fog, // render model darkening/fog
   RPASS_NonShadow, // render "simple" models that doesn't require complex lighting (additive, for example)
+  RPASS_ShadowMaps, // render shadow maps
 };
 
 
@@ -1262,6 +1263,7 @@ protected:
   void RenderMobjsTextures ();
   void RenderMobjsLight (VEntity *owner);
   void RenderMobjsShadow (VEntity *owner, vuint32 dlflags);
+  void RenderMobjsShadowMap (VEntity *owner, vuint32 dlflags);
   void RenderMobjsFog ();
 
   inline bool IsTouchedByCurrLight (const VEntity *ent) const {

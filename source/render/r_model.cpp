@@ -1402,6 +1402,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       if (ri.isTranslucent() && ri.stencilColor) return; // shaded too
       break;
     case RPASS_ShadowVolumes:
+    case RPASS_ShadowMaps:
       if (ri.isTranslucent()) return;
       break;
     case RPASS_Textures:
@@ -1577,6 +1578,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         case RPASS_Normal: passname = "normal"; break;
         case RPASS_Ambient: passname = "ambient"; break;
         case RPASS_ShadowVolumes: passname = "shadow"; break;
+        case RPASS_ShadowMaps: passname = "shadowmaps"; break;
         case RPASS_Light: passname = "light"; break;
         case RPASS_Textures: passname = "texture"; break;
         case RPASS_Fog: passname = "fog"; break;
@@ -1594,6 +1596,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         //if (ri.isAdditive()) continue; // already checked
         break;
       case RPASS_ShadowVolumes:
+      case RPASS_ShadowMaps:
         if (Md2Alpha < 1.0f || SubMdl.NoShadow) continue;
         //if (ri.isTranslucent() && ri.stencilColor) continue; // already checked
         //if (ri.isAdditive()) continue; // already checked
@@ -1689,6 +1692,11 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         Drawer->DrawAliasModelShadow(Md2Org, Md2Angle, Transform,
           SubMdl.Model, Md2Frame, Md2NextFrame, smooth_inter, Interpolate,
           LightPos, LightRadius);
+        break;
+      case RPASS_ShadowMaps:
+        Drawer->DrawAliasModelShadowMap(Md2Org, Md2Angle, Transform,
+          SubMdl.Model, Md2Frame, Md2NextFrame, SkinTex,
+          Md2Alpha, smooth_inter, Interpolate, SubMdl.AllowTransparency);
         break;
       case RPASS_Light:
         Drawer->DrawAliasModelLight(Md2Org, Md2Angle, Transform,

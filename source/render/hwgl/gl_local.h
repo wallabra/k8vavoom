@@ -409,14 +409,26 @@ public:
   virtual void DrawAliasModelAmbient(const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, VTexture *, vuint32, float, float, bool,
     bool, bool) override;
+
   virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle, bool doShadow) override;
   virtual void EndModelsLightPass () override;
   virtual void DrawAliasModelLight(const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, VTexture *, float, float, bool, bool) override;
+
+  virtual void BeginModelShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) override;
+  virtual void EndModelShadowMaps () override;
+  virtual void SetupModelShadowMap (unsigned int facenum) override;
+  virtual void DrawAliasModelShadowMap (const TVec &origin, const TAVec &angles,
+                                        const AliasModelTrans &Transform,
+                                        VMeshModel *Mdl, int frame, int nextframe,
+                                        VTexture *Skin, float Alpha, float Inter,
+                                        bool Interpolate, bool AllowTransparency) override;
+
   virtual void BeginModelsShadowsPass (TVec &LightPos, float LightRadius) override;
   virtual void EndModelsShadowsPass () override;
   virtual void DrawAliasModelShadow(const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, float, bool, const TVec &, float) override;
+
   virtual void BeginModelsTexturesPass () override;
   virtual void EndModelsTexturesPass () override;
   void DrawAliasModelTextures (const TVec &origin, const TAVec &angles,
@@ -425,10 +437,12 @@ public:
                                VTexture *Skin, VTextureTranslation *Trans, int CMap,
                                const RenderStyleInfo &ri, float Inter,
                                bool Interpolate, bool ForceDepth, bool AllowTransparency) override;
+
   virtual void BeginModelsFogPass () override;
   virtual void EndModelsFogPass () override;
   virtual void DrawAliasModelFog(const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, VTexture *, vuint32, float, float, bool, bool) override;
+
   virtual bool StartPortal(VPortal *, bool) override;
   virtual void EndPortal(VPortal *, bool) override;
 

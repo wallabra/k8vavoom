@@ -651,6 +651,15 @@ public:
                                       float Inter, bool Interpolate,
                                       bool ForceDepth, bool AllowTransparency) = 0;
 
+  virtual void BeginModelShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) = 0;
+  virtual void EndModelShadowMaps () = 0;
+  virtual void SetupModelShadowMap (unsigned int facenum) = 0;
+  virtual void DrawAliasModelShadowMap (const TVec &origin, const TAVec &angles,
+                                        const AliasModelTrans &Transform,
+                                        VMeshModel *Mdl, int frame, int nextframe,
+                                        VTexture *Skin, float Alpha, float Inter,
+                                        bool Interpolate, bool AllowTransparency) = 0;
+
   virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle, bool doShadow) = 0;
   virtual void EndModelsLightPass () = 0;
   virtual void DrawAliasModelLight (const TVec &origin, const TAVec &angles,

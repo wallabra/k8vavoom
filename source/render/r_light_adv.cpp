@@ -341,6 +341,9 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
           }
         }
       }
+      Drawer->BeginModelShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle, refdef.width, refdef.height);
+      RenderMobjsShadowMap(ent, dlflags);
+      Drawer->EndModelShadowMaps();
     }
     Drawer->EndLightShadowMaps();
   } else {
