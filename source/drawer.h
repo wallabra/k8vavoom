@@ -651,7 +651,7 @@ public:
                                       float Inter, bool Interpolate,
                                       bool ForceDepth, bool AllowTransparency) = 0;
 
-  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle) = 0;
+  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle, bool doShadow) = 0;
   virtual void EndModelsLightPass () = 0;
   virtual void DrawAliasModelLight (const TVec &origin, const TAVec &angles,
                                     const AliasModelTrans &Transform,

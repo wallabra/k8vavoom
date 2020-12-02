@@ -292,6 +292,18 @@ void prSimpleRestoreAndFreePos (Parser *par, Parser **pos) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+void prPrintTokenLine (const Parser *par) {
+  const char *s = par->tkpos;
+  if (!s) return;
+  const char *start = s;
+  while (start > par->text && start[-1] != '\n') --start;
+  const char *end = s;
+  while (end < par->textend && *end != '\n') ++end;
+  fprintf(stderr, "=================\n");
+  while (start < end) { fputc(*start, stderr); ++start; }
+  fprintf(stderr, "\n=================\n");
+}
+
 int prGetTokenLine (const Parser *par) {
   int res = 1;
   for (const char *s = par->text; s < par->tkpos; ++s) {
@@ -313,6 +325,7 @@ void prError (const Parser *par, const char *msg) {
   int line = prGetTokenLine(par);
   int col = prGetTokenCol(par);
   fprintf(stderr, "PARSE ERROR (%d:%d): %s\n", line, col, msg);
+  prPrintTokenLine(par);
   abort();
 }
 

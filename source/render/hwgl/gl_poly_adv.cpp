@@ -37,6 +37,45 @@ VCvarB gl_smart_reject_shadows("gl_smart_reject_shadows", false, "Reject some su
 VCvarB gl_smart_reject_svol_segs("gl_smart_reject_svol_segs", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
 VCvarB gl_smart_reject_svol_flats("gl_smart_reject_svol_flats", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
 
+// this is for 128x128 shadowmaps
+// divide max to (shadowmapPOT+1)
+static VCvarF gl_shadowmap_bias_mul("gl_shadowmap_bias_mul", "0", "Shadowmap bias multiplier.", CVAR_PreInit/*|CVAR_Archive*/);
+static VCvarF gl_shadowmap_bias_min("gl_shadowmap_bias_min", "0", "Shadowmap bias minimum (0: use default).", CVAR_PreInit/*|CVAR_Archive*/);
+static VCvarF gl_shadowmap_bias_max("gl_shadowmap_bias_max", "0", "Shadowmap bias maximum.", CVAR_PreInit/*|CVAR_Archive*/);
+static VCvarB gl_shadowmap_bias_adjust("gl_shadowmap_bias_adjust", true, "Adjust shadowmap bias according to shadowmap size?", CVAR_PreInit/*|CVAR_Archive*/);
+
+
+//  128: 0.044
+//  256: 0.036
+//  512: 0.02
+// 1024: 0.001
+float advLightGetMaxBias (const unsigned int shadowmapPOT) noexcept {
+  float f = gl_shadowmap_bias_max.asFloat();
+  if (f > 0.0f) {
+    if (gl_shadowmap_bias_adjust) f /= (float)(shadowmapPOT+1);
+    return f;
+  }
+  switch (shadowmapPOT) {
+    case 0: return 0.044f;
+    case 1: return 0.036f/2.0f;
+    case 2: return 0.02f/3.0f;
+    case 3:
+    default: return 0.001f/4.0f;
+  }
+}
+
+float advLightGetMinBias () noexcept {
+  float f = gl_shadowmap_bias_min.asFloat();
+  if (f <= 0.0f) f = 0.0015f;
+  return f;
+}
+
+float advLightGetMulBias () noexcept {
+  float f = gl_shadowmap_bias_mul.asFloat();
+  if (f <= 0.0f) f = 0.0065f;
+  return f;
+}
+
 
 // this also sorts by fade, so we can avoid resorting in fog pass
 int glAdvRenderDrawListItemCmpByTextureAndFade (const void *a, const void *b, void * /*udata*/) {

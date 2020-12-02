@@ -1,6 +1,3 @@
-#version 120
-$include "common/common.inc"
-
 uniform sampler2D Texture;
 uniform vec3 LightColor;
 uniform float LightRadius;
@@ -20,6 +17,13 @@ varying float VDist;
 
 varying vec2 TextureCoordinate;
 
+#ifdef VV_SHADOWMAPS
+$include "shadowvol/smap_light_decl.fs"
+#endif
+
+#define VV_SHADOW_CHECK_TEXTURE
+#define VV_LIGHT_MODEL
+
 
 void main () {
   //k8: don't do this until i fix normals, otherwise lighting looks weird
@@ -34,12 +38,22 @@ void main () {
     if (TexColor.a < ALPHA_MIN) discard;
   }
 
+  $include "shadowvol/common_light.fs"
+
+#if 0
+factored out
   float DistToLight = max(1.0, dot(VertToLight, VertToLight));
   if (DistToLight >= LightRadius*LightRadius) discard;
 
+  vec3 normV2L = normalize(VertToLight);
+
+#ifdef VV_SHADOWMAPS
+  $include "shadowvol/smap_light_check.fs"
+#endif
+
   DistToLight = sqrt(DistToLight);
 
-  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
+  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normV2L, Normal)));
 #ifdef VV_SPOTLIGHT
   $include "common/spotlight_calc.fs"
 #endif
@@ -57,4 +71,5 @@ void main () {
   FinalColor.a = ClampAdd*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
 
   gl_FragColor = FinalColor;
+#endif
 }

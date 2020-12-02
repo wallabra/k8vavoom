@@ -300,8 +300,11 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader [advanced] ShadowsModelShadow both="shadowvol/model/shadows_model_shadow";
   Shader [advanced] ShadowsModelFog both="shadowvol/model/shadows_model_fog";
 
-  Shader [advanced] ShadowsModelLight both="shadowvol/model/shadows_model_light";
-  Shader [advanced] ShadowsModelLightSpot both="shadowvol/model/shadows_model_light" { define "VV_SPOTLIGHT"; }
+  Shader [advanced] ShadowsModelLight both="shadowvol/model/shadows_model_light_svol";
+  Shader [advanced] ShadowsModelLightSpot both="shadowvol/model/shadows_model_light_svol" { define "VV_SPOTLIGHT"; }
+
+  Shader [advanced] ShadowsModelLightSMap both="shadowvol/model/shadows_model_light_smap" { define "VV_SHADOWMAPS"; }
+  Shader [advanced] ShadowsModelLightSMapSpot both="shadowvol/model/shadows_model_light_smap" { defines { "VV_SHADOWMAPS", "VV_SPOTLIGHT" } }
 
   // wipe
   Shader DrawWipeType0 both="wipe/draw_wipe_type0";

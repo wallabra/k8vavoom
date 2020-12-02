@@ -1,6 +1,3 @@
-#version 120
-$include "common/common.inc"
-
 attribute vec3 Position;
 
 uniform mat4 ModelToWorldMat;
@@ -23,6 +20,10 @@ varying float VDist;
 
 varying vec2 TextureCoordinate;
 
+#ifdef VV_SHADOWMAPS
+$include "shadowvol/smap_light_decl.vs"
+#endif
+
 
 void main () {
   vec4 Vert = mix(vec4(Position, 1.0), Vert2, Inter)*ModelToWorldMat;
@@ -39,4 +40,8 @@ void main () {
   */
 
   TextureCoordinate = TexCoord;
+
+#ifdef VV_SHADOWMAPS
+  VertWorldPos = (LightView*Vert).xyz;
+#endif
 }

@@ -391,7 +391,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   }
   Drawer->EndLightPass();
 
-  Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, coneDir, coneAngle);
+  Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, coneDir, coneAngle, allowShadows);
   RenderMobjsLight(ent);
   Drawer->EndModelsLightPass();
 

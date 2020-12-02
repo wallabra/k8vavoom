@@ -13,8 +13,7 @@ varying float Dist;
 varying float VDist;
 
 #ifdef VV_SHADOWMAPS
-varying vec3 VertWorldPos;
-uniform mat4 LightView;
+$include "shadowvol/smap_light_decl.vs"
 #endif
 
 

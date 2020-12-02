@@ -33,6 +33,8 @@ static VCvarB gl_dbg_adv_render_alias_models("gl_dbg_adv_render_alias_models", t
 static VCvarB gl_dbg_adv_render_shadow_models("gl_dbg_adv_render_shadow_models", true, "Render model shadow volumes?", 0);
 static VCvarB gl_dbg_adv_render_fog_models("gl_dbg_adv_render_fog_models", true, "Render model fog?", 0);
 
+extern VCvarB r_shadowmaps;
+
 
 //==========================================================================
 //
@@ -439,6 +441,54 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
 }
 
 
+#define VV_MLIGHT_SHADER_SETUP_COMMON(shad_)  \
+  (shad_).Activate(); \
+  (shad_).SetTexture(0); \
+  (shad_).SetLightPos(LightPos); \
+  (shad_).SetLightRadius(Radius); \
+  (shad_).SetLightMin(LightMin); \
+  (shad_).SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f); \
+
+#define VV_MLIGHT_SHADER_SETUP_SPOT(shad_)  \
+  VV_MLIGHT_SHADER_SETUP_COMMON(shad_); \
+  (shad_).SetConeDirection(coneDir); \
+  (shad_).SetConeAngle(coneAngle);
+
+#define VV_MLIGHT_SHADER_SETUP_SMAP_ONLY(shad_)  \
+  (shad_).SetLightView(lview2); \
+  (shad_).SetLightPos2(lpp); \
+  (shad_).SetShadowTexture(1); \
+  (shad_).SetBiasMul(advLightGetMulBias()); \
+  (shad_).SetBiasMin(advLightGetMinBias()); \
+  (shad_).SetBiasMax(advLightGetMaxBias(shadowmapPOT));
+
+#define VV_MLIGHT_SHADER_SETUP_SMAP(shad_)  \
+  if (spotLight) { \
+    VV_MLIGHT_SHADER_SETUP_SMAP_ONLY(shad_##SMapSpot); \
+  } else { \
+    VV_MLIGHT_SHADER_SETUP_SMAP_ONLY(shad_##SMap); \
+  } \
+
+#define VV_MLIGHT_SHADER_SETUP(shad_)  \
+  if (lpassDoShadowMap) { \
+    if (spotLight) { \
+      VV_MLIGHT_SHADER_SETUP_COMMON(shad_##SMapSpot); \
+      VV_MLIGHT_SHADER_SETUP_SPOT(shad_##SMapSpot); \
+    } else { \
+      VV_MLIGHT_SHADER_SETUP_COMMON(shad_##SMap); \
+    } \
+  } else { \
+    if (spotLight) { \
+      VV_MLIGHT_SHADER_SETUP_COMMON(shad_##Spot); \
+      VV_MLIGHT_SHADER_SETUP_SPOT(shad_##Spot); \
+    } else { \
+      VV_MLIGHT_SHADER_SETUP_COMMON(shad_); \
+    } \
+  }
+
+static bool lpassDoShadowMap;
+
+
 //==========================================================================
 //
 //  VOpenGLDrawer::BeginModelsLightPass
@@ -446,23 +496,24 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
 //  always called after `BeginLightPass()`
 //
 //==========================================================================
-void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle) {
-  if (spotLight) {
-    ShadowsModelLightSpot.Activate();
-    ShadowsModelLightSpot.SetTexture(0);
-    ShadowsModelLightSpot.SetLightPos(LightPos);
-    ShadowsModelLightSpot.SetLightRadius(Radius);
-    ShadowsModelLightSpot.SetLightMin(LightMin);
-    ShadowsModelLightSpot.SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f);
-    ShadowsModelLightSpot.SetConeDirection(coneDir);
-    ShadowsModelLightSpot.SetConeAngle(coneAngle);
-  } else {
-    ShadowsModelLight.Activate();
-    ShadowsModelLight.SetTexture(0);
-    ShadowsModelLight.SetLightPos(LightPos);
-    ShadowsModelLight.SetLightRadius(Radius);
-    ShadowsModelLight.SetLightMin(LightMin);
-    ShadowsModelLight.SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f);
+void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle, bool doShadow) {
+  lpassDoShadowMap = (doShadow && r_shadowmaps.asBool() && CanRenderShadowMaps());
+  VV_MLIGHT_SHADER_SETUP(ShadowsModelLight);
+  if (lpassDoShadowMap) {
+    SelectTexture(1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
+    SelectTexture(0);
+
+    //VMatrix4 lview;
+    //Drawer->CalcModelMatrix(lview, LightPos, TAVec(0.0f, 0.0f, 0.0f), false);
+    //ShadowsLightSMap.SetLightView(lview);
+    VMatrix4 lview2;
+    Drawer->CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
+    //VMatrix4 lview = VMatrix4::TranslateNeg(LightPos);
+    //ShadowsLightSMap.SetLightMPV(lview);
+    TVec lpp = lview2*LightPos;
+    VV_MLIGHT_SHADER_SETUP_SMAP(ShadowsModelLight);
   }
 }
 
@@ -473,6 +524,11 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
 //
 //==========================================================================
 void VOpenGLDrawer::EndModelsLightPass () {
+  if (lpassDoShadowMap) {
+    SelectTexture(1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    SelectTexture(0);
+  }
 }
 
 
@@ -554,10 +610,18 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
 
   UploadModel(Mdl);
 
-  if (spotLight) {
-    DO_DRAW_AMDL_LIGHT(ShadowsModelLightSpot);
+  if (lpassDoShadowMap) {
+    if (spotLight) {
+      DO_DRAW_AMDL_LIGHT(ShadowsModelLightSMapSpot);
+    } else {
+      DO_DRAW_AMDL_LIGHT(ShadowsModelLightSMap);
+    }
   } else {
-    DO_DRAW_AMDL_LIGHT(ShadowsModelLight);
+    if (spotLight) {
+      DO_DRAW_AMDL_LIGHT(ShadowsModelLightSpot);
+    } else {
+      DO_DRAW_AMDL_LIGHT(ShadowsModelLight);
+    }
   }
 }
 

@@ -409,7 +409,7 @@ public:
   virtual void DrawAliasModelAmbient(const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, VTexture *, vuint32, float, float, bool,
     bool, bool) override;
-  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle) override;
+  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle, bool doShadow) override;
   virtual void EndModelsLightPass () override;
   virtual void DrawAliasModelLight(const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, VTexture *, float, float, bool, bool) override;
@@ -1087,5 +1087,9 @@ public:
   }
 };
 
+
+float advLightGetMaxBias (const unsigned int shadowmapPOT) noexcept;
+float advLightGetMinBias () noexcept;
+float advLightGetMulBias () noexcept;
 
 #endif
