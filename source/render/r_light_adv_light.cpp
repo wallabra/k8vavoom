@@ -79,7 +79,6 @@ void VRenderLevelShadowVolume::DrawLightSurfaces (surface_t *InSurfs, texinfo_t 
 //==========================================================================
 void VRenderLevelShadowVolume::RenderLightLine (sec_region_t *secregion, drawseg_t *dseg) {
   const seg_t *seg = dseg->seg;
-
   if (!seg->linedef) return; // miniseg
 
   const float dist = DotProduct(CurrLightPos, seg->normal)-seg->dist;

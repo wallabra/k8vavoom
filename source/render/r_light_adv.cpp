@@ -195,6 +195,10 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     }
   } else {
     Drawer->ResetScissor();
+    hasScissor = 0;
+    scoord[0] = scoord[1] = 0;
+    scoord[2] = Drawer->getWidth();
+    scoord[3] = Drawer->getHeight();
   }
 
   // if there are no lit surfaces oriented away from camera, it cannot possibly be in shadow volume
@@ -318,9 +322,9 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     if (allowShadows) {
       if (!useCollector) (void)fsecCounterGen(); // for checker
       // sort shadow surfaces by textures
-      timsort_r(shadowSurfaces.ptr(), shadowSurfaces.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
       if (r_max_shadow_segs_all) {
         if (useCollector) {
+          timsort_r(shadowSurfaces.ptr(), shadowSurfaces.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
           for (unsigned fc = 0; fc < 6; ++fc) {
             Drawer->SetupLightShadowMap(fc);
             for (auto &&surf : shadowSurfaces) Drawer->RenderSurfaceShadowMap(surf);
@@ -330,6 +334,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
           dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
           dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
           RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+          //GCon->Logf(NAME_Debug, "light at (%g,%g,%g); raduis=%g; surfaces=%d", CurrLightPos.x, CurrLightPos.y, CurrLightPos.z, CurrLightRadius, smapSurfaces.length());
           for (unsigned fc = 0; fc < 6; ++fc) {
             Drawer->SetupLightShadowMap(fc);
             for (auto &&surf : smapSurfaces) Drawer->RenderSurfaceShadowMap(surf);

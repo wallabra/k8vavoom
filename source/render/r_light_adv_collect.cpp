@@ -53,7 +53,7 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
   if (!InSurfs) return;
   if (!(ssflag&FlagAsBoth)) return;
 
-  if (!texinfo || texinfo->Tex->Type == TEXTYPE_Null) return;
+  if (!texinfo || !texinfo->Tex || texinfo->Tex->Type == TEXTYPE_Null) return;
   if (texinfo->Alpha < 1.0f || texinfo->Additive) return;
 
   if (SkyBox && SkyBox->IsPortalDirty()) SkyBox = nullptr;
@@ -64,7 +64,7 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
     return;
   }
 
-  const bool smaps = r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps();
+  const bool smaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
 
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
@@ -83,16 +83,13 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
 
     // light
     if (ssflag&FlagAsLight) {
-      if (surf->IsPlVisible()) {
-        // viewer is in front
-        lightSurfaces.append(surf);
-      }
+      if (surf->IsPlVisible()) lightSurfaces.append(surf); // viewer is in front
     }
 
+    // shadow
     if (ssflag&FlagAsShadow) {
-      // shadow
       if (!smaps && tex->isSeeThrough()) continue; // this is masked texture, shadow volumes cannot process it
-      if (smaps && !surf->IsPlVisible()) continue; // viewer is in back side or on plane
+      //if (smaps && !surf->IsPlVisible()) continue; // viewer is in back side or on plane
       shadowSurfaces.append(surf);
     }
   }
@@ -108,17 +105,24 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
 //==========================================================================
 void VRenderLevelShadowVolume::CollectAdvLightLine (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg, unsigned int ssflag) {
   const seg_t *seg = dseg->seg;
-
   if (!seg->linedef) return; // miniseg
 
   const float dist = DotProduct(CurrLightPos, seg->normal)-seg->dist;
   //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light sphere is not touching a plane
-  if (fabsf(dist) >= CurrLightRadius) return;
+  //if (fabsf(dist) >= CurrLightRadius) return; // was for light
+  if (dist <= 0.0f || dist >= CurrLightRadius) return;
 
   //k8: here we can call `ClipSegToLight()`, but i see no reasons to do so
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
-#if 1
+  #ifdef VV_CHECK_1S_CAST_SHADOW
+  if ((ssflag&FlagAsShadow) && !seg->backsector && !CheckCan1SCastShadow(seg->linedef)) {
+    //return;
+    if ((ssflag &= ~FlagAsShadow) == 0) return;
+  }
+  #endif
+
+#if 0
   // k8: this drops some segs that may leak without proper frustum culling
   // k8: this seems to be unnecessary now
   // k8: yet leave it there in the hope that it will reduce GPU overdrawing
@@ -154,8 +158,8 @@ void VRenderLevelShadowVolume::CollectAdvLightSecSurface (sec_surface_t *ssurf, 
   //const float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
   const float dist = ssurf->PointDist(CurrLightPos);
   //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
-  if (fabsf(dist) >= CurrLightRadius) return;
-  //for shadow: if (dist <= 0.0f || dist >= CurrLightRadius) return;
+  //if (fabsf(dist) >= CurrLightRadius) return; // was for light
+  if (dist <= 0.0f || dist >= CurrLightRadius) return;
 
   CollectAdvLightSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox, true, 0, ssflag);
 }
@@ -250,35 +254,34 @@ void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
   // `LightBspVis` is already an intersection, no need to check `BspVis` here
   //if (!IsSubsectorLitBspVis(num) || !(BspVis[num>>3]&(1<<(num&7)))) return;
 
-  /*if (IsSubsectorLitBspVis(num))*/
-  {
-    if (LightClip.ClipLightCheckSubsector(sub, false)) {
-      // if our light is in frustum, out-of-frustum subsectors are not interesting
-      //FIXME: pass "need frustum check" flag to other functions
-      unsigned int ssflag = FlagAsBoth;
-      if (CurrLightInFrustum && !(BspVis[num>>3]&(1u<<(num&7)))) {
-        // this subsector is invisible, check if it is in frustum
-        float bbox[6];
-        // min
-        bbox[0] = sub->bbox2d[BOX2D_LEFT];
-        bbox[1] = sub->bbox2d[BOX2D_BOTTOM];
-        bbox[2] = sub->sector->floor.minz;
-        // max
-        bbox[3] = sub->bbox2d[BOX2D_RIGHT];
-        bbox[4] = sub->bbox2d[BOX2D_TOP];
-        bbox[5] = sub->sector->ceiling.maxz;
-        FixBBoxZ(bbox);
-        if (!Drawer->viewfrustum.checkBox(bbox)) ssflag &= ~FlagAsLight;
-      }
+  if (LightClip.ClipLightCheckSubsector(sub, false)) {
+    // if our light is in frustum, out-of-frustum subsectors are not interesting
+    //FIXME: pass "need frustum check" flag to other functions
+    unsigned int ssflag = (IsSubsectorLitBspVis(num) ? FlagAsBoth : FlagAsShadow);
+    if (CurrLightInFrustum && !(BspVis[num>>3]&(1u<<(num&7)))) {
+      // this subsector is invisible, check if it is in frustum (this was originally done for shadow)
+      float bbox[6];
+      // min
+      bbox[0] = sub->bbox2d[BOX2D_LEFT];
+      bbox[1] = sub->bbox2d[BOX2D_BOTTOM];
+      bbox[2] = sub->sector->floor.minz;
+      // max
+      bbox[3] = sub->bbox2d[BOX2D_RIGHT];
+      bbox[4] = sub->bbox2d[BOX2D_TOP];
+      bbox[5] = sub->sector->ceiling.maxz;
+      FixBBoxZ(bbox);
+      if (!Drawer->viewfrustum.checkBox(bbox)) ssflag &= ~FlagAsShadow;
+    }
 
-      // update world
-      if (sub->updateWorldFrame != updateWorldFrame) {
-        sub->updateWorldFrame = updateWorldFrame;
-        if (!r_disable_world_update) UpdateSubRegion(sub, sub->regions);
-      }
+    // update world
+    if (sub->updateWorldFrame != updateWorldFrame) {
+      sub->updateWorldFrame = updateWorldFrame;
+      if (!r_disable_world_update) UpdateSubRegion(sub, sub->regions);
+    }
 
-      // render the polyobj in the subsector first, and add it to clipper
-      // this blocks view with polydoors
+    // render the polyobj in the subsector first, and add it to clipper
+    // this blocks view with polydoors
+    if (ssflag) {
       CollectAdvLightPolyObj(sub, ssflag);
       AddPolyObjToLightClipper(LightClip, sub, false);
       CollectAdvLightSubRegion(sub, sub->regions, ssflag);
