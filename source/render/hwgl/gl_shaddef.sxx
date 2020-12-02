@@ -266,9 +266,9 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader SurfPartSq vertex="particle/particle" fragment="particle/particle_sq";
   Shader SurfPartSm vertex="particle/particle" fragment="particle/particle_sm";
 
-  Shader [advanced] SurfShadowVolume both="shadowvol/surf/surf_svol";
-  Shader [advanced] [OpenGL >= 3.0] SurfShadowMap both="shadowvol/surf/surf_smap";
-  Shader [advanced] [OpenGL >= 3.0] SurfShadowMapTex both="shadowvol/surf/surf_smap" { define "VV_SMAP_TEXTURED"; }
+  Shader [advanced] SurfShadowVolume both="shadowvol/surf/shadows_surf_svol";
+  Shader [advanced] [OpenGL >= 3.0] SurfShadowMap both="shadowvol/surf/shadows_surf_smap";
+  Shader [advanced] [OpenGL >= 3.0] SurfShadowMapTex both="shadowvol/surf/shadows_surf_smap" { define "VV_SMAP_TEXTURED"; }
 
   Shader [advanced] ShadowsAmbient both="shadowvol/surf/shadows_surf_ambient";
   Shader [advanced] ShadowsAmbientMasked both="shadowvol/surf/shadows_surf_ambient" { define "VV_AMBIENT_MASKED_WALL"; }
