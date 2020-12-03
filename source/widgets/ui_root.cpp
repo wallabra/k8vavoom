@@ -168,7 +168,7 @@ void VRootWidget::FixEventCoords (VWidget *w, event_t *evt, SavedEventParts &svp
     svparts.x = evt->x;
     svparts.y = evt->y;
     evt->x = (int)w->ScaledXToLocal(MouseX*SizeScaleX);
-    evt->y = (int)w->ScaledYToLocal(MouseY*SizeScaleX);
+    evt->y = (int)w->ScaledYToLocal(MouseY*SizeScaleY);
   } else {
     svparts.type = 2;
     svparts.dx = evt->dx;
@@ -178,7 +178,7 @@ void VRootWidget::FixEventCoords (VWidget *w, event_t *evt, SavedEventParts &svp
     evt->dx = (int)(evt->dx*SizeScaleX/w->ClipRect.ScaleX);
     evt->dy = (int)(evt->dy*SizeScaleY/w->ClipRect.ScaleY);
     evt->msx = (int)w->ScaledXToLocal(MouseX*SizeScaleX);
-    evt->msy = (int)w->ScaledYToLocal(MouseY*SizeScaleX);
+    evt->msy = (int)w->ScaledYToLocal(MouseY*SizeScaleY);
   }
 }
 

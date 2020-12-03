@@ -814,6 +814,46 @@ void VWidget::ToDrawerCoords (int &x, int &y) const noexcept {
 
 //==========================================================================
 //
+//  VWidget::ToDrawerX
+//
+//==========================================================================
+int VWidget::ToDrawerX (int x) const noexcept {
+  return (int)(ClipRect.ScaleX*x+ClipRect.OriginX);
+}
+
+
+//==========================================================================
+//
+//  VWidget::ToDrawerY
+//
+//==========================================================================
+int VWidget::ToDrawerY (int y) const noexcept {
+  return (int)(ClipRect.ScaleY*y+ClipRect.OriginY);
+}
+
+
+//==========================================================================
+//
+//  VWidget::FromDrawerX
+//
+//==========================================================================
+int VWidget::FromDrawerX (int x) const noexcept {
+  return (int)((x-ClipRect.OriginX)/ClipRect.ScaleX);
+}
+
+
+//==========================================================================
+//
+//  VWidget::FromDrawerY
+//
+//==========================================================================
+int VWidget::FromDrawerY (int y) const noexcept {
+  return (int)((y-ClipRect.OriginY)/ClipRect.ScaleY);
+}
+
+
+//==========================================================================
+//
 //  VWidget::TransferAndClipRect
 //
 //==========================================================================

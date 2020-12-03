@@ -248,6 +248,12 @@ public:
   void ToDrawerCoords (float &x, float &y) const noexcept;
   void ToDrawerCoords (int &x, int &y) const noexcept;
 
+  int ToDrawerX (int x) const noexcept;
+  int ToDrawerY (int y) const noexcept;
+
+  int FromDrawerX (int x) const noexcept;
+  int FromDrawerY (int y) const noexcept;
+
   // call this to close widget instead of destroying it
   void Close ();
 
