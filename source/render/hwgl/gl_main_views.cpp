@@ -248,12 +248,19 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
     //   front, back
     //   left, right
     //   top, bottom
+
+    T_SetFont(ConFont);
+    T_SetAlign(hcenter, vtop);
+    const char *cbnames[6] = { "BACK", "FRONT", "RIGHT", "LEFT", "BOTTOM", "TOP" };
+
     //const float ssize = shadowmapSize;
     const float ssize = 128.0f;
+    const float fyofs = T_ToDrawerY(T_FontHeight()+2);
+    const float ysize = (ssize+T_ToDrawerY(T_FontHeight()+4));
     GLDisableBlend();
     for (unsigned int face = 0; face < 6; ++face) {
       float xofs = (face%2)*(ssize+4);
-      float yofs = ((face/2)%3)*(ssize+4);
+      float yofs = (face/2%3)*ysize+fyofs;
       glDisable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_CUBE_MAP);
@@ -274,15 +281,10 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
     }
     GLEnableBlend();
 
-    T_SetFont(ConFont);
-    T_SetAlign(hleft, vcenter);
-    const char *cbnames[3] = { "FRONT/BACK", "LEFT/RIGHT", "TOP/BOTTOM" };
-    for (int y = 0; y < 3; ++y) {
-      int xpos = T_FromDrawerX((int)(ssize+4)*2+16);
-      int ypos = T_FromDrawerY((int)(ssize+4)*y+(int)(ssize+4)/2)+T_FontHeight()/2;
-      //GRoot->ToDrawerCoords(sXPos, sYPos);
-      //Drawer->ShadeRect(0, 0, sXPos, sYPos, stripeAlpha);
-      T_DrawText(xpos, ypos, cbnames[y], CR_DARKBROWN);
+    for (unsigned int face = 0; face < 6; ++face) {
+      int xpos = T_FromDrawerX((int)((face%2)*(ssize+4)+(ssize+4)/2));
+      int ypos = T_FromDrawerY((int)((face/2%3)*ysize))+1;
+      T_DrawText(xpos, ypos, cbnames[face], CR_DARKBROWN);
     }
   }
 }
