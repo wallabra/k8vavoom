@@ -47,8 +47,7 @@ VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
   Height = AHeight;
   bIsCameraTexture = true;
   needFBO = true;
-  transparent = false; // anyway
-  translucent = false; // anyway
+  transFlags = TransValueSolid; // anyway
   Pixels8BitValid = false;
   Pixels8BitAValid = false;
   //vassert(!Pixels);
@@ -106,8 +105,7 @@ bool VCameraTexture::NeedUpdate () {
 //==========================================================================
 vuint8 *VCameraTexture::GetPixels () {
   //bUsedInFrame = true;
-  transparent = false; // anyway
-  translucent = false; // anyway
+  transFlags = TransValueSolid; // anyway
   Pixels8BitValid = false;
   Pixels8BitAValid = false;
   // if already got pixels, then just return them
@@ -149,8 +147,7 @@ void VCameraTexture::CopyImage () {
     //Pixels = new vuint8[Width*Height*4];
     (void)GetPixels();
   }
-  transparent = false; // anyway
-  translucent = false; // anyway
+  transFlags = TransValueSolid; // anyway
   /* it will be done in texture selection code
   if (gl_camera_texture_use_readpixels) {
     Drawer->ReadBackScreen(Width, Height, (rgba_t *)Pixels);

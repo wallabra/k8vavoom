@@ -169,8 +169,7 @@ VPcxTexture::~VPcxTexture () {
 vuint8 *VPcxTexture::GetPixels () {
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
-  transparent = false;
-  translucent = false;
+  transFlags = TransValueSolid; // for now
 
   //GLog.Logf(NAME_Debug, "*** TRYING PCX TEXTURE '%s'", *W_FullLumpName(SourceLump));
 
@@ -333,15 +332,18 @@ vuint8 *VPcxTexture::GetPixels () {
     if (Width > 0 && Height > 0) {
       const vuint8 *s = Pixels;
       for (int count = Width*Height; count--; ++s) {
-        if (s[0] == 0) { transparent = true; break; }
+        if (s[0] == 0) { transFlags |= FlagTransparent; break; }
       }
     }
   } else if (hasAlpha) {
     const vuint8 *s = Pixels;
     for (int count = Width*Height; count--; s += 4) {
       if (s[3] != 255) {
-        transparent = true;
-        translucent = translucent || (s[3] != 0);
+        transFlags |= FlagTransparent;
+        if (s[3]) {
+          if (transFlags&FlagTranslucent) break;
+          transFlags |= FlagTranslucent;
+        }
       }
     }
   }

@@ -1849,7 +1849,7 @@ void VTextureManager::ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, i
     NewTex->HashNext = OldTex->HashNext;
     Textures[OldIndex] = NewTex;
     // force non-translucency for lightmapping
-    if (NewTex->isTranslucent() && !OldTex->isTranslucent()) NewTex->translucent = false;
+    if (NewTex->isTranslucent() && !OldTex->isTranslucent()) NewTex->ResetTranslucentFlag();
     // we may not need it for a long time
     OldTex->ReleasePixels();
     // k8: don't delete old texture, it can be referenced out there

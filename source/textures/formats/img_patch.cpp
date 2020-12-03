@@ -104,8 +104,7 @@ VPatchTexture::~VPatchTexture () {
 //==========================================================================
 vuint8 *VPatchTexture::GetPixels () {
   if (Pixels) return Pixels; // if already got pixels, then just return them
-  transparent = false;
-  translucent = false;
+  transFlags = TransValueSolid; // for now
 
   VCheckedStream Strm(SourceLump);
   const int stsize = Strm.TotalSize();
@@ -120,7 +119,7 @@ vuint8 *VPatchTexture::GetPixels () {
     Pixels = new vuint8[1];
     Pixels[0] = 0;
     ConvertPixelsToShaded();
-    transparent = true;
+    transFlags |= FlagTransparent;
     return Pixels;
   }
 
@@ -263,7 +262,7 @@ vuint8 *VPatchTexture::GetPixels () {
   if (Width > 0 && Height > 0) {
     const vuint8 *s = Pixels;
     for (int count = Width*Height; count--; ++s) {
-      if (s[0] != 0) { transparent = true; break; }
+      if (s[0] != 0) { transFlags |= FlagTransparent; break; }
     }
   }
 

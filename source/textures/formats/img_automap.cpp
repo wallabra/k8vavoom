@@ -75,8 +75,7 @@ VAutopageTexture::~VAutopageTexture () {
 vuint8 *VAutopageTexture::GetPixels () {
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
-  transparent = false;
-  translucent = false;
+  transFlags = TransValueSolid; // anyway
 
   // read data
   VCheckedStream Strm(SourceLump);

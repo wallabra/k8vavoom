@@ -226,11 +226,19 @@ public:
   bool animNoDecals;
   bool animated; // used to select "no decals" flag
   bool needFBO;
-  bool transparent; // `true` if texture has any non-solid pixels; set in `GetPixels()`
-  bool translucent; // `true` if texture has some non-integral alpha pixels; set in `GetPixels()`
   bool nofullbright; // valid for all textures; forces "no fullbright" for sprite brightmaps (ONLY!)
   vuint32 glowing; // is this a glowing texture? (has any meaning only for floors and ceilings; 0: none; if high byte is 0xff, it is fullbright)
   bool noHires; // hires texture tried and not found
+
+  enum {
+    FlagTransparent = 0x01u, // does texture have any non-solid pixels? set in `GetPixels()`
+    FlagTranslucent = 0x02u, // does texture have some non-integral alpha pixels? set in `GetPixels()`
+    TransValueSolid = 0x00u, // this MUST be zero!
+    TransValueUnknown = 0xffu,
+  };
+  vuint32 transFlags; // default is `TransValueUnknown`
+  //bool transparent; // `true` if texture has any non-solid pixels; set in `GetPixels()`
+  //bool translucent; // `true` if texture has some non-integral alpha pixels; set in `GetPixels()`
 
   vuint32 lastUpdateFrame;
 
@@ -358,19 +366,29 @@ public:
   rgba_t getPixel (int x, int y);
 
   inline bool isTransparent () {
-    if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
-    return transparent;
+    //if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
+    if (transFlags == TransValueUnknown) (void)GetPixels(); // this will set the flag
+    return !!(transFlags&FlagTransparent);
   }
 
   inline bool isTranslucent () {
-    if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
-    return translucent;
+    //if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
+    if (transFlags == TransValueUnknown) (void)GetPixels(); // this will set the flag
+    return !!(transFlags&FlagTranslucent);
   }
 
   inline bool isSeeThrough () {
-    if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
-    return (transparent || translucent);
+    //if (!Pixels && !Pixels8BitValid && !Pixels8BitAValid) (void)GetPixels(); // this will set the flag
+    if (transFlags == TransValueUnknown) (void)GetPixels(); // this will set the flag
+    return !!(transFlags&(FlagTransparent|FlagTranslucent));
   }
+
+  inline void ResetTransparentFlag () noexcept { if (transFlags != TransValueUnknown) transFlags &= ~FlagTransparent; }
+  inline void ResetTranslucentFlag () noexcept { if (transFlags != TransValueUnknown) transFlags &= ~FlagTranslucent; }
+
+  // no need to check for `TransValueUnknown` here, as setting any flag will not modify it
+  inline void SetTransparentFlag () noexcept { transFlags |= FlagTransparent; }
+  inline void SetTranslucentFlag () noexcept { transFlags |= FlagTranslucent; }
 
   virtual void SetFrontSkyLayer ();
   virtual bool CheckModified ();

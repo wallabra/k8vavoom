@@ -116,8 +116,7 @@ bool VWarpTexture::CheckModified () {
 //==========================================================================
 vuint8 *VWarpTexture::GetPixels () {
   if (Pixels && GenTime == GTextureManager.Time*Speed) return Pixels;
-  transparent = false;
-  translucent = false;
+  transFlags = TransValueSolid; // for now
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
   mFormat = mOrigFormat = SrcTex->Format;
@@ -144,7 +143,7 @@ vuint8 *VWarpTexture::GetPixels () {
     vuint8 *Dst = Pixels;
     for (int y = 0; y < Height; ++y) {
       for (int x = 0; x < Width; ++x) {
-        if (!(*Dst++ = SrcPixels[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width])) transparent = true;
+        if (!(*Dst++ = SrcPixels[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width])) transFlags |= FlagTransparent;
       }
     }
   } else {
@@ -155,8 +154,8 @@ vuint8 *VWarpTexture::GetPixels () {
         *Dst = ((vuint32 *)SrcPixels)[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width];
         const vuint8 a8 = (((*Dst)>>24)&0xffu);
         if (a8 != 0xffu) {
-          transparent = true;
-          if (a8 != 0) translucent = true;
+          transFlags |= FlagTransparent;
+          if (a8) transFlags |= FlagTranslucent;
         }
       }
     }

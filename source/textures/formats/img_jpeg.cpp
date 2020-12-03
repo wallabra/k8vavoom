@@ -246,8 +246,7 @@ static void my_output_message (j_common_ptr cinfo) {
 vuint8 *VJpegTexture::GetPixels () {
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
-  transparent = false;
-  translucent = false;
+  transFlags = TransValueSolid; // anyway
 
   mFormat = mOrigFormat = TEXFMT_RGBA;
   Pixels = new vuint8[Width*Height*4];
@@ -404,8 +403,7 @@ static const stbi_io_callbacks stbcbacks = {
 vuint8 *VJpegTexture::GetPixels () {
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
-  transparent = false;
-  translucent = false;
+  transFlags = TransValueSolid; // anyway
 
   mFormat = mOrigFormat = TEXFMT_RGBA;
   Pixels = new vuint8[Width*Height*4];

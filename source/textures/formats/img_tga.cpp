@@ -137,8 +137,7 @@ VTgaTexture::~VTgaTexture () {
 vuint8 *VTgaTexture::GetPixels () {
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
-  transparent = false;
-  translucent = false;
+  transFlags = TransValueSolid; // for now
 
   // load texture
   int count;
@@ -398,15 +397,18 @@ vuint8 *VTgaTexture::GetPixels () {
     if (Width > 0 && Height > 0) {
       const vuint8 *s = Pixels;
       for (int cnt = Width*Height; cnt--; ++s) {
-        if (s[0] == 0) { transparent = true; break; }
+        if (s[0] == 0) { transFlags |= FlagTransparent; break; }
       }
     }
   } else {
     const rgba_t *s = (const rgba_t *)Pixels;
     for (int cnt = Width*Height; cnt--; ++s) {
       if (s->a != 255) {
-        transparent = true;
-        translucent = translucent || (s->a != 0);
+        transFlags |= FlagTransparent;
+        if (s->a) {
+          if (transFlags&FlagTranslucent) break;
+          transFlags |= FlagTranslucent;
+        }
       }
     }
   }

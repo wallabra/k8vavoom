@@ -89,8 +89,7 @@ VImgzTexture::~VImgzTexture () {
 vuint8 *VImgzTexture::GetPixels () {
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
-  transparent = false;
-  translucent = false;
+  transFlags = TransValueSolid; // for now
 
   VCheckedStream Strm(SourceLump);
 
@@ -143,7 +142,7 @@ vuint8 *VImgzTexture::GetPixels () {
   if (Width > 0 && Height > 0) {
     const vuint8 *s = Pixels;
     for (int count = Width*Height; count--; ++s) {
-      if (s[0] == 0) { transparent = true; break; }
+      if (s[0] == 0) { transFlags |= FlagTransparent; break; }
     }
   }
 

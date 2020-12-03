@@ -142,8 +142,7 @@ vuint8 *VPngTexture::GetPixels () {
 //#ifdef CLIENT
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
-  transparent = false;
-  translucent = false;
+  transFlags = TransValueSolid; // for now
 
   VCheckedStream Strm(SourceLump);
 
@@ -170,9 +169,9 @@ vuint8 *VPngTexture::GetPixels () {
       *dest++ = clr.b;
       *dest++ = clr.a;
       if (clr.a != 255) {
-        transparent = true;
+        transFlags |= FlagTransparent;
+        if (clr.a) transFlags |= FlagTranslucent;
         //if (clr.a != 0 && VStr::startsWith(*Name, "csta")) GCon->Logf(NAME_Debug, "%s: x=%d; y=%d; clr=(%u,%u,%u,%u)", *Name, x, y, clr.r, clr.g, clr.b, clr.a);
-        translucent = translucent || (clr.a != 0);
       }
     }
   }

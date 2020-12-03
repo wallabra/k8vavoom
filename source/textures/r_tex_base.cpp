@@ -127,11 +127,10 @@ VTexture::VTexture ()
   , animNoDecals(false)
   , animated(false)
   , needFBO(false)
-  , transparent(false)
-  , translucent(false)
   , nofullbright(false)
   , glowing(0)
   , noHires(false)
+  , transFlags(TransValueUnknown)
   , lastUpdateFrame(0)
   , DriverHandle(0)
   , DriverTranslated()
@@ -218,9 +217,8 @@ vuint8 *VTexture::GetPixels8 () {
   // if already have converted version, then just return it
   if (Pixels8Bit && Pixels8BitValid) return Pixels8Bit;
   vuint8 *pixdata = GetPixels();
-  transparent = false;
-  translucent = false;
   if (Format == TEXFMT_8Pal) {
+    transFlags = TransValueSolid; // for now
     // remap to game palette
     int NumPixels = Width*Height;
     rgba_t *Pal = GetPalette();
@@ -231,14 +229,17 @@ vuint8 *VTexture::GetPixels8 () {
     if (!Pixels8Bit) Pixels8Bit = new vuint8[NumPixels];
     const vuint8 *pSrc = pixdata;
     vuint8 *pDst = Pixels8Bit;
+    vuint8 ccollector = 0;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       const vuint8 pv = *pSrc;
-      transparent = transparent || !pv;
+      ccollector |= pv;
       *pDst = Remap[pv];
     }
+    if (ccollector) transFlags |= FlagTransparent;
     Pixels8BitValid = true;
     return Pixels8Bit;
   } else if (Format == TEXFMT_RGBA) {
+    transFlags = TransValueSolid; // for now
     int NumPixels = Width*Height;
     if (!Pixels8Bit) Pixels8Bit = new vuint8[NumPixels];
     const rgba_t *pSrc = (rgba_t *)pixdata;
@@ -246,8 +247,8 @@ vuint8 *VTexture::GetPixels8 () {
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       if (pSrc->a != 255) {
         *pDst = 0;
-        transparent = true;
-        translucent = translucent || (pSrc->a != 0);
+        transFlags |= FlagTransparent;
+        if (pSrc->a) transFlags |= FlagTranslucent;
       } else {
         *pDst = R_LookupRGB(pSrc->r, pSrc->g, pSrc->b);
       }
@@ -277,11 +278,10 @@ pala_t *VTexture::GetPixels8A () {
   int NumPixels = Width*Height;
   if (!Pixels8BitA) Pixels8BitA = new pala_t[NumPixels];
   pala_t *pDst = Pixels8BitA;
-  transparent = false;
-  translucent = false;
 
   if (Format == TEXFMT_8Pal || Format == TEXFMT_8) {
     vassert(Format == mFormat);
+    transFlags = TransValueSolid; // for now
     // remap to game palette
     //GCon->Logf("*** remapping paletted '%s' to 8A (%dx%d:%d) (%d)", *Name, Width, Height, NumPixels, mFormat);
     vuint8 remap[256];
@@ -299,22 +299,25 @@ pala_t *VTexture::GetPixels8A () {
       // game palette, no remap
       for (int i = 0; i < 256; ++i) remap[i] = i;
     }
+    vuint8 ccollector = 0;
     const vuint8 *pSrc = (const vuint8 *)pixdata;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       const vuint8 pv = *pSrc;
+      ccollector |= pv;
       pDst->idx = remap[pv];
       pDst->a = (pv ? 255 : 0);
-      transparent = transparent || !pv;
     }
+    if (ccollector) transFlags |= FlagTransparent;
   } else if (Format == TEXFMT_RGBA) {
+    transFlags = TransValueSolid; // for now
     //GCon->Logf("*** remapping 32-bit '%s' to 8A (%dx%d)", *Name, Width, Height);
     const rgba_t *pSrc = (const rgba_t *)pixdata;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       pDst->idx = R_LookupRGB(pSrc->r, pSrc->g, pSrc->b);
       pDst->a = pSrc->a;
       if (pSrc->a != 255) {
-        transparent = true;
-        translucent = translucent || (pSrc->a != 0);
+        transFlags |= FlagTransparent;
+        if (pSrc->a) transFlags |= FlagTranslucent;
       }
     }
   } else {
@@ -1269,7 +1272,6 @@ VDummyTexture::VDummyTexture () {
 //
 //==========================================================================
 vuint8 *VDummyTexture::GetPixels () {
-  transparent = false;
-  translucent = false;
+  transFlags = TransValueSolid; // anyway
   return nullptr;
 }
