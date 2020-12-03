@@ -42,6 +42,8 @@ static VCvarB r_shadowmap_fix_light_dist("r_shadowmap_fix_light_dist", true, "Mo
 
 VCvarI r_shadowmap_sprites("r_shadowmap_sprites", "0", "Render shadows from sprites? (0:none;1:non-rotational;2:all)", 0);
 
+VCvarB r_shadowmap_sprites_player("r_shadowmap_sprites_player", true, "Render player shadow from sprites?", 0);
+
 
 //==========================================================================
 //
