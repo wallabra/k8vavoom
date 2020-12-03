@@ -1321,7 +1321,7 @@ static void LoadModelSkins (VModel *mdl) {
       // locate the proper data
       SubMdl.Model->LoadFromWad();
       //FIXME: this should be done earilier
-      if (SubMdl.Model->HadErrors) SubMdl.NoShadow = true;
+      //!if (SubMdl.Model->HadErrors) SubMdl.NoShadow = true;
       // load overriden submodel skins
       if (SubMdl.Skins.length()) {
         for (auto &&si : SubMdl.Skins) {
@@ -1454,7 +1454,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     // locate the proper data
     SubMdl.Model->LoadFromWad();
     //FIXME: this should be done earilier
-    if (SubMdl.Model->HadErrors) SubMdl.NoShadow = true;
+    //!if (SubMdl.Model->HadErrors) SubMdl.NoShadow = true;
 
     // skin animations
     int Md2SkinIdx = 0;
@@ -1596,6 +1596,8 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         //if (ri.isAdditive()) continue; // already checked
         break;
       case RPASS_ShadowVolumes:
+        if (Md2Alpha < 1.0f || SubMdl.NoShadow || SubMdl.Model->HadErrors) continue;
+        break;
       case RPASS_ShadowMaps:
         if (Md2Alpha < 1.0f || SubMdl.NoShadow) continue;
         //if (ri.isTranslucent() && ri.stencilColor) continue; // already checked
