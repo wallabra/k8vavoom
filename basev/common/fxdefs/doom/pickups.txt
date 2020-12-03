@@ -4,7 +4,7 @@ pointlight HealthBonus
   alias HealthPotion
   color 0 0 0.9
   radius 86
-  offset 0 0 1
+  offset 0 0 4.2
   noselfshadow
 }
 
@@ -18,7 +18,7 @@ pointlight GreenArmor
 {
   color 0 1 0
   radius 86
-  offset 0 0 1
+  offset 0 0 4.2
   noselfshadow
 }
 
@@ -32,7 +32,7 @@ pointlight BlueArmor
 {
   color 0 0 1
   radius 86
-  offset 0 0 1
+  offset 0 0 4.2
   noselfshadow
 }
 
@@ -46,7 +46,7 @@ pointlight ArmorBonus
 {
   color 0.2 0.9 0.2
   radius 86
-  offset 0 0 1
+  offset 0 0 4.2
 }
 
 class ArmorBonus
@@ -59,7 +59,7 @@ pointlight Soulsphere
 {
   color 0 0 1
   radius 86
-  offset 0 0 1
+  offset 0 0 4.2
   noselfshadow
 }
 
@@ -73,7 +73,7 @@ pointlight BlurSphere
 {
   color 0.65 0 0
   radius 86
-  offset 0 0 1
+  offset 0 0 4.2
   noselfshadow
 }
 
@@ -87,7 +87,7 @@ pointlight InvulnerabilitySphere
 {
   color 0 0.7 0
   radius 86
-  offset 0 0 1
+  offset 0 0 4.2
   noselfshadow
 }
 
@@ -101,7 +101,7 @@ pointlight Megasphere
 {
   color 0.55 0.45 0.35
   radius 86
-  offset 0 0 1
+  offset 0 0 4.2
   noselfshadow
 }
 
