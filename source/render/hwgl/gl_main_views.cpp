@@ -260,7 +260,7 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
     GLDisableBlend();
     for (unsigned int face = 0; face < 6; ++face) {
       float xofs = (face%2)*(ssize+4);
-      float yofs = (face/2%3)*ysize+fyofs;
+      float yofs = (face/2%3)*ysize+fyofs*2;
       glDisable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_CUBE_MAP);
@@ -283,7 +283,7 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
 
     for (unsigned int face = 0; face < 6; ++face) {
       int xpos = T_FromDrawerX((int)((face%2)*(ssize+4)+(ssize+4)/2));
-      int ypos = T_FromDrawerY((int)((face/2%3)*ysize))+1;
+      int ypos = T_FromDrawerY((int)((face/2%3)*ysize))+T_FontHeight()+2+1;
       T_DrawText(xpos, ypos, cbnames[face], CR_DARKBROWN);
     }
   }
