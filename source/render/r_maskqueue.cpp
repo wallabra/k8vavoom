@@ -36,12 +36,12 @@ extern VCvarB r_sort_sprites;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
 
-static VCvarI r_fix_sprite_offsets("r_fix_sprite_offsets", "2", "Sprite offset fixing algorithm (0:don't fix; 1:old; 2:new).", CVAR_Archive);
-static VCvarB r_fix_sprite_offsets_missiles("r_fix_sprite_offsets_missiles", false, "Fix sprite offsets for projectiles?", CVAR_Archive);
-static VCvarB r_fix_sprite_offsets_smart_corpses("r_fix_sprite_offsets_smart_corpses", true, "Let corpses sink a little?", CVAR_Archive);
-static VCvarI r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", CVAR_Archive); // -6 seems to be ok for vanilla BFG explosion, and for imp fireball
-static VCvarB r_use_real_sprite_offset("r_use_real_sprite_offset", true, "Use real picture height instead of texture height for sprite offset fixes (only for old aglorithm)?", CVAR_Archive);
-static VCvarB r_use_sprofs_lump("r_use_sprofs_lump", true, "Use 'sprofs' lump for some hard-coded sprite offsets (only for the new algorithm)?", CVAR_Archive);
+VCvarI r_fix_sprite_offsets("r_fix_sprite_offsets", "2", "Sprite offset fixing algorithm (0:don't fix; 1:old; 2:new).", CVAR_Archive);
+VCvarB r_fix_sprite_offsets_missiles("r_fix_sprite_offsets_missiles", false, "Fix sprite offsets for projectiles?", CVAR_Archive);
+VCvarB r_fix_sprite_offsets_smart_corpses("r_fix_sprite_offsets_smart_corpses", true, "Let corpses sink a little?", CVAR_Archive);
+VCvarI r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", CVAR_Archive); // -6 seems to be ok for vanilla BFG explosion, and for imp fireball
+VCvarB r_use_real_sprite_offset("r_use_real_sprite_offset", true, "Use real picture height instead of texture height for sprite offset fixes (only for old aglorithm)?", CVAR_Archive);
+VCvarB r_use_sprofs_lump("r_use_sprofs_lump", true, "Use 'sprofs' lump for some hard-coded sprite offsets (only for the new algorithm)?", CVAR_Archive);
 
 static VCvarB r_sprite_use_pofs("r_sprite_use_pofs", true, "Use PolygonOffset with sprite sorting to reduce sprite flickering?", CVAR_Archive);
 static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
@@ -286,7 +286,6 @@ void VRenderLevelShared::FixSpriteOffset (int fixAlgo, VEntity *thing, VTexture 
     */
   }
 }
-
 
 
 //==========================================================================
@@ -595,60 +594,6 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   //const int origTOffset = TexTOffset;
   int TexTOffset, origTOffset;
   FixSpriteOffset(fixAlgo, thing, Tex, TexHeight, scaleY, /*out*/TexTOffset, /*out*/origTOffset);
-  #if 0
-  //if (thing) GCon->Logf(NAME_Debug, "*** CLASS '%s': scaleY=%g; TOfs=%d; hgt=%d; dofix=%d", thing->GetClass()->GetName(), scaleY, TexTOffset, TexHeight, (TexTOffset < TexHeight && 2*TexTOffset+r_sprite_fix_delta >= TexHeight ? 1 : 0));
-  // don't bother with projectiles, they're usually flying anyway
-  if (fixAlgo && !r_fix_sprite_offsets_missiles && thing->IsMissile()) fixAlgo = 0;
-  // do not fix offset for flying monsters (but fix flying corpses, just in case)
-  if (fixAlgo && thing->IsAnyAerial()) {
-    if (thing->IsAnyCorpse()) {
-      // don't fix if it is not on a floor
-      if (thing->Origin.z != thing->FloorZ) fixAlgo = 0;
-    } else {
-      fixAlgo = 0;
-    }
-  }
-  if (fixAlgo) {
-    if (fixAlgo > 1) {
-      // new algo
-      const int allowedDelta = -r_sprite_fix_delta.asInt();
-      if (allowedDelta > 0) {
-        const int sph = Tex->GetRealHeight();
-        if (sph > 0 && TexHeight > 0) {
-          const int spbot = sph-TexTOffset; // pixels under "hotspot"
-          if (spbot > 0) {
-            int botofs = (int)(spbot*scaleY);
-            //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spbot=%d; botofs=%d; tofs=%d; adelta=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spbot, botofs, TexTOffset, allowedDelta);
-            if (botofs > 0 && botofs <= allowedDelta) {
-              //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spbot=%d; botofs=%d; tofs=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spbot, botofs, TexTOffset);
-              // sink corpses a little
-              if (thing->IsAnyCorpse() && r_fix_sprite_offsets_smart_corpses) {
-                const float clipFactor = 1.8f;
-                const float ratio = clampval((float)botofs*clipFactor/(float)sph, 0.5f, 1.0f);
-                botofs = (int)((float)botofs*ratio);
-                if (botofs < 0 || botofs > allowedDelta) botofs = 0;
-              }
-              TexTOffset += botofs/scaleY;
-            }
-          }
-        }
-      }
-    } else {
-      // old algo
-      const int sph = (r_use_real_sprite_offset ? Tex->GetRealHeight() : TexHeight);
-      //if (thing) GCon->Logf(NAME_Debug, "THING '%s': sph=%d; height=%d", thing->GetClass()->GetName(), sph, TexHeight);
-      if (TexTOffset < /*TexHeight*/sph && 2*TexTOffset+r_sprite_fix_delta >= /*TexHeight*/sph && scaleY > 0.6f && scaleY < 1.6f) {
-        TexTOffset = /*TexHeight*/sph;
-      }
-      /*
-      if (Tex->bForcedSpriteOffset && r_use_sprofs_lump) {
-        TexSOffset += Tex->SOffset-Tex->SOffsetFix;
-        TexTOffset += Tex->TOffset-Tex->TOffsetFix;
-      }
-      */
-    }
-  }
-  #endif
 
   TVec topdelta = TexTOffset*sprup*scaleY;
   TVec botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
