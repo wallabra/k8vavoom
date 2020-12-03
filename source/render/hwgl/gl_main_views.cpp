@@ -263,10 +263,10 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
       DbgShadowMap.SetCubeFace(face+0.5f);
       DbgShadowMap.UploadChangedUniforms();
       glBegin(GL_QUADS);
-        glTexCoord2f(0, 0); glVertex2f(xofs+0    , yofs+0);
-        glTexCoord2f(1, 0); glVertex2f(xofs+ssize, yofs+0);
-        glTexCoord2f(1, 1); glVertex2f(xofs+ssize, yofs+ssize);
-        glTexCoord2f(0, 1); glVertex2f(xofs+0    , yofs+ssize);
+        glTexCoord2f(0, 1); glVertex2f(xofs+0    , yofs+0);
+        glTexCoord2f(1, 1); glVertex2f(xofs+ssize, yofs+0);
+        glTexCoord2f(1, 0); glVertex2f(xofs+ssize, yofs+ssize);
+        glTexCoord2f(0, 0); glVertex2f(xofs+0    , yofs+ssize);
       glEnd();
       glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
       glDisable(GL_TEXTURE_CUBE_MAP);
