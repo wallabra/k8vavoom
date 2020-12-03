@@ -772,6 +772,8 @@ protected:
   // things
   void QueueTranslucentSurface (surface_t *surf, const RenderStyleInfo &ri);
 
+  void FixSpriteOffset (int fixAlgo, VEntity *thing, VTexture *Tex, const int TexHeight, const float scaleY, int &TexTOffset, int &origTOffset);
+
   void QueueSpritePoly (const TVec *sv, int lump, const RenderStyleInfo &ri, int translation,
                         const TVec &normal, float pdist, const TVec &saxis, const TVec &taxis,
                         const TVec &texorg, int priority, const TVec &sprOrigin, vuint32 objid);

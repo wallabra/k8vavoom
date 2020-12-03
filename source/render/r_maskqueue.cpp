@@ -243,6 +243,67 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, const Render
 
 //==========================================================================
 //
+//  VRenderLevelShared::FixSpriteOffset
+//
+//==========================================================================
+void VRenderLevelShared::FixSpriteOffset (int fixAlgo, VEntity *thing, VTexture *Tex, const int TexHeight, const float scaleY, int &TexTOffset, int &origTOffset) {
+  origTOffset = TexTOffset = (fixAlgo > 1 && Tex->bForcedSpriteOffset && r_use_sprofs_lump ? Tex->TOffsetFix : Tex->TOffset);
+  //if (thing) GCon->Logf(NAME_Debug, "*** CLASS '%s': scaleY=%g; TOfs=%d; hgt=%d; dofix=%d", thing->GetClass()->GetName(), scaleY, TexTOffset, TexHeight, (TexTOffset < TexHeight && 2*TexTOffset+r_sprite_fix_delta >= TexHeight ? 1 : 0));
+  // don't bother with projectiles, they're usually flying anyway
+  if (fixAlgo && !r_fix_sprite_offsets_missiles && thing->IsMissile()) fixAlgo = 0;
+  // do not fix offset for flying monsters (but fix flying corpses, just in case)
+  if (fixAlgo && thing->IsAnyAerial()) {
+    if (thing->IsAnyCorpse()) {
+      // don't fix if it is not on a floor
+      if (thing->Origin.z != thing->FloorZ) fixAlgo = 0;
+    } else {
+      fixAlgo = 0;
+    }
+  }
+  if (fixAlgo > 1) {
+    // new algo
+    const int allowedDelta = -r_sprite_fix_delta.asInt();
+    if (allowedDelta > 0) {
+      const int sph = Tex->GetRealHeight();
+      if (sph > 0 && TexHeight > 0) {
+        const int spbot = sph-TexTOffset; // pixels under "hotspot"
+        if (spbot > 0) {
+          int botofs = (int)(spbot*scaleY);
+          //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spbot=%d; botofs=%d; tofs=%d; adelta=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spbot, botofs, TexTOffset, allowedDelta);
+          if (botofs > 0 && botofs <= allowedDelta) {
+            //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spbot=%d; botofs=%d; tofs=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spbot, botofs, TexTOffset);
+            // sink corpses a little
+            if (thing->IsAnyCorpse() && r_fix_sprite_offsets_smart_corpses) {
+              const float clipFactor = 1.8f;
+              const float ratio = clampval((float)botofs*clipFactor/(float)sph, 0.5f, 1.0f);
+              botofs = (int)((float)botofs*ratio);
+              if (botofs < 0 || botofs > allowedDelta) botofs = 0;
+            }
+            TexTOffset += botofs/scaleY;
+          }
+        }
+      }
+    }
+  } else if (fixAlgo > 0) {
+    // old algo
+    const int sph = (r_use_real_sprite_offset ? Tex->GetRealHeight() : TexHeight);
+    //if (thing) GCon->Logf(NAME_Debug, "THING '%s': sph=%d; height=%d", thing->GetClass()->GetName(), sph, TexHeight);
+    if (TexTOffset < /*TexHeight*/sph && 2*TexTOffset+r_sprite_fix_delta >= /*TexHeight*/sph && scaleY > 0.6f && scaleY < 1.6f) {
+      TexTOffset = /*TexHeight*/sph;
+    }
+    /*
+    if (Tex->bForcedSpriteOffset && r_use_sprofs_lump) {
+      TexSOffset += Tex->SOffset-Tex->SOffsetFix;
+      TexTOffset += Tex->TOffset-Tex->TOffsetFix;
+    }
+    */
+  }
+}
+
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::QueueSprite
 //
 //  this uses `seclight` from ri
@@ -309,7 +370,6 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   int FrameIndex = thing->GetEffectiveSpriteFrame();
   if (thing->FixedSpriteName != NAME_None) SpriteIndex = VClass::FindSprite(thing->FixedSpriteName, false); // don't append
 
-  // decide which patch to use for sprite relative to player
   if ((unsigned)SpriteIndex >= (unsigned)sprites.length()) {
     #ifdef PARANOID
     GCon->Logf(NAME_Dev, "Invalid sprite number %d", SpriteIndex);
@@ -317,6 +377,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
     return;
   }
 
+  // decide which patch to use for sprite relative to player
   sprdef = &sprites.ptr()[SpriteIndex];
   if (FrameIndex >= sprdef->numframes) {
     #ifdef PARANOID
@@ -520,14 +581,14 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
 
   int TexWidth = Tex->GetWidth();
   int TexHeight = Tex->GetHeight();
-  int TexSOffset, TexTOffset;
+  int TexSOffset; // TexTOffset;
 
   if (fixAlgo > 1 && Tex->bForcedSpriteOffset && r_use_sprofs_lump) {
     TexSOffset = Tex->SOffsetFix;
-    TexTOffset = Tex->TOffsetFix;
+    //TexTOffset = Tex->TOffsetFix;
   } else {
     TexSOffset = Tex->SOffset;
-    TexTOffset = Tex->TOffset;
+    //TexTOffset = Tex->TOffset;
   }
 
   /*
@@ -544,7 +605,10 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   TVec start = -TexSOffset*sprright*scaleX;
   TVec end = (TexWidth-TexSOffset)*sprright*scaleX;
 
-  const int origTOffset = TexTOffset;
+  //const int origTOffset = TexTOffset;
+  int TexTOffset, origTOffset;
+  FixSpriteOffset(fixAlgo, thing, Tex, TexHeight, scaleY, /*out*/TexTOffset, /*out*/origTOffset);
+  #if 0
   //if (thing) GCon->Logf(NAME_Debug, "*** CLASS '%s': scaleY=%g; TOfs=%d; hgt=%d; dofix=%d", thing->GetClass()->GetName(), scaleY, TexTOffset, TexHeight, (TexTOffset < TexHeight && 2*TexTOffset+r_sprite_fix_delta >= TexHeight ? 1 : 0));
   // don't bother with projectiles, they're usually flying anyway
   if (fixAlgo && !r_fix_sprite_offsets_missiles && thing->IsMissile()) fixAlgo = 0;
@@ -597,6 +661,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
       */
     }
   }
+  #endif
 
   TVec topdelta = TexTOffset*sprup*scaleY;
   TVec botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
