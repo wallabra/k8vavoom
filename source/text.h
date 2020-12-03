@@ -87,11 +87,16 @@ void T_SetFont (VFont *);
 void T_SetAlign (halign_e, valign_e);
 bool T_IsFontExists (VName fontname);
 
-void T_DrawText (int, int, VStr, int);
+void T_DrawText (int x, int y, VStr String, int col);
 int T_TextWidth (VStr);
 int T_TextHeight (VStr);
 int T_StringWidth (VStr);
 int T_FontHeight ();
+
+int T_ToDrawerX (int x);
+int T_ToDrawerY (int y);
+int T_FromDrawerX (int x);
+int T_FromDrawerY (int y);
 
 int T_CursorWidth ();
 void T_DrawCursor ();
