@@ -567,6 +567,9 @@ public:
                                float Inter, bool Interpolate, bool ForceDepthUse, bool AllowTransparency,
                                bool onlyDepth) = 0;
 
+  virtual void DrawSpriteShadowMap (const TVec *cv, VTexture *Tex, const TVec &sprnormal,
+                                    const TVec &saxis, const TVec &taxis, const TVec &texorg) = 0;
+
   virtual bool StartPortal (VPortal *Portal, bool UseStencil) = 0;
   virtual void EndPortal (VPortal *Portal, bool UseStencil) = 0;
 

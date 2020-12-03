@@ -40,6 +40,8 @@ static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 
 static VCvarB r_shadowmap_fix_light_dist("r_shadowmap_fix_light_dist", true, "Move lights slightly away from surfaces? (slowdown)", 0);
 
+VCvarI r_shadowmap_sprites("r_shadowmap_sprites", "0", "Render shadows from sprites? (0:none;1:non-rotational;2:all)", 0);
+
 
 //==========================================================================
 //
@@ -221,7 +223,9 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   if (r_max_light_segs_all < 0 && r_max_light_segs_one < 0) LimitLights = false;
 
-  BuildMobjsInCurrLight(allowShadows);
+  // one-sided sprites can cast shadows, because why not?
+  // this way, we may cast shadow from most decorations
+  BuildMobjsInCurrLight(allowShadows, (useShadowMaps && allowShadows));
 
   // if we want to scissor on geometry, check if any lit model is out of our light bbox.
   // stop right here! say, is there ANY reason to not limit light box with map geometry?
@@ -230,7 +234,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   // any geometry at all. to somewhat ease this case, rebuild light box when the light
   // didn't touched anything.
   if (optimiseScissor && allowShadows && checkModels && !useShadowMaps) {
-    if (mobjsInCurrLight.length() == 0) return; // nothing to do, as it is guaranteed that light cannot touch map geometry
+    if (mobjsInCurrLightModels.length() == 0) return; // nothing to do, as it is guaranteed that light cannot touch map geometry
     float xbbox[6] = {0};
     /*
     xbbox[0+0] = LitBBox[0].x;
@@ -241,7 +245,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     xbbox[3+2] = LitBBox[1].z;
     */
     bool wasHit = false;
-    for (auto &&ment : mobjsInCurrLight) {
+    for (auto &&ment : mobjsInCurrLightModels) {
       if (ment == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
       // skip things in subsectors that are not visible
       const int SubIdx = (int)(ptrdiff_t)(ment->SubSector-Level->Subsectors);
@@ -337,11 +341,13 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
       if (!useCollector) (void)fsecCounterGen(); // for checker
       // sort shadow surfaces by textures
       if (r_max_shadow_segs_all) {
+        const int spShad = r_shadowmap_sprites.asInt();
         if (useCollector) {
           timsort_r(shadowSurfaces.ptr(), shadowSurfaces.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
           for (unsigned fc = 0; fc < 6; ++fc) {
             Drawer->SetupLightShadowMap(fc);
             for (auto &&surf : shadowSurfaces) Drawer->RenderSurfaceShadowMap(surf);
+            if (spShad > 0) RenderMobjSpriteShadowMaps(ent, fc, spShad, dlflags);
           }
         } else {
           smapSurfaces.reset();
@@ -352,6 +358,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
           for (unsigned fc = 0; fc < 6; ++fc) {
             Drawer->SetupLightShadowMap(fc);
             for (auto &&surf : smapSurfaces) Drawer->RenderSurfaceShadowMap(surf);
+            if (spShad > 0) RenderMobjSpriteShadowMaps(ent, fc, spShad, dlflags);
           }
         }
       }

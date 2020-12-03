@@ -44,6 +44,13 @@ extern VCvarB r_camera_player_shadows;
 extern VCvarB r_model_light;
 extern VCvarI r_max_model_shadows;
 
+extern VCvarI r_fix_sprite_offsets;
+extern VCvarB r_fix_sprite_offsets_missiles;
+extern VCvarB r_fix_sprite_offsets_smart_corpses;
+extern VCvarI r_sprite_fix_delta;
+extern VCvarB r_use_real_sprite_offset;
+extern VCvarB r_use_sprofs_lump;
+
 static VCvarB r_dbg_thing_dump_vislist("r_dbg_thing_dump_vislist", false, "Dump built list of visible things?", 0);
 
 static VCvarB r_dbg_advthing_dump_actlist("r_dbg_advthing_dump_actlist", false, "Dump built list of active/affected things in advrender?", 0);
@@ -151,24 +158,29 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
 //  VRenderLevelShadowVolume::BuildMobjsInCurrLight
 //
 //==========================================================================
-void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
-  mobjsInCurrLight.reset();
-  if (!r_draw_mobjs || !r_models) return;
+void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows, bool collectSprites) {
+  mobjsInCurrLightModels.reset();
+  mobjsInCurrLightSprites.reset();
+  const bool modelsAllowed = r_models.asBool();
+  if (!r_draw_mobjs || (!collectSprites && !modelsAllowed)) return;
   // build new list
   // if we won't render thing shadows, don't bother trying invisible things
   if (!doShadows || !r_model_shadows) {
     // we already have a list of visible things built
+    if (!modelsAllowed) return;
     useInCurrLightAsLight = true;
     const bool doDump = r_dbg_advthing_dump_actlist;
     if (doDump) GCon->Log("=== counting objects ===");
     for (auto &&ent : visibleAliasModels) {
       if (!IsTouchedByCurrLight(ent)) continue;
       if (doDump) GCon->Logf("  <%s> (%f,%f,%f)", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z);
-      mobjsInCurrLight.append(ent);
+      mobjsInCurrLightModels.append(ent);
     }
   } else {
     // we need to render shadows, so process all things
     if (r_model_advshadow_all) {
+      //TODO: collect sprires here too?
+      if (!modelsAllowed) return;
       useInCurrLightAsLight = true;
       for (auto &&ent : allShadowModelObjects) {
         // skip things in subsectors that are not visible by the current light
@@ -176,7 +188,7 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
         if (!IsSubsectorLitVis(SubIdx)) continue;
         if (!IsTouchedByCurrLight(ent)) continue;
         //if (r_dbg_advthing_dump_actlist) GCon->Logf("  <%s> (%f,%f,%f)", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z);
-        mobjsInCurrLight.append(ent);
+        mobjsInCurrLightModels.append(ent);
       }
     } else {
       useInCurrLightAsLight = false;
@@ -191,16 +203,22 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
             VEntity *ent = *It;
             if (!ent->IsRenderable()) continue;
             if (ent->GetRenderRadius() < 1) continue;
+            //TODO: use `RenderRadius` here to check subsectors
             // skip things in subsectors that are not visible by the current light
             const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
             if (!IsSubsectorLitBspVis(SubIdx)) continue;
             if (!IsTouchedByCurrLight(ent)) continue;
-            if (!HasEntityAliasModel(ent)) continue;
+            const bool isModel = (modelsAllowed ? HasEntityAliasModel(ent) : false);
+            //if (collectSprites) GCon->Logf(NAME_Debug, "000: thing:<%s>; model=%d", ent->GetClass()->GetName(), (int)isModel);
+            if (!collectSprites && !isModel) continue;
+            //if (collectSprites) GCon->Logf(NAME_Debug, "001: thing:<%s>; model=%d", ent->GetClass()->GetName(), (int)isModel);
             //if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible
             if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
+            //if (collectSprites) GCon->Logf(NAME_Debug, "002: thing:<%s>; model=%d", ent->GetClass()->GetName(), (int)isModel);
             // ignore translucent things, they cannot cast a shadow
             if (!ri.isTranslucent()) {
-              mobjsInCurrLight.append(ent);
+              //if (collectSprites) GCon->Logf(NAME_Debug, "003: thing:<%s>; model=%d", ent->GetClass()->GetName(), (int)isModel);
+              if (isModel) mobjsInCurrLightModels.append(ent); else mobjsInCurrLightSprites.append(ent);
             }
           }
         }
@@ -220,7 +238,7 @@ void VRenderLevelShadowVolume::RenderMobjsShadow (VEntity *owner, vuint32 dlflag
   if (!r_dbg_advthing_draw_shadow) return;
   float TimeFrac;
   RenderStyleInfo ri;
-  for (auto &&ent : mobjsInCurrLight) {
+  for (auto &&ent : mobjsInCurrLightModels) {
     if (ent == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
     if (ent->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
     if (!IsShadowAllowedFor(ent)) continue;
@@ -248,7 +266,7 @@ void VRenderLevelShadowVolume::RenderMobjsShadowMap (VEntity *owner, vuint32 dlf
   if (!r_dbg_advthing_draw_shadow) return;
   float TimeFrac;
   RenderStyleInfo ri;
-  for (auto &&ent : mobjsInCurrLight) {
+  for (auto &&ent : mobjsInCurrLightModels) {
     if (ent == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
     if (ent->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
     if (!IsShadowAllowedFor(ent)) continue;
@@ -278,7 +296,7 @@ void VRenderLevelShadowVolume::RenderMobjsLight (VEntity *owner) {
   RenderStyleInfo ri;
   if (useInCurrLightAsLight) {
     // list is already built
-    for (auto &&ent : mobjsInCurrLight) {
+    for (auto &&ent : mobjsInCurrLightModels) {
       if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
       if (ent == owner) continue; // this is done in ambient pass
       //RenderThingLight(ent);
@@ -400,4 +418,139 @@ void VRenderLevelShadowVolume::RenderMobjsFog () {
     }
   }
   Drawer->EndModelsFogPass();
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShadowVolume::RenderMobjSpriteShadowMaps
+//
+//==========================================================================
+void VRenderLevelShadowVolume::RenderMobjSpriteShadowMaps (VEntity *owner, const unsigned int facenum, int spShad, vuint32 dlflags) {
+  if (spShad < 1) return;
+  for (auto &&mo : mobjsInCurrLightSprites) {
+    if (mo == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
+    //GCon->Logf(NAME_Debug, "x00: thing:<%s>", mo->GetClass()->GetName());
+    //if (mo->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
+    //GCon->Logf(NAME_Debug, "x01: thing:<%s>", mo->GetClass()->GetName());
+    //!if (!IsShadowAllowedFor(mo)) continue;
+    //GCon->Logf(NAME_Debug, "x02: thing:<%s>", mo->GetClass()->GetName());
+    RenderMobjShadowMapSprite(mo, facenum, (spShad > 1));
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShadowVolume::RenderMobjShadowMapSprite
+//
+//==========================================================================
+void VRenderLevelShadowVolume::RenderMobjShadowMapSprite (VEntity *ent, const unsigned int facenum, const bool allowRotating) {
+  const int sprtype = ent->SpriteType;
+  if (sprtype != SPR_VP_PARALLEL_UPRIGHT) return;
+
+  //GCon->Logf(NAME_Debug, "r00: thing:<%s>", ent->GetClass()->GetName());
+
+  TVec sprorigin = ent->GetDrawOrigin();
+
+  spritedef_t *sprdef;
+  spriteframe_t *sprframe;
+
+  int SpriteIndex = ent->GetEffectiveSpriteIndex();
+  int FrameIndex = ent->GetEffectiveSpriteFrame();
+  if (ent->FixedSpriteName != NAME_None) SpriteIndex = VClass::FindSprite(ent->FixedSpriteName, false); // don't append
+
+  if ((unsigned)SpriteIndex >= (unsigned)sprites.length()) return;
+
+  // decide which patch to use for sprite relative to player
+  sprdef = &sprites.ptr()[SpriteIndex];
+  if (FrameIndex >= sprdef->numframes) return;
+
+  sprframe = &sprdef->spriteframes[FrameIndex];
+
+  //GCon->Logf(NAME_Debug, "r01: thing:<%s>; rotate=%d", ent->GetClass()->GetName(), (int)sprframe->rotate);
+  //FIXME: precalc this
+  if (!allowRotating && sprframe->rotate) {
+    for (unsigned int f = 1; f < 16; ++f) if (sprframe->lump[0] != sprframe->lump[f]) return;
+  }
+
+  // use single rotation for all views
+  int lump = sprframe->lump[0];
+  bool flip = sprframe->flip[0];
+
+  if (sprframe->rotate) {
+    float ang = matan(sprorigin.y-CurrLightPos.y, sprorigin.x-CurrLightPos.x);
+    const float angadd = (sprframe->lump[0] == sprframe->lump[1] ? 45.0f/2.0f : 45.0f/4.0f); //k8: is this right?
+    ang = AngleMod(ang-ent->GetSpriteDrawAngles().yaw+180.0f+angadd);
+    const unsigned rot = (unsigned)(ang*16.0f/360.0f)&15;
+    lump = sprframe->lump[rot];
+    flip = sprframe->flip[rot];
+  }
+
+  if (lump <= 0) return; // sprite lump is not present
+
+  VTexture *Tex = GTextureManager[lump];
+  if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
+
+  TVec sprforward(0, 0, 0);
+  TVec sprright(0, 0, 0);
+  TVec sprup(0, 0, 0);
+
+  TVec viewforward, viewright, viewup;
+  AngleVectors(VDrawer::CubeMapViewAngles[facenum], viewforward, viewright, viewup);
+
+  // Generate the sprite's axes, with sprup straight up in worldspace,
+  // and sprright parallel to the viewplane. This will not work if the
+  // view direction is very close to straight up or down, because the
+  // cross product will be between two nearly parallel vectors and
+  // starts to approach an undefined state, so we don't draw if the two
+  // vectors are less than 1 degree apart
+  const float dot = viewforward.z; // same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
+  if (dot > 0.999848f || dot < -0.999848f) return; // cos(1 degree) = 0.999848f
+  sprup = TVec(0, 0, 1);
+  // CrossProduct(sprup, viewforward)
+  sprright = Normalise(TVec(viewforward.y, -viewforward.x, 0));
+  // CrossProduct(sprright, sprup)
+  sprforward = TVec(-sprright.y, sprright.x, 0);
+
+  int fixAlgo = r_fix_sprite_offsets.asInt();
+  if (fixAlgo < 0 || ent->IsFloatBob()) fixAlgo = 0; // just in case
+
+  int TexWidth = Tex->GetWidth();
+  int TexHeight = Tex->GetHeight();
+  int TexSOffset = (fixAlgo > 1 && Tex->bForcedSpriteOffset && r_use_sprofs_lump ? Tex->SOffsetFix : Tex->SOffset);
+
+  float scaleX = max2(0.001f, ent->ScaleX/Tex->SScale);
+  float scaleY = max2(0.001f, ent->ScaleY/Tex->TScale);
+
+  TVec sv[4];
+
+  TVec start = -TexSOffset*sprright*scaleX;
+  TVec end = (TexWidth-TexSOffset)*sprright*scaleX;
+
+  int TexTOffset, dummy;
+  FixSpriteOffset(fixAlgo, ent, Tex, TexHeight, scaleY, TexTOffset, dummy);
+
+  TVec topdelta = TexTOffset*sprup*scaleY;
+  TVec botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
+
+  sv[0] = sprorigin+start+botdelta;
+  sv[1] = sprorigin+start+topdelta;
+  sv[2] = sprorigin+end+topdelta;
+  sv[3] = sprorigin+end+botdelta;
+
+  /*
+  sv: sprite vertices (4)
+  normal: -sprforward
+  saxis: (flip ? -sprright : sprright)/scaleX
+  taxit: -sprup/scaleY
+  texorg: (flip ? sv[2] : sv[1])
+
+        Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), spr.Verts, GTextureManager[spr.lump],
+                                  spr.rstyle, GetTranslation(spr.translation),
+                                  ColorMap, spr.normal, spr.pdist,
+                                  spr.saxis, spr.taxis, spr.texorg);
+  */
+  //GCon->Logf(NAME_Debug, "r02: thing:<%s>", ent->GetClass()->GetName());
+  Drawer->DrawSpriteShadowMap(sv, Tex, -sprforward/*normal*/, (flip ? -sprright : sprright)/scaleX/*saxis*/, -sprup/scaleY/*taxis*/, (flip ? sv[2] : sv[1])/*texorg*/);
 }

@@ -35,6 +35,7 @@ extern VCvarB r_chasecam;
 extern VCvarB r_sort_sprites;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
+extern VCvarI r_shadowmap_sprites;
 
 VCvarI r_fix_sprite_offsets("r_fix_sprite_offsets", "2", "Sprite offset fixing algorithm (0:don't fix; 1:old; 2:new).", CVAR_Archive);
 VCvarB r_fix_sprite_offsets_missiles("r_fix_sprite_offsets_missiles", false, "Fix sprite offsets for projectiles?", CVAR_Archive);
@@ -307,7 +308,14 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
     r_sort_sprites.asBool() &&
     (r_fake_shadow_scale.asFloat() > 0.0f);
 
+  bool doCheckFrames = false;
   if (renderShadow) {
+    if (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps()) {
+      // this is what shadowmaping does
+      const int sss = r_shadowmap_sprites.asInt();
+           if (sss > 1) renderShadow = false;
+      else if (sss == 1) doCheckFrames = true;
+    }
     if (thing == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) {
       // don't draw camera actor shadow (just in case, it should not come here anyway)
       renderShadow = false;
@@ -373,6 +381,15 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   }
 
   sprframe = &sprdef->spriteframes[FrameIndex];
+
+  if (renderShadow && doCheckFrames) {
+    // this is what shadowmaping does
+    renderShadow = false;
+    if (sprframe->rotate) {
+      for (unsigned int f = 1; f < 16; ++f) if (sprframe->lump[0] != sprframe->lump[f]) { renderShadow = true; break; }
+    }
+    if (!renderShadow && onlyShadow) return;
+  }
 
   TVec sprforward(0, 0, 0);
   TVec sprright(0, 0, 0);

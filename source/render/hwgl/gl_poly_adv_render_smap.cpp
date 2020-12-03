@@ -49,6 +49,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   smapLightPos = LightPos;
   smapLightRadius = Radius;
   smapLastTexinfo.initLastUsed();
+  smapLastSprTexinfo.initLastUsed();
 
   // temp (it should be already disabled)
   glDisable(GL_STENCIL_TEST);
@@ -110,13 +111,18 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   SurfShadowMap.SetLightView(lview2);
   SurfShadowMap.SetLightPos(lpp);
   SurfShadowMap.SetLightRadius(Radius);
-  //SurfShadowMap.SetTexture(0);
 
   //SurfShadowMapTex.Activate();
   SurfShadowMapTex.SetLightView(lview2);
   SurfShadowMapTex.SetLightPos(lpp);
   SurfShadowMapTex.SetLightRadius(Radius);
   SurfShadowMapTex.SetTexture(0);
+
+  //SurfShadowMapSpr.Activate();
+  SurfShadowMapSpr.SetLightView(lview2);
+  SurfShadowMapSpr.SetLightPos(lpp);
+  SurfShadowMapSpr.SetLightRadius(Radius);
+  SurfShadowMapSpr.SetTexture(0);
 
   //glDisable(GL_CULL_FACE);
   GLDRW_CHECK_ERROR("finish cube FBO setup");
@@ -189,6 +195,7 @@ void VOpenGLDrawer::SetupLightShadowMap (unsigned int facenum) {
   VMatrix4 lmpv = smapProj*lview;
   SurfShadowMap.SetLightMPV(lmpv);
   SurfShadowMapTex.SetLightMPV(lmpv);
+  SurfShadowMapSpr.SetLightMPV(lmpv);
 
   //SurfShadowMap.UploadChangedUniforms();
   //GLDRW_CHECK_ERROR("update cube FBO shader");
@@ -238,5 +245,55 @@ void VOpenGLDrawer::RenderSurfaceShadowMap (const surface_t *surf) {
   //glBegin(GL_POLYGON);
   glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < vcount; ++i, ++v) glVertex(v->vec());
+  glEnd();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DrawSpriteShadowMap
+//
+//==========================================================================
+void VOpenGLDrawer::DrawSpriteShadowMap (const TVec *cv, VTexture *Tex, const TVec &sprnormal,
+                                         const TVec &saxis, const TVec &taxis, const TVec &texorg)
+{
+  if (gl_dbg_wireframe) return;
+  if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
+
+  if (Tex->isTransparent()) {
+    // create fake texinfo
+    texinfo_t currTexinfo;
+    currTexinfo.saxis = saxis;
+    currTexinfo.soffs = 0;
+    currTexinfo.taxis = taxis;
+    currTexinfo.toffs = 0;
+    currTexinfo.saxisLM = currTexinfo.taxisLM = TVec(0, 0, 0);
+    currTexinfo.Tex = Tex;
+    currTexinfo.noDecals = 0;
+    currTexinfo.Alpha = 1.1f;
+    currTexinfo.Additive = 0;
+    currTexinfo.ColorMap = 0;
+
+    SurfShadowMapSpr.Activate();
+    // activate shader, check for texture change
+    const bool textureChanged = smapLastSprTexinfo.needChange(currTexinfo, updateFrame);
+    if (true || textureChanged) {
+      smapLastSprTexinfo.updateLastUsed(currTexinfo);
+      SetSpriteLump(Tex, /*Translation*/nullptr, /*CMap*/0, true, 0u);
+      SetupTextureFiltering(sprite_filter);
+    }
+    SurfShadowMapSpr.SetSpriteTex(texorg, saxis, taxis, tex_iw, tex_ih);
+  } else {
+    SurfShadowMap.Activate();
+  }
+
+  currentActiveShader->UploadChangedUniforms();
+  //currentActiveShader->UploadChangedAttrs();
+
+  glBegin(GL_TRIANGLE_FAN);
+    glVertex(cv[0]);
+    glVertex(cv[1]);
+    glVertex(cv[2]);
+    glVertex(cv[3]);
   glEnd();
 }

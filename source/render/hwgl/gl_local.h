@@ -322,6 +322,7 @@ public:
   TVec smapLightPos;
   float smapLightRadius;
   texinfo_t smapLastTexinfo;
+  texinfo_t smapLastSprTexinfo;
 
 public:
   // VDrawer interface
@@ -397,6 +398,9 @@ public:
                                   VTextureTranslation *Translation, int CMap,
                                   const TVec &sprnormal, float sprpdist,
                                   const TVec &saxis, const TVec &taxis, const TVec &texorg) override;
+
+  virtual void DrawSpriteShadowMap (const TVec *cv, VTexture *Tex, const TVec &sprnormal,
+                                    const TVec &saxis, const TVec &taxis, const TVec &texorg) override;
 
   virtual void DrawAliasModel (const TVec &origin, const TAVec &angles, const AliasModelTrans &Transform,
                                VMeshModel *Mdl, int frame, int nextframe, VTexture *Skin, VTextureTranslation *Trans,

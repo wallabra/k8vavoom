@@ -1146,7 +1146,8 @@ private:
   vuint32 CurrLightColor;
   // built in `BuildMobjsInCurrLight()`
   // used in rendering of shadow and light things (only)
-  TArray<VEntity *> mobjsInCurrLight;
+  TArray<VEntity *> mobjsInCurrLightModels;
+  TArray<VEntity *> mobjsInCurrLightSprites;
   int LightsRendered;
   int DynLightsRendered;
   // set this to true before calling `RenderLightShadows()` to indicate dynamic light
@@ -1277,7 +1278,7 @@ protected:
                            TVec coneDir=TVec(0.0f, 0.0f, 0.0f), float coneAngle=0.0f, bool forceRender=false);
 
   // things
-  void BuildMobjsInCurrLight (bool doShadows);
+  void BuildMobjsInCurrLight (bool doShadows, bool collectSprites);
 
   void RenderMobjsAmbient ();
   void RenderMobjsTextures ();
@@ -1285,6 +1286,11 @@ protected:
   void RenderMobjsShadow (VEntity *owner, vuint32 dlflags);
   void RenderMobjsShadowMap (VEntity *owner, vuint32 dlflags);
   void RenderMobjsFog ();
+
+  void RenderMobjSpriteShadowMaps (VEntity *owner, const unsigned int facenum, int spShad, vuint32 dlflags);
+  // doesn't do any checks, just renders it
+  void RenderMobjShadowMapSprite (VEntity *ent, const unsigned int facenum, const bool allowRotating);
+
 
   inline bool IsTouchedByCurrLight (const VEntity *ent) const {
     const float clr = CurrLightRadius;
