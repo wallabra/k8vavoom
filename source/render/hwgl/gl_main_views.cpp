@@ -273,5 +273,16 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
       glEnable(GL_TEXTURE_2D);
     }
     GLEnableBlend();
+
+    T_SetFont(ConFont);
+    T_SetAlign(hleft, vcenter);
+    const char *cbnames[3] = { "FRONT/BACK", "LEFT/RIGHT", "TOP/BOTTOM" };
+    for (int y = 0; y < 3; ++y) {
+      int xpos = T_FromDrawerX((int)(ssize+4)*2+16);
+      int ypos = T_FromDrawerY((int)(ssize+4)*y+(int)(ssize+4)/2)+T_FontHeight()/2;
+      //GRoot->ToDrawerCoords(sXPos, sYPos);
+      //Drawer->ShadeRect(0, 0, sXPos, sYPos, stripeAlpha);
+      T_DrawText(xpos, ypos, cbnames[y], CR_DARKBROWN);
+    }
   }
 }
