@@ -38,6 +38,8 @@ static VCvarB r_shadowvol_use_pofs("r_shadowvol_use_pofs", true, "Use PolygonOff
 static VCvarF r_shadowvol_pofs("r_shadowvol_pofs", "20", "DEBUG");
 static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 
+static VCvarB r_shadowmap_fix_light_dist("r_shadowmap_fix_light_dist", true, "Move lights slightly away from surfaces? (slowdown)", 0);
+
 
 //==========================================================================
 //
@@ -98,6 +100,8 @@ static inline int advCompareSurfaces (const void *saa, const void *sbb, void *) 
 //
 //  VRenderLevelShadowVolume::RenderLightShadows
 //
+//  WARNING! may modify `Pos`
+//
 //==========================================================================
 void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD,
                                                    const VViewClipper *Range,
@@ -120,8 +124,11 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     }
   }
 
+  const bool useShadowMaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
+
   //TODO: we can reuse collected surfaces in next passes
   LitCalcBBox = true;
+  CurrLightCalcUnstuck = (useShadowMaps && r_shadowmap_fix_light_dist);
   if (!CalcLightVis(Pos, Radius-LightMin)) return;
 
   if (!LitVisSubHit) return; // something is wrong, light didn't hit any subsector at all
@@ -171,8 +178,6 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   float dummyBBox[6];
 
   //GCon->Logf("LBB:(%f,%f,%f)-(%f,%f,%f)", LitBBox[0], LitBBox[1], LitBBox[2], LitBBox[3], LitBBox[4], LitBBox[5]);
-
-  const bool useShadowMaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
 
   if (!useShadowMaps) {
     // setup light scissor rectangle
@@ -318,6 +323,15 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   // do shadow volumes
   if (useShadowMaps) {
+    if (allowShadows && CurrLightCalcUnstuck) {
+      if (CurrLightUnstuckPos != CurrLightPos) {
+        #if 0
+        const TVec move = CurrLightUnstuckPos-CurrLightPos;
+        GCon->Logf(NAME_Debug, "light at pos (%g,%g,%g) moved by (%g,%g,%g) (radius=%g)", CurrLightPos.x, CurrLightPos.y, CurrLightPos.z, move.x, move.y, move.z, CurrLightRadius);
+        #endif
+        CurrLightPos = CurrLightUnstuckPos;
+      }
+    }
     Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle, refdef.width, refdef.height);
     if (allowShadows) {
       if (!useCollector) (void)fsecCounterGen(); // for checker

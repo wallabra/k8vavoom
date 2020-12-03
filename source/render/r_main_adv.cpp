@@ -369,7 +369,8 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
           //lorg.z += dli->zofs;
           // always render player lights
           const bool forced = (own && own->IsPlayer());
-          RenderLightShadows(own, dli->l->flags, RD, Range, /*lorg*/dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, true, dli->l->coneDirection, dli->l->coneAngle, forced);
+          TVec lorg = dli->l->origin;
+          RenderLightShadows(own, dli->l->flags, RD, Range, lorg, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, true, dli->l->coneDirection, dli->l->coneAngle, forced);
         }
       }
     }

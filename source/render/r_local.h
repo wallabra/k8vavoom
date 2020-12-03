@@ -380,6 +380,8 @@ protected:
   float CurrLightRadius;
   bool CurrLightInFrustum;
   bool CurrLightInFront;
+  bool CurrLightCalcUnstuck; // set to `true` to calculate "unstuck" distance in `CalcLightVis()`
+  TVec CurrLightUnstuckPos; // set in `CalcLightVis()` if `CurrLightCalcUnstuck` is `true`
   vuint32 CurrLightBit; // tag (bitor) subsectors with this in lightvis builder
   int CurrLightsNumber;
   int CurrShadowsNumber;
@@ -1251,6 +1253,7 @@ protected:
   void RenderLightSubRegion (subsector_t *sub, subregion_t *region);
   void RenderLightSubsector (int num);
   void RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
+  // WARNING! may modify `Pos`
   void RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD, const VViewClipper *Range,
                            TVec &Pos, float Radius, float LightMin, vuint32 Color,
                            bool LimitLights,
