@@ -387,6 +387,9 @@ public:
     CLEAR_ALL = (CLEAR_COLOR|CLEAR_DEPTH|CLEAR_STENCIL),
   };
 
+  // used in shadowmaping
+  static TAVec CubeMapViewAngles[6];
+
 protected:
   bool mInitialized;
   bool isShittyGPU;

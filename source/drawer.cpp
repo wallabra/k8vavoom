@@ -40,6 +40,17 @@ float VDrawer::LightFadeMult = 1.0f;
 float VDrawer::mWindowAspect = 1.0f;
 
 
+TAVec VDrawer::CubeMapViewAngles[6] = {
+  //    pitch    yaw   roll
+  TAVec(  0.0f, -90.0f,   0.0f), // right
+  TAVec(  0.0f,  90.0f,   0.0f), // left
+  TAVec( 90.0f,   0.0f,   0.0f), // top
+  TAVec(-90.0f,   0.0f,   0.0f), // bottom
+  TAVec(  0.0f,   0.0f,   0.0f), // back
+  TAVec(  0.0f, 180.0f,   0.0f), // front
+};
+
+
 //**************************************************************************
 //
 // VDrawer methods

@@ -683,18 +683,8 @@ void VOpenGLDrawer::SetupModelShadowMap (unsigned int facenum) {
 
   p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+facenum, cubeTexId, 0);
 
-  const TAVec viewAngles[6] = {
-    //    pitch    yaw   roll
-    TAVec(  0.0f, -90.0f,   0.0f), // right
-    TAVec(  0.0f,  90.0f,   0.0f), // left
-    TAVec( 90.0f,   0.0f,   0.0f), // top
-    TAVec(-90.0f,   0.0f,   0.0f), // bottom
-    TAVec(  0.0f,   0.0f,   0.0f), // back
-    TAVec(  0.0f, 180.0f,   0.0f), // front
-  };
-
   VMatrix4 lview;
-  CalcModelMatrix(lview, smapLightPos, viewAngles[facenum], false);
+  CalcModelMatrix(lview, smapLightPos, VDrawer::CubeMapViewAngles[facenum], false);
   VMatrix4 lmpv = smapProj*lview;
   ShadowsModelShadowMap.SetLightMPV(lmpv);
 }

@@ -172,6 +172,7 @@ void VOpenGLDrawer::SetupLightShadowMap (unsigned int facenum) {
   GLDRW_CHECK_ERROR("clear cube FBO");
   #endif
 
+  /*
   const TAVec viewAngles[6] = {
     //    pitch    yaw   roll
     TAVec(  0.0f, -90.0f,   0.0f), // right
@@ -181,9 +182,10 @@ void VOpenGLDrawer::SetupLightShadowMap (unsigned int facenum) {
     TAVec(  0.0f,   0.0f,   0.0f), // back
     TAVec(  0.0f, 180.0f,   0.0f), // front
   };
+  */
 
   VMatrix4 lview;
-  CalcModelMatrix(lview, smapLightPos, viewAngles[facenum], false);
+  CalcModelMatrix(lview, smapLightPos, VDrawer::CubeMapViewAngles[facenum], false);
   VMatrix4 lmpv = smapProj*lview;
   SurfShadowMap.SetLightMPV(lmpv);
   SurfShadowMapTex.SetLightMPV(lmpv);
