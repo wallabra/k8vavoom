@@ -90,7 +90,8 @@ bool VOpenGLDrawer::RenderWipe (float time) {
   //GLEnableBlend();
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_SCISSOR_TEST);
-  glDepthMask(GL_FALSE); // no z-buffer writes
+  //glDepthMask(GL_FALSE); // no z-buffer writes
+  glDisableDepthWrite();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 

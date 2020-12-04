@@ -103,10 +103,14 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       abort();
   }
 
+  /*
   GLint oldDepthMask;
   glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
-
   glDepthMask(GL_FALSE); // no z-buffer writes
+  */
+  PushDepthMask();
+  glDisableDepthWrite();
+
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_EQUAL, decalStcVal, 0xff);
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
@@ -132,6 +136,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
   int currTexId = -1; // don't call `SetTexture()` repeatedly
   VTextureTranslation *currTrans = nullptr;
   int lastTexTrans = 0;
+  //int dbg_total = 0, dbg_noblend = 0;
 
   while (dc) {
     // "0" means "no texture found", so remove it too
@@ -260,6 +265,16 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     float texy0 = (dc->flags&decal_t::FlipY ? 0.0f : 1.0f);
     float texy1 = (dc->flags&decal_t::FlipY ? 1.0f : 0.0f);
 
+    /*
+    ++dbg_total;
+    if (dtex->isTranslucent() || dc->alpha <= 0.9) {
+      GLEnableBlend();
+    } else {
+      GLDisableBlend();
+      ++dbg_noblend;
+    }
+    */
+
     currentActiveShader->UploadChangedUniforms();
     glBegin(GL_QUADS);
       glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dcz-thgt);
@@ -290,7 +305,11 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
   //if (oldBlendEnabled) GLEnableBlend(); else GLDisableBlend();
   if (gl_decal_debug_noalpha) GLEnableBlend();
   glDisable(GL_STENCIL_TEST);
-  glDepthMask(oldDepthMask);
+  //glDepthMask(oldDepthMask);
+  PopDepthMask();
+  GLEnableBlend();
+
+  //if (dbg_total && dbg_noblend) GCon->Logf(NAME_Debug, "DECALS: total=%d; noblend=%d", dbg_total, dbg_noblend);
 
   return true;
 }

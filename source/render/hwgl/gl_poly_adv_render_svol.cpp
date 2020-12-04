@@ -112,7 +112,8 @@ static void appendDirtyRect (const GLint arect[4]) {
 void VOpenGLDrawer::BeginShadowVolumesPass () {
   //glEnable(GL_STENCIL_TEST);
   glDisable(GL_STENCIL_TEST);
-  glDepthMask(GL_FALSE); // no z-buffer writes
+  //glDepthMask(GL_FALSE); // no z-buffer writes
+  glDisableDepthWrite();
   // reset last known scissor
   glGetIntegerv(GL_VIEWPORT, lastSVVport);
   memcpy(lastSVScissor, lastSVVport, sizeof(lastSVScissor));
@@ -141,8 +142,12 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
       glGetIntegerv(GL_MATRIX_MODE, &glmatmode);
       GLint oldDepthTest;
       glGetIntegerv(GL_DEPTH_TEST, &oldDepthTest);
+      /*
       GLint oldDepthMask;
       glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
+      */
+      PushDepthMask();
+      glDisableDepthWrite();
 
       //glDisable(GL_STENCIL_TEST);
       glEnable(GL_SCISSOR_TEST);
@@ -177,7 +182,8 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
       glMatrixMode(GL_PROJECTION); glPopMatrix();
       glMatrixMode(GL_MODELVIEW); glPopMatrix();
       glMatrixMode(glmatmode);
-      glDepthMask(oldDepthMask);
+      //glDepthMask(oldDepthMask);
+      PopDepthMask();
       if (oldDepthTest) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
     } else {
       glEnable(GL_SCISSOR_TEST);

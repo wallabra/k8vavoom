@@ -105,7 +105,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   if (zbufferWriteDisabled) {
     PushDepthMask();
-    glDepthMask(GL_FALSE); // no z-buffer writes
+    //glDepthMask(GL_FALSE); // no z-buffer writes
+    glDisableDepthWrite();
   }
 
   // fill stencil buffer for decals
@@ -286,7 +287,8 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
 
   if (resetDepthMask) {
     PushDepthMask();
-    glDepthMask(GL_FALSE); // no z-buffer writes
+    //glDepthMask(GL_FALSE); // no z-buffer writes
+    glDisableDepthWrite();
   }
 
   //vboSprite.activate();
@@ -324,7 +326,8 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
 void VOpenGLDrawer::BeginTranslucentPolygonDecals () {
   GLEnableBlend();
   //glGetIntegerv(GL_DEPTH_WRITEMASK, &savedDepthMask);
-  glDepthMask(GL_FALSE); // no z-buffer writes
+  //glDepthMask(GL_FALSE); // no z-buffer writes
+  glDisableDepthWrite();
   glEnable(GL_TEXTURE_2D);
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_SCISSOR_TEST);

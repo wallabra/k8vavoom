@@ -318,7 +318,8 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     if (!ForceDepthUse && (ri.alpha < 1.0f || AllowTransparency)) { //k8: this looks more logical
       restoreDepth = true;
       PushDepthMask();
-      glDepthMask(GL_FALSE);
+      //glDepthMask(GL_FALSE);
+      glDisableDepthWrite();
     }
 
     p_glDrawRangeElements(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0);
@@ -355,7 +356,8 @@ void VOpenGLDrawer::BeginModelsAmbientPass () {
   //glShadeModel(GL_SMOOTH);
   //glAlphaFunc(GL_GREATER, 0.0f);
   GLEnableBlend();
-  glDepthMask(GL_TRUE);
+  //glDepthMask(GL_TRUE);
+  glEnableDepthWrite();
 }
 
 
@@ -413,7 +415,8 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   if (Alpha < 1.0f && !ForceDepth) {
     restoreDepth = true;
     PushDepthMask();
-    glDepthMask(GL_FALSE);
+    //glDepthMask(GL_FALSE);
+    glDisableDepthWrite();
   }
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
@@ -941,7 +944,8 @@ void VOpenGLDrawer::BeginModelsTexturesPass () {
   GLEnableBlend();
   //glDisable(GL_ALPHA_TEST);
   glBlendFunc(GL_DST_COLOR, GL_ZERO);
-  glDepthMask(GL_FALSE);
+  //glDepthMask(GL_FALSE);
+  glDisableDepthWrite();
   glDepthFunc(GL_EQUAL);
 }
 
@@ -1045,7 +1049,8 @@ void VOpenGLDrawer::BeginModelsFogPass () {
   //glAlphaFunc(GL_GREATER, 0.0f);
   GLEnableBlend();
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // fog is not premultiplied
-  glDepthMask(GL_FALSE);
+  //glDepthMask(GL_FALSE);
+  glDisableDepthWrite();
   glDepthFunc(GL_EQUAL);
 }
 

@@ -297,9 +297,26 @@ protected:
   enum { MaxDepthMaskStack = 16 };
   GLint depthMaskStack[MaxDepthMaskStack];
   unsigned depthMaskSP;
+  GLint currDepthMaskState;
 
+  /*
   virtual void PushDepthMask () override;
   virtual void PopDepthMask () override;
+  */
+
+  inline void glEnableDepthWrite () noexcept { if (!currDepthMaskState) { currDepthMaskState = 1; glDepthMask(GL_TRUE); } }
+  inline void glDisableDepthWrite () noexcept { if (currDepthMaskState) { currDepthMaskState = 0; glDepthMask(GL_FALSE); } }
+
+  inline void PushDepthMask () noexcept {
+    if (depthMaskSP >= MaxDepthMaskStack) Sys_Error("OpenGL: depth mask stack overflow");
+    depthMaskStack[depthMaskSP++] = currDepthMaskState;
+  }
+
+  inline void PopDepthMask () noexcept {
+    if (depthMaskSP == 0) Sys_Error("OpenGL: depth mask stack underflow");
+    const GLint st = depthMaskStack[--depthMaskSP];
+    if (currDepthMaskState != st) { currDepthMaskState = st; glDepthMask(st); }
+  }
 
 public:
   // scissor array indicies

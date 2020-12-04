@@ -42,7 +42,8 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   if (r_decals_enabled && RendLev->/*PortalDepth*/PortalUsingStencil == 0) {
     // stop stenciling now
     glDisable(GL_STENCIL_TEST);
-    glDepthMask(GL_FALSE); // no z-buffer writes
+    //glDepthMask(GL_FALSE); // no z-buffer writes
+    glDisableDepthWrite();
     glEnable(GL_TEXTURE_2D);
     //p_glBlendEquation(GL_FUNC_ADD);
 
@@ -52,7 +53,8 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
     mfbo->activate();
   }
 
-  glDepthMask(GL_FALSE); // no z-buffer writes
+  //glDepthMask(GL_FALSE); // no z-buffer writes
+  glDisableDepthWrite();
   glEnable(GL_TEXTURE_2D);
   // turn off scissoring only if we aren't rendering portal contents
   if (RendLev->/*PortalDepth*/PortalUsingStencil == 0) glDisable(GL_STENCIL_TEST);

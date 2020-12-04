@@ -261,16 +261,22 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
   SurfSimple.SetFogFade(surf->Fade, 1.0f);
 
   // draw it
+  /*
   GLint oldDepthMask;
   glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
   glDepthMask(GL_FALSE); // no z-buffer writes
+  */
+  PushDepthMask();
+  glDisableDepthWrite();
+
   //glBegin(GL_POLYGON);
   SurfSimple.UploadChangedUniforms();
   glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < 4; ++i) glVertex(v[i]);
   glEnd();
   //glDepthMask(GL_TRUE); // allow z-buffer writes
-  glDepthMask(oldDepthMask);
+  //glDepthMask(oldDepthMask);
+  PopDepthMask();
 
   // write to the depth buffer
   SurfZBuf.Activate();
@@ -731,7 +737,8 @@ void VOpenGLDrawer::DrawLightmapWorld () {
     }
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     #endif
-    glDepthMask(GL_FALSE); // no z-buffer writes
+    //glDepthMask(GL_FALSE); // no z-buffer writes
+    glDisableDepthWrite();
     glDepthFunc(GL_EQUAL);
   }
 
@@ -961,7 +968,8 @@ void VOpenGLDrawer::DrawLightmapWorld () {
   }
 
   if (useDepthPreFill) {
-    glDepthMask(GL_TRUE); // allow z-buffer writes
+    //glDepthMask(GL_TRUE); // allow z-buffer writes
+    glEnableDepthWrite();
     RestoreDepthFunc();
   }
 }

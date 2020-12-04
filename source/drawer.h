@@ -430,9 +430,11 @@ public:
 public:
   static void RegisterICB (void (*cb) (int phase));
 
+/*
 protected:
   virtual void PushDepthMask () = 0;
   virtual void PopDepthMask () = 0;
+*/
 
 public:
   VRenderLevelDrawer *RendLev;

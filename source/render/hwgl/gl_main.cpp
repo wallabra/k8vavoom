@@ -241,6 +241,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
   //cameraFBO[1].mOwner = nullptr;
 
   depthMaskSP = 0;
+  currDepthMaskState = 0;
 
   cubeTexId = 0;
   cubeFBO = 0;
@@ -794,6 +795,9 @@ void VOpenGLDrawer::InitResolution () {
   glDisable(GL_DITHER);
   glDisable(GL_FOG);
   glDisable(GL_LIGHTING);
+
+  glDepthMask(GL_FALSE); // no z-buffer writes
+  currDepthMaskState = 0;
 
   #ifndef GL4ES_HACKS
   glDisable(GL_POLYGON_SMOOTH);

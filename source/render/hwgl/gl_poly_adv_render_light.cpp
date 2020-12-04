@@ -97,7 +97,8 @@ static bool lpassDoShadowMap;
 void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) {
   if (gl_dbg_wireframe) return;
   RestoreDepthFunc();
-  glDepthMask(GL_FALSE); // no z-buffer writes
+  //glDepthMask(GL_FALSE); // no z-buffer writes
+  glDisableDepthWrite();
   glDisable(GL_TEXTURE_2D);
 
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);

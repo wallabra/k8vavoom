@@ -140,11 +140,13 @@ void VOpenGLDrawer::LoadVPMatrices () {
 //  VOpenGLDrawer::PushDepthMask
 //
 //==========================================================================
+/*
 void VOpenGLDrawer::PushDepthMask () {
   if (depthMaskSP >= MaxDepthMaskStack) Sys_Error("OpenGL: depth mask stack overflow");
   glGetIntegerv(GL_DEPTH_WRITEMASK, &depthMaskStack[depthMaskSP]);
   ++depthMaskSP;
 }
+*/
 
 
 //==========================================================================
@@ -152,10 +154,12 @@ void VOpenGLDrawer::PushDepthMask () {
 //  VOpenGLDrawer::PopDepthMask
 //
 //==========================================================================
+/*
 void VOpenGLDrawer::PopDepthMask () {
   if (depthMaskSP == 0) Sys_Error("OpenGL: depth mask stack underflow");
   glDepthMask(depthMaskStack[--depthMaskSP]);
 }
+*/
 
 
 //==========================================================================
@@ -518,7 +522,8 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
   //glDisable(GL_STENCIL_TEST);
   //glDisable(GL_SCISSOR_TEST);
   glDisable(GL_TEXTURE_2D);
-  glDepthMask(GL_FALSE); // no z-buffer writes
+  //glDepthMask(GL_FALSE); // no z-buffer writes
+  glDisableDepthWrite();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   //p_glUseProgramObjectARB(0);
 

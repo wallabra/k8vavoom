@@ -180,7 +180,8 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
 
   glEnable(GL_TEXTURE_2D);
   glDisable(GL_STENCIL_TEST);
-  glDepthMask(GL_TRUE); // allow z-buffer writes
+  //glDepthMask(GL_TRUE); // allow z-buffer writes
+  glEnableDepthWrite();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
   glDisable(GL_SCISSOR_TEST);
