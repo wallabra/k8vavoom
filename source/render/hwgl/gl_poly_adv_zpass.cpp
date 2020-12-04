@@ -283,7 +283,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, c
           glVertex(sverts[(i+1)%vcount].vec());
         }
       glEnd();
-      glColor3f(1.0f, 1.0f, 1.0f);
+      //glColor3f(1.0f, 1.0f, 1.0f);
+      glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
       p_glUseProgramObjectARB(SurfShadowVolume_Program);
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     }

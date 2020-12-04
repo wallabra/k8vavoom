@@ -57,6 +57,8 @@ void VOpenGLDrawer::Setup2D () {
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
+  glDisable(GL_ALPHA_TEST);
+  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
   //GLDisableBlend();
   GLEnableBlend();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -117,6 +119,7 @@ void VOpenGLDrawer::FinishUpdate () {
 void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   RendLev = ARLev;
 
+  glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // why not
   glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|(rd->drawworld && !rd->DrawCamera && clear ? GL_COLOR_BUFFER_BIT : 0));
   stencilBufferDirty = false;
 

@@ -185,6 +185,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
     NoteStencilBufferDirty(); // just in case
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     --RendLev->PortalUsingStencil;
     --RendLev->PortalDepth;

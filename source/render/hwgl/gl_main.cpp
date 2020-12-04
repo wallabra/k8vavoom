@@ -787,8 +787,13 @@ void VOpenGLDrawer::InitResolution () {
 
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-  glAlphaFunc(GL_GREATER, getAlphaThreshold());
-  glShadeModel(GL_FLAT);
+  //glAlphaFunc(GL_GREATER, getAlphaThreshold());
+  glShadeModel(GL_FLAT); // we're doing our own lighting anyway
+  glDisable(GL_ALPHA_TEST);
+  //glDisable(GL_BLEND);
+  glDisable(GL_DITHER);
+  glDisable(GL_FOG);
+  glDisable(GL_LIGHTING);
 
   #ifndef GL4ES_HACKS
   glDisable(GL_POLYGON_SMOOTH);

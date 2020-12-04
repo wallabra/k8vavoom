@@ -247,7 +247,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   if (ri.isShaded()) AllowTransparency = true;
 
   //glEnable(GL_ALPHA_TEST);
-  glShadeModel(GL_SMOOTH);
+  //glShadeModel(GL_SMOOTH);
   //glAlphaFunc(GL_GREATER, 0.0f);
   GLEnableBlend();
 
@@ -331,7 +331,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
   }
 
-  glShadeModel(GL_FLAT);
+  //glShadeModel(GL_FLAT);
   //glAlphaFunc(GL_GREATER, getAlphaThreshold());
   //glDisable(GL_ALPHA_TEST);
   //if (ri.isAdditive()) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -350,9 +350,10 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
 //
 //==========================================================================
 void VOpenGLDrawer::BeginModelsAmbientPass () {
-  glEnable(GL_ALPHA_TEST);
-  glShadeModel(GL_SMOOTH);
-  glAlphaFunc(GL_GREATER, 0.0f);
+  //glEnable(GL_ALPHA_TEST);
+  //glDisable(GL_ALPHA_TEST); // just in case
+  //glShadeModel(GL_SMOOTH);
+  //glAlphaFunc(GL_GREATER, 0.0f);
   GLEnableBlend();
   glDepthMask(GL_TRUE);
 }
@@ -364,9 +365,9 @@ void VOpenGLDrawer::BeginModelsAmbientPass () {
 //
 //==========================================================================
 void VOpenGLDrawer::EndModelsAmbientPass () {
-  glAlphaFunc(GL_GREATER, getAlphaThreshold());
-  glShadeModel(GL_FLAT);
-  glDisable(GL_ALPHA_TEST);
+  //glAlphaFunc(GL_GREATER, getAlphaThreshold());
+  //glShadeModel(GL_FLAT);
+  //glDisable(GL_ALPHA_TEST);
 }
 
 
@@ -938,7 +939,7 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
 void VOpenGLDrawer::BeginModelsTexturesPass () {
   PushDepthMask();
   GLEnableBlend();
-  glDisable(GL_ALPHA_TEST);
+  //glDisable(GL_ALPHA_TEST);
   glBlendFunc(GL_DST_COLOR, GL_ZERO);
   glDepthMask(GL_FALSE);
   glDepthFunc(GL_EQUAL);
@@ -1040,7 +1041,7 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
 //==========================================================================
 void VOpenGLDrawer::BeginModelsFogPass () {
   PushDepthMask();
-  glDisable(GL_ALPHA_TEST);
+  //glDisable(GL_ALPHA_TEST);
   //glAlphaFunc(GL_GREATER, 0.0f);
   GLEnableBlend();
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // fog is not premultiplied
@@ -1058,7 +1059,7 @@ void VOpenGLDrawer::EndModelsFogPass () {
   PopDepthMask();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   //glAlphaFunc(GL_GREATER, getAlphaThreshold());
-  glShadeModel(GL_FLAT);
+  //glShadeModel(GL_FLAT);
   //glDisable(GL_ALPHA_TEST);
 }
 
