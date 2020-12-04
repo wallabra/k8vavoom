@@ -19,6 +19,7 @@ menus {
   "menus/video/sprvideo.txt",
   "menus/video/aliasvideo.txt",
   "menus/video/pfxbloom.txt",
+  "menus/video/shadowmap.txt",
 
   "menus/sound/xmp.txt",
   "menus/sound/fluid.txt",

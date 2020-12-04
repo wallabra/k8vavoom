@@ -325,4 +325,9 @@ menudef VideoOptions {
     title = "Bloom Options";
     submenu = "PFXBloomOptions";
   }
+
+  option submenu {
+    title = "Shadowmap Options";
+    submenu = "ShadowMapOptions";
+  }
 }

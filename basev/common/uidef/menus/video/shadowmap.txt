@@ -1,0 +1,136 @@
+menudef ShadowMapOptions {
+  Title = "SHADOWMAP OPTIONS";
+
+  option bool {
+    title = "Use Shadowmaping";
+    cvar = r_shadowmaps;
+    help =
+      "Use shadowmaps instead of stencil shadows?",
+      "",
+      "\c[WHITE]WARNING! This is experimental mode! Use on your own risk!";
+  }
+
+  option bool {
+    title = "Fix Light Distance";
+    cvar = r_shadowmap_fix_light_dist;
+    help =
+      "Turn on to move lights slightly away from surfaces.",
+      "Lights that are too close to wall/floor will get visible moire.",
+      "This option tells the engine to move light on a safer distance,",
+      "if the light is too close to textured surface.";
+  }
+
+
+  header "Sprite Shadows";
+
+  option enum {
+    title = "Sprite Shadows";
+    cvar = r_shadowmap_sprites;
+    list {
+      "None",
+      "Non-Rotational",
+      "All"
+    }
+    help =
+      "The engine can render shadows from sprites with shadowmaps.",
+      "Those shadows are not fully correct (because sprites doesn't",
+      "really have proper sides), but it still may look fun.";
+  }
+
+  option bool {
+    title = "Player Shadow";
+    cvar = r_shadowmap_sprites_player;
+    help =
+      "If you turned on sprite shadows, you can enable/disable rendering",
+      "player shadow. Most of the time player shadow is only distracting.";
+  }
+
+
+  header "Rendering Options";
+
+  option enum {
+    title = "Shadowmap Size";
+    cvar = gl_shadowmap_size;
+    list {
+      "128",
+      "256",
+      "512",
+      "1024",
+    }
+    help =
+      "Shadowmap texture size. There is hardly any reason to use texture",
+      "bigger than 512x512. Also, with 128x128 textures you may have more",
+      "visible moire pattern.",
+      "",
+      "\c[WHITE]WARNING! You need to reinit resolution to apply this.";
+  }
+
+  option enum [__k8vavoom_developer_version > 0] {
+    title = "Shadowmap Precision";
+    cvar = gl_shadowmap_precision;
+    list {
+      "16 bit",
+      "32 bit",
+    }
+    help =
+      "Shadowmap texture precision. 32 bit will not give you anything",
+      "except a slowdown",
+      "",
+      "\c[WHITE]WARNING! You need to reinit resolution to apply this.";
+  }
+
+  option enum [__k8vavoom_developer_version > 0] {
+    title = "Shadowmap Channels";
+    cvar = gl_shadowmap_gbuffer;
+    list {
+      "One",
+      "Three",
+    }
+    help =
+      "Use all three shadowmap texture color channels?",
+      "This will give you nothing yet.",
+      "",
+      "\c[WHITE]WARNING! You need to reinit resolution to apply this.";
+  }
+
+  header "Quality Options";
+
+  option bool {
+    title = "Filter shadowmap";
+    cvar = gl_shadowmap_filter;
+    help =
+      "Apply bilinear filtering to shadowmap textures?",
+      "This will give you slightly rounder shadow corners,",
+      "but shadows will become bigger.",
+      "",
+      "The only reason to turn this on is 16-sample blur.";
+  }
+
+  option enum {
+    title = "Shadowmap Blur";
+    cvar = gl_shadowmap_blur;
+    list {
+      "None",
+      "4 Samples",
+      "8 Samples",
+      "16 Samples",
+    }
+    help =
+      "You can blur shadows a little. Usually small blur looks better.",
+      "Please, note that more samples will cause non-linear slowdown.",
+      "",
+      "If you want to use 16-sample blur, it is recommended to turn on",
+      "shadowmap filtering too. This should not hurt performance, but",
+      "the shadows will look better.";
+  }
+
+  header "Debug Options" [__k8vavoom_developer_version > 0];
+
+  option bool [__k8vavoom_developer_version > 0] {
+    title = "Show Latest Cubemap";
+    cvar = dbg_shadowmaps;
+    help =
+      "Draw latest cubemap texture?",
+      "This won't give you anything intereting to look into.";
+  }
+}
