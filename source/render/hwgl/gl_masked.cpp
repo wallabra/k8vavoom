@@ -181,7 +181,7 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
   const bool trans = (ri.translucency || ri.alpha < 1.0f || Tex->isTranslucent());
 
   SetSpriteLump(Tex, Translation, CMap, true, (ri.isShaded() ? ri.stencilColor : 0u));
-  SetupTextureFiltering(sprite_filter);
+  SetupTextureFiltering(Tex, sprite_filter, TexWrapClamp);
 
   GLuint attribPosition;
   switch (shadtype) {

@@ -239,6 +239,45 @@ public:
   vuint32 transFlags; // default is `TransValueUnknown`
   //bool transparent; // `true` if texture has any non-solid pixels; set in `GetPixels()`
   //bool translucent; // `true` if texture has some non-integral alpha pixels; set in `GetPixels()`
+  //   <0: not set
+  //    0: nearest, no mipmaps
+  //    1: nearest mipmap
+  //    2: linear nearest
+  //    3: bilinear
+  //    4: trilinear
+  // bit 7: wrapping (asmodel): set if repeat
+  // bits 8-15: (last anisotropy level)-1
+  int lastTextureFiltering;
+
+  inline bool filteringAsModel () const noexcept { return (lastTextureFiltering >= 0 && (lastTextureFiltering&0x80) != 0); }
+
+  enum {
+    FilterMatch = 0x00u,
+    FilterWrongLevel = 0x01u,
+    FilterWrongAniso = 0x02u,
+    FilterWrongModel = 0x04u,
+    FilterWrongAll = FilterWrongLevel|FilterWrongAniso|FilterWrongModel,
+  };
+
+  // should NOT be called with invalid arguments!
+  inline unsigned checkFiltering (int level, int aniso, bool asModel) const noexcept {
+    //if (level < 0) level = 0; else if (level > 4) level = 4;
+    if (lastTextureFiltering < 0) return FilterWrongAll;
+    unsigned res = FilterMatch;
+    if (!!(lastTextureFiltering&0x80) != asModel) res |= FilterWrongModel;
+    if ((lastTextureFiltering&0x7f) != level) res |= FilterWrongLevel;
+    if (((lastTextureFiltering>>8)&0xff) != aniso-1) res |= FilterWrongAniso;
+    return res;
+  }
+
+  // should NOT be called with invalid arguments!
+  inline void setFiltering (int level, int aniso, bool asModel) noexcept {
+    lastTextureFiltering = (level&0x7f)|(((aniso-1)&0xff)<<8)|(asModel ? 0x80 : 0);
+  }
+
+  inline bool isWrapRepeat () const noexcept {
+    return (Type == TEXTYPE_Wall || Type == TEXTYPE_Flat || Type == TEXTYPE_Overload || Type == TEXTYPE_WallPatch);
+  }
 
   vuint32 lastUpdateFrame;
 

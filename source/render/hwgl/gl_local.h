@@ -982,7 +982,15 @@ protected:
   void UploadModel (VMeshModel *Mdl);
   void UnloadModels ();
 
-  void SetupTextureFiltering (int level); // level is taken from the appropriate cvar
+  // texture must be bound as GL_TEXTURE_2D
+  // wrap: <0: clamp; 0: default; 1: repeat
+  enum {
+    TexWrapClamp = -1,
+    TexWrapDefault = 0,
+    TexWrapRepeat = 1,
+  };
+  void SetupTextureFiltering (VTexture *Tex, int level, int wrap=TexWrapDefault); // level is taken from the appropriate cvar
+  void SetupShadowTextureFiltering (VTexture *Tex);
 
   void SetupBlending (const RenderStyleInfo &ri);
   void RestoreBlending (const RenderStyleInfo &ri);

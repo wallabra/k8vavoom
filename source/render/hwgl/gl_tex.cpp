@@ -127,6 +127,7 @@ void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glDeleteTextures(1, (GLuint *)&Tex->DriverHandle);
     Tex->DriverHandle = 0;
+    Tex->lastTextureFiltering = -1;
   }
   for (auto &&it : Tex->DriverTranslated) {
     if (it.Handle) {
@@ -151,6 +152,7 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glDeleteTextures(1, (GLuint *)&Tex->DriverHandle);
     Tex->DriverHandle = 0;
+    Tex->lastTextureFiltering = -1;
   }
   for (auto &&it : Tex->DriverTranslated) {
     if (it.Handle) {
@@ -186,10 +188,14 @@ void VOpenGLDrawer::PrecacheTexture (VTexture *Tex) {
 void VOpenGLDrawer::SetBrightmapTexture (VTexture *Tex) {
   if (!Tex || /*Tex->Type == TEXTYPE_Null ||*/ Tex->Width < 1 || Tex->Height < 1) return;
   if (Tex->bIsCameraTexture) return;
-  SetTexture(Tex, 0); // default colormap
+  //SetTexture(Tex, 0); // default colormap
+  SetSpriteLump(Tex, nullptr, 0, false, 0u);
+  /*
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  SetupTextureFiltering(r_brightmaps_filter ? 4 : 0); // trilinear or none
+  */
+  // `asModel` sets GL_REPEAT
+  SetupTextureFiltering(Tex, (r_brightmaps_filter ? 4 : 0), TexWrapRepeat); // trilinear or none
 }
 
 
@@ -202,7 +208,7 @@ void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap, vuint32 ShadeColor) {
   if (!Tex) Sys_Error("cannot set null texture");
   // camera textures are special
   SetSpriteLump(Tex, nullptr, CMap, false, ShadeColor);
-  SetupTextureFiltering(texture_filter);
+  SetupTextureFiltering(Tex, texture_filter);
 }
 
 
@@ -214,7 +220,7 @@ void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap, vuint32 ShadeColor) {
 void VOpenGLDrawer::SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap, vuint32 ShadeColor) {
   if (!Tex) Sys_Error("cannot set null texture");
   SetSpriteLump(Tex, Translation, CMap, false, ShadeColor);
-  SetupTextureFiltering(texture_filter);
+  SetupTextureFiltering(Tex, texture_filter);
 }
 
 
@@ -240,6 +246,8 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
     if (Translation || CMap || ShadeColor) {
       // color translation, color map, or stenciled
       // find translation, and mark it as recently used
+      //FIXME!
+      /*if (Translation || CMap || ShadeColor)*/ Tex->lastTextureFiltering = -1;
       VTexture::VTransData *TData = (ShadeColor ? Tex->FindDriverShaded(ShadeColor, CMap, true) : Tex->FindDriverTrans(Translation, CMap, true));
       if (TData) {
         if (needUp || !TData->Handle || Tex->bIsCameraTexture) {
@@ -306,10 +314,16 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
 //==========================================================================
 void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor) {
   SetSpriteLump(Tex, Trans, CMap, true, ShadeColor);
+  const int oldAniso = gl_texture_filter_anisotropic.asInt();
+  gl_texture_filter_anisotropic.Set(1);
+  SetupTextureFiltering(Tex, (gl_pic_filtering ? 3 : 0), TexWrapClamp);
+  gl_texture_filter_anisotropic.Set(oldAniso);
+  /*
   int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
   if (anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
+  */
 }
 
 
@@ -320,9 +334,11 @@ void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap,
 //==========================================================================
 void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor) {
   SetSpriteLump(Tex, Trans, CMap, false, ShadeColor);
-  SetupTextureFiltering(model_filter);
+  SetupTextureFiltering(Tex, model_filter, TexWrapRepeat);
+  /*
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  */
 }
 
 
@@ -443,6 +459,10 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
   }
 
   // set up texture wrapping
+  const GLint rep = (asPicture || !Tex->isWrapRepeat() ? ClampToEdge : GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, rep);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, rep);
+  /*
   if (asPicture) {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ClampToEdge);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ClampToEdge);
@@ -455,6 +475,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ClampToEdge);
     }
   }
+  */
   // other parameters will be set by the caller
 }
 
