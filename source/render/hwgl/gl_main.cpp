@@ -247,6 +247,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
   memset(&cubeDepthTexId[0], 0, sizeof(cubeDepthTexId));
   shadowmapPOT = getShadowmapPOT();
   shadowmapSize = 128<<shadowmapPOT;
+  cubemapLinearFiltering = false;
 }
 
 
@@ -682,9 +683,9 @@ void VOpenGLDrawer::InitResolution () {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
     GLDRW_CHECK_ERROR("set shadowmap compare func");
     */
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, (cubemapLinearFiltering ? GL_LINEAR : GL_NEAREST));
     GLDRW_CHECK_ERROR("set shadowmap mag filter");
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, (cubemapLinearFiltering ? GL_LINEAR : GL_NEAREST));
     GLDRW_CHECK_ERROR("set shadowmap min filter");
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     GLDRW_CHECK_ERROR("set shadowmap wrap r");

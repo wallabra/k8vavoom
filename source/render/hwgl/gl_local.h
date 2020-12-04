@@ -317,6 +317,7 @@ public:
   GLint savedSMVPort[4];
   GLint shadowmapSize;
   unsigned int shadowmapPOT; // 128<<shadowmapPOT is shadowmap size
+  bool cubemapLinearFiltering;
 
   VMatrix4 smapProj;
   TVec smapLightPos;

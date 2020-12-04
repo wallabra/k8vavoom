@@ -35,6 +35,17 @@
 //
 //==========================================================================
 void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) {
+  const bool flt = gl_shadowmap_filter.asBool();
+  if (flt != cubemapLinearFiltering) {
+    cubemapLinearFiltering = flt;
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, (cubemapLinearFiltering ? GL_LINEAR : GL_NEAREST));
+    GLDRW_CHECK_ERROR("set shadowmap mag filter");
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, (cubemapLinearFiltering ? GL_LINEAR : GL_NEAREST));
+    GLDRW_CHECK_ERROR("set shadowmap min filter");
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+  }
+
   GLDRW_RESET_ERROR();
   p_glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO);
   GLDRW_CHECK_ERROR("set cube FBO");
@@ -72,7 +83,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
 
   glEnable(GL_CULL_FACE);
-  //!glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
   glEnable(GL_TEXTURE_2D);
 

@@ -613,8 +613,10 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
   if (lpassDoShadowMap) {
     if (spotLight) {
       DO_DRAW_AMDL_LIGHT(ShadowsModelLightSMapSpot);
+      //ShadowsModelLightSMapSpot.SetCubeSize((float)(128<<shadowmapPOT));
     } else {
       DO_DRAW_AMDL_LIGHT(ShadowsModelLightSMap);
+      //ShadowsModelLightSMap.SetCubeSize((float)(128<<shadowmapPOT));
     }
   } else {
     if (spotLight) {

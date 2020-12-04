@@ -44,7 +44,8 @@ static bool lpassDoShadowMap;
   (shad_).SetShadowTexture(1); \
   (shad_).SetBiasMul(advLightGetMulBias()); \
   (shad_).SetBiasMin(advLightGetMinBias()); \
-  (shad_).SetBiasMax(advLightGetMaxBias(shadowmapPOT));
+  (shad_).SetBiasMax(advLightGetMaxBias(shadowmapPOT)); \
+  /*(shad_).SetCubeSize((float)(128<<shadowmapPOT));*/
 
 #define SETUP_LIGHT_SHADER_SPOT_ONLY(shad_)  do { \
   (shad_).SetConeDirection(coneDir); \
