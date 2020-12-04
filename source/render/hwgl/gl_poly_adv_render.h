@@ -35,6 +35,7 @@ extern VCvarB gl_smart_reject_shadows;
 extern VCvarB gl_smart_reject_svol_segs;
 extern VCvarB gl_smart_reject_svol_flats;
 extern VCvarB gl_shadowmap_filter;
+extern VCvarI gl_shadowmap_blur;
 
 
 enum {

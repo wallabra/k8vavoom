@@ -13,6 +13,9 @@
 #ifdef VV_SPOTLIGHT
   $include "common/spotlight_calc.fs"
 #endif
+#ifdef VV_SHADOWMAPS
+  attenuation *= shadowMul;
+#endif
 
   if (attenuation <= 0.0) discard;
   float finalA = min(attenuation/255.0, 1.0);

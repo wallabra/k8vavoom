@@ -34,6 +34,7 @@ static VCvarB gl_dbg_adv_render_shadow_models("gl_dbg_adv_render_shadow_models",
 static VCvarB gl_dbg_adv_render_fog_models("gl_dbg_adv_render_fog_models", true, "Render model fog?", 0);
 
 extern VCvarB r_shadowmaps;
+extern VCvarI gl_shadowmap_blur;
 
 
 //==========================================================================
@@ -613,10 +614,12 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
   if (lpassDoShadowMap) {
     if (spotLight) {
       DO_DRAW_AMDL_LIGHT(ShadowsModelLightSMapSpot);
-      //ShadowsModelLightSMapSpot.SetCubeSize((float)(128<<shadowmapPOT));
+      ShadowsModelLightSMapSpot.SetCubeBlur((float)gl_shadowmap_blur.asInt());
+      ShadowsModelLightSMapSpot.SetCubeSize((float)(128<<shadowmapPOT));
     } else {
       DO_DRAW_AMDL_LIGHT(ShadowsModelLightSMap);
-      //ShadowsModelLightSMap.SetCubeSize((float)(128<<shadowmapPOT));
+      ShadowsModelLightSMap.SetCubeBlur((float)gl_shadowmap_blur.asInt());
+      ShadowsModelLightSMap.SetCubeSize((float)(128<<shadowmapPOT));
     }
   } else {
     if (spotLight) {
