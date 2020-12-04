@@ -10,7 +10,8 @@
   ltfdir.x = -fromLightToFragment.x;
   ltfdir.y =  fromLightToFragment.y;
   ltfdir.z =  fromLightToFragment.z;
-  float referenceDistanceToLight = texture(ShadowTexture, ltfdir).r;
+  //float referenceDistanceToLight = texture(ShadowTexture, ltfdir).r;
+  float referenceDistanceToLight = textureCube(ShadowTexture, ltfdir).r;
   /*
   float currentDistanceToLight = (distanceToLight-u_nearFarPlane.x)/(u_nearFarPlane.y-u_nearFarPlane.x);
   currentDistanceToLight = clamp(currentDistanceToLight, 0, 1);
