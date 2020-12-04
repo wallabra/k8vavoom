@@ -71,6 +71,7 @@ VDrawer::VDrawer () noexcept
   , DepthZeroOne(false)
   , canRenderShadowmaps(false)
   , updateFrame(0)
+  , needCrosshair(false)
   , RendLev(nullptr)
 {
   #ifdef CLIENT
@@ -373,6 +374,19 @@ void VDrawer::SetOrthoProjection (const float left, const float right, const flo
   CalcOrthoMatrix(omat, left, right, bottom, top);
   SetProjectionMatrix(omat);
 }
+
+
+//==========================================================================
+//
+//  VDrawer::DrawCrosshair
+//
+//==========================================================================
+void VDrawer::DrawCrosshair () {
+  if (!needCrosshair) return;
+  needCrosshair = false;
+  if (RendLev) RendLev->RenderCrosshair();
+}
+
 
 
 //**************************************************************************

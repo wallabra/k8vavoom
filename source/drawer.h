@@ -305,6 +305,8 @@ public: // automap
 public:
   static bool CalculateRenderStyleInfo (RenderStyleInfo &ri, int RenderStyle, float Alpha, vuint32 StencilColor=0) noexcept;
 
+  virtual void RenderCrosshair () = 0;
+
   #if 0
   static inline bool IsAdditiveStyle (int style) {
     switch (style) {
@@ -427,8 +429,18 @@ public:
   bool MirrorClip;
   static float LightFadeMult;
 
+  // so we can draw it last
+  bool needCrosshair;
+  int prevCrosshairPic;
+
 public:
   static void RegisterICB (void (*cb) (int phase));
+
+public:
+  inline void ResetCrosshair () noexcept { needCrosshair = false; }
+  inline void WantCrosshair () noexcept { needCrosshair = true; }
+  // draws nothing if `needCrosshair` is false; resets flag
+  void DrawCrosshair ();
 
 /*
 protected:

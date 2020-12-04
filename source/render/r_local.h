@@ -802,13 +802,17 @@ protected:
   void RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo &mfi, float PSP_DIST, const RenderStyleInfo &ri);
   bool RenderViewModel (VViewState *VSt, const RenderStyleInfo &ri);
   void DrawPlayerSprites ();
-  void DrawCrosshair ();
 
   // used in things rendering to calculate lighting in `ri`
   void SetupRIThingLighting (VEntity *ent, RenderStyleInfo &ri, bool asAmbient, bool allowBM);
 
   // used in sprite lighting checks
   bool RadiusCastRay (bool textureCheck, sector_t *sector, const TVec &org, sector_t *destsector, const TVec &dest, float radius);
+
+protected:
+  static int prevCrosshairPic;
+
+  virtual void RenderCrosshair () override;
 
 protected:
   virtual void RefilterStaticLights ();

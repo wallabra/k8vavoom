@@ -48,6 +48,8 @@ static VCvarF crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CV
 static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0: down).", CVAR_Archive);
 static VCvarF crosshair_scale("crosshair_scale", "1", "Crosshair scale.", CVAR_Archive);
 
+int VRenderLevelShared::prevCrosshairPic = -666;
+
 
 static int cli_WarnSprites = 0;
 /*static*/ bool cliRegister_rsprites_args =
@@ -393,20 +395,19 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
 //==========================================================================
 //
-//  VRenderLevelShared::DrawCrosshair
+//  VRenderLevelShared::RenderCrosshair
 //
 //==========================================================================
-void VRenderLevelShared::DrawCrosshair () {
-  static int prevCH = -666;
+void VRenderLevelShared::RenderCrosshair () {
   int ch = (int)crosshair;
   const float scale = crosshair_scale.asFloat();
   float alpha = crosshair_alpha.asFloat();
   if (!isFiniteF(alpha)) alpha = 0;
   if (ch > 0 && ch < 16 && alpha > 0.0f && isFiniteF(scale) && scale > 0.0f) {
     static int handle = 0;
-    if (!handle || prevCH != ch) {
-      prevCH = ch;
-      handle = GTextureManager.AddPatch(VName(va("croshai%x", ch), VName::AddLower8), TEXTYPE_Pic, true/*silent*/);
+    if (!handle || prevCrosshairPic != ch) {
+      prevCrosshairPic = ch;
+      handle = GTextureManager.AddPatch(VName(va("croshai%x", ch), VName::AddLower8), TEXTYPE_Pic, true); //silent
       if (handle < 0) handle = 0;
     }
     if (handle > 0) {

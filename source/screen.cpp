@@ -635,6 +635,8 @@ void SCR_Update (bool fullUpdate) {
     wipeStartedTime = Sys_Time();
   }
 
+  Drawer->ResetCrosshair(); // just in case
+
   bool updateStarted = false;
   bool allowClear = true;
   bool allowWipeStart = true;
@@ -696,6 +698,9 @@ void SCR_Update (bool fullUpdate) {
     C_Drawer();
     // various on-screen statistics
     DrawFPS();
+
+    // so it will be always visible
+    Drawer->DrawCrosshair();
 
     if (clWipeTimer >= 0.0f && (!GLevel || GLevel->TicTime >= serverStartRenderFramesTic)) {
       // fix wipe timer
