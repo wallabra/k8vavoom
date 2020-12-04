@@ -59,6 +59,8 @@
 #include "p_acs.h"
 
 //#define ACS_DUMP_EXECUTION
+#define ACS_ALLOW_ZERO_DIVIDE
+
 
 // for PrintName
 #define PRINTNAME_LEVELNAME  (-1)
@@ -84,6 +86,13 @@ extern VCvarF mouse_x_sensitivity;
 extern VCvarF mouse_y_sensitivity;
 extern VCvarF m_yaw;
 extern VCvarF m_pitch;
+
+
+#ifdef ACS_ALLOW_ZERO_DIVIDE
+# define ACS_ZDIV_FIX  if (sp[-1] == 0) sp[-1] = 1;
+#else
+# define ACS_ZDIV_FIX
+#endif
 
 
 static inline bool isZandroACS () noexcept {
@@ -4289,12 +4298,14 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Divide)
+      ACS_ZDIV_FIX
       if (sp[-1] == 0) Host_Error("ACS: division by zero in `Divide`");
       sp[-2] /= sp[-1];
       --sp;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Modulus)
+      ACS_ZDIV_FIX
       if (sp[-1] == 0) Host_Error("ACS: division by zero in `Modulus`");
       sp[-2] %= sp[-1];
       --sp;
@@ -4438,6 +4449,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DivScriptVar)
+      ACS_ZDIV_FIX
       if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivScriptVar`");
       locals[READ_BYTE_OR_INT32] /= sp[-1];
       INC_BYTE_OR_INT32;
@@ -4445,6 +4457,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DivMapVar)
+      ACS_ZDIV_FIX
       if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivMapVar`");
       *ActiveObject->MapVars[READ_BYTE_OR_INT32] /= sp[-1];
       INC_BYTE_OR_INT32;
@@ -4452,6 +4465,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DivWorldVar)
+      ACS_ZDIV_FIX
       if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivWorldVar`");
       //WorldVars[READ_BYTE_OR_INT32] /= sp[-1];
       {
@@ -4463,6 +4477,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ModScriptVar)
+      ACS_ZDIV_FIX
       if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModScriptVar`");
       locals[READ_BYTE_OR_INT32] %= sp[-1];
       INC_BYTE_OR_INT32;
@@ -4470,6 +4485,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ModMapVar)
+      ACS_ZDIV_FIX
       if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModMapVar`");
       *ActiveObject->MapVars[READ_BYTE_OR_INT32] %= sp[-1];
       INC_BYTE_OR_INT32;
@@ -4477,6 +4493,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ModWorldVar)
+      ACS_ZDIV_FIX
       if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModWorldVar`");
       //WorldVars[READ_BYTE_OR_INT32] %= sp[-1];
       {
@@ -5479,6 +5496,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DivGlobalVar)
+      ACS_ZDIV_FIX
       if (sp[-1] == 0) Host_Error("ACS: division by zero in 'DivGlobalVar'");
       //GlobalVars[READ_BYTE_OR_INT32] /= sp[-1];
       {
@@ -5490,6 +5508,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ModGlobalVar)
+      ACS_ZDIV_FIX
       if (sp[-1] == 0) Host_Error("ACS: division by zero in 'ModGlobalVar'");
       //GlobalVars[READ_BYTE_OR_INT32] %= sp[-1];
       {
@@ -5762,6 +5781,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_DivMapArray)
       {
+        ACS_ZDIV_FIX
         if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivMapArray`");
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
         ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])/sp[-1]);
@@ -5772,6 +5792,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_ModMapArray)
       {
+        ACS_ZDIV_FIX
         if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModMapArray`");
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
         ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2])%sp[-1]);
@@ -5885,6 +5906,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_DivWorldArray)
       {
+        ACS_ZDIV_FIX
         if (sp[-1] == 0) Host_Error("ACS: division by zero in 'DivWorldArray'");
         int ANum = READ_BYTE_OR_INT32;
         //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) / sp[-1]);
@@ -5896,6 +5918,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_ModWorldArray)
       {
+        ACS_ZDIV_FIX
         if (sp[-1] == 0) Host_Error("ACS: division by zero in 'ModWorldArray'");
         int ANum = READ_BYTE_OR_INT32;
         //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) % sp[-1]);
@@ -5973,6 +5996,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_DivGlobalArray)
       {
+        ACS_ZDIV_FIX
         int ANum = READ_BYTE_OR_INT32;
         if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivGlobalArray`");
         //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])/sp[-1]);
@@ -5984,6 +6008,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_ModGlobalArray)
       {
+        ACS_ZDIV_FIX
         int ANum = READ_BYTE_OR_INT32;
         if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModGlobalArray`");
         //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])%sp[-1]);
@@ -7146,7 +7171,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_DivScriptArray)
       {
-        if (sp[-1] == 0) Host_Error("ACS: division by zero!");
+        ACS_ZDIV_FIX
+        if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivScriptArray`");
         int ANum = READ_BYTE_OR_INT32;
         localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])/sp[-1]);
         INC_BYTE_OR_INT32;
@@ -7156,7 +7182,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_ModScriptArray)
       {
-        if (sp[-1] == 0) Host_Error("ACS: division by zero!");
+        ACS_ZDIV_FIX
+        if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModScriptArray`");
         int ANum = READ_BYTE_OR_INT32;
         localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])%sp[-1]);
         INC_BYTE_OR_INT32;
