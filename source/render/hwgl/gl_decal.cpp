@@ -27,7 +27,7 @@
 
 //#define VV_USE_BIG_DECAL_SUM_CHECK
 
-static VCvarI gl_bigdecal_limit("gl_bigdecal_limit", "12", "Limit for big decals on one seg (usually produced by gore mod).", /*CVAR_PreInit|*/CVAR_Archive);
+static VCvarI gl_bigdecal_limit("gl_bigdecal_limit", "16", "Limit for big decals on one seg (usually produced by gore mod).", /*CVAR_PreInit|*/CVAR_Archive);
 static VCvarI gl_smalldecal_limit("gl_smalldecal_limit", "64", "Limit for small decals on one seg (usually produced by shots).", /*CVAR_PreInit|*/CVAR_Archive);
 
 
