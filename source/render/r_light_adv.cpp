@@ -39,8 +39,8 @@ static VCvarF r_shadowvol_pofs("r_shadowvol_pofs", "20", "DEBUG");
 static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 
 static VCvarB r_shadowmap_fix_light_dist("r_shadowmap_fix_light_dist", true, "Move lights slightly away from surfaces?", /*CVAR_PreInit|*/CVAR_Archive);
-VCvarI r_shadowmap_sprites("r_shadowmap_sprites", "0", "Render shadows from sprites (0:none;1:non-rotational;2:all)?", /*CVAR_PreInit|*/CVAR_Archive);
-VCvarB r_shadowmap_sprites_player("r_shadowmap_sprites_player", false, "Render player sprite shadow?", /*CVAR_PreInit|*/CVAR_Archive);
+VCvarI r_shadowmap_sprshadows("r_shadowmap_sprshadows", "0", "Render shadows from sprites (0:none;1:non-rotational;2:all)?", /*CVAR_PreInit|*/CVAR_Archive);
+VCvarB r_shadowmap_sprshadows_player("r_shadowmap_sprshadows_player", false, "Render player sprite shadow?", /*CVAR_PreInit|*/CVAR_Archive);
 
 
 //==========================================================================
@@ -341,7 +341,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
       if (!useCollector) (void)fsecCounterGen(); // for checker
       // sort shadow surfaces by textures
       if (r_max_shadow_segs_all) {
-        const int spShad = r_shadowmap_sprites.asInt();
+        const int spShad = r_shadowmap_sprshadows.asInt();
         if (useCollector) {
           timsort_r(shadowSurfaces.ptr(), shadowSurfaces.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
           for (unsigned fc = 0; fc < 6; ++fc) {

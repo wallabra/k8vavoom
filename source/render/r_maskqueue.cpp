@@ -35,7 +35,7 @@ extern VCvarB r_chasecam;
 extern VCvarB r_sort_sprites;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
-extern VCvarI r_shadowmap_sprites;
+extern VCvarI r_shadowmap_sprshadows;
 
 VCvarI r_fix_sprite_offsets("r_fix_sprite_offsets", "2", "Sprite offset fixing algorithm (0:don't fix; 1:old; 2:new).", CVAR_Archive);
 VCvarB r_fix_sprite_offsets_missiles("r_fix_sprite_offsets_missiles", false, "Fix sprite offsets for projectiles?", CVAR_Archive);
@@ -312,7 +312,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   if (renderShadow) {
     if (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps()) {
       // this is what shadowmaping does
-      const int sss = r_shadowmap_sprites.asInt();
+      const int sss = r_shadowmap_sprshadows.asInt();
            if (sss > 1) renderShadow = false;
       else if (sss == 1) doCheckFrames = true;
     }

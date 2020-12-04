@@ -43,7 +43,7 @@ extern VCvarB r_model_shadows;
 extern VCvarB r_camera_player_shadows;
 extern VCvarB r_model_light;
 extern VCvarI r_max_model_shadows;
-extern VCvarI r_shadowmap_sprites_player;
+extern VCvarI r_shadowmap_sprshadows_player;
 
 extern VCvarI r_fix_sprite_offsets;
 extern VCvarB r_fix_sprite_offsets_missiles;
@@ -429,7 +429,7 @@ void VRenderLevelShadowVolume::RenderMobjsFog () {
 //==========================================================================
 void VRenderLevelShadowVolume::RenderMobjSpriteShadowMaps (VEntity *owner, const unsigned int facenum, int spShad, vuint32 dlflags) {
   if (spShad < 1) return;
-  const bool doPlayer = r_shadowmap_sprites_player.asBool();
+  const bool doPlayer = r_shadowmap_sprshadows_player.asBool();
   for (auto &&mo : mobjsInCurrLightSprites) {
     if (mo == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
     //GCon->Logf(NAME_Debug, "x00: thing:<%s>", mo->GetClass()->GetName());

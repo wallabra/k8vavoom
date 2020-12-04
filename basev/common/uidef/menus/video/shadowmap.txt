@@ -25,7 +25,7 @@ menudef ShadowMapOptions {
 
   option enum {
     title = "Sprite Shadows";
-    cvar = r_shadowmap_sprites;
+    cvar = r_shadowmap_sprshadows;
     list {
       "None",
       "Non-Rotational",
@@ -39,7 +39,7 @@ menudef ShadowMapOptions {
 
   option bool {
     title = "Player Shadow";
-    cvar = r_shadowmap_sprites_player;
+    cvar = r_shadowmap_sprshadows_player;
     help =
       "If you turned on sprite shadows, you can enable/disable rendering",
       "player shadow. Most of the time player shadow is only distracting.";
