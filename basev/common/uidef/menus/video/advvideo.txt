@@ -10,6 +10,33 @@ menudef AdvVideoOptions {
     cvar = r_decals_enabled;
   }
 
+  option slider {
+    title = "Maximum Big Decals";
+    cvar = gl_bigdecal_limit;
+    help =
+      "Maximum number of relatively big decals on one wall segment.",
+      "Keep this number small if you're playing with Gore mod, because",
+      "alot of big blood decals can slow down rendering when you're",
+      "looking at a wall from a close distance.",
+      "",
+      "0 means 'no limit'.";
+    step = 1;
+    min = 0;
+    max = 64;
+  }
+
+  option slider {
+    title = "Maximum Small Decals";
+    cvar = gl_smalldecal_limit;
+    help =
+      "Maximum number of small decals (like bullet marks) on one wall segment.",
+      "",
+      "0 means 'no limit'.";
+    step = 1;
+    min = 0;
+    max = 128;
+  }
+
   option bool {
     title = "Recalc Static Lightmaps";
     cvar = r_lmap_recalc_static;
