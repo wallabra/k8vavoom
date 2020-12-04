@@ -25,6 +25,11 @@
 //**************************************************************************
 #include "gl_local.h"
 
+//#define VV_USE_BIG_DECAL_SUM_CHECK
+
+static VCvarI gl_bigdecal_limit("gl_bigdecal_limit", "12", "Limit for big decals on one seg (usually produced by gore mod).", /*CVAR_PreInit|*/CVAR_Archive);
+static VCvarI gl_smalldecal_limit("gl_smalldecal_limit", "64", "Limit for small decals on one seg (usually produced by shots).", /*CVAR_PreInit|*/CVAR_Archive);
+
 
 //==========================================================================
 //
@@ -53,6 +58,8 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
   NoteStencilBufferDirty(); // it will be dirtied
 }
 
+
+static int maxrdcount = 0;
 
 //==========================================================================
 //
@@ -129,14 +136,24 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
   decal_t *dc = surf->seg->decalhead;
 
   int rdcount = 0;
-  static int maxrdcount = 0;
   if (gl_decal_reset_max) { maxrdcount = 0; gl_decal_reset_max = false; }
 
   bool tex1set = false;
   int currTexId = -1; // don't call `SetTexture()` repeatedly
   VTextureTranslation *currTrans = nullptr;
   int lastTexTrans = 0;
-  //int dbg_total = 0, dbg_noblend = 0;
+  //int dbg_noblend = 0;
+
+  int bigDecalCount = 0;
+  int smallDecalCount = 0;
+  #ifdef VV_USE_BIG_DECAL_SUM_CHECK
+  const float bigDecalSize = 52.0f;
+  #define DSCHECK  (twdt+thgt >= bigDecalSize)
+  #else
+  const float bigDecalWidth = 34.0f;
+  const float bigDecalHeight = 34.0f;
+  #define DSCHECK  (twdt >= bigDecalWidth || thgt >= bigDecalHeight)
+  #endif
 
   while (dc) {
     // "0" means "no texture found", so remove it too
@@ -187,7 +204,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     //if (dc->flags&decal_t::FlipX) txofs = twdt-txofs;
     //if (dc->flags&decal_t::FlipY) tyofs = thgt-tyofs;
 
-    if (twdt < 1 || thgt < 1) {
+    if (twdt < 1.0f || thgt < 1.0f) {
       // remove it, if it is not animated
       decal_t *n = dc->next;
       if (!dc->animator) {
@@ -197,6 +214,9 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       dc = n;
       continue;
     }
+
+    //GCon->Logf(NAME_Debug, "twdt=%g; thgt=%g", twdt, thgt);
+    if (DSCHECK) ++bigDecalCount; else ++smallDecalCount;
 
     // setup shader
     switch (dtype) {
@@ -266,7 +286,6 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     float texy1 = (dc->flags&decal_t::FlipY ? 1.0f : 0.0f);
 
     /*
-    ++dbg_total;
     if (dtex->isTranslucent() || dc->alpha <= 0.9) {
       GLEnableBlend();
     } else {
@@ -290,7 +309,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
 
   if (rdcount > maxrdcount) {
     maxrdcount = rdcount;
-    if (gl_decal_dump_max) GCon->Logf("*** max decals on seg: %d", maxrdcount);
+    if (gl_decal_dump_max) GCon->Logf(NAME_Debug, "*** max decals on seg: %d", maxrdcount);
   }
 
   glEnable(GL_CULL_FACE);
@@ -309,7 +328,52 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
   PopDepthMask();
   GLEnableBlend();
 
-  //if (dbg_total && dbg_noblend) GCon->Logf(NAME_Debug, "DECALS: total=%d; noblend=%d", dbg_total, dbg_noblend);
+  //if (rdcount && dbg_noblend) GCon->Logf(NAME_Debug, "DECALS: total=%d; noblend=%d", rdcount, dbg_noblend);
+
+  //if (bigDecalCount) GCon->Logf(NAME_Debug, "bigDecalCount=%d", bigDecalCount);
+  // kill some big decals
+  if (GClLevel) {
+    const int bigLimit = gl_bigdecal_limit.asInt();
+    const int smallLimit = gl_smalldecal_limit.asInt();
+    int toKillBig = (bigLimit > 0 ? bigDecalCount-bigLimit : 0);
+    int toKillSmall = (smallLimit > 0 ? smallDecalCount-smallLimit : 0);
+    if (toKillBig > 0 || toKillSmall > 0) {
+      if (toKillBig < 0) toKillBig = 0;
+      if (toKillSmall < 0) toKillSmall = 0;
+      if (toKillBig) GCon->Logf(NAME_Debug, "have to kill %d big decals...", toKillBig);
+      if (toKillSmall) GCon->Logf(NAME_Debug, "have to kill %d small decals...", toKillSmall);
+      dc = surf->seg->decalhead;
+      while (dc && (toKillBig|toKillSmall)) {
+        decal_t *cdc = dc;
+        dc = dc->next;
+        int dcTexId = cdc->texture;
+        auto dtex = GTextureManager[dcTexId];
+        if (!dtex || dtex->Width < 1 || dtex->Height < 1) continue;
+
+        const float twdt = dtex->GetScaledWidth()*cdc->scaleX;
+        const float thgt = dtex->GetScaledHeight()*cdc->scaleY;
+
+        //GCon->Logf(NAME_Debug, "twdt=%g; thgt=%g", twdt, thgt);
+        bool doKill = false;
+        if (DSCHECK) {
+          if (toKillBig) {
+            --toKillBig;
+            doKill = true;
+          }
+        } else {
+          if (toKillSmall) {
+            --toKillSmall;
+            doKill = true;
+          }
+        }
+        if (doKill) {
+          if (cdc->animator) GClLevel->RemoveAnimatedDecal(cdc);
+          surf->seg->removeDecal(cdc);
+          delete cdc;
+        }
+      }
+    }
+  }
 
   return true;
 }

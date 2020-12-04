@@ -805,6 +805,9 @@ public:
     return SubSegsIndexIterator(this, sub);
   }
 
+  void AddAnimatedDecal (decal_t *dc);
+  void RemoveAnimatedDecal (decal_t *dc); // this will also kill animator
+
 private:
   // map loaders
   void LoadVertexes (int, int, int &);
@@ -917,9 +920,6 @@ private:
   // called by `AddDecal()`
   void AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t *li, int translation);
   void PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec, int side, line_t *li, vuint32 flips, int translation, bool skipMarkCheck);
-
-  void AddAnimatedDecal (decal_t *dc);
-  void RemoveAnimatedDecal (decal_t *dc); // this will also kill animator
 
   void PostProcessForDecals ();
 
