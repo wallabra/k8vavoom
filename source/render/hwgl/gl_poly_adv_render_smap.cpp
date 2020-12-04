@@ -68,7 +68,8 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
 
   //glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+  //glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+  glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
 
   glEnable(GL_CULL_FACE);
   //!glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
