@@ -961,12 +961,13 @@ protected:
 
   // if `ShadeColor` is not zero, ignore translation, and use "shaded" mode
   // high byte of `ShadeColor` means nothing
-  void SetTexture (VTexture *Tex, int CMap, vuint32 ShadeColor=0);
-  void SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap, vuint32 ShadeColor=0);
+  // returns `false` if non-main texture was bound
+  bool SetTexture (VTexture *Tex, int CMap, vuint32 ShadeColor=0);
+  bool SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap, vuint32 ShadeColor=0);
   void SetBrightmapTexture (VTexture *Tex);
-  void SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture, vuint32 ShadeColor=0);
-  void SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor=0);
-  void SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor=0);
+  bool SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture, vuint32 ShadeColor=0);
+  bool SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor=0);
+  bool SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor=0);
 
   void GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture, bool needUpdate, vuint32 ShadeColor);
   void UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal, int SourceLump);
@@ -989,8 +990,15 @@ protected:
     TexWrapDefault = 0,
     TexWrapRepeat = 1,
   };
-  void SetupTextureFiltering (VTexture *Tex, int level, int wrap=TexWrapDefault); // level is taken from the appropriate cvar
+  void SetupTextureFiltering (VTexture *Tex, int level, int wrap=TexWrapDefault);
   void SetupShadowTextureFiltering (VTexture *Tex);
+
+  // will not change texture filter cache
+  void ForceTextureFiltering (VTexture *Tex, int level, int wrap=TexWrapDefault);
+
+  inline void SetOrForceTextureFiltering (bool mainTexture, VTexture *Tex, int level, int wrap=TexWrapDefault) {
+    if (mainTexture) SetupTextureFiltering(Tex, level, wrap); else ForceTextureFiltering(Tex, level, wrap);
+  }
 
   void SetupBlending (const RenderStyleInfo &ri);
   void RestoreBlending (const RenderStyleInfo &ri);

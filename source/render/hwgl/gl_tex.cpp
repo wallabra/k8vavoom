@@ -189,7 +189,7 @@ void VOpenGLDrawer::SetBrightmapTexture (VTexture *Tex) {
   if (!Tex || /*Tex->Type == TEXTYPE_Null ||*/ Tex->Width < 1 || Tex->Height < 1) return;
   if (Tex->bIsCameraTexture) return;
   //SetTexture(Tex, 0); // default colormap
-  SetSpriteLump(Tex, nullptr, 0, false, 0u);
+  (void)SetSpriteLump(Tex, nullptr, 0, false, 0u);
   /*
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -203,12 +203,15 @@ void VOpenGLDrawer::SetBrightmapTexture (VTexture *Tex) {
 //
 //  VOpenGLDrawer::SetTexture
 //
+//  returns `false` if non-main texture was bound
+//
 //==========================================================================
-void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap, vuint32 ShadeColor) {
+bool VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap, vuint32 ShadeColor) {
   if (!Tex) Sys_Error("cannot set null texture");
   // camera textures are special
-  SetSpriteLump(Tex, nullptr, CMap, false, ShadeColor);
-  SetupTextureFiltering(Tex, texture_filter);
+  const bool res = SetSpriteLump(Tex, nullptr, CMap, false, ShadeColor);
+  SetOrForceTextureFiltering(res, Tex, texture_filter);
+  return res;
 }
 
 
@@ -216,11 +219,55 @@ void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap, vuint32 ShadeColor) {
 //
 //  VOpenGLDrawer::SetDecalTexture
 //
+//  returns `false` if non-main texture was bound
+//
 //==========================================================================
-void VOpenGLDrawer::SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap, vuint32 ShadeColor) {
+bool VOpenGLDrawer::SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap, vuint32 ShadeColor) {
   if (!Tex) Sys_Error("cannot set null texture");
-  SetSpriteLump(Tex, Translation, CMap, false, ShadeColor);
-  SetupTextureFiltering(Tex, texture_filter);
+  const bool res = SetSpriteLump(Tex, Translation, CMap, false, ShadeColor);
+  SetOrForceTextureFiltering(res, Tex, texture_filter);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SetPic
+//
+//  returns `false` if non-main texture was bound
+//
+//==========================================================================
+bool VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor) {
+  const bool res = SetSpriteLump(Tex, Trans, CMap, true, ShadeColor);
+  const int oldAniso = gl_texture_filter_anisotropic.asInt();
+  gl_texture_filter_anisotropic.Set(1);
+  SetOrForceTextureFiltering(res, Tex, (gl_pic_filtering ? 3 : 0), TexWrapClamp);
+  gl_texture_filter_anisotropic.Set(oldAniso);
+  /*
+  int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
+  if (anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
+  */
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SetPicModel
+//
+//  returns `false` if non-main texture was bound
+//
+//==========================================================================
+bool VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor) {
+  const bool res = SetSpriteLump(Tex, Trans, CMap, false, ShadeColor);
+  SetOrForceTextureFiltering(res, Tex, model_filter, TexWrapRepeat);
+  /*
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  */
+  return res;
 }
 
 
@@ -228,9 +275,12 @@ void VOpenGLDrawer::SetDecalTexture (VTexture *Tex, VTextureTranslation *Transla
 //
 //  VOpenGLDrawer::SetSpriteLump
 //
+//  returns `false` if non-main texture was bound
+//
 //==========================================================================
-void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture, vuint32 ShadeColor) {
+bool VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture, vuint32 ShadeColor) {
   vassert(Tex);
+  bool res = true;
   if (mInitialized) {
     if (ShadeColor) {
       Translation = nullptr; // just in case
@@ -247,7 +297,7 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
       // color translation, color map, or stenciled
       // find translation, and mark it as recently used
       //FIXME!
-      /*if (Translation || CMap || ShadeColor)*/ Tex->lastTextureFiltering = -1;
+      res = false;
       VTexture::VTransData *TData = (ShadeColor ? Tex->FindDriverShaded(ShadeColor, CMap, true) : Tex->FindDriverTrans(Translation, CMap, true));
       if (TData) {
         if (needUp || !TData->Handle || Tex->bIsCameraTexture) {
@@ -304,41 +354,8 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
 
   tex_scale_x = (Tex->SScale ? Tex->SScale : 1.0f);
   tex_scale_y = (Tex->TScale ? Tex->TScale : 1.0f);
-}
 
-
-//==========================================================================
-//
-//  VOpenGLDrawer::SetPic
-//
-//==========================================================================
-void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor) {
-  SetSpriteLump(Tex, Trans, CMap, true, ShadeColor);
-  const int oldAniso = gl_texture_filter_anisotropic.asInt();
-  gl_texture_filter_anisotropic.Set(1);
-  SetupTextureFiltering(Tex, (gl_pic_filtering ? 3 : 0), TexWrapClamp);
-  gl_texture_filter_anisotropic.Set(oldAniso);
-  /*
-  int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
-  if (anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
-  */
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::SetPicModel
-//
-//==========================================================================
-void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor) {
-  SetSpriteLump(Tex, Trans, CMap, false, ShadeColor);
-  SetupTextureFiltering(Tex, model_filter, TexWrapRepeat);
-  /*
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  */
+  return res;
 }
 
 
