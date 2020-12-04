@@ -16,7 +16,6 @@
   float currentDistanceToLight = (distanceToLight-u_nearFarPlane.x)/(u_nearFarPlane.y-u_nearFarPlane.x);
   currentDistanceToLight = clamp(currentDistanceToLight, 0, 1);
   */
-  float currentDistanceToLight = distanceToLight/LightRadius;
 
   // dunno which one is better (or even which one is right, lol)
   #if 1
@@ -31,4 +30,5 @@
   float bias = clamp(BiasMin+BiasMul*biasMod, 0.0, BiasMax); // cosTheta is dot( n,l ), clamped between 0 and 1
   #endif
   // compare distances to determine whether the fragment is in shadow
+  float currentDistanceToLight = distanceToLight/LightRadius;
   if (currentDistanceToLight > referenceDistanceToLight+bias) discard;
