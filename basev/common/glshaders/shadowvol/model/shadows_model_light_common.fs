@@ -39,37 +39,4 @@ void main () {
   }
 
   $include "shadowvol/common_light.fs"
-
-#if 0
-factored out
-  float DistToLight = max(1.0, dot(VertToLight, VertToLight));
-  if (DistToLight >= LightRadius*LightRadius) discard;
-
-  vec3 normV2L = normalize(VertToLight);
-
-#ifdef VV_SHADOWMAPS
-  $include "shadowvol/smap_light_check.fs"
-#endif
-
-  DistToLight = sqrt(DistToLight);
-
-  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normV2L, Normal)));
-#ifdef VV_SPOTLIGHT
-  $include "common/spotlight_calc.fs"
-#endif
-
-  if (attenuation <= 0.0) discard;
-
-  float ClampAdd = min(attenuation/255.0, 1.0);
-  attenuation = ClampAdd;
-
-  float ClampTrans = clamp((TexColor.a-0.1)/0.9, 0.0, 1.0);
-  if (ClampTrans < ALPHA_MIN) discard;
-
-  vec4 FinalColor;
-  FinalColor.rgb = LightColor;
-  FinalColor.a = ClampAdd*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
-
-  gl_FragColor = FinalColor;
-#endif
 }

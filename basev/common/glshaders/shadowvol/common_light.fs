@@ -7,8 +7,9 @@
   $include "shadowvol/smap_light_check.fs"
 #endif
 
+  // "half-lambert" lighting model
   DistToLight = sqrt(DistToLight);
-  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normV2L, Normal)));
+  float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+0.5*dot(normV2L, Normal));
 #ifdef VV_SPOTLIGHT
   $include "common/spotlight_calc.fs"
 #endif
