@@ -231,8 +231,7 @@ void VOpenGLDrawer::RenderSurfaceShadowMap (const surface_t *surf) {
     if (textureChanged) {
       smapLastTexinfo.updateLastUsed(*currTexinfo);
       //SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
-      SetSpriteLump(currTexinfo->Tex, nullptr, 0/*CMap*/, false, 0/*ShadeColor*/);
-      SetupShadowTextureFiltering(currTexinfo->Tex);
+      SetShadowTexture(currTexinfo->Tex);
       SurfShadowMapTex.SetTex(currTexinfo);
     }
   } else {
@@ -243,8 +242,7 @@ void VOpenGLDrawer::RenderSurfaceShadowMap (const surface_t *surf) {
   const bool textureChanged = smapLastTexinfo.needChange(*currTexinfo, updateFrame);
   if (textureChanged) {
     //SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
-    SetSpriteLump(currTexinfo->Tex, nullptr, 0/*CMap*/, false, 0/*ShadeColor*/);
-    SetupShadowTextureFiltering(currTexinfo->Tex);
+    SetShadowTexture(currTexinfo->Tex);
     SurfShadowMapTex.SetTex(currTexinfo);
   }
   #endif
@@ -293,8 +291,7 @@ void VOpenGLDrawer::DrawSpriteShadowMap (const TVec *cv, VTexture *Tex, const TV
     const bool textureChanged = smapLastSprTexinfo.needChange(currTexinfo, updateFrame);
     if (true || textureChanged) {
       smapLastSprTexinfo.updateLastUsed(currTexinfo);
-      SetSpriteLump(Tex, /*Translation*/nullptr, /*CMap*/0, true, 0u);
-      SetupShadowTextureFiltering(Tex);
+      SetShadowTexture(Tex); //FIXME: this should be "no-repeat"
     }
     SurfShadowMapSpr.SetSpriteTex(texorg, saxis, taxis, tex_iw, tex_ih);
   } else {

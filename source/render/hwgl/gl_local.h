@@ -1012,30 +1012,6 @@ protected:
   void FlushTexture (VTexture *);
   void DeleteTexture (VTexture *);
 
-  // if `ShadeColor` is not zero, ignore translation, and use "shaded" mode
-  // high byte of `ShadeColor` means nothing
-  // returns `false` if non-main texture was bound
-  bool SetTexture (VTexture *Tex, int CMap, vuint32 ShadeColor=0);
-  bool SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap, vuint32 ShadeColor=0);
-  void SetBrightmapTexture (VTexture *Tex);
-  bool SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture, vuint32 ShadeColor=0);
-  bool SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor=0);
-  bool SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor=0);
-
-  void GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture, bool needUpdate, vuint32 ShadeColor);
-  void UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal, int SourceLump);
-  void UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal, int SourceLump);
-  void UploadTexture (int width, int height, const rgba_t *data, bool doFringeRemove, int SourceLump);
-
-  void DoHorizonPolygon (surface_t *surf);
-  void DrawPortalArea (VPortal *Portal);
-
-  GLhandleARB LoadShader (const char *progname, const char *incdir, GLenum Type, VStr FileName, const TArray<VStr> &defines=TArray<VStr>());
-  GLhandleARB CreateProgram (const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader);
-
-  void UploadModel (VMeshModel *Mdl);
-  void UnloadModels ();
-
   // texture must be bound as GL_TEXTURE_2D
   // wrap: <0: clamp; 0: default; 1: repeat
   enum {
@@ -1052,6 +1028,41 @@ protected:
   inline void SetOrForceTextureFiltering (bool mainTexture, VTexture *Tex, int level, int wrap=TexWrapDefault) {
     if (mainTexture) SetupTextureFiltering(Tex, level, wrap); else ForceTextureFiltering(Tex, level, wrap);
   }
+
+  // if `ShadeColor` is not zero, ignore translation, and use "shaded" mode
+  // high byte of `ShadeColor` means nothing
+  // returns `false` if non-main texture was bound
+  bool SetTexture (VTexture *Tex, int CMap, vuint32 ShadeColor=0);
+  bool SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap, vuint32 ShadeColor=0);
+  void SetBrightmapTexture (VTexture *Tex);
+  bool SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor=0);
+  bool SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor=0);
+
+  inline void SetSpriteTexture (int level, VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture, vuint32 ShadeColor=0) {
+    SetOrForceTextureFiltering(SetSpriteLump(Tex, Translation, CMap, asPicture, ShadeColor), Tex, level, TexWrapClamp);
+  }
+
+  inline void SetShadowTexture (VTexture *Tex) {
+    SetSpriteLump(Tex, nullptr, 0/*CMap*/, false, 0/*ShadeColor*/);
+    SetupShadowTextureFiltering(Tex);
+  }
+
+  bool SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture, vuint32 ShadeColor=0);
+
+
+  void GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture, bool needUpdate, vuint32 ShadeColor);
+  void UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal, int SourceLump);
+  void UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal, int SourceLump);
+  void UploadTexture (int width, int height, const rgba_t *data, bool doFringeRemove, int SourceLump);
+
+  void DoHorizonPolygon (surface_t *surf);
+  void DrawPortalArea (VPortal *Portal);
+
+  GLhandleARB LoadShader (const char *progname, const char *incdir, GLenum Type, VStr FileName, const TArray<VStr> &defines=TArray<VStr>());
+  GLhandleARB CreateProgram (const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader);
+
+  void UploadModel (VMeshModel *Mdl);
+  void UnloadModels ();
 
   void SetupBlending (const RenderStyleInfo &ri);
   void RestoreBlending (const RenderStyleInfo &ri);
