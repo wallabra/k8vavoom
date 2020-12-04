@@ -223,6 +223,12 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   if (!surf->IsPlVisible()) return; // viewer is in back side or on plane
   if (surf->count < 3) return;
 
+  if (spotLight && !isSurfaceInSpotlight(surf)) return;
+
+  const unsigned vcount = (unsigned)surf->count;
+  const SurfVertex *sverts = surf->verts;
+  const SurfVertex *v = sverts;
+
   const texinfo_t *currTexinfo = surf->texinfo;
 
   if (currTexinfo->Tex->isTransparent()) {
@@ -242,7 +248,8 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
   //glBegin(GL_POLYGON);
   currentActiveShader->UploadChangedUniforms();
   glBegin(GL_TRIANGLE_FAN);
-    for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
+    //for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
+    for (unsigned i = 0; i < vcount; ++i, ++v) glVertex(v->vec());
   glEnd();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 }

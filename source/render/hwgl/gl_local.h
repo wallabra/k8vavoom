@@ -269,6 +269,7 @@ private:
   TVec coneDir; // current spotlight direction
   float coneAngle; // current spotlight cone angle
   bool spotLight; // is current light a spotlight?
+  TPlane spotPlane; // spotPlane.SetPointNormal3D(CurrLightPos, coneDir);
   GLint savedDepthMask; // used in various begin/end methods
   // for `DrawTexturedPoly()` API
   VTexture *texturedPolyLastTex;
@@ -285,6 +286,40 @@ private:
 
   // returns `false` if scissor is empty
   bool UploadCurrentScissorRect ();
+
+protected:
+  // spotlight should be properly initialised!
+  inline bool isSurfaceInSpotlight (const surface_t *surf) noexcept {
+    const SurfVertex *vv = surf->verts;
+    /*
+    for (unsigned f = (unsigned)surf->count; f--; ++vv) {
+      if (vv->vec().isInSpotlight(LightPos, coneDir, coneAngle)) { splhit = true; break; }
+    }
+    */
+    for (unsigned f = (unsigned)surf->count; f--; ++vv) {
+      if (!spotPlane.PointOnSide(vv->vec())) return true;
+    }
+    return false;
+  }
+
+  inline bool isSpriteInSpotlight (const TVec *cv) noexcept {
+    for (unsigned f = 4; f--; ++cv) {
+      if (!spotPlane.PointOnSide(*cv)) return true;
+    }
+    return false;
+  }
+
+  inline void setupSpotLight (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) noexcept {
+    coneDir = aconeDir;
+    coneAngle = (aconeAngle <= 0.0f || aconeAngle >= 360.0f ? 0.0f : aconeAngle);
+    if (coneAngle && aconeDir.isValid() && !aconeDir.isZero()) {
+      spotLight = true;
+      coneDir.normaliseInPlace();
+      spotPlane.SetPointNormal3D(LightPos, coneDir);
+    } else {
+      spotLight = false;
+    }
+  }
 
 protected:
   VGLShader *shaderHead;

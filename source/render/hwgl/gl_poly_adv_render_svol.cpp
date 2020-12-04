@@ -244,15 +244,8 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
     p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
   }
 
-  coneDir = aconeDir;
-  coneAngle = (aconeAngle <= 0.0f || aconeAngle >= 360.0f ? 0.0f : aconeAngle);
+  setupSpotLight(LightPos, Radius, aconeDir, aconeAngle);
 
-  if (coneAngle && aconeDir.isValid() && !aconeDir.isZero()) {
-    spotLight = true;
-    coneDir.normaliseInPlace();
-  } else {
-    spotLight = false;
-  }
   SurfShadowVolume.Activate();
   SurfShadowVolume.SetLightPos(LightPos);
   SurfShadowVolume.UploadChangedUniforms();
@@ -304,28 +297,11 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
 
   if (gl_smart_reject_shadows && !AdvRenderCanSurfaceCastShadow(surf, LightPos, Radius)) return;
 
+  if (spotLight && !isSurfaceInSpotlight(surf)) return;
+
   const unsigned vcount = (unsigned)surf->count;
   const SurfVertex *sverts = surf->verts;
   const SurfVertex *v = sverts;
-
-  if (spotLight) {
-    // reject all surfaces behind a spotlight
-    //TODO: build spotlight frustum, and perform a rejection with it
-    //      or even better: perform such rejection earilier
-    TPlane pl;
-    pl.SetPointNormal3D(LightPos, coneDir);
-    const SurfVertex *vv = sverts;
-    bool splhit = false;
-    /*
-    for (unsigned f = vcount; f--; ++vv) {
-      if (vv->vec().isInSpotlight(LightPos, coneDir, coneAngle)) { splhit = true; break; }
-    }
-    */
-    for (unsigned f = vcount; f--; ++vv) {
-      if (!pl.PointOnSide(vv->vec())) { splhit = true; break; }
-    }
-    if (!splhit) return;
-  }
 
   //GCon->Logf("***   VOpenGLDrawer::RenderSurfaceShadowVolume()");
   if (!wasRenderedShadowSurface && gl_smart_dirty_rects) {

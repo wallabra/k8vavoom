@@ -104,15 +104,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   }
   #endif
 
-  coneDir = aconeDir;
-  coneAngle = (aconeAngle <= 0.0f || aconeAngle >= 360.0f ? 0.0f : aconeAngle);
-
-  if (coneAngle && aconeDir.isValid() && !aconeDir.isZero()) {
-    spotLight = true;
-    coneDir.normaliseInPlace();
-  } else {
-    spotLight = false;
-  }
+  setupSpotLight(LightPos, Radius, aconeDir, aconeAngle);
 
   CalcShadowMapProjectionMatrix(smapProj, Radius, swidth, sheight, PixelAspect);
 
@@ -225,6 +217,12 @@ void VOpenGLDrawer::RenderSurfaceShadowMap (const surface_t *surf) {
   if (gl_dbg_wireframe) return;
   if (surf->count < 3) return; // just in case
 
+  if (spotLight && !isSurfaceInSpotlight(surf)) return;
+
+  const unsigned vcount = (unsigned)surf->count;
+  const SurfVertex *sverts = surf->verts;
+  const SurfVertex *v = sverts;
+
   const texinfo_t *currTexinfo = surf->texinfo;
   #if 1
   if (currTexinfo->Tex->isTransparent()) {
@@ -253,10 +251,6 @@ void VOpenGLDrawer::RenderSurfaceShadowMap (const surface_t *surf) {
 
   //if (gl_smart_reject_shadows && !AdvRenderCanSurfaceCastShadow(surf, LightPos, Radius)) return;
 
-  const unsigned vcount = (unsigned)surf->count;
-  const SurfVertex *sverts = surf->verts;
-  const SurfVertex *v = sverts;
-
   currentActiveShader->UploadChangedUniforms();
   //currentActiveShader->UploadChangedAttrs();
 
@@ -277,6 +271,8 @@ void VOpenGLDrawer::DrawSpriteShadowMap (const TVec *cv, VTexture *Tex, const TV
 {
   if (gl_dbg_wireframe) return;
   if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
+
+  if (spotLight && !isSpriteInSpotlight(cv)) return;
 
   if (Tex->isTransparent()) {
     // create fake texinfo
