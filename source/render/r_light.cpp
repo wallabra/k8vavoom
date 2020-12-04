@@ -47,9 +47,9 @@ static VCvarB r_dynamic_light_better_vis_check("r_dynamic_light_better_vis_check
 extern VCvarB r_glow_flat;
 extern VCvarB r_lmap_recalc_moved_static;
 
-static VCvarB r_spr_texture_check_static("r_spr_texture_check_static", true, "Check textures of two-sided lines?", CVAR_Archive);
-static VCvarB r_spr_texture_check_dynamic("r_spr_texture_check_dynamic", true, "Check textures of two-sided lines?", CVAR_Archive);
-static VCvarI r_spr_texture_check_radius_dynamic("r_spr_texture_check_radius_dynamic", "300", "Disable texture check for dynamic lights with radius lower than this.", CVAR_Archive);
+static VCvarB r_lmap_texture_check_static("r_lmap_texture_check_static", true, "Check textures of two-sided lines in lightmap tracer?", CVAR_Archive);
+static VCvarB r_lmap_texture_check_dynamic("r_lmap_texture_check_dynamic", true, "Check textures of two-sided lines in lightmap tracer?", CVAR_Archive);
+static VCvarI r_lmap_texture_check_radius_dynamic("r_lmap_texture_check_radius_dynamic", "300", "Disable texture check for dynamic lights with radius lower than this.", CVAR_Archive);
 
 
 #define RL_CLEAR_DLIGHT(_dl)  do { \
@@ -892,8 +892,8 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     static_assert(sizeof(unsigned) >= sizeof(vuint32), "`unsigned` should be at least of `vuint32` size");
     const unsigned dlbits = (unsigned)sub->dlightbits;
-    const bool texCheck = r_spr_texture_check_dynamic.asBool();
-    const float texCheckRadus = r_spr_texture_check_radius_dynamic.asInt(); // float, to avoid conversions
+    const bool texCheck = r_lmap_texture_check_dynamic.asBool();
+    const float texCheckRadus = r_lmap_texture_check_radius_dynamic.asInt(); // float, to avoid conversions
     for (unsigned i = 0; i < MAX_DLIGHTS; ++i) {
       // check visibility
       if (!(dlbits&(1U<<i))) continue;
@@ -950,7 +950,7 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
     if (!staticLightsFiltered) RefilterStaticLights();
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     const bool dynclip = true; //r_dynamic_clip.asBool();
-    const bool texCheck = r_spr_texture_check_static.asBool();
+    const bool texCheck = r_lmap_texture_check_static.asBool();
     // we know for sure what static light may affect the subsector, so there is no need to check 'em all
     const int snum = (int)(ptrdiff_t)(sub-&Level->Subsectors[0]);
     SubStaticLigtInfo *subslinfo = &SubStaticLights[snum];

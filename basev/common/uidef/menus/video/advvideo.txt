@@ -249,7 +249,7 @@ menudef AdvVideoOptions {
 
   option bool {
     title = "Check textures in static trace";
-    cvar = r_spr_texture_check_static;
+    cvar = r_lmap_texture_check_static;
     help =
       "Should static light tracer check textures to allow static light",
       "shine through texture holes when checking thing lighting?";
@@ -257,7 +257,7 @@ menudef AdvVideoOptions {
 
   option bool {
     title = "Check textures in dynamic trace";
-    cvar = r_spr_texture_check_dynamic;
+    cvar = r_lmap_texture_check_dynamic;
     help =
       "Should static light tracer check textures to allow dynamic light",
       "shine through texture holes when checking thing lighting?";
@@ -265,7 +265,7 @@ menudef AdvVideoOptions {
 
   option numeric {
     title = "Minimum texcheck dynamic radius";
-    cvar = r_spr_texture_check_radius_dynamic;
+    cvar = r_lmap_texture_check_radius_dynamic;
     step = 10;
     min = 0;
     max = 1000;
