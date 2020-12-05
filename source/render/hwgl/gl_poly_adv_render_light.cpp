@@ -90,8 +90,8 @@ static unsigned int smapBShaderIndex;
 
 #define SETUP_LIGHT_SHADER_SMAP_SPOT(shad_)  do { \
   SETUP_LIGHT_SHADER_SMAP_NORMAL(shad_); \
-  SETUP_LIGHT_SHADER_SPOT_ONLY(shad_); \
-  SETUP_LIGHT_SHADER_SPOT_ONLY(shad_##Tex); \
+  SETUP_LIGHT_SHADER_SMAP_SPOT_ONLY(shad_); \
+  SETUP_LIGHT_SHADER_SMAP_SPOT_ONLY(shad_##Tex); \
 } while (0)
 
 #define SETUP_LIGHT_SHADER_SMAP(shad_)  \
@@ -271,6 +271,7 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
 
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
   //glBegin(GL_POLYGON);
+  //GCon->Logf(NAME_Debug, "shader: %s", currentActiveShader->progname);
   currentActiveShader->UploadChangedUniforms();
   glBegin(GL_TRIANGLE_FAN);
     //for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i].vec());
