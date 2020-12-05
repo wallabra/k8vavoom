@@ -129,6 +129,12 @@ GLint VOpenGLDrawer::glGetAttrLoc (const char *prog, GLhandleARB pid, const char
 
 
 
+//**************************************************************************
+//
+// VOpenGLDrawer::VGLShader
+//
+//**************************************************************************
+
 //==========================================================================
 //
 //  VOpenGLDrawer::VGLShader::CheckOpenGLVersion
@@ -501,4 +507,36 @@ GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB Vert
   if (glerr != 0) Sys_Error("Failed to link program '%s' for unknown reason (error is %s)", progname, VGetGLErrorStr(glerr));
 
   return Program;
+}
+
+
+#define VV_CREATE_SMAP_SHADER(shad_,blur_,defs_)  \
+  (shad_##Blur)[blur_].Setup(this); \
+  (shad_##Blur)[blur_].defines = (shad_).defines; \
+  (shad_##Blur)[blur_].defines.append(defs_);
+
+
+#define VV_CREATE_SMAP_SHADER_LEVEL(blur_,defs_) \
+  VV_CREATE_SMAP_SHADER(ShadowsLightSMap,blur_,defs_) \
+  VV_CREATE_SMAP_SHADER(ShadowsLightSMapTex,blur_,defs_) \
+  VV_CREATE_SMAP_SHADER(ShadowsLightSMapSpot,blur_,defs_) \
+  VV_CREATE_SMAP_SHADER(ShadowsLightSMapSpotTex,blur_,defs_) \
+  VV_CREATE_SMAP_SHADER(ShadowsModelLightSMap,blur_,defs_) \
+  VV_CREATE_SMAP_SHADER(ShadowsModelLightSMapSpot,blur_,defs_)
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::LoadShadowmapShaders
+//
+//==========================================================================
+void VOpenGLDrawer::LoadShadowmapShaders () {
+  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_NOBLUR, "VV_SMAP_NOBLUR")
+  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR4, "VV_SMAP_BLUR4")
+  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR8, "VV_SMAP_BLUR8")
+  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR8_FAST, "VV_SMAP_BLUR8_FAST")
+  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR16, "VV_SMAP_BLUR16")
+  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR16_FAST, "VV_SMAP_BLUR16_FAST")
+  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR16_FASTER, "VV_SMAP_BLUR16_FASTER")
+  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR16_FASTEST, "VV_SMAP_BLUR16_FASTEST")
 }

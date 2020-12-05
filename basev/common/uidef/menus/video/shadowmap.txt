@@ -113,7 +113,11 @@ menudef ShadowMapOptions {
       "None",
       "4 Samples",
       "8 Samples",
+      "8 Samples, Fast",
       "16 Samples",
+      "16 Samples, Fast",
+      "16 Samples, Faster",
+      "16 Samples, Fastest",
     }
     help =
       "You can blur shadows a little. Usually small blur looks better.",
@@ -121,7 +125,10 @@ menudef ShadowMapOptions {
       "",
       "If you want to use 16-sample blur, it is recommended to turn on",
       "shadowmap filtering too. This should not hurt performance, but",
-      "the shadows will look better.";
+      "the shadows will look better.",
+      "",
+      "Faster versions may or may not be actually faster, depending on",
+      "your GPU. But the image quality is lower for them in any case.";
   }
 
   header "Debug Options" [__k8vavoom_developer_version > 0];

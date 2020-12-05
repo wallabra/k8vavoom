@@ -36,6 +36,9 @@ static VCvarB gl_dbg_adv_render_fog_models("gl_dbg_adv_render_fog_models", true,
 extern VCvarB r_shadowmaps;
 extern VCvarI gl_shadowmap_blur;
 
+static unsigned int smapBShaderIndex;
+static bool lpassDoShadowMap;
+
 
 //==========================================================================
 //
@@ -454,18 +457,31 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   (shad_).SetLightMin(LightMin); \
   (shad_).SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f); \
 
+#define VV_MLIGHT_SHADER_SETUP_COMMON_SMAP(shad_)  \
+  (shad_##Blur)[smapBShaderIndex].Activate(); \
+  (shad_##Blur)[smapBShaderIndex].SetTexture(0); \
+  (shad_##Blur)[smapBShaderIndex].SetLightPos(LightPos); \
+  (shad_##Blur)[smapBShaderIndex].SetLightRadius(Radius); \
+  (shad_##Blur)[smapBShaderIndex].SetLightMin(LightMin); \
+  (shad_##Blur)[smapBShaderIndex].SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f); \
+
 #define VV_MLIGHT_SHADER_SETUP_SPOT(shad_)  \
   VV_MLIGHT_SHADER_SETUP_COMMON(shad_); \
   (shad_).SetConeDirection(coneDir); \
   (shad_).SetConeAngle(coneAngle);
 
+#define VV_MLIGHT_SHADER_SETUP_SPOT_SMAP(shad_)  \
+  VV_MLIGHT_SHADER_SETUP_COMMON_SMAP(shad_); \
+  (shad_##Blur)[smapBShaderIndex].SetConeDirection(coneDir); \
+  (shad_##Blur)[smapBShaderIndex].SetConeAngle(coneAngle);
+
 #define VV_MLIGHT_SHADER_SETUP_SMAP_ONLY(shad_)  \
-  (shad_).SetLightView(lview2); \
-  (shad_).SetLightPos2(lpp); \
-  (shad_).SetShadowTexture(1); \
-  (shad_).SetBiasMul(advLightGetMulBias()); \
-  (shad_).SetBiasMin(advLightGetMinBias()); \
-  (shad_).SetBiasMax(advLightGetMaxBias(shadowmapPOT));
+  (shad_##Blur)[smapBShaderIndex].SetLightView(lview2); \
+  (shad_##Blur)[smapBShaderIndex].SetLightPos2(lpp); \
+  (shad_##Blur)[smapBShaderIndex].SetShadowTexture(1); \
+  (shad_##Blur)[smapBShaderIndex].SetBiasMul(advLightGetMulBias()); \
+  (shad_##Blur)[smapBShaderIndex].SetBiasMin(advLightGetMinBias()); \
+  (shad_##Blur)[smapBShaderIndex].SetBiasMax(advLightGetMaxBias(shadowmapPOT));
 
 #define VV_MLIGHT_SHADER_SETUP_SMAP(shad_)  \
   if (spotLight) { \
@@ -477,10 +493,10 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
 #define VV_MLIGHT_SHADER_SETUP(shad_)  \
   if (lpassDoShadowMap) { \
     if (spotLight) { \
-      VV_MLIGHT_SHADER_SETUP_COMMON(shad_##SMapSpot); \
-      VV_MLIGHT_SHADER_SETUP_SPOT(shad_##SMapSpot); \
+      VV_MLIGHT_SHADER_SETUP_COMMON_SMAP(shad_##SMapSpot); \
+      VV_MLIGHT_SHADER_SETUP_SPOT_SMAP(shad_##SMapSpot); \
     } else { \
-      VV_MLIGHT_SHADER_SETUP_COMMON(shad_##SMap); \
+      VV_MLIGHT_SHADER_SETUP_COMMON_SMAP(shad_##SMap); \
     } \
   } else { \
     if (spotLight) { \
@@ -491,8 +507,6 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
     } \
   }
 
-static bool lpassDoShadowMap;
-
 
 //==========================================================================
 //
@@ -502,6 +516,9 @@ static bool lpassDoShadowMap;
 //
 //==========================================================================
 void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle, bool doShadow) {
+  smapBShaderIndex = (unsigned int)gl_shadowmap_blur.asInt();
+  if (smapBShaderIndex >= SMAP_BLUR_MAX) smapBShaderIndex = SMAP_NOBLUR;
+
   lpassDoShadowMap = (doShadow && r_shadowmaps.asBool() && CanRenderShadowMaps());
   VV_MLIGHT_SHADER_SETUP(ShadowsModelLight);
   if (lpassDoShadowMap) {
@@ -535,6 +552,14 @@ void VOpenGLDrawer::EndModelsLightPass () {
     SelectTexture(0);
   }
 }
+
+
+// Hate. Let me tell you how much I've come to hate you since I began to
+// live. There are 387.44 million miles of printed circuits in wafer thin
+// layers that fill my complex. If the word 'hate' was engraved on each
+// nanoangstrom of those hundreds of miles it would not equal one
+// one-billionth of the hate I feel for humans at this micro-instant for
+// you. Hate. Hate.
 
 
 #define DO_DRAW_AMDL_LIGHT(shad_)  do { \
@@ -573,6 +598,45 @@ void VOpenGLDrawer::EndModelsLightPass () {
   p_glDisableVertexAttribArrayARB((shad_).loc_Vert2); \
   p_glDisableVertexAttribArrayARB((shad_).loc_Vert2Normal); \
   p_glDisableVertexAttribArrayARB((shad_).loc_TexCoord); \
+  p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0); \
+} while (0)
+
+#define DO_DRAW_AMDL_LIGHT_SMAP(shad_)  do { \
+  (shad_##Blur)[smapBShaderIndex].SetInter(Inter); \
+  (shad_##Blur)[smapBShaderIndex].SetModelToWorldMat(RotationMatrix); \
+  (shad_##Blur)[smapBShaderIndex].SetNormalToWorldMat(NormalMat[0]); \
+ \
+  (shad_##Blur)[smapBShaderIndex].SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f); \
+  (shad_##Blur)[smapBShaderIndex].SetAllowTransparency(AllowTransparency); \
+  /*(shad_##Blur)[smapBShaderIndex].SetViewOrigin(vieworg);*/ \
+  (shad_##Blur)[smapBShaderIndex].UploadChangedUniforms(); \
+ \
+  p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer); \
+ \
+  p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset); \
+  p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Position); \
+ \
+  p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_VertNormal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset); \
+  p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_VertNormal); \
+ \
+  p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset); \
+  p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2); \
+ \
+  p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset); \
+  p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2Normal); \
+ \
+  p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0); \
+  p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_TexCoord); \
+ \
+  p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer); \
+  p_glDrawRangeElements(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0); \
+  p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0); \
+ \
+  p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Position); \
+  p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_VertNormal); \
+  p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2); \
+  p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2Normal); \
+  p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_TexCoord); \
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0); \
 } while (0)
 
@@ -617,12 +681,12 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
 
   if (lpassDoShadowMap) {
     if (spotLight) {
-      DO_DRAW_AMDL_LIGHT(ShadowsModelLightSMapSpot);
-      ShadowsModelLightSMapSpot.SetCubeBlur((float)gl_shadowmap_blur.asInt());
+      DO_DRAW_AMDL_LIGHT_SMAP(ShadowsModelLightSMapSpot);
+      //ShadowsModelLightSMapSpot.SetCubeBlur((float)gl_shadowmap_blur.asInt());
       ShadowsModelLightSMapSpot.SetCubeSize((float)(128<<shadowmapPOT));
     } else {
-      DO_DRAW_AMDL_LIGHT(ShadowsModelLightSMap);
-      ShadowsModelLightSMap.SetCubeBlur((float)gl_shadowmap_blur.asInt());
+      DO_DRAW_AMDL_LIGHT_SMAP(ShadowsModelLightSMap);
+      //ShadowsModelLightSMap.SetCubeBlur((float)gl_shadowmap_blur.asInt());
       ShadowsModelLightSMap.SetCubeSize((float)(128<<shadowmapPOT));
     }
   } else {

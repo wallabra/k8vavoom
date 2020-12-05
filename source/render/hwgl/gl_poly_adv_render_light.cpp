@@ -29,7 +29,10 @@
 extern VCvarB r_shadowmaps;
 
 static bool lpassDoShadowMap;
+static unsigned int smapBShaderIndex;
 
+// sorry for the pasta
+// shitplusplus sux, macros sux
 
 #define SETUP_LIGHT_SHADER_NOTX(shad_)  \
   (shad_).SetLightPos(LightPos); \
@@ -38,20 +41,29 @@ static bool lpassDoShadowMap;
   (shad_).SetLightMin(LightMin); \
   (shad_).SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f);
 
-#define SETUP_LIGHT_SHADER_SMAP_ONLY(shad_)  \
-  (shad_).SetLightView(lview2); \
-  (shad_).SetLightPos2(lpp); \
-  (shad_).SetShadowTexture(1); \
-  (shad_).SetBiasMul(advLightGetMulBias()); \
-  (shad_).SetBiasMin(advLightGetMinBias()); \
-  (shad_).SetBiasMax(advLightGetMaxBias(shadowmapPOT)); \
-  (shad_).SetCubeBlur((float)gl_shadowmap_blur.asInt()); \
-  (shad_).SetCubeSize((float)(128<<shadowmapPOT));
+#define SETUP_LIGHT_SHADER_SMAP_NOTX(shad_)  \
+  (shad_##Blur)[smapBShaderIndex].SetLightPos(LightPos); \
+  (shad_##Blur)[smapBShaderIndex].SetLightRadius(Radius); \
+  (shad_##Blur)[smapBShaderIndex].SetViewOrigin(vieworg.x, vieworg.y, vieworg.z); \
+  (shad_##Blur)[smapBShaderIndex].SetLightMin(LightMin); \
+  (shad_##Blur)[smapBShaderIndex].SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f); \
+  \
+  (shad_##Blur)[smapBShaderIndex].SetLightView(lview2); \
+  (shad_##Blur)[smapBShaderIndex].SetLightPos2(lpp); \
+  (shad_##Blur)[smapBShaderIndex].SetShadowTexture(1); \
+  (shad_##Blur)[smapBShaderIndex].SetBiasMul(advLightGetMulBias()); \
+  (shad_##Blur)[smapBShaderIndex].SetBiasMin(advLightGetMinBias()); \
+  (shad_##Blur)[smapBShaderIndex].SetBiasMax(advLightGetMaxBias(shadowmapPOT)); \
+  /*(shad_##Blur)[smapBShaderIndex].SetCubeBlur((float)gl_shadowmap_blur.asInt());*/ \
+  (shad_##Blur)[smapBShaderIndex].SetCubeSize((float)(128<<shadowmapPOT));
 
-#define SETUP_LIGHT_SHADER_SPOT_ONLY(shad_)  do { \
+#define SETUP_LIGHT_SHADER_SPOT_ONLY(shad_)  \
   (shad_).SetConeDirection(coneDir); \
-  (shad_).SetConeAngle(coneAngle); \
-} while (0)
+  (shad_).SetConeAngle(coneAngle);
+
+#define SETUP_LIGHT_SHADER_SMAP_SPOT_ONLY(shad_)  \
+  (shad_##Blur)[smapBShaderIndex].SetConeDirection(coneDir); \
+  (shad_##Blur)[smapBShaderIndex].SetConeAngle(coneAngle);
 
 
 #define SETUP_LIGHT_SHADER_NORMAL(shad_)  do { \
@@ -71,10 +83,9 @@ static bool lpassDoShadowMap;
 
 
 #define SETUP_LIGHT_SHADER_SMAP_NORMAL(shad_)  do { \
-  SETUP_LIGHT_SHADER_NORMAL(shad_); \
-  SETUP_LIGHT_SHADER_SMAP_ONLY(shad_); \
-  SETUP_LIGHT_SHADER_SMAP_ONLY(shad_##Tex); \
-  (shad_##Tex).SetTexture(0); \
+  SETUP_LIGHT_SHADER_SMAP_NOTX(shad_); \
+  SETUP_LIGHT_SHADER_SMAP_NOTX(shad_##Tex); \
+  (shad_##Tex##Blur)[smapBShaderIndex].SetTexture(0); \
 } while (0)
 
 #define SETUP_LIGHT_SHADER_SMAP_SPOT(shad_)  do { \
@@ -95,6 +106,9 @@ static bool lpassDoShadowMap;
 //
 //==========================================================================
 void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) {
+  smapBShaderIndex = (unsigned int)gl_shadowmap_blur.asInt();
+  if (smapBShaderIndex >= SMAP_BLUR_MAX) smapBShaderIndex = SMAP_NOBLUR;
+
   if (gl_dbg_wireframe) return;
   RestoreDepthFunc();
   //glDepthMask(GL_FALSE); // no z-buffer writes
@@ -185,9 +199,20 @@ void VOpenGLDrawer::EndLightPass () {
   if (textureChanged) (shad_).SetTex(currTexinfo); \
 } while (0)
 
+#define SETUP_SHADER_UNIS_MAIN_SMAP(shad_)  do { \
+  (shad_##Blur)[smapBShaderIndex].Activate(); \
+  (shad_##Blur)[smapBShaderIndex].SetSurfNormal(surf->GetNormal()); \
+  (shad_##Blur)[smapBShaderIndex].SetSurfDist(surf->GetDist()); \
+} while (0)
+
+#define SETUP_SHADER_UNIS_MAIN_TX_SMAP(shad_)  do { \
+  SETUP_SHADER_UNIS_MAIN_SMAP(shad_); \
+  if (textureChanged) (shad_##Blur)[smapBShaderIndex].SetTex(currTexinfo); \
+} while (0)
+
 #define SETUP_SHADER_UNIS(shad_)  do { \
   if (lpassDoShadowMap) { \
-    if (spotLight) { SETUP_SHADER_UNIS_MAIN(shad_##SMapSpot); } else { SETUP_SHADER_UNIS_MAIN(shad_##SMap); } \
+    if (spotLight) { SETUP_SHADER_UNIS_MAIN_SMAP(shad_##SMapSpot); } else { SETUP_SHADER_UNIS_MAIN_SMAP(shad_##SMap); } \
   } else { \
     if (spotLight) { SETUP_SHADER_UNIS_MAIN(shad_##Spot); } else { SETUP_SHADER_UNIS_MAIN(shad_); } \
   } \
@@ -195,7 +220,7 @@ void VOpenGLDrawer::EndLightPass () {
 
 #define SETUP_SHADER_UNIS_TX(shad_)  do { \
   if (lpassDoShadowMap) { \
-    if (spotLight) { SETUP_SHADER_UNIS_MAIN_TX(shad_##SMapSpotTex); } else { SETUP_SHADER_UNIS_MAIN_TX(shad_##SMapTex); } \
+    if (spotLight) { SETUP_SHADER_UNIS_MAIN_TX_SMAP(shad_##SMapSpotTex); } else { SETUP_SHADER_UNIS_MAIN_TX_SMAP(shad_##SMapTex); } \
   } else { \
     if (spotLight) { SETUP_SHADER_UNIS_MAIN_TX(shad_##SpotTex); } else { SETUP_SHADER_UNIS_MAIN_TX(shad_##Tex); } \
   } \

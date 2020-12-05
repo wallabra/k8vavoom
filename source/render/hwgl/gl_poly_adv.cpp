@@ -44,8 +44,8 @@ static VCvarF gl_shadowmap_bias_min("gl_shadowmap_bias_min", "0", "Shadowmap bia
 static VCvarF gl_shadowmap_bias_max("gl_shadowmap_bias_max", "0", "Shadowmap bias maximum.", CVAR_PreInit/*|CVAR_Archive*/);
 static VCvarB gl_shadowmap_bias_adjust("gl_shadowmap_bias_adjust", true, "Adjust shadowmap bias according to shadowmap size?", CVAR_PreInit/*|CVAR_Archive*/);
 
-VCvarB gl_shadowmap_filter("gl_shadowmap_filter", true, "Do linear filtering on shadowmap?", /*CVAR_PreInit|*/CVAR_Archive);
-VCvarI gl_shadowmap_blur("gl_shadowmap_blur", "2", "Do very broken pseudo-PCF on shadowmaps (0:no; 1:4 samples; 2:8 samples)?", /*CVAR_PreInit|*/CVAR_Archive);
+VCvarB gl_shadowmap_filter("gl_shadowmap_filter", false, "Do linear filtering on shadowmap?", /*CVAR_PreInit|*/CVAR_Archive);
+VCvarI gl_shadowmap_blur("gl_shadowmap_blur", "3", "Do very broken pseudo-PCF on shadowmaps?", /*CVAR_PreInit|*/CVAR_Archive);
 
 
 //  128: 0.044

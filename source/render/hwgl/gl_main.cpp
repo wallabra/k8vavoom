@@ -808,6 +808,7 @@ void VOpenGLDrawer::InitResolution () {
 
   GCon->Logf(NAME_Init, "OpenGL: loading shaders");
   LoadAllShaders();
+  LoadShadowmapShaders();
   GCon->Logf(NAME_Init, "OpenGL: compiling shaders");
   CompileShaders(major, minor);
 

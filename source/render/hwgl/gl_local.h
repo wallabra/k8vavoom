@@ -124,6 +124,34 @@ static inline const char *VGetGLErrorStr (const GLenum glerr) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// shadowmap blur variants (we will create separate shaders for this)
+enum {
+  SMAP_NOBLUR,
+  SMAP_BLUR4, // "VV_SMAP_BLUR4"
+  SMAP_BLUR8, // "VV_SMAP_BLUR8"
+  SMAP_BLUR8_FAST, // "VV_SMAP_BLUR8","VV_SMAP_BLUR_FAST8"
+  SMAP_BLUR16, // "VV_SMAP_BLUR16"
+  SMAP_BLUR16_FAST, // "VV_SMAP_BLUR16","VV_SMAP_BLUR_FAST8"
+  SMAP_BLUR16_FASTER, // "VV_SMAP_BLUR16","VV_SMAP_BLUR_FAST16"
+  SMAP_BLUR16_FASTEST, // "VV_SMAP_BLUR16","VV_SMAP_BLUR_FAST8","VV_SMAP_BLUR_FAST16"
+
+  SMAP_BLUR_MAX,
+};
+
+
+#define VV_DECLARE_SMAP_SHADER(shad_)  \
+  VShaderDef_##shad_ shad_##Blur [SMAP_BLUR_MAX];
+
+#define VV_DECLARE_SMAP_SHADER_LEVEL \
+  VV_DECLARE_SMAP_SHADER(ShadowsLightSMap) \
+  VV_DECLARE_SMAP_SHADER(ShadowsLightSMapTex) \
+  VV_DECLARE_SMAP_SHADER(ShadowsLightSMapSpot) \
+  VV_DECLARE_SMAP_SHADER(ShadowsLightSMapSpotTex) \
+  VV_DECLARE_SMAP_SHADER(ShadowsModelLightSMap) \
+  VV_DECLARE_SMAP_SHADER(ShadowsModelLightSMapSpot)
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VOpenGLDrawer : public VDrawer {
 public:
   class VGLShader {
@@ -263,6 +291,10 @@ public:
   void ReactivateCurrentFBO ();
 
 #include "gl_shaddef.hi"
+
+VV_DECLARE_SMAP_SHADER_LEVEL
+
+  void LoadShadowmapShaders ();
 
 private:
   bool usingZPass; // if we are rendering shadow volumes, should we do "z-pass"?
