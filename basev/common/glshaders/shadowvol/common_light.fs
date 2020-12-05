@@ -30,10 +30,4 @@
   finalA *= transp*transp*(3.0-(2.0*transp));
 #endif
 
-  //gl_FragColor = vec4(clamp(Normal, 0.0, 1.0), 0.1);
-#ifdef VV_SHADOWMAPS
-  //gl_FragColor = vec4(clamp(fromLightToFragment.xyz, 0.0, 1.0), 0.1);
   gl_FragColor = vec4(LightColor, finalA);
-#else
-  gl_FragColor = vec4(LightColor, finalA);
-#endif

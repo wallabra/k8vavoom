@@ -450,3 +450,19 @@ VVA_CHECKRESULT int M_SkillFromName (const char *skname) {
   if (skn > 0 && skn <= 16) return skn-1; // arbitrary limit
   return -1;
 }
+
+
+//==========================================================================
+//
+//  ConDumpMatrix
+//
+//==========================================================================
+void ConDumpMatrix (const VMatrix4 &mat) {
+  for (int y = 0; y < 4; ++y) {
+    VStr s;
+    for (int x = 0; x < 4; ++x) {
+      s += va(" %+.8f", mat[y][x]);
+    }
+    GCon->Log(NAME_Debug, s);
+  }
+}

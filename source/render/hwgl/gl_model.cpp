@@ -25,6 +25,8 @@
 //**************************************************************************
 #include "gl_local.h"
 
+//#define VV_MODEL_TEXTURES_DEBUG_NORMALS
+
 
 static VCvarB gl_dbg_adv_render_textures_models("gl_dbg_adv_render_textures_models", true, "Render model textures in advanced renderer?", 0);
 static VCvarB gl_dbg_adv_render_ambient_models("gl_dbg_adv_render_ambient_models", true, "Render model ambient light in advanced renderer?", 0);
@@ -583,8 +585,6 @@ void VOpenGLDrawer::EndModelsLightPass () {
   p_glVertexAttribPointerARB((shad_).loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset); \
   p_glEnableVertexAttribArrayARB((shad_).loc_Vert2); \
  \
-  p_glVertexAttribPointerARB((shad_).loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset); \
-  p_glEnableVertexAttribArrayARB((shad_).loc_Vert2Normal); \
  \
   p_glVertexAttribPointerARB((shad_).loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0); \
   p_glEnableVertexAttribArrayARB((shad_).loc_TexCoord); \
@@ -1090,6 +1090,33 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   p_glVertexAttribPointerARB(attrTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
   p_glEnableVertexAttribArrayARB(attrTexCoord);
 
+#ifdef VV_MODEL_TEXTURES_DEBUG_NORMALS
+  if (!ri.isStenciled()) {
+    VMatrix4 normalmatrix;
+    AliasSetupNormalTransform(angles, Transform.Scale, normalmatrix);
+
+    float NormalMat[3][3];
+    NormalMat[0][0] = normalmatrix[0][0];
+    NormalMat[0][1] = normalmatrix[0][1];
+    NormalMat[0][2] = normalmatrix[0][2];
+    NormalMat[1][0] = normalmatrix[1][0];
+    NormalMat[1][1] = normalmatrix[1][1];
+    NormalMat[1][2] = normalmatrix[1][2];
+    NormalMat[2][0] = normalmatrix[2][0];
+    NormalMat[2][1] = normalmatrix[2][1];
+    NormalMat[2][2] = normalmatrix[2][2];
+
+    //GCon->Log(NAME_Debug, "=== ModelToWorldMat ==="); ConDumpMatrix(normalmatrix);
+    //GCon->Log(NAME_Debug, "=== NormalToWorldMat ==="); ConDumpMatrix(normalmatrix);
+
+    ShadowsModelTextures.SetNormalToWorldMat(NormalMat[0]);
+    ShadowsModelTextures.UploadChangedUniforms();
+
+    p_glVertexAttribPointerARB(ShadowsModelTextures.loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset);
+    p_glEnableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2Normal);
+  }
+#endif
+
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
 
   p_glDrawRangeElements(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0);
@@ -1098,6 +1125,11 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   p_glDisableVertexAttribArrayARB(attrPosition);
   p_glDisableVertexAttribArrayARB(attrVert2);
   p_glDisableVertexAttribArrayARB(attrTexCoord);
+#ifdef VV_MODEL_TEXTURES_DEBUG_NORMALS
+  if (!ri.isStenciled()) {
+    p_glDisableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2Normal);
+  }
+#endif
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 }
 

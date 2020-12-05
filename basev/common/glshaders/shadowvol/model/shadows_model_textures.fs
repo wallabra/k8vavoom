@@ -13,6 +13,11 @@ uniform vec3 StencilColor;
 varying vec2 TextureCoordinate;
 
 
+#if 0
+varying vec3 Normal;
+#endif
+
+
 void main () {
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
   //if (TexColor.a < ALPHA_MIN) discard;
@@ -34,6 +39,13 @@ void main () {
 
   float ClampTransp = clamp((TexColor.a-0.1)/0.9, 0.0, 1.0);
   FinalColor.a = TexColor.a*(ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))))*InAlpha;
+
+#if 0
+  FinalColor.x = 0;
+  FinalColor.y = 0;
+  FinalColor.z = Normal.y;
+  if (FinalColor.z < 0) { FinalColor.r = 1.0; FinalColor.z = -FinalColor.z; }
+#endif
 
   gl_FragColor = FinalColor;
 }
