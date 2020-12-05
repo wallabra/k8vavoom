@@ -61,7 +61,7 @@ extern VCvarF gl_alpha_threshold;
 extern VCvarB gl_sort_textures;
 extern VCvarI r_ambient_min;
 extern VCvarB r_allow_ambient;
-extern VCvarB r_decals_enabled;
+extern VCvarB r_decals;
 extern VCvarB r_decals_wall_masked;
 extern VCvarB r_decals_wall_alpha;
 extern VCvarB gl_decal_debug_nostencil;

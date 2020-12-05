@@ -50,7 +50,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   const float lightLevel = getSurfLightLevel(surf);
   const bool zbufferWriteDisabled = (!DepthWrite || Additive || Alpha < 1.0f); // translucent things should not modify z-buffer
 
-  bool doDecals = (tex->Tex && !tex->noDecals && surf->seg && surf->seg->decalhead && r_decals_enabled);
+  bool doDecals = (tex->Tex && !tex->noDecals && surf->seg && surf->seg->decalhead && r_decals.asBool());
   if (doDecals) {
     if (Additive || isAlphaTrans) {
       if (!r_decals_wall_alpha) doDecals = false;
@@ -353,7 +353,7 @@ void VOpenGLDrawer::DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, 
   if (!tex->Tex) return;
 
   //r_decals_wall_masked
-  bool doDecals = (r_decals_enabled && tex->Tex && !tex->noDecals && surf->seg && surf->seg->decalhead);
+  bool doDecals = (r_decals.asBool() && tex->Tex && !tex->noDecals && surf->seg && surf->seg->decalhead);
   if (!doDecals) return;
 
   // fill stencil buffer for decals

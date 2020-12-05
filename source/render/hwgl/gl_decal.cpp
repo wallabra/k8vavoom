@@ -25,10 +25,9 @@
 //**************************************************************************
 #include "gl_local.h"
 
-//#define VV_USE_BIG_DECAL_SUM_CHECK
-
-static VCvarI gl_bigdecal_limit("gl_bigdecal_limit", "16", "Limit for big decals on one seg (usually produced by gore mod).", /*CVAR_PreInit|*/CVAR_Archive);
-static VCvarI gl_smalldecal_limit("gl_smalldecal_limit", "64", "Limit for small decals on one seg (usually produced by shots).", /*CVAR_PreInit|*/CVAR_Archive);
+// main work is done by `VLevel->CleanupDecals()`
+VCvarI gl_bigdecal_limit("gl_bigdecal_limit", "16", "Limit for big decals on one seg (usually produced by gore mod).", /*CVAR_PreInit|*/CVAR_Archive);
+VCvarI gl_smalldecal_limit("gl_smalldecal_limit", "64", "Limit for small decals on one seg (usually produced by shots).", /*CVAR_PreInit|*/CVAR_Archive);
 
 
 //==========================================================================
@@ -37,7 +36,7 @@ static VCvarI gl_smalldecal_limit("gl_smalldecal_limit", "64", "Limit for small 
 //
 //==========================================================================
 void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
-  if (!r_decals_enabled) return;
+  if (!r_decals) return;
   if (RendLev->/*PortalDepth*/PortalUsingStencil) return; //FIXME: not yet
 
   if (!surf->seg || !surf->seg->decalhead) return; // nothing to do
@@ -70,7 +69,7 @@ static int maxrdcount = 0;
 //
 //==========================================================================
 bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, surfcache_t *cache, int cmap) {
-  if (!r_decals_enabled) return false;
+  if (!r_decals) return false;
   if (RendLev->/*PortalDepth*/PortalUsingStencil) return false; //FIXME: not yet
 
   if (!surf->seg || !surf->seg->decalhead) return false; // nothing to do
@@ -146,14 +145,6 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
 
   int bigDecalCount = 0;
   int smallDecalCount = 0;
-  #ifdef VV_USE_BIG_DECAL_SUM_CHECK
-  const float bigDecalSize = 52.0f;
-  #define DSCHECK  (twdt+thgt >= bigDecalSize)
-  #else
-  const float bigDecalWidth = 34.0f;
-  const float bigDecalHeight = 34.0f;
-  #define DSCHECK  (twdt >= bigDecalWidth || thgt >= bigDecalHeight)
-  #endif
 
   while (dc) {
     // "0" means "no texture found", so remove it too
@@ -216,7 +207,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     }
 
     //GCon->Logf(NAME_Debug, "twdt=%g; thgt=%g", twdt, thgt);
-    if (DSCHECK) ++bigDecalCount; else ++smallDecalCount;
+    if (twdt >= VLevel::BigDecalWidth || thgt >= VLevel::BigDecalHeight) ++bigDecalCount; else ++smallDecalCount;
 
     // setup shader
     switch (dtype) {
@@ -337,42 +328,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     const int smallLimit = gl_smalldecal_limit.asInt();
     int toKillBig = (bigLimit > 0 ? bigDecalCount-bigLimit : 0);
     int toKillSmall = (smallLimit > 0 ? smallDecalCount-smallLimit : 0);
-    if (toKillBig > 0 || toKillSmall > 0) {
-      if (toKillBig < 0) toKillBig = 0;
-      if (toKillSmall < 0) toKillSmall = 0;
-      if (toKillBig) GCon->Logf(NAME_Debug, "have to kill %d big decals...", toKillBig);
-      if (toKillSmall) GCon->Logf(NAME_Debug, "have to kill %d small decals...", toKillSmall);
-      dc = surf->seg->decalhead;
-      while (dc && (toKillBig|toKillSmall)) {
-        decal_t *cdc = dc;
-        dc = dc->next;
-        int dcTexId = cdc->texture;
-        auto dtex = GTextureManager[dcTexId];
-        if (!dtex || dtex->Width < 1 || dtex->Height < 1) continue;
-
-        const float twdt = dtex->GetScaledWidth()*cdc->scaleX;
-        const float thgt = dtex->GetScaledHeight()*cdc->scaleY;
-
-        //GCon->Logf(NAME_Debug, "twdt=%g; thgt=%g", twdt, thgt);
-        bool doKill = false;
-        if (DSCHECK) {
-          if (toKillBig) {
-            --toKillBig;
-            doKill = true;
-          }
-        } else {
-          if (toKillSmall) {
-            --toKillSmall;
-            doKill = true;
-          }
-        }
-        if (doKill) {
-          if (cdc->animator) GClLevel->RemoveAnimatedDecal(cdc);
-          surf->seg->removeDecal(cdc);
-          delete cdc;
-        }
-      }
-    }
+    if (toKillBig > 0 || toKillSmall > 0) GClLevel->CleanupDecals(surf->seg);
   }
 
   return true;

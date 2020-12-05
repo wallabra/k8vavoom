@@ -805,8 +805,12 @@ public:
     return SubSegsIndexIterator(this, sub);
   }
 
-  void AddAnimatedDecal (decal_t *dc);
-  void RemoveAnimatedDecal (decal_t *dc); // this will also kill animator
+  static constexpr float BigDecalWidth = 34.0f;
+  static constexpr float BigDecalHeight = 34.0f;
+
+  // this will remove dead and over-the-limit decals (including animated)
+  // called from `AddDecal()`
+  void CleanupDecals (seg_t *seg);
 
 private:
   // map loaders
@@ -915,6 +919,9 @@ private:
   int SetBodyQueueTrans (int, int);
 
   decal_t *AllocSegDecal (seg_t *seg, VDecalDef *dec);
+  void AddAnimatedDecal (decal_t *dc);
+  void RemoveDecalAnimator (decal_t *dc); // this will also delete animator; safe to call on decals without an animator
+
   void AddDecal (TVec org, VName dectype, int side, line_t *li, int level, int translation);
   void AddDecalById (TVec org, int id, int side, line_t *li, int level, int translation);
   // called by `AddDecal()`

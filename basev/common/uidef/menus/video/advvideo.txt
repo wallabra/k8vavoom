@@ -7,7 +7,7 @@ menudef AdvVideoOptions {
 
   option bool {
     title = "Decals";
-    cvar = r_decals_enabled;
+    cvar = r_decals;
   }
 
   option slider {

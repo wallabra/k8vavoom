@@ -26,7 +26,7 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VCvarB r_decals_enabled("r_decals_enabled", true, "Enable decal spawning, processing and rendering?", CVAR_Archive);
+VCvarB r_decals("r_decals", true, "Enable decal spawning, processing and rendering?", CVAR_Archive);
 
 static int cli_DebugDecals = 0;
 

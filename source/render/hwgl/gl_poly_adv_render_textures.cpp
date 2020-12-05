@@ -39,7 +39,7 @@
 void VOpenGLDrawer::DrawWorldTexturesPass () {
   if (gl_dbg_wireframe) return;
 
-  if (r_decals_enabled && RendLev->/*PortalDepth*/PortalUsingStencil == 0) {
+  if (r_decals && RendLev->/*PortalDepth*/PortalUsingStencil == 0) {
     // stop stenciling now
     glDisable(GL_STENCIL_TEST);
     //glDepthMask(GL_FALSE); // no z-buffer writes

@@ -66,7 +66,7 @@ static VCvarB r_dbg_always_draw_flats("r_dbg_always_draw_flats", true, "Draw fla
 
 VCvarB r_separate_translucent_lists("r_separate_translucent_lists", false, "Use separate lists for translucent and additive surfaces?", CVAR_Archive);
 
-extern VCvarB r_decals_enabled;
+extern VCvarB r_decals;
 extern VCvarB clip_frustum;
 extern VCvarB clip_frustum_bsp;
 #ifndef VV_USE_CLIP_CHECK_AND_ADD
@@ -1419,8 +1419,8 @@ void VRenderLevelShared::RenderPortals () {
     //FIXME: disable decals for portals
     //       i should rewrite decal rendering, so we can skip stencil buffer
     //       (or emulate stencil buffer with texture and shaders)
-    const bool oldDecalsEnabled = r_decals_enabled;
-    r_decals_enabled = false;
+    const bool oldDecalsEnabled = r_decals;
+    r_decals = false;
     //bool oldShadows = r_allow_shadows;
     //if (/*Portal->stackedSector &&*/ IsShadowVolumeRenderer()) r_allow_shadows = false;
     //bool firstPortal = true;
@@ -1436,7 +1436,7 @@ void VRenderLevelShared::RenderPortals () {
         }
       }
     }
-    r_decals_enabled = oldDecalsEnabled;
+    r_decals = oldDecalsEnabled;
     //r_allow_shadows = oldShadows;
   } else {
     // if we are in sky portal, render nested sky portals

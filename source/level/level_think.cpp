@@ -29,7 +29,7 @@
 #endif
 
 
-extern VCvarB r_decals_enabled;
+extern VCvarB r_decals;
 
 VCvarB dbg_world_think_vm_time("dbg_world_think_vm_time", false, "Show time taken by VM thinkers (for debug)?", CVAR_Archive);
 VCvarB dbg_world_think_decal_time("dbg_world_think_decal_time", false, "Show time taken by decal thinkers (for debug)?", CVAR_Archive);
@@ -315,7 +315,7 @@ extern "C" {
 //
 //==========================================================================
 void VLevel::TickDecals (float DeltaTime) {
-  if (!r_decals_enabled || !decanimlist) { worldThinkTimeDecal = -1; return; }
+  if (!r_decals || !decanimlist) { worldThinkTimeDecal = -1; return; }
   if (DeltaTime <= 0.0f) return;
   double stimed = (dbg_world_think_decal_time ? -Sys_Time() : 0);
   // run decal thinkers
@@ -325,7 +325,7 @@ void VLevel::TickDecals (float DeltaTime) {
     if (dc->animator) removeIt = !dc->animator->animate(dc, DeltaTime);
     decal_t *c = dc;
     dc = dc->nextanimated;
-    if (removeIt) RemoveAnimatedDecal(c);
+    if (removeIt) RemoveDecalAnimator(c);
   }
   worldThinkTimeDecal = (dbg_world_think_decal_time ? Sys_Time()+stimed : -1);
 }

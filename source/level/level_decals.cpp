@@ -35,10 +35,16 @@
 #endif
 
 
-extern VCvarB r_decals_enabled;
+extern VCvarB r_decals;
 
 static VCvarI r_decal_onetype_max("r_decal_onetype_max", "128", "Maximum decals of one decaltype on a wall segment.", CVAR_Archive);
 static VCvarI r_decal_gore_onetype_max("r_decal_gore_onetype_max", "8", "Maximum decals of one decaltype on a wall segment for Gore Mod.", CVAR_Archive);
+
+// make renderer life somewhat easier by not allowing alot of decals
+extern VCvarI gl_bigdecal_limit;
+extern VCvarI gl_smalldecal_limit;
+
+TArray<VLevel::DecalLineInfo> VLevel::connectedLines;
 
 
 //==========================================================================
@@ -64,6 +70,7 @@ static VVA_OKUNUSED const char *lif2str (int flags) {
 //  isDecalsOverlap
 //
 //==========================================================================
+/*
 static bool isDecalsOverlap (VDecalDef *dec, float dcx0, float dcy0, decal_t *cur, VTexture *DTex) {
   const float twdt = DTex->GetScaledWidth()*dec->scaleX.value;
   const float thgt = DTex->GetScaledHeight()*dec->scaleY.value;
@@ -81,13 +88,12 @@ static bool isDecalsOverlap (VDecalDef *dec, float dcx0, float dcy0, decal_t *cu
   const float ity1 = cur->orgz+cur->scaleY+tyofs;
   const float ity0 = ity1-thgt;
 
-  /*
-  GCon->Logf(NAME_Debug, "  my=(%g,%g)-(%g,%g)", myx0, myy0, myx1, myy1);
-  GCon->Logf(NAME_Debug, "  it=(%g,%g)-(%g,%g)", itx0, ity0, itx1, ity1);
-  */
+  //GCon->Logf(NAME_Debug, "  my=(%g,%g)-(%g,%g)", myx0, myy0, myx1, myy1);
+  //GCon->Logf(NAME_Debug, "  it=(%g,%g)-(%g,%g)", itx0, ity0, itx1, ity1);
 
   return !(itx1 <= myx0 || ity1 <= myy0 || itx0 >= myx1 || ity0 >= myy1);
 }
+*/
 
 
 //==========================================================================
@@ -137,12 +143,14 @@ void VLevel::AddAnimatedDecal (decal_t *dc) {
 
 //==========================================================================
 //
-//  VLevel::RemoveAnimatedDecal
+//  VLevel::RemoveDecalAnimator
 //
-//  this will also kill animator
+//  this will also delete animator
+//  safe to call on decals without an animator//
 //
 //==========================================================================
-void VLevel::RemoveAnimatedDecal (decal_t *dc) {
+void VLevel::RemoveDecalAnimator (decal_t *dc) {
+  if (!dc->animator) return;
   if (!dc || (!dc->prevanimated && !dc->nextanimated && decanimlist != dc)) return;
   if (dc->prevanimated) dc->prevanimated->nextanimated = dc->nextanimated; else decanimlist = dc->nextanimated;
   if (dc->nextanimated) dc->nextanimated->prevanimated = dc->prevanimated;
@@ -179,38 +187,109 @@ decal_t *VLevel::AllocSegDecal (seg_t *seg, VDecalDef *dec) {
 }
 
 
-#ifdef CLEANUP_DECALS
-# error "wtf?!"
-#endif
-
-// sorry for the macro...
-// remove old same-typed decals, if necessary
-#define CLEANUP_DECALS()  do { \
-  if (dcmaxcount > 0 && dcmaxcount < 10000 && performDecalCleanup) { \
-    performDecalCleanup = false; \
-    int count = 0; \
-    decal_t *prev = nullptr; \
-    for (decal_t *cur = seg->decaltail; cur; cur = prev) { \
-      prev = cur->prev; /* in case current one will be removed */ \
-      /* check if this decal is touching our one */ \
-      if (cur->dectype == dec->name) { \
-        /*GCon->Logf(NAME_Debug, "seg #%d: decal '%s'", (int)(ptrdiff_t)(seg-Segs), *cur->dectype);*/ \
-        if (isDecalsOverlap(dec, dcx0, dcy0, cur, DTex)) { \
-          /*GCon->Log(NAME_Debug, "  overlap!"); */ \
-          if (++count >= dcmaxcount) { \
-            /* this decal must be removed */ \
-            seg->removeDecal(cur); \
-            RemoveAnimatedDecal(cur); \
-            delete cur; \
-          } \
-        } \
-      } \
-    } \
-  } \
+#define KILL_CDC_DECAL()  do { \
+  RemoveDecalAnimator(cdc); \
+  seg->removeDecal(cdc); \
+  delete cdc; \
 } while (0)
 
 
-TArray<VLevel::DecalLineInfo> VLevel::connectedLines;
+//==========================================================================
+//
+//  VLevel::CleanupDecals
+//
+//==========================================================================
+void VLevel::CleanupDecals (seg_t *seg) {
+  if (!seg) return;
+  const int bigLimit = gl_bigdecal_limit.asInt();
+  const int smallLimit = gl_smalldecal_limit.asInt();
+  if (bigLimit < 1 && smallLimit < 1) return; // nothing to do
+
+  // count decals
+  int bigDecalCount = 0, smallDecalCount = 0;
+  decal_t *dc = seg->decalhead;
+  while (dc) {
+    decal_t *cdc = dc;
+    dc = dc->next;
+
+    int dcTexId = cdc->texture;
+    auto dtex = GTextureManager[dcTexId];
+    if (!dtex || dtex->Width < 1 || dtex->Height < 1) {
+      // remove this decal (just in case)
+      KILL_CDC_DECAL();
+      continue;
+    }
+
+    const int twdt = (int)(dtex->GetScaledWidth()*cdc->scaleX);
+    const int thgt = (int)(dtex->GetScaledHeight()*cdc->scaleY);
+
+    if (!cdc->animator && (twdt < 1 || thgt < 1)) {
+      // remove this decal (just in case)
+      KILL_CDC_DECAL();
+      continue;
+    }
+
+    if (twdt >= BigDecalWidth || thgt >= BigDecalHeight) ++bigDecalCount; else ++smallDecalCount;
+  }
+
+  int toKillBig = (bigLimit > 0 ? bigDecalCount-bigLimit : 0);
+  int toKillSmall = (smallLimit > 0 ? smallDecalCount-smallLimit : 0);
+  if (toKillBig <= 0 && toKillSmall <= 0) return;
+
+  if (toKillBig < 0) toKillBig = 0;
+  if (toKillSmall < 0) toKillSmall = 0;
+
+  // hack: if we have to remove big decals, limit small decals too
+  if (toKillBig > 0 && smallDecalCount > bigLimit) {
+    int biglim = bigLimit+bigLimit/4;
+    //if (biglim < 1) biglim = 1;
+    int tks = smallDecalCount-biglim;
+    if (tks > toKillSmall) {
+      //GCon->Logf(NAME_Debug, "force-kill %d small decals instead of %d", tks, toKillSmall);
+      toKillSmall = tks;
+    }
+  }
+
+  //if (toKillBig) GCon->Logf(NAME_Debug, "have to kill %d big decals...", toKillBig);
+  //if (toKillSmall) GCon->Logf(NAME_Debug, "have to kill %d small decals...", toKillSmall);
+
+  dc = seg->decalhead;
+  while (dc && (toKillBig|toKillSmall)) {
+    decal_t *cdc = dc;
+    dc = dc->next;
+    int dcTexId = cdc->texture;
+    auto dtex = GTextureManager[dcTexId];
+
+    if (!dtex || dtex->Width < 1 || dtex->Height < 1) {
+      // remove this decal (just in case)
+      KILL_CDC_DECAL();
+      continue;
+    }
+
+    const int twdt = (int)(dtex->GetScaledWidth()*cdc->scaleX);
+    const int thgt = (int)(dtex->GetScaledHeight()*cdc->scaleY);
+
+    if (!cdc->animator && (twdt < 1 || thgt < 1)) {
+      // remove this decal (just in case)
+      KILL_CDC_DECAL();
+      continue;
+    }
+
+    //GCon->Logf(NAME_Debug, "twdt=%g; thgt=%g", twdt, thgt);
+    bool doKill = false;
+    if (twdt >= BigDecalWidth || thgt >= BigDecalHeight) {
+      if (toKillBig) { --toKillBig; doKill = true; }
+    } else {
+      if (toKillSmall) { --toKillSmall; doKill = true; }
+    }
+
+    if (doKill) {
+      KILL_CDC_DECAL();
+      continue;
+    }
+  }
+}
+
 
 //==========================================================================
 //
@@ -271,12 +350,14 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   const float dcy1 = orgz+dec->scaleY.value+tyofs;
   const float dcy0 = dcy1-thgt;
 
+  /*
   int dcmaxcount = r_decal_onetype_max;
        if (twdt >= 128 || thgt >= 128) dcmaxcount = 8;
   else if (twdt >= 64 || thgt >= 64) dcmaxcount = 16;
   else if (twdt >= 32 || thgt >= 32) dcmaxcount = 32;
   //HACK!
   if (VStr::startsWithCI(*dec->name, "K8Gore")) dcmaxcount = r_decal_gore_onetype_max;
+  */
 
   VDC_DLOG(NAME_Debug, "Decal '%s' at line #%d (side %d; fs=%d; bs=%d): linelen=%g; o0=%g; o1=%g (ofsorig=%g; txofs=%g; tyofs=%g; tw=%g; th=%g)", *dec->name, (int)(ptrdiff_t)(li-Lines), side, (int)(ptrdiff_t)(fsec-Sectors), (bsec ? (int)(ptrdiff_t)(bsec-Sectors) : -1), linelen, dcx0, dcx1, lineofs, txofs, tyofs, twdt, thgt);
 
@@ -299,8 +380,6 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
       VDC_DLOG(NAME_Debug, "  checking seg #%d; offset=%g; length=%g (ldef=%d; segside=%d)", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length, (int)(ptrdiff_t)(seg->linedef-&Lines[0]), seg->side);
 
-      bool performDecalCleanup = true;
-
       sector_t *sec3d = seg->backsector;
       const bool has3dregs = (sec3d && sec3d->eregions->next);
 
@@ -321,8 +400,6 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
           const float cz = reg->eceiling.GetPointZClamped(linepos);
           if (dcy0 < cz && dcy1 > fz) {
             VDC_DLOG(NAME_Debug, " HIT solid region: fz=%g; cz=%g; orgz=%g; dcy0=%g; dcy1=%g", fz, cz, orgz, dcy0, dcy1);
-            // remove old same-typed decals, if necessary
-            CLEANUP_DECALS();
             // create decal
             decal_t *decal = AllocSegDecal(seg, dec);
             decal->texture = tex;
@@ -337,6 +414,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
             decal->flags |= decal_t::SlideFloor;
             decal->curz -= decal->slidesec->floor.TexZ;
             //if (side != seg->side) decal->flags ^= decal_t::FlipX;
+            CleanupDecals(seg);
           } else {
             VDC_DLOG(NAME_Debug, " SKIP solid region: fz=%g; cz=%g; orgz=%g; dcy0=%g; dcy1=%g", fz, cz, orgz, dcy0, dcy1);
           }
@@ -453,9 +531,6 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         }
       }
 
-      // remove old same-typed decals, if necessary
-      CLEANUP_DECALS();
-
       if (fsec && bsec) {
         VDC_DLOG(NAME_Debug, "  2s: orgz=%g; front=(%g,%g); back=(%g,%g)", orgz, ffloorZ, fceilingZ, bfloorZ, bceilingZ);
         if (hasMidTex && orgz >= max2(ffloorZ, bfloorZ) && orgz <= min2(fceilingZ, bceilingZ)) {
@@ -555,6 +630,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       }
 
       if (side != seg->side) decal->flags ^= decal_t::FlipX;
+
+      CleanupDecals(seg);
     }
   }
 
@@ -649,8 +726,6 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   connectedLines.setLength(clnum, false); // don't realloc
 }
 
-#undef CLEANUP_DECALS
-
 
 //==========================================================================
 //
@@ -743,7 +818,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
 //
 //==========================================================================
 void VLevel::AddDecal (TVec org, VName dectype, int side, line_t *li, int level, int translation) {
-  if (!r_decals_enabled) return;
+  if (!r_decals) return;
   if (!li || dectype == NAME_None) return; // just in case
 
   //GCon->Logf(NAME_Debug, "%s: oorg:(%g,%g,%g); org:(%g,%g,%g)", *dectype, org.x, org.y, org.z, li->landAlongNormal(org).x, li->landAlongNormal(org).y, li->landAlongNormal(org).z);
@@ -772,7 +847,7 @@ void VLevel::AddDecal (TVec org, VName dectype, int side, line_t *li, int level,
 //
 //==========================================================================
 void VLevel::AddDecalById (TVec org, int id, int side, line_t *li, int level, int translation) {
-  if (!r_decals_enabled) return;
+  if (!r_decals) return;
   if (!li || id < 0) return; // just in case
 
   org = li->landAlongNormal(org);
