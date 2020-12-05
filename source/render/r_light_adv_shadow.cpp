@@ -92,7 +92,7 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
 
     /*
     if (checkFrustum) {
-      if (!Drawer->viewfrustum.checkVerts(surf->verts, (unsigned)surf->count, TFrustum::NearBit)) continue;
+      if (!Drawer->viewfrustum.checkPoly(surf->verts, (unsigned)surf->count, TFrustum::NearBit)) continue;
     }
     */
 

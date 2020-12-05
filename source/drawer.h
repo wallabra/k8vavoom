@@ -39,17 +39,22 @@ extern VCvarF r_lights_radius;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-struct __attribute__((packed)) SurfVertex {
+// TVec is not packed too
+struct /*__attribute__((packed))*/ SurfVertex {
   //TVec vec;
   float x, y, z;
   //float s, t; // nope, we don't need this; sky will be rendered with internal buffer
 
+  /*
   #ifdef VV_NOT_X86
   // just in case, to avoid align problems
   inline const TVec vec () const noexcept { return TVec(x, y, z); }
   #else
   inline const TVec &vec () const noexcept { return *(TVec *)&x; }
   #endif
+  */
+  inline const TVec &vec () const noexcept { return *(TVec *)&x; }
+  inline const TVec *vecptr () const noexcept { return (TVec *)&x; }
 
   inline void setVec (const float ax, const float ay, const float az) noexcept { x = ax; y = ay; z = az; }
   inline void setVec (const TVec &v) noexcept { x = v.x; y = v.y; z = v.z; }
