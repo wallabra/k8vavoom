@@ -30,7 +30,7 @@ void main () {
   gl_Position = gl_ModelViewProjectionMatrix*Vert;
 
   //Normal = NormalToWorldMat*mix(VertNormal, Vert2Normal, Inter);
-  Normal = mix(VertNormal, Vert2Normal, Inter)*NormalToWorldMat;
+  Normal = normalize(mix(VertNormal, Vert2Normal, Inter))*NormalToWorldMat;
   VertToLight = LightPos-Vert.xyz;
 
   /*
