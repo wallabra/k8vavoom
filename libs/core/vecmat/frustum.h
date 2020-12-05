@@ -140,8 +140,11 @@ public:
   //TClipBase (ENoInit) {}
   inline TClipBase () noexcept : fovx(0.0f), fovy(0.0f) {}
   inline TClipBase (int awidth, int aheight, float afov, float apixelAspect=1.0f) noexcept { setupViewport(awidth, aheight, afov, apixelAspect); }
-  inline TClipBase (const float afovx, const float afovy) noexcept { setupFromFOVs(afovx, afovy); }
+  inline TClipBase (const float afovx, const float afovy) noexcept { setupFromCookedFOVs(afovx, afovy); }
   inline TClipBase (const TClipParam &cp) noexcept { setupViewport(cp); }
+  // setup from FOV in degrees, ignore aspect
+  // fov must not be zero, and less than 180
+  inline TClipBase (const float fov) noexcept { setupFromFOV(fov); }
 
   inline VVA_CHECKRESULT bool isValid () const noexcept { return (fovx != 0.0f); }
 
@@ -149,23 +152,20 @@ public:
 
   inline VVA_CHECKRESULT const TVec &operator [] (size_t idx) const noexcept { vassert(idx < 4); return clipbase[idx]; }
 
-  void setupFromFOVs (const float afovx, const float afovy) noexcept;
+  // calculated FOVs (from `CalcFovXY()`)
+  void setupFromCookedFOVs (const float afovx, const float afovy) noexcept;
+
+  // setup from FOV in degrees, ignore aspect
+  // fov must not be zero, and less than 180
+  void setupFromFOV (float fov) noexcept;
 
   void setupViewport (const TClipParam &cp) noexcept;
   void setupViewport (int awidth, int aheight, float afov, float apixelAspect=1.0f) noexcept;
 
   // WARNING! no checks!
-  static inline void CalcFovXY (float *outfovx, float *outfovy, const int width, const int height, const float fov, const float pixelAspect=1.0f) noexcept {
-    const float fovx = tanf(DEG2RADF(fov)/2.0f);
-    if (outfovx) *outfovx = fovx;
-    if (outfovy) *outfovy = fovx*height/width/pixelAspect;
-  }
-
-  static inline void CalcFovXY (float *outfovx, float *outfovy, const TClipParam &cp) noexcept {
-    const float fovx = tanf(DEG2RADF(cp.fov)/2.0f);
-    if (outfovx) *outfovx = fovx;
-    if (outfovy) *outfovy = fovx*cp.height/cp.width/cp.pixelAspect;
-  }
+  static void CalcFovXY (float *outfovx, float *outfovy, const int width, const int height, const float fov, const float pixelAspect=1.0f) noexcept;
+  // WARNING! no checks!
+  static inline void CalcFovXY (float *outfovx, float *outfovy, const TClipParam &cp) noexcept;
 };
 
 
@@ -215,6 +215,17 @@ public:
   // for speed; direction vectors should correspond to angles
   void setup (const TClipBase &clipbase, const TFrustumParam &fp, bool createbackplane=true, const float farplanez=0.0f) noexcept;
 
+  // WARNING! no checks!
+  // ignores aspect
+  // if `farplanez` is non finite, or <= 0, do not set far plane
+  void setupSimpleAngles (const TVec &org, const TAVec &angles, const float fov, const float farplanez) noexcept;
+
+  // WARNING! no checks!
+  // dir must be normalised
+  // ignores aspect
+  // if `farplanez` is non finite, or <= 0, do not set far plane
+  void setupSimpleDir (const TVec &org, const TVec &dir, const float fov, const float farplanez) noexcept;
+
   // if `farplanez` is non finite, or <= 0, remove far plane
   void setFarPlane (const TFrustumParam &fp, float farplanez) noexcept;
 
@@ -223,6 +234,9 @@ public:
 
   void setupBoxIndiciesForPlane (unsigned pidx) noexcept;
 
+
+  // simple checkers returns `false` only if the body is completely outside of the frustum
+  // there may be false positives, but never false negatives
 
   // returns `false` if the point is out of frustum
   VVA_CHECKRESULT bool checkPoint (const TVec &point, const unsigned mask=~0u) const noexcept;
@@ -239,16 +253,17 @@ public:
   //   [4] is maxy
   //   [5] is maxz
   VVA_CHECKRESULT bool checkBox (const float bbox[6], const unsigned mask=~0u) const noexcept;
+  VVA_CHECKRESULT bool checkTriangle (const TVec &v1, const TVec &v2, const TVec &v3, const unsigned mask=~0u) const noexcept;
+  VVA_CHECKRESULT bool checkQuad (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask=~0u) const noexcept;
+  VVA_CHECKRESULT bool checkPolyInterlaced (const TVec *data, size_t memberSize, const unsigned count, const unsigned mask=~0u) const noexcept;
+  VVA_CHECKRESULT inline bool checkPoly (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const noexcept { return checkPolyInterlaced(verts, sizeof(TVec), vcount, mask); }
 
   // WARNING! make sure that the following constants are in sync with `TPlane` ones!
   enum { OUTSIDE = 0, INSIDE = 1, PARTIALLY = -1 };
 
   // 0: completely outside; >0: completely inside; <0: partially inside
   VVA_CHECKRESULT int checkBoxEx (const float bbox[6], const unsigned mask=~0u) const noexcept;
-
-  VVA_CHECKRESULT bool checkVerts (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const noexcept;
-  VVA_CHECKRESULT int checkVertsEx (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const noexcept;
-
+  VVA_CHECKRESULT int checkTriangleEx (const TVec &v1, const TVec &v2, const TVec &v3, const unsigned mask=~0u) const noexcept;
   VVA_CHECKRESULT int checkQuadEx (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask=~0u) const noexcept;
 };
 

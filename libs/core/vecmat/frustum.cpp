@@ -30,12 +30,46 @@
 #define PLANE_BOX_USE_REJECT_ACCEPT
 
 
+//**************************************************************************
+//
+// TClipBase
+//
+//**************************************************************************
+
 //==========================================================================
 //
-//  TClipBase::setupFromFOVs
+//  TClipBase::CalcFovXY
+//
+//  WARNING! no checks!
 //
 //==========================================================================
-void TClipBase::setupFromFOVs (const float afovx, const float afovy) noexcept {
+void TClipBase::CalcFovXY (float *outfovx, float *outfovy, const int width, const int height, const float fov, const float pixelAspect) noexcept {
+  const float fovx = tanf(DEG2RADF(fov)/2.0f);
+  if (outfovx) *outfovx = fovx;
+  if (outfovy) *outfovy = fovx*height/width/pixelAspect;
+}
+
+
+//==========================================================================
+//
+//  TClipBase::CalcFovXY
+//
+//  WARNING! no checks!
+//
+//==========================================================================
+void TClipBase::CalcFovXY (float *outfovx, float *outfovy, const TClipParam &cp) noexcept {
+  const float fovx = tanf(DEG2RADF(cp.fov)/2.0f);
+  if (outfovx) *outfovx = fovx;
+  if (outfovy) *outfovy = fovx*cp.height/cp.width/cp.pixelAspect;
+}
+
+
+//==========================================================================
+//
+//  TClipBase::setupFromCookedFOVs
+//
+//==========================================================================
+void TClipBase::setupFromCookedFOVs (const float afovx, const float afovy) noexcept {
   if (afovx == 0.0f || afovy == 0.0f || !isFiniteF(afovx) || !isFiniteF(afovy)) {
     clear();
   } else {
@@ -53,6 +87,26 @@ void TClipBase::setupFromFOVs (const float afovx, const float afovy) noexcept {
 
 //==========================================================================
 //
+//  TClipBase::setupFromFOV
+//
+//  setup from FOV, ignore aspect
+//
+//==========================================================================
+void TClipBase::setupFromFOV (float fov) noexcept {
+  if (!isFiniteF(fov)) fov = 90.0f;
+  fov = clampval(fov, 0.0001f, 179.90f);
+  const float afov = tanf(DEG2RADF(fov)/2.0f);
+  const float invafov = 1.0f/afov;
+  fovx = fovy = afov;
+  clipbase[0] = TVec(invafov, 0.0f, 1.0f); // left side clip
+  clipbase[1] = TVec(-invafov, 0.0f, 1.0f); // right side clip
+  clipbase[2] = TVec(0.0f, -invafov, 1.0f); // top side clip
+  clipbase[3] = TVec(0.0f, invafov, 1.0f); // bottom side clip
+}
+
+
+//==========================================================================
+//
 //  TClipBase::setupViewport
 //
 //==========================================================================
@@ -63,7 +117,7 @@ void TClipBase::setupViewport (int awidth, int aheight, float afov, float apixel
   }
   float afovx, afovy;
   CalcFovXY(&afovx, &afovy, awidth, aheight, afov, apixelAspect);
-  setupFromFOVs(afovx, afovy);
+  setupFromCookedFOVs(afovx, afovy);
 }
 
 
@@ -79,10 +133,16 @@ void TClipBase::setupViewport (const TClipParam &cp) noexcept {
   }
   float afovx, afovy;
   CalcFovXY(&afovx, &afovy, cp);
-  setupFromFOVs(afovx, afovy);
+  setupFromCookedFOVs(afovx, afovy);
 }
 
 
+
+//**************************************************************************
+//
+// TFrustum
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -135,6 +195,39 @@ void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool c
 
 //==========================================================================
 //
+//  TFrustum::setupSimpleAngles
+//
+//  WARNING! no checks!
+//  ignores aspect
+//  if `farplanez` is non finite, or <= 0, do not set far plane
+//
+//==========================================================================
+void TFrustum::setupSimpleAngles (const TVec &org, const TAVec &angles, const float fov, const float farplanez) noexcept {
+  TFrustumParam fp(org, angles);
+  TClipBase cb(fov);
+  setup(cb, fp, true, farplanez);
+  planes[4].SetPointNormal3D(fp.origin, fp.vforward);
+}
+
+
+//==========================================================================
+//
+//  TFrustum::setupSimpleDir
+//
+//  WARNING! no checks!
+//  ignores aspect
+//  if `farplanez` is non finite, or <= 0, do not set far plane
+//
+//==========================================================================
+void TFrustum::setupSimpleDir (const TVec &org, const TVec &dir, const float fov, const float farplanez) noexcept {
+  TAVec angles;
+  VectorAngles(dir, angles);
+  setupSimpleAngles(org, angles, fov, farplanez);
+}
+
+
+//==========================================================================
+//
 //  TFrustum::checkPoint
 //
 //==========================================================================
@@ -155,11 +248,11 @@ void TFrustum::setFarPlane (const TFrustumParam &fp, float farplanez) noexcept {
 //
 //  TFrustum::checkPoint
 //
-//  returns `false` is sphere is out of frustum (or frustum is not valid)
+//  returns `false` if point is out of frustum (or frustum is not valid)
 //
 //==========================================================================
 bool TFrustum::checkPoint (const TVec &point, const unsigned mask) const noexcept {
-  if (!planeCount || !mask) return true;
+  if (!planeCount || !mask) return false;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
@@ -179,7 +272,7 @@ bool TFrustum::checkPoint (const TVec &point, const unsigned mask) const noexcep
 //
 //==========================================================================
 bool TFrustum::checkSphere (const TVec &center, const float radius, const unsigned mask) const noexcept {
-  if (!planeCount || !mask) return true;
+  if (!planeCount || !mask) return false;
   if (radius <= 0) return checkPoint(center, mask);
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
@@ -208,7 +301,7 @@ bool TFrustum::checkSphere (const TVec &center, const float radius, const unsign
 //
 //==========================================================================
 bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const noexcept {
-  if (!planeCount || !mask) return true;
+  if (!planeCount || !mask) return false;
 #ifdef FRUSTUM_BBOX_CHECKS
   vassert(bbox[0] <= bbox[3+0]);
   vassert(bbox[1] <= bbox[3+1]);
@@ -268,7 +361,7 @@ int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const noexce
     if (res == INSIDE) {
       // check accept point
       d = DotProduct(cp->normal, cp->get3DBBoxAcceptPoint(bbox))-cp->dist;
-      if (d < 0.0f) res = PARTIALLY;
+      if (d <= 0.0f) res = PARTIALLY;
     }
 #else
     if (res == INSIDE) {
@@ -299,17 +392,63 @@ int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const noexce
 
 //==========================================================================
 //
-//  TFrustum::checkVerts
+//  TFrustum::checkTriangle
 //
 //==========================================================================
-bool TFrustum::checkVerts (const TVec *verts, const unsigned vcount, const unsigned mask) const noexcept {
-  if (!planeCount || !mask || !vcount) return true;
+bool TFrustum::checkTriangle (const TVec &v1, const TVec &v2, const TVec &v3, const unsigned mask) const noexcept {
+  if (!planeCount || !mask) return false;
+  const TClipPlane *cp = &planes[0];
+  for (unsigned i = planeCount; i--; ++cp) {
+    if (!(cp->clipflag&mask)) continue; // don't need to clip against it
+    // if everything is on the back side, we're done here
+    if (cp->PointOnSide(v1) && cp->PointOnSide(v2) && cp->PointOnSide(v3)) return false;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  TFrustum::checkTriangleEx
+//
+//==========================================================================
+int TFrustum::checkTriangleEx (const TVec &v1, const TVec &v2, const TVec &v3, const unsigned mask) const noexcept {
+  if (!planeCount || !mask) return OUTSIDE;
+  int res = INSIDE;
+  const TClipPlane *cp = &planes[0];
+  for (unsigned i = planeCount; i--; ++cp) {
+    if (!(cp->clipflag&mask)) continue; // don't need to clip against it
+    const float d1 = DotProduct(cp->normal, v1)-cp->dist;
+    const float d2 = DotProduct(cp->normal, v2)-cp->dist;
+    const float d3 = DotProduct(cp->normal, v3)-cp->dist;
+    // if everything is on the back side, we're done here
+    if (d1 <= 0.0f && d2 <= 0.0f && d3 <= 0.0f) return OUTSIDE;
+    // if we're already hit "partial" case, no need to perform further checks
+    if (res == INSIDE) {
+      // if everything on the front side, go on
+      if (d1 > 0.0f && d2 > 0.0f && d3 > 0.0f) continue;
+      // both sides touched
+      res = PARTIALLY;
+    }
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  TFrustum::checkPolyInterlaced
+//
+//==========================================================================
+bool TFrustum::checkPolyInterlaced (const TVec *data, size_t memberSize, const unsigned count, const unsigned mask) const noexcept {
+  if (!data || count < 3 || !planeCount || !mask) return false;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
     bool passed = false;
-    for (unsigned j = 0; j < vcount; ++j) {
-      if (!cp->PointOnSide(verts[j])) {
+    const uint8_t *vv = (const uint8_t *)data;
+    for (unsigned j = count; j--; vv += memberSize) {
+      if (!cp->PointOnSide(*(const TVec *)vv)) {
         passed = true;
         break;
       }
@@ -320,39 +459,21 @@ bool TFrustum::checkVerts (const TVec *verts, const unsigned vcount, const unsig
 }
 
 
+
 //==========================================================================
 //
-//  TFrustum::checkVertsEx
+//  TFrustum::checkQuad
 //
 //==========================================================================
-int TFrustum::checkVertsEx (const TVec *verts, const unsigned vcount, const unsigned mask) const noexcept {
-  if (!planeCount || !mask || !vcount) return true;
-  int res = INSIDE; // assume that the aabb will be inside the frustum
+bool TFrustum::checkQuad (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask) const noexcept {
+  if (!planeCount || !mask) return false;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
-    if (res == INSIDE) {
-      unsigned passed = 0;
-      for (unsigned j = 0; j < vcount; ++j) {
-        if (!cp->PointOnSide(verts[j])) {
-          ++passed;
-        }
-      }
-      if (!passed) return OUTSIDE;
-      if (passed != vcount) res = PARTIALLY;
-    } else {
-      // partially
-      bool passed = false;
-      for (unsigned j = 0; j < vcount; ++j) {
-        if (!cp->PointOnSide(verts[j])) {
-          passed = true;
-          break;
-        }
-      }
-      if (!passed) return OUTSIDE;
-    }
+    // if everything is on the back side, we're done here
+    if (cp->PointOnSide(v1) && cp->PointOnSide(v2) && cp->PointOnSide(v3) && cp->PointOnSide(v4)) return false;
   }
-  return res;
+  return true;
 }
 
 
@@ -362,21 +483,21 @@ int TFrustum::checkVertsEx (const TVec *verts, const unsigned vcount, const unsi
 //
 //==========================================================================
 int TFrustum::checkQuadEx (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask) const noexcept {
-  if (!planeCount || !mask) return true;
+  if (!planeCount || !mask) return OUTSIDE;
   int res = INSIDE;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
-    float d1 = DotProduct(cp->normal, v1)-cp->dist;
-    float d2 = DotProduct(cp->normal, v2)-cp->dist;
-    float d3 = DotProduct(cp->normal, v3)-cp->dist;
-    float d4 = DotProduct(cp->normal, v4)-cp->dist;
+    const float d1 = DotProduct(cp->normal, v1)-cp->dist;
+    const float d2 = DotProduct(cp->normal, v2)-cp->dist;
+    const float d3 = DotProduct(cp->normal, v3)-cp->dist;
+    const float d4 = DotProduct(cp->normal, v4)-cp->dist;
     // if everything is on the back side, we're done here
-    if (d1 < 0 && d2 < 0 && d3 < 0 && d4 < 0) return OUTSIDE;
+    if (d1 <= 0.0f && d2 <= 0.0f && d3 <= 0.0f && d4 <= 0.0f) return OUTSIDE;
     // if we're already hit "partial" case, no need to perform further checks
     if (res == INSIDE) {
       // if everything on the front side, go on
-      if (d1 >= 0 && d2 >= 0 && d3 >= 0 && d4 >= 0) continue;
+      if (d1 > 0.0f && d2 > 0.0f && d3 > 0.0f && d4 > 0.0f) continue;
       // both sides touched
       res = PARTIALLY;
     }
