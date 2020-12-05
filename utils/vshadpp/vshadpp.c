@@ -1202,9 +1202,16 @@ int parseGLSL (Parser *par, ShaderInfo *si) {
         char *glslType = xstrdup(prExpectId(par));
         char *idname = xstrdup(prExpectId(par));
         prExpect(par, ";");
-        LocInfo *loc = newLoc(&si->locs, idname);
-        loc->isAttr = isAttr;
-        loc->glslType = glslType;
+
+        LocInfo *oloc = findLoc(si->locs, idname);
+        if (oloc) {
+          if (oloc->isAttr != isAttr) prError(par, va("conflicting uniform/attribyte for '%s'", idname));
+          if (!strEqu(oloc->glslType, glslType)) prError(par, va("conflicting type for '%s'", idname));
+        } else {
+          LocInfo *loc = newLoc(&si->locs, idname);
+          loc->isAttr = isAttr;
+          loc->glslType = glslType;
+        }
         xfree(idname); // it is copied in loc ctor
         //fprintf(stderr, "::: %s %s %s;\n", (loc->isAttr ? "attribute" : "uniform"), loc->glslType, loc->name);
         continue;
