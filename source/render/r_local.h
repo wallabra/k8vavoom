@@ -1342,7 +1342,7 @@ extern VCvarB r_static_lights;
 
 extern VCvarI r_aspect_ratio;
 extern VCvarB r_interpolate_frames;
-extern VCvarB r_allow_shadows;
+extern VCvarB r_shadows;
 
 extern VCvarB r_vertical_fov;
 

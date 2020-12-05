@@ -151,7 +151,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   if (dlflags&dlight_t::NoShadow) allowShadows = false;
 
-  if (!r_allow_shadows) allowShadows = false;
+  if (!r_shadows) allowShadows = false;
 
   // if we don't need shadows, and no visible subsectors were hit, we have nothing to do here
   if (!allowShadows && (!HasLightIntersection || !LitSurfaceHit)) return;

@@ -323,7 +323,7 @@ menudef AdvVideoOptions {
 
   option bool {
     title = "Dynamic/stencil shadows";
-    cvar = r_allow_shadows;
+    cvar = r_shadows;
   }
 
   option bool {

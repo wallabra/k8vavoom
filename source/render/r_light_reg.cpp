@@ -978,7 +978,7 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
   */
 
   const bool hasPVS = Level->HasPVS();
-  const bool doCheckTrace = (r_dynamic_clip && r_allow_shadows);
+  const bool doCheckTrace = (r_dynamic_clip && r_shadows);
   const bool useBSPTrace = r_lmap_bsp_trace_dynamic.asBool();
   const bool texCheck = r_lmap_texture_check_dynamic.asBool();
   const float texCheckMinRadius = r_lmap_texture_check_radius_dynamic.asInt(); // float, to avoid converions later

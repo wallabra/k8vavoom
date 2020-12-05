@@ -1421,8 +1421,8 @@ void VRenderLevelShared::RenderPortals () {
     //       (or emulate stencil buffer with texture and shaders)
     const bool oldDecalsEnabled = r_decals;
     r_decals = false;
-    //bool oldShadows = r_allow_shadows;
-    //if (/*Portal->stackedSector &&*/ IsShadowVolumeRenderer()) r_allow_shadows = false;
+    //bool oldShadows = r_shadows;
+    //if (/*Portal->stackedSector &&*/ IsShadowVolumeRenderer()) r_shadows = false;
     //bool firstPortal = true;
     for (auto &&pp : Portals) {
       if (pp && pp->Level == PortalLevel) {
@@ -1437,7 +1437,7 @@ void VRenderLevelShared::RenderPortals () {
       }
     }
     r_decals = oldDecalsEnabled;
-    //r_allow_shadows = oldShadows;
+    //r_shadows = oldShadows;
   } else {
     // if we are in sky portal, render nested sky portals
     // actually, always render sky portals
