@@ -1591,11 +1591,8 @@ int main (int argc, char **argv) {
     fprintf(foc, "void VOpenGLDrawer::VShaderDef_%s::LoadUniforms () {\n", si->name);
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
       //HACK!
-      if (strEqu(loc->name, "FogEnabled")) {
-        fprintf(foc, "  loc_%s = owner->glGet%sLoc(progname, prog, \"%s\", true);\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
-      } else {
-        fprintf(foc, "  loc_%s = owner->glGet%sLoc(progname, prog, \"%s\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
-      }
+      const int optional = (strEqu(loc->name, "FogEnabled") || strEqu(loc->name, "CubeSize"));
+      fprintf(foc, "  loc_%s = owner->glGet%sLoc(progname, prog, \"%s\"%s);\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name, (optional ? ", true" : ""));
       if (!loc->isAttr) fprintf(foc, "  changed_%s = true;\n", loc->name);
     }
     fprintf(foc, "}\n");
