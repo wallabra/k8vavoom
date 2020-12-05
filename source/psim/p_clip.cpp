@@ -492,7 +492,7 @@ bool VViewClipper::IsSegAClosedSomething (VLevel *level, const TFrustum *Frustum
 
       if (Frustum && Frustum->isValid()) {
         // check (only top, bottom, and back)
-        if (!Frustum->checkVerts(verts, 4/*, TFrustum::TopBit|TFrustum::BottomBit*/ /*|TFrustum::BackBit*/)) {
+        if (!Frustum->checkQuad(verts[0], verts[1], verts[2], verts[3]/*, TFrustum::TopBit|TFrustum::BottomBit*/ /*|TFrustum::BackBit*/)) {
           // check which texture is visible -- top or bottom
           #if 0
           bool checkFailed = false;
@@ -503,7 +503,7 @@ bool VViewClipper::IsSegAClosedSomething (VLevel *level, const TFrustum *Frustum
             verts[1] = TVec(vv1.x, vv1.y, -40000);
             verts[2] = TVec(vv2.x, vv2.y, -40000);
             verts[3] = TVec(vv2.x, vv2.y, max2(frontfz2, frontfz2));
-            if (Frustum->checkVerts(verts, 4)) {
+            if (Frustum->checkQuad(verts[0], verts[1], verts[2], verts[3])) {
               // bottom is visible
               GCon->Logf(NAME_Debug, "line #%d: BOTTOM IS VISIBLE (type=%d)", (int)(ptrdiff_t)(ldef-&level->Lines[0]), botTexType);
               checkFailed = true;
@@ -516,7 +516,7 @@ bool VViewClipper::IsSegAClosedSomething (VLevel *level, const TFrustum *Frustum
             verts[1] = TVec(vv1.x, vv1.y, 40000);
             verts[2] = TVec(vv2.x, vv2.y, 40000);
             verts[3] = TVec(vv2.x, vv2.y, min2(frontcz2, frontcz2));
-            if (Frustum->checkVerts(verts, 4)) {
+            if (Frustum->checkQuad(verts[0], verts[1], verts[2], verts[3])) {
               // bottom is visible
               GCon->Logf(NAME_Debug, "line #%d: TOP IS VISIBLE (type=%d)", (int)(ptrdiff_t)(ldef-&level->Lines[0]), topTexType);
               checkFailed = true;
@@ -1169,11 +1169,11 @@ bool VViewClipper::CheckSegFrustum (const subsector_t *sub, const seg_t *seg, co
   if (!seg || !sub || !Frustum.isValid() || !mask) return true;
   const sector_t *sector = sub->sector;
   if (!sector) return true; // just in case
-  TVec sv0(seg->v1->x, seg->v1->y, sector->floor.GetPointZ(*seg->v1));
-  TVec sv1(seg->v1->x, seg->v1->y, sector->ceiling.GetPointZ(*seg->v1));
-  TVec sv2(seg->v2->x, seg->v2->y, sector->ceiling.GetPointZ(*seg->v2));
-  TVec sv3(seg->v2->x, seg->v2->y, sector->floor.GetPointZ(*seg->v2));
-  return Frustum.checkQuadEx(sv0, sv1, sv2, sv3, mask);
+  const TVec sv0(seg->v1->x, seg->v1->y, sector->floor.GetPointZ(*seg->v1));
+  const TVec sv1(seg->v1->x, seg->v1->y, sector->ceiling.GetPointZ(*seg->v1));
+  const TVec sv2(seg->v2->x, seg->v2->y, sector->ceiling.GetPointZ(*seg->v2));
+  const TVec sv3(seg->v2->x, seg->v2->y, sector->floor.GetPointZ(*seg->v2));
+  return Frustum.checkQuad(sv0, sv1, sv2, sv3, mask);
 }
 
 
