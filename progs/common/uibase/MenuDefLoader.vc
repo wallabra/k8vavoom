@@ -889,7 +889,11 @@ override MenuChoiceBase CreateOption (MenuScreen menu) {
   if (textColorFocus != CR_UNDEFINED) opt.TextColorFocus = textColorFocus;
   opt.AddItem("Select automatically", 0);
   opt.AddItem("Lightmaps (Quake-style)", 1);
-  opt.AddItem("Stencil Shadows (DooM 3-style)", 2);
+  string nn;
+       if (R_SupportsShadowVolumeRendering() && R_SupportsShadowMapRendering()) nn = "Stencil Shadows(D3) / Shadowmaps";
+  else if (R_SupportsShadowVolumeRendering()) nn = "Stencil Shadows (D3-style)";
+  else nn = "Shadowmaps";
+  opt.AddItem(nn, 2);
   if (cvar) opt.SetSessionCvar(cvar);
   return opt;
 }
