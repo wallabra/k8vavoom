@@ -430,8 +430,6 @@ void VOpenGLDrawer::InitResolution () {
     }
   }
 
-  if (major >= 3) canRenderShadowmaps = true;
-
   /*
   if (!CheckExtension("GL_ARB_multitexture")) {
     Sys_Error("OpenGL FATAL: Multitexture extensions not found.");
@@ -645,6 +643,9 @@ void VOpenGLDrawer::InitResolution () {
 
   // allocate wipe FBO object
   wipeFBO.createTextureOnly(this, calcWidth, calcHeight);
+
+  //if (major >= 3) canRenderShadowmaps = true;
+  canRenderShadowmaps = true;
 
   // check extensions
   if (canRenderShadowmaps) {
