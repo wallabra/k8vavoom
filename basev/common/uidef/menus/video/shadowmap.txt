@@ -7,7 +7,9 @@ menudef ShadowMapOptions {
     help =
       "Use shadowmaps instead of stencil shadows?",
       "",
-      "\c[WHITE]WARNING! This is experimental mode! Use on your own risk!";
+      "\c[WHITE]WARNING! This is experimental mode! Use on your own risk!",
+      "\c[WHITE]Also, do not fine-tune your maps for this mode yet, because",
+      "\c[WHITE]lighting calculations can (and will) be changed.";
   }
 
   option bool {
