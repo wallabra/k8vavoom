@@ -316,11 +316,11 @@ IMPLEMENT_FUNCTION(VLevel, BSPTraceLine) {
   vobjGetParamSelf(Start, End, HitPoint, HitNormal, noBlockFlags);
   linetrace_t trace;
   bool res = Self->TraceLine(trace, Start, End, noBlockFlags);
-  if (res) {
+  if (!res) {
     if (HitPoint) *HitPoint = trace.LineEnd;
     if (HitNormal) *HitNormal = trace.HitPlaneNormal;
   } else {
-    if (HitPoint) *HitPoint = TVec(0, 0, 0);
+    if (HitPoint) *HitPoint = End;
     if (HitNormal) *HitNormal = TVec(0, 0, 1); // arbitrary
   }
   RET_BOOL(res);
