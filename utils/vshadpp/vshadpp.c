@@ -896,6 +896,7 @@ struct ShaderInfo {
   // opengl version
   CondCode oglVersionCond;
   int oglVersion;  // high*100+low
+  int forCubemaps;
   ShaderInfo *next;
 };
 
@@ -982,10 +983,13 @@ void parseShaderList (Parser *par, const char *basebase) {
     prExpect(par, "Shader");
     CondCode oglVersionCond = CondGreaterEqu;
     int oglVersion = 0;  // high*100+low
+    int forCubemaps = 0;
     // attributes (unused for now)
     while (prCheck(par, "[")) {
       if (prCheck(par, "advanced")) {
         // do nothing
+      } else if (prCheck(par, "cubemaps")) {
+        forCubemaps = 1;
       } else if (prCheck(par, "OpenGL")) {
         oglVersionCond = parseCondCode(par);
         int hi = parseDigit(par);
@@ -1000,6 +1004,7 @@ void parseShaderList (Parser *par, const char *basebase) {
     ShaderInfo *si = xalloc(sizeof(ShaderInfo));
     si->oglVersionCond = oglVersionCond;
     si->oglVersion = oglVersion;
+    si->forCubemaps = forCubemaps;
     // name
     si->name = xstrdup(prExpectId(par));
     if (verbose) printf("[  found shader info '%s']\n", si->name);
@@ -1584,6 +1589,7 @@ int main (int argc, char **argv) {
     if (!(si->oglVersion == 0 && si->oglVersionCond == CondGreaterEqu)) {
       fprintf(foc, "  SetOpenGLVersion(%s, %d);\n", getCondName(si->oglVersionCond), (int)si->oglVersion);
     }
+    if (si->forCubemaps) fprintf(foc, "  SetForCubemaps();\n");
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
       fprintf(foc, "  ");
       writeInitValueNoChecks(foc, loc);

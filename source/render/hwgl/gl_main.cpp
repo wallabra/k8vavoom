@@ -837,7 +837,7 @@ void VOpenGLDrawer::InitResolution () {
   LoadAllShaders();
   LoadShadowmapShaders();
   GCon->Log(NAME_Init, "OpenGL: compiling shaders");
-  CompileShaders(major, minor);
+  CompileShaders(major, minor, canRenderShadowmaps);
 
   GLDRW_CHECK_ERROR("finish OpenGL initialization");
 

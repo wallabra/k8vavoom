@@ -173,6 +173,7 @@ public:
     GLhandleARB prog;
     int oglVersionCond;
     int oglVersion;  // high*100+low
+    bool forCubemaps;
     TArray<VStr> defines;
 
     typedef float glsl_float2[2];
@@ -181,13 +182,14 @@ public:
     typedef float glsl_float9[9];
 
   public:
-    VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1), oglVersionCond(CondGreaterEqu), oglVersion(0) {}
+    VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1), oglVersionCond(CondGreaterEqu), oglVersion(0), forCubemaps(false) {}
 
     inline void SetOpenGLVersion (int cond, int ver) noexcept { oglVersionCond = cond; oglVersion = ver; }
+    inline void SetForCubemaps () noexcept { forCubemaps = true; }
 
     inline bool IsLoaded () const noexcept { return (prog != 0); }
 
-    bool CheckOpenGLVersion (int major, int minor) noexcept;
+    bool CheckOpenGLVersion (int major, int minor, bool canCubemaps) noexcept;
 
     void MainSetup (VOpenGLDrawer *aowner, const char *aprogname, const char *aincdir, const char *avssrcfile, const char *afssrcfile);
 
@@ -370,7 +372,7 @@ protected:
   VGLShader *shaderHead;
 
   void registerShader (VGLShader *shader);
-  void CompileShaders (int glmajor, int glminor);
+  void CompileShaders (int glmajor, int glminor, bool canCubemaps);
   void DestroyShaders ();
 
 protected:

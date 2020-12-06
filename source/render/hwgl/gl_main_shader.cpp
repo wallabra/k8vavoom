@@ -53,9 +53,9 @@ void VOpenGLDrawer::registerShader (VGLShader *shader) {
 //  VOpenGLDrawer::CompileShaders
 //
 //==========================================================================
-void VOpenGLDrawer::CompileShaders (int glmajor, int glminor) {
+void VOpenGLDrawer::CompileShaders (int glmajor, int glminor, bool canCubemaps) {
   for (VGLShader *shad = shaderHead; shad; shad = shad->next) {
-    if (shad->CheckOpenGLVersion(glmajor, glminor)) {
+    if (shad->CheckOpenGLVersion(glmajor, glminor, canCubemaps)) {
       shad->Compile();
     } else {
       GCon->Logf(NAME_Init, "skipped shader '%s' due to OpenGL version constraint", shad->progname);
@@ -140,7 +140,8 @@ GLint VOpenGLDrawer::glGetAttrLoc (const char *prog, GLhandleARB pid, const char
 //  VOpenGLDrawer::VGLShader::CheckOpenGLVersion
 //
 //==========================================================================
-bool VOpenGLDrawer::VGLShader::CheckOpenGLVersion (int major, int minor) noexcept {
+bool VOpenGLDrawer::VGLShader::CheckOpenGLVersion (int major, int minor, bool canCubemaps) noexcept {
+  if (forCubemaps && !canCubemaps) return false;
   const int ver = major*100+minor;
   switch (oglVersionCond) {
     case CondLess: return (ver < oglVersion);

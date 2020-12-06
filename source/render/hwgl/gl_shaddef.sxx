@@ -294,30 +294,22 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader [advanced] ShadowsModelLight both="shadowvol/model/shadows_model_light_svol" { define "VV_MODEL"; }
   Shader [advanced] ShadowsModelLightSpot both="shadowvol/model/shadows_model_light_svol" { defines { "VV_MODEL", "VV_SPOTLIGHT" } }
 
-  Shader [advanced] [OpenGL >= 3.0] SurfShadowMap both="shadowvol/surf/shadows_surf_smap";
-  Shader [advanced] [OpenGL >= 3.0] SurfShadowMapTex both="shadowvol/surf/shadows_surf_smap" { define "VV_SMAP_TEXTURED"; }
-  Shader [advanced] [OpenGL >= 3.0] SurfShadowMapSpr vertex="shadowvol/surf/shadows_surf_smap_spr" fragment="shadowvol/surf/shadows_surf_smap" { define "VV_SMAP_TEXTURED"; }
+  // this was [OpenGL >= 3.0]
+  Shader [advanced] [cubemaps] SurfShadowMap both="shadowvol/surf/shadows_surf_smap";
+  Shader [advanced] [cubemaps] SurfShadowMapTex both="shadowvol/surf/shadows_surf_smap" { define "VV_SMAP_TEXTURED"; }
+  Shader [advanced] [cubemaps] SurfShadowMapSpr vertex="shadowvol/surf/shadows_surf_smap_spr" fragment="shadowvol/surf/shadows_surf_smap" { define "VV_SMAP_TEXTURED"; }
 
-  Shader [advanced] [OpenGL >= 3.0] ShadowsModelShadowMap both="shadowvol/model/shadows_model_smap";
+  Shader [advanced] [cubemaps] ShadowsModelShadowMap both="shadowvol/model/shadows_model_smap";
 
-  Shader [advanced] [OpenGL >= 3.0] ShadowsLightSMap both="shadowvol/surf/shadows_surf_light_smap" { defines { "VV_SHADOWMAPS" } }
-  Shader [advanced] [OpenGL >= 3.0] ShadowsLightSMapTex both="shadowvol/surf/shadows_surf_light_smap" { defines { "VV_SHADOW_CHECK_TEXTURE", "VV_SHADOWMAPS" } }
-  Shader [advanced] [OpenGL >= 3.0] ShadowsLightSMapSpot both="shadowvol/surf/shadows_surf_light_smap" { defines { "VV_SHADOWMAPS", "VV_SPOTLIGHT" } }
-  Shader [advanced] [OpenGL >= 3.0] ShadowsLightSMapSpotTex both="shadowvol/surf/shadows_surf_light_smap" { defines { "VV_SHADOW_CHECK_TEXTURE", "VV_SHADOWMAPS", "VV_SPOTLIGHT" } }
+  Shader [advanced] [cubemaps] ShadowsLightSMap both="shadowvol/surf/shadows_surf_light_smap" { defines { "VV_SHADOWMAPS" } }
+  Shader [advanced] [cubemaps] ShadowsLightSMapTex both="shadowvol/surf/shadows_surf_light_smap" { defines { "VV_SHADOW_CHECK_TEXTURE", "VV_SHADOWMAPS" } }
+  Shader [advanced] [cubemaps] ShadowsLightSMapSpot both="shadowvol/surf/shadows_surf_light_smap" { defines { "VV_SHADOWMAPS", "VV_SPOTLIGHT" } }
+  Shader [advanced] [cubemaps] ShadowsLightSMapSpotTex both="shadowvol/surf/shadows_surf_light_smap" { defines { "VV_SHADOW_CHECK_TEXTURE", "VV_SHADOWMAPS", "VV_SPOTLIGHT" } }
 
-  Shader [advanced] ShadowsModelLightSMap both="shadowvol/model/shadows_model_light_smap" { defines { "VV_MODEL", "VV_SHADOWMAPS" } }
-  Shader [advanced] ShadowsModelLightSMapSpot both="shadowvol/model/shadows_model_light_smap" { defines { "VV_MODEL", "VV_SHADOWMAPS", "VV_SPOTLIGHT" } }
+  Shader [advanced] [cubemaps] ShadowsModelLightSMap both="shadowvol/model/shadows_model_light_smap" { defines { "VV_MODEL", "VV_SHADOWMAPS" } }
+  Shader [advanced] [cubemaps] ShadowsModelLightSMapSpot both="shadowvol/model/shadows_model_light_smap" { defines { "VV_MODEL", "VV_SHADOWMAPS", "VV_SPOTLIGHT" } }
 
-  // blur variants
-  // "VV_SMAP_BLUR4"
-  // "VV_SMAP_BLUR8"
-  // "VV_SMAP_BLUR8","VV_SMAP_BLUR_FAST8"
-  // "VV_SMAP_BLUR16"
-  // "VV_SMAP_BLUR16","VV_SMAP_BLUR_FAST8"
-  // "VV_SMAP_BLUR16","VV_SMAP_BLUR_FAST16"
-  // "VV_SMAP_BLUR16","VV_SMAP_BLUR_FAST8","VV_SMAP_BLUR_FAST16"
-
-  Shader [advanced] [OpenGL >= 3.0] DbgShadowMap both="draw/draw_smap_dbg";
+  Shader [advanced] [cubemaps] DbgShadowMap both="draw/draw_smap_dbg";
 
 
   // wipe
