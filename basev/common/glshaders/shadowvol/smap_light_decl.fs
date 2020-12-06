@@ -6,3 +6,6 @@ uniform float BiasMax;
 uniform float BiasMin;
 uniform float CubeSize;
 //uniform float CubeBlur;
+
+uniform vec3 LightPos;
+uniform float UseAdaptiveBias;

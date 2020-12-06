@@ -80,13 +80,37 @@
 # endif
 #endif
 
+#define VV_BLUR4_MUL(n_)  ((n_)*1.4)
+#define VV_BLUR8_MUL(n_)  ((n_)*1.4)
+#define VV_BLUR16_MUL(n_)  ((n_)*1.8)
+
   // dunno which one is better (or even which one is right, lol)
+  // fun thing: it seems that turning on cubemap texture filtering removes moire almost completely
+  // so if the user will turn on filtering, we will turn off "adaptive" bias with `UseAdaptiveBias`
   #if 1
+  float bias;
   // 0.026
   // 0.039
-  float cosTheta = clamp(dot(Normal, normV2L), 0.0, 1.0);
-  //float bias = clamp(0.0065*tan(acos(cosTheta)), 0.0, 0.026); // cosTheta is dot( n,l ), clamped between 0 and 1
-  float bias = clamp(BiasMul*tan(acos(cosTheta)), BiasMin, BiasMax); // cosTheta is dot( n,l ), clamped between 0 and 1
+  if (UseAdaptiveBias > 0.0) {
+    float cosTheta = clamp(dot(Normal, normV2L), 0.0, 1.0);
+    //bias = clamp(0.0065*tan(acos(cosTheta)), 0.0, 0.026); // cosTheta is dot( n,l ), clamped between 0 and 1
+    bias = clamp(BiasMul*tan(acos(cosTheta)), BiasMin, BiasMax); // cosTheta is dot( n,l ), clamped between 0 and 1
+    //bias = 0.072; //clamp(0.0065*tan(acos(cosTheta)), 0.0, 0.026); // cosTheta is dot( n,l ), clamped between 0 and 1
+    //bias = clamp(0.0065*tan(acos(cosTheta)), 0.0, 0.072); // cosTheta is dot( n,l ), clamped between 0 and 1
+    //bias = 0.0001;
+  } else {
+    //float mxdist = max(abs(VertToLight.x), max(abs(VertToLight.y), abs(VertToLight.z)));
+   #ifdef VV_SMAP_BLUR4
+    // remove slight moire
+    float mxdist = dot(VertToLight, VertToLight);
+         if (mxdist > 400*400) bias = 0.0015;
+    else if (mxdist > 200*200) bias = 0.001;
+    else if (mxdist > 100*100) bias = 0.0005;
+    else bias = 0.0002;
+   #else
+    bias = 0.0002;
+   #endif
+  }
   #else
   float biasMod = 1.0-clamp(dot(Normal, normV2L), 0.0, 1.0);
   //float bias = 0.001+0.039*biasMod;
@@ -114,15 +138,15 @@
     float dcount = 5.0;
     #endif
     if (textureCube(ShadowTexture, ltfdir).r+bias >= currentDistanceToLight) daccum += 1.0;
-    float maxaxis = max(ltfdir.x, max(ltfdir.y, ltfdir.z));
+    float maxaxis = max(abs(ltfdir.x), max(abs(ltfdir.y), abs(ltfdir.z)));
     if (ltfdir.x == maxaxis) {
       // do not touch x
       // y
-      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-      if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep, 0.0)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep, 0.0)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
       // z
-      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0, -cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
-      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0,  cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0, -cubetstep)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0,  cubetstep)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
       #ifdef VV_SMAP_BLUR8
         #ifdef VV_SMAP_BLUR_FAST8
         if (daccum > 0.0 && daccum < 5.0)
@@ -131,10 +155,10 @@
         #ifdef VV_DYNAMIC_DCOUNT
         dcount = 9.0;
         #endif
-        if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep, -cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
-        if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep,  cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
-        if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep, -cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
-        if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep,  cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep, -cubetstep)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep,  cubetstep)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep, -cubetstep)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep,  cubetstep)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
         #ifdef VV_SMAP_BLUR16
           #ifdef VV_SMAP_BLUR_FAST16
           if (daccum > 0.0 && daccum < 9.0)
@@ -143,14 +167,14 @@
           #ifdef VV_DYNAMIC_DCOUNT
           dcount = 17.0;
           #endif
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep*2.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep*2.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0, -cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0,  cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep*2.0, -cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep*2.0,  cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep*2.0, -cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep*2.0,  cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep*2.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep*2.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0, -cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0,  cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep*2.0, -cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep*2.0,  cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep*2.0, -cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep*2.0,  cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
         }
         #endif
       }
@@ -158,11 +182,11 @@
     } else if (ltfdir.y == maxaxis) {
       // do not touch y
       // x
-      if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep, 0.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-      if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep, 0.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep, 0.0, 0.0)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep, 0.0, 0.0)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
       // z
-      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0, -cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
-      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0,  cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0, -cubetstep)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0,  cubetstep)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
       #ifdef VV_SMAP_BLUR8
         #ifdef VV_SMAP_BLUR_FAST8
         if (daccum > 0.0 && daccum < 5.0)
@@ -171,10 +195,10 @@
         #ifdef VV_DYNAMIC_DCOUNT
         dcount = 9.0;
         #endif
-        if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep, 0.0, -cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
-        if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep, 0.0,  cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
-        if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep, 0.0, -cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
-        if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep, 0.0,  cubetstep)).r+bias >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep, 0.0, -cubetstep)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep, 0.0,  cubetstep)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep, 0.0, -cubetstep)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep, 0.0,  cubetstep)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
         #ifdef VV_SMAP_BLUR16
           #ifdef VV_SMAP_BLUR_FAST16
           if (daccum > 0.0 && daccum < 9.0)
@@ -183,14 +207,14 @@
           #ifdef VV_DYNAMIC_DCOUNT
           dcount = 17.0;
           #endif
-          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0, 0.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0, 0.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0, -cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0,  cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0, 0.0, -cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0, 0.0,  cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0, 0.0, -cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0, 0.0,  cubetstep*2.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0, 0.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0, 0.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0, -cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, 0.0,  cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0, 0.0, -cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0, 0.0,  cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0, 0.0, -cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0, 0.0,  cubetstep*2.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
         }
         #endif
       }
@@ -198,11 +222,11 @@
     } else {
       // do not touch z
       // x
-      if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep, 0.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-      if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep, 0.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep, 0.0, 0.0)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep, 0.0, 0.0)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
       // y
-      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-      if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep, 0.0)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+      if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep, 0.0)).r+VV_BLUR4_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
       #ifdef VV_SMAP_BLUR8
         #ifdef VV_SMAP_BLUR_FAST8
         if (daccum > 0.0 && daccum < 5.0)
@@ -211,10 +235,10 @@
         #ifdef VV_DYNAMIC_DCOUNT
         dcount = 9.0;
         #endif
-        if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep, -cubetstep, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-        if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep,  cubetstep, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-        if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep, -cubetstep, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-        if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep,  cubetstep, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep, -cubetstep, 0.0)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep,  cubetstep, 0.0)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep, -cubetstep, 0.0)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+        if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep,  cubetstep, 0.0)).r+VV_BLUR8_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
         #ifdef VV_SMAP_BLUR16
           #ifdef VV_SMAP_BLUR_FAST16
           if (daccum > 0.0 && daccum < 9.0)
@@ -223,14 +247,14 @@
           #ifdef VV_DYNAMIC_DCOUNT
           dcount = 17.0;
           #endif
-          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0, 0.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0, 0.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep*2.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep*2.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0, -cubetstep*2.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0,  cubetstep*2.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0, -cubetstep*2.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
-          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0,  cubetstep*2.0, 0.0)).r+bias >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0, 0.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0, 0.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0, -cubetstep*2.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(0.0,  cubetstep*2.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0, -cubetstep*2.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3(-cubetstep*2.0,  cubetstep*2.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0, -cubetstep*2.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
+          if (textureCube(ShadowTexture, ltfdir+vec3( cubetstep*2.0,  cubetstep*2.0, 0.0)).r+VV_BLUR16_MUL(bias) >= currentDistanceToLight) daccum += 1.0;
         }
         #endif
       }

@@ -483,7 +483,9 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   (shad_##Blur)[smapBShaderIndex].SetShadowTexture(1); \
   (shad_##Blur)[smapBShaderIndex].SetBiasMul(advLightGetMulBias()); \
   (shad_##Blur)[smapBShaderIndex].SetBiasMin(advLightGetMinBias()); \
-  (shad_##Blur)[smapBShaderIndex].SetBiasMax(advLightGetMaxBias(shadowmapPOT));
+  (shad_##Blur)[smapBShaderIndex].SetBiasMax(advLightGetMaxBias(shadowmapPOT)); \
+  (shad_##Blur)[smapBShaderIndex].SetCubeSize((float)(128<<shadowmapPOT)); \
+  (shad_##Blur)[smapBShaderIndex].SetUseAdaptiveBias(cubemapLinearFiltering ? 0.0f : 1.0f);
 
 #define VV_MLIGHT_SHADER_SETUP_SMAP(shad_)  \
   if (spotLight) { \
@@ -601,6 +603,7 @@ void VOpenGLDrawer::EndModelsLightPass () {
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0); \
 } while (0)
 
+
 #define DO_DRAW_AMDL_LIGHT_SMAP(shad_)  do { \
   (shad_##Blur)[smapBShaderIndex].SetInter(Inter); \
   (shad_##Blur)[smapBShaderIndex].SetModelToWorldMat(RotationMatrix); \
@@ -682,12 +685,8 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
   if (lpassDoShadowMap) {
     if (spotLight) {
       DO_DRAW_AMDL_LIGHT_SMAP(ShadowsModelLightSMapSpot);
-      //ShadowsModelLightSMapSpot.SetCubeBlur((float)gl_shadowmap_blur.asInt());
-      ShadowsModelLightSMapSpot.SetCubeSize((float)(128<<shadowmapPOT));
     } else {
       DO_DRAW_AMDL_LIGHT_SMAP(ShadowsModelLightSMap);
-      //ShadowsModelLightSMap.SetCubeBlur((float)gl_shadowmap_blur.asInt());
-      ShadowsModelLightSMap.SetCubeSize((float)(128<<shadowmapPOT));
     }
   } else {
     if (spotLight) {
