@@ -222,7 +222,21 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
     Org.y = -Org.y;
     VectorRotateAroundZ(ref Org, Angle);
   }
-  Org += Origin;
+
+  // k8vavoom-specific flag
+  if (Flags&SXF_MUZZLE_TRACE) {
+    TVec hitPoint;
+    if (!XLevel.BSPTraceLine(Origin, Origin+Org, HitPoint:hitPoint, noBlockFlags:SPF_NOBLOCKING|SPF_PLAYER)) {
+      //printdebug("%C: trying to spawn muzzle with trace; dest=%s; hit=%s; diff=%s", self, Origin+Org, hitPoint, Origin+Org-hitPoint);
+      TVec dir = Org.normalize;
+      Org = hitPoint;
+      Org -= dir*4;
+    } else {
+      Org += Origin;
+    }
+  } else {
+    Org += Origin;
+  }
 
   //printdebug("A_SpawnItemEx: type=%C; org=%s; Origin=%s; yaw=%s", ItemType, Org, Origin, Angles.yaw);
   EntityEx A = Spawn(ItemType, Org);

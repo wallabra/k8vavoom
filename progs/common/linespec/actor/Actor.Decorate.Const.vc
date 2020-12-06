@@ -99,6 +99,8 @@ const [decorate] int SXF_TRANSFERROLL        = 1<<25;
 const [decorate] int SXF_ISTARGET            = 1<<26;
 const [decorate] int SXF_ISMASTER            = 1<<27;
 const [decorate] int SXF_ISTRACER            = 1<<28;
+// perform line trace, to not spawn the thing inside wall or something
+const [decorate] int SXF_MUZZLE_TRACE        = 1<<31;
 
 // morph constants
 const [decorate] int MRF_ADDSTAMINA        = 1;
