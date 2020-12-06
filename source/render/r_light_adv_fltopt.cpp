@@ -30,7 +30,7 @@ static VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.2", 
 static VCvarB r_allow_static_light_filter("r_allow_static_light_filter", true, "Allow filtering of static lights?", CVAR_Archive);
 static VCvarI r_static_light_filter_mode("r_static_light_filter_mode", "0", "Filter only decorations(0), or all lights(1)?", CVAR_Archive);
 
-static VCvarB r_shadowvol_optimise_flats("r_shadowvol_optimise_flats", true, "Drop some floors/ceilings that can't possibly cast shadow?", CVAR_Archive);
+static VCvarB r_shadowvol_optimise_flats("r_shadowvol_optimise_flats", false, "Drop some floors/ceilings that can't possibly cast shadow?", CVAR_Archive);
 #ifdef VV_CHECK_1S_CAST_SHADOW
 static VCvarB r_shadowvol_optimise_lines_1s("r_shadowvol_optimise_lines_1s", true, "Drop some 1s walls that can't possibly cast shadow? (glitchy)");
 #endif
@@ -244,6 +244,25 @@ bool VRenderLevelShadowVolume::CheckCan1SCastShadow (line_t *line) {
 //
 //==========================================================================
 unsigned VRenderLevelShadowVolume::CheckShadowingFlats (subsector_t *sub) {
+  /*
+     this has the bug:
+     we will optimise out flats that touches the borders. like this:
+
+       **********
+       **********
+       **********
+       ##########
+       #........#
+       #........#
+       ##########
+
+     here, "*" and "#" are on the same height, and "." is a deep hole.
+     with optimisations turned on, "*" will be optimised away, and only
+     "#" will cast a shadow into a hole, creating light bleed.
+     to avoid this, we should do recursive check to find possible holes,
+     which is quite expensive (and will prolly hit more corner cases).
+     so i turned it off by default.
+  */
   if (!sub || !sub->sector) return (FlatSectorShadowInfo::NoFloor|FlatSectorShadowInfo::NoCeiling);
   if (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps()) return 0;
   //if (floorz > ceilingz) return 0;
