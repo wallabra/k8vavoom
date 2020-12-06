@@ -564,3 +564,19 @@ bool VLevel::CastLightRay (bool textureCheck, sector_t *startSector, const TVec 
   trace.textureCheck = textureCheck;
   return LightPathTraverse(trace);
 }
+
+
+//==========================================================================
+//
+//  Script natives
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VLevel, CastLightRay) {
+  bool textureCheck;
+  TVec org, dest;
+  VOptParamPtr<sector_t> startSector(nullptr);
+  VOptParamPtr<sector_t> endSector(nullptr);
+  vobjGetParamSelf(textureCheck, org, dest, startSector, endSector);
+  bool res = Self->CastLightRay(textureCheck, startSector, org, dest, endSector);
+  RET_BOOL(res);
+}

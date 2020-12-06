@@ -1001,6 +1001,7 @@ private:
   DECLARE_FUNCTION(ChangeOneSectorInternal)
   DECLARE_FUNCTION(AddExtraFloor)
   DECLARE_FUNCTION(SwapPlanes)
+  DECLARE_FUNCTION(CastLightRay)
 
   DECLARE_FUNCTION(SetFloorPic)
   DECLARE_FUNCTION(SetCeilPic)

@@ -247,6 +247,8 @@ native final sector_t *PointInSectorRender (const TVec Point);
 // BSP trace; returns `false` if something was hit (and then `HitNormal` is valid)
 native final bool BSPTraceLine (const TVec start, const TVec end, out TVec HitPoint, out TVec HitNormal, optional int noBlockFlags/*=SPF_NOBLOCKING*/);
 native final bool BSPTraceLineEx (const TVec start, const TVec end, out linetrace_t trace, optional int noBlockFlags/*=SPF_NOBLOCKING*/);
+native final bool CastLightRay (bool textureCheck, const TVec org, const TVec dest, optional sector_t *startSector, optional sector_t *endSector);
+
 // call this after sector height changed, to notify things
 // crunch means "crush actors" (otherwise first unfitting actor will stop notifying)
 // `-1` for `crunch` means "ignore stuck mobj"
