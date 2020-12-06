@@ -100,10 +100,13 @@ menudef ShadowMapOptions {
     cvar = gl_shadowmap_filter;
     help =
       "Apply bilinear filtering to shadowmap textures?",
-      "This will give you slightly rounder shadow corners,",
-      "but shadows will become bigger.",
+      "This usually gives you slightly bigger, but better,",
+      "shadows due to smaller shadowmap bias.",
       "",
-      "The only reason to turn this on is 16-sample blur.";
+      "Note that while i think it works, it may give you banding",
+      "or moire for very big lights, or some other corner cases.",
+      "",
+      "Still, i think that you'd better leave this 'ON'.";
   }
 
   option enum {
@@ -125,10 +128,10 @@ menudef ShadowMapOptions {
       "",
       "If you want to use 16-sample blur, it is recommended to turn on",
       "shadowmap filtering too. This should not hurt performance, but",
-      "the shadows will look better.",
+      "the shadows will look slightly better.",
       "",
       "Faster versions may or may not be actually faster, depending on",
-      "your GPU. But the image quality is lower for them in any case.";
+      "your GPU. Image quality varies alot too.";
   }
 
   header "Debug Options" [__k8vavoom_developer_version > 0];
