@@ -1104,7 +1104,9 @@ int skipConditionalToElse (Parser *par) {
 int parseGLSL (Parser *par, ShaderInfo *si) {
   prExpect(par, "#");
   prExpect(par, "version");
-  if (!prCheck(par, "130")) prExpect(par, "120");
+  //if (!prCheck(par, "130") && !prCheck(par, "666")) prExpect(par, "120");
+  // skip version token
+  (void)prGetToken(par);
 
   DefineTable savedtbl;
   initTblDefineFrom(&savedtbl, &si->defines);
