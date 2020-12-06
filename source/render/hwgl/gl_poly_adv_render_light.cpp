@@ -133,10 +133,10 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
     SelectTexture(0);
 
     //VMatrix4 lview;
-    //Drawer->CalcModelMatrix(lview, LightPos, TAVec(0.0f, 0.0f, 0.0f), false);
+    //CalcModelMatrix(lview, LightPos, TAVec(0.0f, 0.0f, 0.0f), false);
     //ShadowsLightSMap.SetLightView(lview);
     VMatrix4 lview2;
-    Drawer->CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
+    CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
     //VMatrix4 lview = VMatrix4::TranslateNeg(LightPos);
     //ShadowsLightSMap.SetLightMPV(lview);
     TVec lpp = lview2*LightPos;

@@ -532,10 +532,10 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
     SelectTexture(0);
 
     //VMatrix4 lview;
-    //Drawer->CalcModelMatrix(lview, LightPos, TAVec(0.0f, 0.0f, 0.0f), false);
+    //CalcModelMatrix(lview, LightPos, TAVec(0.0f, 0.0f, 0.0f), false);
     //ShadowsLightSMap.SetLightView(lview);
     VMatrix4 lview2;
-    Drawer->CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
+    CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
     //VMatrix4 lview = VMatrix4::TranslateNeg(LightPos);
     //ShadowsLightSMap.SetLightMPV(lview);
     TVec lpp = lview2*LightPos;
@@ -845,6 +845,8 @@ void VOpenGLDrawer::DrawAliasModelShadowMap (const TVec &origin, const TAVec &an
   //GLDRW_CHECK_ERROR("model shadowmap: unbind texcoord attribute");
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
   //GLDRW_CHECK_ERROR("model shadowmap: unbind array buffer");
+
+  MarkCurrentShadowMapDirty();
 }
 
 

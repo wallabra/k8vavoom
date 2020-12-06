@@ -654,6 +654,9 @@ public:
   virtual void EndLightShadowVolumes () = 0;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) = 0;
 
+  // called in rederer, before collecting light/shadow surfaces, so GPU could perform `glClear()` in parallel
+  virtual void PrepareShadowMaps (const float Radius) = 0;
+
   virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) = 0;
   virtual void EndLightShadowMaps () = 0;
   virtual void SetupLightShadowMap (unsigned int facenum) = 0;

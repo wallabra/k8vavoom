@@ -128,6 +128,8 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   const bool useShadowMaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
 
+  if (useShadowMaps && r_shadows && !(dlflags&dlight_t::NoShadow)) Drawer->PrepareShadowMaps(Radius);
+
   //TODO: we can reuse collected surfaces in next passes
   LitCalcBBox = true;
   CurrLightCalcUnstuck = (useShadowMaps && r_shadowmap_fix_light_dist);

@@ -102,6 +102,7 @@ void VOpenGLDrawer::StartUpdate () {
 void VOpenGLDrawer::FinishUpdate () {
   //mainFBO.blitToScreen();
   GetMainFBO()->blitToScreen();
+  ClearAllShadowMaps();
   glBindTexture(GL_TEXTURE_2D, 0);
   SetMainFBO(true); // forced
   glBindTexture(GL_TEXTURE_2D, 0);

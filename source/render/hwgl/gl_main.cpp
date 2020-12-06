@@ -120,9 +120,9 @@ VCvarI gl_release_ram_textures_mode("gl_release_ram_textures_mode", "0", "When t
 // 1: 256
 // 2: 512
 // 3: 1024
-static VCvarI gl_shadowmap_size("gl_shadowmap_size", "1", "Shadowmap size (0:128; 1:256; 2:512; 3:1024).", CVAR_PreInit|CVAR_Archive);
-static VCvarI gl_shadowmap_precision("gl_shadowmap_precision", "0", "Shadowmap precision (0:16; 1:32).", CVAR_PreInit|CVAR_Archive);
-static VCvarB gl_shadowmap_gbuffer("gl_shadowmap_gbuffer", false, "Emulate G-buffer (allocate all three color channels).", CVAR_PreInit|CVAR_Archive);
+VCvarI gl_shadowmap_size("gl_shadowmap_size", "1", "Shadowmap size (0:128; 1:256; 2:512; 3:1024).", CVAR_PreInit|CVAR_Archive);
+VCvarI gl_shadowmap_precision("gl_shadowmap_precision", "0", "Shadowmap precision (0:16; 1:32).", CVAR_PreInit|CVAR_Archive);
+VCvarB gl_shadowmap_gbuffer("gl_shadowmap_gbuffer", false, "Emulate G-buffer (allocate all three color channels).", CVAR_PreInit|CVAR_Archive);
 
 
 //==========================================================================
@@ -249,6 +249,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
   shadowmapPOT = getShadowmapPOT();
   shadowmapSize = 128<<shadowmapPOT;
   cubemapLinearFiltering = false;
+  smapCleared = false;
 }
 
 
@@ -376,6 +377,7 @@ void VOpenGLDrawer::InitResolution () {
 #endif
   shadowmapPOT = getShadowmapPOT();
   shadowmapSize = 128<<shadowmapPOT;
+  smapCleared = false;
 
   if (!shittyGPUCheckDone) {
     shittyGPUCheckDone = true;

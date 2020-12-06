@@ -407,7 +407,7 @@ public:
     SCS_MAXY,
   };
 
-public:
+protected:
   GLuint cubeTexId;
   GLuint cubeDepthTexId[6];
   GLuint cubeFBO;
@@ -421,6 +421,20 @@ public:
   float smapLightRadius;
   texinfo_t smapLastTexinfo;
   texinfo_t smapLastSprTexinfo;
+
+  bool smapCleared;
+
+protected:
+  void PrepareShadowMapsInternal (const float Radius);
+
+  // called in `FinishUpdate()`, so GPU could perform `glClear()` in parallel
+  void ClearAllShadowMaps ();
+
+  inline void MarkCurrentShadowMapDirty () noexcept { smapCleared = false; }
+
+public:
+  // called in renderer before collecting light/shadow surfaces, so GPU could perform `glClear()` in parallel
+  virtual void PrepareShadowMaps (const float Radius) override;
 
 public:
   // VDrawer interface
