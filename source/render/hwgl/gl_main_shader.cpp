@@ -315,6 +315,39 @@ static bool isVersionLine (VStr s) {
 
 //==========================================================================
 //
+//  fixVersionLine
+//
+//  `s` MUST be valid version line
+//
+//==========================================================================
+static VStr fixVersionLine (VStr s, int glVerMajor, int glVerMinor) {
+  s = s.xstrip();
+  auto spos = s.indexOf('#');
+  vassert(spos >= 0);
+  ++spos;
+  while (spos < s.length() && s[spos] <= ' ') ++spos;
+  while (spos < s.length() && s[spos] > ' ') ++spos;
+  while (spos < s.length() && s[spos] <= ' ') ++spos;
+  if (s.right(s.length()-spos) == "4xx") {
+    s.chopRight(s.length()-spos);
+         if (glVerMajor >= 4) s += "400";
+    else if (glVerMajor >= 3 && glVerMinor >= 1) s += "140";
+    else if (glVerMajor >= 3) s += "130";
+    else s += "120";
+    //GCon->Logf(NAME_Debug, "GLVER4xx: %s", *s);
+  } else if (s.right(s.length()-spos) == "3xx") {
+    s.chopRight(s.length()-spos);
+         if (glVerMajor >= 4 || (glVerMajor >= 3 && glVerMinor >= 1)) s += "140";
+    else if (glVerMajor >= 3) s += "130";
+    else s += "120";
+    //GCon->Logf(NAME_Debug, "GLVER3xx: %s", *s);
+  }
+  return s;
+}
+
+
+//==========================================================================
+//
 //  getDirective
 //
 //==========================================================================
@@ -416,7 +449,35 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdirc
     VStr cmd = getDirective(line);
     if (cmd.length() == 0) {
       if (needToAddDefines) {
-        if (isVersionLine(line)) { res += line; continue; }
+        if (isVersionLine(line)) {
+          res += fixVersionLine(line, glVerMajor, glVerMinor);
+          res += "\n";
+          //FIXME: this sux!
+          if (glVerMajor >= 4) {
+                 if (glVerMajor >= 9) res += "#define GLVER_MAJOR_4_9\n";
+            else if (glVerMajor >= 8) res += "#define GLVER_MAJOR_4_8\n";
+            else if (glVerMajor >= 7) res += "#define GLVER_MAJOR_4_7\n";
+            else if (glVerMajor >= 6) res += "#define GLVER_MAJOR_4_6\n";
+            else if (glVerMajor >= 5) res += "#define GLVER_MAJOR_4_5\n";
+            else if (glVerMajor >= 4) res += "#define GLVER_MAJOR_4_4\n";
+            else if (glVerMajor >= 3) res += "#define GLVER_MAJOR_4_3\n";
+            else if (glVerMajor >= 2) res += "#define GLVER_MAJOR_4_2\n";
+            else if (glVerMajor >= 1) res += "#define GLVER_MAJOR_4_1\n";
+            else res += "#define GLVER_MAJOR_4_0\n";
+          } else if (glVerMinor >= 3) {
+                 if (glVerMajor >= 9) res += "#define GLVER_MAJOR_3_9\n";
+            else if (glVerMajor >= 8) res += "#define GLVER_MAJOR_3_8\n";
+            else if (glVerMajor >= 7) res += "#define GLVER_MAJOR_3_7\n";
+            else if (glVerMajor >= 6) res += "#define GLVER_MAJOR_3_6\n";
+            else if (glVerMajor >= 5) res += "#define GLVER_MAJOR_3_5\n";
+            else if (glVerMajor >= 4) res += "#define GLVER_MAJOR_3_4\n";
+            else if (glVerMajor >= 3) res += "#define GLVER_MAJOR_3_3\n";
+            else if (glVerMajor >= 2) res += "#define GLVER_MAJOR_3_2\n";
+            else if (glVerMajor >= 1) res += "#define GLVER_MAJOR_3_1\n";
+            else res += "#define GLVER_MAJOR_3_0\n";
+          }
+          continue;
+        }
         if (needToAddRevZ) { res += "#define VAVOOM_REVERSE_Z\n"; needToAddRevZ = false; }
         #ifdef GL4ES_HACKS
         res += "#define GL4ES_HACKS\n";

@@ -207,6 +207,8 @@ VOpenGLDrawer::VOpenGLDrawer ()
   , cameraFBOList()
   , currMainFBO(-1)
 {
+  glVerMajor = glVerMinor = 0;
+
   currentActiveShader = nullptr;
   lastgamma = 0;
   CurrentFade = 0;
@@ -375,6 +377,8 @@ void VOpenGLDrawer::InitResolution () {
     GCon->Logf(NAME_Init, "OpenGL v%d.%d found", major, minor);
   }
 #endif
+  glVerMajor = major;
+  glVerMinor = minor;
   shadowmapPOT = getShadowmapPOT();
   shadowmapSize = 128<<shadowmapPOT;
   smapCleared = false;

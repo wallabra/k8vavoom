@@ -297,6 +297,8 @@ VV_DECLARE_SMAP_SHADER_LEVEL
   void LoadShadowmapShaders ();
 
 private:
+  int glVerMajor;
+  int glVerMinor;
   bool usingZPass; // if we are rendering shadow volumes, should we do "z-pass"?
 
   TVec coneDir; // current spotlight direction
