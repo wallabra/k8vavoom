@@ -273,7 +273,7 @@ void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev,
     ProjMat[1][1] = 1.0f/rd->fovy;
     ProjMat[2][3] = -1.0f;
     //ProjMat[3][3] = 0.0f;
-    if (!HaveDepthClamp && rlev && rlev->IsShadowVolumeRenderer()) {
+    if (!HaveDepthClamp && rlev && rlev->IsShadowVolumeRenderer() && !rlev->IsShadowMapRenderer()) {
       ProjMat[2][2] = -1.0f;
       ProjMat[3][2] = -2.0f;
     } else {

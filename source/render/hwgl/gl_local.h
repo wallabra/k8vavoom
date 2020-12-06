@@ -601,6 +601,7 @@ public:
 
   // advanced drawing.
   virtual bool SupportsShadowVolumeRendering () override;
+  virtual bool SupportsShadowMapRendering () override;
 
   virtual void GetProjectionMatrix (VMatrix4 &mat) override;
   virtual void GetModelMatrix (VMatrix4 &mat) override;

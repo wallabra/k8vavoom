@@ -171,6 +171,16 @@ void VRenderLevelShadowVolume::BuildLightMap (surface_t *surf) {
 }
 
 
+//==========================================================================
+//
+//  VRenderLevelShadowVolume::IsShadowMapRenderer
+//
+//==========================================================================
+bool VRenderLevelShadowVolume::IsShadowMapRenderer () const noexcept {
+  return (r_shadowmaps.asBool() && Drawer && Drawer->CanRenderShadowMaps());
+}
+
+
 #ifdef VV_CHECK_1S_CAST_SHADOW
 //==========================================================================
 //

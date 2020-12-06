@@ -882,7 +882,7 @@ override bool parseOne (ScriptsParser par) {
 //==========================================================================
 override MenuChoiceBase CreateOption (MenuScreen menu) {
   // if we have only one renderer available, there's no need to choose anything
-  if (!R_SupportsShadowVolumeRendering()) return none;
+  if (!R_SupportsShadowVolumeRendering() && !R_SupportsShadowMapRendering()) return none;
   auto opt = MenuChoiceEnum(menu.GetItemContainer().NewChild(MenuChoiceEnum));
   opt.SetText(title);
   if (textColor != CR_UNDEFINED) opt.TextColor = textColor;

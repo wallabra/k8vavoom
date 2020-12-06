@@ -281,6 +281,8 @@ public:
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) = 0;
 
   inline bool IsShadowVolumeRenderer () const noexcept { return mIsShadowVolumeRenderer; }
+  // shadowmap renderer is a part of a shadow volume renderer (sorry, this is ugly hack, i know)
+  virtual bool IsShadowMapRenderer () const noexcept = 0;
 
   virtual bool IsNodeRendered (const node_t *node) const noexcept = 0;
   virtual bool IsSubsectorRendered (const subsector_t *sub) const noexcept = 0;
@@ -648,6 +650,8 @@ public:
 
   // advanced drawing
   virtual bool SupportsShadowVolumeRendering () = 0;
+  virtual bool SupportsShadowMapRendering () = 0;
+
   virtual void DrawWorldAmbientPass () = 0;
   virtual void BeginShadowVolumesPass () = 0;
   virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4], const TVec &aconeDir, const float aconeAngle) = 0;

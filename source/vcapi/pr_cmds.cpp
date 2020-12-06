@@ -653,6 +653,20 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_SupportsShadowVolumeRendering) {
 }
 
 
+IMPLEMENT_FREE_FUNCTION(VObject, R_SupportsShadowMapRendering) {
+  #ifdef CLIENT
+  if (Drawer) {
+    RET_BOOL(Drawer->SupportsShadowMapRendering());
+  } else {
+    // be conservative
+    RET_BOOL(false);
+  }
+  #else
+  RET_BOOL(false);
+  #endif
+}
+
+
 //**************************************************************************
 //
 //  Client side sound

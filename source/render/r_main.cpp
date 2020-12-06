@@ -552,17 +552,23 @@ void R_Init () {
 //==========================================================================
 void R_Start (VLevel *ALevel) {
   SCR_Update(false); // partial update
-  if (r_level_renderer > 1 && !Drawer->SupportsShadowVolumeRendering()) {
+  if (r_level_renderer > 1 && !Drawer->SupportsShadowVolumeRendering() && !Drawer->SupportsShadowMapRendering()) {
     GCon->Logf(NAME_Warning, "Your GPU doesn't support Shadow Volume Renderer, so I will switch to the lightmapped one.");
     r_level_renderer = 1;
   } else if (r_level_renderer <= 0) {
-    if (Drawer->SupportsShadowVolumeRendering()) {
+    if (Drawer->SupportsShadowVolumeRendering() || Drawer->SupportsShadowMapRendering()) {
       if (Drawer->IsShittyGPU()) {
         GCon->Logf("Your GPU is... not quite good, so I will use the lightmapped renderer.");
         r_level_renderer = 1;
-      } else {
+      } else if (Drawer->SupportsShadowMapRendering()) {
+        GCon->Logf("Your GPU supports ShadowMap Renderer, so i will use it.");
+        r_level_renderer = 2;
+      } else if (Drawer->SupportsShadowVolumeRendering()) {
         GCon->Logf("Your GPU supports Shadow Volume Renderer, so i will use it.");
         r_level_renderer = 2;
+      } else {
+        GCon->Logf("Your GPU is... not quite good, so I will use the lightmapped renderer.");
+        r_level_renderer = 1;
       }
     } else {
       GCon->Logf("Your GPU doesn't support Shadow Volume Renderer, so I will use the lightmapped one.");
@@ -574,6 +580,13 @@ void R_Start (VLevel *ALevel) {
     ALevel->Renderer = new VRenderLevelLightmap(ALevel);
   } else {
     ALevel->Renderer = new VRenderLevelShadowVolume(ALevel);
+    // force shadowmaps if shadow volumes are not supported
+    if (!Drawer->SupportsShadowVolumeRendering()) {
+      if (!r_shadowmaps) {
+        r_shadowmaps = true;
+        GCon->Logf("Forced shadowmap renderer, because shadow volumes are not supported.");
+      }
+    }
   }
 }
 
@@ -2194,6 +2207,16 @@ surfcache_t *VRenderLevelShared::GetLightChainFirst (vuint32 bnum) {
 //
 //==========================================================================
 void VRenderLevelShared::ResetLightmaps (bool recalcNow) {
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::IsShadowMapRenderer
+//
+//==========================================================================
+bool VRenderLevelShared::IsShadowMapRenderer () const noexcept {
+  return false;
 }
 
 

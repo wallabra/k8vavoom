@@ -872,6 +872,7 @@ public:
   virtual void ThinkerDestroyed (VThinker *Owner) override;
 
   virtual void ResetLightmaps (bool recalcNow) override;
+  virtual bool IsShadowMapRenderer () const noexcept override;
 
   virtual bool isNeedLightmapCache () const noexcept override;
   virtual void saveLightmaps (VStream *strm) override;
@@ -1316,6 +1317,7 @@ public:
   virtual void PreRender () override;
 
   virtual void BuildLightMap (surface_t *) override;
+  virtual bool IsShadowMapRenderer () const noexcept override;
 };
 
 

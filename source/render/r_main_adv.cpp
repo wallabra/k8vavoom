@@ -117,7 +117,16 @@ static TArray<DynLightInfo> visdynlights;
 //
 //==========================================================================
 void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
-  if (!Drawer->SupportsShadowVolumeRendering()) Host_Error("Shadow volume rendering is not supported by your graphics card");
+  if (!Drawer->SupportsShadowVolumeRendering()) {
+    if (!Drawer->SupportsShadowMapRendering()) {
+      Host_Error("Shadow volume rendering is not supported by your graphics card");
+    }
+    // force shadowmaps if shadow volumes are not supported
+    if (!r_shadowmaps) {
+      r_shadowmaps = true;
+      GCon->Logf("Forced shadowmap renderer, because shadow volumes are not supported.");
+    }
+  }
 
   //r_viewleaf = Level->PointInSubsector(Drawer->vieworg); // moved to `PrepareWorldRender()`
 

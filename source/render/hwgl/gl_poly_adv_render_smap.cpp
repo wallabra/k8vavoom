@@ -157,8 +157,6 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   if (gl_shadowmap_gbuffer) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE); else glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
 
   glEnable(GL_CULL_FACE);
-  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
   glEnable(GL_TEXTURE_2D);
 
   glGetIntegerv(GL_VIEWPORT, savedSMVPort);

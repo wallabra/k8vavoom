@@ -61,6 +61,16 @@ bool VOpenGLDrawer::SupportsShadowVolumeRendering () {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::SupportsShadowMapRendering
+//
+//==========================================================================
+bool VOpenGLDrawer::SupportsShadowMapRendering () {
+  return CanRenderShadowMaps();
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::UseFrustumFarClip
 //
 //==========================================================================

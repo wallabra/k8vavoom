@@ -423,10 +423,10 @@ void VOpenGLDrawer::InitResolution () {
   }
   if (p_glClipControl) {
     if (gl_enable_clip_control) {
-      GCon->Logf(NAME_Init, "OpenGL: `glClipControl()` found");
+      GCon->Log(NAME_Init, "OpenGL: `glClipControl()` found");
     } else {
       p_glClipControl = nullptr;
-      GCon->Logf(NAME_Init, "OpenGL: `glClipControl()` found, but disabled by user; i shall obey");
+      GCon->Log(NAME_Init, "OpenGL: `glClipControl()` found, but disabled by user; i shall obey");
     }
   }
 
@@ -528,23 +528,23 @@ void VOpenGLDrawer::InitResolution () {
 #endif
   p_glClipControl = savedClipControl;
 
-  if (p_glBlitFramebuffer) GCon->Logf(NAME_Init, "OpenGL: `glBlitFramebuffer()` found");
+  if (p_glBlitFramebuffer) GCon->Log(NAME_Init, "OpenGL: `glBlitFramebuffer()` found");
 
   if (!isShittyGPU && p_glClipControl) {
     // normal GPUs
     useReverseZ = true;
     if (!gl_enable_reverse_z) {
-      GCon->Logf(NAME_Init, "OpenGL: oops, user disabled reverse z, i shall obey");
+      GCon->Log(NAME_Init, "OpenGL: oops, user disabled reverse z, i shall obey");
       useReverseZ = false;
     }
   } else {
-    GCon->Logf(NAME_Init, "OpenGL: reverse z is turned off for your GPU");
+    GCon->Log(NAME_Init, "OpenGL: reverse z is turned off for your GPU");
     useReverseZ = false;
   }
 
   if (hasBoundsTest && !p_glDepthBounds) {
     hasBoundsTest = false;
-    GCon->Logf(NAME_Init, "OpenGL: GL_EXT_depth_bounds_test found, but no `glDepthBounds()` exported");
+    GCon->Log(NAME_Init, "OpenGL: GL_EXT_depth_bounds_test found, but no `glDepthBounds()` exported");
   }
 
   if (/*p_glStencilFuncSeparate &&*/ p_glStencilOpSeparate) {
@@ -590,14 +590,14 @@ void VOpenGLDrawer::InitResolution () {
   if (!p_glStencilOpSeparate) GCon->Log(NAME_Init, "*** no separate stencil ops --> no shadow volumes");
 
   if (!p_glGenerateMipmap || gl_dbg_fbo_blit_with_texture) {
-    GCon->Logf(NAME_Init, "OpenGL: bloom postprocessing effect disabled due to missing API");
+    GCon->Log(NAME_Init, "OpenGL: bloom postprocessing effect disabled due to missing API");
     r_bloom = false;
     canIntoBloomFX = false;
   } else {
     canIntoBloomFX = true;
   }
 
-  if (hasBoundsTest) GCon->Logf(NAME_Init, "Found GL_EXT_depth_bounds_test");
+  if (hasBoundsTest) GCon->Log(NAME_Init, "Found GL_EXT_depth_bounds_test");
 
   DepthZeroOne = !!p_glClipControl;
 
@@ -645,6 +645,21 @@ void VOpenGLDrawer::InitResolution () {
 
   // allocate wipe FBO object
   wipeFBO.createTextureOnly(this, calcWidth, calcHeight);
+
+  // check extensions
+  if (canRenderShadowmaps) {
+    if (!CheckExtension("GL_ARB_texture_cube_map") && !CheckExtension("GL_EXT_texture_cube_map")) {
+      canRenderShadowmaps = false;
+      GCon->Log(NAME_Init, "OpenGL: no cubemap support, shadowmaps disabled.");
+    }
+  }
+
+  if (canRenderShadowmaps) {
+    if (!CheckExtension("GL_ARB_texture_float")) {
+      canRenderShadowmaps = false;
+      GCon->Log(NAME_Init, "OpenGL: no floating point textures, shadowmaps disabled.");
+    }
+  }
 
   GLDRW_RESET_ERROR();
 
@@ -751,7 +766,12 @@ void VOpenGLDrawer::InitResolution () {
     if (p_glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: cannot initialise shadowmap FBO");
     p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    GCon->Logf(NAME_Init, "created cubemap %u, fbo %u; shadowmap size: %ux%u", cubeTexId, cubeFBO, shadowmapSize, shadowmapSize);
+    GCon->Logf(NAME_Init, "OpenGL: created cubemap %u, fbo %u; shadowmap size: %ux%u", cubeTexId, cubeFBO, shadowmapSize, shadowmapSize);
+
+    if (CheckExtension("GL_ARB_seamless_cube_map")) {
+      GCon->Log(NAME_Init, "OpenGL: enabling seamless cubemaps.");
+      glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    }
   }
 
   mainFBO.activate();
@@ -812,10 +832,10 @@ void VOpenGLDrawer::InitResolution () {
   // shaders
   shaderHead = nullptr; // just in case
 
-  GCon->Logf(NAME_Init, "OpenGL: loading shaders");
+  GCon->Log(NAME_Init, "OpenGL: loading shaders");
   LoadAllShaders();
   LoadShadowmapShaders();
-  GCon->Logf(NAME_Init, "OpenGL: compiling shaders");
+  GCon->Log(NAME_Init, "OpenGL: compiling shaders");
   CompileShaders(major, minor);
 
   GLDRW_CHECK_ERROR("finish OpenGL initialization");
@@ -843,7 +863,7 @@ void VOpenGLDrawer::InitResolution () {
   currentActiveFBO = nullptr;
   ReactivateCurrentFBO();
   */
-  GCon->Logf(NAME_Init, "OpenGL: finished initialization.");
+  GCon->Log(NAME_Init, "OpenGL: finished initialization.");
 }
 
 #undef gl_

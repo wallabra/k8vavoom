@@ -548,6 +548,7 @@ native static final string R_GetAspectRatioDsc (int idx);
 
 // check if advrender can be used (for use in menu system only!)
 native static final bool R_SupportsShadowVolumeRendering ();
+native static final bool R_SupportsShadowMapRendering ();
 
 native static final int R_GetBloodTranslation (int color);
 native static final int R_FindNamedTranslation (string trname);
