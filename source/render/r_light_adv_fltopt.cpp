@@ -264,6 +264,7 @@ unsigned VRenderLevelShadowVolume::CheckShadowingFlats (subsector_t *sub) {
      so i turned it off by default.
   */
   if (!sub || !sub->sector) return (FlatSectorShadowInfo::NoFloor|FlatSectorShadowInfo::NoCeiling);
+  if (!r_shadowvol_optimise_flats.asBool()) return 0; // no reason to do anything, because surface collector already did it for us
   if (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps()) return 0;
   //if (floorz > ceilingz) return 0;
   sector_t *sector = sub->sector; // our main sector
@@ -283,10 +284,12 @@ unsigned VRenderLevelShadowVolume::CheckShadowingFlats (subsector_t *sub) {
     dist = sector->ceiling.PointDistance(CurrLightPos);
     if (dist > 0.0f && dist < CurrLightRadius) allowed |= FlatSectorShadowInfo::NoCeiling; // light can touch
     //allowed = (FlatSectorShadowInfo::NoFloor|FlatSectorShadowInfo::NoCeiling);
+    /* no reason to do this, because surface collector already did this for us
     if (!r_shadowvol_optimise_flats) {
       // no checks, return inverted `allowed`
       return (nfo.renderFlag = allowed^(FlatSectorShadowInfo::NoFloor|FlatSectorShadowInfo::NoCeiling));
     }
+    */
     if (!allowed) {
       // nothing is allowed, oops
       return (nfo.renderFlag = (FlatSectorShadowInfo::NoFloor|FlatSectorShadowInfo::NoCeiling));
