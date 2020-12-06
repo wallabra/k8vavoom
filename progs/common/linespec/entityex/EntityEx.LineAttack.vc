@@ -235,7 +235,7 @@ override Entity PickActor (optional TVec org, TVec dir, float distance, optional
     if (th.Origin.z+th.Height < hit_point.z) continue; // shot over the thing
     if (th.Origin.z > hit_point.z) continue; // shot under the thing
 
-    if (in->bExtraThingCheck && !XLevel.BSPTraceLine(shootOrigin, hit_point, nullptr, nullptr, SPF_NOBLOCKING)) {
+    if (in->bExtraThingCheck && !XLevel.BSPTraceLine(shootOrigin, hit_point, noBlockFlags:SPF_NOBLOCKING)) {
       //printdebug("%C: cannot be hit!", th);
       continue;
     }
@@ -614,7 +614,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec aangles, float distance,
     if (in->bExtraThingCheck) {
       // check angles to see if the thing can be aimed at
       TVec hit_point = shootOrigin+(distance*in->frac)*aim_dir;
-      if (!XLevel.BSPTraceLine(shootOrigin, hit_point, nullptr, nullptr, SPF_NOBLOCKING)) {
+      if (!XLevel.BSPTraceLine(shootOrigin, hit_point, noBlockFlags:SPF_NOBLOCKING)) {
         //printdebug("%C: cannot be hit!", th);
         continue;
       }
@@ -935,7 +935,7 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
     // check for physical attacks on a ghost
     if (th.bGhost && NoAttackGhosts) continue;
 
-    if (in->bExtraThingCheck && !XLevel.BSPTraceLine(shootOrigin, hit_point, nullptr, nullptr, SPF_NOBLOCKING)) {
+    if (in->bExtraThingCheck && !XLevel.BSPTraceLine(shootOrigin, hit_point, noBlockFlags:SPF_NOBLOCKING)) {
       //printdebug("%C: cannot be hit!", th);
       continue;
     }
@@ -1146,7 +1146,7 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
     }
 
     // hit thing
-    if (in->bExtraThingCheck && !XLevel.BSPTraceLine(shootOrigin, hit_point, nullptr, nullptr, SPF_NOBLOCKING)) {
+    if (in->bExtraThingCheck && !XLevel.BSPTraceLine(shootOrigin, hit_point, noBlockFlags:SPF_NOBLOCKING)) {
       //printdebug("%C: cannot be hit!", th);
       continue;
     }
