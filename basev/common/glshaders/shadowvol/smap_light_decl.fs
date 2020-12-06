@@ -9,3 +9,5 @@ uniform float CubeSize;
 
 uniform vec3 LightPos;
 uniform float UseAdaptiveBias;
+
+$include "shadowvol/cubemap_conv.inc.fs"

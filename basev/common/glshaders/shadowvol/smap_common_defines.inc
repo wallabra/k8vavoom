@@ -5,17 +5,6 @@
 
 #ifdef VV_SMAP_BLUR16_FAST
 # define VV_SMAP_BLUR16
-# define VV_SMAP_BLUR_FAST8
-#endif
-
-#ifdef VV_SMAP_BLUR16_FASTER
-# define VV_SMAP_BLUR16
-# define VV_SMAP_BLUR_FAST16
-#endif
-
-#ifdef VV_SMAP_BLUR16_FASTEST
-# define VV_SMAP_BLUR16
-# define VV_SMAP_BLUR_FAST8
 # define VV_SMAP_BLUR_FAST16
 #endif
 
@@ -53,12 +42,6 @@
 #endif
 
 #ifndef DCOUNT
-# ifdef VV_SMAP_BLUR4
-#  define DCOUNT 5.0
-# endif
-#endif
-
-#ifndef DCOUNT
 # define DCOUNT 5.0
 #endif
 
@@ -74,12 +57,17 @@
 # endif
 #endif
 
-#ifdef VV_DYNAMIC_DCOUNT
-# ifndef VV_SMAP_BLUR8
-#  undef VV_DYNAMIC_DCOUNT
+
+#ifdef GLVER_MAJOR_4
+# define textureCubeFn  texture
+#endif
+
+#ifndef textureCubeFn
+# ifdef GLVER_MAJOR_3
+#  define textureCubeFn  texture
 # endif
 #endif
 
-#define VV_BLUR4_MUL(n_)  ((n_)*1.4)
-#define VV_BLUR8_MUL(n_)  ((n_)*1.4)
-#define VV_BLUR16_MUL(n_)  ((n_)*1.8)
+#ifndef textureCubeFn
+# define textureCubeFn  textureCube
+#endif

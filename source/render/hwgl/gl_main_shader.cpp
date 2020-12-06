@@ -328,6 +328,7 @@ static VStr fixVersionLine (VStr s, int glVerMajor, int glVerMinor) {
   while (spos < s.length() && s[spos] <= ' ') ++spos;
   while (spos < s.length() && s[spos] > ' ') ++spos;
   while (spos < s.length() && s[spos] <= ' ') ++spos;
+  bool addVersions = false;
   if (s.right(s.length()-spos) == "4xx") {
     s.chopRight(s.length()-spos);
          if (glVerMajor >= 4) s += "400";
@@ -335,12 +336,43 @@ static VStr fixVersionLine (VStr s, int glVerMajor, int glVerMinor) {
     else if (glVerMajor >= 3) s += "130";
     else s += "120";
     //GCon->Logf(NAME_Debug, "GLVER4xx: %s", *s);
+    addVersions = true;
   } else if (s.right(s.length()-spos) == "3xx") {
     s.chopRight(s.length()-spos);
          if (glVerMajor >= 4 || (glVerMajor >= 3 && glVerMinor >= 1)) s += "140";
     else if (glVerMajor >= 3) s += "130";
     else s += "120";
     //GCon->Logf(NAME_Debug, "GLVER3xx: %s", *s);
+    addVersions = true;
+  }
+  s += "\n";
+  if (addVersions) {
+    //FIXME: this sux!
+    if (glVerMajor >= 4) {
+           if (glVerMajor >= 9) s += "#define GLVER_4_9\n";
+      else if (glVerMajor >= 8) s += "#define GLVER_4_8\n";
+      else if (glVerMajor >= 7) s += "#define GLVER_4_7\n";
+      else if (glVerMajor >= 6) s += "#define GLVER_4_6\n";
+      else if (glVerMajor >= 5) s += "#define GLVER_4_5\n";
+      else if (glVerMajor >= 4) s += "#define GLVER_4_4\n";
+      else if (glVerMajor >= 3) s += "#define GLVER_4_3\n";
+      else if (glVerMajor >= 2) s += "#define GLVER_4_2\n";
+      else if (glVerMajor >= 1) s += "#define GLVER_4_1\n";
+      else s += "#define GLVER_4_0\n";
+      s += "#define GLVER_MAJOR_4\n";
+    } else if (glVerMinor >= 3) {
+           if (glVerMajor >= 9) s += "#define GLVER_3_9\n";
+      else if (glVerMajor >= 8) s += "#define GLVER_3_8\n";
+      else if (glVerMajor >= 7) s += "#define GLVER_3_7\n";
+      else if (glVerMajor >= 6) s += "#define GLVER_3_6\n";
+      else if (glVerMajor >= 5) s += "#define GLVER_3_5\n";
+      else if (glVerMajor >= 4) s += "#define GLVER_3_4\n";
+      else if (glVerMajor >= 3) s += "#define GLVER_3_3\n";
+      else if (glVerMajor >= 2) s += "#define GLVER_3_2\n";
+      else if (glVerMajor >= 1) s += "#define GLVER_3_1\n";
+      else s += "#define GLVER_3_0\n";
+      s += "#define GLVER_MAJOR_3\n";
+    }
   }
   return s;
 }
@@ -449,37 +481,7 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdirc
     VStr cmd = getDirective(line);
     if (cmd.length() == 0) {
       if (needToAddDefines) {
-        if (isVersionLine(line)) {
-          res += fixVersionLine(line, glVerMajor, glVerMinor);
-          res += "\n";
-          //FIXME: this sux!
-          if (glVerMajor >= 4) {
-                 if (glVerMajor >= 9) res += "#define GLVER_4_9\n";
-            else if (glVerMajor >= 8) res += "#define GLVER_4_8\n";
-            else if (glVerMajor >= 7) res += "#define GLVER_4_7\n";
-            else if (glVerMajor >= 6) res += "#define GLVER_4_6\n";
-            else if (glVerMajor >= 5) res += "#define GLVER_4_5\n";
-            else if (glVerMajor >= 4) res += "#define GLVER_4_4\n";
-            else if (glVerMajor >= 3) res += "#define GLVER_4_3\n";
-            else if (glVerMajor >= 2) res += "#define GLVER_4_2\n";
-            else if (glVerMajor >= 1) res += "#define GLVER_4_1\n";
-            else res += "#define GLVER_4_0\n";
-            res += "#define GLVER_MAJOR_4\n";
-          } else if (glVerMinor >= 3) {
-                 if (glVerMajor >= 9) res += "#define GLVER_3_9\n";
-            else if (glVerMajor >= 8) res += "#define GLVER_3_8\n";
-            else if (glVerMajor >= 7) res += "#define GLVER_3_7\n";
-            else if (glVerMajor >= 6) res += "#define GLVER_3_6\n";
-            else if (glVerMajor >= 5) res += "#define GLVER_3_5\n";
-            else if (glVerMajor >= 4) res += "#define GLVER_3_4\n";
-            else if (glVerMajor >= 3) res += "#define GLVER_3_3\n";
-            else if (glVerMajor >= 2) res += "#define GLVER_3_2\n";
-            else if (glVerMajor >= 1) res += "#define GLVER_3_1\n";
-            else res += "#define GLVER_3_0\n";
-            res += "#define GLVER_MAJOR_3\n";
-          }
-          continue;
-        }
+        if (isVersionLine(line)) { res += fixVersionLine(line, glVerMajor, glVerMinor); continue; }
         if (needToAddRevZ) { res += "#define VAVOOM_REVERSE_Z\n"; needToAddRevZ = false; }
         #ifdef GL4ES_HACKS
         res += "#define GL4ES_HACKS\n";
@@ -600,6 +602,4 @@ void VOpenGLDrawer::LoadShadowmapShaders () {
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR8_FAST, "VV_SMAP_BLUR8_FAST")
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR16, "VV_SMAP_BLUR16")
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR16_FAST, "VV_SMAP_BLUR16_FAST")
-  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR16_FASTER, "VV_SMAP_BLUR16_FASTER")
-  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR16_FASTEST, "VV_SMAP_BLUR16_FASTEST")
 }
