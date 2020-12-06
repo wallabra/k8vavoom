@@ -454,27 +454,29 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdirc
           res += "\n";
           //FIXME: this sux!
           if (glVerMajor >= 4) {
-                 if (glVerMajor >= 9) res += "#define GLVER_MAJOR_4_9\n";
-            else if (glVerMajor >= 8) res += "#define GLVER_MAJOR_4_8\n";
-            else if (glVerMajor >= 7) res += "#define GLVER_MAJOR_4_7\n";
-            else if (glVerMajor >= 6) res += "#define GLVER_MAJOR_4_6\n";
-            else if (glVerMajor >= 5) res += "#define GLVER_MAJOR_4_5\n";
-            else if (glVerMajor >= 4) res += "#define GLVER_MAJOR_4_4\n";
-            else if (glVerMajor >= 3) res += "#define GLVER_MAJOR_4_3\n";
-            else if (glVerMajor >= 2) res += "#define GLVER_MAJOR_4_2\n";
-            else if (glVerMajor >= 1) res += "#define GLVER_MAJOR_4_1\n";
-            else res += "#define GLVER_MAJOR_4_0\n";
+                 if (glVerMajor >= 9) res += "#define GLVER_4_9\n";
+            else if (glVerMajor >= 8) res += "#define GLVER_4_8\n";
+            else if (glVerMajor >= 7) res += "#define GLVER_4_7\n";
+            else if (glVerMajor >= 6) res += "#define GLVER_4_6\n";
+            else if (glVerMajor >= 5) res += "#define GLVER_4_5\n";
+            else if (glVerMajor >= 4) res += "#define GLVER_4_4\n";
+            else if (glVerMajor >= 3) res += "#define GLVER_4_3\n";
+            else if (glVerMajor >= 2) res += "#define GLVER_4_2\n";
+            else if (glVerMajor >= 1) res += "#define GLVER_4_1\n";
+            else res += "#define GLVER_4_0\n";
+            res += "#define GLVER_MAJOR_4\n";
           } else if (glVerMinor >= 3) {
-                 if (glVerMajor >= 9) res += "#define GLVER_MAJOR_3_9\n";
-            else if (glVerMajor >= 8) res += "#define GLVER_MAJOR_3_8\n";
-            else if (glVerMajor >= 7) res += "#define GLVER_MAJOR_3_7\n";
-            else if (glVerMajor >= 6) res += "#define GLVER_MAJOR_3_6\n";
-            else if (glVerMajor >= 5) res += "#define GLVER_MAJOR_3_5\n";
-            else if (glVerMajor >= 4) res += "#define GLVER_MAJOR_3_4\n";
-            else if (glVerMajor >= 3) res += "#define GLVER_MAJOR_3_3\n";
-            else if (glVerMajor >= 2) res += "#define GLVER_MAJOR_3_2\n";
-            else if (glVerMajor >= 1) res += "#define GLVER_MAJOR_3_1\n";
-            else res += "#define GLVER_MAJOR_3_0\n";
+                 if (glVerMajor >= 9) res += "#define GLVER_3_9\n";
+            else if (glVerMajor >= 8) res += "#define GLVER_3_8\n";
+            else if (glVerMajor >= 7) res += "#define GLVER_3_7\n";
+            else if (glVerMajor >= 6) res += "#define GLVER_3_6\n";
+            else if (glVerMajor >= 5) res += "#define GLVER_3_5\n";
+            else if (glVerMajor >= 4) res += "#define GLVER_3_4\n";
+            else if (glVerMajor >= 3) res += "#define GLVER_3_3\n";
+            else if (glVerMajor >= 2) res += "#define GLVER_3_2\n";
+            else if (glVerMajor >= 1) res += "#define GLVER_3_1\n";
+            else res += "#define GLVER_3_0\n";
+            res += "#define GLVER_MAJOR_3\n";
           }
           continue;
         }
