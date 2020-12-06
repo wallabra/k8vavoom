@@ -81,31 +81,10 @@ $include "shadowvol/smap_common_defines.inc"
     if (textureCubeFn(ShadowTexture, ltfdir).r+bias1 >= currentDistanceToLight) daccum += 1.0;
 
     //TODO: process cube edges
-    vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
     #ifndef VV_SMAP_FILTER_OLD
-    vec3 cubeMDir = convert_cube_uv_to_xyz(cubeTC);
-    //float cubeMOfs = convert_xyz_to_cube_uvofs(ltfdir);
-    vec2 cubeXMul, cubeYMul, cubeZMul;
-    vec3 absdir = abs(ltfdir);
-    if (absdir.x >= absdir.y && absdir.x >= absdir.z) {
-      // positive x or negative x
-      cubeXMul = vec2(0.0, 0.0);
-      cubeYMul = vec2(1.0, 0.0);
-      cubeZMul = vec2(0.0, 1.0);
-    } else if (absdir.y >= absdir.x && absdir.y >= absdir.z) {
-      // positive y or negative y
-      cubeXMul = vec2(1.0, 0.0);
-      cubeYMul = vec2(0.0, 0.0);
-      cubeZMul = vec2(0.0, 1.0);
-    } else {
-      // positive z or negative z
-      cubeXMul = vec2(1.0, 0.0);
-      cubeYMul = vec2(0.0, 1.0);
-      cubeZMul = vec2(0.0, 0.0);
-    }
-    float cubeDVC = 2.0/CubeSize;
-    #define VV_SMAP_OFS(ox_,oy_)  (vec3(cubeMDir.x+ox_*cubeDVC*cubeXMul.x+oy_*cubeDVC*cubeXMul.y, cubeMDir.y+ox_*cubeDVC*cubeYMul.x+oy_*cubeDVC*cubeYMul.y, cubeMDir.z+ox_*cubeDVC*cubeZMul.x+oy_*cubeDVC*cubeZMul.y)
+    $include "shadowvol/cubemap_calc_filters.fs"
     #else
+    vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
     #define VV_SMAP_OFS  shift_cube_uv_slow(cubeTC, vec2
     #endif
 
