@@ -1,5 +1,8 @@
 $include "shadowvol/smap_common_defines.inc"
 
+// use more math instead of more conditions
+//#define VV_SMAP_FILTER_OLD
+
   // dunno which one is better (or even which one is right, lol)
   // fun thing: it seems that turning on cubemap texture filtering removes moire almost completely
   // so if the user will turn on filtering, we will turn off "adaptive" bias with `UseAdaptiveBias`
@@ -79,12 +82,38 @@ $include "shadowvol/smap_common_defines.inc"
 
     //TODO: process cube edges
     vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
+    #ifndef VV_SMAP_FILTER_OLD
+    vec3 cubeMDir = convert_cube_uv_to_xyz(cubeTC);
+    //float cubeMOfs = convert_xyz_to_cube_uvofs(ltfdir);
+    vec2 cubeXMul, cubeYMul, cubeZMul;
+    vec3 absdir = abs(ltfdir);
+    if (absdir.x >= absdir.y && absdir.x >= absdir.z) {
+      // positive x or negative x
+      cubeXMul = vec2(0.0, 0.0);
+      cubeYMul = vec2(1.0, 0.0);
+      cubeZMul = vec2(0.0, 1.0);
+    } else if (absdir.y >= absdir.x && absdir.y >= absdir.z) {
+      // positive y or negative y
+      cubeXMul = vec2(1.0, 0.0);
+      cubeYMul = vec2(0.0, 0.0);
+      cubeZMul = vec2(0.0, 1.0);
+    } else {
+      // positive z or negative z
+      cubeXMul = vec2(1.0, 0.0);
+      cubeYMul = vec2(0.0, 1.0);
+      cubeZMul = vec2(0.0, 0.0);
+    }
+    float cubeDVC = 2.0/CubeSize;
+    #define VV_SMAP_OFS(ox_,oy_)  (vec3(cubeMDir.x+ox_*cubeDVC*cubeXMul.x+oy_*cubeDVC*cubeXMul.y, cubeMDir.y+ox_*cubeDVC*cubeYMul.x+oy_*cubeDVC*cubeYMul.y, cubeMDir.z+ox_*cubeDVC*cubeZMul.x+oy_*cubeDVC*cubeZMul.y)
+    #else
+    #define VV_SMAP_OFS  shift_cube_uv_slow(cubeTC, vec2
+    #endif
 
     // perform 4-way blur
-    if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2(-1.0,  0.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
-    if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2( 1.0,  0.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
-    if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2( 0.0, -1.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
-    if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2( 0.0,  1.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
+    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-1.0,  0.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
+    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 1.0,  0.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
+    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0, -1.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
+    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0,  1.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
 
     #ifdef VV_SMAP_BLUR8
       // perform 8-way blur
@@ -95,10 +124,10 @@ $include "shadowvol/smap_common_defines.inc"
         #ifdef VV_DYNAMIC_DCOUNT
         dcount = 9.0;
         #endif
-        if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2(-1.0, -1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
-        if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2(-1.0,  1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
-        if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2( 1.0, -1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
-        if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2( 1.0,  1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
+        if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-1.0, -1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
+        if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-1.0,  1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
+        if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 1.0, -1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
+        if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 1.0,  1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
         #ifdef VV_SMAP_BLUR16
           // perform 16-way blur
           #ifdef VV_SMAP_BLUR_FAST16
@@ -108,17 +137,17 @@ $include "shadowvol/smap_common_defines.inc"
             #ifdef VV_DYNAMIC_DCOUNT
             dcount = 17.0;
             #endif
-            if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2(-2.0,  0.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-            if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2( 2.0,  0.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-2.0,  0.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 2.0,  0.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
 
-            if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2( 0.0, -2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-            if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2( 0.0,  2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0, -2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0,  2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
 
-            if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2(-2.0, -2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-            if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2(-2.0,  2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-2.0, -2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-2.0,  2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
 
-            if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2( 2.0, -2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-            if (textureCubeFn(ShadowTexture, shift_cube_uv(cubeTC, vec2( 2.0,  2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 2.0, -2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 2.0,  2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
           }
         #endif
       }

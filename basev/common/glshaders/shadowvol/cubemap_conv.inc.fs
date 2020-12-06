@@ -15,17 +15,14 @@ vec3 convert_cube_uv_to_xyz (const vec3 texc) {
   return res;
 }
 
-// (1.0, 0.1, -0.5) -> (0.25, 0.55, 0)
-// (0.25, 0.55, 0) -> (1.0, 0.1, -0.5)
 
 // input is normalized
 // z is face number
-vec3 convert_xyz_to_cube_uv (vec3 dir) {
+vec3 convert_xyz_to_cube_uv (const vec3 dir) {
   vec3 res;
   float maxAxis;
 
-  //vec3 absdir = abs(dir);
-  vec3 absdir = vec3(abs(dir.x), abs(dir.y), abs(dir.z));
+  vec3 absdir = abs(dir);
   if (absdir.x >= absdir.y && absdir.x >= absdir.z) {
     // positive x or negative x
     maxAxis = absdir.x;
@@ -89,22 +86,11 @@ vec3 convert_xyz_to_cube_uv (vec3 dir) {
 }
 
 
-// input is normalized
-// returns new dir
-/*
-vec3 shift_cube_uv (vec3 dir, vec2 shift, float cubeSize) {
-  //TODO: process cube edges
-  vec3 tc = convert_xyz_to_cube_uv(dir);
-  tc.x += shift.x/cubeSize;
-  tc.y += shift.y/cubeSize;
-  return convert_cube_uv_to_xyz(tc);
-}
-*/
-
-
-// input is normalized, z is face number
+// input is `convert_cube_uv_to_xyz()` result
 // returns new dir, not normalized
-vec3 shift_cube_uv (vec3 tc, const vec2 shift) {
+// it doesn't matter in which order we'll sample the texels,
+// so we can go with simplier thing
+vec3 shift_cube_uv_slow (vec3 tc, const vec2 shift) {
   tc.x += shift.x/CubeSize;
   tc.y += shift.y/CubeSize;
   return convert_cube_uv_to_xyz(tc);
