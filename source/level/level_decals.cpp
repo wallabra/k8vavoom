@@ -41,8 +41,9 @@ static VCvarI r_decal_onetype_max("r_decal_onetype_max", "128", "Maximum decals 
 static VCvarI r_decal_gore_onetype_max("r_decal_gore_onetype_max", "8", "Maximum decals of one decaltype on a wall segment for Gore Mod.", CVAR_Archive);
 
 // make renderer life somewhat easier by not allowing alot of decals
-extern VCvarI gl_bigdecal_limit;
-extern VCvarI gl_smalldecal_limit;
+// main work is done by `VLevel->CleanupDecals()`
+VCvarI gl_bigdecal_limit("gl_bigdecal_limit", "16", "Limit for big decals on one seg (usually produced by gore mod).", /*CVAR_PreInit|*/CVAR_Archive);
+VCvarI gl_smalldecal_limit("gl_smalldecal_limit", "64", "Limit for small decals on one seg (usually produced by shots).", /*CVAR_PreInit|*/CVAR_Archive);
 
 TArray<VLevel::DecalLineInfo> VLevel::connectedLines;
 
