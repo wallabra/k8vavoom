@@ -324,8 +324,8 @@ void VDrawer::CalcShadowMapProjectionMatrix (VMatrix4 &ProjMat, float Radius, in
 //==========================================================================
 void VDrawer::CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAVec &angles, bool MirrorFlip) {
   ModelMat.SetIdentity();
-  ModelMat *= VMatrix4::RotateX(-90); //glRotatef(-90, 1, 0, 0);
-  ModelMat *= VMatrix4::RotateZ(90); //glRotatef(90, 0, 0, 1);
+  ModelMat *= VMatrix4::RotateX(-90.0f); //glRotatef(-90, 1, 0, 0);
+  ModelMat *= VMatrix4::RotateZ(90.0f); //glRotatef(90, 0, 0, 1);
   if (MirrorFlip) ModelMat *= VMatrix4::Scale(TVec(1, -1, 1)); //glScalef(1, -1, 1);
   ModelMat *= VMatrix4::RotateX(-angles.roll); //glRotatef(-viewangles.roll, 1, 0, 0);
   ModelMat *= VMatrix4::RotateY(-angles.pitch); //glRotatef(-viewangles.pitch, 0, 1, 0);
@@ -334,14 +334,22 @@ void VDrawer::CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAV
 }
 
 
-static const TAVec CubeMapViewAngles[6] = {
-  //    pitch    yaw   roll
-  TAVec(  0.0f,  90.0f,   0.0f), // right
-  TAVec(  0.0f, -90.0f,   0.0f), // left
-  TAVec( 90.0f,   0.0f,   0.0f), // top
-  TAVec(-90.0f,   0.0f,   0.0f), // bottom
-  TAVec(  0.0f,   0.0f,   0.0f), // back
-  TAVec(  0.0f, 180.0f,   0.0f), // front
+static const TVec LightViewTarget[6] = {
+  TVec(-1.0f,  0.0f,  0.0f), // positive x
+  TVec( 1.0f,  0.0f,  0.0f), // negative x
+  TVec( 0.0f,  1.0f,  0.0f), // positive y
+  TVec( 0.0f, -1.0f,  0.0f), // negative y
+  TVec( 0.0f,  0.0f, -1.0f), // positive z
+  TVec( 0.0f,  0.0f,  1.0f), // negative z
+};
+
+static const TVec LightViewUp[6] = {
+  TVec( 0.0f, -1.0f,  0.0f), // positive x
+  TVec( 0.0f, -1.0f,  0.0f), // negative x
+  TVec( 0.0f,  0.0f, -1.0f), // positive y
+  TVec( 0.0f,  0.0f,  1.0f), // negative y
+  TVec( 0.0f, -1.0f,  0.0f), // positive z
+  TVec( 0.0f, -1.0f,  0.0f), // negative z
 };
 
 
@@ -349,36 +357,27 @@ static const TAVec CubeMapViewAngles[6] = {
 //
 //  VDrawer::CalcSpotLightFaceView
 //
+//  do not even ask me. if was found by brute force.
+//
 //==========================================================================
 void VDrawer::CalcSpotLightFaceView (VMatrix4 &ModelMat, const TVec &origin, unsigned int facenum) {
   if (facenum > 5) facenum = 0;
   ModelMat.SetIdentity();
-  /*
-  ModelMat *= VMatrix4::RotateX(-angles.roll); //glRotatef(-viewangles.roll, 1, 0, 0);
-  ModelMat *= VMatrix4::RotateY(-angles.pitch); //glRotatef(-viewangles.pitch, 0, 1, 0);
-  ModelMat *= VMatrix4::RotateZ(-angles.yaw); //glRotatef(-viewangles.yaw, 0, 0, 1);
-  */
-  switch (facenum) {
-    case 0: // positive x
-      ModelMat *= VMatrix4::RotateX(-90.0f);
-      break;
-    case 1: // negative x
-      ModelMat *= VMatrix4::RotateX(90.0f);
-      break;
-    case 2: // positive y
-      ModelMat *= VMatrix4::RotateY(-90.0f);
-      break;
-    case 3: // negative y
-      ModelMat *= VMatrix4::RotateY(90.0f);
-      break;
-    case 4: // positive z
-      ModelMat *= VMatrix4::RotateZ(-90.0f);
-      break;
-    case 5: // negative z
-      ModelMat *= VMatrix4::RotateZ(90.0f);
-      break;
-  }
-  ModelMat *= VMatrix4::Translate(-origin); //glTranslatef(-vieworg.x, -vieworg.y, -vieworg.z);
+
+  const TVec forward = LightViewTarget[facenum].normalised();
+  const TVec left = LightViewUp[facenum].cross(forward).normalised();
+  const TVec up = forward.cross(left).normalised();
+
+  ModelMat.m[0][0] = left.x;
+  ModelMat.m[0][1] = left.y;
+  ModelMat.m[0][2] = left.z;
+  ModelMat.m[1][0] = up.x;
+  ModelMat.m[1][1] = up.y;
+  ModelMat.m[1][2] = up.z;
+  ModelMat.m[2][0] = forward.x;
+  ModelMat.m[2][1] = forward.y;
+  ModelMat.m[2][2] = forward.z;
+  ModelMat *= VMatrix4::Translate(-origin);
 }
 
 

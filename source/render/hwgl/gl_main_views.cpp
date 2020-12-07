@@ -256,7 +256,7 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
 
     T_SetFont(ConFont);
     T_SetAlign(hcenter, vtop);
-    const char *cbnames[6] = { "BACK", "FRONT", "RIGHT", "LEFT", "BOTTOM", "TOP" };
+    const char *cbnames[6] = { "POS-X", "NEG-X", "POS-Y", "NEG-Y", "POS-Z", "NEG-Z" };
 
     //const float ssize = shadowmapSize;
     const float ssize = 128.0f;
