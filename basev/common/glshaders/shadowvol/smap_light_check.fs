@@ -81,11 +81,11 @@ $include "shadowvol/smap_common_defines.inc"
     if (textureCubeFn(ShadowTexture, ltfdir).r+bias1 >= currentDistanceToLight) daccum += 1.0;
 
     //TODO: process cube edges
-    #ifndef VV_SMAP_FILTER_OLD
-    $include "shadowvol/cubemap_calc_filters.fs"
-    #else
+    #ifdef VV_SMAP_FILTER_OLD
     vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
     #define VV_SMAP_OFS  shift_cube_uv_slow(cubeTC, vec2
+    #else
+    $include "shadowvol/cubemap_calc_filters.fs"
     #endif
 
     // perform 4-way blur
