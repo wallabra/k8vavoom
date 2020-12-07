@@ -310,7 +310,7 @@ void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev,
 void VDrawer::CalcShadowMapProjectionMatrix (VMatrix4 &ProjMat, float Radius, int awidth, int aheight, float aspect) {
   const float fov = 90.0f;
   const float fovx = tanf(DEG2RADF(fov)/2.0f);
-  if (aspect <= 0.0f || !isFiniteF(aspect)) aspect = 1.0f;
+  //if (aspect <= 0.0f || !isFiniteF(aspect)) aspect = 1.0f;
   const float fovy = fovx;//*aheight/awidth/aspect;
   ProjMat.SetZero();
   ProjMat[0][0] = 1.0f/fovx;
@@ -338,6 +338,20 @@ void VDrawer::CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAV
   ModelMat *= VMatrix4::RotateX(-90); //glRotatef(-90, 1, 0, 0);
   ModelMat *= VMatrix4::RotateZ(90); //glRotatef(90, 0, 0, 1);
   if (MirrorFlip) ModelMat *= VMatrix4::Scale(TVec(1, -1, 1)); //glScalef(1, -1, 1);
+  ModelMat *= VMatrix4::RotateX(-angles.roll); //glRotatef(-viewangles.roll, 1, 0, 0);
+  ModelMat *= VMatrix4::RotateY(-angles.pitch); //glRotatef(-viewangles.pitch, 0, 1, 0);
+  ModelMat *= VMatrix4::RotateZ(-angles.yaw); //glRotatef(-viewangles.yaw, 0, 0, 1);
+  ModelMat *= VMatrix4::Translate(-origin); //glTranslatef(-vieworg.x, -vieworg.y, -vieworg.z);
+}
+
+
+//==========================================================================
+//
+//  VDrawer::CalcModelMatrixNoViewRotation
+//
+//==========================================================================
+void VDrawer::CalcModelMatrixNoViewRotation (VMatrix4 &ModelMat, const TVec &origin, const TAVec &angles) {
+  ModelMat.SetIdentity();
   ModelMat *= VMatrix4::RotateX(-angles.roll); //glRotatef(-viewangles.roll, 1, 0, 0);
   ModelMat *= VMatrix4::RotateY(-angles.pitch); //glRotatef(-viewangles.pitch, 0, 1, 0);
   ModelMat *= VMatrix4::RotateZ(-angles.yaw); //glRotatef(-viewangles.yaw, 0, 0, 1);

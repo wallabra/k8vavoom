@@ -736,6 +736,8 @@ public:
   void CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAVec &angles, bool MirrorFlip=false);
   void CalcOrthoMatrix (VMatrix4 &OrthoMat, const float left, const float right, const float bottom, const float top);
 
+  void CalcModelMatrixNoViewRotation (VMatrix4 &ModelMat, const TVec &origin, const TAVec &angles);
+
   void CalcShadowMapProjectionMatrix (VMatrix4 &ProjMat, float Radius, int awidth, int aheight, float aspect=1.0f);
 
   void SetOrthoProjection (const float left, const float right, const float bottom, const float top);
