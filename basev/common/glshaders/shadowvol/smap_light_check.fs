@@ -1,7 +1,28 @@
 $include "shadowvol/smap_common_defines.inc"
 
+// conditions seems to perform better
+//#define VV_SMAP_MATH_SAMPLER
+
 // use more math instead of more conditions
 //#define VV_SMAP_FILTER_OLD
+
+// try to do weighted 4-texel sampling?
+//#define VV_SMAP_WEIGHTED_BLUR
+
+#ifdef VV_SMAP_WEIGHTED_BLUR
+# ifdef VV_SMAP_BLUR8
+#  undef VV_SMAP_WEIGHTED_BLUR
+# endif
+#endif
+
+#ifdef VV_SMAP_WEIGHTED_BLUR
+# ifndef VV_SMAP_BLUR4
+#  undef VV_SMAP_WEIGHTED_BLUR
+# endif
+#endif
+
+#define VV_SMAP_SAMPLE(ofs_,bias_)  (sign(sign(textureCubeFn(ShadowTexture, (ofs_)).r+(bias_)-currentDistanceToLight)+0.5))
+
 
   // dunno which one is better (or even which one is right, lol)
   // fun thing: it seems that turning on cubemap texture filtering removes moire almost completely
@@ -72,77 +93,178 @@ $include "shadowvol/smap_common_defines.inc"
   ltfdir.y =  fromLightToFragment.y;
   ltfdir.z =  fromLightToFragment.z;
 
-  #ifdef VV_SMAP_BLUR4
-    //float cubetstep = 1.0/CubeSize;
-    float daccum = 0.0;
-    #ifdef VV_DYNAMIC_DCOUNT
-    float dcount = 5.0;
-    #endif
-    if (textureCubeFn(ShadowTexture, ltfdir).r+bias1 >= currentDistanceToLight) daccum += 1.0;
+  #ifdef VV_SMAP_WEIGHTED_BLUR
+  float shadowMul;
 
+  if (UseAdaptiveBias+100.0 > 0.0) {
+    vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
+
+  /*
+    float x = texc.x*CubeSize;
+    float y = texc.y*CubeSize;
+    float x1 = floor(x);
+    float y1 = floor(y);
+    float x2 = x1+1;
+    float y2 = y1+1;
+
+    float fxy1 = (x2-x)/(x2-x1)*smp(x1,y1)+(x-x1)/(x2-x1)*smp(x2,y1)
+    float fxy2 = (x2-x)/(x2-x1)*smp(x1,y2)+(x-x1)/(x2-x1)*smp(x2,y2)
+    float fxy = (y2-y)/(y2-y1)*fxy1+(y-y1)/(y2-y1)*fxy2
+
+    fxy1 = (x1-x+1)*smp(x1,y1) + (x-x1)*smp(x2,y1)
+    fxy2 = (x1-x+1)*smp(x1,y2) + (x-x1)*smp(x2,y2)
+    fxy = (y1-y+1)*fxy1 + (y-y1)*fxy2
+
+
+    fxy1 = 1-fract(x)*smp(x1,y1) + fract(x)*smp(x2,y1)
+    fxy2 = 1-fract(x)*smp(x1,y2) + fract(x)*smp(x2,y2)
+    fxy = 1-fract(y)*fxy1 + fract(y)*fxy2
+  */
+
+    vec4 blurWD = calc_blur_weight_dir_new(cubeTC);
+    #ifdef VV_SMAP_MATH_SAMPLER
+    float valat    = VV_SMAP_SAMPLE(shift_cube_uv_slow(cubeTC, vec2(blurWD.x+0.0, blurWD.y+0.0)), bias1);
+    float valhoriz = VV_SMAP_SAMPLE(shift_cube_uv_slow(cubeTC, vec2(blurWD.x+1.0, blurWD.y+0.0)), bias1);
+    float valvert  = VV_SMAP_SAMPLE(shift_cube_uv_slow(cubeTC, vec2(blurWD.x+0.0, blurWD.y+1.0)), bias1);
+    float valdiag  = VV_SMAP_SAMPLE(shift_cube_uv_slow(cubeTC, vec2(blurWD.x+1.0, blurWD.y+1.0)), bias1);
+    #else
+    //bias4 += 1.02;
+    float valat = 0.0, valvert = 0.0, valhoriz = 0.0, valdiag = 0.0;
+    if (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(blurWD.x+0.0, blurWD.y+0.0))).r+bias1 >= currentDistanceToLight) valat = 1.0;
+    if (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(blurWD.x+1.0, blurWD.y+0.0))).r+bias1 >= currentDistanceToLight) valhoriz = 1.0;
+    if (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(blurWD.x+0.0, blurWD.y+1.0))).r+bias1 >= currentDistanceToLight) valvert = 1.0;
+    if (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(blurWD.x+1.0, blurWD.y+1.0))).r+bias1 >= currentDistanceToLight) valdiag = 1.0;
+    #endif
+
+    float fxy1 = (1.0-blurWD.z)*valat + blurWD.z*valhoriz;
+    float fxy2 = (1.0-blurWD.z)*valvert + blurWD.z*valdiag;
+    float fxy = (1.0-blurWD.w)*fxy1 + blurWD.w*fxy2;
+
+    float daccum = fxy;
+
+    if (daccum <= 0.0) discard;
+    shadowMul = clamp(daccum, 0.0, 1.0);
+  } else {
     //TODO: process cube edges
     #ifdef VV_SMAP_FILTER_OLD
     vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
-    #define VV_SMAP_OFS  shift_cube_uv_slow(cubeTC, vec2
+    #define VV_SMAP_OFS(ox_,oy_)  shift_cube_uv_slow(cubeTC, vec2(ox_, oy_))
     #else
     $include "shadowvol/cubemap_calc_filters.fs"
     #endif
 
-    // perform 4-way blur
-    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-1.0,  0.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
-    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 1.0,  0.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
-    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0, -1.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
-    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0,  1.0))).r+bias4 >= currentDistanceToLight) daccum += 1.0;
-
-    #ifdef VV_SMAP_BLUR8
-      // perform 8-way blur
-      #ifdef VV_SMAP_BLUR_FAST8
-      if (daccum > 0.0 && daccum < 5.0)
-      #endif
-      {
-        #ifdef VV_DYNAMIC_DCOUNT
-        dcount = 9.0;
-        #endif
-        if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-1.0, -1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
-        if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-1.0,  1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
-        if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 1.0, -1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
-        if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 1.0,  1.0))).r+bias8 >= currentDistanceToLight) daccum += 1.0;
-        #ifdef VV_SMAP_BLUR16
-          // perform 16-way blur
-          #ifdef VV_SMAP_BLUR_FAST16
-          if (daccum > 0.0 && daccum < 9.0)
-          #endif
-          {
-            #ifdef VV_DYNAMIC_DCOUNT
-            dcount = 17.0;
-            #endif
-            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-2.0,  0.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 2.0,  0.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-
-            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0, -2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0,  2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-
-            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-2.0, -2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-2.0,  2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-
-            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 2.0, -2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-            if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 2.0,  2.0))).r+bias16 >= currentDistanceToLight) daccum += 1.0;
-          }
-        #endif
-      }
+    float daccum = 0.0;
+    #ifdef VV_SMAP_MATH_SAMPLER
+    daccum += VV_SMAP_SAMPLE(ltfdir, bias1);
+    daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS(-1.0,  0.0), bias4);
+    daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 1.0,  0.0), bias4);
+    daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 0.0, -1.0), bias4);
+    daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 0.0,  1.0), bias4);
+    #else
+    if (textureCubeFn(ShadowTexture, ltfdir).r+bias1 >= currentDistanceToLight) daccum += 1.0;
+    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-1.0,  0.0)).r+bias4 >= currentDistanceToLight) daccum += 1.0;
+    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 1.0,  0.0)).r+bias4 >= currentDistanceToLight) daccum += 1.0;
+    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0, -1.0)).r+bias4 >= currentDistanceToLight) daccum += 1.0;
+    if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0,  1.0)).r+bias4 >= currentDistanceToLight) daccum += 1.0;
     #endif
     if (daccum <= 0.0) discard;
-    #ifdef VV_DYNAMIC_DCOUNT
-    float shadowMul = daccum/dcount;
-    #else
-    float shadowMul = daccum/DCOUNT;
-    #endif
+    shadowMul = daccum/5.0;
+  }
   #else
-    // no blur
-    //vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
-    //ltfdir = convert_cube_uv_to_xyz(cubeTC);
-    if (textureCubeFn(ShadowTexture, ltfdir).r+bias1 < currentDistanceToLight) discard;
-    float shadowMul = 1.0;
+    #ifdef VV_SMAP_BLUR4
+      //float cubetstep = 1.0/CubeSize;
+      float daccum = 0.0;
+      #ifdef VV_DYNAMIC_DCOUNT
+      float dcount = 5.0;
+      #endif
+
+      //TODO: process cube edges
+      #ifdef VV_SMAP_FILTER_OLD
+      vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
+      #define VV_SMAP_OFS(ox_,oy_)  shift_cube_uv_slow(cubeTC, vec2(ox_, oy_))
+      #else
+      $include "shadowvol/cubemap_calc_filters.fs"
+      #endif
+
+      #ifdef VV_SMAP_MATH_SAMPLER
+      daccum += VV_SMAP_SAMPLE(ltfdir, bias1);
+      daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS(-1.0,  0.0), bias4);
+      daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 1.0,  0.0), bias4);
+      daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 0.0, -1.0), bias4);
+      daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 0.0,  1.0), bias4);
+      #else
+      if (textureCubeFn(ShadowTexture, ltfdir).r+bias1 >= currentDistanceToLight) daccum += 1.0;
+      if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-1.0,  0.0)).r+bias4 >= currentDistanceToLight) daccum += 1.0;
+      if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 1.0,  0.0)).r+bias4 >= currentDistanceToLight) daccum += 1.0;
+      if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0, -1.0)).r+bias4 >= currentDistanceToLight) daccum += 1.0;
+      if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0,  1.0)).r+bias4 >= currentDistanceToLight) daccum += 1.0;
+      #endif
+
+      #ifdef VV_SMAP_BLUR8
+        // perform 8-way blur
+        #ifdef VV_SMAP_BLUR_FAST8
+        if (daccum > 0.0 && daccum < 5.0)
+        #endif
+        {
+          #ifdef VV_DYNAMIC_DCOUNT
+          dcount = 9.0;
+          #endif
+          #ifdef VV_SMAP_MATH_SAMPLER
+          daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS(-1.0, -1.0), bias8);
+          daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS(-1.0,  1.0), bias8);
+          daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 1.0, -1.0), bias8);
+          daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 1.0,  1.0), bias8);
+          #else
+          if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-1.0, -1.0)).r+bias8 >= currentDistanceToLight) daccum += 1.0;
+          if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-1.0,  1.0)).r+bias8 >= currentDistanceToLight) daccum += 1.0;
+          if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 1.0, -1.0)).r+bias8 >= currentDistanceToLight) daccum += 1.0;
+          if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 1.0,  1.0)).r+bias8 >= currentDistanceToLight) daccum += 1.0;
+          #endif
+          #ifdef VV_SMAP_BLUR16
+            // perform 16-way blur
+            #ifdef VV_SMAP_BLUR_FAST16
+            if (daccum > 0.0 && daccum < 9.0)
+            #endif
+            {
+              #ifdef VV_DYNAMIC_DCOUNT
+              dcount = 17.0;
+              #endif
+              #ifdef VV_SMAP_MATH_SAMPLER
+              daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS(-2.0,  0.0), bias16);
+              daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 2.0,  0.0), bias16);
+              daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 0.0, -2.0), bias16);
+              daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 0.0,  2.0), bias16);
+              daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS(-2.0, -2.0), bias16);
+              daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS(-2.0,  2.0), bias16);
+              daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 2.0, -2.0), bias16);
+              daccum += VV_SMAP_SAMPLE(VV_SMAP_OFS( 2.0,  2.0), bias16);
+              #else
+              if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-2.0,  0.0)).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+              if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 2.0,  0.0)).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+              if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0, -2.0)).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+              if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 0.0,  2.0)).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+              if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-2.0, -2.0)).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+              if (textureCubeFn(ShadowTexture, VV_SMAP_OFS(-2.0,  2.0)).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+              if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 2.0, -2.0)).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+              if (textureCubeFn(ShadowTexture, VV_SMAP_OFS( 2.0,  2.0)).r+bias16 >= currentDistanceToLight) daccum += 1.0;
+              #endif
+            }
+          #endif
+        }
+      #endif
+      if (daccum <= 0.0) discard;
+      #ifdef VV_DYNAMIC_DCOUNT
+      float shadowMul = daccum/dcount;
+      #else
+      float shadowMul = daccum/DCOUNT;
+      #endif
+    #else
+      // no blur
+      //vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
+      //ltfdir = convert_cube_uv_to_xyz(cubeTC);
+      if (textureCubeFn(ShadowTexture, ltfdir).r+bias1 < currentDistanceToLight) discard;
+      float shadowMul = 1.0;
+    #endif
   #endif
   /*
   float currentDistanceToLight = (distanceToLight-u_nearFarPlane.x)/(u_nearFarPlane.y-u_nearFarPlane.x);

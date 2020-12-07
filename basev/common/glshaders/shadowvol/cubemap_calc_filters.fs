@@ -59,6 +59,6 @@
   }
 
   float cubeDVC = 2.0/CubeSize;
-  #define VV_SMAP_OFS(ox_,oy_)  (vec3(cubeTDir.x+ox_*cubeDVC*cubeXMul.x+oy_*cubeDVC*cubeXMul.y, cubeTDir.y+ox_*cubeDVC*cubeYMul.x+oy_*cubeDVC*cubeYMul.y, cubeTDir.z+ox_*cubeDVC*cubeZMul.x+oy_*cubeDVC*cubeZMul.y)
+  #define VV_SMAP_OFS(ox_,oy_)  vec3(cubeTDir.x+ox_*cubeDVC*cubeXMul.x+oy_*cubeDVC*cubeXMul.y, cubeTDir.y+ox_*cubeDVC*cubeYMul.x+oy_*cubeDVC*cubeYMul.y, cubeTDir.z+ox_*cubeDVC*cubeZMul.x+oy_*cubeDVC*cubeZMul.y)
 
 #endif
