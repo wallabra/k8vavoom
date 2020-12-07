@@ -856,6 +856,28 @@ static int hasTblDefine (DefineTable *tbl, const char *defstr) {
 }
 
 
+static void removeTblDefine (DefineTable *tbl, const char *defstr) {
+  if (!tbl || !defstr) return;
+  if (tbl->defsize == 0 || !tbl->defines) return;
+  while (*defstr && *(const unsigned char *)defstr <= ' ') ++defstr;
+  if (!defstr[0]) return;
+  size_t slen = strlen(defstr);
+  while (slen > 0 && *(const unsigned char *)(defstr+slen-1) <= ' ') --slen;
+  if (slen == 0) return;
+  char *dss = tbl->defines;
+  while (*dss) {
+    size_t xlen = strlen(dss);
+    if (xlen == slen) {
+      if (memcmp(dss, defstr, slen) == 0) {
+        // we found it, replace it with all underscores
+        memset(dss, '_', slen);
+      }
+    }
+    dss += xlen+1;
+  }
+}
+
+
 typedef struct ShaderInfo ShaderInfo;
 
 typedef enum {
@@ -925,6 +947,9 @@ void appendDefine (ShaderInfo *si, const char *defstr) {
   addTblDefine(&si->defines, defstr);
 }
 
+void removeDefine (ShaderInfo *si, const char *defstr) {
+  removeTblDefine(&si->defines, defstr);
+}
 
 int hasDefine (ShaderInfo *si, const char *defstr) {
   if (hasTblDefine(&globaldefines, defstr)) return 1;
@@ -1156,6 +1181,13 @@ int parseGLSL (Parser *par, ShaderInfo *si) {
         char *tk = prExpectId(par);
         //fprintf(stderr, "<newdef: %s>\n", tk);
         appendDefine(si, tk);
+        continue;
+      }
+      // undef
+      if (prCheck(par, "undef")) {
+        char *tk = prExpectId(par);
+        //fprintf(stderr, "<newdef: %s>\n", tk);
+        removeDefine(si, tk);
         continue;
       }
       // if
