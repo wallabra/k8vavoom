@@ -16,6 +16,7 @@
 
 #ifdef VV_SHADOWMAPS
   attenuation *= shadowMul;
+  //attenuation = 1.0; // debug
 #endif
   if (attenuation <= 0.0) discard;
   float finalA = min(attenuation/255.0, 1.0);
@@ -30,4 +31,10 @@
   finalA *= transp*transp*(3.0-(2.0*transp));
 #endif
 
+#ifdef VV_SHADOWMAPS
+  //shadowMul = clamp(shadowMul*1.0, 0.0, 1.0); //debug
+  //gl_FragColor = vec4(shadowMul, 0.0, 0.0, 1.0);
   gl_FragColor = vec4(LightColor, finalA);
+#else
+  gl_FragColor = vec4(LightColor, finalA);
+#endif

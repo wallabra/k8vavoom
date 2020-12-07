@@ -32,6 +32,7 @@ $include "shadowvol/smap_common_defines.inc"
   // 0.026
   // 0.039
   if (UseAdaptiveBias > 0.0) {
+    #if 1
     float cosTheta = clamp(dot(Normal, normV2L), 0.0, 1.0);
     //biasBase = clamp(0.0065*tan(acos(cosTheta)), 0.0, 0.026); // cosTheta is dot( n,l ), clamped between 0 and 1
     biasBase = clamp(BiasMul*tan(acos(cosTheta)), BiasMin, BiasMax); // cosTheta is dot( n,l ), clamped between 0 and 1
@@ -39,6 +40,9 @@ $include "shadowvol/smap_common_defines.inc"
     //biasBase = clamp(0.0065*tan(acos(cosTheta)), 0.0, 0.072); // cosTheta is dot( n,l ), clamped between 0 and 1
     //biasBase = 0.0001;
     bias1 = biasBase;
+    #else
+    biasBase = max(0.05*(1.0-dot(abs(Normal), abs(normV2L))), 0.039);
+    #endif
   } else {
     //float mxdist = max(abs(VertToLight.x), max(abs(VertToLight.y), abs(VertToLight.z)));
    #ifdef VV_SMAP_BLUR4
@@ -260,10 +264,35 @@ $include "shadowvol/smap_common_defines.inc"
       #endif
     #else
       // no blur
+      #if 1
       //vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
       //ltfdir = convert_cube_uv_to_xyz(cubeTC);
       if (textureCubeFn(ShadowTexture, ltfdir).r+bias1 < currentDistanceToLight) discard;
       float shadowMul = 1.0;
+      #else
+      fromLightToFragment = VertWorldPos-LightPos2;
+      fromLightToFragment = normalize(fromLightToFragment);
+      vec3 cubeTC = convert_xyz_to_cube_uv(fromLightToFragment); // texture coords
+      // shoot at the texel center
+      cubeTC.x = (floor(cubeTC.x*CubeSize)+0.5)/CubeSize;
+      cubeTC.y = (floor(cubeTC.y*CubeSize)+0.5)/CubeSize;
+      // get new direction vector
+      vec3 newCubeDir = convert_cube_uv_to_xyz(cubeTC);
+      newCubeDir = normalize(newCubeDir);
+      // find intersection of surface plane and ray from light position
+      float dv = dot(normalize(Normal), newCubeDir);
+      float t = 0.0;
+      if (abs(dv) > 0.00001) t = (SurfDist-dot(normalize(Normal), LightPos2))/dv;
+      vec3 newPos = LightPos2+newCubeDir*t;
+      distanceToLight = length(newPos);
+      float newDistanceToLight = distanceToLight/LightRadius;
+      float shadowMul = abs(newDistanceToLight-currentDistanceToLight);
+      /*
+      //if (abs(newDistanceToLight-currentDistanceToLight) > 0.7) newDistanceToLight = currentDistanceToLight;
+      if (textureCubeFn(ShadowTexture, ltfdir).r+0.05 < newDistanceToLight) discard;
+      float shadowMul = 1.0;
+      */
+      #endif
     #endif
   #endif
   /*
