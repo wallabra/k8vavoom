@@ -429,6 +429,7 @@ void VRenderLevelShadowVolume::RenderMobjsFog () {
 //==========================================================================
 void VRenderLevelShadowVolume::RenderMobjSpriteShadowMaps (VEntity *owner, const unsigned int facenum, int spShad, vuint32 dlflags) {
   if (spShad < 1) return;
+  if (facenum >= 4) return; // we cannot render anything on the floor or on the ceiling
   const bool doPlayer = r_shadowmap_sprshadows_player.asBool();
   for (auto &&mo : mobjsInCurrLightSprites) {
     if (mo == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
@@ -449,8 +450,7 @@ void VRenderLevelShadowVolume::RenderMobjSpriteShadowMaps (VEntity *owner, const
 //
 //==========================================================================
 void VRenderLevelShadowVolume::RenderMobjShadowMapSprite (VEntity *ent, const unsigned int facenum, const bool allowRotating) {
-#if 0
-  not yet, i have to figure out new rotations first
+  if (facenum >= 4) return; // we cannot render anything on the floor or on the ceiling (just in case)
 
   const int sprtype = ent->SpriteType;
   if (sprtype != SPR_VP_PARALLEL_UPRIGHT) return;
@@ -498,12 +498,15 @@ void VRenderLevelShadowVolume::RenderMobjShadowMapSprite (VEntity *ent, const un
   VTexture *Tex = GTextureManager[lump];
   if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
 
-  TVec sprforward(0, 0, 0);
-  TVec sprright(0, 0, 0);
-  TVec sprup(0, 0, 0);
+  //TVec sprforward(0.0f, 0.0f, 0.0f);
+  //TVec sprright(0.0f, 0.0f, 0.0f);
+  //TVec sprup(0.0f, 0.0f, 1.0f);
 
-  TVec viewforward, viewright, viewup;
-  AngleVectors(VDrawer::CubeMapViewAngles[facenum], viewforward, viewright, viewup);
+  //TVec viewforward, viewright, viewup;
+  //AngleVectors(VDrawer::CubeMapViewAngles[facenum], viewforward, viewright, viewup);
+
+  TVec viewforward = Drawer->GetLightViewForward(facenum);
+  if (facenum < 2) viewforward = -viewforward;
 
   // Generate the sprite's axes, with sprup straight up in worldspace,
   // and sprright parallel to the viewplane. This will not work if the
@@ -511,13 +514,11 @@ void VRenderLevelShadowVolume::RenderMobjShadowMapSprite (VEntity *ent, const un
   // cross product will be between two nearly parallel vectors and
   // starts to approach an undefined state, so we don't draw if the two
   // vectors are less than 1 degree apart
-  const float dot = viewforward.z; // same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
-  if (dot > 0.999848f || dot < -0.999848f) return; // cos(1 degree) = 0.999848f
-  sprup = TVec(0, 0, 1);
-  // CrossProduct(sprup, viewforward)
-  sprright = Normalise(TVec(viewforward.y, -viewforward.x, 0));
-  // CrossProduct(sprright, sprup)
-  sprforward = TVec(-sprright.y, sprright.x, 0);
+  //const float dot = viewforward.z; // same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
+  //if (fabs(dot) > 0.999848f) return; // cos(1 degree) = 0.999848f
+  const TVec sprup(0.0f, 0.0f, 1.0f);
+  TVec sprright = TVec(viewforward.y, -viewforward.x, 0.0f);
+  TVec sprforward = TVec(-sprright.y, sprright.x, 0.0f);
 
   int fixAlgo = r_fix_sprite_offsets.asInt();
   if (fixAlgo < 0 || ent->IsFloatBob()) fixAlgo = 0; // just in case
@@ -559,5 +560,4 @@ void VRenderLevelShadowVolume::RenderMobjShadowMapSprite (VEntity *ent, const un
   */
   //GCon->Logf(NAME_Debug, "r02: thing:<%s>", ent->GetClass()->GetName());
   Drawer->DrawSpriteShadowMap(sv, Tex, -sprforward/*normal*/, (flip ? -sprright : sprright)/scaleX/*saxis*/, -sprup/scaleY/*taxis*/, (flip ? sv[2] : sv[1])/*texorg*/);
-#endif
 }

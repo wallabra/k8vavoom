@@ -455,6 +455,10 @@ protected:
 public:
   VRenderLevelDrawer *RendLev;
 
+  // we can precalc these in ctor (and we'll need 'em in various places)
+  // note that they are untranslated
+  static VMatrix4 LightViewMatrix[6];
+
 public:
   VDrawer () noexcept;
   virtual ~VDrawer ();
@@ -735,6 +739,10 @@ public:
 
   void CalcSpotLightFaceView (VMatrix4 &ModelMat, const TVec &origin, unsigned int facenum);
   void CalcShadowMapProjectionMatrix (VMatrix4 &ProjMat, float Radius, int awidth, int aheight, float aspect=1.0f);
+
+  static TVec GetLightViewUp (unsigned int facenum) noexcept;
+  static TVec GetLightViewForward (unsigned int facenum) noexcept;
+  static TVec GetLightViewRight (unsigned int facenum) noexcept;
 
   void SetOrthoProjection (const float left, const float right, const float bottom, const float top);
 

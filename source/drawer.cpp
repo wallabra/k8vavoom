@@ -38,6 +38,55 @@ TArray<void (*) (int phase)> VDrawer::cbInitDeinit;
 
 float VDrawer::LightFadeMult = 1.0f;
 float VDrawer::mWindowAspect = 1.0f;
+VMatrix4 VDrawer::LightViewMatrix[6];
+
+
+static const TVec LightViewForward[6] = {
+  TVec(-1.0f,  0.0f,  0.0f), // positive x
+  TVec( 1.0f,  0.0f,  0.0f), // negative x
+  TVec( 0.0f,  1.0f,  0.0f), // positive y
+  TVec( 0.0f, -1.0f,  0.0f), // negative y
+  TVec( 0.0f,  0.0f, -1.0f), // positive z
+  TVec( 0.0f,  0.0f,  1.0f), // negative z
+};
+
+static const TVec LightViewUp[6] = {
+  TVec( 0.0f, -1.0f,  0.0f), // positive x
+  TVec( 0.0f, -1.0f,  0.0f), // negative x
+  TVec( 0.0f,  0.0f, -1.0f), // positive y
+  TVec( 0.0f,  0.0f,  1.0f), // negative y
+  TVec( 0.0f, -1.0f,  0.0f), // positive z
+  TVec( 0.0f, -1.0f,  0.0f), // negative z
+};
+
+
+//==========================================================================
+//
+//  CalculateLightViewMatrix
+//
+//==========================================================================
+static void CalculateLightViewMatrix (VMatrix4 &ModelMat, const unsigned int facenum) {
+  ModelMat.SetIdentity();
+
+  const TVec forward = LightViewForward[facenum];
+  const TVec left = LightViewUp[facenum].cross(forward).normalised();
+  const TVec up = forward.cross(left).normalised();
+
+  ModelMat.m[0][0] = left.x;
+  ModelMat.m[0][1] = left.y;
+  ModelMat.m[0][2] = left.z;
+  ModelMat.m[1][0] = up.x;
+  ModelMat.m[1][1] = up.y;
+  ModelMat.m[1][2] = up.z;
+  ModelMat.m[2][0] = forward.x;
+  ModelMat.m[2][1] = forward.y;
+  ModelMat.m[2][2] = forward.z;
+}
+
+//TVec VDrawer::GetLightViewForward (unsigned int facenum) noexcept { return TVec(LightViewMatrix[facenum].m[2][0], LightViewMatrix[facenum].m[2][1], LightViewMatrix[facenum].m[2][2]); }
+TVec VDrawer::GetLightViewForward (unsigned int facenum) noexcept { return LightViewForward[facenum]; }
+TVec VDrawer::GetLightViewUp (unsigned int facenum) noexcept { return TVec(LightViewMatrix[facenum].m[1][0], LightViewMatrix[facenum].m[1][1], LightViewMatrix[facenum].m[1][2]); }
+TVec VDrawer::GetLightViewRight (unsigned int facenum) noexcept { return TVec(-LightViewMatrix[facenum].m[0][0], -LightViewMatrix[facenum].m[0][1], -LightViewMatrix[facenum].m[0][2]); }
 
 
 //**************************************************************************
@@ -80,6 +129,8 @@ VDrawer::VDrawer () noexcept
   viewright = TVec(0.0f, 0.0f, 0.0f);
   viewup = TVec(0.0f, 0.0f, 0.0f);
   MirrorFlip = MirrorClip = false;
+
+  for (unsigned int facenum = 0; facenum < 6; ++facenum) CalculateLightViewMatrix(LightViewMatrix[facenum], facenum);
 }
 
 
@@ -334,25 +385,6 @@ void VDrawer::CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAV
 }
 
 
-static const TVec LightViewTarget[6] = {
-  TVec(-1.0f,  0.0f,  0.0f), // positive x
-  TVec( 1.0f,  0.0f,  0.0f), // negative x
-  TVec( 0.0f,  1.0f,  0.0f), // positive y
-  TVec( 0.0f, -1.0f,  0.0f), // negative y
-  TVec( 0.0f,  0.0f, -1.0f), // positive z
-  TVec( 0.0f,  0.0f,  1.0f), // negative z
-};
-
-static const TVec LightViewUp[6] = {
-  TVec( 0.0f, -1.0f,  0.0f), // positive x
-  TVec( 0.0f, -1.0f,  0.0f), // negative x
-  TVec( 0.0f,  0.0f, -1.0f), // positive y
-  TVec( 0.0f,  0.0f,  1.0f), // negative y
-  TVec( 0.0f, -1.0f,  0.0f), // positive z
-  TVec( 0.0f, -1.0f,  0.0f), // negative z
-};
-
-
 //==========================================================================
 //
 //  VDrawer::CalcSpotLightFaceView
@@ -362,9 +394,10 @@ static const TVec LightViewUp[6] = {
 //==========================================================================
 void VDrawer::CalcSpotLightFaceView (VMatrix4 &ModelMat, const TVec &origin, unsigned int facenum) {
   if (facenum > 5) facenum = 0;
+  /*
   ModelMat.SetIdentity();
 
-  const TVec forward = LightViewTarget[facenum].normalised();
+  const TVec forward = LightViewForward[facenum].normalised();
   const TVec left = LightViewUp[facenum].cross(forward).normalised();
   const TVec up = forward.cross(left).normalised();
 
@@ -377,6 +410,8 @@ void VDrawer::CalcSpotLightFaceView (VMatrix4 &ModelMat, const TVec &origin, uns
   ModelMat.m[2][0] = forward.x;
   ModelMat.m[2][1] = forward.y;
   ModelMat.m[2][2] = forward.z;
+  */
+  ModelMat = LightViewMatrix[facenum];
   ModelMat *= VMatrix4::Translate(-origin);
 }
 
