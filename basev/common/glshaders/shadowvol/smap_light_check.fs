@@ -83,7 +83,8 @@ $include "shadowvol/smap_common_defines.inc"
   #endif
 
   // difference between position of the light source and position of the fragment
-  vec3 fromLightToFragment = LightPos2-VertWorldPos;
+  //vec3 fromLightToFragment = LightPos-VertWorldPos;
+  vec3 fromLightToFragment = VertWorldPos-LightPos;
   // normalized distance to the point light source
   float distanceToLight = length(fromLightToFragment);
   float currentDistanceToLight = distanceToLight/LightRadius;
@@ -93,9 +94,9 @@ $include "shadowvol/smap_common_defines.inc"
   fromLightToFragment = normalize(fromLightToFragment);
   // sample shadow cube map
   vec3 ltfdir;
-  ltfdir.x = -fromLightToFragment.x;
-  ltfdir.y =  fromLightToFragment.y;
-  ltfdir.z =  fromLightToFragment.z;
+  ltfdir.x = fromLightToFragment.x;
+  ltfdir.y = fromLightToFragment.y;
+  ltfdir.z = fromLightToFragment.z;
 
   #ifdef VV_SMAP_WEIGHTED_BLUR
   float shadowMul;
@@ -270,7 +271,7 @@ $include "shadowvol/smap_common_defines.inc"
       if (textureCubeFn(ShadowTexture, ltfdir).r+bias1 < currentDistanceToLight) discard;
       float shadowMul = 1.0;
       #else
-      fromLightToFragment = VertWorldPos-LightPos2;
+      fromLightToFragment = VertWorldPos-LightPos;
       fromLightToFragment = normalize(fromLightToFragment);
       vec3 cubeTC = convert_xyz_to_cube_uv(fromLightToFragment); // texture coords
       // shoot at the texel center
@@ -282,8 +283,8 @@ $include "shadowvol/smap_common_defines.inc"
       // find intersection of surface plane and ray from light position
       float dv = dot(normalize(Normal), newCubeDir);
       float t = 0.0;
-      if (abs(dv) > 0.00001) t = (SurfDist-dot(normalize(Normal), LightPos2))/dv;
-      vec3 newPos = LightPos2+newCubeDir*t;
+      if (abs(dv) > 0.00001) t = (SurfDist-dot(normalize(Normal), LightPos))/dv;
+      vec3 newPos = LightPos+newCubeDir*t;
       distanceToLight = length(newPos);
       float newDistanceToLight = distanceToLight/LightRadius;
       float shadowMul = abs(newDistanceToLight-currentDistanceToLight);

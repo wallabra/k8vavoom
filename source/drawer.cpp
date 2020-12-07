@@ -40,17 +40,6 @@ float VDrawer::LightFadeMult = 1.0f;
 float VDrawer::mWindowAspect = 1.0f;
 
 
-TAVec VDrawer::CubeMapViewAngles[6] = {
-  //    pitch    yaw   roll
-  TAVec(  0.0f, -90.0f,   0.0f), // right
-  TAVec(  0.0f,  90.0f,   0.0f), // left
-  TAVec( 90.0f,   0.0f,   0.0f), // top
-  TAVec(-90.0f,   0.0f,   0.0f), // bottom
-  TAVec(  0.0f,   0.0f,   0.0f), // back
-  TAVec(  0.0f, 180.0f,   0.0f), // front
-};
-
-
 //**************************************************************************
 //
 // VDrawer methods
@@ -345,16 +334,50 @@ void VDrawer::CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAV
 }
 
 
+static const TAVec CubeMapViewAngles[6] = {
+  //    pitch    yaw   roll
+  TAVec(  0.0f,  90.0f,   0.0f), // right
+  TAVec(  0.0f, -90.0f,   0.0f), // left
+  TAVec( 90.0f,   0.0f,   0.0f), // top
+  TAVec(-90.0f,   0.0f,   0.0f), // bottom
+  TAVec(  0.0f,   0.0f,   0.0f), // back
+  TAVec(  0.0f, 180.0f,   0.0f), // front
+};
+
+
 //==========================================================================
 //
-//  VDrawer::CalcModelMatrixNoViewRotation
+//  VDrawer::CalcSpotLightFaceView
 //
 //==========================================================================
-void VDrawer::CalcModelMatrixNoViewRotation (VMatrix4 &ModelMat, const TVec &origin, const TAVec &angles) {
+void VDrawer::CalcSpotLightFaceView (VMatrix4 &ModelMat, const TVec &origin, unsigned int facenum) {
+  if (facenum > 5) facenum = 0;
   ModelMat.SetIdentity();
+  /*
   ModelMat *= VMatrix4::RotateX(-angles.roll); //glRotatef(-viewangles.roll, 1, 0, 0);
   ModelMat *= VMatrix4::RotateY(-angles.pitch); //glRotatef(-viewangles.pitch, 0, 1, 0);
   ModelMat *= VMatrix4::RotateZ(-angles.yaw); //glRotatef(-viewangles.yaw, 0, 0, 1);
+  */
+  switch (facenum) {
+    case 0: // positive x
+      ModelMat *= VMatrix4::RotateX(-90.0f);
+      break;
+    case 1: // negative x
+      ModelMat *= VMatrix4::RotateX(90.0f);
+      break;
+    case 2: // positive y
+      ModelMat *= VMatrix4::RotateY(-90.0f);
+      break;
+    case 3: // negative y
+      ModelMat *= VMatrix4::RotateY(90.0f);
+      break;
+    case 4: // positive z
+      ModelMat *= VMatrix4::RotateZ(-90.0f);
+      break;
+    case 5: // negative z
+      ModelMat *= VMatrix4::RotateZ(90.0f);
+      break;
+  }
   ModelMat *= VMatrix4::Translate(-origin); //glTranslatef(-vieworg.x, -vieworg.y, -vieworg.z);
 }
 

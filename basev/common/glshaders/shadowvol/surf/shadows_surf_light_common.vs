@@ -35,6 +35,6 @@ void main () {
   VertToLight = LightPos-gl_Vertex.xyz;
 
 #ifdef VV_SHADOWMAPS
-  VertWorldPos = (LightView*gl_Vertex).xyz;
+  $include "shadowvol/smap_light_calc.vs"
 #endif
 }

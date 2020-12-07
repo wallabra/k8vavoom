@@ -48,8 +48,6 @@ static unsigned int smapBShaderIndex;
   (shad_##Blur)[smapBShaderIndex].SetLightMin(LightMin); \
   (shad_##Blur)[smapBShaderIndex].SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f); \
   \
-  (shad_##Blur)[smapBShaderIndex].SetLightView(lview2); \
-  (shad_##Blur)[smapBShaderIndex].SetLightPos2(lpp); \
   (shad_##Blur)[smapBShaderIndex].SetShadowTexture(1); \
   (shad_##Blur)[smapBShaderIndex].SetBiasMul(advLightGetMulBias()); \
   (shad_##Blur)[smapBShaderIndex].SetBiasMin(advLightGetMinBias()); \
@@ -131,16 +129,6 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
     SelectTexture(0);
-
-    //VMatrix4 lview;
-    //CalcModelMatrix(lview, LightPos, TAVec(0.0f, 0.0f, 0.0f), false);
-    //ShadowsLightSMap.SetLightView(lview);
-    VMatrix4 lview2;
-    CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
-    //VMatrix4 lview = VMatrix4::TranslateNeg(LightPos);
-    //ShadowsLightSMap.SetLightMPV(lview);
-    TVec lpp = lview2*LightPos;
-
     SETUP_LIGHT_SHADER_SMAP(ShadowsLightSMap);
     lpassDoShadowMap = true;
   } else {

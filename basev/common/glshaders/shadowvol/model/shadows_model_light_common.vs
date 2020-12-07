@@ -42,6 +42,6 @@ void main () {
   TextureCoordinate = TexCoord;
 
 #ifdef VV_SHADOWMAPS
-  VertWorldPos = (LightView*Vert).xyz;
+  $include "shadowvol/smap_light_calc.vs"
 #endif
 }

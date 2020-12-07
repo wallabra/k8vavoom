@@ -449,6 +449,9 @@ void VRenderLevelShadowVolume::RenderMobjSpriteShadowMaps (VEntity *owner, const
 //
 //==========================================================================
 void VRenderLevelShadowVolume::RenderMobjShadowMapSprite (VEntity *ent, const unsigned int facenum, const bool allowRotating) {
+#if 0
+  not yet, i have to figure out new rotations first
+
   const int sprtype = ent->SpriteType;
   if (sprtype != SPR_VP_PARALLEL_UPRIGHT) return;
 
@@ -556,4 +559,5 @@ void VRenderLevelShadowVolume::RenderMobjShadowMapSprite (VEntity *ent, const un
   */
   //GCon->Logf(NAME_Debug, "r02: thing:<%s>", ent->GetClass()->GetName());
   Drawer->DrawSpriteShadowMap(sv, Tex, -sprforward/*normal*/, (flip ? -sprright : sprright)/scaleX/*saxis*/, -sprup/scaleY/*taxis*/, (flip ? sv[2] : sv[1])/*texorg*/);
+#endif
 }

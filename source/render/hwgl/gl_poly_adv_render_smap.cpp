@@ -44,19 +44,48 @@
 //
 //==========================================================================
 void VOpenGLDrawer::PrepareShadowMapsInternal (const float Radius) {
-  if (smapCleared) return;
+  if (!IsAnyShadowMapDirty()) return;
   GLSMAP_CLEAR_ERR();
   for (unsigned int fc = 0; fc < 6; ++fc) {
-    p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[fc], 0);
-    GLSMAP_ERR("set framebuffer depth texture");
-    p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, cubeTexId, 0);
-    GLSMAP_ERR("set cube FBO face");
+    if (IsShadowMapDirty(fc)) {
+      p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[fc], 0);
+      GLSMAP_ERR("set framebuffer depth texture");
+      p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, cubeTexId, 0);
+      GLSMAP_ERR("set cube FBO face");
+      glDrawBuffer(GL_COLOR_ATTACHMENT0);
+      GLSMAP_ERR("set cube FBO draw buffer");
+      glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+      GLSMAP_ERR("clear cube FBO");
+    }
+  }
+  MarkAllShadowMapsClear();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::PrepareCurrentShadowMapFaceInternal
+//
+//==========================================================================
+void VOpenGLDrawer::PrepareCurrentShadowMapFaceInternal () {
+  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[smapCurrentFace], 0);
+  GLSMAP_ERR("set framebuffer depth texture");
+
+  //!p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X+smapCurrentFace, cubeTexId, 0);
+  //!GLSMAP_ERR("set cube FBO face");
+
+  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+smapCurrentFace, cubeTexId, 0);
+  GLSMAP_ERR("set cube FBO face");
+  //glDrawBuffer(GL_COLOR_ATTACHMENT0);
+  //GLSMAP_ERR("set cube FBO draw buffer");
+
+  if (IsShadowMapDirty(smapCurrentFace)) {
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
     GLSMAP_ERR("set cube FBO draw buffer");
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     GLSMAP_ERR("clear cube FBO");
+    MarkCurrentShadowMapClean();
   }
-  smapCleared = true;
 }
 
 
@@ -66,7 +95,7 @@ void VOpenGLDrawer::PrepareShadowMapsInternal (const float Radius) {
 //
 //==========================================================================
 void VOpenGLDrawer::PrepareShadowMaps (const float Radius) {
-  if (smapCleared || !r_shadowmaps.asBool() || !CanRenderShadowMaps()) return;
+  if (!IsAnyShadowMapDirty() || !r_shadowmaps.asBool() || !CanRenderShadowMaps()) return;
   GLSMAP_CLEAR_ERR();
   p_glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO);
   glDisable(GL_STENCIL_TEST);
@@ -94,7 +123,7 @@ void VOpenGLDrawer::PrepareShadowMaps (const float Radius) {
 //
 //==========================================================================
 void VOpenGLDrawer::ClearAllShadowMaps () {
-  if (smapCleared || !r_shadowmaps.asBool() || !CanRenderShadowMaps()) return;
+  if (!IsAnyShadowMapDirty() || !r_shadowmaps.asBool() || !CanRenderShadowMaps()) return;
   //FIXME: this should be changed, but we don't have any cascades yet anyway
   PrepareShadowMaps(999999.0f); // use HUGE radius to clear all cascades
 }
@@ -168,24 +197,17 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
 
   CalcShadowMapProjectionMatrix(smapProj, Radius, swidth, sheight, PixelAspect);
 
-  VMatrix4 lview2;
-  CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
-  TVec lpp = lview2*LightPos;
-
   //SurfShadowMap.Activate();
-  SurfShadowMap.SetLightView(lview2);
-  SurfShadowMap.SetLightPos(lpp);
+  SurfShadowMap.SetLightPos(LightPos);
   SurfShadowMap.SetLightRadius(Radius);
 
   //SurfShadowMapTex.Activate();
-  SurfShadowMapTex.SetLightView(lview2);
-  SurfShadowMapTex.SetLightPos(lpp);
+  SurfShadowMapTex.SetLightPos(LightPos);
   SurfShadowMapTex.SetLightRadius(Radius);
   SurfShadowMapTex.SetTexture(0);
 
   //SurfShadowMapSpr.Activate();
-  SurfShadowMapSpr.SetLightView(lview2);
-  SurfShadowMapSpr.SetLightPos(lpp);
+  SurfShadowMapSpr.SetLightPos(LightPos);
   SurfShadowMapSpr.SetLightRadius(Radius);
   SurfShadowMapSpr.SetTexture(0);
 
@@ -228,26 +250,15 @@ void VOpenGLDrawer::EndLightShadowMaps () {
 //
 //==========================================================================
 void VOpenGLDrawer::SetupLightShadowMap (unsigned int facenum) {
-  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[facenum], 0);
-  GLSMAP_ERR("set framebuffer depth texture");
-
-  //!p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X+facenum, cubeTexId, 0);
-  //!GLSMAP_ERR("set cube FBO face");
-
-  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+facenum, cubeTexId, 0);
-  GLSMAP_ERR("set cube FBO face");
-  //glDrawBuffer(GL_COLOR_ATTACHMENT0);
-  //GLSMAP_ERR("set cube FBO draw buffer");
+  SetCurrentShadowMapFace(facenum);
+  PrepareCurrentShadowMapFaceInternal();
 
   VMatrix4 lview;
-  CalcModelMatrix(lview, smapLightPos, VDrawer::CubeMapViewAngles[facenum], false);
+  CalcSpotLightFaceView(lview, smapLightPos, facenum);
   VMatrix4 lmpv = smapProj*lview;
   SurfShadowMap.SetLightMPV(lmpv);
   SurfShadowMapTex.SetLightMPV(lmpv);
   SurfShadowMapSpr.SetLightMPV(lmpv);
-
-  //SurfShadowMap.UploadChangedUniforms();
-  //GLSMAP_ERR("update cube FBO shader");
 }
 
 

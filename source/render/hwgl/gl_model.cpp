@@ -478,8 +478,6 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   (shad_##Blur)[smapBShaderIndex].SetConeAngle(coneAngle);
 
 #define VV_MLIGHT_SHADER_SETUP_SMAP_ONLY(shad_)  \
-  (shad_##Blur)[smapBShaderIndex].SetLightView(lview2); \
-  (shad_##Blur)[smapBShaderIndex].SetLightPos2(lpp); \
   (shad_##Blur)[smapBShaderIndex].SetShadowTexture(1); \
   (shad_##Blur)[smapBShaderIndex].SetBiasMul(advLightGetMulBias()); \
   (shad_##Blur)[smapBShaderIndex].SetBiasMin(advLightGetMinBias()); \
@@ -530,15 +528,6 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
     SelectTexture(0);
-
-    //VMatrix4 lview;
-    //CalcModelMatrix(lview, LightPos, TAVec(0.0f, 0.0f, 0.0f), false);
-    //ShadowsLightSMap.SetLightView(lview);
-    VMatrix4 lview2;
-    CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
-    //VMatrix4 lview = VMatrix4::TranslateNeg(LightPos);
-    //ShadowsLightSMap.SetLightMPV(lview);
-    TVec lpp = lview2*LightPos;
     VV_MLIGHT_SHADER_SETUP_SMAP(ShadowsModelLight);
   }
 }
@@ -720,14 +709,9 @@ void VOpenGLDrawer::BeginModelShadowMaps (const TVec &LightPos, const float Radi
 
   CalcShadowMapProjectionMatrix(smapProj, Radius, swidth, sheight, PixelAspect);
 
-  VMatrix4 lview2;
-  CalcModelMatrix(lview2, TVec(0, 0, 0), TAVec(0, 0, 0), false);
-  TVec lpp = lview2*LightPos;
-
   ShadowsModelShadowMap.Activate();
   ShadowsModelShadowMap.SetTexture(0);
-  ShadowsModelShadowMap.SetLightView(lview2);
-  ShadowsModelShadowMap.SetLightPos(lpp);
+  ShadowsModelShadowMap.SetLightPos(LightPos);
   ShadowsModelShadowMap.SetLightRadius(Radius);
 
   //glDisable(GL_CULL_FACE);
@@ -750,13 +734,15 @@ void VOpenGLDrawer::EndModelShadowMaps () {
 //
 //==========================================================================
 void VOpenGLDrawer::SetupModelShadowMap (unsigned int facenum) {
+  SetCurrentShadowMapFace(facenum);
+
   p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[facenum], 0);
   //GLDRW_CHECK_ERROR("set framebuffer depth texture (model)");
 
   p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+facenum, cubeTexId, 0);
 
   VMatrix4 lview;
-  CalcModelMatrix(lview, smapLightPos, VDrawer::CubeMapViewAngles[facenum], false);
+  CalcSpotLightFaceView(lview, smapLightPos, facenum);
   VMatrix4 lmpv = smapProj*lview;
   ShadowsModelShadowMap.SetLightMPV(lmpv);
 }

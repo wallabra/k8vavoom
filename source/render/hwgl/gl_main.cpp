@@ -251,7 +251,8 @@ VOpenGLDrawer::VOpenGLDrawer ()
   shadowmapPOT = getShadowmapPOT();
   shadowmapSize = 128<<shadowmapPOT;
   cubemapLinearFiltering = false;
-  smapCleared = false;
+  smapDirty = 0x3f;
+  smapCurrentFace = 0;
 }
 
 
@@ -381,7 +382,8 @@ void VOpenGLDrawer::InitResolution () {
   glVerMinor = minor;
   shadowmapPOT = getShadowmapPOT();
   shadowmapSize = 128<<shadowmapPOT;
-  smapCleared = false;
+  smapDirty = 0x3f;
+  smapCurrentFace = 0;
 
   if (!shittyGPUCheckDone) {
     shittyGPUCheckDone = true;

@@ -424,15 +424,23 @@ protected:
   texinfo_t smapLastTexinfo;
   texinfo_t smapLastSprTexinfo;
 
-  bool smapCleared;
+  unsigned int smapDirty; // bits 0..5
+  unsigned int smapCurrentFace;
 
 protected:
   void PrepareShadowMapsInternal (const float Radius);
+  void PrepareCurrentShadowMapFaceInternal ();
 
   // called in `FinishUpdate()`, so GPU could perform `glClear()` in parallel
   void ClearAllShadowMaps ();
 
-  inline void MarkCurrentShadowMapDirty () noexcept { smapCleared = false; }
+  inline void SetCurrentShadowMapFace (unsigned int facenum) noexcept { smapCurrentFace = facenum&0x07; }
+  inline void MarkCurrentShadowMapDirty () noexcept { smapDirty |= 1u<<smapCurrentFace; }
+  inline void MarkCurrentShadowMapClean () noexcept { smapDirty &= ~(1u<<smapCurrentFace); }
+
+  inline bool IsShadowMapDirty (unsigned int facenum) const noexcept { return smapDirty&(1u<<(facenum&0x07)); }
+  inline bool IsAnyShadowMapDirty () const noexcept { return (smapDirty&0x3f); }
+  inline void MarkAllShadowMapsClear () noexcept { smapDirty = 0; }
 
 public:
   // called in renderer before collecting light/shadow surfaces, so GPU could perform `glClear()` in parallel
