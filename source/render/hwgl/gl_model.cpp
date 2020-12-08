@@ -41,6 +41,8 @@ extern VCvarI gl_shadowmap_blur;
 static unsigned int smapBShaderIndex;
 static bool lpassDoShadowMap;
 
+static VCvarB gl_gpu_debug_models("gl_gpu_debug_models", false, "Show model GPUDEBUG messages?", CVAR_PreInit);
+
 
 //==========================================================================
 //
@@ -172,6 +174,8 @@ static void AliasSetupNormalTransform (const TAVec &angles, const TVec &Scale, V
 void VOpenGLDrawer::UploadModel (VMeshModel *Mdl) {
   if (Mdl->Uploaded) return;
 
+  p_glDebugLogf("uploading model <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
+
   // create buffer
   p_glGenBuffersARB(1, &Mdl->VertsBuffer);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
@@ -206,6 +210,8 @@ void VOpenGLDrawer::UploadModel (VMeshModel *Mdl) {
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
   Mdl->Uploaded = true;
   UploadedModels.Append(Mdl);
+
+  p_glDebugLogf("done uploading model <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
 }
 
 
@@ -299,19 +305,27 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   SetupBlending(ri);
 
   {
+    if (gl_gpu_debug_models) p_glDebugLogf("DrawAliasModel <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
+
     VMeshFrame *FrameDesc = &Mdl->Frames[frame];
     VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
     p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
-    p_glVertexAttribPointerARB(attrPosition, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
-    p_glEnableVertexAttribArrayARB(attrPosition);
+    if (attrPosition >= 0) {
+      p_glVertexAttribPointerARB(attrPosition, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
+      p_glEnableVertexAttribArrayARB(attrPosition);
+    }
 
-    p_glVertexAttribPointerARB(attrVert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
-    p_glEnableVertexAttribArrayARB(attrVert2);
+    if (attrVert2 >= 0) {
+      p_glVertexAttribPointerARB(attrVert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
+      p_glEnableVertexAttribArrayARB(attrVert2);
+    }
 
-    p_glVertexAttribPointerARB(attrTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    p_glEnableVertexAttribArrayARB(attrTexCoord);
+    if (attrTexCoord >= 0) {
+      p_glVertexAttribPointerARB(attrTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+      p_glEnableVertexAttribArrayARB(attrTexCoord);
+    }
 
     if (!ri.isStenciled()) {
       SurfModel.SetLightValAttr(((ri.light>>16)&255)/255.0f, ((ri.light>>8)&255)/255.0f, (ri.light&255)/255.0f, ri.alpha);
@@ -333,10 +347,12 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
 
     p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
-    p_glDisableVertexAttribArrayARB(attrPosition);
-    p_glDisableVertexAttribArrayARB(attrVert2);
-    p_glDisableVertexAttribArrayARB(attrTexCoord);
+    if (attrPosition >= 0) p_glDisableVertexAttribArrayARB(attrPosition);
+    if (attrVert2 >= 0) p_glDisableVertexAttribArrayARB(attrVert2);
+    if (attrTexCoord >= 0) p_glDisableVertexAttribArrayARB(attrTexCoord);
     p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+
+    if (gl_gpu_debug_models) p_glDebugLogf("done DrawAliasModel <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
   }
 
   //glShadeModel(GL_FLAT);
@@ -426,16 +442,24 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
     glDisableDepthWrite();
   }
 
+  if (gl_gpu_debug_models) p_glDebugLogf("DrawAliasModelAmbient <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
+
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
-  p_glVertexAttribPointerARB(ShadowsModelAmbient.loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
-  p_glEnableVertexAttribArrayARB(ShadowsModelAmbient.loc_Position);
+  if (ShadowsModelAmbient.loc_Position >= 0) {
+    p_glVertexAttribPointerARB(ShadowsModelAmbient.loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
+    p_glEnableVertexAttribArrayARB(ShadowsModelAmbient.loc_Position);
+  }
 
-  p_glVertexAttribPointerARB(ShadowsModelAmbient.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
-  p_glEnableVertexAttribArrayARB(ShadowsModelAmbient.loc_Vert2);
+  if (ShadowsModelAmbient.loc_Vert2 >= 0) {
+    p_glVertexAttribPointerARB(ShadowsModelAmbient.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
+    p_glEnableVertexAttribArrayARB(ShadowsModelAmbient.loc_Vert2);
+  }
 
-  p_glVertexAttribPointerARB(ShadowsModelAmbient.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  p_glEnableVertexAttribArrayARB(ShadowsModelAmbient.loc_TexCoord);
+  if (ShadowsModelAmbient.loc_TexCoord >= 0) {
+    p_glVertexAttribPointerARB(ShadowsModelAmbient.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    p_glEnableVertexAttribArrayARB(ShadowsModelAmbient.loc_TexCoord);
+  }
 
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
 
@@ -443,10 +467,12 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
 
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
-  p_glDisableVertexAttribArrayARB(ShadowsModelAmbient.loc_Position);
-  p_glDisableVertexAttribArrayARB(ShadowsModelAmbient.loc_Vert2);
-  p_glDisableVertexAttribArrayARB(ShadowsModelAmbient.loc_TexCoord);
+  if (ShadowsModelAmbient.loc_Position >= 0) p_glDisableVertexAttribArrayARB(ShadowsModelAmbient.loc_Position);
+  if (ShadowsModelAmbient.loc_Vert2 >= 0) p_glDisableVertexAttribArrayARB(ShadowsModelAmbient.loc_Vert2);
+  if (ShadowsModelAmbient.loc_TexCoord >= 0) p_glDisableVertexAttribArrayARB(ShadowsModelAmbient.loc_TexCoord);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+
+  if (gl_gpu_debug_models) p_glDebugLogf("done DrawAliasModelAmbient <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
 
   //if (Alpha < 1.0f && !ForceDepth) glDepthMask(GL_TRUE);
   if (restoreDepth) PopDepthMask();
@@ -523,6 +549,7 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
   smapBShaderIndex = (unsigned int)gl_shadowmap_blur.asInt();
   if (smapBShaderIndex >= SMAP_BLUR_MAX) smapBShaderIndex = SMAP_NOBLUR;
 
+  if (gl_gpu_debug_models) p_glDebugLogf("BeginModelsLightPass");
   lpassDoShadowMap = (doShadow && r_shadowmaps.asBool() && CanRenderShadowMaps());
   VV_MLIGHT_SHADER_SETUP(ShadowsModelLight);
   if (lpassDoShadowMap) {
@@ -569,33 +596,48 @@ void VOpenGLDrawer::EndModelsLightPass () {
  \
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer); \
  \
-  p_glVertexAttribPointerARB((shad_).loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset); \
-  p_glEnableVertexAttribArrayARB((shad_).loc_Position); \
+  if ((shad_).loc_Position >= 0) { \
+    p_glVertexAttribPointerARB((shad_).loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset); \
+    p_glEnableVertexAttribArrayARB((shad_).loc_Position); \
+  } \
  \
-  p_glVertexAttribPointerARB((shad_).loc_VertNormal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset); \
-  p_glEnableVertexAttribArrayARB((shad_).loc_VertNormal); \
+  if ((shad_).loc_VertNormal >= 0) { \
+    p_glVertexAttribPointerARB((shad_).loc_VertNormal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset); \
+    p_glEnableVertexAttribArrayARB((shad_).loc_VertNormal); \
+  } \
  \
-  p_glVertexAttribPointerARB((shad_).loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset); \
-  p_glEnableVertexAttribArrayARB((shad_).loc_Vert2); \
+  if ((shad_).loc_Vert2 >= 0) { \
+    p_glVertexAttribPointerARB((shad_).loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset); \
+    p_glEnableVertexAttribArrayARB((shad_).loc_Vert2); \
+  } \
  \
+  if ((shad_).loc_Vert2Normal >= 0) { \
+    p_glVertexAttribPointerARB((shad_).loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset); \
+    p_glEnableVertexAttribArrayARB((shad_).loc_Vert2Normal); \
+  } \
  \
-  p_glVertexAttribPointerARB((shad_).loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0); \
-  p_glEnableVertexAttribArrayARB((shad_).loc_TexCoord); \
+  if ((shad_).loc_TexCoord >= 0) { \
+    p_glVertexAttribPointerARB((shad_).loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0); \
+    p_glEnableVertexAttribArrayARB((shad_).loc_TexCoord); \
+  } \
  \
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer); \
   p_glDrawRangeElements(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0); \
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0); \
  \
-  p_glDisableVertexAttribArrayARB((shad_).loc_Position); \
-  p_glDisableVertexAttribArrayARB((shad_).loc_VertNormal); \
-  p_glDisableVertexAttribArrayARB((shad_).loc_Vert2); \
-  p_glDisableVertexAttribArrayARB((shad_).loc_Vert2Normal); \
-  p_glDisableVertexAttribArrayARB((shad_).loc_TexCoord); \
+  if ((shad_).loc_Position >= 0) p_glDisableVertexAttribArrayARB((shad_).loc_Position); \
+  if ((shad_).loc_VertNormal >= 0) p_glDisableVertexAttribArrayARB((shad_).loc_VertNormal); \
+  if ((shad_).loc_Vert2 >= 0) p_glDisableVertexAttribArrayARB((shad_).loc_Vert2); \
+  if ((shad_).loc_Vert2Normal >= 0) p_glDisableVertexAttribArrayARB((shad_).loc_Vert2Normal); \
+  if ((shad_).loc_TexCoord >= 0) p_glDisableVertexAttribArrayARB((shad_).loc_TexCoord); \
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0); \
 } while (0)
 
+//#define AMDL_LIGHT_DBG       if (showDebugMsg) p_glDebugLogf
+#define AMDL_LIGHT_DBG(...)  do {} while (0)
 
 #define DO_DRAW_AMDL_LIGHT_SMAP(shad_)  do { \
+  vassert((shad_##Blur)[smapBShaderIndex].IsActive()); \
   (shad_##Blur)[smapBShaderIndex].SetInter(Inter); \
   (shad_##Blur)[smapBShaderIndex].SetModelToWorldMat(RotationMatrix); \
   (shad_##Blur)[smapBShaderIndex].SetNormalToWorldMat(NormalMat[0]); \
@@ -603,34 +645,63 @@ void VOpenGLDrawer::EndModelsLightPass () {
   (shad_##Blur)[smapBShaderIndex].SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f); \
   (shad_##Blur)[smapBShaderIndex].SetAllowTransparency(AllowTransparency); \
   /*(shad_##Blur)[smapBShaderIndex].SetViewOrigin(vieworg);*/ \
+  AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: uploading uniforms", *Mdl->Name, Mdl->MeshIndex); \
   (shad_##Blur)[smapBShaderIndex].UploadChangedUniforms(); \
  \
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer); \
+  AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: bound vertices buffer", *Mdl->Name, Mdl->MeshIndex); \
  \
-  p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset); \
-  p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Position); \
+  if ((shad_##Blur)[smapBShaderIndex].loc_Position >= 0) { \
+    p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset); \
+    AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_Position pointed (%d)", *Mdl->Name, Mdl->MeshIndex, (shad_##Blur)[smapBShaderIndex].loc_Position); \
+    p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Position); \
+    AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_Position enabled", *Mdl->Name, Mdl->MeshIndex); \
+  } \
  \
-  p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_VertNormal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset); \
-  p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_VertNormal); \
+  if ((shad_##Blur)[smapBShaderIndex].loc_VertNormal >= 0) { \
+    p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_VertNormal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset); \
+    AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_VertNormal pointed (%d)", *Mdl->Name, Mdl->MeshIndex, (shad_##Blur)[smapBShaderIndex].loc_VertNormal); \
+    p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_VertNormal); \
+    AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_VertNormal enabled", *Mdl->Name, Mdl->MeshIndex); \
+  } \
  \
-  p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset); \
-  p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2); \
+  if ((shad_##Blur)[smapBShaderIndex].loc_Vert2 >= 0) { \
+    p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset); \
+    AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_Vert2 pointed (%d)", *Mdl->Name, Mdl->MeshIndex, (shad_##Blur)[smapBShaderIndex].loc_Vert2); \
+    p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2); \
+    AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_Vert2 enabled", *Mdl->Name, Mdl->MeshIndex); \
+  } \
  \
-  p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset); \
-  p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2Normal); \
+  if ((shad_##Blur)[smapBShaderIndex].loc_Vert2Normal >= 0) { \
+    p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset); \
+    AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_Vert2Normal pointed (%d)", *Mdl->Name, Mdl->MeshIndex, (shad_##Blur)[smapBShaderIndex].loc_Vert2Normal); \
+    p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2Normal); \
+    AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_Vert2Normal enabled", *Mdl->Name, Mdl->MeshIndex); \
+  } \
  \
-  p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0); \
-  p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_TexCoord); \
+  if ((shad_##Blur)[smapBShaderIndex].loc_TexCoord >= 0) { \
+    p_glVertexAttribPointerARB((shad_##Blur)[smapBShaderIndex].loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0); \
+    AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_TexCoord pointed (%d)", *Mdl->Name, Mdl->MeshIndex, (shad_##Blur)[smapBShaderIndex].loc_TexCoord); \
+    p_glEnableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_TexCoord); \
+    AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_TexCoord enabled", *Mdl->Name, Mdl->MeshIndex); \
+  } \
  \
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer); \
+  AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: index buffer bound", *Mdl->Name, Mdl->MeshIndex); \
   p_glDrawRangeElements(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0); \
+  AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: rendered", *Mdl->Name, Mdl->MeshIndex); \
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0); \
  \
-  p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Position); \
-  p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_VertNormal); \
-  p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2); \
-  p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2Normal); \
-  p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_TexCoord); \
+  if ((shad_##Blur)[smapBShaderIndex].loc_Position >= 0) p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Position); \
+  AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_Position disabled", *Mdl->Name, Mdl->MeshIndex); \
+  if ((shad_##Blur)[smapBShaderIndex].loc_VertNormal >= 0) p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_VertNormal); \
+  AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_VertNormal disabled", *Mdl->Name, Mdl->MeshIndex); \
+  if ((shad_##Blur)[smapBShaderIndex].loc_Vert2 >= 0) p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2); \
+  AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_Vert2 disabled", *Mdl->Name, Mdl->MeshIndex); \
+  if ((shad_##Blur)[smapBShaderIndex].loc_Vert2Normal >= 0) p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_Vert2Normal); \
+  AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_Vert2Normal disabled", *Mdl->Name, Mdl->MeshIndex); \
+  if ((shad_##Blur)[smapBShaderIndex].loc_TexCoord >= 0) p_glDisableVertexAttribArrayARB((shad_##Blur)[smapBShaderIndex].loc_TexCoord); \
+  AMDL_LIGHT_DBG("  DrawAliasModelLight <%s:%d>: loc_TexCoord disabled", *Mdl->Name, Mdl->MeshIndex); \
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0); \
 } while (0)
 
@@ -673,6 +744,10 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
 
   UploadModel(Mdl);
 
+  const bool showDebugMsg = gl_gpu_debug_models.asBool();
+
+  if (showDebugMsg) p_glDebugLogf("DrawAliasModelLight <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
+
   if (lpassDoShadowMap) {
     if (spotLight) {
       DO_DRAW_AMDL_LIGHT_SMAP(ShadowsModelLightSMapSpot);
@@ -686,6 +761,8 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
       DO_DRAW_AMDL_LIGHT(ShadowsModelLight);
     }
   }
+
+  if (showDebugMsg) p_glDebugLogf("done DrawAliasModelLight <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
 }
 
 
@@ -708,6 +785,8 @@ void VOpenGLDrawer::BeginModelShadowMaps (const TVec &LightPos, const float Radi
     spotLight = false;
   }
   */
+
+  if (gl_gpu_debug_models) p_glDebugLogf("BeginModelShadowMaps");
 
   CalcShadowMapProjectionMatrix(smapProj, Radius, swidth, sheight, PixelAspect);
 
@@ -736,6 +815,8 @@ void VOpenGLDrawer::EndModelShadowMaps () {
 //
 //==========================================================================
 void VOpenGLDrawer::SetupModelShadowMap (unsigned int facenum) {
+  //if (gl_gpu_debug_models) p_glDebugLogf("  SetupModelShadowMap(%u)", facenum);
+
   SetCurrentShadowMapFace(facenum);
 
   p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[facenum], 0);
@@ -775,6 +856,8 @@ void VOpenGLDrawer::DrawAliasModelShadowMap (const TVec &origin, const TAVec &an
 
   UploadModel(Mdl);
   //GLDRW_CHECK_ERROR("model shadowmap: UploadModel");
+
+  if (gl_gpu_debug_models) p_glDebugLogf("DrawAliasModelShadowMap <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
 
   ShadowsModelShadowMap.SetInter(Inter);
   ShadowsModelShadowMap.SetModelToWorldMat(RotationMatrix);
@@ -833,6 +916,8 @@ void VOpenGLDrawer::DrawAliasModelShadowMap (const TVec &origin, const TAVec &an
   //GLDRW_CHECK_ERROR("model shadowmap: unbind texcoord attribute");
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
   //GLDRW_CHECK_ERROR("model shadowmap: unbind array buffer");
+
+  if (gl_gpu_debug_models) p_glDebugLogf("done DrawAliasModelShadowMap <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
 
   MarkCurrentShadowMapDirty();
 }
@@ -919,6 +1004,8 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   ShadowsModelShadowVol.SetModelToWorldMat(RotationMatrix);
   ShadowsModelShadowVol.UploadChangedUniforms();
 
+  if (gl_gpu_debug_models) p_glDebugLogf("DrawAliasModelShadow <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
+
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
   p_glVertexAttribPointerARB(ShadowsModelShadowVol.loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(ShadowsModelShadowVol.loc_Position);
@@ -982,6 +1069,8 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   p_glDisableVertexAttribArrayARB(ShadowsModelShadowVol.loc_Position);
   p_glDisableVertexAttribArrayARB(ShadowsModelShadowVol.loc_Vert2);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+
+  if (gl_gpu_debug_models) p_glDebugLogf("done DrawAliasModelShadow <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
 }
 
 #undef outv
@@ -1068,6 +1157,8 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
     attrTexCoord = ShadowsModelTexturesStencil.loc_TexCoord;
   }
 
+  if (gl_gpu_debug_models) p_glDebugLogf("DrawAliasModelTextures <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
+
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
   p_glVertexAttribPointerARB(attrPosition, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
@@ -1120,6 +1211,8 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   }
 #endif
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+
+  if (gl_gpu_debug_models) p_glDebugLogf("done DrawAliasModelTextures <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
 }
 
 
@@ -1190,6 +1283,8 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   ShadowsModelFog.SetAllowTransparency(AllowTransparency);
   ShadowsModelFog.UploadChangedUniforms();
 
+  if (gl_gpu_debug_models) p_glDebugLogf("DrawAliasModelFog <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
+
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
   p_glVertexAttribPointerARB(ShadowsModelFog.loc_Position, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
@@ -1209,4 +1304,6 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   p_glDisableVertexAttribArrayARB(ShadowsModelFog.loc_Vert2);
   p_glDisableVertexAttribArrayARB(ShadowsModelFog.loc_TexCoord);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+
+  if (gl_gpu_debug_models) p_glDebugLogf("done DrawAliasModelFog <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
 }
