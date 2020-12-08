@@ -114,6 +114,10 @@ typedef void (*VV_GLGLDEBUGMESSAGECONTROL) (GLenum source, GLenum type, GLenum s
 
 static void vv_glDebugCallback (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam) {
   if (!message || !message[0]) return;
+
+  // block this spam; i will deal with it later (maybe)
+  if (strstr(message, "is base level inconsistent. Check texture size.")) return;
+
   const char *srcstr;
   switch (source) {
     case GL_DEBUG_SOURCE_API: srcstr = "API"; break;
