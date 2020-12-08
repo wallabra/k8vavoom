@@ -31,31 +31,31 @@
   vec3 absdir = abs(ltfdir);
   if (absdir.x >= absdir.y && absdir.x >= absdir.z) {
     // positive x or negative x
-    cubeXMul = vec2(0.0, 0.0);
-    cubeYMul = vec2(1.0, 0.0);
-    cubeZMul = vec2(0.0, 1.0);
-
     cubeTDir.x = sign(ltfdir.x);
     cubeTDir.y /= absdir.x;
     cubeTDir.z /= absdir.x;
+
+    cubeXMul = vec2(0.0, 0.0);
+    cubeYMul = vec2(1.0, 0.0);
+    cubeZMul = vec2(0.0, 1.0);
   } else if (absdir.y >= absdir.x && absdir.y >= absdir.z) {
     // positive y or negative y
-    cubeXMul = vec2(1.0, 0.0);
-    cubeYMul = vec2(0.0, 0.0);
-    cubeZMul = vec2(0.0, 1.0);
-
     cubeTDir.x /= absdir.y;
     cubeTDir.y = sign(ltfdir.y);
     cubeTDir.z /= absdir.y;
+
+    cubeXMul = vec2(1.0, 0.0);
+    cubeYMul = vec2(0.0, 0.0);
+    cubeZMul = vec2(0.0, 1.0);
   } else {
     // positive z or negative z
-    cubeXMul = vec2(1.0, 0.0);
-    cubeYMul = vec2(0.0, 1.0);
-    cubeZMul = vec2(0.0, 0.0);
-
     cubeTDir.x /= absdir.z;
     cubeTDir.y /= absdir.z;
     cubeTDir.z = sign(ltfdir.z);
+
+    cubeXMul = vec2(1.0, 0.0);
+    cubeYMul = vec2(0.0, 1.0);
+    cubeZMul = vec2(0.0, 0.0);
   }
 
   float cubeDVC = 2.0/CubeSize;

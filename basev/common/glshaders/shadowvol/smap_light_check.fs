@@ -4,7 +4,8 @@
 
 //#define VV_SMAP_SAMPLE(ofs_,bias_)  (sign(sign(textureCubeFn(ShadowTexture, (ofs_)).r+(bias_)-currentDistanceToLight)+0.5))
 
-#define VV_SMAP_SAMPLE(var_,ofs_)  (var_) += compareShadowTexelDistance(ofs_, origDist)
+#define VV_SMAP_SAMPLE_SET(var_,ofs_)  (var_) += compareShadowTexelDistance(ofs_, origDist)
+#define VV_SMAP_SAMPLE_ADD(var_,ofs_)  (var_) += compareShadowTexelDistance(normalize(ofs_), origDist)
 
   //VV_SMAP_BIAS = VV_SMAP_BIAS_N/LightRadius;
 
@@ -15,12 +16,10 @@
   // normalized distance to the point light source
   // hardware doesn't require that, but our cubemap calculations do
   vec3 fullltfdir = VertWorldPos-LightPos;
-  float origDist = dot(fullltfdir, fullltfdir); //length(fullltfdir)/LightRadius;
+  // use squared distance in comparisons
+  float origDist = dot(fullltfdir, fullltfdir);
   vec3 ltfdir = normalize(fullltfdir);
-  // sample shadow cube map
-  float sldist = textureCubeFn(ShadowTexture, ltfdir).r+VV_SMAP_BIAS;
 
-  vec3 newCDir;
   #ifdef VV_SMAP_WEIGHTED_BLUR
     /*
       float x = texc.x*CubeSize;
@@ -46,23 +45,37 @@
 
     float shadowMul;
     vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
-    vec4 blurWD = calc_blur_weight_dir_new(cubeTC);
-    float valat = 0.0, valvert = 0.0, valhoriz = 0.0, valdiag = 0.0;
 
-    VV_SMAP_SAMPLE(valat,    shift_cube_uv_slow(cubeTC, vec2(blurWD.x+0.0, blurWD.y+0.0)));
-    VV_SMAP_SAMPLE(valhoriz, shift_cube_uv_slow(cubeTC, vec2(blurWD.x+1.0, blurWD.y+0.0)));
-    VV_SMAP_SAMPLE(valvert,  shift_cube_uv_slow(cubeTC, vec2(blurWD.x+0.0, blurWD.y+1.0)));
-    VV_SMAP_SAMPLE(valdiag,  shift_cube_uv_slow(cubeTC, vec2(blurWD.x+1.0, blurWD.y+1.0)));
+    //vec4 blurWD = calc_blur_weight_dir_new(cubeTC);
+    // sampling is always to the right, and to the up
+    float fX = fract(cubeTC.x*CubeSize);
+    float fY = fract(cubeTC.y*CubeSize);
+
+    float valat = compareShadowTexelDistance(ltfdir, origDist);
+    float valvert, valhoriz, valdiag;
+
+    // sadly, new shifter is not working here
+    #ifndef VV_SMAP_FILTER_OLD
+    # define VV_SMAP_FILTER_OLD
+    #endif
+    #ifdef VV_SMAP_FILTER_OLD
+      VV_SMAP_SAMPLE_SET(valhoriz, normalize(shift_cube_uv_slow(cubeTC, vec2(1.0, 0.0))));
+      VV_SMAP_SAMPLE_SET(valvert,  normalize(shift_cube_uv_slow(cubeTC, vec2(0.0, 1.0))));
+      VV_SMAP_SAMPLE_SET(valdiag,  normalize(shift_cube_uv_slow(cubeTC, vec2(1.0, 1.0))));
+    #else
+      $include "shadowvol/cubemap_calc_filters.fs"
+      VV_SMAP_SAMPLE_SET(valhoriz, normalize(VV_SMAP_OFS(1.0, 0.0)));
+      VV_SMAP_SAMPLE_SET(valvert,  normalize(VV_SMAP_OFS(0.0, 1.0)));
+      VV_SMAP_SAMPLE_SET(valdiag,  normalize(VV_SMAP_OFS(1.0, 1.0)));
+    #endif
+
+    float daccum = valat+valhoriz+valvert+valdiag;
+    if (daccum <= 0.0) discard;
 
     // bilinear filtering
-    float fxy1 = (1.0-blurWD.z)*valat + blurWD.z*valhoriz;
-    float fxy2 = (1.0-blurWD.z)*valvert + blurWD.z*valdiag;
-    float fxy = (1.0-blurWD.w)*fxy1 + blurWD.w*fxy2;
-
-    float daccum = fxy;
-
-    if (daccum <= 0.0) discard;
-    shadowMul = clamp(daccum, 0.0, 1.0);
+    float fxy1 = (1.0-fX)*valat+fX*valhoriz;
+    float fxy2 = (1.0-fX)*valvert+fX*valdiag;
+    shadowMul = (1.0-fY)*fxy1+fY*fxy2;
   #else
     #ifdef VV_SMAP_BLUR4
       //float cubetstep = 1.0/CubeSize;
@@ -79,11 +92,11 @@
       $include "shadowvol/cubemap_calc_filters.fs"
       #endif
 
-      VV_SMAP_SAMPLE(daccum, ltfdir);
-      VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS(-1.0,  0.0));
-      VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS( 1.0,  0.0));
-      VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS( 0.0, -1.0));
-      VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS( 0.0,  1.0));
+      VV_SMAP_SAMPLE_SET(daccum, ltfdir);
+      VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-1.0,  0.0));
+      VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 1.0,  0.0));
+      VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 0.0, -1.0));
+      VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 0.0,  1.0));
 
       #ifdef VV_SMAP_BLUR8
         // perform 8-way blur
@@ -94,10 +107,10 @@
           #ifdef VV_DYNAMIC_DCOUNT
           dcount = 9.0;
           #endif
-          VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS(-1.0, -1.0));
-          VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS(-1.0,  1.0));
-          VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS( 1.0, -1.0));
-          VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS( 1.0,  1.0));
+          VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-1.0, -1.0));
+          VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-1.0,  1.0));
+          VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 1.0, -1.0));
+          VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 1.0,  1.0));
           #ifdef VV_SMAP_BLUR16
             // perform 16-way blur
             #ifdef VV_SMAP_BLUR_FAST16
@@ -107,14 +120,14 @@
               #ifdef VV_DYNAMIC_DCOUNT
               dcount = 17.0;
               #endif
-              VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS(-2.0,  0.0));
-              VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS( 2.0,  0.0));
-              VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS( 0.0, -2.0));
-              VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS( 0.0,  2.0));
-              VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS(-2.0, -2.0));
-              VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS(-2.0,  2.0));
-              VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS( 2.0, -2.0));
-              VV_SMAP_SAMPLE(daccum, VV_SMAP_OFS( 2.0,  2.0));
+              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-2.0,  0.0));
+              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 2.0,  0.0));
+              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 0.0, -2.0));
+              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 0.0,  2.0));
+              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-2.0, -2.0));
+              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-2.0,  2.0));
+              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 2.0, -2.0));
+              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 2.0,  2.0));
             }
           #endif
         }

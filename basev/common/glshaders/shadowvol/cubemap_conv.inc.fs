@@ -38,6 +38,7 @@ vec4 calc_blur_weight_dir (const vec3 texc) {
 // `x` and `y` are the offset of left-bottom; use +1 to get the neighbour
 // `z` and `w` are the weight factors
 // sampling is always to the right, and to the up
+/*
 vec4 calc_blur_weight_dir_new (const vec3 texc) {
   vec4 res;
 #if 0
@@ -67,7 +68,7 @@ vec4 calc_blur_weight_dir_new (const vec3 texc) {
 #endif
   return res;
 }
-
+*/
 
 // input is normalized
 // z is face number
