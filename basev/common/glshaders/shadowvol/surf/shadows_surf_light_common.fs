@@ -1,3 +1,5 @@
+#define VV_SURFACE_LIGHTING
+
 uniform vec3 LightColor;
 uniform float LightRadius;
 uniform float LightMin;
@@ -6,7 +8,7 @@ uniform float LightMin;
 $include "common/spotlight_vars.fs"
 #endif
 
-varying vec3 Normal;
+//varying vec3 Normal;
 varying vec3 VertToLight;
 varying float Dist;
 varying float VDist;

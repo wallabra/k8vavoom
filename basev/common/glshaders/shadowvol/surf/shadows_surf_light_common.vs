@@ -1,13 +1,15 @@
+#define VV_SURFACE_LIGHTING
+
 uniform vec3 ViewOrigin;
 uniform vec3 LightPos;
 #ifdef VV_SHADOW_CHECK_TEXTURE
 $include "common/texture_vars.vs"
 #endif
 
-/*attribute*/uniform vec3 SurfNormal;
-/*attribute*/uniform float SurfDist;
+uniform vec3 SurfNormal;
+uniform float SurfDist;
 
-varying vec3 Normal;
+//varying vec3 Normal;
 varying vec3 VertToLight;
 varying float Dist;
 varying float VDist;
@@ -25,7 +27,7 @@ void main () {
   $include "common/texture_calc.vs"
 #endif
 
-  Normal = SurfNormal;
+  //Normal = SurfNormal;
 
   float LightDist = dot(LightPos, SurfNormal);
   float ViewDist = dot(ViewOrigin, SurfNormal);

@@ -1,3 +1,8 @@
+#ifdef VV_SURFACE_LIGHTING
+# define Normal  SurfNormal
+#endif
+
+
   float DistToLight = max(1.0, dot(VertToLight, VertToLight));
   if (DistToLight >= LightRadius*LightRadius) discard;
 
