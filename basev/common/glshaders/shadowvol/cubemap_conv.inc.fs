@@ -114,7 +114,10 @@ vec3 shift_cube_uv_slow (vec3 tc, const vec2 shift) {
 }
 
 
-float calcShadowTexelDistance (const vec3 ltfdir) {
+float compareShadowTexelDistance (const vec3 ltfdir, float orgDist) {
+  float sldist = textureCubeFn(ShadowTexture, ltfdir).r+VV_SMAP_BIAS;
+  if (sldist >= orgDist) return 1.0;
+
   // snap direction to texel center
   vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
 
@@ -134,6 +137,7 @@ float calcShadowTexelDistance (const vec3 ltfdir) {
   dv += (1.0-abs(sign(dv)))*0.000001; // so it won't be zero
   float t = (SurfDist-dot(Normal, LightPos))/dv;
   newCubeDist = length(newCubeDir*t);
+  if (sldist >= newCubeDist/LightRadius) return 1.0;
 
   // corner #2
   //cubeTC.x = (texX+0.01)/CubeSize;
@@ -145,6 +149,7 @@ float calcShadowTexelDistance (const vec3 ltfdir) {
   dv += (1.0-abs(sign(dv)))*0.000001; // so it won't be zero
   t = (SurfDist-dot(Normal, LightPos))/dv;
   newCubeDist = min(newCubeDist, length(newCubeDir*t));
+  if (sldist >= newCubeDist/LightRadius) return 1.0;
 
   // corner #3
   cubeTC.x = (texX+0.99)/CubeSize;
@@ -156,6 +161,7 @@ float calcShadowTexelDistance (const vec3 ltfdir) {
   dv += (1.0-abs(sign(dv)))*0.000001; // so it won't be zero
   (SurfDist-dot(Normal, LightPos))/dv;
   newCubeDist = min(newCubeDist, length(newCubeDir*t));
+  if (sldist >= newCubeDist/LightRadius) return 1.0;
 
   // corner #4
   //cubeTC.x = (texX+0.99)/CubeSize;
@@ -164,7 +170,10 @@ float calcShadowTexelDistance (const vec3 ltfdir) {
   newCubeDir = normalize(convert_cube_uv_to_xyz(cubeTC));
   // find the intersection of the surface plane and the ray from the light position
   dv = dot(Normal, newCubeDir);
-  t = 0.0;
-  if (abs(dv) >= 0.00001) t = (SurfDist-dot(Normal, LightPos))/dv;
-  return min(newCubeDist, length(newCubeDir*t))/LightRadius;
+  dv += (1.0-abs(sign(dv)))*0.000001; // so it won't be zero
+  t = (SurfDist-dot(Normal, LightPos))/dv;
+  newCubeDist = min(newCubeDist, length(newCubeDir*t));
+
+  if (sldist >= newCubeDist/LightRadius) return 1.0;
+  return 0.0;
 }

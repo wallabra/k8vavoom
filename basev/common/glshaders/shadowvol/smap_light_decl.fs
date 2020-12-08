@@ -15,4 +15,5 @@ float SurfDist;
 
 //float VV_SMAP_BIAS;
 
+$include "shadowvol/smap_common_defines.inc"
 $include "shadowvol/cubemap_conv.inc.fs"

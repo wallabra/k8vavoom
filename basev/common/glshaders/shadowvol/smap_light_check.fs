@@ -1,46 +1,10 @@
-$include "shadowvol/smap_common_defines.inc"
-
-// conditions seems to perform better
-// and this one doesn't even work
-//#define VV_SMAP_MATH_SAMPLER
-
 // use more math instead of more conditions
 //#define VV_SMAP_FILTER_OLD
 
-// try to do weighted 4-texel sampling?
-// DO NOT SET!
-//#define VV_SMAP_WEIGHTED_BLUR
-
-#ifdef VV_MODEL_LIGHTING
-// for models
-# define VV_SMAP_BIAS  (0.008)
-//# define VV_SMAP_BIAS_N  (0.1)
-#else
-// this seems to be enough for surfaces
-//# define VV_SMAP_BIAS  (0.0006)
-# define VV_SMAP_BIAS  (0.00065)
-//# define VV_SMAP_BIAS_N  (0.1)
-#endif
-
-#ifdef VV_SMAP_WEIGHTED_BLUR
-# ifdef VV_SMAP_BLUR8
-#  undef VV_SMAP_WEIGHTED_BLUR
-# endif
-#endif
-
-#ifdef VV_SMAP_WEIGHTED_BLUR
-# ifndef VV_SMAP_BLUR4
-#  undef VV_SMAP_WEIGHTED_BLUR
-# endif
-#endif
 
 //#define VV_SMAP_SAMPLE(ofs_,bias_)  (sign(sign(textureCubeFn(ShadowTexture, (ofs_)).r+(bias_)-currentDistanceToLight)+0.5))
 
-#ifdef VV_SMAP_MATH_SAMPLER
-# define VV_SMAP_SAMPLE(var_,ofs_)  { newCDir = (ofs_); (var_) += max(1.0, (floor(sign(textureCubeFn(ShadowTexture, newCDir).r+VV_SMAP_BIAS-calcShadowTexelDistance(newCDir))+1.1))); }
-#else
-# define VV_SMAP_SAMPLE(var_,ofs_)  { newCDir = (ofs_); if (textureCubeFn(ShadowTexture, newCDir).r+VV_SMAP_BIAS >= calcShadowTexelDistance(newCDir)) (var_) += 1.0; }
-#endif
+#define VV_SMAP_SAMPLE(var_,ofs_)  (var_) += compareShadowTexelDistance(ofs_, origDist)
 
   //VV_SMAP_BIAS = VV_SMAP_BIAS_N/LightRadius;
 
@@ -50,7 +14,9 @@ $include "shadowvol/smap_common_defines.inc"
 
   // normalized distance to the point light source
   // hardware doesn't require that, but our cubemap calculations do
-  vec3 ltfdir = normalize(VertWorldPos-LightPos);
+  vec3 fullltfdir = VertWorldPos-LightPos;
+  float origDist = length(fullltfdir)/LightRadius;
+  vec3 ltfdir = normalize(fullltfdir);
   // sample shadow cube map
   float sldist = textureCubeFn(ShadowTexture, ltfdir).r+VV_SMAP_BIAS;
 
@@ -170,8 +136,7 @@ $include "shadowvol/smap_common_defines.inc"
         float shadowMul = 1.0;
       #else
         // distance from the light to the nearest shadow caster
-        float newCubeDist = calcShadowTexelDistance(ltfdir);
-        if (sldist < newCubeDist) discard;
+        if (compareShadowTexelDistance(ltfdir, origDist) <= 0.0) discard;
         float shadowMul = 1.0;
       #endif
     #endif

@@ -84,3 +84,31 @@
 #ifndef textureCubeFn
 # define textureCubeFn  textureCube
 #endif
+
+
+// try to do weighted 4-texel sampling?
+// DO NOT SET!
+//#define VV_SMAP_WEIGHTED_BLUR
+
+#ifdef VV_MODEL_LIGHTING
+// for models
+# define VV_SMAP_BIAS  (0.008)
+//# define VV_SMAP_BIAS_N  (0.1)
+#else
+// this seems to be enough for surfaces
+//# define VV_SMAP_BIAS  (0.0006)
+# define VV_SMAP_BIAS  (0.00065)
+//# define VV_SMAP_BIAS_N  (0.1)
+#endif
+
+#ifdef VV_SMAP_WEIGHTED_BLUR
+# ifdef VV_SMAP_BLUR8
+#  undef VV_SMAP_WEIGHTED_BLUR
+# endif
+#endif
+
+#ifdef VV_SMAP_WEIGHTED_BLUR
+# ifndef VV_SMAP_BLUR4
+#  undef VV_SMAP_WEIGHTED_BLUR
+# endif
+#endif
