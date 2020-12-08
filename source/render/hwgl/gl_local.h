@@ -160,6 +160,7 @@ static inline const char *VGetGLErrorStr (const GLenum glerr) {
 enum {
   SMAP_NOBLUR,
   SMAP_BLUR4BI, // "VV_SMAP_BLUR4"
+  SMAP_BLUR4SBI, // "VV_SMAP_SHITTY_BILINEAR"
   SMAP_BLUR4, // "VV_SMAP_BLUR4"
   SMAP_BLUR8, // "VV_SMAP_BLUR8"
   SMAP_BLUR8_FAST, // "VV_SMAP_BLUR8","VV_SMAP_BLUR_FAST8"

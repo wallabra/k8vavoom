@@ -584,8 +584,8 @@ GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB Vert
   (shad_##Blur)[blur_].defines = (shad_).defines; \
   (shad_##Blur)[blur_].defines.append(defs_); \
        if (gl_shadowmap_faster_check.asInt() == 1) (shad_##Blur)[blur_].defines.append("VV_CMP_FASTEST_CHECKS"); \
-  else if (gl_shadowmap_faster_check.asInt() == 2) (shad_##Blur)[blur_].defines.append("VV_CMP_SHITTY_CHECKS");
-
+  else if (gl_shadowmap_faster_check.asInt() == 2) (shad_##Blur)[blur_].defines.append("VV_CMP_SHITTY_CHECKS"); \
+  if (shittyBilinear) (shad_##Blur)[blur_].defines.append("VV_SMAP_SHITTY_BILINEAR");
 
 #define VV_CREATE_SMAP_SHADER_LEVEL(blur_,defs_) \
   VV_CREATE_SMAP_SHADER(ShadowsLightSMap,blur_,defs_) \
@@ -602,8 +602,12 @@ GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB Vert
 //
 //==========================================================================
 void VOpenGLDrawer::LoadShadowmapShaders () {
+  bool shittyBilinear = false;
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_NOBLUR, "VV_SMAP_NOBLUR")
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR4BI, "VV_SMAP_BLUR4_BI")
+  shittyBilinear = true;
+  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR4SBI, "VV_SMAP_BLUR4_BI")
+  shittyBilinear = false;
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR4, "VV_SMAP_BLUR4")
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR8, "VV_SMAP_BLUR8")
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR8_FAST, "VV_SMAP_BLUR8_FAST")

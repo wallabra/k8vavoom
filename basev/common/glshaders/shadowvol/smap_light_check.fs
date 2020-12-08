@@ -1,6 +1,8 @@
 // use more math instead of more conditions
 //#define VV_SMAP_FILTER_OLD
 
+// set by the endine
+//#define VV_SMAP_SHITTY_BILINEAR
 
 //#define VV_SMAP_SAMPLE(ofs_,bias_)  (sign(sign(textureCubeFn(ShadowTexture, (ofs_)).r+(bias_)-currentDistanceToLight)+0.5))
 
@@ -54,19 +56,47 @@
     float valat = compareShadowTexelDistance(ltfdir, origDist);
     float valvert, valhoriz, valdiag;
 
-    // sadly, new shifter is not working here
-    #ifndef VV_SMAP_FILTER_OLD
-    # define VV_SMAP_FILTER_OLD
-    #endif
-    #ifdef VV_SMAP_FILTER_OLD
-      VV_SMAP_SAMPLE_SET(valhoriz, normalize(shift_cube_uv_slow(cubeTC, vec2(1.0, 0.0))));
-      VV_SMAP_SAMPLE_SET(valvert,  normalize(shift_cube_uv_slow(cubeTC, vec2(0.0, 1.0))));
-      VV_SMAP_SAMPLE_SET(valdiag,  normalize(shift_cube_uv_slow(cubeTC, vec2(1.0, 1.0))));
+    #ifdef VV_SMAP_SHITTY_BILINEAR
+      valvert = 0.0;
+      valhoriz = 0.0;
+      valdiag = 0.0;
+      float sldist;
+
+      /*
+      float biasMod = 1.0-clamp(dot(Normal, normV2L), 0.0, 1.0);
+      //float biasBase = 0.001+0.039*biasMod;
+      float biasBase = clamp(BiasMin+BiasMul*biasMod, 0.0, BiasMax); // cosTheta is dot( n,l ), clamped between 0 and 1
+      */
+
+      float cosTheta = clamp(dot(Normal, normV2L), 0.0, 1.0);
+      float biasBase = clamp(0.0065*tan(acos(cosTheta)), 0.0015, 0.036); // cosTheta is dot( n,l ), clamped between 0 and 1
+
+      sldist = (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(1.0, 0.0))).r+biasBase)*LightRadius;
+      sldist *= sldist;
+      if (sldist >= origDist) valhoriz = 1.0;
+
+      sldist = (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(0.0, 1.0))).r+biasBase)*LightRadius;
+      sldist *= sldist;
+      if (sldist >= origDist) valvert = 1.0;
+
+      sldist = (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(1.0, 1.0))).r+biasBase+0.0014)*LightRadius;
+      sldist *= sldist;
+      if (sldist >= origDist) valdiag = 1.0;
     #else
-      $include "shadowvol/cubemap_calc_filters.fs"
-      VV_SMAP_SAMPLE_SET(valhoriz, normalize(VV_SMAP_OFS(1.0, 0.0)));
-      VV_SMAP_SAMPLE_SET(valvert,  normalize(VV_SMAP_OFS(0.0, 1.0)));
-      VV_SMAP_SAMPLE_SET(valdiag,  normalize(VV_SMAP_OFS(1.0, 1.0)));
+      // sadly, new shifter is not working here
+      #ifndef VV_SMAP_FILTER_OLD
+      # define VV_SMAP_FILTER_OLD
+      #endif
+      #ifdef VV_SMAP_FILTER_OLD
+        VV_SMAP_SAMPLE_SET(valhoriz, normalize(shift_cube_uv_slow(cubeTC, vec2(1.0, 0.0))));
+        VV_SMAP_SAMPLE_SET(valvert,  normalize(shift_cube_uv_slow(cubeTC, vec2(0.0, 1.0))));
+        VV_SMAP_SAMPLE_SET(valdiag,  normalize(shift_cube_uv_slow(cubeTC, vec2(1.0, 1.0))));
+      #else
+        $include "shadowvol/cubemap_calc_filters.fs"
+        VV_SMAP_SAMPLE_SET(valhoriz, normalize(VV_SMAP_OFS(1.0, 0.0)));
+        VV_SMAP_SAMPLE_SET(valvert,  normalize(VV_SMAP_OFS(0.0, 1.0)));
+        VV_SMAP_SAMPLE_SET(valdiag,  normalize(VV_SMAP_OFS(1.0, 1.0)));
+      #endif
     #endif
 
     float daccum = valat+valhoriz+valvert+valdiag;

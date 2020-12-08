@@ -119,6 +119,7 @@ menudef ShadowMapOptions {
     list {
       "None",
       "4 Samples, Bilinear",
+      "4 Samples, ShittyBi",
       "4 Samples",
       "8 Samples",
       "8 Samples, Fast",
