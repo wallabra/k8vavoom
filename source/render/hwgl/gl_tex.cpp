@@ -31,8 +31,6 @@ extern VCvarB gl_pic_filtering;
 static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false, "Destroy and create new OpenGL textures for changed DooM animated ones?", CVAR_Archive);
 static VCvarB gl_camera_texture_use_readpixels("gl_camera_texture_use_readpixels", true, "Use ReadPixels to update camera textures?", CVAR_Archive);
 
-//static VCvarB r_gozzo_fucked_black("__r_gozzo_fucked_black", false, "Emulate fucked-up gozzo idea about black colors in non-translucent textures?", CVAR_PreInit);
-
 
 //==========================================================================
 //
@@ -43,6 +41,13 @@ void VOpenGLDrawer::GenerateLightmapAtlasTextures () {
   vassert(!atlasesGenerated);
   glGenTextures(NUM_BLOCK_SURFS, lmap_id);
   glGenTextures(NUM_BLOCK_SURFS, addmap_id);
+  for (unsigned f = 0; f < NUM_BLOCK_SURFS; ++f) {
+    glBindTexture(GL_TEXTURE_2D, lmap_id[f]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    glBindTexture(GL_TEXTURE_2D, addmap_id[f]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+  }
+  glBindTexture(GL_TEXTURE_2D, 0);
   atlasesGenerated = true;
   memset(atlases_updated, 0, sizeof(atlases_updated));
   //GCon->Log(NAME_Debug, "******** VOpenGLDrawer::GenerateLightmapAtlasTextures ********");
@@ -419,6 +424,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     // handle non-camera texture
     if (!*pHandle) glGenTextures(1, pHandle);
     glBindTexture(GL_TEXTURE_2D, *pHandle);
+    p_glObjectLabelVA(GL_TEXTURE, *pHandle, "Texture '%s'", *Tex->Name);
     //GCon->Logf(NAME_Debug, "texture '%s'; tid=%d", *Tex->Name, *pHandle);
 
     // try to load high resolution version
@@ -590,26 +596,6 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bo
     tmpImgBuf1 = (vuint8 *)Z_Realloc(tmpImgBuf1, tmpImgBufSize);
   }
 
-  /*
-  vuint8 *gozzoFucked = nullptr;
-  if (SourceLump >= 0 && r_gozzo_fucked_black && !W_IsIWADLump(SourceLump) && W_IsPakFile(W_LumpFile(SourceLump))) {
-    bool wasConversion = false;
-    gozzoFucked = (vuint8 *)Z_Malloc(w*h*4);
-    memcpy(gozzoFucked, data, w*h*4);
-    rgba_t *col = (rgba_t *)gozzoFucked;
-    for (int y = 0; y < w; ++y) {
-      for (int x = 0; x < h; ++x, ++col) {
-        if ((col->r|col->g|col->b) == 0 && col->a == 255) {
-          wasConversion = true;
-          col->a = 0;
-        }
-      }
-    }
-    if (wasConversion) GCon->Logf(NAME_Warning, "hacked gozzo-black texture '%s'", *W_FullLumpName(SourceLump));
-    data = (rgba_t *)gozzoFucked;
-  }
-  */
-
   vuint8 *image = tmpImgBuf0;
   vuint8 *pmimage = tmpImgBuf1;
 
@@ -634,6 +620,5 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bo
 
   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
   glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
-
-  //if (gozzoFucked) Z_Free(gozzoFucked);
+  if (p_glGenerateMipmap) p_glGenerateMipmap(GL_TEXTURE_2D);
 }

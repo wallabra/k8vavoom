@@ -680,6 +680,7 @@ void VOpenGLDrawer::InitResolution () {
       vassert(cubeDepthTexId[fc]);
       glBindTexture(GL_TEXTURE_2D, cubeDepthTexId[fc]);
       GLDRW_CHECK_ERROR("bind shadowmap depth texture");
+      p_glObjectLabelVA(GL_TEXTURE, cubeDepthTexId[fc], "ShadowCube depth texture #%u", fc);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowmapSize, shadowmapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
       GLDRW_CHECK_ERROR("initialize shadowmap depth texture");
       /*
@@ -703,6 +704,7 @@ void VOpenGLDrawer::InitResolution () {
     GLDRW_CHECK_ERROR("create shadowmap cubemap");
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
     GLDRW_CHECK_ERROR("bind shadowmap cubemap");
+    p_glObjectLabelVA(GL_TEXTURE, cubeTexId, "ShadowCube cubemap texture");
 
     /*
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);

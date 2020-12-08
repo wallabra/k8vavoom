@@ -175,6 +175,7 @@ void VOpenGLDrawer::UploadModel (VMeshModel *Mdl) {
   // create buffer
   p_glGenBuffersARB(1, &Mdl->VertsBuffer);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
+  p_glObjectLabelVA(GL_BUFFER, Mdl->VertsBuffer, "Model verts buffer <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
 
   int Size = (int)sizeof(VMeshSTVert)*Mdl->STVerts.length()+(int)sizeof(TVec)*Mdl->STVerts.length()*2*Mdl->Frames.length();
   p_glBufferDataARB(GL_ARRAY_BUFFER_ARB, Size, nullptr, GL_STATIC_DRAW_ARB);
@@ -196,6 +197,7 @@ void VOpenGLDrawer::UploadModel (VMeshModel *Mdl) {
   // indexes
   p_glGenBuffersARB(1, &Mdl->IndexBuffer);
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
+  p_glObjectLabelVA(GL_BUFFER, Mdl->IndexBuffer, "Model idx buffer <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
 
   // vertex indicies
   p_glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 6*Mdl->Tris.length(), &Mdl->Tris[0], GL_STATIC_DRAW_ARB);

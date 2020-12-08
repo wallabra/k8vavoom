@@ -126,6 +126,7 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
   aowner->p_glGenFramebuffers(1, &mFBO);
   if (mFBO == 0) Sys_Error("OpenGL: cannot create FBO: error is %s", VGetGLErrorStr(glGetError()));
   aowner->p_glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+  aowner->p_glObjectLabelVA(GL_FRAMEBUFFER, mFBO, "FBO(%u)", mFBO);
   GLDRW_CHECK_ERROR("FBO: glBindFramebuffer");
 
   // attach 2D texture to this FBO
@@ -133,6 +134,7 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
   if (mColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for FBO: error is %s", VGetGLErrorStr(glGetError()));
   glBindTexture(GL_TEXTURE_2D, mColorTid);
   GLDRW_CHECK_ERROR("FBO: glBindTexture");
+  aowner->p_glObjectLabelVA(GL_TEXTURE, mColorTid, "FBO(%u) color texture", mFBO);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 

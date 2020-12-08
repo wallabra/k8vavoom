@@ -179,6 +179,7 @@ void VOpenGLDrawer::BloomInitEffectTexture () {
 
   p_glGenBuffersARB(1, &bloomColAvgGetterPBOid);
   p_glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, bloomColAvgGetterPBOid);
+  p_glObjectLabelVA(GL_BUFFER, bloomColAvgGetterPBOid, "BloomAveragerBuffer");
   p_glBufferDataARB(GL_PIXEL_PACK_BUFFER_ARB, 3, nullptr, GL_STREAM_READ);
   p_glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0);
 }
@@ -301,8 +302,8 @@ void VOpenGLDrawer::BloomDarken () {
     bloomeffectFBO.blitTo(&bloomcoloraveragingFBO, 0, 0, bloomWidth, bloomHeight, 0, 0, bloomWidth, bloomHeight, GL_NEAREST);
     #endif
     glBindTexture(GL_TEXTURE_2D, bloomcoloraveragingFBO.getColorTid());
-    p_glGenerateMipmap(GL_TEXTURE_2D);
     glGetTexImage(GL_TEXTURE_2D, bloomMipmapCount, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    p_glGenerateMipmap(GL_TEXTURE_2D);
     bloomColAvgValid = true; // any time after this, we could read from the rbo
     p_glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0);
 
