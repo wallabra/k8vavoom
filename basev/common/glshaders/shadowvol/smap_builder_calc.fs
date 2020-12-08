@@ -6,14 +6,11 @@ $include "shadowvol/smap_common_defines.inc"
   if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this
 #endif
   vec4 fc = vec4(0.0, 0.0, 0.0, 1.0);
-  float dist = distance(LightPos, VertWorldPos)+0.8;
+  float dist = distance(LightPos, VertWorldPos);
   #ifdef VV_SMAP_BLUR4
   dist += 1.2;
+  #else
+  dist += 0.8;
   #endif
-  if (dist >= LightRadius) {
-    fc.r = 99999.0;
-    fc.b = 1.0;
-  } else {
-    fc.r = dist/LightRadius;
-  }
-  gl_FragColor = fc;
+  if (dist >= LightRadius) discard;
+  gl_FragColor.r = dist/LightRadius;
