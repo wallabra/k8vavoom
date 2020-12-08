@@ -99,6 +99,21 @@ menudef ShadowMapOptions {
   }
 
   option enum {
+    title = "Faster Checks";
+    cvar = gl_shadowmap_faster_check;
+    list {
+      "Normal",
+      "Faster",
+      "Shitty Fast",
+    }
+    help =
+      "Use slightly faster, but less precise shadowmap texel checks?",
+      "This can lower shadows quality.",
+      "",
+      "\c[WHITE]WARNING! You need to reinit resolution to apply this.";
+  }
+
+  option enum {
     title = "Shadowmap Blur";
     cvar = gl_shadowmap_blur;
     list {

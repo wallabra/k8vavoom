@@ -1,5 +1,7 @@
-#define VV_CMP_FASTEST_CHECKS
 #define VV_CMP_FASTER_CHECKS
+// this is set in the engine
+//#define VV_CMP_FASTEST_CHECKS
+//#define VV_CMP_SHITTY_CHECKS
 
 float compareShadowTexelDistance (const vec3 ltfdir, float orgDist) {
   float sldist = (textureCubeFn(ShadowTexture, ltfdir).r+VV_SMAP_BIAS)*LightRadius;
@@ -19,60 +21,36 @@ float compareShadowTexelDistance (const vec3 ltfdir, float orgDist) {
     if (cubeTC.z == 0.0) {
       // positive x
       #define SMCHECK_V3  vec3(1.0, vc, -uc)
-      #ifdef VV_CMP_FASTEST_CHECKS
-        $include "shadowvol/cubemap_check_three_inc.fs"
-      #else
-        $include "shadowvol/cubemap_check_four_inc.fs"
-      #endif
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
       #undef SMCHECK_V3
     }
     if (cubeTC.z == 1.0) {
       // negative x
       #define SMCHECK_V3  vec3(-1.0, vc, uc)
-      #ifdef VV_CMP_FASTEST_CHECKS
-        $include "shadowvol/cubemap_check_three_inc.fs"
-      #else
-        $include "shadowvol/cubemap_check_four_inc.fs"
-      #endif
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
       #undef SMCHECK_V3
     }
     if (cubeTC.z == 2.0) {
       // positive y
       #define SMCHECK_V3  vec3(uc, 1.0, -vc)
-      #ifdef VV_CMP_FASTEST_CHECKS
-        $include "shadowvol/cubemap_check_three_inc.fs"
-      #else
-        $include "shadowvol/cubemap_check_four_inc.fs"
-      #endif
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
       #undef SMCHECK_V3
     }
     if (cubeTC.z == 3.0) {
       // negative y
       #define SMCHECK_V3  vec3(uc, -1.0, vc)
-      #ifdef VV_CMP_FASTEST_CHECKS
-        $include "shadowvol/cubemap_check_three_inc.fs"
-      #else
-        $include "shadowvol/cubemap_check_four_inc.fs"
-      #endif
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
       #undef SMCHECK_V3
     }
     if (cubeTC.z == 4.0) {
       // positive z
       #define SMCHECK_V3  vec3(uc, vc, 1.0)
-      #ifdef VV_CMP_FASTEST_CHECKS
-        $include "shadowvol/cubemap_check_three_inc.fs"
-      #else
-        $include "shadowvol/cubemap_check_four_inc.fs"
-      #endif
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
       #undef SMCHECK_V3
     }
     // negative z
     #define SMCHECK_V3  vec3(-uc, vc, -1.0)
-      #ifdef VV_CMP_FASTEST_CHECKS
-        $include "shadowvol/cubemap_check_three_inc.fs"
-      #else
-        $include "shadowvol/cubemap_check_four_inc.fs"
-      #endif
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
     #undef SMCHECK_V3
   #else
     float texX = floor(cubeTC.x*CubeSize);

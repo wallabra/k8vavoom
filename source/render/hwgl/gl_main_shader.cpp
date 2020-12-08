@@ -35,6 +35,9 @@
 #include "../r_local.h" /* for VRenderLevelShared */
 
 
+extern VCvarI gl_shadowmap_faster_check;
+
+
 //==========================================================================
 //
 //  VOpenGLDrawer::registerShader
@@ -579,7 +582,9 @@ GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB Vert
 #define VV_CREATE_SMAP_SHADER(shad_,blur_,defs_)  \
   (shad_##Blur)[blur_].Setup(this); \
   (shad_##Blur)[blur_].defines = (shad_).defines; \
-  (shad_##Blur)[blur_].defines.append(defs_);
+  (shad_##Blur)[blur_].defines.append(defs_); \
+       if (gl_shadowmap_faster_check.asInt() == 1) (shad_##Blur)[blur_].defines.append("VV_CMP_FASTEST_CHECKS"); \
+  else if (gl_shadowmap_faster_check.asInt() == 2) (shad_##Blur)[blur_].defines.append("VV_CMP_SHITTY_CHECKS");
 
 
 #define VV_CREATE_SMAP_SHADER_LEVEL(blur_,defs_) \
