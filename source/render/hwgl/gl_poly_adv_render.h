@@ -34,7 +34,7 @@ extern VCvarB gl_dbg_vbo_adv_ambient;
 extern VCvarB gl_smart_reject_shadows;
 extern VCvarB gl_smart_reject_svol_segs;
 extern VCvarB gl_smart_reject_svol_flats;
-extern VCvarB gl_shadowmap_filter;
+extern VCvarB gl_dev_shadowmap_filter;
 extern VCvarI gl_shadowmap_blur;
 extern VCvarB r_shadowmaps;
 

@@ -112,3 +112,59 @@ vec3 shift_cube_uv_slow (vec3 tc, const vec2 shift) {
   tc.y += shift.y/CubeSize;
   return convert_cube_uv_to_xyz(tc);
 }
+
+
+float calcShadowTexelDistance (const vec3 ltfdir) {
+  // snap direction to texel center
+  vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
+
+  float texX = floor(cubeTC.x*CubeSize);
+  float texY = floor(cubeTC.y*CubeSize);
+  float newCubeDist;
+  vec3 newCubeDir;
+
+  // try 4 texel corners to find out which one is nearest
+  // i am pretty sure that i can calculate it faster, but let's use this method for now
+  cubeTC.x = (texX+0.01)/CubeSize;
+  cubeTC.y = (texY+0.01)/CubeSize;
+  // new direction vector
+  newCubeDir = normalize(convert_cube_uv_to_xyz(cubeTC));
+  // find the intersection of the surface plane and the ray from the light position
+  float dv = dot(Normal, newCubeDir);
+  dv += (1.0-abs(sign(dv)))*0.000001; // so it won't be zero
+  float t = (SurfDist-dot(Normal, LightPos))/dv;
+  newCubeDist = length(newCubeDir*t);
+
+  // corner #2
+  //cubeTC.x = (texX+0.01)/CubeSize;
+  cubeTC.y = (texY+0.99)/CubeSize;
+  // new direction vector
+  newCubeDir = normalize(convert_cube_uv_to_xyz(cubeTC));
+  // find the intersection of the surface plane and the ray from the light position
+  dv = dot(Normal, newCubeDir);
+  dv += (1.0-abs(sign(dv)))*0.000001; // so it won't be zero
+  t = (SurfDist-dot(Normal, LightPos))/dv;
+  newCubeDist = min(newCubeDist, length(newCubeDir*t));
+
+  // corner #3
+  cubeTC.x = (texX+0.99)/CubeSize;
+  //cubeTC.y = (texY+0.99)/CubeSize;
+  // new direction vector
+  newCubeDir = normalize(convert_cube_uv_to_xyz(cubeTC));
+  // find the intersection of the surface plane and the ray from the light position
+  dv = dot(Normal, newCubeDir);
+  dv += (1.0-abs(sign(dv)))*0.000001; // so it won't be zero
+  (SurfDist-dot(Normal, LightPos))/dv;
+  newCubeDist = min(newCubeDist, length(newCubeDir*t));
+
+  // corner #4
+  //cubeTC.x = (texX+0.99)/CubeSize;
+  cubeTC.y = (texY+0.01)/CubeSize;
+  // new direction vector
+  newCubeDir = normalize(convert_cube_uv_to_xyz(cubeTC));
+  // find the intersection of the surface plane and the ray from the light position
+  dv = dot(Normal, newCubeDir);
+  t = 0.0;
+  if (abs(dv) >= 0.00001) t = (SurfDist-dot(Normal, LightPos))/dv;
+  return min(newCubeDist, length(newCubeDir*t))/LightRadius;
+}

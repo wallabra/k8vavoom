@@ -1,4 +1,5 @@
 #define VV_SURFACE_LIGHTING
+#define Normal  SurfNormal
 
 uniform vec3 LightColor;
 uniform float LightRadius;

@@ -137,7 +137,7 @@ void VOpenGLDrawer::ClearAllShadowMaps () {
 //==========================================================================
 void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) {
   GLSMAP_CLEAR_ERR();
-  const bool flt = gl_shadowmap_filter.asBool();
+  const bool flt = gl_dev_shadowmap_filter.asBool();
   if (flt != cubemapLinearFiltering) {
     cubemapLinearFiltering = flt;
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);

@@ -507,11 +507,11 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
 
 #define VV_MLIGHT_SHADER_SETUP_SMAP_ONLY(shad_)  \
   (shad_##Blur)[smapBShaderIndex].SetShadowTexture(1); \
-  (shad_##Blur)[smapBShaderIndex].SetBiasMul(advLightGetMulBias()); \
-  (shad_##Blur)[smapBShaderIndex].SetBiasMin(advLightGetMinBias()); \
-  (shad_##Blur)[smapBShaderIndex].SetBiasMax(advLightGetMaxBias(shadowmapPOT)); \
+  /*(shad_##Blur)[smapBShaderIndex].SetBiasMul(advLightGetMulBias());*/ \
+  /*(shad_##Blur)[smapBShaderIndex].SetBiasMin(advLightGetMinBias());*/ \
+  /*(shad_##Blur)[smapBShaderIndex].SetBiasMax(advLightGetMaxBias(shadowmapPOT));*/ \
   (shad_##Blur)[smapBShaderIndex].SetCubeSize((float)(128<<shadowmapPOT)); \
-  (shad_##Blur)[smapBShaderIndex].SetUseAdaptiveBias(cubemapLinearFiltering ? 0.0f : 1.0f);
+  /*(shad_##Blur)[smapBShaderIndex].SetUseAdaptiveBias(cubemapLinearFiltering ? 0.0f : 1.0f);*/
 
 #define VV_MLIGHT_SHADER_SETUP_SMAP(shad_)  \
   if (spotLight) { \

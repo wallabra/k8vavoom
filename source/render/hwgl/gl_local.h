@@ -1302,8 +1302,10 @@ public:
 };
 
 
+/*
 float advLightGetMaxBias (const unsigned int shadowmapPOT) noexcept;
 float advLightGetMinBias () noexcept;
 float advLightGetMulBias () noexcept;
+*/
 
 #endif

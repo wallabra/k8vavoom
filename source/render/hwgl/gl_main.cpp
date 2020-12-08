@@ -27,12 +27,19 @@
 //**  OpenGL driver, main module
 //**
 //**************************************************************************
+// not done yet
+//#define VV_SHADER_COMPILING_PROGRESS
+
 #include <limits.h>
 #include <float.h>
 #include <stdarg.h>
 
 #include "gl_local.h"
 #include "../r_local.h" /* for VRenderLevelShared */
+
+#ifdef VV_SHADER_COMPILING_PROGRESS
+#include "splashfont.inc"
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -123,6 +130,74 @@ VCvarI gl_release_ram_textures_mode("gl_release_ram_textures_mode", "0", "When t
 VCvarI gl_shadowmap_size("gl_shadowmap_size", "1", "Shadowmap size (0:128; 1:256; 2:512; 3:1024).", CVAR_PreInit|CVAR_Archive);
 VCvarI gl_shadowmap_precision("gl_shadowmap_precision", "0", "Shadowmap precision (0:16; 1:32).", CVAR_PreInit|CVAR_Archive);
 //!VCvarB gl_shadowmap_gbuffer("gl_shadowmap_gbuffer", false, "Emulate G-buffer (allocate all three color channels).", CVAR_PreInit|CVAR_Archive);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+#ifdef VV_SHADER_COMPILING_PROGRESS
+
+#define PROG_BUF_WIDTH   (256)
+#define PROG_BUF_HEIGHT  (256)
+
+static uint8_t *tempProgBuffer = nullptr;
+
+
+//==========================================================================
+//
+//  progBufClear
+//
+//==========================================================================
+static void progBufClear () {
+  if (!tempProgBuffer) tempProgBuffer = (uint8_t *)Z_Malloc(PROG_BUF_WIDTH*PROG_BUF_HEIGHT*4);
+  memset(tempProgBuffer, 0, PROG_BUF_WIDTH*PROG_BUF_HEIGHT*4);
+}
+
+
+//==========================================================================
+//
+//  progBufPutCharAt
+//
+//==========================================================================
+static void progBufPutCharAt (int x0, int y0, char ch) {
+  if (!tempProgBuffer) return;
+  /*
+  const unsigned colors[3] = { 0xff7f00u, 0xdf5f00u, 0xbf3f00u };
+  const unsigned conColor = colors[lnum%3];
+  int r = (conColor>>16)&0xff;
+  int g = (conColor>>8)&0xff;
+  int b = conColor&0xff;
+  const int rr = r, gg = g, bb = b;
+  */
+  const unsigned color = 0xff007fff;
+  for (int y = CONFONT_HEIGHT-1; y >= 0; --y) {
+    if (y0+y < 0 || y0+y >= PROG_BUF_HEIGHT) break;
+    vuint16 v = glConFont10[(ch&0xff)*10+y];
+    for (int x = 0; x < CONFONT_WIDTH; ++x) {
+      if (x0+x < 0) continue;
+      if (x0+x >= PROG_BUF_WIDTH) break;
+      if (v&0x8000) {
+        *(uint32_t *)(tempProgBuffer+(PROG_BUF_WIDTH+y)*4+x*4) = color;
+      } else {
+        *(uint32_t *)(tempProgBuffer+(PROG_BUF_WIDTH+y)*4+x*4) = 0xff000000;
+      }
+      v <<= 1;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  progBufPutTextAt
+//
+//==========================================================================
+static void progBufPutTextAt (int x0, int y0, const char *s) {
+  if (!s || !s[0] || !tempProgBuffer) return;
+  while (*s) {
+    progBufPutCharAt(x0, y0, *s++);
+    x0 += CONFONT_WIDTH;
+  }
+}
+#endif
 
 
 //==========================================================================
@@ -846,8 +921,48 @@ void VOpenGLDrawer::InitResolution () {
   GCon->Log(NAME_Init, "OpenGL: loading shaders");
   LoadAllShaders();
   LoadShadowmapShaders();
+
+#ifdef VV_SHADER_COMPILING_PROGRESS
+  // show shader loading progress
+  p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  Setup2D();
+  GLDRW_CHECK_ERROR("progress preparation");
+
+  GLuint msgTexture;
+  glEnable(GL_TEXTURE_2D);
+  glGenTextures(1, &msgTexture);
+  glBindTexture(GL_TEXTURE_2D, msgTexture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+  GLDRW_CHECK_ERROR("created progress texture");
+
+  glDrawBuffer(GL_FRONT); // direct update
+  GLDRW_CHECK_ERROR("turned on direct update");
+
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
+  progBufClear();
+  progBufPutTextAt(2, 2, va("compiling shaders [0/10]"));
+
+  glTexSubImage2D(GL_TEXTURE_2D, 0,  0, 0, PROG_BUF_WIDTH, PROG_BUF_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, tempProgBuffer);
+  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+  glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2i(0, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex2i(PROG_BUF_WIDTH, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex2i(PROG_BUF_WIDTH, PROG_BUF_HEIGHT);
+    glTexCoord2f(0.0f, 1.0f); glVertex2i(0, PROG_BUF_HEIGHT);
+  glEnd();
+#endif
+
   GCon->Log(NAME_Init, "OpenGL: compiling shaders");
   CompileShaders(major, minor, canRenderShadowmaps);
+
+#ifdef VV_SHADER_COMPILING_PROGRESS
+  glDrawBuffer(GL_BACK); // end of direct update
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glDeleteTextures(1, &msgTexture);
+  ReactivateCurrentFBO();
+#endif
 
   GLDRW_CHECK_ERROR("finish OpenGL initialization");
 

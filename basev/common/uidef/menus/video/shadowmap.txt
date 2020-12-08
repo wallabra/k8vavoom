@@ -84,9 +84,9 @@ menudef ShadowMapOptions {
 
   header "Quality Options";
 
-  option bool {
+  option bool [__k8vavoom_developer_version > 0] {
     title = "Filter shadowmap";
-    cvar = gl_shadowmap_filter;
+    cvar = gl_dev_shadowmap_filter;
     help =
       "Apply bilinear filtering to shadowmap textures?",
       "This usually gives you slightly bigger, but better,",
