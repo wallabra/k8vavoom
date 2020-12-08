@@ -37,6 +37,8 @@
 
 extern VCvarI gl_shadowmap_faster_check;
 
+static VCvarB gl_shader_on_demand("gl_shader_on_demand", false, "Compile shaders on demand?", CVAR_PreInit|CVAR_Archive);
+
 
 //==========================================================================
 //
@@ -58,8 +60,9 @@ void VOpenGLDrawer::registerShader (VGLShader *shader) {
 //==========================================================================
 void VOpenGLDrawer::CompileShaders (int glmajor, int glminor, bool canCubemaps) {
   for (VGLShader *shad = shaderHead; shad; shad = shad->next) {
+    shad->compiled = false;
     if (shad->CheckOpenGLVersion(glmajor, glminor, canCubemaps)) {
-      shad->Compile();
+      if (gl_shader_on_demand) shad->Compile();
     } else {
       GCon->Logf(NAME_Init, "skipped shader '%s' due to OpenGL version constraint", shad->progname);
     }
@@ -181,6 +184,11 @@ void VOpenGLDrawer::VGLShader::MainSetup (VOpenGLDrawer *aowner, const char *apr
 //
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Activate () {
+  if (!compiled) {
+    owner->p_glUseProgramObjectARB(0);
+    Compile();
+    compiled = true;
+  }
   vassert(prog);
   if (owner->currentActiveShader != this) {
     owner->p_glUseProgramObjectARB(prog);
@@ -216,7 +224,8 @@ bool VOpenGLDrawer::VGLShader::IsActive () const noexcept {
 //
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Compile () {
-  if (developer) GCon->Logf(NAME_Dev, "compiling shader '%s'", progname);
+       if (gl_shader_on_demand) GCon->Logf(NAME_Init, "compiling shader '%s'", progname);
+  else if (developer) GCon->Logf(NAME_Dev, "compiling shader '%s'", progname);
   GLhandleARB VertexShader = owner->LoadShader(progname, incdir, GL_VERTEX_SHADER_ARB, vssrcfile, defines);
   GLhandleARB FragmentShader = owner->LoadShader(progname, incdir, GL_FRAGMENT_SHADER_ARB, fssrcfile, defines);
   prog = owner->CreateProgram(progname, VertexShader, FragmentShader);

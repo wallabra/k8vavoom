@@ -209,6 +209,7 @@ public:
     int oglVersion;  // high*100+low
     bool forCubemaps;
     TArray<VStr> defines;
+    bool compiled; // for on-demand compiling
 
     typedef float glsl_float2[2];
     typedef float glsl_float3[3];
@@ -216,7 +217,7 @@ public:
     typedef float glsl_float9[9];
 
   public:
-    VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1), oglVersionCond(CondGreaterEqu), oglVersion(0), forCubemaps(false) {}
+    VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1), oglVersionCond(CondGreaterEqu), oglVersion(0), forCubemaps(false), compiled(false) {}
 
     inline void SetOpenGLVersion (int cond, int ver) noexcept { oglVersionCond = cond; oglVersion = ver; }
     inline void SetForCubemaps () noexcept { forCubemaps = true; }
