@@ -57,6 +57,7 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+extern VCvarB gl_gpu_debug;
 extern VCvarF gl_alpha_threshold;
 extern VCvarB gl_sort_textures;
 extern VCvarI r_ambient_min;
@@ -96,6 +97,37 @@ extern VCvarF gl_letterbox_scale;
 
 extern VCvarB gl_enable_depth_bounds;
 extern VCvarB gl_enable_clip_control;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+typedef void (*VV_GLOBJECTLABEL) (GLenum identifier, GLuint name, GLsizei length, const GLchar *label);
+typedef void (*VV_GLOBJECTPTRLABEL) (const void *ptr, GLsizei length, const GLchar *label);
+typedef void (*VV_GLGETOBJECTLABEL) (GLenum identifier, GLuint name, GLsizei bufSize, GLsizei *length, GLchar *label);
+typedef void (*VV_GLGETOBJECTPTRLABEL) (const void *ptr, GLsizei bufSize, GLsizei *length, GLchar *label);
+
+// for `p_glObjectLabel()` and such, for `identifier`
+#ifndef GL_BUFFER
+#define GL_BUFFER                         0x82E0
+#endif
+#ifndef GL_SHADER
+#define GL_SHADER                         0x82E1
+#endif
+#ifndef GL_PROGRAM
+#define GL_PROGRAM                        0x82E2
+#endif
+#ifndef GL_QUERY
+#define GL_QUERY                          0x82E3
+#endif
+#ifndef GL_PROGRAM_PIPELINE
+#define GL_PROGRAM_PIPELINE               0x82E4
+#endif
+#ifndef GL_SAMPLER
+#define GL_SAMPLER                        0x82E6
+#endif
+
+#ifndef GL_MAX_LABEL_LENGTH
+#define GL_MAX_LABEL_LENGTH               0x82E8
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -408,6 +440,8 @@ public:
     SCS_MAXX,
     SCS_MAXY,
   };
+
+  inline bool checkGLVer (int major, int minor) const noexcept { return (glVerMajor == major ? (glVerMinor >= minor) : (glVerMajor > major)); }
 
 protected:
   GLuint cubeTexId;
@@ -1204,6 +1238,17 @@ public:
   inline float CalcSkyTexCoordT (const TVec vert, const texinfo_t *tex) const noexcept {
     return (DotProduct(vert, tex->taxis*tex_scale_y)+tex->toffs*tex_scale_y)*tex_ih;
   }
+
+public:
+  // will be set to dummy functions if no debug API available, so it safe to use
+  bool glDebugEnabled;
+  GLint glMaxDebugLabelLen;
+  VV_GLOBJECTLABEL p_glObjectLabel;
+  VV_GLOBJECTPTRLABEL p_glObjectPtrLabel;
+  VV_GLGETOBJECTLABEL p_glGetObjectLabel;
+  VV_GLGETOBJECTPTRLABEL p_glGetObjectPtrLabel;
+
+  void p_glObjectLabelVA (GLenum identifier, GLuint name, const char *fmt, ...) __attribute__((format(printf, 4, 5)));
 
 public:
   #define VV_GLIMPORTS

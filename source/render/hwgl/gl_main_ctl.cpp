@@ -37,6 +37,28 @@
 
 //==========================================================================
 //
+//  VOpenGLDrawer::p_glObjectLabelVA
+//
+//==========================================================================
+__attribute__((format(printf, 4, 5))) void VOpenGLDrawer::p_glObjectLabelVA (GLenum identifier, GLuint name, const char *fmt, ...) {
+  if (!glDebugEnabled || !glMaxDebugLabelLen) return;
+  if (!fmt || !fmt[0]) {
+    p_glObjectLabel(identifier, name, 0, "");
+  } else {
+    va_list ap;
+    va_start(ap, fmt);
+    char *res = vavarg(fmt, ap);
+    va_end(ap);
+    //if (!res[0]) return;
+    size_t slen = strlen(res);
+    if (slen > (unsigned)glMaxDebugLabelLen) slen = glMaxDebugLabelLen;
+    p_glObjectLabel(identifier, name, (GLsizei)slen, res);
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::CheckExtension
 //
 //==========================================================================

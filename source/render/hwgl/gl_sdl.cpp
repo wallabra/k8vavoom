@@ -45,7 +45,112 @@
 extern VCvarB ui_want_mouse_at_zero;
 extern VCvarF screen_scale;
 
+VCvarB gl_gpu_debug("gl_gpu_debug", false, "Enable OpenGL debugging?", CVAR_PreInit);
 
+typedef void (*VV_GLDEBUGPROC) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam);
+typedef void (*VV_GLDEBUGMESSAGECALLBACK) (VV_GLDEBUGPROC callback, const void *userParam);
+typedef void (*VV_GLGLDEBUGMESSAGECONTROL) (GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled);
+
+/*
+#define GL_DEBUG_OUTPUT_SYNCHRONOUS       0x8242
+#define GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH 0x8243
+#define GL_DEBUG_CALLBACK_FUNCTION        0x8244
+#define GL_DEBUG_CALLBACK_USER_PARAM      0x8245
+#define GL_MAX_DEBUG_MESSAGE_LENGTH       0x9143
+#define GL_MAX_DEBUG_LOGGED_MESSAGES      0x9144
+#define GL_DEBUG_LOGGED_MESSAGES          0x9145
+#define GL_DEBUG_SEVERITY_HIGH            0x9146
+#define GL_DEBUG_SEVERITY_MEDIUM          0x9147
+#define GL_DEBUG_SEVERITY_LOW             0x9148
+#define GL_DEBUG_TYPE_MARKER              0x8268
+#define GL_DEBUG_TYPE_PUSH_GROUP          0x8269
+#define GL_DEBUG_TYPE_POP_GROUP           0x826A
+#define GL_DEBUG_SEVERITY_NOTIFICATION    0x826B
+#define GL_MAX_DEBUG_GROUP_STACK_DEPTH    0x826C
+#define GL_DEBUG_GROUP_STACK_DEPTH        0x826D
+#define GL_DEBUG_OUTPUT                   0x92E0
+*/
+#ifndef GL_DEBUG_OUTPUT
+#define GL_DEBUG_OUTPUT                   0x92E0
+#endif
+
+#ifndef GL_DEBUG_SOURCE_API
+#define GL_DEBUG_SOURCE_API               0x8246
+#endif
+#ifndef GL_DEBUG_SOURCE_WINDOW_SYSTEM
+#define GL_DEBUG_SOURCE_WINDOW_SYSTEM     0x8247
+#endif
+#ifndef GL_DEBUG_SOURCE_SHADER_COMPILER
+#define GL_DEBUG_SOURCE_SHADER_COMPILER   0x8248
+#endif
+#ifndef GL_DEBUG_SOURCE_THIRD_PARTY
+#define GL_DEBUG_SOURCE_THIRD_PARTY       0x8249
+#endif
+#ifndef GL_DEBUG_SOURCE_APPLICATION
+#define GL_DEBUG_SOURCE_APPLICATION       0x824A
+#endif
+#ifndef GL_DEBUG_SOURCE_OTHER
+#define GL_DEBUG_SOURCE_OTHER             0x824B
+#endif
+#ifndef GL_DEBUG_TYPE_ERROR
+#define GL_DEBUG_TYPE_ERROR               0x824C
+#endif
+#ifndef GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR
+#define GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR 0x824D
+#endif
+#ifndef GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR
+#define GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR  0x824E
+#endif
+#ifndef GL_DEBUG_TYPE_PORTABILITY
+#define GL_DEBUG_TYPE_PORTABILITY         0x824F
+#endif
+#ifndef GL_DEBUG_TYPE_PERFORMANCE
+#define GL_DEBUG_TYPE_PERFORMANCE         0x8250
+#endif
+#ifndef GL_DEBUG_TYPE_OTHER
+#define GL_DEBUG_TYPE_OTHER               0x8251
+#endif
+
+
+static void vv_glDebugCallback (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam) {
+  if (!message || !message[0]) return;
+  const char *srcstr;
+  switch (source) {
+    case GL_DEBUG_SOURCE_API: srcstr = "API"; break;
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM: srcstr = "winsys"; break;
+    case GL_DEBUG_SOURCE_SHADER_COMPILER: srcstr = "scompiler"; break;
+    case GL_DEBUG_SOURCE_THIRD_PARTY: srcstr = "3rdparty"; break;
+    case GL_DEBUG_SOURCE_APPLICATION: srcstr = "app"; break;
+    case GL_DEBUG_SOURCE_OTHER: srcstr = "other"; break;
+    default :srcstr = "unknown";
+  }
+  const char *typestr;
+  switch (type) {
+    case GL_DEBUG_TYPE_ERROR: typestr = "ERROR"; break;
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typestr = "deprecated"; break;
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: typestr = "UB"; break;
+    case GL_DEBUG_TYPE_PORTABILITY: typestr = "portability"; break;
+    case GL_DEBUG_TYPE_PERFORMANCE: typestr = "perf"; break;
+    case GL_DEBUG_TYPE_OTHER: typestr = "other"; break;
+    default: typestr = "unknown";
+  }
+  GCon->Logf(NAME_DebugGL, "%s:%s: %s", srcstr, typestr, message);
+}
+
+static void vv_glDebugMessageCallbackDummy (VV_GLDEBUGPROC callback, const void *userParam) {}
+static void vv_glObjectLabel (GLenum identifier, GLuint name, GLsizei length, const GLchar *label) {}
+static void vv_glObjectPtrLabel (const void *ptr, GLsizei length, const GLchar *label) {}
+static void vv_glGetObjectLabel (GLenum identifier, GLuint name, GLsizei bufSize, GLsizei *length, GLchar *label) {
+  if (length) *length = 0;
+  if (bufSize > 0 && label) label[0] = 0;
+}
+static void vv_glGetObjectPtrLabel (const void *ptr, GLsizei bufSize, GLsizei *length, GLchar *label) {
+  if (length) *length = 0;
+  if (bufSize > 0 && label) label[0] = 0;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VSdlOpenGLDrawer : public VOpenGLDrawer {
   friend struct SplashDtor;
 
@@ -82,6 +187,9 @@ protected:
   double imgtlastupdate;
   char imgtext[IMG_TEXT_MAXLEN*IMG_TEXT_LINES];
   unsigned imgtextpos;
+
+  VV_GLDEBUGMESSAGECALLBACK p_glDebugMessageCallback;
+  VV_GLGLDEBUGMESSAGECONTROL p_glDebugMessageControl;
 
   // used to cleanup partially created splash window
   struct SplashDtor {
@@ -184,10 +292,18 @@ VSdlOpenGLDrawer::VSdlOpenGLDrawer ()
   #endif
   , imgtlastupdate(0)
   , imgtextpos(0)
+  , p_glDebugMessageCallback(&vv_glDebugMessageCallbackDummy)
+  , p_glDebugMessageControl(nullptr)
   , hw_window(nullptr)
   , hw_glctx(nullptr)
 {
   memset(imgtext, 0, sizeof(imgtext));
+  glDebugEnabled = false;
+  glMaxDebugLabelLen = 0;
+  p_glObjectLabel = &vv_glObjectLabel;
+  p_glObjectPtrLabel = &vv_glObjectPtrLabel;
+  p_glGetObjectLabel = &vv_glGetObjectLabel;
+  p_glGetObjectPtrLabel = &vv_glGetObjectPtrLabel;
 }
 
 
@@ -338,6 +454,7 @@ void VSdlOpenGLDrawer::SetupSDLRequirements () {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+  gl_gpu_debug = false;
 #else
   //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -347,6 +464,9 @@ void VSdlOpenGLDrawer::SetupSDLRequirements () {
   //fgsfds: libdrm_nouveau requires this, or else shit will be trying to use GLES
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
   //#endif
+  if (gl_gpu_debug) {
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+  }
 #endif
   // as we are doing rendering to FBO, there is no need to create depth and stencil buffers for FB
   // but shitty intel may require this, so...
@@ -374,6 +494,15 @@ void VSdlOpenGLDrawer::SetupSDLRequirements () {
 //==========================================================================
 bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   HideSplashScreens();
+
+  glDebugEnabled = false;
+  glMaxDebugLabelLen = 0;
+  p_glDebugMessageCallback = &vv_glDebugMessageCallbackDummy;
+  p_glDebugMessageControl = nullptr;
+  p_glObjectLabel = &vv_glObjectLabel;
+  p_glObjectPtrLabel = &vv_glObjectPtrLabel;
+  p_glGetObjectLabel = &vv_glGetObjectLabel;
+  p_glGetObjectPtrLabel = &vv_glGetObjectPtrLabel;
 
   int Width = AWidth;
   int Height = AHeight;
@@ -438,6 +567,50 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   if (!gladLoadGLLoader(SDL_GL_GetProcAddress))
     GCon->Logf("GLAD failed to load GL procs!");
 #endif
+
+  if (gl_gpu_debug) {
+    void *pp = GetExtFuncPtr("glDebugMessageCallback");
+    if (!pp) {
+      p_glDebugMessageCallback = &vv_glDebugMessageCallbackDummy;
+      gl_gpu_debug = false;
+      GCon->Logf(NAME_Warning, "debug functions are not available");
+    } else {
+      p_glDebugMessageCallback = (VV_GLDEBUGMESSAGECALLBACK)pp;
+      GCon->Logf(NAME_DebugGL, "found OpenGL debug functions");
+      glEnable(GL_DEBUG_OUTPUT);
+      pp = GetExtFuncPtr("glDebugMessageControl");
+      if (pp) {
+        p_glDebugMessageControl = (VV_GLGLDEBUGMESSAGECONTROL)pp;
+        // allow everything
+        p_glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+      }
+      pp = GetExtFuncPtr("glObjectLabel");
+      if (pp) {
+        GCon->Logf(NAME_DebugGL, "found `glObjectLabel()`");
+        p_glObjectLabel = (VV_GLOBJECTLABEL)pp;
+      }
+      pp = GetExtFuncPtr("glObjectPtrLabel");
+      if (pp) {
+        GCon->Logf(NAME_DebugGL, "found `glObjectPtrLabel()`");
+        p_glObjectPtrLabel = (VV_GLOBJECTPTRLABEL)pp;
+      }
+      pp = GetExtFuncPtr("glGetObjectLabel");
+      if (pp) {
+        GCon->Logf(NAME_DebugGL, "found `glObjectLabel()`");
+        p_glGetObjectLabel = (VV_GLGETOBJECTLABEL)pp;
+      }
+      pp = GetExtFuncPtr("glGetObjectPtrLabel");
+      if (pp) {
+        GCon->Logf(NAME_DebugGL, "found `glObjectPtrLabel()`");
+        p_glGetObjectPtrLabel = (VV_GLGETOBJECTPTRLABEL)pp;
+      }
+      glDebugEnabled = true;
+      glGetIntegerv(GL_MAX_LABEL_LENGTH, &glMaxDebugLabelLen);
+      if (glMaxDebugLabelLen < 0) glMaxDebugLabelLen = 0; else if (glMaxDebugLabelLen > 8191) glMaxDebugLabelLen = 8191;
+    }
+  }
+
+  p_glDebugMessageCallback(vv_glDebugCallback, nullptr);
 
   SetVSync(false); // second time
   //SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
