@@ -15,7 +15,7 @@
   // normalized distance to the point light source
   // hardware doesn't require that, but our cubemap calculations do
   vec3 fullltfdir = VertWorldPos-LightPos;
-  float origDist = length(fullltfdir)/LightRadius;
+  float origDist = dot(fullltfdir, fullltfdir); //length(fullltfdir)/LightRadius;
   vec3 ltfdir = normalize(fullltfdir);
   // sample shadow cube map
   float sldist = textureCubeFn(ShadowTexture, ltfdir).r+VV_SMAP_BIAS;
