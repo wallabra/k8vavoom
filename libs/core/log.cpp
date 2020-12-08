@@ -541,6 +541,7 @@ public:
     VLog::SetColorInfoTTY(NAME_Error, "\x1b[0;31;1m");
     VLog::SetColorInfoTTY(NAME_Log, "\x1b[0;32m");
     VLog::SetColorInfoTTY(NAME_Debug, "\x1b[0;35;1m");
+    VLog::SetColorInfoTTY(NAME_DebugGL, "\x1b[0;35m");
     VLog::SetColorInfoTTY(NAME_Dev, "\x1b[0;35;1m");
     VLog::SetColorInfoTTY(NAME_Chat, "\x1b[0;37;1m");
     // bots, don't reset
@@ -560,6 +561,7 @@ public:
     VLog::SetColorInfoEngine(NAME_Init, TEXT_COLOR_ESCAPE_STR "[InitCyan]");
     VLog::SetColorInfoEngine(NAME_Warning, TEXT_COLOR_ESCAPE_STR "[WarningYellow]");
     VLog::SetColorInfoEngine(NAME_Error, TEXT_COLOR_ESCAPE_STR "[RedError]");
+    VLog::SetColorInfoEngine(NAME_Debug, TEXT_COLOR_ESCAPE_STR "[DebugGreen]");
     VLog::SetColorInfoEngine(NAME_Debug, TEXT_COLOR_ESCAPE_STR "[DebugGreen]");
     VLog::SetColorInfoEngine(NAME_Dev, TEXT_COLOR_ESCAPE_STR "[DebugGreen]");
     VLog::SetColorInfoEngine(NAME_Chat, TEXT_COLOR_ESCAPE_STR "[Gold]");
