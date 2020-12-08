@@ -1,13 +1,15 @@
 $include "shadowvol/smap_common_defines.inc"
 
 // conditions seems to perform better
+// and this one doesn't even work
 //#define VV_SMAP_MATH_SAMPLER
 
 // use more math instead of more conditions
 //#define VV_SMAP_FILTER_OLD
 
 // try to do weighted 4-texel sampling?
-#define VV_SMAP_WEIGHTED_BLUR
+// DO NOT SET!
+//#define VV_SMAP_WEIGHTED_BLUR
 
 #ifdef VV_MODEL_LIGHTING
 // for models
@@ -35,7 +37,7 @@ $include "shadowvol/smap_common_defines.inc"
 //#define VV_SMAP_SAMPLE(ofs_,bias_)  (sign(sign(textureCubeFn(ShadowTexture, (ofs_)).r+(bias_)-currentDistanceToLight)+0.5))
 
 #ifdef VV_SMAP_MATH_SAMPLER
-# define VV_SMAP_SAMPLE(var_,ofs_)  { newCDir = (ofs_); (var_) += (floor(sign(textureCubeFn(ShadowTexture, newCDir).r+VV_SMAP_BIAS-calcShadowTexelDistance(newCDir))+1.1)) }
+# define VV_SMAP_SAMPLE(var_,ofs_)  { newCDir = (ofs_); (var_) += max(1.0, (floor(sign(textureCubeFn(ShadowTexture, newCDir).r+VV_SMAP_BIAS-calcShadowTexelDistance(newCDir))+1.1))); }
 #else
 # define VV_SMAP_SAMPLE(var_,ofs_)  { newCDir = (ofs_); if (textureCubeFn(ShadowTexture, newCDir).r+VV_SMAP_BIAS >= calcShadowTexelDistance(newCDir)) (var_) += 1.0; }
 #endif

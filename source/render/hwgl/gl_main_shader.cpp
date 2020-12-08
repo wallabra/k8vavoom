@@ -598,6 +598,7 @@ GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB Vert
 //==========================================================================
 void VOpenGLDrawer::LoadShadowmapShaders () {
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_NOBLUR, "VV_SMAP_NOBLUR")
+  VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR4BI, "VV_SMAP_BLUR4_BI")
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR4, "VV_SMAP_BLUR4")
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR8, "VV_SMAP_BLUR8")
   VV_CREATE_SMAP_SHADER_LEVEL(SMAP_BLUR8_FAST, "VV_SMAP_BLUR8_FAST")

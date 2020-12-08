@@ -1,3 +1,16 @@
+#ifdef VV_SMAP_BLUR4_BI
+# define VV_SMAP_WEIGHTED_BLUR
+# ifndef VV_SMAP_BLUR4
+#  define VV_SMAP_BLUR4
+# endif
+# ifdef VV_SMAP_BLUR8
+#  undef VV_SMAP_BLUR16
+# endif
+# ifdef VV_SMAP_BLUR16
+#  undef VV_SMAP_BLUR16
+# endif
+#endif
+
 #ifdef VV_SMAP_BLUR8_FAST
 # define VV_SMAP_BLUR8
 # define VV_SMAP_BLUR_FAST8
