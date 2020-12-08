@@ -2,7 +2,6 @@
 # define Normal  SurfNormal
 #endif
 
-
   float DistToLight = max(1.0, dot(VertToLight, VertToLight));
   if (DistToLight >= LightRadius*LightRadius) discard;
 
@@ -21,7 +20,7 @@
 
 #ifdef VV_SHADOWMAPS
   attenuation *= shadowMul;
-  //attenuation = 1.0; // debug
+  //attenuation = 255.0*shadowMul; // debug
 #endif
   if (attenuation <= 0.0) discard;
   float finalA = min(attenuation/255.0, 1.0);

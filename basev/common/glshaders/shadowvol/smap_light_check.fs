@@ -83,20 +83,15 @@ $include "shadowvol/smap_common_defines.inc"
   #endif
 
   // difference between position of the light source and position of the fragment
-  //vec3 fromLightToFragment = LightPos-VertWorldPos;
-  vec3 fromLightToFragment = VertWorldPos-LightPos;
+  vec3 ltfdir = VertWorldPos-LightPos;
   // normalized distance to the point light source
-  float distanceToLight = length(fromLightToFragment);
+  float distanceToLight = length(ltfdir);
   float currentDistanceToLight = distanceToLight/LightRadius;
   // normalized direction from light source for sampling
   // (k8: there is no need to do that: this is just a direction, and hardware doesn't require it to be normalized)
   // (k8: but we may need normalized dir anyway)
-  fromLightToFragment = normalize(fromLightToFragment);
+  ltfdir = normalize(ltfdir);
   // sample shadow cube map
-  vec3 ltfdir;
-  ltfdir.x = fromLightToFragment.x;
-  ltfdir.y = fromLightToFragment.y;
-  ltfdir.z = fromLightToFragment.z;
 
   #ifdef VV_SMAP_WEIGHTED_BLUR
   float shadowMul;
@@ -265,34 +260,78 @@ $include "shadowvol/smap_common_defines.inc"
       #endif
     #else
       // no blur
-      #if 1
+      #if 0
       //vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
       //ltfdir = convert_cube_uv_to_xyz(cubeTC);
       if (textureCubeFn(ShadowTexture, ltfdir).r+bias1 < currentDistanceToLight) discard;
       float shadowMul = 1.0;
       #else
-      fromLightToFragment = VertWorldPos-LightPos;
-      fromLightToFragment = normalize(fromLightToFragment);
-      vec3 cubeTC = convert_xyz_to_cube_uv(fromLightToFragment); // texture coords
-      // shoot at the texel center
-      cubeTC.x = (floor(cubeTC.x*CubeSize)+0.5)/CubeSize;
-      cubeTC.y = (floor(cubeTC.y*CubeSize)+0.5)/CubeSize;
-      // get new direction vector
-      vec3 newCubeDir = convert_cube_uv_to_xyz(cubeTC);
-      newCubeDir = normalize(newCubeDir);
-      // find intersection of surface plane and ray from light position
-      float dv = dot(normalize(Normal), newCubeDir);
+
+      // use constant distance for each shadowcube texel
+
+      // distance from the light to the nearest shadow caster
+      float sldist = textureCubeFn(ShadowTexture, ltfdir).r+0.005;
+
+      // snap direction to texel center
+      vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
+
+      float texX = floor(cubeTC.x*CubeSize);
+      float texY = floor(cubeTC.y*CubeSize);
+      float newCubeDist;
+      vec3 newCubeDir;
+
+      // try 4 texel corners to find out which one is nearest
+      // i am pretty sure that i can calculate it faster, but let's use this method for now
+      cubeTC.x = (texX+0.01)/CubeSize;
+      cubeTC.y = (texY+0.01)/CubeSize;
+      // new direction vector
+      newCubeDir = normalize(convert_cube_uv_to_xyz(cubeTC));
+      // find the intersection of the surface plane and the ray from the light position
+      float dv = dot(Normal, newCubeDir);
       float t = 0.0;
-      if (abs(dv) > 0.00001) t = (SurfDist-dot(normalize(Normal), LightPos))/dv;
-      vec3 newPos = LightPos+newCubeDir*t;
-      distanceToLight = length(newPos);
-      float newDistanceToLight = distanceToLight/LightRadius;
-      float shadowMul = abs(newDistanceToLight-currentDistanceToLight);
-      /*
-      //if (abs(newDistanceToLight-currentDistanceToLight) > 0.7) newDistanceToLight = currentDistanceToLight;
-      if (textureCubeFn(ShadowTexture, ltfdir).r+0.05 < newDistanceToLight) discard;
+      if (abs(dv) >= 0.00001) t = (SurfDist-dot(Normal, LightPos))/dv;
+      // t is "almost the distance" here
+      newCubeDist = length(newCubeDir*t)/LightRadius;
+
+      // corner #2
+      //cubeTC.x = (texX+0.01)/CubeSize;
+      cubeTC.y = (texY+0.99)/CubeSize;
+      // new direction vector
+      newCubeDir = normalize(convert_cube_uv_to_xyz(cubeTC));
+      // find the intersection of the surface plane and the ray from the light position
+      dv = dot(Normal, newCubeDir);
+      t = 0.0;
+      if (abs(dv) >= 0.00001) t = (SurfDist-dot(Normal, LightPos))/dv;
+      // t is "almost the distance" here
+      newCubeDist = min(newCubeDist, length(newCubeDir*t)/LightRadius);
+
+      // corner #3
+      cubeTC.x = (texX+0.99)/CubeSize;
+      //cubeTC.y = (texY+0.99)/CubeSize;
+      // new direction vector
+      newCubeDir = normalize(convert_cube_uv_to_xyz(cubeTC));
+      // find the intersection of the surface plane and the ray from the light position
+      dv = dot(Normal, newCubeDir);
+      t = 0.0;
+      if (abs(dv) >= 0.00001) t = (SurfDist-dot(Normal, LightPos))/dv;
+      // t is "almost the distance" here
+      newCubeDist = min(newCubeDist, length(newCubeDir*t)/LightRadius);
+
+      // corner #4
+      //cubeTC.x = (texX+0.99)/CubeSize;
+      cubeTC.y = (texY+0.01)/CubeSize;
+      // new direction vector
+      newCubeDir = normalize(convert_cube_uv_to_xyz(cubeTC));
+      // find the intersection of the surface plane and the ray from the light position
+      dv = dot(Normal, newCubeDir);
+      t = 0.0;
+      if (abs(dv) >= 0.00001) t = (SurfDist-dot(Normal, LightPos))/dv;
+      // t is "almost the distance" here
+      newCubeDist = min(newCubeDist, length(newCubeDir*t)/LightRadius);
+
+      if (sldist < newCubeDist) discard;
+
       float shadowMul = 1.0;
-      */
       #endif
     #endif
   #endif
