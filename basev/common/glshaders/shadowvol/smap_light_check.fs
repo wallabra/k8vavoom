@@ -270,7 +270,14 @@ $include "shadowvol/smap_common_defines.inc"
       // use constant distance for each shadowcube texel
 
       // distance from the light to the nearest shadow caster
-      float sldist = textureCubeFn(ShadowTexture, ltfdir).r+0.005;
+      float sldist = textureCubeFn(ShadowTexture, ltfdir).r;
+      #ifdef VV_MODEL_LIGHTING
+      //sldist += bias1;
+      float SurfDist = dot(Normal, VertWorldPos);
+      sldist += 0.005; // this seems to be enough for surfaces
+      #else
+      sldist += 0.005; // this seems to be enough for surfaces
+      #endif
 
       // snap direction to texel center
       vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords

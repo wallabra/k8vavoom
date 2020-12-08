@@ -9,7 +9,9 @@ uniform float CubeSize;
 uniform vec3 LightPos;
 uniform float UseAdaptiveBias;
 
+#ifdef VV_SURFACE_LIGHTING
 uniform float SurfDist;
 uniform vec3 SurfNormal;
+#endif
 
 $include "shadowvol/cubemap_conv.inc.fs"

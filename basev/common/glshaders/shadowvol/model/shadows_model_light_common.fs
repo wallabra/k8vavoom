@@ -1,3 +1,5 @@
+#define VV_MODEL_LIGHTING
+
 uniform sampler2D Texture;
 uniform vec3 LightColor;
 uniform float LightRadius;

@@ -1,3 +1,5 @@
+#define VV_MODEL_LIGHTING
+
 attribute vec3 Position;
 
 uniform mat4 ModelToWorldMat;
