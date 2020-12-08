@@ -1249,6 +1249,7 @@ public:
   VV_GLGETOBJECTPTRLABEL p_glGetObjectPtrLabel;
 
   void p_glObjectLabelVA (GLenum identifier, GLuint name, const char *fmt, ...) __attribute__((format(printf, 4, 5)));
+  void p_glDebugLogf (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 
 public:
   #define VV_GLIMPORTS

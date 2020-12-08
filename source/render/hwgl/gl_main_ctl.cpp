@@ -59,6 +59,22 @@ __attribute__((format(printf, 4, 5))) void VOpenGLDrawer::p_glObjectLabelVA (GLe
 
 //==========================================================================
 //
+//  VOpenGLDrawer::p_glDebugLogf
+//
+//==========================================================================
+__attribute__((format(printf, 2, 3))) void VOpenGLDrawer::p_glDebugLogf (const char *fmt, ...) {
+  if (!fmt || !fmt[0] || !glDebugEnabled || !glMaxDebugLabelLen) return;
+  va_list ap;
+  va_start(ap, fmt);
+  char *res = vavarg(fmt, ap);
+  va_end(ap);
+  if (!res[0]) return;
+  GCon->Logf(NAME_DebugGL, "USER: %s", res);
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::CheckExtension
 //
 //==========================================================================
