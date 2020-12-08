@@ -81,19 +81,6 @@ menudef ShadowMapOptions {
       "\c[WHITE]WARNING! You need to reinit resolution to apply this.";
   }
 
-  option enum [__k8vavoom_developer_version > 0] {
-    title = "Shadowmap Channels";
-    cvar = gl_shadowmap_gbuffer;
-    list {
-      "One",
-      "Three",
-    }
-    help =
-      "Use all three shadowmap texture color channels?",
-      "This will give you nothing yet.",
-      "",
-      "\c[WHITE]WARNING! You need to reinit resolution to apply this.";
-  }
 
   header "Quality Options";
 

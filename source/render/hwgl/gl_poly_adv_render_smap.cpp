@@ -105,7 +105,8 @@ void VOpenGLDrawer::PrepareShadowMaps (const float Radius) {
   glClearDepth(1.0f);
   if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // restore "normal" depth control
   glDepthRange(0.0f, 1.0f);
-  if (gl_shadowmap_gbuffer) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE); else glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
+  //!if (gl_shadowmap_gbuffer) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE); else
+  glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
   PrepareShadowMapsInternal(Radius);
   ReactivateCurrentFBO();
@@ -183,7 +184,8 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   //glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   //glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
   //glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
-  if (gl_shadowmap_gbuffer) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE); else glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
+  //!if (gl_shadowmap_gbuffer) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE); else
+  glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
 
   glEnable(GL_CULL_FACE);
   glEnable(GL_TEXTURE_2D);
