@@ -219,7 +219,7 @@ void VOpenGLDrawer::InitShaderProgress () {
 
   p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  glViewport(0, 0, ScreenWidth, ScreenHeight);
+  GLSetViewport(0, 0, ScreenWidth, ScreenHeight);
   SetOrthoProjection(0, ScreenWidth, ScreenHeight, 0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -470,6 +470,9 @@ VOpenGLDrawer::VOpenGLDrawer ()
   cubemapLinearFiltering = false;
   smapDirty = 0x3f;
   smapCurrentFace = 0;
+
+  memset(currentViewport, 0, sizeof(currentViewport));
+  currentViewport[0] = -666;
 }
 
 
@@ -539,6 +542,9 @@ void VOpenGLDrawer::DeinitResolution () {
   BloomDeinit();
   DeleteLightmapAtlases();
   depthMaskSP = 0;
+
+  memset(currentViewport, 0, sizeof(currentViewport));
+  currentViewport[0] = -666;
 }
 
 
@@ -570,6 +576,9 @@ void VOpenGLDrawer::InitResolution () {
     VStr((char *)glGetString(GL_EXTENSIONS)).Split(' ', Exts);
     for (int i = 0; i < Exts.Num(); ++i) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
   }
+
+  memset(currentViewport, 0, sizeof(currentViewport));
+  currentViewport[0] = -666;
 
 #ifdef GL4ES_NO_CONSTRUCTOR
   // fake version for GL4ES

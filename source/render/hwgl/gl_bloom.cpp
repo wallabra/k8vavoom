@@ -379,7 +379,7 @@ void VOpenGLDrawer::BloomDarken () {
 //==========================================================================
 void VOpenGLDrawer::BloomDoGaussian () {
   // set up sample size workspace
-  glViewport(0, 0, bloomWidth, bloomHeight);
+  GLSetViewport(0, 0, bloomWidth, bloomHeight);
 
   //glMatrixMode(GL_PROJECTION);
   //glLoadIdentity();
@@ -443,7 +443,7 @@ void VOpenGLDrawer::BloomDrawEffect (int ax, int ay, int awidth, int aheight) {
   DeactivateShader();
 
   // restore full screen workspace
-  glViewport(0, 0, bloomScrWdt, bloomScrHgt);
+  GLSetViewport(0, 0, bloomScrWdt, bloomScrHgt);
 
   //glMatrixMode(GL_PROJECTION);
   //glLoadIdentity();
@@ -521,7 +521,7 @@ void VOpenGLDrawer::Posteffect_Bloom (int ax, int ay, int awidth, int aheight) {
   BloomInitTextures(); // it is safe to call this each time
   if (bloomScrWdt >= bloomWidth && bloomScrHgt >= bloomHeight) {
     // set up full screen workspace
-    glViewport(0, 0, bloomScrWdt, bloomScrHgt);
+    GLSetViewport(0, 0, bloomScrWdt, bloomScrHgt);
 
     //glMatrixMode(GL_PROJECTION);
     //glLoadIdentity();

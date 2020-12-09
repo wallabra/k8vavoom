@@ -190,8 +190,9 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   glEnable(GL_CULL_FACE);
   glEnable(GL_TEXTURE_2D);
 
-  glGetIntegerv(GL_VIEWPORT, savedSMVPort);
-  glViewport(0, 0, shadowmapSize, shadowmapSize);
+  //glGetIntegerv(GL_VIEWPORT, savedSMVPort);
+  GLGetViewport(savedSMVPort);
+  GLSetViewport(0, 0, shadowmapSize, shadowmapSize);
 
   PrepareShadowMapsInternal(Radius);
 
@@ -236,7 +237,7 @@ void VOpenGLDrawer::EndLightShadowMaps () {
   RestoreDepthFunc();
   if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
-  glViewport(savedSMVPort[0], savedSMVPort[1], savedSMVPort[2], savedSMVPort[3]);
+  GLSetViewport(savedSMVPort[0], savedSMVPort[1], savedSMVPort[2], savedSMVPort[3]);
   glEnable(GL_CULL_FACE);
   //glDepthMask(GL_FALSE);
   glDisableDepthWrite();

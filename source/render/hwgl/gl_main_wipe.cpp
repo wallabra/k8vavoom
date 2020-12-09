@@ -72,7 +72,7 @@ bool VOpenGLDrawer::RenderWipe (float time) {
   glPushAttrib(GL_ALL_ATTRIB_BITS);
   bool oldBlend = blendEnabled;
 
-  glViewport(0, 0, getWidth(), getHeight());
+  GLSetViewport(0, 0, getWidth(), getHeight());
 
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();

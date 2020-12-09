@@ -714,17 +714,31 @@ private:
   // set in `RenderSurfaceShadowVolume()`
   bool wasRenderedShadowSurface;
 
+  // so we can avoid queriung it
+  GLint currentViewport[4];
 
   enum DecalType { DT_SIMPLE, DT_LIGHTMAP, DT_ADVANCED };
 
   // this is required for decals
-  inline void NoteStencilBufferDirty () { stencilBufferDirty = true; }
-  inline bool IsStencilBufferDirty () const { return stencilBufferDirty; }
-  inline void ClearStencilBuffer () { if (stencilBufferDirty) glClear(GL_STENCIL_BUFFER_BIT); stencilBufferDirty = false; decalUsedStencil = false; }
+  inline void NoteStencilBufferDirty () noexcept { stencilBufferDirty = true; }
+  inline bool IsStencilBufferDirty () const noexcept { return stencilBufferDirty; }
+  inline void ClearStencilBuffer () noexcept { if (stencilBufferDirty) glClear(GL_STENCIL_BUFFER_BIT); stencilBufferDirty = false; decalUsedStencil = false; }
 
-  inline void GLEnableBlend () { if (!blendEnabled) { blendEnabled = true; glEnable(GL_BLEND); } }
-  inline void GLDisableBlend () { if (blendEnabled) { blendEnabled = false; glDisable(GL_BLEND); } }
-  inline void GLSetBlendEnabled (const bool v) { if (blendEnabled != v) { blendEnabled = v; if (v) glEnable(GL_BLEND); else glDisable(GL_BLEND); } }
+  inline void GLEnableBlend () noexcept { if (!blendEnabled) { blendEnabled = true; glEnable(GL_BLEND); } }
+  inline void GLDisableBlend () noexcept { if (blendEnabled) { blendEnabled = false; glDisable(GL_BLEND); } }
+  inline void GLSetBlendEnabled (const bool v) noexcept { if (blendEnabled != v) { blendEnabled = v; if (v) glEnable(GL_BLEND); else glDisable(GL_BLEND); } }
+
+  inline void GLSetViewport (int x, int y, int width, int height) noexcept {
+    if (currentViewport[0] != x || currentViewport[1] != y || currentViewport[2] != width || currentViewport[3] != height) {
+      currentViewport[0] = x;
+      currentViewport[1] = y;
+      currentViewport[2] = width;
+      currentViewport[3] = height;
+      glViewport(x, y, width, height);
+    }
+  }
+
+  inline void GLGetViewport (int vp[4]) const noexcept { vp[0] = currentViewport[0]; vp[1] = currentViewport[1]; vp[2] = currentViewport[2]; vp[3] = currentViewport[3]; }
 
   virtual void GLEnableOffset () override;
   virtual void GLDisableOffset () override;

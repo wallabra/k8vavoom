@@ -115,7 +115,8 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
   //glDepthMask(GL_FALSE); // no z-buffer writes
   glDisableDepthWrite();
   // reset last known scissor
-  glGetIntegerv(GL_VIEWPORT, lastSVVport);
+  //glGetIntegerv(GL_VIEWPORT, lastSVVport);
+  GLGetViewport(lastSVVport);
   memcpy(lastSVScissor, lastSVVport, sizeof(lastSVScissor));
   if (gl_smart_dirty_rects) dirtyRects.reset();
 }

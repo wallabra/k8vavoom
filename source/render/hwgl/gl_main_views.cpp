@@ -44,7 +44,7 @@ VCvarI dbg_shadowmaps("dbg_shadowmaps", "0", "Show shadowmap cubemap?", CVAR_Pre
 //
 //==========================================================================
 void VOpenGLDrawer::Setup2D () {
-  glViewport(0, 0, getWidth(), getHeight());
+  GLSetViewport(0, 0, getWidth(), getHeight());
 
   //glMatrixMode(GL_PROJECTION);
   //glLoadIdentity();
@@ -141,7 +141,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   }
   //RestoreDepthFunc();
 
-  glViewport(rd->x, getHeight()-rd->height-rd->y, rd->width, rd->height);
+  GLSetViewport(rd->x, getHeight()-rd->height-rd->y, rd->width, rd->height);
   vpmats.vport.setOrigin(rd->x, getHeight()-rd->height-rd->y);
   vpmats.vport.setSize(rd->width, rd->height);
   /*

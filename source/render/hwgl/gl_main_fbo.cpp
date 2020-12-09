@@ -386,7 +386,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     //glClear(GL_COLOR_BUFFER_BIT);
     glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
     bool oldBlend = mOwner->blendEnabled;
-    glViewport(0, 0, realw, realh);
+    mOwner->GLSetViewport(0, 0, realw, realh);
     glBindTexture(GL_TEXTURE_2D, 0);
     //glMatrixMode(GL_PROJECTION);
     //glLoadIdentity();
@@ -447,7 +447,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
     bool oldBlend = mOwner->blendEnabled;
 
-    glViewport(0, 0, realw, realh);
+    mOwner->GLSetViewport(0, 0, realw, realh);
 
     glBindTexture(GL_TEXTURE_2D, mColorTid);
 
