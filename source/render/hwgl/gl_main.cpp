@@ -127,10 +127,10 @@ VCvarI gl_release_ram_textures_mode("gl_release_ram_textures_mode", "0", "When t
 // 1: 256
 // 2: 512
 // 3: 1024
-VCvarI gl_shadowmap_size("gl_shadowmap_size", "1", "Shadowmap size (0:128; 1:256; 2:512; 3:1024).", CVAR_PreInit|CVAR_Archive);
+VCvarI gl_shadowmap_size("gl_shadowmap_size", "0", "Shadowmap size (0:128; 1:256; 2:512; 3:1024).", CVAR_PreInit|CVAR_Archive);
 VCvarI gl_shadowmap_precision("gl_shadowmap_precision", "0", "Shadowmap precision (0:16; 1:32).", CVAR_PreInit|CVAR_Archive);
 //!VCvarB gl_shadowmap_gbuffer("gl_shadowmap_gbuffer", false, "Emulate G-buffer (allocate all three color channels).", CVAR_PreInit|CVAR_Archive);
-VCvarI gl_shadowmap_faster_check("gl_shadowmap_faster_check", "-", "Use slightly faster, but less precise shadowmap texel chechs? [0..2]", CVAR_PreInit|CVAR_Archive);
+VCvarI gl_shadowmap_faster_check("gl_shadowmap_faster_check", "1", "Use slightly faster, but less precise shadowmap texel chechs? [0..2]", CVAR_PreInit|CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -207,8 +207,8 @@ static void progBufPutTextAt (int x0, int y0, const char *s) {
 //
 //==========================================================================
 static unsigned int getShadowmapPOT () noexcept {
-  int ss = gl_shadowmap_size.asInt();
-  if (ss < 0) ss = 0; else if (ss > 3) ss = 3;
+  int ss = gl_shadowmap_size.asInt()+1;
+  if (ss < 0) ss = 0; else if (ss > 4) ss = 4;
   return (unsigned int)ss;
 }
 
@@ -325,7 +325,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
   cubeFBO = 0;
   memset(&cubeDepthTexId[0], 0, sizeof(cubeDepthTexId));
   shadowmapPOT = getShadowmapPOT();
-  shadowmapSize = 128<<shadowmapPOT;
+  shadowmapSize = 64<<shadowmapPOT;
   cubemapLinearFiltering = false;
   smapDirty = 0x3f;
   smapCurrentFace = 0;
@@ -457,7 +457,7 @@ void VOpenGLDrawer::InitResolution () {
   glVerMajor = major;
   glVerMinor = minor;
   shadowmapPOT = getShadowmapPOT();
-  shadowmapSize = 128<<shadowmapPOT;
+  shadowmapSize = 64<<shadowmapPOT;
   smapDirty = 0x3f;
   smapCurrentFace = 0;
 
