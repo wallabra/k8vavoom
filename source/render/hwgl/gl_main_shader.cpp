@@ -535,13 +535,22 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdirc
   GLint Status;
   p_glGetObjectParameterivARB(Shader, GL_OBJECT_COMPILE_STATUS_ARB, &Status);
   if (!Status) {
-    GLcharARB LogText[1024];
+    static GLcharARB LogText[32768];
     GLsizei LogLen;
     p_glGetInfoLogARB(Shader, sizeof(LogText)-1, &LogLen, LogText);
     LogText[LogLen] = 0;
     GCon->Logf(NAME_Error, "FAILED to compile %s shader '%s'!", sotype, progname);
-    GCon->Logf(NAME_Error, "%s\n", LogText);
-    GCon->Logf(NAME_Error, "====\n%s\n====", *res);
+
+    TArray<VStr> sp;
+    VStr(LogText).Split('\n', sp);
+    for (auto &&s : sp) GCon->Log(NAME_Error, *s);
+
+    //GCon->Logf(NAME_Error, "%s\n", LogText);
+
+    //GCon->Logf(NAME_Error, "====\n%s\n====", *res);
+    VStr(res).Split('\n', sp);
+    for (int f = 0; f < sp.length(); ++f) GCon->Logf(NAME_Error, "%5d: %s", f+1, *sp[f]);
+
     //fprintf(stderr, "================ %s ================\n%s\n=================================\n%s\b", *FileName, *res, LogText);
     //Sys_Error("%s", va("Failed to compile shader %s: %s", *FileName, LogText));
     Sys_Error("Failed to compile %s shader %s!", sotype, progname);
