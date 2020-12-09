@@ -397,7 +397,7 @@ void VOpenGLDrawer::DrawSpriteLump (float x1, float y1, float x2, float y2,
 void VOpenGLDrawer::StartAutomap (bool asOverlay) {
   DrawAutomap.Activate();
   DrawAutomap.UploadChangedUniforms();
-  glEnable(GL_LINE_SMOOTH);
+  //glEnable(GL_LINE_SMOOTH); // this may cause problems
   if (asOverlay) {
     GLEnableBlend();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
