@@ -144,6 +144,8 @@ static VCvarB gl_s3tc_present("__gl_s3tc_present", false, "Use S3TC texture comp
 
 static uint8_t *tempProgBuffer = nullptr;
 static GLuint shadMsgTexture = 0;
+static double shadMsgStartTime;
+static bool shadMsgActive = false;
 
 
 //==========================================================================
@@ -220,6 +222,9 @@ void VOpenGLDrawer::InitShaderProgress () {
 #ifdef VV_SHADER_COMPILING_PROGRESS
   vassert(shadMsgTexture == 0);
 
+  shadMsgStartTime = Sys_Time();
+  shadMsgActive = false;
+
   p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   GLSetViewport(0, 0, ScreenWidth, ScreenHeight);
@@ -283,6 +288,15 @@ void VOpenGLDrawer::DoneShaderProgress () {
 //==========================================================================
 void VOpenGLDrawer::ShowShaderProgress (int curr, int total) {
 #ifdef VV_SHADER_COMPILING_PROGRESS
+  const double ctt = Sys_Time();
+  if (!shadMsgActive) {
+    if (ctt-shadMsgStartTime < 0.666) return;
+    shadMsgActive = true;
+  } else {
+    // update once per 100 msec
+    if (ctt-shadMsgStartTime < 100.0/100.0) return;
+  }
+
   if (total < 1) total = 1;
   if (curr < 0) curr = 0;
   if (curr > total) curr = total;
@@ -341,6 +355,8 @@ void VOpenGLDrawer::ShowShaderProgress (int curr, int total) {
   glEnd();
 
   Update(false);
+
+  shadMsgStartTime = ctt;
 #endif
 }
 
