@@ -5,7 +5,6 @@ $include "shadowvol/smap_common_defines.inc"
   //if (TexColor.a < ALPHA_MIN) discard; //FIXME
   if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this
 #endif
-  vec4 fc = vec4(0.0, 0.0, 0.0, 1.0);
   float dist = distance(LightPos, VertWorldPos);
   #ifdef VV_SMAP_BLUR4
   dist += 1.2;
