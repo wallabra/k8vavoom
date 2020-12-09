@@ -439,9 +439,11 @@ void VSdlOpenGLDrawer::SetVSync (bool firstTime) {
         GCon->Log(NAME_Init, "OpenGL: using adaptive vsync");
       }
     } else {
+      GCon->Log(NAME_Init, "OpenGL: using normal vsync");
       SDL_GL_SetSwapInterval(1);
     }
   } else {
+    GCon->Log(NAME_Init, "OpenGL: vsync is turned off");
     SDL_GL_SetSwapInterval(0);
   }
 }
