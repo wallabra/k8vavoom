@@ -38,6 +38,7 @@ MenuInputLine EdHeight;
 MenuChoiceEnum Depth;
 MenuChoiceEnum Windowed;
 MenuChoiceEnum VSync;
+MenuChoiceEnum VSyncAdaptive;
 MenuChoiceEnum S3TC;
 MenuChoiceNumeric ScrScale;
 MenuChoiceNumeric UIMinScale;
@@ -163,10 +164,25 @@ override void CreateChoices () {
   VSync.SetText("VSync");
   VSync.SetInitialValue(GetCvar('r_vsync'));
     SetLastHelp(
-      "The engine will try to use adaptive vsync automatically.\n"~
+      "Use vsync (synchronize screen updates with physical frame refresh)?\n"~
       "\n"~
       "You have to use \"Set Resolution\" to activate new setting.\n"~
       "Note that FPS is capped at 90, so don't expect glaring numbers without vsync.");
+
+  VSyncAdaptive = GetItemContainer().NewChild(MenuChoice_OnOff);
+  SetChoiceInitialSizePos(VSyncAdaptive);
+  //VSyncAdaptive.SetOrigin(ChoicesStartX, GetCurrentY());
+  VSyncAdaptive.SetText("VSync Adaptive");
+  VSyncAdaptive.SetInitialValue(GetCvar('r_vsync_adaptive'));
+    SetLastHelp(
+      "If your GPU supports it, the engine can stop doing vsync when\n"~
+      "the framerate is lower than physical frame refresh time.\n"~
+      "This will allow you to get a smooth rendering if your GPU is\n"~
+      "fast enough, but will not cap FPS to half of the refresh rate\n"~
+      "if framerate is slightly below it.\n"~
+      "It is recommented to turn this `ON`.\n"~
+      "\n"~
+      "You have to use \"Set Resolution\" to activate new setting.\n");
 
   /*
   CreateEnumCvar("Aspect Ratio", 'r_aspect_ratio',
@@ -253,6 +269,7 @@ int GetModeValue () {
 void ActivateSetMode (Object Sender) {
   SetCvar('screen_fsmode', int(Windowed.Value));
   SetCvar('r_vsync', int(VSync.Value));
+  SetCvar('r_vsync_adaptive', int(VSyncAdaptive.Value));
   if (S3TC) SetCvar('gl_s3tc_allowed', int(S3TC.Value));
   SetCvarF('screen_scale', ScrScale.Value);
   SetCvarI('ui_max_scale', max(0, int(UIMaxScale.Value)));
