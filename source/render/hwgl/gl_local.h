@@ -470,16 +470,19 @@ protected:
 
 protected:
   void PrepareShadowMapsInternal (const float Radius);
-  void PrepareCurrentShadowMapFaceInternal ();
 
   // called in `FinishUpdate()`, so GPU could perform `glClear()` in parallel
   void ClearAllShadowMaps ();
 
-  inline void SetCurrentShadowMapFace (unsigned int facenum) noexcept { smapCurrentFace = facenum&0x07; }
+  // also sets is as current
+  // shadowmap FBO must be active
+  void ActivateShadowMapFace (unsigned int facenum) noexcept;
+
+  inline void SetCurrentShadowMapFace (unsigned int facenum) noexcept { smapCurrentFace = facenum; }
   inline void MarkCurrentShadowMapDirty () noexcept { smapDirty |= 1u<<smapCurrentFace; }
   inline void MarkCurrentShadowMapClean () noexcept { smapDirty &= ~(1u<<smapCurrentFace); }
 
-  inline bool IsShadowMapDirty (unsigned int facenum) const noexcept { return smapDirty&(1u<<(facenum&0x07)); }
+  inline bool IsShadowMapDirty (unsigned int facenum) const noexcept { return smapDirty&(1u<<facenum); }
   inline bool IsAnyShadowMapDirty () const noexcept { return (smapDirty&0x3f); }
   inline void MarkAllShadowMapsClear () noexcept { smapDirty = 0; }
 

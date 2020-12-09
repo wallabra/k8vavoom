@@ -816,13 +816,7 @@ void VOpenGLDrawer::EndModelShadowMaps () {
 //==========================================================================
 void VOpenGLDrawer::SetupModelShadowMap (unsigned int facenum) {
   //if (gl_gpu_debug_models) p_glDebugLogf("  SetupModelShadowMap(%u)", facenum);
-
-  SetCurrentShadowMapFace(facenum);
-
-  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[facenum], 0);
-  //GLDRW_CHECK_ERROR("set framebuffer depth texture (model)");
-
-  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+facenum, cubeTexId, 0);
+  ActivateShadowMapFace(facenum);
 
   VMatrix4 lview;
   CalcSpotLightFaceView(lview, smapLightPos, facenum);
