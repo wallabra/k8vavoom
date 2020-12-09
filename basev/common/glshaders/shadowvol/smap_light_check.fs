@@ -106,9 +106,12 @@
     if (daccum <= 0.0) discard;
 
     // bilinear filtering
+    /*
     float fxy1 = (1.0-fX)*valat+fX*valhoriz;
     float fxy2 = (1.0-fX)*valvert+fX*valdiag;
     shadowMul = (1.0-fY)*fxy1+fY*fxy2;
+    */
+    shadowMul = mix(mix(valat, valhoriz, fX), mix(valvert, valdiag, fX), fY);
   #else
     #ifdef VV_SMAP_BLUR4
       //float cubetstep = 1.0/CubeSize;
