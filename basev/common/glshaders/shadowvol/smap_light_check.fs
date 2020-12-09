@@ -62,14 +62,15 @@
       valdiag = 0.0;
       float sldist;
 
-      /*
       float biasMod = 1.0-clamp(dot(Normal, normV2L), 0.0, 1.0);
       //float biasBase = 0.001+0.039*biasMod;
-      float biasBase = clamp(BiasMin+BiasMul*biasMod, 0.0, BiasMax); // cosTheta is dot( n,l ), clamped between 0 and 1
-      */
+      float biasBase = 0.003+0.052*biasMod;
+      //float biasBase = clamp(0.001+0.0065*biasMod, 0.0, 0.036); // cosTheta is dot( n,l ), clamped between 0 and 1
 
+      /*
       float cosTheta = clamp(dot(Normal, normV2L), 0.0, 1.0);
       float biasBase = clamp(0.0065*tan(acos(cosTheta)), 0.0015, 0.036); // cosTheta is dot( n,l ), clamped between 0 and 1
+      */
 
       sldist = (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(1.0, 0.0))).r+biasBase)*LightRadius;
       sldist *= sldist;
