@@ -956,6 +956,7 @@ protected:
 
   //bool HaveDepthClamp; // moved to drawer
   bool HaveStencilWrap;
+  bool HaveS3TC;
 
   TArray<GLhandleARB> CreatedShaderObjects;
   TArray<VMeshModel *> UploadedModels;

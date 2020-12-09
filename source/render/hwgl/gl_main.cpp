@@ -133,6 +133,9 @@ VCvarI gl_shadowmap_precision("gl_shadowmap_precision", "0", "Shadowmap precisio
 VCvarI gl_shadowmap_faster_check("gl_shadowmap_faster_check", "3", "Use slightly faster, but less precise shadowmap texel chechs? [0..3]", CVAR_PreInit|CVAR_Archive);
 
 
+static VCvarB gl_s3tc_present("__gl_s3tc_present", false, "Use S3TC texture compression, if supported?", CVAR_Rom);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 #ifdef VV_SHADER_COMPILING_PROGRESS
 
@@ -809,6 +812,15 @@ void VOpenGLDrawer::InitResolution () {
     GCon->Log(NAME_Init, "Symbol not found, stencil wrap extensions disabled.");
     HaveStencilWrap = false;
   }
+
+  if (CheckExtension("GL_EXT_texture_compression_s3tc")) {
+    GCon->Log(NAME_Init, "S3TC (texture compression) is supported");
+    HaveS3TC = true;
+  } else {
+    GCon->Log(NAME_Init, "Symbol not found, stencil wrap extensions disabled.");
+    HaveS3TC = false;
+  }
+  gl_s3tc_present = HaveS3TC;
 
   if (!HaveStencilWrap) GCon->Log(NAME_Init, "*** no stencil wrap --> no shadow volumes");
   if (!HaveDepthClamp) GCon->Log(NAME_Init, "*** no depth clamp --> no shadow volumes");

@@ -38,6 +38,7 @@ MenuInputLine EdHeight;
 MenuChoiceEnum Depth;
 MenuChoiceEnum Windowed;
 MenuChoiceEnum VSync;
+MenuChoiceEnum S3TC;
 MenuChoiceNumeric ScrScale;
 MenuChoiceNumeric UIMinScale;
 MenuChoiceNumeric UIMaxScale;
@@ -94,6 +95,7 @@ override void CreateChoices () {
     SetLastHelp(
       "Screen scaling factor.\n"~
       "You can set it to >1 to render screen in lower resolution.\n"~
+      "\n"~
       "\cGWARNING! Requires applying of 'SET RESOLUTION' option!");
 
   UIMaxScale = GetItemContainer().NewChild(MenuChoiceNumeric);
@@ -109,6 +111,7 @@ override void CreateChoices () {
       "Maximum UI scaling factor. Set to 0 to let the engine choose\n"~
       "You can choose `1` to get unscaled UI.\n"~
       "Please, note that this also affects Fullscreen HUD, and HUD messages.\n"~
+      "\n"~
       "\cGWARNING! Requires applying of 'SET RESOLUTION' option!");
 
   UIMinScale = GetItemContainer().NewChild(MenuChoiceNumeric);
@@ -122,6 +125,7 @@ override void CreateChoices () {
   //UIMinScale.SetSessionCvar(cvname);
     SetLastHelp(
       "Minumum UI scaling factor. Set to 0 to let the engine choose\n"~
+      "\n"~
       "\cGWARNING! You can make UI unusable by setting big values here!\n"~
       "\cGWARNING! Requires applying of 'SET RESOLUTION' option!");
 
@@ -136,6 +140,7 @@ override void CreateChoices () {
       "Scaled Fullscreen mode will not change your desktop resolution,\n"~
       "it will scale rendered image instead.\n"~
       "Real Fullscreen mode will change your desktop resolution.\n"~
+      "\n"~
       "\cGWARNING: The engine trusts you, and will not check if videomode is valid.");
 
   CreateEnumCvar("FS Letterbox", 'gl_letterbox',
@@ -159,6 +164,7 @@ override void CreateChoices () {
   VSync.SetInitialValue(GetCvar('r_vsync'));
     SetLastHelp(
       "The engine will try to use adaptive vsync automatically.\n"~
+      "\n"~
       "You have to use \"Set Resolution\" to activate new setting.\n"~
       "Note that FPS is capped at 90, so don't expect glaring numbers without vsync.");
 
@@ -185,6 +191,21 @@ override void CreateChoices () {
     SetLastHelp(
       "Screen aspect ratio."/*~
       "\n'Vanilla' is for square pixels, regardless of screen resolution.\n"*/);
+
+
+  if (GetCvarB('__gl_s3tc_present')) {
+    S3TC = GetItemContainer().NewChild(MenuChoice_OnOff);
+    SetChoiceInitialSizePos(S3TC);
+    S3TC.SetText("Texture Compression");
+    S3TC.SetInitialValue(GetCvar('gl_s3tc_allowed'));
+      SetLastHelp(
+        "You can turn on texture compression This may slightly degrade\n"~
+        "image quality, but will use much less GPU RAM.\n"~
+        "\n"~
+        "You have to use \"Set Resolution\" to activate new setting.");
+  } else {
+    S3TC = none;
+  }
 
   CreateChoiceSubHeader(" ");
 
@@ -232,6 +253,7 @@ int GetModeValue () {
 void ActivateSetMode (Object Sender) {
   SetCvar('screen_fsmode', int(Windowed.Value));
   SetCvar('r_vsync', int(VSync.Value));
+  if (S3TC) SetCvar('gl_s3tc_allowed', int(S3TC.Value));
   SetCvarF('screen_scale', ScrScale.Value);
   SetCvarI('ui_max_scale', max(0, int(UIMaxScale.Value)));
   SetCvarI('ui_min_scale', max(0, int(UIMinScale.Value)));

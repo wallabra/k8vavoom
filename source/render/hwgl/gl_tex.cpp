@@ -28,8 +28,24 @@
 
 extern VCvarB r_allow_cameras;
 extern VCvarB gl_pic_filtering;
+
 static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false, "Destroy and create new OpenGL textures for changed DooM animated ones?", CVAR_Archive);
 static VCvarB gl_camera_texture_use_readpixels("gl_camera_texture_use_readpixels", true, "Use ReadPixels to update camera textures?", CVAR_Archive);
+
+static VCvarB gl_s3tc_allowed("gl_s3tc_allowed", false, "Use S3TC texture compression, if supported?", CVAR_PreInit|CVAR_Archive);
+
+#ifndef COMPRESSED_RGB_S3TC_DXT1_EXT
+# define COMPRESSED_RGB_S3TC_DXT1_EXT                   0x83F0
+#endif
+#ifndef COMPRESSED_RGBA_S3TC_DXT1_EXT
+# define COMPRESSED_RGBA_S3TC_DXT1_EXT                  0x83F1
+#endif
+#ifndef COMPRESSED_RGBA_S3TC_DXT3_EXT
+# define COMPRESSED_RGBA_S3TC_DXT3_EXT                  0x83F2
+#endif
+#ifndef COMPRESSED_RGBA_S3TC_DXT5_EXT
+# define COMPRESSED_RGBA_S3TC_DXT5_EXT                  0x83F3
+#endif
 
 
 //==========================================================================
@@ -618,7 +634,30 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bo
 
   VTexture::AdjustGamma((rgba_t *)image, w*h);
 
+  GLint internal = GL_RGBA;
+  if (HaveS3TC && gl_s3tc_allowed) {
+    // determine texture format:
+    // COMPRESSED_RGB_S3TC_DXT1_EXT  -- RGB
+    // COMPRESSED_RGBA_S3TC_DXT1_EXT -- RGBA with 1-bit alpha
+    // COMPRESSED_RGBA_S3TC_DXT3_EXT -- RGBA with 4-bit alpha
+    // COMPRESSED_RGBA_S3TC_DXT5_EXT -- RGBA with 8-bit interpolated alpha
+    bool hasAlpha = false;
+    bool hasMoreAlpha = false;
+    const rgba_t *s = (const rgba_t *)image;
+    for (int y = 0; y < h; ++y) {
+      for (int x = 0; x < w; ++x, ++s) {
+             if (s->a == 0) hasAlpha = true;
+        else if (s->a < 255) { hasMoreAlpha = true; break; }
+      }
+    }
+         if (hasMoreAlpha) internal = COMPRESSED_RGBA_S3TC_DXT3_EXT;
+    else if (hasAlpha) internal = COMPRESSED_RGBA_S3TC_DXT1_EXT;
+    else internal = COMPRESSED_RGB_S3TC_DXT1_EXT;
+    //GCon->Logf(NAME_Debug, "S3TC(%s): 0x%04X", *W_FullLumpName(SourceLump), internal);
+  }
+
   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-  glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+  //glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+  glTexImage2D(GL_TEXTURE_2D, 0, internal, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
   if (p_glGenerateMipmap) p_glGenerateMipmap(GL_TEXTURE_2D);
 }
