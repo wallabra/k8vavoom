@@ -1,3 +1,10 @@
+// for now, "shitty bilinear" looks better on models
+#ifdef VV_MODEL_LIGHTING
+# ifndef VV_SMAP_SHITTY_BILINEAR
+#  define VV_SMAP_SHITTY_BILINEAR
+# endif
+#endif
+
     float shadowMul;
     vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
 
