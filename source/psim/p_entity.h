@@ -302,6 +302,8 @@ class VEntity : public VThinker {
     EFEX_StickToFloor     = 1u<<8u,
     EFEX_StickToCeiling   = 1u<<9u,
     EFEX_DetachFromServer = 1u<<10u, // set this flag to detach the entity from the server in network game
+
+    //EFEX_WasLinkedToWorld = 1u<<31u, // set if this entity was linked to the world at least once
   };
   vuint32 FlagsEx;
 

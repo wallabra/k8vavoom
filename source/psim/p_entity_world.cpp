@@ -309,6 +309,36 @@ void VEntity::UnlinkFromWorld () {
 
 //==========================================================================
 //
+//  IsGoreBloodSpot
+//
+//==========================================================================
+/*
+static inline bool IsGoreBloodSpot (VClass *cls) {
+  const char *name = cls->GetName();
+  if (name[0] == 'K' &&
+      name[1] == '8' &&
+      name[2] == 'G' &&
+      name[3] == 'o' &&
+      name[4] == 'r' &&
+      name[5] == 'e' &&
+      name[6] == '_')
+  {
+    return
+      VStr::startsWith(name, "K8Gore_BloodSpot") ||
+      VStr::startsWith(name, "K8Gore_CeilBloodSpot") ||
+      VStr::startsWith(name, "K8Gore_MinuscleBloodSpot") ||
+      VStr::startsWith(name, "K8Gore_GrowingBloodPool");
+  }
+  return false;
+}
+
+
+static TArray<VEntity *> bspotList;
+*/
+
+
+//==========================================================================
+//
 //  VEntity::LinkToWorld
 //
 //  Links a thing into both a block and a subsector based on it's x y.
@@ -438,6 +468,36 @@ void VEntity::LinkToWorld (int properFloorCheck) {
       // thing is off the map
       BlockMapNext = BlockMapPrev = nullptr;
     }
+
+    // limit blood spots
+    /*
+    if (!(FlagsEx&EFEX_WasLinkedToWorld)) {
+      FlagsEx |= EFEX_WasLinkedToWorld;
+      if (BlockMapCell && IsGoreBloodSpot(GetClass())) {
+        GCon->Logf(NAME_Debug, "counting blood spots... (%s)", GetClass()->GetName());
+        int count = 0;
+        for (VEntity *ee = XLevel->BlockLinks[BlockMapCell]; ee; ee = ee->BlockMapNext) {
+          if (!ee->IsGoingToDie() && IsGoreBloodSpot(ee->GetClass())) ++count;
+        }
+        if (count >= 32) {
+          // to much, reduce
+          count = 26;
+          bspotList.reset();
+          for (VEntity *ee = XLevel->BlockLinks[BlockMapCell]; ee; ee = ee->BlockMapNext) {
+            if (!ee->IsGoingToDie() && IsGoreBloodSpot(ee->GetClass())) {
+              if (!count) bspotList.append(ee); else --count;
+            }
+          }
+          if (bspotList.length()) {
+            GCon->Logf(NAME_Debug, "removing %d blood spots", bspotList.length());
+            for (int f = 0; f < bspotList.length(); ++f) bspotList[f]->DestroyThinker();
+          }
+        }
+      } else {
+        GCon->Logf(NAME_Debug, "linked `%s` first time", GetClass()->GetName());
+      }
+    }
+    */
   }
 }
 
