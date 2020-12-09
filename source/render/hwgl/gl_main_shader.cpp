@@ -224,8 +224,8 @@ bool VOpenGLDrawer::VGLShader::IsActive () const noexcept {
 //
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Compile () {
-       if (gl_shader_on_demand) GCon->Logf(NAME_Init, "compiling shader '%s'", progname);
-  else if (developer) GCon->Logf(NAME_Dev, "compiling shader '%s'", progname);
+  /*     if (gl_shader_on_demand) GCon->Logf(NAME_Init, "compiling shader '%s'", progname);
+  else*/ if (developer) GCon->Logf(NAME_Dev, "compiling shader '%s'", progname);
   GLhandleARB VertexShader = owner->LoadShader(progname, incdir, GL_VERTEX_SHADER_ARB, vssrcfile, defines);
   GLhandleARB FragmentShader = owner->LoadShader(progname, incdir, GL_FRAGMENT_SHADER_ARB, fssrcfile, defines);
   prog = owner->CreateProgram(progname, VertexShader, FragmentShader);
