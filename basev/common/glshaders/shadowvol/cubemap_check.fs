@@ -124,3 +124,118 @@ float compareShadowTexelDistance (const vec3 ltfdir, float orgDist) {
     return 0.0;
   #endif
 }
+
+
+#if 0
+// `sldistUnmod` is what we got from the texture
+// this is used for GL4 `textureGather()`
+float compareShadowTexelDistanceEx (const vec3 ltfdir, float orgDist, const float sldistUnmod) {
+  float sldist = (sldistUnmod+VV_SMAP_BIAS)*LightRadius;
+  sldist *= sldist;
+  if (sldist >= orgDist) return 1.0;
+
+  // snap direction to texel corners
+  vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
+  #ifdef VV_CMP_FASTER_CHECKS
+    float texX = floor(cubeTC.x*CubeSize);
+    float texY = floor(cubeTC.y*CubeSize);
+    float uc, vc, vc1;
+    float t, dv;
+    float newCubeDist;
+    vec3 newCubeDir;
+    float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
+    if (cubeTC.z == 0.0) {
+      // positive x
+      #define SMCHECK_V3  vec3(1.0, vc, -uc)
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
+      #undef SMCHECK_V3
+    }
+    if (cubeTC.z == 1.0) {
+      // negative x
+      #define SMCHECK_V3  vec3(-1.0, vc, uc)
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
+      #undef SMCHECK_V3
+    }
+    if (cubeTC.z == 2.0) {
+      // positive y
+      #define SMCHECK_V3  vec3(uc, 1.0, -vc)
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
+      #undef SMCHECK_V3
+    }
+    if (cubeTC.z == 3.0) {
+      // negative y
+      #define SMCHECK_V3  vec3(uc, -1.0, vc)
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
+      #undef SMCHECK_V3
+    }
+    if (cubeTC.z == 4.0) {
+      // positive z
+      #define SMCHECK_V3  vec3(uc, vc, 1.0)
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
+      #undef SMCHECK_V3
+    }
+    // negative z
+    #define SMCHECK_V3  vec3(-uc, vc, -1.0)
+      $include "shadowvol/cubemap_check_dispatch_inc.fs"
+    #undef SMCHECK_V3
+  #else
+    abort
+  #endif
+}
+#endif
+
+
+// `sldistUnmod` is what we got from the texture
+// this is used for GL4 `textureGather()`
+float compareShadowTexelDistanceExEx (const vec3 ltfdir, float orgDist, float texX, float texY, float axis) {
+  float sldist = (textureCubeFn(ShadowTexture, ltfdir).r+VV_SMAP_BIAS)*LightRadius;
+  sldist *= sldist;
+  if (sldist >= orgDist) return 1.0;
+
+  // snap direction to texel corners
+  //vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
+
+  //float texX = floor(cubeTC.x*CubeSize);
+  //float texY = floor(cubeTC.y*CubeSize);
+  texX = floor(texX*CubeSize);
+  texY = floor(texY*CubeSize);
+  float uc, vc, vc1;
+  float t, dv;
+  float newCubeDist;
+  vec3 newCubeDir;
+  float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
+  if (axis == 0.0) {
+    // positive x
+    #define SMCHECK_V3  vec3(1.0, vc, -uc)
+    $include "shadowvol/cubemap_check_dispatch_inc.fs"
+    #undef SMCHECK_V3
+  }
+  if (axis == 1.0) {
+    // negative x
+    #define SMCHECK_V3  vec3(-1.0, vc, uc)
+    $include "shadowvol/cubemap_check_dispatch_inc.fs"
+    #undef SMCHECK_V3
+  }
+  if (axis == 2.0) {
+    // positive y
+    #define SMCHECK_V3  vec3(uc, 1.0, -vc)
+    $include "shadowvol/cubemap_check_dispatch_inc.fs"
+    #undef SMCHECK_V3
+  }
+  if (axis == 3.0) {
+    // negative y
+    #define SMCHECK_V3  vec3(uc, -1.0, vc)
+    $include "shadowvol/cubemap_check_dispatch_inc.fs"
+    #undef SMCHECK_V3
+  }
+  if (axis == 4.0) {
+    // positive z
+    #define SMCHECK_V3  vec3(uc, vc, 1.0)
+    $include "shadowvol/cubemap_check_dispatch_inc.fs"
+    #undef SMCHECK_V3
+  }
+  // negative z
+  #define SMCHECK_V3  vec3(-uc, vc, -1.0)
+    $include "shadowvol/cubemap_check_dispatch_inc.fs"
+  #undef SMCHECK_V3
+}
