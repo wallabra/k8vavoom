@@ -28,7 +28,7 @@
 //**
 //**************************************************************************
 // not done yet
-//#define VV_SHADER_COMPILING_PROGRESS
+#define VV_SHADER_COMPILING_PROGRESS
 
 #include <limits.h>
 #include <float.h>
@@ -136,10 +136,11 @@ VCvarI gl_shadowmap_faster_check("gl_shadowmap_faster_check", "3", "Use slightly
 // ////////////////////////////////////////////////////////////////////////// //
 #ifdef VV_SHADER_COMPILING_PROGRESS
 
-#define PROG_BUF_WIDTH   (256)
-#define PROG_BUF_HEIGHT  (256)
+#define PROG_BUF_WIDTH   (512)
+#define PROG_BUF_HEIGHT  (64)
 
 static uint8_t *tempProgBuffer = nullptr;
+static GLuint shadMsgTexture = 0;
 
 
 //==========================================================================
@@ -149,7 +150,9 @@ static uint8_t *tempProgBuffer = nullptr;
 //==========================================================================
 static void progBufClear () {
   if (!tempProgBuffer) tempProgBuffer = (uint8_t *)Z_Malloc(PROG_BUF_WIDTH*PROG_BUF_HEIGHT*4);
-  memset(tempProgBuffer, 0, PROG_BUF_WIDTH*PROG_BUF_HEIGHT*4);
+  //memset(tempProgBuffer, 0, PROG_BUF_WIDTH*PROG_BUF_HEIGHT*4);
+  uint32_t *da = (uint32_t *)tempProgBuffer;
+  for (unsigned f = 0; f < PROG_BUF_WIDTH*PROG_BUF_HEIGHT; ++f, ++da) *da = 0xff000000;
 }
 
 
@@ -172,13 +175,14 @@ static void progBufPutCharAt (int x0, int y0, char ch) {
   for (int y = CONFONT_HEIGHT-1; y >= 0; --y) {
     if (y0+y < 0 || y0+y >= PROG_BUF_HEIGHT) break;
     vuint16 v = glConFont10[(ch&0xff)*10+y];
-    for (int x = 0; x < CONFONT_WIDTH; ++x) {
+    uint32_t *da = (uint32_t *)(tempProgBuffer+(PROG_BUF_WIDTH*(y0+y))*4+x0*4);
+    for (int x = 0; x < CONFONT_WIDTH; ++x, ++da) {
       if (x0+x < 0) continue;
       if (x0+x >= PROG_BUF_WIDTH) break;
       if (v&0x8000) {
-        *(uint32_t *)(tempProgBuffer+(PROG_BUF_WIDTH+y)*4+x*4) = color;
+        *da = color;
       } else {
-        *(uint32_t *)(tempProgBuffer+(PROG_BUF_WIDTH+y)*4+x*4) = 0xff000000;
+        *da = 0xff000000;
       }
       v <<= 1;
     }
@@ -191,14 +195,151 @@ static void progBufPutCharAt (int x0, int y0, char ch) {
 //  progBufPutTextAt
 //
 //==========================================================================
-static void progBufPutTextAt (int x0, int y0, const char *s) {
-  if (!s || !s[0] || !tempProgBuffer) return;
+static int progBufPutTextAt (int x0, int y0, const char *s) {
+  if (!s || !s[0] || !tempProgBuffer) return 0;
+  int wdt = 0;
   while (*s) {
     progBufPutCharAt(x0, y0, *s++);
     x0 += CONFONT_WIDTH;
+    wdt += CONFONT_WIDTH;
   }
+  return wdt;
 }
 #endif
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::InitShaderProgress
+//
+//==========================================================================
+void VOpenGLDrawer::InitShaderProgress () {
+#ifdef VV_SHADER_COMPILING_PROGRESS
+  vassert(shadMsgTexture == 0);
+
+  p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  glViewport(0, 0, ScreenWidth, ScreenHeight);
+  SetOrthoProjection(0, ScreenWidth, ScreenHeight, 0);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  glDisable(GL_ALPHA_TEST);
+  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+  if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
+  glDisable(GL_CLIP_PLANE0);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_BLEND);
+  GLDRW_CHECK_ERROR("progress preparation");
+
+  glEnable(GL_TEXTURE_2D);
+  glGenTextures(1, &shadMsgTexture);
+  glBindTexture(GL_TEXTURE_2D, shadMsgTexture);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+  GLDRW_CHECK_ERROR("create progress texture");
+
+  //glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+  glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+  progBufClear();
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,  PROG_BUF_WIDTH, PROG_BUF_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempProgBuffer);
+  GLDRW_CHECK_ERROR("upload texture image");
+#endif
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DoneShaderProgress
+//
+//==========================================================================
+void VOpenGLDrawer::DoneShaderProgress () {
+#ifdef VV_SHADER_COMPILING_PROGRESS
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glDeleteTextures(1, &shadMsgTexture);
+  shadMsgTexture = 0;
+  ReactivateCurrentFBO();
+  /*
+  GCon->Logf(NAME_Debug, "waiting... (%dx%d, %u)", ScreenWidth, ScreenHeight, shadMsgTexture);
+  double stt = Sys_Time();
+  while (Sys_Time()-stt < 2.0) Sys_Yield();
+  */
+#endif
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::ShowShaderProgress
+//
+//==========================================================================
+void VOpenGLDrawer::ShowShaderProgress (int curr, int total) {
+#ifdef VV_SHADER_COMPILING_PROGRESS
+  if (total < 1) total = 1;
+  if (curr < 0) curr = 0;
+  if (curr > total) curr = total;
+
+  int wdt;
+  if (curr < total) {
+    wdt = progBufPutTextAt(0, 0, va("compiling shaders [%d/%d]", curr, total));
+  } else {
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    progBufClear();
+    wdt = progBufPutTextAt(0, 0, "done compiling shaders");
+  }
+  glTexSubImage2D(GL_TEXTURE_2D, 0,  0, 0, PROG_BUF_WIDTH, PROG_BUF_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, tempProgBuffer);
+
+  glEnable(GL_TEXTURE_2D);
+  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+  const int texOfs = (ScreenWidth-wdt)/2;
+  glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2i(texOfs, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex2i(texOfs+PROG_BUF_WIDTH, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex2i(texOfs+PROG_BUF_WIDTH, PROG_BUF_HEIGHT);
+    glTexCoord2f(0.0f, 1.0f); glVertex2i(texOfs, PROG_BUF_HEIGHT);
+  glEnd();
+
+  const int pbarHeight = 14;
+  const int pbarWidth = ScreenWidth-12;
+  const int pbarXOfs = (ScreenWidth-pbarWidth)/2;
+  const int pbarYOfs = CONFONT_HEIGHT+4;
+
+  glColor4f(1.0f, 0.5f, 0.0f, 1.0f);
+  glDisable(GL_TEXTURE_2D);
+
+  glBegin(GL_QUADS);
+    glVertex2i(pbarXOfs-2, pbarYOfs);
+    glVertex2i(pbarXOfs+pbarWidth+2, pbarYOfs);
+    glVertex2i(pbarXOfs+pbarWidth+2, pbarYOfs+pbarHeight);
+    glVertex2i(pbarXOfs-2, pbarYOfs+pbarHeight);
+  glEnd();
+
+  glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+  glBegin(GL_QUADS);
+    glVertex2i(pbarXOfs-1, pbarYOfs+1);
+    glVertex2i(pbarXOfs+pbarWidth+1, pbarYOfs+1);
+    glVertex2i(pbarXOfs+pbarWidth+1, pbarYOfs+pbarHeight-1);
+    glVertex2i(pbarXOfs-1, pbarYOfs+pbarHeight-1);
+  glEnd();
+
+  const int bwdt = pbarWidth*curr/total;
+  glColor4f(0.9f, 0.4f, 0.0f, 1.0f);
+  glBegin(GL_QUADS);
+    glVertex2i(pbarXOfs, pbarYOfs+2);
+    glVertex2i(pbarXOfs+bwdt, pbarYOfs+2);
+    glVertex2i(pbarXOfs+bwdt, pbarYOfs+pbarHeight-2);
+    glVertex2i(pbarXOfs, pbarYOfs+pbarHeight-2);
+  glEnd();
+
+  Update(false);
+#endif
+}
 
 
 //==========================================================================
@@ -880,7 +1021,7 @@ void VOpenGLDrawer::InitResolution () {
   glBindTexture(GL_TEXTURE_2D, 0);
   p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
   if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
   RestoreDepthFunc();
@@ -908,6 +1049,11 @@ void VOpenGLDrawer::InitResolution () {
   glDisable(GL_DITHER);
   glDisable(GL_FOG);
   glDisable(GL_LIGHTING);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  SelectTexture(0);
+
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_CULL_FACE);
 
   glDepthMask(GL_FALSE); // no z-buffer writes
   currDepthMaskState = 0;
@@ -923,46 +1069,18 @@ void VOpenGLDrawer::InitResolution () {
   LoadAllShaders();
   LoadShadowmapShaders();
 
+  p_glUseProgramObjectARB(0);
+  currentActiveShader = nullptr;
+
 #ifdef VV_SHADER_COMPILING_PROGRESS
-  // show shader loading progress
-  p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  Setup2D();
-  GLDRW_CHECK_ERROR("progress preparation");
-
-  GLuint msgTexture;
-  glEnable(GL_TEXTURE_2D);
-  glGenTextures(1, &msgTexture);
-  glBindTexture(GL_TEXTURE_2D, msgTexture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-  GLDRW_CHECK_ERROR("created progress texture");
-
-  glDrawBuffer(GL_FRONT); // direct update
-  GLDRW_CHECK_ERROR("turned on direct update");
-
-  glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-
-  progBufClear();
-  progBufPutTextAt(2, 2, va("compiling shaders [0/10]"));
-
-  glTexSubImage2D(GL_TEXTURE_2D, 0,  0, 0, PROG_BUF_WIDTH, PROG_BUF_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, tempProgBuffer);
-  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-  glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex2i(0, 0);
-    glTexCoord2f(1.0f, 0.0f); glVertex2i(PROG_BUF_WIDTH, 0);
-    glTexCoord2f(1.0f, 1.0f); glVertex2i(PROG_BUF_WIDTH, PROG_BUF_HEIGHT);
-    glTexCoord2f(0.0f, 1.0f); glVertex2i(0, PROG_BUF_HEIGHT);
-  glEnd();
+  InitShaderProgress();
 #endif
 
   GCon->Log(NAME_Init, "OpenGL: compiling shaders");
   CompileShaders(major, minor, canRenderShadowmaps);
 
 #ifdef VV_SHADER_COMPILING_PROGRESS
-  glDrawBuffer(GL_BACK); // end of direct update
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glDeleteTextures(1, &msgTexture);
-  ReactivateCurrentFBO();
+  DoneShaderProgress();
 #endif
 
   GLDRW_CHECK_ERROR("finish OpenGL initialization");

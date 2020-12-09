@@ -410,6 +410,10 @@ protected:
   void CompileShaders (int glmajor, int glminor, bool canCubemaps);
   void DestroyShaders ();
 
+  void InitShaderProgress ();
+  void DoneShaderProgress ();
+  void ShowShaderProgress (int curr, int total);
+
 protected:
   enum { MaxDepthMaskStack = 16 };
   GLint depthMaskStack[MaxDepthMaskStack];

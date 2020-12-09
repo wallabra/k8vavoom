@@ -37,7 +37,7 @@
 
 extern VCvarI gl_shadowmap_faster_check;
 
-static VCvarB gl_shader_on_demand("gl_shader_on_demand", true, "Compile shaders on demand?", CVAR_PreInit|CVAR_Archive);
+static VCvarB gl_shader_on_demand("gl_shader_on_demand", false, "Compile shaders on demand?", CVAR_PreInit|CVAR_Archive);
 
 
 //==========================================================================
@@ -59,14 +59,22 @@ void VOpenGLDrawer::registerShader (VGLShader *shader) {
 //
 //==========================================================================
 void VOpenGLDrawer::CompileShaders (int glmajor, int glminor, bool canCubemaps) {
-  for (VGLShader *shad = shaderHead; shad; shad = shad->next) {
+  int current = 0, total = 0;
+  for (VGLShader *shad = shaderHead; shad; shad = shad->next) ++total;
+  bool wasProgress = false;
+  for (VGLShader *shad = shaderHead; shad; shad = shad->next, ++current) {
     shad->compiled = false;
     if (shad->CheckOpenGLVersion(glmajor, glminor, canCubemaps)) {
-      if (gl_shader_on_demand) shad->Compile();
+      if (!gl_shader_on_demand) {
+        wasProgress = true;
+        ShowShaderProgress(current, total);
+        shad->Compile();
+      }
     } else {
       GCon->Logf(NAME_Init, "skipped shader '%s' due to OpenGL version constraint", shad->progname);
     }
   }
+  if (wasProgress) ShowShaderProgress(total, total);
 }
 
 
