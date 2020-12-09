@@ -1175,11 +1175,12 @@ protected:
 
   bool SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture, vuint32 ShadeColor=0);
 
-
   void GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture, bool needUpdate, vuint32 ShadeColor);
-  void UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal, int SourceLump);
-  void UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal, int SourceLump);
-  void UploadTexture (int width, int height, const rgba_t *data, bool doFringeRemove, int SourceLump);
+
+  enum { UpTexNoCompress = 0, UpTexNormal = 1, UpTexHiRes = 2 };
+  void UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal, int SourceLump, int hitype);
+  void UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal, int SourceLump, int hitype);
+  void UploadTexture (int width, int height, const rgba_t *data, bool doFringeRemove, int SourceLump, int hitype);
 
   void DoHorizonPolygon (surface_t *surf);
   void DrawPortalArea (VPortal *Portal);

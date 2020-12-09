@@ -214,6 +214,7 @@ protected:
 public:
   VWarpTexture (VTexture *, float aspeed=1);
   virtual ~VWarpTexture () override;
+  virtual bool IsDynamicTexture () const noexcept override;
   virtual void SetFrontSkyLayer () override;
   virtual bool CheckModified () override;
   virtual void ReleasePixels () override;

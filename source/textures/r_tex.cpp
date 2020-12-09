@@ -1834,6 +1834,7 @@ void VTextureManager::ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, i
     //    i don't even know what `overload` meant to do, and it seems to work this way
     //    FIXME: investigate this later
     //if (OldTex->SScale != 1.0f || OldTex->TScale != 1.0f) GCon->Logf(NAME_Debug, "OLD: %s: oldsize=(%d,%d); oldscale=(%g,%g); newsize=(%d,%d); newscale=(%g,%g)", *OldTex->Name, OldTex->GetWidth(), OldTex->GetHeight(), OldTex->SScale, OldTex->TScale, NewTex->GetWidth(), NewTex->GetHeight(), NewTex->SScale, NewTex->TScale);
+    NewTex->hiresRepTex = true;
     NewTex->Type = TEXTYPE_Overload;
     //GCon->Logf("REPLACE0 <%s> (%d)", *OldTex->Name, OldIndex);
     NewTex->Name = OldTex->Name;

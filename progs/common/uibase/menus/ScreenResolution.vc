@@ -210,10 +210,13 @@ override void CreateChoices () {
 
 
   if (GetCvarB('__gl_s3tc_present')) {
-    S3TC = GetItemContainer().NewChild(MenuChoice_OnOff);
+    S3TC = GetItemContainer().NewChild(MenuChoiceEnum);
     SetChoiceInitialSizePos(S3TC);
     S3TC.SetText("Texture Compression");
-    S3TC.SetInitialValue(GetCvar('gl_s3tc_allowed'));
+      S3TC.AddItem("None");
+      S3TC.AddItem("HiRes");
+      S3TC.AddItem("All");
+    S3TC.SetInitialValue(GetCvar('gl_s3tc_mode'));
       SetLastHelp(
         "You can turn on texture compression This may slightly degrade\n"~
         "image quality, but will use much less GPU RAM.\n"~
@@ -270,7 +273,7 @@ void ActivateSetMode (Object Sender) {
   SetCvar('screen_fsmode', int(Windowed.Value));
   SetCvar('r_vsync', int(VSync.Value));
   SetCvar('r_vsync_adaptive', int(VSyncAdaptive.Value));
-  if (S3TC) SetCvar('gl_s3tc_allowed', int(S3TC.Value));
+  if (S3TC) SetCvar('gl_s3tc_mode', int(S3TC.Value));
   SetCvarF('screen_scale', ScrScale.Value);
   SetCvarI('ui_max_scale', max(0, int(UIMaxScale.Value)));
   SetCvarI('ui_min_scale', max(0, int(UIMinScale.Value)));

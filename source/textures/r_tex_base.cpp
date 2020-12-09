@@ -130,6 +130,7 @@ VTexture::VTexture ()
   , nofullbright(false)
   , glowing(0)
   , noHires(false)
+  , hiresRepTex(false)
   , transFlags(TransValueUnknown)
   , lastTextureFiltering(-666)
   , lastUpdateFrame(0)
@@ -166,6 +167,26 @@ VTexture::~VTexture () {
   HiResTexture = nullptr;
   delete Brightmap;
   Brightmap = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VTexture::IsDynamicTexture
+//
+//==========================================================================
+bool VTexture::IsDynamicTexture () const noexcept {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VTexture::IsHugeTexture
+//
+//==========================================================================
+bool VTexture::IsHugeTexture () const noexcept {
+  return (hiresRepTex && (Width >= 256 || Height >= 256));
 }
 
 
@@ -376,6 +397,7 @@ VTexture *VTexture::GetHighResolutionTexture () {
     // create new high-resolution texture
     HiResTexture = CreateTexture(Type, LumpNum);
     if (HiResTexture) {
+      HiResTexture->hiresRepTex = true;
       HiResTexture->Name = Name;
       return HiResTexture;
     }

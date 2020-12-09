@@ -229,6 +229,7 @@ public:
   bool nofullbright; // valid for all textures; forces "no fullbright" for sprite brightmaps (ONLY!)
   vuint32 glowing; // is this a glowing texture? (has any meaning only for floors and ceilings; 0: none; if high byte is 0xff, it is fullbright)
   bool noHires; // hires texture tried and not found
+  bool hiresRepTex; // set for hires replacements
 
   enum {
     FlagTransparent = 0x01u, // does texture have any non-solid pixels? set in `GetPixels()`
@@ -310,6 +311,12 @@ public:
   }
 
   inline bool IsGlowFullbright () const noexcept { return ((glowing&0xff000000u) == 0xff000000u); }
+
+  // `true` means "do not compress"
+  virtual bool IsDynamicTexture () const noexcept;
+  // `true` means "immediately unload, if not dynamic"
+  // note that huge hires textures considered as huge
+  virtual bool IsHugeTexture () const noexcept;
 
 protected:
   vuint8 *Pixels; // most textures has some kind of pixel data, so declare it here

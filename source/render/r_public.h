@@ -258,6 +258,8 @@ public:
 
   VCameraTexture (VName, int, int);
   virtual ~VCameraTexture () override;
+  virtual bool IsDynamicTexture () const noexcept override;
+  virtual bool IsHugeTexture () const noexcept override;
   virtual bool CheckModified () override;
   virtual void ReleasePixels () override;
   virtual vuint8 *GetPixels () override;

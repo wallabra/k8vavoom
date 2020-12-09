@@ -32,7 +32,7 @@ extern VCvarB gl_pic_filtering;
 static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false, "Destroy and create new OpenGL textures for changed DooM animated ones?", CVAR_Archive);
 static VCvarB gl_camera_texture_use_readpixels("gl_camera_texture_use_readpixels", true, "Use ReadPixels to update camera textures?", CVAR_Archive);
 
-static VCvarB gl_s3tc_allowed("gl_s3tc_allowed", false, "Use S3TC texture compression, if supported?", CVAR_PreInit|CVAR_Archive);
+static VCvarI gl_s3tc_mode("gl_s3tc_mode", "0", "Use S3TC texture compression, if supported (0:no; 1:hires; 2:all)?", CVAR_PreInit|CVAR_Archive);
 
 #ifndef COMPRESSED_RGB_S3TC_DXT1_EXT
 # define COMPRESSED_RGB_S3TC_DXT1_EXT                   0x83F0
@@ -431,7 +431,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
     vassert(tid);
     glBindTexture(GL_TEXTURE_2D, tid);
-    #if 1
+    #if 0
     GLint oldbindtex = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
     GCon->Logf(NAME_Debug, "set camera texture; fboidx=%d; fbotid=%u; tid=%d; curtid=%d; size=%dx%d; ofs=(%d,%d); scale=(%g,%g)", CamTex->camfboidx, cameraFBOList[CamTex->camfboidx]->fbo.getColorTid(), tid, oldbindtex, Tex->Width, Tex->Height, Tex->SOffset, Tex->TOffset, Tex->SScale, Tex->TScale);
@@ -444,10 +444,16 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     //GCon->Logf(NAME_Debug, "texture '%s'; tid=%d", *Tex->Name, *pHandle);
 
     // try to load high resolution version
+    int hitype = (Tex->IsDynamicTexture() ? UpTexNoCompress : (Tex->hiresRepTex ? UpTexHiRes : UpTexNormal));
     VTexture *SrcTex = Tex;
     if (!Tex->bIsCameraTexture) {
       VTexture *hitex = Tex->GetHighResolutionTexture();
-      if (hitex && hitex->Type != TEXTYPE_Null) SrcTex = hitex;
+      if (hitex && hitex->Type != TEXTYPE_Null) {
+        SrcTex = hitex;
+        hitype = (hitex->IsDynamicTexture() ? UpTexNoCompress : UpTexHiRes);
+      }
+    } else {
+      hitype = UpTexNoCompress;
     }
 
     if (SrcTex->Type == TEXTYPE_Null) {
@@ -457,7 +463,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
       rgba_t dummy[4];
       memset((void *)dummy, 0, sizeof(dummy));
       VTexture::checkerFillRGBA((vuint8 *)dummy, 2, 2);
-      UploadTexture(2, 2, dummy, false, -1); // no fringe filtering
+      UploadTexture(2, 2, dummy, false, -1, UpTexNoCompress); // no fringe filtering
     } else if (Translation && CMap) {
       // both colormap and translation
       rgba_t tmppal[256];
@@ -465,36 +471,39 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
       const rgba_t *CMPal = ColorMaps[CMap].GetPalette();
       for (int i = 0; i < 256; ++i) tmppal[i] = CMPal[TrTab[i]];
       if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
-      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal, SrcTex->SourceLump);
+      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal, SrcTex->SourceLump, hitype);
     } else if (Translation) {
       // only translation
       //GCon->Logf("uploading translated texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
       //for (int f = 0; f < 256; ++f) GCon->Logf("  %3d: r:g:b=%02x:%02x:%02x", f, Translation->GetPalette()[f].r, Translation->GetPalette()[f].g, Translation->GetPalette()[f].b);
       if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
-      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette(), SrcTex->SourceLump);
+      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette(), SrcTex->SourceLump, hitype);
     } else if (CMap) {
       // only colormap
       //GCon->Logf(NAME_Dev, "uploading colormapped texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
       if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
-      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColorMaps[CMap].GetPalette(), SrcTex->SourceLump);
+      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColorMaps[CMap].GetPalette(), SrcTex->SourceLump, hitype);
     } else if (ShadeColor) {
       // shade (and possible colormap)
       //GLog.Logf(NAME_Debug, "*** SHADE: tex='%s'; color=0x%08x", *SrcTex->Name, ShadeColor);
       rgba_t *shadedPixels = SrcTex->CreateShadedPixels(ShadeColor, (CMap ? ColorMaps[CMap].GetPalette() : nullptr));
-      UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), shadedPixels, false/*remove fringe*/, -1);
+      UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), shadedPixels, false/*remove fringe*/, -1, hitype);
       SrcTex->FreeShadedPixels(shadedPixels);
     } else {
       // normal uploading
       vuint8 *block = SrcTex->GetPixels();
       //if (SrcTex->SourceLump >= 0) GCon->Logf(NAME_Debug, "uploading normal texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
       if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal) {
-        UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block, SrcTex->GetPalette(), SrcTex->SourceLump);
+        UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block, SrcTex->GetPalette(), SrcTex->SourceLump, hitype);
       } else {
-        UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), (rgba_t *)block, (SrcTex->isTransparent() || SrcTex->isTranslucent()), SrcTex->SourceLump);
+        UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), (rgba_t *)block, (SrcTex->isTransparent() || SrcTex->isTranslucent()), SrcTex->SourceLump, hitype);
       }
     }
 
-    if (SrcTex && gl_release_ram_textures_mode.asInt() >= 2) SrcTex->ReleasePixels();
+    if (SrcTex && !SrcTex->IsDynamicTexture() && (SrcTex->IsHugeTexture() || gl_release_ram_textures_mode.asInt() >= 2)) {
+      //if (SrcTex->IsHugeTexture()) GCon->Logf(NAME_Debug, "freeing \"huge\" texture '%s' (%s) (%dx%d)", *SrcTex->Name, *W_FullLumpName(SrcTex->SourceLump), SrcTex->Width, SrcTex->Height);
+      SrcTex->ReleasePixels();
+    }
   }
 
   // set up texture wrapping
@@ -524,7 +533,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
 //  VOpenGLDrawer::UploadTexture8
 //
 //==========================================================================
-void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal, int SourceLump) {
+void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal, int SourceLump, int hitype) {
   // this is single-threaded, so why not?
   int w = (Width > 0 ? Width : 2);
   int h = (Height > 0 ? Height : 2);
@@ -545,7 +554,7 @@ void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, c
   } else {
     memset((void *)NewData, 0, w*h*4);
   }
-  UploadTexture(w, h, databuf, false, -1);
+  UploadTexture(w, h, databuf, false, -1, hitype);
   //Z_Free(NewData);
 }
 
@@ -555,7 +564,7 @@ void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, c
 //  VOpenGLDrawer::UploadTexture8A
 //
 //==========================================================================
-void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal, int SourceLump) {
+void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal, int SourceLump, int hitype) {
   // this is single-threaded, so why not?
   int w = (Width > 0 ? Width : 2);
   int h = (Height > 0 ? Height : 2);
@@ -578,7 +587,7 @@ void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, 
   } else {
     memset((void *)NewData, 0, w*h*4);
   }
-  UploadTexture(w, h, databuf, false, -1);
+  UploadTexture(w, h, databuf, false, -1, hitype);
   //Z_Free(NewData);
 }
 
@@ -588,7 +597,7 @@ void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, 
 //  VOpenGLDrawer::UploadTexture
 //
 //==========================================================================
-void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bool doFringeRemove, int SourceLump) {
+void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bool doFringeRemove, int SourceLump, int hitype) {
   if (width < 1 || height < 1) Sys_Error("WARNING: fucked texture (w=%d; h=%d)", width, height);
   if (!data) Sys_Error("WARNING: fucked texture (w=%d; h=%d, no data)", width, height);
 
@@ -635,7 +644,10 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bo
   VTexture::AdjustGamma((rgba_t *)image, w*h);
 
   GLint internal = GL_RGBA;
-  if (HaveS3TC && gl_s3tc_allowed) {
+  int cmode = (HaveS3TC && hitype != UpTexNoCompress ? gl_s3tc_mode.asInt() : 0);
+  if (cmode == 1 && hitype != UpTexHiRes) cmode = 0;
+  // don't bother with small textures anyway
+  if (cmode > 0 && (width >= 256 || height >= 256)) {
     // determine texture format:
     // COMPRESSED_RGB_S3TC_DXT1_EXT  -- RGB
     // COMPRESSED_RGBA_S3TC_DXT1_EXT -- RGBA with 1-bit alpha
