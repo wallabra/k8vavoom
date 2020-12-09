@@ -105,6 +105,7 @@ menudef ShadowMapOptions {
       "Normal",
       "Faster",
       "Shitty Fast",
+      "Super-Shitty",
     }
     help =
       "Use slightly faster, but less precise shadowmap texel checks?",

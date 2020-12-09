@@ -72,6 +72,8 @@
       float biasBase = clamp(0.0065*tan(acos(cosTheta)), 0.0015, 0.036); // cosTheta is dot( n,l ), clamped between 0 and 1
       */
 
+      //#ifdef GLVER_MAJOR_4
+
       sldist = (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(1.0, 0.0))).r+biasBase)*LightRadius;
       sldist *= sldist;
       if (sldist >= origDist) valhoriz = 1.0;

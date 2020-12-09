@@ -1,7 +1,12 @@
+// should be always defined
 #define VV_CMP_FASTER_CHECKS
+
 // this is set in the engine
+// only one (or none) of the following must be defined
 //#define VV_CMP_FASTEST_CHECKS
 //#define VV_CMP_SHITTY_CHECKS
+//#define VV_CMP_SUPER_SHITTY_CHECKS
+
 
 float compareShadowTexelDistance (const vec3 ltfdir, float orgDist) {
   float sldist = (textureCubeFn(ShadowTexture, ltfdir).r+VV_SMAP_BIAS)*LightRadius;
