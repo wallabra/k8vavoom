@@ -429,7 +429,6 @@ void VRenderLevelShadowVolume::RenderMobjsFog () {
 //==========================================================================
 void VRenderLevelShadowVolume::RenderMobjSpriteShadowMaps (VEntity *owner, const unsigned int facenum, int spShad, vuint32 dlflags) {
   if (spShad < 1) return;
-  if (facenum >= 4) return; // we cannot render anything on the floor or on the ceiling
   const bool doPlayer = r_shadowmap_sprshadows_player.asBool();
   for (auto &&mo : mobjsInCurrLightSprites) {
     if (mo == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
@@ -450,8 +449,6 @@ void VRenderLevelShadowVolume::RenderMobjSpriteShadowMaps (VEntity *owner, const
 //
 //==========================================================================
 void VRenderLevelShadowVolume::RenderMobjShadowMapSprite (VEntity *ent, const unsigned int facenum, const bool allowRotating) {
-  if (facenum >= 4) return; // we cannot render anything on the floor or on the ceiling (just in case)
-
   const int sprtype = ent->SpriteType;
   if (sprtype != SPR_VP_PARALLEL_UPRIGHT) return;
 
@@ -484,8 +481,10 @@ void VRenderLevelShadowVolume::RenderMobjShadowMapSprite (VEntity *ent, const un
   int lump = sprframe->lump[0];
   bool flip = sprframe->flip[0];
 
+  // always look at the light source
   if (sprframe->rotate) {
     float ang = matan(sprorigin.y-CurrLightPos.y, sprorigin.x-CurrLightPos.x);
+    if (!isFiniteF(ang)) ang = matan(sprorigin.y-CurrLightPos.y, sprorigin.x-CurrLightPos.x+1);
     const float angadd = (sprframe->lump[0] == sprframe->lump[1] ? 45.0f/2.0f : 45.0f/4.0f); //k8: is this right?
     ang = AngleMod(ang-ent->GetSpriteDrawAngles().yaw+180.0f+angadd);
     const unsigned rot = (unsigned)(ang*16.0f/360.0f)&15;
@@ -498,15 +497,18 @@ void VRenderLevelShadowVolume::RenderMobjShadowMapSprite (VEntity *ent, const un
   VTexture *Tex = GTextureManager[lump];
   if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
 
-  //TVec sprforward(0.0f, 0.0f, 0.0f);
-  //TVec sprright(0.0f, 0.0f, 0.0f);
-  //TVec sprup(0.0f, 0.0f, 1.0f);
-
-  //TVec viewforward, viewright, viewup;
-  //AngleVectors(VDrawer::CubeMapViewAngles[facenum], viewforward, viewright, viewup);
-
-  TVec viewforward = Drawer->GetLightViewForward(facenum);
-  if (facenum < 2) viewforward = -viewforward;
+  // always look at the light source
+  TVec viewforward = ent->Origin-CurrLightPos;
+  viewforward.z = 0;
+  float len = viewforward.x*viewforward.x+viewforward.y*viewforward.y;
+  if (len >= 0.0001f) {
+    len = 1.0f/sqrtf(len);
+    viewforward.x *= len;
+    viewforward.y *= len;
+  } else {
+    // dunno what to do here
+    viewforward = TVec(1.0f, 0.0f, 0.0f);
+  }
 
   // Generate the sprite's axes, with sprup straight up in worldspace,
   // and sprright parallel to the viewplane. This will not work if the
