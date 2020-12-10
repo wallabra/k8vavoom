@@ -34,6 +34,9 @@
 #ifndef GL_ZERO_TO_ONE
 #  define GL_ZERO_TO_ONE          0x935F
 #endif
+#ifndef GL_NEGATIVE_ONE_TO_ONE
+#  define GL_NEGATIVE_ONE_TO_ONE  0x935E
+#endif
 
 // ARB_multitexture
 #ifndef GL_ARB_multitexture

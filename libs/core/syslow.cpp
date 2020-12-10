@@ -690,7 +690,7 @@ vuint64 Sys_GetTimeNano () {
 #ifdef __linux__
   struct timespec ts;
 #ifdef ANDROID // CrystaX 10.3.2 supports only this
-  if (clock_gettime(CLOCK_MONOTONIC, &systimeNanoTS) != 0) Sys_Error("clock_gettime failed");
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) Sys_Error("clock_gettime failed");
 #else
   if (clock_gettime(/*CLOCK_MONOTONIC*/CLOCK_MONOTONIC_RAW, &ts) != 0) Sys_Error("clock_gettime failed");
 #endif
