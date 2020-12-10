@@ -58,16 +58,17 @@
         float tshift = 1.0/CubeSize;
         float tshift2 = 2.0/CubeSize;
 
-        float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
         float uc, vc, vc1;
         float t, dv;
         float newCubeDist;
         vec3 newCubeDir;
         float sldist;
         #define orgDist  origDist
+        // this fixes checks on cube edges
+        #define CUBE_FIX_EDGES
 
-        valvert = 0.0;
         valhoriz = 0.0;
+        valvert = 0.0;
         valdiag = 0.0;
 
         if (cubeTC.z == 0.0) {
@@ -75,49 +76,109 @@
           ltf_horiz = vec3(1.0, ttexY, -(ttexX+tshift2));
           ltf_vert = vec3(1.0, ttexY+tshift2, -ttexX);
           ltf_diag = vec3(1.0, ttexY+tshift2, -(ttexX+tshift2));
-          #define SMCHECK_V3  vec3(1.0, vc, -uc)
-          $include "shadowvol/cubemap_bilinear_xcheck.fs"
-          #undef SMCHECK_V3
+          #ifdef CUBE_FIX_EDGES
+          if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
+            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
+            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
+            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+          } else
+          #endif
+          {
+            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
+            #define SMCHECK_V3  vec3(1.0, vc, -uc)
+            $include "shadowvol/cubemap_bilinear_xcheck.fs"
+            #undef SMCHECK_V3
+          }
         } else if (cubeTC.z == 1.0) {
           // negative x
           ltf_horiz = vec3(-1.0, ttexY, ttexX+tshift2);
           ltf_vert = vec3(-1.0, ttexY+tshift2, ttexX);
           ltf_diag = vec3(-1.0, ttexY+tshift2, ttexX+tshift2);
-          #define SMCHECK_V3  vec3(-1.0, vc, uc)
-          $include "shadowvol/cubemap_bilinear_xcheck.fs"
-          #undef SMCHECK_V3
+          #ifdef CUBE_FIX_EDGES
+          if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
+            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
+            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
+            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+          } else
+          #endif
+          {
+            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
+            #define SMCHECK_V3  vec3(-1.0, vc, uc)
+            $include "shadowvol/cubemap_bilinear_xcheck.fs"
+            #undef SMCHECK_V3
+          }
         } else if (cubeTC.z == 2.0) {
           // positive y
           ltf_horiz = vec3(ttexX+tshift2, 1.0, -ttexY);
           ltf_vert = vec3(ttexX, 1.0, -(ttexY+tshift2));
           ltf_diag = vec3(ttexX+tshift2, 1.0, -(ttexY+tshift2));
-          #define SMCHECK_V3  vec3(uc, 1.0, -vc)
-          $include "shadowvol/cubemap_bilinear_xcheck.fs"
-          #undef SMCHECK_V3
+          #ifdef CUBE_FIX_EDGES
+          if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
+            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
+            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
+            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+          } else
+          #endif
+          {
+            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
+            #define SMCHECK_V3  vec3(uc, 1.0, -vc)
+            $include "shadowvol/cubemap_bilinear_xcheck.fs"
+            #undef SMCHECK_V3
+          }
         } else if (cubeTC.z == 3.0) {
           // negative y
           ltf_horiz = vec3(ttexX+tshift2, -1.0, ttexY);
           ltf_vert = vec3(ttexX, -1.0, ttexY+tshift2);
           ltf_diag = vec3(ttexX+tshift2, -1.0, ttexY+tshift2);
-          #define SMCHECK_V3  vec3(uc, -1.0, vc)
-          $include "shadowvol/cubemap_bilinear_xcheck.fs"
-          #undef SMCHECK_V3
+          #ifdef CUBE_FIX_EDGES
+          if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
+            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
+            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
+            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+          } else
+          #endif
+          {
+            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
+            #define SMCHECK_V3  vec3(uc, -1.0, vc)
+            $include "shadowvol/cubemap_bilinear_xcheck.fs"
+            #undef SMCHECK_V3
+          }
         } else if (cubeTC.z == 4.0) {
           // positive z
           ltf_horiz = vec3(ttexX+tshift2, ttexY, 1.0);
           ltf_vert = vec3(ttexX, ttexY+tshift2, 1.0);
           ltf_diag = vec3(ttexX+tshift2, ttexY+tshift2, 1.0);
-          #define SMCHECK_V3  vec3(uc, vc, 1.0)
-          $include "shadowvol/cubemap_bilinear_xcheck.fs"
-          #undef SMCHECK_V3
+          #ifdef CUBE_FIX_EDGES
+          if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
+            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
+            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
+            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+          } else
+          #endif
+          {
+            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
+            #define SMCHECK_V3  vec3(uc, vc, 1.0)
+            $include "shadowvol/cubemap_bilinear_xcheck.fs"
+            #undef SMCHECK_V3
+          }
         } else {
           // negative z
           ltf_horiz = vec3(-(ttexX+tshift2), ttexY, -1.0);
           ltf_vert = vec3(-ttexX, ttexY+tshift2, -1.0);
           ltf_diag = vec3(-(ttexX+tshift2), ttexY+tshift2, -1.0);
-          #define SMCHECK_V3  vec3(-uc, vc, -1.0)
-          $include "shadowvol/cubemap_bilinear_xcheck.fs"
-          #undef SMCHECK_V3
+          #ifdef CUBE_FIX_EDGES
+          if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
+            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
+            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
+            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+          } else
+          #endif
+          {
+            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
+            #define SMCHECK_V3  vec3(-uc, vc, -1.0)
+            $include "shadowvol/cubemap_bilinear_xcheck.fs"
+            #undef SMCHECK_V3
+          }
         }
 
         /*
