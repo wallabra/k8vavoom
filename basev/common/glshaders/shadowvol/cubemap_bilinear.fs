@@ -66,6 +66,8 @@
         #define orgDist  origDist
         // this fixes checks on cube edges
         #define CUBE_FIX_EDGES
+        //#define CUBE_FIX_EDGES_norm(v_)  v_
+        #define CUBE_FIX_EDGES_norm(v_)  normalize(v_)
 
         valhoriz = 0.0;
         valvert = 0.0;
@@ -78,9 +80,9 @@
           ltf_diag = vec3(1.0, ttexY+tshift2, -(ttexX+tshift2));
           #ifdef CUBE_FIX_EDGES
           if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
-            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
-            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
-            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+            valhoriz = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_horiz), orgDist);
+            valvert = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_vert), orgDist);
+            valdiag = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_diag), orgDist);
           } else
           #endif
           {
@@ -96,9 +98,9 @@
           ltf_diag = vec3(-1.0, ttexY+tshift2, ttexX+tshift2);
           #ifdef CUBE_FIX_EDGES
           if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
-            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
-            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
-            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+            valhoriz = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_horiz), orgDist);
+            valvert = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_vert), orgDist);
+            valdiag = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_diag), orgDist);
           } else
           #endif
           {
@@ -114,9 +116,9 @@
           ltf_diag = vec3(ttexX+tshift2, 1.0, -(ttexY+tshift2));
           #ifdef CUBE_FIX_EDGES
           if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
-            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
-            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
-            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+            valhoriz = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_horiz), orgDist);
+            valvert = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_vert), orgDist);
+            valdiag = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_diag), orgDist);
           } else
           #endif
           {
@@ -132,9 +134,9 @@
           ltf_diag = vec3(ttexX+tshift2, -1.0, ttexY+tshift2);
           #ifdef CUBE_FIX_EDGES
           if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
-            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
-            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
-            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+            valhoriz = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_horiz), orgDist);
+            valvert = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_vert), orgDist);
+            valdiag = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_diag), orgDist);
           } else
           #endif
           {
@@ -150,9 +152,9 @@
           ltf_diag = vec3(ttexX+tshift2, ttexY+tshift2, 1.0);
           #ifdef CUBE_FIX_EDGES
           if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
-            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
-            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
-            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+            valhoriz = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_horiz), orgDist);
+            valvert = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_vert), orgDist);
+            valdiag = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_diag), orgDist);
           } else
           #endif
           {
@@ -168,9 +170,9 @@
           ltf_diag = vec3(-(ttexX+tshift2), ttexY+tshift2, -1.0);
           #ifdef CUBE_FIX_EDGES
           if (ttexX+tshift2 > 1.0 || ttexY+tshift2 > 1.0) {
-            valhoriz = compareShadowTexelDistance(ltf_horiz, orgDist);
-            valvert = compareShadowTexelDistance(ltf_vert, orgDist);
-            valdiag = compareShadowTexelDistance(ltf_diag, orgDist);
+            valhoriz = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_horiz), orgDist);
+            valvert = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_vert), orgDist);
+            valdiag = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_diag), orgDist);
           } else
           #endif
           {
