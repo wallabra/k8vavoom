@@ -211,6 +211,14 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
     if (status != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: framebuffer creation failed (status=0x%04x)", (unsigned)status);
   }
 
+  glDrawBuffer(GL_COLOR_ATTACHMENT0);
+  glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
+  glClearStencil(0);
+  glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+
   mWidth = awidth;
   mHeight = aheight;
   mOwner = aowner;

@@ -139,6 +139,7 @@ static void vv_glDebugCallback (GLenum source, GLenum type, GLuint id, GLenum se
     default: typestr = "unknown";
   }
   GCon->Logf(NAME_DebugGL, "%s:%s: %s", srcstr, typestr, message);
+  //if (source == GL_DEBUG_SOURCE_API && type == GL_DEBUG_TYPE_ERROR) abort();
 }
 
 static void vv_glDebugMessageCallbackDummy (VV_GLDEBUGPROC callback, const void *userParam) {}

@@ -564,6 +564,7 @@ void VOpenGLDrawer::CreateShadowCube () {
   vassert(cubeFBO);
   p_glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO);
   GLDRW_CHECK_ERROR("bind shadowmap FBO");
+  p_glObjectLabelVA(GL_FRAMEBUFFER, cubeFBO, "Shadowmap FBO");
 
   for (unsigned int fc = 0; fc < 6; ++fc) {
     glGenTextures(1, &cubeDepthTexId[fc]);
@@ -1026,11 +1027,11 @@ void VOpenGLDrawer::InitResolution () {
   glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
   glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, 0);
 
-
   // allocate main FBO object
   mainFBO.createDepthStencil(this, calcWidth, calcHeight);
   mainFBO.scrScaled = (RealScreenWidth != ScreenWidth || RealScreenHeight != ScreenHeight);
   GCon->Logf(NAME_Init, "OpenGL: reverse z is %s", (useReverseZ ? "enabled" : "disabled"));
+  p_glObjectLabelVA(GL_FRAMEBUFFER, mainFBO.getFBOid(), "Main FBO");
 
   mainFBO.activate();
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
@@ -1059,9 +1060,11 @@ void VOpenGLDrawer::InitResolution () {
 
   // allocate ambient light FBO object
   ambLightFBO.createTextureOnly(this, calcWidth, calcHeight);
+  p_glObjectLabelVA(GL_FRAMEBUFFER, ambLightFBO.getFBOid(), "Ambient light FBO");
 
   // allocate wipe FBO object
   wipeFBO.createTextureOnly(this, calcWidth, calcHeight);
+  p_glObjectLabelVA(GL_FRAMEBUFFER, wipeFBO.getFBOid(), "Wipe FBO");
 
   //if (major >= 3) canRenderShadowmaps = true;
   canRenderShadowmaps = true;
@@ -1176,9 +1179,9 @@ void VOpenGLDrawer::InitResolution () {
   mInitialized = true;
 
   currMainFBO = -1;
-
   currentActiveFBO = nullptr;
   ReactivateCurrentFBO();
+  SetMainFBO(true); // forced
 
   callICB(VCB_InitResolution);
 

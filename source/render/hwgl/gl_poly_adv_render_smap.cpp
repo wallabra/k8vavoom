@@ -80,7 +80,7 @@ void VOpenGLDrawer::PrepareShadowMapsInternal (const float Radius) {
 //
 //==========================================================================
 void VOpenGLDrawer::PrepareShadowMaps (const float Radius) {
-  if (!IsAnyShadowMapDirty() || !r_shadowmaps.asBool() || !CanRenderShadowMaps()) return;
+  if (!cubeFBO || !IsAnyShadowMapDirty() || !r_shadowmaps.asBool() || !CanRenderShadowMaps()) return;
   GLSMAP_CLEAR_ERR();
   p_glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO);
   glDisable(GL_STENCIL_TEST);
@@ -109,7 +109,7 @@ void VOpenGLDrawer::PrepareShadowMaps (const float Radius) {
 //
 //==========================================================================
 void VOpenGLDrawer::ClearAllShadowMaps () {
-  if (!IsAnyShadowMapDirty() || !r_shadowmaps.asBool() || !CanRenderShadowMaps()) return;
+  if (!cubeFBO || !IsAnyShadowMapDirty() || !r_shadowmaps.asBool() || !CanRenderShadowMaps()) return;
   //FIXME: this should be changed, but we don't have any cascades yet anyway
   PrepareShadowMaps(999999.0f); // use HUGE radius to clear all cascades
 }
