@@ -62,9 +62,7 @@ menudef ShadowMapOptions {
     help =
       "Shadowmap texture size. There is hardly any reason to use texture",
       "bigger than 512x512. Also, with 128x128 textures you may have more",
-      "visible moire pattern.",
-      "",
-      "\c[WHITE]WARNING! You need to reinit resolution to apply this.";
+      "visible moire pattern.";
   }
 
   option enum [__k8vavoom_developer_version > 0] {
@@ -109,9 +107,7 @@ menudef ShadowMapOptions {
     }
     help =
       "Use slightly faster, but less precise shadowmap texel checks?",
-      "This can lower shadows quality.",
-      "",
-      "\c[WHITE]WARNING! You need to reinit resolution to apply this.";
+      "This can lower shadows quality.";
   }
 
   option enum {
@@ -146,6 +142,6 @@ menudef ShadowMapOptions {
     cvar = dbg_shadowmaps;
     help =
       "Draw latest cubemap texture?",
-      "This won't give you anything intereting to look into.";
+      "This won't give you anything interesting to look into.";
   }
 }
