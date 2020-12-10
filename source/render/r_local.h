@@ -417,7 +417,7 @@ protected:
   TArray<VEntity *> visibleObjects;
   TArray<VEntity *> visibleAliasModels;
   TArray<VEntity *> allShadowModelObjects; // used in advrender
-  bool useInCurrLightAsLight;
+  bool useInCurrLightAsLight; // use `mobjsInCurrLightModels()` list to render models in light?
 
   BSPVisInfo *bspVisRadius;
   vuint32 bspVisRadiusFrame;
