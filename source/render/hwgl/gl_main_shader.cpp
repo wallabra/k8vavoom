@@ -91,6 +91,18 @@ void VOpenGLDrawer::DestroyShaders () {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::UnloadShadowMapShaders
+//
+//==========================================================================
+void VOpenGLDrawer::UnloadShadowMapShaders () {
+  for (VGLShader *shad = shaderHead; shad; shad = shad->next) {
+    if (shad->forCubemaps) shad->Unload();
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::DeactivateShader
 //
 //==========================================================================
@@ -181,7 +193,8 @@ void VOpenGLDrawer::VGLShader::MainSetup (VOpenGLDrawer *aowner, const char *apr
   incdir = aincdir;
   vssrcfile = avssrcfile;
   fssrcfile = afssrcfile;
-  prog = -1;
+  prog = 0;
+  compiled = false; // just in case
   owner->registerShader(this);
 }
 
@@ -192,13 +205,12 @@ void VOpenGLDrawer::VGLShader::MainSetup (VOpenGLDrawer *aowner, const char *apr
 //
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Activate () {
-  if (!compiled) {
-    owner->p_glUseProgramObjectARB(0);
-    Compile();
-    compiled = true;
-  }
-  vassert(prog);
   if (owner->currentActiveShader != this) {
+    if (!compiled) {
+      owner->p_glUseProgramObjectARB(0);
+      Compile();
+      vassert(compiled);
+    }
     owner->p_glUseProgramObjectARB(prog);
     owner->currentActiveShader = this;
   }
@@ -233,11 +245,12 @@ bool VOpenGLDrawer::VGLShader::IsActive () const noexcept {
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Compile () {
   /*     if (gl_shader_on_demand) GCon->Logf(NAME_Init, "compiling shader '%s'", progname);
-  else*/ if (developer) GCon->Logf(NAME_Dev, "compiling shader '%s'", progname);
+  else */if (developer) GCon->Logf(NAME_Dev, "compiling shader '%s'", progname);
   GLhandleARB VertexShader = owner->LoadShader(progname, incdir, GL_VERTEX_SHADER_ARB, vssrcfile, defines);
   GLhandleARB FragmentShader = owner->LoadShader(progname, incdir, GL_FRAGMENT_SHADER_ARB, fssrcfile, defines);
   prog = owner->CreateProgram(progname, VertexShader, FragmentShader);
   LoadUniforms();
+  compiled = true;
 }
 
 
@@ -247,12 +260,17 @@ void VOpenGLDrawer::VGLShader::Compile () {
 //
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Unload () {
-  if (prog) {
+  if (compiled) {
     if (developer) GCon->Logf(NAME_Dev, "unloading shader '%s'", progname);
-    // actual program object will be destroyed elsewhere
-    prog = 0;
+    compiled = false;
     UnloadUniforms();
-    if (owner && owner->currentActiveShader == this) owner->currentActiveShader = nullptr;
+    if (owner) {
+      //if (forCubemaps) GCon->Logf(NAME_Debug, "unloading shadowmap shader '%s'", progname);
+      if (owner->currentActiveShader == this) owner->currentActiveShader = nullptr;
+      //owner->p_glDeleteProgram(prog);
+      owner->p_glDeleteObjectARB(prog);
+    }
+    prog = 0;
   }
 }
 
@@ -468,7 +486,7 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdirc
   // create shader object
   GLhandleARB Shader = p_glCreateShaderObjectARB(Type);
   if (!Shader) Sys_Error("Failed to create %s shader object for shader '%s'", sotype, progname);
-  CreatedShaderObjects.Append(Shader);
+  //CreatedShaderObjects.Append(Shader);
 
   // build source text
   bool needToAddRevZ = CanUseRevZ();
@@ -577,7 +595,7 @@ GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB Vert
   GLDRW_RESET_ERROR();
   GLhandleARB Program = p_glCreateProgramObjectARB();
   if (!Program) Sys_Error("Failed to create program object");
-  CreatedShaderObjects.Append(Program);
+  //CreatedShaderObjects.Append(Program);
 
   // attach shaders
   p_glAttachObjectARB(Program, VertexShader);

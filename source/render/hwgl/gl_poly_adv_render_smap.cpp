@@ -38,6 +38,16 @@
 #endif
 
 
+extern VCvarI gl_shadowmap_size;
+extern VCvarI gl_shadowmap_precision;
+extern VCvarI gl_shadowmap_faster_check;
+
+// saved shadowmap parameters
+static int saved_gl_shadowmap_size = -666;
+static int saved_gl_shadowmap_precision = -666;
+static int saved_gl_shadowmap_faster_check = -666;
+
+
 //==========================================================================
 //
 //  VOpenGLDrawer::PrepareShadowMapsInternal
@@ -136,6 +146,18 @@ void VOpenGLDrawer::ActivateShadowMapFace (unsigned int facenum) noexcept {
 //
 //==========================================================================
 void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) {
+  if (gl_shadowmap_size.asInt() != saved_gl_shadowmap_size ||
+      gl_shadowmap_precision.asInt() != saved_gl_shadowmap_precision ||
+      gl_shadowmap_faster_check.asInt() != saved_gl_shadowmap_faster_check)
+  {
+    DestroyShadowCube();
+    saved_gl_shadowmap_size = gl_shadowmap_size.asInt();
+    saved_gl_shadowmap_precision = gl_shadowmap_precision.asInt();
+    saved_gl_shadowmap_faster_check = gl_shadowmap_faster_check.asInt();
+  }
+
+  EnsureShadowMapCube();
+
   GLSMAP_CLEAR_ERR();
   const bool flt = gl_dev_shadowmap_filter.asBool();
   if (flt != cubemapLinearFiltering) {

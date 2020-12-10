@@ -217,12 +217,23 @@ public:
     typedef float glsl_float9[9];
 
   public:
-    VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1), oglVersionCond(CondGreaterEqu), oglVersion(0), forCubemaps(false), compiled(false) {}
+    inline VGLShader ()
+      : next(nullptr)
+      , owner(nullptr)
+      , progname(nullptr)
+      , vssrcfile(nullptr)
+      , fssrcfile(nullptr)
+      , prog(0)
+      , oglVersionCond(CondGreaterEqu)
+      , oglVersion(0)
+      , forCubemaps(false)
+      , compiled(false)
+    {}
 
     inline void SetOpenGLVersion (int cond, int ver) noexcept { oglVersionCond = cond; oglVersion = ver; }
     inline void SetForCubemaps () noexcept { forCubemaps = true; }
 
-    inline bool IsLoaded () const noexcept { return (prog != 0); }
+    inline bool IsLoaded () const noexcept { return compiled; }
 
     bool CheckOpenGLVersion (int major, int minor, bool canCubemaps) noexcept;
 
@@ -408,7 +419,9 @@ protected:
 
   void registerShader (VGLShader *shader);
   void CompileShaders (int glmajor, int glminor, bool canCubemaps);
-  void DestroyShaders ();
+  void DestroyShaders (); // unload from GPU, remove from list
+
+  void UnloadShadowMapShaders ();
 
   void InitShaderProgress ();
   void DoneShaderProgress ();
@@ -494,16 +507,28 @@ public:
   // VDrawer interface
   VOpenGLDrawer ();
   virtual ~VOpenGLDrawer () override;
+
   virtual void InitResolution () override;
   virtual void DeinitResolution () override;
+
+  // shadowmap management
+  // this also unload shaders
+  void DestroyShadowCube ();
+  void CreateShadowCube ();
+
+  // call in the very first shadowmap stage
+  void EnsureShadowMapCube ();
+
   virtual void StartUpdate () override;
+  void FinishUpdate ();
+
   virtual void ClearScreen (unsigned clearFlags=CLEAR_COLOR) override;
   virtual void Setup2D () override;
+
   virtual void *ReadScreen (int *, bool *) override;
   virtual void ReadBackScreen (int, int, rgba_t *) override;
-  void ReadFBOPixels (FBO *srcfbo, int Width, int Height, rgba_t *Dest);
 
-  void FinishUpdate ();
+  void ReadFBOPixels (FBO *srcfbo, int Width, int Height, rgba_t *Dest);
 
   // rendering stuff
   // shoud frustum use far clipping plane?
@@ -961,7 +986,7 @@ protected:
   bool HaveStencilWrap;
   bool HaveS3TC;
 
-  TArray<GLhandleARB> CreatedShaderObjects;
+  //TArray<GLhandleARB> CreatedShaderObjects;
   TArray<VMeshModel *> UploadedModels;
 
   template<typename T> class VBO {
