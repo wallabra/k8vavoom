@@ -34,42 +34,6 @@ vec4 calc_blur_weight_dir (const vec3 texc) {
 }
 
 
-// given the texture coordinates, calculate weight factors
-// `x` and `y` are the offset of left-bottom; use +1 to get the neighbour
-// `z` and `w` are the weight factors
-// sampling is always to the right, and to the up
-/*
-vec4 calc_blur_weight_dir_new (const vec3 texc) {
-  vec4 res;
-#if 0
-  float fX = fract(texc.x*CubeSize);
-  float fY = fract(texc.y*CubeSize);
-  if (fX < 0.5) {
-    // move left
-    res.x = -1.0;
-    res.z = 1.0-fX;
-  } else {
-    res.x = 0.0;
-    res.z = fX;
-  }
-  if (fY < 0.5) {
-    // move down
-    res.y = -1.0;
-    res.w = 1.0-fY;
-  } else {
-    res.y = 0.0;
-    res.w = fY;
-  }
-#else
-  res.x = 0;
-  res.y = 0;
-  res.z = fract(texc.x*CubeSize);
-  res.w = fract(texc.y*CubeSize);
-#endif
-  return res;
-}
-*/
-
 // input is normalized
 // z is face number
 vec3 convert_xyz_to_cube_uv (const vec3 dir) {
