@@ -1,7 +1,4 @@
 uniform samplerCube ShadowTexture;
-#ifdef VV_MODEL_LIGHTING
-//varying vec3 VertWorldPos;
-#endif
 uniform float CubeSize;
 
 uniform vec3 LightPos;
