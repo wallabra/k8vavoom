@@ -16,12 +16,13 @@
   vec3 fullltfdir = -VertToLight;
   // use squared distance in comparisons
   float origDist = dot(fullltfdir, fullltfdir);
-  vec3 ltfdir = normalize(fullltfdir);
 
   #ifdef VV_SMAP_WEIGHTED_BLUR
+    vec3 ltfdir = normalize(fullltfdir);
     $include "shadowvol/cubemap_bilinear.fs"
   #else
     #ifdef VV_SMAP_BLUR4
+      vec3 ltfdir = normalize(fullltfdir);
       //float cubetstep = 1.0/CubeSize;
       float daccum = 0.0;
       #ifdef VV_DYNAMIC_DCOUNT
@@ -80,16 +81,12 @@
     #else
       // no blur
       #if 0
-        //float distanceToLight = length(ltfdir);
-        //float currentDistanceToLight = distanceToLight/LightRadius;
-        //vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
-        //ltfdir = convert_cube_uv_to_xyz(cubeTC);
-        if (textureCubeFn(ShadowTexture, ltfdir).r+bias1 < currentDistanceToLight) discard;
-        float shadowMul = 1.0;
+        if (textureCubeFn(ShadowTexture, fullltfdir).r+bias1 < currentDistanceToLight) discard;
+        #define shadowMul  1.0
       #else
         // distance from the light to the nearest shadow caster
-        if (compareShadowTexelDistance(ltfdir, origDist) <= 0.0) discard;
-        float shadowMul = 1.0;
+        if (compareShadowTexelDistance(fullltfdir, origDist) <= 0.0) discard;
+        #define shadowMul  1.0
       #endif
     #endif
   #endif
