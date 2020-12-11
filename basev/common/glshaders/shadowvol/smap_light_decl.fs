@@ -1,5 +1,7 @@
 uniform samplerCube ShadowTexture;
-varying vec3 VertWorldPos;
+#ifdef VV_MODEL_LIGHTING
+//varying vec3 VertWorldPos;
+#endif
 uniform float CubeSize;
 
 uniform vec3 LightPos;
@@ -10,7 +12,7 @@ uniform vec3 SurfNormal;
 #endif
 
 #ifdef VV_MODEL_LIGHTING
-float SurfDist;
+//float SurfDist;
 #endif
 
 //float VV_SMAP_BIAS;

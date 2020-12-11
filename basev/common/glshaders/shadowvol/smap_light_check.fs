@@ -12,12 +12,13 @@
   //VV_SMAP_BIAS = VV_SMAP_BIAS_N/LightRadius;
 
   #ifdef VV_MODEL_LIGHTING
-  SurfDist = dot(Normal, VertWorldPos);
+  //SurfDist = dot(Normal, VertWorldPos);
   #endif
 
   // normalized distance to the point light source
   // hardware doesn't require that, but our cubemap calculations do
-  vec3 fullltfdir = VertWorldPos-LightPos;
+  //vec3 fullltfdir = VertWorldPos-LightPos;
+  vec3 fullltfdir = -VertToLight;
   // use squared distance in comparisons
   float origDist = dot(fullltfdir, fullltfdir);
   vec3 ltfdir = normalize(fullltfdir);

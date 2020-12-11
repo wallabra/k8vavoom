@@ -1,5 +1,3 @@
-#ifdef VV_SURFACE_LIGHTING
-  VertWorldPos = gl_Vertex.xyz;
-#else
-  VertWorldPos = Vert.xyz;
+#ifdef VV_MODEL_LIGHTING
+  //VertWorldPos = Vert.xyz;
 #endif

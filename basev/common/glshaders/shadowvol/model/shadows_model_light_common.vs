@@ -19,6 +19,7 @@ varying vec3 VertToLight;
 varying float Dist;
 varying float VDist;
 */
+varying float SurfDist;
 
 varying vec2 TextureCoordinate;
 
@@ -35,6 +36,7 @@ void main () {
   Normal = normalize(mix(VertNormal, Vert2Normal, Inter))*NormalToWorldMat;
   VertToLight = LightPos-Vert.xyz;
 
+  SurfDist = dot(Normal, Vert.xyz);
   /*
   float SurfDist = dot(Normal, Vert.xyz);
   Dist = dot(LightPos, Normal)-SurfDist;

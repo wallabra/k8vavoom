@@ -16,6 +16,7 @@ varying vec3 VertToLight;
 varying float Dist;
 varying float VDist;
 */
+varying float SurfDist;
 
 varying vec2 TextureCoordinate;
 
