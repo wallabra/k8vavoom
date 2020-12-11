@@ -121,7 +121,6 @@ menudef ShadowMapOptions {
       "8 Samples",
       "8 Samples, Fast",
       "16 Samples",
-      "16 Samples, Fast",
     }
     help =
       "You can blur shadows a little. Usually small blur looks better.",

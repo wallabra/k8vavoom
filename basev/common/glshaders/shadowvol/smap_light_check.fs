@@ -61,22 +61,17 @@
           VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 1.0,  1.0));
           #ifdef VV_SMAP_BLUR16
             // perform 16-way blur
-            #ifdef VV_SMAP_BLUR_FAST16
-            if (daccum > 0.0 && daccum < 9.0)
+            #ifdef VV_DYNAMIC_DCOUNT
+            dcount = 17.0;
             #endif
-            {
-              #ifdef VV_DYNAMIC_DCOUNT
-              dcount = 17.0;
-              #endif
-              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-2.0,  0.0));
-              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 2.0,  0.0));
-              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 0.0, -2.0));
-              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 0.0,  2.0));
-              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-2.0, -2.0));
-              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-2.0,  2.0));
-              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 2.0, -2.0));
-              VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 2.0,  2.0));
-            }
+            VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-2.0,  0.0));
+            VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 2.0,  0.0));
+            VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 0.0, -2.0));
+            VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 0.0,  2.0));
+            VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-2.0, -2.0));
+            VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS(-2.0,  2.0));
+            VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 2.0, -2.0));
+            VV_SMAP_SAMPLE_ADD(daccum, VV_SMAP_OFS( 2.0,  2.0));
           #endif
         }
       #endif
