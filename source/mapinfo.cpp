@@ -708,10 +708,12 @@ static VName ParseNextMapName (VScriptParser *sc, bool HexenMode) {
 //  DoCompatFlag
 //
 //==========================================================================
-static void DoCompatFlag (VScriptParser *sc, VMapInfo *info, int Flag) {
+static void DoCompatFlag (VScriptParser *sc, VMapInfo *info, int Flag, bool newFormat) {
   int Set = 1;
-  sc->Check("=");
-  if (sc->CheckNumber()) Set = sc->Number;
+  if (newFormat) {
+    sc->Check("=");
+    if (sc->CheckNumber()) Set = sc->Number;
+  }
   if (Flag) {
     if (Set) {
       info->Flags2 |= Flag;
@@ -957,22 +959,23 @@ MAPINFOCMD(noinfiniteflightpowerup) { info->Flags &= ~VLevelInfo::LIF_InfiniteFl
 MAPINFOCMD(clipmidtextures) { info->Flags |= VLevelInfo::LIF_ClipMidTex; }
 MAPINFOCMD(wrapmidtextures) { info->Flags |= VLevelInfo::LIF_WrapMidTex; }
 MAPINFOCMD(keepfullinventory) { info->Flags |= VLevelInfo::LIF_KeepFullInventory; }
-MAPINFOCMD(compat_shorttex) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatShortTex); }
-MAPINFOCMD(compat_stairs) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatStairs); }
-MAPINFOCMD(compat_limitpain) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatLimitPain); }
-MAPINFOCMD(compat_nopassover) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoPassOver); }
-MAPINFOCMD(compat_notossdrops) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoTossDrops); }
-MAPINFOCMD(compat_useblocking) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatUseBlocking); }
-MAPINFOCMD(compat_nodoorlight) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoDoorLight); }
-MAPINFOCMD(compat_ravenscroll) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatRavenScroll); }
-MAPINFOCMD(compat_soundtarget) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatSoundTarget); }
-MAPINFOCMD(compat_dehhealth) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatDehHealth); }
-MAPINFOCMD(compat_trace) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatTrace); }
-MAPINFOCMD(compat_dropoff) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatDropOff); }
-MAPINFOCMD(compat_boomscroll) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatBoomScroll); }
-MAPINFOCMD(additive_scrollers) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatBoomScroll); }
-MAPINFOCMD(compat_invisibility) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatInvisibility); }
-MAPINFOCMD(compat_sectorsounds) { DoCompatFlag(sc, info, 0); }
+MAPINFOCMD(compat_shorttex) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatShortTex, newFormat); }
+MAPINFOCMD(compat_stairs) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatStairs, newFormat); }
+MAPINFOCMD(compat_limitpain) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatLimitPain, newFormat); }
+MAPINFOCMD(compat_nopassover) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoPassOver, newFormat); }
+MAPINFOCMD(compat_notossdrops) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoTossDrops, newFormat); }
+MAPINFOCMD(compat_useblocking) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatUseBlocking, newFormat); }
+MAPINFOCMD(compat_nodoorlight) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoDoorLight, newFormat); }
+MAPINFOCMD(compat_ravenscroll) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatRavenScroll, newFormat); }
+MAPINFOCMD(compat_soundtarget) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatSoundTarget, newFormat); }
+MAPINFOCMD(compat_dehhealth) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatDehHealth, newFormat); }
+MAPINFOCMD(compat_trace) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatTrace, newFormat); }
+MAPINFOCMD(compat_dropoff) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatDropOff, newFormat); }
+MAPINFOCMD(compat_boomscroll) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatBoomScroll, newFormat); }
+MAPINFOCMD(additive_scrollers) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatBoomScroll, newFormat); }
+MAPINFOCMD(compat_invisibility) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatInvisibility, newFormat); }
+MAPINFOCMD(compat_sectorsounds) { DoCompatFlag(sc, info, 0, newFormat); }
+MAPINFOCMD(compat_crossdropoff) { DoCompatFlag(sc, info, 0, newFormat); }
 
 // ////////////////////////////////////////////////////////////////////////// //
 MAPINFOCMD(noinfighting) { info->Infighting = -1; }
