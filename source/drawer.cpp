@@ -337,7 +337,7 @@ void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev,
     ProjMat[0][0] = 1.0f/rd->fovx;
     ProjMat[1][1] = 1.0f/rd->fovy;
     ProjMat[2][3] = -1.0f;
-    ProjMat[3][2] = zNear; // zNear
+    ProjMat[3][2] = zNear;
   }
   //RestoreDepthFunc();
 }
@@ -353,6 +353,7 @@ void VDrawer::CalcShadowMapProjectionMatrix (VMatrix4 &ProjMat, float Radius, in
   const float fovx = tanf(DEG2RADF(fov)/2.0f);
   //if (aspect <= 0.0f || !isFiniteF(aspect)) aspect = 1.0f;
   const float fovy = fovx;//*aheight/awidth/aspect;
+  const float zNear = 1.0f;
   ProjMat.SetZero();
   ProjMat[0][0] = 1.0f/fovx;
   ProjMat[1][1] = 1.0f/fovy;
@@ -360,11 +361,11 @@ void VDrawer::CalcShadowMapProjectionMatrix (VMatrix4 &ProjMat, float Radius, in
   //ProjMat[3][3] = 0.0f;
   if (Radius < 1.0f || !isFiniteF(Radius)) Radius = 32767.0f;
   if (/*DepthZeroOne*/false) {
-    ProjMat[2][2] = Radius/(1.0f-Radius); // zFar/(zNear-zFar);
-    ProjMat[3][2] = -Radius/(Radius-1.0f); // -(zFar*zNear)/(zFar-zNear);
+    ProjMat[2][2] = Radius/(zNear-Radius); // zFar/(zNear-zFar);
+    ProjMat[3][2] = -(Radius*zNear)/(Radius-zNear); // -(zFar*zNear)/(zFar-zNear);
   } else {
-    ProjMat[2][2] = -(Radius+1.0f)/(Radius-1.0f); // -(zFar+zNear)/(zFar-zNear);
-    ProjMat[3][2] = -2.0f*Radius/(Radius-1.0f); // -(2.0f*zFar*zNear)/(zFar-zNear);
+    ProjMat[2][2] = -(Radius+zNear)/(Radius-zNear); // -(zFar+zNear)/(zFar-zNear);
+    ProjMat[3][2] = -(2.0f*Radius*zNear)/(Radius-zNear); // -(2.0f*zFar*zNear)/(zFar-zNear);
   }
 }
 
