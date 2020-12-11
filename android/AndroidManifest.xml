@@ -32,23 +32,26 @@
     <application android:label="k8vavoom"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
-        android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
         android:hardwareAccelerated="true"
         android:debuggable="true" >
 
         <meta-data android:name="SDL_ENV.SDL_ACCELEROMETER_AS_JOYSTICK" android:value="0"/>
-     
+
+        <activity android:name="Launcher" android:label="k8vavoom Launcher" android:launchMode="singleInstance">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="Vavoom"
             android:label="k8vavoom"
             android:alwaysRetainTaskState="true"
             android:launchMode="singleInstance"
             android:screenOrientation="sensorLandscape"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+        >
         </activity>
     </application>
 

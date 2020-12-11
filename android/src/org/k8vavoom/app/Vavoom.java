@@ -3,7 +3,10 @@ package org.k8vavoom.app;
 import org.libsdl.app.SDL;
 import org.libsdl.app.SDLActivity;
 
+import android.content.Intent;
+
 public class Vavoom extends SDLActivity {
+
   @Override
   protected String[] getLibraries() {
     return new String[] {
@@ -18,7 +21,10 @@ public class Vavoom extends SDLActivity {
 
   @Override
   protected String[] getArguments() {
-    return new String[0];
+    Intent intent = getIntent();
+    String value = intent.getStringExtra("CommandLine");
+    String[] args = value.split("[ \n\t]+");
+    return args;
   }
 
 }
