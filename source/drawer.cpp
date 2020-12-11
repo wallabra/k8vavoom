@@ -301,6 +301,7 @@ bool VDrawer::IsPointInside2DPoly (const float x, const float y, int vcount, con
 //
 //==========================================================================
 void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev, const refdef_t *rd) {
+  const float zNear = 1.0f;
   if (!CanUseRevZ()) {
     // normal
     //glClearDepth(1.0f);
@@ -320,11 +321,11 @@ void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev,
       float maxdist = gl_maxdist.asFloat();
       if (maxdist < 1.0f || !isFiniteF(maxdist)) maxdist = 32767.0f;
       if (DepthZeroOne) {
-        ProjMat[2][2] = maxdist/(1.0f-maxdist); // zFar/(zNear-zFar);
-        ProjMat[3][2] = -maxdist/(maxdist-1.0f); // -(zFar*zNear)/(zFar-zNear);
+        ProjMat[2][2] = maxdist/(zNear-maxdist); // zFar/(zNear-zFar);
+        ProjMat[3][2] = -(maxdist*zNear)/(maxdist-zNear); // -(zFar*zNear)/(zFar-zNear);
       } else {
-        ProjMat[2][2] = -(maxdist+1.0f)/(maxdist-1.0f); // -(zFar+zNear)/(zFar-zNear);
-        ProjMat[3][2] = -2.0f*maxdist/(maxdist-1.0f); // -(2.0f*zFar*zNear)/(zFar-zNear);
+        ProjMat[2][2] = -(maxdist+zNear)/(maxdist-zNear); // -(zFar+zNear)/(zFar-zNear);
+        ProjMat[3][2] = -(2.0f*maxdist*zNear)/(maxdist-zNear); // -(2.0f*zFar*zNear)/(zFar-zNear);
       }
     }
   } else {
@@ -336,7 +337,7 @@ void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev,
     ProjMat[0][0] = 1.0f/rd->fovx;
     ProjMat[1][1] = 1.0f/rd->fovy;
     ProjMat[2][3] = -1.0f;
-    ProjMat[3][2] = 1.0f; // zNear
+    ProjMat[3][2] = zNear; // zNear
   }
   //RestoreDepthFunc();
 }
