@@ -810,6 +810,11 @@ protected:
   bool RadiusCastRay (bool textureCheck, sector_t *sector, const TVec &org, sector_t *destsector, const TVec &dest, float radius);
 
 protected:
+  // use drawer's vieworg, so it can be called only when rendering a scene
+  // it's not exact!
+  float CalcScreenLightMaxDimension (const TVec &LightPos, const float LightRadius) noexcept;
+
+protected:
   static int prevCrosshairPic;
 
   virtual void RenderCrosshair () override;

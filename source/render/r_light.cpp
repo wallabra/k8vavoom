@@ -40,7 +40,8 @@ VCvarB r_light_opt_shadow("r_light_opt_shadow", false, "Check if light can poten
 VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How close dynamic lights should be to be filtered out?\n(0.2-0.4 is usually ok).", CVAR_Archive);
 VCvarB r_allow_dynamic_light_filter("r_allow_dynamic_light_filter", true, "Allow filtering of dynamic lights?", CVAR_Archive);
 
-VCvarF r_light_shadow_distance("r_light_shadow_distance", "2048", "Allow filtering of dynamic lights?", CVAR_Archive);
+// currently affects only advanced renderer
+VCvarF r_light_shadow_min_proj_dimension("r_light_shadow_min_proj_dimension", "96", "Do not render shadows for lights smaller than this screen size.", CVAR_Archive);
 
 VCvarB r_shadowmaps("r_shadowmaps", false, "Use shadowmaps instead of shadow volumes?", /*CVAR_PreInit|*/CVAR_Archive);
 
@@ -63,6 +64,78 @@ static VCvarI r_lmap_texture_check_radius_dynamic("r_lmap_texture_check_radius_d
   (_dl)->lightid = 0; \
   (_dl)->ownerUId = 0; \
 } while (0)
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CalcScreenLightRadius
+//
+//  use drawer's vieworg, so it can be called only when rendering a scene
+//  it's not exact!
+//
+//==========================================================================
+float VRenderLevelShared::CalcScreenLightMaxDimension (const TVec &LightPos, const float LightRadius) noexcept {
+  if (!isFiniteF(LightRadius) || LightRadius <= 0.0f) return 0.0f;
+  if (LightRadius < 8.0f) return LightRadius;
+  // just in case
+  if (!Drawer->vpmats.vport.isValid()) return 0.0f;
+
+  // transform into world coords
+  TVec inworld = Drawer->vpmats.toWorld(LightPos);
+
+  //GCon->Logf(NAME_Debug, "LightPos=(%g,%g,%g); LightRadius=%g; wpos=(%g,%g,%g)", LightPos.x, LightPos.y, LightPos.z, LightRadius, inworld.x, inworld.y, inworld.z);
+
+  // the thing that should not be (completely behind)
+  if (inworld.z-LightRadius > -1.0f) return 0.0f;
+
+  CONST_BBoxVertexIndex;
+
+  // create light bbox
+  float bbox[6];
+  bbox[0+0] = inworld.x-LightRadius;
+  bbox[0+1] = inworld.y-LightRadius;
+  bbox[0+2] = inworld.z-LightRadius;
+
+  bbox[3+0] = inworld.x+LightRadius;
+  bbox[3+1] = inworld.y+LightRadius;
+  bbox[3+2] = min2(-1.0f, inworld.z+LightRadius); // clamp to znear
+
+  const int scrx0 = Drawer->vpmats.vport.x0;
+  const int scry0 = Drawer->vpmats.vport.y0;
+  const int scrx1 = Drawer->vpmats.vport.getX1();
+  const int scry1 = Drawer->vpmats.vport.getY1();
+
+  int minx = scrx1+64, miny = scry1+64;
+  int maxx = -(scrx0-64), maxy = -(scry0-64);
+
+  // transform points, get min and max
+  for (unsigned f = 0; f < 8; ++f) {
+    int winx, winy;
+    Drawer->vpmats.project(TVec(bbox[BBoxVertexIndex[f][0]], bbox[BBoxVertexIndex[f][1]], bbox[BBoxVertexIndex[f][2]]), &winx, &winy);
+
+    if (minx > winx) minx = winx;
+    if (miny > winy) miny = winy;
+    if (maxx < winx) maxx = winx;
+    if (maxy < winy) maxy = winy;
+  }
+
+  if (minx > scrx1 || miny > scry1 || maxx < scrx0 || maxy < scry0) return 0.0f;
+
+  minx = midval(scrx0, minx, scrx1);
+  miny = midval(scry0, miny, scry1);
+  maxx = midval(scrx0, maxx, scrx1);
+  maxy = midval(scry0, maxy, scry1);
+
+  //GCon->Logf("  LightRadius=%f; (%d,%d)-(%d,%d)", LightRadius, minx, miny, maxx, maxy);
+  const int wdt = maxx-minx+1;
+  const int hgt = maxy-miny+1;
+  //GCon->Logf("  LightRadius=%f; (%dx%d)", LightRadius, wdt, hgt);
+
+  const int maxsz = max2(wdt, hgt);
+  // drop very small lights, why not?
+  if (maxsz <= 0) return 0.0f;
+  return (float)maxsz;
+}
 
 
 //==========================================================================

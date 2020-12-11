@@ -25,6 +25,7 @@
 //**************************************************************************
 #include "r_light_adv.h"
 
+extern VCvarF r_light_shadow_min_proj_dimension;
 
 static VCvarI r_dynlight_minimum("r_dynlight_minimum", "6", "Render at least this number of dynamic lights, regardless of total limit.", CVAR_Archive);
 
@@ -154,6 +155,18 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   if (dlflags&dlight_t::NoShadow) allowShadows = false;
 
   if (!r_shadows) allowShadows = false;
+
+  // check distance
+  if (allowShadows) {
+    const float prjdim = r_light_shadow_min_proj_dimension.asFloat()*0.98f;
+    if (prjdim > 8.0f) {
+      //const float ldist = (Drawer->vieworg-Pos).lengthSquared();
+      const float ldim = CalcScreenLightMaxDimension(Pos, Radius);
+      if (ldim < prjdim) {
+        allowShadows = false;
+      }
+    }
+  }
 
   // if we don't need shadows, and no visible subsectors were hit, we have nothing to do here
   if (!allowShadows && (!HasLightIntersection || !LitSurfaceHit)) return;

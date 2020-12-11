@@ -52,7 +52,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
   ForceClearScissorState();
 
-  if (radius < 4) {
+  if (radius < 4.0f) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
     glScissor(0, 0, 0, 0);
