@@ -40,6 +40,8 @@ VCvarB r_light_opt_shadow("r_light_opt_shadow", false, "Check if light can poten
 VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How close dynamic lights should be to be filtered out?\n(0.2-0.4 is usually ok).", CVAR_Archive);
 VCvarB r_allow_dynamic_light_filter("r_allow_dynamic_light_filter", true, "Allow filtering of dynamic lights?", CVAR_Archive);
 
+VCvarF r_light_shadow_distance("r_light_shadow_distance", "2048", "Allow filtering of dynamic lights?", CVAR_Archive);
+
 VCvarB r_shadowmaps("r_shadowmaps", false, "Use shadowmaps instead of shadow volumes?", /*CVAR_PreInit|*/CVAR_Archive);
 
 static VCvarB r_dynamic_light_better_vis_check("r_dynamic_light_better_vis_check", true, "Do better (but slower) dynlight visibility checking on spawn?", CVAR_Archive);
@@ -353,6 +355,8 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       }
     }
 
+    #if 0
+    //TODO: do this *after* trying to allocate a light slot!
     // floodfill visibility check
     if (/*!IsShadowVolumeRenderer() &&*/ r_dynamic_light_better_vis_check) {
       if (leafnum < 0) leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(lorg)-Level->Subsectors);
@@ -361,6 +365,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
         return nullptr;
       }
     }
+    #endif
   } else {
     // test
     /*
@@ -375,6 +380,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   // look for any free slot (or free one if necessary)
   dlight_t *dl;
+  bool skipVisCheck = false;
 
   // first try to find owned light to replace
   if (Owner) {
@@ -422,13 +428,15 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
         if (dd <= 6*6) {
           if (radius > 0 && dl->radius >= radius) return nullptr;
           dlreplace = dl;
+          skipVisCheck = true; // it is so near, that we don't need to do id
           break; // stop searching, we have a perfect candidate
         } else if (dd < radsqhalf) {
-          // if existing light radius is greater than new radius, drop new light, 'cause
+          // if existing light radius is greater than a new radius, drop new light, 'cause
           // we have too much lights around one point (prolly due to several things at one place)
           if (radius > 0 && dl->radius >= radius) return nullptr;
           // otherwise, replace this light
           dlreplace = dl;
+          skipVisCheck = true; // it is so near, that we don't need to do id (i hope)
           //break; // stop searching, we have a perfect candidate
         }
       }
@@ -448,6 +456,15 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
         dl = dlbestdist;
         if (!dl) return nullptr;
       }
+    }
+  }
+
+  // floodfill visibility check
+  if (!skipVisCheck && !isPlr && /*!IsShadowVolumeRenderer() &&*/ r_dynamic_light_better_vis_check) {
+    if (leafnum < 0) leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(lorg)-Level->Subsectors);
+    if (!CheckBSPVisibilityBox(lorg, (radius > 0 ? radius : 64), &Level->Subsectors[leafnum])) {
+      //GCon->Logf("DYNAMIC DROP: visibility check");
+      return nullptr;
     }
   }
 
