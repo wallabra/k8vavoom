@@ -59,4 +59,20 @@ menudef AdvVideoLightFilterOptions {
       "This option affects only stencil lighting."
       "\cGWARNING! you must restart a map or reload a save to use new settings!";
   }
+
+
+  header "Light Shadows";
+
+  option slider {
+    title = "Minimum Size For Shadowing";
+    cvar = r_light_shadow_min_proj_dimension;
+    step = 8;
+    min = 8;
+    max = 512;
+    help =
+      "Lights that takes less than this screen space in maximum lightbox",
+      "dimension will not cast any shadows.",
+      "8 or less means 'no limit'.",
+      "This may speedup maps with alot of lights (or pickups with dynlight).";
+  }
 }
