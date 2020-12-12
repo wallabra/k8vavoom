@@ -524,9 +524,7 @@ void VOpenGLDrawer::DestroyShadowCube () {
   if (cubeTexId) {
     p_glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO);
     p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
-    for (unsigned fc = 0; fc < 6; ++fc) {
-      p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, 0, 0);
-    }
+    p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
     p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteTextures(1, &cubeTexId);
     for (unsigned fc = 0; fc < 6; ++fc) glDeleteTextures(1, &cubeDepthTexId[fc]);
