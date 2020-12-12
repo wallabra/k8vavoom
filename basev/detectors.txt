@@ -179,3 +179,18 @@ detector "HDoom" {
     acstype = zandronum;
   }
 }
+
+
+detector "ZPack" {
+  info {
+    type = "pwad";
+  }
+
+  preconditions {
+    file { name = "mapinfo.txt"; size = 6278; md5 = "348daac825f73f771add8b693a34bf58"; }
+  }
+
+  options {
+    gamename = "doom2";
+  }
+}
