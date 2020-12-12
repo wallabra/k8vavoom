@@ -109,6 +109,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
   int sidx[4];
 
   if (surf->count < 3) return;
+  if (!Texture1) Texture1 = Texture2; // the thing that should not happen, but...
 
   SetFade(surf->Fade);
   sidx[0] = 0;
@@ -128,7 +129,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
 
   const texinfo_t *tex = surf->texinfo;
 
-  if (Texture2->Type != TEXTYPE_Null) {
+  if (Texture2 && Texture2->Type != TEXTYPE_Null) {
     SetTexture(Texture1, CMap);
     SelectTexture(1);
     SetTexture(Texture2, CMap);
@@ -160,7 +161,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
       glVertex(surf->verts[i].vec());
     }
     glEnd();
-  } else {
+  } else if (Texture1) {
     SetTexture(Texture1, CMap);
 
     SurfSky.Activate();
@@ -169,15 +170,16 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     //SurfSky.SetTexSky(tex, offs1, 0, false);
     SurfSky.UploadChangedUniforms();
 
-    /*
-    if (false) {
-      GCon->Logf(NAME_Debug, "SKY: %s; saxis=(%g,%g,%g); taxis=(%g,%g,%g); offs1=%g; soffs=%g; toffs=%g; texscale=(%g,%g); texsize=(%d,%d)", *Texture1->Name,
+    #if 0
+    {
+      GCon->Logf(NAME_Debug, "SKY: %s (%s); saxis=(%g,%g,%g); taxis=(%g,%g,%g); offs1=%g; soffs=%g; toffs=%g; texscale=(%g,%g); texsize=(%d,%d)",
+        *Texture1->Name, *W_FullLumpName(Texture1->SourceLump),
         tex->saxis.x, tex->saxis.y, tex->saxis.z,
         tex->taxis.x, tex->taxis.y, tex->taxis.z,
         offs1, tex->soffs, tex->toffs,
         tex_scale_x, tex_scale_y, tex_w, tex_h);
     }
-    */
+    #endif
 
     vboSky.ensure(surf->count, 16);
 
