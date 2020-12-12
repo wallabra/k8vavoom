@@ -812,7 +812,7 @@ protected:
 protected:
   // use drawer's vieworg, so it can be called only when rendering a scene
   // it's not exact!
-  float CalcScreenLightMaxDimension (const TVec &LightPos, const float LightRadius) noexcept;
+  int CalcScreenLightMaxDimension (const TVec &LightPos, const float LightRadius) noexcept;
 
 protected:
   static int prevCrosshairPic;

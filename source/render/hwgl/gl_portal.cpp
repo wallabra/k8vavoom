@@ -135,7 +135,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
 
 //==========================================================================
 //
-//  VSoftwareDrawer::EndPortal
+//  VOpenGLDrawer::EndPortal
 //
 //==========================================================================
 void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {

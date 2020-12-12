@@ -41,7 +41,7 @@ VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How 
 VCvarB r_allow_dynamic_light_filter("r_allow_dynamic_light_filter", true, "Allow filtering of dynamic lights?", CVAR_Archive);
 
 // currently affects only advanced renderer
-VCvarF r_light_shadow_min_proj_dimension("r_light_shadow_min_proj_dimension", "112", "Do not render shadows for lights smaller than this screen size.", CVAR_Archive);
+VCvarI r_light_shadow_min_proj_dimension("r_light_shadow_min_proj_dimension", "112", "Do not render shadows for lights smaller than this screen size.", CVAR_Archive);
 
 VCvarB r_shadowmaps("r_shadowmaps", false, "Use shadowmaps instead of shadow volumes?", /*CVAR_PreInit|*/CVAR_Archive);
 
@@ -74,11 +74,11 @@ static VCvarI r_lmap_texture_check_radius_dynamic("r_lmap_texture_check_radius_d
 //  it's not exact!
 //
 //==========================================================================
-float VRenderLevelShared::CalcScreenLightMaxDimension (const TVec &LightPos, const float LightRadius) noexcept {
-  if (!isFiniteF(LightRadius) || LightRadius <= 0.0f) return 0.0f;
-  if (LightRadius < 8.0f) return LightRadius;
+int VRenderLevelShared::CalcScreenLightMaxDimension (const TVec &LightPos, const float LightRadius) noexcept {
+  if (!isFiniteF(LightRadius) || LightRadius <= 0.0f) return 0;
+  if (LightRadius < 8.0f) return 0;
   // just in case
-  if (!Drawer->vpmats.vport.isValid()) return 0.0f;
+  if (!Drawer->vpmats.vport.isValid()) return 0;
 
   // transform into world coords
   TVec inworld = Drawer->vpmats.toWorld(LightPos);
@@ -86,7 +86,7 @@ float VRenderLevelShared::CalcScreenLightMaxDimension (const TVec &LightPos, con
   //GCon->Logf(NAME_Debug, "LightPos=(%g,%g,%g); LightRadius=%g; wpos=(%g,%g,%g)", LightPos.x, LightPos.y, LightPos.z, LightRadius, inworld.x, inworld.y, inworld.z);
 
   // the thing that should not be (completely behind)
-  if (inworld.z-LightRadius > -1.0f) return 0.0f;
+  if (inworld.z-LightRadius > -1.0f) return 0;
 
   CONST_BBoxVertexIndex;
 
@@ -119,7 +119,7 @@ float VRenderLevelShared::CalcScreenLightMaxDimension (const TVec &LightPos, con
     if (maxy < winy) maxy = winy;
   }
 
-  if (minx > scrx1 || miny > scry1 || maxx < scrx0 || maxy < scry0) return 0.0f;
+  if (minx > scrx1 || miny > scry1 || maxx < scrx0 || maxy < scry0) return 0;
 
   minx = midval(scrx0, minx, scrx1);
   miny = midval(scry0, miny, scry1);
@@ -133,8 +133,8 @@ float VRenderLevelShared::CalcScreenLightMaxDimension (const TVec &LightPos, con
 
   const int maxsz = max2(wdt, hgt);
   // drop very small lights, why not?
-  if (maxsz <= 0) return 0.0f;
-  return (float)maxsz;
+  if (maxsz <= 0) return 0;
+  return maxsz;
 }
 
 
