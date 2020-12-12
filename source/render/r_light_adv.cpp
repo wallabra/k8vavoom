@@ -162,6 +162,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     if (prjdim >= 9.0f) {
       //const float ldist = (Drawer->vieworg-Pos).lengthSquared();
       const float ldim = CalcScreenLightMaxDimension(Pos, Radius);
+      if (ldim < 16.0f) return; // too small, don't bother
       if (ldim < prjdim) {
         allowShadows = false;
       }
