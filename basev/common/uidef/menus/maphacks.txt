@@ -17,7 +17,7 @@ menudef MapHacksOptions {
   }
 
   option bool {
-    title = "Transparent Doors Hack";
+    title = "Transparent Doors Rendering Hack";
     cvar = r_hack_transparent_doors;
     help =
       "In Vanilla, there was a glitch that allowed creation of transparent"
@@ -25,6 +25,15 @@ menudef MapHacksOptions {
       "Usually this works as intended."
       ""
       "\cGWARNING! You must save and reload your game after changing this!";
+  }
+
+  option bool {
+    title = "Transparent Doors Loading Hack";
+    cvar = ldr_fix_transparent_doors;
+    help =
+      "Complementary to the previous option."
+      ""
+      "\cJWARNING! You must restart the map after changing this!";
   }
 
 

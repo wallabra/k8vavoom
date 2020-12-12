@@ -37,7 +37,7 @@ static VCvarB deepwater_hacks_ceiling("deepwater_hacks_ceiling", true, "Apply de
 static VCvarB deepwater_hacks_bridges("deepwater_hacks_bridges", true, "Apply hack for \"handing bridges\"?", CVAR_Archive);
 
 static VCvarB ldr_fix_slope_cracks("ldr_fix_slope_cracks", true, "Try to fix empty cracks near sloped floors?", /*CVAR_Archive|*/CVAR_PreInit);
-static VCvarB ldr_fix_transparent_doors("ldr_fix_transparent_doors", true, "Try to fix transparent doors?", CVAR_Archive);
+static VCvarB ldr_fix_transparent_doors("ldr_fix_transparent_doors", false, "Try to fix transparent doors?", CVAR_Archive);
 
 
 //==========================================================================
