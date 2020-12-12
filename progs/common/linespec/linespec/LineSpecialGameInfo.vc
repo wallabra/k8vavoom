@@ -1029,7 +1029,7 @@ void StaticInit (Level InLevel, line_t *line) {
   int Dmg;
   sector_t *sec;
 
-  if (!line->arg1) return; // zero sector tag sux
+  //if (!line->arg1) return; // zero sector tag sux -- nope, Boom maps are actively using this
   switch (line->arg2) {
     case 0:
       Grav = Length((*line->v2)-(*line->v1))/100.0;
@@ -1064,7 +1064,7 @@ void StaticInit (Level InLevel, line_t *line) {
       // scrolling, however, is only at a tiny fraction of the wall texture's scrolling speed.
       // this corresponds to the MBF sky transfer linetypes (271 and 272).
       // Note: the line's lower texture, if set and of the same dimensions as the upper texture, will be used during lightning flashes.
-      //printdebug("::: SKYTRANSFER: %s (%s)", line->sidenum[0], GetTextureName(InLevel.Sides[line->sidenum[0]].TopTexture));
+      //printdebug("::: SKYTRANSFER: texid=%s (%s); tag=%s", line->sidenum[0], GetTextureName(InLevel.Sides[line->sidenum[0]].TopTexture), line->arg1);
       for (int hidx = InLevel.FindSectorFromTag(out sec, line->arg1); hidx >= 0; hidx = InLevel.FindSectorFromTag(out sec, line->arg1, hidx)) {
         //sec.Sky = (line->sidenum[0]+1)|SKY_FROM_SIDE;
         int snum = line->sidenum[0];
