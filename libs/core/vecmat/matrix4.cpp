@@ -28,10 +28,10 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 const VMatrix4 VMatrix4::Identity(
-  1, 0, 0, 0,
-  0, 1, 0, 0,
-  0, 0, 1, 0,
-  0, 0, 0, 1
+  1.0f, 0.0f, 0.0f, 0.0f,
+  0.0f, 1.0f, 0.0f, 0.0f,
+  0.0f, 0.0f, 1.0f, 0.0f,
+  0.0f, 0.0f, 0.0f, 1.0f
 );
 
 
@@ -90,8 +90,8 @@ static inline VVA_OKUNUSED float glhProjectfZOld (const TVec &point, const float
 //
 //==========================================================================
 static inline VVA_OKUNUSED float glhProjectfZ (const TVec &point, const float zofs,
-                                                          const VMatrix4 &modelview, const VMatrix4 &projection,
-                                                          bool hasClip, bool revZ)
+                                               const VMatrix4 &modelview, const VMatrix4 &projection,
+                                               bool hasClip, bool revZ)
 {
   // our `w` is always 1
   TVec inworld = modelview.Transform2(point);
@@ -642,7 +642,7 @@ VMatrix4 VMatrix4::LookAtFucked (const TVec &eye, const TVec &center, const TVec
 
   for (unsigned i = 0; i < 4; ++i) {
     for (unsigned j = 0; j < 4; ++j) {
-      if (fabsf(m.m[i][j]) < 0.0001f) m.m[i][j] = 0;
+      if (fabsf(m.m[i][j]) < 0.0001f) m.m[i][j] = 0.0f;
     }
   }
 
@@ -793,7 +793,7 @@ VMatrix4 VMatrix4::lookAt (const TVec &eye, const TVec &center, const TVec &up) 
 VMatrix4 &VMatrix4::lookingAt (const TVec &target) noexcept {
   TVec position(m[3][0], m[3][1], m[3][2]);
   TVec forward = (target-position).normalised();
-  TVec up(0, 0, 0);
+  TVec up(0.0f, 0.0f, 0.0f);
   if (fabsf(forward.x) < 0.0001f && fabsf(forward.z) < 0.0001f) {
     up.z = (forward.y > 0.0f ? -1.0f : 1.0f);
   } else {
@@ -845,7 +845,7 @@ VMatrix4 &VMatrix4::lookingAt (const TVec &target, const TVec &upVec) noexcept {
 VMatrix4 &VMatrix4::rotate (float angle, const TVec &axis) noexcept {
   float s, c;
   msincos(angle, &s, &c);
-  const float c1 = 1-c;
+  const float c1 = 1.0f-c;
   const float m0 = m[0][0], m4 = m[1][0], m8 = m[2][0], m12 = m[3][0];
   const float m1 = m[0][1], m5 = m[1][1], m9 = m[2][1], m13 = m[3][1];
   const float m2 = m[0][2], m6 = m[1][2], m10 = m[2][2], m14 = m[3][2];
