@@ -2458,6 +2458,18 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
         return this;
       }
       break;
+    case OPC_Builtin_VectorAbs: // (v)
+      if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      if (v0.isValid()) {
+        v0.x = fabs(v0.x);
+        v0.y = fabs(v0.y);
+        v0.z = fabs(v0.z);
+        e = new VVectorExpr(v0, Loc);
+      } else {
+        return this;
+      }
+      break;
     default: break;
   }
   if (e) {

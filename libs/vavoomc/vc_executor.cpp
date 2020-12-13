@@ -3082,6 +3082,16 @@ func_loop:
               }
               break;
             }
+          case OPC_Builtin_VectorAbs:
+            {
+              TVec v0(sp[-3].f, sp[-2].f, sp[-1].f);
+              if (v0.isValid()) {
+                sp[-1].f = fabs(v0.z);
+                sp[-2].f = fabs(v0.y);
+                sp[-3].f = fabs(v0.x);
+              }
+              break;
+            }
           default: cstDump(ip); VPackage::InternalFatalError("Unknown builtin");
         }
         ip += 2;

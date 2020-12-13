@@ -866,6 +866,8 @@ struct Instr {
           case OPC_Builtin_VectorMaxF:
             spdelta = -1;
             return;
+          case OPC_Builtin_VectorAbs:
+            return;
           case OPC_Builtin_FloatIsNaN:
           case OPC_Builtin_FloatIsInf:
           case OPC_Builtin_FloatIsFinite:
