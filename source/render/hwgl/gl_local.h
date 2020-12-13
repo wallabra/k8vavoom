@@ -464,7 +464,8 @@ public:
 
 protected:
   GLuint cubeTexId;
-  GLuint cubeDepthTexId[6];
+  //GLuint cubeDepthTexId[6];
+  GLuint cubeDepthRBId[6]; // render buffers for depth (we're not doing depth sampling for shadowmaps)
   GLuint cubeFBO;
   GLint savedSMVPort[4];
   GLint shadowmapSize;

@@ -484,7 +484,8 @@ VOpenGLDrawer::VOpenGLDrawer ()
 
   cubeTexId = 0;
   cubeFBO = 0;
-  memset(&cubeDepthTexId[0], 0, sizeof(cubeDepthTexId));
+  //memset(&cubeDepthTexId[0], 0, sizeof(cubeDepthTexId));
+  memset(&cubeDepthRBId[0], 0, sizeof(cubeDepthRBId));
   shadowmapPOT = getShadowmapPOT();
   shadowmapSize = 64<<shadowmapPOT;
   cubemapLinearFiltering = false;
@@ -523,16 +524,20 @@ void VOpenGLDrawer::DestroyShadowCube () {
   // delete cubemap
   if (cubeTexId) {
     p_glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO);
-    p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+    //p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+    p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
     p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
     p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     glDeleteTextures(1, &cubeTexId);
-    for (unsigned fc = 0; fc < 6; ++fc) glDeleteTextures(1, &cubeDepthTexId[fc]);
+    //glDeleteTextures(6, &cubeDepthTexId[0]);
+    p_glDeleteRenderbuffers(6, &cubeDepthRBId[0]);
     p_glDeleteFramebuffers(1, &cubeFBO);
 
     cubeTexId = 0;
     cubeFBO = 0;
-    memset(&cubeDepthTexId[0], 0, sizeof(cubeDepthTexId));
+    //memset(&cubeDepthTexId[0], 0, sizeof(cubeDepthTexId));
+    memset(&cubeDepthRBId[0], 0, sizeof(cubeDepthRBId));
     smapDirty = 0x3f;
     smapCurrentFace = 0;
   }
@@ -564,9 +569,26 @@ void VOpenGLDrawer::CreateShadowCube () {
   GLDRW_CHECK_ERROR("bind shadowmap FBO");
   p_glObjectLabelVA(GL_FRAMEBUFFER, cubeFBO, "Shadowmap FBO");
 
+  //glGenTextures(6, &cubeDepthTexId[0]);
+  //GLDRW_CHECK_ERROR("create shadowmap depth texture");
+  p_glGenRenderbuffers(6, &cubeDepthRBId[0]);
+  GLDRW_CHECK_ERROR("create shadowmap depth renderbuffers");
+
   for (unsigned int fc = 0; fc < 6; ++fc) {
-    glGenTextures(1, &cubeDepthTexId[fc]);
-    GLDRW_CHECK_ERROR("create shadowmap depth texture");
+    #if 1
+    vassert(cubeDepthRBId[fc]);
+
+    p_glBindRenderbuffer(GL_RENDERBUFFER, cubeDepthRBId[fc]);
+    GLDRW_CHECK_ERROR("bind cubemap depth renderbuffer");
+    p_glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, shadowmapSize, shadowmapSize);
+    GLDRW_CHECK_ERROR("create cubemap depth renderbuffer storage");
+    #ifndef GL4ES_HACKS
+    // unbind the render buffer
+    p_glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    GLDRW_CHECK_ERROR("unbind cubemap depth renderbuffer");
+    #endif
+
+    #else
     vassert(cubeDepthTexId[fc]);
     glBindTexture(GL_TEXTURE_2D, cubeDepthTexId[fc]);
     GLDRW_CHECK_ERROR("bind shadowmap depth texture");
@@ -585,9 +607,13 @@ void VOpenGLDrawer::CreateShadowCube () {
     */
     glBindTexture(GL_TEXTURE_2D, 0);
     GLDRW_CHECK_ERROR("unbind shadowmap depth texture");
+    #endif
   }
-  p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[0], 0);
-  GLDRW_CHECK_ERROR("set framebuffer depth texture");
+  //p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cubeDepthTexId[0], 0);
+  //GLDRW_CHECK_ERROR("set framebuffer depth texture");
+  p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, cubeDepthRBId[0]);
+  GLDRW_CHECK_ERROR("set cubemap depth renderbuffer");
+
 
   glGenTextures(1, &cubeTexId);
   vassert(cubeTexId);
@@ -663,6 +689,11 @@ void VOpenGLDrawer::CreateShadowCube () {
     //glReadBuffer(GL_NONE);
     GLDRW_CHECK_ERROR("set framebuffer read buffer");
   }
+
+  glDrawBuffer(GL_COLOR_ATTACHMENT0);
+  GLDRW_CHECK_ERROR("set cube FBO draw buffer");
+  glReadBuffer(GL_NONE);
+  GLDRW_CHECK_ERROR("set cube FBO read buffer");
 
   if (p_glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: cannot initialise shadowmap FBO");
   p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
