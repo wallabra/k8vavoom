@@ -428,6 +428,8 @@ native static final TVec vfmin (const TVec v1, const float v) [builtin VectorMin
 native static final TVec vfmax (const TVec v1, const float v) [builtin VectorMaxF];
 native static final TVec vecmin (const TVec v1, const TVec v2) [builtin VectorMinV];
 native static final TVec vecmax (const TVec v1, const TVec v2) [builtin VectorMaxV];
+native static final TVec vabs (const TVec v1) [builtin VectorAbs];
+native static final TVec vecabs (const TVec v1) [builtin VectorAbs];
 native static final TVec vclamp (const TVec v, const float Min, const float Max) [builtin VectorClampF]; // clamped value
 native static final TVec vfclamp (const TVec v, const float Min, const float Max) [builtin VectorClampF]; // clamped value
 native static final TVec vecclamp (const TVec v, const TVec vmin, const TVec vmax) [builtin VectorClampV]; // clamped value
