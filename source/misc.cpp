@@ -463,6 +463,6 @@ void ConDumpMatrix (const VMatrix4 &mat) {
     for (int x = 0; x < 4; ++x) {
       s += va(" %+.8f", mat[y][x]);
     }
-    GCon->Log(NAME_Debug, s);
+    GLog.Log(NAME_Debug, *s);
   }
 }
