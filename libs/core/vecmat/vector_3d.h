@@ -128,6 +128,8 @@ public:
   inline VVA_CHECKRESULT float invlength2D () const noexcept { return 1.0f/sqrtf(VSUM2(x*x, y*y)); }
 #endif
 
+  inline VVA_CHECKRESULT TVec abs () const noexcept { return TVec(fabs(x), fabs(y), fabs(z)); }
+
   inline VVA_CHECKRESULT float Length () const noexcept { return sqrtf(VSUM3(x*x, y*y, z*z)); }
   inline VVA_CHECKRESULT float length () const noexcept { return sqrtf(VSUM3(x*x, y*y, z*z)); }
 
@@ -246,6 +248,8 @@ static VVA_OKUNUSED inline bool operator != (const TVec &v1, const TVec &v2) noe
 //static VVA_OKUNUSED inline float operator * (const TVec &a, const TVec &b) noexcept { return a.dot(b); }
 //static VVA_OKUNUSED inline TVec operator ^ (const TVec &a, const TVec &b) noexcept { return a.cross(b); }
 //static VVA_OKUNUSED inline TVec operator % (const TVec &a, const TVec &b) noexcept { return a.cross(b); }
+
+static VVA_OKUNUSED VVA_CHECKRESULT inline TVec abs (const TVec &v1) noexcept { return v1.abs(); }
 
 static VVA_OKUNUSED VVA_CHECKRESULT inline float Length (const TVec &v) noexcept { return v.length(); }
 static VVA_OKUNUSED VVA_CHECKRESULT inline float length (const TVec &v) noexcept { return v.length(); }
