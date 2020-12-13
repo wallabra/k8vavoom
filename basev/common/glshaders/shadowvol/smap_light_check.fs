@@ -23,7 +23,8 @@
   #endif
   */
   # define origDist DistToLight
-  vec3 ltfdir = normalize(fullltfdir);
+  //vec3 ltfdir = normalize(fullltfdir);
+  vec3 ltfdir = -normV2L;
 
   #ifdef VV_SMAP_WEIGHTED_BLUR
     $include "shadowvol/cubemap_bilinear.fs"
