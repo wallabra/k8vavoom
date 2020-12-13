@@ -9,6 +9,9 @@
 #define VV_SMAP_SAMPLE_SET(var_,ofs_)  (var_) += compareShadowTexelDistance(ofs_, origDist)
 #define VV_SMAP_SAMPLE_ADD(var_,ofs_)  (var_) += compareShadowTexelDistance(normalize(ofs_), origDist)
 
+//#define VV_CALC_BIAS  (0.003+0.052*(1.0-clamp(dot(abs(Normal), abs(normV2L)), 0.0, 1.0)))
+#define VV_CALC_BIAS  (0.0035+0.068*(1.0-clamp(dot(abs(Normal), abs(normV2L)), 0.0, 1.0)))
+
   //VV_SMAP_BIAS = VV_SMAP_BIAS_N/LightRadius;
 
   // normalized distance to the point light source
@@ -87,12 +90,18 @@
       #endif
     #else
       // no blur
-      #if 0
-        if (textureCubeFn(ShadowTexture, fullltfdir).r+bias1 < currentDistanceToLight) discard;
+      #ifdef VV_SURFACE_LIGHTING
+        if (compareShadowTexelDistance(ltfdir, origDist) <= 0.0) discard;
         #define shadowMul  1.0
       #else
-        // distance from the light to the nearest shadow caster
-        if (compareShadowTexelDistance(ltfdir, origDist) <= 0.0) discard;
+        // for models, it is better to use bias, otherwise we'll get alot more wrong shadows
+        float biasBase = VV_CALC_BIAS;
+        float sldist = textureCubeFn(ShadowTexture, ltfdir).r+biasBase;
+        #ifdef VV_SMAP_SQUARED_DIST
+          sldist *= LightRadius;
+          sldist *= sldist;
+        #endif
+        if (sldist < origDist) discard;
         #define shadowMul  1.0
       #endif
     #endif

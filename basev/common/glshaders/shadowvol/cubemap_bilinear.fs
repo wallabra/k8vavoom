@@ -5,8 +5,6 @@
 # endif
 #endif
 
-#define VV_CALC_BIAS  (0.003+0.052*(1.0-clamp(dot(abs(Normal), abs(normV2L)), 0.0, 1.0)))
-
     float shadowMul;
     vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
 
@@ -14,8 +12,7 @@
     float fX = fract(cubeTC.x*CubeSize);
     float fY = fract(cubeTC.y*CubeSize);
 
-    float valvert, valhoriz, valdiag;
-    float valat = compareShadowTexelDistance(ltfdir, origDist);
+    float valat, valvert, valhoriz, valdiag;
 
     #ifdef VV_SMAP_SHITTY_BILINEAR
       valvert = 0.0;
@@ -35,6 +32,8 @@
       float cosTheta = clamp(dot(Normal, normV2L), 0.0, 1.0);
       float biasBase = clamp(0.0065*tan(acos(cosTheta)), 0.0015, 0.036); // cosTheta is dot( n,l ), clamped between 0 and 1
       */
+
+      valat = compareShadowTexelDistanceBS(ltfdir, origDist, biasBase);
 
       sldist = textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(1.0, 0.0))).r+biasBase;
       #ifdef VV_SMAP_SQUARED_DIST
@@ -83,6 +82,13 @@
         //#define CUBE_FIX_EDGES_norm(v_)  v_
         #define CUBE_FIX_EDGES_norm(v_)  normalize(v_)
 
+        // for models, it is better to use bias, otherwise we'll get alot more wrong shadows
+        #ifdef VV_SURFACE_LIGHTING
+        valat = compareShadowTexelDistance(ltfdir, origDist);
+        #else
+        float biasBase = VV_CALC_BIAS;
+        valat = compareShadowTexelDistanceBS(ltfdir, origDist, biasBase);
+        #endif
         valhoriz = 0.0;
         valvert = 0.0;
         valdiag = 0.0;

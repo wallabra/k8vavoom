@@ -8,8 +8,8 @@
 //#define VV_CMP_SUPER_SHITTY_CHECKS
 
 
-float compareShadowTexelDistance (const vec3 ltfdir, float orgDist) {
-  float sldist = textureCubeFn(ShadowTexture, ltfdir).r+VV_SMAP_BIAS;
+float compareShadowTexelDistanceBS (const vec3 ltfdir, const float orgDist, const float bias) {
+  float sldist = textureCubeFn(ShadowTexture, ltfdir).r+bias;
   #ifdef VV_SMAP_SQUARED_DIST
     sldist *= LightRadius;
     sldist *= sldist;
@@ -126,4 +126,9 @@ float compareShadowTexelDistance (const vec3 ltfdir, float orgDist) {
 
     return 0.0;
   #endif
+}
+
+
+float compareShadowTexelDistance (const vec3 ltfdir, const float orgDist) {
+  return compareShadowTexelDistanceBS(ltfdir, orgDist, VV_SMAP_BIAS);
 }

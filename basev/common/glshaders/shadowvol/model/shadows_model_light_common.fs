@@ -10,7 +10,7 @@ uniform bool AllowTransparency;
 $include "common/spotlight_vars.fs"
 #endif
 
-varying vec3 Normal;
+varying vec3 VNormal;
 varying vec3 VertToLight;
 /*
 varying float Dist;
@@ -19,6 +19,8 @@ varying float VDist;
 varying float SurfDist;
 
 varying vec2 TextureCoordinate;
+
+vec3 Normal;
 
 #ifdef VV_SHADOWMAPS
 $include "shadowvol/smap_light_decl.fs"
@@ -40,6 +42,9 @@ void main () {
   } else {
     if (TexColor.a < ALPHA_MIN) discard;
   }
+
+  // renormalize normal, because it may be distorted due to interpolation
+  Normal = normalize(VNormal);
 
   $include "shadowvol/common_light.fs"
 }

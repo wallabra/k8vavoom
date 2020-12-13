@@ -13,7 +13,7 @@ attribute vec3 VertNormal;
 attribute vec3 Vert2Normal;
 attribute vec2 TexCoord;
 
-varying vec3 Normal;
+varying vec3 VNormal;
 varying vec3 VertToLight;
 /*
 varying float Dist;
@@ -32,15 +32,15 @@ void main () {
   vec4 Vert = mix(vec4(Position, 1.0), Vert2, Inter)*ModelToWorldMat;
   gl_Position = gl_ModelViewProjectionMatrix*Vert;
 
-  //Normal = NormalToWorldMat*mix(VertNormal, Vert2Normal, Inter);
-  Normal = normalize(mix(VertNormal, Vert2Normal, Inter))*NormalToWorldMat;
+  //VNormal = NormalToWorldMat*mix(VertNormal, Vert2Normal, Inter);
+  VNormal = normalize(mix(VertNormal, Vert2Normal, Inter)*NormalToWorldMat);
   VertToLight = LightPos-Vert.xyz;
 
-  SurfDist = dot(Normal, Vert.xyz);
+  SurfDist = dot(VNormal, Vert.xyz);
   /*
-  float SurfDist = dot(Normal, Vert.xyz);
-  Dist = dot(LightPos, Normal)-SurfDist;
-  VDist = dot(ViewOrigin, Normal)-SurfDist;
+  float SurfDist = dot(VNormal, Vert.xyz);
+  Dist = dot(LightPos, VNormal)-SurfDist;
+  VDist = dot(ViewOrigin, VNormal)-SurfDist;
   */
 
   TextureCoordinate = TexCoord;
