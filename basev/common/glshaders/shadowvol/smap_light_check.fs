@@ -15,7 +15,14 @@
   // hardware doesn't require that, but our cubemap calculations do
   vec3 fullltfdir = -VertToLight;
   // use squared distance in comparisons
+  /*
+  #ifdef VV_SMAP_SQUARED_DIST
   float origDist = dot(fullltfdir, fullltfdir);
+  #else
+  # define origDist DistToLight
+  #endif
+  */
+  # define origDist DistToLight
   vec3 ltfdir = normalize(fullltfdir);
 
   #ifdef VV_SMAP_WEIGHTED_BLUR

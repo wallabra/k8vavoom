@@ -9,8 +9,11 @@
 
 
 float compareShadowTexelDistance (const vec3 ltfdir, float orgDist) {
-  float sldist = (textureCubeFn(ShadowTexture, ltfdir).r+VV_SMAP_BIAS)*LightRadius;
-  sldist *= sldist;
+  float sldist = textureCubeFn(ShadowTexture, ltfdir).r+VV_SMAP_BIAS;
+  #ifdef VV_SMAP_SQUARED_DIST
+    sldist *= LightRadius;
+    sldist *= sldist;
+  #endif
   if (sldist >= orgDist) return 1.0;
 
   // snap direction to texel corners

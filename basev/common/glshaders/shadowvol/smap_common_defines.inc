@@ -1,3 +1,7 @@
+// use squared distance for checks?
+#define VV_SMAP_SQUARED_DIST
+
+
 #ifdef VV_SMAP_BLUR4_BI
 # define VV_SMAP_WEIGHTED_BLUR
 # ifndef VV_SMAP_BLUR4

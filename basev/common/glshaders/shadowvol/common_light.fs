@@ -3,12 +3,18 @@
 
   vec3 normV2L = normalize(VertToLight);
 
+#ifndef VV_SMAP_SQUARED_DIST
+  DistToLight = sqrt(DistToLight);
+#endif
+
 #ifdef VV_SHADOWMAPS
   $include "shadowvol/smap_light_check.fs"
 #endif
 
   // "half-lambert" lighting model
+#ifdef VV_SMAP_SQUARED_DIST
   DistToLight = sqrt(DistToLight);
+#endif
   float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+0.5*dot(normV2L, Normal));
 #ifdef VV_SPOTLIGHT
   $include "common/spotlight_calc.fs"

@@ -4,8 +4,11 @@
 #define tt_ltfdir  ltf_horiz
 #define tt_texX    cubeTC.x+tshift
 #define tt_texY    cubeTC.y
-  sldist = (textureCubeFn(ShadowTexture, tt_ltfdir).r+VV_SMAP_BIAS)*LightRadius;
-  sldist *= sldist;
+  sldist = textureCubeFn(ShadowTexture, tt_ltfdir).r+VV_SMAP_BIAS;
+  #ifdef VV_SMAP_SQUARED_DIST
+    sldist *= LightRadius;
+    sldist *= sldist;
+  #endif
   if (sldist >= orgDist) {
     destvar = 1.0;
   } else {
@@ -23,8 +26,11 @@
 #define tt_ltfdir  ltf_vert
 #define tt_texX    cubeTC.x
 #define tt_texY    cubeTC.y+tshift
-  sldist = (textureCubeFn(ShadowTexture, tt_ltfdir).r+VV_SMAP_BIAS)*LightRadius;
-  sldist *= sldist;
+  sldist = textureCubeFn(ShadowTexture, tt_ltfdir).r+VV_SMAP_BIAS;
+  #ifdef VV_SMAP_SQUARED_DIST
+    sldist *= LightRadius;
+    sldist *= sldist;
+  #endif
   if (sldist >= orgDist) {
     destvar = 1.0;
   } else {
@@ -42,8 +48,11 @@
 #define tt_ltfdir  ltf_diag
 #define tt_texX    cubeTC.x+tshift
 #define tt_texY    cubeTC.y+tshift
-  sldist = (textureCubeFn(ShadowTexture, tt_ltfdir).r+VV_SMAP_BIAS)*LightRadius;
-  sldist *= sldist;
+  sldist = textureCubeFn(ShadowTexture, tt_ltfdir).r+VV_SMAP_BIAS;
+  #ifdef VV_SMAP_SQUARED_DIST
+    sldist *= LightRadius;
+    sldist *= sldist;
+  #endif
   if (sldist >= orgDist) {
     destvar = 1.0;
   } else {

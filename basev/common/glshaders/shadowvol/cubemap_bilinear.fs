@@ -5,6 +5,8 @@
 # endif
 #endif
 
+#define VV_CALC_BIAS  (0.003+0.052*(1.0-clamp(dot(abs(Normal), abs(normV2L)), 0.0, 1.0)))
+
     float shadowMul;
     vec3 cubeTC = convert_xyz_to_cube_uv(ltfdir); // texture coords
 
@@ -21,26 +23,38 @@
       valdiag = 0.0;
       float sldist;
 
-      float biasMod = 1.0-clamp(dot(Normal, normV2L), 0.0, 1.0);
+      /*
+      float biasMod = 1.0-clamp(dot(abs(Normal), abs(normV2L)), 0.0, 1.0);
       //float biasBase = 0.001+0.039*biasMod;
       float biasBase = 0.003+0.052*biasMod;
       //float biasBase = clamp(0.001+0.0065*biasMod, 0.0, 0.036); // cosTheta is dot( n,l ), clamped between 0 and 1
+      */
+      float biasBase = VV_CALC_BIAS;
 
       /*
       float cosTheta = clamp(dot(Normal, normV2L), 0.0, 1.0);
       float biasBase = clamp(0.0065*tan(acos(cosTheta)), 0.0015, 0.036); // cosTheta is dot( n,l ), clamped between 0 and 1
       */
 
-      sldist = (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(1.0, 0.0))).r+biasBase)*LightRadius;
-      sldist *= sldist;
+      sldist = textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(1.0, 0.0))).r+biasBase;
+      #ifdef VV_SMAP_SQUARED_DIST
+        sldist *= LightRadius;
+        sldist *= sldist;
+      #endif
       if (sldist >= origDist) valhoriz = 1.0;
 
-      sldist = (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(0.0, 1.0))).r+biasBase)*LightRadius;
-      sldist *= sldist;
+      sldist = textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(0.0, 1.0))).r+biasBase;
+      #ifdef VV_SMAP_SQUARED_DIST
+        sldist *= LightRadius;
+        sldist *= sldist;
+      #endif
       if (sldist >= origDist) valvert = 1.0;
 
-      sldist = (textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(1.0, 1.0))).r+biasBase+0.0014)*LightRadius;
-      sldist *= sldist;
+      sldist = textureCubeFn(ShadowTexture, shift_cube_uv_slow(cubeTC, vec2(1.0, 1.0))).r+biasBase+0.0014;
+      #ifdef VV_SMAP_SQUARED_DIST
+        sldist *= LightRadius;
+        sldist *= sldist;
+      #endif
       if (sldist >= origDist) valdiag = 1.0;
 
     #else
