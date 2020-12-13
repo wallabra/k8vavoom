@@ -11,8 +11,10 @@
     #ifdef SMCHECK_ASSIGN
     if (sldist >= newCubeDist) destvar = 1.0;
     #else
-    if (sldist >= newCubeDist) return 1.0;
-    return 0.0;
+    float xres = 0.0;
+    if (sldist >= newCubeDist) xres = 1.0;
+    return xres;
+    //return min(sign(sldist-newCubeDist)+1.0, 1.0);
     #endif
 #else
   #ifndef VV_CMP_SHITTY_CHECKS

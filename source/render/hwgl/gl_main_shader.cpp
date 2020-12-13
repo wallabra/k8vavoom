@@ -385,6 +385,7 @@ static VStr fixVersionLine (VStr s, int glVerMajor, int glVerMinor) {
     addVersions = true;
   }
   s += "\n";
+  //if (glVerMajor >= 4) s += "#extension GL_ARB_texture_gather : enable\n";
   if (addVersions) {
     //FIXME: this sux!
     if (glVerMajor >= 4) {
