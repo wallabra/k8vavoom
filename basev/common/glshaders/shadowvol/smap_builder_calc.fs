@@ -10,7 +10,7 @@ $include "shadowvol/smap_common_defines.inc"
   dist += 1.2;
   #else
   dist += sign(floor(LightRadius/800.0))*1.5; // big light offset
-  //dist += 0.8;
+  dist += 0.18;
   #endif
   if (dist >= LightRadius) discard;
   gl_FragColor.r = dist/LightRadius;
