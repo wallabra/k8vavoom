@@ -1,5 +1,6 @@
 uniform samplerCube ShadowTexture;
-uniform float CubeSize;
+// this will be #defined by the engine
+//uniform float CubeSize;
 
 uniform vec3 LightPos;
 

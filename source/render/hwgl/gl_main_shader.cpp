@@ -631,7 +631,8 @@ GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB Vert
        if (gl_shadowmap_ray_points.asInt() == 0) (shad_##Blur)[blur_].defines.append("VV_CMP_SUPER_SHITTY_CHECKS"); \
   else if (gl_shadowmap_ray_points.asInt() == 1) (shad_##Blur)[blur_].defines.append("VV_CMP_SHITTY_CHECKS"); \
   else if (gl_shadowmap_ray_points.asInt() == 2) (shad_##Blur)[blur_].defines.append("VV_CMP_FASTEST_CHECKS"); \
-  if (shittyBilinear) (shad_##Blur)[blur_].defines.append("VV_SMAP_SHITTY_BILINEAR");
+  if (shittyBilinear) (shad_##Blur)[blur_].defines.append("VV_SMAP_SHITTY_BILINEAR"); \
+  (shad_##Blur)[blur_].defines.append(va("CubeSize %d", shadowmapSize));
 
 #define VV_CREATE_SMAP_SHADER_LEVEL(blur_,defs_) \
   VV_CREATE_SMAP_SHADER(ShadowsLightSMap,blur_,defs_) \
