@@ -19,7 +19,8 @@ menudef ShadowMapOptions {
       "Turn on to move lights slightly away from surfaces.",
       "Lights that are too close to wall/floor will get visible moire.",
       "This option tells the engine to move light on a safer distance,",
-      "if the light is too close to textured surface.";
+      "if the light is too close to textured surface.",
+      "There is no reason to turn this off.";
   }
 
 
@@ -61,8 +62,8 @@ menudef ShadowMapOptions {
     }
     help =
       "Shadowmap texture size. There is hardly any reason to use texture",
-      "bigger than 512x512. Also, with 128x128 textures you may have more",
-      "visible moire pattern.";
+      "bigger than 512x512. Bigger textures not only slowdown rendering,",
+      "but also gives harder edges even with bilinear blur.";
   }
 
   option enum [__k8vavoom_developer_version > 0] {
@@ -97,17 +98,17 @@ menudef ShadowMapOptions {
   }
 
   option enum {
-    title = "Faster Checks";
-    cvar = gl_shadowmap_faster_check;
+    title = "Ray Checks";
+    cvar = gl_shadowmap_ray_points;
     list {
-      "Normal",
-      "Faster",
-      "Shitty Fast",
-      "Super-Shitty",
+      "Fast",
+      "Slower",
+      "Slow",
+      "Slowest"
     }
     help =
-      "Use slightly faster, but less precise shadowmap texel checks?",
-      "This can lower shadows quality.";
+      "Number of points on shadowmap to check for one ray.",
+      "'Fast' is usually enough, there should be no reason to change this.";
   }
 
   option enum {
@@ -123,15 +124,9 @@ menudef ShadowMapOptions {
       "16 Samples",
     }
     help =
-      "You can blur shadows a little. Usually small blur looks better.",
+      "You can blur shadows a little. Usually bilinear blur looks better.",
       "Please, note that more samples will cause non-linear slowdown.",
-      "",
-      "If you want to use 16-sample blur, it is recommended to turn on",
-      "shadowmap filtering too. This should not hurt performance, but",
-      "the shadows will look slightly better.",
-      "",
-      "Faster versions may or may not be actually faster, depending on",
-      "your GPU. Image quality varies alot too.";
+      "Also, there is no reason to go beyond bilinear.";
   }
 
   header "Debug Options" [__k8vavoom_developer_version > 0];

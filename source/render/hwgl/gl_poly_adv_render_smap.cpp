@@ -40,12 +40,12 @@
 
 extern VCvarI gl_shadowmap_size;
 extern VCvarI gl_shadowmap_precision;
-extern VCvarI gl_shadowmap_faster_check;
+extern VCvarI gl_shadowmap_ray_points;
 
 // saved shadowmap parameters
 static int saved_gl_shadowmap_size = -666;
 static int saved_gl_shadowmap_precision = -666;
-static int saved_gl_shadowmap_faster_check = -666;
+static int saved_gl_shadowmap_ray_points = -666;
 
 
 //==========================================================================
@@ -150,12 +150,12 @@ void VOpenGLDrawer::ActivateShadowMapFace (unsigned int facenum) noexcept {
 void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) {
   if (gl_shadowmap_size.asInt() != saved_gl_shadowmap_size ||
       gl_shadowmap_precision.asInt() != saved_gl_shadowmap_precision ||
-      gl_shadowmap_faster_check.asInt() != saved_gl_shadowmap_faster_check)
+      gl_shadowmap_ray_points.asInt() != saved_gl_shadowmap_ray_points)
   {
     DestroyShadowCube();
     saved_gl_shadowmap_size = gl_shadowmap_size.asInt();
     saved_gl_shadowmap_precision = gl_shadowmap_precision.asInt();
-    saved_gl_shadowmap_faster_check = gl_shadowmap_faster_check.asInt();
+    saved_gl_shadowmap_ray_points = gl_shadowmap_ray_points.asInt();
   }
 
   EnsureShadowMapCube();
