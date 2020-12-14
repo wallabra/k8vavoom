@@ -662,12 +662,12 @@ public:
   // called in rederer, before collecting light/shadow surfaces, so GPU could perform `glClear()` in parallel
   virtual void PrepareShadowMaps (const float Radius) = 0;
 
-  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) = 0;
+  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) = 0;
   virtual void EndLightShadowMaps () = 0;
   virtual void SetupLightShadowMap (unsigned int facenum) = 0;
   virtual void RenderSurfaceShadowMap (const surface_t *surf) = 0;
 
-  virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) = 0;
+  virtual void BeginLightPass (const TVec &LightPos, const float Radius, float LightMin, vuint32 Color, bool doShadow) = 0;
   virtual void EndLightPass () = 0;
   virtual void DrawSurfaceLight (surface_t *Surf) = 0;
 
@@ -738,7 +738,7 @@ public:
   void CalcOrthoMatrix (VMatrix4 &OrthoMat, const float left, const float right, const float bottom, const float top);
 
   void CalcSpotLightFaceView (VMatrix4 &ModelMat, const TVec &origin, unsigned int facenum);
-  void CalcShadowMapProjectionMatrix (VMatrix4 &ProjMat, float Radius, int awidth, int aheight, float aspect=1.0f);
+  void CalcShadowMapProjectionMatrix (VMatrix4 &ProjMat, float Radius);
 
   static TVec GetLightViewUp (unsigned int facenum) noexcept;
   static TVec GetLightViewForward (unsigned int facenum) noexcept;

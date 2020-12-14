@@ -243,6 +243,7 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
     glEnable(GL_TEXTURE_2D);
   }
 
+#if 0
   if (r_shadowmaps.asBool() && CanRenderShadowMaps() && (dbg_shadowmaps.asInt()&0x01) != 0) {
     // right
     // left
@@ -292,4 +293,5 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
       T_DrawText(xpos, ypos, cbnames[face], CR_DARKBROWN);
     }
   }
+#endif
 }

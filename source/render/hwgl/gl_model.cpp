@@ -555,7 +555,7 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
   if (lpassDoShadowMap) {
     SelectTexture(1);
     glBindTexture(GL_TEXTURE_2D, 0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, shadowCube[smapCurrent].cubeTexId);
     SelectTexture(0);
     VV_MLIGHT_SHADER_SETUP_SMAP(ShadowsModelLight);
   }
@@ -788,8 +788,6 @@ void VOpenGLDrawer::BeginModelShadowMaps (const TVec &LightPos, const float Radi
 
   if (gl_gpu_debug_models) p_glDebugLogf("BeginModelShadowMaps");
 
-  CalcShadowMapProjectionMatrix(smapProj, Radius, swidth, sheight, PixelAspect);
-
   ShadowsModelShadowMap.Activate();
   ShadowsModelShadowMap.SetTexture(0);
   ShadowsModelShadowMap.SetLightPos(LightPos);
@@ -817,11 +815,7 @@ void VOpenGLDrawer::EndModelShadowMaps () {
 void VOpenGLDrawer::SetupModelShadowMap (unsigned int facenum) {
   //if (gl_gpu_debug_models) p_glDebugLogf("  SetupModelShadowMap(%u)", facenum);
   ActivateShadowMapFace(facenum);
-
-  VMatrix4 lview;
-  CalcSpotLightFaceView(lview, smapLightPos, facenum);
-  VMatrix4 lmpv = smapProj*lview;
-  ShadowsModelShadowMap.SetLightMPV(lmpv);
+  ShadowsModelShadowMap.SetLightMPV(shadowCube[smapCurrent].lmpv[facenum]);
 }
 
 

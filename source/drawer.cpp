@@ -348,7 +348,7 @@ void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev,
 //  VDrawer::CalcShadowMapProjectionMatrix
 //
 //==========================================================================
-void VDrawer::CalcShadowMapProjectionMatrix (VMatrix4 &ProjMat, float Radius, int awidth, int aheight, float aspect) {
+void VDrawer::CalcShadowMapProjectionMatrix (VMatrix4 &ProjMat, float Radius) {
   const float fov = 90.0f;
   const float fovx = tanf(DEG2RADF(fov)/2.0f);
   //if (aspect <= 0.0f || !isFiniteF(aspect)) aspect = 1.0f;

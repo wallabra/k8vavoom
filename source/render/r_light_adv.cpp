@@ -352,7 +352,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
         CurrLightPos = CurrLightUnstuckPos;
       }
     }
-    Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle, refdef.width, refdef.height);
+    Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle/*, refdef.width, refdef.height*/);
     if (allowShadows) {
       if (!useCollector) (void)fsecCounterGen(); // for checker
       // sort shadow surfaces by textures

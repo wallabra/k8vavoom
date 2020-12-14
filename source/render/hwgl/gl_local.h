@@ -463,23 +463,36 @@ public:
   inline bool checkGLVer (int major, int minor) const noexcept { return (glVerMajor == major ? (glVerMinor >= minor) : (glVerMajor > major)); }
 
 protected:
-  GLuint cubeTexId;
-  //GLuint cubeDepthTexId[6];
-  GLuint cubeDepthRBId[6]; // render buffers for depth (we're not doing depth sampling for shadowmaps)
-  GLuint cubeFBO;
-  GLint savedSMVPort[4];
+  // we have two shadowmaps: one for lights with radius less than 1020 (16-bit floats), and one for 1020+ (32-bit floats)
+  struct ShadowCubeMap {
+    GLuint cubeTexId;
+    //GLuint cubeDepthTexId[6];
+    GLuint cubeDepthRBId[6]; // render buffers for depth (we're not doing depth sampling for shadowmaps)
+    GLuint cubeFBO;
+    unsigned int smapDirty; // bits 0..5
+    unsigned int smapCurrentFace;
+
+    VMatrix4 proj; // light projection matrix
+    VMatrix4 lmpv[6]; // light view+projection matrices
+  };
+
+  enum {
+    CUBE16 = 0u,
+    CUBE32 = 1u,
+  };
+
+  ShadowCubeMap shadowCube[2];
+
   GLint shadowmapSize;
   unsigned int shadowmapPOT; // 128<<shadowmapPOT is shadowmap size
   bool cubemapLinearFiltering;
 
-  VMatrix4 smapProj;
-  TVec smapLightPos;
-  float smapLightRadius;
+  GLint savedSMVPort[4];
+  //VMatrix4 smapProj;
   texinfo_t smapLastTexinfo;
   texinfo_t smapLastSprTexinfo;
 
-  unsigned int smapDirty; // bits 0..5
-  unsigned int smapCurrentFace;
+  unsigned smapCurrent; // index
 
 protected:
   void PrepareShadowMapsInternal (const float Radius);
@@ -487,17 +500,22 @@ protected:
   // called in `FinishUpdate()`, so GPU could perform `glClear()` in parallel
   void ClearAllShadowMaps ();
 
+  // activate cube (create it if necessary); calculate matrices
+  // won't clear faces
+  void PrepareShadowCube (const TVec &LightPos, const float Radius, unsigned int index) noexcept;
+
   // also sets is as current
   // shadowmap FBO must be active
   void ActivateShadowMapFace (unsigned int facenum) noexcept;
 
-  inline void SetCurrentShadowMapFace (unsigned int facenum) noexcept { smapCurrentFace = facenum; }
-  inline void MarkCurrentShadowMapDirty () noexcept { smapDirty |= 1u<<smapCurrentFace; }
-  inline void MarkCurrentShadowMapClean () noexcept { smapDirty &= ~(1u<<smapCurrentFace); }
+  inline void SetCurrentShadowMapFace (unsigned int facenum) noexcept { shadowCube[smapCurrent].smapCurrentFace = facenum; }
+  inline void MarkCurrentShadowMapDirty () noexcept { shadowCube[smapCurrent].smapDirty |= 1u<<shadowCube[smapCurrent].smapCurrentFace; }
+  inline void MarkCurrentShadowMapClean () noexcept { shadowCube[smapCurrent].smapDirty &= ~(1u<<shadowCube[smapCurrent].smapCurrentFace); }
 
-  inline bool IsShadowMapDirty (unsigned int facenum) const noexcept { return smapDirty&(1u<<facenum); }
-  inline bool IsAnyShadowMapDirty () const noexcept { return (smapDirty&0x3f); }
-  inline void MarkAllShadowMapsClear () noexcept { smapDirty = 0; }
+  inline bool IsShadowMapDirty (unsigned int facenum) const noexcept { return shadowCube[smapCurrent].smapDirty&(1u<<facenum); }
+  inline bool IsCurrentShadowMapDirty () const noexcept {  return shadowCube[smapCurrent].smapDirty&(1u<<shadowCube[smapCurrent].smapCurrentFace); }
+  inline bool IsAnyShadowMapDirty () const noexcept { return (shadowCube[smapCurrent].smapDirty&0x3f); }
+  inline void MarkAllShadowMapsClear () noexcept { shadowCube[smapCurrent].smapDirty = 0u; }
 
 public:
   // called in renderer before collecting light/shadow surfaces, so GPU could perform `glClear()` in parallel
@@ -563,7 +581,7 @@ public:
 
   bool AdvRenderCanSurfaceCastShadow (const surface_t *surf, const TVec &LightPos, float Radius);
 
-  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) override;
+  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) override;
   virtual void EndLightShadowMaps () override;
   virtual void SetupLightShadowMap (unsigned int facenum) override;
   virtual void RenderSurfaceShadowMap (const surface_t *surf) override;

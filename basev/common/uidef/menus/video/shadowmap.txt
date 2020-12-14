@@ -66,16 +66,13 @@ menudef ShadowMapOptions {
       "but also gives harder edges even with bilinear blur.";
   }
 
-  option enum [__k8vavoom_developer_version > 0] {
+  option bool {
     title = "Shadowmap Precision";
     cvar = gl_shadowmap_precision;
-    list {
-      "16 bit",
-      "32 bit",
-    }
     help =
-      "Shadowmap texture precision. 32 bit will not give you anything",
-      "except a slowdown",
+      "Allow higher shadowmap precision for huge lights?",
+      "This may or may not give you less false shadows for hige",
+      "(with 1000+ radius) lights.",
       "",
       "\c[WHITE]WARNING! You need to reinit resolution to apply this.";
   }

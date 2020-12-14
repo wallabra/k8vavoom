@@ -127,7 +127,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
     //glEnable(GL_TEXTURE_CUBE_MAP);
     SelectTexture(1);
     glBindTexture(GL_TEXTURE_2D, 0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, shadowCube[smapCurrent].cubeTexId);
     SelectTexture(0);
     SETUP_LIGHT_SHADER_SMAP(ShadowsLightSMap);
     lpassDoShadowMap = true;
