@@ -32,7 +32,6 @@
 
 
 extern VCvarB r_chasecam;
-extern VCvarB r_sort_sprites;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
 extern VCvarI r_shadowmap_sprshadows;
@@ -315,7 +314,6 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
     sprtype == SPR_VP_PARALLEL_UPRIGHT &&
     !ri.isShadow() && !ri.isShaded() /*yep*/ && !ri.isFuzzy() &&
     r_fake_sprite_shadows.asInt() &&
-    r_sort_sprites.asBool() &&
     (r_fake_shadow_scale.asFloat() > 0.0f);
 
   bool doCheckFrames = false;
@@ -585,6 +583,9 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   VTexture *Tex = GTextureManager[lump];
   if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
 
+  // make sprites with translucent textures translucent
+  if (Tex->isTranslucent() && !ri.isTranslucent()) ri.translucency = RenderStyleInfo::Translucent;
+
   //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
   // ignore brightmap flags for stencil style
   if (!ri.isStenciled() && r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) ri.light = ri.seclight; // disable fullbright
@@ -634,7 +635,8 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
 
   //if (!ri.isTranslucent() && Tex->isTranslucent()) Alpha = 0.9999f;
 
-  if (ri.isTranslucent() || r_sort_sprites || Tex->isTranslucent()) {
+  //if (ri.isTranslucent() || r_sort_sprites || Tex->isTranslucent())
+  {
     // add sprite
     int priority = 0;
     if (thing) {
@@ -645,10 +647,18 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
       else if (thing->EntityFlags&VEntity::EF_NoBlockmap) priority = -200;
     }
     if (!onlyShadow) {
+      #if 0
+      Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), sv, Tex, ri,
+        GetTranslation(thing->Translation), ColorMap,
+        -sprforward, DotProduct(sprorigin, -sprforward),
+        (flip ? -sprright : sprright)/scaleX,
+        -sprup/scaleY, (flip ? sv[2] : sv[1]));
+      #else
       QueueSpritePoly(sv, lump, ri, thing->Translation,
         -sprforward, DotProduct(sprorigin, -sprforward),
         (flip ? -sprright : sprright)/scaleX, -sprup/scaleY,
         (flip ? sv[2] : sv[1]), priority, thing->Origin, thing->ServerUId);
+      #endif
     }
     // add shadow
     if (renderShadow) {
@@ -734,12 +744,6 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
         }
       }
     }
-  } else {
-    Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), sv, Tex, ri,
-      GetTranslation(thing->Translation), ColorMap,
-      -sprforward, DotProduct(sprorigin, -sprforward),
-      (flip ? -sprright : sprright)/scaleX,
-      -sprup/scaleY, (flip ? sv[2] : sv[1]));
   }
 }
 
@@ -908,7 +912,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
 
   transSprState.reset();
   transSprState.allowTransPolys = !dbg_disable_translucent_polys.asBool();
-  transSprState.sortWithOfs = (r_sort_sprites.asBool() && r_sprite_use_pofs.asBool());
+  transSprState.sortWithOfs = r_sprite_use_pofs.asBool();
 
   if (dls.DrawSpriteList.length() > 0) {
     // there is no need to sort solid sprites

@@ -43,7 +43,6 @@ extern VCvarB r_brightmaps_sprite;
 
 extern VCvarB r_fake_shadows_alias_models;
 
-VCvarB r_sort_sprites("r_sort_sprites", true, "Sprite sorting.", CVAR_Archive);
 VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarI r_drawfuzz("r_drawfuzz", "1", "Fuzz effect (0:alpha; 1:shadow)", CVAR_Archive);
