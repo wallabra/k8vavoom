@@ -354,6 +354,8 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
       }
       if (strcmp(text, "vc-case-insensitive-locals") == 0) { VObject::cliCaseSensitiveLocals = 0; continue; }
       if (strcmp(text, "vc-case-insensitive-fields") == 0) { VObject::cliCaseSensitiveFields = 0; continue; }
+      if (strcmp(text, "vc-case-sensitive-locals") == 0) { VObject::cliCaseSensitiveLocals = 1; continue; }
+      if (strcmp(text, "vc-case-sensitive-fields") == 0) { VObject::cliCaseSensitiveFields = 1; continue; }
       const char option = *text++;
       switch (option) {
         case 'd': DebugMode = true; if (*text) OpenDebugFile(text); break;
@@ -627,6 +629,7 @@ int main (int argc, char **argv) {
     if (mklass && !compileOnly) {
       devprintf("Found class 'Main'\n");
       VMethod *mmain = mklass->FindAccessibleMethod("main");
+      if (!mmain) mmain = mklass->FindAccessibleMethod("runmain");
       if (mmain) {
         devprintf(" Found method 'main()' (return type: %u:%s)\n", mmain->ReturnType.Type, *mmain->ReturnType.GetName());
         int atp = checkArg(mmain);
