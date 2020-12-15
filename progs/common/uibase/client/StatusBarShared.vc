@@ -228,6 +228,9 @@ void DrawNotify () {
   // notify lines
   int y = 0;
   int i = 0;
+  if (GetCvar('dbg_world_think_vm_time') || GetCvar('dbg_world_think_decal_time') || GetCvar('draw_gc_stats')) y += FontHeight();
+  //if (GetCvar('draw_fps')) y += FontHeight();
+
   while (i < notifyMsgCount) {
     NotifyMessage *msg = &notifyMessages[(i+notifyMsgHead)%NUM_NOTIFY_LINES];
     if (msg->time <= 0.0) {

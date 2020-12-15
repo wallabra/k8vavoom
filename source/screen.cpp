@@ -287,8 +287,11 @@ COMMAND(ScreenShot) {
 #ifdef CLIENT
 static RunningAverageExp vmAverage;
 static RunningAverageExp decalAverage;
+static bool stripeRendered;
 
 static void DrawDebugTimesStripe () {
+  if (stripeRendered) return;
+  stripeRendered = true;
   const float stripeAlpha = 0.666f;
   T_SetFont(ConFont);
   int sXPos = VirtualWidth;
@@ -310,12 +313,12 @@ static void DrawFPS () {
   else if (worldThinkTimeDecal >= 0) decalAverage.update(worldThinkTimeDecal);
 
   int ypos = 0;
-  bool stripeRendered = false;
+  stripeRendered = false;
 
   // VM/Decal times
   if (!isClient) {
     if ((dbg_world_think_vm_time && worldThinkTimeVM >= 0) || (dbg_world_think_decal_time && worldThinkTimeDecal >= 0)) {
-      DrawDebugTimesStripe(); stripeRendered = true;
+      DrawDebugTimesStripe();
       T_SetFont(ConFont);
       T_SetAlign(hleft, vtop);
       int xpos = VirtualWidth/2;
@@ -334,7 +337,7 @@ static void DrawFPS () {
   // GC stats
   if (draw_gc_stats > 0) {
     const VObject::GCStats &stats = VObject::GetGCStats();
-    if (!stripeRendered) DrawDebugTimesStripe();
+    DrawDebugTimesStripe();
     T_SetFont(ConFont);
     int xpos;
     if (draw_gc_stats_posx < 0) {
@@ -357,7 +360,7 @@ static void DrawFPS () {
         stats.lastCollected, stats.alive, stats.firstFree, stats.poolSize, stats.poolAllocated, (int)(stats.lastCollectDuration*1000+0.5)), CR_DARKBROWN);
     }
 
-    ypos += T_FontHeight();
+    //ypos += T_FontHeight();
   }
 
   // FPS
@@ -374,7 +377,11 @@ static void DrawFPS () {
 
     T_SetFont(SmallFont);
     int xpos;
-    if (draw_fps_posx < 0) {
+    if (stripeRendered) {
+      T_SetFont(ConFont);
+      T_SetAlign(hleft, vtop);
+      xpos = 0;
+    } else if (draw_fps_posx < 0) {
       T_SetAlign(hleft, vtop);
       xpos = 4;
     } else if (draw_fps_posx == 0) {
