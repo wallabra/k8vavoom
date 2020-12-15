@@ -16,7 +16,7 @@ class Main : TestObject;
 
 int val;
 
-final static void main () {
+final static void runmain () {
   //TVec n = vector(1, 2, 3);
   TVec n = vector(1, 2);
   print("hello! defval=%d; vector=%v", Main.default.val, n);

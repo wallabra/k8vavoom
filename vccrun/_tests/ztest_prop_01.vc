@@ -6,7 +6,7 @@ int v = 666;
 int fldn {
   //default n;
   get n;
-  set(v) { n = v+1000; }
+  set(vv) { n = vv+1000; }
 }
 
 int fldv {

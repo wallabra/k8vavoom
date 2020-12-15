@@ -8,7 +8,7 @@ int fld {
 }
 
 
-void main () {
+void runmain () {
   writeln(fld);
   fld = 666;
   //writeln(Main.fld);

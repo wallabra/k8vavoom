@@ -9,7 +9,7 @@ final int fld {
 }
 
 
-static final void main () {
+static final void runmain () {
   writeln(Main.fld);
   Main.fld = 666;
 }

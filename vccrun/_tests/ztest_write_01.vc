@@ -4,7 +4,7 @@ struct S { int n; }
 
 void delegate (int n) dg;
 
-final void main () {
+final void runmain () {
   array!int da;
   float[4] fa;
   S s;
