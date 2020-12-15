@@ -545,6 +545,28 @@ protected:
   }
   */
 
+  struct TransPolyState {
+    bool pofsEnabled;
+    int pofs;
+    float lastpdist; // for sprites: use polyofs for the same dist
+    bool firstSprite;
+
+    // options
+    bool allowTransPolys;
+    bool sortWithOfs;
+
+    inline void reset () noexcept {
+      pofsEnabled = false;
+      pofs = 0;
+      lastpdist = -1e12f; // for sprites: use polyofs for the same dist
+      firstSprite = true;
+    }
+  };
+
+  TransPolyState transSprState;
+
+  void DrawTransSpr (trans_sprite_t &spr);
+
 public:
   virtual bool IsNodeRendered (const node_t *node) const noexcept override;
   virtual bool IsSubsectorRendered (const subsector_t *sub) const noexcept override;
@@ -1374,8 +1396,6 @@ extern VCvarB r_shadows_pickups;
 extern VCvarB r_shadows_decorations;
 extern VCvarB r_shadows_other;
 extern VCvarB r_shadows_players;
-
-extern VCvarB r_separate_translucent_lists;
 
 extern VCvarB dbg_show_lightmap_cache_messages;
 

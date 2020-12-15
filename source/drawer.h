@@ -208,17 +208,16 @@ public:
     // the game running one level for weeks ;-)
     TArray<surface_t *> DrawSurfListSolid; // solid surfaces
     TArray<surface_t *> DrawSurfListMasked; // masked surfaces
-    TArray<surface_t *> DrawSurfListAlpha; // alpha-blended surfaces
-    TArray<surface_t *> DrawSurfListAdditive; // additive surfaces
     TArray<surface_t *> DrawSkyList;
     TArray<surface_t *> DrawHorizonList;
+
+    TArray<trans_sprite_t> DrawSurfListAlpha; // alpha-blended surfaces and sprites
     TArray<trans_sprite_t> DrawSpriteList;
 
     inline void resetAll () {
       DrawSurfListSolid.reset();
       DrawSurfListMasked.reset();
       DrawSurfListAlpha.reset();
-      DrawSurfListAdditive.reset();
       DrawSkyList.reset();
       DrawHorizonList.reset();
       DrawSpriteList.reset();
@@ -233,7 +232,15 @@ public:
   vuint32 currQueueFrame;
 
 public:
-  inline DrawLists &GetCurrentDLS () { return DrawListStack[DrawListStack.length()-1]; }
+  inline DrawLists &GetCurrentDLS () noexcept { return DrawListStack[DrawListStack.length()-1]; }
+
+  inline trans_sprite_t *AllocTransSpr (const RenderStyleInfo &ri) noexcept {
+    if (ri.alpha < 1.0f || ri.isTranslucent()) {
+      return &GetCurrentDLS().DrawSurfListAlpha.alloc();
+    } else {
+      return &GetCurrentDLS().DrawSpriteList.alloc();
+    }
+  }
 
   // should be called before rendering a frame
   // (i.e. in initial render, `RenderPlayerView()`)

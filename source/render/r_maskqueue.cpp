@@ -144,29 +144,36 @@ void VRenderLevelShared::QueueTranslucentSurface (surface_t *surf, const RenderS
   const float dist = LengthSquared(mid-Drawer->vieworg);
 #else
   // select nearest vertex
-  float dist = LengthSquared(sv[0].vec()-Drawer->vieworg);
+  //float dist = LengthSquared(sv[0].vec()-Drawer->vieworg);
+  //const TClipPlane *viewplane = &Drawer->viewfrustum.planes[TFrustum::Near];
+  //float dist = viewplane->PointDistance(sv[0].vec());
+  const TVec vfwd = Drawer->viewforward;
+  const TVec vorg = Drawer->vieworg;
+  float dist = /*fabsf*/(DotProduct(sv[0].vec()-vorg, vfwd));
   for (int i = 1; i < count; ++i) {
-    const float nd = LengthSquared(sv[i].vec()-Drawer->vieworg);
+    //const float nd = LengthSquared(sv[i].vec()-Drawer->vieworg);
+    //const float nd = viewplane->PointDistance(sv[i].vec());
+    const float nd = /*fabsf*/(DotProduct(sv[i].vec()-vorg, vfwd));
     if (dist > nd) dist = nd;
   }
 #endif
 
-  trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
-  spr.dist = dist;
-  spr.surf = surf;
-  spr.type = 0/*(isSprite ? 1 : 0)*/;
-  //spr.origin = sprOrigin;
-  spr.rstyle = ri;
+  trans_sprite_t *spr = AllocTransSpr(ri);
+  spr->dist = dist;
+  spr->surf = surf;
+  spr->type = 0/*(isSprite ? 1 : 0)*/;
+  //spr->origin = sprOrigin;
+  spr->rstyle = ri;
   // used in sorter
-  if (spr.surf->drawflags&surface_t::DF_MIRROR) {
+  if (spr->surf->drawflags&surface_t::DF_MIRROR) {
     // disable depth write too, just in case
-    spr.rstyle.flags |= RenderStyleInfo::FlagMirror/*|RenderStyleInfo::FlagNoDepthWrite*/;
+    spr->rstyle.flags |= RenderStyleInfo::FlagMirror/*|RenderStyleInfo::FlagNoDepthWrite*/;
   }
   // set ceiling/floor flags
-  const float ssz = spr.surf->plane.normal.z;
+  const float ssz = spr->surf->plane.normal.z;
   if (ssz != 0.0f) {
     // disable depth write too, just in case
-    spr.rstyle.flags |= (ssz < 0.0f ? RenderStyleInfo::FlagCeiling : RenderStyleInfo::FlagFloor)|RenderStyleInfo::FlagNoDepthWrite;
+    spr->rstyle.flags |= (ssz < 0.0f ? RenderStyleInfo::FlagCeiling : RenderStyleInfo::FlagFloor)|RenderStyleInfo::FlagNoDepthWrite;
   }
 }
 
@@ -182,25 +189,26 @@ void VRenderLevelShared::QueueSpritePoly (const TVec *sv, int lump, const Render
 {
   if (ri.alpha < 0.004f) return;
 
-  //const float dist = fabsf(DotProduct(sprOrigin-Drawer->vieworg, Drawer->viewforward));
-  const float dist = LengthSquared(sprOrigin-Drawer->vieworg);
+  const float dist = /*fabsf*/(DotProduct(sprOrigin-Drawer->vieworg, Drawer->viewforward));
+  //const float dist = LengthSquared(sprOrigin-Drawer->vieworg);
 
-  trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
-  memcpy(spr.Verts, sv, sizeof(TVec)*4);
-  spr.dist = dist;
-  spr.lump = lump;
-  spr.normal = normal;
-  spr.pdist = pdist;
-  spr.saxis = saxis;
-  spr.taxis = taxis;
-  spr.texorg = texorg;
-  spr.surf = nullptr;
-  spr.translation = translation;
-  spr.type = 1/*(isSprite ? 1 : 0)*/;
-  spr.objid = objid;
-  spr.prio = priority;
-  //spr.origin = sprOrigin;
-  spr.rstyle = ri;
+  //trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
+  trans_sprite_t *spr = AllocTransSpr(ri);
+  memcpy(spr->Verts, sv, sizeof(TVec)*4);
+  spr->dist = dist;
+  spr->lump = lump;
+  spr->normal = normal;
+  spr->pdist = pdist;
+  spr->saxis = saxis;
+  spr->taxis = taxis;
+  spr->texorg = texorg;
+  spr->surf = nullptr;
+  spr->translation = translation;
+  spr->type = 1/*(isSprite ? 1 : 0)*/;
+  spr->objid = objid;
+  spr->prio = priority;
+  //spr->origin = sprOrigin;
+  spr->rstyle = ri;
 }
 
 
@@ -211,21 +219,23 @@ void VRenderLevelShared::QueueSpritePoly (const TVec *sv, int lump, const Render
 //==========================================================================
 void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, const RenderStyleInfo &ri/*vuint32 light, vuint32 Fade, float Alpha, bool Additive*/, float TimeFrac) {
   if (!mobj) return; // just in case
+  if (ri.alpha < 0.004f) return;
 
-  //const float dist = fabsf(DotProduct(mobj->Origin-Drawer->vieworg, Drawer->viewforward));
-  const float dist = LengthSquared(mobj->Origin-Drawer->vieworg);
+  const float dist = /*fabsf*/(DotProduct(mobj->Origin-Drawer->vieworg, Drawer->viewforward));
+  //const float dist = LengthSquared(mobj->Origin-Drawer->vieworg);
 
   //trans_sprite_t &spr = trans_sprites[traspUsed++];
-  trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
-  spr.Ent = mobj;
-  spr.rstyle = ri;
-  spr.dist = dist;
-  spr.type = 2;
-  spr.TimeFrac = TimeFrac;
-  spr.lump = -1; // has no sense
-  spr.objid = mobj->ServerUId;
-  spr.prio = 0; // normal priority
-  //spr.origin = mobj->Origin;
+  //trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
+  trans_sprite_t *spr = AllocTransSpr(ri);
+  spr->Ent = mobj;
+  spr->rstyle = ri;
+  spr->dist = dist;
+  spr->type = 2;
+  spr->TimeFrac = TimeFrac;
+  spr->lump = -1; // has no sense
+  spr->objid = mobj->ServerUId;
+  spr->prio = 0; // normal priority
+  //spr->origin = mobj->Origin;
 }
 
 
@@ -642,6 +652,8 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
     }
     // add shadow
     if (renderShadow) {
+      // move it slightly further, because they're translucent, and should be further to not overlay the sprite itself
+      sprorigin += Drawer->viewforward*0.5f;
       float Alpha = ri.alpha*r_fake_shadow_translucency.asFloat();
       if (Alpha >= 0.012f) {
         // check origin (+12 for "floatbob")
@@ -743,6 +755,27 @@ extern "C" {
     const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
     const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
 
+    // sort by distance to view origin (nearest last)
+    const float d0 = ta->dist;
+    const float d1 = tb->dist;
+    if (d0 < d1) return 1; // a is nearer, so it is last (a is greater)
+    if (d0 > d1) return -1; // b is nearer, so it is last (a is lesser)
+
+    // non-translucent objects should come first
+    #if 0
+    // translucent/additive
+    const unsigned aTrans = (unsigned)(ta->rstyle.alpha < 1.0f || (ta->rstyle.isTranslucent() && !ta->rstyle.isStenciled()));
+    const unsigned bTrans = (unsigned)(tb->rstyle.alpha < 1.0f || (tb->rstyle.isTranslucent() && !tb->rstyle.isStenciled()));
+
+    // if both has that bit set, the result of xoring will be 0
+    if (aTrans^bTrans) {
+      // only one is translucent
+      vassert(aTrans == 0 || bTrans == 0);
+      return (aTrans ? 1/*a is translucent, b is not; b first (a is greater)*/ : -1/*a is not translucent, b is translucent; a first (a is lesser)*/);
+    }
+    #endif
+
+    #if 0
     // mirrors come first, then comes floor/ceiling surfaces
     if ((ta->rstyle.flags^tb->rstyle.flags)&(RenderStyleInfo::FlagCeiling|RenderStyleInfo::FlagFloor|RenderStyleInfo::FlagMirror)) {
       if ((ta->rstyle.flags^tb->rstyle.flags)&RenderStyleInfo::FlagMirror) {
@@ -766,6 +799,7 @@ extern "C" {
         return (taspec&RenderStyleInfo::FlagOriented ? -1/*a first (a is lesser)*/ : 1/*b first (a is greater)*/);
       }
     }
+    #endif
 
     #if 0
     // sort by special type
@@ -776,24 +810,6 @@ extern "C" {
       if (tahang != tbhang) return (tahang > tbhang ? -1/*a first (a is lesser) */ : 1/*b first (a is greater)*/);
     }
     #endif
-
-    // non-translucent objects should come first
-
-    // translucent/additive
-    const unsigned aTrans = (unsigned)(ta->rstyle.alpha < 1.0f || (ta->rstyle.isTranslucent() && !ta->rstyle.isStenciled()));
-    const unsigned bTrans = (unsigned)(tb->rstyle.alpha < 1.0f || (tb->rstyle.isTranslucent() && !tb->rstyle.isStenciled()));
-
-    // if both has that bit set, the result of xoring will be 0
-    if (aTrans^bTrans) {
-      // only one is translucent
-      return (aTrans ? 1/*a is translucent, b is not; b first (a is greater)*/ : -1/*a is not translucent, b is translucent; a first (a is lesser)*/);
-    }
-
-    // sort by distance to view origin (nearest last)
-    const float d0 = ta->dist;
-    const float d1 = tb->dist;
-    if (d0 < d1) return 1; // a is nearer, so it is last (a is greater)
-    if (d0 > d1) return -1; // b is nearer, so it is last (a is lesser)
 
     // sort by object type
     // first masked polys, then sprites, then alias models
@@ -823,6 +839,61 @@ extern "C" {
 }
 
 
+#define MAX_POFS  (10)
+
+//==========================================================================
+//
+//  VRenderLevelShared::DrawTransSpr
+//
+//==========================================================================
+void VRenderLevelShared::DrawTransSpr (trans_sprite_t &spr) {
+  //GCon->Logf("  #%d: type=%d; alpha=%g; additive=%d; light=0x%08x; fade=0x%08x", f, spr.type, spr.Alpha, (int)spr.Additive, spr.light, spr.Fade);
+  if (spr.type == 2) {
+    // alias model
+    if (transSprState.pofsEnabled) { Drawer->GLDisableOffset(); transSprState.pofsEnabled = false; }
+    DrawEntityModel(spr.Ent, spr.rstyle/*spr.light, spr.Fade, spr.Alpha, spr.Additive*/, spr.TimeFrac, RPASS_Normal);
+  } else if (spr.type) {
+    // sprite
+    if (transSprState.sortWithOfs && (transSprState.firstSprite || transSprState.lastpdist == spr.pdist)) {
+      transSprState.lastpdist = spr.pdist;
+      if (!transSprState.firstSprite) {
+        if (!transSprState.pofsEnabled) {
+          // switch to next transSprState.pofs
+          //if (++transSprState.pofs == MAX_POFS) transSprState.pofs = 0;
+          ++transSprState.pofs;
+          Drawer->GLPolygonOffsetEx(r_sprite_pslope, -(transSprState.pofs*r_sprite_pofs)); // pull forward
+          transSprState.pofsEnabled = true;
+        }
+      } else {
+        transSprState.firstSprite = false;
+      }
+    } else {
+      transSprState.lastpdist = spr.pdist;
+      if (transSprState.pofsEnabled) { Drawer->GLDisableOffset(); transSprState.pofsEnabled = false; }
+      // reset transSprState.pofs
+      transSprState.pofs = 0;
+    }
+    Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), spr.Verts, GTextureManager[spr.lump],
+                              spr.rstyle, GetTranslation(spr.translation),
+                              ColorMap, spr.normal, spr.pdist,
+                              spr.saxis, spr.taxis, spr.texorg);
+  } else {
+    // masked polygon
+    // non-translucent and non-additive polys should not end up here
+    vassert(spr.surf);
+    if (transSprState.pofsEnabled) { Drawer->GLDisableOffset(); transSprState.pofsEnabled = false; }
+    if (transSprState.allowTransPolys) {
+      //if (spr.surf->drawflags&surface_t::DF_MIRROR)
+      {
+        Drawer->DrawMaskedPolygon(spr.surf, spr.rstyle.alpha, spr.rstyle.isAdditive(), !(spr.rstyle.flags&RenderStyleInfo::FlagNoDepthWrite));
+      }
+    }
+  }
+}
+
+#undef MAX_POFS
+
+
 //==========================================================================
 //
 //  VRenderLevelShared::DrawTranslucentPolys
@@ -831,87 +902,24 @@ extern "C" {
 void VRenderLevelShared::DrawTranslucentPolys () {
   VRenderLevelDrawer::DrawLists &dls = GetCurrentDLS();
 
-  const bool allowTransPolys = !dbg_disable_translucent_polys.asBool();
-
   //FIXME: we should use proper sort order instead, because with separate lists additive sprites
   //       are broken by translucent surfaces (additive sprite rendered first even if it is nearer
   //       than the surface)
 
+  transSprState.reset();
+  transSprState.allowTransPolys = !dbg_disable_translucent_polys.asBool();
+  transSprState.sortWithOfs = (r_sort_sprites.asBool() && r_sprite_use_pofs.asBool());
+
   if (dls.DrawSpriteList.length() > 0) {
-    //GCon->Logf("DrawTranslucentPolys: first=%u; used=%u; count=%u", traspFirst, traspUsed, traspUsed-traspFirst);
-
-    // sort 'em
-    if (!dbg_disable_sprite_sorting) {
-      timsort_r(dls.DrawSpriteList.ptr(), dls.DrawSpriteList.length(), sizeof(dls.DrawSpriteList[0]), &traspCmp, nullptr);
-    }
-
-#define MAX_POFS  (10)
-    bool pofsEnabled = false;
-    int pofs = 0;
-    float lastpdist = -1e12f; // for sprites: use polyofs for the same dist
-    bool firstSprite = true;
-
-    // other
-    for (auto &&spr : dls.DrawSpriteList) {
-      //GCon->Logf("  #%d: type=%d; alpha=%g; additive=%d; light=0x%08x; fade=0x%08x", f, spr.type, spr.Alpha, (int)spr.Additive, spr.light, spr.Fade);
-      if (spr.type == 2) {
-        // alias model
-        if (pofsEnabled) { Drawer->GLDisableOffset(); pofsEnabled = false; }
-        DrawEntityModel(spr.Ent, spr.rstyle/*spr.light, spr.Fade, spr.Alpha, spr.Additive*/, spr.TimeFrac, RPASS_Normal);
-      } else if (spr.type) {
-        // sprite
-        if (r_sort_sprites && r_sprite_use_pofs && (firstSprite || lastpdist == spr.pdist)) {
-          lastpdist = spr.pdist;
-          if (!firstSprite) {
-            if (!pofsEnabled) {
-              // switch to next pofs
-              //if (++pofs == MAX_POFS) pofs = 0;
-              ++pofs;
-              Drawer->GLPolygonOffsetEx(r_sprite_pslope, -(pofs*r_sprite_pofs)); // pull forward
-              pofsEnabled = true;
-            }
-          } else {
-            firstSprite = false;
-          }
-        } else {
-          lastpdist = spr.pdist;
-          if (pofsEnabled) { Drawer->GLDisableOffset(); pofsEnabled = false; }
-          // reset pofs
-          pofs = 0;
-        }
-        Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), spr.Verts, GTextureManager[spr.lump],
-                                  spr.rstyle, GetTranslation(spr.translation),
-                                  ColorMap, spr.normal, spr.pdist,
-                                  spr.saxis, spr.taxis, spr.texorg);
-      } else {
-        // masked polygon
-        // non-translucent and non-additive polys should not end up here
-        vassert(spr.surf);
-        if (pofsEnabled) { Drawer->GLDisableOffset(); pofsEnabled = false; }
-        if (allowTransPolys) {
-          //if (spr.surf->drawflags&surface_t::DF_MIRROR)
-          {
-            Drawer->DrawMaskedPolygon(spr.surf, spr.rstyle.alpha, spr.rstyle.isAdditive(), !(spr.rstyle.flags&RenderStyleInfo::FlagNoDepthWrite));
-          }
-        }
-      }
-    }
-#undef MAX_POFS
-
-    if (pofsEnabled) { Drawer->GLDisableOffset(); }
+    // there is no need to sort solid sprites
+    //if (!dbg_disable_sprite_sorting) timsort_r(dls.DrawSpriteList.ptr(), dls.DrawSpriteList.length(), sizeof(dls.DrawSpriteList[0]), &transCmp, nullptr);
+    for (auto &&spr : dls.DrawSpriteList) DrawTransSpr(spr);
   }
 
-  // this is code for separate lists
-
-  //GCon->Logf(NAME_Debug, "add=%d; alp=%d", DrawSurfListAdditive.length(), DrawSurfListAlpha.length());
-  // additive (order doesn't matter, so sort by texture)
-  // usually back-to-front
-  for (auto &&sfc : GetCurrentDLS().DrawSurfListAdditive) {
-    Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/true);
+  if (dls.DrawSurfListAlpha.length()) {
+    if (!dbg_disable_sprite_sorting) timsort_r(dls.DrawSurfListAlpha.ptr(), dls.DrawSurfListAlpha.length(), sizeof(dls.DrawSurfListAlpha[0]), &traspCmp, nullptr);
+    for (auto &&spr : dls.DrawSurfListAlpha) DrawTransSpr(spr);
   }
 
-  // usually back-to-front
-  for (auto &&sfc : GetCurrentDLS().DrawSurfListAlpha) {
-    Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/false);
-  }
+  if (transSprState.pofsEnabled) Drawer->GLDisableOffset();
 }
