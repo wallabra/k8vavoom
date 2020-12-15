@@ -54,7 +54,6 @@ static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", true, "Fo
 
 
 extern VCvarI nodes_builder_type;
-extern VCvarB ldr_fix_slope_cracks;
 #ifdef CLIENT
 extern VCvarI r_max_portal_depth;
 extern VCvarI r_max_portal_depth_override;
