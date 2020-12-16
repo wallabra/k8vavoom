@@ -598,8 +598,10 @@ bool VEmitContext::CheckLocalDecl (VName locname, const TLocation &locloc) {
       VConstant *oldConst = SelfClass->FindConstant(locname);
       if (oldConst) { ParseError(locloc, "Local `%s` conflicts with constant at %s", *locname, *oldConst->Loc.toStringNoCol()); res = false; }
 
+      /*
       oldConst = SelfClass->FindDecorateConstant(VStr(locname));
       if (oldConst) { ParseError(locloc, "Local `%s` conflicts with decorate constant at %s", *locname, *oldConst->Loc.toStringNoCol()); res = false; }
+      */
 
       VField *oldField = SelfClass->FindField(locname);
       if (oldField) { ParseError(locloc, "Local `%s` conflicts with field at %s", *locname, *oldField->Loc.toStringNoCol()); res = false; }
@@ -610,8 +612,10 @@ bool VEmitContext::CheckLocalDecl (VName locname, const TLocation &locloc) {
       VProperty *oldProp = SelfClass->FindProperty(locname);
       if (oldProp) { ParseError(locloc, "Local `%s` conflicts with property at %s", *locname, *oldProp->Loc.toStringNoCol()); res = false; }
 
+      /*
       oldProp = SelfClass->FindDecorateProperty(VStr(locname));
       if (oldProp) { ParseError(locloc, "Local `%s` conflicts with decorate property at %s", *locname, *oldProp->Loc.toStringNoCol()); res = false; }
+      */
     }
   }
   return res;
