@@ -52,8 +52,6 @@ extern VCvarI r_sprite_fix_delta;
 extern VCvarB r_use_real_sprite_offset;
 extern VCvarB r_use_sprofs_lump;
 
-static VCvarB r_dbg_thing_dump_vislist("r_dbg_thing_dump_vislist", false, "Dump built list of visible things?", 0);
-
 static VCvarB r_dbg_advthing_dump_actlist("r_dbg_advthing_dump_actlist", false, "Dump built list of active/affected things in advrender?", 0);
 static VCvarB r_dbg_advthing_dump_ambient("r_dbg_advthing_dump_ambient", false, "Dump rendered ambient things?", 0);
 static VCvarB r_dbg_advthing_dump_textures("r_dbg_advthing_dump_textures", false, "Dump rendered textured things?", 0);
@@ -64,7 +62,7 @@ static VCvarB r_dbg_advthing_draw_light("r_dbg_advthing_draw_light", true, "Draw
 static VCvarB r_dbg_advthing_draw_shadow("r_dbg_advthing_draw_shadow", true, "Draw textures for things?", 0);
 static VCvarB r_dbg_advthing_draw_fog("r_dbg_advthing_draw_fog", true, "Draw fog for things?", 0);
 
-static VCvarB r_model_advshadow_all("r_model_advshadow_all", false, "Light all alias models, not only those that are in blockmap (slower)?", CVAR_Archive);
+VCvarB r_model_advshadow_all("r_model_advshadow_all", false, "Light all alias models, not only those that are in blockmap (slower)?", CVAR_Archive);
 
 
 //==========================================================================
@@ -85,72 +83,6 @@ static inline bool SetupRenderStyleAndTime (const VEntity *ent, RenderStyleInfo 
   }
 
   return true;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::BuildVisibleObjectsList
-//
-//  this should be called after `RenderCollectSurfaces()`
-//
-//  this is not called for "regular" renderer
-//
-//==========================================================================
-void VRenderLevelShared::BuildVisibleObjectsList () {
-  visibleObjects.reset();
-  visibleAliasModels.reset();
-  allShadowModelObjects.reset();
-
-  if (!r_draw_mobjs) return;
-
-  const bool lightAll = r_model_advshadow_all;
-  const bool doDump = r_dbg_thing_dump_vislist.asBool();
-  bool alphaDone = false;
-
-  RenderStyleInfo ri;
-
-  if (doDump) GCon->Logf("=== VISIBLE THINGS ===");
-  for (TThinkerIterator<VEntity> it(Level); it; ++it) {
-    VEntity *ent = *it;
-
-    if (!ent->IsRenderable()) continue;
-
-    const bool hasAliasModel = HasEntityAliasModel(ent);
-
-    if (lightAll) {
-      // collect all things with models (we'll need them in advrender)
-      if (hasAliasModel) {
-        alphaDone = true;
-        if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
-        // ignore translucent things, they cannot cast a shadow
-        if (!ri.isTranslucent()) {
-          allShadowModelObjects.append(ent);
-          ent->NumRenderedShadows = 0; // for advanced renderer
-        }
-      } else {
-        alphaDone = false;
-      }
-    }
-
-    // skip things in subsectors that are not visible
-    if (!IsThingVisible(ent)) continue;
-
-    if (!alphaDone) {
-      if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
-    }
-
-    if (doDump) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z, ent->EntityFlags);
-    // mark as visible, why not?
-    // use bsp visibility, to not mark "adjacent" things
-    //if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) ent->FlagsEx |= VEntity::EFEX_Rendered;
-
-    visibleObjects.append(ent);
-    if (hasAliasModel) {
-      ent->NumRenderedShadows = 0; // for advanced renderer
-      visibleAliasModels.append(ent);
-    }
-  }
 }
 
 

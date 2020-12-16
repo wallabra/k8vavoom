@@ -196,7 +196,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
   //RenderPortals(); //k8: it was here before, why?
 
   MiniStopTimer profBuildMObj("BuildVisibleObjectsList", prof_r_bsp_mobj_render.asBool());
-  BuildVisibleObjectsList();
+  BuildVisibleObjectsList(r_shadows.asBool());
   profBuildMObj.stopAndReport();
 
   MiniStopTimer profDrawMObjAmb("RenderMobjsAmbient", prof_r_bsp_mobj_render.asBool());

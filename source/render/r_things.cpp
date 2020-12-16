@@ -42,6 +42,9 @@ extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
 
 extern VCvarB r_fake_shadows_alias_models;
+extern VCvarB r_model_advshadow_all;
+
+static VCvarB r_dbg_thing_dump_vislist("r_dbg_thing_dump_vislist", false, "Dump built list of visible things?", 0);
 
 VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", /*CVAR_Archive|*/CVAR_PreInit);
@@ -275,22 +278,26 @@ void VRenderLevelShared::SetupRIThingLighting (VEntity *ent, RenderStyleInfo &ri
 void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   if (mobj == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) return; // don't draw camera actor
 
+  /*
   if (Pass == RPASS_Normal) {
     // this is called only in regular renderer, and only once
     // so we can skip building visible things list, and perform a direct check here
     if (!mobj->IsRenderable()) return;
   }
+  */
 
   RenderStyleInfo ri;
   if (!CalculateRenderStyleInfo(ri, mobj->RenderStyle, mobj->Alpha, mobj->StencilColor)) return;
   //if (VStr::strEquCI(mobj->GetClass()->GetName(), "FlashSG")) GCon->Logf(NAME_Debug, "%s: %s", mobj->GetClass()->GetName(), ri.toCString());
 
+  /*
   if (Pass == RPASS_Normal) {
     // this is called only in regular renderer, and only once
     // so we can skip building visible things list, and perform a direct check here
     // skip things in subsectors that are not visible
     if (!IsThingVisible(mobj)) return;
   }
+  */
 
   SetupRIThingLighting(mobj, ri, false/*asAmbient*/, true/*allowBM*/);
   ri.fade = GetFade(SV_PointRegionLight(mobj->Sector, mobj->Origin));
@@ -313,13 +320,80 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
   if (!r_draw_mobjs) return;
   // "normal" pass has no object list
+  /*
   if (Pass == RPASS_Normal) {
     // render things
     for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
       RenderThing(*Ent, RPASS_Normal);
     }
-  } else {
+  } else
+  */
+  {
     // we have a list here
     for (auto &&ent : visibleObjects) RenderThing(ent, Pass);
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::BuildVisibleObjectsList
+//
+//  this should be called after `RenderCollectSurfaces()`
+//
+//==========================================================================
+void VRenderLevelShared::BuildVisibleObjectsList (bool doShadows) {
+  visibleObjects.reset();
+  visibleAliasModels.reset();
+  allShadowModelObjects.reset();
+
+  if (!r_draw_mobjs) return;
+
+  const bool lightAll = (doShadows && r_model_advshadow_all);
+  const bool doDump = r_dbg_thing_dump_vislist.asBool();
+  bool alphaDone = false;
+
+  RenderStyleInfo ri;
+
+  if (doDump) GCon->Logf("=== VISIBLE THINGS ===");
+  for (TThinkerIterator<VEntity> it(Level); it; ++it) {
+    VEntity *ent = *it;
+
+    if (!ent->IsRenderable()) continue;
+
+    const bool hasAliasModel = HasEntityAliasModel(ent);
+
+    if (lightAll) {
+      // collect all things with models (we'll need them in advrender)
+      if (hasAliasModel) {
+        alphaDone = true;
+        if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
+        // ignore translucent things, they cannot cast a shadow
+        if (!ri.isTranslucent()) {
+          allShadowModelObjects.append(ent);
+          ent->NumRenderedShadows = 0; // for advanced renderer
+        }
+      } else {
+        alphaDone = false;
+      }
+    }
+
+    // skip things in subsectors that are not visible
+    if (!IsThingVisible(ent)) continue;
+
+    if (!alphaDone) {
+      if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
+    }
+
+    if (doDump) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z, ent->EntityFlags);
+    // mark as visible, why not?
+    // use bsp visibility, to not mark "adjacent" things
+    //if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) ent->FlagsEx |= VEntity::EFEX_Rendered;
+
+    visibleObjects.append(ent);
+    if (hasAliasModel) {
+      ent->NumRenderedShadows = 0; // for advanced renderer
+      visibleAliasModels.append(ent);
+    }
   }
 }

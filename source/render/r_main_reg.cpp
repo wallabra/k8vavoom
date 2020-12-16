@@ -349,8 +349,7 @@ void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *
   //if (!r_reg_disable_portals) RenderPortals(); //k8: it was here before, why?
   if (dbg_show_dlight_trace_info) GCon->Logf("DYNLIGHT: %u total, %u traced", gf_dynlights_processed, gf_dynlights_traced);
 
-  //k8: no need to build list here, as things only processed once
-  //BuildVisibleObjectsList();
+  BuildVisibleObjectsList(false); // no shadows
   MiniStopTimer profDrawMObj("RenderMobjs", prof_r_bsp_mobj_render.asBool());
   RenderMobjs(RPASS_Normal);
   profDrawMObj.stopAndReport();

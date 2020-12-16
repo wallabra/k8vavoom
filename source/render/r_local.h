@@ -674,7 +674,7 @@ protected:
 
   void PrepareWorldRender (const refdef_t *, const VViewClipper *);
   // this should be called after `RenderCollectSurfaces()`
-  void BuildVisibleObjectsList ();
+  void BuildVisibleObjectsList (bool doShadows);
 
   // general
   static float CalcEffectiveFOV (float fov, const refdef_t &refdef);
