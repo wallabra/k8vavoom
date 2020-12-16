@@ -63,6 +63,18 @@ VStatementBuiltinInfo StatementDynArrayDispatchInfo[] = {
 #include "vc_progdefs.h"
 
 
+struct SaveIntVal {
+  int *vptr;
+  int oldval;
+
+  SaveIntVal () = delete;
+  SaveIntVal (const SaveIntVal &) = delete;
+  SaveIntVal &operator = (const SaveIntVal &) = delete;
+  SaveIntVal (int *avar, int newval) noexcept { vptr = avar; oldval = *avar; *avar = newval; }
+  ~SaveIntVal () noexcept { *vptr = oldval; }
+};
+
+
 //==========================================================================
 //
 //  VEmitContext::VEmitContext
@@ -581,21 +593,26 @@ bool VEmitContext::CheckLocalDecl (VName locname, const TLocation &locloc) {
     }
   } else {
     if (SelfClass) {
-      {
-        const int oldCSF = VObject::cliCaseSensitiveFields;
-        VObject::cliCaseSensitiveFields = 0;
-        VConstant *oldConst = SelfClass->FindConstant(locname);
-        VObject::cliCaseSensitiveFields = oldCSF;
-        if (oldConst) { ParseError(locloc, "Local `%s` conflicts with constant at %s", *locname, *oldConst->Loc.toStringNoCol()); res = false; }
-      }
-      {
-        const int oldCSF = VObject::cliCaseSensitiveFields;
-        VObject::cliCaseSensitiveFields = 0;
-        VField *oldField = SelfClass->FindField(locname);
-        VObject::cliCaseSensitiveFields = oldCSF;
-        if (oldField) { ParseError(locloc, "Local `%s` conflicts with field at %s", *locname, *oldField->Loc.toStringNoCol()); res = false; }
-      }
-    }// else GLog.Logf(NAME_Debug, "WTF?!");
+      SaveIntVal ov(&VObject::cliCaseSensitiveFields, 0);
+
+      VConstant *oldConst = SelfClass->FindConstant(locname);
+      if (oldConst) { ParseError(locloc, "Local `%s` conflicts with constant at %s", *locname, *oldConst->Loc.toStringNoCol()); res = false; }
+
+      oldConst = SelfClass->FindDecorateConstant(VStr(locname));
+      if (oldConst) { ParseError(locloc, "Local `%s` conflicts with decorate constant at %s", *locname, *oldConst->Loc.toStringNoCol()); res = false; }
+
+      VField *oldField = SelfClass->FindField(locname);
+      if (oldField) { ParseError(locloc, "Local `%s` conflicts with field at %s", *locname, *oldField->Loc.toStringNoCol()); res = false; }
+
+      VMethod *oldMethod = SelfClass->FindMethod(locname);
+      if (oldMethod) { ParseError(locloc, "Local `%s` conflicts with method at %s", *locname, *oldMethod->Loc.toStringNoCol()); res = false; }
+
+      VProperty *oldProp = SelfClass->FindProperty(locname);
+      if (oldProp) { ParseError(locloc, "Local `%s` conflicts with property at %s", *locname, *oldProp->Loc.toStringNoCol()); res = false; }
+
+      oldProp = SelfClass->FindDecorateProperty(VStr(locname));
+      if (oldProp) { ParseError(locloc, "Local `%s` conflicts with decorate property at %s", *locname, *oldProp->Loc.toStringNoCol()); res = false; }
+    }
   }
   return res;
 }
