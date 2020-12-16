@@ -330,6 +330,9 @@ void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *
   //MarkLeaves(); // moved to `PrepareWorldRender()`
   //if (!MirrorLevel && !r_disable_world_update) UpdateFakeSectors();
 
+  // we will collect rendered sectors, so we could collect things from them
+  nextRenderedSectorsCounter();
+
   gf_dynlights_processed = 0;
   gf_dynlights_traced = 0;
 

@@ -36,6 +36,8 @@
 #include "r_local.h"
 #include "../server/sv_local.h"
 
+//#define VV_THING_COLLECTOR_STATS
+
 
 extern VCvarB r_chasecam;
 extern VCvarB r_brightmaps;
@@ -45,6 +47,8 @@ extern VCvarB r_fake_shadows_alias_models;
 extern VCvarB r_model_advshadow_all;
 
 static VCvarB r_dbg_thing_dump_vislist("r_dbg_thing_dump_vislist", false, "Dump built list of visible things?", 0);
+
+static VCvarB r_thing_faster_collect("r_thing_faster_collect", false, "Use faster by-sector thing collector? (This may miss some visible things in invisible sectors)", CVAR_Archive);
 
 VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", /*CVAR_Archive|*/CVAR_PreInit);
@@ -356,44 +360,123 @@ void VRenderLevelShared::BuildVisibleObjectsList (bool doShadows) {
   RenderStyleInfo ri;
 
   if (doDump) GCon->Logf("=== VISIBLE THINGS ===");
-  for (TThinkerIterator<VEntity> it(Level); it; ++it) {
-    VEntity *ent = *it;
 
-    if (!ent->IsRenderable()) continue;
+  if (r_thing_faster_collect) {
+    if (renderedSectors.length() == 0) return;
 
-    const bool hasAliasModel = HasEntityAliasModel(ent);
+    /*
+    const VObject::GCStats &stats = VObject::GetGCStats();
+    int rtmlen = renderedThingMarks.length();
+    if (rtmlen < stats.alive) {
+      renderedThingMarks.setLength(stats.alive+8192);
+      for (int f = rtmlen; f < renderedThingMarks.length(); ++f) renderedThingMarks[f] = 0;
+      rtmlen = renderedThingMarks.length();
+    }
+    */
 
-    if (lightAll) {
-      // collect all things with models (we'll need them in advrender)
-      if (hasAliasModel) {
-        alphaDone = true;
-        if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
-        // ignore translucent things, they cannot cast a shadow
-        if (!ri.isTranslucent()) {
-          allShadowModelObjects.append(ent);
-          ent->NumRenderedShadows = 0; // for advanced renderer
+    #ifdef VV_THING_COLLECTOR_STATS
+    int checkedCount = 0;
+    #endif
+    renderedThingMarks.reset();
+    const int visCount = Level->nextVisitedCount();
+    for (auto &&secnum : renderedSectors) {
+      for (msecnode_t *n = Level->Sectors[secnum].TouchingThingList; n; n = n->SNext) {
+        if (n->Visited == visCount) continue;
+        n->Visited = visCount;
+        VEntity *ent = n->Thing;
+        if (!ent || !ent->IsRenderable()) continue;
+        if (renderedThingMarks.put(ent, true)) continue; // already collected
+
+        #ifdef VV_THING_COLLECTOR_STATS
+        ++checkedCount;
+        #endif
+
+        const bool hasAliasModel = HasEntityAliasModel(ent);
+
+        if (lightAll) {
+          // collect all things with models (we'll need them in advrender)
+          if (hasAliasModel) {
+            alphaDone = true;
+            if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
+            // ignore translucent things, they cannot cast a shadow
+            if (!ri.isTranslucent()) {
+              allShadowModelObjects.append(ent);
+              ent->NumRenderedShadows = 0; // for advanced renderer
+            }
+          } else {
+            alphaDone = false;
+          }
         }
-      } else {
-        alphaDone = false;
+
+        // skip things in subsectors that are not visible
+        if (!IsThingVisible(ent)) continue;
+
+        if (!alphaDone) {
+          if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
+        }
+
+        if (doDump) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z, ent->EntityFlags);
+        // mark as visible, why not?
+        // use bsp visibility, to not mark "adjacent" things
+        //if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) ent->FlagsEx |= VEntity::EFEX_Rendered;
+
+        visibleObjects.append(ent);
+        if (hasAliasModel) {
+          ent->NumRenderedShadows = 0; // for advanced renderer
+          visibleAliasModels.append(ent);
+        }
       }
     }
 
-    // skip things in subsectors that are not visible
-    if (!IsThingVisible(ent)) continue;
-
-    if (!alphaDone) {
-      if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
+    #ifdef VV_THING_COLLECTOR_STATS
+    int totalCount = 0;
+    for (TThinkerIterator<VEntity> it(Level); it; ++it) {
+      VEntity *ent = *it;
+      if (!ent->IsRenderable()) continue;
+      ++totalCount;
     }
+    GCon->Logf(NAME_Debug, "checked %d things out of %d", checkedCount, totalCount);
+    #endif
+  } else {
+    for (TThinkerIterator<VEntity> it(Level); it; ++it) {
+      VEntity *ent = *it;
 
-    if (doDump) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z, ent->EntityFlags);
-    // mark as visible, why not?
-    // use bsp visibility, to not mark "adjacent" things
-    //if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) ent->FlagsEx |= VEntity::EFEX_Rendered;
+      if (!ent->IsRenderable()) continue;
 
-    visibleObjects.append(ent);
-    if (hasAliasModel) {
-      ent->NumRenderedShadows = 0; // for advanced renderer
-      visibleAliasModels.append(ent);
+      const bool hasAliasModel = HasEntityAliasModel(ent);
+
+      if (lightAll) {
+        // collect all things with models (we'll need them in advrender)
+        if (hasAliasModel) {
+          alphaDone = true;
+          if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
+          // ignore translucent things, they cannot cast a shadow
+          if (!ri.isTranslucent()) {
+            allShadowModelObjects.append(ent);
+            ent->NumRenderedShadows = 0; // for advanced renderer
+          }
+        } else {
+          alphaDone = false;
+        }
+      }
+
+      // skip things in subsectors that are not visible
+      if (!IsThingVisible(ent)) continue;
+
+      if (!alphaDone) {
+        if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
+      }
+
+      if (doDump) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z, ent->EntityFlags);
+      // mark as visible, why not?
+      // use bsp visibility, to not mark "adjacent" things
+      //if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) ent->FlagsEx |= VEntity::EFEX_Rendered;
+
+      visibleObjects.append(ent);
+      if (hasAliasModel) {
+        ent->NumRenderedShadows = 0; // for advanced renderer
+        visibleAliasModels.append(ent);
+      }
     }
   }
 }

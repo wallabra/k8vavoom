@@ -1152,6 +1152,8 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
       const unsigned secnum = (unsigned)(ptrdiff_t)(sub->sector-&Level->Sectors[0]);
       BspVisSector[secnum>>3] |= 1U<<(secnum&7);
 
+      markSectorRendered(secnum);
+
       // update world
       if (sub->updateWorldFrame != updateWorldFrame) {
         sub->updateWorldFrame = updateWorldFrame;

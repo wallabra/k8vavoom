@@ -682,6 +682,8 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   ResetVisFrameCount();
   ResetDLightFrameCount();
 
+  renderedSectorCounter = 0;
+
   ColorMap = 0;
   skyheight = 0;
   memset((void *)(&dlinfo[0]), 0, sizeof(dlinfo));

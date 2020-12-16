@@ -114,11 +114,21 @@ menudef AdvVideoOptions {
   */
 
   option bool {
+    title = "Faster Visible Things Collecting";
+    cvar = r_thing_faster_collect;
+    help =
+      "Should renderer collect only things from sectors it marked as visible?",
+      "This *may* speedup rendering of maps with alot of things, but disables",
+      "the next option (i.e. when this option is turned on, the next one does",
+      "nothing).";
+  }
+
+  option bool {
     title = "Better Thing Rendering";
     cvar = r_draw_adjacent_sector_things;
     help =
-      "Render all things that touches a visible sector."
-      "This can slow down rendering a little, but fixes some cases where a"
+      "Render all things that touches a visible sector.",
+      "This can slow down rendering a little, but fixes some cases where a",
       "thing suddenly pops into view when camera moves a little.";
   }
 

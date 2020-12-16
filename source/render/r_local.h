@@ -419,6 +419,11 @@ protected:
   TArray<VEntity *> allShadowModelObjects; // used in advrender
   bool useInCurrLightAsLight; // use `mobjsInCurrLightModels()` list to render models in light?
 
+  TArray<int> renderedSectors; // sector numbers
+  TArray<int> renderedSectorMarks; // contiains counter; sized by number of sectors
+  int renderedSectorCounter;
+  TMapNC<VEntity *, bool> renderedThingMarks;
+
   BSPVisInfo *bspVisRadius;
   vuint32 bspVisRadiusFrame;
   float bspVisLastCheckRadius;
@@ -465,6 +470,28 @@ protected:
     return
       amX2 >= bbox3d[0+0] && amY2 >= bbox3d[0+1] &&
       amX <= bbox3d[3+0] && amY <= bbox3d[3+1];
+  }
+
+  // also, resets list of rendered sectors
+  inline void nextRenderedSectorsCounter () noexcept {
+    if (++renderedSectorCounter == MAX_VINT32) {
+      renderedSectorCounter = 1;
+      for (auto &&rs : renderedSectorMarks) rs = 0;
+    }
+    renderedSectors.reset();
+  }
+
+  inline void markSectorRendered (int secnum) noexcept {
+    if (secnum < 0 || secnum >= Level->NumSectors) return; // just in case
+    if (renderedSectorMarks.length() == 0) {
+      renderedSectorMarks.setLength(Level->NumSectors);
+      for (auto &&rs : renderedSectorMarks) rs = 0;
+    }
+    vassert(renderedSectorMarks.length() == Level->NumSectors);
+    if (renderedSectorMarks[secnum] != renderedSectorCounter) {
+      renderedSectorMarks[secnum] = renderedSectorCounter;
+      renderedSectors.append(secnum);
+    }
   }
 
 private:

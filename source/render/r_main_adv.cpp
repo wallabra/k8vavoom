@@ -138,6 +138,9 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
 
   double totalRenderTime = 0.0;
 
+  // we will collect rendered sectors, so we could collect things from them
+  nextRenderedSectorsCounter();
+
 #if 0
   {
     VMatrix4 model, proj;
