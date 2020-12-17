@@ -776,7 +776,7 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
 void VOpenGLDrawer::BeginModelShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) {
   if (gl_gpu_debug_models) p_glDebugLogf("BeginModelShadowMaps");
 
-  ShadowsModelShadowMap.Activate();
+  //ShadowsModelShadowMap.Activate();
   ShadowsModelShadowMap.SetTexture(0);
   ShadowsModelShadowMap.SetLightPos(LightPos);
   ShadowsModelShadowMap.SetLightRadius(Radius);
