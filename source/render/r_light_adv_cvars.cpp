@@ -36,6 +36,3 @@ VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark not
 //static VCvarB r_advlight_opt_trace("r_advlight_opt_trace", true, "Try to skip shadow volumes when a light can cast no shadow.", CVAR_Archive|CVAR_PreInit);
 
 VCvarB r_advlight_opt_optimise_scissor("r_advlight_opt_optimise_scissor", true, "Optimise scissor with lit geometry bounds.", CVAR_Archive);
-
-
-VCvarB r_adv_use_collector("r_adv_use_collector", true, "Use one collect pass for advanced lighting?", CVAR_Archive);
