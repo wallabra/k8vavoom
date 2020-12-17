@@ -158,6 +158,7 @@ VCvarB prof_r_world_prepare("prof_r_world_prepare", false, "Show pre-render worl
 VCvarB prof_r_bsp_collect("prof_r_bsp_collect", false, "Show BSP surface collection time.", 0);
 VCvarB prof_r_bsp_world_render("prof_r_bsp_world_render", false, "Show world rendering time (GPU).", 0);
 VCvarB prof_r_bsp_mobj_render("prof_r_bsp_mobj_render", false, "Show total mobj rendering time (including collection time).", 0);
+VCvarB prof_r_bsp_mobj_collect("prof_r_bsp_mobj_collect", false, "Show total mobj collecting time.", 0);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

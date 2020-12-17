@@ -69,6 +69,7 @@ extern VCvarB prof_r_world_prepare;
 extern VCvarB prof_r_bsp_collect;
 extern VCvarB prof_r_bsp_world_render;
 extern VCvarB prof_r_bsp_mobj_render;
+extern VCvarB prof_r_bsp_mobj_collect;
 
 extern VCvarB r_shadowmaps;
 

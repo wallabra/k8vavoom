@@ -360,6 +360,7 @@ void VRenderLevelShared::BuildVisibleObjectsList (bool doShadows) {
   RenderStyleInfo ri;
 
   if (doDump) GCon->Logf("=== VISIBLE THINGS ===");
+  MiniStopTimer profCollect("BuildVisibleObjectsList", prof_r_bsp_mobj_collect.asBool());
 
   if (r_thing_faster_collect) {
     if (renderedSectors.length() == 0) return;
@@ -479,4 +480,6 @@ void VRenderLevelShared::BuildVisibleObjectsList (bool doShadows) {
       }
     }
   }
+
+  profCollect.stopAndReport();
 }
