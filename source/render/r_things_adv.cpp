@@ -194,7 +194,7 @@ void VRenderLevelShadowVolume::RenderMobjsShadow (VEntity *owner, vuint32 dlflag
 //  VRenderLevelShadowVolume::RenderMobjsShadowMap
 //
 //==========================================================================
-void VRenderLevelShadowVolume::RenderMobjsShadowMap (VEntity *owner, vuint32 dlflags) {
+void VRenderLevelShadowVolume::RenderMobjsShadowMap (VEntity *owner, const unsigned int facenum, vuint32 dlflags) {
   if (!r_draw_mobjs || !r_models || !r_model_shadows) return;
   if (!r_dbg_advthing_draw_shadow) return;
   float TimeFrac;
@@ -356,10 +356,10 @@ void VRenderLevelShadowVolume::RenderMobjsFog () {
 
 //==========================================================================
 //
-//  VRenderLevelShadowVolume::RenderMobjSpriteShadowMaps
+//  VRenderLevelShadowVolume::RenderMobjSpriteShadowMap
 //
 //==========================================================================
-void VRenderLevelShadowVolume::RenderMobjSpriteShadowMaps (VEntity *owner, const unsigned int facenum, int spShad, vuint32 dlflags) {
+void VRenderLevelShadowVolume::RenderMobjSpriteShadowMap (VEntity *owner, const unsigned int facenum, int spShad, vuint32 dlflags) {
   if (spShad < 1) return;
   const bool doPlayer = r_shadowmap_sprshadows_player.asBool();
   for (auto &&mo : mobjsInCurrLightSprites) {

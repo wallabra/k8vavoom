@@ -619,16 +619,16 @@ public:
 
   virtual void BeginModelsAmbientPass () override;
   virtual void EndModelsAmbientPass () override;
-  virtual void DrawAliasModelAmbient(const TVec &, const TAVec &, const AliasModelTrans &Transform,
+  virtual void DrawAliasModelAmbient (const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, VTexture *, vuint32, float, float, bool,
     bool, bool) override;
 
   virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle, bool doShadow) override;
   virtual void EndModelsLightPass () override;
-  virtual void DrawAliasModelLight(const TVec &, const TAVec &, const AliasModelTrans &Transform,
+  virtual void DrawAliasModelLight (const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, VTexture *, float, float, bool, bool) override;
 
-  virtual void BeginModelShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) override;
+  virtual void BeginModelShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) override;
   virtual void EndModelShadowMaps () override;
   virtual void SetupModelShadowMap (unsigned int facenum) override;
   virtual void DrawAliasModelShadowMap (const TVec &origin, const TAVec &angles,

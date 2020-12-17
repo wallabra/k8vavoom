@@ -773,19 +773,7 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
 //  this MUST be called after map shadowmap setup
 //
 //==========================================================================
-void VOpenGLDrawer::BeginModelShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle, int swidth, int sheight) {
-  /*
-  coneDir = aconeDir;
-  coneAngle = (aconeAngle <= 0.0f || aconeAngle >= 360.0f ? 0.0f : aconeAngle);
-
-  if (coneAngle && aconeDir.isValid() && !aconeDir.isZero()) {
-    spotLight = true;
-    coneDir.normaliseInPlace();
-  } else {
-    spotLight = false;
-  }
-  */
-
+void VOpenGLDrawer::BeginModelShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) {
   if (gl_gpu_debug_models) p_glDebugLogf("BeginModelShadowMaps");
 
   ShadowsModelShadowMap.Activate();
@@ -831,6 +819,7 @@ void VOpenGLDrawer::DrawAliasModelShadowMap (const TVec &origin, const TAVec &an
                               bool Interpolate, bool AllowTransparency)
 {
   if (!Skin || Skin->Type == TEXTYPE_Null) return; // do not render models without textures
+  if (!gl_dbg_adv_render_shadow_models) return;
 
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
@@ -839,8 +828,6 @@ void VOpenGLDrawer::DrawAliasModelShadowMap (const TVec &origin, const TAVec &an
   AliasSetupTransform(origin, angles, Transform, RotationMatrix);
 
   SetPicModel(Skin, nullptr, CM_Default);
-
-  if (!gl_dbg_adv_render_shadow_models) return;
 
   UploadModel(Mdl);
   //GLDRW_CHECK_ERROR("model shadowmap: UploadModel");
@@ -884,12 +871,16 @@ void VOpenGLDrawer::DrawAliasModelShadowMap (const TVec &origin, const TAVec &an
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
   //GLDRW_CHECK_ERROR("model shadowmap: bind element array buffer");
 
+  /*
   for (unsigned int fc = 0; fc < 6; ++fc) {
     SetupModelShadowMap(fc);
     ShadowsModelShadowMap.UploadChangedUniforms();
     p_glDrawRangeElements(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0);
     //GLDRW_CHECK_ERROR("model shadowmap: draw");
   }
+  */
+  ShadowsModelShadowMap.UploadChangedUniforms();
+  p_glDrawRangeElements(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0);
 
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
   //GLDRW_CHECK_ERROR("model shadowmap: unbind element array buffer");

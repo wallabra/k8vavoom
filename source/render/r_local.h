@@ -1326,10 +1326,10 @@ protected:
   void RenderMobjsTextures ();
   void RenderMobjsLight (VEntity *owner);
   void RenderMobjsShadow (VEntity *owner, vuint32 dlflags);
-  void RenderMobjsShadowMap (VEntity *owner, vuint32 dlflags);
+  void RenderMobjsShadowMap (VEntity *owner, const unsigned int facenum, vuint32 dlflags);
   void RenderMobjsFog ();
 
-  void RenderMobjSpriteShadowMaps (VEntity *owner, const unsigned int facenum, int spShad, vuint32 dlflags);
+  void RenderMobjSpriteShadowMap (VEntity *owner, const unsigned int facenum, int spShad, vuint32 dlflags);
   // doesn't do any checks, just renders it
   void RenderMobjShadowMapSprite (VEntity *ent, const unsigned int facenum, const bool allowRotating);
 

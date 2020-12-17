@@ -351,14 +351,21 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
       // sort shadow surfaces by textures
       const int spShad = r_shadowmap_sprshadows.asInt();
       timsort_r(shadowSurfaces.ptr(), shadowSurfaces.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
+      const bool doModels = r_models.asBool();
+      if (doModels) Drawer->BeginModelShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle);
       for (unsigned fc = 0; fc < 6; ++fc) {
         Drawer->SetupLightShadowMap(fc);
+        if (doModels) Drawer->SetupModelShadowMap(fc);
         for (auto &&surf : shadowSurfaces) Drawer->RenderSurfaceShadowMap(surf);
-        if (spShad > 0) RenderMobjSpriteShadowMaps(ent, fc, spShad, dlflags);
+        if (spShad > 0) RenderMobjSpriteShadowMap(ent, fc, spShad, dlflags);
+        if (doModels) RenderMobjsShadowMap(ent, fc, dlflags);
       }
-      Drawer->BeginModelShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle, refdef.width, refdef.height);
+      if (doModels) Drawer->EndModelShadowMaps();
+      /*
+      Drawer->BeginModelShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle);
       RenderMobjsShadowMap(ent, dlflags);
       Drawer->EndModelShadowMaps();
+      */
     }
     Drawer->EndLightShadowMaps();
   } else {
