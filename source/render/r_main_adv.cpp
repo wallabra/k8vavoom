@@ -221,11 +221,6 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     linetrace_t Trace;
     TVec Delta;
 
-    CurrLightsNumber = 0;
-    CurrShadowsNumber = 0;
-    AllLightsNumber = 0;
-    AllShadowsNumber = 0;
-
     // do not render lights further than `gl_maxdist`
     const float maxLightDist = GetLightMaxDistDef();
     const float rlightraduisSq = maxLightDist*maxLightDist;
@@ -313,7 +308,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
           //if (own) GCon->Logf("STLOWN: %s", *own->GetClass()->GetFullName());
           TVec lorg = sli->stlight->origin;
           lorg.z += sli->zofs;
-          RenderLightShadows(own, flags, RD, Range, lorg, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->color, true, sli->stlight->coneDirection, sli->stlight->coneAngle);
+          RenderLightShadows(own, flags, RD, Range, lorg, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->color, sli->stlight->coneDirection, sli->stlight->coneAngle);
         }
       }
     }
@@ -382,7 +377,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
           // always render player lights
           const bool forced = (own && own->IsPlayer());
           TVec lorg = dli->l->origin;
-          RenderLightShadows(own, dli->l->flags, RD, Range, lorg, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, true, dli->l->coneDirection, dli->l->coneAngle, forced);
+          RenderLightShadows(own, dli->l->flags, RD, Range, lorg, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, dli->l->coneDirection, dli->l->coneAngle, forced);
         }
       }
     }
@@ -391,10 +386,6 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
 
     if (dbg_adv_show_light_count) {
       GCon->Logf("total lights per frame: %d (%d static, %d dynamic)", LightsRendered, LightsRendered-DynLightsRendered, DynLightsRendered);
-    }
-
-    if (dbg_adv_show_light_seg_info) {
-      GCon->Logf("rendered %d shadow segs, and %d light segs", AllShadowsNumber, AllLightsNumber);
     }
   }
 

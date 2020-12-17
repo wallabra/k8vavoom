@@ -28,8 +28,6 @@
 
 static VCvarB clip_adv_regions_shadow("clip_adv_regions_shadow", false, "Clip (1D) shadow regions?", CVAR_PreInit);
 
-static VCvarI r_max_shadow_segs_one("r_max_shadow_segs_one", "-1", "Maximum shadow segments for one light.", CVAR_Archive);
-
 
 //==========================================================================
 //
@@ -323,22 +321,14 @@ void VRenderLevelShadowVolume::RenderShadowSubsector (int num) {
 //  recursively. Just call with BSP root.
 //
 //==========================================================================
-void VRenderLevelShadowVolume::RenderShadowBSPNode (int bspnum, const float *bbox, bool LimitLights) {
-  if (LimitLights) {
-    if (r_max_shadow_segs_all >= 0 && AllShadowsNumber > r_max_shadow_segs_all) return;
-    if (r_max_shadow_segs_one >= 0 && CurrShadowsNumber > r_max_shadow_segs_one) return;
-  }
-
+void VRenderLevelShadowVolume::RenderShadowBSPNode (int bspnum, const float *bbox) {
 #ifdef VV_CLIPPER_FULL_CHECK
   if (LightClip.ClipIsFull()) return;
 #endif
 
   if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
 
-  if (bspnum == -1) {
-    if (LimitLights) { ++CurrShadowsNumber; ++AllShadowsNumber; }
-    return RenderShadowSubsector(0);
-  }
+  if (bspnum == -1) return RenderShadowSubsector(0);
 
   // found a subsector?
   if (BSPIDX_IS_NON_LEAF(bspnum)) {
@@ -347,21 +337,20 @@ void VRenderLevelShadowVolume::RenderShadowBSPNode (int bspnum, const float *bbo
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
     if (dist >= CurrLightRadius) {
       // light is completely on front side
-      return RenderShadowBSPNode(bsp->children[0], bsp->bbox[0], LimitLights);
+      return RenderShadowBSPNode(bsp->children[0], bsp->bbox[0]);
     } else if (dist <= -CurrLightRadius) {
       // light is completely on back side
-      return RenderShadowBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
+      return RenderShadowBSPNode(bsp->children[1], bsp->bbox[1]);
     } else {
       //int side = bsp->PointOnSide(CurrLightPos);
       unsigned side = (unsigned)(dist <= 0.0f);
       // recursively divide front space
-      RenderShadowBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
+      RenderShadowBSPNode(bsp->children[side], bsp->bbox[side]);
       // always divide back space for shadows
       side ^= 1;
-      return RenderShadowBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
+      return RenderShadowBSPNode(bsp->children[side], bsp->bbox[side]);
     }
   } else {
-    if (LimitLights) { ++CurrShadowsNumber; ++AllShadowsNumber; }
     return RenderShadowSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum));
   }
 }

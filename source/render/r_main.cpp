@@ -691,10 +691,6 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   CurrLightRadius = 0;
   CurrLightInFrustum = false;
   CurrLightBit = 0;
-  CurrLightsNumber = 0;
-  CurrShadowsNumber = 0;
-  AllLightsNumber = 0;
-  AllShadowsNumber = 0;
   HasLightIntersection = false;
   LitSurfaceHit = false;
   LitCalcBBox = true;

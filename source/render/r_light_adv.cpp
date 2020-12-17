@@ -109,7 +109,7 @@ static inline int advCompareSurfaces (const void *saa, const void *sbb, void *) 
 void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD,
                                                    const VViewClipper *Range,
                                                    TVec &Pos, float Radius, float LightMin, vuint32 Color,
-                                                   bool LimitLights, TVec coneDir, float coneAngle, bool forceRender)
+                                                   TVec coneDir, float coneAngle, bool forceRender)
 {
   if (Radius <= LightMin || gl_dbg_wireframe) return;
 
@@ -180,8 +180,6 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   ++LightsRendered;
   if (DynamicLights) ++DynLightsRendered;
 
-  CurrShadowsNumber = 0;
-  CurrLightsNumber = 0;
   CurrLightRadius = Radius; // we need full radius, not modified
   CurrLightColor = Color;
 
@@ -236,8 +234,6 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     useZPass = true;
   }
   */
-
-  if (r_max_light_segs_all < 0 && r_max_light_segs_one < 0) LimitLights = false;
 
   // one-sided sprites can cast shadows, because why not?
   // this way, we may cast shadow from most decorations
@@ -338,7 +334,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     (void)fsecCounterGen();
     dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
     dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
-    CollectAdvLightBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+    CollectAdvLightBSPNode(Level->NumNodes-1, dummyBBox);
   }
 
   // do shadow volumes
@@ -356,26 +352,24 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     if (allowShadows) {
       if (!useCollector) (void)fsecCounterGen(); // for checker
       // sort shadow surfaces by textures
-      if (r_max_shadow_segs_all) {
-        const int spShad = r_shadowmap_sprshadows.asInt();
-        if (useCollector) {
-          timsort_r(shadowSurfaces.ptr(), shadowSurfaces.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
-          for (unsigned fc = 0; fc < 6; ++fc) {
-            Drawer->SetupLightShadowMap(fc);
-            for (auto &&surf : shadowSurfaces) Drawer->RenderSurfaceShadowMap(surf);
-            if (spShad > 0) RenderMobjSpriteShadowMaps(ent, fc, spShad, dlflags);
-          }
-        } else {
-          smapSurfaces.reset();
-          dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
-          dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
-          RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
-          //GCon->Logf(NAME_Debug, "light at (%g,%g,%g); raduis=%g; surfaces=%d", CurrLightPos.x, CurrLightPos.y, CurrLightPos.z, CurrLightRadius, smapSurfaces.length());
-          for (unsigned fc = 0; fc < 6; ++fc) {
-            Drawer->SetupLightShadowMap(fc);
-            for (auto &&surf : smapSurfaces) Drawer->RenderSurfaceShadowMap(surf);
-            if (spShad > 0) RenderMobjSpriteShadowMaps(ent, fc, spShad, dlflags);
-          }
+      const int spShad = r_shadowmap_sprshadows.asInt();
+      if (useCollector) {
+        timsort_r(shadowSurfaces.ptr(), shadowSurfaces.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
+        for (unsigned fc = 0; fc < 6; ++fc) {
+          Drawer->SetupLightShadowMap(fc);
+          for (auto &&surf : shadowSurfaces) Drawer->RenderSurfaceShadowMap(surf);
+          if (spShad > 0) RenderMobjSpriteShadowMaps(ent, fc, spShad, dlflags);
+        }
+      } else {
+        smapSurfaces.reset();
+        dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
+        dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
+        RenderShadowBSPNode(Level->NumNodes-1, dummyBBox);
+        //GCon->Logf(NAME_Debug, "light at (%g,%g,%g); raduis=%g; surfaces=%d", CurrLightPos.x, CurrLightPos.y, CurrLightPos.z, CurrLightRadius, smapSurfaces.length());
+        for (unsigned fc = 0; fc < 6; ++fc) {
+          Drawer->SetupLightShadowMap(fc);
+          for (auto &&surf : smapSurfaces) Drawer->RenderSurfaceShadowMap(surf);
+          if (spShad > 0) RenderMobjSpriteShadowMaps(ent, fc, spShad, dlflags);
         }
       }
       Drawer->BeginModelShadowMaps(CurrLightPos, CurrLightRadius, coneDir, coneAngle, refdef.width, refdef.height);
@@ -391,14 +385,12 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
         // pull forward
         Drawer->GLPolygonOffsetEx(r_shadowvol_pslope, -r_shadowvol_pofs);
       }
-      if (r_max_shadow_segs_all) {
-        if (useCollector) {
-          RenderShadowSurfaceList();
-        } else {
-          dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
-          dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
-          RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
-        }
+      if (useCollector) {
+        RenderShadowSurfaceList();
+      } else {
+        dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
+        dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
+        RenderShadowBSPNode(Level->NumNodes-1, dummyBBox);
       }
       Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
       RenderMobjsShadow(ent, dlflags);
@@ -427,7 +419,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
     dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
     dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
-    RenderLightBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+    RenderLightBSPNode(Level->NumNodes-1, dummyBBox);
   }
   Drawer->EndLightPass();
 

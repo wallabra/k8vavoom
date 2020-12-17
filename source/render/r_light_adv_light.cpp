@@ -219,12 +219,7 @@ void VRenderLevelShadowVolume::RenderLightSubsector (int num) {
 //  recursively. Just call with BSP root.
 //
 //==========================================================================
-void VRenderLevelShadowVolume::RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights) {
-  if (LimitLights) {
-     if (r_max_light_segs_all >= 0 && AllLightsNumber > r_max_light_segs_all) return;
-     if (r_max_light_segs_one >= 0 && CurrLightsNumber > r_max_light_segs_one) return;
-  }
-
+void VRenderLevelShadowVolume::RenderLightBSPNode (int bspnum, const float *bbox) {
 #ifdef VV_CLIPPER_FULL_CHECK
   if (LightClip.ClipIsFull()) return;
 #endif
@@ -232,10 +227,7 @@ void VRenderLevelShadowVolume::RenderLightBSPNode (int bspnum, const float *bbox
   if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
   //if (!CheckSphereVsAABBIgnoreZ(bbox, CurrLightPos, CurrLightRadius)) return;
 
-  if (bspnum == -1) {
-    if (LimitLights) { ++CurrLightsNumber; ++AllLightsNumber; }
-    return RenderLightSubsector(0);
-  }
+  if (bspnum == -1) return RenderLightSubsector(0);
 
   // found a subsector?
   if (BSPIDX_IS_NON_LEAF(bspnum)) {
@@ -244,21 +236,20 @@ void VRenderLevelShadowVolume::RenderLightBSPNode (int bspnum, const float *bbox
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
     if (dist >= CurrLightRadius) {
       // light is completely on front side
-      return RenderLightBSPNode(bsp->children[0], bsp->bbox[0], LimitLights);
+      return RenderLightBSPNode(bsp->children[0], bsp->bbox[0]);
     } else if (dist <= -CurrLightRadius) {
       // light is completely on back side
-      return RenderLightBSPNode(bsp->children[1], bsp->bbox[1], LimitLights);
+      return RenderLightBSPNode(bsp->children[1], bsp->bbox[1]);
     } else {
       //int side = bsp->PointOnSide(CurrLightPos);
       unsigned side = (unsigned)(dist <= 0.0f);
       // recursively divide front space
-      RenderLightBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
+      RenderLightBSPNode(bsp->children[side], bsp->bbox[side]);
       // possibly divide back space
       side ^= 1;
-      return RenderLightBSPNode(bsp->children[side], bsp->bbox[side], LimitLights);
+      return RenderLightBSPNode(bsp->children[side], bsp->bbox[side]);
     }
   } else {
-    if (LimitLights) { ++CurrLightsNumber; ++AllLightsNumber; }
     return RenderLightSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum));
   }
 }

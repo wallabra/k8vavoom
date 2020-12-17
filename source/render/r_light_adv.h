@@ -85,9 +85,6 @@ extern VCvarB clip_use_1d_clipper;
 extern VCvarB r_disable_world_update;
 
 extern VCvarI r_max_lights;
-extern VCvarI r_max_light_segs_all;
-extern VCvarI r_max_light_segs_one;
-extern VCvarI r_max_shadow_segs_all;
 extern VCvarI r_max_model_shadows;
 
 extern VCvarB r_advlight_opt_optimise_scissor;

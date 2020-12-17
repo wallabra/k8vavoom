@@ -399,10 +399,6 @@ protected:
   bool CurrLightCalcUnstuck; // set to `true` to calculate "unstuck" distance in `CalcLightVis()`
   TVec CurrLightUnstuckPos; // set in `CalcLightVis()` if `CurrLightCalcUnstuck` is `true`
   vuint32 CurrLightBit; // tag (bitor) subsectors with this in lightvis builder
-  int CurrLightsNumber;
-  int CurrShadowsNumber;
-  int AllLightsNumber;
-  int AllShadowsNumber;
 
   // used in `AllocDlight()` to save one call to `PointInSubsector()`
   // reset in `RenderPlayerView()`
@@ -1310,7 +1306,7 @@ protected:
   void CollectAdvLightPolyObj (subsector_t *sub, unsigned int ssflag);
   void CollectAdvLightSubRegion (subsector_t *sub, subregion_t *region, unsigned int ssflag);
   void CollectAdvLightSubsector (int num);
-  void CollectAdvLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
+  void CollectAdvLightBSPNode (int bspnum, const float *bbox);
 
   void RenderShadowSurfaceList ();
   void RenderLightSurfaceList ();
@@ -1321,7 +1317,7 @@ protected:
   void RenderShadowPolyObj (subsector_t *sub);
   void RenderShadowSubRegion (subsector_t *sub, subregion_t *region);
   void RenderShadowSubsector (int num);
-  void RenderShadowBSPNode (int bspnum, const float *bbox, bool LimitLights);
+  void RenderShadowBSPNode (int bspnum, const float *bbox);
 
   void DrawLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
                           VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
@@ -1330,11 +1326,10 @@ protected:
   void RenderLightPolyObj (subsector_t *sub);
   void RenderLightSubRegion (subsector_t *sub, subregion_t *region);
   void RenderLightSubsector (int num);
-  void RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights);
+  void RenderLightBSPNode (int bspnum, const float *bbox);
   // WARNING! may modify `Pos`
   void RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD, const VViewClipper *Range,
                            TVec &Pos, float Radius, float LightMin, vuint32 Color,
-                           bool LimitLights,
                            TVec coneDir=TVec(0.0f, 0.0f, 0.0f), float coneAngle=0.0f, bool forceRender=false);
 
   // things
