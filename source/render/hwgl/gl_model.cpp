@@ -802,7 +802,7 @@ void VOpenGLDrawer::EndModelShadowMaps () {
 //==========================================================================
 void VOpenGLDrawer::SetupModelShadowMap (unsigned int facenum) {
   //if (gl_gpu_debug_models) p_glDebugLogf("  SetupModelShadowMap(%u)", facenum);
-  ActivateShadowMapFace(facenum);
+  //ActivateShadowMapFace(facenum);
   ShadowsModelShadowMap.SetLightMPV(shadowCube[smapCurrent].lmpv[facenum]);
 }
 
@@ -834,6 +834,7 @@ void VOpenGLDrawer::DrawAliasModelShadowMap (const TVec &origin, const TAVec &an
 
   if (gl_gpu_debug_models) p_glDebugLogf("DrawAliasModelShadowMap <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
 
+  ShadowsModelShadowMap.Activate();
   ShadowsModelShadowMap.SetInter(Inter);
   ShadowsModelShadowMap.SetModelToWorldMat(RotationMatrix);
   //ShadowsModelShadowMap.SetNormalToWorldMat(NormalMat[0]);
