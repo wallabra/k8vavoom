@@ -85,7 +85,7 @@ void VWidget::CleanupWidgets () {
   }
 
   // collect all orphans and dead widgets
-  DyingWidgets.reset();
+  DyingWidgets.resetNoDtor();
   for (auto &&it : AllWidgets.first()) {
     VWidget *w = it.getKey();
     if (w == GRoot) continue;

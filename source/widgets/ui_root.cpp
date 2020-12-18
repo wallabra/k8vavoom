@@ -143,7 +143,7 @@ VWidget *VRootWidget::GetWidgetAtScreenXY (int x, int y, bool allowDisabled) noe
 //==========================================================================
 void VRootWidget::BuildEventPath (VWidget *lastOne) noexcept {
   if (lastOne && (lastOne->IsGoingToDie() || !lastOne->IsEnabled())) lastOne = nullptr;
-  EventPath.reset();
+  EventPath.resetNoDtor();
   for (VWidget *w = CurrentFocusChild; w; w = w->CurrentFocusChild) {
     if (w->IsGoingToDie() || !w->IsEnabled(false)) break;
     EventPath.append(w);
@@ -301,7 +301,7 @@ void VRootWidget::MouseMoveEvent (const event_t *evt, int OldMouseX, int OldMous
 
   /*
   // only bubble
-  EventPath.reset();
+  EventPath.resetNoDtor();
   for (VWidget *W = OldFocus; W; W = W->ParentWidget) EventPath.append(W);
 
   const float ScaledOldX = OldMouseX*SizeScaleX;
