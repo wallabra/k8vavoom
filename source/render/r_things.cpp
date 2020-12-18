@@ -349,6 +349,7 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
 void VRenderLevelShared::BuildVisibleObjectsList (bool doShadows) {
   visibleObjects.reset();
   visibleAliasModels.reset();
+  visibleSprites.reset();
   allShadowModelObjects.reset();
 
   if (!r_draw_mobjs) return;
@@ -425,6 +426,8 @@ void VRenderLevelShared::BuildVisibleObjectsList (bool doShadows) {
         if (hasAliasModel) {
           ent->NumRenderedShadows = 0; // for advanced renderer
           visibleAliasModels.append(ent);
+        } else {
+          visibleSprites.append(ent);
         }
       }
     }
@@ -477,6 +480,8 @@ void VRenderLevelShared::BuildVisibleObjectsList (bool doShadows) {
       if (hasAliasModel) {
         ent->NumRenderedShadows = 0; // for advanced renderer
         visibleAliasModels.append(ent);
+      } else {
+        visibleSprites.append(ent);
       }
     }
   }

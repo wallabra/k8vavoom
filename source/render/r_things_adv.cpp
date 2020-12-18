@@ -94,8 +94,40 @@ static inline bool SetupRenderStyleAndTime (const VEntity *ent, RenderStyleInfo 
 void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows, bool collectSprites) {
   mobjsInCurrLightModels.reset();
   mobjsInCurrLightSprites.reset();
+
   const bool modelsAllowed = r_models.asBool();
   if (!r_draw_mobjs || (!collectSprites && !modelsAllowed)) return;
+
+  if (modelsAllowed) {
+    useInCurrLightAsLight = true;
+    for (auto &&ent : visibleAliasModels) {
+      //if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
+      if (!ent->IsRenderable()) continue;
+      if (!IsTouchedByCurrLight(ent)) continue;
+      // skip things in subsectors that are not visible by the current light
+      if (!doShadows) {
+        const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
+        if (!IsSubsectorLitBspVis(SubIdx)) continue;
+      }
+      mobjsInCurrLightModels.append(ent);
+    }
+  }
+
+  if (doShadows && collectSprites) {
+    RenderStyleInfo ri;
+    for (auto &&ent : visibleSprites) {
+      // limitation of the current sprite shadow renderer
+      if (ent->SpriteType != SPR_VP_PARALLEL_UPRIGHT) continue;
+      //if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
+      if (!ent->IsRenderable()) continue;
+      if (!IsTouchedByCurrLight(ent)) continue;
+      // skip things in subsectors that are not visible by the current light
+      if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
+      if (!ri.isTranslucent()) mobjsInCurrLightSprites.append(ent);
+    }
+  }
+
+#if 0
   // build new list
   // if we won't render thing shadows, don't bother trying invisible things
   if (!doShadows || !r_model_shadows) {
@@ -158,6 +190,7 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows, bool colle
       }
     }
   }
+#endif
 }
 
 
