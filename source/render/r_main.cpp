@@ -106,7 +106,7 @@ VCvarF r_lights_radius("r_lights_radius", "6192", "Lights out of this radius (fr
 //static VCvarB r_lights_cast_many_rays("r_lights_cast_many_rays", false, "Cast more rays to better check light visibility (usually doesn't make visuals any better)?", CVAR_Archive);
 //static VCvarB r_light_opt_separate_vis("r_light_opt_separate_vis", false, "Calculate light and render vis intersection as separate steps?", CVAR_Archive|CVAR_PreInit);
 
-VCvarB r_shadows("r_shadows", true, "Allow stencil shadows, and shadows from dynamic lights?", CVAR_Archive);
+VCvarB r_shadows("r_shadows", true, "Allow shadows from lights?", CVAR_Archive);
 
 static VCvarF r_hud_fullscreen_alpha("r_hud_fullscreen_alpha", "0.44", "Alpha for fullscreen HUD", CVAR_Archive);
 
@@ -684,6 +684,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   ResetDLightFrameCount();
 
   renderedSectorCounter = 0;
+  forceDisableShadows = false;
 
   ColorMap = 0;
   skyheight = 0;
@@ -1312,6 +1313,7 @@ void VRenderLevelShared::SetupFrame () {
   PortalDepth = 0;
   PortalUsingStencil = 0;
   PortalLevel = 0;
+  forceDisableShadows = false;
 }
 
 
@@ -1349,6 +1351,7 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
   PortalDepth = 0;
   PortalUsingStencil = 0;
   PortalLevel = 0;
+  forceDisableShadows = true; // do not render shadows in camera views (for now)
   set_resolution_needed = true;
 }
 

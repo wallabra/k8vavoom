@@ -199,7 +199,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
   //RenderPortals(); //k8: it was here before, why?
 
   MiniStopTimer profBuildMObj("BuildVisibleObjectsList", prof_r_bsp_mobj_render.asBool());
-  BuildVisibleObjectsList(r_shadows.asBool());
+  BuildVisibleObjectsList(IsShadowsEnabled());
   profBuildMObj.stopAndReport();
 
   MiniStopTimer profDrawMObjAmb("RenderMobjsAmbient", prof_r_bsp_mobj_render.asBool());
@@ -214,7 +214,11 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
 
   //GCon->Log("***************** RenderScene *****************");
   //FIXME: portals can use stencils, and advlight too...
-  if (/*PortalDepth*/PortalUsingStencil == 0 || IsShadowMapRenderer()) {
+  if (/*PortalDepth*/ /*PortalUsingStencil == 0 || IsShadowMapRenderer()*/true) {
+    // disable shadows in portals (for now)
+    const bool oldForceDisableShadows = forceDisableShadows;
+    if (PortalDepth > 0) forceDisableShadows = true;
+
     MiniStopTimer profDrawSVol("ShadowVolumes", prof_r_bsp_world_render.asBool());
     Drawer->BeginShadowVolumesPass();
 
@@ -387,6 +391,8 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     if (dbg_adv_show_light_count) {
       GCon->Logf("total lights per frame: %d (%d static, %d dynamic)", LightsRendered, LightsRendered-DynLightsRendered, DynLightsRendered);
     }
+
+    forceDisableShadows = oldForceDisableShadows;
   }
 
   MiniStopTimer profDrawTextures("DrawWorldTexturesPass", prof_r_bsp_world_render.asBool());

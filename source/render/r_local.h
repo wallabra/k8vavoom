@@ -72,6 +72,7 @@ extern VCvarB prof_r_bsp_mobj_render;
 extern VCvarB prof_r_bsp_mobj_collect;
 
 extern VCvarB r_shadowmaps;
+extern VCvarB r_shadows;
 
 
 static VVA_OKUNUSED inline bool IsAnyProfRActive () noexcept {
@@ -642,6 +643,11 @@ protected:
   TransPolyState transSprState;
 
   void DrawTransSpr (trans_sprite_t &spr);
+
+protected:
+  bool forceDisableShadows; // override for "r_shadows"
+
+  inline bool IsShadowsEnabled () const noexcept { return (forceDisableShadows ? false : r_shadows.asBool()); }
 
 public:
   virtual bool IsNodeRendered (const node_t *node) const noexcept override;
@@ -1438,7 +1444,6 @@ extern VCvarB r_static_lights;
 
 extern VCvarI r_aspect_ratio;
 extern VCvarB r_interpolate_frames;
-extern VCvarB r_shadows;
 
 extern VCvarB r_vertical_fov;
 

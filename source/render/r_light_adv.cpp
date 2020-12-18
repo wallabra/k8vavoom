@@ -74,7 +74,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   const bool useShadowMaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
 
-  if (useShadowMaps && r_shadows && !(dlflags&dlight_t::NoShadow)) Drawer->PrepareShadowMaps(Radius);
+  if (useShadowMaps && IsShadowsEnabled() && !(dlflags&dlight_t::NoShadow)) Drawer->PrepareShadowMaps(Radius);
 
   //TODO: we can reuse collected surfaces in next passes
   LitCalcBBox = true;
@@ -99,7 +99,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   if (dlflags&dlight_t::NoShadow) allowShadows = false;
 
-  if (!r_shadows) allowShadows = false;
+  if (!IsShadowsEnabled()) allowShadows = false;
 
   // check distance
   if (allowShadows) {
@@ -139,7 +139,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   //GCon->Logf("LBB:(%f,%f,%f)-(%f,%f,%f)", LitBBox[0], LitBBox[1], LitBBox[2], LitBBox[3], LitBBox[4], LitBBox[5]);
 
-  if (!useShadowMaps) {
+  if (!useShadowMaps && allowShadows) {
     // setup light scissor rectangle
     if (optimiseScissor) {
       hasScissor = Drawer->SetupLightScissor(Pos, Radius-LightMin, scoord, (r_advlight_opt_optimise_scissor ? LitBBox : nullptr));
