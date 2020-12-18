@@ -541,12 +541,10 @@ public:
   virtual void EndLightShadowMaps () override;
   virtual void SetupLightShadowMap (unsigned int facenum) override;
 
-  void DrawSurfaceShadowMap (const surface_t *surf);
+  //void DrawSurfaceShadowMap (const surface_t *surf);
   // may modify lists (sort)
-  virtual void UploadSolidShadowSurfaces (TArray<surface_t *> &slist) override;
-  virtual void UploadMaskedShadowSurfaces (TArray<surface_t *> &slist) override;
-  virtual void RenderSolidShadowMaps (TArray<surface_t *> &slist) override;
-  virtual void RenderMaskedShadowMaps (TArray<surface_t *> &slist) override;
+  virtual void UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<surface_t *> &masked) override;
+  virtual void RenderShadowMaps (TArray<surface_t *> &solid, TArray<surface_t *> &masked) override;
 
   virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const bool aspotLight, const TVec &aconeDir, const float aconeAngle, bool doShadow) override;
   virtual void EndLightPass () override;
@@ -1042,7 +1040,9 @@ protected:
       if (count > oldlen || !vboId) {
         count += (extraReserve > 0 ? extraReserve : 0);
         maxElems = count;
-        data.setLength(count);
+        //data.setLength(count);
+        if (data.capacity() < count) data.setLengthReserve(count);
+        data.setNum(count, false); // don't resize
         if (vboId) { mOwner->p_glDeleteBuffersARB(1, &vboId); vboId = 0; }
         // cleare newly allocated array part
         memset((void *)(data.ptr()+oldlen), 0, sizeof(T)*(unsigned)(count-oldlen));
@@ -1086,11 +1086,11 @@ protected:
     // this enables attribute
     inline void setupAttrib (GLuint attrIdx, int elemCount, ptrdiff_t byteOfs=0) noexcept {
       mOwner->p_glEnableVertexAttribArrayARB(attrIdx);
-      mOwner->p_glVertexAttribPointerARB(attrIdx, elemCount, GL_FLOAT, GL_FALSE, sizeof(T), (void *)byteOfs);
+      mOwner->p_glVertexAttribPointerARB(attrIdx, elemCount, GL_FLOAT, GL_FALSE, (sizeof(T) == sizeof(float)*(unsigned)elemCount ? 0 : sizeof(T)), (void *)byteOfs);
     }
 
     inline void setupAttribNoEnable (GLuint attrIdx, int elemCount, ptrdiff_t byteOfs=0) noexcept {
-      mOwner->p_glVertexAttribPointerARB(attrIdx, elemCount, GL_FLOAT, GL_FALSE, sizeof(T), (void *)byteOfs);
+      mOwner->p_glVertexAttribPointerARB(attrIdx, elemCount, GL_FLOAT, GL_FALSE, (sizeof(T) == sizeof(float)*(unsigned)elemCount ? 0 : sizeof(T)), (void *)byteOfs);
     }
 
     // VBO should be activated!
@@ -1115,11 +1115,19 @@ protected:
   VBO<SkyVBOVertex> vboSky;
 
   // VBO for advrender surfaces
+  // reused in fog renderer (it rely on the fact that data and lists from ambient stage is intact)
   VBO<TVec> vboAdvSurf;
   int vboAdvSurfMaxEls;
   // used in advrender
   TArray<GLsizei> vboCounters; // number of indicies in each primitive
   TArray<GLint> vboStartInds; // starting indicies
+
+  // VBO for shadowmap surfaces (including masked)
+  VBO<TVec> vboSMapSurf;
+  //int vboSMapSolids; // number of uploaded solid surfaces
+  // for each surface
+  TArray<GLsizei> vboSMapCounters; // number of indicies in each primitive
+  TArray<GLint> vboSMapStartInds; // starting indicies
 
   // console variables
   static VCvarI texture_filter;

@@ -1,7 +1,7 @@
 #version 120
 $include "common/common.inc"
 
-attribute vec3 Position;
+//attribute vec3 Position;
 
 uniform float Inter;
 //uniform vec3 LightPos;

@@ -99,6 +99,7 @@ static void CheckListSortValidity (TArray<surface_t *> &list, const char *listna
 #define SADV_FLUSH_VBO()  do { \
   if (vboCountIdx) { \
     if (gl_dbg_vbo_adv_ambient) GCon->Logf(NAME_Debug, "flushing ambsurface VBO: vboCountIdx=%d", vboCountIdx); \
+    currentActiveShader->UploadChangedUniforms(); \
     vboAdvSurf.setupAttribNoEnable(attribPosition, 3); \
     p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboStartInds.ptr(), vboCounters.ptr(), (GLsizei)vboCountIdx); \
     vboCountIdx = 0; \
@@ -120,7 +121,7 @@ static void CheckListSortValidity (TArray<surface_t *> &list, const char *listna
       glEnable(GL_CULL_FACE); \
     } \
   } \
-  currentActiveShader->UploadChangedUniforms(); \
+  /*currentActiveShader->UploadChangedUniforms();*/ \
   /* remember counter */ \
   vboCounters.ptr()[vboCountIdx] = (GLsizei)surf->count; \
   /* remember first index */ \

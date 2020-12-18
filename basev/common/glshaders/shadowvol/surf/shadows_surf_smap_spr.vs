@@ -1,4 +1,5 @@
 #version 120
+#define VV_SHADOWMAP_SPRITE
 $include "common/common.inc"
 
 uniform vec3 SAxis;

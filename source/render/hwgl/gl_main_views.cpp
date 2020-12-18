@@ -243,7 +243,7 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
     glEnable(GL_TEXTURE_2D);
   }
 
-#if 0
+#if 1
   if (r_shadowmaps.asBool() && CanRenderShadowMaps() && (dbg_shadowmaps.asInt()&0x01) != 0) {
     // right
     // left
@@ -270,7 +270,7 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
       glDisable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_CUBE_MAP);
-      glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTexId);
+      glBindTexture(GL_TEXTURE_CUBE_MAP, shadowCube[0].cubeTexId);
       DbgShadowMap.Activate();
       DbgShadowMap.SetTexture(0);
       DbgShadowMap.SetCubeFace(face+0.5f);

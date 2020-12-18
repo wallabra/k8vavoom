@@ -47,6 +47,8 @@ static int saved_gl_shadowmap_size = -666;
 static bool saved_gl_shadowmap_precision = false;
 static int saved_gl_shadowmap_ray_points = -666;
 
+static VCvarB gl_dbg_smap_vbo("gl_dbg_smap_vbo", true, "Use VBO to render shadowmaps?", CVAR_PreInit);
+
 
 //==========================================================================
 //
@@ -282,6 +284,13 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   SurfShadowMapSpr.SetLightRadius(Radius);
   SurfShadowMapSpr.SetTexture(0);
 
+  SurfShadowMapNoBuf.SetLightPos(LightPos);
+  SurfShadowMapNoBuf.SetLightRadius(Radius);
+
+  SurfShadowMapTexNoBuf.SetLightPos(LightPos);
+  SurfShadowMapTexNoBuf.SetLightRadius(Radius);
+  SurfShadowMapTexNoBuf.SetTexture(0);
+
   //glDisable(GL_CULL_FACE);
   GLSMAP_ERR("finish cube FBO setup");
 }
@@ -333,6 +342,9 @@ void VOpenGLDrawer::SetupLightShadowMap (unsigned int facenum) {
 
   // required for proper sprite shadow rendering
   smapLastSprTexinfo.resetLastUsed();
+
+  SurfShadowMapNoBuf.SetLightMPV(shadowCube[smapCurrent].lmpv[facenum]);
+  SurfShadowMapTexNoBuf.SetLightMPV(shadowCube[smapCurrent].lmpv[facenum]);
 }
 
 
@@ -394,6 +406,7 @@ void VOpenGLDrawer::DrawSpriteShadowMap (const TVec *cv, VTexture *Tex, const TV
 //  VOpenGLDrawer::DrawSurfaceShadowMap
 //
 //==========================================================================
+/*
 void VOpenGLDrawer::DrawSurfaceShadowMap (const surface_t *surf) {
   if (gl_dbg_wireframe) return;
   //if (surf->count < 3) return; // just in case
@@ -428,42 +441,158 @@ void VOpenGLDrawer::DrawSurfaceShadowMap (const surface_t *surf) {
 
   MarkCurrentShadowMapDirty();
 }
+*/
 
 
 //==========================================================================
 //
-//  VOpenGLDrawer::UploadSolidShadowSurfaces
+//  VOpenGLDrawer::UploadShadowSurfaces
 //
 //==========================================================================
-void VOpenGLDrawer::UploadSolidShadowSurfaces (TArray<surface_t *> &slist) {
+void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<surface_t *> &masked) {
+  int totalSurfs = solid.length()+masked.length();
+  if (totalSurfs == 0) return;
+
+  timsort_r(masked.ptr(), masked.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
+
+  int vertCount = 0;
+  for (auto &&surf : solid) vertCount += surf->count;
+  for (auto &&surf : masked) vertCount += surf->count;
+
+  vboSMapSurf.ensure(vertCount, 1024);
+  //vboSMapSurf.data.resetNoDtor();
+  vassert(vboSMapSurf.data.length() >= vertCount);
+
+  if (vboSMapCounters.capacity() < totalSurfs) vboSMapCounters.setLengthReserve(totalSurfs);
+  vboSMapCounters.setNum(totalSurfs, false);
+
+  if (vboSMapStartInds.capacity() < totalSurfs) vboSMapStartInds.setLengthReserve(totalSurfs);
+  vboSMapStartInds.setNum(totalSurfs, false);
+
+  int vboCountIdx = 0;
+  int vboDataIdx = 0;
+
+  for (auto &&surf : solid) {
+    vboSMapCounters.ptr()[vboCountIdx] = (GLsizei)surf->count;
+    vboSMapStartInds.ptr()[vboCountIdx] = (GLint)vboDataIdx;
+    ++vboCountIdx;
+    for (int f = 0; f < surf->count; ++f) vboSMapSurf.data.ptr()[vboDataIdx++] = surf->verts[f].vec();
+  }
+
+  for (auto &&surf : masked) {
+    vboSMapCounters.ptr()[vboCountIdx] = (GLsizei)surf->count;
+    vboSMapStartInds.ptr()[vboCountIdx] = (GLint)vboDataIdx;
+    ++vboCountIdx;
+    for (int f = 0; f < surf->count; ++f) vboSMapSurf.data.ptr()[vboDataIdx++] = surf->verts[f].vec();
+  }
+
+  vassert(vboCountIdx == totalSurfs);
+
+  vassert(vboSMapCounters.length() == totalSurfs);
+  vassert(vboSMapStartInds.length() == totalSurfs);
+  vassert(vboSMapSurf.data.length() >= vertCount);
+  vassert(vboDataIdx == vertCount);
+
+  vboSMapSurf.uploadData(vertCount);
 }
 
 
 //==========================================================================
 //
-//  VOpenGLDrawer::UploadMaskedShadowSurfaces
+//  VOpenGLDrawer::RenderShadowMaps
 //
 //==========================================================================
-void VOpenGLDrawer::UploadMaskedShadowSurfaces (TArray<surface_t *> &slist) {
-  timsort_r(slist.ptr(), slist.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
-}
+void VOpenGLDrawer::RenderShadowMaps (TArray<surface_t *> &solid, TArray<surface_t *> &masked) {
+  if (solid.length() == 0 && masked.length() == 0) return;
+  //for (auto &&surf : slist) DrawSurfaceShadowMap(surf);
 
+  if (!gl_dbg_smap_vbo.asBool()) {
+    vboSMapSurf.deactivate();
 
-//==========================================================================
-//
-//  VOpenGLDrawer::RenderSolidShadowMaps
-//
-//==========================================================================
-void VOpenGLDrawer::RenderSolidShadowMaps (TArray<surface_t *> &slist) {
-  for (auto &&surf : slist) DrawSurfaceShadowMap(surf);
-}
+    if (solid.length() != 0) {
+      SurfShadowMapNoBuf.Activate();
+      currentActiveShader->UploadChangedUniforms();
+      for (auto &&surf : solid) {
+        glBegin(GL_TRIANGLE_FAN);
+          for (int f = 0; f < surf->count; ++f) glVertex(surf->verts[f].vec());
+        glEnd();
+      }
+    }
 
+    if (masked.length() != 0) {
+      SurfShadowMapTexNoBuf.Activate();
+      int prevSIdx = solid.length();
+      int currSIdx = prevSIdx;
+      smapLastTexinfo.resetLastUsed();
+      for (auto &&surf : masked) {
+        const texinfo_t *currTexinfo = surf->texinfo;
+        const bool textureChanged = smapLastTexinfo.needChange(*currTexinfo, updateFrame);
+        if (textureChanged) {
+          prevSIdx = currSIdx;
+          smapLastTexinfo.updateLastUsed(*currTexinfo);
+          //SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+          SetShadowTexture(currTexinfo->Tex);
+          SurfShadowMapTexNoBuf.SetTex(currTexinfo);
+          currentActiveShader->UploadChangedUniforms();
+        }
+        glBegin(GL_TRIANGLE_FAN);
+          for (int f = 0; f < surf->count; ++f) glVertex(surf->verts[f].vec());
+        glEnd();
+        ++currSIdx;
+      }
+    }
+  } else {
+    // use vbo
+    vboSMapSurf.activate();
 
-//==========================================================================
-//
-//  VOpenGLDrawer::RenderMaskedShadowMaps
-//
-//==========================================================================
-void VOpenGLDrawer::RenderMaskedShadowMaps (TArray<surface_t *> &slist) {
-  for (auto &&surf : slist) DrawSurfaceShadowMap(surf);
+    // draw solids
+    if (solid.length() != 0) {
+      //glDisable(GL_TEXTURE_2D);
+      SurfShadowMap.Activate();
+      vassert(SurfShadowMap.loc_Position >= 0);
+      vboSMapSurf.setupAttrib(SurfShadowMap.loc_Position, 3);
+      currentActiveShader->UploadChangedUniforms();
+      p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboSMapStartInds.ptr(), vboSMapCounters.ptr(), (GLsizei)solid.length());
+      vboSMapSurf.disableAttrib(SurfShadowMap.loc_Position);
+      //GCon->Logf(NAME_Debug, "rendered %d solid shadowmap surfaces", solid.length());
+    }
+
+    // draw masked
+    if (masked.length() != 0) {
+      //glEnable(GL_TEXTURE_2D);
+      SurfShadowMapTex.Activate();
+      vassert(SurfShadowMapTex.loc_Position >= 0);
+      vboSMapSurf.setupAttrib(SurfShadowMapTex.loc_Position, 3);
+      int prevSIdx = solid.length();
+      int currSIdx = prevSIdx;
+      smapLastTexinfo.resetLastUsed();
+      for (auto &&surf : masked) {
+        const texinfo_t *currTexinfo = surf->texinfo;
+        const bool textureChanged = smapLastTexinfo.needChange(*currTexinfo, updateFrame);
+        if (textureChanged) {
+          if (currSIdx-prevSIdx > 0) {
+            p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboSMapStartInds.ptr()+prevSIdx, vboSMapCounters.ptr()+prevSIdx, (GLsizei)(currSIdx-prevSIdx));
+            //GCon->Logf(NAME_Debug, "  flushed %d masked shadowmap surfaces", currSIdx-prevSIdx);
+          }
+          prevSIdx = currSIdx;
+          smapLastTexinfo.updateLastUsed(*currTexinfo);
+          //SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+          SetShadowTexture(currTexinfo->Tex);
+          SurfShadowMapTex.SetTex(currTexinfo);
+          currentActiveShader->UploadChangedUniforms();
+        }
+        ++currSIdx;
+      }
+      if (currSIdx-prevSIdx > 0) {
+        p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboSMapStartInds.ptr()+prevSIdx, vboSMapCounters.ptr()+prevSIdx, (GLsizei)(currSIdx-prevSIdx));
+        //GCon->Logf(NAME_Debug, "  finally flushed %d masked shadowmap surfaces", currSIdx-prevSIdx);
+      }
+      vboSMapSurf.disableAttrib(SurfShadowMapTex.loc_Position);
+    }
+
+    vboSMapSurf.deactivate();
+    //currentActiveShader->deactivate();
+  }
+
+  MarkCurrentShadowMapDirty();
 }

@@ -675,10 +675,8 @@ public:
 
   //virtual void DrawSurfaceShadowMap (const surface_t *surf) = 0;
   // may modify lists (sort)
-  virtual void UploadSolidShadowSurfaces (TArray<surface_t *> &slist) = 0;
-  virtual void UploadMaskedShadowSurfaces (TArray<surface_t *> &slist) = 0;
-  virtual void RenderSolidShadowMaps (TArray<surface_t *> &slist) = 0;
-  virtual void RenderMaskedShadowMaps (TArray<surface_t *> &slist) = 0;
+  virtual void UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<surface_t *> &masked) = 0;
+  virtual void RenderShadowMaps (TArray<surface_t *> &solid, TArray<surface_t *> &masked) = 0;
 
   virtual void BeginLightPass (const TVec &LightPos, const float Radius, float LightMin, vuint32 Color, const bool aspotLight, const TVec &aconeDir, const float aconeAngle, bool doShadow) = 0;
   virtual void EndLightPass () = 0;

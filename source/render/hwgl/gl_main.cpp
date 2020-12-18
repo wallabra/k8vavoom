@@ -701,6 +701,7 @@ void VOpenGLDrawer::DeinitResolution () {
   vboSky.destroy();
   vboMaskedSurf.destroy();
   vboAdvSurf.destroy();
+  vboSMapSurf.destroy();
   // FBOs
   if (currentActiveFBO != nullptr) {
     currentActiveFBO = nullptr;
@@ -1088,6 +1089,7 @@ void VOpenGLDrawer::InitResolution () {
   vassert(!vboSky.isValid());
   vassert(!vboMaskedSurf.isValid());
   vassert(!vboAdvSurf.isValid());
+  vassert(!vboSMapSurf.isValid());
 
   vboSprite.setOwner(this);
   vboSprite.ensure(4); // sprite is always a quad, so we can allocate it right here
@@ -1095,6 +1097,7 @@ void VOpenGLDrawer::InitResolution () {
   vboSky.setOwner(this);
   vboMaskedSurf.setOwner(this);
   vboAdvSurf.setOwner(this, true); // streaming
+  vboSMapSurf.setOwner(this, false); // non-streaming
 
   // init some defaults
   glBindTexture(GL_TEXTURE_2D, 0);

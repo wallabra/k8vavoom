@@ -291,13 +291,11 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
       const int spShad = r_shadowmap_sprshadows.asInt();
       const bool doModels = r_models.asBool();
       if (doModels) Drawer->BeginModelShadowMaps(CurrLightPos, CurrLightRadius);
-      Drawer->UploadSolidShadowSurfaces(shadowSurfacesSolid);
-      Drawer->UploadMaskedShadowSurfaces(shadowSurfacesMasked);
+      Drawer->UploadShadowSurfaces(shadowSurfacesSolid, shadowSurfacesMasked);
       for (unsigned fc = 0; fc < 6; ++fc) {
         Drawer->SetupLightShadowMap(fc);
         if (doModels) Drawer->SetupModelShadowMap(fc);
-        Drawer->RenderSolidShadowMaps(shadowSurfacesSolid);
-        Drawer->RenderMaskedShadowMaps(shadowSurfacesMasked);
+        Drawer->RenderShadowMaps(shadowSurfacesSolid, shadowSurfacesMasked);
         if (spShad > 0) RenderMobjSpriteShadowMap(ent, fc, spShad, dlflags);
         if (doModels) RenderMobjsShadowMap(ent, fc, dlflags);
       }

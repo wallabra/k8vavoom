@@ -95,6 +95,7 @@ void VOpenGLDrawer::BeforeDrawWorldSV () {
   vboAdvSurf.ensure(maxEls);
   int vboIdx = 0;
   TVec *dest = vboAdvSurf.data.ptr();
+  vassert(vboAdvSurf.data.length() >= maxEls);
   // solid surfaces
   for (auto &&surf : dls.DrawSurfListSolid) {
     surf->firstIndex = vboIdx;

@@ -299,6 +299,9 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader [advanced] [cubemaps] SurfShadowMapTex both="shadowvol/surf/shadows_surf_smap" { define "VV_SMAP_TEXTURED"; }
   Shader [advanced] [cubemaps] SurfShadowMapSpr vertex="shadowvol/surf/shadows_surf_smap_spr" fragment="shadowvol/surf/shadows_surf_smap" { define "VV_SMAP_TEXTURED"; }
 
+  Shader [advanced] [cubemaps] SurfShadowMapNoBuf both="shadowvol/surf/shadows_surf_smap" { define "VV_SMAP_NOBUF"; }
+  Shader [advanced] [cubemaps] SurfShadowMapTexNoBuf both="shadowvol/surf/shadows_surf_smap" { defines { "VV_SMAP_NOBUF", "VV_SMAP_TEXTURED" } }
+
   Shader [advanced] [cubemaps] ShadowsModelShadowMap both="shadowvol/model/shadows_model_smap";
 
   Shader [advanced] [cubemaps] ShadowsLightSMap both="shadowvol/surf/shadows_surf_light_smap" { defines { "VV_SHADOWMAPS" } }
