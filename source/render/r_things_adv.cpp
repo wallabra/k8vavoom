@@ -234,7 +234,7 @@ void VRenderLevelShadowVolume::RenderMobjsShadowMap (VEntity *owner, const unsig
   RenderStyleInfo ri;
   for (auto &&ent : mobjsInCurrLightModels) {
     if (ent == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
-    if (ent->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
+    //if (facenum == 0 && ent->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
     if (!IsShadowAllowedFor(ent)) continue;
     //RenderThingShadow(ent);
     if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
@@ -245,7 +245,7 @@ void VRenderLevelShadowVolume::RenderMobjsShadowMap (VEntity *owner, const unsig
       DrawEntityModel(ent, ri, TimeFrac, RPASS_ShadowMaps);
       //DrawEntityModel(ent, 0xffffffff, 0, ri, TimeFrac, RPASS_ShadowVolumes);
     }
-    ++ent->NumRenderedShadows;
+    //++ent->NumRenderedShadows;
   }
 }
 

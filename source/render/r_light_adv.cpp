@@ -294,12 +294,14 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
       Drawer->UploadShadowSurfaces(shadowSurfacesSolid, shadowSurfacesMasked);
       for (unsigned fc = 0; fc < 6; ++fc) {
         Drawer->SetupLightShadowMap(fc);
-        if (doModels) Drawer->SetupModelShadowMap(fc);
         Drawer->RenderShadowMaps(shadowSurfacesSolid, shadowSurfacesMasked);
         if (spShad > 0) RenderMobjSpriteShadowMap(ent, fc, spShad, dlflags);
-        if (doModels) RenderMobjsShadowMap(ent, fc, dlflags);
+        if (doModels) {
+          Drawer->SetupModelShadowMap(fc);
+          RenderMobjsShadowMap(ent, fc, dlflags);
+          Drawer->EndModelShadowMaps();
+        }
       }
-      if (doModels) Drawer->EndModelShadowMaps();
     }
     Drawer->EndLightShadowMaps();
   } else {
