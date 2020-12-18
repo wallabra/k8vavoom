@@ -214,7 +214,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
 
   //GCon->Log("***************** RenderScene *****************");
   //FIXME: portals can use stencils, and advlight too...
-  if (/*PortalDepth*/PortalUsingStencil == 0) {
+  if (/*PortalDepth*/PortalUsingStencil == 0 || IsShadowMapRenderer()) {
     MiniStopTimer profDrawSVol("ShadowVolumes", prof_r_bsp_world_render.asBool());
     Drawer->BeginShadowVolumesPass();
 
