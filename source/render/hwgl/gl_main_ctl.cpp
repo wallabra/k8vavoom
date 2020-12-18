@@ -114,7 +114,7 @@ bool VOpenGLDrawer::SupportsShadowMapRendering () {
 //==========================================================================
 bool VOpenGLDrawer::UseFrustumFarClip () {
   if (CanUseRevZ()) return false;
-  if (RendLev && RendLev->IsShadowVolumeRenderer() && !HaveDepthClamp) return false;
+  if (RendLev && RendLev->IsShadowVolumeRenderer() && !HaveDepthClamp && !RendLev->IsShadowMapRenderer()) return false;
   return true;
 }
 
