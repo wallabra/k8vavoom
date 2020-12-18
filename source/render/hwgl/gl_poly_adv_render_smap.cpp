@@ -27,6 +27,7 @@
 #include "gl_poly_adv_render.h"
 
 //#define VV_SMAP_STRICT_ERROR_CHECKS
+//#define VV_SMAP_DUMP_CHANGES
 
 
 #ifdef VV_SMAP_STRICT_ERROR_CHECKS
@@ -455,45 +456,110 @@ void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<sur
 
   timsort_r(masked.ptr(), masked.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
 
-  int vertCount = 0;
-  for (auto &&surf : solid) vertCount += surf->count;
-  for (auto &&surf : masked) vertCount += surf->count;
+  if (gl_dbg_smap_vbo.asBool()) {
+    // upload solid surfaces
+    if (solid.length()) {
+      int vertCount = 0;
+      for (auto &&surf : solid) vertCount += surf->count;
 
-  vboSMapSurf.ensure(vertCount, 1024);
-  //vboSMapSurf.data.resetNoDtor();
-  vassert(vboSMapSurf.data.length() >= vertCount);
+      vboSMapSurf.ensure(vertCount, 1024);
+      vassert(vboSMapSurf.data.length() >= vertCount);
 
-  if (vboSMapCounters.capacity() < totalSurfs) vboSMapCounters.setLengthReserve(totalSurfs);
-  vboSMapCounters.setNum(totalSurfs, false);
+      if (vboSMapCounters.capacity() < solid.length()) vboSMapCounters.setLengthReserve(solid.length());
+      vboSMapCounters.setNum(solid.length(), false);
 
-  if (vboSMapStartInds.capacity() < totalSurfs) vboSMapStartInds.setLengthReserve(totalSurfs);
-  vboSMapStartInds.setNum(totalSurfs, false);
+      if (vboSMapStartInds.capacity() < solid.length()) vboSMapStartInds.setLengthReserve(solid.length());
+      vboSMapStartInds.setNum(solid.length(), false);
 
-  int vboCountIdx = 0;
-  int vboDataIdx = 0;
+      int vboCountIdx = 0;
+      int vboDataIdx = 0;
 
-  for (auto &&surf : solid) {
-    vboSMapCounters.ptr()[vboCountIdx] = (GLsizei)surf->count;
-    vboSMapStartInds.ptr()[vboCountIdx] = (GLint)vboDataIdx;
-    ++vboCountIdx;
-    for (int f = 0; f < surf->count; ++f) vboSMapSurf.data.ptr()[vboDataIdx++] = surf->verts[f].vec();
+      for (auto &&surf : solid) {
+        vboSMapCounters.ptr()[vboCountIdx] = (GLsizei)surf->count;
+        vboSMapStartInds.ptr()[vboCountIdx] = (GLint)vboDataIdx;
+        ++vboCountIdx;
+        for (int f = 0; f < surf->count; ++f) vboSMapSurf.data.ptr()[vboDataIdx++] = surf->verts[f].vec();
+      }
+      vassert(vboCountIdx == solid.length());
+      vassert(vboSMapCounters.length() == solid.length());
+      vassert(vboSMapStartInds.length() == solid.length());
+      vassert(vboSMapSurf.data.length() >= vertCount);
+      vassert(vboDataIdx == vertCount);
+
+      vboSMapSurf.uploadData(vertCount);
+    }
+
+    // upload textured surfaces
+    if (masked.length()) {
+      int vertCountTex = 0;
+      for (auto &&surf : masked) vertCountTex += surf->count;
+
+      vboSMapSurfTex.ensure(vertCountTex, 1024);
+      vassert(vboSMapSurfTex.data.length() >= vertCountTex);
+
+      if (vboSMapCountersTex.capacity() < masked.length()) vboSMapCountersTex.setLengthReserve(masked.length());
+      vboSMapCountersTex.setNum(masked.length(), false);
+
+      if (vboSMapStartIndsTex.capacity() < masked.length()) vboSMapStartIndsTex.setLengthReserve(masked.length());
+      vboSMapStartIndsTex.setNum(masked.length(), false);
+
+      int vboCountIdx = 0;
+      int vboDataIdx = 0;
+      #ifdef VV_SMAP_DUMP_CHANGES
+      int changes = 0;
+      #endif
+
+      smapLastTexinfo.resetLastUsed();
+      for (auto &&surf : masked) {
+        vboSMapCountersTex.ptr()[vboCountIdx] = (GLsizei)surf->count;
+        vboSMapStartIndsTex.ptr()[vboCountIdx] = (GLint)vboDataIdx;
+        ++vboCountIdx;
+
+        const texinfo_t *currTexinfo = surf->texinfo;
+        const bool textureChanged = smapLastTexinfo.needChange(*currTexinfo, updateFrame);
+        if (textureChanged) {
+          smapLastTexinfo.updateLastUsed(*currTexinfo);
+          //SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+          SetShadowTexture(currTexinfo->Tex);
+          //SurfShadowMapTexNoBuf.SetTex(currTexinfo);
+          //currentActiveShader->UploadChangedUniforms();
+          #ifdef VV_SMAP_DUMP_CHANGES
+          ++changes;
+          #endif
+        }
+
+        for (int f = 0; f < surf->count; ++f) {
+          SMapVBOVertex *svx = vboSMapSurfTex.data.ptr()+vboDataIdx;
+          ++vboDataIdx;
+          const TVec &sv = surf->verts[f].vec();
+          svx->x = sv.x;
+          svx->y = sv.y;
+          svx->z = sv.z;
+          svx->sx = currTexinfo->saxis.x;
+          svx->sy = currTexinfo->saxis.y;
+          svx->sz = currTexinfo->saxis.z;
+          svx->tx = currTexinfo->taxis.x;
+          svx->ty = currTexinfo->taxis.y;
+          svx->tz = currTexinfo->taxis.z;
+          svx->SOffs = currTexinfo->soffs;
+          svx->TOffs = currTexinfo->toffs;
+          svx->TexIW = tex_iw;
+          svx->TexIH = tex_ih;
+        }
+      }
+
+      vassert(vboCountIdx == masked.length());
+      vassert(vboSMapCountersTex.length() == masked.length());
+      vassert(vboSMapStartIndsTex.length() == masked.length());
+      vassert(vboSMapSurfTex.data.length() >= vertCountTex);
+      vassert(vboDataIdx == vertCountTex);
+
+      vboSMapSurfTex.uploadData(vertCountTex);
+      #ifdef VV_SMAP_DUMP_CHANGES
+      GCon->Logf(NAME_Debug, "upload masked: %d changes per %d surfaces", changes, masked.length());
+      #endif
+    }
   }
-
-  for (auto &&surf : masked) {
-    vboSMapCounters.ptr()[vboCountIdx] = (GLsizei)surf->count;
-    vboSMapStartInds.ptr()[vboCountIdx] = (GLint)vboDataIdx;
-    ++vboCountIdx;
-    for (int f = 0; f < surf->count; ++f) vboSMapSurf.data.ptr()[vboDataIdx++] = surf->verts[f].vec();
-  }
-
-  vassert(vboCountIdx == totalSurfs);
-
-  vassert(vboSMapCounters.length() == totalSurfs);
-  vassert(vboSMapStartInds.length() == totalSurfs);
-  vassert(vboSMapSurf.data.length() >= vertCount);
-  vassert(vboDataIdx == vertCount);
-
-  vboSMapSurf.uploadData(vertCount);
 }
 
 
@@ -509,7 +575,7 @@ void VOpenGLDrawer::RenderShadowMaps (TArray<surface_t *> &solid, TArray<surface
   if (!gl_dbg_smap_vbo.asBool()) {
     vboSMapSurf.deactivate();
 
-    if (solid.length() != 0) {
+    if (solid.length()) {
       SurfShadowMapNoBuf.Activate();
       currentActiveShader->UploadChangedUniforms();
       for (auto &&surf : solid) {
@@ -519,7 +585,7 @@ void VOpenGLDrawer::RenderShadowMaps (TArray<surface_t *> &solid, TArray<surface
       }
     }
 
-    if (masked.length() != 0) {
+    if (masked.length()) {
       SurfShadowMapTexNoBuf.Activate();
       int prevSIdx = solid.length();
       int currSIdx = prevSIdx;
@@ -543,10 +609,9 @@ void VOpenGLDrawer::RenderShadowMaps (TArray<surface_t *> &solid, TArray<surface
     }
   } else {
     // use vbo
-    vboSMapSurf.activate();
-
     // draw solids
-    if (solid.length() != 0) {
+    if (solid.length()) {
+      vboSMapSurf.activate();
       //glDisable(GL_TEXTURE_2D);
       SurfShadowMap.Activate();
       vassert(SurfShadowMap.loc_Position >= 0);
@@ -558,39 +623,60 @@ void VOpenGLDrawer::RenderShadowMaps (TArray<surface_t *> &solid, TArray<surface
     }
 
     // draw masked
-    if (masked.length() != 0) {
+    if (masked.length()) {
+      vboSMapSurfTex.activate();
       //glEnable(GL_TEXTURE_2D);
       SurfShadowMapTex.Activate();
+      currentActiveShader->UploadChangedUniforms();
       vassert(SurfShadowMapTex.loc_Position >= 0);
-      vboSMapSurf.setupAttrib(SurfShadowMapTex.loc_Position, 3);
-      int prevSIdx = solid.length();
-      int currSIdx = prevSIdx;
+      vassert(SurfShadowMapTex.loc_SAxis >= 0);
+      vassert(SurfShadowMapTex.loc_TAxis >= 0);
+      vassert(SurfShadowMapTex.loc_TexOfsSize >= 0);
+
+      vboSMapSurfTex.setupAttrib(SurfShadowMapTex.loc_Position, 3);
+      vboSMapSurfTex.setupAttrib(SurfShadowMapTex.loc_SAxis, 3, (ptrdiff_t)((0+3)*sizeof(float)));
+      vboSMapSurfTex.setupAttrib(SurfShadowMapTex.loc_TAxis, 3, (ptrdiff_t)((0+3+3)*sizeof(float)));
+      vboSMapSurfTex.setupAttrib(SurfShadowMapTex.loc_TexOfsSize, 4, (ptrdiff_t)((0+3+3+3)*sizeof(float)));
+
+      int prevSIdx = 0;
+      int currSIdx = 0;
+      #ifdef VV_SMAP_DUMP_CHANGES
+      int changes = 0;
+      #endif
       smapLastTexinfo.resetLastUsed();
       for (auto &&surf : masked) {
         const texinfo_t *currTexinfo = surf->texinfo;
-        const bool textureChanged = smapLastTexinfo.needChange(*currTexinfo, updateFrame);
+        const bool textureChanged = smapLastTexinfo.needChangeIgnoreOffsets(*currTexinfo, updateFrame);
         if (textureChanged) {
           if (currSIdx-prevSIdx > 0) {
-            p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboSMapStartInds.ptr()+prevSIdx, vboSMapCounters.ptr()+prevSIdx, (GLsizei)(currSIdx-prevSIdx));
+            p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboSMapStartIndsTex.ptr()+prevSIdx, vboSMapCountersTex.ptr()+prevSIdx, (GLsizei)(currSIdx-prevSIdx));
             //GCon->Logf(NAME_Debug, "  flushed %d masked shadowmap surfaces", currSIdx-prevSIdx);
           }
           prevSIdx = currSIdx;
           smapLastTexinfo.updateLastUsed(*currTexinfo);
           //SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
           SetShadowTexture(currTexinfo->Tex);
-          SurfShadowMapTex.SetTex(currTexinfo);
-          currentActiveShader->UploadChangedUniforms();
+          #ifdef VV_SMAP_DUMP_CHANGES
+          ++changes;
+          #endif
         }
         ++currSIdx;
       }
       if (currSIdx-prevSIdx > 0) {
-        p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboSMapStartInds.ptr()+prevSIdx, vboSMapCounters.ptr()+prevSIdx, (GLsizei)(currSIdx-prevSIdx));
+        p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboSMapStartIndsTex.ptr()+prevSIdx, vboSMapCountersTex.ptr()+prevSIdx, (GLsizei)(currSIdx-prevSIdx));
         //GCon->Logf(NAME_Debug, "  finally flushed %d masked shadowmap surfaces", currSIdx-prevSIdx);
       }
-      vboSMapSurf.disableAttrib(SurfShadowMapTex.loc_Position);
+      #ifdef VV_SMAP_DUMP_CHANGES
+      GCon->Logf(NAME_Debug, "render masked: %d changes per %d surfaces", changes, masked.length());
+      #endif
+
+      vboSMapSurfTex.disableAttrib(SurfShadowMapTex.loc_Position);
+      vboSMapSurfTex.disableAttrib(SurfShadowMapTex.loc_SAxis);
+      vboSMapSurfTex.disableAttrib(SurfShadowMapTex.loc_TAxis);
+      vboSMapSurfTex.disableAttrib(SurfShadowMapTex.loc_TexOfsSize);
+      vboSMapSurfTex.deactivate();
     }
 
-    vboSMapSurf.deactivate();
     //currentActiveShader->deactivate();
   }
 

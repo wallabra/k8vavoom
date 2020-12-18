@@ -87,6 +87,15 @@ struct texinfo_t {
   inline bool isEmptyTexture () const { return (!Tex || Tex->Type == TEXTYPE_Null); }
 
   // call this to check if we need to change OpenGL texture
+  inline bool needChangeIgnoreOffsets (const texinfo_t &other, const vuint32 upframe) const {
+    if (&other == this) return false;
+    return
+      Tex != other.Tex ||
+      ColorMap != other.ColorMap ||
+      (Tex && Tex->lastUpdateFrame != upframe);
+  }
+
+  // call this to check if we need to change OpenGL texture
   inline bool needChange (const texinfo_t &other, const vuint32 upframe) const {
     if (&other == this) return false;
     return

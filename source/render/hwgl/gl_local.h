@@ -1122,12 +1122,24 @@ protected:
   TArray<GLsizei> vboCounters; // number of indicies in each primitive
   TArray<GLint> vboStartInds; // starting indicies
 
+  // for textured surfaces
+  struct __attribute__((packed)) SMapVBOVertex {
+    float x, y, z;
+    float sx, sy, sz; // saxis
+    float tx, ty, tz; // taxis
+    float SOffs, TOffs;
+    float TexIW, TexIH;
+  };
+
   // VBO for shadowmap surfaces (including masked)
+  // for each solid surface
   VBO<TVec> vboSMapSurf;
-  //int vboSMapSolids; // number of uploaded solid surfaces
-  // for each surface
   TArray<GLsizei> vboSMapCounters; // number of indicies in each primitive
   TArray<GLint> vboSMapStartInds; // starting indicies
+  // for each textured solid surface
+  VBO<SMapVBOVertex> vboSMapSurfTex;
+  TArray<GLsizei> vboSMapCountersTex; // number of indicies in each primitive
+  TArray<GLint> vboSMapStartIndsTex; // starting indicies
 
   // console variables
   static VCvarI texture_filter;
