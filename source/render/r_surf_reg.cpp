@@ -377,7 +377,7 @@ surface_t *VRenderLevelLightmap::SubdivideFace (surface_t *surf, const TVec &axi
   back->subsector = sub;
   back->seg = seg;
   back->count = clip.vcount[1];
-  memcpy(back->verts, clip.verts[1], back->count*sizeof(SurfVertex));
+  memcpy((void *)back->verts, clip.verts[1], back->count*sizeof(SurfVertex));
 
   surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[0]-1)*sizeof(SurfVertex));
   front->drawflags = drawflags;
@@ -385,7 +385,7 @@ surface_t *VRenderLevelLightmap::SubdivideFace (surface_t *surf, const TVec &axi
   front->subsector = sub;
   front->seg = seg;
   front->count = clip.vcount[0];
-  memcpy(front->verts, clip.verts[0], front->count*sizeof(SurfVertex));
+  memcpy((void *)front->verts, clip.verts[0], front->count*sizeof(SurfVertex));
 
   front->next = next;
   back->next = SubdivideFace(front, axis, nextaxis);
@@ -428,7 +428,7 @@ surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis
 
   vassert(clip.vcount[1] <= surface_t::MAXWVERTS);
   surf->count = clip.vcount[1];
-  memcpy(surf->verts, clip.verts[1], surf->count*sizeof(SurfVertex));
+  memcpy((void *)surf->verts, clip.verts[1], surf->count*sizeof(SurfVertex));
 
   surface_t *news = NewWSurf();
   news->drawflags = surf->drawflags;
@@ -436,7 +436,7 @@ surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis
   news->subsector = sub;
   news->seg = seg;
   news->count = clip.vcount[0];
-  memcpy(news->verts, clip.verts[0], news->count*sizeof(SurfVertex));
+  memcpy((void *)news->verts, clip.verts[0], news->count*sizeof(SurfVertex));
 
   news->next = surf->next;
   surf->next = SubdivideSeg(news, axis, nextaxis, seg);
