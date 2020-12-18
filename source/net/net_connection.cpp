@@ -874,7 +874,7 @@ void VNetConnection::ResendAcks () {
       PutOneAckForced(ack);
     }
   }
-  AcksToResend.reset();
+  AcksToResend.resetNoDtor();
 }
 
 
@@ -884,7 +884,7 @@ void VNetConnection::ResendAcks () {
 //
 //==========================================================================
 void VNetConnection::SendPacketAck (vuint32 AckPacketId) {
-  if (AutoAck) { AcksToResend.reset(); QueuedAcks.reset(); return; }
+  if (AutoAck) { AcksToResend.resetNoDtor(); QueuedAcks.resetNoDtor(); return; }
   // append current ack to resend queue, so it will be sent too
   AcksToResend.append(AckPacketId);
   // this call will clear resend queue
@@ -1067,7 +1067,7 @@ void VNetConnection::Flush () {
   // this way we will send acks twice, just in case they're lost
   // (first time ack wass sent before it got into queued acks store)
   for (auto &&ack : QueuedAcks) AcksToResend.append(ack);
-  QueuedAcks.reset();
+  QueuedAcks.resetNoDtor();
 }
 
 
@@ -1669,7 +1669,7 @@ extern "C" {
 //
 //==========================================================================
 void VNetConnection::CollectAndSortAliveThinkerChans (ThinkerSortInfo *snfo) {
-  AliveThinkerChans.reset();
+  AliveThinkerChans.resetNoDtor();
   for (auto &&it : ThinkerChannels.first()) {
     VChannel *chan = it.getValue();
     if (!chan || !chan->IsThinker() || chan->Closing) continue;
@@ -1695,9 +1695,9 @@ void VNetConnection::CollectAndSortAliveThinkerChans (ThinkerSortInfo *snfo) {
 //
 //==========================================================================
 void VNetConnection::UpdateThinkers () {
-  PendingThinkers.reset();
-  PendingGoreEnts.reset();
-  AliveGoreChans.reset();
+  PendingThinkers.resetNoDtor();
+  PendingGoreEnts.resetNoDtor();
+  AliveGoreChans.resetNoDtor();
 
   ThinkerSortInfo snfo(Owner);
 
@@ -1761,7 +1761,7 @@ void VNetConnection::UpdateThinkers () {
       }
     }
     // don't send them twice, lol
-    PendingThinkers.reset();
+    PendingThinkers.resetNoDtor();
   }
 
   // if we are starving on channels, don't try to add entities behind our back
