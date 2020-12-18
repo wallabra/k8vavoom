@@ -243,7 +243,7 @@ static void Insert3DMidtex (TArray<opening_t> &dest, const sector_t *sector, con
 static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, sector_t *sector, const TVec point,
                                  unsigned NoBlockFlags, bool linkList, bool usePoint, bool skipNonSolid=false, bool forSurface=false)
 {
-  dest.reset();
+  dest.resetNoDtor();
   // if this sector has no 3d floors, we don't need to do any extra work
   if (!sector->Has3DFloors() /*|| !(sector->SectorFlags&sector_t::SF_Has3DMidTex)*/ && (!xldef || !(xldef->flags&ML_3DMIDTEX))) {
     opening_t &op = dest.alloc();
@@ -257,7 +257,7 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
      then cut those solids from main empty region.
    */
   static TArray<opening_t> solids;
-  solids.reset();
+  solids.resetNoDtor();
   opening_t cop;
   cop.lowfloor = 0.0f; // for now
   cop.highceiling = 0.0f; // for now
