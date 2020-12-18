@@ -45,6 +45,43 @@ void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::DisableStenciling
+//
+//  call this to disable stencil tests instead of doing it directly
+//  this is required for portals
+//
+//==========================================================================
+void VOpenGLDrawer::DisableStenciling () {
+  if (RendLev->/*PortalDepth*/PortalUsingStencil == 0) glDisable(GL_STENCIL_TEST);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DisableScissoring
+//
+//  call this to disable stencil tests instead of doing it directly
+//  this is required for portals
+//
+//==========================================================================
+void VOpenGLDrawer::DisableScissoring () {
+  //if (RendLev->/*PortalDepth*/PortalUsingStencil == 0) glDisable(GL_SCISSOR_TEST);
+  glDisable(GL_SCISSOR_TEST);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::RestorePortalStenciling
+//
+//==========================================================================
+void VOpenGLDrawer::RestorePortalStenciling () {
+  if (RendLev->PortalUsingStencil > 0) glEnable(GL_STENCIL_TEST);
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::StartPortal
 //
 //==========================================================================
@@ -75,7 +112,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
 
     // set up stencil test
     glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS, RendLev->PortalDepth+1, ~0);
+    glStencilFunc(GL_ALWAYS, RendLev->PortalDepth+1, ~0u);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     /*
     if (RendLev->PortalDepth == 0) {
@@ -95,7 +132,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
     DrawPortalArea(Portal);
 
     // set up stencil test for portal
-    glStencilFunc(GL_EQUAL, RendLev->PortalDepth+1, ~0);
+    glStencilFunc(GL_EQUAL, RendLev->PortalDepth+1, ~0u);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
     if (Portal->NeedsDepthBuffer()) {

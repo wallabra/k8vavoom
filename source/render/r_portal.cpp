@@ -55,6 +55,8 @@ struct AutoSavedView {
   unsigned planeCount;
   bool SavedMirrorClip;
 
+  bool shadowsDisabled;
+
   vuint8 *SavedBspVis;
   vuint8 *SavedBspVisSector;
 
@@ -83,6 +85,8 @@ struct AutoSavedView {
 
     SavedClip = Drawer->viewfrustum.planes[TFrustum::Forward]; // save far/mirror plane
     planeCount = Drawer->viewfrustum.planeCount;
+
+    shadowsDisabled = RLev->forceDisableShadows;
 
     SavedBspVis = RLev->BspVis;
     SavedBspVisSector = RLev->BspVisSector;
@@ -130,6 +134,8 @@ struct AutoSavedView {
     RLev->FixedLight = SavedFixedLight;
     Drawer->viewfrustum.planes[TFrustum::Forward] = SavedClip; // restore far/mirror plane
     Drawer->viewfrustum.planeCount = planeCount;
+
+    RLev->forceDisableShadows = shadowsDisabled;
 
     // resetup view origin
     Drawer->SetupViewOrg();
@@ -257,6 +263,7 @@ void VPortal::Draw (bool UseStencil) {
     // save renderer settings
     AutoSavedView guard(RLev, NeedsDepthBuffer());
     RLev->CurrPortal = this;
+    RLev->forceDisableShadows = true;
     DrawContents();
   }
 

@@ -150,7 +150,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
   glDepthFunc(GL_EQUAL);
 
   if (doShadow && r_shadowmaps.asBool() && CanRenderShadowMaps()) {
-    glDisable(GL_STENCIL_TEST);
+    DisableStenciling();
     //glEnable(GL_TEXTURE_CUBE_MAP);
     SelectTexture(1);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -175,7 +175,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
       glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
       glEnable(GL_STENCIL_TEST);
     } else {
-      glDisable(GL_STENCIL_TEST);
+      DisableStenciling();
     }
 
     //if (doShadow && !wasRenderedShadowSurface) Color = 0xffff0000u;

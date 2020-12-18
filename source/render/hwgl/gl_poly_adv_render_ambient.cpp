@@ -38,6 +38,7 @@
 //==========================================================================
 void VOpenGLDrawer::DrawWorldAmbientPass () {
   VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
+  GLDisableBlend();
 
   // draw horizons and z-skies
   if (!gl_dbg_wireframe) {

@@ -57,8 +57,8 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   glDisableDepthWrite();
   glEnable(GL_TEXTURE_2D);
   // turn off scissoring only if we aren't rendering portal contents
-  if (RendLev->/*PortalDepth*/PortalUsingStencil == 0) glDisable(GL_STENCIL_TEST);
-  glDisable(GL_SCISSOR_TEST);
+  DisableStenciling();
+  DisableScissoring();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   GLDisableOffset();
   glEnable(GL_CULL_FACE);

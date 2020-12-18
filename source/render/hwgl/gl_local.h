@@ -622,6 +622,12 @@ public:
   virtual bool StartPortal(VPortal *, bool) override;
   virtual void EndPortal(VPortal *, bool) override;
 
+  // call this to disable stencil tests instead of doing it directly
+  // this is required for portals
+  void DisableStenciling ();
+  void DisableScissoring ();
+  void RestorePortalStenciling ();
+
   // particles
   virtual void StartParticles () override;
   virtual void DrawParticle (particle_t *) override;

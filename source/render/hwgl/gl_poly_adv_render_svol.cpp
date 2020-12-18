@@ -111,7 +111,7 @@ static void appendDirtyRect (const GLint arect[4]) {
 //==========================================================================
 void VOpenGLDrawer::BeginShadowVolumesPass () {
   //glEnable(GL_STENCIL_TEST);
-  glDisable(GL_STENCIL_TEST);
+  DisableStenciling();
   //glDepthMask(GL_FALSE); // no z-buffer writes
   glDisableDepthWrite();
   // reset last known scissor
@@ -271,6 +271,7 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
   #endif
   //glDisable(GL_SCISSOR_TEST);
   //glEnable(GL_TEXTURE_2D);
+  RestorePortalStenciling();
 }
 
 

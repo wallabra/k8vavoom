@@ -110,6 +110,241 @@ VRenderLevelShadowVolume::~VRenderLevelShadowVolume () {
 static TArray<StLightInfo> visstatlights;
 static TArray<DynLightInfo> visdynlights;
 
+static unsigned visibleStaticLightCount;
+static unsigned visibleDynamicLightCount;
+static unsigned visdynlightCount;
+static unsigned visstatlightCount;
+
+static TFrustum advLightFrustum;
+static TFrustumParam advLightFp;
+
+
+//==========================================================================
+//
+//  VRenderLevelShadowVolume::RenderSceneStaticLights
+//
+//==========================================================================
+void VRenderLevelShadowVolume::RenderSceneStaticLights (const refdef_t *RD, const VViewClipper *Range) {
+  if (FixedLight || !r_static_lights || r_max_lights == 0) return;
+
+  linetrace_t Trace;
+  TVec Delta;
+
+  // do not render lights further than `gl_maxdist`
+  const float maxLightDist = GetLightMaxDistDef();
+  const float rlightraduisSq = maxLightDist*maxLightDist;
+  //const bool hasPVS = Level->HasPVS();
+
+  // no need to do this, because light rendering will do it again anyway
+  const bool checkLightVis = r_advlight_flood_check.asBool();
+
+  TPlane backPlane;
+  backPlane.SetPointNormal3D(Drawer->vieworg, Drawer->viewforward);
+
+  DynamicLights = false;
+
+
+  //if (!FixedLight && r_static_lights && r_max_lights != 0) {
+  if (!staticLightsFiltered) RefilterStaticLights();
+
+  // sort lights by distance to player, so faraway lights won't disable nearby ones
+  if (visstatlights.length() < Lights.length()) visstatlights.setLength(Lights.length());
+
+  light_t *stlight = Lights.ptr();
+  for (int i = Lights.length(); i--; ++stlight) {
+    //if (!Lights[i].radius) continue;
+    if (!stlight->active || stlight->radius < 8) continue;
+
+    if (stlight->leafnum < 0 || stlight->leafnum >= Level->NumSubsectors) {
+      stlight->leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(stlight->origin)-Level->Subsectors);
+    }
+
+    // drop invisible lights without further processing
+    if (stlight->dlightframe != currDLightFrame) continue;
+
+    TVec lorg = stlight->origin;
+
+    // don't do lights that are too far away
+    Delta = lorg-Drawer->vieworg;
+    const float distSq = Delta.lengthSquared();
+
+    // if the light is behind a view, drop it if it is further than light radius
+    if (distSq >= stlight->radius*stlight->radius) {
+      if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
+      if (advLightFp.needUpdate(Drawer->vieworg, Drawer->viewangles)) {
+        advLightFp.setup(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
+        advLightFrustum.setup(clip_base, advLightFp, false); //true, maxLightDist);
+      }
+      if (!advLightFrustum.checkSphere(lorg, stlight->radius)) {
+        // out of frustum
+        continue;
+      }
+    }
+
+    // drop lights inside sectors without height
+    const sector_t *sec = Level->Subsectors[stlight->leafnum].sector;
+    if (!CheckValidLightPosRough(lorg, sec)) continue;
+    if (checkLightVis && !CheckBSPVisibilityBox(lorg, stlight->radius, &Level->Subsectors[stlight->leafnum])) continue;
+
+    StLightInfo &sli = visstatlights[visstatlightCount++];
+    sli.stlight = stlight;
+    sli.distSq = distSq;
+    sli.zofs = lorg.z-stlight->origin.z;
+  }
+
+  // sort lights, so nearby ones will be rendered first
+  if (visstatlightCount > 0) {
+    visibleStaticLightCount = visstatlightCount;
+    if (r_advlight_sort_static) {
+      timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
+    }
+    for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
+      //VEntity *own = (sli->stlight->owner && sli->stlight->owner->IsA(VEntity::StaticClass()) ? sli->stlight->owner : nullptr);
+      //VObject *ownobj = (sli->stlight->dynowner ? sli->stlight->dynowner : sli->stlight->ownerUId ? VObject::FindByUniqueId(sli->stlight->ownerUId) : nullptr);
+      //VObject *ownobj = (sli->stlight->ownerUId ? VObject::FindByUniqueId(sli->stlight->ownerUId) : nullptr);
+      //VObject *ownobj = (sli->stlight->ownerUId ? VObject::FindByUniqueId(sli->stlight->ownerUId) : nullptr);
+      //VEntity *own = (ownobj && !ownobj->IsGoingToDie() && ownobj->IsA(VEntity::StaticClass()) ? (VEntity *)ownobj : nullptr);
+      VEntity *own = nullptr;
+      if (sli->stlight->ownerUId) {
+        auto ownpp = suid2ent.find(sli->stlight->ownerUId);
+        if (ownpp) own = *ownpp; //else GCon->Logf(NAME_Debug, "stlight owner with uid %u not found", sli->stlight->ownerUId);
+      }
+      vuint32 flags = (own && R_EntModelNoSelfShadow(own) ? dlight_t::NoSelfShadow : 0);
+      //if (own) GCon->Logf("STLOWN: %s", *own->GetClass()->GetFullName());
+      TVec lorg = sli->stlight->origin;
+      lorg.z += sli->zofs;
+      RenderLightShadows(own, flags, RD, Range, lorg, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->color, sli->stlight->coneDirection, sli->stlight->coneAngle);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShadowVolume::RenderSceneDynamicLights
+//
+//==========================================================================
+void VRenderLevelShadowVolume::RenderSceneDynamicLights (const refdef_t *RD, const VViewClipper *Range) {
+  if (FixedLight || !r_dynamic_lights || r_max_lights == 0) return;
+
+  linetrace_t Trace;
+  TVec Delta;
+
+  // do not render lights further than `gl_maxdist`
+  const float maxLightDist = GetLightMaxDistDef();
+  const float rlightraduisSq = maxLightDist*maxLightDist;
+  //const bool hasPVS = Level->HasPVS();
+
+  TPlane backPlane;
+  backPlane.SetPointNormal3D(Drawer->vieworg, Drawer->viewforward);
+
+  //int rlStatic = LightsRendered;
+  DynamicLights = true;
+
+  //if (!FixedLight && r_dynamic_lights && r_max_lights != 0) {
+  if (visdynlights.length() < MAX_DLIGHTS) visdynlights.setLength(MAX_DLIGHTS);
+
+  dlight_t *l = DLights;
+  for (int i = MAX_DLIGHTS; i--; ++l) {
+    if (l->radius < l->minlight+8 || l->die < Level->Time) continue;
+
+    TVec lorg = l->origin;
+
+    // drop lights inside sectors without height
+    /* it is not set here yet; why?! we should calc leafnum!
+    const int leafnum = dlinfo[i].leafnum;
+    GCon->Logf(NAME_Debug, "dl #%d: lfn=%d", i, leafnum);
+    if (leafnum >= 0 && leafnum < Level->NumSubsectors) {
+      const sector_t *sec = Level->Subsectors[leafnum].sector;
+      if (!CheckValidLightPosRough(lorg, sec)) continue;
+    }
+    */
+
+    // don't do lights that are too far away
+    Delta = lorg-Drawer->vieworg;
+    const float distSq = Delta.lengthSquared();
+
+    // if the light is behind a view, drop it if it is further than light radius
+    if (distSq >= l->radius*l->radius) {
+      if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
+      if (advLightFp.needUpdate(Drawer->vieworg, Drawer->viewangles)) {
+        advLightFp.setup(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
+        advLightFrustum.setup(clip_base, advLightFp, false); //true, maxLightDist);
+      }
+      if (!advLightFrustum.checkSphere(lorg, l->radius)) {
+        // out of frustum
+        continue;
+      }
+    }
+
+    DynLightInfo &dli = visdynlights[visdynlightCount++];
+    dli.l = l;
+    dli.distSq = distSq;
+    //dli.zofs = lorg.z-l->origin.z;
+  }
+
+  // sort lights, so nearby ones will be rendered first
+  if (visdynlightCount > 0) {
+    visibleDynamicLightCount = visdynlightCount;
+    if (r_advlight_sort_dynamic) {
+      timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
+    }
+    for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
+      //VEntity *own = (dli->l->Owner && dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
+      VEntity *own = nullptr;
+      if (dli->l->ownerUId) {
+        auto ownpp = suid2ent.find(dli->l->ownerUId);
+        if (ownpp) own = *ownpp; //else GCon->Logf(NAME_Debug, "stlight owner with uid %u not found", sli->stlight->ownerUId);
+      }
+      if (own && R_EntModelNoSelfShadow(own)) dli->l->flags |= dlight_t::NoSelfShadow;
+      //TVec lorg = dli->l->origin;
+      //lorg.z += dli->zofs;
+      // always render player lights
+      const bool forced = (own && own->IsPlayer());
+      TVec lorg = dli->l->origin;
+      RenderLightShadows(own, dli->l->flags, RD, Range, lorg, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, dli->l->coneDirection, dli->l->coneAngle, forced);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShadowVolume::RenderSceneLights
+//
+//==========================================================================
+void VRenderLevelShadowVolume::RenderSceneLights (const refdef_t *RD, const VViewClipper *Range) {
+  visibleStaticLightCount = 0;
+  visibleDynamicLightCount = 0;
+  visdynlightCount = 0;
+  visstatlightCount = 0;
+
+  //if (PortalDepth == 0 /*PortalUsingStencil != 0*/) return;
+
+  //FIXME: portals can use stencils, and advlight too...
+  // disable shadows in portals (for now)
+  const bool oldForceDisableShadows = forceDisableShadows;
+  if (PortalUsingStencil > 0) forceDisableShadows = true;
+
+  //GCon->Log("***************** RenderScene *****************");
+  MiniStopTimer profDrawSVol("ShadowVolumes", prof_r_bsp_world_render.asBool());
+  Drawer->BeginShadowVolumesPass();
+
+  LightsRendered = 0;
+  DynLightsRendered = 0;
+
+  RenderSceneStaticLights(RD, Range);
+  RenderSceneDynamicLights(RD, Range);
+
+  profDrawSVol.stopAndReport();
+
+  if (dbg_adv_show_light_count) {
+    GCon->Logf("total lights per frame: %d (%d static, %d dynamic)", LightsRendered, LightsRendered-DynLightsRendered, DynLightsRendered);
+  }
+
+  forceDisableShadows = oldForceDisableShadows;
+}
+
 
 //==========================================================================
 //
@@ -206,194 +441,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
   RenderMobjsAmbient();
   profDrawMObjAmb.stopAndReport();
 
-  unsigned visibleStaticLightCount = 0;
-  unsigned visibleDynamicLightCount = 0;
-
-  unsigned visdynlightCount = 0;
-  unsigned visstatlightCount = 0;
-
-  //GCon->Log("***************** RenderScene *****************");
-  //FIXME: portals can use stencils, and advlight too...
-  if (/*PortalDepth*/ /*PortalUsingStencil == 0 || IsShadowMapRenderer()*/true) {
-    // disable shadows in portals (for now)
-    const bool oldForceDisableShadows = forceDisableShadows;
-    if (PortalDepth > 0) forceDisableShadows = true;
-
-    MiniStopTimer profDrawSVol("ShadowVolumes", prof_r_bsp_world_render.asBool());
-    Drawer->BeginShadowVolumesPass();
-
-    linetrace_t Trace;
-    TVec Delta;
-
-    // do not render lights further than `gl_maxdist`
-    const float maxLightDist = GetLightMaxDistDef();
-    const float rlightraduisSq = maxLightDist*maxLightDist;
-    //const bool hasPVS = Level->HasPVS();
-
-    // no need to do this, because light rendering will do it again anyway
-    const bool checkLightVis = r_advlight_flood_check.asBool();
-
-    static TFrustum frustum;
-    static TFrustumParam fp;
-
-    TPlane backPlane;
-    backPlane.SetPointNormal3D(Drawer->vieworg, Drawer->viewforward);
-
-    LightsRendered = 0;
-    DynLightsRendered = 0;
-    DynamicLights = false;
-
-    if (!FixedLight && r_static_lights && r_max_lights != 0) {
-      if (!staticLightsFiltered) RefilterStaticLights();
-
-      // sort lights by distance to player, so faraway lights won't disable nearby ones
-      if (visstatlights.length() < Lights.length()) visstatlights.setLength(Lights.length());
-
-      light_t *stlight = Lights.ptr();
-      for (int i = Lights.length(); i--; ++stlight) {
-        //if (!Lights[i].radius) continue;
-        if (!stlight->active || stlight->radius < 8) continue;
-
-        if (stlight->leafnum < 0 || stlight->leafnum >= Level->NumSubsectors) {
-          stlight->leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(stlight->origin)-Level->Subsectors);
-        }
-
-        // drop invisible lights without further processing
-        if (stlight->dlightframe != currDLightFrame) continue;
-
-        TVec lorg = stlight->origin;
-
-        // don't do lights that are too far away
-        Delta = lorg-Drawer->vieworg;
-        const float distSq = Delta.lengthSquared();
-
-        // if the light is behind a view, drop it if it is further than light radius
-        if (distSq >= stlight->radius*stlight->radius) {
-          if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
-          if (fp.needUpdate(Drawer->vieworg, Drawer->viewangles)) {
-            fp.setup(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
-            frustum.setup(clip_base, fp, false); //true, maxLightDist);
-          }
-          if (!frustum.checkSphere(lorg, stlight->radius)) {
-            // out of frustum
-            continue;
-          }
-        }
-
-        // drop lights inside sectors without height
-        const sector_t *sec = Level->Subsectors[stlight->leafnum].sector;
-        if (!CheckValidLightPosRough(lorg, sec)) continue;
-        if (checkLightVis && !CheckBSPVisibilityBox(lorg, stlight->radius, &Level->Subsectors[stlight->leafnum])) continue;
-
-        StLightInfo &sli = visstatlights[visstatlightCount++];
-        sli.stlight = stlight;
-        sli.distSq = distSq;
-        sli.zofs = lorg.z-stlight->origin.z;
-      }
-
-      // sort lights, so nearby ones will be rendered first
-      if (visstatlightCount > 0) {
-        visibleStaticLightCount = visstatlightCount;
-        if (r_advlight_sort_static) {
-          timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
-        }
-        for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
-          //VEntity *own = (sli->stlight->owner && sli->stlight->owner->IsA(VEntity::StaticClass()) ? sli->stlight->owner : nullptr);
-          //VObject *ownobj = (sli->stlight->dynowner ? sli->stlight->dynowner : sli->stlight->ownerUId ? VObject::FindByUniqueId(sli->stlight->ownerUId) : nullptr);
-          //VObject *ownobj = (sli->stlight->ownerUId ? VObject::FindByUniqueId(sli->stlight->ownerUId) : nullptr);
-          //VObject *ownobj = (sli->stlight->ownerUId ? VObject::FindByUniqueId(sli->stlight->ownerUId) : nullptr);
-          //VEntity *own = (ownobj && !ownobj->IsGoingToDie() && ownobj->IsA(VEntity::StaticClass()) ? (VEntity *)ownobj : nullptr);
-          VEntity *own = nullptr;
-          if (sli->stlight->ownerUId) {
-            auto ownpp = suid2ent.find(sli->stlight->ownerUId);
-            if (ownpp) own = *ownpp; //else GCon->Logf(NAME_Debug, "stlight owner with uid %u not found", sli->stlight->ownerUId);
-          }
-          vuint32 flags = (own && R_EntModelNoSelfShadow(own) ? dlight_t::NoSelfShadow : 0);
-          //if (own) GCon->Logf("STLOWN: %s", *own->GetClass()->GetFullName());
-          TVec lorg = sli->stlight->origin;
-          lorg.z += sli->zofs;
-          RenderLightShadows(own, flags, RD, Range, lorg, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->color, sli->stlight->coneDirection, sli->stlight->coneAngle);
-        }
-      }
-    }
-
-    //int rlStatic = LightsRendered;
-    DynamicLights = true;
-
-    if (!FixedLight && r_dynamic_lights && r_max_lights != 0) {
-      if (visdynlights.length() < MAX_DLIGHTS) visdynlights.setLength(MAX_DLIGHTS);
-
-      dlight_t *l = DLights;
-      for (int i = MAX_DLIGHTS; i--; ++l) {
-        if (l->radius < l->minlight+8 || l->die < Level->Time) continue;
-
-        TVec lorg = l->origin;
-
-        // drop lights inside sectors without height
-        /* it is not set here yet; why?! we should calc leafnum!
-        const int leafnum = dlinfo[i].leafnum;
-        GCon->Logf(NAME_Debug, "dl #%d: lfn=%d", i, leafnum);
-        if (leafnum >= 0 && leafnum < Level->NumSubsectors) {
-          const sector_t *sec = Level->Subsectors[leafnum].sector;
-          if (!CheckValidLightPosRough(lorg, sec)) continue;
-        }
-        */
-
-        // don't do lights that are too far away
-        Delta = lorg-Drawer->vieworg;
-        const float distSq = Delta.lengthSquared();
-
-        // if the light is behind a view, drop it if it is further than light radius
-        if (distSq >= l->radius*l->radius) {
-          if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
-          if (fp.needUpdate(Drawer->vieworg, Drawer->viewangles)) {
-            fp.setup(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
-            frustum.setup(clip_base, fp, false); //true, maxLightDist);
-          }
-          if (!frustum.checkSphere(lorg, l->radius)) {
-            // out of frustum
-            continue;
-          }
-        }
-
-        DynLightInfo &dli = visdynlights[visdynlightCount++];
-        dli.l = l;
-        dli.distSq = distSq;
-        //dli.zofs = lorg.z-l->origin.z;
-      }
-
-      // sort lights, so nearby ones will be rendered first
-      if (visdynlightCount > 0) {
-        visibleDynamicLightCount = visdynlightCount;
-        if (r_advlight_sort_dynamic) {
-          timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
-        }
-        for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
-          //VEntity *own = (dli->l->Owner && dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
-          VEntity *own = nullptr;
-          if (dli->l->ownerUId) {
-            auto ownpp = suid2ent.find(dli->l->ownerUId);
-            if (ownpp) own = *ownpp; //else GCon->Logf(NAME_Debug, "stlight owner with uid %u not found", sli->stlight->ownerUId);
-          }
-          if (own && R_EntModelNoSelfShadow(own)) dli->l->flags |= dlight_t::NoSelfShadow;
-          //TVec lorg = dli->l->origin;
-          //lorg.z += dli->zofs;
-          // always render player lights
-          const bool forced = (own && own->IsPlayer());
-          TVec lorg = dli->l->origin;
-          RenderLightShadows(own, dli->l->flags, RD, Range, lorg, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, dli->l->coneDirection, dli->l->coneAngle, forced);
-        }
-      }
-    }
-
-    profDrawSVol.stopAndReport();
-
-    if (dbg_adv_show_light_count) {
-      GCon->Logf("total lights per frame: %d (%d static, %d dynamic)", LightsRendered, LightsRendered-DynLightsRendered, DynLightsRendered);
-    }
-
-    forceDisableShadows = oldForceDisableShadows;
-  }
+  RenderSceneLights(RD, Range);
 
   MiniStopTimer profDrawTextures("DrawWorldTexturesPass", prof_r_bsp_world_render.asBool());
   Drawer->DrawWorldTexturesPass();

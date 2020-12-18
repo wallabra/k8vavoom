@@ -317,6 +317,7 @@ void VOpenGLDrawer::EndLightShadowMaps () {
   glEnable(GL_DEPTH_TEST);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
   glDisable(GL_TEXTURE_2D);
+  RestorePortalStenciling();
 }
 
 

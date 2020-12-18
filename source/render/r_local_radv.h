@@ -110,6 +110,10 @@ private:
 protected:
   virtual void RefilterStaticLights () override;
 
+  void RenderSceneLights (const refdef_t *RD, const VViewClipper *Range);
+  void RenderSceneStaticLights (const refdef_t *RD, const VViewClipper *Range);
+  void RenderSceneDynamicLights (const refdef_t *RD, const VViewClipper *Range);
+
   // general
   virtual void RenderScene (const refdef_t *, const VViewClipper *) override;
 

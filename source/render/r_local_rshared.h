@@ -403,7 +403,7 @@ protected:
 
   void DrawTransSpr (trans_sprite_t &spr);
 
-protected:
+public:
   bool forceDisableShadows; // override for "r_shadows"
 
   inline bool IsShadowsEnabled () const noexcept { return (forceDisableShadows ? false : r_shadows.asBool()); }

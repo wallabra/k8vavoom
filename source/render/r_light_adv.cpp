@@ -58,6 +58,8 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 {
   if (Radius <= LightMin || gl_dbg_wireframe) return;
 
+  //if (PortalDepth > 0) { GCon->Logf(NAME_Debug, "skipped portal lighting (depth=%d)", PortalDepth); return; }
+
   if (!forceRender) {
     // check limits
     if (!DynamicLights) {
@@ -274,47 +276,49 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   // used in flats checker
   (void)fsecCounterGen();
 
-  // do shadow volumes
-  if (useShadowMaps) {
-    if (allowShadows && CurrLightCalcUnstuck) {
-      if (CurrLightUnstuckPos != CurrLightPos) {
-        #if 0
-        const TVec move = CurrLightUnstuckPos-CurrLightPos;
-        GCon->Logf(NAME_Debug, "light at pos (%g,%g,%g) moved by (%g,%g,%g) (radius=%g)", CurrLightPos.x, CurrLightPos.y, CurrLightPos.z, move.x, move.y, move.z, CurrLightRadius);
-        #endif
-        CurrLightPos = CurrLightUnstuckPos;
-      }
-    }
-    Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius);
-    if (allowShadows) {
-      // sort shadow surfaces by textures
-      const int spShad = r_shadowmap_sprshadows.asInt();
-      const bool doModels = r_models.asBool();
-      if (doModels) Drawer->BeginModelShadowMaps(CurrLightPos, CurrLightRadius);
-      Drawer->UploadShadowSurfaces(shadowSurfacesSolid, shadowSurfacesMasked);
-      for (unsigned fc = 0; fc < 6; ++fc) {
-        Drawer->SetupLightShadowMap(fc);
-        Drawer->RenderShadowMaps(shadowSurfacesSolid, shadowSurfacesMasked);
-        if (spShad > 0) RenderMobjSpriteShadowMap(ent, fc, spShad, dlflags);
-        if (doModels) {
-          Drawer->SetupModelShadowMap(fc);
-          RenderMobjsShadowMap(ent, fc, dlflags);
-          Drawer->EndModelShadowMaps();
+  if (allowShadows) {
+    // do shadow volumes
+    if (useShadowMaps) {
+      if (allowShadows && CurrLightCalcUnstuck) {
+        if (CurrLightUnstuckPos != CurrLightPos) {
+          #if 0
+          const TVec move = CurrLightUnstuckPos-CurrLightPos;
+          GCon->Logf(NAME_Debug, "light at pos (%g,%g,%g) moved by (%g,%g,%g) (radius=%g)", CurrLightPos.x, CurrLightPos.y, CurrLightPos.z, move.x, move.y, move.z, CurrLightRadius);
+          #endif
+          CurrLightPos = CurrLightUnstuckPos;
         }
       }
+      Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius);
+      if (allowShadows) {
+        // sort shadow surfaces by textures
+        const int spShad = r_shadowmap_sprshadows.asInt();
+        const bool doModels = r_models.asBool();
+        if (doModels) Drawer->BeginModelShadowMaps(CurrLightPos, CurrLightRadius);
+        Drawer->UploadShadowSurfaces(shadowSurfacesSolid, shadowSurfacesMasked);
+        for (unsigned fc = 0; fc < 6; ++fc) {
+          Drawer->SetupLightShadowMap(fc);
+          Drawer->RenderShadowMaps(shadowSurfacesSolid, shadowSurfacesMasked);
+          if (spShad > 0) RenderMobjSpriteShadowMap(ent, fc, spShad, dlflags);
+          if (doModels) {
+            Drawer->SetupModelShadowMap(fc);
+            RenderMobjsShadowMap(ent, fc, dlflags);
+            Drawer->EndModelShadowMaps();
+          }
+        }
+      }
+      Drawer->EndLightShadowMaps();
+    } else {
+      Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord);
+      if (allowShadows) {
+        if (r_shadowvol_use_pofs) Drawer->GLPolygonOffsetEx(r_shadowvol_pslope, -r_shadowvol_pofs); // pull forward
+        RenderShadowSurfaceList();
+        Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
+        RenderMobjsShadow(ent, dlflags);
+        if (r_shadowvol_use_pofs) Drawer->GLDisableOffset();
+        Drawer->EndModelsShadowsPass();
+      }
+      Drawer->EndLightShadowVolumes();
     }
-    Drawer->EndLightShadowMaps();
-  } else {
-    Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord);
-    if (allowShadows) {
-      if (r_shadowvol_use_pofs) Drawer->GLPolygonOffsetEx(r_shadowvol_pslope, -r_shadowvol_pofs); // pull forward
-      RenderShadowSurfaceList();
-      Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
-      RenderMobjsShadow(ent, dlflags);
-      if (r_shadowvol_use_pofs) Drawer->GLDisableOffset();
-      Drawer->EndModelsShadowsPass();
-    }
-    Drawer->EndLightShadowVolumes();
   }
 
   // k8: the question is: why we are rendering surfaces instead
