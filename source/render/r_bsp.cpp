@@ -1391,7 +1391,7 @@ void VRenderLevelShared::RenderPortals () {
           pp = nullptr;
         }
       }
-      Portals.reset();
+      Portals.resetNoDtor();
       // save cvars
       oldMaxMirrors = r_maxmiror_depth;
       oldPortalDepth = GetMaxPortalDepth();
@@ -1449,5 +1449,5 @@ void VRenderLevelShared::RenderPortals () {
   }
 
   --PortalLevel;
-  if (PortalLevel == 0) Portals.reset();
+  if (PortalLevel == 0) Portals.resetNoDtor();
 }

@@ -92,8 +92,8 @@ static inline bool SetupRenderStyleAndTime (const VEntity *ent, RenderStyleInfo 
 //
 //==========================================================================
 void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows, bool collectSprites) {
-  mobjsInCurrLightModels.reset();
-  mobjsInCurrLightSprites.reset();
+  mobjsInCurrLightModels.resetNoDtor();
+  mobjsInCurrLightSprites.resetNoDtor();
 
   const bool modelsAllowed = r_models.asBool();
   if (!r_draw_mobjs || (!collectSprites && !modelsAllowed)) return;

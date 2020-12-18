@@ -131,7 +131,7 @@ void VRenderLevelShared::amFlatsCheckNode (int bspnum) {
 //
 //==========================================================================
 void VRenderLevelShared::amFlatsCollectSurfaces () {
-  amSurfList.reset();
+  amSurfList.resetNoDtor();
   //amFlatsRej = amFlatsAcc = 0;
   if (Level->NumSectors == 0 || Level->NumSubsectors == 0) return; // just in case
   amSkyTex = GTextureManager.getIgnoreAnim(skyflatnum);
@@ -204,7 +204,7 @@ void VRenderLevelShared::RenderTexturedAutomap (float m_x, float m_y, float m_x2
     // render surfaces
     for (surface_t *surf = (*css)->surfs; surf; surf = surf->next) {
       if (surf->count < 3) continue;
-      amTmpVerts.reset();
+      amTmpVerts.resetNoDtor();
       float sx, sy;
       for (int vn = 0; vn < surf->count; ++vn) {
         MapXYtoFBXY(&sx, &sy, surf->verts[vn].x, surf->verts[vn].y);

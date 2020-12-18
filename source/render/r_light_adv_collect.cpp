@@ -44,10 +44,10 @@ enum {
 //==========================================================================
 void VRenderLevelShadowVolume::CollectLightShadowSurfaces () {
   LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
-  shadowSurfacesSolid.reset();
-  shadowSurfacesMasked.reset();
-  lightSurfacesSolid.reset();
-  lightSurfacesMasked.reset();
+  shadowSurfacesSolid.resetNoDtor();
+  shadowSurfacesMasked.resetNoDtor();
+  lightSurfacesSolid.resetNoDtor();
+  lightSurfacesMasked.resetNoDtor();
   CollectAdvLightBSPNode(Level->NumNodes-1, nullptr);
 }
 

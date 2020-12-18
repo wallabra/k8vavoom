@@ -243,7 +243,7 @@ protected:
       renderedSectorCounter = 1;
       for (auto &&rs : renderedSectorMarks) rs = 0;
     }
-    renderedSectors.reset();
+    renderedSectors.resetNoDtor();
   }
 
   inline void markSectorRendered (int secnum) noexcept {

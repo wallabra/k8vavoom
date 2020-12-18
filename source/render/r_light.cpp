@@ -1377,7 +1377,7 @@ void VRenderLevelShared::CalcStaticLightTouchingSubs (int slindex, light_t &sl) 
     SubStaticLights[snum].touchedStatic.remove(slindex);
   }
 
-  sl.touchedSubs.reset();
+  sl.touchedSubs.resetNoDtor();
   if (!sl.active || sl.radius < 2.0f) return;
 
   //sl.touchedPolys.reset();

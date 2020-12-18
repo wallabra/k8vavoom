@@ -347,10 +347,10 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
 //
 //==========================================================================
 void VRenderLevelShared::BuildVisibleObjectsList (bool doShadows) {
-  visibleObjects.reset();
-  visibleAliasModels.reset();
-  visibleSprites.reset();
-  allShadowModelObjects.reset();
+  visibleObjects.resetNoDtor();
+  visibleAliasModels.resetNoDtor();
+  visibleSprites.resetNoDtor();
+  allShadowModelObjects.resetNoDtor();
 
   if (!r_draw_mobjs) return;
 
