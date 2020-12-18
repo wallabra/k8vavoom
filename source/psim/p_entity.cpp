@@ -503,8 +503,8 @@ bool VEntity::HasSpecialStates (VName StateName) {
 //==========================================================================
 void VEntity::GetStateEffects (TArray<VLightEffectDef *> &Lights, TArray<VParticleEffectDef *> &Part) const {
   // clear arrays
-  Lights.reset();
-  Part.reset();
+  Lights.resetNoDtor();
+  Part.resetNoDtor();
 
   // check for valid state
   if (!State) return;

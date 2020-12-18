@@ -777,7 +777,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
   tmtSetupGap(&tmtrace, newsubsec->sector, Height, false);
 
   XLevel->IncrementValidCount();
-  tmtrace.SpecHit.reset(); // was `Clear()`
+  tmtrace.SpecHit.resetNoDtor(); // was `Clear()`
 
   tmtrace.BlockingMobj = nullptr;
   tmtrace.StepThing = nullptr;
