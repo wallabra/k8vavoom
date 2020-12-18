@@ -1274,26 +1274,22 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     const sector_t *sec = Level->Subsectors[BSPIDX_LEAF_SUBSECTOR(bspnum)].sector;
     if (!sec->linecount) return; // skip sectors containing original polyobjs
     if (sec->floor.SkyBox || sec->ceiling.SkyBox || MirrorLevel || PortalLevel) {
+      /*
       const bool old_clip_height = clip_height.asBool();
       const bool old_clip_midsolid = clip_midsolid.asBool();
-      /* doesn't help much :-(
       const bool old_clip_frustum_bsp = clip_frustum_bsp.asBool();
-      #ifndef VV_USE_CLIP_CHECK_AND_ADD
       const bool old_clip_frustum_bsp_segs = clip_frustum_bsp_segs.asBool();
-      #endif
-      */
       clip_height = false;
       clip_midsolid = false;
       clip_frustum_bsp = false;
       clip_frustum_bsp_segs = false;
+      */
       RenderSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum), onlyClip);
+      /*
       clip_height = old_clip_height;
       clip_midsolid = old_clip_midsolid;
-      /*
       clip_frustum_bsp = old_clip_frustum_bsp;
-      #ifndef VV_USE_CLIP_CHECK_AND_ADD
       clip_frustum_bsp_segs = old_clip_frustum_bsp_segs;
-      #endif
       */
     } else {
       return RenderSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum), onlyClip);
