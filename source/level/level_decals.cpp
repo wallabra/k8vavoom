@@ -808,7 +808,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
   const float lineofs = dist*(v2-v1).length2D();
   VDC_DLOG(NAME_Debug, "linelen=%g; dist=%g; lineofs=%g", (v2-v1).length2D(), dist, lineofs);
 
-  connectedLines.reset();
+  connectedLines.resetNoDtor();
   PutDecalAtLine(tex, org.z, lineofs, dec, side, li, flips, translation, false); // don't skip mark check
 }
 

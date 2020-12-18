@@ -157,7 +157,7 @@ void VLevel::doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_
   sec->soundtraversed = soundblocks+1;
   sec->SoundTarget = soundtarget;
 
-  recSoundSectorList.reset();
+  recSoundSectorList.resetNoDtor();
   recSoundSectorSeenEnts.reset();
   processSoundSector(validcount, elist, sec, soundblocks, soundtarget, maxdist, sndorigin);
 
@@ -173,7 +173,7 @@ void VLevel::doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_
   }
 
   //if (recSoundSectorList.length > 1) print("RECSOUND: len=%d", recSoundSectorList.length);
-  recSoundSectorList.reset();
+  recSoundSectorList.resetNoDtor();
   recSoundSectorSeenEnts.reset();
 }
 
