@@ -118,7 +118,7 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
   //glGetIntegerv(GL_VIEWPORT, lastSVVport);
   GLGetViewport(lastSVVport);
   memcpy(lastSVScissor, lastSVVport, sizeof(lastSVScissor));
-  if (gl_smart_dirty_rects) dirtyRects.reset();
+  if (gl_smart_dirty_rects) dirtyRects.resetNoDtor();
 }
 
 
