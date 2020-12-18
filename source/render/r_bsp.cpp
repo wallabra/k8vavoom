@@ -39,6 +39,8 @@
 // sadly, this doesn't work the way i want it to work... yet
 //#define VV_USE_CLIP_CHECK_AND_ADD
 
+static VCvarB r_skybox_clip_hack("r_skybox_clip_hack", false, "Relax clipping for skyboxes/portals? (Most of the time this is not needed; useful for comples stacked sectors.)", CVAR_Archive);
+
 
 VCvarB r_draw_pobj("r_draw_pobj", true, "Render polyobjects?", CVAR_PreInit);
 static VCvarI r_maxmiror_depth("r_maxmiror_depth", "1", "Maximum allowed mirrors.", CVAR_Archive);
@@ -1273,24 +1275,21 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     // if we have a skybox there, turn off advanced clipping, or stacked sector may glitch
     const sector_t *sec = Level->Subsectors[BSPIDX_LEAF_SUBSECTOR(bspnum)].sector;
     if (!sec->linecount) return; // skip sectors containing original polyobjs
-    if (sec->floor.SkyBox || sec->ceiling.SkyBox || MirrorLevel || PortalLevel) {
-      /*
+    if (r_skybox_clip_hack.asBool() && (sec->floor.SkyBox || sec->ceiling.SkyBox || MirrorLevel || PortalLevel)) {
+      // this is for kdizd z1m3, for example
       const bool old_clip_height = clip_height.asBool();
       const bool old_clip_midsolid = clip_midsolid.asBool();
-      const bool old_clip_frustum_bsp = clip_frustum_bsp.asBool();
-      const bool old_clip_frustum_bsp_segs = clip_frustum_bsp_segs.asBool();
+      //const bool old_clip_frustum_bsp = clip_frustum_bsp.asBool();
+      //const bool old_clip_frustum_bsp_segs = clip_frustum_bsp_segs.asBool();
       clip_height = false;
       clip_midsolid = false;
-      clip_frustum_bsp = false;
-      clip_frustum_bsp_segs = false;
-      */
+      //clip_frustum_bsp = false;
+      //clip_frustum_bsp_segs = false;
       RenderSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum), onlyClip);
-      /*
       clip_height = old_clip_height;
       clip_midsolid = old_clip_midsolid;
-      clip_frustum_bsp = old_clip_frustum_bsp;
-      clip_frustum_bsp_segs = old_clip_frustum_bsp_segs;
-      */
+      //clip_frustum_bsp = old_clip_frustum_bsp;
+      //clip_frustum_bsp_segs = old_clip_frustum_bsp_segs;
     } else {
       return RenderSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum), onlyClip);
     }
