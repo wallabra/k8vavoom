@@ -1193,23 +1193,3 @@ void VOpenGLDrawer::InitResolution () {
 #undef gl_
 #undef glc_
 #undef glg_
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::setupSpotLight
-//
-//==========================================================================
-void VOpenGLDrawer::setupSpotLight (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) noexcept {
-  spotLight = false;
-  coneDir = aconeDir;
-  coneAngle = (aconeAngle <= 0.0f || aconeAngle > 180.0f ? 0.0f : aconeAngle);
-  if (coneAngle && aconeDir.isValid() && !aconeDir.isZero()) {
-    coneDir.normaliseInPlace();
-    if (coneDir.isValid()) {
-      spotLight = true;
-      //spotPlane.SetPointNormal3D(LightPos, coneDir);
-      coneFrustum.setupSimpleDir(LightPos, aconeDir, clampval(aconeAngle*2.0f, 1.0f, 179.0f), Radius);
-    }
-  }
-}

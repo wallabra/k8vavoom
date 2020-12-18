@@ -256,7 +256,7 @@ bool VRenderLevelShared::CheckValidLightPosRough (TVec &lorg, const sector_t *se
 //  TODO: clip invisible geometry for spotlights
 //
 //==========================================================================
-bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, int dlnum) {
+bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, const TVec &aconeDir, const float aconeAngle, int dlnum) {
   if (CurrLightCalcUnstuck) CurrLightUnstuckPos = org;
 
   //if (dlnum >= 0) dlinfo[dlnum].touchedSubs.reset();
@@ -266,8 +266,9 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, int 
 
   doShadows = (radius >= 8.0f);
 
-  CurrLightPos = org;
-  CurrLightRadius = radius;
+  setupCurrentLight(org, radius, aconeDir, aconeAngle);
+  //CurrLightPos = org;
+  //CurrLightRadius = radius;
   CurrLightBit = (dlnum >= 0 ? 1u<<dlnum : 0u);
 
   /*LightSubs.reset();*/ // all affected subsectors

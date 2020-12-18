@@ -348,7 +348,7 @@ void VRenderLevelShared::PushDlights () {
     //MarkLights(l, 1U<<i, Level->NumNodes-1, dlinfo[i].leafnum);
     //FIXME: this has one frame latency; meh for now
     LitCalcBBox = false; // we don't need any lists
-    if (CalcLightVis(l->origin, l->radius, (int)i)) {
+    if (CalcPointLightVis(l->origin, l->radius, (int)i)) {
       dlinfo[i].needTrace = (doShadows ? 1 : -1);
     } else {
       // this one is invisible

@@ -480,6 +480,8 @@ void VRenderLevelShadowVolume::RenderMobjShadowMapSprite (VEntity *ent, const un
   sv[2] = sprorigin+end+topdelta;
   sv[3] = sprorigin+end+botdelta;
 
+  if (!isSpriteInSpotlight(sv)) return;
+
   /*
   sv: sprite vertices (4)
   normal: -sprforward

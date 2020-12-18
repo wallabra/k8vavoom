@@ -98,14 +98,41 @@ static unsigned int smapBShaderIndex;
 
 //==========================================================================
 //
+//  advCompareSurfaces
+//
+//==========================================================================
+static int advCompareSurfaces (const void *saa, const void *sbb, void *) {
+  if (saa == sbb) return 0;
+
+  const surface_t *sa = *(const surface_t **)saa;
+  const surface_t *sb = *(const surface_t **)sbb;
+  if (sa == sb) return 0;
+
+  const texinfo_t *ta = sa->texinfo;
+  const texinfo_t *tb = sb->texinfo;
+
+  // sort by texture id (just use texture pointer)
+  if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
+  if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+
+  return 0;
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::BeginLightPass
 //
 //  setup rendering parameters for lighted surface rendering
 //
 //==========================================================================
-void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) {
+void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const bool aspotLight, const TVec &aconeDir, const float aconeAngle, bool doShadow) {
   smapBShaderIndex = (unsigned int)gl_shadowmap_blur.asInt();
   if (smapBShaderIndex >= SMAP_BLUR_MAX) smapBShaderIndex = SMAP_NOBLUR;
+
+  spotLight = aspotLight;
+  coneDir = aconeDir;
+  coneAngle = aconeAngle;
 
   if (gl_dbg_wireframe) return;
   RestoreDepthFunc();
@@ -231,12 +258,11 @@ void VOpenGLDrawer::EndLightPass () {
 //  most checks are done in caller
 //
 //==========================================================================
-void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
+void VOpenGLDrawer::DrawSurfaceLight (const surface_t *surf) {
   if (gl_dbg_wireframe) return;
-  if (!surf->IsPlVisible()) return; // viewer is in back side or on plane
-  if (surf->count < 3) return;
-
-  if (spotLight && !isSurfaceInSpotlight(surf)) return;
+  //if (!surf->IsPlVisible()) return; // viewer is in back side or on plane
+  //if (surf->count < 3) return;
+  //if (spotLight && !isSurfaceInSpotlight(surf)) return;
 
   const unsigned vcount = (unsigned)surf->count;
   const SurfVertex *sverts = surf->verts;
@@ -266,4 +292,25 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
     for (unsigned i = 0; i < vcount; ++i, ++v) glVertex(v->vec());
   glEnd();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::RenderSolidLightSurfaces
+//
+//==========================================================================
+void VOpenGLDrawer::RenderSolidLightSurfaces (TArray<surface_t *> &slist) {
+  for (auto &&surf : slist) DrawSurfaceLight(surf);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::RenderMaskeLightSurfaces
+//
+//==========================================================================
+void VOpenGLDrawer::RenderMaskeLightSurfaces (TArray<surface_t *> &slist) {
+  timsort_r(slist.ptr(), slist.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
+  for (auto &&surf : slist) DrawSurfaceLight(surf);
 }

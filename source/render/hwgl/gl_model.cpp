@@ -545,9 +545,13 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
 //  always called after `BeginLightPass()`
 //
 //==========================================================================
-void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle, bool doShadow) {
+void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const bool aspotLight, const TVec &aconeDir, const float aconeAngle, bool doShadow) {
   smapBShaderIndex = (unsigned int)gl_shadowmap_blur.asInt();
   if (smapBShaderIndex >= SMAP_BLUR_MAX) smapBShaderIndex = SMAP_NOBLUR;
+
+  spotLight = aspotLight;
+  coneDir = aconeDir;
+  coneAngle = aconeAngle;
 
   if (gl_gpu_debug_models) p_glDebugLogf("BeginModelsLightPass");
   lpassDoShadowMap = (doShadow && r_shadowmaps.asBool() && CanRenderShadowMaps());
@@ -773,7 +777,7 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
 //  this MUST be called after map shadowmap setup
 //
 //==========================================================================
-void VOpenGLDrawer::BeginModelShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) {
+void VOpenGLDrawer::BeginModelShadowMaps (const TVec &LightPos, const float Radius) {
   if (gl_gpu_debug_models) p_glDebugLogf("BeginModelShadowMaps");
 
   //ShadowsModelShadowMap.Activate();

@@ -29,11 +29,27 @@
 static VCvarB clip_advlight_regions("clip_advlight_regions", false, "Clip (1D) light regions?", CVAR_PreInit);
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 enum {
   FlagAsLight = 0x01u,
   FlagAsShadow = 0x02u,
   FlagAsBoth = FlagAsLight|FlagAsShadow,
 };
+
+
+//==========================================================================
+//
+//  VRenderLevelShadowVolume::CollectLightShadowSurfaces
+//
+//==========================================================================
+void VRenderLevelShadowVolume::CollectLightShadowSurfaces () {
+  LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
+  shadowSurfacesSolid.reset();
+  shadowSurfacesMasked.reset();
+  lightSurfacesSolid.reset();
+  lightSurfacesMasked.reset();
+  CollectAdvLightBSPNode(Level->NumNodes-1, nullptr);
+}
 
 
 //==========================================================================
@@ -68,6 +84,7 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
 
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
+    if (!isSurfaceInSpotlight(surf)) continue;
 
     // check transdoor hacks
     //if (surf->drawflags&surface_t::TF_TOPHACK) continue;
@@ -83,14 +100,17 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
 
     // light
     if (ssflag&FlagAsLight) {
-      if (surf->IsPlVisible()) lightSurfaces.append(surf); // viewer is in front
+      if (surf->IsPlVisible()) {
+        // viewer is in front
+        if (tex->isTransparent()) lightSurfacesMasked.append(surf); else lightSurfacesSolid.append(surf);
+      }
     }
 
     // shadow
     if (ssflag&FlagAsShadow) {
       if (!smaps && tex->isSeeThrough()) continue; // this is masked texture, shadow volumes cannot process it
       //if (smaps && !surf->IsPlVisible()) continue; // viewer is in back side or on plane
-      shadowSurfaces.append(surf);
+      if (tex->isTransparent()) shadowSurfacesMasked.append(surf); else shadowSurfacesSolid.append(surf);
     }
   }
 }
@@ -307,8 +327,8 @@ void VRenderLevelShadowVolume::CollectAdvLightBSPNode (int bspnum, const float *
   if (LightClip.ClipIsFull()) return;
 #endif
 
-  if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
-  //if (!CheckSphereVsAABBIgnoreZ(bbox, CurrLightPos, CurrLightRadius)) return;
+  if (bbox && !LightClip.ClipLightIsBBoxVisible(bbox)) return;
+  //if (bbox && !CheckSphereVsAABBIgnoreZ(bbox, CurrLightPos, CurrLightRadius)) return;
 
   if (bspnum == -1) return CollectAdvLightSubsector(0);
 
@@ -342,9 +362,12 @@ void VRenderLevelShadowVolume::CollectAdvLightBSPNode (int bspnum, const float *
 //
 //  VRenderLevelShadowVolume::RenderShadowSurfaceList
 //
+//  this is used only for shadow volumes
+//
 //==========================================================================
 void VRenderLevelShadowVolume::RenderShadowSurfaceList () {
-  for (auto &&surf : shadowSurfaces) {
+  // non-solid surfaces cannot cast shadows with shadow volumes
+  for (auto &&surf : shadowSurfacesSolid) {
     Drawer->RenderSurfaceShadowVolume(surf, CurrLightPos, CurrLightRadius);
   }
 }
@@ -356,7 +379,6 @@ void VRenderLevelShadowVolume::RenderShadowSurfaceList () {
 //
 //==========================================================================
 void VRenderLevelShadowVolume::RenderLightSurfaceList () {
-  for (auto &&surf : lightSurfaces) {
-    Drawer->DrawSurfaceLight(surf);
-  }
+  Drawer->RenderSolidLightSurfaces(lightSurfacesSolid);
+  Drawer->RenderMaskeLightSurfaces(lightSurfacesMasked);
 }

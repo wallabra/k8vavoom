@@ -2314,6 +2314,30 @@ int VRenderLevelShared::GetNumberOfStaticLights () {
 }
 
 
+//==========================================================================
+//
+//  VRenderLevelShared::setupCurrentLight
+//
+//==========================================================================
+void VRenderLevelShared::setupCurrentLight (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) noexcept {
+  CurrLightSpot = false;
+  CurrLightPos = LightPos;
+  CurrLightRadius = Radius;
+  if (!isFiniteF(Radius) || Radius < 1.0f) CurrLightRadius = 1.0f;
+  CurrLightConeDir = aconeDir;
+  // is good spotdlight?
+  if (aconeDir.isValid() && isFiniteF(aconeAngle) && aconeAngle > 0.0f && aconeAngle < 180.0f) {
+    CurrLightConeDir.normaliseInPlace();
+    if (CurrLightConeDir.isValid()) {
+      CurrLightSpot = true;
+      //spotPlane.SetPointNormal3D(LightPos, CurrLightConeDir);
+      CurrLightConeAngle = aconeAngle;
+      CurrLightConeFrustum.setupSimpleDir(CurrLightPos, CurrLightConeDir, clampval(CurrLightConeAngle*2.0f, 1.0f, 179.0f), CurrLightRadius);
+    }
+  }
+}
+
+
 #include "r_main_automap.cpp"
 
 

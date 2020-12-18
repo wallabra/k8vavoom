@@ -129,7 +129,7 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
 //  setup rendering parameters for shadow volume rendering
 //
 //==========================================================================
-void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4], const TVec &aconeDir, const float aconeAngle) {
+void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4]) {
   wasRenderedShadowSurface = false;
   if (gl_dbg_wireframe) return;
   //GCon->Logf("*** VOpenGLDrawer::BeginLightShadowVolumes(): stencil_dirty=%d", (int)IsStencilBufferDirty());
@@ -245,8 +245,6 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
     p_glStencilOpSeparate(GL_BACK,  GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
   }
 
-  setupSpotLight(LightPos, Radius, aconeDir, aconeAngle);
-
   SurfShadowVolume.Activate();
   SurfShadowVolume.SetLightPos(LightPos);
   SurfShadowVolume.UploadChangedUniforms();
@@ -294,11 +292,10 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) {
   if (gl_dbg_wireframe) return;
-  if (surf->count < 3) return; // just in case
+  //if (surf->count < 3) return; // just in case
+  //if (spotLight && !isSurfaceInSpotlight(surf)) return;
 
   if (gl_smart_reject_shadows && !AdvRenderCanSurfaceCastShadow(surf, LightPos, Radius)) return;
-
-  if (spotLight && !isSurfaceInSpotlight(surf)) return;
 
   const unsigned vcount = (unsigned)surf->count;
   const SurfVertex *sverts = surf->verts;

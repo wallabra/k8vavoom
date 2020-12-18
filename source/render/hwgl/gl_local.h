@@ -346,12 +346,6 @@ private:
   int glVerMinor;
   bool usingZPass; // if we are rendering shadow volumes, should we do "z-pass"?
 
-  TVec coneDir; // current spotlight direction
-  float coneAngle; // current spotlight cone angle
-  bool spotLight; // is current light a spotlight?
-  //TPlane spotPlane; // spotPlane.SetPointNormal3D(CurrLightPos, coneDir);
-  TFrustum coneFrustum; // current spotlight frustum
-
   GLint savedDepthMask; // used in various begin/end methods
   // for `DrawTexturedPoly()` API
   VTexture *texturedPolyLastTex;
@@ -369,49 +363,11 @@ private:
   // returns `false` if scissor is empty
   bool UploadCurrentScissorRect ();
 
-protected:
-  // spotlight should be properly initialised!
-  inline bool isSurfaceInSpotlight (const surface_t *surf) noexcept {
-    if (!surf || surf->count < 3) return false;
-    /*
-    const SurfVertex *vv = surf->verts;
-    //for (unsigned f = (unsigned)surf->count; f--; ++vv) if (vv->vec().isInSpotlight(LightPos, coneDir, coneAngle)) { splhit = true; break; }
-    for (unsigned f = (unsigned)surf->count; f--; ++vv) {
-      if (!spotPlane.PointOnSide(vv->vec())) return true;
-    }
-    return false;
-    */
-    // check bounding box instead?
-    return coneFrustum.checkPolyInterlaced(surf->verts->vecptr(), sizeof(SurfVertex), (unsigned)surf->count);
-    /*
-    float bbox[6];
-    const SurfVertex *vv = surf->verts;
-    bbox[BOX3D_MINX] = bbox[BOX3D_MAXX] = vv->vec().x;
-    bbox[BOX3D_MINY] = bbox[BOX3D_MAXY] = vv->vec().y;
-    bbox[BOX3D_MINZ] = bbox[BOX3D_MAXZ] = vv->vec().z;
-    ++vv;
-    for (unsigned f = (unsigned)surf->count-1u; f--; ++vv) {
-      const TVec &v = vv->vec();
-      bbox[BOX3D_MINX] = min2(bbox[BOX3D_MINX], v.x);
-      bbox[BOX3D_MAXX] = max2(bbox[BOX3D_MAXX], v.x);
-      bbox[BOX3D_MINY] = min2(bbox[BOX3D_MINY], v.y);
-      bbox[BOX3D_MAXY] = max2(bbox[BOX3D_MAXY], v.y);
-      bbox[BOX3D_MINZ] = min2(bbox[BOX3D_MINZ], v.z);
-      bbox[BOX3D_MAXZ] = max2(bbox[BOX3D_MAXZ], v.z);
-    }
-    return coneFrustum.checkBox(bbox);
-    */
-  }
-
-  inline bool isSpriteInSpotlight (const TVec *cv) noexcept {
-    /*
-    for (unsigned f = 4; f--; ++cv) if (!spotPlane.PointOnSide(*cv)) return true;
-    return false;
-    */
-    return coneFrustum.checkQuad(cv[0], cv[1], cv[2], cv[3]);
-  }
-
-  void setupSpotLight (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) noexcept;
+private:
+  // used in lijhgt renderer, set by `BeginLightPass()` and `BeginModelsLightPass()`
+  bool spotLight; // is current light a spotlight?
+  TVec coneDir; // current spotlight direction
+  float coneAngle; // current spotlight cone angle
 
 protected:
   VGLShader *shaderHead;
@@ -574,21 +530,30 @@ public:
   virtual void DrawWorldAmbientPass () override;
 
   virtual void BeginShadowVolumesPass () override;
-  virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4], const TVec &aconeDir, const float aconeAngle) override;
+  virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4]) override;
   virtual void EndLightShadowVolumes () override;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) override;
   void RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, const TVec &LightPos, float Radius);
 
   bool AdvRenderCanSurfaceCastShadow (const surface_t *surf, const TVec &LightPos, float Radius);
 
-  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) override;
+  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius) override;
   virtual void EndLightShadowMaps () override;
   virtual void SetupLightShadowMap (unsigned int facenum) override;
-  virtual void RenderSurfaceShadowMap (const surface_t *surf) override;
 
-  virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) override;
+  void DrawSurfaceShadowMap (const surface_t *surf);
+  // may modify lists (sort)
+  virtual void UploadSolidShadowSurfaces (TArray<surface_t *> &slist) override;
+  virtual void UploadMaskedShadowSurfaces (TArray<surface_t *> &slist) override;
+  virtual void RenderSolidShadowMaps (TArray<surface_t *> &slist) override;
+  virtual void RenderMaskedShadowMaps (TArray<surface_t *> &slist) override;
+
+  virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const bool aspotLight, const TVec &aconeDir, const float aconeAngle, bool doShadow) override;
   virtual void EndLightPass () override;
-  virtual void DrawSurfaceLight (surface_t *surf) override;
+
+  void DrawSurfaceLight (const surface_t *surf);
+  virtual void RenderSolidLightSurfaces (TArray<surface_t *> &slist) override;
+  virtual void RenderMaskeLightSurfaces (TArray<surface_t *> &slist) override;
 
   virtual void DrawWorldTexturesPass () override;
   virtual void DrawWorldFogPass () override;
@@ -623,12 +588,12 @@ public:
     VMeshModel *, int, int, VTexture *, vuint32, float, float, bool,
     bool, bool) override;
 
-  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle, bool doShadow) override;
+  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const bool aspotLight, const TVec &aconeDir, const float aconeAngle, bool doShadow) override;
   virtual void EndModelsLightPass () override;
   virtual void DrawAliasModelLight (const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, VTexture *, float, float, bool, bool) override;
 
-  virtual void BeginModelShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) override;
+  virtual void BeginModelShadowMaps (const TVec &LightPos, const float Radius) override;
   virtual void EndModelShadowMaps () override;
   virtual void SetupModelShadowMap (unsigned int facenum) override;
   virtual void DrawAliasModelShadowMap (const TVec &origin, const TAVec &angles,

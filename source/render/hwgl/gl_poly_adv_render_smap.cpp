@@ -50,6 +50,29 @@ static int saved_gl_shadowmap_ray_points = -666;
 
 //==========================================================================
 //
+//  advCompareSurfaces
+//
+//==========================================================================
+static int advCompareSurfaces (const void *saa, const void *sbb, void *) {
+  if (saa == sbb) return 0;
+
+  const surface_t *sa = *(const surface_t **)saa;
+  const surface_t *sb = *(const surface_t **)sbb;
+  if (sa == sb) return 0;
+
+  const texinfo_t *ta = sa->texinfo;
+  const texinfo_t *tb = sb->texinfo;
+
+  // sort by texture id (just use texture pointer)
+  if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
+  if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+
+  return 0;
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::PrepareShadowMapsInternal
 //
 //==========================================================================
@@ -172,7 +195,7 @@ void VOpenGLDrawer::ActivateShadowMapFace (unsigned int facenum) noexcept {
 //  VOpenGLDrawer::BeginLightShadowVolumes
 //
 //==========================================================================
-void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) {
+void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radius) {
   if (gl_shadowmap_size.asInt() != saved_gl_shadowmap_size ||
       gl_shadowmap_precision.asBool() != saved_gl_shadowmap_precision ||
       gl_shadowmap_ray_points.asInt() != saved_gl_shadowmap_ray_points)
@@ -245,8 +268,6 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
 
   PrepareShadowMapsInternal(Radius);
 
-  setupSpotLight(LightPos, Radius, aconeDir, aconeAngle);
-
   //SurfShadowMap.Activate();
   SurfShadowMap.SetLightPos(LightPos);
   SurfShadowMap.SetLightRadius(Radius);
@@ -317,48 +338,6 @@ void VOpenGLDrawer::SetupLightShadowMap (unsigned int facenum) {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::RenderSurfaceShadowMap
-//
-//==========================================================================
-void VOpenGLDrawer::RenderSurfaceShadowMap (const surface_t *surf) {
-  if (gl_dbg_wireframe) return;
-  if (surf->count < 3) return; // just in case
-
-  if (spotLight && !isSurfaceInSpotlight(surf)) return;
-
-  const unsigned vcount = (unsigned)surf->count;
-  const SurfVertex *sverts = surf->verts;
-  const SurfVertex *v = sverts;
-
-  const texinfo_t *currTexinfo = surf->texinfo;
-  if (currTexinfo->Tex->isTransparent()) {
-    SurfShadowMapTex.Activate();
-    const bool textureChanged = smapLastTexinfo.needChange(*currTexinfo, updateFrame);
-    if (textureChanged) {
-      smapLastTexinfo.updateLastUsed(*currTexinfo);
-      //SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
-      SetShadowTexture(currTexinfo->Tex);
-      SurfShadowMapTex.SetTex(currTexinfo);
-    }
-  } else {
-    SurfShadowMap.Activate();
-  }
-
-  //if (gl_smart_reject_shadows && !AdvRenderCanSurfaceCastShadow(surf, LightPos, Radius)) return;
-
-  currentActiveShader->UploadChangedUniforms();
-
-  //glBegin(GL_POLYGON);
-  glBegin(GL_TRIANGLE_FAN);
-    for (unsigned i = 0; i < vcount; ++i, ++v) glVertex(v->vec());
-  glEnd();
-
-  MarkCurrentShadowMapDirty();
-}
-
-
-//==========================================================================
-//
 //  VOpenGLDrawer::DrawSpriteShadowMap
 //
 //==========================================================================
@@ -367,8 +346,7 @@ void VOpenGLDrawer::DrawSpriteShadowMap (const TVec *cv, VTexture *Tex, const TV
 {
   if (gl_dbg_wireframe) return;
   if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
-
-  if (spotLight && !isSpriteInSpotlight(cv)) return;
+  //if (spotLight && !isSpriteInSpotlight(cv)) return;
 
   if (Tex->isTransparent()) {
     // create fake texinfo
@@ -408,4 +386,84 @@ void VOpenGLDrawer::DrawSpriteShadowMap (const TVec *cv, VTexture *Tex, const TV
   glEnd();
 
   MarkCurrentShadowMapDirty();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DrawSurfaceShadowMap
+//
+//==========================================================================
+void VOpenGLDrawer::DrawSurfaceShadowMap (const surface_t *surf) {
+  if (gl_dbg_wireframe) return;
+  //if (surf->count < 3) return; // just in case
+  //if (spotLight && !isSurfaceInSpotlight(surf)) return;
+
+  const unsigned vcount = (unsigned)surf->count;
+  const SurfVertex *sverts = surf->verts;
+  const SurfVertex *v = sverts;
+
+  const texinfo_t *currTexinfo = surf->texinfo;
+  if (currTexinfo->Tex->isTransparent()) {
+    SurfShadowMapTex.Activate();
+    const bool textureChanged = smapLastTexinfo.needChange(*currTexinfo, updateFrame);
+    if (textureChanged) {
+      smapLastTexinfo.updateLastUsed(*currTexinfo);
+      //SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+      SetShadowTexture(currTexinfo->Tex);
+      SurfShadowMapTex.SetTex(currTexinfo);
+    }
+  } else {
+    SurfShadowMap.Activate();
+  }
+
+  //if (gl_smart_reject_shadows && !AdvRenderCanSurfaceCastShadow(surf, LightPos, Radius)) return;
+
+  currentActiveShader->UploadChangedUniforms();
+
+  //glBegin(GL_POLYGON);
+  glBegin(GL_TRIANGLE_FAN);
+    for (unsigned i = 0; i < vcount; ++i, ++v) glVertex(v->vec());
+  glEnd();
+
+  MarkCurrentShadowMapDirty();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::UploadSolidShadowSurfaces
+//
+//==========================================================================
+void VOpenGLDrawer::UploadSolidShadowSurfaces (TArray<surface_t *> &slist) {
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::UploadMaskedShadowSurfaces
+//
+//==========================================================================
+void VOpenGLDrawer::UploadMaskedShadowSurfaces (TArray<surface_t *> &slist) {
+  timsort_r(slist.ptr(), slist.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::RenderSolidShadowMaps
+//
+//==========================================================================
+void VOpenGLDrawer::RenderSolidShadowMaps (TArray<surface_t *> &slist) {
+  for (auto &&surf : slist) DrawSurfaceShadowMap(surf);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::RenderMaskedShadowMaps
+//
+//==========================================================================
+void VOpenGLDrawer::RenderMaskedShadowMaps (TArray<surface_t *> &slist) {
+  for (auto &&surf : slist) DrawSurfaceShadowMap(surf);
 }

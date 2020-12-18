@@ -400,6 +400,13 @@ protected:
   TVec CurrLightUnstuckPos; // set in `CalcLightVis()` if `CurrLightCalcUnstuck` is `true`
   vuint32 CurrLightBit; // tag (bitor) subsectors with this in lightvis builder
 
+  // for spotlights
+  bool CurrLightSpot; // is current light a spotlight?
+  TVec CurrLightConeDir; // current spotlight direction
+  float CurrLightConeAngle; // current spotlight cone angle
+  //TPlane CurrLightSpotPlane; // CurrLightSpotPlane.SetPointNormal3D(CurrLightPos, CurrLightConeDir);
+  TFrustum CurrLightConeFrustum; // current spotlight frustum
+
   // used in `AllocDlight()` to save one call to `PointInSubsector()`
   // reset in `RenderPlayerView()`
   TVec lastDLightView;
@@ -555,6 +562,50 @@ protected:
   virtual void ClearQueues ();
 
 protected:
+  void setupCurrentLight (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) noexcept;
+
+  // spotlight should be properly initialised!
+  inline bool isSurfaceInSpotlight (const surface_t *surf) const noexcept {
+    //if (!CurrLightSpot || !surf || surf->count < 3) return false;
+    /*
+    const SurfVertex *vv = surf->verts;
+    //for (unsigned f = (unsigned)surf->count; f--; ++vv) if (vv->vec().isInSpotlight(LightPos, coneDir, coneAngle)) { splhit = true; break; }
+    for (unsigned f = (unsigned)surf->count; f--; ++vv) {
+      if (!spotPlane.PointOnSide(vv->vec())) return true;
+    }
+    return false;
+    */
+    // check bounding box instead?
+    return (!CurrLightSpot || CurrLightConeFrustum.checkPolyInterlaced(surf->verts->vecptr(), sizeof(SurfVertex), (unsigned)surf->count));
+    /*
+    float bbox[6];
+    const SurfVertex *vv = surf->verts;
+    bbox[BOX3D_MINX] = bbox[BOX3D_MAXX] = vv->vec().x;
+    bbox[BOX3D_MINY] = bbox[BOX3D_MAXY] = vv->vec().y;
+    bbox[BOX3D_MINZ] = bbox[BOX3D_MAXZ] = vv->vec().z;
+    ++vv;
+    for (unsigned f = (unsigned)surf->count-1u; f--; ++vv) {
+      const TVec &v = vv->vec();
+      bbox[BOX3D_MINX] = min2(bbox[BOX3D_MINX], v.x);
+      bbox[BOX3D_MAXX] = max2(bbox[BOX3D_MAXX], v.x);
+      bbox[BOX3D_MINY] = min2(bbox[BOX3D_MINY], v.y);
+      bbox[BOX3D_MAXY] = max2(bbox[BOX3D_MAXY], v.y);
+      bbox[BOX3D_MINZ] = min2(bbox[BOX3D_MINZ], v.z);
+      bbox[BOX3D_MAXZ] = max2(bbox[BOX3D_MAXZ], v.z);
+    }
+    return coneFrustum.checkBox(bbox);
+    */
+  }
+
+  inline bool isSpriteInSpotlight (const TVec *cv) const noexcept {
+    /*
+    for (unsigned f = 4; f--; ++cv) if (!spotPlane.PointOnSide(*cv)) return true;
+    return false;
+    */
+    return (!CurrLightSpot || CurrLightConeFrustum.checkQuad(cv[0], cv[1], cv[2], cv[3]));
+  }
+
+protected:
   // entity must not be `nullptr`, and must have `SubSector` set
   // also, `viewfrustum` should be valid here
   // this is usually called once for each entity, but try to keep it reasonably fast anyway
@@ -668,7 +719,8 @@ protected:
   // returns `false` if the light is invisible
   // this also sets the list of touched subsectors for dynamic light
   // (this is used in `LightPoint()` and such
-  bool CalcLightVis (const TVec &org, const float radius, int dlnum=-1);
+  bool CalcLightVis (const TVec &org, const float radius, const TVec &aconeDir, const float aconeAngle, int dlnum=-1);
+  inline bool CalcPointLightVis (const TVec &org, const float radius, int dlnum=-1) { return CalcLightVis(org, radius, TVec(0.0f, 0.0f, 0.0f), 0.0f, dlnum); }
 
   // does some sanity checks, possibly moves origin a little
   // returns `false` if this light can be dropped
@@ -1210,10 +1262,10 @@ private:
   bool DynamicLights;
 
   // keep 'em here, so we don't have to traverse BSP several times
-  TArray<surface_t *> smapSurfaces;
-
-  TArray<surface_t *> shadowSurfaces;
-  TArray<surface_t *> lightSurfaces;
+  TArray<surface_t *> shadowSurfacesSolid;
+  TArray<surface_t *> shadowSurfacesMasked;
+  TArray<surface_t *> lightSurfacesSolid;
+  TArray<surface_t *> lightSurfacesMasked;
 
   // used to avoid double-checking; sized by NumSectors
   struct FlatSectorShadowInfo {
@@ -1307,6 +1359,10 @@ protected:
   void CollectAdvLightSubRegion (subsector_t *sub, subregion_t *region, unsigned int ssflag);
   void CollectAdvLightSubsector (int num);
   void CollectAdvLightBSPNode (int bspnum, const float *bbox);
+
+  // collector entr point
+  // `CurrLightPos` and `CurrLightRadius` should be set
+  void CollectLightShadowSurfaces ();
 
   void RenderShadowSurfaceList ();
   void RenderLightSurfaceList ();

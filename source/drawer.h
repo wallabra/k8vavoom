@@ -662,21 +662,30 @@ public:
 
   virtual void DrawWorldAmbientPass () = 0;
   virtual void BeginShadowVolumesPass () = 0;
-  virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4], const TVec &aconeDir, const float aconeAngle) = 0;
+  virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4]) = 0;
   virtual void EndLightShadowVolumes () = 0;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) = 0;
 
   // called in rederer, before collecting light/shadow surfaces, so GPU could perform `glClear()` in parallel
   virtual void PrepareShadowMaps (const float Radius) = 0;
 
-  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) = 0;
+  virtual void BeginLightShadowMaps (const TVec &LightPos, const float Radius) = 0;
   virtual void EndLightShadowMaps () = 0;
   virtual void SetupLightShadowMap (unsigned int facenum) = 0;
-  virtual void RenderSurfaceShadowMap (const surface_t *surf) = 0;
 
-  virtual void BeginLightPass (const TVec &LightPos, const float Radius, float LightMin, vuint32 Color, bool doShadow) = 0;
+  //virtual void DrawSurfaceShadowMap (const surface_t *surf) = 0;
+  // may modify lists (sort)
+  virtual void UploadSolidShadowSurfaces (TArray<surface_t *> &slist) = 0;
+  virtual void UploadMaskedShadowSurfaces (TArray<surface_t *> &slist) = 0;
+  virtual void RenderSolidShadowMaps (TArray<surface_t *> &slist) = 0;
+  virtual void RenderMaskedShadowMaps (TArray<surface_t *> &slist) = 0;
+
+  virtual void BeginLightPass (const TVec &LightPos, const float Radius, float LightMin, vuint32 Color, const bool aspotLight, const TVec &aconeDir, const float aconeAngle, bool doShadow) = 0;
   virtual void EndLightPass () = 0;
-  virtual void DrawSurfaceLight (surface_t *Surf) = 0;
+
+  //virtual void DrawSurfaceLight (surface_t *Surf) = 0;
+  virtual void RenderSolidLightSurfaces (TArray<surface_t *> &slist) = 0;
+  virtual void RenderMaskeLightSurfaces (TArray<surface_t *> &slist) = 0;
 
   virtual void DrawWorldTexturesPass () = 0;
   virtual void DrawWorldFogPass () = 0;
@@ -691,7 +700,7 @@ public:
                                       float Inter, bool Interpolate,
                                       bool ForceDepth, bool AllowTransparency) = 0;
 
-  virtual void BeginModelShadowMaps (const TVec &LightPos, const float Radius, const TVec &aconeDir, const float aconeAngle) = 0;
+  virtual void BeginModelShadowMaps (const TVec &LightPos, const float Radius) = 0;
   virtual void EndModelShadowMaps () = 0;
   virtual void SetupModelShadowMap (unsigned int facenum) = 0;
   virtual void DrawAliasModelShadowMap (const TVec &origin, const TAVec &angles,
@@ -700,7 +709,7 @@ public:
                                         VTexture *Skin, float Alpha, float Inter,
                                         bool Interpolate, bool AllowTransparency) = 0;
 
-  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle, bool doShadow) = 0;
+  virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const bool aspotLight, const TVec &aconeDir, const float aconeAngle, bool doShadow) = 0;
   virtual void EndModelsLightPass () = 0;
   virtual void DrawAliasModelLight (const TVec &origin, const TAVec &angles,
                                     const AliasModelTrans &Transform,
