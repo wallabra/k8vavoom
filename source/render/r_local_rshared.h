@@ -196,6 +196,7 @@ protected:
   // `CalcLightVis()` working variables
   unsigned LightFrameNum;
   VViewClipper LightClip; // internal working clipper
+  VViewClipper LightShadowClip; // internal working clipper
   unsigned *LightVis; // this will be allocated if necessary; set to `LightFrameNum` for subsectors touched in `CalcLightVis()`
   unsigned *LightBspVis; // this will be allocated if necessary; set to `LightFrameNum` for subsectors touched, and marked in `BspVis`
   bool HasLightIntersection; // set by `CalcLightVisCheckNode()`: is any touched subsector also marked in `BspVis`?

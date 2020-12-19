@@ -38,52 +38,6 @@ static VCvarB r_shadowvol_optimise_lines_1s("r_shadowvol_optimise_lines_1s", tru
 
 //==========================================================================
 //
-//  ClipSegToLight
-//
-//  this (theoretically) should clip segment to light bounds
-//  tbh, i don't think that there is a real reason to do this
-//
-//==========================================================================
-/*
-static VVA_OKUNUSED inline void ClipSegToLight (TVec &v1, TVec &v2, const TVec &pos, const float radius) {
-  const TVec r1 = pos-v1;
-  const TVec r2 = pos-v2;
-  const float d1 = DotProduct(Normalise(CrossProduct(r1, r2)), pos);
-  const float d2 = DotProduct(Normalise(CrossProduct(r2, r1)), pos);
-  // there might be a better method of doing this, but this one works for now...
-       if (d1 > radius && d2 < -radius) v2 += (v2-v1)*d1/(d1-d2);
-  else if (d2 > radius && d1 < -radius) v1 += (v1-v2)*d2/(d2-d1);
-}
-*/
-
-
-//==========================================================================
-//
-//  VRenderLevelShadowVolume::AddPolyObjToLightClipper
-//
-//  we have to do this separately, because for now we have to add
-//  invisible segs to clipper too
-//  i don't yet know why
-//
-//==========================================================================
-void VRenderLevelShadowVolume::AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow) {
-  if (sub && sub->HasPObjs() && r_draw_pobj && clip_use_1d_clipper) {
-    for (auto &&it : sub->PObjFirst()) {
-      polyobj_t *pobj = it.value();
-      seg_t **polySeg = pobj->segs;
-      for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
-        seg_t *seg = (*polySeg)->drawsegs->seg;
-        if (seg->linedef) {
-          clip.CheckAddClipSeg(seg, nullptr/*mirror*/, asShadow);
-        }
-      }
-    }
-  }
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShadowVolume::RefilterStaticLights
 //
 //==========================================================================

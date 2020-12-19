@@ -132,9 +132,10 @@ protected:
   // this does BSP traversing, and collect world surfaces into various lists to drive GPU rendering
   void RenderCollectSurfaces (const refdef_t *rd, const VViewClipper *Range);
 
-  void AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow);
+  void AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, int asShadow);
 
   bool collectorForShadowMaps; // used in `CollectAdv*()`, set in `CollectLightShadowSurfaces()`
+  int collectorShadowType; // for clipper, used in `CollectAdv*()`, set in `CollectLightShadowSurfaces()`
 
   // we can collect surfaces for lighting and shadowing in one pass
   // don't forget to reset `shadowSurfaces` and `lightSurfaces`

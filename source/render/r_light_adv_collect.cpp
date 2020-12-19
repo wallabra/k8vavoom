@@ -48,12 +48,60 @@ enum {
 //==========================================================================
 void VRenderLevelShadowVolume::CollectLightShadowSurfaces () {
   LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
+  LightShadowClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
   shadowSurfacesSolid.resetNoDtor();
   shadowSurfacesMasked.resetNoDtor();
   lightSurfacesSolid.resetNoDtor();
   lightSurfacesMasked.resetNoDtor();
   collectorForShadowMaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
+  collectorShadowType = (collectorForShadowMaps && r_shadowmap_flip_surfaces.asBool() ? VViewClipper::AsShadowMap : VViewClipper::AsShadow);
   CollectAdvLightBSPNode(Level->NumNodes-1, nullptr);
+}
+
+
+//==========================================================================
+//
+//  ClipSegToLight
+//
+//  this (theoretically) should clip segment to light bounds
+//  tbh, i don't think that there is a real reason to do this
+//
+//==========================================================================
+/*
+static VVA_OKUNUSED inline void ClipSegToLight (TVec &v1, TVec &v2, const TVec &pos, const float radius) {
+  const TVec r1 = pos-v1;
+  const TVec r2 = pos-v2;
+  const float d1 = DotProduct(Normalise(CrossProduct(r1, r2)), pos);
+  const float d2 = DotProduct(Normalise(CrossProduct(r2, r1)), pos);
+  // there might be a better method of doing this, but this one works for now...
+       if (d1 > radius && d2 < -radius) v2 += (v2-v1)*d1/(d1-d2);
+  else if (d2 > radius && d1 < -radius) v1 += (v1-v2)*d2/(d2-d1);
+}
+*/
+
+
+//==========================================================================
+//
+//  VRenderLevelShadowVolume::AddPolyObjToLightClipper
+//
+//  we have to do this separately, because for now we have to add
+//  invisible segs to clipper too
+//  i don't yet know why
+//
+//==========================================================================
+void VRenderLevelShadowVolume::AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, int asShadow) {
+  if (sub && sub->HasPObjs() && r_draw_pobj && clip_use_1d_clipper) {
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      seg_t **polySeg = pobj->segs;
+      for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
+        seg_t *seg = (*polySeg)->drawsegs->seg;
+        if (seg->linedef) {
+          clip.CheckAddClipSeg(seg, nullptr/*mirror*/, asShadow);
+        }
+      }
+    }
+  }
 }
 
 
@@ -118,15 +166,16 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
       if (!smaps && (dist <= 0.0f || tex->isSeeThrough())) continue; // this is masked texture, shadow volumes cannot process it
       if (tex->isTransparent()) {
         // we need to flip it if the player is behind it
-        if (smaps) {
-          if (doflip) {
-            if (surf->plane.PointOnSide(Drawer->vieworg)) continue; // if the camera cannot see it, no need to render it
-            // flip if the light cannot see it
-            if (dist <= 0.0f) surf->drawflags |= surface_t::DF_SMAP_FLIP; else surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
-          } else {
-            if (dist <= 0.0f) continue; // light cannot see it
-            surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
-          }
+        vassert(smaps);
+        if (doflip) {
+          if (surf->plane.PointOnSide(Drawer->vieworg)) continue; // if the camera cannot see it, no need to render it
+          // flip if the light cannot see it
+          if (dist <= 0.0f) surf->drawflags |= surface_t::DF_SMAP_FLIP; else surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
+          //if (surf->plane.PointOnSide(Drawer->vieworg) != (dist <= 0.0f)) surf->drawflags |= surface_t::DF_SMAP_FLIP; else surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
+          //surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
+        } else {
+          if (dist <= 0.0f) continue; // light cannot see it
+          surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
         }
         shadowSurfacesMasked.append(surf);
       } else {
@@ -154,7 +203,24 @@ void VRenderLevelShadowVolume::CollectAdvLightLine (subsector_t *sub, sec_region
   if (fabsf(dist) >= CurrLightRadius) return; // was for light
 
   //k8: here we can call `ClipSegToLight()`, but i see no reasons to do so
-  if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
+  if (ssflag&FlagAsLight) {
+    if (dist <= 0.0f) {
+      if ((ssflag &= ~FlagAsLight) == 0) return;
+    } else if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) {
+      if ((ssflag &= ~FlagAsLight) == 0) return;
+    }
+  }
+  if (ssflag&FlagAsShadow) {
+    if (dist <= 0.0f) {
+      if (!LightShadowClip.IsRangeVisible(*seg->v1, *seg->v2)) {
+        if ((ssflag &= ~FlagAsShadow) == 0) return;
+      }
+    } else {
+      if (!LightShadowClip.IsRangeVisible(*seg->v2, *seg->v1)) {
+        if ((ssflag &= ~FlagAsShadow) == 0) return;
+      }
+    }
+  }
 
   #ifdef VV_CHECK_1S_CAST_SHADOW
   if ((ssflag&FlagAsShadow) && !seg->backsector && !CheckCan1SCastShadow(seg->linedef)) {
@@ -171,16 +237,7 @@ void VRenderLevelShadowVolume::CollectAdvLightLine (subsector_t *sub, sec_region
 #endif
 
   VEntity *skybox = secregion->eceiling.splane->SkyBox;
-  if (dseg->mid) {
-    // check two-sided surface orientation
-    /*
-    if (ssflag&FlagAsShadow) {
-      drawflags
-      DF_INVERT
-    }
-    */
-    CollectAdvLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0), ssflag);
-  }
+  if (dseg->mid) CollectAdvLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0), ssflag);
   if (seg->backsector) {
     // two sided line
     if (dseg->top) CollectAdvLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, (seg->backsector ? -1 : 0), ssflag);
@@ -249,9 +306,15 @@ void VRenderLevelShadowVolume::CollectAdvLightSubRegion (subsector_t *sub, subre
 
   sec_region_t *secregion = region->secregion;
 
-  if (!clip_advlight_regions || LightClip.ClipLightCheckRegion(region, sub, false)) {
+  unsigned int ssflagreg = ssflag;
+  if (clip_advlight_regions) {
+    if ((ssflagreg&FlagAsLight) && !LightClip.ClipLightCheckRegion(region, sub, VViewClipper::AsLight)) ssflagreg &= ~FlagAsLight;
+    if ((ssflagreg&FlagAsShadow) && !LightShadowClip.ClipLightCheckRegion(region, sub, collectorShadowType)) ssflagreg &= ~FlagAsShadow;
+  }
+
+  if (ssflagreg) {
     drawseg_t *ds = region->lines;
-    for (int count = sub->numlines; count--; ++ds) CollectAdvLightLine(sub, secregion, ds, ssflag);
+    for (int count = sub->numlines; count--; ++ds) CollectAdvLightLine(sub, secregion, ds, ssflagreg);
   }
 
   {
@@ -304,11 +367,15 @@ void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
   // `LightBspVis` is already an intersection, no need to check `BspVis` here
   //if (!IsSubsectorLitBspVis(num) || !(BspVis[num>>3]&(1<<(num&7)))) return;
 
-  if (LightClip.ClipLightCheckSubsector(sub, false)) {
+  unsigned int ssflagmask = FlagAsBoth;
+  if (!LightClip.ClipLightCheckSubsector(sub, VViewClipper::AsLight)) ssflagmask &= ~FlagAsLight;
+  if (!LightShadowClip.ClipLightCheckSubsector(sub, collectorShadowType)) ssflagmask &= ~FlagAsShadow;
+
+  if (ssflagmask) {
     // if our light is in frustum, out-of-frustum subsectors are not interesting
     //FIXME: pass "need frustum check" flag to other functions
-    unsigned int ssflag = (IsSubsectorLitBspVis(num) ? FlagAsBoth : FlagAsShadow);
-    if (CurrLightInFrustum && !(BspVis[num>>3]&(1u<<(num&7)))) {
+    unsigned int ssflag = (IsSubsectorLitBspVis(num) ? FlagAsBoth : FlagAsShadow)&ssflagmask;
+    if ((ssflag&FlagAsShadow) && CurrLightInFrustum && !(BspVis[num>>3]&(1u<<(num&7)))) {
       // this subsector is invisible, check if it is in frustum (this was originally done for shadow)
       float bbox[6];
       // min
@@ -333,14 +400,16 @@ void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
     // this blocks view with polydoors
     if (ssflag) {
       CollectAdvLightPolyObj(sub, ssflag);
-      AddPolyObjToLightClipper(LightClip, sub, false);
+      AddPolyObjToLightClipper(LightClip, sub, VViewClipper::AsLight);
+      AddPolyObjToLightClipper(LightShadowClip, sub, collectorShadowType);
       CollectAdvLightSubRegion(sub, sub->regions, ssflag);
     }
-  }
 
-  // add subsector's segs to the clipper
-  // clipping against mirror is done only for vertical mirror planes
-  LightClip.ClipLightAddSubsectorSegs(sub, false);
+    // add subsector's segs to the clipper
+    // clipping against mirror is done only for vertical mirror planes
+    if (ssflagmask&FlagAsLight) LightClip.ClipLightAddSubsectorSegs(sub, VViewClipper::AsLight);
+    if (ssflagmask&FlagAsShadow) LightShadowClip.ClipLightAddSubsectorSegs(sub, collectorShadowType);
+  }
 }
 
 
@@ -354,10 +423,10 @@ void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
 //==========================================================================
 void VRenderLevelShadowVolume::CollectAdvLightBSPNode (int bspnum, const float *bbox) {
 #ifdef VV_CLIPPER_FULL_CHECK
-  if (LightClip.ClipIsFull()) return;
+  if (LightClip.ClipIsFull() || LightShadowClip.ClipIsFull()) return;
 #endif
 
-  if (bbox && !LightClip.ClipLightIsBBoxVisible(bbox)) return;
+  if (bbox && !LightClip.ClipLightIsBBoxVisible(bbox) && !LightShadowClip.ClipLightIsBBoxVisible(bbox)) return;
   //if (bbox && !CheckSphereVsAABBIgnoreZ(bbox, CurrLightPos, CurrLightRadius)) return;
 
   if (bspnum == -1) return CollectAdvLightSubsector(0);
