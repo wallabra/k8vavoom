@@ -463,31 +463,29 @@ void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<sur
       int vertCount = 0;
       for (auto &&surf : solid) vertCount += surf->count;
 
-      vboSMapSurf.ensure(vertCount, 1024);
-      vassert(vboSMapSurf.data.length() >= vertCount);
-
-      if (vboSMapCounters.capacity() < solid.length()) vboSMapCounters.setLengthReserve(solid.length());
-      vboSMapCounters.setNum(solid.length(), false);
-
-      if (vboSMapStartInds.capacity() < solid.length()) vboSMapStartInds.setLengthReserve(solid.length());
-      vboSMapStartInds.setNum(solid.length(), false);
+      if (vboSMapCounters.length() < solid.length()) vboSMapCounters.setLength(solid.length()+1024);
+      if (vboSMapStartInds.length() < solid.length()) vboSMapStartInds.setLength(solid.length()+1024);
 
       int vboCountIdx = 0;
-      int vboDataIdx = 0;
+      vboSMapSurf.ensureDataSize(vertCount, 1024);
 
       for (auto &&surf : solid) {
         vboSMapCounters.ptr()[vboCountIdx] = (GLsizei)surf->count;
-        vboSMapStartInds.ptr()[vboCountIdx] = (GLint)vboDataIdx;
+        vboSMapStartInds.ptr()[vboCountIdx] = (GLint)vboSMapSurf.dataUsed();
         ++vboCountIdx;
-        for (int f = 0; f < surf->count; ++f) vboSMapSurf.data.ptr()[vboDataIdx++] = surf->verts[f].vec();
+
+        const SurfVertex *svt = surf->verts;
+        for (int f = surf->count; f--; ++svt) {
+          TVec *v = vboSMapSurf.allocPtr();
+          *v = svt->vec();
+        }
       }
       vassert(vboCountIdx == solid.length());
-      vassert(vboSMapCounters.length() == solid.length());
-      vassert(vboSMapStartInds.length() == solid.length());
-      vassert(vboSMapSurf.data.length() >= vertCount);
-      vassert(vboDataIdx == vertCount);
+      vassert(vboSMapCounters.length() >= solid.length());
+      vassert(vboSMapStartInds.length() >= solid.length());
+      vassert(vboSMapSurf.dataUsed() == vertCount);
 
-      vboSMapSurf.uploadData(vertCount);
+      vboSMapSurf.uploadData();
     }
 
     // upload textured surfaces
@@ -495,47 +493,37 @@ void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<sur
       int vertCountTex = 0;
       for (auto &&surf : masked) vertCountTex += surf->count;
 
-      vboSMapSurfTex.ensure(vertCountTex, 1024);
-      vassert(vboSMapSurfTex.data.length() >= vertCountTex);
-
-      if (vboSMapCountersTex.capacity() < masked.length()) vboSMapCountersTex.setLengthReserve(masked.length());
-      vboSMapCountersTex.setNum(masked.length(), false);
-
-      if (vboSMapStartIndsTex.capacity() < masked.length()) vboSMapStartIndsTex.setLengthReserve(masked.length());
-      vboSMapStartIndsTex.setNum(masked.length(), false);
+      if (vboSMapCountersTex.length() < masked.length()) vboSMapCountersTex.setLength(masked.length()+1024);
+      if (vboSMapStartIndsTex.length() < masked.length()) vboSMapStartIndsTex.setLength(masked.length()+1024);
 
       int vboCountIdx = 0;
-      int vboDataIdx = 0;
       #ifdef VV_SMAP_DUMP_CHANGES
       int changes = 0;
       #endif
+      vboSMapSurfTex.ensureDataSize(vertCountTex, 1024);
 
       smapLastTexinfo.resetLastUsed();
       for (auto &&surf : masked) {
         vboSMapCountersTex.ptr()[vboCountIdx] = (GLsizei)surf->count;
-        vboSMapStartIndsTex.ptr()[vboCountIdx] = (GLint)vboDataIdx;
+        vboSMapStartIndsTex.ptr()[vboCountIdx] = (GLint)vboSMapSurfTex.dataUsed();
         ++vboCountIdx;
 
         const texinfo_t *currTexinfo = surf->texinfo;
         const bool textureChanged = smapLastTexinfo.needChange(*currTexinfo, updateFrame);
         if (textureChanged) {
           smapLastTexinfo.updateLastUsed(*currTexinfo);
-          //SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
           SetShadowTexture(currTexinfo->Tex);
-          //SurfShadowMapTexNoBuf.SetTex(currTexinfo);
-          //currentActiveShader->UploadChangedUniforms();
           #ifdef VV_SMAP_DUMP_CHANGES
           ++changes;
           #endif
         }
 
-        for (int f = 0; f < surf->count; ++f) {
-          SMapVBOVertex *svx = vboSMapSurfTex.data.ptr()+vboDataIdx;
-          ++vboDataIdx;
-          const TVec &sv = surf->verts[f].vec();
-          svx->x = sv.x;
-          svx->y = sv.y;
-          svx->z = sv.z;
+        const SurfVertex *svt = surf->verts;
+        for (int f = surf->count; f--; ++svt) {
+          TexVBOVertex *svx = vboSMapSurfTex.allocPtr();
+          svx->x = svt->x;
+          svx->y = svt->y;
+          svx->z = svt->z;
           svx->sx = currTexinfo->saxis.x;
           svx->sy = currTexinfo->saxis.y;
           svx->sz = currTexinfo->saxis.z;
@@ -548,14 +536,12 @@ void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<sur
           svx->TexIH = tex_ih;
         }
       }
-
       vassert(vboCountIdx == masked.length());
-      vassert(vboSMapCountersTex.length() == masked.length());
-      vassert(vboSMapStartIndsTex.length() == masked.length());
-      vassert(vboSMapSurfTex.data.length() >= vertCountTex);
-      vassert(vboDataIdx == vertCountTex);
+      vassert(vboSMapCountersTex.length() >= masked.length());
+      vassert(vboSMapStartIndsTex.length() >= masked.length());
+      vassert(vboSMapSurfTex.dataUsed() == vertCountTex);
 
-      vboSMapSurfTex.uploadData(vertCountTex);
+      vboSMapSurfTex.uploadData();
       #ifdef VV_SMAP_DUMP_CHANGES
       GCon->Logf(NAME_Debug, "upload masked: %d changes per %d surfaces", changes, masked.length());
       #endif

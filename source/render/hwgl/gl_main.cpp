@@ -1094,13 +1094,13 @@ void VOpenGLDrawer::InitResolution () {
   vassert(!vboSMapSurfTex.isValid());
 
   vboSprite.setOwner(this);
-  vboSprite.ensure(4); // sprite is always a quad, so we can allocate it right here
+  vboSprite.ensureDataSize(4); // sprite is always a quad, so we can allocate it right here
 
   vboSky.setOwner(this);
   vboMaskedSurf.setOwner(this);
   vboAdvSurf.setOwner(this, true); // streaming
-  vboSMapSurf.setOwner(this, false); // non-streaming
-  vboSMapSurfTex.setOwner(this, false); // non-streaming
+  vboSMapSurf.setOwner(this, true); // streaming
+  vboSMapSurfTex.setOwner(this, true); // streaming
 
   // init some defaults
   glBindTexture(GL_TEXTURE_2D, 0);

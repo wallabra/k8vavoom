@@ -980,17 +980,19 @@ protected:
   protected:
     class VOpenGLDrawer *mOwner;
     GLuint vboId;
+    int vboSize; // current VBO size, in items
     int maxElems;
+    int usedElems;
     bool isStream;
 
   public:
     TArray<T> data;
 
   public:
-    inline VBO () noexcept : mOwner(nullptr), vboId(0), maxElems(0), isStream(false), data() {}
-    inline VBO (VOpenGLDrawer *aOwner, bool aStream) noexcept : mOwner(aOwner), vboId(0), maxElems(0), isStream(aStream), data() {}
+    inline VBO () noexcept : mOwner(nullptr), vboId(0), vboSize(0), maxElems(0), usedElems(0), isStream(false), data() {}
+    inline VBO (VOpenGLDrawer *aOwner, bool aStream) noexcept : mOwner(aOwner), vboId(0), vboSize(0), maxElems(0), usedElems(0), isStream(aStream), data() {}
 
-    static size_t getTypeSize () noexcept { return sizeof(T); }
+    static inline size_t getTypeSize () noexcept { return sizeof(T); }
 
     inline void setOwner (VOpenGLDrawer *aOwner, bool aStream=false) noexcept {
       if (mOwner != aOwner || isStream != aStream) {
@@ -1003,24 +1005,16 @@ protected:
     VBO (VOpenGLDrawer *aOwner, int aMaxElems, bool aStream=false) noexcept
       : mOwner(aOwner)
       , vboId(0)
+      , vboSize(0)
       , maxElems(aMaxElems)
+      , usedElems(0)
       , isStream(aStream)
       , data()
     {
       vassert(aMaxElems >= 0);
       if (aMaxElems == 0) return;
       data.setLength(aMaxElems);
-      memset((void *)data.ptr(), 0, sizeof(T));
-      GLDRW_RESET_ERROR();
-      mOwner->p_glGenBuffersARB(1, &vboId);
-      if (vboId == 0) Sys_Error("VBO: ctor (cannot create)");
-      GLDRW_CHECK_ERROR("VBO: ctor (creation)");
-      // reserve room for vertices
-      mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
-      const int len = (int)sizeof(T)*aMaxElems;
-      mOwner->p_glBufferDataARB(GL_ARRAY_BUFFER, len, data.ptr(), (isStream ? GL_STREAM_DRAW : GL_DYNAMIC_DRAW));
-      GLDRW_CHECK_ERROR("VBO: VBO ctor (allocating)");
-      mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+      //memset((void *)data.ptr(), 0, sizeof(T)); // nobody cares
     }
 
     inline ~VBO () noexcept { destroy(); }
@@ -1031,40 +1025,44 @@ protected:
         if (mOwner) mOwner->p_glDeleteBuffersARB(1, &vboId);
         vboId = 0;
       }
-      maxElems = 0;
+      maxElems = usedElems = 0;
+      vboSize = 0;
     }
 
     inline bool isValid () const noexcept { return (mOwner && vboId != 0); }
     inline GLuint getId () const noexcept { return vboId; }
 
     inline int capacity () const noexcept { return maxElems; }
+    inline int dataUsed () const noexcept { return usedElems; }
 
-    // this activates VBO
-    void ensure (int count, int extraReserve=0) noexcept {
+    // *WARNING!* does no checks!
+    inline void allocReset () noexcept { usedElems = 0; }
+    // *WARNING!* does no checks!
+    inline T *allocPtr () noexcept { return data.ptr()+(usedElems++); }
+
+    // this may resize `data()` (but won't destroy VBO)
+    // note that you should NOT store returned pointer, it may be invalidated by the next call to `allocPtrSafe()`
+    inline T *allocPtrSafe () noexcept {
+      if (usedElems >= data.length()) {
+        data.setLengthReserve(usedElems+1);
+        maxElems = data.capacity();
+      }
+      return data.ptr()+(usedElems++);
+    }
+
+    // this doesn't activate VBO
+    // can delete VBO, so don't keep it active!
+    // this also does `allocReset()`
+    void ensureDataSize (int count, int extraReserve=-1) noexcept {
       if (!mOwner) Sys_Error("VBO: trying to ensure uninitialised VBO");
       const int oldlen = maxElems;
-      if (count > oldlen || !vboId) {
-        count += (extraReserve > 0 ? extraReserve : 0);
+      if (count > oldlen) {
+        count += (extraReserve >= 0 ? extraReserve : 42);
         maxElems = count;
-        //data.setLength(count);
-        if (data.capacity() < count) data.setLengthReserve(count);
-        data.setNum(count, false); // don't resize
-        if (vboId) { mOwner->p_glDeleteBuffersARB(1, &vboId); vboId = 0; }
-        // cleare newly allocated array part
-        memset((void *)(data.ptr()+oldlen), 0, sizeof(T)*(unsigned)(count-oldlen));
-        GLDRW_RESET_ERROR();
-        mOwner->p_glGenBuffersARB(1, &vboId);
-        if (vboId == 0) Sys_Error("VBO: ensure (cannot create)");
-        GLDRW_CHECK_ERROR("VBO: ensure (creation)");
-        // reserve room for vertices
-        mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
-        const int len = (int)sizeof(T)*count;
-        mOwner->p_glBufferDataARB(GL_ARRAY_BUFFER, len, data.ptr(), (isStream ? GL_STREAM_DRAW : GL_DYNAMIC_DRAW));
-        GLDRW_CHECK_ERROR("VBO: VBO ensure (allocating)");
-      } else {
-        mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
+        data.setLength(count, false); // don't resize
+        if (vboId && vboSize < count) { mOwner->p_glDeleteBuffersARB(1, &vboId); vboId = 0; vboSize = 0; }
       }
-      //p_glBindBufferARB(GL_ARRAY_BUFFER, 0);
+      usedElems = 0;
     }
 
     inline void deactivate () const noexcept {
@@ -1077,15 +1075,85 @@ protected:
       mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
     }
 
-    // this activates VBO
-    inline void uploadData (int count, const T *buf=nullptr) noexcept {
+    // this activates VBO (and allocates it if necessary)
+    // `buf` must not be NULL, and must not be `data.ptr()` if `count` might trigger data reallocation
+    void uploadBuffer (int count, const T *buf) noexcept {
       if (count <= 0) return;
       if (!mOwner) Sys_Error("VBO: trying to upload data to uninitialised VBO");
-      ensure(count);
-      if (!buf) buf = data.ptr();
-      // upload data
-      const int len = (int)sizeof(T)*count;
-      mOwner->p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, len, buf);
+      if (!buf) Sys_Error("VBO: trying to upload data from NULL pointer");
+      // delete VBO if it is too small
+      if (vboId && vboSize > 0 && vboSize < count) {
+        mOwner->p_glDeleteBuffersARB(1, &vboId);
+        vboId = 0;
+        vboSize = 0;
+      }
+      // check buffer size
+      if (!vboId || vboSize < count) {
+        GLDRW_RESET_ERROR();
+        if (vboId) {
+          vassert(vboSize == 0);
+        } else {
+          mOwner->p_glGenBuffersARB(1, &vboId);
+          GLDRW_CHECK_ERROR("VBO: creation");
+        }
+        if (maxElems < count) {
+          data.setLength(maxElems);
+          maxElems = count;
+        }
+        vboSize = maxElems;
+        mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
+        if (vboSize == count) {
+          // allocate and upload
+          mOwner->p_glBufferDataARB(GL_ARRAY_BUFFER, (int)sizeof(T)*vboSize, buf, (isStream ? GL_STREAM_DRAW : GL_DYNAMIC_DRAW));
+        } else {
+          // allocate full buffer, upload partial data
+          mOwner->p_glBufferDataARB(GL_ARRAY_BUFFER, (int)sizeof(T)*vboSize, NULL, (isStream ? GL_STREAM_DRAW : GL_DYNAMIC_DRAW));
+          mOwner->p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, (int)sizeof(T)*count, buf);
+        }
+      } else {
+        vassert(vboId);
+        vassert(vboSize >= count);
+        mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
+        // upload partial data
+        mOwner->p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, (int)sizeof(T)*count, buf);
+      }
+    }
+
+    // this activates VBO (and allocates it if necessary)
+    // `usedElems` is used as counter
+    void uploadData () noexcept {
+      vassert(usedElems <= maxElems);
+      if (maxElems == 0) {
+        maxElems = 4;
+        data.setLength(4);
+      }
+      // check buffer size
+      if (vboId && vboSize > 0 && vboSize < usedElems) {
+        mOwner->p_glDeleteBuffersARB(1, &vboId);
+        vboId = 0;
+        vboSize = 0;
+      }
+      // check buffer size
+      if (!vboId || vboSize < usedElems) {
+        GLDRW_RESET_ERROR();
+        if (vboId) {
+          vassert(vboSize == 0);
+        } else {
+          mOwner->p_glGenBuffersARB(1, &vboId);
+          GLDRW_CHECK_ERROR("VBO: creation");
+        }
+        vassert(data.capacity() >= maxElems);
+        vboSize = maxElems;
+        mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
+        // allocate and upload
+        mOwner->p_glBufferDataARB(GL_ARRAY_BUFFER, (int)sizeof(T)*vboSize, data.ptr(), (isStream ? GL_STREAM_DRAW : GL_DYNAMIC_DRAW));
+      } else {
+        vassert(vboId);
+        vassert(vboSize >= usedElems);
+        mOwner->p_glBindBufferARB(GL_ARRAY_BUFFER, vboId);
+        // upload partial data
+        mOwner->p_glBufferSubDataARB(GL_ARRAY_BUFFER, 0, (int)sizeof(T)*usedElems, data.ptr());
+      }
     }
 
     // VBO should be activated!
@@ -1120,6 +1188,15 @@ protected:
   // VBO for sky rendering (created lazily, because we don't know the proper size initially)
   VBO<SkyVBOVertex> vboSky;
 
+  // for textured surfaces, so we can keep texture switching to minimum
+  struct __attribute__((packed)) TexVBOVertex {
+    float x, y, z;
+    float sx, sy, sz; // saxis
+    float tx, ty, tz; // taxis
+    float SOffs, TOffs;
+    float TexIW, TexIH;
+  };
+
   // VBO for advrender surfaces
   // reused in fog renderer (it rely on the fact that data and lists from ambient stage is intact)
   VBO<TVec> vboAdvSurf;
@@ -1128,22 +1205,13 @@ protected:
   TArray<GLsizei> vboCounters; // number of indicies in each primitive
   TArray<GLint> vboStartInds; // starting indicies
 
-  // for textured surfaces
-  struct __attribute__((packed)) SMapVBOVertex {
-    float x, y, z;
-    float sx, sy, sz; // saxis
-    float tx, ty, tz; // taxis
-    float SOffs, TOffs;
-    float TexIW, TexIH;
-  };
-
   // VBO for shadowmap surfaces (including masked)
   // for each solid surface
   VBO<TVec> vboSMapSurf;
   TArray<GLsizei> vboSMapCounters; // number of indicies in each primitive
   TArray<GLint> vboSMapStartInds; // starting indicies
   // for each textured solid surface
-  VBO<SMapVBOVertex> vboSMapSurfTex;
+  VBO<TexVBOVertex> vboSMapSurfTex;
   TArray<GLsizei> vboSMapCountersTex; // number of indicies in each primitive
   TArray<GLint> vboSMapStartIndsTex; // starting indicies
 

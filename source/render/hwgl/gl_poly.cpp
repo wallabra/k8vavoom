@@ -181,20 +181,21 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     }
     #endif
 
-    vboSky.ensure(surf->count, 16);
+    vboSky.ensureDataSize(surf->count);
 
     // copy vertices to VBO
     const unsigned scount = (unsigned)surf->count;
-    SkyVBOVertex *vbovtx = vboSky.data.ptr();
-    for (unsigned i = 0; i < scount; ++i, ++vbovtx) {
-      vbovtx->x = surf->verts[i].x;
-      vbovtx->y = surf->verts[i].y;
-      vbovtx->z = surf->verts[i].z;
+    const SurfVertex *svt = surf->verts;
+    for (unsigned i = 0; i < scount; ++i, ++svt) {
+      SkyVBOVertex *vbovtx = vboSky.allocPtr();
+      vbovtx->x = svt->x;
+      vbovtx->y = svt->y;
+      vbovtx->z = svt->z;
       vbovtx->s = CalcSkyTexCoordS(surf->verts[sidx[i]].vec(), tex, offs1);
-      vbovtx->t = CalcSkyTexCoordT(surf->verts[i].vec(), tex);
+      vbovtx->t = CalcSkyTexCoordT(svt->vec(), tex);
     }
 
-    vboSky.uploadData(surf->count);
+    vboSky.uploadData();
 
     vboSky.setupAttrib(SurfSky.loc_Position, 3);
     vboSky.setupAttrib(SurfSky.loc_TexCoord, 2, (ptrdiff_t)(3*sizeof(float)));

@@ -115,9 +115,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   currentActiveShader->UploadChangedUniforms();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
 
-  //vboMaskedSurf.activate();
-  //vboMaskedSurf.ensure(surf->count);
-  vboMaskedSurf.uploadData(surf->count, surf->verts);
+  // this also activates VBO
+  vboMaskedSurf.uploadBuffer(surf->count, surf->verts);
 
   vboMaskedSurf.setupAttrib(attribPosition, 3);
   p_glDrawArrays(GL_TRIANGLE_FAN, 0, surf->count);
@@ -290,9 +289,8 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
     glDisableDepthWrite();
   }
 
-  //vboSprite.activate();
-  vboSprite.ensure(4);
-  vboSprite.uploadData(4, cv);
+  // this also activates VBO
+  vboSprite.uploadBuffer(4, cv);
 
   vboSprite.setupAttrib(attribPosition, 3);
   #if 0
