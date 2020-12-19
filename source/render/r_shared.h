@@ -84,19 +84,10 @@ struct texinfo_t {
   vint32 Additive;
   vuint8 ColorMap;
 
-  inline bool isEmptyTexture () const { return (!Tex || Tex->Type == TEXTYPE_Null); }
+  inline bool isEmptyTexture () const noexcept { return (!Tex || Tex->Type == TEXTYPE_Null); }
 
   // call this to check if we need to change OpenGL texture
-  inline bool needChangeIgnoreOffsets (const texinfo_t &other, const vuint32 upframe) const {
-    if (&other == this) return false;
-    return
-      Tex != other.Tex ||
-      ColorMap != other.ColorMap ||
-      (Tex && Tex->lastUpdateFrame != upframe);
-  }
-
-  // call this to check if we need to change OpenGL texture
-  inline bool needChange (const texinfo_t &other, const vuint32 upframe) const {
+  inline bool needChange (const texinfo_t &other, const vuint32 upframe) const noexcept {
     if (&other == this) return false;
     return
       Tex != other.Tex ||
@@ -113,7 +104,7 @@ struct texinfo_t {
   }
 
   // call this to cache info for `needChange()`
-  inline void updateLastUsed (const texinfo_t &other) {
+  inline void updateLastUsed (const texinfo_t &other) noexcept {
     if (&other == this) return;
     Tex = other.Tex;
     ColorMap = other.ColorMap;
@@ -127,12 +118,12 @@ struct texinfo_t {
     // other fields doesn't matter
   }
 
-  inline void resetLastUsed () {
+  inline void resetLastUsed () noexcept {
     Tex = nullptr; // it is enough, but to be sure...
     ColorMap = 255; // impossible colormap
   }
 
-  inline void initLastUsed () {
+  inline void initLastUsed () noexcept {
     saxis = taxis = saxisLM = taxisLM = TVec(-99999, -99999, -99999);
     soffs = toffs = -99999;
     Tex = nullptr;
