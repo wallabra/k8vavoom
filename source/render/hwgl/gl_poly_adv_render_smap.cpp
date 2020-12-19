@@ -27,7 +27,6 @@
 #include "gl_poly_adv_render.h"
 
 //#define VV_SMAP_STRICT_ERROR_CHECKS
-//#define VV_SMAP_DUMP_CHANGES
 
 
 #ifdef VV_SMAP_STRICT_ERROR_CHECKS
@@ -497,9 +496,6 @@ void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<sur
       if (vboSMapStartIndsTex.length() < masked.length()) vboSMapStartIndsTex.setLength(masked.length()+1024);
 
       int vboCountIdx = 0;
-      #ifdef VV_SMAP_DUMP_CHANGES
-      int changes = 0;
-      #endif
       vboSMapSurfTex.ensureDataSize(vertCountTex, 1024);
 
       smapLastTexinfo.resetLastUsed();
@@ -509,14 +505,9 @@ void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<sur
         ++vboCountIdx;
 
         const texinfo_t *currTexinfo = surf->texinfo;
-        const bool textureChanged = smapLastTexinfo.needChange(*currTexinfo, updateFrame);
-        if (textureChanged) {
-          smapLastTexinfo.updateLastUsed(*currTexinfo);
-          SetShadowTexture(currTexinfo->Tex);
-          #ifdef VV_SMAP_DUMP_CHANGES
-          ++changes;
-          #endif
-        }
+        VTexture *Tex = currTexinfo->Tex;
+        const float texInvWidth = 1.0f/max2(1, Tex->GetWidth());
+        const float texInvHeight = 1.0f/max2(1, Tex->GetHeight());
 
         const SurfVertex *svt = surf->verts;
         for (int f = surf->count; f--; ++svt) {
@@ -532,8 +523,8 @@ void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<sur
           svx->tz = currTexinfo->taxis.z;
           svx->SOffs = currTexinfo->soffs;
           svx->TOffs = currTexinfo->toffs;
-          svx->TexIW = tex_iw;
-          svx->TexIH = tex_ih;
+          svx->TexIW = texInvWidth;
+          svx->TexIH = texInvHeight;
         }
       }
       vassert(vboCountIdx == masked.length());
@@ -542,9 +533,6 @@ void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<sur
       vassert(vboSMapSurfTex.dataUsed() == vertCountTex);
 
       vboSMapSurfTex.uploadData();
-      #ifdef VV_SMAP_DUMP_CHANGES
-      GCon->Logf(NAME_Debug, "upload masked: %d changes per %d surfaces", changes, masked.length());
-      #endif
     }
   }
 }
@@ -627,25 +615,18 @@ void VOpenGLDrawer::RenderShadowMaps (TArray<surface_t *> &solid, TArray<surface
 
       int prevSIdx = 0;
       int currSIdx = 0;
-      #ifdef VV_SMAP_DUMP_CHANGES
-      int changes = 0;
-      #endif
-      smapLastTexinfo.resetLastUsed();
+      VTexture *lastTex = nullptr;
+
       for (auto &&surf : masked) {
         const texinfo_t *currTexinfo = surf->texinfo;
-        const bool textureChanged = smapLastTexinfo.needChangeIgnoreOffsets(*currTexinfo, updateFrame);
-        if (textureChanged) {
+        if (currTexinfo->Tex != lastTex) {
           if (currSIdx-prevSIdx > 0) {
             p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboSMapStartIndsTex.ptr()+prevSIdx, vboSMapCountersTex.ptr()+prevSIdx, (GLsizei)(currSIdx-prevSIdx));
             //GCon->Logf(NAME_Debug, "  flushed %d masked shadowmap surfaces", currSIdx-prevSIdx);
           }
           prevSIdx = currSIdx;
-          smapLastTexinfo.updateLastUsed(*currTexinfo);
-          //SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
-          SetShadowTexture(currTexinfo->Tex);
-          #ifdef VV_SMAP_DUMP_CHANGES
-          ++changes;
-          #endif
+          lastTex = currTexinfo->Tex;
+          SetShadowTexture(lastTex);
         }
         ++currSIdx;
       }
@@ -653,9 +634,6 @@ void VOpenGLDrawer::RenderShadowMaps (TArray<surface_t *> &solid, TArray<surface
         p_glMultiDrawArrays(GL_TRIANGLE_FAN, vboSMapStartIndsTex.ptr()+prevSIdx, vboSMapCountersTex.ptr()+prevSIdx, (GLsizei)(currSIdx-prevSIdx));
         //GCon->Logf(NAME_Debug, "  finally flushed %d masked shadowmap surfaces", currSIdx-prevSIdx);
       }
-      #ifdef VV_SMAP_DUMP_CHANGES
-      GCon->Logf(NAME_Debug, "render masked: %d changes per %d surfaces", changes, masked.length());
-      #endif
 
       vboSMapSurfTex.disableAttrib(SurfShadowMapTex.loc_Position);
       vboSMapSurfTex.disableAttrib(SurfShadowMapTex.loc_SAxis);
