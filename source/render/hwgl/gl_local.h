@@ -1188,25 +1188,10 @@ protected:
   // VBO for sky rendering (created lazily, because we don't know the proper size initially)
   VBO<SkyVBOVertex> vboSky;
 
-  // for textured surfaces, so we can keep texture switching to minimum
-  struct __attribute__((packed)) AdvVBOVertex {
-    float x, y, z;
-    float sx, sy, sz; // saxis
-    float tx, ty, tz; // taxis
-    float SOffs, TOffs;
-    float TexIW, TexIH;
-    // light
-    float lightColor[3]; // this is vec3 in ambient shader
-    // fog
-    float fogColor[4]; // .w is "fog enabled", 0.0 or 1.0
-    float fogStart, fogEnd; // this is vec2 in fog shader
-  };
-
   // VBO for advrender surfaces
   // used on all stages
   // order: all solid surfaces (DrawSurfListSolid), all masked surfaces (DrawSurfListMasked)
   VBO<TVec> vboAdvSurf;
-  //VBO<AdvVBOVertex> vboAdvSurf;
   TArray<GLsizei> vboCounters; // number of indicies in each primitive
   TArray<GLint> vboStartInds; // starting indicies
 
