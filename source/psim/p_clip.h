@@ -229,12 +229,19 @@ public:
   // this returns `true` if clip was modified
   bool ClipCheckAddSubsector (const subsector_t *sub, const TPlane *Mirror=nullptr) noexcept;
 
+  // asShadow
+  enum {
+    AsLight,
+    AsShadow,
+    AsShadowMap,
+  };
+
 #ifdef CLIENT
   bool ClipLightIsBBoxVisible (const float BBox[6]) const noexcept;
-  bool ClipLightCheckRegion (const subregion_t *region, subsector_t *sub, bool asShadow) const noexcept;
-  bool ClipLightCheckSubsector (subsector_t *sub, bool asShadow) const noexcept;
+  bool ClipLightCheckRegion (const subregion_t *region, subsector_t *sub, int asShadow) const noexcept;
+  bool ClipLightCheckSubsector (subsector_t *sub, int asShadow) const noexcept;
   // this doesn't do raduis and subsector checks: this is done in `CalcLightVisCheckNode()`
-  bool ClipLightCheckSeg (const seg_t *seg, bool asShadow) const noexcept;
+  bool ClipLightCheckSeg (const seg_t *seg, int asShadow) const noexcept;
 #endif
 
   void ClipAddLine (const TVec v1, const TVec v2) noexcept;
@@ -243,7 +250,7 @@ public:
 
 #ifdef CLIENT
   // this doesn't check for radius
-  void ClipLightAddSubsectorSegs (const subsector_t *sub, bool asShadow, const TPlane *Mirror=nullptr) noexcept;
+  void ClipLightAddSubsectorSegs (const subsector_t *sub, int asShadow, const TPlane *Mirror=nullptr) noexcept;
 #endif
 
   // debug
@@ -252,7 +259,7 @@ public:
 public:
   void CheckAddClipSeg (const seg_t *line, const TPlane *Mirror=nullptr, bool clipAll=false) noexcept;
 #ifdef CLIENT
-  void CheckLightAddClipSeg (const seg_t *line, const TPlane *Mirror, bool asShadow) noexcept;
+  void CheckLightAddClipSeg (const seg_t *line, const TPlane *Mirror, int asShadow) noexcept;
   // light radius should be valid
   int CheckSubsectorLight (subsector_t *sub) const noexcept;
 #endif
