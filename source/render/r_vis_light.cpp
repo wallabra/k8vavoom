@@ -186,6 +186,13 @@ void VRenderLevelShared::CalcLightVisCheckNode (int bspnum, const float *bbox, c
     // check if the light is too close to a wall/floor, and calculate "move out" vector
     if (CurrLightCalcUnstuck) {
       const float mindist = 2.5f;
+      //const sector_t *sec = sub->sector;
+
+      /*
+      const float fz = sec->floor.GetPointZClamped(CurrLightUnstuckPos);
+      const float cz = sec->ceiling.GetPointZClamped(CurrLightUnstuckPos);
+      */
+
       // check walls
       const seg_t *seg = &Level->Segs[sub->firstline];
       for (int count = sub->numlines; count--; ++seg) {
@@ -193,6 +200,22 @@ void VRenderLevelShared::CalcLightVisCheckNode (int bspnum, const float *bbox, c
         if (!linedef) continue; // miniseg
         if (linedef->flags&ML_TWOSIDED) continue; // don't bother with two-sided lines for now
         //const float dist = DotProduct(CurrLightUnstuckPos, seg->normal)-seg->dist;
+        /*
+        if (seg->partner) {
+          if (!seg->partner->frontsub) continue;
+          const sector_t *osec = seg->partner->frontsub->sector;
+          if (!osec) continue;
+          // if this sector height is lower than the other sector height, and the light is above other height, bottex skip
+          if ((sec->floor.maxz >= osec->floor.maxz || CurrLightUnstuckPos.z >= osec->floor.maxz) && // skip bottom?
+              (sec->ceiling.minz <= osec->ceiling.minz || CurrLightUnstuckPos.z <= osec->ceiling.minz)) // skip top?
+          {
+            // check midtex presence
+            const side_t *sidedef = seg->sidedef;
+            if (!sidedef) continue; // just in case
+            if (sidedef->MidTexture <= 0) continue;
+          }
+        }
+        */
         const float dist = seg->PointDistance(CurrLightUnstuckPos);
         if (dist > 0.0f && dist < mindist) CurrLightUnstuckPos += seg->normal*(mindist-dist); // move away
       }
