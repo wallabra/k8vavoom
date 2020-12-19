@@ -1,6 +1,10 @@
 uniform samplerCube ShadowTexture;
 // this will be #defined by the engine
 //uniform float CubeSize;
+// still, some unused shaders require it, so...
+#ifndef CubeSize
+# define CubeSize  128
+#endif
 
 uniform vec3 LightPos;
 
