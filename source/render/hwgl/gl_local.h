@@ -1222,7 +1222,7 @@ protected:
   int vboSMapCountIdxTex;
 
   inline void vboSMapResetSurfacesTex () noexcept { vboSMapTex = nullptr; vboSMapTexIW = vboSMapTexIH = 1.0f; vboSMapCountIdxTex = 0; }
-  void vboSMapAppendSurfaceTex (surface_t *surf);
+  void vboSMapAppendSurfaceTex (surface_t *surf, bool flip=false);
 
   // console variables
   static VCvarI texture_filter;

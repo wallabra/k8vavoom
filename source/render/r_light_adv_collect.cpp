@@ -28,6 +28,10 @@
 
 static VCvarB clip_advlight_regions("clip_advlight_regions", false, "Clip (1D) light regions?", CVAR_PreInit);
 
+// this is because the other side has flipped texture, so if
+// the player stands behind it, the shadow is wrong
+static VCvarB r_shadowmap_flip_surfaces("r_shadowmap_flip_surfaces", true, "Flip two-sided surfaces for shadowmapping?", CVAR_Archive);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 enum {
@@ -48,6 +52,7 @@ void VRenderLevelShadowVolume::CollectLightShadowSurfaces () {
   shadowSurfacesMasked.resetNoDtor();
   lightSurfacesSolid.resetNoDtor();
   lightSurfacesMasked.resetNoDtor();
+  collectorForShadowMaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
   CollectAdvLightBSPNode(Level->NumNodes-1, nullptr);
 }
 
@@ -80,7 +85,8 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
     return;
   }
 
-  const bool smaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
+  const bool smaps = collectorForShadowMaps;
+  const bool doflip = r_shadowmap_flip_surfaces.asBool();
 
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
@@ -90,7 +96,8 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
     //if (surf->drawflags&surface_t::TF_TOPHACK) continue;
 
     const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
-    if (dist <= 0.0f || dist >= CurrLightRadius) continue; // light is too far away, or surface is not lit
+    if (!smaps && dist <= 0.0f) continue;
+    if (fabsf(dist) >= CurrLightRadius) continue; // was for light
 
     // ignore translucent/masked
     VTexture *tex = surf->texinfo->Tex;
@@ -100,7 +107,7 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
 
     // light
     if (ssflag&FlagAsLight) {
-      if (surf->IsPlVisible()) {
+      if (dist > 0.0f && surf->IsPlVisible()) {
         // viewer is in front
         if (tex->isTransparent()) lightSurfacesMasked.append(surf); else lightSurfacesSolid.append(surf);
       }
@@ -108,9 +115,23 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
 
     // shadow
     if (ssflag&FlagAsShadow) {
-      if (!smaps && tex->isSeeThrough()) continue; // this is masked texture, shadow volumes cannot process it
-      //if (smaps && !surf->IsPlVisible()) continue; // viewer is in back side or on plane
-      if (tex->isTransparent()) shadowSurfacesMasked.append(surf); else shadowSurfacesSolid.append(surf);
+      if (!smaps && (dist <= 0.0f || tex->isSeeThrough())) continue; // this is masked texture, shadow volumes cannot process it
+      if (tex->isTransparent()) {
+        // we need to flip it if the player is behind it
+        if (smaps) {
+          if (doflip) {
+            if (surf->plane.PointOnSide(Drawer->vieworg)) continue; // if the camera cannot see it, no need to render it
+            // flip if the light cannot see it
+            if (dist <= 0.0f) surf->drawflags |= surface_t::DF_SMAP_FLIP; else surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
+          } else {
+            if (dist <= 0.0f) continue; // light cannot see it
+            surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
+          }
+        }
+        shadowSurfacesMasked.append(surf);
+      } else {
+        if (dist > 0.0f) shadowSurfacesSolid.append(surf);
+      }
     }
   }
 }
@@ -129,8 +150,8 @@ void VRenderLevelShadowVolume::CollectAdvLightLine (subsector_t *sub, sec_region
 
   const float dist = DotProduct(CurrLightPos, seg->normal)-seg->dist;
   //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light sphere is not touching a plane
-  //if (fabsf(dist) >= CurrLightRadius) return; // was for light
-  if (dist <= 0.0f || dist >= CurrLightRadius) return;
+  if (!collectorForShadowMaps && dist <= 0.0f) return;
+  if (fabsf(dist) >= CurrLightRadius) return; // was for light
 
   //k8: here we can call `ClipSegToLight()`, but i see no reasons to do so
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
@@ -150,7 +171,16 @@ void VRenderLevelShadowVolume::CollectAdvLightLine (subsector_t *sub, sec_region
 #endif
 
   VEntity *skybox = secregion->eceiling.splane->SkyBox;
-  if (dseg->mid) CollectAdvLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0), ssflag);
+  if (dseg->mid) {
+    // check two-sided surface orientation
+    /*
+    if (ssflag&FlagAsShadow) {
+      drawflags
+      DF_INVERT
+    }
+    */
+    CollectAdvLightSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0), ssflag);
+  }
   if (seg->backsector) {
     // two sided line
     if (dseg->top) CollectAdvLightSurfaces(dseg->top->surfs, &dseg->top->texinfo, skybox, false, (seg->backsector ? -1 : 0), ssflag);
@@ -178,8 +208,8 @@ void VRenderLevelShadowVolume::CollectAdvLightSecSurface (sec_surface_t *ssurf, 
   //const float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
   const float dist = ssurf->PointDist(CurrLightPos);
   //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
-  //if (fabsf(dist) >= CurrLightRadius) return; // was for light
-  if (dist <= 0.0f || dist >= CurrLightRadius) return;
+  if (!collectorForShadowMaps && dist <= 0.0f) return;
+  if (fabsf(dist) >= CurrLightRadius) return; // was for light
 
   CollectAdvLightSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox, true, 0, ssflag);
 }

@@ -291,7 +291,6 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   SurfShadowMapTexNoBuf.SetLightRadius(Radius);
   SurfShadowMapTexNoBuf.SetTexture(0);
 
-  //glDisable(GL_CULL_FACE);
   GLSMAP_ERR("finish cube FBO setup");
 }
 
@@ -310,7 +309,7 @@ void VOpenGLDrawer::EndLightShadowMaps () {
   if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
   GLSetViewport(savedSMVPort[0], savedSMVPort[1], savedSMVPort[2], savedSMVPort[3]);
-  glEnable(GL_CULL_FACE);
+  //glEnable(GL_CULL_FACE);
   //glDepthMask(GL_FALSE);
   glDisableDepthWrite();
   glEnable(GL_DEPTH_TEST);
@@ -450,7 +449,7 @@ void VOpenGLDrawer::DrawSurfaceShadowMap (const surface_t *surf) {
 //  VOpenGLDrawer::vboSMapAppendSurfaceTex
 //
 //==========================================================================
-void VOpenGLDrawer::vboSMapAppendSurfaceTex (surface_t *surf) {
+void VOpenGLDrawer::vboSMapAppendSurfaceTex (surface_t *surf, bool flip) {
   vboSMapCountersTex.ptr()[vboSMapCountIdxTex] = (GLsizei)surf->count;
   vboSMapStartIndsTex.ptr()[vboSMapCountIdxTex] = (GLint)vboSMapSurfTex.dataUsed();
   ++vboSMapCountIdxTex;
@@ -465,8 +464,8 @@ void VOpenGLDrawer::vboSMapAppendSurfaceTex (surface_t *surf) {
 
   const float texInvWidth = vboSMapTexIW;
   const float texInvHeight = vboSMapTexIH;
-  const SurfVertex *svt = surf->verts;
-  for (int f = surf->count; f--; ++svt) {
+  const SurfVertex *svt = surf->verts+(!flip ? 0 : surf->count-1);
+  for (int f = surf->count; f--; (!flip ? ++svt : --svt)) {
     SMapVBOVertex *svx = vboSMapSurfTex.allocPtr();
     svx->x = svt->x;
     svx->y = svt->y;
@@ -538,7 +537,11 @@ void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<sur
       vboSMapSurfTex.ensureDataSize(vertCountTex, 1024);
 
       vboSMapResetSurfacesTex();
-      for (auto &&surf : masked) vboSMapAppendSurfaceTex(surf);
+      for (auto &&surf : masked) {
+        // we need to flip it if the player is behind it
+        //const bool flip = (surf->plane.PointOnSide(vieworg) != surf->plane.PointOnSide(CurrLightPos));
+        vboSMapAppendSurfaceTex(surf, (surf->drawflags&surface_t::DF_SMAP_FLIP));
+      }
 
       vassert(vboSMapCountIdxTex == masked.length());
       vassert(vboSMapCountersTex.length() >= masked.length());

@@ -134,6 +134,8 @@ protected:
 
   void AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow);
 
+  bool collectorForShadowMaps; // used in `CollectAdv*()`, set in `CollectLightShadowSurfaces()`
+
   // we can collect surfaces for lighting and shadowing in one pass
   // don't forget to reset `shadowSurfaces` and `lightSurfaces`
   void CollectAdvLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,

@@ -158,6 +158,8 @@ struct surface_t {
     DF_CALC_LMAP    = 1u<<3, // calculate static lightmap
     DF_NO_FACE_CULL = 1u<<4, // ignore face culling
     DF_MIRROR       = 1u<<5, // this is floor/ceiling mirror surface (set in renderer)
+    // temp flag for shadowmap collector
+    DF_SMAP_FLIP    = 1u<<30,
     // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
     DF_PL_VISIBLE   = 1u<<31,
   };
