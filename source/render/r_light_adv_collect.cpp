@@ -25,6 +25,8 @@
 //**************************************************************************
 #include "r_light_adv.h"
 
+// dunno if it does anything interesting
+#define VV_SMAP_PAPETHIN_FIX
 
 static VCvarB clip_advlight_regions("clip_advlight_regions", false, "Clip (1D) light regions?", CVAR_PreInit);
 
@@ -117,7 +119,7 @@ void VRenderLevelShadowVolume::AddPolyObjToLightClipper (VViewClipper &clip, sub
 //==========================================================================
 void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
                                                         VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross,
-                                                        unsigned int ssflag)
+                                                        unsigned int ssflag, const bool paperThin)
 {
   if (!InSurfs) return;
   if (!(ssflag&FlagAsBoth)) return;
@@ -143,15 +145,15 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
     // check transdoor hacks
     //if (surf->drawflags&surface_t::TF_TOPHACK) continue;
 
-    const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
-    if (!smaps && dist <= 0.0f) continue;
-    if (fabsf(dist) >= CurrLightRadius) continue; // was for light
-
-    // ignore translucent/masked
+    // ignore translucent
     VTexture *tex = surf->texinfo->Tex;
     if (!tex || tex->Type == TEXTYPE_Null) continue;
     if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;
     if (tex->isTranslucent()) continue; // this is translucent texture
+
+    const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
+    if (!smaps && dist <= 0.0f) continue;
+    if (fabsf(dist) >= CurrLightRadius) continue; // was for light
 
     // light
     if (ssflag&FlagAsLight) {
@@ -168,11 +170,22 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
         // we need to flip it if the player is behind it
         vassert(smaps);
         if (doflip) {
+          #ifdef VV_SMAP_PAPETHIN_FIX
+          // this is for flats: when the camera is almost on a flat, it's shadow disappears
+          // this is because we cannot see neither up, nor down surface
+          // in this case, leave down one
+          const float sdist = surf->plane.PointDistance(Drawer->vieworg);
+          if (sdist <= 0.0f) {
+            if (!paperThin || surf->plane.normal.z >= 0.0f) continue;
+            // paper-thin surface, ceiling: leave it if it is almost invisible
+            if (sdist < -0.1f) continue;
+          }
+          if (dist <= 0.0f) surf->drawflags |= surface_t::DF_SMAP_FLIP; else surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
+          #else
           if (surf->plane.PointOnSide(Drawer->vieworg)) continue; // if the camera cannot see it, no need to render it
           // flip if the light cannot see it
           if (dist <= 0.0f) surf->drawflags |= surface_t::DF_SMAP_FLIP; else surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
-          //if (surf->plane.PointOnSide(Drawer->vieworg) != (dist <= 0.0f)) surf->drawflags |= surface_t::DF_SMAP_FLIP; else surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
-          //surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
+          #endif
         } else {
           if (dist <= 0.0f) continue; // light cannot see it
           surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
@@ -204,21 +217,14 @@ void VRenderLevelShadowVolume::CollectAdvLightLine (subsector_t *sub, sec_region
 
   //k8: here we can call `ClipSegToLight()`, but i see no reasons to do so
   if (ssflag&FlagAsLight) {
-    if (dist <= 0.0f) {
-      if ((ssflag &= ~FlagAsLight) == 0) return;
-    } else if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) {
+    if (dist <= 0.0f || !LightClip.IsRangeVisible(*seg->v2, *seg->v1)) {
       if ((ssflag &= ~FlagAsLight) == 0) return;
     }
   }
   if (ssflag&FlagAsShadow) {
-    if (dist <= 0.0f) {
-      if (!LightShadowClip.IsRangeVisible(*seg->v1, *seg->v2)) {
-        if ((ssflag &= ~FlagAsShadow) == 0) return;
-      }
-    } else {
-      if (!LightShadowClip.IsRangeVisible(*seg->v2, *seg->v1)) {
-        if ((ssflag &= ~FlagAsShadow) == 0) return;
-      }
+    const bool isVis = (dist > 0.0f ? LightShadowClip.IsRangeVisible(*seg->v2, *seg->v1) : LightShadowClip.IsRangeVisible(*seg->v1, *seg->v2));
+    if (!isVis) {
+      if ((ssflag &= ~FlagAsShadow) == 0) return;
     }
   }
 
@@ -258,7 +264,7 @@ void VRenderLevelShadowVolume::CollectAdvLightLine (subsector_t *sub, sec_region
 //  this is used for floor and ceilings
 //
 //==========================================================================
-void VRenderLevelShadowVolume::CollectAdvLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox, unsigned int ssflag) {
+void VRenderLevelShadowVolume::CollectAdvLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox, unsigned int ssflag, const bool paperThin) {
   //const sec_plane_t &plane = *ssurf->secplane;
   if (!ssurf->esecplane.splane->pic) return;
 
@@ -267,8 +273,9 @@ void VRenderLevelShadowVolume::CollectAdvLightSecSurface (sec_surface_t *ssurf, 
   //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
   if (!collectorForShadowMaps && dist <= 0.0f) return;
   if (fabsf(dist) >= CurrLightRadius) return; // was for light
+  if ((ssflag&FlagAsShadow) == 0 && dist <= 0.0f) return;
 
-  CollectAdvLightSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox, true, 0, ssflag);
+  CollectAdvLightSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox, true, 0, ssflag, paperThin);
 }
 
 
@@ -342,11 +349,23 @@ void VRenderLevelShadowVolume::CollectAdvLightSubRegion (subsector_t *sub, subre
       }
     }
 
-    if (fsurf[0]) CollectAdvLightSecSurface(fsurf[0], secregion->efloor.splane->SkyBox, ssflag&floorFlag);
-    if (fsurf[1]) CollectAdvLightSecSurface(fsurf[1], secregion->efloor.splane->SkyBox, ssflag&floorFlag);
+    // paper-thin surface shadow may disappear; workaround it
+    #ifdef VV_SMAP_PAPETHIN_FIX
+    bool paperThin = false;
+    if (((ssflag&floorFlag)&FlagAsShadow) && fsurf[0] && fsurf[2]) {
+      if (secregion->efloor.GetRealDist() == secregion->eceiling.GetRealDist()) {
+        paperThin = true;
+      }
+    }
+    #else
+    # define paperThin false
+    #endif
 
-    if (fsurf[2]) CollectAdvLightSecSurface(fsurf[2], secregion->eceiling.splane->SkyBox, ssflag&ceilingFlag);
-    if (fsurf[3]) CollectAdvLightSecSurface(fsurf[3], secregion->eceiling.splane->SkyBox, ssflag&ceilingFlag);
+    if (fsurf[0]) CollectAdvLightSecSurface(fsurf[0], secregion->efloor.splane->SkyBox, ssflag&floorFlag, paperThin);
+    if (fsurf[1]) CollectAdvLightSecSurface(fsurf[1], secregion->efloor.splane->SkyBox, ssflag&floorFlag, paperThin);
+
+    if (fsurf[2]) CollectAdvLightSecSurface(fsurf[2], secregion->eceiling.splane->SkyBox, ssflag&ceilingFlag, paperThin);
+    if (fsurf[3]) CollectAdvLightSecSurface(fsurf[3], secregion->eceiling.splane->SkyBox, ssflag&ceilingFlag, paperThin);
   }
 
   if (!nextFirst && region->next) return CollectAdvLightSubRegion(sub, region->next, ssflag);
@@ -372,6 +391,12 @@ void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
   if (!LightShadowClip.ClipLightCheckSubsector(sub, collectorShadowType)) ssflagmask &= ~FlagAsShadow;
 
   if (ssflagmask) {
+    // update world
+    if (sub->updateWorldFrame != updateWorldFrame) {
+      sub->updateWorldFrame = updateWorldFrame;
+      if (!r_disable_world_update) UpdateSubRegion(sub, sub->regions);
+    }
+
     // if our light is in frustum, out-of-frustum subsectors are not interesting
     //FIXME: pass "need frustum check" flag to other functions
     unsigned int ssflag = (IsSubsectorLitBspVis(num) ? FlagAsBoth : FlagAsShadow)&ssflagmask;
@@ -388,12 +413,6 @@ void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
       bbox[5] = sub->sector->ceiling.maxz;
       FixBBoxZ(bbox);
       if (!Drawer->viewfrustum.checkBox(bbox)) ssflag &= ~FlagAsShadow;
-    }
-
-    // update world
-    if (sub->updateWorldFrame != updateWorldFrame) {
-      sub->updateWorldFrame = updateWorldFrame;
-      if (!r_disable_world_update) UpdateSubRegion(sub, sub->regions);
     }
 
     // render the polyobj in the subsector first, and add it to clipper
