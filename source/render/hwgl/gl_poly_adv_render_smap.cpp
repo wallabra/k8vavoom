@@ -447,6 +447,46 @@ void VOpenGLDrawer::DrawSurfaceShadowMap (const surface_t *surf) {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::vboSMapAppendSurfaceTex
+//
+//==========================================================================
+void VOpenGLDrawer::vboSMapAppendSurfaceTex (surface_t *surf) {
+  vboSMapCountersTex.ptr()[vboSMapCountIdxTex] = (GLsizei)surf->count;
+  vboSMapStartIndsTex.ptr()[vboSMapCountIdxTex] = (GLint)vboSMapSurfTex.dataUsed();
+  ++vboSMapCountIdxTex;
+
+  const texinfo_t *currTexinfo = surf->texinfo;
+  VTexture *Tex = currTexinfo->Tex;
+  if (Tex != vboSMapTex) {
+    vboSMapTex = Tex;
+    vboSMapTexIW = 1.0f/max2(1, Tex->GetWidth());
+    vboSMapTexIH = 1.0f/max2(1, Tex->GetHeight());
+  }
+
+  const float texInvWidth = vboSMapTexIW;
+  const float texInvHeight = vboSMapTexIH;
+  const SurfVertex *svt = surf->verts;
+  for (int f = surf->count; f--; ++svt) {
+    SMapVBOVertex *svx = vboSMapSurfTex.allocPtr();
+    svx->x = svt->x;
+    svx->y = svt->y;
+    svx->z = svt->z;
+    svx->sx = currTexinfo->saxis.x;
+    svx->sy = currTexinfo->saxis.y;
+    svx->sz = currTexinfo->saxis.z;
+    svx->tx = currTexinfo->taxis.x;
+    svx->ty = currTexinfo->taxis.y;
+    svx->tz = currTexinfo->taxis.z;
+    svx->SOffs = currTexinfo->soffs;
+    svx->TOffs = currTexinfo->toffs;
+    svx->TexIW = texInvWidth;
+    svx->TexIH = texInvHeight;
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::UploadShadowSurfaces
 //
 //==========================================================================
@@ -495,39 +535,12 @@ void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<sur
       if (vboSMapCountersTex.length() < masked.length()) vboSMapCountersTex.setLength(masked.length()+1024);
       if (vboSMapStartIndsTex.length() < masked.length()) vboSMapStartIndsTex.setLength(masked.length()+1024);
 
-      int vboCountIdx = 0;
       vboSMapSurfTex.ensureDataSize(vertCountTex, 1024);
 
-      smapLastTexinfo.resetLastUsed();
-      for (auto &&surf : masked) {
-        vboSMapCountersTex.ptr()[vboCountIdx] = (GLsizei)surf->count;
-        vboSMapStartIndsTex.ptr()[vboCountIdx] = (GLint)vboSMapSurfTex.dataUsed();
-        ++vboCountIdx;
+      vboSMapResetSurfacesTex();
+      for (auto &&surf : masked) vboSMapAppendSurfaceTex(surf);
 
-        const texinfo_t *currTexinfo = surf->texinfo;
-        VTexture *Tex = currTexinfo->Tex;
-        const float texInvWidth = 1.0f/max2(1, Tex->GetWidth());
-        const float texInvHeight = 1.0f/max2(1, Tex->GetHeight());
-
-        const SurfVertex *svt = surf->verts;
-        for (int f = surf->count; f--; ++svt) {
-          TexVBOVertex *svx = vboSMapSurfTex.allocPtr();
-          svx->x = svt->x;
-          svx->y = svt->y;
-          svx->z = svt->z;
-          svx->sx = currTexinfo->saxis.x;
-          svx->sy = currTexinfo->saxis.y;
-          svx->sz = currTexinfo->saxis.z;
-          svx->tx = currTexinfo->taxis.x;
-          svx->ty = currTexinfo->taxis.y;
-          svx->tz = currTexinfo->taxis.z;
-          svx->SOffs = currTexinfo->soffs;
-          svx->TOffs = currTexinfo->toffs;
-          svx->TexIW = texInvWidth;
-          svx->TexIH = texInvHeight;
-        }
-      }
-      vassert(vboCountIdx == masked.length());
+      vassert(vboSMapCountIdxTex == masked.length());
       vassert(vboSMapCountersTex.length() >= masked.length());
       vassert(vboSMapStartIndsTex.length() >= masked.length());
       vassert(vboSMapSurfTex.dataUsed() == vertCountTex);

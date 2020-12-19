@@ -29,6 +29,23 @@
 
 //==========================================================================
 //
+//  VOpenGLDrawer::vboAdvAppendSurface
+//
+//==========================================================================
+void VOpenGLDrawer::vboAdvAppendSurface (surface_t *surf) {
+  CalcGlow(surf->gp, surf);
+  surf->shaderClass = ClassifySurfaceShader(surf);
+  surf->firstIndex = vboAdvSurf.dataUsed();
+  const SurfVertex *svt = surf->verts;
+  for (int f = surf->count; f--; ++svt) {
+    TVec *v = vboAdvSurf.allocPtrSafe();
+    *v = svt->vec();
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::BeforeDrawWorldSV
 //
 //  populate VBO with world surfaces
@@ -47,31 +64,9 @@ void VOpenGLDrawer::BeforeDrawWorldSV () {
   vboAdvSurf.allocReset();
 
   // solid surfaces
-  for (auto &&surf : dls.DrawSurfListSolid) {
-    CalcGlow(surf->gp, surf);
-    surf->shaderClass = ClassifySurfaceShader(surf);
-
-    surf->firstIndex = vboAdvSurf.dataUsed();
-    const SurfVertex *svt = surf->verts;
-    for (int f = surf->count; f--; ++svt) {
-      TVec *v = vboAdvSurf.allocPtrSafe();
-      *v = svt->vec();
-    }
-  }
-
+  for (auto &&surf : dls.DrawSurfListSolid) vboAdvAppendSurface(surf);
   // masked surfaces
-  for (auto &&surf : dls.DrawSurfListMasked) {
-    CalcGlow(surf->gp, surf);
-    surf->shaderClass = ClassifySurfaceShader(surf);
-
-    surf->firstIndex = vboAdvSurf.dataUsed();
-    const SurfVertex *svt = surf->verts;
-    for (int f = surf->count; f--; ++svt) {
-      TVec *v = vboAdvSurf.allocPtrSafe();
-      *v = svt->vec();
-    }
-  }
-
+  for (auto &&surf : dls.DrawSurfListMasked) vboAdvAppendSurface(surf);
   // upload data
   vboAdvSurf.uploadData();
   // and turn off VBO for now

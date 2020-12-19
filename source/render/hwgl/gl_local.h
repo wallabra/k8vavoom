@@ -1189,7 +1189,31 @@ protected:
   VBO<SkyVBOVertex> vboSky;
 
   // for textured surfaces, so we can keep texture switching to minimum
-  struct __attribute__((packed)) TexVBOVertex {
+  struct __attribute__((packed)) AdvVBOVertex {
+    float x, y, z;
+    float sx, sy, sz; // saxis
+    float tx, ty, tz; // taxis
+    float SOffs, TOffs;
+    float TexIW, TexIH;
+    // light
+    float lightColor[3]; // this is vec3 in ambient shader
+    // fog
+    float fogColor[4]; // .w is "fog enabled", 0.0 or 1.0
+    float fogStart, fogEnd; // this is vec2 in fog shader
+  };
+
+  // VBO for advrender surfaces
+  // used on all stages
+  // order: all solid surfaces (DrawSurfListSolid), all masked surfaces (DrawSurfListMasked)
+  VBO<TVec> vboAdvSurf;
+  //VBO<AdvVBOVertex> vboAdvSurf;
+  TArray<GLsizei> vboCounters; // number of indicies in each primitive
+  TArray<GLint> vboStartInds; // starting indicies
+
+  void vboAdvAppendSurface (surface_t *surf);
+
+  // for textured surfaces, so we can keep texture switching to minimum
+  struct __attribute__((packed)) SMapVBOVertex {
     float x, y, z;
     float sx, sy, sz; // saxis
     float tx, ty, tz; // taxis
@@ -1197,23 +1221,23 @@ protected:
     float TexIW, TexIH;
   };
 
-  // VBO for advrender surfaces
-  // reused in fog renderer (it rely on the fact that data and lists from ambient stage is intact)
-  VBO<TVec> vboAdvSurf;
-  int vboAdvSurfMaxEls;
-  // used in advrender
-  TArray<GLsizei> vboCounters; // number of indicies in each primitive
-  TArray<GLint> vboStartInds; // starting indicies
-
   // VBO for shadowmap surfaces (including masked)
   // for each solid surface
   VBO<TVec> vboSMapSurf;
   TArray<GLsizei> vboSMapCounters; // number of indicies in each primitive
   TArray<GLint> vboSMapStartInds; // starting indicies
+
   // for each textured solid surface
-  VBO<TexVBOVertex> vboSMapSurfTex;
+  VBO<SMapVBOVertex> vboSMapSurfTex;
   TArray<GLsizei> vboSMapCountersTex; // number of indicies in each primitive
   TArray<GLint> vboSMapStartIndsTex; // starting indicies
+
+  float vboSMapTexIW, vboSMapTexIH;
+  VTexture *vboSMapTex;
+  int vboSMapCountIdxTex;
+
+  inline void vboSMapResetSurfacesTex () noexcept { vboSMapTex = nullptr; vboSMapTexIW = vboSMapTexIH = 1.0f; vboSMapCountIdxTex = 0; }
+  void vboSMapAppendSurfaceTex (surface_t *surf);
 
   // console variables
   static VCvarI texture_filter;
