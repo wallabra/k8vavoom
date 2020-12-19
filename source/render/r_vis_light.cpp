@@ -185,26 +185,26 @@ void VRenderLevelShared::CalcLightVisCheckNode (int bspnum, const float *bbox, c
 
     // check if the light is too close to a wall/floor, and calculate "move out" vector
     if (CurrLightCalcUnstuck) {
-      const float mindist = 4.5f;
+      const float mindist = 2.5f;
       // check walls
       const seg_t *seg = &Level->Segs[sub->firstline];
       for (int count = sub->numlines; count--; ++seg) {
         const line_t *linedef = seg->linedef;
         if (!linedef) continue; // miniseg
         if (linedef->flags&ML_TWOSIDED) continue; // don't bother with two-sided lines for now
-        const float dist = DotProduct(CurrLightUnstuckPos, seg->normal)-seg->dist;
-        if (dist <= 0.0f || dist >= mindist) continue; // light far enough, or surface is not lit
-        CurrLightUnstuckPos += seg->normal*dist; // move away
+        //const float dist = DotProduct(CurrLightUnstuckPos, seg->normal)-seg->dist;
+        const float dist = seg->PointDistance(CurrLightUnstuckPos);
+        if (dist > 0.0f && dist < mindist) CurrLightUnstuckPos += seg->normal*(mindist-dist); // move away
       }
       // now check floors
       for (const subregion_t *region = sub->regions; region; region = region->next) {
         if (region->floorplane.splane) {
           const float dist = region->floorplane.PointDistance(CurrLightUnstuckPos);
-          if (dist > 0.0f && dist < mindist) CurrLightUnstuckPos += region->floorplane.GetNormal()*dist; // move away
+          if (dist > 0.0f && dist < mindist) CurrLightUnstuckPos += region->floorplane.GetNormal()*(mindist-dist); // move away
         }
         if (region->ceilplane.splane) {
           const float dist = region->ceilplane.PointDistance(CurrLightUnstuckPos);
-          if (dist > 0.0f && dist < mindist) CurrLightUnstuckPos += region->floorplane.GetNormal()*dist; // move away
+          if (dist > 0.0f && dist < mindist) CurrLightUnstuckPos += region->floorplane.GetNormal()*(mindist-dist); // move away
         }
       }
     }
