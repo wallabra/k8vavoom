@@ -508,7 +508,7 @@ protected:
   virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) = 0;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) = 0;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) = 0;
-  virtual void QueueWorldSurface (surface_t *) = 0;
+  virtual void QueueWorldSurface (surface_t *surf) = 0;
   virtual void FreeSurfCache (surfcache_t *&block);
   // this is called after surface queues built, so lightmap renderer can calculate new lightmaps
   // it is called right before starting world drawing
@@ -546,13 +546,13 @@ protected:
   // checks if surface is not queued twice, sets various flags
   // returns `false` if the surface should not be queued
   bool SurfPrepareForRender (surface_t *surf);
-  // this checks if surface is not queued twice
-  void SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf);
 
   // world BSP rendering
   //void QueueTranslucentSurf (surface_t *surf);
 
-  // WARNING: `SurfPrepareForRender()` should be already called!
+  // `SurfPrepareForRender()` should be done by the caller
+  // `IsPlVisible()` should be checked by the caller
+  // i.e. it does no checks at all
   void QueueSimpleSurf (surface_t *surf);
 
   void QueueSkyPortal (surface_t *surf);

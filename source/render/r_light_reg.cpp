@@ -1619,15 +1619,7 @@ void VRenderLevelLightmap::ProcessCachedSurfaces () {
   for (auto &&sfc : LMSurfList) {
     if (!BuildSurfaceLightmap(sfc)) {
       // render this surface as non-lightmapped: it is better than completely losing it
-      //DrawSurfList.append(sfc);
-      // do not call `SurfCheckAndQueue()` here, because it is already done
-      if ((sfc->drawflags&surface_t::DF_MASKED) == 0) {
-        //SurfCheckAndQueue(GetCurrentDLS().DrawSurfListSolid, sfc);
-        GetCurrentDLS().DrawSurfListSolid.append(sfc);
-      } else {
-        //SurfCheckAndQueue(GetCurrentDLS().DrawSurfListMasked, sfc);
-        GetCurrentDLS().DrawSurfListMasked.append(sfc);
-      }
+      QueueSimpleSurf(sfc);
     }
   }
 }
@@ -1638,15 +1630,15 @@ void VRenderLevelLightmap::ProcessCachedSurfaces () {
 //  VRenderLevelLightmap::QueueLMapSurface
 //
 //==========================================================================
-bool VRenderLevelLightmap::QueueLMapSurface (surface_t *surface) {
+bool VRenderLevelLightmap::QueueLMapSurface (surface_t *surf) {
   // HACK: return `true` for invalid surfaces, so they won't be queued as normal ones
-  //if (!SurfPrepareForRender(surface)) return true; // should be done by the caller
-  if (!surface->IsPlVisible()) return true;
+  //if (!SurfPrepareForRender(surf)) return true; // should be done by the caller
+  if (!surf->IsPlVisible()) return true;
+  vassert(surf->count >= 3);
   // remember this surface, it will be processed later
-  LMSurfList.append(surface);
+  LMSurfList.append(surf);
   return true;
 }
-
 
 
 //==========================================================================

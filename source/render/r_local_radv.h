@@ -125,7 +125,10 @@ protected:
   virtual void ProcessCachedSurfaces () override;
 
   // world BSP rendering
-  virtual void QueueWorldSurface (surface_t *) override;
+
+  // called to put surface into queue
+  // surface is either solid, or masked, but never translucent/additive/etc.
+  virtual void QueueWorldSurface (surface_t *surf) override;
   // this does BSP traversing, and collect world surfaces into various lists to drive GPU rendering
   void RenderCollectSurfaces (const refdef_t *rd, const VViewClipper *Range);
 

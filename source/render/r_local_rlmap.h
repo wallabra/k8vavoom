@@ -199,7 +199,7 @@ protected:
 
   // lightmap cache manager
   // WARNING: `SurfPrepareForRender()` should be already called!
-  bool QueueLMapSurface (surface_t *); // returns `true` if surface was queued
+  bool QueueLMapSurface (surface_t *surf); // returns `true` if surface was queued
 
   void FlushCaches ();
   virtual void FreeSurfCache (surfcache_t *&block) override;

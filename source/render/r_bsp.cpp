@@ -316,31 +316,13 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
 
 //==========================================================================
 //
-//  VRenderLevelShared::SurfCheckAndQueue
-//
-//  this checks if surface is not queued twice
-//
-//==========================================================================
-void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf) {
-  if (SurfPrepareForRender(surf)) {
-    if (surf->IsPlVisible()) queue.append(surf);
-  }
-  //GCon->Logf("frame %u: queued surface with texinfo %p", currQueueFrame, surf->texinfo);
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::QueueSimpleSurf
+//
+//  `SurfPrepareForRender()` should be done by the caller
+//  `IsPlVisible()` should be checked by the caller
 //
 //==========================================================================
 void VRenderLevelShared::QueueSimpleSurf (surface_t *surf) {
-  // note that masked surfaces (i.e. textures with binary transparency) are processed by the normal renderers.
-  // i.e. there is no need to pass them to "transparent wall" route.
-  // only alpha-blended and additive surfaces must be rendered in a separate pass.
-  //const bool isCommon = (texinfo->Alpha >= 1.0f && !texinfo->Additive && !texinfo->Tex->isTranslucent());
-  //if (!SurfPrepareForRender(surf)) return; // should be done by the caller
-  if (!surf->IsPlVisible()) return;
   if ((surf->drawflags&surface_t::DF_MASKED) == 0) {
     GetCurrentDLS().DrawSurfListSolid.append(surf);
   } else {
@@ -355,7 +337,9 @@ void VRenderLevelShared::QueueSimpleSurf (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevelShared::QueueSkyPortal (surface_t *surf) {
-  SurfCheckAndQueue(GetCurrentDLS().DrawSkyList, surf);
+  if (!SurfPrepareForRender(surf)) return;
+  if (!surf->IsPlVisible()) return;
+  GetCurrentDLS().DrawSkyList.append(surf);
 }
 
 
@@ -365,7 +349,9 @@ void VRenderLevelShared::QueueSkyPortal (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevelShared::QueueHorizonPortal (surface_t *surf) {
-  SurfCheckAndQueue(GetCurrentDLS().DrawHorizonList, surf);
+  if (!SurfPrepareForRender(surf)) return;
+  if (!surf->IsPlVisible()) return;
+  GetCurrentDLS().DrawHorizonList.append(surf);
 }
 
 
@@ -401,8 +387,8 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   surface_t *InSurfs, texinfo_t *texinfo, VEntity *SkyBox, int LightSourceSector, int SideLight,
   bool AbsSideLight, bool CheckSkyBoxAlways)
 {
-  surface_t *surfs = InSurfs;
-  if (!surfs) return;
+  surface_t *surf = InSurfs; // this actually a list
+  if (!surf) return;
 
   if (!texinfo->Tex || texinfo->Tex->Type == TEXTYPE_Null) return;
 
@@ -413,8 +399,8 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   };
 
   const int surfaceType =
-    surfs->plane.normal.z == 0.0f ? SFT_Wall :
-    (surfs->plane.normal.z > 0.0f ? SFT_Floor : SFT_Ceiling);
+    surf->plane.normal.z == 0.0f ? SFT_Wall :
+    (surf->plane.normal.z > 0.0f ? SFT_Floor : SFT_Ceiling);
 
   vuint32 lightColor;
 
@@ -505,12 +491,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
 
       VTexture *sk2tex = GTextureManager[Tex];
       if (sk2tex && sk2tex->Type != TEXTYPE_Null) {
-        for (auto &&sks : SideSkies) {
-          if (sks->SideTex == Tex && sks->SideFlip == Flip) {
-            Sky = sks;
-            break;
-          }
-        }
+        for (auto &&sks : SideSkies) if (sks->SideTex == Tex && sks->SideFlip == Flip) { Sky = sks; break; }
         if (!Sky) {
           Sky = new VSky;
           Sky->Init(Tex, Tex, 0, 0, false, !!(Level->LevelInfo->LevelInfoFlags&VLevelInfo::LIF_ForceNoSkyStretch), Flip, false);
@@ -528,36 +509,21 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     VPortal *Portal = nullptr;
     if (SkyBox) {
       // check if we already have any portal with this skybox/stacked sector
-      for (auto &&pp: Portals) {
-        if (pp && pp->MatchSkyBox(SkyBox)) {
-          Portal = pp;
-          break;
-        }
-      }
+      for (auto &&pp: Portals) if (pp && pp->MatchSkyBox(SkyBox)) { Portal = pp; break; }
       // nope?
       if (!Portal) {
         // no, no such portal yet, create a new one
         if (IsStack) {
           // advrender cannot into stacked sectors yet
-          if (r_allow_stacked_sectors) {
-            Portal = new VSectorStackPortal(this, SkyBox);
-            Portals.Append(Portal);
-          }
+          if (r_allow_stacked_sectors) Portal = new VSectorStackPortal(this, SkyBox);
         } else {
-          if (r_enable_sky_portals) {
-            Portal = new VSkyBoxPortal(this, SkyBox);
-            Portals.Append(Portal);
-          }
+          if (r_enable_sky_portals) Portal = new VSkyBoxPortal(this, SkyBox);
         }
+        if (Portal) Portals.Append(Portal);
       }
     } else if (r_enable_sky_portals) {
       // check if we already have any portal with this sky
-      for (auto &&pp : Portals) {
-        if (pp && pp->MatchSky(Sky)) {
-          Portal = pp;
-          break;
-        }
-      }
+      for (auto &&pp : Portals) if (pp && pp->MatchSky(Sky)) { Portal = pp; break; }
       // nope?
       if (!Portal) {
         // no, no such portal yet, create a new one
@@ -570,43 +536,43 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     // if we have a portal to add, put its surfaces into render/portal surfaces list
     if (Portal) {
       //GCon->Log("----");
-      //const bool doRenderSurf = (surfs ? IsStack && CheckSkyBoxAlways && SkyBox->GetSkyBoxPlaneAlpha() : false);
+      //const bool doRenderSurf = (surf ? IsStack && CheckSkyBoxAlways && SkyBox->GetSkyBoxPlaneAlpha() : false);
       // stacked sectors are queued for rendering immediately
       // k8: this can cause "double surface queue" error (if stacked sector is used more than once)
       //     also, for some reason surfaces are added both to portal, and to renderer; wtf?!
       //     it seems that this is done for things like mirrors or such; dunno yet
-      bool doRenderSurf = (surfs ? IsStack && CheckSkyBoxAlways : false);
+      bool doRenderSurf = (surf ? IsStack && CheckSkyBoxAlways : false);
       float alpha = 0.0f;
+      //k8: wtf is this?
       if (doRenderSurf) {
         alpha = SkyBox->GetSkyBoxPlaneAlpha();
         if (alpha <= 0.0f || alpha >= 1.0f) doRenderSurf = false;
         //if (!plane.splane->pic) return;
       }
       //GCon->Logf(NAME_Debug, "PORTAL(%d): IsStack=%d; doRenderSurf=%d", Portals.length(), (int)IsStack, (int)doRenderSurf);
-      for (; surfs; surfs = surfs->next) {
-        Portal->Surfs.Append(surfs);
-        if (doRenderSurf && surfs->queueframe != currQueueFrame) {
-          //GCon->Logf("  SURF!");
-          surfs->Light = (lLev<<24)|lightColor;
-          surfs->Fade = Fade;
-          surfs->dlightframe = sub->dlightframe;
-          surfs->dlightbits = sub->dlightbits;
-          surfs->glowFloorHeight = glowFloorHeight;
-          surfs->glowCeilingHeight = glowCeilingHeight;
-          surfs->glowFloorColor = glowFloorColor;
-          surfs->glowCeilingColor = glowCeilingColor;
-          if (SurfPrepareForRender(surfs)) {
-            if (surfs->IsPlVisible()) {
-              //GCon->Logf(NAME_Debug, "  SURF! norm=(%g,%g,%g); alpha=%g", surfs->plane.normal.x, surfs->plane.normal.y, surfs->plane.normal.z, SkyBox->GetSkyBoxPlaneAlpha());
-              //surfs->drawflags |= surface_t::DF_MASKED;
-              RenderStyleInfo ri;
-              ri.alpha = alpha;
-              ri.translucency = RenderStyleInfo::Translucent;
-              ri.fade = Fade;
-              QueueTranslucentSurface(surfs, ri);
-            }
-          }
-        }
+      for (; surf; surf = surf->next) {
+        //k8: do we need to set this here? or portal will do this for us?
+        surf->Light = (lLev<<24)|lightColor;
+        surf->Fade = Fade;
+        surf->dlightframe = sub->dlightframe;
+        surf->dlightbits = sub->dlightbits;
+        surf->glowFloorHeight = glowFloorHeight;
+        surf->glowCeilingHeight = glowCeilingHeight;
+        surf->glowFloorColor = glowFloorColor;
+        surf->glowCeilingColor = glowCeilingColor;
+        Portal->Surfs.Append(surf);
+        if (!doRenderSurf) continue;
+        if (surf->queueframe == currQueueFrame) continue;
+        //GCon->Logf("  SURF!");
+        if (!SurfPrepareForRender(surf)) continue;
+        if (!surf->IsPlVisible()) continue;
+        //GCon->Logf(NAME_Debug, "  SURF! norm=(%g,%g,%g); alpha=%g", surfs->plane.normal.x, surfs->plane.normal.y, surfs->plane.normal.z, SkyBox->GetSkyBoxPlaneAlpha());
+        //surfs->drawflags |= surface_t::DF_MASKED;
+        RenderStyleInfo ri;
+        ri.alpha = alpha;
+        ri.translucency = RenderStyleInfo::Translucent;
+        ri.fade = Fade;
+        QueueTranslucentSurface(surf, ri);
       }
       return;
     } else {
@@ -616,60 +582,31 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
 
   vuint32 sflight = (lLev<<24)|lightColor;
 
-#if 0
-  if ((int)(ptrdiff_t)(sub->sector-Level->Sectors) == 40 ||
-      (int)(ptrdiff_t)(sub->sector-Level->Sectors) == 0)
-  {
-    GCon->Logf("#%d: light=%d; ls=%d; sl=%d; asl=%d; lp->llev=%d; fixed=%d; extra=%d; remap=%d; fade=0x%08x; lc=0x%08x; sflight=0x%08x; ta=%g",
-      (int)(ptrdiff_t)(sub->sector-Level->Sectors),
-      lLev, LightSourceSector, SideLight, (int)AbsSideLight,
-      LightParams->lightlevel, (int)FixedLight, ExtraLight, light_remap[clampval(LightParams->lightlevel, 0, 255)], Fade, (unsigned)lightColor, sflight, texinfo->Alpha);
-    //lLev = 250;
-    //Fade = 0xffffffff;
-    /*
-    lLev = 255;
-    sflight = (lLev<<24)|(0xff7fff);
-    */
-    sflight = 0x1fffffff;
-  }
-#endif
-
-  // note that masked surfaces (i.e. textures with binary transparency) are processed by the normal renderers.
-  // i.e. there is no need to pass them to "transparent wall" route.
+  // note that masked surfaces (i.e. textures with binary transparency) processed by the normal renderers.
   // only alpha-blended and additive surfaces must be rendered in a separate pass.
   const bool isCommon = (texinfo->Alpha >= 1.0f && !texinfo->Additive && !texinfo->Tex->isTranslucent());
 
-  for (; surfs; surfs = surfs->next) {
-    //if (!surfs->IsVisibleFor(Drawer->vieworg)) continue;
-
-    //if (surfs->plane.isCeiling()) GCon->Logf(NAME_Debug, "SFCT: %s", *texinfo->Tex->Name);
-
-    surfs->Light = sflight;
-    surfs->Fade = Fade;
-    surfs->dlightframe = sub->dlightframe;
-    surfs->dlightbits = sub->dlightbits;
-    // alpha: 1.0 is masked wall, 1.1 is solid wall
-    //if (texinfo->Alpha <= 1.0f) surfs->drawflags |= surface_t::DF_MASKED; else surfs->drawflags &= ~surface_t::DF_MASKED;
-
-    surfs->glowFloorHeight = glowFloorHeight;
-    surfs->glowCeilingHeight = glowCeilingHeight;
-    surfs->glowFloorColor = glowFloorColor;
-    surfs->glowCeilingColor = glowCeilingColor;
-
+  for (; surf; surf = surf->next) {
+    surf->Light = sflight;
+    surf->Fade = Fade;
+    surf->dlightframe = sub->dlightframe;
+    surf->dlightbits = sub->dlightbits;
+    surf->glowFloorHeight = glowFloorHeight;
+    surf->glowCeilingHeight = glowCeilingHeight;
+    surf->glowFloorColor = glowFloorColor;
+    surf->glowCeilingColor = glowCeilingColor;
     if (isCommon) {
-      CommonQueueSurface(surfs, SFCType::SFCT_World);
-    } else if (surfs->queueframe != currQueueFrame) {
-      //surfs->queueframe = currQueueFrame;
-      //surfs->SetPlVisible(surfs->IsVisibleFor(Drawer->vieworg));
-      if (SurfPrepareForRender(surfs)) {
-        if (surfs->IsPlVisible()) {
-          RenderStyleInfo ri;
-          ri.alpha = texinfo->Alpha;
-          ri.translucency = (texinfo->Additive ? RenderStyleInfo::Additive : RenderStyleInfo::Translucent);
-          ri.fade = Fade;
-          QueueTranslucentSurface(surfs, ri);
-        }
-      }
+      CommonQueueSurface(surf, SFCType::SFCT_World);
+    } else if (surf->queueframe != currQueueFrame) {
+      //surf->queueframe = currQueueFrame;
+      //surf->SetPlVisible(surf->IsVisibleFor(Drawer->vieworg));
+      if (!SurfPrepareForRender(surf)) continue;
+      if (!surf->IsPlVisible()) continue;
+      RenderStyleInfo ri;
+      ri.alpha = texinfo->Alpha;
+      ri.translucency = (texinfo->Additive ? RenderStyleInfo::Additive : RenderStyleInfo::Translucent);
+      ri.fade = Fade;
+      QueueTranslucentSurface(surf, ri);
     }
   }
 }
@@ -789,7 +726,7 @@ void VRenderLevelShared::RenderMirror (subsector_t *sub, sec_region_t *secregion
       Portals.Append(Portal);
     }
 
-    for (surface_t *surfs = dseg->mid->surfs; surfs; surfs = surfs->next) Portal->Surfs.Append(surfs);
+    for (surface_t *surf = dseg->mid->surfs; surf; surf = surf->next) Portal->Surfs.Append(surf);
   } else {
     if (dseg->mid) {
       DrawSurfaces(sub, secregion, seg, dseg->mid->surfs, &dseg->mid->texinfo,
