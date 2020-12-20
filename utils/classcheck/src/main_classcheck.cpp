@@ -738,6 +738,7 @@ bool ignoreClass (const VStr &name, VName parent) {
     "LightmapTracer",
     "VSocketPublic",
     "VSdlOpenGLDrawer",
+    "SurfVertex",
     nullptr,
   };
   for (const char *const *np = ignoreCN; *np; ++np) {
@@ -776,6 +777,8 @@ void skipAttributeOrPreprocessor (SemParser *par) {
       // attribute macro
     } else if (par->eat("#")) {
       skipPreprocessor(par);
+    } else if (par->eat("VV_DECLARE_SMAP_SHADER_LEVEL")) {
+      // macro
     } else {
       break;
     }

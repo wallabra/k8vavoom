@@ -415,6 +415,9 @@ int SemParser::expectInt () {
       }
     }
 
+    if (token == "DEFAULT_BODYQUESIZE") return 4096;
+    if (token == "DEFAULT_CORPSEQUEUESIZE") return 4096;
+
     restorePos(pos);
     Sys_Error("%s:%d: integer expected", *srcfile, getCurrLine());
   }
