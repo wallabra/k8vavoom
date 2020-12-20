@@ -361,8 +361,10 @@ void VPathTraverse::RemoveInterceptsAfter (const float frac) {
 bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool EarlyOut, bool wantThings) {
   line_t *ld;
   for (VBlockLinesIterator It(Self->XLevel, mapx, mapy, &ld); It.GetNext(); ) {
-    const float dot1 = DotProduct(*ld->v1, trace_plane.normal)-trace_plane.dist;
-    const float dot2 = DotProduct(*ld->v2, trace_plane.normal)-trace_plane.dist;
+    //const float dot1 = DotProduct(*ld->v1, trace_plane.normal)-trace_plane.dist;
+    //const float dot2 = DotProduct(*ld->v2, trace_plane.normal)-trace_plane.dist;
+    const float dot1 = trace_plane.PointDistance(*ld->v1);
+    const float dot2 = trace_plane.PointDistance(*ld->v2);
 
     // do not use multiplication to check: zero speedup, lost accuracy
     //if (dot1*dot2 >= 0) continue; // line isn't crossed
@@ -417,7 +419,8 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
   if (dbg_use_buggy_thing_traverser) {
     // original
     for (VBlockThingsIterator It(Self->XLevel, mapx, mapy); It; ++It) {
-      const float dot = DotProduct(It->Origin, trace_plane.normal)-trace_plane.dist;
+      //const float dot = DotProduct(It->Origin, trace_plane.normal)-trace_plane.dist;
+      const float dot = trace_plane.PointDistance(It->Origin);
       if (dot >= It->Radius || dot <= -It->Radius) continue; // thing is too far away
       const float dist = DotProduct((It->Origin-trace_org), trace_dir); //dist -= sqrt(It->radius * It->radius - dot * dot);
       if (dist < 0) continue; // behind source
@@ -436,7 +439,8 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
     for (int dy = -1; dy < 2; ++dy) {
       for (int dx = -1; dx < 2; ++dx) {
         for (VBlockThingsIterator It(Self->XLevel, mapx+dx, mapy+dy); It; ++It) {
-          const float dot = DotProduct(It->Origin, trace_plane.normal)-trace_plane.dist;
+          //const float dot = DotProduct(It->Origin, trace_plane.normal)-trace_plane.dist;
+          const float dot = trace_plane.PointDistance(It->Origin);
           if (dot >= It->Radius || dot <= -It->Radius) continue; // thing is too far away
           const float dist = DotProduct((It->Origin-trace_org), trace_dir); //dist -= sqrt(It->radius * It->radius - dot * dot);
           if (dist < 0) continue; // behind source

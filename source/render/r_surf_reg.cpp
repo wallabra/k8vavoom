@@ -284,7 +284,8 @@ static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
 
   int backSideCount = 0, frontSideCount = 0;
   for (int i = 0; i < surfcount; ++i, ++vt) {
-    const float dot = DotProduct(vt->vec(), plane.normal)-plane.dist;
+    //const float dot = DotProduct(vt->vec(), plane.normal)-plane.dist;
+    const float dot = plane.PointDistance(vt->vec());
     dots[i] = dot;
          if (dot < -ON_EPSILON) { ++backSideCount; sides[i] = PlaneBack; }
     else if (dot > ON_EPSILON) { ++frontSideCount; sides[i] = PlaneFront; }

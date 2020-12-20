@@ -1212,7 +1212,7 @@ void VRenderLevelLightmap::InvalidateBSPNodeLMaps (const TVec &org, float radius
   if (BSPIDX_IS_NON_LEAF(bspnum)) {
     node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the light is on
-    const float dist = DotProduct(org, bsp->normal)-bsp->dist;
+    const float dist = bsp->PointDistance(org);
     if (dist > radius) {
       // light is completely on the front side
       return InvalidateBSPNodeLMaps(org, radius, bsp->children[0], bsp->bbox[0]);

@@ -1183,7 +1183,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     node_t *bsp = &Level->Nodes[bspnum];
     //if (bsp->visframe == currVisFrame) return; // if we're exactly on a splitting plane, this can happen
     // decide which side the view point is on
-    float dist = DotProduct(Drawer->vieworg, bsp->normal)-bsp->dist;
+    float dist = bsp->PointDistance(Drawer->vieworg);
     unsigned side = (unsigned)(dist <= 0.0f);
     // mark this node as rendered (if we're going to render it)
     if (!onlyClip) {
@@ -1195,7 +1195,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
         //unsigned osd = side;
         //float odist = dist;
         TVec fwd = AngleVectorYaw(Drawer->viewangles.yaw);
-        dist = DotProduct(Drawer->vieworg-fwd*16, bsp->normal)-bsp->dist;
+        dist = bsp->PointDistance(Drawer->vieworg-fwd*16);
         side = (unsigned)(dist <= 0.0f);
         //GCon->Logf("osd=%u; side=%u; odist=%g; dist=%g", osd, side, odist, dist);
       }

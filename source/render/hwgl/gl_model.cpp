@@ -975,7 +975,7 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   int xcount = 0;
   for (int i = 0; i < Mdl->Tris.length(); ++i, ++P) {
     // planes facing to the light
-    const float pdist = DotProduct(LocalLightPos, P->normal)-P->dist;
+    const float pdist = P->PointDistance(LocalLightPos);
     PlaneSides[i] = (pdist > 0.0f && pdist < LightRadius);
     xcount += PlaneSides[i];
   }

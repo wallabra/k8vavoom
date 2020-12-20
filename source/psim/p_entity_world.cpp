@@ -701,7 +701,8 @@ bool VEntity::CheckLine (tmtrace_t &cptrace, line_t *ld) {
   }
 
   // set openrange, opentop, openbottom
-  TVec hit_point = cptrace.Pos-(DotProduct(cptrace.Pos, ld->normal)-ld->dist)*ld->normal;
+  //TVec hit_point = cptrace.Pos-(DotProduct(cptrace.Pos, ld->normal)-ld->dist)*ld->normal;
+  TVec hit_point = cptrace.Pos-(ld->PointDistance(cptrace.Pos)*ld->normal);
   opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
   open = SV_FindOpening(open, cptrace.Pos.z, cptrace.Pos.z+Height);
 
@@ -1084,7 +1085,8 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
 
   // set openrange, opentop, openbottom
   const float hgt = (Height > 0 ? Height : 0.0f);
-  TVec hit_point = tmtrace.End-(DotProduct(tmtrace.End, ld->normal)-ld->dist)*ld->normal;
+  //TVec hit_point = tmtrace.End-(DotProduct(tmtrace.End, ld->normal)-ld->dist)*ld->normal;
+  TVec hit_point = tmtrace.End-(ld->PointDistance(tmtrace.End)*ld->normal);
   opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
 
   /*

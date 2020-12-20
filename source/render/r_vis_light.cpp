@@ -108,7 +108,7 @@ void VRenderLevelShared::CalcLightVisCheckNode (int bspnum, const float *bbox, c
   if (BSPIDX_IS_NON_LEAF(bspnum)) {
     const node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the view point is on
-    const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
+    const float dist = bsp->PointDistance(CurrLightPos);
     if (dist > CurrLightRadius) {
       // light is completely on front side
       if (!Are3DBBoxesOverlapIn2D(bsp->bbox[0], lightbbox)) return;
@@ -199,7 +199,7 @@ void VRenderLevelShared::CalcLightVisCheckNode (int bspnum, const float *bbox, c
         const line_t *linedef = seg->linedef;
         if (!linedef) continue; // miniseg
         if (linedef->flags&ML_TWOSIDED) continue; // don't bother with two-sided lines for now
-        //const float dist = DotProduct(CurrLightUnstuckPos, seg->normal)-seg->dist;
+        //const float dist = sef->PointDistance(CurrLightUnstuckPos);
         /*
         if (seg->partner) {
           if (!seg->partner->frontsub) continue;

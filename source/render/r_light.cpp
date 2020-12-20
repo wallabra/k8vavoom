@@ -317,7 +317,7 @@ void VRenderLevelShared::MarkLights (dlight_t *light, vuint32 bit, int bspnum, i
     }
   } else {
     node_t *node = &Level->Nodes[bspnum];
-    const float dist = DotProduct(light->origin, node->normal)-node->dist;
+    const float dist = node->PointDistance(light->origin);
     if (dist > -light->radius+light->minlight) MarkLights(light, bit, node->children[0], lleafnum);
     if (dist < light->radius-light->minlight) MarkLights(light, bit, node->children[1], lleafnum);
   }
@@ -1327,7 +1327,7 @@ void VRenderLevelShared::CalcBSPNodeLMaps (int slindex, light_t &sl, int bspnum,
   if (BSPIDX_IS_NON_LEAF(bspnum)) {
     node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the light is on
-    const float dist = DotProduct(sl.origin, bsp->normal)-bsp->dist;
+    const float dist = bsp->PointDistance(sl.origin);
     if (dist > sl.radius) {
       // light is completely on the front side
       return CalcBSPNodeLMaps(slindex, sl, bsp->children[0], bsp->bbox[0]);

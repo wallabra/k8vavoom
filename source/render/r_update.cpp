@@ -60,13 +60,13 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], surface_t *surfs, 
       // viewer is in back side or on plane
       /*
       if (!HasBackLit) {
-        const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
+        const float dist = surf->PointDistance(CurrLightPos);
         HasBackLit = (dist > 0.0f && dist < CurrLightRadius);
       }
       */
       continue;
     }
-    const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
+    const float dist = surf->PointDistance(CurrLightPos);
     if (dist <= 0.0f || dist >= CurrLightRadius) continue; // light is too far away, or surface is not lit
     LitSurfaceHit = true;
     const SurfVertex *vert = surf->verts;
@@ -91,7 +91,7 @@ void VRenderLevelShared::UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, cons
   const seg_t *seg = dseg->seg;
   if (!seg->linedef) return; // miniseg
   // if light sphere is not touching a plane, do nothing
-  const float dist = DotProduct(CurrLightPos, seg->normal)-seg->dist;
+  const float dist = seg->PointDistance(CurrLightPos);
   //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light sphere is not touching a plane
   if (fabsf(dist) >= CurrLightRadius) return;
   // check clipper

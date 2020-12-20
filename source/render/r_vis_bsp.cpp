@@ -63,7 +63,7 @@ bool VRenderLevelShared::CheckBSPVisibilityBoxSub (int bspnum, const float *bbox
     // k8: checking bbox before recurse into one node speeds it up
     // k8: checking bbox in two-node recursion doesn't do anything sensible (obviously)
     // decide which side the light is on
-    const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
+    const float dist = bsp->PointDistance(CurrLightPos);
     if (dist >= CurrLightRadius) {
       // light is completely on front side
       if (!Are3DBBoxesOverlapIn2D(bsp->bbox[0], bbox)) return false;

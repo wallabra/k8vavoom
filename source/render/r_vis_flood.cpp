@@ -127,7 +127,7 @@ bool VRenderLevelShared::CheckBSPFloodVisibilitySub (const TVec &org, const floa
     if (!seg->partner || seg->partner == seg || seg->partner->frontsub == currsub) continue;
     // check if this seg is touching our sphere
     {
-      float distSq = DotProduct(org, seg->normal)-seg->dist;
+      float distSq = seg->PointDistance(org);
       distSq *= distSq;
       if (distSq >= radiusSq) continue;
     }

@@ -312,7 +312,7 @@ void VPortal::SetupRanges (const refdef_t &refdef, VViewClipper &Range, bool Rev
         if (Dir.x > -0.01f && Dir.x < 0.01f && Dir.y > -0.01f && Dir.y < 0.01f) continue; // too short
         TPlane P;
         P.SetPointDirXY(v1, Dir);
-        if ((DotProduct(Drawer->vieworg, P.normal)-P.dist < 0.01f) != Revert) continue; // view origin is on the back side
+        if ((P.PointDistance(Drawer->vieworg) < 0.01f) != Revert) continue; // view origin is on the back side
         Range.AddClipRange(v2, v1);
       }
     }
@@ -508,7 +508,7 @@ void VMirrorPortal::DrawContents () {
   Drawer->MirrorFlip = RLev->MirrorLevel&1;
   Drawer->MirrorClip = true;
 
-  float Dist = DotProduct(Drawer->vieworg, Plane->normal)-Plane->dist;
+  float Dist = Plane->PointDistance(Drawer->vieworg);
   Drawer->vieworg -= 2*Dist*Plane->normal;
 
   Dist = DotProduct(Drawer->viewforward, Plane->normal);
