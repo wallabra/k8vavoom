@@ -177,7 +177,7 @@ protected:
   // mark all updated subsectors with this; increment on each new frame
   vuint32 updateWorldFrame;
 
-  // those three arrays are filled in `BuildVisibleObjectsList()`
+  // those arrays are filled in `BuildVisibleObjectsList()`
   TArray<VEntity *> visibleObjects;
   TArray<VEntity *> visibleAliasModels;
   TArray<VEntity *> visibleSprites;
