@@ -112,7 +112,9 @@ public:
 
   VScriptParser sc;
   bool bExtended;
+  bool bDoTranslation;
   vuint8 NS;
+  VStr NamespaceStr;
   VStr Key;
   int ValType;
   int ValInt;
@@ -161,7 +163,6 @@ public:
 
   vuint32 CheckColor (vuint32 defval, vuint32 mask=0u);
 };
-
 
 
 //==========================================================================
@@ -386,6 +387,7 @@ void VUdmfParser::Parse (VLevel *Level, const VMapInfo &MInfo) {
   sc.SetCMode(true);
 
   bExtended = false;
+  bDoTranslation = true;
 
   // get namespace name
   sc.Expect("namespace");
@@ -395,20 +397,24 @@ void VUdmfParser::Parse (VLevel *Level, const VMapInfo &MInfo) {
   sc.Expect(";");
 
   // Vavoom's namespace?
-       if (Namespace.strEquCI("Vavoom")) { NS = NS_Vavoom; bExtended = true; }
-  else if (Namespace.strEquCI("k8vavoom")) { NS = NS_Vavoom; bExtended = true; }
+       if (Namespace.strEquCI("Vavoom")) { NS = NS_Vavoom; bExtended = true; bDoTranslation = false; }
+  else if (Namespace.strEquCI("k8vavoom")) { NS = NS_Vavoom; bExtended = true; bDoTranslation = false; }
   // standard namespaces?
   else if (Namespace.strEquCI("Doom")) NS = NS_Doom;
   else if (Namespace.strEquCI("Heretic")) NS = NS_Heretic;
-  else if (Namespace.strEquCI("Hexen")) { NS = NS_Hexen; bExtended = true; }
+  else if (Namespace.strEquCI("Hexen")) { NS = NS_Hexen; bExtended = true; bDoTranslation = false; }
   else if (Namespace.strEquCI("Strife")) NS = NS_Strife;
   // ZDoom namespaces?
-  else if (Namespace.strEquCI("ZDoom")) { NS = NS_ZDoom; bExtended = true; }
-  else if (Namespace.strEquCI("ZDoomTranslated")) NS = NS_ZDoomTranslated;
+  else if (Namespace.strEquCI("ZDoom")) { NS = NS_ZDoom; bExtended = true; bDoTranslation = false; }
+  else if (Namespace.strEquCI("ZDoomTranslated")) { NS = NS_ZDoomTranslated; bExtended = true; } // we need to perform translation
   else {
     sc.HostError(va("UDMF: unknown namespace '%s'", *Namespace));
-    NS = 0; // unknown namespace
+    NS = NS_ZDoom; // unknown namespace, assume ZDoom
+    bExtended = true;
+    bDoTranslation = false;
   }
+
+  NamespaceStr = Namespace;
 
   while (!sc.AtEnd()) {
          if (sc.Check("vertex")) ParseVertex();
@@ -1032,6 +1038,9 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
   VUdmfParser Parser(Lump);
   Parser.Parse(this, MInfo);
 
+  const bool doTranslation = Parser.bDoTranslation;
+
+  UDMFNamespace = VName(*Parser.NamespaceStr, VName::AddLower);
   if (Parser.bExtended) LevelFlags |= LF_Extended;
 
   if (Parser.ParsedVertexes.length() == 0) Host_Error("UDMF: map has no vertices!");
@@ -1109,7 +1118,7 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
     //if (i == 1018) GCon->Logf("LD1018: v0=%d; v1=%d; v0=(%f,%f); v1=(%f,%f)", *ip0, *ip1, Vertexes[*ip0].x, Vertexes[*ip0].y, Vertexes[*ip1].x, Vertexes[*ip1].y);
   }
 
-  if (!(LevelFlags&LF_Extended)) {
+  if (doTranslation) {
     // translate level to Hexen format
     GGameInfo->eventTranslateLevel(this);
   }

@@ -79,8 +79,8 @@ native readonly int SegHash; // xxHash32 of segs
 
 // flags
 native readonly private bool bForServer; // true if this level belongs to the server
-native readonly bool bExtended; // true if level was in Hexen format
-native readonly private bool bGLNodesV5; // true if using version 5 GL nodes
+native readonly bool bExtended; // true if level was in Hexen format (or extended namespace for UDMF)
+native readonly private bool bGLNodesV5; // true if using version 5 GL nodes (used only in loader)
 native readonly bool bTextMap; // UDMF format map
 // used in map fixer
 native transient bool bForceRebuildNodes;
@@ -90,8 +90,10 @@ native transient bool bForceNoPrecalcStaticLights;
 native transient bool bForceNoDeepwaterFix;
 native transient bool bForceNoFloorFloodfillFix;
 native transient bool bForceNoCeilingFloodfillFix;
-// not in C++
+// used only in VavoomC
 native transient bool bConvertSectorLightsToStatic;
+
+native transient name UDMFNamespace; // locased
 
 // map-related data
 native TVec[] Vertexes;

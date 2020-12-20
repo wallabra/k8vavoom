@@ -28,6 +28,8 @@
 #define DEBUG_DEEP_WATERS
 
 
+static VCvarB ldr_fix_udmf("ldr_fix_udmf", false, "Apply fixers for UDMF maps?", CVAR_Archive);
+
 static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", CVAR_PreInit/*|CVAR_Archive*/);
 static VCvarB dbg_floodfill_fixer("dbg_floodfill_fixer", false, "Show debug messages from floodfill fixer?", CVAR_PreInit/*|CVAR_Archive*/);
 
@@ -38,6 +40,19 @@ static VCvarB deepwater_hacks_bridges("deepwater_hacks_bridges", true, "Apply ha
 
 static VCvarB ldr_fix_slope_cracks("ldr_fix_slope_cracks", true, "Try to fix empty cracks near sloped floors?", /*CVAR_Archive|*/CVAR_PreInit);
 static VCvarB ldr_fix_transparent_doors("ldr_fix_transparent_doors", false, "Try to fix transparent doors?", CVAR_Archive);
+
+
+//==========================================================================
+//
+//  NeedUDMFFix
+//
+//==========================================================================
+static bool NeedUDMFFix (VLevel *level) noexcept {
+  if (ldr_fix_udmf) return true;
+  if (!(level->LevelFlags&VLevel::LF_TextMap)) return true;
+  if (!(level->LevelFlags&VLevel::LF_Extended)) return true;
+  return false; // skip it
+}
 
 
 //==========================================================================
@@ -81,10 +96,10 @@ void VLevel::DetectHiddenSectors () {
   }
 
 
+#if 0
   // fix missing top/bottom textures, so there won't be empty cracks
   if (!ldr_fix_slope_cracks) return;
 
-#if 0
   for (auto &&sec : allSectors()) {
     if ((sec.SectorFlags&sector_t::SF_HasExtrafloors) == 0) continue;
     //GCon->Logf(NAME_Debug, "FIXING SLOPED SECTOR #%d", (int)(ptrdiff_t)(&sec-&Sectors[0]));
@@ -138,6 +153,7 @@ void VLevel::DetectHiddenSectors () {
 //==========================================================================
 void VLevel::FixTransparentDoors () {
   if (!ldr_fix_transparent_doors) return;
+  if (!NeedUDMFFix(this)) { GCon->Logf(NAME_Debug, "FixTransparentDoors: skipped due to UDMF map"); return; }
 
   // mark all sectors with transparent door hacks
   for (auto &&sec : allSectors()) {
@@ -279,7 +295,7 @@ void VLevel::FixTransparentDoors () {
 void VLevel::FixSelfRefDeepWater () {
   // in UDMF maps, there is no sense to do "classic deepwater hack", so don't bother
   // but don't exit, because of converted doom->udmf maps, for example
-  //if (LevelFlags&LF_TextMap) return;
+  if (!NeedUDMFFix(this)) { GCon->Logf(NAME_Debug, "FixSelfRefDeepWater: skipped due to UDMF map"); return; }
 
   TArray<vuint8> self_subs;
   self_subs.setLength(NumSubsectors);
@@ -675,6 +691,8 @@ void VLevel::FixDeepWaters () {
   if (NumSectors == 0) return;
   //vassert(checkSkipLines.length() == 0);
 
+  if (!NeedUDMFFix(this)) { GCon->Logf(NAME_Debug, "FixDeepWaters: skipped due to UDMF map"); return; }
+
   for (auto &&sec : allSectors()) {
     sec.deepref = nullptr;
     sec.othersecFloor = nullptr;
@@ -833,5 +851,3 @@ void VLevel::FixDeepWaters () {
   deepwater_hacks_floor = oldFixFloor;
   deepwater_hacks_ceiling = oldFixCeiling;
 }
-
-

@@ -226,20 +226,24 @@ class VLevel : public VGameObject {
 
   // flags
   enum {
-    LF_ForServer = 0x01, // true if this level belongs to the server
-    LF_Extended  = 0x02, // true if level was in Hexen format
-    LF_GLNodesV5 = 0x04, // true if using version 5 GL nodes
-    LF_TextMap   = 0x08, // UDMF format map
+    LF_ForServer = 1u<<0, // true if this level belongs to the server
+    LF_Extended  = 1u<<1, // true if level was in Hexen format (or extended namespace for UDMF)
+    LF_GLNodesV5 = 1u<<2, // true if using version 5 GL nodes
+    LF_TextMap   = 1u<<3, // UDMF format map
     // used in map fixer
-    LF_ForceRebuildNodes                = 0x0010,
-    LF_ForceAllowSeveralPObjInSubsector = 0x0020, // this is not used anymore, but kept for compatibility
-    LF_ForceNoTexturePrecache           = 0x0040,
-    LF_ForceNoPrecalcStaticLights       = 0x0080,
-    LF_ForceNoDeepwaterFix              = 0x0100,
-    LF_ForceNoFloorFloodfillFix         = 0x0200,
-    LF_ForceNoCeilingFloodfillFix       = 0x0400,
+    LF_ForceRebuildNodes                = 1u<<4,
+    LF_ForceAllowSeveralPObjInSubsector = 1u<<5, // this is not used anymore, but kept for compatibility
+    LF_ForceNoTexturePrecache           = 1u<<6,
+    LF_ForceNoPrecalcStaticLights       = 1u<<7,
+    LF_ForceNoDeepwaterFix              = 1u<<8,
+    LF_ForceNoFloorFloodfillFix         = 1u<<9,
+    LF_ForceNoCeilingFloodfillFix       = 1u<<10,
+    // used only in VavoomC
+    LF_ConvertSectorLightsToStatic      = 1u<<11,
   };
   vuint32 LevelFlags;
+
+  VName UDMFNamespace; // locased
 
   // MAP related Lookup tables
   // store VERTEXES, LINEDEFS, SIDEDEFS, etc.
