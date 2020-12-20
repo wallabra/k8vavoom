@@ -1195,6 +1195,7 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
   //memcpy(Things, Parser.ParsedThings.Ptr(), sizeof(mthing_t)*NumThings);
 
   // create slopes from vertex heights
+  // this is allowed only for triangular sectors (otherwise the map will be distorted)
   if (hasVertexHeights && NumSectors > 0) {
     // create list of lines for each sector
     struct SecLines {
@@ -1202,6 +1203,7 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
       int vidxFloorOther[3]; // has no ceilz
       int vidxCeil[3]; // has ceilz
       int vidxCeilOther[3]; // has no ceilz
+      int lineCount;
 
       static inline void appendIndex (int vidx[3], int idx) noexcept {
         if (vidx[0] == idx || vidx[1] == idx || vidx[2] == idx) return;
@@ -1214,6 +1216,7 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
         for (unsigned int c = 0; c < 3; ++c) {
           vidxFloor[c] = vidxFloorOther[c] = vidxCeil[c] = vidxCeilOther[c] = -1;
         }
+        lineCount = 0;
       }
 
       inline void appendFloor (int idx) noexcept { appendIndex(vidxFloor, idx); }
@@ -1258,6 +1261,8 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
         int snum = (int)(ptrdiff_t)(sector-&Sectors[0]);
         vassert(snum >= 0 && snum < NumSectors);
         SecLines *sl = &seclines[snum];
+        ++sl->lineCount;
+        if (sl->lineCount > 3) continue;
         //if (sl->invalid) continue;
         if (v1.hasFloorZ) sl->appendFloor(uline.V1Index); else sl->appendFloorOther(uline.V1Index);
         if (v2.hasFloorZ) sl->appendFloor(uline.V2Index); else sl->appendFloorOther(uline.V2Index);
@@ -1274,6 +1279,8 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
     if (hasVertexSlopes) {
       for (int secindex = 0; secindex < NumSectors; ++secindex) {
         SecLines *sl = &seclines[secindex];
+        if (sl->lineCount != 3) continue; // skip invalid sectors
+
         sector_t *sector = &Sectors[secindex];
         int verts[3];
 
