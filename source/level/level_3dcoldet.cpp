@@ -155,10 +155,10 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
 //
 //==========================================================================
 bool VLevel::CheckPlanePass (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky) {
-  const float d1 = plane.DotPointDist(linestart);
+  const float d1 = plane.PointDistance(linestart);
   if (d1 < 0.0f) return true; // don't shoot back side
 
-  const float d2 = plane.DotPointDist(lineend);
+  const float d2 = plane.PointDistance(lineend);
   if (d2 >= 0.0f) return true; // didn't hit plane
 
   //if (d2 > 0.0f) return true; // didn't hit plane (was >=)

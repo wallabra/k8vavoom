@@ -620,11 +620,11 @@ IMPLEMENT_FUNCTION(VGameObject, spDotPoint) {
   RET_FLOAT(sp->DotPoint(*point));
 }
 
-//native static final float spDotPointDist (const ref TSecPlaneRef sp, const ref TVec point);
-IMPLEMENT_FUNCTION(VGameObject, spDotPointDist) {
+//native static final float spPointDistance (const ref TSecPlaneRef sp, const ref TVec point);
+IMPLEMENT_FUNCTION(VGameObject, spPointDistance) {
   P_GET_PTR(TVec, point);
   P_GET_PTR(TSecPlaneRef, sp);
-  RET_FLOAT(sp->DotPointDist(*point));
+  RET_FLOAT(sp->PointDistance(*point));
 }
 
 //native static final int spPointOnSide (const ref TSecPlaneRef sp, const ref TVec point);

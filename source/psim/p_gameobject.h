@@ -516,7 +516,7 @@ struct TSecPlaneRef {
   inline float GetDist () const { return (!flipped ? splane->dist : -splane->dist); }
   inline TPlane GetPlane () const { TPlane res; res.normal = (!flipped ? splane->normal : -splane->normal); res.dist = (!flipped ? splane->dist : -splane->dist); return res; }
 
-  inline float PointDistance (const TVec &p) const { return (!flipped ? DotProduct(p, splane->normal)-splane->dist : DotProductV2Neg(p, splane->normal)-(-splane->dist)); }
+  inline float PointDistance (const TVec &p) const { return (!flipped ? DotProduct(p, splane->normal)-splane->dist : DotProductV2Neg(p, splane->normal)+splane->dist); }
 
   // valid only for horizontal planes!
   inline float GetRealDist () const { return (!flipped ? splane->dist*splane->normal.z : (-splane->dist)*(-splane->normal.z)); }
@@ -534,23 +534,7 @@ struct TSecPlaneRef {
     return (!flipped ? splane->GetPointZClamped(x, y) : splane->GetPointZRevClamped(x, y));
   }
 
-  inline VVA_CHECKRESULT float DotPoint (const TVec &point) const {
-    if (!flipped) {
-      return DotProduct(point, splane->normal);
-    } else {
-      // gozzo shit, idc
-      return DotProduct(point, -splane->normal);
-    }
-  }
-
-  inline VVA_CHECKRESULT float DotPointDist (const TVec &point) const {
-    if (!flipped) {
-      return DotProduct(point, splane->normal)-splane->dist;
-    } else {
-      // gozzo shit, idc
-      return DotProduct(point, -splane->normal)+splane->dist;
-    }
-  }
+  inline VVA_CHECKRESULT float DotPoint (const TVec &point) const { return (!flipped ? DotProduct(point, splane->normal) : DotProductV2Neg(point, splane->normal)); }
 
   inline VVA_CHECKRESULT float GetPointZ (const TVec &v) const {
     return GetPointZ(v.x, v.y);
@@ -562,50 +546,52 @@ struct TSecPlaneRef {
 
   // returns side 0 (front) or 1 (back, or on plane)
   inline VVA_CHECKRESULT int PointOnSide (const TVec &point) const {
-    return (DotPointDist(point) <= 0.0f);
+    return (PointDistance(point) <= 0.0f);
   }
 
   // returns side 0 (front) or 1 (back, or on plane)
   inline VVA_CHECKRESULT int PointOnSideThreshold (const TVec &point) const {
-    return (DotPointDist(point) < 0.1f);
+    return (PointDistance(point) < 0.1f);
   }
 
   // returns side 0 (front, or on plane) or 1 (back)
   // "fri" means "front inclusive"
   inline VVA_CHECKRESULT int PointOnSideFri (const TVec &point) const {
-    return (DotPointDist(point) < 0.0f);
+    return (PointDistance(point) < 0.0f);
   }
 
   // returns side 0 (front), 1 (back), or 2 (on)
   // used in line tracing (only)
   inline VVA_CHECKRESULT int PointOnSide2 (const TVec &point) const {
-    const float dot = DotPointDist(point);
+    const float dot = PointDistance(point);
     return (dot < -0.1f ? 1 : dot > 0.1f ? 0 : 2);
   }
 
   // returns side 0 (front), 1 (back)
   // if at least some part of the sphere is on a front side, it means "front"
   inline VVA_CHECKRESULT int SphereOnSide (const TVec &center, float radius) const {
-    return (DotPointDist(center) <= -radius);
+    return (PointDistance(center) <= -radius);
   }
 
   inline VVA_CHECKRESULT bool SphereTouches (const TVec &center, float radius) const {
-    return (fabsf(DotPointDist(center)) < radius);
+    return (fabsf(PointDistance(center)) < radius);
   }
 
   // returns side 0 (front), 1 (back), or 2 (collides)
   inline VVA_CHECKRESULT int SphereOnSide2 (const TVec &center, float radius) const {
-    const float d = DotPointDist(center);
+    const float d = PointDistance(center);
     return (d < -radius ? 1 : d > radius ? 0 : 2);
   }
 
   // distance from point to plane
   // plane must be normalized
+  /*
   inline VVA_CHECKRESULT float Distance (const TVec &p) const {
     //return (cast(double)normal.x*p.x+cast(double)normal.y*p.y+cast(double)normal.z*cast(double)p.z)/normal.dbllength;
     //return VSUM3(normal.x*p.x, normal.y*p.y, normal.z*p.z); // plane normal has length 1
-    return DotPointDist(p);
+    return PointDistance(p);
   }
+  */
 };
 
 
@@ -1276,7 +1262,7 @@ public:
   DECLARE_FUNCTION(spGetDist)
   DECLARE_FUNCTION(spGetPointZ)
   DECLARE_FUNCTION(spDotPoint)
-  DECLARE_FUNCTION(spDotPointDist)
+  DECLARE_FUNCTION(spPointDistance)
   DECLARE_FUNCTION(spPointOnSide)
   DECLARE_FUNCTION(spPointOnSideThreshold)
   DECLARE_FUNCTION(spPointOnSideFri)

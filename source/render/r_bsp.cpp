@@ -931,12 +931,12 @@ bool VRenderLevelShared::NeedToRenderNextSubFirst (const subregion_t *region) no
   if (!region->next || !r_ordered_subregions) return false;
   const sec_surface_t *floor = region->fakefloor;
   if (floor) {
-    const float d = floor->PointDist(Drawer->vieworg);
+    const float d = floor->PointDistance(Drawer->vieworg);
     if (d <= 0.0f) return true;
   }
   floor = region->realfloor;
   if (floor) {
-    const float d = floor->PointDist(Drawer->vieworg);
+    const float d = floor->PointDistance(Drawer->vieworg);
     if (d <= 0.0f) return true;
   }
   return false;

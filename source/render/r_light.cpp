@@ -746,7 +746,7 @@ float VRenderLevelShared::CheckLightPointCone (VEntity *lowner, const TVec &p, c
 //
 //==========================================================================
 static inline float getFPlaneDist (const sec_surface_t *floor, const TVec &p) {
-  //const float d = floor->PointDist(p);
+  //const float d = floor->PointDistance(p);
   if (floor) {
     const float z = floor->esecplane.GetPointZClamped(p);
     if (floor->esecplane.GetNormalZ() > 0.0f) {

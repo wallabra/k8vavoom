@@ -872,7 +872,7 @@ native static final float spGetDist (const ref TSecPlaneRef sp);
 // don't try to use it on a vertical plane
 native static final float spGetPointZ (const ref TSecPlaneRef sp, const ref TVec p);
 native static final float spDotPoint (const ref TSecPlaneRef sp, const ref TVec point);
-native static final float spDotPointDist (const ref TSecPlaneRef sp, const ref TVec point);
+native static final float spPointDistance (const ref TSecPlaneRef sp, const ref TVec point);
 // returns side 0 (front) or 1 (back, or on plane)
 native static final int spPointOnSide (const ref TSecPlaneRef sp, const ref TVec point);
 // returns side 0 (front) or 1 (back, or on plane)

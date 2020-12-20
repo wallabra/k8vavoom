@@ -115,10 +115,10 @@ struct PlaneHitInfo {
   }
 
   inline void update (const TSecPlaneRef &plane) noexcept {
-    const float d1 = plane.DotPointDist(linestart);
+    const float d1 = plane.PointDistance(linestart);
     if (d1 < 0.0f) return; // don't shoot back side
 
-    const float d2 = plane.DotPointDist(lineend);
+    const float d2 = plane.PointDistance(lineend);
     if (d2 >= 0.0f) return; // didn't hit plane
 
     // d1/(d1-d2) -- from start

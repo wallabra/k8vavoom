@@ -57,7 +57,7 @@ void VRenderLevelShadowVolume::CollectLightShadowSurfaces () {
   lightSurfacesMasked.resetNoDtor();
   collectorForShadowMaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
   collectorShadowType = (collectorForShadowMaps && r_shadowmap_flip_surfaces.asBool() ? VViewClipper::AsShadowMap : VViewClipper::AsShadow);
-  CollectAdvLightBSPNode(Level->NumNodes-1, nullptr);
+  CollectAdvLightBSPNode(Level->NumNodes-1, nullptr, FlagAsBoth);
 }
 
 
@@ -151,7 +151,7 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
     if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;
     if (tex->isTranslucent()) continue; // this is translucent texture
 
-    const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
+    const float dist = surf->PointDistance(CurrLightPos);
     if (!smaps && dist <= 0.0f) continue;
     if (fabsf(dist) >= CurrLightRadius) continue; // was for light
 
@@ -210,7 +210,7 @@ void VRenderLevelShadowVolume::CollectAdvLightLine (subsector_t *sub, sec_region
   const seg_t *seg = dseg->seg;
   if (!seg->linedef) return; // miniseg
 
-  const float dist = DotProduct(CurrLightPos, seg->normal)-seg->dist;
+  const float dist = seg->PointDistance(CurrLightPos);
   //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light sphere is not touching a plane
   if (!collectorForShadowMaps && dist <= 0.0f) return;
   if (fabsf(dist) >= CurrLightRadius) return; // was for light
@@ -268,8 +268,7 @@ void VRenderLevelShadowVolume::CollectAdvLightSecSurface (sec_surface_t *ssurf, 
   //const sec_plane_t &plane = *ssurf->secplane;
   if (!ssurf->esecplane.splane->pic) return;
 
-  //const float dist = DotProduct(CurrLightPos, plane.normal)-plane.dist;
-  const float dist = ssurf->PointDist(CurrLightPos);
+  const float dist = ssurf->PointDistance(CurrLightPos);
   //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light is in back side or on plane
   if (!collectorForShadowMaps && dist <= 0.0f) return;
   if (fabsf(dist) >= CurrLightRadius) return; // was for light
@@ -377,7 +376,7 @@ void VRenderLevelShadowVolume::CollectAdvLightSubRegion (subsector_t *sub, subre
 //  VRenderLevelShadowVolume::CollectAdvLightSubsector
 //
 //==========================================================================
-void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
+void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num, unsigned int ssflag) {
   vassert(num >= 0 && num < Level->NumSubsectors);
   subsector_t *sub = &Level->Subsectors[num];
 
@@ -386,11 +385,18 @@ void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
   // `LightBspVis` is already an intersection, no need to check `BspVis` here
   //if (!IsSubsectorLitBspVis(num) || !(BspVis[num>>3]&(1<<(num&7)))) return;
 
-  unsigned int ssflagmask = FlagAsBoth;
-  if (!LightClip.ClipLightCheckSubsector(sub, VViewClipper::AsLight)) ssflagmask &= ~FlagAsLight;
-  if (!LightShadowClip.ClipLightCheckSubsector(sub, collectorShadowType)) ssflagmask &= ~FlagAsShadow;
+  if ((ssflag&FlagAsLight) && !LightClip.ClipLightCheckSubsector(sub, VViewClipper::AsLight)) {
+    if ((ssflag &= ~FlagAsLight) == 0) return;
+  }
+  if ((ssflag&FlagAsShadow) && !LightShadowClip.ClipLightCheckSubsector(sub, collectorShadowType)) {
+    if ((ssflag &= ~FlagAsShadow) == 0) return;
+  }
 
-  if (ssflagmask) {
+  if (ssflag) {
+    if ((ssflag&FlagAsLight) && !IsSubsectorLitBspVis(num)) {
+      if ((ssflag &= ~FlagAsLight) == 0) return;
+    }
+
     // update world
     if (sub->updateWorldFrame != updateWorldFrame) {
       sub->updateWorldFrame = updateWorldFrame;
@@ -399,7 +405,6 @@ void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
 
     // if our light is in frustum, out-of-frustum subsectors are not interesting
     //FIXME: pass "need frustum check" flag to other functions
-    unsigned int ssflag = (IsSubsectorLitBspVis(num) ? FlagAsBoth : FlagAsShadow)&ssflagmask;
     if ((ssflag&FlagAsShadow) && CurrLightInFrustum && !(BspVis[num>>3]&(1u<<(num&7)))) {
       // this subsector is invisible, check if it is in frustum (this was originally done for shadow)
       float bbox[6];
@@ -412,7 +417,10 @@ void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
       bbox[4] = sub->bbox2d[BOX2D_TOP];
       bbox[5] = sub->sector->ceiling.maxz;
       FixBBoxZ(bbox);
-      if (!Drawer->viewfrustum.checkBox(bbox)) ssflag &= ~FlagAsShadow;
+      if (!Drawer->viewfrustum.checkBox(bbox)) {
+        LightShadowClip.ClipLightAddSubsectorSegs(sub, collectorShadowType);
+        if ((ssflag &= ~FlagAsShadow) == 0) return;
+      }
     }
 
     // render the polyobj in the subsector first, and add it to clipper
@@ -422,12 +430,11 @@ void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
       AddPolyObjToLightClipper(LightClip, sub, VViewClipper::AsLight);
       AddPolyObjToLightClipper(LightShadowClip, sub, collectorShadowType);
       CollectAdvLightSubRegion(sub, sub->regions, ssflag);
+      // add subsector's segs to the clipper
+      // clipping against mirror is done only for vertical mirror planes
+      if (ssflag&FlagAsLight) LightClip.ClipLightAddSubsectorSegs(sub, VViewClipper::AsLight);
+      if (ssflag&FlagAsShadow) LightShadowClip.ClipLightAddSubsectorSegs(sub, collectorShadowType);
     }
-
-    // add subsector's segs to the clipper
-    // clipping against mirror is done only for vertical mirror planes
-    if (ssflagmask&FlagAsLight) LightClip.ClipLightAddSubsectorSegs(sub, VViewClipper::AsLight);
-    if (ssflagmask&FlagAsShadow) LightShadowClip.ClipLightAddSubsectorSegs(sub, collectorShadowType);
   }
 }
 
@@ -440,38 +447,50 @@ void VRenderLevelShadowVolume::CollectAdvLightSubsector (int num) {
 //  recursively. Just call with BSP root.
 //
 //==========================================================================
-void VRenderLevelShadowVolume::CollectAdvLightBSPNode (int bspnum, const float *bbox) {
+void VRenderLevelShadowVolume::CollectAdvLightBSPNode (int bspnum, const float *bbox, unsigned int ssflag) {
 #ifdef VV_CLIPPER_FULL_CHECK
-  if (LightClip.ClipIsFull() || LightShadowClip.ClipIsFull()) return;
+  if ((ssflag&FlagAsLight) && LightClip.ClipIsFull()) {
+    if ((ssflag &= ~FlagAsLight) == 0) return;
+  }
+  if ((ssflag&FlagAsShadow) && LightShadowClip.ClipIsFull()) {
+    if ((ssflag &= ~FlagAsShadow) == 0) return;
+  }
 #endif
 
-  if (bbox && !LightClip.ClipLightIsBBoxVisible(bbox) && !LightShadowClip.ClipLightIsBBoxVisible(bbox)) return;
+  if (bbox) {
+    if ((ssflag&FlagAsLight) && !LightClip.ClipLightIsBBoxVisible(bbox)) {
+      if ((ssflag &= ~FlagAsLight) == 0) return;
+    }
+    if ((ssflag&FlagAsShadow) && !LightShadowClip.ClipLightIsBBoxVisible(bbox)) {
+      if ((ssflag &= ~FlagAsShadow) == 0) return;
+    }
+  }
   //if (bbox && !CheckSphereVsAABBIgnoreZ(bbox, CurrLightPos, CurrLightRadius)) return;
 
-  if (bspnum == -1) return CollectAdvLightSubsector(0);
+  if (bspnum == -1) return CollectAdvLightSubsector(0, ssflag);
 
   // found a subsector?
   if (BSPIDX_IS_NON_LEAF(bspnum)) {
     node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the light is on
-    const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
+    const float dist = bsp->PointDistance(CurrLightPos);
     if (dist >= CurrLightRadius) {
       // light is completely on front side
-      return CollectAdvLightBSPNode(bsp->children[0], bsp->bbox[0]);
+      return CollectAdvLightBSPNode(bsp->children[0], bsp->bbox[0], ssflag);
     } else if (dist <= -CurrLightRadius) {
       // light is completely on back side
-      return CollectAdvLightBSPNode(bsp->children[1], bsp->bbox[1]);
+      return CollectAdvLightBSPNode(bsp->children[1], bsp->bbox[1], ssflag);
     } else {
       //int side = bsp->PointOnSide(CurrLightPos);
       unsigned side = (unsigned)(dist <= 0.0f);
       // recursively divide front space
-      CollectAdvLightBSPNode(bsp->children[side], bsp->bbox[side]);
+      CollectAdvLightBSPNode(bsp->children[side], bsp->bbox[side], ssflag);
       // possibly divide back space
       side ^= 1;
-      return CollectAdvLightBSPNode(bsp->children[side], bsp->bbox[side]);
+      return CollectAdvLightBSPNode(bsp->children[side], bsp->bbox[side], ssflag);
     }
   } else {
-    return CollectAdvLightSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum));
+    return CollectAdvLightSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum), ssflag);
   }
 }
 
