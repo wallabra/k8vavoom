@@ -68,17 +68,21 @@ static VCvarI r_lmap_texture_check_radius_dynamic("r_lmap_texture_check_radius_d
 
 //==========================================================================
 //
-//  VRenderLevelShared::CalcScreenLightRadius
+//  VRenderLevelShared::CalcScreenLightDimensions
 //
 //  use drawer's vieworg, so it can be called only when rendering a scene
 //  it's not exact!
+//  returns `false` if the light is invisible (or too small, with radius < 8)
+//  in this case, `w`, and `h` are zeroes
+//  both `w` and `h` can be `nullptr`
 //
 //==========================================================================
-int VRenderLevelShared::CalcScreenLightMaxDimension (const TVec &LightPos, const float LightRadius) noexcept {
-  if (!isFiniteF(LightRadius) || LightRadius <= 0.0f) return 0;
-  if (LightRadius < 8.0f) return 0;
+bool VRenderLevelShared::CalcScreenLightDimensions (const TVec &LightPos, const float LightRadius, int *w, int *h) noexcept {
+  if (w) *w = 0;
+  if (h) *h = 0;
+  if (!isFiniteF(LightRadius) || LightRadius < 8.0f) return false;
   // just in case
-  if (!Drawer->vpmats.vport.isValid()) return 0;
+  if (!Drawer->vpmats.vport.isValid()) return false;
 
   // transform into world coords
   TVec inworld = Drawer->vpmats.toWorld(LightPos);
@@ -86,7 +90,7 @@ int VRenderLevelShared::CalcScreenLightMaxDimension (const TVec &LightPos, const
   //GCon->Logf(NAME_Debug, "LightPos=(%g,%g,%g); LightRadius=%g; wpos=(%g,%g,%g)", LightPos.x, LightPos.y, LightPos.z, LightRadius, inworld.x, inworld.y, inworld.z);
 
   // the thing that should not be (completely behind)
-  if (inworld.z-LightRadius > -1.0f) return 0;
+  if (inworld.z-LightRadius > -1.0f) return false;
 
   CONST_BBoxVertexIndex;
 
@@ -119,7 +123,7 @@ int VRenderLevelShared::CalcScreenLightMaxDimension (const TVec &LightPos, const
     if (maxy < winy) maxy = winy;
   }
 
-  if (minx > scrx1 || miny > scry1 || maxx < scrx0 || maxy < scry0) return 0;
+  if (minx > scrx1 || miny > scry1 || maxx < scrx0 || maxy < scry0) return false;
 
   minx = midval(scrx0, minx, scrx1);
   miny = midval(scry0, miny, scry1);
@@ -131,10 +135,12 @@ int VRenderLevelShared::CalcScreenLightMaxDimension (const TVec &LightPos, const
   const int hgt = maxy-miny+1;
   //GCon->Logf("  LightRadius=%f; (%dx%d)", LightRadius, wdt, hgt);
 
-  const int maxsz = max2(wdt, hgt);
-  // drop very small lights, why not?
-  if (maxsz <= 0) return 0;
-  return maxsz;
+  if (wdt < 1 || hgt < 1) return false;
+
+  if (w) *w = wdt;
+  if (h) *h = hgt;
+
+  return true;
 }
 
 

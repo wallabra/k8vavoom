@@ -677,7 +677,10 @@ protected:
 protected:
   // use drawer's vieworg, so it can be called only when rendering a scene
   // it's not exact!
-  int CalcScreenLightMaxDimension (const TVec &LightPos, const float LightRadius) noexcept;
+  // returns `false` if the light is invisible (or too small, with radius < 8)
+  // in this case, `w`, and `h` are zeroes
+  // both `w` and `h` can be `nullptr`
+  bool CalcScreenLightDimensions (const TVec &LightPos, const float LightRadius, int *w, int *h) noexcept;
 
 protected:
   static int prevCrosshairPic;

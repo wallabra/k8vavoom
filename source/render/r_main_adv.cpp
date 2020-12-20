@@ -125,7 +125,7 @@ static TFrustumParam advLightFp;
 //
 //==========================================================================
 void VRenderLevelShadowVolume::RenderSceneStaticLights (const refdef_t *RD, const VViewClipper *Range) {
-  if (FixedLight || !r_static_lights || r_max_lights == 0) return;
+  if (FixedLight || !r_static_lights || r_max_lights == 0 || Lights.length() == 0) return;
 
   linetrace_t Trace;
   TVec Delta;
@@ -142,7 +142,6 @@ void VRenderLevelShadowVolume::RenderSceneStaticLights (const refdef_t *RD, cons
   backPlane.SetPointNormal3D(Drawer->vieworg, Drawer->viewforward);
 
   DynamicLights = false;
-
 
   //if (!FixedLight && r_static_lights && r_max_lights != 0) {
   if (!staticLightsFiltered) RefilterStaticLights();
@@ -198,6 +197,7 @@ void VRenderLevelShadowVolume::RenderSceneStaticLights (const refdef_t *RD, cons
     if (r_advlight_sort_static) {
       timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
     }
+    //GCon->Logf(NAME_Debug, "=== %d static lights ===", visstatlightCount);
     for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
       //VEntity *own = (sli->stlight->owner && sli->stlight->owner->IsA(VEntity::StaticClass()) ? sli->stlight->owner : nullptr);
       //VObject *ownobj = (sli->stlight->dynowner ? sli->stlight->dynowner : sli->stlight->ownerUId ? VObject::FindByUniqueId(sli->stlight->ownerUId) : nullptr);
@@ -289,6 +289,7 @@ void VRenderLevelShadowVolume::RenderSceneDynamicLights (const refdef_t *RD, con
     if (r_advlight_sort_dynamic) {
       timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
     }
+    //GCon->Logf(NAME_Debug, "=== %d dynamic lights ===", visdynlightCount);
     for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
       //VEntity *own = (dli->l->Owner && dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
       VEntity *own = nullptr;

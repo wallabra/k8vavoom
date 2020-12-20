@@ -105,14 +105,25 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   // check distance
   if (allowShadows) {
-    const int prjdim = r_light_shadow_min_proj_dimension.asInt()*Drawer->getWidth()/1024;
+    int prjdim = r_light_shadow_min_proj_dimension.asInt()*Drawer->getWidth()/1024;
     if (prjdim >= 9) {
       //const float ldist = (Drawer->vieworg-Pos).lengthSquared();
-      const int ldim = CalcScreenLightMaxDimension(Pos, Radius);
-      if (ldim < 16) return; // too small, don't bother
-      if (ldim < prjdim) {
+      int lw, lh;
+      if (!CalcScreenLightDimensions(Pos, Radius, &lw, &lh)) return; // this light is invisible
+      if (lw < 16 || lh < 10) {
         allowShadows = false;
+      } else {
+        const float distsq = (Drawer->vieworg-Pos).lengthSquared();
+             if (distsq >= 4200.0f*4200.0f) prjdim *= 3;
+        else if (distsq >= 3500.0f*3500.0f) prjdim *= 2;
+        else if (distsq >= 2900.0f*2900.0f) prjdim += prjdim/2;
+        if (distsq >= 3100.0f*3100.0f) {
+          if (lw < prjdim || lh < prjdim) allowShadows = false;
+        } else {
+          if (lw < prjdim && lh < prjdim) allowShadows = false;
+        }
       }
+      //GCon->Logf(NAME_Debug, "light at (%g,%g,%g); radius=%g; size=(%dx%d); shadows=%s; dist=%g", Pos.x, Pos.y, Pos.z, Radius, lw, lh, (allowShadows ? "tan" : "ona"), Drawer->vieworg.distanceTo(Pos));
     }
   }
 
