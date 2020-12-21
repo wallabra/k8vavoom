@@ -573,8 +573,26 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdirc
     //GCon->Logf(NAME_Error, "%s\n", LogText);
 
     //GCon->Logf(NAME_Error, "====\n%s\n====", *res);
-    VStr(res).Split('\n', sp);
-    for (int f = 0; f < sp.length(); ++f) GCon->Logf(NAME_Error, "%5d: %s", f+1, *sp[f]);
+    //VStr(res).Split('\n', sp);
+    //for (int f = 0; f < sp.length(); ++f) GCon->Logf(NAME_Error, "%5d: %s", f+1, *sp[f]);
+    const char *ss = (ShaderText ? ShaderText : "");
+    int sline = 1;
+    while (*ss) {
+      const char *es = strchr(ss, '\n');
+      if (!es) {
+        GCon->Logf(NAME_Error, "%5d: %s", sline, ss);
+        break;
+      }
+      VStr ts(ss, (int)(es-ss));
+      ts = ts.trimRight();
+      if (ts.length()) {
+        GCon->Logf(NAME_Error, "%5d: %s", sline, *ts);
+      } else {
+        GCon->Logf(NAME_Error, "%5d:", sline);
+      }
+      ss = es+1;
+      ++sline;
+    }
 
     //fprintf(stderr, "================ %s ================\n%s\n=================================\n%s\b", *FileName, *res, LogText);
     //Sys_Error("%s", va("Failed to compile shader %s: %s", *FileName, LogText));
