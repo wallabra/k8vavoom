@@ -106,7 +106,6 @@
           } else
           #endif
           {
-            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
             #define SMCHECK_V3  vec3(1.0, vc, -uc)
             $include "shadowvol/cubemap_bilinear_xcheck.fs"
             #undef SMCHECK_V3
@@ -124,7 +123,6 @@
           } else
           #endif
           {
-            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
             #define SMCHECK_V3  vec3(-1.0, vc, uc)
             $include "shadowvol/cubemap_bilinear_xcheck.fs"
             #undef SMCHECK_V3
@@ -142,7 +140,6 @@
           } else
           #endif
           {
-            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
             #define SMCHECK_V3  vec3(uc, 1.0, -vc)
             $include "shadowvol/cubemap_bilinear_xcheck.fs"
             #undef SMCHECK_V3
@@ -160,7 +157,6 @@
           } else
           #endif
           {
-            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
             #define SMCHECK_V3  vec3(uc, -1.0, vc)
             $include "shadowvol/cubemap_bilinear_xcheck.fs"
             #undef SMCHECK_V3
@@ -178,7 +174,6 @@
           } else
           #endif
           {
-            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
             #define SMCHECK_V3  vec3(uc, vc, 1.0)
             $include "shadowvol/cubemap_bilinear_xcheck.fs"
             #undef SMCHECK_V3
@@ -196,7 +191,6 @@
           } else
           #endif
           {
-            float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
             #define SMCHECK_V3  vec3(-uc, vc, -1.0)
             $include "shadowvol/cubemap_bilinear_xcheck.fs"
             #undef SMCHECK_V3

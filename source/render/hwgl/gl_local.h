@@ -441,7 +441,6 @@ protected:
 
   GLint shadowmapSize;
   unsigned int shadowmapPOT; // 128<<shadowmapPOT is shadowmap size
-  bool cubemapLinearFiltering;
 
   GLint savedSMVPort[4];
   //VMatrix4 smapProj;

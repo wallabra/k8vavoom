@@ -129,7 +129,6 @@ VCvarI gl_release_ram_textures_mode("gl_release_ram_textures_mode", "0", "When t
 // 3: 1024
 VCvarI gl_shadowmap_size("gl_shadowmap_size", "0", "Shadowmap size (0:128; 1:256; 2:512; 3:1024).", CVAR_PreInit|CVAR_Archive);
 VCvarB gl_shadowmap_precision("gl_shadowmap_precision", false, "Allow higher shadowmap precision for bigger lights?", CVAR_PreInit|CVAR_Archive);
-VCvarI gl_shadowmap_ray_points("gl_shadowmap_ray_points", "0", "Number of texel points to check for shadowmap ray [0..3].", CVAR_PreInit|CVAR_Archive);
 
 
 static VCvarB gl_s3tc_present("__gl_s3tc_present", false, "Use S3TC texture compression, if supported?", CVAR_Rom);
@@ -483,7 +482,6 @@ VOpenGLDrawer::VOpenGLDrawer ()
 
   shadowmapPOT = getShadowmapPOT();
   shadowmapSize = 64<<shadowmapPOT;
-  cubemapLinearFiltering = false;
 
   memset((void *)&shadowCube[0], 0, sizeof(shadowCube));
   shadowCube[0].smapDirty = shadowCube[1].smapDirty = 0x3fu;
@@ -623,9 +621,9 @@ void VOpenGLDrawer::CreateShadowCube () {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
     GLDRW_CHECK_ERROR("set shadowmap compare func");
     */
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, (cubemapLinearFiltering ? GL_LINEAR : GL_NEAREST));
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     GLDRW_CHECK_ERROR("set shadowmap mag filter");
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, (cubemapLinearFiltering ? GL_LINEAR : GL_NEAREST));
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     GLDRW_CHECK_ERROR("set shadowmap min filter");
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     GLDRW_CHECK_ERROR("set shadowmap wrap r");

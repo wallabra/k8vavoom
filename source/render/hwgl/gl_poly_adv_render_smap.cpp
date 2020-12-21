@@ -40,12 +40,10 @@
 
 extern VCvarI gl_shadowmap_size;
 extern VCvarB gl_shadowmap_precision;
-extern VCvarI gl_shadowmap_ray_points;
 
 // saved shadowmap parameters
 static int saved_gl_shadowmap_size = -666;
 static bool saved_gl_shadowmap_precision = false;
-static int saved_gl_shadowmap_ray_points = -666;
 
 static VCvarB gl_dbg_smap_vbo("gl_dbg_smap_vbo", true, "Use VBO to render shadowmaps?", CVAR_PreInit);
 
@@ -199,18 +197,17 @@ void VOpenGLDrawer::ActivateShadowMapFace (unsigned int facenum) noexcept {
 //==========================================================================
 void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radius) {
   if (gl_shadowmap_size.asInt() != saved_gl_shadowmap_size ||
-      gl_shadowmap_precision.asBool() != saved_gl_shadowmap_precision ||
-      gl_shadowmap_ray_points.asInt() != saved_gl_shadowmap_ray_points)
+      gl_shadowmap_precision.asBool() != saved_gl_shadowmap_precision)
   {
     DestroyShadowCube();
     saved_gl_shadowmap_size = gl_shadowmap_size.asInt();
     saved_gl_shadowmap_precision = gl_shadowmap_precision.asBool();
-    saved_gl_shadowmap_ray_points = gl_shadowmap_ray_points.asInt();
   }
 
   PrepareShadowCube(LightPos, Radius, (Radius < 1000.0f ? CUBE16 : CUBE32));
 
   GLSMAP_CLEAR_ERR();
+  /*
   const bool flt = gl_dev_shadowmap_filter.asBool();
   if (flt != cubemapLinearFiltering) {
     cubemapLinearFiltering = flt;
@@ -221,6 +218,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
     GLSMAP_ERR("set shadowmap min filter");
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
   }
+  */
 
   GLSMAP_CLEAR_ERR();
   p_glBindFramebuffer(GL_FRAMEBUFFER, shadowCube[smapCurrent].cubeFBO);

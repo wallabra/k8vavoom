@@ -66,7 +66,7 @@ menudef ShadowMapOptions {
       "but also gives harder edges even with bilinear blur.";
   }
 
-  option bool {
+  option bool [__k8vavoom_developer_version > 0] {
     title = "Shadowmap Precision";
     cvar = gl_shadowmap_precision;
     help =
@@ -80,48 +80,20 @@ menudef ShadowMapOptions {
 
   header "Quality Options";
 
-  option bool [__k8vavoom_developer_version > 0] {
-    title = "Filter shadowmap";
-    cvar = gl_dev_shadowmap_filter;
-    help =
-      "Apply bilinear filtering to shadowmap textures?",
-      "This usually gives you slightly bigger, but better,",
-      "shadows due to smaller shadowmap bias.",
-      "",
-      "Note that while i think it works, it may give you banding",
-      "or moire for very big lights, or some other corner cases.",
-      "",
-      "Still, i think that you'd better leave this 'ON'.";
-  }
-
-  option enum {
-    title = "Ray Checks";
-    cvar = gl_shadowmap_ray_points;
-    list {
-      "Fast",
-      "Slower",
-      "Slow",
-      "Slowest"
-    }
-    help =
-      "Number of points on shadowmap to check for one ray.",
-      "'Fast' is usually enough, there should be no reason to change this.";
-  }
-
   option enum {
     title = "Shadowmap Blur";
     cvar = gl_shadowmap_blur;
     list {
       "None",
-      "4 Samples, Bilinear",
-      "4 Samples, ShittyBi",
-      "4 Samples",
-      "8 Samples",
-      "8 Samples, Fast",
-      "16 Samples",
+      "Bilinear",
+      "Bilinear, Low Quality",
+      "Nearest/4",
+      "Nearest/8",
+      "Nearest/8, Low Quality",
+      "Nearest/16 (Very Slow)",
     }
     help =
-      "You can blur shadows a little. Usually bilinear blur looks better.",
+      "You can blur shadows a little. Usually bilinear blur looks best.",
       "Please, note that more samples will cause non-linear slowdown.",
       "Also, there is no reason to go beyond bilinear.";
   }

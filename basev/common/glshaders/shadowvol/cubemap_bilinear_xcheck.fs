@@ -1,5 +1,7 @@
 #define SMCHECK_ASSIGN
 
+  float ssd = SurfDist-dot(Normal, LightPos); // this is invariant
+
 #define destvar    valhoriz
 #define tt_ltfdir  ltf_horiz
 #define tt_texX    cubeTC.x+tshift
