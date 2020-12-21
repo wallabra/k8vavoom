@@ -48,7 +48,7 @@ enum {
 //  VRenderLevelShadowVolume::CollectLightShadowSurfaces
 //
 //==========================================================================
-void VRenderLevelShadowVolume::CollectLightShadowSurfaces () {
+void VRenderLevelShadowVolume::CollectLightShadowSurfaces (bool doShadows) {
   LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
   LightShadowClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
   shadowSurfacesSolid.resetNoDtor();
@@ -57,7 +57,7 @@ void VRenderLevelShadowVolume::CollectLightShadowSurfaces () {
   lightSurfacesMasked.resetNoDtor();
   collectorForShadowMaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
   collectorShadowType = (collectorForShadowMaps && r_shadowmap_flip_surfaces.asBool() ? VViewClipper::AsShadowMap : VViewClipper::AsShadow);
-  CollectAdvLightBSPNode(Level->NumNodes-1, nullptr, FlagAsBoth);
+  CollectAdvLightBSPNode(Level->NumNodes-1, nullptr, (doShadows ? FlagAsBoth : FlagAsLight));
 }
 
 
@@ -517,5 +517,5 @@ void VRenderLevelShadowVolume::RenderShadowSurfaceList () {
 //==========================================================================
 void VRenderLevelShadowVolume::RenderLightSurfaceList () {
   Drawer->RenderSolidLightSurfaces(lightSurfacesSolid);
-  Drawer->RenderMaskeLightSurfaces(lightSurfacesMasked);
+  Drawer->RenderMaskedLightSurfaces(lightSurfacesMasked);
 }

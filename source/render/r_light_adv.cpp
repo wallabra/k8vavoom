@@ -282,14 +282,16 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     }
   }
 
-  CollectLightShadowSurfaces();
+  CollectLightShadowSurfaces(allowShadows);
 
   // used in flats checker
   (void)fsecCounterGen();
 
   if (allowShadows) {
-    // do shadow volumes
+    const bool doModels = (r_models.asBool() && r_model_shadows.asBool());
+    // need shadows
     if (useShadowMaps) {
+      // shadowmaps
       if (allowShadows && CurrLightCalcUnstuck) {
         if (CurrLightUnstuckPos != CurrLightPos) {
           #if 0
@@ -300,34 +302,31 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
         }
       }
       Drawer->BeginLightShadowMaps(CurrLightPos, CurrLightRadius);
-      if (allowShadows) {
-        // sort shadow surfaces by textures
-        const int spShad = r_shadowmap_sprshadows.asInt();
-        const bool doModels = r_models.asBool();
-        if (doModels) Drawer->BeginModelShadowMaps(CurrLightPos, CurrLightRadius);
-        Drawer->UploadShadowSurfaces(shadowSurfacesSolid, shadowSurfacesMasked);
-        for (unsigned fc = 0; fc < 6; ++fc) {
-          Drawer->SetupLightShadowMap(fc);
-          Drawer->RenderShadowMaps(shadowSurfacesSolid, shadowSurfacesMasked);
-          if (spShad > 0) RenderMobjSpriteShadowMap(ent, fc, spShad, dlflags);
-          if (doModels) {
-            Drawer->SetupModelShadowMap(fc);
-            RenderMobjsShadowMap(ent, fc, dlflags);
-            Drawer->EndModelShadowMaps();
-          }
+      Drawer->UploadShadowSurfaces(shadowSurfacesSolid, shadowSurfacesMasked);
+      const int spShad = r_shadowmap_sprshadows.asInt();
+      if (doModels) Drawer->BeginModelShadowMaps(CurrLightPos, CurrLightRadius);
+      for (unsigned fc = 0; fc < 6; ++fc) {
+        Drawer->SetupLightShadowMap(fc);
+        Drawer->RenderShadowMaps(shadowSurfacesSolid, shadowSurfacesMasked);
+        if (spShad > 0) RenderMobjSpriteShadowMap(ent, fc, spShad, dlflags);
+        if (doModels) {
+          Drawer->SetupModelShadowMap(fc);
+          RenderMobjsShadowMap(ent, fc, dlflags);
         }
       }
+      if (doModels) Drawer->EndModelShadowMaps();
       Drawer->EndLightShadowMaps();
     } else {
+      // shadow volumes
       Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord);
-      if (allowShadows) {
-        if (r_shadowvol_use_pofs) Drawer->GLPolygonOffsetEx(r_shadowvol_pslope, -r_shadowvol_pofs); // pull forward
-        RenderShadowSurfaceList();
+      if (r_shadowvol_use_pofs) Drawer->GLPolygonOffsetEx(r_shadowvol_pslope, -r_shadowvol_pofs); // pull forward
+      RenderShadowSurfaceList();
+      if (doModels) {
         Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
         RenderMobjsShadow(ent, dlflags);
-        if (r_shadowvol_use_pofs) Drawer->GLDisableOffset();
         Drawer->EndModelsShadowsPass();
       }
+      if (r_shadowvol_use_pofs) Drawer->GLDisableOffset();
       Drawer->EndLightShadowVolumes();
     }
   }
@@ -342,7 +341,6 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   // draw light
   Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, CurrLightSpot, CurrLightConeDir, CurrLightConeAngle, allowShadows);
-  //timsort_r(lightSurfaces.ptr(), lightSurfaces.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
   RenderLightSurfaceList();
   Drawer->EndLightPass();
 

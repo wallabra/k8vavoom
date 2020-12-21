@@ -98,29 +98,6 @@ static unsigned int smapBShaderIndex;
 
 //==========================================================================
 //
-//  advCompareSurfaces
-//
-//==========================================================================
-static int advCompareSurfaces (const void *saa, const void *sbb, void *) {
-  if (saa == sbb) return 0;
-
-  const surface_t *sa = *(const surface_t **)saa;
-  const surface_t *sb = *(const surface_t **)sbb;
-  if (sa == sb) return 0;
-
-  const texinfo_t *ta = sa->texinfo;
-  const texinfo_t *tb = sb->texinfo;
-
-  // sort by texture id (just use texture pointer)
-  if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
-  if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
-
-  return 0;
-}
-
-
-//==========================================================================
-//
 //  VOpenGLDrawer::BeginLightPass
 //
 //  setup rendering parameters for lighted surface rendering
@@ -307,10 +284,10 @@ void VOpenGLDrawer::RenderSolidLightSurfaces (TArray<surface_t *> &slist) {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::RenderMaskeLightSurfaces
+//  VOpenGLDrawer::RenderMaskedLightSurfaces
 //
 //==========================================================================
-void VOpenGLDrawer::RenderMaskeLightSurfaces (TArray<surface_t *> &slist) {
-  timsort_r(slist.ptr(), slist.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
+void VOpenGLDrawer::RenderMaskedLightSurfaces (TArray<surface_t *> &slist) {
+  timsort_r(slist.ptr(), slist.length(), sizeof(surface_t *), &glAdvCompareTextureIdOnly, nullptr);
   for (auto &&surf : slist) DrawSurfaceLight(surf);
 }

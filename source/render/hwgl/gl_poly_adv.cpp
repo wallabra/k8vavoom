@@ -167,13 +167,24 @@ int glAdvRenderDrawListItemCmpByShaderBMTexture (const void *a, const void *b, v
 }
 
 
-//#include "gl_poly_adv_dirty_rect.cpp"
-//#include "gl_poly_adv_sort_compare.cpp"
+//==========================================================================
+//
+//  glAdvCompareTextureIdOnly
+//
+//==========================================================================
+int glAdvCompareTextureIdOnly (const void *saa, const void *sbb, void *) {
+  if (saa == sbb) return 0;
 
-//#include "gl_poly_adv_render_pre.cpp"
-//#include "gl_poly_adv_render_svol.cpp"
-//#include "gl_poly_adv_render_vbomac.cpp"
-//#include "gl_poly_adv_render_ambient.cpp"
-//#include "gl_poly_adv_render_textures.cpp"
-//#include "gl_poly_adv_render_fog.cpp"
-//#include "gl_poly_adv_render_light.cpp"
+  const surface_t *sa = *(const surface_t **)saa;
+  const surface_t *sb = *(const surface_t **)sbb;
+  if (sa == sb) return 0;
+
+  const texinfo_t *ta = sa->texinfo;
+  const texinfo_t *tb = sb->texinfo;
+
+  // sort by texture id (just use texture pointer)
+  if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
+  if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+
+  return 0;
+}

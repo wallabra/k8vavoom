@@ -682,7 +682,7 @@ public:
 
   //virtual void DrawSurfaceLight (surface_t *Surf) = 0;
   virtual void RenderSolidLightSurfaces (TArray<surface_t *> &slist) = 0;
-  virtual void RenderMaskeLightSurfaces (TArray<surface_t *> &slist) = 0;
+  virtual void RenderMaskedLightSurfaces (TArray<surface_t *> &slist) = 0;
 
   virtual void DrawWorldTexturesPass () = 0;
   virtual void DrawWorldFogPass () = 0;

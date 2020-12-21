@@ -50,29 +50,6 @@ static VCvarB gl_dbg_smap_vbo("gl_dbg_smap_vbo", true, "Use VBO to render shadow
 
 //==========================================================================
 //
-//  advCompareSurfaces
-//
-//==========================================================================
-static int advCompareSurfaces (const void *saa, const void *sbb, void *) {
-  if (saa == sbb) return 0;
-
-  const surface_t *sa = *(const surface_t **)saa;
-  const surface_t *sb = *(const surface_t **)sbb;
-  if (sa == sb) return 0;
-
-  const texinfo_t *ta = sa->texinfo;
-  const texinfo_t *tb = sb->texinfo;
-
-  // sort by texture id (just use texture pointer)
-  if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
-  if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
-
-  return 0;
-}
-
-
-//==========================================================================
-//
 //  VOpenGLDrawer::PrepareShadowMapsInternal
 //
 //==========================================================================
@@ -491,7 +468,7 @@ void VOpenGLDrawer::UploadShadowSurfaces (TArray<surface_t *> &solid, TArray<sur
   int totalSurfs = solid.length()+masked.length();
   if (totalSurfs == 0) return;
 
-  timsort_r(masked.ptr(), masked.length(), sizeof(surface_t *), &advCompareSurfaces, nullptr);
+  timsort_r(masked.ptr(), masked.length(), sizeof(surface_t *), &glAdvCompareTextureIdOnly, nullptr);
 
   if (gl_dbg_smap_vbo.asBool()) {
     // upload solid surfaces

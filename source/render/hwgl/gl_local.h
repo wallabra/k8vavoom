@@ -550,7 +550,7 @@ public:
 
   void DrawSurfaceLight (const surface_t *surf);
   virtual void RenderSolidLightSurfaces (TArray<surface_t *> &slist) override;
-  virtual void RenderMaskeLightSurfaces (TArray<surface_t *> &slist) override;
+  virtual void RenderMaskedLightSurfaces (TArray<surface_t *> &slist) override;
 
   virtual void DrawWorldTexturesPass () override;
   virtual void DrawWorldFogPass () override;

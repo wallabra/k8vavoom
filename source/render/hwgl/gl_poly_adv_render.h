@@ -144,13 +144,16 @@ static void CheckListSortValidity (TArray<surface_t *> &list, const char *listna
 
 
 // this also sorts by fade, so we can avoid resorting in fog pass
-int glAdvRenderDrawListItemCmpByTextureAndFade (const void *a, const void *b, void * /*udata*/);
+int glAdvRenderDrawListItemCmpByTextureAndFade (const void *a, const void *b, void *);
 
 // full shader and texture sorting
-int glAdvRenderDrawListItemCmpByShaderTexture (const void *a, const void *b, void * /*udata*/);
+int glAdvRenderDrawListItemCmpByShaderTexture (const void *a, const void *b, void *);
 
 // only shaders and brightmap textures will be sorted
-int glAdvRenderDrawListItemCmpByShaderBMTexture (const void *a, const void *b, void * /*udata*/);
+int glAdvRenderDrawListItemCmpByShaderBMTexture (const void *a, const void *b, void *);
+
+// sort only by texture id
+int glAdvCompareTextureIdOnly (const void *a, const void *b, void *);
 
 
 #endif

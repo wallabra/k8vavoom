@@ -151,7 +151,7 @@ protected:
 
   // collector entr point
   // `CurrLightPos` and `CurrLightRadius` should be set
-  void CollectLightShadowSurfaces ();
+  void CollectLightShadowSurfaces (bool doShadows);
 
   void RenderShadowSurfaceList ();
   void RenderLightSurfaceList ();
