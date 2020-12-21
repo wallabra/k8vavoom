@@ -430,6 +430,8 @@ protected:
 
     VMatrix4 proj; // light projection matrix
     VMatrix4 lmpv[6]; // light view+projection matrices
+
+    inline void setAllDirty () noexcept { smapDirty = 0x3f; }
   };
 
   enum {
@@ -437,7 +439,10 @@ protected:
     CUBE32 = 1u,
   };
 
-  ShadowCubeMap shadowCube[2];
+  // should be even!
+  enum { MaxShadowCubes = 4 };
+
+  ShadowCubeMap shadowCube[MaxShadowCubes];
 
   GLint shadowmapSize;
   unsigned int shadowmapPOT; // 128<<shadowmapPOT is shadowmap size
@@ -450,14 +455,15 @@ protected:
   unsigned smapCurrent; // index
 
 protected:
-  void PrepareShadowMapsInternal (const float Radius);
+  // clear current cube textures
+  void ClearShadowMapsInternal ();
 
   // called in `FinishUpdate()`, so GPU could perform `glClear()` in parallel
   void ClearAllShadowMaps ();
 
   // activate cube (create it if necessary); calculate matrices
   // won't clear faces
-  void PrepareShadowCube (const TVec &LightPos, const float Radius, unsigned int index) noexcept;
+  void PrepareShadowCube (const TVec &LightPos, const float Radius) noexcept;
 
   // also sets is as current
   // shadowmap FBO must be active
@@ -471,10 +477,6 @@ protected:
   inline bool IsCurrentShadowMapDirty () const noexcept {  return shadowCube[smapCurrent].smapDirty&(1u<<shadowCube[smapCurrent].smapCurrentFace); }
   inline bool IsAnyShadowMapDirty () const noexcept { return (shadowCube[smapCurrent].smapDirty&0x3f); }
   inline void MarkAllShadowMapsClear () noexcept { shadowCube[smapCurrent].smapDirty = 0u; }
-
-public:
-  // called in renderer before collecting light/shadow surfaces, so GPU could perform `glClear()` in parallel
-  virtual void PrepareShadowMaps (const float Radius) override;
 
 public:
   // VDrawer interface

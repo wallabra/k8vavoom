@@ -40,6 +40,7 @@
 
 extern VCvarI gl_shadowmap_size;
 extern VCvarB gl_shadowmap_precision;
+extern VCvarB gl_shadowmap_more_cubes;
 
 // saved shadowmap parameters
 static int saved_gl_shadowmap_size = -666;
@@ -50,13 +51,12 @@ static VCvarB gl_dbg_smap_vbo("gl_dbg_smap_vbo", true, "Use VBO to render shadow
 
 //==========================================================================
 //
-//  VOpenGLDrawer::PrepareShadowMapsInternal
+//  VOpenGLDrawer::ClearShadowMapsInternal
 //
 //==========================================================================
-void VOpenGLDrawer::PrepareShadowMapsInternal (const float Radius) {
+void VOpenGLDrawer::ClearShadowMapsInternal () {
   if (!IsAnyShadowMapDirty()) return;
   GLSMAP_CLEAR_ERR();
-  glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
   for (unsigned int fc = 0; fc < 6; ++fc) {
     if (IsShadowMapDirty(fc)) {
       //p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowCube[smapCurrent].cubeDepthTexId[fc], 0);
@@ -64,47 +64,13 @@ void VOpenGLDrawer::PrepareShadowMapsInternal (const float Radius) {
       GLSMAP_ERR("set framebuffer depth texture");
       p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, shadowCube[smapCurrent].cubeTexId, 0);
       GLSMAP_ERR("set cube FBO face");
-      glDrawBuffer(GL_COLOR_ATTACHMENT0);
-      GLSMAP_ERR("set cube FBO draw buffer");
+      //glDrawBuffer(GL_COLOR_ATTACHMENT0);
+      //GLSMAP_ERR("set cube FBO draw buffer");
       glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
       GLSMAP_ERR("clear cube FBO");
     }
   }
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
   MarkAllShadowMapsClear();
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::PrepareShadowMaps
-//
-//==========================================================================
-void VOpenGLDrawer::PrepareShadowMaps (const float Radius) {
-  if (!r_shadowmaps.asBool() || !CanRenderShadowMaps()) return;
-  for (unsigned int index = 0; index < 2; ++index) {
-    smapCurrent = index;
-    if (!shadowCube[smapCurrent].cubeFBO || !IsAnyShadowMapDirty()) continue;
-    GLSMAP_CLEAR_ERR();
-    p_glBindFramebuffer(GL_FRAMEBUFFER, shadowCube[index].cubeFBO);
-    glDisable(GL_STENCIL_TEST);
-    glDisable(GL_SCISSOR_TEST);
-    PushDepthMask();
-    glEnableDepthWrite();
-    glClearDepth(1.0f);
-    if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // restore "normal" depth control
-    glDepthRange(0.0f, 1.0f);
-    //!if (gl_shadowmap_gbuffer) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE); else
-    glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
-    PrepareShadowMapsInternal(Radius);
-    ReactivateCurrentFBO();
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    RestoreDepthFunc();
-    if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
-    glClearDepth(!useReverseZ ? 1.0f : 0.0f);
-    PopDepthMask();
-  }
 }
 
 
@@ -115,7 +81,39 @@ void VOpenGLDrawer::PrepareShadowMaps (const float Radius) {
 //==========================================================================
 void VOpenGLDrawer::ClearAllShadowMaps () {
   //FIXME: this should be changed, but we don't have any cascades yet anyway
-  PrepareShadowMaps(999999.0f); // use HUGE radius to clear all cascades
+  //PrepareShadowMaps(999999.0f); // use HUGE radius to clear all cascades
+  if (!r_shadowmaps.asBool() || !CanRenderShadowMaps()) return;
+  bool restoreVals = false;
+  for (unsigned int index = 0; index < MaxShadowCubes; ++index) {
+    smapCurrent = index;
+    if (!shadowCube[smapCurrent].cubeFBO || !IsAnyShadowMapDirty()) continue;
+    GLSMAP_CLEAR_ERR();
+    p_glBindFramebuffer(GL_FRAMEBUFFER, shadowCube[index].cubeFBO);
+    if (!restoreVals) {
+      restoreVals = true;
+      //glDisable(GL_STENCIL_TEST);
+      glDisable(GL_SCISSOR_TEST);
+      PushDepthMask();
+      glEnableDepthWrite();
+      glClearDepth(1.0f);
+      if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // restore "normal" depth control
+      glDepthRange(0.0f, 1.0f);
+      //!if (gl_shadowmap_gbuffer) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE); else
+      glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
+      glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
+    }
+    ClearShadowMapsInternal();
+  }
+  if (restoreVals) {
+    ReactivateCurrentFBO();
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    RestoreDepthFunc();
+    if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
+    glClearDepth(!useReverseZ ? 1.0f : 0.0f);
+    PopDepthMask();
+  }
+  smapCurrent = 0;
 }
 
 
@@ -127,10 +125,42 @@ void VOpenGLDrawer::ClearAllShadowMaps () {
 //  won't clear faces
 //
 //==========================================================================
-void VOpenGLDrawer::PrepareShadowCube (const TVec &LightPos, const float Radius, unsigned int index) noexcept {
-  if (index > CUBE32) index = CUBE32;
+void VOpenGLDrawer::PrepareShadowCube (const TVec &LightPos, const float Radius) noexcept {
   EnsureShadowMapCube();
-  if (index > 0 && !shadowCube[index].cubeFBO) index = 0;
+
+  unsigned int index = smapCurrent;
+  if (gl_shadowmap_more_cubes.asBool()) {
+    if (!gl_shadowmap_precision.asBool()) {
+      index = (index+1u)%MaxShadowCubes;
+    } else {
+      if (Radius < 1000.0f) {
+        if (index >= MaxShadowCubes/2) index = 0u; else index = (index+1u)%(MaxShadowCubes/2);
+      } else {
+        if (index >= MaxShadowCubes/2) index = ((index-MaxShadowCubes/2+1u)%MaxShadowCubes/2)+MaxShadowCubes/2; else index = MaxShadowCubes/2;
+      }
+    }
+  } else {
+    if (gl_shadowmap_precision.asBool() && Radius >= 1000.0f) index = MaxShadowCubes/2;
+  }
+
+  //GCon->Logf(NAME_Debug, "PrepareShadowCube: smapCurrent=%u; smapNext=%u", smapCurrent, index);
+
+  // clear previous shadow cube
+  if (smapCurrent != index) {
+    if (IsAnyShadowMapDirty()) {
+      //GCon->Logf(NAME_Debug, "PrepareShadowCube: smapCurrent=%u; smapNext=%u", smapCurrent, index);
+      p_glBindFramebuffer(GL_FRAMEBUFFER, shadowCube[smapCurrent].cubeFBO);
+      glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
+      glClearDepth(1.0f);
+      glDisable(GL_SCISSOR_TEST);
+      glEnableDepthWrite();
+      if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // restore "normal" depth control
+      glDepthRange(0.0f, 1.0f);
+      glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
+      ClearShadowMapsInternal();
+    }
+  }
+
   smapCurrent = index;
   CalcShadowMapProjectionMatrix(shadowCube[index].proj, Radius/*, swidth, sheight, PixelAspect*/);
   for (unsigned int facenum = 0; facenum < 6; ++facenum) {
@@ -150,6 +180,15 @@ void VOpenGLDrawer::PrepareShadowCube (const TVec &LightPos, const float Radius,
 //==========================================================================
 void VOpenGLDrawer::ActivateShadowMapFace (unsigned int facenum) noexcept {
   vassert(facenum >= 0 && facenum <= 5);
+
+  // clear next shadowmap face (so it can be done in parallel)
+  /*
+  if (facenum != 5 && IsShadowMapDirty(facenum+1)) {
+    p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, shadowCube[smapCurrent].cubeDepthRBId[facenum+1]);
+    p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X+facenum+1, shadowCube[smapCurrent].cubeTexId, 0);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+  }
+  */
 
   //p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowCube[smapCurrent].cubeDepthTexId[facenum], 0);
   p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, shadowCube[smapCurrent].cubeDepthRBId[facenum]);
@@ -181,7 +220,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
     saved_gl_shadowmap_precision = gl_shadowmap_precision.asBool();
   }
 
-  PrepareShadowCube(LightPos, Radius, (Radius < 1000.0f ? CUBE16 : CUBE32));
+  PrepareShadowCube(LightPos, Radius);
 
   GLSMAP_CLEAR_ERR();
   /*
@@ -243,7 +282,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   GLGetViewport(savedSMVPort);
   GLSetViewport(0, 0, shadowmapSize, shadowmapSize);
 
-  PrepareShadowMapsInternal(Radius);
+  ClearShadowMapsInternal();
 
   //SurfShadowMap.Activate();
   SurfShadowMap.SetLightPos(LightPos);

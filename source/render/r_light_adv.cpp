@@ -76,7 +76,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   const bool useShadowMaps = (r_shadowmaps.asBool() && Drawer->CanRenderShadowMaps());
 
-  if (useShadowMaps && IsShadowsEnabled() && !(dlflags&dlight_t::NoShadow)) Drawer->PrepareShadowMaps(Radius);
+  //if (useShadowMaps && IsShadowsEnabled() && !(dlflags&dlight_t::NoShadow)) Drawer->PrepareShadowMaps(Radius);
 
   //TODO: we can reuse collected surfaces in next passes
   LitCalcBBox = true;

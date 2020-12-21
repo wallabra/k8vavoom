@@ -37,6 +37,9 @@
 
 VCvarI dbg_shadowmaps("dbg_shadowmaps", "0", "Show shadowmap cubemap?", CVAR_PreInit);
 
+extern VCvarB gl_shadowmap_preclear;
+
+
 
 //==========================================================================
 //
@@ -102,7 +105,7 @@ void VOpenGLDrawer::StartUpdate () {
 void VOpenGLDrawer::FinishUpdate () {
   //mainFBO.blitToScreen();
   GetMainFBO()->blitToScreen();
-  ClearAllShadowMaps();
+  if (gl_shadowmap_preclear) ClearAllShadowMaps();
   glBindTexture(GL_TEXTURE_2D, 0);
   SetMainFBO(true); // forced
   glBindTexture(GL_TEXTURE_2D, 0);

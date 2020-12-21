@@ -129,6 +129,9 @@ VCvarI gl_release_ram_textures_mode("gl_release_ram_textures_mode", "0", "When t
 // 3: 1024
 VCvarI gl_shadowmap_size("gl_shadowmap_size", "0", "Shadowmap size (0:128; 1:256; 2:512; 3:1024).", CVAR_PreInit|CVAR_Archive);
 VCvarB gl_shadowmap_precision("gl_shadowmap_precision", false, "Allow higher shadowmap precision for bigger lights?", CVAR_PreInit|CVAR_Archive);
+VCvarB gl_shadowmap_preclear("gl_shadowmap_preclear", true, "Clear shadowmaps after frame blit?", CVAR_PreInit|CVAR_Archive);
+// this seems to work slightly slower
+VCvarB gl_shadowmap_more_cubes("gl_shadowmap_more_cubes", false, "Use all available shadowmap cubes, and clear them in advanve?", CVAR_PreInit|CVAR_Archive);
 
 
 static VCvarB gl_s3tc_present("__gl_s3tc_present", false, "Use S3TC texture compression, if supported?", CVAR_Rom);
@@ -483,8 +486,9 @@ VOpenGLDrawer::VOpenGLDrawer ()
   shadowmapPOT = getShadowmapPOT();
   shadowmapSize = 64<<shadowmapPOT;
 
-  memset((void *)&shadowCube[0], 0, sizeof(shadowCube));
-  shadowCube[0].smapDirty = shadowCube[1].smapDirty = 0x3fu;
+  memset((void *)shadowCube, 0, sizeof(shadowCube));
+  for (unsigned int f = 0; f < MaxShadowCubes; ++f) shadowCube[f].setAllDirty();
+  smapCurrent = 0;
 
   memset(currentViewport, 0, sizeof(currentViewport));
   currentViewport[0] = -666;
@@ -516,7 +520,7 @@ VOpenGLDrawer::~VOpenGLDrawer () {
 void VOpenGLDrawer::DestroyShadowCube () {
   UnloadShadowMapShaders();
   // delete cubemaps
-  for (unsigned cubeidx = 0; cubeidx < 2; ++cubeidx) {
+  for (unsigned cubeidx = 0; cubeidx < MaxShadowCubes; ++cubeidx) {
     ShadowCubeMap &cube = *&shadowCube[cubeidx];
     if (cube.cubeTexId) {
       p_glBindFramebuffer(GL_FRAMEBUFFER, cube.cubeFBO);
@@ -532,8 +536,9 @@ void VOpenGLDrawer::DestroyShadowCube () {
 
     }
   }
-  memset((void *)&shadowCube[0], 0, sizeof(shadowCube));
-  shadowCube[0].smapDirty = shadowCube[1].smapDirty = 0x3fu;
+  memset((void *)shadowCube, 0, sizeof(shadowCube));
+  for (unsigned int f = 0; f < MaxShadowCubes; ++f) shadowCube[f].setAllDirty();
+  smapCurrent = 0;
 }
 
 
@@ -552,9 +557,9 @@ void VOpenGLDrawer::CreateShadowCube () {
 
   GLDRW_RESET_ERROR();
 
-  for (unsigned cubeidx = 0; cubeidx < 2; ++cubeidx) {
+  for (unsigned cubeidx = 0; cubeidx < MaxShadowCubes; ++cubeidx) {
     ShadowCubeMap &cube = *&shadowCube[cubeidx];
-    cube.smapDirty = 0x3fu;
+    cube.setAllDirty();
     cube.smapCurrentFace = 0;
     // create cubemap for shadowmapping
     p_glGenFramebuffers(1, &cube.cubeFBO);
@@ -643,7 +648,7 @@ void VOpenGLDrawer::CreateShadowCube () {
 
       //glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, 0, GL_R32F, shadowmapSize, shadowmapSize, 0, GL_RED, GL_FLOAT, 0);
       //glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, 0, GL_RGB16F, shadowmapSize, shadowmapSize, 0, GL_RGB, GL_FLOAT, 0);
-      if (cubeidx > 0 && gl_shadowmap_precision.asBool()) {
+      if (cubeidx >= MaxShadowCubes/2 && gl_shadowmap_precision.asBool()) {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, 0, GL_R32F, shadowmapSize, shadowmapSize, 0, GL_RED, GL_FLOAT, 0);
       } else {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+fc, 0, GL_R16F, shadowmapSize, shadowmapSize, 0, GL_RED, GL_FLOAT, 0);
