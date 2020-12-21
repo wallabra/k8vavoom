@@ -160,7 +160,7 @@ void VRenderLevelShared::QueueTranslucentSurface (surface_t *surf, const RenderS
   trans_sprite_t *spr = AllocTransSpr(ri);
   spr->dist = dist;
   spr->surf = surf;
-  spr->type = 0/*(isSprite ? 1 : 0)*/;
+  spr->type = TSP_Wall;
   //spr->origin = sprOrigin;
   spr->rstyle = ri;
   // used in sorter
@@ -203,7 +203,7 @@ void VRenderLevelShared::QueueSpritePoly (const TVec *sv, int lump, const Render
   spr->texorg = texorg;
   spr->surf = nullptr;
   spr->translation = translation;
-  spr->type = 1/*(isSprite ? 1 : 0)*/;
+  spr->type = TSP_Sprite;
   spr->objid = objid;
   spr->prio = priority;
   //spr->origin = sprOrigin;
@@ -229,7 +229,7 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, const Render
   spr->Ent = mobj;
   spr->rstyle = ri;
   spr->dist = dist;
-  spr->type = 2;
+  spr->type = TSP_Model;
   spr->TimeFrac = TimeFrac;
   spr->lump = -1; // has no sense
   spr->objid = mobj->ServerUId;
@@ -815,6 +815,12 @@ extern "C" {
     }
     #endif
 
+    // priority check
+    // higher priority comes first
+    if (ta->prio < tb->prio) return 1; // a has lower priority, it should come last (a > b)
+    if (ta->prio > tb->prio) return -1; // a has higher priority, it should come first (a < b)
+
+    #if 0
     // sort by object type
     // first masked polys, then sprites, then alias models
     // type 0: masked polys
@@ -823,19 +829,22 @@ extern "C" {
     const int typediff = (int)ta->type-(int)tb->type;
     if (typediff) return typediff;
 
+    /*
     // priority check
     // higher priority comes first
     if (ta->prio < tb->prio) return 1; // a has lower priority, it should come last (a > b)
     if (ta->prio > tb->prio) return -1; // a has higher priority, it should come first (a < b)
+    */
 
     if (ta->objid < tb->objid) return -1;
     if (ta->objid > tb->objid) return 1;
 
     // sort sprites by lump number, why not
-    if (ta->type == 1) {
+    if (ta->type == TSP_Sprite) {
       if (ta->lump < tb->lump) return -1;
       if (ta->lump > tb->lump) return 1;
     }
+    #endif
 
     // nothing to check anymore, consider equal
     return 0;
@@ -843,7 +852,29 @@ extern "C" {
 }
 
 
-#define MAX_POFS  (10)
+//==========================================================================
+//
+//  TSNextPOfs
+//
+//==========================================================================
+static inline void TSNextPOfs (VRenderLevelShared::TransPolyState &transSprState) noexcept {
+  // switch to next transSprState.pofs
+  //if (++transSprState.pofs == /*MAX_POFS*/10) transSprState.pofs = 0;
+  ++transSprState.pofs;
+  Drawer->GLPolygonOffsetEx(r_sprite_pslope, -(transSprState.pofs*r_sprite_pofs)); // pull forward
+  transSprState.pofsEnabled = true;
+}
+
+
+//==========================================================================
+//
+//  TSDisablePOfs
+//
+//==========================================================================
+static inline void TSDisablePOfs (VRenderLevelShared::TransPolyState &transSprState) noexcept {
+  if (transSprState.pofsEnabled) { Drawer->GLDisableOffset(); transSprState.pofsEnabled = false; }
+}
+
 
 //==========================================================================
 //
@@ -852,50 +883,43 @@ extern "C" {
 //==========================================================================
 void VRenderLevelShared::DrawTransSpr (trans_sprite_t &spr) {
   //GCon->Logf("  #%d: type=%d; alpha=%g; additive=%d; light=0x%08x; fade=0x%08x", f, spr.type, spr.Alpha, (int)spr.Additive, spr.light, spr.Fade);
-  if (spr.type == 2) {
-    // alias model
-    if (transSprState.pofsEnabled) { Drawer->GLDisableOffset(); transSprState.pofsEnabled = false; }
-    DrawEntityModel(spr.Ent, spr.rstyle/*spr.light, spr.Fade, spr.Alpha, spr.Additive*/, spr.TimeFrac, RPASS_Normal);
-  } else if (spr.type) {
-    // sprite
-    if (transSprState.sortWithOfs && (transSprState.firstSprite || transSprState.lastpdist == spr.pdist)) {
-      transSprState.lastpdist = spr.pdist;
-      if (!transSprState.firstSprite) {
-        if (!transSprState.pofsEnabled) {
-          // switch to next transSprState.pofs
-          //if (++transSprState.pofs == MAX_POFS) transSprState.pofs = 0;
-          ++transSprState.pofs;
-          Drawer->GLPolygonOffsetEx(r_sprite_pslope, -(transSprState.pofs*r_sprite_pofs)); // pull forward
-          transSprState.pofsEnabled = true;
+  switch (spr.type) {
+    case TSP_Wall:
+      // masked polygon
+      // non-translucent and non-additive polys should not end up here
+      vassert(spr.surf);
+      TSDisablePOfs(transSprState);
+      if (transSprState.allowTransPolys) {
+        //if (spr.surf->drawflags&surface_t::DF_MIRROR)
+        {
+          Drawer->DrawMaskedPolygon(spr.surf, spr.rstyle.alpha, spr.rstyle.isAdditive(), !(spr.rstyle.flags&RenderStyleInfo::FlagNoDepthWrite));
         }
+      }
+      break;
+    case TSP_Sprite:
+      // sprite
+      if (transSprState.sortWithOfs && transSprState.lastpdist == spr.pdist) {
+        transSprState.lastpdist = spr.pdist;
+        if (!transSprState.pofsEnabled) TSNextPOfs(transSprState);
       } else {
-        transSprState.firstSprite = false;
+        transSprState.lastpdist = spr.pdist;
+        TSDisablePOfs(transSprState);
+        // reset transSprState.pofs
+        transSprState.pofs = 0;
       }
-    } else {
-      transSprState.lastpdist = spr.pdist;
-      if (transSprState.pofsEnabled) { Drawer->GLDisableOffset(); transSprState.pofsEnabled = false; }
-      // reset transSprState.pofs
-      transSprState.pofs = 0;
-    }
-    Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), spr.Verts, GTextureManager[spr.lump],
-                              spr.rstyle, GetTranslation(spr.translation),
-                              ColorMap, spr.normal, spr.pdist,
-                              spr.saxis, spr.taxis, spr.texorg);
-  } else {
-    // masked polygon
-    // non-translucent and non-additive polys should not end up here
-    vassert(spr.surf);
-    if (transSprState.pofsEnabled) { Drawer->GLDisableOffset(); transSprState.pofsEnabled = false; }
-    if (transSprState.allowTransPolys) {
-      //if (spr.surf->drawflags&surface_t::DF_MIRROR)
-      {
-        Drawer->DrawMaskedPolygon(spr.surf, spr.rstyle.alpha, spr.rstyle.isAdditive(), !(spr.rstyle.flags&RenderStyleInfo::FlagNoDepthWrite));
-      }
-    }
+      Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), spr.Verts, GTextureManager[spr.lump],
+                                spr.rstyle, GetTranslation(spr.translation),
+                                ColorMap, spr.normal, spr.pdist,
+                                spr.saxis, spr.taxis, spr.texorg);
+      break;
+    case TSP_Model:
+      // alias model
+      TSDisablePOfs(transSprState);
+      DrawEntityModel(spr.Ent, spr.rstyle/*spr.light, spr.Fade, spr.Alpha, spr.Additive*/, spr.TimeFrac, RPASS_Normal);
+      break;
+    default: Sys_Error("VRenderLevelShared::DrawTransSpr: invalid sprite type (%d)", spr.type);
   }
 }
-
-#undef MAX_POFS
 
 
 //==========================================================================

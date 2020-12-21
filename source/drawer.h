@@ -170,6 +170,12 @@ protected:
   bool mIsShadowVolumeRenderer;
 
 public:
+  enum {
+    TSP_Wall,
+    TSP_Sprite,
+    TSP_Model,
+  };
+
   struct trans_sprite_t {
     /*SurfVertex*/TVec Verts[4]; // only for sprites
     union {
@@ -187,7 +193,7 @@ public:
     TVec taxis; // masked polys and sprites
     TVec texorg; // masked polys and sprites
     int translation; // masked polys and sprites
-    int type; // 0: masked polygon (wall); 1: sprite; 2: alias model
+    int type; // TSP_xxx -- 0: masked polygon (wall); 1: sprite; 2: alias model
     float dist; // for soriting
     vuint32 objid; // for entities
     RenderStyleInfo rstyle;

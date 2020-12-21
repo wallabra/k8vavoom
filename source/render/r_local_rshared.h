@@ -382,11 +382,11 @@ protected:
   }
   */
 
+public:
   struct TransPolyState {
     bool pofsEnabled;
     int pofs;
     float lastpdist; // for sprites: use polyofs for the same dist
-    bool firstSprite;
 
     // options
     bool allowTransPolys;
@@ -396,10 +396,10 @@ protected:
       pofsEnabled = false;
       pofs = 0;
       lastpdist = -1e12f; // for sprites: use polyofs for the same dist
-      firstSprite = true;
     }
   };
 
+protected:
   TransPolyState transSprState;
 
   void DrawTransSpr (trans_sprite_t &spr);
