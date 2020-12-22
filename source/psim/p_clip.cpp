@@ -1688,7 +1688,7 @@ void VViewClipper::CheckLightAddClipSeg (const seg_t *seg, const TPlane *Mirror,
   }
   */
 
-  //if (asShadow == AsShadowMap && ldef->flags&ML_TWOSIDED) return; // hack for shadowmaps
+  if (asShadow == AsShadowMap && (ldef->flags&ML_TWOSIDED)) return; // hack for shadowmaps
 
   // light has 360 degree FOV, so clip with all walls
   const TVec *v1, *v2;
