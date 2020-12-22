@@ -20,7 +20,19 @@ menudef ShadowMapOptions {
       "Lights that are too close to wall/floor will get visible moire.",
       "This option tells the engine to move light on a safer distance,",
       "if the light is too close to textured surface.",
-      "There is no reason to turn this off.";
+      "THIS IS EXPERIMENTAL OPTION, and it causes shadow jittering.";
+  }
+
+  option bool {
+    title = "Flip 2-Sided Walls";
+    cvar = r_shadowmap_flip_surfaces;
+    help =
+      "In Doom, two-sided walls has flipped textures on their sides.",
+      "This option tries to render the proper side, so shadows will be",
+      "correct for the camera PoV.",
+      "Most of the time this works, but you may notice 'shadow flipping'",
+      "sometimes. Also, there are some bugs with the algo yet.",
+      "Anyway, if in doubt, leave this 'ON'.";
   }
 
 
