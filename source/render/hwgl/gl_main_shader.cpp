@@ -244,9 +244,9 @@ bool VOpenGLDrawer::VGLShader::IsActive () const noexcept {
 void VOpenGLDrawer::VGLShader::Compile () {
   /*     if (gl_shader_on_demand) GCon->Logf(NAME_Init, "compiling shader '%s'", progname);
   else */if (developer) GCon->Logf(NAME_Dev, "compiling shader '%s'", progname);
-  GLhandleARB VertexShader = owner->LoadShader(progname, incdir, GL_VERTEX_SHADER_ARB, vssrcfile, defines);
-  GLhandleARB FragmentShader = owner->LoadShader(progname, incdir, GL_FRAGMENT_SHADER_ARB, fssrcfile, defines);
-  prog = owner->CreateProgram(progname, VertexShader, FragmentShader);
+  GLhandleARB VertexShader = owner->LoadShader(this, progname, incdir, GL_VERTEX_SHADER_ARB, vssrcfile, defines);
+  GLhandleARB FragmentShader = owner->LoadShader(this, progname, incdir, GL_FRAGMENT_SHADER_ARB, fssrcfile, defines);
+  prog = owner->CreateProgram(this, progname, VertexShader, FragmentShader);
   LoadUniforms();
   compiled = true;
 }
@@ -476,7 +476,7 @@ static VStr getDirectiveArg (VStr s) {
 //  VOpenGLDrawer::LoadShader
 //
 //==========================================================================
-GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdircs, GLenum Type, VStr FileName, const TArray<VStr> &defines) {
+GLhandleARB VOpenGLDrawer::LoadShader (VGLShader *gls, const char *progname, const char *incdircs, GLenum Type, VStr FileName, const TArray<VStr> &defines) {
   // load source file
   VStr ssrc = readTextFile(FileName);
 
@@ -519,7 +519,13 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdirc
     VStr cmd = getDirective(line);
     if (cmd.length() == 0) {
       if (needToAddDefines) {
-        if (isVersionLine(line)) { res += fixVersionLine(line, glVerMajor, glVerMinor); continue; }
+        if (isVersionLine(line)) {
+          res += fixVersionLine(line, glVerMajor, glVerMinor);
+          if (gls && gls->forCubemaps) {
+            res += va("#define CubeSize %d.0\n", shadowmapSize);
+          }
+          continue;
+        }
         if (needToAddRevZ) { res += "#define VAVOOM_REVERSE_Z\n"; needToAddRevZ = false; }
         #ifdef GL4ES_HACKS
         res += "#define GL4ES_HACKS\n";
@@ -607,7 +613,7 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdirc
 //  VOpenGLDrawer::CreateProgram
 //
 //==========================================================================
-GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader) {
+GLhandleARB VOpenGLDrawer::CreateProgram (VGLShader *gls, const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader) {
   // create program object
   GLDRW_RESET_ERROR();
   GLhandleARB Program = p_glCreateProgramObjectARB();
@@ -645,7 +651,7 @@ GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB Vert
   (shad_##Blur)[blur_].defines = (shad_).defines; \
   (shad_##Blur)[blur_].defines.append(defs_); \
   if (shittyBilinear) (shad_##Blur)[blur_].defines.append("VV_SMAP_SHITTY_BILINEAR"); \
-  (shad_##Blur)[blur_].defines.append(va("CubeSize %d", shadowmapSize));
+  /*(shad_##Blur)[blur_].defines.append(va("CubeSize %d", shadowmapSize));*/
 
 #define VV_CREATE_SMAP_SHADER_LEVEL(blur_,defs_) \
   VV_CREATE_SMAP_SHADER(ShadowsLightSMap,blur_,defs_) \

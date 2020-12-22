@@ -13,27 +13,6 @@ vec3 convert_cube_uv_to_xyz (const vec3 texc) {
 }
 
 
-// given the texture coordinates, calculate sampling direction, and weight factors
-// `x` and `y` are the directions
-// `z` and `w` are [0..1] proximity to the corresponding texel edge
-// (so 1.0-prox is the weight for the neighbouring texel)
-vec4 calc_blur_weight_dir (const vec3 texc) {
-  vec4 res;
-  float texU = texc.x*CubeSize;
-  float texV = texc.y*CubeSize;
-  // fractional parts gives texel offsets
-  res.z = fract(texU)-0.5;
-  res.w = fract(texV)-0.5;
-  // horizontal
-  res.x = sign(res.z);
-  res.z = 0.5-abs(res.z);
-  // vertical
-  res.y = sign(res.w);
-  res.w = 0.5-abs(res.w);
-  return res;
-}
-
-
 // input is normalized
 // z is face number
 vec3 convert_xyz_to_cube_uv (const vec3 dir) {

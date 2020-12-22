@@ -1300,8 +1300,8 @@ protected:
   void DoHorizonPolygon (surface_t *surf);
   void DrawPortalArea (VPortal *Portal);
 
-  GLhandleARB LoadShader (const char *progname, const char *incdir, GLenum Type, VStr FileName, const TArray<VStr> &defines=TArray<VStr>());
-  GLhandleARB CreateProgram (const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader);
+  GLhandleARB LoadShader (VGLShader *gls, const char *progname, const char *incdir, GLenum Type, VStr FileName, const TArray<VStr> &defines=TArray<VStr>());
+  GLhandleARB CreateProgram (VGLShader *gls, const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader);
 
   void UploadModel (VMeshModel *Mdl);
   void UnloadModels ();
