@@ -407,6 +407,8 @@ int SemParser::expectInt () {
 
     if (token == "MaxStackSlots") return 1024;
 
+    if (token == "MaxShadowCubes") return 4;
+
     if (token == "VMethod") {
       skipToken();
       if (token == "::") {
