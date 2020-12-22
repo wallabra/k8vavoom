@@ -57,14 +57,6 @@
       if (sldist >= origDist) valdiag = 1.0;
 
     #else
-      // sadly, new shifter is not working here
-      // meh, new spaghetti is faster anyway
-      /*
-      #ifndef VV_SMAP_FILTER_OLD
-      # define VV_SMAP_FILTER_OLD
-      #endif
-      #ifdef VV_SMAP_FILTER_OLD
-      */
         vec3 ltf_horiz, ltf_vert, ltf_diag;
         float ttexX = 2.0*cubeTC.x-1.0;
         float ttexY = 2.0*cubeTC.y-1.0;
@@ -83,12 +75,15 @@
         #define CUBE_FIX_EDGES_norm(v_)  normalize(v_)
 
         // for models, it is better to use bias, otherwise we'll get alot more wrong shadows
+        /*
         #ifdef VV_SURFACE_LIGHTING
         valat = compareShadowTexelDistance(ltfdir, origDist);
         #else
         float biasBase = VV_CALC_BIAS;
         valat = compareShadowTexelDistanceBS(ltfdir, origDist, biasBase);
         #endif
+        */
+        valat = 0.0;
         valhoriz = 0.0;
         valvert = 0.0;
         valdiag = 0.0;
@@ -144,26 +139,6 @@
           #undef SMCHECK_V3
         }
         #undef SMCHECK_ASSIGN
-
-        /*
-        valhoriz = compareShadowTexelDistanceExEx(ltf_horiz, origDist, cubeTC.x+tshift, cubeTC.y, cubeTC.z);
-        valvert = compareShadowTexelDistanceExEx(ltf_vert, origDist, cubeTC.x, cubeTC.y+tshift, cubeTC.z);
-        valdiag = compareShadowTexelDistanceExEx(ltf_diag, origDist, cubeTC.x+tshift, cubeTC.y+tshift, cubeTC.z);
-        */
-
-        /*
-        VV_SMAP_SAMPLE_SET(valhoriz, normalize(shift_cube_uv_slow(cubeTC, vec2(1.0, 0.0))));
-        VV_SMAP_SAMPLE_SET(valvert,  normalize(shift_cube_uv_slow(cubeTC, vec2(0.0, 1.0))));
-        VV_SMAP_SAMPLE_SET(valdiag,  normalize(shift_cube_uv_slow(cubeTC, vec2(1.0, 1.0))));
-        */
-      /*
-      #else
-        $include "shadowvol/cubemap_calc_filters.fs"
-        VV_SMAP_SAMPLE_SET(valhoriz, normalize(VV_SMAP_OFS(1.0, 0.0)));
-        VV_SMAP_SAMPLE_SET(valvert,  normalize(VV_SMAP_OFS(0.0, 1.0)));
-        VV_SMAP_SAMPLE_SET(valdiag,  normalize(VV_SMAP_OFS(1.0, 1.0)));
-      #endif
-      */
     #endif
 
     float daccum = valat+valhoriz+valvert+valdiag;

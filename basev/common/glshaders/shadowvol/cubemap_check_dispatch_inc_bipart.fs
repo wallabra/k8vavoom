@@ -1,4 +1,7 @@
   sldist = textureCubeFn(ShadowTexture, tt_ltfdir).r+VV_SMAP_BIAS;
+  #ifdef VV_MODEL_LIGHTING
+  sldist += biasBase;
+  #endif
   #ifdef VV_SMAP_SQUARED_DIST
     sldist *= LightRadius;
     sldist *= sldist;
