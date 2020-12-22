@@ -638,6 +638,7 @@ void SCR_Update (bool fullUpdate) {
   if (!fullUpdate) return;
 
   if (clWipeTimer >= 0.0f && wipeStartedTime < 0.0) {
+    //GCon->Logf(NAME_Debug, "PrepareWipe(): clWipeTimer=%g; wipeStartedTime=%g; wipeStarted=%d", clWipeTimer, wipeStartedTime, (int)wipeStarted);
     Drawer->PrepareWipe();
     wipeStartedTime = Sys_Time();
   }
@@ -665,6 +666,7 @@ void SCR_Update (bool fullUpdate) {
         if (dbg_disable_world_render) {
           Drawer->ClearScreen(VDrawer::CLEAR_ALL);
         } else {
+          //if (clWipeTimer >= 0.0f) GCon->Logf(NAME_Debug, "R_RenderPlayerView(): clWipeTimer=%g; wipeStartedTime=%g; wipeStarted=%d", clWipeTimer, wipeStartedTime, (int)wipeStarted);
           R_RenderPlayerView();
         }
       } else {
@@ -694,7 +696,7 @@ void SCR_Update (bool fullUpdate) {
     Drawer->StartUpdate();
     if (allowClear) Drawer->ClearScreen();
     Drawer->Setup2D(); // setup 2D projection
-    if (clWipeTimer >= 0.0f) Drawer->RenderWipe(-1.0f);
+    if (clWipeTimer >= 0.0f && wipeStartedTime > 0.0) Drawer->RenderWipe(-1.0f);
   }
 
   if (drawOther) {
@@ -713,6 +715,7 @@ void SCR_Update (bool fullUpdate) {
       // fix wipe timer
       const double ctt = Sys_Time();
       if (allowWipeStart) {
+        //GCon->Logf(NAME_Debug, "wiperender: clWipeTimer=%g; wipeStartedTime=%g; wipeStarted=%d", clWipeTimer, wipeStartedTime, (int)wipeStarted);
         if (!wipeStarted) { wipeStarted = true; wipeStartedTime = ctt; }
         clWipeTimer = (float)(ctt-wipeStartedTime);
         // render wipe
@@ -722,6 +725,8 @@ void SCR_Update (bool fullUpdate) {
       } else {
         Drawer->RenderWipe(-1.0f);
       }
+    } else if (clWipeTimer >= 0.0f) {
+      Drawer->RenderWipe(-1.0f);
     }
 
     if ((!GLevel || GLevel->TicTime >= serverStartRenderFramesTic) && clWipeTimer < 0.0f) {
