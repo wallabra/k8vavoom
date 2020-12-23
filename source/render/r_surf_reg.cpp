@@ -787,7 +787,7 @@ void VRenderLevelLightmap::saveLightmapsInternal (VStream *strm) {
 void VRenderLevelLightmap::saveLightmaps (VStream *strm) {
   if (!strm) return;
   strm->Serialise(LMAP_CACHE_DATA_SIGNATURE, CDSLEN);
-  VZipStreamWriter *zipstrm = new VZipStreamWriter(strm, (int)loader_cache_compression_level_lightmap);
+  VZLibStreamWriter *zipstrm = new VZLibStreamWriter(strm, (int)loader_cache_compression_level_lightmap);
   saveLightmapsInternal(zipstrm);
   zipstrm->Close();
   delete zipstrm;
@@ -1132,7 +1132,7 @@ bool VRenderLevelLightmap::loadLightmaps (VStream *strm) {
     return false;
   }
   lmcacheUnknownSurfaceCount = 0;
-  VZipStreamReader *zipstrm = new VZipStreamReader(true, strm, VZipStreamReader::UNKNOWN_SIZE, VZipStreamReader::UNKNOWN_SIZE/*Map->DecompressedSize*/);
+  VZLibStreamReader *zipstrm = new VZLibStreamReader(true, strm, VZLibStreamReader::UNKNOWN_SIZE, VZLibStreamReader::UNKNOWN_SIZE/*Map->DecompressedSize*/);
   bool ok = loadLightmapsInternal(zipstrm);
   zipstrm->Close();
   if (!ok && !lmcacheUnknownSurfaceCount) lmcacheUnknownSurfaceCount = CountAllSurfaces();

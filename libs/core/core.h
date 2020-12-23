@@ -152,7 +152,7 @@
 #include "args.h" // command line arguments
 #include "stream/streamsbit.h" // bitstreams
 #include "stream/streamsex.h" // extended streams
-#include "stream/streamszip.h" // packed streams
+#include "stream/streamszlib.h" // packed streams
 
 #include "mathutil.h"
 

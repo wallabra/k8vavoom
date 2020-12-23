@@ -28,7 +28,7 @@
 
 
 // this will cache the whole stream on 2nd back-seek
-class VZipStreamReader : public VStream {
+class VZLibStreamReader : public VStream {
 public:
   // stream type
   enum Type {
@@ -79,27 +79,27 @@ private:
   void cacheAllData ();
 
 public:
-  VV_DISABLE_COPY(VZipStreamReader)
+  VV_DISABLE_COPY(VZLibStreamReader)
 
   // doesn't own passed stream
-  VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  VZipStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZLibStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZLibStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
 
   // doesn't own passed stream
-  VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  VZipStreamReader (bool useCurrSrcPos, VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZLibStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZLibStreamReader (bool useCurrSrcPos, VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
 
   // lock should not be held for the following ctors
 
   // doesn't own passed stream
-  VZipStreamReader (mythread_mutex *ardlock, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  VZipStreamReader (mythread_mutex *ardlock, VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZLibStreamReader (mythread_mutex *ardlock, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZLibStreamReader (mythread_mutex *ardlock, VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
 
   // doesn't own passed stream
-  VZipStreamReader (mythread_mutex *ardlock, bool useCurrSrcPos, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  VZipStreamReader (mythread_mutex *ardlock, bool useCurrSrcPos, VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZLibStreamReader (mythread_mutex *ardlock, bool useCurrSrcPos, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZLibStreamReader (mythread_mutex *ardlock, bool useCurrSrcPos, VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
 
-  virtual ~VZipStreamReader () override;
+  virtual ~VZLibStreamReader () override;
 
   void setCrc (vuint32 acrc); // turns on CRC checking
 
@@ -114,7 +114,7 @@ public:
 };
 
 
-class VZipStreamWriter : public VStream {
+class VZLibStreamWriter : public VStream {
 public:
   // stream type
   enum Type {
@@ -133,11 +133,11 @@ private:
   bool doCrcCalc;
 
 public:
-  VV_DISABLE_COPY(VZipStreamWriter)
+  VV_DISABLE_COPY(VZLibStreamWriter)
 
   // doesn't own passed stream
-  VZipStreamWriter (VStream *, int clevel=6, Type atype=Type::ZLIB);
-  virtual ~VZipStreamWriter () override;
+  VZLibStreamWriter (VStream *, int clevel=6, Type atype=Type::ZLIB);
+  virtual ~VZLibStreamWriter () override;
 
   void setRequireCrc ();
   vuint32 getCrc32 () const; // crc32 over uncompressed data (if enabled)

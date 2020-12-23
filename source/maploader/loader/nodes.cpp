@@ -198,7 +198,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     Strm = DataStrm;
     DataStrm = nullptr;
   } else {
-    Strm = new VZipStreamReader(DataStrm);
+    Strm = new VZLibStreamReader(DataStrm);
   }
 
   int type;

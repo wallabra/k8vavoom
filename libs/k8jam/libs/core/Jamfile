@@ -31,8 +31,9 @@ Library libcore.a :
   src/vecmat/matrix4.cpp
 
   src/stream/stream.cpp
+  src/stream/streamsbit.cpp
   src/stream/streamsex.cpp
-  src/stream/streamszip.cpp
+  src/stream/streamszlib.cpp
   src/stream/ntvalue.cpp
 
   src/hash/crc.cpp

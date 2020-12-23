@@ -46,8 +46,8 @@ add_library(core STATIC
   stream/streamsbit.cpp
   stream/streamsex.h
   stream/streamsex.cpp
-  stream/streamszip.h
-  stream/streamszip.cpp
+  stream/streamszlib.h
+  stream/streamszlib.cpp
   stream/ntvalue.cpp
   mathutil.h
   vecmat/vector_avec.h

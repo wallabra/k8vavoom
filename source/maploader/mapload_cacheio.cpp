@@ -118,7 +118,7 @@ void VLevel::SaveCachedData (VStream *strm) {
   vuint8 bspbuilder = GetNodesBuilder();
   *strm << bspbuilder;
 
-  VZipStreamWriter *arrstrm = new VZipStreamWriter(strm, (int)loader_cache_compression_level);
+  VZLibStreamWriter *arrstrm = new VZLibStreamWriter(strm, (int)loader_cache_compression_level);
 
   // flags (nothing for now)
   vuint32 flags = 0;
@@ -281,7 +281,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
   *strm << bspbuilder;
   if (bspbuilder != GetNodesBuilder()) { GCon->Log("invalid cache nodes builder"); return false; }
 
-  VZipStreamReader *arrstrm = new VZipStreamReader(true, strm);
+  VZLibStreamReader *arrstrm = new VZLibStreamReader(true, strm);
   if (arrstrm->IsError()) { delete arrstrm; GCon->Log("cannot create cache decompressor"); return false; }
 
   int vissize = -1;

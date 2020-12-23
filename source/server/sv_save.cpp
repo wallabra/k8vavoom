@@ -1662,7 +1662,7 @@ static void SV_SaveMap (bool savePlayers) {
     Map->Compressed = 1;
     VArrayStream *ArrStrm = new VArrayStream("<savemap>", Map->Data);
     ArrStrm->BeginWrite();
-    VZipStreamWriter *ZipStrm = new VZipStreamWriter(ArrStrm, (int)save_compression_level);
+    VZLibStreamWriter *ZipStrm = new VZLibStreamWriter(ArrStrm, (int)save_compression_level);
     ZipStrm->Serialise(Buf.Ptr(), Buf.Num());
     delete ZipStrm;
     delete ArrStrm;
@@ -1883,7 +1883,7 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) 
     if (Map->Data.length()) memcpy(DecompressedData.ptr(), Map->Data.ptr(), Map->Data.length());
   } else {
     VArrayStream *ArrStrm = new VArrayStream("<savemap:mapdata>", Map->Data);
-    VZipStreamReader *ZipStrm = new VZipStreamReader(ArrStrm, VZipStreamReader::UNKNOWN_SIZE, Map->DecompressedSize);
+    VZLibStreamReader *ZipStrm = new VZLibStreamReader(ArrStrm, VZLibStreamReader::UNKNOWN_SIZE, Map->DecompressedSize);
     DecompressedData.SetNum(Map->DecompressedSize);
     ZipStrm->Serialise(DecompressedData.Ptr(), DecompressedData.Num());
     delete ZipStrm;
