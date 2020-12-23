@@ -204,7 +204,7 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
     // shadow
     if (ssflag&FlagAsShadow) {
       if (!smaps && (dist <= 0.0f || tex->isSeeThrough())) continue; // this is masked texture, shadow volumes cannot process it
-      if (tex->isTransparent() && isGood2Flip(Level, surf, SurfaceType)) {
+      if (tex->isTransparent()) {
         // we need to flip it if the player is behind it
         vassert(smaps);
         if (doflip) {
