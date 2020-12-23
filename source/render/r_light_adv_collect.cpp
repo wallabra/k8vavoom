@@ -120,6 +120,36 @@ enum {
   SurfTypePaperFlatEx, // flat (extra floor or ceiling, including slopes), paper-thin
 };
 
+
+//==========================================================================
+//
+//  isGood2Flip
+//
+//  check if this wall is "ok" to be flipped
+//
+//  many 2s walls has no good textures on the other side
+//  (because it never meant to be seen), and we should not flip such walls
+//
+//  so we'll check if the side is present, and if it has good midtexture
+//  (only midtexture, because this is the only texture we'll flip anyway)
+//
+//==========================================================================
+static bool isGood2Flip (VLevel *level, const surface_t *surf, int SurfaceType) noexcept {
+  if (!surf || SurfaceType < SurfTypeMiddle) return false;
+  const seg_t *seg =surf->seg;
+  if (!seg) return (SurfaceType == SurfTypePaperFlatEx);
+  if (!seg->frontsector || !seg->backsector) return false;
+  const line_t *line = surf->seg->linedef;
+  if (!line || !(line->flags&ML_TWOSIDED)) return false;
+  if (line->sidenum[seg->side] < 0) return false;
+  const side_t *side = &level->Sides[line->sidenum[seg->side]];
+  if (side->MidTexture <= 0) return false;
+  VTexture *tex = GTextureManager[side->MidTexture];
+  if (!tex || tex->Type == TEXTYPE_Null) return false;
+  return (!tex->isTranslucent() && tex->isTransparent());
+}
+
+
 //==========================================================================
 //
 //  VRenderLevelShadowVolume::CollectAdvLightSurfaces
@@ -174,7 +204,7 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
     // shadow
     if (ssflag&FlagAsShadow) {
       if (!smaps && (dist <= 0.0f || tex->isSeeThrough())) continue; // this is masked texture, shadow volumes cannot process it
-      if (tex->isTransparent()) {
+      if (tex->isTransparent() && isGood2Flip(Level, surf, SurfaceType)) {
         // we need to flip it if the player is behind it
         vassert(smaps);
         if (doflip) {
@@ -188,11 +218,21 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
             // paper-thin surface, ceiling: leave it if it is almost invisible
             if (sdist < -0.1f) continue;
           }
-          if (dist <= 0.0f) surf->drawflags |= surface_t::DF_SMAP_FLIP; else surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
+          if (dist <= 0.0f) {
+            if (!isGood2Flip(Level, surf, SurfaceType)) continue;
+            surf->drawflags |= surface_t::DF_SMAP_FLIP;
+          } else {
+            surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
+          }
           #else
           if (surf->plane.PointOnSide(Drawer->vieworg)) continue; // if the camera cannot see it, no need to render it
           // flip if the light cannot see it
-          if (dist <= 0.0f) surf->drawflags |= surface_t::DF_SMAP_FLIP; else surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
+          if (dist <= 0.0f) {
+            if (!isGood2Flip(Level, surf, SurfaceType)) continue;
+            surf->drawflags |= surface_t::DF_SMAP_FLIP;
+          } else {
+            surf->drawflags &= ~surface_t::DF_SMAP_FLIP;
+          }
           #endif
         } else {
           if (dist <= 0.0f) continue; // light cannot see it
