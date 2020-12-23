@@ -156,11 +156,12 @@ bool IsQuitPromptEnabled () {
 //
 //==========================================================================
 MsgBoxInputType GetMessageBoxInputType () {
-  if (!msgboxState.active || !msgboxState.wantInput) return MsgBoxInputType.None;
+  if (!msgboxState.active) return MsgBoxInputType.None;
+  if (msgboxState.type >= MessageBoxType.ControlAll && msgboxState.type <= MessageBoxType.ControlNonStrife) return MsgBoxInputType.Keybind; //wtf?!
+  if (!msgboxState.wantInput) return MsgBoxInputType.None;
   if (msgboxState.type == MessageBoxType.None) return MsgBoxInputType.None; //wtf?!
   if (msgboxState.type == MessageBoxType.Shareware) return MsgBoxInputType.Warning; //wtf?!
   if (msgboxState.type == MessageBoxType.Warning) return MsgBoxInputType.Warning; //wtf?!
-  if (msgboxState.type >= MessageBoxType.ControlAll && msgboxState.type <= MessageBoxType.ControlNonStrife) return MsgBoxInputType.Keybind; //wtf?!
   return MsgBoxInputType.YesNo;
 }
 
@@ -286,6 +287,7 @@ void MessageBoxStartMessage (string text, MessageBoxType type, bool input) {
 //
 //==========================================================================
 void MessageBoxStartBindQuery (MenuControlKey currctl, int strifeMode) {
+  printdebug("MessageBoxStartBindQuery");
   CurrentCtl = currctl;
   auto mt = (strifeMode < 0 ? MessageBoxType.ControlNonStrife : strifeMode > 0 ? MessageBoxType.ControlStrife : MessageBoxType.ControlAll);
   MessageBoxStartMessage("Press new key\n\nESC to cancel", mt, input:false);
