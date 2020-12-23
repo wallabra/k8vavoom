@@ -135,9 +135,9 @@ enum {
 //
 //==========================================================================
 static bool isGood2Flip (VLevel *level, const surface_t *surf, int SurfaceType) noexcept {
-  if (!surf || SurfaceType < SurfTypeMiddle) return false;
+  if (!surf || SurfaceType < SurfTypeFlatEx) return false;
   const seg_t *seg =surf->seg;
-  if (!seg) return (SurfaceType == SurfTypePaperFlatEx);
+  if (!seg) return true;
   if (!seg->frontsector || !seg->backsector) return false;
   const line_t *line = surf->seg->linedef;
   if (!line || !(line->flags&ML_TWOSIDED)) return false;
