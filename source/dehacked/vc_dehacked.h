@@ -29,3 +29,4 @@
 //**************************************************************************
 
 void ProcessDehackedFiles ();
+bool IsDehReplacedSprite (VName spname);

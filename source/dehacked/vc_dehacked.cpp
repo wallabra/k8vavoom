@@ -79,6 +79,8 @@ struct VDehFlag {
 VCvarI Infighting("infighting", 0, "Allow infighting for all monster types?", 0/*CVAR_ServerInfo*/);
 
 
+static TMapNC<VName, bool> ReplacedSprites; // lowercased
+
 static char *Patch;
 static char *PatchPtr;
 static char *String;
@@ -238,6 +240,14 @@ static inline bool isWeaponState (int idx) noexcept { return (idx >= 0 && idx < 
 static bool isWeaponSprite (const char *oldStr) noexcept {
   if (!oldStr || !oldStr[0]) return false;
   if (!oldStr[1] || !oldStr[2] || !oldStr[3] || oldStr[4]) return false;
+  if (VStr::strEquCI(oldStr, "CLIP")) return true;
+  if (VStr::strEquCI(oldStr, "AMMO")) return true;
+  if (VStr::strEquCI(oldStr, "ROCK")) return true;
+  if (VStr::strEquCI(oldStr, "BROK")) return true;
+  if (VStr::strEquCI(oldStr, "CELL")) return true;
+  if (VStr::strEquCI(oldStr, "CELP")) return true;
+  if (VStr::strEquCI(oldStr, "SHEL")) return true;
+  if (VStr::strEquCI(oldStr, "SBOX")) return true;
   char buf[4];
   buf[0] = oldStr[0];
   buf[1] = oldStr[1];
@@ -247,7 +257,21 @@ static bool isWeaponSprite (const char *oldStr) noexcept {
   if (VStr::strEquCI(buf, "PUN")) return true;
   if (VStr::strEquCI(buf, "PIS")) return true;
   if (VStr::strEquCI(buf, "SAW")) return true;
+  if (VStr::strEquCI(buf, "CHG")) return true;
+  if (VStr::strEquCI(buf, "MIS")) return true;
+  if (VStr::strEquCI(buf, "BFG")) return true;
+  if (VStr::strEquCI(buf, "PLS")) return true;
   return false;
+}
+
+
+//==========================================================================
+//
+//  IsDehReplacedSprite
+//
+//==========================================================================
+bool IsDehReplacedSprite (VName spname) {
+  return ReplacedSprites.has(spname);
 }
 
 
@@ -1953,6 +1977,12 @@ void ProcessDehackedFiles () {
   GSoundManager->ReplaceSoundLumpNames(SfxNames);
   P_ReplaceMusicLumpNames(MusicNames);
   VClass::ReplaceSpriteNames(SpriteNames);
+
+  for (auto &&rs : SpriteNames) {
+    if (!rs.Replaced) continue;
+    ReplacedSprites.put(VName(*rs.Old, VName::AddLower), true);
+    ReplacedSprites.put(VName(*rs.New, VName::AddLower), true);
+  }
 
   VClass::StaticReinitStatesLookup();
 
