@@ -361,6 +361,10 @@ struct line_t : public TPlane {
   line_t **v2lines;
   vint32 v2linesCount;
 
+  inline int vxCount (int vidx) const noexcept { return (vidx ? v2linesCount : v1linesCount); }
+  inline line_t *vxLine (int vidx, int idx) noexcept { return (vidx ? v2lines[idx] : v1lines[idx]); }
+  inline const line_t *vxLine (int vidx, int idx) const noexcept { return (vidx ? v2lines[idx] : v1lines[idx]); }
+
   // collision detection planes
   // first plane is usually a duplicate of a normal line plane, but idc
   TPlane *cdPlanes;

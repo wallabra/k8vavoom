@@ -851,6 +851,7 @@ private:
   void FixDeepWaters ();
   void FixSelfRefDeepWater (); // called from `FixDeepWaters`
 
+  vuint32 IsFloodBugSectorPart (sector_t *sec);
   vuint32 IsFloodBugSector (sector_t *sec);
   sector_t *FindGoodFloodSector (sector_t *sec, bool wantFloor);
 
