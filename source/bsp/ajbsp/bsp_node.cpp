@@ -1551,7 +1551,13 @@ superblock_t *CreateSegs(void)
 			AddSegToSuper(block, right);
 		}
 		else
-			Warning("Linedef #%d has no right sidedef!\n", line->index);
+		{
+			if (line->two_sided)
+			{
+				Warning("Linedef #%d has no right sidedef!\n", line->index);
+				line->two_sided = 0;
+			}
+		}
 
 		if (line->left)
 		{
