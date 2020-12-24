@@ -6199,7 +6199,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetLineRowOffset)
-      *sp = line ? (vint32)XLevel->Sides[line->sidenum[0]].Mid.RowOffset : 0;
+      *sp = (line && line->sidenum[0] >= 0 ? (vint32)XLevel->Sides[line->sidenum[0]].Mid.RowOffset : 0);
       ++sp;
       ACSVM_BREAK;
 
