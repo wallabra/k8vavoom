@@ -142,8 +142,8 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     if (line->lineTag && line->lineTag != -1) writef(strm, "  id = %d;\n", line->lineTag);
     writef(strm, "  v1 = %d;\n", vpool.put(*line->v1));
     writef(strm, "  v2 = %d;\n", vpool.put(*line->v2));
-    vassert(line->sidenum[0] >= 0);
-    writef(strm, "  sidefront = %d;\n", line->sidenum[0]);
+    //vassert(line->sidenum[0] >= 0);
+    if (line->sidenum[0] >= 0) writef(strm, "  sidefront = %d;\n", line->sidenum[0]);
     if (line->sidenum[1] >= 0) writef(strm, "  sideback = %d;\n", line->sidenum[1]);
     // flags
     if (line->flags&ML_BLOCKING) writef(strm, "  blocking = true;\n");
