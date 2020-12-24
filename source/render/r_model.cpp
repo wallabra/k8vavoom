@@ -50,10 +50,14 @@ static VCvarB dbg_dump_gzmodels("dbg_dump_gzmodels", false, "Dump xml files for 
 
 
 static int cli_DisableModeldef = 0;
+static int cli_IgnoreReplaced = 0;
+static int cli_IgnoreRestrictions = 0;
 static TMap<VStrCI, bool> cli_IgnoreModelClass;
 
 /*static*/ bool cliRegister_rmodel_args =
   VParsedArgs::RegisterFlagSet("-no-modeldef", "disable GZDoom MODELDEF lump parsing", &cli_DisableModeldef) &&
+  VParsedArgs::RegisterFlagSet("-model-ignore-replaced", "do not disable models for replaced sprites", &cli_IgnoreReplaced) &&
+  VParsedArgs::RegisterFlagSet("-model-ignore-restrictions", "ignore model restrictions", &cli_IgnoreRestrictions) &&
   VParsedArgs::RegisterCallback("-model-ignore-classes", "!do not use model for the following class names", [] (VArgs &args, int idx) -> int {
     for (++idx; !VParsedArgs::IsArgBreaker(args, idx); ++idx) {
       VStr mn = args[idx];
@@ -536,12 +540,18 @@ static bool IsValidSpriteFrame (int lump, VName sprname, int sprframe, bool iwad
   if (lump < 0) return true;
   int sprindex = VClass::FindSprite(sprname, false); /* don't append */
   if (sprindex <= 1) return prevvalid; // <0: not found; 0: tnt1; 1: ----
+  if (!cli_IgnoreReplaced && IsDehReplacedSprite(sprname)) {
+    //GCon->Logf(NAME_Debug, "model: ignore replaced sprite '%s'", *sprname);
+    return false;
+  }
   SpriteTexInfo txnfo;
   if (!R_GetSpriteTextureInfo(&txnfo, sprindex, sprframe)) return prevvalid;
   VTexture *basetex = GTextureManager[txnfo.texid];
   if (!basetex) return prevvalid;
-  if (iwadonly && !W_IsIWADLump(basetex->SourceLump)) return false;
-  if (thiswadonly && W_LumpFile(basetex->SourceLump) != W_LumpFile(lump)) return false;
+  if (!cli_IgnoreRestrictions) {
+    if (iwadonly && !W_IsIWADLump(basetex->SourceLump)) return false;
+    if (thiswadonly && W_LumpFile(basetex->SourceLump) != W_LumpFile(lump)) return false;
+  }
   return true;
 }
 
@@ -764,6 +774,8 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
     bool hasOneAll = false;
     bool hasOthers = false;
     bool prevValid = true;
+    bool hasDisabled = false;
+    int frmFirstIdx = Cls->Frames.length();
 
     // process frames
     for (VXmlNode *N = CN->FindChild("state"); N; N = N->FindNext()) {
@@ -804,8 +816,13 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
           if (!xcls || !IsValidSpriteState(lump, FindClassStateByIndex(xcls, F.Number), Cls->iwadonly, Cls->thiswadonly, prevValid)) {
             prevValid = false;
             F.disabled = true;
+            hasDisabled = true;
             GCon->Logf(NAME_Warning, "skipped model '%s' class '%s' state #%d due to iwadonly restriction", *Mdl->Name, *Cls->Name, F.Number);
           }
+        } else if (!IsValidSpriteState(lump, FindClassStateByIndex(xcls, F.Number), false, false, true)) {
+          F.disabled = true;
+          hasDisabled = true;
+          GCon->Logf(NAME_Warning, "skipped model '%s' class '%s' state #%d due to replaced sprite", *Mdl->Name, *Cls->Name, F.Number);
         } else {
           prevValid = true;
         }
@@ -826,8 +843,13 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
           if (!IsValidSpriteFrame(lump, sprname, F.frame, Cls->iwadonly, Cls->thiswadonly, prevValid)) {
             prevValid = false;
             F.disabled = true;
+            hasDisabled = true;
             GCon->Logf(NAME_Warning, "skipped model '%s' class '%s' frame '%s%C' due to iwadonly restriction", *Mdl->Name, *Cls->Name, *sprname, sprframe[0]);
           }
+        } else if (!IsValidSpriteFrame(lump, sprname, F.frame, false, false, true)) {
+          F.disabled = true;
+          hasDisabled = true;
+          GCon->Logf(NAME_Warning, "skipped model '%s' class '%s' frame '%s%C' due to replaced sprite", *Mdl->Name, *Cls->Name, *sprname, sprframe[0]);
         } else {
           prevValid = true;
         }
@@ -867,6 +889,7 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
             if (!xcls || !IsValidSpriteState(lump, FindClassStateByIndex(xcls, ffr.Number), Cls->iwadonly, Cls->thiswadonly, prevValid)) {
               prevValid = false;
               ffr.disabled = true;
+              hasDisabled = true;
               GCon->Logf(NAME_Warning, "skipped model '%s' class '%s' state #%d due to iwadonly restriction", *Mdl->Name, *Cls->Name, ffr.Number);
             } else {
               prevValid = true;
@@ -881,6 +904,14 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
         } else {
           hasOthers = true;
         }
+      }
+    }
+
+    if (hasDisabled) {
+      if (frmFirstIdx == 0) {
+        Cls->Frames.clear();
+      } else {
+        for (int f = frmFirstIdx; f < Cls->Frames.length(); ++f) Cls->Frames[f].disabled = true;
       }
     }
 
