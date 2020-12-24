@@ -211,7 +211,7 @@ static TArray<StInfo> dehStInfo; // debug
 //  dehStInfoFind
 //
 //==========================================================================
-static StInfo *dehStInfoFind (int idx) {
+static StInfo *dehStInfoFind (int idx) noexcept {
   for (auto &&ss : dehStInfo) if (idx >= ss.stcps && idx < ss.stcps+ss.count) return &ss;
   Sys_Error("invalid deh stinfo index %d", idx);
   return nullptr;
@@ -225,7 +225,30 @@ static StInfo *dehStInfoFind (int idx) {
 //  FIXME: remove hardcode here!
 //
 //==========================================================================
-static inline bool isWeaponState (int idx) { return (idx >= 0 && idx < 157); }
+static inline bool isWeaponState (int idx) noexcept { return (idx >= 0 && idx < 157); }
+
+
+//==========================================================================
+//
+//  isWeaponSprite
+//
+//  FIXME: remove hardcode here!
+//
+//==========================================================================
+static bool isWeaponSprite (const char *oldStr) noexcept {
+  if (!oldStr || !oldStr[0]) return false;
+  if (!oldStr[1] || !oldStr[2] || !oldStr[3] || oldStr[4]) return false;
+  char buf[4];
+  buf[0] = oldStr[0];
+  buf[1] = oldStr[1];
+  buf[2] = oldStr[2];
+  buf[3] = 0;
+  if (VStr::strEquCI(buf, "SHT")) return true;
+  if (VStr::strEquCI(buf, "PUN")) return true;
+  if (VStr::strEquCI(buf, "PIS")) return true;
+  if (VStr::strEquCI(buf, "SAW")) return true;
+  return false;
+}
 
 
 //==========================================================================
@@ -1245,8 +1268,8 @@ static void FindString (const char *oldStr, const char *newStr) {
   // sounds
   bool SoundFound = false;
   for (int i = 0; i < SfxNames.length(); ++i) {
-    if (SfxNames[i].Old == oldStr) {
-      SfxNames[i].New = newStr;
+    if (SfxNames[i].Old.strEquCI(oldStr)) {
+      SfxNames[i].New = VStr(newStr).toLowerCase();
       SfxNames[i].Replaced = true;
       // continue, because other sounds can use the same sound
       SoundFound = true;
@@ -1257,8 +1280,8 @@ static void FindString (const char *oldStr, const char *newStr) {
   // music
   bool SongFound = false;
   for (int i = 0; i < MusicNames.length(); ++i) {
-    if (MusicNames[i].Old == oldStr) {
-      MusicNames[i].New = newStr;
+    if (MusicNames[i].Old.strEquCI(oldStr)) {
+      MusicNames[i].New = VStr(newStr).toLowerCase();
       MusicNames[i].Replaced = true;
       // there could be duplicates
       SongFound = true;
@@ -1268,9 +1291,13 @@ static void FindString (const char *oldStr, const char *newStr) {
 
   // sprite names
   for (int i = 0; i < SpriteNames.length(); ++i) {
-    if (SpriteNames[i].Old == oldStr) {
-      SpriteNames[i].New = newStr;
-      SpriteNames[i].Replaced = true;
+    if (SpriteNames[i].Old.strEquCI(oldStr)) {
+      if (cli_DehackedIgnoreWeapons && isWeaponSprite(oldStr)) {
+        // do nothing
+      } else {
+        SpriteNames[i].New = VStr(newStr).toLowerCase();
+        SpriteNames[i].Replaced = true;
+      }
       return;
     }
   }
