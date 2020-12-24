@@ -30,3 +30,4 @@
 
 void ProcessDehackedFiles ();
 bool IsDehReplacedSprite (VName spname);
+VName GetDehReplacedSprite (VName oldname);

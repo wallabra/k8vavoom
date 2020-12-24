@@ -80,6 +80,7 @@ VCvarI Infighting("infighting", 0, "Allow infighting for all monster types?", 0/
 
 
 static TMapNC<VName, bool> ReplacedSprites; // lowercased
+static TMapNC<VName, VName> SpriteReplacements; // lowercased, origname, newname
 
 static char *Patch;
 static char *PatchPtr;
@@ -272,6 +273,17 @@ static bool isWeaponSprite (const char *oldStr) noexcept {
 //==========================================================================
 bool IsDehReplacedSprite (VName spname) {
   return ReplacedSprites.has(spname);
+}
+
+
+//==========================================================================
+//
+//  GetDehReplacedSprite
+//
+//==========================================================================
+VName GetDehReplacedSprite (VName oldname) {
+  auto rp = SpriteReplacements.find(oldname);
+  return (rp ? *rp : NAME_None);
 }
 
 
@@ -1316,11 +1328,13 @@ static void FindString (const char *oldStr, const char *newStr) {
   // sprite names
   for (int i = 0; i < SpriteNames.length(); ++i) {
     if (SpriteNames[i].Old.strEquCI(oldStr)) {
-      if (cli_DehackedIgnoreWeapons && isWeaponSprite(oldStr)) {
-        // do nothing
-      } else {
-        SpriteNames[i].New = VStr(newStr).toLowerCase();
-        SpriteNames[i].Replaced = true;
+      if (!VStr::strEquCI(newStr, oldStr)) {
+        if (cli_DehackedIgnoreWeapons && isWeaponSprite(oldStr)) {
+          // do nothing
+        } else {
+          SpriteNames[i].New = VStr(newStr).toLowerCase();
+          SpriteNames[i].Replaced = true;
+        }
       }
       return;
     }
@@ -1982,6 +1996,7 @@ void ProcessDehackedFiles () {
     if (!rs.Replaced) continue;
     ReplacedSprites.put(VName(*rs.Old, VName::AddLower), true);
     ReplacedSprites.put(VName(*rs.New, VName::AddLower), true);
+    SpriteReplacements.put(VName(*rs.Old, VName::AddLower), VName(*rs.New, VName::AddLower));
   }
 
   VClass::StaticReinitStatesLookup();
