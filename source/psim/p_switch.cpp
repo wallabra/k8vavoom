@@ -77,6 +77,7 @@ IMPLEMENT_CLASS(V, ThinkButton)
 //
 //==========================================================================
 bool VLevelInfo::ChangeSwitchTexture (int sidenum, bool useAgain, VName DefaultSound, bool &Quest) {
+  if (sidenum < 0) return false;
   int texTop = XLevel->Sides[sidenum].TopTexture;
   int texMid = XLevel->Sides[sidenum].MidTexture;
   int texBot = XLevel->Sides[sidenum].BottomTexture;
@@ -125,6 +126,8 @@ bool VLevelInfo::ChangeSwitchTexture (int sidenum, bool useAgain, VName DefaultS
 //
 //==========================================================================
 bool VLevelInfo::StartButton (int sidenum, vuint8 w, int SwitchDef, VName DefaultSound, bool UseAgain) {
+  if (sidenum < 0) return false;
+
   // see if button is already pressed
   for (TThinkerIterator<VThinkButton> Btn(XLevel); Btn; ++Btn) {
     if (Btn->Side == sidenum) {

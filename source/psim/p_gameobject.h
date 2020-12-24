@@ -310,6 +310,7 @@ struct line_t : public TPlane {
 
   // visual appearance: SideDefs
   // sidenum[1] will be -1 if one sided
+  // sidenum[0] can be -1 too (some UDMF maps can do this)
   vint32 sidenum[2];
 
   // neat. another bounding box, for the extent of the LineDef

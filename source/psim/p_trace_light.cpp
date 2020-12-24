@@ -271,7 +271,7 @@ static bool LightCheck2SLinePass (LightTraceInfo &trace, const line_t *line, con
 
   // check texture
   int sidenum = line->PointOnSide2(trace.Start);
-  if (sidenum == 2) return true; // on a line
+  if (sidenum == 2 || line->sidenum[sidenum] == -1) return true; // on a line
 
   const side_t *sidedef = &trace.Level->Sides[line->sidenum[sidenum]];
   VTexture *MTex = GTextureManager(sidedef->MidTexture);
