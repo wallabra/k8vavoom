@@ -40,11 +40,13 @@ static VCvarB x_brightmaps_ignore_iwad("x_brightmaps_ignore_iwad", false, "Ignor
 static int cli_WarnBrightmaps = 0;
 static int cli_DumpBrightmaps = 0;
 static int cli_SprStrict = 0;
+static int cli_SprDehTransfer = 0;
 
 /*static*/ bool cliRegister_rdata_args =
   VParsedArgs::RegisterFlagSet("-Wbrightmap", "!show warnings about brightmaps", &cli_WarnBrightmaps) &&
   VParsedArgs::RegisterFlagSet("-sprstrict", "!strict sprite name checking", &cli_SprStrict) &&
-  VParsedArgs::RegisterFlagSet("-dump-brightmaps", "!debug brightmap loading", &cli_DumpBrightmaps);
+  VParsedArgs::RegisterFlagSet("-dump-brightmaps", "!debug brightmap loading", &cli_DumpBrightmaps) &&
+  VParsedArgs::RegisterFlagSet("-deh-transfer", "!transfer sprite effects for dehacked sprite replacements", &cli_SprDehTransfer);
 
 
 struct VTempSpriteEffectDef {
@@ -1782,8 +1784,15 @@ void R_ParseEffectDefs () {
       SprName[4] = 0;
       int SprIdx = VClass::FindSprite(SprName, false);
       if (SprIdx == -1) {
-        GCon->Logf(NAME_Warning, "No such sprite '%s', sprite effects ignored.", SprName);
-        continue;
+        VName repl = (cli_SprDehTransfer ? GetDehReplacedSprite(VName(SprName, VName::FindLower)) : NAME_None);
+        if (repl != NAME_None) {
+          SprIdx = VClass::FindSprite(repl, false);
+          if (SprIdx != -1) GCon->Logf(NAME_Debug, "Dehacked effect transfer from '%s' to '%s'", SprName, *repl);
+        }
+        if (SprIdx == -1) {
+          GCon->Logf(NAME_Warning, "No such sprite '%s', sprite effects ignored.", SprName);
+          continue;
+        }
       }
 
       VSpriteEffect &SprFx = Cls->SpriteEffects.Alloc();
