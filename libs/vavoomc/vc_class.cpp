@@ -490,7 +490,7 @@ void VClass::ReplaceSpriteNames (TArray<FReplacedString> &List) {
     if (!it.Replaced) continue;
     VName newname = VName(*it.New, VName::AddLower);
     if (newname == NAME_None) {
-      GLog.Logf("cannot replace sprite '%s' with nameless one", *GSpriteNames[it.Index]);
+      GLog.Logf(NAME_Warning, "cannot replace sprite '%s' with nameless one", *GSpriteNames[it.Index]);
       newname = VName("tnt1", VName::AddLower);
     }
     if (GSpriteNames[it.Index] == newname) continue;
