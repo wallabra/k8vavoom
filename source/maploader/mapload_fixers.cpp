@@ -422,6 +422,30 @@ enum {
 
 //==========================================================================
 //
+//  isBadTriangle
+//
+//==========================================================================
+static bool isBadTriangle (const sector_t *tsec, const sector_t *mysec) {
+  if (!tsec || !mysec || tsec == mysec) return false;
+  if (tsec->linecount > 3) return false;
+  for (int f = 0; f < tsec->linecount; ++f) {
+    const line_t *line = tsec->lines[f];
+    if ((line->flags&ML_TWOSIDED) == 0) continue;
+    if (!line->frontsector || !line->backsector) continue;
+    if (line->frontsector == tsec) {
+      if (line->backsector != mysec) return false;
+    } else if (line->backsector == tsec) {
+      if (line->frontsector != mysec) return false;
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VLevel::IsFloodBugSector
 //
 //==========================================================================
@@ -439,6 +463,9 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   int myside = -1;
   bool hasMissingBottomTexture = false;
   bool hasMissingTopTexture = false;
+
+  // ignore triangles with only neighbour
+
   // if we have only one of 4+ walls with bottex, still consider it as a floodfill bug
   int floorBotTexCount = 0;
   int ceilTopTexCount = 0;
@@ -489,6 +516,10 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       // this looks like a door, don't "fix" anything
       return 0;
     }
+    if (isBadTriangle(bs, sec)) {
+      if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  ignore triangle sector sector #%d", (int)(ptrdiff_t)(bs-&Sectors[0]));
+      continue;
+    }
     // check for possible floor floodbug
     do {
       if (res&FFBugFloor) {
@@ -518,7 +549,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
           break;
         }
         if (line->sidenum[myside] < 0 || Sides[line->sidenum[myside]].BottomTexture <= 0) hasMissingBottomTexture = true;
-        //if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "  sector #%d (back #%d): floor fix ok; fs:floor=(%g,%g); bs:floor=(%g,%g)", (int)(ptrdiff_t)(sec-Sectors), (int)(ptrdiff_t)(bs-Sectors), sec->floor.minz, sec->floor.maxz, bs->floor.minz, bs->floor.maxz);
+        if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "  sector #%d (back #%d): floor fix ok; fs:floor=(%g,%g); bs:floor=(%g,%g) (secline #%d; linedef #%d)", (int)(ptrdiff_t)(sec-Sectors), (int)(ptrdiff_t)(bs-Sectors), sec->floor.minz, sec->floor.maxz, bs->floor.minz, bs->floor.maxz, f, (int)(ptrdiff_t)(line-&Lines[0]));
         //if (/*line->special != 0 &&*/ bs->floor.minz == sec->floor.minz) { res &= ~FFBugFloor; continue; }
       }
     } while (0);
