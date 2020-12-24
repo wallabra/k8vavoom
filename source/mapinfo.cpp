@@ -713,6 +713,8 @@ static void DoCompatFlag (VScriptParser *sc, VMapInfo *info, int Flag, bool newF
   if (newFormat) {
     sc->Check("=");
     if (sc->CheckNumber()) Set = sc->Number;
+  } else if (sc->CheckNumber()) {
+    Set = sc->Number;
   }
   if (Flag) {
     if (Set) {
