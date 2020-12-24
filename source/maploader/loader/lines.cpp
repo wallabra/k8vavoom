@@ -36,6 +36,7 @@
 void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const VMapInfo &MInfo) {
   NumLines = W_LumpLength(Lump)/14;
   Lines = new line_t[NumLines];
+  if (Lines <= 0) Host_Error("Map '%s' has no lines!", *MapName);
   memset((void *)Lines, 0, sizeof(line_t)*NumLines);
 
   VStream *lumpstream = W_CreateLumpReaderNum(Lump);
@@ -77,6 +78,7 @@ void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const VMapInfo &MInfo) {
 void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const VMapInfo &MInfo) {
   NumLines = W_LumpLength(Lump)/16;
   Lines = new line_t[NumLines];
+  if (Lines <= 0) Host_Error("Map '%s' has no lines!", *MapName);
   memset((void *)Lines, 0, sizeof(line_t)*NumLines);
 
   VStream *lumpstream = W_CreateLumpReaderNum(Lump);
@@ -132,7 +134,11 @@ void VLevel::FinaliseLines () {
     // calculate line's plane, slopetype, etc
     CalcLine(ldef);
     // set up sector references
-    ldef->frontsector = Sides[ldef->sidenum[0]].Sector;
+    if (ldef->sidenum[0] >= 0) {
+      ldef->frontsector = Sides[ldef->sidenum[0]].Sector;
+    } else {
+      ldef->frontsector = &Sectors[0]; // just in case
+    }
     if (ldef->sidenum[1] != -1) {
       ldef->backsector = Sides[ldef->sidenum[1]].Sector;
     } else {

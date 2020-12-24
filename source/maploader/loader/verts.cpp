@@ -44,7 +44,9 @@ void VLevel::LoadVertexes (int Lump, int GLLump, int &NumBaseVerts) {
 
   // determine number of vertexes: total lump length / vertex record length
   NumBaseVerts = W_LumpLength(Lump)/4;
-  int NumGLVerts = GlFormat == 0 ? 0 : GlFormat == 1 ? (W_LumpLength(GLLump)/4) : ((W_LumpLength(GLLump)-4)/8);
+  if (NumBaseVerts <= 0) Host_Error("Map '%s' has no vertices!", *MapName);
+
+  int NumGLVerts = (GlFormat == 0 ? 0 : GlFormat == 1 ? (W_LumpLength(GLLump)/4) : ((W_LumpLength(GLLump)-4)/8));
   NumVertexes = NumBaseVerts+NumGLVerts;
 
   // allocate memory for vertexes

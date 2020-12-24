@@ -36,6 +36,7 @@ void VLevel::LoadSectors (int Lump) {
   // allocate memory for sectors
   NumSectors = W_LumpLength(Lump)/26;
   Sectors = new sector_t[NumSectors];
+  if (Sectors <= 0) Host_Error("Map '%s' has no sectors!", *MapName);
   memset((void *)Sectors, 0, sizeof(sector_t)*NumSectors);
 
   // load sectors
@@ -189,6 +190,7 @@ void VLevel::LoadSubsectors (int Lump) {
 
   // allocate memory for subsectors
   Subsectors = new subsector_t[NumSubsectors];
+  if (Subsectors <= 0) Host_Error("Map '%s' has no subsectors!", *MapName);
   memset((void *)Subsectors, 0, sizeof(subsector_t)*NumSubsectors);
 
   // read data

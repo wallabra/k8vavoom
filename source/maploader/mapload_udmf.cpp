@@ -1126,11 +1126,18 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
   // copy sidedefs
   NumSides = Parser.ParsedSides.Num();
   CreateSides();
+
   side_t *sd = Sides;
   for (int i = 0; i < NumSides; ++i, ++sd) {
+    /*
     if (sd->BottomTexture < 0 || sd->BottomTexture >= Parser.ParsedSides.length()) {
       Host_Error("UDMF: bad sidedef index %d (broken UDMF)", (int)sd->BottomTexture);
     }
+    */
+
+    // this is dummy side, it was initialised in `CreateSides()`
+    if (Sides[i].Flags == SDF_ABSLIGHT) continue;
+
     VUdmfParser::VParsedSide &Src = Parser.ParsedSides[sd->BottomTexture];
     int Spec = sd->MidTexture;
     int Tag = sd->TopTexture;

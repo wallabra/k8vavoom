@@ -173,6 +173,7 @@ void VLevel::FixTransparentDoors () {
 
       // mark only back sectors (the usual door setup)
       if (ldef->backsector != &sec) continue;
+      if (ldef->sidenum[0] < 0) continue; // sector-less control line (usually)
 
       if ((ldef->flags&ML_ADDITIVE) != 0 || ldef->alpha < 1.0f) continue; // skip translucent walls
       if (!(ldef->flags&ML_TWOSIDED)) continue; // one-sided wall always blocks everything
@@ -459,8 +460,8 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       bs = line->backsector;
       if (myside == 1) {
         if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: skipped line #%d (%d) due to side conflict (1)", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f);
-        if (!hasMissingBottomTexture && bs->floor.minz > sec->floor.minz && Sides[line->sidenum[0]].BottomTexture <= 0) hasMissingBottomTexture = true;
-        if (!hasMissingTopTexture && bs->ceiling.minz < sec->ceiling.minz && Sides[line->sidenum[0]].TopTexture <= 0) hasMissingTopTexture = true;
+        if (!hasMissingBottomTexture && bs->floor.minz > sec->floor.minz && (line->sidenum[0] < 0 || Sides[line->sidenum[0]].BottomTexture <= 0)) hasMissingBottomTexture = true;
+        if (!hasMissingTopTexture && bs->ceiling.minz < sec->ceiling.minz && (line->sidenum[0] < 0 || Sides[line->sidenum[0]].TopTexture <= 0)) hasMissingTopTexture = true;
         continue;
       }
       myside = 0;
@@ -469,8 +470,8 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       bs = line->frontsector;
       if (myside == 0) {
         if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: skipped line #%d (%d) due to side conflict (0)", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f);
-        if (!hasMissingBottomTexture && bs->floor.minz > sec->floor.minz && Sides[line->sidenum[1]].BottomTexture <= 0) hasMissingBottomTexture = true;
-        if (!hasMissingTopTexture && bs->ceiling.minz < sec->ceiling.minz && Sides[line->sidenum[1]].TopTexture <= 0) hasMissingTopTexture = true;
+        if (!hasMissingBottomTexture && bs->floor.minz > sec->floor.minz && (line->sidenum[1] < 0 || Sides[line->sidenum[1]].BottomTexture <= 0)) hasMissingBottomTexture = true;
+        if (!hasMissingTopTexture && bs->ceiling.minz < sec->ceiling.minz && (line->sidenum[1] < 0 || Sides[line->sidenum[1]].TopTexture <= 0)) hasMissingTopTexture = true;
         continue;
       }
       myside = 1;
@@ -496,7 +497,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
           break;
         }
         // line has no bottom texture?
-        if (Sides[line->sidenum[myside]].BottomTexture > 0) {
+        if (line->sidenum[myside] >= 0 && Sides[line->sidenum[myside]].BottomTexture > 0) {
           ++floorBotTexCount;
           if (floorBotTexCount > 1 || sec->linecount == 3) {
             if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: reset floorbug flag due to line #%d (%d) -- has bottom texture", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f);
@@ -516,7 +517,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
           res &= ~FFBugFloor;
           break;
         }
-        if (Sides[line->sidenum[myside]].BottomTexture <= 0) hasMissingBottomTexture = true;
+        if (line->sidenum[myside] < 0 || Sides[line->sidenum[myside]].BottomTexture <= 0) hasMissingBottomTexture = true;
         //if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "  sector #%d (back #%d): floor fix ok; fs:floor=(%g,%g); bs:floor=(%g,%g)", (int)(ptrdiff_t)(sec-Sectors), (int)(ptrdiff_t)(bs-Sectors), sec->floor.minz, sec->floor.maxz, bs->floor.minz, bs->floor.maxz);
         //if (/*line->special != 0 &&*/ bs->floor.minz == sec->floor.minz) { res &= ~FFBugFloor; continue; }
       }
@@ -540,7 +541,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
           break;
         }
         // line has no top texture?
-        if (Sides[line->sidenum[myside]].TopTexture > 0) {
+        if (line->sidenum[myside] >= 0 && Sides[line->sidenum[myside]].TopTexture > 0) {
           ++ceilTopTexCount;
           if (ceilTopTexCount > 1 || sec->linecount == 3) {
             res &= ~FFBugCeiling;
@@ -552,7 +553,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
         // height?
         if (bs->ceiling.minz > sec->ceiling.minz) { res &= ~FFBugCeiling; break; }
         //if (line->special != 0 && bs->ceiling.minz == sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
-        if (Sides[line->sidenum[myside]].TopTexture <= 0) hasMissingTopTexture = true;
+        if (line->sidenum[myside] < 0 && Sides[line->sidenum[myside]].TopTexture <= 0) hasMissingTopTexture = true;
       }
     } while (0);
   }

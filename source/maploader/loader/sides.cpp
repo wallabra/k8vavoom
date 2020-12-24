@@ -36,25 +36,43 @@ static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix inval
 //==========================================================================
 void VLevel::CreateSides () {
   // perform side index and two-sided flag checks and count number of sides needed
+  int dummySideCount = 0;
   int NumNewSides = 0;
+
   line_t *Line = Lines;
   for (int i = 0; i < NumLines; ++i, ++Line) {
     if (Line->sidenum[0] == -1) {
-      GCon->Logf("Bad WAD: Line %d has no front side", i);
-      // let it glitch...
-      //Line->sidenum[0] = 0;
+      if (Line->sidenum[1] == -1) {
+        // UDMF control line
+        GCon->Logf(NAME_Debug, "Line %d is sideless control line", i);
+        Line->flags &= ~ML_TWOSIDED; // just in case
+        continue;
+      }
+      GCon->Logf(NAME_Error, "Line %d has no front side", i);
+      //++dummySideCount;
     } else {
-      if (Line->sidenum[0] < 0 || Line->sidenum[0] >= NumSides) Host_Error("Bad side-def index %d", Line->sidenum[0]);
-      ++NumNewSides;
+      if (Line->sidenum[0] < 0 || Line->sidenum[0] >= NumSides) {
+        //Host_Error("Bad sidedef index %d", Line->sidenum[0]);
+        GCon->Logf(NAME_Error, "Bad sidedef index %d for linedef #%d", Line->sidenum[0], i);
+        Line->sidenum[0] = -1;
+        ++dummySideCount;
+      } else {
+        ++NumNewSides;
+      }
+    }
+
+    if (Line->sidenum[1] != -1 && (Line->sidenum[1] < 0 || Line->sidenum[1] >= NumSides)) {
+      //Host_Error("Bad sidedef index %d for linedef #%d", Line->sidenum[1], i);
+      GCon->Logf(NAME_Error, "Bad second sidedef index %d for linedef #%d", Line->sidenum[1], i);
+      Line->sidenum[1] = -1;
     }
 
     if (Line->sidenum[1] != -1) {
       // has second side
-      if (Line->sidenum[1] < 0 || Line->sidenum[1] >= NumSides) Host_Error("Bad sidedef index %d for linedef #%d", Line->sidenum[1], i);
       // just a warning (and a fix)
       if ((Line->flags&ML_TWOSIDED) == 0) {
         if (loader_force_fix_2s) {
-          GCon->Logf(NAME_Warning, "linedef #%d marked as two-sided but has no TWO-SIDED flag set", i);
+          GCon->Logf(NAME_Warning, "Linedef #%d marked as two-sided but has no TWO-SIDED flag set", i);
           Line->flags |= ML_TWOSIDED; //k8: we need to set this, or clipper will glitch
         }
       }
@@ -63,52 +81,80 @@ void VLevel::CreateSides () {
       // no second side, but marked as two-sided
       if (Line->flags&ML_TWOSIDED) {
         //if (strict_level_errors) Host_Error("Bad WAD: Line %d is marked as TWO-SIDED but has only one side", i);
-        GCon->Logf(NAME_Warning, "linedef #%d is marked as TWO-SIDED but has only one side", i);
+        GCon->Logf(NAME_Warning, "Linedef #%d is marked as TWO-SIDED but has only one side", i);
         Line->flags &= ~ML_TWOSIDED;
       }
     }
     //fprintf(stderr, "linedef #%d: sides=(%d,%d); two-sided=%s\n", i, Line->sidenum[0], Line->sidenum[1], (Line->flags&ML_TWOSIDED ? "tan" : "ona"));
   }
 
-  // allocate memory for side defs
-  Sides = new side_t[NumNewSides+1];
-  memset((void *)Sides, 0, sizeof(side_t)*(NumNewSides+1));
 
-  for (int f = 0; f < NumNewSides; ++f) {
+  // allocate memory for sidedefs
+  Sides = new side_t[NumNewSides+dummySideCount+1];
+  memset((void *)Sides, 0, sizeof(side_t)*(NumNewSides+dummySideCount+1));
+
+  for (int f = 0; f < NumNewSides+dummySideCount+1; ++f) {
     Sides[f].Top.ScaleX = Sides[f].Top.ScaleY = 1.0f;
     Sides[f].Bot.ScaleX = Sides[f].Bot.ScaleY = 1.0f;
     Sides[f].Mid.ScaleX = Sides[f].Mid.ScaleY = 1.0f;
   }
 
+  // create dummy sidedef
+  if (dummySideCount) {
+    for (int f = NumNewSides; f < NumNewSides+dummySideCount+1; ++f) {
+      side_t *ds = &Sides[f];
+      ds->TopTexture = ds->BottomTexture = ds->MidTexture = GTextureManager.DefaultTexture;
+      ds->Flags = SDF_ABSLIGHT;
+      ds->Light = 255;
+      // `Sector` and `LineNum` will be set later
+    }
+  }
+
   int CurrentSide = 0;
+  int CurrentDummySide = NumNewSides;
   Line = Lines;
   for (int i = 0; i < NumLines; ++i, ++Line) {
-    Sides[CurrentSide].BottomTexture = Line->sidenum[0]; //k8: this is for UDMF
-    Sides[CurrentSide].LineNum = i;
-    bool skipInit0 = false;
-    if (Line->sidenum[0] == -1) {
-      // let it glitch...
-      Line->sidenum[0] = 0;
-      skipInit0 = true;
-    } else {
+    if (Line->sidenum[0] == -1 && Line->sidenum[1] == -1) continue; // skip control lines
+
+    vassert(Line->sidenum[0] >= -1 && Line->sidenum[0] < NumSides);
+    vassert(Line->sidenum[1] >= -1 && Line->sidenum[1] < NumSides);
+
+    side_t *fside;
+    if (Line->sidenum[0] != -1) {
+      fside = &Sides[CurrentSide];
+      fside->BottomTexture = Line->sidenum[0]; //k8: this is for UDMF
+      fside->LineNum = i;
       Line->sidenum[0] = CurrentSide++;
+    } else {
+      // let it glitch...
+      fside = nullptr;
+      Line->sidenum[0] = CurrentDummySide;
+      side_t *ds = &Sides[CurrentDummySide++];
+      ds->LineNum = i;
+      ds->Sector = &Sectors[0]; //FIXME
+      GCon->Logf(NAME_Debug, "Linedef #%d front side is dummy side #%d", i, CurrentDummySide-NumNewSides);
     }
+
     if (Line->sidenum[1] != -1) {
-      Sides[CurrentSide].BottomTexture = Line->sidenum[1]; //k8: this is for UDMF
-      Sides[CurrentSide].LineNum = i;
+      side_t *ds = &Sides[CurrentSide];
+      ds->BottomTexture = Line->sidenum[1]; //k8: this is for UDMF
+      ds->LineNum = i;
       Line->sidenum[1] = CurrentSide++;
     }
 
     // assign line specials to sidedefs midtexture and arg1 to toptexture
     if (Line->special == LNSPEC_StaticInit && Line->arg2 != 1) continue;
-    if (!skipInit0) {
-      Sides[Line->sidenum[0]].MidTexture = Line->special;
-      Sides[Line->sidenum[0]].TopTexture = Line->arg1;
+
+    if (fside) {
+      fside->MidTexture = Line->special;
+      fside->TopTexture = Line->arg1;
     }
   }
-  vassert(CurrentSide == NumNewSides);
 
-  NumSides = NumNewSides;
+  vassert(CurrentSide == NumNewSides);
+  vassert(CurrentDummySide == NumNewSides+dummySideCount);
+
+  NumSides = NumNewSides+dummySideCount;
 }
 
 
@@ -119,6 +165,7 @@ void VLevel::CreateSides () {
 //==========================================================================
 void VLevel::LoadSideDefs (int Lump) {
   NumSides = W_LumpLength(Lump)/30;
+  if (NumSides <= 0) Host_Error("Map '%s' has no sides!", *MapName);
   CreateSides();
 
   // load data
@@ -126,6 +173,8 @@ void VLevel::LoadSideDefs (int Lump) {
   VCheckedStream Strm(lumpstream);
   side_t *sd = Sides;
   for (int i = 0; i < NumSides; ++i, ++sd) {
+    if (sd->Flags == SDF_ABSLIGHT) continue; // dummy side
+
     Strm.Seek(sd->BottomTexture*30);
     vint16 textureoffset;
     vint16 rowoffset;
