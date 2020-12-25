@@ -412,7 +412,7 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
     }
   }
   // link list, if necessary
-  if (linkList) {
+  if (linkList && dest.length()) {
     cs = dest.ptr();
     for (int f = dest.length()-1; f > 0; --f) cs[f-1].next = &cs[f];
     cs[dest.length()-1].next = nullptr;
