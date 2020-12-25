@@ -125,6 +125,8 @@ struct rep_light_t {
   vuint32 OwnerUId; // 0: no owner
   TVec ConeDir;
   float ConeAngle;
+  sector_t *LevelSector;
+  float LevelScale;
   //int NextUIdIndex; // -1 or next light for this OwnerUId
   enum {
     LightChanged = 1u<<0,
@@ -209,6 +211,37 @@ struct VCtl2DestLink {
   vint32 src; // sector number, just in case (can be -1 for unused slots)
   vint32 dest; // sector number (can be -1 for unused slots)
   vint32 next; // index in `ControlLinks` or -1
+};
+
+
+struct VLightParams {
+  TVec Origin;
+  float Radius;
+  vuint32 Color;
+  TVec coneDirection;
+  float coneAngle;
+  sector_t *LevelSector;
+  float LevelScale; // <0: attenuated
+
+  inline VLightParams () noexcept
+    : Origin(0.0f, 0.0f, 0.0f)
+    , Radius(0.0f)
+    , Color(0u)
+    , coneDirection(0.0f, 0.0f, 0.0f)
+    , coneAngle(0.0f)
+    , LevelSector(nullptr)
+    , LevelScale(0.0f)
+  {}
+
+  inline VLightParams (const rep_light_t &L) noexcept {
+    Origin = L.Origin;
+    Radius = L.Radius;
+    Color = L.Color;
+    coneDirection = L.ConeDir;
+    coneAngle = L.ConeAngle;
+    LevelSector = L.LevelSector;
+    LevelScale = L.LevelScale;
+  }
 };
 
 
@@ -611,11 +644,13 @@ public:
 
   void ResetStaticLights ();
 
-  void AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f);
+  // returns static light id
+  void AddStaticLightRGB (VEntity *Ent, const VLightParams &lpar);
   void MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin);
   void RemoveStaticLightByOwner (VEntity *Ent);
 
-  void AddStaticLightRGB (vuint32 owneruid, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f);
+  // returns static light id
+  void AddStaticLightRGB (vuint32 owneruid, const VLightParams &lpar);
   void MoveStaticLightByOwner (vuint32 owneruid, const TVec &Origin);
   void RemoveStaticLightByOwner (vuint32 owneruid);
 

@@ -378,7 +378,10 @@ void CL_SetupStandaloneClient () {
 
   GClLevel->Renderer->ResetStaticLights();
   for (auto &&L : GClLevel->StaticLights) {
-    if (L.IsActive()) GClLevel->Renderer->AddStaticLightRGB(L.OwnerUId, L.Origin, L.Radius, L.Color, L.ConeDir, L.ConeAngle);
+    if (L.IsActive()) {
+      VLightParams lpar(L);
+      GClLevel->Renderer->AddStaticLightRGB(L.OwnerUId, lpar);
+    }
   }
   GClLevel->Renderer->PreRender();
 
@@ -1050,7 +1053,10 @@ COMMAND(VidRendererRestart) {
   R_Start(GClLevel);
   GClLevel->Renderer->ResetStaticLights();
   for (auto &&L : GClLevel->StaticLights) {
-    if (L.IsActive()) GClLevel->Renderer->AddStaticLightRGB(L.OwnerUId, L.Origin, L.Radius, L.Color, L.ConeDir, L.ConeAngle);
+    if (L.IsActive()) {
+      VLightParams lpar(L);
+      GClLevel->Renderer->AddStaticLightRGB(L.OwnerUId, lpar);
+    }
   }
   GClLevel->Renderer->PreRender();
   Host_ResetSkipFrames();

@@ -175,18 +175,25 @@ void VRenderLevelShared::ResetStaticLights () {
 //  VRenderLevelShared::AddStaticLightRGB
 //
 //==========================================================================
-void VRenderLevelShared::AddStaticLightRGB (vuint32 OwnerUId, const TVec &origin, float radius, vuint32 color, TVec coneDirection, float coneAngle) {
+void VRenderLevelShared::AddStaticLightRGB (vuint32 OwnerUId, const VLightParams &lpar) {
   staticLightsFiltered = false;
   light_t &L = Lights.Alloc();
-  L.origin = origin;
-  L.radius = radius;
-  L.color = color;
+  L.origin = lpar.Origin;
+  L.radius = lpar.Radius;
+  L.color = lpar.Color;
   //L.dynowner = nullptr;
   L.ownerUId = OwnerUId;
-  L.leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(origin)-Level->Subsectors);
+  L.leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(lpar.Origin)-Level->Subsectors);
   L.active = true;
-  L.coneDirection = coneDirection;
-  L.coneAngle = coneAngle;
+  L.coneDirection = lpar.coneDirection;
+  L.coneAngle = lpar.coneAngle;
+  L.levelSector = lpar.LevelSector;
+  L.levelScale = lpar.LevelScale;
+  if (lpar.LevelSector) {
+    L.sectorLightLevel = lpar.LevelSector->params.lightlevel;
+    const float intensity = clampval(L.sectorLightLevel*(fabs(lpar.LevelScale)*0.125f), 0.0f, 255.0f);
+    L.radius = VLevelInfo::GZSizeToRadius(intensity, (lpar.LevelScale < 0.0f), 2.0f);
+  }
   if (OwnerUId) {
     auto osp = StOwners.find(OwnerUId);
     if (osp) Lights[*osp].ownerUId = 0;

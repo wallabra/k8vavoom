@@ -126,7 +126,7 @@ public:
   virtual void RenderPlayerView () = 0;
 
   virtual void ResetStaticLights () = 0;
-  virtual void AddStaticLightRGB (vuint32 OwnerUId, const TVec &, float, vuint32, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f) = 0;
+  virtual void AddStaticLightRGB (vuint32 OwnerUId, const VLightParams &lpar) = 0;
   virtual void MoveStaticLightByOwner (vuint32 OwnerUId, const TVec &origin) = 0;
   virtual void RemoveStaticLightByOwner (vuint32 OwnerUId) = 0;
   virtual int GetNumberOfStaticLights () = 0;

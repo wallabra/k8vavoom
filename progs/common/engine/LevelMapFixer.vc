@@ -425,10 +425,23 @@ void KnownMapBugFixer () {
   //     for some mysterious reason dynamic lighting doesn't have it.
   //     it would be event better when i'll do proper dynlight caching system
   /*
-  if (MapHashMD5 == "d28e3374cd4d2a17a00bfe49fb6d48d8")
-  {
+  if (MapHashMD5 == "d28e3374cd4d2a17a00bfe49fb6d48d8") {
     bConvertSectorLightsToStatic = true;
     printwarn("MAPFIX: Discharge MAP04: made sector lights static");
+    return;
+  }
+  */
+
+  // Project Remap
+  /*
+  if (MapHashMD5 == "2f40f5af09a1a6b9d257ef94303ee8a8" ||
+      MapHashMD5 == "0b83e5124ead265f8e63f7c2e759117e" ||
+      MapHashMD5 == "39ff9af2e7bfaaa55e78e7ec2a78db8f" ||
+      MapHashMD5 == "cb8f6cf20fb677a94fa2a9b18876303a"
+     )
+  {
+    bConvertSectorLightsToStatic = true;
+    printwarn("MAPFIX: Project Remap: made sector lights static");
     return;
   }
   */

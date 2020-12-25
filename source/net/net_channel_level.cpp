@@ -1490,11 +1490,18 @@ int VLevelChannel::UpdateStaticLight (VMessageOut &Msg, VBitStreamWriter &strm, 
   vuint32 ouid = L.OwnerUId;
 
   strm << STRM_INDEX_U(ouid) << lOrigin << lRadius << lColor;
+
   strm.WriteBit(!!L.ConeAngle);
   if (L.ConeAngle) {
     TVec lConeDir = L.ConeDir;
     float lConeAngle = L.ConeAngle;
     strm << lConeDir << lConeAngle;
+  }
+
+  strm.WriteBit(!!L.LevelSector);
+  if (L.LevelSector) {
+    const vuint32 sidx = (vuint32)(ptrdiff_t)(L.LevelSector-&Level->Sectors[0]);
+    strm << STRM_INDEX_U(sidx) << L.LevelScale;
   }
 
   if (!forced) L.Flags &= ~rep_light_t::LightChanged;
@@ -1513,28 +1520,40 @@ bool VLevelChannel::ParseStaticLight (VMessageIn &Msg) {
   TVec Origin;
   float Radius;
   vuint32 Color;
+
   Msg << STRM_INDEX_U(owneruid) << Origin << Radius << Color;
+
   bool isCone = Msg.ReadBit();
+  TVec ConeDir(0.0f, 0.0f, 0.0f);
+  float ConeAngle = 0.0f;
+  if (isCone) {
+    Msg << ConeDir << ConeAngle;
+  }
+
+  bool isSector = Msg.ReadBit();
+  vuint32 snum = 0xffffffffu;
+  float sscale = 0.0f;
+  if (isSector) {
+    Msg << STRM_INDEX_U(snum) << sscale;
+    if (snum >= (unsigned)Level->NumSectors) isSector = false;
+  }
+
   if (Msg.IsError()) {
     GCon->Logf(NAME_DevNet, "%s: cannot read static light header", *GetDebugName());
     return false;
   }
-  if (isCone) {
-    TVec ConeDir;
-    float ConeAngle;
-    Msg << ConeDir << ConeAngle;
-    if (Msg.IsError()) {
-      GCon->Logf(NAME_DevNet, "%s: cannot read static light cone data", *GetDebugName());
-      return false;
-    }
-    #ifdef CLIENT
-    Level->AddStaticLightRGB(owneruid, Origin, Radius, Color, ConeDir, ConeAngle);
-    #endif
-  } else {
-    #ifdef CLIENT
-    Level->AddStaticLightRGB(owneruid, Origin, Radius, Color);
-    #endif
-  }
+
+  VLightParams lpar;
+  lpar.Origin = Origin;
+  lpar.Radius = Radius;
+  lpar.Color = Color;
+  lpar.coneDirection = ConeDir;
+  lpar.coneAngle = ConeAngle;
+  lpar.LevelSector = (isSector ? &Level->Sectors[snum] : nullptr);
+  lpar.LevelScale = sscale;
+  #ifdef CLIENT
+  Level->AddStaticLightRGB(owneruid, lpar);
+  #endif
 
   return !Msg.IsError();
 }

@@ -107,15 +107,17 @@ override void OnMapSpawn (mthing_t *mthing) {
       }
     }
     Destroy();
-  } else if (LightType == DLTYPE_Sector && mthing && !TID && Level.XLevel.bConvertSectorLightsToStatic && Sector) {
-    // hack for Discharge map set
+  } else if (LightType == DLTYPE_Sector && mthing && !TID && /*Level.XLevel.bConvertSectorLightsToStatic &&*/ Sector) {
+    float Scale = float(Args[3]);
+    if (Attenuated) Scale = -Scale;
+    Level.AddStaticLightRGBSector(none, Origin, Sector, Scale, RGB(mthing->args[1-1], mthing->args[2-1], mthing->args[3-1]));
+    /*
     float Scale = float(Args[3])*0.125;
     if (!Scale) Scale = 1.0;
-    Intensity = float(Sector->params.lightlevel)*Scale;
-    if (Intensity < 0.0) Intensity = 0.0;
-    if (Intensity > 255.0) Intensity = 255.0;
+    Intensity = fclamp(float(Sector->params.lightlevel)*Scale, 0.0, 255.0);
     //printwarn("*** FORCED static light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere); RGB=(%s,%s,%s); scale=%s; intensity=%s", Class, ltype, TID, bDormant, (mthing ? "" : "not "), Args[0], Args[1], Args[2], Scale, Intensity);
     Level.AddStaticLightRGB(none, Origin, IntensityToRadius(Intensity), RGB(mthing->args[1-1], mthing->args[2-1], mthing->args[3-1]));
+    */
     /*
     if (Args[0] == 255 && Args[1] == 255 && Args[2]) {
       Level.AddStaticLight(none, Origin, IntensityToRadius(float(mthing->args[4-1])));
@@ -210,9 +212,7 @@ override void ClientTick (float DeltaTime) {
       {
         float Scale = float(Args[3])*0.125;
         if (!Scale) Scale = 1.0;
-        Intensity = float(Sector->params.lightlevel)*Scale;
-        if (Intensity < 0.0) Intensity = 0.0;
-        if (Intensity > 255.0) Intensity = 255.0;
+        Intensity = fclamp(float(Sector->params.lightlevel)*Scale, 0.0, 255.0);
       }
       break;
   }

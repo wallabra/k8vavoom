@@ -176,6 +176,7 @@ public:
   // static lights
   DECLARE_FUNCTION(AddStaticLight)
   DECLARE_FUNCTION(AddStaticLightRGB)
+  DECLARE_FUNCTION(AddStaticLightRGBSector)
   DECLARE_FUNCTION(MoveStaticLightByOwner)
   DECLARE_FUNCTION(RemoveStaticLightByOwner)
 

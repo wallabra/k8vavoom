@@ -71,6 +71,9 @@ public:
     TArray<subsector_t *> touchedSubs;
     unsigned invalidateFrame; // to avoid double-processing lights; using `currDLightFrame`
     unsigned dlightframe; // set to `currDLightFrame` if BSP renderer touched any subsector that is connected with this light
+    sector_t *levelSector; // for `DLTYPE_Sector`, or `nullptr`
+    float levelScale; // scale for `DLTYPE_Sector` light, <0: attenuated
+    vuint32 sectorLightLevel; // to detect changes
     //TArray<polyobj_t *> touchedPolys;
   };
 
@@ -728,7 +731,7 @@ public:
   virtual void SetupFakeFloors (sector_t *) override;
 
   virtual void ResetStaticLights () override;
-  virtual void AddStaticLightRGB (vuint32 OwnerUId, const TVec &origin, float radius, vuint32 color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f) override;
+  virtual void AddStaticLightRGB (vuint32 OwnerUId, const VLightParams &lpar) override;
   virtual void MoveStaticLightByOwner (vuint32 OwnerUId, const TVec &origin) override;
   virtual void RemoveStaticLightByOwner (vuint32 OwnerUId) override;
 

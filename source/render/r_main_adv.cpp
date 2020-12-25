@@ -152,7 +152,16 @@ void VRenderLevelShadowVolume::RenderSceneStaticLights (const refdef_t *RD, cons
   light_t *stlight = Lights.ptr();
   for (int i = Lights.length(); i--; ++stlight) {
     //if (!Lights[i].radius) continue;
-    if (!stlight->active || stlight->radius < 8.0f) continue;
+    if (!stlight->active) continue;
+
+    // update `DLTYPE_Sector`
+    if (stlight->levelSector && stlight->sectorLightLevel != stlight->levelSector->params.lightlevel) {
+      stlight->sectorLightLevel = stlight->levelSector->params.lightlevel;
+      const float intensity = clampval(stlight->sectorLightLevel*(fabs(stlight->levelScale)*0.125f), 0.0f, 255.0f);
+      stlight->radius = VLevelInfo::GZSizeToRadius(intensity, (stlight->levelScale < 0.0f), 2.0f);
+    }
+
+    if (stlight->radius < 8.0f) continue;
 
     if (stlight->leafnum < 0 || stlight->leafnum >= Level->NumSubsectors) {
       stlight->leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(stlight->origin)-Level->Subsectors);

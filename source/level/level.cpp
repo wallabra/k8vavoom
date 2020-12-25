@@ -562,16 +562,19 @@ void VLevel::ResetStaticLights () {
 //  VLevel::AddStaticLightRGB
 //
 //==========================================================================
-void VLevel::AddStaticLightRGB (vuint32 owneruid, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection, float coneAngle) {
+void VLevel::AddStaticLightRGB (vuint32 owneruid, const VLightParams &lpar) {
   if (owneruid && !StaticLightsMap) StaticLightsMap = new TMapNC<vuint32, int>();
   const int idx = StaticLights.length();
   rep_light_t &L = StaticLights.alloc();
   L.OwnerUId = owneruid;
-  L.Origin = Origin;
-  L.Radius = Radius;
-  L.Color = Color;
-  L.ConeDir = coneDirection;
-  L.ConeAngle = coneAngle;
+  L.Origin = lpar.Origin;
+  L.Radius = lpar.Radius;
+  L.Color = lpar.Color;
+  L.ConeDir = lpar.coneDirection;
+  L.ConeAngle = lpar.coneAngle;
+  L.LevelSector = lpar.LevelSector;
+  L.LevelScale = lpar.LevelScale;
+  if (L.LevelScale == 0.0f) L.LevelScale = 1.0f;
   L.Flags = rep_light_t::LightChanged|rep_light_t::LightActive;
   if (owneruid) {
     vassert(StaticLightsMap);
@@ -580,7 +583,7 @@ void VLevel::AddStaticLightRGB (vuint32 owneruid, const TVec &Origin, float Radi
     StaticLightsMap->put(owneruid, idx);
   }
   #ifdef CLIENT
-  if (Renderer) Renderer->AddStaticLightRGB(owneruid, Origin, Radius, Color, coneDirection, coneAngle);
+  if (Renderer) Renderer->AddStaticLightRGB(owneruid, lpar);
   #endif
 }
 
@@ -636,8 +639,8 @@ void VLevel::RemoveStaticLightByOwner (vuint32 owneruid) {
 //  VLevel::AddStaticLightRGB
 //
 //==========================================================================
-void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection, float coneAngle) {
-  AddStaticLightRGB((Ent ? Ent->/*GetUniqueId()*/ServerUId : 0u), Origin, Radius, Color, coneDirection, coneAngle);
+void VLevel::AddStaticLightRGB (VEntity *Ent, const VLightParams &lpar) {
+  return AddStaticLightRGB((Ent ? Ent->/*GetUniqueId()*/ServerUId : 0u), lpar);
 }
 
 
