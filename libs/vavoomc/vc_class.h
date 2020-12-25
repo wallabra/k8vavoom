@@ -501,7 +501,7 @@ public:
   VState *FindState (VName);
   VState *FindStateChecked (VName);
   VStateLabel *FindStateLabel (VName AName, VName SubLabel=NAME_None, bool Exact=false);
-  VStateLabel *FindStateLabel (TArray<VName> &, bool);
+  VStateLabel *FindStateLabel (TArray<VName> &Names, bool Exact);
 
   VMethod *FindDecorateStateActionExact (VStr actname); // but case-insensitive
   VMethod *FindDecorateStateAction (VStr actname);

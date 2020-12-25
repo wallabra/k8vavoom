@@ -964,6 +964,23 @@ VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
     else if (VStr::ICmp(*AName, "Burn") == 0) { AName = VName("Death"); SubLabel = VName("Fire"); }
     else if (VStr::ICmp(*AName, "Ice") == 0) { AName = VName("Death"); SubLabel = VName("Ice"); }
     else if (VStr::ICmp(*AName, "Disintegrate") == 0) { AName = VName("Death"); SubLabel = VName("Disintegrate"); }
+
+    // resolve "Super::", because why not?
+    VStr CheckName(AName);
+    int DCol = CheckName.IndexOf("::");
+    if (DCol >= 0) {
+      VClass *CheckClass;
+      VStr ClassNameStr(CheckName, 0, DCol);
+      if (ClassNameStr.strEquCI("Super") || ClassNameStr.length() == 0) {
+        CheckClass = ParentClass;
+      } else {
+        CheckClass = StaticFindClassNoCase(*ClassNameStr);
+      }
+      if (!CheckClass) return nullptr;
+      CheckName = VStr(CheckName, DCol+2, CheckName.Length()-DCol-2);
+      if (CheckName.length() == 0) return nullptr;
+      return CheckClass->FindStateLabel(VName(*CheckName), NAME_None, Exact);
+    }
   }
 
   const char *namestr = *AName;
@@ -1841,13 +1858,17 @@ void VClass::EmitStateLabels () {
 //==========================================================================
 VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Offset) {
   VClass *CheckClass = this;
-  VStr CheckName = *LabelName;
+  VStr CheckName(LabelName);
 
   int DCol = CheckName.IndexOf("::");
   if (DCol >= 0) {
     VStr ClassNameStr(CheckName, 0, DCol);
-    if (ClassNameStr.ICmp("Super") == 0) {
+    if (ClassNameStr.ICmp("Super") == 0 || ClassNameStr.length() == 0) {
       CheckClass = ParentClass;
+      if (!CheckClass) {
+        ParseError(Loc, "No superclass for class '%s'", *GetFullName());
+        return nullptr;
+      }
     } else {
       CheckClass = StaticFindClassNoCase(*ClassNameStr);
       if (!CheckClass) {
