@@ -574,7 +574,11 @@ void VLevel::AddStaticLightRGB (vuint32 owneruid, const VLightParams &lpar) {
   L.ConeAngle = lpar.coneAngle;
   L.LevelSector = lpar.LevelSector;
   L.LevelScale = lpar.LevelScale;
-  if (L.LevelScale == 0.0f) L.LevelScale = 1.0f;
+  if (L.LevelSector) {
+    if (L.LevelScale == 0.0f) L.LevelScale = 1.0f;
+    const float intensity = clampval(lpar.LevelSector->params.lightlevel*(fabs(lpar.LevelScale)*0.125f), 0.0f, 255.0f);
+    L.Radius = VLevelInfo::GZSizeToRadius(intensity, (lpar.LevelScale < 0.0f), 2.0f);
+  }
   L.Flags = rep_light_t::LightChanged|rep_light_t::LightActive;
   if (owneruid) {
     vassert(StaticLightsMap);
