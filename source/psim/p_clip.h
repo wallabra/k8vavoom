@@ -173,6 +173,7 @@ public:
 
   inline const TVec &GetOrigin () const noexcept { return Origin; }
   inline const TFrustum &GetFrustum () const noexcept { return Frustum; }
+  inline void SetFrustum (const TFrustum &newfrustum) noexcept { Frustum = newfrustum; }
 
   // 0: completely outside; >0: completely inside; <0: partially inside
   int CheckSubsectorFrustum (subsector_t *sub, const unsigned mask=~0u) const noexcept;
