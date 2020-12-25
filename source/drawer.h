@@ -365,12 +365,12 @@ public:
 
   // limit light distance with both `r_lights_radius` and `gl_maxdist`
   static inline float GetLightMaxDist () noexcept {
-    return fmax(0.0f, (gl_maxdist > 0 ? fmin(gl_maxdist.asFloat(), r_lights_radius.asFloat()) : r_lights_radius.asFloat()));
+    return fmax(0.0f, (gl_maxdist > 0.0f ? fmin(gl_maxdist.asFloat(), r_lights_radius.asFloat()) : r_lights_radius.asFloat()));
   }
 
-  static inline float GetLightMaxDistDef (const float defval=4096) noexcept {
-    const float maxLightDist = (gl_maxdist > 0 ? fmin(gl_maxdist.asFloat(), r_lights_radius.asFloat()) : r_lights_radius.asFloat());
-    return (maxLightDist < 1 ? defval : maxLightDist);
+  static inline float GetLightMaxDistDef (const float defval=4096.0f) noexcept {
+    const float maxLightDist = (gl_maxdist > 0.0f ? fmin(gl_maxdist.asFloat(), r_lights_radius.asFloat()) : r_lights_radius.asFloat());
+    return (maxLightDist < 8.0f ? defval : maxLightDist);
   }
 };
 

@@ -45,13 +45,13 @@ static VCvarI dbg_adv_force_dynamic_lights_radius("dbg_adv_force_dynamic_lights_
 
 struct StLightInfo {
   VRenderLevelShared::light_t *stlight; // light
-  float distSq; // distance
+  float distSq; // distance from view origin to the nearest point on the light sphere
   float zofs; // origin z offset
 };
 
 struct DynLightInfo {
   dlight_t *l; // light
-  float distSq; // distance
+  float distSq; // distance from view origin to the nearest point on the light sphere
   //float zofs; // origin z offset
 };
 
@@ -152,7 +152,7 @@ void VRenderLevelShadowVolume::RenderSceneStaticLights (const refdef_t *RD, cons
   light_t *stlight = Lights.ptr();
   for (int i = Lights.length(); i--; ++stlight) {
     //if (!Lights[i].radius) continue;
-    if (!stlight->active || stlight->radius < 8) continue;
+    if (!stlight->active || stlight->radius < 8.0f) continue;
 
     if (stlight->leafnum < 0 || stlight->leafnum >= Level->NumSubsectors) {
       stlight->leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(stlight->origin)-Level->Subsectors);
@@ -166,10 +166,11 @@ void VRenderLevelShadowVolume::RenderSceneStaticLights (const refdef_t *RD, cons
     // don't do lights that are too far away
     Delta = lorg-Drawer->vieworg;
     const float distSq = Delta.lengthSquared();
+    const float srq = stlight->radius*stlight->radius;
 
     // if the light is behind a view, drop it if it is further than light radius
-    if (distSq >= stlight->radius*stlight->radius) {
-      if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
+    if (distSq >= srq) {
+      if (distSq-srq > rlightraduisSq || backPlane.SphereOnSide(lorg, stlight->radius)) continue; // too far away
       if (advLightFp.needUpdate(Drawer->vieworg, Drawer->viewangles)) {
         advLightFp.setup(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
         advLightFrustum.setup(clip_base, advLightFp, false); //true, maxLightDist);
@@ -187,7 +188,7 @@ void VRenderLevelShadowVolume::RenderSceneStaticLights (const refdef_t *RD, cons
 
     StLightInfo &sli = visstatlights[visstatlightCount++];
     sli.stlight = stlight;
-    sli.distSq = distSq;
+    sli.distSq = distSq-srq;
     sli.zofs = lorg.z-stlight->origin.z;
   }
 
@@ -246,7 +247,7 @@ void VRenderLevelShadowVolume::RenderSceneDynamicLights (const refdef_t *RD, con
 
   dlight_t *l = DLights;
   for (int i = MAX_DLIGHTS; i--; ++l) {
-    if (l->radius < l->minlight+8 || l->die < Level->Time) continue;
+    if (l->radius < l->minlight+8.0f || l->die < Level->Time) continue;
 
     TVec lorg = l->origin;
 
@@ -263,10 +264,11 @@ void VRenderLevelShadowVolume::RenderSceneDynamicLights (const refdef_t *RD, con
     // don't do lights that are too far away
     Delta = lorg-Drawer->vieworg;
     const float distSq = Delta.lengthSquared();
+    const float srq = l->radius*l->radius;
 
     // if the light is behind a view, drop it if it is further than light radius
-    if (distSq >= l->radius*l->radius) {
-      if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
+    if (distSq >= srq) {
+      if (distSq-srq > rlightraduisSq || backPlane.SphereOnSide(lorg, l->radius)) continue; // too far away
       if (advLightFp.needUpdate(Drawer->vieworg, Drawer->viewangles)) {
         advLightFp.setup(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
         advLightFrustum.setup(clip_base, advLightFp, false); //true, maxLightDist);
@@ -279,7 +281,7 @@ void VRenderLevelShadowVolume::RenderSceneDynamicLights (const refdef_t *RD, con
 
     DynLightInfo &dli = visdynlights[visdynlightCount++];
     dli.l = l;
-    dli.distSq = distSq;
+    dli.distSq = distSq-srq;
     //dli.zofs = lorg.z-l->origin.z;
   }
 

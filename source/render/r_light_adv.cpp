@@ -61,16 +61,9 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   //if (PortalDepth > 0) { GCon->Logf(NAME_Debug, "skipped portal lighting (depth=%d)", PortalDepth); return; }
 
   if (!forceRender) {
-    // check limits
-    if (!DynamicLights) {
-      // static lights
-      if (r_max_lights >= 0 && LightsRendered >= r_max_lights) return;
-    } else {
-      // dynamic lights
-      if (r_max_lights >= 0 && LightsRendered >= r_max_lights) {
-        // enforce dynlight limit
-        if (r_dynlight_minimum >= 0 && DynLightsRendered >= r_dynlight_minimum) return;
-      }
+    if (r_max_lights >= 0 && LightsRendered >= r_max_lights) {
+      // check limits
+      if (!DynamicLights || (r_dynlight_minimum >= 0 && DynLightsRendered >= r_dynlight_minimum)) return;
     }
   }
 
