@@ -529,17 +529,7 @@ void VMirrorPortal::DrawContents () {
   VViewClipper Range;
   SetupRanges(rd, Range, true, false);
 
-  // use "far plane" (it is unused by default)
-  const TClipPlane SavedClip = Drawer->viewfrustum.planes[TFrustum::Forward]; // save far/mirror plane
-  const unsigned planeCount = Drawer->viewfrustum.planeCount;
-  Drawer->viewfrustum.planes[TFrustum::Forward] = *Plane;
-  Drawer->viewfrustum.planes[TFrustum::Forward].clipflag = TFrustum::ForwardBit; //0x20U;
-  Drawer->viewfrustum.planeCount = 6;
-
   RLev->RenderScene(&rd, &Range);
-
-  Drawer->viewfrustum.planes[TFrustum::Forward] = SavedClip;
-  Drawer->viewfrustum.planeCount = planeCount;
 
   --RLev->MirrorLevel;
   Drawer->MirrorFlip = RLev->MirrorLevel&1;

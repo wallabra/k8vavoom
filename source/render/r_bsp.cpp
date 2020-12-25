@@ -1243,8 +1243,13 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
   /*static*/ const float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
   ViewClip.ClearClipNodes(Drawer->vieworg, Level);
-  ViewClip.ClipInitFrustumRange(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup, rd->fovx, rd->fovy);
-  if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
+  if (Range) {
+    ViewClip.ClipResetFrustumPlanes();
+    ViewClip.SetFrustum(Range->GetFrustum());
+    ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
+  } else {
+    ViewClip.ClipInitFrustumRange(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup, rd->fovx, rd->fovy);
+  }
   memset(BspVis, 0, VisSize);
   memset(BspVisSector, 0, SecVisSize);
   if (PortalLevel == 0) {
