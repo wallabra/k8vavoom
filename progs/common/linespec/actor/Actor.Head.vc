@@ -419,6 +419,16 @@ override void Destroyed () {
 
 //==========================================================================
 //
+//  A_CallSpecial
+//
+//==========================================================================
+[decorate] final bool A_CallSpecial (int aSpecial, optional int Arg1, optional int Arg2, optional int Arg3, optional int Arg4, optional int Arg5) {
+  return Level.ExecuteActionSpecial(aSpecial, Arg1, Arg2, Arg3, Arg4, Arg5, nullptr, 0, self);
+}
+
+
+//==========================================================================
+//
 //  A_GiveQuestItem
 //
 //==========================================================================
