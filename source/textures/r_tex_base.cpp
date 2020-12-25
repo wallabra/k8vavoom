@@ -143,6 +143,7 @@ VTexture::VTexture ()
   , Pixels8BitValid(false)
   , Pixels8BitAValid(false)
   , shadeColor(-1)
+  , shadeColorSaved(-1)
 {
 }
 
@@ -216,7 +217,6 @@ bool VTexture::CheckModified () {
 //
 //==========================================================================
 void VTexture::ReleasePixels () {
-  //if (shadeColor != -1) return; // cannot release shaded texture
   if (SourceLump < 0) return; // this texture cannot be reloaded
   //GCon->Logf(NAME_Debug, "VTexture::ReleasePixels: '%s' (%d: %s)", *Name, SourceLump, *W_FullLumpName(SourceLump));
   if (InReleasingPixels()) return; // already released
@@ -921,8 +921,10 @@ void VTexture::ConvertPixelsToRGBA () {
 //
 //==========================================================================
 void VTexture::ConvertPixelsToShaded () {
+  if (shadeColorSaved != -1) { shadeColor = shadeColorSaved; shadeColorSaved = -1; }
   if (shadeColor == -1) return; // nothing to do
-  int sc = shadeColor;
+  const int sc = shadeColor;
+  shadeColorSaved = sc;
   shadeColor = -1; // no more conversions, and return original format info
   ConvertPixelsToRGBA();
   if (sc >= 0) shadePixelsRGBA(sc); else stencilPixelsRGBA(sc&0xffffff);
@@ -1194,10 +1196,11 @@ void VTexture::PremultiplyImage (rgba_t *pic, int wdt, int hgt) {
 //
 //==========================================================================
 void VTexture::Shade (int shade) {
-  if (shadeColor == shade) return;
-  vassert(shadeColor == -1);
+  if (shadeColor == shade || shadeColorSaved == shade) return;
   // remember shading
+  if (shadeColor != -1) ReleasePixels();
   shadeColor = shade;
+  shadeColorSaved = -1;
 }
 
 

@@ -326,6 +326,7 @@ protected:
   bool Pixels8BitValid;
   bool Pixels8BitAValid;
   int shadeColor;
+  int shadeColorSaved; // `ConvertPixelsToShaded()` saves `shadeColor` here, so we can restore it after `ReleasePixels()`
 
 public:
   static void checkerFill8 (vuint8 *dest, int width, int height);
@@ -380,7 +381,7 @@ public:
 
 public:
   //k8: please note that due to my sloppy coding, real format checking should be preceded by `GetPixels()`
-  inline int GetFormat () const { return (shadeColor == -1 ?  mFormat : TEXFMT_RGBA); }
+  inline int GetFormat () const noexcept { return (shadeColor == -1 ? mFormat : TEXFMT_RGBA); }
   PropertyRO<int, VTexture> Format {this, &VTexture::GetFormat};
 
   inline int GetRealX0 () { if (RealX0 == MIN_VINT32) CalcRealDimensions(); return RealX0; }
