@@ -64,6 +64,12 @@ override void BeginPlay () {
 override void Tick (float DeltaTime) {
   ::Tick(DeltaTime);
 
+  if (Level.bFrozen && ((!bIsPlayer && !bNoTimeFreeze) ||
+      (bIsPlayer && !(PlayerEx(Player).Cheats&PlayerEx::CF_TIMEFREEZE))))
+  {
+    return;
+  }
+
   if (Special1f) {
     if (MissileState == FindState('Missile', 'SSG', true)) {
       // super shotgun sounds

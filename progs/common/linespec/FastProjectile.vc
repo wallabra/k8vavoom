@@ -34,6 +34,12 @@ class FastProjectile : Actor;
 //
 //==========================================================================
 override void Tick (float DeltaTime) {
+  if (Level.bFrozen && ((!bIsPlayer && !bNoTimeFreeze) ||
+      (bIsPlayer && !(PlayerEx(Player).Cheats&PlayerEx::CF_TIMEFREEZE))))
+  {
+    return;
+  }
+
   int Count = 8;
 
   //print("%C: velocity=%s", self, Velocity);
