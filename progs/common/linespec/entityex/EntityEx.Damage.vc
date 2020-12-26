@@ -262,9 +262,12 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name adam
     refire = PlayerEx(plr.Player).Refire;
     if (!refire) {
       if (fromMissile && plr.k8hsLastMissileTicTime) {
-        if (XLevel.TicTime-plr.k8hsLastMissileTicTime < 10) ++plr.k8hsLastMissileRefire; else plr.k8hsLastMissileRefire = 0;
-        refire = plr.k8hsLastMissileRefire;
-        if (debugme) printdebug("%C: missile refire: %s (%s : %s) diff=%s", inflictor, refire, plr.k8hsLastMissileTicTime, XLevel.TicTime, XLevel.TicTime-plr.k8hsLastMissileTicTime);
+        int tdiff = XLevel.TicTime-plr.k8hsLastMissileTicTime;
+        if (tdiff > 0) {
+          if (tdiff < 10) ++plr.k8hsLastMissileRefire; else plr.k8hsLastMissileRefire = 0;
+          refire = plr.k8hsLastMissileRefire;
+          if (debugme) printdebug("%C: missile refire: %s (%s : %s) diff=%s", inflictor, refire, plr.k8hsLastMissileTicTime, XLevel.TicTime, tdiff);
+        }
       }
     } else {
       plr.k8hsLastMissileRefire = 0;
