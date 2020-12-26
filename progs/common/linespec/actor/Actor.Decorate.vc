@@ -89,7 +89,7 @@ protected final void DoFireRailgun (float Offset) {
 //
 //===========================================================================
 protected final void doFireMissileProjectile (class!Actor aMissileType, optional float Angle,
-  optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
+  optional bool UseAmmo, optional float SpawnXY, optional float SpawnZ,
   optional int Flags, optional float Pitch, optional float SpawnFwd)
 {
   if (!aMissileType || !bIsPlayer) return;
@@ -108,20 +108,20 @@ protected final void doFireMissileProjectile (class!Actor aMissileType, optional
   if (SpawnXY) {
     float s, c;
     sincos(Angles.yaw-90.0, out s, out c);
-    ShootOrg.x += float(SpawnXY)*c;
-    ShootOrg.y += float(SpawnXY)*s;
+    ShootOrg.x += SpawnXY*c;
+    ShootOrg.y += SpawnXY*s;
   }
   if (SpawnFwd) {
     float s, c;
     sincos(Angles.yaw, out s, out c);
-    ShootOrg.x += float(SpawnFwd)*c;
-    ShootOrg.y += float(SpawnFwd)*s;
+    ShootOrg.x += SpawnFwd*c;
+    ShootOrg.y += SpawnFwd*s;
   }
   ShootOrg.z += SpawnZ;
 
   float ShootAngle = Angles.yaw;
   if (Flags&FPF_AIMATANGLE) ShootAngle += Angle;
-  // Temporarily adjusts the pitch
+  // temporarily adjusts the pitch
   float SavedPitch = Angles.pitch;
   if (Flags&FPF_NOAUTOAIM) Angles.pitch += Pitch; // `A_FireCustomMissile()` does this another way
 

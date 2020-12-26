@@ -520,7 +520,7 @@
 //
 //===========================================================================
 [decorate] final void A_FireCustomMissile (class!Actor aMissileType, optional float Angle,
-  optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
+  optional bool UseAmmo, optional float SpawnXY, optional float SpawnZ,
   optional int Flags, optional float Pitch) self(Actor)
 {
   Pitch = -Pitch; // this does it this way
@@ -534,7 +534,7 @@
 //
 //===========================================================================
 [decorate] final void A_FireCustomMissileEx (class!Actor aMissileType, optional float Angle,
-  optional bool UseAmmo, optional int SpawnLeft, optional float SpawnFwd, optional float SpawnUp,
+  optional bool UseAmmo, optional float SpawnLeft, optional float SpawnFwd, optional float SpawnUp,
   optional int Flags, optional float Pitch) self(Actor)
 {
   Pitch = -Pitch; // this does it this way
@@ -566,7 +566,7 @@
 //
 //===========================================================================
 [decorate] final void A_FireProjectile (class!Actor aMissileType, optional float Angle,
-                                        optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
+                                        optional bool UseAmmo, optional float SpawnXY, optional float SpawnZ,
                                         optional int Flags, optional float Pitch) self(Actor)
 {
   doFireMissileProjectile(aMissileType, Angle!optional, UseAmmo!optional, SpawnXY!optional, SpawnZ!optional, Flags!optional, Pitch!optional);
