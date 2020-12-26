@@ -99,7 +99,11 @@ array!DamageColorType DamageColors;
 int MaxHealth;
 
 // K8 Headshots Variables
-int k8hsCount;
+transient int k8hsCount;
+// last headshot from a missile
+// used to detect secondary shots from a multi-projectile missile
+transient int k8hsLastMissileTicTime;
+transient int k8hsLastHitscanTicTime;
 
 // both 64 by default
 float UseRange;
@@ -111,6 +115,7 @@ float UseThingRange;
 // it has info for exactly 10 slots, and each slot list ends with `none`
 // i.e. `none` is used as slot delimiter (NOT TERMINATOR! i.e. last `none` may absent)
 // also, exact `Weapon` class means "this slot was defined as empty"
+// k8: is this valid yet?
 transient protected array!(class!Weapon) decoWeaponsClasses;
 
 

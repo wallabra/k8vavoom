@@ -371,6 +371,23 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name adam
     if (debugme) printdebug("K8HS: len=%s; critChance=%s; hscount=%s", len, critChance, (plr ? plr.k8hsCount : -1));
     // shotgun, etc -- multiple hitscans per one tick?
     if (plr) {
+      if (fromMissile) {
+        if (plr.k8hsLastMissileTicTime == XLevel.TicTime) {
+          secondary = true;
+          if (debugme) printdebug("K8HS: *** *** *** forced secondary for missile '%C'", inflictor);
+        } else {
+          if (debugme) printdebug("K8HS: *** *** *** first shot for missile '%C'", inflictor);
+        }
+        plr.k8hsLastMissileTicTime = XLevel.TicTime;
+      } else {
+        if (plr.k8hsLastHitscanTicTime == XLevel.TicTime) {
+          secondary = true;
+          if (debugme) printdebug("K8HS: *** *** *** forced secondary for hitscan from '%C'", inflictor);
+        } else {
+          if (debugme) printdebug("K8HS: *** *** *** first shot for hitscan from '%C'", inflictor);
+        }
+        plr.k8hsLastHitscanTicTime = XLevel.TicTime;
+      }
       if (secondary) {
         // very rarely, shotgun can do double criticals
         ++plr.k8hsCount;
@@ -396,6 +413,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name adam
       }
     }
     int hsCount = (plr ? plr.k8hsCount : 0);
+    if (debugme) printdebug("K8HS: len=%s; critChance=%s; new-hscount=%s", len, critChance, hsCount);
 
     if (critChance > 13 && !GetCvarB('k8HSCriticals')) critChance = 13;
 
