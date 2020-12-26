@@ -643,6 +643,7 @@ override void SB_DrawFullscreenStats () {
     // faces
     //if (ClGame.maxclients > 1) DrawPic(12, ovh-32, pic_faceback, fsalpha, cl.MO.Translation);
     //DrawPic(12, ovh-32, pic_faces[sb_faceindex], fsalpha);
+    #if 1
     picinfo_t pi;
     R_GetPicInfo(pic_faces[sb_faceindex], &pi);
     int rhgt = int((pi.height-pi.yoffset)*R_GetAspectRatio());
@@ -650,10 +651,21 @@ override void SB_DrawFullscreenStats () {
       int xpos = (Width-pi.width+pi.xoffset)/2;
       DrawPicScaled(xpos, Height-rhgt-2-42, pic_faces[sb_faceindex], 1, R_GetAspectRatio(), fsalpha);
     } else {
-      //print("hgt=%s; ofs=%s", pi.height, pi.yoffset);
+      //printdebug("***: hgt=%s; ofs=%s", pi.height, pi.yoffset);
       //printdebug("wdt=%s; hgt=%s; ofs=%s:%s", pi.width, pi.height, pi.xoffset, pi.yoffset);
       DrawPicScaled(12, Height-rhgt-2, pic_faces[sb_faceindex], 1, R_GetAspectRatio(), fsalpha);
     }
+    #else
+    if (GetCvarB('r_hud_fs_face_centered')) {
+      picinfo_t pi;
+      R_GetPicInfo(pic_faces[sb_faceindex], &pi);
+      int rhgt = int((pi.height-pi.yoffset)*R_GetAspectRatio());
+      int xpos = (Width-pi.width+pi.xoffset)/2;
+      DrawPicScaled(xpos, Height-rhgt-2-42, pic_faces[sb_faceindex], 1, R_GetAspectRatio(), fsalpha);
+    } else {
+      DrawPicFit(32, 32, 12, Height-32-2, pic_faces[sb_faceindex], fsalpha);
+    }
+    #endif
   }
 
   // health
