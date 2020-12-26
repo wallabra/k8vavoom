@@ -290,13 +290,14 @@ void VMeshModel::Load_MD2 (vuint8 *Data, int DataSize) {
         TVec d1 = v2-v3;
         TVec d2 = v1-v3;
         PlaneNormal = CrossProduct(d1, d2);
-        if (lengthSquared(PlaneNormal) == 0) {
+        if (lengthSquared(PlaneNormal) == 0.0f) {
           //k8:hack!
           if (mdl_report_errors && !reported) {
             GCon->Logf("Alias model '%s' has degenerate triangle %d; v1=(%f,%f,%f), v2=(%f,%f,%f); v3=(%f,%f,%f); d1=(%f,%f,%f); d2=(%f,%f,%f); cross=(%f,%f,%f)",
               *this->Name, j, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z, d1.x, d1.y, d1.z, d2.x, d2.y, d2.z, PlaneNormal.x, PlaneNormal.y, PlaneNormal.z);
           }
           reported = true;
+          PlaneNormal = TVec(0.0f, 0.0f, 1.0f);
         } else {
           hacked = (vnn != 0);
           break;
@@ -322,6 +323,7 @@ void VMeshModel::Load_MD2 (vuint8 *Data, int DataSize) {
 
   if (pmodel->numframes == 1 && validTri.length()) {
     // rebuild triangle indicies, why not
+    #if 0
     if (hadError) {
       VMeshFrame &Frame = this->Frames[0];
       TArray<VMeshTri> NewTris; // vetex indicies
@@ -349,6 +351,7 @@ void VMeshModel::Load_MD2 (vuint8 *Data, int DataSize) {
         }
       }
     }
+    #endif
   } else {
     if (hadError && showError) {
       GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u!", *this->Name, triIgnored, pmodel->numtris);
@@ -555,12 +558,13 @@ void VMeshModel::Load_MD3 (vuint8 *Data, int DataSize) {
         TVec d1 = v2-v3;
         TVec d2 = v1-v3;
         PlaneNormal = CrossProduct(d1, d2);
-        if (lengthSquared(PlaneNormal) == 0) {
+        if (lengthSquared(PlaneNormal) == 0.0f) {
           //k8:hack!
           if (mdl_report_errors && !reported) {
             GCon->Logf("Alias model '%s' has degenerate triangle %d; v1=(%f,%f,%f), v2=(%f,%f,%f); v3=(%f,%f,%f); d1=(%f,%f,%f); d2=(%f,%f,%f); cross=(%f,%f,%f)",
               *this->Name, j, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z, d1.x, d1.y, d1.z, d2.x, d2.y, d2.z, PlaneNormal.x, PlaneNormal.y, PlaneNormal.z);
           }
+          PlaneNormal = TVec(0.0f, 0.0f, 1.0f);
           reported = true;
         } else {
           hacked = (vnn != 0);
@@ -586,6 +590,7 @@ void VMeshModel::Load_MD3 (vuint8 *Data, int DataSize) {
 
   if (pmodel->frameNum == 1 && validTri.length()) {
     // rebuild triangle indicies, why not
+    #if 0
     if (hadError) {
       VMeshFrame &Frame = this->Frames[0];
       TArray<VMeshTri> NewTris; // vetex indicies
@@ -613,6 +618,7 @@ void VMeshModel::Load_MD3 (vuint8 *Data, int DataSize) {
         }
       }
     }
+    #endif
   } else {
     if (hadError && showError) {
       GCon->Logf(NAME_Warning, "Alias model '%s' has %d degenerate triangles out of %u!", *this->Name, triIgnored, pmesh->triNum);
