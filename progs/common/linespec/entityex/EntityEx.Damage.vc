@@ -264,13 +264,21 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name adam
       if (fromMissile && plr.k8hsLastMissileTicTime) {
         int tdiff = XLevel.TicTime-plr.k8hsLastMissileTicTime;
         if (tdiff > 0) {
-          if (tdiff < 10) ++plr.k8hsLastMissileRefire; else plr.k8hsLastMissileRefire = 0;
+          if (tdiff < 15) ++plr.k8hsLastMissileRefire; else plr.k8hsLastMissileRefire = 0;
           refire = plr.k8hsLastMissileRefire;
           if (debugme) printdebug("%C: missile refire: %s (%s : %s) diff=%s", inflictor, refire, plr.k8hsLastMissileTicTime, XLevel.TicTime, tdiff);
+        }
+      } else {
+        int tdiff = XLevel.TicTime-plr.k8hsLastHitscanTicTime;
+        if (tdiff > 0) {
+          if (tdiff < 15) ++plr.k8hsLastHitscanRefire; else plr.k8hsLastHitscanRefire = 0;
+          refire = plr.k8hsLastHitscanRefire;
+          if (debugme) printdebug("%C: hitscan refire: %s (%s : %s) diff=%s", inflictor, refire, plr.k8hsLastHitscanTicTime, XLevel.TicTime, tdiff);
         }
       }
     } else {
       plr.k8hsLastMissileRefire = 0;
+      plr.k8hsLastHitscanRefire = 0;
     }
     // set `refire` to:
     //   -666: totally fucked
