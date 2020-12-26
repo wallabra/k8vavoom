@@ -104,6 +104,7 @@ defaultproperties
   ForwardMove2 = 1.2;
   SideMove1 = 1.2;
   SideMove2 = 1.2;
+  GruntSpeed = 12.0;
   JumpVelZ = 1.0 * 35.0;
   MorphWeapon = Beak;
   bPickUp = false;

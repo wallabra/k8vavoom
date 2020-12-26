@@ -1326,8 +1326,16 @@ final void PlayerLandedOnThing () {
   if (pex && pex.MO == self) pex.DeltaViewHeight = Velocity.z/8.0;
   FallingDamage();
   if (Health > 0 && pex && !pex.MorphTime) {
-    if (Velocity.z < -DEFAULT_GRAVITY*0.375) {
-      PlaySound('*grunt', CHAN_VOICE);
+    //printdebug("%C: vel=%s", self, Velocity.z);
+    //float gruntS = DEFAULT_GRAVITY*0.375;
+    auto pp = PlayerPawn(self);
+    float gruntS = (pp ? pp.GruntSpeed*35.0 : DEFAULT_GRAVITY*0.375);
+    if (gruntS > 0.0) {
+      //printdebug("%C: vel=%s; gs=%s", self, Velocity.z, gruntS);
+      if (Velocity.z < -gruntS) {
+        //printdebug("%C: ***grunt***", self);
+        PlaySound('*grunt', CHAN_VOICE);
+      }
     }
     if ((Origin.z > FloorZ || !GetFloorType()->bLiquid) && !AreSoundsEquivalent('*grunt', '*land')) {
       PlaySound('*land', CHAN_BODY);

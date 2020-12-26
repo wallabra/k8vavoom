@@ -547,6 +547,7 @@
     <prop_float name="Player.UseThingRange" property="UseThingRange" />
     <prop_class name="Player.MorphWeapon" property="MorphWeapon" />
     <prop_pawn_weapon_slot name="Player.WeaponSlot" />
+    <prop_float name="Player.GruntSpeed" property="GruntSpeed" />
   </class>
 
   <class name="MorphProjectile">

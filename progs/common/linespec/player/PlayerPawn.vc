@@ -50,6 +50,7 @@ float ForwardMove1;
 float ForwardMove2;
 float SideMove1;
 float SideMove2;
+float GruntSpeed;
 
 // color translation range
 int TranslStart;
@@ -922,6 +923,7 @@ defaultproperties {
   RealHeight = -666;
   ForwardMove1 = 1.0;
   ForwardMove2 = 1.0;
+  GruntSpeed = 12.0;
   SideMove1 = 1.0;
   SideMove2 = 1.0;
   JumpVelZ = 8.0*35.0;
