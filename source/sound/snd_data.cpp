@@ -811,6 +811,7 @@ void VSoundManager::ParsePlayerSoundCommon (VScriptParser *sc, int &PClass, int 
 //
 //==========================================================================
 int VSoundManager::AddPlayerClass (VName CName) {
+  CName = CName.GetLower();
   int idx = FindPlayerClass(CName);
   return (idx == -1 ? PlayerClasses.Append(CName) : idx);
 }
@@ -822,7 +823,10 @@ int VSoundManager::AddPlayerClass (VName CName) {
 //
 //==========================================================================
 int VSoundManager::FindPlayerClass (VName CName) {
-  for (int i = 0; i < PlayerClasses.length(); ++i) if (PlayerClasses[i] == CName) return i;
+  CName = CName.GetLowerNoCreate();
+  if (CName != NAME_None) {
+    for (int i = 0; i < PlayerClasses.length(); ++i) if (PlayerClasses[i] == CName) return i;
+  }
   return -1;
 }
 
@@ -833,6 +837,7 @@ int VSoundManager::FindPlayerClass (VName CName) {
 //
 //==========================================================================
 int VSoundManager::AddPlayerGender (VName GName) {
+  GName = GName.GetLower();
   int idx = FindPlayerGender(GName);
   return (idx == -1 ? PlayerGenders.Append(GName) : idx);
 }
@@ -844,7 +849,10 @@ int VSoundManager::AddPlayerGender (VName GName) {
 //
 //==========================================================================
 int VSoundManager::FindPlayerGender (VName GName) {
-  for (int i = 0; i < PlayerGenders.length(); ++i) if (PlayerGenders[i] == GName) return i;
+  GName = GName.GetLowerNoCreate();
+  if (GName != NAME_None) {
+    for (int i = 0; i < PlayerGenders.length(); ++i) if (PlayerGenders[i] == GName) return i;
+  }
   return -1;
 }
 
@@ -952,10 +960,13 @@ int VSoundManager::ResolveSound (int InSoundId) {
 //==========================================================================
 int VSoundManager::ResolveEntitySound (VName ClassName, VName GenderName, VName SoundName) {
   int ClassId = FindPlayerClass(ClassName);
+  //GCon->Logf(NAME_Debug, "ResolveEntitySound: class '%s' is %d", *ClassName, ClassId);
   if (ClassId == -1) ClassId = 0;
   int GenderId = FindPlayerGender(GenderName);
+  //GCon->Logf(NAME_Debug, "ResolveEntitySound: gender '%s' is %d", *GenderName, GenderId);
   if (GenderId == -1) GenderId = 0;
   int SoundId = GetSoundID(SoundName);
+  //GCon->Logf(NAME_Debug, "ResolveEntitySound: sound '%s' is %d", *SoundName, SoundId);
   return ResolveSound(ClassId, GenderId, SoundId);
 }
 

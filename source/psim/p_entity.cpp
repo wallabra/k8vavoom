@@ -627,6 +627,7 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
 void VEntity::StartSound (VName Sound, vint32 Channel, float Volume, float Attenuation, bool Loop, bool Local) {
   if (!Sector) return;
   if (Sector->SectorFlags&sector_t::SF_Silent) return;
+  //if (IsPlayer()) GCon->Logf(NAME_Debug, "player sound '%s' (sound class '%s', gender '%s')", *Sound, *SoundClass, *SoundGender);
   Super::StartSound(Origin, SoundOriginID,
     GSoundManager->ResolveEntitySound(SoundClass, SoundGender, Sound),
     Channel, Volume, Attenuation, Loop, Local);
