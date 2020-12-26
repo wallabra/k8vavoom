@@ -1187,7 +1187,7 @@ final void CHolyTailRemove () {
   if (!Target) return;
   PlaySound(AttackSound, CHAN_WEAPON);
   if (CheckMeleeRange()) {
-    Target.Damage(self, self, HITDICE(4), spawnBlood:true);
+    Target.Damage(self, self, HITDICE(4), DmgType:'Melee', spawnBlood:true);
     return;
   }
   Special1 = (P_Random()&3)+5;
@@ -1362,7 +1362,7 @@ final void CHolyTailRemove () {
 [decorate] final void A_SerpentMeleeAttack () {
   if (!Target) return;
   if (CheckMeleeRange()) {
-    Target.Damage(self, self, HITDICE(5), spawnBlood:true);
+    Target.Damage(self, self, HITDICE(5), DmgType:'Melee', spawnBlood:true);
     PlaySound('SerpentMeleeHit', CHAN_WEAPON);
   }
   if (P_Random() < 96) A_SerpentCheckForAttack();
@@ -1502,7 +1502,7 @@ final void CHolyTailRemove () {
   // steal health from enemy and give to player
   if (CheckMeleeRange() && P_Random() < 220) {
     int amount = HITDICE(2);
-    Target.Damage(self, self, amount, spawnBlood:true);
+    Target.Damage(self, self, amount, DmgType:'Melee', spawnBlood:true);
     Health += amount;
   }
 }
@@ -1634,7 +1634,7 @@ final void DragonSeek (float thresh, float turnMax) {
       oldTarget = Target;
       Target = tempTarget;
       if (CheckMeleeRange()) {
-        Target.Damage(self, self, HITDICE(10), spawnBlood:true);
+        Target.Damage(self, self, HITDICE(10), DmgType:'Melee', spawnBlood:true);
         PlaySound('DragonAttack', CHAN_WEAPON);
       } else if (P_Random() < 128 && CheckMissileRange()) {
         SpawnMissile(tempTarget, DragonFireball);
@@ -1686,7 +1686,7 @@ final void DragonSeek (float thresh, float turnMax) {
     }
     float angle = atan2(Target.Origin.y-Origin.y, Target.Origin.x-Origin.x);
     if (fabs(AngleMod180(Angles.yaw-angle)) < 45.0/2.0 && CheckMeleeRange()) {
-      Target.Damage(self, self, HITDICE(8), spawnBlood:true);
+      Target.Damage(self, self, HITDICE(8), DmgType:'Melee', spawnBlood:true);
       PlaySound('DragonAttack', CHAN_WEAPON);
     } else if (fabs(AngleMod180(Angles.yaw-angle)) <= 20.0) {
       SetState(MissileState);

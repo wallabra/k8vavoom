@@ -937,6 +937,17 @@ static TArray<VPainChanceInfo> &GetClassPainChances (VClass *Class) {
 
 //==========================================================================
 //
+//  GetClassDamageColors
+//
+//==========================================================================
+static TArray<VDamageColorType> &GetClassDamageColors (VClass *Class) {
+  VField *F = Class->FindFieldChecked("DamageColors");
+  return *(TArray<VDamageColorType>*)F->GetFieldPtr((VObject *)Class->Defaults);
+}
+
+
+//==========================================================================
+//
 //  AddClassFixup
 //
 //==========================================================================
@@ -2695,15 +2706,36 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             //FIXME: Player.DamageScreenColor color[, intensity[, damagetype]]
             {
               vuint32 Col = sc->ExpectColor();
+              float Intensity = 1.0f;
+              VStr dmgType;
               // intensity
               if (sc->Check(",")) {
                 sc->ExpectFloat();
+                Intensity = clampval(sc->Float, 0.0f, 1.0f);
                 // damage type
                 if (sc->Check(",")) {
                   sc->ExpectString();
+                  if (sc->String.length() && !sc->String.strEquCI("None")) dmgType = sc->String;
                 }
               }
-              P.Field->SetInt(DefObj, Col);
+              // set damage
+              if (dmgType.length()) {
+                // custom damage type
+                TArray<VDamageColorType> &dclist = GetClassDamageColors(Class);
+                int fidx = -1;
+                for (int f = 0; f < dclist.length(); ++f) if (dmgType.strEquCI(*dclist[f].Type)) { fidx = f; break; }
+                if (fidx < 0) {
+                  fidx = dclist.length();
+                  dclist.alloc();
+                  vassert(fidx == dclist.length()-1);
+                  dclist[fidx].Type = VName(*dmgType);
+                }
+                dclist[fidx].Color = Col;
+                dclist[fidx].Intensity = Intensity;
+              } else {
+                // default
+                P.Field->SetInt(DefObj, Col);
+              }
             }
             break;
           case PROP_HexenArmor:

@@ -155,7 +155,8 @@
   EntityEx spraySrc = (flags&BFGF_MISSILEORIGIN ? self : Target);
   if (!spraySrc) return;
 
-  if (!FlashType) FlashType = BFGExtra;
+  name dmgType = 'BFGSplash';
+  if (!FlashType) FlashType = BFGExtra; else dmgType = FlashType.default.DamageType;
   if (NumRays <= 0) NumRays = 40;
   if (DamageAmount <= 0) DamageAmount = 15;
 
@@ -185,6 +186,6 @@
       foreach (auto j; 0..DamageAmount) damage += (P_Random()&7)+1;
     }
 
-    AimTarget.Damage(spraySrc, spraySrc, damage, spawnBlood:true);
+    AimTarget.Damage(spraySrc, spraySrc, damage, DmgType:dmgType, spawnBlood:true);
   }
 }

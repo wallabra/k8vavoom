@@ -379,6 +379,7 @@
     A.Player.MO = A;
     if (A.Player.Camera == self) A.Player.Camera = A;
     PlayerEx(A.Player).DamageFlash = 1.0;
+    PlayerEx(A.Player).DamageFlashType = '';
     LineSpecialLevelInfo(Level).AddPlayerCorpse(self);
   }
 }

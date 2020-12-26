@@ -84,8 +84,16 @@ class!Weapon MorphWeapon;
 // attack offset, relative to the center of the player
 float AttackZOffset;
 
-// damage flash color
+// damage flash color (default)
 int DamageScreenColor;
+
+struct DamageColorType {
+  name Type;
+  int Color;
+  float Intensity;
+}
+
+array!DamageColorType DamageColors;
 
 // maximal health
 int MaxHealth;

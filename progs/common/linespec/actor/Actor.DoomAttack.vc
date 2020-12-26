@@ -186,7 +186,7 @@ final void DoSPosAttack () {
   if (CheckMeleeRange()) {
     PlaySound('imp/melee', CHAN_WEAPON);
     int damage = (P_Random()%8+1)*3;
-    Target.Damage(self, self, damage, spawnBlood:true);
+    Target.Damage(self, self, damage, DmgType:'Melee', spawnBlood:true);
     return;
   }
 
@@ -208,7 +208,7 @@ final void DoSPosAttack () {
   A_FaceTarget();
   if (CheckMeleeRange()) {
     int damage = ((P_Random()%10)+1)*4;
-    Target.Damage(self, self, damage, spawnBlood:true);
+    Target.Damage(self, self, damage, DmgType:'Melee', spawnBlood:true);
   }
 }
 
@@ -226,7 +226,7 @@ final void DoSPosAttack () {
   A_FaceTarget();
   if (CheckMeleeRange()) {
     int damage = (P_Random()%6+1)*10;
-    Target.Damage(self, self, damage, spawnBlood:true);
+    Target.Damage(self, self, damage, DmgType:'Melee', spawnBlood:true);
     return;
   }
 
@@ -252,7 +252,7 @@ final void DoSPosAttack () {
   if (CheckMeleeRange()) {
     PlaySound('baron/melee', CHAN_WEAPON);
     int damage = (P_Random()%8+1)*10;
-    Target.Damage(self, self, damage, spawnBlood:true);
+    Target.Damage(self, self, damage, DmgType:'Melee', spawnBlood:true);
     return;
   }
 
@@ -417,7 +417,7 @@ final void DoSPosAttack () {
   if (CheckMeleeRange()) {
     int damage = ((P_Random()%10)+1)*6;
     PlaySound('skeleton/melee', CHAN_WEAPON);
-    Target.Damage(self, self, damage, spawnBlood:true);
+    Target.Damage(self, self, damage, DmgType:'Melee', spawnBlood:true);
   }
 }
 

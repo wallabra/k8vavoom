@@ -155,6 +155,12 @@ struct VPainChanceInfo {
   float Chance;
 };
 
+struct VDamageColorType {
+  VName Type;
+  vint32 Color;
+  float Intensity;
+};
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 //WARNING: sync this with VC code!

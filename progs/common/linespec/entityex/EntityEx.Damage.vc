@@ -806,6 +806,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     PlayerEx(Player).Attacker = source;
     PlayerEx(Player).DamageFlash += float(damage)/35.0; // add damage after armor / invuln
     if (PlayerEx(Player).DamageFlash > 3.0) PlayerEx(Player).DamageFlash = 3.0; // teleport stomp does 10k points...
+    PlayerEx(Player).DamageFlashType = DmgType;
     // for Korax Arena
     PlayerEx(Player).Damaged(inflictor);
   }

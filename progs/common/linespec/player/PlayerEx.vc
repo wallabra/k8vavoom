@@ -53,6 +53,7 @@ const int MAXMORPHHEALTH = 30;
 // for screen flashing (red or bright)
 float DamageFlash;
 float BonusFlash;
+name DamageFlashType;
 
 // base height above floor for viewz
 float ViewHeight;
@@ -258,7 +259,7 @@ void BotTestFindPathTo (TVec dest) {
 replication {
   reliable if (!bIsClient)
     Cheats, ReadyWeapon, InvFirst, InvPtr, InventoryTime, ArtifactFlash,
-    Objectives, MorphTime/*, Accuracy, Stamina*/, MapsVisited, DamageFlash,
+    Objectives, MorphTime/*, Accuracy, Stamina*/, MapsVisited, DamageFlash, DamageFlashType,
     BonusFlash, Attacker, bFrozen, bTotallyFrozen,/* DesiredFOV, FOV,*/
     bFlashlightOn;
 
@@ -2371,10 +2372,33 @@ void PaletteFlash () {
     // Frozen player
     AddBlend(r, g, b, a, RGBA(2, 2, 255, 113));
   } else {
+    if (DamageFlash < 0) DamageFlash = 0;
     if (DamageFlash) {
-      int Amount = int(114.0*DamageFlash);
+      auto pawn = PlayerPawn(MO);
+      int dmgColor = pawn.DamageScreenColor;
+      float dmgIntensity = 1.0;
+
+      name dmgType = DamageFlashType;
+      if (dmgType && !nameEquCI(dmgType, 'None')) {
+        foreach (auto ref dmg; pawn.DamageColors) {
+          if (nameEquCI(dmgType, dmg.Type)) {
+            //printdebug("%C: found damage record! Type=%s", self, dmg.Type);
+            dmgColor = dmg.Color;
+            dmgIntensity = fclamp(dmg.Intensity, 0.0, 1.0)*2.0;
+            break;
+          }
+          //printdebug("%C: skipped damage record with type=%s, int=%s, clr=0x%08x (%s)", self, dmg.Type, dmg.Intensity, dmg.Color, dmgType);
+        }
+      }
+      /*
+      else {
+        printdebug("%C: damage without a type", self);
+      }
+      */
+
+      int Amount = int(114.0*DamageFlash*dmgIntensity);
       if (Amount >= 228) Amount = 228;
-      AddBlend(r, g, b, a, (Amount<<24)|(PlayerPawn(MO).DamageScreenColor&0x00ffffff));
+      AddBlend(r, g, b, a, (Amount<<24)|(dmgColor&0x00ffffff));
     }
 
     if (BonusFlash) {
@@ -3213,6 +3237,7 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
   ClearSubSeenInfo();
   Refire = 0;
   DamageFlash = 0.0;
+  DamageFlashType = '';
   BonusFlash = 0.0;
   PoisonCount = 0;
   MorphTime = 0.0;
@@ -3874,6 +3899,7 @@ override void PlayerExitMap (bool clusterChange) {
   ExtraLight = 0; // cancel gun flashes
   FixedColormap = 0; // cancel ir gogles
   DamageFlash = 0.0; // no palette changes
+  DamageFlashType = '';
   BonusFlash = 0.0;
   PoisonCount = 0;
   BlendR = 0.0;

@@ -1164,7 +1164,7 @@ final EntityEx FindEnemyMaster () {
 
   PlaySound('minotaur/melee', CHAN_WEAPON);
   if (CheckMeleeRange()) {
-    Target.Damage(self, self, HITDICE(4), spawnBlood:true);
+    Target.Damage(self, self, HITDICE(4), DmgType:'Melee', spawnBlood:true);
     if (Target.bIsPlayer) {
       // squish the player
       auto pex = PlayerEx(Target.Player);
@@ -1225,7 +1225,7 @@ final EntityEx FindEnemyMaster () {
   if (!Target) return;
   PlaySound('minotaur/attack2', CHAN_WEAPON);
   if (CheckMeleeRange()) {
-    Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)), spawnBlood:true);
+    Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)), DmgType:'Melee', spawnBlood:true);
     return;
   }
 
@@ -1253,7 +1253,7 @@ final EntityEx FindEnemyMaster () {
 
   PlaySound('minotaur/attack3', CHAN_WEAPON);
   if (CheckMeleeRange()) {
-    Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)), spawnBlood:true);
+    Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)), DmgType:'Melee', spawnBlood:true);
     if (Target.bIsPlayer) {
       // squish the player
       auto pex = PlayerEx(Target.Player);
