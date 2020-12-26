@@ -382,11 +382,13 @@ struct AliasModelTrans {
   TVec Shift; // unscaled, done before scaling and offseting
   TVec Offset;
   TVec Scale;
+  TAVec PreRot;
 
   inline AliasModelTrans () noexcept
     : Shift(0.0f, 0.0f, 0.0f)
     , Offset(0.0f, 0.0f, 0.0f)
     , Scale(1.0f, 1.0f, 1.0f)
+    , PreRot(0.0f, 0.0f, 0.0f)
   {}
 };
 

@@ -189,6 +189,7 @@ struct VScriptedModelFrame {
   float bobSpeed; // bobbing speed
   int gzNoActorPitch; // <0: inverted; 0: use; 1: don't use (sorry); 2: from momentum (sorry)
   bool gzNoActorRoll; // true: don't use actor roll;
+  bool gzdoom;
   //
   VName sprite;
   int frame; // sprite frame
@@ -213,6 +214,9 @@ struct VScriptedModelFrame {
     anglePitch = src.anglePitch;
     rotateSpeed = src.rotateSpeed;
     bobSpeed = src.bobSpeed;
+    gzNoActorPitch = src.gzNoActorPitch;
+    gzNoActorRoll = src.gzNoActorRoll;
+    gzdoom = src.gzdoom;
     sprite = src.sprite;
     frame = src.frame;
     nextSpriteIdx = src.nextSpriteIdx;
@@ -790,6 +794,7 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
 
       // some special things
       if (ParseBool(N, "gzdoom", false)) {
+        F.gzdoom = true;
         F.gzNoActorPitch = 1; // don't use actor pitch
         F.gzNoActorRoll = true; // don't use actor roll
         if (N->HasAttribute("usepitch")) {
@@ -798,6 +803,8 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
           else if (ParseBool(N, "usepitch", false)) F.gzNoActorPitch = 0; // use
         }
         if (ParseBool(N, "useroll", false)) F.gzNoActorRoll = false; // use
+      } else {
+        F.gzdoom = false;
       }
 
       int lastIndex = -666;
@@ -1559,27 +1566,29 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     TAVec Md2Angle = Angles;
 
     if (!IsViewModel) {
+      const vuint8 rndVal = (mobj ? (hashU32(mobj->ServerUId)>>4)&0xffu : 0);
+
       // world model, fix angles
-      if (FDef.gzNoActorRoll) Md2Angle.roll = 0;
-      // 0: use as is
-      if (FDef.gzNoActorPitch) {
-        if (FDef.gzNoActorPitch == 2) {
-          // from momentum
-          Md2Angle.pitch = (mobj ? VectorAnglePitch(mobj->Velocity) : 0.0f);
-        } else {
-          Md2Angle.pitch = (FDef.gzNoActorPitch < 0 ? AngleMod(FDef.gzNoActorPitch+180.0f) : 0);
+      if (FDef.gzdoom) {
+        if (FDef.gzNoActorRoll) Md2Angle.roll = 0;
+        // 0: use as is
+        if (FDef.gzNoActorPitch) {
+          if (FDef.gzNoActorPitch == 2) {
+            // from momentum
+            Md2Angle.pitch = (mobj ? VectorAnglePitch(mobj->Velocity) : 0.0f);
+          } else {
+            Md2Angle.pitch = (FDef.gzNoActorPitch < 0 ? AngleMod(FDef.gzNoActorPitch+180.0f) : 0);
+          }
         }
+      } else {
+        if (FDef.AngleStart || FDef.AngleEnd != 1.0f) {
+          Md2Angle.yaw = AngleMod(Md2Angle.yaw+FDef.AngleStart+(FDef.AngleEnd-FDef.AngleStart)*Inter);
+        }
+
+        Md2Angle.yaw = FDef.angleYaw.GetAngle(Md2Angle.yaw, rndVal);
+        Md2Angle.pitch = FDef.anglePitch.GetAngle(Md2Angle.pitch, rndVal);
+        Md2Angle.roll = FDef.angleRoll.GetAngle(Md2Angle.roll, rndVal);
       }
-
-      if (FDef.AngleStart || FDef.AngleEnd != 1.0f) {
-        Md2Angle.yaw = AngleMod(Md2Angle.yaw+FDef.AngleStart+(FDef.AngleEnd-FDef.AngleStart)*Inter);
-      }
-
-      vuint8 rndVal = (mobj ? (hashU32(mobj->ServerUId)>>4)&0xffu : 0);
-
-      Md2Angle.yaw = FDef.angleYaw.GetAngle(Md2Angle.yaw, rndVal);
-      Md2Angle.pitch = FDef.anglePitch.GetAngle(Md2Angle.pitch, rndVal);
-      Md2Angle.roll = FDef.angleRoll.GetAngle(Md2Angle.roll, rndVal);
 
       if (Level && mobj) {
         if (r_model_autorotating && FDef.rotateSpeed) {
@@ -1686,6 +1695,12 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       Transform.Scale.x = F.Transform.Scale.x*ScaleX;
       Transform.Scale.y = F.Transform.Scale.y*ScaleX;
       Transform.Scale.z = F.Transform.Scale.z*ScaleY;
+    }
+
+    if (FDef.gzdoom) {
+      Transform.PreRot.yaw = FDef.angleYaw.angle;
+      Transform.PreRot.pitch = FDef.anglePitch.angle;
+      Transform.PreRot.roll = FDef.angleRoll.angle;
     }
 
     // light

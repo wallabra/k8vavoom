@@ -89,6 +89,17 @@ static void AliasSetupTransform (const TVec &modelorg, const TAVec &angles,
     rotmat[i][2] = alias_up[i];
   }
 
+  if (Transform.PreRot.pitch || Transform.PreRot.roll || Transform.PreRot.yaw) {
+    AngleVectors(Transform.PreRot, alias_forward, alias_right, alias_up);
+    VMatrix4 rm2 = VMatrix4::Identity;
+    for (unsigned i = 0; i < 3; ++i) {
+      rm2[i][0] = alias_forward[i];
+      rm2[i][1] = -alias_right[i];
+      rm2[i][2] = alias_up[i];
+    }
+    rotmat = rm2*rotmat;
+  }
+
   // shift it
   rotmat[0][3] = modelorg.x+Transform.Shift.x;
   rotmat[1][3] = modelorg.y+Transform.Shift.y;
