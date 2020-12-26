@@ -539,6 +539,7 @@
     <prop_name_lower name="Player.ScoreIcon" property="ScoreIcon" />
     <prop_float_optional_2 name="Player.SideMove" property="SideMove1" property2="SideMove2" />
     <prop_name_lower name="Player.SoundClass" property="SoundClass" />
+    <prop_name_lower name="Player.SoundGender" property="SoundGender" />
     <prop_name_lower name="Player.SpawnClass" property="SpawnClass" />
     <prop_start_item name="Player.StartItem" />
     <prop_float name="Player.ViewHeight" property="ViewHeight" />
