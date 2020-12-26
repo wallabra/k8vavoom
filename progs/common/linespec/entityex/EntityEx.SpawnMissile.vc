@@ -137,15 +137,6 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
     }
   }
 
-  if (!SetState(ExplState)) return false;
-
-  if (Victim) {
-    if (bHitTarget) Target = Victim;
-    if (bHitMaster) Master = Victim;
-    if (bHitTracer) Tracer = Victim;
-    // check for shootable corpses here
-  }
-
   //k8:TODO: this should be strictly client-side
   if (line && DecalName) {
     //if (GetCvarB('k8ExplodeMissleTest')) print("MISSILE DECAL: <%s> (side:%d:%d) vel:(%f,%f,%f)", DecalName, PointOnPlaneSide(Origin, *line), PointOnPlaneSide(Origin-savedVelocity, *line), savedVelocity.x, savedVelocity.y, savedVelocity.z);
@@ -178,6 +169,18 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
       }
     }
     */
+  }
+
+  if (!SetState(ExplState)) {
+    //printdebug("%C: EXPLODING MISSILE: no explosion state!", self);
+    return false;
+  }
+
+  if (Victim) {
+    if (bHitTarget) Target = Victim;
+    if (bHitMaster) Master = Victim;
+    if (bHitTracer) Tracer = Victim;
+    // check for shootable corpses here
   }
 
   if (bDehExplosion) {
