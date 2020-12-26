@@ -225,6 +225,15 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name adam
     printdebug("ME: %C; inf: %C", self, GetClassReplacee(inflictor.Class));
   }
 
+  scope(exit) {
+    if (fromMissile) {
+      plr.k8hsLastMissileTicTime = XLevel.TicTime;
+    } else {
+      plr.k8hsLastHitscanTicTime = XLevel.TicTime;
+    }
+  }
+
+
   //PlayerPawn plr = PlayerPawn(inflictor);
 
   //if (k8CheckBoolCVar('k8HSShowKnownDamage', debugme)) printdebug("K8HS: damage type '%s', damage=%s", adamageType, damage);
@@ -251,6 +260,15 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name adam
   int refire = 0;
   if (plr && plr.Player) {
     refire = PlayerEx(plr.Player).Refire;
+    if (!refire) {
+      if (fromMissile && plr.k8hsLastMissileTicTime) {
+        if (XLevel.TicTime-plr.k8hsLastMissileTicTime < 10) ++plr.k8hsLastMissileRefire; else plr.k8hsLastMissileRefire = 0;
+        refire = plr.k8hsLastMissileRefire;
+        if (debugme) printdebug("%C: missile refire: %s (%s : %s) diff=%s", inflictor, refire, plr.k8hsLastMissileTicTime, XLevel.TicTime, XLevel.TicTime-plr.k8hsLastMissileTicTime);
+      }
+    } else {
+      plr.k8hsLastMissileRefire = 0;
+    }
     // set `refire` to:
     //   -666: totally fucked
     //      0: not fucked
