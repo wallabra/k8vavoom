@@ -333,6 +333,7 @@
     <flag name="StickToCeiling" property="bStickToCeiling" relinktoworld="true" />
     <flag name="KillOnUnarchive" property="bKillOnUnarchive" />
     <flag_byte name="OrientedOfs" property="SpriteType" true_value="6" false_value="0" />
+    <flag name="k8MissileHeadshots" property="bMissileHeadshotsAllowed" />
     <!-- k8vavoom network flags -->
     <flag name="k8ServerSideOnly" property="bServerSideOnly" />
     <flag name="k8DetachFromServer" property="bDetachFromServer" />

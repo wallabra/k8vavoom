@@ -1016,8 +1016,12 @@ override bool Touch (Entity InOther) {
 
     // damage / explode
     if (Level.Game.IsAuthority) {
-      damage = GetMissileDamage(bStrifeDamage ? 3 : 7, 1);
+      damage = GetMissileDamage((bStrifeDamage ? 3 : 7), 1);
+      if (bMissileHeadshotsAllowed || GetCvarB('k8HSAnyProjectile')) {
+        damage = Other.K8onBeforeLineDamage(self, Origin+vector(0, 0, Height*0.5)-Other.Origin, damage, DamageType, secondary:false);
+      }
       if (damage > 0) {
+        //printdebug("%C: Target=%C; Master=%C; Tracer=%C", self, Target, Master, Tracer);
         if (bBloodSplatter && !Other.bNoBlood && !Other.bReflective &&
             !Other.bInvulnerable && !Other.bDormant &&
             !bBloodlessImpact && P_Random() < 192)
@@ -1026,8 +1030,14 @@ override bool Touch (Entity InOther) {
           if (self.Radius > 0) org.z += self.Radius/2.0;
           Other.SpawnBloodSplatter(Origin, damage, org);
         }
-        Other.SpawnBloodAtHeadExplosion(damage, self);
-        Other.Damage(self, Target, damage, DamageType);
+        bool spawnBlood = false;
+        if (!bMissileHeadshotsAllowed) {
+          // normal missile
+          Other.SpawnBloodAtHeadExplosion(damage, self);
+        } else {
+          spawnBlood = true;
+        }
+        Other.Damage(self, Target, damage, DamageType, spawnBlood:spawnBlood);
       }
     }
     // don't traverse any more

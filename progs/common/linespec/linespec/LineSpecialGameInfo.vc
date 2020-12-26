@@ -186,6 +186,9 @@ override void Init () {
   // disable criticals?
   CreateCvarBool('k8HSCriticals', true, "Enable critical shots?", CVAR_ARCHIVE/*|CVAR_SERVERINFO*/);
 
+  // allow headshots from all projectiles?
+  CreateCvarBool('k8HSAnyProjectile', false, "Enable headshots from any projectile?", CVAR_ARCHIVE/*|CVAR_SERVERINFO*/);
+
   // fastkill/instakill some annoying monsters?
   CreateCvarBool('k8HSFastKillAnnoyingMonsters', IsDeveloperVersion, "Fastkill some annoying monsters?", CVAR_ARCHIVE/*|CVAR_SERVERINFO*/);
   // instakill Pain Elementals?
