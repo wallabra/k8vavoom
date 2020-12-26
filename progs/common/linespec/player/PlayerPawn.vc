@@ -135,6 +135,41 @@ float GetPawnViewHeight () {
 
 //==========================================================================
 //
+//  GetPawnCameraHeight
+//
+//  ignores current viewoffset height
+//
+//==========================================================================
+float GetPawnCameraHeight () {
+  return GetPawnViewHeight*crouchfactor;
+}
+
+
+//==========================================================================
+//
+//  CalcSaneViewZ
+//
+//==========================================================================
+float CalcSaneViewZ () {
+  //float z = Origin.z+GetPawnCameraHeight;
+  float z = Origin.z;
+  auto pex = (bIsPlayer ? PlayerEx(Player) : none);
+  z += (pex ? pex.ViewHeight : GetPawnCameraHeight);
+  if (bFloorClip && FloorClip) {
+    if (pex) {
+      if (pex.PlayerState != PST_DEAD && z <= FloorZ) z -= FloorClip;
+    } else {
+      z -= FloorClip;
+    }
+  }
+  if (z < FloorZ+3.0) z = FloorZ+3.0;
+  if (z > CeilingZ-3.0) z = CeilingZ-3.0;
+  return z;
+}
+
+
+//==========================================================================
+//
 //  GetNumberOfSlots
 //
 //==========================================================================

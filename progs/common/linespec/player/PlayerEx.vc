@@ -638,9 +638,9 @@ final void ThrustPlayer (float angle, float move, float deltaTime) {
 //==========================================================================
 void SanitizeViewOrgZ () {
   if (!MO) return; // just in case
-  if (PlayerState != PST_DEAD && MO.Origin.z <= MO.FloorZ) ViewOrg.z -= MO.FloorClip;
-  if (ViewOrg.z < MO.FloorZ+4.0) ViewOrg.z = MO.FloorZ+4.0;
-  if (ViewOrg.z > MO.CeilingZ-4.0) ViewOrg.z = MO.CeilingZ-4.0;
+  if (PlayerState != PST_DEAD && MO.bFloorClip && MO.Origin.z <= MO.FloorZ) ViewOrg.z -= MO.FloorClip;
+  if (ViewOrg.z < MO.FloorZ+3.0) ViewOrg.z = MO.FloorZ+3.0;
+  if (ViewOrg.z > MO.CeilingZ-3.0) ViewOrg.z = MO.CeilingZ-3.0;
 }
 
 

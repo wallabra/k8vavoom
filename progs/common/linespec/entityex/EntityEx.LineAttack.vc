@@ -91,7 +91,7 @@ static final bool CalcProperThingHit (ref TVec hit_point, Entity th, const TVec 
 //==========================================================================
 float CalculateLineAttackZOfs () {
   // to make the shot go through the crosshair, we should return `ViewHeight`
-  float res = Height*0.5-FloorClip;
+  float res = Height*0.5-(bFloorClip ? FloorClip : 0.0);
   if (bIsPlayer) {
     if (!GetCvarB('gm_fix_attack_offset')) return res+PlayerEx(Player).GetAttackZOfs;
     return PlayerEx(Player).ViewHeight;
@@ -113,16 +113,29 @@ float CalculateMissileAttackZOfs (class!EntityEx type) {
   // add an extra unit to simulate Doom's original behaviour
   if (bIsPlayer) {
     auto pex = PlayerEx(Player);
-    if (!pex) return Height*0.5-FloorClip+8.0-3.0; // just in case
+    if (!pex) return Height*0.5-(bFloorClip ? FloorClip : 0.0)+8.0-3.0; // just in case
     if (GetCvarB('gm_fix_projectile_attack_offset_broken')) {
       // 4 is for autoaim
-      //return Height*0.5-FloorClip+(type ? type.default.Height*0.5f : pex.GetAttackZOfs-3.0);
-      return Height*0.5-FloorClip+(type ? type.default.Height*0.5f : pex.GetAttackZOfs-3.0);
+      // should we use the height at all?
+      return Height*0.5-(bFloorClip ? FloorClip : 0.0)+(type ? -type.default.Height*0.5 : pex.GetAttackZOfs-3.0);
     } else {
-      return Height*0.5-FloorClip+pex.GetAttackZOfs-3.0;
+      //return Height*0.5-(bFloorClip ? FloorClip : 0.0)+pex.GetAttackZOfs-3.0;
+      auto pwn = PlayerPawn(self);
+      if (pwn && type && type.default.Height > 0) {
+        //float plrVH = pwn.GetPawnCameraHeight;
+        /*
+        float plrVH = pex.ViewHeight;
+        return plrVH-(bFloorClip ? FloorClip : 0.0)-(type ? type.default.Height*0.5 : 0.0);
+        */
+        float vz = pwn.CalcSaneViewZ-Origin.z;
+        if (type) vz -= type.default.Height*0.5;
+        return vz;
+      } else {
+        return Height*0.5-(bFloorClip ? FloorClip : 0.0)+pex.GetAttackZOfs-3.0;
+      }
     }
   } else {
-    return Height*0.5-FloorClip+8.0-3.0;
+    return Height*0.5-(bFloorClip ? FloorClip : 0.0)+8.0-3.0;
   }
 }
 
