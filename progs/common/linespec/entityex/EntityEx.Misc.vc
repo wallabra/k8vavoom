@@ -2790,6 +2790,11 @@ override int GetActorProperty (int Prop) {
     case APROP_Friction: return int(Friction*65536.0);
     case APROP_ReactionTime: return ReactionCount;
     case APROP_StencilColor: return StencilColor&0xffffff;
+    case APROP_SeeSound: return NameToIIndex(SightSound);
+    case APROP_AttackSound: return NameToIIndex(AttackSound);
+    case APROP_PainSound: return NameToIIndex(PainSound);
+    case APROP_DeathSound: return NameToIIndex(DeathSound);
+    case APROP_ActiveSound: return NameToIIndex(ActiveSound);
   }
   dprint("%C: GetActorProperty: unknown property %d", self, Prop);
   return 0;

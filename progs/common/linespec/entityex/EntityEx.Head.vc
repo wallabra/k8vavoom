@@ -88,11 +88,11 @@ enum {
   APROP_Damage        = 2, // implemented
   APROP_Alpha         = 3, // implemented
   APROP_RenderStyle   = 4, // implemented
-  APROP_SeeSound      = 5, // sounds can only be set, not get
-  APROP_AttackSound   = 6,
-  APROP_PainSound     = 7,
-  APROP_DeathSound    = 8,
-  APROP_ActiveSound   = 9,
+  APROP_SeeSound      = 5, // getter partially implemented in C++ code (string conversion)
+  APROP_AttackSound   = 6, // getter partially implemented in C++ code (string conversion)
+  APROP_PainSound     = 7, // getter partially implemented in C++ code (string conversion)
+  APROP_DeathSound    = 8, // getter partially implemented in C++ code (string conversion)
+  APROP_ActiveSound   = 9, // getter partially implemented in C++ code (string conversion)
   APROP_Ambush        = 10, // implemented
   APROP_Invulnerable  = 11, // implemented
   APROP_JumpZ         = 12, // implemented

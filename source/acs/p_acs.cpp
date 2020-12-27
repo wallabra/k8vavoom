@@ -6069,6 +6069,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           sp[-2] = Ent->eventGetActorProperty(sp[-1]);
           // convert special properties
           switch (sp[-1]) {
+            case 5: // APROP_SeeSound
+            case 6: // APROP_AttackSound
+            case 7: // APROP_PainSound
+            case 8: // APROP_DeathSound
+            case 9: // APROP_ActiveSound
             case 20: //APROP_Species
             case 21: //APROP_NameTag
             case 46: //APROP_DamageType
