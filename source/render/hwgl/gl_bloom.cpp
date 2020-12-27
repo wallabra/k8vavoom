@@ -510,7 +510,8 @@ void VOpenGLDrawer::Posteffect_Bloom (int ax, int ay, int awidth, int aheight) {
   GLint oldbindtex = 0;
   glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
   glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
-  bool oldBlend = blendEnabled;
+  const bool oldBlend = blendEnabled;
+  const GLint oldCurrDepthMaskState = currDepthMaskState;
 
   glMatrixMode(GL_MODELVIEW); glPushMatrix();
   glMatrixMode(GL_PROJECTION); glPushMatrix();
@@ -563,7 +564,9 @@ void VOpenGLDrawer::Posteffect_Bloom (int ax, int ay, int awidth, int aheight) {
   SetMainFBO(true); // just in case, forced
   DeactivateShader();
   glBindTexture(GL_TEXTURE_2D, oldbindtex);
+
   blendEnabled = oldBlend;
+  currDepthMaskState = oldCurrDepthMaskState;
 }
 
 

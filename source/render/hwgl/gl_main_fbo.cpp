@@ -300,7 +300,8 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
     GLint oldbindtex = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
     glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
-    bool oldBlend = mOwner->blendEnabled;
+    const bool oldBlend = mOwner->blendEnabled;
+    const GLint oldCurrDepthMaskState = mOwner->currDepthMaskState;
 
     mOwner->p_glBindFramebuffer(GL_FRAMEBUFFER, dest->mFBO);
     glBindTexture(GL_TEXTURE_2D, mColorTid);
@@ -351,7 +352,9 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
 
     glPopAttrib();
     glBindTexture(GL_TEXTURE_2D, oldbindtex);
+
     mOwner->blendEnabled = oldBlend;
+    mOwner->currDepthMaskState = oldCurrDepthMaskState;
   }
   mOwner->ReactivateCurrentFBO();
 }
@@ -393,7 +396,8 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     //glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
     //glClear(GL_COLOR_BUFFER_BIT);
     glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
-    bool oldBlend = mOwner->blendEnabled;
+    const bool oldBlend = mOwner->blendEnabled;
+    const GLint oldCurrDepthMaskState = mOwner->currDepthMaskState;
     mOwner->GLSetViewport(0, 0, realw, realh);
     glBindTexture(GL_TEXTURE_2D, 0);
     //glMatrixMode(GL_PROJECTION);
@@ -438,6 +442,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     glEnd();
     glPopAttrib();
     mOwner->blendEnabled = oldBlend;
+    mOwner->currDepthMaskState = oldCurrDepthMaskState;
   }
 
   if (mOwner->p_glBlitFramebuffer && !gl_dbg_fbo_blit_with_texture) {
@@ -453,7 +458,8 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     GLint oldbindtex = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
     glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
-    bool oldBlend = mOwner->blendEnabled;
+    const bool oldBlend = mOwner->blendEnabled;
+    const GLint oldCurrDepthMaskState = mOwner->currDepthMaskState;
 
     mOwner->GLSetViewport(0, 0, realw, realh);
 
@@ -508,7 +514,9 @@ void VOpenGLDrawer::FBO::blitToScreen () {
 
     glPopAttrib();
     glBindTexture(GL_TEXTURE_2D, oldbindtex);
+
     mOwner->blendEnabled = oldBlend;
+    mOwner->currDepthMaskState = oldCurrDepthMaskState;
   }
 
   mOwner->ReactivateCurrentFBO();

@@ -553,7 +553,8 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
 //==========================================================================
 void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint32 color) {
   glPushAttrib(/*GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT*/GL_ALL_ATTRIB_BITS);
-  bool oldBlend = blendEnabled;
+  const bool oldBlend = blendEnabled;
+  const GLint oldCurrDepthMaskState = currDepthMaskState;
 
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
@@ -599,7 +600,9 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
   glPopAttrib();
   p_glUseProgramObjectARB(0);
   currentActiveShader = nullptr;
+
   blendEnabled = oldBlend;
+  currDepthMaskState = oldCurrDepthMaskState;
 }
 
 
