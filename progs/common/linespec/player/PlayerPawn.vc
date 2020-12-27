@@ -107,6 +107,9 @@ transient int k8hsLastMissileRefire;
 transient int k8hsLastHitscanTicTime;
 transient int k8hsLastHitscanRefire;
 
+transient float k8hsLastCritMsgHideTime;
+transient int k8hsLastCritMsgCoeff;
+
 // both 64 by default
 float UseRange;
 float UseThingRange;
