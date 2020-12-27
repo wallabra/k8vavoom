@@ -920,16 +920,6 @@ bool IsSecondaryBloodSpawnAllowed (EntityEx victim, int damage, name DmgType) {
 }
 
 
-//===========================================================================
-//
-//  GetCrouchFactor
-//
-//===========================================================================
-[decorate] final float decorate_GetCrouchFactor () {
-  return crouchfactor;
-}
-
-
 defaultproperties {
   Health = 100;
   Radius = 16.0;

@@ -322,7 +322,8 @@ const [decorate] int AAPTR_OWNER = 0x10_0000;
 //  GetCrouchFactor
 //
 //==========================================================================
-[decorate] final float GetCrouchFactor (int aptr0) {
+[decorate] final float GetCrouchFactor (optional int aptr0) {
+  if (!specified_aptr0) aptr0 = AAPTR_DEFAULT;
   EntityEx sex = EntityEx(self);
   if (!sex) return 1.0;
   sex = EntityEx(sex.DecorDoAAPtr('GetCrouchFactor', aptr0));
