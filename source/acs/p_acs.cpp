@@ -6071,6 +6071,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           switch (sp[-1]) {
             case 20: //APROP_Species
             case 21: //APROP_NameTag
+            case 46: //APROP_DamageType
               sp[-2] = ActiveObject->Level->PutNewString(*VName(EName(sp[-2])));
               break;
           }

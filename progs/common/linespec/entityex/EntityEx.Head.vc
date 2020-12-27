@@ -125,9 +125,9 @@ enum {
   // not implemented yet (and prolly won't be)
   APROP_Friction         = 42,
   APROP_DamageMultiplier = 43, // implemented
-  APROP_MaxStepHeight    = 44,
-  APROP_MaxDropOffHeight = 45,
-  APROP_DamageType       = 46,
+  APROP_MaxStepHeight    = 44, // implemented
+  APROP_MaxDropOffHeight = 45, // implemented
+  APROP_DamageType       = 46, // getter partially implemented in C++ code (string conversion)
 };
 
 // constants for ClassifyActor

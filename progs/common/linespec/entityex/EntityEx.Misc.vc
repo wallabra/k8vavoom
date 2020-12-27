@@ -2723,11 +2723,14 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
       GenericDamageMultiplier = fclamp(float(IntVal)/65536.0, 0, 100000);
       //printdebug("%C: dmgmult=%s (%s)", self, GenericDamageMultiplier, IntVal);
       break;
+    case APROP_MaxStepHeight: MaxStepHeight = fclamp(float(IntVal)/65536.0, 0, 8192); break;
+    case APROP_MaxDropOffHeight: MaxDropoffHeight = fclamp(float(IntVal)/65536.0, 0, 8192); break;
     case APROP_ReactionTime: ReactionCount = IntVal; break;
     case APROP_StencilColor: StencilColor = IntVal|0xff000000; break;
     case APROP_Species: /*printdebug("%C: SPECIE=%s", self, StrVal);*/ Species = StrVal; break;
     case APROP_NameTag: /*printdebug("%C: NAMETAG=%s", self, StrVal);*/ StrifeName = StrVal; break;
-    default: dprint("%C: SetActorProperty: unknown property %d", self, Prop);
+    case APROP_DamageType: /*printdebug("%C: DAMAGETYPE=%s", self, StrVal);*/ DamageType = name(StrVal); break;
+    default: dprint("%C: SetActorProperty: unknown property %s (value is %s)", self, Prop, IntVal);
   }
 }
 
@@ -2780,6 +2783,9 @@ override int GetActorProperty (int Prop) {
     case APROP_Stamina: return Stamina;
     case APROP_DamageFactor: return int(GenericDamageFactor*65536.0);
     case APROP_DamageMultiplier: return int(GenericDamageMultiplier*65536.0);
+    case APROP_DamageType: return (!DamageType ? NameToIIndex('None') : NameToIIndex(DamageType));
+    case APROP_MaxStepHeight: return int(MaxStepHeight*65536.0);
+    case APROP_MaxDropOffHeight: return int(MaxDropoffHeight*65536.0);
     case APROP_ReactionTime: return ReactionCount;
     case APROP_StencilColor: return StencilColor&0xffffff;
   }
