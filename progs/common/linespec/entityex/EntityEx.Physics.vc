@@ -1704,7 +1704,15 @@ override void ApplyFriction (float DeltaTime) {
   {
     if (bIsPlayer) {
       // if in a walking frame, stop moving
-      if (StateIsInRange(State, SeeState, none, 4)) SetState(IdleState);
+      if (IdleState && /*StateIsInRange(State, SeeState, none, 4)*/StateIsInSequence(State, SeeState)) {
+        //printdebug("%C: going to idle state %s from %s (0)", self, IdleState, State);
+        SetState(IdleState);
+      }
+      /*
+      else {
+        printdebug("%C: CANNOT go to idle state (0) from %s", self, State);
+      }
+      */
     }
     Velocity.x = 0.0;
     Velocity.y = 0.0;
@@ -1726,7 +1734,15 @@ override void ApplyFriction (float DeltaTime) {
     //k8: do we need this for Voodoo Dolls?
     if (bIsPlayer && !Velocity.xy) {
       // if in a walking frame, stop moving
-      if (StateIsInRange(State, SeeState, none, 4)) SetState(IdleState);
+      if (IdleState && /*StateIsInRange(State, SeeState, none, 4)*/StateIsInSequence(State, SeeState)) {
+        //printdebug("%C: going to idle state %s from %s (1)", self, IdleState, State);
+        SetState(IdleState);
+      }
+      /*
+      else {
+        printdebug("%C: CANNOT go to idle state from %s (1)", self, State);
+      }
+      */
     }
   }
 }

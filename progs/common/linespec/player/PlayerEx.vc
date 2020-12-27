@@ -1558,9 +1558,17 @@ void PlayerInContents (float deltaTime) {
 //
 //==========================================================================
 void SetPlayerRunState () {
-  if (MO.State == EntityEx(MO).IdleState && EntityEx(MO).SeeState) {
-    MO.SetState(EntityEx(MO).SeeState);
+  EntityEx mobj = EntityEx(MO);
+  if (!mobj) return;
+  if (mobj.SeeState && /*mobj.State == mobj.IdleState*/StateIsInSequence(mobj.State, mobj.IdleState)) {
+    //printdebug("%C: going to see state %s from %s", mobj, mobj.IdleState, mobj.State);
+    mobj.SetState(mobj.SeeState);
   }
+  /*
+  else {
+    printdebug("%C: CANNOT go to see state %s", mobj, mobj.State);
+  }
+  */
 }
 
 
