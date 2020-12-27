@@ -2725,6 +2725,7 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
       break;
     case APROP_MaxStepHeight: MaxStepHeight = fclamp(float(IntVal)/65536.0, 0, 8192); break;
     case APROP_MaxDropOffHeight: MaxDropoffHeight = fclamp(float(IntVal)/65536.0, 0, 8192); break;
+    case APROP_Friction: Friction = fmax(float(IntVal)/65536.0, 0.0); break;
     case APROP_ReactionTime: ReactionCount = IntVal; break;
     case APROP_StencilColor: StencilColor = IntVal|0xff000000; break;
     case APROP_Species: /*printdebug("%C: SPECIE=%s", self, StrVal);*/ Species = StrVal; break;
@@ -2786,6 +2787,7 @@ override int GetActorProperty (int Prop) {
     case APROP_DamageType: return (!DamageType ? NameToIIndex('None') : NameToIIndex(DamageType));
     case APROP_MaxStepHeight: return int(MaxStepHeight*65536.0);
     case APROP_MaxDropOffHeight: return int(MaxDropoffHeight*65536.0);
+    case APROP_Friction: return int(Friction*65536.0);
     case APROP_ReactionTime: return ReactionCount;
     case APROP_StencilColor: return StencilColor&0xffffff;
   }

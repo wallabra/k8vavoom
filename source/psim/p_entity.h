@@ -343,6 +343,7 @@ class VEntity : public VThinker {
   float MaxStepHeight;
   float MaxDropoffHeight;
   float Gravity;
+  float Friction;
 
   // water
   vuint8 WaterLevel;

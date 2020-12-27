@@ -356,6 +356,7 @@ float Mass;
 float MaxStepHeight;
 float MaxDropoffHeight;
 float Gravity;
+float Friction;
 
 // water
 ubyte WaterLevel;
@@ -1333,6 +1334,7 @@ defaultproperties {
   bColideWithWorld = true;
   MaxDropoffHeight = 24.0;
   Gravity = 1.0;
+  Friction = 1.0;
   SoundClass = 'player';
   SoundGender = 'male';
   FloatBobPhase = -1.0f;

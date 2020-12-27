@@ -40,6 +40,10 @@ const float ONFLOORZ   = -99999.0;
 const float ONCEILINGZ = +99999.0;
 const float FLOATRANDZ = +99998.0;
 
+// original Doom code multiplies speed by friction once per game tic
+// original friction value is (0xE800/65536.0) == 0.90625
+// so it subtracts (Velocity*0.09375) per game tic
+// now multiply that by 35, and you'll get 3.28125
 const float FRICTION_NORMAL = 3.28125;
 const float FRICTION_LOW    = 0.95703125;
 const float FRICTION_FLY    = 2.87109375;
@@ -122,8 +126,7 @@ enum {
   APROP_ViewHeight    = 39, // implemented
   APROP_AttackZOffset = 40, // implemented
   APROP_StencilColor  = 41, // implemented
-  // not implemented yet (and prolly won't be)
-  APROP_Friction         = 42,
+  APROP_Friction         = 42, // implemented, but i'm not sure if it is right
   APROP_DamageMultiplier = 43, // implemented
   APROP_MaxStepHeight    = 44, // implemented
   APROP_MaxDropOffHeight = 45, // implemented

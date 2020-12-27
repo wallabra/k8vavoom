@@ -1710,7 +1710,13 @@ override void ApplyFriction (float DeltaTime) {
     Velocity.y = 0.0;
   } else {
     // slow down
-    TVec vdiff = Velocity.xy*(GetFriction()*DeltaTime);
+    float fric = GetFriction();
+    //k8: this must be right, i believe, because original code multiplies speed by friction
+    //    as we're doing it the opposite way, we should divide subtracted velocity by entity friction factor
+    //    zero factor means "infinite friction" (i.e. the entity cannot move at all)
+    if (Friction > 0.0) fric /= Friction;
+    TVec vdiff = Velocity.xy*(fric*DeltaTime);
+    if (Friction <= 0.0) vdiff = Velocity.xy; // stop right there, you criminal scum!
     Velocity -= vdiff;
     //Velocity.x -= Velocity.x*(GetFriction()*DeltaTime);
     //Velocity.y -= Velocity.y*(GetFriction()*DeltaTime);
