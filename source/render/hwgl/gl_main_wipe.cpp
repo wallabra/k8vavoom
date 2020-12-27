@@ -70,7 +70,8 @@ bool VOpenGLDrawer::RenderWipe (float time) {
   //GCon->Logf(NAME_Debug, "WIPE: time=%g", time);
 
   glPushAttrib(GL_ALL_ATTRIB_BITS);
-  bool oldBlend = blendEnabled;
+  const bool oldBlend = blendEnabled;
+  const GLint oldCurrDepthMaskState = currDepthMaskState;
 
   GLSetViewport(0, 0, getWidth(), getHeight());
 
@@ -129,7 +130,9 @@ bool VOpenGLDrawer::RenderWipe (float time) {
   glPopAttrib();
   p_glUseProgramObjectARB(0);
   currentActiveShader = nullptr;
+
   blendEnabled = oldBlend;
+  currDepthMaskState = oldCurrDepthMaskState;
 
   //wipeFBO.blitTo(&mainFBO, 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), GL_NEAREST);
   return (time <= WipeDur);

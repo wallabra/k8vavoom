@@ -666,7 +666,7 @@ void SCR_Update (bool fullUpdate) {
         if (dbg_disable_world_render) {
           Drawer->ClearScreen(VDrawer::CLEAR_ALL);
         } else {
-          //if (clWipeTimer >= 0.0f) GCon->Logf(NAME_Debug, "R_RenderPlayerView(): clWipeTimer=%g; wipeStartedTime=%g; wipeStarted=%d", clWipeTimer, wipeStartedTime, (int)wipeStarted);
+          //if (clWipeTimer >= 0.0f) GCon->Logf(NAME_Debug, "R_RenderPlayerView(): clWipeTimer=%g; wipeStartedTime=%g; wipeStarted=%d; Time=%g; TicTime=%d", clWipeTimer, wipeStartedTime, (int)wipeStarted, GLevel->Time, GLevel->TicTime);
           R_RenderPlayerView();
         }
       } else {
