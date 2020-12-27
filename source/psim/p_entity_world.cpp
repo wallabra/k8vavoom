@@ -30,6 +30,15 @@
 #include "../gamedefs.h"
 #include "../server/sv_local.h"
 
+//#define VV_DBG_VERBOSE_TRYMOVE
+
+
+#ifdef VV_DBG_VERBOSE_TRYMOVE
+# define TMDbgF(...)  GCon->Logf(NAME_Debug, __VA_ARGS__)
+#else
+# define TMDbgF(...)  (void)0
+#endif
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
@@ -1270,13 +1279,14 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
   check = CheckRelPosition(tmtrace, newPos, skipEffects);
   tmtrace.TraceFlags &= ~tmtrace_t::TF_FloatOk;
   //if (IsPlayer()) GCon->Logf(NAME_Debug, "trying to move from (%g,%g,%g) to (%g,%g,%g); check=%d", Origin.x, Origin.y, Origin.z, newPos.x, newPos.y, newPos.z, (int)check);
+  TMDbgF("%s: trying to move from (%g,%g,%g) to (%g,%g,%g); check=%d", GetClass()->GetName(), Origin.x, Origin.y, Origin.z, newPos.x, newPos.y, newPos.z, (int)check);
 
   if (isClient) skipEffects = true;
 
   if (!check) {
     // cannot fit into destination point
     VEntity *O = tmtrace.BlockingMobj;
-    //GCon->Logf("HIT! %s", O->GetClass()->GetName());
+    TMDbgF("%s:   HIT %s", GetClass()->GetName(), (O ? O->GetClass()->GetName() : "<none>"));
     if (!O) {
       // can't step up or doesn't fit
       PushLine(tmtrace, skipEffects);
@@ -1305,7 +1315,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
     if (tmtrace.CeilingZ-tmtrace.FloorZ < Height) {
       // doesn't fit
       PushLine(tmtrace, skipEffects);
-      //printf("*** WORLD(0)!\n");
+      TMDbgF("%s:   DOESN'T FIT(0)!", GetClass()->GetName());
       return false;
     }
 
@@ -1314,7 +1324,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
     if (tmtrace.CeilingZ-Origin.z < Height && !(EntityFlags&EF_Fly) && !(EntityFlags&EF_IgnoreCeilingStep)) {
       // mobj must lower itself to fit
       PushLine(tmtrace, skipEffects);
-      //printf("*** WORLD(1)!\n");
+      TMDbgF("%s:   DOESN'T FIT(1)! ZBox=(%g,%g); ceilz=%g", GetClass()->GetName(), Origin.z, Origin.z+Height, tmtrace.CeilingZ);
       return false;
     }
 
@@ -1357,19 +1367,19 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
               TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ)))
           {
             PushLine(tmtrace, skipEffects);
-            //printf("*** WORLD(2)!\n");
+            TMDbgF("%s:   FLOORSTEP(0)!", GetClass()->GetName());
             return false;
           }
         } else {
           PushLine(tmtrace, skipEffects);
-          //printf("*** WORLD(3)!\n");
+          TMDbgF("%s:   FLOORSTEP(1)!", GetClass()->GetName());
           return false;
         }
       }
 
       if ((EntityFlags&EF_Missile) && !(EntityFlags&EF_StepMissile) && tmtrace.FloorZ > Origin.z) {
         PushLine(tmtrace, skipEffects);
-        //printf("*** WORLD(4)!\n");
+        TMDbgF("%s:   FLOORX(0)!", GetClass()->GetName());
         return false;
       }
 
@@ -1382,7 +1392,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
         // check to make sure there's nothing in the way for the step up
         if (TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ))) {
           PushLine(tmtrace, skipEffects);
-          //printf("*** WORLD(5)!\n");
+          TMDbgF("%s:   OBJZ(0)!", GetClass()->GetName());
           return false;
         }
       }
@@ -1396,19 +1406,19 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
       if (!(EntityFlags&EF_AvoidingDropoff)) {
         float floorz = tmtrace.FloorZ;
         // [RH] If the thing is standing on something, use its current z as the floorz.
-        // This is so that it does not walk off of things onto a drop off.
+        // this is so that it does not walk off of things onto a drop off.
         if (EntityFlags&EF_OnMobj) floorz = max2(Origin.z, tmtrace.FloorZ);
 
         if ((floorz-tmtrace.DropOffZ > MaxDropoffHeight) && !(EntityFlags&EF_Blasted)) {
-          // Can't move over a dropoff unless it's been blasted
-          //printf("*** WORLD(6)!\n");
+          // can't move over a dropoff unless it's been blasted
+          TMDbgF("%s:   DROPOFF(0)!", GetClass()->GetName());
           return false;
         }
       } else {
         // special logic to move a monster off a dropoff
         // this intentionally does not check for standing on things
         if (FloorZ-tmtrace.FloorZ > MaxDropoffHeight || DropOffZ-tmtrace.DropOffZ > MaxDropoffHeight) {
-          //printf("*** WORLD(7)!\n");
+          TMDbgF("%s:   DROPOFF(1)!", GetClass()->GetName());
           return false;
         }
       }
@@ -1418,7 +1428,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
         (tmtrace.EFloor.splane->pic != EFloor.splane->pic || tmtrace.FloorZ != Origin.z))
     {
       // must stay within a sector of a certain floor type
-      //printf("*** WORLD(8)!\n");
+      TMDbgF("%s:   SECTORSTAY(0)!", GetClass()->GetName());
       return false;
     }
   }
@@ -1432,6 +1442,8 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
   }
 
   if (checkOnly) return true;
+
+  TMDbgF("%s:   ***OK-TO-MOVE", GetClass()->GetName());
 
   // the move is ok, so link the thing into its new position
   UnlinkFromWorld();
