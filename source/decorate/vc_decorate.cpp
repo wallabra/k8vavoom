@@ -1361,6 +1361,36 @@ static VStr RemapOldLabel (VStr name) {
 
 //==========================================================================
 //
+//  CanBeSpriteNameWorker
+//
+//  called after the base sprite or command read
+//
+//==========================================================================
+static bool CanBeSpriteNameWorker (VScriptParser *sc, bool asGoto) {
+  // get argument
+  if (!sc->GetString()) return false;
+  //GCon->Logf(NAME_Debug, "asGoto=%d: <%s>", (int)asGoto, *sc->String.quote(true));
+  if (sc->String == "}" || sc->String.startsWith(":") || sc->String.startsWith(".")) return false;
+  if (sc->IsAtEol()) return false; // no frames -- not a sprite line
+  if (!asGoto) {
+    // check for valid frame names
+    for (int f = 0; f < sc->String.length(); ++f) {
+      char FChar = VStr::ToUpper(sc->String[f]);
+      if (FChar == '#') continue;
+      if (FChar < 'A' || FChar > '^') return false;
+    }
+    // there should be a duration
+    if (!sc->GetString()) return false;
+    return !(sc->String == "}" || sc->String.startsWith(":") || sc->String.startsWith("."));
+  } else {
+    if (!sc->GetString()) return false;
+    return !(sc->String == "}" || sc->String.startsWith(":") || sc->String.startsWith(".") || sc->String.startsWith("+"));
+  }
+}
+
+
+//==========================================================================
+//
 //  CanBeSpriteName
 //
 //  called after the base sprite or command read
@@ -1368,24 +1398,10 @@ static VStr RemapOldLabel (VStr name) {
 //==========================================================================
 static bool CanBeSpriteName (VScriptParser *sc, bool asGoto=false) {
   if (sc->IsAtEol()) return false; // no way
-  // if next token ends with ':', it is a label, so this is not a sprite name
-  if (asGoto) {
-    //TODO: write something here
-    return false;
-  }
   auto sp = sc->SavePos();
-  if (sc->Check(":") || sc->Check("::")) { sc->RestorePos(sp); return false; }
-  if (sc->Check("{") || sc->Check("}")) { sc->RestorePos(sp); return false; }
-  if (!sc->GetString()) { sc->RestorePos(sp); return false; }
-  // check for valid frame names
-  for (int f = 0; f < sc->String.length(); ++f) {
-    char FChar = VStr::ToUpper(sc->String[f]);
-    if (FChar == '#') continue;
-    if (FChar < 'A' || FChar > '^') { sc->RestorePos(sp); return false; }
-  }
-  if (sc->Check(":") || sc->Check("::")) { sc->RestorePos(sp); return false; }
+  const bool res = CanBeSpriteNameWorker(sc, asGoto);
   sc->RestorePos(sp);
-  return true;
+  return res;
 }
 
 
