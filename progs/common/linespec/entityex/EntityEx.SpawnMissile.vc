@@ -98,7 +98,7 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
     //Destroy();
     return false;
   }
-  //printdebug("%C: SERVER EXPLODING MISSILE; Victim=%C", self, Victim);
+  //printdebug("%C: SERVER EXPLODING MISSILE; Victim=%C; line=%s", self, Victim, line);
 
   if (bExploCount) {
     if (++Special2 < Special1) return false;
