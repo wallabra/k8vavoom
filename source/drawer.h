@@ -519,6 +519,10 @@ public:
   virtual void SetBlendEnabled (const bool v) = 0;
 
   virtual void Posteffect_Bloom (int ax, int ay, int awidth, int aheight) = 0;
+  // can be called several times
+  virtual void LevelRendererCreated (VRenderLevelPublic *Renderer) = 0;
+  // can be called several times in a row (i.e. one creation may lead to many shutdowns)
+  virtual void LevelRendererDestroyed () = 0;
 
   virtual void StartUpdate () = 0;
   virtual void ClearScreen (unsigned clearFlags=CLEAR_COLOR) = 0;

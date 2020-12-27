@@ -1336,6 +1336,9 @@ private: // bloom
 public:
   virtual void Posteffect_Bloom (int ax, int ay, int awidth, int aheight) override;
 
+  virtual void LevelRendererCreated (VRenderLevelPublic *Renderer) override;
+  virtual void LevelRendererDestroyed () override;
+
 public:
   virtual void SetMainFBO (bool forced=false) override;
 

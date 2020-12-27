@@ -565,3 +565,23 @@ void VOpenGLDrawer::Posteffect_Bloom (int ax, int ay, int awidth, int aheight) {
   glBindTexture(GL_TEXTURE_2D, oldbindtex);
   blendEnabled = oldBlend;
 }
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::LevelRendererCreated
+//
+//==========================================================================
+void VOpenGLDrawer::LevelRendererCreated (VRenderLevelPublic *Renderer) {
+  BloomDeinit();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::LevelRendererDestroyed
+//
+//==========================================================================
+void VOpenGLDrawer::LevelRendererDestroyed () {
+  BloomDeinit();
+}

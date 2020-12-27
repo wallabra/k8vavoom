@@ -577,6 +577,7 @@ void R_Start (VLevel *ALevel) {
     }
   }
   // now create renderer
+  Drawer->LevelRendererDestroyed();
   if (r_level_renderer <= 1) {
     ALevel->Renderer = new VRenderLevelLightmap(ALevel);
   } else {
@@ -589,6 +590,7 @@ void R_Start (VLevel *ALevel) {
       }
     }
   }
+  Drawer->LevelRendererCreated(ALevel->Renderer);
 }
 
 
@@ -725,7 +727,10 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 //==========================================================================
 VRenderLevelShared::~VRenderLevelShared () {
   VDrawer::LightFadeMult = 1.0f; // restore it
-  if (Drawer) Drawer->ClearCameraFBOs();
+  if (Drawer) {
+    Drawer->ClearCameraFBOs();
+    Drawer->LevelRendererDestroyed();
+  }
 
   if (Level->CameraTextures.length()) {
     int bcnt = 0;
