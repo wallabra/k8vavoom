@@ -617,8 +617,8 @@ private final Ammo GetWeaponAmmo (Weapon wpn) {
   if (!a1) { a1 = a2; a2 = none; }
   if (!a1) return none;
 
-  if (IsStandardAmmoClass(a1.Class)) return a1;
-  if (IsStandardAmmoClass(a2.Class)) return a2;
+  if (a1 && IsStandardAmmoClass(a1.Class)) return a1;
+  if (a2 && IsStandardAmmoClass(a2.Class)) return a2;
 
   if (a1 && wpn.AmmoGive1) return a1;
   if (a2 && wpn.AmmoGive2) return a2;
