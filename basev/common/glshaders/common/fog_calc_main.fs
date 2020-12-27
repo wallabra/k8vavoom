@@ -21,10 +21,6 @@
     float FogFactor = (FogEnd-z)/(FogEnd-FogStart);
 #ifdef VAVOOM_SIMPLE_ALPHA_FOG
     FogFactor = 1.0-FogFactor;
-#else
-# ifdef VAVOOM_ADV_MASKED_FOG
-    //FogFactor_3 = 1.0-FogFactor_3;
-# endif
 #endif
     FogFactor = clamp(FogFactor, 0.0, 1.0); // "smooth factor"
 
@@ -38,13 +34,8 @@
 #else
     // don't mess with alpha channel
     float oldAlpha = FinalColor.a;
-# ifdef VAVOOM_ADV_MASKED_FOG
-    vec4 fc2 = vec4(1.0-FogColor.r, 1.0-FogColor.g, 1.0-FogColor.b, FogColor.a);
-    FinalColor = mix(fc2, FinalColor, FogCoeff);
-# else
     //FinalColor = mix(FogColor, FinalColor, FogCoeff);
     FinalColor = mix(FogColor*oldAlpha, FinalColor, FogCoeff);
-# endif
     FinalColor.a = oldAlpha;
     //if (FinalColor.a < ALPHA_MIN) discard; //k8: dunno if it worth it, but meh...
 #endif

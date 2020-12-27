@@ -1,8 +1,6 @@
 #version 120
 $include "common/common.inc"
 
-//#define VAVOOM_ADV_MASKED_FOG
-
 uniform sampler2D Texture;
 $include "common/texshade.inc"
 #ifdef VV_MASKED_BRIGHTMAP
