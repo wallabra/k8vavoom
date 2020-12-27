@@ -42,7 +42,8 @@
     vec4 fc2 = vec4(1.0-FogColor.r, 1.0-FogColor.g, 1.0-FogColor.b, FogColor.a);
     FinalColor = mix(fc2, FinalColor, FogCoeff);
 # else
-    FinalColor = mix(FogColor, FinalColor, FogCoeff);
+    //FinalColor = mix(FogColor, FinalColor, FogCoeff);
+    FinalColor = mix(FogColor*oldAlpha, FinalColor, FogCoeff);
 # endif
     FinalColor.a = oldAlpha;
     //if (FinalColor.a < ALPHA_MIN) discard; //k8: dunno if it worth it, but meh...
