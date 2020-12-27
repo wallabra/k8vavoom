@@ -315,3 +315,17 @@ const [decorate] int AAPTR_OWNER = 0x10_0000;
 [decorate] final bool decorate_IsDumbClient () { return Level.Game.IsDumbClient; }
 
 [decorate] final bool decorate_IsDetached () { return bDetachComplete; }
+
+
+//==========================================================================
+//
+//  GetCrouchFactor
+//
+//==========================================================================
+[decorate] final float GetCrouchFactor (int aptr0) {
+  EntityEx sex = EntityEx(self);
+  if (!sex) return 1.0;
+  sex = EntityEx(sex.DecorDoAAPtr('GetCrouchFactor', aptr0));
+  if (!sex || !sex.bIsPlayer || !PlayerPawn(sex)) return 1.0;
+  return sex.crouchfactor;
+}
