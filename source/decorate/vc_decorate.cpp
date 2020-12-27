@@ -1632,10 +1632,27 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     if (sc->Check("random")) {
       sc->Expect("(");
       sc->ExpectNumberWithSign();
+      // this is what GZDoom does
+      if (sc->Number < -1 || sc->Number > 32767) {
+        if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: random state min duration out of rande (%d)!", *TmpLoc.toStringNoCol(), sc->Number);
+        sc->Number = clampval(sc->Number, -1, 32767);
+      }
       State->Arg1 = sc->Number;
       sc->Expect(",");
       sc->ExpectNumberWithSign();
+      // this is what GZDoom does
+      if (sc->Number < -1 || sc->Number > 32767) {
+        if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: random state min duration out of rande (%d)!", *TmpLoc.toStringNoCol(), sc->Number);
+        sc->Number = clampval(sc->Number, -1, 32767);
+      }
       State->Arg2 = sc->Number;
+      // this is what GZDoom does
+      if (State->Arg1 > State->Arg2) {
+        if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: random state min/max duration is in invalid order!", *TmpLoc.toStringNoCol());
+        const int tmp = State->Arg1;
+        State->Arg1 = State->Arg2;
+        State->Arg2 = tmp;
+      }
       sc->Expect(")");
       State->Time = float(State->Arg1)/35.0f;
       State->TicType = VState::TCK_Random;
