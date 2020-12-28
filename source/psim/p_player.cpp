@@ -54,6 +54,14 @@ extern VCvarF cl_fov;
 #define WEAPONTOP     (32.0f)
 
 
+const int VPSpriteRenderOrder[NUMPSPRITES] = {
+  PS_WEAPON_OVL_BACK,
+  PS_WEAPON,
+  PS_FLASH,
+  PS_WEAPON_OVL,
+};
+
+
 struct SavedVObjectPtr {
   VObject **ptr;
   VObject *saved;
@@ -229,77 +237,28 @@ __attribute__((format(printf,2,3))) void VBasePlayer::CenterPrintf (const char *
 //===========================================================================
 void VBasePlayer::SetViewState (int position, VState *stnum) {
   if (position < 0 || position >= NUMPSPRITES) return; // sanity check
-  if (position == PS_WEAPON && !stnum) ViewStates[PS_WEAPON_OVL].State = nullptr;
-  //if (position == PS_WEAPON_OVL /*&& stnum*/) GCon->Logf("ticking OVERLAY (%s)", (stnum ? *stnum->Loc.toStringNoCol() : "ona"));
-  //if (position == PS_WEAPON /*&& stnum*/) GCon->Logf("*** START ticking WEAPON (%s)", (stnum ? *stnum->Loc.toStringNoCol() : "ona"));
-  /*
-  if (!fldPendingWeapon) {
-    fldPendingWeapon = GetClass()->FindFieldChecked("PendingWeapon");
-    if (fldPendingWeapon->Type.Type != TYPE_Reference) Sys_Error("'PendingWeapon' in playerpawn should be a reference");
-    //fprintf(stderr, "*** TP=<%s>\n", *fldPendingWeapon->Type.GetName());
-  }
-  SavedVObjectPtr svp(&_stateRouteSelf);
-  _stateRouteSelf = fldPendingWeapon->GetObjectValue(this);
-  */
-  //fprintf(stderr, "VBasePlayer::SetViewState(%s): route=<%s>\n", GetClass()->GetName(), (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<fuck>"));
-  //VField *VBasePlayer::fldPendingWeapon = nullptr;
-  //fprintf(stderr, "  VBasePlayer::SetViewState: position=%d; stnum=%s\n", position, (stnum ? *stnum->GetFullName() : "<none>"));
-#if 0
-  if (position == PS_WEAPON && stnum) {
-    static VClass *WeaponClass = nullptr;
-    if (!WeaponClass) WeaponClass = VClass::FindClass("Weapon");
-    if (!fldReadyWeapon) {
-      fldReadyWeapon = GetClass()->FindFieldChecked("ReadyWeapon");
-      if (fldReadyWeapon->Type.Type != TYPE_Reference) Sys_Error("'ReadyWeapon' in playerpawn should be a reference");
-    }
-    if (WeaponClass) {
-      VObject *wobj = fldReadyWeapon->GetObjectValue(this);
-      if (wobj != lastReadyWeapon) {
-        lastReadyWeapon = wobj;
-        if (wobj && wobj->IsA(WeaponClass)) {
-          VEntity *wpn = (VEntity *)wobj;
-          lastReadyWeaponReadyState = wpn->FindState("Ready");
-          //GCon->Logf("WEAPON CHANGED TO '%s'", *wpn->GetClass()->Name);
-          SetViewState(PS_WEAPON_OVL, wpn->FindState("Display"));
-          /*
-          ViewStates[PS_WEAPON_OVL].State = wpn->FindState("Display");
-          if (ViewStates[PS_WEAPON_OVL].State) {
-            GCon->Logf("WEAPON CHANGED TO '%s', 'Display' substate found", *wpn->GetClass()->Name);
-          }
-          */
-        } else {
-          lastReadyWeaponReadyState = nullptr;
-          ViewStates[PS_WEAPON_OVL].State = nullptr;
-        }
-      }
-      /*
-      if (lastReadyWeaponReadyState == stnum) {
-        GCon->Logf("SetViewState: %s", *stnum->Name);
-      }
-      */
-    }
-  }
-#else
+  if (position == PS_WEAPON && !stnum) ViewStates[PS_WEAPON_OVL].State = ViewStates[PS_WEAPON_OVL_BACK].State = nullptr;
+
   if (_stateRouteSelf != LastViewObject[position]) {
     LastViewObject[position] = _stateRouteSelf;
     ViewStates[position].SX = ViewStates[position].OfsY = ViewStates[position].BobOfsX = ViewStates[position].BobOfsY = 0;
     // "display" state
     if (position == PS_WEAPON) {
-      LastViewObject[PS_WEAPON_OVL] = _stateRouteSelf;
+      LastViewObject[PS_WEAPON_OVL] = LastViewObject[PS_WEAPON_OVL_BACK] = _stateRouteSelf;
       static VClass *WeaponClass = nullptr;
       if (!WeaponClass) WeaponClass = VClass::FindClass("Weapon");
       if (_stateRouteSelf && _stateRouteSelf->IsA(WeaponClass)) {
         //GCon->Logf(NAME_Warning, "*** NEW DISPLAY STATE: %s", *_stateRouteSelf->GetClass()->GetFullName());
         VEntity *wpn = (VEntity *)_stateRouteSelf;
         SetViewState(PS_WEAPON_OVL, wpn->FindState("Display"));
+        SetViewState(PS_WEAPON_OVL_BACK, wpn->FindState("DisplayOverlayBack"));
       } else {
         //GCon->Logf(NAME_Warning, "*** NEW DISPLAY STATE: EMPTY (%s)", (_stateRouteSelf ? *_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
-        ViewStates[PS_WEAPON_OVL].State = nullptr;
-        LastViewObject[PS_WEAPON_OVL] = nullptr;
+        ViewStates[PS_WEAPON_OVL].State = ViewStates[PS_WEAPON_OVL_BACK].State = nullptr;
+        LastViewObject[PS_WEAPON_OVL] = LastViewObject[PS_WEAPON_OVL_BACK] = nullptr;
       }
     }
   }
-#endif
 
   VViewState &VSt = ViewStates[position];
   VState *state = stnum;
@@ -371,10 +330,11 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     state = VSt.State->NextState;
   } while (!VSt.StateTime); // an initial state of 0 could cycle through
   //fprintf(stderr, "  VBasePlayer::SetViewState: DONE: position=%d; stnum=%s\n", position, (stnum ? *stnum->GetFullName() : "<none>"));
+
   if (!VSt.State) {
     //GCon->Logf("Player: viewobject DEAD(1)!");
     LastViewObject[position] = nullptr;
-    if (position == PS_WEAPON) LastViewObject[PS_WEAPON_OVL] = nullptr;
+    if (position == PS_WEAPON) LastViewObject[PS_WEAPON_OVL] = LastViewObject[PS_WEAPON_OVL_BACK] = nullptr;
   }
 }
 

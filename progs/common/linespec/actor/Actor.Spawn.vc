@@ -172,7 +172,8 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
   if (bIsPlayer &&
       (XLevel.CallingState == Player.ViewStates[PS_WEAPON].State ||
        XLevel.CallingState == Player.ViewStates[PS_FLASH].State ||
-       XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State))
+       XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State ||
+       XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL_BACK].State))
   {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
     if (!Wpn) return;

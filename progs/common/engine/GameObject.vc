@@ -71,9 +71,10 @@ enum {
 };
 
 enum {
-  PS_WEAPON,
-  PS_FLASH,
-  PS_WEAPON_OVL,
+  PS_WEAPON, // this MUST be before overlays
+  PS_FLASH, // only DOOM uses it
+  PS_WEAPON_OVL, // temporary hack
+  PS_WEAPON_OVL_BACK, // hack: this overlay will be drawn first
   NUMPSPRITES
 };
 

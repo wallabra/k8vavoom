@@ -707,7 +707,8 @@ final void do_simple_A_Explode (optional int damage, optional float aradius, opt
   if (bIsPlayer &&
       (XLevel.CallingState == Player.ViewStates[PS_WEAPON].State ||
        XLevel.CallingState == Player.ViewStates[PS_FLASH].State ||
-       XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State))
+       XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State ||
+       XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL_BACK].State))
   {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
     if (!Wpn) { KeepChainResult(); return; }

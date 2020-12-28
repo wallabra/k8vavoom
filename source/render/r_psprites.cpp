@@ -291,9 +291,12 @@ void VRenderLevelShared::DrawPlayerSprites () {
   RenderStyleInfo mdri = ri;
 
   // add all active psprites
-  for (int i = 0; i < NUMPSPRITES; ++i) {
+  for (int ii = 0; ii < NUMPSPRITES; ++ii) {
+    const int i = VPSpriteRenderOrder[ii];
+
     VState *vst = cl->ViewStates[i].State;
     if (!vst) continue;
+    //GCon->Logf(NAME_Debug, "PSPRITE #%d is %d: %s", ii, i, *vst->Loc.toStringNoCol());
 
     // fix rendering style for models
     /*
@@ -383,8 +386,10 @@ void VRenderLevelShared::DrawPlayerSprites () {
     cl->ViewStates[i].SX += cl->ViewStates[i].BobOfsX;
     cl->ViewStates[i].SY += cl->ViewStates[i].OfsY+cl->ViewStates[i].BobOfsY;
 
+    //GCon->Logf(NAME_Debug, "PSPRITE #%d is %d: sx=%g; sy=%g; %s", ii, i, cl->ViewStates[i].SX, cl->ViewStates[i].SY, *vst->Loc.toStringNoCol());
+
     if (!RenderViewModel(&cl->ViewStates[i], mdri)) {
-      RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), 3-i, ri);
+      RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), NUMPSPRITES-ii, ri);
     }
 
     cl->ViewStates[i].SX = currSX;

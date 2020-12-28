@@ -383,6 +383,7 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
   else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) Player.SetViewState(PS_WEAPON, aState);
   else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_FLASH].State) Player.SetViewState(PS_FLASH, aState);
   else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) Player.SetViewState(PS_WEAPON_OVL, aState);
+  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL_BACK].State) Player.SetViewState(PS_WEAPON_OVL_BACK, aState);
   else SetState(aState);
 }
 

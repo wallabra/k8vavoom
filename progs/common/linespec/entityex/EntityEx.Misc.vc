@@ -3263,34 +3263,16 @@ final state FindJumpState (name Label) {
 
   // special weapon states?
   if (bIsPlayer) {
-    // weapon?
-    if (XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) {
+    // weapon/muzzle flash/weapon overlays?
+    if (XLevel.CallingState == Player.ViewStates[PS_WEAPON].State ||
+        XLevel.CallingState == Player.ViewStates[PS_FLASH].State ||
+        XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State ||
+        XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL_BACK].State)
+    {
       if (!PlayerEx(Player).ReadyWeapon) return none;
       state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
       if (!res && !k8CheckIfSpecialStateLabel(Label)) {
-        printwarn("unknown decorate label (PS_WEAPON) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
-        if (GetCvarB('dbg_emulate_broken_gozzo_gotos')) res = GetNextState(XLevel.CallingState);
-      }
-      return res;
-    }
-
-    // muzzle flash?
-    if (XLevel.CallingState == Player.ViewStates[PS_FLASH].State) {
-      if (!PlayerEx(Player).ReadyWeapon) return none;
-      state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) {
-        printwarn("unknown decorate label (PS_FLASH) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
-        if (GetCvarB('dbg_emulate_broken_gozzo_gotos')) res = GetNextState(XLevel.CallingState);
-      }
-      return res;
-    }
-
-    // weapon overlay?
-    if (XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) {
-      if (!PlayerEx(Player).ReadyWeapon) return none;
-      state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) {
-        printwarn("unknown decorate label (PS_WEAPON_OVL) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+        printwarn("unknown weapon decorate label '%s' -- probably broken actor `%C` code!", Label, PlayerEx(Player).ReadyWeapon);
         if (GetCvarB('dbg_emulate_broken_gozzo_gotos')) res = GetNextState(XLevel.CallingState);
       }
       return res;
@@ -3300,7 +3282,7 @@ final state FindJumpState (name Label) {
   // normal state jump
   state res = FindState(Label);
   if (!res && !k8CheckIfSpecialStateLabel(Label)) {
-    printwarn("unknown decorate label '%s' -- probably broken actor '%C' code!", Label, self);
+    printwarn("unknown decorate label '%s' -- probably broken actor `%C` code!", Label, self);
     if (GetCvarB('dbg_emulate_broken_gozzo_gotos')) res = GetNextState(XLevel.CallingState);
   }
 
@@ -3357,6 +3339,9 @@ final void DoJump (state aState, optional bool affectStateCallResult) {
   } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) {
     PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
     Player.SetViewState(PS_WEAPON_OVL, aState);
+  } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL_BACK].State) {
+    PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
+    Player.SetViewState(PS_WEAPON_OVL_BACK, aState);
   } else {
     SetState(aState);
   }

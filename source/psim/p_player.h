@@ -45,11 +45,14 @@ enum {
 // drawn directly on the view screen,
 // coordinates are given for a 320*200 view screen.
 enum psprnum_t {
-  PS_WEAPON,
+  PS_WEAPON, // this MUST be before overlays
   PS_FLASH, // only DOOM uses it
   PS_WEAPON_OVL, // temporary hack
+  PS_WEAPON_OVL_BACK, // hack: this overlay will be drawn first
   NUMPSPRITES
 };
+
+extern const int VPSpriteRenderOrder[NUMPSPRITES];
 
 // player states
 enum playerstate_t {
