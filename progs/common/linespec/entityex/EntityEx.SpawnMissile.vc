@@ -171,16 +171,16 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
     */
   }
 
-  if (!SetState(ExplState)) {
-    //printdebug("%C: EXPLODING MISSILE: no explosion state!", self);
-    return false;
-  }
-
   if (Victim) {
     if (bHitTarget) Target = Victim;
     if (bHitMaster) Master = Victim;
     if (bHitTracer) Tracer = Victim;
     // check for shootable corpses here
+  }
+
+  if (!SetState(ExplState)) {
+    //printdebug("%C: EXPLODING MISSILE: no explosion state!", self);
+    return false;
   }
 
   if (bDehExplosion) {

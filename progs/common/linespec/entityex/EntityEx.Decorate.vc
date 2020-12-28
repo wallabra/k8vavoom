@@ -302,11 +302,44 @@ const [decorate] int AAPTR_OWNER = 0x10_0000;
 [decorate] final int decorate_GetUID () { return __ObjectUniqueId; }
 [decorate] final Object decorate_GetSelf () { return self; }
 [decorate] final Object decorate_GetSSR () { /*print("(SSR.self=%C)", self);*/ return _stateRouteSelf; }
-[decorate] final Object decorate_GetTarget () { return Target; }
-[decorate] final Object decorate_GetTracer () { return Tracer; }
-[decorate] final Object decorate_GetMaster () { return Master; }
-[decorate] final Object decorate_GetOwner () { return Owner; }
+
+
+private final EntityEx dccDoAPtr (optional int aptr0) {
+  if (!specified_aptr0) aptr0 = AAPTR_DEFAULT;
+  EntityEx sex = EntityEx(self);
+  if (sex) sex = EntityEx(sex.DecorDoAAPtr('dccDoAPtr', aptr0));
+  return sex;
+}
+
+[decorate] final Object decorate_GetTarget (optional int aptr0) { EntityEx sex = dccDoAPtr(aptr0!optional); return (sex ? sex.Target : none); }
+[decorate] final Object decorate_GetTracer (optional int aptr0) { EntityEx sex = dccDoAPtr(aptr0!optional); return (sex ? sex.Tracer : none); }
+[decorate] final Object decorate_GetMaster (optional int aptr0) { EntityEx sex = dccDoAPtr(aptr0!optional); return (sex ? sex.Master : none); }
+[decorate] final Object decorate_GetOwner (optional int aptr0) { EntityEx sex = dccDoAPtr(aptr0!optional); return (sex ? sex.Owner : none); }
 [decorate] final float decorate_GetStateTime () { return StateTime; }
+[decorate] final int decorate_GetHealth (optional int aptr0) { EntityEx sex = dccDoAPtr(aptr0!optional); return (sex ? sex.Health : 0); }
+
+[decorate] final int decorate_GetSpawnHealth (optional int aptr0) {
+  EntityEx sex = dccDoAPtr(aptr0!optional);
+  if (!sex) return 0;
+  if (PlayerPawn(sex)) return PlayerPawn(sex).MaxHealth;
+  return sex.InitialHealth;
+}
+
+[decorate] final bool decorate_IsMonster (optional int aptr0) { EntityEx sex = dccDoAPtr(aptr0!optional); return (sex ? sex.bMonster : false); }
+[decorate] final bool decorate_IsPlayer (optional int aptr0) { EntityEx sex = dccDoAPtr(aptr0!optional); return (sex ? sex.bIsPlayer : false); }
+[decorate] final bool decorate_IsMissile (optional int aptr0) { EntityEx sex = dccDoAPtr(aptr0!optional); return (sex ? sex.bMissile : false); }
+
+// or any subclass
+[decorate] final bool decorate_IsActorClass (name classname, optional int aptr0) {
+  EntityEx sex = dccDoAPtr(aptr0!optional);
+  return (sex ? (sex isa classname) : false);
+}
+
+[decorate] final bool decorate_IsActorClassExact (name classname, optional int aptr0) {
+  EntityEx sex = dccDoAPtr(aptr0!optional);
+  return (sex ? nameEquCI(GetClassName(sex.Class), classname) : false);
+}
+
 
 [decorate] final bool decorate_IsNetGame () { return Level.Game.netgame; }
 [decorate] final bool decorate_IsNetServer () { return Level.Game.IsNetServer; }

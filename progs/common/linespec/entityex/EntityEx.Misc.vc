@@ -3330,20 +3330,22 @@ final void DoJump (state aState, optional bool affectStateCallResult) {
     XLevel.StateCall->State = aState;
     // shoult state jump affect state chain results?
     if (!affectStateCallResult) XLevel.StateCall->Result = 0;
-  } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) {
-    PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
-    Player.SetViewState(PS_WEAPON, aState);
-  } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_FLASH].State) {
-    PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
-    Player.SetViewState(PS_FLASH, aState);
-  } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) {
-    PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
-    Player.SetViewState(PS_WEAPON_OVL, aState);
-  } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL_BACK].State) {
-    PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
-    Player.SetViewState(PS_WEAPON_OVL_BACK, aState);
   } else {
-    SetState(aState);
+    if (bIsPlayer) {
+      bool done = false;
+      foreach (int xidx; 0..NUMPSPRITES) {
+        if (XLevel.CallingState == Player.ViewStates[xidx].State) {
+          done = true;
+          //printdebug("SetViewState #%s: %s", xidx, aState);
+          PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
+          Player.SetViewState(xidx, aState);
+          //printdebug("DONE SetViewState #%s: %s", xidx, aState);
+        }
+      }
+      if (!done) SetState(aState);
+    } else {
+      SetState(aState);
+    }
   }
   // state jumps should not affect state chain results
   //if (!keepChainRes && XLevel.StateCall) XLevel.StateCall->Result = false;
