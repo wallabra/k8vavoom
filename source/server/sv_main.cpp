@@ -492,7 +492,7 @@ void SV_Clear () {
 
     GLevel->ConditionalDestroy();
     GLevel = nullptr;
-    VObject::CollectGarbage();
+    Host_CollectGarbage(true);
   }
   memset(&sv, 0, sizeof(sv));
   #ifdef CLIENT
@@ -878,7 +878,7 @@ static void SV_Ticker () {
       }
       if (GLevel->TicTime != lastTick) {
         lastTick = GLevel->TicTime;
-        VObject::CollectGarbage();
+        Host_CollectGarbage();
       }
       // calculate frame time
       // do small steps, it seems to work better this way
@@ -1668,6 +1668,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
     }
   }
 
+  Host_CollectGarbage(true); // why not?
   GCon->Logf("Spawned server for \"%s\".", mapname);
 }
 

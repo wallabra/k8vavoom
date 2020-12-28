@@ -42,6 +42,9 @@ bool Host_IsDangerousTimeout ();
 // call this after saving/loading/map loading, so we won't unnecessarily skip frames
 void Host_ResetSkipFrames ();
 
+// this does GC rougly twice per second (unless forced)
+void Host_CollectGarbage (bool forced=false);
+
 extern VCvarB developer;
 
 extern bool host_initialised;

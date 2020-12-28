@@ -100,6 +100,8 @@ VCvarB developer("developer", false, "Developer (debug) mode?", CVAR_PreInit/*|C
 VCvarB k8vavoom_developer_version("__k8vavoom_developer_version", CVAR_K8_DEV_VALUE, "Don't even think about this.", CVAR_Rom);
 
 
+static double hostLastGCTime = 0.0;
+
 int host_frametics = 0; // used only in non-realtime mode
 double host_frametime = 0;
 double host_framefrac = 0; // unused frame time left from previous `SV_Ticker()` in realtime mode
@@ -129,6 +131,8 @@ static VCvarF dbg_frametime("dbg_frametime", "0", "If greater or equal to 0.004,
 VCvarI host_max_skip_frames("dbg_host_max_skip_frames", "12", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!", CVAR_PreInit);
 static VCvarB host_show_skip_limit("dbg_host_show_skip_limit", false, "Show skipframe limit hits? (DEBUG CVAR, DON'T USE!)", CVAR_PreInit);
 static VCvarB host_show_skip_frames("dbg_host_show_skip_frames", false, "Show skipframe hits? (DEBUG CVAR, DON'T USE!)", CVAR_PreInit);
+
+static VCvarF host_gc_timeout("host_gc_timeout", "0.5", "Timeout in seconds between garbage collections.", CVAR_Archive);
 
 static double last_time = 0.0; // last time `FilterTime()` was returned `true`
 
@@ -166,6 +170,28 @@ static VCvarI cl_framerate_net_timeout("cl_framerate_net_timeout", "28", "If we 
 
 
 #include "dedlog.cpp"
+
+
+//==========================================================================
+//
+//  Host_CollectGarbage
+//
+//==========================================================================
+// this does GC rougly twice per second (unless forced)
+void Host_CollectGarbage (bool forced) {
+  const double ctt = Sys_Time();
+  if (!forced) {
+    float tout = host_gc_timeout.asFloat();
+    if (!isFiniteF(tout) || tout < 0.0f) tout = 0.0f; else if (tout > 13.0f) tout = 13.0f; // arbitrary limit
+    if (tout > 0.0f && ctt-hostLastGCTime < (double)tout) {
+      //GCon->Logf(NAME_Debug, "*** gc timeout: %g", (double)tout-(ctt-hostLastGCTime));
+      return; // nothing to do yet
+    }
+  }
+  //GCon->Logf(NAME_Debug, "*** GC! ***");
+  hostLastGCTime = ctt;
+  VObject::CollectGarbage();
+}
 
 
 //==========================================================================
@@ -681,8 +707,7 @@ void Host_Frame () {
       #endif
     }
 
-    // collect all garbage
-    VObject::CollectGarbage();
+    Host_CollectGarbage();
 
     #ifdef CLIENT
     // update video

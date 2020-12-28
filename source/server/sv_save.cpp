@@ -1614,7 +1614,7 @@ static void UnarchiveSounds (VStream &Strm) {
 //==========================================================================
 static void SV_SaveMap (bool savePlayers) {
   // make sure we don't have any garbage
-  VObject::CollectGarbage();
+  Host_CollectGarbage(true);
 
   // open the output file
   VMemoryStream *InStrm = new VMemoryStream();
