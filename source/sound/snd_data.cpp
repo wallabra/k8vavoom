@@ -392,7 +392,34 @@ void VSoundManager::Init () {
 
 //==========================================================================
 //
+//  FindSoundFile
+//
+//  TODO: split this to separate command handlers!
+//
+//==========================================================================
+static int FindSoundFile (VStr fname) {
+  /*static*/ const char *soundExts[] = { "opus", "ogg", "flac", "mp3", "wav", ".lmp", nullptr };
+  fname = fname.fixSlashes();
+  while (fname.length() && fname[0] == '/') fname.chopLeft(1);
+  if (fname.length() == 0) return -1;
+  int lump = -1;
+  if (fname.length() > 8 || fname.indexOf("/")) {
+    lump = W_CheckNumForFileName(fname);
+    if (lump < 0) lump = W_FindLumpByFileNameWithExts(fname, soundExts);
+    if (lump >= 0) return lump;
+  }
+  VName sndLumpName(*fname, VName::AddLower8);
+  lump = W_CheckNumForName(sndLumpName, WADNS_Sounds);
+  if (lump < 0) lump = W_CheckNumForName(sndLumpName, WADNS_Global);
+  return lump;
+}
+
+
+//==========================================================================
+//
 //  VSoundManager::ParseSndinfo
+//
+//  TODO: split this to separate command handlers!
 //
 //==========================================================================
 void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
@@ -414,11 +441,16 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
       // $registered
       // unused
     } else if (sc->Check("$limit")) {
-      // $limit <logical name> <max channels>
+      // $limit <logical name> <max channels> [limitdistance]
+      //TODO: imitdistance specifies how far the limit takes effect.
+      //      It defaults to 256, as in, two sounds further than 256 units
+      //      apart can be played even if $limit would cause them to be
+      //      evicted otherwise.
       sc->ExpectString();
       int sfx = FindOrAddSound(*sc->String);
       sc->ExpectNumber();
       S_sfx[sfx].NumChannels = midval(0, sc->Number, 255);
+      if (sc->CheckFloat()) { /* do nothing */ }
     } else if (sc->Check("$pitchshift")) {
       // $pitchshift <logical name> <pitch shift amount>
       sc->ExpectString();
@@ -583,22 +615,24 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
       ambient->Volume = sc->Float;
       if (ambient->Volume > 1) ambient->Volume = 1; else if (ambient->Volume < 0) ambient->Volume = 0;
     } else if (sc->Check("$musicvolume")) {
+      // $musicvolume musicname factor
       sc->ExpectName();
       VName SongName = sc->Name;
       sc->ExpectFloat();
-      int i;
-      for (i = 0; i < MusicVolumes.length(); ++i) {
+      bool found = false;
+      for (int i = 0; i < MusicVolumes.length(); ++i) {
         if (MusicVolumes[i].SongName == SongName) {
           MusicVolumes[i].Volume = sc->Float;
-          break;
+          found = true;
         }
       }
-      if (i == MusicVolumes.length()) {
+      if (!found) {
         VMusicVolume &V = MusicVolumes.Alloc();
         V.SongName = SongName;
         V.Volume = sc->Float;
       }
     } else if (sc->Check("$musicalias")) {
+      // $musicalias musicname remappedname
       sc->ExpectName();
       VName SongName = sc->Name;
       sc->ExpectName();
@@ -670,16 +704,28 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
       sc->ExpectFloat();
       rlf->MaxDistance = sc->Float;
     } else if (sc->Check("$mididevice")) {
+      // $mididevice musicname device [parameter]
       sc->ExpectString();
       sc->ExpectString();
+      if (!sc->IsAtEol()) sc->ExpectString(); // optional parameter
     } else {
+      TLocation sloc = sc->GetLoc();
+      // new sound
       sc->ExpectString();
       if (**sc->String == '$') sc->Error(va("Unknown command (%s)", *sc->String));
-      VName TagName = *sc->String;
-      sc->ExpectName();
-      int lump = W_CheckNumForName(sc->Name, WADNS_Sounds);
-      if (lump < 0) lump = W_CheckNumForName(sc->Name, WADNS_Global);
-      if (lump < 0) lump = W_CheckNumForFileName(VStr(sc->Name));
+      VName TagName(*sc->String);
+      //sc->ExpectName();
+      sc->ExpectString(); // allow full pathes here
+      // try file name
+      int lump = FindSoundFile(sc->String);
+      /*
+      if (sc->String.length() > 8 || sc->String.indexOf("/") >= 0) {
+        if (lump >= 0) GCon->Logf(NAME_Debug, "sound '%s' is '%s' (%s)", *TagName, *W_FullLumpName(lump), *sc->String);
+        else GCon->Logf(NAME_Debug, "sound '%s' is FUCKAWUT '%s'", *TagName, *sc->String);
+      }
+      */
+      // show warnings for non-iwads
+      if (lump < 0 && !W_IsIWADFile(fileid)) GCon->Logf(NAME_Warning, "%s: sound '%s' not found (%s)", *sloc.toStringNoCol(), *TagName, *sc->String);
       #if 1
       AddSound(TagName, lump);
       #else
