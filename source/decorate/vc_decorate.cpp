@@ -1455,7 +1455,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
       //ParseDecorate(new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
-      GCon->Logf(NAME_Debug, "*** state include: %s", *W_FullLumpName(Lump));
+      //GCon->Logf(NAME_Debug, "*** state include: %s", *W_FullLumpName(Lump));
       VScriptParser *nsp = new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
       ParseStatesStack.append(sc);
       sc = nsp;
@@ -1470,7 +1470,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       sc = ParseStatesStack[ParseStatesStack.length()-1];
       ParseStatesStack[ParseStatesStack.length()-1] = nullptr;
       ParseStatesStack.setLength(ParseStatesStack.length()-1);
-      GCon->Logf(NAME_Debug, "*** restored %s", *sc->GetScriptName());
+      //GCon->Logf(NAME_Debug, "*** restored %s", *sc->GetScriptName());
       continue;
     }
     sc->UnGet();
