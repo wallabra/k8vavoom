@@ -1405,6 +1405,22 @@ static bool CanBeSpriteName (VScriptParser *sc, bool asGoto=false) {
 }
 
 
+static TArray<VScriptParser *> ParseStatesStack;
+
+
+//==========================================================================
+//
+//  ClearStatesStack
+//
+//==========================================================================
+/*
+static void ClearStatesStack () {
+  for (auto &&sc : ParseStatesStack) delete sc;
+  ParseStatesStack.resetNoDtor();
+}
+*/
+
+
 //==========================================================================
 //
 //  ParseStates
@@ -1418,10 +1434,47 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
 
   VStr LastDefinedLabel; // to workaround another ZDoom idiocity
 
+  //FIXME: this may leak!
+  ParseStatesStack.resetNoDtor();
+
   sc->Expect("{");
   // disable escape sequences in states
   sc->SetEscape(false);
   while (!sc->Check("}")) {
+    if (sc->Check("stateinclude")) {
+      if (ParseStatesStack.length() > 32) sc->Error("too many state includes");
+      sc->ExpectString();
+      int Lump = /*W_CheckNumForFileName*/W_CheckNumForFileNameInSameFile(mainDecorateLump, sc->String);
+      // check WAD lump only if it's no longer than 8 characters and has no path separator
+      if (Lump < 0 && sc->String.Length() <= 8 && sc->String.IndexOf('/') < 0) {
+        if (mainDecorateLump < 0) {
+          Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
+        } else {
+          Lump = W_CheckNumForNameInFile(VName(*sc->String, VName::AddLower8), W_LumpFile(mainDecorateLump));
+        }
+      }
+      if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
+      //ParseDecorate(new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
+      GCon->Logf(NAME_Debug, "*** state include: %s", *W_FullLumpName(Lump));
+      VScriptParser *nsp = new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
+      ParseStatesStack.append(sc);
+      sc = nsp;
+      sc->SetCMode(true);
+      sc->SetEscape(false);
+      continue;
+    }
+
+    if (!sc->GetString()) {
+      if (ParseStatesStack.length() == 0) sc->Error("unexpected decorate eof");
+      delete sc;
+      sc = ParseStatesStack[ParseStatesStack.length()-1];
+      ParseStatesStack[ParseStatesStack.length()-1] = nullptr;
+      ParseStatesStack.setLength(ParseStatesStack.length()-1);
+      GCon->Logf(NAME_Debug, "*** restored %s", *sc->GetScriptName());
+      continue;
+    }
+    sc->UnGet();
+
     TLocation TmpLoc = sc->GetLoc();
     VStr TmpName = ParseStateString(sc);
 
@@ -1858,6 +1911,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     }
   }
 
+  if (ParseStatesStack.length() != 0) sc->Error("unexpected states completion in state include");
   return true;
 }
 
