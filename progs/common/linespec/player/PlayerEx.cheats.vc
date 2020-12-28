@@ -1462,3 +1462,52 @@ void Cheat_Debug_Summon_Light_Bulbs_AC (const ref array!string args, bool newArg
 }
 */
 #endif
+
+
+//==========================================================================
+//
+//  ConsoleGiveInventory
+//
+//==========================================================================
+override void ConsoleGiveInventory (string itemName, int amount) {
+  if (!MO) return;
+  if (!itemName) return;
+  if (amount < 1) return;
+
+  class!Inventory icls = class!Inventory(FindClassNoCaseStr(itemName));
+  if (!icls) { printdebug("unknown inventory item '%s'?", itemName); return; }
+  if (!icls.default.bAllowConsoleGive) return;
+
+  EntityEx(MO).GiveInventory(name(itemName), amount, allowReplacement:true);
+}
+
+
+//==========================================================================
+//
+//  ConsoleTakeInventory
+//
+//==========================================================================
+override void ConsoleTakeInventory (string itemName, int amount) {
+  if (!MO) return;
+  if (!itemName) return;
+  if (!amount) return;
+
+  class!Inventory icls = class!Inventory(FindClassNoCaseStr(itemName));
+  if (!icls) { printdebug("unknown inventory item '%s'?", itemName); return; }
+  if (!icls.default.bAllowConsoleTake) return;
+
+  EntityEx Receiver = EntityEx(MO);
+  Inventory Item = Receiver.FindInventory(icls, disableReplacement:true);
+  if (Item && !HexenArmor(Item)) {
+    //if (Item.Amount > 0) SuccessChainResult(); // this sets state chain result to true
+    if (amount < 0 || Item.Amount <= amount) {
+      if (Item.bKeepDepleted) {
+        Item.Amount = 0;
+      } else {
+        Item.Destroy();
+      }
+    } else {
+      Item.Amount -= amount;
+    }
+  }
+}

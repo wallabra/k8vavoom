@@ -495,6 +495,18 @@ public:
     VMT_RET_VOID(method);
   }
 
+  void eventConsoleGiveInventory (VStr itemName, int amount=1) {
+    static VMethodProxy method("ConsoleGiveInventory");
+    vobjPutParamSelf(itemName, amount);
+    VMT_RET_VOID(method);
+  }
+
+  void eventConsoleTakeInventory (VStr itemName, int amount=-1) {
+    static VMethodProxy method("ConsoleTakeInventory");
+    vobjPutParamSelf(itemName, amount);
+    VMT_RET_VOID(method);
+  }
+
   // client to server events
   void eventServerImpulse (int AImpulse) {
     static VMethodProxy method("ServerImpulse");

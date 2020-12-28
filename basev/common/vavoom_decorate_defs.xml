@@ -413,6 +413,10 @@
     <flag_unsupported name="AlwaysActivate" /> <!-- From SkulTag ? -->
     <flag name="NeverRespawn" property="bNeverRespawn" />
     <flag name="Transfer" property="bTransferInventory" />
+
+    <!-- k8vavoom extensions -->
+    <flag name="k8AllowConsoleGive" property="bAllowConsoleGive" />
+    <flag name="k8AllowConsoleTake" property="bAllowConsoleTake" />
   </class>
 
   <class name="Ammo">

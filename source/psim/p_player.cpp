@@ -1234,3 +1234,41 @@ COMMAND(ChangeWeapon) {
     if (newwpn && Player->eventSetPendingWeapon(newwpn)) return;
   }
 }
+
+
+//==========================================================================
+//
+//  ConsoleGiveInventory
+//
+//==========================================================================
+COMMAND(ConsoleGiveInventory) {
+  CMD_FORWARD_TO_SERVER();
+
+  if (!Player || sv.intermission || !GGameInfo || GGameInfo->NetMode < NM_Standalone) {
+    GCon->Logf(NAME_Error, "cannot call `ConsoleGiveInventory` when no game is running!");
+  }
+
+  if (Args.length() < 2 || Args[1].length() == 0) return;
+  int amount = (Args.length() > 2 ? VStr::atoi(*Args[2]) : 1);
+
+  Player->eventConsoleGiveInventory(Args[1], amount);
+}
+
+
+//==========================================================================
+//
+//  ConsoleTakeInventory
+//
+//==========================================================================
+COMMAND(ConsoleTakeInventory) {
+  CMD_FORWARD_TO_SERVER();
+
+  if (!Player || sv.intermission || !GGameInfo || GGameInfo->NetMode < NM_Standalone) {
+    GCon->Logf(NAME_Error, "cannot call `ConsoleTakeInventory` when no game is running!");
+  }
+
+  if (Args.length() < 2 || Args[1].length() == 0) return;
+  int amount = (Args.length() > 2 ? VStr::atoi(*Args[2]) : -1);
+
+  Player->eventConsoleTakeInventory(Args[1], amount);
+}

@@ -640,6 +640,13 @@ Entity EngineHelperGetSavedInventory () { return none; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// <=0 is "none"
+void ConsoleGiveInventory (string itemName, int amount) {}
+// -1 is "max", 0 is "none"
+void ConsoleTakeInventory (string itemName, int amount) {}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // various cheat commands
 // if commands starts with `Cheat_`, is void, and has no args, it is console command
 // if commands starts with `Cheat_`, ends with '_AC', is void, and is

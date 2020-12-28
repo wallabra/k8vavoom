@@ -76,6 +76,8 @@ bool bTransferInventory; // transfer inventory on pickup
 bool bNoAutoaim;
 bool bIsHitscanWeapon;
 bool bIsCheckpointSaveAllowed = true;
+bool bAllowConsoleGive;
+bool bAllowConsoleTake;
 
 
 replication {
