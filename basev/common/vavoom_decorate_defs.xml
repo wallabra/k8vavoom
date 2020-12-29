@@ -449,6 +449,7 @@
   </class>
 
   <class name="Powerup">
+    <flag name="k8ShowTimer" property="bShowTimer" />
     <prop_powerup_color name="Powerup.Color" />
     <prop_tics name="Powerup.Duration" property="EffectTime" />
     <prop_name name="Powerup.Mode" property="Mode" />
