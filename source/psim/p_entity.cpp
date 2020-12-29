@@ -323,8 +323,10 @@ bool VEntity::SetState (VState *InState) {
           setStateNewState = nullptr;
           ExecuteFunctionNoArgs(this, st->Function); //k8: allow VMT lookups (k8:why?)
           if (IsGoingToDie()) {
-            State = nullptr; // just in case
-          } else if (setStateNewState) {
+            State = nullptr;
+            break;
+          }
+          if (setStateNewState) {
             // recursive invocation set a new state
             st = setStateNewState;
             StateTime = 0.0f;
@@ -333,14 +335,13 @@ bool VEntity::SetState (VState *InState) {
         }
       }
 
-      if (!State) break;
       st = State->NextState;
     } while (!StateTime);
     VSLOGF("%s: SetState(%d), done with %s", GetClass()->GetName(), setStateWatchCat, (State ? *State->Loc.toStringNoCol() : "<none>"));
   }
   vassert(setStateWatchCat == 0);
 
-  if (!State) {
+  if (!State || IsGoingToDie()) {
     //GCon->Logf(NAME_Debug, "*** 001: STATE DYING THINKER %u: %s from %s", GetUniqueId(), GetClass()->GetName(), (InState ? *InState->Loc.toStringNoCol() : "<none>"));
     DispSpriteFrame = 0;
     DispSpriteName = NAME_None;

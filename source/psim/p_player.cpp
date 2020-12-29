@@ -295,7 +295,6 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
     VState *state = InState;
     do {
       if (!state) { VSt.State = nullptr; break; }
-      vassert(state);
 
       if (LastViewObject != _stateRouteSelf) {
         // new object
@@ -359,12 +358,7 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
           }
           ExecuteFunctionNoArgs(MO, state->Function); // allow VMT lookups
         }
-        if (!VSt.State) {
-          //GCon->Logf("Player: viewobject DEAD(0)! state is %s", *state->Loc.toStringNoCol());
-          DispSpriteFrame[position] = 0;
-          DispSpriteName[position] = NAME_None;
-          break;
-        }
+        if (!VSt.State) break;
         if (setStateNewState[position]) {
           state = setStateNewState[position];
           VSLOGF("SetViewState(%d): current is %s, next is %s", position, (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"), *state->Loc.toStringNoCol());
@@ -373,7 +367,7 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
         }
       }
       state = VSt.State->NextState;
-    } while (!VSt.StateTime); // an initial state of 0 could cycle through
+    } while (!VSt.StateTime);
     VSLOGF("SetViewState(%d): DONE0: watchcat=%d, new %s", position, setStateWatchCat[position], (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
   }
   VSLOGF("SetViewState(%d): DONE1: watchcat=%d, new %s", position, setStateWatchCat[position], (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
@@ -391,6 +385,8 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
         if (f != PS_WEAPON) {
           ViewStates[f].State = nullptr;
           ViewStates[f].StateTime = -1;
+          ViewStates[f].SX = ViewStates[f].SY = 0.0f;
+          ViewStates[f].OfsX = ViewStates[f].OfsY = 0.0f;
         }
       }
     }
