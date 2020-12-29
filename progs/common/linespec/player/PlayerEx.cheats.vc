@@ -148,6 +148,36 @@ void Cheat_PrintWeaponSlots () {
 
 //==========================================================================
 //
+//  Cheat_PrintCurrentViewStates
+//
+//==========================================================================
+void Cheat_PrintCurrentViewStates () {
+  if (!MO || !MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (plr.ReadyWeapon) printdebug("ReadyWeapon is `%C`", plr.ReadyWeapon);
+  if (plr.PendingWeapon) printdebug("PendingWeapon is `%C`", plr.PendingWeapon);
+  printdebug("====== View States ======");
+  foreach (int idx; 0..NUMPSPRITES) {
+    if (!ViewStates[idx].State) continue;
+    printdebug("  %s: time=%s; state is %s", idx, ViewStates[idx].StateTime, ViewStates[idx].State);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintPendingWeapon
+//
+//==========================================================================
+void Cheat_PrintPendingWeapon () {
+  if (!MO || !MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (plr.PendingWeapon) printdebug("PendingWeapon is `%C`", plr.PendingWeapon); else printdebug("No pending weapon");
+}
+
+
+//==========================================================================
+//
 //  Cheat_DumpInventory
 //
 //==========================================================================
