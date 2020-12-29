@@ -26,6 +26,14 @@
 #include "../gamedefs.h"
 #include "../server/sv_local.h"
 
+//#define VV_SETSTATE_DEBUG
+
+#ifdef VV_SETSTATE_DEBUG
+# define VSLOGF(...)  GCon->Logf(NAME_Debug, __VA_ARGS__)
+#else
+# define VSLOGF(...)  (void)0
+#endif
+
 
 IMPLEMENT_CLASS(V, Entity);
 
@@ -67,22 +75,9 @@ public:
 public:
   VV_DISABLE_COPY(SetStateGuard)
   // constructor increases invocation count
-  inline SetStateGuard (VEntity *aent) noexcept : ent(aent) { ent->incSetStateInvocation(); }
-  inline ~SetStateGuard () noexcept { ent->decSetStateInvocation(); ent = nullptr; }
+  inline SetStateGuard (VEntity *aent) noexcept : ent(aent) { aent->setStateWatchCat = 0; }
+  inline ~SetStateGuard () noexcept { ent->setStateWatchCat = 0; }
 };
-
-
-/*
-static inline bool isDebugDumpEnt (const VEntity *ent) {
-  if (!ent) return false;
-  if (ent->IsPlayer()) return false;
-  const char *cn = ent->GetClass()->GetName();
-  if (VStr::strEqu(cn, "LDWordsAreMorePowerfulThanAThousandFrames")) return false;
-  if (VStr::strEqu(cn, "LDWeaponDropCounter")) return false;
-  if (VStr::strEqu(cn, "LDLegendaryCommonPickupEffect")) return false;
-  return true;
-}
-*/
 
 
 //==========================================================================
@@ -275,71 +270,85 @@ void VEntity::RemoveFromTIDList () {
 //
 //==========================================================================
 bool VEntity::SetState (VState *InState) {
-  VState *st = InState;
-  //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(000): Doomer %p: state=%s (%s)", this, (st ? *st->GetFullName() : "<none>"), (st ? *st->Loc.toStringNoCol() : ""));
-  if (IsGoingToDie()) {
-    if (developer) GCon->Logf(NAME_Dev, "   (00):%s: dead (0x%04x) before state actions, state is %s", *GetClass()->GetFullName(), GetFlags(), (st ? *st->Loc.toStringNoCol() : "<none>"));
+  if (!InState || IsGoingToDie()) {
+    if (developer) GCon->Logf(NAME_Dev, "   (00):%s: dead (0x%04x) before state actions, state is %s", *GetClass()->GetFullName(), GetFlags(), (InState ? *InState->Loc.toStringNoCol() : "<none>"));
     State = nullptr;
+    StateTime = -1;
     DispSpriteFrame = 0;
     DispSpriteName = NAME_None;
+    //GCon->Logf(NAME_Debug, "*** 000: STATE DYING THINKER %u: %s", GetUniqueId(), GetClass()->GetName());
+    if (!IsGoingToDie()) DestroyThinker();
     return false;
   }
 
-  SetStateGuard guard(this);
+  // the only way we can arrive here is via decorate call
+  if (setStateWatchCat) {
+    vassert(InState);
+    VSLOGF("%s: recursive(%d) SetState, %s to %s", GetClass()->GetName(), setStateWatchCat, (State ? *State->Loc.toStringNoCol() : "<none>"), *InState->Loc.toStringNoCol());
+    setStateNewState = InState;
+    return true;
+  }
 
-  do {
-    if (!st) {
-      // remove mobj
-      DispSpriteFrame = 0;
-      DispSpriteName = NAME_None;
-      State = nullptr;
-      StateTime = -1;
-      DestroyThinker();
-      return false;
-    }
+  {
+    SetStateGuard guard(this);
 
-    if (incSetStateWatchCat() > 512) {
-      //k8: FIXME!
-      GCon->Logf(NAME_Error, "WatchCat interrupted `VEntity::SetState()` in '%s' (%s)!", *GetClass()->GetFullName(), *st->Loc.toStringNoCol());
-      break;
-    }
+    VState *st = InState;
+    do {
+      if (!st) { State = nullptr; break; }
 
-    // remember current sprite and frame
-    UpdateDispFrameFrom(st);
+      if (++setStateWatchCat > 512) {
+        //k8: FIXME!
+        GCon->Logf(NAME_Error, "WatchCat interrupted `VEntity::SetState()` in '%s' (%s)!", *GetClass()->GetFullName(), *st->Loc.toStringNoCol());
+        StateTime = 13.0f;
+        break;
+      }
 
-    State = st;
-    StateTime = eventGetStateTime(st, st->Time);
-    EntityFlags &= ~EF_FullBright;
+      VSLOGF("%s: loop SetState(%d), %s to %s", GetClass()->GetName(), setStateWatchCat, (State ? *State->Loc.toStringNoCol() : "<none>"), *st->Loc.toStringNoCol());
 
-    // modified handling
-    // call action functions when the state is set
-    if (st->Function && Role == ROLE_Authority) {
-      //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("   (011):%s: Doomer %p STATE ACTION: %p '%s'", *st->Loc.toStringNoCol(), this, st, st->Function->GetName());
-      XLevel->CallingState = State;
-      {
-        SavedVObjectPtr svp(&_stateRouteSelf);
-        _stateRouteSelf = nullptr;
-        ExecuteFunctionNoArgs(this, st->Function); //k8: allow VMT lookups (k8:why?)
-        if (IsGoingToDie()) {
-          /*
-          GCon->Logf(NAME_Warning, "   (01):%s: dead (0x%04x) after state action, state is %s (next is %s; State is %s)", *GetClass()->GetFullName(), GetFlags(), *st->Loc.toStringNoCol(),
-            (st && st->Next ? *st->Next->Loc.toStringNoCol() : "<none>"), (State ? *State->Loc.toStringNoCol() : "<none>"));
-          */
-          State = nullptr; // just in case
+      // remember current sprite and frame
+      UpdateDispFrameFrom(st);
+
+      State = st;
+      StateTime = eventGetStateTime(st, st->Time);
+      EntityFlags &= ~EF_FullBright;
+      //GCon->Logf("%s: loop SetState(%d), time %g, %s", GetClass()->GetName(), setStateWatchCat, StateTime, *State->Loc.toStringNoCol());
+
+      // modified handling
+      // call action functions when the state is set
+      if (st->Function && Role == ROLE_Authority) {
+        XLevel->CallingState = State;
+        {
+          SavedVObjectPtr svp(&_stateRouteSelf);
+          _stateRouteSelf = nullptr;
+          setStateNewState = nullptr;
+          ExecuteFunctionNoArgs(this, st->Function); //k8: allow VMT lookups (k8:why?)
+          if (IsGoingToDie()) {
+            State = nullptr; // just in case
+          } else if (setStateNewState) {
+            // recursive invocation set a new state
+            st = setStateNewState;
+            StateTime = 0.0f;
+            continue;
+          }
         }
       }
-    }
 
-    if (!State) {
-      //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(660): Doomer %p IS DEAD", this);
-      DispSpriteFrame = 0;
-      DispSpriteName = NAME_None;
-      StateTime = -1;
-      if (!IsGoingToDie()) DestroyThinker();
-      return false;
-    }
-    st = State->NextState;
-  } while (!StateTime);
+      if (!State) break;
+      st = State->NextState;
+    } while (!StateTime);
+    VSLOGF("%s: SetState(%d), done with %s", GetClass()->GetName(), setStateWatchCat, (State ? *State->Loc.toStringNoCol() : "<none>"));
+  }
+  vassert(setStateWatchCat == 0);
+
+  if (!State) {
+    //GCon->Logf(NAME_Debug, "*** 001: STATE DYING THINKER %u: %s from %s", GetUniqueId(), GetClass()->GetName(), (InState ? *InState->Loc.toStringNoCol() : "<none>"));
+    DispSpriteFrame = 0;
+    DispSpriteName = NAME_None;
+    StateTime = -1;
+    if (!IsGoingToDie()) DestroyThinker();
+    return false;
+  }
+
   return true;
 }
 

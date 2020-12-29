@@ -374,9 +374,8 @@ class VEntity : public VThinker {
   VEntity *BeginPlayResult;
 
   // `SetState()` guard
-  // high 16 bits is `SetState()` invocation count
-  // low 16 bits is watchcat
-  vuint32 setStateInCount;
+  vuint32 setStateWatchCat; // watchcat
+  VState *setStateNewState; // if we are inside of `SetState()`, just set this, and get out; cannot be `nullptr`
 
   // moved here from `SkyViewpoint`, so i don't have to call any VM methods to get it
   enum {
@@ -420,20 +419,6 @@ protected:
 
   void CopyRegFloor (sec_region_t *reg, bool setz=true);
   void CopyRegCeiling (sec_region_t *reg, bool setz=true);
-
-  inline vuint32 incSetStateWatchCat () { return ((++setStateInCount)&0xffffu); }
-  inline vuint32 getSetStateWatchCat () { return (setStateInCount&0xffffu); }
-
-  inline void incSetStateInvocation () { setStateInCount += 0x00010000u; }
-  // this resets watchcat when invocation count reaches zero
-  inline void decSetStateInvocation () {
-    if (((setStateInCount -= 0x00010000u)&0xffff0000u) == 0) {
-      setStateInCount = 0;
-      //GCon->Log("WATCHCAT RESET!");
-    }
-  }
-
-  friend struct SetStateGuard;
 
 public:
   VVA_CHECKRESULT inline float GetFloorNormalZ () const noexcept { return EFloor.GetNormalZ(); }

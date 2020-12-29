@@ -271,8 +271,8 @@ override bool Touch(Entity InOther)
   EntityEx A = Spawn(LightningZap, Origin);
   if (A)
   {
-    A.SetState(A.FindState('LastZap'));
     A.Velocity.z = 40.0 * 35.0;
+    A.SetState(A.FindState('LastZap'));
   }
 }
 

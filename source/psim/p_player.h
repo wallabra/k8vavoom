@@ -209,12 +209,10 @@ class VBasePlayer : public VGameObject {
 
   VPlayerReplicationInfo *PlayerReplicationInfo;
 
-  //VField *fldPendingWeapon;
-  //VField *fldReadyWeapon;
+  VObject *LastViewObject;
 
-  VObject *LastViewObject[NUMPSPRITES];
-  //VObject *lastReadyWeapon;
-  //VState *lastReadyWeaponReadyState;
+  vuint32 setStateWatchCat[NUMPSPRITES];
+  VState *setStateNewState[NUMPSPRITES]; // if we are inside of `SetState()`, just set this, and get out; cannot be `nullptr`
 
   static bool isCheckpointSpawn;
 
@@ -232,6 +230,7 @@ private:
 public:
   //VBasePlayer () : UserInfo(E_NoInit), PlayerName(E_NoInit) {}
   virtual void PostCtor () override;
+  //virtual void ClearReferences () override;
 
   void ResetButtons ();
 

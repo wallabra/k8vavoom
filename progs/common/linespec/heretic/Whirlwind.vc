@@ -84,8 +84,8 @@ void TouchWhirlwind(Actor Other)
   if (Health < 0)
   {
     Velocity = vector(0.0, 0.0, 0.0);
-    SetState(FindState('Death'));
     bMissile = false;
+    SetState(FindState('Death'));
     return;
   }
   Special2 -= 3;

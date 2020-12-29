@@ -36,7 +36,10 @@ class SorcBall2 : SorcBall;
 override void A_CastSorcererSpell()
 {
   // Put sorcerer into throw spell animation
-  if (Target.Health > 0) Target.SetState(Target.FindState('Attack2'));
+  if (Target.Health > 0) {
+    auto st = Target.FindState('Attack2');
+    if (st) Target.SetState(st);
+  }
 
   float z = Target.Origin.z - Target.FloorClip + SORC_DEFENSE_HEIGHT;
   EntityEx mo = Spawn(SorcFX2, vector(Origin.x, Origin.y, z));

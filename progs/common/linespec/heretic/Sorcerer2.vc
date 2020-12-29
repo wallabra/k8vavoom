@@ -133,11 +133,11 @@ final void DSparilTeleport()
   {
     EntityEx fog = Spawn(Sorcerer2Telefade, PrevOrg);
     if (fog) fog.PlaySound('misc/teleport', CHAN_VOICE);
-    SetState(FindState('Teleport'));
     PlaySound('misc/teleport', CHAN_VOICE);
     Origin.z = FloorZ;
     Angles.yaw = spotSpot.Angles.yaw;
     Velocity = vector(0.0, 0.0, 0.0);
+    SetState(FindState('Teleport'));
   }
 }
 

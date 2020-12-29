@@ -44,7 +44,10 @@ override void MorphPlayerThink()
     Weapon wpn = PlayerEx(Player).ReadyWeapon;
     state flashState = none;
     if (wpn) flashState = wpn.FindState('Flash');
-    if (flashState) Player.SetViewState(PS_WEAPON, flashState);
+    if (flashState) {
+      Player.SetViewObject(wpn);
+      Player.SetViewState(PS_WEAPON, flashState);
+    }
     PlaySound('PigActive1', CHAN_VOICE);  // snort
     return;
   }

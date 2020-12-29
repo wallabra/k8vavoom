@@ -146,8 +146,8 @@ final bool AutoUseChaosDevice(EntityEx Victim)
       Velocity.x = Speed * cos(angle);
       Velocity.y = Speed * sin(angle);
     }
-    SetState(IdleState);
     PlaySound('weapons/macestop', CHAN_VOICE);
+    SetState(IdleState);
   }
   else
   {

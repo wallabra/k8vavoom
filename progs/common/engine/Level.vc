@@ -66,6 +66,8 @@ struct rep_light_t {
   int OwnerUId;
   TVec ConeDir;
   float ConeAngle;
+  sector_t *LevelSector;
+  float LevelScale;
   //int NextUIdIndex; // -1 or next light for this OwnerUId
   bool bLightChanged;
   bool bLightActive;

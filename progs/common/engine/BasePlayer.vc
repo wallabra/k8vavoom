@@ -158,7 +158,10 @@ native readonly ClientGameBase ClGame; // valid only on client side
 
 PlayerReplicationInfo playerReplicationInfo;
 
-private native transient Object[NUMPSPRITES] LastViewObject;
+private native transient Object LastViewObject;
+
+private native transient int[NUMPSPRITES] setStateWatchCat;
+private native transient state [NUMPSPRITES]setStateNewState;
 
 
 replication {
@@ -257,42 +260,10 @@ native void ServerSetUserInfo (string Info);
 //  SetViewStateOffsets
 //
 //==========================================================================
-final void SetViewStateOffsets (optional float newsx, optional float newsy, optional bool delta) {
+final void SetViewStateOffsets (float newsx, float newsy, optional bool delta) {
   foreach (auto ref vs; ViewStates) {
-    if (specified_newsx) {
-      if (delta) vs.SX += newsx; else vs.SX = newsx;
-    }
-    if (specified_newsy) {
-      if (delta) vs.SY += newsy; else vs.SY = newsy;
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  SetViewStateOffsetX
-//
-//==========================================================================
-final void SetViewStateOffsetX (optional float news, optional bool delta) {
-  foreach (auto ref vs; ViewStates) {
-    if (specified_news) {
-      if (delta) vs.SX += news; else vs.SX = news;
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  SetViewStateOffsetY
-//
-//==========================================================================
-final void SetViewStateOffsetY (optional float news, optional bool delta) {
-  foreach (auto ref vs; ViewStates) {
-    if (specified_news) {
-      if (delta) vs.SY += news; else vs.SY = news;
-    }
+    if (delta) vs.SX += newsx; else vs.SX = newsx;
+    if (delta) vs.SY += newsy; else vs.SY = newsy;
   }
 }
 

@@ -943,7 +943,7 @@
   if (!Wpn) return;
 
   Player.SetViewObject(Wpn);
-  Player.SetViewStateOffsetY(Weapon::WEAPONTOP);
+  Player.SetViewStateOffsets(0, Weapon::WEAPONTOP);
   Player.SetViewState(PS_WEAPON, Wpn.GetReadyState());
 }
 

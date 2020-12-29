@@ -197,7 +197,7 @@ protected final void do_A_ReFire (optional state refirestate) self(Actor) {
   {
     //writeln("A_ReFire: primary");
     ++PlayerEx(Player).Refire;
-    if (!k8InWeaponReady) PlayerEx(Player).FireWeapon(refirestate!optional);
+    if (PlayerEx(Player).k8InWeaponReadyWatchCat != XLevel.TicTime) PlayerEx(Player).FireWeapon(refirestate!optional);
   }
   else if (Wpn.FireMode == Weapon::FIRE_Secondary &&
            (Player.Buttons&BT_ALT_ATTACK) &&
@@ -205,7 +205,7 @@ protected final void do_A_ReFire (optional state refirestate) self(Actor) {
   {
     //writeln("A_ReFire: secondary");
     ++PlayerEx(Player).Refire;
-    if (!k8InWeaponReady) PlayerEx(Player).AltFireWeapon(refirestate!optional);
+    if (PlayerEx(Player).k8InWeaponReadyWatchCat != XLevel.TicTime) PlayerEx(Player).AltFireWeapon(refirestate!optional);
   } else {
     //writeln("A_ReFire: nothing");
     PlayerEx(Player).Refire = 0;
@@ -247,7 +247,7 @@ protected final void do_A_Raise (optional float raisespeed) self(Actor) {
   }
   */
   float sy = prevsy-raisespeed;
-  Player.SetViewStateOffsetY(sy);
+  Player.SetViewStateOffsets(0, sy);
 
   if (sy > Weapon::WEAPONTOP) {
     // not raised all the way yet
@@ -262,7 +262,7 @@ protected final void do_A_Raise (optional float raisespeed) self(Actor) {
     Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
   }
 
-  Player.SetViewStateOffsetY(Weapon::WEAPONTOP);
+  Player.SetViewStateOffsets(0, Weapon::WEAPONTOP);
   Player.SetViewObject(Wpn);
   if (Wpn) {
     Player.SetViewState(PS_WEAPON, Wpn.GetReadyState());
@@ -309,7 +309,7 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
   Player.PSpriteWeaponLowerPrev = prevsy;
 
   if (PlayerEx(Player).MorphTime || PlayerEx(Player).bInstantWeaponSwitch) {
-    Player.SetViewStateOffsetY(Weapon::WEAPONBOTTOM);
+    Player.SetViewStateOffsets(0, Weapon::WEAPONBOTTOM);
     prevsy = Weapon::WEAPONBOTTOM;
   } else {
     // FIXME!!
@@ -320,7 +320,7 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
       Player.ViewStates[PS_WEAPON].SY += lowerspeed*35.0*Level.Game.frametime;
     }
     */
-    Player.SetViewStateOffsetY(lowerspeed, delta:true);
+    Player.SetViewStateOffsets(0, lowerspeed, delta:true);
   }
 
   float sy = Player.ViewStates[PS_WEAPON].SY;
@@ -334,7 +334,7 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
 
   if (Player.PlayerState == PST_DEAD) {
     // player is dead, so don't bring up a pending weapon
-    Player.SetViewStateOffsetY(Weapon::WEAPONBOTTOM);
+    Player.SetViewStateOffsets(0, Weapon::WEAPONBOTTOM);
     return;
   }
 
@@ -379,12 +379,20 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
 //==========================================================================
 [decorate] final void decorate_A_RetDoJump (state aState) {
   KeepChainResult(); //k8: this is prolly wrong, because `return` in GZDoom can return `fail` condition too
-       if (XLevel.StateCall) XLevel.StateCall->State = aState;
-  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) Player.SetViewState(PS_WEAPON, aState);
-  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_FLASH].State) Player.SetViewState(PS_FLASH, aState);
-  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) Player.SetViewState(PS_WEAPON_OVL, aState);
-  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL_BACK].State) Player.SetViewState(PS_WEAPON_OVL_BACK, aState);
-  else SetState(aState);
+  if (XLevel.StateCall) {
+    XLevel.StateCall->State = aState;
+  } else {
+    if (bIsPlayer) {
+      foreach (int xidx; 0..NUMPSPRITES) {
+        if (XLevel.CallingState == Player.ViewStates[xidx].State) {
+          Player.SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
+          Player.SetViewState(xidx, aState);
+          return;
+        }
+      }
+    }
+    SetState(aState);
+  }
 }
 
 

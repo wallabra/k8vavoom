@@ -1704,6 +1704,8 @@ override void ApplyFriction (float DeltaTime) {
   if (fabs(vx) < STOPSPEED && fabs(vy) < STOPSPEED &&
       (!bIsPlayer || !Player || (Player.MO == self && !Player.ForwardMove && !Player.SideMove)))
   {
+    Velocity.x = 0.0;
+    Velocity.y = 0.0;
     if (bIsPlayer) {
       // if in a walking frame, stop moving
       if (IdleState && /*StateIsInRange(State, SeeState, none, 4)*/StateIsInSequence(State, SeeState)) {
@@ -1716,8 +1718,6 @@ override void ApplyFriction (float DeltaTime) {
       }
       */
     }
-    Velocity.x = 0.0;
-    Velocity.y = 0.0;
   } else {
     // slow down
     float fric = GetFriction();

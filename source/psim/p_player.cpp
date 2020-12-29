@@ -28,6 +28,14 @@
 #include "../server/sv_local.h"
 #include "../client/cl_local.h"
 
+//#define VV_SETSTATE_DEBUG
+
+#ifdef VV_SETSTATE_DEBUG
+# define VSLOGF(...)  GCon->Logf(NAME_Debug, __VA_ARGS__)
+#else
+# define VSLOGF(...)  (void)0
+#endif
+
 
 IMPLEMENT_CLASS(V, BasePlayer)
 
@@ -68,6 +76,19 @@ struct SavedVObjectPtr {
   SavedVObjectPtr (VObject **aptr) : ptr(aptr), saved(*aptr) {}
   ~SavedVObjectPtr() { *ptr = saved; }
 };
+
+
+struct SetViewStateGuard {
+public:
+  VBasePlayer *plr;
+  int pos;
+public:
+  VV_DISABLE_COPY(SetViewStateGuard)
+  // constructor increases invocation count
+  inline SetViewStateGuard (VBasePlayer *aplr, int apos) noexcept : plr(aplr), pos(apos) { /*GCon->Logf(NAME_Debug, "VSG:CTOR: wc[%d]=%d", pos, plr->setStateWatchCat[pos]);*/ aplr->setStateWatchCat[apos] = 0; }
+  inline ~SetViewStateGuard () noexcept { /*GCon->Logf(NAME_Debug, "VSG:DTOR: wc[%d]=%d", pos, plr->setStateWatchCat[pos]);*/ plr->setStateWatchCat[pos] = 0; }
+};
+
 
 
 //==========================================================================
@@ -230,114 +251,149 @@ __attribute__((format(printf,2,3))) void VBasePlayer::CenterPrintf (const char *
 }
 
 
+//==========================================================================
+//
+//  VBasePlayer::ClearReferences
+//
+//==========================================================================
+/*
+void VBasePlayer::ClearReferences () {
+  Super::ClearReferences();
+  if (LastViewObject && LastViewObject->IsRefToCleanup()) LastViewObject = nullptr;
+}
+*/
+
+
 //===========================================================================
 //
 //  VBasePlayer::SetViewState
 //
 //===========================================================================
-void VBasePlayer::SetViewState (int position, VState *stnum) {
+void VBasePlayer::SetViewState (int position, VState *InState) {
   if (position < 0 || position >= NUMPSPRITES) return; // sanity check
-  if (position == PS_WEAPON && !stnum) {
-    ViewStates[PS_FLASH].State = ViewStates[PS_WEAPON_OVL].State = ViewStates[PS_WEAPON_OVL_BACK].State = nullptr;
-  }
-
-  if (_stateRouteSelf != LastViewObject[position]) {
-    LastViewObject[position] = _stateRouteSelf;
-    //ViewStates[position].SX = ViewStates[position].SY = ViewStates[position].OfsX = ViewStates[position].OfsY = ViewStates[position].BobOfsX = ViewStates[position].BobOfsY = 0.0f;
-    ViewStates[position].OfsX = ViewStates[position].OfsY = 0.0f;
-    // "display" state
-    if (position == PS_WEAPON) {
-      LastViewObject[PS_WEAPON_OVL] = LastViewObject[PS_WEAPON_OVL_BACK] = _stateRouteSelf;
-      static VClass *WeaponClass = nullptr;
-      if (!WeaponClass) WeaponClass = VClass::FindClass("Weapon");
-      if (_stateRouteSelf && _stateRouteSelf->IsA(WeaponClass)) {
-        //GCon->Logf(NAME_Warning, "*** NEW DISPLAY STATE: %s", *_stateRouteSelf->GetClass()->GetFullName());
-        VEntity *wpn = (VEntity *)_stateRouteSelf;
-        SetViewState(PS_WEAPON_OVL, wpn->FindState("Display"));
-        SetViewState(PS_WEAPON_OVL_BACK, wpn->FindState("DisplayOverlayBack"));
-      } else {
-        //GCon->Logf(NAME_Warning, "*** NEW DISPLAY STATE: EMPTY (%s)", (_stateRouteSelf ? *_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
-        ViewStates[PS_WEAPON_OVL].State = ViewStates[PS_WEAPON_OVL_BACK].State = nullptr;
-        LastViewObject[PS_WEAPON_OVL] = LastViewObject[PS_WEAPON_OVL_BACK] = nullptr;
-      }
-    }
-  }
 
   VViewState &VSt = ViewStates[position];
-  VState *state = stnum;
-  int watchcatCount = 1024;
-  do {
-    if (!state) {
-      if (position == PS_WEAPON && developer) GCon->Logf(NAME_Dev, "*** WEAPON removed itself!");
-      // object removed itself
-      //_stateRouteSelf = nullptr; // why not?
-      DispSpriteFrame[position] = 0;
-      DispSpriteName[position] = NAME_None;
-      VSt.State = nullptr;
-      VSt.StateTime = -1;
-      break;
-    }
+  VSLOGF("SetViewState(%d): watchcat=%d, vobj=%s, from %s to new %s", position, setStateWatchCat[position], (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<none>"), (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"), (InState ? *InState->Loc.toStringNoCol() : "<none>"));
 
-    if (--watchcatCount <= 0) {
-      //k8: FIXME!
-      GCon->Logf(NAME_Error, "WatchCat interrupted `VBasePlayer::SetViewState()` in '%s'!", *state->Loc.toStringNoCol());
-      VSt.StateTime = -1;
-      break;
-    }
+  /*
+  {
+    VEntity *curwpn = eventGetReadyWeapon();
+    GCon->Logf(NAME_Debug, "    curwpn=%s", (curwpn ? curwpn->GetClass()->GetName() : "<none>"));
+  }
+  */
 
-    //if (position == PS_WEAPON) GCon->Logf("*** ... ticking WEAPON (%s)", *state->Loc.toStringNoCol());
+  // the only way we can arrive here is via decorate call
+  if (InState && setStateWatchCat[position]) {
+    setStateNewState[position] = InState;
+    VSLOGF("SetViewState(%d): recursive, watchcat=%d, from %s to new %s", position, setStateWatchCat[position], (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"), (InState ? *InState->Loc.toStringNoCol() : "<none>"));
+    return;
+  }
 
-    // remember current sprite and frame
-    UpdateDispFrameFrom(position, state);
+  {
+    SetViewStateGuard guard(this, position);
 
-    VSt.State = state;
-    VSt.StateTime = state->Time; // could be 0
-    if (state->Misc1) VSt.OfsX = state->Misc1;
-    if (state->Misc2) VSt.OfsY = state->Misc2-32;
+    VState *state = InState;
+    do {
+      if (!state) { VSt.State = nullptr; break; }
+      vassert(state);
 
-    //GCon->Logf("sprite #%d: '%s' %c (ofs: %g, %g)", position, *DispSpriteName[position], ('A'+(DispSpriteFrame[position]&0xff)), VSt.SX, VSt.OfsY);
-
-    // call action routine
-    if (state->Function) {
-      //fprintf(stderr, "    VBasePlayer::SetViewState: CALLING '%s'(%s): position=%d; stnum=%s\n", *state->Function->GetFullName(), *state->Function->Loc.toStringNoCol(), position, (stnum ? *stnum->GetFullName() : "<none>"));
-      Level->XLevel->CallingState = state;
-      if (!MO) Sys_Error("PlayerPawn is dead (wtf?!)");
-      {
-        SavedVObjectPtr svp(&MO->_stateRouteSelf);
-        MO->_stateRouteSelf = _stateRouteSelf; // always, 'cause player is The Authority
-        /*
-        if (!MO->_stateRouteSelf) {
-          MO->_stateRouteSelf = _stateRouteSelf;
-        } else {
-          //GCon->Logf("player(%s), MO(%s)-viewobject: `%s`, state `%s` (at %s)", *GetClass()->GetFullName(), *MO->GetClass()->GetFullName(), MO->_stateRouteSelf->GetClass()->GetName(), *state->GetFullName(), *state->Loc.toStringNoCol());
-        }
-        */
-        if (!MO->_stateRouteSelf /*&& position == 0*/) {
-          GCon->Logf(NAME_Warning, "Player: viewobject is not set! state is %s", *state->Loc.toStringNoCol());
-        }
-        /*
+      if (LastViewObject != _stateRouteSelf) {
+        // new object
+        LastViewObject = _stateRouteSelf;
+        ViewStates[position].OfsX = ViewStates[position].OfsY = 0.0f;
+        // set overlay states for weapon
         if (position == PS_WEAPON) {
-          VObject::VMDumpCallStack();
-          //GCon->Logf("player(%s), MO(%s)-viewobject: `%s`, state `%s` (at %s)", *GetClass()->GetFullName(), *MO->GetClass()->GetFullName(), MO->_stateRouteSelf->GetClass()->GetName(), *state->GetFullName(), *state->Loc.toStringNoCol());
+          for (int f = 0; f < NUMPSPRITES; ++f) {
+            if (f != PS_WEAPON) {
+              ViewStates[f].SX = ViewStates[PS_WEAPON].SX;
+              ViewStates[f].SY = ViewStates[PS_WEAPON].SY;
+              ViewStates[f].OfsX = ViewStates[f].OfsY = 0.0f;
+              ViewStates[f].State = nullptr;
+              ViewStates[f].StateTime = -1;
+            }
+          }
+          static VClass *WeaponClass = nullptr;
+          if (!WeaponClass) WeaponClass = VClass::FindClass("Weapon");
+          if (_stateRouteSelf && _stateRouteSelf->IsA(WeaponClass)) {
+            //GCon->Logf(NAME_Warning, "*** NEW DISPLAY STATE: %s", *_stateRouteSelf->GetClass()->GetFullName());
+            VEntity *wpn = (VEntity *)_stateRouteSelf;
+            SetViewState(PS_WEAPON_OVL, wpn->FindState("Display"));
+            SetViewState(PS_WEAPON_OVL_BACK, wpn->FindState("DisplayOverlayBack"));
+          } else {
+            //GCon->Logf(NAME_Warning, "*** NEW DISPLAY STATE: EMPTY (%s)", (_stateRouteSelf ? *_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
+          }
         }
-        */
-        ExecuteFunctionNoArgs(MO, state->Function); // allow VMT lookups
       }
-      if (!VSt.State) {
-        //GCon->Logf("Player: viewobject DEAD(0)! state is %s", *state->Loc.toStringNoCol());
-        DispSpriteFrame[position] = 0;
-        DispSpriteName[position] = NAME_None;
+
+      if (++setStateWatchCat[position] > 1024) {
+        //k8: FIXME!
+        GCon->Logf(NAME_Error, "WatchCat interrupted `VBasePlayer::SetViewState(%d)` in '%s'!", position, *state->Loc.toStringNoCol());
+        VSt.StateTime = 13.0f;
         break;
       }
-    }
-    state = VSt.State->NextState;
-  } while (!VSt.StateTime); // an initial state of 0 could cycle through
-  //fprintf(stderr, "  VBasePlayer::SetViewState: DONE: position=%d; stnum=%s\n", position, (stnum ? *stnum->GetFullName() : "<none>"));
+
+      //if (position == PS_WEAPON) GCon->Logf("*** ... ticking WEAPON (%s)", *state->Loc.toStringNoCol());
+
+      // remember current sprite and frame
+      UpdateDispFrameFrom(position, state);
+
+      VSt.State = state;
+      VSt.StateTime = state->Time; // could be 0
+      if (state->Misc1) VSt.OfsX = state->Misc1;
+      if (state->Misc2) VSt.OfsY = state->Misc2-32;
+
+      VSLOGF("SetViewState(%d): loop: vobj=%s, watchcat=%d, new %s", position, (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<none>"), setStateWatchCat[position], (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
+      //GCon->Logf(NAME_Debug, "sprite #%d: '%s' %c (ofs: %g, %g)", position, *DispSpriteName[position], ('A'+(DispSpriteFrame[position]&0xff)), VSt.SX, VSt.OfsY);
+
+      // call action routine
+      if (state->Function) {
+        //fprintf(stderr, "    VBasePlayer::SetViewState: CALLING '%s'(%s): position=%d; InState=%s\n", *state->Function->GetFullName(), *state->Function->Loc.toStringNoCol(), position, (InState ? *InState->GetFullName() : "<none>"));
+        setStateNewState[position] = nullptr;
+        Level->XLevel->CallingState = state;
+        if (!MO) Sys_Error("PlayerPawn is dead (wtf?!)");
+        {
+          SavedVObjectPtr svp(&MO->_stateRouteSelf);
+          MO->_stateRouteSelf = _stateRouteSelf; // always, 'cause player is The Authority
+          if (!MO->_stateRouteSelf) {
+            GCon->Logf(NAME_Warning, "Player: viewobject(%d) is not set! state is %s", position, *state->Loc.toStringNoCol());
+          }
+          ExecuteFunctionNoArgs(MO, state->Function); // allow VMT lookups
+        }
+        if (!VSt.State) {
+          //GCon->Logf("Player: viewobject DEAD(0)! state is %s", *state->Loc.toStringNoCol());
+          DispSpriteFrame[position] = 0;
+          DispSpriteName[position] = NAME_None;
+          break;
+        }
+        if (setStateNewState[position]) {
+          state = setStateNewState[position];
+          VSLOGF("SetViewState(%d): current is %s, next is %s", position, (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"), *state->Loc.toStringNoCol());
+          VSt.StateTime = 0.0f;
+          continue;
+        }
+      }
+      state = VSt.State->NextState;
+    } while (!VSt.StateTime); // an initial state of 0 could cycle through
+    VSLOGF("SetViewState(%d): DONE0: watchcat=%d, new %s", position, setStateWatchCat[position], (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
+  }
+  VSLOGF("SetViewState(%d): DONE1: watchcat=%d, new %s", position, setStateWatchCat[position], (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
+  vassert(setStateWatchCat[position] == 0);
 
   if (!VSt.State) {
-    //GCon->Logf("Player: viewobject DEAD(1)!");
-    LastViewObject[position] = nullptr;
-    if (position == PS_WEAPON) LastViewObject[PS_WEAPON_OVL] = LastViewObject[PS_WEAPON_OVL_BACK] = nullptr;
+    // object removed itself
+    if (position == PS_WEAPON && developer) GCon->Logf(NAME_Dev, "*** WEAPON removed itself!");
+    DispSpriteFrame[position] = 0;
+    DispSpriteName[position] = NAME_None;
+    VSt.StateTime = -1;
+    if (position == PS_WEAPON) {
+      LastViewObject = nullptr;
+      for (int f = 0; f < NUMPSPRITES; ++f) {
+        if (f != PS_WEAPON) {
+          ViewStates[f].State = nullptr;
+          ViewStates[f].StateTime = -1;
+        }
+      }
+    }
   }
 }
 
@@ -940,7 +996,7 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer) {
   Self->PSpriteWeaponLowerPrev = 0;
   Self->PSpriteWeaponLoweringStartTime = 0;
   Self->PSpriteWeaponLoweringDuration = 0;
-  memset((void *)Self->LastViewObject, 0, sizeof(Self->LastViewObject));
+  Self->LastViewObject = nullptr;
 
   vuint8 *Def = Self->GetClass()->Defaults;
   for (VField *F = Self->GetClass()->Fields; F; F = F->Next) {
@@ -952,23 +1008,23 @@ IMPLEMENT_FUNCTION(VBasePlayer, SetViewObject) {
   VObject *vobj;
   vobjGetParamSelf(vobj);
   //if (!vobj) GCon->Logf("RESET VIEW OBJECT; WTF?!");
-  //GCon->Logf(NAME_Warning, "*** SetViewObject: %s (old: %s)", (vobj ? *vobj->GetClass()->GetFullName() : "<none>"), (Self->_stateRouteSelf ? *Self->_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
+  //GCon->Logf(NAME_Debug, "*** SetViewObject: %s (old: %s)", (vobj ? *vobj->GetClass()->GetFullName() : "<none>"), (Self->_stateRouteSelf ? *Self->_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
   if (Self) Self->_stateRouteSelf = vobj;
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, SetViewObjectIfNone) {
   VObject *vobj;
   vobjGetParamSelf(vobj);
-  //GCon->Logf(NAME_Warning, "*** SetViewObjectIfNone: %s (old: %s)", (vobj ? *vobj->GetClass()->GetFullName() : "<none>"), (Self->_stateRouteSelf ? *Self->_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
+  //GCon->Logf(NAME_Debug, "*** SetViewObjectIfNone: %s (old: %s)", (vobj ? *vobj->GetClass()->GetFullName() : "<none>"), (Self->_stateRouteSelf ? *Self->_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
   if (Self && !Self->_stateRouteSelf) Self->_stateRouteSelf = vobj;
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, SetViewState) {
   //fprintf(stderr, "*** SVS ***\n");
-  VState *stnum;
+  VState *InState;
   int position;
-  vobjGetParamSelf(position, stnum);
-  Self->SetViewState(position, stnum);
+  vobjGetParamSelf(position, InState);
+  Self->SetViewState(position, InState);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, AdvanceViewStates) {

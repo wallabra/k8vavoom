@@ -386,8 +386,9 @@ name DecalName;
 // this is required for `RandomSpawner`
 native transient Entity BeginPlayResult;
 
-// internal C++ field
-readonly private native int setStateInCount;
+// internal C++ fields
+readonly private native transient int setStateWatchCat;
+readonly private native transient state setStateNewState;
 
 // moved here from `SkyViewpoint`, so i don't have to call any VM methods to get it
 bool bAlways;

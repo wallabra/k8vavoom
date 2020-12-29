@@ -846,6 +846,7 @@ final bool InquisitorCheckDistance () {
   if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
 
   // make it flash
+  Player.SetViewObject(Wpn);
   Player.SetViewState(PS_FLASH, flash);
 
   Origin.z += 32.0;
@@ -934,7 +935,7 @@ final bool InquisitorCheckDistance () {
   if (!Wpn) return;
 
   PlaySound('weapons/mauler2charge', CHAN_WEAPON);
-  Player.SetViewStateOffsets((Random()-Random())*4.0, (Random()-Random())*4.0, delta:true);
+  Player.SetViewStateOffsets((Random()-Random())*4.0, (Random()-Random())*4.0/*, delta:true*/); //k8: it should not be delta, i believe
 }
 
 

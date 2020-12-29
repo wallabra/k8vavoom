@@ -77,7 +77,10 @@ override void A_CastSorcererSpell()
   }
 
   // Put sorcerer into throw spell animation
-  if (Target.Health > 0) Target.SetState(Target.FindState('Attack2'));
+  if (Target.Health > 0) {
+    auto st = Target.FindState('Attack2');
+    if (st) Target.SetState(st);
+  }
 
   // Offensive
   A_SorcOffense1();

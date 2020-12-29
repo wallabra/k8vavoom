@@ -513,8 +513,6 @@ float JumpTime;
 //float CrouchHeight;
 float crouchfactor = 1.0;
 
-bool k8InWeaponReady; // otherwise recursive calls to it may overflow stack
-
 // gozzo crap
 bool bUseKillScripts;
 bool bNoKillScripts;

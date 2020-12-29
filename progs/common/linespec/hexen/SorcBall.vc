@@ -234,7 +234,10 @@ void A_CastSorcererSpell()
     if (Actor(Target).SpecialCID == Class)
     {
       // Put sorcerer into special throw spell anim
-      if (Target.Health > 0) Target.SetState(Target.FindState('Attack1'));
+      if (Target.Health > 0) {
+        auto st = Target.FindState('Attack1');
+        if (st) Target.SetState(st);
+      }
 
       PlaySound('SorcererSpellCast', CHAN_VOICE, 1.0, ATTN_NONE);
 
@@ -249,7 +252,10 @@ void A_CastSorcererSpell()
         // Done rapid firing
         Target.Args[3] = SORC_STOPPED;
         // Back to orbit balls
-        if (Target.Health > 0) Target.SetState(Target.FindState('Attack2'));
+        if (Target.Health > 0) {
+          auto st = Target.FindState('Attack2');
+          if (st) Target.SetState(st);
+        }
       }
       else
       {
@@ -307,8 +313,8 @@ void A_CastSorcererSpell()
   {
     if (Args[3]-- <= 0)
     {
-      SetState(FindState('Death'));
       PlaySound('SorcererBigBallExplode', CHAN_VOICE, 1.0, ATTN_NONE);
+      SetState(FindState('Death'));
     }
     else
     {

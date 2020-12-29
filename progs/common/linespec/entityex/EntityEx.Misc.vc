@@ -2462,7 +2462,7 @@ final EntityEx SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
     // [BB] set the target of the puff to this actor
     if (puff.bPuffGetsOwner) puff.Target = Target;
          if (!HitThing && puff.FindState('Crash')) puff.SetState(puff.FindState('Crash'));
-    else if (Range == DEFAULT_MELEERANGE && puff.MeleeState) puff.SetState(puff.MeleeState);
+    else if (Range <= DEFAULT_MELEERANGE && puff.MeleeState) puff.SetState(puff.MeleeState);
 
     if (HitThing && puff.SightSound) {
       // hit thing sound
@@ -3340,6 +3340,7 @@ final void DoJump (state aState, optional bool affectStateCallResult) {
           PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
           Player.SetViewState(xidx, aState);
           //printdebug("DONE SetViewState #%s: %s", xidx, aState);
+          break;
         }
       }
       if (!done) SetState(aState);

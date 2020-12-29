@@ -80,6 +80,7 @@ int /*[checkpoint]*/ Cheats;
 
 Weapon /*[checkpoint]*/ ReadyWeapon;
 Weapon PendingWeapon; // is none if not changing
+transient int k8InWeaponReadyWatchCat; // otherwise recursive calls to it may overflow the stack
 
 // refired shots are less accurate (this is counter)
 int Refire;
@@ -1587,8 +1588,8 @@ void SetWeapon (Weapon NewWeapon) {
   ReadyWeapon = NewWeapon;
   PendingWeapon = none;
   if (NewWeapon) {
-    PSpriteSY = /*ReadyWeapon*/NewWeapon.PSpriteSY;
-    MO.ModelVersion = /*ReadyWeapon*/NewWeapon.PlayerModelVersion;
+    PSpriteSY = NewWeapon.PSpriteSY;
+    MO.ModelVersion = NewWeapon.PlayerModelVersion;
   } else {
     SetViewObject(none);
     PSpriteSY = 0;
@@ -1616,7 +1617,7 @@ void BringUpWeapon (optional bool instant, optional bool skipSound) {
   }
 
   PendingWeapon = none;
-  SetViewStateOffsetY((instant || bInstantWeaponSwitch ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM));
+  SetViewStateOffsets(0, (instant || bInstantWeaponSwitch ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM));
   ResetWeaponReloadRefire();
   if (ReadyWeapon) {
     ReadyWeapon.bBobDisabled = true;
@@ -1742,6 +1743,8 @@ void MovePsprites (float deltaTime) {
     vst.BobOfsY = newBobY;
   }
 
+  //printdebug("%C: ReadyWeapon=%C; PendingWeapon=%C", self, ReadyWeapon, PendingWeapon);
+  SetViewObject(ReadyWeapon);
   AdvanceViewStates(deltaTime);
 
   if (!ReadyWeapon) {
@@ -4977,7 +4980,7 @@ void ActivateMorphWeapon () {
   } else {
     SetViewState(PS_WEAPON, none);
   }
-  SetViewStateOffsetY(Weapon::WEAPONTOP);
+  SetViewStateOffsets(0, Weapon::WEAPONTOP);
 }
 
 
@@ -4988,7 +4991,7 @@ void ActivateMorphWeapon () {
 //===========================================================================
 void PostMorphWeapon (Weapon weapon) {
   SetWeapon(weapon);
-  SetViewStateOffsetY(Weapon::WEAPONBOTTOM);
+  SetViewStateOffsets(0, Weapon::WEAPONBOTTOM);
   SetViewObject(ReadyWeapon);
   if (ReadyWeapon) {
     ReadyWeapon.bBobDisabled = true;
@@ -5645,4 +5648,5 @@ void AdjustSideMove (ref float speed, ref float moveWalk, ref float moveRun) {}
 defaultproperties {
   InvSize = 6;
   PrevViewHeight = -666;
+  k8InWeaponReadyWatchCat = -1;
 }

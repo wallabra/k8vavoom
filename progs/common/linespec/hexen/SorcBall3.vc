@@ -39,7 +39,10 @@ override void A_CastSorcererSpell()
   float ang1, ang2;
 
   // Put sorcerer into throw spell animation
-  if (Target.Health > 0) Target.SetState(Target.FindState('Attack2'));
+  if (Target.Health > 0) {
+    auto st = Target.FindState('Attack2');
+    if (st) Target.SetState(st);
+  }
 
   ang1 = AngleMod360(Angles.yaw - 45.0);
   ang2 = AngleMod360(Angles.yaw + 45.0);

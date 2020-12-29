@@ -206,7 +206,7 @@ void CHolyWeave () {
     Velocity.y /= 4.0;
     Velocity.z = 0.0;
     SetState(FindState('Death'));
-    StateTime -= Random()*0.1;
+    if (StateTime > 0) StateTime = fmax(0.01, StateTime-Random()*0.1);
     return;
   }
 

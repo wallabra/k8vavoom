@@ -392,6 +392,7 @@ void VLevel::TickWorld (float DeltaTime) {
   }
   #endif
 
+  //GCon->Log(NAME_Debug, "========================");
   VThinker *Th = ThinkerHead;
   if (!dbg_vm_disable_thinkers) {
     while (Th) {
@@ -404,6 +405,7 @@ void VLevel::TickWorld (float DeltaTime) {
         if (!c->IsGoingToDie()) c->Tick(DeltaTime);
       }
       if (c->IsGoingToDie()) {
+        //GCon->Logf(NAME_Debug, "  DYING THINKER %u: %s", c->GetUniqueId(), c->GetClass()->GetName());
         // object is already dead, or dying
         if (c->IsDelayedDestroy()) RemoveThinker(c);
         // if it is just destroyed, call level notifier

@@ -153,33 +153,21 @@ void GiveSigilPiece (EntityEx Receiver) {
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn || !Sigil(Wpn)) return;
 
+  name st = '';
   switch (Sigil(Wpn).NumPieces) {
-    case 1:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready1'));
-      break;
-    case 2:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready2'));
-      break;
-    case 3:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready3'));
-      break;
-    case 4:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready4'));
-      break;
-    case 5:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready5'));
-      break;
-    default:
-      printwarn("A_SelectSigilReady: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready1'));
-      break;
+    case 1: st = 'Ready1'; break;
+    case 2: st = 'Ready2'; break;
+    case 3: st = 'Ready3'; break;
+    case 4: st = 'Ready4'; break;
+    case 5: st = 'Ready5'; break;
   }
+  if (!st) {
+    printwarn("A_SelectSigilReady: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
+    st = 'Ready1';
+  }
+
+  Player.SetViewObject(Wpn);
+  Player.SetViewState(PS_WEAPON, Wpn.FindState(st));
 }
 
 
@@ -198,33 +186,21 @@ void GiveSigilPiece (EntityEx Receiver) {
   Sigil(Wpn).DownPieces = 0;
   if (!Pieces) Pieces = Sigil(Wpn).NumPieces;
 
+  name st = '';
   switch (Pieces) {
-    case 1:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect1'));
-      break;
-    case 2:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect2'));
-      break;
-    case 3:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect3'));
-      break;
-    case 4:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect4'));
-      break;
-    case 5:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect5'));
-      break;
-    default:
-      printwarn("A_SelectSigilDown: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect1'));
-      break;
+    case 1: st = 'Deselect1'; break;
+    case 2: st = 'Deselect2'; break;
+    case 3: st = 'Deselect3'; break;
+    case 4: st = 'Deselect4'; break;
+    case 5: st = 'Deselect5'; break;
   }
+  if (!st) {
+    printwarn("A_SelectSigilDown: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
+    st = 'Deselect1';
+  }
+
+  Player.SetViewObject(Wpn);
+  Player.SetViewState(PS_WEAPON, Wpn.FindState(st));
 }
 
 
@@ -239,33 +215,21 @@ void GiveSigilPiece (EntityEx Receiver) {
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn || !Sigil(Wpn)) return;
 
+  name st = '';
   switch (Sigil(Wpn).NumPieces) {
-    case 1:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select1'));
-      break;
-    case 2:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select2'));
-      break;
-    case 3:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select3'));
-      break;
-    case 4:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select4'));
-      break;
-    case 5:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select5'));
-      break;
-    default:
-      printwarn("A_SelectSigilUp: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select1'));
-      break;
+    case 1: st = 'Select1'; break;
+    case 2: st = 'Select2'; break;
+    case 3: st = 'Select3'; break;
+    case 4: st = 'Select4'; break;
+    case 5: st = 'Select5'; break;
   }
+  if (!st) {
+    printwarn("A_SelectSigilUp: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
+    st = 'Select1';
+  }
+
+  Player.SetViewObject(Wpn);
+  Player.SetViewState(PS_WEAPON, Wpn.FindState(st));
 }
 
 
@@ -280,33 +244,21 @@ void GiveSigilPiece (EntityEx Receiver) {
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn || !Sigil(Wpn)) return;
 
+  name st = '';
   switch (Sigil(Wpn).NumPieces) {
-    case 1:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire1'));
-      break;
-    case 2:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire2'));
-      break;
-    case 3:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire3'));
-      break;
-    case 4:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire4'));
-      break;
-    case 5:
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire5'));
-      break;
-    default:
-      printwarn("A_SelectSigilAttack: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire1'));
-      break;
+    case 1: st = 'Fire1'; break;
+    case 2: st = 'Fire2'; break;
+    case 3: st = 'Fire3'; break;
+    case 4: st = 'Fire4'; break;
+    case 5: st = 'Fire5'; break;
   }
+  if (!st) {
+    printwarn("A_SelectSigilAttack: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
+    st = 'Fire1';
+  }
+
+  Player.SetViewObject(Wpn);
+  Player.SetViewState(PS_WEAPON, Wpn.FindState(st));
 }
 
 
