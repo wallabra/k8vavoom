@@ -91,7 +91,7 @@ struct VViewState {
   VState *State;
   float StateTime;
   float SX, SY;
-  float OfsY;
+  float OfsX, OfsY;
   float BobOfsX, BobOfsY;
 };
 

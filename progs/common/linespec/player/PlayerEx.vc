@@ -1616,7 +1616,7 @@ void BringUpWeapon (optional bool instant, optional bool skipSound) {
   }
 
   PendingWeapon = none;
-  ViewStates[PS_WEAPON].SY = (instant || bInstantWeaponSwitch ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM);
+  SetViewStateOffsetY((instant || bInstantWeaponSwitch ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM));
   ResetWeaponReloadRefire();
   if (ReadyWeapon) {
     ReadyWeapon.bBobDisabled = true;
@@ -1696,6 +1696,8 @@ void MovePsprites (float deltaTime) {
   // moved here, so weapon can bob independently
   Weapon wpn = Weapon(ReadyWeapon);
 
+  float newBobX = 0.0, newBobY = 0.0;
+
   if (MO && wpn && !wpn.bDontBob && !wpn.bBobDisabled) {
     // bob the weapon based on movement speed
     float mvbobbob = fmin(GetCvarF('weaponbob'), 1.0);
@@ -1721,15 +1723,10 @@ void MovePsprites (float deltaTime) {
         wbob /= (3.0/mvbobbob)*35.0*35.0;
         if (wbob > MAXBOB) wbob = MAXBOB;
         float angle = AngleMod360(180.0*MO.XLevel.Time);
-        //ViewStates[PS_WEAPON].SX = 1.0+wbob*cos(angle);
-        ViewStates[PS_WEAPON].BobOfsX = /*1.0+*/wbob*cos(angle); //k8: why it did `1.0+` here?
+        newBobX = /*1.0+*/wbob*cos(angle); //k8: why it did `1.0+` here?
         if (angle >= 180.0) angle -= 180.0;
-        //ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+wbob*sin(angle);
-        ViewStates[PS_WEAPON].BobOfsY = wbob*sin(angle);
+        newBobY = wbob*sin(angle);
       }
-    } else {
-      ViewStates[PS_WEAPON].BobOfsX = 0;
-      ViewStates[PS_WEAPON].BobOfsY = 0;
     }
     /*
     float wbob = Bob*fclamp(GetCvarF('weaponbob'), 0.0, 1.0);
@@ -1740,25 +1737,12 @@ void MovePsprites (float deltaTime) {
     */
   }
 
-  ViewStates[PS_FLASH].BobOfsX = ViewStates[PS_WEAPON].BobOfsX;
-  ViewStates[PS_FLASH].BobOfsY = ViewStates[PS_WEAPON].BobOfsY;
-
-  ViewStates[PS_WEAPON_OVL].BobOfsX = ViewStates[PS_WEAPON].BobOfsX;
-  ViewStates[PS_WEAPON_OVL].BobOfsY = ViewStates[PS_WEAPON].BobOfsY;
-
-  ViewStates[PS_WEAPON_OVL_BACK].BobOfsX = ViewStates[PS_WEAPON].BobOfsX;
-  ViewStates[PS_WEAPON_OVL_BACK].BobOfsY = ViewStates[PS_WEAPON].BobOfsY;
+  foreach (auto ref vst; ViewStates) {
+    vst.BobOfsX = newBobX;
+    vst.BobOfsY = newBobY;
+  }
 
   AdvanceViewStates(deltaTime);
-
-  ViewStates[PS_FLASH].SX = ViewStates[PS_WEAPON].SX;
-  ViewStates[PS_FLASH].SY = ViewStates[PS_WEAPON].SY;
-
-  ViewStates[PS_WEAPON_OVL].SX = ViewStates[PS_WEAPON].SX;
-  ViewStates[PS_WEAPON_OVL].SY = ViewStates[PS_WEAPON].SY;
-
-  ViewStates[PS_WEAPON_OVL_BACK].SX = ViewStates[PS_WEAPON].SX;
-  ViewStates[PS_WEAPON_OVL_BACK].SY = ViewStates[PS_WEAPON].SY;
 
   if (!ReadyWeapon) {
     if (wpn) printwarn("PLAYER: ReadyWeapon died, PendingWeapon is %C", PendingWeapon);
@@ -4993,7 +4977,7 @@ void ActivateMorphWeapon () {
   } else {
     SetViewState(PS_WEAPON, none);
   }
-  ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP;
+  SetViewStateOffsetY(Weapon::WEAPONTOP);
 }
 
 
@@ -5004,7 +4988,7 @@ void ActivateMorphWeapon () {
 //===========================================================================
 void PostMorphWeapon (Weapon weapon) {
   SetWeapon(weapon);
-  ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
+  SetViewStateOffsetY(Weapon::WEAPONBOTTOM);
   SetViewObject(ReadyWeapon);
   if (ReadyWeapon) {
     ReadyWeapon.bBobDisabled = true;

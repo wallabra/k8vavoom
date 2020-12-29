@@ -237,11 +237,14 @@ __attribute__((format(printf,2,3))) void VBasePlayer::CenterPrintf (const char *
 //===========================================================================
 void VBasePlayer::SetViewState (int position, VState *stnum) {
   if (position < 0 || position >= NUMPSPRITES) return; // sanity check
-  if (position == PS_WEAPON && !stnum) ViewStates[PS_WEAPON_OVL].State = ViewStates[PS_WEAPON_OVL_BACK].State = nullptr;
+  if (position == PS_WEAPON && !stnum) {
+    ViewStates[PS_FLASH].State = ViewStates[PS_WEAPON_OVL].State = ViewStates[PS_WEAPON_OVL_BACK].State = nullptr;
+  }
 
   if (_stateRouteSelf != LastViewObject[position]) {
     LastViewObject[position] = _stateRouteSelf;
-    ViewStates[position].SX = ViewStates[position].OfsY = ViewStates[position].BobOfsX = ViewStates[position].BobOfsY = 0;
+    //ViewStates[position].SX = ViewStates[position].SY = ViewStates[position].OfsX = ViewStates[position].OfsY = ViewStates[position].BobOfsX = ViewStates[position].BobOfsY = 0.0f;
+    ViewStates[position].OfsX = ViewStates[position].OfsY = 0.0f;
     // "display" state
     if (position == PS_WEAPON) {
       LastViewObject[PS_WEAPON_OVL] = LastViewObject[PS_WEAPON_OVL_BACK] = _stateRouteSelf;
@@ -289,7 +292,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
 
     VSt.State = state;
     VSt.StateTime = state->Time; // could be 0
-    if (state->Misc1) VSt.SX = state->Misc1;
+    if (state->Misc1) VSt.OfsX = state->Misc1;
     if (state->Misc2) VSt.OfsY = state->Misc2-32;
 
     //GCon->Logf("sprite #%d: '%s' %c (ofs: %g, %g)", position, *DispSpriteName[position], ('A'+(DispSpriteFrame[position]&0xff)), VSt.SX, VSt.OfsY);

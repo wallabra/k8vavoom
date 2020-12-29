@@ -247,7 +247,7 @@ protected final void do_A_Raise (optional float raisespeed) self(Actor) {
   }
   */
   float sy = prevsy-raisespeed;
-  Player.ViewStates[PS_WEAPON].SY = sy;
+  Player.SetViewStateOffsetY(sy);
 
   if (sy > Weapon::WEAPONTOP) {
     // not raised all the way yet
@@ -262,7 +262,7 @@ protected final void do_A_Raise (optional float raisespeed) self(Actor) {
     Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
   }
 
-  Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP;
+  Player.SetViewStateOffsetY(Weapon::WEAPONTOP);
   Player.SetViewObject(Wpn);
   if (Wpn) {
     Player.SetViewState(PS_WEAPON, Wpn.GetReadyState());
@@ -309,7 +309,7 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
   Player.PSpriteWeaponLowerPrev = prevsy;
 
   if (PlayerEx(Player).MorphTime || PlayerEx(Player).bInstantWeaponSwitch) {
-    Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
+    Player.SetViewStateOffsetY(Weapon::WEAPONBOTTOM);
     prevsy = Weapon::WEAPONBOTTOM;
   } else {
     // FIXME!!
@@ -320,7 +320,7 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
       Player.ViewStates[PS_WEAPON].SY += lowerspeed*35.0*Level.Game.frametime;
     }
     */
-    Player.ViewStates[PS_WEAPON].SY += lowerspeed;
+    Player.SetViewStateOffsetY(lowerspeed, delta:true);
   }
 
   float sy = Player.ViewStates[PS_WEAPON].SY;
@@ -334,7 +334,7 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
 
   if (Player.PlayerState == PST_DEAD) {
     // player is dead, so don't bring up a pending weapon
-    Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
+    Player.SetViewStateOffsetY(Weapon::WEAPONBOTTOM);
     return;
   }
 

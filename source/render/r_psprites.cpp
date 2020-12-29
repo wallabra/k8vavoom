@@ -388,7 +388,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
       cl->ViewStates[i].SY = prevSY;
     }
 
-    cl->ViewStates[i].SX += cl->ViewStates[i].BobOfsX;
+    cl->ViewStates[i].SX += cl->ViewStates[i].OfsX+cl->ViewStates[i].BobOfsX;
     cl->ViewStates[i].SY += cl->ViewStates[i].OfsY+cl->ViewStates[i].BobOfsY;
 
     //GCon->Logf(NAME_Debug, "PSPRITE #%d is %d: sx=%g; sy=%g; %s", ii, i, cl->ViewStates[i].SX, cl->ViewStates[i].SY, *vst->Loc.toStringNoCol());

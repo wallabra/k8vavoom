@@ -48,7 +48,7 @@ struct VViewState {
   state State; // `none` state means not active
   float StateTime;
   float SX, SY;
-  float OfsY;
+  float OfsX, OfsY;
   float BobOfsX, BobOfsY;
 };
 
@@ -250,6 +250,51 @@ native void ClientHudMessage (string Message, name Font, int Type, int Id,
 native void ClientFOV (float fov);
 
 native void ServerSetUserInfo (string Info);
+
+
+//==========================================================================
+//
+//  SetViewStateOffsets
+//
+//==========================================================================
+final void SetViewStateOffsets (optional float newsx, optional float newsy, optional bool delta) {
+  foreach (auto ref vs; ViewStates) {
+    if (specified_newsx) {
+      if (delta) vs.SX += newsx; else vs.SX = newsx;
+    }
+    if (specified_newsy) {
+      if (delta) vs.SY += newsy; else vs.SY = newsy;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  SetViewStateOffsetX
+//
+//==========================================================================
+final void SetViewStateOffsetX (optional float news, optional bool delta) {
+  foreach (auto ref vs; ViewStates) {
+    if (specified_news) {
+      if (delta) vs.SX += news; else vs.SX = news;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  SetViewStateOffsetY
+//
+//==========================================================================
+final void SetViewStateOffsetY (optional float news, optional bool delta) {
+  foreach (auto ref vs; ViewStates) {
+    if (specified_news) {
+      if (delta) vs.SY += news; else vs.SY = news;
+    }
+  }
+}
 
 
 //==========================================================================

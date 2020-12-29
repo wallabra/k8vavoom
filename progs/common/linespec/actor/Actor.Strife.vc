@@ -934,8 +934,7 @@ final bool InquisitorCheckDistance () {
   if (!Wpn) return;
 
   PlaySound('weapons/mauler2charge', CHAN_WEAPON);
-  Player.ViewStates[PS_WEAPON].SX += (Random()-Random())*4.0;
-  Player.ViewStates[PS_WEAPON].SY += (Random()-Random())*4.0;
+  Player.SetViewStateOffsets((Random()-Random())*4.0, (Random()-Random())*4.0, delta:true);
 }
 
 

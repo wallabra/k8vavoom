@@ -609,8 +609,7 @@
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) return;
 
-  Player.ViewStates[PS_WEAPON].SX = Random()*4.0-2.0;
-  Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+Random()*4.0;
+  Player.SetViewStateOffsets(Random()*4.0-2.0, Weapon::WEAPONTOP+Random()*4.0);
   aangs = Angles;
   if (power) {
     damage = HITDICE(2);
@@ -861,8 +860,7 @@
     return;
   }
 
-  Player.ViewStates[PS_WEAPON].SX = Random()*4.0-2.0;
-  Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+Random()*4.0;
+  Player.SetViewStateOffsets(Random()*4.0-2.0, Weapon::WEAPONTOP+Random()*4.0);
   {
     EntityEx ball = SpawnPlayerMissileAngle(MaceFX1, AngleMod360(Angles.yaw+(Random()-0.5)*45.0/4.0));
     if (ball) Actor(ball).Special1 = 16;  // tics till dropoff
@@ -945,7 +943,7 @@
   if (!Wpn) return;
 
   Player.SetViewObject(Wpn);
-  Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP;
+  Player.SetViewStateOffsetY(Weapon::WEAPONTOP);
   Player.SetViewState(PS_WEAPON, Wpn.GetReadyState());
 }
 
