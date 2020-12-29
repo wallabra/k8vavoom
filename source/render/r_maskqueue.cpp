@@ -43,7 +43,7 @@ VCvarI r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", C
 VCvarB r_use_real_sprite_offset("r_use_real_sprite_offset", true, "Use real picture height instead of texture height for sprite offset fixes (only for old aglorithm)?", CVAR_Archive);
 VCvarB r_use_sprofs_lump("r_use_sprofs_lump", true, "Use 'sprofs' lump for some hard-coded sprite offsets (only for the new algorithm)?", CVAR_Archive);
 
-static VCvarB r_sprite_use_pofs("r_sprite_use_pofs", true, "Use PolygonOffset with sprite sorting to reduce sprite flickering?", CVAR_Archive);
+static VCvarB r_sprite_use_pofs("r_sprite_use_pofs", false, "Use PolygonOffset with sprite sorting to reduce sprite flickering?", CVAR_Archive);
 static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
 static VCvarF r_sprite_pslope("r_sprite_pslope", "-1.0", "DEBUG");
 
@@ -339,9 +339,10 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
     }
   }
 
-  // only for monsters
+  const VEntity::EType tclass = thing->Classify();
+
   if (renderShadow) {
-    switch (thing->Classify()) {
+    switch (tclass) {
       case VEntity::EType::ET_Unknown: renderShadow = false; break;
       case VEntity::EType::ET_Player: renderShadow = r_fake_shadows_players.asBool(); break;
       case VEntity::EType::ET_Missile: renderShadow = r_fake_shadows_missiles.asBool(); break;
@@ -399,6 +400,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
     if (!renderShadow && onlyShadow) return;
   }
 
+
   TVec sprforward(0, 0, 0);
   TVec sprright(0, 0, 0);
   TVec sprup(0, 0, 0);
@@ -406,6 +408,17 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   // HACK: if sprite is additive, move is slightly closer to view
   // this is mostly for things like light flares
   if (ri.isAdditive()) sprorigin -= Drawer->viewforward*0.2f;
+
+  // move various things forward/backward a little
+  switch (tclass) {
+    case VEntity::EType::ET_Player: sprorigin -= Drawer->viewforward*0.12f; break; // forward
+    case VEntity::EType::ET_Corpse: sprorigin += Drawer->viewforward*0.12f; break; // backward
+    case VEntity::EType::ET_Pickup: sprorigin -= Drawer->viewforward*0.20f; break; // forward
+    default:
+           if (thing->IsNoInteraction() || thing->IsFloatBob()) sprorigin -= Drawer->viewforward*0.18f;
+      else if (thing->EntityFlags&(VEntity::EF_Bright|VEntity::EF_FullBright)) sprorigin -= Drawer->viewforward*0.12f;
+      break;
+  }
 
   float dot;
   TVec tvec(0, 0, 0);
@@ -645,6 +658,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
       else if (thing->EntityFlags&(VEntity::EF_Corpse|VEntity::EF_Blasted)) priority = -120;
       else if (thing->Health <= 0) priority = -110;
       else if (thing->EntityFlags&VEntity::EF_NoBlockmap) priority = -200;
+      //else if (tclass == VEntity::EType::ET_Pickup) priority = 50;
     }
     if (!onlyShadow) {
       #if 0
@@ -899,14 +913,19 @@ void VRenderLevelShared::DrawTransSpr (trans_sprite_t &spr) {
     case TSP_Sprite:
       // sprite
       if (transSprState.sortWithOfs && transSprState.lastpdist == spr.pdist) {
-        transSprState.lastpdist = spr.pdist;
         if (!transSprState.pofsEnabled) TSNextPOfs(transSprState);
+      } else if (transSprState.sortWithOfs && spr.prio == 50) {
+        // pickup
+        //transSprState.pofs = 0;
+        //TSNextPOfs(transSprState);
+        //Drawer->GLPolygonOffsetEx(r_sprite_pslope, (transSprState.pofs*r_sprite_pofs)); // pull forward
+        //transSprState.pofsEnabled = true;
       } else {
-        transSprState.lastpdist = spr.pdist;
         TSDisablePOfs(transSprState);
         // reset transSprState.pofs
         transSprState.pofs = 0;
       }
+      transSprState.lastpdist = spr.pdist;
       Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), spr.Verts, GTextureManager[spr.lump],
                                 spr.rstyle, GetTranslation(spr.translation),
                                 ColorMap, spr.normal, spr.pdist,
