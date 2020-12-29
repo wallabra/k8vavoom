@@ -124,27 +124,6 @@ void VOpenGLDrawer::FinishUpdate () {
 void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   RendLev = ARLev;
 
-  glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // why not
-  glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|(rd->drawworld && !rd->DrawCamera && clear ? GL_COLOR_BUFFER_BIT : 0));
-  stencilBufferDirty = false;
-
-  if (!rd->DrawCamera && rd->drawworld && rd->width != ScreenWidth) {
-    // draws the border around the view for different size windows
-    R_DrawViewBorder();
-  }
-  glBindTexture(GL_TEXTURE_2D, 0);
-
-  if (!CanUseRevZ()) {
-    // normal
-    glClearDepth(1.0f);
-    glDepthFunc(GL_LEQUAL);
-  } else {
-    // reversed
-    glClearDepth(0.0f);
-    glDepthFunc(GL_GEQUAL);
-  }
-  //RestoreDepthFunc();
-
   GLSetViewport(rd->x, getHeight()-rd->height-rd->y, rd->width, rd->height);
   vpmats.vport.setOrigin(rd->x, getHeight()-rd->height-rd->y);
   vpmats.vport.setSize(rd->width, rd->height);
@@ -157,6 +136,19 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     GCon->Logf(NAME_Debug, "VP: (%d,%d);(%d,%d) -- (%d,%d);(%d,%d)", vpmats.vport.x0, vpmats.vport.y0, vpmats.vport.width, vpmats.vport.height, vport[0], vport[1], vport[2], vport[3]);
   }
   */
+
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  if (!CanUseRevZ()) {
+    // normal
+    glClearDepth(1.0f);
+    glDepthFunc(GL_LEQUAL);
+  } else {
+    // reversed
+    glClearDepth(0.0f);
+    glDepthFunc(GL_GEQUAL);
+  }
+  //RestoreDepthFunc();
 
   CalcProjectionMatrix(vpmats.projMat, /*ARLev,*/ rd);
   glMatrixMode(GL_PROJECTION);
@@ -193,6 +185,18 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
 
   // just in case
   glDisable(GL_CLIP_PLANE0);
+
+  glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // why not
+  glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|(rd->drawworld && !rd->DrawCamera && clear ? GL_COLOR_BUFFER_BIT : 0));
+  stencilBufferDirty = false;
+  decalUsedStencil = false;
+
+  /*
+  if (!rd->DrawCamera && rd->drawworld && rd->width != ScreenWidth) {
+    // draws the border around the view for different size windows
+    R_DrawViewBorder();
+  }
+  */
 }
 
 

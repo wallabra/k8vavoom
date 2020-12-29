@@ -712,6 +712,10 @@ void VOpenGLDrawer::ClearScreen (unsigned clearFlags) {
   GLuint flags = 0;
   if (clearFlags&CLEAR_COLOR) flags |= GL_COLOR_BUFFER_BIT;
   if (clearFlags&CLEAR_DEPTH) flags |= GL_DEPTH_BUFFER_BIT;
-  if (clearFlags&CLEAR_STENCIL) flags |= GL_STENCIL_BUFFER_BIT;
+  if (clearFlags&CLEAR_STENCIL) {
+    flags |= GL_STENCIL_BUFFER_BIT;
+    stencilBufferDirty = false;
+    decalUsedStencil = false;
+  }
   if (flags) glClear(flags);
 }

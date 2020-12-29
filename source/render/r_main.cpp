@@ -1045,7 +1045,7 @@ float VRenderLevelShared::CalcEffectiveFOV (float fov, const refdef_t &refdef) {
 
 //==========================================================================
 //
-//  VRenderLevelShared::ExecuteSetViewSize
+//  VRenderLevelShared::SetupRefdefWithFOV
 //
 //==========================================================================
 void VRenderLevelShared::SetupRefdefWithFOV (refdef_t *refdef, float fov) {
@@ -1067,7 +1067,7 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   if (allow_small_screen_size) {
     screen_size = clampval(screen_size.asInt(), 3, 13);
   } else {
-    screen_size = clampval(screen_size.asInt(), 10, 13);
+    screen_size = clampval(screen_size.asInt(), 11, 13);
   }
   screenblocks = screen_size;
 
@@ -1146,6 +1146,11 @@ void VRenderLevelShared::ExecuteSetViewSize () {
 
   AspectFOVX = refdef.fovx;
   AspectEffectiveFOVX = tanf(DEG2RADF(currentFOV)/2.0f);
+
+  Drawer->ClearScreen(VDrawer::CLEAR_ALL);
+  Drawer->LevelRendererDestroyed();
+  Drawer->LevelRendererCreated(this);
+  //GCon->Logf(NAME_Debug, "ExecuteSetViewSize: screenblocks=%d", screenblocks);
 }
 
 
