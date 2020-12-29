@@ -396,7 +396,7 @@ void VRenderLevelShadowVolume::RenderMobjSpriteShadowMap (VEntity *owner, const 
   if (spShad < 1) return;
   const bool doPlayer = r_shadowmap_sprshadows_player.asBool();
   for (auto &&mo : mobjsInCurrLightSprites) {
-    if (mo == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
+    if (mo == owner /*&& (dlflags&dlight_t::NoSelfShadow)*/) continue;
     //GCon->Logf(NAME_Debug, "x00: thing:<%s>", mo->GetClass()->GetName());
     //if (mo->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
     //GCon->Logf(NAME_Debug, "x01: thing:<%s>", mo->GetClass()->GetName());
