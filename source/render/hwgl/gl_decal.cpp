@@ -115,7 +115,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
   glDepthMask(GL_FALSE); // no z-buffer writes
   */
   PushDepthMask();
-  glDisableDepthWrite();
+  GLDisableDepthWrite();
 
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_EQUAL, decalStcVal, 0xff);

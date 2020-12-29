@@ -114,7 +114,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
   if (gl_dbg_wireframe) return;
   RestoreDepthFunc();
   //glDepthMask(GL_FALSE); // no z-buffer writes
-  glDisableDepthWrite();
+  GLDisableDepthWrite();
   glDisable(GL_TEXTURE_2D);
 
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);

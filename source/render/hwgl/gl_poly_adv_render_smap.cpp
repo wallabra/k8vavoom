@@ -94,7 +94,7 @@ void VOpenGLDrawer::ClearAllShadowMaps () {
       //glDisable(GL_STENCIL_TEST);
       glDisable(GL_SCISSOR_TEST);
       PushDepthMask();
-      glEnableDepthWrite();
+      GLEnableDepthWrite();
       glClearDepth(1.0f);
       if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // restore "normal" depth control
       glDepthRange(0.0f, 1.0f);
@@ -153,7 +153,7 @@ void VOpenGLDrawer::PrepareShadowCube (const TVec &LightPos, const float Radius)
       glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
       glClearDepth(1.0f);
       glDisable(GL_SCISSOR_TEST);
-      glEnableDepthWrite();
+      GLEnableDepthWrite();
       if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // restore "normal" depth control
       glDepthRange(0.0f, 1.0f);
       glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -259,7 +259,7 @@ void VOpenGLDrawer::BeginLightShadowMaps (const TVec &LightPos, const float Radi
   GLDisableBlend();
 
   //glDepthMask(GL_TRUE); // due to shadow volumes pass settings
-  glEnableDepthWrite();
+  GLEnableDepthWrite();
   glEnable(GL_DEPTH_TEST);
   glClearDepth(1.0f);
   if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // restore "normal" depth control
@@ -325,7 +325,7 @@ void VOpenGLDrawer::EndLightShadowMaps () {
   GLSetViewport(savedSMVPort[0], savedSMVPort[1], savedSMVPort[2], savedSMVPort[3]);
   //glEnable(GL_CULL_FACE);
   //glDepthMask(GL_FALSE);
-  glDisableDepthWrite();
+  GLDisableDepthWrite();
   glEnable(GL_DEPTH_TEST);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
   glDisable(GL_TEXTURE_2D);

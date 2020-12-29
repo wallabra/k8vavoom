@@ -189,9 +189,14 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   saxis *= scaleX;
   taxis *= scaleY;
 
+  Drawer->PushDepthMaskSlow();
+  Drawer->GLDisableDepthWriteSlow();
+  Drawer->GLDisableDepthTestSlow();
   Drawer->DrawSpritePolygon((Level ? Level->Time : 0.0f), dv, GTextureManager[lump], ri,
     nullptr, ColorMap, -Drawer->viewforward,
     DotProduct(dv[0], -Drawer->viewforward), saxis, taxis, texorg);
+  Drawer->PopDepthMaskSlow();
+  Drawer->GLEnableDepthTestSlow();
 }
 
 
@@ -218,7 +223,7 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, const RenderStyleInfo
     SetupRefdefWithFOV(&newrd, fov90);
 
     VMatrix4 newProjMat;
-    Drawer->CalcProjectionMatrix(newProjMat, this, &newrd);
+    Drawer->CalcProjectionMatrix(newProjMat, /*this,*/ &newrd);
 
     Drawer->GetProjectionMatrix(oldProjMat);
     Drawer->SetProjectionMatrix(newProjMat);
@@ -389,7 +394,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
     //GCon->Logf(NAME_Debug, "PSPRITE #%d is %d: sx=%g; sy=%g; %s", ii, i, cl->ViewStates[i].SX, cl->ViewStates[i].SY, *vst->Loc.toStringNoCol());
 
     if (!RenderViewModel(&cl->ViewStates[i], mdri)) {
-      RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), NUMPSPRITES-ii, ri);
+      RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), 3.0f/*NUMPSPRITES-ii*/, ri);
     }
 
     cl->ViewStates[i].SX = currSX;

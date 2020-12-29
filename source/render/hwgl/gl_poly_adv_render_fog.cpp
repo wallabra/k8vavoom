@@ -37,7 +37,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   GLEnableBlend();
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // fog is not premultiplied
   //glDepthMask(GL_FALSE); // no z-buffer writes
-  glDisableDepthWrite();
+  GLDisableDepthWrite();
 
   // draw surfaces
   //ShadowsFog.Activate();
@@ -127,6 +127,6 @@ void VOpenGLDrawer::EndFogPass () {
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
   // back to normal z-buffering
   //glDepthMask(GL_TRUE); // allow z-buffer writes
-  glEnableDepthWrite();
+  GLEnableDepthWrite();
   RestoreDepthFunc();
 }

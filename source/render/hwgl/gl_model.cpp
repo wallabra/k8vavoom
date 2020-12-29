@@ -351,7 +351,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
       restoreDepth = true;
       PushDepthMask();
       //glDepthMask(GL_FALSE);
-      glDisableDepthWrite();
+      GLDisableDepthWrite();
     }
 
     p_glDrawRangeElements(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0);
@@ -391,7 +391,7 @@ void VOpenGLDrawer::BeginModelsAmbientPass () {
   //glAlphaFunc(GL_GREATER, 0.0f);
   GLEnableBlend();
   //glDepthMask(GL_TRUE);
-  glEnableDepthWrite();
+  GLEnableDepthWrite();
 }
 
 
@@ -450,7 +450,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
     restoreDepth = true;
     PushDepthMask();
     //glDepthMask(GL_FALSE);
-    glDisableDepthWrite();
+    GLDisableDepthWrite();
   }
 
   if (gl_gpu_debug_models) p_glDebugLogf("DrawAliasModelAmbient <%s:%d>", *Mdl->Name, Mdl->MeshIndex);
@@ -1082,7 +1082,7 @@ void VOpenGLDrawer::BeginModelsTexturesPass () {
   //glDisable(GL_ALPHA_TEST);
   glBlendFunc(GL_DST_COLOR, GL_ZERO);
   //glDepthMask(GL_FALSE);
-  glDisableDepthWrite();
+  GLDisableDepthWrite();
   glDepthFunc(GL_EQUAL);
 }
 
@@ -1223,7 +1223,7 @@ void VOpenGLDrawer::BeginModelsFogPass () {
   GLEnableBlend();
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // fog is not premultiplied
   //glDepthMask(GL_FALSE);
-  glDisableDepthWrite();
+  GLDisableDepthWrite();
   glDepthFunc(GL_EQUAL);
 }
 

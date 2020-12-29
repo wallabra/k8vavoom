@@ -572,7 +572,7 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
   //glDisable(GL_SCISSOR_TEST);
   glDisable(GL_TEXTURE_2D);
   //glDepthMask(GL_FALSE); // no z-buffer writes
-  glDisableDepthWrite();
+  GLDisableDepthWrite();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   //p_glUseProgramObjectARB(0);
 

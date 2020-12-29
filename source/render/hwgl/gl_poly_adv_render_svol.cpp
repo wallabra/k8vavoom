@@ -113,12 +113,13 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
   //glEnable(GL_STENCIL_TEST);
   DisableStenciling();
   //glDepthMask(GL_FALSE); // no z-buffer writes
-  glDisableDepthWrite();
+  GLDisableDepthWrite();
   // reset last known scissor
   //glGetIntegerv(GL_VIEWPORT, lastSVVport);
   GLGetViewport(lastSVVport);
   memcpy(lastSVScissor, lastSVVport, sizeof(lastSVScissor));
   if (gl_smart_dirty_rects) dirtyRects.resetNoDtor();
+
 }
 
 
@@ -129,7 +130,7 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
 //  setup rendering parameters for shadow volume rendering
 //
 //==========================================================================
-void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4]) {
+void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4], const refdef_t *rd) {
   wasRenderedShadowSurface = false;
   if (gl_dbg_wireframe) return;
   //GCon->Logf("*** VOpenGLDrawer::BeginLightShadowVolumes(): stencil_dirty=%d", (int)IsStencilBufferDirty());
@@ -148,7 +149,7 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
       glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
       */
       PushDepthMask();
-      glDisableDepthWrite();
+      GLDisableDepthWrite();
 
       //glDisable(GL_STENCIL_TEST);
       glEnable(GL_SCISSOR_TEST);
@@ -219,6 +220,7 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
   glDisable(GL_CULL_FACE);
   glStencilFunc(GL_ALWAYS, 0x0, 0xff);
   glEnable(GL_STENCIL_TEST);
+  if (HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
 
   if (!CanUseRevZ()) {
     // normal
@@ -251,6 +253,14 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
 
   // remember current scissor rect
   memcpy(lastSVScissor, currentSVScissor, sizeof(lastSVScissor));
+
+  if (!r_shadowmaps.asBool() || !Drawer->CanRenderShadowMaps()) {
+    VMatrix4 newpmat;
+    CalcProjectionMatrix(newpmat, rd, true);
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(newpmat[0]);
+    glMatrixMode(GL_MODELVIEW);
+  }
 }
 
 
@@ -262,6 +272,12 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
 void VOpenGLDrawer::EndLightShadowVolumes () {
   //GCon->Logf("*** VOpenGLDrawer::EndLightShadowVolumes(): stencil_dirty=%d", (int)IsStencilBufferDirty());
   //RestoreDepthFunc(); // no need to do this, if will be modified anyway
+  if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
+  if (!r_shadowmaps.asBool() || !Drawer->CanRenderShadowMaps()) {
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(vpmats.projMat[0]);
+    glMatrixMode(GL_MODELVIEW);
+  }
   // meh, just turn if off each time
   #if 0
   //FIXME: done in main renderer now

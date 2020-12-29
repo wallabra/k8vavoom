@@ -107,7 +107,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
     glDisable(GL_TEXTURE_2D);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     //glDepthMask(GL_FALSE); // no z-buffer writes
-    glDisableDepthWrite();
+    GLDisableDepthWrite();
     GLDisableBlend();
 
     // set up stencil test
@@ -137,7 +137,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
 
     if (Portal->NeedsDepthBuffer()) {
       //glDepthMask(GL_TRUE); // allow z-buffer writes
-      glEnableDepthWrite();
+      GLEnableDepthWrite();
       // clear depth buffer
       if (CanUseRevZ()) glDepthRange(0, 0); else glDepthRange(1, 1);
       glDepthFunc(GL_ALWAYS);
@@ -147,7 +147,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
       glDepthRange(0, 1);
     } else {
       //glDepthMask(GL_FALSE); // no z-buffer writes
-      glDisableDepthWrite();
+      GLDisableDepthWrite();
       glDisable(GL_DEPTH_TEST);
     }
 
@@ -162,7 +162,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
   } else {
     if (!Portal->NeedsDepthBuffer()) {
       //glDepthMask(GL_FALSE); // no z-buffer writes
-      glDisableDepthWrite();
+      GLDisableDepthWrite();
       glDisable(GL_DEPTH_TEST);
     }
   }
@@ -188,7 +188,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
       glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
       glDepthFunc(GL_ALWAYS);
       //glDepthMask(GL_FALSE); // no z-buffer writes
-      glDisableDepthWrite();
+      GLDisableDepthWrite();
       glColor3f(1, 0, 0);
       //GLDisableBlend();
       glDisable(GL_STENCIL_TEST);
@@ -198,7 +198,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
       SurfZBuf.Activate();
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
       //glDepthMask(GL_TRUE); // allow z-buffer writes
-      glEnableDepthWrite();
+      GLEnableDepthWrite();
     }
 
     if (Portal->NeedsDepthBuffer()) {
@@ -211,7 +211,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
       glDepthRange(0, 1);
     } else {
       //glDepthMask(GL_TRUE); // allow z-buffer writes
-      glEnableDepthWrite();
+      GLEnableDepthWrite();
       glEnable(GL_DEPTH_TEST);
     }
 
@@ -240,7 +240,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
       glClear(GL_DEPTH_BUFFER_BIT);
     } else {
       //glDepthMask(GL_TRUE); // allow z-buffer writes
-      glEnableDepthWrite();
+      GLEnableDepthWrite();
       glEnable(GL_DEPTH_TEST);
     }
 

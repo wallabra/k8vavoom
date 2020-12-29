@@ -56,16 +56,17 @@ void VOpenGLDrawer::Setup2D () {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-
+  //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
   glDisable(GL_ALPHA_TEST);
   glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-  //GLDisableBlend();
-  GLEnableBlend();
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDisable(GL_SCISSOR_TEST);
+  GLForceDepthWrite();
+  GLForceBlend();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-  if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
+  //if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
 
   glDisable(GL_CLIP_PLANE0);
 }
@@ -157,7 +158,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   }
   */
 
-  CalcProjectionMatrix(vpmats.projMat, ARLev, rd);
+  CalcProjectionMatrix(vpmats.projMat, /*ARLev,*/ rd);
   glMatrixMode(GL_PROJECTION);
   glLoadMatrixf(vpmats.projMat[0]);
   glDisable(GL_CLIP_PLANE0);
@@ -168,24 +169,22 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+  //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
   glEnable(GL_CULL_FACE);
   glCullFace(GL_FRONT);
 
   glEnable(GL_DEPTH_TEST);
-  //GLDisableBlend();
-  GLEnableBlend();
+  GLForceDepthWrite();
+  GLForceBlend();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   glDisable(GL_ALPHA_TEST);
-  if (RendLev && RendLev->IsShadowVolumeRenderer() && HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
+  //if (RendLev && RendLev->IsShadowVolumeRenderer() && HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
   //k8: there is no reason to not do it
   //if (HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
 
   glEnable(GL_TEXTURE_2D);
   glDisable(GL_STENCIL_TEST);
-  //glDepthMask(GL_TRUE); // allow z-buffer writes
-  glEnableDepthWrite();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
   glDisable(GL_SCISSOR_TEST);

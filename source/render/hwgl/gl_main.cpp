@@ -236,7 +236,7 @@ void VOpenGLDrawer::InitShaderProgress () {
   glDisable(GL_ALPHA_TEST);
   glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
+  //if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
   glDisable(GL_CLIP_PLANE0);
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -689,6 +689,56 @@ void VOpenGLDrawer::CreateShadowCube () {
 //==========================================================================
 void VOpenGLDrawer::EnsureShadowMapCube () {
   if (!shadowCube[0].cubeTexId) CreateShadowCube();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GLDisableDepthWriteSlow
+//
+//==========================================================================
+void VOpenGLDrawer::GLDisableDepthWriteSlow () noexcept {
+  GLDisableDepthWrite();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::PushDepthMaskSlow
+//
+//==========================================================================
+void VOpenGLDrawer::PushDepthMaskSlow () noexcept {
+  PushDepthMask();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::PopDepthMaskSlow
+//
+//==========================================================================
+void VOpenGLDrawer::PopDepthMaskSlow () noexcept {
+  PopDepthMask();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GLDisableDepthTestSlow
+//
+//==========================================================================
+void VOpenGLDrawer::GLDisableDepthTestSlow () noexcept {
+  glDisable(GL_DEPTH_TEST);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GLEnableDepthTestSlow
+//
+//==========================================================================
+void VOpenGLDrawer::GLEnableDepthTestSlow () noexcept {
+  glEnable(GL_DEPTH_TEST);
 }
 
 

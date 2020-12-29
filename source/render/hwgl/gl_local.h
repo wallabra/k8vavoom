@@ -388,13 +388,9 @@ protected:
   unsigned depthMaskSP;
   GLint currDepthMaskState;
 
-  /*
-  virtual void PushDepthMask () override;
-  virtual void PopDepthMask () override;
-  */
-
-  inline void glEnableDepthWrite () noexcept { if (!currDepthMaskState) { currDepthMaskState = 1; glDepthMask(GL_TRUE); } }
-  inline void glDisableDepthWrite () noexcept { if (currDepthMaskState) { currDepthMaskState = 0; glDepthMask(GL_FALSE); } }
+  inline void GLForceDepthWrite () noexcept { currDepthMaskState = 1; glDepthMask(GL_TRUE); }
+  inline void GLEnableDepthWrite () noexcept { if (!currDepthMaskState) { currDepthMaskState = 1; glDepthMask(GL_TRUE); } }
+  inline void GLDisableDepthWrite () noexcept { if (currDepthMaskState) { currDepthMaskState = 0; glDepthMask(GL_FALSE); } }
 
   inline void PushDepthMask () noexcept {
     if (depthMaskSP >= MaxDepthMaskStack) Sys_Error("OpenGL: depth mask stack overflow");
@@ -406,6 +402,14 @@ protected:
     const GLint st = depthMaskStack[--depthMaskSP];
     if (currDepthMaskState != st) { currDepthMaskState = st; glDepthMask(st); }
   }
+
+public:
+  virtual void GLDisableDepthWriteSlow () noexcept override;
+  virtual void PushDepthMaskSlow () noexcept override;
+  virtual void PopDepthMaskSlow () noexcept override;
+
+  virtual void GLDisableDepthTestSlow () noexcept override;
+  virtual void GLEnableDepthTestSlow () noexcept override;
 
 public:
   // scissor array indicies
@@ -531,7 +535,7 @@ public:
   virtual void DrawWorldAmbientPass () override;
 
   virtual void BeginShadowVolumesPass () override;
-  virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4]) override;
+  virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4], const refdef_t *rd) override;
   virtual void EndLightShadowVolumes () override;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) override;
   void RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, const TVec &LightPos, float Radius);
@@ -740,6 +744,7 @@ private:
   inline bool IsStencilBufferDirty () const noexcept { return stencilBufferDirty; }
   inline void ClearStencilBuffer () noexcept { if (stencilBufferDirty) glClear(GL_STENCIL_BUFFER_BIT); stencilBufferDirty = false; decalUsedStencil = false; }
 
+  inline void GLForceBlend () noexcept { blendEnabled = true; glEnable(GL_BLEND); }
   inline void GLEnableBlend () noexcept { if (!blendEnabled) { blendEnabled = true; glEnable(GL_BLEND); } }
   inline void GLDisableBlend () noexcept { if (blendEnabled) { blendEnabled = false; glDisable(GL_BLEND); } }
   inline void GLSetBlendEnabled (const bool v) noexcept { if (blendEnabled != v) { blendEnabled = v; if (v) glEnable(GL_BLEND); else glDisable(GL_BLEND); } }

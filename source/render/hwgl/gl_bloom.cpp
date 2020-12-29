@@ -534,8 +534,8 @@ void VOpenGLDrawer::Posteffect_Bloom (int ax, int ay, int awidth, int aheight) {
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
     //glDepthMask(GL_FALSE);
-    glDisableDepthWrite();
-    if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
+    GLDisableDepthWrite();
+    //if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
 
     GLDisableBlend();
     glEnable(GL_TEXTURE_2D);
@@ -552,7 +552,7 @@ void VOpenGLDrawer::Posteffect_Bloom (int ax, int ay, int awidth, int aheight) {
     glEnable(GL_TEXTURE_2D);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //glDepthMask(GL_TRUE);
-    glEnableDepthWrite();
+    GLEnableDepthWrite();
   }
 
   // restore attributes

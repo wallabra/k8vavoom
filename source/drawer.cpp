@@ -300,7 +300,7 @@ bool VDrawer::IsPointInside2DPoly (const float x, const float y, int vcount, con
 //  VDrawer::CalcProjectionMatrix
 //
 //==========================================================================
-void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev, const refdef_t *rd) {
+void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, /*VRenderLevelDrawer *rlev,*/ const refdef_t *rd, bool noFarNearPlanes) {
   const float zNear = 1.0f;
   if (!CanUseRevZ()) {
     // normal
@@ -314,7 +314,7 @@ void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev,
     ProjMat[1][1] = 1.0f/rd->fovy;
     ProjMat[2][3] = -1.0f;
     //ProjMat[3][3] = 0.0f;
-    if (!HaveDepthClamp && rlev && rlev->IsShadowVolumeRenderer() && !rlev->IsShadowMapRenderer()) {
+    if (/*!HaveDepthClamp && rlev && rlev->IsShadowVolumeRenderer() && !rlev->IsShadowMapRenderer()*/noFarNearPlanes) {
       ProjMat[2][2] = -1.0f;
       ProjMat[3][2] = -2.0f;
     } else {

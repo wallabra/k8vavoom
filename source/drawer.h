@@ -671,9 +671,16 @@ public:
   virtual bool SupportsShadowVolumeRendering () = 0;
   virtual bool SupportsShadowMapRendering () = 0;
 
+  virtual void GLDisableDepthWriteSlow () noexcept = 0;
+  virtual void PushDepthMaskSlow () noexcept = 0;
+  virtual void PopDepthMaskSlow () noexcept = 0;
+
+  virtual void GLDisableDepthTestSlow () noexcept = 0;
+  virtual void GLEnableDepthTestSlow () noexcept = 0;
+
   virtual void DrawWorldAmbientPass () = 0;
   virtual void BeginShadowVolumesPass () = 0;
-  virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4]) = 0;
+  virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4], const refdef_t *rd) = 0;
   virtual void EndLightShadowVolumes () = 0;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) = 0;
 
@@ -755,7 +762,7 @@ public:
   virtual void SetProjectionMatrix (const VMatrix4 &mat) = 0;
   virtual void SetModelMatrix (const VMatrix4 &mat) = 0;
 
-  void CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *ARLev, const refdef_t *rd);
+  void CalcProjectionMatrix (VMatrix4 &ProjMat, /*VRenderLevelDrawer *ARLev,*/ const refdef_t *rd, bool noFarNearPlanes=false);
   void CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAVec &angles, bool MirrorFlip=false);
   void CalcOrthoMatrix (VMatrix4 &OrthoMat, const float left, const float right, const float bottom, const float top);
 

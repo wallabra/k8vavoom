@@ -84,7 +84,7 @@ bool VOpenGLDrawer::RenderWipe (float time) {
   //glLoadIdentity();
   SetOrthoProjection(0, getWidth(), getHeight(), 0);
 
-  if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
+  //if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
@@ -92,7 +92,7 @@ bool VOpenGLDrawer::RenderWipe (float time) {
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_SCISSOR_TEST);
   //glDepthMask(GL_FALSE); // no z-buffer writes
-  glDisableDepthWrite();
+  GLDisableDepthWrite();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
