@@ -896,9 +896,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     if (inflictor && inflictor.bLightning) {
       if ((P_Random() < 96 && !inflictor.bPainless) || inflictor.bForcePain) {
         bJustHit = true; // fight back!
-        if (FindState('Pain', DmgType, false)) {
-          SetState(FindState('Pain', DmgType, false));
-        }
+        SetPainState(DmgType);
       } else {
         // "electrocute" the target
         bFullBright = true;
@@ -909,9 +907,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     } else {
       bJustHit = true; // fight back!
       if (!inflictor || (inflictor && (!inflictor.bPainless || inflictor.bForcePain))) {
-        if (FindState('Pain', DmgType, false)) {
-          SetState(FindState('Pain', DmgType, false));
-        }
+        SetPainState(DmgType);
       }
       if (inflictor && inflictor.bHowlVictims) {
         if (HowlSound && bMonster && P_Random() < 128 &&
@@ -942,6 +938,24 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
       Threshold = BASETHRESHOLD;
       if (State == IdleState && SeeState) SetState(SeeState);
     }
+  }
+}
+
+
+//==========================================================================
+//
+//  SetPainState
+//
+//==========================================================================
+bool SetPainState (optional name DamageType, optional bool always) {
+  auto pst = FindState('Pain', DamageType, false); // allow inexact states
+  if (!pst) pst = FindState('Pain'); // just in case
+  if (pst) {
+    SetState(pst);
+    return true;
+  } else {
+    if (always) SetState(pst);
+    return false;
   }
 }
 
@@ -1287,13 +1301,13 @@ final void PoisonDamage (EntityEx inflictor, EntityEx source, int damage, bool p
     }
     Player.Health -= damage; // mirror mobj health here for Dave
     if (Player.Health < 0) Player.Health = 0;
-    if (Player.Health < 1 && /*(PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)*/isBuddha) Player.Health = 1;
+    if (isBuddha && Player.Health < 1) Player.Health = 1;
     PlayerEx(Player).Attacker = source;
   }
 
   // do the damage
   Health -= damage;
-  if (bIsPlayer && Health < 1 && /*(PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)*/isBuddha) Health = 1;
+  if (bIsPlayer && isBuddha && Health < 1) Health = 1;
   if (Health <= 0) {
     // death
     Special1 = damage;
@@ -1305,9 +1319,10 @@ final void PoisonDamage (EntityEx inflictor, EntityEx source, int damage, bool p
         DamageType = inflictor.DamageType; // for obituary
       }
     }
+    if (!DamageType) DamageType = 'Poison';
     Died(source, inflictor);
     return;
   }
 
-  if (!(XLevel.TicTime&63) && playPainSound) SetState(FindState('Pain'));
+  if (!(XLevel.TicTime&63) && playPainSound) SetPainState('Poison');
 }

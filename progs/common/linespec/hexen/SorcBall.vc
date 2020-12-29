@@ -193,7 +193,7 @@ void A_CastSorcererSpell()
   float dist = Target.Radius - (Radius * 2.0);
   float prevangle = Special1f;
 
-  if (Target.Health <= 0) SetState(FindState('Pain'));
+  if (Target.Health <= 0) SetPainState(always:true);
 
   baseangle = Actor(Target).Special1f;
   angle = AngleMod360(baseangle + BallAngleOffset);

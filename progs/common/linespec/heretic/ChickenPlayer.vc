@@ -53,7 +53,7 @@ override void MorphPlayerThink()
   {
     // Jump and noise
     Velocity.z += 1.0 * 35.0;
-    SetState(FindState('Pain'));
+    SetPainState();
     return;
   }
   if (P_Random() < 48)

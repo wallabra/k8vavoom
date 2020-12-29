@@ -718,7 +718,7 @@ final bool InquisitorCheckDistance () {
   emitter.bInCombat = true;
 
   emitter.Target = atarget;
-  if (emitter.FindState('Pain')) emitter.SetState(emitter.FindState('Pain'));
+  emitter.SetPainState();
 
   for (looker = Sector->ThingList; looker; looker = looker.SNext) {
     if (looker == emitter || looker == atarget) continue;
