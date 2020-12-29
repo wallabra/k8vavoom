@@ -1308,10 +1308,12 @@ final float GetReflectedAngle (EntityEx Other) {
 //
 //==========================================================================
 final void Crash () {
-  state CrashState = FindState('Crash');
-  if (CrashState && bCorpse && DamageType != 'Ice' && !bCrashed) {
-    SetState(CrashState);
-    bCrashed = true;
+  if (bCorpse && !bCrashed && !nameEquCI(DamageType, 'Ice')) {
+    state CrashState = FindState('Crash', DamageType, false); // non-exact
+    if (CrashState) {
+      SetState(CrashState);
+      bCrashed = true;
+    }
   }
 }
 
