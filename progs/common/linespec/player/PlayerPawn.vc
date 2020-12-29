@@ -703,6 +703,7 @@ override void RemoveInventory (Inventory Item) {
     if (pex.PendingWeapon == Item) pex.PendingWeapon = none;
     if (pex.ReadyWeapon == Item) {
       pex.ReadyWeapon = none;
+      pex.SetViewStateOffsets(0, 0);
       pex.ResetWeaponReloadRefire();
       SelectNewWeap = true;
     }

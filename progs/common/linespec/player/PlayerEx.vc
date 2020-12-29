@@ -1611,7 +1611,7 @@ void BringUpWeapon (optional bool instant, optional bool skipSound) {
     MO.PlaySound(ReadyWeapon.UpSound, CHAN_WEAPON);
   }
 
-  if (PendingWeapon && ReadyWeapon && PendingWeapon == ReadyWeapon) {
+  if (PendingWeapon && PendingWeapon == ReadyWeapon) {
     printwarn("%C: RAISING ALREADY RAISED WEAPON! (0)", ReadyWeapon);
     //return;
   }
@@ -1747,16 +1747,37 @@ void MovePsprites (float deltaTime) {
   SetViewObject(ReadyWeapon);
   AdvanceViewStates(deltaTime);
 
+  bool checkPW = false;
+
   if (!ReadyWeapon) {
-    if (wpn) printwarn("PLAYER: ReadyWeapon died, PendingWeapon is %C", PendingWeapon);
+    if (wpn) printwarn("PLAYER: ReadyWeapon `%C` died, PendingWeapon is `%C`", wpn, PendingWeapon);
+    checkPW = true;
   } else {
     if (!ViewStates[PS_WEAPON].State) {
-      printwarn("PLAYER: ReadyWeapon %C (%C) removed itself, PendingWeapon is %C", ReadyWeapon, wpn, PendingWeapon);
+      if (wpn) printwarn("PLAYER: ReadyWeapon %C (%C) removed itself, PendingWeapon is %C", ReadyWeapon, wpn, PendingWeapon);
       ReadyWeapon = none;
+      SetViewStateOffsets(0, 0);
+      checkPW = true;
     } else if (GetStateDuration(ViewStates[PS_WEAPON].State) < 0) {
       // this is totally wrong, because it cannot call `A_WeaponReady()`, and weapon switching is impossible
-      printwarn("PLAYER: ReadyWeapon %C (%C) put itself into endless state", ReadyWeapon, wpn, PendingWeapon);
-      ReadyWeapon = none;
+      //printwarn("PLAYER: ReadyWeapon %C (%C) put itself into endless state", ReadyWeapon, wpn, PendingWeapon);
+      //ReadyWeapon = none;
+      //SetViewStateOffsets(0, 0);
+      checkPW = true;
+    }
+  }
+
+  if (checkPW && MO && k8InWeaponReadyWatchCat != MO.XLevel.TicTime) {
+    // check if we want to change a weapon
+    k8InWeaponReadyWatchCat = MO.XLevel.TicTime;
+    if (MO.Health <= 0) {
+      if (ReadyWeapon) {
+        SetWeapon(none);
+        BringUpWeapon();
+      }
+    } else if (PendingWeapon && PendingWeapon != ReadyWeapon) {
+      SetWeapon(PendingWeapon);
+      BringUpWeapon();
     }
   }
 }

@@ -608,6 +608,7 @@ override void ClearInventory () {
   if (bIsPlayer) {
     PlayerEx(Player).ReadyWeapon = none;
     PlayerEx(Player).PendingWeapon = none;
+    PlayerEx(Player).SetViewStateOffsets(0, 0);
     Player.SetViewObject(none);
     Player.SetViewState(PS_WEAPON, none);
     Player.SetViewState(PS_FLASH, none);
