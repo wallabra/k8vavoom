@@ -953,9 +953,15 @@ override void SB_DrawFullscreenStats () {
     if (Item) DrawPic(429, /*447*/ovh-33, pic_invgemr[!(ClGame.GLevel.TicTime&4) ? 0 : 1], fsalpha);
   } else if (cl.InvPtr) {
     // ready artifact
-    DrawPic(486, /*448*/ovh-32, pic_artibox, fsalpha);
-    DrawShadowedPic(483, /*446*/ovh-34, R_RegisterPic(cl.InvPtr.IconName));
-    SB_DrawSmallNum(514, /*470*/ovh-10, cl.InvPtr.Amount);
+    Inventory Item = cl.InvPtr;
+    if (Item.State && /*GetStateSpriteName(Item.State) != 'tnt1'*/Item.IconName) {
+      int icon = R_RegisterPic(Item.IconName);
+      if (icon > 0) {
+        DrawPic(486, /*448*/ovh-32, pic_artibox, fsalpha);
+        DrawShadowedPic(483, /*446*/ovh-34, icon);
+        SB_DrawSmallNum(514, /*470*/ovh-10, Item.Amount);
+      }
+    }
   }
 }
 
