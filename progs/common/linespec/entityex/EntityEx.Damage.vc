@@ -988,12 +988,14 @@ int TakeSpecialDamage (EntityEx inflictor, EntityEx source, int damage, name Dmg
 
   // if there's no corresponding death state, actor takes no damage at all
   if (nameicmp(DmgType, 'Ice') == 0) {
-    if (FindState('Death', 'Ice', true)) return damage;
-    if ((bIsPlayer || bMonster) && !bNoIceDeath) return damage;
+    if (FindState('Death', 'Ice', true)) {
+      //return damage;
+      if ((bIsPlayer || bMonster) && !bNoIceDeath) return damage;
+    }
     return -1;
   }
 
-  return (FindState('Death', DmgType) ? damage : -1);
+  return (FindState('Death', DmgType, true) ? damage : -1);
 }
 
 
@@ -1131,7 +1133,7 @@ void Died (EntityEx source, EntityEx inflictor) {
   }
 
   float NewHeight = 0.0;
-  if (nameicmp(DamageType, 'Fire') == 0) NewHeight = BurnHeight;
+  if (nameEquCI(DamageType, 'Fire')) NewHeight = BurnHeight;
   if (!NewHeight) NewHeight = DeathHeight;
        if (NewHeight < 0.0) Height = 0.0;
   else if (NewHeight) Height = NewHeight;
@@ -1185,25 +1187,40 @@ void Died (EntityEx source, EntityEx inflictor) {
   state DeathState = none;
   if (DamageType) {
     // specialised death state for this damage type (ice, etc)
+    if ((bIsPlayer || bMonster) && bNoIceDeath && nameEquCI(DamageType, 'Ice')) {
+      // do nothing
+    } else {
+      DeathState = FindState('Death', DamageType, true);
+      if (!DeathState && nameEquCI(DamageType, 'Ice')) DeathState = FindState('GenericFreezeDeath');
+    }
+    /* old code
     DeathState = FindState('Death', DamageType, true);
-    if (nameicmp(DamageType, 'Ice') == 0 && !bNoIceDeath && (bIsPlayer || bMonster)) {
+    if (nameEquCI(DamageType, 'Ice') && !bNoIceDeath && (bIsPlayer || bMonster)) {
       if (FindState('Death', 'Ice', true)) {
         DeathState = FindState('Death', 'Ice', true);
       } else {
         DeathState = FindState('GenericFreezeDeath');
       }
     }
+    */
   }
+
   if (!DeathState) {
     // don't pass damage type unless it's a massacre damage
-    if (nameicmp(DamageType, 'Massacre') != 0) DamageType = '';
+    // k8: why?
+    //if (nameEquCI(DamageType, 'Massacre')) DamageType = '';
 
+    //print("%C: Health=%s; GHealth=%s", self, Health, GHealth);
     // extreme death?
     if (Health < GHealth) {
-      DeathState = FindState('Death', 'Extreme', true);
+      //DeathState = FindState('Death', 'Extreme', true);
+      DeathState = FindState('Death.Extreme', DamageType, true);
+      if (!DeathState) DeathState = FindState('Death', 'Extreme', true);
       if (DeathState) SpawnBloodSprayHead(damage:InitialHealth, notDead:false, spawnBloodPool:true);
+      //if (DeathState) printdebug("%C: FOUND XDEATH %s", self, DeathState);
     }
-    // normal death?
+
+    // normal death
     if (!DeathState) DeathState = FindState('Death');
   }
 
