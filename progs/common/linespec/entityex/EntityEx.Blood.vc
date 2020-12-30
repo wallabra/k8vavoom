@@ -26,7 +26,7 @@
 //  BLOOD UTILITIES
 //**************************************************************************
 
-const float BloodHeightMult = 0.85;
+const float BloodHeightMult = 0.65;
 
 
 final bool BloodCanSplat (class!Actor aBloodType) {
@@ -408,14 +408,18 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
   //print("btrans for %C is %s", self, btrans);
 
   trsplat_t tr;
+  bool wsp = GetCvarB('blood_widespread');
   while (count-- > 0) {
     //float bleedang = AngleMod360(angle+(P_Random()-128)*noise);
     //k8: meh, spray it in all directions sometimes
     //float bleedang = (P_Random() >= 170 ? 360.0*Random() : AngleMod360(angle+(P_Random()-128)*noise));
-    float bleedang = (GetCvarB('blood_widespread') || P_Random() >= 220 ? 360.0*Random() : AngleMod360(angle+(P_Random()-128)*noise));
+    float bleedang = (wsp || P_Random() >= 220 ? 360.0*Random() : AngleMod360(angle+(P_Random()-128)*noise));
     float bleedpitch = AngleMod360(pitch+(P_Random()-128)*noise);
-    //bleedpitch = pitch;
-    //double cosp = bleedpitch.Cos();
+    float bpp = (bleedpitch >= 180 ? bleedpitch-360 : bleedpitch);
+    //printdebug("BLOOD: bleedpitch   =%s %s", bleedpitch, bpp);
+    //bleedpitch = AngleMod360(fclamp(bleedpitch-90, -70, 70)+90);
+    bleedpitch = AngleMod360(fclamp(bpp, -18, 18));
+    //printdebug("       bleedpitchfix=%s", bleedpitch);
     float cosp, sinp;
     sincos(bleedpitch, out sinp, out cosp);
     float bas, bac;
@@ -424,7 +428,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
     vdir.x = cosp*bac;
     vdir.y = cosp*bas;
     vdir.z = -sinp;
-    //DVector3 vdir = DVector3(cosp * bleedang.Cos(), cosp * bleedang.Sin(), -bleedpitch.Sin());
+    //printdebug("BLOOD: angle=%s; pitch=%s; bleedang=%s; bleedpitch=%s; vdir=%s", angle, pitch, bleedang, bleedpitch, vdir);
 
     if (isSmallDamage && !radiusDamage) continue;
 
