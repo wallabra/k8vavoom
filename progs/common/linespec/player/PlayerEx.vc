@@ -5573,7 +5573,20 @@ bool CheatHelper_GiveAmmoClass (class!Ammo acls, optional bool verbose) {
   }
 
   if (Ammo(AmmoItem)) {
-    AmmoItem.Amount = Ammo(AmmoItem)./*MaxAmount*/k8GetAmmoKingMax();
+    auto spwspate = FindClassState(AmmoItem.Class, 'Spawn');
+    if (spwspate && AreStateSpritesPresent(spwspate)) {
+      AmmoItem.Amount = Ammo(AmmoItem).k8GetAmmoKingMax();
+    } else {
+      bool hasBackpack = false;
+      if (AmmoItem.Owner && AmmoItem.Owner.bIsPlayer) {
+        PlayerEx plr = PlayerEx(AmmoItem.Owner.Player);
+        hasBackpack = (plr && plr.bHasBackpack);
+      }
+      if (verbose) printdebug("unpickable ammo '%C', AmmoKing ignored", AmmoItem);
+      int am = Ammo(AmmoItem).MaxAmount;
+      if (hasBackpack) am = max(am, Ammo(AmmoItem).BackpackMaxAmount);
+      AmmoItem.Amount = am;
+    }
     res = true;
   }
 
