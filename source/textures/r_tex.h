@@ -82,7 +82,6 @@ private:
   int PatchCount;
   VTexPatch *Patches;
 
-
 protected:
   void ParseGfxPart (VScriptParser *sc, EWadNamespace prioNS, TArray<VTexPatch> &Parts);
 

@@ -344,7 +344,6 @@ void VMultiPatchTexture::ParseGfxPart (VScriptParser *sc, EWadNamespace prioNS, 
         P.Blend.g = 0;
         P.Blend.b = 0;
         P.Blend.a = 0;
-
              if (sc->Check("inverse")) P.Trans = &ColorMaps[CM_Inverse];
         else if (sc->Check("gold")) P.Trans = &ColorMaps[CM_Gold];
         else if (sc->Check("red")) P.Trans = &ColorMaps[CM_Red];
@@ -372,7 +371,6 @@ void VMultiPatchTexture::ParseGfxPart (VScriptParser *sc, EWadNamespace prioNS, 
         P.Blend.g = 0;
         P.Blend.b = 0;
         P.Blend.a = 0;
-
         if (!sc->CheckNumber()) {
           sc->ExpectString();
           vuint32 Col = M_ParseColor(*sc->String);
@@ -395,8 +393,7 @@ void VMultiPatchTexture::ParseGfxPart (VScriptParser *sc, EWadNamespace prioNS, 
         } else {
           P.Blend.a = 255;
         }
-      }
-      else if (sc->Check("alpha")) {
+      } else if (sc->Check("alpha")) {
         sc->ExpectFloat();
         P.Alpha = midval(0.0f, (float)sc->Float, 1.0f);
       } else {
@@ -417,7 +414,9 @@ void VMultiPatchTexture::ParseGfxPart (VScriptParser *sc, EWadNamespace prioNS, 
             sc->Error(va("Bad texture patch command '%s'", *sc->String));
           }
         }
-        if (P.Style != STYLE_Copy) mFormat = mOrigFormat = TEXFMT_RGBA;
+        if (P.Tex && P.Tex->Type != TEXTYPE_Null && P.Tex->Width > 1 && P.Tex->Height > 1 && P.Style != STYLE_Copy) {
+          mFormat = mOrigFormat = TEXFMT_RGBA;
+        }
       }
     }
   }
@@ -478,7 +477,6 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         sc->Expect(",");
         sc->ExpectNumberWithSign();
         TOffset = sc->Number;
-        //GCon->Logf(NAME_Debug, "TX '%s': offsets=%d,%d", *Name, SOffset, TOffset);
       } else if (sc->Check("xscale")) {
         sc->ExpectFloatWithSign();
         SScale = sc->Float;
@@ -683,7 +681,6 @@ vuint8 *VMultiPatchTexture::GetPixels () {
         case 3: case 5: PIdxY = PWidth-y+y1-1; break;
         default: Sys_Error("invalid `patch->Rot` in `VMultiPatchTexture::GetPixels()` (PIdxY)");
       }
-      //if (PIdxY < 0 || PIdxY >= PHeight) continue; // just in case
 
       for (int x = x1 < 0 ? 0 : x1; x < x2; ++x) {
         int PIdx;
