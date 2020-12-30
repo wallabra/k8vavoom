@@ -1018,7 +1018,8 @@ override bool Touch (Entity InOther) {
     if (Level.Game.IsAuthority) {
       damage = GetMissileDamage((bStrifeDamage ? 3 : 7), 1);
       if (bMissileHeadshotsAllowed || GetCvarB('k8HSAnyProjectile')) {
-        damage = Other.K8onBeforeLineDamage(self, Origin+vector(0, 0, Height*0.5)-Other.Origin, damage, DamageType, secondary:false);
+        //printdebug("%C: missile with velocity %s hit `%C`", self, Velocity, Other);
+        damage = Other.K8onBeforeDamage(self, Origin+vector(0, 0, Height*0.5)-Other.Origin, damage, DamageType, secondary:false);
       }
       if (damage > 0) {
         //printdebug("%C: Target=%C; Master=%C; Tracer=%C", self, Target, Master, Tracer);
@@ -1089,11 +1090,15 @@ bool IsTouched (Entity Toucher) {
 //===========================================================================
 bool Slam (EntityEx Other) {
   bSkullFly = false;
+  TVec orgVel = Velocity;
   Velocity = vector(0.0, 0.0, 0.0);
   if (Health > 0) {
     if (!bDormant) {
       int damage = GetMissileDamage(7, 1);
-      if (damage > 0) Other.SpawnBloodAtHead(damage, Origin);
+      if (damage > 0) {
+        // we only need it for blood direction, length doesn't matter
+        Other.SpawnBloodAtHead(damage, Origin-orgVel);
+      }
       Other.Damage(self, self, damage, 'Melee');
       SetState(SeeState ? SeeState : IdleState);
     } else {

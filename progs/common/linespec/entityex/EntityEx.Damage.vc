@@ -185,16 +185,16 @@ bool K8HS_CheckHeadshot (EntityEx inflictor, TVec hitpos, int damage, name adama
 
 //==========================================================================
 //
-//  K8onBeforeLineDamage
+//  K8onBeforeDamage
 //
-//  this script will be called before hitscan line damage is done.
-//  you can return new damage, or <= 0 to prevent any hitscan damage.
+//  this script will be called before hitscan/projectile damage is done.
+//  you can return new damage, or <= 0 to prevent any damage.
 //  note that poisoned puffs will still inflict damage to victim.
 //  also note that preventing victim from taking any damage will not
 //  "awake" it.
 //
 //==========================================================================
-int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageType, bool secondary) {
+int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageType, bool secondary) {
   if (damage <= 0) return damage;
   // is it from player?
   if (!inflictor) return damage;
@@ -569,7 +569,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name adam
 //==========================================================================
 void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bool NoArmor, TVec hitp, bool secondary, optional bool spawnBlood) {
   if (!Level.Game.IsAuthority) return;
-  int newdmg = K8onBeforeLineDamage(inflictor, hitp, damage, DmgType, secondary);
+  int newdmg = K8onBeforeDamage(inflictor, hitp, damage, DmgType, secondary);
   //printdebug("THP(%s):(%s,%s,%s); dmg=%s; new=%s; type='%s'", (secondary ? "2" : "1"), hitp.x, hitp.y, hitp.z, damage, newdmg, DmgType);
   //printdebug("THP:(%s,%s,%s); dmg=%s; type='%s'", hitp.x, hitp.y, hitp.z, damage, "FUCK!");
   if (!secondary) {
@@ -666,7 +666,12 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
       SpawnBloodAtHeadExplosion(damage, inflictor);
     } else {
       if (inflictor) {
-        SpawnBlood(Origin, damage, inflictor.Origin);
+        // we only need it for blood direction, length doesn't matter
+        TVec sorg = inflictor.Origin;
+        // no need to move z, it looks better this way
+        //sorg.z += fmax(0.0, inflictor.Height*0.5);
+        if (inflictor.bMissile && inflictor.Velocity) sorg -= inflictor.Velocity.normalise*64;
+        SpawnBlood(Origin, damage, sorg);
       } else {
         SpawnBlood(Origin, damage);
       }
