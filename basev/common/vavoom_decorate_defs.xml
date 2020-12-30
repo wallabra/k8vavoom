@@ -180,6 +180,8 @@
     <flag_inverted name="Vulnerable" property="bInvulnerable" />
     <flag name="Reflective" property="bReflective" />
     <flag name="ShieldReflect" property="bShieldReflect" />
+    <flag name="MirrorReflect" property="bMirrorReflect" />
+    <flag name="AimReflect" property="bAimReflect" />
     <flag name="Deflect" property="bDeflect" />
     <flag name="NoRadiusDmg" property="bNoRadiusDamage" />
     <flag name="DontBlast" property="bDontBlast" />

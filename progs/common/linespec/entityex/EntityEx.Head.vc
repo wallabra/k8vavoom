@@ -285,6 +285,8 @@ bool bNoLiftDrop; // don't fall down with the lift
 bool bStayMorphed; // don't unmorph
 bool bCanBlast; // special cases that can be blasted
 bool bShieldReflect; // centaur style shield reflection
+bool bMirrorReflect; // mirror-like 360 degrees reflection
+bool bAimReflect; // reflect at the original shooter
 bool bDontShieldReflect; // projectile not reflected by shield reflection
 bool bDeflect; // different projectile reflection style
 bool bDontReflect; // projectile cannot be reflected

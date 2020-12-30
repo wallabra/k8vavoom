@@ -1321,7 +1321,18 @@ final void CeilingBounceMissile () {
 final float GetReflectedAngle (EntityEx Other) {
   if (Other.bDontReflect) return -1.0;
 
+  if (bAimReflect && Other.Target && Other.Target != Other) {
+    // direction from us to the target
+    float a2 = atan2(Other.Target.Origin.y-Origin.y, Other.Target.Origin.x-Origin.x);
+    return AngleMod360(a2+180.0);
+  }
+
+  // direction from us to the target
   float angle = atan2(Other.Origin.y-Origin.y, Other.Origin.x-Origin.x);
+
+  if (bMirrorReflect) {
+    return AngleMod360(angle+180.0);
+  }
 
   if (bShieldReflect) {
     // change angle for delflection/reflection
