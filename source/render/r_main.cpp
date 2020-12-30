@@ -1147,10 +1147,12 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   AspectFOVX = refdef.fovx;
   AspectEffectiveFOVX = tanf(DEG2RADF(currentFOV)/2.0f);
 
+  /*
   Drawer->ClearScreen(VDrawer::CLEAR_ALL);
   Drawer->LevelRendererDestroyed();
   Drawer->LevelRendererCreated(this);
   //GCon->Logf(NAME_Debug, "ExecuteSetViewSize: screenblocks=%d", screenblocks);
+  */
 }
 
 

@@ -576,6 +576,7 @@ void VOpenGLDrawer::Posteffect_Bloom (int ax, int ay, int awidth, int aheight) {
 //
 //==========================================================================
 void VOpenGLDrawer::LevelRendererCreated (VRenderLevelPublic *Renderer) {
+  //GCon->Logf(NAME_Debug, "LevelRendererCreated");
   BloomDeinit();
 }
 
@@ -586,5 +587,6 @@ void VOpenGLDrawer::LevelRendererCreated (VRenderLevelPublic *Renderer) {
 //
 //==========================================================================
 void VOpenGLDrawer::LevelRendererDestroyed () {
+  //GCon->Logf(NAME_Debug, "LevelRendererDestroyed");
   BloomDeinit();
 }
