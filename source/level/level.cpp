@@ -576,7 +576,7 @@ void VLevel::AddStaticLightRGB (vuint32 owneruid, const VLightParams &lpar) {
   L.LevelScale = lpar.LevelScale;
   if (L.LevelSector) {
     if (L.LevelScale == 0.0f) L.LevelScale = 1.0f;
-    const float intensity = clampval(lpar.LevelSector->params.lightlevel*(fabs(lpar.LevelScale)*0.125f), 0.0f, 255.0f);
+    const float intensity = clampval(lpar.LevelSector->params.lightlevel*(fabsf(lpar.LevelScale)*0.125f), 0.0f, 255.0f);
     L.Radius = VLevelInfo::GZSizeToRadius(intensity, (lpar.LevelScale < 0.0f), 2.0f);
   }
   L.Flags = rep_light_t::LightChanged|rep_light_t::LightActive;
@@ -604,9 +604,9 @@ void VLevel::MoveStaticLightByOwner (vuint32 owneruid, const TVec &Origin) {
   if (!oidxp) return; // no such owned light
   // check if it is moved far enough
   rep_light_t &sl = StaticLights[*oidxp];
-  if (fabs(sl.Origin.x-Origin.x) <= 4 &&
-      fabs(sl.Origin.y-Origin.y) <= 4 &&
-      fabs(sl.Origin.z-Origin.z) <= 4)
+  if (fabsf(sl.Origin.x-Origin.x) <= 4.0f &&
+      fabsf(sl.Origin.y-Origin.y) <= 4.0f &&
+      fabsf(sl.Origin.z-Origin.z) <= 4.0f)
   {
     return;
   }

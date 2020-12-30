@@ -627,7 +627,7 @@ void VUdmfParser::ParseSector (VLevel *Level) {
   if (fpvalid[0] && fpvalid[1] && fpvalid[2] && fpvalid[3]) {
     TPlane pl;
     pl.normal = TVec(fval[0], fval[1], fval[2]).normalised();
-    if (pl.normal.isValid() && !pl.normal.isZero() && fabs(pl.normal.z) > 0.01f) {
+    if (pl.normal.isValid() && !pl.normal.isZero() && fabsf(pl.normal.z) > 0.01f) {
       pl.dist = -fval[3];
       if (pl.normal.z < 0) pl.flipInPlace();
       *((TPlane *)&S.floor) = pl;
@@ -638,7 +638,7 @@ void VUdmfParser::ParseSector (VLevel *Level) {
   if (cpvalid[0] && cpvalid[1] && cpvalid[2] && cpvalid[3]) {
     TPlane pl;
     pl.normal = TVec(cval[0], cval[1], cval[2]).normalised();
-    if (pl.normal.isValid() && !pl.normal.isZero() && fabs(pl.normal.z) > 0.01f) {
+    if (pl.normal.isValid() && !pl.normal.isZero() && fabsf(pl.normal.z) > 0.01f) {
       pl.dist = -cval[3];
       if (pl.normal.z > 0) pl.flipInPlace();
       *((TPlane *)&S.ceiling) = pl;
@@ -1302,7 +1302,7 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
           TPlane pl;
           pl.SetFromTriangle(tvs[0], tvs[1], tvs[2]);
           // sanity check
-          if (isFiniteF(pl.normal.z) && fabs(pl.normal.z) > 0.0001f) {
+          if (isFiniteF(pl.normal.z) && fabsf(pl.normal.z) > 0.0001f) {
             // flip, if necessary
             if (pl.normal.z < 0.0f) pl.flipInPlace();
             *((TPlane *)&sector->floor) = pl;
@@ -1323,7 +1323,7 @@ void VLevel::LoadTextMap (int Lump, const VMapInfo &MInfo) {
           TPlane pl;
           pl.SetFromTriangle(tvs[0], tvs[1], tvs[2]);
           // sanity check
-          if (isFiniteF(pl.normal.z) && fabs(pl.normal.z) > 0.0001f) {
+          if (isFiniteF(pl.normal.z) && fabsf(pl.normal.z) > 0.0001f) {
             // flip, if necessary
             if (pl.normal.z > 0.0f) pl.flipInPlace();
             *((TPlane *)&sector->ceiling) = pl;

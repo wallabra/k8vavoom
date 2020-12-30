@@ -271,9 +271,9 @@ static TVec sanitiseScale (const TVec &scale) {
   if (res.y < 0) res.y = 1.0f/(-res.y);
   if (res.z < 0) res.z = 1.0f/(-res.z);
   #else
-  res.x = fabs(res.x);
-  res.y = fabs(res.y);
-  res.z = fabs(res.z);
+  res.x = fabsf(res.x);
+  res.y = fabsf(res.y);
+  res.z = fabsf(res.z);
   #endif
   return res;
 }

@@ -157,7 +157,7 @@ void VRenderLevelShadowVolume::RenderSceneStaticLights (const refdef_t *RD, cons
     // update `DLTYPE_Sector`
     if (stlight->levelSector && stlight->sectorLightLevel != stlight->levelSector->params.lightlevel) {
       stlight->sectorLightLevel = stlight->levelSector->params.lightlevel;
-      const float intensity = clampval(stlight->sectorLightLevel*(fabs(stlight->levelScale)*0.125f), 0.0f, 255.0f);
+      const float intensity = clampval(stlight->sectorLightLevel*(fabsf(stlight->levelScale)*0.125f), 0.0f, 255.0f);
       stlight->radius = VLevelInfo::GZSizeToRadius(intensity, (stlight->levelScale < 0.0f), 2.0f);
     }
 

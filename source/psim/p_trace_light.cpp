@@ -368,9 +368,9 @@ static bool LightCheckLine (LightTraceInfo &trace, line_t *ld) {
   const float dot2 = ld->PointDistance(trace.End);
 
   // if starting point is on a line, ignore this line
-  if (fabs(dot1) <= 0.1f) return true;
+  if (fabsf(dot1) <= 0.1f) return true;
   // if ending point is on a line, ignore this line
-  if (fabs(dot2) <= 0.1f) return true;
+  if (fabsf(dot2) <= 0.1f) return true;
 
   // do not use multiplication to check: zero speedup, lost accuracy
   //if (dot1*dot2 >= 0) return true; // line isn't crossed
@@ -501,7 +501,7 @@ static bool LightPathTraverse (LightTraceInfo &trace) {
   trace.LineStart = trace.Start;
   trace.Delta = trace.End-trace.Start;
 
-  if (fabs(trace.Delta.x) <= 1.0f && fabs(trace.Delta.y) <= 1.0f) {
+  if (fabsf(trace.Delta.x) <= 1.0f && fabsf(trace.Delta.y) <= 1.0f) {
     // vertical trace; check starting sector planes and get out
     trace.LineEnd = trace.End;
     // point cannot hit anything!

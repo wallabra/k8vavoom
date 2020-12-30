@@ -191,7 +191,7 @@ void VRenderLevelShared::AddStaticLightRGB (vuint32 OwnerUId, const VLightParams
   L.levelScale = lpar.LevelScale;
   if (lpar.LevelSector) {
     L.sectorLightLevel = lpar.LevelSector->params.lightlevel;
-    const float intensity = clampval(L.sectorLightLevel*(fabs(lpar.LevelScale)*0.125f), 0.0f, 255.0f);
+    const float intensity = clampval(L.sectorLightLevel*(fabsf(lpar.LevelScale)*0.125f), 0.0f, 255.0f);
     L.radius = VLevelInfo::GZSizeToRadius(intensity, (lpar.LevelScale < 0.0f), 2.0f);
   }
   if (OwnerUId) {
@@ -214,9 +214,9 @@ void VRenderLevelShared::MoveStaticLightByOwner (vuint32 OwnerUId, const TVec &o
   auto stp = StOwners.get(OwnerUId);
   if (!stp) return;
   light_t &sl = Lights[*stp];
-  if (fabs(sl.origin.x-origin.x) <= 4 &&
-      fabs(sl.origin.y-origin.y) <= 4 &&
-      fabs(sl.origin.z-origin.z) <= 4)
+  if (fabsf(sl.origin.x-origin.x) <= 4.0f &&
+      fabsf(sl.origin.y-origin.y) <= 4.0f &&
+      fabsf(sl.origin.z-origin.z) <= 4.0f)
   {
     return;
   }

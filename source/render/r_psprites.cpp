@@ -364,7 +364,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
       float t = currt-stt;
       float prevSY = cl->PSpriteWeaponLowerPrev;
       if (t >= 0.0f && t < dur) {
-        float ydelta = fabs(prevSY-currSY)*(t/dur);
+        float ydelta = fabsf(prevSY-currSY)*(t/dur);
         //GCon->Logf("prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY+ydelta, dur, t, t/dur, ydelta);
         if (prevSY < currSY) {
           prevSY += ydelta;

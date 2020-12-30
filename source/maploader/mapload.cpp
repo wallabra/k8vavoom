@@ -741,7 +741,7 @@ load_again:
         0;
       const int smoothChange =
         !line.normal.x ? 0 :
-        (int)(MInfo.HorizWallShade+fabs(atanf(line.normal.y/line.normal.x)/1.57079f)*(MInfo.VertWallShade-MInfo.HorizWallShade)); // xs_RoundToInt()
+        (int)(MInfo.HorizWallShade+fabsf(atanf(line.normal.y/line.normal.x)/1.57079f)*(MInfo.VertWallShade-MInfo.HorizWallShade)); // xs_RoundToInt()
       if (shadeChange || smoothChange) {
         for (int sn = 0; sn < 2; ++sn) {
           const int sidx = line.sidenum[sn];

@@ -719,9 +719,9 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
       if (GotOrigin && oldLastOrgUpdateTime != Ent->NetLastOrgUpdateTime) {
         TVec newOrg = Ent->Origin;
         // try to compensate for teleports
-        const float mvdeltax = fabs(newOrg.x-oldOrg.x);
-        const float mvdeltay = fabs(newOrg.y-oldOrg.y);
-        const float mvdeltaz = fabs(newOrg.z-oldOrg.z);
+        const float mvdeltax = fabsf(newOrg.x-oldOrg.x);
+        const float mvdeltay = fabsf(newOrg.y-oldOrg.y);
+        const float mvdeltaz = fabsf(newOrg.z-oldOrg.z);
         if ((mvdeltax+mvdeltay+mvdeltaz) < 1 || mvdeltax > 42 || mvdeltay > 42 || mvdeltaz > 42) {
           Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
         } else {
@@ -737,7 +737,7 @@ void VThinkerChannel::ParseMessage (VMessageIn &Msg) {
       #else
         TVec newOrg = Ent->Origin;
         // try to compensate for teleports
-        const float mvdelta = fabs(newOrg.x-oldOrg.x)+fabs(newOrg.y-oldOrg.y)+fabs(newOrg.z-oldOrg.z);
+        const float mvdelta = fabsf(newOrg.x-oldOrg.x)+fabsf(newOrg.y-oldOrg.y)+fabsf(newOrg.z-oldOrg.z);
         if (mvdelta < 1 || mvdelta > 3*16) {
           Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
         }

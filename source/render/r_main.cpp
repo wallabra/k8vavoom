@@ -1224,12 +1224,12 @@ void VRenderLevelShared::SetupFrame () {
     TVec cpos = cl->MO->Origin;
     for (;;) {
       TVec npos = cl->MO->SlideMoveCamera(cpos, endcpos, r_chase_radius);
-      float zdiff = fabs(cpos.z-npos.z);
+      float zdiff = fabsf(cpos.z-npos.z);
       cpos = npos;
       if (zdiff < 1.0f) break;
       // try to move up
       npos = cl->MO->SlideMoveCamera(cpos, TVec(cpos.x, cpos.y, endcpos.z), r_chase_radius);
-      zdiff = fabs(cpos.z-npos.z);
+      zdiff = fabsf(cpos.z-npos.z);
       cpos = npos;
       if (zdiff < 1.0f) break;
     }
