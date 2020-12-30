@@ -607,7 +607,7 @@ void CopyTranslations (Entity src) {
 //  you can override it
 //
 //==========================================================================
-native void UpdateVelocity (float DeltaTime);
+native void UpdateVelocity (float DeltaTime, bool allowSlopeFriction);
 
 
 //===========================================================================

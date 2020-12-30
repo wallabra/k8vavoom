@@ -836,6 +836,18 @@ void MovePlayer (float deltaTime) {
   // do not let the player control movement if not onground
   onground = (MO.Origin.z <= MO.FloorZ || EntityEx(MO).bOnMobj);
 
+  //if (Buttons&BT_JUMP) printdebug("%C: onground=%s; JumpTime=%s", self, onground, JumpTime);
+
+  /*
+  if (spGetNormalZ(MO.EFloor) != 1.0) printdebug("%C: slope onground=%s", self, onground);
+
+  // for slopes
+  if (!onground && spGetNormalZ(MO.EFloor) != 1.0 && MO.Origin.z <= spGetPointZ(MO.EFloor, MO.Origin)) {
+    printdebug("%C: on a slope!", self);
+    onground = true;
+  }
+  */
+
   forward = ForwardMove*5.0;
   side = SideMove*5.0;
 

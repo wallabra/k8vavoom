@@ -393,6 +393,8 @@ public:
 
   void eventInitWeaponSlots () { static VMethodProxy method("InitWeaponSlots"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
+  bool IsNoclipActive () { static VMethodProxy method("GetIsNoclipActive"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
+
   void QS_Save () { static VMethodProxy method("QS_Save"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 

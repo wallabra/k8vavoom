@@ -2318,7 +2318,7 @@ int VEntity::FindDropOffLine (TArray<VDropOffLineInfo> *list, TVec pos) {
 //  called from entity `Physics()`
 //
 //=============================================================================
-void VEntity::UpdateVelocity (float DeltaTime) {
+void VEntity::UpdateVelocity (float DeltaTime, bool allowSlopeFriction) {
   if (!Sector) return; // just in case
 
   /*
@@ -2328,8 +2328,40 @@ void VEntity::UpdateVelocity (float DeltaTime) {
   }
   */
 
+  const float fnormz = EFloor.GetNormalZ();
+
+  // apply slope friction
+  if (allowSlopeFriction && Origin.z <= FloorZ && fnormz != 1.0f && (EntityFlags&(EF_Fly|EF_Missile)) == 0 &&
+      fabsf(Sector->floor.maxz-Sector->floor.minz) > MaxStepHeight)
+  {
+    if (IsPlayer() && Player && Player->IsNoclipActive()) {
+      // do nothing
+    } else if (true /*fnormz <= 0.7f*/) {
+      TVec Vel = EFloor.GetNormal();
+      float dot = DotProduct(Velocity, Vel);
+      if (dot < 0.0f) {
+        //TVec Vel = dot*EFloor.spGetNormal();
+        //if (bIsPlayer) printdebug("%C: Velocity=%s; Vel=%s; dot=%s; Vel*dot=%s (%s); dt=%s", self, Velocity.xy, Vel, dot, Vel.xy*dot, Vel.xy*(dot*DeltaTime), DeltaTime);
+        Vel *= dot*35.0f*DeltaTime;
+        Vel.z = 0;
+        //print("mht=%s; hgt=%s", MaxStepHeight, Sector.floor.maxz-Sector.floor.minz);
+        /*
+        print("vv: Vel=%s; dot=%s; norm=%s", Vel, dot, EFloor.spGetNormal());
+        print("  : z=%s; fminz=%s; fmaxz=%s", Origin.z, Sector.floor.minz, Sector.floor.maxz);
+        print("  : velocity: %s -- %s", Velocity, Velocity-Vel.xy);
+        */
+        Velocity -= Vel;
+      }
+    }
+  }
+
+  if (EntityFlags&EF_NoGravity) return;
+
+  const float dz = Origin.z-FloorZ;
+
   // don't add gravity if standing on slope with normal.z > 0.7 (aprox 45 degrees)
-  if (!(EntityFlags&EF_NoGravity) && (Origin.z > FloorZ || EFloor.GetNormalZ() <= 0.7f)) {
+  if (dz > 0.6f || fnormz <= 0.7f) {
+    //if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: *** dfz=%g; normz=%g", GetClass()->GetName(), dz, EFloor.GetNormalZ());
     if (WaterLevel < 2) {
       Velocity.z -= Gravity*Level->Gravity*Sector->Gravity*DeltaTime;
     } else if (!IsPlayer() || Health <= 0) {
@@ -2342,6 +2374,10 @@ void VEntity::UpdateVelocity (float DeltaTime) {
       } else {
         Velocity.z = startvelz+(Velocity.z-startvelz)*WaterSinkFactor;
       }
+    } else if (dz > 0.0f && Velocity.z == 0.0f) {
+      // snap to the floor
+      Velocity.z = dz;
+      //if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: *** SNAP! dfz=%g; normz=%g", GetClass()->GetName(), dz, EFloor.GetNormalZ());
     }
   }
 }
@@ -2604,11 +2640,12 @@ IMPLEMENT_FUNCTION(VEntity, RoughBlockSearch) {
 }
 
 
-// native void UpdateVelocity (float DeltaTime);
+// native void UpdateVelocity (float DeltaTime, bool allowSlopeFriction);
 IMPLEMENT_FUNCTION(VEntity, UpdateVelocity) {
   float DeltaTime;
-  vobjGetParamSelf(DeltaTime);
-  Self->UpdateVelocity(DeltaTime);
+  bool allowSlopeFriction;
+  vobjGetParamSelf(DeltaTime, allowSlopeFriction);
+  Self->UpdateVelocity(DeltaTime, allowSlopeFriction);
 }
 
 

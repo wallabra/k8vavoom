@@ -689,6 +689,15 @@ int CheatHelperCheckOnOff () {
   return res;
 }
 
+
+//==========================================================================
+//
+//  GetIsNoclipActive
+//
+//==========================================================================
+bool GetIsNoclipActive () { return false; }
+
+
 /*
 void Cheat_Resurrect () {}
 void Cheat_God () {}

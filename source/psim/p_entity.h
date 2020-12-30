@@ -706,7 +706,7 @@ public:
   VEntity *TestMobjZ (const TVec &);
   void SlideMove (float StepVelScale, bool noPickups=false);
   void BounceWall (float, float);
-  void UpdateVelocity (float DeltaTime);
+  void UpdateVelocity (float DeltaTime, bool allowSlopeFriction);
   TVec FakeZMovement ();
   VEntity *CheckOnmobj ();
   bool CheckSides (TVec);
