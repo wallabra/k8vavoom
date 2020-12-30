@@ -158,6 +158,289 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
 
 //==========================================================================
 //
+//  FindPartByName
+//
+//==========================================================================
+static int FindPartByName (VStr name, EWadNamespace prioNS, int *ttype) {
+  if (name.length() == 0) return -1;
+
+  int LumpNum = W_CheckNumForTextureFileName(name);
+  if (LumpNum >= 0) return LumpNum;
+
+  VStr shortName = name;
+  auto dotidx = shortName.indexOf('.');
+  if (dotidx >= 0) shortName = shortName.left(dotidx);
+
+  VName pname(*name, VName::AddLower);
+  VName pshortName(*shortName, VName::AddLower);
+
+  LumpNum = W_CheckNumForName(pname, /*WADNS_Patches*/prioNS);
+  if (LumpNum >= 0) return LumpNum;
+
+  if (shortName.length() > 0) {
+    LumpNum = W_CheckNumForName(pshortName, /*WADNS_Patches*/prioNS);
+    if (LumpNum >= 0) return LumpNum;
+  }
+
+  /*
+  LumpNum = W_CheckNumForTextureFileName(name);
+  if (LumpNum >= 0) return LumpNum;
+  */
+
+  if (shortName.length() > 0) {
+    LumpNum = W_CheckNumForTextureFileName(shortName);
+    if (LumpNum >= 0) return LumpNum;
+  }
+
+  const EWadNamespace wslist[5] = {
+    WADNS_Patches,
+    WADNS_Sprites,
+    WADNS_Graphics,
+    WADNS_Flats, //k8: why not?
+    WADNS_AllFiles, // end mark
+  };
+
+  //TEXTYPE_Any
+  const int ttlist[5] = {
+    TEXTYPE_WallPatch,
+    TEXTYPE_Sprite,
+    TEXTYPE_WallPatch,
+    TEXTYPE_Flat,
+  };
+
+  for (int f = 0; wslist[f] != WADNS_AllFiles; ++f) {
+    if (prioNS == wslist[f]) continue; // arleady checked
+
+    LumpNum = W_CheckNumForName(pname, wslist[f]);
+    if (LumpNum >= 0) { *ttype = ttlist[f]; return LumpNum; }
+
+    if (shortName.length() > 0) {
+      LumpNum = W_CheckNumForName(pshortName, wslist[f]);
+      if (LumpNum >= 0) { *ttype = ttlist[f]; return LumpNum; }
+    }
+  }
+
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  VMultiPatchTexture::ParseGfxPart
+//
+//==========================================================================
+void VMultiPatchTexture::ParseGfxPart (VScriptParser *sc, EWadNamespace prioNS, TArray<VTexPatch> &Parts) {
+  VTexPatch &P = Parts.Alloc();
+  sc->ExpectString();
+
+  VStr PatchNameStr = sc->String;
+  VName PatchName = VName(*PatchNameStr, VName::AddLower);
+  const int ttype = (prioNS == WADNS_Sprites ? TEXTYPE_Sprite : TEXTYPE_WallPatch);
+
+  int Tex = GTextureManager.CheckNumForName(PatchName, ttype, true);
+  if (Tex < 0) Tex = GTextureManager.FindPatchByName(PatchName);
+
+  if (Tex < 0) {
+    /*
+    int LumpNum = W_CheckNumForTextureFileName(sc->String);
+    if (LumpNum >= 0) {
+      Tex = GTextureManager.FindTextureByLumpNum(LumpNum);
+      if (Tex < 0) {
+        VTexture *T = CreateTexture(/ *TEXTYPE_WallPatch* /ttype, LumpNum);
+        if (!T) {
+          T = CreateTexture(TEXTYPE_Any, LumpNum);
+          if (T && T->Type == TEXTYPE_Any) T->Type = / *TEXTYPE_WallPatch* /ttype;
+        }
+        if (T) {
+          Tex = GTextureManager.AddTexture(T);
+          T->Name = NAME_None; // so it won't be found
+        }
+      }
+    } else if (sc->String.Length() <= 8) {
+      //if (warn) fprintf(stderr, "*********************\n");
+      LumpNum = W_CheckNumForName(PatchName, WADNS_Patches);
+      if (LumpNum < 0) LumpNum = W_CheckNumForTextureFileName(*PatchName);
+      if (LumpNum >= 0) {
+        Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_WallPatch, LumpNum));
+      } else {
+        // DooM:Complete has some patches in "sprites/"
+        LumpNum = W_CheckNumForName(PatchName, WADNS_Sprites);
+        if (LumpNum < 0) LumpNum = W_CheckNumForName(PatchName, WADNS_Graphics);
+        if (LumpNum < 0) LumpNum = W_CheckNumForName(PatchName, WADNS_Flats); //k8: why not?
+        if (LumpNum >= 0) {
+          Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_Any, LumpNum));
+        }
+      }
+    }
+    */
+    int newttype = ttype;
+    int LumpNum = FindPartByName(PatchNameStr, prioNS, &newttype);
+    if (LumpNum >= 0) {
+      VTexture *T = CreateTexture(/*TEXTYPE_Any*/newttype, LumpNum);
+      if (!T) {
+        T = CreateTexture(TEXTYPE_Any, LumpNum);
+        if (T && T->Type == TEXTYPE_Any) T->Type = /*TEXTYPE_WallPatch*/ttype;
+      }
+      if (T) {
+        Tex = GTextureManager.AddTexture(T);
+        //T->Name = NAME_None; // so it won't be found (k8:why?)
+      }
+    }
+  }
+
+  if (Tex < 0) {
+    GCon->Logf(NAME_Warning, "%s: Unknown patch '%s' in texture '%s'", *sc->GetLoc().toStringNoCol(), *sc->String, *Name);
+    //int LumpNum = W_CheckNumForTextureFileName("-noflat-");
+    //if (LumpNum >= 0) Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_WallPatch, LumpNum));
+    P.Tex = nullptr;
+  } else {
+    P.Tex = GTextureManager[Tex];
+  }
+
+  // parse origin
+  sc->Expect(",");
+  sc->ExpectNumberWithSign();
+  P.XOrigin = sc->Number;
+  sc->Expect(",");
+  sc->ExpectNumberWithSign();
+  P.YOrigin = sc->Number;
+
+  // initialise parameters
+  int Flip = 0;
+  P.Rot = 0;
+  P.Trans = nullptr;
+  P.bOwnTrans = false;
+  P.Blend.r = 0;
+  P.Blend.g = 0;
+  P.Blend.b = 0;
+  P.Blend.a = 0;
+  P.Style = STYLE_Copy;
+  P.Alpha = 1.0f;
+  bool bUseOffsets = false;
+
+  if (sc->Check("{")) {
+    while (!sc->Check("}")) {
+      bool expectStyle = false;
+      if (sc->Check("flipx")) {
+        Flip |= 1;
+      } else if (sc->Check("flipy")) {
+        Flip |= 2;
+      } else if (sc->Check("useoffsets")) {
+        bUseOffsets = true;
+      } else if (sc->Check("rotate")) {
+        sc->ExpectNumberWithSign();
+        int Rot = ((sc->Number+90)%360)-90;
+        if (Rot != 0 && Rot != 90 && Rot != 180 && Rot != -90) sc->Error("Rotation must be a multiple of 90 degrees.");
+        P.Rot = (Rot/90)&3;
+      } else if (sc->Check("translation")) {
+        mFormat = mOrigFormat = TEXFMT_RGBA;
+        if (P.bOwnTrans) {
+          delete P.Trans;
+          P.Trans = nullptr;
+          P.bOwnTrans = false;
+        }
+        P.Trans = nullptr;
+        P.Blend.r = 0;
+        P.Blend.g = 0;
+        P.Blend.b = 0;
+        P.Blend.a = 0;
+
+             if (sc->Check("inverse")) P.Trans = &ColorMaps[CM_Inverse];
+        else if (sc->Check("gold")) P.Trans = &ColorMaps[CM_Gold];
+        else if (sc->Check("red")) P.Trans = &ColorMaps[CM_Red];
+        else if (sc->Check("green")) P.Trans = &ColorMaps[CM_Green];
+        else if (sc->Check("mono") || sc->Check("monochrome")) P.Trans = &ColorMaps[CM_Mono];
+        else if (sc->Check("ice")) P.Trans = &IceTranslation;
+        else if (sc->Check("desaturate")) { sc->Expect(","); sc->ExpectNumber(); }
+        else {
+          P.Trans = new VTextureTranslation();
+          P.bOwnTrans = true;
+          do {
+            sc->ExpectString();
+            P.Trans->AddTransString(sc->String);
+          } while (sc->Check(","));
+        }
+      } else if (sc->Check("blend")) {
+        mFormat = mOrigFormat = TEXFMT_RGBA;
+        if (P.bOwnTrans) {
+          delete P.Trans;
+          P.Trans = nullptr;
+          P.bOwnTrans = false;
+        }
+        P.Trans = nullptr;
+        P.Blend.r = 0;
+        P.Blend.g = 0;
+        P.Blend.b = 0;
+        P.Blend.a = 0;
+
+        if (!sc->CheckNumber()) {
+          sc->ExpectString();
+          vuint32 Col = M_ParseColor(*sc->String);
+          P.Blend.r = (Col>>16)&0xff;
+          P.Blend.g = (Col>>8)&0xff;
+          P.Blend.b = Col&0xff;
+        } else {
+          P.Blend.r = clampToByte((int)sc->Number);
+          sc->Expect(",");
+          sc->ExpectNumber();
+          P.Blend.g = clampToByte((int)sc->Number);
+          sc->Expect(",");
+          sc->ExpectNumber();
+          P.Blend.b = clampToByte((int)sc->Number);
+          //sc->Expect(",");
+        }
+        if (sc->Check(",")) {
+          sc->ExpectFloat();
+          P.Blend.a = clampToByte((int)(sc->Float*255));
+        } else {
+          P.Blend.a = 255;
+        }
+      }
+      else if (sc->Check("alpha")) {
+        sc->ExpectFloat();
+        P.Alpha = midval(0.0f, (float)sc->Float, 1.0f);
+      } else {
+        if (sc->Check("style")) expectStyle = true;
+             if (sc->Check("copy")) P.Style = STYLE_Copy;
+        else if (sc->Check("translucent")) P.Style = STYLE_Translucent;
+        else if (sc->Check("add")) P.Style = STYLE_Add;
+        else if (sc->Check("subtract")) P.Style = STYLE_Subtract;
+        else if (sc->Check("reversesubtract")) P.Style = STYLE_ReverseSubtract;
+        else if (sc->Check("modulate")) P.Style = STYLE_Modulate;
+        else if (sc->Check("copyalpha")) P.Style = STYLE_CopyAlpha;
+        else if (sc->Check("overlay")) P.Style = STYLE_Overlay;
+        else if (sc->Check("copynewalpha")) P.Style = STYLE_CopyNewAlpha;
+        else {
+          if (expectStyle) {
+            sc->Error(va("Bad style: '%s'", *sc->String));
+          } else {
+            sc->Error(va("Bad texture patch command '%s'", *sc->String));
+          }
+        }
+        if (P.Style != STYLE_Copy) mFormat = mOrigFormat = TEXFMT_RGBA;
+      }
+    }
+  }
+
+  if (bUseOffsets && P.Tex && P.Tex->Type != TEXTYPE_Null) {
+    //P.XOrigin -= P.Tex->GetScaledSOffset();
+    //P.YOrigin -= P.Tex->GetScaledTOffset();
+    P.XOrigin -= P.Tex->SOffset;
+    P.YOrigin -= P.Tex->TOffset;
+  }
+
+  if (Flip&2) {
+    P.Rot = (P.Rot+2)&3;
+    Flip ^= 1;
+  }
+  if (Flip&1) {
+    P.Rot |= 4;
+  }
+}
+
+
+//==========================================================================
+//
 //  VMultiPatchTexture::VMultiPatchTexture
 //
 //==========================================================================
@@ -195,6 +478,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         sc->Expect(",");
         sc->ExpectNumberWithSign();
         TOffset = sc->Number;
+        //GCon->Logf(NAME_Debug, "TX '%s': offsets=%d,%d", *Name, SOffset, TOffset);
       } else if (sc->Check("xscale")) {
         sc->ExpectFloatWithSign();
         SScale = sc->Float;
@@ -209,184 +493,12 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         noDecals = true;
         staticNoDecals = true;
         animNoDecals = true;
-      } else if (sc->Check("patch") || sc->Check("graphic")) {
-        VTexPatch &P = Parts.Alloc();
-        sc->ExpectString();
-        VName PatchName = VName(*sc->String.ToLower());
-        int Tex = GTextureManager.FindPatchByName(PatchName);
-        if (Tex < 0) {
-          int LumpNum = W_CheckNumForTextureFileName(sc->String);
-          if (LumpNum >= 0) {
-            Tex = GTextureManager.FindTextureByLumpNum(LumpNum);
-            if (Tex < 0) {
-              VTexture *T = CreateTexture(TEXTYPE_WallPatch, LumpNum);
-              if (!T) {
-                T = CreateTexture(TEXTYPE_Any, LumpNum);
-                if (T && T->Type == TEXTYPE_Any) T->Type = TEXTYPE_WallPatch;
-              }
-              if (T) {
-                Tex = GTextureManager.AddTexture(T);
-                T->Name = NAME_None;
-              }
-            }
-          } else if (sc->String.Length() <= 8) {
-            //if (warn) fprintf(stderr, "*********************\n");
-            LumpNum = W_CheckNumForName(PatchName, WADNS_Patches);
-            if (LumpNum < 0) LumpNum = W_CheckNumForTextureFileName(*PatchName);
-            if (LumpNum >= 0) {
-              Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_WallPatch, LumpNum));
-            } else {
-              // DooM:Complete has some patches in "sprites/"
-              LumpNum = W_CheckNumForName(PatchName, WADNS_Sprites);
-              if (LumpNum < 0) LumpNum = W_CheckNumForName(PatchName, WADNS_Graphics);
-              if (LumpNum < 0) LumpNum = W_CheckNumForName(PatchName, WADNS_Flats); //k8: why not?
-              if (LumpNum >= 0) {
-                Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_Any, LumpNum));
-              }
-            }
-          }
-        }
-        if (Tex < 0) {
-          GCon->Logf(NAME_Warning, "%s: Unknown patch '%s' in texture '%s'", *sc->GetLoc().toStringNoCol(), *sc->String, *Name);
-          //int LumpNum = W_CheckNumForTextureFileName("-noflat-");
-          //if (LumpNum >= 0) Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_WallPatch, LumpNum));
-          P.Tex = nullptr;
-        } else {
-          P.Tex = GTextureManager[Tex];
-        }
-
-        // parse origin
-        sc->Expect(",");
-        sc->ExpectNumberWithSign();
-        P.XOrigin = sc->Number;
-        sc->Expect(",");
-        sc->ExpectNumberWithSign();
-        P.YOrigin = sc->Number;
-
-        // initialise parameters
-        int Flip = 0;
-        P.Rot = 0;
-        P.Trans = nullptr;
-        P.bOwnTrans = false;
-        P.Blend.r = 0;
-        P.Blend.g = 0;
-        P.Blend.b = 0;
-        P.Blend.a = 0;
-        P.Style = STYLE_Copy;
-        P.Alpha = 1.0f;
-
-        if (sc->Check("{")) {
-          while (!sc->Check("}")) {
-            bool expectStyle = false;
-            if (sc->Check("flipx")) {
-              Flip |= 1;
-            } else if (sc->Check("flipy")) {
-              Flip |= 2;
-            } else if (sc->Check("useoffsets")) {
-              //FIXME!
-              GCon->Logf(NAME_Warning, "%s: 'UseOffsets' is not supported yet", *sc->GetLoc().toStringNoCol());
-            } else if (sc->Check("rotate")) {
-              sc->ExpectNumberWithSign();
-              int Rot = ((sc->Number+90)%360)-90;
-              if (Rot != 0 && Rot != 90 && Rot != 180 && Rot != -90) sc->Error("Rotation must be a multiple of 90 degrees.");
-              P.Rot = (Rot/90)&3;
-            } else if (sc->Check("translation")) {
-              mFormat = mOrigFormat = TEXFMT_RGBA;
-              if (P.bOwnTrans) {
-                delete P.Trans;
-                P.Trans = nullptr;
-                P.bOwnTrans = false;
-              }
-              P.Trans = nullptr;
-              P.Blend.r = 0;
-              P.Blend.g = 0;
-              P.Blend.b = 0;
-              P.Blend.a = 0;
-
-                   if (sc->Check("inverse")) P.Trans = &ColorMaps[CM_Inverse];
-              else if (sc->Check("gold")) P.Trans = &ColorMaps[CM_Gold];
-              else if (sc->Check("red")) P.Trans = &ColorMaps[CM_Red];
-              else if (sc->Check("green")) P.Trans = &ColorMaps[CM_Green];
-              else if (sc->Check("mono") || sc->Check("monochrome")) P.Trans = &ColorMaps[CM_Mono];
-              else if (sc->Check("ice")) P.Trans = &IceTranslation;
-              else if (sc->Check("desaturate")) { sc->Expect(","); sc->ExpectNumber(); }
-              else {
-                P.Trans = new VTextureTranslation();
-                P.bOwnTrans = true;
-                do {
-                  sc->ExpectString();
-                  P.Trans->AddTransString(sc->String);
-                } while (sc->Check(","));
-              }
-            } else if (sc->Check("blend")) {
-              mFormat = mOrigFormat = TEXFMT_RGBA;
-              if (P.bOwnTrans) {
-                delete P.Trans;
-                P.Trans = nullptr;
-                P.bOwnTrans = false;
-              }
-              P.Trans = nullptr;
-              P.Blend.r = 0;
-              P.Blend.g = 0;
-              P.Blend.b = 0;
-              P.Blend.a = 0;
-
-              if (!sc->CheckNumber()) {
-                sc->ExpectString();
-                vuint32 Col = M_ParseColor(*sc->String);
-                P.Blend.r = (Col>>16)&0xff;
-                P.Blend.g = (Col>>8)&0xff;
-                P.Blend.b = Col&0xff;
-              } else {
-                P.Blend.r = clampToByte((int)sc->Number);
-                sc->Expect(",");
-                sc->ExpectNumber();
-                P.Blend.g = clampToByte((int)sc->Number);
-                sc->Expect(",");
-                sc->ExpectNumber();
-                P.Blend.b = clampToByte((int)sc->Number);
-                //sc->Expect(",");
-              }
-              if (sc->Check(",")) {
-                sc->ExpectFloat();
-                P.Blend.a = clampToByte((int)(sc->Float*255));
-              } else {
-                P.Blend.a = 255;
-              }
-            }
-            else if (sc->Check("alpha")) {
-              sc->ExpectFloat();
-              P.Alpha = midval(0.0f, (float)sc->Float, 1.0f);
-            } else {
-              if (sc->Check("style")) expectStyle = true;
-                   if (sc->Check("copy")) P.Style = STYLE_Copy;
-              else if (sc->Check("translucent")) P.Style = STYLE_Translucent;
-              else if (sc->Check("add")) P.Style = STYLE_Add;
-              else if (sc->Check("subtract")) P.Style = STYLE_Subtract;
-              else if (sc->Check("reversesubtract")) P.Style = STYLE_ReverseSubtract;
-              else if (sc->Check("modulate")) P.Style = STYLE_Modulate;
-              else if (sc->Check("copyalpha")) P.Style = STYLE_CopyAlpha;
-              else if (sc->Check("overlay")) P.Style = STYLE_Overlay;
-              else if (sc->Check("copynewalpha")) P.Style = STYLE_CopyNewAlpha;
-              else {
-                if (expectStyle) {
-                  sc->Error(va("Bad style: '%s'", *sc->String));
-                } else {
-                  sc->Error(va("Bad texture patch command '%s'", *sc->String));
-                }
-              }
-              if (P.Style != STYLE_Copy) mFormat = mOrigFormat = TEXFMT_RGBA;
-            }
-          }
-        }
-
-        if (Flip&2) {
-          P.Rot = (P.Rot+2)&3;
-          Flip ^= 1;
-        }
-        if (Flip&1) {
-          P.Rot |= 4;
-        }
+      } else if (sc->Check("patch")) {
+        ParseGfxPart(sc, WADNS_Patches, Parts);
+      } else if (sc->Check("graphic")) {
+        ParseGfxPart(sc, WADNS_Graphics, Parts);
+      } else if (sc->Check("sprite")) {
+        ParseGfxPart(sc, WADNS_Sprites, Parts);
       } else {
         sc->Error(va("Bad texture command '%s'", *sc->String));
       }
@@ -545,16 +657,22 @@ vuint8 *VMultiPatchTexture::GetPixels () {
     vuint8 *PatchPixels = (patch->Trans ? PatchTex->GetPixels8() : PatchTex->GetPixels());
     int PWidth = PatchTex->GetWidth();
     int PHeight = PatchTex->GetHeight();
-    int x1 = (patch->XOrigin < 0 ? 0 : patch->XOrigin);
+    if (PWidth < 1 || PHeight < 1) continue;
+
+    //int x1 = (patch->XOrigin < 0 ? 0 : patch->XOrigin);
+    int x1 = patch->XOrigin;
     int x2 = x1+(patch->Rot&1 ? PHeight : PWidth);
     if (x2 > Width) x2 = Width;
-    int y1 = (patch->YOrigin < 0 ? 0 : patch->YOrigin);
+
+    //int y1 = (patch->YOrigin < 0 ? 0 : patch->YOrigin);
+    int y1 = patch->YOrigin;
     int y2 = y1+(patch->Rot&1 ? PWidth : PHeight);
     if (y2 > Height) y2 = Height;
+
     float IAlpha = 1.0f-patch->Alpha;
     if (IAlpha < 0) IAlpha = 0; else if (IAlpha > 1) IAlpha = 1;
 
-    //GCon->Logf("Texture '%s'; patch #%d; patchtex '%s'", *Name, i, *PatchTex->Name);
+    //GCon->Logf(NAME_Debug, "Texture '%s'; patch #%d; patchtex '%s'; box:(%d,%d)-(%d,%d)", *Name, i, *PatchTex->Name, x1, y1, x2, y2);
 
     for (int y = y1 < 0 ? 0 : y1; y < y2; ++y) {
       int PIdxY;
@@ -565,6 +683,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
         case 3: case 5: PIdxY = PWidth-y+y1-1; break;
         default: Sys_Error("invalid `patch->Rot` in `VMultiPatchTexture::GetPixels()` (PIdxY)");
       }
+      //if (PIdxY < 0 || PIdxY >= PHeight) continue; // just in case
 
       for (int x = x1 < 0 ? 0 : x1; x < x2; ++x) {
         int PIdx;
@@ -575,6 +694,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
           case 3: case 7: PIdx = (x-x1)*PWidth+PIdxY; break;
           default: Sys_Error("invalid `patch->Rot` in `VMultiPatchTexture::GetPixels() (PIdx)`");
         }
+        if (PIdx < 0 || PIdx >= PWidth*PHeight) continue; // just in case
 
         if (Format == TEXFMT_8) {
           // patch texture is guaranteed to be paletted

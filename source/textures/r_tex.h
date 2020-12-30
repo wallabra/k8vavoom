@@ -67,8 +67,8 @@ private:
 
   struct VTexPatch {
     // block origin (allways UL), which has allready accounted for the internal origin of the patch
-    short XOrigin;
-    short YOrigin;
+    int XOrigin;
+    int YOrigin;
     vuint8 Rot;
     vuint8 Style;
     bool bOwnTrans;
@@ -81,6 +81,10 @@ private:
   // all the Patches[PatchCount] are drawn back to front into the cached texture
   int PatchCount;
   VTexPatch *Patches;
+
+
+protected:
+  void ParseGfxPart (VScriptParser *sc, EWadNamespace prioNS, TArray<VTexPatch> &Parts);
 
 public:
   VMultiPatchTexture (VStream &, int, TArray<VTextureManager::WallPatchInfo> &, int, bool);
