@@ -806,8 +806,10 @@ final void WeaponReadyResetAttackState () {
 
   Wpn.bBobDisabled = ((Flags&WRF_NOBOB) || Wpn.bDontBob);
 
-  // force weapon to "ready" position in case it tries to do "instant ready" trick
-  Player.SetViewStateOffsets(0, Weapon::WEAPONTOP);
+  // force weapon to "ready" position in case it tries to perform "instant ready" trick
+  if (Player.ViewStates[PS_WEAPON].SY > Weapon::WEAPONTOP) {
+    Player.SetViewStateOffsets(0, Weapon::WEAPONTOP);
+  }
 
   if (Player.ViewStates[PS_WEAPON].State == Wpn.GetReadyState() &&
       Wpn.ReadySound && (!Wpn.bReadySndHalf || Random() < 0.5))
@@ -857,8 +859,10 @@ final void WeaponReadyResetAttackState () {
       }
     } else {
       if (Player.bAttackDown || Player.bAltAttackDown) {
-        //k8: i don't think that we need any checks here
-        WeaponReadyResetAttackState();
+        //k8: i don't think that we need any checks here, but still...
+        if (PlayerEx(Player).k8InWeaponReadyWatchCat != XLevel.TicTime) {
+          WeaponReadyResetAttackState();
+        }
       }
       Player.bAttackDown = false;
       Player.bAltAttackDown = false;
