@@ -196,10 +196,11 @@ public:
   virtual void Shutdown () = 0;
 
   // playback of sound effects
-  virtual void PlaySound (int, const TVec &, const TVec &, int, int, float, float, bool) = 0;
-  virtual void StopSound (int, int) = 0;
+  virtual void PlaySound (int InSoundId, const TVec &origin, const TVec &velocity, int origin_id, int channel, float volume, float Attenuation, bool Loop) = 0;
+  virtual void StopSound (int origin_id, int channel) = 0;
   virtual void StopAllSound () = 0;
   virtual bool IsSoundPlaying (int, int) = 0;
+  virtual void MoveSounds (int origin_id, const TVec &neworigin) = 0;
 
   // ,usic and general sound control
   virtual void StartSong (VName, bool) = 0;

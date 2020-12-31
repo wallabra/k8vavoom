@@ -88,6 +88,7 @@ public:
   virtual void StopSound (int origin_id, int channel) override;
   virtual void StopAllSound () override;
   virtual bool IsSoundPlaying (int origin_id, int InSoundId) override;
+  virtual void MoveSounds (int origin_id, const TVec &neworigin) override;
 
   // music and general sound control
   virtual void StartSong (VName song, bool loop) override;
@@ -523,6 +524,22 @@ void VAudio::PlaySound (int InSoundId, const TVec &origin, const TVec &velocity,
 
 //==========================================================================
 //
+//  VAudio::MoveSounds
+//
+//==========================================================================
+void VAudio::MoveSounds (int origin_id, const TVec &neworigin) {
+  if (origin_id <= 0) return;
+  if (!neworigin.isValid()) return;
+  FOR_EACH_CHANNEL(i) {
+    if (!Channel[i].sound_id || Channel[i].handle == -1 || Channel[i].origin_id != origin_id) continue;
+    //GCon->Logf(NAME_Debug, "moving sound channel #%d (%d) from (%g,%g,%g) to (%g,%g,%g)", i, origin_id, Channel[i].origin.x, Channel[i].origin.y, Channel[i].origin.z, neworigin.x, neworigin.y, neworigin.z);
+    Channel[i].origin = neworigin;
+  }
+}
+
+
+//==========================================================================
+//
 //  VAudio::GetChannel
 //
 //  channel 0 is "CHAN_AUTO"
@@ -799,6 +816,7 @@ void VAudio::UpdateSfx () {
 
     // still playing?
     if (!SoundDevice->IsChannelPlaying(Channel[i].handle)) {
+      // nope
       if (cli_DebugSound > 0 && Channel[i].sound_id >= 0) {
         GCon->Logf(NAME_Debug, "UpdateSfx: finished sound(%d)='%s'; origin_id=%d; channel=%d; chan=%d; loop=%d",
           Channel[i].sound_id, *GSoundManager->S_sfx[Channel[i].sound_id].TagName, Channel[i].origin_id, Channel[i].channel, i, (int)Channel[i].Loop);
@@ -811,6 +829,12 @@ void VAudio::UpdateSfx () {
     // full volume sound?
     if (!Channel[i].origin_id || Channel[i].Attenuation <= 0) continue;
 
+    if (cl && cl->MO && Channel[i].origin_id == cl->MO->SoundOriginID) {
+      //GCon->Logf(NAME_Debug, "channel #%d (%d), origin=(%g,%g,%g); new origin=(%g,%g,%g)", i, Channel[i].origin_id, Channel[i].origin.x, Channel[i].origin.y, Channel[i].origin.z, cl->MO->Origin.x, cl->MO->Origin.y, cl->MO->Origin.z);
+      Channel[i].origin = cl->MO->Origin;
+      Channel[i].velocity = TVec(0.0f, 0.0f, 0.0f);
+    }
+
     // client sound?
     if (Channel[i].LocalPlayerSound) continue;
 
@@ -819,13 +843,15 @@ void VAudio::UpdateSfx () {
 
     if (!cl) continue;
 
-    int dist = (int)(Length(Channel[i].origin-cl->ViewOrg)*Channel[i].Attenuation);
+    const int dist = (int)(Length(Channel[i].origin-cl->ViewOrg)*Channel[i].Attenuation);
     if (dist >= MaxSoundDist) {
       // too far away
       StopChannel(i);
       DeallocChannel(i);
       continue;
     }
+
+    //GCon->Logf(NAME_Debug, "channel #%d (%d), origin=(%g,%g,%g); dist=%d", i, Channel[i].origin_id, Channel[i].origin.x, Channel[i].origin.y, Channel[i].origin.z, dist);
 
     // update params
     if (Channel[i].is3D) SoundDevice->UpdateChannel3D(Channel[i].handle, Channel[i].origin, Channel[i].velocity);
