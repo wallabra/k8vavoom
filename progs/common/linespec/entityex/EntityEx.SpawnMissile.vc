@@ -156,7 +156,9 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
     }
     */
     //if (TraceSplat(Origin-dir*2, dir, 64.0, &tr, 0)) SpawnDecal(tr.hit, DecalName, tr.side, tr.line);
-    TraceSplat(Origin-dir*2, dir, 64.0, &tr, 0, DecalName, atranslation:(bCopyBloodTranslation ? Translation : 0));
+    TVec org = Origin;
+    org.z += Height*0.5;
+    TraceSplat(org-dir*2, dir, Radius+64.0, &tr, 0, DecalName, atranslation:(bCopyBloodTranslation ? Translation : 0));
   } else {
     /*
     if (GetCvarB('k8ExplodeMissleTest')) {
