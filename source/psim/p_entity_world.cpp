@@ -1392,7 +1392,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
 
       if ((EntityFlags&EF_Missile) && !(EntityFlags&EF_StepMissile) && tmtrace.FloorZ > Origin.z) {
         PushLine(tmtrace, skipEffects);
-        TMDbgF("%s:   FLOORX(0)!", GetClass()->GetName());
+        TMDbgF("%s:   FLOORX(0)! z=%g; fl=%g; spechits=%d", GetClass()->GetName(), Origin.z, tmtrace.FloorZ, tmtrace.SpecHit.length());
         return false;
       }
 

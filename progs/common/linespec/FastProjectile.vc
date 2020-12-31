@@ -134,13 +134,14 @@ override void Tick (float DeltaTime) {
         // hit the floor
         Origin.z = FloorZ;
         HitFloorType();
-        //!print("FLOOR HIT! '%C'", Class);
+        //printdebug("FAST(%C): FLOOR HIT!", self);
         ExplodeMissile(Victim:none);
         return;
       }
       if (Origin.z+Height > CeilingZ) {
         // hit the ceiling
         Origin.z = CeilingZ-Height;
+        //printdebug("FAST(%C): CEILING HIT!", self);
         ExplodeMissile(Victim:none);
         return;
       }
