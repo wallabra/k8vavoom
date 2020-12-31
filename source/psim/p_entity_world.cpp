@@ -48,6 +48,10 @@ VCvarB r_interpolate_thing_angles_models("r_interpolate_thing_angles_models", tr
 VCvarB r_interpolate_thing_angles_sprites("r_interpolate_thing_angles_sprites", false, "Interpolate mobj rotation for sprites?", CVAR_Archive);
 #endif
 
+VCvarB r_limit_blood_spots("r_limit_blood_spots", true, "Limit blood spoit amount in a sector?", CVAR_Archive);
+VCvarI r_limit_blood_spots_max("r_limit_blood_spots_max", "96", "Maximum blood spots?", CVAR_Archive);
+VCvarI r_limit_blood_spots_leave("r_limit_blood_spots", "64", "Leva no more than this number of blood spots.", CVAR_Archive);
+
 
 //==========================================================================
 //
@@ -257,6 +261,34 @@ void VEntity::CreateSecNodeList () {
 
 //==========================================================================
 //
+//  IsGoreBloodSpot
+//
+//==========================================================================
+static inline bool IsGoreBloodSpot (VClass *cls) {
+  const char *name = cls->GetName();
+  if (name[0] == 'K' &&
+      name[1] == '8' &&
+      name[2] == 'G' &&
+      name[3] == 'o' &&
+      name[4] == 'r' &&
+      name[5] == 'e' &&
+      name[6] == '_')
+  {
+    return
+      VStr::startsWith(name, "K8Gore_BloodSpot") ||
+      VStr::startsWith(name, "K8Gore_CeilBloodSpot") ||
+      VStr::startsWith(name, "K8Gore_MinuscleBloodSpot") ||
+      VStr::startsWith(name, "K8Gore_GrowingBloodPool");
+  }
+  return false;
+}
+
+
+static TArray<VEntity *> bspotList;
+
+
+//==========================================================================
+//
 //  VEntity::UnlinkFromWorld
 //
 //  unlinks a thing from block map and sectors. on each position change,
@@ -266,8 +298,9 @@ void VEntity::CreateSecNodeList () {
 //==========================================================================
 void VEntity::UnlinkFromWorld () {
   //!MoveFlags &= ~MVF_JustMoved;
-
   if (!SubSector) return;
+
+  if (Sector) LastSector = Sector;
 
   if (!(EntityFlags&EF_NoSector)) {
     // invisible things don't need to be in sector list
@@ -318,36 +351,6 @@ void VEntity::UnlinkFromWorld () {
 
 //==========================================================================
 //
-//  IsGoreBloodSpot
-//
-//==========================================================================
-/*
-static inline bool IsGoreBloodSpot (VClass *cls) {
-  const char *name = cls->GetName();
-  if (name[0] == 'K' &&
-      name[1] == '8' &&
-      name[2] == 'G' &&
-      name[3] == 'o' &&
-      name[4] == 'r' &&
-      name[5] == 'e' &&
-      name[6] == '_')
-  {
-    return
-      VStr::startsWith(name, "K8Gore_BloodSpot") ||
-      VStr::startsWith(name, "K8Gore_CeilBloodSpot") ||
-      VStr::startsWith(name, "K8Gore_MinuscleBloodSpot") ||
-      VStr::startsWith(name, "K8Gore_GrowingBloodPool");
-  }
-  return false;
-}
-
-
-static TArray<VEntity *> bspotList;
-*/
-
-
-//==========================================================================
-//
 //  VEntity::LinkToWorld
 //
 //  Links a thing into both a block and a subsector based on it's x y.
@@ -357,6 +360,12 @@ static TArray<VEntity *> bspotList;
 //==========================================================================
 void VEntity::LinkToWorld (int properFloorCheck) {
   if (SubSector) UnlinkFromWorld();
+
+  /*
+  if (IsGoreBloodSpot(GetClass())) {
+    GCon->Logf(NAME_Debug, "*** %s:%u: LinkToWorld (%d); nosector=%u", GetClass()->GetName(), GetUniqueId(), (int)IsGoreBloodSpot(GetClass()), (unsigned)(!!(EntityFlags&EF_NoSector)));
+  }
+  */
 
   // link into subsector
   subsector_t *ss = XLevel->PointInSubsector_Buggy(Origin);
@@ -477,36 +486,40 @@ void VEntity::LinkToWorld (int properFloorCheck) {
       // thing is off the map
       BlockMapNext = BlockMapPrev = nullptr;
     }
+  }
 
-    // limit blood spots
-    /*
-    if (!(FlagsEx&EFEX_WasLinkedToWorld)) {
-      FlagsEx |= EFEX_WasLinkedToWorld;
-      if (BlockMapCell && IsGoreBloodSpot(GetClass())) {
-        GCon->Logf(NAME_Debug, "counting blood spots... (%s)", GetClass()->GetName());
-        int count = 0;
-        for (VEntity *ee = XLevel->BlockLinks[BlockMapCell]; ee; ee = ee->BlockMapNext) {
-          if (!ee->IsGoingToDie() && IsGoreBloodSpot(ee->GetClass())) ++count;
-        }
-        if (count >= 32) {
-          // to much, reduce
-          count = 26;
-          bspotList.reset();
-          for (VEntity *ee = XLevel->BlockLinks[BlockMapCell]; ee; ee = ee->BlockMapNext) {
-            if (!ee->IsGoingToDie() && IsGoreBloodSpot(ee->GetClass())) {
-              if (!count) bspotList.append(ee); else --count;
+  // limit blood spots
+  // blood spots are never moved, so this won't be called often
+  if (r_limit_blood_spots.asBool() && Sector && Sector != LastSector && Sector->TouchingThingList && IsGoreBloodSpot(GetClass())) {
+    //GCon->Logf(NAME_Debug, "counting blood spots... (%s)", GetClass()->GetName());
+    int spotsMax = r_limit_blood_spots_max.asInt();
+    int spotsLeave = r_limit_blood_spots_leave.asInt();
+    if (spotsMax > 0) {
+      if (spotsLeave < 1 || spotsLeave > spotsMax) spotsLeave = spotsMax;
+      bspotList.resetNoDtor();
+      const int visCount = XLevel->nextVisitedCount();
+      for (msecnode_t *n = Sector->TouchingThingList; n; n = n->SNext) {
+        if (n->Thing != this && n->Visited != visCount && !n->Thing->IsGoingToDie()) {
+          // unprocessed thing found, mark thing as processed
+          n->Visited = visCount;
+          // process it
+          //TVec oldOrg = n->Thing->Origin;
+          if (IsGoreBloodSpot(n->Thing->GetClass())) {
+            const float sqDist = (n->Thing->Origin-Origin).length2DSquared();
+            if (sqDist <= 96.0f*96.0f) {
+              bspotList.append(n->Thing);
             }
           }
-          if (bspotList.length()) {
-            GCon->Logf(NAME_Debug, "removing %d blood spots", bspotList.length());
-            for (int f = 0; f < bspotList.length(); ++f) bspotList[f]->DestroyThinker();
-          }
         }
-      } else {
-        GCon->Logf(NAME_Debug, "linked `%s` first time", GetClass()->GetName());
+      }
+      // check number?
+      if (bspotList.length() >= spotsMax) {
+        // too much, reduce
+        vassert(spotsLeave <= spotsMax);
+        //GCon->Logf(NAME_Debug, "found %d blood spots, max is %d, leaving only %d", bspotList.length(), spotsMax, spotsLeave);
+        for (int f = spotsLeave; f < bspotList.length(); ++f) bspotList[f]->DestroyThinker();
       }
     }
-    */
   }
 }
 
