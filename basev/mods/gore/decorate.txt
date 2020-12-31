@@ -441,7 +441,7 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   -Decals2SPass
   //Decal K8GoreBloodSplat
   //+Decals2SPass
-  DamageFactor "TeleportRemover", 100.0
+  //DamageFactor "TeleportRemover", 100.0
 
   States {
     Spawn:
@@ -929,7 +929,7 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
   +NoTrigger
   +k8DetachFromServer
   +k8ServerSideOnly
-  DamageFactor "TeleportRemover", 100.0
+  //DamageFactor "TeleportRemover", 100.0
   Renderstyle Dark
   //!Alpha 0.99
 
@@ -1525,7 +1525,7 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   -Decals2SPass
   //Decal K8GoreBloodSplatTransient
   //+Decals2SPass
-  DamageFactor "TeleportRemover", 100.0
+  //DamageFactor "TeleportRemover", 100.0
 
   States {
     Spawn:
@@ -2008,7 +2008,7 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
   +NoTrigger
   +k8DetachFromServer
   +k8ServerSideOnly
-  DamageFactor "TeleportRemover", 100.0
+  //DamageFactor "TeleportRemover", 100.0
   Renderstyle Dark
   //!Alpha 0.99
 

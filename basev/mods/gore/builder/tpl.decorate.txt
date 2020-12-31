@@ -461,7 +461,7 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(TransientSfx) {
   -Decals2SPass
   //Decal K8GoreBloodSplat$(Color)
   //+Decals2SPass
-  DamageFactor "TeleportRemover", 100.0
+  //DamageFactor "TeleportRemover", 100.0
 
   States {
     Spawn:
@@ -996,7 +996,7 @@ Actor K8Gore_MinuscleBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   +NoTrigger
   +k8DetachFromServer
   +k8ServerSideOnly
-  DamageFactor "TeleportRemover", 100.0
+  //DamageFactor "TeleportRemover", 100.0
   Renderstyle Dark
   //!Alpha 0.99
 
