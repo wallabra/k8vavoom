@@ -7,7 +7,7 @@
 //**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
 //**       #    ##    ##    #      ####     ####   ##       ##
 //**
-//**  Copyright (C) 2018-2020 Ketmar Dark
+//**  Copyright (C) 2018-2021 Ketmar Dark
 //**
 //**  This program is free software: you can redistribute it and/or modify
 //**  it under the terms of the GNU General Public License as published by
