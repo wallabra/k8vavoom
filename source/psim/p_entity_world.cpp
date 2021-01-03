@@ -2362,7 +2362,11 @@ void VEntity::UpdateVelocity (float DeltaTime, bool allowSlopeFriction) {
         //TVec Vel = dot*EFloor.spGetNormal();
         //if (bIsPlayer) printdebug("%C: Velocity=%s; Vel=%s; dot=%s; Vel*dot=%s (%s); dt=%s", self, Velocity.xy, Vel, dot, Vel.xy*dot, Vel.xy*(dot*DeltaTime), DeltaTime);
         //Vel *= dot*35.0f*DeltaTime;
-        Vel *= dot*DeltaTime;
+        if (fnormz <= 0.7f) {
+          Vel *= dot*1.75f; // k8: i pulled this out of my ass
+        } else {
+          Vel *= dot*DeltaTime;
+        }
         Vel.z = 0;
         //print("mht=%s; hgt=%s", MaxStepHeight, Sector.floor.maxz-Sector.floor.minz);
         /*
