@@ -31,6 +31,7 @@
 #include "../server/sv_local.h"
 
 //#define VV_DBG_VERBOSE_TRYMOVE
+//#define VV_DBG_VERBOSE_REL_LINE_FC
 
 
 #ifdef VV_DBG_VERBOSE_TRYMOVE
@@ -429,6 +430,8 @@ void VEntity::LinkToWorld (int properFloorCheck) {
 
     CopyTraceFloor(&tmtrace);
     CopyTraceCeiling(&tmtrace);
+
+    //if (IsPlayer()) GCon->Logf(NAME_Debug, "LTW: proper! z=%g; floor=(%g,%g,%g); ceil=(%g,%g,%g); floorz=%g", Origin.z, EFloor.GetNormal().x, EFloor.GetNormal().y, EFloor.GetNormal().z, ECeiling.GetNormal().x, ECeiling.GetNormal().y, ECeiling.GetNormal().z, FloorZ);
   } else {
     // simplified check
     TSecPlaneRef floor, ceiling;
@@ -1111,31 +1114,60 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
   TVec hit_point = tmtrace.End-(ld->PointDistance(tmtrace.End)*ld->normal);
   opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
 
-  /*
+  #ifdef VV_DBG_VERBOSE_REL_LINE_FC
   if (IsPlayer()) {
-    GCon->Logf(NAME_Debug, "  checking line: %d; sz=%g; ez=%g; hgt=%g", (int)(ptrdiff_t)(ld-&XLevel->Lines[0]), tmtrace.End.z, tmtrace.End.z+hgt, hgt);
+    GCon->Logf(NAME_Debug, "  checking line: %d; sz=%g; ez=%g; hgt=%g; traceFZ=%g; traceCZ=%g", (int)(ptrdiff_t)(ld-&XLevel->Lines[0]), tmtrace.End.z, tmtrace.End.z+hgt, hgt, tmtrace.FloorZ, tmtrace.CeilingZ);
     for (opening_t *op = open; op; op = op->next) {
       GCon->Logf(NAME_Debug, "   %p: bot=%g; top=%g; range=%g; lowfloor=%g; highceil=%g", op, op->bottom, op->top, op->range, op->lowfloor, op->highceiling);
     }
   }
-  */
+  #endif
 
   open = SV_FindRelOpening(open, tmtrace.End.z, tmtrace.End.z+hgt);
-  //if (IsPlayer()) GCon->Logf(NAME_Debug, "  open=%p", open);
+  #ifdef VV_DBG_VERBOSE_REL_LINE_FC
+  if (IsPlayer()) GCon->Logf(NAME_Debug, "  open=%p", open);
+  #endif
 
   if (open) {
     // adjust floor / ceiling heights
-    if (!(open->eceiling.splane->flags&SPF_NOBLOCKING) && open->top < tmtrace.CeilingZ) {
-      if (!skipSpecials || open->top+hgt >= Origin.z+hgt) {
-        tmtrace.CopyOpenCeiling(open);
-        tmtrace.CeilingLine = ld;
+    // use epsilon to avoid getting stuck on some slope configurations
+    if (!(open->eceiling.splane->flags&SPF_NOBLOCKING)) {
+      bool replaceIt;
+      if (open->eceiling.GetNormalZ() != -1.0f) {
+        // slope
+        replaceIt = (tmtrace.CeilingZ-open->top > 0.1f);
+      } else {
+        replaceIt = (tmtrace.CeilingZ > open->top);
+      }
+      if (/*open->top < tmtrace.CeilingZ*/replaceIt) {
+        if (!skipSpecials || open->top /*+hgt*/ >= Origin.z+hgt) {
+          #ifdef VV_DBG_VERBOSE_REL_LINE_FC
+          if (IsPlayer()) GCon->Logf(NAME_Debug, "    copy ceiling; hgt=%g; z+hgt=%g; top=%g; curcz-top=%g", hgt, Origin.z+hgt, open->top, tmtrace.CeilingZ-open->top);
+          #endif
+          tmtrace.CopyOpenCeiling(open);
+          tmtrace.CeilingLine = ld;
+        }
       }
     }
 
-    if (!(open->efloor.splane->flags&SPF_NOBLOCKING) && open->bottom > tmtrace.FloorZ) {
-      if (!skipSpecials || open->bottom <= Origin.z) {
-        tmtrace.CopyOpenFloor(open);
-        tmtrace.FloorLine = ld;
+    if (!(open->efloor.splane->flags&SPF_NOBLOCKING)) {
+      bool replaceIt;
+      if (open->efloor.GetNormalZ() != 1.0f) {
+        // slope
+        replaceIt = (open->bottom-tmtrace.FloorZ > 0.1f);
+      } else {
+        replaceIt = (open->bottom > tmtrace.FloorZ);
+      }
+      //const bool slope = (open->efloor.GetNormalZ() != 1.0f);
+      //const float diffz = open->bottom-tmtrace.FloorZ;
+      if (/*open->bottom > tmtrace.FloorZ*/replaceIt) {
+        if (!skipSpecials || open->bottom <= Origin.z) {
+          #ifdef VV_DBG_VERBOSE_REL_LINE_FC
+          if (IsPlayer()) GCon->Logf(NAME_Debug, "    copy floor");
+          #endif
+          tmtrace.CopyOpenFloor(open);
+          tmtrace.FloorLine = ld;
+        }
       }
     }
 

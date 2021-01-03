@@ -818,6 +818,7 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
 
   if (!sector->Has3DFloors()) {
     // only one region, yay
+    //FIXME: this is wrong, because we may have 3dmidtex
     floor = sector->eregions->efloor;
     ceiling = sector->eregions->eceiling;
     return;
