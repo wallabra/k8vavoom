@@ -468,7 +468,7 @@ VVA_CHECKRESULT VStr VStr::koi2utf () const noexcept {
 
 // ////////////////////////////////////////////////////////////////////////// //
 VVA_CHECKRESULT bool VStr::fnameEqu1251CI (const char *s) const noexcept {
-  size_t slen = length();
+  size_t slen = (size_t)length();
   if (!s || !s[0]) return (slen == 0);
   size_t pos = 0;
   const char *data = getData();
@@ -736,7 +736,7 @@ VVA_CHECKRESULT bool VStr::StartsWith (const char *s) const noexcept {
 
 VVA_CHECKRESULT bool VStr::StartsWith (const VStr &s) const noexcept {
   int l = s.length();
-  if (l > length()) return false;
+  if (l == 0 || l > length()) return false;
   return (memcmp(getData(), *s, l) == 0);
 }
 
@@ -751,7 +751,7 @@ VVA_CHECKRESULT bool VStr::EndsWith (const char *s) const noexcept {
 
 VVA_CHECKRESULT bool VStr::EndsWith (const VStr &s) const noexcept {
   int l = s.length();
-  if (l > length()) return false;
+  if (l == 0 || l > length()) return false;
   return (memcmp(getData()+length()-l, *s, l) == 0);
 }
 
@@ -766,7 +766,7 @@ VVA_CHECKRESULT bool VStr::startsWithNoCase (const char *s) const noexcept {
 
 VVA_CHECKRESULT bool VStr::startsWithNoCase (const VStr &s) const noexcept {
   int l = s.length();
-  if (l > length()) return false;
+  if (l == 0 || l > length()) return false;
   return (NICmp(getData(), *s, l) == 0);
 }
 
@@ -781,7 +781,7 @@ VVA_CHECKRESULT bool VStr::endsWithNoCase (const char *s) const noexcept {
 
 VVA_CHECKRESULT bool VStr::endsWithNoCase (const VStr &s) const noexcept {
   int l = s.length();
-  if (l > length()) return false;
+  if (l == 0 || l > length()) return false;
   return (NICmp(getData()+length()-l, *s, l) == 0);
 }
 
@@ -830,6 +830,7 @@ VVA_CHECKRESULT VStr VStr::ToLower () const noexcept {
   if (!dataptr) return VStr();
   bool hasWork = false;
   int l = length();
+  if (!l) return VStr(*this);
   const char *data = getData();
   for (int i = 0; i < l; ++i) if (data[i] >= 'A' && data[i] <= 'Z') { hasWork = true; break; }
   if (hasWork) {
@@ -848,6 +849,7 @@ VVA_CHECKRESULT VStr VStr::ToUpper () const noexcept {
   if (!data) return VStr();
   bool hasWork = false;
   int l = length();
+  if (!l) return VStr(*this);
   for (int i = 0; i < l; ++i) if (data[i] >= 'a' && data[i] <= 'z') { hasWork = true; break; }
   if (hasWork) {
     VStr res(*this);
@@ -1013,7 +1015,7 @@ VVA_CHECKRESULT VStr VStr::Replace (const char *Search, const char *Replacement)
 
   VStr res = VStr(*this);
   size_t i = 0;
-  while (i <= res.length()-SLen) {
+  while ((size_t)res.length() >= SLen && i <= (size_t)res.length()-SLen) {
     if (NCmp(res.getData()+i, Search, SLen) == 0) {
       // if search and replace strings are of the same size,
       // we can just copy the data and avoid memory allocations
@@ -1043,7 +1045,7 @@ VVA_CHECKRESULT VStr VStr::Replace (VStr Search, VStr Replacement) const noexcep
 
   VStr res(*this);
   size_t i = 0;
-  while (i <= res.length()-SLen) {
+  while ((size_t)res.length() >= SLen && i <= (size_t)res.length()-SLen) {
     if (NCmp(res.getData()+i, *Search, SLen) == 0) {
       // if search and replace strings are of the same size,
       // we can just copy the data and avoid memory allocations
@@ -1506,6 +1508,7 @@ VVA_CHECKRESULT VStr VStr::RemoveColors () const noexcept {
 
 
 VVA_CHECKRESULT VStr VStr::ExtractFilePath () const noexcept {
+  if (!length()) return VStr();
   const char *src = getData()+length();
 #if !defined(_WIN32)
   while (src != getData() && src[-1] != '/') --src;
@@ -1517,6 +1520,7 @@ VVA_CHECKRESULT VStr VStr::ExtractFilePath () const noexcept {
 
 
 VVA_CHECKRESULT VStr VStr::ExtractFileName () const noexcept {
+  if (!length()) return VStr();
   const char *data = getData();
   const char *src = data+length();
 #if !defined(_WIN32)
@@ -1529,8 +1533,7 @@ VVA_CHECKRESULT VStr VStr::ExtractFileName () const noexcept {
 
 
 VVA_CHECKRESULT VStr VStr::ExtractFileBase (bool doSysError) const noexcept {
-  int i = int(length());
-
+  int i = length();
   if (i == 0) return VStr();
 
   const char *data = getData();
@@ -1556,8 +1559,7 @@ VVA_CHECKRESULT VStr VStr::ExtractFileBase (bool doSysError) const noexcept {
 
 
 VVA_CHECKRESULT VStr VStr::ExtractFileBaseName () const noexcept {
-  int i = int(length());
-
+  int i = length();
   if (i == 0) return VStr();
 
   const char *data = getData();
@@ -1573,6 +1575,7 @@ VVA_CHECKRESULT VStr VStr::ExtractFileBaseName () const noexcept {
 
 
 VVA_CHECKRESULT VStr VStr::ExtractFileExtension () const noexcept {
+  if (!length()) return VStr();
   const char *data = getData();
   const char *src = data+length();
   while (src != data) {
@@ -1590,6 +1593,7 @@ VVA_CHECKRESULT VStr VStr::ExtractFileExtension () const noexcept {
 
 
 VVA_CHECKRESULT VStr VStr::StripExtension () const noexcept {
+  if (!length()) return VStr();
   const char *data = getData();
   const char *src = data+length();
   while (src != data) {
@@ -1607,6 +1611,7 @@ VVA_CHECKRESULT VStr VStr::StripExtension () const noexcept {
 
 
 VVA_CHECKRESULT VStr VStr::DefaultPath (VStr basepath) const noexcept {
+  if (!length()) return basepath;
   const char *data = getData();
 #if !defined(_WIN32)
   if (data && data[0] == '/') return *this; // absolute path location
@@ -1621,6 +1626,7 @@ VVA_CHECKRESULT VStr VStr::DefaultPath (VStr basepath) const noexcept {
 
 // if path doesn't have a .EXT, append extension (extension should include the leading dot)
 VVA_CHECKRESULT VStr VStr::DefaultExtension (VStr extension) const noexcept {
+  if (!length()) return extension;
   const char *data = getData();
   const char *src = data+length();
   while (src != data) {
@@ -1638,6 +1644,7 @@ VVA_CHECKRESULT VStr VStr::DefaultExtension (VStr extension) const noexcept {
 
 
 VVA_CHECKRESULT VStr VStr::FixFileSlashes () const noexcept {
+  if (!length()) return VStr();
   const char *data = getData();
   bool hasWork = false;
   for (const char *c = data; *c; ++c) if (*c == '\\') { hasWork = true; break; }
@@ -1721,7 +1728,7 @@ VVA_CHECKRESULT int VStr::Utf8Length (const char *s, int len) noexcept {
 
 
 VVA_CHECKRESULT size_t VStr::ByteLengthForUtf8 (const char *s, size_t N) noexcept {
-  if (s) {
+  if (s && s[0]) {
     size_t count = 0;
     const char *c;
     for (c = s; *c; ++c) {
