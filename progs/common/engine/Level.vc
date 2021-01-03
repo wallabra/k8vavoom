@@ -382,8 +382,17 @@ void OnEntitySpawned (Entity ent) {}
 // called after entity was removed from lists, and marked for deletion; `ent` is never `none`
 void OnEntityDying (Entity ent) {}
 
-// this is called after LevelInfo handler when game is loaded (hub or savegame)
-void AfterUnarchiveThinkers () {}
+// this is called after LevelInfo handler when the game is loaded (hub or savegame)
+void AfterUnarchiveThinkers () {
+  if (!GetCvarB('r_flip_corpses')) return;
+  EntityEx ee;
+  foreach AllThinkers(EntityEx, out ee) {
+    if (ee.bCorpse && (ee.bMonster || ee.bIsPlayer)) {
+      ee.bCorpseFlipped = (P_Random() >= 128);
+      //if (ee.bCorpseFlipped) printdebug("%C: corpse flipped", ee);
+    }
+  }
+}
 
 // return `false` to prevent spawning
 // you can set `spw.Chooser` here too
