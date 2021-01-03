@@ -257,7 +257,9 @@ bool Physics (float DeltaTime) {
   // handle X and Y momentums
   //sector_t *prevSector = Sector;
   float oldfloorz = FloorZ;
-  XYMovement(DeltaTime, CummX, CummY);
+  float oldFloorNZ = EFloor.spGetNormalZ;
+  sector_t *oldSector = Sector;
+  XYMovement(DeltaTime, CummX, CummY, oldSector);
   if (IsDestroyed) return false; // mobj was removed
   // apply friction here
   //if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
@@ -355,13 +357,13 @@ bool Physics (float DeltaTime) {
           onmo.Origin.z = onmo.FloorZ;
         }
       } else {
-        ZMovement(DeltaTime, oldfloorz/*, prevSector*/);
+        ZMovement(DeltaTime, oldfloorz, oldFloorNZ, oldSector);
         bOnMobj = false;
       }
       if (IsDestroyed) return false; // entity was removed
     } else {
       // handle Z momentum and gravity
-      ZMovement(DeltaTime, oldfloorz/*, prevSector*/);
+      ZMovement(DeltaTime, oldfloorz, oldFloorNZ, oldSector);
       if (IsDestroyed) return false; // entity was removed
     }
   }
@@ -435,7 +437,7 @@ final bool PerformSectorWindThrust (float DeltaTime, sector_t *asector) {
 //  XYMovement
 //
 //==========================================================================
-final void XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
+final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *OldSector) {
   if (bWindThrust && Sector) {
     #if 0
     // check winds for all touching sectors?
@@ -583,7 +585,7 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
             TVec scvel = vector(ScrollX/DeltaTime, ScrollY/DeltaTime);
             Velocity += scvel;
             //if (bIsPlayer) printdebug("%C: 00: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
-            HitLine(ref tmtrace, DeltaTime/float(Steps), true);
+            HitLine(ref tmtrace, DeltaTime/float(Steps), true, OldSector:OldSector);
             //if (bIsPlayer) printdebug("%C: 01: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
             Velocity -= scvel;
             //if (bIsPlayer) printdebug("%C: 02: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
@@ -593,15 +595,15 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
             //if (bIsPlayer) printdebug("%C: 03: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
             */
             tmp_transporter_velocity = vector(ScrollX/DeltaTime, ScrollY/DeltaTime);
-            HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:true);
+            HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:true, OldSector:OldSector);
             tmp_transporter_velocity = vector(0, 0, 0);
           } else {
             tmp_transporter_velocity = vector(0, 0, 0);
-            HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:true);
+            HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:true, OldSector:OldSector);
           }
         } else {
           //tmp_transporter_velocity = vector(0, 0, 0); // just in case
-          HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:false);
+          HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:false, OldSector:OldSector);
         }
       }
       return;
@@ -624,7 +626,7 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
 //  ZMovement
 //
 //==========================================================================
-final void ZMovement (float DeltaTime, float OldFloorZ/*, sector_t *OldSector*/) {
+final void ZMovement (float DeltaTime, float OldFloorZ, float OldFloorNZ, sector_t *OldSector) {
   float oldz = Origin.z;
   bool wasonground = (oldz == OldFloorZ);
 
@@ -638,40 +640,33 @@ final void ZMovement (float DeltaTime, float OldFloorZ/*, sector_t *OldSector*/)
     // Make objects fall to their own weight.
     if (oldz > FloorZ) {
       if (!bNoGravity) {
-        /*
-        bool snapToFloor = false;
-        // don't add gravity if standing on slope with normal.z > 0.7 (aprox 45 degrees)
-        if (wasonground && Velocity.z == 0.0 && oldz-FloorZ < 0.6 && EFloor.spGetNormalZ > 0.7) {
-          snapToFloor = true; //(wasonground && (OldSector == Sector || oldz-FloorZ < 0.6));
-        }
-        */
-        #if 0
-        not yet
-        if (/*snapToFloor*/wasonground && Velocity.z == 0.0 && oldz-FloorZ < 0.6 && EFloor.spGetNormalZ > 0.7) {
-          //!if (bIsPlayer) printdebug("%C: DOWN delta=%s; vz=%s; normz=%s", self, oldz-FloorZ, Velocity.z, EFloor.spGetNormalZ);
-          Origin.z = FloorZ-0.01; // to call `HitFloor()`
-          //Velocity.z = 0;
-          //oldz = FloorZ;
-        } else
-        #endif
-        {
-          float grav = (Gravity*Level.Gravity*(WaterLevel < 2 ? Sector->Gravity : Sector->Gravity/10.0))/1.220703125; // 9.8 (1053.52)
-          if (grav.isinf) grav = 1000;
-          //float xmass = (Mass.isinf ? 10000.0 : fmax(1, Mass));
-          float xmass = fmax(1, Mass);
-          //print("WL=%s; grav=%s; Gravity=%s, LGravity=%s; SGravity=%s; mass=%s; vz=%s", WaterLevel, grav, Gravity, Level.Gravity, Sector->Gravity, xmass, Velocity.z);
-
-          if (!Velocity.z && OldFloorZ > FloorZ && wasonground) grav += grav;
-          if (WaterLevel >= 2) grav /= 10.0;
-          //!if (bIsPlayer) printdebug("%C: GRAVITY! vz=%s : %s  dfz=%s; wasonground=%s; sequ=%s; normz=%s", self, Velocity.z, (grav/xmass)*DeltaTime, oldz-FloorZ, wasonground, (OldSector == Sector), EFloor.spGetNormalZ);
-          Velocity.z -= (grav/xmass)*DeltaTime;
+        float grav = (Gravity*Level.Gravity*(WaterLevel < 2 ? Sector->Gravity : Sector->Gravity/10.0))/1.220703125; // 9.8 (1053.52)
+        if (grav.isinf) grav = 1000;
+        //float xmass = (Mass.isinf ? 10000.0 : fmax(1, Mass));
+        float xmass = fmax(1, Mass);
+        //print("WL=%s; grav=%s; Gravity=%s, LGravity=%s; SGravity=%s; mass=%s; vz=%s", WaterLevel, grav, Gravity, Level.Gravity, Sector->Gravity, xmass, Velocity.z);
+        float prevVelZ = Velocity.z;
+        if (!prevVelZ && OldFloorZ > FloorZ && wasonground) grav += grav;
+        if (WaterLevel >= 2) grav /= 10.0;
+        //!if (bIsPlayer) printdebug("%C: GRAVITY! vz=%s : %s  dfz=%s; wasonground=%s; sequ=%s; normz=%s", self, Velocity.z, (grav/xmass)*DeltaTime, oldz-FloorZ, wasonground, (OldSector == Sector), EFloor.spGetNormalZ);
+        Velocity.z -= (grav/xmass)*DeltaTime;
+        // check if we're on the same slope
+        if (wasonground && prevVelZ <= 0 && OldFloorNZ != 1.0 && EFloor.spGetNormalZ == OldFloorNZ) {
+          //if (bIsPlayer) printdebug("%C: same slope (down)!", self);
+          //Velocity.z = 0; //fmax(0.0, Velocity.z);
+          oldz = FloorZ;
+          Origin.z = oldz;
         }
       }
-    } else if (wasonground && oldz < FloorZ /*&& OldSector == Sector*/) {
+    } else if (wasonground && oldz < FloorZ) {
       //!if (bIsPlayer) printdebug("%C: UP delta=%s; vz=%s; normz=%s", self, FloorZ-oldz, Velocity.z, EFloor.spGetNormalZ);
-      //Origin.z = FloorZ;
-      if (Velocity.z < 0.0) Velocity.z = 0;
-      //oldz = FloorZ;
+      Velocity.z = fmax(0.0, Velocity.z);
+      // check if we're on the same slope
+      if (!Velocity.z && OldFloorNZ != 1.0 && EFloor.spGetNormalZ == OldFloorNZ) {
+        //if (bIsPlayer) printdebug("%C: same slope (up)!", self);
+        oldz = FloorZ;
+        Origin.z = oldz;
+      }
     }
   }
 
@@ -682,7 +677,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ/*, sector_t *OldSector*/)
   //if (bFloatBob && bSpecial) printdebug("%C:%s: velocity.z=%s; nograv=%B; z=%s; floorz=%s", self, UniqueId, Velocity.z, bNoGravity, Origin.z, FloorZ);
 
   // check for smooth step up
-  if (bIsPlayer && oldz < FloorZ /*&& OldSector != Sector*/) {
+  if (bIsPlayer && oldz < FloorZ) {
     PlayerEx pex = PlayerEx(Player);
     if (pex && pex.MO == self) {
       float dfz = FloorZ-oldz;
@@ -690,9 +685,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ/*, sector_t *OldSector*/)
       if (dfz > 0.6 || EFloor.spGetNormalZ == 1.0) {
         pex.ViewHeight -= dfz;
         pex.DeltaViewHeight = (PlayerPawn(self).GetPawnViewHeight-pex.ViewHeight)*4.0;
-        //if (EFloor.spGetNormalZ != 1.0) print("FUCK1! z=%s; fz=%s; sfz=(%s:%s); dfz=%s", oldz, FloorZ, Sector.floor.minz, Sector.floor.maxz, dfz);
-      } else {
-        //print("FUCK0! z=%s; fz=%s; sfz=(%s:%s); dfz=%s", oldz, FloorZ, Sector.floor.minz, Sector.floor.maxz, dfz);
+        //if (EFloor.spGetNormalZ != 1.0) print("FUCK1! z=%s; fz=%s; dfz=%s; sfz=(%s:%s); dfz=%s", oldz, FloorZ, dfz, Sector.floor.minz, Sector.floor.maxz, dfz);
       }
     }
   }
@@ -742,22 +735,16 @@ final void ZMovement (float DeltaTime, float OldFloorZ/*, sector_t *OldSector*/)
   // clip movement
   if (!bNoInteraction) {
     //if (bMissile) printdebug("%C: HitFloor: z=%s; floorz=%s; hit=%B", self, Origin.z, FloorZ, (Origin.z <= FloorZ+0.1));
-    //bool onFloor = (origz == FloorZ);
-    if (origz < FloorZ+0.1 /* || (onFloor && Sector != OldSector)*/) {
+    if (origz < FloorZ+0.1) {
       // hit the floor
       //!if (bIsPlayer) printdebug("%C: HitFloor: z=%s; floorz=%s; vz=%s; sector=%d", self, Origin.z, FloorZ, Velocity.z, (Sector ? Sector-&XLevel.Sectors[0] : -1));
-      if (!HitFloor(oldz)) return;
+      if (!HitFloor(oldz, OldSector)) return;
       origz = Origin.z;
     }
-    /*
-    else if (onFloor && Velocity.z < 0.0) {
-      Velocity.z = 0;
-    }
-    */
 
-    if (origz+Height > CeilingZ /*&& Sector != OldSector*/) {
+    if (origz+Height > CeilingZ) {
       // hit the ceiling
-      if (!HitCeiling(oldz)) return;
+      if (!HitCeiling(oldz, OldSector)) return;
     }
 
     CheckFakeFloorTriggers(oldz);
@@ -773,7 +760,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ/*, sector_t *OldSector*/)
 //  in any case
 //
 //==========================================================================
-final void HitLine (ref tmtrace_t tmtrace, float StepVelScale, bool forceSlide) {
+final void HitLine (ref tmtrace_t tmtrace, float StepVelScale, bool forceSlide, sector_t *OldSector) {
   // it may hit a sloped 3d floor
   if (!bNoInteraction && !tmtrace.BlockingLine && bMissile && SectorHas3DSlopes(Sector)) {
     //printdebug("%C: z=%s; FloorZ=%s; CeilingZ=%s; hitf=%B; hitc=%B", self, Origin.z, tmtrace.FloorZ, tmtrace.CeilingZ, (Origin.z <= tmtrace.FloorZ+0.1), (Origin.z+Height > tmtrace.CeilingZ));
@@ -781,14 +768,14 @@ final void HitLine (ref tmtrace_t tmtrace, float StepVelScale, bool forceSlide) 
     if (origz <= tmtrace.FloorZ+0.1) {
       // hit the floor
       FloorZ = tmtrace.FloorZ; // we need to do this to register a hit
-      if (!HitFloor(/*oldz*/origz)) return;
+      if (!HitFloor(/*oldz*/origz, OldSector)) return;
       return;
     }
 
     if (origz+Height > tmtrace.CeilingZ) {
       // hit the ceiling
       CeilingZ = tmtrace.CeilingZ; // we need to do this to register a hit
-      if (!HitCeiling(/*oldz*/origz)) return;
+      if (!HitCeiling(/*oldz*/origz, OldSector)) return;
       return;
     }
 
@@ -1022,14 +1009,15 @@ final void HitMobj (Entity Other, float ptryx, float ptryy) {
 //  HitFloor
 //
 //==========================================================================
-final bool HitFloor (float prevz) {
-  bool justLanded = (prevz > FloorZ);
+final bool HitFloor (float prevz, sector_t *OldSector) {
 
   // trigger hit floor sector actions
   // k8: trigger always, or only when just landed? it was always
-  if (Sector && justLanded && Sector->ActionList && GetPointZClamped(ref Sector->floor, Origin) == FloorZ) {
+  if (Sector && OldSector != Sector && Sector->ActionList && GetPointZClamped(ref Sector->floor, Origin) == FloorZ) {
     SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitFloor);
   }
+
+  bool justLanded = (prevz > FloorZ);
 
   // killough 11/98: touchy objects explode on impact
   // allow very short drops to be safe, so that a touchy can be summoned without exploding
@@ -1085,20 +1073,23 @@ final bool HitFloor (float prevz) {
     //if (bIsPlayer) printdebug("000: %C: Velocity=%s; vdot=%s", self, Velocity, vdot);
     // do not spawn excessive splashes if not moving
     HitFloorType(justLanded);
-    if (!Inventory(self) && nameicmp(DamageType, 'Ice') == 0 && vdot < -DEFAULT_GRAVITY*0.25) {
+    if (!Inventory(self) && nameicmp(DamageType, 'Ice') == 0 && /*vdot*/Velocity.z < -DEFAULT_GRAVITY*0.25) {
       StateTime = 0.1;
       //Velocity = vector(0.0, 0.0, 0.0);
       Velocity.z = 0.0;
       return false;
     }
-    if (bCanJump && Velocity.z < 0.0 && JumpTime <= 0.0) JumpTime = 0.5; // delay any jumping for a short time
+    if (!bIsPlayer && bCanJump && Velocity.z < 0.0 && JumpTime <= 0.0) JumpTime = 0.5; // delay any jumping for a short time
     // do some special action when hitting the floor
     OnHitFloor();
     if (bIsPlayer && Player) {
-      if (Velocity.z < 0.0 && PlayerEx(Player).JumpTime <= 0.0) {
+      //k8: dunno why -6, i just pulled it from my ass
+      if (Velocity.z < -6.0 && PlayerEx(Player).JumpTime <= 0.0) {
+        //printdebug("%C: jumpblock! velz=%s; fnz=%s", self, Velocity.z, EFloor.spGetNormalZ);
         PlayerEx(Player).JumpTime = 0.2; // delay any jumping for a short time
       }
-      if (vdot < -DEFAULT_GRAVITY*0.25 && !bNoGravity) {
+      //printdebug("%C: vdot=%s %s (%s)", self, vdot, Velocity.z, -DEFAULT_GRAVITY*0.25);
+      if (/*vdot*/Velocity.z < -DEFAULT_GRAVITY*0.25 && !bNoGravity) {
         // squat down
         // decrease ViewHeight for a moment after hitting the ground (hard), and utter appropriate sound
         PlayerLandedOnThing();
@@ -1127,7 +1118,8 @@ final bool HitFloor (float prevz) {
 
   if (bSkullFly) {
     // the skull slammed into something
-    Velocity.z = -Velocity.z;
+    //Velocity.z = -Velocity.z;
+    Velocity.z = fabs(Velocity.z);
   }
 
   Crash();
@@ -1140,9 +1132,9 @@ final bool HitFloor (float prevz) {
 //  HitCeiling
 //
 //==========================================================================
-final bool HitCeiling (float prevz) {
+final bool HitCeiling (float prevz, sector_t *OldSector) {
   // trigger hit ceiling sector actions
-  if (Sector && Sector->ActionList && GetPointZClamped(ref Sector->ceiling, Origin) == CeilingZ) {
+  if (Sector && OldSector != Sector && Sector->ActionList && GetPointZClamped(ref Sector->ceiling, Origin+vector(0, 0, Height)) == CeilingZ) {
     SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitCeiling);
   }
 

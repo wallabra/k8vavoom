@@ -2351,11 +2351,18 @@ void VEntity::UpdateVelocity (float DeltaTime, bool allowSlopeFriction) {
       // do nothing
     } else if (true /*fnormz <= 0.7f*/) {
       TVec Vel = EFloor.GetNormal();
-      float dot = DotProduct(Velocity, Vel);
+      const float dot = DotProduct(Velocity, Vel);
       if (dot < 0.0f) {
+        /*
+        if (IsPlayer()) {
+          GCon->Logf(NAME_Debug, "%s: slopeZ=%g; dot=%g; Velocity=(%g,%g,%g); Vel=(%g,%g,%g); Vel*dot=(%g,%g,%g)",
+            GetClass()->GetName(), fnormz, dot, Velocity.x, Velocity.y, Velocity.z, Vel.x, Vel.y, Vel.z, Vel.x*dot, Vel.y*dot, Vel.z*dot);
+        }
+        */
         //TVec Vel = dot*EFloor.spGetNormal();
         //if (bIsPlayer) printdebug("%C: Velocity=%s; Vel=%s; dot=%s; Vel*dot=%s (%s); dt=%s", self, Velocity.xy, Vel, dot, Vel.xy*dot, Vel.xy*(dot*DeltaTime), DeltaTime);
-        Vel *= dot*35.0f*DeltaTime;
+        //Vel *= dot*35.0f*DeltaTime;
+        Vel *= dot*DeltaTime;
         Vel.z = 0;
         //print("mht=%s; hgt=%s", MaxStepHeight, Sector.floor.maxz-Sector.floor.minz);
         /*
