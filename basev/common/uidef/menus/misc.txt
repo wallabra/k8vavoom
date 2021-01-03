@@ -33,6 +33,14 @@ menudef MiscOptions {
   }
 
   option bool {
+    title = "Flip Corpses";
+    cvar = r_flip_corpses;
+    help =
+      "Randomly flip monster corpses?",
+      "This affects only rendering.";
+  }
+
+  option bool {
     title = "Allow vanilla cheatcodes";
     cvar = allow_vanilla_cheats;
     help = "Turn this on to allow IDXXX cheatcodes from Vanilla DooM.";
