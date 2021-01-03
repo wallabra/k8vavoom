@@ -27,8 +27,8 @@ class Level_K8Gore : replaces(Level);
 
 const int DefaultMaxAllowedBloodEntities = 1500;
 
-int bloodEntCounter;
-int bloodSkipDeathCounter;
+//!int bloodEntCounter;
+//!int bloodSkipDeathCounter;
 
 /*
 #ifdef K8GORE_DEBUG
@@ -37,7 +37,7 @@ bool cvBloodDebugDump;
 bool cvBloodLimiterDebugDump;
 int cvBloodMaxEntities = -1;
 */
-bool cvBloodColoredBlood;
+transient bool cvBloodColoredBlood;
 
 
 final void goreBloodUpdateCvarCache () {
