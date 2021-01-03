@@ -522,7 +522,11 @@ void VRenderLevelShadowVolume::CollectAdvLightBSPNode (int bspnum, const float *
   }
 #endif
 
+
   if (bbox) {
+    // mirror clip
+    if (Drawer->MirrorClip && !Drawer->MirrorPlane.checkBox(bbox)) return;
+    // clipper clip
     if ((ssflag&FlagAsLight) && !LightClip.ClipLightIsBBoxVisible(bbox)) {
       if ((ssflag &= ~FlagAsLight) == 0) return;
     }

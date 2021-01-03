@@ -507,13 +507,11 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
   DrawParticles();
 
   RenderPortals();
-  Drawer->SetupClipPlanes();
 
   MiniStopTimer profDrawTransSpr("DrawTranslucentPolys", prof_r_bsp_world_render.asBool());
   DrawTranslucentPolys();
   totalRenderTime += profDrawTransSpr.stopAndReport();
 
-  Drawer->DisableClipPlanes();
   profRenderScene.stopAndReport();
   if (profRenderScene.isEnabled()) {
     if (totalRenderTime) GCon->Logf(NAME_Debug, "PROF: total advpasses time %g seconds (%d msecs)", ((int)totalRenderTime == 0 ? 0.0 : totalRenderTime), (int)(totalRenderTime*1000.0));

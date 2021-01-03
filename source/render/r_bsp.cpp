@@ -463,6 +463,20 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   }
   */
 
+  // check mirror clipping plane for non-walls
+  // TODO: this is slow and ugly, and prolly not necessary at all
+  //       BSP renderer rejects whole nodes anyway
+  /*
+  if (Drawer->MirrorClip && surfaceType != SFT_Wall) {
+    for (const surface_t *ss = surf; ss; ss = ss->next) {
+      if (ss->count < 3) continue;
+      for (int f = 0; f < ss->count; ++f) {
+        if (Drawer->MirrorPlane.PointOnSide2(ss->verts[f].vec())) return;
+      }
+    }
+  }
+  */
+
   // sky/skybox/stacked sector rendering
 
   // prevent recursion
@@ -748,6 +762,9 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
   seg_t *seg = dseg->seg;
   line_t *linedef = seg->linedef;
 
+  // mirror clip
+  if (Drawer->MirrorClip && (Drawer->MirrorPlane.PointOnSide2(*seg->v1) || Drawer->MirrorPlane.PointOnSide2(*seg->v2))) return;
+
   if (!linedef) {
     // miniseg
     // for now
@@ -874,15 +891,17 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
   if (plane.splane->MirrorAlpha < 1.0f /*&& ssurf->surfs && ssurf->surfs->IsVisibleFor(Drawer->vieworg)*/) {
     // mirror
     if (r_allow_mirrors && r_allow_floor_mirrors && MirrorLevel < r_maxmiror_depth) {
+      TPlane rpl = plane.GetPlane();
+
       VPortal *Portal = nullptr;
       for (auto &&pp : Portals) {
-        if (pp && pp->MatchMirror(plane.splane)) {
+        if (pp && pp->MatchMirror(&rpl)) {
           Portal = pp;
           break;
         }
       }
       if (!Portal) {
-        Portal = new VMirrorPortal(this, plane.splane);
+        Portal = new VMirrorPortal(this, &rpl);
         Portals.Append(Portal);
       }
 
@@ -1059,6 +1078,15 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
   subsector_t *sub = &Level->Subsectors[num];
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
+  // this should not be necessary, because BSP node rejection does it for us
+  /*
+  if (Drawer->MirrorClip) {
+    float sbb[6];
+    Level->GetSubsectorBBox(sub, sbb);
+    if (!Drawer->MirrorPlane.checkBox(sbb)) return;
+  }
+  */
+
   // render it if we're not in "only clip" mode
   if (!onlyClip) {
     // if we have PVS, `MarkLeaves()` marks potentially visible subsectors
@@ -1147,6 +1175,9 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
   }
 
   if (!ViewClip.ClipIsBBoxVisible(bbox)) return;
+
+  // mirror clip
+  if (Drawer->MirrorClip && !Drawer->MirrorPlane.checkBox(bbox)) return;
 
   if (!onlyClip) {
     // cull the clipping planes if not trivial accept

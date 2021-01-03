@@ -445,6 +445,7 @@ public:
   TFrustum viewfrustum;
   bool MirrorFlip;
   bool MirrorClip;
+  TPlane MirrorPlane; // active is `MirrorClip` is true
   static float LightFadeMult;
 
   // so we can draw it last
@@ -546,9 +547,6 @@ public:
 
   // lightmapped renderer
   virtual void DrawLightmapWorld () = 0;
-
-  virtual void DisableClipPlanes () = 0;
-  virtual void SetupClipPlanes () = 0;
 
   virtual void SetMainFBO (bool forced=false) = 0;
 

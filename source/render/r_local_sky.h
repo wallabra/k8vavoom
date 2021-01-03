@@ -89,11 +89,11 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VMirrorPortal : public VPortal {
 public:
-  TPlane *Plane;
+  TPlane Plane;
 
-  inline VMirrorPortal (VRenderLevelShared *ARLev, TPlane *APlane) : VPortal(ARLev), Plane(APlane) {}
+  inline VMirrorPortal (VRenderLevelShared *ARLev, const TPlane *APlane) : VPortal(ARLev), Plane(*APlane) {}
   virtual bool IsMirror () const override;
-  virtual bool MatchMirror (TPlane *) const override;
+  virtual bool MatchMirror (const TPlane *) const override;
   virtual void DrawContents () override;
 };
 

@@ -83,6 +83,9 @@ void VRenderLevelShared::CalcLightVisCheckNode (int bspnum, const float *bbox, c
 
   if (!LightClip.ClipLightIsBBoxVisible(bbox)) return;
 
+  // mirror clip
+  if (Drawer->MirrorClip && !Drawer->MirrorPlane.checkBox(bbox)) return;
+
   if (bspnum == -1) {
     const unsigned subidx = 0;
     subsector_t *sub = &Level->Subsectors[subidx];

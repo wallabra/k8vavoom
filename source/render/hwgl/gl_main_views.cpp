@@ -67,8 +67,6 @@ void VOpenGLDrawer::Setup2D () {
   GLForceBlend();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   //if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
-
-  glDisable(GL_CLIP_PLANE0);
 }
 
 
@@ -153,7 +151,6 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   CalcProjectionMatrix(vpmats.projMat, /*ARLev,*/ rd);
   glMatrixMode(GL_PROJECTION);
   glLoadMatrixf(vpmats.projMat[0]);
-  glDisable(GL_CLIP_PLANE0);
 
   //vpmats.projMat = ProjMat;
   vpmats.modelMat.SetIdentity();
@@ -183,9 +180,6 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = 0;
   currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 32000;
 
-  // just in case
-  glDisable(GL_CLIP_PLANE0);
-
   glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // why not
   glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|(rd->drawworld && !rd->DrawCamera && clear ? GL_COLOR_BUFFER_BIT : 0));
   stencilBufferDirty = false;
@@ -213,7 +207,6 @@ void VOpenGLDrawer::SetupViewOrg () {
 
   glCullFace(MirrorClip ? GL_BACK : GL_FRONT);
 
-  SetupClipPlanes();
   //LoadVPMatrices();
 }
 

@@ -734,7 +734,7 @@ public:
   virtual bool IsStack () const;
   virtual bool MatchSky (class VSky *) const;
   virtual bool MatchSkyBox (VEntity *) const;
-  virtual bool MatchMirror (TPlane *) const;
+  virtual bool MatchMirror (const TPlane *) const;
 
   // most portals will override `DrawContents()`, but for sky we could skip all the heavy mechanics
   void Draw (bool UseStencil);

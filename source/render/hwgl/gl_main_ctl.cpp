@@ -428,57 +428,6 @@ void VOpenGLDrawer::RestoreBlending (const RenderStyleInfo &ri) {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::DisableClipPlanes
-//
-//==========================================================================
-void VOpenGLDrawer::DisableClipPlanes () {
-  glDisable(GL_CLIP_PLANE0);
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::SetupClipPlanes
-//
-//==========================================================================
-void VOpenGLDrawer::SetupClipPlanes () {
-  if (MirrorClip && viewfrustum.planes[TFrustum::Forward].isValid()) {
-    glEnable(GL_CLIP_PLANE0);
-    const GLdouble eq[4] = {
-      viewfrustum.planes[TFrustum::Forward].normal.x,
-      viewfrustum.planes[TFrustum::Forward].normal.y,
-      viewfrustum.planes[TFrustum::Forward].normal.z,
-      -viewfrustum.planes[TFrustum::Forward].dist,
-    };
-    glClipPlane(GL_CLIP_PLANE0, eq);
-  }
-  #if 0 /*k8: i am too dumb to figure this out*/
-  else if (/*!MirrorClip && viewfrustum.planes[TFrustum::Forward].isValid()*/true) {
-    //GCon->Logf(NAME_Debug, "mclip: (%g,%g,%g) : %g", viewfrustum.planes[TFrustum::Forward].normal.x, viewfrustum.planes[TFrustum::Forward].normal.y, viewfrustum.planes[TFrustum::Forward].normal.z, viewfrustum.planes[TFrustum::Forward].dist);
-
-    // do not transform matrix
-    glLoadIdentity();
-
-    glEnable(GL_CLIP_PLANE0);
-    const GLdouble eq[4] = {
-      0.0f, //viewfrustum.planes[TFrustum::Forward].normal.x,
-      0.0f, //viewfrustum.planes[TFrustum::Forward].normal.y,
-      -1.0f, //viewfrustum.planes[TFrustum::Forward].normal.z,
-      8.0f, //-viewfrustum.planes[TFrustum::Forward].dist,
-    };
-    glClipPlane(GL_CLIP_PLANE0, eq);
-
-    glLoadMatrixf(vpmats.modelMat[0]);
-  }
-  #endif
-  else {
-    glDisable(GL_CLIP_PLANE0);
-  }
-}
-
-
-//==========================================================================
-//
 //  VOpenGLDrawer::ReadScreen
 //
 //==========================================================================

@@ -237,7 +237,6 @@ void VOpenGLDrawer::InitShaderProgress () {
   glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   //if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
-  glDisable(GL_CLIP_PLANE0);
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   glDisable(GL_BLEND);

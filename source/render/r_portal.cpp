@@ -54,6 +54,7 @@ struct AutoSavedView {
   TClipPlane SavedClip;
   unsigned planeCount;
   bool SavedMirrorClip;
+  TPlane SavedMirrorPlane;
 
   bool shadowsDisabled;
 
@@ -78,6 +79,7 @@ struct AutoSavedView {
     SavedViewRight = Drawer->viewright;
     SavedViewUp = Drawer->viewup;
     SavedMirrorClip = Drawer->MirrorClip;
+    SavedMirrorPlane = Drawer->MirrorPlane;
     SavedViewEnt = RLev->ViewEnt;
     SavedPortal = RLev->CurrPortal;
     SavedExtraLight = RLev->ExtraLight;
@@ -125,6 +127,7 @@ struct AutoSavedView {
     Drawer->viewright = SavedViewRight;
     Drawer->viewup = SavedViewUp;
     Drawer->MirrorClip = SavedMirrorClip;
+    Drawer->MirrorPlane = SavedMirrorPlane;
 
     // restore original frustum
     RLev->ViewEnt = SavedViewEnt;
@@ -239,7 +242,7 @@ bool VPortal::MatchSkyBox (VEntity *) const {
 //  VPortal::MatchMirror
 //
 //==========================================================================
-bool VPortal::MatchMirror (TPlane *) const {
+bool VPortal::MatchMirror (const TPlane *) const {
   return false;
 }
 
@@ -491,8 +494,8 @@ bool VMirrorPortal::IsMirror () const {
 //  VMirrorPortal::MatchMirror
 //
 //==========================================================================
-bool VMirrorPortal::MatchMirror (TPlane *APlane) const {
-  return (Level == RLev->PortalLevel+1 && Plane->normal == APlane->normal && Plane->dist == APlane->dist);
+bool VMirrorPortal::MatchMirror (const TPlane *APlane) const {
+  return (Level == RLev->PortalLevel+1 && Plane.normal == APlane->normal && Plane.dist == APlane->dist);
 }
 
 
@@ -507,16 +510,17 @@ void VMirrorPortal::DrawContents () {
   ++RLev->MirrorLevel;
   Drawer->MirrorFlip = RLev->MirrorLevel&1;
   Drawer->MirrorClip = true;
+  Drawer->MirrorPlane = Plane;
 
-  float Dist = Plane->PointDistance(Drawer->vieworg);
-  Drawer->vieworg -= 2*Dist*Plane->normal;
+  float Dist = Plane.PointDistance(Drawer->vieworg);
+  Drawer->vieworg -= 2.0f*Dist*Plane.normal;
 
-  Dist = DotProduct(Drawer->viewforward, Plane->normal);
-  Drawer->viewforward -= 2*Dist*Plane->normal;
-  Dist = DotProduct(Drawer->viewright, Plane->normal);
-  Drawer->viewright -= 2*Dist*Plane->normal;
-  Dist = DotProduct(Drawer->viewup, Plane->normal);
-  Drawer->viewup -= 2*Dist*Plane->normal;
+  Dist = DotProduct(Drawer->viewforward, Plane.normal);
+  Drawer->viewforward -= 2.0f*Dist*Plane.normal;
+  Dist = DotProduct(Drawer->viewright, Plane.normal);
+  Drawer->viewright -= 2.0f*Dist*Plane.normal;
+  Dist = DotProduct(Drawer->viewup, Plane.normal);
+  Drawer->viewup -= 2.0f*Dist*Plane.normal;
 
   // k8: i added this, but i don't know if it is required
   Drawer->viewforward.normaliseInPlace();
