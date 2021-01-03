@@ -135,8 +135,8 @@ VCvarB r_vertical_fov("r_vertical_fov", true, "Maintain vertical FOV for widescr
 
 // translation tables
 VTextureTranslation *PlayerTranslations[MAXPLAYERS+1];
-static TArray<VTextureTranslation *> CachedTranslations;
-static TMapNC<vuint32, int> CachedTranslationsMap; // key:crc; value: translation index
+//static TArray<VTextureTranslation *> CachedTranslations;
+//static TMapNC<vuint32, int> CachedTranslationsMap; // key:crc; value: translation index
 
 static VCvarB r_reupload_level_textures("r_reupload_level_textures", true, "Reupload level textures to GPU when new map is loaded?", CVAR_Archive);
 static VCvarB r_precache_textures("r_precache_textures", true, "Precache level textures?", CVAR_Archive);
@@ -2425,7 +2425,9 @@ VTextureTranslation *R_GetCachedTranslation (int TransNum, VLevel *Level) {
   }
 
   if (!Tr) return nullptr;
+  return Tr;
 
+  /*
   auto cpi = CachedTranslationsMap.find(Tr->Crc);
   if (cpi) {
     int cidx = *cpi;
@@ -2442,6 +2444,7 @@ VTextureTranslation *R_GetCachedTranslation (int TransNum, VLevel *Level) {
   CachedTranslationsMap.put(Copy->Crc, CachedTranslations.length());
   CachedTranslations.Append(Copy);
   return Copy;
+  */
 }
 
 
@@ -2571,11 +2574,13 @@ void V_Shutdown () {
       PlayerTranslations[i] = nullptr;
     }
   }
+  /*
   for (int i = 0; i < CachedTranslations.Num(); ++i) {
     delete CachedTranslations[i];
     CachedTranslations[i] = nullptr;
   }
   CachedTranslations.Clear();
   CachedTranslationsMap.clear();
+  */
   R_FreeSkyboxData();
 }

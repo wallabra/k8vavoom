@@ -798,6 +798,144 @@ int R_ParseDecorateTranslation (VScriptParser *sc, int GameMax, VStr trname) {
 
 //==========================================================================
 //
+//  isGoodTranslationArgs
+//
+//==========================================================================
+static inline bool isGoodTranslationArgs (int AStart, int AEnd) noexcept {
+  return !(AEnd < AStart || AEnd < 0 || AStart > 255 || !GLevel);
+}
+
+
+//==========================================================================
+//
+//  appendLevelTranslation
+//
+//  returns 0 if translation cannot be created
+//
+//==========================================================================
+static int appendLevelTranslation (VTextureTranslation *tr) {
+  // see if we already have this translation
+  for (int i = 0; i < GLevel->Translations.Num(); ++i) {
+    if (GLevel->Translations[i]->Crc != tr->Crc) continue;
+    if (memcmp(GLevel->Translations[i]->Palette, tr->Palette, sizeof(tr->Palette))) continue;
+    // found a match
+    delete tr;
+    return (TRANSL_Level<<TRANSL_TYPE_SHIFT)+i;
+  }
+
+  if (GLevel->Translations.length() >= MAX_LEVEL_TRANSLATIONS) {
+    delete tr;
+    return 0;
+  }
+
+  int idx = GLevel->Translations.length();
+  GLevel->Translations.append(tr);
+  return (TRANSL_Level<<TRANSL_TYPE_SHIFT)+idx;
+}
+
+
+//==========================================================================
+//
+//  R_CreateDesaturatedTranslation
+//
+//  returns 0 if translation cannot be created
+//
+//==========================================================================
+int R_CreateDesaturatedTranslation (int AStart, int AEnd, float rs, float gs, float bs, float re, float ge, float be) {
+  if (!isGoodTranslationArgs(AStart, AEnd)) return 0;
+  VTextureTranslation *tr = new VTextureTranslation;
+  tr->MapDesaturated(AStart, AEnd, rs, gs, bs, re, ge, be);
+  return appendLevelTranslation(tr);
+}
+
+
+//==========================================================================
+//
+//  R_CreateBlendedTranslation
+//
+//  returns 0 if translation cannot be created
+//
+//==========================================================================
+int R_CreateBlendedTranslation (int AStart, int AEnd, int r, int g, int b) {
+  if (!isGoodTranslationArgs(AStart, AEnd)) return 0;
+  VTextureTranslation *tr = new VTextureTranslation;
+  tr->MapBlended(AStart, AEnd, r, g, b);
+  return appendLevelTranslation(tr);
+}
+
+
+//==========================================================================
+//
+//  R_CreateTintedTranslation
+//
+//  returns 0 if translation cannot be created
+//
+//==========================================================================
+int R_CreateTintedTranslation (int AStart, int AEnd, int r, int g, int b, int amount) {
+  if (!isGoodTranslationArgs(AStart, AEnd) || amount <= 0) return 0;
+  VTextureTranslation *tr = new VTextureTranslation;
+  tr->MapTinted(AStart, AEnd, r, g, b, amount);
+  return appendLevelTranslation(tr);
+}
+
+
+//==========================================================================
+//
+//  R_GetGamePalette
+//
+//==========================================================================
+void R_GetGamePalette (VColorRGBA newpal[256]) {
+  if (!newpal) return;
+  for (unsigned int f = 0; f < 256; ++f) {
+    newpal[f].r = r_palette[f].r;
+    newpal[f].g = r_palette[f].g;
+    newpal[f].b = r_palette[f].b;
+    newpal[f].a = r_palette[f].a;
+  }
+}
+
+
+//==========================================================================
+//
+//  R_GetTranslatedPalette
+//
+//==========================================================================
+void R_GetTranslatedPalette (int transnum, VColorRGBA newpal[256]) {
+  if (!newpal) return;
+  VTextureTranslation *tr = R_GetCachedTranslation(transnum, GLevel);
+  if (!tr) {
+    R_GetGamePalette(newpal);
+  } else {
+    for (unsigned int f = 0; f < 256; ++f) {
+      newpal[f].r = tr->Palette[f].r;
+      newpal[f].g = tr->Palette[f].g;
+      newpal[f].b = tr->Palette[f].b;
+      newpal[f].a = tr->Palette[f].a;
+    }
+    // just in case
+    newpal[0].r = newpal[0].g = newpal[0].b = newpal[0].a = 0;
+  }
+}
+
+
+//==========================================================================
+//
+//  R_CreateColorTranslation
+//
+//  returns 0 if translation cannot be created
+//  color 0 *WILL* be translated too!
+//
+//==========================================================================
+int R_CreateColorTranslation (const VColorRGBA newpal[256]) {
+  if (!newpal) return 0;
+  VTextureTranslation *tr = new VTextureTranslation;
+  tr->MapToPalette(newpal);
+  return appendLevelTranslation(tr);
+}
+
+
+//==========================================================================
+//
 //  R_FindTranslationByName
 //
 //==========================================================================
@@ -813,13 +951,15 @@ int R_FindTranslationByName (VStr trname) {
 //  R_GetBloodTranslation
 //
 //==========================================================================
-int R_GetBloodTranslation (int Col) {
+int R_GetBloodTranslation (int Col, bool allowAdd) {
   // check for duplicate blood translation
   for (int i = 0; i < BloodTranslations.Num(); ++i) {
-    if (BloodTranslations[i]->Color == Col) {
+    if (BloodTranslations[i]->Color == (Col&0xffffff)) {
       return (TRANSL_Blood<<TRANSL_TYPE_SHIFT)+i;
     }
   }
+
+  if (!allowAdd) return 0;
 
   // create new translation
   VTextureTranslation *Tr = new VTextureTranslation;
@@ -827,8 +967,15 @@ int R_GetBloodTranslation (int Col) {
 
   // add it
   if (BloodTranslations.Num() >= MAX_BLOOD_TRANSLATIONS) {
-    Sys_Error("Too many blood colors in DECORATE scripts");
+    delete Tr;
+    static bool warnPrinted = false;
+    if (!warnPrinted) {
+      warnPrinted = true;
+      GCon->Logf(NAME_Warning, "Too many blood translation colors!");
+    }
+    return 0;
   }
+
   BloodTranslations.Append(Tr);
   return (TRANSL_Blood<<TRANSL_TYPE_SHIFT)+BloodTranslations.Num()-1;
 }

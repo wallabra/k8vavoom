@@ -220,9 +220,12 @@ IMPLEMENT_FREE_FUNCTION(VObject, AreStateSpritesPresent) {
 }
 
 
+//native static final int R_GetBloodTranslation (int color, optional bool allowadd/*=false*/);
 IMPLEMENT_FREE_FUNCTION(VObject, R_GetBloodTranslation) {
-  P_GET_INT(color);
-  RET_INT(R_GetBloodTranslation(color));
+  vint32 color;
+  VOptParamBool allowadd(false);
+  vobjGetParam(color, allowadd);
+  RET_INT(R_GetBloodTranslation(color, allowadd));
 }
 
 
@@ -232,6 +235,77 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_FindNamedTranslation) {
   vobjGetParam(name);
   RET_INT(R_FindTranslationByName(name));
 }
+
+
+//native static final int R_CreateDesaturatedTranslation (int AStart, int AEnd, float rs, float gs, float bs, float re, float ge, float be);
+IMPLEMENT_FREE_FUNCTION(VObject, R_CreateDesaturatedTranslation) {
+  int AStart, AEnd;
+  float rs, gs, bs, re, ge, be;
+  vobjGetParam(AStart, AEnd, rs, gs, bs, re, ge, be);
+  RET_INT(R_CreateDesaturatedTranslation(AStart, AEnd, rs, gs, bs, re, ge, be));
+}
+
+
+//native static final int R_CreateBlendedTranslation (int AStart, int AEnd, int r, int g, int b);
+IMPLEMENT_FREE_FUNCTION(VObject, R_CreateBlendedTranslation) {
+  int AStart, AEnd;
+  int r, g, b;
+  vobjGetParam(AStart, AEnd, r, g, b);
+  RET_INT(R_CreateBlendedTranslation(AStart, AEnd, r, g, b));
+}
+
+
+//native static final int R_CreateTintedTranslation (int AStart, int AEnd, int r, int g, int b, int amount);
+IMPLEMENT_FREE_FUNCTION(VObject, R_CreateTintedTranslation) {
+  int AStart, AEnd;
+  int r, g, b;
+  int amount;
+  vobjGetParam(AStart, AEnd, r, g, b, amount);
+  RET_INT(R_CreateTintedTranslation(AStart, AEnd, r, g, b, amount));
+}
+
+
+//native static final void R_GetGamePalette (ref array!ColorRGBA pal);
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetGamePalette) {
+  TArray<VColorRGBA> *pal256;
+  vobjGetParam(pal256);
+  if (pal256) {
+    if (pal256->length() != 256) pal256->SetLength(256);
+    R_GetGamePalette(pal256->ptr());
+  }
+}
+
+
+//native static final void R_GetTranslatedPalette (int transnum, ref array!ColorRGBA pal);
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetTranslatedPalette) {
+  int transnum;
+  TArray<VColorRGBA> *pal256;
+  vobjGetParam(transnum, pal256);
+  if (pal256) {
+    if (pal256->length() != 256) pal256->SetLength(256);
+    R_GetTranslatedPalette(transnum, pal256->ptr());
+  }
+}
+
+
+//native static final int R_CreateColorTranslation (const ref array!ColorRGBA pal);
+IMPLEMENT_FREE_FUNCTION(VObject, R_CreateColorTranslation) {
+  TArray<VColorRGBA> *pal256;
+  vobjGetParam(pal256);
+  if (pal256) {
+    if (pal256->length() < 256) {
+      VColorRGBA pal[256];
+      R_GetGamePalette(pal256->ptr());
+      for (unsigned int f = 0; f < (unsigned)pal256->length(); ++f) pal[f] = pal256->ptr()[f];
+      RET_INT(R_CreateColorTranslation(pal));
+    } else {
+      RET_INT(R_CreateColorTranslation(pal256->ptr()));
+    }
+  } else {
+    RET_INT(0);
+  }
+}
+
 
 // native static final int BoxOnLineSide2D (const TVec bmin, const TVec bmax, const ref GameObject::line_t line);
 IMPLEMENT_FREE_FUNCTION(VObject, BoxOnLineSide2D) {

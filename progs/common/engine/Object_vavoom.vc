@@ -550,8 +550,25 @@ native static final string R_GetAspectRatioDsc (int idx);
 native static final bool R_SupportsShadowVolumeRendering ();
 native static final bool R_SupportsShadowMapRendering ();
 
-native static final int R_GetBloodTranslation (int color);
+// returns 0 if no translation found
+native static final int R_GetBloodTranslation (int color, optional bool allowadd/*=false*/);
 native static final int R_FindNamedTranslation (string trname);
+
+// returns 0 if translation cannot be created
+native static final int R_CreateDesaturatedTranslation (int AStart, int AEnd, float rs, float gs, float bs, float re, float ge, float be);
+native static final int R_CreateBlendedTranslation (int AStart, int AEnd, int r, int g, int b);
+native static final int R_CreateTintedTranslation (int AStart, int AEnd, int r, int g, int b, int amount);
+
+// [0..255]; a=0 is fully transparent, a=255 is fully opaque
+struct ColorRGBA {
+  int r, g, b, a;
+}
+
+// will resize array if necessary
+native static final void R_GetGamePalette (ref array!ColorRGBA pal);
+native static final void R_GetTranslatedPalette (int transnum, ref array!ColorRGBA pal);
+//  color 0 *WILL* be translated too!
+native static final int R_CreateColorTranslation (const ref array!ColorRGBA pal);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

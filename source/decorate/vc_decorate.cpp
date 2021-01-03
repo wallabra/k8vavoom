@@ -2591,7 +2591,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_BloodColor:
             bloodColor = sc->ExpectColor();
             P.Field->SetInt(DefObj, bloodColor);
-            if (!bloodTranslationSet) P.Field2->SetInt(DefObj, R_GetBloodTranslation(bloodColor));
+            if (!bloodTranslationSet) P.Field2->SetInt(DefObj, R_GetBloodTranslation(bloodColor, true));
             break;
           case PROP_BloodTranslation:
             bloodTranslationSet = true;

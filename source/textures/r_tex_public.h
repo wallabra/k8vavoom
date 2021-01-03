@@ -118,6 +118,13 @@ struct TSwitch {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// [0..255]; a=0 is fully transparent, a=255 is fully opaque
+struct VColorRGBA {
+  vint32 r, g, b, a;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VTextureTranslation {
 public:
   vuint8 Table[256];
@@ -164,6 +171,9 @@ public:
   void MapTinted (int AStart, int AEnd, int R, int G, int B, int Amount);
   void BuildBloodTrans (int Col);
   void AddTransString (VStr Str);
+
+  // not supported over the network yet
+  void MapToPalette (const VColorRGBA newpal[768]);
 
   inline const vuint8 *GetTable () const noexcept { return Table; }
   inline const rgba_t *GetPalette () const noexcept { return Palette; }

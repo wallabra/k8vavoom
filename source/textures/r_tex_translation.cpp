@@ -117,6 +117,7 @@ void VTextureTranslation::BuildPlayerTrans (int Start, int End, int Col) {
   M_RgbToHsv(r, g, b, h, s, v);
   for (int i = 0; i < Count; ++i) {
     int Idx = Start+i;
+    if (Idx < 0 || Idx > 255) continue;
     vuint8 TmpH, TmpS, TmpV;
     M_RgbToHsv(Palette[Idx].r, Palette[Idx].g,Palette[Idx].b, TmpH, TmpS, TmpV);
     M_HsvToRgb(h, s, v*TmpV/255, Palette[Idx].r, Palette[Idx].g, Palette[Idx].b);
@@ -149,7 +150,37 @@ void VTextureTranslation::BuildBloodTrans (int Col) {
     //Table[i] = R_LookupRGB(255, 0, 0);
   }
   CalcCrc();
-  Color = Col;
+  Color = Col&0xffffff;
+}
+
+
+//==========================================================================
+//
+//  VTextureTranslation::MapToPalette
+//
+//  not supported over the network yet
+//
+//==========================================================================
+void VTextureTranslation::MapToPalette (const VColorRGBA newpal[768]) {
+  if (newpal) {
+    for (unsigned int i = 0; i < 256; ++i) {
+      Palette[i].r = clampToByte(newpal[i].r);
+      Palette[i].g = clampToByte(newpal[i].g);
+      Palette[i].b = clampToByte(newpal[i].b);
+      Palette[i].a = clampToByte(newpal[i].a);
+      if (Palette[i].a != 0) {
+        Table[i] = R_LookupRGB(Palette[i].r, Palette[i].g, Palette[i].b);
+      } else {
+        Table[i] = 0;
+      }
+    }
+  } else {
+    for (unsigned int i = 0; i < 256; ++i) {
+      Palette[i] = r_palette[i];
+      Table[i] = i;
+    }
+  }
+  CalcCrc();
 }
 
 
@@ -181,13 +212,16 @@ void VTextureTranslation::MapToRange (int AStart, int AEnd, int ASrcStart, int A
   }
   // check for single color change
   if (Start == End) {
-    Table[Start] = SrcStart;
-    Palette[Start] = r_palette[SrcStart];
+    if (Start >= 0 && Start <= 255) {
+      Table[Start] = SrcStart;
+      Palette[Start] = r_palette[SrcStart];
+    }
     return;
   }
   float CurCol = SrcStart;
   float ColStep = (float(SrcEnd)-float(SrcStart))/(float(End)-float(Start));
   for (int i = Start; i <= End; ++i, CurCol += ColStep) {
+    if (i < 0 || i > 255) continue;
     Table[i] = clampToByte(int(CurCol));
     Palette[i] = r_palette[Table[i]];
   }
@@ -242,10 +276,12 @@ void VTextureTranslation::MapToColors (int AStart, int AEnd, int AR1, int AG1, i
   }
   // check for single color change
   if (Start == End) {
-    Palette[Start].r = R1;
-    Palette[Start].g = G1;
-    Palette[Start].b = B1;
-    Table[Start] = R_LookupRGB(R1, G1, B1);
+    if (Start >= 0 && Start <= 255) {
+      Palette[Start].r = R1;
+      Palette[Start].g = G1;
+      Palette[Start].b = B1;
+      Table[Start] = R_LookupRGB(R1, G1, B1);
+    }
     return;
   }
   float CurR = R1;
@@ -258,6 +294,7 @@ void VTextureTranslation::MapToColors (int AStart, int AEnd, int AR1, int AG1, i
   if (!isFiniteF(GStep)) GStep = 0;
   if (!isFiniteF(BStep)) BStep = 0;
   for (int i = Start; i <= End; ++i, CurR += RStep, CurG += GStep, CurB += BStep) {
+    if (i < 0 || i > 255) continue;
     Palette[i].r = clampToByte(int(CurR));
     Palette[i].g = clampToByte(int(CurG));
     Palette[i].b = clampToByte(int(CurB));
@@ -299,6 +336,7 @@ void VTextureTranslation::MapDesaturated (int AStart, int AEnd, float rs, float 
   }
   //GCon->Logf(NAME_Debug, "DESAT: %d:%d [%g,%g,%g]-[%g,%g,%g]", AStart, AEnd, rs, gs, bs, re, ge, be);
   for (int i = AStart; i <= AEnd; ++i) {
+    if (i < 0 || i > 255) continue;
     float gray = colorIntensity(r_palette[i].r, r_palette[i].g, r_palette[i].b)/255.0f;
     Palette[i].r = clampToByte((int)((rs+gray*(re-rs))*255.0f));
     Palette[i].g = clampToByte((int)((gs+gray*(ge-gs))*255.0f));
@@ -338,6 +376,7 @@ void VTextureTranslation::MapBlended (int AStart, int AEnd, int R, int G, int B)
     AEnd = itmp;
   }
   for (int i = AStart; i <= AEnd; ++i) {
+    if (i < 0 || i > 255) continue;
     float gray = colorIntensity(r_palette[i].r, r_palette[i].g, r_palette[i].b)/255.0f;
     Palette[i].r = clampToByte((int)(R*gray));
     Palette[i].g = clampToByte((int)(G*gray));
@@ -379,6 +418,7 @@ void VTextureTranslation::MapTinted (int AStart, int AEnd, int R, int G, int B, 
   const float bAmount = float(B)*(float(Amount)/100.0f);
   //translatedcolor = originalcolor * (100-amount)% + (r, g, b) * amount%
   for (int i = AStart; i <= AEnd; ++i) {
+    if (i < 0 || i > 255) continue;
     Palette[i].r = clampToByte((int)(r_palette[i].r*origAmount+rAmount));
     Palette[i].g = clampToByte((int)(r_palette[i].g*origAmount+gAmount));
     Palette[i].b = clampToByte((int)(r_palette[i].b*origAmount+bAmount));

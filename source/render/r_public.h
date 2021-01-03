@@ -172,7 +172,18 @@ void R_InstallSpriteComplete ();
 bool R_AreSpritesPresent (int);
 int R_ParseDecorateTranslation (VScriptParser *sc, int GameMax, VStr trname=VStr::EmptyString);
 int R_FindTranslationByName (VStr trname);
-int R_GetBloodTranslation (int);
+int R_GetBloodTranslation (int Col, bool allowAdd);
+
+// returns 0 if translation cannot be created
+int R_CreateDesaturatedTranslation (int AStart, int AEnd, float rs, float gs, float bs, float re, float ge, float be);
+int R_CreateBlendedTranslation (int AStart, int AEnd, int r, int g, int b);
+int R_CreateTintedTranslation (int AStart, int AEnd, int r, int g, int b, int amount);
+
+// color 0 *WILL* be translated too!
+int R_CreateColorTranslation (const VColorRGBA newpal[256]);
+void R_GetGamePalette (VColorRGBA newpal[256]);
+void R_GetTranslatedPalette (int transnum, VColorRGBA newpal[256]);
+
 void R_ParseEffectDefs ();
 VLightEffectDef *R_FindLightEffect (VStr Name);
 
