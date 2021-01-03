@@ -482,6 +482,7 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
       int id = AddSound(*sc->String, -1);
       sc->Expect("{");
       while (!sc->Check("}")) {
+        if (sc->AtEnd()) break;
         sc->ExpectString();
         int sfxto = FindOrAddSound(*sc->String);
         list.Append(sfxto);
@@ -712,26 +713,48 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
       TLocation sloc = sc->GetLoc();
       // new sound
       sc->ExpectString();
-      if (**sc->String == '$') sc->Error(va("Unknown command (%s)", *sc->String));
+      if (sc->String.length() && **sc->String == '$') sc->Error(va("Unknown command (%s)", *sc->String));
       VName TagName(*sc->String);
       //sc->ExpectName();
       sc->ExpectString(); // allow full pathes here
-      // try file name
-      int lump = FindSoundFile(sc->String);
-      /*
-      if (sc->String.length() > 8 || sc->String.indexOf("/") >= 0) {
-        if (lump >= 0) GCon->Logf(NAME_Debug, "sound '%s' is '%s' (%s)", *TagName, *W_FullLumpName(lump), *sc->String);
-        else GCon->Logf(NAME_Debug, "sound '%s' is FUCKAWUT '%s'", *TagName, *sc->String);
+      // gzdoomism again: this is "$random", but the sounds may not be defined yet (wtf?!)
+      if (sc->String == "{") {
+        list.Clear();
+        while (!sc->Check("}")) {
+          if (sc->AtEnd()) break;
+          sc->ExpectString();
+          int sfxto = FindOrAddSound(*sc->String);
+          list.Append(sfxto);
+        }
+        int id = AddSound(TagName, -1);
+        if (list.length() == 1) {
+          // only one sound: treat as $alias
+          S_sfx[id].Link = list[0];
+        } else if (list.length() > 1) {
+          // only add non-empty random lists
+          S_sfx[id].Link = list.length();
+          S_sfx[id].Sounds = new int[list.length()];
+          memcpy(S_sfx[id].Sounds, &list[0], sizeof(int)*list.length());
+          S_sfx[id].bRandomHeader = true;
+        }
+      } else {
+        // try file name
+        int lump = FindSoundFile(sc->String);
+        /*
+        if (sc->String.length() > 8 || sc->String.indexOf("/") >= 0) {
+          if (lump >= 0) GCon->Logf(NAME_Debug, "sound '%s' is '%s' (%s)", *TagName, *W_FullLumpName(lump), *sc->String);
+          else GCon->Logf(NAME_Debug, "sound '%s' is FUCKAWUT '%s'", *TagName, *sc->String);
+        }
+        */
+        // show warnings for non-iwads
+        if (lump < 0 && !W_IsIWADFile(fileid)) GCon->Logf(NAME_Warning, "%s: sound '%s' not found (lump '%s')", *sloc.toStringNoCol(), *TagName, *sc->String);
+        #if 1
+        AddSound(TagName, lump);
+        #else
+        int aid = AddSound(TagName, lump);
+        GCon->Logf(NAME_Debug, "SND: aid=%d; tag=<%s>; name=<%s>; lump=%d", aid, *TagName, *sc->Name, lump);
+        #endif
       }
-      */
-      // show warnings for non-iwads
-      if (lump < 0 && !W_IsIWADFile(fileid)) GCon->Logf(NAME_Warning, "%s: sound '%s' not found (%s)", *sloc.toStringNoCol(), *TagName, *sc->String);
-      #if 1
-      AddSound(TagName, lump);
-      #else
-      int aid = AddSound(TagName, lump);
-      GCon->Logf(NAME_Debug, "SND: aid=%d; tag=<%s>; name=<%s>; lump=%d", aid, *TagName, *sc->Name, lump);
-      #endif
     }
   }
   delete sc;
