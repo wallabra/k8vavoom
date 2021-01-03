@@ -114,11 +114,7 @@ float CalculateMissileAttackZOfs (class!EntityEx type) {
   if (bIsPlayer) {
     auto pex = PlayerEx(Player);
     if (!pex) return Height*0.5-(bFloorClip ? FloorClip : 0.0)+8.0-3.0; // just in case
-    if (GetCvarB('gm_fix_projectile_attack_offset_broken')) {
-      // 4 is for autoaim
-      // should we use the height at all?
-      return Height*0.5-(bFloorClip ? FloorClip : 0.0)+(type ? -type.default.Height*0.5 : pex.GetAttackZOfs-3.0);
-    } else {
+    if (GetCvarB('gm_fix_projectile_attack_offset')) {
       //return Height*0.5-(bFloorClip ? FloorClip : 0.0)+pex.GetAttackZOfs-3.0;
       auto pwn = PlayerPawn(self);
       if (pwn && type && type.default.Height > 0) {
@@ -133,6 +129,10 @@ float CalculateMissileAttackZOfs (class!EntityEx type) {
       } else {
         return Height*0.5-(bFloorClip ? FloorClip : 0.0)+pex.GetAttackZOfs-3.0;
       }
+    } else {
+      // 4 is for autoaim
+      // should we use the height at all?
+      return Height*0.5-(bFloorClip ? FloorClip : 0.0)+(type ? -type.default.Height*0.5 : pex.GetAttackZOfs-3.0);
     }
   } else {
     return Height*0.5-(bFloorClip ? FloorClip : 0.0)+8.0-3.0;

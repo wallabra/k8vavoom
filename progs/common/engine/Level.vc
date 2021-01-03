@@ -379,6 +379,10 @@ void AfterWorldTick (float DeltaTime) { /*print("AFTER: %s", DeltaTime);*/ }
 // called after `OnMapSpawn()`, `ent` is never `none`
 void OnEntitySpawned (Entity ent) {}
 
+// called after missile was spawned, `ent` is never `none`, `originator` may be `none`
+// WARNING! THIS API MAY BE CHANGED LATER!
+void OnMissileSpawned (Entity ent /*, Entity originator*/) {}
+
 // called after entity was removed from lists, and marked for deletion; `ent` is never `none`
 void OnEntityDying (Entity ent) {}
 
