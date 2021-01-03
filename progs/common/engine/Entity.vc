@@ -319,6 +319,9 @@ bool bNoTickGravLifeTime; // if `bNoTickGrav` set, perform lifetime logic
 bool bStickToFloor;
 bool bStickToCeiling;
 transient bool bDetachFromServer;
+// don't store it, because nobody cares
+// we may randomly set it on unarchiving
+transient bool bCorpseFlipped;
 
 // 0: none
 // 1: switches object to "k8vavoomInternalNoTickGrav" when it enters idle state (the one with negative duration)

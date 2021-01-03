@@ -167,6 +167,8 @@ override void Init () {
   CreateCvarBool('alternate_monster_attacks', false, "Alternate monster attacks in Hexen?", CVAR_ARCHIVE);
   CreateCvarBool('wpn_autoswitch', IsReleaseMode, "Should we autoswitch to new weapon?", CVAR_ARCHIVE);
 
+  CreateCvarBool('r_flip_corpses', false, "Randomly flip corpses?", CVAR_ARCHIVE);
+
   // debug headshots?
   CreateCvarBool('k8HSDebug', false, "Show headshots debug messages?", 0);
   CreateCvarBool('k8HSDebug_ShowFailedDamageType', false, "Show skipped damage types?", 0);

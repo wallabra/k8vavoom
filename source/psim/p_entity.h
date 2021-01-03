@@ -309,6 +309,7 @@ class VEntity : public VThinker {
     EFEX_StickToFloor     = 1u<<8u,
     EFEX_StickToCeiling   = 1u<<9u,
     EFEX_DetachFromServer = 1u<<10u, // set this flag to detach the entity from the server in network game
+    EFEX_CorpseFlipped    = 1u<<11u, // this flag is set when monster died, and need its corpse flipped
   };
   vuint32 FlagsEx;
 
@@ -656,6 +657,7 @@ public:
   // floating, flying, floatbob; used in renderer to disable sprite offset fix
   inline bool IsAnyAerial () const noexcept { return !!((EntityFlags&(EF_Float|EF_Fly))|(FlagsEx&EFEX_FloatBob)); }
   inline bool IsFloatBob () const noexcept { return !!(FlagsEx&EFEX_FloatBob); }
+  inline bool IsSpriteFlipped () const noexcept { return !!(FlagsEx&EFEX_CorpseFlipped); }
 
   enum EType {
     ET_Unknown,

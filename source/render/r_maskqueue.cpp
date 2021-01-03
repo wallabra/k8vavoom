@@ -624,8 +624,18 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   }
   */
 
-  float scaleX = max2(0.001f, thing->ScaleX/Tex->SScale);
-  float scaleY = max2(0.001f, thing->ScaleY/Tex->TScale);
+  //float scaleX = max2(0.001f, thing->ScaleX/Tex->SScale);
+  float scaleX = thing->ScaleX;
+  if (thing->IsSpriteFlipped()) scaleX = -scaleX;
+  if (scaleX < 0.0f) { scaleX = -scaleX; flip = !flip; }
+  scaleX /= Tex->SScale;
+
+  //float scaleY = max2(0.001f, thing->ScaleY/Tex->TScale);
+  float scaleY = fabsf(thing->ScaleY); // sorry, vertical flip is not working yet
+  scaleY /= Tex->TScale;
+
+  if (!isFiniteF(scaleX) || scaleX == 0.0f) return;
+  if (!isFiniteF(scaleY) || scaleY == 0.0f) return;
 
   TVec sv[4];
 

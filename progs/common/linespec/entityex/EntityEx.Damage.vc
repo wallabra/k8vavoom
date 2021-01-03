@@ -1143,12 +1143,17 @@ void Died (EntityEx source, EntityEx inflictor) {
     XLevel.StartTypedACScripts(Level::SCRIPT_Kill, 0, 0, 0, Activator:self, Always:true, RunNow:true);
   }
 
+  //FIXME: need compatibility flag
   float NewHeight = 0.0;
   if (nameEquCI(DamageType, 'Fire')) NewHeight = BurnHeight;
   if (!NewHeight) NewHeight = DeathHeight;
        if (NewHeight < 0.0) Height = 0.0;
   else if (NewHeight) Height = NewHeight;
   else Height /= 4.0;
+
+  if ((bMonster || bIsPlayer) && GetCvarB('r_flip_corpses')) {
+    bCorpseFlipped = (P_Random() >= 128);
+  }
 
   if (Special && (!bSpecial || bMonster)) {
     // initiate monster death actions

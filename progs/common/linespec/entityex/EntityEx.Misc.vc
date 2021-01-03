@@ -3895,6 +3895,7 @@ final bool DoThingRaise (optional bool skipCheckPosition) {
   float OldRadius = Radius;
   bool OldSolid = bSolid;
   bSolid = true;
+  //FIXME: need compatibility flag
   Height = default.Height;
 
   if (!skipCheckPosition) {
@@ -3918,6 +3919,7 @@ final bool DoThingRaise (optional bool skipCheckPosition) {
   Health = InitialHealth;
   Target = none;
   LastEnemy = none;
+  bCorpseFlipped = false; // unflip it
 
   // if it counts as kill, count it as another one
   if (CountsAsKill()) ++Level.TotalKills;
