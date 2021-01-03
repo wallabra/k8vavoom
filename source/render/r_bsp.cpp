@@ -464,10 +464,8 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   */
 
   // check mirror clipping plane for non-walls
-  // TODO: this is slow and ugly, and prolly not necessary at all
-  //       BSP renderer rejects whole nodes anyway
-  /*
-  if (Drawer->MirrorClip && surfaceType != SFT_Wall) {
+  // FIXME: dunno if this is really necessary
+  if (Drawer->MirrorClip && Drawer->MirrorPlane.normal.z) {
     for (const surface_t *ss = surf; ss; ss = ss->next) {
       if (ss->count < 3) continue;
       for (int f = 0; f < ss->count; ++f) {
@@ -475,7 +473,6 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       }
     }
   }
-  */
 
   // sky/skybox/stacked sector rendering
 
