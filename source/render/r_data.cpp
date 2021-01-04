@@ -902,6 +902,7 @@ void R_GetGamePalette (VColorRGBA newpal[256]) {
 //==========================================================================
 void R_GetTranslatedPalette (int transnum, VColorRGBA newpal[256]) {
   if (!newpal) return;
+#ifdef CLIENT
   VTextureTranslation *tr = R_GetCachedTranslation(transnum, GLevel);
   if (!tr) {
     R_GetGamePalette(newpal);
@@ -915,6 +916,12 @@ void R_GetTranslatedPalette (int transnum, VColorRGBA newpal[256]) {
     // just in case
     newpal[0].r = newpal[0].g = newpal[0].b = newpal[0].a = 0;
   }
+#else
+  // FIXME: do we need any translations on server?
+  //        anyway, API doesn't guarantee that translation request will succeed,
+  //        so this result is valid too
+  R_GetGamePalette(newpal);
+#endif
 }
 
 
