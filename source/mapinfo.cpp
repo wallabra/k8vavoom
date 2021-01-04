@@ -856,10 +856,10 @@ MAPINFOCMD(sky1) {
 MAPINFOCMD(sky2) {
   wasSky1Sky2 |= WSK_WAS_SKY2;
   if (newFormat) sc->Expect("=");
-  sc->ExpectName8();
+  sc->ExpectName();
   //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, false);
   //info->SkyBox = NAME_None; //k8:required or not???
-  info->Sky2Texture = loadSkyTexture(sc, sc->Name8);
+  info->Sky2Texture = loadSkyTexture(sc, sc->Name);
   info->Sky2ScrollDelta = 0;
   if (newFormat) {
     if (!sc->IsAtEol()) {
