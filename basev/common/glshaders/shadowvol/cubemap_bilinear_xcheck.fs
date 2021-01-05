@@ -17,10 +17,18 @@
   // this breaks shader requirements about texture sampling, but meh...
   #ifdef CUBE_FIX_EDGES
   if (ttexX+tshift2 > 1.0) {
+    #ifdef CUBE_FIX_EDGES_BAD_GUESS
+    valdiag = valhoriz = valat;
+    #else
     valdiag = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_diag), orgDist);
     valhoriz = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_horiz), orgDist);
+    #endif
     if (ttexY+tshift2 > 1.0) {
+      #ifdef CUBE_FIX_EDGES_BAD_GUESS
+      valvert = valat;
+      #else
       valvert = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_vert), orgDist);
+      #endif
     } else {
       // overflow: only x
       float vc1 = 2.0*(cctexY0+1.5)/CubeSize-1.0;
@@ -37,8 +45,12 @@
     }
   } else if (ttexY+tshift2 > 1.0) {
     // overflow: only y
+    #ifdef CUBE_FIX_EDGES_BAD_GUESS
+    valvert = valdiag = valat;
+    #else
     valvert = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_vert), orgDist);
     valdiag = compareShadowTexelDistance(CUBE_FIX_EDGES_norm(ltf_diag), orgDist);
+    #endif
 
     float uc1 = 2.0*(cctexX0+1.5)/CubeSize-1.0;
 

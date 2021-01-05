@@ -71,6 +71,9 @@
         #define orgDist  origDist
         // this fixes checks on cube edges
         #define CUBE_FIX_EDGES
+        // my edge fixing algo is totally wrong (see cube faces to understand why)
+        // use "valat" at edge instead for now
+        #define CUBE_FIX_EDGES_BAD_GUESS
         //#define CUBE_FIX_EDGES_norm(v_)  v_
         #define CUBE_FIX_EDGES_norm(v_)  normalize(v_)
 
