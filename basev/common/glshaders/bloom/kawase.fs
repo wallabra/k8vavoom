@@ -13,10 +13,12 @@ uniform sampler2D TextureSource;
 
 
 void main () {
-  gl_FragColor =
+  // .a should be 1.0 here, otherwise unrendered parts will be grayed
+  vec4 clr =
     (texture2D(TextureSource, TexCoord1)+
      texture2D(TextureSource, TexCoord2)+
      texture2D(TextureSource, TexCoord3)+
      texture2D(TextureSource, TexCoord4))/4.0;
+  gl_FragColor = vec4(clr.rgb, 1.0);
   //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

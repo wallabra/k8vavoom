@@ -10,5 +10,7 @@ varying vec2 TextureCoordinate;
 
 
 void main () {
-  gl_FragColor = pow(texture2D(TextureSource, TextureCoordinate.st), Exponent);
+  // .a should be 1.0 here, otherwise unrendered parts will be grayed
+  vec4 clr = pow(texture2D(TextureSource, TextureCoordinate.st), Exponent);
+  gl_FragColor = vec4(clr.rgb, 1.0);
 }
