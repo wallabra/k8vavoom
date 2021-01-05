@@ -551,49 +551,12 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
       }
       //if ((self isa 'DoomImpBall') && !Level.Game.IsAuthority) printdebug("%C:101: org=%s; vel=%s", self, Origin, Velocity);
       if (tmtrace.BlockingMobj) {
-        //if (GetCvarB('k8ExplodeMissleTest')) print("MOBJ!");
         //if (self isa 'DoomImpBall') printdebug("%C:600: ouid=%s; tuid=%s; muid=%s; truid=%s; org=%s; vel=%s; hitobj=%C (%s : %s)", self, OwnerSUId, TargetSUId, MasterSUId, TracerSUId, Origin, Velocity, tmtrace.BlockingMobj, tmtrace.BlockingMobj.UniqueId, tmtrace.BlockingMobj.ServerUId);
         HitMobj(tmtrace.BlockingMobj, ptryx, ptryy);
       } else {
-        /*
-        if (GetCvarB('k8ExplodeMissleTest')) {
-          print("LINE! (%d)", tmtrace.SpecHit.Length);
-          if (!tmtrace.BlockingLine) print("*** BUT NO LINE!");
-          if (!tmtrace.AnyBlockingLine) print("*** BUT NO ANY-LINE!");
-          if (!tmtrace.AnyBlockingLine) {
-            if (tmtrace.CeilingLine) print("      CEILING LINE IS HERE!");
-            if (tmtrace.FloorLine) print("      FLOOR LINE IS HERE!");
-            if (tmtrace.CeilingLine == tmtrace.FloorLine && tmtrace.FloorLine) print("      FLOOR AND CEILING LINE IS THE SAME!");
-          }
-        }
-        */
-        /*
-        if (!tmtrace.BlockingLine && !tmtrace.AnyBlockingLine) {
-          tmtrace_t tr2;
-          if (CheckRelPosition(out tr2, vector(ptryx, ptryy, Origin.z))) {
-            print("second trace returned TRUE!: l:%s; al:%s", (tr2.BlockingLine ? "tan" : "ona"), (tr2.AnyBlockingLine ? "tan" : "ona"));
-          } else {
-            print("second trace returned FALSE!: l:%s; al:%s", (tr2.BlockingLine ? "tan" : "ona"), (tr2.AnyBlockingLine ? "tan" : "ona"));
-          }
-        }
-        */
         if (forceSlide) {
           if (absoluteSlide) {
             //k8: this is absolutely wrong! but without this, idiotic Boom transporters won't make objects slide
-            /*
-            TVec oldvel = Velocity;
-            TVec scvel = vector(ScrollX/DeltaTime, ScrollY/DeltaTime);
-            Velocity += scvel;
-            //if (bIsPlayer) printdebug("%C: 00: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
-            HitLine(ref tmtrace, DeltaTime/float(Steps), true, OldSector:OldSector);
-            //if (bIsPlayer) printdebug("%C: 01: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
-            Velocity -= scvel;
-            //if (bIsPlayer) printdebug("%C: 02: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
-            // don't thrust back
-            if (fsign(Velocity.x) != fsign(oldvel.x)) Velocity.x = 0;
-            if (fsign(Velocity.y) != fsign(oldvel.y)) Velocity.y = 0;
-            //if (bIsPlayer) printdebug("%C: 03: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
-            */
             tmp_transporter_velocity = vector(ScrollX/DeltaTime, ScrollY/DeltaTime);
             HitLine(ref tmtrace, DeltaTime, DeltaTime/float(Steps), forceSlide:true, OldSector:OldSector);
             tmp_transporter_velocity = vector(0, 0, 0);
@@ -608,7 +571,7 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
       }
       return;
     }
-  } //while (Step++ < Steps);
+  }
 
   if (DecalName && (bDecals2SPass || bDecalsOnly2S)) {
     //print("tracing decal '%s' (pass)", DecalName);
@@ -642,9 +605,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ, float OldFloorNZ, sector
       if (!bNoGravity) {
         float grav = (Gravity*Level.Gravity*(WaterLevel < 2 ? Sector->Gravity : Sector->Gravity/10.0))/1.220703125; // 9.8 (1053.52)
         if (grav.isinf) grav = 1000;
-        //float xmass = (Mass.isinf ? 10000.0 : fmax(1, Mass));
         float xmass = fmax(1, Mass);
-        //print("WL=%s; grav=%s; Gravity=%s, LGravity=%s; SGravity=%s; mass=%s; vz=%s", WaterLevel, grav, Gravity, Level.Gravity, Sector->Gravity, xmass, Velocity.z);
         float prevVelZ = Velocity.z;
         if (!prevVelZ && OldFloorZ > FloorZ && wasonground) grav += grav;
         if (WaterLevel >= 2) grav /= 10.0;
@@ -653,7 +614,6 @@ final void ZMovement (float DeltaTime, float OldFloorZ, float OldFloorNZ, sector
         // check if we're on the same slope
         if (wasonground && prevVelZ <= 0 && OldFloorNZ != 1.0 && EFloor.spGetNormalZ == OldFloorNZ) {
           //if (bIsPlayer) printdebug("%C: same slope (down)!", self);
-          //Velocity.z = 0; //fmax(0.0, Velocity.z);
           oldz = FloorZ;
           Origin.z = oldz;
         }
@@ -669,12 +629,6 @@ final void ZMovement (float DeltaTime, float OldFloorZ, float OldFloorNZ, sector
       }
     }
   }
-
-  #ifdef CLIENT
-  //printdebug("%C: physics tick! (noint=%B) gravity=%s; delta=%s; vel=%s; levgrav=%s", self, bNoInteraction, Gravity, DeltaTime, Velocity, Level.Gravity);
-  #endif
-
-  //if (bFloatBob && bSpecial) printdebug("%C:%s: velocity.z=%s; nograv=%B; z=%s; floorz=%s", self, UniqueId, Velocity.z, bNoGravity, Origin.z, FloorZ);
 
   // check for smooth step up
   if (bIsPlayer && oldz < FloorZ) {
@@ -694,7 +648,6 @@ final void ZMovement (float DeltaTime, float OldFloorZ, float OldFloorNZ, sector
   // k8: nope, floatbob is affected by gravity too
   /*if (!bFloatBob)*/ Origin.z += Velocity.z*DeltaTime;
   float origz = Origin.z;
-  //!if (bIsPlayer && Velocity.z) printdebug("%C: vz=%s", self, Velocity.z);
 
   if (bFloat && !bDormant && Target) {
     // float down towards enemy if too close
@@ -723,7 +676,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ, float OldFloorNZ, sector
   }
 
   if (bIsPlayer && bFly && origz > FloorZ /*&& (XLevel.TicTime&2)*/) {
-    //FIXME: this is time-dependent, rewrite!
+    //FIXME: this is time-dependent, rewrite! (it was)
     //Origin.z += sin(90.0*35.0/20.0*AngleMod360(int(XLevel.Time)))/2.0;
     auto plx = PlayerEx(Player);
     if (plx && !(plx.Cheats&PlayerEx::CF_NOCLIP)) {
@@ -784,20 +737,13 @@ final void HitLine (ref tmtrace_t tmtrace, float DeltaTime, float StepVelScale, 
   }
 
   if (bMissile) {
-    /*
-    if (bMissile) {
-      printdebug("%C: HitLine: z=%s; floorz=%s; hit=%B", self, Origin.z, FloorZ, (Origin.z <= FloorZ+0.1));
-      if (tmtrace.BlockingLine) printdebug("%C:   BlockingLine=%s", self, tmtrace.BlockingLine-&XLevel.Lines[0]);
-      if (tmtrace.CeilingLine) printdebug("%C:   CeilingLine=%s", self, tmtrace.CeilingLine-&XLevel.Lines[0]);
-      if (tmtrace.FloorLine) printdebug("%C:   FloorLine=%s", self, tmtrace.CeilingLine-&XLevel.Lines[0]);
-      printdebug("%C:   EFloor=%s", self, spGetPointZ(ref tmtrace.EFloor, Origin));
-      printdebug("%C:   ECeiling=%s", self, spGetPointZ(ref tmtrace.ECeiling, Origin));
-      printdebug("%C:   FloorZ=%s", self, tmtrace.FloorZ);
-      printdebug("%C:   CeilingZ=%s", self, tmtrace.CeilingZ);
-      printdebug("%C:   hit=%B", self, (Origin.z <= tmtrace.FloorZ+0.1));
+    if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon) {
+      SightSound = '';
+      Destroy();
+      return;
     }
-    */
-    // explode a missile
+
+    // explode a missile against sky ceilings
     if (tmtrace.CeilingLine && tmtrace.CeilingLine->backsector &&
         tmtrace.CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
     {
@@ -822,23 +768,17 @@ final void HitLine (ref tmtrace_t tmtrace, float DeltaTime, float StepVelScale, 
       }
     }
 
-    if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon) {
-      SightSound = '';
-      Destroy();
-      return;
-    }
-
-    // explode a missile
-    if (tmtrace.CeilingLine && tmtrace.CeilingLine->backsector &&
-        tmtrace.CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
+    // explode a missile against sky floors
+    if (tmtrace.FloorLine && tmtrace.FloorLine->backsector &&
+        tmtrace.FloorLine->backsector->ceiling.pic == Level.Game.skyflatnum)
     {
       // hack to prevent missiles exploding against the sky
       // does not handle sky floors
-      float pf = tmtrace.CeilingLine->frontsector->floor.maxz;
-      float pb = tmtrace.CeilingLine->backsector->floor.maxz;
+      float pf = tmtrace.FloorLine->frontsector->floor.maxz;
+      float pb = tmtrace.FloorLine->backsector->floor.maxz;
       bool hitsky = true;
       if (pf != pb) {
-        int siden = PointOnPlaneSide(Origin-Velocity*2, ref *tmtrace.CeilingLine);
+        int siden = PointOnPlaneSide(Origin-Velocity*2, ref *tmtrace.FloorLine);
         if (!siden) {
           hitsky = (pf < pb && tmtrace.End.z > pb);
         } else {
@@ -846,7 +786,7 @@ final void HitLine (ref tmtrace_t tmtrace, float DeltaTime, float StepVelScale, 
         }
       }
       if (hitsky) {
-             if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0);
+             if (bBounceSky) Velocity = vector(0.0, 0.0, 1.0*35.0);
         else if (bExplodeOnSky) ExplodeMissile(none);
         else Destroy();
         return;
@@ -862,23 +802,14 @@ final void HitLine (ref tmtrace_t tmtrace, float DeltaTime, float StepVelScale, 
           return;
         }
 
-        //printdebug("%C:%s:000: wall bounce; vel=%s; minspd=%s; count=%s; line=%s", self, UniqueId, Velocity/35.0, (fmax(1, Mass)*Gravity)/64.0, BounceCount, (tmtrace.BlockingLine ? tmtrace.BlockingLine-&XLevel.Lines[0] : -1));
         BounceWall(DeltaTime, tmtrace.BlockingLine, BOUNCE_VAL, WallBounceFactor);
         if (!bNoBounceSound && !bNoWallBounceSnd && (BounceSound || SightSound)) {
           PlaySound((BounceSound ? BounceSound : SightSound), CHAN_VOICE);
         }
         // wall bouncing never changes `Velocity.z`, so there is no need to check for stop here
-        //printdebug("%C:%s:001: wall bounce; vel=%s; minspd=%s; count=%s", self, UniqueId, Velocity/35.0, (fmax(1, Mass)*Gravity)/64.0, BounceCount);
         return;
       }
     }
-
-    /*
-    if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon) {
-      if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0); else Destroy();
-      return;
-    }
-    */
 
     line_t *hitline = tmtrace.BlockingLine;
     if (!hitline) hitline = tmtrace.CeilingLine;
@@ -1075,11 +1006,9 @@ final bool HitFloor (float prevz, sector_t *OldSector) {
   if (vdot < -0.1) {
     // spawn splashes, etc
     //if (bIsPlayer) printdebug("000: %C: Velocity=%s; vdot=%s", self, Velocity, vdot);
-    // do not spawn excessive splashes if not moving
     HitFloorType(justLanded);
     if (!Inventory(self) && nameicmp(DamageType, 'Ice') == 0 && /*vdot*/Velocity.z < -DEFAULT_GRAVITY*0.25) {
       StateTime = 0.1;
-      //Velocity = vector(0.0, 0.0, 0.0);
       Velocity.z = 0.0;
       return false;
     }
@@ -1100,25 +1029,10 @@ final bool HitFloor (float prevz, sector_t *OldSector) {
       }
     }
     if (!bSkullFly && Velocity.z < 0.0) Velocity.z = 0.0;
-    /*
-    if (!bSkullFly) {
-      if (fnorm.z != 1.0) {
-        TVec Vel = vdot*fnorm;
-        if (Vel.z > 0) Velocity.z -= Vel.z;
-      } else {
-        if (Velocity.z < 0) Velocity.z = 0;
-      }
-    }
-    */
     //if (bIsPlayer) printdebug("001: %C: Velocity=%s; vdot=%s", self, Velocity, vdot);
   } else {
     if (!bSkullFly && Velocity.z < 0.0) Velocity.z = 0.0;
   }
-  /*
-  else {
-    if (bIsPlayer) printdebug("***: %C: Velocity=%s; vdot=%s", self, Velocity, vdot);
-  }
-  */
 
   if (bSkullFly) {
     // the skull slammed into something
@@ -1175,7 +1089,7 @@ final bool HitCeiling (float prevz, sector_t *OldSector) {
 
   if (bSkullFly) {
     // the skull slammed into something
-    Velocity.z = -Velocity.z;
+    Velocity.z = -fabs(Velocity.z);
   }
 
   return true;
@@ -1219,6 +1133,7 @@ void FlatBounceMissile (TVec norm) {
 
   if (bBounceLikeHeretic || (BounceType == BOUNCE_Heretic && !bMBFBounce)) {
     Velocity -= 2.0*(vdot*norm);
+    if (fsign(Velocity.z) != fsign(norm.z)) Velocity.z = -Velocity.z; // ensure that it is bounced in the right direction
     Angles.yaw = atan2(Velocity.y, Velocity.x);
     SetState(FindState('Death'));
     return;
@@ -1239,6 +1154,8 @@ void FlatBounceMissile (TVec norm) {
   if (!bNoBounceSound && (BounceSound || SightSound)) {
     PlaySound(BounceSound ? BounceSound : SightSound, CHAN_VOICE);
   }
+
+  if (fsign(Velocity.z) != fsign(norm.z)) Velocity.z = -Velocity.z; // ensure that it is bounced in the right direction
 
   if (bMBFBounce) {
     if (fabs(Velocity.z) < (fmax(1, Mass)*Gravity)/64.0*35.0) {
@@ -1285,7 +1202,7 @@ void FloorBounceMissile () {
 //  CeilingBounceMissile
 //
 //==========================================================================
-final void CeilingBounceMissile () {
+void CeilingBounceMissile () {
   FlatBounceMissile(ECeiling.spGetNormal());
 }
 
@@ -1295,7 +1212,7 @@ final void CeilingBounceMissile () {
 //  GetReflectedAngle
 //
 //==========================================================================
-final float GetReflectedAngle (EntityEx Other) {
+float GetReflectedAngle (EntityEx Other) {
   if (Other.bDontReflect) return -1.0;
 
   if (bAimReflect && Other.Target && Other.Target != Other) {
@@ -1339,7 +1256,7 @@ final float GetReflectedAngle (EntityEx Other) {
 //  Crash
 //
 //==========================================================================
-final void Crash () {
+void Crash () {
   if (bCorpse && !bCrashed && !nameEquCI(DamageType, 'Ice')) {
     state CrashState = FindState('Crash', DamageType, false); // non-exact
     if (CrashState) {
@@ -1355,7 +1272,7 @@ final void Crash () {
 //  PlayerLandedOnThing
 //
 //===========================================================================
-final void PlayerLandedOnThing () {
+void PlayerLandedOnThing () {
   auto pex = PlayerEx(Player);
   if (pex && pex.MO == self) pex.DeltaViewHeight = Velocity.z/8.0;
   FallingDamage();
@@ -1384,7 +1301,7 @@ final void PlayerLandedOnThing () {
 //  FallingDamage
 //
 //==========================================================================
-final void FallingDamage () {
+void FallingDamage () {
   //print("fdam: %B %B %B", Level.bFallingDamage, Level.bOldFallingDamage, Level.bStrifeFallingDamage);
   int damage;
   float dist;
@@ -1435,7 +1352,7 @@ final void FallingDamage () {
 //  MonsterFallingDamage
 //
 //==========================================================================
-final void MonsterFallingDamage () {
+void MonsterFallingDamage () {
   int damage;
   float mom;
 
@@ -1460,7 +1377,7 @@ final void MonsterFallingDamage () {
 //  ResetBlasted
 //
 //==========================================================================
-final void ResetBlasted () {
+void ResetBlasted () {
   bBlasted = false;
   if (!bIceCorpse) bSlide = false;
 }
@@ -1497,7 +1414,7 @@ void CheckSplash (float distance) {
 //  HitFloorType
 //
 //==========================================================================
-final bool HitFloorType (optional bool justLanded) {
+bool HitFloorType (optional bool justLanded) {
   // things that don't splash go here
   if (bFloatBob || bNoSplash) return false;
   if (!Level.Game.IsAuthority) return false;
@@ -1605,7 +1522,7 @@ final bool HitFloorType (optional bool justLanded) {
 //  GetFloorType
 //
 //===========================================================================
-final VTerrainInfo *GetFloorType () {
+VTerrainInfo *GetFloorType () {
   return TerrainType(EFloor.splane->pic);
 }
 
@@ -1791,7 +1708,7 @@ override void ApplyFriction (float DeltaTime) {
 //  GetFriction
 //
 //===========================================================================
-final float GetFriction () {
+float GetFriction () {
   if (WaterLevel > 1) return FRICTION_WATER;
   if (bFly && Origin.z > FloorZ && !bOnMobj) return FRICTION_FLY;
   if (Sector && (Sector->special&SECSPEC_BASE_MASK) == SECSPEC_FrictionLow) return FRICTION_LOW;
