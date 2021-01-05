@@ -98,6 +98,8 @@ public:
 
   static void UnpressAll ();
 
+  virtual void UnpressAllInternal () = 0;
+
   static VInputPublic *Create ();
 };
 

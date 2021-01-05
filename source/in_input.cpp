@@ -74,6 +74,8 @@ public:
   virtual bool HasClipboardText () override;
   virtual VStr GetClipboardText () override;
 
+  virtual void UnpressAllInternal () override;
+
 private:
   VInputDevice *Device;
 
@@ -85,6 +87,9 @@ private:
   }
 
   bool lastWasGameBinding = false;
+
+  // "unpress all keys" should perform unpress bindings
+  vuint8 keysPressed[256];
 
 public:
   struct Binding {
@@ -317,6 +322,7 @@ bool VInputPublic::KBCheatProcessor (event_t *ev) {
 //==========================================================================
 void VInputPublic::UnpressAll () {
   UnpressAllButtons();
+  if (GInput) GInput->UnpressAllInternal();
 }
 
 
@@ -330,6 +336,7 @@ VInput::VInput () : Device(0) {
   memset((void *)&KeyBindingsStrife[0], 0, sizeof(KeyBindingsStrife[0]));
   memset((void *)&KeyBindingsNonStrife[0], 0, sizeof(KeyBindingsNonStrife[0]));
   memset((void *)&ModKeyBindingsActive[0], 0, sizeof(ModKeyBindingsActive[0]));
+  memset(keysPressed, 0, sizeof(keysPressed));
 }
 
 
@@ -340,6 +347,30 @@ VInput::VInput () : Device(0) {
 //==========================================================================
 VInput::~VInput () {
   Shutdown();
+}
+
+
+//==========================================================================
+//
+//  VInput::UnpressAllInternal
+//
+//==========================================================================
+void VInput::UnpressAllInternal () {
+  for (int f = 1; f < 256; ++f) {
+    if (keysPressed[f]) {
+      keysPressed[f] = 0;
+      VStr kb = getBinding(false, f);
+      //GCon->Logf(NAME_Debug, "UNPRESS KEY %s is %s; action is '%s'", *GInput->KeyNameForNum(f), "up", *kb);
+      if (kb.IsNotEmpty()) {
+        if (kb[0] == '+' || kb[0] == '-') {
+          // button commands add keynum as a parm
+          if (kb.length() > 1) GCmdBuf << kb << " " << VStr(f) << "\n";
+        } else {
+          GCmdBuf << kb << "\n";
+        }
+      }
+    }
+  }
 }
 
 
@@ -571,6 +602,8 @@ void VInput::ProcessEvents () {
     // alt key state
     if (ev.keycode == K_RALT) { if (ev.type == ev_keydown) AltDown |= 1; else AltDown &= ~1; }
     if (ev.keycode == K_LALT) { if (ev.type == ev_keydown) AltDown |= 2; else AltDown &= ~2; }
+
+    if ((ev.type == ev_keydown || ev.type == ev_keyup) && (ev.keycode > 0 && ev.keycode < 256)) keysPressed[ev.keycode&0xff] = (ev.type == ev_keydown);
 
     // initial network client data transmit?
     bool initNetClient = (CL_GetNetState() == CLState_Init);
