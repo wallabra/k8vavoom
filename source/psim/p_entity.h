@@ -164,7 +164,8 @@ struct VDamageColorType {
 
 // ////////////////////////////////////////////////////////////////////////// //
 //WARNING: sync this with VC code!
-#define PHYS_MAXMOVE  (1050.0f*10.0f)
+#define PHYS_MAXMOVE  (1050.0f*30.0f)  /* this is rougly equal to 900 in Vanilla speed */
+
 
 class VEntity : public VThinker {
   DECLARE_CLASS(VEntity, VThinker, 0)
@@ -706,7 +707,7 @@ public:
   bool TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly=false, bool noPickups=false);
   VEntity *TestMobjZ (const TVec &);
   void SlideMove (float StepVelScale, bool noPickups=false);
-  void BounceWall (float, float);
+  void BounceWall (float DeltaTime, const line_t *blockline, float overbounce, float bouncefactor);
   void UpdateVelocity (float DeltaTime, bool allowSlopeFriction);
   TVec FakeZMovement ();
   VEntity *CheckOnmobj ();

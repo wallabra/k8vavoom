@@ -31,6 +31,8 @@
 //#define PHYSICS_VELOCITY_CHECKS
 //#define ENABLE_LINGUORTALS
 
+const float DOOM_BOUNCE_STOP_VEL = 2.5/*3.0*/*35.0;
+
 
 //==========================================================================
 //
@@ -379,7 +381,7 @@ bool Physics (float DeltaTime) {
       Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
     }
     bIntrJustMoved = false; // disable movement interpolation
-  } else if (Velocity.z < 0 && Origin.z == FloorZ) {
+  } else if (Velocity.z < 0 && Origin.z == FloorZ && !bBounceFloors) {
     // do not accumulate it
     Velocity.z = 0;
   }
@@ -531,10 +533,8 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
   float StepXMove = xmove/float(Steps);
   float StepYMove = ymove/float(Steps);
 
-  //if ((self isa 'DoomImpBall') && !Level.Game.IsAuthority) printdebug("%C:100: org=%s; vel=%s", self, Origin, Velocity);
-  //int Step = 1;
   TVec oldOrigin = Origin;
-  foreach (; 0..Steps) {
+  foreach (auto snum; 0..Steps) {
     float ptryx = Origin.x+StepXMove;
     float ptryy = Origin.y+StepYMove;
 
@@ -595,15 +595,15 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
             //if (bIsPlayer) printdebug("%C: 03: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
             */
             tmp_transporter_velocity = vector(ScrollX/DeltaTime, ScrollY/DeltaTime);
-            HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:true, OldSector:OldSector);
+            HitLine(ref tmtrace, DeltaTime, DeltaTime/float(Steps), forceSlide:true, OldSector:OldSector);
             tmp_transporter_velocity = vector(0, 0, 0);
           } else {
             tmp_transporter_velocity = vector(0, 0, 0);
-            HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:true, OldSector:OldSector);
+            HitLine(ref tmtrace, DeltaTime, DeltaTime/float(Steps), forceSlide:true, OldSector:OldSector);
           }
         } else {
           //tmp_transporter_velocity = vector(0, 0, 0); // just in case
-          HitLine(ref tmtrace, DeltaTime/float(Steps), forceSlide:false, OldSector:OldSector);
+          HitLine(ref tmtrace, DeltaTime, DeltaTime/float(Steps), forceSlide:false, OldSector:OldSector);
         }
       }
       return;
@@ -660,7 +660,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ, float OldFloorNZ, sector
       }
     } else if (wasonground && oldz < FloorZ) {
       //!if (bIsPlayer) printdebug("%C: UP delta=%s; vz=%s; normz=%s", self, FloorZ-oldz, Velocity.z, EFloor.spGetNormalZ);
-      Velocity.z = fmax(0.0, Velocity.z);
+      if (!bBounceFloors) Velocity.z = fmax(0.0, Velocity.z);
       // check if we're on the same slope
       if (!Velocity.z && OldFloorNZ != 1.0 && EFloor.spGetNormalZ == OldFloorNZ) {
         //if (bIsPlayer) printdebug("%C: same slope (up)!", self);
@@ -760,7 +760,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ, float OldFloorNZ, sector
 //  in any case
 //
 //==========================================================================
-final void HitLine (ref tmtrace_t tmtrace, float StepVelScale, bool forceSlide, sector_t *OldSector) {
+final void HitLine (ref tmtrace_t tmtrace, float DeltaTime, float StepVelScale, bool forceSlide, sector_t *OldSector) {
   // it may hit a sloped 3d floor
   if (!bNoInteraction && !tmtrace.BlockingLine && bMissile && SectorHas3DSlopes(Sector)) {
     //printdebug("%C: z=%s; FloorZ=%s; CeilingZ=%s; hitf=%B; hitc=%B", self, Origin.z, tmtrace.FloorZ, tmtrace.CeilingZ, (Origin.z <= tmtrace.FloorZ+0.1), (Origin.z+Height > tmtrace.CeilingZ));
@@ -797,51 +797,34 @@ final void HitLine (ref tmtrace_t tmtrace, float StepVelScale, bool forceSlide, 
       printdebug("%C:   hit=%B", self, (Origin.z <= tmtrace.FloorZ+0.1));
     }
     */
-    if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) {
-      // if number of bounces is limited
-      if (BounceCount > 0 && --BounceCount <= 0) {
-        ExplodeMissile(none, line:tmtrace.BlockingLine);
+    // explode a missile
+    if (tmtrace.CeilingLine && tmtrace.CeilingLine->backsector &&
+        tmtrace.CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
+    {
+      // hack to prevent missiles exploding against the sky
+      // does not handle sky floors
+      float pf = tmtrace.CeilingLine->frontsector->floor.maxz;
+      float pb = tmtrace.CeilingLine->backsector->floor.maxz;
+      bool hitsky = true;
+      if (pf != pb) {
+        int siden = PointOnPlaneSide(Origin-Velocity*2, ref *tmtrace.CeilingLine);
+        if (!siden) {
+          hitsky = (pf < pb && tmtrace.End.z > pb);
+        } else {
+          hitsky = (pb < pf && tmtrace.End.z > pf);
+        }
+      }
+      if (hitsky) {
+             if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0);
+        else if (bExplodeOnSky) ExplodeMissile(none);
+        else Destroy();
         return;
       }
+    }
 
-      // explode a missile
-      if (tmtrace.CeilingLine && tmtrace.CeilingLine->backsector &&
-          tmtrace.CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
-      {
-        // hack to prevent missiles exploding against the sky
-        // does not handle sky floors
-        float pf = tmtrace.CeilingLine->frontsector->floor.maxz;
-        float pb = tmtrace.CeilingLine->backsector->floor.maxz;
-        bool hitsky = true;
-        if (pf != pb) {
-          int siden = PointOnPlaneSide(Origin-Velocity*2, ref *tmtrace.CeilingLine);
-          if (!siden) {
-            hitsky = (pf < pb && tmtrace.End.z > pb);
-          } else {
-            hitsky = (pb < pf && tmtrace.End.z > pf);
-          }
-        }
-        if (hitsky) {
-               if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0);
-          else if (bExplodeOnSky) ExplodeMissile(none);
-          else Destroy();
-          return;
-        }
-      }
-
-      if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon) {
-        SightSound = '';
-        Destroy();
-        return;
-      }
-
-      // struck a wall
-      if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) {
-        BounceWall(BOUNCE_VAL, WallBounceFactor);
-        if (!bNoBounceSound && !bNoWallBounceSnd && (BounceSound || SightSound)) {
-          PlaySound((BounceSound ? BounceSound : SightSound), CHAN_VOICE);
-        }
-      }
+    if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon) {
+      SightSound = '';
+      Destroy();
       return;
     }
 
@@ -870,10 +853,32 @@ final void HitLine (ref tmtrace_t tmtrace, float StepVelScale, bool forceSlide, 
       }
     }
 
+    if (tmtrace.BlockingLine) {
+      // struck a wall
+      if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) {
+        // if number of bounces is limited
+        if (BounceCount > 0 && --BounceCount <= 0) {
+          ExplodeMissile(none, line:tmtrace.BlockingLine);
+          return;
+        }
+
+        //printdebug("%C:%s:000: wall bounce; vel=%s; minspd=%s; count=%s; line=%s", self, UniqueId, Velocity/35.0, (fmax(1, Mass)*Gravity)/64.0, BounceCount, (tmtrace.BlockingLine ? tmtrace.BlockingLine-&XLevel.Lines[0] : -1));
+        BounceWall(DeltaTime, tmtrace.BlockingLine, BOUNCE_VAL, WallBounceFactor);
+        if (!bNoBounceSound && !bNoWallBounceSnd && (BounceSound || SightSound)) {
+          PlaySound((BounceSound ? BounceSound : SightSound), CHAN_VOICE);
+        }
+        // wall bouncing never changes `Velocity.z`, so there is no need to check for stop here
+        //printdebug("%C:%s:001: wall bounce; vel=%s; minspd=%s; count=%s", self, UniqueId, Velocity/35.0, (fmax(1, Mass)*Gravity)/64.0, BounceCount);
+        return;
+      }
+    }
+
+    /*
     if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon) {
       if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0); else Destroy();
       return;
     }
+    */
 
     line_t *hitline = tmtrace.BlockingLine;
     if (!hitline) hitline = tmtrace.CeilingLine;
@@ -1010,7 +1015,6 @@ final void HitMobj (Entity Other, float ptryx, float ptryy) {
 //
 //==========================================================================
 final bool HitFloor (float prevz, sector_t *OldSector) {
-
   // trigger hit floor sector actions
   // k8: trigger always, or only when just landed? it was always
   if (Sector && OldSector != Sector && Sector->ActionList && GetPointZClamped(ref Sector->floor, Origin) == FloorZ) {
@@ -1184,11 +1188,73 @@ final bool HitCeiling (float prevz, sector_t *OldSector) {
 //
 //==========================================================================
 void TurnOffAllBouncingFlags () {
+  BounceType = BOUNCE_None;
+  bBounceSky = false;
   bBounceWalls = false;
   bBounceFloors = false;
   bBounceCeilings = false;
   bBounceOnActors = false;
   bBounceOnAllActors = false;
+  bBounceLikeHeretic = false;
+}
+
+
+//==========================================================================
+//
+//  FlatBounceMissile
+//
+//  common missile bounce code for floors and ceilings
+//
+//==========================================================================
+void FlatBounceMissile (TVec norm) {
+  // if number of bounces is limited
+  if (BounceCount > 0 && --BounceCount <= 0) {
+    ExplodeMissile(none);
+    return;
+  }
+
+  //printdebug("%C:%s:000: flat bounce (%s), count=%s; vel=%s; minz=%s", self, UniqueId, norm, BounceCount, Velocity, (fmax(1, Mass)*Gravity)/64.0*35.0);
+  float vdot = DotProduct(Velocity, norm);
+  //if (self isa 'CryBallMini') printdebug("%C:%s: FlatBounceMissile:000: vel=%s : org=%s : norm=%s : vdot=%s", self, UniqueId, Velocity, Origin, norm, vdot);
+
+  if (bBounceLikeHeretic || (BounceType == BOUNCE_Heretic && !bMBFBounce)) {
+    Velocity -= 2.0*(vdot*norm);
+    Angles.yaw = atan2(Velocity.y, Velocity.x);
+    SetState(FindState('Death'));
+    return;
+  }
+
+  if (bMBFBounce) {
+    Velocity -= 2.0*(vdot*norm);
+    Velocity.z = Velocity.z*BounceFactor;
+    Angles.yaw = atan2(Velocity.y, Velocity.x);
+  } else {
+    //Velocity = (Velocity-(2.0*(vdot*norm)))*BounceFactor;
+    Velocity -= 2.0*(vdot*norm);
+    Velocity.z *= BounceFactor;
+    Angles.yaw = atan2(Velocity.y, Velocity.x);
+  }
+
+  // play bounce sound
+  if (!bNoBounceSound && (BounceSound || SightSound)) {
+    PlaySound(BounceSound ? BounceSound : SightSound, CHAN_VOICE);
+  }
+
+  if (bMBFBounce) {
+    if (fabs(Velocity.z) < (fmax(1, Mass)*Gravity)/64.0*35.0) {
+      // bring it to rest below a certain speed
+      Velocity.z = 0.0;
+    }
+  } else {
+    //printdebug("%C:%s:001: flat bounce (%s), count=%s; vel=%s; minz=%s", self, UniqueId, norm, BounceCount, Velocity, (fmax(1, Mass)*Gravity)/64.0*35.0);
+    //if (self isa 'CryBallMini') printdebug("%C:%s: FlatBounceMissile:001: vel=%s : org=%s : norm=%s : vdot=%s", self, UniqueId, Velocity, Origin, norm, vdot);
+    if (bBounceAutoOff || BounceType == BOUNCE_Doom) {
+      if (!bNoGravity && Velocity.z < DOOM_BOUNCE_STOP_VEL) {
+        TurnOffAllBouncingFlags(); // otherwise it will bounce forever
+      }
+    }
+  }
+  //if (self isa 'CryBallMini') printdebug("%C:%s: FlatBounceMissile:002: vel=%s : org=%s : norm=%s : vdot=%s", self, UniqueId, Velocity, Origin, norm, vdot);
 }
 
 
@@ -1198,8 +1264,6 @@ void TurnOffAllBouncingFlags () {
 //
 //==========================================================================
 void FloorBounceMissile () {
-  float vdot;
-
   if (HitFloorType()) {
     // landed on some kind of liquid
     if (bExplodeOnWater) {
@@ -1212,55 +1276,7 @@ void FloorBounceMissile () {
     }
   }
 
-  // if number of bounces is limited
-  if (BounceCount > 0 && --BounceCount <= 0) {
-    ExplodeMissile(none);
-    return;
-  }
-
-  vdot = DotProduct(Velocity, EFloor.spGetNormal());
-
-  if (bBounceLikeHeretic || (BounceType == BOUNCE_Heretic && !bMBFBounce)) {
-    Velocity -= 2.0*(vdot*EFloor.spGetNormal());
-    Angles.yaw = atan2(Velocity.y, Velocity.x);
-    SetState(FindState('Death'));
-    return;
-  }
-
-  if (bMBFBounce) {
-    Velocity = Velocity-(2.0*(vdot*EFloor.spGetNormal()));
-    Velocity.z = Velocity.z*BounceFactor;
-    Angles.yaw = atan2(Velocity.y, Velocity.x);
-  } else {
-    Velocity = (Velocity-(2.0*(vdot*EFloor.spGetNormal())))*BounceFactor;
-    Angles.yaw = atan2(Velocity.y, Velocity.x);
-  }
-
-  // put it to rest, or...
-  /*if (fabs(Velocity.z) <= 0.1) {
-    Velocity.z = 0;
-  } else*/ {
-    // ...play bounce sound
-    if (!bNoBounceSound && (BounceSound || SightSound)) {
-      PlaySound(BounceSound ? BounceSound : SightSound, CHAN_VOICE);
-    }
-  }
-
-  if (bMBFBounce) {
-    if (Velocity.z < (fmax(1, Mass)*Gravity)/64.0) {
-      // bring it to rest below a certain speed
-      Velocity.z = 0.0;
-    }
-  }
-
-  //print("%C: bBounceFloors=%B; bBounceAutoOff=%B; bNoGravity=%B; Velocity.z=%s; btype=%s", self, bBounceFloors, bBounceAutoOff, bNoGravity, Velocity.z, BounceType);
-  //print("%C: Mass=%s; Gravity=%s; Velocity.z=%s; lim=%s", self, Mass, Gravity, Velocity.z, (Mass*Gravity)/64.0);
-  if (bBounceAutoOff || BounceType == BOUNCE_Doom) {
-    if (!bNoGravity && Velocity.z < 2.5/*3.0*/*35.0) {
-      BounceType = BOUNCE_None;
-      TurnOffAllBouncingFlags(); // otherwise it will bounce forever
-    }
-  }
+  FlatBounceMissile(EFloor.spGetNormal());
 }
 
 
@@ -1270,50 +1286,7 @@ void FloorBounceMissile () {
 //
 //==========================================================================
 final void CeilingBounceMissile () {
-  float vdot;
-
-  // if number of bounces is limited
-  if (BounceCount > 0 && --BounceCount <= 0) {
-    ExplodeMissile(none);
-    return;
-  }
-
-  vdot = DotProduct(Velocity, ECeiling.spGetNormal());
-
-  if (bBounceLikeHeretic || (BounceType == BOUNCE_Heretic && !bMBFBounce)) {
-    Velocity -= 2.0*(vdot*ECeiling.spGetNormal());
-    Angles.yaw = atan2(Velocity.y, Velocity.x);
-    SetState(FindState('Death'));
-    return;
-  }
-
-  // reverse momentum here for ceiling bounce
-  if (bMBFBounce) {
-    Velocity = Velocity-(2.0*(vdot*ECeiling.spGetNormal()));
-    Velocity.z = Velocity.z*BounceFactor;
-    Angles.yaw = atan2(Velocity.y, Velocity.x);
-  } else {
-    Velocity = (Velocity-(2.0*(vdot*ECeiling.spGetNormal())))*BounceFactor;
-    Angles.yaw = atan2(Velocity.y, Velocity.x);
-  }
-
-  if (!bNoBounceSound && (BounceSound || SightSound)) {
-    PlaySound(BounceSound ? BounceSound : SightSound, CHAN_VOICE);
-  }
-
-  if (bMBFBounce) {
-    if (Velocity.z < (fmax(1, Mass)*Gravity/64.0)) {
-      // bring it to rest below a certain speed
-      Velocity.z = 0.0;
-    }
-  }
-
-  if (bBounceAutoOff || BounceType == BOUNCE_Doom) {
-    if (!bNoGravity && Velocity.z < 2.5/*3.0*/*35.0) {
-      BounceType = BOUNCE_None;
-      TurnOffAllBouncingFlags(); // otherwise it will bounce forever
-    }
-  }
+  FlatBounceMissile(ECeiling.spGetNormal());
 }
 
 

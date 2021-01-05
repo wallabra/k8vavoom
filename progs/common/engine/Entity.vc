@@ -535,7 +535,7 @@ native final bool TestMobjZ ();
 
 // `noPickups` means "don't activate specials" too
 native final void SlideMove (float StepVelScale, optional bool noPickups/*=false*/);
-native final void BounceWall (float overbounce, float bouncefactor);
+native final void BounceWall (float DeltaTime, const line_t *blockline, float overbounce, float bouncefactor);
 
 // this sets `WaterLevel` and `WaterType`
 native final void CheckWater ();
