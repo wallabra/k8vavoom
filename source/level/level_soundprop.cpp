@@ -182,7 +182,7 @@ void VLevel::doRecursiveSound (TArray<VEntity *> &elist, sector_t *sec, int soun
   // wake up all monsters in this sector
   if (!sec || (sec->validcount == validcount && sec->soundtraversed <= soundblocks+1)) return; // already flooded
 
-  GCon->Log(NAME_Debug, "=== sound propagation ===");
+  //GCon->Log(NAME_Debug, "=== sound propagation ===");
 
   if (maxdist < 0.0f) maxdist = 0.0f;
   if (gm_compat_max_hearing_distance.asFloat() > 0.0f && (maxdist == 0.0f || maxdist > gm_compat_max_hearing_distance.asFloat())) {
