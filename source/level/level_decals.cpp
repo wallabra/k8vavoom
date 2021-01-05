@@ -820,7 +820,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
 //==========================================================================
 void VLevel::AddDecal (TVec org, VName dectype, int side, line_t *li, int level, int translation) {
   if (!r_decals) return;
-  if (!li || dectype == NAME_None) return; // just in case
+  if (!li || dectype == NAME_None || VStr::strEquCI(*dectype, "none")) return; // just in case
 
   //GCon->Logf(NAME_Debug, "%s: oorg:(%g,%g,%g); org:(%g,%g,%g)", *dectype, org.x, org.y, org.z, li->landAlongNormal(org).x, li->landAlongNormal(org).y, li->landAlongNormal(org).z);
 
