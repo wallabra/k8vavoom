@@ -154,12 +154,12 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
       opening_t *open = SV_LineOpenings(line, hitpoint, trace.PlaneNoBlockFlags&SPF_FLAG_MASK);
       if (dbg_bsp_trace_strict_flats) {
         while (open) {
-          if (open->bottom < hitpoint.z && open->top > hitpoint.z) return true;
+          if (open->range > 0.0f && open->bottom < hitpoint.z && open->top > hitpoint.z) return true;
           open = open->next;
         }
       } else {
         while (open) {
-          if (open->bottom <= hitpoint.z && open->top >= hitpoint.z) return true;
+          if (open->range > 0.0f && open->bottom <= hitpoint.z && open->top >= hitpoint.z) return true;
           open = open->next;
         }
       }

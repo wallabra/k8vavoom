@@ -575,12 +575,12 @@ final EntityEx CheckLineAttackWithCB (TVec dir, float distance, bool delegate (E
       if (li->flags&ML_TWOSIDED) {
         // crosses a two sided line
         opening_t *open;
-        float opentop = 0.0;
+        float opentop = -float.max;
 
         open = LineOpenings(li, hit_point, SPF_NOBLOCKING|SPF_NOBLOCKSHOOT);
         if (open) opentop = open->top;
         while (open) {
-          if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
+          if (open->range > 0.0 && open->bottom <= hit_point.z && open->top >= hit_point.z) {
             if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN))) break; // shot continues
           }
           open = open->next;

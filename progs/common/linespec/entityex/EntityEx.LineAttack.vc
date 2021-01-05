@@ -194,12 +194,12 @@ override Entity PickActor (optional TVec org, TVec dir, float distance, optional
       if (li->flags&ML_TWOSIDED) {
         // crosses a two sided line
         opening_t *open;
-        float opentop = 0.0;
+        float opentop = -float.max;
 
         open = LineOpenings(li, hit_point, SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT);
         if (open) opentop = open->top;
         while (open) {
-          if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
+          if (open->range > 0.0 && open->bottom <= hit_point.z && open->top >= hit_point.z) {
             //if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN))) break; // shot continues
             if (!(li->flags&wallMask)) {
               // shot continues
@@ -423,7 +423,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
       } else*/ {
         if (li->flags&ML_TWOSIDED) {
           // crosses a two sided line
-          float opentop = 0.0;
+          float opentop = -float.max;
 
           opening_t *open = LineOpenings(li, hit_point, SPF_NOBLOCKING, stopat3dmidtex);
           if (open) {
@@ -456,7 +456,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
           if (open) opentop = open->top;
           while (open) {
             //!opentop = fmax(opentop, open->top);
-            if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
+            if (open->range > 0.0 && open->bottom <= hit_point.z && open->top >= hit_point.z) {
               if (!(li->flags&ML_BLOCKEVERYTHING)) break; // shot continues
             }
             open = open->next;
@@ -587,7 +587,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec aangles, float distance,
       //open = FindOpening(open, hit_point.z, hit_point.z);
       open = FindLineOpening(li, hit_point, 0, SPF_NOBLOCKING|SPF_NOBLOCKSHOOT);
 
-      if (!open || open->bottom >= open->top) break; // stop
+      if (!open || open->range <= 0.0) break; // stop
 
       dist = aim_range2d*in->frac;
 
@@ -886,12 +886,12 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
       if (li->flags&ML_TWOSIDED) {
         // crosses a two sided line
         opening_t *open;
-        float opentop = 0.0;
+        float opentop = -float.max;
 
         open = LineOpenings(li, hit_point, SPF_NOBLOCKING|SPF_NOBLOCKSHOOT);
         if (open) opentop = open->top;
         while (open) {
-          if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
+          if (open->range > 0.0 && open->bottom <= hit_point.z && open->top >= hit_point.z) {
             if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN))) break; // shot continues
           }
           open = open->next;
@@ -1104,12 +1104,12 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
       if (li->flags&ML_TWOSIDED) {
         // crosses a two sided line
         opening_t *open;
-        float opentop = 0.0;
+        float opentop = -float.max;
 
         open = LineOpenings(li, hit_point, SPF_NOBLOCKING|SPF_NOBLOCKSHOOT);
         if (open) opentop = open->top;
         while (open) {
-          if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
+          if (open->range > 0.0 && open->bottom <= hit_point.z && open->top >= hit_point.z) {
             if (!(li->flags&ML_BLOCKEVERYTHING)) break; // shot continues
           }
           open = open->next;

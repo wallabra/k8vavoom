@@ -345,7 +345,7 @@ void SV_Init () {
     if (developer) GCon->Logf(NAME_Dev, "spawned base player object for player #%d, with actual class <%s>", i, *GPlayersBase[i]->GetClass()->GetFullName());
   }
 
-  GGameInfo->validcount = &validcount;
+  //GGameInfo->validcount = &validcount;
   GGameInfo->skyflatnum = skyflatnum; // this should be fixed after mapinfo parsing
 
   SV_ReplaceCustomDamageFactors();

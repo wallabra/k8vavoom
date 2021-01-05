@@ -49,7 +49,7 @@ readonly bool bMouseLookDisabled;
 readonly bool bCrouchDisabled;
 readonly bool bJumpDisabled;
 
-readonly int *validcount;
+//readonly int *validcount;
 readonly int skyflatnum;
 
 readonly WorldInfo WorldInfo;

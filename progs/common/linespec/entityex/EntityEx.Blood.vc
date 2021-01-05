@@ -269,7 +269,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
           open = LineOpenings(li, hit_point);
           if (open) opentop = open->top;
           while (open) {
-            if (open->bottom <= hit_point.z-12 && open->top >= hit_point.z+12) {
+            if (open->range > 0.0 && open->bottom <= hit_point.z-12 && open->top >= hit_point.z+12) {
               break; // shot continues
             }
             open = open->next;

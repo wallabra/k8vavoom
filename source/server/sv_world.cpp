@@ -692,13 +692,13 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
 //
 //  4. if there is no gaps which the thing could fit in, do the same.
 //
-//  Returns the gap number, or -1 if there are no gaps at all.
+//  Can return `nullptr`
 //
 //==========================================================================
 opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
   // check for trivial gaps
   if (!InGaps) return nullptr;
-  if (!InGaps->next) return InGaps;
+  if (!InGaps->next) return (InGaps->range > 0.0f ? InGaps : nullptr);
 
   int fit_num = 0;
   opening_t *fit_last = nullptr;
@@ -711,6 +711,7 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
 
   // there are 2 or more gaps; now it gets interesting :-)
   for (opening_t *gap = InGaps; gap; gap = gap->next) {
+    if (gap->range <= 0.0f) continue;
     const float f = gap->bottom;
     const float c = gap->top;
 
@@ -764,8 +765,15 @@ opening_t *SV_FindRelOpening (opening_t *InGaps, float z1, float z2) {
 
   const float zmid = z1+(z2-z1)*0.5f;
 
+  opening_t *zerogap = nullptr;
+
   // there are 2 or more gaps; now it gets interesting :-)
   for (opening_t *gap = InGaps; gap; gap = gap->next) {
+    if (gap->range <= 0.0f) {
+      if (!zerogap) zerogap = gap;
+      continue;
+    }
+
     const float f = gap->bottom;
     const float c = gap->top;
 
@@ -792,7 +800,7 @@ opening_t *SV_FindRelOpening (opening_t *InGaps, float z1, float z2) {
     }
   }
 
-  return (fit_closest ? fit_closest : nofit_closest ? nofit_closest : InGaps);
+  return (fit_closest ? fit_closest : nofit_closest ? nofit_closest : zerogap ? zerogap : InGaps);
 }
 
 

@@ -34,7 +34,7 @@ static VCvarB dbg_disable_sound_alert("dbg_disable_sound_alert", false, "Disable
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// intersector sound propagation code
+// inter-sector sound propagation code
 // moved here 'cause levels like Vela Pax with ~10000 interconnected sectors
 // causes a huge slowdown on shooting
 // will be moved back to VM when i'll implement JIT compiler
@@ -53,7 +53,7 @@ static TMapNC<VEntity *, bool> recSoundSectorSeenEnts;
 
 //==========================================================================
 //
-//  VLevel::processRecursiveSoundSectorList
+//  VLevel::processSoundSector
 //
 //==========================================================================
 void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, sector_t *sec, int soundblocks, VEntity *soundtarget, float maxdist, const TVec sndorigin) {
@@ -61,7 +61,8 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
 
   // `validcount` and other things were already checked in caller
   // also, caller already set `soundtraversed` and `SoundTarget`
-  if (maxdist <= 0) maxdist = 0; else maxdist *= maxdist; // squared
+  if (maxdist <= 0.0f) maxdist = 0.0f; else maxdist *= maxdist; // squared
+  const bool distUnlim = (maxdist == 0.0f);
 
   unsigned hmask = 0/*, exmask = VEntity::EFEX_NoInteraction*/;
   if (!gm_compat_everything_can_hear) {
@@ -76,7 +77,7 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
     if ((Ent->EntityFlags&hmask)|(Ent->FlagsEx&VEntity::EFEX_NoInteraction)) continue;
     if (Ent == soundtarget) continue; // skip target
     // check max distance
-    if (maxdist > 0 && length2DSquared(sndorigin-Ent->Origin) > maxdist) continue;
+    if (!distUnlim && length2DSquared(sndorigin-Ent->Origin) > maxdist) continue;
     if (!recSoundSectorSeenEnts.put(Ent, true)) {
       // register for processing
       elist.append(Ent);
@@ -86,12 +87,19 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
   line_t **slinesptr = sec->lines;
   for (int i = sec->linecount; i--; ++slinesptr) {
     const line_t *check = *slinesptr;
+
+    // ignore one-sided lines
     if (check->sidenum[1] == -1 || !(check->flags&ML_TWOSIDED)) continue;
 
     // early out for intra-sector lines
     if (check->frontsector == check->backsector) continue;
 
     /*
+    if (check->validcount == validcount) continue;
+    check->validcount = validcount;
+    */
+
+    /* check for closed door
     if (!SV_LineOpenings(check, *check->v1, 0xffffffff)) {
       if (!SV_LineOpenings(check, *check->v2, 0xffffffff)) {
         // closed door
@@ -104,7 +112,7 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
     if (!other) continue; // just in case
 
     bool addIt = false;
-    int sblock;
+    int sblock = 0;
 
     if (check->flags&ML_SOUNDBLOCK) {
       if (!soundblocks) {
@@ -121,17 +129,36 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
     if (addIt) {
       // don't add one sector several times
       if (other->validcount == validcount && other->soundtraversed <= sblock+1) continue; // already flooded
-      // set flags
-      other->validcount = validcount;
-      other->soundtraversed = sblock+1;
-      other->SoundTarget = soundtarget;
       // moved door check here, because why not?
-      if (!SV_LineOpenings(check, *check->v1, 0xffffffff)) {
-        if (!SV_LineOpenings(check, *check->v2, 0xffffffff)) {
+      opening_t *op = SV_LineOpenings(check, *check->v1, 0xffffffff);
+      while (op && op->range <= 0.0f) op = op->next;
+      if (!op) {
+        op = SV_LineOpenings(check, *check->v2, 0xffffffff);
+        while (op && op->range <= 0.0f) op = op->next;
+        if (!op) {
           // closed door
           continue;
         }
       }
+      #if 0
+      GCon->Logf(NAME_Debug, "  sound to sector: scount=%d; from sector=%d; sector=%d from line %d", sblock, (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(other-&Sectors[0]), (int)(ptrdiff_t)(check-&Lines[0]));
+      /*
+      op = SV_LineOpenings(check, *check->v1, 0xffffffff);
+      if (op) {
+        GCon->Log(NAME_Debug, "    v1 openinigs:");
+        for (; op; op = op->next) GCon->Logf(NAME_Debug, "      range=%g; top=%g; bottom=%g; lowfloor=%g; highceiling=%g", op->range, op->top, op->bottom, op->lowfloor, op->highceiling);
+      }
+      op = SV_LineOpenings(check, *check->v2, 0xffffffff);
+      if (op) {
+        GCon->Log(NAME_Debug, "    v2 openinigs:");
+        for (; op; op = op->next) GCon->Logf(NAME_Debug, "      range=%g; top=%g; bottom=%g; lowfloor=%g; highceiling=%g", op->range, op->top, op->bottom, op->lowfloor, op->highceiling);
+      }
+      */
+      #endif
+      // set flags
+      other->validcount = validcount;
+      other->soundtraversed = sblock+1;
+      other->SoundTarget = soundtarget;
       // add to processing list
       SoundSectorListItem &sl = recSoundSectorList.alloc();
       sl.sec = other;
@@ -143,15 +170,24 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
 
 //==========================================================================
 //
-//  RecursiveSound
+//  VLevel::doRecursiveSound
 //
 //  Called by NoiseAlert. Recursively traverse adjacent sectors, sound
 //  blocking lines cut off traversal.
 //
 //==========================================================================
-void VLevel::doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_t *sec, int soundblocks, VEntity *soundtarget, float maxdist, const TVec sndorigin) {
+void VLevel::doRecursiveSound (TArray<VEntity *> &elist, sector_t *sec, int soundblocks, VEntity *soundtarget, float maxdist, const TVec sndorigin) {
+  IncrementValidCount();
+
   // wake up all monsters in this sector
   if (!sec || (sec->validcount == validcount && sec->soundtraversed <= soundblocks+1)) return; // already flooded
+
+  GCon->Log(NAME_Debug, "=== sound propagation ===");
+
+  if (maxdist < 0.0f) maxdist = 0.0f;
+  if (gm_compat_max_hearing_distance.asFloat() > 0.0f && (maxdist == 0.0f || maxdist > gm_compat_max_hearing_distance.asFloat())) {
+    maxdist = gm_compat_max_hearing_distance.asFloat();
+  }
 
   sec->validcount = validcount;
   sec->soundtraversed = soundblocks+1;
@@ -160,9 +196,6 @@ void VLevel::doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_
   recSoundSectorList.resetNoDtor();
   recSoundSectorSeenEnts.reset();
   processSoundSector(validcount, elist, sec, soundblocks, soundtarget, maxdist, sndorigin);
-
-  if (maxdist < 0) maxdist = 0;
-  if (gm_compat_max_hearing_distance > 0 && (maxdist == 0 || maxdist > gm_compat_max_hearing_distance)) maxdist = gm_compat_max_hearing_distance;
 
   // don't use `foreach` here!
   int rspos = 0;
@@ -173,22 +206,22 @@ void VLevel::doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_
   }
 
   //if (recSoundSectorList.length > 1) print("RECSOUND: len=%d", recSoundSectorList.length);
-  recSoundSectorList.resetNoDtor();
-  recSoundSectorSeenEnts.reset();
+  //recSoundSectorList.resetNoDtor();
+  //recSoundSectorSeenEnts.reset();
 }
 
 
-//native final void doRecursiveSound (int validcount, ref array!Entity elist, sector_t *sec, int soundblocks, Entity soundtarget, float maxdist, const TVec sndorigin);
+//native final void doRecursiveSound (ref array!Entity elist, sector_t *sec, int soundblocks, Entity soundtarget, float maxdist, const TVec sndorigin);
 IMPLEMENT_FUNCTION(VLevel, doRecursiveSound) {
-  P_GET_VEC(sndorigin);
-  P_GET_FLOAT(maxdist);
-  P_GET_PTR(VEntity, soundtarget);
-  P_GET_INT(soundblocks);
-  P_GET_PTR(sector_t, sec);
-  P_GET_PTR(TArray<VEntity *>, elist);
-  P_GET_INT(validcount);
-  P_GET_SELF;
+  int soundblocks;
+  TArray<VEntity *> *elist;
+  sector_t *sec;
+  VEntity *soundtarget;
+  float maxdist;
+  TVec sndorigin;
+  vobjGetParamSelf(elist, sec, soundblocks, soundtarget, maxdist, sndorigin);
+  elist->resetNoDtor();
   if (!dbg_disable_sound_alert) {
-    Self->doRecursiveSound(validcount, *elist, sec, soundblocks, soundtarget, maxdist, sndorigin);
+    Self->doRecursiveSound(*elist, sec, soundblocks, soundtarget, maxdist, sndorigin);
   }
 }

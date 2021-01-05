@@ -971,7 +971,7 @@ private:
   void PostProcessForDecals ();
 
   void processSoundSector (int validcount, TArray<VEntity *> &elist, sector_t *sec, int soundblocks, VEntity *soundtarget, float maxdist, const TVec sndorigin);
-  void doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_t *sec, int soundblocks, VEntity *soundtarget, float maxdist, const TVec sndorigin);
+  void doRecursiveSound (TArray<VEntity *> &elist, sector_t *sec, int soundblocks, VEntity *soundtarget, float maxdist, const TVec sndorigin);
 
   void eventAfterLevelLoaded () {
     static VMethodProxy method("AfterLevelLoaded");

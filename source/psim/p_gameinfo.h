@@ -58,7 +58,7 @@ class VGameInfo : public VGameObject {
   // the following flags are valid only for `NM_Client`
   vuint32 clientFlags; // see `CLF_XXX`
 
-  vint32 *validcount;
+  //vint32 *validcount;
   vint32 skyflatnum;
 
   VWorldInfo *WorldInfo;
