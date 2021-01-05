@@ -147,12 +147,28 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
     org.z += Height*0.5;
     float rad = fmax(1.0, Radius);
     //printdebug("%C: MISSILE DECAL %s: (side:%d:%d) vel:(%f,%f,%f)", self, DecalName, PointOnPlaneSide(org, *line), PointOnPlaneSide(org-savedVelocity, *line), savedVelocity.x, savedVelocity.y, savedVelocity.z);
+    //printdebug("%C: MISSILE DECAL %s: vel:(%f,%f,%f)", self, DecalName, savedVelocity.x, savedVelocity.y, savedVelocity.z);
     if (!TraceSplat(org-dir, dir, rad+16.0, &tr, 0, DecalName, atranslation:(bCopyBloodTranslation ? Translation : 0))) {
-      if (!line && dir.z) {
+      bool doNextTrace = true;
+      if (line && Velocity.xy) {
+        //printdebug("%C: MISSILE DECAL %s: (side:%d:%d) vel:(%f,%f,%f)", self, DecalName, PointOnPlaneSide(org, *line), PointOnPlaneSide(org-savedVelocity, *line), savedVelocity.x, savedVelocity.y, savedVelocity.z);
+        TVec ndir = vector(fsign(Velocity.x), fsign(Velocity.y)).normalise;
+        if (TraceSplat(org-ndir, ndir, rad+16.0, &tr, 0, DecalName, atranslation:(bCopyBloodTranslation ? Translation : 0))) {
+          doNextTrace = false;
+        }
+      }
+      if (doNextTrace && !line && dir.z) {
         //printdebug("%C: secondary trace", self);
         dir.z = 0;
         dir = dir.normalise;
-        TraceSplat(org-dir, dir, rad+16.0, &tr, 0, DecalName, atranslation:(bCopyBloodTranslation ? Translation : 0));
+        if (TraceSplat(org-dir, dir, rad+16.0, &tr, 0, DecalName, atranslation:(bCopyBloodTranslation ? Translation : 0))) {
+          doNextTrace = false;
+        }
+      }
+      if (line && doNextTrace) {
+        //printdebug("%C: MISSILE DECAL %s: (side:%d:%d) vel:(%f,%f,%f)", self, DecalName, PointOnPlaneSide(org, *line), PointOnPlaneSide(org-savedVelocity, *line), savedVelocity.x, savedVelocity.y, savedVelocity.z);
+        TVec ndir = -line->normal;
+        TraceSplat(org-ndir, ndir, rad+16.0, &tr, 0, DecalName, atranslation:(bCopyBloodTranslation ? Translation : 0));
       }
     }
   }
