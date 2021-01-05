@@ -617,7 +617,7 @@ void VInput::ProcessEvents () {
         //VStr kb;
         //if (isAllowed(ev.keycode&0xff)) kb = (ev.type == ev_keydown ? KeyBindingsDown[ev.keycode&0xff] : KeyBindingsUp[ev.keycode&0xff]);
         VStr kb = getBinding((ev.type == ev_keydown), ev.keycode&0xff);
-        //GCon->Logf("KEY %s is %s; action is '%s'", *GInput->KeyNameForNum(ev.keycode&0xff), (ev.type == ev_keydown ? "down" : "up"), *kb);
+        //GCon->Logf(NAME_Debug, "KEY %s is %s; action is '%s'", *GInput->KeyNameForNum(ev.keycode&0xff), (ev.type == ev_keydown ? "down" : "up"), *kb);
         if (kb.IsNotEmpty()) {
           if (kb[0] == '+' || kb[0] == '-') {
             // button commands add keynum as a parm
