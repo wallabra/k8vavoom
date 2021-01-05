@@ -538,7 +538,7 @@ VVA_CHECKRESULT int BoxOnLineSide2D (const float tmbox[4], TVec v1, TVec v2) noe
       p1 ^= 1;
       p2 ^= 1;
     }
-  } else if (dir.y/dir.x > 0) {
+  } else if (dir.y*dir.x >= 0.0f) {
     TPlane lpl;
     lpl.SetPointDirXY(v1, dir);
     // positive
@@ -552,8 +552,7 @@ VVA_CHECKRESULT int BoxOnLineSide2D (const float tmbox[4], TVec v1, TVec v2) noe
     p2 = lpl.PointOnSide(TVec(tmbox[BOX2D_LEFT], tmbox[BOX2D_BOTTOM], 0));
   }
 
-  if (p1 == p2) return p1;
-  return -1;
+  return (p1 == p2 ? p1 : -1);
 }
 
 

@@ -336,3 +336,22 @@ static inline VVA_OKUNUSED float VectorAnglePitch (const TVec &vec) noexcept {
 bool ProjectPointOnPlane (TVec &dst, const TVec &p, const TVec &normal) noexcept;
 
 void PerpendicularVector (TVec &dst, const TVec &src) noexcept; // assumes "src" is normalised
+
+
+// origin is center
+static inline VVA_OKUNUSED void Create2DBBox (float box[4], const TVec &origin, float radius) noexcept {
+  box[BOX2D_MAXY] = origin.y+radius;
+  box[BOX2D_MINY] = origin.y-radius;
+  box[BOX2D_MINX] = origin.x-radius;
+  box[BOX2D_MAXX] = origin.x+radius;
+}
+
+// origin is center, bottom
+static inline VVA_OKUNUSED void Create3DBBox (float box[6], const TVec &origin, float radius, float height) noexcept {
+  box[BOX3D_MINX] = origin.x-radius;
+  box[BOX3D_MINY] = origin.y-radius;
+  box[BOX3D_MINZ] = origin.z;
+  box[BOX3D_MAXX] = origin.x+radius;
+  box[BOX3D_MAXY] = origin.y+radius;
+  box[BOX3D_MAXZ] = origin.z+height;
+}
