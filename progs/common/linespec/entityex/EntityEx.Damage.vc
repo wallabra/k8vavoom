@@ -196,12 +196,11 @@ bool K8HS_CheckHeadshot (EntityEx inflictor, TVec hitpos, int damage, name adama
 //==========================================================================
 int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageType, bool secondary) {
   if (damage <= 0) return damage;
+
   // is it from player?
   if (!inflictor) return damage;
-
-  PlayerPawn plr = none;
+  PlayerPawn plr;
   bool fromMissile = false;
-
   if (!inflictor.bIsPlayer) {
     if (!inflictor.bMissile) return damage;
     //if (inflictor.Target) printdebug("%C: %C (%C)", inflictor, PlayerEx(inflictor.Target), PlayerPawn(inflictor.Target));
@@ -210,8 +209,6 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
   } else {
     plr = PlayerPawn(inflictor);
   }
-
-  //if (!inflictor.bIsPlayer) return damage;
   if (!plr) return damage;
 
   if (!GetCvarB('k8HSEnabled')) return damage;
@@ -233,15 +230,7 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
     }
   }
 
-  //PlayerPawn plr = PlayerPawn(inflictor);
-
   //if (k8CheckBoolCVar('k8HSShowKnownDamage', debugme)) printdebug("K8HS: damage type '%s', damage=%s", adamageType, damage);
-
-  //int vicHealth = Health; // current health
-  //int vicSpHealth = InitialHealth; // spawning health (i.e. full health for monsters)
-  //int vicMass = Mass;
-  //float vicRadius = Radius;
-  //float vicHgt = Height;
 
   if (debugme) printdebug("InitialHealth=%s; Health=%s", InitialHealth, Health);
 
@@ -256,75 +245,50 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
     if (fastdamage > 0) return fastdamage;
   }
 
+  // when we last fired?
+  int ticdiff = XLevel.TicTime-(fromMissile ? plr.k8hsLastMissileTicTime : plr.k8hsLastHitscanTicTime);
+
+  // process refires (very fast firing)
   int refire = 0;
-  /*if (plr.Player)*/ {
-    // force our timeout-based refire
-    //refire = PlayerEx(plr.Player).Refire;
-    //if (!refire)
-    {
-      if (fromMissile) {
-        int tdiff = XLevel.TicTime-plr.k8hsLastMissileTicTime;
-        if (tdiff > 0) {
-          if (tdiff < 30) ++plr.k8hsLastMissileRefire; else plr.k8hsLastMissileRefire = 0;
-          refire = plr.k8hsLastMissileRefire;
-          if (debugme) printdebug("%C: missile refire: %s (%s : %s) diff=%s", inflictor, refire, plr.k8hsLastMissileTicTime, XLevel.TicTime, tdiff);
-        }
-      } else {
-        int tdiff = XLevel.TicTime-plr.k8hsLastHitscanTicTime;
-        if (tdiff > 0) {
-          if (tdiff < 30) ++plr.k8hsLastHitscanRefire; else plr.k8hsLastHitscanRefire = 0;
-          refire = plr.k8hsLastHitscanRefire;
-          if (debugme) printdebug("%C: hitscan refire: %s (%s : %s) diff=%s", inflictor, refire, plr.k8hsLastHitscanTicTime, XLevel.TicTime, tdiff);
-        }
-      }
-    }
-    /*
-    else {
-      plr.k8hsLastMissileRefire = 0;
-      plr.k8hsLastHitscanRefire = 0;
-      printdebug("%C: refire count: %s", inflictor, refire);
-    }
-    */
-    // set `refire` to:
-    //   -666: totally fucked
-    //      0: not fucked
-    //      1: slightly fucked
-    //      2: more fucked
-    //      3: even more fucked
-    if (refire > 0) {
-      if (debugme) printdebug("refire0: %s", refire);
-           if (refire >= 20) refire = -666; // totally fucked
-      else if (refire >= 16) refire = 3;
-      else if (refire >= 8) refire = 2;
-      else {
-        int rnd = P_Random();
-             if (rnd >= 200+(refire == 1 ? 10 : refire > 3 ? -10 : 0)) refire = -666; // totally fucked
-        else if (rnd >= 164) refire = 1; // slightly fucked
-        else refire = 0; // not fucked
-      }
-      if (debugme) printdebug("refire1: %s", refire);
-    }
-
-    if (refire < 0) return damage; // totally fucked
-    if (refire > 0 && P_Random() >= 255/refire) return damage; // oops
-    if (debugme) printdebug("refire2: %s", refire);
-
-    // force secondary for same-tic-shots
-    if (fromMissile) {
-      if (plr.k8hsLastMissileTicTime == XLevel.TicTime) {
-        secondary = true;
-        if (debugme) printdebug("K8HS: *** *** *** forced secondary for missile '%C'", inflictor);
-      } else {
-        if (debugme) printdebug("K8HS: *** *** *** first shot for missile '%C'", inflictor);
-      }
+  // force our timeout-based refire
+  // we can use `PlayerEx(plr.Player).Refire` here, but it is not reliable
+  // same tic is secondary, not refire
+  if (ticdiff > 0) {
+    if (ticdiff < 30) {
+      refire = (fromMissile ? ++plr.k8hsLastMissileRefire : ++plr.k8hsLastHitscanRefire);
+      if (debugme) printdebug("%C: %s refire: %s (%s : %s) diff=%s", inflictor, (fromMissile ? "missile" : "hitscan"), refire, plr.k8hsLastMissileTicTime, XLevel.TicTime, ticdiff);
     } else {
-      if (plr.k8hsLastHitscanTicTime == XLevel.TicTime) {
-        secondary = true;
-        if (debugme) printdebug("K8HS: *** *** *** forced secondary for hitscan from '%C'", inflictor);
-      } else {
-        if (debugme) printdebug("K8HS: *** *** *** first shot for hitscan from '%C'", inflictor);
-      }
+      if (fromMissile) plr.k8hsLastMissileRefire = 0; else plr.k8hsLastHitscanRefire = 0;
     }
+  }
+  // set `refire` to:
+  //   -666: totally fucked
+  //      0: not fucked
+  //      1: slightly fucked
+  //      2: more fucked (no precision shots)
+  //      3: even more fucked (no precision shots)
+  if (refire > 0) {
+    if (debugme) printdebug("refire0: %s", refire);
+         if (refire >= 16) refire = -666; // totally fucked
+    else if (refire >= 12) refire = 3;
+    else if (refire >= 6) refire = 2;
+    else {
+      int rnd = P_Random();
+           if (rnd >= 200+(refire == 1 ? 10 : refire > 3 ? -10 : 0)) refire = -666; // sometimes it is totally fucked
+      else if (rnd >= 164) refire = 1; // slightly fucked
+      else refire = 0; // not fucked
+    }
+    if (debugme) printdebug("refire1: %s", refire);
+  }
+
+  if (refire < 0) return damage; // totally fucked
+  if (refire > 0 && P_Random() >= 255/refire) return damage; // oops
+  if (debugme) printdebug("refire2: %s", refire);
+
+  // force secondary for same-tic-shots (with threshold)
+  if (!secondary && ticdiff >= 0 && ticdiff <= 1) {
+    secondary = true;
+    if (debugme) printdebug("K8HS: *** *** *** forced secondary for %s '%C'", (fromMissile ? "missile" : "hitscan"), inflictor);
   }
 
   bool showHeadshots = false;
@@ -394,35 +358,36 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
     //TODO: int tick = gametic;
     //int tick = k8hsLastHitTick+1;
 
-    if (debugme) printdebug("K8HS: len=%s; critChance=%s; hscount=%s", len, critChance, (plr ? plr.k8hsCount : -1));
-    // shotgun, etc -- multiple hitscans per one tick?
-    if (plr) {
-      if (secondary) {
-        // very rarely, shotgun can do double criticals
-        ++plr.k8hsCount;
-        if (plr.k8hsCount == 1) {
-          // second hitscan
-        } else if (plr.k8hsCount == 2) {
-          // third hitscan; 1.25 damage sometimes
-          critChance = 1;
-          if (allowCrits && Random()*100.0 > 75.0) {
-            dodmg += dodmg/4;
-            if (debugCrits) printdebug("*Critx1.25 (2); d=%s", dodmg);
-          }
-        } else {
-          // fourth and other hitscans; 1.25 damage sometimes
-          critChance = 1;
-          if (allowCrits && Random()*100.0 > 80) {
-            dodmg += dodmg/4;
-            if (debugCrits) printdebug("*Critx1.25 (3); d=%s", dodmg);
-          }
+    if (debugme) printdebug("K8HS: len=%s; critChance=%s; hscount=%s", len, critChance, plr.k8hsCount);
+    // multiple shots per one tick?
+    if (secondary) {
+      // very rarely, secondary shots can do small criticals
+      ++plr.k8hsCount;
+      if (plr.k8hsCount == 1) {
+        // second hitscan sometimes critical too (but never precision)
+        if (allowCrits && Random()*100.0 < 65.0) critChance = 1;
+      } else if (plr.k8hsCount == 2) {
+        // third hitscan; 1.8 damage sometimes
+        critChance = 1;
+        if (allowCrits && Random()*100.0 > 75.0) {
+          dodmg += int(fround(dodmg*0.8));
+          if (debugCrits) printdebug("*Critx1.8 (2); d=%s", dodmg);
         }
       } else {
-        plr.k8hsCount = 0;
+        // fourth and other hitscans; 1.25 damage sometimes
+        critChance = 1;
+        if (allowCrits && Random()*100.0 > 80) {
+          dodmg += dodmg/4;
+          if (debugCrits) printdebug("*Critx1.25 (3); d=%s", dodmg);
+        }
       }
+      // no precision shots for secondaries
+      if (precisionShot > 0) precisionShot = 0;
+    } else {
+      plr.k8hsCount = 0;
     }
 
-    int hsCount = (plr ? plr.k8hsCount : 0);
+    int hsCount = plr.k8hsCount;
     if (debugme) printdebug("K8HS: len=%s; critChance=%s; new-hscount=%s", len, critChance, hsCount);
 
     if (critChance > 13 && !GetCvarB('k8HSCriticals')) critChance = 13;
@@ -436,21 +401,23 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
            if (hsCount <= 1) critChance += 42;
       else if (hsCount <= 2) critChance += 33;
       else if (hsCount >= 8) critChance += 10;
-      else critChance += (8-hsCount)*9;
-      if (precisionShot > 0 && hsCount > 1) precisionShot = 0; // don't do it for secondary bullets
+      else critChance += max(0, (8-hsCount))*9;
     }
     if (debugme) printdebug("oldcc=%s; critChance=%s; len=%s", oldcc, critChance, len);
 
     if (precisionShot) {
       //printdebug("PREC=%s; chance-before=%s", precisionShot, critChance);
-           if (precisionShot > 1) critChance += 23;
-      else if (precisionShot > 0) critChance += 13;
-      else if (precisionShot < -1) critChance -= 23;
-      else if (precisionShot < 0) critChance -= 13;
+           if (precisionShot > 1) critChance += 23; // nailed it
+      else if (precisionShot > 0) critChance += 13; // almost
+      else if (precisionShot < -1) critChance -= 23; // very far
+      else if (precisionShot < 0) critChance -= 13; // too far
       //printdebug("  chance-after=%s", critChance);
     }
 
     if (!allowCrits) critChance = 0;
+
+    // note that `critChance` may be negative too (precision shot adjustment)
+    // currently it means nothing
 
     // create message
     bool showMessage = false;
@@ -508,7 +475,7 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
     }
 
     if (dodmg) {
-      if (showMessage && plr && plr.Player && GetCvarB('k8HSShowCriticals')) {
+      if (showMessage && plr.Player && GetCvarB('k8HSShowCriticals')) {
         // do not replace weaker critical messages
         if (plr.k8hsLastCritMsgHideTime <= XLevel.Time || plr.k8hsLastCritMsgCoeff < critCoeff) {
           plr.k8hsLastCritMsgHideTime = XLevel.Time+1.4;
