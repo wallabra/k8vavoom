@@ -1919,16 +1919,19 @@ static void ProcessSpriteClass (VClass *cls, SpriteScanInfo &ssi) {
 //  this is actually private, but meh...
 //
 //  returns number of new textures
+//  do not precache player pawn textures
 //
 //==========================================================================
 int VRenderLevelShared::CollectSpriteTextures (TArray<bool> &texturepresent) {
   // scan all thinkers, and add sprites from all states, because why not?
   VClass *eexCls = VClass::FindClass("EntityEx");
   if (!eexCls) return 0;
+  VClass *pawnCls = VClass::FindClass("PlayerPawn");
   SpriteScanInfo ssi(texturepresent);
   for (VThinker *th = Level->ThinkerHead; th; th = th->Next) {
     if (th->IsGoingToDie()) continue;
     if (!th->IsA(eexCls)) continue;
+    if (pawnCls && th->IsA(pawnCls)) continue;
     ProcessSpriteClass(th->GetClass(), ssi);
   }
   // precache gore mod sprites
