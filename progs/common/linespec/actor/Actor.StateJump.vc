@@ -211,7 +211,7 @@ final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
 
 //==========================================================================
 //
-//  A_JumpIfInventory
+//  worker_JumpIfInInventory
 //
 //==========================================================================
 final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amount, state Label) {
@@ -251,8 +251,50 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
 //==========================================================================
 [decorate] final void A_JumpIfInTargetInventory (class!Actor ItemType, int Amount, state Label, optional int aptr) {
   EntityEx tgt;
-  if (Target) tgt = EntityEx(Target.DecorDoAAPtr('A_JumpIfInventory', aptr!optional));
+  if (Target) tgt = EntityEx(Target.DecorDoAAPtr('A_JumpIfInTargetInventory', aptr!optional));
   worker_JumpIfInInventory(tgt, ItemType, Amount, Label);
+}
+
+
+//==========================================================================
+//
+//  worker_JumpIfNotInInventory
+//
+//==========================================================================
+final void worker_JumpIfNotInInventory (EntityEx tgt, class!Actor ItemType, state Label) {
+  KeepChainResult();
+  class!Inventory itp = class!Inventory(ItemType);
+
+  bool doJump = true;
+  if (itp && tgt) {
+    Inventory Item = tgt.FindInventory(itp, disableReplacement:true); //k8: i hope so
+    if (Item) doJump = (Item.Amount == 0);
+  }
+
+  if (doJump) DoJump(Label);
+}
+
+
+//==========================================================================
+//
+//  A_JumpIfNotInventory
+//
+//==========================================================================
+[decorate] final void A_JumpIfNotInventory (class!Actor ItemType, state Label, optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_JumpIfNotInventory', aptr!optional));
+  if (tgt) worker_JumpIfNotInInventory(tgt, ItemType, Label);
+}
+
+
+//==========================================================================
+//
+//  A_JumpIfNotInTargetInventory
+//
+//==========================================================================
+[decorate] final void A_JumpIfNotInTargetInventory (class!Actor ItemType, state Label, optional int aptr) {
+  EntityEx tgt;
+  if (Target) tgt = EntityEx(Target.DecorDoAAPtr('A_JumpIfNotInTargetInventory', aptr!optional));
+  if (tgt) worker_JumpIfNotInInventory(tgt, ItemType, Label);
 }
 
 
