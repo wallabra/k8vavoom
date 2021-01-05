@@ -33,6 +33,7 @@ static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false
 static VCvarB gl_camera_texture_use_readpixels("gl_camera_texture_use_readpixels", true, "Use ReadPixels to update camera textures?", CVAR_Archive);
 
 static VCvarI gl_s3tc_mode("gl_s3tc_mode", "0", "Use S3TC texture compression, if supported (0:no; 1:hires; 2:all)?", CVAR_PreInit|CVAR_Archive);
+static VCvarB gl_s3tc_dump("__gl_s3tc_dump", false, "Show which textures are compressed.", CVAR_PreInit);
 
 #ifndef COMPRESSED_RGB_S3TC_DXT1_EXT
 # define COMPRESSED_RGB_S3TC_DXT1_EXT                   0x83F0
@@ -647,7 +648,7 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bo
   int cmode = (HaveS3TC && hitype != UpTexNoCompress ? gl_s3tc_mode.asInt() : 0);
   if (cmode == 1 && hitype != UpTexHiRes) cmode = 0;
   // don't bother with small textures anyway
-  if (cmode > 0 && (width >= 256 || height >= 256)) {
+  if (cmode > 0 && (width > 256 && height > 256)) {
     // determine texture format:
     // COMPRESSED_RGB_S3TC_DXT1_EXT  -- RGB
     // COMPRESSED_RGBA_S3TC_DXT1_EXT -- RGBA with 1-bit alpha
@@ -665,7 +666,9 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bo
          if (hasMoreAlpha) internal = COMPRESSED_RGBA_S3TC_DXT3_EXT;
     else if (hasAlpha) internal = COMPRESSED_RGBA_S3TC_DXT1_EXT;
     else internal = COMPRESSED_RGB_S3TC_DXT1_EXT;
-    //GCon->Logf(NAME_Debug, "S3TC(%s): 0x%04X", *W_FullLumpName(SourceLump), internal);
+    if (gl_s3tc_dump) GCon->Logf(NAME_Debug, "S3TC(%s): 0x%04X  size: %dx%d", *W_FullLumpName(SourceLump), internal, width, height);
+  } else {
+    //if (gl_s3tc_dump) GCon->Logf(NAME_Debug, "NOS3TC(%s): size: %dx%d", *W_FullLumpName(SourceLump), width, height);
   }
 
   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
