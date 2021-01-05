@@ -636,10 +636,10 @@ final void ZMovement (float DeltaTime, float OldFloorZ, float OldFloorNZ, sector
     if (pex && pex.MO == self) {
       float dfz = FloorZ-oldz;
       // arbitrary number
-      if (dfz > 0.6 || EFloor.spGetNormalZ == 1.0) {
+      //if (/*dfz > 0.6*/ || EFloor.spGetNormalZ == 1.0)
+      {
         pex.ViewHeight -= dfz;
         pex.DeltaViewHeight = (PlayerPawn(self).GetPawnViewHeight-pex.ViewHeight)*4.0;
-        //if (EFloor.spGetNormalZ != 1.0) print("FUCK1! z=%s; fz=%s; dfz=%s; sfz=(%s:%s); dfz=%s", oldz, FloorZ, dfz, Sector.floor.minz, Sector.floor.maxz, dfz);
       }
     }
   }
