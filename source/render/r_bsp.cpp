@@ -913,8 +913,8 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
       ssurf->texinfo.Alpha = min2(plane.splane->MirrorAlpha, 1.0f);
     } else {
       // this is NOT right!
-      ssurf->texinfo.Alpha = 1.0f;
       if (plane.splane->pic) {
+        ssurf->texinfo.Alpha = 1.0f;
         //GCon->Logf("MALPHA=%f", plane.splane->MirrorAlpha);
         // darken it a little to simulate a mirror
         sec_params_t *oldRegionLightParams = secregion->params;
@@ -925,8 +925,8 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
         DrawSurfaces(sub, secregion, nullptr, ssurf->surfs, &ssurf->texinfo, SkyBox, -1, 0, false, true);
         // and resore rregion
         secregion->params = oldRegionLightParams;
-        return;
       }
+      return;
     }
   }
 
