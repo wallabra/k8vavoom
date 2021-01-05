@@ -304,8 +304,8 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
         if (position == PS_WEAPON) {
           for (int f = 0; f < NUMPSPRITES; ++f) {
             if (f != PS_WEAPON) {
-              ViewStates[f].SX = ViewStates[PS_WEAPON].SX;
-              ViewStates[f].SY = ViewStates[PS_WEAPON].SY;
+              //ViewStates[f].SX = ViewStates[PS_WEAPON].SX;
+              //ViewStates[f].SY = ViewStates[PS_WEAPON].SY;
               ViewStates[f].OfsX = ViewStates[f].OfsY = 0.0f;
               ViewStates[f].State = nullptr;
               ViewStates[f].StateTime = -1;
@@ -338,8 +338,13 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
 
       VSt.State = state;
       VSt.StateTime = state->Time; // could be 0
-      if (state->Misc1) VSt.OfsX = state->Misc1;
-      if (state->Misc2) VSt.OfsY = state->Misc2-32;
+      // flash offset cannot be changed from decorate
+      if (position != PS_FLASH) {
+        if (state->Misc1) VSt.OfsX = state->Misc1;
+        if (state->Misc2) VSt.OfsY = state->Misc2-32;
+      } else {
+        VSt.OfsX = VSt.OfsY = 0.0f;
+      }
 
       VSLOGF("SetViewState(%d): loop: vobj=%s, watchcat=%d, new %s", position, (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<none>"), setStateWatchCat[position], (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
       //GCon->Logf(NAME_Debug, "sprite #%d: '%s' %c (ofs: %g, %g)", position, *DispSpriteName[position], ('A'+(DispSpriteFrame[position]&0xff)), VSt.SX, VSt.OfsY);
@@ -385,7 +390,7 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
         if (f != PS_WEAPON) {
           ViewStates[f].State = nullptr;
           ViewStates[f].StateTime = -1;
-          ViewStates[f].SX = ViewStates[f].SY = 0.0f;
+          //ViewStates[f].SX = ViewStates[f].SY = 0.0f;
           ViewStates[f].OfsX = ViewStates[f].OfsY = 0.0f;
         }
       }

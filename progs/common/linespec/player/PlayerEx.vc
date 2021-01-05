@@ -1750,10 +1750,15 @@ void MovePsprites (float deltaTime) {
     */
   }
 
+  ViewStates[PS_WEAPON].BobOfsX = newBobX;
+  ViewStates[PS_WEAPON].BobOfsY = newBobY;
+
+  /*
   foreach (auto ref vst; ViewStates) {
     vst.BobOfsX = newBobX;
     vst.BobOfsY = newBobY;
   }
+  */
 
   //printdebug("%C: ReadyWeapon=%C; PendingWeapon=%C", self, ReadyWeapon, PendingWeapon);
   SetViewObject(ReadyWeapon);

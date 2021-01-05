@@ -667,8 +667,8 @@ protected:
   void RenderThing (VEntity *, ERenderPass);
   void RenderMobjs (ERenderPass);
   void DrawTranslucentPolys ();
-  void RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo &mfi, float PSP_DIST, const RenderStyleInfo &ri);
-  bool RenderViewModel (VViewState *VSt, const RenderStyleInfo &ri);
+  void RenderPSprite (float SX, float SY, const VAliasModelFrameInfo &mfi, float PSP_DIST, const RenderStyleInfo &ri);
+  bool RenderViewModel (VViewState *VSt, float SX, float SY, const RenderStyleInfo &ri);
   void DrawPlayerSprites ();
 
   // used in things rendering to calculate lighting in `ri`

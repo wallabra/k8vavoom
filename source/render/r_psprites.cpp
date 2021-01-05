@@ -61,7 +61,9 @@ static int cli_WarnSprites = 0;
 //  showPSpriteWarnings
 //
 //==========================================================================
-static bool showPSpriteWarnings () { return (cli_WAll > 0 || cli_WarnSprites > 0); }
+static inline bool showPSpriteWarnings () {
+  return (cli_WAll > 0 || cli_WarnSprites > 0);
+}
 
 
 //==========================================================================
@@ -69,7 +71,7 @@ static bool showPSpriteWarnings () { return (cli_WAll > 0 || cli_WarnSprites > 0
 //  VRenderLevelShared::RenderPSprite
 //
 //==========================================================================
-void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo &mfi, float PSP_DIST, const RenderStyleInfo &ri) {
+void VRenderLevelShared::RenderPSprite (float SX, float SY, const VAliasModelFrameInfo &mfi, float PSP_DIST, const RenderStyleInfo &ri) {
   spritedef_t *sprdef;
   spriteframe_t *sprframe;
   int lump;
@@ -79,21 +81,21 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   //if (ri.alpha > 1.0f) ri.alpha = 1.0f;
 
   // decide which patch to use
-  if ((unsigned)mfi.spriteIndex/*VSt->State->SpriteIndex*/ >= (unsigned)sprites.length()) {
+  if ((unsigned)mfi.spriteIndex >= (unsigned)sprites.length()) {
     if (showPSpriteWarnings()) {
       GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite number %d", mfi.spriteIndex);
     }
     return;
   }
-  sprdef = &sprites.ptr()[mfi.spriteIndex/*VSt->State->SpriteIndex*/];
+  sprdef = &sprites.ptr()[mfi.spriteIndex];
 
-  if (mfi.frame/*(VSt->State->Frame & VState::FF_FRAMEMASK)*/ >= sprdef->numframes) {
+  if (mfi.frame >= sprdef->numframes) {
     if (showPSpriteWarnings()) {
       GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite frame %d : %d (max is %d)", mfi.spriteIndex, mfi.frame, sprdef->numframes);
     }
     return;
   }
-  sprframe = &sprdef->spriteframes[mfi.frame/*VSt->State->Frame & VState::FF_FRAMEMASK*/];
+  sprframe = &sprdef->spriteframes[mfi.frame];
 
   lump = sprframe->lump[0];
   if (lump < 0) {
@@ -128,8 +130,8 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   const float PSP_DISTI = 1.0f/PSP_DIST;
   TVec sprorigin = Drawer->vieworg+PSP_DIST*Drawer->viewforward;
 
-  float sprx = 160.0f-VSt->SX+TexSOffset*invScaleX;
-  float spry = 100.0f-VSt->SY+TexTOffset*invScaleY;
+  float sprx = 160.0f-SX+TexSOffset*invScaleX;
+  float spry = 100.0f-SY+TexTOffset*invScaleY;
 
   spry -= cl->PSpriteSY;
   spry -= PSpriteOfsAspect;
@@ -207,7 +209,7 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
 //  FIXME: this doesn't work with "----" and "####" view states
 //
 //==========================================================================
-bool VRenderLevelShared::RenderViewModel (VViewState *VSt, const RenderStyleInfo &ri) {
+bool VRenderLevelShared::RenderViewModel (VViewState *VSt, float SX, float SY, const RenderStyleInfo &ri) {
   if (!r_models_view) return false;
   if (!R_HaveClassModelByName(VSt->State->Outer->Name)) return false;
 
@@ -229,7 +231,7 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, const RenderStyleInfo
     Drawer->SetProjectionMatrix(newProjMat);
   }
 
-  TVec origin = Drawer->vieworg+(VSt->SX-1.0f)*Drawer->viewright/8.0f-(VSt->SY-32.0f)*Drawer->viewup/6.0f;
+  TVec origin = Drawer->vieworg+(SX-1.0f)*Drawer->viewright/8.0f-(SY-32.0f)*Drawer->viewup/6.0f;
 
   float TimeFrac = 0;
   if (VSt->State->Time > 0) {
@@ -249,6 +251,18 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, const RenderStyleInfo
   }
 
   return res;
+}
+
+
+//==========================================================================
+//
+//  getVSOffset
+//
+//==========================================================================
+static inline float getVSOffset (const float ofs, const float stofs) noexcept {
+  if (stofs <= -10000.0f) return stofs+10000.0f;
+  if (stofs >=  10000.0f) return stofs-10000.0f;
+  return ofs;
 }
 
 
@@ -295,7 +309,73 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
   RenderStyleInfo mdri = ri;
 
-  // add all active psprites
+  // calculate interpolation
+  const float currSX = cl->ViewStates[PS_WEAPON].SX;
+  const float currSY = cl->ViewStates[PS_WEAPON].SY;
+
+  float SX = currSX;
+  float SY = currSY;
+
+  const float dur = cl->PSpriteWeaponLoweringDuration;
+  if (dur > 0.0f) {
+    float stt = cl->PSpriteWeaponLoweringStartTime;
+    float currt = Level->Time;
+    float t = currt-stt;
+    float prevSY = cl->PSpriteWeaponLowerPrev;
+    if (t >= 0.0f && t < dur) {
+      const float ydelta = fabsf(prevSY-currSY)*(t/dur);
+      //GCon->Logf("prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY+ydelta, dur, t, t/dur, ydelta);
+      if (prevSY < currSY) {
+        prevSY += ydelta;
+        //GCon->Logf("DOWN: prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY, dur, t, t/dur, ydelta);
+        if (prevSY >= currSY) {
+          prevSY = currSY;
+          cl->PSpriteWeaponLoweringDuration = 0.0f;
+        }
+      } else {
+        prevSY -= ydelta;
+        //GCon->Logf("UP: prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY, dur, t, t/dur, ydelta);
+        if (prevSY <= currSY) {
+          prevSY = currSY;
+          cl->PSpriteWeaponLoweringDuration = 0.0f;
+        }
+      }
+    } else {
+      prevSY = currSY;
+      cl->PSpriteWeaponLoweringDuration = 0.0f;
+    }
+    //cl->ViewStates[i].SY = prevSY;
+    SY = prevSY;
+  }
+
+       if (cl->ViewStates[PS_WEAPON].OfsX <= -10000.0f) SX += cl->ViewStates[PS_WEAPON].OfsX+10000.0f;
+  else if (cl->ViewStates[PS_WEAPON].OfsX >= 10000.0f) SX += cl->ViewStates[PS_WEAPON].OfsX-10000.0f;
+  else SX += cl->ViewStates[PS_WEAPON].OfsX;
+
+       if (cl->ViewStates[PS_WEAPON].OfsY <= -10000.0f) SY += cl->ViewStates[PS_WEAPON].OfsY+10000.0f;
+  else if (cl->ViewStates[PS_WEAPON].OfsY >= 10000.0f) SY += cl->ViewStates[PS_WEAPON].OfsY-10000.0f;
+  else SY += cl->ViewStates[PS_WEAPON].OfsY;
+
+  //GCon->Logf(NAME_Debug, "weapon offset:(%g,%g):(%g,%g)  flash offset:(%g,%g)", cl->ViewStates[PS_WEAPON].OfsX, cl->ViewStates[PS_WEAPON].OfsY, SX, SY, cl->ViewStates[PS_FLASH].OfsX, cl->ViewStates[PS_FLASH].OfsY);
+
+  SX += cl->ViewStates[PS_WEAPON].BobOfsX;
+  SY += cl->ViewStates[PS_WEAPON].BobOfsY;
+
+  // calculate base light and fade
+  vuint32 baselight;
+  if (RendStyle == STYLE_Fuzzy) {
+    baselight = 0;
+  } else {
+    if (ltxr|ltxg|ltxb) {
+      baselight = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
+    } else {
+      baselight = LightPoint(nullptr, Drawer->vieworg-TVec(0.0f, 0.0f, cl->MO->Height), cl->MO->Radius, cl->MO->Height, r_viewleaf);
+    }
+  }
+
+  const vuint32 basefase = GetFade(SV_PointRegionLight(r_viewleaf->sector, cl->ViewOrg));
+
+  // draw all active psprites
   for (int ii = 0; ii < NUMPSPRITES; ++ii) {
     const int i = VPSpriteRenderOrder[ii];
 
@@ -303,102 +383,22 @@ void VRenderLevelShared::DrawPlayerSprites () {
     if (!vst) continue;
     //GCon->Logf(NAME_Debug, "PSPRITE #%d is %d: %s", ii, i, *vst->Loc.toStringNoCol());
 
-    // fix rendering style for models
-    /*
-    if (r_models_view) {
-      mdri = ri;
-      if (vst->Outer->isClassMember() && R_HaveClassModelByName(vst->Outer->Name)) {
-        vassert(vst->Outer->isClassMember());
-        VClass *cls = (VClass *)vst->Outer;
-        if (cls->IsChildOf(VEntity::StaticClass())) {
-          RenderStyleInfo rsi;
-          const VEntity *ed = (const VEntity *)(cls->Defaults);
-          if (CalculateRenderStyleInfo(rsi, ed->RenderStyle, ed->Alpha, ed->StencilColor)) {
-            GCon->Logf(NAME_Debug, "PSPRITE #%d: class='%s'; rs=%d(%d) : %g(%g) (%d : %g)", i, cls->GetName(), rsi.translucency, ri.translucency, rsi.alpha, ri.alpha, ed->RenderStyle, ed->Alpha);
-            mdri.alpha = min2(mdri.alpha, rsi.alpha);
-            if (rsi.isAdditive()) mdri.translucency = rsi.translucency;
-          }
-        }
-      }
-    }
-    */
-
-    vuint32 light;
-    if (RendStyle == STYLE_Fuzzy) {
-      light = 0;
-    } else if (vst->Frame&VState::FF_FULLBRIGHT) {
-      light = 0xffffffff;
-    } else {
-      /*
-      light = LightPoint(nullptr, Drawer->vieworg, cl->MO->Radius, -1, r_viewleaf);
-      if (ltxr|ltxg|ltxb) {
-        //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
-        int r = max2(ltxr, (int)((light>>16)&0xff));
-        int g = max2(ltxg, (int)((light>>8)&0xff));
-        int b = max2(ltxb, (int)(light&0xff));
-        light = (light&0xff000000u)|(((vuint32)clampToByte(r))<<16)|(((vuint32)clampToByte(g))<<8)|((vuint32)clampToByte(b));
-      }
-      */
-      if (ltxr|ltxg|ltxb) {
-        light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
-      } else {
-        light = LightPoint(nullptr, Drawer->vieworg-TVec(0.0f, 0.0f, cl->MO->Height), cl->MO->Radius, cl->MO->Height, r_viewleaf);
-      }
-      //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
-      //light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
-    }
+    const vuint32 light = (RendStyle != STYLE_Fuzzy && (vst->Frame&VState::FF_FULLBRIGHT) ? 0xffffffff : baselight);
 
     ri.light = ri.seclight = light;
-    ri.fade = GetFade(SV_PointRegionLight(r_viewleaf->sector, cl->ViewOrg));
+    ri.fade = basefase;
 
     mdri.light = mdri.seclight = light;
     mdri.fade = ri.fade;
 
-    const float currSX = cl->ViewStates[i].SX;
-    const float currSY = cl->ViewStates[i].SY;
-
-    float dur = cl->PSpriteWeaponLoweringDuration;
-    if (dur > 0.0f) {
-      float stt = cl->PSpriteWeaponLoweringStartTime;
-      float currt = Level->Time;
-      float t = currt-stt;
-      float prevSY = cl->PSpriteWeaponLowerPrev;
-      if (t >= 0.0f && t < dur) {
-        float ydelta = fabsf(prevSY-currSY)*(t/dur);
-        //GCon->Logf("prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY+ydelta, dur, t, t/dur, ydelta);
-        if (prevSY < currSY) {
-          prevSY += ydelta;
-          //GCon->Logf("DOWN: prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY, dur, t, t/dur, ydelta);
-          if (prevSY >= currSY) {
-            prevSY = currSY;
-            cl->PSpriteWeaponLoweringDuration = 0.0f;
-          }
-        } else {
-          prevSY -= ydelta;
-          //GCon->Logf("UP: prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY, dur, t, t/dur, ydelta);
-          if (prevSY <= currSY) {
-            prevSY = currSY;
-            cl->PSpriteWeaponLoweringDuration = 0.0f;
-          }
-        }
-      } else {
-        prevSY = currSY;
-        cl->PSpriteWeaponLoweringDuration = 0.0f;
-      }
-      cl->ViewStates[i].SY = prevSY;
-    }
-
-    cl->ViewStates[i].SX += cl->ViewStates[i].OfsX+cl->ViewStates[i].BobOfsX;
-    cl->ViewStates[i].SY += cl->ViewStates[i].OfsY+cl->ViewStates[i].BobOfsY;
-
     //GCon->Logf(NAME_Debug, "PSPRITE #%d is %d: sx=%g; sy=%g; %s", ii, i, cl->ViewStates[i].SX, cl->ViewStates[i].SY, *vst->Loc.toStringNoCol());
 
-    if (!RenderViewModel(&cl->ViewStates[i], mdri)) {
-      RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), 3.0f/*NUMPSPRITES-ii*/, ri);
-    }
+    const float nSX = (i != PS_WEAPON ? getVSOffset(SX, cl->ViewStates[i].OfsX) : SX);
+    const float nSY = (i != PS_WEAPON ? getVSOffset(SY, cl->ViewStates[i].OfsY) : SY);
 
-    cl->ViewStates[i].SX = currSX;
-    cl->ViewStates[i].SY = currSY;
+    if (!RenderViewModel(&cl->ViewStates[i], nSX, nSY, mdri)) {
+      RenderPSprite(nSX, nSY, cl->getMFI(i), 3.0f/*NUMPSPRITES-ii*/, ri);
+    }
   }
 }
 

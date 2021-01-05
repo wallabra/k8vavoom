@@ -261,9 +261,18 @@ native void ServerSetUserInfo (string Info);
 //
 //==========================================================================
 final void SetViewStateOffsets (float newsx, float newsy, optional bool delta) {
+  /*
   foreach (auto ref vs; ViewStates) {
     if (delta) vs.SX += newsx; else vs.SX = newsx;
     if (delta) vs.SY += newsy; else vs.SY = newsy;
+  }
+  */
+  if (delta) {
+    ViewStates[PS_WEAPON].SX += newsx;
+    ViewStates[PS_WEAPON].SY += newsy;
+  } else {
+    ViewStates[PS_WEAPON].SX = newsx;
+    ViewStates[PS_WEAPON].SY = newsy;
   }
 }
 
