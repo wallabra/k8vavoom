@@ -174,6 +174,16 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   }
   vassert((reg->regflags&(sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) == 0);
 
+  // arg4 is translucency
+  if (line->arg4 < 255) {
+    reg->efloor.splane->Alpha = reg->eceiling.splane->Alpha = clampval(line->arg4, 0, 255)/255.0f;
+    //GCon->Logf(NAME_Debug, "3dfloor alpha=%g", reg->efloor.splane->Alpha);
+  }
+  if (line->flags&ML_ADDITIVE) {
+    reg->efloor.splane->flags |= SPF_ADDITIVE;
+    reg->eceiling.splane->flags |= SPF_ADDITIVE;
+  }
+
   if (!isSolid) {
     // non-solid regions has visible floor and ceiling only when camera is inside
     // add the same region, but with flipped floor and ceiling (and mark it as visual only)

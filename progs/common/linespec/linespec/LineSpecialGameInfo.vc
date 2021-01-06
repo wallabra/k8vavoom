@@ -1233,11 +1233,14 @@ override void SpawnWorld (Level InLevel) {
           }
           // set line tag
           if (line->arg2&8) line->lineTag = line->arg5;
+          // translucency done in C++ code
+          /*
           if (line->arg4 < 255) {
             float secalpha = clamp(line->arg4, 0, 255)/255.0;
             sec.floor.Alpha = secalpha;
             sec.ceiling.Alpha = secalpha;
           }
+          */
         }
         SpawnExtraFloors(InLevel, line);
         line->special = 0;
