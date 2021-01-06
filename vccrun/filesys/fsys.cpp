@@ -1149,8 +1149,8 @@ bool VPartialStreamReader::AtEnd () { return (bError || srccurpos >= stpos+partl
 
 // ////////////////////////////////////////////////////////////////////////// //
 /*
-// VZipStreamReader
-VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, bool asZipArchive, FSysDriverBase *aDriver)
+// VZLibStreamReader
+VZLibStreamReader::VZLibStreamReader (VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, bool asZipArchive, FSysDriverBase *aDriver)
   : VStreamPakFile(aDriver)
   , srcStream(ASrcStream)
   , initialised(false)
@@ -1170,7 +1170,7 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize
 }
 
 
-VZipStreamReader::VZipStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, bool asZipArchive, FSysDriverBase *aDriver)
+VZLibStreamReader::VZLibStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, bool asZipArchive, FSysDriverBase *aDriver)
   : VStreamPakFile(aDriver)
   , srcStream(ASrcStream)
   , initialised(false)
@@ -1190,13 +1190,13 @@ VZipStreamReader::VZipStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACo
 }
 
 
-VZipStreamReader::~VZipStreamReader () {
+VZLibStreamReader::~VZLibStreamReader () {
   Close();
   mythread_mutex_destroy(&lock);
 }
 
 
-void VZipStreamReader::initialize () {
+void VZLibStreamReader::initialize () {
   bLoading = true;
 
   // initialise zip stream structure
@@ -1231,10 +1231,10 @@ void VZipStreamReader::initialize () {
 }
 
 
-VStr VZipStreamReader::GetName () const { return mFileName.cloneUnique(); }
+VStr VZLibStreamReader::GetName () const { return mFileName.cloneUnique(); }
 
 // turns on CRC checking
-void VZipStreamReader::setCrc (vuint32 acrc) {
+void VZLibStreamReader::setCrc (vuint32 acrc) {
   if (doCrcCheck && origCrc32 == acrc) return;
   origCrc32 = acrc;
   doCrcCheck = true;
@@ -1243,7 +1243,7 @@ void VZipStreamReader::setCrc (vuint32 acrc) {
 }
 
 
-bool VZipStreamReader::Close () {
+bool VZLibStreamReader::Close () {
   if (initialised) { inflateEnd(&zStream); initialised = false; }
   //if (srcStream) { delete srcStream; srcStream = nullptr; }
   srcStream = nullptr;
@@ -1251,7 +1251,7 @@ bool VZipStreamReader::Close () {
 }
 
 
-void VZipStreamReader::setError () {
+void VZLibStreamReader::setError () {
   if (initialised) { inflateEnd(&zStream); initialised = false; }
   //if (srcStream) { delete srcStream; srcStream = nullptr; }
   srcStream = nullptr;
@@ -1262,7 +1262,7 @@ void VZipStreamReader::setError () {
 // just read, no `nextpos` advancement
 // returns number of bytes read, -1 on error, or 0 on EOF
 // no need to lock here
-int VZipStreamReader::readSomeBytes (void *buf, int len) {
+int VZLibStreamReader::readSomeBytes (void *buf, int len) {
   if (len <= 0) return -1;
   if (!srcStream) return -1;
   if (bError) return -1;
@@ -1299,7 +1299,7 @@ int VZipStreamReader::readSomeBytes (void *buf, int len) {
 }
 
 
-void VZipStreamReader::Serialise (void* buf, int len) {
+void VZLibStreamReader::Serialise (void* buf, int len) {
   if (len == 0) return;
   MyThreadLocker locker(&lock);
 
@@ -1358,7 +1358,7 @@ void VZipStreamReader::Serialise (void* buf, int len) {
 }
 
 
-void VZipStreamReader::Seek (int pos) {
+void VZLibStreamReader::Seek (int pos) {
   if (bError) return;
 
   if (pos < 0) { setError(); return; }
@@ -1373,10 +1373,10 @@ void VZipStreamReader::Seek (int pos) {
 }
 
 
-int VZipStreamReader::Tell () { return nextpos; }
+int VZLibStreamReader::Tell () { return nextpos; }
 
 
-int VZipStreamReader::TotalSize () {
+int VZLibStreamReader::TotalSize () {
   if (bError) return 0;
   if (uncompressedSize == 0xffffffffU) {
     // calculate size
@@ -1395,7 +1395,7 @@ int VZipStreamReader::TotalSize () {
 }
 
 
-bool VZipStreamReader::AtEnd () { return (bError || nextpos >= TotalSize()); }
+bool VZLibStreamReader::AtEnd () { return (bError || nextpos >= TotalSize()); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

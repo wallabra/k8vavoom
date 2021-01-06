@@ -247,7 +247,7 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 /*
-class VZipStreamReader : public VStreamPakFile {
+class VZLibStreamReader : public VStreamPakFile {
 private:
   enum { BUFFER_SIZE = 16384 };
 
@@ -280,9 +280,9 @@ private:
 
 public:
   // doesn't own passed stream
-  VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false, FSysDriverBase *aDriver=nullptr);
-  VZipStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false, FSysDriverBase *aDriver=nullptr);
-  virtual ~VZipStreamReader () override;
+  VZLibStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false, FSysDriverBase *aDriver=nullptr);
+  VZLibStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false, FSysDriverBase *aDriver=nullptr);
+  virtual ~VZLibStreamReader () override;
 
   virtual VStr GetName () const override;
 
