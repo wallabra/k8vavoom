@@ -882,6 +882,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         delete this;
         return nullptr;
       }
+      SelfExpr->RequestAddressOf();
       VExpression *e = new VDynArrayGetNum(SelfExpr, (MethodName == "length1" ? 1 : MethodName == "length2" ? 2 : 0), Loc);
       SelfExpr = nullptr;
       delete this;
