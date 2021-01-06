@@ -60,12 +60,13 @@ void VLevel::LoadLoadACS (int lacsLump, int XMapLump) {
 void VLevel::LoadACScripts (int Lump, int XMapLump) {
   Acs = new VAcsLevel(this);
 
-  GCon->Logf(NAME_Dev, "ACS: BEHAVIOR lump: %d", Lump);
+  if (developer) GCon->Logf(NAME_Dev, "ACS: BEHAVIOR lump: %d", Lump);
 
   // load level's BEHAVIOR lump if it has one
   if (Lump >= 0 && W_LumpLength(Lump) > 0) {
-    GCon->Log("loading map behavior lump");
+    GCon->Logf("found map behavior lump (%s)", *W_FullLumpName(Lump));
     Acs->LoadObject(Lump);
+    //GCon->Logf("done loading map behavior lump (%s)", *W_FullLumpName(Lump));
   }
 
   // load ACS helper scripts if needed (for Strife)
@@ -82,17 +83,23 @@ void VLevel::LoadACScripts (int Lump, int XMapLump) {
   // first load all from map file and further, then all before map file
   // this is done so autoloaded acs won't interfere with pwad libraries
   if (XMapLump >= 0) {
+    //GCon->Log("scanning for behavior scritps...");
     // from map file and further
     for (int ScLump = W_StartIterationFromLumpFileNS(W_LumpFile(XMapLump), WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
       if (W_LumpName(ScLump) != NAME_loadacs) continue;
+      //GCon->Logf("found behavior script lump (%s)", *W_FullLumpName(ScLump));
       LoadLoadACS(ScLump, XMapLump);
     }
+    //GCon->Log("done scanning for behavior scritps...");
   }
 
   // before map file
+  //GCon->Log("scanning for b-behavior scritps...");
   for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
     if (XMapLump >= 0 && W_LumpFile(ScLump) >= W_LumpFile(XMapLump)) break;
     if (W_LumpName(ScLump) != NAME_loadacs) continue;
+    //GCon->Logf("found b-behavior script lump (%s)", *W_FullLumpName(ScLump));
     LoadLoadACS(ScLump, XMapLump);
   }
+  //GCon->Log("done scanning for b-behavior scritps...");
 }
