@@ -711,12 +711,14 @@ load_again:
   ConvTime += Sys_Time();
 
   // set up polyobjs, slopes, 3D floors and some other static stuff
+  GCon->Log("spawning the world...");
   double SpawnWorldTime = -Sys_Time();
   GGameInfo->eventSpawnWorld(this);
   // hash it all again, 'cause spawner may change something
   HashSectors();
   HashLines();
   SpawnWorldTime += Sys_Time();
+  GCon->Log("world spawning complete");
 
   double InitPolysTime = -Sys_Time();
   InitPolyobjs(); // Initialise the polyobjs
