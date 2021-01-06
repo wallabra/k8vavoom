@@ -439,22 +439,47 @@ void AfterSetMapInfo (Level lvl) {
 
 //==========================================================================
 //
+//  MapFixerRemoveEntitiesHelper
+//
+//==========================================================================
+void MapFixerRemoveEntitiesHelper (name entname, optional string msg) {
+  if (!entname) return;
+  auto moClass = class!EntityEx(FindClassNoCase(entname));
+  if (!moClass) return;
+  printdebug("removing `%s`", entname);
+  array!EntityEx elist;
+  EntityEx ent;
+  foreach AllThinkers(moClass, out ent) {
+    if (ent.Owner) continue;
+    if (ent.bIsPlayer) continue;
+    elist[$] = ent;
+  }
+  if (elist.length == 0) return;
+  foreach (EntityEx e; elist) delete e;
+  if (msg) {
+    printwarn("MAPFIX: "~msg, elist.length);
+  } else {
+    printwarn("MAPFIX: removed %s `%s` entities", elist.length, entname);
+  }
+}
+
+
+//==========================================================================
+//
 //  SpawnSpecials
 //
 //==========================================================================
 void SpawnSpecials () {
   // Vela Pax MAP01: remove barrels
   if (XLevel.MapHashMD5 == "dae64fe4b2a4c17f4b4682bf7b63f12f") {
-    array!EntityEx elist;
-    EntityEx ent;
-    auto moClass = class!EntityEx(FindClassNoCase('ExplosiveBarrel'));
-    foreach AllThinkers(moClass, out ent) {
-      if (ent.Owner) continue;
-      if (ent.bIsPlayer) continue;
-      elist[$] = ent;
-    }
-    foreach (EntityEx e; elist) delete e;
-    printwarn("MAPFIX: Vela Pax, MAP01: removed %s useless barrels", elist.length);
+    MapFixerRemoveEntitiesHelper('ExplosiveBarrel', "Vela Pax, MAP01: removed %s annoying barrels (for speed)");
+    return;
+  }
+
+  // Plutonium Sandpit (ka_tech.pk3): remove bubble spawners
+  if (XLevel.MapHashMD5 == "acb63fdf33586f3a0f03a4da67c2ac9d") {
+    MapFixerRemoveEntitiesHelper('BubbleSpawner', "Plutonium Sandpit: removed %s bubble spawners (for speed)");
+    return;
   }
 }
 
