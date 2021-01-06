@@ -1,0 +1,12 @@
+class Main : Object;
+
+
+void main () {
+  int n = 5;
+  string s = "xyzzy";
+  switch (n) {
+    case 1: { s = "10"; break; }
+    case 2: { s = "15"; break; }
+  }
+  writeln(s);
+}

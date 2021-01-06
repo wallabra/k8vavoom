@@ -1,0 +1,9 @@
+class Main : Object;
+
+
+void main () {
+  array!int a;
+  a[$] = 10;
+  int len = a.length();
+  writeln(len);
+}
