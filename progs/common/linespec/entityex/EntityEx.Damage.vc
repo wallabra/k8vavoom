@@ -218,9 +218,7 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
 
   bool debugme = GetCvarB('k8HSDebug');
 
-  if (debugme) {
-    printdebug("ME: %C; inf: %C", self, GetClassReplacee(inflictor.Class));
-  }
+  if (debugme) printdebug("ME: %C; inf: %C", self, GetClassReplacee(inflictor.Class));
 
   scope(exit) {
     if (fromMissile) {
@@ -254,6 +252,7 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
   // we can use `PlayerEx(plr.Player).Refire` here, but it is not reliable
   // same tic is secondary, not refire
   if (ticdiff > 0) {
+    // ~0.857 seconds
     if (ticdiff < 30) {
       refire = (fromMissile ? ++plr.k8hsLastMissileRefire : ++plr.k8hsLastHitscanRefire);
       if (debugme) printdebug("%C: %s refire: %s (%s : %s) diff=%s", inflictor, (fromMissile ? "missile" : "hitscan"), refire, plr.k8hsLastMissileTicTime, XLevel.TicTime, ticdiff);
@@ -311,7 +310,7 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
     else if (hc <= r3) precisionShot = 1;
     else if (hc > r3*2.4) precisionShot = -2;
     else if (hc > r3*2) precisionShot = -1;
-    if (fromMissile && precisionShot > 0) --precisionShot; // yeah, nerf it
+    //if (fromMissile && precisionShot > 0) --precisionShot; // yeah, nerf it -- nope, no need to
     //printdebug("HC=%s; precisionShot=%s; radius=%s; r3*0.7=%s; r3=%s; r3*2=%s; r3*2.4=%s", hc, precisionShot, Radius, r3*0.7, r3, r3*2, r3*2.4);
   }
 
@@ -324,9 +323,13 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
   float len = 10000;
   if (headshot) {
     //len = Distance2D(inflictor)*mult;
-    float xd = self.Origin.x-inflictor.Origin.x;
-    float yd = self.Origin.y-inflictor.Origin.y;
+    // missile is always near, lol; always use player position
+    /*
+    float xd = self.Origin.x-plr.Origin.x;
+    float yd = self.Origin.y-plr.Origin.y;
     len = sqrt(xd*xd+yd*yd);
+    */
+    len = length2D(self.Origin-plr.Origin);
     // 600: E1M1, from entry to top of the stairs
     if (debugme) printdebug("K8HS: len=%s; multlen=%s", len, len*mult);
     len *= mult;
@@ -348,12 +351,14 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
     int dodmg = damage; //*2 baron of hell and other Big Things
     int smallHealth = 50; // baron of hell and other Big Things
     int critChance = int(Random()*100);
+    if (debugme) printdebug("initial critChance=%s", critChance);
     // decrease critical chance for refiring
     switch (refire) {
       case 1: critChance -= critChance/8; break; // slightly
       case 2: critChance -= critChance/4; break; // more
       case 3: critChance /= 2; break; // even more
     }
+    if (debugme) printdebug("after-refire(%d) critChance=%s", refire, critChance);
 
     //TODO: int tick = gametic;
     //int tick = k8hsLastHitTick+1;
@@ -365,7 +370,7 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
       ++plr.k8hsCount;
       if (plr.k8hsCount == 1) {
         // second hitscan sometimes critical too (but never precision)
-        if (allowCrits && Random()*100.0 < 65.0) critChance = 1;
+        //if (allowCrits && Random()*100.0 < 65.0) critChance = 1;
       } else if (plr.k8hsCount == 2) {
         // third hitscan; 1.8 damage sometimes
         critChance = 1;
@@ -382,7 +387,7 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
         }
       }
       // no precision shots for secondaries
-      if (precisionShot > 0) precisionShot = 0;
+      //if (precisionShot > 0) precisionShot = 0;
     } else {
       plr.k8hsCount = 0;
     }
@@ -397,21 +402,21 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
     else if (len > 400) { if (critChance >= 75 && Random()*100 > 40) critChance = 13; }
     else if (len > 300) { if (critChance >= 75 && Random()*100 > 50) critChance = 13; }
     else if (len > 200) { if (critChance >= 75 && Random()*100 > 70) critChance = 13; }
-    else if (len < 90) {
+    else if (len < 136 /*(Radius+plr.Radius)*2*/) { // this is 288 for Mastermind, ok
            if (hsCount <= 1) critChance += 42;
       else if (hsCount <= 2) critChance += 33;
       else if (hsCount >= 8) critChance += 10;
       else critChance += max(0, (8-hsCount))*9;
     }
-    if (debugme) printdebug("oldcc=%s; critChance=%s; len=%s", oldcc, critChance, len);
+    if (debugme) printdebug("oldcc=%s; critChance=%s; len=%s (pointblank=%s)", oldcc, critChance, len, (Radius+plr.Radius)*2);
 
     if (precisionShot) {
-      //printdebug("PREC=%s; chance-before=%s", precisionShot, critChance);
+      if (debugme) printdebug("PREC=%s; chance-before=%s", precisionShot, critChance);
            if (precisionShot > 1) critChance += 23; // nailed it
       else if (precisionShot > 0) critChance += 13; // almost
       else if (precisionShot < -1) critChance -= 23; // very far
       else if (precisionShot < 0) critChance -= 13; // too far
-      //printdebug("  chance-after=%s", critChance);
+      if (debugme) printdebug("  chance-after=%s", critChance);
     }
 
     if (!allowCrits) critChance = 0;
