@@ -894,11 +894,9 @@ override bool Touch (Entity InOther) {
         Other.Velocity.y += Velocity.y;
         if ((Other.Velocity.x+Other.Velocity.y) > 3.0*35.0) {
           damage = (int(fmax(0, Mass))/100)+1;
-          if (damage > 0) Other.SpawnBloodAtHeadExplosion(damage, self);
-          Other.Damage(self, self, damage);
+          if (Other.Damage(self, self, damage)) Other.SpawnBloodAtHeadExplosion(damage, self);
           damage = (int(fmax(0, Other.Mass))/100)+1;
-          if ((damage>>2) > 0) SpawnBloodAtHeadExplosion(damage>>2, Other);
-          Damage(Other, Other, damage>>2);
+          if (Damage(Other, Other, damage>>2)) SpawnBloodAtHeadExplosion(damage>>2, Other);
         }
       }
       return ProcessHitFlags(Other, false);
@@ -999,12 +997,12 @@ override bool Touch (Entity InOther) {
         if (!bNoBossRip || !Other.bBoss) {
           PlaySound('misc/ripslop', /*CHAN_BODY*/CHAN_AUTO);
           damage = GetMissileDamage(3, 2);
-          if (!Other.bNoBlood && !Other.bReflective && !Other.bInvulnerable) {
-            // ok to spawn some blood
-            if (damage > 0) Other.SpawnBloodRipper(damage, self);
-          }
           //printdebug("%C: ripper, other is %C", self, Other);
-          Other.Damage(self, Target, damage, DamageType, spawnBlood:false); // we already spawned ripper blood
+          int dmg = Other.Damage(self, Target, damage, DamageType, spawnBlood:false); // we already spawned ripper blood
+          if (dmg && !Other.bNoBlood && !Other.bReflective && !Other.bInvulnerable) {
+            // ok to spawn some blood
+            Other.SpawnBloodRipper(damage, self);
+          }
           if (Other.bPushable && !bCannotPush) {
             // push thing
             Other.Velocity.x += Velocity.x/4.0;
@@ -1032,14 +1030,8 @@ override bool Touch (Entity InOther) {
           if (self.Radius > 0) org.z += self.Radius/2.0;
           Other.SpawnBloodSplatter(Origin, damage, org);
         }
-        bool spawnBlood = false;
-        if (!bMissileHeadshotsAllowed) {
-          // normal missile
-          Other.SpawnBloodAtHeadExplosion(damage, self);
-        } else {
-          spawnBlood = true;
-        }
-        Other.Damage(self, Target, damage, DamageType, spawnBlood:spawnBlood);
+        int dmg = Other.Damage(self, Target, damage, DamageType, spawnBlood:bMissileHeadshotsAllowed);
+        if (dmg && !bMissileHeadshotsAllowed) Other.SpawnBloodAtHeadExplosion(damage, self);
       }
     }
     // don't traverse any more
@@ -1096,11 +1088,11 @@ bool Slam (EntityEx Other) {
   if (Health > 0) {
     if (!bDormant) {
       int damage = GetMissileDamage(7, 1);
-      if (damage > 0) {
+      int dmg = Other.Damage(self, self, damage, 'Melee');
+      if (dmg) {
         // we only need it for blood direction, length doesn't matter
         Other.SpawnBloodAtHead(damage, Origin-orgVel);
       }
-      Other.Damage(self, self, damage, 'Melee');
       SetState(SeeState ? SeeState : IdleState);
     } else {
       SetState(IdleState);

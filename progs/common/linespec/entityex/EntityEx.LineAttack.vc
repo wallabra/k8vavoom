@@ -1168,13 +1168,15 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
     hit_point -= 10.0*dir;
 
     // spawn bullet puffs or blood spots, depending on target type
+    bool doBlood = false;
     if (th.bNoBlood || th.bInvulnerable || th.bDormant) {
       if (PuffType) SpawnPuff(hit_point, distance, PuffType, true);
     } else {
-      if (!PuffType || !PuffType.default.bBloodlessImpact) th.SpawnBlood(hit_point, RailDamage, shootOrigin);
+      doBlood =(!PuffType || !PuffType.default.bBloodlessImpact);
     }
 
-    th.Damage(self, self, RailDamage, DmgType);
+    int dmg = th.Damage(self, self, RailDamage, DmgType);
+    if (dmg && doBlood) th.SpawnBlood(hit_point, RailDamage, shootOrigin);
 
     if (--pierceLimit < 1) DontPierce = true;
 

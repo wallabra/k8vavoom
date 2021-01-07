@@ -65,7 +65,7 @@ override bool Touch(Entity InOther)
         damage = (int(fmax(0, Mass)) / 100) + 1;
         Other.Damage(self, self, damage, spawnBlood:true);
         damage = (int(fmax(0, Other.Mass)) / 100) + 1;
-        Damage(Other, Other, damage >> 2);
+        Damage(Other, Other, damage >> 2, spawnBlood:true);
       }
       return false;
     }
