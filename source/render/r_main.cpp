@@ -2342,15 +2342,18 @@ void VRenderLevelShared::setupCurrentLight (const TVec &LightPos, const float Ra
   CurrLightPos = LightPos;
   CurrLightRadius = Radius;
   if (!isFiniteF(Radius) || Radius < 1.0f) CurrLightRadius = 1.0f;
+  CurrLightConeFrustum.clear();
   CurrLightConeDir = aconeDir;
   // is good spotdlight?
   if (aconeDir.isValid() && isFiniteF(aconeAngle) && aconeAngle > 0.0f && aconeAngle < 180.0f) {
     CurrLightConeDir.normaliseInPlace();
     if (CurrLightConeDir.isValid()) {
       CurrLightSpot = true;
-      //spotPlane.SetPointNormal3D(LightPos, CurrLightConeDir);
       CurrLightConeAngle = aconeAngle;
-      CurrLightConeFrustum.setupSimpleDir(CurrLightPos, CurrLightConeDir, clampval(CurrLightConeAngle*2.0f, 1.0f, 179.0f), CurrLightRadius);
+      // move it back a little, because why not?
+      // note that created frustum will have its near plane at the given origin,
+      // contrary to normal camera frustums, where near plane is moved forward a little
+      CurrLightConeFrustum.setupSimpleDir(CurrLightPos-CurrLightConeDir*0.5f, CurrLightConeDir, clampval(CurrLightConeAngle*2.0f, 1.0f, 179.0f), CurrLightRadius);
     }
   }
 }
