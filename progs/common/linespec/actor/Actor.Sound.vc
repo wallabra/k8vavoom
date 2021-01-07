@@ -38,9 +38,9 @@
 {
   if (!specified_Sound) Sound = 'weapons/pistol';
   if (!Sound) return;
-  //if (!specified_ChannelNameOrNumber) ChannelNameOrNumber = CHAN_BODY;
-  if (!specified_ChannelNameOrNumber) ChannelNameOrNumber = CHAN_AUTO; //k8: use `auto` channel
-  if (ChannelNameOrNumber < 0 || ChannelNameOrNumber > 7) ChannelNameOrNumber = CHAN_AUTO;
+  // use `auto` channel, not body here
+  // "body" is default "for historical reasons", but meh
+  if (!specified_ChannelNameOrNumber) ChannelNameOrNumber = CHAN_AUTO;
   PlaySound(Sound, ChannelNameOrNumber, volume!optional, attenuation!optional, looping!optional, local!optional);
 }
 
@@ -61,9 +61,9 @@
   }
   if (!specified_Sound) Sound = 'weapons/pistol';
   if (!Sound) return;
-  //if (!specified_ChannelNameOrNumber) ChannelNameOrNumber = CHAN_BODY;
-  if (!specified_ChannelNameOrNumber) ChannelNameOrNumber = CHAN_AUTO; //k8: use `auto` channel
-  if (ChannelNameOrNumber < 0 || ChannelNameOrNumber > 7) ChannelNameOrNumber = CHAN_AUTO;
+  // use `auto` channel, not body here
+  // "body" is default "for historical reasons", but meh
+  if (!specified_ChannelNameOrNumber) ChannelNameOrNumber = CHAN_AUTO;
   PlaySound(Sound, ChannelNameOrNumber, volume!optional, attenuation!optional, looping!optional, local!optional);
 }
 

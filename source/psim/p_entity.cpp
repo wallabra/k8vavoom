@@ -855,14 +855,18 @@ IMPLEMENT_FUNCTION(VEntity, CallStateChain) {
   RET_BOOL(Self->CallStateChain(Actor, State));
 }
 
+//native final void PlaySound (name SoundName, int Channel, optional float Volume,
+//                             optional float Atenuation, optional bool Loop, optional bool Local);
 IMPLEMENT_FUNCTION(VEntity, PlaySound) {
-  P_GET_BOOL_OPT(Local, false);
-  P_GET_BOOL_OPT(Loop, false);
-  P_GET_FLOAT_OPT(Attenuation, 1.0f);
-  P_GET_FLOAT_OPT(Volume, 1.0f);
-  P_GET_INT(Channel);
-  P_GET_NAME(SoundName);
-  P_GET_SELF;
+  VName SoundName;
+  int Channel;
+  VOptParamFloat Volume(1.0f);
+  VOptParamFloat Attenuation(1.0f);
+  VOptParamBool Loop(false);
+  VOptParamBool Local(false);
+  vobjGetParamSelf(SoundName, Channel, Volume, Attenuation, Loop, Local);
+  if (Channel&256) Loop = true; // sorry for this magic number
+  Channel &= 7; // other bits are flags
   Self->StartSound(SoundName, Channel, Volume, Attenuation, Loop, Local);
 }
 
