@@ -515,7 +515,9 @@ int K8onBeforeDamage (EntityEx inflictor, TVec hitpos, int damage, name adamageT
 
       // ketchup spawn
       if (instakill || headshot) {
-        if (!secondary || instakill || dodmg >= Health) SpawnBloodSprayHead(damage:(instakill ? Health : dodmg), spawnBloodPool:(instakill || dodmg >= Health));
+        if (!secondary || instakill || dodmg >= Health) {
+          SpawnBloodSprayHead(damage:(instakill ? Health : dodmg), spawnBloodPool:(instakill || dodmg >= Health));
+        }
 
         if (instakill) {
           // so they won't gib
@@ -595,14 +597,18 @@ void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bo
 //
 //  `ignorePowerups` and `NoArmor` now does the same thing (sigh)
 //
+//  returns 0 if damage is not done
+//  returns -1 if damage was absorbed by some armor (unreliable)
+//  note that damage resist returns 0
+//
 //==========================================================================
-final void Damage (EntityEx inflictor, EntityEx source, int damage,
-                   optional name DmgType, optional bool NoArmor, optional bool forced,
-                   optional bool spawnBlood,
-                   optional bool ignoreDamageFactors, optional bool ignorePowerups)
+final int Damage (EntityEx inflictor, EntityEx source, int damage,
+                  optional name DmgType, optional bool NoArmor, optional bool forced,
+                  optional bool spawnBlood,
+                  optional bool ignoreDamageFactors, optional bool ignorePowerups)
 {
-  if (!bShootable && !forced) return; // shouldn't happen...
-  if (!Level.Game.IsAuthority) return;
+  if (!bShootable && !forced) return 0; // shouldn't happen...
+  if (!Level.Game.IsAuthority) return 0;
 
   if (DmgType) {
     if (nameicmp(DmgType, 'None') == 0 || nameicmp(DmgType, 'Normal') == 0) DmgType = 'None';
@@ -611,24 +617,24 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   }
 
   if (Health <= 0) {
-    if (inflictor && nameicmp(DmgType, 'Ice') == 0) return;
+    if (inflictor && nameicmp(DmgType, 'Ice') == 0) return 0;
     if (bIceCorpse) {
       // frozen
       StateTime = 0.1;
       Velocity.x = 0.0;
       Velocity.y = 0.0;
     }
-    return;
+    return 0;
   }
 
   // apply damage multiplier
   if (source) {
     damage = int(float(damage)*source.GenericDamageMultiplier);
-    if (damage <= 0) return;
+    if (damage <= 0) return 0;
   } else if (inflictor) {
     //k8: gozzo doesn't do this, but why not?
     damage = int(float(damage)*inflictor.GenericDamageMultiplier);
-    if (damage <= 0) return;
+    if (damage <= 0) return 0;
   }
 
   // amplify damage with powerups
@@ -661,10 +667,10 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     if (bIsPlayer) {
       if (LineSpecialGameInfo(Level.Game).bNoDamageThrustInvulnerable) {
         // for player, no exceptions
-        return;
+        return 0;
       }
     } else if (!inflictor || !inflictor.bDamageInvulnerable) {
-      return;
+      return 0;
     }
   }
 
@@ -674,7 +680,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   if (bSpectral && !forced) {
     if (!inflictor || !inflictor.bSpectral) {
       if (MissileState) SetState(MissileState);
-      return;
+      return 0;
     }
   }
 
@@ -685,13 +691,13 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   }
 
   if (bSkullFly) {
-    if (bSkullFlyInvulnerable && !forced) return; // invulnerable during charge attack
+    if (bSkullFlyInvulnerable && !forced) return 0; // invulnerable during charge attack
     bSkullFly = false;
     Velocity = vector(0.0, 0.0, 0.0);
     if (Health > 0) SetState(SeeState);
   }
 
-  if (bDormant && !forced) return; // invulnerable, and won't wake up
+  if (bDormant && !forced) return 0; // invulnerable, and won't wake up
 
   bool isBuddha = false;
   if (bIsPlayer && Player) {
@@ -704,7 +710,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   // special damage types
   if (inflictor) {
     damage = inflictor.DoSpecialDamage(self, source, damage);
-    if (damage == -1) return;
+    if (damage == -1) return 0;
   }
 
   if (nameicmp(DmgType, 'SpectralLow') == 0 && bLowSpectralResist) damage = 0;
@@ -726,10 +732,10 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     }
     damage = int(float(damage)*realdmgfactor);
   }
-  if (damage <= 0) return;
+  if (damage <= 0) return 0;
 
   damage = TakeSpecialDamage(inflictor, source, damage, DmgType, forced:forced!optional);
-  if (damage < 0) return; // was `-1`
+  if (damage < 0) return 0; // was `-1`
 
   //printdebug("DAMAGE: self=`%C`; damage=%s; health=%s; forced=%B; dmgtype=<%s>", self, damage, Health, forced, DmgType);
   // push the target unless using a weapon that should not inflict thrust
@@ -799,7 +805,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   // player specific
   if (bIsPlayer) {
     //printdebug("%C: dmg=%s; invul=%B", self, damage, bInvulnerable);
-    if (!forced && Player && PlayerEx(Player).CheckFriendlyFire(source, damage)) return;
+    if (!forced && Player && PlayerEx(Player).CheckFriendlyFire(source, damage)) return 0;
 
     // end of game hell hack
     if ((Sector->special&SECSPEC_BASE_MASK) == SECSPEC_DamageSuperHellslimeExit && damage >= Health) {
@@ -808,14 +814,14 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
     // below certain threshold, ignore damage in GOD mode, or with INVUL power
     if (damage < 1000 && (bInvulnerable || (PlayerEx(Player).Cheats&PlayerEx::CF_GODMODE))) {
-      return;
+      return -1;
     }
 
     if (!NoArmor && !ignorePowerups && Inventory) {
       int NewDmg = damage;
       Inventory.AbsorbDamage(source, damage, DmgType, NewDmg);
       damage = NewDmg;
-      if (damage <= 0) return;
+      if (damage <= 0) return -1;
     }
 
     if (damage >= Health && (Level.World.bSkillAutoUseHealth ||
@@ -864,13 +870,13 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
       if (masta && masta.bIsPlayer && masta.Player.MO == masta) source = masta;
     }
     Died(source, inflictor);
-    return;
+    return damage;
   }
 
   state WoundState = FindState('Wound', DmgType, false);
   if (Health <= WoundHealth && WoundState) {
     SetState(WoundState);
-    return;
+    return damage;
   }
 
   float PChance = FindPainChance(DmgType, PainChance);
@@ -922,6 +928,8 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
       if (State == IdleState && SeeState) SetState(SeeState);
     }
   }
+
+  return damage;
 }
 
 
