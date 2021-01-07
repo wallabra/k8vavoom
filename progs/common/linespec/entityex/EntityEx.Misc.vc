@@ -280,9 +280,10 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
       //if (damage <= 0) continue;
 
       if (damage > 0) {
-        if (damage > 1) Other.SpawnBloodAtHeadExplosion(damage, Source);
         if (DoDamage) {
-          Other.Damage(self, Source, damage, BombDmgType);
+          int dmg = Other.Damage(self, Source, damage, BombDmgType); // !0: done or absorbed
+          //print("%C: got RadiusAttack from `%C`, damage=%s; dmg=%s", self, Source, damage, dmg);
+          if (damage > 1 && dmg) Other.SpawnBloodAtHeadExplosion(damage, Source);
         } else {
           if (!bDontThrust) Other.bBlasted = true;
         }
@@ -893,10 +894,10 @@ override bool Touch (Entity InOther) {
         Other.Velocity.y += Velocity.y;
         if ((Other.Velocity.x+Other.Velocity.y) > 3.0*35.0) {
           damage = (int(fmax(0, Mass))/100)+1;
-          Other.SpawnBloodAtHeadExplosion(damage, self);
+          if (damage > 0) Other.SpawnBloodAtHeadExplosion(damage, self);
           Other.Damage(self, self, damage);
           damage = (int(fmax(0, Other.Mass))/100)+1;
-          SpawnBloodAtHeadExplosion(damage>>2, Other);
+          if ((damage>>2) > 0) SpawnBloodAtHeadExplosion(damage>>2, Other);
           Damage(Other, Other, damage>>2);
         }
       }
@@ -1000,7 +1001,7 @@ override bool Touch (Entity InOther) {
           damage = GetMissileDamage(3, 2);
           if (!Other.bNoBlood && !Other.bReflective && !Other.bInvulnerable) {
             // ok to spawn some blood
-            Other.SpawnBloodRipper(damage, self);
+            if (damage > 0) Other.SpawnBloodRipper(damage, self);
           }
           //printdebug("%C: ripper, other is %C", self, Other);
           Other.Damage(self, Target, damage, DamageType, spawnBlood:false); // we already spawned ripper blood
