@@ -168,22 +168,16 @@ void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool c
   }
   // create back plane
   if (createbackplane) {
-    // move back plane forward a little
-    // it should be moved to match projection, but our line tracing code
-    // is using `0.1f` tolerance, and it should be lower than that
-    //planes[4].SetPointNormal3D(fp.origin/*+fp.vforward*0.02f*/, fp.vforward);
-    // disregard that; our `zNear` is `1.0f`, so just use it
+    // move back plane forward a little; our `zNear` is `1.0f`, so just use it
     // k8: better be safe than sorry
     planes[4].SetPointNormal3D(fp.origin+fp.vforward*0.125f, fp.vforward);
-    // sanity check: camera shouldn't be in frustum
-    //vassert(planes[4].PointOnSide(fp.origin));
     planes[4].clipflag = 1U<<4;
     planeCount = 5;
   } else {
     planes[4].clipflag = 0;
   }
   // create far plane
-  if (isFiniteF(farplanez) && farplanez > 0) {
+  if (isFiniteF(farplanez) && farplanez >= 0.2f) {
     planes[5].SetPointNormal3D(fp.origin+fp.vforward*farplanez, -fp.vforward);
     planes[5].clipflag = 1U<<5;
     planeCount = 6;
@@ -206,7 +200,7 @@ void TFrustum::setupSimpleAngles (const TVec &org, const TAVec &angles, const fl
   TFrustumParam fp(org, angles);
   TClipBase cb(fov);
   setup(cb, fp, true, farplanez);
-  planes[4].SetPointNormal3D(fp.origin, fp.vforward);
+  planes[Near].SetPointNormal3D(fp.origin, fp.vforward);
 }
 
 
@@ -233,7 +227,7 @@ void TFrustum::setupSimpleDir (const TVec &org, const TVec &dir, const float fov
 //==========================================================================
 void TFrustum::setFarPlane (const TFrustumParam &fp, float farplanez) noexcept {
   // create far plane
-  if (isFiniteF(farplanez) && farplanez > 0) {
+  if (isFiniteF(farplanez) && farplanez >= 0.2f) {
     planes[5].SetPointNormal3D(fp.origin+fp.vforward*farplanez, -fp.vforward);
     planes[5].clipflag = 1U<<5;
     planeCount = 6;
@@ -252,7 +246,7 @@ void TFrustum::setFarPlane (const TFrustumParam &fp, float farplanez) noexcept {
 //
 //==========================================================================
 bool TFrustum::checkPoint (const TVec &point, const unsigned mask) const noexcept {
-  if (!planeCount || !mask) return false;
+  if (!(mask|planeCount)) return true;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
@@ -272,7 +266,7 @@ bool TFrustum::checkPoint (const TVec &point, const unsigned mask) const noexcep
 //
 //==========================================================================
 bool TFrustum::checkSphere (const TVec &center, const float radius, const unsigned mask) const noexcept {
-  if (!planeCount || !mask) return false;
+  if (!(mask|planeCount)) return true;
   if (radius <= 0) return checkPoint(center, mask);
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
@@ -301,7 +295,7 @@ bool TFrustum::checkSphere (const TVec &center, const float radius, const unsign
 //
 //==========================================================================
 bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const noexcept {
-  if (!planeCount || !mask) return false;
+  if (!(mask|planeCount)) return true;
 #ifdef FRUSTUM_BBOX_CHECKS
   vassert(bbox[0] <= bbox[3+0]);
   vassert(bbox[1] <= bbox[3+1]);
@@ -314,7 +308,7 @@ bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const noexcep
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
 #ifdef PLANE_BOX_USE_REJECT_ACCEPT
-    if (DotProduct(cp->normal, cp->get3DBBoxRejectPoint(bbox))-cp->dist <= 0.0f) return false; // on a back side?
+    if (cp->PointDistance(cp->get3DBBoxRejectPoint(bbox)) <= 0.0f) return false; // on a back side?
 #else
     bool passed = false;
     for (unsigned j = 0; j < 8; ++j) {
@@ -355,13 +349,11 @@ int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const noexce
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
 #ifdef PLANE_BOX_USE_REJECT_ACCEPT
     // check reject point
-    float d = DotProduct(cp->normal, cp->get3DBBoxRejectPoint(bbox))-cp->dist;
-    if (d <= 0.0f) return OUTSIDE; // entire box on a back side
+    if (cp->PointDistance(cp->get3DBBoxRejectPoint(bbox)) <= 0.0f) return OUTSIDE; // entire box on a back side
     // if the box is already determined to be partially inside, there is no need to check accept point anymore
     if (res == INSIDE) {
       // check accept point
-      d = DotProduct(cp->normal, cp->get3DBBoxAcceptPoint(bbox))-cp->dist;
-      if (d <= 0.0f) res = PARTIALLY;
+      if (cp->PointDistance(cp->get3DBBoxAcceptPoint(bbox)) <= 0.0f) res = PARTIALLY;
     }
 #else
     if (res == INSIDE) {
@@ -396,7 +388,7 @@ int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const noexce
 //
 //==========================================================================
 bool TFrustum::checkTriangle (const TVec &v1, const TVec &v2, const TVec &v3, const unsigned mask) const noexcept {
-  if (!planeCount || !mask) return false;
+  if (!(mask|planeCount)) return true;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
@@ -413,22 +405,19 @@ bool TFrustum::checkTriangle (const TVec &v1, const TVec &v2, const TVec &v3, co
 //
 //==========================================================================
 int TFrustum::checkTriangleEx (const TVec &v1, const TVec &v2, const TVec &v3, const unsigned mask) const noexcept {
-  if (!planeCount || !mask) return OUTSIDE;
+  if (!planeCount || !mask) return INSIDE;
   int res = INSIDE;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
-    const float d1 = DotProduct(cp->normal, v1)-cp->dist;
-    const float d2 = DotProduct(cp->normal, v2)-cp->dist;
-    const float d3 = DotProduct(cp->normal, v3)-cp->dist;
+    const bool d1negz = (cp->PointDistance(v1) <= 0.0f);
+    const bool d2negz = (cp->PointDistance(v2) <= 0.0f);
+    const bool d3negz = (cp->PointDistance(v3) <= 0.0f);
     // if everything is on the back side, we're done here
-    if (d1 <= 0.0f && d2 <= 0.0f && d3 <= 0.0f) return OUTSIDE;
+    if (d1negz && d2negz && d3negz) return OUTSIDE;
     // if we're already hit "partial" case, no need to perform further checks
     if (res == INSIDE) {
-      // if everything on the front side, go on
-      if (d1 > 0.0f && d2 > 0.0f && d3 > 0.0f) continue;
-      // both sides touched
-      res = PARTIALLY;
+      if (d1negz || d2negz || d3negz) res = PARTIALLY; // both sides touched
     }
   }
   return res;
@@ -441,7 +430,8 @@ int TFrustum::checkTriangleEx (const TVec &v1, const TVec &v2, const TVec &v3, c
 //
 //==========================================================================
 bool TFrustum::checkPolyInterlaced (const TVec *data, size_t memberSize, const unsigned count, const unsigned mask) const noexcept {
-  if (!data || count < 3 || !planeCount || !mask) return false;
+  if (!data || count < 3) return false;
+  if (!(mask|planeCount)) return true;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
@@ -466,7 +456,7 @@ bool TFrustum::checkPolyInterlaced (const TVec *data, size_t memberSize, const u
 //
 //==========================================================================
 bool TFrustum::checkQuad (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask) const noexcept {
-  if (!planeCount || !mask) return false;
+  if (!(mask|planeCount)) return true;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
@@ -483,23 +473,20 @@ bool TFrustum::checkQuad (const TVec &v1, const TVec &v2, const TVec &v3, const 
 //
 //==========================================================================
 int TFrustum::checkQuadEx (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask) const noexcept {
-  if (!planeCount || !mask) return OUTSIDE;
+  if (!planeCount || !mask) return INSIDE;
   int res = INSIDE;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
-    const float d1 = DotProduct(cp->normal, v1)-cp->dist;
-    const float d2 = DotProduct(cp->normal, v2)-cp->dist;
-    const float d3 = DotProduct(cp->normal, v3)-cp->dist;
-    const float d4 = DotProduct(cp->normal, v4)-cp->dist;
+    const bool d1negz = (cp->PointDistance(v1) <= 0.0f);
+    const bool d2negz = (cp->PointDistance(v2) <= 0.0f);
+    const bool d3negz = (cp->PointDistance(v3) <= 0.0f);
+    const bool d4negz = (cp->PointDistance(v4) <= 0.0f);
     // if everything is on the back side, we're done here
-    if (d1 <= 0.0f && d2 <= 0.0f && d3 <= 0.0f && d4 <= 0.0f) return OUTSIDE;
+    if (d1negz && d2negz && d3negz && d4negz) return OUTSIDE;
     // if we're already hit "partial" case, no need to perform further checks
     if (res == INSIDE) {
-      // if everything on the front side, go on
-      if (d1 > 0.0f && d2 > 0.0f && d3 > 0.0f && d4 > 0.0f) continue;
-      // both sides touched
-      res = PARTIALLY;
+      if (d1negz || d2negz || d3negz || d4negz) res = PARTIALLY; // both sides touched
     }
   }
   return res;
