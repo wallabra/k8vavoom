@@ -826,6 +826,7 @@ int VNetConnection::PutOneAck (vuint32 ackId, bool forceSend) {
   if (Out.GetNumBits() == 0) Prepare(0); // put header
   // we cannot ack packets from the future
   vassert(ackId <= InPacketId);
+  // dunno, maybe `ResendAcks()` can call it with wrong ack?
   vassert(ackId >= OutLastWrittenAck);
   // convert ack to delta, it will take much less room (usually just one byte)
   unsigned ackIdDelta = ackId-OutLastWrittenAck;
@@ -849,15 +850,18 @@ int VNetConnection::PutOneAck (vuint32 ackId, bool forceSend) {
 }
 
 
-extern "C" {
-  static int cmpAcks (const void *aa, const void *bb, void *ncptr) {
-    const vuint32 a = *(const vuint32 *)aa;
-    const vuint32 b = *(const vuint32 *)bb;
-    return
-      a < b ? -1 :
-      a > b ? 1 :
-      0;
-  }
+//==========================================================================
+//
+//  cmpAcks
+//
+//==========================================================================
+static int cmpAcks (const void *aa, const void *bb, void *ncptr) {
+  const vuint32 a = *(const vuint32 *)aa;
+  const vuint32 b = *(const vuint32 *)bb;
+  return
+    a < b ? -1 :
+    a > b ? 1 :
+    0;
 }
 
 
@@ -868,6 +872,10 @@ extern "C" {
 //==========================================================================
 void VNetConnection::ResendAcks () {
   if (!AutoAck) {
+    if (OutLastWrittenAck) {
+      GCon->Logf(NAME_Warning, "NET: ResendAcks: OutLastWrittenAck=%u", OutLastWrittenAck); // something is VERY wrong here
+      Flush();
+    }
     // make sure that the sequence is right
     timsort_r(AcksToResend.ptr(), AcksToResend.length(), sizeof(AcksToResend[0]), &cmpAcks, nullptr);
     for (auto &&ack : AcksToResend) {
@@ -959,13 +967,14 @@ void VNetConnection::Flush () {
 
   // if there is any pending data to send, send it
   if (Out.GetNumBits() || (!AutoAck && IsKeepAliveExceeded())) {
-    // if sending keepalive packet, still generate header
+    // if sending keepalive packet, still generate the header
     if (Out.GetNumBits() == 0) {
       Prepare(0); // write header
       // this looks like keepalive packet, so resend last acks there too
       // this is to avoid client timeout on bad connection
       #if 1
       if (!AutoAck) {
+        if (OutLastWrittenAck) GCon->Logf(NAME_Warning, "NET: Flush: OutLastWrittenAck=%u", OutLastWrittenAck); // something is VERY wrong here
         // only ticker can call this with empty accumulator, and in this case we have no acks to resend
         vassert(AcksToResend.length() == 0);
         if (QueuedAcks.length()) {
@@ -1065,7 +1074,7 @@ void VNetConnection::Flush () {
 
   // move queued acks to resend queue
   // this way we will send acks twice, just in case they're lost
-  // (first time ack wass sent before it got into queued acks store)
+  // (first time ack was sent before it got into queued acks store)
   for (auto &&ack : QueuedAcks) AcksToResend.append(ack);
   QueuedAcks.resetNoDtor();
 }
