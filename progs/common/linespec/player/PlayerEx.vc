@@ -3707,6 +3707,8 @@ bool AddElvenGift (name Klass) {
       }
     } else if (Klass == 'BDW_Shotgun' || (Klass == 'Shotgun' && FindClass('BDW_Shotgun'))) {
       Weapon(act).AmmoGive2 = 8;
+    } else if (Klass == 'FragfireGun' || (Klass == 'Shotgun' && FindClass('FragfireGun'))) {
+      Weapon(act).AmmoGive1 = 80;
     }
     act.TouchSpecial(EntityEx(MO), true);
     if (Klass == 'BDW_Rifle' && ReadyWeapon && ReadyWeapon.bWimpyWeapon && (!PendingWeapon || PendingWeapon.bWimpyWeapon)) {
