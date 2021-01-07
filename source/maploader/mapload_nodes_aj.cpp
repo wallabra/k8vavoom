@@ -635,7 +635,7 @@ void VLevel::BuildNodesAJ () {
   /*if (lev_doing_hexen)*/ ajbsp::DetectPolyobjSectors(); // -JL- Find sectors containing polyobjs
 
   //if (cur_info->window_fx) ajbsp::DetectWindowEffects();
-  GCon->Logf("AJBSP: building blockmap");
+  //GCon->Logf("AJBSP: building blockmap");
   ajbsp::InitBlockmap();
 
   GCon->Logf("AJBSP: creating initial segs");

@@ -26,7 +26,7 @@
 #include "../../gamedefs.h"
 
 
-extern VCvarB build_blockmap;
+extern VCvarB loader_build_blockmap;
 
 
 //==========================================================================
@@ -37,21 +37,22 @@ extern VCvarB build_blockmap;
 void VLevel::LoadBlockMap (int Lump) {
   VStream *Strm = nullptr;
 
-  if (build_blockmap) {
+  if (loader_build_blockmap) {
     Lump = -1;
   } else {
-    if (Lump >= 0 && !build_blockmap) Strm = W_CreateLumpReaderNum(Lump);
+    if (Lump >= 0 && !loader_build_blockmap) Strm = W_CreateLumpReaderNum(Lump);
   }
 
   if (!Strm || Strm->TotalSize() == 0 || Strm->TotalSize()/2 >= 0x10000) {
     delete Strm;
-    GCon->Logf("Creating BLOCKMAP");
     CreateBlockMap();
   } else {
     // killough 3/1/98: Expand wad blockmap into larger internal one,
     // by treating all offsets except -1 as unsigned and zero-extending
     // them. This potentially doubles the size of blockmaps allowed,
     // because Doom originally considered the offsets as always signed.
+
+    GCon->Logf("loading existing blockmap...");
 
     // allocate memory for blockmap
     int count = Strm->TotalSize()/2;
@@ -73,7 +74,7 @@ void VLevel::LoadBlockMap (int Lump) {
     delete Strm;
 
     if (wasError) {
-      GCon->Logf(NAME_Warning, "error loading BLOCKMAP, it will be rebuilt");
+      GCon->Logf(NAME_Warning, "error loading blockmap, it will be rebuilt.");
       delete BlockMapLump;
       BlockMapLump = nullptr;
       BlockMapLumpSize = 0;
@@ -103,43 +104,69 @@ void VLevel::LoadBlockMap (int Lump) {
 //
 //==========================================================================
 void VLevel::CreateBlockMap () {
+  GCon->Logf("creating new blockmap (%d lines)...", NumLines);
+
   // determine bounds of the map
-  float MinX = Vertexes[0].x;
-  float MaxX = MinX;
-  float MinY = Vertexes[0].y;
-  float MaxY = MinY;
+
+  /*
+  float MinXflt = Vertexes[0].x;
+  float MaxXflt = MinXflt;
+  float MinYflt = Vertexes[0].y;
+  float MaxYflt = MinYflt;
   for (int i = 0; i < NumVertexes; ++i) {
-    if (MinX > Vertexes[i].x) MinX = Vertexes[i].x;
-    if (MaxX < Vertexes[i].x) MaxX = Vertexes[i].x;
-    if (MinY > Vertexes[i].y) MinY = Vertexes[i].y;
-    if (MaxY < Vertexes[i].y) MaxY = Vertexes[i].y;
+    if (MinXflt > Vertexes[i].x) MinXflt = Vertexes[i].x;
+    if (MaxXflt < Vertexes[i].x) MaxXflt = Vertexes[i].x;
+    if (MinYflt > Vertexes[i].y) MinYflt = Vertexes[i].y;
+    if (MaxYflt < Vertexes[i].y) MaxYflt = Vertexes[i].y;
+  }
+  */
+
+  float MinXflt = FLT_MAX;
+  float MaxXflt = -MinXflt;
+  float MinYflt = FLT_MAX;
+  float MaxYflt = -MinYflt;
+  for (int i = 0; i < NumLines; ++i) {
+    const line_t &line = Lines[i];
+
+    MinXflt = min2(MinXflt, line.v1->x);
+    MinYflt = min2(MinYflt, line.v1->y);
+    MaxXflt = max2(MaxXflt, line.v1->x);
+    MaxYflt = max2(MaxYflt, line.v1->y);
+
+    MinXflt = min2(MinXflt, line.v2->x);
+    MinYflt = min2(MinYflt, line.v2->y);
+    MaxXflt = max2(MaxXflt, line.v2->x);
+    MaxYflt = max2(MaxYflt, line.v2->y);
   }
 
   // they should be integers, but just in case round them
-  MinX = floorf(MinX);
-  MinY = floorf(MinY);
-  MaxX = ceilf(MaxX);
-  MaxY = ceilf(MaxY);
+  int MinX = floorf(MinXflt);
+  int MinY = floorf(MinYflt);
+  int MaxX = ceilf(MaxXflt);
+  int MaxY = ceilf(MaxYflt);
 
   int Width = MapBlock(MaxX-MinX)+1;
   int Height = MapBlock(MaxY-MinY)+1;
 
+  GCon->Logf("blockmap size: %dx%d (%d,%d)-(%d,%d)", Width, Height, MinX, MinY, MaxX, MaxY);
+
   // add all lines to their corresponding blocks
   // but skip zero-length lines
-  TArray<vuint16> *BlockLines = new TArray<vuint16>[Width*Height];
+  TArray<int> *BlockLines = new TArray<int>[Width*Height];
   for (int i = 0; i < NumLines; ++i) {
     // determine starting and ending blocks
-    line_t &Line = Lines[i];
+    const line_t &line = Lines[i];
 
-    float ssq = Length2DSquared(*Line.v2 - *Line.v1);
+    const TVec ldir = (*line.v2)-(*line.v1);
+    double ssq = ldir.x*ldir.x+ldir.y*ldir.y;
     if (ssq < 1.0f) continue;
-    ssq = Length2D(*Line.v2 - *Line.v1);
+    ssq = sqrt(ssq);
     if (ssq < 1.0f) continue;
 
-    int X1 = MapBlock(Line.v1->x-MinX);
-    int Y1 = MapBlock(Line.v1->y-MinY);
-    int X2 = MapBlock(Line.v2->x-MinX);
-    int Y2 = MapBlock(Line.v2->y-MinY);
+    int X1 = MapBlock(line.v1->x-MinX);
+    int Y1 = MapBlock(line.v1->y-MinY);
+    int X2 = MapBlock(line.v2->x-MinX);
+    int Y2 = MapBlock(line.v2->y-MinY);
 
     if (X1 > X2) {
       int Tmp = X2;
@@ -165,19 +192,18 @@ void VLevel::CreateBlockMap () {
       for (int y = Y1; y <= Y2; y++) {
         BlockLines[X1+y*Width].Append(i);
       }
-    }
-    else {
+    } else {
       // diagonal line
       for (int x = X1; x <= X2; ++x) {
         for (int y = Y1; y <= Y2; ++y) {
           // check if line crosses the block
-          if (Line.slopetype == ST_POSITIVE) {
-            int p1 = Line.PointOnSide(TVec(MinX+x*128, MinY+(y+1)*128, 0));
-            int p2 = Line.PointOnSide(TVec(MinX+(x+1)*128, MinY+y*128, 0));
+          if (line.slopetype == ST_POSITIVE) {
+            int p1 = line.PointOnSide(TVec(MinX+x*128, MinY+(y+1)*128, 0));
+            int p2 = line.PointOnSide(TVec(MinX+(x+1)*128, MinY+y*128, 0));
             if (p1 == p2) continue;
           } else {
-            int p1 = Line.PointOnSide(TVec(MinX+x*128, MinY+y*128, 0));
-            int p2 = Line.PointOnSide(TVec(MinX+(x+1)*128, MinY+(y+1)*128, 0));
+            int p1 = line.PointOnSide(TVec(MinX+x*128, MinY+y*128, 0));
+            int p2 = line.PointOnSide(TVec(MinX+(x+1)*128, MinY+(y+1)*128, 0));
             if (p1 == p2) continue;
           }
           BlockLines[x+y*Width].Append(i);
@@ -196,7 +222,7 @@ void VLevel::CreateBlockMap () {
   for (int i = 0; i < Width*Height; ++i) {
     // write offset
     BMap[i+4] = BMap.Num();
-    TArray<vuint16> &Block = BlockLines[i];
+    TArray<int> &Block = BlockLines[i];
     // add dummy start marker
     BMap.Append(0);
     // add lines in this block
@@ -213,5 +239,4 @@ void VLevel::CreateBlockMap () {
   memcpy(BlockMapLump, BMap.Ptr(), BMap.Num()*sizeof(vint32));
 
   delete[] BlockLines;
-  BlockLines = nullptr;
 }

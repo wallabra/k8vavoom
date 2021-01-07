@@ -43,7 +43,7 @@ VCvarB loader_cache_data("loader_cache_data", true, "Cache built level data?", C
 VCvarF loader_cache_time_limit("loader_cache_time_limit", "3", "Cache data if building took more than this number of seconds.", CVAR_Archive);
 
 //static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
-VCvarB build_blockmap("loader_force_blockmap_rebuild", false, "Force blockmap rebuild on map loading?", CVAR_Archive);
+VCvarB loader_build_blockmap("loader_force_blockmap_rebuild", false, "Force blockmap rebuild on map loading?", CVAR_Archive);
 //static VCvarB show_level_load_times("show_level_load_times", false, "Show loading times?", CVAR_Archive);
 
 // there seems to be a bug in compressed GL nodes reader, hence the flag
@@ -592,6 +592,7 @@ load_again:
     }
   }
 
+  bool forceNewBlockmap = false;
   double NodesTime = -Sys_Time();
   // and again; sorry!
   if (!cachedDataLoaded || forceNodeRebuildFromFixer) {
@@ -599,12 +600,14 @@ load_again:
       GCon->Logf("building GL nodes");
       //R_OSDMsgShowSecondary("BUILDING NODES");
       BuildNodes();
+      forceNewBlockmap = true;
       saveCachedData = true;
     } else if (UseComprGLNodes) {
       if (!LoadCompressedGLNodes(CompressedGLNodesLump, GLNodesHdr)) {
         GCon->Logf("rebuilding GL nodes");
         //R_OSDMsgShowSecondary("BUILDING NODES");
         BuildNodes();
+        forceNewBlockmap = true;
         saveCachedData = true;
       }
     } else {
@@ -624,26 +627,31 @@ load_again:
 
   for (int nidx = 0; nidx < NumNodes; ++nidx) Nodes[nidx].index = nidx;
 
-  // create blockmap
-  if (!BlockMapLump) {
-    GCon->Logf("creating BLOCKMAP");
-    CreateBlockMap();
+  if (forceNewBlockmap) {
+    delete[] BlockMapLump;
+    BlockMapLump = nullptr;
+    BlockMapLumpSize = 0;
+    BlockmapLumpNum = -1;
   }
 
   NodesTime += Sys_Time();
 
   // load blockmap
-  if ((build_blockmap || forceNodeRebuildFromFixer) && BlockMapLump) {
+  if (BlockMapLump && (loader_build_blockmap || forceNodeRebuildFromFixer)) {
+    GCon->Logf("blockmap will be rebuilt");
     delete[] BlockMapLump;
     BlockMapLump = nullptr;
     BlockMapLumpSize = 0;
   }
 
+  //GCon->Logf("*** BlockmapLumpNum=%d; BlockMapLump=%p; BlockMapLumpSize=%d", BlockmapLumpNum, BlockMapLump, BlockMapLumpSize);
+
   double BlockMapTime = -Sys_Time();
-  if (!BlockMapLump) {
+  if (!BlockMapLump || BlockMapLumpSize <= 0) {
     LoadBlockMap(forceNodeRebuildFromFixer || NeedNodesBuild ? -1 : BlockmapLumpNum);
     saveCachedData = true;
   }
+  vassert(BlockMapLump);
   {
     BlockMapOrgX = BlockMapLump[0];
     BlockMapOrgY = BlockMapLump[1];
