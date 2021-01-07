@@ -286,7 +286,7 @@ static VVA_OKUNUSED inline VStream &operator << (VStream &Strm, TVec &v) { retur
 
 
 void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) noexcept;
-void AngleRightVector (const TAVec &angles, TVec &right) noexcept;
+void AnglesRightVector (const TAVec &angles, TVec &right) noexcept;
 void AngleVector (const TAVec &angles, TVec &forward) noexcept;
 void YawVectorRight (float yaw, TVec &right) noexcept;
 void VectorAngles (const TVec &vec, TAVec &angles) noexcept;
@@ -329,7 +329,7 @@ static inline VVA_OKUNUSED float VectorAnglePitch (const TVec &vec) noexcept {
   const float fx = vec.x;
   const float fy = vec.y;
   const float len2d = VSUM2(fx*fx, fy*fy);
-  return (len2d < 0.0001f ? (vec.z > 0.0f ? 90 : 270) : -matan(vec.z, sqrtf(len2d)));
+  return (len2d < 0.0001f ? (vec.z < 0.0f ? 90 : 270) : -matan(vec.z, sqrtf(len2d)));
 }
 
 // returns `false` on error (and zero `dst`)
