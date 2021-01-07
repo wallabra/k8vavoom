@@ -484,9 +484,14 @@ native static final void AngleVectors (const TAVec angles, out TVec forward, opt
 native static final void AngleVector (const TAVec angles, out TVec forward);
 // create angle vector for a vector
 native static final void VectorAngles (const TVec vec, out TAVec angles);
+native static final void DirVectorsAngles (const TVec forward, const TVec right, const TVec up, out TAVec angles);
 native static final float VectorAngleYaw (const TVec vec);
 native static final float VectorAnglePitch (const TVec vec);
 native static final TVec AngleYawVector (const float yaw);
+native static final TVec AnglePitchVector (const float pitch);
+native static final TVec AnglesRightVector (const TAVec angles);
+native static final TVec YawVectorRight (float yaw);
+native static final TVec RotatePointAroundVector (const TVec dir, const TVec point, float degrees);
 static final float AngleDiff (float afrom, float ato) { return AngleMod360(ato-afrom+180)-180; }
 // get z of point with given x and y coords (don't try to use it on a vertical plane)
 native static final float GetPlanePointZ (const ref TPlane plane, const TVec point);

@@ -221,6 +221,14 @@ IMPLEMENT_FUNCTION(VObject, VectorAngles) {
   VectorAngles(vec, *angles);
 }
 
+//native static final void DirVectorsAngles (const TVec forward, const TVec right, const TVec up, out TAVec angles);
+IMPLEMENT_FUNCTION(VObject, DirVectorsAngles) {
+  TVec fwd, right, up;
+  TAVec *angles;
+  vobjGetParam(fwd, right, up, angles);
+  VectorsAngles(fwd, right, up, *angles);
+}
+
 // native static final float VectorAngleYaw (const TVec vec);
 IMPLEMENT_FUNCTION(VObject, VectorAngleYaw) {
   TVec vec;
@@ -241,6 +249,82 @@ IMPLEMENT_FUNCTION(VObject, AngleYawVector) {
   vobjGetParam(yaw);
   RET_VEC(AngleVectorYaw(yaw));
 }
+
+// native static final TVec AnglePitchVector (const float pitch);
+IMPLEMENT_FUNCTION(VObject, AnglePitchVector) {
+  float yaw;
+  TVec res;
+  vobjGetParam(yaw);
+  AngleVectorPitch(yaw, res);
+  RET_VEC(res);
+}
+
+// native static final TVec AnglesRightVector (const TAVec angles);
+IMPLEMENT_FUNCTION(VObject, AnglesRightVector) {
+  TAVec angles;
+  TVec res;
+  vobjGetParam(angles);
+  AnglesRightVector(angles, res);
+  RET_VEC(res);
+}
+
+// native static final TVec YawVectorRight (float yaw);
+IMPLEMENT_FUNCTION(VObject, YawVectorRight) {
+  float yaw;
+  TVec res;
+  vobjGetParam(yaw);
+  YawVectorRight(yaw, res);
+  RET_VEC(res);
+}
+
+// native static final TVec RotateDirectionVector (const TVec vec, const TAVec rot);
+IMPLEMENT_FUNCTION(VObject, RotateDirectionVector) {
+  TVec vec;
+  TAVec rot;
+  vobjGetParam(vec, rot);
+
+  TAVec angles(0, 0, 0);
+  TVec out(0, 0, 0);
+
+  VectorAngles(vec, angles);
+  angles.pitch += rot.pitch;
+  angles.yaw += rot.yaw;
+  angles.roll += rot.roll;
+  AngleVector(angles, out);
+  RET_VEC(out);
+}
+
+// native static final void VectorRotateAroundZ (ref TVec vec, float angle);
+IMPLEMENT_FUNCTION(VObject, VectorRotateAroundZ) {
+  TVec *vec;
+  float angle;
+  vobjGetParam(vec, angle);
+
+  angle = AngleMod(angle);
+  const float dstx = vec->x*mcos(angle)-vec->y*msin(angle);
+  const float dsty = vec->x*msin(angle)+vec->y*mcos(angle);
+
+  vec->x = dstx;
+  vec->y = dsty;
+}
+
+// native static final TVec RotateVectorAroundVector (const TVec Vector, const TVec Axis, float angle);
+IMPLEMENT_FUNCTION(VObject, RotateVectorAroundVector) {
+  TVec vec, axis;
+  float angle;
+  vobjGetParam(vec, axis, angle);
+  RET_VEC(RotateVectorAroundVector(vec, axis, angle));
+}
+
+// native static final TVec RotatePointAroundVector (const TVec dir, const TVec point, float degrees);
+IMPLEMENT_FUNCTION(VObject, RotatePointAroundVector) {
+  TVec dir, point, res;
+  float degrees;
+  vobjGetParam(dir, point, degrees);
+  RotatePointAroundVector(res, dir, point, degrees);
+  RET_VEC(res);
+}
+
 
 // native static final float GetPlanePointZ (const ref TPlane plane, const TVec point);
 IMPLEMENT_FUNCTION(VObject, GetPlanePointZ) {
@@ -288,45 +372,6 @@ IMPLEMENT_FUNCTION(VObject, BoxOnLineSide2DV) {
   tmbox[BOX2D_LEFT] = bmin.x;
   tmbox[BOX2D_RIGHT] = bmax.x;
   RET_INT(BoxOnLineSide2D(tmbox, v1, v2));
-}
-
-// native static final TVec RotateDirectionVector (const TVec vec, const TAVec rot);
-IMPLEMENT_FUNCTION(VObject, RotateDirectionVector) {
-  TVec vec;
-  TAVec rot;
-  vobjGetParam(vec, rot);
-
-  TAVec angles(0, 0, 0);
-  TVec out(0, 0, 0);
-
-  VectorAngles(vec, angles);
-  angles.pitch += rot.pitch;
-  angles.yaw += rot.yaw;
-  angles.roll += rot.roll;
-  AngleVector(angles, out);
-  RET_VEC(out);
-}
-
-// native static final void VectorRotateAroundZ (ref TVec vec, float angle);
-IMPLEMENT_FUNCTION(VObject, VectorRotateAroundZ) {
-  TVec *vec;
-  float angle;
-  vobjGetParam(vec, angle);
-
-  angle = AngleMod(angle);
-  const float dstx = vec->x*mcos(angle)-vec->y*msin(angle);
-  const float dsty = vec->x*msin(angle)+vec->y*mcos(angle);
-
-  vec->x = dstx;
-  vec->y = dsty;
-}
-
-// native static final TVec RotateVectorAroundVector (const TVec Vector, const TVec Axis, float angle);
-IMPLEMENT_FUNCTION(VObject, RotateVectorAroundVector) {
-  TVec vec, axis;
-  float angle;
-  vobjGetParam(vec, axis, angle);
-  RET_VEC(RotateVectorAroundVector(vec, axis, angle));
 }
 
 //native static final bool IsPlainFloor (const ref TPlane plane); // valid only for floors

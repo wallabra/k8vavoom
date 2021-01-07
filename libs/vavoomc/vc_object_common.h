@@ -44,20 +44,32 @@
   // math functions
   DECLARE_FUNCTION(AngleMod360)
   DECLARE_FUNCTION(AngleMod180)
+
   DECLARE_FUNCTION(AngleVectors)
   DECLARE_FUNCTION(AngleVector)
   DECLARE_FUNCTION(VectorAngles)
+  DECLARE_FUNCTION(DirVectorsAngles)
   DECLARE_FUNCTION(VectorAngleYaw)
   DECLARE_FUNCTION(VectorAnglePitch)
+
   DECLARE_FUNCTION(AngleYawVector)
+  DECLARE_FUNCTION(AnglePitchVector)
+  DECLARE_FUNCTION(AnglesRightVector)
+  DECLARE_FUNCTION(YawVectorRight)
+
+  DECLARE_FUNCTION(RotateDirectionVector)
+  DECLARE_FUNCTION(VectorRotateAroundZ)
+  DECLARE_FUNCTION(RotateVectorAroundVector)
+
+  DECLARE_FUNCTION(RotatePointAroundVector)
+
   DECLARE_FUNCTION(GetPlanePointZ)
   DECLARE_FUNCTION(GetPlanePointZRev)
   DECLARE_FUNCTION(PointOnPlaneSide)
   DECLARE_FUNCTION(PointOnPlaneSide2)
+
   DECLARE_FUNCTION(BoxOnLineSide2DV)
-  DECLARE_FUNCTION(RotateDirectionVector)
-  DECLARE_FUNCTION(VectorRotateAroundZ)
-  DECLARE_FUNCTION(RotateVectorAroundVector)
+
   DECLARE_FUNCTION(IsPlainFloor)
   DECLARE_FUNCTION(IsPlainCeiling)
   DECLARE_FUNCTION(IsSlopedFlat)
