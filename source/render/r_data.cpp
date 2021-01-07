@@ -1811,7 +1811,7 @@ static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempC
     else if (sc->Check("flickerlight2")) ParseGZLightDef(sc, DLTYPE_FlickerRandom, lightsizefactor);
     else if (sc->Check("sectorlight")) ParseGZLightDef(sc, DLTYPE_Sector, lightsizefactor);
     else if (sc->Check("object")) ParseClassEffects(sc, ClassDefs);
-    else if (sc->Check("skybox")) R_ParseGozzoSkyBoxesScript(sc);
+    else if (sc->Check("skybox")) R_ParseGLDefSkyBoxesScript(sc);
     else if (sc->Check("brightmap")) ParseBrightmap(SrcLump, sc);
     else if (sc->Check("glow")) ParseGlow(sc);
     else if (sc->Check("hardwareshader")) { sc->Message("Shaders are not supported"); sc->SkipBracketed(); }

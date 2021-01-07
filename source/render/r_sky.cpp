@@ -85,13 +85,13 @@ static void ParseSkyBoxesScript (VScriptParser *sc) {
 
 //==========================================================================
 //
-//  R_ParseGozzoSkyBoxesScript
+//  R_ParseGLDefSkyBoxesScript
 //
 //  https://zdoom.org/wiki/GLDEFS#Skybox_definitions
 //  TODO: fliptop
 //
 //==========================================================================
-void R_ParseGozzoSkyBoxesScript (VScriptParser *sc) {
+void R_ParseGLDefSkyBoxesScript (VScriptParser *sc) {
   skyboxinfo_t &info = skyboxinfo.Alloc();
   memset((void *)&info, 0, sizeof(info));
   info.isgozzo = true;
@@ -161,7 +161,7 @@ void R_InitSkyBoxes () {
         if (!sc->GetString()) break;
         sc->UnGet();
         sc->Expect("skybox");
-        R_ParseGozzoSkyBoxesScript(sc); // as gozzo
+        R_ParseGLDefSkyBoxesScript(sc); // as gozzo
       }
       delete sc;
     }

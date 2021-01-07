@@ -1192,13 +1192,14 @@ int VTextureManager::AddFileTextureChecked (VName Name, int Type, VName forceNam
 
   VStr fname = VStr(Name);
 
-  for (int trynum = 0; trynum < 4; ++trynum) {
+  for (int trynum = 0; trynum <= 4; ++trynum) {
     if (Type == TEXTYPE_SkyMap) {
       switch (trynum) {
         case 0: fname = "textures/skybox/"+VStr(Name); break;
         case 1: fname = "textures/skyboxes/"+VStr(Name); break;
-        case 2: fname = "textures/"+VStr(Name); break;
-        case 3: fname = VStr(Name); break;
+        case 2: fname = "textures/skies/"+VStr(Name); break;
+        case 3: fname = "textures/"+VStr(Name); break;
+        case 4: fname = VStr(Name); break;
         default: abort(); // just in case
       }
     } else {
