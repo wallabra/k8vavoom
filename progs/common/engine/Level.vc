@@ -332,8 +332,7 @@ native final static iterator AllActivePlayers (out BasePlayer Player);
 
 // ////////////////////////////////////////////////////////////////////////// //
 // this moved to C++ code to make sound propagation on huge maps faster
-native void doRecursiveSound (ref array!Entity elist, sector_t *sec, int soundblocks,
-                              Entity soundtarget, float maxdist, const TVec sndorigin);
+native void doRecursiveSound (ref array!Entity elist, sector_t *sec, Entity soundtarget, float maxdist, const TVec sndorigin);
 
 // debug function
 final int calcSecIdx (sector_t *sec) {
