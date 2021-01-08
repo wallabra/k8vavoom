@@ -38,8 +38,8 @@
 //  VBlockLinesIterator
 //
 //  The validcount flags are used to avoid checking lines that are marked in
-// multiple mapblocks, so increment validcount before the first call to
-// SV_BlockLinesIterator, then make one or more calls to it.
+//  multiple mapblocks, so increment validcount before the first call to
+//  SV_BlockLinesIterator, then make one or more calls to it.
 //
 //==========================================================================
 class VBlockLinesIterator {
