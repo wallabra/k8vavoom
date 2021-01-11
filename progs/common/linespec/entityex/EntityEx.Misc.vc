@@ -2807,21 +2807,22 @@ final bool SetPlayerProperty (int Prop, int Set) {
   class!Inventory InvClass = none;
 
   switch (Prop) {
-    case PROP_FROZEN: PlayerEx(Player).bFrozen = !!Set; return true;
-    case PROP_NOTARGET: PlayerEx(Player).bNoTarget = !!Set; return true;
-    case PROP_INSTANTWEAPONSWITCH: PlayerEx(Player).bInstantWeaponSwitch = !!Set; return true;
-    case PROP_FLY: PlayerEx(Player).bFly = !!Set; bFly = !!Set; bNoGravity = !!Set; return true;
-    case PROP_TOTALLYFROZEN: PlayerEx(Player).bTotallyFrozen = !!Set; return true;
+    case PROP_FROZEN: if (Player) PlayerEx(Player).bFrozen = !!Set; return true;
+    case PROP_NOTARGET: if (Player) PlayerEx(Player).bNoTarget = !!Set; return true;
+    case PROP_INSTANTWEAPONSWITCH: if (Player) PlayerEx(Player).bInstantWeaponSwitch = !!Set; return true;
+    case PROP_FLY: if (Player) PlayerEx(Player).bFly = !!Set; bFly = !!Set; bNoGravity = !!Set; return true;
+    case PROP_TOTALLYFROZEN: if (Player) PlayerEx(Player).bTotallyFrozen = !!Set; return true;
     case PROP_INVULNERABILITY: InvClass = PowerInvulnerable; break;
     case PROP_STRENGTH: InvClass = PowerStrength; break;
     case PROP_INVISIBILITY: InvClass = PowerInvisibility; break;
     case PROP_RADIATIONSUIT: InvClass = PowerIronFeet; break;
-    case PROP_ALLMAP: if (Set) PlayerEx(Player).AddRevealedMap(); else PlayerEx(Player).RemoveRevealedMap(); return true;
+    case PROP_ALLMAP: if (Player) { if (Set) PlayerEx(Player).AddRevealedMap(); else PlayerEx(Player).RemoveRevealedMap(); } return true;
     case PROP_INFRARED: InvClass = PowerLightAmp; break;
     case PROP_WEAPONLEVEL2: InvClass = PowerWeaponLevel2; break;
     case PROP_FLIGHT: InvClass = PowerFlight; break;
     case PROP_SPEED: InvClass = PowerSpeed; break;
     case PROP_BUDDHA: break; // no, my dear mod author, you cannot do this
+    case PROP_NOWEAPONSWITCH: if (Player) PlayerEx(Player).bDisableWeaponSwitch = !!Set; return true;
     default:
       dprint("%C: SetPlayerProperty: unknown property %d", self, Prop);
       return false;

@@ -824,10 +824,12 @@ final void WeaponReadyResetAttackState () {
     // put the weapon away if the player has a pending weapon or has died
     if (PlayerEx(Player).PendingWeapon || Player.MO.Health <= 0) {
       if (InWeaponReadyCheckSetRecurseGuard('weapon change')) return;
-      Wpn.bBobDisabled = true;
-      PlayerEx(Player).ResetWeaponReloadRefire();
-      Player.SetViewObject(Wpn);
-      Player.SetViewState(PS_WEAPON, Wpn.GetDownState());
+      if (!PlayerEx(Player).bDisableWeaponSwitch) {
+        Wpn.bBobDisabled = true;
+        PlayerEx(Player).ResetWeaponReloadRefire();
+        Player.SetViewObject(Wpn);
+        Player.SetViewState(PS_WEAPON, Wpn.GetDownState());
+      }
       return;
     }
   }

@@ -56,6 +56,8 @@ const [decorate] int PROP_WEAPONLEVEL2 = 11;
 const [decorate] int PROP_FLIGHT = 12;
 const [decorate] int PROP_SPEED = 15;
 const [decorate] int PROP_BUDDHA = 16; // not supported
+// k8vavoom extension
+const [decorate] int PROP_NOWEAPONSWITCH = 67;
 
 
 const [decorate] int PTROP_UNSAFETARGET = 1;

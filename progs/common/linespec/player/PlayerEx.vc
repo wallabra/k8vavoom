@@ -107,9 +107,10 @@ bool /*[checkpoint]*/ bInstantWeaponSwitch; // switch weapons instantly
 bool bFly; // player is flying
 bool bInventoryAlwaysOpen; // inventory bar is always open
 bool bAutoAim; // auto aiming enabled? (weapon can override this)
-
 // used in ammo king ammo amount getter
 bool bHasBackpack;
+// for PROP_NOWEAPONSWITCH
+bool bDisableWeaponSwitch;
 
 int PoisonCount; // screen flash for poison damage
 float LastPoisonTime;
@@ -1792,7 +1793,7 @@ void MovePsprites (float deltaTime) {
         SetWeapon(none);
         BringUpWeapon();
       }
-    } else if (PendingWeapon && PendingWeapon != ReadyWeapon) {
+    } else if (PendingWeapon && PendingWeapon != ReadyWeapon /*&& !bDisableWeaponSwitch*/) {
       SetWeapon(PendingWeapon);
       BringUpWeapon();
     }
@@ -3299,6 +3300,7 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
   bTotallyFrozen = false; // just in case
   */
   bFly = false; // just in case
+  bDisableWeaponSwitch = false;
   PoisonCount = 0; // screen flash for poison damage
   LastPoisonTime = 0;
   Poisoner = none; // none for non-player mobjs
@@ -4603,7 +4605,7 @@ override void PlayerTick (float deltaTime) {
     bUseDown = false;
   }
 
-  if (!ReadyWeapon && PendingWeapon) {
+  if (!ReadyWeapon && PendingWeapon && !bDisableWeaponSwitch) {
     SetWeapon(PendingWeapon);
     BringUpWeapon();
   }

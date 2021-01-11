@@ -1170,6 +1170,7 @@ void Died (EntityEx source, EntityEx inflictor) {
 
     bSolid = false;
     bFly = false;
+    PlayerEx(Player).bDisableWeaponSwitch = false;
     Player.PlayerState = PST_DEAD;
     PlayerEx(Player).DropWeapon();
 #ifdef FIXME
