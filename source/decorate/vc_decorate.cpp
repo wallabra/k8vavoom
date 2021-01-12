@@ -68,8 +68,8 @@ TArray<VDamageFactor> CustomDamageFactors;
 
 
 enum {
-  PROPS_HASH_SIZE = 256,
-  FLAGS_HASH_SIZE = 256,
+  //PROPS_HASH_SIZE = 256,
+  //FLAGS_HASH_SIZE = 256,
   //WARNING! keep in sync with script code (LineSpecialGameInfo.vc)
   NUM_WEAPON_SLOTS = 10,
 };
@@ -454,7 +454,8 @@ static VWeaponSlotFixups &allocWeaponSlotsFor (TArray<VWeaponSlotFixups> &list, 
 struct VPropDef {
   vuint8 Type;
   int HashNext;
-  VName Name;
+  //VName Name;
+  VStr Name;
   VField *Field;
   VField *Field2;
   VName PropName;
@@ -480,7 +481,8 @@ struct VPropDef {
 struct VFlagDef {
   vuint8 Type;
   int HashNext;
-  VName Name;
+  //VName Name;
+  VStr Name;
   VField *Field;
   VField *Field2;
   union {
@@ -511,29 +513,60 @@ struct VFlagList {
   VClass *Class;
 
   TArray<VPropDef> Props;
-  int PropsHash[PROPS_HASH_SIZE];
+  TMapNC<VStrCI, int> PropsHash;
 
   TArray<VFlagDef> Flags;
-  int FlagsHash[FLAGS_HASH_SIZE];
+  TMapNC<VStrCI, int> FlagsHash;
+
+  VPropDef *FindProp (VStr name) {
+    auto pi = PropsHash.find(name);
+    if (!pi) {
+      const int dotidx = name.indexOf('.');
+      if (dotidx >= 0) {
+        VStr cn = name.left(dotidx);
+        name.chopLeft(dotidx+1);
+        if (name.length() == 0) return nullptr;
+        if (cn.strEquCI("Player")) cn = "PlayerPawn";
+        if (!cn.strEquCI(Class->GetName())) return nullptr;
+        pi = PropsHash.find(name);
+      }
+    }
+    return (pi ? &Props[*pi] : nullptr);
+  }
+
+  // name must be short (i.e. without qualification part)
+  VFlagDef *FindFlag (VStr name) {
+    auto pi = FlagsHash.find(name);
+    return (pi ? &Flags[*pi] : nullptr);
+  }
 
   VPropDef &NewProp (vuint8 Type, VXmlNode *PN, bool checkUnsupported=false) {
     VPropDef &P = Props.Alloc();
     P.Type = Type;
-    P.Name = VName(*PN->GetAttribute("name"), VName::AddLower);
+    //P.Name = VName(*PN->GetAttribute("name"), VName::AddLower);
+    P.Name = PN->GetAttribute("name");
     if (checkUnsupported && PN->HasAttribute("warning")) {
       VStr bs = PN->GetAttribute("warning");
       if (bs.strEquCI("true") || bs.strEquCI("tan")) P.ShowWarning = true;
     }
-    int HashIndex = GetTypeHash(P.Name)&(PROPS_HASH_SIZE-1);
-    P.HashNext = PropsHash[HashIndex];
-    PropsHash[HashIndex] = Props.Num()-1;
+    PropsHash.put(VStr(P.Name), Props.length()-1);
     return P;
   }
 
   VFlagDef &NewFlag (vuint8 Type, VXmlNode *PN, bool checkUnsupported=false) {
     VFlagDef &F = Flags.Alloc();
     F.Type = Type;
-    F.Name = VName(*PN->GetAttribute("name"), VName::AddLower);
+    //F.Name = VName(*PN->GetAttribute("name"), VName::AddLower);
+    F.Name = PN->GetAttribute("name");
+    const int dotidx = F.Name.indexOf('.');
+    if (dotidx >= 0) {
+      VStr cn = F.Name.left(dotidx);
+      F.Name.chopLeft(dotidx+1);
+      if (F.Name.length() == 0) Sys_Error("invalid flag name: '%s'", *PN->GetAttribute("name"));
+      if (cn.strEquCI("Player")) cn = "PlayerPawn";
+      if (!cn.strEquCI(Class->GetName())) Sys_Error("flag '%s' is of class '%s', but prefix is '%s'", *PN->GetAttribute("name"), Class->GetName(), *cn);
+      //GCon->Logf(NAME_Debug, "=== flag '%s' trimmed to '%s' (prefix is '%s')", *PN->GetAttribute("name"), *F.Name, *cn);
+    }
     if (checkUnsupported && PN->HasAttribute("warning")) {
       VStr bs = PN->GetAttribute("warning");
       if (bs.strEquCI("true") || bs.strEquCI("tan")) F.ShowWarning = true;
@@ -545,9 +578,7 @@ struct VFlagList {
         //GCon->Logf(NAME_Debug, "RELINK FLAG '%s'", *F.Name);
       }
     }
-    int HashIndex = GetTypeHash(F.Name)&(FLAGS_HASH_SIZE-1);
-    F.HashNext = FlagsHash[HashIndex];
-    FlagsHash[HashIndex] = Flags.Num()-1;
+    FlagsHash.put(VStr(F.Name), Flags.length()-1);
     return F;
   }
 };
@@ -681,8 +712,6 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
     VStr ClassName = N->GetAttribute("name");
     VFlagList &Lst = FlagList.Alloc();
     Lst.Class = VClass::FindClass(*ClassName);
-    for (int i = 0; i < PROPS_HASH_SIZE; ++i) Lst.PropsHash[i] = -1;
-    for (int i = 0; i < FLAGS_HASH_SIZE; ++i) Lst.FlagsHash[i] = -1;
     for (VXmlNode *PN = N->FirstChild; PN; PN = PN->NextSibling) {
       if (PN->Name == "prop_int") {
         VPropDef &P = Lst.NewProp(PROP_Int, PN);
@@ -1279,33 +1308,30 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
   }
 
   //sorry!
-  if (ClassFilter.strEquCI("POWERSPEED")) return true;
+  //if (ClassFilter.strEquCI("POWERSPEED")) return true; //k8: why?
+  if (ClassFilter.strEquCI("Player")) ClassFilter = "PlayerPawn";
 
-  VName FlagName(*Flag, VName::FindLower);
-  //GCon->Logf(NAME_Debug, "ParseFlag: <%s> (%s) (cf=%s; fn=%s)", *sc->String, *Flag, *ClassFilter, *FlagName);
-  if (FlagName != NAME_None) {
-    for (auto &&ClassDef : FlagList) {
-      //VFlagList &ClassDef = FlagList[j];
-      if (!Class->IsChildOf(ClassDef.Class)) continue;
-      if (!ClassFilter.isEmpty() && !ClassFilter.strEquCI(*ClassDef.Class->Name)) continue;
-      for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
-        const VFlagDef &F = ClassDef.Flags[i];
-        if (FlagName == F.Name) {
-          VObject *DefObj = (VObject *)Class->Defaults;
-          switch (F.Type) {
-            case FLAG_Bool: F.Field->SetBool(DefObj, Value); break;
-            case FLAG_BoolInverted: F.Field->SetBool(DefObj, !Value); break;
-            case FLAG_Unsupported: if (!vcWarningsSilenced && (F.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *BuildFlagName(ClassFilter, Flag), Class->GetName()); break;
-            case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
-            case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
-            case FLAG_Name: F.Field->SetNameValue(DefObj, Value ? F.NTrue : F.NFalse); break;
-            case FLAG_Class: AddClassFixup(Class, F.Field, (Value ? *F.NTrue : *F.NFalse), ClassFixups); break;
-            case FLAG_NoClip: F.Field->SetBool(DefObj, !Value); F.Field2->SetBool(DefObj, !Value); break;
-          }
-          return true;
-        }
-      }
+  //GCon->Logf(NAME_Debug, "*** ParseFlag: Class=%s; <%s> (%s) (cf=%s)", Class->GetName(), *sc->String, *Flag, *ClassFilter);
+  for (auto &&ClassDef : FlagList) {
+    //VFlagList &ClassDef = FlagList[j];
+    //GCon->Logf(NAME_Debug, "   +++ Class=%s; Flag=%s; ClassDef=%s; childof=%d", Class->GetName(), *Flag, ClassDef.Class->GetName(), (int)Class->IsChildOf(ClassDef.Class));
+    if (!Class->IsChildOf(ClassDef.Class)) continue;
+    if (!ClassFilter.isEmpty() && !ClassFilter.strEquCI(*ClassDef.Class->Name)) continue;
+    VFlagDef *fdef = ClassDef.FindFlag(Flag);
+    if (!fdef) continue;
+    VObject *DefObj = (VObject *)Class->Defaults;
+    switch (fdef->Type) {
+      case FLAG_Bool: fdef->Field->SetBool(DefObj, Value); break;
+      case FLAG_BoolInverted: fdef->Field->SetBool(DefObj, !Value); break;
+      case FLAG_Unsupported: if (!vcWarningsSilenced && (fdef->ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *BuildFlagName(ClassFilter, Flag), Class->GetName()); break;
+      case FLAG_Byte: fdef->Field->SetByte(DefObj, Value ? fdef->BTrue : fdef->BFalse); break;
+      case FLAG_Float: fdef->Field->SetFloat(DefObj, Value ? fdef->FTrue : fdef->FFalse); break;
+      case FLAG_Name: fdef->Field->SetNameValue(DefObj, Value ? fdef->NTrue : fdef->NFalse); break;
+      case FLAG_Class: AddClassFixup(Class, fdef->Field, (Value ? *fdef->NTrue : *fdef->NFalse), ClassFixups); break;
+      case FLAG_NoClip: fdef->Field->SetBool(DefObj, !Value); fdef->Field2->SetBool(DefObj, !Value); break;
     }
+    //if (fdef->Type == FLAG_Bool) GCon->Logf(NAME_Debug, "ParseFlag: %s: {%s}=%d", Class->GetName(), *fdef->Name, (int)fdef->Field->GetBool(DefObj));
+    return true;
   }
 
   if (decorate_fail_on_unknown) {
@@ -2267,719 +2293,716 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       Prop += ".";
       Prop += sc->String;
     }
-    VName PropName = *Prop.ToLower();
+    //VName PropName = *Prop.ToLower();
     bool FoundProp = false;
     for (int j = 0; j < FlagList.Num() && !FoundProp; ++j) {
       VFlagList &ClassDef = FlagList[j];
       if (!Class->IsChildOf(ClassDef.Class)) continue;
-      for (int i = ClassDef.PropsHash[GetTypeHash(PropName)&(PROPS_HASH_SIZE-1)]; i != -1; i = ClassDef.Props[i].HashNext) {
-        VPropDef &P = FlagList[j].Props[i];
-        if (PropName != P.Name) continue;
-        switch (P.Type) {
-          case PROP_Int:
-            sc->ExpectNumberWithSign();
-            P.Field->SetInt(DefObj, sc->Number);
-            break;
-          case PROP_IntTrunced:
-            sc->ExpectFloatWithSign();
-            P.Field->SetInt(DefObj, (int)sc->Float);
-            break;
-          case PROP_IntConst:
-            P.Field->SetInt(DefObj, P.IConst);
-            break;
-          case PROP_IntBobPhase:
-            sc->ExpectNumberWithSign();
-            if (sc->Number < 0) {
-              P.Field->SetFloat(DefObj, -1.0f);
-            } else {
-              P.Field->SetFloat(DefObj, (sc->Number&63)/35.0f);
-            }
-            break;
-          case PROP_IntUnsupported:
-            //FIXME
+      VPropDef *pdef = ClassDef.FindProp(Prop);
+      if (!pdef) continue;
+      switch (pdef->Type) {
+        case PROP_Int:
+          sc->ExpectNumberWithSign();
+          pdef->Field->SetInt(DefObj, sc->Number);
+          break;
+        case PROP_IntTrunced:
+          sc->ExpectFloatWithSign();
+          pdef->Field->SetInt(DefObj, (int)sc->Float);
+          break;
+        case PROP_IntConst:
+          pdef->Field->SetInt(DefObj, pdef->IConst);
+          break;
+        case PROP_IntBobPhase:
+          sc->ExpectNumberWithSign();
+          if (sc->Number < 0) {
+            pdef->Field->SetFloat(DefObj, -1.0f);
+          } else {
+            pdef->Field->SetFloat(DefObj, (sc->Number&63)/35.0f);
+          }
+          break;
+        case PROP_IntUnsupported:
+          //FIXME
+          sc->CheckNumberWithSign();
+          if (!vcWarningsSilenced && (pdef->ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+          break;
+        case PROP_IntIdUnsupported:
+          //FIXME
+          {
+            //bool oldcm = sc->IsCMode();
+            //sc->SetCMode(true);
             sc->CheckNumberWithSign();
-            if (!vcWarningsSilenced && (P.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
-            break;
-          case PROP_IntIdUnsupported:
-            //FIXME
-            {
-              //bool oldcm = sc->IsCMode();
-              //sc->SetCMode(true);
-              sc->CheckNumberWithSign();
-              sc->Expect(",");
-              sc->ExpectIdentifier();
-              if (sc->Check(",")) sc->ExpectIdentifier();
-              //sc->SetCMode(oldcm);
-              if (!vcWarningsSilenced && (P.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
-            }
-            break;
-          case PROP_BitIndex:
-            sc->ExpectNumber();
-            P.Field->SetInt(DefObj, 1<<(sc->Number-1));
-            break;
-          case PROP_Float:
-            sc->ExpectFloatWithSign();
-            P.Field->SetFloat(DefObj, sc->Float);
-            break;
-          case PROP_FloatUnsupported:
-            //FIXME
-            sc->ExpectFloatWithSign();
-            if (!vcWarningsSilenced && (P.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
-            break;
-          case PROP_Speed:
-            sc->ExpectFloatWithSign();
-            // check for speed powerup
-            if (PowerSpeedClass && Class->IsChildOf(PowerSpeedClass)) {
-              P.Field->SetFloat(DefObj, sc->Float);
-            } else {
-              P.Field->SetFloat(DefObj, sc->Float*35.0f);
-            }
-            break;
-          case PROP_SpeedMult:
-            sc->ExpectFloatWithSign();
-            P.Field->SetFloat(DefObj, sc->Float);
-            break;
-          case PROP_Tics:
-            sc->ExpectNumberWithSign();
-            P.Field->SetFloat(DefObj, (sc->Number > 0 ? sc->Number/35.0f : -sc->Number));
-            break;
-          case PROP_TicsSecs:
-            sc->ExpectNumberWithSign();
-            P.Field->SetFloat(DefObj, sc->Number >= 0 ? sc->Number/35.0f : sc->Number);
-            break;
-          case PROP_Percent:
-            sc->ExpectFloat();
-            P.Field->SetFloat(DefObj, midval(0.0f, (float)sc->Float, 100.0f)/100.0f);
-            break;
-          case PROP_FloatClamped:
-            sc->ExpectFloatWithSign();
-            P.Field->SetFloat(DefObj, midval(P.FMin, (float)sc->Float, P.FMax));
-            break;
-          case PROP_FloatClamped2:
-            sc->ExpectFloatWithSign();
-            P.Field->SetFloat(DefObj, midval(P.FMin, (float)sc->Float, P.FMax));
-            P.Field2->SetFloat(DefObj, midval(P.FMin, (float)sc->Float, P.FMax));
-            break;
-          case PROP_FloatOpt2:
-            sc->ExpectFloat();
-            if (decoIgnorePlayerSpeed && (P.Field->Name == "ForwardMove1" || P.Field->Name == "SideMove1")) {
-              GCon->Log(NAME_Warning, "ignored playerpawn movement speed property by user request");
-              if (sc->Check(",")) sc->ExpectFloat(); else (void)sc->CheckFloat();
-            } else {
-              P.Field->SetFloat(DefObj, sc->Float);
-              P.Field2->SetFloat(DefObj, sc->Float);
-              if (sc->Check(",")) {
-                sc->ExpectFloat();
-                P.Field2->SetFloat(DefObj, sc->Float);
-              } else if (sc->CheckFloat()) {
-                P.Field2->SetFloat(DefObj, sc->Float);
-              }
-            }
-            break;
-          case PROP_Name:
-            sc->ExpectString();
-            P.Field->SetNameValue(DefObj, *sc->String);
-            break;
-          case PROP_NameLower:
-            sc->ExpectString();
-            P.Field->SetNameValue(DefObj, VName(*sc->String, VName::AddLower));
-            break;
-          case PROP_Str:
-            sc->ExpectString();
-            P.Field->SetStr(DefObj, sc->String);
-            break;
-          case PROP_StrUnsupported:
-            //FIXME
-            sc->ExpectString();
-            if (!vcWarningsSilenced && (P.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
-            break;
-          case PROP_Class:
-            sc->ExpectString();
-            AddClassFixup(Class, P.Field, P.CPrefix+sc->String, ClassFixups);
-            break;
-          case PROP_PoisonDamage:
-            sc->ExpectNumberWithSign();
-            P.Field->SetInt(DefObj, sc->Number);
+            sc->Expect(",");
+            sc->ExpectIdentifier();
+            if (sc->Check(",")) sc->ExpectIdentifier();
+            //sc->SetCMode(oldcm);
+            if (!vcWarningsSilenced && (pdef->ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+          }
+          break;
+        case PROP_BitIndex:
+          sc->ExpectNumber();
+          pdef->Field->SetInt(DefObj, 1<<(sc->Number-1));
+          break;
+        case PROP_Float:
+          sc->ExpectFloatWithSign();
+          pdef->Field->SetFloat(DefObj, sc->Float);
+          break;
+        case PROP_FloatUnsupported:
+          //FIXME
+          sc->ExpectFloatWithSign();
+          if (!vcWarningsSilenced && (pdef->ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+          break;
+        case PROP_Speed:
+          sc->ExpectFloatWithSign();
+          // check for speed powerup
+          if (PowerSpeedClass && Class->IsChildOf(PowerSpeedClass)) {
+            pdef->Field->SetFloat(DefObj, sc->Float);
+          } else {
+            pdef->Field->SetFloat(DefObj, sc->Float*35.0f);
+          }
+          break;
+        case PROP_SpeedMult:
+          sc->ExpectFloatWithSign();
+          pdef->Field->SetFloat(DefObj, sc->Float);
+          break;
+        case PROP_Tics:
+          sc->ExpectNumberWithSign();
+          pdef->Field->SetFloat(DefObj, (sc->Number > 0 ? sc->Number/35.0f : -sc->Number));
+          break;
+        case PROP_TicsSecs:
+          sc->ExpectNumberWithSign();
+          pdef->Field->SetFloat(DefObj, sc->Number >= 0 ? sc->Number/35.0f : sc->Number);
+          break;
+        case PROP_Percent:
+          sc->ExpectFloat();
+          pdef->Field->SetFloat(DefObj, midval(0.0f, (float)sc->Float, 100.0f)/100.0f);
+          break;
+        case PROP_FloatClamped:
+          sc->ExpectFloatWithSign();
+          pdef->Field->SetFloat(DefObj, midval(pdef->FMin, (float)sc->Float, pdef->FMax));
+          break;
+        case PROP_FloatClamped2:
+          sc->ExpectFloatWithSign();
+          pdef->Field->SetFloat(DefObj, midval(pdef->FMin, (float)sc->Float, pdef->FMax));
+          pdef->Field2->SetFloat(DefObj, midval(pdef->FMin, (float)sc->Float, pdef->FMax));
+          break;
+        case PROP_FloatOpt2:
+          sc->ExpectFloat();
+          if (decoIgnorePlayerSpeed && (pdef->Field->Name == "ForwardMove1" || pdef->Field->Name == "SideMove1")) {
+            GCon->Log(NAME_Warning, "ignored playerpawn movement speed property by user request");
+            if (sc->Check(",")) sc->ExpectFloat(); else (void)sc->CheckFloat();
+          } else {
+            pdef->Field->SetFloat(DefObj, sc->Float);
+            pdef->Field2->SetFloat(DefObj, sc->Float);
             if (sc->Check(",")) {
-              if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: Additional arguments to property '%s' in '%s' are not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
-              for (;;) {
-                sc->ExpectNumberWithSign();
-                if (!sc->Check(",")) break;
-              }
+              sc->ExpectFloat();
+              pdef->Field2->SetFloat(DefObj, sc->Float);
+            } else if (sc->CheckFloat()) {
+              pdef->Field2->SetFloat(DefObj, sc->Float);
             }
-            break;
-          case PROP_Power_Class:
-            // This is a very inconvenient shit!
-            // but ZDoom had to prepend "power" to the name...
+          }
+          break;
+        case PROP_Name:
+          sc->ExpectString();
+          pdef->Field->SetNameValue(DefObj, *sc->String);
+          break;
+        case PROP_NameLower:
+          sc->ExpectString();
+          pdef->Field->SetNameValue(DefObj, VName(*sc->String, VName::AddLower));
+          break;
+        case PROP_Str:
+          sc->ExpectString();
+          pdef->Field->SetStr(DefObj, sc->String);
+          break;
+        case PROP_StrUnsupported:
+          //FIXME
+          sc->ExpectString();
+          if (!vcWarningsSilenced && (pdef->ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+          break;
+        case PROP_Class:
+          sc->ExpectString();
+          AddClassFixup(Class, pdef->Field, pdef->CPrefix+sc->String, ClassFixups);
+          break;
+        case PROP_PoisonDamage:
+          sc->ExpectNumberWithSign();
+          pdef->Field->SetInt(DefObj, sc->Number);
+          if (sc->Check(",")) {
+            if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: Additional arguments to property '%s' in '%s' are not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            for (;;) {
+              sc->ExpectNumberWithSign();
+              if (!sc->Check(",")) break;
+            }
+          }
+          break;
+        case PROP_Power_Class:
+          // This is a very inconvenient shit!
+          // but ZDoom had to prepend "power" to the name...
+          sc->ExpectString();
+          /*
+          if (!sc->String.toLowerCase().StartsWith("power")) {
+            GLog.Logf("*** POWERUP TYPE(0): <%s>", *sc->String);
+          } else {
+            GLog.Logf("*** POWERUP TYPE(1): <%s>", *(pdef->CPrefix+sc->String));
+          }
+          AddClassFixup(Class, pdef->Field, sc->String.StartsWith("Power") || sc->String.StartsWith("power") ?
+              sc->String : pdef->CPrefix+sc->String, ClassFixups);
+          */
+          AddClassFixup(Class, pdef->Field, sc->String, ClassFixups, pdef->CPrefix);
+          break;
+        case PROP_BoolConst:
+          pdef->Field->SetBool(DefObj, pdef->IConst);
+          break;
+        case PROP_State:
+          ParseParentState(sc, Class, *pdef->PropName);
+          break;
+        case PROP_Game:
+          {
+            const vuint32 ngf = SC_ParseGameDef(sc);
+            if (!ngf) sc->Error("Unknown game filter");
+            GameFilter |= ngf;
+          }
+          break;
+        case PROP_SpawnId:
+          if (sc->CheckNumber()) {
+            SpawnNum = sc->Number;
+          } else {
             sc->ExpectString();
-            /*
-            if (!sc->String.toLowerCase().StartsWith("power")) {
-              GLog.Logf("*** POWERUP TYPE(0): <%s>", *sc->String);
-            } else {
-              GLog.Logf("*** POWERUP TYPE(1): <%s>", *(P.CPrefix+sc->String));
-            }
-            AddClassFixup(Class, P.Field, sc->String.StartsWith("Power") || sc->String.StartsWith("power") ?
-                sc->String : P.CPrefix+sc->String, ClassFixups);
-            */
-            AddClassFixup(Class, P.Field, sc->String, ClassFixups, P.CPrefix);
-            break;
-          case PROP_BoolConst:
-            P.Field->SetBool(DefObj, P.IConst);
-            break;
-          case PROP_State:
-            ParseParentState(sc, Class, *P.PropName);
-            break;
-          case PROP_Game:
-            {
-              const vuint32 ngf = SC_ParseGameDef(sc);
-              if (!ngf) sc->Error("Unknown game filter");
-              GameFilter |= ngf;
-            }
-            break;
-          case PROP_SpawnId:
-            if (sc->CheckNumber()) {
-              SpawnNum = sc->Number;
-            } else {
-              sc->ExpectString();
-              if (sc->String.length() != 0) sc->Error("'spawnid' should be a number!");
-              if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: 'spawnid' should be a number, not an empty string! FIX YOUR BROKEN CODE!", *sc->GetLoc().toStringNoCol());
-              SpawnNum = 0;
-            }
-            break;
-          case PROP_ConversationId:
+            if (sc->String.length() != 0) sc->Error("'spawnid' should be a number!");
+            if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: 'spawnid' should be a number, not an empty string! FIX YOUR BROKEN CODE!", *sc->GetLoc().toStringNoCol());
+            SpawnNum = 0;
+          }
+          break;
+        case PROP_ConversationId:
+          sc->ExpectNumber();
+          pdef->Field->SetInt(DefObj, sc->Number);
+          if (sc->Check(",")) {
+            sc->ExpectNumberWithSign();
+            sc->Expect(",");
+            sc->ExpectNumberWithSign();
+          }
+          break;
+        case PROP_PainChance:
+          if (sc->CheckNumber()) {
+            pdef->Field->SetFloat(DefObj, float(sc->Number)/256.0f);
+          } else {
+            sc->ExpectString();
+            VName DamageType = (sc->String.ICmp("Normal") == 0 ? /*NAME_None*/VName("None") : VName(*sc->String));
+            sc->Expect(",");
             sc->ExpectNumber();
-            P.Field->SetInt(DefObj, sc->Number);
-            if (sc->Check(",")) {
-              sc->ExpectNumberWithSign();
-              sc->Expect(",");
-              sc->ExpectNumberWithSign();
+
+            // check pain chances array for replacements
+            TArray<VPainChanceInfo> &PainChances = GetClassPainChances(Class);
+            VPainChanceInfo *PC = nullptr;
+            for (int i = 0; i < PainChances.Num(); ++i) {
+              if (PainChances[i].DamageType == DamageType) {
+                PC = &PainChances[i];
+                break;
+              }
             }
-            break;
-          case PROP_PainChance:
-            if (sc->CheckNumber()) {
-              P.Field->SetFloat(DefObj, float(sc->Number)/256.0f);
-            } else {
+            if (!PC) {
+              PC = &PainChances.Alloc();
+              PC->DamageType = DamageType;
+            }
+            PC->Chance = float(sc->Number)/256.0f;
+          }
+          break;
+        case PROP_DamageFactor:
+          {
+            auto loc = sc->GetLoc();
+
+            VName DamageType = /*NAME_None*/VName("None");
+            // Check if we only have a number instead of a string, since
+            // there are some custom WAD files that don't specify a DamageType,
+            // but specify a DamageFactor
+            if (!sc->CheckFloatWithSign()) {
               sc->ExpectString();
-              VName DamageType = (sc->String.ICmp("Normal") == 0 ? /*NAME_None*/VName("None") : VName(*sc->String));
+              DamageType = (sc->String.ICmp("Normal") == 0 ? /*NAME_None*/VName("None") : VName(*sc->String));
               sc->Expect(",");
-              sc->ExpectNumber();
-
-              // check pain chances array for replacements
-              TArray<VPainChanceInfo> &PainChances = GetClassPainChances(Class);
-              VPainChanceInfo *PC = nullptr;
-              for (i = 0; i < PainChances.Num(); ++i) {
-                if (PainChances[i].DamageType == DamageType) {
-                  PC = &PainChances[i];
-                  break;
-                }
-              }
-              if (!PC) {
-                PC = &PainChances.Alloc();
-                PC->DamageType = DamageType;
-              }
-              PC->Chance = float(sc->Number)/256.0f;
-            }
-            break;
-          case PROP_DamageFactor:
-            {
-              auto loc = sc->GetLoc();
-
-              VName DamageType = /*NAME_None*/VName("None");
-              // Check if we only have a number instead of a string, since
-              // there are some custom WAD files that don't specify a DamageType,
-              // but specify a DamageFactor
-              if (!sc->CheckFloatWithSign()) {
-                sc->ExpectString();
-                DamageType = (sc->String.ICmp("Normal") == 0 ? /*NAME_None*/VName("None") : VName(*sc->String));
-                sc->Expect(",");
-                sc->ExpectFloatWithSign();
-              }
-
-              // check damage factors array for replacements
-              TArray<VDamageFactor> &DamageFactors = GetClassDamageFactors(Class);
-              VDamageFactor *DF = nullptr, *ncDF = nullptr;
-              for (i = 0; i < DamageFactors.Num(); ++i) {
-                if (DamageFactors[i].DamageType == DamageType) {
-                  DF = &DamageFactors[i];
-                  break;
-                }
-                if (VStr::ICmp(*DamageFactors[i].DamageType, *DamageType) == 0) {
-                  ParseWarning(loc, "DamageFactor case mismatch: looking for '%s', got '%s'", *DamageType, *DamageFactors[i].DamageType);
-                  if (!ncDF) ncDF = &DamageFactors[i];
-                }
-              }
-
-              if (!DF && ncDF) DF = ncDF;
-              if (!DF) {
-                DF = &DamageFactors.Alloc();
-                DF->DamageType = DamageType;
-              }
-              DF->Factor = sc->Float;
-              /*
-              GCon->Logf(NAME_Warning, "*** class '%s': damage factor '%s', value is %g", Class->GetName(), *DamageType, sc->Float);
-              for (i = 0; i < DamageFactors.length(); ++i) GCon->Logf(NAME_Debug, "Actor '%s': damage factor #%d: name=<%s>; factor=%g", Class->GetName(), i, *DamageFactors[i].DamageType, DamageFactors[i].Factor);
-              */
-            }
-            break;
-          case PROP_MissileDamage:
-            if (sc->Check("(")) {
-              VExpression *Expr = ParseExpression(sc, Class);
-              if (!Expr) {
-                ParseError(sc->GetLoc(), "Damage expression expected");
-              } else {
-                Expr = new VScalarToInt(Expr, false); // not resolved
-                VMethod *M = new VMethod("GetMissileDamage", Class, sc->GetLoc());
-                M->Flags = FUNC_Override;
-                M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Int, sc->GetLoc());
-                M->ReturnType = TYPE_Int;
-                M->NumParams = 2;
-                M->Params[0].Name = "Mask";
-                M->Params[0].Loc = sc->GetLoc();
-                M->Params[0].TypeExpr = new VTypeExprSimple(TYPE_Int, sc->GetLoc());
-                M->Params[1].Name = "Add";
-                M->Params[1].Loc = sc->GetLoc();
-                M->Params[1].TypeExpr = new VTypeExprSimple(TYPE_Int, sc->GetLoc());
-                M->Statement = new VReturn(Expr, sc->GetLoc());
-                Class->AddMethod(M);
-                M->Define();
-              }
-              sc->Expect(")");
-            } else {
-              sc->ExpectNumber();
-              P.Field->SetInt(DefObj, sc->Number);
-            }
-            break;
-          case PROP_VSpeed:
-            {
               sc->ExpectFloatWithSign();
-              TVec Val = P.Field->GetVec(DefObj);
-              Val.z = sc->Float*35.0f;
-              P.Field->SetVec(DefObj, Val);
             }
-            break;
-          case PROP_RenderStyle:
-            {
-              int RenderStyle = STYLE_Normal;
-                   if (sc->Check("None")) RenderStyle = STYLE_None;
-              else if (sc->Check("Normal")) RenderStyle = STYLE_Normal;
-              else if (sc->Check("Fuzzy")) RenderStyle = STYLE_Fuzzy;
-              else if (sc->Check("SoulTrans")) RenderStyle = STYLE_SoulTrans;
-              else if (sc->Check("OptFuzzy")) RenderStyle = STYLE_OptFuzzy;
-              else if (sc->Check("Translucent")) RenderStyle = STYLE_Translucent;
-              else if (sc->Check("Add")) RenderStyle = STYLE_Add;
-              else if (sc->Check("Stencil")) RenderStyle = STYLE_Stencil;
-              else if (sc->Check("AddStencil")) RenderStyle = STYLE_AddStencil;
-              else if (sc->Check("Subtract")) RenderStyle = STYLE_Subtract;
-              else if (sc->Check("Shaded")) RenderStyle = STYLE_Shaded;
-              else if (sc->Check("AddShaded")) RenderStyle = STYLE_AddShaded;
-              else if (sc->Check("Shadow")) RenderStyle = STYLE_Shadow;
-              // special k8vavoom style
-              else if (sc->Check("Dark")) RenderStyle = STYLE_Dark;
-              else {
-                GCon->Logf(NAME_Error, va("%s: invalid render style '%s' in '%s'", *prloc.toStringNoCol(), *sc->String, Class->GetName()));
-                //sc->Error("Bad render style");
-              }
-              P.Field->SetByte(DefObj, RenderStyle);
-            }
-            break;
-          case PROP_DefaultAlpha: // heretic should have 0.6, but meh...
-            P.Field->SetFloat(DefObj, 0.6f);
-            break;
-          case PROP_Translation:
-            P.Field->SetInt(DefObj, R_ParseDecorateTranslation(sc, (GameFilter&GAME_Strife ? 7 : 3)));
-            break;
-          case PROP_BloodColor:
-            bloodColor = sc->ExpectColor();
-            P.Field->SetInt(DefObj, bloodColor);
-            if (!bloodTranslationSet) P.Field2->SetInt(DefObj, R_GetBloodTranslation(bloodColor, true));
-            break;
-          case PROP_BloodTranslation:
-            bloodTranslationSet = true;
-            //k8: don't clear color, so we could be able to set it separately
-            //P.Field->SetInt(DefObj, 0); // clear color
-            P.Field2->SetInt(DefObj, R_ParseDecorateTranslation(sc, (GameFilter&GAME_Strife ? 7 : 3))); // set translation
-            break;
-          case PROP_BloodType:
-            sc->ExpectString();
-            AddClassFixup(Class, P.Field, sc->String, ClassFixups);
-            if (sc->Check(",")) sc->ExpectString();
-            AddClassFixup(Class, P.Field2, sc->String, ClassFixups);
-            if (sc->Check(",")) sc->ExpectString();
-            AddClassFixup(Class, "AxeBloodType", sc->String, ClassFixups);
-            break;
-          case PROP_StencilColor:
-            {
-              vuint32 Col = sc->ExpectColor();
-              P.Field->SetInt(DefObj, Col);
-            }
-            break;
-          case PROP_Monster:
-            Class->SetFieldBool("bShootable", true);
-            Class->SetFieldBool("bCountKill", true);
-            Class->SetFieldBool("bSolid", true);
-            Class->SetFieldBool("bActivatePushWall", true);
-            Class->SetFieldBool("bActivateMCross", true);
-            Class->SetFieldBool("bPassMobj", true);
-            Class->SetFieldBool("bMonster", true);
-            Class->SetFieldBool("bCanUseWalls", true);
-            break;
-          case PROP_Projectile:
-            Class->SetFieldBool("bNoBlockmap", true);
-            Class->SetFieldBool("bNoGravity", true);
-            Class->SetFieldBool("bDropOff", true);
-            Class->SetFieldBool("bMissile", true);
-            Class->SetFieldBool("bActivateImpact", true);
-            Class->SetFieldBool("bActivatePCross", true);
-            Class->SetFieldBool("bNoTeleport", true);
-            if (GGameInfo->Flags&VGameInfo::GIF_DefaultBloodSplatter) Class->SetFieldBool("bBloodSplatter", true);
-            break;
-          case PROP_BounceType:
-            if (sc->Check("None")) {
-              Class->SetFieldByte("BounceType", BOUNCE_None);
-            } else if (sc->Check("Doom")) {
-              Class->SetFieldByte("BounceType", BOUNCE_Doom);
-              Class->SetFieldBool("bBounceWalls", true);
-              Class->SetFieldBool("bBounceFloors", true);
-              Class->SetFieldBool("bBounceCeilings", true);
-              Class->SetFieldBool("bBounceOnActors", true);
-              Class->SetFieldBool("bBounceAutoOff", true);
-            } else if (sc->Check("Heretic")) {
-              Class->SetFieldByte("BounceType", BOUNCE_Heretic);
-              Class->SetFieldBool("bBounceFloors", true);
-              Class->SetFieldBool("bBounceCeilings", true);
-            } else if (sc->Check("Hexen")) {
-              Class->SetFieldByte("BounceType", BOUNCE_Hexen);
-              Class->SetFieldBool("bBounceWalls", true);
-              Class->SetFieldBool("bBounceFloors", true);
-              Class->SetFieldBool("bBounceCeilings", true);
-              Class->SetFieldBool("bBounceOnActors", true);
-            } else if (sc->Check("DoomCompat")) {
-              Class->SetFieldByte("BounceType", BOUNCE_Doom);
-            } else if (sc->Check("HereticCompat")) {
-              Class->SetFieldByte("BounceType", BOUNCE_Heretic);
-            } else if (sc->Check("HexenCompat")) {
-              Class->SetFieldByte("BounceType", BOUNCE_Hexen);
-            } else if (sc->Check("Grenade")) {
-              // bounces on walls and flats like ZDoom bounce
-              Class->SetFieldByte("BounceType", BOUNCE_Doom);
-              Class->SetFieldBool("bBounceOnActors", false);
-            } else if (sc->Check("Classic")) {
-              // bounces on flats only, but does not die when bouncing
-              Class->SetFieldByte("BounceType", BOUNCE_Heretic);
-              Class->SetFieldBool("bMBFBounce", true);
-            }
-            break;
-          case PROP_ClearFlags:
-            for (j = 0; j < FlagList.Num(); ++j) {
-              if (FlagList[j].Class != ActorClass) continue;
-              for (i = 0; i < FlagList[j].Flags.Num(); ++i) {
-                VFlagDef &F = FlagList[j].Flags[i];
-                switch (F.Type) {
-                  case FLAG_Bool: F.Field->SetBool(DefObj, false); break;
-                }
-              }
-            }
-            Class->SetFieldByte("BounceType", BOUNCE_None);
-            Class->SetFieldBool("bColideWithThings", true);
-            Class->SetFieldBool("bColideWithWorld", true);
-            Class->SetFieldBool("bPickUp", false);
-            break;
-          case PROP_DropItem:
-            {
-              if (!DropItemsDefined) {
-                GetClassDropItems(Class).Clear();
-                DropItemsDefined = true;
-              }
-              sc->ExpectString();
-              VDropItemInfo DI;
-              DI.TypeName = *sc->String.ToLower();
-              DI.Type = nullptr;
-              DI.Amount = 0;
-              DI.Chance = 1.0f;
-              bool HaveChance = false;
-              if (sc->Check(",")) {
-                sc->ExpectNumber();
-                HaveChance = true;
-              } else {
-                HaveChance = sc->CheckNumber();
-              }
-              if (HaveChance) {
-                DI.Chance = float(sc->Number)/255.0f;
-                if (sc->Check(",")) {
-                  sc->ExpectNumberWithSign();
-                  DI.Amount = max2(0, sc->Number);
-                } else if (sc->CheckNumberWithSign()) {
-                  DI.Amount = max2(0, sc->Number);
-                }
-              }
-              if (DI.TypeName == "none" || DI.TypeName == NAME_None) {
-                GetClassDropItems(Class).Clear();
-              } else {
-                GetClassDropItems(Class).Insert(0, DI);
-              }
-            }
-            break;
-          case PROP_States:
-            if (!ParseStates(sc, Class, States)) return;
-            break;
-          case PROP_SkipSuper:
-            {
-              // preserve items that should not be copied
-              TArray<VDamageFactor> DamageFactors = GetClassDamageFactors(Class);
-              TArray<VPainChanceInfo> PainChances = GetClassPainChances(Class);
-              // copy default properties
-              ActorClass->DeepCopyObject(Class->Defaults, ActorClass->Defaults);
-              // copy state labels
-              Class->StateLabels = ActorClass->StateLabels;
-              Class->ClassFlags |= CLASS_SkipSuperStateLabels;
-              // drop items are reset back to the list of the parent class
-              GetClassDropItems(Class) = GetClassDropItems(Class->ParentClass);
-              // restore items that should not be copied
-              GetClassDamageFactors(Class) = DamageFactors;
-              GetClassPainChances(Class) = PainChances;
-            }
-            break;
-          case PROP_Args:
-            for (i = 0; i < 5; ++i) {
-              sc->ExpectNumber();
-              P.Field->SetInt(DefObj, sc->Number, i);
-              if (i < 4 && !sc->Check(",")) break;
-            }
-            P.Field2->SetBool(DefObj, true);
-            break;
-          case PROP_LowMessage:
-            sc->ExpectNumber();
-            P.Field->SetInt(DefObj, sc->Number);
-            sc->Expect(",");
-            sc->ExpectString();
-            P.Field2->SetStr(DefObj, sc->String);
-            break;
-          case PROP_PowerupColor:
-                 if (sc->Check("InverseMap")) P.Field->SetInt(DefObj, INVERSECOLOR);
-            else if (sc->Check("GoldMap")) P.Field->SetInt(DefObj, GOLDCOLOR);
-            else if (sc->Check("RedMap")) P.Field->SetInt(DefObj, REDCOLOR);
-            else if (sc->Check("BerserkRedMap")) P.Field->SetInt(DefObj, BEREDCOLOR);
-            else if (sc->Check("GreenMap")) P.Field->SetInt(DefObj, GREENCOLOR);
-            else if (sc->Check("MonoMap")) P.Field->SetInt(DefObj, MONOCOLOR);
-            else if (sc->Check("MonochromeMap")) P.Field->SetInt(DefObj, MONOCOLOR);
-            else if (sc->Check("BlueMap")) P.Field->SetInt(DefObj, BLUECOLOR);
-            else {
-              vuint32 Col = sc->ExpectColor();
-              int r = (Col>>16)&255;
-              int g = (Col>>8)&255;
-              int b = Col&255;
-              int a = 88; // default alpha, around 0.(3)
-              sc->Check(",");
-              // alpha may be missing
-              if (!sc->Crossed) {
-                sc->ExpectFloat();
-                     if (sc->Float <= 0) a = 1;
-                else if (sc->Float >= 1) a = 255;
-                else a = clampToByte((int)(sc->Float*255));
-                if (a > 250) a = 250;
-                if (a < 1) a = 1;
-              }
-              P.Field->SetInt(DefObj, (r<<16)|(g<<8)|b|(a<<24));
-            }
-            break;
-          case PROP_ColorRange:
-            sc->ExpectNumber();
-            P.Field->SetInt(DefObj, sc->Number);
-            sc->Check(",");
-            sc->ExpectNumber();
-            P.Field2->SetInt(DefObj, sc->Number);
-            break;
-          case PROP_DamageScreenColor:
-            //FIXME: Player.DamageScreenColor color[, intensity[, damagetype]]
-            {
-              vuint32 Col = sc->ExpectColor();
-              float Intensity = 1.0f;
-              VStr dmgType;
-              // intensity
-              if (sc->Check(",")) {
-                sc->ExpectFloat();
-                Intensity = clampval(sc->Float, 0.0f, 1.0f);
-                // damage type
-                if (sc->Check(",")) {
-                  sc->ExpectString();
-                  if (sc->String.length() && !sc->String.strEquCI("None")) dmgType = sc->String;
-                }
-              }
-              // set damage
-              if (dmgType.length()) {
-                // custom damage type
-                TArray<VDamageColorType> &dclist = GetClassDamageColors(Class);
-                int fidx = -1;
-                for (int f = 0; f < dclist.length(); ++f) if (dmgType.strEquCI(*dclist[f].Type)) { fidx = f; break; }
-                if (fidx < 0) {
-                  fidx = dclist.length();
-                  dclist.alloc();
-                  vassert(fidx == dclist.length()-1);
-                  dclist[fidx].Type = VName(*dmgType);
-                }
-                dclist[fidx].Color = Col;
-                dclist[fidx].Intensity = Intensity;
-              } else {
-                // default
-                P.Field->SetInt(DefObj, Col);
-              }
-            }
-            break;
-          case PROP_HexenArmor:
-            sc->ExpectFloat();
-            P.Field->SetFloat(DefObj, sc->Float, 0);
-            sc->Expect(",");
-            sc->ExpectFloat();
-            P.Field->SetFloat(DefObj, sc->Float, 1);
-            sc->Expect(",");
-            sc->ExpectFloat();
-            P.Field->SetFloat(DefObj, sc->Float, 2);
-            sc->Expect(",");
-            sc->ExpectFloat();
-            P.Field->SetFloat(DefObj, sc->Float, 3);
-            sc->Expect(",");
-            sc->ExpectFloat();
-            P.Field->SetFloat(DefObj, sc->Float, 4);
-            break;
-          case PROP_StartItem:
-            {
-              TArray<VDropItemInfo> &DropItems = *(TArray<VDropItemInfo>*)P.Field->GetFieldPtr(DefObj);
-              if (!DropItemsDefined) {
-                DropItems.Clear();
-                DropItemsDefined = true;
-              }
-              sc->ExpectString();
-              VDropItemInfo DI;
-              DI.TypeName = *sc->String.ToLower();
-              DI.Type = nullptr;
-              DI.Amount = 0;
-              DI.Chance = 1.0f;
-              if (sc->Check(",")) {
-                sc->ExpectNumber();
-                DI.Amount = sc->Number;
-                if (DI.Amount == 0) DI.Amount = -666; //k8:hack!
-              } else if (sc->CheckNumber()) {
-                DI.Amount = sc->Number;
-                if (DI.Amount == 0) DI.Amount = -666; //k8:hack!
-              }
-              if (DI.TypeName == "none" || DI.TypeName == NAME_None) {
-                DropItems.Clear();
-              } else {
-                DropItems.Insert(0, DI);
-              }
-            }
-            break;
-          case PROP_MorphStyle:
-            if (sc->CheckNumber()) {
-              P.Field->SetInt(DefObj, sc->Number);
-            } else {
-              // WANING! keep in sync with "EntityEx.Morph.vc"!
-              enum {
-                MORPH_ADDSTAMINA          = 0x00000001, // player has a "power" instead of a "curse" (add stamina instead of limiting to health)
-                MORPH_FULLHEALTH          = 0x00000002, // player uses new health semantics (!POWER => MaxHealth of animal, POWER => Normal health behaviour)
-                MORPH_UNDOBYTOMEOFPOWER   = 0x00000004, // player unmorphs upon activating a Tome of Power
-                MORPH_UNDOBYCHAOSDEVICE   = 0x00000008, // player unmorphs upon activating a Chaos Device
-                MORPH_FAILNOTELEFRAG      = 0x00000010, // player stays morphed if unmorph by Tome of Power fails
-                MORPH_FAILNOLAUGH         = 0x00000020, // player doesn't laugh if unmorph by Chaos Device fails
-                MORPH_WHENINVULNERABLE    = 0x00000040, // player can morph (or scripted unmorph) when invulnerable but ONLY if doing it to themselves
-                MORPH_LOSEACTUALWEAPON    = 0x00000080, // player loses specified morph weapon only (not "whichever they have when unmorphing")
-                MORPH_NEWTIDBEHAVIOUR     = 0x00000100, // actor TID is by default transferred from the old actor to the new actor
-                MORPH_UNDOBYDEATH         = 0x00000200, // actor unmorphs when killed and (unless MORPH_UNDOBYDEATHSAVES) stays dead
-                MORPH_UNDOBYDEATHFORCED   = 0x00000400, // actor (if unmorphed when killed) forces unmorph (not very useful with UNDOBYDEATHSAVES)
-                MORPH_UNDOBYDEATHSAVES    = 0x00000800, // actor (if unmorphed when killed) regains their health and doesn't die
-                MORPH_UNDOALWAYS          = 0x00001000, // ignore unmorph blocking conditions (not implemented)
-                MORPH_TRANSFERTRANSLATION = 0x00002000, // transfers the actor's translation to the morphed actor (applies to players and monsters) (not implemented)
-              };
 
-              bool HaveParen = sc->Check("(");
-              int Val = 0;
-              do {
-                     if (sc->Check("MRF_ADDSTAMINA")) Val |= MORPH_ADDSTAMINA;
-                else if (sc->Check("MRF_FULLHEALTH")) Val |= MORPH_FULLHEALTH;
-                else if (sc->Check("MRF_UNDOBYTOMEOFPOWER")) Val |= MORPH_UNDOBYTOMEOFPOWER;
-                else if (sc->Check("MRF_UNDOBYCHAOSDEVICE")) Val |= MORPH_UNDOBYCHAOSDEVICE;
-                else if (sc->Check("MRF_FAILNOTELEFRAG")) Val |= MORPH_FAILNOTELEFRAG;
-                else if (sc->Check("MRF_FAILNOLAUGH")) Val |= MORPH_FAILNOLAUGH;
-                else if (sc->Check("MRF_WHENINVULNERABLE")) Val |= MORPH_WHENINVULNERABLE;
-                else if (sc->Check("MRF_LOSEACTUALWEAPON")) Val |= MORPH_LOSEACTUALWEAPON;
-                else if (sc->Check("MRF_NEWTIDBEHAVIOUR")) Val |= MORPH_NEWTIDBEHAVIOUR;
-                else if (sc->Check("MRF_UNDOBYDEATH")) Val |= MORPH_UNDOBYDEATH;
-                else if (sc->Check("MRF_UNDOBYDEATHFORCED")) Val |= MORPH_UNDOBYDEATHFORCED;
-                else if (sc->Check("MRF_UNDOBYDEATHSAVES")) Val |= MORPH_UNDOBYDEATHSAVES;
-                else if (sc->Check("MRF_UNDOALWAYS")) Val |= MORPH_UNDOALWAYS;
-                else if (sc->Check("MRF_TRANSFERTRANSLATION")) Val |= MORPH_TRANSFERTRANSLATION;
-                else sc->Error(va("Bad morph style (%s)", *sc->String));
-              } while (sc->Check("|"));
-              if (HaveParen) sc->Expect(")");
-              P.Field->SetInt(DefObj, Val);
+            // check damage factors array for replacements
+            TArray<VDamageFactor> &DamageFactors = GetClassDamageFactors(Class);
+            VDamageFactor *DF = nullptr, *ncDF = nullptr;
+            for (int i = 0; i < DamageFactors.Num(); ++i) {
+              if (DamageFactors[i].DamageType == DamageType) {
+                DF = &DamageFactors[i];
+                break;
+              }
+              if (VStr::ICmp(*DamageFactors[i].DamageType, *DamageType) == 0) {
+                ParseWarning(loc, "DamageFactor case mismatch: looking for '%s', got '%s'", *DamageType, *DamageFactors[i].DamageType);
+                if (!ncDF) ncDF = &DamageFactors[i];
+              }
             }
-            break;
-          case PROP_PawnWeaponSlot: // Player.WeaponSlot 1, XFist, XChainsaw
-            {
-              // get slot number
+
+            if (!DF && ncDF) DF = ncDF;
+            if (!DF) {
+              DF = &DamageFactors.Alloc();
+              DF->DamageType = DamageType;
+            }
+            DF->Factor = sc->Float;
+            /*
+            GCon->Logf(NAME_Warning, "*** class '%s': damage factor '%s', value is %g", Class->GetName(), *DamageType, sc->Float);
+            for (i = 0; i < DamageFactors.length(); ++i) GCon->Logf(NAME_Debug, "Actor '%s': damage factor #%d: name=<%s>; factor=%g", Class->GetName(), i, *DamageFactors[i].DamageType, DamageFactors[i].Factor);
+            */
+          }
+          break;
+        case PROP_MissileDamage:
+          if (sc->Check("(")) {
+            VExpression *Expr = ParseExpression(sc, Class);
+            if (!Expr) {
+              ParseError(sc->GetLoc(), "Damage expression expected");
+            } else {
+              Expr = new VScalarToInt(Expr, false); // not resolved
+              VMethod *M = new VMethod("GetMissileDamage", Class, sc->GetLoc());
+              M->Flags = FUNC_Override;
+              M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Int, sc->GetLoc());
+              M->ReturnType = TYPE_Int;
+              M->NumParams = 2;
+              M->Params[0].Name = "Mask";
+              M->Params[0].Loc = sc->GetLoc();
+              M->Params[0].TypeExpr = new VTypeExprSimple(TYPE_Int, sc->GetLoc());
+              M->Params[1].Name = "Add";
+              M->Params[1].Loc = sc->GetLoc();
+              M->Params[1].TypeExpr = new VTypeExprSimple(TYPE_Int, sc->GetLoc());
+              M->Statement = new VReturn(Expr, sc->GetLoc());
+              Class->AddMethod(M);
+              M->Define();
+            }
+            sc->Expect(")");
+          } else {
+            sc->ExpectNumber();
+            pdef->Field->SetInt(DefObj, sc->Number);
+          }
+          break;
+        case PROP_VSpeed:
+          {
+            sc->ExpectFloatWithSign();
+            TVec Val = pdef->Field->GetVec(DefObj);
+            Val.z = sc->Float*35.0f;
+            pdef->Field->SetVec(DefObj, Val);
+          }
+          break;
+        case PROP_RenderStyle:
+          {
+            int RenderStyle = STYLE_Normal;
+                 if (sc->Check("None")) RenderStyle = STYLE_None;
+            else if (sc->Check("Normal")) RenderStyle = STYLE_Normal;
+            else if (sc->Check("Fuzzy")) RenderStyle = STYLE_Fuzzy;
+            else if (sc->Check("SoulTrans")) RenderStyle = STYLE_SoulTrans;
+            else if (sc->Check("OptFuzzy")) RenderStyle = STYLE_OptFuzzy;
+            else if (sc->Check("Translucent")) RenderStyle = STYLE_Translucent;
+            else if (sc->Check("Add")) RenderStyle = STYLE_Add;
+            else if (sc->Check("Stencil")) RenderStyle = STYLE_Stencil;
+            else if (sc->Check("AddStencil")) RenderStyle = STYLE_AddStencil;
+            else if (sc->Check("Subtract")) RenderStyle = STYLE_Subtract;
+            else if (sc->Check("Shaded")) RenderStyle = STYLE_Shaded;
+            else if (sc->Check("AddShaded")) RenderStyle = STYLE_AddShaded;
+            else if (sc->Check("Shadow")) RenderStyle = STYLE_Shadow;
+            // special k8vavoom style
+            else if (sc->Check("Dark")) RenderStyle = STYLE_Dark;
+            else {
+              GCon->Logf(NAME_Error, va("%s: invalid render style '%s' in '%s'", *prloc.toStringNoCol(), *sc->String, Class->GetName()));
+              //sc->Error("Bad render style");
+            }
+            pdef->Field->SetByte(DefObj, RenderStyle);
+          }
+          break;
+        case PROP_DefaultAlpha: // heretic should have 0.6, but meh...
+          pdef->Field->SetFloat(DefObj, 0.6f);
+          break;
+        case PROP_Translation:
+          pdef->Field->SetInt(DefObj, R_ParseDecorateTranslation(sc, (GameFilter&GAME_Strife ? 7 : 3)));
+          break;
+        case PROP_BloodColor:
+          bloodColor = sc->ExpectColor();
+          pdef->Field->SetInt(DefObj, bloodColor);
+          if (!bloodTranslationSet) pdef->Field2->SetInt(DefObj, R_GetBloodTranslation(bloodColor, true));
+          break;
+        case PROP_BloodTranslation:
+          bloodTranslationSet = true;
+          //k8: don't clear color, so we could be able to set it separately
+          //pdef->Field->SetInt(DefObj, 0); // clear color
+          pdef->Field2->SetInt(DefObj, R_ParseDecorateTranslation(sc, (GameFilter&GAME_Strife ? 7 : 3))); // set translation
+          break;
+        case PROP_BloodType:
+          sc->ExpectString();
+          AddClassFixup(Class, pdef->Field, sc->String, ClassFixups);
+          if (sc->Check(",")) sc->ExpectString();
+          AddClassFixup(Class, pdef->Field2, sc->String, ClassFixups);
+          if (sc->Check(",")) sc->ExpectString();
+          AddClassFixup(Class, "AxeBloodType", sc->String, ClassFixups);
+          break;
+        case PROP_StencilColor:
+          {
+            vuint32 Col = sc->ExpectColor();
+            pdef->Field->SetInt(DefObj, Col);
+          }
+          break;
+        case PROP_Monster:
+          Class->SetFieldBool("bShootable", true);
+          Class->SetFieldBool("bCountKill", true);
+          Class->SetFieldBool("bSolid", true);
+          Class->SetFieldBool("bActivatePushWall", true);
+          Class->SetFieldBool("bActivateMCross", true);
+          Class->SetFieldBool("bPassMobj", true);
+          Class->SetFieldBool("bMonster", true);
+          Class->SetFieldBool("bCanUseWalls", true);
+          break;
+        case PROP_Projectile:
+          Class->SetFieldBool("bNoBlockmap", true);
+          Class->SetFieldBool("bNoGravity", true);
+          Class->SetFieldBool("bDropOff", true);
+          Class->SetFieldBool("bMissile", true);
+          Class->SetFieldBool("bActivateImpact", true);
+          Class->SetFieldBool("bActivatePCross", true);
+          Class->SetFieldBool("bNoTeleport", true);
+          if (GGameInfo->Flags&VGameInfo::GIF_DefaultBloodSplatter) Class->SetFieldBool("bBloodSplatter", true);
+          break;
+        case PROP_BounceType:
+          if (sc->Check("None")) {
+            Class->SetFieldByte("BounceType", BOUNCE_None);
+          } else if (sc->Check("Doom")) {
+            Class->SetFieldByte("BounceType", BOUNCE_Doom);
+            Class->SetFieldBool("bBounceWalls", true);
+            Class->SetFieldBool("bBounceFloors", true);
+            Class->SetFieldBool("bBounceCeilings", true);
+            Class->SetFieldBool("bBounceOnActors", true);
+            Class->SetFieldBool("bBounceAutoOff", true);
+          } else if (sc->Check("Heretic")) {
+            Class->SetFieldByte("BounceType", BOUNCE_Heretic);
+            Class->SetFieldBool("bBounceFloors", true);
+            Class->SetFieldBool("bBounceCeilings", true);
+          } else if (sc->Check("Hexen")) {
+            Class->SetFieldByte("BounceType", BOUNCE_Hexen);
+            Class->SetFieldBool("bBounceWalls", true);
+            Class->SetFieldBool("bBounceFloors", true);
+            Class->SetFieldBool("bBounceCeilings", true);
+            Class->SetFieldBool("bBounceOnActors", true);
+          } else if (sc->Check("DoomCompat")) {
+            Class->SetFieldByte("BounceType", BOUNCE_Doom);
+          } else if (sc->Check("HereticCompat")) {
+            Class->SetFieldByte("BounceType", BOUNCE_Heretic);
+          } else if (sc->Check("HexenCompat")) {
+            Class->SetFieldByte("BounceType", BOUNCE_Hexen);
+          } else if (sc->Check("Grenade")) {
+            // bounces on walls and flats like ZDoom bounce
+            Class->SetFieldByte("BounceType", BOUNCE_Doom);
+            Class->SetFieldBool("bBounceOnActors", false);
+          } else if (sc->Check("Classic")) {
+            // bounces on flats only, but does not die when bouncing
+            Class->SetFieldByte("BounceType", BOUNCE_Heretic);
+            Class->SetFieldBool("bMBFBounce", true);
+          }
+          break;
+        case PROP_ClearFlags:
+          for (int jj = 0; jj < FlagList.Num(); ++jj) {
+            if (FlagList[jj].Class != ActorClass) continue;
+            for (int i = 0; i < FlagList[jj].Flags.Num(); ++i) {
+              VFlagDef &F = FlagList[jj].Flags[i];
+              switch (F.Type) {
+                case FLAG_Bool: F.Field->SetBool(DefObj, false); break;
+              }
+            }
+          }
+          Class->SetFieldByte("BounceType", BOUNCE_None);
+          Class->SetFieldBool("bColideWithThings", true);
+          Class->SetFieldBool("bColideWithWorld", true);
+          Class->SetFieldBool("bPickUp", false);
+          break;
+        case PROP_DropItem:
+          {
+            if (!DropItemsDefined) {
+              GetClassDropItems(Class).Clear();
+              DropItemsDefined = true;
+            }
+            sc->ExpectString();
+            VDropItemInfo DI;
+            DI.TypeName = *sc->String.ToLower();
+            DI.Type = nullptr;
+            DI.Amount = 0;
+            DI.Chance = 1.0f;
+            bool HaveChance = false;
+            if (sc->Check(",")) {
               sc->ExpectNumber();
-              int sidx = sc->Number;
-              if (!VWeaponSlotFixups::isValidSlot(sidx)) {
-                GLog.Logf(NAME_Warning, "%s: invalid weapon slot number %d", *sc->GetLoc().toStringNoCol(), sidx);
-                while (sc->Check(",")) sc->ExpectString();
-              } else {
-                VWeaponSlotFixups &wst = allocWeaponSlotsFor(newWSlots, Class);
-                wst.clearSlot(sidx);
-                while (sc->Check(",")) {
-                  sc->ExpectString();
-                  // filter out special name
-                  if (!sc->String.strEquCI("Weapon")) {
-                    wst.addToSlot(sidx, sc->String);
-                  }
+              HaveChance = true;
+            } else {
+              HaveChance = sc->CheckNumber();
+            }
+            if (HaveChance) {
+              DI.Chance = float(sc->Number)/255.0f;
+              if (sc->Check(",")) {
+                sc->ExpectNumberWithSign();
+                DI.Amount = max2(0, sc->Number);
+              } else if (sc->CheckNumberWithSign()) {
+                DI.Amount = max2(0, sc->Number);
+              }
+            }
+            if (DI.TypeName == "none" || DI.TypeName == NAME_None) {
+              GetClassDropItems(Class).Clear();
+            } else {
+              GetClassDropItems(Class).Insert(0, DI);
+            }
+          }
+          break;
+        case PROP_States:
+          if (!ParseStates(sc, Class, States)) return;
+          break;
+        case PROP_SkipSuper:
+          {
+            // preserve items that should not be copied
+            TArray<VDamageFactor> DamageFactors = GetClassDamageFactors(Class);
+            TArray<VPainChanceInfo> PainChances = GetClassPainChances(Class);
+            // copy default properties
+            ActorClass->DeepCopyObject(Class->Defaults, ActorClass->Defaults);
+            // copy state labels
+            Class->StateLabels = ActorClass->StateLabels;
+            Class->ClassFlags |= CLASS_SkipSuperStateLabels;
+            // drop items are reset back to the list of the parent class
+            GetClassDropItems(Class) = GetClassDropItems(Class->ParentClass);
+            // restore items that should not be copied
+            GetClassDamageFactors(Class) = DamageFactors;
+            GetClassPainChances(Class) = PainChances;
+          }
+          break;
+        case PROP_Args:
+          for (int i = 0; i < 5; ++i) {
+            sc->ExpectNumber();
+            pdef->Field->SetInt(DefObj, sc->Number, i);
+            if (i < 4 && !sc->Check(",")) break;
+          }
+          pdef->Field2->SetBool(DefObj, true);
+          break;
+        case PROP_LowMessage:
+          sc->ExpectNumber();
+          pdef->Field->SetInt(DefObj, sc->Number);
+          sc->Expect(",");
+          sc->ExpectString();
+          pdef->Field2->SetStr(DefObj, sc->String);
+          break;
+        case PROP_PowerupColor:
+               if (sc->Check("InverseMap")) pdef->Field->SetInt(DefObj, INVERSECOLOR);
+          else if (sc->Check("GoldMap")) pdef->Field->SetInt(DefObj, GOLDCOLOR);
+          else if (sc->Check("RedMap")) pdef->Field->SetInt(DefObj, REDCOLOR);
+          else if (sc->Check("BerserkRedMap")) pdef->Field->SetInt(DefObj, BEREDCOLOR);
+          else if (sc->Check("GreenMap")) pdef->Field->SetInt(DefObj, GREENCOLOR);
+          else if (sc->Check("MonoMap")) pdef->Field->SetInt(DefObj, MONOCOLOR);
+          else if (sc->Check("MonochromeMap")) pdef->Field->SetInt(DefObj, MONOCOLOR);
+          else if (sc->Check("BlueMap")) pdef->Field->SetInt(DefObj, BLUECOLOR);
+          else {
+            vuint32 Col = sc->ExpectColor();
+            int r = (Col>>16)&255;
+            int g = (Col>>8)&255;
+            int b = Col&255;
+            int a = 88; // default alpha, around 0.(3)
+            sc->Check(",");
+            // alpha may be missing
+            if (!sc->Crossed) {
+              sc->ExpectFloat();
+                   if (sc->Float <= 0) a = 1;
+              else if (sc->Float >= 1) a = 255;
+              else a = clampToByte((int)(sc->Float*255));
+              if (a > 250) a = 250;
+              if (a < 1) a = 1;
+            }
+            pdef->Field->SetInt(DefObj, (r<<16)|(g<<8)|b|(a<<24));
+          }
+          break;
+        case PROP_ColorRange:
+          sc->ExpectNumber();
+          pdef->Field->SetInt(DefObj, sc->Number);
+          sc->Check(",");
+          sc->ExpectNumber();
+          pdef->Field2->SetInt(DefObj, sc->Number);
+          break;
+        case PROP_DamageScreenColor:
+          //FIXME: Player.DamageScreenColor color[, intensity[, damagetype]]
+          {
+            vuint32 Col = sc->ExpectColor();
+            float Intensity = 1.0f;
+            VStr dmgType;
+            // intensity
+            if (sc->Check(",")) {
+              sc->ExpectFloat();
+              Intensity = clampval(sc->Float, 0.0f, 1.0f);
+              // damage type
+              if (sc->Check(",")) {
+                sc->ExpectString();
+                if (sc->String.length() && !sc->String.strEquCI("None")) dmgType = sc->String;
+              }
+            }
+            // set damage
+            if (dmgType.length()) {
+              // custom damage type
+              TArray<VDamageColorType> &dclist = GetClassDamageColors(Class);
+              int fidx = -1;
+              for (int f = 0; f < dclist.length(); ++f) if (dmgType.strEquCI(*dclist[f].Type)) { fidx = f; break; }
+              if (fidx < 0) {
+                fidx = dclist.length();
+                dclist.alloc();
+                vassert(fidx == dclist.length()-1);
+                dclist[fidx].Type = VName(*dmgType);
+              }
+              dclist[fidx].Color = Col;
+              dclist[fidx].Intensity = Intensity;
+            } else {
+              // default
+              pdef->Field->SetInt(DefObj, Col);
+            }
+          }
+          break;
+        case PROP_HexenArmor:
+          sc->ExpectFloat();
+          pdef->Field->SetFloat(DefObj, sc->Float, 0);
+          sc->Expect(",");
+          sc->ExpectFloat();
+          pdef->Field->SetFloat(DefObj, sc->Float, 1);
+          sc->Expect(",");
+          sc->ExpectFloat();
+          pdef->Field->SetFloat(DefObj, sc->Float, 2);
+          sc->Expect(",");
+          sc->ExpectFloat();
+          pdef->Field->SetFloat(DefObj, sc->Float, 3);
+          sc->Expect(",");
+          sc->ExpectFloat();
+          pdef->Field->SetFloat(DefObj, sc->Float, 4);
+          break;
+        case PROP_StartItem:
+          {
+            TArray<VDropItemInfo> &DropItems = *(TArray<VDropItemInfo>*)pdef->Field->GetFieldPtr(DefObj);
+            if (!DropItemsDefined) {
+              DropItems.Clear();
+              DropItemsDefined = true;
+            }
+            sc->ExpectString();
+            VDropItemInfo DI;
+            DI.TypeName = *sc->String.ToLower();
+            DI.Type = nullptr;
+            DI.Amount = 0;
+            DI.Chance = 1.0f;
+            if (sc->Check(",")) {
+              sc->ExpectNumber();
+              DI.Amount = sc->Number;
+              if (DI.Amount == 0) DI.Amount = -666; //k8:hack!
+            } else if (sc->CheckNumber()) {
+              DI.Amount = sc->Number;
+              if (DI.Amount == 0) DI.Amount = -666; //k8:hack!
+            }
+            if (DI.TypeName == "none" || DI.TypeName == NAME_None) {
+              DropItems.Clear();
+            } else {
+              DropItems.Insert(0, DI);
+            }
+          }
+          break;
+        case PROP_MorphStyle:
+          if (sc->CheckNumber()) {
+            pdef->Field->SetInt(DefObj, sc->Number);
+          } else {
+            // WANING! keep in sync with "EntityEx.Morph.vc"!
+            enum {
+              MORPH_ADDSTAMINA          = 0x00000001, // player has a "power" instead of a "curse" (add stamina instead of limiting to health)
+              MORPH_FULLHEALTH          = 0x00000002, // player uses new health semantics (!POWER => MaxHealth of animal, POWER => Normal health behaviour)
+              MORPH_UNDOBYTOMEOFPOWER   = 0x00000004, // player unmorphs upon activating a Tome of Power
+              MORPH_UNDOBYCHAOSDEVICE   = 0x00000008, // player unmorphs upon activating a Chaos Device
+              MORPH_FAILNOTELEFRAG      = 0x00000010, // player stays morphed if unmorph by Tome of Power fails
+              MORPH_FAILNOLAUGH         = 0x00000020, // player doesn't laugh if unmorph by Chaos Device fails
+              MORPH_WHENINVULNERABLE    = 0x00000040, // player can morph (or scripted unmorph) when invulnerable but ONLY if doing it to themselves
+              MORPH_LOSEACTUALWEAPON    = 0x00000080, // player loses specified morph weapon only (not "whichever they have when unmorphing")
+              MORPH_NEWTIDBEHAVIOUR     = 0x00000100, // actor TID is by default transferred from the old actor to the new actor
+              MORPH_UNDOBYDEATH         = 0x00000200, // actor unmorphs when killed and (unless MORPH_UNDOBYDEATHSAVES) stays dead
+              MORPH_UNDOBYDEATHFORCED   = 0x00000400, // actor (if unmorphed when killed) forces unmorph (not very useful with UNDOBYDEATHSAVES)
+              MORPH_UNDOBYDEATHSAVES    = 0x00000800, // actor (if unmorphed when killed) regains their health and doesn't die
+              MORPH_UNDOALWAYS          = 0x00001000, // ignore unmorph blocking conditions (not implemented)
+              MORPH_TRANSFERTRANSLATION = 0x00002000, // transfers the actor's translation to the morphed actor (applies to players and monsters) (not implemented)
+            };
+
+            bool HaveParen = sc->Check("(");
+            int Val = 0;
+            do {
+                   if (sc->Check("MRF_ADDSTAMINA")) Val |= MORPH_ADDSTAMINA;
+              else if (sc->Check("MRF_FULLHEALTH")) Val |= MORPH_FULLHEALTH;
+              else if (sc->Check("MRF_UNDOBYTOMEOFPOWER")) Val |= MORPH_UNDOBYTOMEOFPOWER;
+              else if (sc->Check("MRF_UNDOBYCHAOSDEVICE")) Val |= MORPH_UNDOBYCHAOSDEVICE;
+              else if (sc->Check("MRF_FAILNOTELEFRAG")) Val |= MORPH_FAILNOTELEFRAG;
+              else if (sc->Check("MRF_FAILNOLAUGH")) Val |= MORPH_FAILNOLAUGH;
+              else if (sc->Check("MRF_WHENINVULNERABLE")) Val |= MORPH_WHENINVULNERABLE;
+              else if (sc->Check("MRF_LOSEACTUALWEAPON")) Val |= MORPH_LOSEACTUALWEAPON;
+              else if (sc->Check("MRF_NEWTIDBEHAVIOUR")) Val |= MORPH_NEWTIDBEHAVIOUR;
+              else if (sc->Check("MRF_UNDOBYDEATH")) Val |= MORPH_UNDOBYDEATH;
+              else if (sc->Check("MRF_UNDOBYDEATHFORCED")) Val |= MORPH_UNDOBYDEATHFORCED;
+              else if (sc->Check("MRF_UNDOBYDEATHSAVES")) Val |= MORPH_UNDOBYDEATHSAVES;
+              else if (sc->Check("MRF_UNDOALWAYS")) Val |= MORPH_UNDOALWAYS;
+              else if (sc->Check("MRF_TRANSFERTRANSLATION")) Val |= MORPH_TRANSFERTRANSLATION;
+              else sc->Error(va("Bad morph style (%s)", *sc->String));
+            } while (sc->Check("|"));
+            if (HaveParen) sc->Expect(")");
+            pdef->Field->SetInt(DefObj, Val);
+          }
+          break;
+        case PROP_PawnWeaponSlot: // Player.WeaponSlot 1, XFist, XChainsaw
+          {
+            // get slot number
+            sc->ExpectNumber();
+            int sidx = sc->Number;
+            if (!VWeaponSlotFixups::isValidSlot(sidx)) {
+              GLog.Logf(NAME_Warning, "%s: invalid weapon slot number %d", *sc->GetLoc().toStringNoCol(), sidx);
+              while (sc->Check(",")) sc->ExpectString();
+            } else {
+              VWeaponSlotFixups &wst = allocWeaponSlotsFor(newWSlots, Class);
+              wst.clearSlot(sidx);
+              while (sc->Check(",")) {
+                sc->ExpectString();
+                // filter out special name
+                if (!sc->String.strEquCI("Weapon")) {
+                  wst.addToSlot(sidx, sc->String);
                 }
-                // if it is empty, mark it as empty
-                if (wst.getSlotWeaponCount(sidx) == 0) wst.addToSlot(sidx, "Weapon"); // this is "empty slot" flag
               }
+              // if it is empty, mark it as empty
+              if (wst.getSlotWeaponCount(sidx) == 0) wst.addToSlot(sidx, "Weapon"); // this is "empty slot" flag
             }
-            break;
-          case PROP_Activation:
-            {
-              int acttype = 0;
-              for (;;) {
-                     if (sc->Check("THINGSPEC_Default") || sc->Check("AF_Default")) acttype |= THINGSPEC_Default;
-                else if (sc->Check("THINGSPEC_ThingActs") || sc->Check("AF_ThingActs")) acttype |= THINGSPEC_ThingActs;
-                else if (sc->Check("THINGSPEC_ThingTargets") || sc->Check("AF_ThingTargets")) acttype |= THINGSPEC_ThingTargets;
-                else if (sc->Check("THINGSPEC_TriggerTargets") || sc->Check("AF_TriggerTargets")) acttype |= THINGSPEC_TriggerTargets;
-                else if (sc->Check("THINGSPEC_MonsterTrigger") || sc->Check("AF_MonsterTrigger")) acttype |= THINGSPEC_MonsterTrigger;
-                else if (sc->Check("THINGSPEC_MissileTrigger") || sc->Check("AF_MissileTrigger")) acttype |= THINGSPEC_MissileTrigger;
-                else if (sc->Check("THINGSPEC_ClearSpecial") || sc->Check("AF_ClearSpecial")) acttype |= THINGSPEC_ClearSpecial;
-                else if (sc->Check("THINGSPEC_NoDeathSpecial") || sc->Check("AF_NoDeathSpecial")) acttype |= THINGSPEC_NoDeathSpecial;
-                else if (sc->Check("THINGSPEC_TriggerActs") || sc->Check("AF_TriggerActs")) acttype |= THINGSPEC_TriggerActs;
-                else if (sc->Check("THINGSPEC_Activate") || sc->Check("AF_Activate")) acttype |= THINGSPEC_Activate;
-                else if (sc->Check("THINGSPEC_Deactivate") || sc->Check("AF_Deactivate")) acttype |= THINGSPEC_Deactivate;
-                else if (sc->Check("THINGSPEC_Switch") || sc->Check("AF_Switch")) acttype |= THINGSPEC_Switch;
-                else sc->Error(va("Bad activaion type \"%s\"", *sc->String));
-                if (!sc->Check("|")) break;
-              }
-              P.Field->SetInt(DefObj, acttype);
+          }
+          break;
+        case PROP_Activation:
+          {
+            int acttype = 0;
+            for (;;) {
+                   if (sc->Check("THINGSPEC_Default") || sc->Check("AF_Default")) acttype |= THINGSPEC_Default;
+              else if (sc->Check("THINGSPEC_ThingActs") || sc->Check("AF_ThingActs")) acttype |= THINGSPEC_ThingActs;
+              else if (sc->Check("THINGSPEC_ThingTargets") || sc->Check("AF_ThingTargets")) acttype |= THINGSPEC_ThingTargets;
+              else if (sc->Check("THINGSPEC_TriggerTargets") || sc->Check("AF_TriggerTargets")) acttype |= THINGSPEC_TriggerTargets;
+              else if (sc->Check("THINGSPEC_MonsterTrigger") || sc->Check("AF_MonsterTrigger")) acttype |= THINGSPEC_MonsterTrigger;
+              else if (sc->Check("THINGSPEC_MissileTrigger") || sc->Check("AF_MissileTrigger")) acttype |= THINGSPEC_MissileTrigger;
+              else if (sc->Check("THINGSPEC_ClearSpecial") || sc->Check("AF_ClearSpecial")) acttype |= THINGSPEC_ClearSpecial;
+              else if (sc->Check("THINGSPEC_NoDeathSpecial") || sc->Check("AF_NoDeathSpecial")) acttype |= THINGSPEC_NoDeathSpecial;
+              else if (sc->Check("THINGSPEC_TriggerActs") || sc->Check("AF_TriggerActs")) acttype |= THINGSPEC_TriggerActs;
+              else if (sc->Check("THINGSPEC_Activate") || sc->Check("AF_Activate")) acttype |= THINGSPEC_Activate;
+              else if (sc->Check("THINGSPEC_Deactivate") || sc->Check("AF_Deactivate")) acttype |= THINGSPEC_Deactivate;
+              else if (sc->Check("THINGSPEC_Switch") || sc->Check("AF_Switch")) acttype |= THINGSPEC_Switch;
+              else sc->Error(va("Bad activaion type \"%s\"", *sc->String));
+              if (!sc->Check("|")) break;
             }
-            break;
-          case PROP_SkipLineUnsupported:
-            {
-              if (!vcWarningsSilenced && (P.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
-              sc->SkipLine();
-            }
-            break;
-        }
-        FoundProp = true;
-        break;
+            pdef->Field->SetInt(DefObj, acttype);
+          }
+          break;
+        case PROP_SkipLineUnsupported:
+          {
+            if (!vcWarningsSilenced && (pdef->ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            sc->SkipLine();
+          }
+          break;
       }
+      FoundProp = true;
     }
     //while (sc->Check(";")) {}
     if (FoundProp) continue;
 
     //k8: sorry for this
-    if (PropName == "limitwithsubcvar") {
+    if (Prop.strEquCI("limitwithsubcvar")) {
       sc->ExpectString();
       NewPropLimitSubCvar(Class, sc->String);
       continue;
     }
-    if (PropName == "limitwithsubint") {
+    if (Prop.strEquCI("limitwithsubint")) {
       sc->ExpectNumber();
       NewPropLimitSubInt(Class, sc->Number);
       continue;
@@ -4058,102 +4081,96 @@ bool VEntity::SetDecorateFlag (VStr Flag, bool Value) {
     Flag.chopLeft(DotPos+1);
   }
 
-  VName FlagName(*Flag, VName::FindLower);
-  if (FlagName != NAME_None) {
-    for (auto &&ClassDef : FlagList) {
-      //VFlagList &ClassDef = FlagList[j];
-      if (!IsA(ClassDef.Class)) continue;
-      if (!ClassFilter.isEmpty() && !ClassFilter.strEquCI(*ClassDef.Class->Name)) continue;
-      for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
-        const VFlagDef &F = ClassDef.Flags[i];
-        if (FlagName == F.Name) {
-          //FIXME: unlink only for flags that needs it!
-          bool doRelink = F.RelinkToWorld;
-          //if (F.RelinkToWorld) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
-          bool didset = true;
-          switch (F.Type) {
-            case FLAG_Bool:
-              if (doRelink) doRelink = (F.Field->GetBool(this) != Value);
-              F.Field->SetBool(this, Value);
-              // worker fields for notickers
-              if (Value && FlagName == "k8vavoominternalnotickgrav") {
-                StateTime = -1;
-                LastMoveTime = 0;
-                PlaneAlpha = 0;
-              }
-              break;
-            case FLAG_BoolInverted:
-              if (doRelink) doRelink = (F.Field->GetBool(this) == Value);
-              F.Field->SetBool(this, !Value);
-              break;
-            case FLAG_Unsupported:
-              doRelink = false;
-              if (F.ShowWarning || dbg_show_decorate_unsupported) {
-                VStr ws = va("Setting unsupported flag '%s' in `%s` to `%s`", *Flag, GetClass()->GetName(), (Value ? "true" : "false"));
-                if (!decoFlagsWarned.has(ws)) {
-                  decoFlagsWarned.put(ws, true);
-                  GLog.Log(NAME_Warning, *ws);
-                }
-              }
-              break;
-            case FLAG_Byte:
-              {
-                vuint8 bv = (Value ? F.BTrue : F.BFalse);
-                if (doRelink) {
-                  doRelink = (F.Field->GetByte(this) != bv);
-                  if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
-                }
-                F.Field->SetByte(this, bv);
-              }
-              break;
-            case FLAG_Float:
-              {
-                float fv = (Value ? F.FTrue : F.FFalse);
-                if (doRelink) {
-                  doRelink = (F.Field->GetFloat(this) != fv);
-                  if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
-                }
-                F.Field->SetFloat(this, fv);
-              }
-              break;
-            case FLAG_Name:
-              {
-                VName nv = (Value ? F.NTrue : F.NFalse);
-                if (doRelink) {
-                  doRelink = (F.Field->GetNameValue(this) != nv);
-                  if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
-                }
-                F.Field->SetNameValue(this, nv);
-              }
-              break;
-            case FLAG_Class:
-              {
-                VClass *cv = Value ?
-                  F.NTrue != NAME_None ? VClass::FindClass(*F.NTrue) : nullptr :
-                  F.NFalse != NAME_None ? VClass::FindClass(*F.NFalse) : nullptr;
-                if (doRelink) {
-                  doRelink = (F.Field->GetClassValue(this) != cv);
-                  if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
-                }
-                F.Field->SetClassValue(this, cv);
-              }
-              break;
-            case FLAG_NoClip:
-              if (doRelink) {
-                doRelink = (F.Field->GetBool(this) == Value || F.Field2->GetBool(this) == Value);
-                if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
-              }
-              F.Field->SetBool(this, !Value);
-              F.Field2->SetBool(this, !Value);
-              break;
-            default: didset = false;
-          }
-          if (doRelink) LinkToWorld(true); // ...and link back again
-          if (dbg_dump_flag_changes) GLog.Logf("SETFLAG '%s'(%s) on '%s' (relink=%d); value=%d", *Flag, *ClassFilter, *GetClass()->GetFullName(), (int)doRelink, (int)Value);
-          return didset;
+  //if (ClassFilter.strEquCI("POWERSPEED")) return true;
+  if (ClassFilter.strEquCI("Player")) ClassFilter = "PlayerPawn";
+
+  for (auto &&ClassDef : FlagList) {
+    if (!IsA(ClassDef.Class)) continue;
+    if (!ClassFilter.isEmpty() && !ClassFilter.strEquCI(*ClassDef.Class->Name)) continue;
+    VFlagDef *fdef = ClassDef.FindFlag(Flag);
+    if (!fdef) continue;
+    bool doRelink = fdef->RelinkToWorld;
+    bool didset = true;
+    switch (fdef->Type) {
+      case FLAG_Bool:
+        if (doRelink) doRelink = (fdef->Field->GetBool(this) != Value);
+        fdef->Field->SetBool(this, Value);
+        // worker fields for notickers
+        if (Value && Flag.strEquCI("k8vavoominternalnotickgrav")) {
+          StateTime = -1;
+          LastMoveTime = 0;
+          PlaneAlpha = 0;
         }
-      }
+        break;
+      case FLAG_BoolInverted:
+        if (doRelink) doRelink = (fdef->Field->GetBool(this) == Value);
+        fdef->Field->SetBool(this, !Value);
+        break;
+      case FLAG_Unsupported:
+        doRelink = false;
+        if (fdef->ShowWarning || dbg_show_decorate_unsupported) {
+          VStr ws = va("Setting unsupported flag '%s' in `%s` to `%s`", *Flag, GetClass()->GetName(), (Value ? "true" : "false"));
+          if (!decoFlagsWarned.has(ws)) {
+            decoFlagsWarned.put(ws, true);
+            GLog.Log(NAME_Warning, *ws);
+          }
+        }
+        break;
+      case FLAG_Byte:
+        {
+          vuint8 bv = (Value ? fdef->BTrue : fdef->BFalse);
+          if (doRelink) {
+            doRelink = (fdef->Field->GetByte(this) != bv);
+            if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+          }
+          fdef->Field->SetByte(this, bv);
+        }
+        break;
+      case FLAG_Float:
+        {
+          float fv = (Value ? fdef->FTrue : fdef->FFalse);
+          if (doRelink) {
+            doRelink = (fdef->Field->GetFloat(this) != fv);
+            if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+          }
+          fdef->Field->SetFloat(this, fv);
+        }
+        break;
+      case FLAG_Name:
+        {
+          VName nv = (Value ? fdef->NTrue : fdef->NFalse);
+          if (doRelink) {
+            doRelink = (fdef->Field->GetNameValue(this) != nv);
+            if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+          }
+          fdef->Field->SetNameValue(this, nv);
+        }
+        break;
+      case FLAG_Class:
+        {
+          VClass *cv = Value ?
+            fdef->NTrue != NAME_None ? VClass::FindClass(*fdef->NTrue) : nullptr :
+            fdef->NFalse != NAME_None ? VClass::FindClass(*fdef->NFalse) : nullptr;
+          if (doRelink) {
+            doRelink = (fdef->Field->GetClassValue(this) != cv);
+            if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+          }
+          fdef->Field->SetClassValue(this, cv);
+        }
+        break;
+      case FLAG_NoClip:
+        if (doRelink) {
+          doRelink = (fdef->Field->GetBool(this) == Value || fdef->Field2->GetBool(this) == Value);
+          if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+        }
+        fdef->Field->SetBool(this, !Value);
+        fdef->Field2->SetBool(this, !Value);
+        break;
+      default: didset = false;
     }
+    if (doRelink) LinkToWorld(true); // ...and link back again
+    if (dbg_dump_flag_changes) GLog.Logf("SETFLAG '%s'(%s) on '%s' (relink=%d); value=%d", *Flag, *ClassFilter, *GetClass()->GetFullName(), (int)doRelink, (int)Value);
+    return didset;
   }
 
   {
@@ -4180,37 +4197,30 @@ bool VEntity::GetDecorateFlag (VStr Flag) {
     Flag.chopLeft(DotPos+1);
   }
 
-  VName FlagName(*Flag, VName::FindLower);
-  if (FlagName != NAME_None) {
-    for (auto &&ClassDef : FlagList) {
-      //VFlagList &ClassDef = FlagList[j];
-      if (!IsA(ClassDef.Class)) continue;
-      if (!ClassFilter.isEmpty() && !ClassFilter.strEquCI(*ClassDef.Class->Name)) continue;
-      for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
-        const VFlagDef &F = ClassDef.Flags[i];
-        if (FlagName == F.Name) {
-          switch (F.Type) {
-            case FLAG_Bool: return F.Field->GetBool(this);
-            case FLAG_BoolInverted: return !F.Field->GetBool(this);
-            case FLAG_Unsupported:
-              if (F.ShowWarning || dbg_show_decorate_unsupported) {
-                VStr ws = va("Getting unsupported flag '%s' in `%s`", *Flag, GetClass()->GetName());
-                if (!decoFlagsWarned.has(ws)) {
-                  decoFlagsWarned.put(ws, true);
-                  GLog.Log(NAME_Warning, *ws);
-                }
-              }
-              return false;
-            case FLAG_Byte: return !!F.Field->GetByte(this);
-            case FLAG_Float: return (F.Field->GetFloat(this) != 0.0f);
-            case FLAG_Name: return (F.Field->GetNameValue(this) != NAME_None);
-            case FLAG_Class: return !!F.Field->GetClassValue(this);
-            case FLAG_NoClip: return (!F.Field->GetBool(this) && !F.Field2->GetBool(this)); //FIXME??
+  for (auto &&ClassDef : FlagList) {
+    if (!IsA(ClassDef.Class)) continue;
+    if (!ClassFilter.isEmpty() && !ClassFilter.strEquCI(*ClassDef.Class->Name)) continue;
+    VFlagDef *fdef = ClassDef.FindFlag(Flag);
+    if (!fdef) continue;
+    switch (fdef->Type) {
+      case FLAG_Bool: return fdef->Field->GetBool(this);
+      case FLAG_BoolInverted: return !fdef->Field->GetBool(this);
+      case FLAG_Unsupported:
+        if (fdef->ShowWarning || dbg_show_decorate_unsupported) {
+          VStr ws = va("Getting unsupported flag '%s' in `%s`", *Flag, GetClass()->GetName());
+          if (!decoFlagsWarned.has(ws)) {
+            decoFlagsWarned.put(ws, true);
+            GLog.Log(NAME_Warning, *ws);
           }
-          return false;
         }
-      }
+        return false;
+      case FLAG_Byte: return !!fdef->Field->GetByte(this);
+      case FLAG_Float: return (fdef->Field->GetFloat(this) != 0.0f);
+      case FLAG_Name: return (fdef->Field->GetNameValue(this) != NAME_None);
+      case FLAG_Class: return !!fdef->Field->GetClassValue(this);
+      case FLAG_NoClip: return (!fdef->Field->GetBool(this) && !fdef->Field2->GetBool(this)); //FIXME??
     }
+    return false;
   }
 
   {
