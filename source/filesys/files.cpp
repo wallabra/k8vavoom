@@ -82,8 +82,7 @@ static const char *cli_IWadDir = nullptr;
 static const char *cli_SaveDir = nullptr;
 static const char *cli_ConfigDir = nullptr;
 
-static int reportIWads = 0;
-static int reportPWads = 1;
+static int reportWads = 1;
 static int cli_NakedBase = -1;
 
 
@@ -2318,13 +2317,7 @@ void FL_InitOptions () {
     return idx;
   });
 
-  GParsedArgs.RegisterFlagSet("-reportiwad", "report loaded iwads (disabled by default)", &reportIWads);
-  GParsedArgs.RegisterAlias("-reportiwads", "-reportiwad");
-
-  GParsedArgs.RegisterFlagSet("-silentpwads", "do not report loaded iwads (report by default)", &reportPWads);
-  GParsedArgs.RegisterAlias("-silentpwad", "-silentpwads");
-  GParsedArgs.RegisterAlias("-silencepwad", "-silentpwads");
-  GParsedArgs.RegisterAlias("-silencepwads", "-silentpwads");
+  GParsedArgs.RegisterFlagReset("-silentwads", "do not report loaded wads (report by default)", &reportWads);
 
   GParsedArgs.RegisterFlagSet("-nakedbase", "skip all autoloads", &cli_NakedBase);
   GParsedArgs.RegisterAlias("-naked-base", "-nakedbase");
@@ -2389,7 +2382,7 @@ void FL_Init () {
   if (cli_IWadName && cli_IWadName[0]) mainIWad = cli_IWadName;
 
 
-  fsys_report_added_paks = !!reportIWads;
+  fsys_report_added_paks = !!reportWads;
 
   //if (!isChex) fsys_onlyOneBaseFile = (cli_NakedBase > 0);
   fsys_onlyOneBaseFile = (cli_NakedBase > 0);
@@ -2697,7 +2690,7 @@ void FL_Init () {
   if (customMode.disableBloodReplacement) fsys_DisableBloodReplacement = true;
   if (customMode.disableBDW) fsys_DisableBDW = true;
 
-  fsys_report_added_paks = !!reportPWads;
+  fsys_report_added_paks = !!reportWads;
   //GCon->Logf(NAME_Debug, "!!!: %d", (fsys_report_added_paks ? 1 : 0));
 
   CustomModeLoadPwads(CM_PRE_PWADS);
@@ -2709,7 +2702,7 @@ void FL_Init () {
   // load custom mode pwads
   CustomModeLoadPwads(CM_POST_PWADS);
 
-  fsys_report_added_paks = !!reportIWads;
+  fsys_report_added_paks = !!reportWads;
 
   if (!fsys_DisableBDW && cli_BDWMod > 0) AddGameDir("basev/mods/bdw");
 
@@ -2721,7 +2714,7 @@ void FL_Init () {
   }
   modAddMods.clear(); // don't need it anymore
 
-  fsys_report_added_paks = !!reportPWads;
+  fsys_report_added_paks = !!reportWads;
 
   RenameSprites();
 
