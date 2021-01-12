@@ -890,7 +890,7 @@ final void NewChaseDirTo (TVec destination, optional EntityEx aTarget) {
       // MBF which requires unconditional use of the altered logic and therefore
       // forcing a massive change in the monster behavior to use this.
 
-      //printdebug("%C: dropoff; delta=(%s,%s)", self, AvoidDeltaX, AvoidDeltaY);
+      //printdebug("%C:%s: dropoff; delta=(%s,%s)", self, UniqueId, AvoidDeltaX, AvoidDeltaY);
 
       // use different dropoff movement logic in TryMove
       bAvoidingDropoff = true;
