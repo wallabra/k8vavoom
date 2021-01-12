@@ -705,40 +705,6 @@ final bool InquisitorCheckDistance () {
 
 //==========================================================================
 //
-//  A_AttackAlert
-//
-//==========================================================================
-[decorate] final void A_AttackAlert (EntityEx atarget, EntityEx emitter) self(Actor) {
-  Entity looker;
-
-  if (emitter.LastHeard) return;
-  if (emitter.Health <= 0) return;
-  if (!emitter.bMonster) return;
-  if (emitter.bInCombat) return;
-  emitter.bInCombat = true;
-
-  emitter.Target = atarget;
-  emitter.SetPainState();
-
-  for (looker = Sector->ThingList; looker; looker = looker.SNext) {
-    if (looker == emitter || looker == atarget) continue;
-    if (looker.Health <= 0) continue;
-    if (!EntityEx(looker).bSeesDaggers) continue;
-    if (!EntityEx(looker).bInCombat) {
-      if (!looker.CanSee(atarget) && !looker.CanSee(emitter)) continue;
-      if (EntityEx(looker).SeeState) {
-        EntityEx(looker).Target = atarget;
-        looker.PlaySound(SightSound, CHAN_VOICE);
-        looker.SetState(EntityEx(looker).SeeState);
-        EntityEx(looker).bInCombat = true;
-      }
-    }
-  }
-}
-
-
-//==========================================================================
-//
 //  A_JabDagger
 //
 //==========================================================================
@@ -768,7 +734,7 @@ final bool InquisitorCheckDistance () {
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
     Player.bFixAngle = true;
     bJustAttacked = true;
-    A_AttackAlert(self, AimTarget);
+    DaggerAlert(self, AimTarget);
   } else {
     PlaySound('misc/swish', CHAN_WEAPON);
   }

@@ -32,7 +32,7 @@ class PoisonBolt : Actor;
 //
 //==========================================================================
 override int DoSpecialDamage (EntityEx victim, EntityEx source, int damage) {
-  A_AttackAlert(source, victim);
+  DaggerAlert(source, victim);
   if (victim.bNoBlood) return -1; // don't damage actors that don't take poison damage
   if (victim.Health < 100000) return victim.Health+10;
   return 1;

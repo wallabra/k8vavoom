@@ -4207,6 +4207,40 @@ override float GetViewHeight () {
 }
 
 
+//==========================================================================
+//
+//  DaggerAlert
+//
+//==========================================================================
+void DaggerAlert (EntityEx atarget, EntityEx emitter) {
+  Entity looker;
+
+  if (emitter.LastHeard) return;
+  if (emitter.Health <= 0) return;
+  if (!emitter.bMonster) return;
+  if (emitter.bInCombat) return;
+  emitter.bInCombat = true;
+
+  emitter.Target = atarget;
+  emitter.SetPainState('Dagger');
+
+  for (looker = Sector->ThingList; looker; looker = looker.SNext) {
+    if (looker == emitter || looker == atarget) continue;
+    if (looker.Health <= 0) continue;
+    EntityEx ee = EntityEx(looker);
+    if (!ee) continue;
+    if (!ee.bSeesDaggers) continue;
+    if (!ee.bInCombat) {
+      if (!looker.CanSee(atarget) && !looker.CanSee(emitter)) continue;
+      ee.Target = atarget;
+      looker.PlaySound(SightSound, CHAN_VOICE);
+      if (ee.SeeState) looker.SetState(ee.SeeState);
+      ee.bInCombat = true;
+    }
+  }
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 states {
 DehackedDormantPickup:

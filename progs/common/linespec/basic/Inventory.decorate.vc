@@ -390,7 +390,7 @@
       if (bIsPlayer) Player.bFixAngle = true;
     }
     if (Flags&CPF_PULLIN) bJustAttacked = true;
-    if (Flags&CPF_DAGGER) A_AttackAlert(self, AimTarget); // incorrect; see https://zdoom.org/wiki/A_CustomPunch
+    if (Flags&CPF_DAGGER) DaggerAlert(self, AimTarget);
   } else {
     if (misssound) PlaySound(misssound, CHAN_WEAPON);
   }

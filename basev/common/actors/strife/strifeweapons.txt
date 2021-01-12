@@ -139,8 +139,9 @@ actor StrifeCrossbow : StrifeWeapon 2001
     XBOW D 6
     XBOW E 3
     XBOW F 5
+    XBOW G 0 A_ShowElectricFlash
     XBOW G 5 A_CheckReload
-    Goto Ready
+    Goto Ready+1
   ElectricFlash:
     XBOW KLM 5
     Loop
