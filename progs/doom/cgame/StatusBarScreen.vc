@@ -477,7 +477,7 @@ bool IsStandardAmmoClass (class a) {
   }
   class arep = GetClassReplacee(a);
   if (arep != a) {
-    //print("*** C2: %C replaced %C", a, arep);
+    //printdebug("*** C2: %C replaced %C", a, arep);
     if ((arep isa Clip) ||
         (arep isa Shell) ||
         (arep isa RocketAmmo) ||
@@ -825,7 +825,7 @@ override void SB_DrawFullscreenStats () {
           foreach (const ref AmmoInfo a; alist) if (a.ammo == wammo) { found = true; break; }
           if (!found) {
             // new ammo
-            //print("ammo %C for weapon %C; secondary is %C, good: %s", wammo, wpn, wpn.Ammo2, IsStandardAmmoClass(wammo.Class));
+            //printdebug("ammo %C for weapon %C; (%C/%C)", wammo, wpn, wpn.Ammo1, wpn.Ammo2);
             AmmoInfo *ai = alist.alloc();
             ai.ammo = wammo;
             ai.wslot = tmpslot;
