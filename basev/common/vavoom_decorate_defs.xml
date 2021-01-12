@@ -556,6 +556,8 @@
     <prop_class name="Player.MorphWeapon" property="MorphWeapon" />
     <prop_pawn_weapon_slot name="Player.WeaponSlot" />
     <prop_float name="Player.GruntSpeed" property="GruntSpeed" />
+    <!-- k8vavoom flags -->
+    <flag name="IgnoreAmmoKing" property="bIgnoreAmmoKing" />
   </class>
 
   <class name="MorphProjectile">

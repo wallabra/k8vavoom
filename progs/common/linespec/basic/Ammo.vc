@@ -84,9 +84,17 @@ int k8GetAmmoKingMax () {
   bool hasBackpack = false;
 
   if (Owner && Owner.bIsPlayer) {
+    auto pawn = PlayerPawn(Owner);
+    //if (pawn) printdebug("%C: ignoreammoking=%B (%C)", self, pawn.bIgnoreAmmoKing, pawn);
+    if (pawn && pawn.bIgnoreAmmoKing) { /*printdebug("%C: owner is %C, ignoring AmmoKing", self, Owner);*/ return maxam; }
     PlayerEx plr = PlayerEx(Owner.Player);
     hasBackpack = (plr && plr.bHasBackpack);
   }
+  /*
+  else {
+    printdebug("%C: no owner!", self);
+  }
+  */
 
   switch (GetClassName(Class)) {
     // loaded ammo
