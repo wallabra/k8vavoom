@@ -2348,8 +2348,8 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY, float baseSpeed) {
           }
           // move away from dropoff at a standard speed
           // multiple contacted linedefs are cumulative (e.g. hanging over corner)
-          DeltaX += Dir.x*baseSpeed;
-          DeltaY += Dir.y*baseSpeed;
+          DeltaX -= Dir.x*baseSpeed;
+          DeltaY -= Dir.y*baseSpeed;
         }
       }
     }
