@@ -1874,8 +1874,8 @@ void VEntity::BounceWall (float DeltaTime, const line_t *blockline, float overbo
       if (!(li->flags&ML_BLOCKEVERYTHING)) {
         if (li->flags&ML_TWOSIDED) {
           // set openrange, opentop, openbottom
-          TVec hit_point = SlideOrg+in->frac*SlideDir;
-          opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
+          TVec hpoint = SlideOrg+in->frac*SlideDir;
+          opening_t *open = SV_LineOpenings(li, hpoint, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
           open = SV_FindOpening(open, Origin.z, Origin.z+Height);
 
           if (open && open->range >= Height && // fits
