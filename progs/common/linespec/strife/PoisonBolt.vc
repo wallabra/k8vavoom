@@ -32,9 +32,9 @@ class PoisonBolt : Actor;
 //
 //==========================================================================
 override int DoSpecialDamage (EntityEx victim, EntityEx source, int damage) {
-  DaggerAlert(source, victim);
+  //DaggerAlert(source, victim); //k8: Strife doesn't seem to do this
   if (victim.bNoBlood) return -1; // don't damage actors that don't take poison damage
-  if (victim.Health < 100000) return victim.Health+10;
+  if (victim.Health < 100000) return (!victim.bBoss ? victim.Health+10 : 50);
   return 1;
 }
 
