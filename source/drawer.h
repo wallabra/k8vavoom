@@ -217,6 +217,7 @@ public:
     TArray<surface_t *> DrawHorizonList;
 
     TArray<trans_sprite_t> DrawSurfListAlpha; // alpha-blended surfaces and sprites
+    TArray<trans_sprite_t> DrawSpriteShadowsList;
     TArray<trans_sprite_t> DrawSpriteList;
 
     inline void resetAll () {
@@ -225,6 +226,7 @@ public:
       DrawSurfListAlpha.reset();
       DrawSkyList.reset();
       DrawHorizonList.reset();
+      DrawSpriteShadowsList.reset();
       DrawSpriteList.reset();
     }
   };
@@ -240,7 +242,9 @@ public:
   inline DrawLists &GetCurrentDLS () noexcept { return DrawListStack[DrawListStack.length()-1]; }
 
   inline trans_sprite_t *AllocTransSpr (const RenderStyleInfo &ri) noexcept {
-    if (ri.alpha < 1.0f || ri.isTranslucent()) {
+    if (ri.flags&RenderStyleInfo::FlagShadow) {
+      return &GetCurrentDLS().DrawSpriteShadowsList.alloc();
+    } else if (ri.alpha < 1.0f || ri.isTranslucent()) {
       return &GetCurrentDLS().DrawSurfListAlpha.alloc();
     } else {
       return &GetCurrentDLS().DrawSpriteList.alloc();

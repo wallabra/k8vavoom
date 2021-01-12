@@ -219,6 +219,7 @@ void VRenderLevelShared::QueueSpritePoly (const TVec *sv, int lump, const Render
 void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, const RenderStyleInfo &ri/*vuint32 light, vuint32 Fade, float Alpha, bool Additive*/, float TimeFrac) {
   if (!mobj) return; // just in case
   if (ri.alpha < 0.004f) return;
+  if (ri.flags&RenderStyleInfo::FlagShadow) return;
 
   const float dist = /*fabsf*/(DotProduct(mobj->Origin-Drawer->vieworg, Drawer->viewforward));
   //const float dist = LengthSquared(mobj->Origin-Drawer->vieworg);
@@ -966,6 +967,13 @@ void VRenderLevelShared::DrawTranslucentPolys () {
   transSprState.reset();
   transSprState.allowTransPolys = !dbg_disable_translucent_polys.asBool();
   transSprState.sortWithOfs = r_sprite_use_pofs.asBool();
+
+  // render sprite shadpows first (there is no need to sort them)
+  if (dls.DrawSpriteShadowsList.length() > 0) {
+    // there is no need to sort solid sprites
+    //if (!dbg_disable_sprite_sorting) timsort_r(dls.DrawSpriteList.ptr(), dls.DrawSpriteList.length(), sizeof(dls.DrawSpriteList[0]), &transCmp, nullptr);
+    for (auto &&spr : dls.DrawSpriteShadowsList) DrawTransSpr(spr);
+  }
 
   if (dls.DrawSpriteList.length() > 0) {
     // there is no need to sort solid sprites
