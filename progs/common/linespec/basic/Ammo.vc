@@ -163,6 +163,7 @@ bool DoPickupInternal (Inventory Item) {
   //printdebug("  Item=%C", Item);
   int amax = k8GetAmmoKingMax();
   int oldammo = Amount;
+  //printdebug("%C: DoPickupInternal: Item=%C; Class=%C; Item.Class=%C; itpar: %C; amax=%s; oldammo=%s; amount=%s", self, Item, Class, Item.Class, Ammo(Item).GetParentAmmo(), amax, oldammo, Item.Amount);
   if (oldammo >= amax) return true; // we're full
 
   int ReceiveAmount = Item.Amount;

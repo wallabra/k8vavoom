@@ -3700,26 +3700,31 @@ bool AddElvenGift (name Klass) {
   if (th) {
     Actor act = Actor(Level.Spawn(th));
     if (!act) return false;
+    Weapon wpn = Weapon(act);
+    int fixAmmoGive = -1;
     if (Klass == 'BDW_Rifle') {
-      Weapon(act).AmmoGive2 = 31;
-      if (ReadyWeapon != Weapon(act)) {
-        //PendingWeapon = Weapon(act);
-        SetWeapon(Weapon(act));
+      wpn.AmmoGive2 = 31;
+      if (ReadyWeapon != wpn) {
+        //PendingWeapon = wpn;
+        SetWeapon(wpn);
         BringUpWeapon();
       }
     } else if (Klass == 'BDW_Shotgun' || (Klass == 'Shotgun' && FindClass('BDW_Shotgun'))) {
-      Weapon(act).AmmoGive2 = 8;
+      wpn.AmmoGive2 = 8;
     } else if (Klass == 'FragfireGun' || (Klass == 'Shotgun' && FindClass('FragfireGun'))) {
       //TODO: check ammo type? let's hope nobody else has FragfireGun like that
-      if (Weapon(act).AmmoGive1 == 0 && Weapon(act).AmmoGive2 == 40) {
-        Weapon(act).AmmoGive1 = 80;
+      if (wpn.AmmoGive1 == 0 && wpn.AmmoGive2 == 40) {
+        fixAmmoGive = 80;
       }
     }
+    int oldAmmoGive = (wpn ? wpn.AmmoGive1 : 0);
+    if (wpn && fixAmmoGive >= 0) wpn.AmmoGive1 = fixAmmoGive;
     act.TouchSpecial(EntityEx(MO), true);
-    if (Klass == 'BDW_Rifle' && ReadyWeapon && ReadyWeapon.bWimpyWeapon && (!PendingWeapon || PendingWeapon.bWimpyWeapon)) {
-      if (ReadyWeapon != Weapon(act)) {
-        //PendingWeapon = Weapon(act);
-        SetWeapon(Weapon(act));
+    if (wpn) wpn.AmmoGive1 = oldAmmoGive;
+    if (wpn && Klass == 'BDW_Rifle' && ReadyWeapon && ReadyWeapon.bWimpyWeapon && (!PendingWeapon || PendingWeapon.bWimpyWeapon)) {
+      if (ReadyWeapon != wpn) {
+        //PendingWeapon = wpn;
+        SetWeapon(wpn);
         BringUpWeapon();
       }
     }
