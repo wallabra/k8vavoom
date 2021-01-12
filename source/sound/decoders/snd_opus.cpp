@@ -68,7 +68,7 @@ public:
 #else
 # define VV_OPUS_CODEC_SUFFIX  "(system)"
 #endif
-IMPLEMENT_AUDIO_CODEC(VOpusAudioCodec, "Opus" VV_OPUS_CODEC_SUFFIX, true); // with signature
+IMPLEMENT_AUDIO_CODEC(VOpusAudioCodec, "Opus" VV_OPUS_CODEC_SUFFIX);
 
 VOpusSampleLoader OpusSampleLoader;
 

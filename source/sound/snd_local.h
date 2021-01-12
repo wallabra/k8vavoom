@@ -309,30 +309,61 @@ typedef VAudioCodec *(*CreatorFn) (VStream *InStrm, const vuint8 sign[], int sig
 struct FAudioCodecDesc {
   const char *Description;
   CreatorFn Creator;
+  int Priority;
   FAudioCodecDesc *Next;
 
-  static FAudioCodecDesc *ListWithSign;
-  static FAudioCodecDesc *ListWithoutSign;
+  static FAudioCodecDesc *List;
+
+private:
+  static void InsertIntoList (FAudioCodecDesc *&list, FAudioCodecDesc *codec) noexcept {
+    if (!codec) return;
+    if (!list) {
+      codec->Next = nullptr;
+      list = codec;
+    } else {
+      FAudioCodecDesc *prev = nullptr;
+      for (FAudioCodecDesc *curr = list; curr; prev = curr, curr = curr->Next) {
+        if (codec->Priority < curr->Priority) {
+          if (prev) {
+            prev->Next = codec;
+            codec->Next = curr;
+          } else {
+            vassert(curr == list);
+            codec->Next = list;
+            list = codec;
+          }
+          return;
+        }
+      }
+      vassert(prev);
+      prev->Next = codec;
+      codec->Next = nullptr;
+    }
+  }
 
 public:
   // codecs with `hasGoodSignature` will be checked last
-  FAudioCodecDesc (const char *InDescription, CreatorFn InCreator, bool hasGoodSignature)
+  FAudioCodecDesc (const char *InDescription, CreatorFn InCreator, int prio)
     : Description(InDescription)
     , Creator(InCreator)
+    , Priority(prio)
   {
-    if (hasGoodSignature) {
-      Next = ListWithSign;
-      ListWithSign = this;
-    } else {
-      Next = ListWithoutSign;
-      ListWithoutSign = this;
-    }
+    InsertIntoList(List, this);
   }
 };
 
+// priority for decoders without a signature
+#define AUDIO_DEFAULT_PRIO  (100)
+
+// priority for decoders without a signature
+#define AUDIO_NO_SIGNATURE  (1000)
+
 // audio codec registration helper
-#define IMPLEMENT_AUDIO_CODEC(TClass,Description,WithSign) \
-  FAudioCodecDesc TClass##Desc(Description, TClass::Create, WithSign);
+#define IMPLEMENT_AUDIO_CODEC(TClass,Description) \
+  FAudioCodecDesc TClass##Desc(Description, TClass::Create, AUDIO_DEFAULT_PRIO);
+
+#define IMPLEMENT_AUDIO_CODEC_EX(TClass,Description,Prio) \
+  FAudioCodecDesc TClass##Desc(Description, TClass::Create, Prio);
 
 
 // quick MUS to MIDI converter

@@ -191,7 +191,7 @@ public:
 static FluidManager fluidManager;
 
 
-IMPLEMENT_AUDIO_CODEC(VFluidAudioCodec, "FluidSynth", true); // with signature
+IMPLEMENT_AUDIO_CODEC(VFluidAudioCodec, "FluidSynth");
 
 
 fluid_settings_t *FluidManager::settings = nullptr;

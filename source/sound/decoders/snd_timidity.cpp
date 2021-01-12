@@ -84,7 +84,7 @@ public:
 static TimidityManager timidityManager;
 
 
-IMPLEMENT_AUDIO_CODEC(VTimidityAudioCodec, "Timidity", true); // with signature
+IMPLEMENT_AUDIO_CODEC(VTimidityAudioCodec, "Timidity");
 
 ControlMode TimidityManager::MyControlMode = {
   TimidityManager::ctl_msg,

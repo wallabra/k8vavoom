@@ -73,7 +73,7 @@ public:
   virtual const char *GetName () const noexcept override;
 };
 
-IMPLEMENT_AUDIO_CODEC(VXMPAudioCodec, "XMP", false); // without signature (oh, well...)
+IMPLEMENT_AUDIO_CODEC_EX(VXMPAudioCodec, "XMP", 666); // try it last
 
 VXMPSampleLoader XMPSampleLoader;
 

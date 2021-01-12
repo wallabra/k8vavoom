@@ -76,7 +76,7 @@ public:
 
 VFlacSampleLoader FlacSampleLoader;
 
-IMPLEMENT_AUDIO_CODEC(VFlacAudioCodec, "FLAC(dr)", true); // with signature
+IMPLEMENT_AUDIO_CODEC(VFlacAudioCodec, "FLAC(dr)");
 
 
 //==========================================================================

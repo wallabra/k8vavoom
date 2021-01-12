@@ -55,7 +55,7 @@ private:
 };
 
 
-IMPLEMENT_AUDIO_CODEC(VNukedOPLAudioCodec, "NukedOPL", true); // with signature
+IMPLEMENT_AUDIO_CODEC(VNukedOPLAudioCodec, "NukedOPL");
 
 static VCvarI snd_nukedopl_type("snd_nukedopl_type", "1", "OPL chip type (0:OPL2; 1:OPL3)", CVAR_Archive);
 static VCvarB snd_nukedopl_stereo("snd_nukedopl_stereo", true, "Use stereo mode?", CVAR_Archive);

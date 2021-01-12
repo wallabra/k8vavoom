@@ -72,7 +72,7 @@ public:
 };
 
 
-IMPLEMENT_AUDIO_CODEC(VMp3AudioCodec, "MP3", false); // no signature
+IMPLEMENT_AUDIO_CODEC_EX(VMp3AudioCodec, "MP3", AUDIO_NO_SIGNATURE);
 
 VMp3SampleLoader Mp3SampleLoader;
 

@@ -200,8 +200,7 @@ private:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-FAudioCodecDesc *FAudioCodecDesc::ListWithSign = nullptr;
-FAudioCodecDesc *FAudioCodecDesc::ListWithoutSign = nullptr;
+FAudioCodecDesc *FAudioCodecDesc::List = nullptr;
 VAudioPublic *GAudio = nullptr;
 
 VCvarF snd_master_volume("snd_master_volume", "1", "Master volume", CVAR_Archive);
@@ -1166,21 +1165,8 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying, bool f
   const char *codecName = nullptr;
   VAudioCodec *Codec = nullptr;
 
-  for (FAudioCodecDesc *Desc = FAudioCodecDesc::ListWithSign; Desc && !Codec; Desc = Desc->Next) {
-    //GCon->Logf(va("Trying %s to open the stream", Desc->Description));
-    Strm->Seek(0);
-    if (Strm->IsError()) {
-      GCon->Logf(NAME_Error, "error loading song '%s'", *W_FullLumpName(Lump));
-      Strm->Close();
-      delete Strm;
-      return nullptr;
-    }
-    Codec = Desc->Creator(Strm, sign, 4);
-    if (Codec) codecName = Desc->Description;
-  }
-
-  for (FAudioCodecDesc *Desc = FAudioCodecDesc::ListWithoutSign; Desc && !Codec; Desc = Desc->Next) {
-    //GCon->Logf(va("Trying %s to open the stream", Desc->Description));
+  for (FAudioCodecDesc *Desc = FAudioCodecDesc::List; Desc && !Codec; Desc = Desc->Next) {
+    //GCon->Logf(NAME_Debug, "Trying codec `%s` (%d) to open the stream", Desc->Description, Desc->Priority);
     Strm->Seek(0);
     if (Strm->IsError()) {
       GCon->Logf(NAME_Error, "error loading song '%s'", *W_FullLumpName(Lump));

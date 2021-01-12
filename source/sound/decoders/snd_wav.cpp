@@ -75,7 +75,7 @@ public:
 
 static VWaveSampleLoader WaveSampleLoader;
 
-IMPLEMENT_AUDIO_CODEC(VWavAudioCodec, "Wav", true); // with signature
+IMPLEMENT_AUDIO_CODEC_EX(VWavAudioCodec, "Wav", 663); // before XMP
 
 
 //==========================================================================

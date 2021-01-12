@@ -76,7 +76,7 @@ public:
 
 VMP3SampleLoader MP3SampleLoader;
 
-IMPLEMENT_AUDIO_CODEC(VMP3AudioCodec, "MP3(dr)", false); // no signature
+IMPLEMENT_AUDIO_CODEC_EX(VMP3AudioCodec, "MP3(dr)", AUDIO_NO_SIGNATURE);
 
 
 //==========================================================================

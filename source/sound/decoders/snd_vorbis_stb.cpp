@@ -82,7 +82,7 @@ public:
   virtual const char *GetName () const noexcept override;
 };
 
-IMPLEMENT_AUDIO_CODEC(VVorbisAudioCodec, "Vorbis(stb)", true); // with signature
+IMPLEMENT_AUDIO_CODEC(VVorbisAudioCodec, "Vorbis(stb)");
 
 VVorbisSampleLoader VorbisSampleLoader;
 
