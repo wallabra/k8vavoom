@@ -510,8 +510,7 @@ void VFileDirectory::buildLumpNames () {
         lumpName = lumpName.Replace("^", "\\");
       }
 
-      //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
-      //fprintf(stderr, "ZIP <%s> mapped to <%s> (%d)\n", *Files[i].Name, *LumpName, Files[i].LumpNamespace);
+      //GLog.Logf(NAME_Debug, "ZIP <%s> mapped to <%s> (%d)", *fi.fileName, *lumpName, (int)fi.lumpNamespace);
 
       // do filtering
       if (fidx >= 0) {

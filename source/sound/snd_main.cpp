@@ -988,7 +988,12 @@ static int FindMusicLump (const char *songName) {
   if (!songName || !songName[0] || VStr::ICmp(songName, "none") == 0) return -1;
   int Lump = -1;
   VName sn8 = VName(songName, VName::FindLower8);
-  if (sn8 != NAME_None) Lump = W_CheckNumForName(sn8, WADNS_Music);
+  if (sn8 != NAME_None) {
+    Lump = W_CheckNumForName(sn8, WADNS_Music);
+    //GCon->Logf(NAME_Debug, "*** 000: looking for 8-mus: <%s>: Lump=%d : %s", *sn8, Lump, *W_FullLumpName(Lump));
+    Lump = max2(Lump, W_CheckNumForName(sn8, WADNS_Global));
+    //GCon->Logf(NAME_Debug, "*** 001: looking for 8-mus: <%s>: Lump=%d : %s", *sn8, Lump, *W_FullLumpName(Lump));
+  }
   // if there is no 8-char lump, try harder
   if (Lump < 0) {
     Lump = max2(Lump, W_FindLumpByFileNameWithExts(va("music/%s", songName), Exts));
