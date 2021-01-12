@@ -721,7 +721,11 @@ Actor K8Gore_TinyBlood$(Color) : K8Gore_BloodBase$(TransientSfx) {
 
     Death:
       TNT1 A 0
-      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound_NoNet("k8gore/blooddrop3"); }
+      TNT1 A 0
+        {
+          if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound_NoNet("k8gore/blooddrop3");
+          A_ChangeFlag("StickToFloor", 1);
+        }
 #ifndef TRANSIENT
       XDT1 EFGHIJKL 2
 #else
@@ -823,8 +827,11 @@ Actor K8Gore_DripingBloodLeavesSmallPool$(Color) : K8Gore_TinyBlood$(Color) {
     Death:
       TNT1 A 0
       TNT1 A 0 A_k8JumpIfOnFloorSky("DieNow")
-      TNT1 A 0 A_SpawnItem("K8Gore_MinuscleBloodSpot$(Color)",0,0,0,true)
-      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound_NoNet("k8gore/blooddrop2"); }
+      TNT1 A 0 {
+        if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound_NoNet("k8gore/blooddrop2");
+        A_SpawnItem("K8Gore_MinuscleBloodSpot$(Color)", 0, 0, 0, true);
+        A_ChangeFlag("StickToFloor", 1);
+      }
 #ifndef TRANSIENT
       XDT1 EFGHIJKL 2
 #else
