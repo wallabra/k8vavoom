@@ -54,6 +54,16 @@ IMPLEMENT_FREE_FUNCTION(VObject, SectorClosestPoint) {
 }
 
 
+IMPLEMENT_FREE_FUNCTION(VObject, SectorClosestLine) {
+  sector_t *sec;
+  TVec point;
+  vobjGetParam(sec, point);
+  line_t *line = nullptr;
+  P_SectorClosestPoint(sec, point, &line);
+  RET_PTR(line);
+}
+
+
 //==========================================================================
 //
 //  LineOpenings

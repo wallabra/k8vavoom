@@ -35,33 +35,37 @@
 //  Ignores `z`.
 //
 //==========================================================================
-TVec P_SectorClosestPoint (sector_t *sec, TVec in) {
-  if (!sec) return in;
+TVec P_SectorClosestPoint (const sector_t *sec, const TVec in, line_t **resline) {
+  if (!sec || !sec->linecount) {
+    if (resline) *resline = nullptr;
+    return in;
+  }
 
   double x = in.x, y = in.y;
   double bestdist = /*HUGE_VAL*/1e200;
   double bestx = x, besty = y;
+  line_t *bestline = nullptr;
 
-  for (int f = 0; f < sec->linecount; ++f) {
-    const line_t *check = sec->lines[f];
-    const TVec *v1 = check->v1;
-    const TVec *v2 = check->v2;
+  line_t *line = sec->lines[0];
+  for (int f = sec->linecount; f--; ++line) {
+    const TVec *v1 = line->v1;
+    const TVec *v2 = line->v2;
     double a = v2->x-v1->x;
     double b = v2->y-v1->y;
     const double den = a*a+b*b;
     double ix, iy, dist;
 
     if (fabs(den) <= 0.01) {
-      // line is actually a point!
+      // this line is actually a point!
       ix = v1->x;
       iy = v1->y;
     } else {
       double num = (x-v1->x)*a+(y-v1->y)*b;
       double u = num/den;
-      if (u <= 0) {
+      if (u <= 0.0) {
         ix = v1->x;
         iy = v1->y;
-      } else if (u >= 1) {
+      } else if (u >= 1.0) {
         ix = v2->x;
         iy = v2->y;
       } else {
@@ -72,13 +76,16 @@ TVec P_SectorClosestPoint (sector_t *sec, TVec in) {
     a = ix-x;
     b = iy-y;
     dist = a*a+b*b;
-    if (dist < bestdist)  {
+    if (dist < bestdist) {
       bestdist = dist;
       bestx = ix;
       besty = iy;
+      bestline = line;
     }
   }
-  return TVec(bestx, besty, in.z);
+
+  if (resline) *resline = bestline;
+  return TVec((float)bestx, (float)besty, in.z);
 }
 
 
@@ -90,39 +97,32 @@ TVec P_SectorClosestPoint (sector_t *sec, TVec in) {
 //  returns side 0 or 1, -1 if box crosses the line
 //
 //==========================================================================
-int P_BoxOnLineSide (float *tmbox, line_t *ld) {
+int P_BoxOnLineSide (const float *tmbox, const line_t *ld) {
   int p1 = 0;
   int p2 = 0;
 
   switch (ld->slopetype) {
     case ST_HORIZONTAL:
-      p1 = tmbox[BOX2D_TOP] > ld->v1->y;
-      p2 = tmbox[BOX2D_BOTTOM] > ld->v1->y;
-      if (ld->dir.x < 0) {
-        p1 ^= 1;
-        p2 ^= 1;
-      }
+      p1 = (tmbox[BOX2D_TOP] > ld->v1->y);
+      p2 = (tmbox[BOX2D_BOTTOM] > ld->v1->y);
+      if (ld->dir.x < 0.0f) { p1 ^= 1; p2 ^= 1; }
       break;
     case ST_VERTICAL:
-      p1 = tmbox[BOX2D_RIGHT] < ld->v1->x;
-      p2 = tmbox[BOX2D_LEFT] < ld->v1->x;
-      if (ld->dir.y < 0) {
-        p1 ^= 1;
-        p2 ^= 1;
-      }
+      p1 = (tmbox[BOX2D_RIGHT] < ld->v1->x);
+      p2 = (tmbox[BOX2D_LEFT] < ld->v1->x);
+      if (ld->dir.y < 0.0f) { p1 ^= 1; p2 ^= 1; }
       break;
     case ST_POSITIVE:
-      p1 = ld->PointOnSide(TVec(tmbox[BOX2D_LEFT], tmbox[BOX2D_TOP], 0));
-      p2 = ld->PointOnSide(TVec(tmbox[BOX2D_RIGHT], tmbox[BOX2D_BOTTOM], 0));
+      p1 = ld->PointOnSide(TVec(tmbox[BOX2D_LEFT], tmbox[BOX2D_TOP], 0.0f));
+      p2 = ld->PointOnSide(TVec(tmbox[BOX2D_RIGHT], tmbox[BOX2D_BOTTOM], 0.0f));
       break;
     case ST_NEGATIVE:
-      p1 = ld->PointOnSide(TVec(tmbox[BOX2D_RIGHT], tmbox[BOX2D_TOP], 0));
-      p2 = ld->PointOnSide(TVec(tmbox[BOX2D_LEFT], tmbox[BOX2D_BOTTOM], 0));
+      p1 = ld->PointOnSide(TVec(tmbox[BOX2D_RIGHT], tmbox[BOX2D_TOP], 0.0f));
+      p2 = ld->PointOnSide(TVec(tmbox[BOX2D_LEFT], tmbox[BOX2D_BOTTOM], 0.0f));
       break;
   }
 
-  if (p1 == p2) return p1;
-  return -1;
+  return (p1 == p2 ? p1 : -1);
 }
 
 

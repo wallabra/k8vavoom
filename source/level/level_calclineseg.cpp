@@ -34,39 +34,24 @@
 void VLevel::CalcLine (line_t *line) {
   // calc line's slopetype
   line->dir = (*line->v2)-(*line->v1);
-  line->dir.z = 0;
+  line->dir.z = 0.0f;
 
-  if (!line->dir.x) {
+  if (line->dir.x == 0.0f) {
     line->slopetype = ST_VERTICAL;
-  } else if (!line->dir.y) {
+  } else if (line->dir.y == 0.0f) {
     line->slopetype = ST_HORIZONTAL;
   } else {
-    if (line->dir.y/line->dir.x > 0) {
-      line->slopetype = ST_POSITIVE;
-    } else {
-      line->slopetype = ST_NEGATIVE;
-    }
+    line->slopetype = (line->dir.y*line->dir.x >= 0.0f ? ST_POSITIVE : ST_NEGATIVE);
   }
 
   line->SetPointDirXY(*line->v1, line->dir);
   line->ndir = line->dir.normalised2D();
 
   // calc line's bounding box
-  if (line->v1->x < line->v2->x) {
-    line->bbox2d[BOX2D_LEFT] = line->v1->x;
-    line->bbox2d[BOX2D_RIGHT] = line->v2->x;
-  } else {
-    line->bbox2d[BOX2D_LEFT] = line->v2->x;
-    line->bbox2d[BOX2D_RIGHT] = line->v1->x;
-  }
-
-  if (line->v1->y < line->v2->y) {
-    line->bbox2d[BOX2D_BOTTOM] = line->v1->y;
-    line->bbox2d[BOX2D_TOP] = line->v2->y;
-  } else {
-    line->bbox2d[BOX2D_BOTTOM] = line->v2->y;
-    line->bbox2d[BOX2D_TOP] = line->v1->y;
-  }
+  line->bbox2d[BOX2D_LEFT] = min2(line->v1->x, line->v2->x);
+  line->bbox2d[BOX2D_RIGHT] = max2(line->v1->x, line->v2->x);
+  line->bbox2d[BOX2D_BOTTOM] = min2(line->v1->y, line->v2->y);
+  line->bbox2d[BOX2D_TOP] = max2(line->v1->y, line->v2->y);
 
   CalcLineCDPlanes(line);
 }
@@ -80,16 +65,13 @@ void VLevel::CalcLine (line_t *line) {
 //
 //==========================================================================
 void VLevel::CalcSegLenOfs (seg_t *seg) {
-  if (seg->linedef) {
-    const line_t *ldef = seg->linedef;
-    if (seg->side) {
-      seg->offset = seg->v1->DistanceTo2D(*ldef->v2);
-    } else {
-      seg->offset = seg->v1->DistanceTo2D(*ldef->v1);
-    }
+  const line_t *ldef = seg->linedef;
+  if (ldef) {
+    const TVec *vv = (seg->side ? ldef->v2 : ldef->v1);
+    seg->offset = seg->v1->DistanceTo2D(*vv);
   }
   seg->length = seg->v2->DistanceTo2D(*seg->v1);
-  if (!isFiniteF(seg->length)) seg->length = 0; // just in case
+  if (!isFiniteF(seg->length)) seg->length = 0.0f; // just in case
 }
 
 
@@ -100,7 +82,7 @@ void VLevel::CalcSegLenOfs (seg_t *seg) {
 //==========================================================================
 void VLevel::CalcSeg (seg_t *seg) {
   seg->Set2Points(*seg->v1, *seg->v2);
-  bool valid = (seg->length >= 0.0001f);
+  bool valid = (isFiniteF(seg->length) && seg->length >= 0.0001f);
   if (valid) {
     if (seg->v1->x == seg->v2->x) {
       // vertical
@@ -131,9 +113,9 @@ void VLevel::CalcSeg (seg_t *seg) {
     if (seg->partner) GCon->Logf(NAME_Warning, "  partner: %d", (int)(ptrdiff_t)(seg->partner-Segs));
     if (seg->frontsub) GCon->Logf(NAME_Warning, "  frontsub: %d", (int)(ptrdiff_t)(seg->frontsub-Subsectors));
 
-    seg->dir = TVec(1, 0, 0); // arbitrary
+    seg->dir = TVec(1.0f, 0.0f, 0.0f); // arbitrary
     seg->flags |= SF_ZEROLEN;
-    //seg->offset = 0.0f;
+    if (!isFiniteF(seg->offset)) seg->offset = 0.0f;
     seg->length = 0.0001f;
     // setup fake seg's plane params
     seg->normal = TVec(1.0f, 0.0f, 0.0f);

@@ -2299,10 +2299,7 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY, float baseSpeed) {
   // try to move away from a dropoff
   DeltaX = DeltaY = 0;
 
-  t_bbox[BOX2D_TOP] = Origin.y+Radius;
-  t_bbox[BOX2D_BOTTOM] = Origin.y-Radius;
-  t_bbox[BOX2D_RIGHT] = Origin.x+Radius;
-  t_bbox[BOX2D_LEFT] = Origin.x-Radius;
+  Create2DBBox(t_bbox, Origin, Radius);
 
   const int xl = MapBlock(t_bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
   const int xh = MapBlock(t_bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
@@ -2316,7 +2313,7 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY, float baseSpeed) {
     for (int by = yl; by <= yh; ++by) {
       line_t *line;
       for (VBlockLinesIterator It(XLevel, bx, by, &line); It.GetNext(); ) {
-        if (!line->backsector) continue; // ignore one-sided linedefs
+        if (!line->backsector || line->frontsector == line->backsector) continue; // ignore one-sided linedefs and selfrefs
         // linedef must be contacted
         if (t_bbox[BOX2D_RIGHT] > line->bbox2d[BOX2D_LEFT] &&
             t_bbox[BOX2D_LEFT] < line->bbox2d[BOX2D_RIGHT] &&
@@ -2371,10 +2368,7 @@ int VEntity::FindDropOffLine (TArray<VDropOffLineInfo> *list, TVec pos) {
   int res = 0;
   float t_bbox[4];
 
-  t_bbox[BOX2D_TOP] = Origin.y+Radius;
-  t_bbox[BOX2D_BOTTOM] = Origin.y-Radius;
-  t_bbox[BOX2D_RIGHT] = Origin.x+Radius;
-  t_bbox[BOX2D_LEFT] = Origin.x-Radius;
+  Create2DBBox(t_bbox, Origin, Radius);
 
   const int xl = MapBlock(t_bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
   const int xh = MapBlock(t_bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);

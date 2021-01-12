@@ -645,7 +645,10 @@ native static final GameObject::opening_t *FindOpening (const GameObject::openin
 // given a point (x,y), returns the point (ox,oy) on the sector's defining
 // lines that is nearest to (x,y).
 // ignores `z`.
-native static final TVec SectorClosestPoint (GameObject::sector_t *sec, TVec in);
+native static final TVec SectorClosestPoint (const GameObject::sector_t *sec, const TVec in);
+
+// can return `nullptr` for empty sectors
+native static final GameObject::line_t *SectorClosestLine (const GameObject::sector_t *sec, const TVec in);
 
 // find the best opening
 // warning! never change openings, they are cached!

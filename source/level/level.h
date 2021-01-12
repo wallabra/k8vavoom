@@ -1167,8 +1167,11 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-TVec P_SectorClosestPoint (sector_t *sec, TVec in);
-int P_BoxOnLineSide (float *tmbox, line_t *ld);
+TVec P_SectorClosestPoint (const sector_t *sec, const TVec in, line_t **resline=nullptr);
+
+// considers the line to be infinite
+// returns side 0 or 1, -1 if box crosses the line
+int P_BoxOnLineSide (const float *tmbox, const line_t *ld);
 
 // used only in debug code
 bool P_GetMidTexturePosition (const line_t *line, int sideno, float *ptextop, float *ptexbot);
