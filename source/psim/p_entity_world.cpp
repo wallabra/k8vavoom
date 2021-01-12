@@ -30,8 +30,12 @@
 #include "../gamedefs.h"
 #include "../server/sv_local.h"
 
+//#define VV_NEW_SLIDE_CHECK
+
 //#define VV_DBG_VERBOSE_TRYMOVE
 //#define VV_DBG_VERBOSE_REL_LINE_FC
+
+//#define VV_DBG_VERBOSE_SLIDE
 
 
 #ifdef VV_DBG_VERBOSE_TRYMOVE
@@ -43,6 +47,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
+static VCvarB gm_use_new_slide_code("gm_use_new_slide_code", false, "Use new sliding code (experimental)?", CVAR_Archive);
 #ifdef CLIENT
 VCvarB r_interpolate_thing_movement("r_interpolate_thing_movement", true, "Interpolate mobj movement?", CVAR_Archive);
 VCvarB r_interpolate_thing_angles_models("r_interpolate_thing_angles_models", true, "Interpolate mobj rotation for 3D models?", CVAR_Archive);
@@ -1589,53 +1594,193 @@ TVec VEntity::ClipVelocity (const TVec &in, const TVec &normal, float overbounce
 void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, float x, float y, float StepVelScale) {
   TVec SlideOrg(x, y, Origin.z);
   TVec SlideDir = Velocity*StepVelScale;
-  intercept_t *in;
-  for (VPathTraverse It(this, &in, x, y, x+SlideDir.x, y+SlideDir.y, PT_ADDLINES); It.GetNext(); ) {
-    if (!(in->Flags&intercept_t::IF_IsALine)) Host_Error("PTR_SlideTraverse: not a line?");
+  if (gm_use_new_slide_code.asBool()) {
+    // new slide code
+    float bbox[4];
+    Create2DBBox(bbox, Origin, Radius);
 
-    line_t *li = in->line;
+    const int xl = MapBlock(bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
+    const int xh = MapBlock(bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
+    const int yl = MapBlock(bbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
+    const int yh = MapBlock(bbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
 
-    bool IsBlocked = false;
-    if (!(li->flags&ML_TWOSIDED) || !li->backsector) {
-      if (li->PointOnSide(Origin)) continue; // don't hit the back side
-      IsBlocked = true;
-    } else if (li->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING)) {
-      IsBlocked = true;
-    } else if ((EntityFlags&EF_IsPlayer) && (li->flags&ML_BLOCKPLAYERS)) {
-      IsBlocked = true;
-    } else if ((EntityFlags&EF_CheckLineBlockMonsters) && (li->flags&ML_BLOCKMONSTERS)) {
-      IsBlocked = true;
-    }
+    VLevel::CD_HitType lastHitType = VLevel::CD_HT_None;
+    XLevel->IncrementValidCount();
+    for (int bx = xl; bx <= xh; ++bx) {
+      for (int by = yl; by <= yh; ++by) {
+        line_t *li;
+        for (VBlockLinesIterator It(XLevel, bx, by, &li); It.GetNext(); ) {
+          bool IsBlocked = false;
+          if (!(li->flags&ML_TWOSIDED) || !li->backsector) {
+            if (li->PointOnSide(Origin)) continue; // don't hit the back side
+            IsBlocked = true;
+          } else if (li->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING)) {
+            IsBlocked = true;
+          } else if ((EntityFlags&EF_IsPlayer) && (li->flags&ML_BLOCKPLAYERS)) {
+            IsBlocked = true;
+          } else if ((EntityFlags&EF_CheckLineBlockMonsters) && (li->flags&ML_BLOCKMONSTERS)) {
+            IsBlocked = true;
+          }
 
-    if (!IsBlocked) {
-      // set openrange, opentop, openbottom
-      TVec hit_point = SlideOrg+in->frac*SlideDir;
-      opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
-      open = SV_FindOpening(open, Origin.z, Origin.z+Height);
+          VLevel::CD_HitType hitType;
+          float fdist = VLevel::SweepLinedefAABB(li, SlideOrg, SlideOrg+SlideDir, TVec(-Radius, -Radius, 0), TVec(Radius, Radius, Height), nullptr, nullptr, &hitType);
+          if (fdist < 0.0f || fdist >= 1.0f) continue;
 
-      if (open && open->range >= Height && // fits
-          open->top-Origin.z >= Height && // mobj is not too high
-          open->bottom-Origin.z <= MaxStepHeight) // not too big a step up
-      {
-        // this line doesn't block movement
-        if (Origin.z < open->bottom) {
-          // check to make sure there's nothing in the way for the step up
-          TVec CheckOrg = Origin;
-          CheckOrg.z = open->bottom;
-          if (!TestMobjZ(CheckOrg)) continue;
-        } else {
-          continue;
+
+          if (!IsBlocked) {
+            const TVec hpoint = SlideOrg+fdist*SlideDir;
+            // set openrange, opentop, openbottom
+            opening_t *open = SV_LineOpenings(li, hpoint, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
+            open = SV_FindOpening(open, Origin.z, Origin.z+Height);
+
+            if (open && open->range >= Height && // fits
+                open->top-Origin.z >= Height && // mobj is not too high
+                open->bottom-Origin.z <= MaxStepHeight) // not too big a step up
+            {
+              // this line doesn't block movement
+              if (Origin.z < open->bottom) {
+                // check to make sure there's nothing in the way for the step up
+                TVec CheckOrg = Origin;
+                CheckOrg.z = open->bottom;
+                if (!TestMobjZ(CheckOrg)) continue;
+              } else {
+                continue;
+              }
+            }
+          }
+
+          // ignore vertex hits
+          if (hitType == VLevel::CD_HT_Right || hitType == VLevel::CD_HT_Left) {
+            if (li->dir.y == 0.0f) {
+              #ifdef VV_DBG_VERBOSE_SLIDE
+              if (IsPlayer()) {
+                TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
+                GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: IGNORED H-VERTEX line #%d; norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
+              }
+              #endif
+              continue;
+            }
+          } else if (hitType == VLevel::CD_HT_Top || hitType == VLevel::CD_HT_Bottom) {
+            if (li->dir.x == 0.0f) {
+              #ifdef VV_DBG_VERBOSE_SLIDE
+              if (IsPlayer()) {
+                TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
+                GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: IGNORED V-VERTEX line #%d; norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
+              }
+              #endif
+              continue;
+            }
+          }
+
+          if (!BestSlideLine) {
+            #ifdef VV_DBG_VERBOSE_SLIDE
+            if (IsPlayer()) {
+              TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
+              GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: FIRST line #%d; norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
+            }
+            #endif
+            BestSlideFrac = fdist;
+            BestSlideLine = li;
+            lastHitType = hitType;
+            continue;
+          }
+
+          // the line blocks movement, see if it is closer than best so far
+          if (fdist < BestSlideFrac /*&& hitType == VLevel::CD_HT_Point*/) {
+            if (hitType == VLevel::CD_HT_Point || lastHitType != VLevel::CD_HT_Point) {
+              #ifdef VV_DBG_VERBOSE_SLIDE
+              if (IsPlayer()) {
+                TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
+                GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: NEW line #%d; norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
+              }
+              #endif
+              BestSlideFrac = fdist;
+              BestSlideLine = li;
+              lastHitType = hitType;
+            }
+          }
+          else if (fdist == BestSlideFrac && hitType == VLevel::CD_HT_Point && lastHitType != VLevel::CD_HT_Point) {
+            // replace non-sloped line
+            TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
+            if (cvel.x != 0.0f || cvel.y != 0.0f) {
+              #ifdef VV_DBG_VERBOSE_SLIDE
+              if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: REPLACE line #%d; norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
+              #endif
+              BestSlideFrac = fdist;
+              BestSlideLine = li;
+              lastHitType = hitType;
+            }
+            #ifdef VV_DBG_VERBOSE_SLIDE
+            else {
+              if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: IGNORED REPLACE line #%d; (bestf=%g; frac=%g); norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), BestSlideFrac, fdist, li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
+            }
+            #endif
+          }
+          #ifdef VV_DBG_VERBOSE_SLIDE
+          else {
+            if (IsPlayer()) {
+              TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
+              GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: IGNORED line #%d; (bestf=%g; frac=%g); norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), BestSlideFrac, fdist, li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
+            }
+          }
+          #endif
         }
       }
     }
+  } else {
+    // old slide code
+    intercept_t *in;
+    for (VPathTraverse It(this, &in, x, y, x+SlideDir.x, y+SlideDir.y, PT_ADDLINES); It.GetNext(); ) {
+      if (!(in->Flags&intercept_t::IF_IsALine)) Host_Error("PTR_SlideTraverse: not a line?");
 
-    // the line blocks movement, see if it is closer than best so far
-    if (in->frac < BestSlideFrac) {
-      BestSlideFrac = in->frac;
-      BestSlideLine = li;
+      line_t *li = in->line;
+
+      bool IsBlocked = false;
+      if (!(li->flags&ML_TWOSIDED) || !li->backsector) {
+        if (li->PointOnSide(Origin)) continue; // don't hit the back side
+        IsBlocked = true;
+      } else if (li->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING)) {
+        IsBlocked = true;
+      } else if ((EntityFlags&EF_IsPlayer) && (li->flags&ML_BLOCKPLAYERS)) {
+        IsBlocked = true;
+      } else if ((EntityFlags&EF_CheckLineBlockMonsters) && (li->flags&ML_BLOCKMONSTERS)) {
+        IsBlocked = true;
+      }
+
+      #ifdef VV_DBG_VERBOSE_SLIDE
+      if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: best=%g; frac=%g; line #%d; flags=0x%08x; blocked=%d", GetClass()->GetName(), BestSlideFrac, in->frac, (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->flags, (int)IsBlocked);
+      #endif
+
+      if (!IsBlocked) {
+        // set openrange, opentop, openbottom
+        TVec hpoint = SlideOrg+in->frac*SlideDir;
+        opening_t *open = SV_LineOpenings(li, hpoint, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
+        open = SV_FindOpening(open, Origin.z, Origin.z+Height);
+
+        if (open && open->range >= Height && // fits
+            open->top-Origin.z >= Height && // mobj is not too high
+            open->bottom-Origin.z <= MaxStepHeight) // not too big a step up
+        {
+          // this line doesn't block movement
+          if (Origin.z < open->bottom) {
+            // check to make sure there's nothing in the way for the step up
+            TVec CheckOrg = Origin;
+            CheckOrg.z = open->bottom;
+            if (!TestMobjZ(CheckOrg)) continue;
+          } else {
+            continue;
+          }
+        }
+      }
+
+      // the line blocks movement, see if it is closer than best so far
+      if (in->frac < BestSlideFrac) {
+        BestSlideFrac = in->frac;
+        BestSlideLine = li;
+      }
+
+      break;  // stop
     }
-
-    break;  // stop
   }
 }
 
@@ -1654,33 +1799,36 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
 //
 //==========================================================================
 void VEntity::SlideMove (float StepVelScale, bool noPickups) {
-  float leadx;
-  float leady;
-  float trailx;
-  float traily;
-  float newx;
-  float newy;
-  int hitcount;
+  float leadx, leady;
+  float trailx, traily;
+  int hitcount = 0;
   tmtrace_t tmtrace;
   memset((void *)&tmtrace, 0, sizeof(tmtrace)); // valgrind: AnyBlockingLine
-
-  hitcount = 0;
 
   float XMove = Velocity.x*StepVelScale;
   float YMove = Velocity.y*StepVelScale;
   if (XMove == 0.0f && YMove == 0.0f) return; // just in case
 
+  #ifdef VV_DBG_VERBOSE_SLIDE
+  if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: === SlideMove; move=(%g,%g) ===", GetClass()->GetName(), XMove, YMove);
+  #endif
+
+  float prevVelX = XMove;
+  float prevVelY = YMove;
+
   do {
     if (++hitcount == 3) {
       // don't loop forever
-      if (!TryMove(tmtrace, TVec(Origin.x, Origin.y+YMove, Origin.z), true, noPickups)) {
-        TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true, noPickups);
-      }
+      const bool movedY = (YMove != 0.0f ? TryMove(tmtrace, TVec(Origin.x, Origin.y+YMove, Origin.z), true) : false);
+      if (!movedY) TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true, noPickups);
       return;
     }
 
+    if (XMove != 0.0f) prevVelX = XMove;
+    if (YMove != 0.0f) prevVelY = YMove;
+
     // trace along the three leading corners
-    if (XMove > 0.0f) {
+    if (/*XMove*/prevVelX > 0.0f) {
       leadx = Origin.x+Radius;
       trailx = Origin.x-Radius;
     } else {
@@ -1688,7 +1836,7 @@ void VEntity::SlideMove (float StepVelScale, bool noPickups) {
       trailx = Origin.x+Radius;
     }
 
-    if (Velocity.y > 0.0f) {
+    if (/*Velocity.y*/prevVelY > 0.0f) {
       leady = Origin.y+Radius;
       traily = Origin.y-Radius;
     } else {
@@ -1699,36 +1847,69 @@ void VEntity::SlideMove (float StepVelScale, bool noPickups) {
     float BestSlideFrac = 1.00001f;
     line_t *BestSlideLine = nullptr;
 
-    SlidePathTraverse(BestSlideFrac, BestSlideLine, leadx, leady, StepVelScale);
-    SlidePathTraverse(BestSlideFrac, BestSlideLine, trailx, leady, StepVelScale);
-    SlidePathTraverse(BestSlideFrac, BestSlideLine, leadx, traily, StepVelScale);
+    #ifdef VV_DBG_VERBOSE_SLIDE
+    if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlideMove: hitcount=%d; fracleft=%g; move=(%g,%g) (%g,%g) (%d:%d)", GetClass()->GetName(), hitcount, BestSlideFrac, XMove, YMove, prevVelX, prevVelY, (XMove == 0.0f), (YMove == 0.0f));
+    #endif
+
+    if (gm_use_new_slide_code.asBool()) {
+      SlidePathTraverse(BestSlideFrac, BestSlideLine, Origin.x, Origin.y, StepVelScale);
+      #ifdef VV_DBG_VERBOSE_SLIDE
+      if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlideMove: hitcount=%d; frac=%g; line #%d; pos=(%g,%g)", GetClass()->GetName(), hitcount, BestSlideFrac, (int)(ptrdiff_t)(BestSlideLine-&XLevel->Lines[0]), leadx, leady);
+      #endif
+    } else {
+      // old slide code
+      SlidePathTraverse(BestSlideFrac, BestSlideLine, leadx, leady, StepVelScale);
+      #ifdef VV_DBG_VERBOSE_SLIDE
+      if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlideMove: hitcount=%d; frac=%g; line #%d; pos=(%g,%g)", GetClass()->GetName(), hitcount, BestSlideFrac, (int)(ptrdiff_t)(BestSlideLine-&XLevel->Lines[0]), leadx, leady);
+      #endif
+      if (BestSlideFrac != 0.0f) SlidePathTraverse(BestSlideFrac, BestSlideLine, trailx, leady, StepVelScale);
+      #ifdef VV_DBG_VERBOSE_SLIDE
+      if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlideMove: hitcount=%d; frac=%g; line #%d; pos=(%g,%g)", GetClass()->GetName(), hitcount, BestSlideFrac, (int)(ptrdiff_t)(BestSlideLine-&XLevel->Lines[0]), trailx, leady);
+      #endif
+      if (BestSlideFrac != 0.0f) SlidePathTraverse(BestSlideFrac, BestSlideLine, leadx, traily, StepVelScale);
+      #ifdef VV_DBG_VERBOSE_SLIDE
+      if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlideMove: hitcount=%d; frac=%g; line #%d; pos=(%g,%g)", GetClass()->GetName(), hitcount, BestSlideFrac, (int)(ptrdiff_t)(BestSlideLine-&XLevel->Lines[0]), leadx, traily);
+      #endif
+    }
 
     // move up to the wall
     if (BestSlideFrac == 1.00001f) {
       // the move must have hit the middle, so stairstep
-      if (!TryMove(tmtrace, TVec(Origin.x, Origin.y+YMove, Origin.z), true)) {
-        TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true);
-      }
+      const bool movedY = (YMove != 0.0f ? TryMove(tmtrace, TVec(Origin.x, Origin.y+YMove, Origin.z), true) : false);
+      #ifdef VV_DBG_VERBOSE_SLIDE
+      bool movedX = false;
+      if (!movedY) movedX = (XMove != 0.0f ? TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true) : false);
+      if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlideMove: hitcount=%d; stairstep! (no line found!); movedx=%d; movedy=%d", GetClass()->GetName(), hitcount, (int)movedX, (int)movedY);
+      #else
+      if (!movedY) TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true);
+      #endif
       return;
     }
 
+    #ifdef VV_DBG_VERBOSE_SLIDE
+    if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlideMove: hitcount=%d; frac=%g; line #%d", GetClass()->GetName(), hitcount, BestSlideFrac, (int)(ptrdiff_t)(BestSlideLine-&XLevel->Lines[0]));
+    #endif
+
     // fudge a bit to make sure it doesn't hit
+    const float origSlide = BestSlideFrac; // we'll need it later
     BestSlideFrac -= 0.03125f;
     if (BestSlideFrac > 0.0f) {
-      newx = XMove*BestSlideFrac;
-      newy = YMove*BestSlideFrac;
+      const float newx = XMove*BestSlideFrac;
+      const float newy = YMove*BestSlideFrac;
 
       if (!TryMove(tmtrace, TVec(Origin.x+newx, Origin.y+newy, Origin.z), true)) {
-        if (!TryMove(tmtrace, TVec(Origin.x, Origin.y+YMove, Origin.z), true)) {
-          TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true);
-        }
+        const bool movedY = (YMove != 0.0f ? TryMove(tmtrace, TVec(Origin.x, Origin.y+YMove, Origin.z), true) : false);
+        if (!movedY) TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true);
         return;
       }
     }
 
     // now continue along the wall
     // first calculate remainder
-    BestSlideFrac = 1.0f-(BestSlideFrac+0.03125f);
+    BestSlideFrac = 1.0f-origSlide;
+    #ifdef VV_DBG_VERBOSE_SLIDE
+    if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlideMove: hitcount=%d; fracleft=%g", GetClass()->GetName(), hitcount, BestSlideFrac);
+    #endif
 
     if (BestSlideFrac > 1.0f) BestSlideFrac = 1.0f;
     if (BestSlideFrac <= 0.0f) return;
