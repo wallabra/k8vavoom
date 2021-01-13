@@ -406,8 +406,8 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   TVec sprright(0, 0, 0);
   TVec sprup(0, 0, 0);
 
-  const TVec vfwd = Drawer->viewforward;
-  //const TVec vfwd = AngleVectorYaw(Drawer->viewangles.yaw);
+  //const TVec vfwd = Drawer->viewforward;
+  const TVec vfwd = AngleVectorYaw(Drawer->viewangles.yaw);
 
   // HACK: if sprite is additive, move is slightly closer to view
   // this is mostly for things like light flares
