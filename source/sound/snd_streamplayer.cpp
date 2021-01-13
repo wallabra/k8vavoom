@@ -56,12 +56,16 @@ static bool doTick (VStreamMusicPlayer *strm) {
     // pause playback
     return false;
   }
+  //GCon->Logf(NAME_Debug, "doTick: decoding...");
+  const double stt = Sys_Time();
   for (int Len = strm->SoundDevice->GetStreamAvailable(); Len; Len = strm->SoundDevice->GetStreamAvailable()) {
     vint16 *Data = strm->SoundDevice->GetStreamBuffer();
     int StartPos = 0;
     int decodedFromLoop = 0, loopCount = 0;
     while (!strm->Stopping && StartPos < Len) {
+      //GCon->Logf(NAME_Debug, "doTick: trying to decode %d samples (len=%d, stpos=%d)", Len-StartPos, Len, StartPos);
       int SamplesDecoded = strm->Codec->Decode(Data+StartPos*2, Len-StartPos);
+      //GCon->Logf(NAME_Debug, "doTick: decoded %d samples", SamplesDecoded);
       if (SamplesDecoded < 0) SamplesDecoded = 0;
       StartPos += SamplesDecoded;
       decodedFromLoop += SamplesDecoded;
@@ -90,9 +94,13 @@ static bool doTick (VStreamMusicPlayer *strm) {
         strm->FinishTime = Sys_Time();
       }
     }
+    //GCon->Logf(NAME_Debug, "doTick: setting data; len=%d; stpos=%d", Len, StartPos);
     if (strm->Stopping && StartPos < Len) memset(Data+StartPos*2, 0, (Len-StartPos)*4);
     strm->SoundDevice->SetStreamData(Data, Len);
+    //GCon->Logf(NAME_Debug, "doTick: decoded; len=%d; stpos=%d; time=%g", Len, StartPos, Sys_Time()-stt);
+    if (Sys_Time()-stt > 0.5) break;
   }
+  //GCon->Logf(NAME_Debug, "doTick: DONE decoing...");
   return false;
 }
 
