@@ -60,16 +60,19 @@ private:
   }
 
 public:
-  PFFmtBuf (size_t resv=0) : buf(nullptr), bufalloted(0), bufused(0) {
-    reserve(resv);
-  }
-  ~PFFmtBuf () { if (buf) Z_Free(buf); }
+  inline PFFmtBuf (size_t resv=0) : buf(nullptr), bufalloted(0), bufused(0) { reserve(resv); }
+  inline ~PFFmtBuf () { if (buf) Z_Free(buf); }
 
-  const char *getCStr () {
+  inline const char *getCStr () {
     if (!bufused) return "";
     reserve(1);
     buf[bufused] = 0;
     return buf;
+  }
+
+  inline void putChar (char ch) {
+    reserve(1);
+    buf[bufused++] = ch;
   }
 
   void putStrInternal (VStr s, bool doQuote=false) {
@@ -81,15 +84,12 @@ public:
       qlen = s.length();
       for (int f = 0; f < s.length(); ++f) {
         vuint8 ch = (vuint8)s[f];
-        if (ch == '\t' || ch == '\r' || ch == '\n') {
+        if (ch == '\n' || ch == '\t' || ch == '\r' || ch == '"' || ch == '\\') {
           doQuote = true;
           ++qlen;
         } else if (ch < ' ' || ch == 127) {
           doQuote = true;
           qlen += 3;
-        } else if (ch == '"' || ch == '\\') {
-          doQuote = true;
-          ++qlen;
         }
       }
     }
@@ -99,23 +99,20 @@ public:
       bufused += (size_t)qlen;
       for (int f = 0; f < s.length(); ++f) {
         vuint8 ch = (vuint8)s[f];
-        if (ch == '\t') {
-          *d++ = '\\';
-          *d++ = 't';
-        } else if (ch == '\n') {
-          *d++ = '\\';
-          *d++ = 'n';
-        } else if (ch == '\r') {
-          *d++ = '\\';
-          *d++ = 'r';
-        } else if (ch < ' ' || ch == 127) {
-          snprintf((char *)d, 6, "\\x%02x", ch);
-          d += 4;
-        } else if (ch == '"' || ch == '\\') {
-          *d++ = '\\';
-          *d++ = ch;
-        } else {
-          *d++ = ch;
+        switch (ch) {
+          case '\n': *d++ = '\\'; *d++ = 'n'; break;
+          case '\t': *d++ = '\\'; *d++ = 't'; break;
+          case '\r': *d++ = '\\'; *d++ = 'r'; break;
+          case '"': *d++ = '\\'; *d++ = '"'; break;
+          case '\\': *d++ = '\\'; *d++ = '\\'; break;
+          default:
+            if (ch < ' ' || ch == 127) {
+              snprintf((char *)d, 6, "\\x%02x", ch);
+              d += 4;
+            } else {
+              *d++ = ch;
+            }
+            break;
         }
       }
     } else {
@@ -150,12 +147,6 @@ public:
     }
   }
 
-  void putChar (char ch) {
-    reserve(1);
-    memcpy(buf+bufused, &ch, 1);
-    bufused += 1;
-  }
-
   void putInt (int v, int width, bool toRight, bool zeroFill, bool asdec=true) {
     char tmp[64];
     int len;
@@ -170,6 +161,8 @@ public:
           if (tmp[0] == '-') {
             putChar('-');
             memmove(tmp, tmp+1, strlen(tmp));
+            --len;
+            --width;
           }
           while (width-- > len) putChar('0');
         } else {
@@ -248,6 +241,7 @@ VStr VObject::PF_FormatString () {
   PFFmtBuf pbuf((size_t)str.length());
   int spos = 0;
   while (spos < str.length()) {
+    //fprintf(stderr, "  spos=%d; len=%d; ch=<%c> %d\n", spos, str.length(), ((vuint8)str[spos] < ' ' || str[spos] == 127 ? '.' : str[spos]), (vuint8)str[spos]);
     if (str[spos] == '%') {
       auto savedpos = spos;
       ++spos;
@@ -263,7 +257,7 @@ VStr VObject::PF_FormatString () {
       if (str[spos] >= '0' && str[spos] <= '9') {
         zeroFill = (str[spos] == '0');
         width = 0;
-        while (spos <= str.length() && str[spos] >= '0' && str[spos] <= '9') {
+        while (spos < str.length() && str[spos] >= '0' && str[spos] <= '9') {
           width = width*10+str[spos++]-'0';
         }
         if (spos >= str.length()) {
@@ -491,6 +485,8 @@ VStr VObject::PF_FormatString () {
 
   if (pi < MAX_PARAMS) GLog.Log(NAME_Dev, "PF_FormatString: Not all params were used");
   //if (pi > count) GLog.Log(NAME_Dev, "PF_FormatString: Param count overflow");
+
+  //fprintf(stderr, "  DONE: <%s>\n", pbuf.getCStr());
 
   VStr res(pbuf.getCStr());
   return res;
