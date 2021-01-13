@@ -361,9 +361,7 @@ void CoopPickedUp (EntityEx Toucher) {
 //
 //==========================================================================
 bool TryPickup (EntityEx Toucher) {
-  //bool doDebug = (self !isa 'LDWeaponNameAlternation');
-  //if (doDebug) printwarn("%C: TryPickup: new owner `%C`; bTransferInventory=%B)", self, Toucher, bTransferInventory);
-
+  //printdebug("%C: TryPickup: new owner `%C`; bTransferInventory=%B)", self, Toucher, bTransferInventory);
   EntityEx NewToucher = Toucher;
   bPickupGood = false;
   if (Toucher.Inventory && Toucher.Inventory.HandlePickup(self)) {
@@ -410,7 +408,7 @@ bool TryPickup (EntityEx Toucher) {
         Copy.Owner = none;
         Copy.bCreateCopyMoved = false;
       }
-      //if (doDebug) printdebug("%C: TryPickup: attaching copy `%C` to the new owner `%C` (same:%B; bTransferInventory=%B; AA=%B)", self, Copy, NewToucher, (Copy == self), self.bTransferInventory, bAutoActivate);
+      //printdebug("%C: TryPickup: attaching copy `%C` to the new owner `%C` (same:%B; bTransferInventory=%B; AA=%B)", self, Copy, NewToucher, (Copy == self), self.bTransferInventory, bAutoActivate);
       Copy.AttachToOwner(NewToucher, self);
       if (!bAutoActivate && Level.Game.netgame && !Level.Game.deathmatch) Copy.CoopPickedUp(Toucher);
       if (bAutoActivate && Copy.Use(true)) {

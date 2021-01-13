@@ -200,12 +200,19 @@ override bool HandlePickup (Inventory Item) {
     Ammo bestParent, best2Parent;
     auto pammo = Ammo(Item).GetParentAmmo();
     for (Inventory inv = self; inv; inv = inv.Inventory) {
-      if (inv.Class == Item.Class) return Ammo(inv).DoPickupInternal(Item);
+      if (inv.Class == Item.Class) {
+        //printdebug("%C: HPP:EXACT; Item=%C; pa=%C; inv=%C", self, Item, Ammo(Item).GetParentAmmo(), inv);
+        return Ammo(inv).DoPickupInternal(Item);
+      }
       Ammo a2 = Ammo(inv);
       if (!a2) continue;
-      if (!bestParent) {
-             if (a2.Class == pammo) bestParent = a2;
-        else if (!best2Parent && a2.GetParentAmmo() == pammo) best2Parent = a2;
+      if (!bestParent && a2.Class == pammo) {
+        //printdebug("%C: HPP:BESTPARENT; Item=%C; pa=%C; inv=%C", self, Item, Ammo(Item).GetParentAmmo(), inv);
+        bestParent = a2;
+      }
+      if (!best2Parent && a2.GetParentAmmo() == pammo) {
+        //printdebug("%C: HPP:BESTPARENT2; Item=%C; pa=%C; inv=%C", self, Item, Ammo(Item).GetParentAmmo(), inv);
+        best2Parent = a2;
       }
     }
     // found best match?

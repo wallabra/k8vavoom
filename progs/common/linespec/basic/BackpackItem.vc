@@ -44,7 +44,7 @@ override bool HandlePickup (Inventory Item) {
       if (ait.k8IsLoadedAmmo()) continue;
       int amax = ait.k8GetAmmoKingMax();
       int oldammo = AmmoItem.Amount;
-      //print("ammo=%C (%C); max=%d (%d) (now: %d)", AmmoItem, ait, amax, AmmoItem.MaxAmount, oldammo);
+      //printdebug("ammo=%C (%C); max=%d (%d) (now: %d)", AmmoItem, ait, amax, AmmoItem.MaxAmount, oldammo);
       if (oldammo >= amax) continue;
       int num = ait.default.BackpackAmount;
       if (!num || BackpackItem(Item).bDepleted) continue;
@@ -76,13 +76,29 @@ override Inventory CreateCopy (EntityEx Toucher) {
 
   // give toucher every kind of ammo
   foreach AllClasses(Ammo, Cls) {
+    if (Cls !isa 'Ammo') continue;
+    class!Ammo AmmoClass = class!Ammo(GetClassReplacement(Cls));
+    if (!AmmoClass) AmmoClass = Cls;
     // only direct descendants
-    if (GetClassParent(Cls) != Ammo) continue;
-    Ammo AmmoItem = Ammo(Toucher.FindInventory(Cls));
+    if (GetClassParent(AmmoClass) != Ammo) continue;
+    Ammo AmmoItem = Ammo(Toucher.FindInventory(AmmoClass));
     if (!AmmoItem) {
-      AmmoItem = SpawnAmmoType(self, Cls);
+      // check if it is valid
+      if (!EntityEx.CheckSpawnGameFilter(AmmoClass, Level.Game)) {
+        //printdebug("BACKPACK:   ammo `%C` (%C) disabled by game filter, ignoring", AmmoClass, Cls);
+        continue;
+      }
+      AmmoItem = SpawnAmmoType(self, AmmoClass);
       if (!AmmoItem) continue;
-      if (AmmoItem.k8IsLoadedAmmo()) {
+      //printdebug("BACKPACK: spawning ammo `%C` (orig: %C), got `%C` (parent is `%C`)", AmmoClass, Cls, AmmoItem, GetClassParent(AmmoItem.Class));
+      if (AmmoItem.k8IsLoadedAmmo() || GetClassParent(AmmoItem.Class) != Ammo) {
+        //printdebug("BACKPACK:   ammo `%C` (%C) is not a direct Ammo descendant, ignoring", AmmoItem, AmmoClass);
+        delete AmmoItem;
+        continue;
+      }
+      // check if it is valid (just in case we spawned something different)
+      if (!EntityEx.CheckSpawnGameFilter(AmmoItem.Class, Level.Game)) {
+        //printdebug("BACKPACK:   ammo `%C` (%C) disabled by game filter, ignoring", AmmoItem, AmmoClass);
         delete AmmoItem;
         continue;
       }
