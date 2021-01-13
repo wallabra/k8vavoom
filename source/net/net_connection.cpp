@@ -1490,7 +1490,7 @@ VNetConnection::ThinkerSortInfo::ThinkerSortInfo (VBasePlayer *Owner) noexcept {
   ViewAngles = Owner->ViewAngles;
   TVec fwd;
   #if 0
-  AngleVector(ViewAngles, fwd);
+  fwd = AngleVector(ViewAngles);
   //GCon->Logf(NAME_DevNet, "angles=(%g,%g,%g); fwd=(%g,%g,%g)", ViewAngles.yaw, ViewAngles.pitch, ViewAngles.roll, fwd.x, fwd.y, fwd.z);
   ViewPlane.SetPointNormal3DSafe(ViewOrg, fwd);
   #else

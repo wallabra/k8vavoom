@@ -214,8 +214,7 @@ void TFrustum::setupSimpleAngles (const TVec &org, const TAVec &angles, const fl
 //
 //==========================================================================
 void TFrustum::setupSimpleDir (const TVec &org, const TVec &dir, const float fov, const float farplanez) noexcept {
-  TAVec angles;
-  VectorAngles(dir, angles);
+  const TAVec angles = VectorAngles(dir);
   setupSimpleAngles(org, angles, fov, farplanez);
 }
 

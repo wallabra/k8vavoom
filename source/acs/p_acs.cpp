@@ -3340,8 +3340,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         ang.yaw = 360.0f*float(args[1])/65536.0f;
         ang.pitch = 360.0f*float(args[2])/65536.0f;
         ang.roll = 0;
-        TVec dir(0, 0, 0);
-        AngleVector(ang, dir);
+        TVec dir = AngleVector(ang);
         //dir = NormaliseSafe(dir);
         //dir.normaliseInPlace();
         VEntity *hit = src->eventPickActor(
@@ -3381,8 +3380,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         ang.yaw = 360.0f*float(args[1])/65536.0f;
         ang.pitch = 360.0f*float(args[2])/65536.0f;
         ang.roll = 0;
-        TVec dir(0, 0, 0);
-        AngleVector(ang, dir);
+        TVec dir = AngleVector(ang);
         //dir = NormaliseSafe(dir);
         //dir.normaliseInPlace();
         // dir, range, damage,

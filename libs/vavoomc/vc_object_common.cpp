@@ -201,7 +201,7 @@ IMPLEMENT_FUNCTION(VObject, AngleVectors) {
     if (!vup) vup.value = &dummyup;
     AngleVectors(angles, *vforward, *vright, *vup);
   } else {
-    AngleVector(angles, *vforward);
+    *vforward = AngleVector(angles);
   }
 }
 
@@ -210,7 +210,7 @@ IMPLEMENT_FUNCTION(VObject, AngleVector) {
   TAVec angles;
   TVec *vforward;
   vobjGetParam(angles, vforward);
-  AngleVector(angles, *vforward);
+  *vforward = AngleVector(angles);
 }
 
 // native static final void VectorAngles (const TVec vec, out TAVec angles);
@@ -218,7 +218,7 @@ IMPLEMENT_FUNCTION(VObject, VectorAngles) {
   TVec vec;
   TAVec *angles;
   vobjGetParam(vec, angles);
-  VectorAngles(vec, *angles);
+  *angles = VectorAngles(vec);
 }
 
 //native static final void DirVectorsAngles (const TVec forward, const TVec right, const TVec up, out TAVec angles);
@@ -253,28 +253,22 @@ IMPLEMENT_FUNCTION(VObject, AngleYawVector) {
 // native static final TVec AnglePitchVector (const float pitch);
 IMPLEMENT_FUNCTION(VObject, AnglePitchVector) {
   float yaw;
-  TVec res;
   vobjGetParam(yaw);
-  AngleVectorPitch(yaw, res);
-  RET_VEC(res);
+  RET_VEC(AngleVectorPitch(yaw));
 }
 
 // native static final TVec AnglesRightVector (const TAVec angles);
 IMPLEMENT_FUNCTION(VObject, AnglesRightVector) {
   TAVec angles;
-  TVec res;
   vobjGetParam(angles);
-  AnglesRightVector(angles, res);
-  RET_VEC(res);
+  RET_VEC(AnglesRightVector(angles));
 }
 
 // native static final TVec YawVectorRight (float yaw);
 IMPLEMENT_FUNCTION(VObject, YawVectorRight) {
   float yaw;
-  TVec res;
   vobjGetParam(yaw);
-  YawVectorRight(yaw, res);
-  RET_VEC(res);
+  RET_VEC(YawVectorRight(yaw));
 }
 
 // native static final TVec RotateDirectionVector (const TVec vec, const TAVec rot);
@@ -282,16 +276,11 @@ IMPLEMENT_FUNCTION(VObject, RotateDirectionVector) {
   TVec vec;
   TAVec rot;
   vobjGetParam(vec, rot);
-
-  TAVec angles(0, 0, 0);
-  TVec out(0, 0, 0);
-
-  VectorAngles(vec, angles);
+  TAVec angles = VectorAngles(vec);
   angles.pitch += rot.pitch;
   angles.yaw += rot.yaw;
   angles.roll += rot.roll;
-  AngleVector(angles, out);
-  RET_VEC(out);
+  RET_VEC(AngleVector(angles));
 }
 
 // native static final void VectorRotateAroundZ (ref TVec vec, float angle);

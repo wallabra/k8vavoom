@@ -286,11 +286,12 @@ static VVA_OKUNUSED inline VStream &operator << (VStream &Strm, TVec &v) { retur
 
 
 void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) noexcept;
-void AnglesRightVector (const TAVec &angles, TVec &right) noexcept;
-void AngleVector (const TAVec &angles, TVec &forward) noexcept;
-void YawVectorRight (float yaw, TVec &right) noexcept;
-void VectorAngles (const TVec &vec, TAVec &angles) noexcept;
 void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVec &angles) noexcept;
+VVA_CHECKRESULT TVec AnglesRightVector (const TAVec &angles) noexcept;
+VVA_CHECKRESULT TVec AngleVector (const TAVec &angles) noexcept; // forward vector
+VVA_CHECKRESULT TVec AngleVectorPitch (const float pitch) noexcept;
+VVA_CHECKRESULT TVec YawVectorRight (float yaw) noexcept;
+VVA_CHECKRESULT TAVec VectorAngles (const TVec &vec) noexcept; // from forward
 
 VVA_CHECKRESULT TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle) noexcept;
 
@@ -301,31 +302,21 @@ void RotateAroundDirection (TVec axis[3], float yaw) noexcept;
 // given a normalized forward vector, create two other perpendicular vectors
 void MakeNormalVectors (const TVec &forward, TVec &right, TVec &up) noexcept;
 
-static inline VVA_OKUNUSED void AngleVectorPitch (const float pitch, TVec &forward) noexcept {
-  msincos(pitch, &forward.z, &forward.x);
-  forward.y = 0.0f;
-  forward.z = -forward.z;
-  /*
-  forward.x = mcos(pitch);
-  forward.y = 0.0f;
-  forward.z = -msin(pitch);
-  */
-}
 
-static inline VVA_OKUNUSED TVec AngleVectorYaw (const float yaw) noexcept {
+static inline VVA_OKUNUSED VVA_CHECKRESULT TVec AngleVectorYaw (const float yaw) noexcept {
   float sy, cy;
   msincos(yaw, &sy, &cy);
   return TVec(cy, sy, 0.0f);
 }
 
-static inline VVA_OKUNUSED float VectorAngleYaw (const TVec &vec) noexcept {
+static inline VVA_OKUNUSED VVA_CHECKRESULT float VectorAngleYaw (const TVec &vec) noexcept {
   const float fx = vec.x;
   const float fy = vec.y;
   const float len2d = VSUM2(fx*fx, fy*fy);
   return (len2d < 0.0001f ? 0.0f : matan(fy, fx));
 }
 
-static inline VVA_OKUNUSED float VectorAnglePitch (const TVec &vec) noexcept {
+static inline VVA_OKUNUSED VVA_CHECKRESULT float VectorAnglePitch (const TVec &vec) noexcept {
   const float fx = vec.x;
   const float fy = vec.y;
   const float len2d = VSUM2(fx*fx, fy*fy);

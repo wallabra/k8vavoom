@@ -108,7 +108,7 @@ bool VEntity::CanSeeEx (VEntity *Other, unsigned flags) {
 
   TVec dirF, dirR;
   if (cbs) {
-    //YawVectorRight(Angles.yaw, dirR);
+    //dirR = YawVectorRight(Angles.yaw);
     TVec dirU;
     TAVec ang;
     ang.yaw = Angles.yaw;

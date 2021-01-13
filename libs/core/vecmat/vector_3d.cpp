@@ -99,7 +99,8 @@ void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) no
 //  AnglesRightVector
 //
 //==========================================================================
-void AnglesRightVector (const TAVec &angles, TVec &right) noexcept {
+TVec AnglesRightVector (const TAVec &angles) noexcept {
+  TVec right;
   float sy, cy;
   msincos(angles.yaw, &sy, &cy);
   if (angles.pitch) {
@@ -124,6 +125,7 @@ void AnglesRightVector (const TAVec &angles, TVec &right) noexcept {
     right.y = -cy;
     right.z = 0.0f;
   }
+  return right;
 }
 
 
@@ -132,16 +134,18 @@ void AnglesRightVector (const TAVec &angles, TVec &right) noexcept {
 //  YawVectorRight
 //
 //==========================================================================
-void YawVectorRight (float yaw, TVec &right) noexcept {
+TVec YawVectorRight (float yaw) noexcept {
   /*
   float sy, cy;
   msincos(yaw, &sy, &cy);
   right.x = sy;
   right.y = -cy;
   */
+  TVec right;
   msincos(yaw, &right.x, &right.y);
   right.y = -right.y;
   right.z = 0.0f;
+  return right;
 }
 
 
@@ -150,7 +154,7 @@ void YawVectorRight (float yaw, TVec &right) noexcept {
 //  AngleVector
 //
 //==========================================================================
-void AngleVector (const TAVec &angles, TVec &forward) noexcept {
+TVec AngleVector (const TAVec &angles) noexcept {
   /*
   const float ay = DEG2RADF(angles.yaw);
   const float ap = DEG2RADF(angles.pitch);
@@ -160,6 +164,7 @@ void AngleVector (const TAVec &angles, TVec &forward) noexcept {
   const float sp = sinf(ap);
   const float cp = cosf(ap);
   */
+  TVec forward;
   if (angles.pitch) {
     float sy, cy;
     float sp, cp;
@@ -174,6 +179,7 @@ void AngleVector (const TAVec &angles, TVec &forward) noexcept {
     msincos(angles.yaw, &forward.y, &forward.x);
     forward.z = 0.0f;
   }
+  return forward;
 }
 
 
@@ -182,7 +188,8 @@ void AngleVector (const TAVec &angles, TVec &forward) noexcept {
 //  VectorAngles
 //
 //==========================================================================
-void VectorAngles (const TVec &vec, TAVec &angles) noexcept {
+TAVec VectorAngles (const TVec &vec) noexcept {
+  TAVec angles;
   const float fx = vec.x;
   const float fy = vec.y;
   const float len2d = VSUM2(fx*fx, fy*fy);
@@ -194,6 +201,7 @@ void VectorAngles (const TVec &vec, TAVec &angles) noexcept {
     angles.yaw = matan(fy, fx);
   }
   angles.roll = 0.0f;
+  return angles;
 }
 
 
@@ -221,6 +229,25 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
     angles.yaw = matan(fy, fx); // left/right
     angles.roll = (right.z || up.z ? matan(-right.z/len2d, up.z/len2d) : 0.0f);
   }
+}
+
+
+//==========================================================================
+//
+//  AngleVectorPitch
+//
+//==========================================================================
+VVA_CHECKRESULT TVec AngleVectorPitch (const float pitch) noexcept {
+  TVec forward;
+  msincos(pitch, &forward.z, &forward.x);
+  forward.y = 0.0f;
+  forward.z = -forward.z;
+  /*
+  forward.x = mcos(pitch);
+  forward.y = 0.0f;
+  forward.z = -msin(pitch);
+  */
+  return forward;
 }
 
 

@@ -2089,12 +2089,12 @@ void VEntity::BounceWall (float DeltaTime, const line_t *blockline, float overbo
     TVec delta(0, 0, 0);
 
     // convert BestSlideLine normal to an angle
-    VectorAngles(BestSlideLine->normal, lineang);
+    lineang = VectorAngles(BestSlideLine->normal);
     if (BestSlideLine->PointOnSide(Origin)) lineang.yaw += 180.0f;
 
     // convert the line angle back to a vector, so that
     // we can use it to calculate the delta against the Velocity vector
-    AngleVector(lineang, delta);
+    delta = AngleVector(lineang);
     delta = (delta*2.0f)-Velocity;
 
     if (delta.length2DSquared() < 1.0f) {
@@ -2102,7 +2102,7 @@ void VEntity::BounceWall (float DeltaTime, const line_t *blockline, float overbo
     }
 
     // finally get the delta angle to use
-    VectorAngles(delta, delta_ang);
+    delta_ang = VectorAngles(delta);
 
     Velocity.x = (Velocity.x*bouncefactor)*cos(delta_ang.yaw);
     Velocity.y = (Velocity.y*bouncefactor)*sin(delta_ang.yaw);

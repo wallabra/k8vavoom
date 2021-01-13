@@ -1168,8 +1168,7 @@ static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int
   AngleVectors(Angles, md_forward, md_left, md_up);
   md_left = -md_left;
   Origin += md_forward*p[0].x+md_left*p[0].y+md_up*p[0].z;
-  TAVec wangles;
-  VectorAngles(p[1]-p[0], wangles);
+  TAVec wangles = VectorAngles(p[1]-p[0]);
   Angles.yaw = AngleMod(Angles.yaw+wangles.yaw);
   Angles.pitch = AngleMod(Angles.pitch+wangles.pitch);
 }

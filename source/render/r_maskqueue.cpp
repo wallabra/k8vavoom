@@ -406,18 +406,21 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   TVec sprright(0, 0, 0);
   TVec sprup(0, 0, 0);
 
+  const TVec vfwd = Drawer->viewforward;
+  //const TVec vfwd = AngleVectorYaw(Drawer->viewangles.yaw);
+
   // HACK: if sprite is additive, move is slightly closer to view
   // this is mostly for things like light flares
-  if (ri.isAdditive()) sprorigin -= Drawer->viewforward*0.2f;
+  if (ri.isAdditive()) sprorigin -= vfwd*0.2f;
 
   // move various things forward/backward a little
   switch (tclass) {
-    case VEntity::EType::ET_Player: sprorigin -= Drawer->viewforward*0.12f; break; // forward
-    case VEntity::EType::ET_Corpse: sprorigin += Drawer->viewforward*0.12f; break; // backward
-    case VEntity::EType::ET_Pickup: sprorigin -= Drawer->viewforward*0.20f; break; // forward
+    case VEntity::EType::ET_Player: sprorigin -= vfwd*0.12f; break; // forward
+    case VEntity::EType::ET_Corpse: sprorigin += vfwd*0.12f; break; // backward
+    case VEntity::EType::ET_Pickup: sprorigin -= vfwd*0.16f; break; // forward
     default:
-           if (thing->IsNoInteraction() || thing->IsFloatBob()) sprorigin -= Drawer->viewforward*0.18f;
-      else if (thing->EntityFlags&(VEntity::EF_Bright|VEntity::EF_FullBright)) sprorigin -= Drawer->viewforward*0.12f;
+           if (thing->IsNoInteraction() || thing->IsFloatBob()) sprorigin -= vfwd*0.18f;
+      else if (thing->EntityFlags&(VEntity::EF_Bright|VEntity::EF_FullBright)) sprorigin -= vfwd*0.12f;
       break;
   }
 
