@@ -667,7 +667,7 @@ final bool StepMove () {
         float drDeltaY;
         TAVec ang;
 
-        CheckDropOff(drDeltaX, drDeltaY);
+        CheckDropOff(out drDeltaX, out drDeltaY);
         TVec dir = Target.Origin-Origin;
         VectorAngles(dir, out ang);
 
@@ -876,7 +876,7 @@ final void NewChaseDirTo (TVec destination, optional EntityEx aTarget) {
     float AvoidDeltaY;
     // We call CheckDropoff here to determine if the
     // bounding box actually needs to be used below
-    CheckDropOff(AvoidDeltaX, AvoidDeltaY);
+    CheckDropOff(out AvoidDeltaX, out AvoidDeltaY);
 
     if (AvoidDeltaX || AvoidDeltaY) {
       // [Graf Zahl] I have changed TryMove to only apply this logic when
