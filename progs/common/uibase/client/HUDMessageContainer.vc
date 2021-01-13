@@ -135,9 +135,9 @@ void AddHudMessage (string Message, name aFont, int Type, int Id, int Color,
 
   // log to console if needed.
   if (Type&HUDMSG_LOG) {
-    print("\ci<------------------------------->");
-    print("%s%s", TextColorString(Color), Message);
-    print("\ci<------------------------------->");
+    //print("\ci<------------------------------->");
+    print("\c[red]ACS:\c[normal] %s%s", TextColorString(Color), Message);
+    //print("\ci<------------------------------->");
     Type &= ~HUDMSG_LOG;
   }
   //printdebug("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>", Id, aFont, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message);

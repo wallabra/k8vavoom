@@ -48,9 +48,7 @@ override void Destroyed () {
 //
 //===========================================================================
 [decorate] final void A_Log (string text) {
-  print("<------------------------------->");
-  print("%s", TranslateString(text));
-  print("<------------------------------->");
+  printdebug("%s", TranslateString(text));
 }
 
 
@@ -60,9 +58,7 @@ override void Destroyed () {
 //
 //===========================================================================
 [decorate] final void A_LogInt (int num) {
-  print("<------------------------------->");
-  print("%i", num);
-  print("<------------------------------->");
+  printdebug("%i", num);
 }
 
 
