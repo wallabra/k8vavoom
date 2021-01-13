@@ -270,6 +270,8 @@ set(VLEVEL_CLASS_SOURCES
   level/level_soundprop.cpp
   level/level_miscapi.cpp
   level/level_think.cpp
+  level/beamclip.cpp
+  level/beamclip.h
 )
 
 set(SV_SOURCES
@@ -310,8 +312,6 @@ set(ACS_SOURCES
 )
 
 set(PSIM_SOURCES
-  psim/p_clip.cpp
-  psim/p_clip.h
   psim/p_decal.cpp
   psim/p_decal.h
   psim/p_entity.cpp

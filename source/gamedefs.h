@@ -42,25 +42,26 @@
 
 #include "../libs/core/core.h"
 
-#include "build.h"    //  Build settings
-#include "common.h"   //  Common types
-#include "language.h" //  Localisation
-#include "misc.h"   //  Misc utilites
-#include "infostr.h"  //  Info strings
-#include "debug.h"    //  Debug file
-#include "system.h"   //  System specific routines
-#include "filesys/files.h"    //  File I/O routines
+#include "build.h"
+#include "common.h"
+#include "language.h"
+#include "misc.h"
+#include "infostr.h"
+#include "debug.h"
+#include "system.h"
+#include "filesys/files.h"
 #include "../libs/vavoomc/vc_public.h"
-#include "dehacked/vc_dehacked.h"//  DeHackEd support
-#include "scripts.h"  //  Script parsing
-#include "input.h"    //  Input from keyboard, mouse and joystick
-#include "video.h"    //  Graphics
+#include "dehacked/vc_dehacked.h"
+#include "scripts.h"
+#include "input.h"
+#include "video.h"
 #include "screen.h"
 #include "automap.h"
 #include "psim/p_gameobject.h"
 #include "textures/r_tex_id.h"
 #include "ntvalueioex.h"
-#include "level/level.h"    //  Level data
+#include "level/level.h"
+#include "level/beamclip.h"
 #include "mapinfo.h"
 #include "lockdefs.h"
 #include "host.h"
@@ -77,13 +78,12 @@
 #include "server/server.h"
 #include "server/sv_save.h"
 #include "qs_data.h"
-#include "psim/p_clip.h"
 #include "psim/p_decal.h"
 #include "psim/p_worldinfo.h"
 #include "psim/p_thinker.h"
 #include "psim/p_levelinfo.h"
 #include "psim/p_entity.h"
-#include "decorate/vc_decorate.h"//  Decorate scripts
+#include "decorate/vc_decorate.h"
 #include "psim/p_playerreplicationinfo.h"
 #include "psim/p_player.h"
 #include "psim/p_gameinfo.h"
