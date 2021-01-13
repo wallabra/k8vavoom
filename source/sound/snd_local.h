@@ -315,31 +315,7 @@ struct FAudioCodecDesc {
   static FAudioCodecDesc *List;
 
 private:
-  static void InsertIntoList (FAudioCodecDesc *&list, FAudioCodecDesc *codec) noexcept {
-    if (!codec) return;
-    if (!list) {
-      codec->Next = nullptr;
-      list = codec;
-    } else {
-      FAudioCodecDesc *prev = nullptr;
-      for (FAudioCodecDesc *curr = list; curr; prev = curr, curr = curr->Next) {
-        if (codec->Priority < curr->Priority) {
-          if (prev) {
-            prev->Next = codec;
-            codec->Next = curr;
-          } else {
-            vassert(curr == list);
-            codec->Next = list;
-            list = codec;
-          }
-          return;
-        }
-      }
-      vassert(prev);
-      prev->Next = codec;
-      codec->Next = nullptr;
-    }
-  }
+  static void InsertIntoList (FAudioCodecDesc *&list, FAudioCodecDesc *codec) noexcept;
 
 public:
   // codecs with `hasGoodSignature` will be checked last

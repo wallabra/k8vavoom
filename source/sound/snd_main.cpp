@@ -225,6 +225,29 @@ static VCvarB snd_bgloading_music("snd_bgloading_music", false, "Load music in t
 
 //==========================================================================
 //
+//  FAudioCodecDesc::InsertIntoList
+//
+//==========================================================================
+void FAudioCodecDesc::InsertIntoList (FAudioCodecDesc *&list, FAudioCodecDesc *codec) noexcept {
+  if (!codec) return;
+  FAudioCodecDesc *prev = nullptr;
+  FAudioCodecDesc *curr;
+  for (curr = list; curr && curr->Priority <= codec->Priority; prev = curr, curr = curr->Next) {}
+  if (prev) {
+    prev->Next = codec;
+    codec->Next = curr;
+  } else {
+    vassert(curr == list);
+    codec->Next = list;
+    list = codec;
+  }
+  //fprintf(stderr, "=== codecs ===\n"); for (const FAudioCodecDesc *c = list; c; c = c->Next) fprintf(stderr,"  %5d: %s\n", c->Priority, c->Description);
+}
+
+
+
+//==========================================================================
+//
 //  VAudioPublic::Create
 //
 //==========================================================================
