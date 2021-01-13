@@ -32,14 +32,13 @@ struct __attribute__((packed)) FRiffChunkHeader {
 };
 static_assert(sizeof(FRiffChunkHeader) == 8, "invalid size of FRiffChunkHeader");
 
-struct __attribute__((packed)) FWavFormatDesc
-{
-  vuint16   Format;
-  vuint16   Channels;
-  vuint32   Rate;
-  vuint32   BytesPerSec;
-  vuint16   BlockAlign;
-  vuint16   Bits;
+struct __attribute__((packed)) FWavFormatDesc {
+  vuint16 Format;
+  vuint16 Channels;
+  vuint32 Rate;
+  vuint32 BytesPerSec;
+  vuint16 BlockAlign;
+  vuint16 Bits;
 };
 static_assert(sizeof(FWavFormatDesc) == 2+2+4+4+2+2, "invalid size of FWavFormatDesc");
 
@@ -83,7 +82,7 @@ IMPLEMENT_AUDIO_CODEC_EX(VWavAudioCodec, "Wav", 663); // before XMP
 //  FindRiffChunk
 //
 //==========================================================================
-static int FindRiffChunk (VStream &Strm, const char *ID) {
+static int FindRiffChunk (VStream &Strm, const char ID[4]) {
   Strm.Seek(12);
   if (Strm.IsError()) return -1;
   int EndPos = Strm.TotalSize();
@@ -92,7 +91,7 @@ static int FindRiffChunk (VStream &Strm, const char *ID) {
     FRiffChunkHeader ChunkHdr;
     Strm.Serialise(&ChunkHdr, 8);
     int ChunkSize = LittleLong(ChunkHdr.Size);
-    if (!memcmp(ChunkHdr.ID, ID, 4)) return ChunkSize; // found chunk
+    if (memcmp(ChunkHdr.ID, ID, 4) == 0) return ChunkSize; // found chunk
     if (Strm.Tell()+ChunkSize > EndPos) break; // chunk goes beyound end of file
     Strm.Seek(Strm.Tell()+ChunkSize);
     if (Strm.IsError()) return -1;
@@ -121,7 +120,11 @@ void VWaveSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
   char Header[12];
   Strm.Seek(0);
   Strm.Serialise(Header, 12);
-  if (memcmp(Header, "RIFF", 4) != 0 || memcmp(Header+8, "WAVE", 4) != 0) return; // not a WAVE
+  if (memcmp(Header, "RIFF", 4) != 0 || memcmp(Header+8, "WAVE", 4) != 0) {
+    // not a WAVE
+    //GCon->Log(NAME_Debug, "WAV: not a RIFF/WAVE");
+    return;
+  }
 
   // get format settings
   int FmtSize = FindRiffChunk(Strm, "fmt ");
@@ -129,6 +132,7 @@ void VWaveSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
 
   FWavFormatDesc Fmt;
   Strm.Serialise(&Fmt, 16);
+  //GCon->Logf(NAME_Debug, "WAV: fmt=%d", (int)Fmt.Format);
   if (LittleShort(Fmt.Format) != 1) return; // not a PCM format
 
   int SampleRate = LittleLong(Fmt.Rate);
@@ -136,6 +140,9 @@ void VWaveSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
   int WavBits = LittleShort(Fmt.Bits);
   int BlockAlign = LittleShort(Fmt.BlockAlign);
   //if (WavChannels != 1) GCon->Logf("A stereo sample, taking left channel");
+
+  //GCon->Logf(NAME_Debug, "WAV: srate=%d; chans=%d; bits=%d; align=%d", (int)SampleRate, (int)WavChannels, (int)WavBits, (int)BlockAlign);
+
   if (WavChannels < 1 || WavChannels > 2) return;
   if (SampleRate < 128 || SampleRate > 96000) return;
   if (WavBits != 8 && WavBits != 16) return;
@@ -190,17 +197,21 @@ VWavAudioCodec::VWavAudioCodec (VStream *InStrm)
   : Strm(InStrm)
   , SamplesLeft(-1)
 {
+  //GCon->Log(NAME_Debug, "WAVCRT: trying...");
   int FmtSize = FindRiffChunk(*Strm, "fmt ");
   if (FmtSize < 16) return; // format not found or too small
 
   FWavFormatDesc Fmt;
   Strm->Serialise(&Fmt, 16);
+  //GCon->Logf(NAME_Debug, "WAV: fmt=%d", (int)Fmt.Format);
+  //GCon->Logf(NAME_Debug, "WAV: srate=%d; chans=%d; bits=%d; align=%d", (int)LittleLong(Fmt.Rate), (int)LittleShort(Fmt.Channels), (int)LittleShort(Fmt.Bits), (int)LittleShort(Fmt.BlockAlign));
   if (LittleShort(Fmt.Format) != 1) return; // not a PCM format
 
   SampleRate = LittleLong(Fmt.Rate);
   WavChannels = LittleShort(Fmt.Channels);
   WavBits = LittleShort(Fmt.Bits);
   BlockAlign = LittleShort(Fmt.BlockAlign);
+  //GCon->Logf(NAME_Debug, "WAV: srate=%d; chans=%d; bits=%d; align=%d", (int)SampleRate, (int)WavChannels, (int)WavBits, (int)BlockAlign);
   if (WavBits != 8 && WavBits != 16) return;
   if (WavChannels < 1 || WavChannels > 2) return;
   if (SampleRate < 128 || SampleRate > 96000) return;
@@ -285,6 +296,7 @@ void VWavAudioCodec::Restart () {
 //
 //==========================================================================
 VAudioCodec *VWavAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int signsize) {
+  //GCon->Logf(NAME_Debug, "WAVCRT: signsize=%d; <%.*s>", signsize, signsize, (const char *)sign);
   if (memcmp(sign, "RIFF", 4) != 0) return nullptr;
   char Header[12];
   if (signsize >= 12) {
@@ -293,7 +305,10 @@ VAudioCodec *VWavAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int s
     InStrm->Seek(0);
     InStrm->Serialise(Header, 12);
   }
-  if (memcmp(Header, "RIFF", 4) != 0 || memcmp(Header+8, "WAVE", 4) != 0) return nullptr;
+  if (memcmp(Header, "RIFF", 4) != 0 || memcmp(Header+8, "WAVE", 4) != 0) {
+    //GCon->Log(NAME_Debug, "WAVCRT: not a RIFF/WAVE");
+    return nullptr;
+  }
 
   // it's a WAVE file
   VWavAudioCodec *Codec = new VWavAudioCodec(InStrm);

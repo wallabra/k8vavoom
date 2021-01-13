@@ -185,13 +185,13 @@ bool VMP3AudioCodec::Init () {
   decinited = true;
 
   if (decoder.sampleRate < 64 || decoder.sampleRate > 96000*2) {
-    GCon->Logf(NAME_Warning, "cannot open flac '%s' with sample rate %u", *Strm->GetName(), (unsigned)decoder.sampleRate);
+    GCon->Logf(NAME_Warning, "cannot open mp3 '%s' with sample rate %u", *Strm->GetName(), (unsigned)decoder.sampleRate);
     Cleanup();
     return false;
   }
 
   if (decoder.channels < 1 || decoder.channels > 2) {
-    GCon->Logf(NAME_Warning, "cannot open flac '%s' with %u channels", *Strm->GetName(), (unsigned)decoder.channels);
+    GCon->Logf(NAME_Warning, "cannot open mp3 '%s' with %u channels", *Strm->GetName(), (unsigned)decoder.channels);
     Cleanup();
     return false;
   }
