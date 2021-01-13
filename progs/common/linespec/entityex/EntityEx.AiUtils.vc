@@ -671,18 +671,13 @@ final bool StepMove () {
         TVec dir = Target.Origin-Origin;
         VectorAngles(dir, out ang);
 
-        if (drDeltaX > 0.0) {
-          Velocity.x += 0.6*35.0*cos(ang.yaw);
-        } else {
-          Velocity.x += 0.6*35.0*cos(-ang.yaw);
-        }
+        // this was '>', but `CheckDropOff()` returns direction *back* from dropoff
+        Velocity.x += 0.6*35.0*cos((drDeltaX < 0.0 ? ang.yaw : -ang.yaw));
+        // this was '>', but `CheckDropOff()` returns direction *back* from dropoff
+        Velocity.y += 0.6*35.0*sin((drDeltaY < 0.0 ? ang.yaw : -ang.yaw));
 
-        if (drDeltaY > 0.0) {
-          Velocity.y += 0.6*35.0*sin(ang.yaw);
-        } else {
-          Velocity.y += 0.6*35.0*sin(-ang.yaw);
-        }
         Velocity.z = (JumpVelZ*1.1)*35.0;
+
         bOnMobj = false;
         JumpTime = 0.5;
         return true;
