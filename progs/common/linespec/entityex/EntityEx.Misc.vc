@@ -1352,7 +1352,7 @@ void DetectStaticLightSpawn () {
   Entity ltowner = self;
   if (bNoInteraction || bNoBlockmap) {
     if (!bMoveWithSector && !bStickToFloor && !bStickToCeiling) {
-      printdebug("%C:    removing object -- this is immovable static light");
+      printdebug("%C:    removing object -- this is immovable static light", self);
       ltowner = none;
     }
   }
