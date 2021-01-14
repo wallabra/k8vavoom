@@ -1604,7 +1604,6 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
     const int yl = MapBlock(bbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
     const int yh = MapBlock(bbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
 
-    //VLevel::CD_HitType lastHitType = VLevel::CD_HT_None;
     XLevel->IncrementValidCount();
     for (int bx = xl; bx <= xh; ++bx) {
       for (int by = yl; by <= yh; ++by) {
@@ -1660,84 +1659,6 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
             BestSlideFrac = fdist;
             BestSlideLine = li;
           }
-
-          /*
-          // ignore vertex hits (no need to do this, we already rejected them)
-          if (hitType == VLevel::CD_HT_Right || hitType == VLevel::CD_HT_Left) {
-            if (li->dir.y == 0.0f) {
-              #ifdef VV_DBG_VERBOSE_SLIDE
-              if (IsPlayer()) {
-                TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
-                GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: IGNORED H-VERTEX line #%d; norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
-              }
-              #endif
-              continue;
-            }
-          } else if (hitType == VLevel::CD_HT_Top || hitType == VLevel::CD_HT_Bottom) {
-            if (li->dir.x == 0.0f) {
-              #ifdef VV_DBG_VERBOSE_SLIDE
-              if (IsPlayer()) {
-                TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
-                GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: IGNORED V-VERTEX line #%d; norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
-              }
-              #endif
-              continue;
-            }
-          }
-
-          if (!BestSlideLine) {
-            #ifdef VV_DBG_VERBOSE_SLIDE
-            if (IsPlayer()) {
-              TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
-              GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: FIRST line #%d; norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
-            }
-            #endif
-            BestSlideFrac = fdist;
-            BestSlideLine = li;
-            lastHitType = hitType;
-            continue;
-          }
-
-          // the line blocks movement, see if it is closer than best so far
-          if (fdist < BestSlideFrac) {
-            if (hitType == VLevel::CD_HT_Point || lastHitType != VLevel::CD_HT_Point) {
-              #ifdef VV_DBG_VERBOSE_SLIDE
-              if (IsPlayer()) {
-                TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
-                GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: NEW line #%d; norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
-              }
-              #endif
-              BestSlideFrac = fdist;
-              BestSlideLine = li;
-              lastHitType = hitType;
-            }
-          }
-          else if (fdist == BestSlideFrac && hitType == VLevel::CD_HT_Point && lastHitType != VLevel::CD_HT_Point) {
-            // replace non-sloped line
-            TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
-            if (cvel.x != 0.0f || cvel.y != 0.0f) {
-              #ifdef VV_DBG_VERBOSE_SLIDE
-              if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: REPLACE line #%d; norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
-              #endif
-              BestSlideFrac = fdist;
-              BestSlideLine = li;
-              lastHitType = hitType;
-            }
-            #ifdef VV_DBG_VERBOSE_SLIDE
-            else {
-              if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: IGNORED REPLACE line #%d; (bestf=%g; frac=%g); norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), BestSlideFrac, fdist, li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
-            }
-            #endif
-          }
-          #ifdef VV_DBG_VERBOSE_SLIDE
-          else {
-            if (IsPlayer()) {
-              TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
-              GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: IGNORED line #%d; (bestf=%g; frac=%g); norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), BestSlideFrac, fdist, li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
-            }
-          }
-          #endif
-          */
         }
       }
     }
