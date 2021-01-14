@@ -1211,23 +1211,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     node_t *bsp = &Level->Nodes[bspnum];
     //if (bsp->visframe == currVisFrame) return; // if we're exactly on a splitting plane, this can happen
     // decide which side the view point is on
-    float dist = bsp->PointDistance(Drawer->vieworg);
-    unsigned side = (unsigned)(dist <= 0.0f);
-    // mark this node as rendered (if we're going to render it)
-    if (!onlyClip) {
-      //k8: this is done in `RenderSubsector()`
-      //    node visframe flag is used only in debug automap render
-      //!if (BSPIDX_LEAF_SUBSECTOR(bsp->children[0]|bsp->children[1])) bsp->visframe = currVisFrame;
-      // if we're exactly on a splitting plane, render backward node first (why not?)
-      if (fabsf(dist) <= 0.1f) {
-        //unsigned osd = side;
-        //float odist = dist;
-        TVec fwd = AngleVectorYaw(Drawer->viewangles.yaw);
-        dist = bsp->PointDistance(Drawer->vieworg-fwd*16);
-        side = (unsigned)(dist <= 0.0f);
-        //GCon->Logf("osd=%u; side=%u; odist=%g; dist=%g", osd, side, odist, dist);
-      }
-    }
+    unsigned side = (unsigned)bsp->PointOnSide(Drawer->vieworg);
     // recursively divide front space (towards the viewer)
     RenderBSPNode(bsp->children[side], bsp->bbox[side], clipflags, onlyClip);
     // recursively divide back space (away from the viewer)
