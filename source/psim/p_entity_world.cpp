@@ -1604,7 +1604,7 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
     const int yl = MapBlock(bbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
     const int yh = MapBlock(bbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
 
-    VLevel::CD_HitType lastHitType = VLevel::CD_HT_None;
+    //VLevel::CD_HitType lastHitType = VLevel::CD_HT_None;
     XLevel->IncrementValidCount();
     for (int bx = xl; bx <= xh; ++bx) {
       for (int by = yl; by <= yh; ++by) {
@@ -1623,16 +1623,17 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
           }
 
           VLevel::CD_HitType hitType;
-          float fdist = VLevel::SweepLinedefAABB(li, SlideOrg, SlideOrg+SlideDir, TVec(-Radius, -Radius, 0), TVec(Radius, Radius, Height), nullptr, nullptr, &hitType);
-          if (fdist < 0.0f || fdist >= 1.0f) continue;
-
+          int hitplanenum = -1;
+          TVec contactPoint;
+          const float fdist = VLevel::SweepLinedefAABB(li, SlideOrg, SlideOrg+SlideDir, TVec(-Radius, -Radius, 0), TVec(Radius, Radius, Height), nullptr, &contactPoint, &hitType, &hitplanenum);
+          // ignore cap planes
+          if (hitplanenum < 0 || hitplanenum > 1 || fdist < 0.0f || fdist >= 1.0f) continue;
 
           if (!IsBlocked) {
-            const TVec hpoint = SlideOrg+fdist*SlideDir;
+            const TVec hpoint = contactPoint; //SlideOrg+fdist*SlideDir;
             // set openrange, opentop, openbottom
             opening_t *open = SV_LineOpenings(li, hpoint, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
             open = SV_FindOpening(open, Origin.z, Origin.z+Height);
-
             if (open && open->range >= Height && // fits
                 open->top-Origin.z >= Height && // mobj is not too high
                 open->bottom-Origin.z <= MaxStepHeight) // not too big a step up
@@ -1649,7 +1650,19 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
             }
           }
 
-          // ignore vertex hits
+          if (fdist < BestSlideFrac) {
+            #ifdef VV_DBG_VERBOSE_SLIDE
+            if (IsPlayer()) {
+              TVec cvel = ClipVelocity(SlideDir, li->normal, 1.0f);
+              GCon->Logf(NAME_Debug, "%s: SlidePathTraverse: NEW line #%d; norm=(%g,%g); sldir=(%g,%g); cvel=(%g,%g); ht=%d", GetClass()->GetName(), (int)(ptrdiff_t)(li-&XLevel->Lines[0]), li->normal.x, li->normal.y, SlideDir.x, SlideDir.y, cvel.x, cvel.y, (int)hitType);
+            }
+            #endif
+            BestSlideFrac = fdist;
+            BestSlideLine = li;
+          }
+
+          /*
+          // ignore vertex hits (no need to do this, we already rejected them)
           if (hitType == VLevel::CD_HT_Right || hitType == VLevel::CD_HT_Left) {
             if (li->dir.y == 0.0f) {
               #ifdef VV_DBG_VERBOSE_SLIDE
@@ -1686,7 +1699,7 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
           }
 
           // the line blocks movement, see if it is closer than best so far
-          if (fdist < BestSlideFrac /*&& hitType == VLevel::CD_HT_Point*/) {
+          if (fdist < BestSlideFrac) {
             if (hitType == VLevel::CD_HT_Point || lastHitType != VLevel::CD_HT_Point) {
               #ifdef VV_DBG_VERBOSE_SLIDE
               if (IsPlayer()) {
@@ -1724,6 +1737,7 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
             }
           }
           #endif
+          */
         }
       }
     }
