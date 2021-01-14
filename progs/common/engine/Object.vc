@@ -765,13 +765,13 @@ static final float CD_SweepLineAABB (TVec lineA, TVec lineB, TVec vstart, TVec v
 // the moving thing is AABB
 // returns contact point in `contactPoint`
 // actually, `contactPoint` has little sense for non-point hits, and is somewhat arbitrary
-// `side` indicates which line side we hit: front (0), back(1), or caps; can be -1
+// `hitplanenum` indicates which line side we hit: front (0), back(1), or caps; can be -1
 static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec vstart, TVec vend, TVec bmin, TVec bmax,
                                         optional out TPlane hitPlane, optional out TVec contactPoint,
-                                        optional out CD_HitType hitType, optional out int side)
+                                        optional out CD_HitType hitType, optional out int hitplanenum)
 {
   hitType = CD_HitType.CD_HT_None;
-  side = -1;
+  hitplanenum = -1;
 
   float ifrac = -1.0f;
   float ofrac = +1.0f;
@@ -784,6 +784,7 @@ static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec
   foreach (auto pidx; 0..linePlanes.count) {
     TPlane *plane = &linePlanes.planes[pidx];
     // box
+    // line plane normal z is always zero, so don't bother checking it
     TVec offset = vector((plane.normal.x < 0 ? bmax.x : bmin.x), (plane.normal.y < 0 ? bmax.y : bmin.y), (plane.normal.z < 0 ? bmax.z : bmin.z));
     // adjust the plane distance apropriately for mins/maxs
     float dist = plane.dist-DotProduct(offset, plane.normal);
@@ -826,7 +827,7 @@ static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec
   }
 
   if (ifrac > -1 && ifrac < ofrac) {
-    side = phit;
+    hitplanenum = phit;
     //if (ifrac >= 1.0f) return ifrac;
     // might be exact hit
     ifrac = fclamp(ifrac, 0.0f, 1.0f);

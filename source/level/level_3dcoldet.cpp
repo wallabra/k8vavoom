@@ -36,14 +36,16 @@
 //  returns contact point in `contactPoint`
 //  actually, `contactPoint` has little sense for non-point hits, and is
 //  somewhat arbitrary
+//  `hitplanenum` indicates which line side we hit:
+//  front (0), back(1), or caps; can be -1
 //
 //==========================================================================
 float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec bmin, TVec bmax,
-                                TPlane *hitPlane, TVec *contactPoint, CD_HitType *hitType)
+                                TPlane *hitPlane, TVec *contactPoint, CD_HitType *hitType, int *hitplanenum)
 {
-  if (!ld) return -1.0f;
-
   if (hitType) *hitType = CD_HT_None;
+  if (hitplanenum) *hitplanenum = -1;
+  if (!ld) return -1.0f;
 
   float ifrac = -1.0f;
   float ofrac = +1.0f;
@@ -100,6 +102,7 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
   }
 
   if (ifrac > -1.0f && ifrac < ofrac) {
+    if (hitplanenum) *hitplanenum = phit;
     ifrac = clampval(ifrac, 0.0f, 1.0f); // just in case
     if (/*ifrac == 0 ||*/ ifrac == 1.0f) return ifrac; // just in case
     if (hitPlane || contactPoint || hitType) {
@@ -344,13 +347,18 @@ void VLevel::CalcLineCDPlanes (line_t *line) {
 
 //native static final float CD_SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec bmin, TVec bmax,
 //                                               optional out TPlane hitPlane, optional out TVec contactPoint,
-//                                               optional out CD_HitType hitType);
+//                                               optional out CD_HitType hitType, optional out int hitplanenum);
 IMPLEMENT_FUNCTION(VLevel, CD_SweepLinedefAABB) {
   line_t *ld;
   TVec vstart, vend, bmin, bmax;
   VOptParamPtr<TPlane> hitPlane;
   VOptParamPtr<TVec> contactPoint;
   VOptParamPtr<CD_HitType> hitType;
-  vobjGetParamSelf(ld, vstart, vend, bmin, bmax, hitPlane, contactPoint, hitType);
-  RET_FLOAT(SweepLinedefAABB(ld, vstart, vend, bmin, bmax, hitPlane, contactPoint, hitType));
+  VOptParamPtr<vint32> hitplanenum;
+  vobjGetParamSelf(ld, vstart, vend, bmin, bmax, hitPlane, contactPoint, hitType, hitplanenum);
+  if (!hitPlane.specified) hitPlane = nullptr;
+  if (!contactPoint.specified) contactPoint = nullptr;
+  if (!hitType.specified) hitType = nullptr;
+  if (!hitplanenum.specified) hitplanenum = nullptr;
+  RET_FLOAT(SweepLinedefAABB(ld, vstart, vend, bmin, bmax, hitPlane, contactPoint, hitType, hitplanenum));
 }
