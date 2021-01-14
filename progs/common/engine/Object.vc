@@ -733,7 +733,9 @@ static final void CD_BuildLinePlanes (out CD_LinePlanes lpl, TVec a, TVec b) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // keep 1/8 unit away to avoid various numeric issues
-const float CD_CLIP_EPSILON = 0.125f;
+//const float CD_CLIP_EPSILON = 1.0f/8.0f;
+// keep 1/16 unit away to avoid various numeric issues
+const float CD_CLIP_EPSILON = 1.0f/16.0f;
 
 enum CD_HitType {
   CD_HT_None,
@@ -779,26 +781,25 @@ static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec
   bool startsOut = false;
   //bool endsOut = false;
   int phit = -1;
-  bool lastContactWasPoint = false;
 
   foreach (auto pidx; 0..linePlanes.count) {
     TPlane *plane = &linePlanes.planes[pidx];
     // box
     // line plane normal z is always zero, so don't bother checking it
-    TVec offset = vector((plane.normal.x < 0 ? bmax.x : bmin.x), (plane.normal.y < 0 ? bmax.y : bmin.y), (plane.normal.z < 0 ? bmax.z : bmin.z));
+    TVec offset = vector((plane.normal.x < 0.0f ? bmax.x : bmin.x), (plane.normal.y < 0.0f ? bmax.y : bmin.y), /*(plane.normal.z < 0.0f ? bmax.z : bmin.z)*/bmin.z);
     // adjust the plane distance apropriately for mins/maxs
     float dist = plane.dist-DotProduct(offset, plane.normal);
     float idist = DotProduct(vstart, plane.normal)-dist;
     float odist = DotProduct(vend, plane.normal)-dist;
 
-    if (idist <= 0 && odist <= 0) continue; // doesn't cross this plane, don't bother
+    if (idist <= 0.0f && odist <= 0.0f) continue; // doesn't cross this plane, don't bother
 
-    if (idist > 0) {
+    if (idist > 0.0f) {
       startsOut = true;
       // if completely in front of face, no intersection with the entire brush
       if (odist >= CD_CLIP_EPSILON || odist >= idist) return 1.0f;
     }
-    //if (odist > 0) endsOut = true;
+    //if (odist > 0.0f) endsOut = true;
 
     // crosses plane
     if (idist > odist) {
@@ -806,11 +807,6 @@ static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec
       float fr = fmax(0.0f, (idist-CD_CLIP_EPSILON)/(idist-odist));
       if (fr > ifrac) {
         ifrac = fr;
-        phit = pidx;
-        lastContactWasPoint = (plane.normal.x && plane.normal.y);
-      } else if (!lastContactWasPoint && fr == ifrac && plane.normal.x && plane.normal.y) {
-        // prefer point contacts (rare case, but why not?)
-        lastContactWasPoint = true;
         phit = pidx;
       }
     } else {
@@ -826,39 +822,69 @@ static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec
     return -1.0f;
   }
 
-  if (ifrac > -1 && ifrac < ofrac) {
-    hitplanenum = phit;
-    //if (ifrac >= 1.0f) return ifrac;
+  if (ifrac > -1.0f && ifrac < ofrac) {
     // might be exact hit
     ifrac = fclamp(ifrac, 0.0f, 1.0f);
-    //if (/*ifrac == 0 ||*/ ifrac == 1) return ifrac; // just in case
+    if (/*ifrac == 0.0f ||*/ ifrac == 1.0f) return ifrac; // just in case
+    hitplanenum = phit;
     hitPlane = linePlanes.planes[phit];
     //print("ifrac=%s; hp(%s): %s:%s", ifrac, phit, hitPlane.normal, hitPlane.dist);
     // check what kind of hit this is
-    if (!hitPlane.normal.y) {
+    if (phit > 1 && !hitPlane.normal.y) {
       // left or right side of the box
-      hitType = (hitPlane.normal.x < 0 ? CD_HitType.CD_HT_Right : CD_HitType.CD_HT_Left);
+      hitType = (hitPlane.normal.x < 0.0f ? CD_HitType.CD_HT_Right : CD_HitType.CD_HT_Left);
       contactPoint =
         linePlanes.lineA.x < linePlanes.lineB.x ?
           (hitType == CD_HitType.CD_HT_Right ? linePlanes.lineA : linePlanes.lineB) :
           (hitType == CD_HitType.CD_HT_Right ? linePlanes.lineB : linePlanes.lineA);
-    } else if (!hitPlane.normal.x) {
+      contactPoint -= (vend-vstart).normalise*CD_CLIP_EPSILON;
+    } else if (phit > 1 && !hitPlane.normal.x) {
       // top or down side of the box
-      hitType = (hitPlane.normal.y < 0 ? CD_HitType.CD_HT_Bottom : CD_HitType.CD_HT_Top);
+      hitType = (hitPlane.normal.y < 0.0f ? CD_HitType.CD_HT_Bottom : CD_HitType.CD_HT_Top);
       contactPoint =
         linePlanes.lineA.y < linePlanes.lineB.y ?
           (hitType == CD_HitType.CD_HT_Bottom ? linePlanes.lineA : linePlanes.lineB) :
           (hitType == CD_HitType.CD_HT_Bottom ? linePlanes.lineB : linePlanes.lineA);
+      contactPoint -= (vend-vstart).normalise*CD_CLIP_EPSILON;
     } else {
       // point hit
       hitType = CD_HitType.CD_HT_Point;
-      contactPoint = vector((hitPlane.normal.x < 0 ? bmax.x : bmin.x), (hitPlane.normal.y < 0 ? bmax.y : bmin.y), bmin.z);
-      contactPoint += vstart+(vend-vstart)*ifrac;
+      if (linePlanes.count == 4 && linePlanes.lineA.xy == linePlanes.lineB.xy) {
+        // point
+        contactPoint = linePlanes.lineA-(vend-vstart).normalise*CD_CLIP_EPSILON;
+      } else {
+        bool fixX = false, fixY = false;
+        if (!hitPlane.normal.x) {
+          // horizontal line
+          contactPoint = vector(0.0f, (hitPlane.normal.y < 0.0f ? bmax.y : hitPlane.normal.y > 0.0f ? bmin.y : 0.0f), bmin.z);
+          fixX = true;
+        } else if (!hitPlane.normal.y) {
+          // vertical line
+          contactPoint = vector((hitPlane.normal.x < 0.0f ? bmax.x : hitPlane.normal.x > 0.0f ? bmin.x : 0.0f), 0.0f, bmin.z);
+          fixY = true;
+        } else {
+          contactPoint = vector((hitPlane.normal.x < 0.0f ? bmax.x : bmin.x), (hitPlane.normal.y < 0.0f ? bmax.y : bmin.y), bmin.z);
+        }
+        contactPoint += vstart+(vend-vstart)*ifrac;
+        if (fixX) {
+          if (linePlanes.lineA.x < linePlanes.lineB.x) {
+            contactPoint.x = fclamp(contactPoint.x, linePlanes.lineA.x, linePlanes.lineB.x);
+          } else {
+            contactPoint.x = fclamp(contactPoint.x, linePlanes.lineB.x, linePlanes.lineA.x);
+          }
+        } else if (fixY) {
+          if (linePlanes.lineA.y < linePlanes.lineB.y) {
+            contactPoint.y = fclamp(contactPoint.y, linePlanes.lineA.y, linePlanes.lineB.y);
+          } else {
+            contactPoint.y = fclamp(contactPoint.y, linePlanes.lineB.y, linePlanes.lineA.y);
+          }
+        }
+      }
     }
     return ifrac;
   }
 
-  return 1.0;
+  return 1.0f;
 }
 #endif
 

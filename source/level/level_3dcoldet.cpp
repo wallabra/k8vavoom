@@ -25,6 +25,11 @@
 //**************************************************************************
 #include "../gamedefs.h"
 
+// keep 1/8 unit away to avoid various numeric issues
+//#define CD_CLIP_EPSILON  (0.125f)
+// keep 1/16 unit away to avoid various numeric issues
+#define CD_CLIP_EPSILON  (0.0625f)
+
 
 //==========================================================================
 //
@@ -53,27 +58,26 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
   bool startsOut = false;
   //bool endsOut = false;
   int phit = -1;
-  bool lastContactWasPoint = false;
   const unsigned pcount = (unsigned)ld->cdPlanesCount;
 
   for (unsigned pidx = 0; pidx < pcount; ++pidx) {
     const TPlane *plane = &ld->cdPlanesArray[pidx];
     // box
     // line plane normal z is always zero, so don't bother checking it
-    const TVec offset = TVec((plane->normal.x < 0 ? bmax.x : bmin.x), (plane->normal.y < 0 ? bmax.y : bmin.y), /*(plane->normal.z < 0 ? bmax.z : bmin.z)*/bmin.z);
+    const TVec offset = TVec((plane->normal.x < 0.0f ? bmax.x : bmin.x), (plane->normal.y < 0.0f ? bmax.y : bmin.y), /*(plane->normal.z < 0.0f ? bmax.z : bmin.z)*/bmin.z);
     // adjust the plane distance apropriately for mins/maxs
     const float dist = plane->dist-DotProduct(offset, plane->normal);
     const float idist = DotProduct(vstart, plane->normal)-dist;
     const float odist = DotProduct(vend, plane->normal)-dist;
 
-    if (idist <= 0 && odist <= 0) continue; // doesn't cross this plane, don't bother
+    if (idist <= 0.0f && odist <= 0.0f) continue; // doesn't cross this plane, don't bother
 
-    if (idist > 0) {
+    if (idist > 0.0f) {
       startsOut = true;
       // if completely in front of face, no intersection with the entire brush
       if (odist >= CD_CLIP_EPSILON || odist >= idist) return 1.0f;
     }
-    //if (odist > 0) endsOut = true;
+    //if (odist > 0.0f) endsOut = true;
 
     // crosses plane
     if (idist > odist) {
@@ -81,11 +85,6 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
       const float fr = fmax(0.0f, (idist-CD_CLIP_EPSILON)/(idist-odist));
       if (fr > ifrac) {
         ifrac = fr;
-        phit = (int)pidx;
-        lastContactWasPoint = (plane->normal.x && plane->normal.y);
-      } else if (!lastContactWasPoint && fr == ifrac && plane->normal.x && plane->normal.y) {
-        // prefer point contacts (rare case, but why not?)
-        lastContactWasPoint = true;
         phit = (int)pidx;
       }
     } else {
@@ -102,9 +101,10 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
   }
 
   if (ifrac > -1.0f && ifrac < ofrac) {
-    if (hitplanenum) *hitplanenum = phit;
+    // might be exact hit
     ifrac = clampval(ifrac, 0.0f, 1.0f); // just in case
-    if (/*ifrac == 0 ||*/ ifrac == 1.0f) return ifrac; // just in case
+    if (/*ifrac == 0.0f ||*/ ifrac == 1.0f) return ifrac; // just in case
+    if (hitplanenum) *hitplanenum = phit;
     if (hitPlane || contactPoint || hitType) {
       vassert(phit >= 0);
       const TPlane *hpl = &ld->cdPlanesArray[(unsigned)phit];
@@ -113,30 +113,60 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
         CD_HitType httmp = CD_HT_None;
         if (!hitType) hitType = &httmp;
         // check what kind of hit this is
-        if (!hpl->normal.y) {
+        if (phit > 1 && !hpl->normal.y) {
           // left or right side of the box
-          *hitType = (hpl->normal.x < 0 ? CD_HT_Right : CD_HT_Left);
+          *hitType = (hpl->normal.x < 0.0f ? CD_HT_Right : CD_HT_Left);
           if (contactPoint) {
             *contactPoint =
-              ld->v1->x < ld->v2->x ?
+              (ld->v1->x < ld->v2->x ?
                 (*hitType == CD_HT_Right ? *ld->v1 : *ld->v2) :
-                (*hitType == CD_HT_Right ? *ld->v2 : *ld->v1);
+                (*hitType == CD_HT_Right ? *ld->v2 : *ld->v1))-(vend-vstart).normalised()*CD_CLIP_EPSILON;
           }
-        } else if (!hpl->normal.x) {
+        } else if (phit > 1 && !hpl->normal.x) {
           // top or down side of the box
-          *hitType = (hpl->normal.y < 0 ? CD_HT_Bottom : CD_HT_Top);
+          *hitType = (hpl->normal.y < 0.0f ? CD_HT_Bottom : CD_HT_Top);
           if (contactPoint) {
             *contactPoint =
-              ld->v1->y < ld->v2->y ?
+              (ld->v1->y < ld->v2->y ?
                 (*hitType == CD_HT_Bottom ? *ld->v1 : *ld->v2) :
-                (*hitType == CD_HT_Bottom ? *ld->v2 : *ld->v1);
+                (*hitType == CD_HT_Bottom ? *ld->v2 : *ld->v1))-(vend-vstart).normalised()*CD_CLIP_EPSILON;
           }
         } else {
           // point hit
           *hitType = CD_HT_Point;
           if (contactPoint) {
-            *contactPoint = TVec((hpl->normal.x < 0 ? bmax.x : bmin.x), (hpl->normal.y < 0 ? bmax.y : bmin.y), bmin.z);
-            *contactPoint += vstart+(vend-vstart)*ifrac;
+            //*contactPoint = TVec((hpl->normal.x < 0.0f ? bmax.x : hpl->normal.x > 0.0f ? bmin.x : 0.0f), (hpl->normal.y < 0.0f ? bmax.y : hpl->normal.y > 0.0f ? bmin.y : 0.0f), bmin.z);
+            if (pcount == 4 && ld->v1->x == ld->v2->x && ld->v1->y == ld->v2->y) {
+              // point
+              *contactPoint = (*ld->v1)-(vend-vstart).normalised()*CD_CLIP_EPSILON;
+            } else {
+              bool fixX = false, fixY = false;
+              if (!hpl->normal.x) {
+                // horizontal line
+                *contactPoint = TVec(0.0f, (hpl->normal.y < 0.0f ? bmax.y : hpl->normal.y > 0.0f ? bmin.y : 0.0f), bmin.z);
+                fixX = true;
+              } else if (!hpl->normal.y) {
+                // vertical line
+                *contactPoint = TVec((hpl->normal.x < 0.0f ? bmax.x : hpl->normal.x > 0.0f ? bmin.x : 0.0f), 0.0f, bmin.z);
+                fixY = true;
+              } else {
+                *contactPoint = TVec((hpl->normal.x < 0.0f ? bmax.x : bmin.x), (hpl->normal.y < 0.0f ? bmax.y : bmin.y), bmin.z);
+              }
+              *contactPoint += vstart+(vend-vstart)*ifrac;
+              if (fixX) {
+                if (ld->v1->x < ld->v2->x) {
+                  contactPoint->x = clampval(contactPoint->x, ld->v1->x, ld->v2->x);
+                } else {
+                  contactPoint->x = clampval(contactPoint->x, ld->v2->x, ld->v1->x);
+                }
+              } else if (fixY) {
+                if (ld->v1->y < ld->v2->y) {
+                  contactPoint->y = clampval(contactPoint->y, ld->v1->y, ld->v2->y);
+                } else {
+                  contactPoint->y = clampval(contactPoint->y, ld->v2->y, ld->v1->y);
+                }
+              }
+            }
           }
         }
       }
