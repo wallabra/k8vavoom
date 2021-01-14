@@ -2780,31 +2780,39 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           pdef->Field2->SetStr(DefObj, sc->String);
           break;
         case PROP_PowerupColor:
-               if (sc->Check("InverseMap")) pdef->Field->SetInt(DefObj, INVERSECOLOR);
-          else if (sc->Check("GoldMap")) pdef->Field->SetInt(DefObj, GOLDCOLOR);
-          else if (sc->Check("RedMap")) pdef->Field->SetInt(DefObj, REDCOLOR);
-          else if (sc->Check("BerserkRedMap")) pdef->Field->SetInt(DefObj, BEREDCOLOR);
-          else if (sc->Check("GreenMap")) pdef->Field->SetInt(DefObj, GREENCOLOR);
-          else if (sc->Check("MonoMap")) pdef->Field->SetInt(DefObj, MONOCOLOR);
-          else if (sc->Check("MonochromeMap")) pdef->Field->SetInt(DefObj, MONOCOLOR);
-          else if (sc->Check("BlueMap")) pdef->Field->SetInt(DefObj, BLUECOLOR);
-          else {
-            vuint32 Col = sc->ExpectColor();
-            int r = (Col>>16)&255;
-            int g = (Col>>8)&255;
-            int b = Col&255;
-            int a = 88; // default alpha, around 0.(3)
-            sc->Check(",");
-            // alpha may be missing
-            if (!sc->Crossed) {
-              sc->ExpectFloat();
-                   if (sc->Float <= 0) a = 1;
-              else if (sc->Float >= 1) a = 255;
-              else a = clampToByte((int)(sc->Float*255));
-              if (a > 250) a = 250;
-              if (a < 1) a = 1;
+          {
+            bool fuckfloat = true;
+                 if (sc->Check("InverseMap")) pdef->Field->SetInt(DefObj, INVERSECOLOR);
+            else if (sc->Check("GoldMap")) pdef->Field->SetInt(DefObj, GOLDCOLOR);
+            else if (sc->Check("RedMap")) pdef->Field->SetInt(DefObj, REDCOLOR);
+            else if (sc->Check("BerserkRedMap")) pdef->Field->SetInt(DefObj, BEREDCOLOR);
+            else if (sc->Check("GreenMap")) pdef->Field->SetInt(DefObj, GREENCOLOR);
+            else if (sc->Check("MonoMap")) pdef->Field->SetInt(DefObj, MONOCOLOR);
+            else if (sc->Check("MonochromeMap")) pdef->Field->SetInt(DefObj, MONOCOLOR);
+            else if (sc->Check("BlueMap")) pdef->Field->SetInt(DefObj, BLUECOLOR);
+            else {
+              fuckfloat = false;
+              vuint32 Col = sc->ExpectColor();
+              int r = (Col>>16)&255;
+              int g = (Col>>8)&255;
+              int b = Col&255;
+              int a = 88; // default alpha, around 0.(3)
+              sc->Check(",");
+              // alpha may be missing
+              if (!sc->Crossed) {
+                sc->ExpectFloat();
+                     if (sc->Float <= 0) a = 1;
+                else if (sc->Float >= 1) a = 255;
+                else a = clampToByte((int)(sc->Float*255));
+                if (a > 250) a = 250;
+                if (a < 1) a = 1;
+              }
+              pdef->Field->SetInt(DefObj, (r<<16)|(g<<8)|b|(a<<24));
             }
-            pdef->Field->SetInt(DefObj, (r<<16)|(g<<8)|b|(a<<24));
+            if (fuckfloat) {
+              sc->Check(",");
+              if (!sc->Crossed) sc->ExpectFloat();
+            }
           }
           break;
         case PROP_ColorRange:
