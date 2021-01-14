@@ -64,6 +64,7 @@ states
 Spawn:
   SORC A 3
   SORC A 2 A_SorcSpinBalls
+Idle:
   SORC A 10 A_Look
   Wait
 See:
