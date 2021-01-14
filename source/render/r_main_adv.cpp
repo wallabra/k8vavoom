@@ -34,7 +34,8 @@ static VCvarB r_advlight_sort_static("r_advlight_sort_static", true, "Sort visib
 static VCvarB r_advlight_sort_dynamic("r_advlight_sort_dynamic", true, "Sort visible dynamic lights, so nearby lights will be rendered first?", CVAR_Archive|CVAR_PreInit);
 // no need to do this, because light rendering will do it again anyway
 // yet it seems to be slightly faster for complex maps with alot of static lights
-static VCvarB r_advlight_flood_check("r_advlight_flood_check", true, "Check static light visibility with floodfill before trying to render it?", CVAR_Archive|CVAR_PreInit);
+// 'cmon, `RenderLightShadows()` builds lightvis, and checks this
+static VCvarB r_advlight_flood_check("r_advlight_flood_check", false, "Check static light visibility with floodfill before trying to render it?", CVAR_Archive|CVAR_PreInit);
 
 static VCvarB dbg_adv_show_light_count("dbg_adv_show_light_count", false, "Show number of rendered lights?", CVAR_PreInit);
 static VCvarB dbg_adv_show_light_seg_info("dbg_adv_show_light_seg_info", false, "Show totals of rendered light/shadow segments?", CVAR_PreInit);
@@ -193,6 +194,7 @@ void VRenderLevelShadowVolume::RenderSceneStaticLights (const refdef_t *RD, cons
     // drop lights inside sectors without height
     const sector_t *sec = Level->Subsectors[stlight->leafnum].sector;
     if (!CheckValidLightPosRough(lorg, sec)) continue;
+    // 'cmon, `RenderLightShadows()` builds lightvis, and checks this
     if (checkLightVis && !CheckBSPVisibilityBox(lorg, stlight->radius, &Level->Subsectors[stlight->leafnum])) continue;
 
     StLightInfo &sli = visstatlights[visstatlightCount++];
