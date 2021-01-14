@@ -593,53 +593,54 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
     // process model parts
     const char *mdx = (N->FindChild("md2") ? "md2" : "md3");
     for (VXmlNode *SN = N->FindChild(mdx); SN; SN = SN->FindNext()) {
-      VScriptSubModel &Md2 = SMdl.SubModels.Alloc();
+      VScriptSubModel *Md2 = &SMdl.SubModels.Alloc();
+      const int Md2Index = SMdl.SubModels.length()-1;
 
       bool hasMeshIndex = false;
-      Md2.MeshIndex = 0;
+      Md2->MeshIndex = 0;
       if (SN->HasAttribute("mesh_index")) {
         hasMeshIndex = true;
-        Md2.MeshIndex = VStr::atoi(*SN->GetAttribute("mesh_index"));
+        Md2->MeshIndex = VStr::atoi(*SN->GetAttribute("mesh_index"));
       }
 
-      Md2.Model = Mod_FindMeshModel(Mdl->Name, SN->GetAttribute("file").ToLower().FixFileSlashes(), Md2.MeshIndex);
+      Md2->Model = Mod_FindMeshModel(Mdl->Name, SN->GetAttribute("file").ToLower().FixFileSlashes(), Md2->MeshIndex);
 
       // version
-      Md2.Version = ParseIntWithDefault(SN, "version", -1);
+      Md2->Version = ParseIntWithDefault(SN, "version", -1);
 
       // position model
-      Md2.PositionModel = nullptr;
+      Md2->PositionModel = nullptr;
       if (SN->HasAttribute("position_file")) {
-        Md2.PositionModel = Mod_FindMeshModel(Mdl->Name, SN->GetAttribute("position_file").ToLower().FixFileSlashes(), Md2.MeshIndex);
+        Md2->PositionModel = Mod_FindMeshModel(Mdl->Name, SN->GetAttribute("position_file").ToLower().FixFileSlashes(), Md2->MeshIndex);
       }
 
       // skin animation
-      Md2.SkinAnimSpeed = 0;
-      Md2.SkinAnimRange = 0;
+      Md2->SkinAnimSpeed = 0;
+      Md2->SkinAnimRange = 0;
       if (SN->HasAttribute("skin_anim_speed")) {
         if (!SN->HasAttribute("skin_anim_range")) Sys_Error("'skin_anim_speed' requires 'skin_anim_range'");
-        Md2.SkinAnimSpeed = ParseIntWithDefault(SN, "skin_anim_speed", 1);
-        Md2.SkinAnimRange = ParseIntWithDefault(SN, "skin_anim_range", 1);
+        Md2->SkinAnimSpeed = ParseIntWithDefault(SN, "skin_anim_speed", 1);
+        Md2->SkinAnimRange = ParseIntWithDefault(SN, "skin_anim_range", 1);
       }
 
       AliasModelTrans BaseTransform;
       ParseTransform(SN, BaseTransform);
 
       // fullbright flag
-      Md2.FullBright = ParseBool(SN, "fullbright", false);
+      Md2->FullBright = ParseBool(SN, "fullbright", false);
       // no shadow flag
-      Md2.NoShadow = ParseBool(SN, "noshadow", false);
+      Md2->NoShadow = ParseBool(SN, "noshadow", false);
       // force depth test flag (for things like monsters with alpha transaparency)
-      Md2.UseDepth = ParseBool(SN, "usedepth", false);
+      Md2->UseDepth = ParseBool(SN, "usedepth", false);
 
       // allow transparency in skin files
       // for skins that are transparent in solid models (Alpha = 1.0f)
-      Md2.AllowTransparency = ParseBool(SN, "allowtransparency", false);
+      Md2->AllowTransparency = ParseBool(SN, "allowtransparency", false);
 
       // process frames
       int curframeindex = 0;
       for (VXmlNode *FN = SN->FindChild("frame"); FN; FN = FN->FindNext(), ++curframeindex) {
-        VScriptSubModel::VFrame &F = Md2.Frames.Alloc();
+        VScriptSubModel::VFrame &F = Md2->Frames.Alloc();
         //FIXME: require index?
         F.Index = ParseIntWithDefault(FN, "index", curframeindex);
 
@@ -662,9 +663,9 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
       for (VXmlNode *SkN = SN->FindChild("skin"); SkN; SkN = SkN->FindNext()) {
         VStr sfl = SkN->GetAttribute("file").ToLower().FixFileSlashes();
         if (sfl.length()) {
-          if (sfl.indexOf('/') < 0) sfl = Md2.Model->Name.ExtractFilePath()+sfl;
+          if (sfl.indexOf('/') < 0) sfl = Md2->Model->Name.ExtractFilePath()+sfl;
           if (mdl_verbose_loading > 2) GCon->Logf("model '%s': skin file '%s'", *SMdl.Name, *sfl);
-          VMeshModel::SkinInfo &si = Md2.Skins.alloc();
+          VMeshModel::SkinInfo &si = Md2->Skins.alloc();
           si.fileName = *sfl;
           si.textureId = -1;
           si.shade = -1;
@@ -678,7 +679,7 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
       // if this is MD3 without mesh index, create additional models for all meshes
       if (!hasMeshIndex && mdx[2] == '3') {
         // load model and get number of meshes
-        VStream *md3strm = FL_OpenFileRead(Md2.Model->Name);
+        VStream *md3strm = FL_OpenFileRead(Md2->Model->Name);
         // allow missing models
         if (md3strm) {
           int fsidx = SMdl.SubModels.length()-1;
@@ -691,10 +692,11 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
             md3strm->Serialise(&n, 4);
             n = LittleLong(n);
             if (n > 1 && n < 64) {
-              GCon->Logf(NAME_Init, "model '%s' got automatic submodel%s for %u more mesh%s", *Md2.Model->Name, (n > 2 ? "s" : ""), n-1, (n > 2 ? "es" : ""));
+              GCon->Logf(NAME_Init, "model '%s' got automatic submodel%s for %u more mesh%s", *Md2->Model->Name, (n > 2 ? "s" : ""), n-1, (n > 2 ? "es" : ""));
               for (unsigned f = 1; f < n; ++f) {
                 VScriptSubModel &newmdl = SMdl.SubModels.Alloc();
-                newmdl.copyFrom(Md2);
+                Md2 = &SMdl.SubModels[Md2Index]; // this pointer may change, so refresh it
+                newmdl.copyFrom(*Md2);
                 newmdl.MeshIndex = f;
                 newmdl.Model = Mod_FindMeshModel(Mdl->Name, newmdl.Model->Name, newmdl.MeshIndex);
                 if (newmdl.PositionModel) {
@@ -702,7 +704,7 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
                 }
               }
             } else {
-              if (n != 1) GCon->Logf(NAME_Warning, "model '%s' has invalid number of meshes (%u)", *Md2.Model->Name, n);
+              if (n != 1) GCon->Logf(NAME_Warning, "model '%s' has invalid number of meshes (%u)", *Md2->Model->Name, n);
             }
           }
           delete md3strm;
@@ -712,7 +714,7 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
             int subidx = ParseIntWithDefault(SkN, "submodel_index", -1);
             VStr sfl = SkN->GetAttribute("file").ToLower().FixFileSlashes();
             if (sfl.length() && subidx >= 0 && subidx < 1024) {
-              if (sfl.indexOf('/') < 0) sfl = Md2.Model->Name.ExtractFilePath()+sfl;
+              if (sfl.indexOf('/') < 0) sfl = Md2->Model->Name.ExtractFilePath()+sfl;
               if (mdl_verbose_loading > 2) GCon->Logf("model '%s': skin file '%s'", *SMdl.Name, *sfl);
               while (SubSkins.length() <= subidx) SubSkins.alloc();
               VMeshModel::SkinInfo &si = SubSkins[subidx];
