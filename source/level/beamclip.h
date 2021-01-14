@@ -40,6 +40,9 @@
 #ifdef VAVOOM_CLIPPER_USE_REAL_ANGLES
 # define PointToClipAngleZeroOrigin  PointToRealAngleZeroOrigin
 # define VV_CLIPPER_FULL_CHECK
+# ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
+#  undef VAVOOM_CLIPPER_USE_PSEUDO_INT
+# endif
 #else
 # define PointToClipAngleZeroOrigin  PointToPseudoAngleZeroOrigin
 /*# define ClipperPseudoResolution  (0x4000000u)*/
@@ -54,9 +57,11 @@
 #endif
 
 // sanitise defines
+/*
 #if defined(VAVOOM_CLIPPER_USE_PSEUDO_INT) && !defined(VAVOOM_CLIPPER_USE_REAL_ANGLES)
 # undef VAVOOM_CLIPPER_USE_PSEUDO_INT
 #endif
+*/
 
 
 class VViewClipper {
@@ -68,7 +73,7 @@ public:
 #endif
 
 #ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
-  static_assert(sizeof(unsigned int) == 4, "Oops! `unsigned int` should be at least 32 bits!");
+  static_assert(sizeof(unsigned int) >= 4, "Oops! `unsigned int` should be at least 32 bits!");
   typedef unsigned int FromTo;
   typedef double Angle2FixIn;
 #else
@@ -125,14 +130,15 @@ protected:
   // k8: i found this code in GZDoom, and changed it a little, to make it return [0..4]
 #ifndef VAVOOM_CLIPPER_USE_REAL_ANGLES
   static inline FromTo PointToPseudoAngleZeroOrigin (const Angle2FixIn dx, const Angle2FixIn dy) noexcept {
-    if (dx == 0 && dy == 0) return 0+1;
     #ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
+      if (dx == 0.0 && dy == 0.0) return 0.0+1.0;
       double res = dy/(fabs(dx)+fabs(dy));
-      res = (dx < 0 ? 2-res : res)+1;
-      return (FromTo)(res*(ClipperPseudoResolution-1u));
+      res = (dx < 0 ? 2.0-res : res)+1.0;
+      return (FromTo)(res*ClipperPseudoResolution);
     #else
+      if (dx == 0.0f && dy == 0.0f) return 0.0f+1.0f;
       const VFloat res = dy/(fabsf(dx)+fabsf(dy));
-      return (dx < 0 ? 2-res : res)+1;
+      return (dx < 0.0f ? 2.0f-res : res)+1.0f;
     #endif
   }
 #endif

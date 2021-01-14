@@ -33,7 +33,9 @@
 #else
 # ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
 #  define MIN_ANGLE  (0)
-#  define MAX_ANGLE  (ClipperPseudoResolution-1)
+//#  define MAX_ANGLE  (4u*ClipperPseudoResolution)
+#  define MAX_ANGLE  (0xffffffffu)
+#  define VAVOOM_CLIPPER_NO_ANGLE_CLAMP
 # else
 #  define MIN_ANGLE  ((VFloat)0)
 #  define MAX_ANGLE  ((VFloat)4)
@@ -45,8 +47,10 @@
 
 #ifdef XXX_CLIPPER_DUMP_ADDED_RANGES
 # define RNGLOG(...)  if (dbg_clip_dump_added_ranges) GCon->Logf(__VA_ARGS__)
+# define SBCLOG(...)  if (dbg_clip_dump_sub_checks) GCon->Logf((__VA_ARGS__)
 #else
 # define RNGLOG(...)  (void)0
+# define SBCLOG(...)  (void)0
 #endif
 
 
@@ -777,7 +781,9 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
       ClipTail->Prev = ClipHead;
       ClipTail->Next = nullptr;
     }
+    #ifdef XXX_CLIPPER_DUMP_ADDED_RANGES
     if (dbg_clip_dump_added_ranges) { GCon->Log("=== FRUSTUM ==="); Dump(); GCon->Log("---"); }
+    #endif
   }
 }
 
@@ -876,8 +882,10 @@ void VViewClipper::Dump () const noexcept {
 //
 //==========================================================================
 bool VViewClipper::DoAddClipRange (FromTo From, FromTo To) noexcept {
+  #ifndef VAVOOM_CLIPPER_NO_ANGLE_CLAMP
   if (From < MIN_ANGLE) From = MIN_ANGLE; else if (From > MAX_ANGLE) From = MAX_ANGLE;
   if (To < MIN_ANGLE) To = MIN_ANGLE; else if (To > MAX_ANGLE) To = MAX_ANGLE;
+  #endif
 
   if (ClipIsEmpty()) {
     ClipHead = NewClipNode();
@@ -984,8 +992,10 @@ bool VViewClipper::AddClipRangeAngle (const FromTo From, const FromTo To) noexce
 //
 //==========================================================================
 void VViewClipper::DoRemoveClipRange (FromTo From, FromTo To) noexcept {
+  #ifndef VAVOOM_CLIPPER_NO_ANGLE_CLAMP
   if (From < MIN_ANGLE) From = MIN_ANGLE; else if (From > MAX_ANGLE) From = MAX_ANGLE;
   if (To < MIN_ANGLE) To = MIN_ANGLE; else if (To > MAX_ANGLE) To = MAX_ANGLE;
+  #endif
 
   if (ClipHead) {
     // check to see if range contains any old ranges
@@ -1267,10 +1277,12 @@ bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t
 bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) noexcept {
   if (!clip_enabled) return true;
   if (ClipIsFull()) {
-    if (dbg_clip_dump_sub_checks) GCon->Logf("  ::: sub #%d: clip is full", (int)(ptrdiff_t)(sub-Level->Subsectors));
+    SBCLOG("  ::: sub #%d: clip is full", (int)(ptrdiff_t)(sub-Level->Subsectors));
     return false;
   }
+  #ifdef XXX_CLIPPER_DUMP_ADDED_RANGES
   if (dbg_clip_dump_sub_checks) Dump();
+  #endif
 
   /*
   if (checkBBox) {
@@ -1287,20 +1299,22 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub) noexcept {
     const int orgside = seg->PointOnSide2(Origin);
     if (orgside) {
       if (orgside == 2) {
-        if (dbg_clip_dump_sub_checks) GCon->Logf("  ::: sub #%d: seg #%u contains origin", (int)(ptrdiff_t)(sub-Level->Subsectors), (unsigned)(ptrdiff_t)(seg-Level->Segs));
-        return true; // origin is on plane, we cannot do anything sane
+        // if origin is on the seg, it doesn't matter how we'll count it
+        // let's say that it is visible
+        SBCLOG("  ::: sub #%d: seg #%u contains origin", (int)(ptrdiff_t)(sub-Level->Subsectors), (unsigned)(ptrdiff_t)(seg-Level->Segs));
+        return true;
       }
       continue; // viewer is in back side
     }
     const TVec &v1 = *seg->v1;
     const TVec &v2 = *seg->v2;
     if (IsRangeVisible(v2, v1)) {
-      if (dbg_clip_dump_sub_checks) GCon->Logf("  ::: sub #%d: visible seg #%u (%f : %f) (vis=%d)", (int)(ptrdiff_t)(sub-Level->Subsectors), (unsigned)(ptrdiff_t)(seg-Level->Segs), PointToClipAngle(v2), PointToClipAngle(v1), IsRangeVisible(v2, v1));
+      SBCLOG("  ::: sub #%d: visible seg #%u (%f : %f) (vis=%d)", (int)(ptrdiff_t)(sub-Level->Subsectors), (unsigned)(ptrdiff_t)(seg-Level->Segs), PointToClipAngle(v2), PointToClipAngle(v1), IsRangeVisible(v2, v1));
       return true;
     }
-    if (dbg_clip_dump_sub_checks) GCon->Logf("  ::: sub #%d: invisible seg #%u (%f : %f)", (int)(ptrdiff_t)(sub-Level->Subsectors), (unsigned)(ptrdiff_t)(seg-Level->Segs), PointToClipAngle(v2), PointToClipAngle(v1));
+    SBCLOG("  ::: sub #%d: invisible seg #%u (%f : %f)", (int)(ptrdiff_t)(sub-Level->Subsectors), (unsigned)(ptrdiff_t)(seg-Level->Segs), PointToClipAngle(v2), PointToClipAngle(v1));
   }
-  if (dbg_clip_dump_sub_checks) GCon->Logf("  ::: sub #%d: no visible segs", (int)(ptrdiff_t)(sub-Level->Subsectors));
+  SBCLOG("  ::: sub #%d: no visible segs", (int)(ptrdiff_t)(sub-Level->Subsectors));
   return false;
 }
 
@@ -1359,7 +1373,7 @@ bool VViewClipper::ClipCheckAddSubsector (const subsector_t *sub, const TPlane *
         // here, if seg is "in front", that means that it is not interested
         // (because we moved inside another subsector)
         //res = true;
-        if (!res) res = (seg->PointOnSide(Origin-Forward*10) != 0);
+        if (!res) res = (seg->PointOnSide(Origin-Forward*10.0f) != 0);
         continue;
       } else {
         if (!addBackface || !seg->partner) {
@@ -1473,11 +1487,11 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, const TPlane *Mirror, bool
     }
   }
 
-  RNGLOG("added seg #%d (line #%d); range=(%f : %f); vis=%d",
+  RNGLOG("added seg #%d (line #%d); range=(%f : %f); vis=%d : (%g,%g)-(%g,%g)",
     (int)(ptrdiff_t)(seg-Level->Segs),
     (int)(ptrdiff_t)(ldef-Level->Lines),
     PointToClipAngle(v2), PointToClipAngle(v1),
-    (int)IsRangeVisible(v2, v1));
+    (int)IsRangeVisible(v2, v1), v1.x, v1.y, v2.x, v2.y);
 
   AddClipRange(v2, v1);
 }
