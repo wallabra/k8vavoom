@@ -126,7 +126,7 @@ COMMAND(ClearPlayerClasses) {
 COMMAND(AddPlayerClass) {
   if (!ParsingKeyConf) return;
 
-  if (Args.Num() < 2) {
+  if (Args.length() < 2) {
     GCon->Logf(NAME_Warning, "AddPlayerClass: Player class name missing");
     return;
   }
@@ -159,7 +159,7 @@ COMMAND(AddPlayerClass) {
 //==========================================================================
 COMMAND(WeaponSection) {
   if (!ParsingKeyConf) return;
-  GGameInfo->eventCmdWeaponSection(Args.Num() > 1 ? Args[1] : "");
+  GGameInfo->eventCmdWeaponSection(Args.length() > 1 ? Args[1] : "");
 }
 
 
@@ -182,4 +182,68 @@ COMMAND(SetSlot) {
 COMMAND(AddSlotDefault) {
   if (!ParsingKeyConf) return;
   GGameInfo->eventCmdAddSlotDefault(&Args, true); // as keyconf
+}
+
+
+//==========================================================================
+//
+//  COMMAND ForcePlayerClass
+//
+//==========================================================================
+COMMAND(ForcePlayerClass) {
+  CMD_FORWARD_TO_SERVER();
+  if (GGameInfo->NetMode >= NM_Client) {
+    GCon->Logf(NAME_Error, "Cannot force player class on client!");
+    return;
+  }
+
+  if (Args.length() < 2) {
+    GCon->Logf(NAME_Warning, "ForcePlayerClass: Player class name missing");
+    return;
+  }
+
+  VClass *PPClass = VClass::FindClass("PlayerPawn");
+  if (!PPClass) {
+    GCon->Logf(NAME_Warning, "ForcePlayerClass: Can't find PlayerPawn class");
+    return;
+  }
+
+  TArray<VClass *> clist;
+  for (int f = 1; f < Args.length(); ++f) {
+    VClass *Class = VClass::FindClassNoCase(*Args[f]);
+    if (!Class) {
+      GCon->Logf(NAME_Warning, "ForcePlayerClass: No such class `%s`", *Args[f]);
+      continue;
+    }
+    if (!Class->IsChildOf(PPClass)) {
+      GCon->Logf(NAME_Warning, "ForcePlayerClass: '%s' is not a player pawn class", *Args[f]);
+      continue;
+    }
+    clist.append(Class);
+  }
+
+  if (clist.length() == 0) {
+    GCon->Logf(NAME_Warning, "ForcePlayerClass: no valid player classes were specified.");
+    return;
+  }
+
+  GGameInfo->PlayerClasses.Clear();
+  for (auto &&cc : clist) GGameInfo->PlayerClasses.Append(cc);
+}
+
+
+//==========================================================================
+//
+//  COMMAND PrintPlayerClasses
+//
+//==========================================================================
+COMMAND(PrintPlayerClasses) {
+  CMD_FORWARD_TO_SERVER();
+  if (GGameInfo->NetMode >= NM_Client) {
+    GCon->Logf(NAME_Error, "Cannot list player classes on client!");
+    return;
+  }
+
+  GCon->Logf("=== %d known player class%s ===", GGameInfo->PlayerClasses.length(), (GGameInfo->PlayerClasses.length() != 1 ? "es" : ""));
+  for (auto &&cc : GGameInfo->PlayerClasses) GCon->Logf("  %s (%s)", cc->GetName(), *cc->Loc.toStringNoCol());
 }
