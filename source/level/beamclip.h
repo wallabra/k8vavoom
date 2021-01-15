@@ -26,6 +26,8 @@
 #define VAVOOM_CLIPPER_USE_FLOAT
 //#define VAVOOM_CLIPPER_USE_REAL_ANGLES
 #define VAVOOM_CLIPPER_USE_PSEUDO_INT
+// this doesn't work
+//#define VAVOOM_CLIPPER_USE_PSEUDO_INT_FULL32
 
 #ifdef VAVOOM_CLIPPER_USE_FLOAT
 # define VVC_matan        matan
@@ -45,12 +47,9 @@
 # endif
 #else
 # define PointToClipAngleZeroOrigin  PointToPseudoAngleZeroOrigin
-/*# define ClipperPseudoResolution  (0x4000000u)*/
-/* k8: we don't really need alot of precision here */
-/*     actually, as we're using segs, we can get away with *LESS* precision */
-/*     but i am not sure */
-/*     this will prolly break hard with retinas (or something with 2k+ resolution), but idc */
-# define ClipperPseudoResolution  (0x3000u)
+# ifndef VAVOOM_CLIPPER_USE_PSEUDO_INT_FULL32
+#  define ClipperPseudoResolution  (1u<<24)
+# endif
 # ifdef VV_CLIPPER_FULL_CHECK
 #  error "oops"
 # endif
@@ -74,6 +73,7 @@ public:
 
 #ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
   static_assert(sizeof(unsigned int) >= 4, "Oops! `unsigned int` should be at least 32 bits!");
+  static_assert(sizeof(int) >= 4, "Oops! `int` should be at least 32 bits!");
   typedef unsigned int FromTo;
   typedef double Angle2FixIn;
 #else
@@ -131,14 +131,26 @@ protected:
 #ifndef VAVOOM_CLIPPER_USE_REAL_ANGLES
   static inline FromTo PointToPseudoAngleZeroOrigin (const Angle2FixIn dx, const Angle2FixIn dy) noexcept {
     #ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
-      if (dx == 0.0 && dy == 0.0) return 0.0+1.0;
-      double res = dy/(fabs(dx)+fabs(dy));
-      res = (dx < 0 ? 2.0-res : res)+1.0;
-      return (FromTo)(res*ClipperPseudoResolution);
+      #ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT_FULL32
+        if (dx == 0.0 && dy == 0.0) return 0;
+        double res = dy/(fabs(dx)+fabs(dy));
+        if (dx < 0.0) res = 2.0-res;
+        //k8: this seems to be UB, and only works with 2-complement math. i don't understand it.
+        return (FromTo)(int)(res*(1<<30));
+      #else
+        if (dx == 0.0 && dy == 0.0) return 0+1;
+        double res = dy/(fabs(dx)+fabs(dy));
+        res = (dx < 0.0 ? 2.0-res : res)+1.0;
+        return (FromTo)(res*ClipperPseudoResolution);
+      #endif
     #else
-      if (dx == 0.0f && dy == 0.0f) return 0.0f+1.0f;
+      if (dx == VFloat(0) && dy == VFloat(0)) return VFloat(0+1);
+      #ifdef VAVOOM_CLIPPER_USE_FLOAT
       const VFloat res = dy/(fabsf(dx)+fabsf(dy));
-      return (dx < 0.0f ? 2.0f-res : res)+1.0f;
+      #else
+      const VFloat res = dy/(fabs(dx)+fabs(dy));
+      #endif
+      return (dx < VFloat(0) ? VFloat(2)-res : res)+VFloat(1);
     #endif
   }
 #endif
