@@ -1733,13 +1733,16 @@ void ProcessWeaponActions () {
   #endif
 
   if (bWeaponAllowSwitch) {
-    if ((PendingWeapon && !bDisableWeaponSwitch) || (MO && MO.Health <= 0)) {
+    if (PendingWeapon && !bDisableWeaponSwitch) {
       ResetWeaponReloadRefire();
       ResetWeaponActionFlags();
       if (ReadyWeapon) {
         ReadyWeapon.bBobDisabled = true;
         SetViewObject(ReadyWeapon);
         SetViewState(PS_WEAPON, ReadyWeapon.GetDownState());
+      } else if (PendingWeapon) {
+        SetWeapon(PendingWeapon);
+        BringUpWeapon();
       }
       return;
     }
@@ -1860,7 +1863,6 @@ void MovePsprites (float deltaTime) {
   //printdebug("%C: ReadyWeapon=%C; PendingWeapon=%C", self, ReadyWeapon, PendingWeapon);
   SetViewObject(ReadyWeapon);
   AdvanceViewStates(deltaTime);
-  ProcessWeaponActions();
 
   if (PlayerState == PST_LIVE) {
     if (!ReadyWeapon) {
@@ -1881,6 +1883,8 @@ void MovePsprites (float deltaTime) {
       }
     }
   }
+
+  ProcessWeaponActions();
 }
 
 
