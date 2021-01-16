@@ -655,9 +655,10 @@ void Destroyed () {
 //  Touch
 //
 //  return `false` if movement should be blocked
+//  if `disableEffects` is true, don't perform any special effects
 //
 //==========================================================================
-bool Touch (Entity Other) {
+bool Touch (Entity Other, bool disableEffects) {
   return (Other.bCorpse ? true : !Other.bSolid);
 }
 

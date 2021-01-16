@@ -30,96 +30,78 @@ Lightning LightningLink;
 int ZigZagCount;  // Only for floor
 float ZagSpeed;
 
+
 //==========================================================================
 //
 //  Touch
 //
 //==========================================================================
-
-override bool Touch(Entity InOther)
-{
+override bool Touch (Entity InOther, bool disableEffects) {
   int damage;
   EntityEx Other;
 
-  if (!bMissile)
-  {
-    return false;
-  }
+  if (!bMissile) return false;
 
   Other = EntityEx(InOther);
-  // Check for a non-shootable mobj
-  if (!Other.bShootable || Other.bNonShootable)
-  {
-    return true;
-  }
+  // check for a non-shootable mobj
+  if (!Other.bShootable || Other.bNonShootable) return true;
 
   // Check for blasted thing running into another
-  if (bBlasted && Other.bShootable)
-  {
-    if (!Other.bBoss && Other.bMonster)
-    {
-      Other.Velocity.x += Velocity.x;
-      Other.Velocity.y += Velocity.y;
-      if ((Other.Velocity.x + Other.Velocity.y) > 3.0 * 35.0)
-      {
-        damage = (int(fmax(0, Mass)) / 100) + 1;
-        Other.Damage(self, self, damage, spawnBlood:true);
-        damage = (int(fmax(0, Other.Mass)) / 100) + 1;
-        Damage(Other, Other, damage >> 2, spawnBlood:true);
+  if (bBlasted && Other.bShootable) {
+    if (!Other.bBoss && Other.bMonster) {
+      if (!disableEffects) {
+        Other.Velocity.x += Velocity.x;
+        Other.Velocity.y += Velocity.y;
+        if ((Other.Velocity.x+Other.Velocity.y) > 3.0*35.0) {
+          damage = (int(fmax(0, Mass))/100)+1;
+          Other.Damage(self, self, damage, spawnBlood:true);
+          damage = (int(fmax(0, Other.Mass))/100)+1;
+          Damage(Other, Other, damage>>2, spawnBlood:true);
+        }
       }
       return false;
     }
   }
 
-  if (Other == Target)
-  {
+  if (Other == Target) return true;
+
+  if (disableEffects) {
+    if (Health-1 <= 0 || Other.Health <= 0) return false;
     return true;
   }
 
-  if (Other.Mass != 99999.0)
-  {
-    Other.Velocity.x += Velocity.x / 16.0;
-    Other.Velocity.y += Velocity.y / 16.0;
+  if (Other.Mass != 99999.0) {
+    Other.Velocity.x += Velocity.x/16.0;
+    Other.Velocity.y += Velocity.y/16.0;
   }
-  if ((!Other.bIsPlayer && !Other.bBoss) || !(XLevel.TicTime & 1))
-  {
-    if (Other.IsA('Centaur'))
-    {
-      // Lightning does more damage to centaurs
+
+  if ((!Other.bIsPlayer && !Other.bBoss) || !(XLevel.TicTime&1)) {
+    if (Other.IsA('Centaur')) {
+      // lightning does more damage to centaurs
       Other.Damage(self, Target, 9, spawnBlood:true);
-    }
-    else
-    {
+    } else {
       Other.Damage(self, Target, 3, spawnBlood:true);
     }
-    if (!(GetSoundPlayingInfo(self, GetSoundID('MageLightningZap'))))
-    {
-      PlaySound('MageLightningZap', CHAN_VOICE);
-    }
+    if (!(GetSoundPlayingInfo(self, GetSoundID('MageLightningZap')))) PlaySound('MageLightningZap', CHAN_VOICE);
     if (Other.HowlSound && Other.bMonster && P_Random() < 64 &&
-      !GetSoundPlayingInfo(Other, GetSoundID(Other.HowlSound)))
+        !GetSoundPlayingInfo(Other, GetSoundID(Other.HowlSound)))
     {
       Other.PlaySound(Other.HowlSound, CHAN_VOICE);
     }
   }
-  Health--;
-  if (Health <= 0 || Other.Health <= 0)
-  {
-    return false;
-  }
-  if (Class == GetClassReplacement(LightningFloor))
-  {
-    if (LightningLink && !LightningLink.Tracer)
-    {
-      LightningLink.Tracer = Other;
-    }
-  }
-  else if (!Tracer)
-  {
+
+  --Health;
+  if (Health <= 0 || Other.Health <= 0) return false;
+
+  if (Class == GetClassReplacement(LightningFloor)) {
+    if (LightningLink && !LightningLink.Tracer) LightningLink.Tracer = Other;
+  } else if (!Tracer) {
     Tracer = Other;
   }
+
   return true;  // lightning zaps through all sprites
 }
+
 
 //==========================================================================
 //

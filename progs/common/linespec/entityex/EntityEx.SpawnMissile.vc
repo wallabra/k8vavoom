@@ -48,9 +48,11 @@ final void PlayMissileSpawnSound (EntityEx Source) {
 final bool CheckMissileSpawn () {
   if (bRandomise && StateTime > 0.0) StateTime = fmax(1.0/35.0, StateTime-Random()*0.1);
 
+  bIntrJustMoved = false; // disable movement interpolation
+  //k8: wtf?!
+  /*
   // move a little forward so an angle can be computed if it immediately explodes
   UnlinkFromWorld();
-  bIntrJustMoved = false; // disable movement interpolation
   if (Speed > 100.0*35.0) {
     // ultra-fast missile
     Origin += Velocity*0.0142857143/8.0;
@@ -59,9 +61,12 @@ final bool CheckMissileSpawn () {
     Origin += Velocity*0.0142857143;
   }
   LinkToWorld();
+  */
 
   tmtrace_t tmtrace;
-  if (!TryMoveEx(out tmtrace, Origin, AllowDropOff:false)) {
+  if (!TryMoveEx(out tmtrace, Origin, AllowDropOff:false, checkOnly:true)) {
+    //printdebug("%C: CheckMissileSpawn: spawn failed; mobj=%C; stepthing=%C; %s", self, tmtrace.BlockingMobj, tmtrace.StepThing, (tmtrace.BlockingLine ? tmtrace.BlockingLine-&XLevel.Lines[0] : -1));
+    //printdebug("%C: fz=%s; cz=%s; z0=%s; z1=%s", self, tmtrace.FloorZ, tmtrace.CeilingZ, Origin.z, Origin.z+Height);
     if (!Level.Game.IsAuthority) { Destroy(); return false; }
     // don't explode ripping missiles that spawn inside another thing
     if (!tmtrace.BlockingMobj || !bRip || EntityEx(tmtrace.BlockingMobj).bDontRip) {

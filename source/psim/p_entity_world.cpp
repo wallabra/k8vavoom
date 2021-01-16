@@ -1001,20 +1001,7 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
     if (tmtrace.End.z+Height <= Other->Origin.z) return true;  // underneath
   }
 
-  //FIXME: call VC to determine blocking
-  if (noPickups) {
-    if (isOtherCorpse) return true; // k8: corpses won't block
-    if (Other->EntityFlags&EF_Solid) {
-      tmtrace.BlockingMobj = Other;
-      return false;
-    }
-    // non-solids won't block
-    return true;
-  }
-
-  //if (EntityFlags&EF_IsPlayer) GCon->Logf("RelThing: self=`%s`; other=`%s`; ocp=%d", *GetClass()->GetFullName(), *Other->GetClass()->GetFullName(), (int)isOtherCorpse);
-
-  if (!eventTouch(Other)) {
+  if (!eventTouch(Other, noPickups)) {
     // just in case
     tmtrace.BlockingMobj = Other;
     return false;

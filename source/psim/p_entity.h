@@ -519,7 +519,7 @@ public:
   void eventOnMapSpawn (mthing_t *mthing) { static VMethodProxy method("OnMapSpawn"); vobjPutParamSelf(mthing); VMT_RET_VOID(method); }
   void eventBeginPlay () { static VMethodProxy method("BeginPlay"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void eventDestroyed () { static VMethodProxy method("Destroyed"); vobjPutParamSelf(); VMT_RET_VOID(method); }
-  bool eventTouch (VEntity *Other) { static VMethodProxy method("Touch"); vobjPutParamSelf(Other); VMT_RET_BOOL(method); }
+  bool eventTouch (VEntity *Other, bool disableEffects) { static VMethodProxy method("Touch"); vobjPutParamSelf(Other, disableEffects); VMT_RET_BOOL(method); }
   void eventCheckForPushSpecial (line_t *line, int side) { static VMethodProxy method("CheckForPushSpecial"); vobjPutParamSelf(line, side); VMT_RET_VOID(method); }
   void eventBlastedHitLine () { static VMethodProxy method("BlastedHitLine"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void eventHandleFloorclip () { static VMethodProxy method("HandleFloorclip"); vobjPutParamSelf(); VMT_RET_VOID(method); }

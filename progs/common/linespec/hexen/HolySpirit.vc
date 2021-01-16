@@ -34,7 +34,7 @@ int WeaveZ;
 //  Touch
 //
 //==========================================================================
-override bool Touch (Entity InOther) {
+override bool Touch (Entity InOther, bool disableEffects) {
   int damage;
   EntityEx Other;
 
@@ -47,7 +47,7 @@ override bool Touch (Entity InOther) {
 
   // check for skulls slamming into things
   if (bSkullFly) {
-    if (Other.bShootable && Other != Target) {
+    if (!disableEffects && Other.bShootable && Other != Target) {
       if (Level.Game.netgame && !Level.Game.deathmatch && Other.bIsPlayer) {
         // don't attack other co-op players
         return true;
@@ -80,7 +80,8 @@ override bool Touch (Entity InOther) {
     }
     return true;
   }
-  return ::Touch(InOther);
+
+  return ::Touch(InOther, disableEffects);
 }
 
 

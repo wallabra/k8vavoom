@@ -27,90 +27,65 @@ class LightningZap : Actor;
 
 Lightning LightningOwner; //  Lightning missile that spawned zap.
 
+
 //==========================================================================
 //
 //  Touch
 //
 //==========================================================================
-
-override bool Touch(Entity InOther)
-{
+override bool Touch (Entity InOther, bool disableEffects) {
   int damage;
   EntityEx Other;
 
   Other = EntityEx(InOther);
   if (!Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) &&
-    !Other.bBlockedBySolidActors)
+      !Other.bBlockedBySolidActors)
   {
     return true;
   }
 
-  // Check for missile
-  if (bMissile)
-  {
-    // Check for a non-shootable mobj
-    if (Other.bNonShootable)
-    {
-      return true;
-    }
-    if (Other.bShootable && Other != Target)
-    {
-      if (LightningOwner)
-      {
-        if (LightningOwner.Class == GetClassReplacement(LightningFloor))
-        {
-          if (LightningOwner.LightningLink &&
-            !LightningOwner.LightningLink.Tracer)
-          {
+  // check for missile
+  if (bMissile) {
+    // check for a non-shootable mobj
+    if (Other.bNonShootable) return true;
+    if (!disableEffects && Other.bShootable && Other != Target) {
+      if (LightningOwner) {
+        if (LightningOwner.Class == GetClassReplacement(LightningFloor)) {
+          if (LightningOwner.LightningLink && !LightningOwner.LightningLink.Tracer) {
             LightningOwner.LightningLink.Tracer = Other;
           }
-        }
-        else if (!LightningOwner.Tracer)
-        {
+        } else if (!LightningOwner.Tracer) {
           LightningOwner.Tracer = Other;
         }
-        if (!(XLevel.TicTime & 3))
+        if (!(XLevel.TicTime&3)) --LightningOwner.Health;
+      }
+    }
+    if (Target && Target.Class == Other.Class) {
+      // don't hit same species as originator
+      if (Other == Target) return true; // don't missile self
+      if (!Other.bIsPlayer) return false; // hit same species as originator, explode, no damage
+    }
+    if (!Other.bShootable) return !Other.bSolid; // didn't do any damage
+    if (!disableEffects) {
+      // do damage
+      damage = ((P_Random()%8)+1)*MissileDamage;
+      if (damage) {
+        if (!Other.bNoBlood && !Other.bReflective &&
+            !Other.bInvulnerable && (P_Random() < 192))
         {
-          LightningOwner.Health--;
+          TVec org = self.Origin;
+          if (self.Radius > 0) org.z += self.Radius/2.0;
+          Other.SpawnBloodSplatter(Origin, damage, org);
         }
+        Other.Damage(self, Target, damage, spawnBlood:true);
       }
-    }
-    if (Target && Target.Class == Other.Class)
-    {
-      // Don't hit same species as originator
-      if (Other == Target)
-      {
-        // Don't missile self
-        return true;
-      }
-      if (!Other.bIsPlayer)
-      {
-        // Hit same species as originator, explode, no damage
-        return false;
-      }
-    }
-    if (!Other.bShootable)
-    {
-      // Didn't do any damage
-      return !Other.bSolid;
-    }
-    // Do damage
-    damage = ((P_Random() % 8) + 1) * MissileDamage;
-    if (damage)
-    {
-      if (!Other.bNoBlood && !Other.bReflective &&
-        !Other.bInvulnerable && (P_Random() < 192))
-      {
-        TVec org = self.Origin;
-        if (self.Radius > 0) org.z += self.Radius/2.0;
-        Other.SpawnBloodSplatter(Origin, damage, org);
-      }
-      Other.Damage(self, Target, damage, spawnBlood:true);
     }
     return false;
   }
+
   return !Other.bSolid;
 }
+
 
 //==========================================================================
 //

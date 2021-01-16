@@ -31,9 +31,9 @@ class SpectralMonster : Actor abstract;
 //  Touch
 //
 //==========================================================================
-override bool Touch (Entity InOther) {
-  EntityEx(InOther).Damage(self, self, 5, 'Melee', spawnBlood:true);
-  return ::Touch(InOther);
+override bool Touch (Entity InOther, bool disableEffects) {
+  if (!disableEffects) EntityEx(InOther).Damage(self, self, 5, 'Melee', spawnBlood:true);
+  return ::Touch(InOther, disableEffects);
 }
 
 
