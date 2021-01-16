@@ -1379,7 +1379,8 @@ void MonsterFallingDamage () {
 //==========================================================================
 void ResetBlasted () {
   bBlasted = false;
-  if (!bIceCorpse) bSlide = false;
+  //if (!bIceCorpse) bSlide = false;
+  bSlide = default.bSlide;
 }
 
 
