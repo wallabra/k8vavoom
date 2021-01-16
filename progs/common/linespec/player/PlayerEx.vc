@@ -80,7 +80,6 @@ int /*[checkpoint]*/ Cheats;
 
 Weapon /*[checkpoint]*/ ReadyWeapon;
 Weapon PendingWeapon; // is none if not changing
-transient int k8InWeaponReadyWatchCat; // otherwise recursive calls to it may overflow the stack
 
 // refired shots are less accurate (this is counter)
 int Refire;
@@ -1632,6 +1631,9 @@ void BringUpWeapon (optional bool instant, optional bool skipSound) {
   PendingWeapon = none;
   SetViewStateOffsets(0, (instant || bInstantWeaponSwitch ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM));
   ResetWeaponReloadRefire();
+  // block firing for "no autofire" weapons
+  bAttackDown = true;
+  bAltAttackDown = true;
   if (ReadyWeapon) {
     ReadyWeapon.bBobDisabled = true;
     SetViewObject(ReadyWeapon);
@@ -1673,7 +1675,9 @@ void BringUpWeapon (optional bool instant, optional bool skipSound) {
 //===========================================================================
 void DropWeapon () {
   ResetWeaponReloadRefire();
+  ResetWeaponActionFlags();
   if (ReadyWeapon) {
+    printdebug("%C: bringing weapon %C down: %s", self, ReadyWeapon, ReadyWeapon.GetDownState());
     SetViewObject(ReadyWeapon);
     SetViewState(PS_WEAPON, ReadyWeapon.GetDownState());
   }
@@ -1707,22 +1711,24 @@ void SetupPsprites () {
 void ProcessWeaponActions () {
   if (PendingWeapon == ReadyWeapon) PendingWeapon = none;
 
-  if (!MO || MO.Health <= 0) bWeaponAllowSwitch = true;
+  if (!MO || MO.Health <= 0 || PlayerState != PST_LIVE) {
+    ResetWeaponReloadRefire();
+    ResetWeaponActionFlags();
+    return;
+  }
 
   #if 0
   if (bWeaponAllowSwitch ||
       bWeaponAllowPrimaryFire ||
       bWeaponAllowAltFire ||
       bWeaponAllowReload ||
-      bWeaponAllowZoom ||
-      bWeaponRefireFlag)
+      bWeaponAllowZoom)
   {
     printdebug("%C: bWeaponAllowSwitch=%B", self, bWeaponAllowSwitch);
     printdebug("%C: bWeaponAllowPrimaryFire=%B", self, bWeaponAllowPrimaryFire);
     printdebug("%C: bWeaponAllowAltFire=%B", self, bWeaponAllowAltFire);
     printdebug("%C: bWeaponAllowReload=%B", self, bWeaponAllowReload);
     printdebug("%C: bWeaponAllowZoom=%B", self, bWeaponAllowZoom);
-    printdebug("%C: bWeaponRefireFlag=%B", self, bWeaponRefireFlag);
   }
   #endif
 
@@ -1739,43 +1745,33 @@ void ProcessWeaponActions () {
     }
   }
 
-  bool wasFireAction = false;
-
   Weapon Wpn = ReadyWeapon;
   if (!Wpn) {
-    bool oldAllowSwitch = bWeaponAllowSwitch;
     ResetWeaponReloadRefire();
     ResetWeaponActionFlags();
-    bWeaponAllowSwitch = oldAllowSwitch;
+    bWeaponAllowSwitch = true;
     ResetPlayerFiringState();
     return;
   }
 
-  //printdebug("%C: bWeaponAllowPrimaryFire=%B; btn=%B; st=%B; bAttackDown=%B", self, bWeaponAllowPrimaryFire, !!(Buttons&BT_ATTACK), !!Wpn.FindState('Fire'), bAttackDown);
+  if (!bWeaponWasWeaponReady) return;
+  bWeaponWasWeaponReady = false;
 
-  if (bWeaponAllowPrimaryFire && (Buttons&BT_ATTACK) && Wpn.FindState('Fire')) {
-    if (!bAttackDown || !Wpn.bNoAutoFire || bWeaponRefireFlag) {
-      if (bWeaponRefireFlag) ++Refire; else { Refire = 0; WeaponRefireState = none; }
-      //printdebug("%C: firing with %C, Refire=%s", self, Wpn, Refire);
-      bWeaponRefireFlag = false;
-      bAttackDown = true;
-      if (FireWeapon()) {
-        //printdebug("%C: FIRED with %C, Refire=%s", self, Wpn, Refire);
-        wasFireAction = true;
-        Wpn.bBobDisabled = true;
-      }
+  bool wasFireAction = false;
+
+  if (bWeaponAllowPrimaryFire && (Buttons&BT_ATTACK) && (!bAttackDown || !Wpn.bNoAutoFire) && Wpn.FindState('Fire')) {
+    bAttackDown = true;
+    if (FireWeapon()) {
+      wasFireAction = true;
+      Wpn.bBobDisabled = true;
     }
   }
 
-  if (bWeaponAllowAltFire && (Buttons&BT_ALT_ATTACK) && Wpn.FindState('AltFire')) {
-    if (!bAltAttackDown || !Wpn.bNoAutoFire || bWeaponRefireFlag) {
-      if (bWeaponRefireFlag) ++Refire; else { Refire = 0; WeaponRefireState = none; }
-      bWeaponRefireFlag = false;
-      bAltAttackDown = true;
-      if (AltFireWeapon()) {
-        Wpn.bBobDisabled = true;
-        wasFireAction = true;
-      }
+  if (!wasFireAction && bWeaponAllowAltFire && (Buttons&BT_ALT_ATTACK) && (!bAltAttackDown || !Wpn.bNoAutoFire) && Wpn.FindState('AltFire')) {
+    bAltAttackDown = true;
+    if (AltFireWeapon()) {
+      Wpn.bBobDisabled = true;
+      wasFireAction = true;
     }
   }
 
@@ -1784,20 +1780,17 @@ void ProcessWeaponActions () {
     Refire = 0;
   }
 
-  // anyway
-  bWeaponRefireFlag = false;
-  WeaponRefireState = none;
-
-  if (bWeaponAllowReload && ((Buttons&BT_RELOAD) || bReloadQueued)) {
+  if (!wasFireAction && bWeaponAllowReload && ((Buttons&BT_RELOAD) || bReloadQueued)) {
     // `bReloadQueued` will be reset by `ReloadWeapon()`
-    if (ReloadWeapon()) Wpn.bBobDisabled = true;
+    if (ReloadWeapon()) {
+      Wpn.bBobDisabled = true;
+      wasFireAction = true;
+    }
   }
 
-  if (bWeaponAllowZoom && (Buttons&BT_ZOOM) && Wpn.GetZoomState()) {
-    if (!!bZoomDown) {
-      bZoomDown = true;
-      if (ZoomWeapon()) Wpn.bBobDisabled = true;
-    }
+  if (!wasFireAction && bWeaponAllowZoom && (Buttons&BT_ZOOM) && !bZoomDown && Wpn.GetZoomState()) {
+    bZoomDown = true;
+    if (ZoomWeapon()) Wpn.bBobDisabled = true;
   }
 }
 
@@ -1864,47 +1857,28 @@ void MovePsprites (float deltaTime) {
   }
   */
 
-  bool newTick = false;
-  if (k8InWeaponReadyWatchCat != MO.XLevel.TicTime) {
-    k8InWeaponReadyWatchCat = MO.XLevel.TicTime;
-    newTick = true;
-    ProcessWeaponActions();
-  }
-
   //printdebug("%C: ReadyWeapon=%C; PendingWeapon=%C", self, ReadyWeapon, PendingWeapon);
   SetViewObject(ReadyWeapon);
   AdvanceViewStates(deltaTime);
+  ProcessWeaponActions();
 
-  bool checkPW = false;
-
-  if (!ReadyWeapon) {
-    if (wpn) printwarn("PLAYER: ReadyWeapon `%C` died, PendingWeapon is `%C`", wpn, PendingWeapon);
-    checkPW = true;
-  } else {
-    if (!ViewStates[PS_WEAPON].State) {
-      if (wpn) printwarn("PLAYER: ReadyWeapon %C (%C) removed itself, PendingWeapon is %C", ReadyWeapon, wpn, PendingWeapon);
-      ReadyWeapon = none;
-      SetViewStateOffsets(0, 0);
-      checkPW = true;
-    } else if (GetStateDuration(ViewStates[PS_WEAPON].State) < 0) {
-      // this is totally wrong, because it cannot call `A_WeaponReady()`, and weapon switching is impossible
-      //printwarn("PLAYER: ReadyWeapon %C (%C) put itself into endless state", ReadyWeapon, wpn, PendingWeapon);
-      //ReadyWeapon = none;
-      //SetViewStateOffsets(0, 0);
-      checkPW = true;
-    }
-  }
-
-  if (checkPW && newTick && MO) {
-    // check if we want to change a weapon
-    if (MO.Health <= 0 || PlayerState == PST_DEAD) {
-      if (ReadyWeapon) {
-        SetWeapon(none);
-        BringUpWeapon();
+  if (PlayerState == PST_LIVE) {
+    if (!ReadyWeapon) {
+      if (wpn) printwarn("PLAYER: ReadyWeapon `%C` died, PendingWeapon is `%C`", wpn, PendingWeapon);
+      bWeaponAllowSwitch = true;
+    } else {
+      if (!ViewStates[PS_WEAPON].State) {
+        if (wpn) printwarn("PLAYER: ReadyWeapon %C (%C) removed itself, PendingWeapon is %C", ReadyWeapon, wpn, PendingWeapon);
+        ReadyWeapon = none;
+        SetViewStateOffsets(0, 0);
+        bWeaponAllowSwitch = true;
+      } else if (ViewStates[PS_WEAPON].StateTime < 0) {
+        // this is totally wrong, because it cannot call `A_WeaponReady()`, and weapon switching is impossible
+        //printwarn("PLAYER: ReadyWeapon %C (%C) put itself into endless state", ReadyWeapon, wpn, PendingWeapon);
+        //ReadyWeapon = none;
+        //SetViewStateOffsets(0, 0);
+        bWeaponAllowSwitch = true;
       }
-    } else if (PlayerState == PST_LIVE && PendingWeapon && PendingWeapon != ReadyWeapon /*&& !bDisableWeaponSwitch*/) {
-      SetWeapon(PendingWeapon);
-      BringUpWeapon();
     }
   }
 }
@@ -4022,6 +3996,7 @@ void PlayerReborn () {
   bZoomDown = false;
   bReloadDown = false;
   ResetWeaponReloadRefire();
+  ResetWeaponActionFlags();
   PlayerState = PST_LIVE;
   Health = GetRebornHealth();
 }
@@ -4785,8 +4760,6 @@ override void PlayerTick (float deltaTime) {
   }
 
   /* done in `MovePsprites()`
-  ProcessWeaponActions();
-
   if (!ReadyWeapon && PendingWeapon && !bDisableWeaponSwitch && bWeaponAllowSwitch) {
     SetWeapon(PendingWeapon);
     BringUpWeapon();
@@ -5889,5 +5862,4 @@ void AdjustSideMove (ref float speed, ref float moveWalk, ref float moveRun) {}
 defaultproperties {
   InvSize = 6;
   PrevViewHeight = -666;
-  k8InWeaponReadyWatchCat = -1;
 }

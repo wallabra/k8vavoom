@@ -291,17 +291,19 @@ bool VEntity::SetState (VState *InState) {
 
   {
     SetStateGuard guard(this);
+    ++validcountState;
 
     VState *st = InState;
     do {
       if (!st) { State = nullptr; break; }
 
-      if (++setStateWatchCat > 512) {
-        //k8: FIXME!
-        GCon->Logf(NAME_Error, "WatchCat interrupted `VEntity::SetState()` in '%s' (%s)!", *GetClass()->GetFullName(), *st->Loc.toStringNoCol());
-        StateTime = 13.0f;
+      if (++setStateWatchCat > 256 || st->validcount == validcountState) {
+        //k8: FIXME! what to do here?
+        GCon->Logf(NAME_Error, "WatchCat interrupted `%s::SetState()` at '%s' (%s)!", *GetClass()->GetFullName(), *st->Loc.toStringNoCol(), (st->validcount == validcountState ? "loop" : "timeout"));
+        //StateTime = 13.0f;
         break;
       }
+      st->validcount = validcountState;
 
       VSLOGF("%s: loop SetState(%d), %s to %s", GetClass()->GetName(), setStateWatchCat, (State ? *State->Loc.toStringNoCol() : "<none>"), *st->Loc.toStringNoCol());
 

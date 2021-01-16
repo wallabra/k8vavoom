@@ -272,20 +272,17 @@ void VBasePlayer::ClearReferences () {
 void VBasePlayer::SetViewState (int position, VState *InState) {
   if (position < 0 || position >= NUMPSPRITES) return; // sanity check
 
-  if (position == PS_WEAPON) {
-    WeaponActionFlags = 0;
-    WeaponRefireState = nullptr;
-  }
+  if (position == PS_WEAPON) WeaponActionFlags = 0;
 
   VViewState &VSt = ViewStates[position];
   VSLOGF("SetViewState(%d): watchcat=%d, vobj=%s, from %s to new %s", position, setStateWatchCat[position], (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<none>"), (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"), (InState ? *InState->Loc.toStringNoCol() : "<none>"));
 
-  /*
+  #if 0
   {
     VEntity *curwpn = eventGetReadyWeapon();
     GCon->Logf(NAME_Debug, "    curwpn=%s", (curwpn ? curwpn->GetClass()->GetName() : "<none>"));
   }
-  */
+  #endif
 
   // the only way we can arrive here is via decorate call
   if (InState && setStateWatchCat[position]) {
@@ -296,6 +293,7 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
 
   {
     SetViewStateGuard guard(this, position);
+    ++validcountState;
 
     VState *state = InState;
     do {
@@ -329,12 +327,13 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
         }
       }
 
-      if (++setStateWatchCat[position] > 1024) {
-        //k8: FIXME!
-        GCon->Logf(NAME_Error, "WatchCat interrupted `VBasePlayer::SetViewState(%d)` in '%s'!", position, *state->Loc.toStringNoCol());
-        VSt.StateTime = 13.0f;
+      if (++setStateWatchCat[position] > 256 || state->validcount == validcountState) {
+        //k8: FIXME! what to do here?
+        GCon->Logf(NAME_Error, "WatchCat interrupted `VBasePlayer::SetViewState(%d)` at '%s' (%s)!", position, *state->Loc.toStringNoCol(), (state->validcount == validcountState ? "loop" : "timeout"));
+        //VSt.StateTime = 13.0f;
         break;
       }
+      state->validcount = validcountState;
 
       //if (position == PS_WEAPON) GCon->Logf("*** ... ticking WEAPON (%s)", *state->Loc.toStringNoCol());
 
@@ -406,23 +405,41 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
 
 //==========================================================================
 //
+//  VBasePlayer::WillAdvanceWeaponState
+//
+//==========================================================================
+bool VBasePlayer::WillAdvanceWeaponState (float deltaTime) {
+  const VViewState &St = ViewStates[PS_WEAPON];
+  if (!St.State) return true;
+  const float stime = St.StateTime;
+  if (stime <= 0.0f) return true;
+  const int dfchecked = (eventCheckDoubleFiringSpeed() ? 1 : 0); // call VM only once
+  const float dtime = deltaTime*(dfchecked ? 2.0f : 1.0f); // [BC] Apply double firing speed
+  return (stime-dtime <= 0.0f);
+}
+
+
+//==========================================================================
+//
 //  VBasePlayer::AdvanceViewStates
 //
 //==========================================================================
-void VBasePlayer::AdvanceViewStates (float deltaTime) {
-  if (deltaTime <= 0.0f) return;
+bool VBasePlayer::AdvanceViewStates (float deltaTime) {
+  if (deltaTime <= 0.0f) return false;
+  bool res = false;
   int dfchecked = -1;
   for (unsigned i = 0; i < NUMPSPRITES; ++i) {
     VViewState &St = ViewStates[i];
     // null state means not active
     // -1 tic count never changes
-    if (!St.State) continue;
-    if (St.StateTime < 0.0f) { St.StateTime = -1.0f; continue; } // force `-1` here just in case
+    if (!St.State) { if (i == PS_WEAPON) res = true; continue; }
+    if (St.StateTime < 0.0f) { if (i == PS_WEAPON) res = true; St.StateTime = -1.0f; continue; } // force `-1` here just in case
     if (dfchecked < 0) dfchecked = (eventCheckDoubleFiringSpeed() ? 1 : 0); // call VM only once
     const float dtime = deltaTime*(dfchecked ? 2.0f : 1.0f); // [BC] Apply double firing speed
     // drop tic count and possibly change state
     //GCon->Logf(NAME_Debug, "*** %u:%s:%s: i=%d: StateTime=%g (%g) (nst=%g); delta=%g (%g)", GetUniqueId(), GetClass()->GetName(), *St.State->Loc.toStringShort(), i, St.StateTime, St.StateTime*35.0f, St.StateTime-dtime, dtime, dtime*35.0f);
     if (St.StateTime > 0.0f) St.StateTime -= dtime;
+    if (i == PS_WEAPON && St.StateTime <= 0.0f) res = true;
     while (St.StateTime <= 0.0f) {
       // this somewhat compensates freestep instability
       const float tleft = St.StateTime; // "overjump time"
@@ -437,6 +454,7 @@ void VBasePlayer::AdvanceViewStates (float deltaTime) {
     }
     //if (St.State) GCon->Logf(NAME_Debug, "    %u:%s:%s: i=%d:     END; StateTime=%g (%g); delta=%g (%g)", GetUniqueId(), GetClass()->GetName(), *St.State->Loc.toStringShort(), i, St.StateTime, St.StateTime*35.0f, deltaTime, deltaTime*35.0f);
   }
+  return res;
 }
 
 
@@ -997,7 +1015,6 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer) {
   Self->PlayerFlags &= ~VBasePlayer::PF_AutomapRevealed;
   Self->PlayerFlags &= ~VBasePlayer::PF_AutomapShowThings;
   Self->WeaponActionFlags = 0;
-  Self->WeaponRefireState = nullptr;
   Self->ExtraLight = 0;
   Self->FixedColormap = 0;
   Self->CShift = 0;
@@ -1016,7 +1033,6 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer) {
 IMPLEMENT_FUNCTION(VBasePlayer, ResetWeaponActionFlags) {
   vobjGetParamSelf();
   Self->WeaponActionFlags = 0;
-  Self->WeaponRefireState = nullptr;
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, SetViewObject) {
@@ -1045,7 +1061,13 @@ IMPLEMENT_FUNCTION(VBasePlayer, SetViewState) {
 IMPLEMENT_FUNCTION(VBasePlayer, AdvanceViewStates) {
   float deltaTime;
   vobjGetParamSelf(deltaTime);
-  Self->AdvanceViewStates(deltaTime);
+  RET_BOOL(Self->AdvanceViewStates(deltaTime));
+}
+
+IMPLEMENT_FUNCTION(VBasePlayer, WillAdvanceWeaponState) {
+  float deltaTime;
+  vobjGetParamSelf(deltaTime);
+  RET_BOOL(Self->WillAdvanceWeaponState(deltaTime));
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, DisconnectBot) {

@@ -128,6 +128,7 @@ server_static_t svs;
 
 // increment every time a check is made
 int validcount = 1;
+vint64 validcountState = 1;
 // for sector height cache
 int validcountSZCache = 1;
 

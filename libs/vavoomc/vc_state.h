@@ -102,6 +102,8 @@ public:
   VLightEffectDef *LightDef;
   VStr LightName;
 
+  vint64 validcount;
+
   // compiler flags
   bool funcIsCopy; // this will be set if there is no need to call `PostLoad()` for `Function`
 

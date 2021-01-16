@@ -185,51 +185,12 @@ protected final void do_A_CheckReload () self(Actor) {
 protected final void do_A_ReFire (optional state refirestate) self(Actor) {
   if (!bIsPlayer) return;
 
-#if 1
-  PlayerEx pex = PlayerEx(Player);
-  if (!pex) return; // just in case
-
-  pex.WeaponRefireState = none;
-
-  Weapon Wpn = pex.ReadyWeapon;
-
-  if (!Wpn) {
-    pex.ResetWeaponReloadRefire();
-    //pex.ResetPlayerFiringState();
-    if (!pex.PendingWeapon && Player.MO.Health > 0) {
-      Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true); // k8: should we switch weapon here?
-    }
-    return;
-  }
-
-  if (!pex.PendingWeapon && Player.MO.Health > 0) {
-    if (Wpn.FireMode == Weapon::FIRE_Primary && (Player.Buttons&BT_ATTACK)) {
-      pex.bWeaponRefireFlag = true;
-      pex.bWeaponAllowPrimaryFire = true;
-      pex.WeaponRefireState = refirestate;
-      return;
-    }
-
-    if (Wpn.FireMode == Weapon::FIRE_Secondary && (Player.Buttons&BT_ALT_ATTACK)) {
-      pex.bWeaponRefireFlag = true;
-      pex.bWeaponAllowAltFire = true;
-      pex.WeaponRefireState = refirestate;
-      return;
-    }
-
-    pex.Refire = 0;
-    //k8: do we need to check ammo here at all?
-    Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true); // k8: should we switch weapon here?
-  }
-#else
-  // old code
+  // we have to explicitly set the weapon state here due to standard weapon definitions
+  // RocketLauncher, for example, has zero-duration refire state
+  // our WatchCat will take care of endless loops
 
   PlayerEx pex = PlayerEx(Player);
   if (!pex) return; // just in case
-
-  // zero-state protection
-  if (pex.k8InWeaponReadyWatchCat == XLevel.TicTime) return;
-  pex.k8InWeaponReadyWatchCat = XLevel.TicTime;
 
   Weapon Wpn = pex.ReadyWeapon;
 
@@ -243,12 +204,14 @@ protected final void do_A_ReFire (optional state refirestate) self(Actor) {
 
   if (!pex.PendingWeapon && Player.MO.Health > 0) {
     if (Wpn.FireMode == Weapon::FIRE_Primary && (Player.Buttons&BT_ATTACK)) {
+      pex.ResetPlayerFiringState();
       ++pex.Refire;
       pex.FireWeapon(refirestate!optional);
       return;
     }
 
     if (Wpn.FireMode == Weapon::FIRE_Secondary && (Player.Buttons&BT_ALT_ATTACK)) {
+      pex.ResetPlayerFiringState();
       ++pex.Refire;
       pex.AltFireWeapon(refirestate!optional);
       return;
@@ -257,10 +220,7 @@ protected final void do_A_ReFire (optional state refirestate) self(Actor) {
     pex.Refire = 0;
     //k8: do we need to check ammo here at all?
     Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true); // k8: should we switch weapon here?
-  } else {
-    pex.ResetWeaponReloadRefire();
   }
-#endif
 }
 
 

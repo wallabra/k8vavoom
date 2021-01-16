@@ -129,20 +129,18 @@ class VBasePlayer : public VGameObject {
 
   // set in `A_WeaponReady()`, processed in player tick
   enum {
-    WAF_ALLOW_SWITCH       = 1u<<0,
-    WAF_ALLOW_PRIMARY_FIRE = 1u<<1,
-    WAF_ALLOW_ALT_FIRE     = 1u<<2,
-    WAF_ALLOW_RELOAD       = 1u<<3,
-    WAF_ALLOW_ZOOM         = 1u<<4,
-    WAF_ALLOW_USER1        = 1u<<5,
-    WAF_ALLOW_USER2        = 1u<<6,
-    WAF_ALLOW_USER3        = 1u<<7,
-    WAF_ALLOW_USER4        = 1u<<8,
-    WAF_REFIRE_FLAG        = 1u<<9,
+    WAF_WAS_WEAPON_READY   = 1u<<0,
+    WAF_ALLOW_SWITCH       = 1u<<1,
+    WAF_ALLOW_PRIMARY_FIRE = 1u<<2,
+    WAF_ALLOW_ALT_FIRE     = 1u<<3,
+    WAF_ALLOW_RELOAD       = 1u<<4,
+    WAF_ALLOW_ZOOM         = 1u<<5,
+    WAF_ALLOW_USER1        = 1u<<6,
+    WAF_ALLOW_USER2        = 1u<<7,
+    WAF_ALLOW_USER3        = 1u<<8,
+    WAF_ALLOW_USER4        = 1u<<9,
   };
   vuint32 WeaponActionFlags;
-  // set in `A_Refire()`
-  VState *WeaponRefireState;
 
   VStr UserInfo;
 
@@ -279,8 +277,9 @@ public:
   void Printf(const char *, ...) __attribute__((format(printf,2,3)));
   void CenterPrintf(const char *, ...) __attribute__((format(printf,2,3)));
 
-  void SetViewState(int, VState *);
-  void AdvanceViewStates(float);
+  void SetViewState (int position, VState *InState);
+  bool AdvanceViewStates (float deltaTime);
+  bool WillAdvanceWeaponState (float deltaTime);
 
   void SetUserInfo(VStr);
   void ReadFromUserInfo();
@@ -347,6 +346,7 @@ public:
   DECLARE_FUNCTION(SetViewObjectIfNone)
   DECLARE_FUNCTION(SetViewState)
   DECLARE_FUNCTION(AdvanceViewStates)
+  DECLARE_FUNCTION(WillAdvanceWeaponState)
   DECLARE_FUNCTION(DisconnectBot)
 
   DECLARE_FUNCTION(ClientStartSound)
@@ -410,6 +410,8 @@ public:
   void eventClientFOV (float deltaTime) { static VMethodProxy method("ClientFOV"); vobjPutParamSelf(deltaTime); VMT_RET_VOID(method); }
 
   void eventInitWeaponSlots () { static VMethodProxy method("InitWeaponSlots"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+
+  void eventProcessWeaponActions () { static VMethodProxy method("ProcessWeaponActions"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
   bool IsNoclipActive () { static VMethodProxy method("GetIsNoclipActive"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
 

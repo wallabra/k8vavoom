@@ -283,6 +283,7 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 extern TArray<int> AllModelTextures;
 extern int validcount; // defined in "sv_main.cpp"
+extern vint64 validcountState; // defined in "sv_main.cpp"
 extern int validcountSZCache; // defined in "sv_main.cpp"
 
 extern rgba_t r_palette[256];

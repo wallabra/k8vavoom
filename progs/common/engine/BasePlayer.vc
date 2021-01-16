@@ -75,6 +75,7 @@ transient bool bAutonomousProxy;
 native readonly private void *Net;
 
 // weapon action flags
+native transient bool bWeaponWasWeaponReady;
 native transient bool bWeaponAllowSwitch;
 native transient bool bWeaponAllowPrimaryFire;
 native transient bool bWeaponAllowAltFire;
@@ -84,9 +85,6 @@ native transient bool bWeaponAllowUser1;
 native transient bool bWeaponAllowUser2;
 native transient bool bWeaponAllowUser3;
 native transient bool bWeaponAllowUser4;
-native transient bool bWeaponRefireFlag;
-// set in `A_Refire()`
-native transient state WeaponRefireState;
 
 string UserInfo;
 
@@ -239,7 +237,8 @@ native final void ResetWeaponActionFlags ();
 native final void SetViewObject (Object vobj);
 native final void SetViewObjectIfNone (Object vobj);
 native final void SetViewState (int position, state stnum);
-native final void AdvanceViewStates (float deltaTime);
+native final bool AdvanceViewStates (float deltaTime);
+native final bool WillAdvanceWeaponState (float deltaTime);
 native final void DisconnectBot ();
 
 // for networking
