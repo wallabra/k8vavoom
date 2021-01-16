@@ -68,6 +68,23 @@ static VCvarI r_lmap_texture_check_radius_dynamic("r_lmap_texture_check_radius_d
 
 //==========================================================================
 //
+//  calcLightPoint
+//
+//==========================================================================
+static inline TVec calcLightPoint (const TVec &pt, float height) {
+  TVec p = pt;
+  if (height > 0.0f) {
+    // raise a point to 1/3 of the height
+    //p.z += height*(1.0f/3.0f);
+    // raise a point to 1/2 of the height
+    p.z += height*0.5f;
+  }
+  return p;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::CalcScreenLightDimensions
 //
 //  use drawer's vieworg, so it can be called only when rendering a scene
@@ -727,11 +744,12 @@ float VRenderLevelShared::CheckLightPointCone (VEntity *lowner, const TVec &p, c
   bbox[3+1] = p.y+radius*0.4f;
   bbox[3+2] = p.z+(height > 0.0f ? height : 0.0f);
   if (!pl.checkBox(bbox)) return 0.0f;
-  float res = p.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
+  float res = calcLightPoint(p, height).CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
   if (res == 1.0f) return res;
   CONST_BBoxVertexIndex;
   for (unsigned bi = 0; bi < 8; ++bi) {
     const TVec vv(bbox[BBoxVertexIndex[bi][0]], bbox[BBoxVertexIndex[bi][1]], bbox[BBoxVertexIndex[bi][2]]);
+    if (pl.PointOnSide(vv)) continue;
     const float attn = vv.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
     if (attn > res) {
       res = attn;
@@ -869,6 +887,7 @@ sec_surface_t *SV_DebugFindNearestFloor (subsector_t *sub, const TVec &p) {
 //  sprite height center
 //
 //==========================================================================
+/*
 sec_surface_t *VRenderLevelShared::GetNearestFloor (const subsector_t *sub, const TVec &p) {
   if (!sub) return nullptr;
   sec_surface_t *rfloor = nullptr;
@@ -916,6 +935,7 @@ sec_surface_t *VRenderLevelShared::GetNearestFloor (const subsector_t *sub, cons
   }
   return rfloor;
 }
+*/
 
 
 //==========================================================================
@@ -923,13 +943,14 @@ sec_surface_t *VRenderLevelShared::GetNearestFloor (const subsector_t *sub, cons
 //  VRenderLevelShared::CalcEntityStaticLightingFromOwned
 //
 //==========================================================================
-void VRenderLevelShared::CalcEntityStaticLightingFromOwned (VEntity *lowner, const TVec &p, float radius, float height, float &l, float &lr, float &lg, float &lb) {
+void VRenderLevelShared::CalcEntityStaticLightingFromOwned (VEntity *lowner, const TVec &pt, float radius, float height, float &l, float &lr, float &lg, float &lb) {
   // fullight by owned lights
   if (!lowner) return;
 
   auto stpp = StOwners.find(lowner->ServerUId);
   if (!stpp) return;
 
+  const TVec p = calcLightPoint(pt, height);
   const light_t *stl = &Lights[*stpp];
   const float distSq = (p-stl->origin).lengthSquared();
   if (distSq < stl->radius*stl->radius) return; // too far away
@@ -937,7 +958,7 @@ void VRenderLevelShared::CalcEntityStaticLightingFromOwned (VEntity *lowner, con
   float add = stl->radius-sqrtf(distSq);
   if (add > 1.0f) {
     if (stl->coneAngle > 0.0f && stl->coneAngle < 360.0f) {
-      const float attn = CheckLightPointCone(lowner, p, radius, height, stl->origin, stl->coneDirection, stl->coneAngle);
+      const float attn = CheckLightPointCone(lowner, pt, radius, height, stl->origin, stl->coneDirection, stl->coneAngle);
       add *= attn;
       if (add <= 1.0f) return;
     }
@@ -954,20 +975,21 @@ void VRenderLevelShared::CalcEntityStaticLightingFromOwned (VEntity *lowner, con
 //  VRenderLevelShared::CalcEntityDynamicLightingFromOwned
 //
 //==========================================================================
-void VRenderLevelShared::CalcEntityDynamicLightingFromOwned (VEntity *lowner, const TVec &p, float radius, float height, float &l, float &lr, float &lg, float &lb) {
+void VRenderLevelShared::CalcEntityDynamicLightingFromOwned (VEntity *lowner, const TVec &pt, float radius, float height, float &l, float &lr, float &lg, float &lb) {
   // fullight by owned lights
   if (!lowner) return;
 
   auto dlpp = dlowners.find(lowner->ServerUId);
   if (!dlpp) return;
 
+  const TVec p = calcLightPoint(pt, height);
   const dlight_t &dl = DLights[*dlpp];
   const float distSq = (p-dl.origin).lengthSquared();
   if (distSq >= dl.radius*dl.radius) return; // too far away
   float add = (dl.radius-dl.minlight)-sqrtf(distSq);
   if (add > 1.0f) {
     if (dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
-      const float attn = CheckLightPointCone(lowner, p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
+      const float attn = CheckLightPointCone(lowner, pt, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
       add *= attn;
       if (add <= 1.0f) return;
     }
@@ -987,9 +1009,10 @@ void VRenderLevelShared::CalcEntityDynamicLightingFromOwned (VEntity *lowner, co
 //  pass light values from ambient pass
 //
 //==========================================================================
-void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height) {
+void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &pt, float radius, float height) {
   //WARNING! if `MAX_DLIGHTS` is not 32, remove the last check
   if (r_dynamic_lights && sub->dlightframe == currDLightFrame && sub->dlightbits) {
+    const TVec p = calcLightPoint(pt, height);
     const bool dynclip = r_dynamic_clip.asBool();
     const int snum = (int)(ptrdiff_t)(sub-&Level->Subsectors[0]);
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
@@ -1021,7 +1044,7 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
         //const bool isowned = (lowner && lowner->ServerUId == dl.ownerUId);
         // check potential visibility
         if (dl.coneAngle > 0.0f && dl.coneAngle < 360.0f) {
-          const float attn = CheckLightPointCone(lowner, p, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
+          const float attn = CheckLightPointCone(lowner, pt, radius, height, dl.origin, dl.coneDirection, dl.coneAngle);
           add *= attn;
           if (add <= 1.0f) continue;
         }
@@ -1048,9 +1071,10 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
 //  (light variables must be initialized)
 //
 //==========================================================================
-void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height) {
+void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &pt, float radius, float height) {
   if (r_static_lights && sub) {
     if (!staticLightsFiltered) RefilterStaticLights();
+    const TVec p = calcLightPoint(pt, height);
     const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     const bool dynclip = true; //r_dynamic_clip.asBool();
     const bool texCheck = r_lmap_texture_check_static.asBool();
@@ -1071,7 +1095,7 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
       float add = stl->radius-sqrtf(distSq);
       if (add > 1.0f) {
         if (stl->coneAngle > 0.0f && stl->coneAngle < 360.0f) {
-          const float attn = CheckLightPointCone(lowner, p, radius, height, stl->origin, stl->coneDirection, stl->coneAngle);
+          const float attn = CheckLightPointCone(lowner, pt, radius, height, stl->origin, stl->coneDirection, stl->coneAngle);
           add *= attn;
           if (add <= 1.0f) continue;
         }
@@ -1101,7 +1125,7 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
       float add = stl->radius-sqrtf(distSq);
       if (add > 1.0f) {
         if (stl->coneAngle > 0.0f && stl->coneAngle < 360.0f) {
-          const float attn = CheckLightPointCone(lowner, p, radius, height, stl->origin, stl->coneDirection, stl->coneAngle);
+          const float attn = CheckLightPointCone(lowner, pt, radius, height, stl->origin, stl->coneDirection, stl->coneAngle);
           add *= attn;
           if (add <= 1.0f) continue;
         }
@@ -1127,9 +1151,11 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
 //  (light variables must be initialized)
 //
 //==========================================================================
-void VRenderLevelShared::CalculateSubAmbient (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius) {
+void VRenderLevelShared::CalculateSubAmbient (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height) {
   unsigned glowFlags = 3u; // bit 0: floor glow allowed; bit 1: ceiling glow allowed
+  if (height < 0.0f) height = 0.0f;
 
+  //const TVec p = calcLightPoint(pt, height);
   //FIXME: this is slightly wrong (and slow)
   if (/*!skipAmbient &&*/ sub->regions) {
     //sec_region_t *regbase;
@@ -1225,20 +1251,30 @@ void VRenderLevelShared::CalculateSubAmbient (VEntity *lowner, float &l, float &
 
   // glowing flats
   if (glowFlags && r_glow_flat && sub->sector) {
+    //const float hadd = height*(1.0f/8.0f);
+    const float hadd = 6.0f;
     const sector_t *sec = sub->sector;
     // fuckin' pasta!
     if ((glowFlags&1u) && sec->floor.pic) {
       VTexture *gtex = GTextureManager(sec->floor.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
-        const float hgt = p.z-sub->sector->floor.GetPointZClamped(p);
-        MIX_FLAT_GLOW
+        const float floorz = sub->sector->floor.GetPointZClamped(p);
+        if (p.z >= floorz) {
+          const float pz = p.z+hadd;
+          const float hgt = pz-floorz;
+          MIX_FLAT_GLOW
+        }
       }
     }
     if ((glowFlags&2u) && sec->ceiling.pic) {
       VTexture *gtex = GTextureManager(sec->ceiling.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
-        const float hgt = sub->sector->ceiling.GetPointZClamped(p)-p.z;
-        MIX_FLAT_GLOW
+        const float ceilz = sub->sector->ceiling.GetPointZClamped(p);
+        if (p.z <= ceilz) {
+          const float pz = min2(ceilz-hadd, p.z+height-hadd);
+          const float hgt = ceilz-pz;
+          MIX_FLAT_GLOW
+        }
       }
     }
   }
@@ -1252,18 +1288,15 @@ void VRenderLevelShared::CalculateSubAmbient (VEntity *lowner, float &l, float &
 //  VRenderLevelShared::LightPoint
 //
 //==========================================================================
-vuint32 VRenderLevelShared::LightPoint (VEntity *lowner, TVec p, float radius, float height, const subsector_t *psub) {
+vuint32 VRenderLevelShared::LightPoint (VEntity *lowner, const TVec p, float radius, float height, const subsector_t *psub) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   const subsector_t *sub = (psub ? psub : Level->PointInSubsector(p));
 
   float l = 0.0f, lr = 0.0f, lg = 0.0f, lb = 0.0f;
 
-  // raise a point to 1/3 of the height
-  if (height > 0) p.z += height*(1.0f/3.0f);
-
   // calculate ambient light level
-  CalculateSubAmbient(lowner, l, lr, lg, lb, sub, p, radius);
+  CalculateSubAmbient(lowner, l, lr, lg, lb, sub, p, radius, height);
 
   // fullight by owned lights
   if (lowner) {
@@ -1292,16 +1325,13 @@ vuint32 VRenderLevelShared::LightPoint (VEntity *lowner, TVec p, float radius, f
 //  used in advrender to calculate model lighting
 //
 //==========================================================================
-vuint32 VRenderLevelShared::LightPointAmbient (VEntity *lowner, TVec p, float radius, float height, const subsector_t *psub) {
+vuint32 VRenderLevelShared::LightPointAmbient (VEntity *lowner, const TVec p, float radius, float height, const subsector_t *psub) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   const subsector_t *sub = (psub ? psub : Level->PointInSubsector(p));
   float l = 0.0f, lr = 0.0f, lg = 0.0f, lb = 0.0f;
 
-  // raise a point to 1/3 of the height
-  if (height > 0) p.z += height*(1.0f/3.0f);
-
-  CalculateSubAmbient(lowner, l, lr, lg, lb, sub, p, radius);
+  CalculateSubAmbient(lowner, l, lr, lg, lb, sub, p, radius, height);
 
   // fullight by owned lights
   if (lowner) {

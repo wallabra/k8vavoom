@@ -421,9 +421,9 @@ public:
 
   // defined only after `PushDlights()`
   // `radius` is used for visibility raycasts
-  vuint32 LightPoint (VEntity *lowner, TVec p, float radius, float height, const subsector_t *psub=nullptr);
+  vuint32 LightPoint (VEntity *lowner, const TVec p, float radius, float height, const subsector_t *psub=nullptr);
   // `radius` is used for... nothing yet
-  vuint32 LightPointAmbient (VEntity *lowner, TVec p, float radius, float height, const subsector_t *psub=nullptr);
+  vuint32 LightPointAmbient (VEntity *lowner, const TVec p, float radius, float height, const subsector_t *psub=nullptr);
 
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) override;
 
@@ -695,14 +695,14 @@ protected:
 
   // used to get a floor to sample lightmap
   // WARNING! can return `nullptr`!
-  sec_surface_t *GetNearestFloor (const subsector_t *sub, const TVec &p);
+  //sec_surface_t *GetNearestFloor (const subsector_t *sub, const TVec &p);
 
   // this is common code for light point calculation
   // pass light values from ambient pass
   void CalculateDynLightSub (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height);
 
   // calculate subsector's ambient light (light variables must be initialized)
-  void CalculateSubAmbient (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius);
+  void CalculateSubAmbient (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height);
 
   // calculate subsector's light from static light sources (light variables must be initialized)
   void CalculateSubStatic (VEntity *lowner, float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height);

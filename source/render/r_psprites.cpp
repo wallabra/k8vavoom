@@ -369,7 +369,9 @@ void VRenderLevelShared::DrawPlayerSprites () {
     if (ltxr|ltxg|ltxb) {
       baselight = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
     } else {
-      baselight = LightPoint(nullptr, Drawer->vieworg-TVec(0.0f, 0.0f, cl->MO->Height), cl->MO->Radius, cl->MO->Height, r_viewleaf);
+      //const TVec lpos = Drawer->vieworg-TVec(0.0f, 0.0f, cl->MO->Height);
+      const TVec lpos = cl->MO->Origin;
+      baselight = LightPoint(nullptr, lpos, cl->MO->Radius, cl->MO->Height, r_viewleaf);
     }
   }
 
