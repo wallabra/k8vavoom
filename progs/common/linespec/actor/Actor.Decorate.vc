@@ -1569,6 +1569,7 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
   } else {
     tgt = EntityEx(DecorDoAAPtr('A_Warp', aptr));
   }
+
   if (!tgt) {
     KeepChainResult(); // it should not succeed
     return false;
@@ -1577,87 +1578,84 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
   EntityEx tomove = self;
 
   if (flags&WARPF_MOVEPTR) {
-    //print("%C: A_Warp(WARPF_MOVEPTR) is not supported yet!", self);
-    //return false;
     tomove = tgt;
+    tgt = self;
   }
 
-  TVec dest = tgt.Origin;
+  //printdebug("A_Warp: tomove=%C; tgt=%C", tomove, tgt);
 
-  if (flags&WARPF_ABSOLUTEPOSITION) {
-    dest = vector(xofs, yofs, zofs);
-    if (flags&WARPF_TOFLOOR) {
-      //dest.z = tgt.FloorZ+zofs; //FIXME: is this right?
-      sector_t *sec = XLevel.PointInSector(dest);
-      dest.z = GetPointZClamped(ref sec->floor, dest)+zofs;
-    }
-  } else {
-    if (xofs || yofs || zofs) {
-      if (flags&WARPF_ABSOLUTEOFFSET) {
-        //FIXME: up is not right here?
-        dest += vector(xofs, yofs, 0);
-      } else {
-        TVec fwd, right, up;
-        AngleVectors(tgt.Angles, out fwd, out right, out up);
-        dest += fwd*xofs;
-        dest += right*yofs;
-        //FIXME: up is not right here?
-        //dir += up*zofs;
-      }
-    }
-    //FIXME: up is not right here?
-    if (flags&WARPF_TOFLOOR) {
-      //dest.z = tgt.FloorZ+zofs; //FIXME: is this right?
-      sector_t *sec = XLevel.PointInSector(dest);
-      dest.z = GetPointZClamped(ref sec->floor, dest)+zofs;
-    } else {
-      dest.z += zofs;
-    }
+  if (!(flags&WARPF_ABSOLUTEANGLE)) {
+    angle += (flags&WARPF_USECALLERANGLE ? tomove.Angles.yaw : tgt.Angles.yaw);
   }
+  angle = AngleMod360(angle);
 
-  dest += vector(tgt.Radius*radiusoffset, tgt.Radius*radiusoffset, tgt.Height*heightoffset);
+  float rad = radiusoffset*tgt.Radius;
+  float s, c;
+  sincos(angle, out s, out c);
 
-  TAVec newa = tomove.Angles;
-  if (!(flags&WARPF_USECALLERANGLE)) newa.yaw = tgt.Angles.yaw;
+  //printdebug("A_Warp:   000: xofs=%s; yofs=%s; zofs=%s", xofs, yofs, zofs);
 
-  if (flags&WARPF_ABSOLUTEANGLE) {
-    newa.yaw = AngleMod360(angle);
-  } else {
-    newa.yaw = AngleMod360(newa.yaw+angle);
-  }
+  zofs += tgt.Height*heightoffset;
+  //printdebug("A_Warp:   001: xofs=%s; yofs=%s; zofs=%s", xofs, yofs, zofs);
 
-  if (flags&WARPF_COPYPITCH) {
-    newa.pitch = pitch;
-  } else {
-    newa.pitch += pitch;
-  }
+  //FIXME!
+  /*
+  bIntrJustMoved = false;
+  LastMoveOrigin = NewOrigin;
+  */
 
-  if (!(flags&WARPF_NOCHECKPOSITION)) {
-    if (!tomove.CheckPosition(dest)) {
-      KeepChainResult(); // it should not succeed
-      return false;
-    }
-  }
-
-  if (flags&WARPF_TESTONLY) return true; // chain result is not reset, so it will become `true`
-
-  //print("A_Warp: src=%C; tgt=%C; heightoffset=%s; flags=0x%08x; pitch=%s; angles=%s; apitch=%s; newapitch=%s", self, tgt, heightoffset, flags, pitch, tomove.Angles, Angles.pitch, newa.pitch);
-
-  tomove.bIntrJustMoved = !!(flags&WARPF_INTERPOLATE); // disable movement interpolation
+  //!tomove.bIntrJustMoved = !!(flags&WARPF_INTERPOLATE); // disable movement interpolation
   //tomove.LastMoveOrigin = tomove.Origin;
   //tomove.LastMoveAngles = tomove.Angles;
   //tomove.LastMoveTime = XLevel.Time;
+
+  TVec oldOrigin = tomove.Origin;
+
   tomove.UnlinkFromWorld();
-  tomove.Origin = dest;
-  tomove.Angles = newa;
+  if (flags&WARPF_ABSOLUTEPOSITION) {
+    tomove.Origin = vector(xofs+rad*c, yofs+rad*s, zofs);
+  } else {
+    if (!(flags&WARPF_ABSOLUTEOFFSET)) {
+      float xofs1 = xofs;
+      // in relative mode negative y values mean 'left' and positive ones mean 'right'
+      // This is the inverse orientation of the absolute mode!
+      xofs = xofs1*c+yofs*s;
+      yofs = xofs1*s-yofs*c;
+    }
+    tomove.Origin = tgt.Origin+vector(xofs+rad*c, yofs+rad*s, (flags&WARPF_TOFLOOR ? 0.0 : zofs));
+  }
   tomove.LinkToWorld();
 
-       if (flags&WARPF_STOP) tomove.Velocity = vector(0, 0, 0);
-  else if (flags&WARPF_COPYVELOCITY) tomove.Velocity = tgt.Velocity;
+  if (flags&WARPF_TOFLOOR) {
+    float newz = (tomove.Sector ? GetPointZClamped(ref tomove.Sector->floor, tomove.Origin) : tomove.FloorZ)+zofs;
+    tomove.Origin.z = newz+zofs;
+  }
 
-  if (success_state) DoJump(success_state, affectStateCallResult:true); // chain result is not reset, so it will become `true`
+  tmtrace_t tmtrace;
+  if ((flags&WARPF_NOCHECKPOSITION) || tomove.CheckRelPosition(out tmtrace, tomove.Origin, noPickups:true)) {
+    if (flags&WARPF_TESTONLY) {
+      tomove.SetOrigin(oldOrigin);
+    } else {
+      tomove.Angles.yaw = angle;
+      if (flags&WARPF_COPYPITCH) tomove.Angles.pitch = tgt.Angles.pitch;
+      if (pitch != 0) tomove.Angles.pitch += pitch;
 
-  return true;
+      if (flags&WARPF_COPYVELOCITY) tomove.Velocity = tgt.Velocity;
+      if (flags&WARPF_STOP) tomove.Velocity = vector(0, 0, 0);
+
+      //TODO: WARPF_BOB
+
+      tomove.TryMoveEx(out tmtrace, tomove.Origin, AllowDropOff:true);
+      tomove.bIntrJustMoved = !!(flags&WARPF_INTERPOLATE); // disable movement interpolation
+    }
+    if (success_state) DoJump(success_state, affectStateCallResult:true); // chain result is not reset, so it will become `true`
+    return true;
+  } else {
+    //FIXME: keep interpolation?
+    tomove.SetOrigin(oldOrigin);
+    KeepChainResult(); // it should not succeed
+    return false;
+  }
 }
 
 
