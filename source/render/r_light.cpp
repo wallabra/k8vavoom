@@ -1239,8 +1239,8 @@ void VRenderLevelShared::CalculateSubAmbient (VEntity *lowner, float &l, float &
       /*glowL *= 0.8f;*/ \
       if (glowL > 1.0f) { \
         /*l *= 0.8f;*/ \
-        const float llfrac = (l/255.0f)*0.8f; \
-        const float glfrac = (glowL/255.0f)*0.8f; \
+        const float llfrac = 0.8f; /*(l/255.0f)*0.8f;*/ \
+        const float glfrac = (glowL/255.0f)*0.9f; \
         lr = clampval(lr*llfrac+glowR*glfrac, 0.0f, 255.0f); \
         lg = clampval(lg*llfrac+glowG*glfrac, 0.0f, 255.0f); \
         lb = clampval(lb*llfrac+glowB*glfrac, 0.0f, 255.0f); \
