@@ -74,6 +74,20 @@ transient bool bAutonomousProxy;
 
 native readonly private void *Net;
 
+// weapon action flags
+native transient bool bWeaponAllowSwitch;
+native transient bool bWeaponAllowPrimaryFire;
+native transient bool bWeaponAllowAltFire;
+native transient bool bWeaponAllowReload;
+native transient bool bWeaponAllowZoom;
+native transient bool bWeaponAllowUser1;
+native transient bool bWeaponAllowUser2;
+native transient bool bWeaponAllowUser3;
+native transient bool bWeaponAllowUser4;
+native transient bool bWeaponRefireFlag;
+// set in `A_Refire()`
+native transient state WeaponRefireState;
+
 string UserInfo;
 
 string PlayerName;
@@ -220,6 +234,7 @@ native final void cprint (string format, ...) [printf,1];
 native final void centerprint (string format, ...) [printf,1];
 native final int GetPlayerNum ();
 native final void ClearPlayer ();
+native final void ResetWeaponActionFlags ();
 
 native final void SetViewObject (Object vobj);
 native final void SetViewObjectIfNone (Object vobj);
@@ -573,6 +588,7 @@ void eventSetReadyWeapon (Entity ent, bool instant) {}
 //
 //==========================================================================
 void ResetToDefaults () {
+  ResetWeaponActionFlags();
 }
 
 

@@ -1701,6 +1701,109 @@ void SetupPsprites () {
 
 //==========================================================================
 //
+//  ProcessWeaponActions
+//
+//==========================================================================
+void ProcessWeaponActions () {
+  if (PendingWeapon == ReadyWeapon) PendingWeapon = none;
+
+  if (!MO || MO.Health <= 0) bWeaponAllowSwitch = true;
+
+  #if 0
+  if (bWeaponAllowSwitch ||
+      bWeaponAllowPrimaryFire ||
+      bWeaponAllowAltFire ||
+      bWeaponAllowReload ||
+      bWeaponAllowZoom ||
+      bWeaponRefireFlag)
+  {
+    printdebug("%C: bWeaponAllowSwitch=%B", self, bWeaponAllowSwitch);
+    printdebug("%C: bWeaponAllowPrimaryFire=%B", self, bWeaponAllowPrimaryFire);
+    printdebug("%C: bWeaponAllowAltFire=%B", self, bWeaponAllowAltFire);
+    printdebug("%C: bWeaponAllowReload=%B", self, bWeaponAllowReload);
+    printdebug("%C: bWeaponAllowZoom=%B", self, bWeaponAllowZoom);
+    printdebug("%C: bWeaponRefireFlag=%B", self, bWeaponRefireFlag);
+  }
+  #endif
+
+  if (bWeaponAllowSwitch) {
+    if ((PendingWeapon && !bDisableWeaponSwitch) || (MO && MO.Health <= 0)) {
+      ResetWeaponReloadRefire();
+      ResetWeaponActionFlags();
+      if (ReadyWeapon) {
+        ReadyWeapon.bBobDisabled = true;
+        SetViewObject(ReadyWeapon);
+        SetViewState(PS_WEAPON, ReadyWeapon.GetDownState());
+      }
+      return;
+    }
+  }
+
+  bool wasFireAction = false;
+
+  Weapon Wpn = ReadyWeapon;
+  if (!Wpn) {
+    bool oldAllowSwitch = bWeaponAllowSwitch;
+    ResetWeaponReloadRefire();
+    ResetWeaponActionFlags();
+    bWeaponAllowSwitch = oldAllowSwitch;
+    ResetPlayerFiringState();
+    return;
+  }
+
+  //printdebug("%C: bWeaponAllowPrimaryFire=%B; btn=%B; st=%B; bAttackDown=%B", self, bWeaponAllowPrimaryFire, !!(Buttons&BT_ATTACK), !!Wpn.FindState('Fire'), bAttackDown);
+
+  if (bWeaponAllowPrimaryFire && (Buttons&BT_ATTACK) && Wpn.FindState('Fire')) {
+    if (!bAttackDown || !Wpn.bNoAutoFire || bWeaponRefireFlag) {
+      if (bWeaponRefireFlag) ++Refire; else { Refire = 0; WeaponRefireState = none; }
+      //printdebug("%C: firing with %C, Refire=%s", self, Wpn, Refire);
+      bWeaponRefireFlag = false;
+      bAttackDown = true;
+      if (FireWeapon()) {
+        //printdebug("%C: FIRED with %C, Refire=%s", self, Wpn, Refire);
+        wasFireAction = true;
+        Wpn.bBobDisabled = true;
+      }
+    }
+  }
+
+  if (bWeaponAllowAltFire && (Buttons&BT_ALT_ATTACK) && Wpn.FindState('AltFire')) {
+    if (!bAltAttackDown || !Wpn.bNoAutoFire || bWeaponRefireFlag) {
+      if (bWeaponRefireFlag) ++Refire; else { Refire = 0; WeaponRefireState = none; }
+      bWeaponRefireFlag = false;
+      bAltAttackDown = true;
+      if (AltFireWeapon()) {
+        Wpn.bBobDisabled = true;
+        wasFireAction = true;
+      }
+    }
+  }
+
+  if (!wasFireAction) {
+    ResetPlayerFiringState();
+    Refire = 0;
+  }
+
+  // anyway
+  bWeaponRefireFlag = false;
+  WeaponRefireState = none;
+
+  if (bWeaponAllowReload && ((Buttons&BT_RELOAD) || bReloadQueued)) {
+    // `bReloadQueued` will be reset by `ReloadWeapon()`
+    if (ReloadWeapon()) Wpn.bBobDisabled = true;
+  }
+
+  if (bWeaponAllowZoom && (Buttons&BT_ZOOM) && Wpn.GetZoomState()) {
+    if (!!bZoomDown) {
+      bZoomDown = true;
+      if (ZoomWeapon()) Wpn.bBobDisabled = true;
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  MovePsprites
 //
 //  Called every tic by player thinking routine.
@@ -1761,6 +1864,13 @@ void MovePsprites (float deltaTime) {
   }
   */
 
+  bool newTick = false;
+  if (k8InWeaponReadyWatchCat != MO.XLevel.TicTime) {
+    k8InWeaponReadyWatchCat = MO.XLevel.TicTime;
+    newTick = true;
+    ProcessWeaponActions();
+  }
+
   //printdebug("%C: ReadyWeapon=%C; PendingWeapon=%C", self, ReadyWeapon, PendingWeapon);
   SetViewObject(ReadyWeapon);
   AdvanceViewStates(deltaTime);
@@ -1785,19 +1895,85 @@ void MovePsprites (float deltaTime) {
     }
   }
 
-  if (checkPW && MO && k8InWeaponReadyWatchCat != MO.XLevel.TicTime) {
+  if (checkPW && newTick && MO) {
     // check if we want to change a weapon
-    k8InWeaponReadyWatchCat = MO.XLevel.TicTime;
-    if (MO.Health <= 0) {
+    if (MO.Health <= 0 || PlayerState == PST_DEAD) {
       if (ReadyWeapon) {
         SetWeapon(none);
         BringUpWeapon();
       }
-    } else if (PendingWeapon && PendingWeapon != ReadyWeapon /*&& !bDisableWeaponSwitch*/) {
+    } else if (PlayerState == PST_LIVE && PendingWeapon && PendingWeapon != ReadyWeapon /*&& !bDisableWeaponSwitch*/) {
       SetWeapon(PendingWeapon);
       BringUpWeapon();
     }
   }
+}
+
+
+//==========================================================================
+//
+//  SetPlayerWeaponState
+//
+//  changes player state (animation)
+//  if `newstate` is `none`, set idle state if we're in attacking one
+//  never use to set idle state!
+//
+//==========================================================================
+void SetPlayerWeaponState (state newstate) {
+  // get player out of attack state
+  EntityEx ee = EntityEx(MO);
+  if (!ee) return;
+  if (newstate) {
+    if (newstate != ee.IdleState) ee.SetState(newstate);
+  } else {
+    if (!ee.IdleState) return;
+    if ((ee.MissileState && StateIsInSequence(ee.State, ee.MissileState)) ||
+        (ee.MeleeState && StateIsInSequence(ee.State, ee.MeleeState)))
+    {
+      ee.SetState(ee.IdleState);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  ResetPlayerFiringState
+//
+//==========================================================================
+void ResetPlayerFiringState () {
+  // get player out of attack state
+  EntityEx ee = EntityEx(MO);
+  if (!ee) return;
+  if (!ee.IdleState) return;
+  if ((ee.MissileState && StateIsInSequence(ee.State, ee.MissileState)) ||
+      (ee.MeleeState && StateIsInSequence(ee.State, ee.MeleeState)))
+  {
+    ee.SetState(ee.IdleState);
+  }
+}
+
+
+//===========================================================================
+//
+//  CommonFireWeapon
+//
+//  `firetype` is `Weapon::FIRE_Primary` or `Weapon::FIRE_Secondary`
+//
+//===========================================================================
+bool CommonFireWeapon (int firetype, state firestate) {
+  bReloadQueued = false;
+  if (!firestate) return false; // just in case
+  assert(firetype == Weapon::FIRE_Primary || firetype == Weapon::FIRE_Secondary);
+  if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(firetype, AutoSwitch:true)) return false;
+  ReadyWeapon.FireMode = firetype;
+  if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
+  SetViewObject(ReadyWeapon);
+  SetViewState(PS_WEAPON, firestate);
+  if (ReadyWeapon && !ReadyWeapon.bNoAlert) {
+    LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
+  }
+  return !!ReadyWeapon;
 }
 
 
@@ -1806,21 +1982,10 @@ void MovePsprites (float deltaTime) {
 //  FireWeapon
 //
 //===========================================================================
-void FireWeapon (optional state firestate) {
-  bReloadQueued = false;
-  if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:true)) return;
-
-  //print("FireWeapon: self=`%C`; MO=`%C`; PS_WEAPON=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, PS_WEAPON, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
-  //print("  Refire=%s", Refire);
-  //print("  MissileState=%s; SeeState=%s", EntityEx(MO).MissileState, EntityEx(MO).SeeState);
-
-  ReadyWeapon.FireMode = Weapon::FIRE_Primary;
-  if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
-  SetViewObject(ReadyWeapon);
-  SetViewState(PS_WEAPON, (/*specified_firestate &&*/ firestate ? firestate : ReadyWeapon.GetAttackState(Refire)));
-  if (ReadyWeapon && !ReadyWeapon.bNoAlert) {
-    LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
-  }
+bool FireWeapon (optional state firestate) {
+  if (!ReadyWeapon) return false;
+  if (!firestate) firestate = ReadyWeapon.GetAttackState(Refire);
+  return CommonFireWeapon(Weapon::FIRE_Primary, firestate);
 }
 
 
@@ -1829,21 +1994,10 @@ void FireWeapon (optional state firestate) {
 //  AltFireWeapon
 //
 //===========================================================================
-void AltFireWeapon (optional state firestate) {
-  bReloadQueued = false;
-  if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, AutoSwitch:true)) return;
-
-  //print("AltFireWeapon: self=`%C`; MO=`%C`; PS_WEAPON=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, PS_WEAPON, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
-  //print("  Refire=%s", Refire);
-  //print("  MissileState=%s; SeeState=%s", EntityEx(MO).MissileState, EntityEx(MO).SeeState);
-
-  ReadyWeapon.FireMode = Weapon::FIRE_Secondary;
-  if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
-  SetViewObject(ReadyWeapon);
-  SetViewState(PS_WEAPON, (/*specified_firestate &&*/ firestate ? firestate : ReadyWeapon.GetAltAttackState(Refire)));
-  if (ReadyWeapon && !ReadyWeapon.bNoAlert) {
-    LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
-  }
+bool AltFireWeapon (optional state firestate) {
+  if (!ReadyWeapon) return false;
+  if (!firestate) firestate = ReadyWeapon.GetAltAttackState(Refire);
+  return CommonFireWeapon(Weapon::FIRE_Secondary, firestate);
 }
 
 
@@ -1852,15 +2006,21 @@ void AltFireWeapon (optional state firestate) {
 //  ReloadWeapon
 //
 //===========================================================================
-void ReloadWeapon () {
+bool ReloadWeapon () {
   //k8: reloading weapon resets refire state
   ResetWeaponReloadRefire();
   if (ReadyWeapon) {
     state rst = ReadyWeapon.GetReloadState();
-    if (!rst) return;
+    if (!rst) return false;
+    //printdebug("reloading %C: state is %s", ReadyWeapon, rst);
+    // set player pawn to reloading state, if there is any, or into idle one
+    SetPlayerWeaponState(MO.FindState('Reload'));
     SetViewObject(ReadyWeapon);
     SetViewState(PS_WEAPON, rst);
+    //printdebug("reloading %C: SET state is %s", ReadyWeapon, rst);
+    return true;
   }
+  return false;
 }
 
 
@@ -1869,15 +2029,18 @@ void ReloadWeapon () {
 //  ZoomWeapon
 //
 //===========================================================================
-void ZoomWeapon () {
+bool ZoomWeapon () {
   //k8: zooming weapon resets refire state
   ResetWeaponReloadRefire();
   if (ReadyWeapon) {
     state zst = ReadyWeapon.GetZoomState();
-    if (!zst) return;
+    if (!zst) return false;
+    SetPlayerWeaponState(MO.FindState('Zoom'));
     SetViewObject(ReadyWeapon);
     SetViewState(PS_WEAPON, zst);
+    return true;
   }
+  return false;
 }
 
 
@@ -3316,6 +3479,8 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
 
   //k8: just in case
   ResetWeaponReloadRefire();
+  ResetWeaponActionFlags();
+  bDisableWeaponSwitch = false;
 
   if (GetCvarB('k8HealthAccum_Reset')) k8HealthAccum_Amount = 0;
   k8HealthAccum_LastRegenTime = -10000;
@@ -3961,6 +4126,8 @@ override void PlayerExitMap (bool clusterChange) {
   Rain2 = none;
   //k8: just in case
   ResetWeaponReloadRefire();
+  ResetWeaponActionFlags();
+  //bDisableWeaponSwitch = false;
   LocalQuakeHappening = vector(0, 0, 0);
 }
 
@@ -4138,6 +4305,9 @@ void DeathPlayerTick (float deltaTime) {
   // just in case
   k8HealthAccum_LastRegenTime = 0;
   k8HealthAccum_LastBoostTime = 0;
+  ResetWeaponReloadRefire();
+  ResetWeaponActionFlags();
+  bDisableWeaponSwitch = false;
 
   ClearSubSeenInfo();
   MovePsprites(deltaTime);
@@ -4476,6 +4646,7 @@ override void PlayerTick (float deltaTime) {
     SideMove = 0.0;
     FlyMove = 0.0;
     ResetWeaponReloadRefire(); // no reload too
+    ResetWeaponActionFlags();
   } else if (bFrozen) {
     ForwardMove = 0.0;
     SideMove = 0.0;
@@ -4486,7 +4657,6 @@ override void PlayerTick (float deltaTime) {
   InventoryTick(deltaTime);
 
   if (PlayerState == PST_DEAD) {
-    ResetWeaponReloadRefire(); // no reload
     DeathPlayerTick(deltaTime);
     return;
   }
@@ -4527,7 +4697,7 @@ override void PlayerTick (float deltaTime) {
     }
   }
 
-  // queue reload
+  // process buttons (reset "down" flags)
   if (Buttons&BT_RELOAD) {
     // set "reload queued" only if the button was released and pressed again
     if (!bReloadDown) bReloadQueued = true;
@@ -4535,6 +4705,10 @@ override void PlayerTick (float deltaTime) {
   } else {
     bReloadDown = false;
   }
+
+  if (!(Buttons&BT_ATTACK)) bAttackDown = false;
+  if (!(Buttons&BT_ALT_ATTACK)) bAltAttackDown = false;
+  if (!(Buttons&BT_ZOOM)) bZoomDown = false;
 
   // copy view angles
   if (MO == Camera) MO.Angles = ViewAngles;
@@ -4610,10 +4784,14 @@ override void PlayerTick (float deltaTime) {
     bUseDown = false;
   }
 
-  if (!ReadyWeapon && PendingWeapon && !bDisableWeaponSwitch) {
+  /* done in `MovePsprites()`
+  ProcessWeaponActions();
+
+  if (!ReadyWeapon && PendingWeapon && !bDisableWeaponSwitch && bWeaponAllowSwitch) {
     SetWeapon(PendingWeapon);
     BringUpWeapon();
   }
+  */
 
   // morph counter
   if (MorphTime) {

@@ -361,7 +361,7 @@ void SV_Init () {
 
 //==========================================================================
 //
-//  SV_ResetPlayers
+//  SV_UpdateSkyFlat
 //
 //  call after texture manager updated a flat
 //

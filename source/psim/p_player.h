@@ -127,6 +127,23 @@ class VBasePlayer : public VGameObject {
 
   VNetConnection *Net;
 
+  // set in `A_WeaponReady()`, processed in player tick
+  enum {
+    WAF_ALLOW_SWITCH       = 1u<<0,
+    WAF_ALLOW_PRIMARY_FIRE = 1u<<1,
+    WAF_ALLOW_ALT_FIRE     = 1u<<2,
+    WAF_ALLOW_RELOAD       = 1u<<3,
+    WAF_ALLOW_ZOOM         = 1u<<4,
+    WAF_ALLOW_USER1        = 1u<<5,
+    WAF_ALLOW_USER2        = 1u<<6,
+    WAF_ALLOW_USER3        = 1u<<7,
+    WAF_ALLOW_USER4        = 1u<<8,
+    WAF_REFIRE_FLAG        = 1u<<9,
+  };
+  vuint32 WeaponActionFlags;
+  // set in `A_Refire()`
+  VState *WeaponRefireState;
+
   VStr UserInfo;
 
   VStr PlayerName;
@@ -325,6 +342,7 @@ public:
   DECLARE_FUNCTION(centerprint)
   DECLARE_FUNCTION(GetPlayerNum)
   DECLARE_FUNCTION(ClearPlayer)
+  DECLARE_FUNCTION(ResetWeaponActionFlags)
   DECLARE_FUNCTION(SetViewObject)
   DECLARE_FUNCTION(SetViewObjectIfNone)
   DECLARE_FUNCTION(SetViewState)

@@ -733,6 +733,7 @@ override void Destroyed () {
 //  InWeaponReadyCheckSetRecurseGuard
 //
 //==========================================================================
+/*
 final bool InWeaponReadyCheckSetRecurseGuard (name ftype) {
   // don't allow calling `A_WeaponReady()` more than once per tic
   if (PlayerEx(Player).k8InWeaponReadyWatchCat == XLevel.TicTime) {
@@ -745,26 +746,7 @@ final bool InWeaponReadyCheckSetRecurseGuard (name ftype) {
   PlayerEx(Player).k8InWeaponReadyWatchCat = XLevel.TicTime;
   return false;
 }
-
-
-//==========================================================================
-//
-//  WeaponReadyResetAttackState
-//
-//  changes player state (animation)
-//
-//==========================================================================
-final void WeaponReadyResetAttackState () {
-  // get out of attack state
-  if (!IdleState) return;
-  if ((MissileState && StateIsInSequence(State, MissileState)) ||
-      (MeleeState && StateIsInSequence(State, MeleeState)))
-  {
-    //print("%C: InMissile=%B", self, StateIsInSequence(State, MissileState));
-    //print("%C: InMelee  =%B", self, StateIsInSequence(State, MeleeState));
-    SetState(IdleState);
-  }
-}
+*/
 
 
 //==========================================================================
@@ -791,14 +773,29 @@ final void WeaponReadyResetAttackState () {
 [decorate] final void decorate_A_WeaponReady (optional int Flags) {
   if (!bIsPlayer) return;
 
+  /*
   bool wasZoomDown = Player.bZoomDown;
   if (PlayerEx(Player).k8InWeaponReadyWatchCat != XLevel.TicTime) Player.bZoomDown = !!(Player.Buttons&BT_ZOOM);
+  */
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) {
     PlayerEx(Player).ResetWeaponReloadRefire();
     return;
   }
+
+  #if 0
+  string flg;
+  if (Flags&WRF_NOBOB) flg ~= ",WRF_NOBOB";
+  if (Flags&WRF_NOFIRE) flg ~= ",WRF_NOFIRE"; else { if (Flags&WRF_NOSWITCH) flg ~= ",WRF_NOSWITCH"; if (Flags&WRF_NOSECONDARY) flg ~= ",WRF_NOSECONDARY"; }
+  if (Flags&WRF_ALLOWRELOAD) flg ~= ",WRF_ALLOWRELOAD";
+  if (Flags&WRF_ALLOWZOOM) flg ~= ",WRF_ALLOWZOOM";
+  if (Flags&WRF_DISABLESWITCH) flg ~= ",WRF_DISABLESWITCH";
+  //if (Flags&WRF_ALLOWREFIRE) flg ~= ",WRF_ALLOWREFIRE";
+  if (flg) flg = flg[1..$]; else flg = "<none>";
+  printdebug("%C: ENTER: A_WeaponReady(%C); flags=%s; state=%s", self, Wpn, flg, Player.ViewStates[PS_WEAPON].State);
+  scope(exit) printdebug("%C: EXIT : A_WeaponReady(%C); flags=%s; state=%s", self, Wpn, flg, Player.ViewStates[PS_WEAPON].State);
+  #endif
 
   Wpn.bBobDisabled = ((Flags&WRF_NOBOB) || Wpn.bDontBob);
 
@@ -813,70 +810,76 @@ final void WeaponReadyResetAttackState () {
     PlaySound(Wpn.ReadySound, CHAN_WEAPON);
   }
 
+  PlayerEx pex = PlayerEx(Player);
+  assert(pex);
+
+#if 1
+  Player.bWeaponAllowSwitch = !(Flags&(WRF_DISABLESWITCH|WRF_NOSWITCH));
+  if (Flags&WRF_DISABLESWITCH) pex.PendingWeapon = none;
+
+  Player.bWeaponAllowPrimaryFire = !(Flags&WRF_NOPRIMARY);
+  Player.bWeaponAllowAltFire = !(Flags&WRF_NOSECONDARY);
+  Player.bWeaponAllowReload = !!(Flags&WRF_ALLOWRELOAD);
+  Player.bWeaponAllowZoom = !!(Flags&WRF_ALLOWZOOM);
+#else
+  // old code
   if (Flags&WRF_DISABLESWITCH) {
     // this cancels switch
-    PlayerEx(Player).PendingWeapon = none;
+    pex.PendingWeapon = none;
   } else if (!(Flags&WRF_NOSWITCH)) {
     // put the weapon away if the player has a pending weapon or has died
-    if (PlayerEx(Player).PendingWeapon || Player.MO.Health <= 0) {
+    if (pex.PendingWeapon || Player.MO.Health <= 0) {
       if (InWeaponReadyCheckSetRecurseGuard('weapon change')) return;
-      if (!PlayerEx(Player).bDisableWeaponSwitch) {
+      if (!pex.bDisableWeaponSwitch) {
         Wpn.bBobDisabled = true;
-        PlayerEx(Player).ResetWeaponReloadRefire();
+        pex.ResetWeaponReloadRefire();
         Player.SetViewObject(Wpn);
         Player.SetViewState(PS_WEAPON, Wpn.GetDownState());
+        return;
       }
+    }
+  }
+
+  // reset fire buttons for non-autofiring weapon
+  if ((Flags&WRF_NOFIRE) != 0 && Wpn.bNoAutoFire) {
+    if (Flags&WRF_NOPRIMARY) Player.bAttackDown = false;
+    if (Flags&WRF_NOSECONDARY) Player.bAltAttackDown = false;
+  }
+
+  // check for reload
+  if ((Flags&WRF_ALLOWRELOAD) && (Player.bReloadQueued || Player.bReloadDown) && Wpn.GetReloadState()) {
+    if (InWeaponReadyCheckSetRecurseGuard('reloading')) return;
+    Wpn.bBobDisabled = true;
+    //k8: why i did this?
+    //Player.bAttackDown = true;
+    //Player.bAltAttackDown = true;
+    Player.bZoomDown = false;
+    // `bReloadQueued` will be reset by `ReloadWeapon()`
+    pex.ReloadWeapon();
+    return;
+  }
+
+  //print("wpnready: %C; flags=0x%04x; attack=%B", Wpn, Flags, !!(Player.Buttons&BT_ATTACK));
+  // primary fire
+  if (!(Flags&WRF_NOPRIMARY) && (Player.Buttons&BT_ATTACK) && Wpn.FindState('Fire')) {
+    if (InWeaponReadyCheckSetRecurseGuard('primary fire')) return;
+    if (!Player.bAttackDown || !Wpn.bNoAutoFire) {
+      Wpn.bBobDisabled = true;
+      Player.bAttackDown = true;
+      pex.FireWeapon();
       return;
     }
   }
 
-  //print("wpnready: %C; flags=0x%04x; attack=%B", Wpn, Flags, !!(Player.Buttons&BT_ATTACK));
-  if ((Flags&WRF_NOFIRE) != WRF_NOFIRE) {
-    // check for fire
-    if (!(Flags&WRF_NOPRIMARY) && (Player.Buttons&BT_ATTACK)) {
-      if (((Flags&WRF_ALLOWREFIRE) || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
-        if (InWeaponReadyCheckSetRecurseGuard('primary fire')) return;
-        WeaponReadyResetAttackState();
-        Wpn.bBobDisabled = true;
-        Player.bAttackDown = true;
-        Player.bReloadQueued = false;
-        PlayerEx(Player).FireWeapon();
-        //if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
-        return;
-      }
-    } else if (!(Flags&WRF_NOSECONDARY) && (Player.Buttons&BT_ALT_ATTACK) && Wpn.FindState('AltFire')) {
-      if (((Flags&WRF_ALLOWREFIRE) || !Player.bAltAttackDown) || !Wpn.bNoAutoFire) {
-        if (InWeaponReadyCheckSetRecurseGuard('secondary fire')) return;
-        WeaponReadyResetAttackState();
-        Wpn.bBobDisabled = true;
-        Player.bAltAttackDown = true;
-        Player.bReloadQueued = false;
-        PlayerEx(Player).AltFireWeapon();
-        //if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
-        return;
-      }
-    } else {
-      if (Player.bAttackDown || Player.bAltAttackDown) {
-        //k8: i don't think that we need any checks here, but still...
-        if (PlayerEx(Player).k8InWeaponReadyWatchCat != XLevel.TicTime) {
-          WeaponReadyResetAttackState();
-        }
-      }
-      Player.bAttackDown = false;
-      Player.bAltAttackDown = false;
+  // secondary fire
+  if (!(Flags&WRF_NOSECONDARY) && (Player.Buttons&BT_ALT_ATTACK) && Wpn.FindState('AltFire')) {
+    if (InWeaponReadyCheckSetRecurseGuard('secondary fire')) return;
+    if (!Player.bAltAttackDown || !Wpn.bNoAutoFire) {
+      Wpn.bBobDisabled = true;
+      Player.bAltAttackDown = true;
+      pex.AltFireWeapon();
+      return;
     }
-  }
-
-  // check for reload
-  if ((Flags&WRF_ALLOWRELOAD) && Player.bReloadQueued && Wpn.GetReloadState()) {
-    if (InWeaponReadyCheckSetRecurseGuard('reloading')) return;
-    WeaponReadyResetAttackState();
-    Wpn.bBobDisabled = true;
-    Player.bAttackDown = true;
-    Player.bAltAttackDown = true;
-    Player.bZoomDown = false;
-    PlayerEx(Player).ReloadWeapon();
-    return;
   }
 
   // check for zoom
@@ -884,15 +887,18 @@ final void WeaponReadyResetAttackState () {
     if ((Player.Buttons&BT_ZOOM) && Wpn.GetZoomState()) {
       if (!wasZoomDown) {
         if (InWeaponReadyCheckSetRecurseGuard('zoom')) return;
-        WeaponReadyResetAttackState();
         Wpn.bBobDisabled = true;
         Player.bZoomDown = true;
-        PlayerEx(Player).ZoomWeapon();
+        pex.ZoomWeapon();
       }
       return;
     }
   }
   //Player.bZoomDown = !!(Player.Buttons&BT_ZOOM);
+
+  // we are not firing, so reset player firing state
+  if (pex.k8InWeaponReadyWatchCat != XLevel.TicTime) pex.ResetPlayerFiringState();
+#endif
 
   // bobbing is moved out of here to `MovePsprites()`, so weapon can bob independently of tic rate
 }

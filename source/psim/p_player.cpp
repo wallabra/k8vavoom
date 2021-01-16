@@ -272,6 +272,11 @@ void VBasePlayer::ClearReferences () {
 void VBasePlayer::SetViewState (int position, VState *InState) {
   if (position < 0 || position >= NUMPSPRITES) return; // sanity check
 
+  if (position == PS_WEAPON) {
+    WeaponActionFlags = 0;
+    WeaponRefireState = nullptr;
+  }
+
   VViewState &VSt = ViewStates[position];
   VSLOGF("SetViewState(%d): watchcat=%d, vobj=%s, from %s to new %s", position, setStateWatchCat[position], (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<none>"), (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"), (InState ? *InState->Loc.toStringNoCol() : "<none>"));
 
@@ -991,6 +996,8 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer) {
   Self->PlayerFlags &= ~VBasePlayer::PF_UseDown;
   Self->PlayerFlags &= ~VBasePlayer::PF_AutomapRevealed;
   Self->PlayerFlags &= ~VBasePlayer::PF_AutomapShowThings;
+  Self->WeaponActionFlags = 0;
+  Self->WeaponRefireState = nullptr;
   Self->ExtraLight = 0;
   Self->FixedColormap = 0;
   Self->CShift = 0;
@@ -1004,6 +1011,12 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer) {
   for (VField *F = Self->GetClass()->Fields; F; F = F->Next) {
     VField::CopyFieldValue(Def+F->Ofs, (vuint8 *)Self+F->Ofs, F->Type);
   }
+}
+
+IMPLEMENT_FUNCTION(VBasePlayer, ResetWeaponActionFlags) {
+  vobjGetParamSelf();
+  Self->WeaponActionFlags = 0;
+  Self->WeaponRefireState = nullptr;
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, SetViewObject) {

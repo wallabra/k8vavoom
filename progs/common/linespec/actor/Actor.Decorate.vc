@@ -185,39 +185,82 @@ protected final void do_A_CheckReload () self(Actor) {
 protected final void do_A_ReFire (optional state refirestate) self(Actor) {
   if (!bIsPlayer) return;
 
-  // zero-state protection
-  if (PlayerEx(Player).k8InWeaponReadyWatchCat == XLevel.TicTime) return;
-  PlayerEx(Player).k8InWeaponReadyWatchCat = XLevel.TicTime;
+#if 1
+  PlayerEx pex = PlayerEx(Player);
+  if (!pex) return; // just in case
 
-  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  pex.WeaponRefireState = none;
+
+  Weapon Wpn = pex.ReadyWeapon;
 
   if (!Wpn) {
-    PlayerEx(Player).ResetWeaponReloadRefire();
-    if (!PlayerEx(Player).PendingWeapon && Player.MO.Health > 0) {
+    pex.ResetWeaponReloadRefire();
+    //pex.ResetPlayerFiringState();
+    if (!pex.PendingWeapon && Player.MO.Health > 0) {
       Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true); // k8: should we switch weapon here?
     }
     return;
   }
 
-  if (!PlayerEx(Player).PendingWeapon && Player.MO.Health > 0) {
+  if (!pex.PendingWeapon && Player.MO.Health > 0) {
     if (Wpn.FireMode == Weapon::FIRE_Primary && (Player.Buttons&BT_ATTACK)) {
-      ++PlayerEx(Player).Refire;
-      PlayerEx(Player).FireWeapon(refirestate!optional);
+      pex.bWeaponRefireFlag = true;
+      pex.bWeaponAllowPrimaryFire = true;
+      pex.WeaponRefireState = refirestate;
       return;
     }
 
     if (Wpn.FireMode == Weapon::FIRE_Secondary && (Player.Buttons&BT_ALT_ATTACK)) {
-      ++PlayerEx(Player).Refire;
-      PlayerEx(Player).AltFireWeapon(refirestate!optional);
+      pex.bWeaponRefireFlag = true;
+      pex.bWeaponAllowAltFire = true;
+      pex.WeaponRefireState = refirestate;
       return;
     }
 
-    PlayerEx(Player).Refire = 0;
+    pex.Refire = 0;
+    //k8: do we need to check ammo here at all?
+    Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true); // k8: should we switch weapon here?
+  }
+#else
+  // old code
+
+  PlayerEx pex = PlayerEx(Player);
+  if (!pex) return; // just in case
+
+  // zero-state protection
+  if (pex.k8InWeaponReadyWatchCat == XLevel.TicTime) return;
+  pex.k8InWeaponReadyWatchCat = XLevel.TicTime;
+
+  Weapon Wpn = pex.ReadyWeapon;
+
+  if (!Wpn) {
+    pex.ResetWeaponReloadRefire();
+    if (!pex.PendingWeapon && Player.MO.Health > 0) {
+      Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true); // k8: should we switch weapon here?
+    }
+    return;
+  }
+
+  if (!pex.PendingWeapon && Player.MO.Health > 0) {
+    if (Wpn.FireMode == Weapon::FIRE_Primary && (Player.Buttons&BT_ATTACK)) {
+      ++pex.Refire;
+      pex.FireWeapon(refirestate!optional);
+      return;
+    }
+
+    if (Wpn.FireMode == Weapon::FIRE_Secondary && (Player.Buttons&BT_ALT_ATTACK)) {
+      ++pex.Refire;
+      pex.AltFireWeapon(refirestate!optional);
+      return;
+    }
+
+    pex.Refire = 0;
     //k8: do we need to check ammo here at all?
     Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true); // k8: should we switch weapon here?
   } else {
-    PlayerEx(Player).ResetWeaponReloadRefire();
+    pex.ResetWeaponReloadRefire();
   }
+#endif
 }
 
 
