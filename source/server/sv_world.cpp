@@ -953,8 +953,8 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, unsigned *gl
     return sector->eregions;
   }
 
-  unsigned tmp = 0;
-  if (glowFlags) *glowFlags = 0; else glowFlags = &tmp;
+  unsigned gflg = 0;
+  //if (glowFlags) *glowFlags = 0; else glowFlags = &gflg;
 
   /*
    (?) if the point is in a water (swimmable), use swimmable region
@@ -968,7 +968,7 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, unsigned *gl
 
   sec_region_t *best = nullptr;
   float bestDist = 99999.0f; // minimum distance to region floor
-  *glowFlags = 3u; // will be reset when necessary
+  gflg = 3u; // will be reset when necessary
   for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     // ignore base (just in case) and visual-only regions
     if (reg->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_BaseRegion)) continue;
@@ -983,8 +983,8 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, unsigned *gl
     } else {
       // solid, use region floor
       // calc glow flags
-      if (p.z < rtopz) *glowFlags &= ~2u; // we have solid region above us, no ceiling glow
-      if (p.z > rbotz) *glowFlags &= ~1u; // we have solid region below us, no floor glow
+      if (p.z < rtopz) gflg &= ~2u; // we have solid region above us, no ceiling glow
+      if (p.z > rbotz) gflg &= ~1u; // we have solid region below us, no floor glow
       // check best distance
       botDist = rbotz-p.z;
     }
@@ -1001,6 +1001,7 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, unsigned *gl
     best = sector->eregions;
   }
 
+  if (glowFlags) *glowFlags = gflg;
   return best;
 }
 
