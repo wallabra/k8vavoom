@@ -213,7 +213,7 @@ void PostDecorateInit () {
     class/*!PlayerPawn*/ realplrclass = /*class!PlayerPawn*/(GetClassReplacement(PlayerClasses[idx]));
     if (realplrclass && realplrclass != PlayerClasses[idx]) {
       //print("replacement player class for '%C' is '%C' (ignored for now)", PlayerClasses[idx], realplrclass);
-      print("replacement player class for '%C' is '%C'", PlayerClasses[idx], realplrclass);
+      printmsg(PMSG.Init, "replacement player class for '%C' is '%C'", PlayerClasses[idx], realplrclass);
       PlayerClasses[idx] = realplrclass;
     }
   }

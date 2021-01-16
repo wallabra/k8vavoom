@@ -1115,7 +1115,11 @@ COMMAND(Alias) {
   nal.Save = !ParsingKeyConf;
 
   if (ParsingKeyConf) {
-    GCon->Logf("defined %salias '%s': %s", (ParsingKeyConf ? "temporary " : ""), *Args[1], *cmd);
+    if (ParsingKeyConf) {
+      GCon->Logf(NAME_Init, "defined temporary alias '%s': %s", *Args[1], *cmd);
+    } else {
+      GCon->Logf("defined alias '%s': %s", *Args[1], *cmd);
+    }
   }
 
   rebuildAliasMap();

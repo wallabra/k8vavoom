@@ -1121,6 +1121,8 @@ enum PrintMsg {
   PMSG_Warning,
   PMSG_Error,
   PMSG_Debug,
+  PMSG_Init,
+  PMSG_DevNet,
   //
   PMSG_Bot,
   PMSG_BotDev,
@@ -1144,6 +1146,9 @@ IMPLEMENT_FUNCTION(VObject, printmsg) {
     case PMSG_Warning: nn = NAME_Warning; break;
     case PMSG_Error: nn = NAME_Error; break;
     case PMSG_Debug: nn = NAME_Debug; break;
+    case PMSG_Init: nn = NAME_Init; break;
+    case PMSG_DevNet: nn = NAME_DevNet; break;
+    //
     case PMSG_Bot: nn = NAME_Bot; break;
     case PMSG_BotDev: nn = NAME_BotDev; break;
     case PMSG_BotDevAI: nn = NAME_BotDevAI; break;

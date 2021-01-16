@@ -1231,7 +1231,7 @@ COMMAND(AddKeySection) {
 #ifdef CLIENT
   if (GInput) {
     GInput->AddActiveMod(CurrKeyConfKeySection);
-    GCon->Logf(NAME_Debug, "mod keyconf key section '%s'", *CurrKeyConfKeySection);
+    GCon->Logf(NAME_Init, "mod keyconf key section '%s'", *CurrKeyConfKeySection);
   } else {
     GCon->Logf(NAME_Error, "'AddKeySection' without initialised input system");
   }

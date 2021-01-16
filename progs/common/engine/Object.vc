@@ -1109,6 +1109,8 @@ enum PMSG {
   Warning,
   Error,
   Debug,
+  Init,
+  DevNet,
   //
   Bot,
   BotDev,
