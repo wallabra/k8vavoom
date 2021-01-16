@@ -154,12 +154,23 @@ protected final void do_A_GunFlash (optional name newstate, optional int flags) 
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) return; // just in case
+
+  if (!(flags&1) && MeleeState) {
+    SetState(MeleeState);
+    Wpn = PlayerEx(Player).ReadyWeapon;
+    if (!Wpn) return;
+  }
+
+  state flashState;
+  if (!specified_newstate) {
+    if (Wpn.FireMode == Weapon::FIRE_Secondary) flashState = Wpn.FindState('AltFlash');
+    if (!flashState) flashState = Wpn.FindState('Flash');
+  } else {
+    flashState = Wpn.FindState(newstate);
+  }
+
   Player.SetViewObject(Wpn);
-
-  if (!specified_newstate) newstate = 'Flash';
-
-  if (MeleeState) SetState(MeleeState);
-  if (newstate && !(flags&1)) Player.SetViewState(PS_FLASH, Wpn.FindState(newstate));
+  Player.SetViewState(PS_FLASH, flashState);
 }
 
 
