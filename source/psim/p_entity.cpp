@@ -297,7 +297,7 @@ bool VEntity::SetState (VState *InState) {
     do {
       if (!st) { State = nullptr; break; }
 
-      if (++setStateWatchCat > 256 || st->validcount == validcountState) {
+      if (++setStateWatchCat > 512 /*|| st->validcount == validcountState*/) {
         //k8: FIXME! what to do here?
         GCon->Logf(NAME_Error, "WatchCat interrupted `%s::SetState()` at '%s' (%s)!", *GetClass()->GetFullName(), *st->Loc.toStringNoCol(), (st->validcount == validcountState ? "loop" : "timeout"));
         //StateTime = 13.0f;
@@ -436,7 +436,8 @@ bool VEntity::AdvanceState (float deltaTime) {
         const float tleft = StateTime; // "overjump time"
         if (!SetState(State->NextState)) return false; // freed itself
         if (!State) break; // just in case
-        if (StateTime <= 0.0f) break; // zero should not end up here, but...
+        if (StateTime < 0.0f) { StateTime = -1.0f; break; } // force `-1` here just in case
+        if (StateTime <= 0.0f) break; // zero should not end up here, but WatchCat can cause this
         // this somewhat compensates freestep instability (at least revenant missiles are more stable on a short term)
         //if (dbg) GCon->Logf(NAME_Debug, "%u:%s:%s:     tleft=%g; StateTime=%g (%g); rest=%g", GetUniqueId(), GetClass()->GetName(), *State->Loc.toStringShort(), tleft, StateTime, StateTime*35.0f, StateTime+tleft);
         StateTime += tleft;
@@ -445,7 +446,7 @@ bool VEntity::AdvanceState (float deltaTime) {
       // zero-duration state; advance, and delay next non-zero state a little
       if (!SetState(State->NextState)) return false; // freed itself
       if (State) {
-        vassert(StateTime != 0.0f); // invariant
+        //vassert(StateTime != 0.0f); // WatchCat can cause zero duration
         if (StateTime > 0.0f) StateTime += 0.0002f; // delay it slightly, so spawner may do its business
       }
     }

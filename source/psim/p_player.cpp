@@ -327,7 +327,7 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
         }
       }
 
-      if (++setStateWatchCat[position] > 256 || state->validcount == validcountState) {
+      if (++setStateWatchCat[position] > 1024 /*|| state->validcount == validcountState*/) {
         //k8: FIXME! what to do here?
         GCon->Logf(NAME_Error, "WatchCat interrupted `VBasePlayer::SetViewState(%d)` at '%s' (%s)!", position, *state->Loc.toStringNoCol(), (state->validcount == validcountState ? "loop" : "timeout"));
         //VSt.StateTime = 13.0f;
@@ -447,8 +447,8 @@ bool VBasePlayer::AdvanceViewStates (float deltaTime) {
       SetViewState(i, St.State->NextState);
       //if (i == PS_WEAPON) GCon->Logf("AdvanceViewStates: after weapon=%s; route=%s", (LastViewObject[i] ? *LastViewObject[i]->GetClass()->GetFullName() : "<none>"), (_stateRouteSelf ? *_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
       if (!St.State) break;
-      vassert(St.StateTime != 0.0f);
       if (St.StateTime < 0.0f) { St.StateTime = -1.0f; break; } // force `-1` here just in case
+      if (St.StateTime <= 0.0f) break; // zero should not end up here, but WatchCat can cause this
       //GCon->Logf(NAME_Debug, "*** %u:%s:%s: i=%d:     tleft=%g; StateTime=%g (%g); rest=%g", GetUniqueId(), GetClass()->GetName(), *St.State->Loc.toStringShort(), i, tleft, St.StateTime, St.StateTime*35.0f, St.StateTime+tleft);
       St.StateTime += tleft; // freestep compensation
     }
