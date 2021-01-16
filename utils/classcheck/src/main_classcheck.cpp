@@ -560,9 +560,31 @@ void skipPreprocessor (SemParser *par) {
   for (;;) {
     char ch = par->getChar();
     if (!ch) break;
-    if (ch == '/' || ch == '\\') {
+    if (ch == '/') {
+      char c1 = par->peekChar(0);
+      if (c1 == '/') {
+        for (;;) {
+          ch = par->getChar();
+          if (!ch || ch == '\n') return;
+        }
+        continue;
+      }
+      if (c1 == '*') {
+        bool wasNL = false;
+        for (;;) {
+          ch = par->getChar();
+          if (!ch || ch == '\n') wasNL = true;
+          if (ch == '*' && par->peekChar() == '/') {
+            par->skipChar();
+            break;
+          }
+        }
+        if (wasNL) return;
+        continue;
+      }
+    } else if (ch == '\\') {
       par->skipBlanks();
-      ch = par->getChar();
+      continue;
     }
     if (ch == '\n') break;
   }
