@@ -441,9 +441,11 @@ void VMeshModel::Load_MD3 (vuint8 *Data, int DataSize) {
 
     if (pmesh->shaderNum < 0 || pmesh->shaderNum > 1024) Sys_Error("model '%s' has invalid number of shaders: %u", *this->Name, pmesh->shaderNum);
     if (pmesh->frameNum != pmodel->frameNum) Sys_Error("model '%s' has mismatched number of frames in mesh", *this->Name);
-    if (pmesh->vertNum < 1) Sys_Error("model '%s' has no vertices", *this->Name);
+    //if (pmesh->vertNum < 1) Sys_Error("model '%s' has no vertices", *this->Name);
+    if (pmesh->vertNum < 1) GCon->Logf(NAME_Error, "model '%s' has no vertices", *this->Name);
     if (pmesh->vertNum > MAXALIASVERTS) Sys_Error("model '%s' has too many vertices", *this->Name);
-    if (pmesh->triNum < 1) Sys_Error("model '%s' has no triangles", *this->Name);
+    //if (pmesh->triNum < 1) Sys_Error("model '%s' has no triangles", *this->Name);
+    if (pmesh->triNum < 1) GCon->Logf(NAME_Error, "model '%s' has no triangles", *this->Name);
     if (pmesh->triNum > 65536) Sys_Error("model '%s' has too many triangles", *this->Name);
 
     pmesh = (MD3Surface *)((vuint8 *)pmesh+pmesh->endOfs);
@@ -511,11 +513,20 @@ void VMeshModel::Load_MD3 (vuint8 *Data, int DataSize) {
   }
 
   // copy vertices
-  this->AllVerts.setLength(pmodel->frameNum*pmesh->vertNum);
-  this->AllNormals.setLength(pmodel->frameNum*pmesh->vertNum);
+  this->AllVerts.setLength(pmesh->vertNum*pmodel->frameNum);
+  this->AllNormals.setLength(pmesh->vertNum*pmodel->frameNum);
   for (unsigned i = 0; i < pmesh->vertNum*pmodel->frameNum; ++i) {
     this->AllVerts[i] = md3vert(pverts+i);
     this->AllNormals[i] = md3vertNormal(pverts+i);
+  }
+
+  if (AllVerts.length() == 0) {
+    AllVerts.append(TVec(0.0f, 0.0f, 0.0f));
+    AllVerts.append(TVec(0.0f, 0.0f, 0.0f));
+    AllVerts.append(TVec(0.0f, 0.0f, 0.0f));
+    AllNormals.append(TVec(0.0f, 0.0f, 1.0f));
+    AllNormals.append(TVec(0.0f, 0.0f, 1.0f));
+    AllNormals.append(TVec(0.0f, 0.0f, 1.0f));
   }
 
   // frames
@@ -526,11 +537,18 @@ void VMeshModel::Load_MD3 (vuint8 *Data, int DataSize) {
   TArray<vuint8> validTri;
   if (pmodel->frameNum == 1) {
     validTri.setLength((int)pmesh->triNum);
-    memset(validTri.ptr(), 0, pmesh->triNum);
+    if (pmesh->triNum) memset(validTri.ptr(), 0, pmesh->triNum);
   }
 
   this->Frames.setLength(pmodel->frameNum);
   this->AllPlanes.setLength(pmodel->frameNum*pmesh->triNum);
+
+  if (AllPlanes.length() == 0) {
+    TPlane pl;
+    pl.normal = TVec(0.0f, 0.0f, 1.0f);
+    pl.dist = 0;
+    AllPlanes.append(pl);
+  }
 
   int triIgnored = 0;
   for (unsigned i = 0; i < pmodel->frameNum; ++i, ++pframe) {

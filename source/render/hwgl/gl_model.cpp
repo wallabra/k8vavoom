@@ -256,7 +256,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
                                     bool is_view_model, float Inter, bool Interpolate,
                                     bool ForceDepthUse, bool AllowTransparency, bool onlyDepth)
 {
-  if (!Skin || Skin->Type == TEXTYPE_Null) return; // do not render models without textures
+  if (!Skin || Skin->Type == TEXTYPE_Null || Mdl->STVerts.length() == 0) return; // do not render models without textures
 
   if (is_view_model) {
     // hack the depth range to prevent view model from poking into walls
@@ -419,7 +419,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
                                            float Inter, bool Interpolate,
                                            bool ForceDepth, bool AllowTransparency)
 {
-  if (!Skin || Skin->Type == TEXTYPE_Null) return; // do not render models without textures
+  if (!Skin || Skin->Type == TEXTYPE_Null || Mdl->STVerts.length() == 0) return; // do not render models without textures
 
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
@@ -732,7 +732,7 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
                                          VTexture *Skin, float Alpha, float Inter,
                                          bool Interpolate, bool AllowTransparency)
 {
-  if (!Skin || Skin->Type == TEXTYPE_Null) return; // do not render models without textures
+  if (!Skin || Skin->Type == TEXTYPE_Null || Mdl->STVerts.length() == 0) return; // do not render models without textures
 
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
@@ -833,7 +833,7 @@ void VOpenGLDrawer::DrawAliasModelShadowMap (const TVec &origin, const TAVec &an
                               VTexture *Skin, float Alpha, float Inter,
                               bool Interpolate, bool AllowTransparency)
 {
-  if (!Skin || Skin->Type == TEXTYPE_Null) return; // do not render models without textures
+  if (!Skin || Skin->Type == TEXTYPE_Null || Mdl->STVerts.length() == 0) return; // do not render models without textures
   if (!gl_dbg_adv_render_shadow_models) return;
 
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
@@ -954,10 +954,10 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
                                           float Inter, bool Interpolate,
                                           const TVec &LightPos, float LightRadius)
 {
+  if (!gl_dbg_adv_render_shadow_models || Mdl->STVerts.length() == 0) return;
+
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
-
-  if (!gl_dbg_adv_render_shadow_models) return;
 
   UploadModel(Mdl);
 
@@ -1110,7 +1110,7 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
                                             const RenderStyleInfo &ri, float Inter,
                                             bool Interpolate, bool ForceDepth, bool AllowTransparency)
 {
-  if (!Skin || Skin->Type == TEXTYPE_Null) return; // do not render models without textures
+  if (!Skin || Skin->Type == TEXTYPE_Null || Mdl->STVerts.length() == 0) return; // do not render models without textures
 
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
@@ -1253,7 +1253,7 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
                                        VTexture *Skin, vuint32 Fade, float Alpha, float Inter,
                                        bool Interpolate, bool AllowTransparency)
 {
-  if (!Skin || Skin->Type == TEXTYPE_Null) return; // do not render models without textures
+  if (!Skin || Skin->Type == TEXTYPE_Null || Mdl->STVerts.length() == 0) return; // do not render models without textures
 
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
