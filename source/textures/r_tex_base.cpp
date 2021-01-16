@@ -251,13 +251,11 @@ vuint8 *VTexture::GetPixels8 () {
     if (!Pixels8Bit) Pixels8Bit = new vuint8[NumPixels];
     const vuint8 *pSrc = pixdata;
     vuint8 *pDst = Pixels8Bit;
-    vuint8 ccollector = 0;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       const vuint8 pv = *pSrc;
-      ccollector |= pv;
+      if (!pv) transFlags |= FlagTransparent;
       *pDst = Remap[pv];
     }
-    if (ccollector) transFlags |= FlagTransparent;
     Pixels8BitValid = true;
     return Pixels8Bit;
   } else if (Format == TEXFMT_RGBA) {
@@ -267,10 +265,10 @@ vuint8 *VTexture::GetPixels8 () {
     const rgba_t *pSrc = (rgba_t *)pixdata;
     vuint8 *pDst = Pixels8Bit;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
-      if (pSrc->a != 255) {
+      if (pSrc->a < 128) {
         *pDst = 0;
         transFlags |= FlagTransparent;
-        if (pSrc->a) transFlags |= FlagTranslucent;
+        //if (pSrc->a) transFlags |= FlagTranslucent;
       } else {
         *pDst = R_LookupRGB(pSrc->r, pSrc->g, pSrc->b);
       }
@@ -321,15 +319,13 @@ pala_t *VTexture::GetPixels8A () {
       // game palette, no remap
       for (int i = 0; i < 256; ++i) remap[i] = i;
     }
-    vuint8 ccollector = 0;
     const vuint8 *pSrc = (const vuint8 *)pixdata;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       const vuint8 pv = *pSrc;
-      ccollector |= pv;
+      if (!pv) transFlags |= FlagTransparent;
       pDst->idx = remap[pv];
       pDst->a = (pv ? 255 : 0);
     }
-    if (ccollector) transFlags |= FlagTransparent;
   } else if (Format == TEXFMT_RGBA) {
     transFlags = TransValueSolid; // for now
     //GCon->Logf("*** remapping 32-bit '%s' to 8A (%dx%d)", *Name, Width, Height);
@@ -337,10 +333,7 @@ pala_t *VTexture::GetPixels8A () {
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       pDst->idx = R_LookupRGB(pSrc->r, pSrc->g, pSrc->b);
       pDst->a = pSrc->a;
-      if (pSrc->a != 255) {
-        transFlags |= FlagTransparent;
-        if (pSrc->a) transFlags |= FlagTranslucent;
-      }
+      if (pSrc->a != 255) transFlags |= (pSrc->a ? FlagTranslucent : FlagTransparent);
     }
   } else {
     Sys_Error("invalid texture format in `VTexture::GetPixels8A()`");

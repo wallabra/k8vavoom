@@ -558,10 +558,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
     for (int y = 0; y < newh; ++y) {
       for (int x = 0; x < neww; ++x) {
         rgba_t pix = getPixel(x+xmin, y+ymin);
-        if (pix.a != 255) {
-          transFlags |= FlagTransparent;
-          if (pix.a) transFlags |= FlagTranslucent;
-        }
+        if (pix.a != 255) transFlags |= (pix.a ? FlagTranslucent : FlagTransparent);
         newpix[y*neww+x] = pix;
       }
     }
@@ -812,11 +809,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
       const rgba_t *s = (const rgba_t *)Pixels;
       for (int count = Width*Height; count--; ++s) {
         if (s->a != 255) {
-          transFlags |= FlagTransparent;
-          if (s->a) {
-            if (transFlags&FlagTranslucent) break;
-            transFlags |= FlagTranslucent;
-          }
+          if ((transFlags |= (s->a ? FlagTranslucent : FlagTransparent)) == (FlagTranslucent|FlagTransparent)) break;
         }
       }
     }

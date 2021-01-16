@@ -339,11 +339,7 @@ vuint8 *VPcxTexture::GetPixels () {
     const vuint8 *s = Pixels;
     for (int count = Width*Height; count--; s += 4) {
       if (s[3] != 255) {
-        transFlags |= FlagTransparent;
-        if (s[3]) {
-          if (transFlags&FlagTranslucent) break;
-          transFlags |= FlagTranslucent;
-        }
+        if ((transFlags |= (s[3] ? FlagTranslucent : FlagTransparent)) == (FlagTranslucent|FlagTransparent)) break;
       }
     }
   }

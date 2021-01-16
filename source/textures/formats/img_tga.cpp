@@ -404,11 +404,7 @@ vuint8 *VTgaTexture::GetPixels () {
     const rgba_t *s = (const rgba_t *)Pixels;
     for (int cnt = Width*Height; cnt--; ++s) {
       if (s->a != 255) {
-        transFlags |= FlagTransparent;
-        if (s->a) {
-          if (transFlags&FlagTranslucent) break;
-          transFlags |= FlagTranslucent;
-        }
+        if ((transFlags |= (s->a ? FlagTranslucent : FlagTransparent)) == (FlagTranslucent|FlagTransparent)) break;
       }
     }
   }

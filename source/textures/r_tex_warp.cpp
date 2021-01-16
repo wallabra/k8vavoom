@@ -163,10 +163,7 @@ vuint8 *VWarpTexture::GetPixels () {
       for (int x = 0; x < Width; ++x, ++Dst) {
         *Dst = ((vuint32 *)SrcPixels)[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width];
         const vuint8 a8 = (((*Dst)>>24)&0xffu);
-        if (a8 != 0xffu) {
-          transFlags |= FlagTransparent;
-          if (a8) transFlags |= FlagTranslucent;
-        }
+        if (a8 != 0xffu) transFlags |= (a8 ? FlagTranslucent : FlagTransparent);
       }
     }
   }
