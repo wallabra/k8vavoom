@@ -663,7 +663,7 @@ private final float clampPitch (float newpitch) {
 [decorate] final int decorate_CountInv (name ItemName, optional int aptr) {
   Entity tgt = DecorDoAAPtr('decorate_CountInv', aptr!optional);
   if (!tgt) return 0;
-  return tgt.CheckInventory(ItemName, allowReplacement:false); //k8: is it?
+  return tgt.CheckInventory(ItemName, allowReplacement:false, fromACS:false); //k8: is it?
 }
 
 

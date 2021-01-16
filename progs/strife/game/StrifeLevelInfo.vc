@@ -100,7 +100,7 @@ int StrifeCheckInv (Entity ent, name invName) {
   if (!invName) return 0;
   EntityEx e = EntityEx(ent);
   if (!e) return 0;
-  return e.CheckInventory(invName, allowReplacement:false);
+  return e.CheckInventory(invName, allowReplacement:false, fromACS:false);
 }
 
 

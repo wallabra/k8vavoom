@@ -772,7 +772,7 @@ void TakeInventory (name ItemName, int Amount, bool allowReplacement) {
 //  CheckInventory
 //
 //===========================================================================
-int CheckInventory (name ItemName, bool allowReplacement) {
+int CheckInventory (name ItemName, bool allowReplacement, bool fromACS) {
   return 0;
 }
 

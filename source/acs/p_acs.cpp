@@ -5181,7 +5181,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         sp[-1] = 0;
       } else {
         VName clsName = GetNameLowerCase(sp[-1]);
-        sp[-1] = Activator->eventCheckInventory(clsName, false); // disable replacement
+        sp[-1] = Activator->eventCheckInventory(clsName, false, true); // disable replacement, from ACS
         //GCon->Logf(NAME_Debug, "PCD_CheckInventory: <%s> = %d", *clsName, sp[-1]);
       }
       ACSVM_BREAK;
@@ -5191,7 +5191,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         *sp = 0;
       } else {
         VName clsName = GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID());
-        *sp = Activator->eventCheckInventory(clsName, false); // disable replacement
+        *sp = Activator->eventCheckInventory(clsName, false, true); // disable replacement, from ACS
         //GCon->Logf(NAME_Debug, "PCD_CheckInventoryDirect: <%s> = %d", *clsName, *sp);
       }
       ++sp;
@@ -6452,7 +6452,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_CheckActorInventory)
       {
         VEntity *Ent = EntityFromTID(sp[-2], Activator);
-        sp[-2] = (!Ent ? 0 : Ent->eventCheckInventory(GetNameLowerCase(sp[-1]), false)); // disable replacement
+        sp[-2] = (!Ent ? 0 : Ent->eventCheckInventory(GetNameLowerCase(sp[-1]), false, true)); // disable replacement, from ACS
       }
       --sp;
       ACSVM_BREAK;
@@ -7038,6 +7038,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetPlayerInput)
+      //GCon->Logf(NAME_Debug, "PIP (0x%04x): 0x%08x", (unsigned)sp[-1], (unsigned)sp[-2]);
       if (sp[-2] < 0) {
         if (Activator && Activator->IsPlayer()) {
           sp[-2] = (Activator->Player ? Activator->Player->AcsGetInput(sp[-1]) : 0);

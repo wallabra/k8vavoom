@@ -736,7 +736,13 @@ override void TakeInventory (name ItemName, int Amount, bool allowReplacement) {
 //  CheckInventory
 //
 //===========================================================================
-override int CheckInventory (name ItemName, bool allowReplacement) {
+override int CheckInventory (name ItemName, bool allowReplacement, bool fromACS) {
+  //FIXME: do it always?
+  if (fromACS) {
+    allowReplacement = false; // anyway
+    if (nameEquCI(ItemName, 'Health')) return Health;
+    if (nameEquCI(ItemName, 'Armor')) ItemName = 'BasicArmor'; //FIXME: should i do something special here?
+  }
   //printwarn("*** CheckInventory: %s", ItemName);
   class!Inventory ItemClass = FindInventoryClassForACS(ItemName, allowReplacement);
   if (!ItemClass) return 0;
