@@ -1929,6 +1929,11 @@ void ResetPlayerFiringState () {
   {
     //printdebug("%C: setting idle state", self);
     ee.SetState(ee.IdleState);
+  } else {
+    state st = ee.FindState('Melee', 'Crouch', Exact:true);
+    if (st && StateIsInSequence(ee.State, st)) { ee.SetState(ee.IdleState); return; }
+    st = ee.FindState('Missile', 'Crouch', Exact:true);
+    if (st && StateIsInSequence(ee.State, st)) { ee.SetState(ee.IdleState); return; }
   }
 }
 
