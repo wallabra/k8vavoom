@@ -215,16 +215,14 @@ protected final void do_A_ReFire (optional state refirestate) self(Actor) {
 
   if (!pex.PendingWeapon && Player.MO.Health > 0) {
     if (Wpn.FireMode == Weapon::FIRE_Primary && (Player.Buttons&BT_ATTACK)) {
-      pex.ResetPlayerFiringState();
       ++pex.Refire;
-      pex.FireWeapon(refirestate!optional);
+      if (!pex.FireWeapon(refirestate!optional)) pex.ResetPlayerFiringState();
       return;
     }
 
     if (Wpn.FireMode == Weapon::FIRE_Secondary && (Player.Buttons&BT_ALT_ATTACK)) {
-      pex.ResetPlayerFiringState();
       ++pex.Refire;
-      pex.AltFireWeapon(refirestate!optional);
+      if (!pex.AltFireWeapon(refirestate!optional)) pex.ResetPlayerFiringState();
       return;
     }
 

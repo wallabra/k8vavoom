@@ -1927,6 +1927,7 @@ void ResetPlayerFiringState () {
   if ((ee.MissileState && StateIsInSequence(ee.State, ee.MissileState)) ||
       (ee.MeleeState && StateIsInSequence(ee.State, ee.MeleeState)))
   {
+    //printdebug("%C: setting idle state", self);
     ee.SetState(ee.IdleState);
   }
 }
@@ -1945,7 +1946,20 @@ bool CommonFireWeapon (int firetype, state firestate) {
   assert(firetype == Weapon::FIRE_Primary || firetype == Weapon::FIRE_Secondary);
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(firetype, AutoSwitch:true)) return false;
   ReadyWeapon.FireMode = firetype;
-  if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
+  EntityEx ee = EntityEx(MO);
+  if (ee) {
+    state st;
+    if (ReadyWeapon.bBotMelee) {
+      st = ee.MeleeState;
+      if (!st) st = ee.MissileState;
+    } else {
+      st = ee.MissileState;
+    }
+    if (st && !StateIsInSequence(ee.State, st)) {
+      //printdebug("%C: setting attack state %s", self, st);
+      ee.SetState(st);
+    }
+  }
   SetViewObject(ReadyWeapon);
   SetViewState(PS_WEAPON, firestate);
   if (ReadyWeapon && !ReadyWeapon.bNoAlert) {
