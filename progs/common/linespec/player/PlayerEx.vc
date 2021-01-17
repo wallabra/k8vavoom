@@ -1949,11 +1949,14 @@ bool CommonFireWeapon (int firetype, state firestate) {
   EntityEx ee = EntityEx(MO);
   if (ee) {
     state st;
-    if (ReadyWeapon.bBotMelee) {
-      st = ee.MeleeState;
+    if (ee.crouchfactor < 1) {
+      // try crouch states
+      if (ReadyWeapon.bBotMelee) st = ee.FindState('Melee', 'Crouch', Exact:true);
+      if (!st) st = ee.FindState('Missile', 'Crouch', Exact:true);
+    }
+    if (!st) {
+      if (ReadyWeapon.bBotMelee) st = ee.MeleeState;
       if (!st) st = ee.MissileState;
-    } else {
-      st = ee.MissileState;
     }
     if (st && !StateIsInSequence(ee.State, st)) {
       //printdebug("%C: setting attack state %s", self, st);
