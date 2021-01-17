@@ -472,7 +472,9 @@ void MapFixerRemoveEntitiesHelper (name entname, optional string msg) {
 void SpawnSpecials () {
   // Vela Pax MAP01: remove barrels
   if (XLevel.MapHashMD5 == "dae64fe4b2a4c17f4b4682bf7b63f12f") {
-    MapFixerRemoveEntitiesHelper('ExplosiveBarrel', "Vela Pax, MAP01: removed %s annoying barrels (for speed)");
+    if (!GetCvarB('vm_optimise_statics')) {
+      MapFixerRemoveEntitiesHelper('ExplosiveBarrel', "Vela Pax, MAP01: removed %s annoying barrels (for speed)");
+    }
     return;
   }
 
