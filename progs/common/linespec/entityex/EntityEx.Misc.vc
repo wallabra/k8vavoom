@@ -1757,38 +1757,10 @@ void NoBlockingSet () {
 
 //==========================================================================
 //
-//  Tick
+//  EntityPreTick
 //
 //==========================================================================
-override void Tick (float deltaTime) {
-  //if (self isa PlayerPawn) print("*** PLAYERPAWN(%C): TICK!", self);
-
-  scope(exit) {
-    DataGameTime = XLevel.Time+deltaTime;
-  }
-
-  /*
-  if (bIsPlayer && GetCvarB('k8TraceDebug')) {
-    auto plr = PlayerEx(Player);
-    trsplat_t tr;
-    TAVec ang = Angles; //vector(plr.pitch, plr.yaw, plr.roll);
-    TVec dir;
-    AngleVector(ang, out dir);
-    bool wallHit = TraceLineEx(Origin, dir, 4096, true, &tr);
-    if (wallHit) {
-      print("*** WALL");
-    } else if (tr.mobj) {
-      print("*** thing %n: health=%d", GetClassName(tr.mobj.Class), tr.mobj.Health);
-    }
-  }
-  */
-
-  if (Level.bFrozen && ((!bIsPlayer && !bNoTimeFreeze) ||
-      (bIsPlayer && !(PlayerEx(Player).Cheats&PlayerEx::CF_TIMEFREEZE))))
-  {
-    return;
-  }
-
+void EntityPreTick (float deltaTime) {
   // handle powerup effects
   Inventory Item;
   for (Item = Inventory; Item && Item.Owner == self; Item = Item.Inventory) {
@@ -1830,6 +1802,104 @@ override void Tick (float deltaTime) {
   }
 
   if (JumpTime) JumpTime = fmax(0, JumpTime-deltaTime);
+}
+
+
+//==========================================================================
+//
+//  EntityTickCheckRespawn
+//
+//==========================================================================
+void EntityTickCheckRespawn (float deltaTime) {
+  // check for nightmare respawn
+  if (!bAlwaysRespawn) {
+    if (!bMonster || bDormant || bNeverRespawn) return;
+    if (!LineSpecialGameInfo(Level.Game).RespawnTime) return;
+    int respLimit = Level.World.GetRespawnLimit();
+    if (respLimit > 0 && SkillRespawnCount >= respLimit) {
+      return;
+    }
+  }
+
+  // old code
+  /*
+  ++MoveCount;
+  if (MoveCount < int(LineSpecialGameInfo(Level.Game).RespawnTime*35.0)) return;
+  if (XLevel.TicTime&31) return;
+  if (P_Random() > 4) return;
+  */
+  // new code
+  //print("OMC=%s", MoveCount);
+  if (MoveCount >= 0) MoveCount = -XLevel.TicTime;
+  //print("MC=%s; tc=%s; delta=%s; rt=%s", MoveCount, XLevel.TicTime, XLevel.TicTime+MoveCount, int(LineSpecialGameInfo(Level.Game).RespawnTime));
+  if (XLevel.TicTime+MoveCount < int(LineSpecialGameInfo(Level.Game).RespawnTime)) return;
+  if (XLevel.TicTime&31) return;
+  if (P_Random() > 4) return;
+  MoveCount = 0;
+
+  NightmareRespawn();
+}
+
+
+//==========================================================================
+//
+//  SimplifiedTick
+//
+//  called when entity doesn't need physics
+//
+//==========================================================================
+override void SimplifiedTick (float deltaTime) {
+  if (Level.bFrozen && ((!bIsPlayer && !bNoTimeFreeze) ||
+      (bIsPlayer && !(PlayerEx(Player).Cheats&PlayerEx::CF_TIMEFREEZE))))
+  {
+    DataGameTime = XLevel.Time+deltaTime;
+    return;
+  }
+
+  EntityPreTick(deltaTime);
+
+  // state will be advanced by the normal ticker
+  if (StateTime < 0.0) EntityTickCheckRespawn(deltaTime);
+
+  DataGameTime = XLevel.Time+deltaTime;
+}
+
+
+//==========================================================================
+//
+//  Tick
+//
+//==========================================================================
+override void Tick (float deltaTime) {
+  //if (self isa PlayerPawn) print("*** PLAYERPAWN(%C): TICK!", self);
+
+  scope(exit) {
+    DataGameTime = XLevel.Time+deltaTime;
+  }
+
+  /*
+  if (bIsPlayer && GetCvarB('k8TraceDebug')) {
+    auto plr = PlayerEx(Player);
+    trsplat_t tr;
+    TAVec ang = Angles; //vector(plr.pitch, plr.yaw, plr.roll);
+    TVec dir;
+    AngleVector(ang, out dir);
+    bool wallHit = TraceLineEx(Origin, dir, 4096, true, &tr);
+    if (wallHit) {
+      print("*** WALL");
+    } else if (tr.mobj) {
+      print("*** thing %n: health=%d", GetClassName(tr.mobj.Class), tr.mobj.Health);
+    }
+  }
+  */
+
+  if (Level.bFrozen && ((!bIsPlayer && !bNoTimeFreeze) ||
+      (bIsPlayer && !(PlayerEx(Player).Cheats&PlayerEx::CF_TIMEFREEZE))))
+  {
+    return;
+  }
+
+  EntityPreTick(deltaTime);
 
   TVec lastOrg = Origin;
   bool lastInterp = bIntrJustMoved;
@@ -1898,34 +1968,7 @@ override void Tick (float deltaTime) {
     }
   } else if (Level.Game.IsAuthority) {
     // endless state
-
-    // check for nightmare respawn
-    if (!bAlwaysRespawn) {
-      if (!bMonster || bDormant || bNeverRespawn) return;
-      if (!LineSpecialGameInfo(Level.Game).RespawnTime) return;
-      int respLimit = Level.World.GetRespawnLimit();
-      if (respLimit > 0 && SkillRespawnCount >= respLimit) {
-        return;
-      }
-    }
-
-    // old code
-    /*
-    ++MoveCount;
-    if (MoveCount < int(LineSpecialGameInfo(Level.Game).RespawnTime*35.0)) return;
-    if (XLevel.TicTime&31) return;
-    if (P_Random() > 4) return;
-    */
-    // new code
-    //print("OMC=%s", MoveCount);
-    if (MoveCount >= 0) MoveCount = -XLevel.TicTime;
-    //print("MC=%s; tc=%s; delta=%s; rt=%s", MoveCount, XLevel.TicTime, XLevel.TicTime+MoveCount, int(LineSpecialGameInfo(Level.Game).RespawnTime));
-    if (XLevel.TicTime+MoveCount < int(LineSpecialGameInfo(Level.Game).RespawnTime)) return;
-    if (XLevel.TicTime&31) return;
-    if (P_Random() > 4) return;
-    MoveCount = 0;
-
-    NightmareRespawn();
+    EntityTickCheckRespawn(deltaTime);
   }
 }
 

@@ -646,6 +646,20 @@ public:
     }
   }
 
+  void eventSimplifiedTick (float deltaTime) {
+    static VMethodProxy method("SimplifiedTick");
+    vobjPutParamSelf(deltaTime);
+    VMT_RET_VOID(method);
+  }
+
+  bool eventNeedPhysics () {
+    static VMethodProxy method("NeedPhysics");
+    vobjPutParamSelf();
+    VMT_RET_BOOL(method);
+  }
+
+  bool NeedPhysics ();
+
   //bool IsMonster () { static VMethodProxy method("IsMonster"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
   inline bool IsPlayer () const noexcept { return !!(EntityFlags&EF_IsPlayer); }
   inline bool IsMissile () const noexcept { return !!(EntityFlags&EF_Missile); }
@@ -654,7 +668,8 @@ public:
   inline bool IsSolid () const noexcept { return !!(EntityFlags&EF_Solid); }
   inline bool IsMonster () const noexcept { return !!(FlagsEx&EFEX_Monster); }
   inline bool IsNoInteraction () const noexcept { return !!(FlagsEx&EFEX_NoInteraction); }
-  inline bool IsPlayerOrMonster () const noexcept { return !!(EntityFlags&(EF_IsPlayer|EFEX_Monster)); }
+  inline bool IsPlayerOrMonster () const noexcept { return !!((EntityFlags&EF_IsPlayer)|(FlagsEx&EFEX_Monster)); }
+  inline bool IsPlayerOrMissileOrMonster () const noexcept { return !!((EntityFlags&(EF_IsPlayer|EF_Missile))|(FlagsEx&EFEX_Monster)); }
   // floating, flying, floatbob; used in renderer to disable sprite offset fix
   inline bool IsAnyAerial () const noexcept { return !!((EntityFlags&(EF_Float|EF_Fly))|(FlagsEx&EFEX_FloatBob)); }
   inline bool IsFloatBob () const noexcept { return !!(FlagsEx&EFEX_FloatBob); }

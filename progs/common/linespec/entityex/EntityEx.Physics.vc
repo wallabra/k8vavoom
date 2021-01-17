@@ -74,6 +74,43 @@ final void GetFloorAndCeilingEx (out tmtrace_t tmtrace, TVec org, optional bool 
 
 //==========================================================================
 //
+//  NeedPhysics
+//
+//  Velocity and other things already checked by C++ code
+//
+//==========================================================================
+override bool NeedPhysics () {
+  if (bNoInteraction) return true;
+  if (Owner) return true; // inventory
+  if (Sector && GetClassInstanceCountWithSub(Scroller) && bColideWithWorld && !bNoSector && Origin != lastScrollCheckOrigin) {
+    // check conveyors
+    for (msecnode_t *mnode = TouchingSectorList; mnode; mnode = mnode.TNext) {
+      sector_t *sec = mnode.Sector;
+      if (!sec->AffectorData) continue;
+      // move objects only if on floor or underwater, non-floating, and clipped
+      for (SectorThinker SecThink = SectorThinker(sec->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
+        auto sth = Scroller(SecThink);
+        if (!sth) continue;
+        float scrollx = sth.CarryScrollX;
+        float scrolly = sth.CarryScrollY;
+        if (!scrollx && !scrolly) continue;
+        if (bNoGravity && (!sec->heightsec || sec->heightsec->bIgnoreHeightSec)) continue;
+        float hgt = GetPointZClamped(ref sec->floor, Origin);
+        if (Origin.z > hgt) {
+          if (!sec->heightsec || sec->heightsec->bIgnoreHeightSec) continue;
+          float waterheight = GetPointZClamped(ref sec->heightsec->floor, Origin);
+          if (waterheight > hgt && Origin.z >= waterheight) continue;
+        }
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  Physics
 //
 //  returns `false` if mobj is destroyed

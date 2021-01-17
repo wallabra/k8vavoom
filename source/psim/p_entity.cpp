@@ -44,6 +44,8 @@ static VCvarB dbg_disable_state_advance("dbg_disable_state_advance", false, "Dis
 
 static VCvarB dbg_emulate_broken_gozzo_gotos("dbg_emulate_broken_gozzo_gotos", false, "Emulate (partially) broken GZDoom decorate gotos to missing labels?", CVAR_Archive);
 
+static VCvarB vm_optimise_statics("vm_optimise_statics", false, "Try to detect some static things, and don't run physics for them? (DO NOT USE, IT IS GLITCHY!)", CVAR_Archive);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct SavedVObjectPtr {
@@ -143,6 +145,48 @@ void VEntity::AddedToLevel () {
 
 //==========================================================================
 //
+//  VEntity::NeedPhysics
+//
+//==========================================================================
+bool VEntity::NeedPhysics () {
+  if (IsPlayer()) return true;
+  //if (IsPlayerOrMissileOrMonster()) return true;
+  if (WaterLevel != 0) return true;
+  if (!Velocity.isZero2D()) return true;
+
+  // check sticks
+  if (FlagsEx&(EFEX_StickToFloor|EFEX_StickToCeiling)) {
+    if (FlagsEx&EFEX_StickToFloor) {
+      return (Origin.z != CeilingZ);
+    } else {
+      return (Origin.z != FloorZ);
+    }
+  }
+
+  if (!(EntityFlags&EF_NoGravity)) {
+    if (Velocity.z > 0.0f || Origin.z != FloorZ) return true;
+  }
+
+  bool removeJustMoved = false;
+  if (MoveFlags&MVF_JustMoved) {
+    TVec odiff = LastMoveOrigin-Origin;
+    if (fabsf(odiff.x) >= 0.4f || fabsf(odiff.y) >= 0.4f || fabsf(odiff.z) >= 0.4f) return true;
+    removeJustMoved = true;
+  }
+
+  if (eventNeedPhysics()) return true;
+
+  if (removeJustMoved) {
+    MoveFlags &= ~MVF_JustMoved;
+    LastMoveOrigin = Origin;
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VEntity::Tick
 //
 //==========================================================================
@@ -208,11 +252,24 @@ void VEntity::Tick (float deltaTime) {
     }
     return;
   }
+
+  bool doSimplifiedTick = false;
+  if (GGameInfo->NetMode == NM_Standalone && vm_optimise_statics.asBool() &&
+      (StateTime < 0.0f || StateTime-deltaTime > 0.0f) && !NeedPhysics())
+  {
+    if (StateTime > 0.0f) StateTime -= deltaTime;
+    doSimplifiedTick = true;
+  }
+
   // `Mass` is clamped in `OnMapSpawn()`, and we should take care of it in VC code
   // clamp velocity (just in case)
-  Velocity.clampScaleInPlace(PHYS_MAXMOVE);
-  // call normal ticker
-  VThinker::Tick(deltaTime);
+  if (!doSimplifiedTick) {
+    Velocity.clampScaleInPlace(PHYS_MAXMOVE);
+    // call normal ticker
+    VThinker::Tick(deltaTime);
+  } else {
+    eventSimplifiedTick(deltaTime);
+  }
 }
 
 
