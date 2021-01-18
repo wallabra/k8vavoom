@@ -635,7 +635,8 @@ void Host_Frame () {
       // but still process network activity, we may want to re-send packets and such
       if (lastNetFrameTime > systime) lastNetFrameTime = systime; // just in case
       //const double ctt = Sys_Time();
-      if (systime-lastNetFrameTime >= 1.0/70.0) {
+      const double dtt = (GGameInfo->NetMode >= NM_DedicatedServer ? 1.0/200.0 : 1.0/70.0);
+      if (systime-lastNetFrameTime >= dtt) {
         // perform network activity
         lastNetFrameTime = systime;
         #ifdef CLIENT

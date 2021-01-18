@@ -152,7 +152,7 @@ int VChannel::IsQueueFull () noexcept {
 bool VChannel::CanSendData () noexcept {
   // keep some space for close message
   if (IsQueueFull()) return false;
-  return (Connection ? Connection->CanSendData() : false);
+  return (Connection ? /*Connection->CanSendData()*/true : false);
 }
 
 

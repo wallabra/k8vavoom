@@ -1223,6 +1223,8 @@ void VNetConnection::Tick () {
 
   // also, flush if we have no room for more data in outgoing accumulator
   if (ForceFlush || IsKeepAliveExceeded() || CalcEstimatedByteSize() == MAX_DGRAM_SIZE) Flush();
+
+  //GCon->Logf(NAME_DevNet, "%s: tick: SaturaDepth=%d; sdd=%d; dt=%g", *GetAddress(), SaturaDepth, SaturaDepth+Out.GetNumBytes(), DeltaTime*1000.0);
 }
 
 
@@ -1733,6 +1735,8 @@ void VNetConnection::UpdateThinkers () {
    other players, then finger.
    */
 
+  bool connCanSend = CanSendData();
+
   // send updates to the nearest objects first
   // collect all thinkers with channels in `PendingThinkers`, and sort
   // also, use finger to update the object
@@ -1762,15 +1766,18 @@ void VNetConnection::UpdateThinkers () {
 
   // sort and update existing thinkers first
   if (PendingThinkers.length()) {
+    //GCon->Logf(NAME_DevNet, "000: PendingThinkers.length()=%d", PendingThinkers.length());
     timsort_r(PendingThinkers.ptr(), PendingThinkers.length(), sizeof(PendingThinkers[0]), &cmpPendingThinkers, (void *)&snfo);
     for (auto &&th : PendingThinkers) {
       VThinkerChannel *chan = ThinkerChannels.FindPtr(th);
       if (!chan) continue;
-      if (chan->CanSendData()) {
+      if (connCanSend && chan->CanSendData()) {
         chan->Update();
         continue;
       }
+      //GCon->Logf(NAME_DevNet, "000:   cannot send PendingThinker! (%d) (%d)", SaturaDepth+Out.GetNumBytes(), chan->IsQueueFull());
     }
+    //GCon->Logf(NAME_DevNet, "000: PendingThinkers.length()=%d DONE", PendingThinkers.length());
     // don't send them twice, lol
     PendingThinkers.resetNoDtor();
   }
@@ -1975,8 +1982,11 @@ void VNetConnection::UpdateLevel () {
     wasAtLeastOneUpdate = true;
   }
 
+  //GCon->Logf(NAME_DevNet, "CLIENT: LastThinkersUpdateTime=%g; ctt=%g; diff=%g", LastThinkersUpdateTime, ctt, ctt-LastThinkersUpdateTime);
   if (LastThinkersUpdateTime <= ctt) {
-    LastThinkersUpdateTime = ctt+1.0/(double)clampval(sv_fps.asFloat(), 5.0f, 70.0f);
+    //LastThinkersUpdateTime = ctt+1.0/(double)clampval(sv_fps.asFloat(), 5.0f, 70.0f);
+    while (LastThinkersUpdateTime <= ctt) LastThinkersUpdateTime = ctt+1.0/(double)clampval(sv_fps.asFloat(), 5.0f, 70.0f);
+    //GCon->Logf(NAME_DevNet, "CLIENT: next update timeout=%g", (LastThinkersUpdateTime-ctt)*1000.0);
     NeedsUpdate = false; // note that we already sent an update
     if (!wasAtLeastOneUpdate) SetupFatPVS();
     UpdateThinkers();

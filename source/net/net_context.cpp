@@ -127,7 +127,9 @@ void VNetContext::Tick () {
           // spam client with player updates
           Conn->GetPlayerChannel()->Update();
           //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT001!", *Conn->GetAddress(), i);
+          //GCon->Logf(NAME_DevNet, "CLIENT #%d: open=%d; needsupdate=%d", i, (int)Conn->IsOpen(), (int)Conn->NeedsUpdate);
           if (Conn->IsOpen() && Conn->NeedsUpdate) {
+            //GCon->Logf(NAME_DevNet, "CLIENT #%d:   sending updates!", i);
             Conn->UpdateLevel(); // `UpdateLevel()` will reset update flag
             //if (!Conn->IsOpen()) GCon->Logf(NAME_DevNet, "%s(%d): ABORT002!", *Conn->GetAddress(), i);
           }
