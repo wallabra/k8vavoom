@@ -2597,6 +2597,7 @@ static const ACSF_Info ACSF_List[] = {
 #undef ACS_EXTFUNC_NUM
 #undef ACS_EXTFUNC
 
+static TMapNC<int, bool> unimpACSFWarned;
 
 // pcd opcode names
 #define DECLARE_PCD(name) { "" #name "", PCD_ ## name }
@@ -3938,7 +3939,9 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       if (acs_abort_on_unknown_acsf) {
         Host_Error("unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
       } else {
-        GCon->Logf(NAME_Error, "unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
+        if (!unimpACSFWarned.put(nfo->index, true)) {
+          GCon->Logf(NAME_Error, "unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
+        }
       }
       return 0;
     }
@@ -3947,7 +3950,9 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
   if (acs_abort_on_unknown_acsf) {
     Host_Error("unimplemented ACSF function #%d (%d args)", funcIndex, argCount);
   } else {
-    GCon->Logf(NAME_Error, "unimplemented ACSF function #%d (%d args)", funcIndex, argCount);
+    if (!unimpACSFWarned.put(funcIndex, true)) {
+      GCon->Logf(NAME_Error, "unimplemented ACSF function #%d (%d args)", funcIndex, argCount);
+    }
   }
 
   return 0;
