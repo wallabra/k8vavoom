@@ -126,10 +126,10 @@ bool VWarpTexture::CheckModified () {
 //==========================================================================
 vuint8 *VWarpTexture::GetPixels () {
   if (Pixels && GenTime == GTextureManager.Time*Speed) return Pixels;
-  transFlags = TransValueSolid; // for now
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
   mFormat = mOrigFormat = SrcTex->Format;
+  transFlags = SrcTex->transFlags;
 
   GenTime = GTextureManager.Time*Speed;
   Pixels8BitValid = false;
@@ -230,6 +230,7 @@ vuint8 *VWarp2Texture::GetPixels () {
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
   mFormat = mOrigFormat = SrcTex->Format;
+  transFlags = SrcTex->transFlags;
 
   GenTime = GTextureManager.Time*Speed;
 
