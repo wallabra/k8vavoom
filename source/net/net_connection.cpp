@@ -871,13 +871,15 @@ static int cmpAcks (const void *aa, const void *bb, void *ncptr) {
 //
 //==========================================================================
 void VNetConnection::ResendAcks () {
-  if (!AutoAck) {
-    if (OutLastWrittenAck) {
-      GCon->Logf(NAME_Warning, "NET: ResendAcks: OutLastWrittenAck=%u", OutLastWrittenAck); // something is VERY wrong here
-      Flush();
-    }
+  if (!AutoAck && AcksToResend.length() > 0) {
     // make sure that the sequence is right
     timsort_r(AcksToResend.ptr(), AcksToResend.length(), sizeof(AcksToResend[0]), &cmpAcks, nullptr);
+    if (OutLastWrittenAck > AcksToResend[0]) {
+      GCon->Logf(NAME_Warning, "NET: ResendAcks: OutLastWrittenAck=%u; FirstToResend=%u", OutLastWrittenAck, AcksToResend[0]); // something is VERY wrong here
+      Flush();
+      // `Flush()` can update this queue
+      timsort_r(AcksToResend.ptr(), AcksToResend.length(), sizeof(AcksToResend[0]), &cmpAcks, nullptr);
+    }
     for (auto &&ack : AcksToResend) {
       PutOneAckForced(ack);
     }
