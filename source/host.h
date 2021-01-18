@@ -49,6 +49,7 @@ extern VCvarB developer;
 
 extern bool host_initialised;
 extern bool host_request_exit;
+extern bool host_gdb_mode;
 
 
 // no more than 250 FPS
@@ -62,3 +63,13 @@ extern double host_time; // used in UI and network heartbits; accumulates frame 
 extern double systime; // current `Sys_Time()`; used for consistency, updated in `FilterTime()`
 extern int host_framecount;
 extern int cli_ShowEndText;
+
+
+#if defined(__i386__) || defined(__x86_64__)
+__inline__ __attribute__((unused,gnu_inline,always_inline)) static void host_debug_break_internal (void) {
+  __asm__ volatile("int $0x03");
+}
+__inline__ __attribute__((unused,gnu_inline,always_inline)) static void host_debug_break (void) { if (host_gdb_mode) host_debug_break_internal(); }
+#else
+__inline__ __attribute__((unused,gnu_inline,always_inline)) static void host_debug_break (void) {}
+#endif

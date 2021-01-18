@@ -471,10 +471,10 @@ int main (int argc, char **argv) {
   }
 #endif
 
-  bool inGDB = false;
+  host_gdb_mode = false;
   for (int f = 1; f < argc; ++f) {
     if (strcmp(argv[f], "-gdb") == 0) {
-      inGDB = true;
+      host_gdb_mode = true;
       for (int c = f+1; c < argc; ++c) argv[c-1] = argv[c];
       --argc;
       --f;
@@ -498,7 +498,7 @@ int main (int argc, char **argv) {
     }
   }
 
-  if (inGDB) {
+  if (host_gdb_mode) {
     mainloop(argc, argv);
   } else {
     try {

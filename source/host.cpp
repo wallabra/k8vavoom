@@ -111,6 +111,7 @@ int host_framecount = 0;
 
 bool host_initialised = false;
 bool host_request_exit = false;
+bool host_gdb_mode = false;
 
 extern VCvarB real_time;
 
