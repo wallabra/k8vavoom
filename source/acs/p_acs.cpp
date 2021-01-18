@@ -3232,6 +3232,17 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     case ACSF_SetPlayerLivesLeft_Zandro:
       return 0;
 
+    case ACSF_GetGamemodeState_Zandro:
+      if (GGameInfo->NetMode == NM_Standalone ||
+          GGameInfo->NetMode == NM_Client ||
+          GGameInfo->NetMode == NM_ListenServer)
+      {
+        if (cl && cls.signon && cl->MO) {
+          return 2; // GAMESTATE_INPROGRESS
+        }
+      }
+      return -1; // GAMESTATE_UNSPECIFIED
+
     // https://zdoom.org/wiki/ConsolePlayerNumber
     //FIXME: disconnect?
     case ACSF_ConsolePlayerNumber_Zandro:

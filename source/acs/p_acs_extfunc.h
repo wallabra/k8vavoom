@@ -139,7 +139,7 @@
   ACS_EXTFUNC(GetPlayerLivesLeft_Zandro) // ignored
   ACS_EXTFUNC(SetPlayerLivesLeft_Zandro) // ignored
   ACS_EXTFUNC(ForceToSpectate_Zandro)
-  ACS_EXTFUNC(GetGamemodeState_Zandro)
+  ACS_EXTFUNC(GetGamemodeState_Zandro) // always returns "in progress"
   ACS_EXTFUNC(SetDBEntry_Zandro)
   ACS_EXTFUNC(GetDBEntry_Zandro)
   ACS_EXTFUNC(SetDBEntryString_Zandro)
