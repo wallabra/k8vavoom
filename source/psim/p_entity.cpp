@@ -287,7 +287,8 @@ void VEntity::Tick (float deltaTime) {
   }
 
   bool doSimplifiedTick = false;
-  if (GGameInfo->NetMode == NM_Standalone && vm_optimise_statics.asBool() &&
+  // allow optimiser in netplay servers too, because why not?
+  if (GGameInfo->NetMode != NM_Client && vm_optimise_statics.asBool() &&
       (StateTime < 0.0f || StateTime-deltaTime > 0.0f) && !NeedPhysics())
   {
     if (StateTime > 0.0f) StateTime -= deltaTime;
