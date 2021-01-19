@@ -41,6 +41,8 @@ void VLevel::CreateSides () {
 
   line_t *Line = Lines;
   for (int i = 0; i < NumLines; ++i, ++Line) {
+    if (Line->sidenum[0] < 0) Line->sidenum[0] = -1; // just in case
+    if (Line->sidenum[1] < 0) Line->sidenum[1] = -1; // just in case
     if (Line->sidenum[0] == -1) {
       if (Line->sidenum[1] == -1) {
         // UDMF control line
@@ -130,6 +132,7 @@ void VLevel::CreateSides () {
       fside = nullptr;
       Line->sidenum[0] = CurrentDummySide;
       side_t *ds = &Sides[CurrentDummySide++];
+      vassert(ds->Flags&SDF_ABSLIGHT);
       ds->LineNum = i;
       ds->Sector = &Sectors[0]; //FIXME
       GCon->Logf(NAME_Debug, "Linedef #%d front side is dummy side #%d", i, CurrentDummySide-NumNewSides);
