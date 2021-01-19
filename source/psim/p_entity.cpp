@@ -65,7 +65,7 @@ public:
   VStateCall *PrevCall;
 public:
   VV_DISABLE_COPY(PCSaver)
-  inline PCSaver (VStateCall **aptr) noexcept : ptr(aptr), PrevCall(nullptr) { if (ptr) PrevCall = *ptr; }
+  inline PCSaver (VStateCall **aptr) noexcept : ptr(aptr), PrevCall(nullptr) { if (aptr) PrevCall = *aptr; }
   inline ~PCSaver () noexcept { if (ptr) *ptr = PrevCall; ptr = nullptr; }
 };
 
@@ -530,13 +530,7 @@ bool VEntity::AdvanceState (float deltaTime) {
 //==========================================================================
 VState *VEntity::FindState (VName StateName, VName SubLabel, bool Exact) {
   VStateLabel *Lbl = GetClass()->FindStateLabel(StateName, SubLabel, Exact);
-  if (!Lbl && !Exact && SubLabel == NAME_None && StateName != NAME_None && strchr(*StateName, '.')) {
-    // try to split, if not exact
-    TArray<VName> Names;
-    VMemberBase::StaticSplitStateLabel(*StateName, Names);
-    //GCon->Logf("VEntity::FindState(%s): splitted '%s' to %d parts", GetClass()->GetName(), *StateName, Names.length());
-    if (Names.length() > 1) Lbl = GetClass()->FindStateLabel(Names, true);
-  }
+  //k8: there's no need to manually resolve compound labels (like "A.B"), `VClass::FindStateLabel()` will do it for us
   //if (Lbl) GCon->Logf("VEntity::FindState(%s): found '%s' (%s : %s)", GetClass()->GetName(), *StateName, *Lbl->Name, *Lbl->State->Loc.toStringNoCol());
   return (Lbl ? Lbl->State : nullptr);
 }
@@ -634,7 +628,7 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
   if (!Actor) return false;
 
   // set up state call structure
-  //GCon->Logf(NAME_Debug, "%s: CHAIN (Actor=%s)", *GetClass()->GetFullName(), *Actor->GetClass()->GetFullName());
+  //if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: CHAIN (Actor=%s); actorstate=%s; itstate=%s", *GetClass()->GetFullName(), *Actor->GetClass()->GetFullName(), (Actor->State ? *Actor->State->Loc.toStringNoCol() : "<none>"), (AState ? *AState->Loc.toStringNoCol() : "<none>"));
   PCSaver saver(&XLevel->StateCall);
   VStateCall Call;
   Call.Item = this;
@@ -649,7 +643,7 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
   //if (dbg && S) GCon->Logf(NAME_Debug, "*** %u:%s(%s):%s: CallStateChain ENTER", GetUniqueId(), GetClass()->GetName(), Actor->GetClass()->GetName(), *S->Loc.toStringShort());
   while (S) {
     // check for infinite loops
-    if (++RunAway > 1024) {
+    if (++RunAway > 512) {
       GCon->Logf(NAME_Warning, "entity '%s' state chain interrupted by WatchCat!", *Actor->GetClass()->GetFullName());
       GCon->Logf(NAME_Warning, "... state: '%s'", *S->Loc.toStringNoCol());
       res = false; // watchcat break, oops
