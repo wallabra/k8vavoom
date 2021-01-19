@@ -393,10 +393,12 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VInvocation *inv
       break;
 
     case TYPE_State:
-      // some very bright persons does this: `A_JumpIfTargetInLOS("1")` -- brilliant!
+      // some very bright person does this: `A_JumpIfTargetInLOS("1")` -- brilliant!
       // string?
-      if (IsStrConst()) {
-        VStr str = GetStrConst(ec.Package).xstrip();
+      if (IsStrConst() || IsDecorateSingleName()) {
+        //VStr str = GetStrConst(ec.Package).xstrip();
+        VStr str;
+        if (IsStrConst()) str = GetStrConst(ec.Package).xstrip(); else { VDecorateSingleName *e = (VDecorateSingleName *)this; str = VStr(e->Name).xstrip(); }
         if (str.isEmpty() || str.strEquCI("none") || str.strEquCI("null") || str.strEquCI("nil") || str.strEquCI("false")) {
           if (isOptional) {
             // this is perfectly legal
@@ -477,11 +479,15 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VInvocation *inv
         return enew;
       }
       // string?
-      if (IsStrConst()) {
-        VStr Lbl = GetStrConst(ec.Package);
-        //TLocation ALoc = Args[i]->Loc;
+      if (IsStrConst() || IsDecorateSingleName()) {
+        //VStr Lbl = GetStrConst(ec.Package);
+        VStr Lbl;
+        if (IsStrConst()) Lbl = GetStrConst(ec.Package); else { VDecorateSingleName *e = (VDecorateSingleName *)this; Lbl = VStr(e->Name); }
+        //k8: actually, don't resolve any "::" here, our dynamic resolver will do this for us
+        /*
         int DCol = Lbl.IndexOf("::");
-        if (DCol >= 0) {
+        // always use dynamic resolving for `A_Jump()`
+        if (DCol >= 0 && !VStr::strEqu(funcName, "A_Jump")) {
           // jump to a specific parent class state, resolve it and pass value directly
           VStr ClassName(Lbl, 0, DCol);
           VClass *CheckClass;
@@ -527,6 +533,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VInvocation *inv
           delete this;
           return enew;
         }
+        */
         // it's a virtual state jump
         //ParseWarning(Args[i]->Loc, "***VSJMP `%s`: <%s>", Func->GetName(), *Lbl);
         VExpression *TmpArgs[1];
