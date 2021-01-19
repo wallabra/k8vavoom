@@ -1306,10 +1306,13 @@ bool do_CheckProximity (name classname, float distance, optional int count, opti
 
 //==========================================================================
 //
-//  NeedPhysics
+//  PhysicsCheckScroller
+//
+//  returns `true` if this Entity is standing on a scroller
+//  all prerequisites are checked by the C++ code
 //
 //==========================================================================
-bool NeedPhysics () {
+bool PhysicsCheckScroller () {
   return true;
 }
 

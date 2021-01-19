@@ -48,6 +48,10 @@ static VCvarB vm_optimise_statics("vm_optimise_statics", false, "Try to detect s
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static VClass *classScroller = nullptr;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct SavedVObjectPtr {
 public:
   VObject **ptr;
@@ -80,6 +84,18 @@ public:
   inline SetStateGuard (VEntity *aent) noexcept : ent(aent) { aent->setStateWatchCat = 0; }
   inline ~SetStateGuard () noexcept { ent->setStateWatchCat = 0; }
 };
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+
+//==========================================================================
+//
+//  VEntity::EntityStaticInit
+//
+//==========================================================================
+void VEntity::EntityStaticInit () {
+  classScroller = VClass::FindClassNoCase("Scroller");
+}
 
 
 //==========================================================================
@@ -150,8 +166,9 @@ void VEntity::AddedToLevel () {
 //==========================================================================
 bool VEntity::NeedPhysics () {
   if (IsPlayer()) return true;
+  if (Owner) return true; // inventory
   //if (IsPlayerOrMissileOrMonster()) return true;
-  if (WaterLevel != 0) return true;
+  //if (WaterLevel != 0) return true; // i don't think that we need to check this
   if (!Velocity.isZero2D()) return true;
 
   // check sticks
@@ -170,11 +187,22 @@ bool VEntity::NeedPhysics () {
   bool removeJustMoved = false;
   if (MoveFlags&MVF_JustMoved) {
     TVec odiff = LastMoveOrigin-Origin;
-    if (fabsf(odiff.x) >= 0.4f || fabsf(odiff.y) >= 0.4f || fabsf(odiff.z) >= 0.4f) return true;
+    if (fabsf(odiff.x) > 0.2f || fabsf(odiff.y) > 0.2f || fabsf(odiff.z) > 0.2f) return true;
     removeJustMoved = true;
   }
 
-  if (eventNeedPhysics()) return true;
+  // check for scrollers
+  if (classScroller && classScroller->InstanceCountWithSub) {
+    if ((EntityFlags&(EF_NoSector|EF_ColideWithWorld)) == EF_ColideWithWorld && Sector) {
+      // do as much as we can here
+      for (msecnode_t *mnode = TouchingSectorList; mnode; mnode = mnode->TNext) {
+        sector_t *sec = mnode->Sector;
+        if (!sec->AffectorData) continue;
+        if (eventPhysicsCheckScroller()) return true;
+        break;
+      }
+    }
+  }
 
   if (removeJustMoved) {
     MoveFlags &= ~MVF_JustMoved;
@@ -192,6 +220,9 @@ bool VEntity::NeedPhysics () {
 //==========================================================================
 void VEntity::Tick (float deltaTime) {
   ++dbgEntityTickTotal;
+  // advance it here, why not
+  // may be moved down later if some VC code will start using it
+  DataGameTime = XLevel->Time+deltaTime;
   // skip ticker?
   const unsigned eflags = FlagsEx;
   if (eflags&EFEX_NoTickGrav) {

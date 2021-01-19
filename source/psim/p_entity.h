@@ -455,6 +455,10 @@ public:
   };
 
 public:
+  // call this *AFTER* all decorate code was compiled!
+  static void EntityStaticInit ();
+
+public:
   // VObject interface
   virtual void Destroy () override;
   virtual void SerialiseOther (VStream &) override;
@@ -652,8 +656,8 @@ public:
     VMT_RET_VOID(method);
   }
 
-  bool eventNeedPhysics () {
-    static VMethodProxy method("NeedPhysics");
+  bool eventPhysicsCheckScroller () {
+    static VMethodProxy method("PhysicsCheckScroller");
     vobjPutParamSelf();
     VMT_RET_BOOL(method);
   }
