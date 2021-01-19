@@ -368,6 +368,8 @@ void VLevel::TickWorld (float DeltaTime) {
     cls->InstanceLimitList.reset();
   }
 
+  if (dbg_vm_show_tick_stats.asBool()) GCon->Log(NAME_Debug, "=== WORLD TICK ===");
+
   const int corpseLimit = gm_corpse_limit.asInt();
   corpseQueue.reset();
 

@@ -46,9 +46,13 @@ static VCvarB dbg_emulate_broken_gozzo_gotos("dbg_emulate_broken_gozzo_gotos", f
 
 static VCvarB vm_optimise_statics("vm_optimise_statics", false, "Try to detect some static things, and don't run physics for them? (DO NOT USE, IT IS GLITCHY!)", CVAR_Archive);
 
+extern VCvarB dbg_vm_show_tick_stats;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VClass *classScroller = nullptr;
+static VClass *classEntityEx = nullptr;
+static VField *fldbWindThrust = nullptr;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -95,6 +99,14 @@ public:
 //==========================================================================
 void VEntity::EntityStaticInit () {
   classScroller = VClass::FindClassNoCase("Scroller");
+  if (classScroller) GCon->Log(NAME_Init, "`Scroller` class found");
+  classEntityEx = VClass::FindClassNoCase("EntityEx");
+  if (classEntityEx) {
+    GCon->Log(NAME_Init, "`EntityEx` class found");
+    //FIXME: do we need "checked" here?
+    fldbWindThrust = classEntityEx->FindField("bWindThrust");
+    if (fldbWindThrust) GCon->Log(NAME_Init, "`EntityEx.bWindThrust` field found");
+  }
 }
 
 
@@ -169,7 +181,9 @@ bool VEntity::NeedPhysics () {
   if (Owner) return true; // inventory
   //if (IsPlayerOrMissileOrMonster()) return true;
   //if (WaterLevel != 0) return true; // i don't think that we need to check this
-  if (!Velocity.isZero2D()) return true;
+  //if (!Velocity.isZero2D()) return true;
+  // roughly smaller than lowest fixed point 16.16 (it is more like 0.0000152587890625)
+  if (fabsf(Velocity.x) > 0.000016f*4.0f || fabsf(Velocity.x) > 0.000016f*4.0f) return true;
 
   // check sticks
   if (FlagsEx&(EFEX_StickToFloor|EFEX_StickToCeiling)) {
@@ -182,6 +196,9 @@ bool VEntity::NeedPhysics () {
 
   if (!(EntityFlags&EF_NoGravity)) {
     if (Velocity.z > 0.0f || Origin.z != FloorZ) return true;
+  } else {
+    // no gravity, check for vertical velocity
+    if (fabsf(Velocity.z) > 0.000016f*4.0f) return true;
   }
 
   bool removeJustMoved = false;
@@ -204,10 +221,16 @@ bool VEntity::NeedPhysics () {
     }
   }
 
+  // check for windthrust
+  if (classEntityEx && fldbWindThrust && GetClass()->IsChildOf(classEntityEx) && fldbWindThrust->GetBool(this)) {
+    return true;
+  }
+
   if (removeJustMoved) {
     MoveFlags &= ~MVF_JustMoved;
     LastMoveOrigin = Origin;
   }
+  Velocity.x = Velocity.y = 0.0f;
 
   return false;
 }
@@ -299,6 +322,14 @@ void VEntity::Tick (float deltaTime) {
   // `Mass` is clamped in `OnMapSpawn()`, and we should take care of it in VC code
   // clamp velocity (just in case)
   if (!doSimplifiedTick) {
+    if (dbg_vm_show_tick_stats.asBool()) {
+      GCon->Logf(NAME_Debug, "%s: cannot simplify tick; vel=(%g,%g,%g); z=%g; floorz=%g; statetime=%g (%g); Owner=%p; justmoved=%d; vcheck=%d; floorcheck=%d; stcheck=%d; interdiff=(%g,%g,%g)",
+      GetClass()->GetName(), Velocity.x, Velocity.y, Velocity.z, Origin.z, FloorZ, StateTime, StateTime-deltaTime, Owner,
+      (int)((MoveFlags&MVF_JustMoved) != 0), (int)(!(fabsf(Velocity.x) > 0.000016f*4.0f || fabsf(Velocity.x) > 0.000016f*4.0f)),
+      (int)(!(Velocity.z > 0.0f || Origin.z != FloorZ)),
+      (int)(StateTime < 0.0f || StateTime-deltaTime > 0.0f),
+      (LastMoveOrigin-Origin).x, (LastMoveOrigin-Origin).y, (LastMoveOrigin-Origin).z);
+    }
     Velocity.clampScaleInPlace(PHYS_MAXMOVE);
     // call normal ticker
     VThinker::Tick(deltaTime);

@@ -1764,8 +1764,7 @@ void NoBlockingSet () {
 //==========================================================================
 final void EntityPreTick (float deltaTime) {
   // handle powerup effects
-  Inventory Item;
-  for (Item = Inventory; Item && Item.Owner == self; Item = Item.Inventory) {
+  for (Inventory Item = Inventory; Item && Item.Owner == self; Item = Item.Inventory) {
     Item.DoEffect();
   }
 
