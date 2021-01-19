@@ -103,6 +103,7 @@ defaultproperties {
   bShootable = false;
   bNoBlood = true;
   bNoInteraction = true; //k8
+  bAlwaysTick = true;
 
   Health = 0;
   Radius = 0;

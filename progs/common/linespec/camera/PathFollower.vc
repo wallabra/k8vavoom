@@ -368,4 +368,5 @@ defaultproperties {
   bNoSector = true;
   bNoGravity = true;
   bNoSplash = true;
+  bAlwaysTick = true;
 }

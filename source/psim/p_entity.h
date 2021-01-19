@@ -311,6 +311,7 @@ class VEntity : public VThinker {
     EFEX_StickToCeiling   = 1u<<9u,
     EFEX_DetachFromServer = 1u<<10u, // set this flag to detach the entity from the server in network game
     EFEX_CorpseFlipped    = 1u<<11u, // this flag is set when monster died, and need its corpse flipped
+    EFEX_AlwaysTick       = 1u<<12u, // cannot optimise physics for this entity
   };
   vuint32 FlagsEx;
 

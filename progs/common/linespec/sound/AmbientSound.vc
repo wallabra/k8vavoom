@@ -141,4 +141,5 @@ class AmbientSoundNoGravity : AmbientSound __mobjinfo__(14067);
 
 defaultproperties {
   bNoGravity = true;
+  bAlwaysTick = true;
 }
