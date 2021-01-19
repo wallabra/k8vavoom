@@ -983,14 +983,19 @@ VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
     }
   }
 
+  // resolve compound labels
+  const char *sublbl = (SubLabel == NAME_None ? "" : *SubLabel);
   const char *namestr = *AName;
-  if (strchr(namestr, '.') != nullptr || (SubLabel != NAME_None && strchr(*SubLabel, '.') != nullptr)) {
+  if (strchr(namestr, '.') != nullptr || (SubLabel != NAME_None && strchr(sublbl, '.') != nullptr)) {
     // oops, has dots; do it slow
     VStr lblstr = VStr(namestr);
-    if (SubLabel != NAME_None) { lblstr += '.'; lblstr += *SubLabel; }
+    if (SubLabel != NAME_None) {
+      if (lblstr.length() && !lblstr.endsWith(".")) lblstr += '.';
+      if (sublbl[0] != '.') lblstr += sublbl; else lblstr += sublbl+1;
+    }
     TArray<VName> names;
-    if (names.length() == 0) return nullptr;
     StaticSplitStateLabel(lblstr, names);
+    if (names.length() == 0) return nullptr;
     return FindStateLabel(names, Exact);
   }
 
