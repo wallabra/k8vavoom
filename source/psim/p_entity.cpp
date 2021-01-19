@@ -191,9 +191,11 @@ bool VEntity::NeedPhysics () {
 //
 //==========================================================================
 void VEntity::Tick (float deltaTime) {
+  ++dbgEntityTickTotal;
   // skip ticker?
   const unsigned eflags = FlagsEx;
   if (eflags&EFEX_NoTickGrav) {
+    ++dbgEntityTickNoTick;
     #ifdef CLIENT
     //GCon->Logf(NAME_Debug, "*** %s ***", GetClass()->GetName());
     #endif
@@ -268,6 +270,7 @@ void VEntity::Tick (float deltaTime) {
     // call normal ticker
     VThinker::Tick(deltaTime);
   } else {
+    ++dbgEntityTickSimple;
     eventSimplifiedTick(deltaTime);
   }
 }

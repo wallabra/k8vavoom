@@ -36,6 +36,7 @@ VCvarB dbg_world_think_decal_time("dbg_world_think_decal_time", false, "Show tim
 VCvarB dbg_vm_disable_thinkers("dbg_vm_disable_thinkers", false, "Disable VM thinkers (for debug)?", CVAR_PreInit);
 VCvarB dbg_vm_enable_secthink("dbg_vm_enable_secthink", true, "Enable sector thinkers when VM thinkers are disabled (for debug)?", CVAR_PreInit);
 VCvarB dbg_vm_disable_specials("dbg_vm_disable_specials", false, "Disable updating specials (for debug)?", CVAR_PreInit);
+VCvarB dbg_vm_show_tick_stats("dbg_vm_show_tick_stats", false, "Show some debug tick statistics?", CVAR_PreInit);
 
 static VCvarB dbg_limiter_counters("dbg_limiter_counters", false, "Show limiter counters?", CVAR_PreInit);
 static VCvarB dbg_limiter_remove_messages("dbg_limiter_remove_messages", false, "Show limiter remove messages?", CVAR_PreInit);
@@ -46,6 +47,10 @@ double worldThinkTimeVM = -1;
 double worldThinkTimeDecal = -1;
 
 static TArray<VEntity *> corpseQueue;
+
+int dbgEntityTickTotal = 0;
+int dbgEntityTickSimple = 0;
+int dbgEntityTickNoTick = 0;
 
 
 //==========================================================================
@@ -346,6 +351,8 @@ void VLevel::TickWorld (float DeltaTime) {
   eventUpdateCachedCVars();
   eventBeforeWorldTick(DeltaTime);
 
+  dbgEntityTickTotal = dbgEntityTickSimple = dbgEntityTickNoTick = 0;
+
   if (dbg_world_think_vm_time) stimet = -Sys_Time();
 
   // setup limiter info
@@ -546,6 +553,10 @@ void VLevel::TickWorld (float DeltaTime) {
   TicTime = (int)(Time*35.0f);
 
   eventAfterWorldTick(DeltaTime);
+
+  if (dbg_vm_show_tick_stats.asBool()) {
+    GCon->Logf(NAME_Debug, "TICK: total=%d; simple=%d; notick=%d (full left: %d)", dbgEntityTickTotal, dbgEntityTickSimple, dbgEntityTickNoTick, dbgEntityTickTotal-(dbgEntityTickSimple+dbgEntityTickNoTick));
+  }
 }
 
 

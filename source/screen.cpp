@@ -361,6 +361,10 @@ static void DrawFPS () {
     }
 
     //ypos += T_FontHeight();
+    if (xpos > 4) {
+      T_SetAlign(hleft, vtop);
+      T_DrawText(7*T_TextWidth("W"), ypos, va("[\034U%5d\034-/\034U%5d\034-/\034U%4d\034-|\034U%3d\034-]", dbgEntityTickTotal, dbgEntityTickSimple, dbgEntityTickNoTick, dbgEntityTickTotal-(dbgEntityTickSimple+dbgEntityTickNoTick)), CR_DARKBROWN);
+    }
   }
 
   // FPS
@@ -391,9 +395,13 @@ static void DrawFPS () {
       T_SetAlign(hright, vtop);
       xpos = VirtualWidth-2;
     }
-    T_DrawText(xpos, ypos, va("%02d FPS", show_fps), CR_DARKBROWN);
+    if (stripeRendered) {
+      T_DrawText(xpos, ypos, va("FPS:%02d", show_fps), CR_DARKBROWN);
+    } else {
+      T_DrawText(xpos, ypos, va("%02d FPS", show_fps), CR_DARKBROWN);
+    }
 
-    if (draw_fps == 2) {
+    if (!stripeRendered && draw_fps == 2) {
       T_SetAlign(hright, vtop);
       T_DrawText(VirtualWidth-2, ypos, va("%.2f MSEC", ms), CR_DARKBROWN);
     }

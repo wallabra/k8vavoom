@@ -1174,3 +1174,9 @@ int P_BoxOnLineSide (const float *tmbox, const line_t *ld);
 
 // used only in debug code
 bool P_GetMidTexturePosition (const line_t *line, int sideno, float *ptextop, float *ptexbot);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+extern int dbgEntityTickTotal;
+extern int dbgEntityTickSimple;
+extern int dbgEntityTickNoTick;
