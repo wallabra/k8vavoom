@@ -871,7 +871,7 @@ static void ReadSpriteName (int) {
 //
 //==========================================================================
 static inline vint32 FixScale (vint32 a, vint32 b, vint32 c) {
-  return (vint32)(((vint64)a*b)/c);
+  return (c ? (vint32)(((vint64)a*b)/c) : b);
 }
 
 
@@ -953,8 +953,8 @@ static void ReadAmmo (int num) {
       } else if (Weapon && C->IsChildOf(Weapon)) {
         // fix weapon "ammo give"
         if (C->GetFieldClassValue("AmmoType1") == Ammo) {
+          //GCon->Logf(NAME_Debug, "*** fixing ammo1 for weapon '%s' (ammo '%s'); perVal=%d; oldVal=%d", C->GetName(), Ammo->GetName(), perVal, oldVal);
           C->SetFieldInt("AmmoGive1", FixScale(C->GetFieldInt("AmmoGive1"), perVal, oldVal));
-          //GCon->Logf(NAME_Debug, "*** fixing ammo1 for weapon '%s' (ammo '%s')", C->GetName(), Ammo->GetName());
         }
         if (C->GetFieldClassValue("AmmoType2") == Ammo) {
           C->SetFieldInt("AmmoGive2", FixScale(C->GetFieldInt("AmmoGive2"), perVal, oldVal));
