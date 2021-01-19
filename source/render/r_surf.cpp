@@ -27,6 +27,9 @@
 #include "r_local.h"
 #include "../server/sv_local.h"
 
+  // it seems that `segsidedef` offset is in effect, but scaling is not
+//#define VV_SURFCTOR_3D_USE_SEGSIDEDEF_SCALE
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB r_hack_transparent_doors("r_hack_transparent_doors", true, "Transparent doors hack.", CVAR_Archive);
@@ -691,13 +694,22 @@ static inline void SetupTextureAxesOffsetEx (seg_t *seg, texinfo_t *texinfo, VTe
   texinfo->Additive = false;
   texinfo->ColorMap = 0;
 
+  #ifdef VV_SURFCTOR_3D_USE_SEGSIDEDEF_SCALE
+  const float scale2X = tparam2->ScaleY;
+  const float scale2Y = tparam2->ScaleY;
+  #else
+  // it seems that `segsidedef` offset is in effect, but scaling is not
+  const float scale2X = 1.0f;
+  const float scale2Y = 1.0f;
+  #endif
+
   texinfo->saxisLM = seg->dir;
-  texinfo->saxis = seg->dir*(TextureSScale(tex)*tparam->ScaleX*tparam2->ScaleX);
+  texinfo->saxis = seg->dir*(TextureSScale(tex)*tparam->ScaleX*scale2X);
   texinfo->taxisLM = TVec(0, 0, -1);
-  texinfo->taxis = TVec(0, 0, -1)*(TextureTScale(tex)*tparam->ScaleY*tparam2->ScaleY);
+  texinfo->taxis = TVec(0, 0, -1)*(TextureTScale(tex)*tparam->ScaleY*scale2Y);
 
   texinfo->soffs = -DotProduct(*seg->v1, texinfo->saxis)+
-                   seg->offset*(TextureSScale(tex)*tparam->ScaleX*tparam2->ScaleX)+
+                   seg->offset*(TextureSScale(tex)*tparam->ScaleX*scale2X)+
                    (tparam->TextureOffset+tparam2->TextureOffset)*TextureOffsetSScale(tex);
 
   texinfo->toffs = 0.0f;
@@ -1221,9 +1233,15 @@ static inline void FixMidTextureOffsetAndOrigin (float &z_org, const line_t *lin
 //
 //==========================================================================
 static inline void FixMidTextureOffsetAndOriginEx (float &z_org, const line_t *linedef, const side_t *sidedef, texinfo_t *texinfo, VTexture *MTex, const side_tex_params_t *tparam, const side_tex_params_t *tparam2) {
+  #ifdef VV_SURFCTOR_3D_USE_SEGSIDEDEF_SCALE
+  const float scale2Y = tparam2->ScaleY;
+  #else
+  // it seems that `segsidedef` offset is in effect, but scaling is not
+  const float scale2Y = 1.0f;
+  #endif
   // it is always wrapped, so just slide it
   texinfo->toffs = (tparam->RowOffset+tparam2->RowOffset)*TextureOffsetTScale(MTex);
-  texinfo->toffs += z_org*(TextureTScale(MTex)*tparam->ScaleY*tparam2->ScaleY);
+  texinfo->toffs += z_org*(TextureTScale(MTex)*tparam->ScaleY*scale2Y);
 }
 
 
@@ -1546,13 +1564,31 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   //ops = SV_SectorOpenings(seg->frontsector); // skip non-solid
 
   const line_t *linedef = reg->extraline;
-  const side_t *sidedef = &Level->Sides[linedef->sidenum[0]];
-  const side_t *segsidedef = seg->sidedef;
+  /*const*/ side_t *sidedef = &Level->Sides[linedef->sidenum[0]];
+  /*const*/ side_t *segsidedef = seg->sidedef;
   //const side_t *texsideparm = (segsidedef ? segsidedef : sidedef);
 
   VTexture *MTex = GTextureManager(sidedef->MidTexture);
   if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
 
+  // it seems that `segsidedef` offset is in effect, but scaling is not
+  #ifdef VV_SURFCTOR_3D_USE_SEGSIDEDEF_SCALE
+  const float scale2Y = segsidedef->Mid.ScaleY;
+  #else
+  // it seems that `segsidedef` offset is in effect, but scaling is not
+  const float scale2Y = 1.0f;
+  #endif
+
+  /*
+  if (sidedef->Mid.ScaleY != 1) GCon->Logf(NAME_Debug, "extra: line #%d (%d), side #%d: midscale=%g", (int)(ptrdiff_t)(linedef-&Level->Lines[0]), (int)(ptrdiff_t)(seg->linedef-&Level->Lines[0]), (int)(ptrdiff_t)(sidedef-&Level->Sides[0]), sidedef->Mid.ScaleY);
+  if (segsidedef->Mid.ScaleY != 1) GCon->Logf(NAME_Debug, "seg: line #%d (%d), side #%d: midscale=%g", (int)(ptrdiff_t)(seg->linedef-&Level->Lines[0]), (int)(ptrdiff_t)(linedef-&Level->Lines[0]), (int)(ptrdiff_t)(segsidedef-&Level->Sides[0]), segsidedef->Mid.ScaleY);
+  if ((int)(ptrdiff_t)(seg->linedef-&Level->Lines[0]) == 49) {
+    //sidedef->Mid.ScaleY = segsidedef->Mid.ScaleY = 1;
+    segsidedef->Mid.ScaleY = 1;
+    //segsidedef->Mid.RowOffset = 0;
+    //sidedef->Mid.RowOffset = 0;
+  }
+  */
   /*
    1. solid 3d floors should be cut only by other solids (including other sector)
    2. swimmable (water) 3d floors should be cut by all solids (including other sector), and
@@ -1606,18 +1642,26 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   SetupTextureAxesOffsetEx(seg, &sp->texinfo, MTex, &sidedef->Mid, &segsidedef->Mid);
 
   //const float texh = DivByScale(MTex->GetScaledHeight(), texsideparm->Mid.ScaleY);
-  const float texh = DivByScale2(MTex->GetScaledHeight(), sidedef->Mid.ScaleY, segsidedef->Mid.ScaleY);
+  const float texh = DivByScale2(MTex->GetScaledHeight(), sidedef->Mid.ScaleY, scale2Y);
+  const float texhsc = MTex->GetHeight();
   float z_org; // texture top
+
   // (reg->regflags&sec_region_t::RF_SaneRegion) // vavoom 3d floor
   if (linedef->flags&ML_DONTPEGBOTTOM) {
     // bottom of texture at bottom
     z_org = reg->efloor.splane->TexZ+texh;
+  } else if (linedef->flags&ML_DONTPEGTOP) {
+    // top of texture at top of top region (???)
+    z_org = seg->frontsub->sector->ceiling.TexZ;
+    //z_org = reg->eceiling.splane->TexZ;
   } else {
     // top of texture at top
     z_org = reg->eceiling.splane->TexZ;
   }
+
   // apply offsets from both sides
   FixMidTextureOffsetAndOriginEx(z_org, linedef, sidedef, &sp->texinfo, MTex, &sidedef->Mid, &segsidedef->Mid);
+  //FixMidTextureOffsetAndOrigin(z_org, linedef, sidedef, &sp->texinfo, MTex, &sidedef->Mid);
 
   sp->texinfo.Alpha = (reg->efloor.splane->Alpha < 1.0f ? reg->efloor.splane->Alpha : 1.1f);
   sp->texinfo.Additive = !!(reg->efloor.splane->flags&SPF_ADDITIVE);
@@ -1653,7 +1697,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 
       // check texture limits
       if (!wrapped) {
-        if (max2(topz1, topz2) <= z_org-texh) continue;
+        if (max2(topz1, topz2) <= z_org-texhsc) continue;
         if (min2(botz1, botz2) >= z_org) continue;
       }
 
@@ -1668,10 +1712,10 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
         wv[2].z = topz2;
         wv[3].z = botz2;
       } else {
-        wv[0].z = max2(botz1, z_org-texh);
+        wv[0].z = max2(botz1, z_org-texhsc);
         wv[1].z = min2(topz1, z_org);
         wv[2].z = min2(topz2, z_org);
-        wv[3].z = max2(botz2, z_org-texh);
+        wv[3].z = max2(botz2, z_org-texhsc);
       }
 
       if (doDump) for (int wf = 0; wf < 4; ++wf) GCon->Logf("   wf #%d: (%g,%g,%g)", wf, wv[wf].x, wv[wf].y, wv[wf].z);
