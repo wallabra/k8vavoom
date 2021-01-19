@@ -327,11 +327,14 @@ void Host_Init () {
     Z_Exit(0);
   }
 
+  VEntity::EntityStaticInit();
+
 #ifdef CLIENT
   GInput = VInputPublic::Create();
   GInput->Init();
   GAudio = VAudioPublic::Create();
   if (GAudio) GAudio->Init();
+
   SCR_Init();
   CT_Init();
   //V_Init(); // moved to the top, so we can show a splash screen
