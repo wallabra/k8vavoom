@@ -200,13 +200,13 @@ actor SuperShotgun : DoomWeapon 82
     SHT2 H 6 A_CloseShotgun2
     SHT2 A 5 A_ReFire
     Goto Ready
-    //  Unused states
+    // unused states (may be required for Dehacked)
     SHT2 B 7
     SHT2 A 3
     Goto Deselect
   Flash:
-    SHT2 I 5 Bright A_Light1
-    SHT2 J 4 Bright A_Light2
+    SHT2 I 4 Bright A_Light1
+    SHT2 J 3 Bright A_Light2
     Goto LightDone
   Spawn:
     SGN2 A -1
