@@ -652,6 +652,8 @@ void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
 //
 //  SetupTextureAxesOffset
 //
+//  used only for normal wall textures: top, mid, bottom
+//
 //==========================================================================
 static inline void SetupTextureAxesOffset (seg_t *seg, texinfo_t *texinfo, VTexture *tex, const side_tex_params_t *tparam) {
   texinfo->Tex = tex;
@@ -667,9 +669,8 @@ static inline void SetupTextureAxesOffset (seg_t *seg, texinfo_t *texinfo, VText
   texinfo->taxis = TVec(0, 0, -1)*(TextureTScale(tex)*tparam->ScaleY);
 
   texinfo->soffs = -DotProduct(*seg->v1, texinfo->saxis)+
-                      seg->offset*(TextureSScale(tex)*tparam->ScaleX)+ //k8: maybe we need to *divide* to scale here?
-                      tparam->TextureOffset*TextureOffsetSScale(tex);
-
+                   seg->offset*(TextureSScale(tex)*tparam->ScaleX)+
+                   tparam->TextureOffset*TextureOffsetSScale(tex);
   texinfo->toffs = 0.0f;
   // toffs is not calculated here, as its calculation depends of texture position and pegging
 }
@@ -678,6 +679,8 @@ static inline void SetupTextureAxesOffset (seg_t *seg, texinfo_t *texinfo, VText
 //==========================================================================
 //
 //  SetupTextureAxesOffsetEx
+//
+//  used for 3d floor extra midtextures
 //
 //==========================================================================
 static inline void SetupTextureAxesOffsetEx (seg_t *seg, texinfo_t *texinfo, VTexture *tex, const side_tex_params_t *tparam, const side_tex_params_t *tparam2) {
@@ -694,8 +697,8 @@ static inline void SetupTextureAxesOffsetEx (seg_t *seg, texinfo_t *texinfo, VTe
   texinfo->taxis = TVec(0, 0, -1)*(TextureTScale(tex)*tparam->ScaleY*tparam2->ScaleY);
 
   texinfo->soffs = -DotProduct(*seg->v1, texinfo->saxis)+
-                      seg->offset*(TextureSScale(tex)*tparam->ScaleX*tparam2->ScaleX)+ //k8: maybe we need to *divide* to scale here?
-                      (tparam->TextureOffset+tparam2->TextureOffset)*TextureOffsetSScale(tex);
+                   seg->offset*(TextureSScale(tex)*tparam->ScaleX*tparam2->ScaleX)+
+                   (tparam->TextureOffset+tparam2->TextureOffset)*TextureOffsetSScale(tex);
 
   texinfo->toffs = 0.0f;
   // toffs is not calculated here, as its calculation depends of texture position and pegging
@@ -900,14 +903,15 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
       top_TexZ = back_ceiling->TexZ;
     }
 
+    const float tscale = TextureTScale(TTex)*sidedef->Top.ScaleY;
     if ((linedef->flags&ML_DONTPEGTOP)^peghack) {
       // top of texture at top
-      sp->texinfo.toffs = top_TexZ;
+      sp->texinfo.toffs = top_TexZ*tscale;
     } else {
       // bottom of texture
-      sp->texinfo.toffs = back_ceiling->TexZ+(TTex->GetScaledHeight()*sidedef->Top.ScaleY);
+      //GCon->Logf(NAME_Debug, "line #%d, side #%d: tz=%g; sch=%d; scy=%g", (int)(ptrdiff_t)(linedef-&Level->Lines[0]), (int)(ptrdiff_t)(sidedef-&Level->Sides[0]), back_ceiling->TexZ, TTex->GetScaledHeight(), sidedef->Top.ScaleY);
+      sp->texinfo.toffs = back_ceiling->TexZ*tscale+TTex->Height;
     }
-    sp->texinfo.toffs *= TextureTScale(TTex)*sidedef->Top.ScaleY;
     sp->texinfo.toffs += sidedef->Top.RowOffset*TextureOffsetTScale(TTex);
 
     wv[0].x = wv[1].x = seg->v1->x;
