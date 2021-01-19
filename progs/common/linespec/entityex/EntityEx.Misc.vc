@@ -3296,9 +3296,8 @@ final state FindJumpState (name Label) {
   if (XLevel.StateCall) {
     // `item` is the original caller, we should follow its states here
     state res = XLevel.StateCall->Item.FindState(Label);
-    //printdebug("%C (item=%C); state=%s (%s)", self, XLevel.StateCall->Item, Label, res);
     if (!res && !k8CheckIfSpecialStateLabel(Label)) {
-      printwarn("unknown decorate label (statecall) '%s' -- probably broken actor '%C' code! (Item=%C)", Label, self, XLevel.StateCall->Item);
+      printwarn("unknown item decorate label (statecall) '%s' (actor is `%C`) -- probably broken item `%C` code!", Label, self, XLevel.StateCall->Item);
       if (GetCvarB('dbg_emulate_broken_gozzo_gotos')) res = GetNextState(XLevel.CallingState);
     }
     return res;
