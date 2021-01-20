@@ -3696,6 +3696,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
     //printdebug("%C: PostTravel inventory (%C:%s):", self, PP, PP.UniqueId);
     //for (auto inv = PP.Inventory; inv; inv = inv.Inventory) printdebug("  %C: owner=%C(%s); MO=%C(%s)", inv, inv.Owner, (inv.Owner ? inv.Owner.UniqueId : 0), MO, MO.UniqueId);
     if (ResetInventory) {
+      //printdebug("%C: ResetInventory!", self);
       //while (PP.Inventory) PP.Inventory.Destroy();
       //FIXME!!!
       // for some reason, bot inventory sometimes refusing to go; wtf?!
@@ -3710,11 +3711,20 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
       PP.Inventory = none;
       AddDefaultInventory();
     } else if (Level.bResetItems && !GetCvarB('sv_ignore_reset_items')) {
+      //printdebug("*** %C: cleaning up inventory...", self);
       Inventory inv = PP.Inventory;
       while (inv) {
         Inventory c = inv;
         inv = inv.Inventory;
-        if (c.bInvBar && !c.bUndroppable) c.Destroy();
+        //if (c.bInvBar && !c.bUndroppable) c.Destroy();
+        //printdebug("*** %C:   %C(power=%s): bInvBar=%B; bPersistentPower=%B; bUndroppable=%B", self, c, (Powerup(c) ? "tan" : "ona"), c.bPersistentPower, c.bUndroppable);
+        if (!c.bInvBar) continue;
+        if (Powerup(c)) {
+          if (c.bPersistentPower) continue;
+        } else {
+          if (c.bUndroppable) continue;
+        }
+        c.Destroy();
       }
     }
   }
@@ -4084,8 +4094,15 @@ override void PlayerExitMap (bool clusterChange) {
   // strip all current powers
   for (Item = EntityEx(MO).Inventory; Item; ) {
     Inventory Next = Item.Inventory;
-    if (Powerup(Item) && (Level.Game.deathmatch || clusterChange || !Item.bHubPower)) {
-      Item.Destroy();
+    if (Powerup(Item)) {
+      if (Level.Game.deathmatch || (!Item.bPersistentPower && (clusterChange || !Item.bHubPower))) {
+        Item.Destroy();
+      }
+      /*
+      else {
+        printdebug("%C: keeping powerup `%C`", self, Item);
+      }
+      */
     }
     Item = Next;
   }

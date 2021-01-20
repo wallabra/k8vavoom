@@ -79,6 +79,10 @@ bool bIsCheckpointSaveAllowed = true;
 bool bAllowConsoleGive;
 bool bAllowConsoleTake;
 
+// this is transient, because it cannot be changed by DECORATE
+// FIXME: make this non-transient later, if necessary
+transient bool bPersistentPower; // valid only for powerups -- the player should keep 'em on level transitions
+
 
 replication {
   reliable if (Role == ROLE_Authority && bNetOwner)

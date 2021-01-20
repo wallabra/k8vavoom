@@ -400,7 +400,7 @@
     <flag name="Undroppable" property="bUndroppable" />
     <flag name="InvBar" property="bInvBar" />
     <flag name="HubPower" property="bHubPower" />
-    <flag_unsupported name="PersistentPower" warning="false" />
+    <flag name="PersistentPower" property="bPersistentPower" />
     <flag_unsupported name="Untossable" warning="false" />
     <flag name="InterHubStrip" property="bInterHubStrip" />
     <flag_class name="PickupFlash" property="PickupFlashType" true_value="PickupFlash" false_value="None" />

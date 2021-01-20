@@ -587,22 +587,24 @@ void ObtainInventory (EntityEx Other) {
 override void ClearInventory () {
   Inventory Item = Inventory;
   while (Item) {
-    Inventory invNext = Item.Inventory;
-    if (!Item.bUndroppable) {
+    Inventory c = Item;
+    Item = Item.Inventory;
+    //printdebug("*** %C:   %C(power=%s): bInvBar=%B; bPersistentPower=%B; bUndroppable=%B", self, c, (Powerup(c) ? "tan" : "ona"), c.bPersistentPower, c.bUndroppable);
+    bool mustKeep = (Powerup(c) ? c.bPersistentPower : c.bUndroppable);
+    if (!mustKeep) {
       // IMHO any item that should be kept should not be dropped, not just ammo
-      if (Item.bKeepDepleted) {
-        Item.Amount = 0;
+      if (c.bKeepDepleted) {
+        c.Amount = 0;
       } else {
-        Item.Destroy();
+        c.Destroy();
       }
-    } else if (HexenArmor(Item)) {
-      HexenArmor A = HexenArmor(Item);
+    } else if (HexenArmor(c)) {
+      HexenArmor A = HexenArmor(c);
       A.Slots[0] = 0.0;
       A.Slots[1] = 0.0;
       A.Slots[2] = 0.0;
       A.Slots[3] = 0.0;
     }
-    Item = invNext;
   }
 
   if (bIsPlayer) {
