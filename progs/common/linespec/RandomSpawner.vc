@@ -156,12 +156,28 @@ override void BeginPlay () {
 
 //==========================================================================
 //
+//  SimplifiedTick
+//
+//  called when entity doesn't need physics
+//
+//==========================================================================
+override void SimplifiedTick (float deltaTime) {
+  ::SimplifiedTick(deltaTime);
+  // sorry for this pasta
+  if (!Tracer || Tracer.Health <= 0) {
+    A_BossDeath();
+    Destroy();
+  }
+}
+
+
+//==========================================================================
+//
 //  Tick
 //
 //==========================================================================
 override void Tick (float deltaTime) {
   ::Tick(deltaTime);
-
   if (!Tracer || Tracer.Health <= 0) {
     A_BossDeath();
     Destroy();

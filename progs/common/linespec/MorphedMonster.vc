@@ -136,4 +136,5 @@ override bool MorphedDeath (out EntityEx Morphed, out int MorphedStyle, out int 
 
 
 defaultproperties {
+  bAlwaysTick = true;
 }

@@ -207,11 +207,10 @@ override bool Activate (EntityEx Activator) {
 
 //==========================================================================
 //
-//  Tick
+//  CommonTick
 //
 //==========================================================================
-override void Tick (float DeltaTime) {
-  ::Tick(DeltaTime);
+final void CommonTick (float DeltaTime) {
   if (!bActive) return;
 
   if (bJustStepped) {
@@ -246,6 +245,30 @@ override void Tick (float DeltaTime) {
       if ((Args[2]&1) == 0 && CurrNode.NextPoint.NextPoint == none) Deactivate(none);
     }
   }
+}
+
+
+//==========================================================================
+//
+//  SimplifiedTick
+//
+//  called when entity doesn't need physics
+//
+//==========================================================================
+override void SimplifiedTick (float deltaTime) {
+  ::SimplifiedTick(deltaTime);
+  CommonTick(deltaTime);
+}
+
+
+//==========================================================================
+//
+//  Tick
+//
+//==========================================================================
+override void Tick (float DeltaTime) {
+  ::Tick(DeltaTime);
+  CommonTick(DeltaTime);
 }
 
 
@@ -368,5 +391,4 @@ defaultproperties {
   bNoSector = true;
   bNoGravity = true;
   bNoSplash = true;
-  bAlwaysTick = true;
 }

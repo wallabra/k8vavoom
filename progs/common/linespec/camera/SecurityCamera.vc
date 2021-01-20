@@ -90,6 +90,19 @@ override void BeginPlay () {
 
 //==========================================================================
 //
+//  SimplifiedTick
+//
+//  called when entity doesn't need physics
+//
+//==========================================================================
+override void SimplifiedTick (float deltaTime) {
+  ::SimplifiedTick(deltaTime);
+  TickCamera(deltaTime);
+}
+
+
+//==========================================================================
+//
 //  Tick
 //
 //==========================================================================
@@ -115,6 +128,5 @@ defaultproperties {
   bNoBlockmap = true;
   bNoGravity = true;
   bNoSplash = true;
-  bAlwaysTick = true;
   RenderStyle = STYLE_None;
 }

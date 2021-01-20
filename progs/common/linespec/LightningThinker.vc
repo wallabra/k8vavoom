@@ -183,4 +183,5 @@ defaultproperties {
   bNoSector = true;
   bNoBlockmap = true;
   bNoSplash = true;
+  bAlwaysTick = true;
 }

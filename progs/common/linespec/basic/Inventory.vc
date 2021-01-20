@@ -153,6 +153,27 @@ override void Destroyed () {
 
 //==========================================================================
 //
+//  SimplifiedTick
+//
+//  called when entity doesn't need physics
+//
+//==========================================================================
+override void SimplifiedTick (float DeltaTime) {
+  ::SimplifiedTick(DeltaTime);
+  // sorry for this pasta
+  if (DropTime) {
+    DropTime -= DeltaTime;
+    if (DropTime <= 0.0) {
+      DropTime = 0.0;
+      bSpecial = default.bSpecial;
+      bSolid = default.bSolid;
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  Tick
 //
 //==========================================================================

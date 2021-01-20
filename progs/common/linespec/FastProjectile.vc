@@ -182,4 +182,5 @@ defaultproperties {
   bActivateImpact = true;
   bActivatePCross = true;
   bBloodSplatter = true;
+  bAlwaysTick = true;
 }

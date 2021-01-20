@@ -65,6 +65,21 @@ override void OnMapSpawn (mthing_t *mthing) {
 
 //==========================================================================
 //
+//  SimplifiedTick
+//
+//  called when entity doesn't need physics
+//
+//==========================================================================
+override void SimplifiedTick (float DeltaTime) {
+  ::SimplifiedTick(DeltaTime);
+  // sorry for this pasta
+  lifeleft -= DeltaTime;
+  if (lifeleft <= 0) { Destroy(); return; }
+}
+
+
+//==========================================================================
+//
 //  Tick
 //
 //==========================================================================
@@ -103,7 +118,6 @@ defaultproperties {
   bShootable = false;
   bNoBlood = true;
   bNoInteraction = true; //k8
-  bAlwaysTick = true;
 
   Health = 0;
   Radius = 0;

@@ -720,6 +720,7 @@ defaultproperties {
   bMonster = true;
   bPassMobj = true;
   bCanUseWalls = true;
+  bAlwaysTick = true;
   PainSound = '*pain50';
   DeathSound = '*death';
 }

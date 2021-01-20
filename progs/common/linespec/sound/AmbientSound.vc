@@ -83,12 +83,10 @@ override bool Deactivate (EntityEx Activator) {
 
 //==========================================================================
 //
-//  Tick
+//  CommonTicker
 //
 //==========================================================================
-override void Tick (float DeltaTime) {
-  ::Tick(DeltaTime);
-
+final void CommonTicker (float DeltaTime) {
   Timer -= DeltaTime;
   if (Timer < 0.0) Timer = 0.0;
 
@@ -108,6 +106,30 @@ override void Tick (float DeltaTime) {
   }
 
   SetTimer(Amb);
+}
+
+
+//==========================================================================
+//
+//  SimplifiedTick
+//
+//  called when entity doesn't need physics
+//
+//==========================================================================
+override void SimplifiedTick (float deltaTime) {
+  ::SimplifiedTick(deltaTime);
+  CommonTicker(deltaTime);
+}
+
+
+//==========================================================================
+//
+//  Tick
+//
+//==========================================================================
+override void Tick (float DeltaTime) {
+  ::Tick(DeltaTime);
+  CommonTicker(DeltaTime);
 }
 
 
@@ -137,9 +159,9 @@ defaultproperties {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 class AmbientSoundNoGravity : AmbientSound __mobjinfo__(14067);
 
 defaultproperties {
   bNoGravity = true;
-  bAlwaysTick = true;
 }

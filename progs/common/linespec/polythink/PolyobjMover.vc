@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class PolyobjMover:PolyobjThinker;
+class PolyobjMover : PolyobjThinker;
 
 int polyobj;
 float speed;

@@ -436,35 +436,6 @@ final Weapon AddWeapon (class!Weapon WeaponType) {
 
 //==========================================================================
 //
-//  Tick
-//
-//==========================================================================
-/*k8: this isn't working as i thought it is
-override void Tick (float DeltaTime) {
-  // make inactive weapons transparent in netgames
-  if (!Owner) {
-    if (Alpha == 1) {
-      if (!bDropped && ShouldStay()) {
-        RenderStyle = Entity::STYLE_Translucent;
-        //RenderStyle = Entity::STYLE_Add;
-        Alpha = 0.8;
-        print("TRANS: %C", self);
-      }
-    } else {
-      if (!bDropped) {
-        RenderStyle = Entity::STYLE_Normal;
-        Alpha = 1;
-        print("NORMAL: %C", self);
-      }
-    }
-  }
-  ::Tick(DeltaTime);
-}
-*/
-
-
-//==========================================================================
-//
 //  CanPickupForAmmo
 //
 //==========================================================================
