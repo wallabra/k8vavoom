@@ -65,8 +65,8 @@ final bool CheckMissileSpawn () {
 
   tmtrace_t tmtrace;
   if (!TryMoveEx(out tmtrace, Origin, AllowDropOff:false, checkOnly:true)) {
-    printdebug("%C: CheckMissileSpawn: spawn failed; mobj=%C; stepthing=%C; %s", self, tmtrace.BlockingMobj, tmtrace.StepThing, (tmtrace.BlockingLine ? tmtrace.BlockingLine-&XLevel.Lines[0] : -1));
-    printdebug("%C: fz=%s; cz=%s; z0=%s; z1=%s", self, tmtrace.FloorZ, tmtrace.CeilingZ, Origin.z, Origin.z+Height);
+    //printdebug("%C: CheckMissileSpawn: spawn failed; mobj=%C; stepthing=%C; %s", self, tmtrace.BlockingMobj, tmtrace.StepThing, (tmtrace.BlockingLine ? tmtrace.BlockingLine-&XLevel.Lines[0] : -1));
+    //printdebug("%C: fz=%s; cz=%s; z0=%s; z1=%s", self, tmtrace.FloorZ, tmtrace.CeilingZ, Origin.z, Origin.z+Height);
     if (!Level.Game.IsAuthority) { Destroy(); return false; }
     // don't explode ripping missiles that spawn inside another thing
     if (!tmtrace.BlockingMobj || !bRip || EntityEx(tmtrace.BlockingMobj).bDontRip) {
