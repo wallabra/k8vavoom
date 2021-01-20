@@ -66,6 +66,19 @@ menudef GameplayOptions {
   header "Other Options";
 
   option bool {
+    title = "Optimise Physics Calculation";
+    cvar = vm_optimise_statics;
+    help =
+      "Omit most physics code for 'sleeping' entities. I.e. entities without",
+      "horizontal velocity, and standing on a floor.",
+      "",
+      "This could allow you to play some pwads with 2k-4k monsters, but may",
+      "break some mods. If something doesn't work right, try to turn this",
+      "option off and check if it fixes broken things. There is no need to",
+      "restart a map to activate/deactivate this option.";
+  }
+
+  option bool {
     title = "Player Hit Kickback";
     cvar = plr_allow_damage_thrust;
     help = "Can the player be knocked back when damaged?";
