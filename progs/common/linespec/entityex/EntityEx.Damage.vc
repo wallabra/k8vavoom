@@ -1112,7 +1112,12 @@ void Died (EntityEx source, EntityEx inflictor) {
   //   only mosters and things with raise state can become corpses
   //   k8: not that i care even a little
   if (!bDontCorpse) {
-    bCorpse = true;
+    if (!bCorpse) {
+      // relink, because corpses could have a smaller radius
+      UnlinkFromWorld();
+      bCorpse = true;
+      LinkToWorld();
+    }
     bPassMobj = false;
   }
 

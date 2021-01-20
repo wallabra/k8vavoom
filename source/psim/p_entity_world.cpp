@@ -48,6 +48,10 @@
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
 static VCvarB gm_use_new_slide_code("gm_use_new_slide_code", false, "Use new sliding code (experimental)?", CVAR_Archive);
+// this may create stuck monsters on Arch-Vile revival and such, but meh...
+// i REALLY HATE hanging corpses
+static VCvarB gm_smaller_corpses("gm_smaller_corpses", false, "Make corpses smaller, so they will not hang on ledges?", CVAR_Archive);
+static VCvarF gm_corpse_radius_mult("gm_corpse_radius_mult", "0.4", "Corpse radius multiplier for 'smaller corpese' mode.", CVAR_Archive);
 #ifdef CLIENT
 VCvarB r_interpolate_thing_movement("r_interpolate_thing_movement", true, "Interpolate mobj movement?", CVAR_Archive);
 VCvarB r_interpolate_thing_angles_models("r_interpolate_thing_angles_models", true, "Interpolate mobj rotation for 3D models?", CVAR_Archive);
@@ -57,6 +61,27 @@ VCvarB r_interpolate_thing_angles_sprites("r_interpolate_thing_angles_sprites", 
 VCvarB r_limit_blood_spots("r_limit_blood_spots", true, "Limit blood spoit amount in a sector?", CVAR_Archive);
 VCvarI r_limit_blood_spots_max("r_limit_blood_spots_max", "96", "Maximum blood spots?", CVAR_Archive);
 VCvarI r_limit_blood_spots_leave("r_limit_blood_spots", "64", "Leva no more than this number of blood spots.", CVAR_Archive);
+
+
+//==========================================================================
+//
+//  VEntity::GetMoveRadius
+//
+//  corpses could have smaller radius
+//
+//  TODO: return real radius in nightmare?
+//
+//==========================================================================
+float VEntity::GetMoveRadius () const noexcept {
+  if (((EntityFlags&EF_Corpse)|(FlagsEx&EFEX_Monster)) && !(EntityFlags&EF_Missile)) {
+    // monster corpse
+    if (gm_smaller_corpses.asBool()) {
+      const float rmult = gm_corpse_radius_mult.asFloat();
+      if (isFiniteF(rmult) && rmult > 0.0f && rmult < 1.0f) return Radius*rmult;
+    }
+  }
+  return Radius;
+}
 
 
 //==========================================================================
@@ -191,7 +216,7 @@ void VEntity::CreateSecNodeList () {
   // no, we cannot do this, because touching sector list is used to move objects too
   // we need another list here, if we want to avoid loop in renderer
   //const float rad = max2(RenderRadius, Radius);
-  const float rad = Radius;
+  const float rad = GetMoveRadius();
 
   //++validcount; // used to make sure we only process a line once
   XLevel->IncrementValidCount();
@@ -373,6 +398,8 @@ void VEntity::LinkToWorld (int properFloorCheck) {
   }
   */
 
+  const float rad = GetMoveRadius();
+
   // link into subsector
   subsector_t *ss = XLevel->PointInSubsector_Buggy(Origin);
   //vassert(ss); // meh, it will segfault on `nullptr` anyway
@@ -382,7 +409,7 @@ void VEntity::LinkToWorld (int properFloorCheck) {
   if (properFloorCheck != -666) {
     if (!IsPlayer()) {
       if (properFloorCheck) {
-        if (Radius < 4 || (EntityFlags&(EF_ColideWithWorld|EF_NoSector|EF_NoBlockmap|EF_Invisible|EF_Missile|EF_ActLikeBridge)) != EF_ColideWithWorld) {
+        if (rad < 4 || (EntityFlags&(EF_ColideWithWorld|EF_NoSector|EF_NoBlockmap|EF_Invisible|EF_Missile|EF_ActLikeBridge)) != EF_ColideWithWorld) {
           properFloorCheck = false;
         }
       }
@@ -402,10 +429,10 @@ void VEntity::LinkToWorld (int properFloorCheck) {
 
     tmtrace.End = Pos;
 
-    tmtrace.BBox[BOX2D_TOP] = Pos.y+Radius;
-    tmtrace.BBox[BOX2D_BOTTOM] = Pos.y-Radius;
-    tmtrace.BBox[BOX2D_RIGHT] = Pos.x+Radius;
-    tmtrace.BBox[BOX2D_LEFT] = Pos.x-Radius;
+    tmtrace.BBox[BOX2D_TOP] = Pos.y+rad;
+    tmtrace.BBox[BOX2D_BOTTOM] = Pos.y-rad;
+    tmtrace.BBox[BOX2D_RIGHT] = Pos.x+rad;
+    tmtrace.BBox[BOX2D_LEFT] = Pos.x-rad;
 
     tmtSetupGap(&tmtrace, newsubsec->sector, Height, false);
 
@@ -592,10 +619,12 @@ bool VEntity::CheckPosition (TVec Pos) {
   memset((void *)&cptrace, 0, sizeof(cptrace));
   cptrace.Pos = Pos;
 
-  cptrace.BBox[BOX2D_TOP] = Pos.y+Radius;
-  cptrace.BBox[BOX2D_BOTTOM] = Pos.y-Radius;
-  cptrace.BBox[BOX2D_RIGHT] = Pos.x+Radius;
-  cptrace.BBox[BOX2D_LEFT] = Pos.x-Radius;
+  const float rad = GetMoveRadius();
+
+  cptrace.BBox[BOX2D_TOP] = Pos.y+rad;
+  cptrace.BBox[BOX2D_BOTTOM] = Pos.y-rad;
+  cptrace.BBox[BOX2D_RIGHT] = Pos.x+rad;
+  cptrace.BBox[BOX2D_LEFT] = Pos.x-rad;
 
   subsector_t *newsubsec = XLevel->PointInSubsector_Buggy(Pos);
 
@@ -679,7 +708,7 @@ bool VEntity::CheckThing (tmtrace_t &cptrace, VEntity *Other) {
   if (!(Other->EntityFlags&EF_Solid)) return true;
   if (Other->EntityFlags&EF_Corpse) return true; //k8: skip corpses
 
-  const float blockdist = Other->Radius+Radius;
+  const float blockdist = Other->GetMoveRadius()+GetMoveRadius();
 
   if (fabsf(Other->Origin.x-cptrace.Pos.x) >= blockdist ||
       fabsf(Other->Origin.y-cptrace.Pos.y) >= blockdist)
@@ -797,10 +826,12 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
 
   tmtrace.End = Pos;
 
-  tmtrace.BBox[BOX2D_TOP] = Pos.y+Radius;
-  tmtrace.BBox[BOX2D_BOTTOM] = Pos.y-Radius;
-  tmtrace.BBox[BOX2D_RIGHT] = Pos.x+Radius;
-  tmtrace.BBox[BOX2D_LEFT] = Pos.x-Radius;
+  const float rad = GetMoveRadius();
+
+  tmtrace.BBox[BOX2D_TOP] = Pos.y+rad;
+  tmtrace.BBox[BOX2D_BOTTOM] = Pos.y-rad;
+  tmtrace.BBox[BOX2D_RIGHT] = Pos.x+rad;
+  tmtrace.BBox[BOX2D_LEFT] = Pos.x-rad;
 
   subsector_t *newsubsec = XLevel->PointInSubsector_Buggy(Pos);
   tmtrace.CeilingLine = nullptr;
@@ -950,7 +981,10 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
   // can't hit thing
   if (!(Other->EntityFlags&EF_ColideWithThings)) return true;
 
-  const float blockdist = Other->Radius+Radius;
+  const float rad = GetMoveRadius();
+  const float otherrad = Other->GetMoveRadius();
+
+  const float blockdist = otherrad+rad;
 
   if (fabsf(Other->Origin.x-tmtrace.End.x) >= blockdist ||
       fabsf(Other->Origin.y-tmtrace.End.y) >= blockdist)
@@ -971,8 +1005,8 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
         (Other->EntityFlags&(EF_Solid|EF_ActLikeBridge)) == (EF_Solid|EF_ActLikeBridge))
     {
       // allow actors to walk on other actors as well as floors
-      if (fabsf(Other->Origin.x-tmtrace.End.x) < Other->Radius ||
-          fabsf(Other->Origin.y-tmtrace.End.y) < Other->Radius)
+      if (fabsf(Other->Origin.x-tmtrace.End.x) < otherrad ||
+          fabsf(Other->Origin.y-tmtrace.End.y) < otherrad)
       {
         const float ohgt = GetBlockingHeightFor(Other);
         if (Other->Origin.z+ohgt >= tmtrace.FloorZ &&
@@ -1582,9 +1616,11 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
   TVec SlideOrg(x, y, Origin.z);
   TVec SlideDir = Velocity*StepVelScale;
   if (gm_use_new_slide_code.asBool()) {
+    const float rad = GetMoveRadius();
+
     // new slide code
     float bbox[4];
-    Create2DBBox(bbox, Origin, Radius);
+    Create2DBBox(bbox, Origin, rad);
 
     const int xl = MapBlock(bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
     const int xh = MapBlock(bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
@@ -1611,7 +1647,7 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
           VLevel::CD_HitType hitType;
           int hitplanenum = -1;
           TVec contactPoint;
-          const float fdist = VLevel::SweepLinedefAABB(li, SlideOrg, SlideOrg+SlideDir, TVec(-Radius, -Radius, 0), TVec(Radius, Radius, Height), nullptr, &contactPoint, &hitType, &hitplanenum);
+          const float fdist = VLevel::SweepLinedefAABB(li, SlideOrg, SlideOrg+SlideDir, TVec(-rad, -rad, 0), TVec(rad, rad, Height), nullptr, &contactPoint, &hitType, &hitplanenum);
           // ignore cap planes
           if (hitplanenum < 0 || hitplanenum > 1 || fdist < 0.0f || fdist >= 1.0f) continue;
 
@@ -1735,6 +1771,8 @@ void VEntity::SlideMove (float StepVelScale, bool noPickups) {
   if (IsPlayer()) GCon->Logf(NAME_Debug, "%s: === SlideMove; move=(%g,%g) ===", GetClass()->GetName(), XMove, YMove);
   #endif
 
+  const float rad = GetMoveRadius();
+
   float prevVelX = XMove;
   float prevVelY = YMove;
 
@@ -1751,19 +1789,19 @@ void VEntity::SlideMove (float StepVelScale, bool noPickups) {
 
     // trace along the three leading corners
     if (/*XMove*/prevVelX > 0.0f) {
-      leadx = Origin.x+Radius;
-      trailx = Origin.x-Radius;
+      leadx = Origin.x+rad;
+      trailx = Origin.x-rad;
     } else {
-      leadx = Origin.x-Radius;
-      trailx = Origin.x+Radius;
+      leadx = Origin.x-rad;
+      trailx = Origin.x+rad;
     }
 
     if (/*Velocity.y*/prevVelY > 0.0f) {
-      leady = Origin.y+Radius;
-      traily = Origin.y-Radius;
+      leady = Origin.y+rad;
+      traily = Origin.y-rad;
     } else {
-      leady = Origin.y-Radius;
-      traily = Origin.y+Radius;
+      leady = Origin.y-rad;
+      traily = Origin.y+rad;
     }
 
     float BestSlideFrac = 1.00001f;
@@ -1961,7 +1999,7 @@ void VEntity::BounceWall (float DeltaTime, const line_t *blockline, float overbo
   if (!BestSlideLine || BestSlideLine->PointOnSide(Origin)) {
     BestSlideLine = nullptr;
     TVec SlideOrg = Origin;
-    const float rad = max2(1.0f, Radius);
+    const float rad = max2(1.0f, GetMoveRadius());
     SlideOrg.x += (Velocity.x > 0.0f ? rad : -rad);
     SlideOrg.y += (Velocity.y > 0.0f ? rad : -rad);
     TVec SlideDir = Velocity*DeltaTime;
@@ -2047,16 +2085,16 @@ void VEntity::BounceWall (float DeltaTime, const line_t *blockline, float overbo
 
     #if 0
     float bbox3d[6];
-    Create3DBBox(bbox3d, Origin, Radius+0.1f, Height);
+    Create3DBBox(bbox3d, Origin, rad+0.1f, Height);
     float bbox2d[4];
-    Create2DBBox(bbox2d, Origin, Radius+0.1f);
+    Create2DBBox(bbox2d, Origin, rad+0.1f);
     GCon->Logf(NAME_Debug, "%s:%u:BOXSIDE: %d : %d", GetClass()->GetName(), GetUniqueId(), BestSlideLine->checkBoxEx(bbox3d), BoxOnLineSide2D(bbox2d, *BestSlideLine->v1, *BestSlideLine->v2));
     #endif
 
     //TODO: unstuck from the wall?
     #if 0
     float bbox[4];
-    Create2DBBox(bbox, Origin, max2(1.0f, Radius+0.25f));
+    Create2DBBox(bbox, Origin, max2(1.0f, rad+0.25f));
     if (BoxOnLineSide2D(bbox, *BestSlideLine->v1, *BestSlideLine->v2) == -1) {
       GCon->Logf(NAME_Debug, "%s:%u:666: STUCK! lineangle=%g; moveangle=%g; deltaangle=%g; movelen=%g; vel.xy=(%g,%g,%g); side=%d", GetClass()->GetName(), GetUniqueId(), lineangle, moveangle, deltaangle, movelen, Velocity.x/35.0f, Velocity.y/35.0f, Velocity.z/35.0f, BestSlideLine->PointOnSide(Origin));
       UnlinkFromWorld();
@@ -2114,13 +2152,15 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
   // can't hit things, or not solid?
   if ((EntityFlags&(EF_ColideWithThings|EF_Solid)) != (EF_ColideWithThings|EF_Solid)) return nullptr;
 
+  const float rad = GetMoveRadius();
+
   // the bounding box is extended by MAXRADIUS because mobj_ts are grouped
   // into mapblocks based on their origin point, and can overlap into adjacent
   // blocks by up to MAXRADIUS units
-  const int xl = MapBlock(TryOrg.x-Radius-XLevel->BlockMapOrgX-MAXRADIUS);
-  const int xh = MapBlock(TryOrg.x+Radius-XLevel->BlockMapOrgX+MAXRADIUS);
-  const int yl = MapBlock(TryOrg.y-Radius-XLevel->BlockMapOrgY-MAXRADIUS);
-  const int yh = MapBlock(TryOrg.y+Radius-XLevel->BlockMapOrgY+MAXRADIUS);
+  const int xl = MapBlock(TryOrg.x-rad-XLevel->BlockMapOrgX-MAXRADIUS);
+  const int xh = MapBlock(TryOrg.x+rad-XLevel->BlockMapOrgX+MAXRADIUS);
+  const int yl = MapBlock(TryOrg.y-rad-XLevel->BlockMapOrgY-MAXRADIUS);
+  const int yh = MapBlock(TryOrg.y+rad-XLevel->BlockMapOrgY+MAXRADIUS);
 
   // xl->xh, yl->yh determine the mapblock set to search
   for (int bx = xl; bx <= xh; ++bx) {
@@ -2133,7 +2173,7 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
         const float ohgt = GetBlockingHeightFor(*Other);
         if (TryOrg.z > Other->Origin.z+ohgt) continue; // over thing
         if (TryOrg.z+Height < Other->Origin.z) continue; // under thing
-        const float blockdist = Other->Radius+Radius;
+        const float blockdist = Other->GetMoveRadius()+rad;
         if (fabsf(Other->Origin.x-TryOrg.x) >= blockdist ||
             fabsf(Other->Origin.y-TryOrg.y) >= blockdist)
         {
@@ -2270,12 +2310,14 @@ bool VEntity::FixMapthingPos () {
 
   bool res = false;
 
+  const float rad = GetMoveRadius();
+
   // here is the bounding box of the trajectory
   float tmbbox[4];
-  tmbbox[BOX2D_TOP] = Origin.y+Radius;
-  tmbbox[BOX2D_BOTTOM] = Origin.y-Radius;
-  tmbbox[BOX2D_RIGHT] = Origin.x+Radius;
-  tmbbox[BOX2D_LEFT] = Origin.x-Radius;
+  tmbbox[BOX2D_TOP] = Origin.y+rad;
+  tmbbox[BOX2D_BOTTOM] = Origin.y-rad;
+  tmbbox[BOX2D_RIGHT] = Origin.x+rad;
+  tmbbox[BOX2D_LEFT] = Origin.x-rad;
 
   // determine which blocks to look in for blocking lines
   // determine which blocks to look in for blocking lines
@@ -2352,12 +2394,12 @@ bool VEntity::FixMapthingPos () {
           }
         }
 
-        if (distance < Radius) {
+        if (distance < rad) {
           /*
           float angle = matan(ld->dir.y, ld->dir.x);
           angle += (ld->backsector && ld->backsector == sec ? 90 : -90);
           // get the distance we have to move the object away from the wall
-          distance = Radius-distance;
+          distance = rad-distance;
           UnlinkFromWorld();
           Origin += AngleVectorYaw(angle)*distance;
           LinkToWorld();
@@ -2367,7 +2409,7 @@ bool VEntity::FixMapthingPos () {
           TVec movedir = ld->normal;
           if (ld->backsector && ld->backsector == sec) movedir = -movedir;
           // get the distance we have to move the object away from the wall
-          distance = Radius-distance;
+          distance = rad-distance;
           UnlinkFromWorld();
           Origin += movedir*distance;
           LinkToWorld();
@@ -2402,7 +2444,9 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY, float baseSpeed) {
   // try to move away from a dropoff
   DeltaX = DeltaY = 0;
 
-  Create2DBBox(t_bbox, Origin, Radius);
+  const float rad = GetMoveRadius();
+
+  Create2DBBox(t_bbox, Origin, rad);
 
   const int xl = MapBlock(t_bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
   const int xh = MapBlock(t_bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
@@ -2471,7 +2515,9 @@ int VEntity::FindDropOffLine (TArray<VDropOffLineInfo> *list, TVec pos) {
   int res = 0;
   float t_bbox[4];
 
-  Create2DBBox(t_bbox, Origin, Radius);
+  const float rad = GetMoveRadius();
+
+  Create2DBBox(t_bbox, Origin, rad);
 
   const int xl = MapBlock(t_bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
   const int xh = MapBlock(t_bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
@@ -2849,21 +2895,21 @@ IMPLEMENT_FUNCTION(VEntity, CanSee) {
   VEntity *Other;
   VOptParamBool disableBetterSight(false);
   vobjGetParamSelf(Other, disableBetterSight);
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
+  //if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
   RET_BOOL(Self->CanSee(Other, disableBetterSight));
 }
 
 IMPLEMENT_FUNCTION(VEntity, CanSeeAdv) {
   VEntity *Other;
   vobjGetParamSelf(Other);
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
+  //if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
   RET_BOOL(Self->CanSee(Other, false, true));
 }
 
 IMPLEMENT_FUNCTION(VEntity, CanShoot) {
   VEntity *Other;
   vobjGetParamSelf(Other);
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
+  //if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
   RET_BOOL(Self->CanShoot(Other));
 }
 

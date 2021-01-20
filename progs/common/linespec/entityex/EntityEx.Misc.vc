@@ -3948,7 +3948,12 @@ final bool DoThingRaise (optional bool skipCheckPosition) {
   bNoGravity = default.bNoGravity;
   bDropOff = false;
   bSolid = true;
-  bCorpse = false;
+  if (bCorpse) {
+    // relink, because corpses could have a smaller radius
+    UnlinkFromWorld();
+    bCorpse = false;
+    LinkToWorld();
+  }
   Health = InitialHealth;
   Target = none;
   LastEnemy = none;

@@ -38,6 +38,31 @@ menudef GameplayOptions {
   }
 
 
+  header "Corpses";
+
+  option bool {
+    title = "Make Corpses Smaller";
+    cvar = gm_smaller_corpses;
+    help =
+      "Make corpses smaller, so they will not hang on ledges?",
+      "This makes corpse collision radius smaller, so corpses will not",
+      "hang on ledges unrealistically (at least not so often).",
+      "",
+      "\cGWARNING! This may create stuck monsters with Arch-Vile resurresion.",
+      "\cGWARNING! This may create stuck monsters in Nightmare mode.";
+  }
+
+  option slider {
+    title = "Corpse Radius Multiplier";
+    cvar = gm_corpse_radius_mult;
+    min = 0;
+    max = 1;
+    step = 0.1;
+    help =
+      "If 'smaller corpses' is active, monster corpse radius will be multiplied by this.";
+  }
+
+
   header "Other Options";
 
   option bool {

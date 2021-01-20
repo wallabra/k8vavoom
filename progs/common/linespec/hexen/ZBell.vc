@@ -63,7 +63,12 @@ override bool Activate(EntityEx Activator)
 [decorate] final void A_BellReset2()
 {
   bShootable = true;
-  bCorpse = false;
+  if (bCorpse) {
+    // relink, because corpses could have a smaller radius
+    UnlinkFromWorld();
+    bCorpse = false;
+    LinkToWorld();
+  }
   Health = 5;
 }
 

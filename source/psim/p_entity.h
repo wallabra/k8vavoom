@@ -506,6 +506,9 @@ public:
     #endif
   }
 
+  // corpses could have smaller radius
+  float GetMoveRadius () const noexcept;
+
   inline VEntity *GetTopOwner () {
     VEntity *Ret = this;
     while (Ret->Owner) Ret = Ret->Owner;
