@@ -78,6 +78,7 @@ VLevelScriptThinker::~VLevelScriptThinker () {
 void VLevel::PostCtor () {
   lineTags = tagHashAlloc();
   sectorTags = tagHashAlloc();
+  Super::PostCtor();
 }
 
 
