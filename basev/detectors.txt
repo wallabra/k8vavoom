@@ -196,19 +196,3 @@ detector "ZPack" {
     gamename = "doom2";
   }
 }
-
-
-detector "HeartKneeDeep" {
-  info {
-    type = "pwad";
-  }
-
-  preconditions {
-    zscript = true;
-    file { name = "zmapinfo"; size = 389; md5 = "7b03d4a7c25134933626893d02320013"; }
-  }
-
-  options {
-    ignoreplayerclasses = "NoJumpPlayerPawn";
-  }
-}
