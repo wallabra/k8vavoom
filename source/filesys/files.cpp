@@ -123,6 +123,8 @@ static ArgVarValue emptyAV;
 static TArray<VStr> cliModesList;
 static int cli_oldSprites = 0;
 
+static TArray<GameDefinition> knownGames;
+
 
 //==========================================================================
 //
@@ -1731,6 +1733,13 @@ static void ParseGameDefinitions (VScriptParser *sc, TArray<GameDefinition> &gam
       sc->ExpectString();
       VStr gname = sc->String;
       if (gname.isEmpty()) sc->Error("game name is empty");
+      for (int f = 0; f < games.length(); ) {
+        if (games[f].gamename.strEqu(gname)) {
+          games.removeAt(f);
+        } else {
+          ++f;
+        }
+      }
       sc->Expect("{");
       GameDefinition &game = games.Alloc();
       game.FixVoices = false;
@@ -1745,25 +1754,47 @@ static void ParseGameDefinitions (VScriptParser *sc, TArray<GameDefinition> &gam
 
 //==========================================================================
 //
+//  ParseBaseGameDefsFile
+//
+//==========================================================================
+static void ParseBaseGameDefsFile (VStr name, VStr mainiwad, bool inHomeDir) {
+  VStr UseName;
+
+  if (name.isAbsolutePath()) {
+    if (!Sys_FileExists(name)) return;
+    UseName = name;
+  } else if (inHomeDir) {
+    if (fl_configdir.IsNotEmpty() && Sys_FileExists(fl_configdir+"/"+name)) {
+      UseName = fl_configdir+"/"+name;
+    } else {
+      return;
+    }
+  } else {
+    if (Sys_FileExists(fl_basedir+"/"+name)) {
+      UseName = fl_basedir+"/"+name;
+    } else {
+      return;
+    }
+  }
+
+  if (dbg_dump_gameinfo || inHomeDir || true) GCon->Logf(NAME_Init, "Parsing game definition file \"%s\"", *UseName);
+  VScriptParser *sc = new VScriptParser(UseName, FL_OpenSysFileRead(UseName));
+  ParseGameDefinitions(sc, knownGames);
+  if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "Done parsing game definition file \"%s\"", *UseName);
+}
+
+
+//==========================================================================
+//
 //  ProcessBaseGameDefs
 //
 //==========================================================================
-static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
-  TArray<GameDefinition> games;
+static void ProcessBaseGameDefs (VStr mainiwad) {
   GameDefinition *selectedGame = nullptr;
-  VStr UseName;
 
-       if (fl_savedir.IsNotEmpty() && Sys_FileExists(fl_savedir+"/"+name)) UseName = fl_savedir+"/"+name;
-  else if (Sys_FileExists(fl_basedir+"/"+name)) UseName = fl_basedir+"/"+name;
-  else return;
+  if (knownGames.length() == 0) Sys_Error("No game definitions found!");
 
-  if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "Parsing game definition file \"%s\"", *UseName);
-  VScriptParser *sc = new VScriptParser(UseName, FL_OpenSysFileRead(UseName));
-  ParseGameDefinitions(sc, games);
-  if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "Done parsing game definition file \"%s\"", *UseName);
-  if (games.length() == 0) Sys_Error("No game definitions found!");
-
-  for (auto &&game : games) {
+  for (auto &&game : knownGames) {
     for (auto &&arg : game.params) {
       if (arg.isEmpty()) continue;
       if (cliGameMode.strEquCI(arg)) {
@@ -1778,10 +1809,10 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
     VStr gn = selectedGame->gamename;
     if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "SELECTED GAME: \"%s\"", *gn);
   } else {
-    if (games.length() > 1) {
+    if (knownGames.length() > 1) {
       // try to detect game by custom iwad
       if (!selectedGame && mainiwad.length() > 0) {
-        for (auto &&game : games) {
+        for (auto &&game : knownGames) {
           VStr mw = mainiwad.extractFileBaseName();
           for (auto &&mwi : game.mainWads) {
             VStr gw = mwi.main.extractFileBaseName();
@@ -1799,7 +1830,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
       if (!selectedGame) {
         //!performPWadScan();
         if (!pwadScanInfo.iwad.isEmpty()) {
-          for (auto &&game : games) {
+          for (auto &&game : knownGames) {
             for (auto &&mwi : game.mainWads) {
               VStr gw = mwi.main.extractFileBaseName();
               if (gw.strEquCI(pwadScanInfo.iwad)) {
@@ -1821,7 +1852,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
             // found map, find DooM or DooM II game definition
             VStr gn1 = (pwadScanInfo.episode == 0 ? "doom2" : "doom");
             VStr gn2 = (pwadScanInfo.episode == 0 ? "freedoom2" : "freedoom");
-            for (auto &&game : games) {
+            for (auto &&game : knownGames) {
               if (!gn1.strEquCI(game.gamename) && !gn2.strEquCI(game.gamename)) continue;
               // check if we have the corresponding iwad
               VStr mwp;
@@ -1841,7 +1872,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
 
       // try to find game iwad
       if (!selectedGame) {
-        for (auto &&game : games) {
+        for (auto &&game : knownGames) {
           VStr mainWadPath;
           for (auto &&mwi : game.mainWads) {
             mainWadPath = FindMainWad(mwi.main);
@@ -1857,12 +1888,12 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
 
       /*
       if (selectedGame >= 0) {
-        game_name = *games[selectedGame].gamename;
-        GCon->Logf(NAME_Init, "detected game: \"%s\"", *games[selectedGame].gamename);
+        game_name = *knownGames[selectedGame].gamename;
+        GCon->Logf(NAME_Init, "detected game: \"%s\"", *knownGames[selectedGame].gamename);
       }
       */
     } else {
-      selectedGame = &games[0];
+      selectedGame = &knownGames[0];
     }
     if (!selectedGame) Sys_Error("Looks like I cannot find any IWADs. Did you forgot to specify -iwaddir?");
   }
@@ -1970,6 +2001,8 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
       AddAnyFile(mainWadPath, false, game.FixVoices);
     }
   }
+
+  knownGames.clear();
 }
 
 
@@ -2546,15 +2579,18 @@ void FL_Init () {
   // and current dir
   //IWadDirs.Append(".");
 
-  ParseDetectors("basev/detectors.txt");
+  ParseDetectors("basev/detectors.txt", false);
   // parse detectors from home directory
+  ParseDetectors("detectors.rc", true);
   #ifndef _WIN32
+  /*
   {
     const char *hdir = getenv("HOME");
     if (hdir && hdir[0]) {
-      ParseDetectors(VStr(va("%s/.k8vavoom/detectors.rc", hdir)));;
+      ParseDetectors(VStr(va("%s/.k8vavoom/detectors.rc", hdir)));
     }
   }
+  */
   #endif
 
   int mapnum = -1;
@@ -2623,7 +2659,9 @@ void FL_Init () {
 
   //collectPWads();
 
-  ProcessBaseGameDefs("basev/games.txt", mainIWad);
+  ParseBaseGameDefsFile("basev/games.txt", mainIWad, false);
+  ParseBaseGameDefsFile("games.rc", mainIWad, true); // load rc from user home directory too
+  ProcessBaseGameDefs(mainIWad);
 #ifdef DEVELOPER
   // i need progs to be loaded from files
   //fl_devmode = true;

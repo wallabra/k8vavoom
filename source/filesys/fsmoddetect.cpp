@@ -68,6 +68,7 @@ public:
   bool sprofslump;
   bool ignorePlayerSpeed;
   int acsType;
+  TArray<VStr> ignorePlayerClasses;
 
 public:
   inline VDetectorInfo () noexcept
@@ -91,6 +92,7 @@ public:
     , sprofslump(true)
     , ignorePlayerSpeed(false)
     , acsType(FL_ACS_Default)
+    , ignorePlayerClasses()
   {}
 
   // "{" just eaten
@@ -113,6 +115,8 @@ public:
     iwad = true;
     sprofslump = true;
     ignorePlayerSpeed = false;
+    acsType = FL_ACS_Default;
+    ignorePlayerClasses.clear();
   }
 
 private:
@@ -125,12 +129,14 @@ private:
   static VStr parseString (VScriptParser *sc);
   static int parseInt (VScriptParser *sc);
   static int parseACSType (VScriptParser *sc);
+  static void parseStringList (VScriptParser *sc, TArray<VStr> &list);
 
   void parseFileLump (VScriptParser *sc, bool asLump);
 };
 
 
 static TArray<VDetectorInfo *> detectorList;
+static TMap<VStrCI, bool> ignoredPlayerClassesMap;
 
 
 //==========================================================================
@@ -175,6 +181,23 @@ int VDetectorInfo::parseInt (VScriptParser *sc) {
   int res = sc->Number;
   sc->Expect(";");
   return res;
+}
+
+
+//==========================================================================
+//
+//  VDetectorInfo::parseStringList
+//
+//==========================================================================
+void VDetectorInfo::parseStringList (VScriptParser *sc, TArray<VStr> &list) {
+  sc->Expect("=");
+  for (;;) {
+    if (sc->Check(";")) return;
+    sc->ExpectString();
+    list.append(sc->String);
+    if (!sc->Check(",")) break;
+  }
+  sc->Expect(";");
 }
 
 
@@ -275,6 +298,7 @@ void VDetectorInfo::parseOpts (VScriptParser *sc) {
     else if (sc->Check("sprofslump")) sprofslump = parseBool(sc);
     else if (sc->Check("ignorePlayerSpeed")) ignorePlayerSpeed = parseBool(sc);
     else if (sc->Check("acstype")) acsType = parseACSType(sc);
+    else if (sc->Check("ignoreplayerclasses")) parseStringList(sc, ignorePlayerClasses);
     else sc->Error(va("unknown options command '%s'", *sc->String));
   }
 }
@@ -313,16 +337,26 @@ static void FreeDetectors () {
 //  ParseDetectors
 //
 //==========================================================================
-static void ParseDetectors (VStr name) {
+static void ParseDetectors (VStr name, bool inHomeDir) {
   if (name.isEmpty()) return;
 
-  //GCon->Logf(NAME_Debug, "===<%s>===", *name);
+  //GCon->Logf(NAME_Debug, "===<%s> : <%s>===", *name, *fl_configdir);
   if (name.isAbsolutePath()) {
     if (!Sys_FileExists(name)) return;
   } else {
-         if (fl_savedir.IsNotEmpty() && Sys_FileExists(fl_savedir+"/"+name)) name = fl_savedir+"/"+name;
-    else if (Sys_FileExists(fl_basedir+"/"+name)) name = fl_basedir+"/"+name;
-    else return;
+    if (inHomeDir) {
+      if (fl_configdir.IsNotEmpty() && Sys_FileExists(fl_configdir+"/"+name)) {
+        name = fl_configdir+"/"+name;
+      } else {
+        return;
+      }
+    } else {
+      if (Sys_FileExists(fl_basedir+"/"+name)) {
+        name = fl_basedir+"/"+name;
+      } else {
+        return;
+      }
+    }
   }
 
   GCon->Logf(NAME_Init, "Parsing detectors file \"%s\"", *name);
@@ -459,6 +493,7 @@ static int detectFromList (FSysModDetectorHelper &hlp, int seenZScriptLump) {
     if (!dc->iwad) mdetect_DisableIWads();
     if (!dc->sprofslump) modNoBaseSprOfs = true;
     if (dc->ignorePlayerSpeed) decoIgnorePlayerSpeed = true;
+    for (auto &&cn : dc->ignorePlayerClasses) ignoredPlayerClassesMap.put(cn, true);
     if (dc->nomore) return 1; // detected, stop
   }
 
@@ -492,4 +527,15 @@ static int detectCzechbox (FSysModDetectorHelper &hlp, int seenZScriptLump) {
 static void FL_RegisterModDetectors () {
   fsysRegisterModDetector(&detectCzechbox);
   fsysRegisterModDetector(&detectFromList);
+}
+
+
+//==========================================================================
+//
+//  FL_IsIgnoredPlayerClass
+//
+//==========================================================================
+bool FL_IsIgnoredPlayerClass (VStr cname) {
+  if (cname.length() == 0) return true;
+  return ignoredPlayerClassesMap.has(cname);
 }

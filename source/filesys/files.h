@@ -134,6 +134,7 @@ enum {
 };
 extern int flACSType;
 
+extern bool FL_IsIgnoredPlayerClass (VStr cname);
 
 int FL_GetNetWadsCount ();
 vuint32 FL_GetNetWadsHash ();
