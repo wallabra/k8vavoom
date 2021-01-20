@@ -504,7 +504,10 @@ static void RecurseMarkLines (VLevel *level, const sector_t *sec, const line_t *
 //
 //==========================================================================
 vuint32 VLevel::IsFloodBugSectorPart (sector_t *sec) {
-  if (lineSectorPart.length() < 3) return 0;
+  if (lineSectorPart.length() < 3) {
+    if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector: sector #%d: skipped due to low part count (%d)", (int)(ptrdiff_t)(sec-&Sectors[0]), lineSectorPart.length());
+    return 0;
+  }
 
   vuint32 res = (deepwater_hacks_floor ? FFBugFloor : 0)|(deepwater_hacks_ceiling ? FFBugCeiling : 0); // not yet
   // don't fix alphas
@@ -519,13 +522,12 @@ vuint32 VLevel::IsFloodBugSectorPart (sector_t *sec) {
   // if we have only one of 4+ walls with bottex, still consider it as a floodfill bug
   int floorBotTexCount = 0;
   int ceilTopTexCount = 0;
-  //for (int f = 0; f < sec->linecount; ++f)
-  for (int ff = 0; ff < lineSectorPart.length(); ++ff)
-  {
+  for (int ff = 0; ff < lineSectorPart.length(); ++ff) {
     //line_t *line = sec->lines[f];
     line_t *line = &Lines[lineSectorPart[ff]];
     if (line->vxCount(0) == 0 || line->vxCount(1) == 0) continue;
 
+    //if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: checking line #%d...", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]));
     //const int lidx = (int)(ptrdiff_t)(line-&Lines[0]);
     //if (lineMarks[lidx] != lineMarkId) continue;
 
@@ -533,12 +535,14 @@ vuint32 VLevel::IsFloodBugSectorPart (sector_t *sec) {
       if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  skipped sector #%d due to res=0", (int)(ptrdiff_t)(sec-&Sectors[0]));
       return 0;
     }
+
     //vint32 lineidx = (vint32)(ptrdiff_t)(line-&Lines[0]);
     //if (checkSkipLines.find(lineidx)) continue; // skip lines we are not interested into
     if (!line->frontsector || !line->backsector) {
       if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: skipped line #%d due to missing side sector", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]));
       continue;
     }
+
     sector_t *bs;
     if (line->frontsector == sec) {
       // back
@@ -564,20 +568,24 @@ vuint32 VLevel::IsFloodBugSectorPart (sector_t *sec) {
       if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  something's strange in the neighbourhood, sector #%d", (int)(ptrdiff_t)(sec-&Sectors[0]));
       return 0; // something's strange in the neighbourhood
     }
+
     // this is self-referenced sector, nothing to see here, come along
     if (bs == sec) {
       if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  skipping self-referenced sector #%d", (int)(ptrdiff_t)(sec-&Sectors[0]));
       return 0;
     }
+
     if (bs->floor.minz >= bs->ceiling.minz) {
       if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  door-like sector #%d", (int)(ptrdiff_t)(sec-&Sectors[0]));
       // this looks like a door, don't "fix" anything
       return 0;
     }
+
     if (isBadTriangle(bs, sec)) {
       if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  ignore triangle sector sector #%d", (int)(ptrdiff_t)(bs-&Sectors[0]));
       continue;
     }
+
     // check for possible floor floodbug
     do {
       if (res&FFBugFloor) {
@@ -611,7 +619,9 @@ vuint32 VLevel::IsFloodBugSectorPart (sector_t *sec) {
         //if (/*line->special != 0 &&*/ bs->floor.minz == sec->floor.minz) { res &= ~FFBugFloor; continue; }
       }
     } while (0);
+
     // check for possible ceiling floodbug
+    //if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: checking line #%d for ceiling floodfill bug... (myside=%d)", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), myside);
     do {
       //TODO: here we should ignore lifts
       if (res&FFBugCeiling) {
@@ -642,7 +652,8 @@ vuint32 VLevel::IsFloodBugSectorPart (sector_t *sec) {
         // height?
         if (bs->ceiling.minz > sec->ceiling.minz) { res &= ~FFBugCeiling; break; }
         //if (line->special != 0 && bs->ceiling.minz == sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
-        if (line->sidenum[myside] < 0 && Sides[line->sidenum[myside]].TopTexture <= 0) hasMissingTopTexture = true;
+        //if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: checking line #%d for ceiling floodfill bug... (sn=%d; toptex=%d)", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]),  line->sidenum[myside], (line->sidenum[myside] >= 0 ? Sides[line->sidenum[myside]].TopTexture.id : -666));
+        if (line->sidenum[myside] < 0 || Sides[line->sidenum[myside]].TopTexture <= 0) hasMissingTopTexture = true;
       }
     } while (0);
   }
