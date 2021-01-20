@@ -322,7 +322,11 @@ transient bool bDetachFromServer;
 // don't store it, because nobody cares
 // we may randomly set it on unarchiving
 transient bool bCorpseFlipped;
-transient bool bAlwaysTick; // cannot optimise physics for this entity
+transient native readonly bool bAlwaysTick; // cannot optimise physics for this entity
+// two flags to avoid calling `IsChildOf()` each time
+// set in C++ postctor, refreshed in serializer (to avoid serializing them)
+transient native readonly bool bThisIsEntityEx;
+transient native readonly bool bThisIsActor;
 
 // 0: none
 // 1: switches object to "k8vavoomInternalNoTickGrav" when it enters idle state (the one with negative duration)

@@ -312,6 +312,10 @@ class VEntity : public VThinker {
     EFEX_DetachFromServer = 1u<<10u, // set this flag to detach the entity from the server in network game
     EFEX_CorpseFlipped    = 1u<<11u, // this flag is set when monster died, and need its corpse flipped
     EFEX_AlwaysTick       = 1u<<12u, // cannot optimise physics for this entity
+    // two flags to avoid calling `IsChildOf()` each time
+    // set in postctor, refreshed in serializer (to avoid serializing them)
+    EFEX_IsEntityEx       = 1u<<13u, // cannot optimise physics for this entity
+    EFEX_IsActor          = 1u<<14u, // cannot optimise physics for this entity
   };
   vuint32 FlagsEx;
 
@@ -461,6 +465,7 @@ public:
 
 public:
   // VObject interface
+  virtual void PostCtor () override;
   virtual void Destroy () override;
   virtual void SerialiseOther (VStream &) override;
 

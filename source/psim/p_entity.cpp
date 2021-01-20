@@ -52,6 +52,7 @@ extern VCvarB dbg_vm_show_tick_stats;
 // ////////////////////////////////////////////////////////////////////////// //
 static VClass *classScroller = nullptr;
 static VClass *classEntityEx = nullptr;
+static VClass *classActor = nullptr;
 static VField *fldbWindThrust = nullptr;
 
 
@@ -107,6 +108,20 @@ void VEntity::EntityStaticInit () {
     fldbWindThrust = classEntityEx->FindField("bWindThrust");
     if (fldbWindThrust) GCon->Log(NAME_Init, "`EntityEx.bWindThrust` field found");
   }
+  classActor = VClass::FindClassNoCase("Actor");
+  if (classActor) GCon->Log(NAME_Init, "`Actor` class found");
+}
+
+
+//==========================================================================
+//
+//  VEntity::PostCtor
+//
+//==========================================================================
+void VEntity::PostCtor () {
+  if (classEntityEx && GetClass()->IsChildOf(classEntityEx)) FlagsEx |= EFEX_IsEntityEx; else FlagsEx &= ~EFEX_IsEntityEx;
+  if (classActor && GetClass()->IsChildOf(classActor)) FlagsEx |= EFEX_IsActor; else FlagsEx &= ~EFEX_IsActor;
+  Super::PostCtor();
 }
 
 
@@ -118,6 +133,8 @@ void VEntity::EntityStaticInit () {
 void VEntity::SerialiseOther (VStream &Strm) {
   Super::SerialiseOther(Strm);
   if (Strm.IsLoading()) {
+    if (classEntityEx && GetClass()->IsChildOf(classEntityEx)) FlagsEx |= EFEX_IsEntityEx; else FlagsEx &= ~EFEX_IsEntityEx;
+    if (classActor && GetClass()->IsChildOf(classActor)) FlagsEx |= EFEX_IsActor; else FlagsEx &= ~EFEX_IsActor;
     //CHECKME: k8: is this right? voodoo dolls?
     if (EntityFlags&EF_IsPlayer) Player->MO = this;
     SubSector = nullptr; // must mark as not linked
@@ -222,9 +239,7 @@ bool VEntity::NeedPhysics () {
   }
 
   // check for windthrust
-  if (classEntityEx && fldbWindThrust && GetClass()->IsChildOf(classEntityEx) && fldbWindThrust->GetBool(this)) {
-    return true;
-  }
+  if ((FlagsEx&EFEX_IsEntityEx) && fldbWindThrust && fldbWindThrust->GetBool(this)) return true;
 
   if (removeJustMoved) {
     MoveFlags &= ~MVF_JustMoved;
