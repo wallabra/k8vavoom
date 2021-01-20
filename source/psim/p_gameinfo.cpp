@@ -148,6 +148,11 @@ COMMAND(AddPlayerClass) {
     return;
   }
 
+  if (FL_IsIgnoredPlayerClass(Args[1])) {
+    GCon->Logf(NAME_Init, "keyconf player class '%s' ignored due to mod detector orders", Class->GetName());
+    return;
+  }
+
   GGameInfo->PlayerClasses.Append(Class);
 }
 

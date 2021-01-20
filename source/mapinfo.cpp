@@ -2043,7 +2043,13 @@ static void ParseGameInfo (VScriptParser *sc) {
       sc->Expect("=");
       while (!sc->AtEnd()) {
         sc->ExpectString();
-        if (sc->String.length()) MapInfoPlayerClasses.append(VName(*sc->String));
+        if (sc->String.length()) {
+          if (!FL_IsIgnoredPlayerClass(sc->String)) {
+            MapInfoPlayerClasses.append(VName(*sc->String));
+          } else {
+            GCon->Logf(NAME_Init, "mapinfo player class '%s' ignored due to mod detector orders", *sc->String);
+          }
+        }
         if (!sc->Check(",")) break;
       }
     } else if (sc->Check("weaponslot")) {
