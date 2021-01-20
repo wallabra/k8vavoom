@@ -65,8 +65,8 @@ final bool CheckMissileSpawn () {
 
   tmtrace_t tmtrace;
   if (!TryMoveEx(out tmtrace, Origin, AllowDropOff:false, checkOnly:true)) {
-    //printdebug("%C: CheckMissileSpawn: spawn failed; mobj=%C; stepthing=%C; %s", self, tmtrace.BlockingMobj, tmtrace.StepThing, (tmtrace.BlockingLine ? tmtrace.BlockingLine-&XLevel.Lines[0] : -1));
-    //printdebug("%C: fz=%s; cz=%s; z0=%s; z1=%s", self, tmtrace.FloorZ, tmtrace.CeilingZ, Origin.z, Origin.z+Height);
+    printdebug("%C: CheckMissileSpawn: spawn failed; mobj=%C; stepthing=%C; %s", self, tmtrace.BlockingMobj, tmtrace.StepThing, (tmtrace.BlockingLine ? tmtrace.BlockingLine-&XLevel.Lines[0] : -1));
+    printdebug("%C: fz=%s; cz=%s; z0=%s; z1=%s", self, tmtrace.FloorZ, tmtrace.CeilingZ, Origin.z, Origin.z+Height);
     if (!Level.Game.IsAuthority) { Destroy(); return false; }
     // don't explode ripping missiles that spawn inside another thing
     if (!tmtrace.BlockingMobj || !bRip || EntityEx(tmtrace.BlockingMobj).bDontRip) {
@@ -590,15 +590,20 @@ final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
   }
 
   TVec org = (specified_SpawnOrg ? SpawnOrg : Origin);
+  bool zofsfix;
+
   if (type.default.bIgnoreFloorStep) {
     org.z = ONFLOORZ;
     dir.z = 0.0;
     dir = Normalise(dir);
+    zofsfix = false;
   } else if (type.default.bIgnoreCeilingStep) {
     org.z = ONCEILINGZ;
     dir.z = 0.0;
     dir = Normalise(dir);
+    zofsfix = false;
   } else {
+    zofsfix = (bIsPlayer && fabs(org.z-Origin.z) <= Height*0.5);
     org.z += CalculateMissileAttackZOfs(type);
     /* done in `CalculateMissileAttackZOfs()`
     // missiles are spawned 4 units lower than hitscan attacks
@@ -639,6 +644,24 @@ final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
     A.Velocity.z = dir.z*A.Speed;
   }
   VectorAngles(dir, out A.Angles);
+
+  // try to fit it
+  if (zofsfix && A.bColideWithWorld && A.Height > 0) {
+    tmtrace_t tmtrace;
+    A.GetFloorAndCeiling(tmtrace);
+    auto rng = tmtrace.CeilingZ-tmtrace.FloorZ;
+    //printdebug("%C: spawned player missile `%C` position will be clamped: rng=%s; hgt=%s", self, A, rng, A.Height);
+    if (rng >= A.Height) {
+      if (A.Origin.z < tmtrace.FloorZ) {
+        //printdebug("%C: missile `%C` spawned lower than the floor, fixing", self, A);
+        A.Origin.z = tmtrace.FloorZ+(rng-Height > 8 ? 4 : 0);
+      }
+      if (A.Origin.z+A.Height > tmtrace.CeilingZ) {
+        //printdebug("%C: missile `%C` spawned higher than the ceiling, fixing", self, A);
+        A.Origin.z = tmtrace.CeilingZ-A.Height-(rng-Height > 8 ? 4 : 0);
+      }
+    }
+  }
 
   return (A.CheckMissileSpawn() || RetExploded ? A : none);
 }
