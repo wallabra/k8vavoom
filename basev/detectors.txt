@@ -31,6 +31,8 @@
       iwad = <true|false>; // for some TCs game iwads should be disabled (default: true)
       sprofslump = <true|false>; // disable basepak sprofs lumps (required for some TCs); forced to "true" by "iwad = false;" (and should be reset explicitly)
       acstype = <default|zandronum|zdoom>;
+      ignoreplayerspeed = <true|false>; // ignore player speed setting in playerpawn
+      ignoreplayerclasses = <list>; // ignore given player classes from mapinfo/keyconf; list is "name, name"
     }
   }
 */
@@ -192,5 +194,21 @@ detector "ZPack" {
 
   options {
     gamename = "doom2";
+  }
+}
+
+
+detector "HeartKneeDeep" {
+  info {
+    type = "pwad";
+  }
+
+  preconditions {
+    zscript = true;
+    file { name = "zmapinfo"; size = 389; md5 = "7b03d4a7c25134933626893d02320013"; }
+  }
+
+  options {
+    ignoreplayerclasses = "NoJumpPlayerPawn";
   }
 }
