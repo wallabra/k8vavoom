@@ -116,7 +116,7 @@ void VRenderLevelShared::RenderPSprite (float SX, float SY, const VAliasModelFra
   }
 
   // do not release psprite textures
-  int oldRelease = gl_release_ram_textures_mode.asInt();
+  const int oldRelease = gl_release_ram_textures_mode.asInt();
   gl_release_ram_textures_mode = 0;
   Tex->CropTexture();
 

@@ -1285,7 +1285,7 @@ void VTexture::CropTexture () {
   if (Type == TEXTYPE_Null) return;
   if (Width < 1 || Height < 1) return;
 
-  ReleasePixels();
+  //ReleasePixels();
   GetPixels();
 
   int x0 = +0x7ffffff, y0 = +0x7ffffff;
