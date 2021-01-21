@@ -250,7 +250,7 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
     !!(Flags&SXF_TRANSFERPOINTERS),
     Originator:!!(Flags&SXF_ORIGINATOR));
 
-  if (A) {
+  if (A && !A.IsDestroyed) {
     A.Velocity.x = fclamp(XVel*35.0, -1024, 1024);
     A.Velocity.y = fclamp(YVel*35.0, -1024, 1024);
     A.Velocity.z = fclamp(ZVel*35.0, -1024, 1024);
