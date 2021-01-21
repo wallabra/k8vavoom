@@ -1704,6 +1704,36 @@ static void ParseGameDef (VScriptParser *sc, GameDefinition &game) {
       }
       continue;
     }
+    // options
+    if (sc->Check("nakedbase")) {
+      game.options.nakedbase = ParseBoolValue(sc);
+      continue;
+    }
+    if (sc->Check("bdw")) {
+      game.options.bdw = (ParseBoolValue(sc) ? 1 : 0);
+      continue;
+    }
+    if (sc->Check("gore")) {
+      game.options.gore = (ParseBoolValue(sc) ? 1 : 0);
+      continue;
+    }
+    if (sc->Check("modblood")) {
+      game.options.modblood = (ParseBoolValue(sc) ? 1 : 0);
+      continue;
+    }
+    if (sc->Check("sprofslump")) {
+      game.options.sprofslump = ParseBoolValue(sc);
+      continue;
+    }
+    if (sc->Check("acstype")) {
+      sc->Expect("=");
+           if (sc->Check("default")) game.options.acsType = FL_ACS_Default;
+      else if (sc->Check("zandronum") || sc->Check("zandro")) game.options.acsType = FL_ACS_Zandronum;
+      else if (sc->Check("zdoom")) game.options.acsType = FL_ACS_ZDoom;
+      else sc->Error(va("unknown asc type '%s'", *sc->String));
+      sc->Expect(";");
+      continue;
+    }
     // unknown shit
     if (!sc->GetString()) sc->Error("unexpected end of file");
     sc->Error(va("unknown command: '%s'", *sc->String));
@@ -1953,6 +1983,20 @@ static void ProcessBaseGameDefs (VStr mainiwad) {
   }
   warpTpl = game.warp;
 
+  // set options
+  if (game_options.nakedbase) { GCon->Log(NAME_Init, "iwad forced 'nakedbase'"); mdetect_ClearAndBlockCustomModes(); }
+  if (game_options.acsType != FL_ACS_Default) { GCon->Log(NAME_Init, "iwad forced ACS type"); flACSType = game_options.acsType; }
+  if (game_options.bdw >= 0) { GCon->Logf(NAME_Init, "iwad forced BDW (%s)", (game_options.bdw == 0 ? "off" : "on")); fsys_DisableBDW = (game_options.bdw == 0); cli_BDWMod = game_options.bdw; }
+  if (game_options.gore >= 0) {
+    if (cli_GoreMod != game_options.gore) GCon->Logf(NAME_Init, "iwad forced gore mod (%s).", (game_options.gore ? "on" : "off"));
+    cli_GoreMod = game_options.gore;
+  }
+  if (game_options.modblood >= 0) {
+    //if (game_options.modblood < 0) game_options.modblood = (cli_GoreMod == 0);
+    fsys_DisableBloodReplacement = (game_options.modblood == 0);
+  }
+  if (!game_options.sprofslump) modNoBaseSprOfs = true;
+
   // append iwad
   //GCon->Logf("MAIN WAD(1): '%s'", *MainWadPath);
 
@@ -2003,6 +2047,7 @@ static void ProcessBaseGameDefs (VStr mainiwad) {
   }
 
   knownGames.clear();
+
 }
 
 

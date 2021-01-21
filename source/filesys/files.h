@@ -66,18 +66,37 @@ void FL_CollectPreinits ();
 void FL_ProcessPreInits ();
 
 
+enum {
+  FL_ACS_Default = 0,
+  FL_ACS_Zandronum = 1,
+  FL_ACS_ZDoom = 2,
+};
+
+
 struct GameOptions {
   bool hexenGame;
   // warnings
   bool warnDeh;
   bool warnPNames;
   bool warnAnimated;
+  // more options
+  bool nakedbase;
+  int bdw; // -1: don't care
+  int gore; // -1: don't care
+  int modblood; // -1: "nogore"
+  bool sprofslump;
+  int acsType;
 
   GameOptions ()
     : hexenGame(false)
     , warnDeh(true)
     , warnPNames(true)
     , warnAnimated(true)
+    , nakedbase(false)
+    , bdw(-1)
+    , gore(-1)
+    , sprofslump(false)
+    , acsType(FL_ACS_Default)
   {}
 };
 
@@ -127,12 +146,7 @@ extern int cli_GoreMod; // !=0: enabled
 
 extern VStr flWarningMessage;
 
-enum {
-  FL_ACS_Default = 0,
-  FL_ACS_Zandronum = 1,
-  FL_ACS_ZDoom = 2,
-};
-extern int flACSType;
+extern int flACSType; // FL_ACS_XXX
 
 extern bool FL_IsIgnoredPlayerClass (VStr cname);
 
