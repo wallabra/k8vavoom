@@ -4081,28 +4081,27 @@ override void PlayerBeforeExitMap () {
 //==========================================================================
 override void PlayerExitMap (bool clusterChange) {
   ClearSubSeenInfo();
-  Inventory Item;
 
+  //printdebug("%C: *** exiting map *** (clusterChange=%B)", self, clusterChange);
+
+  // moved between hubs, clamp inventory amount
   if (clusterChange && !Level.bClusterHub && !Level.bKeepFullInventory) {
-    for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
+    for (Inventory Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
       if (Item.bInvBar && Item.Amount > Item.InterHubAmount) {
+        //printdebug("%C: clamping inventory item `%C` from %s to %s", self, Item, Item.Amount, Item.InterHubAmount);
         Item.Amount = Item.InterHubAmount;
       }
     }
   }
 
-  // strip all current powers
-  for (Item = EntityEx(MO).Inventory; Item; ) {
+  // strip all non-persistent powers
+  for (Inventory Item = EntityEx(MO).Inventory; Item; ) {
     Inventory Next = Item.Inventory;
     if (Powerup(Item)) {
       if (Level.Game.deathmatch || (!Item.bPersistentPower && (clusterChange || !Item.bHubPower))) {
+        //printdebug("%C: removing powerup `%C`", self, Item);
         Item.Destroy();
       }
-      /*
-      else {
-        printdebug("%C: keeping powerup `%C`", self, Item);
-      }
-      */
     }
     Item = Next;
   }
@@ -4110,9 +4109,10 @@ override void PlayerExitMap (bool clusterChange) {
   if (clusterChange) {
     // entering new cluster
     // some items are stripped
-    for (Item = EntityEx(MO).Inventory; Item; ) {
+    for (Inventory Item = EntityEx(MO).Inventory; Item; ) {
       Inventory Next = Item.Inventory;
       if (Item.bInterHubStrip /*&& Item.InterHubAmount < 1*/) {
+        //printdebug("%C: removing item `%C` due to `bInterHubStrip`", self, Item);
         Item.Destroy();
       }
       Item = Next;
