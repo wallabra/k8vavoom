@@ -181,11 +181,8 @@ void VOpenGLDrawer::DrawSpritePolygon (float time, const TVec *cv, VTexture *Tex
   const bool trans = (ri.translucency || ri.alpha < 1.0f || Tex->isTranslucent());
 
   const int oldRelease = gl_release_ram_textures_mode.asInt();
-  const bool cropIt = gl_crop_sprites.asBool();
-  if (cropIt) {
-    gl_release_ram_textures_mode = 0;
-    Tex->CropTexture();
-  }
+  const bool cropIt = (oldRelease < 2 && gl_crop_sprites.asBool());
+  if (cropIt) gl_release_ram_textures_mode = 0;
 
   SetSpriteTexture(sprite_filter, Tex, Translation, CMap, true, (ri.isShaded() ? ri.stencilColor : 0u)); //FIXME: TexWrapClamp
 

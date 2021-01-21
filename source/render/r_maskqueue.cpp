@@ -35,6 +35,8 @@ extern VCvarB r_chasecam;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
 extern VCvarI r_shadowmap_sprshadows;
+extern VCvarI gl_release_ram_textures_mode;
+extern VCvarB gl_crop_sprites;
 
 VCvarI r_fix_sprite_offsets("r_fix_sprite_offsets", "2", "Sprite offset fixing algorithm (0:don't fix; 1:old; 2:new).", CVAR_Archive);
 VCvarB r_fix_sprite_offsets_missiles("r_fix_sprite_offsets_missiles", false, "Fix sprite offsets for projectiles?", CVAR_Archive);
@@ -600,8 +602,17 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   VTexture *Tex = GTextureManager[lump];
   if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
 
+  const int oldRelease = gl_release_ram_textures_mode.asInt();
+  const bool cropIt = (oldRelease < 2 && gl_crop_sprites.asBool());
+  if (cropIt) {
+    gl_release_ram_textures_mode = 0;
+    Tex->CropTexture();
+  }
+
   // make sprites with translucent textures translucent
   if (Tex->isTranslucent() && !ri.isTranslucent()) ri.translucency = RenderStyleInfo::Translucent;
+
+  if (cropIt) gl_release_ram_textures_mode = oldRelease;
 
   //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
   // ignore brightmap flags for stencil style
