@@ -653,12 +653,12 @@ final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
     //printdebug("%C: spawned player missile `%C` position will be clamped: rng=%s; hgt=%s", self, A, rng, A.Height);
     if (rng >= A.Height) {
       if (A.Origin.z < tmtrace.FloorZ) {
-        //printdebug("%C: missile `%C` spawned lower than the floor, fixing", self, A);
-        A.Origin.z = tmtrace.FloorZ+(rng-Height > 8 ? 4 : 0);
+        //printdebug("%C: player missile `%C` spawned lower than the floor, fixing", self, A);
+        A.Origin.z = tmtrace.FloorZ+min(4, cast(int)(rng-Height)/2);
       }
       if (A.Origin.z+A.Height > tmtrace.CeilingZ) {
-        //printdebug("%C: missile `%C` spawned higher than the ceiling, fixing", self, A);
-        A.Origin.z = tmtrace.CeilingZ-A.Height-(rng-Height > 8 ? 4 : 0);
+        //printdebug("%C: player missile `%C` spawned higher than the ceiling, fixing", self, A);
+        A.Origin.z = tmtrace.CeilingZ-A.Height-min(4, cast(int)(rng-Height)/2);
       }
     }
   }
