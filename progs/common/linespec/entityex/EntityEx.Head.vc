@@ -526,6 +526,10 @@ float GenericDamageMultiplier = 1.0; // for APROP_DamageMultiplier
 
 float ProjectileKickback; // 0 means "don't use"
 
+int RipperLevel;
+int RipLevelMin;
+int RipLevelMax;
+
 // temporary for physics z change due to stepping
 transient float tmp_phys_z_change;
 transient float tmp_phys_last_water_z; // used to trigger water checks

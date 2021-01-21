@@ -111,6 +111,9 @@
     <prop_state name="Crush" property="Crush" />
     <prop_state name="Heal" property="Heal" />
     <prop_args name="Args" />
+    <prop_int name="RipperLevel" property="RipperLevel" />
+    <prop_int name="RipLevelMin" property="RipLevelMin" />
+    <prop_int name="RipLevelMax" property="RipLevelMax" />
 
     <!-- Physics -->
     <flag name="Solid" property="bSolid" relinktoworld="true" />

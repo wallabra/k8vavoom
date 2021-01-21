@@ -752,6 +752,20 @@ final void NightmareRespawn () {
 
 //==========================================================================
 //
+//  CheckRipLevel
+//
+//  `self` is ripping projectile
+//
+//==========================================================================
+final bool CheckRipLevel (EntityEx Other) {
+  if (Other.RipLevelMin > 0 && RipperLevel < Other.RipLevelMin) return false;
+  if (Other.RipLevelMax > 0 && RipperLevel > Other.RipLevelMax) return false;
+  return true;
+}
+
+
+//==========================================================================
+//
 //  ProcessHitFlags
 //
 //  returns `false` if hit something
@@ -919,7 +933,7 @@ override bool Touch (Entity InOther, bool disableEffects) {
       if (Target != Other && Other.bSolid && !Other.bCorpse) {
         //ProcessHitFlags(Other, false, disableEffects);
         #if 1
-        if (!bRip || Other.bDontRip || (bNoBossRip && Other.bBoss)) {
+        if (!bRip || Other.bDontRip || (bNoBossRip && Other.bBoss) || !CheckRipLevel(Other)) {
           // not a ripper, bounce unconditionally
           return ProcessHitFlags(Other, false, disableEffects);
         } else {
@@ -996,7 +1010,7 @@ override bool Touch (Entity InOther, bool disableEffects) {
 
     if (bRip && !Other.bDontRip) {
       if (!disableEffects && Level.Game.IsAuthority) {
-        if (!bNoBossRip || !Other.bBoss) {
+        if (CheckRipLevel(Other) && (!bNoBossRip || !Other.bBoss)) {
           PlaySound('misc/ripslop', /*CHAN_BODY*/CHAN_AUTO);
           damage = GetMissileDamage(3, 2);
           //printdebug("%C: ripper, other is %C", self, Other);

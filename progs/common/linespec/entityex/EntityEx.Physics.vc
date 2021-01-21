@@ -936,7 +936,7 @@ final void HitMobj (Entity Other, float ptryx, float ptryy) {
           (!Other.bIsPlayer && !otherEnt.bMonster) || /* not a player, and not a monster */
           !otherEnt.IsSentient() || /* non-sentient monster */
           /* ripper checks (only for reflective monsters; dunno, GZDoom does it like this) */
-          (otherEnt.bReflective && (!bRip || !otherEnt.bDontRip || (bNoBossRip && otherEnt.bBoss))))
+          (otherEnt.bReflective && (!bRip || !otherEnt.bDontRip || (bNoBossRip && otherEnt.bBoss) || !CheckRipLevel(otherEnt))))
       {
         //printwarn("%C: BOUNCE! actb=%B; allactb=%B; other=%C; refl=%B, sent=%B", self, bBounceOnActors, bBounceOnAllActors, otherEnt, otherEnt.bReflective, otherEnt.IsSentient());
         //printwarn("    ooball=%B", otherEnt.bBounceOnAllActors);
