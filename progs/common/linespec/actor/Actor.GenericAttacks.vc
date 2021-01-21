@@ -495,6 +495,7 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
 
   if (!specified_dmgsource) dmgsource = Target;
   if (!specified_dmgtype) dmgtype = DamageType;
+
   if (specified_dmgdistance && dmgdistance > 0) {
     RadiusAttack(dmgsource, damage, distance, damageSelf, dmgtype, dmgdistance);
   } else {
@@ -557,7 +558,11 @@ final void do_simple_A_Explode (optional int damage, optional float aradius, opt
   GetExplodeParms(damage, distance, damageSelf);
 
   CheckSplash(distance);
-  DoExplode(damage, distance, damageSelf);
+  if (flags&XF_EXPLICITDAMAGETYPE) {
+    DoExplode(damage, distance, damageSelf, dmgtype:'None');
+  } else {
+    DoExplode(damage, distance, damageSelf);
+  }
 }
 
 
@@ -610,6 +615,8 @@ final void do_simple_A_Explode (optional int damage, optional float aradius, opt
     //k8: dunno if this is right
     if (!(flags&XF_EXPLICITDAMAGETYPE)) dmgType = DamageType;
   } else {
+    //k8: dunno if this is right
+    if (!dmgType && !(flags&XF_EXPLICITDAMAGETYPE)) dmgType = DamageType;
     NailDamageType = dmgType; //k8: dunno
   }
 
