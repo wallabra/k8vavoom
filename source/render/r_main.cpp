@@ -35,6 +35,7 @@
 extern VCvarB r_advlight_opt_optimise_scissor;
 extern VCvarB dbg_clip_dump_added_ranges;
 extern VCvarI gl_release_ram_textures_mode;
+extern VCvarB gl_crop_sprites;
 
 static VCvarB dbg_autoclear_automap("dbg_autoclear_automap", false, "Clear automap before rendering?", 0/*CVAR_Archive*/);
 VCvarB dbg_vischeck_time("dbg_vischeck_time", false, "Show frame vischeck time?", 0/*CVAR_Archive*/);
@@ -1885,6 +1886,10 @@ static void ProcessSpriteState (VState *st, SpriteScanInfo &ssi) {
                 if (!(*ssi.texturepresent)[stid]) {
                   (*ssi.texturepresent)[stid] = true;
                   ++ssi.sprtexcount;
+                  if (gl_crop_sprites.asBool() && gl_release_ram_textures_mode.asInt() < 2) {
+                    VTexture *tex = GTextureManager[stid];
+                    if (tex) tex->CropTexture();
+                  }
                 }
               }
             }
@@ -2026,6 +2031,10 @@ void VRenderLevelShared::PrecacheLevel () {
             if (!texturepresent[stid]) {
               texturepresent[stid] = true;
               ++sprtexcount;
+              if (gl_crop_sprites.asBool() && gl_release_ram_textures_mode.asInt() < 2) {
+                VTexture *tex = GTextureManager[stid];
+                if (tex) tex->CropTexture();
+              }
             }
           }
         }

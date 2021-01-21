@@ -88,6 +88,8 @@ extern VCvarB gl_regular_prefill_depth;
 extern VCvarB gl_regular_disable_overbright;
 
 extern VCvarI gl_release_ram_textures_mode;
+extern VCvarB gl_crop_psprites;
+extern VCvarB gl_crop_sprites;
 
 extern VCvarB gl_dbg_fbo_blit_with_texture;
 extern VCvarB gl_letterbox;

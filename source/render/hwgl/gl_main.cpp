@@ -122,6 +122,8 @@ VCvarB r_glow_flat("r_glow_flat", true, "Allow glowing flats?", CVAR_Archive);
 VCvarB gl_lmap_allow_partial_updates("gl_lmap_allow_partial_updates", true, "Allow partial updates of lightmap atlases (this is usually faster than full updates)?", CVAR_Archive);
 
 VCvarI gl_release_ram_textures_mode("gl_release_ram_textures_mode", "0", "When the engine should release RAM (non-GPU) texture storage (0:never; 1:after map unload; 2:immediately)?", CVAR_Archive);
+VCvarB gl_crop_psprites("gl_crop_psprites", true, "Crop psprite textures?", CVAR_Archive);
+VCvarB gl_crop_sprites("gl_crop_sprites", true, "Crop all sprite textures?", CVAR_Archive);
 
 // 0: 128
 // 1: 256
