@@ -444,7 +444,8 @@ void VMultiPatchTexture::ParseGfxPart (VScriptParser *sc, EWadNamespace prioNS, 
 //
 //==========================================================================
 VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
-  : PatchCount(0)
+  : VTexture()
+  , PatchCount(0)
   , Patches(nullptr)
 {
   Type = AType;
