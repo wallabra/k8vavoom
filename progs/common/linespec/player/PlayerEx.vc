@@ -1760,40 +1760,38 @@ void ProcessWeaponActions () {
   if (!bWeaponWasWeaponReady) return;
   bWeaponWasWeaponReady = false;
 
-  bool wasFireAction = false;
+  bool oldNoBob = Wpn.bBobDisabled;
 
   if (bWeaponAllowPrimaryFire && (Buttons&BT_ATTACK) && (!bAttackDown || !Wpn.bNoAutoFire) && Wpn.FindState('Fire')) {
     bAttackDown = true;
-    if (FireWeapon()) {
-      wasFireAction = true;
-      Wpn.bBobDisabled = true;
-    }
+    Wpn.bBobDisabled = true;
+    if (FireWeapon()) return;
+    Wpn.bBobDisabled = oldNoBob;
   }
 
-  if (!wasFireAction && bWeaponAllowAltFire && (Buttons&BT_ALT_ATTACK) && (!bAltAttackDown || !Wpn.bNoAutoFire) && Wpn.FindState('AltFire')) {
+  if (bWeaponAllowAltFire && (Buttons&BT_ALT_ATTACK) && (!bAltAttackDown || !Wpn.bNoAutoFire) && Wpn.FindState('AltFire')) {
     bAltAttackDown = true;
-    if (AltFireWeapon()) {
-      Wpn.bBobDisabled = true;
-      wasFireAction = true;
-    }
+    Wpn.bBobDisabled = true;
+    if (AltFireWeapon()) return;
+    Wpn.bBobDisabled = oldNoBob;
   }
 
-  if (!wasFireAction) {
-    ResetPlayerFiringState();
-    Refire = 0;
-  }
+  // cannot fire
+  ResetPlayerFiringState();
+  Refire = 0;
 
-  if (!wasFireAction && bWeaponAllowReload && ((Buttons&BT_RELOAD) || bReloadQueued)) {
+  if (bWeaponAllowReload && ((Buttons&BT_RELOAD) || bReloadQueued)) {
     // `bReloadQueued` will be reset by `ReloadWeapon()`
-    if (ReloadWeapon()) {
-      Wpn.bBobDisabled = true;
-      wasFireAction = true;
-    }
+    Wpn.bBobDisabled = true;
+    if (ReloadWeapon()) return;
+    Wpn.bBobDisabled = oldNoBob;
   }
 
-  if (!wasFireAction && bWeaponAllowZoom && (Buttons&BT_ZOOM) && !bZoomDown && Wpn.GetZoomState()) {
+  if (bWeaponAllowZoom && (Buttons&BT_ZOOM) && !bZoomDown && Wpn.GetZoomState()) {
     bZoomDown = true;
-    if (ZoomWeapon()) Wpn.bBobDisabled = true;
+    Wpn.bBobDisabled = true;
+    if (ZoomWeapon()) return;
+    Wpn.bBobDisabled = oldNoBob;
   }
 }
 
@@ -1810,6 +1808,33 @@ void MovePsprites (float deltaTime) {
   Weapon wpn = Weapon(ReadyWeapon);
 
   float newBobX = 0.0, newBobY = 0.0;
+
+  //printdebug("%C: ReadyWeapon=%C; PendingWeapon=%C", self, ReadyWeapon, PendingWeapon);
+  SetViewObject(ReadyWeapon);
+  AdvanceViewStates(deltaTime);
+  ProcessWeaponActions();
+
+  wpn = Weapon(ReadyWeapon);
+
+  if (PlayerState == PST_LIVE) {
+    if (!ReadyWeapon) {
+      if (wpn) printwarn("PLAYER: ReadyWeapon `%C` died, PendingWeapon is `%C`", wpn, PendingWeapon);
+      bWeaponAllowSwitch = true;
+    } else {
+      if (!ViewStates[PS_WEAPON].State) {
+        if (wpn) printwarn("PLAYER: ReadyWeapon %C (%C) removed itself, PendingWeapon is %C", ReadyWeapon, wpn, PendingWeapon);
+        ReadyWeapon = none;
+        SetViewStateOffsets(0, 0);
+        bWeaponAllowSwitch = true;
+      } else if (ViewStates[PS_WEAPON].StateTime < 0) {
+        // this is totally wrong, because it cannot call `A_WeaponReady()`, and weapon switching is impossible
+        //printwarn("PLAYER: ReadyWeapon %C (%C) put itself into endless state", ReadyWeapon, wpn, PendingWeapon);
+        //ReadyWeapon = none;
+        //SetViewStateOffsets(0, 0);
+        bWeaponAllowSwitch = true;
+      }
+    }
+  }
 
   if (MO && wpn && !wpn.bDontBob && !wpn.bBobDisabled) {
     // bob the weapon based on movement speed
@@ -1860,31 +1885,6 @@ void MovePsprites (float deltaTime) {
   }
   */
 
-  //printdebug("%C: ReadyWeapon=%C; PendingWeapon=%C", self, ReadyWeapon, PendingWeapon);
-  SetViewObject(ReadyWeapon);
-  AdvanceViewStates(deltaTime);
-
-  if (PlayerState == PST_LIVE) {
-    if (!ReadyWeapon) {
-      if (wpn) printwarn("PLAYER: ReadyWeapon `%C` died, PendingWeapon is `%C`", wpn, PendingWeapon);
-      bWeaponAllowSwitch = true;
-    } else {
-      if (!ViewStates[PS_WEAPON].State) {
-        if (wpn) printwarn("PLAYER: ReadyWeapon %C (%C) removed itself, PendingWeapon is %C", ReadyWeapon, wpn, PendingWeapon);
-        ReadyWeapon = none;
-        SetViewStateOffsets(0, 0);
-        bWeaponAllowSwitch = true;
-      } else if (ViewStates[PS_WEAPON].StateTime < 0) {
-        // this is totally wrong, because it cannot call `A_WeaponReady()`, and weapon switching is impossible
-        //printwarn("PLAYER: ReadyWeapon %C (%C) put itself into endless state", ReadyWeapon, wpn, PendingWeapon);
-        //ReadyWeapon = none;
-        //SetViewStateOffsets(0, 0);
-        bWeaponAllowSwitch = true;
-      }
-    }
-  }
-
-  ProcessWeaponActions();
 }
 
 
@@ -1944,6 +1944,8 @@ void ResetPlayerFiringState () {
 //
 //  `firetype` is `Weapon::FIRE_Primary` or `Weapon::FIRE_Secondary`
 //
+//  returns `true` if weapon state was changed
+//
 //===========================================================================
 bool CommonFireWeapon (int firetype, state firestate) {
   bReloadQueued = false;
@@ -1973,7 +1975,7 @@ bool CommonFireWeapon (int firetype, state firestate) {
   if (ReadyWeapon && !ReadyWeapon.bNoAlert) {
     LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
   }
-  return !!ReadyWeapon;
+  return true;
 }
 
 
@@ -2005,6 +2007,8 @@ bool AltFireWeapon (optional state firestate) {
 //
 //  ReloadWeapon
 //
+//  returns `true` if weapon state was changed
+//
 //===========================================================================
 bool ReloadWeapon () {
   //k8: reloading weapon resets refire state
@@ -2027,6 +2031,8 @@ bool ReloadWeapon () {
 //===========================================================================
 //
 //  ZoomWeapon
+//
+//  returns `true` if weapon state was changed
 //
 //===========================================================================
 bool ZoomWeapon () {
