@@ -114,6 +114,7 @@
     <prop_int name="RipperLevel" property="RipperLevel" />
     <prop_int name="RipLevelMin" property="RipLevelMin" />
     <prop_int name="RipLevelMax" property="RipLevelMax" />
+    <prop_int name="FriendlySeeBlocks" property="FriendlySeeBlocks" />
 
     <!-- Physics -->
     <flag name="Solid" property="bSolid" relinktoworld="true" />

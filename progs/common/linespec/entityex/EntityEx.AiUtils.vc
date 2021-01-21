@@ -220,7 +220,12 @@ final bool LookForMonstersPH () {
 //
 //==========================================================================
 final bool LookForMonsters2 (float fov, float minseedist, float maxseedist) {
-  if (!maxseedist) maxseedist = 4096;
+  if (!maxseedist) {
+    //maxseedist = 4096;
+    //FIXME: zero may be valid value here
+    maxseedist = (FriendlySeeBlocks <= 0 ? 1280 : FriendlySeeBlocks*128);
+  }
+
   minseedist = fmax(0, minseedist);
   maxseedist = fmax(0, maxseedist);
   float minseedistSq = minseedist*minseedist;

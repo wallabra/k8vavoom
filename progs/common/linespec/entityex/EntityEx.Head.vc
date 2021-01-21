@@ -530,6 +530,8 @@ int RipperLevel;
 int RipLevelMin;
 int RipLevelMax;
 
+int FriendlySeeBlocks = -1;
+
 // temporary for physics z change due to stepping
 transient float tmp_phys_z_change;
 transient float tmp_phys_last_water_z; // used to trigger water checks
