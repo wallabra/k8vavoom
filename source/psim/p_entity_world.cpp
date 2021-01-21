@@ -644,6 +644,8 @@ bool VEntity::CheckPosition (TVec Pos) {
   cptrace.CopyRegCeiling(reg, &Pos);
   */
 
+  //GCon->Logf("%s: CheckPosition (%g,%g,%g : %g); fz=%g; cz=%g", GetClass()->GetName(), Origin.x, Origin.y, Origin.z, Origin.z+Height, cptrace.FloorZ, cptrace.CeilingZ);
+
   //++validcount;
   XLevel->IncrementValidCount();
 
@@ -661,7 +663,10 @@ bool VEntity::CheckPosition (TVec Pos) {
     for (int bx = xl; bx <= xh; ++bx) {
       for (int by = yl; by <= yh; ++by) {
         for (VBlockThingsIterator It(XLevel, bx, by); It; ++It) {
-          if (!CheckThing(cptrace, *It)) return false;
+          if (!CheckThing(cptrace, *It)) {
+            //GCon->Logf("%s: collided with thing `%s`", GetClass()->GetName(), (*It)->GetClass()->GetName());
+            return false;
+          }
         }
       }
     }
@@ -679,7 +684,10 @@ bool VEntity::CheckPosition (TVec Pos) {
         line_t *ld;
         for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
           //good &= CheckLine(cptrace, ld);
-          if (!CheckLine(cptrace, ld)) good = false; // no early exit!
+          if (!CheckLine(cptrace, ld)) {
+            good = false; // no early exit!
+            //GCon->Logf("%s: collided with line %d", GetClass()->GetName(), (int)(ptrdiff_t)(ld-&XLevel->Lines[0]));
+          }
         }
       }
     }
@@ -708,7 +716,10 @@ bool VEntity::CheckThing (tmtrace_t &cptrace, VEntity *Other) {
   if (!(Other->EntityFlags&EF_Solid)) return true;
   if (Other->EntityFlags&EF_Corpse) return true; //k8: skip corpses
 
-  const float blockdist = Other->GetMoveRadius()+GetMoveRadius();
+  const float rad = GetMoveRadius();
+  const float otherrad = Other->GetMoveRadius();
+
+  const float blockdist = otherrad+rad;
 
   if (fabsf(Other->Origin.x-cptrace.Pos.x) >= blockdist ||
       fabsf(Other->Origin.y-cptrace.Pos.y) >= blockdist)
@@ -717,6 +728,7 @@ bool VEntity::CheckThing (tmtrace_t &cptrace, VEntity *Other) {
     return true;
   }
 
+  /*
   if ((EntityFlags&(EF_PassMobj|EF_Missile)) || (Other->EntityFlags&EF_ActLikeBridge)) {
     // prevent some objects from overlapping
     if (EntityFlags&Other->EntityFlags&EF_DontOverlap) return false;
@@ -724,8 +736,21 @@ bool VEntity::CheckThing (tmtrace_t &cptrace, VEntity *Other) {
     if (cptrace.Pos.z >= Other->Origin.z+GetBlockingHeightFor(Other)) return true;
     if (cptrace.Pos.z+Height <= Other->Origin.z) return true; // under thing
   }
+  */
 
-  return false;
+  if ((EntityFlags&EF_Missile) ||
+      (((EntityFlags&EF_PassMobj)|(Other->EntityFlags&EF_ActLikeBridge)) && !Level->GetNoPassOver()))
+  {
+    // prevent some objects from overlapping
+    if ((EntityFlags&Other->EntityFlags)&EF_DontOverlap) return false;
+    // check if a mobj passed over/under another object
+    if (cptrace.End.z >= Other->Origin.z+GetBlockingHeightFor(Other)) return true; // overhead
+    if (cptrace.End.z+Height <= Other->Origin.z) return true; // underneath
+  }
+
+  if (!eventTouch(Other, /*noPickups*/true)) return false;
+
+  return true;
 }
 
 
@@ -996,11 +1021,13 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
   // can't walk on corpses (but can touch them)
   const bool isOtherCorpse = !!(Other->EntityFlags&EF_Corpse);
 
+  // /*!(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) && !compat_nopassover*/!Level->GetNoPassOver()
+
   if (!isOtherCorpse) {
     //tmtrace.BlockingMobj = Other;
 
     // check bridges
-    if (/*!(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) && !compat_nopassover*/!Level->GetNoPassOver() &&
+    if (!Level->GetNoPassOver() &&
         !(EntityFlags&(EF_Float|EF_Missile|EF_NoGravity)) &&
         (Other->EntityFlags&(EF_Solid|EF_ActLikeBridge)) == (EF_Solid|EF_ActLikeBridge))
     {
@@ -1021,9 +1048,8 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
   }
 
   //if (!(tmtrace.Thing->EntityFlags & VEntity::EF_NoPassMobj) || Actor(Other).bSpecial)
-  if ((((EntityFlags&EF_PassMobj) || (Other->EntityFlags&EF_ActLikeBridge)) &&
-       /*!(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) && !compat_nopassover*/!Level->GetNoPassOver()) ||
-      (EntityFlags&EF_Missile))
+  if ((EntityFlags&EF_Missile) ||
+      (((EntityFlags&EF_PassMobj)|(Other->EntityFlags&EF_ActLikeBridge)) && !Level->GetNoPassOver()))
   {
     // prevent some objects from overlapping
     if (!isOtherCorpse && ((EntityFlags&Other->EntityFlags)&EF_DontOverlap)) {
@@ -1032,7 +1058,7 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
     }
     // check if a mobj passed over/under another object
     if (tmtrace.End.z >= Other->Origin.z+GetBlockingHeightFor(Other)) return true; // overhead
-    if (tmtrace.End.z+Height <= Other->Origin.z) return true;  // underneath
+    if (tmtrace.End.z+Height <= Other->Origin.z) return true; // underneath
   }
 
   if (!eventTouch(Other, noPickups)) {
