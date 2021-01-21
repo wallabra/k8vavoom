@@ -116,6 +116,9 @@ public:
 
   virtual VStream *OpenFileRead (VStr, int *lump)  override;
   virtual VStream *CreateLumpReaderNum (int) override;
+
+  // do not refresh file size, to support dynamic reloads
+  virtual void UpdateLumpLength (int Lump, int len) override;
 };
 
 

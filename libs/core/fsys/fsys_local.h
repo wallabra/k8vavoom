@@ -96,6 +96,9 @@ public:
   virtual VStream *CreateLumpReaderNum (int LumpNum) = 0;
   virtual void RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) = 0;
   virtual VStr GetPrefix () = 0; // for logging
+  // this is called by various lump methods when `filesize` is -1
+  // can be used to cache lump sizes for archives where getting those sizes on open is expensive
+  virtual void UpdateLumpLength (int Lump, int len) = 0;
 
   virtual void ListWadFiles (TArray<VStr> &list);
   virtual void ListPk3Files (TArray<VStr> &list);
@@ -240,6 +243,8 @@ public:
   VStr CalculateMD5 (int lumpidx);
 
   virtual VStr GetPrefix () override;
+
+  virtual void UpdateLumpLength (int Lump, int len) override;
 };
 
 
@@ -323,7 +328,7 @@ public:
   int findLump (const char *lumpname, int size=-1, const char *md5=nullptr);
   int findFile (const char *filename, int size=-1, const char *md5=nullptr);
 
-  // returns -1 for invalid lumps
+  // returns -1 for invalid or disk lumps; never refreshes lump sizes, never opens lump streams to detect real sizes
   int getLumpSize (int lumpidx);
   // returns empty string for invalid lumps
   VStr getLumpMD5 (int lumpidx);

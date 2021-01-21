@@ -130,6 +130,18 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth) {
 
 //==========================================================================
 //
+//  VDirPakFile::UpdateLumpLength
+//
+//  do not refresh file size, to support dynamic reloads
+//
+//==========================================================================
+void VDirPakFile::UpdateLumpLength (int Lump, int len) {
+  // do nothing
+}
+
+
+//==========================================================================
+//
 //  VDirPakFile::OpenFileRead
 //
 //  if `lump` is not `nullptr`, sets it to file lump or to -1
@@ -141,11 +153,13 @@ VStream *VDirPakFile::OpenFileRead (VStr fname, int *plump) {
   if (lump < 0) return nullptr;
   VStr tmpname = PakFileName.appendPath(pakdir.files[lump].diskName);
   VStream *strm = CreateDiskStreamRead(tmpname, pakdir.files[lump].diskName);
+  /* nope
   // update file size
   if (strm && pakdir.files[lump].filesize < 0) {
     pakdir.files[lump].filesize = strm->TotalSize();
     strm->Seek(0);
   }
+  */
   return strm;
 }
 
@@ -160,10 +174,12 @@ VStream *VDirPakFile::CreateLumpReaderNum (int lump) {
   vassert(lump < pakdir.files.length());
   VStr tmpname = PakFileName.appendPath(pakdir.files[lump].diskName);
   VStream *strm = CreateDiskStreamRead(tmpname, pakdir.files[lump].diskName);
+  /* nope
   // update file size
   if (strm && pakdir.files[lump].filesize < 0) {
     pakdir.files[lump].filesize = strm->TotalSize();
     strm->Seek(0);
   }
+  */
   return strm;
 }

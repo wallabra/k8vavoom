@@ -896,6 +896,16 @@ VStr VPakFileBase::GetPrefix () {
 
 //==========================================================================
 //
+//  VPakFileBase::UpdateLumpLength
+//
+//==========================================================================
+void VPakFileBase::UpdateLumpLength (int Lump, int len) {
+  if (len > 0) pakdir.files[Lump].filesize = len;
+}
+
+
+//==========================================================================
+//
 //  VPakFileBase::RenameSprites
 //
 //==========================================================================
@@ -1046,8 +1056,9 @@ void VPakFileBase::ReadFromLump (int Lump, void *Dest, int Pos, int Size) {
   // special case: unpacked size is unknown, cache it
   int fsize = pakdir.files[Lump].filesize;
   if (fsize == -1) {
-    pakdir.files[Lump].filesize = Strm->TotalSize();
-    fsize = pakdir.files[Lump].filesize;
+    fsize = Strm->TotalSize();
+    if (Strm->IsError()) Sys_Error("error getting lump '%s:%s' size", *GetPrefix(), *pakdir.files[Lump].fileName);
+    UpdateLumpLength(Lump, fsize);
   }
   if (fsize < 0 || Pos >= fsize || fsize-Pos < Size) {
     delete Strm;
@@ -1072,10 +1083,12 @@ int VPakFileBase::LumpLength (int Lump) {
   if (pakdir.files[Lump].filesize == -1) {
     VStream *Strm = CreateLumpReaderNum(Lump);
     if (!Strm) Sys_Error("cannot get length for lump '%s:%s'", *GetPrefix(), *pakdir.files[Lump].fileName);
-    pakdir.files[Lump].filesize = Strm->TotalSize();
+    int fsize = Strm->TotalSize();
     bool wasError = Strm->IsError();
     delete Strm;
-    if (wasError || pakdir.files[Lump].filesize < 0) Sys_Error("cannot get length for lump '%s:%s'", *GetPrefix(), *pakdir.files[Lump].fileName);
+    if (wasError || /*pakdir.files[Lump].filesize*/fsize < 0) Sys_Error("cannot get length for lump '%s:%s'", *GetPrefix(), *pakdir.files[Lump].fileName);
+    UpdateLumpLength(Lump, fsize);
+    return fsize;
   }
   return pakdir.files[Lump].filesize;
 }
