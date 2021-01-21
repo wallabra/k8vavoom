@@ -142,6 +142,7 @@ VTexture::VTexture ()
   , HiResTexture(nullptr)
   , Pixels8BitValid(false)
   , Pixels8BitAValid(false)
+  , alreadyCropped(false)
   , shadeColor(-1)
   , shadeColorSaved(-1)
 {
@@ -227,6 +228,7 @@ void VTexture::ReleasePixels () {
   Pixels8BitValid = Pixels8BitAValid = false;
   mFormat = mOrigFormat; // undo `ConvertPixelsToRGBA()`
   if (Brightmap) Brightmap->ReleasePixels();
+  alreadyCropped = false;
 }
 
 
@@ -1272,6 +1274,99 @@ void VTexture::WriteToPNG (VStream *strm) {
   }
 }
 
+
+//==========================================================================
+//
+//  VTexture::CropTexture
+//
+//==========================================================================
+void VTexture::CropTexture () {
+  if (alreadyCropped) return;
+  if (Type == TEXTYPE_Null) return;
+  if (Width < 1 || Height < 1) return;
+
+  ReleasePixels();
+  GetPixels();
+
+  int x0 = +0x7ffffff, y0 = +0x7ffffff;
+  int x1 = -0x7ffffff, y1 = -0x7ffffff;
+
+  if (Format == TEXFMT_RGBA) {
+    const rgba_t *pic = (const rgba_t *)Pixels;
+    for (int y = 0; y < Height; ++y) {
+      for (int x = 0; x < Width; ++x, ++pic) {
+        if (pic->a) {
+          x0 = min2(x0, x);
+          y0 = min2(y0, y);
+          x1 = max2(x1, x);
+          y1 = max2(y1, y);
+        }
+      }
+    }
+  } else {
+    const rgba_t *pal = (mFormat == TEXFMT_8Pal ? GetPalette() : r_palette);
+    const vuint8 *pic = Pixels;
+    if (!pal) pal = r_palette;
+    for (int y = 0; y < Height; ++y) {
+      for (int x = 0; x < Width; ++x, ++pic) {
+        if (*pic && pal[*pic].a) {
+          x0 = min2(x0, x);
+          y0 = min2(y0, y);
+          x1 = max2(x1, x);
+          y1 = max2(y1, y);
+        }
+      }
+    }
+  }
+
+  // leave one-pixel border
+  x0 = max2(0, x0-1);
+  y0 = max2(0, y0-1);
+  x1 = min2(Width-1, x1+1);
+  y1 = min2(Height-1, y1+1);
+
+  // crop it
+  if (x0 == 0 && y0 == 0 && x1 == Width-1 && y1 == Height-1) return;
+
+  const int neww = x1-x0+1;
+  const int newh = y1-y0+1;
+
+  if (neww < 1 || newh < 1) return; // just in case
+
+  GCon->Logf(NAME_Debug, "%s: crop from (0,0)-(%d,%d) to (%d,%d)-(%d,%d) -- %dx%d -> %dx%d", *Name, Width-1, Height-1, x0, y0, x1, y1, Width, Height, neww, newh);
+
+  if (Format == TEXFMT_RGBA) {
+    const rgba_t *pic = (const rgba_t *)Pixels;
+    rgba_t *newpic = new rgba_t[neww*newh];
+    rgba_t *dest = newpic;
+    for (int y = y0; y <= y1; ++y) {
+      for (int x = x0; x <= x1; ++x) {
+        *dest++ = pic[y*Width+x];
+      }
+    }
+    delete[] Pixels;
+    Pixels = (vuint8 *)newpic;
+  } else {
+    const vuint8 *pic = Pixels;
+    vuint8 *newpic = new vuint8[neww*newh];
+    vuint8 *dest = newpic;
+    for (int y = y0; y <= y1; ++y) {
+      for (int x = x0; x <= x1; ++x) {
+        *dest++ = pic[y*Width+x];
+      }
+    }
+    delete[] Pixels;
+    Pixels = (vuint8 *)newpic;
+  }
+
+  alreadyCropped = true;
+  SOffset -= x0;
+  TOffset -= y0;
+  Width = neww;
+  Height = newh;
+
+  RealX0 = RealY0 = RealHeight = RealWidth = MIN_VINT32;
+}
 
 
 //==========================================================================

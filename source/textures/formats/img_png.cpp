@@ -139,7 +139,6 @@ VPngTexture::~VPngTexture () {
 //
 //==========================================================================
 vuint8 *VPngTexture::GetPixels () {
-//#ifdef CLIENT
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
   transFlags = TransValueSolid; // for now
@@ -184,12 +183,6 @@ vuint8 *VPngTexture::GetPixels () {
 
   ConvertPixelsToShaded();
   return Pixels;
-/*
-#else
-  Sys_Error("GetPixels on dedicated server");
-  return nullptr;
-#endif
-*/
 }
 
 

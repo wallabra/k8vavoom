@@ -42,6 +42,7 @@ extern VCvarF cl_fov;
 extern VCvarB gl_pic_filtering;
 extern VCvarB r_draw_psprites;
 extern VCvarB r_chasecam;
+extern VCvarI gl_release_ram_textures_mode;
 
 static VCvarI crosshair("crosshair", "2", "Crosshair type (0-2).", CVAR_Archive);
 static VCvarF crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
@@ -113,6 +114,11 @@ void VRenderLevelShared::RenderPSprite (float SX, float SY, const VAliasModelFra
     }
     return;
   }
+
+  // do not release psprite textures
+  int oldRelease = gl_release_ram_textures_mode.asInt();
+  gl_release_ram_textures_mode = 0;
+  Tex->CropTexture();
 
   const int TexWidth = Tex->GetWidth();
   const int TexHeight = Tex->GetHeight();
@@ -199,6 +205,8 @@ void VRenderLevelShared::RenderPSprite (float SX, float SY, const VAliasModelFra
     DotProduct(dv[0], -Drawer->viewforward), saxis, taxis, texorg);
   Drawer->PopDepthMaskSlow();
   Drawer->GLEnableDepthTestSlow();
+
+  gl_release_ram_textures_mode = oldRelease;
 }
 
 

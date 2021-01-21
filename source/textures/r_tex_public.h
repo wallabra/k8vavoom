@@ -335,6 +335,7 @@ protected:
   VTexture *HiResTexture;
   bool Pixels8BitValid;
   bool Pixels8BitAValid;
+  bool alreadyCropped;
   int shadeColor;
   int shadeColorSaved; // `ConvertPixelsToShaded()` saves `shadeColor` here, so we can restore it after `ReleasePixels()`
 
@@ -388,6 +389,8 @@ public:
   // use `153` to calculate glow color
   rgb_t GetAverageColor (vuint32 maxout);
   void ResizeCanvas (int newwdt, int newhgt);
+
+  void CropTexture ();
 
 public:
   //k8: please note that due to my sloppy coding, real format checking should be preceded by `GetPixels()`
