@@ -62,6 +62,27 @@ menudef SpriteVideoOptions {
   }
 
 
+  header "Texture Cropping";
+
+  option bool {
+    title = "Crop PSprites";
+    cvar = gl_crop_psprites;
+    help =
+      "Crop (remove empty edges) psprite textures.",
+      "This may help reduce GPU bandwidth for hires psprite textures.",
+      "Leave 'ON' if unsure.";
+  }
+
+  option bool {
+    title = "Crop All Sprites";
+    cvar = gl_crop_sprites;
+    help =
+      "Crop (remove empty edges) all sprite textures.",
+      "This may help reduce GPU bandwidth for hires sprite textures.",
+      "Leave 'OFF' if unsure.";
+  }
+
+
   header "Camera Plane Rotation";
 
   option bool {
