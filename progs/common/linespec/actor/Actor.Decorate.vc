@@ -373,11 +373,12 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
   Player.SetViewState(PS_FLASH, none);
 
   if (!pending) {
+    Player.SetViewObject(none);
     PlayerEx(Player).SetWeapon(none);
     if (Player.PlayerState == PST_DEAD) return;
     if (Player.MO != self) return; // voodoo doll
     if (Player.bIsBot) return;
-    print("%C: LOWERING UNRAISED WEAPON! (2)", self);
+    print("%C: LOWERING WEAPON WITHOUT A PENDING ONE!", self);
     return;
   }
 

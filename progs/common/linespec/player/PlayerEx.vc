@@ -1603,9 +1603,10 @@ void SetWeapon (Weapon NewWeapon) {
     PSpriteSY = NewWeapon.PSpriteSY;
     MO.ModelVersion = NewWeapon.PlayerModelVersion;
   } else {
-    SetViewObject(none);
     PSpriteSY = 0;
     MO.ModelVersion = 0;
+    SetViewObject(none);
+    SetViewState(PS_WEAPON, none);
   }
 }
 
