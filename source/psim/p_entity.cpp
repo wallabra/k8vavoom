@@ -436,7 +436,7 @@ bool VEntity::SetState (VState *InState) {
     do {
       if (!st) { State = nullptr; break; }
 
-      if (++setStateWatchCat > 512 /*|| st->validcount == validcountState*/) {
+      if (++setStateWatchCat > 512*4 /*|| st->validcount == validcountState*/) {
         //k8: FIXME! what to do here?
         GCon->Logf(NAME_Error, "WatchCat interrupted `%s::SetState()` at '%s' (%s)!", *GetClass()->GetFullName(), *st->Loc.toStringNoCol(), (st->validcount == validcountState ? "loop" : "timeout"));
         //StateTime = 13.0f;
