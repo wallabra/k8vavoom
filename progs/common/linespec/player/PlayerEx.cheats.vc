@@ -680,6 +680,7 @@ void Cheat_Summon () {
     if (optFriendly) {
       printdebug("%C(%s): marked as friendly", it, it.UniqueId);
       ent.bFriendly = true;
+      ent.FriendPlayer = GetPlayerNum()+1;
     }
   }
 

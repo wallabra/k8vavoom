@@ -902,9 +902,25 @@ final Entity DecorDoAAPtr (name methodname, optional int ptr) {
   if (ptr&AAPTR_MASTER) return Master;
   if (ptr&AAPTR_TRACER) return Tracer;
   if (ptr&AAPTR_FRIENDPLAYER) {
-    if (FriendPlayer > 0 && FriendPlayer <= MAXPLAYERS) {
-      auto plr = Level.Game.Players[FriendPlayer-1];
-      if (plr && plr.bSpawned && plr.MO) return plr.MO;
+    if (bFriendly) {
+      int fpn = FriendPlayer;
+      if (fpn < 1 || fpn > MAXPLAYERS) {
+        if (!Level.Game.netgame) {
+          // in non-mp games, there is only one player, so consider it as a friend
+          fpn = 1;
+        } else if (!Level.Game.deathmatch) {
+          // return first active player
+          // this is not strictly right, but meh...
+          foreach (int pnum; 0..MAXPLAYERS) {
+            auto plr = Level.Game.Players[pnum];
+            if (plr && plr.bSpawned && plr.MO) return plr.MO;
+          }
+        }
+      }
+      if (fpn > 0 && fpn <= MAXPLAYERS) {
+        auto plr = Level.Game.Players[fpn-1];
+        if (plr && plr.bSpawned && plr.MO) return plr.MO;
+      }
     }
     ptr |= AAPTR_NULL;
   }

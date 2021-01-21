@@ -2718,7 +2718,7 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     case APROP_ChaseGoal: bChaseGoal = !!IntVal; break;
     case APROP_Frightened: print("Frightened property is not implemented"); break;
     case APROP_Gravity: if (IntVal < 0) IntVal = 0; Gravity = float(IntVal)/65536.0; break;
-    case APROP_Friendly: bFriendly = !!IntVal; break;
+    case APROP_Friendly: bFriendly = !!IntVal; FriendPlayer = 0; break;
     case APROP_SeeSound: SightSound = name(StrVal); break;
     case APROP_AttackSound: AttackSound = name(StrVal); break;
     case APROP_PainSound: PainSound = name(StrVal); break;

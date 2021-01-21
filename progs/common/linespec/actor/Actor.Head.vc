@@ -371,6 +371,7 @@ override void Destroyed () {
   RenderStyle = STYLE_Translucent;
   Alpha = 0.333;
   bFriendly = false;
+  FriendPlayer = 0;
 }
 
 

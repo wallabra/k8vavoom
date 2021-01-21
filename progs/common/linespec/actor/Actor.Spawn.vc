@@ -131,6 +131,7 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
       } else if (Instig.bIsPlayer) {
         // make monster friendly
         A.bFriendly = true;
+        A.FriendPlayer = Instig.Player.GetPlayerNum()+1;
         EntityEx Atk = PlayerEx(Instig.Player).Attacker;
         if (Atk && !Atk.bFriendly) {
           // make it attack monster who last attacked player

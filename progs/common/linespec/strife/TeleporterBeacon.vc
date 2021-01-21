@@ -80,7 +80,7 @@ override bool Use (bool Pickup) {
   // set up the new rebel
   if (entOwner) {
     A.CopyTranslations(entOwner);
-    A.FriendPlayer = entOwner.bIsPlayer ? entOwner.Player.GetPlayerNum()+1 : 0;
+    A.FriendPlayer = (entOwner.bIsPlayer ? entOwner.Player.GetPlayerNum()+1 : 0);
   }
   A.Threshold = 100;
   A.bFriendly = true;
