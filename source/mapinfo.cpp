@@ -157,6 +157,7 @@ static bool ExpectBool (const char *optname, VScriptParser *sc) {
 // ////////////////////////////////////////////////////////////////////////// //
 VName P_TranslateMap (int map);
 static void ParseMapInfo (VScriptParser *sc, int milumpnum);
+static void ParseUMapinfo (VScriptParser *sc, int milumpnum);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -547,6 +548,18 @@ static void LoadAllMapInfoLumpsInFile (int miLump, int zmiLump) {
 
 //==========================================================================
 //
+//  LoadUmapinfoLump
+//
+//==========================================================================
+static void LoadUmapinfoLump (int lump) {
+  if (lump < 0) return;
+  GCon->Logf(NAME_Init, "umapinfo file: '%s'", *W_FullLumpName(lump));
+  ParseUMapinfo(new VScriptParser(W_FullLumpName(lump), W_CreateLumpReaderNum(lump)), lump);
+}
+
+
+//==========================================================================
+//
 //  InitMapInfo
 //
 //==========================================================================
@@ -554,11 +567,13 @@ void InitMapInfo () {
   // use "zmapinfo" if it is present?
   bool zmapinfoAllowed = (cli_NoZMapinfo >= 0);
   if (!zmapinfoAllowed) GCon->Logf(NAME_Init, "zmapinfo parsing disabled by user");
-  int lastMapinfoFile = -1; // not seen yet
-  int lastMapinfoLump = -1; // not seen yet
-  int lastZMapinfoLump = -1; // not seen yet
+  int lastMapinfoFile = -1; // haven't seen yet
+  int lastMapinfoLump = -1; // haven't seen yet
+  int lastZMapinfoLump = -1; // haven't seen yet
+  int lastUmapinfoLump = -1; // haven't seen yet
   bool doSkipFile = false;
   VName nameZMI = VName("zmapinfo", VName::Add);
+  VName nameUMI = VName("umapinfo", VName::Add);
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     int currFile = W_LumpFile(Lump);
     if (doSkipFile) {
@@ -568,9 +583,12 @@ void InitMapInfo () {
     // if we hit another file, load last seen [z]mapinfo lump
     if (currFile != lastMapinfoFile) {
       LoadAllMapInfoLumpsInFile(lastMapinfoLump, lastZMapinfoLump);
+      if (lastMapinfoLump < 0 && lastZMapinfoLump < 0 && lastUmapinfoLump >= 0) {
+        LoadUmapinfoLump(lastUmapinfoLump);
+      }
       // reset/update remembered lump indicies
       lastMapinfoFile = currFile;
-      lastMapinfoLump = lastZMapinfoLump = -1; // not seen yet
+      lastMapinfoLump = lastZMapinfoLump = lastUmapinfoLump = -1; // haven't seen yet
       // skip zip files
       doSkipFile = !W_IsWadPK3File(currFile);
       if (doSkipFile) continue;
@@ -578,9 +596,14 @@ void InitMapInfo () {
     // remember last seen [z]mapinfo lump
     if (lastMapinfoLump < 0 && W_LumpName(Lump) == NAME_mapinfo) lastMapinfoLump = Lump;
     if (zmapinfoAllowed && lastZMapinfoLump < 0 && W_LumpName(Lump) == nameZMI) lastZMapinfoLump = Lump;
+    if (W_LumpName(Lump) == nameUMI && lastUmapinfoLump < Lump) lastUmapinfoLump = Lump;
   }
   // load last seen mapinfos
   LoadAllMapInfoLumpsInFile(lastMapinfoLump, lastZMapinfoLump);
+  if (lastMapinfoLump < 0 && lastZMapinfoLump < 0 && lastUmapinfoLump >= 0) {
+    LoadUmapinfoLump(lastUmapinfoLump);
+  }
+
   mapinfoParsed = true;
 
   for (int i = 0; i < MapInfo.Num(); ++i) {
@@ -1390,21 +1413,251 @@ static void ParseNameOrLookup (VScriptParser *sc, vint32 lookupFlag, VStr *name,
 
 //==========================================================================
 //
+//  ParseUStringKey
+//
+//==========================================================================
+static VStr ParseUStringKey (VScriptParser *sc) {
+  sc->Expect("=");
+  sc->ExpectString();
+  return sc->String.xstrip();
+}
+
+
+//==========================================================================
+//
+//  ParseUBoolKey
+//
+//==========================================================================
+static bool ParseUBoolKey (VScriptParser *sc) {
+  sc->Expect("=");
+  sc->ExpectString();
+  VStr ss = sc->String.xstrip();
+  if (ss.strEquCI("false") || ss.strEquCI("0")) return false;
+  if (ss.strEquCI("true") || ss.strEquCI("1")) return true;
+  sc->Error("boolean value expected");
+  return false;
+}
+
+
+//==========================================================================
+//
+//  ParseMapUMapinfo
+//
+//==========================================================================
+static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
+  // if we have "lightning", but no "sky2", make "sky2" equal to "sky1" (otherwise the sky may flicker)
+  wasSky1Sky2 = 0u; // clear "was skyN" flag
+  bool wasEndGame = false;
+  VStr endType;
+  VStr episodeName;
+
+  sc->Expect("{");
+  for (;;) {
+    const TLocation loc = sc->GetLoc();
+
+    if (sc->Check("}")) break;
+    if (sc->AtEnd()) break;
+
+    if (sc->Check("levelname")) {
+      VStr ss = ParseUStringKey(sc);
+      if (ss.length()) info->Name = ss;
+      continue;
+    }
+    if (sc->Check("levelpic")) {
+      VStr ss = ParseUStringKey(sc);
+      if (ss.length()) info->ExitPic = info->EnterPic = VName(*ss, VName::AddLower);
+      continue;
+    }
+    if (sc->Check("next")) {
+      VStr ss = ParseUStringKey(sc);
+      if (ss.length()) info->NextMap = VName(*ss, VName::AddLower);
+      continue;
+    }
+    if (sc->Check("nextsecret")) {
+      VStr ss = ParseUStringKey(sc);
+      if (ss.length()) info->SecretMap = VName(*ss, VName::AddLower);
+      continue;
+    }
+    if (sc->Check("skytexture")) {
+      VStr ss = ParseUStringKey(sc);
+      if (ss.length()) {
+        wasSky1Sky2 |= WSK_WAS_SKY1;
+        info->SecretMap = VName(*ss, VName::AddLower);
+        VName skbname = R_HasNamedSkybox(sc->String);
+        if (skbname != NAME_None) {
+          //k8: ok, this may be done to support sourceports that cannot into skyboxes
+          miWarning(loc, "sky1 '%s' is actually a skybox (this is mostly harmless)", *sc->String);
+          info->SkyBox = skbname;
+          info->Sky1Texture = GTextureManager.DefaultTexture;
+          info->Sky2Texture = GTextureManager.DefaultTexture;
+          info->Sky1ScrollDelta = 0;
+          info->Sky2ScrollDelta = 0;
+        } else {
+          info->SkyBox = NAME_None;
+          info->Sky1Texture = loadSkyTexture(sc, VName(*ss, VName::AddLower));
+          info->Sky1ScrollDelta = 0;
+        }
+      }
+      continue;
+    }
+    if (sc->Check("music")) {
+      VStr ss = ParseUStringKey(sc);
+      if (ss.length()) info->SongLump = VName(*ss, VName::AddLower);
+      continue;
+    }
+    if (sc->Check("exitpic")) {
+      VStr ss = ParseUStringKey(sc);
+      if (ss.length()) info->ExitPic = VName(*ss, VName::AddLower);
+      continue;
+    }
+    if (sc->Check("enterpic")) {
+      VStr ss = ParseUStringKey(sc);
+      if (ss.length()) info->EnterPic = VName(*ss, VName::AddLower);
+      continue;
+    }
+    if (sc->Check("partime")) {
+      sc->Expect("=");
+      sc->ExpectNumber();
+      info->ParTime = sc->Number;
+      continue;
+    }
+    if (sc->Check("endgame")) {
+      wasEndGame = ParseUBoolKey(sc);
+      continue;
+    }
+    if (sc->Check("endpic")) {
+      VStr ss = ParseUStringKey(sc);
+      if (ss.length()) {
+        endType = VStr(va("EndGameCustomPic%s", *ss));
+      } else {
+        endType = "EndGamePic3"; // arbitrary decision, credits
+      }
+      continue;
+    }
+    if (sc->Check("endbunny")) {
+      if (ParseUBoolKey(sc)) endType = "EndGameBunny";
+      continue;
+    }
+    if (sc->Check("endcast")) {
+      if (ParseUBoolKey(sc)) endType = "EndGameCast";
+      continue;
+    }
+    if (sc->Check("bossaction")) {
+      //sc->Error("UMAPINFO 'bossaction' is not supported yet");
+      miWarning(loc, "UMAPINFO 'bossaction' is not supported yet");
+      (void)ParseUStringKey(sc);
+      sc->Expect(",");
+      sc->ExpectNumber();
+      sc->Expect(",");
+      sc->ExpectNumber();
+      continue;
+    }
+
+    if (sc->Check("episode")) {
+      VStr ss = ParseUStringKey(sc);
+      if (ss.strEquCI("clear")) {
+        EpisodeDefs.Clear();
+      } else {
+        VStr pic = ss;
+        VStr epname;
+        bool checkReplace = true;
+        if (sc->Check(",")) {
+          sc->ExpectString();
+          epname = sc->String.xstrip();
+          if (sc->Check(",")) sc->ExpectString(); // ignore key
+        } else {
+          epname = "Unnamed episode";
+          checkReplace = false;
+        }
+
+        VEpisodeDef *EDef = nullptr;
+        // check for replaced episode
+        if (checkReplace) {
+          for (int i = 0; i < EpisodeDefs.length(); ++i) {
+            if (sc->Name == EpisodeDefs[i].Name) {
+              EDef = &EpisodeDefs[i];
+              break;
+            }
+          }
+        }
+        if (!EDef) EDef = &EpisodeDefs.Alloc();
+
+        // set defaults
+        EDef->Name = info->LumpName;
+        EDef->TeaserName = NAME_None;
+        EDef->Text = epname;
+        EDef->PicName = VName(*ss, VName::AddLower);
+        EDef->Flags = 0;
+        EDef->Key = VStr();
+        EDef->MapinfoSourceLump = info->MapinfoSourceLump;
+      }
+      continue;
+    }
+
+    if (sc->Check("nointermission")) {
+      if (ParseUBoolKey(sc)) info->Flags |= VLevelInfo::LIF_NoIntermission; else info->Flags &= ~VLevelInfo::LIF_NoIntermission;
+      continue;
+    }
+
+    // intertexts require creating new clusters; not now (and maybe never, because i don't really care)
+    if (sc->Check("intertext")) {
+      miWarning(loc, "UMAPINFO 'intertext' is not supported yet");
+      (void)ParseUStringKey(sc);
+      while (sc->Check(",")) sc->ExpectString();
+      continue;
+    }
+    if (sc->Check("intertextsecret")) {
+      miWarning(loc, "UMAPINFO 'intertextsecret' is not supported yet");
+      (void)ParseUStringKey(sc);
+      while (sc->Check(",")) sc->ExpectString();
+      continue;
+    }
+    if (sc->Check("interbackdrop")) {
+      miWarning(loc, "UMAPINFO 'interbackdrop' is not supported yet");
+      (void)ParseUStringKey(sc);
+      continue;
+    }
+    if (sc->Check("intermusic")) {
+      VStr ss = ParseUStringKey(sc);
+      info->InterMusic = VName(*ss, VName::AddLower);
+      continue;
+    }
+
+    sc->Error(va("Unknown UMAPINFO map key '%s'", *sc->String));
+  }
+
+  if (wasEndGame) {
+    if (endType.length() == 0) endType = "EndGamePic3"; // arbitrary decision, credits
+    info->NextMap = VName(*endType);
+  }
+
+  FixSkyTexturesHack(sc, info);
+
+  // second sky defaults to first sky
+  if (info->Sky2Texture == GTextureManager.DefaultTexture) info->Sky2Texture = info->Sky1Texture;
+  if (info->Flags&VLevelInfo::LIF_DoubleSky) GTextureManager.SetFrontSkyLayer(info->Sky1Texture);
+}
+
+
+//==========================================================================
+//
 //  ParseMap
 //
 //==========================================================================
-static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int milumpnum) {
+static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int milumpnum, bool umapinfo=false) {
   VMapInfo *info = nullptr;
   VName MapLumpName;
-  if (sc->CheckNumber()) {
+  if (!umapinfo && sc->CheckNumber()) {
     // map number, for Hexen compatibility
     HexenMode = true;
     if (sc->Number < 1 || sc->Number > 99) sc->Error("Map number out or range");
     MapLumpName = va("map%02d", sc->Number);
   } else {
     // map name
-    sc->ExpectName8();
-    MapLumpName = sc->Name8;
+    sc->ExpectString();
+    VStr nn = sc->String.xstrip();
+    if (nn.length() == 0) sc->Error("empty map name");
+    MapLumpName = VName(*sc->String, VName::AddLower);
   }
 
   // check for replaced map info
@@ -1480,8 +1733,10 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int
     info->ParTime = par;
   }
 
-  // map name must follow the number
-  ParseNameOrLookup(sc, VLevelInfo::LIF_LookupName, &info->Name, &info->Flags, false);
+  if (!umapinfo) {
+    // map name must follow the number
+    ParseNameOrLookup(sc, VLevelInfo::LIF_LookupName, &info->Name, &info->Flags, false);
+  }
 
   // set song lump name from SNDINFO script
   for (int i = 0; i < MapSongList.Num(); ++i) {
@@ -1501,7 +1756,13 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int
     info->LevelNum = (mn[1]-'1')*10+(mn[3]-'0');
   }
 
-  ParseMapCommon(sc, info, HexenMode);
+  info->MapinfoSourceLump = milumpnum;
+
+  if (!umapinfo) {
+    ParseMapCommon(sc, info, HexenMode);
+  } else {
+    ParseMapUMapinfo(sc, info);
+  }
 
   info->MapinfoSourceLump = milumpnum;
 
@@ -1645,11 +1906,11 @@ static void ParseClusterDef (VScriptParser *sc) {
 static void ParseEpisodeDef (VScriptParser *sc, int milumpnum) {
   VEpisodeDef *EDef = nullptr;
   int EIdx = 0;
-  sc->ExpectName8();
+  sc->ExpectName();
 
   // check for replaced episode
   for (int i = 0; i < EpisodeDefs.Num(); ++i) {
-    if (sc->Name8 == EpisodeDefs[i].Name) {
+    if (sc->Name == EpisodeDefs[i].Name) {
       EDef = &EpisodeDefs[i];
       EIdx = i;
       break;
@@ -1667,7 +1928,7 @@ static void ParseEpisodeDef (VScriptParser *sc, int milumpnum) {
   }
 
   // set defaults
-  EDef->Name = sc->Name8;
+  EDef->Name = sc->Name;
   EDef->TeaserName = NAME_None;
   EDef->Text = VStr();
   EDef->PicName = NAME_None;
@@ -1676,8 +1937,8 @@ static void ParseEpisodeDef (VScriptParser *sc, int milumpnum) {
   EDef->MapinfoSourceLump = milumpnum;
 
   if (sc->Check("teaser")) {
-    sc->ExpectName8();
-    EDef->TeaserName = sc->Name8;
+    sc->ExpectName();
+    EDef->TeaserName = sc->Name;
   }
 
   bool newFormat = sc->Check("{");
@@ -1688,8 +1949,8 @@ static void ParseEpisodeDef (VScriptParser *sc, int milumpnum) {
       ParseNameOrLookup(sc, EPISODEF_LookupText, &EDef->Text, &EDef->Flags, newFormat);
     } else if (sc->Check("picname")) {
       if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
-      EDef->PicName = sc->Name8;
+      sc->ExpectName();
+      EDef->PicName = sc->Name;
     } else if (sc->Check("key")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
@@ -2353,6 +2614,29 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
   }
   delete sc;
   sc = nullptr;
+}
+
+
+//==========================================================================
+//
+//  ParseUMapinfo
+//
+//==========================================================================
+static void ParseUMapinfo (VScriptParser *sc, int milumpnum) {
+  // set up default map info
+  VMapInfo Default;
+  SetMapDefaults(Default);
+  bool HexenMode = false;
+
+  while (!sc->AtEnd()) {
+    if (sc->Check("map")) {
+      ParseMap(sc, HexenMode, Default, milumpnum, true);
+    } else {
+      sc->Error(va("Unknown UMAPINFO key '%s'", *sc->String));
+    }
+  }
+
+  delete sc;
 }
 
 
