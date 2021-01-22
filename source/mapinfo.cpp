@@ -1543,6 +1543,18 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
       continue;
     }
     if (sc->Check("bossaction")) {
+      // clear all special map action flags
+      info->Flags &= ~(
+        VLevelInfo::LIF_Map07Special|
+        VLevelInfo::LIF_BaronSpecial|
+        VLevelInfo::LIF_CyberDemonSpecial|
+        VLevelInfo::LIF_SpiderMastermindSpecial|
+        VLevelInfo::LIF_MinotaurSpecial|
+        VLevelInfo::LIF_DSparilSpecial|
+        VLevelInfo::LIF_IronLichSpecial|
+        VLevelInfo::LIF_SpecialActionOpenDoor|
+        VLevelInfo::LIF_SpecialActionLowerFloor|
+        VLevelInfo::LIF_SpecialActionKillMonsters);
       // can't we fuckin' have a complete specs for ANYTHING, for fuck's sake?!
       VStr className = ParseUStringKey(sc);
       if (className.strEquCI("clear")) {
