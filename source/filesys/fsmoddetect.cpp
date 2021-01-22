@@ -521,10 +521,58 @@ static int detectCzechbox (FSysModDetectorHelper &hlp, int seenZScriptLump) {
 
 //==========================================================================
 //
+//  detectMapinfoZScript
+//
+//  if we have UMAPINFO, or MAPINFO in old format,
+//  assume that zscript can be ignored
+//
+//==========================================================================
+static int detectMapinfoZScript (FSysModDetectorHelper &hlp, int seenZScriptLump) {
+  if (seenZScriptLump < 0) return AD_NONE;
+
+  if (hlp.hasLump("umapinfo")) {
+    GCon->Log(NAME_Init, "zscript allowed due to UMAPINFO presence");
+    return AD_ALLOW_ZSCRIPT;
+  }
+
+  //if (hlp.hasLump("zmapinfo")) return AD_NONE;
+
+  int lumpidx = hlp.findLump("mapinfo");
+  if (lumpidx < 0) return AD_NONE;
+
+  VStream *rd = hlp.createLumpReader(lumpidx);
+  if (!rd) return AD_NONE;
+
+  bool newFormat = false;
+  VScriptParser *par = new VScriptParser("mapinfo", rd);
+  while (par->GetString()) {
+    if (!newFormat && par->String == "{") {
+      newFormat = true;
+    } else if (par->String.strEquCI("CanIgnoreZScript")) {
+      bool allow = true;
+      if (par->Check("=")) allow = par->Check("true");
+      if (allow) {
+        GCon->Log(NAME_Init, "zscript allowed due to MAPINFO 'CanIgnoreZScript' option");
+        delete par;
+        return AD_ALLOW_ZSCRIPT;
+      }
+    }
+  }
+  delete par;
+  if (newFormat) return AD_NONE; // alas
+
+  GCon->Log(NAME_Init, "zscript allowed due to old MAPINFO format");
+  return AD_ALLOW_ZSCRIPT;
+}
+
+
+//==========================================================================
+//
 //  FL_RegisterModDetectors
 //
 //==========================================================================
 static void FL_RegisterModDetectors () {
+  fsysRegisterModDetector(&detectMapinfoZScript);
   fsysRegisterModDetector(&detectCzechbox);
   fsysRegisterModDetector(&detectFromList);
 }

@@ -305,7 +305,8 @@ extern int fsys_dev_dump_paks;
 
 // autodetected wad/pk3
 enum {
-  AD_NONE,
+  AD_NONE = 0,
+  AD_ALLOW_ZSCRIPT = -1,
 };
 
 class FSysModDetectorHelper {

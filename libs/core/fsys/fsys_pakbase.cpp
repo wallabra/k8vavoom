@@ -256,13 +256,15 @@ void fsysRegisterModDetector (fsysModDetectorCB cb) {
 //
 //==========================================================================
 static int callModDetectors (VFileDirectory *adir, VPakFileBase *apak, int seenZScriptLump) {
+  bool allowZShit = false;
   if (modDetectorList.length() == 0) return AD_NONE;
   FSysModDetectorHelper hlp(adir, apak);
   for (auto &&it : modDetectorList) {
     int res = it(hlp, seenZScriptLump);
+    if (res == AD_ALLOW_ZSCRIPT) { allowZShit = true; res = AD_NONE; }
     if (res != AD_NONE) return res;
   }
-  return AD_NONE;
+  return (allowZShit ? AD_ALLOW_ZSCRIPT : AD_NONE);
 }
 
 
