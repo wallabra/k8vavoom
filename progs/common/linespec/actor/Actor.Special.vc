@@ -34,30 +34,33 @@
 //
 //==========================================================================
 [decorate] final void A_BossDeath () {
-  name myCName = GetClassName(GetClassReplacee(Class));
-
   if (!CheckBossDeath()) return;
 
   // check generic actions first
-  foreach (auto i; 0..Level.SpecialActions.length) {
-    if (Class == FindClassNoCase(Level.SpecialActions[i].TypeName)) {
-      Level.ExecuteActionSpecial(Level.SpecialActions[i].Special,
-                                 Level.SpecialActions[i].Args[0],
-                                 Level.SpecialActions[i].Args[1],
-                                 Level.SpecialActions[i].Args[2],
-                                 Level.SpecialActions[i].Args[3],
-                                 Level.SpecialActions[i].Args[4], nullptr, 0, self);
+  foreach (ref VMapSpecialAction Action; Level.SpecialActions) {
+    if (!Action.Special) continue;
+    class!EntityEx cc = class!EntityEx(FindClassNoCase(Action.TypeName));
+    if (!cc) continue;
+    if (Class == cc || GetClassReplacee(Class) == cc) {
+      printdebug("triggering boss special %s for boss `%C` (arg1=%s)", Action.Special, Class, Action.Args[0]);
+      // trigger it only once
+      VMapSpecialAction act = Action;
+      Action.Special = 0;
+      Level.ExecuteActionSpecial(act.Special, act.Args[0], act.Args[1], act.Args[2], act.Args[3], act.Args[4], nullptr, 0, self);
     }
   }
 
-  if (!((myCName == 'BaronOfHell' && Level.bBaronSpecial) ||
-        (myCName == 'Cyberdemon' && Level.bCyberDemonSpecial) ||
-        (myCName == 'SpiderMastermind' && Level.bSpiderMastermindSpecial) ||
-        (myCName == 'Arachnotron' && Level.bMap07Special) ||
-        (myCName == 'Fatso' && Level.bMap07Special) ||
-        (myCName == 'Ironlich' && Level.bIronLichSpecial) ||
-        (myCName == 'Minotaur' && Level.bMinotaurSpecial) ||
-        (myCName == 'Sorcerer2' && Level.bDSparilSpecial)))
+  class!EntityEx rpc = class!EntityEx(GetClassReplacee(Class));
+  if (!rpc) rpc = class!EntityEx(Class);
+
+  if (!((Level.bBaronSpecial && (rpc isa 'BaronOfHell')) ||
+        (Level.bCyberDemonSpecial && (rpc isa 'Cyberdemon')) ||
+        (Level.bSpiderMastermindSpecial && (rpc isa 'SpiderMastermind')) ||
+        (Level.bMap07Special && (rpc isa 'Arachnotron')) ||
+        (Level.bMap07Special && (rpc isa 'Fatso')) ||
+        (Level.bIronLichSpecial && (rpc isa 'Ironlich')) ||
+        (Level.bMinotaurSpecial && (rpc isa 'Minotaur')) ||
+        (Level.bDSparilSpecial && (rpc isa 'Sorcerer2'))))
   {
     return;
   }
@@ -69,11 +72,11 @@
   }
 
   if (Level.bMap07Special) {
-    if (myCName == 'Fatso') {
+    if ((rpc isa 'Fatso')) {
       Level.ExecuteActionSpecial(LNSPEC_FloorLowerToLowest, 666, 8, 0, 0, 0, nullptr, 0, none);
       return;
     }
-    if (myCName == 'Arachnotron') {
+    if ((rpc isa 'Arachnotron')) {
       Level.ExecuteActionSpecial(LNSPEC_FloorRaiseByTexture, 667, 8, 0, 0, 0, nullptr, 0, none);
       return;
     }

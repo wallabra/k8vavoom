@@ -25,8 +25,8 @@
 //**************************************************************************
 
 struct VMapSpecialAction {
-  VName TypeName;
-  vint32 Special;
+  VName TypeName; // class name
+  vint32 Special; // negative means "need to translate it"
   vint32 Args[5];
 };
 

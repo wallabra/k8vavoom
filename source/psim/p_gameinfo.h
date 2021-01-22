@@ -142,6 +142,7 @@ public:
   void eventInitNewGame (int skill) { static VMethodProxy method("InitNewGame"); vobjPutParamSelf(skill); VMT_RET_VOID(method); }
   VWorldInfo *eventCreateWorldInfo () { static VMethodProxy method("CreateWorldInfo"); vobjPutParamSelf(); VMT_RET_REF(VWorldInfo, method); }
   void eventTranslateLevel (VLevel *InLevel) { static VMethodProxy method("TranslateLevel"); vobjPutParamSelf(InLevel); VMT_RET_VOID(method); }
+  void eventTranslateSpecialActions (VLevelInfo *Level) { static VMethodProxy method("TranslateSpecialActions"); vobjPutParamSelf(Level); VMT_RET_VOID(method); }
   void eventSpawnWorld (VLevel *InLevel) { static VMethodProxy method("SpawnWorld"); vobjPutParamSelf(InLevel); VMT_RET_VOID(method); }
   VName eventGetConScriptName (VName LevelName) { static VMethodProxy method("GetConScriptName"); vobjPutParamSelf(LevelName); VMT_RET_NAME(method); }
   void eventCmdWeaponSection (VStr Section) { static VMethodProxy method("CmdWeaponSection"); vobjPutParamSelf(Section); VMT_RET_VOID(method); }

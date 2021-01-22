@@ -114,6 +114,8 @@ void VLevelInfo::SetMapInfo (const VMapInfo &Info) {
     for (int i = 0; i < XLevel->NumSectors; ++i) XLevel->Sectors[i].seqType = 0;
   }
 
+  GGameInfo->eventTranslateSpecialActions(this);
+
   eventAfterSetMapInfo();
 }
 

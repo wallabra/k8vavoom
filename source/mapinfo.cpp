@@ -1543,13 +1543,30 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
       continue;
     }
     if (sc->Check("bossaction")) {
-      //sc->Error("UMAPINFO 'bossaction' is not supported yet");
-      miWarning(loc, "UMAPINFO 'bossaction' is not supported yet");
-      (void)ParseUStringKey(sc);
-      sc->Expect(",");
-      sc->ExpectNumber();
-      sc->Expect(",");
-      sc->ExpectNumber();
+      // can't we fuckin' have a complete specs for ANYTHING, for fuck's sake?!
+      VStr className = ParseUStringKey(sc);
+      if (className.strEquCI("clear")) {
+        info->SpecialActions.clear();
+      } else {
+        //bossaction = thingtype, linespecial, tag
+        sc->Expect(",");
+        sc->ExpectNumber();
+        int special = sc->Number;
+        //if (special < 0) sc->Error(va("invalid bossaction special %d", special));
+        sc->Expect(",");
+        sc->ExpectNumber();
+        int tag = sc->Number;
+        // allow no 0-tag specials here, unless a level exit.
+        if (className.length() && special > 0 && (tag != 0 || special == 11 || special == 51 || special == 52 || special == 124)) {
+          VMapSpecialAction &A = info->SpecialActions.Alloc();
+          A.TypeName = VName(*className);
+          A.Special = -special; // it should be translated
+          A.Args[0] = tag;
+          A.Args[1] = A.Args[2] = A.Args[3] = A.Args[4] = 0;
+        } else {
+          miWarning(sc, "Invalid bossaction special %d (tag %d)", special, tag);
+        }
+      }
       continue;
     }
 

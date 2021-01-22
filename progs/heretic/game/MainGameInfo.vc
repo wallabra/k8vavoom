@@ -522,6 +522,20 @@ override void TranslateLevel(Level InLevel)
   }
 }
 
+
+//==========================================================================
+//
+//  TranslateSpecialActions
+//
+//==========================================================================
+override void TranslateSpecialActions (LevelInfo Level) {
+  foreach (ref VMapSpecialAction sac; Level.SpecialActions) {
+    if (sac.Special >= 0) continue; // no translation needed
+    printerror("UMAPINFO BOSS ACTIONS AREN'T SUPPORTED FOR THIS GAME!");
+  }
+}
+
+
 defaultproperties
 {
   LevelInfoClass = HereticLevelInfo;

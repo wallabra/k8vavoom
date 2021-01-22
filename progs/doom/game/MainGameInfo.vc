@@ -1024,6 +1024,36 @@ override void TranslateLevel (Level InLevel) {
 }
 
 
+//==========================================================================
+//
+//  TranslateSpecialActions
+//
+//==========================================================================
+override void TranslateSpecialActions (LevelInfo Level) {
+  foreach (ref VMapSpecialAction sac; Level.SpecialActions) {
+    int special = sac.Special;
+    if (special >= 0) continue; // no translation needed
+    auto trsp = spec_trans_tab.find(-special);
+    if (!trsp) {
+      // oops
+      sac.Special = 0;
+      printwarn("TRANSLATION: boss special %d -- NOT FOUND!", -special);
+      continue;
+    }
+    sac.Special = trsp.special;
+    // args
+    int tag = sac.Args[0];
+    sac.Args[0] = 0;
+    sac.Args[0] = (trsp.arg1 == -1 ? tag : (trsp.arg1 == -666 ? sac.Args[0] : trsp.arg1));
+    sac.Args[1] = (trsp.arg2 == -1 ? tag : (trsp.arg2 == -666 ? sac.Args[1] : trsp.arg2));
+    sac.Args[2] = (trsp.arg3 == -1 ? tag : (trsp.arg3 == -666 ? sac.Args[2] : trsp.arg3));
+    sac.Args[3] = (trsp.arg4 == -1 ? tag : (trsp.arg4 == -666 ? sac.Args[3] : trsp.arg4));
+    sac.Args[4] = (trsp.arg5 == -1 ? tag : (trsp.arg5 == -666 ? sac.Args[4] : trsp.arg5));
+    printdebug("BOSSSPECIAL %s for '%s' translated to %s (tag %s)", -special, sac.TypeName, sac.Special, tag);
+  }
+}
+
+
 defaultproperties {
   LevelInfoClass = DoomLevelInfo;
   /*
