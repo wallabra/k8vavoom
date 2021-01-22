@@ -557,7 +557,7 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   if (!allowBetterSight || radius < 4.0f || height < 4.0f || myheight < 4.0f) {
     trace.Start = lookOrigin;
     trace.End = dest;
-    trace.End.z += height*0.75f; // roughly at the head
+    trace.End.z += height*0.85f; // roughly at the head
     const bool collectIntercepts = (trace.Delta.length2DSquared() <= 820.0f*820.0f); // arbitrary number
     if (SightPathTraverse(trace)) return true;
     if (trace.Hit1S || !collectIntercepts) return false; // hit one-sided wall, or too far, no need to do other checks
@@ -566,8 +566,8 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
     trace.End.z += height*0.5f;
     return SightPathTraverse2(trace);
   } else {
-    const float sidemult[3] = { 0.0f, -0.75f, 0.75f }; // side shift multiplier (by radius)
-    const float ithmult[2] = { 0.35f, 0.75f }; // destination height multiplier (0.5f is checked first)
+    const float sidemult[3] = { 0.0f, -0.8f, 0.8f }; // side shift multiplier (by radius)
+    const float ithmult[2] = { 0.25f, 0.85f }; // destination height multiplier (0.5f is checked first)
     // check side looks
     for (unsigned myx = 0; myx < 3; ++myx) {
       // now look from eyes of t1 to some parts of t2
