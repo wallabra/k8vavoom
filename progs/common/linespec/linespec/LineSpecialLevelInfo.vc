@@ -1362,11 +1362,9 @@ final int EV_TextureChangeDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5
 //
 //==========================================================================
 final int EV_DoCeiling (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type, line_t *Line) {
-  int Rtn;
   sector_t *Sec;
   CeilingMover Ceiling;
-
-  Rtn = false;
+  int Rtn = false;
 
   if (!Arg1) {
     if (!Line || !Line->backsector) return false;
@@ -1397,14 +1395,19 @@ final int EV_DoCeiling (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Ty
     }
 
     for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx)) {
-      if (Sec->CeilingData || !Sec->lines.length) continue;
-      //printdebug("sec=%s; tag=%s; type=%s", Sec-&XLevel.Sectors[0], Arg1, Type);
+      if (Sec->CeilingData || !Sec->lines.length) {
+        //printdebug("sector #%s (tag %s) (ceiling): already moving or no lines (%s)", Sec-&XLevel.Sectors[0], Arg1, Sec->lines.length);
+        continue;
+      }
+
+      //printdebug("sector #%s (tag %s): got ceiling thinker", Sec-&XLevel.Sectors[0], Arg1);
       // new ceiling thinker
       Rtn = true;
       Ceiling = SpawnThinker(CeilingMover);
       Ceiling.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type, Line);
     }
   }
+
   return Rtn;
 }
 
@@ -1458,45 +1461,40 @@ final bool EV_StartCeilingWaggle (int Arg1, int Arg2, int Arg3, int Arg4, int Ar
 //  HANDLE FLOOR TYPES
 //
 //==========================================================================
-
-final int EV_DoFloor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  int Type, line_t *Line)
-{
-  int     Rtn;
+final int EV_DoFloor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type, line_t *Line) {
   sector_t *Sec;
-  FloorMover  Floor;
+  FloorMover Floor;
+  int Rtn = false;
 
-  Rtn = false;
-  if (!Arg1)
-  {
+  if (!Arg1) {
     if (!Line || !Line->backsector) return false;
 
-    if (!Line->backsector->FloorData)
-    {
+    if (!Line->backsector->FloorData) {
       // new floor thinker
       if (!Line->backsector->lines.length) return false;
       Rtn = true;
       Floor = SpawnThinker(FloorMover);
-      Floor.Init(Line->backsector, Arg1, Arg2, Arg3, Arg4, Arg5, Type,
-        Line);
+      Floor.Init(Line->backsector, Arg1, Arg2, Arg3, Arg4, Arg5, Type, Line);
     }
-  }
-  else
-  {
-    for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
-         hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
-    {
+  } else {
+    for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx)) {
       // ALREADY MOVING?  IF SO, KEEP GOING...
-      if (Sec->FloorData || !Sec->lines.length) continue;
+      if (Sec->FloorData || !Sec->lines.length) {
+        //printdebug("sector #%s (tag %s) (floor): already moving or no lines (%s)", Sec-&XLevel.Sectors[0], Arg1, Sec->lines.length);
+        continue;
+      }
 
+      //printdebug("sector #%s (tag %s): got floor thinker", Sec-&XLevel.Sectors[0], Arg1);
       // new floor thinker
       Rtn = true;
       Floor = SpawnThinker(FloorMover);
       Floor.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type, Line);
     }
   }
+
   return Rtn;
 }
+
 
 //==========================================================================
 //

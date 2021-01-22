@@ -1566,14 +1566,13 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
     // if any special lines were hit, do the effect
     if (EntityFlags&EF_ColideWithWorld) {
       while (tmtrace.SpecHit.Num() > 0) {
-        int side;
-        int oldside;
-
         // see if the line was crossed
         ld = tmtrace.SpecHit[tmtrace.SpecHit.Num()-1];
         tmtrace.SpecHit.SetNum(tmtrace.SpecHit.Num()-1, false);
-        side = ld->PointOnSide(Origin);
-        oldside = ld->PointOnSide(oldorg);
+        // some moron once placed the entity *EXACTLY* on the fuckin' linedef! what a brilliant idea!
+        // this will *NEVER* be fixed, it is a genuine map bug (it's impossible to fix it with our freestep engine anyway)
+        const int oldside = ld->PointOnSide(oldorg);
+        const int side = ld->PointOnSide(Origin);
         if (side != oldside) {
           if (ld->special) eventCrossSpecialLine(ld, oldside);
         }
