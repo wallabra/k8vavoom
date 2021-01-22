@@ -1448,6 +1448,7 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
   // if we have "lightning", but no "sky2", make "sky2" equal to "sky1" (otherwise the sky may flicker)
   wasSky1Sky2 = 0u; // clear "was skyN" flag
   bool wasEndGame = false;
+  bool wasClearBossAction = false;
   VStr endType;
   VStr episodeName;
 
@@ -1546,6 +1547,7 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
       VStr className = ParseUStringKey(sc);
       if (className.strEquCI("clear")) {
         info->SpecialActions.clear();
+        wasClearBossAction = true;
       } else {
         //bossaction = thingtype, linespecial, tag
         sc->Expect(",");
@@ -1555,13 +1557,20 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
         sc->Expect(",");
         sc->ExpectNumber();
         int tag = sc->Number;
-        // allow no 0-tag specials here, unless a level exit.
+        // allow no 0-tag specials here, unless a level exit
         if (className.length() && special > 0 && (tag != 0 || special == 11 || special == 51 || special == 52 || special == 124)) {
+          // add special action
+          if (info->SpecialActions.length() == 0) {
+            VMapSpecialAction &aa = info->SpecialActions.Alloc();
+            aa.TypeName = VName("UMapInfoActions");
+            aa.Special = 666999; // this means nothing
+          }
           VMapSpecialAction &A = info->SpecialActions.Alloc();
           A.TypeName = VName(*className);
           A.Special = -special; // it should be translated
           A.Args[0] = tag;
           A.Args[1] = A.Args[2] = A.Args[3] = A.Args[4] = 0;
+          wasClearBossAction = false;
         } else {
           miWarning(sc, "Invalid bossaction special %d (tag %d)", special, tag);
         }
@@ -1647,6 +1656,14 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
     info->NextMap = VName(*endType);
   }
 
+  if (wasClearBossAction) {
+    vassert(info->SpecialActions.length() == 0);
+    // special action
+    VMapSpecialAction &A = info->SpecialActions.Alloc();
+    A.TypeName = VName("UMapInfoDoNothing");
+    A.Special = 666999; // this means nothing
+  }
+
   FixSkyTexturesHack(sc, info);
 
   // second sky defaults to first sky
@@ -1662,6 +1679,8 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
 //==========================================================================
 static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int milumpnum, bool umapinfo=false) {
   VMapInfo *info = nullptr;
+  vuint32 savedFlags = 0;
+
   VName MapLumpName;
   if (!umapinfo && sc->CheckNumber()) {
     // map number, for Hexen compatibility
@@ -1682,6 +1701,7 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int
     if (MapLumpName == MapInfo[i].LumpName) {
       info = &MapInfo[i];
       //GCon->Logf("replaced map '%s' (Sky1Texture=%d; default=%d)", *info->LumpName, info->Sky1Texture, Default.Sky1Texture);
+      savedFlags = info->Flags;
       replacement = true;
       break;
     }
@@ -1777,6 +1797,18 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int
   if (!umapinfo) {
     ParseMapCommon(sc, info, HexenMode);
   } else {
+    // copy special actions, they should be explicitly cleared
+    info->Flags = savedFlags&(
+      VLevelInfo::LIF_Map07Special|
+      VLevelInfo::LIF_BaronSpecial|
+      VLevelInfo::LIF_CyberDemonSpecial|
+      VLevelInfo::LIF_SpiderMastermindSpecial|
+      VLevelInfo::LIF_MinotaurSpecial|
+      VLevelInfo::LIF_DSparilSpecial|
+      VLevelInfo::LIF_IronLichSpecial|
+      VLevelInfo::LIF_SpecialActionOpenDoor|
+      VLevelInfo::LIF_SpecialActionLowerFloor|
+      VLevelInfo::LIF_SpecialActionKillMonsters);
     ParseMapUMapinfo(sc, info);
   }
 

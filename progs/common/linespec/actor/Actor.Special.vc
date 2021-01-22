@@ -26,6 +26,7 @@
 //  Special actions
 //**************************************************************************
 
+
 //==========================================================================
 //
 //  A_BossDeath
@@ -34,21 +35,30 @@
 //
 //==========================================================================
 [decorate] final void A_BossDeath () {
-  if (!CheckBossDeath()) return;
+  bool bossDeathChecked = false;
+  bool umapinfo = false;
 
   // check generic actions first
   foreach (ref VMapSpecialAction Action; Level.SpecialActions) {
     if (!Action.Special) continue;
+    if (Action.TypeName == 'UMapInfoDoNothing') return; // no boss actions
+    if (Action.TypeName == 'UMapInfoActions') { umapinfo = true; continue; }
     class!EntityEx cc = class!EntityEx(FindClassNoCase(Action.TypeName));
     if (!cc) continue;
     if (Class == cc || GetClassReplacee(Class) == cc) {
-      printdebug("triggering boss special %s for boss `%C` (arg1=%s)", Action.Special, Class, Action.Args[0]);
+      if (!bossDeathChecked) {
+        if (!CheckBossDeath()) return;
+        bossDeathChecked = true;
+      }
       // trigger it only once
       VMapSpecialAction act = Action;
       Action.Special = 0;
       Level.ExecuteActionSpecial(act.Special, act.Args[0], act.Args[1], act.Args[2], act.Args[3], act.Args[4], nullptr, 0, self);
     }
   }
+
+  // assume that UMAPINFO is in full control
+  if (umapinfo) return;
 
   class!EntityEx rpc = class!EntityEx(GetClassReplacee(Class));
   if (!rpc) rpc = class!EntityEx(Class);
@@ -65,28 +75,38 @@
     return;
   }
 
+  if (!bossDeathChecked) {
+    if (!CheckBossDeath()) return;
+  }
+
   // victory!
   if (Level.bSpecialActionKillMonsters) {
     // kill any remaining monsters
+    //Level.bSpecialActionKillMonsters = false;
     LineSpecialLevelInfo(Level).P_Massacre();
   }
 
   if (Level.bMap07Special) {
     if ((rpc isa 'Fatso')) {
+      //Level.bMap07Special = false;
       Level.ExecuteActionSpecial(LNSPEC_FloorLowerToLowest, 666, 8, 0, 0, 0, nullptr, 0, none);
       return;
     }
     if ((rpc isa 'Arachnotron')) {
+      //Level.bMap07Special = false;
       Level.ExecuteActionSpecial(LNSPEC_FloorRaiseByTexture, 667, 8, 0, 0, 0, nullptr, 0, none);
       return;
     }
   } else if (Level.bSpecialActionOpenDoor) {
+    //Level.bSpecialActionOpenDoor = false;
     Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 666, 64, 150, 0, 0, nullptr, 0, none);
     return;
   } else if (Level.bSpecialActionLowerFloor) {
+    //Level.bSpecialActionLowerFloor = false;
     Level.ExecuteActionSpecial(LNSPEC_FloorLowerToLowest, 666, 8, 0, 0, 0, nullptr, 0, none);
     return;
   }
+
   Level.ExitLevel(0);
 }
 
