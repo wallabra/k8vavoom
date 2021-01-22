@@ -1571,8 +1571,9 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
         tmtrace.SpecHit.SetNum(tmtrace.SpecHit.Num()-1, false);
         // some moron once placed the entity *EXACTLY* on the fuckin' linedef! what a brilliant idea!
         // this will *NEVER* be fixed, it is a genuine map bug (it's impossible to fix it with our freestep engine anyway)
-        const int oldside = ld->PointOnSide(oldorg);
-        const int side = ld->PointOnSide(Origin);
+        // let's try use "front inclusive" here; it won't solve all cases, but *may* solve the one above
+        const int oldside = ld->PointOnSideFri(oldorg);
+        const int side = ld->PointOnSideFri(Origin);
         if (side != oldside) {
           if (ld->special) eventCrossSpecialLine(ld, oldside);
         }
