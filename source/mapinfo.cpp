@@ -1482,7 +1482,6 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
       VStr ss = ParseUStringKey(sc);
       if (ss.length()) {
         wasSky1Sky2 |= WSK_WAS_SKY1;
-        info->SecretMap = VName(*ss, VName::AddLower);
         VName skbname = R_HasNamedSkybox(sc->String);
         if (skbname != NAME_None) {
           //k8: ok, this may be done to support sourceports that cannot into skyboxes
