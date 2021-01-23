@@ -521,10 +521,13 @@ static void LoadMapInfoLump (int Lump, bool doFixups=true) {
 //  loves duplicate lumps
 //
 //==========================================================================
-static void LoadAllMapInfoLumpsInFile (int miLump, int zmiLump) {
+static void LoadAllMapInfoLumpsInFile (int miLump, int zmiLump, int vmiLump) {
   if (miLump < 0 && zmiLump < 0) return;
   VName milname;
-  if (zmiLump >= 0) {
+  if (vmiLump >= 0) {
+    milname = VName("vmapinfo", VName::Add);
+    zmiLump = vmiLump;
+  } else if (zmiLump >= 0) {
     milname = VName("zmapinfo", VName::Add);
   } else {
     vassert(miLump >= 0);
@@ -570,13 +573,17 @@ void InitMapInfo () {
   // use "zmapinfo" if it is present?
   bool zmapinfoAllowed = (cli_NoZMapinfo >= 0);
   if (!zmapinfoAllowed) GCon->Logf(NAME_Init, "zmapinfo parsing disabled by user");
+
   int lastMapinfoFile = -1; // haven't seen yet
   int lastMapinfoLump = -1; // haven't seen yet
+  int lastVMapinfoLump = -1; // haven't seen yet
   int lastZMapinfoLump = -1; // haven't seen yet
   int lastUmapinfoLump = -1; // haven't seen yet
   bool doSkipFile = false;
+  VName nameVMI = VName("vmapinfo", VName::Add);
   VName nameZMI = VName("zmapinfo", VName::Add);
   VName nameUMI = VName("umapinfo", VName::Add);
+
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     int currFile = W_LumpFile(Lump);
     if (doSkipFile) {
@@ -585,13 +592,13 @@ void InitMapInfo () {
     }
     // if we hit another file, load last seen [z]mapinfo lump
     if (currFile != lastMapinfoFile) {
-      LoadAllMapInfoLumpsInFile(lastMapinfoLump, lastZMapinfoLump);
-      if (lastMapinfoLump < 0 && lastZMapinfoLump < 0 && lastUmapinfoLump >= 0) {
+      LoadAllMapInfoLumpsInFile(lastMapinfoLump, lastZMapinfoLump, lastVMapinfoLump);
+      if (lastMapinfoLump < 0 && lastZMapinfoLump < 0 && lastVMapinfoLump < 0 && lastUmapinfoLump >= 0) {
         LoadUmapinfoLump(lastUmapinfoLump);
       }
       // reset/update remembered lump indicies
       lastMapinfoFile = currFile;
-      lastMapinfoLump = lastZMapinfoLump = lastUmapinfoLump = -1; // haven't seen yet
+      lastMapinfoLump = lastVMapinfoLump = lastZMapinfoLump = lastUmapinfoLump = -1; // haven't seen yet
       // skip zip files
       doSkipFile = !W_IsWadPK3File(currFile);
       if (doSkipFile) continue;
@@ -599,11 +606,13 @@ void InitMapInfo () {
     // remember last seen [z]mapinfo lump
     if (lastMapinfoLump < 0 && W_LumpName(Lump) == NAME_mapinfo) lastMapinfoLump = Lump;
     if (zmapinfoAllowed && lastZMapinfoLump < 0 && W_LumpName(Lump) == nameZMI) lastZMapinfoLump = Lump;
-    if (W_LumpName(Lump) == nameUMI && lastUmapinfoLump < Lump) lastUmapinfoLump = Lump;
+    if (lastVMapinfoLump < 0 && W_LumpName(Lump) == nameVMI) lastVMapinfoLump = Lump;
+    if (lastUmapinfoLump < 0 && W_LumpName(Lump) == nameUMI) lastUmapinfoLump = Lump;
   }
+
   // load last seen mapinfos
-  LoadAllMapInfoLumpsInFile(lastMapinfoLump, lastZMapinfoLump);
-  if (lastMapinfoLump < 0 && lastZMapinfoLump < 0 && lastUmapinfoLump >= 0) {
+  LoadAllMapInfoLumpsInFile(lastMapinfoLump, lastZMapinfoLump, lastVMapinfoLump);
+  if (lastMapinfoLump < 0 && lastZMapinfoLump < 0 && lastVMapinfoLump < 0 && lastUmapinfoLump >= 0) {
     LoadUmapinfoLump(lastUmapinfoLump);
   }
 
