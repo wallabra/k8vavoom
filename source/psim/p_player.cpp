@@ -658,7 +658,7 @@ void VBasePlayer::DoClientIntermission (VName NextMap) {
   im.LeaveMap = Level->XLevel->MapName;
   im.LeaveCluster = linfo.Cluster;
   im.LeaveName = linfo.GetName();
-  im.LeaveTitlePatch = linfo.TitlePatch;
+  im.LeaveTitlePatch = linfo.ExitTitlePatch;
   im.ExitPic = linfo.ExitPic;
   im.InterMusic = linfo.InterMusic;
 
@@ -666,14 +666,22 @@ void VBasePlayer::DoClientIntermission (VName NextMap) {
   im.EnterMap = NextMap;
   im.EnterCluster = einfo.Cluster;
   im.EnterName = einfo.GetName();
-  im.EnterTitlePatch = einfo.TitlePatch;
+  im.EnterTitlePatch = einfo.EnterTitlePatch;
   im.EnterPic = einfo.EnterPic;
 
-  /*
-  GCon->Logf("******************** DoClientIntermission ********************");
+  bool didSecret = false;
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    if (GGameInfo->Players[i] && (GGameInfo->Players[i]->PlayerFlags&PF_ExitedViaSecret)) {
+      didSecret = true;
+      break;
+    }
+  }
+
+  #if 0
+  GCon->Logf(NAME_Debug, "******************** DoClientIntermission (didSecret=%d) ********************", (int)didSecret);
   linfo.dump("leaving");
   einfo.dump("entering");
-  */
+  #endif
 
 #ifdef CLIENT
   AM_Stop();
@@ -685,6 +693,22 @@ void VBasePlayer::DoClientIntermission (VName NextMap) {
     if (linfo.Cluster) SetupClusterText(ClusterText_Exit, im.LeaveText, P_GetClusterDef(linfo.Cluster));
     // cluster entering text
     if (einfo.Cluster) SetupClusterText(ClusterText_Enter, im.EnterText, P_GetClusterDef(einfo.Cluster));
+  }
+
+  VStr mapExitText = (didSecret ? linfo.SecretExitText : linfo.ExitText);
+  if (!mapExitText.isEmpty()) {
+    // this is usually comes from umapinfo, ignore cluster transitions
+    im.EnterText.clear();
+    im.LeaveText.clear();
+    // single space is special value, means "no text"
+    if (mapExitText != " ") {
+      im.LeaveText.Text = mapExitText;
+      im.LeaveText.TextMusic = im.InterMusic;
+      const VClusterDef *cd = P_GetClusterDef(linfo.Cluster);
+      if (!cd || cd->Flat == NAME_None) cd = P_GetClusterDef(einfo.Cluster);
+      im.LeaveText.TextFlat = (cd ? cd->Flat : NAME_None);
+      im.LeaveText.TextPic = NAME_None;
+    }
   }
 
        if (im.LeaveText.isActive()) ClGame->StartIntermissionLeave();

@@ -220,42 +220,45 @@ VStr VMapInfo::GetName () const {
 //
 //==========================================================================
 void VMapInfo::dump (const char *msg) const {
-  if (msg && msg[0]) GCon->Logf("==== mapinfo: %s ===", msg); else GCon->Log("==== mapinfo ===");
-  GCon->Logf("  LumpName: \"%s\"", *VStr(LumpName).quote());
-  GCon->Logf("  Name: \"%s\"", *Name.quote());
-  GCon->Logf("  LevelNum: %d", LevelNum);
-  GCon->Logf("  Cluster: %d", Cluster);
-  GCon->Logf("  WarpTrans: %d", WarpTrans);
-  GCon->Logf("  NextMap: \"%s\"", *VStr(NextMap).quote());
-  GCon->Logf("  SecretMap: \"%s\"", *VStr(SecretMap).quote());
-  GCon->Logf("  SongLump: \"%s\"", *VStr(SongLump).quote());
-  GCon->Logf("  Sky1Texture: %d", Sky1Texture);
-  GCon->Logf("  Sky2Texture: %d", Sky2Texture);
-  GCon->Logf("  Sky1ScrollDelta: %g", Sky1ScrollDelta);
-  GCon->Logf("  Sky2ScrollDelta: %g", Sky2ScrollDelta);
-  GCon->Logf("  SkyBox: \"%s\"", *VStr(SkyBox).quote());
-  GCon->Logf("  FadeTable: \"%s\"", *VStr(FadeTable).quote());
-  GCon->Logf("  Fade: 0x%08x", Fade);
-  GCon->Logf("  OutsideFog: 0x%08x", OutsideFog);
-  GCon->Logf("  Gravity: %g", Gravity);
-  GCon->Logf("  AirControl: %g", AirControl);
-  GCon->Logf("  Flags: 0x%08x", Flags);
-  GCon->Logf("  Flags2: 0x%08x", Flags2);
-  GCon->Logf("  TitlePatch: \"%s\"", *VStr(TitlePatch).quote());
-  GCon->Logf("  ParTime: %d", ParTime);
-  GCon->Logf("  SuckTime: %d", SuckTime);
-  GCon->Logf("  HorizWallShade: %d", HorizWallShade);
-  GCon->Logf("  VertWallShade: %d", VertWallShade);
-  GCon->Logf("  Infighting: %d", Infighting);
-  GCon->Logf("  RedirectType: \"%s\"", *VStr(RedirectType).quote());
-  GCon->Logf("  RedirectMap: \"%s\"", *VStr(RedirectMap).quote());
-  GCon->Logf("  ExitPic: \"%s\"", *VStr(ExitPic).quote());
-  GCon->Logf("  EnterPic: \"%s\"", *VStr(EnterPic).quote());
-  GCon->Logf("  InterMusic: \"%s\"", *VStr(InterMusic).quote());
+  if (msg && msg[0]) GCon->Logf(NAME_Debug, "==== mapinfo: %s ===", msg); else GCon->Log(NAME_Debug, "==== mapinfo ===");
+  GCon->Logf(NAME_Debug, "  LumpName: \"%s\"", *VStr(LumpName).quote());
+  GCon->Logf(NAME_Debug, "  Name: \"%s\"", *Name.quote());
+  GCon->Logf(NAME_Debug, "  LevelNum: %d", LevelNum);
+  GCon->Logf(NAME_Debug, "  Cluster: %d", Cluster);
+  GCon->Logf(NAME_Debug, "  WarpTrans: %d", WarpTrans);
+  GCon->Logf(NAME_Debug, "  NextMap: \"%s\"", *VStr(NextMap).quote());
+  GCon->Logf(NAME_Debug, "  SecretMap: \"%s\"", *VStr(SecretMap).quote());
+  GCon->Logf(NAME_Debug, "  SongLump: \"%s\"", *VStr(SongLump).quote());
+  GCon->Logf(NAME_Debug, "  Sky1Texture: %d", Sky1Texture);
+  GCon->Logf(NAME_Debug, "  Sky2Texture: %d", Sky2Texture);
+  GCon->Logf(NAME_Debug, "  Sky1ScrollDelta: %g", Sky1ScrollDelta);
+  GCon->Logf(NAME_Debug, "  Sky2ScrollDelta: %g", Sky2ScrollDelta);
+  GCon->Logf(NAME_Debug, "  SkyBox: \"%s\"", *VStr(SkyBox).quote());
+  GCon->Logf(NAME_Debug, "  FadeTable: \"%s\"", *VStr(FadeTable).quote());
+  GCon->Logf(NAME_Debug, "  Fade: 0x%08x", Fade);
+  GCon->Logf(NAME_Debug, "  OutsideFog: 0x%08x", OutsideFog);
+  GCon->Logf(NAME_Debug, "  Gravity: %g", Gravity);
+  GCon->Logf(NAME_Debug, "  AirControl: %g", AirControl);
+  GCon->Logf(NAME_Debug, "  Flags: 0x%08x", Flags);
+  GCon->Logf(NAME_Debug, "  Flags2: 0x%08x", Flags2);
+  GCon->Logf(NAME_Debug, "  EnterTitlePatch: \"%s\"", *VStr(EnterTitlePatch).quote());
+  GCon->Logf(NAME_Debug, "  ExitTitlePatch: \"%s\"", *VStr(ExitTitlePatch).quote());
+  GCon->Logf(NAME_Debug, "  ParTime: %d", ParTime);
+  GCon->Logf(NAME_Debug, "  SuckTime: %d", SuckTime);
+  GCon->Logf(NAME_Debug, "  HorizWallShade: %d", HorizWallShade);
+  GCon->Logf(NAME_Debug, "  VertWallShade: %d", VertWallShade);
+  GCon->Logf(NAME_Debug, "  Infighting: %d", Infighting);
+  GCon->Logf(NAME_Debug, "  RedirectType: \"%s\"", *VStr(RedirectType).quote());
+  GCon->Logf(NAME_Debug, "  RedirectMap: \"%s\"", *VStr(RedirectMap).quote());
+  GCon->Logf(NAME_Debug, "  ExitPic: \"%s\"", *VStr(ExitPic).quote());
+  GCon->Logf(NAME_Debug, "  EnterPic: \"%s\"", *VStr(EnterPic).quote());
+  GCon->Logf(NAME_Debug, "  InterMusic: \"%s\"", *VStr(InterMusic).quote());
+  GCon->Logf(NAME_Debug, "  ExitText: \"%s\"", *VStr(ExitText).quote());
+  GCon->Logf(NAME_Debug, "  SecretExitText: \"%s\"", *VStr(SecretExitText).quote());
   for (auto &&sac : SpecialActions) {
-    GCon->Log("  --- special action ---");
-    GCon->Logf("    TypeName: \"%s\"", *VStr(sac.TypeName).quote());
-    GCon->Logf("    Special: %d (%d,%d,%d,%d,%d)", sac.Special, sac.Args[0], sac.Args[1], sac.Args[2], sac.Args[3], sac.Args[4]);
+    GCon->Log(NAME_Debug, "  --- special action ---");
+    GCon->Logf(NAME_Debug, "    TypeName: \"%s\"", *VStr(sac.TypeName).quote());
+    GCon->Logf(NAME_Debug, "    Special: %d (%d,%d,%d,%d,%d)", sac.Special, sac.Args[0], sac.Args[1], sac.Args[2], sac.Args[3], sac.Args[4]);
   }
 }
 
@@ -670,7 +673,8 @@ static void SetMapDefaults (VMapInfo &Info) {
   Info.AirControl = 0;
   Info.Flags = 0;
   Info.Flags2 = (gm_default_pain_limit ? VLevelInfo::LIF2_CompatLimitPain : 0);
-  Info.TitlePatch = NAME_None;
+  Info.EnterTitlePatch = NAME_None;
+  Info.ExitTitlePatch = NAME_None;
   Info.ParTime = 0;
   Info.SuckTime = 0;
   Info.HorizWallShade = -8;
@@ -682,6 +686,8 @@ static void SetMapDefaults (VMapInfo &Info) {
   Info.ExitPic = NAME_None;
   Info.EnterPic = NAME_None;
   Info.InterMusic = NAME_None;
+  Info.ExitText = VStr::EmptyString;
+  Info.SecretExitText = VStr::EmptyString;
 
   if (GGameInfo->Flags&VGameInfo::GIF_DefaultLaxMonsterActivation) {
     Info.Flags2 |= VLevelInfo::LIF2_LaxMonsterActivation;
@@ -1073,7 +1079,7 @@ MAPINFOCMD(titlepatch) {
   //FIXME: quoted string is a textual level name
   if (newFormat) sc->Expect("=");
   sc->ExpectName8Def(NAME_None);
-  info->TitlePatch = sc->Name8;
+  info->EnterTitlePatch = info->ExitTitlePatch = sc->Name8;
 }
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1466,7 +1472,17 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
     }
     if (sc->Check("levelpic")) {
       VStr ss = ParseUStringKey(sc);
-      if (ss.length()) info->ExitPic = info->EnterPic = VName(*ss, VName::AddLower);
+      info->EnterTitlePatch = info->ExitTitlePatch = VName(*ss, VName::AddLower);
+      continue;
+    }
+    if (sc->Check("exitpic")) {
+      VStr ss = ParseUStringKey(sc);
+      info->ExitPic = VName(*ss, VName::AddLower);
+      continue;
+    }
+    if (sc->Check("enterpic")) {
+      VStr ss = ParseUStringKey(sc);
+      info->EnterPic = VName(*ss, VName::AddLower);
       continue;
     }
     if (sc->Check("next")) {
@@ -1503,16 +1519,6 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
     if (sc->Check("music")) {
       VStr ss = ParseUStringKey(sc);
       if (ss.length()) info->SongLump = VName(*ss, VName::AddLower);
-      continue;
-    }
-    if (sc->Check("exitpic")) {
-      VStr ss = ParseUStringKey(sc);
-      if (ss.length()) info->ExitPic = VName(*ss, VName::AddLower);
-      continue;
-    }
-    if (sc->Check("enterpic")) {
-      VStr ss = ParseUStringKey(sc);
-      if (ss.length()) info->EnterPic = VName(*ss, VName::AddLower);
       continue;
     }
     if (sc->Check("partime")) {
@@ -1638,15 +1644,27 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
 
     // intertexts require creating new clusters; not now (and maybe never, because i don't really care)
     if (sc->Check("intertext")) {
-      miWarning(loc, "UMAPINFO 'intertext' is not supported yet");
-      (void)ParseUStringKey(sc);
-      while (sc->Check(",")) sc->ExpectString();
+      VStr exitText = ParseUStringKey(sc);
+      while (sc->Check(",")) {
+        exitText += "\n";
+        sc->ExpectString();
+        exitText += sc->String.xstrip();
+      }
+      exitText = exitText.xstrip();
+      if (exitText.strEquCI("clear")) exitText = VStr(" ");
+      info->ExitText = exitText;
       continue;
     }
     if (sc->Check("intertextsecret")) {
-      miWarning(loc, "UMAPINFO 'intertextsecret' is not supported yet");
-      (void)ParseUStringKey(sc);
-      while (sc->Check(",")) sc->ExpectString();
+      VStr exitText = ParseUStringKey(sc);
+      while (sc->Check(",")) {
+        exitText += "\n";
+        sc->ExpectString();
+        exitText += sc->String.xstrip();
+      }
+      exitText = exitText.xstrip();
+      if (exitText.strEquCI("clear")) exitText = VStr(" ");
+      info->SecretExitText = exitText;
       continue;
     }
     if (sc->Check("interbackdrop")) {
@@ -1746,7 +1764,8 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int
   info->AirControl = Default.AirControl;
   info->Flags = Default.Flags;
   info->Flags2 = Default.Flags2;
-  info->TitlePatch = Default.TitlePatch;
+  info->EnterTitlePatch = Default.EnterTitlePatch;
+  info->ExitTitlePatch = Default.ExitTitlePatch;
   info->ParTime = Default.ParTime;
   info->SuckTime = Default.SuckTime;
   info->HorizWallShade = Default.HorizWallShade;
@@ -1755,6 +1774,8 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int
   info->SpecialActions = Default.SpecialActions;
   info->RedirectType = Default.RedirectType;
   info->RedirectMap = Default.RedirectMap;
+  info->ExitText = Default.ExitText;
+  info->SecretExitText = Default.SecretExitText;
   if (!replacement) {
     info->ExitPic = Default.ExitPic;
     info->EnterPic = Default.EnterPic;

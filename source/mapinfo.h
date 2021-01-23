@@ -51,7 +51,8 @@ struct VMapInfo {
   float AirControl; // air control in this map.
   vuint32 Flags; // for values, see `VLevelInfo::LIF_XXX`
   vuint32 Flags2; // for values, see `VLevelInfo::LIF2_XXX`
-  VName TitlePatch;
+  VName EnterTitlePatch;
+  VName ExitTitlePatch; // if empty, `EnterTitlePatch` will be used
   vint32 ParTime;
   vint32 SuckTime;
   vint8 HorizWallShade;
@@ -65,6 +66,9 @@ struct VMapInfo {
   VName InterMusic;
   vint32 MapinfoSourceLump;
   vint32 FakeContrast; // 0: default; 1: smooth; 2: disabled (even)
+  // exit texts will override cluster exit texts
+  VStr ExitText;
+  VStr SecretExitText;
 
   VStr GetName () const;
   void dump (const char *msg=nullptr) const;

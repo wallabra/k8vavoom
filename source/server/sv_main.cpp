@@ -1562,7 +1562,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
       GGameInfo->Players[i]->SecretCount = 0;
       GGameInfo->Players[i]->ItemCount = 0;
 
-      GGameInfo->Players[i]->PlayerFlags &= ~VBasePlayer::PF_Spawned;
+      GGameInfo->Players[i]->PlayerFlags &= ~(VBasePlayer::PF_Spawned|VBasePlayer::PF_ExitedViaSecret);
       GGameInfo->Players[i]->MO = nullptr;
       GGameInfo->Players[i]->Frags = 0;
       GGameInfo->Players[i]->Deaths = 0;

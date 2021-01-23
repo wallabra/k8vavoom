@@ -67,9 +67,9 @@ struct IntermissionText {
   };
   vuint32 Flags;
 
-  IntermissionText () : Text(), TextFlat(NAME_None), TextPic(NAME_None), TextMusic(NAME_None), Flags(0) {}
-  inline void clear () { Text.clear(); TextFlat = NAME_None; TextPic = NAME_None; TextMusic = NAME_None; Flags = 0; }
-  inline bool isActive () const { return !Text.isEmpty(); }
+  inline IntermissionText () noexcept : Text(), TextFlat(NAME_None), TextPic(NAME_None), TextMusic(NAME_None), Flags(0) {}
+  inline void clear () noexcept { Text.clear(); TextFlat = NAME_None; TextPic = NAME_None; TextMusic = NAME_None; Flags = 0; }
+  inline bool isActive () const noexcept { return !Text.isEmpty(); }
 };
 
 

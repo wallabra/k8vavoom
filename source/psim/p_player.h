@@ -122,6 +122,7 @@ class VBasePlayer : public VGameObject {
     PF_AltAttackDown     = 1u<<14,
     // this flag is set for client games if the player is using prediction engine (not yet)
     PF_AutonomousProxy   = 1u<<15,
+    PF_ExitedViaSecret   = 1u<<16,
   };
   vuint32 PlayerFlags;
 

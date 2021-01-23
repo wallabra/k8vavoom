@@ -205,6 +205,10 @@ void VLevelInfo::PolyobjStopSequence (const polyobj_t *poly) {
 void VLevelInfo::ExitLevel (int Position) {
   LeavePosition = Position;
   completed = true;
+  // just in case
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    if (Game->Players[i]) Game->Players[i]->PlayerFlags &= ~VBasePlayer::PF_ExitedViaSecret;
+  }
 }
 
 
@@ -226,7 +230,9 @@ void VLevelInfo::SecretExitLevel (int Position) {
   NextMap = SecretMap; // go to secret level
 
   for (int i = 0; i < MAXPLAYERS; ++i) {
-    if (Game->Players[i]) Game->Players[i]->PlayerFlags |= VBasePlayer::PF_DidSecret;
+    if (Game->Players[i]) {
+      Game->Players[i]->PlayerFlags |= VBasePlayer::PF_DidSecret|VBasePlayer::PF_ExitedViaSecret;
+    }
   }
 }
 

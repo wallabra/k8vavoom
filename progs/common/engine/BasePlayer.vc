@@ -71,6 +71,7 @@ bool bZoomDown; // `true` if button was down last tic
 bool bAltAttackDown; // `true` if button was down last tic
 // this flag is set for client games if the player is using prediction engine (not yet)
 transient bool bAutonomousProxy;
+transient bool bExitedViaSecret; // set/reset in C++ code
 
 native readonly private void *Net;
 

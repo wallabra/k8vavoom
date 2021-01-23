@@ -435,7 +435,8 @@ struct MapInfo {
   float AirControl; // Air control in this map.
   int Flags; // unsigned
   int Flags2; // unsigned
-  name TitlePatch;
+  name EnterTitlePatch;
+  name ExitTitlePatch; // if empty, `EnterTitlePatch` will be used
   int ParTime;
   int SuckTime;
   ubyte HorizWallShade;
@@ -449,6 +450,9 @@ struct MapInfo {
   name InterMusic;
   int MapinfoSourceLump;
   int FakeContrast; // 0: vanilla; <0: disabled; 1: even; 2: smooth
+  // exit texts will override cluster exit texts
+  string ExitText;
+  string SecretExitText;
 };
 
 // by lump name; checks for the actual lump presence, ignoring known map list
