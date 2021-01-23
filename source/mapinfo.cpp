@@ -1692,7 +1692,7 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
     sc->Error(va("Unknown UMAPINFO map key '%s'", *sc->String));
   }
 
-  if (wasEndGame) {
+  if (wasEndGame || endType.length()) {
     if (endType.length() == 0) endType = "EndGamePic3"; // arbitrary decision, credits
     info->NextMap = VName(*endType);
   }
