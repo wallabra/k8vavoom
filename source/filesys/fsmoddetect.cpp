@@ -535,10 +535,19 @@ static int detectMapinfoZScript (FSysModDetectorHelper &hlp, int seenZScriptLump
     return AD_ALLOW_ZSCRIPT;
   }
 
-  //if (hlp.hasLump("zmapinfo")) return AD_NONE;
+  if (hlp.hasLump("vmapinfo")) {
+    GCon->Log(NAME_Init, "zscript allowed due to VMAPINFO presence");
+    return AD_ALLOW_ZSCRIPT;
+  }
 
   int lumpidx = hlp.findLump("mapinfo");
   if (lumpidx < 0) return AD_NONE;
+
+  // if we have both ZMAPINFO and MAPINFO, assume that zshit can be ignored
+  if (hlp.hasLump("zmapinfo")) {
+    GCon->Log(NAME_Init, "zscript allowed due to both MAPINFO and ZMAPINFO presence");
+    return AD_ALLOW_ZSCRIPT;
+  }
 
   VStream *rd = hlp.createLumpReader(lumpidx);
   if (!rd) return AD_NONE;
