@@ -87,13 +87,26 @@ enum {
   BT_ZOOM        = 1u<<20,
 };
 
+
 struct VViewState {
   VState *State;
   float StateTime;
-  float SX, SY;
-  float OfsX, OfsY;
-  float BobOfsX, BobOfsY;
+  vint32 DispSpriteFrame; // see entity code for explanation
+  VName DispSpriteName; // see entity code for explanation
+  float OvlOfsX, OvlOfsY;
+  // transient fields
+  vint32 WatchCat;
+  VState *NewState;
 };
+
+// for overlays (when i'll implement them)
+struct VViewStateOverlay {
+  VEntity *Owner; // inventory item or player entity can own an overlay
+  vint32 Priority;
+  vint32 RenderStyle;
+  float Alpha;
+};
+
 
 // extended player object info: player_t
 class VBasePlayer : public VGameObject {
@@ -198,12 +211,18 @@ class VBasePlayer : public VGameObject {
 
   // overlay view sprites (gun, etc)
   VViewState ViewStates[NUMPSPRITES];
-  vint32 DispSpriteFrame[NUMPSPRITES]; // see entity code for explanation
-  VName DispSpriteName[NUMPSPRITES]; // see entity code for explanation
+  float ViewStateSX, ViewStateSY;
+  float ViewStateOfsX, ViewStateOfsY;
+  float ViewStateBobOfsX, ViewStateBobOfsY;
+  //vint32 DispSpriteFrame[NUMPSPRITES]; // see entity code for explanation
+  //VName DispSpriteName[NUMPSPRITES]; // see entity code for explanation
   float PSpriteSY;
   float PSpriteWeaponLowerPrev;
   float PSpriteWeaponLoweringStartTime;
   float PSpriteWeaponLoweringDuration;
+  // extra overlays (not implemented yet)
+  TArray<VViewState> ViewOverlayState;
+  TArray<VViewStateOverlay> ViewOverlayView;
 
   // see "BasePlayer.vc" for explanations
   float WorldTimer; // total time the player's been playing
@@ -223,19 +242,16 @@ class VBasePlayer : public VGameObject {
 
   VObject *LastViewObject;
 
-  vuint32 setStateWatchCat[NUMPSPRITES];
-  VState *setStateNewState[NUMPSPRITES]; // if we are inside of `SetState()`, just set this, and get out; cannot be `nullptr`
-
   static bool isCheckpointSpawn;
 
 private:
   inline void UpdateDispFrameFrom (int idx, const VState *st) {
     if (st) {
       if ((st->Frame&VState::FF_KEEPSPRITE) == 0 && st->SpriteIndex != 1) {
-        DispSpriteFrame[idx] = (DispSpriteFrame[idx]&~0x00ffffff)|(st->SpriteIndex&0x00ffffff);
-        DispSpriteName[idx] = st->SpriteName;
+        ViewStates[idx].DispSpriteFrame = (ViewStates[idx].DispSpriteFrame&~0x00ffffff)|(st->SpriteIndex&0x00ffffff);
+        ViewStates[idx].DispSpriteName = st->SpriteName;
       }
-      if ((st->Frame&VState::FF_DONTCHANGE) == 0) DispSpriteFrame[idx] = (DispSpriteFrame[idx]&0x00ffffff)|((st->Frame&VState::FF_FRAMEMASK)<<24);
+      if ((st->Frame&VState::FF_DONTCHANGE) == 0) ViewStates[idx].DispSpriteFrame = (ViewStates[idx].DispSpriteFrame&0x00ffffff)|((st->Frame&VState::FF_FRAMEMASK)<<24);
     }
   }
 
@@ -251,12 +267,12 @@ public:
   bool IsCrouchEnabled () const noexcept;
   bool IsJumpEnabled () const noexcept;
 
-  inline int GetEffectiveSpriteIndex (int idx) const noexcept { return DispSpriteFrame[idx]&0x00ffffff; }
-  inline int GetEffectiveSpriteFrame (int idx) const noexcept { return ((DispSpriteFrame[idx]>>24)&VState::FF_FRAMEMASK); }
+  inline int GetEffectiveSpriteIndex (int idx) const noexcept { return ViewStates[idx].DispSpriteFrame&0x00ffffff; }
+  inline int GetEffectiveSpriteFrame (int idx) const noexcept { return ((ViewStates[idx].DispSpriteFrame>>24)&VState::FF_FRAMEMASK); }
 
   inline VAliasModelFrameInfo getMFI (int idx) const noexcept {
     VAliasModelFrameInfo res;
-    res.sprite = DispSpriteName[idx];
+    res.sprite = ViewStates[idx].DispSpriteName;
     res.frame = GetEffectiveSpriteFrame(idx);
     res.index = (ViewStates[idx].State ? ViewStates[idx].State->InClassIndex : -1);
     res.spriteIndex = GetEffectiveSpriteIndex(idx);

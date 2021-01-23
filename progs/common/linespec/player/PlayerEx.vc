@@ -1659,7 +1659,7 @@ void BringUpWeapon (optional bool instant, optional bool skipSound) {
         SetViewState(PS_WEAPON, ReadyWeapon.GetReadyState());
       }
     } else {
-      //print("BRINGING %C: curr=%s; top=%s; bot=%s", ReadyWeapon, ViewStates[PS_WEAPON].SY, Weapon::WEAPONTOP, Weapon::WEAPONBOTTOM);
+      //print("BRINGING %C: curr=%s; top=%s; bot=%s", ReadyWeapon, ViewStateSY, Weapon::WEAPONTOP, Weapon::WEAPONBOTTOM);
       SetViewState(PS_WEAPON, ReadyWeapon.GetUpState());
     }
     //dprint("MO=%C; RW=%C", MO, ReadyWeapon);
@@ -1886,16 +1886,16 @@ void MovePsprites (float deltaTime) {
       //if (wbob) printdebug("wbob=%s", wbob);
       /*
       if (wbob < 300) {
-        float dx = ViewStates[PS_WEAPON].BobOfsX;
-        float dy = ViewStates[PS_WEAPON].BobOfsY;
+        float dx = ViewStateBobOfsX;
+        float dy = ViewStateBobOfsY;
         float move = 4.0*deltaTime;
         float mx = (dx < 0 ? fmin(dx+move, 0.0) : fmax(dx-move, 0.0));
         float my = (dy < 0 ? fmin(dy+move, 0.0) : fmax(dy-move, 0.0));
         if (dx || dy) printdebug("dx=%s; dy=%s; mx=%s; my=%s", dx, dy, mx, my);
         dx = (fabs(dx) <= 0.01 ? 0 : mx);
         dy = (fabs(dy) <= 0.01 ? 0 : my);
-        ViewStates[PS_WEAPON].BobOfsX = dx;
-        ViewStates[PS_WEAPON].BobOfsY = dy;
+        ViewStateBobOfsX = dx;
+        ViewStateBobOfsY = dy;
       } else
       */
       {
@@ -1910,22 +1910,14 @@ void MovePsprites (float deltaTime) {
     /*
     float wbob = Bob*fclamp(GetCvarF('weaponbob'), 0.0, 1.0);
     float angle = AngleMod360(180.0*MO.XLevel.Time);
-    ViewStates[PS_WEAPON].SX = 1.0+wbob*cos(angle);
+    ViewStateSX = 1.0+wbob*cos(angle);
     if (angle >= 180.0) angle -= 180.0;
-    ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+wbob*sin(angle);
+    ViewStateSY = Weapon::WEAPONTOP+wbob*sin(angle);
     */
   }
 
-  ViewStates[PS_WEAPON].BobOfsX = newBobX;
-  ViewStates[PS_WEAPON].BobOfsY = newBobY;
-
-  /*
-  foreach (auto ref vst; ViewStates) {
-    vst.BobOfsX = newBobX;
-    vst.BobOfsY = newBobY;
-  }
-  */
-
+  ViewStateBobOfsX = newBobX;
+  ViewStateBobOfsY = newBobY;
 }
 
 

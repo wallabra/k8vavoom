@@ -85,8 +85,8 @@ public:
 public:
   VV_DISABLE_COPY(SetViewStateGuard)
   // constructor increases invocation count
-  inline SetViewStateGuard (VBasePlayer *aplr, int apos) noexcept : plr(aplr), pos(apos) { /*GCon->Logf(NAME_Debug, "VSG:CTOR: wc[%d]=%d", pos, plr->setStateWatchCat[pos]);*/ aplr->setStateWatchCat[apos] = 0; }
-  inline ~SetViewStateGuard () noexcept { /*GCon->Logf(NAME_Debug, "VSG:DTOR: wc[%d]=%d", pos, plr->setStateWatchCat[pos]);*/ plr->setStateWatchCat[pos] = 0; }
+  inline SetViewStateGuard (VBasePlayer *aplr, int apos) noexcept : plr(aplr), pos(apos) { /*GCon->Logf(NAME_Debug, "VSG:CTOR: wc[%d]=%d", pos, plr->ViewStates[pos].WatchCat);*/ aplr->ViewStates[pos].WatchCat = 0; }
+  inline ~SetViewStateGuard () noexcept { /*GCon->Logf(NAME_Debug, "VSG:DTOR: wc[%d]=%d", pos, plr->ViewStates[pos].WatchCat);*/ plr->ViewStates[pos].WatchCat = 0; }
 };
 
 
@@ -275,7 +275,7 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
   if (position == PS_WEAPON) WeaponActionFlags = 0;
 
   VViewState &VSt = ViewStates[position];
-  VSLOGF("SetViewState(%d): watchcat=%d, vobj=%s, from %s to new %s", position, setStateWatchCat[position], (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<none>"), (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"), (InState ? *InState->Loc.toStringNoCol() : "<none>"));
+  VSLOGF("SetViewState(%d): watchcat=%d, vobj=%s, from %s to new %s", position, ViewStates[position].WatchCat, (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<none>"), (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"), (InState ? *InState->Loc.toStringNoCol() : "<none>"));
 
   #if 0
   {
@@ -285,9 +285,9 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
   #endif
 
   // the only way we can arrive here is via decorate call
-  if (InState && setStateWatchCat[position]) {
-    setStateNewState[position] = InState;
-    VSLOGF("SetViewState(%d): recursive, watchcat=%d, from %s to new %s", position, setStateWatchCat[position], (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"), (InState ? *InState->Loc.toStringNoCol() : "<none>"));
+  if (InState && ViewStates[position].WatchCat) {
+    ViewStates[position].NewState = InState;
+    VSLOGF("SetViewState(%d): recursive, watchcat=%d, from %s to new %s", position, ViewStates[position].WatchCat, (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"), (InState ? *InState->Loc.toStringNoCol() : "<none>"));
     return;
   }
 
@@ -302,14 +302,14 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
       if (LastViewObject != _stateRouteSelf) {
         // new object
         LastViewObject = _stateRouteSelf;
-        ViewStates[position].OfsX = ViewStates[position].OfsY = 0.0f;
+        ViewStates[position].OvlOfsX = ViewStates[position].OvlOfsY = 0.0f;
         // set overlay states for weapon
         if (position == PS_WEAPON) {
           for (int f = 0; f < NUMPSPRITES; ++f) {
             if (f != PS_WEAPON) {
               //ViewStates[f].SX = ViewStates[PS_WEAPON].SX;
               //ViewStates[f].SY = ViewStates[PS_WEAPON].SY;
-              ViewStates[f].OfsX = ViewStates[f].OfsY = 0.0f;
+              ViewStates[f].OvlOfsX = ViewStates[f].OvlOfsY = 0.0f;
               ViewStates[f].State = nullptr;
               ViewStates[f].StateTime = -1;
             }
@@ -327,7 +327,7 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
         }
       }
 
-      if (++setStateWatchCat[position] > 1024 /*|| state->validcount == validcountState*/) {
+      if (++ViewStates[position].WatchCat > 1024 /*|| state->validcount == validcountState*/) {
         //k8: FIXME! what to do here?
         GCon->Logf(NAME_Error, "WatchCat interrupted `VBasePlayer::SetViewState(%d)` at '%s' (%s)!", position, *state->Loc.toStringNoCol(), (state->validcount == validcountState ? "loop" : "timeout"));
         //VSt.StateTime = 13.0f;
@@ -343,20 +343,23 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
       VSt.State = state;
       VSt.StateTime = state->Time; // could be 0
       // flash offset cannot be changed from decorate
-      if (position != PS_FLASH) {
-        if (state->Misc1) VSt.OfsX = state->Misc1;
-        if (state->Misc2) VSt.OfsY = state->Misc2-32;
+      if (position == PS_WEAPON) {
+        if (state->Misc1) ViewStateOfsX = state->Misc1;
+        if (state->Misc2) ViewStateOfsY = state->Misc2-32;
+      } else if (position != PS_FLASH) {
+        if (state->Misc1) VSt.OvlOfsX = state->Misc1;
+        if (state->Misc2) VSt.OvlOfsY = state->Misc2-32;
       } else {
-        VSt.OfsX = VSt.OfsY = 0.0f;
+        VSt.OvlOfsX = VSt.OvlOfsY = 0.0f;
       }
 
-      VSLOGF("SetViewState(%d): loop: vobj=%s, watchcat=%d, new %s", position, (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<none>"), setStateWatchCat[position], (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
-      //GCon->Logf(NAME_Debug, "sprite #%d: '%s' %c (ofs: %g, %g)", position, *DispSpriteName[position], ('A'+(DispSpriteFrame[position]&0xff)), VSt.SX, VSt.OfsY);
+      VSLOGF("SetViewState(%d): loop: vobj=%s, watchcat=%d, new %s", position, (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<none>"), ViewStates[position].WatchCat, (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
+      //GCon->Logf(NAME_Debug, "sprite #%d: '%s' %c (ofs: %g, %g)", position, *VSt.DispSpriteName, ('A'+(VSt.DispSpriteFrame&0xff)), VSt.SX, VSt.OfsY);
 
       // call action routine
       if (state->Function) {
         //fprintf(stderr, "    VBasePlayer::SetViewState: CALLING '%s'(%s): position=%d; InState=%s\n", *state->Function->GetFullName(), *state->Function->Loc.toStringNoCol(), position, (InState ? *InState->GetFullName() : "<none>"));
-        setStateNewState[position] = nullptr;
+        ViewStates[position].NewState = nullptr;
         Level->XLevel->CallingState = state;
         if (!MO) Sys_Error("PlayerPawn is dead (wtf?!)");
         {
@@ -368,8 +371,8 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
           ExecuteFunctionNoArgs(MO, state->Function); // allow VMT lookups
         }
         if (!VSt.State) break;
-        if (setStateNewState[position]) {
-          state = setStateNewState[position];
+        if (ViewStates[position].NewState) {
+          state = ViewStates[position].NewState;
           VSLOGF("SetViewState(%d): current is %s, next is %s", position, (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"), *state->Loc.toStringNoCol());
           VSt.StateTime = 0.0f;
           continue;
@@ -377,26 +380,26 @@ void VBasePlayer::SetViewState (int position, VState *InState) {
       }
       state = VSt.State->NextState;
     } while (!VSt.StateTime);
-    VSLOGF("SetViewState(%d): DONE0: watchcat=%d, new %s", position, setStateWatchCat[position], (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
+    VSLOGF("SetViewState(%d): DONE0: watchcat=%d, new %s", position, ViewStates[position].WatchCat, (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
   }
-  VSLOGF("SetViewState(%d): DONE1: watchcat=%d, new %s", position, setStateWatchCat[position], (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
-  vassert(setStateWatchCat[position] == 0);
+  VSLOGF("SetViewState(%d): DONE1: watchcat=%d, new %s", position, ViewStates[position].WatchCat, (VSt.State ? *VSt.State->Loc.toStringNoCol() : "<none>"));
+  vassert(ViewStates[position].WatchCat == 0);
 
   if (!VSt.State) {
     // object removed itself
     if (position == PS_WEAPON && developer) GCon->Logf(NAME_Dev, "*** WEAPON removed itself!");
-    DispSpriteFrame[position] = 0;
-    DispSpriteName[position] = NAME_None;
+    VSt.DispSpriteFrame = 0;
+    VSt.DispSpriteName = NAME_None;
     VSt.StateTime = -1;
     if (position == PS_WEAPON) {
       LastViewObject = nullptr;
+      ViewStateOfsX = ViewStateOfsY = 0.0f;
+      ViewStateBobOfsX = ViewStateBobOfsY = 0.0f;
       for (int f = 0; f < NUMPSPRITES; ++f) {
-        if (f != PS_WEAPON) {
-          ViewStates[f].State = nullptr;
-          ViewStates[f].StateTime = -1;
-          //ViewStates[f].SX = ViewStates[f].SY = 0.0f;
-          ViewStates[f].OfsX = ViewStates[f].OfsY = 0.0f;
-        }
+        ViewStates[f].State = nullptr;
+        ViewStates[f].StateTime = -1;
+        //ViewStates[f].SX = ViewStates[f].SY = 0.0f;
+        ViewStates[f].OvlOfsX = ViewStates[f].OvlOfsY = 0.0f;
       }
     }
   }

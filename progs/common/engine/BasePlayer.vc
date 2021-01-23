@@ -47,9 +47,20 @@ const float TOCENTRE = -128.0;
 struct VViewState {
   state State; // `none` state means not active
   float StateTime;
-  float SX, SY;
-  float OfsX, OfsY;
-  float BobOfsX, BobOfsY;
+  int DispSpriteFrame;
+  name DispSpriteName;
+  float OvlOfsX, OvlOfsY;
+  // transient fields
+  transient int WatchCat;
+  transient state NewState;
+};
+
+// for overlays (when i'll implement them)
+struct VViewStateOverlay {
+  Entity Owner; // inventory item or player entity can own an overlay
+  int Priority;
+  int RenderStyle;
+  float Alpha;
 };
 
 readonly LevelInfo Level;
@@ -142,12 +153,16 @@ int CShift;
 
 // overlay view sprites (gun, etc)
 VViewState[NUMPSPRITES] ViewStates;
-int[NUMPSPRITES] DispSpriteFrame;
-name[NUMPSPRITES] DispSpriteName;
+float ViewStateSX, ViewStateSY;
+float ViewStateOfsX, ViewStateOfsY;
+float ViewStateBobOfsX, ViewStateBobOfsY;
 float PSpriteSY;
 float PSpriteWeaponLowerPrev;
 float PSpriteWeaponLoweringStartTime;
 float PSpriteWeaponLoweringDuration;
+// extra overlays (not implemented yet)
+array!VViewState ViewOverlayState;
+array!VViewStateOverlay ViewOverlayView;
 
 // server-side data (sent to client)
 float WorldTimer; // total time the player's been playing (calculated by summing deltas)
@@ -169,15 +184,12 @@ PlayerReplicationInfo playerReplicationInfo;
 
 private native transient Object LastViewObject;
 
-private native transient int[NUMPSPRITES] setStateWatchCat;
-private native transient state [NUMPSPRITES]setStateNewState;
-
 
 replication {
   reliable if (!bIsClient)
     Health, Frags, Deaths, ExtraLight, FixedColormap, CShift,
     PSpriteSY, KillCount, ItemCount, SecretCount,
-    ViewStates, DispSpriteFrame, DispSpriteName,
+    ViewStates, /*DispSpriteFrame, DispSpriteName,*/
     ClientNum, MO, Camera, SoundEnvironment,
     bAutomapRevealed, bAutomapShowThings, bAttackDown,
     WorldTimer, GameTime, LastDeltaTime;
@@ -271,18 +283,12 @@ native void ServerSetUserInfo (string Info);
 //
 //==========================================================================
 final void SetViewStateOffsets (float newsx, float newsy, optional bool delta) {
-  /*
-  foreach (auto ref vs; ViewStates) {
-    if (delta) vs.SX += newsx; else vs.SX = newsx;
-    if (delta) vs.SY += newsy; else vs.SY = newsy;
-  }
-  */
   if (delta) {
-    ViewStates[PS_WEAPON].SX += newsx;
-    ViewStates[PS_WEAPON].SY += newsy;
+    ViewStateSX += newsx;
+    ViewStateSY += newsy;
   } else {
-    ViewStates[PS_WEAPON].SX = newsx;
-    ViewStates[PS_WEAPON].SY = newsy;
+    ViewStateSX = newsx;
+    ViewStateSY = newsy;
   }
 }
 

@@ -322,8 +322,8 @@ void VRenderLevelShared::DrawPlayerSprites () {
   RenderStyleInfo mdri = ri;
 
   // calculate interpolation
-  const float currSX = cl->ViewStates[PS_WEAPON].SX;
-  const float currSY = cl->ViewStates[PS_WEAPON].SY;
+  const float currSX = cl->ViewStateSX;
+  const float currSY = cl->ViewStateSY;
 
   float SX = currSX;
   float SY = currSY;
@@ -360,18 +360,18 @@ void VRenderLevelShared::DrawPlayerSprites () {
     SY = prevSY;
   }
 
-       if (cl->ViewStates[PS_WEAPON].OfsX <= -10000.0f) SX += cl->ViewStates[PS_WEAPON].OfsX+10000.0f;
-  else if (cl->ViewStates[PS_WEAPON].OfsX >= 10000.0f) SX += cl->ViewStates[PS_WEAPON].OfsX-10000.0f;
-  else SX += cl->ViewStates[PS_WEAPON].OfsX;
+       if (cl->ViewStateOfsX <= -10000.0f) SX += cl->ViewStateOfsX+10000.0f;
+  else if (cl->ViewStateOfsX >= 10000.0f) SX += cl->ViewStateOfsX-10000.0f;
+  else SX += cl->ViewStateOfsX;
 
-       if (cl->ViewStates[PS_WEAPON].OfsY <= -10000.0f) SY += cl->ViewStates[PS_WEAPON].OfsY+10000.0f;
-  else if (cl->ViewStates[PS_WEAPON].OfsY >= 10000.0f) SY += cl->ViewStates[PS_WEAPON].OfsY-10000.0f;
-  else SY += cl->ViewStates[PS_WEAPON].OfsY;
+       if (cl->ViewStateOfsY <= -10000.0f) SY += cl->ViewStateOfsY+10000.0f;
+  else if (cl->ViewStateOfsY >= 10000.0f) SY += cl->ViewStateOfsY-10000.0f;
+  else SY += cl->ViewStateOfsY;
 
-  //GCon->Logf(NAME_Debug, "weapon offset:(%g,%g):(%g,%g)  flash offset:(%g,%g)", cl->ViewStates[PS_WEAPON].OfsX, cl->ViewStates[PS_WEAPON].OfsY, SX, SY, cl->ViewStates[PS_FLASH].OfsX, cl->ViewStates[PS_FLASH].OfsY);
+  //GCon->Logf(NAME_Debug, "weapon offset:(%g,%g):(%g,%g)  flash offset:(%g,%g)", cl->ViewStateOfsX, cl->ViewStateOfsY, SX, SY, cl->ViewStates[PS_FLASH].OfsX, cl->ViewStates[PS_FLASH].OfsY);
 
-  SX += cl->ViewStates[PS_WEAPON].BobOfsX;
-  SY += cl->ViewStates[PS_WEAPON].BobOfsY;
+  SX += cl->ViewStateBobOfsX;
+  SY += cl->ViewStateBobOfsY;
 
   // calculate base light and fade
   vuint32 baselight;
@@ -407,8 +407,8 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
     //GCon->Logf(NAME_Debug, "PSPRITE #%d is %d: sx=%g; sy=%g; %s", ii, i, cl->ViewStates[i].SX, cl->ViewStates[i].SY, *vst->Loc.toStringNoCol());
 
-    const float nSX = (i != PS_WEAPON ? getVSOffset(SX, cl->ViewStates[i].OfsX) : SX);
-    const float nSY = (i != PS_WEAPON ? getVSOffset(SY, cl->ViewStates[i].OfsY) : SY);
+    const float nSX = (i != PS_WEAPON ? getVSOffset(SX, cl->ViewStates[i].OvlOfsX) : SX);
+    const float nSY = (i != PS_WEAPON ? getVSOffset(SY, cl->ViewStates[i].OvlOfsY) : SY);
 
     if (!RenderViewModel(&cl->ViewStates[i], nSX, nSY, mdri)) {
       RenderPSprite(nSX, nSY, cl->getMFI(i), 3.0f/*NUMPSPRITES-ii*/, ri);

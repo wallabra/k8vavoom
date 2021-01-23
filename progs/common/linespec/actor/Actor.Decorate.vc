@@ -248,9 +248,9 @@ protected final void do_A_Raise (optional float raisespeed) self(Actor) {
   if (!specified_raisespeed) raisespeed = Weapon::RAISESPEED;
   if (raisespeed <= 0) raisespeed = Weapon::RAISESPEED; //k8: sanity guard
 
-  //print("RAISING %C: curr=%s; top=%s; bot=%s; speed=%s; time=%s", Wpn, Player.ViewStates[PS_WEAPON].SY, Weapon::WEAPONTOP, Weapon::WEAPONBOTTOM, raisespeed, Player.ViewStates[PS_WEAPON].StateTime);
+  //print("RAISING %C: curr=%s; top=%s; bot=%s; speed=%s; time=%s", Wpn, Player.ViewStateSY, Weapon::WEAPONTOP, Weapon::WEAPONBOTTOM, raisespeed, Player.ViewStates[PS_WEAPON].StateTime);
 
-  float prevsy = Player.ViewStates[PS_WEAPON].SY;
+  float prevsy = Player.ViewStateSY;
 
   Player.PSpriteWeaponLoweringStartTime = 0;
   Player.PSpriteWeaponLoweringDuration = 0;
@@ -259,9 +259,9 @@ protected final void do_A_Raise (optional float raisespeed) self(Actor) {
   // FIXME!!
   /*
   if (Level.Game.frametime < 1.0/35.0) {
-    Player.ViewStates[PS_WEAPON].SY -= raisespeed;
+    Player.ViewStateSY -= raisespeed;
   } else {
-    Player.ViewStates[PS_WEAPON].SY -= raisespeed*35.0*Level.Game.frametime;
+    Player.ViewStateSY -= raisespeed*35.0*Level.Game.frametime;
   }
   */
   float sy = prevsy-raisespeed;
@@ -320,7 +320,7 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
   if (!specified_lowerspeed) lowerspeed = Weapon::LOWERSPEED;
   if (lowerspeed <= 0) lowerspeed = Weapon::LOWERSPEED; //k8: sanity guard
 
-  float prevsy = Player.ViewStates[PS_WEAPON].SY;
+  float prevsy = Player.ViewStateSY;
 
   Player.PSpriteWeaponLoweringStartTime = 0;
   Player.PSpriteWeaponLoweringDuration = 0;
@@ -333,15 +333,15 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
     // FIXME!!
     /*
     if (Level.Game.frametime < 1.0/35.0) {
-      Player.ViewStates[PS_WEAPON].SY += lowerspeed;
+      Player.ViewStateSY += lowerspeed;
     } else {
-      Player.ViewStates[PS_WEAPON].SY += lowerspeed*35.0*Level.Game.frametime;
+      Player.ViewStateSY += lowerspeed*35.0*Level.Game.frametime;
     }
     */
     Player.SetViewStateOffsets(0, lowerspeed, delta:true);
   }
 
-  float sy = Player.ViewStates[PS_WEAPON].SY;
+  float sy = Player.ViewStateSY;
 
   if (sy < Weapon::WEAPONBOTTOM) {
     // not lowered all the way yet
