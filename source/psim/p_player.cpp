@@ -704,10 +704,15 @@ void VBasePlayer::DoClientIntermission (VName NextMap) {
     if (mapExitText != " ") {
       im.LeaveText.Text = mapExitText;
       im.LeaveText.TextMusic = im.InterMusic;
-      const VClusterDef *cd = P_GetClusterDef(linfo.Cluster);
-      if (!cd || cd->Flat == NAME_None) cd = P_GetClusterDef(einfo.Cluster);
-      im.LeaveText.TextFlat = (cd ? cd->Flat : NAME_None);
-      im.LeaveText.TextPic = NAME_None;
+      if (linfo.InterBackdrop != NAME_None) {
+        im.LeaveText.TextFlat = (VStr::strEquCI(*linfo.InterBackdrop, "clear") ? NAME_None : linfo.InterBackdrop);
+        im.LeaveText.TextPic = NAME_None;
+      } else {
+        const VClusterDef *cd = P_GetClusterDef(linfo.Cluster);
+        if (!cd || cd->Flat == NAME_None) cd = P_GetClusterDef(einfo.Cluster);
+        im.LeaveText.TextFlat = (cd ? cd->Flat : NAME_None);
+        im.LeaveText.TextPic = NAME_None;
+      }
     }
   }
 

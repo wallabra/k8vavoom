@@ -69,6 +69,7 @@ struct VMapInfo {
   // exit texts will override cluster exit texts
   VStr ExitText;
   VStr SecretExitText;
+  VName InterBackdrop; // used when we have exit test, set in umapinfo parser
 
   VStr GetName () const;
   void dump (const char *msg=nullptr) const;

@@ -453,6 +453,7 @@ struct MapInfo {
   // exit texts will override cluster exit texts
   string ExitText;
   string SecretExitText;
+  name InterBackdrop; // used only when we have map exit text
 };
 
 // by lump name; checks for the actual lump presence, ignoring known map list

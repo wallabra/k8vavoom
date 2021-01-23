@@ -35,6 +35,8 @@
 //
 //==========================================================================
 [decorate] final void A_BossDeath () {
+  printdebug("%C: A_BossDeath", self);
+
   bool bossDeathChecked = false;
   bool skipLevelExit = false;
 
@@ -55,6 +57,7 @@
       // trigger it only once
       VMapSpecialAction act = Action;
       Action.Special = 0;
+      printdebug("%C: A_BossDeath: special action %s (tag=%s)", self, act.Special, act.Args[0]);
       Level.ExecuteActionSpecial(act.Special, act.Args[0], act.Args[1], act.Args[2], act.Args[3], act.Args[4], nullptr, 0, self);
     }
   }
@@ -83,30 +86,38 @@
     // kill any remaining monsters
     //Level.bSpecialActionKillMonsters = false;
     LineSpecialLevelInfo(Level).P_Massacre();
+    printdebug("%C: A_BossDeath: massacre", self);
   }
 
   if (Level.bMap07Special) {
     if ((rpc isa 'Fatso')) {
       //Level.bMap07Special = false;
+      printdebug("%C: A_BossDeath: Fatsos dead", self);
       Level.ExecuteActionSpecial(LNSPEC_FloorLowerToLowest, 666, 8, 0, 0, 0, nullptr, 0, none);
       return;
     }
     if ((rpc isa 'Arachnotron')) {
       //Level.bMap07Special = false;
+      printdebug("%C: A_BossDeath: Babyspiders dead", self);
       Level.ExecuteActionSpecial(LNSPEC_FloorRaiseByTexture, 667, 8, 0, 0, 0, nullptr, 0, none);
       return;
     }
   } else if (Level.bSpecialActionOpenDoor) {
     //Level.bSpecialActionOpenDoor = false;
+    printdebug("%C: A_BossDeath: open door", self);
     Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 666, 64, 150, 0, 0, nullptr, 0, none);
     return;
   } else if (Level.bSpecialActionLowerFloor) {
     //Level.bSpecialActionLowerFloor = false;
+    printdebug("%C: A_BossDeath: lower floor", self);
     Level.ExecuteActionSpecial(LNSPEC_FloorLowerToLowest, 666, 8, 0, 0, 0, nullptr, 0, none);
     return;
   }
 
-  if (!skipLevelExit) Level.ExitLevel(0);
+  if (!skipLevelExit) {
+    printdebug("%C: A_BossDeath: default action -- level exit", self);
+    Level.ExitLevel(0);
+  }
 }
 
 

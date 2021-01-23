@@ -255,6 +255,7 @@ void VMapInfo::dump (const char *msg) const {
   GCon->Logf(NAME_Debug, "  InterMusic: \"%s\"", *VStr(InterMusic).quote());
   GCon->Logf(NAME_Debug, "  ExitText: \"%s\"", *VStr(ExitText).quote());
   GCon->Logf(NAME_Debug, "  SecretExitText: \"%s\"", *VStr(SecretExitText).quote());
+  GCon->Logf(NAME_Debug, "  InterBackdrop: \"%s\"", *VStr(InterBackdrop).quote());
   for (auto &&sac : SpecialActions) {
     GCon->Log(NAME_Debug, "  --- special action ---");
     GCon->Logf(NAME_Debug, "    TypeName: \"%s\"", *VStr(sac.TypeName).quote());
@@ -697,6 +698,7 @@ static void SetMapDefaults (VMapInfo &Info) {
   Info.InterMusic = NAME_None;
   Info.ExitText = VStr::EmptyString;
   Info.SecretExitText = VStr::EmptyString;
+  Info.InterBackdrop = NAME_None;
 
   if (GGameInfo->Flags&VGameInfo::GIF_DefaultLaxMonsterActivation) {
     Info.Flags2 |= VLevelInfo::LIF2_LaxMonsterActivation;
@@ -1677,8 +1679,8 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
       continue;
     }
     if (sc->Check("interbackdrop")) {
-      miWarning(loc, "UMAPINFO 'interbackdrop' is not supported yet");
-      (void)ParseUStringKey(sc);
+      VStr ss = ParseUStringKey(sc);
+      info->InterBackdrop = VName(*ss, VName::AddLower);
       continue;
     }
     if (sc->Check("intermusic")) {
@@ -1785,6 +1787,7 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int
   info->RedirectMap = Default.RedirectMap;
   info->ExitText = Default.ExitText;
   info->SecretExitText = Default.SecretExitText;
+  info->InterBackdrop = Default.InterBackdrop;
   if (!replacement) {
     info->ExitPic = Default.ExitPic;
     info->EnterPic = Default.EnterPic;
