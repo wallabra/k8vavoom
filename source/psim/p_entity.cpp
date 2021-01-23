@@ -56,6 +56,9 @@ static VField *fldNextAffector = nullptr;
 static VClass *classScroller = nullptr;
 static VField *fldCarryScrollX = nullptr;
 static VField *fldCarryScrollY = nullptr;
+static VField *fldVDX = nullptr;
+static VField *fldVDY = nullptr;
+static VField *fldbAccel = nullptr;
 
 static VClass *classEntityEx = nullptr;
 static VField *fldbWindThrust = nullptr;
@@ -116,31 +119,63 @@ void VEntity::EntityStaticInit () {
     if (fldNextAffector) GCon->Logf(NAME_Init, "`SectorThinker.NextAffector` field found (%s)", *fldNextAffector->Type.GetName());
   }
 
-  classScroller = VClass::FindClassNoCase("Scroller");
+  classScroller = (fldNextAffector ? VClass::FindClassNoCase("Scroller") : nullptr);
   if (classScroller) {
     GCon->Log(NAME_Init, "`Scroller` class found");
+
     fldCarryScrollX = classScroller->FindField("CarryScrollX");
     if (fldCarryScrollX->Type.Type != TYPE_Float) fldCarryScrollX = nullptr;
     if (fldCarryScrollX) GCon->Logf(NAME_Init, "`Scroller.CarryScrollX` field found (%s)", *fldCarryScrollX->Type.GetName());
+
     fldCarryScrollY = classScroller->FindField("CarryScrollY");
     if (fldCarryScrollY->Type.Type != TYPE_Float) fldCarryScrollY = nullptr;
     if (fldCarryScrollY) GCon->Logf(NAME_Init, "`Scroller.CarryScrollY` field found (%s)", *fldCarryScrollY->Type.GetName());
+
+    fldVDX = classScroller->FindField("VDX");
+    if (fldVDX->Type.Type != TYPE_Float) fldVDX = nullptr;
+    if (fldVDX) GCon->Logf(NAME_Init, "`Scroller.VDX` field found (%s)", *fldVDX->Type.GetName());
+
+    fldVDY = classScroller->FindField("VDY");
+    if (fldVDY->Type.Type != TYPE_Float) fldVDY = nullptr;
+    if (fldVDY) GCon->Logf(NAME_Init, "`Scroller.VDY` field found (%s)", *fldVDY->Type.GetName());
+
+    fldbAccel = classScroller->FindField("bAccel");
+    if (fldbAccel->Type.Type != TYPE_Bool) fldbAccel = nullptr;
+    if (fldbAccel) GCon->Logf(NAME_Init, "`Scroller.bAccel` field found (%s)", *fldbAccel->Type.GetName());
+
   }
 
   classEntityEx = VClass::FindClassNoCase("EntityEx");
   if (classEntityEx) {
     GCon->Log(NAME_Init, "`EntityEx` class found");
-    //FIXME: do we need "checked" here?
+
     fldbWindThrust = classEntityEx->FindField("bWindThrust");
     if (fldbWindThrust && fldbWindThrust->Type.Type != TYPE_Bool) fldbWindThrust = nullptr; // bad type
     if (fldbWindThrust) GCon->Logf(NAME_Init, "`EntityEx.bWindThrust` field found (%s)", *fldbWindThrust->Type.GetName());
+
     fldLastScrollOrig = classEntityEx->FindField("lastScrollCheckOrigin");
     if (fldLastScrollOrig && fldLastScrollOrig->Type.Type != TYPE_Vector) fldLastScrollOrig = nullptr; // bad type
     if (fldLastScrollOrig) GCon->Logf(NAME_Init, "`EntityEx.lastScrollCheckOrigin` field found (%s)", *fldLastScrollOrig->Type.GetName());
+
+    if (!fldLastScrollOrig && classScroller) {
+      GCon->Log(NAME_Init, "`Scroller` class discarded due to missing EntityEx fields");
+      classScroller = nullptr;
+    }
   }
 
   classActor = VClass::FindClassNoCase("Actor");
   if (classActor) GCon->Log(NAME_Init, "`Actor` class found");
+
+  // discard the things we cannot check, to do less work in ticker
+  if (fldLastScrollOrig && classScroller) fldCarryScrollX = nullptr;
+  if (classScroller && (!fldCarryScrollX || !fldCarryScrollY || !fldVDX || !fldVDY || !fldbAccel)) {
+    GCon->Log(NAME_Init, "`Scroller` class discarded due to missing fields");
+    GCon->Log(NAME_Init, "`SectorThinker` class discarded due to missing fields");
+    classSectorThinker = nullptr;
+    fldNextAffector = nullptr;
+    classScroller = nullptr;
+    fldCarryScrollX = fldCarryScrollY = fldVDX = fldVDY = fldbAccel = nullptr;
+  }
 }
 
 
@@ -258,7 +293,7 @@ bool VEntity::NeedPhysics () {
 
   if (FlagsEx&EFEX_IsEntityEx) {
     // check for scrollers
-    if (fldLastScrollOrig && classScroller) {
+    if (classScroller) {
       if (classScroller->InstanceCountWithSub && (EntityFlags&(EF_NoSector|EF_ColideWithWorld)) == EF_ColideWithWorld && Sector &&
           fldLastScrollOrig->GetVec(this) != Origin)
       {
@@ -267,11 +302,14 @@ bool VEntity::NeedPhysics () {
           sector_t *sec = mnode->Sector;
           VThinker *th = sec->AffectorData;
           if (!th) continue;
-          if (fldCarryScrollX && fldCarryScrollY && fldNextAffector && th->GetClass()->IsChildOf(classSectorThinker)) {
+          if (th->GetClass()->IsChildOf(classSectorThinker)) {
+            // check if we have any transporters
             bool needCheck = false;
             while (th) {
               if (th->GetClass()->IsChildOf(classScroller)) {
-                if (fldCarryScrollX->GetFloat(th) != 0.0f || fldCarryScrollY->GetFloat(th) != 0.0f) {
+                if (fldCarryScrollX->GetFloat(th) != 0.0f || fldCarryScrollY->GetFloat(th) != 0.0f ||
+                    (fldbAccel->GetBool(th) && (fldVDX->GetFloat(th) != 0.0f || fldVDX->GetFloat(th) != 0.0f)))
+                {
                   needCheck = true;
                   break;
                 }
@@ -283,12 +321,14 @@ bool VEntity::NeedPhysics () {
               break;
             }
           } else {
+            // affector is not a sector thinker: this should not happen, but let's play safe
             if (eventPhysicsCheckScroller()) return true;
             break;
           }
         }
       }
     } else {
+      // no scroller class, something wicked that way comes...
       if (eventPhysicsCheckScroller()) return true;
     }
 
