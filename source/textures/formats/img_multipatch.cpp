@@ -45,6 +45,7 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
 {
   Type = TEXTYPE_Wall;
   mFormat = mOrigFormat = TEXFMT_8;
+  xmin = ymin = xmax = ymax = -1;
 
   // read offset and seek to the starting position
   Strm.Seek(4+DirectoryIndex*4);
@@ -450,6 +451,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
 {
   Type = AType;
   mFormat = mOrigFormat = TEXFMT_8;
+  xmin = ymin = xmax = ymax = -1;
 
   sc->SetCMode(true);
 
@@ -547,6 +549,16 @@ VMultiPatchTexture::~VMultiPatchTexture () {
 
 //==========================================================================
 //
+//  VMultiPatchTexture::IsDynamicTexture
+//
+//==========================================================================
+bool VMultiPatchTexture::IsMultipatch () const noexcept {
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VMultiPatchTexture::SetFrontSkyLayer
 //
 //==========================================================================
@@ -584,6 +596,9 @@ vuint8 *VMultiPatchTexture::GetPixels () {
     memset(Pixels, 0, Width*Height*4);
   }
 
+  xmin = ymin = +2147483640;
+  xmax = ymax = -2147483640;
+
   // composite the columns together
   VTexPatch *patch = Patches;
   for (int i = 0; i < PatchCount; ++i, ++patch) {
@@ -607,8 +622,19 @@ vuint8 *VMultiPatchTexture::GetPixels () {
     int y2 = y1+(patch->Rot&1 ? PWidth : PHeight);
     if (y2 > Height) y2 = Height;
 
-    float IAlpha = 1.0f-patch->Alpha;
-    if (IAlpha < 0) IAlpha = 0; else if (IAlpha > 1) IAlpha = 1;
+    const float IAlpha = clampval(1.0f-patch->Alpha, 0.0f, 1.0f);
+
+    /*
+    if (patch->Alpha <= 0.0f) {
+      if (patch->Style == STYLE_Translucent ||
+          patch->Style == STYLE_Add ||
+          patch->Style == STYLE_Subtract ||
+          patch->Style == STYLE_ReverseSubtract)
+      {
+        continue;
+      }
+    }
+    */
 
     //GCon->Logf(NAME_Debug, "Texture '%s'; patch #%d; patchtex '%s'; box:(%d,%d)-(%d,%d)", *Name, i, *PatchTex->Name, x1, y1, x2, y2);
 
@@ -635,9 +661,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
 
         if (Format == TEXFMT_8) {
           // patch texture is guaranteed to be paletted
-          if (PatchPixels[PIdx]) {
-            Pixels[x+y*Width] = PatchPixels[PIdx];
-          }
+          if (PatchPixels[PIdx]) Pixels[x+y*Width] = PatchPixels[PIdx];
         } else {
           // get pixel
           rgba_t col = rgba_t(0, 0, 0, 0);
@@ -663,6 +687,10 @@ vuint8 *VMultiPatchTexture::GetPixels () {
 
           // add to texture
           if (col.a) {
+            xmin = min2(xmin, x);
+            ymin = min2(ymin, y);
+            xmax = max2(xmax, x);
+            ymax = max2(ymax, y);
             rgba_t &Dst = ((rgba_t *)Pixels)[x+y*Width];
             switch (patch->Style) {
               case STYLE_Copy:
@@ -756,6 +784,13 @@ vuint8 *VMultiPatchTexture::GetPixels () {
         }
       }
     }
+    xmin = max2(0, xmin-1);
+    ymin = max2(0, ymin-1);
+    xmax = min2(Width-1, xmax+1);
+    ymax = min2(Height-1, ymax+1);
+  } else {
+    xmin = ymin = 0;
+    xmax = ymax = 0;
   }
 
   ConvertPixelsToShaded();

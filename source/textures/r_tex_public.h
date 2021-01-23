@@ -328,6 +328,8 @@ public:
   // note that huge hires textures considered as huge
   virtual bool IsHugeTexture () const noexcept;
 
+  virtual bool IsMultipatch () const noexcept;
+
 protected:
   vuint8 *Pixels; // most textures has some kind of pixel data, so declare it here
   vuint8 *Pixels8Bit;

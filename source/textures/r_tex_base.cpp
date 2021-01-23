@@ -184,6 +184,16 @@ bool VTexture::IsDynamicTexture () const noexcept {
 
 //==========================================================================
 //
+//  VTexture::IsDynamicTexture
+//
+//==========================================================================
+bool VTexture::IsMultipatch () const noexcept {
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VTexture::IsHugeTexture
 //
 //==========================================================================
@@ -1288,42 +1298,53 @@ void VTexture::CropTexture () {
   //ReleasePixels();
   GetPixels();
 
-  int x0 = +0x7ffffff, y0 = +0x7ffffff;
-  int x1 = -0x7ffffff, y1 = -0x7ffffff;
+  int x0, y0;
+  int x1, y1;
 
-  if (Format == TEXFMT_RGBA) {
-    const rgba_t *pic = (const rgba_t *)Pixels;
-    for (int y = 0; y < Height; ++y) {
-      for (int x = 0; x < Width; ++x, ++pic) {
-        if (pic->a) {
-          x0 = min2(x0, x);
-          y0 = min2(y0, y);
-          x1 = max2(x1, x);
-          y1 = max2(y1, y);
-        }
-      }
-    }
+  if (IsMultipatch()) {
+    VMultiPatchTexture *mtx = (VMultiPatchTexture *)this;
+    x0 = mtx->xmin;
+    y0 = mtx->ymin;
+    x1 = mtx->xmax;
+    y1 = mtx->ymax;
   } else {
-    const rgba_t *pal = (mFormat == TEXFMT_8Pal ? GetPalette() : r_palette);
-    const vuint8 *pic = Pixels;
-    if (!pal) pal = r_palette;
-    for (int y = 0; y < Height; ++y) {
-      for (int x = 0; x < Width; ++x, ++pic) {
-        if (*pic && pal[*pic].a) {
-          x0 = min2(x0, x);
-          y0 = min2(y0, y);
-          x1 = max2(x1, x);
-          y1 = max2(y1, y);
+    x0 = y0 = +0x7fffff0;
+    x1 = y1 = -0x7fffff0;
+
+    if (Format == TEXFMT_RGBA) {
+      const rgba_t *pic = (const rgba_t *)Pixels;
+      for (int y = 0; y < Height; ++y) {
+        for (int x = 0; x < Width; ++x, ++pic) {
+          if (pic->a) {
+            x0 = min2(x0, x);
+            y0 = min2(y0, y);
+            x1 = max2(x1, x);
+            y1 = max2(y1, y);
+          }
+        }
+      }
+    } else {
+      const rgba_t *pal = (mFormat == TEXFMT_8Pal ? GetPalette() : r_palette);
+      const vuint8 *pic = Pixels;
+      if (!pal) pal = r_palette;
+      for (int y = 0; y < Height; ++y) {
+        for (int x = 0; x < Width; ++x, ++pic) {
+          if (*pic && pal[*pic].a) {
+            x0 = min2(x0, x);
+            y0 = min2(y0, y);
+            x1 = max2(x1, x);
+            y1 = max2(y1, y);
+          }
         }
       }
     }
-  }
 
-  // leave one-pixel border
-  x0 = max2(0, x0-1);
-  y0 = max2(0, y0-1);
-  x1 = min2(Width-1, x1+1);
-  y1 = min2(Height-1, y1+1);
+    // leave one-pixel border
+    x0 = max2(0, x0-1);
+    y0 = max2(0, y0-1);
+    x1 = min2(Width-1, x1+1);
+    y1 = min2(Height-1, y1+1);
+  }
 
   // crop it
   if (x0 == 0 && y0 == 0 && x1 == Width-1 && y1 == Height-1) return;

@@ -82,6 +82,10 @@ private:
   int PatchCount;
   VTexPatch *Patches;
 
+public:
+  // set in `GetPixels()`
+  int xmin, ymin, xmax, ymax; // with 1-pixel border
+
 protected:
   void ParseGfxPart (VScriptParser *sc, EWadNamespace prioNS, TArray<VTexPatch> &Parts);
 
@@ -92,6 +96,7 @@ public:
   virtual void SetFrontSkyLayer () override;
   virtual void ReleasePixels () override;
   virtual vuint8 *GetPixels () override;
+  virtual bool IsMultipatch () const noexcept override;
 };
 
 
