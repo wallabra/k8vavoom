@@ -35,7 +35,7 @@
 //
 //==========================================================================
 [decorate] final void A_BossDeath () {
-  printdebug("%C: A_BossDeath", self);
+  //printdebug("%C: A_BossDeath", self);
 
   bool bossDeathChecked = false;
   bool skipLevelExit = false;
