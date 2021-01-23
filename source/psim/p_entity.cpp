@@ -44,7 +44,7 @@ static VCvarB dbg_disable_state_advance("dbg_disable_state_advance", false, "Dis
 
 static VCvarB dbg_emulate_broken_gozzo_gotos("dbg_emulate_broken_gozzo_gotos", false, "Emulate (partially) broken GZDoom decorate gotos to missing labels?", CVAR_Archive);
 
-static VCvarB vm_optimise_statics("vm_optimise_statics", false, "Try to detect some static things, and don't run physics for them? (DO NOT USE, IT IS GLITCHY!)", CVAR_Archive);
+static VCvarB vm_optimise_statics("vm_optimise_statics", true, "Try to detect some static things, and don't run physics for them? (DO NOT USE, IT IS GLITCHY!)", CVAR_Archive);
 
 extern VCvarB dbg_vm_show_tick_stats;
 
