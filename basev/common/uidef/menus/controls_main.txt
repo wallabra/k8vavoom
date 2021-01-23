@@ -98,6 +98,30 @@ menudef ControlsMain {
     command = "impulse 18";
   }
 
+  option bind {
+    title = "Weapon User 1";
+    button = tan;
+    command = "Button5";
+  }
+
+  option bind {
+    title = "Weapon User 2";
+    button = tan;
+    command = "Button6";
+  }
+
+  option bind {
+    title = "Weapon User 3";
+    button = tan;
+    command = "Button7";
+  }
+
+  option bind {
+    title = "Weapon User 4";
+    button = tan;
+    command = "Button8";
+  }
+
 
   header "Look";
 

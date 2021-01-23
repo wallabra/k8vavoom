@@ -797,11 +797,15 @@ override void Destroyed () {
   Player.bWeaponAllowAltFire = !(Flags&WRF_NOSECONDARY);
   Player.bWeaponAllowReload = !!(Flags&WRF_ALLOWRELOAD);
   Player.bWeaponAllowZoom = !!(Flags&WRF_ALLOWZOOM);
+  Player.bWeaponAllowUser1 = !!(Flags&WRF_ALLOWUSER1);
+  Player.bWeaponAllowUser2 = !!(Flags&WRF_ALLOWUSER2);
+  Player.bWeaponAllowUser3 = !!(Flags&WRF_ALLOWUSER3);
+  Player.bWeaponAllowUser4 = !!(Flags&WRF_ALLOWUSER4);
 
   // reset fire buttons for non-autofiring weapon
   if ((Flags&WRF_NOFIRE) != 0 && Wpn.bNoAutoFire) {
     if (Flags&WRF_NOPRIMARY) Player.bAttackDown = false;
-    if (Flags&WRF_NOSECONDARY) Player.bAltAttackDown = false;
+    if (Flags&WRF_NOSECONDARY) pex.bAltAttackDown = false;
   }
   // bobbing is moved out of here to `MovePsprites()`, so weapon can bob independently of tic rate
 }

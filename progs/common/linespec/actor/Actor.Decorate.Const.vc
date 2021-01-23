@@ -173,8 +173,6 @@ const [decorate] int WRF_NOFIRE      = 12;
 const [decorate] int WRF_ALLOWRELOAD = 16;
 const [decorate] int WRF_ALLOWZOOM   = 32;
 const [decorate] int WRF_DISABLESWITCH = 64;
-//const [decorate] int WRF_ALLOWREFIRE = 8192; // k8vavoom specific (no need to; i was wrong)
-// not implemented yet
 const [decorate] int WRF_ALLOWUSER1 = 128;
 const [decorate] int WRF_ALLOWUSER2 = 256;
 const [decorate] int WRF_ALLOWUSER3 = 512;

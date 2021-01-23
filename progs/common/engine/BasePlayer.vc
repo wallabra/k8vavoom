@@ -57,18 +57,14 @@ readonly LevelInfo Level;
 readonly bool bActive;
 readonly bool bSpawned;
 readonly bool bIsBot;
-bool bFixAngle;
-bool bAttackDown; // `true` if button was down last tic
-bool bUseDown;
-bool bDidSecret; // `true` if secret level has been done
+transient bool bFixAngle;
+transient bool bAttackDown; // `true` if button was down last tic
+transient bool bUseDown;
+transient bool bDidSecret; // `true` if secret level has been done
 readonly private bool bCentering;
-readonly bool bIsClient; // player on client side
+transient readonly bool bIsClient; // player on client side
 bool bAutomapRevealed;
 bool bAutomapShowThings;
-bool bReloadQueued; // true if "reload" was pressed
-bool bReloadDown; // `true` if button was down last tic
-bool bZoomDown; // `true` if button was down last tic
-bool bAltAttackDown; // `true` if button was down last tic
 // this flag is set for client games if the player is using prediction engine (not yet)
 transient bool bAutonomousProxy;
 transient bool bExitedViaSecret; // set/reset in C++ code
@@ -183,8 +179,7 @@ replication {
     PSpriteSY, KillCount, ItemCount, SecretCount,
     ViewStates, DispSpriteFrame, DispSpriteName,
     ClientNum, MO, Camera, SoundEnvironment,
-    bAutomapRevealed, bAutomapShowThings,
-    bAttackDown, bReloadQueued, bReloadDown, bZoomDown, bAltAttackDown,
+    bAutomapRevealed, bAutomapShowThings, bAttackDown,
     WorldTimer, GameTime, LastDeltaTime;
 
   // methods server can execute on client

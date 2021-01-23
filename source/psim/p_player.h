@@ -116,13 +116,9 @@ class VBasePlayer : public VGameObject {
     PF_IsClient          = 1u<<8, // this player is on dumb client side
     PF_AutomapRevealed   = 1u<<9,
     PF_AutomapShowThings = 1u<<10,
-    PF_ReloadQueued      = 1u<<11,
-    PF_ReloadDown        = 1u<<12, // set if button was down last tic
-    PF_ZoomDown          = 1u<<13,
-    PF_AltAttackDown     = 1u<<14,
     // this flag is set for client games if the player is using prediction engine (not yet)
-    PF_AutonomousProxy   = 1u<<15,
-    PF_ExitedViaSecret   = 1u<<16,
+    PF_AutonomousProxy   = 1u<<11,
+    PF_ExitedViaSecret   = 1u<<12,
   };
   vuint32 PlayerFlags;
 

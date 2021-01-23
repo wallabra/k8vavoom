@@ -111,6 +111,16 @@ bool bHasBackpack;
 // for PROP_NOWEAPONSWITCH
 bool bDisableWeaponSwitch;
 
+// button down flags, etc.
+transient bool bReloadQueued; // true if "reload" was pressed
+transient bool bReloadDown; // `true` if button was down last tic
+transient bool bZoomDown; // `true` if button was down last tic
+transient bool bAltAttackDown; // `true` if button was down last tic
+transient bool bButton5Down; // `true` if button was down last tic
+transient bool bButton6Down; // `true` if button was down last tic
+transient bool bButton7Down; // `true` if button was down last tic
+transient bool bButton8Down; // `true` if button was down last tic
+
 int PoisonCount; // screen flash for poison damage
 float LastPoisonTime;
 EntityEx Poisoner; // none for non-player mobjs
@@ -262,6 +272,8 @@ replication {
     Cheats, ReadyWeapon, InvFirst, InvPtr, InventoryTime, ArtifactFlash,
     Objectives, MorphTime/*, Accuracy, Stamina*/, MapsVisited, DamageFlash, DamageFlashType,
     BonusFlash, Attacker, bFrozen, bTotallyFrozen,/* DesiredFOV, FOV,*/
+    bReloadQueued, bReloadDown, bZoomDown, bAltAttackDown,
+    bButton5Down, bButton6Down, bButton7Down, bButton8Down,
     bFlashlightOn;
 
   unreliable if (!bIsClient)
@@ -1794,6 +1806,34 @@ void ProcessWeaponActions () {
     if (ZoomWeapon()) return;
     Wpn.bBobDisabled = oldNoBob;
   }
+
+  if (bWeaponAllowUser1 && (Buttons&BT_BUTTON_5) && !bButton5Down && Wpn.FindState('User1')) {
+    bButton5Down = true;
+    Wpn.bBobDisabled = true;
+    if (WeaponUserAction(1)) return;
+    Wpn.bBobDisabled = oldNoBob;
+  }
+
+  if (bWeaponAllowUser2 && (Buttons&BT_BUTTON_6) && !bButton6Down && Wpn.FindState('User2')) {
+    bButton6Down = true;
+    Wpn.bBobDisabled = true;
+    if (WeaponUserAction(2)) return;
+    Wpn.bBobDisabled = oldNoBob;
+  }
+
+  if (bWeaponAllowUser3 && (Buttons&BT_BUTTON_7) && !bButton7Down && Wpn.FindState('User3')) {
+    bButton7Down = true;
+    Wpn.bBobDisabled = true;
+    if (WeaponUserAction(3)) return;
+    Wpn.bBobDisabled = oldNoBob;
+  }
+
+  if (bWeaponAllowUser4 && (Buttons&BT_BUTTON_8) && !bButton8Down && Wpn.FindState('User4')) {
+    bButton8Down = true;
+    Wpn.bBobDisabled = true;
+    if (WeaponUserAction(4)) return;
+    Wpn.bBobDisabled = oldNoBob;
+  }
 }
 
 
@@ -2043,6 +2083,35 @@ bool ZoomWeapon () {
     state zst = ReadyWeapon.GetZoomState();
     if (!zst) return false;
     SetPlayerWeaponState(MO.FindState('Zoom'));
+    SetViewObject(ReadyWeapon);
+    SetViewState(PS_WEAPON, zst);
+    return true;
+  }
+  return false;
+}
+
+
+//===========================================================================
+//
+//  WeaponUserAction
+//
+//  returns `true` if weapon state was changed
+//
+//===========================================================================
+bool WeaponUserAction (int actnum) {
+  if (actnum < 1 || actnum > 4) return false;
+  ResetWeaponReloadRefire();
+  if (ReadyWeapon) {
+    name stname;
+    switch (actnum) {
+      case 1: stname = 'User1'; break;
+      case 2: stname = 'User2'; break;
+      case 3: stname = 'User3'; break;
+      case 4: stname = 'User4'; break;
+    }
+    state zst = ReadyWeapon.FindState(stname);
+    if (!zst) return false;
+    SetPlayerWeaponState(MO.FindState(stname));
     SetViewObject(ReadyWeapon);
     SetViewState(PS_WEAPON, zst);
     return true;
@@ -4036,8 +4105,13 @@ void PlayerReborn () {
   bUseDown = true; // don't do anything immediately
   bAttackDown = true;
   bAltAttackDown = false;
-  bZoomDown = false;
+  bReloadQueued = false;
   bReloadDown = false;
+  bZoomDown = false;
+  bButton5Down = false;
+  bButton6Down = false;
+  bButton7Down = false;
+  bButton8Down = false;
   ResetWeaponReloadRefire();
   ResetWeaponActionFlags();
   PlayerState = PST_LIVE;
@@ -4734,6 +4808,10 @@ override void PlayerTick (float deltaTime) {
   if (!(Buttons&BT_ATTACK)) bAttackDown = false;
   if (!(Buttons&BT_ALT_ATTACK)) bAltAttackDown = false;
   if (!(Buttons&BT_ZOOM)) bZoomDown = false;
+  if (!(Buttons&BT_BUTTON_5)) bButton5Down = false;
+  if (!(Buttons&BT_BUTTON_6)) bButton6Down = false;
+  if (!(Buttons&BT_BUTTON_7)) bButton7Down = false;
+  if (!(Buttons&BT_BUTTON_8)) bButton8Down = false;
 
   // copy view angles
   if (MO == Camera) MO.Angles = ViewAngles;
