@@ -152,7 +152,6 @@ option(ENABLE_MASTER      "Build master server (no reason to build it)" OFF)
 option(ENABLE_QUERY_DEMO  "Build query demo (can be used to send rcon commands)" OFF)
 option(ENABLE_VCCRUN      "Build vccrun executable" OFF)
 option(ENABLE_MD2FIXER    "Build fixmd2 executable (you don't need it)" OFF)
-option(ENABLE_GLVIS       "Build glvis PVS builder executable (you don't need it)" OFF)
 
 option(ENABLE_VCCRUN_ONLY "Build ONLY vccrun" OFF)
 option(ENABLE_UTILS_ONLY "Build ONLY utils" OFF)

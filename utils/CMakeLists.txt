@@ -2,14 +2,7 @@
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
-#add_subdirectory(acc)
 add_subdirectory(fixmd2)
-#add_subdirectory(glbsp)
-if(ENABLE_GLVIS)
-  if(NOT CMAKE_CROSSCOMPILING)
-    add_subdirectory(glvis)
-  endif(NOT CMAKE_CROSSCOMPILING)
-endif(ENABLE_GLVIS)
 add_subdirectory(master)
 add_subdirectory(server_query_demo)
 add_subdirectory(vlumpy)
