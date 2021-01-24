@@ -136,6 +136,8 @@ struct segpart_t {
   float frontFakeCeilDist;
   float backFakeFloorDist;
   float backFakeCeilDist;
+  // t-junction flag
+  unsigned fixTJunction;
   //vint32 regidx; // region index (negative means "backsector region")
   sec_region_t *basereg;
 };

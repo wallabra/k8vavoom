@@ -39,6 +39,8 @@ static VCvarB r_3dfloor_clip_both_sides("r_3dfloor_clip_both_sides", false, "Cli
 
 static VCvarB r_hack_fake_floor_decorations("r_hack_fake_floor_decorations", true, "Fake floor/ceiling decoration fix.", /*CVAR_Archive|*/CVAR_PreInit);
 
+VCvarB r_fix_tjunctions("r_fix_tjunctions", true, "Fix t-junctions to avoid occasional white dots?", CVAR_Archive);
+
 
 //**************************************************************************
 //
@@ -1860,6 +1862,50 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
 //==========================================================================
 //
+//  InvalidateSegPart
+//
+//==========================================================================
+static inline void InvalidateSegPart (segpart_t *sp) {
+  for (; sp; sp = sp->next) sp->fixTJunction = 1u;
+}
+
+
+//==========================================================================
+//
+//  MarkTJunctions
+//
+//==========================================================================
+static inline void MarkTJunctions (VLevel *Level, seg_t *seg) {
+  const line_t *line = seg->linedef;
+  const sector_t *mysec = seg->frontsector;
+  if (!line || !mysec) return; // just in case
+  //GCon->Logf(NAME_Debug, "mark tjunctions for line #%d", (int)(ptrdiff_t)(line-&Level->Lines[0]));
+  // simply mark all adjacents for recreation
+  for (int lvidx = 0; lvidx < 2; ++lvidx) {
+    for (int f = 0; f < line->vxCount(lvidx); ++f) {
+      const line_t *ln = line->vxLine(lvidx, f);
+      if (ln != line) {
+        //GCon->Logf(NAME_Debug, "  ...marking line #%d", (int)(ptrdiff_t)(ln-&Level->Lines[0]));
+        // for each seg
+        for (seg_t *ns = ln->firstseg; ns; ns = ns->lsnext) {
+          // for each drawseg
+          for (drawseg_t *ds = ns->drawsegs; ds; ds = ds->next) {
+            // for each segpart
+            InvalidateSegPart(ds->top);
+            InvalidateSegPart(ds->mid);
+            InvalidateSegPart(ds->bot);
+            InvalidateSegPart(ds->topsky);
+            InvalidateSegPart(ds->extra);
+          }
+        }
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  CheckCommonRecreateEx
 //
 //==========================================================================
@@ -1868,6 +1914,7 @@ static inline bool CheckCommonRecreateEx (segpart_t *sp, VTexture *NTex, const T
 {
   if (!NTex) NTex = GTextureManager[GTextureManager.DefaultTexture];
   bool res =
+    (sp->fixTJunction) ||
     (ceiling ? FASI(sp->frontTopDist) != FASI(ceiling->dist) : false) ||
     (floor ? FASI(sp->frontBotDist) != FASI(floor->dist) : false) ||
     (backceiling ? FASI(sp->backTopDist) != FASI(backceiling->dist) : false) ||
@@ -2011,6 +2058,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
   seg_t *seg = dseg->seg;
 
   if (!seg->linedef) return; // miniseg
+  bool needTJ = false;
 
   if (!seg->backsector) {
     // one-sided seg
@@ -2028,6 +2076,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     if (sp) {
       //if (seg->pobj) GCon->Logf(NAME_Debug, "pobj #%d seg; UPDATING", seg->pobj->index);
       if (CheckMidRecreate1S(seg, sp, r_floor.splane, r_ceiling.splane)) {
+        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
         SetupOneSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid);
@@ -2044,6 +2093,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) &&
           R_IsStrictlySkyFlatPlane(r_ceiling.splane) && !R_IsStrictlySkyFlatPlane(back_ceiling))
       {
+        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
         SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
       }
       sp->texinfo.ColorMap = ColorMap;
@@ -2055,6 +2105,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     sp = dseg->top;
     if (sp) {
       if (CheckTopRecreate2S(seg, sp, r_floor.splane, r_ceiling.splane)) {
+        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
         SetupTwoSidedTopWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Top);
@@ -2066,6 +2117,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     sp = dseg->bot;
     if (sp) {
       if (CheckBopRecreate2S(seg, sp, r_floor.splane, r_ceiling.splane)) {
+        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
         SetupTwoSidedBotWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Bot);
@@ -2077,6 +2129,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     sp = dseg->mid;
     if (sp) {
       if (CheckMidRecreate2S(seg, sp, r_floor.splane, r_ceiling.splane)) {
+        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
         SetupTwoSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid);
@@ -2105,6 +2158,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
 
       if (CheckCommonRecreateEx(sp, MTex, r_floor.splane, r_ceiling.splane, reg->efloor.splane, reg->eceiling.splane)) {
+        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
         SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsetsEx(sub, seg, sp, &extraside->Mid, &seg->sidedef->Mid);
@@ -2112,6 +2166,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       sp->texinfo.ColorMap = ColorMap;
     }
   }
+
+  if (needTJ && r_fix_tjunctions.asBool()) MarkTJunctions(Level, seg);
 }
 
 

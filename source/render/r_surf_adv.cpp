@@ -46,6 +46,8 @@ static inline bool BinHeapLess (float a, float b) noexcept {
 #include "../gamedefs.h"
 #include "r_local.h"
 
+extern VCvarB r_fix_tjunctions;
+
 
 //==========================================================================
 //
@@ -89,7 +91,7 @@ surface_t *VRenderLevelShadowVolume::SubdivideFace (surface_t *surf, const TVec 
 //
 //==========================================================================
 surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
-  if (surf->count < 3) return surf; // just in case
+  if (!r_fix_tjunctions.asBool() || surf->count < 3) return surf; // just in case
 
   const line_t *line = seg->linedef;
   const sector_t *mysec = seg->frontsector;
@@ -247,7 +249,7 @@ surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &
     FreeWSurfs(surf);
     surf = s0;
     //
-    GCon->Logf(NAME_Debug, "line #%d, seg #%d: fixed t-junctions", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
+    //GCon->Logf(NAME_Debug, "line #%d, seg #%d: fixed t-junctions", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
   }
 
   return surf;
