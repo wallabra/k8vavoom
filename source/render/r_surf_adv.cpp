@@ -34,26 +34,10 @@
 //==========================================================================
 void VRenderLevelShadowVolume::InitSurfs (bool recalcStaticLightmaps, surface_t *surfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) {
   if (!texinfo && !plane) return;
-  if (texinfo && plane) {
-    for (; surfs; surfs = surfs->next) {
-      surfs->texinfo = texinfo;
-      surfs->plane = *plane;
-    }
-  } else if (texinfo) {
-    for (; surfs; surfs = surfs->next) {
-      surfs->texinfo = texinfo;
-    }
-  } else if (plane) {
-    for (; surfs; surfs = surfs->next) {
-      surfs->plane = *plane;
-    }
+  for (; surfs; surfs = surfs->next) {
+    if (texinfo) surfs->texinfo = texinfo;
+    if (plane) surfs->plane = *plane;
   }
-  /*
-  if (surfs && plane) {
-    surfs->texinfo = texinfo;
-    surfs->plane = *plane;
-  }
-  */
 }
 
 
@@ -61,10 +45,13 @@ void VRenderLevelShadowVolume::InitSurfs (bool recalcStaticLightmaps, surface_t 
 //
 //  VRenderLevelShadowVolume::SubdivideFace
 //
+//  this is used to subdivide flags (floors and ceilings)
+//  axes are two lightmap axes
+//
 //==========================================================================
-surface_t *VRenderLevelShadowVolume::SubdivideFace (surface_t *f, const TVec &, const TVec *) {
+surface_t *VRenderLevelShadowVolume::SubdivideFace (surface_t *surf, const TVec &axis, const TVec *nextaxis) {
   // advanced renderer can draw whole surface
-  return f;
+  return surf;
 }
 
 
@@ -72,8 +59,11 @@ surface_t *VRenderLevelShadowVolume::SubdivideFace (surface_t *f, const TVec &, 
 //
 //  VRenderLevelShadowVolume::SubdivideSeg
 //
+//  this is used to subdivide wall segments
+//  axes are two lightmap axes
+//
 //==========================================================================
-surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &, const TVec *, seg_t *) {
+surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
   // advanced renderer can draw whole surface
   return surf;
 }
