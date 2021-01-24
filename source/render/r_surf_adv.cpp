@@ -61,7 +61,8 @@ surface_t *VRenderLevelShadowVolume::SubdivideFace (surface_t *surf, const TVec 
 //
 //==========================================================================
 surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
-  return surf; // just in case
+  // advanced renderer can draw whole surface
+  return surf;
 }
 
 
