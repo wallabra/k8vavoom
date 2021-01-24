@@ -90,6 +90,21 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       SelectTexture(1);
       glBindTexture(GL_TEXTURE_2D, 0);
       SelectTexture(0);
+
+      for (auto &&surf : dls.DrawSurfListSolid) {
+        //glBegin(GL_TRIANGLE_FAN);
+        glBegin(GL_LINE_LOOP);
+          for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
+        glEnd();
+      }
+
+      for (auto &&surf : dls.DrawSurfListMasked) {
+        //glBegin(GL_TRIANGLE_FAN);
+        glBegin(GL_LINE_LOOP);
+          for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
+        glEnd();
+      }
+
       return;
     }
 
