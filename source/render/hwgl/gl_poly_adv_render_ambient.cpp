@@ -93,8 +93,17 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
       for (auto &&surf : dls.DrawSurfListSolid) {
         //glBegin(GL_TRIANGLE_FAN);
+        /*
         glBegin(GL_LINE_LOOP);
           for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
+        glEnd();
+        */
+        glBegin(GL_LINE_LOOP);
+        for (int i = 1; i < surf->count; ++i) {
+          glVertex(surf->verts[0].vec());
+          glVertex(surf->verts[i].vec());
+          glVertex(surf->verts[(i+1)%surf->count].vec());
+        }
         glEnd();
       }
 

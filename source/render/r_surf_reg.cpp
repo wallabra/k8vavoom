@@ -341,7 +341,7 @@ static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
 //==========================================================================
 surface_t *VRenderLevelLightmap::SubdivideFace (surface_t *surf, const TVec &axis, const TVec *nextaxis) {
   subsector_t *sub = surf->subsector;
-  seg_t *seg = surf->seg;
+  //seg_t *seg = surf->seg;
   vassert(sub);
 
   if (surf->count < 2) {
@@ -367,26 +367,31 @@ surface_t *VRenderLevelLightmap::SubdivideFace (surface_t *surf, const TVec &axi
 
   ++c_subdivides;
 
-  vuint32 drawflags = surf->drawflags;
-  vuint32 typeFlags = surf->typeFlags;
+  //vuint32 drawflags = surf->drawflags;
+  //vuint32 typeFlags = surf->typeFlags;
   surface_t *next = surf->next;
-  Z_Free(surf);
+  //Z_Free(surf);
 
   surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[1]-1)*sizeof(SurfVertex));
-  back->drawflags = drawflags;
-  back->typeFlags = typeFlags;
-  back->subsector = sub;
-  back->seg = seg;
+  back->copyRequiredFrom(*surf);
+  //back->drawflags = drawflags;
+  //back->typeFlags = typeFlags;
+  //back->subsector = sub;
+  //back->seg = seg;
   back->count = clip.vcount[1];
   memcpy((void *)back->verts, clip.verts[1], back->count*sizeof(SurfVertex));
 
   surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[0]-1)*sizeof(SurfVertex));
-  front->drawflags = drawflags;
-  front->typeFlags = typeFlags;
-  front->subsector = sub;
-  front->seg = seg;
+  front->copyRequiredFrom(*surf);
+  //front->drawflags = drawflags;
+  //front->typeFlags = typeFlags;
+  //front->subsector = sub;
+  //front->seg = seg;
   front->count = clip.vcount[0];
   memcpy((void *)front->verts, clip.verts[0], front->count*sizeof(SurfVertex));
+
+  // it is ok to free surface here, because flat surfaces are dynamically allocated
+  Z_Free(surf);
 
   front->next = next;
   back->next = SubdivideFace(front, axis, nextaxis);
@@ -401,7 +406,7 @@ surface_t *VRenderLevelLightmap::SubdivideFace (surface_t *surf, const TVec &axi
 //==========================================================================
 surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
   subsector_t *sub = surf->subsector;
-  vassert(surf->seg == seg);
+  //vassert(surf->seg == seg);
   vassert(sub);
 
   if (surf->count < 2) {
@@ -432,10 +437,11 @@ surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis
   memcpy((void *)surf->verts, clip.verts[1], surf->count*sizeof(SurfVertex));
 
   surface_t *news = NewWSurf();
-  news->drawflags = surf->drawflags;
-  news->typeFlags = surf->typeFlags;
-  news->subsector = sub;
-  news->seg = seg;
+  news->copyRequiredFrom(*surf);
+  //news->drawflags = surf->drawflags;
+  //news->typeFlags = surf->typeFlags;
+  //news->subsector = sub;
+  //news->seg = seg;
   news->count = clip.vcount[0];
   memcpy((void *)news->verts, clip.verts[0], news->count*sizeof(SurfVertex));
 

@@ -206,6 +206,16 @@ struct surface_t {
   SurfVertex verts[1]; // dynamic array of vertices
 
 
+  // used to fill subdivided surfaces
+  inline void copyRequiredFrom (const surface_t &other) noexcept {
+    if (&other != this) {
+      subsector = other.subsector;
+      seg = other.seg;
+      typeFlags = other.typeFlags;
+      drawflags = other.drawflags;
+    }
+  }
+
   inline bool NeedRecalcStaticLightmap () const noexcept { return (drawflags&DF_CALC_LMAP); }
   inline bool IsMasked () const noexcept { return (drawflags&DF_MASKED); }
   inline bool IsTwoSided () const noexcept { return (drawflags&DF_NO_FACE_CULL); }
