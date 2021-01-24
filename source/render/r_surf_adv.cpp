@@ -90,10 +90,21 @@ surface_t *VRenderLevelShadowVolume::SubdivideFace (surface_t *surf, const TVec 
 //==========================================================================
 surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
   if (surf->count < 3) return surf; // just in case
-  if (surf->count != 4) return surf; // wall segment should always be a quad
+
   const line_t *line = seg->linedef;
   const sector_t *mysec = seg->frontsector;
   if (!line || !mysec) return surf; // just in case
+
+  if (surf->count != 4) {
+    // wall segment should always be a quad
+    GCon->Logf(NAME_Warning, "line #%d, seg #%d: not a quad (%d)", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]), surf->count);
+    return surf;
+  }
+  if (surf->next) {
+    GCon->Logf(NAME_Warning, "line #%d, seg #%d: has surface chain", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
+    return surf;
+  }
+
   //GCon->Logf(NAME_Debug, "*** checking line #%d...", (int)(ptrdiff_t)(line-&Level->Lines[0]));
   // build heights for neighbour sectors
   //TArray<float> hlist;
@@ -183,16 +194,6 @@ surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &
         }
       }
 
-      /*
-      surface_t *newsurf;
-      newsurf->copyRequiredFrom(surf);
-      Z_Free(surf);
-
-      //surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[1]-1)*sizeof(SurfVertex));
-      //back->count = clip.vcount[1];
-      //memcpy((void *)back->verts, clip.verts[1], back->count*sizeof(SurfVertex));
-      */
-
       // get triangle to fix
       TArray<TVec> &tri = (vidx ? tri1 : tri0);
       // insert vertices
@@ -217,14 +218,8 @@ surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &
 
   // create new surfaces
   if (tri0.length()) {
-    //FIXME! subdivide surfaces with too many vertices
-    if (tri0.length() > surface_t::MAXWVERTS || tri1.length() > surface_t::MAXWVERTS) {
-      GCon->Logf(NAME_Warning, "line #%d, seg #%d: too many additional vertices (%d:%d); max is %d", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]),
-        tri0.length(), tri1.length(), surface_t::MAXWVERTS);
-      return surf;
-    }
     // s0
-    surface_t *s0 = NewWSurf();
+    surface_t *s0 = NewWSurf(tri0.length());
     s0->copyRequiredFrom(*surf);
     s0->count = tri0.length();
     TJLOG(NAME_Debug, " *** tri0 ***");
@@ -236,7 +231,7 @@ surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &
       s0->verts[f].z = tri0[vn].z;
     }
     // s1
-    surface_t *s1 = NewWSurf();
+    surface_t *s1 = NewWSurf(tri1.length());
     s1->copyRequiredFrom(*surf);
     s1->count = tri1.length();
     TJLOG(NAME_Debug, " *** tri1 ***");
@@ -251,6 +246,8 @@ surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &
     s0->next = s1;
     FreeWSurfs(surf);
     surf = s0;
+    //
+    GCon->Logf(NAME_Debug, "line #%d, seg #%d: fixed t-junctions", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
   }
 
   return surf;

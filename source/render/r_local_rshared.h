@@ -613,8 +613,12 @@ protected:
   // subsector is not changed, but we need it non-const
   //enum { USS_Normal, USS_Force, USS_IgnoreCMap, USS_ForceIgnoreCMap };
   void UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub, subregion_t *sreg, bool ignoreColorMap=false, bool fake=false);
-  surface_t *NewWSurf ();
+
+  // call this ONLY when vcount is known and won't be increased later! use `FreeWSurfs()` to free this surface
+  surface_t *NewWSurf (int vcount);
+  // frees *the* *whole* *surface* *chain*!
   void FreeWSurfs (surface_t *&);
+
   surface_t *CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount, vuint32 typeFlags);
   int CountSegParts (const seg_t *);
   void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, sec_region_t *curreg, bool isMainRegion);

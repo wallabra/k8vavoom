@@ -173,6 +173,12 @@ struct surface_t {
     TF_TOPHACK = 1u<<5,
   };
 
+  // internal allocator flags
+  enum {
+    // allocation type; it prolly doesn't belong there, but meh
+    ALLOC_WORLD = 1u<<0,
+  };
+
   surface_t *next;
   texinfo_t *texinfo; // points to owning `sec_surface_t`
   TPlane plane; // was pointer
@@ -194,6 +200,7 @@ struct surface_t {
   unsigned dlightframe;
   unsigned dlightbits;
   unsigned drawflags; // DF_XXX
+  unsigned allocflags;
   /*short*/int texturemins[2];
   /*short*/int extents[2];
   surfcache_t *CacheSurf; // lightmap atlas cache
@@ -205,6 +212,8 @@ struct surface_t {
   int count; // number of vertices
   SurfVertex verts[1]; // dynamic array of vertices
 
+
+  inline bool isWorldAllocated () const noexcept { return (allocflags&ALLOC_WORLD); }
 
   // used to fill subdivided surfaces
   inline void copyRequiredFrom (const surface_t &other) noexcept {

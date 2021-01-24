@@ -196,7 +196,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
     // new sector surface
     ssurf = new sec_surface_t;
     memset((void *)ssurf, 0, sizeof(sec_surface_t));
-    surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(vcount-1)*sizeof(SurfVertex));
+    surf = NewWSurf(vcount);
   } else {
     // change sector surface
     // we still may have to recreate it if it was a "sky <-> non-sky" change, so check for it
@@ -414,29 +414,34 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
 //  VRenderLevelShared::NewWSurf
 //
 //==========================================================================
-surface_t *VRenderLevelShared::NewWSurf () {
+surface_t *VRenderLevelShared::NewWSurf (int vcount) {
+  vassert(vcount >= 0);
   enum { WSURFSIZE = sizeof(surface_t)+sizeof(SurfVertex)*(surface_t::MAXWVERTS-1) };
-#if 1
+  if (vcount > surface_t::MAXWVERTS) {
+    const int vcnt = (vcount|3)+1;
+    surface_t *res = (surface_t *)Z_Calloc(sizeof(surface_t)+(vcnt-1)*sizeof(SurfVertex));
+    res->count = vcount;
+    return res;
+  }
+  // fits into "standard" surface
   if (!free_wsurfs) {
     // allocate some more surfs
-    vuint8 *tmp = (vuint8 *)Z_Calloc(WSURFSIZE*128+sizeof(void *));
+    vuint8 *tmp = (vuint8 *)Z_Calloc(WSURFSIZE*4096+sizeof(void *));
     *(void **)tmp = AllocatedWSurfBlocks;
     AllocatedWSurfBlocks = tmp;
     tmp += sizeof(void *);
-    for (int i = 0; i < 128; ++i) {
+    for (int i = 0; i < 4096; ++i, tmp += WSURFSIZE) {
       ((surface_t *)tmp)->next = free_wsurfs;
       free_wsurfs = (surface_t *)tmp;
-      tmp += WSURFSIZE;
     }
   }
   surface_t *surf = free_wsurfs;
   free_wsurfs = surf->next;
 
   memset((void *)surf, 0, WSURFSIZE);
-#else
-  surface_t *surf = (surface_t *)Z_Calloc(WSURFSIZE);
-#endif
+  surf->allocflags = surface_t::ALLOC_WORLD;
 
+  surf->count = vcount;
   return surf;
 }
 
@@ -447,26 +452,50 @@ surface_t *VRenderLevelShared::NewWSurf () {
 //
 //==========================================================================
 void VRenderLevelShared::FreeWSurfs (surface_t *&InSurfs) {
-#if 1
   surface_t *surfs = InSurfs;
   FlushSurfCaches(surfs);
   while (surfs) {
     surfs->FreeLightmaps();
     surface_t *next = surfs->next;
-    surfs->next = free_wsurfs;
-    free_wsurfs = surfs;
+    if (surfs->isWorldAllocated()) {
+      surfs->next = free_wsurfs;
+      free_wsurfs = surfs;
+    } else {
+      Z_Free(surfs);
+    }
     surfs = next;
   }
   InSurfs = nullptr;
-#else
-  while (InSurfs) {
-    surface_t *surf = InSurfs;
-    InSurfs = InSurfs->next;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::ReallocSurface
+//
+//  free all surfaces except the first one, clear first, set
+//  number of vertices to vcount
+//
+//==========================================================================
+surface_t *VRenderLevelShared::ReallocSurface (surface_t *surfs, int vcount) {
+  vassert(vcount >= 0); // just in case
+  surface_t *surf = surfs;
+  if (surf) {
+    const int maxcount = (surf->isWorldAllocated() ? surface_t::MAXWVERTS : surf->count);
+    if (vcount > maxcount) {
+      FreeWSurfs(surf);
+      return NewWSurf(vcount);
+    }
+    // free surface chain
+    if (surf->next) { FreeWSurfs(surf->next); surf->next = nullptr; }
     if (surf->CacheSurf) FreeSurfCache(surf->CacheSurf);
     surf->FreeLightmaps();
-    Z_Free(surf);
+    memset((void *)surf, 0, sizeof(surface_t)+(vcount-1)*sizeof(SurfVertex));
+    surf->count = vcount;
+    return surf;
+  } else {
+    return NewWSurf(vcount);
   }
-#endif
 }
 
 
@@ -484,14 +513,14 @@ surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t 
 
   if (!texinfo->Tex || texinfo->Tex->Type == TEXTYPE_Null) return nullptr;
 
-  surface_t *surf = NewWSurf();
+  surface_t *surf = NewWSurf(wvcount);
   surf->subsector = sub;
   surf->seg = seg;
   surf->next = nullptr;
   surf->count = wvcount;
   surf->typeFlags = typeFlags;
   //memcpy(surf->verts, wv, wvcount*sizeof(SurfVertex));
-  memset((void *)surf->verts, 0, wvcount*sizeof(SurfVertex));
+  //memset((void *)surf->verts, 0, wvcount*sizeof(SurfVertex));
   for (int f = 0; f < wvcount; ++f) surf->verts[f].setVec(wv[f]);
 
   if (texinfo->Tex == GTextureManager[skyflatnum]) {
@@ -2774,51 +2803,11 @@ void VRenderLevelShared::SetupFakeFloors (sector_t *sector) {
 
 //==========================================================================
 //
-//  VRenderLevelShared::ReallocSurface
-//
-//  free all surfaces except the first one, clear first, set
-//  number of vertices to vcount
-//
-//==========================================================================
-surface_t *VRenderLevelShared::ReallocSurface (surface_t *surfs, int vcount) {
-  vassert(vcount > 2); // just in case
-  surface_t *surf = surfs;
-  if (surf) {
-    // clear first surface
-    if (surf->CacheSurf) FreeSurfCache(surf->CacheSurf);
-    surf->FreeLightmaps();
-    // free extra surfaces
-    surface_t *next;
-    for (surface_t *s = surfs->next; s; s = next) {
-      if (s->CacheSurf) FreeSurfCache(s->CacheSurf);
-      s->FreeLightmaps();
-      next = s->next;
-      Z_Free(s);
-    }
-    surf->next = nullptr;
-    // realloc first surface (if necessary)
-    if (surf->count != vcount) {
-      const size_t msize = sizeof(surface_t)+(vcount-1)*sizeof(SurfVertex);
-      surf = (surface_t *)Z_Realloc(surf, msize);
-      memset((void *)surf, 0, msize);
-    } else {
-      memset((void *)surf, 0, sizeof(surface_t)+(vcount-1)*sizeof(SurfVertex));
-    }
-    surf->count = vcount;
-  } else {
-    surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(vcount-1)*sizeof(SurfVertex));
-    surf->count = vcount;
-  }
-  return surf;
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::FreeSurfaces
 //
 //==========================================================================
 void VRenderLevelShared::FreeSurfaces (surface_t *InSurf) {
+  /*
   surface_t *next;
   for (surface_t *s = InSurf; s; s = next) {
     if (s->CacheSurf) FreeSurfCache(s->CacheSurf);
@@ -2826,6 +2815,8 @@ void VRenderLevelShared::FreeSurfaces (surface_t *InSurf) {
     next = s->next;
     Z_Free(s);
   }
+  */
+  FreeWSurfs(InSurf);
 }
 
 

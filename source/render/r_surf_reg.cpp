@@ -367,33 +367,23 @@ surface_t *VRenderLevelLightmap::SubdivideFace (surface_t *surf, const TVec &axi
 
   ++c_subdivides;
 
-  //vuint32 drawflags = surf->drawflags;
-  //vuint32 typeFlags = surf->typeFlags;
-  surface_t *next = surf->next;
-  //Z_Free(surf);
-
-  surface_t *back = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[1]-1)*sizeof(SurfVertex));
+  surface_t *back = NewWSurf(clip.vcount[1]);
   back->copyRequiredFrom(*surf);
-  //back->drawflags = drawflags;
-  //back->typeFlags = typeFlags;
-  //back->subsector = sub;
-  //back->seg = seg;
   back->count = clip.vcount[1];
   memcpy((void *)back->verts, clip.verts[1], back->count*sizeof(SurfVertex));
 
-  surface_t *front = (surface_t *)Z_Calloc(sizeof(surface_t)+(clip.vcount[0]-1)*sizeof(SurfVertex));
+  surface_t *front = NewWSurf(clip.vcount[0]);
   front->copyRequiredFrom(*surf);
-  //front->drawflags = drawflags;
-  //front->typeFlags = typeFlags;
-  //front->subsector = sub;
-  //front->seg = seg;
   front->count = clip.vcount[0];
   memcpy((void *)front->verts, clip.verts[0], front->count*sizeof(SurfVertex));
 
-  // it is ok to free surface here, because flat surfaces are dynamically allocated
-  Z_Free(surf);
+  front->next = surf->next;
 
-  front->next = next;
+  // it is ok to free surface here, because flat surfaces are dynamically allocated
+  //Z_Free(surf);
+  surf->next = nullptr;
+  FreeWSurfs(surf);
+
   back->next = SubdivideFace(front, axis, nextaxis);
   return (nextaxis ? SubdivideFace(back, *nextaxis, nullptr) : back);
 }
@@ -436,7 +426,7 @@ surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis
   surf->count = clip.vcount[1];
   memcpy((void *)surf->verts, clip.verts[1], surf->count*sizeof(SurfVertex));
 
-  surface_t *news = NewWSurf();
+  surface_t *news = NewWSurf(clip.vcount[0]);
   news->copyRequiredFrom(*surf);
   //news->drawflags = surf->drawflags;
   //news->typeFlags = surf->typeFlags;
