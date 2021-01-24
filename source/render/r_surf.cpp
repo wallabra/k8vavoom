@@ -23,12 +23,33 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+
+//==========================================================================
+//
+//  BinHeapLess
+//
+//  it has to be here, sorry
+//
+//==========================================================================
+static inline bool BinHeapLess (float a, float b) noexcept {
+  return (a < b);
+}
+
+
 #include "../gamedefs.h"
 #include "r_local.h"
 #include "../server/sv_local.h"
 
-  // it seems that `segsidedef` offset is in effect, but scaling is not
+// it seems that `segsidedef` offset is in effect, but scaling is not
 //#define VV_SURFCTOR_3D_USE_SEGSIDEDEF_SCALE
+
+//#define VV_TJUNCTION_VERBOSE
+
+#ifdef VV_TJUNCTION_VERBOSE
+# define TJLOG(...)  GCon->Logf(__VA_ARGS__)
+#else
+# define TJLOG(...)  (void)0
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -39,6 +60,8 @@ static VCvarB r_3dfloor_clip_both_sides("r_3dfloor_clip_both_sides", false, "Cli
 
 static VCvarB r_hack_fake_floor_decorations("r_hack_fake_floor_decorations", true, "Fake floor/ceiling decoration fix.", /*CVAR_Archive|*/CVAR_PreInit);
 
+
+static VCvarB dbg_fix_tjunctions("dbg_fix_tjunctions", false, "Show debug messages from t-junctions fixer?", 0);
 VCvarB r_fix_tjunctions("r_fix_tjunctions", true, "Fix t-junctions to avoid occasional white dots?", CVAR_Archive);
 
 
@@ -280,7 +303,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
       surf->texinfo = &ssurf->texinfo;
     } else {
       //!GCon->Logf(NAME_Debug, "sfcF:%p: saxis=(%g,%g,%g); taxis=(%g,%g,%g); saxisLM=(%g,%g,%g); taxisLM=(%g,%g,%g)", ssurf, ssurf->texinfo.saxis.x, ssurf->texinfo.saxis.y, ssurf->texinfo.saxis.z, ssurf->texinfo.taxis.x, ssurf->texinfo.taxis.y, ssurf->texinfo.taxis.z, ssurf->texinfo.saxisLM.x, ssurf->texinfo.saxisLM.y, ssurf->texinfo.saxisLM.z, ssurf->texinfo.taxisLM.x, ssurf->texinfo.taxisLM.y, ssurf->texinfo.taxisLM.z);
-      ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxisLM, &ssurf->texinfo.taxisLM);
+      ssurf->surfs = SubdivideFace(FixFaceTJunctions(surf), ssurf->texinfo.saxisLM, &ssurf->texinfo.taxisLM);
       InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub); // recalc static lightmaps
     }
   } else if (updateZ) {
@@ -533,7 +556,7 @@ surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t 
   }
 
   //!GCon->Logf(NAME_Debug, "sfcS:%p: saxis=(%g,%g,%g); taxis=(%g,%g,%g); saxisLM=(%g,%g,%g); taxisLM=(%g,%g,%g)", surf, texinfo->saxis.x, texinfo->saxis.y, texinfo->saxis.z, texinfo->taxis.x, texinfo->taxis.y, texinfo->taxis.z, texinfo->saxisLM.x, texinfo->saxisLM.y, texinfo->saxisLM.z, texinfo->taxisLM.x, texinfo->taxisLM.y, texinfo->taxisLM.z);
-  surf = SubdivideSeg(surf, texinfo->saxisLM, &texinfo->taxisLM, seg);
+  surf = SubdivideSeg(FixSegTJunctions(surf, seg), texinfo->saxisLM, &texinfo->taxisLM, seg);
   InitSurfs(true, surf, texinfo, seg, sub); // recalc static lightmaps
   return surf;
 }
@@ -2916,4 +2939,194 @@ void VRenderLevelShared::FreeSurfaces (surface_t *InSurf) {
 //==========================================================================
 void VRenderLevelShared::FreeSegParts (segpart_t *ASP) {
   for (segpart_t *sp = ASP; sp; sp = sp->next) FreeWSurfs(sp->surfs);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::FixFaceTJunctions
+//
+//==========================================================================
+surface_t *VRenderLevelShared::FixFaceTJunctions (surface_t *surf) {
+  // not yet
+  return surf;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::FixSegTJunctions
+//
+//  this is used to subdivide wall segments
+//  axes are two lightmap axes
+//
+//  we'll fix t-junctions here
+//
+//  WARNING! this is temporary solution, we should do it in renderer,
+//  because moving flats can invalidate neighbour surfaces
+//
+//==========================================================================
+surface_t *VRenderLevelShared::FixSegTJunctions (surface_t *surf, seg_t *seg) {
+  if (!r_fix_tjunctions.asBool() || surf->count < 3) return surf; // just in case
+
+  const line_t *line = seg->linedef;
+  const sector_t *mysec = seg->frontsector;
+  if (!line || !mysec) return surf; // just in case
+
+  if (surf->count != 4) {
+    // wall segment should always be a quad
+    GCon->Logf(NAME_Warning, "line #%d, seg #%d: not a quad (%d)", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]), surf->count);
+    return surf;
+  }
+  if (surf->next) {
+    GCon->Logf(NAME_Warning, "line #%d, seg #%d: has surface chain", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
+    return surf;
+  }
+
+  //GCon->Logf(NAME_Debug, "*** checking line #%d...", (int)(ptrdiff_t)(line-&Level->Lines[0]));
+  // build heights for neighbour sectors
+  //TArray<float> hlist;
+  TBinHeapNoDtor<float> hlist;
+  //TMapNC<const sector_t *, bool> seensec;
+  // determine surface miny and maxy
+  float minz = surf->verts[0].vec().z;
+  float maxz = minz;
+  for (int f = 1; f < surf->count; ++f) {
+    const float y = surf->verts[f].vec().z;
+    minz = min2(minz, y);
+    maxz = max2(maxz, y);
+  }
+
+  // the surface will be split to two triangles
+  TArray<TVec> tri0, tri1;
+  //TJLOG(NAME_Debug, "*** minz=%g; maxz=%g", minz, maxz);
+  for (int vidx = 0; vidx < 2; ++vidx) {
+    const int lvidx = (seg->side ? 1-vidx : vidx);
+    if (!line->vxCount(lvidx)) continue;
+    const TVec lv = (lvidx ? *line->v2 : *line->v1);
+    hlist.resetNoDtor();
+    //seensec.reset();
+    for (int f = 0; f < line->vxCount(lvidx); ++f) {
+      const line_t *ln = line->vxLine(lvidx, f);
+      if (ln == line) continue;
+      //TJLOG(NAME_Debug, "  other line #%d...", (int)(ptrdiff_t)(ln-&Level->Lines[0]));
+      for (int sn = 0; sn < 2; ++sn) {
+        const sector_t *sec = (sn ? ln->backsector : ln->frontsector);
+        if (!sec || sec == mysec) continue;
+        if (sn && ln->frontsector == ln->backsector) continue; // self-referenced line
+        //if (seensec.put(sec, true)) continue;
+        const float fz = sec->floor.GetPointZClamped(lv);
+        const float cz = sec->ceiling.GetPointZClamped(lv);
+        //TJLOG(NAME_Debug, "  other line #%d: sec=%d; fz=%g; cz=%g", (int)(ptrdiff_t)(ln-&Level->Lines[0]), (int)(ptrdiff_t)(sec-&Level->Sectors[0]), fz, cz);
+        if (fz > cz) continue; // just in case
+        if (cz <= minz || fz >= maxz) continue; // no need to introduce any new vertices
+        if (fz > minz) hlist.push(fz);
+        if (cz != fz && cz < maxz) hlist.push(cz);
+      }
+    }
+
+    if (hlist.length()) {
+      TJLOG(NAME_Debug, "line #%d, vertex %d: at most %d additional %s", (int)(ptrdiff_t)(line-&Level->Lines[0]), lvidx, hlist.length(), (hlist.length() != 1 ? "vertices" : "vertex"));
+
+      /*
+        insert points into surface side. as we are rendering with triangle fans, and inserting
+        point can create a degenerate side triangle, so we'll need to post-process new surface.
+        as our surface is always either a quad, or a triangle, we can split a quad into two
+        triangles. this way we'll always be able to find a good starting point for triangle fan.
+       */
+
+      if (!tri1.length()) {
+        vassert(surf->count == 4);
+        #ifdef VV_TJUNCTION_VERBOSE
+          TJLOG(NAME_Debug, " minz=%g; maxz=%g; (%g,%g,%g)-(%g,%g,%g)", minz, maxz, seg->v1->x, seg->v1->y, seg->v1->z, seg->v2->x, seg->v2->y, seg->v2->z);
+          for (int f = 0; f < surf->count; ++f) TJLOG(NAME_Debug, "  %d: (%g,%g,%g)", f, surf->verts[f].vec().x, surf->verts[f].vec().y, surf->verts[f].vec().z);
+        #endif
+        if (surf->verts[0].vec().x != surf->verts[1].vec().x || surf->verts[0].vec().y != surf->verts[1].vec().y ||
+            surf->verts[2].vec().x != surf->verts[3].vec().x || surf->verts[2].vec().y != surf->verts[3].vec().y)
+        {
+          GCon->Logf(NAME_Warning, "line #%d, seg #%d: bad quad (0)", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
+          return surf;
+        }
+        if (surf->verts[0].vec().x == seg->v1->x && surf->verts[0].vec().y == seg->v1->y) {
+          // first triangle
+          tri0.append(surf->verts[0].vec());
+          tri0.append(surf->verts[1].vec());
+          tri0.append(surf->verts[2].vec());
+          // second triangle
+          tri1.append(surf->verts[2].vec());
+          tri1.append(surf->verts[3].vec());
+          tri1.append(surf->verts[0].vec());
+        } else if (surf->verts[0].vec().x == seg->v2->x && surf->verts[0].vec().y == seg->v2->y) {
+          // second triangle
+          tri1.append(surf->verts[0].vec());
+          tri1.append(surf->verts[1].vec());
+          tri1.append(surf->verts[2].vec());
+          // first triangle
+          tri0.append(surf->verts[2].vec());
+          tri0.append(surf->verts[3].vec());
+          tri0.append(surf->verts[0].vec());
+        } else {
+          //FIXME: this should not happen, but...
+          GCon->Logf(NAME_Warning, "line #%d, seg #%d: bad quad (1)", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
+          return surf;
+        }
+      }
+
+      // get triangle to fix
+      TArray<TVec> &tri = (vidx ? tri1 : tri0);
+      // insert vertices
+      float prevhz = -FLT_MAX;
+      while (hlist.length()) {
+        const float hz = hlist.pop();
+        if (hz != prevhz) {
+          TJLOG(NAME_Debug, "  y=%g", hz);
+          prevhz = hz;
+          int f = 0;
+          if (tri[0].z < tri[1].z) {
+            while (f < tri.length() && tri[f].z < hz) ++f;
+          } else {
+            while (f < tri.length() && hz < tri[f].z) ++f;
+          }
+          vassert(f < tri.length());
+          tri.Insert(f, TVec(tri[0].x, tri[0].y, hz));
+        }
+      }
+    }
+  }
+
+  // create new surfaces
+  if (tri0.length()) {
+    // s0
+    surface_t *s0 = NewWSurf(tri0.length());
+    s0->copyRequiredFrom(*surf);
+    s0->count = tri0.length();
+    TJLOG(NAME_Debug, " *** tri0 ***");
+    for (int f = 0; f < s0->count; ++f) {
+      const int vn = (s0->count-1+f)%s0->count;
+      TJLOG(NAME_Debug, "   %d(%d): (%g,%g,%g)", f, vn, tri0[vn].x, tri0[vn].y, tri0[vn].z);
+      s0->verts[f].x = tri0[vn].x;
+      s0->verts[f].y = tri0[vn].y;
+      s0->verts[f].z = tri0[vn].z;
+    }
+    // s1
+    surface_t *s1 = NewWSurf(tri1.length());
+    s1->copyRequiredFrom(*surf);
+    s1->count = tri1.length();
+    TJLOG(NAME_Debug, " *** tri1 ***");
+    for (int f = 0; f < s1->count; ++f) {
+      const int vn = (s1->count-1+f)%s1->count;
+      TJLOG(NAME_Debug, "   %d(%d): (%g,%g,%g)", f, vn, tri1[vn].x, tri1[vn].y, tri1[vn].z);
+      s1->verts[f].x = tri1[vn].x;
+      s1->verts[f].y = tri1[vn].y;
+      s1->verts[f].z = tri1[vn].z;
+    }
+    // link them
+    s0->next = s1;
+    FreeWSurfs(surf);
+    surf = s0;
+    //
+    if (dbg_fix_tjunctions.asBool()) GCon->Logf(NAME_Debug, "line #%d, seg #%d: fixed t-junctions", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
+  }
+
+  return surf;
 }
