@@ -1697,6 +1697,8 @@ static void ParseMapUMapinfo (VScriptParser *sc, VMapInfo *info) {
     info->NextMap = VName(*endType);
   }
 
+  if (info->SecretMap == NAME_None) info->SecretMap = info->NextMap;
+
   if (wasClearBossAction) {
     vassert(info->SpecialActions.length() == 0);
     // special action

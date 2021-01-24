@@ -40,8 +40,19 @@ intermusic = "song"         ; Music to be used for intertext and intertextsecret
 episode = clear             ; Clears the episode menu of all previous entries. Should be used on the first map if a mod wants to define its own episodes.
 episode = "patch", "name", "key"
                             ; Defines an entry for the episode menu. If all defined episodes define a valid patch, those will be shown, otherwise the names will be used with the HUD font. At most 8 episodes can be defined.
+bossaction = clear          ; k8: Remove all map boss actions; found in prboom+/umapinfo source code
 bossaction = thingtype, linespecial, tag
                             ; Defines a boss death action. Tag 0 is not allowed except for level exits. Shoot triggers, teleporters and locked doors are not supported. A map may define multiple death actions. Thingtype uses ZDoom's class names (see list below.)
+k8: should specifying "bossaction" on map07, for example, override default map07 boss actions. should "clear" remove them.
+what to do for:
+  bossaction = boo, 666, 666
+  bossaction = clear
+  bossaction = boo, 888, 888
+k8: btw. is quotes allowed in <thingtype>? looks like they aren't. also, are quores *required* for other cases? should
+  intertext = clear
+and
+  intertext = "clear"
+mean two different things?
 
 
 Default handling:
