@@ -448,7 +448,6 @@ bool TFrustum::checkPolyInterlaced (const TVec *data, size_t memberSize, const u
 }
 
 
-
 //==========================================================================
 //
 //  TFrustum::checkQuad
