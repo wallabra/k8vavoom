@@ -48,6 +48,8 @@ static inline bool BinHeapLess (float a, float b) noexcept {
 
 extern VCvarB r_fix_tjunctions;
 
+static VCvarB dbg_fix_tjunctions("dbg_fix_tjunctions", false, "Show debug messages from t-junctions fixer?", 0);
+
 
 //==========================================================================
 //
@@ -249,7 +251,7 @@ surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &
     FreeWSurfs(surf);
     surf = s0;
     //
-    //GCon->Logf(NAME_Debug, "line #%d, seg #%d: fixed t-junctions", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
+    if (dbg_fix_tjunctions.asBool()) GCon->Logf(NAME_Debug, "line #%d, seg #%d: fixed t-junctions", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
   }
 
   return surf;

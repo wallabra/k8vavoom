@@ -1906,6 +1906,36 @@ static inline void MarkTJunctions (VLevel *Level, seg_t *seg) {
 
 //==========================================================================
 //
+//  CheckFlatsChangedEx
+//
+//==========================================================================
+static inline bool CheckFlatsChangedEx (const segpart_t *sp, const TPlane *floor, const TPlane *ceiling,
+                                        const TPlane *backfloor, const TPlane *backceiling)
+{
+  return
+    (ceiling ? FASI(sp->frontTopDist) != FASI(ceiling->dist) : false) ||
+    (floor ? FASI(sp->frontBotDist) != FASI(floor->dist) : false) ||
+    (backceiling ? FASI(sp->backTopDist) != FASI(backceiling->dist) : false) ||
+    (backfloor ? FASI(sp->backBotDist) != FASI(backfloor->dist) : false);
+}
+
+
+//==========================================================================
+//
+//  CheckFlatsChanged
+//
+//==========================================================================
+static inline bool CheckFlatsChanged (const seg_t *seg, const segpart_t *sp, const TPlane *floor, const TPlane *ceiling) {
+  if (seg->backsector) {
+    return CheckFlatsChangedEx(sp, floor, ceiling, &seg->backsector->floor, &seg->backsector->ceiling);
+  } else {
+    return CheckFlatsChangedEx(sp, floor, ceiling, nullptr, nullptr);
+  }
+}
+
+
+//==========================================================================
+//
 //  CheckCommonRecreateEx
 //
 //==========================================================================
@@ -1913,12 +1943,9 @@ static inline bool CheckCommonRecreateEx (segpart_t *sp, VTexture *NTex, const T
                                           const TPlane *backfloor, const TPlane *backceiling)
 {
   if (!NTex) NTex = GTextureManager[GTextureManager.DefaultTexture];
-  bool res =
+  const bool res =
     (sp->fixTJunction) ||
-    (ceiling ? FASI(sp->frontTopDist) != FASI(ceiling->dist) : false) ||
-    (floor ? FASI(sp->frontBotDist) != FASI(floor->dist) : false) ||
-    (backceiling ? FASI(sp->backTopDist) != FASI(backceiling->dist) : false) ||
-    (backfloor ? FASI(sp->backBotDist) != FASI(backfloor->dist) : false) ||
+    (CheckFlatsChangedEx(sp, floor, ceiling, backfloor, backceiling)) ||
     FASI(sp->texinfo.Tex->SScale) != FASI(NTex->SScale) ||
     FASI(sp->texinfo.Tex->TScale) != FASI(NTex->TScale) ||
     (sp->texinfo.Tex->Type == TEXTYPE_Null) != (NTex->Type == TEXTYPE_Null) ||
@@ -2076,7 +2103,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     if (sp) {
       //if (seg->pobj) GCon->Logf(NAME_Debug, "pobj #%d seg; UPDATING", seg->pobj->index);
       if (CheckMidRecreate1S(seg, sp, r_floor.splane, r_ceiling.splane)) {
-        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
+        if (CheckFlatsChanged(seg, sp, r_floor.splane, r_ceiling.splane)) needTJ = true;
+        sp->fixTJunction = 0;
         SetupOneSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid);
@@ -2093,7 +2121,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) &&
           R_IsStrictlySkyFlatPlane(r_ceiling.splane) && !R_IsStrictlySkyFlatPlane(back_ceiling))
       {
-        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
+        if (CheckFlatsChanged(seg, sp, r_floor.splane, r_ceiling.splane)) needTJ = true;
+        sp->fixTJunction = 0;
         SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
       }
       sp->texinfo.ColorMap = ColorMap;
@@ -2105,7 +2134,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     sp = dseg->top;
     if (sp) {
       if (CheckTopRecreate2S(seg, sp, r_floor.splane, r_ceiling.splane)) {
-        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
+        if (CheckFlatsChanged(seg, sp, r_floor.splane, r_ceiling.splane)) needTJ = true;
+        sp->fixTJunction = 0;
         SetupTwoSidedTopWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Top);
@@ -2117,7 +2147,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     sp = dseg->bot;
     if (sp) {
       if (CheckBopRecreate2S(seg, sp, r_floor.splane, r_ceiling.splane)) {
-        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
+        if (CheckFlatsChanged(seg, sp, r_floor.splane, r_ceiling.splane)) needTJ = true;
+        sp->fixTJunction = 0;
         SetupTwoSidedBotWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Bot);
@@ -2129,7 +2160,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     sp = dseg->mid;
     if (sp) {
       if (CheckMidRecreate2S(seg, sp, r_floor.splane, r_ceiling.splane)) {
-        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
+        if (CheckFlatsChanged(seg, sp, r_floor.splane, r_ceiling.splane)) needTJ = true;
+        sp->fixTJunction = 0;
         SetupTwoSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid);
@@ -2158,7 +2190,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
 
       if (CheckCommonRecreateEx(sp, MTex, r_floor.splane, r_ceiling.splane, reg->efloor.splane, reg->eceiling.splane)) {
-        if (!sp->fixTJunction) needTJ = true; else sp->fixTJunction = 0;
+        if (CheckFlatsChanged(seg, sp, r_floor.splane, r_ceiling.splane)) needTJ = true;
+        sp->fixTJunction = 0;
         SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsetsEx(sub, seg, sp, &extraside->Mid, &seg->sidedef->Mid);
