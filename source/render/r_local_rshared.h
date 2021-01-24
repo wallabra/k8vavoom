@@ -170,11 +170,6 @@ protected:
   //TPlane CurrLightSpotPlane; // CurrLightSpotPlane.SetPointNormal3D(CurrLightPos, CurrLightConeDir);
   TFrustum CurrLightConeFrustum; // current spotlight frustum
 
-  // used in `AllocDlight()` to save one call to `PointInSubsector()`
-  // reset in `RenderPlayerView()`
-  TVec lastDLightView;
-  subsector_t *lastDLightViewSub;
-
   bool inWorldCreation; // are we creating world surfaces now?
 
   // mark all updated subsectors with this; increment on each new frame

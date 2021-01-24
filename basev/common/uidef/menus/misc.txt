@@ -152,25 +152,6 @@ menudef MiscOptions {
       "\cGWARNING: GL Node loader is buggy, and may not work.";
   }
 
-  option bool [__k8vavoom_developer_version > 0] {
-    title = "Build (rough) PVS";
-    cvar = pvs_build_on_loading;
-    help =
-      "Build simple PVS set."
-      "This rarely speeds up rendering, but can take alot of time to build.";
-  }
-
-  option numeric [__k8vavoom_developer_version > 0] {
-    title = "PVS threads";
-    cvar = pvs_threads;
-    step = 1;
-    min = 0;
-    max = 16;
-    help =
-      "How many CPU cores can be used to build PVS set?"
-      "0 means 'Use all available cores'.";
-  }
-
 
   header "Cache options";
 

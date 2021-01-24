@@ -134,7 +134,6 @@ void VRenderLevelShadowVolume::RenderSceneStaticLights (const refdef_t *RD, cons
   // do not render lights further than `gl_maxdist`
   const float maxLightDist = GetLightMaxDistDef();
   const float rlightraduisSq = maxLightDist*maxLightDist;
-  //const bool hasPVS = Level->HasPVS();
 
   // no need to do this, because light rendering will do it again anyway
   const bool checkLightVis = r_advlight_flood_check.asBool();
@@ -245,7 +244,6 @@ void VRenderLevelShadowVolume::RenderSceneDynamicLights (const refdef_t *RD, con
   // do not render lights further than `gl_maxdist`
   const float maxLightDist = GetLightMaxDistDef();
   const float rlightraduisSq = maxLightDist*maxLightDist;
-  //const bool hasPVS = Level->HasPVS();
 
   TPlane backPlane;
   backPlane.SetPointNormal3D(Drawer->vieworg, Drawer->viewforward);

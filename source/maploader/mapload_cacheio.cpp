@@ -27,7 +27,7 @@
 
 
 static int constexpr cestlen (const char *s, int pos=0) noexcept { return (s && s[pos] ? 1+cestlen(s, pos+1) : 0); }
-static constexpr const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 008.\n";
+static constexpr const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 009.\n";
 enum { CDSLEN = cestlen(CACHE_DATA_SIGNATURE) };
 static_assert(CDSLEN == 32, "oops!");
 
@@ -241,20 +241,6 @@ void VLevel::SaveCachedData (VStream *strm) {
     arrstrm->Serialize(BlockMapLump, BlockMapLumpSize*4);
   }
 
-  //FIXME: store visdata size somewhere
-  // pvs
-  if (VisData) {
-    NET_SendNetworkHeartbeat(true); // forced
-    int rowbytes = (NumSubsectors+7)>>3;
-    int vissize = rowbytes*NumSubsectors;
-    GCon->Logf("cache: writing %d bytes of pvs table", vissize);
-    *arrstrm << vissize;
-    if (vissize) arrstrm->Serialize(VisData, vissize);
-  } else {
-    int vissize = 0;
-    *arrstrm << vissize;
-  }
-
   delete arrstrm;
 
   NET_SendNetworkHeartbeat(true); // forced
@@ -284,7 +270,6 @@ bool VLevel::LoadCachedData (VStream *strm) {
   VZLibStreamReader *arrstrm = new VZLibStreamReader(true, strm);
   if (arrstrm->IsError()) { delete arrstrm; GCon->Log("cannot create cache decompressor"); return false; }
 
-  int vissize = -1;
   int checkSecNum = -1;
 
   // flags (nothing for now)
@@ -424,15 +409,6 @@ bool VLevel::LoadCachedData (VStream *strm) {
     GCon->Logf("cache: reading %d cells of blockmap table", BlockMapLumpSize);
     BlockMapLump = new vint32[BlockMapLumpSize];
     arrstrm->Serialize(BlockMapLump, BlockMapLumpSize*4);
-  }
-
-  // pvs
-  *arrstrm << vissize;
-  if (vissize < 0 || vissize > 0x6fffffff) { delete arrstrm; GCon->Log("cache file corrupted (pvs)"); return false; }
-  if (vissize > 0) {
-    GCon->Logf("cache: reading %d bytes of pvs table", vissize);
-    VisData = new vuint8[vissize];
-    arrstrm->Serialize(VisData, vissize);
   }
 
   if (arrstrm->IsError()) { delete arrstrm; GCon->Log("cache file corrupted (read error)"); return false; }

@@ -76,9 +76,7 @@ bool VEntity::CanSeeEx (VEntity *Other, unsigned flags) {
     return false;
   }
 
-  // determine subsector entries in GL_PVS table
   // first check for trivial rejection
-  if (!XLevel->IsLeafVisible(SubSector, Other->SubSector)) return false; // can't possibly be connected
   if (XLevel->IsRejectedVis(Sector, Other->Sector)) return false; // can't possibly be connected
 
   // killough 11/98: shortcut for melee situations

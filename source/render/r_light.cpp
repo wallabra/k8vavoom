@@ -34,7 +34,6 @@ VCvarI r_ambient_min("r_ambient_min", "0", "Minimal ambient light.", CVAR_Archiv
 VCvarB r_allow_ambient("r_allow_ambient", true, "Allow ambient lights?", CVAR_Archive);
 VCvarB r_dynamic_lights("r_dynamic_lights", true, "Allow dynamic lights?", CVAR_Archive);
 VCvarB r_dynamic_clip("r_dynamic_clip", true, "Clip dynamic lights?", CVAR_Archive);
-VCvarB r_dynamic_clip_pvs("r_dynamic_clip_pvs", false, "Clip dynamic lights with PVS?", CVAR_Archive);
 VCvarB r_static_lights("r_static_lights", true, "Allow static lights?", CVAR_Archive);
 VCvarB r_light_opt_shadow("r_light_opt_shadow", false, "Check if light can potentially cast a shadow.", CVAR_Archive);
 VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How close dynamic lights should be to be filtered out?\n(0.2-0.4 is usually ok).", CVAR_Archive);
@@ -326,13 +325,6 @@ void VRenderLevelShared::MarkLights (dlight_t *light, vuint32 bit, int bspnum, i
     const int num = (bspnum != -1 ? BSPIDX_LEAF_SUBSECTOR(bspnum) : 0);
     subsector_t *ss = &Level->Subsectors[num];
 
-    if (r_dynamic_clip_pvs && Level->HasPVS()) {
-      const vuint8 *dyn_facevis = Level->LeafPVS(ss);
-      //int leafnum = Level->PointInSubsector(light->origin)-Level->Subsectors;
-      // check potential visibility
-      if (!(dyn_facevis[lleafnum>>3]&(1<<(lleafnum&7)))) return;
-    }
-
     if (ss->dlightframe != currDLightFrame) {
       ss->dlightbits = bit;
       ss->dlightframe = currDLightFrame;
@@ -440,22 +432,6 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       //!if (bestdist/*lengthSquared(cl->ViewOrg-lorg)*/ >= r_lights_radius*r_lights_radius) return nullptr;
       //const float rsqx = r_lights_radius+radius;
       //if (bestdist >= rsqx*rsqx) return nullptr;
-    }
-
-    // pvs check
-    if (r_dynamic_clip_pvs && Level->HasPVS()) {
-      subsector_t *sub = lastDLightViewSub;
-      if (!sub || lastDLightView.x != cl->ViewOrg.x || lastDLightView.y != cl->ViewOrg.y /*|| lastDLightView.z != cl->ViewOrg.z*/) {
-        lastDLightView = cl->ViewOrg;
-        lastDLightViewSub = sub = Level->PointInSubsector(cl->ViewOrg);
-      }
-      const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-      leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(lorg)-Level->Subsectors);
-      // check potential visibility
-      if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) {
-        //fprintf(stderr, "DYNLIGHT rejected by PVS\n");
-        return nullptr;
-      }
     }
 
     #if 0
@@ -1015,7 +991,6 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
     const TVec p = calcLightPoint(pt, height);
     const bool dynclip = r_dynamic_clip.asBool();
     const int snum = (int)(ptrdiff_t)(sub-&Level->Subsectors[0]);
-    const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     static_assert(sizeof(unsigned) >= sizeof(vuint32), "`unsigned` should be at least of `vuint32` size");
     const unsigned dlbits = (unsigned)sub->dlightbits;
     const bool texCheck = r_lmap_texture_check_dynamic.asBool();
@@ -1027,13 +1002,6 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
       // reject owned light, because they are processed by another method
       const dlight_t &dl = DLights[i];
       if (lowner && lowner->ServerUId == dl.ownerUId) continue;
-      // check potential visibility
-      const int leafnum = dlinfo[i].leafnum;
-      if (dyn_facevis) {
-        //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
-        if (leafnum < 0) continue;
-        if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
-      }
       if (dl.type&DLTYPE_Subtractive) continue;
       //if (!dl.radius || dl.die < Level->Time) continue; // this is not needed here
       const float distSq = (p-dl.origin).lengthSquared();
@@ -1049,7 +1017,8 @@ void VRenderLevelShared::CalculateDynLightSub (VEntity *lowner, float &l, float 
           if (add <= 1.0f) continue;
         }
         // trace light that needs shadows
-        if (dynclip && !(dl.flags&dlight_t::NoShadow) && dlinfo[i].leafnum != snum && dlinfo[i].isNeedTrace()) {
+        const int leafnum = dlinfo[i].leafnum;
+        if (dynclip && !(dl.flags&dlight_t::NoShadow) && leafnum != snum && dlinfo[i].isNeedTrace()) {
           if (!RadiusCastRay((texCheck && dl.radius > texCheckRadus), sub->sector, p, (leafnum >= 0 ? Level->Subsectors[leafnum].sector : nullptr), dl.origin, radius)) continue;
         }
         //!if (dl.type&DLTYPE_Subtractive) add = -add;
@@ -1075,7 +1044,6 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
   if (r_static_lights && sub) {
     if (!staticLightsFiltered) RefilterStaticLights();
     const TVec p = calcLightPoint(pt, height);
-    const vuint8 *dyn_facevis = (Level->HasPVS() ? Level->LeafPVS(sub) : nullptr);
     const bool dynclip = true; //r_dynamic_clip.asBool();
     const bool texCheck = r_lmap_texture_check_static.asBool();
     // we know for sure what static light may affect the subsector, so there is no need to check 'em all
@@ -1089,7 +1057,6 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
       // ignore owned lights, because they are processed in another method
       if (lowner && lowner->ServerUId == stl->ownerUId) continue;
       // check potential visibility
-      if (dyn_facevis && !(dyn_facevis[stl->leafnum>>3]&(1<<(stl->leafnum&7)))) continue;
       const float distSq = (p-stl->origin).lengthSquared();
       if (distSq >= stl->radius*stl->radius) continue; // too far away
       float add = stl->radius-sqrtf(distSq);
@@ -1119,7 +1086,6 @@ void VRenderLevelShared::CalculateSubStatic (VEntity *lowner, float &l, float &l
       // owned lights always shine
       const bool isowned = (lowner && lowner->ServerUId == stl->ownerUId);
       // check potential visibility
-      if (!isowned && dyn_facevis && !(dyn_facevis[stl->leafnum>>3]&(1<<(stl->leafnum&7)))) continue;
       const float distSq = (p-stl->origin).lengthSquared();
       if (distSq >= stl->radius*stl->radius) continue; // too far away
       float add = stl->radius-sqrtf(distSq);

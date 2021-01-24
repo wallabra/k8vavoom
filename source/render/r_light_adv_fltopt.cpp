@@ -78,13 +78,6 @@ void VRenderLevelShadowVolume::RefilterStaticLights () {
       const float distsq = length2DSquared(cl.origin-nl.origin);
       if (distsq >= radsq) continue;
 
-      // check potential visibility
-      /*
-      subsector_t *sub = Level->PointInSubsector(nl.origin);
-      const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-      if (!(dyn_facevis[nl.leafnum>>3]&(1<<(nl.leafnum&7)))) continue;
-      */
-
       // if we cannot trace a line between two lights, they are prolly divided by a wall or a flat
       linetrace_t Trace;
       if (!Level->TraceLine(Trace, nl.origin, cl.origin, SPF_NOBLOCKSIGHT)) continue;

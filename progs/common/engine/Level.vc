@@ -106,9 +106,6 @@ native readonly seg_t[] Segs;
 native readonly subsector_t[] Subsectors;
 native readonly private node_t[] Nodes;
 
-native readonly private ubyte *VisData;
-native readonly private ubyte *NoVis;
-
 // !!! Used only during level loading
 native mthing_t[] Things;
 

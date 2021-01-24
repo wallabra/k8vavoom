@@ -51,7 +51,6 @@ VCvarB r_lmap_recalc_moved_static("r_lmap_recalc_moved_static", true, "Recalc st
 extern VCvarI r_ambient_min;
 extern VCvarB r_allow_ambient;
 extern VCvarB r_dynamic_clip;
-extern VCvarB r_dynamic_clip_pvs;
 extern VCvarB r_glow_flat;
 extern VCvarB r_draw_queue_warnings;
 
@@ -503,14 +502,9 @@ template<typename T> void FilterLightmap (T *lmap, const int wdt, const int hgt)
 //  light face with static light
 //
 //==========================================================================
-void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf, const vuint8 *facevis) {
+void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf) {
   if (surf->count < 3) return; // wtf?!
   if (!light->active || light->radius < 2) return;
-
-  // check potential visibility
-  if (facevis) {
-    if (!(facevis[light->leafnum>>3]&(1<<(light->leafnum&7)))) return;
-  }
 
   // check bounding box
   if (light->origin.x+light->radius < lmi.smins.x ||
@@ -778,7 +772,6 @@ void VRenderLevelLightmap::LightFace (surface_t *surf) {
     return;
   }
 
-  subsector_t *leaf = surf->subsector;
   const bool accountTime = (lmapStaticRecalcTimeLeft > 0);
   double stt = (accountTime ? -Sys_Time() : 0);
 
@@ -786,7 +779,6 @@ void VRenderLevelLightmap::LightFace (surface_t *surf) {
   //lmi.points_calculated = false;
   vassert(!lmi.pointsCalced);
 
-  const vuint8 *facevis = (leaf && Level->HasPVS() ? Level->LeafPVS(leaf) : nullptr);
   lmi.light_hit = false;
   lmtracer.isColored = false;
 
@@ -796,14 +788,14 @@ void VRenderLevelLightmap::LightFace (surface_t *surf) {
   if (r_static_lights) {
     #if 0
     light_t *stl = Lights.ptr();
-    for (int i = Lights.length(); i--; ++stl) SingleLightFace(lmi, stl, surf, facevis);
+    for (int i = Lights.length(); i--; ++stl) SingleLightFace(lmi, stl, surf);
     #else
     const int snum = (int)(ptrdiff_t)(surf->subsector-&Level->Subsectors[0]);
     if (snum >= 0 && snum < SubStaticLights.length()) {
       SubStaticLigtInfo *sli = SubStaticLights.ptr()+snum;
       for (auto it : sli->touchedStatic.first()) {
         light_t *stl = &Lights[it.getKey()];
-        SingleLightFace(lmi, stl, surf, facevis);
+        SingleLightFace(lmi, stl, surf);
       }
     }
     #endif
@@ -977,7 +969,6 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
   const float step = 16;
   */
 
-  const bool hasPVS = Level->HasPVS();
   const bool doCheckTrace = (r_dynamic_clip && IsShadowsEnabled());
   const bool useBSPTrace = r_lmap_bsp_trace_dynamic.asBool();
   const bool texCheck = r_lmap_texture_check_dynamic.asBool();
@@ -1006,16 +997,6 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
     float minlight = dl.minlight;
     if (rad < minlight) continue;
     minlight = rad-minlight;
-
-    if (hasPVS && r_dynamic_clip_pvs && surf->subsector) {
-      const subsector_t *sub = surf->subsector; //Level->PointInSubsector(impact);
-      const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-      //int leafnum = Level->PointInSubsector(dorg)-Level->Subsectors;
-      int leafnum = dlinfo[lnum].leafnum;
-      if (leafnum < 0) continue;
-      // check potential visibility
-      if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
-    }
 
     TVec impact = dorg-surf->GetNormal()*dist;
     //const TVec surfOffs = surf->GetNormal()*4.0f; // don't land exactly on a surface

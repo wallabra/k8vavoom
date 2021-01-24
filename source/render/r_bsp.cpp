@@ -1086,18 +1086,8 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
 
   // render it if we're not in "only clip" mode
   if (!onlyClip) {
-    // if we have PVS, `MarkLeaves()` marks potentially visible subsectors
-    if (Level->HasPVS()) {
-      if (sub->VisFrame != currVisFrame) {
-        if (clip_use_1d_clipper) {
-          ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && Drawer->viewfrustum.planes[TFrustum::Forward].isValid() ? &Drawer->viewfrustum.planes[TFrustum::Forward] : nullptr));
-        }
-        return;
-      }
-    } else {
-      // if we have no PVS, and already hit this subsector somehow, do nothing
-      if (sub->VisFrame == currVisFrame) return;
-    }
+    // if we already hit this subsector somehow, do nothing
+    if (sub->VisFrame == currVisFrame) return;
 
     // is this subsector potentially visible?
     #ifndef VV_USE_CLIP_CHECK_AND_ADD

@@ -633,6 +633,8 @@ struct segpart_t {
   float frontFakeCeilDist;
   float backFakeFloorDist;
   float backFakeCeilDist;
+  // t-junction flag
+  int fixTJunction;
   //int regidx; // region index (has no meaning for non-region parts)
   sec_region_t *basereg;
 };

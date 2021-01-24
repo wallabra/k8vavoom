@@ -161,14 +161,6 @@ bool VRenderLevelShared::CheckBSPFloodVisibility (const TVec &org, float radius,
     if (!sub) return false;
   }
   const unsigned subidx = (unsigned)(ptrdiff_t)(sub-Level->Subsectors);
-  // check potential visibility
-  /*
-  if (hasPVS) {
-    const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-    const unsigned leafnum = Level->PointInSubsector(l->origin)-Level->Subsectors;
-    if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
-  }
-  */
 /*
   // already checked?
   if (bspVisRadius[subidx].framecount == bspVisRadiusFrame) {

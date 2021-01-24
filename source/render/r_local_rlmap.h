@@ -194,7 +194,7 @@ protected:
   static void CalcMinMaxs (LMapTraceInfo &lmi, const surface_t *surf);
   static bool CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf);
   void CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool lowres); // for dynlights, set `lowres` to `true`
-  void SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf, const vuint8 *facevis);
+  void SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf);
   void AddDynamicLights (surface_t *surf);
 
   // lightmap cache manager

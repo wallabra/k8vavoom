@@ -302,9 +302,6 @@ class VLevel : public VGameObject {
   node_t *Nodes;
   vint32 NumNodes;
 
-  vuint8 *VisData;
-  vuint8 *NoVis;
-
   // !!! Used only during level loading
   mthing_t *Things;
   vint32 NumThings;
@@ -607,29 +604,6 @@ public:
   // checks all subsectors
   bool IsPointInSector2D (const sector_t *sec, TVec in) const noexcept;
 
-  inline bool HasPVS () const noexcept { return !!VisData; }
-
-  //const vuint8 *LeafPVS (const subsector_t *ss) const;
-  inline const vuint8 *LeafPVS (const subsector_t *ss) const noexcept {
-    if (VisData) {
-      const int sub = (int)(ptrdiff_t)(ss-Subsectors);
-      return VisData+(((NumSubsectors+7)>>3)*sub);
-    }
-    return NoVis;
-  }
-
-  // checks PVS data
-  inline const vuint8 IsLeafVisible (const subsector_t *from, const subsector_t *dest) const noexcept {
-    if (!from || !dest) return 0x00;
-    if (VisData && from != dest) {
-      const unsigned sub = (unsigned)(ptrdiff_t)(from-Subsectors);
-      const vuint8 *vd = VisData+(((NumSubsectors+7)>>3)*sub);
-      const unsigned ss2 = (unsigned)(ptrdiff_t)(dest-Subsectors);
-      return vd[ss2>>3]&(1u<<(ss2&7));
-    }
-    return 0xff;
-  }
-
   inline const vuint8 IsRejectedVis (const sector_t *from, const sector_t *dest) const noexcept {
     if (!from || !dest) return 0xff; // this is REJECT matrix, not ACCEPT
     if (RejectMatrix) {
@@ -703,8 +677,6 @@ public:
 
   inline bool IsForServer () const { return !!(LevelFlags&LF_ForServer); }
   inline bool IsForClient () const { return !(LevelFlags&LF_ForServer); }
-
-  void BuildPVS ();
 
   void SaveCachedData (VStream *strm);
   bool LoadCachedData (VStream *strm);
@@ -860,7 +832,6 @@ private:
   void LoadGLSegs (int, int);
   void LoadSubsectors (int);
   void LoadNodes (int);
-  void LoadPVS (int);
   bool LoadCompressedGLNodes (int Lump, char hdr[4]);
   void LoadBlockMap (int);
   void LoadReject (int);

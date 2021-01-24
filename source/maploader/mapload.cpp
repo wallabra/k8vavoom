@@ -87,7 +87,6 @@ enum {
   ML_GL_SEGS,  // segs, from linedefs & minisegs
   ML_GL_SSECT, // subsectors, list of segs
   ML_GL_NODES, // gl bsp nodes
-  ML_GL_PVS,   // potentially visible set
 };
 
 
@@ -334,9 +333,6 @@ load_again:
   char GLNodesHdr[4];
   const VMapInfo &MInfo = P_GetMapInfo(MapName);
   memset(GLNodesHdr, 0, sizeof(GLNodesHdr));
-
-  VisData = nullptr;
-  NoVis = nullptr;
 
   sha224_ctx sha224ctx;
   MD5Context md5ctx;
@@ -614,7 +610,6 @@ load_again:
       LoadGLSegs(gl_lumpnum+ML_GL_SEGS, NumBaseVerts);
       LoadSubsectors(gl_lumpnum+ML_GL_SSECT);
       LoadNodes(gl_lumpnum+ML_GL_NODES);
-      LoadPVS(gl_lumpnum+ML_GL_PVS);
     }
   }
 
@@ -666,16 +661,6 @@ load_again:
     memset(BlockLinks, 0, sizeof(VEntity *)*count);
   }
   BlockMapTime += Sys_Time();
-
-  // rebuild PVS if we have none (just in case)
-  // cached data loader took care of this
-  double BuildPVSTime = -1;
-  if (NoVis == nullptr && VisData == nullptr) {
-    BuildPVSTime = -Sys_Time();
-    BuildPVS();
-    BuildPVSTime += Sys_Time();
-    if (VisData) saveCachedData = true;
-  }
 
   // load reject table
   double RejectTime = -Sys_Time();
@@ -849,7 +834,6 @@ load_again:
   AddLoadingTiming("Flood zones", FloodZonesTime);
   AddLoadingTiming("Conversations", ConvTime);
   AddLoadingTiming("Reject", RejectTime);
-  if (BuildPVSTime >= 0.1f) AddLoadingTiming("PVS building", BuildPVSTime);
   AddLoadingTiming("Spawn world", SpawnWorldTime);
   AddLoadingTiming("Polyobjs", InitPolysTime);
   AddLoadingTiming("Sector minmaxs", MinMaxTime);
@@ -1235,30 +1219,5 @@ void VLevel::FloodZone (sector_t *Sec, int Zone) {
     if (Line->flags&ML_ZONEBOUNDARY) continue;
     if (Line->frontsector && Line->frontsector->Zone == -1) FloodZone(Line->frontsector, Zone);
     if (Line->backsector && Line->backsector->Zone == -1) FloodZone(Line->backsector, Zone);
-  }
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-COMMAND(pvs_rebuild) {
-  if (GClLevel) {
-    delete [] GClLevel->VisData;
-    GClLevel->VisData = nullptr;
-    delete [] GClLevel->NoVis;
-    GClLevel->NoVis = nullptr;
-    GClLevel->BuildPVS();
-  }
-}
-
-
-COMMAND(pvs_reset) {
-  if (GClLevel) {
-    delete [] GClLevel->VisData;
-    GClLevel->VisData = nullptr;
-    delete [] GClLevel->NoVis;
-    GClLevel->NoVis = nullptr;
-    GClLevel->VisData = nullptr;
-    GClLevel->NoVis = new vuint8[(GClLevel->NumSubsectors+7)/8];
-    memset(GClLevel->NoVis, 0xff, (GClLevel->NumSubsectors+7)/8);
   }
 }

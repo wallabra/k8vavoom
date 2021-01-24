@@ -662,9 +662,6 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 
   SubStaticLights.setLength(Level->NumSubsectors);
 
-  lastDLightView = TVec(-1e9, -1e9, -1e9);
-  lastDLightViewSub = nullptr;
-
   memset((void *)DLights, 0, sizeof(DLights));
 
   CreatePortalPool();
@@ -1379,112 +1376,8 @@ void VRenderLevelShared::MarkLeaves () {
   r_viewleaf = Level->PointInSubsector(Drawer->vieworg);
 
   // we need this for debug automap view
-  if (!Level->HasPVS()) {
-    (void)IncVisFrameCount();
-    r_oldviewleaf = r_viewleaf;
-    return;
-  }
-
-  // no need to do anything if we are still in the same subsector
-  if (r_oldviewleaf == r_viewleaf) return;
-
+  (void)IncVisFrameCount();
   r_oldviewleaf = r_viewleaf;
-  if (!Level->HasPVS()) return;
-
-  const vuint32 currvisframe = IncVisFrameCount();
-
-  const vuint8 *vis = Level->LeafPVS(r_viewleaf);
-  subsector_t *sub = &Level->Subsectors[0];
-
-#if 0
-  {
-    const unsigned ssleft = (unsigned)Level->NumSubsectors;
-    for (unsigned i = 0; i < ssleft; ++i, ++sub) {
-      if (vis[i>>3]&(1<<(i&7))) {
-        sub->VisFrame = currvisframe;
-        node_t *node = sub->parent;
-        while (node) {
-          if (node->visframe == currvisframe) break;
-          node->visframe = currvisframe;
-          node = node->parent;
-        }
-      }
-    }
-  }
-#else
-  {
-    unsigned ssleft = (unsigned)Level->NumSubsectors;
-    if (!ssleft) return; // just in case
-    // process by 8 subsectors
-    while (ssleft >= 8) {
-      ssleft -= 8;
-      vuint8 cvb = *vis++;
-      if (!cvb) {
-        // everything is invisible, skip 8 subsectors
-        sub += 8;
-      } else {
-        // something is visible
-        for (unsigned bc = 8; bc--; cvb >>= 1, ++sub) {
-          if (cvb&1) {
-            sub->VisFrame = currvisframe;
-            node_t *node = sub->parent;
-            while (node && node->visframe != currvisframe) {
-              node->visframe = currvisframe;
-              node = node->parent;
-            }
-          }
-        }
-      }
-    }
-    // process last byte
-    if (ssleft) {
-      vuint8 cvb = *vis;
-      if (cvb) {
-        while (ssleft--) {
-          if (cvb&1) {
-            sub->VisFrame = currvisframe;
-            node_t *node = sub->parent;
-            while (node && node->visframe != currvisframe) {
-              node->visframe = currvisframe;
-              node = node->parent;
-            }
-          }
-          if ((cvb >>= 1) == 0) break;
-          ++sub;
-        }
-      }
-    }
-    /*
-    for (unsigned i = 0; i < ssleft; ++i, ++sub) {
-      if (vis[i>>3]&(1<<(i&7))) {
-        sub->VisFrame = currvisframe;
-        node_t *node = sub->parent;
-        while (node) {
-          if (node->visframe == currvisframe) break;
-          node->visframe = currvisframe;
-          node = node->parent;
-        }
-      }
-    }
-    */
-  }
-  /*
-  else {
-    // eh, we have no PVS, so just mark it all
-    // we won't check for visframe ever if level has no PVS, so do nothing here
-    subsector_t *sub = &Level->Subsectors[0];
-    for (int i = Level->NumSubsectors-1; i >= 0; --i, ++sub) {
-      sub->VisFrame = currvisframe;
-      node_t *node = sub->parent;
-      while (node) {
-        if (node->visframe == currvisframe) break;
-        node->visframe = currvisframe;
-        node = node->parent;
-      }
-    }
-  }
-  */
-#endif
 }
 
 
@@ -1522,9 +1415,6 @@ void VRenderLevelShared::RenderPlayerView () {
   subsector_t *playerViewLeaf = r_viewleaf;
 
   if (/*!MirrorLevel &&*/ !r_disable_world_update) UpdateFakeSectors(playerViewLeaf);
-
-  lastDLightView = TVec(-1e9, -1e9, -1e9);
-  lastDLightViewSub = nullptr;
 
   GTextureManager.Time = Level->Time;
 

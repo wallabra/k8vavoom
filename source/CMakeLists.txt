@@ -301,7 +301,6 @@ set(MAPLOADER_SOURCES
   maploader/mapload_decals.cpp
   maploader/mapload_nodes_aj.cpp
   maploader/mapload_nodes_zd.cpp
-  maploader/mapload_pvs.cpp
   maploader/mapload_fixers.cpp
 )
 

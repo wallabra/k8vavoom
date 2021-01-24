@@ -389,10 +389,6 @@ void VLevel::ClearAllMapData () {
   Nodes = nullptr;
   NumNodes = 0;
 
-  if (VisData) delete[] VisData; else delete[] NoVis;
-  VisData = nullptr;
-  NoVis = nullptr;
-
   delete[] BlockMapLump;
   BlockMapLump = nullptr;
   BlockMapLumpSize = 0;
