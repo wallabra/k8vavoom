@@ -147,6 +147,7 @@
 #include "stream/stream.h" // streams
 #include "array.h" // dynamic arrays
 #include "map.h" // mapping of keys to values
+#include "binheap.h" // binary heap
 #include "str.h" // strings
 #include "vstrci.h"
 #include "args.h" // command line arguments

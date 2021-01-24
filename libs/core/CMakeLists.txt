@@ -18,6 +18,7 @@ add_library(core STATIC
   args.cpp
   args.h
   array.h
+  binheap.h
   common.h
   common.cpp
   core.h
