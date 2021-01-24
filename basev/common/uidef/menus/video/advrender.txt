@@ -2,7 +2,7 @@
 menudef AdvRenderOptions {
   Title = "ADVANCED RENDER OPTIONS";
 
-  header "Options for broken OpenGL drivers";
+  header "OpenGL drivers options";
 
   option bool {
     title = "Z-Fighting Prevention";
@@ -12,6 +12,20 @@ menudef AdvRenderOptions {
       "But with some OpenGL drivers it breaks shadow volumes completely."
       "If you set renderer to Shadow Volumes, and suddenly the lighting"
       "is glitchy, try to turn this 'OFF'";
+  }
+
+  option enum {
+    title = "Render Quality";
+    cvar = r_fix_tjunctions;
+    list {
+      "Speed",
+      "Quality",
+    }
+    help =
+      "'Quality' setting fixes 'running white dots' on walls, but is somewhat slow.",
+      "Please, note that lightmap renderer will still have those dots",
+      "on floors and ceilings. This will be fixed later.",
+      "\cGPlease note that you have to restart/reload map after changing this.";
   }
 
 
