@@ -64,6 +64,8 @@ static VCvarB r_hack_fake_floor_decorations("r_hack_fake_floor_decorations", tru
 static VCvarB dbg_fix_tjunctions("dbg_fix_tjunctions", false, "Show debug messages from t-junctions fixer?", CVAR_PreInit);
 VCvarB r_fix_tjunctions("r_fix_tjunctions", true, "Fix t-junctions to avoid occasional white dots?", CVAR_Archive);
 
+static VCvarB warn_fix_tjunctions("warn_fix_tjunctions", false, "Show t-junction fixer warnings?", CVAR_Archive);
+
 
 //**************************************************************************
 //
@@ -2981,7 +2983,7 @@ surface_t *VRenderLevelShared::FixSegTJunctions (surface_t *surf, seg_t *seg) {
 
   if (surf->count != 4) {
     // wall segment should always be a quad
-    GCon->Logf(NAME_Warning, "line #%d, seg #%d: not a quad (%d)", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]), surf->count);
+    if (warn_fix_tjunctions) GCon->Logf(NAME_Warning, "line #%d, seg #%d: not a quad (%d)", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]), surf->count);
     return surf;
   }
 
@@ -3000,11 +3002,11 @@ surface_t *VRenderLevelShared::FixSegTJunctions (surface_t *surf, seg_t *seg) {
   if (surf->verts[0].vec().x != surf->verts[1].vec().x || surf->verts[0].vec().y != surf->verts[1].vec().y ||
       surf->verts[2].vec().x != surf->verts[3].vec().x || surf->verts[2].vec().y != surf->verts[3].vec().y)
   {
-    GCon->Logf(NAME_Warning, "line #%d, seg #%d: bad quad (0)", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
-    #if 1
+    if (warn_fix_tjunctions) GCon->Logf(NAME_Warning, "line #%d, seg #%d: bad quad (0)", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
+    if (warn_fix_tjunctions) {
       GCon->Logf(NAME_Debug, " (%g,%g,%g)-(%g,%g,%g)", seg->v1->x, seg->v1->y, seg->v1->z, seg->v2->x, seg->v2->y, seg->v2->z);
       for (int f = 0; f < surf->count; ++f) GCon->Logf(NAME_Debug, "  %d: (%g,%g,%g)", f, surf->verts[f].vec().x, surf->verts[f].vec().y, surf->verts[f].vec().z);
-    #endif
+    }
     return surf;
   }
 
@@ -3028,11 +3030,11 @@ surface_t *VRenderLevelShared::FixSegTJunctions (surface_t *surf, seg_t *seg) {
        if (fabsf(surf->verts[0].vec().x-seg->v1->x) < 0.1f && fabsf(surf->verts[0].vec().y-seg->v1->y) < 0.1f) v0idx = 0;
   else if (fabsf(surf->verts[0].vec().x-seg->v2->x) < 0.1f && fabsf(surf->verts[0].vec().y-seg->v2->y) < 0.1f) v0idx = 2;
   else {
-    GCon->Logf(NAME_Warning, "line #%d, seg #%d: bad quad (1)", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
-    #if 1
+    if (warn_fix_tjunctions) GCon->Logf(NAME_Warning, "line #%d, seg #%d: bad quad (1)", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
+    if (warn_fix_tjunctions) {
       GCon->Logf(NAME_Debug, " (%g,%g,%g)-(%g,%g,%g)", seg->v1->x, seg->v1->y, seg->v1->z, seg->v2->x, seg->v2->y, seg->v2->z);
       for (int f = 0; f < surf->count; ++f) GCon->Logf(NAME_Debug, "  %d: (%g,%g,%g)", f, surf->verts[f].vec().x, surf->verts[f].vec().y, surf->verts[f].vec().z);
-    #endif
+    }
     return surf;
   }
   minz[0] = min2(surf->verts[v0idx].vec().z, surf->verts[v0idx+1].vec().z);
@@ -3043,21 +3045,32 @@ surface_t *VRenderLevelShared::FixSegTJunctions (surface_t *surf, seg_t *seg) {
   // the surface will be split to two triangles
   TArray<TVec> tri0, tri1;
   //TJLOG(NAME_Debug, "*** minz=%g; maxz=%g", minz, maxz);
+  // for each seg vertex
   for (int vidx = 0; vidx < 2; ++vidx) {
-    const int lvidx = (seg->side ? 1-vidx : vidx);
+    // do not fix anything for vertex seg that doesn't touch line seg
+    int lvidx;
+    if (vidx == 0) {
+           if (seg->v1->x == line->v1->x && seg->v1->y == line->v1->y) lvidx = 0;
+      else if (seg->v1->x == line->v2->x && seg->v1->y == line->v2->y) lvidx = 1;
+      else continue;
+    } else {
+           if (seg->v2->x == line->v1->x && seg->v2->y == line->v1->y) lvidx = 0;
+      else if (seg->v2->x == line->v2->x && seg->v2->y == line->v2->y) lvidx = 1;
+      else continue;
+    }
+
     if (!line->vxCount(lvidx)) continue;
     const TVec lv = (lvidx ? *line->v2 : *line->v1);
     hlist.resetNoDtor();
-    //seensec.reset();
+    // collect all possible height fixes
     for (int f = 0; f < line->vxCount(lvidx); ++f) {
       const line_t *ln = line->vxLine(lvidx, f);
       if (ln == line) continue;
-      //TJLOG(NAME_Debug, "  other line #%d...", (int)(ptrdiff_t)(ln-&Level->Lines[0]));
+      //TJLOG(NAME_Debug, "  vidx=%d; other line #%d...", vidx, (int)(ptrdiff_t)(ln-&Level->Lines[0]));
       for (int sn = 0; sn < 2; ++sn) {
         const sector_t *sec = (sn ? ln->backsector : ln->frontsector);
         if (!sec || sec == mysec) continue;
         if (sn && ln->frontsector == ln->backsector) continue; // self-referenced line
-        //if (seensec.put(sec, true)) continue;
         const float fz = sec->floor.GetPointZClamped(lv);
         const float cz = sec->ceiling.GetPointZClamped(lv);
         //TJLOG(NAME_Debug, "  other line #%d: sec=%d; fz=%g; cz=%g", (int)(ptrdiff_t)(ln-&Level->Lines[0]), (int)(ptrdiff_t)(sec-&Level->Sectors[0]), fz, cz);
@@ -3067,81 +3080,80 @@ surface_t *VRenderLevelShared::FixSegTJunctions (surface_t *surf, seg_t *seg) {
         if (cz != fz && cz < maxz[vidx]) hlist.push(cz);
       }
     }
+    if (!hlist.length()) continue;
 
-    if (hlist.length()) {
-      TJLOG(NAME_Debug, "line #%d, vertex %d: at most %d additional %s", (int)(ptrdiff_t)(line-&Level->Lines[0]), lvidx, hlist.length(), (hlist.length() != 1 ? "vertices" : "vertex"));
-      /*
-        insert points into surface side. as we are rendering with triangle fans, and inserting
-        point can create a degenerate side triangle, so we'll need to post-process new surface.
-        as our surface is always either a quad, or a triangle, we can split a quad into two
-        triangles. this way we'll always be able to find a good starting point for triangle fan.
-       */
-      if (!tri1.length()) {
-        vassert(surf->count == 4);
+    TJLOG(NAME_Debug, "line #%d, vertex %d: at most %d additional %s", (int)(ptrdiff_t)(line-&Level->Lines[0]), lvidx, hlist.length(), (hlist.length() != 1 ? "vertices" : "vertex"));
+    /*
+      insert points into surface side. as we are rendering with triangle fans, and inserting
+      point can create a degenerate side triangle, so we'll need to post-process new surface.
+      as our surface is always either a quad, or a triangle, we can split a quad into two
+      triangles. this way we'll always be able to find a good starting point for triangle fan.
+     */
+    if (!tri1.length()) {
+      vassert(surf->count == 4);
+      #ifdef VV_TJUNCTION_VERBOSE
+        TJLOG(NAME_Debug, " minz=%g:%g; maxz=%g%g; (%g,%g,%g)-(%g,%g,%g)", minz[0], minz[1], maxz[0], maxz[1], seg->v1->x, seg->v1->y, seg->v1->z, seg->v2->x, seg->v2->y, seg->v2->z);
+        for (int f = 0; f < surf->count; ++f) TJLOG(NAME_Debug, "  %d: (%g,%g,%g)", f, surf->verts[f].vec().x, surf->verts[f].vec().y, surf->verts[f].vec().z);
+      #endif
+      if (v0idx == 0) {
+        // first triangle
+        tri0.append(surf->verts[0].vec());
+        tri0.append(surf->verts[1].vec());
+        tri0.append(surf->verts[2].vec());
+        // second triangle
+        tri1.append(surf->verts[2].vec());
+        tri1.append(surf->verts[3].vec());
+        tri1.append(surf->verts[0].vec());
+      } else {
+        vassert(v0idx == 2);
+        // second triangle
+        tri1.append(surf->verts[0].vec());
+        tri1.append(surf->verts[1].vec());
+        tri1.append(surf->verts[2].vec());
+        // first triangle
+        tri0.append(surf->verts[2].vec());
+        tri0.append(surf->verts[3].vec());
+        tri0.append(surf->verts[0].vec());
+      }
+    }
+
+    // get triangle to fix
+    TArray<TVec> &tri = (vidx ? tri1 : tri0);
+
+    if (tri.length() == 3 && tri[0].z == tri[1].z) {
+      TJLOG(NAME_Debug, "line #%d, seg #%d: ignore side due to being paper-thin", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
+      continue;
+    }
+
+    // insert vertices
+    float prevhz = -FLT_MAX;
+    while (hlist.length()) {
+      const float hz = hlist.pop();
+      if (hz != prevhz) {
         #ifdef VV_TJUNCTION_VERBOSE
-          TJLOG(NAME_Debug, " minz=%g:%g; maxz=%g%g; (%g,%g,%g)-(%g,%g,%g)", minz[0], minz[1], maxz[0], maxz[1], seg->v1->x, seg->v1->y, seg->v1->z, seg->v2->x, seg->v2->y, seg->v2->z);
-          for (int f = 0; f < surf->count; ++f) TJLOG(NAME_Debug, "  %d: (%g,%g,%g)", f, surf->verts[f].vec().x, surf->verts[f].vec().y, surf->verts[f].vec().z);
+          TJLOG(NAME_Debug, " y=%g; minz=%g:%g; maxz=%g:%g; (%g,%g,%g)-(%g,%g,%g)", hz, minz[0], minz[1], maxz[0], maxz[1], seg->v1->x, seg->v1->y, seg->v1->z, seg->v2->x, seg->v2->y, seg->v2->z);
+          for (int f = 0; f < tri.length(); ++f) TJLOG(NAME_Debug, "  %d: (%g,%g,%g)", f, tri[f].x, tri[f].y, tri[f].z);
         #endif
-        if (v0idx == 0) {
-          // first triangle
-          tri0.append(surf->verts[0].vec());
-          tri0.append(surf->verts[1].vec());
-          tri0.append(surf->verts[2].vec());
-          // second triangle
-          tri1.append(surf->verts[2].vec());
-          tri1.append(surf->verts[3].vec());
-          tri1.append(surf->verts[0].vec());
+        prevhz = hz;
+        int f = 0;
+        if (tri[0].z < tri[1].z) {
+          while (f < tri.length() && tri[f].z < hz) ++f;
         } else {
-          vassert(v0idx == 2);
-          // second triangle
-          tri1.append(surf->verts[0].vec());
-          tri1.append(surf->verts[1].vec());
-          tri1.append(surf->verts[2].vec());
-          // first triangle
-          tri0.append(surf->verts[2].vec());
-          tri0.append(surf->verts[3].vec());
-          tri0.append(surf->verts[0].vec());
+          while (f < tri.length() && hz < tri[f].z) ++f;
         }
-      }
-
-      // get triangle to fix
-      TArray<TVec> &tri = (vidx ? tri1 : tri0);
-
-      if (tri.length() == 3 && tri[0].z == tri[1].z) {
-        TJLOG(NAME_Debug, "line #%d, seg #%d: ignore side due to being paper-thin", (int)(ptrdiff_t)(line-&Level->Lines[0]), (int)(ptrdiff_t)(seg-&Level->Segs[0]));
-        continue;
-      }
-
-      // insert vertices
-      float prevhz = -FLT_MAX;
-      while (hlist.length()) {
-        const float hz = hlist.pop();
-        if (hz != prevhz) {
-          #ifdef VV_TJUNCTION_VERBOSE
-            TJLOG(NAME_Debug, " y=%g; minz=%g:%g; maxz=%g:%g; (%g,%g,%g)-(%g,%g,%g)", hz, minz[0], minz[1], maxz[0], maxz[1], seg->v1->x, seg->v1->y, seg->v1->z, seg->v2->x, seg->v2->y, seg->v2->z);
-            for (int f = 0; f < tri.length(); ++f) TJLOG(NAME_Debug, "  %d: (%g,%g,%g)", f, tri[f].x, tri[f].y, tri[f].z);
-          #endif
-          prevhz = hz;
-          int f = 0;
-          if (tri[0].z < tri[1].z) {
-            while (f < tri.length() && tri[f].z < hz) ++f;
-          } else {
-            while (f < tri.length() && hz < tri[f].z) ++f;
-          }
-          if (f < 1) {
-            TJLOG(NAME_Debug, "  OOPS! (0)");
-            continue;
-          }
-          if (f >= tri.length()) {
-            TJLOG(NAME_Debug, "  OOPS! (1)");
-            continue;
-          }
-          if (tri[0].x != tri[f].x || tri[0].y != tri[f].y) {
-            TJLOG(NAME_Debug, "  OOPS! (2); f=%d", f);
-            continue;
-          }
-          tri.Insert(f, TVec(tri[0].x, tri[0].y, hz));
+        if (f < 1) {
+          TJLOG(NAME_Debug, "  OOPS! (0)");
+          continue;
         }
+        if (f >= tri.length()) {
+          TJLOG(NAME_Debug, "  OOPS! (1)");
+          continue;
+        }
+        if (tri[0].x != tri[f].x || tri[0].y != tri[f].y) {
+          TJLOG(NAME_Debug, "  OOPS! (2); f=%d", f);
+          continue;
+        }
+        tri.Insert(f, TVec(tri[0].x, tri[0].y, hz));
       }
     }
   }
