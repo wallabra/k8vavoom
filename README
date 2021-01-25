@@ -11,9 +11,48 @@ ketmar@ketmar.no-ip.org
 WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!!
 
 k8vavoom is the fork of the excellent DooM sourceport Vavoom. It features
-two unique lightning systems, one based on lightmaps (like Quake), and
-one with DooM3-style lighting. Please note that k8vavoom is not a carbon
-copy of Vavoom, so full backward compatibility should not be expected.
+three unique lightning systems, one based on lightmaps (like Quake), one
+with DooM3-style lighting, and one based on shadowmaps. Please note that
+k8vavoom is not a carbon copy of Vavoom, so full backward compatibility
+should not be expected.
+
+DON'T FORGET TO CHECK "OPTIONS" MENU,
+YOU WILL FIND ALOT OF INTERESTING THINGS THERE!
+
+
+## SOUNDFOUNTS
+
+you can put SF2 from GZDoom in ~/.k8vavoom/soundfonts directory, and it
+will be autoloaded.
+actually, any SF2/DLS dropped into this directory will be autoloaded.
+if you don't like GZDoom sound font, you can use the one from this post:
+https://forums.duke4.net/topic/6973-sc-55-soundfont-huge-update/
+it is quite big, but sounds more like Roland SC-55 (as the name implies).
+
+if that soundfont is too big for you, you may try a new Miracle one:
+https://www.doomworld.com/forum/topic/111665
+it also sounds good, and it is only 8MB!
+
+WARNING: SFPACK sound founts are not supported!
+
+you can use "snd_sf2_file" cvar to specify the path to your soundfont.
+
+
+## AUTOMAP KEYS
+
+currently, automap keys are not configurable, sorry.
+
+TOGGLE FLOOR/CEILING/NONE TEXTURING: T
+FOLLOW: H
+GRID ON/OFF: G
+PUT MARK: M
+SELECT NEXT MARK: N
+DELETE SELECTED MARK: C/DELETE
+
+note that you can manage your marks with "N" and "C". pressing "N"
+will cycle through all marks, and you can delete current mark with
+"C".
+
 
 ## GNU/LINUX GAMERS SECTION
 
