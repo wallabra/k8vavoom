@@ -4187,7 +4187,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       State = ASTE_Suspended;
       action = SCRIPT_Stop;
       if (activeFunction) {
-        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to Suspend inside a function; terminated", info->Number, *info->Name);
         action = SCRIPT_Terminate;
       }
       ACSVM_BREAK_STOP;
@@ -4623,7 +4623,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       --sp;
       action = SCRIPT_Stop;
       if (activeFunction) {
-        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to TagWait inside a function; terminated", info->Number, *info->Name);
         action = SCRIPT_Terminate;
       }
       ACSVM_BREAK_STOP;
@@ -4634,7 +4634,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ip += 4;
       action = SCRIPT_Stop;
       if (activeFunction) {
-        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to TagWaitDirect inside a function; terminated", info->Number, *info->Name);
         action = SCRIPT_Terminate;
       }
       ACSVM_BREAK_STOP;
@@ -4645,7 +4645,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       --sp;
       action = SCRIPT_Stop;
       if (activeFunction) {
-        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to PolyWait inside a function; terminated", info->Number, *info->Name);
         action = SCRIPT_Terminate;
       }
       ACSVM_BREAK_STOP;
@@ -4656,7 +4656,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ip += 4;
       action = SCRIPT_Stop;
       if (activeFunction) {
-        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to PolyWaitDirect inside a function; terminated", info->Number, *info->Name);
         action = SCRIPT_Terminate;
       }
       ACSVM_BREAK_STOP;
@@ -4796,7 +4796,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       --sp;
       action = SCRIPT_Stop;
       if (activeFunction) {
-        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to ScriptWait inside a function; terminated", info->Number, *info->Name);
         action = SCRIPT_Terminate;
       }
       ACSVM_BREAK_STOP;
@@ -4816,7 +4816,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ip += 4;
       action = SCRIPT_Stop;
       if (activeFunction) {
-        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to ScriptWaitDirect inside a function; terminated", info->Number, *info->Name);
         action = SCRIPT_Terminate;
       }
       ACSVM_BREAK_STOP;
@@ -4841,7 +4841,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         }
         action = SCRIPT_Stop;
         if (activeFunction) {
-          GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+          GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to ScriptWaitNamed inside a function; terminated", info->Number, *info->Name);
           action = SCRIPT_Terminate;
         }
       }
@@ -5717,7 +5717,9 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int value;
 
-        vassert(currRetFrame);
+        if (!currRetFrame || !activeFunction) {
+          Host_Error("ACS script #%d (named '%s') tried to return without a function", info->Number, *info->Name);
+        }
 
         // get return value
         if (cmd == PCD_ReturnVal) {
@@ -7397,13 +7399,13 @@ LblFuncStop:
   } else {
     vassert(action == SCRIPT_Stop); // always
     if (activeFunction) {
-      GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+      GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated (on exit)", info->Number, *info->Name);
       action = SCRIPT_Terminate;
       if (info->RunningScript == this) info->RunningScript = nullptr;
       ResetSaveds(); // just in case
       DestroyThinker();
     } else if (sp != mystack) {
-      GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to delay/suspend with non-empty stack; terminated", info->Number, *info->Name);
+      GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to delay/suspend with non-empty stack; terminated (on exit)", info->Number, *info->Name);
       action = SCRIPT_Terminate;
       if (info->RunningScript == this) info->RunningScript = nullptr;
       ResetSaveds(); // just in case
