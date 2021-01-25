@@ -504,7 +504,17 @@ void CL_NetInterframe () {
 //
 //==========================================================================
 bool CL_IsInGame () {
-  return (cl && !GClGame->InIntermission());
+  return (cl && GClGame && !GClGame->InIntermission());
+}
+
+
+//==========================================================================
+//
+//  CL_IsInGame
+//
+//==========================================================================
+int CL_IntermissionPhase () {
+  return (GClGame ? GClGame->intermissionPhase : -666);
 }
 
 

@@ -658,6 +658,15 @@ void SCR_Update (bool fullUpdate) {
   bool allowWipeStart = true;
   bool drawOther = true;
 
+  //GCon->Logf(NAME_Debug, "cl=%p; signon=%d; MO=%p; ingame=%d (%d); clWipeTimer=%g", cl, cls.signon, (cl ? cl->MO : nullptr), CL_IsInGame(), CL_IntermissionPhase(), clWipeTimer);
+
+  // if the map forced "map end" on the very first ticks...
+  if (GGameInfo->NetMode != NM_Client && cl && cls.signon && cl->MO && CL_IntermissionPhase() && clWipeTimer >= 0.0f && GLevel && GLevel->TicTime < serverStartRenderFramesTic) {
+    //GCon->Logf(NAME_Debug, "*************************");
+    clWipeTimer = -1.0f;
+    Drawer->RenderWipe(-1.0f);
+  }
+
   // do buffered drawing
   if (cl && cls.signon && cl->MO && /*!GClGame->InIntermission()*/CL_IsInGame()) {
     if (GGameInfo->NetMode == NM_Client && !cl->Level) {
