@@ -144,6 +144,12 @@ menudef AutomapOptions {
       "\cGcan use this without turning on cheats.";
   }
 
+  option bool {
+    title = "Mark Blinking";
+    cvar = am_mark_blink;
+    help = "Make automap marks blink for better visibility?";
+  }
+
 
   header "Automap Colors";
 
@@ -202,6 +208,12 @@ menudef AutomapOptions {
     title = "Current Mark";
     cvar = am_color_current_mark;
     help = "Current mark color.";
+  }
+
+  option color {
+    title = "Blink Mark";
+    cvar = am_color_mark_blink;
+    help = "Mark blink color.";
   }
 
 

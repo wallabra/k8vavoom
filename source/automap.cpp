@@ -173,6 +173,7 @@ static VCvarB am_overlay("am_overlay", true, "Show automap in overlay mode?", CV
 static VCvarF am_back_darken("am_back_darken", "0", "Overlay automap darken factor", CVAR_Archive);
 static VCvarB am_full_lines("am_full_lines", false, "Render full line even if only some parts of it were seen?", CVAR_Archive);
 static VCvarB am_draw_grid("am_draw_grid", false, "Draw automap grid?", CVAR_Archive);
+static VCvarB am_mark_blink("am_mark_blink", true, "Should marks blink (to make them better visible)?", CVAR_Archive);
 
 // automap colors
 static VCvarS am_color_wall("am_color_wall", "d0 b0 85", "Automap color: normal walls.", CVAR_Archive);
@@ -193,6 +194,7 @@ static VCvarS am_color_dead("am_color_dead", "80 80 80", "Automap color: dead th
 static VCvarS am_color_invisible("am_color_invisible", "f0 00 f0", "Automap color: invisible thing.", CVAR_Archive);
 
 static VCvarS am_color_current_mark("am_color_current_mark", "00 ff 00", "Automap color: current map mark.", CVAR_Archive);
+static VCvarS am_color_mark_blink("am_color_mark_blink", "df 5f 00", "Automap color: mark blink color.", CVAR_Archive);
 
 //static VCvarS am_color_light_static("am_color_light_static", "ff ff ff", "Automap color: static light.", CVAR_Archive);
 //static VCvarS am_color_light_dynamic("am_color_light_dynamic", "00 ff ff", "Automap color: dynamic light.", CVAR_Archive);
@@ -251,6 +253,7 @@ static ColorCV DeadColor(&am_color_dead, &am_overlay_alpha);
 static ColorCV PlayerColor(&am_color_player, &am_overlay_alpha);
 static ColorCV MinisegColor(&am_color_miniseg, &am_overlay_alpha);
 static ColorCV CurrMarkColor(&am_color_current_mark, &am_overlay_alpha);
+static ColorCV MarkBlinkColor(&am_color_mark_blink, &am_overlay_alpha);
 
 
 static int leveljuststarted = 1; // kluge until AM_LevelInit() is called
@@ -1890,6 +1893,8 @@ static void AM_drawMarks () {
 
     if (i == markActive) {
       Drawer->FillRect((fx-1)*fScaleX, (fy-1)*fScaleY, (fx+wdt+2)*fScaleX, (fy+hgt+2)*fScaleY, CurrMarkColor, 0.5f);
+    } else if (GClLevel && (GClLevel->TicTime&0x0f) >= 8) {
+      Drawer->FillRect((fx-1)*fScaleX, (fy-1)*fScaleY, (fx+wdt+2)*fScaleX, (fy+hgt+2)*fScaleY, MarkBlinkColor, 0.5f);
     }
 
     // render it
