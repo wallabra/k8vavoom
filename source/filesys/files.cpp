@@ -47,6 +47,7 @@ int cli_WAll = 0;
 bool fsys_hasPwads = false; // or paks
 bool fsys_hasMapPwads = false; // or paks
 bool fsys_DisableBloodReplacement = false; // for custom modes
+VStr flForcePlayerClass = VStr::EmptyString;
 
 
 int fsys_warp_n0 = -1;
@@ -487,6 +488,23 @@ struct CustomModeInfo {
     return false;
   }
 
+  // returns "cosmetic" flag
+  static bool processPWadFlags (VStr &path) {
+    path = path.xstrip();
+    if (path.isEmpty()) return false;
+    if (path[0] == '!') {
+      path.chopLeft(1);
+      path = path.xstrip();
+      return false;
+    }
+    if (path[0] == '*') {
+      path.chopLeft(1);
+      path = path.xstrip();
+      return true;
+    }
+    return false;
+  }
+
   // `mode` keyword skipped, expects mode name
   // mode must be cleared
   void parse (VScriptParser *sc) {
@@ -496,31 +514,19 @@ struct CustomModeInfo {
     sc->Expect("{");
     while (!sc->Check("}")) {
       if (sc->Check("pwad")) {
-        bool cosmetic = true;
         for (;;) {
           sc->ExpectString();
+          const bool cosmetic = processPWadFlags(sc->String);
           if (sc->String.isEmpty()) continue;
-          if (sc->String[0] == '!') {
-            sc->String.chopLeft(1);
-            if (sc->String.isEmpty()) continue;
-            cosmetic = false;
-          }
           appendPWad(sc->String, cosmetic);
-          cosmetic = true;
           if (!sc->Check(",")) break;
         }
       } else if (sc->Check("postpwad")) {
-        bool cosmetic = true;
         for (;;) {
           sc->ExpectString();
+          const bool cosmetic = processPWadFlags(sc->String);
           if (sc->String.isEmpty()) continue;
-          if (sc->String[0] == '!') {
-            sc->String.chopLeft(1);
-            if (sc->String.isEmpty()) continue;
-            cosmetic = false;
-          }
           appendPostPWad(sc->String, cosmetic);
-          cosmetic = true;
           if (!sc->Check(",")) break;
         }
       } else if (sc->Check("skipauto")) {
@@ -548,6 +554,9 @@ struct CustomModeInfo {
         disableGoreMod = true;
       } else if (sc->Check("DisableBDW")) {
         disableBDW = true;
+      } else if (sc->Check("ForcePlayerClass")) {
+        sc->ExpectString();
+        flForcePlayerClass = sc->String.xstrip();
       } else if (sc->Check("alias")) {
         sc->ExpectString();
         VStr k = sc->String.xstrip();

@@ -147,6 +147,7 @@ extern int cli_GoreMod; // !=0: enabled
 extern VStr flWarningMessage;
 
 extern int flACSType; // FL_ACS_XXX
+extern VStr flForcePlayerClass;
 
 extern bool FL_IsIgnoredPlayerClass (VStr cname);
 

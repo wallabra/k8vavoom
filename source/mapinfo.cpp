@@ -270,20 +270,33 @@ void VMapInfo::dump (const char *msg) const {
 //
 //==========================================================================
 void P_SetupMapinfoPlayerClasses () {
+  VClass *PPClass = VClass::FindClass("PlayerPawn");
+  if (!PPClass) {
+    GCon->Logf(NAME_Warning, "Can't find PlayerPawn class");
+    return;
+  }
+  if (!flForcePlayerClass.isEmpty()) {
+    VClass *Class = VClass::FindClassNoCase(*flForcePlayerClass);
+    if (!Class) {
+      GCon->Logf(NAME_Warning, "Mode-ForcePlayerClass: No such class `%s`", *flForcePlayerClass);
+    } else if (!Class->IsChildOf(PPClass)) {
+      GCon->Logf(NAME_Warning, "Mode-ForcePlayerClass: '%s' is not a player pawn class", *flForcePlayerClass);
+    } else {
+      GGameInfo->PlayerClasses.Clear();
+      GGameInfo->PlayerClasses.Append(Class);
+      GCon->Logf(NAME_Init, "mode-forced player class '%s'", *flForcePlayerClass);
+      return;
+    }
+  }
   if (cli_NoMapinfoPlrClasses > 0) return;
   if (MapInfoPlayerClasses.length() == 0) return;
-  GCon->Logf("setting up %d player class%s from mapinfo", MapInfoPlayerClasses.length(), (MapInfoPlayerClasses.length() != 1 ? "es" : ""));
+  GCon->Logf(NAME_Init, "setting up %d player class%s from mapinfo", MapInfoPlayerClasses.length(), (MapInfoPlayerClasses.length() != 1 ? "es" : ""));
   GGameInfo->PlayerClasses.Clear();
   for (int f = 0; f < MapInfoPlayerClasses.length(); ++f) {
     VClass *Class = VClass::FindClassNoCase(*MapInfoPlayerClasses[f]);
     if (!Class) {
       GCon->Logf(NAME_Warning, "No player class '%s'", *MapInfoPlayerClasses[f]);
       continue;
-    }
-    VClass *PPClass = VClass::FindClass("PlayerPawn");
-    if (!PPClass) {
-      GCon->Logf(NAME_Warning, "Can't find PlayerPawn class");
-      return;
     }
     if (!Class->IsChildOf(PPClass)) {
       GCon->Logf(NAME_Warning, "'%s' is not a player pawn class", *MapInfoPlayerClasses[f]);
@@ -333,7 +346,7 @@ static void appendNumFixup (TMapDtor<int, SpawnEdFixup> &arr, VStr className, in
 //
 //==========================================================================
 static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, SpawnEdFixup> &fixups) {
-  //GCon->Logf("fixing '%s' (%d)", errname, fixups.count());
+  //GCon->Logf(NAME_Debug, "fixing '%s' (%d)", errname, fixups.count());
 #if 0
   int f = 0;
   while (f < list.length()) {
@@ -342,7 +355,7 @@ static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, Sp
     if (fxp) {
       SpawnEdFixup fix = *fxp;
       VStr cname = fxp->ClassName;
-      //GCon->Logf("    MAPINFO: class '%s' for %s got doomed num %d (got %d)", *cname, errname, fxp->num, nfo.DoomEdNum);
+      //GCon->Logf(NAME_Debug, "    MAPINFO: class '%s' for %s got doomed num %d (got %d)", *cname, errname, fxp->num, nfo.DoomEdNum);
       fixups.del(nfo.DoomEdNum);
       /*
       if (cname.length() == 0 || cname.ICmp("none") == 0) {
@@ -372,13 +385,13 @@ static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, Sp
     ++f;
   }
 #endif
-  //GCon->Logf("  appending '%s' (%d)", errname, fixups.count());
+  //GCon->Logf(NAME_Debug, "  appending '%s' (%d)", errname, fixups.count());
   // append new
   for (auto it = fixups.first(); it; ++it) {
     SpawnEdFixup *fxp = &it.getValue();
     if (fxp->num <= 0) continue;
     VStr cname = fxp->ClassName;
-    //GCon->Logf("    MAPINFO0: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
+    //GCon->Logf(NAME_Debug, "    MAPINFO0: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
     // set it
     VClass *cls;
     if (cname.length() == 0 || cname.ICmp("none") == 0) {
@@ -387,7 +400,7 @@ static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, Sp
       cls = VClass::FindClassNoCase(*cname);
       if (!cls) GCon->Logf(NAME_Warning, "MAPINFO: class '%s' for %s %d not found", *cname, errname, fxp->num);
     }
-    //GCon->Logf("    MAPINFO1: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
+    //GCon->Logf(NAME_Debug, "    MAPINFO1: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
     if (!cls) {
       if (ismobj) {
         VClass::RemoveMObjId(fxp->num, GGameInfo->GameFilterFlag);
@@ -645,7 +658,7 @@ void InitMapInfo () {
   DefaultMap.FadeTable = NAME_colormap;
   DefaultMap.HorizWallShade = -8;
   DefaultMap.VertWallShade = 8;
-  //GCon->Logf("*** DEFAULT MAP: Sky1Texture=%d", DefaultMap.Sky1Texture);
+  //GCon->Logf(NAME_Debug, "*** DEFAULT MAP: Sky1Texture=%d", DefaultMap.Sky1Texture);
 
   // we don't need it anymore
   mcmap.clear();
@@ -863,7 +876,7 @@ MAPINFOCMD(sky1) {
     info->Sky2Texture = GTextureManager.DefaultTexture;
     info->Sky1ScrollDelta = 0;
     info->Sky2ScrollDelta = 0;
-    //GCon->Logf("MSG: using gz skybox '%s'", *skbname);
+    //GCon->Logf(NAME_Init, "using gz skybox '%s'", *skbname);
     if (!sc->IsAtEol()) {
       sc->Check(",");
       sc->ExpectFloatWithSign();
@@ -1409,7 +1422,7 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
           *name += sc->String;
         }
       }
-      //GCon->Logf("COLLECTED: <%s>", **name);
+      //GCon->Logf(NAME_Debug, "COLLECTED: <%s>", **name);
     }
   }
 }
@@ -1743,7 +1756,7 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, VMapInfo &Default, int
   for (int i = 0; i < MapInfo.Num(); ++i) {
     if (MapLumpName == MapInfo[i].LumpName) {
       info = &MapInfo[i];
-      //GCon->Logf("replaced map '%s' (Sky1Texture=%d; default=%d)", *info->LumpName, info->Sky1Texture, Default.Sky1Texture);
+      //GCon->Logf(NAME_Init, "replaced map '%s' (Sky1Texture=%d; default=%d)", *info->LumpName, info->Sky1Texture, Default.Sky1Texture);
       savedFlags = info->Flags;
       replacement = true;
       break;
@@ -1911,17 +1924,17 @@ static void ParseClusterDef (VScriptParser *sc) {
   CDef->Flat = NAME_None;
   CDef->Music = NAME_None;
 
-  //GCon->Logf("=== NEW CLUSTER %d ===", CDef->Cluster);
+  //GCon->Logf(NAME_Debug, "=== NEW CLUSTER %d ===", CDef->Cluster);
   bool newFormat = sc->Check("{");
   //if (newFormat) sc->SetCMode(true);
   while (!sc->AtEnd()) {
-    //if (sc->GetString()) { GCon->Logf(":%s: CLUSTER(%d): <%s>", *sc->GetLoc().toStringNoCol(), (newFormat ? 1 : 0), *sc->String); sc->UnGet(); }
+    //if (sc->GetString()) { GCon->Logf(NAME_Debug, ":%s: CLUSTER(%d): <%s>", *sc->GetLoc().toStringNoCol(), (newFormat ? 1 : 0), *sc->String); sc->UnGet(); }
     if (sc->Check("hub")) {
       CDef->Flags |= CLUSTERF_Hub;
     } else if (sc->Check("entertext")) {
       if (newFormat) sc->Expect("=");
       ParseNameOrLookup(sc, CLUSTERF_LookupEnterText, &CDef->EnterText, &CDef->Flags, newFormat);
-      //GCon->Logf("::: <%s>", *CDef->EnterText);
+      //GCon->Logf(NAME_Debug, "::: <%s>", *CDef->EnterText);
     } else if (sc->Check("entertextislump")) {
       CDef->Flags |= CLUSTERF_EnterTextIsLump;
     } else if (sc->Check("exittext")) {
@@ -2403,7 +2416,7 @@ static void ParseGameInfo (VScriptParser *sc) {
           if (!FL_IsIgnoredPlayerClass(sc->String)) {
             MapInfoPlayerClasses.append(VName(*sc->String));
           } else {
-            GCon->Logf(NAME_Init, "mapinfo player class '%s' ignored due to mod detector orders", *sc->String);
+            GCon->Logf(NAME_Init, "mapinfo player class '%s' ignored due to mod detector/mode orders", *sc->String);
           }
         }
         if (!sc->Check(",")) break;
@@ -2559,7 +2572,7 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
             error = true;
             break;
           }
-          GCon->Logf("Including '%s'", *sc->String);
+          GCon->Logf(NAME_Init, "Including '%s'", *sc->String);
           scstack[scsp++] = sc;
           sc = new VScriptParser(/**sc->String*/W_FullLumpName(lmp), W_CreateLumpReaderNum(lmp));
           //ParseMapInfo(new VScriptParser(*sc->String, W_CreateLumpReaderNum(lmp)));
@@ -2602,17 +2615,17 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
         }
       /*
       } else if (sc->Check("gamedefaults")) {
-        GCon->Logf("WARNING: Unimplemented MAPINFO section gamedefaults");
+        GCon->Logf(NAME_Warning, "Unimplemented MAPINFO section gamedefaults");
         sc->SkipBracketed();
       } else if (sc->Check("automap")) {
-        GCon->Logf("WARNING: Unimplemented MAPINFO command Automap");
+        GCon->Logf(NAME_Warning, "Unimplemented MAPINFO command Automap");
         sc->SkipBracketed();
       } else if (sc->Check("automap_overlay")) {
-        GCon->Logf("WARNING: Unimplemented MAPINFO command automap_overlay");
+        GCon->Logf(NAME_Warning, "Unimplemented MAPINFO command automap_overlay");
         sc->SkipBracketed();
       */
       } else if (sc->Check("DoomEdNums")) {
-        //GCon->Logf("*** <%s> ***", *sc->String);
+        //GCon->Logf(NAME_Debug, "*** <%s> ***", *sc->String);
         //auto cmode = sc->IsCMode();
         //sc->SetCMode(true);
         sc->Expect("{");
@@ -2664,7 +2677,7 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
               if (special == -1) special = 0; // special special ;-)
             }
           }
-          //GCon->Logf("MAPINFO: DOOMED: '%s', %d (%d)", *clsname, num, flags);
+          //GCon->Logf(NAME_Debug, "MAPINFO: DOOMED: '%s', %d (%d)", *clsname, num, flags);
           appendNumFixup(DoomEdNumFixups, clsname, num, flags, special, args[0], args[1], args[2], args[3], args[4]);
         }
         //sc->SetCMode(cmode);
@@ -2703,7 +2716,7 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
       break;
     }
     if (scsp == 0) break;
-    GCon->Logf("Finished included '%s'", *sc->GetLoc().GetSource());
+    GCon->Logf(NAME_Init, "Finished included '%s'", *sc->GetLoc().GetSource());
     delete sc;
     sc = scstack[--scsp];
   }
