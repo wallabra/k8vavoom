@@ -2,19 +2,25 @@ menudef GoreModMenu {
   title = "Gore Mod Options";
 
   option bool {
-    title = "Ceiling blood";
+    title = "Ceiling Blood";
     cvar = k8GoreOpt_CeilBlood;
     help = "Spawn blood splats on ceiling?";
   }
 
   option bool {
-    title = "Floor blood";
+    title = "Dripping Ceiling Blood";
+    cvar = k8GoreOpt_CeilBloodDrip;
+    help = "Should ceiling blood spots drip some blood?";
+  }
+
+  option bool {
+    title = "Floor Blood";
     cvar = k8GoreOpt_FloorBlood;
     help = "Spawn blood splats on floor?";
   }
 
   option enum {
-    title = "Blood amount";
+    title = "Blood Amount";
     cvar = k8GoreOpt_BloodAmount;
     list {
       "Some",
@@ -26,13 +32,13 @@ menudef GoreModMenu {
   }
 
   option bool {
-    title = "Blood drip sound";
+    title = "Blood Drip Sound";
     cvar = k8GoreOpt_BloodDripSound;
     help = "Play small splashes when flying/dropping blood landed?";
   }
 
   option bool {
-    title = "Headshot sound";
+    title = "Headshot Sound";
     cvar = k8GoreOpt_HeadshotSound;
     help = "Play special sound on headshot kill?";
   }
