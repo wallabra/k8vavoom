@@ -552,9 +552,8 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
     (ignoreBlockAll ? 0 : ML_BLOCKEVERYTHING)|
     (trace.PlaneNoBlockFlags&SPF_NOBLOCKSHOOT ? ML_BLOCKHITSCAN : 0u);
 
-  const TVec lookOrigin = org+TVec(0, 0, myheight*0.75f); // look from the eyes (roughly)
-
   if (!allowBetterSight || radius < 4.0f || height < 4.0f || myheight < 4.0f) {
+    const TVec lookOrigin = org+TVec(0, 0, myheight*0.75f); // look from the eyes (roughly)
     trace.Start = lookOrigin;
     trace.End = dest;
     trace.End.z += height*0.85f; // roughly at the head
@@ -566,8 +565,9 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
     trace.End.z += height*0.5f;
     return SightPathTraverse2(trace);
   } else {
+    const TVec lookOrigin = org+TVec(0, 0, myheight*0.92f); // look from the eyes (roughly)
     const float sidemult[3] = { 0.0f, -0.8f, 0.8f }; // side shift multiplier (by radius)
-    const float ithmult[2] = { 0.25f, 0.85f }; // destination height multiplier (0.5f is checked first)
+    const float ithmult = 0.92f; // destination height multiplier (0.5f is checked first)
     // check side looks
     for (unsigned myx = 0; myx < 3; ++myx) {
       // now look from eyes of t1 to some parts of t2
@@ -582,12 +582,10 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
       if (SightPathTraverse(trace)) return true;
       if (trace.Hit1S || interUsed == 0) continue;
 
-      // check up and down
-      for (unsigned itsz = 0; itsz < 2; ++itsz) {
-        trace.End = dest;
-        trace.End.z += height*ithmult[itsz];
-        if (SightPathTraverse2(trace)) return true;
-      }
+      // check eyes (roughly)
+      trace.End = dest;
+      trace.End.z += height*ithmult;
+      if (SightPathTraverse2(trace)) return true;
     }
   }
 
