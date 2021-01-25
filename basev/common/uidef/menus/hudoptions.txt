@@ -64,6 +64,12 @@ menudef HUDOptions {
     cvar = crosshair;
   }
 
+  option bool {
+    title = "Topmost Crosshair";
+    cvar = crosshair_topmpost;
+    help = "Draw crosshair on top of everything (including UI)?";
+  }
+
   option slider {
     title = "Crosshair Transparency";
     cvar = crosshair_alpha;

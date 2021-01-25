@@ -54,7 +54,7 @@ VCvarB r_vis_check_flood("r_vis_check_flood", false, "Use floodfill to perform d
 static VCvarI k8ColormapInverse("k8ColormapInverse", "0", "Inverse colormap replacement (0: original inverse; 1: black-and-white; 2: gold; 3: green; 4: red).", CVAR_Archive);
 static VCvarI k8ColormapLightAmp("k8ColormapLightAmp", "0", "LightAmp colormap replacement (0: original; 1: black-and-white; 2: gold; 3: green; 4: red).", CVAR_Archive);
 
-static VCvarB crosshair_topmpost("crosshair_topmpost", true, "Render crosshair at the top of everything?", CVAR_Archive);
+static VCvarB crosshair_topmpost("crosshair_topmpost", false, "Render crosshair at the top of everything?", CVAR_Archive);
 
 
 static const char *videoDrvName = nullptr;
