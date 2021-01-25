@@ -746,7 +746,7 @@ void SCR_Update (bool fullUpdate) {
       Drawer->RenderWipe(-1.0f);
     }
 
-    if ((!GLevel || GLevel->TicTime >= serverStartRenderFramesTic) && clWipeTimer < 0.0f) {
+    if ((wipeStarted || (!r_wipe_enabled && updateStarted)) && (!GLevel || GLevel->TicTime >= serverStartRenderFramesTic) && clWipeTimer < 0.0f) {
       MN_CheckStartupWarning();
     }
   } else if (GGameInfo->NetMode == NM_Client && cl && cl->Net && !cls.signon && /*!GClGame->InIntermission()*/CL_IsInGame()) {

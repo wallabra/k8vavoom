@@ -78,6 +78,7 @@ void MN_DeactivateMenu () {
 void MN_CheckStartupWarning () {
   if (!GClGame) return;
   if (flWarningMessage.isEmpty()) return;
+  //GCon->Logf(NAME_Debug, "***MSG***: %s", *flWarningMessage.quote());
   GClGame->eventMessageBoxShowWarning(flWarningMessage);
   flWarningMessage.clear();
 }
