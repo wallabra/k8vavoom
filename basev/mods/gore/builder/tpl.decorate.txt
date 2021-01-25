@@ -532,7 +532,7 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   States {
     Spawn:
       BPDL A 0
-      //"####" "#" 0 A_k8JumpIfCeilingSky("DieNow")  // already checked in `K8Gore_FlyingBlood`
+      "####" "#" 0 A_k8JumpIfCeilingSky("DieNow")
       Goto ModelFriendly
     DoAfterSpawn:
       "####" "#" 1
