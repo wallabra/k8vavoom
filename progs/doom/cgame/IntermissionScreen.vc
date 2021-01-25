@@ -979,8 +979,13 @@ void IM_InitNoState () {
     IM_InitText();
     return;
   }
-  interstate = IMS_NoState;
+  // if we have some text, skip pause
+  if (IM_HasText()) {
+    IM_InitText();
+    return;
+  }
   ClGame.bSkipIntermission = false;
+  interstate = IMS_NoState;
   cnt = 0.3;
 }
 
@@ -1034,6 +1039,24 @@ array!string cookedHubText;
 bool hubTextTypingComplete;
 int hubTextHeight;
 int hubTextWidth;
+
+
+//==========================================================================
+//
+//  IM_HasText
+//
+//==========================================================================
+bool IM_HasText () {
+  if (ClGame.deathmatch) return false;
+
+  if (ClientGame::IM_Phase.Leave) {
+    if (ClGame.im.LeaveText.Text) return true;
+  }
+
+  if (ClGame.im.EnterText.Text) return true;
+
+  return false;
+}
 
 
 //==========================================================================
