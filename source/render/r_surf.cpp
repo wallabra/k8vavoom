@@ -2287,6 +2287,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   }
 
   // count regions in all subsectors
+  GCon->Logf(NAME_Debug, "processing %d subsectors...", Level->NumSubsectors);
   int count = 0;
   int dscount = 0;
   int spcount = 0;
@@ -2309,6 +2310,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       }
     }
   }
+
+  GCon->Logf(NAME_Debug, "%d subregions, %d drawsegs, %d segparts", count, dscount, spcount);
 
   // get some memory
   subregion_t *sreg = new subregion_t[count+1];
@@ -2411,11 +2414,14 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     if (inWorldCreation) R_PBarUpdate("Surfaces", it.index(), Level->NumSubsectors);
   }
 
+  GCon->Log(NAME_Debug, "performing initial world update...");
   InitialWorldUpdate();
 
   if (inWorldCreation) R_PBarUpdate("Surfaces", Level->NumSubsectors, Level->NumSubsectors, true);
 
   inWorldCreation = oldIWC;
+
+  GCon->Log(NAME_Debug, "surface creation complete");
 }
 
 
