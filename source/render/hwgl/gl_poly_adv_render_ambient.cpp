@@ -105,12 +105,24 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           glVertex(surf->verts[(i+1)%surf->count].vec());
         }
         glEnd();
+        /*
+        glPointSize(3.0f);
+        glBegin(GL_POINTS);
+        for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
+        glEnd();
+        glPointSize(1.0f);
+        */
       }
 
       for (auto &&surf : dls.DrawSurfListMasked) {
         //glBegin(GL_TRIANGLE_FAN);
         glBegin(GL_LINE_LOOP);
-          for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
+        //for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
+        for (int i = 1; i < surf->count; ++i) {
+          glVertex(surf->verts[0].vec());
+          glVertex(surf->verts[i].vec());
+          glVertex(surf->verts[(i+1)%surf->count].vec());
+        }
         glEnd();
       }
 
