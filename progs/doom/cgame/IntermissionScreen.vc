@@ -279,6 +279,8 @@ override void Tick (float DeltaTime) {
       IM_UpdateText(DeltaTime);
       break;
     case IMS_Done:
+      // leave "entering" there
+      IM_UpdateNoState(DeltaTime);
       break;
   }
 }
@@ -291,6 +293,7 @@ override void Tick (float DeltaTime) {
 //==========================================================================
 override void OnPostDraw () {
   SetFont('bigfont');
+  //printdebug("OnPostDraw: state=%s", interstate);
   switch (interstate) {
     case IMS_Stats:
            if (ClGame.deathmatch) IM_DrawDeathmatchStats();
@@ -307,6 +310,8 @@ override void OnPostDraw () {
       IM_DrawText();
       break;
     case IMS_Done:
+      // leave "entering" there
+      IM_DrawNoState();
       break;
   }
 }
