@@ -213,7 +213,7 @@ Actor K8Gore_FlyingBlood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
             }
             // spawn ceiling blood spot
             if (GetCVar("k8GoreOpt_CeilBlood") && GetCVar("k8GoreOpt_BloodAmount") >= 2) {
-              if (ceilingz-z < random(96, 128)) {
+              if (ceilingz-z < random(118, 132)) {
                 if ((ceilingz-z <= 64 && random(0, 100) > 20) ||
                     (ceilingz-z > 64 && ceilingz-z < 80 && random(0, 100) > 40) ||
                     (ceilingz-z >= 80 && random(0, 100) > 60))
