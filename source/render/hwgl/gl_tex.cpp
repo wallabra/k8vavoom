@@ -51,6 +51,18 @@ static VCvarB gl_s3tc_dump("__gl_s3tc_dump", false, "Show which textures are com
 
 //==========================================================================
 //
+//  isPOT
+//
+//==========================================================================
+static int isPOT (int val) {
+  int answer = 0, origval = val;
+  while (val >>= 1) ++answer;
+  return ((1<<answer) == origval);
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::GenerateLightmapAtlasTextures
 //
 //==========================================================================
@@ -648,7 +660,7 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bo
   int cmode = (HaveS3TC && hitype != UpTexNoCompress ? gl_s3tc_mode.asInt() : 0);
   if (cmode == 1 && hitype != UpTexHiRes) cmode = 0;
   // don't bother with small textures anyway
-  if (cmode > 0 && (width > 256 && height > 256)) {
+  if (cmode > 0 && width > 256 && height > 256 && isPOT(width) && isPOT(height)) {
     // determine texture format:
     // COMPRESSED_RGB_S3TC_DXT1_EXT  -- RGB
     // COMPRESSED_RGBA_S3TC_DXT1_EXT -- RGBA with 1-bit alpha
