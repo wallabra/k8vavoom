@@ -1257,6 +1257,29 @@ VStr VObject::NameFromVKey (int vkey) {
     case K_JOY14: return "JOY14";
     case K_JOY15: return "JOY15";
     case K_JOY16: return "JOY16";
+
+    case K_AXIS_LEFTX: return "AXIS_LEFTX";
+    case K_AXIS_LEFTY: return "AXIS_LEFTY";
+    case K_AXIS_RIGHTX: return "AXIS_RIGHTX";
+    case K_AXIS_RIGHTY: return "AXIS_RIGHTY";
+    case K_AXIS_TRIGGERLEFT: return "AXIS_TRIGGERLEFT";
+    case K_AXIS_TRIGGERRIGHT: return "AXIS_TRIGGERRIGHT";
+
+    case K_BUTTON_A: return "BUTTON_A";
+    case K_BUTTON_B: return "BUTTON_B";
+    case K_BUTTON_X: return "BUTTON_X";
+    case K_BUTTON_Y: return "BUTTON_Y";
+    case K_BUTTON_BACK: return "BUTTON_BACK";
+    case K_BUTTON_GUIDE: return "BUTTON_GUIDE";
+    case K_BUTTON_START: return "BUTTON_START";
+    case K_BUTTON_LEFTSTICK: return "BUTTON_LEFTSTICK";
+    case K_BUTTON_RIGHTSTICK: return "BUTTON_RIGHTSTICK";
+    case K_BUTTON_LEFTSHOULDER: return "BUTTON_LEFTSHOULDER";
+    case K_BUTTON_RIGHTSHOULDER: return "BUTTON_RIGHTSHOULDER";
+    case K_BUTTON_DPAD_UP: return "BUTTON_DPAD_UP";
+    case K_BUTTON_DPAD_DOWN: return "BUTTON_DPAD_DOWN";
+    case K_BUTTON_DPAD_LEFT: return "BUTTON_DPAD_LEFT";
+    case K_BUTTON_DPAD_RIGHT: return "BUTTON_DPAD_RIGHT";
   }
   if (vkey > 32 && vkey < 127) return VStr(char(vkey));
   return VStr();
@@ -1403,6 +1426,33 @@ int VObject::VKeyFromName (VStr kn) {
   if (num >= 1 && num <= 16) {
     vassert(num < 10); // just in case
     return K_JOY1+num-1;
+  }
+
+  if (kn.startsWithCI("AXIS_")) {
+    if (kn.strEquCI("AXIS_LEFTX")) return K_AXIS_LEFTX;
+    if (kn.strEquCI("AXIS_LEFTY")) return K_AXIS_LEFTY;
+    if (kn.strEquCI("AXIS_RIGHTX")) return K_AXIS_RIGHTX;
+    if (kn.strEquCI("AXIS_RIGHTY")) return K_AXIS_RIGHTY;
+    if (kn.strEquCI("AXIS_TRIGGERLEFT")) return K_AXIS_TRIGGERLEFT;
+    if (kn.strEquCI("AXIS_TRIGGERRIGHT")) return K_AXIS_TRIGGERRIGHT;
+  }
+
+  if (kn.startsWithCI("BUTTON_")) {
+    if (kn.strEquCI("BUTTON_A")) return K_BUTTON_A;
+    if (kn.strEquCI("BUTTON_B")) return K_BUTTON_B;
+    if (kn.strEquCI("BUTTON_X")) return K_BUTTON_X;
+    if (kn.strEquCI("BUTTON_Y")) return K_BUTTON_Y;
+    if (kn.strEquCI("BUTTON_BACK")) return K_BUTTON_BACK;
+    if (kn.strEquCI("BUTTON_GUIDE")) return K_BUTTON_GUIDE;
+    if (kn.strEquCI("BUTTON_START")) return K_BUTTON_START;
+    if (kn.strEquCI("BUTTON_LEFTSTICK")) return K_BUTTON_LEFTSTICK;
+    if (kn.strEquCI("BUTTON_RIGHTSTICK")) return K_BUTTON_RIGHTSTICK;
+    if (kn.strEquCI("BUTTON_LEFTSHOULDER")) return K_BUTTON_LEFTSHOULDER;
+    if (kn.strEquCI("BUTTON_RIGHTSHOULDER")) return K_BUTTON_RIGHTSHOULDER;
+    if (kn.strEquCI("BUTTON_DPAD_UP")) return K_BUTTON_DPAD_UP;
+    if (kn.strEquCI("BUTTON_DPAD_DOWN")) return K_BUTTON_DPAD_DOWN;
+    if (kn.strEquCI("BUTTON_DPAD_LEFT")) return K_BUTTON_DPAD_LEFT;
+    if (kn.strEquCI("BUTTON_DPAD_RIGHT")) return K_BUTTON_DPAD_RIGHT;
   }
 
   return 0;

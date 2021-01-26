@@ -658,8 +658,14 @@ void VSdlInputDevice::ReadInput () {
 }
 
 #ifdef __SWITCH__
-//TEMPORARY: maps joystick buttons to keys for fake kb events
-static inline int SwitchJoyToKey(int b) {
+//==========================================================================
+//
+//  SwitchJoyToKey
+//
+// TEMPORARY: maps joystick buttons to keys for fake kb events
+//
+//==========================================================================
+static inline int SwitchJoyToKey (int b) {
   /*static*/ const int keymap[] = {
       /* KEY_A      */ K_ENTER,
       /* KEY_B      */ K_BACKSPACE,
@@ -683,6 +689,7 @@ static inline int SwitchJoyToKey(int b) {
   return keymap[b];
 }
 #endif
+
 
 //**************************************************************************
 //**
@@ -786,11 +793,11 @@ void VSdlInputDevice::PostJoystick () {
 
   for (int i = 0; i < joy_num_buttons; ++i) {
     if (joy_newb[i] != joy_oldb[i]) {
-#ifdef __SWITCH__
+      #ifdef __SWITCH__
       //TEMPORARY: also translate some buttons to keys
       int key = SwitchJoyToKey(i);
       if (key) GInput->PostKeyEvent(key, joy_newb[i], curmodflags);
-#endif
+      #endif
       GInput->PostKeyEvent(K_JOY1+i, joy_newb[i], curmodflags);
       joy_oldb[i] = joy_newb[i];
     }
