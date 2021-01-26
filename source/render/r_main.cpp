@@ -69,6 +69,8 @@ void R_FreeSkyboxData ();
 
 vuint8 light_remap[256];
 int screenblocks = 0; // viewport size
+bool render_last_quality_setting = false;
+
 
 static VCvarF r_aspect_pixel("r_aspect_pixel", "1", "Pixel aspect ratio.", CVAR_Rom);
 static VCvarI r_aspect_horiz("r_aspect_horiz", "4", "Horizontal aspect multiplier.", CVAR_Rom);
@@ -634,9 +636,11 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , updateWorldFrame(0)
   , bspVisRadius(nullptr)
   , bspVisRadiusFrame(0)
+  , NumSegParts(0)
   , pspart(nullptr)
   , pspartsLeft(0)
 {
+  lastRenderQuality = r_fix_tjunctions.asBool();
   currDLightFrame = 0;
   currQueueFrame = 0;
   currVisFrame = 0;
@@ -1398,6 +1402,12 @@ void R_RenderPlayerView () {
 //==========================================================================
 void VRenderLevelShared::RenderPlayerView () {
   if (!Level->LevelInfo) return;
+
+  if (lastRenderQuality != r_fix_tjunctions.asBool()) {
+    lastRenderQuality = r_fix_tjunctions.asBool();
+    GCon->Logf(NAME_Debug, "render quality changed to '%s', invalidating all surfaces", (lastRenderQuality ? "quality" : "speed"));
+    InvaldateAllSegParts();
+  }
 
   Drawer->MirrorFlip = false;
   Drawer->MirrorClip = false;

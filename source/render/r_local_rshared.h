@@ -212,9 +212,15 @@ protected:
   // k8: it was a bunch of globals; i will eventually got rid of this
   bool MirrorClipSegs;
 
+  // set in `CreateWorldSurfaces()`
+  int NumSegParts;
   // used in `CreateWorldSurfaces()` and friends
   segpart_t *pspart;
   int pspartsLeft;
+  bool lastRenderQuality;
+  // used in t-junction fixer, put there to avoid constant memory reallocating
+  TBinHeapNoDtor<float> tjunkHList;
+  TArray<TVec> tjunkTri0, tjunkTri1;
 
   vuint32 currVisFrame;
 
@@ -615,6 +621,10 @@ protected:
   surface_t *NewWSurf (int vcount);
   // frees *the* *whole* *surface* *chain*!
   void FreeWSurfs (surface_t *&);
+
+  // can be called to recreate all world surfaces
+  // call only after world surfaces were created for the first time!
+  void InvaldateAllSegParts ();
 
   surface_t *CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t *seg, subsector_t *sub, int wvcount, vuint32 typeFlags);
   int CountSegParts (const seg_t *);
