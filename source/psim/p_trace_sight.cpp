@@ -565,7 +565,7 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
     trace.End.z += height*0.5f;
     return SightPathTraverse2(trace);
   } else {
-    const TVec lookOrigin = org+TVec(0, 0, myheight*0.92f); // look from the eyes (roughly)
+    const TVec lookOrigin = org+TVec(0, 0, myheight*0.86f); // look from the eyes (roughly)
     const float sidemult[3] = { 0.0f, -0.8f, 0.8f }; // side shift multiplier (by radius)
     const float ithmult = 0.92f; // destination height multiplier (0.5f is checked first)
     // check side looks
