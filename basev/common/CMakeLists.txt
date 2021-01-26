@@ -3,16 +3,16 @@ configure_file(basepak.ls.in ${CMAKE_CURRENT_BINARY_DIR}/basepak.ls)
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
   COMMAND ${WINERUN} $<TARGET_FILE:vlumpy> ARGS basepak.ls
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.ls vlumpy
-    basepak.ls.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/basepak.ls.in
     ${CMAKE_CURRENT_SOURCE_DIR}/*.txt
-    confont.pcx
-    dbigfont.pcx
-    default.cfg
-    language.en
-    startup.vs
-    vavoom_decorate_defs.xml
-    vavoom_known_blood.rc
-    vavoom_class_ignores.rc
+    ${CMAKE_CURRENT_SOURCE_DIR}/confont.pcx
+    ${CMAKE_CURRENT_SOURCE_DIR}/dbigfont.pcx
+    ${CMAKE_CURRENT_SOURCE_DIR}/default.cfg
+    ${CMAKE_CURRENT_SOURCE_DIR}/language.en
+    ${CMAKE_CURRENT_SOURCE_DIR}/startup.vs
+    ${CMAKE_CURRENT_SOURCE_DIR}/vavoom_decorate_defs.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/vavoom_known_blood.rc
+    ${CMAKE_CURRENT_SOURCE_DIR}/vavoom_class_ignores.rc
 
     ${CMAKE_CURRENT_SOURCE_DIR}/credits/*.txt
 
@@ -49,7 +49,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_CURRENT_SOURCE_DIR}/sprites/*.png
     ${CMAKE_CURRENT_SOURCE_DIR}/sprites/dogs/*
 
-    textures/-noflat-.png
+    ${CMAKE_CURRENT_SOURCE_DIR}/textures/-noflat-.png
 
     ${CMAKE_CURRENT_SOURCE_DIR}/uidef/*.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/uidef/menus/*.txt

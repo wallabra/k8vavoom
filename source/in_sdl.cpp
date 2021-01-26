@@ -77,7 +77,9 @@ private:
   bool hyperDown;
 
   SDL_Joystick *joystick;
+  SDL_GameController *controller;
   bool joystick_started;
+  bool joystick_controller;
   int joy_num_buttons;
   int joy_x;
   int joy_y;
@@ -85,6 +87,9 @@ private:
   int joy_oldx;
   int joy_oldy;
   int joy_oldb[MAX_JOYSTICK_BUTTONS];
+
+  // deletes stream; it is ok to pass `nullptr`
+  void LoadControllerMappings (VStream *st);
 
   void StartupJoystick ();
   void ShutdownJoystick ();
@@ -252,6 +257,7 @@ VSdlInputDevice::VSdlInputDevice ()
   , hyperDown(false)
   , joystick(nullptr)
   , joystick_started(false)
+  , joystick_controller(false)
   , joy_num_buttons(0)
   , joy_x(0)
   , joy_y(0)
@@ -495,6 +501,7 @@ void VSdlInputDevice::ReadInput () {
         if (Drawer) Drawer->GetMousePosition(&vev.x, &vev.y);
         if (IsUIMouse() || !ui_active || ui_control_waiting || ui_freemouse) VObject::PostEvent(vev);
         break;
+      // joysticks
       case SDL_JOYAXISMOTION:
         normal_value = ev.jaxis.value*127/32767;
              if (ev.jaxis.axis == 0) joy_x = normal_value;
@@ -510,6 +517,42 @@ void VSdlInputDevice::ReadInput () {
       case SDL_JOYBUTTONUP:
         joy_newb[ev.jbutton.button] = 0;
         break;
+      // controllers
+      /*TODO
+      case SDL_CONTROLLERAXISMOTION:
+        normal_value = ev.caxis.value*127/32767;
+        switch (ev.caxis.axis) {
+          case SDL_CONTROLLER_AXIS_LEFTX: joy_x = normal_value; break;
+          case SDL_CONTROLLER_AXIS_LEFTY: joy_x = normal_value; break;
+          case SDL_CONTROLLER_AXIS_RIGHTX: joy_x = normal_value; break;
+          case SDL_CONTROLLER_AXIS_RIGHTY: joy_x = normal_value; break;
+          case SDL_CONTROLLER_AXIS_TRIGGERLEFT: joy_x = normal_value; break;
+          case SDL_CONTROLLER_AXIS_TRIGGERRIGHT: joy_x = normal_value; break;
+        }
+        break;
+      */
+      case SDL_CONTROLLERBUTTONDOWN:
+      case SDL_CONTROLLERBUTTONUP:
+        switch (ev.cbutton.button) {
+          case SDL_CONTROLLER_BUTTON_A: GInput->PostKeyEvent(K_BUTTON_A, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_B: GInput->PostKeyEvent(K_BUTTON_B, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_X: GInput->PostKeyEvent(K_BUTTON_X, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_Y: GInput->PostKeyEvent(K_BUTTON_Y, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_BACK: GInput->PostKeyEvent(K_BUTTON_BACK, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_GUIDE: GInput->PostKeyEvent(K_BUTTON_GUIDE, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_START: GInput->PostKeyEvent(K_BUTTON_START, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_LEFTSTICK: GInput->PostKeyEvent(K_BUTTON_LEFTSTICK, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_RIGHTSTICK: GInput->PostKeyEvent(K_BUTTON_RIGHTSTICK, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: GInput->PostKeyEvent(K_BUTTON_LEFTSHOULDER, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: GInput->PostKeyEvent(K_BUTTON_RIGHTSHOULDER, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_DPAD_UP: GInput->PostKeyEvent(K_BUTTON_DPAD_UP, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_DPAD_DOWN: GInput->PostKeyEvent(K_BUTTON_DPAD_DOWN, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_DPAD_LEFT: GInput->PostKeyEvent(K_BUTTON_DPAD_LEFT, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: GInput->PostKeyEvent(K_BUTTON_DPAD_RIGHT, (ev.cbutton.state == SDL_PRESSED ? 1 : 0), curmodflags); break;
+          default: break;
+        }
+        break;
+      // window/other
       case SDL_WINDOWEVENT:
         switch (ev.window.event) {
           case SDL_WINDOWEVENT_FOCUS_GAINED:
@@ -704,7 +747,59 @@ static inline int SwitchJoyToKey (int b) {
 //==========================================================================
 void VSdlInputDevice::ShutdownJoystick () {
   if (joystick) { SDL_JoystickClose(joystick); joystick = nullptr; }
-  if (joystick_started) { SDL_QuitSubSystem(SDL_INIT_JOYSTICK); joystick_started = false; }
+  if (controller) { SDL_GameControllerClose(controller); controller = nullptr; }
+  if (joystick_started) { SDL_QuitSubSystem(SDL_INIT_JOYSTICK|SDL_INIT_GAMECONTROLLER); joystick_started = false; }
+  joy_num_buttons = 0;
+  joystick_controller = false;
+  joy_oldx = joy_x = joy_oldy = joy_y = 0;
+  SDL_JoystickEventState(SDL_IGNORE);
+  SDL_GameControllerEventState(SDL_IGNORE);
+}
+
+
+//==========================================================================
+//
+//  VSdlInputDevice::LoadControllerMappings
+//
+//  deletes stream; it is ok to pass `nullptr`
+//
+//==========================================================================
+void VSdlInputDevice::LoadControllerMappings (VStream *st) {
+  if (!st) return;
+
+  VStr stname = st->GetName();
+  int size = st->TotalSize();
+  if (size <= 0 || size > 1024*1024*32) {
+    if (size) GCon->Logf(NAME_Error, "cannot load controller mappings from '%s' (bad file size)", *stname);
+    st->Close();
+    delete st;
+    return;
+  }
+
+  char *buf = new char[(unsigned)(size+1)];
+  st->Serialise(buf, size);
+  const bool wasErr = st->IsError();
+  st->Close();
+  delete st;
+  if (wasErr) {
+    GCon->Logf(NAME_Error, "cannot read controller mappings from '%s'", *stname);
+    delete[] buf;
+    return;
+  }
+
+  SDL_RWops *rwo = SDL_RWFromConstMem(buf, size);
+  if (rwo) {
+    const int count = SDL_GameControllerAddMappingsFromRW(rwo, 1); // free rwo
+    if (count < 0) {
+      GCon->Logf(NAME_Error, "cannot read controller mappings from '%s'", *stname);
+    } else if (count > 0) {
+      GCon->Logf(NAME_Init, "read %d controller mapping%s from '%s'", count, (count != 1 ? "s" : ""), *stname);
+    }
+  } else {
+    GCon->Logf(NAME_Error, "cannot read controller mappings from '%s' (rwo)", *stname);
+  }
+
+  delete[] buf;
 }
 
 
@@ -723,6 +818,16 @@ void VSdlInputDevice::StartupJoystick () {
     return;
   }
 
+  // load user controller mappings
+  VStream *rcstrm = FL_OpenFileReadInCfgDir("gamecontrollerdb.txt");
+  if (rcstrm) {
+    LoadControllerMappings(rcstrm);
+  } else {
+    // no user mappings, load built-in mappings
+    rcstrm = FL_OpenFileReadBaseOnly("gamecontrollerdb.txt");
+    LoadControllerMappings(rcstrm);
+  }
+
   //FIXME: change this!
   int joynum = 0;
   for (int jparm = GArgs.CheckParmFrom("-joy", -1, true); jparm; jparm = GArgs.CheckParmFrom("-joy", jparm, true)) {
@@ -739,7 +844,7 @@ void VSdlInputDevice::StartupJoystick () {
   GCon->Logf(NAME_Init, "SDL: will try to use joystick #%d", joynum);
 
 
-  if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0) {
+  if (SDL_InitSubSystem(SDL_INIT_JOYSTICK|SDL_INIT_GAMECONTROLLER) < 0) {
     GCon->Log(NAME_Init, "SDL: joystick initialisation failed");
     return;
   }
@@ -757,16 +862,30 @@ void VSdlInputDevice::StartupJoystick () {
 
   GCon->Logf(NAME_Init, "SDL: %d joystick%s found", joycount, (joycount == 1 ? "" : "s"));
 
-  joystick = SDL_JoystickOpen(joynum);
-  if (!joystick) {
-    GCon->Logf(NAME_Init, "SDL: cannot initialise joystick #%d", joynum);
-    return;
+  if (SDL_IsGameController(joynum)) {
+    joystick_controller = true;
+    joy_num_buttons = 0;
+    controller = SDL_GameControllerOpen(joynum);
+    if (!controller) {
+      GCon->Logf(NAME_Init, "SDL: cannot initialise controller #%d", joynum);
+      return;
+    }
+    GCon->Logf(NAME_Init, "SDL: joystick is a controller (%s)", SDL_GameControllerNameForIndex(joynum));
+    SDL_JoystickEventState(SDL_IGNORE);
+    SDL_GameControllerEventState(SDL_ENABLE);
+  } else {
+    joystick = SDL_JoystickOpen(joynum);
+    if (!joystick) {
+      GCon->Logf(NAME_Init, "SDL: cannot initialise joystick #%d", joynum);
+      return;
+    }
+    joy_num_buttons = SDL_JoystickNumButtons(joystick);
+    GCon->Logf(NAME_Init, "SDL: found joystick with %d buttons", joy_num_buttons);
+    memset(joy_oldb, 0, sizeof(joy_oldb));
+    memset(joy_newb, 0, sizeof(joy_newb));
+    SDL_JoystickEventState(SDL_ENABLE);
+    SDL_GameControllerEventState(SDL_IGNORE);
   }
-
-  joy_num_buttons = SDL_JoystickNumButtons(joystick);
-  GCon->Logf(NAME_Init, "SDL: found joystick with %d buttons", joy_num_buttons);
-  memset(joy_oldb, 0, sizeof(joy_oldb));
-  memset(joy_newb, 0, sizeof(joy_newb));
 }
 
 
@@ -776,7 +895,7 @@ void VSdlInputDevice::StartupJoystick () {
 //
 //==========================================================================
 void VSdlInputDevice::PostJoystick () {
-  if (!joystick_started || !joystick) return;
+  if (!joystick_started || !joystick || !controller) return;
 
   if (joy_oldx != joy_x || joy_oldy != joy_y) {
     event_t event;
@@ -791,15 +910,17 @@ void VSdlInputDevice::PostJoystick () {
     joy_oldy = joy_y;
   }
 
-  for (int i = 0; i < joy_num_buttons; ++i) {
-    if (joy_newb[i] != joy_oldb[i]) {
-      #ifdef __SWITCH__
-      //TEMPORARY: also translate some buttons to keys
-      int key = SwitchJoyToKey(i);
-      if (key) GInput->PostKeyEvent(key, joy_newb[i], curmodflags);
-      #endif
-      GInput->PostKeyEvent(K_JOY1+i, joy_newb[i], curmodflags);
-      joy_oldb[i] = joy_newb[i];
+  if (joystick) {
+    for (int i = 0; i < joy_num_buttons; ++i) {
+      if (joy_newb[i] != joy_oldb[i]) {
+        #ifdef __SWITCH__
+        //TEMPORARY: also translate some buttons to keys
+        int key = SwitchJoyToKey(i);
+        if (key) GInput->PostKeyEvent(key, joy_newb[i], curmodflags);
+        #endif
+        GInput->PostKeyEvent(K_JOY1+i, joy_newb[i], curmodflags);
+        joy_oldb[i] = joy_newb[i];
+      }
     }
   }
 }

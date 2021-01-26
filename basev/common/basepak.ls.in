@@ -55,6 +55,9 @@ vavoom_known_blood.rc  @CMAKE_CURRENT_SOURCE_DIR@/vavoom_known_blood.rc
 // known class ignores
 vavoom_class_ignores.rc  @CMAKE_CURRENT_SOURCE_DIR@/vavoom_class_ignores.rc
 
+// controllers database
+gamecontrollerdb.txt  @CMAKE_CURRENT_SOURCE_DIR@/gamecontrollerdb.txt
+
 // decals
 decaldef.txt  @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
 
