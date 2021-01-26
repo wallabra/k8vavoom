@@ -748,4 +748,5 @@ void Cheat_DumpInventory () {}
 
 
 defaultproperties {
+  ViewStateSY = Weapon::WEAPONTOP;
 }
