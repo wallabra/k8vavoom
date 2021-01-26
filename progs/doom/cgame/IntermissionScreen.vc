@@ -427,6 +427,10 @@ void IM_DrawLF () {
 //
 //==========================================================================
 void IM_DrawEL () {
+  // do not draw "entering" for endgame
+  string s = cast(string)ClGame.im.EnterMap;
+  if (!s || s.startsWithCI("EndGame")) return;
+
   picinfo_t info;
   int y = WI_TITLEY;
 
@@ -998,7 +1002,7 @@ void IM_InitNoState () {
 void IM_DrawNoState () {
   if (checkForDoom2()) {
     // draws which level you are entering
-    if (ClGame.im.LeaveMap != 'map30') IM_DrawEL();
+    IM_DrawEL();
   } else {
     IM_DrawNextLoc();
   }
