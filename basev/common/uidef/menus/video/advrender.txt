@@ -22,10 +22,10 @@ menudef AdvRenderOptions {
       "Quality",
     }
     help =
-      "'Quality' setting fixes 'running white dots' on walls, but is somewhat slow.",
+      "'Quality' setting fixes 'running white dots' on walls,",
+      "but is somewhat slow.",
       "Please, note that lightmap renderer will still have those dots",
-      "on floors and ceilings. This will be fixed later.",
-      "\cGPlease note that you have to restart/reload map after changing this.";
+      "on floors and ceilings. This will (probably) be fixed later.";
   }
 
 
