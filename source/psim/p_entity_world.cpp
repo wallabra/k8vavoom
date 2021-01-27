@@ -223,16 +223,8 @@ void VEntity::CreateSecNodeList () {
 
   if (rad > 1.0f) {
     float tmbbox[4];
-    tmbbox[BOX2D_TOP] = Origin.y+rad;
-    tmbbox[BOX2D_BOTTOM] = Origin.y-rad;
-    tmbbox[BOX2D_RIGHT] = Origin.x+rad;
-    tmbbox[BOX2D_LEFT] = Origin.x-rad;
-
-    const int xl = MapBlock(tmbbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-    const int xh = MapBlock(tmbbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-    const int yl = MapBlock(tmbbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-    const int yh = MapBlock(tmbbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
-
+    Create2DBBox(tmbbox, Origin, rad);
+    DeclareMakeBlockMapCoordsBBox2D(tmbbox, xl, yl, xh, yh);
     for (int bx = xl; bx <= xh; ++bx) {
       for (int by = yl; by <= yh; ++by) {
         line_t *ld;
@@ -441,10 +433,7 @@ void VEntity::LinkToWorld (int properFloorCheck) {
 
     //tmtrace.FloorZ = tmtrace.DropOffZ;
 
-    int xl = MapBlock(tmtrace.BBox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-    int xh = MapBlock(tmtrace.BBox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-    int yl = MapBlock(tmtrace.BBox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-    int yh = MapBlock(tmtrace.BBox[BOX2D_TOP]-XLevel->BlockMapOrgY);
+    DeclareMakeBlockMapCoordsBBox2D(tmtrace.BBox, xl, yl, xh, yh);
 
     //float lastFZ, lastCZ;
     //sec_plane_t *lastFloor = nullptr;
@@ -655,11 +644,7 @@ bool VEntity::CheckPosition (TVec Pos) {
     // because mobj_ts are grouped into mapblocks
     // based on their origin point, and can overlap
     // into adjacent blocks by up to MAXRADIUS units.
-    const int xl = MapBlock(cptrace.BBox[BOX2D_LEFT]-XLevel->BlockMapOrgX-MAXRADIUS);
-    const int xh = MapBlock(cptrace.BBox[BOX2D_RIGHT]-XLevel->BlockMapOrgX+MAXRADIUS);
-    const int yl = MapBlock(cptrace.BBox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY-MAXRADIUS);
-    const int yh = MapBlock(cptrace.BBox[BOX2D_TOP]-XLevel->BlockMapOrgY+MAXRADIUS);
-
+    DeclareMakeBlockMapCoordsBBox2D(cptrace.BBox, xl, yl, xh, yh);
     for (int bx = xl; bx <= xh; ++bx) {
       for (int by = yl; by <= yh; ++by) {
         for (VBlockThingsIterator It(XLevel, bx, by); It; ++It) {
@@ -674,11 +659,7 @@ bool VEntity::CheckPosition (TVec Pos) {
 
   if (EntityFlags&EF_ColideWithWorld) {
     // check lines
-    const int xl = MapBlock(cptrace.BBox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-    const int xh = MapBlock(cptrace.BBox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-    const int yl = MapBlock(cptrace.BBox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-    const int yh = MapBlock(cptrace.BBox[BOX2D_TOP]-XLevel->BlockMapOrgY);
-
+    DeclareMakeBlockMapCoordsBBox2D(cptrace.BBox, xl, yl, xh, yh);
     for (int bx = xl; bx <= xh; ++bx) {
       for (int by = yl; by <= yh; ++by) {
         line_t *ld;
@@ -876,11 +857,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
   // based on their origin point, and can overlap
   // into adjacent blocks by up to MAXRADIUS units.
   if (EntityFlags&EF_ColideWithThings) {
-    const int xl = MapBlock(tmtrace.BBox[BOX2D_LEFT]-XLevel->BlockMapOrgX-MAXRADIUS);
-    const int xh = MapBlock(tmtrace.BBox[BOX2D_RIGHT]-XLevel->BlockMapOrgX+MAXRADIUS);
-    const int yl = MapBlock(tmtrace.BBox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY-MAXRADIUS);
-    const int yh = MapBlock(tmtrace.BBox[BOX2D_TOP]-XLevel->BlockMapOrgY+MAXRADIUS);
-
+    DeclareMakeBlockMapCoordsBBox2D(tmtrace.BBox, xl, yl, xh, yh);
     for (int bx = xl; bx <= xh; ++bx) {
       for (int by = yl; by <= yh; ++by) {
         for (VBlockThingsIterator It(XLevel, bx, by); It; ++It) {
@@ -926,12 +903,8 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
   tmtrace.BlockingMobj = nullptr;
 
   if (EntityFlags&EF_ColideWithWorld) {
-    const int xl = MapBlock(tmtrace.BBox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-    const int xh = MapBlock(tmtrace.BBox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-    const int yl = MapBlock(tmtrace.BBox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-    const int yh = MapBlock(tmtrace.BBox[BOX2D_TOP]-XLevel->BlockMapOrgY);
+    DeclareMakeBlockMapCoordsBBox2D(tmtrace.BBox, xl, yl, xh, yh);
     bool good = true;
-
     line_t *fuckhit = nullptr;
     float lastFrac = 1e7f;
     for (int bx = xl; bx <= xh; ++bx) {
@@ -1643,16 +1616,8 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
   TVec SlideDir = Velocity*StepVelScale;
   if (gm_use_new_slide_code.asBool()) {
     const float rad = GetMoveRadius();
-
     // new slide code
-    float bbox[4];
-    Create2DBBox(bbox, Origin, rad);
-
-    const int xl = MapBlock(bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-    const int xh = MapBlock(bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-    const int yl = MapBlock(bbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-    const int yh = MapBlock(bbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
-
+    DeclareMakeBlockMapCoords(Origin.x, Origin.y, rad, xl, yl, xh, yh);
     XLevel->IncrementValidCount();
     for (int bx = xl; bx <= xh; ++bx) {
       for (int by = yl; by <= yh; ++by) {
@@ -2183,11 +2148,8 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
   // the bounding box is extended by MAXRADIUS because mobj_ts are grouped
   // into mapblocks based on their origin point, and can overlap into adjacent
   // blocks by up to MAXRADIUS units
-  const int xl = MapBlock(TryOrg.x-rad-XLevel->BlockMapOrgX-MAXRADIUS);
-  const int xh = MapBlock(TryOrg.x+rad-XLevel->BlockMapOrgX+MAXRADIUS);
-  const int yl = MapBlock(TryOrg.y-rad-XLevel->BlockMapOrgY-MAXRADIUS);
-  const int yh = MapBlock(TryOrg.y+rad-XLevel->BlockMapOrgY+MAXRADIUS);
-
+  //FIXME
+  DeclareMakeBlockMapCoords(TryOrg.x, TryOrg.y, (rad+MAXRADIUS), xl, yl, xh, yh);
   // xl->xh, yl->yh determine the mapblock set to search
   for (int bx = xl; bx <= xh; ++bx) {
     for (int by = yl; by <= yh; ++by) {
@@ -2273,10 +2235,7 @@ bool VEntity::CheckSides (TVec lsPos) {
   tmbbox[BOX2D_BOTTOM] = min2(Origin.y, lsPos.y);
 
   // determine which blocks to look in for blocking lines
-  const int xl = MapBlock(tmbbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-  const int xh = MapBlock(tmbbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-  const int yl = MapBlock(tmbbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-  const int yh = MapBlock(tmbbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
+  DeclareMakeBlockMapCoordsBBox2D(tmbbox, xl, yl, xh, yh);
 
   //k8: is this right?
   int projblk = (EntityFlags&VEntity::EF_Missile ? ML_BLOCKPROJECTILE : 0);
@@ -2333,24 +2292,11 @@ bool VEntity::CheckSides (TVec lsPos) {
 //==========================================================================
 bool VEntity::FixMapthingPos () {
   sector_t *sec = XLevel->PointInSubsector_Buggy(Origin)->sector; // here buggy original should be used!
-
   bool res = false;
-
   const float rad = GetMoveRadius();
-
-  // here is the bounding box of the trajectory
   float tmbbox[4];
-  tmbbox[BOX2D_TOP] = Origin.y+rad;
-  tmbbox[BOX2D_BOTTOM] = Origin.y-rad;
-  tmbbox[BOX2D_RIGHT] = Origin.x+rad;
-  tmbbox[BOX2D_LEFT] = Origin.x-rad;
-
-  // determine which blocks to look in for blocking lines
-  // determine which blocks to look in for blocking lines
-  const int xl = MapBlock(tmbbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-  const int xh = MapBlock(tmbbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-  const int yl = MapBlock(tmbbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-  const int yh = MapBlock(tmbbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
+  Create2DBBox(tmbbox, Origin, rad);
+  DeclareMakeBlockMapCoordsBBox2D(tmbbox, xl, yl, xh, yh);
 
   // xl->xh, yl->yh determine the mapblock set to search
   //++validcount; // prevents checking same line twice
@@ -2465,19 +2411,13 @@ bool VEntity::FixMapthingPos () {
 //
 //=============================================================================
 void VEntity::CheckDropOff (float &DeltaX, float &DeltaY, float baseSpeed) {
-  float t_bbox[4];
-
   // try to move away from a dropoff
   DeltaX = DeltaY = 0;
 
   const float rad = GetMoveRadius();
-
-  Create2DBBox(t_bbox, Origin, rad);
-
-  const int xl = MapBlock(t_bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-  const int xh = MapBlock(t_bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-  const int yl = MapBlock(t_bbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-  const int yh = MapBlock(t_bbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
+  float tmbbox[4];
+  Create2DBBox(tmbbox, Origin, rad);
+  DeclareMakeBlockMapCoordsBBox2D(tmbbox, xl, yl, xh, yh);
 
   // check lines
   //++validcount;
@@ -2488,11 +2428,11 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY, float baseSpeed) {
       for (VBlockLinesIterator It(XLevel, bx, by, &line); It.GetNext(); ) {
         if (!line->backsector || line->frontsector == line->backsector) continue; // ignore one-sided linedefs and selfrefs
         // linedef must be contacted
-        if (t_bbox[BOX2D_RIGHT] > line->bbox2d[BOX2D_LEFT] &&
-            t_bbox[BOX2D_LEFT] < line->bbox2d[BOX2D_RIGHT] &&
-            t_bbox[BOX2D_TOP] > line->bbox2d[BOX2D_BOTTOM] &&
-            t_bbox[BOX2D_BOTTOM] < line->bbox2d[BOX2D_TOP] &&
-            P_BoxOnLineSide(t_bbox, line) == -1)
+        if (tmbbox[BOX2D_RIGHT] > line->bbox2d[BOX2D_LEFT] &&
+            tmbbox[BOX2D_LEFT] < line->bbox2d[BOX2D_RIGHT] &&
+            tmbbox[BOX2D_TOP] > line->bbox2d[BOX2D_BOTTOM] &&
+            tmbbox[BOX2D_BOTTOM] < line->bbox2d[BOX2D_TOP] &&
+            P_BoxOnLineSide(tmbbox, line) == -1)
         {
           // new logic for 3D Floors
           /*
@@ -2539,16 +2479,11 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY, float baseSpeed) {
 //=============================================================================
 int VEntity::FindDropOffLine (TArray<VDropOffLineInfo> *list, TVec pos) {
   int res = 0;
-  float t_bbox[4];
 
   const float rad = GetMoveRadius();
-
-  Create2DBBox(t_bbox, Origin, rad);
-
-  const int xl = MapBlock(t_bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-  const int xh = MapBlock(t_bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-  const int yl = MapBlock(t_bbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-  const int yh = MapBlock(t_bbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
+  float tmbbox[4];
+  Create2DBBox(tmbbox, Origin, rad);
+  DeclareMakeBlockMapCoordsBBox2D(tmbbox, xl, yl, xh, yh);
 
   // check lines
   //++validcount;
@@ -2559,11 +2494,11 @@ int VEntity::FindDropOffLine (TArray<VDropOffLineInfo> *list, TVec pos) {
       for (VBlockLinesIterator It(XLevel, bx, by, &line); It.GetNext(); ) {
         if (!line->backsector) continue; // ignore one-sided linedefs
         // linedef must be contacted
-        if (t_bbox[BOX2D_RIGHT] > line->bbox2d[BOX2D_LEFT] &&
-            t_bbox[BOX2D_LEFT] < line->bbox2d[BOX2D_RIGHT] &&
-            t_bbox[BOX2D_TOP] > line->bbox2d[BOX2D_BOTTOM] &&
-            t_bbox[BOX2D_BOTTOM] < line->bbox2d[BOX2D_TOP] &&
-            P_BoxOnLineSide(t_bbox, line) == -1)
+        if (tmbbox[BOX2D_RIGHT] > line->bbox2d[BOX2D_LEFT] &&
+            tmbbox[BOX2D_LEFT] < line->bbox2d[BOX2D_RIGHT] &&
+            tmbbox[BOX2D_TOP] > line->bbox2d[BOX2D_BOTTOM] &&
+            tmbbox[BOX2D_BOTTOM] < line->bbox2d[BOX2D_TOP] &&
+            P_BoxOnLineSide(tmbbox, line) == -1)
         {
           // new logic for 3D Floors
           /*
