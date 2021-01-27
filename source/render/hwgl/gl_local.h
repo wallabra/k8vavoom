@@ -511,6 +511,10 @@ public:
 
   void ReadFBOPixels (FBO *srcfbo, int Width, int Height, rgba_t *Dest);
 
+  void PrepareWireframe ();
+  void DrawWireframeSurface (const surface_t *surf);
+  void DoneWireframe ();
+
   // rendering stuff
   // shoud frustum use far clipping plane?
   virtual bool UseFrustumFarClip () override;

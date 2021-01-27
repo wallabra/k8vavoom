@@ -623,6 +623,57 @@ COMMAND(dgl_ForceAtlasUpdate) {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::PrepareWireframe
+//
+//==========================================================================
+void VOpenGLDrawer::PrepareWireframe () {
+  DrawAutomap.Activate();
+  DrawAutomap.UploadChangedUniforms();
+  GLEnableBlend();
+  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+  SelectTexture(1);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  SelectTexture(0);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DrawWireframeSurface
+//
+//==========================================================================
+void VOpenGLDrawer::DrawWireframeSurface (const surface_t *surf) {
+  if (!surf || surf->count < 3) return;
+  const TVec sv0 = surf->verts[0].vec();
+  for (int i = 1; i < surf->count; ++i) {
+    glBegin(GL_LINE_LOOP);
+    glVertex(sv0);
+    glVertex(surf->verts[i].vec());
+    glVertex(surf->verts[(i+1)%surf->count].vec());
+    glEnd();
+  }
+  /*
+  glPointSize(3.0f);
+  glBegin(GL_POINTS);
+  for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
+  glEnd();
+  glPointSize(1.0f);
+  */
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DoneWireframe
+//
+//==========================================================================
+void VOpenGLDrawer::DoneWireframe () {
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::DrawLightmapWorld
 //
 //  lightmapped rendering
@@ -633,6 +684,26 @@ void VOpenGLDrawer::DrawLightmapWorld () {
   lastTexinfo.initLastUsed();
 
   VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
+
+  if (gl_dbg_wireframe) {
+    PrepareWireframe();
+    for (auto &&surf : dls.DrawSurfListSolid) DrawWireframeSurface(surf);
+    for (auto &&surf : dls.DrawSurfListMasked) DrawWireframeSurface(surf);
+
+    for (vuint32 lcbn = RendLev->GetLightChainHead(); lcbn; lcbn = RendLev->GetLightChainNext(lcbn)) {
+      const vuint32 lb = lcbn-1;
+      vassert(lb < NUM_BLOCK_SURFS);
+      for (surfcache_t *cache = RendLev->GetLightChainFirst(lb); cache; cache = cache->chain) {
+        surface_t *surf = cache->surf;
+        if (!surf->IsPlVisible()) continue; // viewer is in back side or on plane
+        DrawWireframeSurface(surf);
+      }
+    }
+
+    DoneWireframe();
+    return;
+  }
+
 
   // first draw horizons
   {

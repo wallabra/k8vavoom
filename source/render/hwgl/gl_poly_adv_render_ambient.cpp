@@ -82,50 +82,10 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
     //FIXME!
     if (gl_dbg_wireframe) {
-      DrawAutomap.Activate();
-      DrawAutomap.UploadChangedUniforms();
-      GLEnableBlend();
-      glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-      SelectTexture(1);
-      glBindTexture(GL_TEXTURE_2D, 0);
-      SelectTexture(0);
-
-      for (auto &&surf : dls.DrawSurfListSolid) {
-        //glBegin(GL_TRIANGLE_FAN);
-        /*
-        glBegin(GL_LINE_LOOP);
-          for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
-        glEnd();
-        */
-        glBegin(GL_LINE_LOOP);
-        for (int i = 1; i < surf->count; ++i) {
-          glVertex(surf->verts[0].vec());
-          glVertex(surf->verts[i].vec());
-          glVertex(surf->verts[(i+1)%surf->count].vec());
-        }
-        glEnd();
-        /*
-        glPointSize(3.0f);
-        glBegin(GL_POINTS);
-        for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
-        glEnd();
-        glPointSize(1.0f);
-        */
-      }
-
-      for (auto &&surf : dls.DrawSurfListMasked) {
-        //glBegin(GL_TRIANGLE_FAN);
-        glBegin(GL_LINE_LOOP);
-        //for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i].vec());
-        for (int i = 1; i < surf->count; ++i) {
-          glVertex(surf->verts[0].vec());
-          glVertex(surf->verts[i].vec());
-          glVertex(surf->verts[(i+1)%surf->count].vec());
-        }
-        glEnd();
-      }
-
+      PrepareWireframe();
+      for (auto &&surf : dls.DrawSurfListSolid) DrawWireframeSurface(surf);
+      for (auto &&surf : dls.DrawSurfListMasked) DrawWireframeSurface(surf);
+      DoneWireframe();
       return;
     }
 
