@@ -47,7 +47,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
-static VCvarB gm_use_new_slide_code("gm_use_new_slide_code", false, "Use new sliding code (experimental)?", CVAR_Archive);
+static VCvarB gm_use_new_slide_code("gm_use_new_slide_code", true, "Use new sliding code (experimental)?", CVAR_Archive);
 // this may create stuck monsters on Arch-Vile revival and such, but meh...
 // i REALLY HATE hanging corpses
 static VCvarB gm_smaller_corpses("gm_smaller_corpses", false, "Make corpses smaller, so they will not hang on ledges?", CVAR_Archive);
