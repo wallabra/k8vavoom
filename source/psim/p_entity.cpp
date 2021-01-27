@@ -266,7 +266,7 @@ bool VEntity::NeedPhysics () {
   //if (WaterLevel != 0) return true; // i don't think that we need to check this
   //if (!Velocity.isZero2D()) return true;
   // roughly smaller than lowest fixed point 16.16 (it is more like 0.0000152587890625)
-  if (fabsf(Velocity.x) > 0.000016f*4.0f || fabsf(Velocity.x) > 0.000016f*4.0f) return true;
+  if (fabsf(Velocity.x) > 0.000016f*4.0f || fabsf(Velocity.y) > 0.000016f*4.0f) return true;
 
   // check sticks
   if (FlagsEx&(EFEX_StickToFloor|EFEX_StickToCeiling)) {
