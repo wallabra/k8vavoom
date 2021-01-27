@@ -597,7 +597,7 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
         //printdebug("%C: 000: Height=%s; rng=%s", self, Height, tmtrace.CeilingZ-tmtrace.FloorZ);
         PlayerEx pex = PlayerEx(Player);
         // can we crouch at all?
-        if (pex.CanCrouch()) {
+        if (pex && pex.CanCrouch()) {
           //GetFloorAndCeilingEx(out tmtrace, vector(ptryx, ptryy, Origin.z), collideWorld:true, collideThings:true);
           float hgt = PlayerPawn(self).GetRealHeight();
           float rng = tmtrace.CeilingZ-tmtrace.FloorZ;

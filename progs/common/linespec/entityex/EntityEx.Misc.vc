@@ -392,7 +392,6 @@ final bool TeleportMove (TVec org, optional bool ForceTelestomp, optional bool F
 //==========================================================================
 final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepDir, optional bool ForceTelestomp) {
   float fogDelta;
-  //EntityEx fog;
   bool ResetPitch = false;
 
   TVec oldOrg = Origin;
@@ -416,17 +415,42 @@ final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepD
       Dst.z = DstFloorZ;
     }
   }
+
   if (!TeleportMove(Dst, ForceTelestomp!optional)) return false;
-  if (bIsPlayer && Player.MO == self) {
-    Player.ViewOrg = Origin+vector(0.0, 0.0, PlayerEx(Player).ViewHeight);
-    //auto pex = PlayerEx(Player);
-    //if (pex) pex.lastViewOrgZForPfx = Origin.z;
-    if (ResetPitch) Angles.pitch = 0.0;
+
+  if (bIsPlayer) {
+    // crouch if we have autocrouch option, and cannot fit
+    if (CeilingZ-FloorZ < Height && crouchfactor > 0.5 && PlayerPawn(self) && (PlayerPawn(self).bAutoCrouch || GetCvarB('player_force_autocrouch'))) {
+      PlayerEx pex = PlayerEx(Player);
+      // can we crouch at all?
+      if (pex && pex.CanCrouch()) {
+        float hgt = PlayerPawn(self).GetRealHeight();
+        float rng = CeilingZ-FloorZ;
+        if (rng < hgt && rng >= hgt*0.5) {
+          // yep, can move if we'll crouch, so let's do it
+          float newcrf = fclamp(rng/hgt, 0.5, 1.0);
+          float savedheight = Height; //HACK! we'd better use `GetHeight()` here, but...
+          Height = hgt*newcrf; // lowest possible crouch factor
+          tmtrace_t tmtracetmp;
+          bool oktomove = TryMoveEx(out tmtracetmp, Origin, AllowDropOff:true);
+          Height = savedheight;
+          if (oktomove) crouchfactor = newcrf; else Height = savedheight;
+        }
+      }
+    }
+    if (Player.MO == self) {
+      Player.ViewOrg = Origin+vector(0.0, 0.0, PlayerEx(Player).ViewHeight);
+      //auto pex = PlayerEx(Player);
+      //if (pex) pex.lastViewOrgZForPfx = Origin.z;
+      if (ResetPitch) Angles.pitch = 0.0;
+    }
   }
+
   // spawn teleport fog at source and destination
   fogDelta = (bMissile ? 0.0 : LineSpecialGameInfo(Level.Game).TeleFogHeight);
   if (SrcFog) Spawn(TeleportFog, oldOrg+vector(0.0, 0.0, fogDelta));
   if (DstFog) Spawn(TeleportFog, Origin+vector(20.0*cos(angle), 20.0*sin(angle), fogDelta));
+
   if (!KeepDir) {
     if (bIsPlayer && !FindInventory(PowerWeaponLevel2) && !FindInventory(PowerSpeed)) {
       // don't move for a bit, freeze player for about .5 sec
@@ -435,7 +459,9 @@ final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepD
     Angles.yaw = angle;
     if (bIsPlayer) Player.bFixAngle = true;
   }
+
   HandleFloorclip();
+
   if (bMissile) {
     float s, c;
     sincos(angle, out s, out c);
@@ -445,6 +471,7 @@ final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepD
     // no fog doesn't alter the player's momentums
     Velocity = vector(0.0, 0.0, 0.0);
   }
+
   bIntrJustMoved = false; // disable movement interpolation
   return true;
 }
