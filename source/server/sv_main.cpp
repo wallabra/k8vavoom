@@ -1311,11 +1311,15 @@ COMMAND_WITH_AC(TeleportNewMapEx) {
   mapteleport_executed = false; // used for netgame autoteleport
 
   if (Args.length() < 2) {
-    GCon->Logf("TeleportNewMapEx mapname|+ [posidx [flags [skill]]]");
+    GCon->Logf("TeleportNewMapEx mapname|+|* [posidx [flags [skill]]]");
     return;
   }
 
-  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
+  //if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
+  if (GGameInfo->NetMode != NM_Standalone) {
+    GCon->Logf("TeleportNewMapEx works only in standalone games!");
+    return;
+  }
 
   CMD_FORWARD_TO_SERVER();
 
@@ -1354,6 +1358,11 @@ COMMAND_WITH_AC(TeleportNewMapEx) {
 
   if (Args[1] == "+" || Args[1] == "*") {
     // use default next map; i.e. do nothing
+    if (Args.length() == 2 && Args[1] == "+") {
+      C_Stop(true); // immediate
+      G_DoCompleted(false);
+      return;
+    }
   } else {
     VName mname = VName(*Args[1], VName::FindLower8);
     if (mname == NAME_None) {
