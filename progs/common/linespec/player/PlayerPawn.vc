@@ -116,6 +116,7 @@ float UseThingRange;
 
 // used for Zan, for example
 bool bIgnoreAmmoKing;
+bool bAutoCrouch;
 
 // weapon slots from decorate
 // this is created by decorate, and it is in very special format

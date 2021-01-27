@@ -562,6 +562,7 @@
     <prop_float name="Player.GruntSpeed" property="GruntSpeed" />
     <!-- k8vavoom flags -->
     <flag name="IgnoreAmmoKing" property="bIgnoreAmmoKing" />
+    <flag name="AutoCrouch" property="bAutoCrouch" />
   </class>
 
   <class name="MorphProjectile">
