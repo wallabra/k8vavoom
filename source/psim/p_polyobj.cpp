@@ -747,6 +747,7 @@ bool VLevel::PolyCheckMobjBlocking (seg_t *seg, polyobj_t *po) {
   for (j = bottom*BlockMapWidth; j <= top*BlockMapWidth; j += BlockMapWidth) {
     for (i = left; i <= right; ++i) {
       for (mobj = BlockLinks[j+i]; mobj; mobj = mobj->BlockMapNext) {
+        if (mobj->IsGoingToDie()) continue;
         if (mobj->EntityFlags&VEntity::EF_ColideWithWorld) {
           if (mobj->EntityFlags&(VEntity::EF_Solid|VEntity::EF_Corpse)) {
             bool isSolid = !!(mobj->EntityFlags&VEntity::EF_Solid);

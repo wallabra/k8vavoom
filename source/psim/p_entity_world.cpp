@@ -2659,6 +2659,8 @@ bool VRoughBlockSearchIterator::GetNext () {
   int BlockY;
 
   for (;;) {
+    while (Ent && Ent->IsGoingToDie()) Ent = Ent->BlockMapNext;
+
     if (Ent) {
       *EntPtr = Ent;
       Ent = Ent->BlockMapNext;
@@ -2736,6 +2738,7 @@ bool VRoughBlockSearchIterator::GetNext () {
         break;
     }
   }
+
   return false;
 }
 

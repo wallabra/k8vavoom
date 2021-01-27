@@ -201,6 +201,8 @@ VRadiusThingsIterator::VRadiusThingsIterator (VThinker *ASelf, VEntity **AEntPtr
 //==========================================================================
 bool VRadiusThingsIterator::GetNext () {
   for (;;) {
+    while (Ent && Ent->IsGoingToDie()) Ent = Ent->BlockMapNext;
+
     if (Ent) {
       *EntPtr = Ent;
       Ent = Ent->BlockMapNext;
