@@ -487,6 +487,10 @@ final bool PerformSectorWindThrust (float DeltaTime, sector_t *asector) {
 //
 //==========================================================================
 final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *OldSector) {
+  tmtrace_t tmtrace, tmtracetmp;
+
+  if (bIsPlayer) PlayerEx(Player).bForceCrouchingDown = false;
+
   if (bWindThrust && Sector) {
     #if 0
     // check winds for all touching sectors?
@@ -558,6 +562,7 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
       // arm a mine which has come to rest
       bArmed = true;
     }
+    //if (bIsPlayer) printdebug("***** PLAYER STANDS! ***");
     return;
   }
 
@@ -585,9 +590,37 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
     float ptryx = Origin.x+StepXMove;
     float ptryy = Origin.y+StepYMove;
 
-    tmtrace_t tmtrace;
     if (!bNoInteraction && !TryMoveEx(out tmtrace, vector(ptryx, ptryy, Origin.z), AllowDropOff:true)) {
       // blocked move
+      // check if we're a player, and can do it with crouching
+      if (bIsPlayer && Player.MO == self && crouchfactor > 0.5 && (self isa 'Zan')) {
+        //printdebug("%C: 000: Height=%s; rng=%s", self, Height, tmtrace.CeilingZ-tmtrace.FloorZ);
+        PlayerEx pex = PlayerEx(Player);
+        // can we crouch at all?
+        if (pex.CanCrouch()) {
+          //GetFloorAndCeilingEx(out tmtrace, vector(ptryx, ptryy, Origin.z), collideWorld:true, collideThings:true);
+          float hgt = PlayerPawn(self).GetRealHeight();
+          float rng = tmtrace.CeilingZ-tmtrace.FloorZ;
+          //printdebug("%C: 001: Height=%s; hgt=%s; rng=%s", self, Height, hgt, rng);
+          if (rng < hgt && rng >= hgt*0.5) {
+            // yep, can move if we'll crouch, so let's do it
+            //printdebug("   ...trying to crouch...");
+            // try moving again
+            float savedheight = Height; //HACK! we'd better use `GetHeight()` here, but...
+            Height = hgt*0.5; // lowest possible crouch factor
+            bool oktomove = TryMoveEx(out tmtracetmp, vector(ptryx, ptryy, Origin.z), AllowDropOff:true);
+            Height = savedheight;
+            if (oktomove) {
+              // restore crouch factor, force crouching, don't slide, don't reset velocity
+              //printdebug("   ...force crouching!");
+              pex.bForceCrouchingDown = true;
+              // return back (for now)
+              TryMoveEx(out tmtracetmp, oldOrigin, AllowDropOff:true);
+              return;
+            }
+          }
+        }
+      }
       if (DecalName && (bDecals2SPass || bDecalsOnly2S)) {
         //print("tracing decal '%s' (hit)", DecalName);
         if (Role == ROLE_Authority) {

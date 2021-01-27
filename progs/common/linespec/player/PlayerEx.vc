@@ -110,6 +110,9 @@ bool bAutoAim; // auto aiming enabled? (weapon can override this)
 bool bHasBackpack;
 // for PROP_NOWEAPONSWITCH
 bool bDisableWeaponSwitch;
+// used to force crouching from entity physics
+// reset in physics, or on player reborn
+transient bool bForceCrouchingDown;
 
 // button down flags, etc.
 transient bool bReloadQueued; // true if "reload" was pressed
@@ -778,17 +781,14 @@ void CalcHeight (float deltaTime) {
 
 //==========================================================================
 //
-//  CrouchMove
+//  SetNewCrouchFactor
 //
 //==========================================================================
-void CrouchMove (int direction) {
-  scope(exit) PrevViewHeight = ViewHeight;
+void SetNewCrouchFactor (float newcrf) {
   auto plrmo = PlayerPawn(MO);
   if (!plrmo) return;
 
-  float crouchspeed = direction*EntityEx::CROUCHSPEED;
-  float newcrf = fclamp(plrmo.crouchfactor+crouchspeed, 0.5, 1.0);
-  if (newcrf == plrmo.crouchfactor) return; // nothing to do
+  //scope(exit) PrevViewHeight = ViewHeight;
 
   // check whether the move is ok
   float savedheight = plrmo.Height; //HACK! we'd better use `GetHeight()` here, but...
@@ -807,12 +807,43 @@ void CrouchMove (int direction) {
   float vhDelta = ViewHeight-prevVH;
   ViewHeight = PlayerPawn(plrmo).GetPawnViewHeight*newcrf+vhDelta;
   plrmo.crouchfactor = newcrf;
+  PrevViewHeight = ViewHeight;
 
   // check for eyes going above/below fake floor due to crouching motion
   // this seems to be done in TryMove
   //FIXME
   //TODO
   //CheckFakeFloorTriggers(pos.Z + oldheight, true);
+}
+
+
+//==========================================================================
+//
+//  CrouchMove
+//
+//==========================================================================
+void CrouchMove (int direction) {
+  auto plrmo = PlayerPawn(MO);
+  if (!plrmo) return;
+
+  float crouchspeed = (bForceCrouchingDown && direction > 0 ? -EntityEx::CROUCHSPEED : direction*EntityEx::CROUCHSPEED);
+  float newcrf = fclamp(plrmo.crouchfactor+crouchspeed, 0.5, 1.0);
+  if (newcrf == plrmo.crouchfactor) return; // nothing to do
+  //if (bForceCrouchingDown) printdebug("FORCED CROUCH! old=%s; new=%s; cspeed=%s", plrmo.crouchfactor, newcrf, crouchspeed);
+  //else if (newcrf != 1.0f) printdebug("CROUCH(dir=%s)! old=%s; new=%s; cspeed=%s", direction, plrmo.crouchfactor, newcrf, crouchspeed);
+
+  SetNewCrouchFactor(newcrf);
+}
+
+
+//==========================================================================
+//
+//  CanCrouch
+//
+//==========================================================================
+final bool CanCrouch () {
+  if (!IsCrouchEnabled()) return false;
+  return (!bFly || MO.Origin.z <= MO.FloorZ);
 }
 
 
@@ -3531,7 +3562,6 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
   bTotallyFrozen = false; // just in case
   */
   bFly = false; // just in case
-  bDisableWeaponSwitch = false;
   PoisonCount = 0; // screen flash for poison damage
   LastPoisonTime = 0;
   Poisoner = none; // none for non-player mobjs
@@ -3549,6 +3579,7 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
   ResetWeaponReloadRefire();
   ResetWeaponActionFlags();
   bDisableWeaponSwitch = false;
+  bForceCrouchingDown = false;
 
   if (GetCvarB('k8HealthAccum_Reset')) k8HealthAccum_Amount = 0;
   k8HealthAccum_LastRegenTime = -10000;
@@ -4219,6 +4250,7 @@ override void PlayerExitMap (bool clusterChange) {
   ResetWeaponReloadRefire();
   ResetWeaponActionFlags();
   //bDisableWeaponSwitch = false;
+  bForceCrouchingDown = false;
   LocalQuakeHappening = vector(0, 0, 0);
 }
 
@@ -4399,6 +4431,7 @@ void DeathPlayerTick (float deltaTime) {
   ResetWeaponReloadRefire();
   ResetWeaponActionFlags();
   bDisableWeaponSwitch = false;
+  bForceCrouchingDown = false;
 
   ClearSubSeenInfo();
   MovePsprites(deltaTime);
