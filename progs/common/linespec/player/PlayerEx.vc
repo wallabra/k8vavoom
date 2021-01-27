@@ -822,11 +822,11 @@ void SetNewCrouchFactor (float newcrf) {
 //  CrouchMove
 //
 //==========================================================================
-void CrouchMove (int direction) {
+void CrouchMove (float deltaTime, int direction) {
   auto plrmo = PlayerPawn(MO);
   if (!plrmo) return;
 
-  float crouchspeed = (bForceCrouchingDown && direction > 0 ? -EntityEx::CROUCHSPEED : direction*EntityEx::CROUCHSPEED);
+  float crouchspeed = (bForceCrouchingDown && direction > 0 ? -EntityEx::CROUCHSPEED : direction*EntityEx::CROUCHSPEED)*deltaTime;
   float newcrf = fclamp(plrmo.crouchfactor+crouchspeed, 0.5, 1.0);
   if (newcrf == plrmo.crouchfactor) return; // nothing to do
   //if (bForceCrouchingDown) printdebug("FORCED CROUCH! old=%s; new=%s; cspeed=%s", plrmo.crouchfactor, newcrf, crouchspeed);
@@ -873,7 +873,7 @@ void MovePlayer (float deltaTime) {
 
   // yeah, we can start crouching mid-air
   //auto ohgt = MO.Height;
-  CrouchMove(IsCrouchButtonCrouch() ? -1 : 1);
+  CrouchMove(deltaTime, (IsCrouchButtonCrouch() ? -1 : 1));
   //print("HEIGHT: %s  %s  crf=%s; vh=%s; dvh=%s", ohgt, MO.Height, EntityEx(MO).crouchfactor, ViewHeight, PlayerPawn(MO).default.ViewHeight);
 
   // do not let the player control movement if not onground
@@ -1096,7 +1096,7 @@ void WaterMove (float deltaTime) {
     } else if (MO.Origin.z <= MO.FloorZ) {
       // normal crouch
       doCrouchMove = false;
-      CrouchMove(IsCrouchButtonCrouch() ? -1 : 1);
+      CrouchMove(deltaTime, (IsCrouchButtonCrouch() ? -1 : 1));
     }
   } else {
     if (MO.WaterLevel >= 2 && wishvel.z < 0 && wishvz == 0) {
@@ -1112,7 +1112,7 @@ void WaterMove (float deltaTime) {
   }
 
   // stand up
-  if (doCrouchMove) CrouchMove(1);
+  if (doCrouchMove) CrouchMove(deltaTime, 1);
 
   CheckWaterJump();
 
