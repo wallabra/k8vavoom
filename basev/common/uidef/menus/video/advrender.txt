@@ -24,8 +24,9 @@ menudef AdvRenderOptions {
     help =
       "'Quality' setting fixes 'running white dots' on walls,",
       "but is somewhat slow.",
-      "Please, note that lightmap renderer will still have those dots",
-      "on floors and ceilings. This will (probably) be fixed later.";
+      "",
+      "Please, note that lightmapped renderer will still have",
+      "those dots all around. This will be fixed later.";
   }
 
 
