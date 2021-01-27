@@ -1363,3 +1363,33 @@ COMMAND_AC(LightmapsReset) {
   list.append("defer");
   return AutoCompleteFromListCmd(prefix, list);
 }
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::FixFaceTJunctions
+//
+//==========================================================================
+surface_t *VRenderLevelLightmap::FixFaceTJunctions (surface_t *surf) {
+  // not yet
+  return surf;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::FixSegTJunctions
+//
+//  this is used to subdivide wall segments
+//  axes are two lightmap axes
+//
+//  we'll fix t-junctions here
+//
+//  WARNING! this is temporary solution, we should do it in renderer,
+//  because moving flats can invalidate neighbour surfaces
+//
+//==========================================================================
+surface_t *VRenderLevelLightmap::FixSegTJunctions (surface_t *surf, seg_t *seg) {
+  // not yet
+  return surf;
+}

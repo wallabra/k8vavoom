@@ -511,8 +511,8 @@ protected:
   static float CheckLightPointCone (VEntity *lowner, const TVec &p, const float radius, const float height, const TVec &coneOrigin, const TVec &coneDir, const float coneAngle);
 
   virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) = 0;
-  virtual surface_t *FixFaceTJunctions (surface_t *surf);
-  virtual surface_t *FixSegTJunctions (surface_t *surf, seg_t *seg);
+  virtual surface_t *FixFaceTJunctions (surface_t *surf) = 0;
+  virtual surface_t *FixSegTJunctions (surface_t *surf, seg_t *seg) = 0;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) = 0;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) = 0;
   virtual void QueueWorldSurface (surface_t *surf) = 0;

@@ -910,6 +910,8 @@ extern VCvarF r_fade_factor;
 extern VCvarF r_sky_bright_factor;
 
 extern VCvarB r_fix_tjunctions;
+extern VCvarB dbg_fix_tjunctions;
+extern VCvarB warn_fix_tjunctions;
 
 extern float PixelAspect;
 extern float BaseAspect;
