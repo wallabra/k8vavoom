@@ -593,7 +593,7 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
     if (!bNoInteraction && !TryMoveEx(out tmtrace, vector(ptryx, ptryy, Origin.z), AllowDropOff:true)) {
       // blocked move
       // check if we're a player, and can do it with crouching
-      if (bIsPlayer && PlayerPawn(self) && PlayerPawn(self).bAutoCrouch && crouchfactor > 0.5) {
+      if (bIsPlayer && crouchfactor > 0.5 && PlayerPawn(self) && (PlayerPawn(self).bAutoCrouch || GetCvarB('player_force_autocrouch'))) {
         //printdebug("%C: 000: Height=%s; rng=%s", self, Height, tmtrace.CeilingZ-tmtrace.FloorZ);
         PlayerEx pex = PlayerEx(Player);
         // can we crouch at all?

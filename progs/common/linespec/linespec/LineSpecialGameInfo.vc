@@ -139,6 +139,8 @@ transient int kkWeaponSlotCopy[MaxWeaponSlots]; // if set to false, this slot wa
 override void Init () {
   CreateCvarStr('player_default_gender', "male", "Default player gender?", CVAR_ARCHIVE|CVAR_PREINIT); // preinit, so we can change it from command line
 
+  CreateCvarBool('player_force_autocrouch', false, "Force autocrouching for all player pawns?", CVAR_ARCHIVE);
+
   CreateCvarBool('gm_death_infighting', true, "Should monsters start infighting when player dies?", CVAR_ARCHIVE);
   CreateCvarInt('dbg_perfect_hatred', 0, "Make monsters hate everything around? (bitflags, use 13 for most fun)", 0);
 
