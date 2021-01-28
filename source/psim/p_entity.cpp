@@ -278,32 +278,39 @@ bool VEntity::NeedPhysics () {
   }
 
   if (!(EntityFlags&EF_NoGravity)) {
+    // going up, or not stanting on a floor?
     if (Velocity.z > 0.0f || Origin.z != FloorZ) return true;
   } else {
     // no gravity, check for vertical velocity
     if (fabsf(Velocity.z) > 0.000016f*4.0f) return true;
   }
 
+  // interpolation
+  // actually, interpolation is done by the renderer, so why bother?
+  /*
   bool removeJustMoved = false;
   if (MoveFlags&MVF_JustMoved) {
     TVec odiff = LastMoveOrigin-Origin;
     if (fabsf(odiff.x) > 0.2f || fabsf(odiff.y) > 0.2f || fabsf(odiff.z) > 0.2f) return true;
     removeJustMoved = true;
   }
+  */
 
   if (FlagsEx&EFEX_IsEntityEx) {
     // check for scrollers
     if (classScroller) {
-      if (classScroller->InstanceCountWithSub && (EntityFlags&(EF_NoSector|EF_ColideWithWorld)) == EF_ColideWithWorld && Sector &&
-          fldLastScrollOrig->GetVec(this) != Origin)
+      if (classScroller->InstanceCountWithSub && (EntityFlags&(EF_NoSector|EF_ColideWithWorld)) == EF_ColideWithWorld &&
+          Sector && fldLastScrollOrig->GetVec(this) != Origin)
       {
-        // do as much as we can here
+        // do as much as we can here (it is *MUCH* faster than VM code)
+        // fallback to VM checks only if they have a chance to succeed
         for (msecnode_t *mnode = TouchingSectorList; mnode; mnode = mnode->TNext) {
           sector_t *sec = mnode->Sector;
           VThinker *th = sec->AffectorData;
           if (!th) continue;
           if (th->GetClass()->IsChildOf(classSectorThinker)) {
             // check if we have any transporters
+            //TODO: add another velocity-affecting classes here if they will ever emerge
             bool needCheck = false;
             while (th) {
               if (th->GetClass()->IsChildOf(classScroller)) {
@@ -335,14 +342,18 @@ bool VEntity::NeedPhysics () {
     // check for windthrust
     if (fldbWindThrust && fldbWindThrust->GetBool(this)) return true;
   } else {
-    // just in case
+    // just in case (everything should be EntityEx here, but let's play safe)
     if (eventPhysicsCheckScroller()) return true;
   }
 
+  /*
   if (removeJustMoved) {
     MoveFlags &= ~MVF_JustMoved;
     LastMoveOrigin = Origin;
   }
+  */
+
+  // reset horizontal velocity (just in case, it is either already zero, or very close to zero, but...)
   Velocity.x = Velocity.y = 0.0f;
 
   return false;
