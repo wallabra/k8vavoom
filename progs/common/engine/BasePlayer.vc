@@ -63,6 +63,12 @@ struct VViewStateOverlay {
   float Alpha;
 };
 
+struct VPlrAngleInterp {
+  float StartTime;
+  float Duration;
+  float Prev;
+};
+
 readonly LevelInfo Level;
 
 readonly bool bActive;
@@ -128,8 +134,9 @@ int PlayerState;
 TVec ViewOrg;
 TAVec ViewAngles;
 
-transient native float ViewPitchStartTime;
-transient native float ViewPitchPrev;
+transient native VPlrAngleInterp ViewPitchInterp;
+transient native VPlrAngleInterp ViewYawInterp;
+transient native VPlrAngleInterp ViewRollInterp;
 
 // this is only used between levels,
 // mo->health is used during levels.

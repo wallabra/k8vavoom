@@ -108,6 +108,13 @@ struct VViewStateOverlay {
 };
 
 
+struct VPlrAngleInterp {
+  float StartTime;
+  float Duration;
+  float Prev;
+};
+
+
 // extended player object info: player_t
 class VBasePlayer : public VGameObject {
   DECLARE_CLASS(VBasePlayer, VGameObject, 0)
@@ -186,11 +193,11 @@ class VBasePlayer : public VGameObject {
   TVec ViewOrg;
   TAVec ViewAngles;
 
-  // pitch interpolation (for `A_SetPitch()`)
+  // angle interpolation
   // doesn't work for level start (zero time) -- meh
-  // it interpolates pitch for 1/35 of second
-  float ViewPitchStartTime;
-  float ViewPitchPrev;
+  VPlrAngleInterp ViewPitchInterp;
+  VPlrAngleInterp ViewYawInterp;
+  VPlrAngleInterp ViewRollInterp;
 
   // this is only used between levels
   // mo->health is used during levels

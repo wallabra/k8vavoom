@@ -449,8 +449,11 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
 //
 //==========================================================================
 [decorate] final void A_SetAngle (float newyaw, optional int flags, optional int aptr) {
-  Entity tgt = DecorDoAAPtr('A_SetAngle', aptr!optional);
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetAngle', aptr!optional));
   if (!tgt) return;
+  if (tgt.bIsPlayer && tgt.Player.MO == self && !(flags&SPF_NO_INTERPOLATE)) {
+    tgt.PlrSetAngleInterp(ref tgt.Player.ViewYawInterp, tgt.Angles.yaw, aptr);
+  }
   tgt.Angles.yaw = AngleMod360(newyaw);
 }
 
@@ -524,11 +527,6 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
 }
 
 
-/*
-const int SPF_FORCECLAMP = 0x01;
-const int SPF_INTERPOLATE = 0x00;
-*/
-
 //==========================================================================
 //
 //  clampPitch
@@ -556,11 +554,10 @@ private final float clampPitch (float newpitch) {
 //
 //==========================================================================
 [decorate] final void A_SetPitch (float newpitch, optional int flags, optional int aptr) {
-  Entity tgt = DecorDoAAPtr('A_SetPitch', aptr!optional);
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetPitch', aptr!optional));
   if (!tgt) return;
   if (tgt.bIsPlayer && tgt.Player.MO == self && !(flags&SPF_NO_INTERPOLATE)) {
-    tgt.Player.ViewPitchStartTime = XLevel.Time;
-    tgt.Player.ViewPitchPrev = tgt.Angles.pitch;
+    tgt.PlrSetAngleInterp(ref tgt.Player.ViewPitchInterp, tgt.Angles.pitch, aptr);
   }
   if (tgt.bIsPlayer || (flags&SPF_FORCECLAMP) != 0) newpitch = clampPitch(newpitch);
   tgt.Angles.pitch = /*AngleMod360*/(newpitch);
@@ -573,8 +570,11 @@ private final float clampPitch (float newpitch) {
 //
 //==========================================================================
 [decorate] final void A_SetRoll (float newroll, optional int flags, optional int aptr) {
-  Entity tgt = DecorDoAAPtr('A_SetRoll', aptr!optional);
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetRoll', aptr!optional));
   if (!tgt) return;
+  if (tgt.bIsPlayer && tgt.Player.MO == self && !(flags&SPF_NO_INTERPOLATE)) {
+    tgt.PlrSetAngleInterp(ref tgt.Player.ViewRollInterp, tgt.Angles.roll, aptr);
+  }
   tgt.Angles.roll = AngleMod360(newroll);
 }
 

@@ -1190,6 +1190,26 @@ void VRenderLevelShared::TransformFrustum () {
 
 //==========================================================================
 //
+//  PlrInterpAngle
+//
+//==========================================================================
+static void PlrInterpAngle (VLevel *Level, VPlrAngleInterp &ii, float &currangle) {
+  if (ii.Duration > 0.0f) {
+    const float pdiff = (Level->Time-ii.StartTime)/ii.Duration;
+    if (pdiff < 0.0f || pdiff >= 1.0f) {
+      //GCon->Logf(NAME_Debug, "pdiff=%g", pdiff);
+      ii.Duration = 0.0f;
+    } else {
+      const float delta = AngleDiff(AngleMod(ii.Prev), AngleMod(currangle));
+      //GCon->Logf(NAME_Debug, "pdiff=%g; delta=%g; prev=%g; curr=%g; val=%g", pdiff, delta, cl->ViewPitchPrev, cl->ViewAngles.pitch, cl->ViewPitchPrev+delta*pdiff);
+      currangle = ii.Prev+delta*pdiff;
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SetupFrame
 //
 //==========================================================================
@@ -1208,17 +1228,11 @@ void VRenderLevelShared::SetupFrame () {
 
   Drawer->viewangles = cl->ViewAngles;
 
-  // interpolate pitch
-  if (cl->Camera == cl->MO && cl->ViewPitchStartTime) {
-    const float pdiff = (cl->MO->XLevel->Time-cl->ViewPitchStartTime)*35.0f;
-    if (pdiff < 0.0f || pdiff >= 1.0f) {
-      //GCon->Logf(NAME_Debug, "pdiff=%g", pdiff);
-      cl->ViewPitchStartTime = 0.0f;
-    } else {
-      const float delta = AngleDiff(AngleMod(cl->ViewPitchPrev), AngleMod(cl->ViewAngles.pitch));
-      //GCon->Logf(NAME_Debug, "pdiff=%g; delta=%g; prev=%g; curr=%g; val=%g", pdiff, delta, cl->ViewPitchPrev, cl->ViewAngles.pitch, cl->ViewPitchPrev+delta*pdiff);
-      Drawer->viewangles.pitch = cl->ViewPitchPrev+delta*pdiff;
-    }
+  // interpolate pitch and yaw
+  if (cl->Camera == cl->MO) {
+    PlrInterpAngle(cl->MO->XLevel, cl->ViewYawInterp, Drawer->viewangles.yaw);
+    PlrInterpAngle(cl->MO->XLevel, cl->ViewPitchInterp, Drawer->viewangles.pitch);
+    PlrInterpAngle(cl->MO->XLevel, cl->ViewRollInterp, Drawer->viewangles.roll);
   }
 
   if (r_chasecam && r_chase_front) {

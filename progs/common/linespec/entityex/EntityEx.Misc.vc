@@ -3398,6 +3398,57 @@ final state FindJumpStateOfs (int offset) {
 
 //===========================================================================
 //
+//  GetXStateTime
+//
+//===========================================================================
+final float GetXStateTime () {
+  if (XLevel.StateCall) return StateTime;
+  if (bIsPlayer) {
+    foreach (int xidx; 0..NUMPSPRITES) {
+      if (XLevel.CallingState == Player.ViewStates[xidx].State) {
+        return Player.ViewStates[xidx].StateTime;
+      }
+    }
+  }
+  return StateTime;
+}
+
+
+//===========================================================================
+//
+//  PlrSetAngleInterp
+//
+//===========================================================================
+final void PlrSetAngleInterp (ref BasePlayer::VPlrAngleInterp ii, float prevangle, int aptr) {
+  if (!bIsPlayer || Player.MO != self) return;
+  PlayerEx plr = PlayerEx(Player);
+  if (!plr) return;
+
+  float stt = (!aptr ? GetXStateTime() : StateTime);
+  float gtime = XLevel.Time;
+
+  if (ii.Duration) {
+    float dt = (gtime-ii.StartTime)/ii.Duration;
+    if (dt < 0.0 || dt >= 1.0) {
+      ii.StartTime = gtime;
+      ii.Duration = (stt > 0 ? stt : 1.0/35.0);
+      ii.Prev = prevangle;
+    } else if (stt > 0.0) {
+      ii.Duration += stt;
+    } else {
+      if (!ii.Duration) ii.Duration = 1.0/35.0;
+    }
+  } else {
+    ii.StartTime = gtime;
+    ii.Duration = (stt > 0 ? stt : 1.0/35.0);
+    ii.Prev = prevangle;
+  }
+  //printdebug("%C: time=%s : %s", self, ii.Duration, stt);
+}
+
+
+//===========================================================================
+//
 //  DoJump
 //
 //  mostly called from decorate actions
