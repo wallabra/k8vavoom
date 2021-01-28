@@ -1201,7 +1201,7 @@ static void PlrInterpAngle (VLevel *Level, VPlrAngleInterp &ii, float &currangle
       ii.Duration = 0.0f;
     } else {
       const float delta = AngleDiff(AngleMod(ii.Prev), AngleMod(currangle));
-      //GCon->Logf(NAME_Debug, "pdiff=%g; delta=%g; prev=%g; curr=%g; val=%g", pdiff, delta, cl->ViewPitchPrev, cl->ViewAngles.pitch, cl->ViewPitchPrev+delta*pdiff);
+      //GCon->Logf(NAME_Debug, "pdiff=%g; delta=%g; prev=%g; curr=%g; val=%g", pdiff, delta, ii.Prev, currangle, ii.Prev+delta*pdiff);
       currangle = ii.Prev+delta*pdiff;
     }
   }

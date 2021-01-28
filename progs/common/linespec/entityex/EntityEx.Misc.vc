@@ -3429,18 +3429,19 @@ final void PlrSetAngleInterp (ref BasePlayer::VPlrAngleInterp ii, float prevangl
 
   if (ii.Duration) {
     float dt = (gtime-ii.StartTime)/ii.Duration;
+    //printdebug("%C: stt=%s; dt=%s; prev=%s", self, stt, dt, prevangle);
     if (dt < 0.0 || dt >= 1.0) {
       ii.StartTime = gtime;
-      ii.Duration = (stt > 0 ? stt : 1.0/35.0);
+      ii.Duration = (stt > 0.0 ? stt : 1.0/35.0);
       ii.Prev = prevangle;
     } else if (stt > 0.0) {
-      ii.Duration += stt;
-    } else {
-      if (!ii.Duration) ii.Duration = 1.0/35.0;
+      ii.Prev += AngleDiff(ii.Prev, prevangle)*dt;
+      ii.StartTime = gtime;
+      ii.Duration = stt;
     }
   } else {
     ii.StartTime = gtime;
-    ii.Duration = (stt > 0 ? stt : 1.0/35.0);
+    ii.Duration = (stt > 0.0 ? stt : 1.0/35.0);
     ii.Prev = prevangle;
   }
   //printdebug("%C: time=%s : %s", self, ii.Duration, stt);
