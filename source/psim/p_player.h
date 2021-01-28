@@ -184,8 +184,13 @@ class VBasePlayer : public VGameObject {
   // determine POV, including viewpoint bobbing during movement
   // focal origin above r.z
   TVec ViewOrg;
-
   TAVec ViewAngles;
+
+  // pitch interpolation (for `A_SetPitch()`)
+  // doesn't work for level start (zero time) -- meh
+  // it interpolates pitch for 1/35 of second
+  float ViewPitchStartTime;
+  float ViewPitchPrev;
 
   // this is only used between levels
   // mo->health is used during levels

@@ -263,8 +263,9 @@ const [decorate] int XF_NOSPLASH           = 0x08; // No splash: if set, the exp
 const [decorate] int XF_THRUSTZ            = 0; // this is new in GZDoom 4.1.3, and we don't care
 
 
-const [decorate] int SPF_FORCECLAMP  = 0x01;
-const [decorate] int SPF_INTERPOLATE = 0x00;
+const [decorate] int SPF_FORCECLAMP  = 0x01; // for player, this is always set
+const [decorate] int SPF_INTERPOLATE = 0x02; // in k8vavoom, this is always set for player
+const [decorate] int SPF_NO_INTERPOLATE = 0x80; // k8vavoom flag
 
 
 // flags for A_Fade*

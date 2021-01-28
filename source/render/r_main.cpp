@@ -1205,7 +1205,22 @@ void VRenderLevelShared::SetupFrame () {
 
   ViewEnt = cl->Camera;
   CurrPortal = nullptr;
+
   Drawer->viewangles = cl->ViewAngles;
+
+  // interpolate pitch
+  if (cl->Camera == cl->MO && cl->ViewPitchStartTime) {
+    const float pdiff = (cl->MO->XLevel->Time-cl->ViewPitchStartTime)*35.0f;
+    if (pdiff < 0.0f || pdiff >= 1.0f) {
+      //GCon->Logf(NAME_Debug, "pdiff=%g", pdiff);
+      cl->ViewPitchStartTime = 0.0f;
+    } else {
+      const float delta = AngleDiff(AngleMod(cl->ViewPitchPrev), AngleMod(cl->ViewAngles.pitch));
+      //GCon->Logf(NAME_Debug, "pdiff=%g; delta=%g; prev=%g; curr=%g; val=%g", pdiff, delta, cl->ViewPitchPrev, cl->ViewAngles.pitch, cl->ViewPitchPrev+delta*pdiff);
+      Drawer->viewangles.pitch = cl->ViewPitchPrev+delta*pdiff;
+    }
+  }
+
   if (r_chasecam && r_chase_front) {
     // this is used to see how weapon looks in player's hands
     Drawer->viewangles.yaw = AngleMod(Drawer->viewangles.yaw+180);

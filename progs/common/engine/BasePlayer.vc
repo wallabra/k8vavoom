@@ -126,8 +126,10 @@ int PlayerState;
 // determine POV, including viewpoint bobbing during movement
 // focal origin above r.z
 TVec ViewOrg;
-
 TAVec ViewAngles;
+
+transient native float ViewPitchStartTime;
+transient native float ViewPitchPrev;
 
 // this is only used between levels,
 // mo->health is used during levels.

@@ -314,10 +314,6 @@ class Actor extends Thinker native {
   action native A_SetRoll(float newa, optional int flags, optional int ptr);
   action native A_Turn(float yawdelta);
 
-  action native A_SetRollExt(float newa);
-  action native A_SetYawExt(float newa);
-  action native A_SetPitchExt(float newa);
-
   action native A_LayToFloorWithYaw(float yaw);
   action native A_LayToCeilingWithYaw(float yaw);
   action native A_LayToFloorWithYawSprite(float yaw);

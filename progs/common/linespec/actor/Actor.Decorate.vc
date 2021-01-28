@@ -558,7 +558,11 @@ private final float clampPitch (float newpitch) {
 [decorate] final void A_SetPitch (float newpitch, optional int flags, optional int aptr) {
   Entity tgt = DecorDoAAPtr('A_SetPitch', aptr!optional);
   if (!tgt) return;
-  if (tgt.bIsPlayer || (flags&0x01) != 0) newpitch = clampPitch(newpitch);
+  if (tgt.bIsPlayer && tgt.Player.MO == self && !(flags&SPF_NO_INTERPOLATE)) {
+    tgt.Player.ViewPitchStartTime = XLevel.Time;
+    tgt.Player.ViewPitchPrev = tgt.Angles.pitch;
+  }
+  if (tgt.bIsPlayer || (flags&SPF_FORCECLAMP) != 0) newpitch = clampPitch(newpitch);
   tgt.Angles.pitch = /*AngleMod360*/(newpitch);
 }
 
