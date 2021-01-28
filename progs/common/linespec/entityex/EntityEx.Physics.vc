@@ -33,6 +33,8 @@
 
 const float DOOM_BOUNCE_STOP_VEL = 2.5/*3.0*/*35.0;
 
+const float AUTOCROUCH_LIMIT = 0.75;
+
 
 //==========================================================================
 //
@@ -593,21 +595,25 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
     if (!bNoInteraction && !TryMoveEx(out tmtrace, vector(ptryx, ptryy, Origin.z), AllowDropOff:true)) {
       // blocked move
       // check if we're a player, and can do it with crouching
-      if (bIsPlayer && crouchfactor > 0.5 && PlayerPawn(self) && (PlayerPawn(self).bAutoCrouch || GetCvarB('player_force_autocrouch'))) {
-        //printdebug("%C: 000: Height=%s; rng=%s", self, Height, tmtrace.CeilingZ-tmtrace.FloorZ);
+      // limit autocrouch to AUTOCROUCH_LIMIT of height, and do not step up more than 2/3 of maximum climable ledge
+      if (bIsPlayer && crouchfactor > AUTOCROUCH_LIMIT &&
+          tmtrace.FloorZ-FloorZ <= MaxStepHeight*2/3 && // max height to step up
+          PlayerPawn(self) && (PlayerPawn(self).bAutoCrouch || GetCvarB('player_force_autocrouch')))
+      {
+        //printdebug("%C: 000: Height=%s; rng=%s; fz=%s; cz=%s; drp=%s; selffcz=%s:%s", self, Height, tmtrace.CeilingZ-tmtrace.FloorZ, tmtrace.FloorZ, tmtrace.CeilingZ, tmtrace.DropOffZ, FloorZ, CeilingZ);
         PlayerEx pex = PlayerEx(Player);
         // can we crouch at all?
         if (pex && pex.CanCrouch()) {
           //GetFloorAndCeilingEx(out tmtrace, vector(ptryx, ptryy, Origin.z), collideWorld:true, collideThings:true);
           float hgt = PlayerPawn(self).GetRealHeight();
           float rng = tmtrace.CeilingZ-tmtrace.FloorZ;
-          //printdebug("%C: 001: Height=%s; hgt=%s; rng=%s", self, Height, hgt, rng);
-          if (rng < hgt && rng >= hgt*0.5) {
+          //printdebug("%C: 001: Height=%s; hgt=%s; rng=%s; hgtmin=%s", self, Height, hgt, rng, hgt*0.7);
+          if (rng < hgt && rng >= hgt*AUTOCROUCH_LIMIT) {
             // yep, can move if we'll crouch, so let's do it
             //printdebug("   ...trying to crouch...");
             // try moving again
             float savedheight = Height; //HACK! we'd better use `GetHeight()` here, but...
-            Height = hgt*0.5; // lowest possible crouch factor
+            Height = hgt*AUTOCROUCH_LIMIT; // lowest possible crouch factor
             bool oktomove = TryMoveEx(out tmtracetmp, vector(ptryx, ptryy, Origin.z), AllowDropOff:true);
             Height = savedheight;
             if (oktomove) {
