@@ -3765,7 +3765,7 @@ final bool IsFast () {
 //
 //  RespawnResetFlags
 //
-//  Reset most of the flags to the default values on respawn.
+//  reset most of the flags to the default values on respawn
 //
 //==========================================================================
 void RespawnResetFlags () {
@@ -3778,129 +3778,211 @@ void RespawnResetFlags () {
   ScaleX = default.ScaleX;
   ScaleY = default.ScaleY;
 
-  bSpecial = default.bSpecial;
+
   bSolid = default.bSolid;
+  bNoGravity = default.bNoGravity;
+  bDropOff = default.bDropOff;
+  bFloat = default.bFloat;
+  bMissile = default.bMissile;
+  bCorpse = default.bCorpse;
+  bMonster = default.bMonster;
+  bBlasted = default.bBlasted;
+  bFly = default.bFly;
+  bFloorClip = default.bFloorClip;
+  bOnMobj = default.bOnMobj;
+  bPassMobj = default.bPassMobj;
+  bTelestomp = default.bTelestomp;
+  bFloatBob = default.bFloatBob;
+  bCantLeaveFloorpic = default.bCantLeaveFloorpic;
+  bIgnoreFloorStep = default.bIgnoreFloorStep;
+  bIgnoreCeilingStep = default.bIgnoreCeilingStep;
+  bDontOverlap = default.bDontOverlap;
+  bActLikeBridge = default.bActLikeBridge;
+  bNoDropOff = default.bNoDropOff;
+  bAvoidingDropoff = default.bAvoidingDropoff;
+
+  bSpecial = default.bSpecial;
   bShootable = default.bShootable;
   bAmbush = default.bAmbush;
   bJustHit = default.bJustHit;
   bJustAttacked = default.bJustAttacked;
   bSpawnCeiling = default.bSpawnCeiling;
-  bNoGravity = default.bNoGravity;
-  bDropOff = default.bDropOff;
   bPickUp = default.bPickUp;
-  bFloat = default.bFloat;
-  bMissile = default.bMissile;
   bDropped = default.bDropped;
-  bShadow = default.bShadow;
   bNoBlood = default.bNoBlood;
-  bCorpse = default.bCorpse;
+  bNoBloodDecals = default.bNoBloodDecals; //k8:???
   bInFloat = default.bInFloat;
+  bSkullFly = default.bSkullFly;
   bCountKill = default.bCountKill;
   bCountItem = default.bCountItem;
-  bSkullFly = default.bSkullFly;
-  bNoDeathmatch = default.bNoDeathmatch;
-  bSpawnSoundSource = default.bSpawnSoundSource;
-  bNoLiftDrop = default.bNoLiftDrop;
-  bStealth = default.bStealth;
-  bIceCorpse = default.bIceCorpse;
-
-  bDontReflect = default.bDontReflect;
   bWindThrust = default.bWindThrust;
-  bBlasted = default.bBlasted;
-  bFly = default.bFly;
-  bFloorClip = default.bFloorClip;
-  bSpawnFloat = default.bSpawnFloat;
-  bNoTeleport = default.bNoTeleport;
-  bRip = default.bRip;
-  bPushable = default.bPushable;
-  bSlide = default.bSlide;
-  bOnMobj = default.bOnMobj;
-  bPassMobj = default.bPassMobj;
-  bCannotPush = default.bCannotPush;
-  bThruGhost = default.bThruGhost;
-  bBoss = default.bBoss;
-  bDontTranslate = default.bDontTranslate;
-  bNoDamageThrust = default.bNoDamageThrust;
-  bTelestomp = default.bTelestomp;
-  bFloatBob = default.bFloatBob;
   bActivateImpact = default.bActivateImpact;
   bActivatePushWall = default.bActivatePushWall;
   bActivateMCross = default.bActivateMCross;
   bActivatePCross = default.bActivatePCross;
-  bCantLeaveFloorpic = default.bCantLeaveFloorpic;
-  bNonShootable = default.bNonShootable;
-  bInvulnerable = default.bInvulnerable;
-  bSeekerMissile = default.bSeekerMissile;
-  bReflective = default.bReflective;
-
-  bIgnoreFloorStep = default.bIgnoreFloorStep;
-  bIgnoreCeilingStep = default.bIgnoreCeilingStep;
-  bNoRadiusDamage = default.bNoRadiusDamage;
-  bGhost = default.bGhost;
-  bAlwaysPuff = default.bAlwaysPuff;
+  //bDormant ???
+  //bWaterJump ???
+  bNoTeleport = default.bNoTeleport;
+  //bTelestomp ???
+  bCannotPush = default.bCannotPush;
+  bSmallSplash = default.bSmallSplash; //k8:???
   bNoSplash = default.bNoSplash;
-  bDontOverlap = default.bDontOverlap;
-  bNoMorph = default.bNoMorph;
-  bDontSquash = default.bDontSquash;
-  bFullVolActive = default.bFullVolActive;
-  bMonster = default.bMonster;
-  bExplodeOnSky = default.bExplodeOnSky;
-  bStayMorphed = default.bStayMorphed;
-  bDontBlast = default.bDontBlast;
-  bCanBlast = default.bCanBlast;
-  bNeverTarget = default.bNeverTarget;
-  bReallyNeverTarget = default.bReallyNeverTarget;
-  bDontGib = default.bDontGib;
-  bNoBlockMonst = default.bNoBlockMonst;
-  bFullVolDeath = default.bFullVolDeath;
-  bCanBounceWater = default.bCanBounceWater;
-  bNoWallBounceSnd = default.bNoWallBounceSnd;
-  bDamageInvulnerable = default.bDamageInvulnerable;
-  bNoTeleOther = default.bNoTeleOther;
-  bBloodlessImpact = default.bBloodlessImpact;
-  bNoExplodeFloor = default.bNoExplodeFloor;
-  bPuffOnActors = default.bPuffOnActors;
-
-  bNoGrudge = default.bNoGrudge;
-  bNoIceDeath = default.bNoIceDeath;
-  bBossDeath = default.bBossDeath;
-  bRandomise = default.bRandomise;
-  bActLikeBridge = default.bActLikeBridge;
-  bStrifeDamage = default.bStrifeDamage;
+  //bStaticLight ???
+  //bStaticLightSpawned ???
+  //bDynamicLight ???
+  //bLeaveTrail ???
+  //bLeaveTrail2 ???
   bTriggerHappy = default.bTriggerHappy;
-  bMissileEvenMore = default.bMissileEvenMore;
-  bForceRadiusDmg = default.bForceRadiusDmg;
-  bNoGravKill = default.bNoGravKill;
-  bInCombat = default.bInCombat;
-  bLookAllAround = default.bLookAllAround;
-  bStanding = default.bStanding;
+  //bOnmobjCopyVel ???
+  bNoBounceSound = default.bNoBounceSound;
+  bNoWallBounceSnd = default.bNoWallBounceSnd;
+  bNoSplashAlert = default.bNoSplashAlert; //k8:???
+  bBounceSky = default.bBounceSky; //k8:???
+  bExplodeOnSky = default.bExplodeOnSky;
+  bBounceWalls = default.bBounceWalls; //k8:???
+  bBounceFloors = default.bBounceFloors; //k8:???
+  bBounceCeilings = default.bBounceCeilings; //k8:???
+  bBounceOnActors = default.bBounceOnActors;
+  bBounceOnAllActors = default.bBounceOnAllActors; //k8:???
+  bBounceAutoOff = default.bBounceAutoOff; //k8:???
+  bBounceLikeHeretic = default.bBounceLikeHeretic; //k8:???
+  bSlide = default.bSlide;
+  bReflective = default.bReflective;
+  bSeekerMissile = default.bSeekerMissile;
+  bNoExplodeFloor = default.bNoExplodeFloor;
+  bIceCorpse = default.bIceCorpse;
+  bExplodeOnWater = default.bExplodeOnWater;
+  bCanBounceWater = default.bCanBounceWater;
+  bFallingFriction = default.bFallingFriction; //k8:???
+  bNoRadiusDamage = default.bNoRadiusDamage;
+  bCantAutoAim = default.bCantAutoAim; //k8:???
+  bPuffOnActors = default.bPuffOnActors;
+  bInvulnerable = default.bInvulnerable;
+  //bFriendly ???
+  bRandomise = default.bRandomise;
+  bFullVolDeath = default.bFullVolDeath;
+  //bExploCount ???
   bSpectral = default.bSpectral;
-  bFireResist = default.bFireResist;
-  bSynchronised = default.bSynchronised;
-  bNoTargetSwitch = default.bNoTargetSwitch;
-  bDontHurtSpecies = default.bDontHurtSpecies;
-  bShieldReflect = default.bShieldReflect;
-  bDeflect = default.bDeflect;
-  bPuffParticles = default.bPuffParticles;
+  bDamageInvulnerable = default.bDamageInvulnerable;
+  //bSkullFlyInvulnerable ???
+  bNoDamageThrust = default.bNoDamageThrust;
+  //bConditionalFireDamage ???
   bNoExtremeDeath = default.bNoExtremeDeath;
   bExtremeDeath = default.bExtremeDeath;
-  bNoBounceSound = default.bNoBounceSound;
-
+  //bLightning ???
+  //bHowlVictims ???
+  bNoGrudge = default.bNoGrudge;
+  bNeverTarget = default.bNeverTarget;
+  bReallyNeverTarget = default.bReallyNeverTarget;
+  bNoTargetSwitch = default.bNoTargetSwitch;
+  bNoGravKill = default.bNoGravKill;
   bFaster = default.bFaster;
   bFastMelee = default.bFastMelee;
-  bNoDropOff = default.bNoDropOff;
-  bBounceOnActors = default.bBounceOnActors;
-  bExplodeOnWater = default.bExplodeOnWater;
-  bAvoidingDropoff = default.bAvoidingDropoff;
-  bNoDamage = default.bNoDamage;
+  bStanding = default.bStanding;
+  bBoss = default.bBoss;
+  bNonShootable = default.bNonShootable;
+  bThruGhost = default.bThruGhost;
+  bRip = default.bRip;
+  bPushable = default.bPushable;
+  bBloodlessImpact = default.bBloodlessImpact;
+  bNoDeathmatch = default.bNoDeathmatch;
+  //bTeleport ???
+  bSpawnFloat = default.bSpawnFloat;
+  bNoMorph = default.bNoMorph;
+  bNoBlockMonst = default.bNoBlockMonst;
+  bLookAllAround = default.bLookAllAround;
+  //bNeutral ???
+  //bStandMustSeeTarget ???
+  bInCombat = default.bInCombat;
+  bFullVolActive = default.bFullVolActive;
+  //bDehackedSpecial ???
+  bPuffParticles = default.bPuffParticles;
+  //bExplodeParticles ???
+  bStealth = default.bStealth;
   bChaseGoal = default.bChaseGoal;
-  bPierceArmor = default.bPierceArmor;
+  //bExplosionDontHurtSelf ???
+  //bNoSightCheck ???
+  //bHuntPlayers ???
+  //bNoHatePlayers ???
+  bStrifeDamage = default.bStrifeDamage;
+  bDontBlast = default.bDontBlast;
+  //bVisibilityPulse ???
+  //bArgsDefined ???
+  bShadow = default.bShadow;
+  bGhost = default.bGhost;
+  bBossDeath = default.bBossDeath;
+  bNoIceDeath = default.bNoIceDeath;
+  bDontTranslate = default.bDontTranslate;
+  bMissileEvenMore = default.bMissileEvenMore;
+  bNoLiftDrop = default.bNoLiftDrop;
+  bStayMorphed = default.bStayMorphed;
+  bCanBlast = default.bCanBlast;
+  bShieldReflect = default.bShieldReflect;
+  bMirrorReflect = default.bMirrorReflect; //k8:???
+  bAimReflect = default.bAimReflect; //k8:???
+  bDontShieldReflect = default.bDontShieldReflect; //k8:???
+  bDeflect = default.bDeflect;
+  bDontReflect = default.bDontReflect;
+  bFireResist = default.bFireResist;
+  //bLowSpectralResist ???
+  bDontSquash = default.bDontSquash;
+  bNoTeleOther = default.bNoTeleOther;
+  bDontHurtClass = default.bDontHurtClass; //k8:???
+  bDontHurtSpecies = default.bDontHurtSpecies;
+  bNoDamage = default.bNoDamage;
+  bDontGib = default.bDontGib;
   bNoPain = default.bNoPain;
+  //bPainless ???
+  //bForcePain ???
+  //bCantSeek ???
+  //bDontSeekInvisible ???
+  bPierceArmor = default.bPierceArmor;
+  bForceRadiusDmg = default.bForceRadiusDmg;
+  bSpawnSoundSource = default.bSpawnSoundSource;
+  bAlwaysPuff = default.bAlwaysPuff;
+  bSynchronised = default.bSynchronised;
   bAlwaysFast = default.bAlwaysFast;
   bNeverFast = default.bNeverFast;
+  //bAlwaysRespawn ???
+  //bNeverRespawn ???
+  bDontRip = default.bDontRip; //k8:???
   bCanUseWalls = default.bCanUseWalls;
-
+  bInChase = false; //k8: i think so
+  //bUseSpecial ???
+  //bNoInfighting ???
+  //bBloodSplatter ???
+  //bDehExplosion ???
+  //bNoVerticalMeleeRange ???
+  //bSummonedMonster ???
+  //bSeesDaggers ???
+  //bPuffGetsOwner ???
+  //bFrightened ???
+  //bNoFear ???
+  //bTouchy ???
+  //bArmed ???
+  //bJumpDown ???
+  //bMoveWithSector ???
+  //bNoTrigger ???
+  //bBlockedBySolidActors ???
+  //bThruActors ???
+  //bThruSpecies ???
+  //bMThruSpecies ???
+  bNoTeleFrag = default.bNoTeleFrag; //k8:???
+  bNoBossRip = default.bNoBossRip; //k8:???
+  //bScreenSeeker ???
+  bBumpSpecial = default.bBumpSpecial; //k8:???
+  bMBFBounce = default.bMBFBounce; //k8:???
+  //bAvoidsDropOffs ???
+  //bNoTimeFreeze ???
+  //bCrashed ???
   bDontThrust = default.bDontThrust;
+  //bSeeInvisible ???
+  //bAvoidMelee ???
+  bHitTarget = default.bHitTarget; //k8:???
+  bHitMaster = default.bHitMaster; //k8:???
+  bHitTracer = default.bHitTracer; //k8:???
+  bHitOwner = default.bHitOwner; //k8:???
+  //bOldRadiusDamage ???
 
   DecalName = default.DecalName;
 }

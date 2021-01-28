@@ -264,7 +264,7 @@ bool bStandMustSeeTarget; // COUNTITEM 800000
 bool bInCombat; // actors in combat won't talk
 bool bFullVolActive; // play active sound at full volume
 bool bDehackedSpecial; // old style special handling
-bool bUnknown2; // 8000000
+//bool bUnknown2; // 8000000
 bool bPuffParticles; // puff spawns particles
 bool bExplodeParticles; // use particle explosion
 bool bStealth; // Andy Baker's Stealth monsters

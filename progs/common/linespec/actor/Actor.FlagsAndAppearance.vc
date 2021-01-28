@@ -337,7 +337,7 @@
 //
 //==========================================================================
 [decorate] final void A_SetShadow () {
-  bUnknown2 = true;
+  //bUnknown2 = true;
   bShadow = true;
   RenderStyle = STYLE_Translucent;
   Alpha = 0.333;
@@ -350,7 +350,7 @@
 //
 //==========================================================================
 [decorate] final void A_ClearShadow () {
-  bUnknown2 = false;
+  //bUnknown2 = false;
   bShadow = false;
   RenderStyle = STYLE_Normal;
   Alpha = 1.0;
