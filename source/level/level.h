@@ -367,7 +367,8 @@ class VLevel : public VGameObject {
   TArray<VSndSeqInfo> ActiveSequences;
   TArray<VCameraTextureInfo> CameraTextures;
 
-  float Time; // game time, in seconds
+  float NextTime; // current game time, in seconds (set *BEFORE* all tickers called)
+  float Time; // current game time, in seconds (incremented *AFTER* all tickers called)
   vint32 TicTime; // game time, in tics (35 per second)
 
   msecnode_t *SectorList;

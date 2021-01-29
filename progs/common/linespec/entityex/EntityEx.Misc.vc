@@ -3425,7 +3425,7 @@ final void PlrSetAngleInterp (ref BasePlayer::VPlrAngleInterp ii, float prevangl
   if (!plr) return;
 
   float stt = (!aptr ? GetXStateTime() : StateTime);
-  float gtime = XLevel.Time;
+  float gtime = XLevel.NextTime;
 
   if (ii.Duration) {
     float dt = (gtime-ii.StartTime)/ii.Duration;

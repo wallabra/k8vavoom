@@ -73,6 +73,7 @@ struct rep_light_t {
   bool bLightActive;
 };
 
+
 native readonly name MapName;
 native readonly string MapHash; // lowercase
 native readonly string MapHashMD5; // lowercase
@@ -156,8 +157,9 @@ native readonly private void *StaticLightsMap; // internal dictionary
 native readonly private array!int ActiveSequences;
 native readonly private array!int CameraTextures;
 
-native readonly float Time; // game time, in seconds
-native readonly int TicTime; // game time, in tics (35 per second)
+native readonly float NextTime; // current game time, in seconds (set *BEFORE* all tickers called)
+readonly float Time; // current game time, in seconds (incremented *AFTER* all tickers called)
+readonly int TicTime; // game time, in tics (35 per second)
 
 native readonly private msecnode_t *SectorList;
 native readonly private msecnode_t *HeadSecNode;

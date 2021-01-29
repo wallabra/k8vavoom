@@ -348,6 +348,8 @@ void VLevel::TickWorld (float DeltaTime) {
 
   double stimet = 0;
 
+  NextTime = Time+DeltaTime;
+
   eventUpdateCachedCVars();
   eventBeforeWorldTick(DeltaTime);
 
