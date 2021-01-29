@@ -1108,6 +1108,29 @@ struct seg_t : TPlane {
   native transient readonly void/*decal_t*/ *decaltail;
 };
 
+
+//==========================================================================
+//
+//  polyobject-in-subsector node
+//
+//  as polyobjects could occupy more than one subsector, we need a
+//  separate data structure to keep a list of polyobjects in a subsector
+//
+//==========================================================================
+struct pobjsubnode_t {
+  subsector_t *sub; // subsector for this node
+  polyobj_t *pobj; // polyobject pointer
+  // linked list of nodes
+  pobjsubnode_t *snodeprev;
+  pobjsubnode_t *snodenext;
+  // linked list of all nodes for this polyobject
+  pobjsubnode_t *pnodeprev;
+  pobjsubnode_t *pnodenext;
+  // polyobj segs, clipped to the subsector
+  //array!(seg_t *) segs;
+};
+
+
 //
 //  Polyobj data
 //
@@ -1126,16 +1149,13 @@ struct polyobj_t {
   int seqType;
   Thinker SpecialData;  // pointer a thinker, if the poly is moving
   int index; // required for LevelInfo sound sequences
-  readonly subsector_t *sub;
-  // we can have more than one pobj in a subsector, and they form a doubly-linked list
-  readonly polyobj_t *subprev;
-  readonly polyobj_t *subnext;
+  readonly native pobjsubnode_t *polynode; // node for first pobj in the subsector
 };
+
 
 //
 // SubRegion
 //
-
 struct subregion_t {
   readonly sec_region_t *secregion;
   readonly subregion_t *next;
@@ -1159,7 +1179,8 @@ struct subsector_t {
   native transient subsector_t *seclink; // next subsector for this sector
   int numlines;
   int firstline;
-  polyobj_t *poly;
+
+  readonly native pobjsubnode_t *polysubnode; // node for first pobj in the subsector
 
   native transient node_t *parent;
   native transient int parentChild; // our child index in parent node

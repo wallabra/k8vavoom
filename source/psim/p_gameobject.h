@@ -58,6 +58,8 @@ struct subregion_t;
 struct decal_t;
 struct opening_t;
 
+struct polyobj_t;
+
 
 // line specials that are used by the loader
 enum {
@@ -842,9 +844,32 @@ struct sector_t {
 //
 //==========================================================================
 
+//==========================================================================
+//
+//  polyobject-in-subsector node
+//
+//  as polyobjects could occupy more than one subsector, we need a
+//  separate data structure to keep a list of polyobjects in a subsector
+//
+//==========================================================================
+struct pobjsubnode_t {
+  subsector_t *sub; // subsector for this node
+  polyobj_t *pobj; // polyobject pointer
+  // linked list of nodes
+  pobjsubnode_t *snodeprev;
+  pobjsubnode_t *snodenext;
+  // linked list of all nodes for this polyobject
+  pobjsubnode_t *pnodeprev;
+  pobjsubnode_t *pnodenext;
+  // polyobj segs, clipped to the subsector
+  //TArray<seg_t *> segs;
+};
+
+
 // polyobj data
 struct polyobj_t {
   friend class PolySubIter;
+  friend class PolySubsectorsIter;
 
   seg_t **segs;
   vint32 numsegs;
@@ -862,46 +887,53 @@ struct polyobj_t {
   };
   vuint32 PolyFlags;
   vint32 seqType;
-  VThinker *SpecialData; // pointer a thinker, if the poly is moving
+  VThinker *SpecialData; // pointer to a thinker, if the poly is moving
   vint32 index; // required for LevelInfo sound sequences
 
 private:
-  subsector_t *sub;
-  // we can have more than one pobj in a subsector, and they form a doubly-linked list
-  polyobj_t *subprev;
-  polyobj_t *subnext;
+  pobjsubnode_t *polynode; // node for first pobj in the subsector
 
 public:
-  //WARNING! polyobj can be in only one subsector at a time, so calling this
-  //         will remove pobj from its current subsector, and put it into a new one!
-  // it is safe to call this with `nullptr`
-  void RelinkToSubsector (subsector_t *asub);
-  void UnlinkFromSubsector ();
+  // it is NOT safe to call this with `nullptr`!
+  void LinkToSubsector (subsector_t *asub);
+  void UnlinkFromSubsector (subsector_t *asub);
+  bool IsLinkedToSubsector (subsector_t *asub);
 
-  inline subsector_t *GetSubsector () const { return sub; }
-
-  inline polyobj_t *GetPrev () { return subprev; }
-  inline const polyobj_t *GetPrev () const { return subprev; }
-
-  inline polyobj_t *GetNext () { return subnext; }
-  inline const polyobj_t *GetNext () const { return subnext; }
+  void UnlinkFromAllSubsectors ();
 
 public:
   class PolySubIter {
   private:
-    polyobj_t *pobjp;
+    pobjsubnode_t *node;
   public:
-    PolySubIter (polyobj_t *pstart) : pobjp(pstart) {}
-    inline PolySubIter begin () { return PolySubIter(pobjp); }
-    inline PolySubIter end () { return PolySubIter(nullptr); }
-    inline bool operator == (const PolySubIter &b) const { return (pobjp == b.pobjp); }
-    inline bool operator != (const PolySubIter &b) const { return (pobjp != b.pobjp); }
-    inline PolySubIter operator * () const { return PolySubIter(this->pobjp); } /* required for iterator */
-    inline void operator ++ () { if (pobjp) pobjp = pobjp->GetNext(); } /* this is enough for iterator */
+    inline PolySubIter (pobjsubnode_t *anode) noexcept : node(anode) {}
+    inline PolySubIter begin () noexcept { return PolySubIter(node); }
+    inline PolySubIter end () noexcept { return PolySubIter(nullptr); }
+    inline bool operator == (const PolySubIter &b) const noexcept { return (node == b.node); }
+    inline bool operator != (const PolySubIter &b) const noexcept { return (node != b.node); }
+    inline PolySubIter operator * () const noexcept { return PolySubIter(node); } /* required for iterator */
+    inline void operator ++ () noexcept { if (node) node = node->snodenext; } /* this is enough for iterator */
     // accessors
-    inline polyobj_t *pobj () const { return pobjp; }
-    inline polyobj_t *value () const { return pobjp; }
+    inline polyobj_t *value () const noexcept { return node->pobj; }
   };
+
+public:
+  class PolySubsectorsIter {
+  private:
+    pobjsubnode_t *node;
+  public:
+    inline PolySubsectorsIter (pobjsubnode_t *anode) noexcept : node(anode) {}
+    inline PolySubsectorsIter begin () noexcept { return PolySubsectorsIter(node); }
+    inline PolySubsectorsIter end () noexcept { return PolySubsectorsIter(nullptr); }
+    inline bool operator == (const PolySubsectorsIter &b) const noexcept { return (node == b.node); }
+    inline bool operator != (const PolySubsectorsIter &b) const noexcept { return (node != b.node); }
+    inline PolySubsectorsIter operator * () const noexcept { return PolySubsectorsIter(node); } /* required for iterator */
+    inline void operator ++ () noexcept { if (node) node = node->pnodenext; } /* this is enough for iterator */
+    // accessors
+    inline subsector_t *value () const noexcept { return node->sub; }
+  };
+
+  inline PolySubsectorsIter SubSectorFirst () const noexcept { return PolySubsectorsIter(polynode); }
 };
 
 
@@ -1014,7 +1046,8 @@ public:
   subsector_t *seclink; // next subsector for this sector
   vint32 numlines;
   vint32 firstline;
-  polyobj_t *polyfirst; // first pobj in the subsector
+
+  pobjsubnode_t *polysubnode; // node for first pobj in the subsector
 
   node_t *parent;
   vuint32 parentChild; // our child index in parent node
@@ -1033,8 +1066,8 @@ public:
 
   vuint32 miscFlags; // SSMF_xxx
 
-  inline bool HasPObjs () const { return !!polyfirst; }
-  inline polyobj_t::PolySubIter PObjFirst () const { return polyobj_t::PolySubIter(polyfirst); }
+  inline bool HasPObjs () const noexcept { return !!polysubnode; }
+  inline polyobj_t::PolySubIter PObjFirst () const noexcept { return polyobj_t::PolySubIter(polysubnode); }
 };
 
 

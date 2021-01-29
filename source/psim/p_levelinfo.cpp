@@ -178,10 +178,16 @@ void VLevelInfo::SectorStopSequence (const sector_t *sector) {
 //
 //==========================================================================
 void VLevelInfo::PolyobjStartSequence (const polyobj_t *Poly, VName Name, int ModeNum) {
-  if (!Poly || !Poly->GetSubsector() || !Poly->GetSubsector()->sector) return;
-  if (Poly->GetSubsector() && Poly->GetSubsector()->sector) {
-    if (Poly->GetSubsector()->sector->SectorFlags&sector_t::SF_Silent) return;
+  //if (!Poly || !Poly->GetSubsector() || !Poly->GetSubsector()->sector) return;
+  if (!Poly) return;
+  bool seenNonSilent = false;
+  for (auto &&it : Poly->SubSectorFirst()) {
+    if (it.value()->sector && !(it.value()->sector->SectorFlags&sector_t::SF_Silent)) {
+      seenNonSilent = true;
+      break;
+    }
   }
+  if (!seenNonSilent) return;
   StartSoundSequence(Poly->startSpot, Poly->index+(SNDORG_PolyObj<<24), Name, ModeNum);
 }
 

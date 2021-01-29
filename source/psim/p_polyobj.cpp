@@ -32,26 +32,43 @@
 
 //==========================================================================
 //
-//  polyobj_t::RelinkToSubsector
+//  polyobj_t::IsLinkedToSubsector
 //
 //==========================================================================
-void polyobj_t::RelinkToSubsector (subsector_t *asub) {
-  if (asub == sub) return; // nothing to do
-  if (sub) UnlinkFromSubsector();
-  vassert(!sub);
-  if (!asub) return;
-  if (!originalSector) originalSector = asub->sector;
-  // just prepend, the order doesn't really matter
-  vassert(!subprev);
-  vassert(!subnext);
-  subnext = asub->polyfirst;
-  if (asub->polyfirst) {
-    vassert(asub->polyfirst != this);
-    vassert(!asub->polyfirst->subprev);
-    asub->polyfirst->subprev = this;
+bool polyobj_t::IsLinkedToSubsector (subsector_t *asub) {
+  if (!asub) return false;
+  for (const pobjsubnode_t *node = asub->polysubnode; node; node = node->snodenext) {
+    if (node->pobj == this) return true;
   }
-  asub->polyfirst = this;
-  sub = asub;
+  return false;
+}
+
+
+//==========================================================================
+//
+//  polyobj_t::LinkToSubsector
+//
+//==========================================================================
+void polyobj_t::LinkToSubsector (subsector_t *asub) {
+  // check if this polyobj already linked to the given subsector
+  vassert(asub);
+  for (const pobjsubnode_t *node = asub->polysubnode; node; node = node->snodenext) {
+    if (node->pobj == this) return; // nothing to do
+  }
+  // ok, not linked, link it
+  pobjsubnode_t *node = (pobjsubnode_t *)Z_Calloc(sizeof(pobjsubnode_t)); //FIXME: use pool allocator
+  node->sub = asub;
+  node->pobj = this;
+  // link to subsector
+  if (asub->polysubnode) asub->polysubnode->snodeprev = node;
+  node->snodenext = asub->polysubnode;
+  asub->polysubnode = node;
+  // link pobj
+  if (polynode) polynode->pnodeprev = node;
+  node->pnodenext = polynode;
+  polynode = node;
+  // remember original sector (we'll need it to calculate pobj height)
+  if (!originalSector) originalSector = asub->sector;
 }
 
 
@@ -60,13 +77,30 @@ void polyobj_t::RelinkToSubsector (subsector_t *asub) {
 //  polyobj_t::UnlinkFromSubsector
 //
 //==========================================================================
-void polyobj_t::UnlinkFromSubsector () {
-  if (!sub) return;
-  if (!subprev) sub->polyfirst = subnext; // fix list head
-  if (subprev) subprev->subnext = subnext;
-  if (subnext) subnext->subprev = subprev;
-  sub = nullptr;
-  subprev = subnext = nullptr;
+void polyobj_t::UnlinkFromSubsector (subsector_t *asub) {
+  if (!asub) return;
+  for (pobjsubnode_t *node = asub->polysubnode; node; node = node->snodenext) {
+    if (node->pobj == this) {
+      // found it, unlink from subsector node list
+      if (node->snodeprev) node->snodeprev->snodenext = node->snodenext; else node->sub->polysubnode = node->snodenext;
+      if (node->snodenext) node->snodenext->snodeprev = node->snodeprev;
+      // unlink from this pobj node list
+      if (node->pnodeprev) node->pnodeprev->pnodenext = node->pnodenext; else polynode = node->pnodenext;
+      if (node->pnodenext) node->pnodenext->pnodeprev = node->pnodeprev;
+      Z_Free(node); //FIXME: use pool allocator
+      return;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  polyobj_t::UnlinkFromAllSubsectors
+//
+//==========================================================================
+void polyobj_t::UnlinkFromAllSubsectors () {
+  while (polynode) UnlinkFromSubsector(polynode->sub);
 }
 
 
@@ -392,6 +426,7 @@ void VLevel::TranslatePolyobjToStartSpot (float originX, float originY, int tag)
   polyobj_t *po = GetPolyobj(tag);
   if (!po) Host_Error("Unable to match polyobj tag: %d", tag); // didn't match the tag with a polyobj tag
   if (po->segs == nullptr) Host_Error("Anchor point located without a StartSpot point: %d", tag);
+  vassert(po->numsegs);
   po->originalPts = new TVec[po->numsegs];
   po->prevPts = new TVec[po->numsegs];
   float deltaX = originX-po->startSpot.x;
@@ -399,7 +434,7 @@ void VLevel::TranslatePolyobjToStartSpot (float originX, float originY, int tag)
 
   seg_t **tempSeg = po->segs;
   TVec *tempPt = po->originalPts;
-  TVec avg(0, 0, 0); // used to find a polyobj's center, and hence subsector
+  TVec avg(0, 0, 0); // used to find a polyobj's center, and hence the subsector
 
   for (int i = 0; i < po->numsegs; ++i, ++tempSeg, ++tempPt) {
     seg_t **veryTempSeg = po->segs;
@@ -418,8 +453,10 @@ void VLevel::TranslatePolyobjToStartSpot (float originX, float originY, int tag)
   }
   avg.x /= po->numsegs;
   avg.y /= po->numsegs;
+
   subsector_t *sub = PointInSubsector(avg); // bugfixed algo
-  po->RelinkToSubsector(sub);
+  po->UnlinkFromSubsector(sub); // just in case
+  po->LinkToSubsector(sub);
   UpdatePolySegs(po);
 }
 
@@ -478,8 +515,8 @@ void VLevel::LinkPolyobj (polyobj_t *po) {
      note that if it moves to the sector with a different height, the renderer
      adjusts it to the height of the new sector.
 
-     to avoid this, i have to introduce new field to segs, which links back to the
-     pobj. and i have to store the initial floor and ceiling planes in the pobj, so
+     to avoid this, i had to introduce new field to segs, which links back to the
+     pobj. and i had to store the initial floor and ceiling planes in the pobj, so
      renderer can use them instead of the corresponding sector planes.
 
      actually, not the original. on relinking, we have to scan all touching sectors,
@@ -496,8 +533,15 @@ void VLevel::LinkPolyobj (polyobj_t *po) {
   }
   avg.x /= po->numsegs;
   avg.y /= po->numsegs;
+
+  // for now, polyobj can be linked only to one subsector
+  // this will be changed later
   subsector_t *sub = PointInSubsector(avg); // bugfixed algo
-  po->RelinkToSubsector(sub);
+  if (sub) {
+    if (!po->IsLinkedToSubsector(sub)) po->LinkToSubsector(sub);
+  } else {
+    po->UnlinkFromAllSubsectors();
+  }
 
   po->bbox2d[BOX2D_RIGHT] = MapBlock(rightX-BlockMapOrgX);
   po->bbox2d[BOX2D_LEFT] = MapBlock(leftX-BlockMapOrgX);
@@ -611,13 +655,16 @@ bool VLevel::MovePolyobj (int num, float x, float y, bool forced) {
       (*prevPts).y += y;
     }
   }
+
   UpdatePolySegs(po);
+
   if (!forced && IsForServer()) {
     segList = po->segs;
     for (count = po->numsegs; count; --count, ++segList) {
       if (PolyCheckMobjBlocking(*segList, po)) blocked = true; //k8: break here?
     }
   }
+
   if (blocked) {
     count = po->numsegs;
     segList = po->segs;
@@ -636,7 +683,7 @@ bool VLevel::MovePolyobj (int num, float x, float y, bool forced) {
       ++prevPts;
     }
     UpdatePolySegs(po);
-    LinkPolyobj(po);
+    LinkPolyobj(po); // it is always for server
     return false;
   }
 
@@ -703,7 +750,7 @@ bool VLevel::RotatePolyobj (int num, float angle) {
       (*segList)->v1->y = prevPts->y;
     }
     UpdatePolySegs(po);
-    LinkPolyobj(po);
+    LinkPolyobj(po); // it is always for server
     return false;
   }
 

@@ -452,6 +452,7 @@ void VLevel::Destroy () {
   }
 
   for (int i = 0; i < NumPolyObjs; ++i) {
+    PolyObjs[i]->UnlinkFromAllSubsectors();
     delete[] PolyObjs[i]->segs;
     PolyObjs[i]->segs = nullptr;
     delete[] PolyObjs[i]->originalPts;
