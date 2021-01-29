@@ -78,7 +78,7 @@ final bool CheckMissileSpawn () {
       if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon) {
         Destroy();
       } else {
-        ExplodeMissile(EntityEx(tmtrace.BlockingMobj), line:tmtrace.BlockingLine);
+        ExplodeMissile(EntityEx(tmtrace.BlockingMobj), line:tmtrace.BlockingLine, onspawn:true);
       }
       return false;
     }
@@ -94,7 +94,7 @@ final bool CheckMissileSpawn () {
 //  ExplodeMissile
 //
 //==========================================================================
-final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
+final bool ExplodeMissile (EntityEx Victim, optional line_t *line, optional bool onspawn) {
   if (!bDetachFromServer && /*!Level.Game.IsAuthority*/Role == ROLE_SimulatedProxy) {
     //printdebug("%C: CLIENT EXPLODING MISSILE; Victim=%C", self, Victim);
     printdebug("%C: reverting to dumb proxy (client)", self);
@@ -124,10 +124,22 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
 
   state ExplState = none;
   if (Victim && (Victim.bShootable || Victim.bCorpse)) {
-    if (Victim.bNoBlood) ExplState = FindState('Crash');
-    if (!ExplState) ExplState = FindState('Death', 'Extreme');
+    if (bHitTarget) Target = Victim;
+    if (bHitMaster) Master = Victim;
+    if (bHitTracer) Tracer = Victim;
+    if (Victim.bNoBlood) {
+      if (onspawn) ExplState = FindState('SpawnCrash');
+      if (!ExplState) ExplState = FindState('Crash');
+    }
+    if (!ExplState) {
+      if (onspawn) ExplState = FindState('SpawnDeath', 'Extreme');
+      if (!ExplState) ExplState = FindState('Death', 'Extreme');
+    }
   }
-  if (!ExplState) ExplState = FindState('Death');
+  if (!ExplState) {
+    if (onspawn) ExplState = FindState('SpawnDeath');
+    if (!ExplState) ExplState = FindState('Death');
+  }
 
   //if (self isa 'DoomImpBall') printdebug("%C: roles: role=%s; remote=%s; dts=%B", self, Role, RemoteRole, bDetachSimulated);
 
@@ -649,16 +661,26 @@ final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
   if (zofsfix && A.bColideWithWorld && A.Height > 0) {
     tmtrace_t tmtrace;
     A.GetFloorAndCeiling(tmtrace);
-    auto rng = tmtrace.CeilingZ-tmtrace.FloorZ;
+    float fz = tmtrace.FloorZ;
+    float cz = tmtrace.CeilingZ;
+    float rng = cz-fz;
     //printdebug("%C: spawned player missile `%C` position will be clamped: rng=%s; hgt=%s", self, A, rng, A.Height);
     if (rng >= A.Height) {
-      if (A.Origin.z < tmtrace.FloorZ) {
+      if (A.Origin.z < fz) {
         //printdebug("%C: player missile `%C` spawned lower than the floor, fixing", self, A);
-        A.Origin.z = tmtrace.FloorZ+min(4, cast(int)(rng-Height)/2);
+        A.Origin.z = fz+min(4, cast(int)(rng-Height)/2);
       }
-      if (A.Origin.z+A.Height > tmtrace.CeilingZ) {
+      if (A.Origin.z+A.Height > cz) {
         //printdebug("%C: player missile `%C` spawned higher than the ceiling, fixing", self, A);
-        A.Origin.z = tmtrace.CeilingZ-A.Height-min(4, cast(int)(rng-Height)/2);
+        A.Origin.z = cz-A.Height-min(4, cast(int)(rng-Height)/2);
+      }
+      // now move it a slightly forward, and check there
+      A.GetFloorAndCeilingEx(tmtrace, A.Origin+A.Velocity.xy.normalise*8);
+      rng = tmtrace.CeilingZ-tmtrace.FloorZ;
+      float nz = (A.Origin.z+A.Height)-tmtrace.CeilingZ;
+      if (rng >= A.Height && nz > 0 && nz < 8) {
+        //printdebug("%C: player missile `%C` doesn't fit with forward check; acz=%s; cz=%s; diff=%s", self, A, A.Origin.z+A.Height, tmtrace.CeilingZ, nz);
+        A.Origin.z -= nz;
       }
     }
   }

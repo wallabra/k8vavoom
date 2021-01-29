@@ -88,19 +88,19 @@ protected final void DoFireRailgun (float Offset) {
 //  they both will use this code
 //
 //===========================================================================
-protected final void doFireMissileProjectile (class!Actor aMissileType, optional float Angle,
+protected final EntityEx doFireMissileProjectile (class!Actor aMissileType, optional float Angle,
   optional bool UseAmmo, optional float SpawnXY, optional float SpawnZ,
   optional int Flags, optional float Pitch, optional float SpawnFwd)
 {
-  if (!aMissileType || !bIsPlayer) return;
+  if (!aMissileType || !bIsPlayer) return none;
 
   if (!specified_UseAmmo) UseAmmo = true;
 
   name decal = ''; // default
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (UseAmmo) {
-    if (!Wpn) return;
-    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
+    if (!Wpn) return none;
+    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return none;
   }
   if (Wpn) decal = Wpn.DecalName;
 
@@ -129,12 +129,15 @@ protected final void doFireMissileProjectile (class!Actor aMissileType, optional
   EntityEx A = SpawnPlayerMissileEx(aMissileType, false, AimTarget, ShootAngle, ShootOrg, decal, noAutoAim:!!(Flags&FPF_NOAUTOAIM));
   Angles.pitch = SavedPitch;
 
-  if (A) {
+  if (A && !A.IsDestroyed) {
     if (Flags&FPF_TRANSFERTRANSLATION) A.CopyTranslations(self);
     // handle seeker missiles
     if (A.bSeekerMissile) A.Tracer = AimTarget;
     if (!(Flags&FPF_AIMATANGLE)) VectorRotateAroundZ(ref A.Velocity, Angle);
+    return A;
   }
+
+  return none;
 }
 
 
