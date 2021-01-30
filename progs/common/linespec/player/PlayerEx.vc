@@ -2606,7 +2606,7 @@ void ClientSparkParticles (int Count, TVec Org, float Angle) {
 //  AddBlend
 //
 //==========================================================================
-final void AddBlend (out float r, out float g, out float b, out float a, int Col) {
+final void AddBlend (ref float r, ref float g, ref float b, ref float a, int Col) {
   if (!(Col&0xff000000)) return; // no alpha
   float r1 = float((Col>>16)&0xff)/255.0;
   float g1 = float((Col>>8)&0xff)/255.0;
@@ -2628,7 +2628,7 @@ final void AddBlend (out float r, out float g, out float b, out float a, int Col
 //  overrides blend color alpha
 //
 //==========================================================================
-final void AddBlendWithAlpha (out float r, out float g, out float b, out float a, int Col, float alpha) {
+final void AddBlendWithAlpha (ref float r, ref float g, ref float b, ref float a, int Col, float alpha) {
   if (alpha <= 0) return; // no alpha
   float r1 = float((Col>>16)&0xff)/255.0;
   float g1 = float((Col>>8)&0xff)/255.0;
