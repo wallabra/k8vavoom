@@ -268,13 +268,17 @@ class VAudioCodec;
 class VSampleLoader : public VInterface {
 public:
   VSampleLoader *Next;
+  int Priority;
 
-  static VSampleLoader *ListSign;
-  static VSampleLoader *ListNoSign;
+  static VSampleLoader *List;
+
+private:
+  static void InsertIntoList (VSampleLoader *&list, VSampleLoader *codec) noexcept;
 
 public:
   VSampleLoader () = delete;
-  VSampleLoader (bool withSignature) { if (withSignature) { Next = ListSign; ListSign = this; } else { Next = ListNoSign; ListNoSign = this; } }
+  VV_DISABLE_COPY(VSampleLoader)
+  VSampleLoader (int prio) : Next(nullptr), Priority(prio) { InsertIntoList(List, this); }
   virtual void Load (sfxinfo_t &Sfx, VStream &Strm) = 0;
   virtual const char *GetName () const noexcept = 0;
 
@@ -318,6 +322,8 @@ private:
   static void InsertIntoList (FAudioCodecDesc *&list, FAudioCodecDesc *codec) noexcept;
 
 public:
+  FAudioCodecDesc () = delete;
+  VV_DISABLE_COPY(FAudioCodecDesc)
   // codecs with `hasGoodSignature` will be checked last
   FAudioCodecDesc (const char *InDescription, CreatorFn InCreator, int prio)
     : Description(InDescription)

@@ -68,7 +68,7 @@ private:
 
 class VXMPSampleLoader : public VSampleLoader {
 public:
-  VXMPSampleLoader () : VSampleLoader(false) {} // without signature (oh, well...)
+  VXMPSampleLoader () : VSampleLoader(666) {}
   virtual void Load (sfxinfo_t &, VStream &) override;
   virtual const char *GetName () const noexcept override;
 };

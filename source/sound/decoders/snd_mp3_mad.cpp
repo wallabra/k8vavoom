@@ -66,7 +66,7 @@ public:
 
 class VMp3SampleLoader : public VSampleLoader {
 public:
-  VWaveSampleLoader () : VSampleLoader(false) {} // without signature
+  VWaveSampleLoader () : VSampleLoader(AUDIO_NO_SIGNATURE) {}
   virtual void Load (sfxinfo_t &Sfx, VStream &Stream) override;
   virtual const char *GetName () const noexcept override;
 };

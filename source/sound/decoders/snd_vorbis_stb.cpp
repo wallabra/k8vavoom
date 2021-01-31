@@ -77,7 +77,7 @@ protected:
 
 class VVorbisSampleLoader : public VSampleLoader {
 public:
-  VVorbisSampleLoader () : VSampleLoader(true) {} // with signature
+  VVorbisSampleLoader () : VSampleLoader(AUDIO_DEFAULT_PRIO) {}
   virtual void Load (sfxinfo_t &, VStream &) override;
   virtual const char *GetName () const noexcept override;
 };

@@ -58,7 +58,7 @@ public:
     static void error_callback (const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderErrorStatus status, void *client_data);
   };
 
-  VFlacSampleLoader () : VSampleLoader(true) {} // with signature
+  VFlacSampleLoader () : VSampleLoader(AUDIO_DEFAULT_PRIO) {}
   virtual void Load (sfxinfo_t &, VStream &) override;
   virtual const char *GetName () const noexcept override;
 };

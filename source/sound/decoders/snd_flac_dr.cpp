@@ -68,7 +68,7 @@ protected:
 
 class VFlacSampleLoader : public VSampleLoader {
 public:
-  VFlacSampleLoader () : VSampleLoader(true) {} // with signature
+  VFlacSampleLoader () : VSampleLoader(AUDIO_DEFAULT_PRIO) {}
   virtual void Load (sfxinfo_t &, VStream &) override;
   virtual const char *GetName () const noexcept override;
 };

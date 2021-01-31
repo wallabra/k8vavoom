@@ -44,7 +44,7 @@ static VCvarB snd_bgloading_sfx("snd_bgloading_sfx", false, "Load sounds in back
 #ifdef CLIENT
 class VRawSampleLoader : public VSampleLoader {
 public:
-  VRawSampleLoader () : VSampleLoader(true) {} // with signature (version, lol)
+  VRawSampleLoader () : VSampleLoader(AUDIO_DEFAULT_PRIO+69) {}
   virtual void Load (sfxinfo_t &, VStream &) override;
   virtual const char *GetName () const noexcept override;
 };
@@ -52,8 +52,7 @@ const char *VRawSampleLoader::GetName () const noexcept { return "raw"; }
 #endif
 
 
-VSampleLoader *VSampleLoader::ListSign;
-VSampleLoader *VSampleLoader::ListNoSign;
+VSampleLoader *VSampleLoader::List;
 VSoundManager *GSoundManager;
 
 #ifdef CLIENT
@@ -68,6 +67,29 @@ static int cli_DebugSoundMT = 0;
 
 /*static*/ bool cliRegister_snddata_args =
   VParsedArgs::RegisterFlagSet("-debug-sound-threading", "!show debug messages from MT sound loader", &cli_DebugSoundMT);
+
+
+
+//==========================================================================
+//
+//  VSampleLoader::InsertIntoList
+//
+//==========================================================================
+void VSampleLoader::InsertIntoList (VSampleLoader *&list, VSampleLoader *codec) noexcept {
+  if (!codec) return;
+  VSampleLoader *prev = nullptr;
+  VSampleLoader *curr;
+  for (curr = list; curr && curr->Priority <= codec->Priority; prev = curr, curr = curr->Next) {}
+  if (prev) {
+    prev->Next = codec;
+    codec->Next = curr;
+  } else {
+    vassert(curr == list);
+    codec->Next = list;
+    list = codec;
+  }
+}
+
 
 
 //==========================================================================
@@ -1225,7 +1247,7 @@ bool VSoundManager::LoadSoundInternal (int sound_id) {
     //GCon->Logf(NAME_Debug, "Sound lump '%s' loaded into memory (%d bytes)", *W_FullLumpName(Lump), strmsize);
   }
 
-  for (VSampleLoader *Ldr = VSampleLoader::ListSign; Ldr && !S_sfx[sound_id].Data; Ldr = Ldr->Next) {
+  for (VSampleLoader *Ldr = VSampleLoader::List; Ldr && !S_sfx[sound_id].Data; Ldr = Ldr->Next) {
     Strm->Seek(0);
     Ldr->Load(*sfx, *Strm);
     if (sfx->Data) {
@@ -1233,19 +1255,6 @@ bool VSoundManager::LoadSoundInternal (int sound_id) {
       break;
     } else {
       if (cli_DebugSound) GCon->Logf(NAME_Debug, "STRD: SKIPPED sound #%d (uc=%d) (%s : %s) format is '%s'", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(Lump), Ldr->GetName());
-    }
-  }
-
-  if (!sfx->Data) {
-    for (VSampleLoader *Ldr = VSampleLoader::ListNoSign; Ldr && !S_sfx[sound_id].Data; Ldr = Ldr->Next) {
-      Strm->Seek(0);
-      Ldr->Load(*sfx, *Strm);
-      if (sfx->Data) {
-        if (cli_DebugSound) GCon->Logf(NAME_Debug, "STRD: loaded sound #%d (uc=%d) (%s : %s) format is '%s'", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(Lump), Ldr->GetName());
-        break;
-      } else {
-        if (cli_DebugSound) GCon->Logf(NAME_Debug, "STRD: SKIPPED sound #%d (uc=%d) (%s : %s) format is '%s'", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(Lump), Ldr->GetName());
-      }
     }
   }
 
