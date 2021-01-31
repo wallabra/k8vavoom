@@ -70,6 +70,7 @@ IMPLEMENT_AUDIO_CODEC(VVorbisAudioCodec, "Vorbis");
 VVorbisSampleLoader VorbisSampleLoader;
 
 
+
 //==========================================================================
 //
 //  VVorbisAudioCodec::VVorbisAudioCodec
@@ -274,9 +275,10 @@ VAudioCodec *VVorbisAudioCodec::Create (VStream *InStrm, const vuint8 sign[], in
 }
 
 
+
 //==========================================================================
 //
-//  VVorbisSampleLoader::Create
+//  VVorbisSampleLoader::Load
 //
 //==========================================================================
 void VVorbisSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {

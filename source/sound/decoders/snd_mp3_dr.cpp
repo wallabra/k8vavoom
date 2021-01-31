@@ -66,6 +66,7 @@ protected:
 };
 
 
+/*
 class VMP3SampleLoader : public VSampleLoader {
 public:
   VMP3SampleLoader () : VSampleLoader(AUDIO_NO_SIGNATURE) {}
@@ -73,8 +74,8 @@ public:
   virtual const char *GetName () const noexcept override;
 };
 
-
 VMP3SampleLoader MP3SampleLoader;
+*/
 
 IMPLEMENT_AUDIO_CODEC_EX(VMP3AudioCodec, "MP3(dr)", AUDIO_NO_SIGNATURE);
 
@@ -274,9 +275,11 @@ VAudioCodec *VMP3AudioCodec::Create (VStream *InStream, const vuint8 sign[], int
 }
 
 
+
+/*
 //==========================================================================
 //
-//  VMP3SampleLoader::Create
+//  VMP3SampleLoader::Load
 //
 //==========================================================================
 void VMP3SampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
@@ -298,3 +301,4 @@ void VMP3SampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
 const char *VMP3SampleLoader::GetName () const noexcept {
   return "mp3/dr";
 }
+*/

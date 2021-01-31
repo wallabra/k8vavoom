@@ -64,6 +64,7 @@ public:
 };
 
 
+/*
 class VMp3SampleLoader : public VSampleLoader {
 public:
   VWaveSampleLoader () : VSampleLoader(AUDIO_NO_SIGNATURE) {}
@@ -71,10 +72,10 @@ public:
   virtual const char *GetName () const noexcept override;
 };
 
+VMp3SampleLoader Mp3SampleLoader;
+*/
 
 IMPLEMENT_AUDIO_CODEC_EX(VMp3AudioCodec, "MP3", AUDIO_NO_SIGNATURE);
-
-VMp3SampleLoader Mp3SampleLoader;
 
 
 //==========================================================================
@@ -305,6 +306,7 @@ VAudioCodec *VMp3AudioCodec::Create (VStream *InStrm, const vuint8 sign[], int s
 }
 
 
+/*
 //==========================================================================
 //
 //  VMp3SampleLoader::Load
@@ -327,3 +329,4 @@ void VMp3SampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
 const char *VMp3SampleLoader::GetName () const noexcept {
   return "mp3/mad";
 }
+*/

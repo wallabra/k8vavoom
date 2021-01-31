@@ -129,9 +129,8 @@ void VSampleLoader::LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec) {
       // downmix stereo to mono
       const vint16 *src = buf;
       vint16 *dst = ((vint16 *)Data.Ptr())+oldlen;
-      for (int i = 0; i < SamplesDecoded; ++i, src += 2) {
-        int v = (src[0]+src[1])/2;
-        if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
+      for (int i = SamplesDecoded; i--; src += 2) {
+        const int v = clampval((src[0]+src[1])/2, -32768, 32767);
         *dst++ = (vint16)v;
       }
     } else {

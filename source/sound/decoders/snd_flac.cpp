@@ -115,6 +115,7 @@ VFlacSampleLoader FlacSampleLoader;
 IMPLEMENT_AUDIO_CODEC(VFlacAudioCodec, "FLAC");
 
 
+
 //==========================================================================
 //
 //  VFlacSampleLoader::Load
@@ -150,6 +151,7 @@ void VFlacSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
   Sfx.Data = Strm->Data;
   delete Strm;
 }
+
 
 
 //==========================================================================

@@ -66,6 +66,7 @@ private:
 };
 
 
+/*
 class VXMPSampleLoader : public VSampleLoader {
 public:
   VXMPSampleLoader () : VSampleLoader(666) {}
@@ -73,9 +74,11 @@ public:
   virtual const char *GetName () const noexcept override;
 };
 
+VXMPSampleLoader XMPSampleLoader;
+*/
+
 IMPLEMENT_AUDIO_CODEC_EX(VXMPAudioCodec, "XMP", 666); // try it last
 
-VXMPSampleLoader XMPSampleLoader;
 
 
 //==========================================================================
@@ -283,9 +286,11 @@ VAudioCodec *VXMPAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int s
 }
 
 
+
+/*
 //==========================================================================
 //
-//  VXMPAudioCodec::Create
+//  VXMPSampleLoader::Load
 //
 //==========================================================================
 void VXMPSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
@@ -308,3 +313,4 @@ void VXMPSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
 const char *VXMPSampleLoader::GetName () const noexcept {
   return "xmp";
 }
+*/

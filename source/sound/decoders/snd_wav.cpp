@@ -77,6 +77,7 @@ static VWaveSampleLoader WaveSampleLoader;
 IMPLEMENT_AUDIO_CODEC_EX(VWavAudioCodec, "Wav", 663); // before XMP
 
 
+
 //==========================================================================
 //
 //  FindRiffChunk

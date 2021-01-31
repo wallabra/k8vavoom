@@ -265,9 +265,10 @@ VAudioCodec *VOpusAudioCodec::Create (VStream *InStrm, const vuint8 sign[], int 
 }
 
 
+
 //==========================================================================
 //
-//  VOpusAudioCodec::Create
+//  VOpusSampleLoader::Load
 //
 //==========================================================================
 void VOpusSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
@@ -283,7 +284,7 @@ void VOpusSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
 
 //==========================================================================
 //
-//  VOpusAudioCodec::GetName
+//  VOpusSampleLoader::GetName
 //
 //==========================================================================
 const char *VOpusSampleLoader::GetName () const noexcept {

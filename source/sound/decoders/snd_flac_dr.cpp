@@ -284,9 +284,10 @@ VAudioCodec *VFlacAudioCodec::Create (VStream *InStream, const vuint8 sign[], in
 }
 
 
+
 //==========================================================================
 //
-//  VFlacSampleLoader::Create
+//  VFlacSampleLoader::Load
 //
 //==========================================================================
 void VFlacSampleLoader::Load (sfxinfo_t &Sfx, VStream &Stream) {
