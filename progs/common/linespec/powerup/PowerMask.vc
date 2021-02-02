@@ -57,4 +57,6 @@ defaultproperties {
   EffectTime = 80.0;
   BlendColor = 0;
   bHubPower = true;
+  bShowTimer = true;
+  PowerupTimerName = "Mask";
 }

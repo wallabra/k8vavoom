@@ -130,4 +130,6 @@ defaultproperties {
   EffectTime = 1.0/35.0;
   BlendColor = RGBA(255, 0, 0, 128);
   bHubPower = true;
+  bShowTimer = true;
+  PowerupTimerName = "Strength";
 }

@@ -55,4 +55,6 @@ override void EndEffect () {
 
 
 defaultproperties {
+  bShowTimer = true;
+  PowerupTimerName = "High Jump";
 }

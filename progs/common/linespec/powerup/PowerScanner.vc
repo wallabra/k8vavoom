@@ -49,4 +49,6 @@ override void EndEffect () {
 defaultproperties {
   EffectTime = 80.0;
   bHubPower = true;
+  bShowTimer = true;
+  PowerupTimerName = "Scanner";
 }
