@@ -666,6 +666,11 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
       TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, aDecalName:DecalName, pass2S:bDecals2SPass, only2S:bDecalsOnly2S, atranslation:(bCopyBloodTranslation ? Translation : 0));
     }
   }
+
+  // reset autocrouch
+  if (bIsPlayer && Player.MO == self && PlayerEx(Player).bForceCrouchingDown) {
+    PlayerEx(Player).bForceCrouchingDown = 0;
+  }
 }
 
 
