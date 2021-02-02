@@ -491,8 +491,6 @@ final bool PerformSectorWindThrust (float DeltaTime, sector_t *asector) {
 final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *OldSector) {
   tmtrace_t tmtrace, tmtracetmp;
 
-  if (bIsPlayer) PlayerEx(Player).bForceCrouchingDown = false;
-
   if (bWindThrust && Sector) {
     #if 0
     // check winds for all touching sectors?
@@ -596,11 +594,12 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
       // blocked move
       // check if we're a player, and can do it with crouching
       // limit autocrouch to AUTOCROUCH_LIMIT of height, and do not step up more than 2/3 of maximum climable ledge
-      if (bIsPlayer && crouchfactor > AUTOCROUCH_LIMIT &&
+      // sorry, Voodoo Dolls will not crouch; this may break some maps, but i'm ok with it for now
+      if (bIsPlayer && Player.MO == self && crouchfactor > AUTOCROUCH_LIMIT &&
           tmtrace.FloorZ-FloorZ <= MaxStepHeight*2/3 && // max height to step up
           PlayerPawn(self) && (PlayerPawn(self).bAutoCrouch || GetCvarB('player_force_autocrouch')))
       {
-        //printdebug("%C: 000: Height=%s; rng=%s; fz=%s; cz=%s; drp=%s; selffcz=%s:%s", self, Height, tmtrace.CeilingZ-tmtrace.FloorZ, tmtrace.FloorZ, tmtrace.CeilingZ, tmtrace.DropOffZ, FloorZ, CeilingZ);
+        //printdebug("%C: 000: Height=%s; rng=%s; fz=%s; cz=%s; drp=%s; selffcz=%s:%s; cfactor=%s", self, Height, tmtrace.CeilingZ-tmtrace.FloorZ, tmtrace.FloorZ, tmtrace.CeilingZ, tmtrace.DropOffZ, FloorZ, CeilingZ, crouchfactor);
         PlayerEx pex = PlayerEx(Player);
         // can we crouch at all?
         if (pex && pex.CanCrouch()) {
@@ -619,7 +618,7 @@ final void XYMovement (float DeltaTime, float ScrollX, float ScrollY, sector_t *
             if (oktomove) {
               // restore crouch factor, force crouching, don't slide, don't reset velocity
               //printdebug("   ...force crouching!");
-              pex.bForceCrouchingDown = true;
+              pex.bForceCrouchingDown = XLevel.TicTime+1; // last for one tick
               // return back (for now)
               TryMoveEx(out tmtracetmp, oldOrigin, AllowDropOff:true);
               return;

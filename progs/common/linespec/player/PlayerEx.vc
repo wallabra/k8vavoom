@@ -111,8 +111,9 @@ bool bHasBackpack;
 // for PROP_NOWEAPONSWITCH
 bool bDisableWeaponSwitch;
 // used to force crouching from entity physics
-// reset in physics, or on player reborn
-transient bool bForceCrouchingDown;
+// reset in player ticker, or on player reborn
+// value is game tick when it should be reset, or 0 for inactive
+transient int bForceCrouchingDown;
 
 // button down flags, etc.
 transient bool bReloadQueued; // true if "reload" was pressed
@@ -873,6 +874,7 @@ void MovePlayer (float deltaTime) {
 
   // yeah, we can start crouching mid-air
   //auto ohgt = MO.Height;
+  //printdebug("%C: MovePlayer; dt=%s; bForceCrouchingDown=%s", self, deltaTime, bForceCrouchingDown);
   CrouchMove(deltaTime, (IsCrouchButtonCrouch() ? -1 : 1));
   //print("HEIGHT: %s  %s  crf=%s; vh=%s; dvh=%s", ohgt, MO.Height, EntityEx(MO).crouchfactor, ViewHeight, PlayerPawn(MO).default.ViewHeight);
 
@@ -3579,7 +3581,7 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
   ResetWeaponReloadRefire();
   ResetWeaponActionFlags();
   bDisableWeaponSwitch = false;
-  bForceCrouchingDown = false;
+  bForceCrouchingDown = 0;
 
   if (GetCvarB('k8HealthAccum_Reset')) k8HealthAccum_Amount = 0;
   k8HealthAccum_LastRegenTime = -10000;
@@ -4250,7 +4252,7 @@ override void PlayerExitMap (bool clusterChange) {
   ResetWeaponReloadRefire();
   ResetWeaponActionFlags();
   //bDisableWeaponSwitch = false;
-  bForceCrouchingDown = false;
+  bForceCrouchingDown = 0;
   LocalQuakeHappening = vector(0, 0, 0);
 }
 
@@ -4431,7 +4433,7 @@ void DeathPlayerTick (float deltaTime) {
   ResetWeaponReloadRefire();
   ResetWeaponActionFlags();
   bDisableWeaponSwitch = false;
-  bForceCrouchingDown = false;
+  bForceCrouchingDown = 0;
 
   ClearSubSeenInfo();
   MovePsprites(deltaTime);
@@ -5002,6 +5004,11 @@ override void PlayerTick (float deltaTime) {
   }
 
   //ProcessFlashligh(); // nope, it is done in `ClientTick()`
+
+  if (bForceCrouchingDown && bForceCrouchingDown <= Level.XLevel.TicTime) {
+    //printdebug("%C: crouch reset!", self);
+    bForceCrouchingDown = 0;
+  }
 }
 
 
