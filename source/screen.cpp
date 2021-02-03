@@ -179,7 +179,6 @@ static int show_fps = 0;
 VCvarB draw_lag("draw_lag", true, "Draw network lag value?", CVAR_Archive);
 
 static VCvarI draw_gc_stats("draw_gc_stats", "0", "Draw GC stats (0: none; 1: brief; 2: full)?", CVAR_Archive);
-static VCvarI draw_gc_stats_posx("draw_gc_stats_posx", "0", "GC stats counter position (<0:left; 0:center; >0:right)", CVAR_Archive);
 
 static VCvarB draw_cycles("draw_cycles", false, "Draw cycle counter?", 0); //NOOP
 
@@ -316,6 +315,7 @@ static void DrawFPS () {
   stripeRendered = false;
 
   // VM/Decal times
+  /*
   if (!isClient) {
     if ((dbg_world_think_vm_time && worldThinkTimeVM >= 0) || (dbg_world_think_decal_time && worldThinkTimeDecal >= 0)) {
       DrawDebugTimesStripe();
@@ -333,6 +333,7 @@ static void DrawFPS () {
       }
     }
   }
+  */
 
   // GC stats
   if (draw_gc_stats > 0) {
@@ -340,30 +341,31 @@ static void DrawFPS () {
     DrawDebugTimesStripe();
     T_SetFont(ConFont);
     int xpos;
-    if (draw_gc_stats_posx < 0) {
-      T_SetAlign(hleft, vtop);
-      xpos = 4;
-    } else if (draw_gc_stats_posx == 0) {
-      T_SetAlign(hcenter, vtop);
-      xpos = VirtualWidth/2;
-    } else {
-      T_SetAlign(hright, vtop);
-      xpos = VirtualWidth-2;
-    }
+    T_SetAlign(hcenter, vtop);
+    xpos = VirtualWidth/2;
+    xpos += xpos/3;
     if (Sys_Time()-stats.lastCollectTime > 1) VObject::ResetGCStatsLastCollected();
 
-    if (draw_gc_stats == 1) {
-      T_DrawText(xpos, ypos, va("[\034U%3d\034-/\034U%4d\034-/\034U%3d\034-]",
-        stats.lastCollected, stats.alive, (int)(stats.lastCollectDuration*1000+0.5)), CR_DARKBROWN);
-    } else {
-      T_DrawText(xpos, ypos, va("OBJ:[\034U%3d\034-/\034U%3d\034-]  ARRAY:[\034U%5d\034-/\034U%5d\034-/\034U%d\034-]; \034U%2d\034- MSEC GC",
-        stats.lastCollected, stats.alive, stats.firstFree, stats.poolSize, stats.poolAllocated, (int)(stats.lastCollectDuration*1000+0.5)), CR_DARKBROWN);
+    VStr ss = va("[\034U%3d\034-/\034U%4d\034-/\034U%3d\034-]", stats.lastCollected, stats.alive, (int)(stats.lastCollectDuration*1000+0.5));
+    if ((dbg_world_think_vm_time && worldThinkTimeVM >= 0) || (dbg_world_think_decal_time && worldThinkTimeDecal >= 0)) {
+      if (dbg_world_think_decal_time && dbg_world_think_vm_time) {
+        ss += va(" [VM:\034U%d\034- | DC:\034U%d\034-]", (int)(vmAverage.getValue()*1000+0.5), (int)(decalAverage.getValue()*1000+0.5));
+      } else {
+        if (dbg_world_think_decal_time) ss += va(" [DC:\034U%d\034-]", (int)(decalAverage.getValue()*1000+0.5));
+        if (dbg_world_think_vm_time) ss += va(" [VM:\034U%d\034-]", (int)(vmAverage.getValue()*1000+0.5));
+      }
     }
+
+    T_DrawText(xpos, ypos, ss, CR_DARKBROWN);
+    /*
+    T_DrawText(xpos, ypos, va("OBJ:[\034U%3d\034-/\034U%3d\034-]  ARRAY:[\034U%5d\034-/\034U%5d\034-/\034U%d\034-]; \034U%2d\034- MSEC GC",
+      stats.lastCollected, stats.alive, stats.firstFree, stats.poolSize, stats.poolAllocated, (int)(stats.lastCollectDuration*1000+0.5)), CR_DARKBROWN);
+    */
 
     //ypos += T_FontHeight();
     if (xpos > 4) {
       T_SetAlign(hleft, vtop);
-      T_DrawText(7*T_TextWidth("W"), ypos, va("[\034U%5d\034-/\034U%5d\034-/\034U%4d\034-|\034U%3d\034-]", dbgEntityTickTotal, dbgEntityTickSimple, dbgEntityTickNoTick, dbgEntityTickTotal-(dbgEntityTickSimple+dbgEntityTickNoTick)), CR_DARKBROWN);
+      T_DrawText(7*T_TextWidth("W"), ypos, va("[T\034U%5d\034-/S\034U%5d\034-|N\034U%4d\034-/F\034U%3d\034-]", dbgEntityTickTotal, dbgEntityTickSimple, dbgEntityTickNoTick, dbgEntityTickTotal-(dbgEntityTickSimple+dbgEntityTickNoTick)), CR_DARKBROWN);
     }
   }
 

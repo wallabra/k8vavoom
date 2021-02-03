@@ -125,16 +125,6 @@ menudef HUDOptions {
     cvar = draw_gc_stats;
   }
 
-  option enum {
-    title = "GS Stats Position";
-    cvar = draw_gc_stats_posx;
-    list {
-      "Left" = -1,
-      "Center" = 0,
-      "Right" = 1,
-    }
-  }
-
 
   header "Health Bar";
 
