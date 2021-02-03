@@ -225,6 +225,7 @@ bool bNoRadiusDamage; // does not take radius damage
 bool bCantAutoAim; // can't auto aim at this actor
 bool bPuffOnActors; // spawn this puff when hitting actors
 bool bInvulnerable; // mobj is invulnerable
+bool bVulnerable; // mobj is vulnerable to explosions
 bool bFriendly; // will fight on player's side
 bool bRandomise; // randomise initial state time
 bool bFullVolDeath; // play missile death sound at full volume

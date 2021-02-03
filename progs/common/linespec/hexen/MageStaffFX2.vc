@@ -31,7 +31,7 @@ class MageStaffFX2 : Actor;
 //
 //==========================================================================
 
-override void GetExplodeParms(ref int damage, ref float distance, ref ubyte damageSelf)
+override void GetExplodeParms(ref int damage, ref float distance, ref bool damageSelf)
 {
   damage = 80;
   distance = 192.0;

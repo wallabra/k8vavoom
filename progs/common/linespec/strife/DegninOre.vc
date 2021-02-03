@@ -31,7 +31,7 @@ class DegninOre : Inventory game(GAME_Strife) __mobjinfo__(59);
 //  GetExplodeParms
 //
 //==========================================================================
-override void GetExplodeParms (ref int damage, ref float distance, ref ubyte damageSelf) {
+override void GetExplodeParms (ref int damage, ref float distance, ref bool damageSelf) {
   damage = 192;
   distance = 192.0;
   PlaySound(DeathSound, CHAN_VOICE);

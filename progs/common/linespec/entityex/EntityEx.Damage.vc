@@ -1186,14 +1186,18 @@ void Died (EntityEx source, EntityEx inflictor) {
 #endif
   }
 
+  bool extremeDeath = (Health < GHealth);
+
   state DeathState = none;
   if (DamageType) {
     // specialised death state for this damage type (ice, etc)
     if ((bIsPlayer || bMonster) && bNoIceDeath && nameEquCI(DamageType, 'Ice')) {
       // do nothing
     } else {
-      DeathState = FindState('Death', DamageType, true);
+      if (extremeDeath) DeathState = FindState('Death.Extreme', DamageType, true);
+      if (!DeathState) DeathState = FindState('Death', DamageType, true);
       if (!DeathState && nameEquCI(DamageType, 'Ice')) DeathState = FindState('GenericFreezeDeath');
+      //print("%C: DamageType=%s; DeathState=%s", self, DamageType, DeathState);
     }
     /* old code
     DeathState = FindState('Death', DamageType, true);
@@ -1209,15 +1213,14 @@ void Died (EntityEx source, EntityEx inflictor) {
 
   if (!DeathState) {
     // don't pass damage type unless it's a massacre damage
-    // k8: why?
-    //if (nameEquCI(DamageType, 'Massacre')) DamageType = '';
+    // k8: because dying barrel, for example, passes damage on
+    if (!nameEquCI(DamageType, 'Massacre')) DamageType = '';
 
-    //print("%C: Health=%s; GHealth=%s", self, Health, GHealth);
-    // extreme death?
-    if (Health < GHealth) {
+    //printdebug("%C: Health=%s; GHealth=%s", self, Health, GHealth);
+    // extreme death? (typed extreme death already checked above)
+    if (extremeDeath) {
       //DeathState = FindState('Death', 'Extreme', true);
-      DeathState = FindState('Death.Extreme', DamageType, true);
-      if (!DeathState) DeathState = FindState('Death', 'Extreme', true);
+      DeathState = FindState('Death', 'Extreme', true);
       if (DeathState) SpawnBloodSprayHead(damage:InitialHealth, notDead:false, spawnBloodPool:true);
       //if (DeathState) printdebug("%C: FOUND XDEATH %s", self, DeathState);
     }

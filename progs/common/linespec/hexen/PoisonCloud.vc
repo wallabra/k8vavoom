@@ -34,7 +34,7 @@ int BobIndex;
 //
 //==========================================================================
 
-override void GetExplodeParms(ref int damage, ref float distance, ref ubyte damageSelf)
+override void GetExplodeParms(ref int damage, ref float distance, ref bool damageSelf)
 {
   damage = 4;
   distance = 40.0;

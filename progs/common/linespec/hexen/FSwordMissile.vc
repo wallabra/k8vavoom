@@ -46,7 +46,7 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 //
 //==========================================================================
 
-override void GetExplodeParms(ref int damage, ref float distance, ref ubyte damageSelf)
+override void GetExplodeParms(ref int damage, ref float distance, ref bool damageSelf)
 {
   // Fighter Runesword
   damage = 64;

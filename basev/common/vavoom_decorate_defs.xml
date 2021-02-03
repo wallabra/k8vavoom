@@ -181,7 +181,8 @@
     <flag name="CanBounceWater" property="bCanBounceWater" />
     <!-- Defenses -->
     <flag name="Invulnerable" property="bInvulnerable" />
-    <flag_inverted name="Vulnerable" property="bInvulnerable" />
+    <!--flag_inverted name="Vulnerable" property="bInvulnerable" /-->
+    <flag name="Vulnerable" property="bVulnerable" />
     <flag name="Reflective" property="bReflective" />
     <flag name="ShieldReflect" property="bShieldReflect" />
     <flag name="MirrorReflect" property="bMirrorReflect" />

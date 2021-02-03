@@ -541,23 +541,14 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
 //
 //==========================================================================
 final void do_simple_A_Explode (optional int damage, optional float aradius, optional int flags) {
-  ubyte damageSelf;
-
+  bool damageSelf = (specified_flags ? !!(flags&XF_HURTSOURCE) : true);
   if (!specified_damage) damage = 128;
-  if (!specified_aradius) aradius = 128;
-
-  if (specified_flags) {
-    damageSelf = (flags&XF_HURTSOURCE ? 1 : 0);
-  } else {
-    damageSelf = 1;
-  }
-
-  float distance = aradius;
+  float distance = (specified_aradius ? aradius : cast(float)damage);
 
   PreExplode();
   GetExplodeParms(damage, distance, damageSelf);
-
   CheckSplash(distance);
+
   if (flags&XF_EXPLICITDAMAGETYPE) {
     DoExplode(damage, distance, damageSelf, dmgtype:'None');
   } else {

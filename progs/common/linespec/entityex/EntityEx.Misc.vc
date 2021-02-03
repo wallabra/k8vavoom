@@ -215,7 +215,9 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
   EntityEx SpecieSrc = (Source ? Source : self);
 
   foreach RadiusThings(Other, Origin, BombDistance) {
-    if (!Other || !Other.bShootable) continue;
+    // vulnerable actors can be damaged by radius attacks even if not shootable
+    // used to emulate MBF's vulnerability of non-missile bouncers to explosions
+    if (!Other || !(Other.bShootable || Other.bVulnerable)) continue;
 
     // check for actors that take no damage from concussion
     if (Other.bNoRadiusDamage && !bForceRadiusDmg) continue;
@@ -242,7 +244,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
         continue;
       }
     } else {
-      // shitfuck for clusterfuck (fuckin' morons!)
+      // shitfuck for clusterfuck
       //if (SpecieSrc) printdebug("%C(%s): Other=%C(%s); SpecieSrc=%C(%s); DmgType=%s", self, GetSpecies(), Other, Other.GetSpecies(), SpecieSrc, SpecieSrc.GetSpecies(), BombDmgType);
       if (SpecieSrc &&
           ((SpecieSrc.bDontHurtClass && Other.Class == self.Class) ||
@@ -252,6 +254,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
       }
     }
     #endif
+    //printdebug("%C: RadiusAttack; DamageSource=%s; Source=%C; Other=%C", self, DamageSource, Source, Other);
 
     float dist =
       !bOldRadiusDamage ?
@@ -282,7 +285,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
       if (damage > 0) {
         if (DoDamage) {
           int dmg = Other.Damage(self, Source, damage, BombDmgType); // !0: done or absorbed
-          //print("%C: got RadiusAttack from `%C`, damage=%s; dmg=%s", self, Source, damage, dmg);
+          //print("%C: got RadiusAttack from `%C`, damage=%s; dmg=%s; type=%s", self, Source, damage, dmg, BombDmgType);
           if (damage > 1 && dmg) Other.SpawnBloodAtHeadExplosion(damage, Source);
         } else {
           if (!bDontThrust) Other.bBlasted = true;
@@ -2597,7 +2600,7 @@ void PreExplode () {
 //  GetExplodeParms
 //
 //==========================================================================
-void GetExplodeParms (ref int damage, ref float distance, ref ubyte damageSelf) {
+void GetExplodeParms (ref int damage, ref float distance, ref bool damageSelf) {
 }
 
 
