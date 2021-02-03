@@ -658,7 +658,7 @@ struct SurfaceInfoBlock {
     if (flag&1u) {
       *strm << lmsize;
       if (strm->IsError()) { GCon->Log(NAME_Error, "error reading lightmap cache"); clear(); return false; }
-      if (count < 0) { GCon->Log(NAME_Error, "invalid lightmap cache surface vertex count"); clear(); return false; }
+      if (count < 0) { GCon->Log(NAME_Warning, "invalid lightmap cache surface vertex count"); clear(); return false; }
       if (lmsize == 0 || lmsize > BLOCK_WIDTH*BLOCK_HEIGHT) { GCon->Log(NAME_Warning, "invalid lightmap cache surface lightmap size"); clear(); return false; }
       lightmap = (vuint8 *)Z_Malloc(lmsize);
       strm->Serialise(lightmap, lmsize);
@@ -673,11 +673,11 @@ struct SurfaceInfoBlock {
     if (strm->IsError()) { GCon->Log(NAME_Error, "error reading lightmap cache"); clear(); return false; }
     // link to subsector
          if (subidx == -1) subsector = nullptr;
-    else if (subidx < 0 || subidx >= Level->NumSubsectors) { GCon->Log(NAME_Error, "invalid lightmap cache surface subsector"); clear(); return false; }
+    else if (subidx < 0 || subidx >= Level->NumSubsectors) { GCon->Log(NAME_Warning, "invalid lightmap cache surface subsector"); clear(); return false; }
     else subsector = &Level->Subsectors[subidx];
     // link to seg
          if (segidx == -1) seg = nullptr;
-    else if (segidx < 0 || segidx >= Level->NumSegs) { GCon->Log(NAME_Error, "invalid lightmap cache surface seg"); clear(); return false; }
+    else if (segidx < 0 || segidx >= Level->NumSegs) { GCon->Log(NAME_Warning, "invalid lightmap cache surface seg"); clear(); return false; }
     else seg = &Level->Segs[segidx];
     // done
     return true;

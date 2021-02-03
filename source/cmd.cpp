@@ -1307,7 +1307,7 @@ COMMAND(__k8_run_first_map) {
   }
 
   if (startMap == NAME_None) {
-    GCon->Log(NAME_Error, "Starting map not found!");
+    GCon->Log(NAME_Warning, "Starting map not found!");
     return;
   }
 

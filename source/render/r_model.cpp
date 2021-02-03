@@ -925,7 +925,7 @@ static void ParseModelXml (int lump, VModel *Mdl, VXmlDocument *Doc, bool isGZDo
     }
 
     if (Cls->Frames.length() == 0) {
-      if (!deleteIt) GCon->Logf(NAME_Error, "model '%s' class '%s' has no states defined", *Mdl->Name, *Cls->Name);
+      if (!deleteIt) GCon->Logf(NAME_Warning, "model '%s' class '%s' has no states defined", *Mdl->Name, *Cls->Name);
       ClassModels.Remove(Cls);
       ClassModelMapRebuild = true;
       deleteIt = true;
