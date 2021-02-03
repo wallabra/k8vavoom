@@ -46,7 +46,7 @@ pointlight ArmorBonus
 {
   color 0.2 0.9 0.2
   radius 86
-  offset 0 0 4.2
+  offset 0 0 2.0
 }
 
 class ArmorBonus
