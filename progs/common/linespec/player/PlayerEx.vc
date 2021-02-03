@@ -3902,7 +3902,7 @@ void PerformBossDetection () {
   if (msg) {
     print("\c[Red]*** %s ***", msg);
     ClientHudMessage(msg, 'smallfont', HUDMsgType.FadeInOut|HUDMsgFlag.ColorString/*|HUDMsgFlag.Log*/, 123669, CR_UNDEFINED, "Green",
-      0.5, 0.5, 0, 0,
+      0.5, 0.56, 0, 0,
       2.5, 0.5, 1.0);
   }
 }
