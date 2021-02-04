@@ -527,12 +527,23 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
     case SPR_FLAT: // offset slightly by pitch -- for floor/ceiling splats; ignore roll angle
       {
         TAVec angs = thing->GetSpriteDrawAngles();
-        // this is what makes the sprite looks like in GZDoom
-        angs.pitch = AngleMod(angs.pitch-90.0f);
-        // roll is meaningfull too
-        angs.roll = AngleMod(angs.roll+180.0f);
-        // generate the sprite's axes, according to the sprite's world orientation
-        AngleVectors(angs, sprforward, sprright, sprup);
+        if (thing->EFloor.splane && !thing->EFloor.splane->normal.isZero2D()) {
+          //k8: this is wrong, but meh...
+          sprforward = thing->EFloor.GetNormal();
+          MakeNormalVectors(sprforward, sprright, sprup);
+          //const float ang = AngleMod(angs.roll+180.0f+angs.yaw);
+          const float ang = angs.yaw;
+          sprright = RotateVectorAroundVector(sprright, sprforward, ang);
+          sprup = RotateVectorAroundVector(sprup, sprforward, ang);
+        } else {
+          // this is what makes the sprite looks like in GZDoom
+          angs.pitch = AngleMod(angs.pitch+270.0f);
+          // roll is meaningfull too
+          angs.roll = AngleMod(angs.roll+180.0f);
+          // generate the sprite's axes, according to the sprite's world orientation
+          AngleVectors(angs, sprforward, sprright, sprup);
+          //GCon->Logf(NAME_Debug, "%s: pitch=%g; roll=%g; yaw=%g; sprfwd=(%g,%g,%g)", thing->GetClass()->GetName(), angs.pitch, angs.roll, angs.yaw, sprforward.x, sprforward.y, sprforward.z);
+        }
         ri.flags |= RenderStyleInfo::FlagFlat|RenderStyleInfo::FlagOffset|RenderStyleInfo::FlagNoCull;
       }
       break;
