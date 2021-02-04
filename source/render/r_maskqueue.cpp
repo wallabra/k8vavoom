@@ -411,19 +411,21 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   //const TVec vfwd = Drawer->viewforward;
   const TVec vfwd = AngleVectorYaw(Drawer->viewangles.yaw);
 
-  // HACK: if sprite is additive, move is slightly closer to view
-  // this is mostly for things like light flares
-  if (ri.isAdditive()) sprorigin -= vfwd*0.2f;
+  if (sprtype == SPR_VP_PARALLEL_UPRIGHT) {
+    // HACK: if sprite is additive, move is slightly closer to view
+    // this is mostly for things like light flares
+    if (ri.isAdditive()) sprorigin -= vfwd*0.22f;
 
-  // move various things forward/backward a little
-  switch (tclass) {
-    case VEntity::EType::ET_Player: sprorigin -= vfwd*0.12f; break; // forward
-    case VEntity::EType::ET_Corpse: sprorigin += vfwd*0.12f; break; // backward
-    case VEntity::EType::ET_Pickup: sprorigin -= vfwd*0.16f; break; // forward
-    default:
-           if (thing->IsNoInteraction() || thing->IsFloatBob()) sprorigin -= vfwd*0.18f;
-      else if (thing->EntityFlags&(VEntity::EF_Bright|VEntity::EF_FullBright)) sprorigin -= vfwd*0.12f;
-      break;
+    // move various things forward/backward a little
+    switch (tclass) {
+      case VEntity::EType::ET_Player: sprorigin -= vfwd*(0.12f*1.8f); break; // forward
+      case VEntity::EType::ET_Corpse: sprorigin += vfwd*(0.12f*1.8f); break; // backward
+      case VEntity::EType::ET_Pickup: sprorigin -= vfwd*(0.16f*1.8f); break; // forward
+      default:
+             if (thing->IsNoInteraction() || thing->IsFloatBob()) sprorigin -= vfwd*(0.18f*1.8f);
+        else if (thing->EntityFlags&(VEntity::EF_Bright|VEntity::EF_FullBright)) sprorigin -= vfwd*(0.13f*1.8f);
+        break;
+    }
   }
 
   float dot;
@@ -701,13 +703,14 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
     }
     // add shadow
     if (renderShadow) {
-      // move it slightly further, because they're translucent, and should be further to not overlay the sprite itself
-      sprorigin += Drawer->viewforward*0.5f;
       float Alpha = ri.alpha*r_fake_shadow_translucency.asFloat();
       if (Alpha >= 0.012f) {
+        // move it slightly further, because they're translucent, and should be further to not overlay the sprite itself
+        sprorigin += /*Drawer->viewforward*/vfwd*0.5f;
         // check origin (+12 for "floatbob")
         /*if (sprorigin.z+12 >= thing->FloorZ)*/
         if (r_fake_sprite_shadows.asInt() == 1) {
+          // 2d
           sprorigin.z = thing->FloorZ;
 
           Alpha = min2(1.0f, Alpha);
@@ -736,6 +739,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
             (flip ? -sprright : sprright)/scaleX, -sprup/scaleY,
             (flip ? sv[2] : sv[1]), priority, thing->Origin, thing->ServerUId);
         } else if (r_fake_sprite_shadows.asInt() == 2) {
+          // pseudo3d
           sprorigin.z = thing->FloorZ+0.2f;
 
           Alpha = min2(1.0f, Alpha);
