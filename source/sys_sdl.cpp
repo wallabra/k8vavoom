@@ -359,7 +359,7 @@ static void mainloop (int argc, char **argv) {
     FL_CollectPreinits();
     GParsedArgs.parse(GArgs);
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) Sys_Error("SDL_InitSubSystem(): %s\n",SDL_GetError());
+    if (SDL_InitSubSystem(SDL_INIT_VIDEO|SDL_INIT_EVENTS) < 0) Sys_Error("SDL_InitSubSystem(): %s\n", SDL_GetError());
 
 #ifdef USE_SIGNAL_HANDLER
     // install signal handlers

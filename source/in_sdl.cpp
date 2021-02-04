@@ -37,6 +37,10 @@
 #endif
 
 
+//#define VSDL_JINIT  ((SDL_INIT_JOYSTICK|SDL_INIT_GAMECONTROLLER)&~SDL_INIT_HAPTIC)
+#define VSDL_JINIT  (SDL_INIT_JOYSTICK|SDL_INIT_GAMECONTROLLER)
+
+
 static int cli_NoMouse = 0;
 static int cli_NoJoy = 0;
 
@@ -748,7 +752,7 @@ static inline int SwitchJoyToKey (int b) {
 void VSdlInputDevice::ShutdownJoystick () {
   if (joystick) { SDL_JoystickClose(joystick); joystick = nullptr; }
   if (controller) { SDL_GameControllerClose(controller); controller = nullptr; }
-  if (joystick_started) { SDL_QuitSubSystem(SDL_INIT_JOYSTICK|SDL_INIT_GAMECONTROLLER); joystick_started = false; }
+  if (joystick_started) { SDL_QuitSubSystem(VSDL_JINIT); joystick_started = false; }
   joy_num_buttons = 0;
   joystick_controller = false;
   joy_oldx = joy_x = joy_oldy = joy_y = 0;
@@ -844,7 +848,7 @@ void VSdlInputDevice::StartupJoystick () {
   GCon->Logf(NAME_Init, "SDL: will try to use joystick #%d", joynum);
 
 
-  if (SDL_InitSubSystem(SDL_INIT_JOYSTICK|SDL_INIT_GAMECONTROLLER) < 0) {
+  if (SDL_InitSubSystem(VSDL_JINIT) < 0) {
     GCon->Log(NAME_Init, "SDL: joystick initialisation failed");
     return;
   }
