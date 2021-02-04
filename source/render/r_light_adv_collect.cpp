@@ -26,7 +26,7 @@
 #include "r_light_adv.h"
 
 // dunno if it does anything interesting
-#define VV_SMAP_PAPETHIN_FIX
+#define VV_SMAP_PAPERTHIN_FIX
 
 static VCvarB clip_shadow("clip_shadow", true, "Use clipper to drop unnecessary shadow surfaces?", CVAR_PreInit);
 static VCvarB clip_advlight_regions("clip_advlight_regions", false, "Clip (1D) light regions?", CVAR_PreInit);
@@ -208,7 +208,7 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
         // we need to flip it if the player is behind it
         vassert(smaps);
         if (doflip) {
-          #ifdef VV_SMAP_PAPETHIN_FIX
+          #ifdef VV_SMAP_PAPERTHIN_FIX
           // this is for flats: when the camera is almost on a flat, it's shadow disappears
           // this is because we cannot see neither up, nor down surface
           // in this case, leave down one
@@ -414,7 +414,7 @@ void VRenderLevelShadowVolume::CollectAdvLightSubRegion (subsector_t *sub, subre
     }
 
     // paper-thin surface shadow may disappear; workaround it
-    #ifdef VV_SMAP_PAPETHIN_FIX
+    #ifdef VV_SMAP_PAPERTHIN_FIX
     bool paperThin = false;
     if (((ssflag&floorFlag)&FlagAsShadow) && fsurf[0] && fsurf[2]) {
       if (secregion->efloor.GetRealDist() == secregion->eceiling.GetRealDist()) {
