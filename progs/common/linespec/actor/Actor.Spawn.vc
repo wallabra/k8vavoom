@@ -140,7 +140,7 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
         }
       }
     }
-  } else if (!/*TransPitch*/TransPointers) {
+  } else if (!TransPointers) {
     // for missiles or anything else set target to instigator
     if (!Instig) Instig = self;
     A.Target = Instig;
@@ -242,6 +242,7 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
 
   //printdebug("A_SpawnItemEx: type=%C; org=%s; Origin=%s; yaw=%s", ItemType, Org, Origin, Angles.yaw);
   EntityEx A = Spawn(ItemType, Org);
+  //printdebug("A_SpawnItemEx(%C):xxx: angles=%s (%s); AA=%s", A, A.Angles, Angle, Angles);
   InitSpawnedItem(A,
     !!(Flags&SXF_TRANSFERTRANSLATION),
     !!(Flags&SXF_SETMASTER),
@@ -255,7 +256,9 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
     A.Velocity.x = fclamp(XVel*35.0, -1024, 1024);
     A.Velocity.y = fclamp(YVel*35.0, -1024, 1024);
     A.Velocity.z = fclamp(ZVel*35.0, -1024, 1024);
+    //printdebug("A_SpawnItemEx(%C):000: angles=%s (%s); AA=%s", A, A.Angles, Angle, Angles);
     A.Angles.yaw = Angle;
+    //printdebug("A_SpawnItemEx(%C):001: angles=%s (%s)", A, A.Angles, Angle);
     if (!(Flags&SXF_ABSOLUTEVELOCITY)) {
       // the same issue as with offsets
       A.Velocity.y = -A.Velocity.y;
@@ -301,6 +304,7 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
     if (Flags&SXF_CLEARCALLERSPECIAL) { Special = 0; foreach (auto f; 0..Args.length) Args[f] = 0; }
     if (specified_newtid && newtid >= 0) A.SetTID(newtid);
     //if (Flags&SXF_SETMASTER) printdebug("*** %C: spawned `%C` with SetMaster; A.Master=%C; uid=%s", self, A, A.Master, A.UniqueId);
+    //printdebug("A_SpawnItemEx(%C):002: angles=%s (%s)", A, A.Angles, Angle);
     return true;
   }
 
