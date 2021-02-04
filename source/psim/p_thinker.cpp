@@ -353,10 +353,10 @@ VThinker *VThinker::SpawnCommon (bool allowNoneClass, bool checkKillEntityEx, bo
 
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty self in `Thinker::SpawnXXX()`"); }
   VEntity *SelfEnt = Cast<VEntity>(Self);
-  // if spawner is entity, default to it's origin and angles
+  // if spawner is entity, default to it's origin and yaw
   if (SelfEnt) {
     if (!AOrigin.specified) AOrigin = SelfEnt->Origin;
-    if (!AAngles.specified) AAngles = SelfEnt->Angles;
+    if (!AAngles.specified) { /*AAngles = SelfEnt->Angles;*/ AAngles.value.yaw = SelfEnt->Angles.yaw; }
   }
   if (!Class) {
     if (!allowNoneClass) { VObject::VMDumpCallStack(); Sys_Error("Trying to spawn `None` class"); }
