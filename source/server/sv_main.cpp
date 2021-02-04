@@ -1359,7 +1359,9 @@ COMMAND_WITH_AC(TeleportNewMapEx) {
   if (Args[1] == "+" || Args[1] == "*") {
     // use default next map; i.e. do nothing
     if (Args.length() == 2 && Args[1] == "+") {
+      #ifdef CLIENT
       C_Stop(true); // immediate
+      #endif
       G_DoCompleted(false);
       return;
     }

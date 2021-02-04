@@ -3233,6 +3233,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       return 0;
 
     case ACSF_GetGamemodeState_Zandro:
+      #ifdef CLIENT
       if (GGameInfo->NetMode == NM_Standalone ||
           GGameInfo->NetMode == NM_Client ||
           GGameInfo->NetMode == NM_ListenServer)
@@ -3241,6 +3242,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
           return 2; // GAMESTATE_INPROGRESS
         }
       }
+      #endif
       return -1; // GAMESTATE_UNSPECIFIED
 
     // https://zdoom.org/wiki/ConsolePlayerNumber
