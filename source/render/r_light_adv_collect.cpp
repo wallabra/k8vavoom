@@ -206,6 +206,8 @@ void VRenderLevelShadowVolume::CollectAdvLightSurfaces (surface_t *InSurfs, texi
       if (!smaps && (dist <= 0.0f || tex->isSeeThrough())) continue; // this is masked texture, shadow volumes cannot process it
       if (tex->isTransparent()) {
         // we need to flip it if the player is behind it
+        // this is not fully right, because it is better to check partner seg here, for example
+        // but not for now; let map authors care about setting proper textures on 2-sided walls instead
         vassert(smaps);
         if (doflip) {
           #ifdef VV_SMAP_PAPERTHIN_FIX
