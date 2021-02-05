@@ -1932,6 +1932,39 @@ IMPLEMENT_FUNCTION(VObject, SetCvarB) {
 }
 
 
+IMPLEMENT_FUNCTION(VObject, SetShadowCvar) {
+  VName name;
+  int value;
+  vobjGetParam(name, value);
+  VCvar *cvar = VCvar::FindVariable(*name);
+  if (cvar) cvar->SetShadow(value);
+}
+
+IMPLEMENT_FUNCTION(VObject, SetShadowCvarF) {
+  VName name;
+  float value;
+  vobjGetParam(name, value);
+  VCvar *cvar = VCvar::FindVariable(*name);
+  if (cvar) cvar->SetShadow(value);
+}
+
+IMPLEMENT_FUNCTION(VObject, SetShadowCvarS) {
+  VName name;
+  VStr value;
+  vobjGetParam(name, value);
+  VCvar *cvar = VCvar::FindVariable(*name);
+  if (cvar) cvar->SetShadow(value);
+}
+
+IMPLEMENT_FUNCTION(VObject, SetShadowCvarB) {
+  VName name;
+  bool value;
+  vobjGetParam(name, value);
+  VCvar *cvar = VCvar::FindVariable(*name);
+  if (cvar) cvar->SetShadow(value ? 1 : 0);
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // temporary name set functions
 // used to prevent warning spam

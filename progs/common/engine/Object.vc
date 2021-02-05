@@ -1322,6 +1322,12 @@ native static final bool GetCvarB (name Name); // read boolean value
 native static final void SetCvarB (name Name, bool value); // set cvar boolean value
 native static final void CvarUnlatchAll (); // NOOP in network game (so can be called safely)
 
+native static final void SetShadowCvar (name Name, int value); // set cvar int value
+native static final void SetShadowCvarF (name Name, float value); // set cvar float value
+native static final void SetShadowCvarS (name Name, string value); // set cvar string value
+native static final void SetShadowCvarB (name Name, bool value); // set cvar boolean value
+alias SetShadowCvarI = SetShadowCvar; // set cvar int value
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // temporary name set functions
