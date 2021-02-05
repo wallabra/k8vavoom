@@ -3143,14 +3143,21 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       if (argCount >= 2) {
         VName name = GetName(args[0]);
         if (name == NAME_None) return 0;
-        if (!VCvar::CanBeModified(*name, true, true)) return 0; // modonly, noserver
+        VCvar *cvar = VCvar::FindVariable(*name);
+        if (cvar) {
+          if (!cvar->CanBeModified(true, true)) return 0; // modonly, noserver
+        } else {
+          cvar = VCvar::CreateNewInt(*name, args[1], "created from ACS", CVAR_FromMod|CVAR_ACS);
+          cvar->SetACS();
+        }
         //GCon->Logf("ACSF: set cvar '%s' (%f)", *name, args[1]/65536.0f);
-        VCvar::Set(*name, args[1] /* /65536.0f */);
+        cvar->Set(*name, args[1] /* /65536.0f */);
         return 1;
       }
       return 0;
 
     //k8: this should work over network, but meh
+    // args[0]: playernumber
     case ACSF_GetUserCVar:
       if (argCount >= 2) {
         VName name = GetName(args[1]);
@@ -3162,13 +3169,20 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       return 0;
 
     //k8: this should work over network, but meh
+    // args[0]: playernumber
     case ACSF_SetUserCVar:
       if (argCount >= 3) {
         VName name = GetName(args[1]);
         if (name == NAME_None) return 0;
-        if (!VCvar::CanBeModified(*name, true, true)) return 0; // modonly, noserver
+        VCvar *cvar = VCvar::FindVariable(*name);
+        if (cvar) {
+          if (!cvar->CanBeModified(true, true)) return 0; // modonly, noserver
+        } else {
+          cvar = VCvar::CreateNewInt(*name, args[2], "created from ACS", CVAR_FromMod|CVAR_ACS);
+          cvar->SetACS();
+        }
         //GCon->Logf("ACSF: set user cvar '%s' (%f)", *name, args[2]/65536.0f);
-        VCvar::Set(*name, args[2] /* /65536.0f */);
+        cvar->Set(*name, args[2] /* /65536.0f */);
         return 1;
       }
       return 0;
@@ -3191,9 +3205,15 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         VName name = GetName(args[0]);
         if (name == NAME_None) return 0;
         //GCon->Logf("ACSF_SetCVarString: var=<%s>; value=<%s>; allowed=%d", *name, *GetStr(args[1]), (int)VCvar::CanBeModified(*name, true, true));
-        if (!VCvar::CanBeModified(*name, true, true)) return 0; // modonly, noserver
+        VCvar *cvar = VCvar::FindVariable(*name);
+        if (cvar) {
+          if (!cvar->CanBeModified(true, true)) return 0; // modonly, noserver
+        } else {
+          cvar = VCvar::CreateNewStr(*name, "", "created from ACS", CVAR_FromMod|CVAR_ACS);
+          cvar->SetACS();
+        }
         VStr value = GetStr(args[1]);
-        VCvar::Set(*name, value);
+        cvar->Set(*name, value);
         return 1;
       }
       return 0;
@@ -3211,15 +3231,22 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       return 0; //ActiveObject->Level->PutNewString("");
 
     //k8: this should work over network, but meh
+    // args[0]: playernumber
     case ACSF_SetUserCVarString:
       //GCon->Logf("***ACSF_SetUserCVarString: var=<%s>", *GetName(args[1]));
       if (argCount >= 3) {
         VName name = GetName(args[1]);
         if (name == NAME_None) return 0;
         //GCon->Logf("ACSF_SetUserCVarString: var=<%s>; value=<%s>; allowed=%d", *name, *GetStr(args[2]), (int)VCvar::CanBeModified(*name, true, true));
-        if (!VCvar::CanBeModified(*name, true, true)) return 0;
+        VCvar *cvar = VCvar::FindVariable(*name);
+        if (cvar) {
+          if (!cvar->CanBeModified(true, true)) return 0; // modonly, noserver
+        } else {
+          cvar = VCvar::CreateNewStr(*name, "", "created from ACS", CVAR_FromMod|CVAR_ACS);
+          cvar->SetACS();
+        }
         VStr value = GetStr(args[2]);
-        VCvar::Set(*name, value);
+        cvar->Set(*name, value);
         return 1;
       }
       return 0;
