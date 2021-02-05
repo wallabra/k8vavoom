@@ -88,6 +88,20 @@ extern VCvarF m_yaw;
 extern VCvarF m_pitch;
 
 
+static TMapNC<VName, bool> acsCVarWarnList;
+
+
+//==========================================================================
+//
+//  acsCVarWarning
+//
+//==========================================================================
+static void inline acsCVarWarning (VName cvname) {
+  if (!acsCVarWarnList.put(cvname, true)) GCon->Logf(NAME_Warning, "ACS: prevented cvar change for '%s'", *cvname);
+}
+
+
+
 #ifdef ACS_ALLOW_ZERO_DIVIDE
 # define ACS_ZDIV_FIX  if (sp[-1] == 0) sp[-1] = 1;
 #else
@@ -95,6 +109,11 @@ extern VCvarF m_pitch;
 #endif
 
 
+//==========================================================================
+//
+//  isZandroACS
+//
+//==========================================================================
 static inline bool isZandroACS () noexcept {
        if (flACSType == FL_ACS_Zandronum) return true;
   else if (flACSType == FL_ACS_ZDoom) return false;
@@ -3145,7 +3164,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         if (name == NAME_None) return 0;
         VCvar *cvar = VCvar::FindVariable(*name);
         if (cvar) {
-          if (!cvar->CanBeModified(true, true)) return 0; // modonly, noserver
+          if (!cvar->CanBeModified(true, true)) { acsCVarWarning(name); return 0; } // modonly, noserver
         } else {
           cvar = VCvar::CreateNewInt(*name, args[1], "created from ACS", CVAR_FromMod|CVAR_ACS);
           cvar->SetACS();
@@ -3176,7 +3195,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         if (name == NAME_None) return 0;
         VCvar *cvar = VCvar::FindVariable(*name);
         if (cvar) {
-          if (!cvar->CanBeModified(true, true)) return 0; // modonly, noserver
+          if (!cvar->CanBeModified(true, true)) { acsCVarWarning(name); return 0; } // modonly, noserver
         } else {
           cvar = VCvar::CreateNewInt(*name, args[2], "created from ACS", CVAR_FromMod|CVAR_ACS);
           cvar->SetACS();
@@ -3207,7 +3226,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         //GCon->Logf("ACSF_SetCVarString: var=<%s>; value=<%s>; allowed=%d", *name, *GetStr(args[1]), (int)VCvar::CanBeModified(*name, true, true));
         VCvar *cvar = VCvar::FindVariable(*name);
         if (cvar) {
-          if (!cvar->CanBeModified(true, true)) return 0; // modonly, noserver
+          if (!cvar->CanBeModified(true, true)) { acsCVarWarning(name); return 0; } // modonly, noserver
         } else {
           cvar = VCvar::CreateNewStr(*name, "", "created from ACS", CVAR_FromMod|CVAR_ACS);
           cvar->SetACS();
@@ -3240,7 +3259,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         //GCon->Logf("ACSF_SetUserCVarString: var=<%s>; value=<%s>; allowed=%d", *name, *GetStr(args[2]), (int)VCvar::CanBeModified(*name, true, true));
         VCvar *cvar = VCvar::FindVariable(*name);
         if (cvar) {
-          if (!cvar->CanBeModified(true, true)) return 0; // modonly, noserver
+          if (!cvar->CanBeModified(true, true)) { acsCVarWarning(name); return 0; } // modonly, noserver
         } else {
           cvar = VCvar::CreateNewStr(*name, "", "created from ACS", CVAR_FromMod|CVAR_ACS);
           cvar->SetACS();
