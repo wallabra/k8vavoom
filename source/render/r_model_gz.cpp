@@ -649,10 +649,19 @@ void GZModelDef::checkModelSanity () {
       } else {
         if (!models[mdlindex].frlistLoaded) {
           VStr mfn = models[mdlindex].modelFile;
+          GLog.WriteLine(NAME_Init, "loading alias model (md2) frames from '%s' (for class '%s')", *mfn, *className);
           if (!ParseMD2Frames(mfn, models[mdlindex].frlist)) {
-            GLog.WriteLine(NAME_Warning, "alias model '%s' not found for class '%s'", *mfn, *className);
+            VStream *strm = FL_OpenFileRead(mfn);
+            if (!strm) {
+              GLog.WriteLine(NAME_Warning, "alias model '%s' not found for class '%s'", *mfn, *className);
+            } else {
+              strm->Close();
+              delete strm;
+              GLog.WriteLine(NAME_Warning, "cannot parse alias model '%s' not found for class '%s'", *mfn, *className);
+            }
             models[mdlindex].reported = true;
           }
+          models[mdlindex].frlistLoaded = true;
         }
         frm.vvindex = -1;
         for (auto &&nit : models[mdlindex].frlist.itemsIdx()) {
@@ -662,8 +671,14 @@ void GZModelDef::checkModelSanity () {
           }
         }
         if (frm.vvindex < 0 && !models[mdlindex].reported) {
-          GLog.WriteLine(NAME_Warning, "alias model '%s' not found for class '%s'", *models[mdlindex].modelFile, *className);
+          GLog.WriteLine(NAME_Warning, "alias model '%s' has no frame '%s' for class '%s'", *models[mdlindex].modelFile, *frm.frname, *className);
           models[mdlindex].reported = true;
+          /*
+          if (models[mdlindex].frlist.length()) {
+            GLog.Logf(NAME_Debug, "=== %d frame%s ===", models[mdlindex].frlist.length(), (models[mdlindex].frlist.length() != 1 ? "s" : ""));
+            for (auto &&nit : models[mdlindex].frlist.itemsIdx()) GLog.Logf(NAME_Debug, "  %s", *nit.value().quote());
+          }
+          */
         }
       }
       if (frm.vvindex >= 0) {
