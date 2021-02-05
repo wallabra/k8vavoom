@@ -38,6 +38,8 @@ enum {
   CVAR_PreInit    = 0x4000u, // CLI change for this cvar should be processed before initializing the main game
   //
   CVAR_AlwaysArchive = 0x8000u, // always write to config
+  //
+  CVAR_ACS = 0x10000u, // created from ACS script
 };
 
 
@@ -86,6 +88,9 @@ public:
 
   static void AddAllVarsToAutocomplete (void (*addfn) (const char *name));
 
+  inline bool IsACS () const noexcept { return !!(Flags&CVAR_ACS); }
+  inline void SetACS () noexcept { Flags |= CVAR_ACS|CVAR_FromMod; }
+
   inline CVType GetType () const noexcept { return Type; }
   // this will coerce values, if necessary
   void SetType (CVType atype);
@@ -124,6 +129,8 @@ public:
   inline const char *GetName () const noexcept { return Name; }
   inline const char *GetHelp () const noexcept { return (HelpString ? HelpString : "no help yet: FIXME!!!"); }
   inline const char *GetDefault () const noexcept { return DefaultString; }
+
+  bool CanBeModified (bool modonly=false, bool noserver=true) const noexcept;
 
   static void Init ();
   static void Shutdown ();

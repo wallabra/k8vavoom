@@ -126,6 +126,7 @@ void ParseCVarInfo () {
                if (par.Check("noarchive")) flags &= ~CVAR_ARCHIVE;
           else if (par.Check("cheat")) flags |= CVAR_CHEAT;
           else if (par.Check("latch")) flags |= CVAR_LATCH;
+          else if (par.Check("acs")) flags |= CVAR_ACS;
           else break;
         }
         // value

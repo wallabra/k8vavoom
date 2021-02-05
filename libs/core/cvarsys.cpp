@@ -807,14 +807,24 @@ bool VCvar::HasModUserVar (const char *var_name) {
 //  VCvar::CanBeModified
 //
 //==========================================================================
+bool VCvar::CanBeModified (bool modonly, bool noserver) const noexcept {
+  if (modonly && !IsModVar()) return false;
+  if (noserver && (Flags&CVAR_Latch) != 0) return false;
+  if (Flags&(CVAR_Rom|CVAR_Init)) return false;
+  if (!Cheating && (Flags&CVAR_Cheat) != 0) return false;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VCvar::CanBeModified
+//
+//==========================================================================
 bool VCvar::CanBeModified (const char *var_name, bool modonly, bool noserver) {
   VCvar *var = FindVariable(var_name);
   if (!var) return false;
-  if (modonly && !var->IsModVar()) return false;
-  if (noserver && (var->Flags&CVAR_Latch) != 0) return false;
-  if (var->Flags&(CVAR_Rom|CVAR_Init)) return false;
-  if (!Cheating && (var->Flags&CVAR_Cheat) != 0) return false;
-  return true;
+  return var->CanBeModified(modonly, noserver);
 }
 
 
@@ -1128,6 +1138,7 @@ void VCvar::DumpAllVars () {
         if (cvar->Flags&CVAR_ServerInfo) stmp += " server"; else stmp += " user";
         if (cvar->Flags&CVAR_Cheat) stmp += " cheat";
         if (cvar->Flags&CVAR_Latch) stmp += " latch";
+        if (cvar->Flags&CVAR_ACS) stmp += " acs";
         switch (cvar->GetType()) {
           case String: stmp += " string"; break;
           case Int: stmp += " int"; break;
