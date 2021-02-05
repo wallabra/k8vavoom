@@ -132,6 +132,8 @@ VCvar::VCvar (const char *AName, const char *ADefault, const char *AHelp, int AF
   , FloatValue(0)
   , BoolValue(false)
   , nextInBucket(nullptr)
+  , lnhash(0)
+  , shadowVar(nullptr)
   , MeChangedCB(nullptr)
 {
   if (!DefaultString) DefaultString = ""; // 'cause why not?
@@ -168,6 +170,8 @@ VCvar::VCvar (const char *AName, VStr ADefault, VStr AHelp, int AFlags, CVType A
   , FloatValue(0)
   , BoolValue(false)
   , nextInBucket(nullptr)
+  , lnhash(0)
+  , shadowVar(nullptr)
   , MeChangedCB(nullptr)
 {
   char *Tmp = new char[ADefault.Length()+1];
@@ -197,6 +201,18 @@ VCvar::VCvar (const char *AName, VStr ADefault, VStr AHelp, int AFlags, CVType A
     VStr::Cpy(Tmp, *StringValue);
     DefaultString = Tmp;
   }
+}
+
+
+//==========================================================================
+//
+//  VCvar::EnsureShadow
+//
+//==========================================================================
+void VCvar::EnsureShadow () {
+  if (shadowVar) return;
+  // create nonamed cvar, so it won't go into hashtable
+  shadowVar = new VCvar(nullptr, *StringValue, nullptr/*HelpString*/, 0/*flags*/, Type);
 }
 
 
@@ -429,6 +445,39 @@ void VCvar::SetDefault (VStr value) {
   VStr::Cpy(tmp, *value);
   DefaultString = tmp;
   defstrOwned = true;
+}
+
+
+//==========================================================================
+//
+//  VCvar::SetShadow
+//
+//==========================================================================
+void VCvar::SetShadow (int value) {
+  EnsureShadow();
+  shadowVar->Set(value);
+}
+
+
+//==========================================================================
+//
+//  VCvar::SetShadow
+//
+//==========================================================================
+void VCvar::SetShadow (float value) {
+  EnsureShadow();
+  shadowVar->Set(value);
+}
+
+
+//==========================================================================
+//
+//  VCvar::SetShadow
+//
+//==========================================================================
+void VCvar::SetShadow (VStr value) {
+  EnsureShadow();
+  shadowVar->Set(value);
 }
 
 
@@ -791,7 +840,7 @@ VCvar *VCvar::FindVariable (const char *name) {
 //==========================================================================
 int VCvar::GetInt (const char *var_name) {
   VCvar *var = FindVariable(var_name);
-  return (var ? var->IntValue : 0);
+  return (var ? (var->shadowVar ? var->shadowVar->IntValue : var->IntValue) : 0);
 }
 
 
@@ -802,7 +851,7 @@ int VCvar::GetInt (const char *var_name) {
 //==========================================================================
 float VCvar::GetFloat (const char *var_name) {
   VCvar *var = FindVariable(var_name);
-  return (var ? var->FloatValue : 0.0f);
+  return (var ? (var->shadowVar ? var->shadowVar->FloatValue : var->FloatValue) : 0.0f);
 }
 
 
@@ -813,7 +862,7 @@ float VCvar::GetFloat (const char *var_name) {
 //==========================================================================
 bool VCvar::GetBool (const char *var_name) {
   VCvar *var = FindVariable(var_name);
-  return (var ? var->BoolValue : false);
+  return (var ? (var->shadowVar ? var->shadowVar->BoolValue : var->BoolValue) : false);
 }
 
 
@@ -822,10 +871,12 @@ bool VCvar::GetBool (const char *var_name) {
 //  VCvar::GetCharp
 //
 //==========================================================================
+/*
 const char *VCvar::GetCharp (const char *var_name) {
   VCvar *var = FindVariable(var_name);
-  return (var ? *var->StringValue : "");
+  return (var ? (var->shadowVar ? *var->shadowVar->StringValue : *var->StringValue) : "");
 }
+*/
 
 
 //==========================================================================
@@ -836,7 +887,7 @@ const char *VCvar::GetCharp (const char *var_name) {
 VStr VCvar::GetString (const char *var_name) {
   VCvar *var = FindVariable(var_name);
   if (!var) return VStr::EmptyString;
-  return var->StringValue;
+  return (var->shadowVar ? var->shadowVar->StringValue : var->StringValue);
 }
 
 
@@ -845,7 +896,7 @@ VStr VCvar::GetString (const char *var_name) {
 //  VCvar::GetHelp
 //
 //==========================================================================
-const char *VCvar::GetHelp (const char *var_name) {
+VStr VCvar::GetHelp (const char *var_name) {
   VCvar *var = FindVariable(var_name);
   if (!var) return nullptr;
   return var->HelpString;

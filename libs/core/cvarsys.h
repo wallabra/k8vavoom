@@ -66,12 +66,15 @@ protected:
   VStr LatchedString; // for `CVAR_Latch` variables
   VCvar *nextInBucket; // next cvar in this bucket
   vuint32 lnhash; // hash of lo-cased variable name
+  VCvar *shadowVar; // if this cvar is shadowed, always return this value (but set the main one)
 
 private:
   void CoerceToString ();
   void CoerceToFloat ();
   void CoerceToInt ();
   void CoerceToBool ();
+
+  void EnsureShadow ();
 
 public:
   // called on any change, before other callbacks
@@ -92,6 +95,11 @@ public:
   void Set (VStr value);
   void SetDefault (VStr value);
 
+  // WARNING! shadowed userinfo/serverinfo cvars won't work as expected!
+  void SetShadow (int value);
+  void SetShadow (float value);
+  void SetShadow (VStr value);
+
   inline void SetReadOnly (bool v) noexcept { if (v) Flags |= CVAR_Rom; else Flags &= ~CVAR_Rom; }
 
   // this clears modified flag on call
@@ -107,10 +115,10 @@ public:
   inline bool IsPreInit () const noexcept { return !!(Flags&CVAR_PreInit); }
   inline bool IsModVar () const noexcept { return ((Flags&CVAR_FromMod) != 0); }
 
-  inline bool asBool () const noexcept { return BoolValue; }
-  inline int asInt () const noexcept { return IntValue; }
-  inline float asFloat () const noexcept { return FloatValue; }
-  inline VStr asStr () const noexcept { return StringValue; }
+  inline bool asBool () const noexcept { return (shadowVar ? shadowVar->BoolValue : BoolValue); }
+  inline int asInt () const noexcept { return (shadowVar ? shadowVar->IntValue : IntValue); }
+  inline float asFloat () const noexcept { return (shadowVar ? shadowVar->FloatValue : FloatValue); }
+  inline VStr asStr () const noexcept { return (shadowVar ? shadowVar->StringValue : StringValue); }
 
   inline int GetFlags () const noexcept { return Flags; }
   inline const char *GetName () const noexcept { return Name; }
@@ -138,9 +146,9 @@ public:
   static int GetInt (const char *var_name);
   static float GetFloat (const char *var_name);
   static bool GetBool (const char *var_name);
-  static const char *GetCharp (const char *var_name);
+  //static const char *GetCharp (const char *var_name);
   static VStr GetString (const char *var_name);
-  static const char *GetHelp (const char *var_name); // returns nullptr if there is no such cvar
+  static VStr GetHelp (const char *var_name); // returns nullptr if there is no such cvar
   static int GetVarFlags (const char *var_name); // -1: not found
 
   static void Set (const char *var_name, int value);
@@ -227,7 +235,7 @@ public:
   VCvarF (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags, CVType::Float) {}
   VCvarF (const VCvar &);
 
-  inline operator float () const { return FloatValue; }
+  inline operator float () const { return (shadowVar ? shadowVar->asFloat() : FloatValue); }
   //inline operator bool () const { return (isFiniteF(FloatValue) && FloatValue == 0); }
   inline VCvarF &operator = (float AValue) { Set(AValue); return *this; }
   VCvarF &operator = (const VCvar &v);
@@ -244,7 +252,7 @@ public:
   VCvarS (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags, CVType::String) {}
   VCvarS (const VCvar &);
 
-  inline operator const char * () const { return *StringValue; }
+  inline operator const char * () const { return (shadowVar ? *shadowVar->asStr() : *StringValue); }
   //inline operator bool () const { return ParseBool(*StringValue); }
   inline VCvarS &operator = (const char *AValue) { Set(AValue); return *this; }
   VCvarS &operator = (const VCvar &v);
@@ -257,7 +265,7 @@ class VCvarB : public VCvar {
 public:
   VCvarB (const char *AName, bool ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, (ADefault ? "1" : "0"), AHelp, AFlags, CVType::Bool) {}
 
-  inline operator bool () const { return BoolValue; }
+  inline operator bool () const { return (shadowVar ? shadowVar->asBool() : BoolValue); }
   VCvarB &operator = (const VCvar &v);
   inline VCvarB &operator = (bool v) { Set(v ? 1 : 0); return *this; }
   VCvarB &operator = (const VCvarB &v);
